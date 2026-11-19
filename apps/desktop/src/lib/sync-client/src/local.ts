@@ -8,13 +8,10 @@ import type { SpaceState } from './places'
 import { get, put, remove, scan, type Change, type SyncStore } from './store'
 
 export const LOCAL_STORE = 'local'
-
 const PREFIX = 'local-'
-
 export function isLocal(spaceId: string): boolean {
   return spaceId.startsWith(PREFIX)
 }
-
 export function localSpaceId(random: () => number): string {
   let out = PREFIX
   for (let part = 0; part < 4; part += 1) {
@@ -24,9 +21,7 @@ export function localSpaceId(random: () => number): string {
   }
   return out
 }
-
 const ROUNDS = 4
-
 export async function localFirst(
   core: Core,
   space: SpaceState,
@@ -42,7 +37,6 @@ export async function localFirst(
       return holder === null || !notes.has(space.key(holder))
     })
     .sort((a, b) => a.path.split('/').length - b.path.split('/').length)
-
   const changes: Change[] = []
   for (const one of listing) {
     if (core.life !== life) return false
@@ -62,12 +56,10 @@ export async function localFirst(
   await core.commit(changes)
   return core.life === life
 }
-
 export async function localPass(core: Core, space: SpaceState): Promise<Passed> {
   const life = core.life
   const alive = () => core.life === life
   const passed: Passed = { pulled: 0, pushed: 0, finished: false, full: false }
-
   await core.commit(flushAll(core))
   if (!alive()) return passed
   for (let round = 0; round < ROUNDS && space.outbox.length; round += 1) {
@@ -80,12 +72,10 @@ export async function localPass(core: Core, space: SpaceState): Promise<Passed> 
   passed.finished = alive()
   return passed
 }
-
 async function applied(core: Core, space: SpaceState): Promise<Change[]> {
   const state = space.confirmed()
   const device = core.device
   for (const entry of state.entries.values()) entry.by = device
-
   const changes: Change[] = []
   const refusals: [Op, string][] = []
   for (const one of [...space.outbox]) {
@@ -97,7 +87,6 @@ async function applied(core: Core, space: SpaceState): Promise<Change[]> {
     const result = applyOp(state, op, { role: 'owner', device })
     if ('refused' in result) refusals.push([op, result.refused])
   }
-
   for (const after of state.entries.values()) {
     const entry = space.entries.get(after.id)
     if (!entry) continue
@@ -117,19 +106,16 @@ async function applied(core: Core, space: SpaceState): Promise<Change[]> {
   space.row = { ...space.row, cursor: state.cursor }
   changes.push(put('spaces', { ...space.row }))
   space.changed()
-
   for (const [op, why] of refusals) changes.push(...(await refusedHere(core, space, op, why)))
   space.changed()
   return changes
 }
-
 async function refusedHere(core: Core, space: SpaceState, op: Op, why: string): Promise<Change[]> {
   if ((op.t !== 'create' && op.t !== 'mkdir') || why !== 'gone') {
     return await refused(core, space, op, why)
   }
   return await madeAnew(core, space, op.id)
 }
-
 async function confirmed(core: Core, space: SpaceState): Promise<number> {
   const changes: Change[] = []
   let count = 0
@@ -147,13 +133,9 @@ async function confirmed(core: Core, space: SpaceState): Promise<number> {
   if (count) await core.commit([...changes, core.counterRow()])
   return count
 }
-
 const CARRIED = 'carried:'
-
 const FROM = 'from:'
-
 const ID = /^[0-9A-Za-z-]{1,64}$/
-
 export async function carriedIds(
   store: Pick<SyncStore, 'read'>,
   which: (spaceId: string) => boolean = isLocal,
@@ -180,7 +162,6 @@ export async function carriedIds(
   }
   return out
 }
-
 function fromOf(value: string): { account: string; ids: Set<string> } | null {
   try {
     const read: unknown = JSON.parse(value)
@@ -192,7 +173,6 @@ function fromOf(value: string): { account: string; ids: Set<string> } | null {
     return null
   }
 }
-
 export function carriedRows(carried: ReadonlyMap<string, string>, account?: string): Change[] {
   const rows: Change[] = []
   for (const [root, ids] of carried) {
@@ -203,7 +183,6 @@ export function carriedRows(carried: ReadonlyMap<string, string>, account?: stri
   }
   return rows
 }
-
 export async function carriedFor(
   store: Pick<SyncStore, 'read'>,
   root: string,
@@ -223,7 +202,6 @@ export async function carriedFor(
   }
   return out
 }
-
 export function carriedGone(root: string): Change {
   return remove('meta', `${CARRIED}${root}`)
 }

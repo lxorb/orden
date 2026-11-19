@@ -14,33 +14,27 @@ interface HoldsSpaces {
   persist(): void
   loadTree(): Promise<void>
 }
-
 interface Listed {
   name: string
   path: string
   is_dir: boolean
   children?: Listed[]
 }
-
 interface Told {
   progress(done: number, total: number): void
   failed(reason: string): void
 }
-
 const quiet: Told = { progress: () => undefined, failed: () => undefined }
 const SAVE_EVERY = 200
 const SAVE_AFTER = 2000
 const FAILED_SHOWN = 20000
-
 interface Stamp {
   modified: number
   len: number
 }
-
 const foldsCase = () => ['windows', 'macos', 'ios', ''].includes(platform())
 const INBOX = '.Inbox.md'
 const VAULT = ['.obsidian/app.json', '.obsidian/workspace.json', '.obsidian/core-plugins.json']
-
 async function contents(root: string): Promise<{ path: string; dir: boolean }[]> {
   const tree = await crate<Listed>('read_tree', {
     root,
@@ -62,17 +56,14 @@ async function contents(root: string): Promise<{ path: string; dir: boolean }[]>
   }
   return out
 }
-
 async function bytesAt(path: string): Promise<Uint8Array> {
   return new Uint8Array(await crate<ArrayBuffer>('read_file', { path }))
 }
-
 function same(one: Uint8Array, other: Uint8Array | null): boolean {
   if (other?.byteLength !== one.byteLength) return false
   for (let at = 0; at < one.byteLength; at += 1) if (one[at] !== other[at]) return false
   return true
 }
-
 async function copied(
   root: string,
   into: InternalFolder,
@@ -119,7 +110,6 @@ async function copied(
   await into.save()
   return stamps
 }
-
 async function backedUp(from: string, name: string): Promise<string> {
   const stamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', ' ')
   const backups = joinPath(joinPath(await crate<string>('spaces_root'), KEPT_HOME), '.backups')
@@ -130,10 +120,8 @@ async function backedUp(from: string, name: string): Promise<string> {
   await crate('copy_path', { from, to: at })
   return at
 }
-
 let turn: Promise<unknown> = Promise.resolve()
 const CONVERTING_LOCK = 'orden:converting'
-
 function oneAtATime<T>(run: () => Promise<T>): Promise<T> {
   const locked = async (): Promise<T> => {
     const locks = locksHere()
@@ -144,11 +132,9 @@ function oneAtATime<T>(run: () => Promise<T>): Promise<T> {
   turn = mine.catch(() => undefined)
   return mine
 }
-
 export function convertSpace(ws: HoldsSpaces, id: string, told: Told = quiet): Promise<boolean> {
   return oneAtATime(() => converting(ws, id, told))
 }
-
 async function begun(
   home: string,
   from: string,
@@ -164,18 +150,15 @@ async function begun(
   }
   return { taken, folder: null, backup: null }
 }
-
 async function opened(folder: string): Promise<InternalFolder> {
   const world = { now: () => Date.now(), key: () => crypto.randomUUID(), foldsCase: foldsCase() }
   return InternalFolder.open(folder, folderBytes(folder), world)
 }
-
 const nameIn = (folder: string) =>
   folder
     .replace(/[\\/]+$/, '')
     .split(/[\\/]/)
     .pop() ?? ''
-
 async function converting(ws: HoldsSpaces, id: string, told: Told): Promise<boolean> {
   const space = ws.spaces.find((one) => one.id === id)
   if (!space || mountOf(space.root)) return false
@@ -191,7 +174,6 @@ async function converting(ws: HoldsSpaces, id: string, told: Told): Promise<bool
   }
   const name = nameIn(folder)
   const marker = joinPath(folder, CONVERTING)
-
   let backup = found.backup
   if (!backup || !(await crate<boolean>('path_taken', { path: backup }).catch(() => false))) {
     try {
@@ -235,7 +217,6 @@ async function converting(ws: HoldsSpaces, id: string, told: Told): Promise<bool
       await copied(from, into, changed)
       await into.flush()
       into.close()
-
       const root = await mountKept(folder, name, from)
       await crate('delete_note', { path: marker })
       if (name !== space.name) space.name = name
@@ -256,7 +237,6 @@ async function converting(ws: HoldsSpaces, id: string, told: Told): Promise<bool
     return false
   }
 }
-
 async function sameAsSource(root: string, from: string): Promise<boolean> {
   const folder = mountOf(root)?.mount.folder
   if (!folder) return false
@@ -271,11 +251,9 @@ async function sameAsSource(root: string, from: string): Promise<boolean> {
   }
   return true
 }
-
 export interface Twins extends HoldsSpaces {
   deleteSpace(id: string, keep?: boolean): Promise<void>
 }
-
 export async function retireTwins(ws: Twins): Promise<void> {
   const made = await keptCameFrom()
   const groups: { root: string; from: string }[][] = []
@@ -302,7 +280,6 @@ export async function retireTwins(ws: Twins): Promise<void> {
     }
   }
 }
-
 export async function convertAll(ws: Twins): Promise<void> {
   await retireTwins(ws).catch((error: unknown) => log('warn', `twin spaces not looked at: ${String(error)}`))
   const done = new Set(await keptFrom())

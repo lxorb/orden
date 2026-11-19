@@ -13,7 +13,6 @@ const PRIVATE = [
   'sk-proj-abcdefghijklmnop1234',
   'Kiss me under the stars',
 ]
-
 function base(kind: string): CrashReport {
   return {
     v: 1,
@@ -38,13 +37,11 @@ function base(kind: string): CrashReport {
     resources: { memory: 300_000_000, cpu: 5000, uptime: 60_000 },
   }
 }
-
 const FRAMES = [
   { module: 'orden.exe', offset: '0x1a2b3c' },
   { module: String.raw`C:\Users\anna\AppData\Local\Orden\WebView2Loader.dll`, offset: '0x10' },
   { module: 'ntdll.dll', offset: '0x9f0e4', symbol: 'NtWaitForSingleObject' },
 ]
-
 const REPORTS: CrashReport[] = [
   {
     ...base('panic'),
@@ -88,13 +85,11 @@ const REPORTS: CrashReport[] = [
   },
   { ...base('exit'), summary: 'Orden ended without quitting, 89 s after it started' },
 ]
-
 function sample(kind: string): CrashReport {
   const found = REPORTS.find((one) => one.kind === kind)
   if (!found) throw new Error(`no ${kind} report`)
   return found
 }
-
 describe('every kind of report is sent scrubbed', () => {
   for (const report of REPORTS) {
     test(report.kind, () => {
@@ -105,7 +100,6 @@ describe('every kind of report is sent scrubbed', () => {
     })
   }
 })
-
 test('what helps to debug stays', () => {
   const panic = scrubbedReport(sample('panic'))
   expect(panic.where).toBe('src/web_tabs.rs:120:9')
@@ -115,28 +109,23 @@ test('what helps to debug stays', () => {
   expect(panic.breadcrumbs?.map((one) => one.what)).toEqual(['web_open', 'read_note'])
   expect(panic.open).toEqual({ windows: 2, kinds: { note: 3, web: 1 } })
   expect(panic.log?.[1]).toBe('2026-10-03T22:11:01.000Z INFO  opened https://secret-bank.example.com/…')
-
   const freeze = scrubbedReport(sample('freeze'))
   expect(freeze.summary).toBe('The window did not answer for 41 s (read_note), 98% of a core busy')
   expect(freeze.doing).toBe('read_note, in a nested loop')
   expect(freeze.held).toBe(41_000)
   expect(freeze.killed).toBe(true)
-
   const js = scrubbedReport(sample('js'))
   expect(js.stack).toContain('index-BKq9x8Yz.js:12:345')
 })
-
 test('a page keeps only its host', () => {
   expect(scrubbedText('opened https://www.example.com/private/path?q=1#x')).toBe('opened https://www.example.com/…')
 })
-
 test('secrets go whatever they are called', () => {
   expect(scrubbedText('Authorization: Bearer abc.def-ghi_jkl')).not.toContain('abc.def')
   expect(scrubbedText('api_key=AKIA1234567890ABCDEF')).toBe('api_key=<hidden>')
   expect(scrubbedText('ghp_abcdefghijklmnopqrstuvwxyz0123456789 leaked')).toBe('<token> leaked')
   expect(scrubbedText('a 0123456789abcdef0123456789abcdef id')).toBe('a <token> id')
 })
-
 test('a module keeps its file name alone and a frame its offset', () => {
   const report = scrubbedReport({
     ...base('crash'),

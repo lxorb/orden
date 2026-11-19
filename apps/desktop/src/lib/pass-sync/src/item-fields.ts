@@ -10,17 +10,14 @@ interface ShownField {
   strength?: boolean
   multiline?: boolean
 }
-
 export interface ShownGroup {
   id: string
   name: string
   fields: ShownField[]
 }
-
 function present(fields: ShownField[]): ShownField[] {
   return fields.filter((one) => one.value.trim() !== '')
 }
-
 function extraOf(field: Field): ShownField {
   return {
     id: field.id,
@@ -30,7 +27,6 @@ function extraOf(field: Field): ShownField {
     ...(field.kind === 'hidden' ? { mono: true } : {}),
   }
 }
-
 function sectionGroups(sections: readonly Section[]): ShownGroup[] {
   return sections.map((section) => ({
     id: section.id,
@@ -38,7 +34,6 @@ function sectionGroups(sections: readonly Section[]): ShownGroup[] {
     fields: present(section.fields.map(extraOf)),
   }))
 }
-
 function mainOf(content: Content): ShownField[] {
   switch (content.kind) {
     case 'login':
@@ -93,7 +88,6 @@ function mainOf(content: Content): ShownField[] {
       return []
   }
 }
-
 function identityGroups(content: Content): ShownGroup[] {
   if (content.kind !== 'identity') return []
   return Object.entries(IDENTITY_FIELDS).map(([group, keys]) => ({
@@ -109,7 +103,6 @@ function identityGroups(content: Content): ShownGroup[] {
     ),
   }))
 }
-
 export function groupsOf(content: Content): ShownGroup[] {
   const main: ShownGroup = { id: 'main', name: '', fields: present(mainOf(content)) }
   const sections =

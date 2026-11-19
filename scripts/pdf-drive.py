@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import subprocess
@@ -12,7 +11,6 @@ OUT = Path(sys.argv[1]).resolve()
 SPACES = Path(os.environ["ORDEN_SPACES_DIR"])
 SECRET_WORDS = "sekretbytes4711"
 WORDS = "the words of the note"
-
 def printed(html, name):
     target = SPACES / f"{name}.pdf"
     page = {"width": 8.27, "height": 11.69, "margin": 1, "landscape": False}
@@ -39,11 +37,9 @@ def printed(html, name):
     pages = next(int(line.split()[1]) for line in info.splitlines() if line.startswith("Pages:"))
     print(f"pdf: {name}: {pages} pages, {target.stat().st_size} bytes")
     return pages, text
-
 secret = OUT / "pdf-secret.txt"
 secret.write_text(SECRET_WORDS + "\n")
 address = f"file://{secret}"
-
 plain = (
     f"<!doctype html><html><head><title>x</title></head><body><h1>{WORDS}</h1>"
     "<div style='break-before:page'>page two</div></body></html>"
@@ -51,7 +47,6 @@ plain = (
 pages, text = printed(plain, "plain")
 if pages != 2 or WORDS not in text or "page two" not in text:
     raise SystemExit(f"::error::a plain page came out as {pages} pages: {text!r}")
-
 hostile = (
     f"<!doctype html><html><head><title>x</title><link rel=stylesheet href='{address}'>"
     f"<style>@import url('{address}');</style></head><body><h1>{WORDS}</h1>"

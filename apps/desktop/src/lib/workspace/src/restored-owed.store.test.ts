@@ -1,7 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -11,16 +10,12 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('./workspace.svelte')
-
 const ROOT = '/spaces/One'
 const PATH = `${ROOT}/a.md`
-
 const tab = (fields: object) => ({
   kind: 'note' as const,
   path: PATH,
@@ -33,7 +28,6 @@ const tab = (fields: object) => ({
   share: 'k1',
   ...fields,
 })
-
 const split = (one: object, other: object) => ({
   panel: null,
   focused: 'p1',
@@ -48,13 +42,11 @@ const split = (one: object, other: object) => ({
     ] as [never, never],
   },
 })
-
 const single = (one: object) => ({
   panel: null,
   focused: 'p1',
   frame: { kind: 'pane' as const, pane: { id: 'p1', active: 0, linked: false, tabs: [one] } },
 })
-
 beforeEach(async () => {
   const one = disk.current!
   one.reset()
@@ -64,14 +56,12 @@ beforeEach(async () => {
   workspace.tabs = []
   await workspace.loadTree()
 })
-
 test('one note in two panes whose file has gone comes back as one draft', async () => {
   await workspace.applyLayout(split(tab({}), tab({})), false)
   expect(workspace.tabs).toHaveLength(2)
   expect(workspace.tabs[0]?.note).toBe(workspace.tabs[1]?.note)
   expect(workspace.tabs[0]?.path).toBeNull()
 })
-
 test('a restored tab fetches across for its write, and takes in what the file said since', async () => {
   disk.current?.files.set(PATH, 'base\n')
   const { startAcross } = await import('./across')
@@ -88,7 +78,6 @@ test('a restored tab fetches across for its write, and takes in what the file sa
   expect(fetched).toBe(1)
   expect(disk.current?.files.get(PATH)).toContain('newer')
 })
-
 test('a key typed in a restored tab lands, with the words it came back with', async () => {
   disk.current?.files.set(PATH, 'base\n')
   await workspace.applyLayout(single(tab({})) as never, false)
@@ -99,7 +88,6 @@ test('a key typed in a restored tab lands, with the words it came back with', as
   await workspace.writesSettled()
   expect(disk.current?.files.get(PATH)).toBe('base\ntyped\nkey\n')
 })
-
 test('closing it lets it go', async () => {
   disk.current?.files.set(PATH, 'base\n')
   await workspace.loadTree()
@@ -110,7 +98,6 @@ test('closing it lets it go', async () => {
   await workspace.writesSettled()
   expect(disk.current?.files.get(PATH)).toBe('base\ntyped\n')
 })
-
 test('words typed in a note this launch opened do not wait for anybody', async () => {
   disk.current?.files.set(PATH, 'base\n')
   await workspace.loadTree()
@@ -121,7 +108,6 @@ test('words typed in a note this launch opened do not wait for anybody', async (
   await workspace.writesSettled()
   expect(disk.current?.files.get(PATH)).toBe('base\nnew\n')
 })
-
 test('a tab closed within the pause: once the write has landed the entry holds no words', async () => {
   disk.current?.files.set(PATH, 'base\n')
   await workspace.loadTree()

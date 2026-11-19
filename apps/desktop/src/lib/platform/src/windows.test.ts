@@ -7,11 +7,9 @@ interface Asking {
   client: number
   grant: () => void
 }
-
 class Locks {
   private readonly held = new Map<string, number>()
   private readonly waiting: Asking[] = []
-
   as(client: number): LockManager {
     const request = (name: string, ...rest: unknown[]) => {
       const run = rest.at(-1) as (lock: { name: string } | null) => unknown
@@ -42,13 +40,11 @@ class Locks {
       })
     return { request, query } as LockManager
   }
-
   gone(client: number) {
     for (const [name, holder] of [...this.held]) if (holder === client) this.held.delete(name)
     this.waiting.splice(0, this.waiting.length, ...this.waiting.filter((one) => one.client !== client))
     this.next()
   }
-
   private next() {
     for (const one of [...this.waiting]) {
       if (this.held.has(one.name)) continue
@@ -57,7 +53,6 @@ class Locks {
     }
   }
 }
-
 function hub() {
   const lines = new Set<Line>()
   const line = (): Line => {
@@ -74,9 +69,7 @@ function hub() {
   }
   return { line, cut: (one: Line) => lines.delete(one) }
 }
-
 const settled = () => new Promise((resolve) => setTimeout(resolve, 10))
-
 test('a window that dies without a word is let go, as if it had said goodbye', async () => {
   const locks = new Locks()
   const { line, cut } = hub()
@@ -97,14 +90,11 @@ test('a window that dies without a word is let go, as if it had said goodbye', a
   await settled()
   expect(staying.alone).toBe(false)
   expect(dying.alone).toBe(false)
-
   for (const one of opened) cut(one)
   locks.gone(1)
-
   await vi.waitFor(() => expect(staying.alone).toBe(true))
   expect(byes.map((said) => said.from)).toEqual([dying.me])
 })
-
 test('a window still there is kept, however long it says nothing', async () => {
   const locks = new Locks()
   const { line } = hub()
@@ -113,27 +103,22 @@ test('a window still there is kept, however long it says nothing', async () => {
   expect(one.alone && other.alone).toBe(true)
   await settled()
   await settled()
-
   expect(one.alone).toBe(false)
   expect(other.alone).toBe(false)
 })
-
 test('a window back from the page cache says hello again to those that let it go', async () => {
   const { line } = hub()
   const back = new Windows(line, () => undefined)
   const other = new Windows(line, () => undefined)
   expect(back.alone && other.alone).toBe(true)
   await settled()
-
   window.dispatchEvent(Object.assign(new Event('pagehide'), { persisted: true }))
   await settled()
   expect(other.alone).toBe(true)
-
   window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted: true }))
   await settled()
   expect(other.alone).toBe(false)
 })
-
 test('an engine whose locks cannot be asked who waits keeps its windows and throws nothing', async () => {
   const locks = new Locks()
   const { line } = hub()

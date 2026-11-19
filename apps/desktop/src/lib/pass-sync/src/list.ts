@@ -7,19 +7,15 @@ export type Scope =
   | { kind: 'trash' }
   | { kind: 'shared-with-me' }
   | { kind: 'shared-by-me' }
-
 export const TYPE_FILTERS = ['all', 'login', 'alias', 'card', 'note', 'identity', 'other'] as const
 export type TypeFilter = (typeof TYPE_FILTERS)[number]
-
 export const SORTS = ['recent', 'title', 'newest', 'oldest'] as const
 export type Sort = (typeof SORTS)[number]
-
 export interface Listed {
   pinned: Item[]
   rows: Item[]
   counts: Record<TypeFilter, number>
 }
-
 function filterOf(kind: ItemKind): Exclude<TypeFilter, 'all'> {
   switch (kind) {
     case 'login':
@@ -34,7 +30,6 @@ function filterOf(kind: ItemKind): Exclude<TypeFilter, 'all'> {
       return 'other'
   }
 }
-
 function subtreeOf(folders: readonly Folder[], root: string): Set<string> {
   const inside = new Set([root])
   let grew = true
@@ -49,7 +44,6 @@ function subtreeOf(folders: readonly Folder[], root: string): Set<string> {
   }
   return inside
 }
-
 function inScope(scope: Scope, vaults: readonly Vault[]): (item: Item) => boolean {
   const byId = new Map(vaults.map((vault) => [vault.id, vault]))
   const live = (item: Item) => item.trashed === null
@@ -75,7 +69,6 @@ function inScope(scope: Scope, vaults: readonly Vault[]): (item: Item) => boolea
       }
   }
 }
-
 function firstLine(text: string): string {
   return (
     text
@@ -84,11 +77,9 @@ function firstLine(text: string): string {
       .find((line) => line !== '') ?? ''
   )
 }
-
 function lastFour(number: string): string {
   return number.replace(/\D/g, '').slice(-4)
 }
-
 function searchedOf(content: Content): string[] {
   const words = [content.title, firstLine(content.note)]
   switch (content.kind) {
@@ -115,7 +106,6 @@ function searchedOf(content: Content): string[] {
   }
   return words.filter((word) => word !== '').map((word) => word.toLowerCase())
 }
-
 function matchesQuery(query: string): (item: Item) => boolean {
   const wanted = query.toLowerCase().split(/\s+/).filter(Boolean)
   if (!wanted.length) return () => true
@@ -124,9 +114,7 @@ function matchesQuery(query: string): (item: Item) => boolean {
     return wanted.every((word) => searched.some((one) => one.includes(word)))
   }
 }
-
 const recency = (item: Item) => Math.max(item.modified, item.used ?? 0)
-
 function compare(sort: Sort): (a: Item, b: Item) => number {
   switch (sort) {
     case 'recent':
@@ -140,7 +128,6 @@ function compare(sort: Sort): (a: Item, b: Item) => number {
       return (a, b) => a.created - b.created
   }
 }
-
 export function listed(
   items: readonly Item[],
   vaults: readonly Vault[],
@@ -166,7 +153,6 @@ export function listed(
   const pinned = scope.kind === 'trash' ? [] : rows.filter((item) => item.pinned)
   return { pinned, rows, counts }
 }
-
 export function subtitleOf(item: Item): string {
   const content = item.content
   switch (content.kind) {

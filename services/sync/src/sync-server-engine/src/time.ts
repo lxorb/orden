@@ -18,9 +18,7 @@ import {
 import { deviceOf } from './sync2/device'
 
 const NOT_A_TIME_RECORD = 'that is not a time record'
-
 const TOO_MUCH_TIME = 'that is more time records than an account keeps'
-
 async function entriesSince(env: Env, userId: string, since: number): Promise<TimePage> {
   const { results } = await env.DB.prepare(
     `select kind, id, value, seq, at from time_entries
@@ -28,7 +26,6 @@ async function entriesSince(env: Env, userId: string, since: number): Promise<Ti
   )
     .bind(userId, since, TIME_PAGE + 1)
     .all<{ kind: string; id: string; value: string | null; seq: number; at: number }>()
-
   const page = results.slice(0, TIME_PAGE)
   return {
     entries: page.map((row): TimeEntry => ({
@@ -42,7 +39,6 @@ async function entriesSince(env: Env, userId: string, since: number): Promise<Ti
     more: results.length > TIME_PAGE,
   }
 }
-
 function roomFor(user: string, sent: string, most: string): string {
   return `((select count(*) from time_entries where user_id = ${user})
           + (select count(*) from (select distinct json_extract(value, '$.kind') as kind,
@@ -52,7 +48,6 @@ function roomFor(user: string, sent: string, most: string): string {
                                  where kept.user_id = ${user}
                                    and kept.kind = fresh.kind and kept.id = fresh.id)) <= ${most})`
 }
-
 async function written(env: Env, userId: string, changes: readonly TimeChange[], by: string): Promise<number | 'full'> {
   const many = changes.length
   const at = now()
@@ -86,21 +81,17 @@ async function written(env: Env, userId: string, changes: readonly TimeChange[],
   if (!(results[0]?.results[0] as { room?: number } | undefined)?.room) return 'full'
   return (results.at(-1)?.results[0] as { last?: number } | undefined)?.last ?? many
 }
-
 export const time = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 time.get('/', async (context) => {
   const asked = Math.floor(Number(context.req.query('since') ?? 0))
   const since = Number.isFinite(asked) && asked > 0 ? asked : 0
   return context.json(await entriesSince(context.env, context.get('user').id, since))
 })
-
 time.post('/', async (context) => {
   const body: unknown = await context.req.json().catch(() => undefined)
   if (typeof body !== 'object' || body === null) return context.json({ error: NOT_AN_OBJECT }, 400)
   const changes = timeChangesOf(body)
   if (!changes) return context.json({ error: NOT_A_TIME_RECORD }, 400)
-
   const user = context.get('user').id
   if (!changes.length) return context.json({ cursor: 0 })
   if (!(await mayChangeTree(context.env, user))) {

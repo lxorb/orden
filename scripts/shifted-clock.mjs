@@ -1,7 +1,5 @@
 const at = process.env.ORDEN_TEST_CLOCK
-
 const SHIFTED = Symbol.for('orden.shifted-clock')
-
 if (at && !globalThis[SHIFTED]) {
   globalThis[SHIFTED] = true
   const Real = globalThis.Date

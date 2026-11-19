@@ -24,7 +24,6 @@ const WORK = 'work'
 const WORK_ROOT = '/browser/work'
 const PLAN = 'n1'
 const IDEAS = 'n2'
-
 interface Device {
   disk: MemoryDisk
   store: MemoryStore
@@ -33,7 +32,6 @@ interface Device {
   online: boolean
   engine: Engine
 }
-
 async function fresh(
   account: ReferenceAccount,
   id: string,
@@ -103,7 +101,6 @@ async function fresh(
   made.engine = await Engine.start(world, store.open(), { freshens: false })
   return made
 }
-
 function letting(disk: MemoryDisk) {
   const told: { path: string; text: string }[] = []
   return {
@@ -120,13 +117,11 @@ function letting(disk: MemoryDisk) {
     },
   }
 }
-
 describe('a browser that keeps only the words it uses', () => {
   test('takes the tree down and no words, and lists every note it keeps none of', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
-
     expect(browser.routes).toContain('feed')
     expect(browser.pulled).toEqual([])
     expect([...browser.disk.files.keys()]).toEqual([])
@@ -137,7 +132,6 @@ describe('a browser that keeps only the words it uses', () => {
         .sort(),
     ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
   })
-
   test('fetches every note it keeps none of under a folder in one ask', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const other = await fresh(account, 'o', { lazy: false })
@@ -149,12 +143,10 @@ describe('a browser that keeps only the words it uses', () => {
       await other.engine.created(`${ROOT}/F/${name}`, false, `# ${name}\n`)
     }
     await other.engine.pass(SPACE)
-
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
     const before = browser.routes.filter((one) => one === 'pull').length
     expect(await browser.engine.fetch(`${ROOT}/F`)).toBe(true)
-
     expect(browser.routes.filter((one) => one === 'pull').length - before).toBe(1)
     expect(browser.disk.files.get(`${ROOT}/F/b.md`)).toBe('# b.md\n')
     expect(
@@ -165,7 +157,6 @@ describe('a browser that keeps only the words it uses', () => {
     ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
     expect(await browser.engine.fetch(`${ROOT}/Nothing`)).toBe(false)
   })
-
   test('fetches a folder whole from an account that answers a pull a note at a time', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const other = await fresh(account, 'o', { lazy: false })
@@ -178,7 +169,6 @@ describe('a browser that keeps only the words it uses', () => {
       await other.engine.created(`${ROOT}/F/${name}`, false, `# ${name}\n`)
     }
     await other.engine.pass(SPACE)
-
     const browser = await fresh(account, 'b', { few: 1 })
     await browser.engine.pass(SPACE)
     expect(await browser.engine.fetch(`${ROOT}/F`)).toBe(true)
@@ -186,7 +176,6 @@ describe('a browser that keeps only the words it uses', () => {
       expect(browser.disk.files.get(`${ROOT}/F/${name}`)).toBe(`# ${name}\n`)
     }
   })
-
   test('puts what it makes in a folder it keeps no words of into that folder, not a new one of its name', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const other = await fresh(account, 'o', { lazy: false })
@@ -195,20 +184,17 @@ describe('a browser that keeps only the words it uses', () => {
     await other.engine.created(`${ROOT}/Work`, true)
     await other.engine.created(`${ROOT}/Work/Plan.md`, false, '# Plan\n')
     await other.engine.pass(SPACE)
-
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
     expect(browser.engine.awayFiles().map((one) => one.path)).toContain(`${ROOT}/Work/Plan.md`)
     const space = browser.engine.core.spaces.get(SPACE)
     const work = [...(space?.entries.values() ?? [])].find((one) => one.name === 'Work')
-
     await browser.disk.write(`${ROOT}/Work/Idea.md`, '# Idea\n')
     await browser.engine.created(`${ROOT}/Work`, true)
     await browser.engine.created(`${ROOT}/Work/Idea.md`, false, '# Idea\n')
     const ops = (space?.outbox ?? []).flatMap((one) => (one.record.t === 'op' ? [one.record.op] : []))
     expect(ops.map((one) => one.t)).toEqual(['create'])
     expect(ops[0] && 'parent' in ops[0] ? ops[0].parent : null).toBe(work?.id)
-
     await browser.engine.pass(SPACE)
     await other.engine.pass(SPACE)
     expect([...other.disk.files.keys()].filter((one) => one.startsWith(`${ROOT}/Work`)).sort()).toEqual([
@@ -216,28 +202,23 @@ describe('a browser that keeps only the words it uses', () => {
       `${ROOT}/Work/Plan.md`,
     ])
   })
-
   test('pass after pass leaves away what it was never asked for, so another window open fetches nothing', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
     expect(browser.engine.awayFiles()).toHaveLength(2)
-
     await browser.engine.pass(SPACE)
     expect(browser.engine.awayFiles()).toHaveLength(2)
     expect(browser.pulled).toEqual([])
   })
-
   test("fetches a note's words when it is asked for, and keeps them in step from then on", async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
-
     expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe(true)
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
     expect(browser.pulled).toEqual([PLAN])
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Ideas.md`])
-
     const other = await fresh(account, 'o', { lazy: false })
     await other.engine.pass(SPACE)
     for (const id of [PLAN, IDEAS]) {
@@ -249,22 +230,18 @@ describe('a browser that keeps only the words it uses', () => {
       await other.engine.letGo(id)
     }
     await other.engine.pass(SPACE)
-
     browser.pulled.length = 0
     await browser.engine.pass(SPACE)
     expect(browser.pulled).toEqual([PLAN])
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)?.startsWith('Later. ')).toBe(true)
     expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(false)
-
     expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(true)
     expect(browser.disk.files.get(`${ROOT}/Ideas.md`)?.startsWith('Later. # Ideas')).toBe(true)
   })
-
   test('a note asked for while a pass is bringing it too still comes, and its file is written (#2116)', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
-
     const { account: talk } = browser.engine.core.world
     const ask = talk.ask.bind(talk)
     let answered!: () => void
@@ -295,7 +272,6 @@ describe('a browser that keeps only the words it uses', () => {
       }
       return write(path, text)
     }
-
     const fetching = browser.engine.fetch(`${ROOT}/Plan.md`)
     await asked
     const passing = browser.engine.pass(SPACE)
@@ -304,26 +280,21 @@ describe('a browser that keeps only the words it uses', () => {
     const here = await fetching
     written()
     await passing
-
     expect(here).toBe(true)
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
   })
-
   test('offline, a note kept away stays asked for, and the next pass brings it', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
-
     browser.online = false
     expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe(false)
     expect(browser.disk.files.has(`${ROOT}/Plan.md`)).toBe(false)
-
     browser.online = true
     await browser.engine.pass(SPACE)
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
     expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(false)
   })
-
   test('a note whose words came and whose file would not be written stays listed', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
@@ -332,7 +303,6 @@ describe('a browser that keeps only the words it uses', () => {
     browser.disk.write = () => Promise.reject(new Error('the storage is full'))
     const there = { exists: browser.disk.exists.bind(browser.disk) }
     browser.disk.exists = (path) => (path === `${ROOT}/Ideas.md` ? Promise.resolve(true) : there.exists(path))
-
     expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe(false)
     expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(false)
     expect(browser.pulled).toEqual([PLAN, IDEAS])
@@ -342,7 +312,6 @@ describe('a browser that keeps only the words it uses', () => {
         .map((one) => one.path)
         .sort(),
     ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
-
     browser.disk.write = write
     browser.disk.exists = there.exists
     expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe(true)
@@ -351,7 +320,6 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(true)
     expect(browser.engine.awayFiles()).toEqual([])
   })
-
   test('lets go of the least recently used past the budget, and fetches it again whole', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
@@ -360,12 +328,10 @@ describe('a browser that keeps only the words it uses', () => {
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
     await browser.engine.hold(PLAN)
     await browser.engine.letGo(PLAN)
-
     const { told, how } = letting(browser.disk)
     const ideas = SEEDED[1]?.text.length ?? 0
     const plan = SEEDED[0]?.text.length ?? 0
     expect(await browser.engine.trim(plan + ideas - 1, how)).toBe(1)
-
     expect(told).toEqual([{ path: 'Ideas.md', text: SEEDED[1]?.text }])
     expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(false)
     expect(browser.disk.files.has(`${ROOT}/Plan.md`)).toBe(true)
@@ -373,36 +339,30 @@ describe('a browser that keeps only the words it uses', () => {
     const [written] = await browser.store.open().read([scan('written')])
     expect(written.map((one) => one.id)).toEqual([PLAN])
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Ideas.md`])
-
     expect((await account.view()).texts[IDEAS]).toBe(SEEDED[1]?.text)
     expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(true)
     expect(browser.disk.files.get(`${ROOT}/Ideas.md`)).toBe(SEEDED[1]?.text)
   })
-
   test('never lets go of a note with anything of this device in it, nor an open one', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
     await browser.engine.fetch(`${ROOT}/Plan.md`)
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
-
     const plan = await browser.engine.hold(PLAN)
     plan?.live?.transact(() => plan.live?.getText(TEXT).insert(0, 'Mine. '), HERE)
     await browser.disk.write(`${ROOT}/Plan.md`, plan?.text() ?? '')
     await browser.engine.saved(`${ROOT}/Plan.md`, plan?.text() ?? '')
     await browser.engine.letGo(PLAN)
     await browser.engine.hold(IDEAS)
-
     const { how } = letting(browser.disk)
     expect(await browser.engine.trim(0, how)).toBe(0)
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)?.startsWith('Mine. ')).toBe(true)
-
     await browser.engine.pass(SPACE)
     await browser.engine.letGo(IDEAS)
     expect(await browser.engine.trim(0, how)).toBe(2)
     expect((await account.view()).texts[PLAN]).toMatch(/^Mine\. /)
   })
-
   test('never lets go of a note whose file holds words it has not taken in', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
@@ -411,13 +371,11 @@ describe('a browser that keeps only the words it uses', () => {
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
     const ideas = `${SEEDED[1]?.text ?? ''}\nwritten by the app\n`
     await browser.disk.write(`${ROOT}/Ideas.md`, ideas)
-
     const { how } = letting(browser.disk)
     expect(await browser.engine.trim(0, how)).toBe(1)
     expect(browser.disk.files.get(`${ROOT}/Ideas.md`)).toBe(ideas)
     expect(browser.disk.files.has(`${ROOT}/Plan.md`)).toBe(false)
   })
-
   test('never drops words the app writes into a note while letting go of it', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
@@ -425,7 +383,6 @@ describe('a browser that keeps only the words it uses', () => {
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
     const at = `${ROOT}/Ideas.md`
     const later = `${SEEDED[1]?.text ?? ''}\nwritten by the app meanwhile\n`
-
     let queue = Promise.resolve()
     const turn = <T>(_path: string, run: () => Promise<T>): Promise<T> => {
       const going = queue.then(run)
@@ -449,16 +406,13 @@ describe('a browser that keeps only the words it uses', () => {
     }
     await browser.engine.trim(0, how)
     await writing
-
     expect(browser.disk.files.get(at)).toBe(later)
   })
-
   test('a let-go cut short drops the rest of the row at the next trim', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
     await browser.engine.fetch(`${ROOT}/Plan.md`)
-
     let cut = true
     const how = {
       drop: (path: string) => {
@@ -470,31 +424,26 @@ describe('a browser that keeps only the words it uses', () => {
     await expect(browser.engine.trim(0, how)).rejects.toThrow('the tab closed')
     expect(browser.disk.files.has(`${ROOT}/Plan.md`)).toBe(true)
     expect(browser.engine.awayFiles().map((one) => one.path)).toContain(`${ROOT}/Plan.md`)
-
     cut = false
     await browser.engine.trim(0, how)
     expect(browser.disk.files.has(`${ROOT}/Plan.md`)).toBe(false)
     expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe(true)
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
   })
-
   test('a note kept away is renamed and deleted by its id, with no words fetched', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
-
     await browser.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Later.md`, () => Promise.resolve())
     await browser.engine.removing(`${ROOT}/Ideas.md`, () => Promise.resolve())
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Later.md`])
     await browser.engine.pass(SPACE)
-
     const tree = account.tree.entries
     expect(tree.get(PLAN)?.name).toBe('Later.md')
     expect(tree.get(IDEAS)?.deleted).toBe(true)
     expect(browser.pulled).toEqual([])
     expect(browser.disk.files.size).toBe(0)
   })
-
   test('a delete of a note kept away takes the words it was listed with, and no later ones', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const other = await fresh(account, 'o', { lazy: false })
@@ -512,17 +461,14 @@ describe('a browser that keeps only the words it uses', () => {
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
     await write(PLAN, 'Plan.md', 'Later. ')
-
     await browser.engine.removing(`${ROOT}/Ideas.md`, () => Promise.resolve())
     await browser.engine.removing(`${ROOT}/Plan.md`, () => Promise.resolve())
     await browser.engine.pass(SPACE)
     await browser.engine.pass(SPACE)
-
     expect(account.tree.entries.get(IDEAS)?.deleted).toBe(true)
     expect(account.tree.entries.get(PLAN)?.deleted).toBe(false)
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Plan.md`])
   })
-
   test('and a folder deleted takes the notes kept away inside it, as they were listed', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const other = await fresh(account, 'o', { lazy: false })
@@ -534,21 +480,17 @@ describe('a browser that keeps only the words it uses', () => {
     )
     await other.engine.pass(SPACE)
     await other.engine.pass(SPACE)
-
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
     expect(browser.engine.awayFiles().map((one) => one.path)).toContain(`${ROOT}/Box/Ideas.md`)
     await browser.engine.removing(`${ROOT}/Box`, () => Promise.resolve())
     await browser.engine.pass(SPACE)
     await browser.engine.pass(SPACE)
-
     expect(account.tree.entries.get(IDEAS)?.deleted).toBe(true)
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Plan.md`])
   })
-
   test('a canvas, a pages file and a folder never fetched move to another space whole (#1187)', async () => {
     const { account, work, browser } = await keptAwayInHome()
-
     for (const name of MOVED) {
       const from = `${ROOT}/${name}`
       const to = `${WORK_ROOT}/${name}`
@@ -556,17 +498,14 @@ describe('a browser that keeps only the words it uses', () => {
       await browser.engine.moved(from, to)
     }
     await settledBoth(browser)
-
     expect(await wordsOn(work)).toEqual(drawn(AWAY))
     const home = await wordsOn(account)
     for (const name of Object.keys(AWAY)) expect(home[name]).toBeUndefined()
     expect(Object.keys(home).sort()).toEqual(['Ideas.md', 'Plan.md'])
   })
-
   test('offline, a move to another space of what was never fetched stops and deletes nothing', async () => {
     const { account, work, browser } = await keptAwayInHome()
     browser.online = false
-
     for (const name of MOVED) {
       const from = `${ROOT}/${name}`
       const to = `${WORK_ROOT}/${name}`
@@ -581,37 +520,29 @@ describe('a browser that keeps only the words it uses', () => {
     }
     browser.online = true
     await settledBoth(browser)
-
     expect(await wordsOn(account)).toEqual(drawn({ ...AWAY, ...seededWords() }))
     expect(await wordsOn(work)).toEqual({})
   })
-
   test('a move to another space told after the files went still brings what was kept away', async () => {
     const { work, browser } = await keptAwayInHome()
-
     await browser.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
     await settledBoth(browser)
-
     const there = await wordsOn(work)
     expect(there['Trip/Map.md']).toBe(AWAY['Trip/Map.md'])
     expect(there['Trip/Trip.md']).toBe(AWAY['Trip/Trip.md'])
   })
-
   test('and offline puts the files back where they were, and deletes nothing', async () => {
     const { account, work, browser } = await keptAwayInHome()
     await browser.disk.move(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
     browser.online = false
-
     await browser.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
     expect(await browser.disk.exists(`${ROOT}/Trip`)).toBe(true)
     expect(await browser.disk.exists(`${WORK_ROOT}/Trip`)).toBe(false)
     browser.online = true
     await settledBoth(browser)
-
     expect(await wordsOn(account)).toEqual(drawn({ ...AWAY, ...seededWords() }))
     expect(await wordsOn(work)).toEqual({})
   })
-
   test('an account that does not say it serves the rest, and a desktop, are kept whole', async () => {
     for (const how of [{ index: false }, { lazy: false }]) {
       const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -622,14 +553,12 @@ describe('a browser that keeps only the words it uses', () => {
       expect(device.engine.awayFiles()).toEqual([])
     }
   })
-
   test('an account that stops saying so is kept whole again from the next pass', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const saying = { on: true }
     const browser = await fresh(account, 'b', { index: saying })
     await browser.engine.pass(SPACE)
     expect(browser.pulled).toEqual([])
-
     saying.on = false
     const other = await fresh(account, 'o', { lazy: false })
     await other.engine.pass(SPACE)
@@ -638,14 +567,12 @@ describe('a browser that keeps only the words it uses', () => {
     await other.disk.write(`${ROOT}/Plan.md`, doc?.text() ?? '')
     await other.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
     await other.engine.pass(SPACE)
-
     await browser.engine.pass(SPACE)
     await browser.engine.pass(SPACE)
     expect(browser.disk.files.size).toBe(2)
     expect(browser.engine.awayFiles()).toEqual([])
   })
 })
-
 const AWAY: Record<string, string> = {
   'Board.canvas':
     '{"nodes":[{"id":"a","type":"text","x":0,"y":0,"width":200,"height":80,"text":"On the board"}],"edges":[]}',
@@ -655,7 +582,6 @@ const AWAY: Record<string, string> = {
   'Trip/Map.md': '# Map\n\nThe map.\n',
 }
 const MOVED = ['Board.canvas', 'Lecture.pages', 'Trip']
-
 function drawn(words: Record<string, string>): Record<string, string> {
   const plain = (name: string, text: string) => {
     if (!/\.(canvas|pages)$/.test(name)) return text
@@ -668,11 +594,9 @@ function drawn(words: Record<string, string>): Record<string, string> {
   }
   return Object.fromEntries(Object.entries(words).map(([name, text]) => [name, plain(name, text)]))
 }
-
 function seededWords(): Record<string, string> {
   return Object.fromEntries(SEEDED.map((one) => [one.name, one.text]))
 }
-
 async function keptAwayInHome() {
   const account = new ReferenceAccount(new Clock(), SEEDED)
   const work = new ReferenceAccount(new Clock(), [])
@@ -686,7 +610,6 @@ async function keptAwayInHome() {
   }
   await other.engine.pass(SPACE)
   await other.engine.pass(SPACE)
-
   const browser = await fresh(account, 'b', { work })
   await browser.engine.pass(SPACE)
   await browser.engine.pass(WORK)
@@ -699,14 +622,12 @@ async function keptAwayInHome() {
   expect(browser.pulled).toEqual([])
   return { account, work, browser }
 }
-
 async function settledBoth(browser: Device) {
   for (let round = 0; round < 3; round += 1) {
     await browser.engine.pass(SPACE)
     await browser.engine.pass(WORK)
   }
 }
-
 async function wordsOn(account: ReferenceAccount): Promise<Record<string, string>> {
   const reader = await fresh(account, `r${String(Math.random())}`, { lazy: false })
   await reader.engine.pass(SPACE)
@@ -715,7 +636,6 @@ async function wordsOn(account: ReferenceAccount): Promise<Record<string, string
   for (const [path, text] of reader.disk.files) out[path.slice(ROOT.length + 1)] = text
   return drawn(out)
 }
-
 function readingOf(account: ReferenceAccount, how: { missing?: boolean; skipless?: boolean } = {}) {
   const asked: { route: string; ids: string[] }[] = []
   const reading: Reading = {
@@ -751,7 +671,6 @@ function readingOf(account: ReferenceAccount, how: { missing?: boolean; skipless
   }
   return { reading, asked }
 }
-
 function memoryIndex(): IndexStore & { rows: Map<string, IndexRow> } {
   const rows = new Map<string, IndexRow>()
   return {
@@ -768,7 +687,6 @@ function memoryIndex(): IndexStore & { rows: Map<string, IndexRow> } {
     close: () => undefined,
   }
 }
-
 describe('what a browser knows of the notes it keeps no words of', () => {
   test("asks for each one's scan once per version of its words", async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -777,7 +695,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     const { reading, asked } = readingOf(account)
     const store = memoryIndex()
     const indexing = new Indexing(browser.engine, reading, store)
-
     const first = await indexing.refresh()
     expect(asked).toEqual([{ route: 'index', ids: [PLAN, IDEAS] }])
     expect(first[0]?.root).toBe(ROOT)
@@ -785,7 +702,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     expect(indexing.scans().get(IDEAS)?.headings).toEqual(['Ideas'])
     expect(await indexing.refresh()).toEqual([])
     expect(asked).toHaveLength(1)
-
     const other = await fresh(account, 'o', { lazy: false })
     await other.engine.pass(SPACE)
     const doc = await other.engine.hold(IDEAS)
@@ -799,12 +715,10 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     await indexing.refresh()
     expect(asked.at(-1)).toEqual({ route: 'index', ids: [IDEAS] })
     expect(indexing.scans().get(IDEAS)?.headings).toEqual(['New', 'Ideas'])
-
     const again = new Indexing(browser.engine, reading, store)
     expect(await again.refresh()).toEqual([])
     expect(again.scans().get(PLAN)?.path).toBe('Plan.md')
   })
-
   test('a note let go of leaves its scan made here, and nothing is asked for it', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
@@ -820,7 +734,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     await indexing.refresh()
     expect(asked).toEqual([{ route: 'index', ids: [IDEAS] }])
   })
-
   test('a search of them pages through the account, by the path each is shown at', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
@@ -828,7 +741,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     await browser.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Later.md`, () => Promise.resolve())
     const { reading, asked } = readingOf(account)
     const indexing = new Indexing(browser.engine, reading, memoryIndex())
-
     const found: string[] = []
     await indexing.search(
       ROOT,
@@ -843,13 +755,11 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     expect(asked.map((one) => one.route)).toEqual(['search', 'search'])
     expect(found.some((one) => one.startsWith(`${ROOT}/Later.md:`))).toBe(true)
     expect(found.some((one) => one.startsWith(`${ROOT}/Ideas.md:`))).toBe(true)
-
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
     asked.length = 0
     await indexing.search(ROOT, parseQuery('e'), [], 1, () => undefined, [])
     expect(asked).toEqual([{ route: 'search', ids: [IDEAS] }])
   })
-
   test('a search of them shows nothing this browser keeps the words of, even where the account sends it', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
@@ -857,7 +767,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
     const { reading } = readingOf(account, { skipless: true })
     const indexing = new Indexing(browser.engine, reading, memoryIndex())
-
     const found: string[] = []
     await indexing.search(
       ROOT,
@@ -870,20 +779,17 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     expect(found.some((one) => one.endsWith('/Plan.md'))).toBe(true)
     expect(found.filter((one) => one.endsWith('/Ideas.md'))).toEqual([])
   })
-
   test('an account with no route for it keeps the space whole from the next pass', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
     const { reading } = readingOf(account, { missing: true })
     const indexing = new Indexing(browser.engine, reading, memoryIndex())
-
     expect(await indexing.refresh()).toEqual([])
     expect(browser.engine.keepingFew()).toEqual([])
     await browser.engine.pass(SPACE)
     expect(browser.disk.files.size).toBe(2)
     expect(browser.engine.awayFiles()).toEqual([])
-
     const launched = await Engine.start(browser.engine.core.world, browser.store.open(), {
       freshens: false,
     })

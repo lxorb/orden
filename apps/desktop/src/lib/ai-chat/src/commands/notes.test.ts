@@ -11,7 +11,6 @@ arguments: [project, week]
 ---
 Summarize $project for week $week.
 `
-
 describe('a note as a command', () => {
   test('is found by its front matter, with its overrides', () => {
     const [one, ...rest] = rolesOf('Commands/weekly.md', WEEKLY)
@@ -29,7 +28,6 @@ describe('a note as a command', () => {
       tools: [],
     })
   })
-
   test('is an agent and a style by their keys, and nothing without one', () => {
     const profile = rolesOf(
       'a.md',
@@ -50,7 +48,6 @@ describe('a note as a command', () => {
     expect(rolesOf('n.md', '# Just a note\n\ncommand: no')).toEqual([])
     expect(rolesOf('m.md', '---\nmode: sideways\neffort: huge\ncommand: x\n---\n')[0]).not.toHaveProperty('mode')
   })
-
   test('takes its arguments in every way Claude Code writes them', () => {
     const body = (text: string) => ({ body: text, arguments: ['project', 'week'] })
     expect(expand(body('Summarize $project for week $week.'), 'orden 40')).toBe('Summarize orden for week 40.')
@@ -61,7 +58,6 @@ describe('a note as a command', () => {
     expect(expand(body('No placeholder.'), '')).toBe('No placeholder.')
     expect(expand(body('$projects stays'), 'orden')).toBe('$projects stays\n\norden')
   })
-
   test('splits its words as a shell does, and names as a command can be typed', () => {
     expect(splitArgs(`one "two three" 'four'`)).toEqual(['one', 'two three', 'four'])
     expect(commandName(' /Stand Up! ')).toBe('stand-up')

@@ -7,25 +7,19 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   isNative: false,
   invoke: () => Promise.resolve(undefined),
 }))
-
 const STRIP = 1200
-
 class Measured {
   constructor(private readonly told: ResizeObserverCallback) {}
-
   observe(target: Element) {
     queueMicrotask(() => this.told([{ target } as ResizeObserverEntry], this))
   }
-
   unobserve() {
     // Nothing is watched for long enough to need it.
   }
-
   disconnect() {
     // Said above.
   }
 }
-
 globalThis.ResizeObserver = Measured
 Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
   configurable: true,
@@ -33,7 +27,6 @@ Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
     return this.classList.contains('tabs') ? STRIP : 0
   },
 })
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -47,17 +40,14 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { iconTabs } = await import('../../src/lib/tab-strip/src/icon-tabs.svelte')
 const untouched = iconTabs.on
 const { OPENED_LEAST, WIDTH } = await import('../../src/lib/tab-strip/src/layout')
 const Tabs = (await import('../../src/lib/tab-strip/src/Tabs.svelte')).default
 await import('../../src/lib/tab-strip/src/closing.svelte')
-
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
-
 beforeEach(() => {
   iconTabs.set(true)
   workspace.panes.collapse()
@@ -67,14 +57,12 @@ beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   if (shown) void unmount(shown, { outro: false })
   shown = null
   target.remove()
   iconTabs.set(true)
 })
-
 async function strip() {
   for (const name of ['Alpha', 'Beta', 'Gamma', 'Delta']) workspace.openBlank(name, `# ${name}`)
   const paneId = workspace.panes.focusedId
@@ -87,21 +75,17 @@ async function strip() {
   })
   return tabs.map((one) => one.id)
 }
-
 const box = (id: string) => target.querySelector<HTMLElement>(`[data-box="${id}"]`)
 const width = (id: string) => parseFloat(box(id)?.style.width ?? '0')
 const along = (id: string) => /translateX\((-?[\d.]+)px\)/.exec(box(id)?.style.transform ?? '')?.[1]
-
 function point(id: string, how: 'pointerenter' | 'pointerleave') {
   const event = new PointerEvent(how, { bubbles: false, pointerType: 'mouse' })
   box(id)?.dispatchEvent(event)
   flushSync()
 }
-
 test('off until someone turns it on', () => {
   expect(untouched).toBe(false)
 })
-
 test('every tab but the one in front is its mark alone, the name kept for a screen reader', async () => {
   const [front, ...rest] = await strip()
   expect(box(front ?? '')?.classList.contains('icon')).toBe(false)
@@ -111,7 +95,6 @@ test('every tab but the one in front is its mark alone, the name kept for a scre
     expect(target.querySelector(`.pick[data-tab="${id}"]`)?.getAttribute('aria-label')).toBeTruthy()
   }
 })
-
 test('the pointer on one opens it out at once, and those in front of it stay where they were', async () => {
   const [, beta, gamma] = await strip()
   const before = along(beta ?? '')
@@ -119,17 +102,14 @@ test('the pointer on one opens it out at once, and those in front of it stay whe
   expect(box(gamma ?? '')?.classList.contains('icon')).toBe(false)
   expect(width(gamma ?? '')).toBeGreaterThanOrEqual(OPENED_LEAST)
   expect(along(beta ?? '')).toBe(before)
-
   point(gamma ?? '', 'pointerleave')
   expect(width(gamma ?? '')).toBe(WIDTH.icon)
 })
-
 test('two that would look the same each wear their first letter', async () => {
   const [, beta, gamma] = await strip()
   expect(box(beta ?? '')?.querySelector('.letter')?.textContent).toBe('B')
   expect(box(gamma ?? '')?.querySelector('.letter')?.textContent).toBe('G')
 })
-
 test('turned off, every tab has its name again', async () => {
   const ids = await strip()
   iconTabs.set(false)

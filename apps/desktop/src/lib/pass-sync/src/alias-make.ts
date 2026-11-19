@@ -9,7 +9,6 @@ export interface AliasKeeper {
   aliasProvider(): Promise<AliasAccount | null>
   update(id: string, content: Alias): Promise<Item>
 }
-
 export function aliasContentOf(made: AliasMade, provider: AliasService, title: string): Alias {
   return {
     ...blank('alias'),
@@ -23,7 +22,6 @@ export function aliasContentOf(made: AliasMade, provider: AliasService, title: s
     name: made.name,
   }
 }
-
 export function defaultAsk(account: AliasAccount, options: AliasOptions, prefix: string): AliasAsk {
   const usable = options.suffixes.filter((one) => !one.premium)
   const suffix =
@@ -42,12 +40,10 @@ export function defaultAsk(account: AliasAccount, options: AliasOptions, prefix:
     note: '',
   }
 }
-
 function stoppable(item: Item): item is Item & { content: Alias } {
   const content = item.content
   return content.kind === 'alias' && content.provider !== 'manual' && content.enabled && content.remoteId !== ''
 }
-
 export async function stoppedAliases(keeper: AliasKeeper, items: readonly Item[]): Promise<void> {
   const live = items.filter(stoppable)
   if (!live.length) return

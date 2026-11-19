@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 HOLES = """() => {
   const ul = document.querySelector('.hit')?.closest('ul')
   if (!ul) return { rows: 0 }
@@ -21,8 +19,6 @@ HOLES = """() => {
   return { rows: rows.length, seen: seen.length, empty, top: box.scrollTop, height: rows[0] ? Math.round(rows[0].getBoundingClientRect().height) : 0,
     first: seen[0]?.dataset.row, last: seen.at(-1)?.dataset.row }
 }"""
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -48,6 +44,4 @@ def drive(browser: Browser) -> None:
             wrong(f"{name}: {one['empty']} empty strips in the Links list")
     DRIVE.shot(page, "links")
     page.context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "the Links panel's rows stay in place"))

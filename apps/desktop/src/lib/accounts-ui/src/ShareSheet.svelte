@@ -19,33 +19,24 @@
     { value: 'write', label: 'can edit' },
     { value: 'read', label: 'can view' },
   ])
-
   const who = $derived(share.who)
   const link = $derived(who?.link ?? null)
-
   const item = $derived(share.item)
-
   const subject = $derived(item ? shownName(nameOf(item.path)) : (share.space?.name ?? ''))
-
   const alreadyInTheSpace = $derived(!!share.space && isShared(share.space.root))
-
   type Waiting = Sharing['requests'][number]
-
   function name(person: Member | Waiting): string {
     return person.email ? called({ name: person.name, email: person.email }) : (person.name ?? '')
   }
-
   function subtitle(person: Member): (string | null | false)[] {
     if (person.guest) return [person.email, 'Guest']
     return [person.email, person.pending && 'Invited']
   }
-
   const faceOf = (person: Member | Waiting | Sharing['owner'], named: string): Face => ({
     name: named,
     avatar: person.avatar ?? null,
     key: person.id ?? person.email ?? ('guest' in person ? person.guest : null) ?? '',
   })
-
   const pressFor = (person: { id?: string | null }) => {
     const id = person.id
     return id && !__EVEN_PLUGIN__
@@ -57,9 +48,7 @@
         }
       : undefined
   }
-
   const avatars = __EVEN_PLUGIN__ ? null : import('./Avatar.svelte')
-
   function menuFor(person: Member) {
     return [
       ...ROLES,
@@ -67,25 +56,20 @@
       { value: 'remove', label: 'Remove', danger: true },
     ]
   }
-
   function chose(person: Member, choice: string) {
     if (choice === 'remove') void share.remove(person)
     else if (choice === 'resend') void share.resend(person)
     else void share.setRole(person, choice as GivenRole)
   }
-
   function toggleLink() {
     if (share.busy) return
     if (link) void share.revoke()
     else void share.setLink('read', 'approval')
   }
-
   const sharable = 'share' in navigator
-
   function shareLink(url: string) {
     navigator.share({ title: subject, url }).catch(() => undefined)
   }
-
   function toggleAsking() {
     if (!link || share.busy) return
     void share.setLink(link.role, link.mode === 'approval' ? 'open' : 'approval')
@@ -333,11 +317,9 @@
     padding: 3px 3px 3px var(--space-3);
     gap: var(--space-1);
   }
-
   .compose.bad {
     border-color: var(--danger);
   }
-
   .send {
     flex: none;
     display: grid;
@@ -352,7 +334,6 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .send svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -362,67 +343,54 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .send:hover:not(:disabled) {
     background: var(--accent-hover);
   }
-
   .person {
     padding: var(--space-1) 0;
   }
-
   .worn {
     display: contents;
   }
-
   .worn.pending > :global(*) {
     opacity: 0.45;
   }
-
   .asking {
     margin: 0 calc(-1 * var(--space-1)) 2px;
     padding: var(--space-1);
     border-radius: var(--radius-row);
     background: var(--accent-soft);
   }
-
   .waiting {
     opacity: 0.55;
   }
-
   .named {
     display: flex;
     align-items: baseline;
     gap: var(--space-1);
     min-width: 0;
   }
-
   .who {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .you {
     flex: none;
     color: var(--muted);
   }
-
   .fixed {
     flex: none;
     padding-inline-end: var(--space-1);
     color: var(--muted);
   }
-
   .pick {
     flex: none;
     max-width: 50%;
   }
-
   .card-head .name {
     flex: none;
   }
-
   .dot {
     flex: none;
     width: 6px;
@@ -432,27 +400,22 @@
     background: var(--line-strong);
     transition: background var(--dur-base) var(--ease-out);
   }
-
   .dot.on {
     background: var(--success);
   }
-
   .linkbody {
     display: flex;
     flex-direction: column;
     width: 100%;
     transition: opacity var(--dur-base) var(--ease-out);
   }
-
   .linkbody.off {
     opacity: 0.45;
     pointer-events: none;
   }
-
   .asks {
     color: var(--muted-strong);
   }
-
   .share {
     flex: none;
     padding: 6px 10px;
@@ -465,28 +428,23 @@
     font-weight: var(--weight-strong);
     cursor: default;
   }
-
   @media (hover: hover) {
     .share:hover:not(:disabled) {
       border-color: var(--accent);
       color: var(--accent);
     }
   }
-
   .share:active:not(:disabled) {
     background: var(--press);
   }
-
   .reach {
     display: flex;
     padding: var(--space-1) 0 var(--space-2);
   }
-
   .under {
     flex: none;
     width: var(--row-height-sm);
   }
-
   .bone {
     display: block;
     height: 9px;
@@ -494,63 +452,52 @@
     background: var(--surface-3);
     animation: bone-breathe 1400ms var(--ease-in-out) infinite;
   }
-
   .bone.face {
     flex: none;
     width: 24px;
     height: 24px;
     border-radius: 50%;
   }
-
   .bone.words {
     width: 42%;
   }
-
   .bone.under {
     width: 58%;
     height: 8px;
     margin-top: 4px;
     opacity: 0.7;
   }
-
   .bone.control {
     flex: none;
     width: 64px;
     height: 12px;
     border-radius: 4px;
   }
-
   @keyframes bone-breathe {
     50% {
       opacity: 0.45;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .bone {
       animation: none;
     }
   }
-
   :global([data-touch]) .compose {
     padding: var(--space-1) var(--space-1) var(--space-1) var(--touch-gap);
   }
-
   :global([data-touch]) .compose .pick {
     max-width: 40%;
   }
-
   :global([data-touch]) .send {
     width: var(--touch-target);
     height: var(--touch-target);
     border-radius: var(--radius-md);
   }
-
   :global([data-touch]) .send svg {
     width: var(--icon-md);
     height: var(--icon-md);
   }
-
   :global([data-touch]) .pick {
     max-width: 45%;
   }

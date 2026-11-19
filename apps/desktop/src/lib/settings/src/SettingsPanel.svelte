@@ -61,35 +61,24 @@
   import { waited } from '../../platform/src/api'
 
   let refused = $state<string | null>(null)
-
   let leaving = $state(false)
-
   const LIT = 1400
-
   const GROUPS = $derived(sectionGroups())
-
   const SECTIONS = $derived(GROUPS.flat())
   const titleOf = (id: SettingsSectionId) => SECTIONS.find((one) => one.id === id)?.label ?? ''
-
   const SIDE_BY_SIDE = 560
-
   let width = $state(0)
-
   const stacked = $derived(viewport.touch || viewport.narrow || (width > 0 && width < SIDE_BY_SIDE))
-
   let query = $state('')
   let detailed = $state.raw<SettingsPart | null>(null)
-
   const hostOf = (part: SettingsPart): SettingsPartHost => ({
     detail: (open) => {
       if (open) detailed = part
       else if (detailed === part) detailed = null
     },
   })
-
   const panes = $derived(preferences())
   const current = $derived(panes.find((one) => one.id === settings.section))
-
   const places = $derived.by((): Place[] => {
     const all: Place[] = [
       ...paneRows(),
@@ -99,28 +88,21 @@
         text: [shortcuts.hint(one.id) ?? '', 'Shortcuts'],
       })),
     ]
-
     return all.map((place) => ({ ...place, text: [...place.text, titleOf(place.section)] }))
   })
-
   const found = $derived(search(query, panes, places))
-
   $effect(() => {
     if (!SECTIONS.some((one) => one.id === settings.section)) settings.section = 'account'
   })
-
   $effect(() => () => {
     store.close()
     rebind.forget()
     settings.landsOnField = false
   })
-
   $effect(() => {
     if (settings.section !== 'account') leaving = false
   })
-
   let sheet = $state<HTMLElement>()
-
   $effect(() => {
     if (!settings.asked || !sheet) return
     const into = sheet
@@ -131,14 +113,11 @@
         ?.focus({ preventScroll: true }),
     )
   })
-
   let body = $state<HTMLElement>()
-
   $effect(() => {
     const label = landing.label
     const box = body
     if (!label || !box) return
-
     query = ''
     keyFilter = ''
     const frame = requestAnimationFrame(() => {
@@ -147,7 +126,6 @@
         one.querySelector('.name')?.textContent.trim().startsWith(label),
       )
       if (!row) return
-
       for (let one: HTMLElement | null = row; one && one !== box; one = one.parentElement) {
         holdScroll(one)
       }
@@ -156,23 +134,18 @@
       row.classList.add('landed')
       void waited(LIT).then(() => row.classList.remove('landed'))
     })
-
     return () => cancelAnimationFrame(frame)
   })
-
   function go(section: SettingsSectionId) {
     query = ''
     settings.section = section
     settings.listing = false
   }
-
   const offered = () => offers(panes, places, titleOf)
-
   function goTo(section: SettingsSectionId, label: string) {
     go(section)
     landing.label = label || null
   }
-
   async function rename(name: string) {
     settings.error = null
     try {
@@ -181,29 +154,24 @@
       settings.error = message(error, 'that did not work')
     }
   }
-
   const fraction = (field: Extract<Field, { kind: 'slider' }>, value: number) =>
     ((value - field.min) / (field.max - field.min)) * 100
-
   function dialled(field: Extract<Field, { kind: 'slider' }>, input: HTMLInputElement, kept: boolean) {
     const value = Number(input.value)
     if (kept || !field.preview) field.set(value)
     else field.preview(value)
   }
-
   function typed(field: Extract<Field, { kind: 'text' }>, value: string) {
     const wrong = (field.check?.(value) ?? null) !== null
     refused = wrong ? field.label : null
     if (!wrong) field.set(value)
   }
-
   function placing(side: PictureSide, press: PointerEvent) {
     const thumb = press.currentTarget
     if (!(thumb instanceof HTMLElement) || press.button !== 0) return
     const start = { x: press.clientX, y: press.clientY }
     let dragged = false
     thumb.setPointerCapture(press.pointerId)
-
     const at = (event: PointerEvent): [number, number] => {
       const box = thumb.getBoundingClientRect()
       return [(event.clientX - box.left) / box.width, (event.clientY - box.top) / box.height]
@@ -226,25 +194,19 @@
     thumb.addEventListener('pointerup', up)
     thumb.addEventListener('pointercancel', up)
   }
-
   const rebind = new Rebind()
   let keyFilter = $state('')
-
   const shown = (key: string | null) => (key ? showCombination(key, shortcuts.platform) : null)
-
   const here = whileHere()
   let presets = $state.raw<Preset[]>([])
   void here(shortcutPresets()).then((one) => (presets = one.PRESETS))
-
   const presetChoices = $derived([
     ...presets.map((one) => ({ value: one.id, label: one.label() })),
     ...(shortcuts.preset === 'custom' ? [{ value: 'custom', label: 'Custom' }] : []),
   ])
-
   async function choosePreset(id: string) {
     const preset = presets.find((one) => one.id === id)
     if (!preset) return
-
     if (shortcuts.preset === 'custom') {
       const sure = await prompt.confirm({
         title: 'Replace your own keys?',
@@ -253,14 +215,11 @@
       })
       if (!sure) return
     }
-
     shortcuts.choose(preset)
   }
-
   const keyGroups = $derived.by(() => {
     const needle = keyFilter.trim().toLowerCase()
     const has = (text: string | null) => !!text && text.toLowerCase().includes(needle)
-
     return CATEGORIES.map((category) => ({
       id: category.id,
       label: category.label(),
@@ -269,16 +228,12 @@
       ),
     })).filter((group) => group.rows.length)
   })
-
   let barFilter = $state('')
-
   let dragging = $state<number | null>(null)
   let dropAt = $state<number | null>(null)
-
   const barOffers = $derived.by(() => {
     const needle = barFilter.trim().toLowerCase()
     const held = new Set(toolbar.ids)
-
     return CATEGORIES.map((category) => ({
       id: category.id,
       label: category.label(),
@@ -291,59 +246,47 @@
       ),
     })).filter((group) => group.rows.length)
   })
-
   function takeBar(event: DragEvent, at: number) {
     event.dataTransfer?.setData('text/plain', String(at))
     dragging = at
   }
-
   function overBar(event: DragEvent, at: number) {
     if (dragging === null || dragging === at) return
-
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
     dropAt = at
   }
-
   function dropBar(event: DragEvent, at: number) {
     event.preventDefault()
     if (dragging !== null) toolbar.move(dragging, at)
     dragging = null
     dropAt = null
   }
-
   $effect(() => {
     if (!rebind.listening) return
-
     const record = (event: KeyboardEvent) => {
       event.preventDefault()
       event.stopPropagation()
       rebind.record(event)
     }
-
     window.addEventListener('keydown', record, true)
     let unheard: (() => void) | undefined
     const unwanted = whenLoaded(doubleTaps, ({ hearTaps }) => {
       unheard = hearTaps((key) => rebind.tapped(key))
     })
-
     return () => {
       window.removeEventListener('keydown', record, true)
       unwanted()
       unheard?.()
     }
   })
-
   $effect(() => {
     if (settings.section !== 'shortcuts') rebind.forget()
   })
-
   $effect(() => {
     if (settings.section === 'shortcuts') globalKeys.follow()
   })
-
   const enter = (x: number) => (stacked ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) })
-
   $effect.pre(() => closeOnBack(stacked && !settings.listing, () => (settings.listing = true)))
 </script>
 
@@ -1089,7 +1032,6 @@
     overflow: hidden;
     background: var(--surface);
   }
-
   nav {
     display: flex;
     flex-direction: column;
@@ -1099,11 +1041,9 @@
     background: var(--bg);
     overflow-y: auto;
   }
-
   nav > * {
     flex: none;
   }
-
   nav h1 {
     margin: 0 0 var(--space-3);
     padding: 0 var(--row-pad);
@@ -1112,27 +1052,22 @@
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .search {
     flex: none;
     margin-bottom: var(--space-3);
   }
-
   .group {
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
-
   .group + .group {
     margin-top: var(--space-2);
   }
-
   .setting .name .what,
   .setting .value {
     unicode-bidi: isolate;
   }
-
   .item .glyph {
     fill: none;
     stroke: currentColor;
@@ -1140,27 +1075,22 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .item .chevron {
     display: none;
   }
-
   .item .orden-row-label {
     white-space: normal;
   }
-
   .body {
     padding: var(--space-5) var(--space-6);
     overflow-y: auto;
   }
-
   .pane {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
     max-width: var(--screen-pair);
   }
-
   .pane h2 {
     margin: 0 0 var(--space-2);
     font-family: var(--font-ui);
@@ -1168,7 +1098,6 @@
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .pane h3 {
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
@@ -1176,29 +1105,24 @@
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
-
   .pane h3:first-child,
   .pane h2 + h3 {
     margin-top: 0;
   }
-
   .part {
     display: contents;
   }
-
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .stack {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     width: 100%;
   }
-
   .setting .glyph {
     flex: none;
     width: var(--icon-md);
@@ -1208,28 +1132,23 @@
     stroke: currentColor;
     stroke-width: 1.6;
   }
-
   .setting .name {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1px;
   }
-
   .setting .name .what {
     display: block;
   }
-
   .setting .name small {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .setting .orden-segmented {
     flex: none;
     min-width: min(var(--setting-value), 100%);
   }
-
   .setting .value {
     flex: none;
     width: 4.5rem;
@@ -1238,7 +1157,6 @@
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .setting .value.said {
     flex: none;
     width: auto;
@@ -1249,7 +1167,6 @@
     user-select: text;
     -webkit-user-select: text;
   }
-
   .setting .chevron {
     flex: none;
     width: 14px;
@@ -1260,24 +1177,20 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   @media (hover: hover) {
     button.setting:hover,
     .setting.pressable:hover {
       color: var(--text-strong);
     }
   }
-
   button.setting:focus-visible,
   .setting .value.said:focus-visible {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
-
   .setting.button {
     gap: var(--space-2);
   }
-
   .setting .mark {
     flex: none;
     display: grid;
@@ -1289,41 +1202,32 @@
     color: var(--text-strong);
     font-size: var(--text-sm);
   }
-
   .setting .mark :global(svg) {
     --mark: 1.2em;
-
     display: block;
   }
-
   .setting .mark .low {
     display: inline-block;
     transform: translateY(0.2em);
   }
-
   .setting.button.landing {
     box-shadow: inset 0 2px 0 var(--accent);
   }
-
   .body :global(.orden-setting.landed) {
     border-radius: var(--radius-row);
     background: var(--accent-soft);
     box-shadow: 0 0 0 var(--space-2) var(--accent-soft);
   }
-
   .setting.shortcut {
     gap: var(--space-2);
   }
-
   .body.filled {
     display: flex;
     flex-direction: column;
   }
-
   .body.filled > .pane {
     flex: 1 0 auto;
   }
-
   .shortcut-list {
     flex: 1 1 0;
     min-height: 12rem;
@@ -1333,13 +1237,11 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-
   .shortcut-group {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .pane .shortcut-group h3 {
     position: sticky;
     top: 0;
@@ -1348,7 +1250,6 @@
     padding-block: var(--space-1);
     background: var(--surface);
   }
-
   .key {
     flex: none;
     min-width: 7rem;
@@ -1367,37 +1268,30 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     button.key:hover {
       border-color: var(--line-strong);
       color: var(--text-strong);
     }
   }
-
   button.key:focus-visible {
     outline-offset: 2px;
   }
-
   .key.listening {
     border-color: var(--accent);
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .key.none {
     color: var(--muted);
   }
-
   .key.held {
     background: none;
     color: var(--muted);
   }
-
   .revert:disabled {
     visibility: hidden;
   }
-
   .clash {
     display: flex;
     align-items: center;
@@ -1408,16 +1302,13 @@
     color: var(--muted-strong);
     line-height: 1.5;
   }
-
   .clash span {
     flex: 1;
     min-width: 12rem;
   }
-
   .setting .name small.reach {
     overflow-wrap: anywhere;
   }
-
   .setting .name small.reach .link {
     padding: 0;
     border: none;
@@ -1426,44 +1317,36 @@
     color: var(--accent);
     cursor: default;
   }
-
   .setting .name small.caution {
     color: var(--muted-strong);
   }
-
   .setting .name small.warn {
     color: var(--danger);
   }
-
   .slider {
     width: 11rem;
   }
-
   .lead {
     margin: 0;
     font-size: var(--text-base);
     color: var(--text-strong);
     font-weight: var(--weight-row);
   }
-
   .note {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted-strong);
     line-height: 1.6;
   }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   .hint.caption {
     margin-top: calc(-1 * var(--space-2));
   }
-
   .hint.caption .link {
     padding-block: 0;
     padding-inline-start: 0;
@@ -1477,32 +1360,26 @@
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .hint.caption .link:hover {
       color: var(--accent-hover);
     }
   }
-
   .hint.bad {
     color: var(--danger);
   }
-
   .orden-button {
     align-self: flex-start;
   }
-
   .pictures {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .picture {
     position: relative;
     display: flex;
   }
-
   .thumb {
     position: relative;
     flex: none;
@@ -1520,17 +1397,14 @@
       scale var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .current .thumb {
     box-shadow:
       0 0 0 2px var(--bg),
       0 0 0 4px var(--accent);
   }
-
   .thumb.field {
     background-image: var(--wallpaper-field);
   }
-
   .focus {
     position: absolute;
     width: 8px;
@@ -1542,7 +1416,6 @@
       0 0 0 2.5px rgb(0 0 0 / 0.35);
     pointer-events: none;
   }
-
   .drop {
     position: absolute;
     top: -8px;
@@ -1554,41 +1427,34 @@
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .picture:hover .drop,
   .drop:focus-visible {
     opacity: 1;
   }
-
   @media (hover: none) {
     .drop {
       opacity: 1;
     }
   }
-
   @media (hover: hover) {
     .thumb:hover {
       translate: 0 -1px;
     }
   }
-
   .thumb:active {
     translate: 0 0;
     scale: 0.97;
   }
-
   .sheet.phone {
     display: flex;
     flex-direction: column;
     background: var(--bg);
   }
-
   .sheet.phone > nav,
   .sheet.phone > .body {
     flex: 1;
     min-height: 0;
   }
-
   .sheet.phone .bar {
     flex: none;
     display: flex;
@@ -1599,7 +1465,6 @@
     border-bottom: 1px solid var(--line);
     background: var(--bg);
   }
-
   .sheet.phone .bar h2 {
     flex: 1;
     min-width: 0;
@@ -1612,19 +1477,16 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .sheet.phone nav {
     gap: 0;
     padding: var(--space-3) var(--space-4) calc(var(--space-5) + var(--touch-bottom));
     border-inline-end: none;
     background: none;
   }
-
   .sheet.phone .search {
     margin-bottom: var(--space-4);
     background: var(--surface);
   }
-
   .sheet.phone .group {
     gap: 0;
     border: 1px solid var(--line);
@@ -1632,17 +1494,14 @@
     background: var(--surface);
     overflow: clip;
   }
-
   .sheet.phone .group + .group {
     margin-top: var(--space-4);
   }
-
   .sheet.phone .item {
     position: relative;
     border-radius: 0;
     color: var(--text);
   }
-
   .sheet.phone .item + .item::before {
     content: '';
     position: absolute;
@@ -1652,14 +1511,12 @@
     height: 1px;
     background: var(--line);
   }
-
   .sheet.phone .item .glyph {
     width: var(--touch-icon);
     height: var(--touch-icon);
     color: var(--accent);
     stroke-width: 1.2;
   }
-
   .sheet.phone .item .chevron {
     display: block;
     flex: none;
@@ -1671,43 +1528,35 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .sheet.phone .body {
     padding: var(--space-3) var(--space-4) calc(var(--space-6) + var(--touch-bottom));
   }
-
   :global(main:has(.fab)) .sheet.phone nav,
   :global(main:has(.fab)) .sheet.phone .body {
     padding-bottom: calc(var(--space-4) + var(--touch-bottom) + var(--touch-row));
   }
-
   .sheet.phone .pane {
     gap: var(--space-4);
   }
-
   .sheet.phone .pane h3 {
     margin: var(--space-3) 0 calc(-1 * var(--space-2)) 14px;
     font-size: 13px;
     color: var(--muted);
   }
-
   .sheet.phone .pane .shortcut-group h3 {
     margin: 0;
     padding-inline-start: 14px;
     background: var(--bg);
   }
-
   .sheet.phone .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: clip;
   }
-
   .sheet.phone .card > .stack {
     padding: var(--touch-pad);
   }
-
   .sheet.phone .setting {
     position: relative;
     gap: var(--touch-gap);
@@ -1715,11 +1564,9 @@
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   .sheet.phone .setting > .name > small {
     font-size: var(--text-base);
   }
-
   .sheet.phone .setting + .setting::before,
   .sheet.phone :global(.orden-action + .setting::before),
   .sheet.phone :global(.orden-action + .orden-action::before) {
@@ -1731,74 +1578,59 @@
     height: 1px;
     background: var(--line);
   }
-
   .sheet.phone button.setting:active {
     background: var(--surface-2);
   }
-
   .sheet.phone button.setting:focus-visible {
     border-radius: 0;
   }
-
   .sheet.phone .setting.sliding {
     flex-wrap: wrap;
     padding-bottom: 6px;
   }
-
   .sheet.phone .setting .value {
     width: auto;
     font-size: var(--text-base);
   }
-
   .sheet.phone .slider {
     order: 3;
     width: 100%;
   }
-
   .sheet.phone :global(.orden-action) {
     position: relative;
     padding: var(--space-2) var(--touch-pad);
     color: var(--accent);
   }
-
   .sheet.phone :global(.orden-action.is-danger) {
     color: var(--danger);
   }
-
   .sheet.phone :global(.orden-action:active:not(:disabled)) {
     background: var(--surface-press);
   }
-
   .sheet.phone .key {
     min-width: 5.5rem;
     min-height: var(--touch-target);
     padding: 7px 10px;
     font-size: var(--text-sm);
   }
-
   .sheet.phone .setting .mark {
     width: 34px;
     height: 34px;
     font-size: var(--text-base);
   }
-
   .sheet.phone .clash {
     padding: 10px var(--touch-pad);
   }
-
   .sheet.phone .hint,
   .sheet.phone .note {
     font-size: var(--text-base);
   }
-
   .sheet.phone .hint.caption {
     margin: calc(-1 * var(--space-2)) var(--touch-pad) 0;
   }
-
   .sheet.phone .lead {
     font-size: var(--touch-text);
   }
-
   .sheet.phone .orden-button {
     align-self: stretch;
   }

@@ -8,10 +8,8 @@ test('a store hears another window write its key through heardElsewhere, not a l
     .map((path) => relative(SOURCE, path).replace(/\\/g, '/'))
     .filter((name) => name !== 'lib/platform/src/stored.ts')
     .filter((name) => /addEventListener\(\s*'storage'/.test(readFileSync(join(SOURCE, name), 'utf8')))
-
   expect(own).toEqual([])
 })
-
 test('hears its own keys and a storage cleared, and stops when asked', async () => {
   const listeners = new Set<(event: { key: string | null }) => void>()
   vi.stubGlobal('window', {
@@ -24,13 +22,11 @@ test('hears its own keys and a storage cleared, and stops when asked', async () 
   const told = (key: string | null) => {
     for (const one of listeners) one({ key })
   }
-
   told('orden:a')
   told('orden:b')
   told(null)
   stop()
   told('orden:a')
-
   expect(heard).toEqual(['orden:a', null])
   vi.unstubAllGlobals()
 })

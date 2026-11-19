@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import { spawnSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { request } from 'node:http'
@@ -9,43 +8,33 @@ import { fileURLToPath } from 'node:url'
 
 function endpointFile() {
   if (process.env.ORDEN_ENDPOINT) return process.env.ORDEN_ENDPOINT
-
   const home = homedir()
   const identifier = 'so.orden.Orden'
-
   if (platform() === 'win32') {
     const roaming = process.env.APPDATA ?? join(home, 'AppData', 'Roaming')
     return join(roaming, identifier, 'automation.json')
   }
-
   if (platform() === 'darwin') {
     return join(home, 'Library', 'Application Support', identifier, 'automation.json')
   }
-
   const xdg = process.env.XDG_CONFIG_HOME
   const config = xdg && isAbsolute(xdg) ? xdg : join(home, '.config')
   return join(config, identifier, 'automation.json')
 }
-
 const FLAG = /^--[a-z]/i
-
 const SWITCHES = new Set(['silent', 'append', 'prepend', 'undo', 'done'])
-
 function valueAfter(argv, at) {
   const next = argv[at + 1]
   return next !== undefined && !FLAG.test(next) ? next : null
 }
-
 function parseArgv(argv) {
   const mine = { json: false, out: null, yes: false, help: false }
   const args = {}
   const rest = []
   let verb = null
   let flags = true
-
   for (let at = 0; at < argv.length; at++) {
     const word = argv[at]
-
     if (flags) {
       if (word === '--') {
         flags = false
@@ -78,18 +67,14 @@ function parseArgv(argv) {
         continue
       }
     }
-
     if (verb === null) {
       verb = word
       continue
     }
-
     rest.push(word)
   }
-
   return { verb, args, rest, ...mine }
 }
-
 const USAGE = `orden - drive the running Orden
 
   orden <verb> [words...] [--name value] [--json] [--yes]
@@ -131,39 +116,29 @@ const USAGE = `orden - drive the running Orden
   Every verb takes --space to work in a space other than the one that is open.
   --json answers as JSON rather than as words. Anything that changes a note needs
   --yes, and eval is off until this installation's endpoint file says otherwise.`
-
 async function main() {
   const argv = process.argv.slice(2)
   const asked = parseArgv(argv)
-
   if (!asked.verb || asked.verb === 'help' || asked.help) {
     return help()
   }
-
   if (asked.verb === 'screenshot') return screenshot(asked)
   await fromFile(asked)
-
   const answered = await ask(asked.verb, asked.args, asked.rest)
   return show(answered, asked)
 }
-
 async function help() {
   console.log(USAGE)
-
   const answered = await ask('verbs', {}, []).catch(() => null)
   if (answered?.ok) console.log(`\nthe app answers: ${answered.value.verbs.join(', ')}`)
-
   return 0
 }
-
 async function fromFile(asked) {
   const from = asked.args.from
   if (from === undefined) return
-
   delete asked.args.from
   asked.args.content = from === '-' ? await readStdin() : await readFile(from, 'utf8')
 }
-
 function readStdin() {
   return new Promise((settle, fail) => {
     let held = ''
@@ -173,21 +148,16 @@ function readStdin() {
     process.stdin.on('error', fail)
   })
 }
-
 async function ask(verb, args, rest) {
   const { port, secret } = await endpoint()
-
   const response = await posted(port, secret, JSON.stringify({ verb, args, rest })).catch((error) => {
     throw new Error(`Orden is not answering on 127.0.0.1:${port}: ${error.message}`)
   })
-
   const said = response.said
   const body = said ? JSON.parse(said) : {}
-
   if (!response.ok) throw new Error(body.error ?? `the app answered ${response.status}`)
   return body
 }
-
 function posted(port, secret, body) {
   return new Promise((settle, fail) => {
     const asked = request(
@@ -217,29 +187,23 @@ function posted(port, secret, body) {
     asked.end(body)
   })
 }
-
 async function endpoint() {
   const path = endpointFile()
   const held = await readFile(path, 'utf8').catch(() => null)
   if (held === null) {
     throw new Error(`no endpoint file at ${path}: open Orden once, and note that the browser build has no command line`)
   }
-
   const { port, secret, pid } = JSON.parse(held)
   if (!port || !secret) throw new Error(`${path} says no port or no secret`)
-
   return { port, secret, pid }
 }
-
 async function screenshot(asked) {
   const out = asked.out ?? join(tmpdir(), 'orden-window.png')
   const rect = await ask('window', {}, [])
   if (!rect.ok) return show(rect, asked)
-
   const byPid = platform() === 'win32' || platform() === 'darwin'
   const { pid } = byPid ? await endpoint() : {}
   if (byPid && !pid) throw new Error('this app did not say which process it is, so it cannot be photographed')
-
   if (platform() === 'win32') {
     const script = resolve(dirname(fileURLToPath(import.meta.url)), '../../scripts/capture-window.ps1')
     const ran = spawnSync(
@@ -255,57 +219,46 @@ async function screenshot(asked) {
   } else {
     throw new Error('no screenshot on this platform: X11 and Wayland share no capture tool, so take one yourself')
   }
-
   return show({ ok: true, value: { file: out, ...rect.value } }, asked)
 }
-
 const MAC_WINDOWS = `ObjC.import('CoreGraphics')
 function run(argv) {
   const all = ObjC.deepUnwrap(ObjC.castRefToObject($.CGWindowListCopyWindowInfo($.kCGWindowListOptionOnScreenOnly, 0)))
   return JSON.stringify(all.filter((one) => one.kCGWindowOwnerPID === Number(argv[0]) && one.kCGWindowLayer === 0)
     .map((one) => ({ id: one.kCGWindowNumber, ...one.kCGWindowBounds })))
 }`
-
 function macWindow(pid, { x, y, width, height, scale }) {
   const ran = spawnSync('osascript', ['-l', 'JavaScript', '-e', MAC_WINDOWS, String(pid)], {
     encoding: 'utf8',
   })
   if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'could not list the windows')
-
   const near = (a, b) => Math.abs(a - b / scale) <= 1
   const found = JSON.parse(ran.stdout).find(
     (one) => near(one.X, x) && near(one.Y, y) && near(one.Width, width) && near(one.Height, height),
   )
   if (!found) throw new Error(`process ${pid} has no window on screen where the app said it is`)
-
   return found.id
 }
-
 function plain(answered) {
   if ('ok' in answered) return answered
   if (answered.status === 'ok') return { ok: true, value: answered.result }
-
   return { ok: false, error: answered.message ?? answered.summary ?? JSON.stringify(answered) }
 }
-
 function show(answered, asked) {
   const said = plain(answered)
   if (asked.json) {
     console.log(JSON.stringify(answered, null, 2))
     return said.ok ? 0 : 1
   }
-
   if (!said.ok) {
     console.error(said.error)
     return 1
   }
-
   const value = said.value
   if (value === null || typeof value !== 'object') {
     console.log(String(value))
     return 0
   }
-
   for (const [name, held] of Object.entries(value)) {
     if (Array.isArray(held)) {
       for (const one of held) {
@@ -325,22 +278,17 @@ function show(answered, asked) {
       console.log(`${name}: ${JSON.stringify(held)}`)
       continue
     }
-
     console.log(`${name}: ${String(held)}`)
   }
-
   return 0
 }
-
 function asLine(one) {
   if (one === null || typeof one !== 'object') return String(one)
-
   return Object.values(one)
     .filter((held) => held === null || typeof held !== 'object')
     .map((held) => String(held))
     .join('\t')
 }
-
 main()
   .then((code) => {
     process.exitCode = code ?? 0

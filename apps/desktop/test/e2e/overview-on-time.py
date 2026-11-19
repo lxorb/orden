@@ -1,16 +1,12 @@
 import json
 import tempfile
 from pathlib import Path
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 NEEDS = ("chromium",)
-
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -21,7 +17,6 @@ async () => {
   await new Promise((go) => setTimeout(go, 600))
 }
 """
-
 SAMPLE = """
 () => {
   const frames = []
@@ -65,9 +60,7 @@ SAMPLE = """
   }
 }
 """
-
 CATEGORIES = ["devtools.timeline", "disabled-by-default-devtools.timeline"]
-
 def restyled(trace: Path) -> list[int]:
     data = json.loads(trace.read_text())
     events = data["traceEvents"] if isinstance(data, dict) else data
@@ -85,7 +78,6 @@ def restyled(trace: Path) -> list[int]:
         if count:
             counts.append(int(count))
     return counts
-
 def run(browser: Browser, page: Page, label: str, keys: list[str], folder: Path) -> None:
     trace = folder / f"{label}.json"
     page.evaluate(SAMPLE)
@@ -120,7 +112,6 @@ def run(browser: Browser, page: Page, label: str, keys: list[str], folder: Path)
     say(f"[{label}] at most {most} elements restyled in a frame, of {seen['elements']}")
     if most > seen["elements"] / 4:
         wrong(f"[{label}] a frame restyled {most} of the window's {seen['elements']} elements")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1600, "height": 960})
     DRIVE.open(page)
@@ -137,5 +128,4 @@ def drive(browser: Browser) -> None:
         run(browser, page, "in", ["Alt", "Alt"], Path(folder))
         run(browser, page, "home", ["Escape"], Path(folder))
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "every frame of the overview's way in and home is on time"))

@@ -9,33 +9,26 @@ vi.stubGlobal('document', {
     toggleAttribute: () => true,
   },
 })
-
 const api = vi.hoisted(() => {
   const held: { answer: Record<string, unknown> } = { answer: {} }
-
   return {
     held,
     settings: async () => ({ settings: held.answer }),
     saveSettings: async () => ({ settings: {} }),
   }
 })
-
 vi.mock('../../accounts/src/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../accounts/src/client')>()),
   api,
 }))
-
 const KEY = 'orden:modes'
-
 await import('./modes.svelte')
-
 async function restarted() {
   vi.resetModules()
   const store = (await import('./modes.svelte')).modes
   store.restore()
   return store
 }
-
 function everything(): Record<string, string> {
   const out: Record<string, string> = {}
   const keys: string[] = []
@@ -43,13 +36,11 @@ function everything(): Record<string, string> {
   for (const key of keys.sort()) out[key] = localStorage.getItem(key) ?? ''
   return out
 }
-
 function held(store: Awaited<ReturnType<typeof restarted>>): string | null {
   store.toggleSilent()
   store.toggleSilent()
   return localStorage.getItem(KEY)
 }
-
 const AWAY = {
   source: true,
   readOnly: true,
@@ -104,32 +95,26 @@ const AWAY = {
   hardBreaks: true,
   linkFormat: 'markdown',
 }
-
 beforeEach(() => {
   localStorage.clear()
   api.held.answer = {}
 })
-
 describe('what orden:modes holds', () => {
   test('a start with nothing written writes nothing', async () => {
     await restarted()
     expect(everything()).toEqual({})
   })
-
   test('the entry a store that was never changed writes, byte for byte', async () => {
     expect(held(await restarted())).toMatchSnapshot()
   })
-
   test('an entry with every field away from its default comes back as it was', async () => {
     const written = JSON.stringify(AWAY)
     localStorage.setItem(KEY, written)
     const store = await restarted()
-
     expect(localStorage.getItem(KEY)).toBe(written)
     expect(held(store)).toMatchSnapshot()
   })
 })
-
 describe('what an older build wrote', () => {
   const OLD: Record<string, Record<string, unknown>> = {
     'the reading switch, read as the lock': { reading: true },
@@ -184,23 +169,19 @@ describe('what an older build wrote', () => {
     'a lone frame': { frame: 'system' },
     'not an object at all': [1, 2] as unknown as Record<string, unknown>,
   }
-
   for (const [name, entry] of Object.entries(OLD)) {
     test(name, async () => {
       localStorage.setItem(KEY, JSON.stringify(entry))
       const store = await restarted()
-
       expect({ written: everything(), holds: held(store) }).toMatchSnapshot()
     })
   }
-
   test('nonsense under the key', async () => {
     localStorage.setItem(KEY, '{"source": tr')
     const store = await restarted()
     expect({ written: everything(), holds: held(store) }).toMatchSnapshot()
   })
 })
-
 describe('what the account holds', () => {
   const ANSWERS: Record<string, Record<string, unknown>> = {
     'every setting the account carries, away from its default': {
@@ -262,21 +243,17 @@ describe('what the account holds', () => {
     'a tone that is no colour': { highlightTone: null },
     'nothing at all': {},
   }
-
   for (const [name, answer] of Object.entries(ANSWERS)) {
     test(name, async () => {
       localStorage.setItem(KEY, JSON.stringify(AWAY))
       const store = await restarted()
       api.held.answer = answer
-
       await store.adopt('token')
       expect({ written: everything(), holds: held(store) }).toMatchSnapshot()
     })
-
     test(`${name}, over a machine that never chose`, async () => {
       const store = await restarted()
       api.held.answer = answer
-
       await store.adopt('token')
       expect({ written: everything(), holds: held(store) }).toMatchSnapshot()
     })

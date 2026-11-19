@@ -8,7 +8,6 @@ import { grouped, linesOf, type Listed, listedOf, placed, visible } from './rost
 import { useStore } from './source.svelte'
 
 afterEach(() => useStore(chats))
-
 const one = (who: string, name: string, more: Partial<Listed> = {}): Listed => ({
   who: `guest:${who}`,
   name,
@@ -16,9 +15,7 @@ const one = (who: string, name: string, more: Partial<Listed> = {}): Listed => (
   presence: null,
   ...more,
 })
-
 const names = (list: readonly Listed[]) => list.map((it) => it.name)
-
 function rosterOf(page: ChatPage) {
   return grouped(
     listedOf(
@@ -28,11 +25,9 @@ function rosterOf(page: ChatPage) {
     ),
   )
 }
-
 function shapeOf(page: ChatPage) {
   return rosterOf(page).map((group) => [group.rank, names(group.members)])
 }
-
 describe('the members of a chat in groups', () => {
   test('come by role, the online first and then by name, each group counted', () => {
     const groups = grouped([
@@ -54,7 +49,6 @@ describe('the members of a chat in groups', () => {
       { kind: 'group', rank: 'bot', count: 1 },
     ])
   })
-
   test('a filter keeps those whose name holds it, accents and case aside', () => {
     const list = [one('j', 'José Núñez'), one('m', 'Mia'), one('k', 'Kai', { rank: 'owner' })]
     expect(names(grouped(list, 'nunez').flatMap((group) => group.members))).toEqual(['José Núñez'])
@@ -62,7 +56,6 @@ describe('the members of a chat in groups', () => {
     expect(grouped(list, 'nobody')).toEqual([])
     expect(grouped(list, '  ').flatMap((group) => group.members)).toHaveLength(3)
   })
-
   test('a list of thousands draws only the rows in sight', () => {
     const many = Array.from({ length: 5000 }, (_, at) =>
       one(`p${at}`, `Person ${String(at).padStart(4, '0')}`, {
@@ -78,13 +71,11 @@ describe('the members of a chat in groups', () => {
     expect(visible(laid.rows, 0, 100).map((row) => row.line.kind)).toEqual(['group', 'member', 'member'])
   })
 })
-
 describe("the members of Orden's own chat", () => {
   const OWNER: ChatMember = { who: 'user:emil', name: 'Emil Vinu', role: 'owner' }
   const LUCILE: ChatMember = { who: 'user:lucile', name: 'Lucile', role: 'write' }
   const AGENT: ChatMember = { who: 'program:scribe', name: 'Scribe', role: 'write' }
   const MIA: ChatMember = { who: 'user:mia', name: 'Mia Keller', role: 'read' }
-
   test('come as owners, members and bots, and follow joins and leaves', async () => {
     const fixture = new FixtureChats(OWNER.who, { seed: 3 })
     const chat = fixture.add('team', [OWNER, LUCILE, AGENT])

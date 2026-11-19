@@ -4,7 +4,6 @@ export interface Point {
   x: number
   y: number
 }
-
 export interface Hand {
   id: number
   name: string
@@ -12,21 +11,17 @@ export interface Hand {
   at: Point
   stroke: InkStroke | null
 }
-
 export interface Reachable {
   undo: boolean
   redo: boolean
 }
-
 export type Pushed = 'step' | 'more' | 'aside'
-
 export interface SharedPlane {
   push: (before: Canvas, after: Canvas, how?: Pushed) => void
   undo: () => boolean
   redo: () => boolean
   hand: (at: Point | null, drawing: InkStroke | null) => void
 }
-
 export interface PlaneSurface {
   readonly canvas: Canvas
   shared: SharedPlane | null

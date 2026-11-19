@@ -7,11 +7,8 @@
   import { setup } from './setup-state.svelte'
 
   const browser = $derived(BROWSERS.find((one) => one.id === setup.answers.browser) ?? null)
-
   let stage = $state<'asking' | 'importing' | 'done'>('asking')
-
   const BROUGHT = ['Bookmarks', 'Open tabs', 'History']
-
   async function bring() {
     const importer = browser?.importer
     if (!importer || stage !== 'asking') return
@@ -60,7 +57,6 @@
     align-items: center;
     gap: 18px;
   }
-
   .end {
     width: 76px;
     height: 76px;
@@ -72,48 +68,39 @@
       var(--shadow-sm),
       0 8px 24px rgb(16 24 40 / 0.08);
   }
-
   .dots {
     display: flex;
     gap: 6px;
   }
-
   .dots i {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: var(--line-strong);
   }
-
   .importing .dots i {
     animation: travel 1s ease-in-out infinite;
   }
-
   .importing .dots i:nth-child(2) {
     animation-delay: 0.15s;
   }
-
   .importing .dots i:nth-child(3) {
     animation-delay: 0.3s;
   }
-
   .done .dots i {
     background: var(--success);
   }
-
   @keyframes travel {
     50% {
       background: var(--accent);
       transform: scale(1.4);
     }
   }
-
   ul {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   .bar {
     width: min(320px, 100%);
     height: 6px;
@@ -121,7 +108,6 @@
     background: var(--surface-3);
     overflow: hidden;
   }
-
   .bar i {
     display: block;
     height: 100%;
@@ -130,7 +116,6 @@
     border-radius: inherit;
     transition: width 0.6s var(--ease-out);
   }
-
   .bar i.full {
     width: 100%;
   }

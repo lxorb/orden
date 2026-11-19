@@ -20,16 +20,13 @@
   let inFile = $state(false)
   const EXAMPLE_URL = 'http://localhost:11434'
   const named = (vendor: string) => vendorName(vendor, ai.accounts)
-
   const addable = $derived(
     offeredKinds(isDesktop, __CLAUDE_CODE__).filter(
       (kind) => repeatable(kind) || !ai.accounts.some((one) => one.kind === kind),
     ),
   )
-
   let plans = $state.raw<LocalPlans | null>(null)
   const plansHeld = __EVEN_PLUGIN__ ? Promise.resolve(null) : localCli().then((one) => (plans = one.plans))
-
   onMount(() => {
     for (const account of ai.accounts) void ask(account)
     const lookFile = () => void keysInFile().then((found) => (inFile = found))
@@ -43,7 +40,6 @@
       unhear()
     }
   })
-
   async function ask(account: Provider) {
     if (__EVEN_PLUGIN__) return
     const { kind } = account
@@ -51,13 +47,11 @@
     if (isLocal(kind)) await held?.check({ id: account.id, kind })
     if (kind === 'chatgpt') await held?.checkChatgpt()
   }
-
   $effect(() => {
     for (const account of ai.accounts) {
       if (!isLocal(account.kind) && account.kind !== 'chatgpt') void look(account.id)
     }
   })
-
   $effect(() => {
     for (const account of ai.accounts) {
       if (!__EVEN_PLUGIN__ && isLocal(account.kind) && plans?.of(account.id).state === 'in') {
@@ -65,7 +59,6 @@
       }
     }
   })
-
   async function look(id: string) {
     const found = await hasKey(id).catch((error: unknown) => {
       if (error instanceof NoWord) void wordSaid().then(() => look(id))
@@ -73,7 +66,6 @@
     })
     if (found !== undefined) keyed = { ...keyed, [id]: found }
   }
-
   async function take(provider: Provider, typed: string): Promise<string> {
     said(provider)('')
     try {
@@ -87,14 +79,12 @@
     await refresh(provider)
     return ''
   }
-
   async function drop(provider: Provider) {
     await forgetKey(provider.id).catch((error: unknown) =>
       said(provider)(message(error, 'that key could not be saved')),
     )
     await look(provider.id)
   }
-
   async function refresh(provider: Provider) {
     if (isLocal(provider.kind)) {
       void usage.look(provider, true)
@@ -109,11 +99,9 @@
       said(provider)(message(error, 'Could not read the models.'))
     }
   }
-
   const said = (provider: Provider) => (text: string) => {
     trouble = { ...trouble, [provider.id]: text }
   }
-
   async function add({ kind, key, name, baseUrl }: Adding): Promise<string | null> {
     const held = __EVEN_PLUGIN__ || kind !== 'chatgpt' ? null : await plansHeld
     if (held && !held.chatgpt) {
@@ -139,12 +127,10 @@
     void ask(account)
     return null
   }
-
   function fullness(week: Weekly): 'fine' | 'near' | 'full' {
     if (week.used >= 90) return 'full'
     return week.used >= 75 ? 'near' : 'fine'
   }
-
   function weekWords(week: Weekly): { used: string; resets: string } {
     return {
       used: `${localNumber(week.used / 100, { style: 'percent', maximumFractionDigits: 0 })} used this week`,
@@ -154,7 +140,6 @@
           : `Resets ${localDate(week.resets, { weekday: 'long', hour: '2-digit', minute: '2-digit' })}`,
     }
   }
-
   function forget(provider: Account) {
     const { kind } = provider
     if (!isLocal(kind) && kind !== 'chatgpt') void drop(provider)
@@ -166,7 +151,6 @@
     usage.forget(provider.id)
     ai.remove(provider.id)
   }
-
   async function removeDevice(id: string, name: string) {
     const { prompt } = await import('../../ui-kit/src/api')
     const sure = await prompt.confirm({
@@ -177,7 +161,6 @@
     })
     if (sure) await vault.remove(id).catch(() => false)
   }
-
   function engineName(engine: Engine): string {
     if (engine === 'auto') return 'Auto'
     if (engine === 'local') return 'This computer'
@@ -185,7 +168,6 @@
     if (engine === 'device') return 'This device'
     return ai.transcriber?.name ?? ''
   }
-
   function labelOf(provider: Account): string {
     if (provider.name) return provider.name
     const email = !__EVEN_PLUGIN__ && isLocal(provider.kind) ? (plans?.of(provider.id).account ?? null) : null
@@ -481,90 +463,73 @@
     font-weight: 600;
     color: var(--muted-strong);
   }
-
   h3:first-child,
   :global(h2) + h3 {
     margin-top: 0;
   }
-
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .setting .name {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .row {
     flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   .hint.bad {
     color: var(--danger);
   }
-
   .hint.caption {
     padding: 0 2px;
   }
-
   .strong {
     font-weight: 600;
   }
-
   .name > :global(.mark) {
     margin-inline-end: var(--space-2);
   }
-
   .adding {
     gap: var(--space-2);
   }
-
   .hint.on {
     color: var(--accent);
   }
-
   .digits {
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.04em;
   }
-
   .boxed {
     padding: var(--space-1) var(--space-3);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
   }
-
   .boxed > p.hint {
     padding-block: var(--space-2);
   }
-
   .boxed.fallback {
     border-color: var(--accent);
   }
-
   .week {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
     padding-block: var(--space-2);
   }
-
   .week-words {
     display: flex;
     flex-wrap: wrap;
@@ -573,27 +538,22 @@
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
   }
-
   :global(.sheet.phone) .boxed {
     padding: 0;
   }
-
   :global(.sheet.phone) .boxed.fallback {
     border-color: var(--accent);
   }
-
   :global(.sheet.phone) .boxed > p.hint,
   :global(.sheet.phone) .week {
     padding: var(--space-2) var(--touch-pad);
   }
-
   :global(.sheet.phone) .setting {
     position: relative;
     gap: var(--touch-gap);

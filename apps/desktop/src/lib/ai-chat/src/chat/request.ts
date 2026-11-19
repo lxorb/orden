@@ -20,17 +20,14 @@ export class Refused extends Error {
     this.name = 'Refused'
   }
 }
-
 export function wasStopped(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError'
 }
-
 async function keyFor(provider: Provider): Promise<string> {
   if (provider.kind !== 'chatgpt') return await readKey(provider)
   const { planToken } = await chatgptPlan()
   return await planToken()
 }
-
 async function headers(provider: Provider, extra: Record<string, string> = {}): Promise<Record<string, string>> {
   if (!usable({ ...provider, model: provider.model || '-' })) {
     throw new Error('That provider is not set up yet.')
@@ -39,7 +36,6 @@ async function headers(provider: Provider, extra: Record<string, string> = {}): 
   if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')
   return { ...headersFor(provider, apiKey), ...extra }
 }
-
 export async function request(
   provider: Provider,
   url: string,
@@ -59,12 +55,10 @@ export async function request(
   if (!response.ok) throw await refusalOf(response, provider)
   return response
 }
-
 async function refusalOf(response: Response, provider: Provider): Promise<Refused> {
   const text = await response.text().catch(() => '')
   return refusalIn(sseJson(text), response.status, provider)
 }
-
 export async function refusalIn(body: unknown, status: number, provider: Provider): Promise<Refused> {
   const { param, code } = detailsIn(body)
   if (provider.kind === 'chatgpt') {
@@ -79,7 +73,6 @@ export async function refusalIn(body: unknown, status: number, provider: Provide
   }
   return new Refused(`The provider answered ${status}.`, status, param, code)
 }
-
 function detailsIn(body: unknown): { param: string; code: string } {
   const error = typeof body === 'object' && body !== null ? (body as { error?: unknown }).error : null
   if (typeof error !== 'object' || error === null) return { param: '', code: '' }

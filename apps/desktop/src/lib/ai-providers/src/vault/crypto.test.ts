@@ -4,7 +4,6 @@ import { commitment, digits as pairing, newNonce } from '../pairing'
 const digits = (...parts: [string, string, string, string]) => pairing('nib ai vault digits', ...parts)
 import { authOf, fingerprint, idOf, newDeviceKey, newVaultKey, open, seal, unwrap } from './crypto'
 import { wrap } from './crypto'
-
 describe('the vault’s keys', () => {
   test('a key wrapped to a device opens on that device and no other', async () => {
     const laptop = await newDeviceKey()
@@ -14,7 +13,6 @@ describe('the vault’s keys', () => {
     expect(await unwrap(wrapped, phone)).toEqual(key)
     await expect(unwrap(wrapped, laptop)).rejects.toThrow()
   })
-
   test('a device is filed under its public key, and both screens show the same six digits', async () => {
     const asking = await newDeviceKey()
     const answering = await newDeviceKey()
@@ -25,7 +23,6 @@ describe('the vault’s keys', () => {
     expect(shown).toMatch(/^\d{3} \d{3}$/)
     expect(await digits(asking.pub, mine, theirs, answering.pub)).toBe(shown)
   })
-
   test('the digits turn on every part, and a key is bound before the answer is picked', async () => {
     const asking = await newDeviceKey()
     const swapped = await newDeviceKey()
@@ -46,7 +43,6 @@ describe('the vault’s keys', () => {
     expect(await digits(asking.pub, newNonce(), theirs, answering.pub)).not.toBe(shown)
     expect(await digits(asking.pub, mine, theirs, swapped.pub)).not.toBe(shown)
   })
-
   test('the token the account asks for is the vault key’s, and says nothing of it', async () => {
     const key = newVaultKey()
     const token = await authOf(key)
@@ -54,7 +50,6 @@ describe('the vault’s keys', () => {
     expect(await authOf(newVaultKey())).not.toBe(token)
     expect(atob(token)).not.toContain(String.fromCharCode(...key))
   })
-
   test('the vault opens under its key, and not under another or with a byte changed', async () => {
     const key = newVaultKey()
     const sealed = await seal(key, '{"keys":{"anthropic":"sk-ant"}}')
@@ -65,7 +60,6 @@ describe('the vault’s keys', () => {
     const changed = btoa(bytes.slice(0, -1) + String.fromCharCode(bytes.charCodeAt(bytes.length - 1) ^ 1))
     await expect(open(key, changed)).rejects.toThrow()
   })
-
   test('a key’s fingerprint says whether it changed without saying the key', async () => {
     const one = await fingerprint('sk-one')
     expect(one).toBe(await fingerprint('sk-one'))

@@ -14,7 +14,6 @@ function deletedElsewhere(name: string): Promise<'gone' | 'stuck'> {
     new Promise<'stuck'>((resolve) => setTimeout(() => resolve('stuck'), 2000)),
   ])
 }
-
 describe('a store of the browser that another tab deletes', () => {
   test('is the scratchpad’s own, which still keeps and reads', async () => {
     const disk = padDisk()
@@ -23,7 +22,6 @@ describe('a store of the browser that another tab deletes', () => {
     await disk.keep('b', 2)
     expect(await disk.read('b')).toBe(2)
   })
-
   test('is the time records’ own, which still keep and read', async () => {
     const disk = await openTimeDisk('held-time')
     await disk.keep('cursor', 1)
@@ -34,7 +32,6 @@ describe('a store of the browser that another tab deletes', () => {
     expect((await disk.rows()).map((row) => row.id)).toEqual(['a'])
     disk.close()
   })
-
   test('is the overview’s pictures, which another tab is not kept waiting on', async () => {
     const face = { html: '<p>a</p>', shot: null, w: 1, h: 1, at: 1 }
     await writeFace('note:/a.md', face)

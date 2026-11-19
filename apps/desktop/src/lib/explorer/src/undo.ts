@@ -7,7 +7,6 @@ import { swapping } from './renaming'
 import { relistAll } from './view.svelte'
 
 type Outside = Extract<FileAction, { kind: 'outside' }>
-
 export async function undoOutside(action: Outside): Promise<void> {
   try {
     for (const step of [...action.steps].reverse()) await undoStep(step)
@@ -15,7 +14,6 @@ export async function undoOutside(action: Outside): Promise<void> {
     relistAll()
   }
 }
-
 export async function redoOutside(action: Outside): Promise<void> {
   const steps: OutsideStep[] = []
   try {
@@ -25,7 +23,6 @@ export async function redoOutside(action: Outside): Promise<void> {
     relistAll()
   }
 }
-
 async function undoStep(step: OutsideStep): Promise<void> {
   switch (step.op) {
     case 'moved':
@@ -47,7 +44,6 @@ async function undoStep(step: OutsideStep): Promise<void> {
     }
   }
 }
-
 async function redoStep(step: OutsideStep): Promise<OutsideStep> {
   switch (step.op) {
     case 'moved':
@@ -65,7 +61,6 @@ async function redoStep(step: OutsideStep): Promise<OutsideStep> {
       return { op: step.op, tickets: await trashPaths(step.tickets.map((one) => one.path)) }
   }
 }
-
 async function movedBack(pairs: Pair[]) {
   if (!swapping(pairs, (path) => pathKey(path))) {
     whole(await carried(pairs, 'move'))
@@ -83,12 +78,10 @@ async function movedBack(pairs: Pair[]) {
     ),
   )
 }
-
 function carried(pairs: Pair[], how: 'copy' | 'move'): Promise<Transferred> {
   const label = pairs.length === 1 ? 'Moving 1 item' : `Moving ${pairs.length} items`
   return jobs.run(label, (id) => put(id, pairs, how))
 }
-
 function whole(done: Transferred): Transferred {
   if (done.cancelled || done.failed.length) throw new Error(done.failed[0]?.why ?? 'cancelled')
   return done

@@ -6,7 +6,6 @@ import { completionsUsage } from './usage'
 import { type Answer, argsOf, type Ask, type Heard, PartsReader, type Reader, record, text, type Wire } from './wire'
 
 type Message = Record<string, unknown>
-
 function userMessage(step: Extract<Step, { role: 'user' }>): Message {
   if (!step.images.length) return { role: 'user', content: step.text }
   return {
@@ -20,7 +19,6 @@ function userMessage(step: Extract<Step, { role: 'user' }>): Message {
     ],
   }
 }
-
 function assistantMessage(words: string, calls: readonly Call[]): Message {
   return {
     role: 'assistant',
@@ -39,11 +37,9 @@ function assistantMessage(words: string, calls: readonly Call[]): Message {
       : {}),
   }
 }
-
 function toolMessage(id: string, output: ToolOutput): Message {
   return { role: 'tool', tool_call_id: id, content: outputText(output) }
 }
-
 export function chatMessagesOf(system: string, steps: readonly Step[]): Message[] {
   const out: Message[] = system ? [{ role: 'system', content: system }] : []
   for (const step of steps) {
@@ -67,7 +63,6 @@ export function chatMessagesOf(system: string, steps: readonly Step[]): Message[
   }
   return out
 }
-
 export const completions: Wire = {
   request(ask: Ask) {
     const known = learnt(ask.provider.id, ask.model.id)
@@ -94,58 +89,47 @@ export const completions: Wire = {
     }
     return { url: conversationUrl(ask.provider), body, headers: {} }
   },
-
   reader(window) {
     return new CompletionsReader(window)
   },
-
   results(results) {
     return results.map((one) => toolMessage(one.call.id, one.output))
   },
 }
-
 interface Arriving {
   id: string
   name: string
   json: string
   part: number
 }
-
 class CompletionsReader extends PartsReader implements Reader {
   private readonly calls = new Map<number, Arriving>()
   private readonly made = crypto.randomUUID()
   private words = ''
   private finish = ''
   private usage: Usage | undefined
-
   heard(event: unknown): Heard {
     const said = record(event)
     if (said.error) return { changed: [], trouble: said }
     const changed: number[] = []
     const model = text(said.model)
     if (said.usage) this.usage = completionsUsage(said.usage, this.window)
-
     const choice = record(Array.isArray(said.choices) ? said.choices[0] : null)
     const delta = record(choice.delta)
     this.finish = text(choice.finish_reason) || this.finish
-
     const thought = text(delta.reasoning_content) || text(delta.reasoning)
     if (thought) changed.push(this.think(thought))
-
     const words = text(delta.content)
     if (words) changed.push(this.say(words))
-
     if (Array.isArray(delta.tool_calls)) {
       for (const piece of delta.tool_calls.map(record)) changed.push(this.call(piece))
     }
     return { changed, ...(model ? { model } : {}), ...(this.usage ? { usage: this.usage } : {}) }
   }
-
   protected override say(words: string): number {
     this.words += words
     return super.say(words)
   }
-
   private call(piece: Record<string, unknown>): number {
     const index = Number(piece.index ?? 0)
     const fn = record(piece.function)
@@ -165,11 +149,9 @@ class CompletionsReader extends PartsReader implements Reader {
     }
     return arriving.part
   }
-
   finished(saidDone: boolean): boolean {
     return saidDone || this.finish !== ''
   }
-
   answer(): Answer {
     const calls: Call[] = [...this.calls.entries()]
       .sort(([a], [b]) => a - b)

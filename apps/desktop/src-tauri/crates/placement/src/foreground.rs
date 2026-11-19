@@ -6,7 +6,6 @@ const TOOL_WINDOW: u32 = 0x0000_0080;
 const APP_WINDOW: u32 = 0x0004_0000;
 #[cfg(any(windows, test))]
 const CHILD: u32 = 0x4000_0000;
-
 pub fn hold() -> bool {
     #[cfg(windows)]
     if crate::placement::asked_away() {
@@ -17,10 +16,8 @@ pub fn hold() -> bool {
     }
     false
 }
-
 #[cfg(any(windows, test))]
 const PARKED: i32 = -32_000;
-
 #[cfg(any(windows, test))]
 fn kept_off(to: (i32, i32), on_a_screen: bool) -> (i32, i32) {
     if on_a_screen {
@@ -29,17 +26,14 @@ fn kept_off(to: (i32, i32), on_a_screen: bool) -> (i32, i32) {
         to
     }
 }
-
 #[cfg(any(windows, test))]
 fn kept_back(asked: u32) -> u32 {
     (asked | NO_ACTIVATE | TOOL_WINDOW) & !APP_WINDOW
 }
-
 #[cfg(any(windows, test))]
 fn top_level(style: u32, for_messages: bool) -> bool {
     style & CHILD == 0 && !for_messages
 }
-
 #[cfg(windows)]
 mod held {
     use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, RECT, WPARAM};
@@ -58,12 +52,10 @@ mod held {
     };
 
     const SUBCLASS: usize = 0x6e69_6200;
-
     #[allow(unsafe_code)]
     pub fn lock() -> bool {
         unsafe { LockSetForegroundWindow(LSFW_LOCK) }.is_ok()
     }
-
     #[allow(unsafe_code)]
     pub fn on_this_thread() {
         let _ = unsafe {
@@ -75,7 +67,6 @@ mod held {
             )
         };
     }
-
     #[allow(unsafe_code)]
     pub fn on_every_thread(thread: u32) -> Option<HWINEVENTHOOK> {
         unsafe {
@@ -92,7 +83,6 @@ mod held {
             (!hook.is_invalid()).then_some(hook)
         }
     }
-
     pub fn every_thread_or_say() {
         if on_every_thread(0).is_none() {
             eprintln!(
@@ -103,7 +93,6 @@ mod held {
             );
         }
     }
-
     #[allow(unsafe_code)]
     pub fn in_context_refusal() -> Option<u32> {
         use windows::core::w;
@@ -120,7 +109,6 @@ mod held {
             _time: u32,
         ) {
         }
-
         unsafe {
             let module = GetModuleHandleW(w!("user32.dll")).ok()?;
             let hook = SetWinEventHook(
@@ -139,7 +127,6 @@ mod held {
             None
         }
     }
-
     #[allow(unsafe_code)]
     unsafe extern "system" fn made(
         _hook: HWINEVENTHOOK,
@@ -185,12 +172,10 @@ mod held {
             };
         }
     }
-
     #[allow(unsafe_code)]
     fn top_level_now(window: HWND) -> bool {
         unsafe { GetAncestor(window, GA_PARENT) == GetDesktopWindow() }
     }
-
     #[allow(unsafe_code)]
     fn on_a_screen(rectangle: &RECT) -> bool {
         if rectangle.right <= rectangle.left || rectangle.bottom <= rectangle.top {
@@ -198,7 +183,6 @@ mod held {
         }
         !unsafe { MonitorFromRect(rectangle, MONITOR_DEFAULTTONULL) }.is_invalid()
     }
-
     #[allow(unsafe_code)]
     fn kept_away(window: HWND, going: &mut WINDOWPOS) {
         if !top_level_now(window) {
@@ -230,7 +214,6 @@ mod held {
             going.flags &= !SWP_NOMOVE;
         }
     }
-
     #[allow(unsafe_code)]
     unsafe extern "system" fn watching(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         match u32::try_from(code) {
@@ -251,7 +234,6 @@ mod held {
         }
         unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
     }
-
     #[allow(unsafe_code)]
     unsafe extern "system" fn holding(
         window: HWND,
@@ -289,7 +271,6 @@ mod held {
         answer
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -316,7 +297,6 @@ mod tests {
         }
         assert_eq!(kept_back(0x0010_0000) & 0x0010_0000, 0x0010_0000);
     }
-
     #[test]
     fn the_app_holds_itself_back_before_it_makes_anything() {
         let lib = include_str!("../../../src/lib.rs");
@@ -329,14 +309,12 @@ mod tests {
             assert!(held < at, "{later} comes before the process is held back");
         }
     }
-
     #[test]
     fn a_window_that_would_be_on_a_screen_is_parked_and_any_other_left_alone() {
         assert_eq!(kept_off((100, 200), true), (PARKED, PARKED));
         assert_eq!(kept_off((-5000, 40), false), (-5000, 40));
         assert_eq!(kept_off((PARKED, PARKED), false), (PARKED, PARKED));
     }
-
     #[test]
     fn only_a_top_level_window_is_held_back() {
         assert!(top_level(0x0000_0000, false));
@@ -347,7 +325,6 @@ mod tests {
             "a window for messages is on no desktop"
         );
     }
-
     #[cfg(windows)]
     #[test]
     fn the_styles_are_the_system_s() {
@@ -360,7 +337,6 @@ mod tests {
         assert_eq!(APP_WINDOW, WS_EX_APPWINDOW.0);
         assert_eq!(CHILD, WS_CHILD.0);
     }
-
     #[cfg(windows)]
     #[test]
     fn a_real_window_is_held_back_and_never_activated() {
@@ -372,7 +348,6 @@ mod tests {
             "the system refused by itself; the test proves nothing"
         );
         assert_eq!(plain.made & APP_WINDOW, APP_WINDOW);
-
         let held = std::thread::spawn(|| made_and_asked(true))
             .join()
             .expect("the held thread");
@@ -386,14 +361,12 @@ mod tests {
         }
         assert!(!held.activated, "activated");
     }
-
     #[cfg(windows)]
     struct Asked {
         made: u32,
         restyled: u32,
         activated: bool,
     }
-
     #[cfg(windows)]
     #[allow(unsafe_code)]
     fn made_and_asked(holding: bool) -> Asked {
@@ -441,7 +414,6 @@ mod tests {
             }
         }
     }
-
     #[cfg(windows)]
     #[test]
     fn a_dialog_any_thread_raises_is_never_on_a_screen() {
@@ -458,18 +430,15 @@ mod tests {
             plain.on_a_screen,
             "the system kept the dialog off the screens by itself; the test proves nothing"
         );
-
         let held = a_message_box_watched(true);
         assert!(held.seen, "the held dialog never appeared");
         assert!(!held.on_a_screen, "the held dialog was on a screen");
     }
-
     #[cfg(windows)]
     struct Watched {
         seen: bool,
         on_a_screen: bool,
     }
-
     #[cfg(windows)]
     #[allow(unsafe_code)]
     fn a_message_box_watched(holding: bool) -> Watched {
@@ -514,7 +483,6 @@ mod tests {
         });
         hearing.recv().expect("hooked");
         go.send(()).expect("go");
-
         let mut watched = Watched {
             seen: false,
             on_a_screen: false,
@@ -552,7 +520,6 @@ mod tests {
         let _ = unsafe { CloseDesktop(HDESK(desktop as _)) };
         watched
     }
-
     #[cfg(windows)]
     #[allow(unsafe_code)]
     fn own_desktop(which: bool) -> isize {
@@ -560,7 +527,6 @@ mod tests {
         use windows::Win32::System::StationsAndDesktops::{CreateDesktopW, DESKTOP_CONTROL_FLAGS};
 
         const EVERYTHING: u32 = 0x1000_0000;
-
         let name: Vec<u16> = format!(
             "orden-foreground-test-{}-{}",
             std::process::id(),
@@ -582,7 +548,6 @@ mod tests {
         .expect("a desktop of the test's own");
         desktop.0 as isize
     }
-
     #[cfg(windows)]
     #[allow(unsafe_code)]
     fn on_desktop(
@@ -596,7 +561,6 @@ mod tests {
             work();
         })
     }
-
     #[cfg(windows)]
     #[allow(unsafe_code)]
     fn shown(desktop: isize, thread: u32) -> Vec<(isize, bool)> {
@@ -611,7 +575,6 @@ mod tests {
             unsafe { (*(found.0 as *mut Vec<isize>)).push(window.0 as isize) };
             BOOL(1)
         }
-
         let mut found: Vec<isize> = Vec::new();
         let _ = unsafe {
             EnumDesktopWindows(

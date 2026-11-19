@@ -6,15 +6,12 @@ export interface FetchedResponse {
   status: number
   text(): Promise<string>
 }
-
 export type Fetcher = (
   url: string,
   init: { headers: Record<string, string>; signal?: AbortSignal },
 ) => Promise<FetchedResponse>
-
 export class BreachLookupError extends Error {
   override name = 'BreachLookupError'
-
   constructor(
     message: string,
     readonly status: number | null,
@@ -22,7 +19,6 @@ export class BreachLookupError extends Error {
     super(message)
   }
 }
-
 export interface Breach {
   name: string
   title: string
@@ -30,10 +26,8 @@ export interface Breach {
   date: string
   dataClasses: string[]
 }
-
 export const RANGE_URL = 'https://api.pwnedpasswords.com/range/'
 export const BREACHED_ACCOUNT_URL = 'https://haveibeenpwned.com/api/v3/breachedaccount/'
-
 export async function sha1Hex(text: string): Promise<string> {
   const digest = await globalThis.crypto.subtle.digest('SHA-1', new TextEncoder().encode(text))
   return [...new Uint8Array(digest)]
@@ -41,7 +35,6 @@ export async function sha1Hex(text: string): Promise<string> {
     .join('')
     .toUpperCase()
 }
-
 export function parseRange(body: string): Map<string, number> {
   const counts = new Map<string, number>()
   for (const line of body.split(/\r?\n/)) {
@@ -52,7 +45,6 @@ export function parseRange(body: string): Map<string, number> {
   }
   return counts
 }
-
 async function fetched(
   url: string,
   headers: Record<string, string>,
@@ -66,13 +58,11 @@ async function fetched(
     throw new BreachLookupError(`Could not reach ${new URL(url).host}.`, null)
   }
 }
-
 function failure(host: string, status: number): BreachLookupError {
   if (status === 429) return new BreachLookupError(`${host} asks to wait before asking again.`, status)
   if (status === 401) return new BreachLookupError(`${host} did not take the API key.`, status)
   return new BreachLookupError(`${host} answered ${String(status)}.`, status)
 }
-
 export async function rangeOf(prefix: string, fetcher: Fetcher, signal?: AbortSignal): Promise<Map<string, number>> {
   if (!/^[0-9A-F]{5}$/.test(prefix)) throw new Error('pass: a range is five upper-case hex digits')
   const headers = { 'Add-Padding': 'true' }
@@ -80,18 +70,15 @@ export async function rangeOf(prefix: string, fetcher: Fetcher, signal?: AbortSi
   if (!response.ok) throw failure('Have I Been Pwned', response.status)
   return parseRange(await response.text())
 }
-
 export async function pwnedCount(password: string, fetcher: Fetcher, signal?: AbortSignal): Promise<number> {
   const hash = await sha1Hex(password)
   const range = await rangeOf(hash.slice(0, 5), fetcher, signal)
   return range.get(hash.slice(5)) ?? 0
 }
-
 export interface CompromisedOptions {
   concurrency?: number
   signal?: AbortSignal
 }
-
 export async function compromisedOf(
   items: readonly Item[],
   fetcher: Fetcher,
@@ -125,7 +112,6 @@ export async function compromisedOf(
   await Promise.all(Array.from({ length: lanes }, worker))
   return compromised
 }
-
 function breachOf(value: unknown): Breach | null {
   if (value === null || typeof value !== 'object') return null
   const one = value as Record<string, unknown>
@@ -142,7 +128,6 @@ function breachOf(value: unknown): Breach | null {
       : [],
   }
 }
-
 export async function breachedAccount(
   email: string,
   apiKey: string,

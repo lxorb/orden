@@ -28,7 +28,6 @@
     now: number
     onday: (day: number) => void
   } = $props()
-
   const pieces = $derived(piecesIn(own, from, to, now))
   const totals = $derived(totalsOf(pieces))
   const whole = $derived(wholeOf(pieces))
@@ -56,14 +55,12 @@
       .filter((one) => one.list.length),
   )
   const most = (list: readonly Place[]) => list.map((one) => one.ms).reduce((high, one) => Math.max(high, one), 1)
-
   const madeOfText = (activity: string | null): string[] =>
     (['site', 'app'] as const)
       .flatMap((lane) => madeOf(spans, activity, lane, from, to, now).slice(0, 2))
       .sort((one, other) => other.ms - one.ms)
       .slice(0, 3)
       .map((one) => `${one.name} ${length(one.ms)}`)
-
   function placeMenu(event: MouseEvent, lane: Lane, place: Place) {
     event.preventDefault()
     const was = time.ruleFor(lane, place.key)?.activity ?? null
@@ -87,7 +84,6 @@
       { title: `Count as: ${place.name}` },
     )
   }
-
   async function askGoal(activity: Activity, per: Per) {
     const was = time.goalFor(activity.id, per)
     const said = await prompt.ask({
@@ -98,7 +94,6 @@
     })
     if (said !== null) time.setGoal(activity.id, per, lengthIn(said))
   }
-
   function activityMenu(event: MouseEvent, activity: Activity | null) {
     event.preventDefault()
     if (!activity) return
@@ -237,13 +232,11 @@
     flex-direction: column;
     gap: var(--space-4);
   }
-
   .cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
     gap: var(--space-2);
   }
-
   .card {
     display: flex;
     flex-direction: column;
@@ -252,26 +245,22 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .what {
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .much {
     color: var(--text-strong);
     font-size: 1.35rem;
     font-variant-numeric: tabular-nums;
     font-weight: var(--weight-strong);
   }
-
   .chart {
     display: flex;
     align-items: stretch;
     gap: 4px;
     height: 9rem;
   }
-
   .column {
     flex: 1;
     min-width: 0;
@@ -288,7 +277,6 @@
     font-size: var(--text-xs);
     cursor: pointer;
   }
-
   .stack {
     display: flex;
     flex-direction: column-reverse;
@@ -297,35 +285,29 @@
     border-radius: 3px 3px 0 0;
     background: var(--surface-2);
   }
-
   .stack span {
     flex-basis: 0;
   }
-
   .day {
     text-align: center;
     white-space: nowrap;
   }
-
   .columns {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
     gap: var(--space-4);
   }
-
   ul {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   .dot {
     flex: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
   }
-
   .name {
     display: block;
     overflow: hidden;
@@ -333,7 +315,6 @@
     text-align: match-parent;
     text-overflow: ellipsis;
   }
-
   .made {
     display: block;
     overflow: hidden;
@@ -342,11 +323,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .activities .bar {
     flex-basis: 40%;
   }
-
   .bar {
     flex: 0 0 22%;
     height: 6px;
@@ -354,25 +333,21 @@
     border-radius: 3px;
     background: var(--surface-2);
   }
-
   .bar span {
     display: block;
     max-width: 100%;
     height: 100%;
     background: var(--tint);
   }
-
   @media (forced-colors: active) {
     .bar span {
       background: Highlight;
     }
   }
-
   .counted {
     flex: none;
     font-size: var(--text-xs);
   }
-
   .none {
     margin: 0;
     color: var(--muted);

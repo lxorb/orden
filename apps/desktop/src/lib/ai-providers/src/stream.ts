@@ -1,5 +1,4 @@
 export const SSE_DONE = '[DONE]'
-
 export function sseLines(held: string, chunk: string): { payloads: string[]; rest: string } {
   const last = chunk.lastIndexOf('\n')
   if (last < 0) return { payloads: [], rest: held + chunk }
@@ -14,7 +13,6 @@ export function sseLines(held: string, chunk: string): { payloads: string[]; res
   }
   return { payloads, rest }
 }
-
 export function sseJson(payload: string): unknown {
   if (payload === SSE_DONE) return null
   try {
@@ -23,7 +21,6 @@ export function sseJson(payload: string): unknown {
     return null
   }
 }
-
 export async function* sseEvents(body: ReadableStream<Uint8Array>, done?: () => void): AsyncGenerator {
   const reader = body.getReader()
   const decoder = new TextDecoder()

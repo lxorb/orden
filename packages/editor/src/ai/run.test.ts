@@ -11,7 +11,6 @@ import { aiExtension, aiFenceAt, type AiAsk, askAiFence, askingAt, setAiRunner, 
 
 class Fake {
   state: EditorState
-
   constructor(doc: string) {
     this.state = parsed(
       EditorState.create({
@@ -20,49 +19,38 @@ class Fake {
       }),
     )
   }
-
   dispatch = (spec: TransactionSpec) => {
     this.state = this.state.update(spec).state
   }
-
   get text(): string {
     return this.state.doc.toString()
   }
-
   get asking(): boolean {
     return askingAt(this.state, this.text.indexOf('```ai'))
   }
 }
-
 const SCROLLED = StateEffect.define()
-
 class Pane extends Fake {
   readonly scrollDOM = { scrollTop: 0 }
-
   override dispatch = (spec: TransactionSpec) => {
     const made = this.state.update(spec)
     this.state = made.state
     if (made.changes.empty || isExternal(made)) return
     documentOf(this)?.local(made.changes, made.state.selection, this)
   }
-
   setState(next: EditorState) {
     this.state = next
   }
-
   scrollSnapshot() {
     return SCROLLED.of(null)
   }
 }
-
 const NOTE = 'A note about herons.\n\n```ai\nSummarise @note\n```\n\nAfter it.\n'
 const PLAIN = 'A note.\n\n```ai\nJust the question\n```\n'
-
 function held() {
   let asked: AiAsk | null = null
   let ended: (() => void) | null = null
   let aborted = false
-
   setAiRunner((ask, signal) => {
     asked = ask
     signal.addEventListener('abort', () => {
@@ -73,7 +61,6 @@ function held() {
       ended = resolve
     })
   })
-
   return {
     get ask(): AiAsk {
       if (!asked) throw new Error('nothing was asked')
@@ -85,56 +72,44 @@ function held() {
     finish: () => ended?.(),
   }
 }
-
 afterEach(() => setAiRunner(null))
-
 async function settled(view: Fake): Promise<void> {
   for (let turn = 0; turn < 200 && view.asking; turn++) await new Promise((resolve) => setTimeout(resolve, 5))
 }
-
 describe('finding the ai fence', () => {
   test('reaches it from inside the question', () => {
     const view = new Fake(NOTE)
     const found = aiFenceAt(view.state, NOTE.indexOf('Summarise'))
-
     expect(found?.prompt).toBe('Summarise @note')
     expect(found?.from).toBe(NOTE.indexOf('```ai'))
     expect(found?.to).toBe(NOTE.indexOf('```\n\nAfter') + 3)
   })
-
   test('finds nothing in a fence of another language', () => {
     const view = new Fake('```js\nconsole.log(1)\n```\n')
     expect(aiFenceAt(view.state, 8)).toBeNull()
   })
 })
-
 describe('asking', () => {
   test('does nothing without a runner', () => {
     const view = new Fake(NOTE)
     const fence = aiFenceAt(view.state, NOTE.indexOf('Summarise'))
-
     expect(askAiFence(view, fence!)).toBe(false)
   })
-
   test('does nothing for a fence with no question in it', () => {
     held()
     const view = new Fake('```ai\n\n```\n')
     const fence = aiFenceAt(view.state, 7)
-
     expect(askAiFence(view, fence!)).toBe(false)
   })
-
   test('hands over the note only when the question asked for it', () => {
     const runner = held()
     const view = new Fake(NOTE)
     askAiFence(view, aiFenceAt(view.state, NOTE.indexOf('Summarise'))!)
     expect(runner.ask.note).toBe(NOTE)
-
     const plain = new Fake(PLAIN)
     askAiFence(plain, aiFenceAt(plain.state, PLAIN.indexOf('Just'))!)
     expect(runner.ask.note).toBeNull()
   })
-
   test('names the document the question was asked in', () => {
     const runner = held()
     const view = new Fake(PLAIN)
@@ -143,34 +118,28 @@ describe('asking', () => {
     askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
     expect(runner.ask.shows).toBe(live)
   })
-
   test('writes nothing until the model is known', () => {
     held()
     const view = new Fake(NOTE)
     askAiFence(view, aiFenceAt(view.state, NOTE.indexOf('Summarise'))!)
-
     expect(view.text).toBe(NOTE)
     expect(askingAt(view.state, NOTE.indexOf('```ai'))).toBe(true)
   })
-
   test('streams the answer under the fence', async () => {
     const runner = held()
     const view = new Fake(NOTE)
     askAiFence(view, aiFenceAt(view.state, NOTE.indexOf('Summarise'))!)
-
     runner.ask.started('gpt-test')
     runner.ask.wrote('Herons ')
     runner.ask.wrote('stand still.')
     runner.finish()
     await settled(view)
-
     expect(view.text).toBe(
       'A note about herons.\n\n```ai\nSummarise @note\n```\n\n' +
         `${ANSWER_OPEN}\n*answered by gpt-test, ${dated()}*\n\nHerons stand still.\n${ANSWER_CLOSE}` +
         '\n\nAfter it.\n',
     )
   })
-
   test('streams the answer inside the list item or quote the fence is in', async () => {
     for (const [doc, lead] of [
       ['1. a\n\n   ```ai\n   question here\n   ```\n2. b\n', '   '],
@@ -181,32 +150,26 @@ describe('asking', () => {
       const fence = aiFenceAt(view.state, doc.indexOf('```ai') - lead.length)
       expect(fence?.prompt).toBe('question here')
       askAiFence(view, fence!)
-
       runner.ask.started('m')
       runner.ask.wrote('line one\n\nline two')
       runner.finish()
       await settled(view)
-
       expect(view.text).toContain(
         `${lead}${ANSWER_OPEN}\n${lead}*answered by m, ${dated()}*\n${lead.trimEnd()}\n` +
           `${lead}line one\n${lead.trimEnd()}\n${lead}line two\n${lead}${ANSWER_CLOSE}`,
       )
     }
   })
-
   test('takes the blank space off the end of what the model sent', async () => {
     const runner = held()
     const view = new Fake(PLAIN)
     askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
-
     runner.ask.started('m')
     runner.ask.wrote('One.\n\n\n')
     runner.finish()
     await settled(view)
-
     expect(view.text).toContain(`One.\n${ANSWER_CLOSE}`)
   })
-
   test('replaces the answer it wrote last time rather than adding a second', async () => {
     const first = held()
     const view = new Fake(NOTE)
@@ -216,63 +179,51 @@ describe('asking', () => {
     first.ask.wrote('The first answer.')
     first.finish()
     await settled(view)
-
     const again = held()
     askAiFence(view, aiFenceAt(view.state, at)!)
     again.ask.started('m2')
     again.ask.wrote('The second.')
     again.finish()
     await settled(view)
-
     expect(view.text.match(new RegExp(ANSWER_OPEN, 'g'))).toHaveLength(1)
     expect(view.text).toContain('The second.')
     expect(view.text).not.toContain('The first answer.')
     expect(view.text).toContain('After it.')
   })
-
   test('keeps what arrived when it is stopped', async () => {
     const runner = held()
     const view = new Fake(PLAIN)
     askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
-
     runner.ask.started('m')
     runner.ask.wrote('As far as')
     stopAskAt(view, PLAIN.indexOf('```ai'))
     await settled(view)
-
     expect(runner.aborted).toBe(true)
     expect(view.text).toContain(`As far as\n${ANSWER_CLOSE}`)
     expect(askingAt(view.state, PLAIN.indexOf('```ai'))).toBe(false)
   })
-
   test('follows the fence when the note above it grows', async () => {
     const runner = held()
     const view = new Fake(PLAIN)
     askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
     runner.ask.started('m')
-
     view.dispatch({ changes: { from: 0, insert: 'A line typed above.\n' } })
     runner.ask.wrote('Still lands right.')
     runner.finish()
     await settled(view)
-
     expect(view.text).toContain(`\n\nStill lands right.\n${ANSWER_CLOSE}`)
     expect(view.text.startsWith('A line typed above.\nA note.')).toBe(true)
   })
-
   test('stops itself when the fence stops being one', async () => {
     const runner = held()
     const view = new Fake(PLAIN)
     const from = PLAIN.indexOf('```ai')
     askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
-
     view.dispatch({ changes: { from, to: from + 3, insert: '' } })
     await settled(view)
-
     expect(runner.aborted).toBe(true)
     expect(askingAt(view.state, from)).toBe(false)
   })
-
   test('refuses a note nobody may write in', () => {
     held()
     const readOnly = parsed(
@@ -286,10 +237,8 @@ describe('asking', () => {
       }),
     )
     const fence = aiFenceAt(readOnly, PLAIN.indexOf('Just'))
-
     expect(askAiFence({ state: readOnly, dispatch: () => undefined }, fence!)).toBe(false)
   })
-
   test('says who answered, and when', async () => {
     const runner = held()
     const view = new Fake(PLAIN)
@@ -297,11 +246,9 @@ describe('asking', () => {
     runner.ask.started('m')
     runner.finish()
     await settled(view)
-
     expect(view.text).toContain(`*answered by m, ${dated()}*`)
   })
 })
-
 describe('an answer while the pane turns to another note', () => {
   function switched() {
     const runner = held()
@@ -312,19 +259,16 @@ describe('an answer while the pane turns to another note', () => {
     askAiFence(pane, aiFenceAt(pane.state, NOTE.indexOf('Summarise'))!)
     runner.ask.started('gpt-test')
     runner.ask.wrote('Herons ')
-
     const away = HeldState.shownIn(first, pane)
     away.take(pane)
     HeldState.waiting(second, new Fake(PLAIN).state).give(pane)
     return { runner, first, second, pane, away }
   }
-
   test('goes on into its own note, whole, and leaves the note shown alone', async () => {
     const { runner, first, pane, away } = switched()
     runner.ask.wrote('stand still.')
     runner.finish()
     await new Promise((resolve) => setTimeout(resolve, 10))
-
     expect(first.text.toString()).toBe(
       'A note about herons.\n\n```ai\nSummarise @note\n```\n\n' +
         `${ANSWER_OPEN}\n*answered by gpt-test, ${dated()}*\n\nHerons stand still.\n${ANSWER_CLOSE}` +
@@ -335,22 +279,18 @@ describe('an answer while the pane turns to another note', () => {
     expect(askingAt(away.state, NOTE.indexOf('```ai'))).toBe(false)
     expect(runner.aborted).toBe(false)
   })
-
   test('stops the model once its note is closed', () => {
     const { runner, away } = switched()
     away.release()
     runner.ask.wrote('more')
-
     expect(runner.aborted).toBe(true)
   })
 })
-
 function dated(): string {
   const now = new Date()
   const two = (value: number) => String(value).padStart(2, '0')
   return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`
 }
-
 describe('asking again over an answer whose closing mark was deleted', () => {
   test('keeps the notes and the second question written below it', async () => {
     const doc =
@@ -365,7 +305,6 @@ describe('asking again over an answer whose closing mark was deleted', () => {
       asked = ask
       return new Promise<void>((resolve) => (finish = resolve))
     })
-
     const view = new Fake(doc)
     expect(askAiFence(view, aiFenceAt(view.state, doc.indexOf('first'))!)).toBe(true)
     const ask = asked as AiAsk | null
@@ -375,7 +314,6 @@ describe('asking again over an answer whose closing mark was deleted', () => {
     for (let turn = 0; turn < 100 && askingAt(view.state, 0); turn++) {
       await new Promise((resolve) => setTimeout(resolve, 5))
     }
-
     expect(view.text).toContain('new answer')
     expect(view.text).toContain('My own notes written later.')
     expect(view.text).toContain('second question')

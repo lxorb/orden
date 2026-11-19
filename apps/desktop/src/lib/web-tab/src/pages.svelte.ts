@@ -14,27 +14,21 @@ import type { HalfTyped } from '@orden/scan/typed'
 function history(): Promise<typeof import('./visited').visited> {
   return import('./visited').then((module) => module.visited)
 }
-
 function stores(): Promise<typeof import('./web-data.svelte').webData> {
   return import('./web-data.svelte').then((module) => module.webData)
 }
-
 function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
   return import('./permissions.svelte')
 }
-
 function leftPrivate(privateLeft: boolean): void {
   if (!__EVEN_PLUGIN__ && !privateLeft) void pagePermissions().then(({ grants }) => grants.leftPrivate())
 }
-
 function shut(tab: string, keep: boolean): Promise<unknown> {
   return invoke('web_close', { tab, keep }).catch(() => undefined)
 }
-
 function sleeping() {
   return import('./sleeping')
 }
-
 export const OUT_OF_THE_WAY = 20_000
 const SHOT_KEEPS = 400
 const LOOK_WAITS = 500
@@ -42,37 +36,30 @@ const SHOT_WAITS = 300
 const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
 const ARRIVES = 3000
-
 export interface Rect {
   x: number
   y: number
   width: number
   height: number
 }
-
 export interface Frame {
   window: { width: number; height: number }
   area: Rect
   pane: Rect
 }
-
 export type Foot = readonly [left: number, right: number]
-
 export interface Over {
   cut: Cut | null
   frame: Frame | null
   opacity?: number
   corner?: Foot
 }
-
 const WHOLE: Cut = { all: true, hollows: [] }
 const NOTHING: Over = { cut: null, frame: null }
-
 function awayFrom(pane: Rect): Placement {
   const away = { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }
   return { pane: away, visible: true, frame: null, cut: WHOLE, away: true }
 }
-
 interface Placement {
   pane: Rect
   visible: boolean
@@ -82,21 +69,15 @@ interface Placement {
   opacity?: number
   corner?: Foot | undefined
 }
-
 export type Layering = 'under' | 'cut' | 'hollows' | 'hide'
-
 let layering = $state<Layering>('hide')
-
 function heard(page: Page, said: unknown): void {
   layering = said === 'under' || said === 'hollows' ? said : said === true ? 'cut' : 'hide'
   page.layering = layering
 }
-
 const cutsOut = (layering: Layering, cut: Cut | null): boolean =>
   cut !== null && (layering === 'cut' || (layering === 'hollows' && !cut.all))
-
 const goesAway = (layering: Layering): boolean => layering === 'hide' || layering === 'hollows'
-
 interface Looked {
   url: string
   x: number
@@ -105,24 +86,19 @@ interface Looked {
   at: number
   edited?: boolean
 }
-
 interface Clipped {
   url: string
   title: string
   html: string
 }
-
 export type Step = 'back' | 'forward' | 'reload' | 'fresh' | 'stop'
-
 interface Wanted {
   pane: Rect
   visible: boolean
   covering: boolean
   over: Over
 }
-
 export type Framing = 'card' | 'frame'
-
 interface Moved {
   tab: string
   url: string
@@ -131,7 +107,6 @@ interface Moved {
   forward: boolean
   loading: boolean
 }
-
 function readMoved(said: unknown): Moved | null {
   if (!isRecord(said) || !isString(said.tab) || !isString(said.url)) return null
   return {
@@ -143,32 +118,26 @@ function readMoved(said: unknown): Moved | null {
     loading: said.loading === true,
   }
 }
-
 interface Iconed {
   tab: string
   icon: string
 }
-
 function readIconed(said: unknown): Iconed | null {
   return isRecord(said) && isString(said.tab) && isString(said.icon) ? { tab: said.tab, icon: said.icon } : null
 }
-
 interface Opening {
   tab: string
   url: string
   behind: boolean
 }
-
 export function readChosen(value: unknown): string | null {
   return isRecord(value) && isString(value.tab) ? value.tab : null
 }
-
 export async function chooseTab(tab: string): Promise<void> {
   const { workspace } = await import('../../workspace/src/api')
   if (workspace.activeTabId === tab || !workspace.tabs.some((one) => one.id === tab)) return
   workspace.activate(tab)
 }
-
 export function cardCorner(within?: Element | null): Foot {
   if (typeof document === 'undefined') return [0, 0]
   const card = within?.closest('[data-pane]')
@@ -180,14 +149,12 @@ export function cardCorner(within?: Element | null): Foot {
   const round = parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
   return [round, round]
 }
-
 export function readOpening(said: unknown): Opening | null {
   if (!isRecord(said) || !isString(said.tab) || !isString(said.url)) return null
   return isWebAddress(said.url) || isExtensionPage(said.url)
     ? { tab: said.tab, url: said.url, behind: said.behind === true }
     : null
 }
-
 export class Page {
   url = $state<string | null>(null)
   title = $state('')
@@ -240,16 +207,13 @@ export class Page {
   inPrivate = false
   store: string | null | undefined
   rehousing = Promise.resolve()
-
   marked(icon: string) {
     this.icon = icon || null
     if (icon && Date.now() <= this.arriving) this.kept = icon
   }
-
   loaded(loading: boolean) {
     this.arriving = loading ? Infinity : Date.now() + ARRIVES
   }
-
   onScreen = false
   lent = false
   playing = $state(false)
@@ -258,100 +222,75 @@ export class Page {
   zoom = $state(1)
   find = $state({ open: false, query: '', count: 0, at: -1 })
 }
-
 export function inSight(page: Page): boolean {
   return page.onScreen
 }
-
 class Pages {
   private readonly held = new Map<string, Page>()
-
   private readonly gone = new Set<string>()
-
   private readonly goingTo = new WeakMap<Page, string>()
-
   private readonly movedWhileTyping = new WeakSet<Page>()
-
   private listening: Promise<void> | null = null
-
   each(): [string, Page][] {
     return [...this.held.entries()]
   }
-
   peek(tabId: string): Page | undefined {
     return this.held.get(tabId)
   }
-
   of(tabId: string): Page {
     const found = this.held.get(tabId)
     if (found) return found
     if (this.gone.has(tabId)) return new Page()
-
     void this.listen()
-
     const made = new Page()
     this.held.set(tabId, made)
     return made
   }
-
   iconOf(tabId: string): string | null {
     return this.held.get(tabId)?.icon ?? null
   }
-
   loadingOf(tabId: string): boolean {
     return this.held.get(tabId)?.loading ?? false
   }
-
   lentOf(tabId: string): boolean {
     return this.held.get(tabId)?.lent ?? false
   }
-
   async losing(tabId: string): Promise<boolean> {
     const page = this.held.get(tabId)
     if (!page?.live) return false
     await this.look(tabId)
     return page.edited || page.loading
   }
-
   addressOf(tabId: string): string | null {
     return this.held.get(tabId)?.url ?? null
   }
-
   typedInto(tabId: string): boolean {
     return (this.held.get(tabId)?.halfTyped ?? null) !== null
   }
-
   async show(tabId: string, url: string, pane: Rect, visible = true, over: Over = NOTHING): Promise<void> {
     this.gone.delete(tabId)
     const page = this.of(tabId)
     this.wake(page)
     page.url ??= url
     page.onScreen = true
-
     if (!isDesktop) {
       page.live = true
       return
     }
-
     await this.listen()
-
     if (page.crashed || !inSight(page)) return
-
     if (page.live) {
       await this.thaw(tabId)
       if (!inSight(page)) return
       await this.place(tabId, pane, visible, !visible, over)
       return
     }
-
     if (page.opening) {
       page.wanted = { pane, visible, covering: !visible, over }
       return
     }
-
     await this.build(tabId, page, pane, visible, over)
   }
-
   async adopt(tabId: string, handing: () => Promise<void>): Promise<void> {
     this.gone.delete(tabId)
     const page = this.of(tabId)
@@ -359,7 +298,6 @@ class Pages {
       await handing()
       return
     }
-
     page.opening = true
     let handed = false
     try {
@@ -374,33 +312,26 @@ class Pages {
     } finally {
       page.opening = false
     }
-
     const goingTo = this.goingTo.get(page)
     this.goingTo.delete(page)
     if (goingTo && handed) void this.go(tabId, goingTo, page.upgrade)
-
     const wanted = page.wanted
     page.wanted = null
     if (!wanted) return
     if (handed) await this.place(tabId, wanted.pane, wanted.visible, wanted.covering, wanted.over)
     else await this.build(tabId, page, wanted.pane, wanted.visible, wanted.over)
   }
-
   async build(tabId: string, page: Page, pane: Rect, visible: boolean, over: Over = NOTHING): Promise<void> {
     page.opening = true
-
     if (!visible) page.wanted = { pane, visible, covering: true, over }
-
     const kept = placeOf(page.path)
     const here = kept?.url === page.url ? kept : null
     const place = here ? { x: here.x, y: here.y } : null
     const trail = here?.trail ?? []
-
     page.pane = pane
     const tried = page.url
     const forOwn = page.own
     this.goingTo.delete(page)
-
     try {
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
       const pass = (await import('../../gates/src/api')).passOn()
@@ -435,11 +366,9 @@ class Pages {
     } finally {
       page.opening = false
     }
-
     const goingTo = this.goingTo.get(page)
     this.goingTo.delete(page)
     if (goingTo) page.url = goingTo
-
     const wanted = page.wanted
     page.wanted = null
     if (page.live && page.crashed) {
@@ -451,17 +380,13 @@ class Pages {
       if (moved && wanted) await this.build(tabId, page, wanted.pane, wanted.visible, wanted.over)
       return
     }
-
     if (this.held.get(tabId) !== page) {
       page.live = false
       await shut(tabId, false)
       return
     }
-
     if (page.own !== forOwn && !page.inPrivate) void this.rehouse(tabId, page.own)
-
     if (goingTo && goingTo !== tried) void this.go(tabId, goingTo, page.upgrade)
-
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
     else if (wanted.covering)
@@ -474,21 +399,17 @@ class Pages {
       )
     else this.hide(tabId, wanted.pane)
   }
-
   async place(tabId: string, pane: Rect, visible: boolean, covering = false, over: Over = NOTHING): Promise<void> {
     if (__EVEN_PLUGIN__) return
     const page = this.held.get(tabId)
     if (!isDesktop || !page) return
-
     if (page.opening) {
       page.wanted = { pane, visible, covering, over }
       return
     }
-
     if (!page.live && visible) return
     const turn = ++page.placings
     clearTimeout(page.stowing)
-
     if (page.layering === 'under' && page.live) {
       const shown = visible || covering
       const cut = !shown ? null : covering ? (over.cut ?? WHOLE) : over.cut
@@ -502,12 +423,10 @@ class Pages {
       })
       return
     }
-
     if (covering && page.live && cutsOut(page.layering, over.cut)) {
       await this.cover(tabId, page, pane, over)
       return
     }
-
     if (covering) await this.shoot(tabId)
     if (page.placings !== turn) return
     if (covering && goesAway(page.layering) && (page.shown || page.stowed)) {
@@ -521,7 +440,6 @@ class Pages {
       await new Promise<void>((go) => setTimeout(go, DRAWN_AWAY))
       if (page.placings !== turn) return
     }
-
     await this.put(tabId, page, {
       pane,
       visible,
@@ -530,13 +448,11 @@ class Pages {
       corner: over.corner,
     })
   }
-
   private async stow(tabId: string, page: Page, pane: Rect, turn: number): Promise<void> {
     if (page.placings !== turn) return
     page.stowed = true
     await this.put(tabId, page, { pane, visible: false, frame: null, cut: null })
   }
-
   private async cover(tabId: string, page: Page, pane: Rect, over: Over): Promise<void> {
     if (__EVEN_PLUGIN__ || !over.cut) return
     if (page.shot === null || over.cut.all) void this.shoot(tabId)
@@ -548,13 +464,11 @@ class Pages {
       corner: over.corner,
     })
   }
-
   private async put(tabId: string, page: Page, one: Placement): Promise<void> {
     if (__EVEN_PLUGIN__) return
     page.placing ??= new Latest((sent) => this.send(tabId, page, sent))
     await page.placing.put(one).catch(() => undefined)
   }
-
   private async send(tabId: string, page: Page, one: Placement): Promise<void> {
     if (__EVEN_PLUGIN__) return
     page.sent = one
@@ -580,36 +494,29 @@ class Pages {
       throw error
     }
     if (one.away) return
-
     if (one.visible && (page.pane?.width !== one.pane.width || page.pane.height !== one.pane.height)) {
       page.shot = null
     }
     page.pane = one.pane
     page.shown = one.visible
   }
-
   get cuts(): boolean {
     return layering !== 'hide'
   }
-
   get under(): boolean {
     return layering === 'under'
   }
-
   still = $state(false)
-
   holdStill(): Promise<void> | null {
     this.still = true
     const shown = this.each().filter(([, page]) => this.heldWhere(page) !== null)
     if (shown.length === 0) return null
     return Promise.all(shown.map(([tabId, page]) => this.holdOne(tabId, page))).then(() => undefined)
   }
-
   private heldWhere(page: Page): Placement | null {
     if (__EVEN_PLUGIN__ || !isDesktop || !page.live) return null
     return page.heldAt ?? (page.shown && page.sent?.visible && !page.sent.away ? page.sent : null)
   }
-
   private async holdOne(tabId: string, page: Page): Promise<void> {
     const at = this.heldWhere(page)
     if (!at) return
@@ -628,69 +535,56 @@ class Pages {
           : { ...at, visible: false },
     )
   }
-
   async letGo(): Promise<void> {
     this.still = false
     await Promise.all(this.each().map(([tabId, page]) => this.letOneGo(tabId, page)))
   }
-
   private async letOneGo(tabId: string, page: Page): Promise<void> {
     const at = page.heldAt
     if (!at) return
     if (page.layering !== 'under') await this.put(tabId, page, at)
     if (!this.still) page.heldAt = null
   }
-
   hide(tabId: string, pane: Rect) {
     const page = this.held.get(tabId)
     if (!page) return
     page.onScreen = false
     page.looked = Date.now()
-
     if (isDesktop && page.live && (page.shooting || page.lent)) void this.aside(tabId, page, pane)
     else void this.place(tabId, pane, false)
     if (!isDesktop) return
-
     void this.look(tabId).then(() => this.rest(tabId))
   }
-
   async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
     await this.put(tabId, page, awayFrom(pane))
     await page.shooting
     if (!page.onScreen && !page.lent) await this.place(tabId, pane, false)
   }
-
   private async rest(tabId: string): Promise<void> {
     ;(await sleeping()).rest(this, tabId)
   }
-
   freeze(tabId: string) {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || page.frozen || page.onScreen || page.lent) return
     page.frozen = true
     void sleeping().then((one) => one.lull(this, tabId, page, true))
   }
-
   async thaw(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.frozen) return page?.lulling
-
     this.wake(page)
     page.frozen = false
     const thawed = (await sleeping()).lull(this, tabId, page, false)
     if (!page.onScreen) void this.rest(tabId)
     return thawed
   }
-
   retime() {
     for (const [id, page] of this.held) if (!page.onScreen) void this.rest(id)
     void this.bound()
   }
-
   async park(tabId: string, hidden = false): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.live) return
-
     await this.look(tabId)
     if (hidden && page.onScreen) return
     page.live = false
@@ -700,12 +594,10 @@ class Pages {
     clearTimeout(page.resting)
     await shut(tabId, true)
   }
-
   async ended(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (page?.opening) page.crashed = true
     if (!page?.live) return
-
     page.crashed = true
     page.live = false
     page.frozen = false
@@ -717,7 +609,6 @@ class Pages {
     clearTimeout(page.resting)
     await shut(tabId, true)
   }
-
   async failed(tabId: string, not: NotArrived): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.live) return
@@ -725,12 +616,10 @@ class Pages {
     page.failure = { ...not, url: page.url ?? not.url }
     await this.ended(tabId)
   }
-
   private async look(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     const said = await this.whereIs(tabId)
     if (!page || !said) return
-
     page.edited = said.edited === true
     if (!page.path || page.inPrivate) return
     placeKept(page.path, {
@@ -741,28 +630,23 @@ class Pages {
       at: said.at,
     })
   }
-
   private async whereIs(tabId: string): Promise<Looked | null> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || page.frozen) return null
-
     return Promise.race([
       invoke<Looked>('web_look', { tab: tabId }),
       new Promise<null>((go) => setTimeout(() => go(null), LOOK_WAITS)),
     ]).catch(() => null)
   }
-
   async stepAddress(tabId: string, by: -1 | 1): Promise<string | null> {
     const said = await this.whereIs(tabId)
     return said?.trail[said.at + by] ?? null
   }
-
   async shoot(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || !page.shown) return
     if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
     if (page.shooting) return page.shooting
-
     const taking = this.photograph(page, tabId)
     page.shooting = taking
     try {
@@ -771,14 +655,12 @@ class Pages {
       page.shooting = null
     }
   }
-
   freshen(tabId: string): void {
     const page = this.held.get(tabId)
     if (!page || (page.shot && Date.now() - page.shotAt < SHOT_KEEPS)) return
     page.shot = null
     void this.shoot(tabId)
   }
-
   private async photograph(page: Page, tabId: string): Promise<void> {
     const { url, pane, shotAt } = page
     const same = (now: Rect | null) => now?.width === pane?.width && now?.height === pane?.height
@@ -799,17 +681,14 @@ class Pages {
       // ground, which is what it held before there was a picture to hold.
     }
   }
-
   private wake(page: Page) {
     clearTimeout(page.resting)
     page.resting = undefined
     page.looked = Date.now()
   }
-
   private async bound(): Promise<void> {
     ;(await sleeping()).bound(this)
   }
-
   typing(tabId: string, on: boolean) {
     const page = this.held.get(tabId)
     if (!page) return
@@ -818,13 +697,10 @@ class Pages {
     this.movedWhileTyping.delete(page)
     if (page.at) page.url = page.at
   }
-
   async go(tabId: string, url: string, upgrade: Upgrade | null = null): Promise<void> {
     const page = this.of(tabId)
     if (!isWebAddress(url)) return
-
     this.movedWhileTyping.delete(page)
-
     page.upgrade = upgrade
     page.url = url
     page.openable = true
@@ -833,15 +709,12 @@ class Pages {
     page.title = ''
     page.icon = null
     page.shot = null
-
     if (!isDesktop) {
       void this.saw(tabId, url, '')
       return
     }
-
     if (page.opening) this.goingTo.set(page, url)
     if (!page.live) return
-
     try {
       await invoke('web_navigate', { tab: tabId, url })
     } catch {
@@ -849,7 +722,6 @@ class Pages {
       // address the tab already holds. See `place`.
     }
   }
-
   async step(tabId: string, step: Step, by = 1): Promise<void> {
     const page = this.held.get(tabId)
     if (page?.crashed && (step === 'reload' || step === 'fresh')) {
@@ -861,44 +733,35 @@ class Pages {
     }
     if (!isDesktop || !page?.live) return
     page.upgrade = null
-
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
   }
-
   async trail(tabId: string): Promise<{ urls: string[]; at: number }> {
     const none = { urls: [], at: 0 }
     if (!isDesktop || !this.held.get(tabId)?.live) return none
-
     return invoke<[string[], number]>('web_trail', { tab: tabId })
       .then(([urls, at]) => ({ urls, at }))
       .catch(() => none)
   }
-
   async zoom(tabId: string, factor: number): Promise<void> {
     if (!isDesktop || !this.held.get(tabId)?.live) return
     await invoke('web_zoom', { tab: tabId, factor }).catch(() => undefined)
   }
-
   async print(tabId: string): Promise<void> {
     if (!isDesktop || !this.held.get(tabId)?.live) return
     await invoke('web_print', { tab: tabId }).catch(() => undefined)
   }
-
   async read(tabId: string, selection: boolean): Promise<Clipped | null> {
     if (!isDesktop || !this.held.get(tabId)?.live) return null
     return invoke<Clipped>('web_clip', { tab: tabId, selection }).catch(() => null)
   }
-
   private async saw(tabId: string, url: string, title: string): Promise<void> {
     if (this.held.get(tabId)?.inPrivate) return
     const [visited, webData] = await Promise.all([history(), stores()])
     visited.saw(webData.history(), tabId, url, title)
   }
-
   apart(): string[] {
     return [...this.held.values()].map((page) => page.own).filter((one) => one !== null)
   }
-
   rehouse(tabId: string, own: string | null, said: string | null = null): Promise<void> {
     const page = this.held.get(tabId)
     if (!page) return Promise.resolve()
@@ -907,12 +770,10 @@ class Pages {
     page.rehousing = moving.catch(() => undefined)
     return moving
   }
-
   private async moved(tabId: string, page: Page, said: string | null): Promise<void> {
     if (this.held.get(tabId) !== page || page.inPrivate) return
     const store = await (await stores()).store(page.own)
     if (!page.live || store === page.store) return
-
     const shown = page.shown ? page.pane : null
     page.opening = true
     try {
@@ -920,7 +781,6 @@ class Pages {
     } finally {
       page.opening = false
     }
-
     const wanted = page.wanted
     page.wanted = null
     const pane = wanted?.pane ?? shown
@@ -928,46 +788,36 @@ class Pages {
       await this.build(tabId, page, pane, wanted?.visible ?? true, wanted?.over)
     page.notice = said
   }
-
   private anyPrivate(): boolean {
     return [...this.held.values()].some((page) => page.inPrivate)
   }
-
   forget(tabId: string) {
     this.gone.add(tabId)
     const page = this.held.get(tabId)
     if (!page) return
-
     clearTimeout(page.resting)
     void history().then((visited) => visited.left(tabId))
     this.asked.delete(tabId)
     if (page.inPrivate) void import('./sites').then(({ forgetAside }) => forgetAside(tabId))
-
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
       leftPrivate(this.anyPrivate())
       if (isDesktop) void shut(tabId, false)
       return
     }
-
     void this.closing(tabId)
   }
-
   private async closing(tabId: string): Promise<void> {
     await this.look(tabId)
-
     this.held.delete(tabId)
     leftPrivate(this.anyPrivate())
     await shut(tabId, false)
   }
-
   keepOnly(ids: readonly string[]) {
     const kept = new Set(ids)
     for (const tabId of [...this.held.keys()]) if (!kept.has(tabId)) this.forget(tabId)
   }
-
   private readonly asked = new Map<string, string>()
-
   openBlocked(tabId: string): void {
     const page = this.held.get(tabId)
     const url = page?.blocked
@@ -975,27 +825,22 @@ class Pages {
     page.blocked = null
     void this.openAsked({ tab: tabId, url, behind: false })
   }
-
   private async openAsked(said: Opening): Promise<void> {
     const { workspace } = await import('../../workspace/src/api')
     const opened = workspace.openPage(said.url, said.behind ? 'behind' : 'front', said.tab)
     if (opened !== null) this.asked.set(opened, said.tab)
   }
-
   private async downloaded(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     const opener = this.asked.get(tabId)
     if (opener === undefined || !page || page.titled) return
-
     const { closeItself } = await import('./self-close')
     await closeItself(tabId, opener)
   }
-
   private listen(): Promise<void> {
     if (__EVEN_PLUGIN__ || !isDesktop || typeof window === 'undefined') return Promise.resolve()
     this.listening ??= (async () => {
       const { hearHere: listen } = await import('../../windows/src/api')
-
       await listen('orden://web-open', (event) => {
         const said = readOpening(event.payload)
         if (said && this.held.has(said.tab)) void this.openAsked(said)
@@ -1030,7 +875,6 @@ class Pages {
         const said = readIconed(event.payload)
         const page = said ? this.held.get(said.tab) : undefined
         if (!said || !page) return
-
         page.marked(said.icon)
         const at = page.at ?? page.url
         if (said.icon && !page.inPrivate) {
@@ -1057,10 +901,8 @@ class Pages {
       await listen('orden://web-tab', (event) => {
         const said = readMoved(event.payload)
         if (!said) return
-
         const page = this.held.get(said.tab)
         if (!page) return
-
         const was = page.loading
         const moved = said.url !== '' && said.url !== page.at
         if (moved || (said.loading && !was)) {
@@ -1079,7 +921,6 @@ class Pages {
           page.titled = true
         }
         if (said.url) void this.saw(said.tab, said.url, said.title)
-
         if (was && !said.loading) {
           page.landed ??= page.url
           page.shot = null
@@ -1091,13 +932,10 @@ class Pages {
     return this.listening
   }
 }
-
 export const pages = new Pages()
-
 function carried(step: (carry: typeof import('./carry-in')) => void): void {
   if (isDesktop && !__EVEN_PLUGIN__) void import('./carry-in').then(step)
 }
-
 providePort('web.pages', {
   get cuts() {
     return pages.cuts
@@ -1171,31 +1009,23 @@ providePort('web.pages', {
     return clipNote(page, on)
   },
 })
-
 export const MARKS = 'orden:favicons'
 export const MARK = 'orden:favicon:'
-
 export function drawable(picture: string): boolean {
   return picture.length <= 22 * 1024 && /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(picture)
 }
-
 export type Seen = [picture: string, used: number]
-
 class Favicons {
   changed = $state(0)
   readonly sizes = new Map<string, number>()
   readonly pictures = new Map<string, string | null>()
   readonly unwritten = new Map<string, string>()
-
   private held: Map<string, Seen> | null = null
-
   index(): Map<string, Seen> {
     if (this.held) return this.held
-
     this.held = new Map()
     const saved = stored(MARKS)
     if (!isRecord(saved) || !isRecord(saved.pages) || !isRecord(saved.sizes)) return this.held
-
     for (const [key, one] of Object.entries(saved.pages)) {
       if (Array.isArray(one) && isString(one[0]) && isNumber(one[1])) {
         this.held.set(key, [one[0], one[1]])
@@ -1206,7 +1036,6 @@ class Favicons {
     }
     return this.held
   }
-
   private picture(id: string): string | null {
     let found = this.pictures.get(id)
     if (found === undefined) {
@@ -1216,17 +1045,14 @@ class Favicons {
     }
     return found
   }
-
   of(url: string | null | undefined): string | null {
     const keys = this.changed >= 0 ? keysOf(url) : null
     if (!keys) return null
-
     const index = this.index()
     for (const key of keys) {
       const held = index.get(key)
       const picture = held ? this.picture(held[0]) : null
       if (!held || !picture) continue
-
       if (Date.now() - held[1] > 86_400_000) {
         held[1] = Date.now()
         void import('./favicons').then((one) => one.later())
@@ -1236,9 +1062,7 @@ class Favicons {
     return null
   }
 }
-
 export const favicons = new Favicons()
-
 export function siteMark(
   live: string | null | undefined,
   url: string | null | undefined,

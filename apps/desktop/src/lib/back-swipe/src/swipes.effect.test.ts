@@ -10,10 +10,8 @@ vi.mock('../../workspace/src/api', () => ({
     goForward: () => undefined,
   },
 }))
-
 const { heard } = await import('./swipes')
 const { swiping } = await import('./shown.svelte')
-
 const PAGE = {
   url: null,
   title: '',
@@ -31,7 +29,6 @@ const PAGE = {
 }
 providePort('web.pages', { ...webPages(), of: () => PAGE })
 type Tab = import('../../workspace/src/api').Tab
-
 const pane = document.createElement('div')
 pane.dataset.pane = 'p'
 document.body.append(pane)
@@ -40,11 +37,9 @@ pane.getBoundingClientRect = () => {
   measured++
   return DOMRect.fromRect({ x: 0, y: 40, width: 800, height: 560 })
 }
-
 const tab = { id: 't', kind: 'note', paneId: 'p', canGoBack: true, canGoForward: false } as Tab
 const NONE = { left: false, right: false }
 const step = (dx: number, at: number) => heard({ tab, source: 'touch', dx, dy: 0, at, scrolls: NONE })
-
 describe('the arrow', () => {
   test('is out at the first step, where the fingers are, in the same turn', () => {
     step(-2, 1)
@@ -55,7 +50,6 @@ describe('the arrow', () => {
       expect(swiping.travel).toBe(2 + 3 * (at - 1))
     }
   })
-
   test('measures the room it comes in over once, not at every step', () => {
     expect(measured).toBe(1)
   })

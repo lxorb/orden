@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 
 const askedOf: string[] = []
-
 vi.mock('../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -11,15 +10,12 @@ vi.mock('../../platform/src/tauri', async (original) => ({
     return Promise.resolve(`data:image/png;base64,${args.ending}`)
   },
 }))
-
 const { KindIcons, kindOf } = await import('./kind-icons')
 const EntryMark = (await import('./EntryMark.svelte')).default
 const { workspace } = await import('../../workspace/src/api')
-
 const settled = async () => {
   for (let turn = 0; turn < 10; turn++) await Promise.resolve()
 }
-
 function held() {
   const asked: string[] = []
   const waiting = new Map<string, (url: string | null) => void>()
@@ -37,7 +33,6 @@ function held() {
   }
   return { icons, asked, answer }
 }
-
 describe("a file's kind", () => {
   test('is its lowercased ending, and nothing when the ending is no kind', () => {
     expect(kindOf('Report.DOCX')).toBe('docx')
@@ -47,7 +42,6 @@ describe("a file's kind", () => {
     expect(kindOf('notes from 3.5 hours of talk')).toBe('')
   })
 })
-
 describe("the system's icons for kinds of file", () => {
   test('are asked for once a kind, however many files of it are drawn', async () => {
     const { icons, asked, answer } = held()
@@ -58,7 +52,6 @@ describe("the system's icons for kinds of file", () => {
     expect(icons.of('other.DOCX')).toBe('data:image/png;base64,AA')
     expect(asked).toEqual(['docx'])
   })
-
   test('a few are asked for at once, the rest when those come back', async () => {
     const { icons, asked, answer } = held()
     for (let one = 0; one < 20; one++) icons.of(`a.k${one}`)
@@ -67,7 +60,6 @@ describe("the system's icons for kinds of file", () => {
     await answer('k0', null)
     expect(asked).toHaveLength(5)
   })
-
   test('a kind the system has no icon for is not asked for again', async () => {
     const { icons, asked, answer } = held()
     icons.of('a.zzz')
@@ -77,14 +69,12 @@ describe("the system's icons for kinds of file", () => {
     await settled()
     expect(asked).toEqual(['zzz'])
   })
-
   test('nothing is asked where there is no system to ask', async () => {
     const icons = new KindIcons(null)
     expect(icons.of('a.docx')).toBeNull()
     await settled()
   })
 })
-
 describe('a row of the file explorer', () => {
   test("wears Orden's own mark for what Orden opens and asks the system only for the rest", async () => {
     workspace.spaces = [{ id: 's', name: 'Me', root: '/me' }]
@@ -95,7 +85,6 @@ describe('a row of the file explorer', () => {
     drawn('/me/Folder.docx', true)
     await settled()
     expect(askedOf).toEqual([])
-
     expect(drawn('/me/Budget.xlsx')).toContain('<svg')
     drawn('/me/photo.png')
     drawn('/elsewhere/photo.jpg')

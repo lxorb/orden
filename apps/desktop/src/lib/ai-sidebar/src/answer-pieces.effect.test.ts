@@ -19,12 +19,10 @@ function steps() {
     left: () => waiting.length,
   }
 }
-
 const long = Array.from(
   { length: 400 },
   (_, at) => `<h2>Part ${String(at)}</h2><p>${'Herons stand still. '.repeat(10)}${String(at)}</p>`,
 ).join('')
-
 test('a short answer is drawn at once', () => {
   const node = document.createElement('div')
   const html = '<p>Herons stand still.</p>'
@@ -33,7 +31,6 @@ test('a short answer is drawn at once', () => {
   expect(node.innerHTML).toBe(html)
   expect(left()).toBe(0)
 })
-
 test('a long answer shows its end first, then the rest above it, piece by piece, as it was', () => {
   expect(long.length).toBeGreaterThan(50_000)
   const node = document.createElement('div')
@@ -45,7 +42,6 @@ test('a long answer shows its end first, then the rest above it, piece by piece,
   expect(run()).toBeGreaterThan(3)
   expect(node.innerHTML).toBe(long)
 })
-
 test('a long answer let go, or drawn again, draws no more of the old one', () => {
   const node = document.createElement('div')
   const { later, run } = steps()
@@ -55,7 +51,6 @@ test('a long answer let go, or drawn again, draws no more of the old one', () =>
   drawInPieces(node, '<p>Egrets.</p>', later)
   expect(node.innerHTML).toBe('<p>Egrets.</p>')
 })
-
 test('what is drawn above the screen keeps the reader where they were', () => {
   const box = document.createElement('div')
   box.style.overflowY = 'auto'
@@ -87,7 +82,6 @@ test('what is drawn above the screen keeps the reader where they were', () => {
   expect(top).toBe(0)
   box.remove()
 })
-
 test('long answers drawn at once in one list measure it once a step, not once an answer', () => {
   const box = document.createElement('div')
   box.style.overflowY = 'auto'

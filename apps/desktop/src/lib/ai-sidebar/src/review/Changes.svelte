@@ -15,29 +15,24 @@
     thread,
     open = false,
   }: { notes: NoteChanges[]; files: FileChange[]; thread: Thread; open?: boolean } = $props()
-
   function openMoved(file: FileChange) {
     const root = workspace.spaces.find(
       (one) => one.id === file.space || one.name === file.space || one.id === thread.space,
     )?.root
     if (root) void workspace.open(insideSpace(root, file.path))
   }
-
   const rows = $derived(notes.flatMap((note) => note.changes))
   let lit = $state(0)
   let list = $state<HTMLElement>()
-
   $effect(() => {
     if (lit >= rows.length) lit = Math.max(0, rows.length - 1)
   })
-
   $effect(() => {
     if (!open) return
     list?.focus({ preventScroll: true })
     const shown = setTimeout(() => list?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), dur(150) + 20)
     return () => clearTimeout(shown)
   })
-
   function keys(event: KeyboardEvent) {
     const change = rows[lit]
     const key = event.key.toLowerCase()
@@ -51,7 +46,6 @@
     event.preventDefault()
     event.stopPropagation()
   }
-
   function litOf(change: Change): boolean {
     return rows[lit]?.id === change.id
   }
@@ -122,14 +116,12 @@
     padding: 2px;
     outline: none;
   }
-
   .line {
     position: relative;
     display: flex;
     align-items: center;
     gap: 2px;
   }
-
   .pair {
     position: absolute;
     inset-block: 0;
@@ -142,24 +134,20 @@
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .line:hover .pair,
   .line:focus-within .pair,
   .changes:focus-visible .is-on ~ .pair,
   :global([data-touch]) .pair {
     opacity: 1;
   }
-
   .change .name {
     padding-inline-start: var(--row-indent);
   }
-
   .name {
     flex: 1;
     width: auto;
     min-width: 0;
   }
-
   .is-gone {
     color: var(--danger);
     text-decoration: line-through;

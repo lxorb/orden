@@ -8,19 +8,15 @@ use orden_agents::grants::Spaces;
 use orden_agents::verbs::{window, ReaderTab};
 
 const ASKING: Duration = Duration::from_millis(800);
-
 const LENDING: Duration = Duration::from_secs(15);
-
 fn listed(app: &AppHandle) -> Option<Vec<ReaderTab>> {
     orden_agents::endpoint::ask(app, window::READER_TABS, json!({}), ASKING)
         .ok()
         .and_then(|value| serde_json::from_value(value).ok())
 }
-
 pub fn every_tab(app: &AppHandle) -> Vec<ReaderTab> {
     listed(app).unwrap_or_else(|| pages(app))
 }
-
 pub fn tabs(app: &AppHandle, spaces: &Spaces) -> Vec<ReaderTab> {
     listed(app)
         .unwrap_or_default()
@@ -32,7 +28,6 @@ pub fn tabs(app: &AppHandle, spaces: &Spaces) -> Vec<ReaderTab> {
         })
         .collect()
 }
-
 fn pages(app: &AppHandle) -> Vec<ReaderTab> {
     app.webviews()
         .into_iter()
@@ -49,7 +44,6 @@ fn pages(app: &AppHandle) -> Vec<ReaderTab> {
         })
         .collect()
 }
-
 pub fn page(app: &AppHandle, tab: &str) -> Option<View> {
     let label = orden_web::web_tabs::label_of(tab);
     if label == "web-session" || !(label.starts_with("web-") || label.starts_with("agent-")) {

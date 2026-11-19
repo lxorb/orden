@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import base64
 import io
@@ -13,14 +12,12 @@ import sys
 import tempfile
 import time
 from typing import Any
-
 from fresh_app import ended, fresh
 from heavy_paper import BENCH_BODY, REFERENCE, heavy_paper
 from native_app import config_of, endpoint
 
 OPEN_LIMIT = 8000
 BLOCK_LIMIT = 500
-
 WATCH = """
 const probe = { beats: [], frames: [] }
 window.__steady = probe
@@ -45,7 +42,6 @@ const look = (at) => {
 requestAnimationFrame(look)
 return true
 """
-
 SINCE = """
 const from = %s
 const probe = window.__steady
@@ -57,12 +53,10 @@ let blocked = 0
 for (const [, between] of beats) blocked = Math.max(blocked, between)
 return { blocked, gap, frames: frames.length, bare: frames.filter(([, , bare]) => bare > 0).length }
 """
-
 DRAWN = """
 const sheets = [...document.querySelectorAll('.pages .sheet')]
 return sheets.length === 2 && sheets.every((one) => one.querySelector('canvas.there')?.width > 1)
 """
-
 DARK = """
 const out = []
 for (const sheet of document.querySelectorAll('.pages .sheet')) {
@@ -80,14 +74,12 @@ for (const sheet of document.querySelectorAll('.pages .sheet')) {
 }
 return out
 """
-
 INKED = """
 await new Promise((go) => setTimeout(go, 1500))
 const path = orden.workspace.active?.note?.path ?? orden.workspace.active?.path
 if (!path) return -1
 try { return JSON.parse(await orden.invoke('read_note', { path })).orden?.ink?.length ?? 0 } catch { return -2 }
 """
-
 EDITS = """
 const path = orden.workspace.active?.note?.path ?? orden.workspace.active?.path
 if (!path) return false
@@ -104,23 +96,19 @@ for (let n = 0; n < 12; n++) {
 }
 return true
 """
-
 MARKS = """
 const from = %s
 const marks = performance.getEntriesByType('mark').filter((one) => one.name.startsWith('orden: paper')).map((one) => [one.name, Math.round(one.startTime - from)])
 const held = window.__steady.beats.filter(([at]) => at >= from).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([at, between]) => [Math.round(at - between - from), Math.round(between)])
 return { marks, held }
 """
-
 SHEET = """
 const box = document.querySelector('.pages .sheet').getBoundingClientRect()
 const host = document.querySelector('.pages').getBoundingClientRect()
 return { x: box.x, y: box.y, width: box.width, height: box.height, hx: host.x, hy: host.y, hw: host.width, hh: host.height }
 """
-
 def page_session(identifier: str) -> Any:
     from devtools import Session, port, targets
-
     web = pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier / "EBWebView"
     until = time.monotonic() + 90
     while time.monotonic() < until:
@@ -134,15 +122,12 @@ def page_session(identifier: str) -> Any:
     there = sorted(str(one.relative_to(web.parent)) for one in web.parent.glob("*")) if web.parent.exists() else []
     print(f"no devtools port under {web}; beside it: {there[:20]}", flush=True)
     return None
-
 class Recording:
     def __init__(self, tools: Any) -> None:
         self.tools = tools
-
     def start(self) -> None:
         self.tools.events.clear()
         self.tools.call("Page.startScreencast", {"format": "png", "everyNthFrame": 1})
-
     def stop(self) -> list[bytes]:
         frames: list[bytes] = []
         self.tools.listen(0.3)
@@ -155,7 +140,6 @@ class Recording:
             self.tools.call("Page.screencastFrameAck", {"sessionId": params["sessionId"]}, seconds=5)
         self.tools.events.clear()
         return frames
-
     def pump(self, seconds: float) -> None:
         until = time.monotonic() + seconds
         while time.monotonic() < until:
@@ -164,10 +148,8 @@ class Recording:
                 if one.get("method") == "Page.screencastFrame" and not one.get("acked"):
                     one["acked"] = True
                     self.tools.call("Page.screencastFrameAck", {"sessionId": one["params"]["sessionId"]}, seconds=5)
-
 def black_frames(frames: list[bytes], sheet: dict, css_width: float) -> tuple[int, float, list[bytes]]:
     from PIL import Image
-
     black, worst, kept = 0, 0.0, []
     for png in frames:
         picture = Image.open(io.BytesIO(png)).convert("RGB")
@@ -189,7 +171,6 @@ def black_frames(frames: list[bytes], sheet: dict, css_width: float) -> tuple[in
             if len(kept) < 3:
                 kept.append(png)
     return black, worst, kept
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -203,7 +184,6 @@ def main() -> int:
         return 0
     windows = sys.platform == "win32"
     args.shots.mkdir(parents=True, exist_ok=True)
-
     config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
@@ -212,7 +192,6 @@ def main() -> int:
     env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     if windows:
         from devtools import debugged
-
         env = debugged(env)
     process = subprocess.Popen([str(args.exe)], env=env, cwd=str(args.exe.parent))
     wrong: list[str] = []
@@ -252,7 +231,6 @@ def main() -> int:
             tools.call("Profiler.enable")
             tools.call("Profiler.setSamplingInterval", {"interval": 500})
             tools.call("Profiler.start")
-
         started = app.eval("return performance.now()")
         app.eval(f"void orden.workspace.openPdf({json.dumps(pdf)}, 1); return true")
         opened = app.until("return document.querySelectorAll('.pages .sheet').length === 2", 120)
@@ -273,7 +251,6 @@ def main() -> int:
             wrong.append(f"opening the page note took {drawn - started:.0f} ms to draw its pages")
         if isinstance(opening, dict) and opening["blocked"] > block_limit:
             wrong.append(f"opening the page note held the window {opening['blocked']:.0f} ms")
-
         app.eval("document.querySelector('.pages').focus(); return true")
         sheet = app.eval(SHEET)
         css = app.eval("return innerWidth")
@@ -320,7 +297,6 @@ def main() -> int:
             print(f"edit frames: {len(frames)}, {black} mostly black (worst {worst:.0%})", flush=True)
             if black:
                 wrong.append(f"while editing, {black} of {len(frames)} frames showed the page note black")
-
         from_zoom = app.eval("return performance.now()")
         if recording:
             recording.start()
@@ -366,13 +342,11 @@ def main() -> int:
             tools.close()
         ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in unverified:
         print(f"::warning::{one}", flush=True)
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
 def heaviest(profile: dict, count: int = 12) -> list[str]:
     nodes = {node["id"]: node for node in profile.get("nodes", [])}
     self_time: dict[int, int] = {}
@@ -386,6 +360,5 @@ def heaviest(profile: dict, count: int = 12) -> list[str]:
         name = f"{frame.get('functionName') or '(anonymous)'} {pathlib.PurePosixPath(frame.get('url', '')).name}:{frame.get('lineNumber', 0)}"
         named[name] = named.get(name, 0) + hits * every
     return [f"{ms:.0f} ms {name}" for name, ms in sorted(named.items(), key=lambda one: -one[1])[:count]]
-
 if __name__ == "__main__":
     raise SystemExit(main())

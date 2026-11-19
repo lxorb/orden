@@ -10,7 +10,6 @@ const world = vi.hoisted(() => ({
   stored: new Map<string, string>(),
   invoked: [] as string[],
 }))
-
 vi.mock('../../accounts/src/account.svelte', () => ({
   account: {
     get accountToken() {
@@ -45,19 +44,15 @@ vi.mock('../../platform/src/stored', () => ({
   keep: (key: string, value: string) => world.stored.set(key, value),
   forget: (key: string) => world.stored.delete(key),
 }))
-
 const { canDictate, deviceHears, engines, showsDictateButton, whereTo } = await import('./engines.svelte')
 const { local } = await import('./local.svelte')
-
 const PARAKEET = { id: 'parakeet', name: 'Parakeet TDT 0.6B v3', bytes: 670_000_000 }
-
 function computer(fit: 'fits' | 'cores', installed: boolean, pace: number | null = null) {
   world.desktop = true
   world.native = true
   local.machine = { fit, model: PARAKEET, installed }
   local.pace = pace
 }
-
 beforeEach(() => {
   Object.assign(world, { token: null, provider: null, native: false })
   Object.assign(world, { os: '', phone: false, desktop: false })
@@ -68,28 +63,23 @@ beforeEach(() => {
   local.pace = null
   engines.choose(null)
 })
-
 afterEach(() => {
   delete (globalThis as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
 })
-
 describe('the roads offered', () => {
   test('are none with no provider, no account and no recogniser', () => {
     expect(engines.offered()).toEqual([])
     expect(canDictate()).toBe(false)
   })
-
   test('are the provider first, then the account', () => {
     world.token = 'a token'
     world.provider = { id: 'p', kind: 'openai', name: 'OpenAI', model: '' }
     expect(engines.offered()).toEqual(['provider', 'account'])
   })
-
   test('take the phone’s recogniser where the activity has one', () => {
     world.phone = true
     expect(engines.offered()).toEqual(['device'])
   })
-
   test('take the web’s recogniser on a Mac or in a browser', () => {
     Object.assign(globalThis, { webkitSpeechRecognition: vi.fn() })
     expect(deviceHears()).toBe(true)
@@ -97,7 +87,6 @@ describe('the roads offered', () => {
     world.os = 'macos'
     expect(deviceHears()).toBe(true)
   })
-
   test('but not in WebView2 or CEF, which carry the name and no service', () => {
     Object.assign(globalThis, { webkitSpeechRecognition: vi.fn() })
     world.native = true
@@ -107,7 +96,6 @@ describe('the roads offered', () => {
     expect(deviceHears()).toBe(false)
   })
 })
-
 describe('the dictate button', () => {
   test('shows wherever a road is offered but in the Mac app, whose system dictates in any field', () => {
     world.token = 'a token'
@@ -119,32 +107,27 @@ describe('the dictate button', () => {
     expect(canDictate()).toBe(true)
     expect(showsDictateButton()).toBe(false)
   })
-
   test('is not shown where no road is offered', () => {
     expect(showsDictateButton()).toBe(false)
   })
 })
-
 describe('the road taken', () => {
   test('is none until one is chosen, whatever is offered', () => {
     world.token = 'a token'
     expect(engines.now()).toBeNull()
   })
-
   test('is the one chosen, kept for this device', () => {
     world.token = 'a token'
     engines.choose('account')
     expect(engines.now()).toBe('account')
     expect(world.stored.get('orden:dictation-engine')).toBe('account')
   })
-
   test('is none again once the chosen one cannot be taken, rather than another', () => {
     world.provider = { id: 'p', kind: 'openai', name: 'OpenAI', model: '' }
     engines.choose('account')
     expect(engines.now()).toBeNull()
   })
 })
-
 describe('this computer', () => {
   test('is asked about only on a desktop, and never downloads by being asked', () => {
     expect(engines.offered()).toEqual([])
@@ -153,20 +136,17 @@ describe('this computer', () => {
     engines.offered()
     expect(world.invoked).toEqual(['dictation_local'])
   })
-
   test('is offered first, with Auto, where it can run the model', () => {
     world.token = 'a token'
     computer('fits', false)
     expect(engines.offered()).toEqual(['auto', 'local', 'account'])
     expect(world.invoked).not.toContain('dictation_local_fetch')
   })
-
   test('is not offered where it cannot keep up', () => {
     world.token = 'a token'
     computer('cores', false)
     expect(engines.offered()).toEqual(['account'])
   })
-
   test('downloads its model once it or Auto is chosen, and not for another road', async () => {
     world.token = 'a token'
     computer('fits', false)
@@ -179,7 +159,6 @@ describe('this computer', () => {
     expect(engines.now()).toBe('local')
   })
 })
-
 describe('Auto', () => {
   test('takes the network road while the model is not here', async () => {
     world.provider = { id: 'p', kind: 'openai', name: 'OpenAI', model: '' }
@@ -191,7 +170,6 @@ describe('Auto', () => {
     world.provider = null
     expect(engines.now()).toBe('account')
   })
-
   test.each([
     [0.08, 'local'],
     [0.6, 'account'],
@@ -201,13 +179,11 @@ describe('Auto', () => {
     engines.choose('auto')
     expect(engines.now()).toBe(road)
   })
-
   test('waits for the download where there is no network road', () => {
     computer('fits', false)
     engines.choose('auto')
     expect(engines.now()).toBe('local')
   })
-
   test('is not taken on a computer that cannot run the model', () => {
     world.token = 'a token'
     computer('fits', false)
@@ -216,7 +192,6 @@ describe('Auto', () => {
     expect(engines.now()).toBeNull()
   })
 })
-
 describe('where a provider sends audio', () => {
   test('is this machine for a server on it', () => {
     const local = {
@@ -229,7 +204,6 @@ describe('where a provider sends audio', () => {
     expect(whereTo(local)).toEqual({ local: true, host: 'localhost' })
     expect(whereTo({ ...local, baseUrl: 'http://127.0.0.1:9000/v1' }).local).toBe(true)
   })
-
   test('and the server’s name otherwise', () => {
     expect(whereTo({ id: 'o', kind: 'openai', name: 'OpenAI', model: '' })).toEqual({
       local: false,

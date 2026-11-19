@@ -2,19 +2,15 @@ import { type Env, now } from '../../../sync-server/src/api'
 import { accountBy, minimum, move, NEEDS_MIN, standing } from './gate'
 
 export type Mode = 'off' | 'new' | 'all'
-
 const MODES: readonly Mode[] = ['off', 'new', 'all']
-
 export function isMode(value: unknown): value is Mode {
   return MODES.includes(value as Mode)
 }
-
 export interface Rollout {
   mode: Mode
   min: string | null
   since: number
 }
-
 async function rolloutOf(env: Env): Promise<Rollout> {
   const { results } = await env.DB.prepare('select key, value from sync_rollout').all<{
     key: string
@@ -30,14 +26,12 @@ async function rolloutOf(env: Env): Promise<Rollout> {
     since: Number.isFinite(since) ? since : 0,
   }
 }
-
 function setting(env: Env, key: 'mode' | 'min' | 'since', value: string) {
   return env.DB.prepare(
     `insert into sync_rollout (key, value) values (?1, ?2)
      on conflict(key) do update set value = ?2`,
   ).bind(key, value)
 }
-
 export async function setRollout(
   env: Env,
   mode: Mode,
@@ -52,7 +46,6 @@ export async function setRollout(
   if (mode === 'all' && min === null && (await rolloutOf(env)).min === null) {
     return { error: NEEDS_MIN }
   }
-
   await env.DB.batch([
     setting(env, 'mode', mode),
     setting(env, 'since', String(now())),
@@ -60,11 +53,9 @@ export async function setRollout(
   ])
   return { rollout: await rolloutOf(env) }
 }
-
 export async function startingVersion(env: Env): Promise<1 | 2> {
   return (await rolloutOf(env)).mode === 'off' ? 1 : 2
 }
-
 async function heldBack(env: Env, user: string, since: number): Promise<boolean> {
   const last = await env.DB.prepare(
     `select to_version from sync_flips where user_id = ? and at >= ?
@@ -74,15 +65,12 @@ async function heldBack(env: Env, user: string, since: number): Promise<boolean>
     .first<{ to_version: number }>()
   return last?.to_version === 1
 }
-
 export async function rollOn(env: Env, user: string): Promise<boolean> {
   const rollout = await rolloutOf(env)
   if (rollout.mode !== 'all' || rollout.min === null) return false
-
   const account = await accountBy(env, 'id', user)
   if (!account || account.version === 2) return false
   if (await heldBack(env, user, rollout.since)) return false
-
   const { blockers } = await standing(env, account, {
     min: rollout.min,
     allow: new Set(),
@@ -92,7 +80,6 @@ export async function rollOn(env: Env, user: string): Promise<boolean> {
   if (blockers.length > 0) return false
   return await move(env, account, 2, 'hello', rollout.min)
 }
-
 export async function everyoneBack(env: Env, dry: boolean): Promise<number> {
   if (dry) {
     const counted = await env.DB.prepare('select count(*) as n from users where sync_version = 2').first<{
@@ -100,7 +87,6 @@ export async function everyoneBack(env: Env, dry: boolean): Promise<number> {
     }>()
     return counted?.n ?? 0
   }
-
   const at = now()
   const [, , , moved] = await env.DB.batch([
     setting(env, 'mode', 'off'),
@@ -115,7 +101,6 @@ export async function everyoneBack(env: Env, dry: boolean): Promise<number> {
   console.warn(`[sync-version] everyone 2 -> 1: ${count} accounts, rollout off`)
   return count
 }
-
 export async function rolloutView(env: Env) {
   const rollout = await rolloutOf(env)
   const { results: counts } = await env.DB.prepare(

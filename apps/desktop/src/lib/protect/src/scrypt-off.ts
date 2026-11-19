@@ -5,13 +5,10 @@ interface Said {
   key?: Uint8Array<ArrayBuffer>
   error?: string
 }
-
 type Waiting = (said: Said) => void
-
 let worker: Worker | null = null
 let asked = 0
 const waiting = new Map<number, Waiting>()
-
 function open(): Worker | null {
   if (worker) return worker
   if (typeof Worker === 'undefined') return null
@@ -34,7 +31,6 @@ function open(): Worker | null {
   }
   return worker
 }
-
 export function scryptOffThread(
   password: Uint8Array<ArrayBuffer>,
   salt: Uint8Array<ArrayBuffer>,

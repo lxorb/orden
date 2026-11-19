@@ -6,9 +6,7 @@
   import Tally from './Tally.svelte'
 
   const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } = $props()
-
   let shown = $state.raw<Preview | null>(null)
-
   $effect(() => {
     let current = true
     void previewOf(
@@ -24,7 +22,6 @@
       current = false
     }
   })
-
   const counted = $derived(shown ? diffCount(shown.rows) : null)
 </script>
 
@@ -48,7 +45,6 @@
     flex-direction: column;
     gap: var(--space-1);
   }
-
   .head {
     display: flex;
     align-items: center;
@@ -56,7 +52,6 @@
     color: var(--muted-strong);
     font-size: var(--text-xs);
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -64,7 +59,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .diff {
     max-height: 14rem;
     overflow: auto;
@@ -76,18 +70,15 @@
     font-size: var(--text-xs);
     line-height: 1.6;
   }
-
   .row {
     padding: 0 var(--space-2);
     color: var(--muted-strong);
     white-space: pre-wrap;
   }
-
   .row.added {
     background: color-mix(in srgb, var(--success) 14%, transparent);
     color: var(--text-strong);
   }
-
   .row.removed {
     background: color-mix(in srgb, var(--danger) 14%, transparent);
     color: var(--text-strong);

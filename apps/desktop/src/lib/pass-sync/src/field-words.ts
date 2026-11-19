@@ -7,11 +7,9 @@ export const IDENTITY_FIRST: Record<IdentityGroup, readonly IdentityKey[]> = {
   contact: ['ssn', 'passport', 'license', 'website', 'x', 'secondPhone'],
   work: ['company', 'jobTitle'],
 }
-
 export function fieldKindLabel(kind: FieldKind): string {
   return { text: 'Text', hidden: 'Hidden', totp: '2FA code', date: 'Date' }[kind]
 }
-
 export function matchLabel(rule: MatchRule): string {
   return {
     domain: 'Site and its subdomains',
@@ -21,11 +19,9 @@ export function matchLabel(rule: MatchRule): string {
     never: 'Never',
   }[rule]
 }
-
 export function securityLabel(security: WifiSecurity): string {
   return { wpa: 'WPA', wpa2: 'WPA2', wpa3: 'WPA3', wep: 'WEP', none: 'None' }[security]
 }
-
 export function brandLabel(brand: CardBrand): string {
   return {
     visa: 'Visa',
@@ -35,7 +31,6 @@ export function brandLabel(brand: CardBrand): string {
     other: 'Other',
   }[brand]
 }
-
 export function brandOf(number: string): CardBrand | null {
   const digits = number.replace(/\D/g, '')
   if (digits === '') return null
@@ -45,7 +40,6 @@ export function brandOf(number: string): CardBrand | null {
   if (/^6(011|5|4[4-9])/.test(digits)) return 'discover'
   return 'other'
 }
-
 export function separatorLabel(separator: Separator | 'none'): string {
   return {
     none: 'None',

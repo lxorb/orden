@@ -1,12 +1,10 @@
 import sys
 from pathlib import Path
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -15,12 +13,10 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 DEVICES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
 ]
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -41,7 +37,6 @@ async () => {
   return ws.notes.length
 }
 """
-
 SPREAD_DATES = """
 async () => {
   const day = 24 * 60 * 60 * 1000
@@ -70,7 +65,6 @@ async () => {
   return rows.length
 }
 """
-
 SEED_MANY = """
 async (count) => {
   const links = window.ordenApp.links
@@ -92,7 +86,6 @@ async (count) => {
   }
 }
 """
-
 PAN = """
 async ({ steps }) => {
   const canvas = document.querySelector('.graph canvas')
@@ -152,7 +145,6 @@ async ({ steps }) => {
   }
 }
 """
-
 RASTER = """
 async ({ ratio, width, height }) => {
   const graph = window.ordenApp.links.graph
@@ -271,7 +263,6 @@ async ({ ratio, width, height }) => {
   return out
 }
 """
-
 PATCH = """
 const patch = () => {
   const canvas = document.querySelector('.graph canvas')
@@ -292,7 +283,6 @@ const patch = () => {
   return sum
 }
 """
-
 PATCH_ONCE = (
     """
 () => {
@@ -303,7 +293,6 @@ PATCH_ONCE = (
 }
 """
 )
-
 SWITCH = """
 async ({ orphans }) => {
   const painted = () =>
@@ -315,12 +304,10 @@ async ({ orphans }) => {
   return Math.round((performance.now() - began) * 100) / 100
 }
 """
-
 PAINTED = """
   const painted = () =>
     new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
 """
-
 TINT = (
     """
 async () => {
@@ -334,7 +321,6 @@ async () => {
 }
 """
 )
-
 FILTER = (
     """
 async () => {
@@ -348,14 +334,12 @@ async () => {
 }
 """
 )
-
 VIEW = """
 () => {
   const one = window.ordenApp.workspace.graphSettings.here
   return { filter: one.filter, arrows: one.arrows, depth: one.depth, lines: one.lines }
 }
 """
-
 KEEP_VIEW = """
 (name) => {
   const ws = window.ordenApp.workspace
@@ -363,11 +347,9 @@ KEEP_VIEW = """
   return ws.bookmarks.list.map((one) => `${one.kind}:${one.text}`)
 }
 """
-
 TAB = """
 () => window.ordenApp.workspace.active?.note?.kind ?? 'none'
 """
-
 def opened(browser, width, height, agent, finger, scheme, name):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -391,41 +373,33 @@ def opened(browser, width, height, agent, finger, scheme, name):
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     return context, page
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     context, page = opened(browser, width, height, agent, finger, scheme, name)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(shots / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
-
     say(f"[{name}] the space holds {page.evaluate(SEED)} notes")
     say(f"[{name}] dates spread over {page.evaluate(SPREAD_DATES)} files")
     page.wait_for_timeout(500)
-
     page.evaluate("() => window.ordenApp.workspace.openGraph()")
     page.wait_for_selector(".graph", timeout=20000)
     page.wait_for_timeout(1400)
     shot("arrived")
-
     counts = page.evaluate(
         "() => ({ nodes: window.ordenApp.links.graph.nodes.length,"
         " edges: window.ordenApp.links.graph.edges.length })"
     )
     say(f"[{name}] {counts['nodes']} nodes and {counts['edges']} edges")
-
     tab = page.locator(".graph .corner > button").last
     if not tab.count():
         say(f"[{name}] no card to open")
         context.close()
         return
-
     tab.click(force=True)
     page.wait_for_timeout(500)
     shot("card")
-
     forces = page.locator('.graph .corner .card button:has-text("Forces")').first
     if forces.count():
         forces.click(force=True)
@@ -435,14 +409,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.wait_for_timeout(400)
     else:
         say(f"[{name}] no Forces row on the card")
-
     page.evaluate(
         "() => window.ordenApp.workspace.graphSettings.set({"
         " groups: [{ query: 'tag:work', colour: 4 }, { query: 'tag:later', colour: 6 }] })"
     )
     page.wait_for_timeout(700)
     shot("groups")
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ attachments: true })")
     page.wait_for_timeout(1600)
     shot("attachments")
@@ -462,7 +434,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ attachments: false })")
     page.wait_for_timeout(1400)
-
     for step, what in ((1, "thin"), (3, "thick")):
         page.evaluate(
             f"() => window.ordenApp.workspace.graphSettings.set({{ lines: {step} }})"
@@ -471,7 +442,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot(f"lines-{what}")
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ lines: 2 })")
     page.wait_for_timeout(400)
-
     for fade, what in ((0.25, "soon"), (4, "late")):
         page.evaluate(
             f"() => window.ordenApp.workspace.graphSettings.set({{ fade: {fade} }})"
@@ -480,11 +450,9 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot(f"fade-{what}")
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ fade: 1 })")
     page.wait_for_timeout(400)
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ arrows: true })")
     page.wait_for_timeout(600)
     shot("arrows")
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ filter: 'tag:later' })")
     page.wait_for_timeout(800)
     shot("filtered")
@@ -492,13 +460,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         "() => window.ordenApp.workspace.graphSettings.here.filter"
     )
     say(f"[{name}] the filter reads {shown!r}")
-
     page.evaluate(
         "() => window.ordenApp.workspace.graphSettings.set({ filter: '', orphans: false })"
     )
     page.wait_for_timeout(800)
     shot("no-orphans")
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ orphans: true })")
     page.wait_for_timeout(400)
     played = page.locator(".graph .corner .time button")
@@ -510,13 +476,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("played")
     else:
         say(f"[{name}] no time row, so no dates to play")
-
     page.evaluate(
         "() => window.ordenApp.workspace.graphSettings.set({ spread: 3, gather: false })"
     )
     page.wait_for_timeout(2000)
     shot("spread")
-
     page.evaluate(
         "() => window.ordenApp.workspace.graphSettings.set("
         " { spread: 1, gather: true, distance: 96, push: 40 })"
@@ -528,11 +492,9 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_timeout(2200)
     shot("forces-hard-push")
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.reset()")
     page.wait_for_timeout(1600)
     shot("reset")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -550,7 +512,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         picture.click(force=True)
         page.wait_for_timeout(1200)
         shot("panel-depth-1")
-
         step = page.locator("aside .tools .depth")
         if step.count():
             step.click(force=True)
@@ -562,7 +523,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
                 f"[{name}] the stepper reads "
                 f"{page.evaluate('() => window.ordenApp.workspace.graphSettings.here.depth')}"
             )
-
             page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ depth: 5 })")
             page.wait_for_timeout(1600)
             shot("panel-depth-5")
@@ -576,7 +536,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             say(f"[{name}] no depth stepper")
     else:
         say(f"[{name}] no picture switch in the panel")
-
     say(f"[{name}] --- a bookmarked view ---")
     page.evaluate("() => window.ordenApp.workspace.openGraph()")
     page.wait_for_timeout(800)
@@ -586,17 +545,13 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_timeout(600)
     say(f"[{name}] the picture now: {page.evaluate(VIEW)}")
-
     kept = page.evaluate(KEEP_VIEW, "Ink and arrows")
     say(f"[{name}] the bookmarks hold: {kept}")
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.reset()")
     page.wait_for_timeout(600)
     say(f"[{name}] after a reset: {page.evaluate(VIEW)}")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
-
     row = page.locator('aside .row:has-text("Ink and arrows")').first
     if row.count():
         row.click(force=True)
@@ -606,25 +561,19 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("bookmarked-view")
     else:
         say(f"[{name}] no row for the view")
-
     context.close()
-
 def measure(browser, out: Path, count: int) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     name = "many"
     context, page = opened(browser, 1440, 900, DESKTOP_AGENT, False, "dark", name)
-
     seeded = page.evaluate(SEED_MANY, count)
     say(f"[{name}] {seeded['nodes']} nodes and {seeded['edges']} edges in {seeded['ms']} ms")
-
     for line in page.evaluate(RASTER, {"ratio": 2, "width": 1440, "height": 860}):
         say(f"[{name}] {line}")
-
     page.evaluate("() => window.ordenApp.workspace.openGraph()")
     page.wait_for_selector(".graph", timeout=20000)
     page.wait_for_timeout(10000)
-
     def pan(what: str) -> None:
         panned = page.evaluate(PAN, {"steps": 90})
         if not panned:
@@ -635,24 +584,19 @@ def measure(browser, out: Path, count: int) -> None:
             f"[{name}] {what}: {panned['frames']} frames, median {panned['median']} ms"
             f" ({rate} fps), 90th {panned['ninety']} ms, worst {panned['worst']} ms"
         )
-
     pan("panned")
     pan("panned again")
-
     say(
         f"[{name}] orphans off in {page.evaluate(SWITCH, {'orphans': False})} ms,"
         f" on again in {page.evaluate(SWITCH, {'orphans': True})} ms"
     )
     say(f"[{name}] a colour group over the lot in {page.evaluate(TINT)} ms")
     pan("panned with a colour group")
-
     say(f"[{name}] a filter over the lot in {page.evaluate(FILTER)} ms")
     pan("panned while filtered")
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ filter: '', arrows: true })")
     page.wait_for_timeout(1200)
     pan("panned with arrowheads")
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ arrows: false })")
     for step, what in ((1, "thin"), (2, "normal"), (3, "thick")):
         page.evaluate(
@@ -660,22 +604,17 @@ def measure(browser, out: Path, count: int) -> None:
         )
         page.wait_for_timeout(600)
         pan(f"panned with lines {what}")
-
     page.evaluate("() => window.ordenApp.workspace.graphSettings.set({ lines: 2 })")
     page.wait_for_timeout(400)
-
     page.screenshot(path=str(shots / f"{name}-arrows.png"))
     say(f"shot {name}-arrows.png")
     page.evaluate("() => window.ordenApp.workspace.graphSettings.reset()")
     page.wait_for_timeout(10000)
     page.screenshot(path=str(shots / f"{name}-settled.png"))
     say(f"shot {name}-settled.png")
-
     pan("panned after the reset")
-
     def picture() -> bytes:
         return page.screenshot(clip={"x": 400, "y": 200, "width": 640, "height": 480})
-
     before = picture()
     page.evaluate(SWITCH, {"orphans": False})
     page.wait_for_timeout(400)
@@ -686,9 +625,7 @@ def measure(browser, out: Path, count: int) -> None:
         f"[{name}] the picture came back identical: {picture() == before}"
         f" (and the switch changed it: {away != before})"
     )
-
     context.close()
-
 def main() -> int:
     count = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
     out = DRIVE.shots
@@ -696,10 +633,7 @@ def main() -> int:
         for one in DEVICES:
             say(f"--- {one[0]} ---")
             drive(browser, out, *one)
-
         say(f"--- {count} notes ---")
         measure(browser, out, count)
-
     return DRIVE.verdict(f"shots in {out}")
-
 raise SystemExit(main())

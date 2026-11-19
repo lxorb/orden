@@ -19,7 +19,6 @@ pub fn identity(path: &Path) -> Option<String> {
         } => format!("{device_id:x}:{inode_number:x}"),
     })
 }
-
 #[cfg(unix)]
 pub fn identity(path: &Path) -> Option<String> {
     use std::os::unix::fs::MetadataExt;
@@ -30,7 +29,6 @@ pub fn identity(path: &Path) -> Option<String> {
         .ok()
         .and_then(|at| at.duration_since(std::time::UNIX_EPOCH).ok())
         .map(|since| since.as_nanos());
-
     let id = match born {
         Some(born) => format!("{:x}:{:x}:{born:x}", meta.dev(), meta.ino()),
         None => format!("{:x}:{:x}", meta.dev(), meta.ino()),
@@ -42,7 +40,6 @@ pub fn identity(path: &Path) -> Option<String> {
     };
     Some(id)
 }
-
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
 fn generation(path: &Path) -> Option<libc::c_int> {
@@ -58,7 +55,6 @@ fn generation(path: &Path) -> Option<libc::c_int> {
     let asked = unsafe { libc::ioctl(file.as_raw_fd(), libc::FS_IOC_GETVERSION, &mut generation) };
     (asked == 0).then_some(generation)
 }
-
 #[cfg(test)]
 mod tests {
     use super::identity;
@@ -70,16 +66,13 @@ mod tests {
         let before = dir.path().join("Plan.md");
         fs::write(&before, "one").expect("a note");
         let id = identity(&before).expect("an identity");
-
         let after = dir.path().join("Renamed.md");
         fs::rename(&before, &after).expect("renamed");
         assert_eq!(identity(&after).as_ref(), Some(&id));
         assert_eq!(identity(&before), None, "nothing is there now");
-
         fs::write(&after, "two, written in place").expect("edited");
         assert_eq!(identity(&after).as_ref(), Some(&id));
     }
-
     #[test]
     fn a_move_to_another_folder_keeps_it_too() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -88,17 +81,14 @@ mod tests {
         fs::create_dir_all(&deeper).expect("folders");
         fs::write(&before, "one").expect("a note");
         let id = identity(&before).expect("an identity");
-
         let after = deeper.join("Plan.md");
         fs::rename(&before, &after).expect("moved");
         assert_eq!(identity(&after), Some(id));
-
         let folder = identity(&deeper).expect("a folder has one");
         let moved = dir.path().join("Archive");
         fs::rename(dir.path().join("Projects"), &moved).expect("a folder moved");
         assert_eq!(identity(&moved.join("2026")), Some(folder));
     }
-
     #[test]
     fn a_file_made_again_is_another_file() {
         let dir = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).expect("a folder");
@@ -106,7 +96,6 @@ mod tests {
         for _ in 0..200 {
             fs::write(&path, "one").expect("a note");
             let first = identity(&path).expect("an identity");
-
             fs::remove_file(&path).expect("deleted");
             fs::write(&path, "one").expect("made again");
             assert_ne!(identity(&path).expect("an identity"), first);

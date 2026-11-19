@@ -18,20 +18,15 @@
     side?: 'above' | 'below'
     onpress?: () => void
   } = $props()
-
   $effect(() => {
     hints.want(hint, hints.open(hint) && when !== false)
   })
-
   $effect(() => () => hints.want(hint, false))
-
   function press() {
     hints.dismiss(hint)
     onpress?.()
   }
-
   let bubble = $state<HTMLDivElement>()
-
   function busy(event: Event) {
     if (hints.current !== hint) return
     if (event.target instanceof Node && bubble?.contains(event.target)) return
@@ -64,7 +59,6 @@
     align-items: center;
     gap: var(--space-1);
   }
-
   .say {
     padding: 0;
     border: none;
@@ -73,7 +67,6 @@
     font: inherit;
     text-align: start;
   }
-
   .shut {
     flex: none;
     width: 20px;

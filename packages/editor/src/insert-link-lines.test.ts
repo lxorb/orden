@@ -17,12 +17,10 @@ function linked(doc: string, from: number, to: number): string {
   insertLink({ state, dispatch: (one: Transaction) => (next = one.state) })
   return next.doc.toString()
 }
-
 describe('Insert link over a whole picked line', () => {
   test('a list item keeps its marker outside the link', () => {
     expect(linked('- item\n', 0, 6)).toBe('- [item]()\n')
   })
-
   test('a heading keeps its hashes outside the link', () => {
     expect(linked('# Title\nnext', 0, 8)).toBe('# [Title]()\nnext')
   })

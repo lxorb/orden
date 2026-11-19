@@ -5,13 +5,11 @@ import { askedOf, money, picksOf, placeOf, summaryOf, warningOf } from './choosi
 
 const eur = (amount: number) => money(amount, 'EUR')
 const kept = (words: string) => words.replaceAll(' ', '\u00a0')
-
 const price = (monthly: number, hourly: number, location = 'nbg1') => ({
   location,
   monthly,
   hourly,
 })
-
 const OFFERS: Offers = {
   currency: 'EUR',
   locations: [
@@ -67,7 +65,6 @@ const OFFERS: Offers = {
     },
   ],
 }
-
 const SERVER: ServerInfo = {
   type: 'cx43',
   location: 'nbg1',
@@ -80,9 +77,7 @@ const SERVER: ServerInfo = {
   made: true,
   spent: 3.1,
 }
-
 const names = (picks: { offer: { name: string } }[]) => picks.map((one) => one.offer.name)
-
 describe('the machines to choose from', () => {
   test('are those priced where the machine is, cheapest first, sortable by any column', () => {
     expect(names(picksOf(OFFERS, 'nbg1', 'price', 'any', 'any', null))).toEqual([
@@ -108,13 +103,11 @@ describe('the machines to choose from', () => {
       'cx53',
     ])
   })
-
   test('are filtered by CPU kind and architecture', () => {
     expect(names(picksOf(OFFERS, 'nbg1', 'price', 'dedicated', 'any', null))).toEqual(['ccx33'])
     expect(names(picksOf(OFFERS, 'nbg1', 'price', 'any', 'arm', null))).toEqual(['cax31'])
     expect(names(picksOf(OFFERS, 'nbg1', 'price', 'shared', 'x86', null))).toEqual(['cx23', 'cx43', 'cx53'])
   })
-
   test('for a made machine, a smaller disk or the other architecture cannot be chosen', () => {
     const picks = picksOf(OFFERS, 'nbg1', 'price', 'any', 'any', SERVER)
     const of = (name: string) => picks.find((one) => one.offer.name === name)
@@ -126,13 +119,11 @@ describe('the machines to choose from', () => {
       blocked: null,
     })
   })
-
   test('start in the machine’s own place, else Nuremberg, Falkenstein, or the first offered', () => {
     expect(placeOf(OFFERS, { ...SERVER, location: 'hel1' })).toBe('hel1')
     expect(placeOf(OFFERS, null)).toBe('nbg1')
     expect(placeOf({ ...OFFERS, locations: [{ name: 'ash', city: 'Ashburn', country: 'US' }] }, null)).toBe('ash')
   })
-
   test('read from the server as sent, and nothing from a server that has none', () => {
     expect(offersOf({ currency: 'EUR', locations: OFFERS.locations, types: OFFERS.types })).toEqual(OFFERS)
     expect(offersOf({ error: 'not found' })).toBeNull()
@@ -140,17 +131,14 @@ describe('the machines to choose from', () => {
     expect(refitOf(new Error('offline'))).toBe('other')
   })
 })
-
 describe('resizing, asked first', () => {
   const pick = (name: string) =>
     picksOf(OFFERS, 'nbg1', 'price', 'any', 'any', SERVER).find((one) => one.offer.name === name)
-
   test('warns first of the terminals running, and of nothing when none are', () => {
     expect(warningOf(0)).toBeNull()
     expect(warningOf(1)).toMatch(/^A terminal is running\. Resizing restarts the machine/)
     expect(warningOf(3)).toMatch(/^3 terminals are running\./)
   })
-
   test('says the restart, the disk that cannot shrink, and the price difference', () => {
     const bigger = pick('cx53')
     if (!bigger) throw new Error('no cx53')
@@ -159,7 +147,6 @@ describe('resizing, asked first', () => {
     expect(asked.detail).toContain('starts again. It is away for about 5 minutes')
     expect(asked.detail).toContain('The disk grows from 160 GB to 320 GB and cannot shrink again')
     expect(asked.detail).toContain(`${eur(14.27)} a month now, ${eur(27.95)} after: ${eur(13.68)} more a month.`)
-
     const same = pick('ccx33')
     if (!same) throw new Error('no ccx33')
     expect(askedOf({ ...SERVER, diskGb: 240 }, same, 'EUR').detail).toContain(
@@ -168,7 +155,6 @@ describe('resizing, asked first', () => {
     expect(askedOf({ ...SERVER, price: 80 }, same, 'EUR').detail).toContain(`${eur(4.53)} less a month.`)
   })
 })
-
 describe('the machine’s summary', () => {
   test('is its facts and its cost, laid out apart, with no dot or bullet between them', () => {
     const { about, cost } = summaryOf(SERVER)

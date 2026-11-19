@@ -13,7 +13,6 @@ vi.mock('../../ai-providers/src/api', async (original) => ({
   wasStopped: () => false,
   ai: { providerFor: () => ({ id: 'p', model: 'm' }) },
 }))
-
 const diary = vi.hoisted(() => ({ live: {}, unsaved: {}, locked: false }))
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
@@ -33,10 +32,8 @@ vi.mock('../../protect/src/api', () => ({
     agentsMayAll: () => !diary.locked,
   },
 }))
-
 const { answer } = await import('./answering')
 const { busy } = await import('../../ui-kit/src/api')
-
 test('an answer written into a note spells its formulas the note’s way', async () => {
   let written = ''
   let model = ''
@@ -54,11 +51,9 @@ test('an answer written into a note spells its formulas the note’s way', async
   expect(model).toBe('m')
   expect(written).toBe('So $x^2$ and\n$$\n\\frac{1}{2}\n$$\n')
 })
-
 test('a note shut to agents asks nothing of the model, and says why', async () => {
   completed.count = 0
   let written = ''
-
   await expect(
     answer(
       {
@@ -71,16 +66,13 @@ test('a note shut to agents asks nothing of the model, and says why', async () =
       new AbortController().signal,
     ),
   ).rejects.toThrow()
-
   expect(completed.count).toBe(0)
   expect(written).toBe('')
   expect(busy.trouble).toContain('Let agents read')
 })
-
 test('a document no open note shows asks nothing of the model while the space holds a note shut to agents', async () => {
   completed.count = 0
   diary.locked = true
-
   await expect(
     answer(
       {
@@ -93,15 +85,12 @@ test('a document no open note shows asks nothing of the model while the space ho
       new AbortController().signal,
     ),
   ).rejects.toThrow()
-
   diary.locked = false
   expect(completed.count).toBe(0)
 })
-
 test('a note not yet saved is asked about on its own, not for every lock in the space', async () => {
   completed.count = 0
   diary.locked = true
-
   await answer(
     {
       prompt: 'Explain',
@@ -112,7 +101,6 @@ test('a note not yet saved is asked about on its own, not for every lock in the 
     },
     new AbortController().signal,
   )
-
   diary.locked = false
   expect(completed.count).toBe(1)
 })

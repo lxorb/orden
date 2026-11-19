@@ -7,16 +7,13 @@ const AT_ONCE = 4
 const SIDE = 224
 const KEPT = 400
 const WHOLE_MOST = 256 * 1024
-
 export interface Wanted {
   path: string
   name: string
   stamp?: string
 }
-
 type Read = (path: string, most: number) => Promise<Peek>
 type Shrink = (name: string, read: Peek) => Promise<string | null>
-
 async function shrunk(name: string, read: Peek): Promise<string | null> {
   const blob = pictureBlob(name, read)
   if (!blob) return null
@@ -38,7 +35,6 @@ async function shrunk(name: string, read: Peek): Promise<string | null> {
     return whole()
   }
 }
-
 export class Thumbs {
   readonly shown = new SvelteMap<string, string>()
   #folder: string | null = null
@@ -48,12 +44,10 @@ export class Thumbs {
   #running = 0
   readonly #read: Read
   readonly #shrink: Shrink
-
   constructor(read: Read = peekAt, shrink: Shrink = shrunk) {
     this.#read = read
     this.#shrink = shrink
   }
-
   want(folder: string | null, wanted: Wanted[]): void {
     if (folder !== this.#folder) {
       this.clear()
@@ -73,7 +67,6 @@ export class Thumbs {
     }
     this.#next()
   }
-
   clear(): void {
     for (const url of this.shown.values()) URL.revokeObjectURL(url)
     this.shown.clear()
@@ -81,7 +74,6 @@ export class Thumbs {
     this.#waiting = []
     this.#folder = null
   }
-
   #next(): void {
     while (this.#running < AT_ONCE) {
       const one = this.#waiting.shift()
@@ -110,7 +102,6 @@ export class Thumbs {
         })
     }
   }
-
   #trim(): void {
     for (const [path, url] of this.shown) {
       if (this.shown.size <= KEPT) return

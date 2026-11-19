@@ -4,7 +4,6 @@ import { Script } from 'node:vm'
 import { expect, test } from 'vitest'
 
 const HARNESS = readFileSync(join(import.meta.dirname, 'e2e/harness.py'), 'utf8')
-
 function scriptsPutIntoPages(source: string): Map<string, string> {
   const names = new Set([...source.matchAll(/add_init_script\(([A-Z_]+)\)/g)].map((one) => one[1]))
   const out = new Map<string, string>()
@@ -19,7 +18,6 @@ function scriptsPutIntoPages(source: string): Map<string, string> {
   }
   return out
 }
-
 test('every script the drives put into a page is JavaScript that parses', () => {
   const scripts = scriptsPutIntoPages(HARNESS)
   expect([...scripts.keys()]).toContain('BUILT_IN')
@@ -27,7 +25,6 @@ test('every script the drives put into a page is JavaScript that parses', () => 
     expect(() => new Script(code), name).not.toThrow()
   }
 })
-
 test('a script missing a semicolon between two statements is caught', () => {
   const broken = 'BUILT_IN = (\n    "a()"\n    " if (b) c()"\n)\nx.add_init_script(BUILT_IN)\n'
   const code = scriptsPutIntoPages(broken).get('BUILT_IN') ?? ''

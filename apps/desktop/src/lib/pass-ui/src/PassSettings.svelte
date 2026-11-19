@@ -7,7 +7,6 @@
   import { SETTINGS_TABS, type PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
-
   const TABS = {
     general: ['General', SettingsGeneral],
     security: ['Security', SettingsSecurity],
@@ -15,7 +14,6 @@
     import: ['Import', SettingsImport],
     export: ['Export', SettingsExport],
   } as const
-
   const tab = $derived(ui.view.settingsTab)
   const Page = $derived(TABS[tab][1])
 </script>
@@ -49,7 +47,6 @@
     flex-direction: column;
     height: 100%;
   }
-
   .head {
     flex: none;
     display: flex;
@@ -57,11 +54,9 @@
     gap: var(--space-3);
     padding: var(--space-4) var(--space-5) var(--space-3);
   }
-
   .tabs {
     max-width: 36rem;
   }
-
   .body {
     flex: 1;
     min-height: 0;

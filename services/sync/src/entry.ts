@@ -13,9 +13,7 @@ interface Exports {
   DirectoryBackupGateway: DirectoryBackupGatewayBinding
   Egress: (options: { props: Record<string, never> }) => Fetcher
 }
-
 const HOMES = 'HOMES'
-
 const DENIED = [
   /^localhost$/i,
   /^127\./,
@@ -29,7 +27,6 @@ const DENIED = [
   /\.internal$/i,
   /\.local$/i,
 ]
-
 export class Egress extends WorkerEntrypoint<Env> {
   override async fetch(request: Request): Promise<Response> {
     const host = new URL(request.url).hostname.replace(/\.+$/, '')
@@ -39,9 +36,7 @@ export class Egress extends WorkerEntrypoint<Env> {
     return await fetch(request)
   }
 }
-
 carry(machine)
-
 wire({
   backups: (container, ctx) => {
     const exports = ctx.exports as unknown as Exports
@@ -63,7 +58,6 @@ wire({
   },
   outbound: (ctx) => (ctx.exports as unknown as Exports).Egress({ props: {} }),
 })
-
 export { DirectoryBackupGateway }
 export { AccountHub, AppRelay, ChatLog, NoteRoom } from './index'
 export { Machine } from './sync-server-machines/src/api'

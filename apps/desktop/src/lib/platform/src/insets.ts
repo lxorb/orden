@@ -6,9 +6,7 @@ export interface Edges {
   bottom: number
   left: number
 }
-
 const EDGES = ['top', 'right', 'bottom', 'left'] as const
-
 export function edgesOf(text: string): Edges | null {
   let parsed: unknown
   try {
@@ -16,9 +14,7 @@ export function edgesOf(text: string): Edges | null {
   } catch {
     return null
   }
-
   if (typeof parsed !== 'object' || parsed === null) return null
-
   const read: Record<string, unknown> = { ...parsed }
   const edges: Edges = { top: 0, right: 0, bottom: 0, left: 0 }
   for (const edge of EDGES) {
@@ -26,27 +22,21 @@ export function edgesOf(text: string): Edges | null {
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null
     edges[edge] = value
   }
-
   return edges
 }
-
 export function writeEdges(root: HTMLElement, edges: Edges): void {
   for (const edge of EDGES) root.style.setProperty(`--inset-${edge}`, `${edges[edge]}px`)
 }
-
 export function startInsets(): void {
   const insets = method('insets')
   if (!insets) return
-
   const read = () => {
     const edges = edgesOf(insets())
     if (edges) writeEdges(document.documentElement, edges)
   }
-
   read()
   answer('__ordenInsets', read)
 }
-
 export function tintSystemBars(dark: boolean): void {
   method('bars')?.(dark)
 }

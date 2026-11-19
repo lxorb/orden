@@ -1,15 +1,12 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 PHONE_AGENT = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15"
     " (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
 )
-
 BAR_SEEN = """
 () => {
   const bar = document.querySelector('[data-phone-tabs]')
@@ -19,8 +16,6 @@ BAR_SEEN = """
   return !!hit && bar.contains(hit)
 }
 """
-
-
 COVERED = """
 () => {
   const bar = document.querySelector('[data-phone-tabs]').getBoundingClientRect()
@@ -30,18 +25,12 @@ COVERED = """
   })
 }
 """
-
-
 def bar_seen(page: Page) -> bool:
     return bool(page.evaluate(BAR_SEEN))
-
-
 def tab(page: Page, name: str) -> None:
     page.locator(f"[data-phone-tabs] [data-tab={name}]").tap()
     wait_for(page, f"window.ordenApp.workspace.panel === {name!r}", f"the {name} tab")
     page.wait_for_timeout(400)
-
-
 def laptop(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -52,8 +41,6 @@ def laptop(browser: Browser) -> None:
     if not page.locator('[role="tablist"][aria-label="Panels"]').count():
         wrong("[laptop] the panel strip went")
     page.context.close()
-
-
 def phone(browser: Browser, dark: bool) -> None:
     tag = "dark-" if dark else ""
     context = DRIVE.context(
@@ -71,7 +58,6 @@ def phone(browser: Browser, dark: bool) -> None:
     DRIVE.seed(page, "# Ideas\n\nA thought")
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
-
     if page.locator('.panels:not(.right) [role="tablist"][aria-label="Panels"]').count():
         wrong("[phone] the desktop's panel strip is still drawn")
     tabs = page.locator("[data-phone-tabs] [data-tab]").evaluate_all("(all) => all.map((one) => one.dataset.tab)")
@@ -81,7 +67,6 @@ def phone(browser: Browser, dark: bool) -> None:
     if not bar_seen(page):
         wrong("[phone] the tab bar is not seen over the notes")
     DRIVE.shot(page, f"{tag}notes")
-
     page.locator("[data-panel=tree]").get_by_text("Groceries").first.tap()
     wait_for(page, "window.ordenApp.workspace.active?.note?.name?.startsWith('Groceries')", "the note")
     wait_for(page, "window.ordenApp.workspace.panel === null", "the note on its own")
@@ -95,7 +80,6 @@ def phone(browser: Browser, dark: bool) -> None:
     page.keyboard.type("\nbread")
     wait_for(page, "window.ordenApp.workspace.active?.doc?.includes('bread')", "the line written")
     DRIVE.shot(page, f"{tag}note")
-
     if page.locator("header .search").is_visible():
         wrong("[phone] the note's bar still has the search glyph, which is a tab now")
     page.locator("[data-phone-more]").tap()
@@ -108,13 +92,11 @@ def phone(browser: Browser, dark: bool) -> None:
     DRIVE.shot(page, f"{tag}note-outline")
     page.evaluate("() => window.ordenApp.workspace.closeRight()")
     page.wait_for_timeout(400)
-
     page.locator("[data-phone-back]").tap()
     wait_for(page, "window.ordenApp.workspace.panel === 'tree'", "back on the notes")
     page.wait_for_timeout(400)
     if not bar_seen(page):
         wrong("[phone] back did not bring the tab bar")
-
     tab(page, "tasks")
     wait_for(page, "document.querySelector('[data-panel=tasks] [data-todos-add]')", "the todos panel")
     page.locator("[data-panel=tasks] [data-todos-add]").fill("milk")
@@ -126,7 +108,6 @@ def phone(browser: Browser, dark: bool) -> None:
     if page.evaluate(COVERED):
         wrong("[phone] a notice covers the tab bar")
     DRIVE.shot(page, f"{tag}tasks")
-
     tab(page, "search")
     field = page.locator("[data-panel=search] input").first
     field.tap()
@@ -136,7 +117,6 @@ def phone(browser: Browser, dark: bool) -> None:
     DRIVE.shot(page, f"{tag}search")
     page.locator("[data-panel=search] .hit").first.tap()
     wait_for(page, "window.ordenApp.workspace.active?.note?.name?.startsWith('Ideas')", "the note found")
-
     page.locator("[data-phone-back]").tap()
     wait_for(page, "window.ordenApp.workspace.panel === 'search'", "back on the search")
     tab(page, "tree")
@@ -154,7 +134,6 @@ def phone(browser: Browser, dark: bool) -> None:
     page.keyboard.type("Kestrel")
     wait_for(page, "window.ordenApp.workspace.active?.doc?.includes('Kestrel')", "the new note written")
     DRIVE.shot(page, f"{tag}new-note")
-
     page.locator("[data-phone-back]").tap()
     wait_for(page, "window.ordenApp.workspace.panel === 'tree'", "back on the notes")
     page.wait_for_timeout(300)
@@ -164,14 +143,10 @@ def phone(browser: Browser, dark: bool) -> None:
     page.locator('[role="menuitem"]:has-text("Settings")').tap()
     wait_for(page, """document.querySelector('[role="region"][aria-label="Settings"]')""", "the settings")
     context.close()
-
-
 def drive(browser: Browser) -> None:
     laptop(browser)
     phone(browser, False)
     phone(browser, True)
-
-
 raise SystemExit(
     DRIVE.run(drive, "a phone gets around by a tab bar, and a note pushed over it comes back by a back button")
 )

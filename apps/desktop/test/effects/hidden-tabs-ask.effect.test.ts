@@ -7,35 +7,29 @@ vi.mock('../../src/lib/platform/src/tauri', async (actual) => ({
   platform: () => 'windows',
   invoke: () => Promise.resolve(undefined),
 }))
-
 vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
 vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
     finished: Promise.resolve(),
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
-
 const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { hiddenTabs } = await import('../../src/lib/workspace/src/hidden-tabs.svelte')
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const PromptSheet = (await import('../../src/lib/surfaces/src/PromptSheet.svelte')).default
 type Tab = import('../../src/lib/workspace/src/api').Tab
-
 let target: HTMLElement
 let close: (() => void) | undefined
-
 function running(id: string): Tab {
   pages.of(id).live = true
   return { id, kind: 'web', paneId: 'aside' } as Tab
 }
-
 beforeEach(() => {
   hiddenTabs.set('run')
   hiddenTabs.choice = 'ask'
@@ -45,42 +39,34 @@ beforeEach(() => {
   close = () => void unmount(shown)
   flushSync()
 })
-
 afterEach(() => {
   close?.()
   close = undefined
   target.remove()
 })
-
 test('asks in the question sheet: the title and the two answers', async () => {
   const leaving = hiddenTabs.left([running('a')])
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
-
   expect(target.querySelector('.title')?.textContent).toBe('Hidden tabs')
   const buttons = [...target.querySelectorAll('.row button')]
   expect(buttons.map((one) => one.textContent.trim())).toEqual(['Keep running', 'Pause'])
-
   const pause = buttons.at(1)
   if (pause instanceof HTMLButtonElement) pause.click()
   await leaving
   flushSync()
-
   expect(prompt.open).toBe(false)
   expect(hiddenTabs.choice).toBe('pause')
 })
-
 test('Escape takes it away with nothing decided, and the next switch asks again', async () => {
   const leaving = hiddenTabs.left([running('a')])
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
-
   expect(overlays.escape()).toBe(true)
   await leaving
   flushSync()
   expect(prompt.open).toBe(false)
   expect(hiddenTabs.choice).toBe('ask')
-
   const again = hiddenTabs.left([running('b')])
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   prompt.dismiss()

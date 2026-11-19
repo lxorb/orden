@@ -8,30 +8,23 @@ import type { Reading } from './transport'
 import type { IndexRow, IndexStore } from './index-store'
 
 const BATCH = 200
-
 const MOST_SKIPPED = 5000
-
 const SCANNED = /\.(md|markdown|mdown|mkd|canvas|url|webloc)$/i
-
 export interface Refreshed {
   root: string
   scans: IndexedNote[]
 }
-
 export class Indexing {
   private readonly rows = new Map<string, IndexRow>()
   private readonly loaded = new Set<string>()
-
   constructor(
     private readonly engine: Engine,
     private readonly reading: Reading,
     private readonly store: IndexStore,
   ) {}
-
   scans(): ReadonlyMap<string, IndexedNote> {
     return new Map([...this.rows].map(([id, row]) => [id, row.scan]))
   }
-
   async refresh(): Promise<Refreshed[]> {
     const out: Refreshed[] = []
     const away = this.engine.awayFiles()
@@ -74,7 +67,6 @@ export class Indexing {
     }
     return out
   }
-
   async leaving(one: Leaving): Promise<void> {
     const stamp = { size: one.text.length, mtime: one.at, ctime: one.at }
     const scan = indexed(one.path, one.text, stamp)
@@ -83,7 +75,6 @@ export class Indexing {
     await this.store.put([row])
     this.rows.set(row.id, row)
   }
-
   readonly search = async (
     root: string,
     query: Query,
@@ -124,14 +115,12 @@ export class Indexing {
     }
     return true
   }
-
   private async load(space: string) {
     if (this.loaded.has(space)) return
     this.loaded.add(space)
     for (const row of await this.store.of(space)) this.rows.set(row.id, row)
   }
 }
-
 function samePath(one: string, other: string): boolean {
   const norm = (value: string) => value.replace(/\\/g, '/').replace(/\/+$/, '')
   return norm(one) === norm(other)

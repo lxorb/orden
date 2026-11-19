@@ -8,7 +8,6 @@ const picture = (size: number): Picture => ({
   kind: 'png',
   bytes: () => Promise.resolve(new Uint8Array(size)),
 })
-
 function machine(where: (at: number) => string | Error): Source & { sizes: number[] } {
   const sizes: number[] = []
   return {
@@ -26,18 +25,15 @@ function machine(where: (at: number) => string | Error): Source & { sizes: numbe
     },
   }
 }
-
 beforeEach(() => {
   busy.clear()
 })
-
 describe('pictures carried to another machine', () => {
   test('are their paths there, a space apart, quoted where a shell would split one', async () => {
     const source = machine((at) => (at === 1 ? '/home/me/a.png' : '/home/me/my shots/b.png'))
     expect(await carried(source, [picture(3), picture(5)], '/bin/sh')).toBe("/home/me/a.png '/home/me/my shots/b.png'")
     expect(source.sizes).toEqual([3, 5])
   })
-
   test('are spelled for the shell they land in, as a kept one on Windows is', async () => {
     const kept = 'C:\\Users\\Emil Vinu\\AppData\\Local\\orden\\images\\orden-1.png'
     expect(
@@ -55,14 +51,12 @@ describe('pictures carried to another machine', () => {
       ),
     ).toBe("'/mnt/c/Users/Emil Vinu/AppData/Local/orden/images/orden-1.png'")
   })
-
   test('one larger than a paste carries is never sent, and the line says so', async () => {
     const source = machine(() => '/x.png')
     expect(await carried(source, [picture(MOST_IMAGE + 1)], '/bin/sh')).toBeNull()
     expect(source.sizes).toEqual([])
     expect(busy.trouble).toBe('Could not send the image')
   })
-
   test('one the machine refused is nothing pasted, and the line says so', async () => {
     expect(
       await carried(
@@ -73,7 +67,6 @@ describe('pictures carried to another machine', () => {
     ).toBeNull()
     expect(busy.trouble).toBe('Could not send the image')
   })
-
   test('nothing goes where the source cannot carry a picture', async () => {
     const local = machine(() => '/x.png')
     delete local.image
@@ -82,7 +75,6 @@ describe('pictures carried to another machine', () => {
     expect(busy.trouble).toBeNull()
   })
 })
-
 describe('a picture', () => {
   test('is one an agent reads, by its type or by its file’s name', () => {
     expect(pictureOf(new Blob([], { type: 'image/webp' }))?.kind).toBe('webp')

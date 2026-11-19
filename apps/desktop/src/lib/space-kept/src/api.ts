@@ -20,6 +20,5 @@ export {
   SpaceGraphSettings,
 } from './graph.svelte'
 export { ItemMetaStore } from './item-meta.svelte'
-
 export const push = async (...args: Parameters<typeof import('./pushing').push>): Promise<void> =>
   (await import('./pushing')).push(...args)

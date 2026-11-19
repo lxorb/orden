@@ -14,9 +14,7 @@ providePort('terminal.making', {
   pickHost: nothing,
   online: nothing,
 })
-
 await import('../../src/lib/web-tab/src/api')
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -28,13 +26,10 @@ Element.prototype.animate = () =>
     playState: 'finished',
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
-
 Element.prototype.scrollIntoView = () => undefined
-
 let target: HTMLElement
 let close: (() => void) | undefined
 let was: 'phone' | 'tablet' | 'desktop'
-
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
@@ -43,7 +38,6 @@ beforeEach(() => {
   target.dataset.pane = workspace.panes.focusedId
   document.body.append(target)
 })
-
 afterEach(() => {
   close?.()
   close = undefined
@@ -51,10 +45,8 @@ afterEach(() => {
   viewport.device = was
   vi.restoreAllMocks()
 })
-
 function makers(): string[] {
   const made: string[] = []
-
   vi.spyOn(workspace, 'openBlank').mockImplementation(() => void made.push('note'))
   vi.spyOn(workspace, 'newCanvas').mockImplementation(async () => void made.push('canvas'))
   vi.spyOn(workspace, 'openPage').mockImplementation(() => {
@@ -63,10 +55,8 @@ function makers(): string[] {
   })
   vi.spyOn(workspace, 'newPages').mockImplementation(async () => void made.push('pages'))
   vi.spyOn(workspace, 'focusPane').mockImplementation(() => undefined)
-
   return made
 }
-
 function here(chosenOn?: string) {
   const paneId = workspace.panes.focusedId
   const made = mount(NewHere, {
@@ -76,21 +66,17 @@ function here(chosenOn?: string) {
   flushSync()
   close = () => void unmount(made, { outro: false })
 }
-
 const buttons = () => [...target.querySelectorAll<HTMLButtonElement>('button')]
 const names = (within: ParentNode) =>
   [...within.querySelectorAll('.orden-row-label')].map((one) => one.textContent.trim())
-
 function press(key: string, held: KeyboardEventInit = {}) {
   const at = document.activeElement ?? document.body
   at.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...held }))
   flushSync()
 }
-
 test('offers every kind a new tab can be, in the lines Emil gave them', () => {
   makers()
   here()
-
   expect(names(target)).toEqual([
     'New note',
     'New canvas',
@@ -109,7 +95,6 @@ test('offers every kind a new tab can be, in the lines Emil gave them', () => {
     ['New application', 'Pass'],
   ])
 })
-
 test('folds each group into one card where the lines do not fit, a lone kind staying itself', async () => {
   const made = makers()
   vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(320)
@@ -118,13 +103,11 @@ test('folds each group into one card where the lines do not fit, a lone kind sta
   vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(120)
   here()
   flushSync()
-
   expect(names(target)).toEqual(['Notes', 'New AI chat', 'Online terminal', 'New web note', 'Apps'])
   const notes = target.querySelector<HTMLElement>('[data-group="notes"]')
   expect(notes?.getAttribute('aria-haspopup')).toBe('menu')
   expect(notes?.querySelector('kbd')).toBeNull()
   expect(notes?.querySelector('[data-more]')).not.toBeNull()
-
   const { menu } = await import('../../src/lib/ui-kit/src/api')
   const shown = vi.spyOn(menu, 'show').mockImplementation(() => undefined)
   notes?.click()
@@ -132,15 +115,12 @@ test('folds each group into one card where the lines do not fit, a lone kind sta
   const rows = shown.mock.calls[0]?.[1] ?? []
   expect(rows.map((row) => row?.label)).toEqual(['New note', 'New canvas', 'New page note'])
   expect(made).toEqual([])
-
   press('c')
   expect(made).toEqual(['canvas'])
 })
-
 test('each wearing its letter, which a screen reader is told as its key', () => {
   makers()
   here()
-
   expect(buttons().map((one) => one.querySelector('kbd')?.textContent)).toEqual([
     'N',
     'C',
@@ -162,104 +142,77 @@ test('each wearing its letter, which a screen reader is told as its key', () => 
     'K',
   ])
 })
-
 test('lands the keyboard on the first of them', () => {
   makers()
   here()
-
   expect(document.activeElement).toBe(buttons()[0])
 })
-
 test('and the arrows walk the rest', () => {
   makers()
   here()
-
   const first = buttons()[0]
   first?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
   flushSync()
-
   expect(document.activeElement).toBe(buttons()[1])
 })
-
 test('makes its own kind when one is pressed', async () => {
   const made = makers()
   here()
-
   for (const one of buttons()) one.click()
   flushSync()
-
   await vi.waitFor(() => expect(made).toEqual(['note', 'canvas', 'pages', 'web']))
 })
-
 test('makes a kind by its letter, with the keyboard on a card', () => {
   const made = makers()
   here()
-
   expect(document.activeElement).toBe(buttons()[0])
   press('c')
-
   expect(made).toEqual(['canvas'])
 })
-
 test('and with the keyboard on nothing at all', async () => {
   const made = makers()
   here()
-
   ;(document.activeElement as HTMLElement | null)?.blur()
   press('p')
   press('W', { shiftKey: true })
-
   await vi.waitFor(() => expect(made).toEqual(['pages', 'web']))
 })
-
 test('but never in a field, nor under a modifier', () => {
   const made = makers()
   here()
-
   const field = document.createElement('input')
   target.prepend(field)
   field.focus()
   press('n')
   field.remove()
-
   buttons()[0]?.focus()
   press('n', { ctrlKey: true })
   press('n', { altKey: true })
-
   expect(made).toEqual([])
 })
-
 test('in a new tab, leaves the keyboard where it was and says which tab the choice is on', () => {
   const made = makers()
   const chosen: string[] = []
   vi.spyOn(workspace, 'chosenOn').mockImplementation((id) => void chosen.push(id))
   vi.spyOn(workspace, 'showing').mockReturnValue({ id: 'new-tab' } as ReturnType<typeof workspace.showing>)
   here('new-tab')
-
   expect(target.contains(document.activeElement)).toBe(false)
   press('c')
-
   expect(made).toEqual(['canvas'])
   expect(chosen).toEqual(['new-tab'])
 })
-
 test('and hears no letter once that tab is not the one in front', () => {
   const made = makers()
   vi.spyOn(workspace, 'showing').mockReturnValue(null)
   here('new-tab')
-
   press('c')
-
   expect(made).toEqual([])
 })
-
 test('is one stop for Tab, whichever button the keyboard is on', () => {
   makers()
   here()
-
   expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1, -1])
 })
-
 test('takes the keyboard once what held it in the tab just closed is gone', async () => {
   makers()
   const leaving = document.createElement('input')
@@ -267,13 +220,10 @@ test('takes the keyboard once what held it in the tab just closed is gone', asyn
   leaving.focus()
   here()
   expect(document.activeElement).toBe(leaving)
-
   leaving.remove()
   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
-
   expect(document.activeElement).toBe(buttons()[0])
 })
-
 test('leaves the keyboard where the reader put it outside the pane', async () => {
   makers()
   const elsewhere = document.createElement('input')
@@ -281,7 +231,6 @@ test('leaves the keyboard where the reader put it outside the pane', async () =>
   elsewhere.focus()
   here()
   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
-
   expect(document.activeElement).toBe(elsewhere)
   elsewhere.remove()
 })

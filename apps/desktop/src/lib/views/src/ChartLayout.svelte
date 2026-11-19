@@ -11,12 +11,10 @@
   import { chartName, groupLabel, measureName, noteNames, propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const settings = $derived(view ? settingsOf(view) : null)
   const property = $derived(view?.groupBy?.property)
-
   const points = $derived(
     live.answer && settings && live.base ? seriesOf(live.answer, settings, live.base, live.context) : [],
   )
@@ -24,7 +22,6 @@
     live.answer && settings && live.base ? totalOf(live.answer, settings, live.base, live.context) : null,
   )
   const fractions = $derived(heights(points))
-
   const TONES = [
     'var(--canvas-5)',
     'var(--canvas-4)',
@@ -38,7 +35,6 @@
     const own = live.base && property && typeof key === 'string' ? toneColour(toneOf(live.base, property, key)) : null
     return own ?? TONES[at % TONES.length] ?? 'var(--accent)'
   }
-
   const names = $derived(noteNames(points.map((point) => point.key)))
   const label = (at: number) => groupLabel(property, points[at]?.key ?? null, live.today, names)
   const said = (at: number) => {
@@ -46,11 +42,8 @@
     if (!one) return ''
     return one.day ? dayWords(one.day, live.today) : localNumber(Math.round(one.value * 100) / 100)
   }
-
   const set = (key: string, value: unknown) => kit.change((base, at) => setOrdenOption(base, at, key, value))
-
   const numeric = $derived(live.base ? knownProperties(live.base, view?.orden.rows ?? 'notes', live.rows) : [])
-
   const W = 640
   const H = 260
 </script>
@@ -165,47 +158,38 @@
     padding: var(--space-3);
     font-family: var(--font-ui);
   }
-
   .settings {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
   }
-
   .pick {
     width: 180px;
   }
-
   .kinds button {
     padding: 0 var(--space-3);
   }
-
   .plot {
     width: 100%;
     max-height: 420px;
   }
-
   .line {
     fill: none;
     stroke: var(--accent);
     stroke-width: 2;
     stroke-linejoin: round;
   }
-
   circle {
     fill: var(--accent);
   }
-
   .tick {
     fill: var(--muted);
     font-size: 11px;
   }
-
   .tick.value {
     fill: var(--muted-strong);
   }
-
   .number {
     padding: var(--space-6) 0;
     color: var(--text-strong);
@@ -214,25 +198,21 @@
     font-variant-numeric: tabular-nums;
     text-align: center;
   }
-
   .donut {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-4);
   }
-
   .donut svg {
     width: 240px;
     height: 240px;
   }
-
   .middle {
     fill: var(--text-strong);
     font-size: 24px;
     font-weight: 600;
   }
-
   .legend {
     margin: 0;
     padding: 0;
@@ -240,31 +220,26 @@
     color: var(--text);
     font-size: var(--text-row);
   }
-
   .legend li {
     display: flex;
     align-items: center;
     gap: var(--space-2);
     min-height: var(--row-height-sm);
   }
-
   .swatch {
     width: 10px;
     height: 10px;
     border-radius: 3px;
   }
-
   .value {
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   .hbars {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .hbar {
     display: grid;
     grid-template-columns: minmax(80px, 22%) 1fr auto;
@@ -272,21 +247,18 @@
     gap: var(--space-3);
     font-size: var(--text-row);
   }
-
   .name {
     overflow: hidden;
     color: var(--text);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .track {
     height: 14px;
     border-radius: 4px;
     background: var(--surface-2);
     overflow: hidden;
   }
-
   .fill {
     display: block;
     height: 100%;

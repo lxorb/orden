@@ -21,7 +21,6 @@
     now: number
     hours?: boolean
   } = $props()
-
   const whole = $derived(to - from)
   const at = (moment: number) => `${((moment - from) / whole) * 100}%`
   const wide = (ms: number) => `${Math.max(0.25, (ms / whole) * 100)}%`
@@ -86,14 +85,12 @@
     flex-direction: column;
     gap: 2px;
   }
-
   .lanes {
     position: relative;
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
-
   .said,
   .busy {
     position: relative;
@@ -101,36 +98,29 @@
     background: var(--surface-2);
     overflow: hidden;
   }
-
   .said {
     height: 14px;
   }
-
   .busy {
     height: 10px;
   }
-
   .said span,
   .busy span {
     position: absolute;
   }
-
   .said span {
     top: 0;
     bottom: 0;
     border-radius: 2px;
   }
-
   .busy span {
     bottom: 0;
     background: var(--accent);
     opacity: 0.5;
   }
-
   .busy span.away {
     background: repeating-linear-gradient(135deg, var(--muted) 0 2px, transparent 2px 4px);
   }
-
   .now {
     position: absolute;
     top: -2px;
@@ -140,7 +130,6 @@
     border-radius: 1px;
     background: var(--danger);
   }
-
   .hours {
     position: relative;
     height: 1.1em;
@@ -148,7 +137,6 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .hours span {
     position: absolute;
     white-space: nowrap;

@@ -24,35 +24,28 @@ interface ReviewCommands {
 }
 const REVIEW = import.meta.glob<ReviewCommands>('../review/commands.ts')
 const loadReview = Object.values(REVIEW)[0]
-
 async function reviewCommand(which: keyof ReviewCommands, context: CommandContext): Promise<void> {
   if (loadReview) await (await loadReview())[which](context)
 }
-
 function threadOf(context: CommandContext): Thread | null {
   return context.thread ?? context.panel.ensure?.() ?? null
 }
-
 async function report(host: Host, context: CommandContext, said: Promise<string>): Promise<void> {
   const thread = threadOf(context)
   const words = await said
   if (thread) host.line(thread, words)
 }
-
 export function effortIn(args: string): Effort | 'next' {
   const word = args.trim().toLowerCase()
   if (word === 'extra' || word === 'x-high') return 'xhigh'
   if (word === 'none') return 'off'
   return isEffort(word) ? word : 'next'
 }
-
 function onOff(args: string): boolean | undefined {
   const word = args.trim().toLowerCase()
   return word === 'on' ? true : word === 'off' ? false : undefined
 }
-
 type Run = (context: CommandContext, host: Host) => void | Promise<void>
-
 const RUNS: Record<string, Run> = {
   new: async ({ args, panel }) => {
     panel.newThread()
@@ -113,14 +106,12 @@ const RUNS: Record<string, Run> = {
     }
     panel.text = '/'
   },
-
   model: ({ args, panel }) => {
     if (!args || !panel.modelNamed(args)) panel.openModels()
   },
   effort: ({ args, panel }) => panel.setEffort(effortIn(args)),
   fast: ({ args, panel }) => panel.setFast(onOff(args)),
   'output-style': ({ args, thread }, host) => outputStyle(host, thread, args),
-
   approve: ({ args, panel }) => {
     panel.setMode('approve')
     if (args) panel.send(args)
@@ -163,14 +154,12 @@ const RUNS: Record<string, Run> = {
     const thread = threadOf(context)
     if (thread && context.args) await research(host, thread, context.args)
   },
-
   mention: ({ args }, host) => mention(host, args),
   'add-space': ({ args }, host) => mention(host, args),
   memory: ({ args, thread }, host) => memory(host, thread, args),
   init: ({ thread }, host) => init(host, thread),
   skills: ({ args, thread }, host) => skills(host, thread, args),
   mcp: () => settingsWindow().show('agents'),
-
   shorter: () => void rewrite('shorter'),
   longer: () => void rewrite('longer'),
   fix: () => void rewrite('grammar'),
@@ -179,7 +168,6 @@ const RUNS: Record<string, Run> = {
   summarize: ({ args, thread }, host) => summarize(host, thread, args),
   review: ({ args, thread }, host) => review(host, thread, args),
   diff: (context) => reviewCommand('changes', context),
-
   tasks: async (context, host) => {
     const thread = threadOf(context)
     if (thread) await showTasks(host, thread, context.args)
@@ -207,7 +195,6 @@ const RUNS: Record<string, Run> = {
   },
   voice: ({ args, panel }) => panel.voice?.(onOff(args)),
 }
-
 async function guarded(host: Host, context: CommandContext, run: Run | undefined): Promise<void> {
   try {
     await run?.(context, host)
@@ -215,7 +202,6 @@ async function guarded(host: Host, context: CommandContext, run: Run | undefined
     if (context.thread) host.line(context.thread, message(error, 'The model did not answer.'))
   }
 }
-
 function noteRow(note: NoteCommand, host: Host): PanelCommand {
   const onceIn = async (thread: Thread | null) => {
     const held = () => (thread ?? host.panel.ensure?.())?.mode ?? FIRST_MODE
@@ -240,7 +226,6 @@ function noteRow(note: NoteCommand, host: Host): PanelCommand {
     },
   }
 }
-
 export function commands(panel: Panel): readonly PanelCommand[] {
   const host = hostOf(panel)
   const ready = { review: !!loadReview }

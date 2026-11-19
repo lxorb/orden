@@ -9,7 +9,6 @@ import type { Source } from './sources'
 
 const ARCHIVE = 'Archive'
 const BUNDLE = /^(.*?\.textbundle)(?:\/|$)/i
-
 interface Info {
   id: string | null
   meta: Meta
@@ -17,7 +16,6 @@ interface Info {
   archived: boolean
   locked: boolean
 }
-
 export async function readBear(sources: readonly Source[]): Promise<ImportPlan> {
   const unwrapped = withoutBackupFolder(sources)
   const infos = await bundleInfos(unwrapped)
@@ -25,13 +23,11 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
   let trashed = 0
   let archived = 0
   let locked = 0
-
   for (const info of infos.values()) {
     if (info.trashed) trashed += 1
     else if (info.locked) locked += 1
     else if (info.archived) archived += 1
   }
-
   const placed = unwrapped.map((source) => {
     const info = infoOf(infos, source.path)
     if (!info?.archived || info.trashed || info.locked) return source
@@ -42,9 +38,7 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
     const archivedHere = info.archived && !info.trashed && !info.locked
     moved.set(archivedHere ? `${ARCHIVE}/${bundle}` : bundle, info)
   }
-
   const notes = noteIndex(placed, moved)
-
   const plan = await readPlain(placed, {
     format: 'bear',
     skip: (path) => {
@@ -56,7 +50,6 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
     words: (text, source) => bearWords(text, source.path, notes),
     meta: (source) => infoOf(moved, source.path)?.meta,
   })
-
   if (trashed) {
     lost.push(`${trashed} notes were in the bin and stay there`)
   }
@@ -66,21 +59,17 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
   if (archived) {
     lost.push(`${archived} archived notes are in a folder called Archive`)
   }
-
   plan.lost.push(...lost)
   return plan
 }
-
 export const bearTags = (text: string): string => convertTags(text).text
 const UNDERLINE = /(?<![~\\\w/])~([^~\s\\](?:[^~\n]*[^~\s\\])?)~(?![~\w/])/g
 const COLONS = /(?<![\w:])::([^\s:](?:[^:\n]*[^\s:])?)::(?![\w:])/g
 const NOTE_LINK = /\]\((bear:\/\/x-callback-url\/open-note\?[^)\s]*)\)/g
 const WIKILINK = /(?<!\\)(!?)\[\[([^\]\n|#]+)((?:\|[^\]\n]*)?)\]\]/g
 const UNLINKABLE_NAME = /(?<!\\)!?\[\[([^\]\n|]*[#^[][^\]\n|]*)((?:\|[^\]\n]*)?)\]\]/g
-
 export function bearWords(text: string, from = '', notes: NoteIndex = EMPTY): string {
   const tagged = bearTags(text)
-
   return outsideCode(tagged, (words) =>
     words
       .replace(UNDERLINE, '<u>$1</u>')
@@ -104,36 +93,29 @@ export function bearWords(text: string, from = '', notes: NoteIndex = EMPTY): st
       }),
   )
 }
-
 function encoded(path: string): string {
   return path.replace(/%/g, '%25').replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/#/g, '%23')
 }
-
 interface NoteIndex {
   find(address: string): string | null
   heading(target: string): string | null
   named(target: string): string | null
 }
-
 const EMPTY: NoteIndex = { find: () => null, heading: () => null, named: () => null }
-
 function noteIndex(sources: readonly Source[], infos: ReadonlyMap<string, Info>): NoteIndex {
   const byId = new Map<string, string>()
   const byTitle = new Map<string, string>()
   const notes: string[] = []
-
   for (const source of sources) {
     if (!/\.(md|markdown|txt)$/i.test(source.path)) continue
     const bundle = BUNDLE.exec(source.path)?.[1]
     const info = bundle === undefined ? undefined : infos.get(bundle)
     if (info?.id) byId.set(info.id.toUpperCase(), source.path)
-
     const named = (bundle ?? source.path).split('/').pop() ?? ''
     const title = named.replace(/\.(textbundle|md|markdown|txt)$/i, '').toLowerCase()
     if (!byTitle.has(title)) byTitle.set(title, source.path)
     notes.push((bundle ?? source.path).replace(/\.(textbundle|md|markdown|txt)$/i, '').toLowerCase())
   }
-
   return {
     find(address) {
       let params: URLSearchParams
@@ -161,38 +143,30 @@ function noteIndex(sources: readonly Source[], infos: ReadonlyMap<string, Info>)
     },
   }
 }
-
 function withoutBackupFolder(sources: readonly Source[]): readonly Source[] {
   const top = sources[0]?.path.split('/')[0] ?? ''
   if (!/\.bear2bk$/i.test(top)) return sources
   if (!sources.every((one) => one.path.startsWith(`${top}/`))) return sources
-
   return sources.map((one) => ({ ...one, path: one.path.slice(top.length + 1) }))
 }
-
 async function bundleInfos(sources: readonly Source[]): Promise<Map<string, Info>> {
   const infos = new Map<string, Info>()
-
   for (const source of sources) {
     const bundle = /^(.*\.textbundle)\/info\.json$/i.exec(source.path)?.[1]
     if (bundle === undefined) continue
-
     let said: unknown
     try {
       said = JSON.parse(await source.text())
     } catch {
       continue
     }
-
     const bear = record(record(said)?.['net.shinyfrog.bear'])
     if (!bear) continue
-
     const made = dayOf(text(bear.creationDate))
     const changed = dayOf(text(bear.modificationDate))
     const meta: Meta = {}
     if (made) meta.date = made
     if (changed) meta.updated = changed
-
     infos.set(bundle, {
       id: text(bear.uniqueIdentifier),
       meta,
@@ -201,20 +175,15 @@ async function bundleInfos(sources: readonly Source[]): Promise<Map<string, Info
       locked: flag(bear.encrypted),
     })
   }
-
   return infos
 }
-
 function infoOf(infos: ReadonlyMap<string, Info>, path: string): Info | undefined {
   const bundle = BUNDLE.exec(path)?.[1]
   return bundle === undefined ? undefined : infos.get(bundle)
 }
-
 const record = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null
-
 function text(value: unknown): string | null {
   return typeof value === 'string' && value ? value : null
 }
-
 const flag = (value: unknown): boolean => value === 1 || value === true || value === '1'

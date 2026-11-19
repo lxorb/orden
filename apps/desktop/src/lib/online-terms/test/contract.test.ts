@@ -6,13 +6,11 @@ describe('the module stands on its own', () => {
     expect(MADE_NAME).toBe('Terminal')
   })
 })
-
 describe('an online terminal', () => {
   test('is only ever a terminal, and is told by its .term file', () => {
     expect(isOnlineTab({ kind: 'note', path: 'a.term' })).toBe(false)
     expect(isOnlineTab({ kind: 'terminal', path: null, doc: '{"shell":"zsh"}' })).toBe(false)
   })
-
   test('is shown without its ending, and a made name is told from a chosen one', () => {
     expect(termName('Build.term')).toBe('Build')
     expect(isMadeName('Terminal 2.term')).toBe(true)

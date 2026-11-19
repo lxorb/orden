@@ -4,18 +4,15 @@ import { nextOrder } from './query'
 import { checkedPatch, fieldsOf, fitsOneChange, KIND, newId, type Todo, todoOf, type TodoPatch } from './todo'
 
 const SEND_AFTER = 1500
-
 export interface OpenedDisk extends TodoDisk {
   close(): void
   clear(): Promise<void>
 }
-
 export interface Opening {
   readonly owner: string | null
   readonly server: TodoServer | null
   readonly device: string
 }
-
 export interface StoreWorld {
   openDisk(owner: string | null): Promise<OpenedDisk>
   now(): number
@@ -27,14 +24,11 @@ export interface StoreWorld {
   warn(message: string): void
   later(run: () => void, ms: number): () => void
 }
-
 const missing = (what: string) => err(failure('tasks-model', 'missing', what))
-
 export class TodoStore {
   todos = $state<readonly Todo[]>([])
   answers = $state<boolean | null>(null)
   openedFor = $state<string | null | undefined>(undefined)
-
   private records: TodoRecords | null = null
   private disk: OpenedDisk | null = null
   private owner: string | null | undefined = undefined
@@ -46,9 +40,7 @@ export class TodoStore {
   private channel: ReturnType<StoreWorld['channel']> = null
   private cancelSend: () => void = () => undefined
   private readonly listeners: (() => void)[] = []
-
   constructor(private readonly world: StoreWorld) {}
-
   opened(how: Opening): Promise<void> {
     this.server = how.server
     this.device = how.device
@@ -64,7 +56,6 @@ export class TodoStore {
       })
     return this.opening
   }
-
   private async switchTo(owner: string | null): Promise<void> {
     this.channel?.close()
     this.channel = null
@@ -103,7 +94,6 @@ export class TodoStore {
     this.told()
     if (this.server) void this.exchange()
   }
-
   private async carry(into: TodoRecords): Promise<boolean> {
     const local = await this.world.openDisk(null)
     try {
@@ -116,7 +106,6 @@ export class TodoStore {
       local.close()
     }
   }
-
   private told(): void {
     const records = this.records
     this.todos = records
@@ -127,7 +116,6 @@ export class TodoStore {
       : []
     for (const listener of [...this.listeners]) listener()
   }
-
   hear(listener: () => void): () => void {
     this.listeners.push(listener)
     return () => {
@@ -135,7 +123,6 @@ export class TodoStore {
       if (at !== -1) this.listeners.splice(at, 1)
     }
   }
-
   private wrote(): void {
     this.channel?.postMessage('changed')
     if (this.server) {
@@ -143,11 +130,9 @@ export class TodoStore {
       this.cancelSend = this.world.later(() => void this.exchange(), SEND_AFTER)
     }
   }
-
   todo(id: string): Todo | null {
     return this.todos.find((one) => one.id === id) ?? null
   }
-
   async add(patch: TodoPatch & { title: string }): Promise<Result<Todo>> {
     const records = this.records
     if (!records) return missing('the todos are not open yet')
@@ -175,7 +160,6 @@ export class TodoStore {
     const made = this.todo(id)
     return made ? ok(made) : missing('the todo was not kept')
   }
-
   async update(id: string, patch: TodoPatch): Promise<Result<Todo>> {
     const records = this.records
     if (!records) return missing('the todos are not open yet')
@@ -195,7 +179,6 @@ export class TodoStore {
     const now = this.todo(id)
     return now ? ok(now) : missing(`no todo ${id}`)
   }
-
   async remove(id: string): Promise<Result<void>> {
     const records = this.records
     if (!records) return missing('the todos are not open yet')
@@ -204,7 +187,6 @@ export class TodoStore {
     this.wrote()
     return ok(undefined)
   }
-
   exchange(): Promise<boolean> {
     if (this.exchanging) {
       this.again = true
@@ -219,7 +201,6 @@ export class TodoStore {
     })
     return this.exchanging
   }
-
   private async exchanged(): Promise<boolean> {
     const server = this.server
     const records = this.records

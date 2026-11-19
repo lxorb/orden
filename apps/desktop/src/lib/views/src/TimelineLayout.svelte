@@ -25,18 +25,15 @@
   } from './timeline'
 
   const { kit }: { kit: Kit } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   let scale = $state<Scale>('week')
-
   const SCALE_NAMES: Record<Scale, string> = {
     day: 'Days',
     week: 'Weeks',
     month: 'Months',
     quarter: 'Quarters',
   }
-
   const rows = $derived(everyRow(live.answer?.groups ?? []))
   const bars = $derived.by((): Bar[] => {
     const base = live.base
@@ -54,7 +51,6 @@
   const ROW = 32
   const NAMED = 80
   const x = (day: string) => daysBetween(span.first, day) * width
-
   const ticks = $derived.by(() => {
     const out: { day: string; label: string }[] = []
     for (let day = span.first; day <= span.last; day = addDays(day, 1)) {
@@ -69,14 +65,12 @@
     }
     return out
   })
-
   const arrows = $derived(
     arrowsOf(bars).map((one) => ({
       from: { x: x(drawnOf(one.from.bar, span).end) + width, y: one.from.at * ROW + ROW / 2 },
       to: { x: x(drawnOf(one.to.bar, span).start), y: one.to.at * ROW + ROW / 2 },
     })),
   )
-
   function drag(event: PointerEvent, bar: Bar, part: 'move' | 'start' | 'end') {
     if (event.button !== 0) return
     event.preventDefault()
@@ -138,7 +132,6 @@
     window.addEventListener('pointerup', up)
     window.addEventListener('pointercancel', done)
   }
-
   let carrying = false
 </script>
 
@@ -229,17 +222,14 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .bar-head {
     display: flex;
     justify-content: flex-end;
     padding: var(--space-2) var(--space-3);
   }
-
   .scales button {
     padding: 0 var(--space-3);
   }
-
   .body {
     flex: 1;
     display: flex;
@@ -247,18 +237,15 @@
     overflow-y: auto;
     border-top: 1px solid var(--line);
   }
-
   .names {
     flex: none;
     width: 220px;
     border-inline-end: 1px solid var(--line);
   }
-
   .corner {
     height: 28px;
     border-bottom: 1px solid var(--line);
   }
-
   .name {
     display: block;
     width: 100%;
@@ -274,29 +261,24 @@
     white-space: nowrap;
     cursor: default;
   }
-
   @media (hover: hover) {
     .name:hover {
       color: var(--text-strong);
     }
   }
-
   .track {
     flex: 1;
     min-width: 0;
     overflow-x: auto;
   }
-
   .inner {
     position: relative;
   }
-
   .ticks {
     position: relative;
     height: 28px;
     border-bottom: 1px solid var(--line);
   }
-
   .ticks span {
     position: absolute;
     top: 6px;
@@ -305,11 +287,9 @@
     font-size: var(--text-xs);
     white-space: nowrap;
   }
-
   .lanes {
     position: relative;
   }
-
   .rule,
   .today {
     position: absolute;
@@ -318,24 +298,20 @@
     width: 1px;
     background: var(--line);
   }
-
   .today {
     width: 2px;
     background: var(--accent);
   }
-
   .arrows {
     position: absolute;
     inset: 0;
     pointer-events: none;
   }
-
   .arrows path {
     fill: none;
     stroke: var(--muted);
     stroke-width: 1.2;
   }
-
   .span {
     position: absolute;
     display: flex;
@@ -351,15 +327,12 @@
     cursor: grab;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .span.far {
     border-style: dashed;
   }
-
   .span.done {
     opacity: 0.55;
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -369,7 +342,6 @@
     white-space: nowrap;
     pointer-events: none;
   }
-
   .beside {
     position: absolute;
     height: 22px;
@@ -379,7 +351,6 @@
     white-space: nowrap;
     pointer-events: none;
   }
-
   .edge {
     flex: none;
     width: 6px;

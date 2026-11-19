@@ -20,13 +20,11 @@ export const SORT_NAMES: Readonly<Record<Sort, string>> = {
   priority: 'Priority',
   manual: 'Manual',
 }
-
 export interface Space {
   readonly id: string
   readonly also?: readonly string[]
   readonly name: string
 }
-
 export interface ShownWorld {
   todos(): readonly Todo[]
   activeSpace(): Space | null
@@ -35,12 +33,10 @@ export interface ShownWorld {
   kept(): unknown
   keep(value: unknown): void
 }
-
 interface Kept {
   onlySpace: boolean
   sort: Sort
 }
-
 function keptOf(value: unknown): Kept {
   const read = typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
   return {
@@ -48,48 +44,38 @@ function keptOf(value: unknown): Kept {
     sort: isSort(read.sort) ? read.sort : 'deadline',
   }
 }
-
 export class Shown {
   onlySpace = $state(false)
   label = $state<string | null>(ALL_LABELS)
   sort = $state<Sort>('deadline')
-
   constructor(private readonly world: ShownWorld) {
     const kept = keptOf(world.kept())
     this.onlySpace = kept.onlySpace
     this.sort = kept.sort
   }
-
   private remember(): void {
     this.world.keep({ onlySpace: this.onlySpace, sort: this.sort })
   }
-
   setOnlySpace(value: boolean): void {
     this.onlySpace = value
     this.remember()
   }
-
   setSort(value: Sort): void {
     this.sort = value
     this.remember()
   }
-
   setLabel(value: string | null): void {
     this.label = value
   }
-
   get space(): Space | null {
     return this.world.activeSpace()
   }
-
   get spaces(): readonly Space[] {
     return this.world.spaces()
   }
-
   private get narrowed(): boolean {
     return this.onlySpace && this.space !== null
   }
-
   get filter(): Filter {
     const label = this.label
     return {
@@ -100,7 +86,6 @@ export class Shown {
       today: this.world.today(),
     }
   }
-
   get labels(): string[] {
     const today = this.world.today()
     const shown = shownTodos(this.world.todos(), {
@@ -112,23 +97,18 @@ export class Shown {
     })
     return labelsOf(shown, { onlySpace: false, space: null, today })
   }
-
   get todos(): Todo[] {
     return sortedTodos(shownTodos(this.world.todos(), this.filter), this.sort)
   }
-
   get groups(): Group[] {
     return groupedByLabel(this.todos)
   }
-
   spaceName(id: string | null): string | null {
     if (id === null) return null
     return this.spaces.find((one) => isTodoSpace(one, id))?.name ?? null
   }
 }
-
 const KEPT = 'orden:todos-shown'
-
 export function shellWorld(todos: () => readonly Todo[]): ShownWorld {
   const workspace = () => {
     const port = portOf('sync.workspace')

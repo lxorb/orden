@@ -2,13 +2,11 @@ import base64
 import tempfile
 import zipfile
 from pathlib import Path
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -17,24 +15,19 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 DEVICES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
 ]
-
 PLAN = "1a2b3c4d5e6f78901a2b3c4d5e6f7890"
 KIT = "aaaabbbbccccddddeeeeffff00001111"
 TASKS = "99998888777766665555444433332222"
 ROW = "11112222333344445555666677778888"
-
 PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=="
 )
-
 def notion_zip(into: Path) -> Path:
     path = into / "Export-9f1c2d3e.zip"
-
     with zipfile.ZipFile(path, "w") as zip_file:
         zip_file.writestr(
             f"Plan {PLAN}.md",
@@ -56,14 +49,11 @@ def notion_zip(into: Path) -> Path:
             "Name,Status,Notes\nOne,Done,Nothing left\nTwo,Doing,Still going\n",
         )
         zip_file.writestr(f"Tasks {TASKS}/One {ROW}.md", "# One\nStatus: Done\n\nThe first row.\n")
-
     return path
-
 def enex(into: Path) -> Path:
     path = into / "Travel.enex"
     hashed = __import__("hashlib").md5(PNG).hexdigest()
     encoded = base64.b64encode(PNG).decode()
-
     path.write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export4.dtd">\n'
@@ -92,9 +82,7 @@ def enex(into: Path) -> Path:
         "</en-export>\n",
         encoding="utf-8",
     )
-
     return path
-
 def opened(browser, width, height, agent, finger, scheme, name):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -119,11 +107,9 @@ def opened(browser, width, height, agent, finger, scheme, name):
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     return context, page
-
 NAMES = """
 () => window.ordenApp.workspace.files.map((one) => one.path.split('/').slice(-2).join('/'))
 """
-
 TEXT_OF = """
 async (ending) => {
   const ws = window.ordenApp.workspace
@@ -131,17 +117,14 @@ async (ending) => {
   return found ? await ws.noteText(found.path) : null
 }
 """
-
 def bring_in(page, shot, tag: str, path: Path) -> dict:
     page.evaluate("() => window.ordenApp.importing.show()")
     page.wait_for_selector("button.drop")
     page.wait_for_timeout(450)
     shot(f"{tag}-waiting")
-
     with page.expect_file_chooser() as chooser:
         page.click("button.drop")
     chooser.value.set_files(str(path))
-
     page.wait_for_selector("button.orden-button", timeout=20000)
     page.wait_for_function("() => window.ordenApp.importing.stage === 'ready'", timeout=30000)
     said = page.evaluate(
@@ -153,54 +136,41 @@ def bring_in(page, shot, tag: str, path: Path) -> dict:
         })"""
     )
     shot(f"{tag}-preview")
-
     page.click("button.orden-button")
     page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=60000)
     shot(f"{tag}-done")
-
     page.evaluate("() => window.ordenApp.importing.close()")
     page.wait_for_timeout(300)
     return said
-
 def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     context, page = opened(browser, width, height, agent, finger, scheme, name)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(shots / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
-
     said = bring_in(page, shot, "notion", notion_zip(fixtures))
     say(f"[{name}] Notion: {said['format']}, {said['counts']}, into {said['folder']!r}")
     for line in said["lost"]:
         say(f"[{name}] worth knowing: {line}")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     shot("notion-tree")
-
     paths = page.evaluate(NAMES)
     say(f"[{name}] the space holds {len(paths)} files")
     for one in sorted(paths):
         say(f"[{name}]   {one}")
-
     plan = page.evaluate(TEXT_OF, "Plan.md")
     say(f"[{name}] the page links as: {[line for line in (plan or '').splitlines() if '[[' in line]}")
     say(f"[{name}] and carries: {[line for line in (plan or '').splitlines() if ':' in line][:4]}")
-
     table = page.evaluate(TEXT_OF, "Tasks.md")
     say(f"[{name}] the database reads: {[line for line in (table or '').splitlines() if '|' in line]}")
-
     said = bring_in(page, shot, "enex", enex(fixtures))
     say(f"[{name}] Evernote: {said['format']}, {said['counts']}, into {said['folder']!r}")
-
     trip = page.evaluate(TEXT_OF, "Trip to Iceland.md")
     say(f"[{name}] the note says: {[line for line in (trip or '').splitlines() if line][:6]}")
-
     packing = page.evaluate(TEXT_OF, "Packing.md")
     say(f"[{name}] the boxes: {[line for line in (packing or '').splitlines() if '- [' in line]}")
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -210,7 +180,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     )
     page.wait_for_timeout(700)
     shot("enex-note")
-
     held = page.evaluate(
         """async () => {
           const open = indexedDB.open('orden')
@@ -227,7 +196,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
         }"""
     )
     say(f"[{name}] the asset store holds: {held}")
-
     books = fixtures / "Books.csv"
     books.write_text(
         "Name,Status,Pages,Created\n"
@@ -235,7 +203,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
         'Ubik,Reading,224,"March 4, 2026"\n',
         encoding="utf-8",
     )
-
     page.evaluate("() => window.ordenApp.importing.show()")
     page.wait_for_selector("button.drop")
     with page.expect_file_chooser() as chooser:
@@ -244,7 +211,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     page.wait_for_function("() => window.ordenApp.importing.stage === 'ready'", timeout=20000)
     page.wait_for_timeout(300)
     shot("table-preview")
-
     say(f"[{name}] as a table: {page.evaluate('() => window.ordenApp.importing.counts')}")
     choices = page.locator('[role="dialog"] .orden-segmented button')
     say(f"[{name}] the groove has {choices.count()} choices")
@@ -255,15 +221,12 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     page.wait_for_timeout(300)
     shot("table-rows")
     say(f"[{name}] one note per row: {page.evaluate('() => window.ordenApp.importing.counts')}")
-
     page.click("button.orden-button")
     page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=30000)
     page.evaluate("() => window.ordenApp.importing.close()")
     page.wait_for_timeout(300)
-
     row = page.evaluate(TEXT_OF, "Dune.md")
     say(f"[{name}] a row reads: {[line for line in (row or '').splitlines() if line][:6]}")
-
     before = len(page.evaluate(NAMES))
     label = page.evaluate("() => window.ordenApp.workspace.undoLabel")
     page.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
@@ -271,9 +234,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     after = len(page.evaluate(NAMES))
     say(f"[{name}] undo said {label!r}: {before} files became {after}")
     shot("undone")
-
     context.close()
-
 def main() -> int:
     out = DRIVE.shots
     with tempfile.TemporaryDirectory(prefix="orden-import-") as held, DRIVE.session() as browser:
@@ -281,7 +242,5 @@ def main() -> int:
         for one in DEVICES:
             say(f"--- {one[0]} ---")
             drive(browser, out, fixtures, *one)
-
     return DRIVE.verdict(f"shots in {out}")
-
 raise SystemExit(main())

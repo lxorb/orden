@@ -2,14 +2,12 @@ import { expect, test, vi } from 'vitest'
 import type { Payload } from '../../files-out/src/api'
 
 const handed: Payload[] = []
-
 vi.mock('../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../platform/src/tauri')>()),
   isNative: true,
   isMobile: false,
   isDesktop: true,
 }))
-
 vi.mock('../../files-out/src/save', () => ({
   chooseTarget: () => Promise.resolve(null),
   deliver: (_name: string, _extension: string, _label: string, payload: Payload) => {
@@ -17,7 +15,6 @@ vi.mock('../../files-out/src/save', () => ({
     return Promise.resolve('/out/Trip.md')
   },
 }))
-
 vi.mock('./pictures', async (original) => ({
   ...(await original<typeof import('./pictures')>()),
   readPictures: (sources: readonly string[]) =>
@@ -30,34 +27,27 @@ vi.mock('./pictures', async (original) => ({
       })),
     ),
 }))
-
 const { runExport } = await import('./run')
-
 test('markdown with pictures links a picture under the name it landed at', async () => {
   await runExport('md-assets', {
     source: '# Trip\n\n![](image.png)\n',
     name: 'Trip.md',
     path: '/space/Trip.md',
   })
-
   const payload = handed[0]
   if (!payload || !('files' in payload)) throw new Error('no files were handed over')
   expect(payload.files[0]?.body).toContain('](assets/image.png)')
-
   const text = payload.relink?.(new Map([['assets/image.png', 'assets/image 2.png']]))
   expect(text).toContain('](<assets/image 2.png>)')
   expect(text).not.toContain('](assets/image.png)')
 })
-
 test('a page with its pictures goes out in pieces, each picture written in, never one string', async () => {
   handed.length = 0
-
   await runExport('html', {
     source: '# Trip\n\n![a](a.png)\n\n![b](b.png)\n',
     name: 'Trip.md',
     path: '/space/Trip.md',
   })
-
   const payload = handed[0]
   if (!payload || !('pieces' in payload)) throw new Error('the page was not handed over in pieces')
   const page = await payload.pieces.text()
@@ -65,25 +55,20 @@ test('a page with its pictures goes out in pieces, each picture written in, neve
   expect(page).not.toContain('src="a.png"')
   expect(page).not.toContain('src="b.png"')
 })
-
 test('a markdown export takes its pictures from the note as Orden finds them', async () => {
   handed.length = 0
-
   await runExport(
     'md',
     { source: 'see ![[a.png]] here\n', name: 'Trip.md', path: '/space/Trip.md' },
     { picturesWritten: (source) => source.replace('![[a.png]]', '![](att/a.png)') },
   )
-
   const payload = handed[0]
   if (!payload || !('text' in payload)) throw new Error('no text was handed over')
   expect(payload.text).toBe('see ![](att/a.png) here\n')
 })
-
 test('a document export takes its pictures from the note as Orden finds them', async () => {
   handed.length = 0
   const asked: string[] = []
-
   await runExport(
     'md-assets',
     { source: 'see ![[a.png]] here\n', name: 'Trip.md', path: '/space/Trip.md' },
@@ -94,7 +79,6 @@ test('a document export takes its pictures from the note as Orden finds them', a
       },
     },
   )
-
   const payload = handed[0]
   if (!payload || !('files' in payload)) throw new Error('no files were handed over')
   expect(asked).toEqual(['see ![[a.png]] here\n'])

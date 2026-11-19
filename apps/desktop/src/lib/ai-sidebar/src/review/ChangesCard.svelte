@@ -14,7 +14,6 @@
   const added = $derived(notes.reduce((sum, note) => sum + note.added, 0))
   const removed = $derived(notes.reduce((sum, note) => sum + note.removed, 0))
   const listing = $derived(review.listing === thread.id && waiting > 0)
-
   function toggle() {
     review.listing = listing ? null : thread.id
   }
@@ -46,7 +45,6 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
   }
-
   .bar {
     display: flex;
     align-items: center;
@@ -54,7 +52,6 @@
     padding: 2px;
     background: var(--ink-wash);
   }
-
   .what {
     flex: 1;
     width: auto;

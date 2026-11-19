@@ -8,11 +8,9 @@
   import type { ExplorerView } from './view.svelte'
 
   const { view }: { view: ExplorerView } = $props()
-
   $effect(() => {
     void places.ask()
   })
-
   const rows = $derived([
     ...places.list.map((one) => ({
       path: one.path,
@@ -29,7 +27,6 @@
         pinned: true,
       })),
   ])
-
   const here = $derived.by(() => {
     const folder = view.folder
     if (!folder) return null
@@ -40,9 +37,7 @@
     }
     return best
   })
-
   let taking = $state<string | null>(null)
-
   function pinDropped(event: DragEvent) {
     const target = event.target instanceof Element ? event.target : null
     if (!isExplorerDrag(event.dataTransfer) || target?.closest('.place')) return
@@ -53,7 +48,6 @@
     }
     taking = null
   }
-
   function rowMenu(event: MouseEvent, path: string, pinned: boolean) {
     if (!pinned) return
     event.preventDefault()
@@ -112,19 +106,16 @@
     overflow-y: auto;
     border-inline-end: 1px solid var(--line);
   }
-
   @container (max-width: 34rem) {
     .places {
       display: none;
     }
   }
-
   ul {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   svg {
     fill: none;
     stroke: currentColor;

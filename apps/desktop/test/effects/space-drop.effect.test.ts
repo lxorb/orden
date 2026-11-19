@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const moved = vi.hoisted(() => [] as string[])
-
 vi.mock('../../src/lib/tab-strip/src/to-space', () => ({
   spacesOf: () => [{ id: 'home' }, { id: 'uni' }],
   spacesOfPaths: () => [{ id: 'home' }],
@@ -10,7 +9,6 @@ vi.mock('../../src/lib/tab-strip/src/to-space', () => ({
     return Promise.resolve()
   },
 }))
-
 vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: {
     tabs: [{ id: 't1' }],
@@ -24,10 +22,8 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
     },
   },
 }))
-
 const { droppedOnSpace, followTreeDrag, leftSpaces, overSpaces } =
   await import('../../src/lib/tab-strip/src/space-drop')
-
 const SPANS: Record<string, [number, number]> = {
   switcher: [0, 20],
   gap: [20, 36],
@@ -37,7 +33,6 @@ const SPANS: Record<string, [number, number]> = {
   home: [110, 160],
   pane: [400, 800],
 }
-
 function switcher() {
   document.body.innerHTML = `
     <button id="switcher" data-space-drop="switcher" aria-expanded="false"></button>
@@ -67,7 +62,6 @@ function switcher() {
   }
   return { button, list }
 }
-
 const byId = (id: string) => document.getElementById(id)
 const pointOf = (id: string) => {
   const [left, right] = SPANS[id] ?? [0, 0]
@@ -78,10 +72,8 @@ const over = (id: string | null, carried: Parameters<typeof overSpaces>[0] = TAB
   under = id === null ? null : byId(id)
   return overSpaces(carried, id === null ? null : pointOf(id))
 }
-
 const TAB = { tab: 't1' }
 const ROWS = { paths: ['/work/Plan.md', '/work/Trip'] }
-
 beforeEach(() => {
   vi.useFakeTimers()
   moved.length = 0
@@ -90,23 +82,19 @@ beforeEach(() => {
     return [...(open ? [byId('catch')!] : []), ...(under ? [under] : [])]
   }
 })
-
 afterEach(() => {
   leftSpaces()
   vi.useRealTimers()
 })
-
 describe('a tab held over the switcher', () => {
   test('lights the button, and opens the list after a moment', () => {
     const { button, list } = switcher()
     over('switcher')
     expect(button.classList.contains('is-drop')).toBe(true)
     expect(list.hidden).toBe(true)
-
     vi.advanceTimersByTime(500)
     expect(list.hidden).toBe(false)
   })
-
   test('passing over it opens nothing', () => {
     const { list } = switcher()
     over('switcher')
@@ -115,7 +103,6 @@ describe('a tab held over the switcher', () => {
     vi.advanceTimersByTime(500)
     expect(list.hidden).toBe(true)
   })
-
   test('stays open over the button under the catch the open list lays over it', () => {
     const { list } = switcher()
     over('switcher')
@@ -124,31 +111,26 @@ describe('a tab held over the switcher', () => {
     vi.advanceTimersByTime(500)
     expect(list.hidden).toBe(false)
   })
-
   test('lights a space it may go to, and not the one it is in', () => {
     switcher()
     over('switcher')
     vi.advanceTimersByTime(500)
-
     over('work')
     expect(byId('work')?.classList.contains('is-drop')).toBe(false)
     over('home')
     expect(byId('home')?.classList.contains('is-drop')).toBe(true)
     expect(byId('switcher')?.classList.contains('is-drop')).toBe(false)
   })
-
   test('let go of on a space, moves there and closes the list', () => {
     const { list } = switcher()
     over('switcher')
     vi.advanceTimersByTime(500)
     over('home')
-
     expect(droppedOnSpace(TAB)).toBe(true)
     expect(moved).toEqual(['t1 to home'])
     expect(list.hidden).toBe(true)
     expect(byId('home')?.classList.contains('is-drop')).toBe(false)
   })
-
   test('from the button to the list, and between two rows, the list stays; off it, it closes', () => {
     const { list } = switcher()
     over('switcher')
@@ -157,11 +139,9 @@ describe('a tab held over the switcher', () => {
     expect(list.hidden).toBe(false)
     over('between')
     expect(list.hidden).toBe(false)
-
     over('pane')
     expect(list.hidden).toBe(true)
   })
-
   test('let go of anywhere else, moves nothing', () => {
     switcher()
     over('switcher')
@@ -171,7 +151,6 @@ describe('a tab held over the switcher', () => {
     expect(moved).toEqual([])
   })
 })
-
 describe('rows of the file list carried onto the switcher (#303)', () => {
   test('light only a space they may go to, and move there with the row’s move', () => {
     switcher()
@@ -179,19 +158,16 @@ describe('rows of the file list carried onto the switcher (#303)', () => {
     vi.advanceTimersByTime(500)
     expect(over('work', ROWS)).toBe(false)
     expect(over('home', ROWS)).toBe(true)
-
     expect(droppedOnSpace(ROWS)).toBe(true)
     expect(moved).toEqual(['/work/Plan.md,/work/Trip into /home'])
   })
 })
-
 function dragged(type: string, id: string | null = null): Event {
   under = id === null ? null : byId(id)
   const event = new Event(type, { bubbles: true, cancelable: true })
   const { x, y } = id === null ? { x: 0, y: 0 } : pointOf(id)
   return Object.assign(event, { clientX: x, clientY: y, dataTransfer: { dropEffect: 'none' } })
 }
-
 describe('a pointer’s drag out of the file list', () => {
   test('is taken by a space’s row, and the drop is the switcher’s alone', () => {
     switcher()
@@ -201,7 +177,6 @@ describe('a pointer’s drag out of the file list', () => {
     const over = dragged('dragover', 'home')
     window.dispatchEvent(over)
     expect(over.defaultPrevented).toBe(true)
-
     const pane = vi.fn()
     byId('home')?.addEventListener('drop', pane)
     const drop = dragged('drop', 'home')
@@ -210,7 +185,6 @@ describe('a pointer’s drag out of the file list', () => {
     expect(pane).not.toHaveBeenCalled()
     expect(moved).toEqual(['/work/Plan.md,/work/Trip into /home'])
   })
-
   test('is left alone over the file list, where its own drop is', () => {
     switcher()
     followTreeDrag(ROWS.paths)
@@ -222,7 +196,6 @@ describe('a pointer’s drag out of the file list', () => {
     expect(drop.defaultPrevented).toBe(false)
     expect(moved).toEqual([])
   })
-
   test('ended by Escape closes what the hold opened, moves nothing, and stops listening', () => {
     const { list } = switcher()
     followTreeDrag(ROWS.paths)
@@ -230,17 +203,14 @@ describe('a pointer’s drag out of the file list', () => {
     vi.advanceTimersByTime(500)
     window.dispatchEvent(dragged('dragover', 'home'))
     expect(list.hidden).toBe(false)
-
     window.dispatchEvent(dragged('dragend'))
     expect(list.hidden).toBe(true)
     expect(byId('home')?.classList.contains('is-drop')).toBe(false)
-
     const after = dragged('dragover', 'home')
     window.dispatchEvent(after)
     expect(after.defaultPrevented).toBe(false)
     expect(moved).toEqual([])
   })
-
   test('of a row that moved is followed no more once the next drag starts', () => {
     switcher()
     followTreeDrag(['/work/Gone.md'])

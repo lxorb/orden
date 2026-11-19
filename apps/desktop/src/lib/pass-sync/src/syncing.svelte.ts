@@ -12,24 +12,19 @@ import type { SyncWorld } from './sync-world'
 import { invitesOf } from './synced'
 
 export type PassSyncState = 'off' | 'syncing' | 'synced' | 'offline' | 'old-server' | 'conflict' | 'other-account'
-
 const SETTLE = 800
 const EVERY = 5 * 60_000
-
 function callWith(token: string): PassCall {
   return (path, method, body) =>
     request(path, { ...(method ? { method } : {}), ...(body === undefined ? {} : { body }), token })
 }
-
 class PassSync {
   state = $state<PassSyncState>('off')
   at = $state<number | null>(null)
   invites = $state.raw<Invite[]>([])
-
   private running: Promise<void> | null = null
   private again = false
   private backfilled = false
-
   async refresh(): Promise<void> {
     if (this.running) {
       this.again = true
@@ -44,7 +39,6 @@ class PassSync {
     this.again = false
     await this.refresh()
   }
-
   signedOut(): void {
     this.backfilled = false
     this.state = 'off'
@@ -52,11 +46,9 @@ class PassSync {
     this.invites = []
     pass.conflict = false
   }
-
   private holds(token: string): boolean {
     return !!account.user && account.token === token
   }
-
   private worldFor(id: string, email: string, token: string): SyncWorld {
     return {
       api: new PassApi(callWith(token), () => hub.device),
@@ -82,7 +74,6 @@ class PassSync {
       files: async () => (await import('./file-sync')).worldFiles(BASE, token),
     }
   }
-
   private async run(): Promise<void> {
     const user = account.user
     const token = account.token
@@ -110,14 +101,11 @@ class PassSync {
     }
   }
 }
-
 export const passSync = new PassSync()
 let started = false
-
 export function startPassSync(): void {
   if (started) return
   started = true
-
   let retry: ReturnType<typeof setTimeout> | undefined
   let tries = 0
   const now = () => {
@@ -147,7 +135,6 @@ export function startPassSync(): void {
       passSync.invites = invites
     })
     .catch(() => undefined)
-
   $effect.root(() => {
     $effect(() => {
       const who = account.user?.id ?? null
@@ -156,7 +143,6 @@ export function startPassSync(): void {
         else passSync.signedOut()
       })
     })
-
     $effect(() => {
       if (pass.state !== 'open') return
       untrack(now)

@@ -26,33 +26,25 @@
     'pdf-pages': 'A PDF, as pages to write on',
     todoist: 'Todoist',
   }
-
   let over = $state(false)
   const plan = $derived(importing.plan)
   const counts = $derived(importing.counts)
-
   const said = $derived([
     counts.notes === 1 ? '1 note' : `${counts.notes} notes`,
     counts.files ? (counts.files === 1 ? '1 file' : `${counts.files} files`) : '',
   ])
-
   const target = $derived([importing.spaceName, importing.under].filter(Boolean).join(' / ') || 'This space')
-
   const ready = $derived(importing.stage === 'ready' && !!plan?.files.length && !!importing.root && !importing.error)
-
   let token = $state('')
   let withDone = $state(false)
-
   async function readTodoist() {
     const pasted = token
     token = ''
     await importing.readTodoist(pasted, withDone)
   }
-
   async function choose() {
     await importing.take(await pickFiles())
   }
-
   async function drop(event: DragEvent) {
     event.preventDefault()
     over = false
@@ -240,7 +232,6 @@
       border-color var(--dur-base) var(--ease-out),
       background var(--dur-base) var(--ease-out);
   }
-
   .drop svg {
     width: 26px;
     height: 26px;
@@ -251,21 +242,17 @@
     stroke-linejoin: round;
     opacity: 0.75;
   }
-
   .drop.over {
     border-color: var(--accent);
     border-style: solid;
     background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
   }
-
   .drop.busy {
     cursor: default;
   }
-
   .drop:disabled {
     opacity: 0.7;
   }
-
   @media (hover: hover) {
     .drop:hover:not(:disabled) {
       border-color: var(--line-strong);

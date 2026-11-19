@@ -7,7 +7,6 @@ describe('a task line drawn in a view', () => {
     const task = readTask('- [ ] Prices \\$5-\\$10 \\~5 min a=\\=b milk \\$3')
     expect(plain(task?.text ?? '')).toBe('Prices $5-$10 ~5 min a==b milk $3')
   })
-
   test('opens no markup on an escaped marker, and keeps its own markup', () => {
     expect(pieces('\\*not em\\* and **bold** [page](https://x.test/a) `a\\$b`')).toEqual([
       { text: '*not em* and ' },
@@ -18,7 +17,6 @@ describe('a task line drawn in a view', () => {
       { text: 'a\\$b', code: true },
     ])
   })
-
   test('a backslash at the end of code is code, not an escaped backtick', () => {
     expect(pieces('open `C:\\` now')).toEqual([{ text: 'open ' }, { text: 'C:\\', code: true }, { text: ' now' }])
   })

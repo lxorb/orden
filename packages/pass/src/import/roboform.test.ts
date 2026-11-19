@@ -28,7 +28,6 @@ describe('parseRoboForm', () => {
     expect(items[1]?.content.kind === 'login' && items[1].content.websites).toHaveLength(1)
     expect(items[2]?.content).toMatchObject({ kind: 'note', note: 'This is a safe note' })
   })
-
   it('takes the folder from the name when there is no folder column', () => {
     const items = parseRoboForm('Name,Url,Login,Pwd\n/Work/Mail,https://m.com,u,p\n').vaults[0]?.items ?? []
     expect(items[0]).toMatchObject({ folder: 'Work', content: { title: 'Mail' } })

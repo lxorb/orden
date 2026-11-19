@@ -4,9 +4,7 @@ use base64::Engine as _;
 use zeroize::Zeroizing;
 
 const LENGTH: usize = 32;
-
 const SHORTEST_SALT: usize = 8;
-
 fn stretch_params(salt: &[u8], m: u32, t: u32, p: u32) -> Result<Params, String> {
     let sound = (8..=1_048_576).contains(&m)
         && (1..=10).contains(&t)
@@ -20,7 +18,6 @@ fn stretch_params(salt: &[u8], m: u32, t: u32, p: u32) -> Result<Params, String>
     }
     Params::new(m, t, p, Some(LENGTH)).map_err(|_| "the stretch's settings were refused".into())
 }
-
 pub fn secret_stretched(
     secret: &[u8],
     salt: &[u8],
@@ -35,7 +32,6 @@ pub fn secret_stretched(
         .map_err(|_| "the secret could not be secret_stretched".to_string())?;
     Ok(key)
 }
-
 #[tauri::command]
 pub async fn pass_stretch(
     webview: tauri::Webview,
@@ -60,7 +56,6 @@ pub async fn pass_stretch(
     .await
     .map_err(|_| "the secret could not be secret_stretched".to_string())?
 }
-
 #[cfg(test)]
 mod tests {
     use std::fmt::Write as _;
@@ -73,7 +68,6 @@ mod tests {
             out
         })
     }
-
     #[test]
     fn the_reference_vector_stretches_to_its_key() {
         let key =
@@ -83,7 +77,6 @@ mod tests {
             "09316115d5cf24ed5a15a31a3ba326e5cf32edc24702987c02b6566f61913cf7"
         );
     }
-
     #[test]
     fn settings_out_of_bounds_are_refused_without_saying_the_secret() {
         let salt = b"somesalt";

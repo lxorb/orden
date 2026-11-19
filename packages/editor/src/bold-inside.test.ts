@@ -17,7 +17,6 @@ function bolded(doc: string, picked: string): string {
   toggleWrap('**')({ state, dispatch: (one: Transaction) => (state = one.state) })
   return state.doc.toString()
 }
-
 describe('bold over a word picked inside a bold run', () => {
   test('takes the bold off that word and leaves the rest bold', () => {
     expect(bolded('a **very important** note', 'important')).toBe('a **very** important note')

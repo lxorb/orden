@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import base64
 import json
 import os
@@ -14,27 +13,19 @@ SWITCHES = (
     "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HideCursorWhileTyping"
     " --remote-debugging-port=0"
 )
-
 def debugged(env: dict[str, str] | None = None) -> dict[str, str]:
-
     return {**(os.environ if env is None else env), "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": SWITCHES}
-
 def port(web: pathlib.Path) -> int:
-
     for found in web.rglob("DevToolsActivePort"):
         try:
             return int(found.read_text().splitlines()[0])
         except (OSError, ValueError, IndexError):
             continue
     return 0
-
 def targets(at: int) -> list[dict]:
-
     with urllib.request.urlopen(f"http://127.0.0.1:{at}/json/list", timeout=10) as answer:
         return json.loads(answer.read())
-
 class _Socket:
-
     def __init__(self, url: str, seconds: float = 30) -> None:
         parsed = urlparse(url)
         self.sock = socket.create_connection((parsed.hostname, parsed.port or 80), timeout=seconds)
@@ -55,7 +46,6 @@ class _Socket:
             head += chunk
         if b" 101 " not in head.split(b"\r\n", 1)[0]:
             raise ConnectionError(head.decode("latin-1"))
-
     def _exactly(self, count: int) -> bytes:
         out = bytearray()
         while len(out) < count:
@@ -64,7 +54,6 @@ class _Socket:
                 raise ConnectionError("the socket closed")
             out += chunk
         return bytes(out)
-
     def _frame(self, opcode: int, data: bytes) -> None:
         head = bytearray([0x80 | opcode])
         if len(data) < 126:
@@ -77,10 +66,8 @@ class _Socket:
             head += struct.pack(">Q", len(data))
         mask = os.urandom(4)
         self.sock.sendall(bytes(head) + mask + bytes(b ^ mask[i % 4] for i, b in enumerate(data)))
-
     def send(self, text: str) -> None:
         self._frame(0x1, text.encode())
-
     def receive(self) -> str:
         parts = bytearray()
         while True:
@@ -100,20 +87,16 @@ class _Socket:
             parts += data
             if first & 0x80:
                 return parts.decode("utf-8", "replace")
-
     def close(self) -> None:
         try:
             self.sock.close()
         except OSError:
             pass
-
 class Session:
-
     def __init__(self, target: dict) -> None:
         self._socket = _Socket(target["webSocketDebuggerUrl"])
         self._last = 0
         self.events: list[dict] = []
-
     def call(self, method: str, params: dict | None = None, seconds: float = 30) -> dict:
         self._last += 1
         mine = self._last
@@ -127,9 +110,7 @@ class Session:
             if "method" in said:
                 self.events.append(said)
         return {"error": "no answer"}
-
     def listen(self, seconds: float) -> None:
-
         until = time.monotonic() + seconds
         while time.monotonic() < until:
             self._socket.sock.settimeout(max(0.05, until - time.monotonic()))
@@ -139,9 +120,7 @@ class Session:
                 return
             if "method" in said:
                 self.events.append(said)
-
     def value(self, expression: str, context: int | None = None, console: bool = False) -> object:
-
         params: dict[str, object] = {"expression": expression, "returnByValue": True}
         if context is not None:
             params["contextId"] = context
@@ -149,19 +128,14 @@ class Session:
             params["includeCommandLineAPI"] = True
         said = self.call("Runtime.evaluate", params)
         return said.get("result", {}).get("value", said)
-
     def world(self, name: str, frame: str | None = None) -> int | None:
-
         if frame is None:
             frame = self.call("Page.getFrameTree").get("frameTree", {}).get("frame", {}).get("id")
         made = self.call("Page.createIsolatedWorld", {"frameId": frame, "worldName": name})
         return made.get("executionContextId")
-
     def close(self) -> None:
         self._socket.close()
-
 def thrown(events: list[dict]) -> list[str]:
-
     out: list[str] = []
     for one in events:
         if one.get("method") != "Runtime.exceptionThrown":

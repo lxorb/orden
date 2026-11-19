@@ -6,7 +6,6 @@ use serde_json::Value;
 use orden_agents::verbs::ReadAs;
 
 const PAINTED: [u8; 3] = [128, 128, 128];
-
 pub fn png_size(base64: &str) -> Option<(u32, u32)> {
     let head = base64.get(..44)?;
     let bytes = base64::engine::general_purpose::STANDARD
@@ -16,7 +15,6 @@ pub fn png_size(base64: &str) -> Option<(u32, u32)> {
     let height = u32::from_be_bytes(bytes.get(20..24)?.try_into().ok()?);
     Some((width, height))
 }
-
 pub fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(png)
@@ -63,12 +61,10 @@ pub fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
     writer.finish().map_err(|why| why.to_string())?;
     Ok(base64::engine::general_purpose::STANDARD.encode(out))
 }
-
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn pixel(value: f64, most: u32) -> usize {
     value.floor().clamp(0.0, f64::from(most)) as usize
 }
-
 fn strip_tags(html: &str) -> String {
     let mut kept = String::with_capacity(html.len());
     let mut rest = html;
@@ -99,11 +95,8 @@ fn strip_tags(html: &str) -> String {
     kept.push_str(rest);
     kept.split_whitespace().collect::<Vec<_>>().join(" ")
 }
-
 pub const CARET_ALL: &str = "function () { if (this.select) { this.select() } else { const range = document.createRange(); range.selectNodeContents(this); const now = getSelection(); now.removeAllRanges(); now.addRange(range) } }";
-
 pub const CARET_END: &str = "function () { try { if (this.setSelectionRange) { const end = String(this.value || '').length; this.setSelectionRange(end, end) } } catch (_) {} }";
-
 pub fn words(app: &tauri::AppHandle, shape: ReadAs, said: &Value) -> (String, String, String) {
     let text_at = |key: &str| {
         said.get(key)
@@ -138,7 +131,6 @@ pub fn words(app: &tauri::AppHandle, shape: ReadAs, said: &Value) -> (String, St
     });
     (url, title, words)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,7 +141,6 @@ mod tests {
         assert_eq!(png_size(one), Some((1, 1)));
         assert_eq!(png_size("nope"), None);
     }
-
     #[test]
     fn a_secret_is_painted_over_and_nothing_else_moves() {
         let mut raw = Vec::new();
@@ -183,7 +174,6 @@ mod tests {
         }
         assert!(paint_over("not a picture", &[]).is_err());
     }
-
     #[test]
     fn markup_s_words_leave_out_scripts_and_styles() {
         assert_eq!(strip_tags("<p>a <b>b</b></p>"), "a b");

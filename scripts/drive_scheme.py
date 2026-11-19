@@ -12,36 +12,24 @@ CLOSE = (
     " return true })()"
 )
 GONE = f"!document.querySelector({json.dumps(PICKER)})"
-
-
 def mode(scheme):
     return f"{PICKER} .modes button[aria-label='{NAMES[scheme]}']"
-
-
 def kept(scheme):
     return f"{SCHEME} === {json.dumps(scheme)} && !!document.querySelector({json.dumps(mode(scheme) + '[aria-pressed=true]')})"
-
-
 def themes_row(run):
     at = run(
         "[...document.querySelectorAll(%s)].find((one) => one.textContent.trim() === 'Themes')?.dataset.at ?? null"
         % json.dumps(MENU)
     )
     return None if at is None else f"{MENU}[data-at='{at}']"
-
-
 def other(scheme):
     return "light" if scheme == "dark" else "dark"
-
-
 def waited(run, code, seconds):
     for _ in range(int(seconds / 0.2)):
         if run(code):
             return True
         time.sleep(0.2)
     return False
-
-
 def switch(run, box, press, want, seconds=4):
     if run(SCHEME) == want:
         return "kept"
@@ -69,8 +57,6 @@ def switch(run, box, press, want, seconds=4):
     if not waited(run, GONE, seconds):
         return "Escape left the picker open"
     return "switched" if switched else f"{NAMES[want]} in the picker left the app {run(SCHEME)}"
-
-
 def clicked(run, want, seconds=4):
     said = run(
         "(async () => { const wait = (ms) => new Promise((done) => setTimeout(done, ms));"

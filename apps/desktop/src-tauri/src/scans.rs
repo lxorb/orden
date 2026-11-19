@@ -1,7 +1,6 @@
 #[test]
 fn every_window_is_built_where_the_run_sends_them() {
     let excused = ["crates/documents/src/pdf.rs", "engine.rs"];
-
     let mut unplaced = Vec::new();
     for (name, path) in crate::sources() {
         let text = std::fs::read_to_string(&path).unwrap_or_default();
@@ -21,7 +20,6 @@ fn every_window_is_built_where_the_run_sends_them() {
         "built past `placement::built`: {unplaced:?}"
     );
 }
-
 #[test]
 fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
     let asks_the_system = [
@@ -73,7 +71,6 @@ fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
         "the keyboard or the front asked for past `raised` and `keyboard_to`: {found:?}"
     );
 }
-
 #[test]
 fn nothing_moves_a_window_but_moved_as_it_is() {
     let excused = ["quick_add.rs", "crates/extensions/src/extensions/popup.rs"];
@@ -106,7 +103,6 @@ fn nothing_moves_a_window_but_moved_as_it_is() {
         "a window moved past `moved_as_it_is`: {found:?}"
     );
 }
-
 #[test]
 fn no_window_is_built_to_show_the_desk_where_nothing_is_drawn() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));

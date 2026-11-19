@@ -14,37 +14,30 @@ import { isRecord, keepJson, stored } from '../../platform/src/api'
 
 export const MODES = ['random', 'memorable', 'username'] as const
 export type GeneratorMode = (typeof MODES)[number]
-
 export interface GeneratorPrefs {
   mode: GeneratorMode
   random: RandomRule
   memorable: MemorableRule
   username: UsernameRule
 }
-
 const KEY = 'orden:pass-generator'
-
 const DEFAULT_PREFS: GeneratorPrefs = {
   mode: 'random',
   random: DEFAULT_RANDOM,
   memorable: DEFAULT_MEMORABLE,
   username: DEFAULT_USERNAME,
 }
-
 function flag(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback
 }
-
 function count(value: unknown, range: { min: number; max: number }, fallback: number): number {
   return typeof value === 'number' && Number.isInteger(value) && value >= range.min && value <= range.max
     ? value
     : fallback
 }
-
 function separatorIn<T extends Separator | 'none'>(value: unknown, fallback: T): Separator | T {
   return SEPARATORS.find((one) => one === value) ?? fallback
 }
-
 function randomIn(value: unknown): RandomRule {
   const raw = isRecord(value) ? value : {}
   return {
@@ -54,7 +47,6 @@ function randomIn(value: unknown): RandomRule {
     symbols: flag(raw.symbols, DEFAULT_RANDOM.symbols),
   }
 }
-
 function memorableIn(value: unknown): MemorableRule {
   const raw = isRecord(value) ? value : {}
   return {
@@ -64,7 +56,6 @@ function memorableIn(value: unknown): MemorableRule {
     numbers: flag(raw.numbers, DEFAULT_MEMORABLE.numbers),
   }
 }
-
 function usernameIn(value: unknown): UsernameRule {
   const raw = isRecord(value) ? value : {}
   return {
@@ -75,7 +66,6 @@ function usernameIn(value: unknown): UsernameRule {
     leet: flag(raw.leet, DEFAULT_USERNAME.leet),
   }
 }
-
 function prefsIn(value: unknown): GeneratorPrefs {
   const raw = isRecord(value) ? value : {}
   return {
@@ -85,15 +75,12 @@ function prefsIn(value: unknown): GeneratorPrefs {
     username: usernameIn(raw.username),
   }
 }
-
 export function readPrefs(): GeneratorPrefs {
   return prefsIn(stored(KEY))
 }
-
 export function keepPrefs(prefs: GeneratorPrefs): void {
   keepJson(KEY, prefs)
 }
-
 export function generated(prefs: GeneratorPrefs): string {
   switch (prefs.mode) {
     case 'random':

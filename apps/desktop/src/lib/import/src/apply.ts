@@ -9,40 +9,32 @@ import type { ImportPlan, Planned } from './plan'
 import { baseFollowed, basesFollowed, calledBy, canvasFollowed, isBase, isCanvas, linksFollowed } from './rewrite'
 
 type Written = Pick<ImportPlan, 'files'>
-
 export interface ImportTarget {
   root: string
   folder: string
 }
-
 export interface Landed {
   paths: string[]
   stepped: number
 }
-
 export interface Writing {
   onWritten?: (done: number, total: number) => void
 }
-
 export async function applyImport(plan: Written, target: ImportTarget, options: Writing = {}): Promise<Landed> {
   const { canWriteAt } = await import('../../sharing/src/api')
   const into = target.folder ? joinPath(target.root, target.folder) : target.root
   if (!canWriteAt(into)) throw new Error(UNWRITABLE)
-
   const { files, stepped } = await restampedOnDisk(plan, target)
   const paths: string[] = []
   const wrote: Record<string, string> = {}
   let done = 0
-
   try {
     for (const file of files) {
       const path = joinPath(target.root, file.path)
-
       if (file.kind === 'note') {
         await writeFile(path, file.text)
         wrote[path] = await sha256(file.text)
       } else await writeBytes(path, file.bytes)
-
       paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
       done += 1
       options.onWritten?.(done, files.length)
@@ -50,12 +42,9 @@ export async function applyImport(plan: Written, target: ImportTarget, options: 
   } finally {
     if (paths.length) await landed(paths, wrote)
   }
-
   return { paths, stepped }
 }
-
 const asPages = async (path: string): Promise<string[]> => [(await workspace.pageNoteForPdf(path)) ?? path]
-
 async function landed(paths: string[], wrote: Record<string, string>) {
   workspace.undone.record({ kind: 'import', paths, wrote })
   for (const path of paths) await workspace.fileCame(path, 'file')
@@ -63,7 +52,6 @@ async function landed(paths: string[], wrote: Record<string, string>) {
   const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
 }
-
 function judged(files: readonly Planned[]): Planned[] {
   return files.map((file) => {
     const inside = insideOnly(file.path)
@@ -71,22 +59,17 @@ function judged(files: readonly Planned[]): Planned[] {
       log('error', `import: ${file.path} is not a path inside a space, so nothing was written`)
       throw new Error(ESCAPING)
     }
-
     return { ...file, path: inside }
   })
 }
-
 const UNWRITABLE = 'That import could not be written.'
 const ESCAPING = 'That import would have landed outside the space, so nothing was written.'
-
 async function restampedOnDisk(plan: Written, target: ImportTarget): Promise<{ files: Planned[]; stepped: number }> {
   const taken = await takenIn(target)
   const there = new Map<string, boolean>()
-
   for (;;) {
     const stamped = restamped(plan, taken, target.folder)
     const files = judged(stamped.files)
-
     const coming = new Set(files.map((file) => nameKey(file.path)))
     const partner = (path: string) => {
       const other = pairOf(path)
@@ -99,7 +82,6 @@ async function restampedOnDisk(plan: Written, target: ImportTarget): Promise<{ f
     const asking = [...new Set(asked)].filter((path) => !there.has(path))
     const answers = await Promise.all(asking.map((path) => onDisk(joinPath(target.root, path))))
     asking.forEach((path, at) => there.set(path, answers[at] === true))
-
     const held = files.filter((file) => {
       const other = partner(file.path)
       return there.get(file.path) === true || (other !== null && there.get(other) === true)
@@ -108,13 +90,11 @@ async function restampedOnDisk(plan: Written, target: ImportTarget): Promise<{ f
     for (const file of held) taken.add(file.path)
   }
 }
-
 async function takenIn(target: ImportTarget): Promise<Set<string>> {
   const taken = new Set<string>()
   const root = target.root
   const open = workspace.activeSpace?.root
   const files = open !== undefined && samePath(open, root) ? workspace.files : await filesIn(root)
-
   for (const entry of files) {
     if (!entry.path.startsWith(root)) continue
     taken.add(
@@ -124,10 +104,8 @@ async function takenIn(target: ImportTarget): Promise<Set<string>> {
         .replace(/\\/g, '/'),
     )
   }
-
   return taken
 }
-
 async function filesIn(root: string): Promise<Entry[]> {
   const options = workspace.treeOptions
   const tree = await invoke<Entry>('read_tree', { root, options }).catch(() => null)
@@ -141,7 +119,6 @@ async function filesIn(root: string): Promise<Entry[]> {
   if (tree) walk(tree)
   return files
 }
-
 export function restamped(
   plan: Written,
   taken: ReadonlySet<string>,
@@ -153,12 +130,10 @@ export function restamped(
   const moved = new Map<string, string>()
   const placed = new Map<Planned, string>()
   const inside = (path: string) => (under ? `${under}/${path}` : path)
-
   const clashes = (candidate: string) => {
     const other = pairOf(candidate)
     return held.has(nameKey(candidate)) || (other !== null && there.has(nameKey(other)))
   }
-
   const filled = new Set<string>()
   for (const file of plan.files) {
     const parts = file.path.split('/').slice(0, -1)
@@ -188,14 +163,12 @@ export function restamped(
     notes.set(file, free)
     folders.set(nameKey(inside(file.path).replace(/\.md$/i, '')), free.replace(/\.md$/i, ''))
   }
-
   const coming = new Set(plan.files.map((file) => nameKey(file.path)))
   const following = (file: Planned) => {
     const holder = holderOf(file.path)
     return holder !== null && coming.has(nameKey(holder))
   }
   const landedAt = new Map<string, string>()
-
   for (const file of [...plan.files.filter((one) => !following(one)), ...plan.files.filter(following)]) {
     const wanted = inside(file.path)
     const holder = holderOf(file.path)
@@ -203,11 +176,9 @@ export function restamped(
     const free = notes.get(file) ?? freePath(note === undefined ? into(wanted) : paperOf(note), clashes)
     held.add(nameKey(free))
     landedAt.set(nameKey(file.path), free)
-
     if (free !== wanted) moved.set(file.path, under ? free.slice(under.length + 1) : free)
     placed.set(file, free)
   }
-
   const stepped = (path: string) => {
     const now = path
       ? (landedAt.get(nameKey(path)) ?? folders.get(nameKey(inside(path))) ?? into(inside(path)))
@@ -233,6 +204,5 @@ export function restamped(
     const text = moved.size || under ? basesFollowed(linked, under, stepped) : linked
     return { ...file, path: now, text }
   })
-
   return { files, stepped: moved.size }
 }

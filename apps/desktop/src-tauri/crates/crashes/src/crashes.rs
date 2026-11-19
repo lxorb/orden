@@ -19,36 +19,24 @@ mod stacks;
 use report::{App, Facts, Report, System};
 
 const FOLDER: &str = "crash-reports";
-
 const TOLD: &str = "orden://crash-report";
-
 const CLAIM: Duration = Duration::from_secs(120);
-
 const MOST_JS: usize = 10;
-
 const ALIVE_EVERY: Duration = Duration::from_secs(30);
-
 const DRILL: &str = "ORDEN_CRASH_DRILL";
-
 const QUIET: [&str; 4] = [
     "write_log",
     "crash_alive",
     "crash_context",
     "crash_reports_waiting",
 ];
-
 static APP: OnceLock<AppHandle> = OnceLock::new();
-
 static CLAIMED: Mutex<Option<HashMap<String, Instant>>> = Mutex::new(None);
-
 static JS_SEEN: Mutex<Option<HashSet<String>>> = Mutex::new(None);
-
 static ALIVE_AT: Mutex<Option<Instant>> = Mutex::new(None);
-
 fn dir() -> Option<PathBuf> {
     report::facts().map(|facts| facts.dir.clone())
 }
-
 pub fn start(app: &AppHandle) {
     let Ok(logs) = orden_base::paths::log_dir(app) else {
         return;
@@ -76,7 +64,6 @@ pub fn start(app: &AppHandle) {
     stacks::mark_main();
     panics::install();
     native::install(&dir, &version);
-
     let before = exit::Before {
         last: exit::read(&dir),
         booted: exit::booted(),
@@ -87,23 +74,19 @@ pub fn start(app: &AppHandle) {
     }
     exit::begin(&dir, &version);
 }
-
 fn engine(app: &AppHandle) -> String {
     format!("CEF {}", app.webview_version().unwrap_or_default())
 }
-
 fn told() {
     if let Some(app) = APP.get() {
         let _ = app.emit(TOLD, ());
     }
 }
-
 pub fn crumb(command: &str) {
     if !QUIET.contains(&command) {
         report::crumb(command);
     }
 }
-
 pub fn tick(window_answers: bool) {
     renderer::look(window_answers);
     let mut alive = ALIVE_AT.held();
@@ -113,11 +96,9 @@ pub fn tick(window_answers: bool) {
         exit::alive();
     }
 }
-
 pub fn ended_well() {
     exit::ended_well();
 }
-
 pub fn window_gone(label: &str) {
     renderer::gone(label);
     if let Some(seen) = PAGES_SEEN.held().as_mut() {
@@ -125,13 +106,10 @@ pub fn window_gone(label: &str) {
     }
     report::windows(renderer_count());
 }
-
 fn renderer_count() -> usize {
     PAGES_SEEN.held().as_ref().map_or(0, HashSet::len)
 }
-
 static PAGES_SEEN: Mutex<Option<HashSet<String>>> = Mutex::new(None);
-
 fn whose(label: &str) -> &'static str {
     if label == "main" {
         "The window’s"
@@ -139,19 +117,16 @@ fn whose(label: &str) -> &'static str {
         "A window’s"
     }
 }
-
 enum Ended {
     Gone {
         whose: &'static str,
         doing: Option<String>,
     },
 }
-
 fn ends() -> &'static std::sync::mpsc::Sender<Ended> {
     static ENDS: OnceLock<std::sync::mpsc::Sender<Ended>> = OnceLock::new();
     ENDS.get_or_init(|| orden_base::lane::lane(ended_report))
 }
-
 fn ended_report(ended: Ended) {
     let report = match ended {
         Ended::Gone { whose, doing } => {
@@ -164,14 +139,12 @@ fn ended_report(ended: Ended) {
     };
     report::keep_now(&report, false);
 }
-
 pub fn page_ended(label: &str) {
     let _ = ends().send(Ended::Gone {
         whose: whose(label),
         doing: crate::stall::doing_now(),
     });
 }
-
 fn claimed(id: &str) -> bool {
     let mut held = CLAIMED.held();
     let claims = held.get_or_insert_with(HashMap::new);
@@ -182,13 +155,11 @@ fn claimed(id: &str) -> bool {
     claims.insert(id.to_owned(), Instant::now());
     false
 }
-
 fn unclaimed(id: &str) {
     if let Some(claims) = CLAIMED.held().as_mut() {
         claims.remove(id);
     }
 }
-
 #[tauri::command(async)]
 pub fn crash_reports_waiting() -> Vec<Report> {
     let Some(dir) = dir() else {
@@ -199,7 +170,6 @@ pub fn crash_reports_waiting() -> Vec<Report> {
         .filter(|one| !claimed(&one.id))
         .collect()
 }
-
 #[tauri::command(async)]
 pub fn crash_report_sent(id: String) -> Result<(), String> {
     let dir = dir().ok_or_else(|| "crash reports are not kept here".to_owned())?;
@@ -207,12 +177,10 @@ pub fn crash_report_sent(id: String) -> Result<(), String> {
     unclaimed(&id);
     Ok(())
 }
-
 #[tauri::command(async)]
 pub fn crash_report_unsent(id: String) {
     unclaimed(&id);
 }
-
 fn first_seen(message: &str) -> bool {
     let mut held = JS_SEEN.held();
     let seen = held.get_or_insert_with(HashSet::new);
@@ -221,7 +189,6 @@ fn first_seen(message: &str) -> bool {
     }
     seen.insert(message.chars().take(160).collect())
 }
-
 pub fn js_report(message: &str, stack: &str) -> Option<Report> {
     let first = message.lines().next().unwrap_or_default().trim();
     if first.is_empty() || !first_seen(first) {
@@ -232,14 +199,12 @@ pub fn js_report(message: &str, stack: &str) -> Option<Report> {
     report.doing = crate::stall::doing_now();
     Some(report)
 }
-
 #[tauri::command(async)]
 pub fn crash_report_js(message: String, stack: String) {
     if let Some(report) = js_report(&message, &stack) {
         report::keep(&report, false);
     }
 }
-
 #[tauri::command(async)]
 pub fn crash_alive(webview: Webview, visible: bool) {
     let label = webview.label().to_owned();
@@ -252,7 +217,6 @@ pub fn crash_alive(webview: Webview, visible: bool) {
     }
     renderer::heard(&label, whose(&label), visible);
 }
-
 #[tauri::command(async)]
 pub fn crash_context(kinds: BTreeMap<String, u32>) {
     report::shape(
@@ -268,12 +232,10 @@ pub fn crash_context(kinds: BTreeMap<String, u32>) {
             .collect(),
     );
 }
-
 #[tauri::command(async)]
 pub fn crash_leaving() {
     exit::leaving();
 }
-
 #[tauri::command(async)]
 pub fn crash_drill(app: AppHandle, webview: Webview, what: String) -> Result<(), String> {
     if std::env::var_os(DRILL).is_none_or(|said| said.is_empty() || said == "0") {
@@ -294,21 +256,18 @@ pub fn crash_drill(app: AppHandle, webview: Webview, what: String) -> Result<(),
         _ => Err(format!("no drill named {what}")),
     }
 }
-
 fn drilled_freeze() {
     let end = Instant::now() + Duration::from_secs(15);
     while Instant::now() < end {
         std::hint::spin_loop();
     }
 }
-
 #[allow(unsafe_code)]
 fn drilled_crash() {
     unsafe {
         std::hint::black_box(std::ptr::null_mut::<u8>()).write_volatile(1);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::js_report;

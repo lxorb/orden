@@ -2,7 +2,6 @@
   import type { Mode } from '../../ai-providers/src/api'
 
   const { mode }: { mode: Mode } = $props()
-
   const PATHS: Record<Mode, string> = {
     approve:
       'M4.4 7.2V3.6a.8.8 0 0 1 1.6 0v2.8V2.8a.8.8 0 0 1 1.6 0v3.6V3.4a.8.8 0 0 1 1.6 0v4.4l.5-.9a.8.8 0 0 1 1.4.8l-1.6 2.7a2.4 2.4 0 0 1-2.1 1.2H6.6a2.2 2.2 0 0 1-2.2-2.2z',

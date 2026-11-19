@@ -4,19 +4,16 @@ export interface LocalSpace {
   name: string
   root: string
 }
-
 export interface RemoteSpace {
   id: string
   name: string
   shared?: boolean
 }
-
 export interface Pairing {
   root: string
   spaceId: string
   shared?: boolean
 }
-
 export interface Plan {
   pair: Pairing[]
   upload: LocalSpace[]
@@ -26,7 +23,6 @@ export interface Plan {
   remove: string[]
   discard: string[]
 }
-
 export function planSpaces(input: {
   local: LocalSpace[]
   remote: RemoteSpace[]
@@ -39,12 +35,10 @@ export function planSpaces(input: {
   const spelled = (root: string) => local.find((one) => samePath(one.root, root))?.root ?? root
   const mirrors = input.mirrors.map((one) => ({ ...one, root: spelled(one.root) }))
   const untouched = input.untouched == null ? null : spelled(input.untouched)
-
   const mirrorByRoot = new Map(mirrors.map((one) => [one.root, one]))
   const remoteById = new Map(remote.map((one) => [one.id, one]))
   const remoteByName = new Map(remote.filter((one) => !one.shared).map((one) => [one.name, one]))
   const roots = new Set(local.map((one) => one.root))
-
   const plan: Plan = {
     pair: [],
     upload: [],
@@ -55,19 +49,15 @@ export function planSpaces(input: {
     discard: [],
   }
   const gone = new Set(deleted)
-
   const discarding =
     untouched !== null && roots.has(untouched) && !mirrorByRoot.has(untouched) && remote.some((one) => !one.shared)
       ? untouched
       : null
   if (discarding !== null) plan.discard.push(discarding)
-
   const removing = new Set(mirrors.filter((one) => roots.has(one.root) && gone.has(one.spaceId)).map((one) => one.root))
-
   const spoken = new Set(
     mirrors.filter((one) => roots.has(one.root) && !removing.has(one.root)).map((one) => one.spaceId),
   )
-
   const loose = local.filter(
     (space) => !mirrorByRoot.has(space.root) && !removing.has(space.root) && space.root !== discarding,
   )
@@ -80,10 +70,8 @@ export function planSpaces(input: {
     spoken.add(kept.id)
     housed.add(space.root)
   }
-
   for (const space of loose) {
     if (housed.has(space.root)) continue
-
     const match = remoteByName.get(space.name)
     if (match && !spoken.has(match.id)) {
       plan.pair.push({ root: space.root, spaceId: match.id })
@@ -92,12 +80,10 @@ export function planSpaces(input: {
       plan.upload.push(space)
     }
   }
-
   const claimed = new Set([
     ...mirrors.filter((one) => roots.has(one.root)).map((one) => one.root),
     ...plan.pair.map((one) => one.root),
   ])
-
   for (const space of remote) {
     if (spoken.has(space.id)) continue
     if (
@@ -109,23 +95,19 @@ export function planSpaces(input: {
     ) {
       continue
     }
-
     plan.adopt.push(space)
     spoken.add(space.id)
   }
-
   for (const mirror of mirrors) {
     if (!roots.has(mirror.root)) {
       plan.drop.push(mirror.root)
       continue
     }
-
     if (gone.has(mirror.spaceId)) plan.remove.push(mirror.root)
     else if (!remoteById.has(mirror.spaceId)) {
       if (mirror.shared) plan.remove.push(mirror.root)
       else plan.detach.push(mirror.root)
     }
   }
-
   return plan
 }

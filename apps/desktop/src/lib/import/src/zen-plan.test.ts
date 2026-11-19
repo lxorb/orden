@@ -5,15 +5,12 @@ import { SIDEBAR } from './zen.fixture'
 import { zenImport } from './zen-plan'
 
 const NOW = new Date('2026-10-13T08:00:00.000Z')
-
 function session(): ZenSession {
   const read = readZenSession(SIDEBAR)
   if (!read) throw new Error('the fixture is a sidebar')
   return read
 }
-
 const spaces = () => zenImport(session(), NOW).spaces
-
 describe("Zen's spaces as Orden's", () => {
   test('is a space for every Zen space, named, dressed and in order', () => {
     expect(spaces().map((one) => [one.name, one.icon, one.tint])).toEqual([
@@ -22,7 +19,6 @@ describe("Zen's spaces as Orden's", () => {
       ['Reading', null, null],
     ])
   })
-
   test('puts every tab where the sidebar has it, folders as folders', () => {
     const [, work, reading] = spaces()
     expect(work?.files.map((one) => one.path)).toEqual([
@@ -42,12 +38,10 @@ describe("Zen's spaces as Orden's", () => {
     expect(work?.folderIcons).toEqual({ Docs: 'book' })
     expect(reading?.files).toEqual([])
   })
-
   test('makes an empty folder an empty note', () => {
     const later = spaces()[1]?.files.find((one) => one.path === 'Later.md')
     expect(later).toEqual({ kind: 'note', path: 'Later.md', text: '' })
   })
-
   test('names an empty folder apart from a folder of the same name', () => {
     const read = session()
     const work = read.spaces.find((one) => one.name === 'Work')?.id ?? null
@@ -69,13 +63,11 @@ describe("Zen's spaces as Orden's", () => {
     expect(paths).toContain('Docs 2.md')
     expect(paths).toContain('Docs 3.md')
   })
-
   test('makes each tab a web note: its page, where it was pinned, its mark as a picture', () => {
     const [home, work] = spaces()
     const news = home?.files.find((one) => one.path === 'News today.url')
     const mail = home?.files.find((one) => one.path === 'Mail.url')
     const guide = work?.files.find((one) => one.path === 'Docs/The guide.url')
-
     expect(news?.kind === 'note' && readShortcut(news.text)).toMatchObject({
       url: 'https://news.example.com/today',
       home: 'https://news.example.com/',
@@ -86,20 +78,17 @@ describe("Zen's spaces as Orden's", () => {
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe('data:image/png;base64,iVBORw0KGgo=')
     expect(guide?.kind === 'note' && readShortcut(guide.text)?.title).toBe('The guide')
   })
-
   test('makes the Essentials bookmarks of the first space, at its top', () => {
     const [home, work] = spaces()
     expect(home?.bookmarks).toEqual(['Mail.url'])
     expect(home?.order['']).toEqual(['Mail.url', 'News today.url'])
     expect(work?.bookmarks).toEqual([])
   })
-
   test('leaves pages that are not on the web, and says containers stay', () => {
     const all = spaces().flatMap((one) => one.files.map((file) => file.path))
     expect(all.some((path) => path.startsWith('Settings'))).toBe(false)
     expect(zenImport(session(), NOW).lost).toEqual(['Containers stay in Zen'])
   })
-
   test('steps a name aside rather than writing one tab over another', () => {
     const read = session()
     const twice = {
@@ -109,7 +98,6 @@ describe("Zen's spaces as Orden's", () => {
     const work = zenImport(twice, NOW).spaces[1]
     expect(work?.order['']).toEqual(['Docs', 'Board.url', 'b - Search.url', 'Board 2.url', 'Later.md'])
   })
-
   test('takes an Essential of a container to the first space of that container', () => {
     const read = session()
     const contained = {

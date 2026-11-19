@@ -9,7 +9,6 @@ import { watch } from './watchdog'
 
 const PORT = 7680
 const RESTART = 75
-
 const PASSED = [
   'PATH',
   'LANG',
@@ -21,30 +20,25 @@ const PASSED = [
   'CURL_CA_BUNDLE',
   'GIT_SSL_CAINFO',
 ]
-
 function numberOf(value: string | undefined, fallback: number): number {
   const number = Number(value)
   return value && Number.isSafeInteger(number) && number > 0 ? number : fallback
 }
-
 function said(name: string): string | undefined {
   return process.env[`ORDEND_${name}`] ?? process.env[`NIBD_${name}`]
 }
-
 function main(): void {
   const env = process.env
   const secret = said('SECRET') ?? ''
   delete env.ORDEND_SECRET
   delete env.NIBD_SECRET
   const former = !existsSync('/opt/ordend') && existsSync('/opt/nibd')
-
   const root = process.getuid?.() === 0
   const user = root ? userOf(said('USER') ?? 'nib') : null
   const home = user?.home ?? homedir()
   const shell = user?.shell ?? env.SHELL ?? (existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh')
   const name = user?.name ?? userInfo().username
   const pidsMax = numberOf(said('PIDS_MAX'), PIDS_MAX)
-
   const sessionEnv: Record<string, string> = {
     HOME: home,
     USER: name,
@@ -60,7 +54,6 @@ function main(): void {
     const value = env[key]
     if (value) sessionEnv[key] = value
   }
-
   const ordend = new Ordend({
     state: said('STATE') ?? (former ? '/var/lib/nibd' : '/var/lib/ordend'),
     home,
@@ -79,14 +72,12 @@ function main(): void {
     },
   })
   watch()
-
   const server = serve(ordend, secret)
   server.listen(numberOf(said('PORT'), PORT), said('HOST') ?? '0.0.0.0')
   listenOpener(
     serveOpener({ open: (url, session) => ordend.open(url, session) }),
     said('OPEN') ?? (former ? '/run/nibd/open.sock' : OPEN_SOCKET),
   )
-
   let stopping = false
   const stop = (): void => {
     if (stopping) return
@@ -100,5 +91,4 @@ function main(): void {
   process.on('SIGTERM', stop)
   process.on('SIGINT', stop)
 }
-
 main()

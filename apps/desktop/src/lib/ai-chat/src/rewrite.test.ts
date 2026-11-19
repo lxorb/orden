@@ -6,25 +6,20 @@ describe('the verbs', () => {
     expect(VERBS.map((one) => one.id)).toEqual(['shorter', 'longer', 'grammar', 'translate'])
   })
 })
-
 describe('what one rewrite sends', () => {
   const selection = 'A heron stands still in the shallows.'
-
   test('is the instruction and the selection, and nothing else', () => {
     const messages = rewriteMessages('shorter', 'German', selection)
-
     expect(messages).toHaveLength(2)
     expect(messages[1]).toEqual({ role: 'user', content: selection })
     expect(messages[0]?.role).toBe('system')
   })
-
   test('says what each verb is for', () => {
     expect(rewriteMessages('shorter', 'German', selection)[0]?.content).toContain('fewer words')
     expect(rewriteMessages('longer', 'German', selection)[0]?.content).toContain('greater length')
     expect(rewriteMessages('grammar', 'German', selection)[0]?.content).toContain('grammar')
     expect(rewriteMessages('translate', 'German', selection)[0]?.content).toContain('into German')
   })
-
   test('asks every verb for the text and nothing around it', () => {
     for (const verb of VERBS) {
       const said = rewriteMessages(verb.id, 'German', selection)[0]?.content ?? ''
@@ -33,14 +28,12 @@ describe('what one rewrite sends', () => {
       expect(said, verb.id).toContain('markdown')
     }
   })
-
   test('leaves the language out of the three verbs that have no use for one', () => {
     for (const verb of ['shorter', 'longer', 'grammar'] as const) {
       expect(rewriteMessages(verb, 'German', selection)[0]?.content, verb).not.toContain('German')
     }
   })
 })
-
 describe('the language a translation goes into', () => {
   test('is offered as the languages the app itself has', () => {
     const ids = languageNames().map((one) => one.id)
@@ -48,40 +41,32 @@ describe('the language a translation goes into', () => {
     expect(ids).toContain('de')
     expect(ids).not.toContain('system')
   })
-
   test('is named in the language itself, which is what a model should be told', () => {
     expect(nameOfLanguage('de')).toBe('Deutsch')
     expect(nameOfLanguage('ja')).toBe('日本語')
   })
-
   test('falls back to English for a language nothing here knows', () => {
     expect(nameOfLanguage('xx')).toBe('English')
     expect(defaultLanguage('xx')).toBe('en')
   })
-
   test('is the app’s own language where Orden has one', () => {
     expect(defaultLanguage('fr')).toBe('fr')
   })
 })
-
 describe('where the rewrite goes', () => {
   const before = 'A heron stands still.'
-
   test('is where the words were chosen, while they are still there', () => {
     const text = `Notes. ${before} The end.`
     expect(stillThere(text, { from: 7, to: 28 }, before)).toEqual({ from: 7, to: 28 })
   })
-
   test('follows the words where the note changed above them meanwhile', () => {
     const text = `Notes, synced from the phone. ${before} The end.`
     expect(stillThere(text, { from: 7, to: 28 }, before)).toEqual({ from: 30, to: 51 })
   })
-
   test('takes the nearest of the words where they are there twice', () => {
     const text = `${before} Middle words here. ${before}`
     expect(stillThere(text, { from: 35, to: 56 }, before)).toEqual({ from: 41, to: 62 })
   })
-
   test('is nowhere once the words are gone, or the place is past the end', () => {
     expect(stillThere('Notes.', { from: 7, to: 28 }, before)).toBeNull()
     expect(stillThere('Notes. A heron flew off.', { from: 7, to: 28 }, before)).toBeNull()

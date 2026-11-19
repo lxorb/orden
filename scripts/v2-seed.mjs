@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
@@ -8,15 +7,11 @@ import { deflateSync } from 'node:zlib'
 
 const TEST = 'V2 Test'
 const BIG = 'Big'
-
 const MARKER = /\b(?:mk|ed)-[a-z0-9]+-[a-z0-9]{6}\b/g
-
 const TEXT = /\.(md|canvas|pages|url|term)$/i
-
 function say(words) {
   process.stdout.write(`${words}\n`)
 }
-
 function random(...parts) {
   let state = 0x811c9dc5
   for (const char of parts.join(':')) {
@@ -46,7 +41,6 @@ function random(...parts) {
     },
   }
 }
-
 const WORDS =
   'the a sync note space folder file device offline online merge version history paper ink page tab window draft rename move delete restore keep quiet room settle push pull account token share link canvas card edge stroke picture table task fence term machine session'.split(
     ' ',
@@ -63,12 +57,10 @@ const SITES = [
   ['https://www.ethz.ch/de.html', 'ETH Zürich'],
   ['https://news.ycombinator.com/item?id=1&q=a?b:c', 'HN: a title with ? and : in it'],
 ]
-
 function sentence(rng, length) {
   const words = Array.from({ length }, () => rng.pick(WORDS))
   return `${words[0][0].toUpperCase()}${words.join(' ').slice(1)}.`
 }
-
 function folderOf(rng) {
   const depth = rng.int(6)
   const parts = []
@@ -77,12 +69,10 @@ function folderOf(rng) {
   }
   return parts
 }
-
 function noteText(seed, n, title, total) {
   const rng = random(seed, 'note', n)
   const marker = `mk-${n}-${rng.word(6)}`
   const lines = []
-
   if (n % 10 === 0) {
     lines.push(
       '---',
@@ -114,10 +104,8 @@ function noteText(seed, n, title, total) {
   if (n % 17 === 0) lines.push(rng.pick(CJK), '')
   if (n % 19 === 0) lines.push(`${rng.pick(EMOJI)} ${sentence(rng, 5)} ${rng.pick(EMOJI)}`, '')
   for (let paragraph = rng.int(4); paragraph > 0; paragraph--) lines.push(sentence(rng, 10 + rng.int(30)), '')
-
   return { text: lines.join('\n'), marker }
 }
-
 function png(rng, size) {
   const width = 256
   const height = Math.max(1, Math.round(size / (width * 3 + 1)))
@@ -125,7 +113,6 @@ function png(rng, size) {
   const noise = rng.bytes(width * 3 * height)
   for (let row = 0; row < height; row++)
     noise.copy(raw, row * (width * 3 + 1) + 1, row * width * 3, (row + 1) * width * 3)
-
   const chunk = (type, data) => {
     const head = Buffer.alloc(8)
     head.writeUInt32BE(data.length, 0)
@@ -146,19 +133,16 @@ function png(rng, size) {
     chunk('IEND', Buffer.alloc(0)),
   ])
 }
-
 const CRC = Array.from({ length: 256 }, (_, n) => {
   let c = n
   for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
   return c >>> 0
 })
-
 function crc32(data) {
   let c = 0xffffffff
   for (const byte of data) c = CRC[(c ^ byte) & 0xff] ^ (c >>> 8)
   return (c ^ 0xffffffff) >>> 0
 }
-
 function pdf(words) {
   const stream = `BT /F1 18 Tf 72 720 Td (${words.replace(/[()\\]/g, '')}) Tj ET`
   const objects = [
@@ -180,11 +164,9 @@ function pdf(words) {
   out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`
   return Buffer.from(out, 'latin1')
 }
-
 function shortcut(url, title, when) {
   return `[InternetShortcut]\r\nURL=${url}\r\nTitle=${title}\r\nOrden-Added=${when}\r\n`
 }
-
 function canvas(rng, n) {
   const nodes = []
   const edges = []
@@ -212,7 +194,6 @@ function canvas(rng, n) {
     edges.push({ id: rng.word(16), fromNode: nodes[at - 1].id, toNode: nodes[at].id })
   return `${JSON.stringify({ nodes, edges }, null, '\t')}\n`
 }
-
 function pages(rng, count) {
   const nodes = []
   const records = []
@@ -231,35 +212,29 @@ function pages(rng, count) {
   }
   return `${JSON.stringify({ nodes, edges: [], orden: { version: 1, pages: records } }, null, '\t')}\n`
 }
-
 function scaled(count, scale) {
   return Math.max(1, Math.round(count * scale))
 }
-
 async function put(root, path, data) {
   const where = join(root, ...path.split('/'))
   await mkdir(dirname(where), { recursive: true })
   await writeFile(where, data)
 }
-
 async function makeTest(root, seed, scale, light) {
   const space = join(root, TEST)
   const total = scaled(3000, scale)
   const notes = []
-
   for (let n = 0; n < total; n++) {
     const rng = random(seed, 'place', n)
     const path = [...folderOf(rng), `Note ${n}.md`].join('/')
     await put(space, path, noteText(seed, n, `Note ${n}`, total).text)
     notes.push(path)
   }
-
   await put(space, 'Tricky/CON.md', noteText(seed, 'con', 'CON', total).text)
   await put(space, 'Tricky/aux.md', noteText(seed, 'aux', 'aux', total).text)
   await put(space, 'Tricky/Café ☕ & 100% «quotes».md', noteText(seed, 'cafe', 'Café', total).text)
   const long = `Tricky/${'Very long folder name '.repeat(4).trim()}/${'And another long folder '.repeat(3).trim()}/`
   await put(space, `${long}${'n'.repeat(200 - long.length - 3)}.md`, noteText(seed, 'long', 'Long', total).text)
-
   const day = new Date(Date.UTC(2026, 8, 1) + (seed % 30) * 86400000).toISOString()
   for (let n = 0; n < scaled(30, scale); n++) {
     const rng = random(seed, 'url', n)
@@ -274,7 +249,6 @@ async function makeTest(root, seed, scale, light) {
     await put(space, `Boards/Board ${n}.canvas`, canvas(random(seed, 'canvas', n), n))
   for (let n = 0; n < scaled(2, scale); n++)
     await put(space, `Boards/Pages ${n}.pages`, pages(random(seed, 'pages', n), 3 + n))
-
   const cap = light ? 256 * 1024 : Infinity
   const pictures = scaled(60, scale)
   for (let n = 0; n < pictures; n++) {
@@ -287,7 +261,6 @@ async function makeTest(root, seed, scale, light) {
   for (let n = 0; n < scaled(3, scale); n++)
     await put(space, `Papers/Paper ${n}.pdf`, pdf(`Seed paper ${n} mk-pdf${n}-${random(seed, 'pdf', n).word(6)}`))
   await put(space, 'assets/recording.bin', random(seed, 'big').bytes(Math.min(cap, 70 * 1024 * 1024)))
-
   for (let n = 0; n < scaled(5, scale); n++) {
     const rng = random(seed, 'term', n)
     await put(
@@ -296,7 +269,6 @@ async function makeTest(root, seed, scale, light) {
       `${JSON.stringify({ v: 1, machine: `seed-${rng.word(12)}`, session: `seed-${rng.word(16)}` })}\n`,
     )
   }
-
   await put(
     space,
     `Daily/${day.slice(0, 10)}.md`,
@@ -304,7 +276,6 @@ async function makeTest(root, seed, scale, light) {
   )
   return notes.length
 }
-
 async function makeBig(root, seed, scale) {
   const space = join(root, BIG)
   const total = scaled(12000, scale)
@@ -318,7 +289,6 @@ async function makeBig(root, seed, scale) {
   }
   return total
 }
-
 async function walk(root, folder = root) {
   const found = []
   for (const entry of await readdir(folder, { withFileTypes: true })) {
@@ -329,7 +299,6 @@ async function walk(root, folder = root) {
   }
   return found
 }
-
 async function manifest(root) {
   const files = {}
   const markers = {}
@@ -341,18 +310,15 @@ async function manifest(root) {
   }
   return { files, markers }
 }
-
 async function writeManifest(where, body) {
   await writeFile(where, `${JSON.stringify(body, null, 1)}\n`)
 }
-
 async function churn(root, seed, scale, manifestPath) {
   const space = join(root, TEST)
   const rng = random(seed, 'churn')
   const isNote = (path) => /(?:^|\/)Note \d+\.md$/.test(path)
   const log = []
   const markers = {}
-
   const before = (await walk(space)).filter(isNote)
   const held = new Map()
   for (const path of before.filter((one) => one.includes('/'))) {
@@ -379,14 +345,12 @@ async function churn(root, seed, scale, manifestPath) {
       to,
     })
   }
-
   const notes = (await walk(space)).filter(isNote).sort()
   const take = (count) => {
     const out = []
     while (out.length < count && notes.length) out.push(notes.splice(rng.int(notes.length), 1)[0])
     return out
   }
-
   for (const path of take(scaled(100, scale))) {
     const to = path.replace(/Note (\d+)\.md$/, (_, n) => `Renamed ${n} ${rng.word(4)}.md`)
     await rename(join(space, ...path.split('/')), join(space, ...to.split('/')))
@@ -412,7 +376,6 @@ async function churn(root, seed, scale, manifestPath) {
     markers[marker] = daily
     log.push({ op: 'edit', path: daily, marker })
   }
-
   if (existsSync(manifestPath)) {
     const held = JSON.parse(await readFile(manifestPath, 'utf8'))
     held.markers = {
@@ -427,7 +390,6 @@ async function churn(root, seed, scale, manifestPath) {
     `churned ${TEST}: ${count('move')} folder moves, ${count('rename')} renames, ${count('delete')} deletes, ${count('edit')} edits`,
   )
 }
-
 async function check(manifestPath, folders) {
   const { markers } = JSON.parse(await readFile(manifestPath, 'utf8'))
   const found = new Set()
@@ -444,14 +406,12 @@ async function check(manifestPath, folders) {
   if (missing.length > 50) say(`  … ${missing.length - 50} more`)
   if (missing.length) process.exitCode = 2
 }
-
 async function viaApi(spaceName, prod) {
   const api = (process.env.ORDEN_API || 'https://orden.so').replace(/\/$/, '')
   const token = process.env.ORDEN_TOKEN ?? ''
   if (!token) throw new Error('ORDEN_TOKEN is not set')
   if (/orden\.so|nibeditor\.com/.test(api) && !prod)
     throw new Error(`${api} is production: pass --prod once the manager has said yes`)
-
   const ask = async (path, body) => {
     const response = await fetch(`${api}${path}`, {
       method: body ? 'POST' : 'GET',
@@ -463,11 +423,9 @@ async function viaApi(spaceName, prod) {
     })
     return { status: response.status, json: await response.json().catch(() => ({})) }
   }
-
   const { json } = await ask('/v1/spaces')
   const space = (json.spaces ?? []).find((one) => one.name === spaceName || one.id === spaceName)
   if (!space) throw new Error(`no space called ${spaceName}`)
-
   const names = [
     'Tricky/Plan.md',
     'Tricky/plan.md',
@@ -484,7 +442,6 @@ async function viaApi(spaceName, prod) {
     say(`${made.status} ${JSON.stringify(path)}${made.json.error ? ` ${made.json.error}` : ''}`)
   }
 }
-
 async function main() {
   const argv = process.argv.slice(2)
   const words = []
@@ -499,7 +456,6 @@ async function main() {
   const seed = Number(flags.seed ?? 1)
   const scale = Number(flags.scale ?? 1)
   if (!Number.isFinite(seed) || !(scale > 0)) throw new Error('--seed is a number and --scale above 0')
-
   if (what === 'make' && first) {
     await mkdir(first, { recursive: true })
     const made = []
@@ -528,7 +484,6 @@ async function main() {
     )
   }
 }
-
 main().catch((error) => {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
   process.exitCode = 1

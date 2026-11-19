@@ -4,7 +4,6 @@ import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
-
 await import('../../features')
 await (await import('@orden/contracts')).commandRowsLoaded()
 const { paletteCommands } = await import('../../commands/src/api')
@@ -17,7 +16,6 @@ const { candidates } = await import('./kinds')
 const { ranked } = await import('../../matching/src/api')
 const { settingRows } = await import('../../settings/src/palette-rows')
 const { file, named, NOW, ROOT, tab, visit, world } = await import('./world.fixture')
-
 const FILES = [
   'Plan.md',
   'Ideas.md',
@@ -38,9 +36,7 @@ const FILES = [
   'Attention is all you need.pdf',
   'Moodle.url',
 ].map(file)
-
 const MOODLE = 'https://moodle-app2.let.ethz.ch/'
-
 const WORLD = world({
   files: FILES,
   tabs: [
@@ -69,7 +65,6 @@ const WORLD = world({
   settings: settingRows(sectionGroups().flat(), preferences(), places(), 'Settings'),
   now: NOW,
 })
-
 const CASES: [string, string, 1 | 3][] = [
   ['plan', 'tab Plan', 3],
   ['lecture', 'Lecture 3', 1],
@@ -129,14 +124,11 @@ const CASES: [string, string, 1 | 3][] = [
   ['lectrue', 'Lecture 3', 1],
   ['setings', '> Settings', 1],
 ]
-
 const ALL = candidates(WORLD)
-
 function placeOf(expected: string, rows: readonly Row[]): number | null {
   const at = rows.map(named).indexOf(expected)
   return at < 0 ? null : at + 1
 }
-
 function before(query: string): Row[] {
   const where = (path: string) => path.slice(ROOT.length + 1)
   return rank(
@@ -145,14 +137,12 @@ function before(query: string): Row[] {
     (one) => [shownName(one.name), shownName(where(one.path))],
   ).map((entry): Row => ({ kind: 'note', entry, folder: null, shared: false }))
 }
-
 describe('what the palette puts first', () => {
   const results = CASES.map(([query, expected, within]) => {
     const now = placeOf(expected, ranked(query, ALL))
     const then = placeOf(expected.replace(/^tab /, ''), before(query))
     return { query, expected, within, now, then }
   })
-
   if (process.env.ORDEN_EVAL === '1') {
     const shown = (at: number | null) => (at === null ? '-' : String(at))
     for (const one of results) {
@@ -166,7 +156,6 @@ describe('what the palette puts first', () => {
       `top 1: now ${rate('now', 1).toFixed(2)} before ${rate('then', 1).toFixed(2)}; top 3: now ${rate('now', 3).toFixed(2)} before ${rate('then', 3).toFixed(2)}`,
     )
   }
-
   test.each(results)('$query finds $expected', ({ now, within }) => {
     expect(now).not.toBeNull()
     expect(now).toBeLessThanOrEqual(within)

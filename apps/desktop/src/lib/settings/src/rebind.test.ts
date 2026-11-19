@@ -3,13 +3,10 @@ import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
-
 let Rebind: typeof import('./rebind.svelte').Rebind
 let shortcuts: typeof import('../../shortcuts/src/shortcuts.svelte').shortcuts
 let rebind: InstanceType<typeof Rebind>
-
 await Promise.all([import('./rebind.svelte'), import('../../shortcuts/src/shortcuts.svelte')])
-
 function press(key: string, held: { ctrl?: boolean; alt?: boolean; shift?: boolean } = {}) {
   return {
     key,
@@ -19,7 +16,6 @@ function press(key: string, held: { ctrl?: boolean; alt?: boolean; shift?: boole
     shiftKey: !!held.shift,
   } as KeyboardEvent
 }
-
 beforeEach(async () => {
   localStorage.clear()
   vi.resetModules()
@@ -28,7 +24,6 @@ beforeEach(async () => {
   shortcuts.restore()
   rebind = new Rebind()
 })
-
 describe('a row that is listening', () => {
   test('takes the next keystroke as its key', () => {
     rebind.listen('format.bold')
@@ -36,27 +31,23 @@ describe('a row that is listening', () => {
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
     expect(rebind.listening).toBeNull()
   })
-
   test('keeps waiting while only modifiers are down', () => {
     rebind.listen('format.bold')
     rebind.record(press('Control', { ctrl: true }))
     expect(rebind.listening).toBe('format.bold')
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
   })
-
   test('stops listening on Escape, leaving the key as it was', () => {
     rebind.listen('format.bold')
     rebind.record(press('Escape'))
     expect(rebind.listening).toBeNull()
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
   })
-
   test('takes the key away on Backspace', () => {
     rebind.listen('format.bold')
     rebind.record(press('Backspace'))
     expect(shortcuts.keyFor('format.bold')).toBeNull()
   })
-
   test('takes Backspace or Delete held with Ctrl or Alt as the key', () => {
     rebind.listen('format.bold')
     rebind.record(press('Delete', { ctrl: true }))
@@ -65,20 +56,17 @@ describe('a row that is listening', () => {
     rebind.record(press('Backspace', { ctrl: true, shift: true }))
     expect(shortcuts.keyFor('format.italic')).toBe('Mod-Shift-Backspace')
   })
-
   test('is stopped by asking for it again', () => {
     rebind.listen('format.bold')
     rebind.listen('format.bold')
     expect(rebind.listening).toBeNull()
   })
-
   test('moves to another row rather than listening for two', () => {
     rebind.listen('format.bold')
     rebind.listen('format.italic')
     expect(rebind.listening).toBe('format.italic')
   })
 })
-
 describe('a key that cannot be taken', () => {
   test('is turned down with a reason, and nothing is written', () => {
     rebind.listen('format.bold')
@@ -89,7 +77,6 @@ describe('a key that cannot be taken', () => {
     expect(rebind.listening).toBeNull()
   })
 })
-
 describe('a key something else already answers to', () => {
   test('is held back until it is answered', () => {
     rebind.listen('format.bold')
@@ -99,7 +86,6 @@ describe('a key something else already answers to', () => {
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
     expect(shortcuts.keyFor('app.palette.open')).toBe('Mod-o')
   })
-
   test('taking it over leaves the one that held it with none', () => {
     rebind.listen('format.bold')
     rebind.record(press('o', { ctrl: true }))
@@ -108,7 +94,6 @@ describe('a key something else already answers to', () => {
     expect(shortcuts.keyFor('app.palette.open')).toBeNull()
     expect(rebind.clash).toBeNull()
   })
-
   test('leaving it alone changes nothing at all', () => {
     rebind.listen('format.bold')
     rebind.record(press('o', { ctrl: true }))
@@ -117,7 +102,6 @@ describe('a key something else already answers to', () => {
     expect(shortcuts.keyFor('app.palette.open')).toBe('Mod-o')
   })
 })
-
 describe('closing the pane', () => {
   test('leaves nothing listening and no question standing', () => {
     rebind.listen('format.bold')
@@ -128,7 +112,6 @@ describe('closing the pane', () => {
     expect(rebind.turnedDown).toBeNull()
   })
 })
-
 describe('a modifier tapped twice', () => {
   test('is the key of a row the window runs', () => {
     rebind.listen('app.graph')
@@ -136,13 +119,11 @@ describe('a modifier tapped twice', () => {
     expect(shortcuts.keyFor('app.graph')).toBe('Meta Meta')
     expect(rebind.listening).toBeNull()
   })
-
   test('clashes with the palette, which Shift twice already opens', () => {
     rebind.listen('app.graph')
     rebind.tapped('Shift')
     expect(rebind.clash?.holders.map((one) => one.id)).toEqual(['app.palette'])
   })
-
   test('is not a key for the editor, which has no such thing, so the row goes on waiting', () => {
     rebind.listen('format.bold')
     rebind.tapped('Shift')
@@ -150,7 +131,6 @@ describe('a modifier tapped twice', () => {
     expect(rebind.listening).toBe('format.bold')
   })
 })
-
 describe('a key brought back by Reset', () => {
   test('is held back while another row took it over', () => {
     rebind.listen('app.new')
@@ -167,7 +147,6 @@ describe('a key brought back by Reset', () => {
     expect('format.bold' in shortcuts.overrides).toBe(false)
     expect(shortcuts.keyFor('app.new')).toBeNull()
   })
-
   test('comes back at once when nothing else holds it', () => {
     shortcuts.set('format.bold', 'Mod-Alt-j')
     rebind.reset('format.bold')

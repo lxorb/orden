@@ -6,7 +6,6 @@ const frame = () =>
     requestAnimationFrame(() => done(undefined))
     setTimeout(done, 20)
   })
-
 export async function settle(): Promise<void> {
   for (let turn = 0; turn < 4; turn++) {
     await vi.dynamicImportSettled()
@@ -16,7 +15,6 @@ export async function settle(): Promise<void> {
     flushSync()
   }
 }
-
 export async function elapse(ms: number): Promise<void> {
   await vi.dynamicImportSettled()
   await vi.advanceTimersByTimeAsync(ms)
@@ -24,7 +22,6 @@ export async function elapse(ms: number): Promise<void> {
   await vi.advanceTimersByTimeAsync(0)
   flushSync()
 }
-
 export async function idle(ms: number): Promise<void> {
   await new Promise((done) => setTimeout(done, ms))
   await settle()

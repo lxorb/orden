@@ -20,41 +20,32 @@ interface LeavingView {
   notes?: { id: string; path: string }[]
   members?: { email: string | null }[]
 }
-
 const KEPT = { OPENAI_KEY_SECRET: 'a secret for the tests' }
-
 const ME = 'leaving@example.com'
 const OTHER = 'staying@example.com'
-
 let env: TestEnv
 let token: string
-
 beforeEach(async () => {
   env = testEnv(KEPT)
   token = await signIn(env, ME)
 })
-
 afterEach(() => env.close())
-
 async function askToLeave(as = token): Promise<{ answer: Answer<LeavingView>; code: string; mailed: string }> {
   const answers: Answer<LeavingView>[] = []
   const mailed = await mail(async () => {
     answers.push(await call<LeavingView>(env, '/v1/account/delete/code', { token: as, body: {} }))
   })
-
   const found = /(\d{3}) (\d{3})/.exec(mailed)
   const answer = answers[0]
   if (!answer) throw new Error('step one answered nothing')
   return { answer, code: found ? `${found[1]}${found[2]}` : '', mailed }
 }
-
 function verify(code: string, second?: string, as = token) {
   return call<LeavingView>(env, '/v1/account/delete/verify', {
     token: as,
     body: { code, ...(second === undefined ? {} : { second }) },
   })
 }
-
 function confirm(ticket: string | undefined, as = token) {
   return call<LeavingView>(env, '/v1/account', {
     method: 'DELETE',
@@ -62,113 +53,88 @@ function confirm(ticket: string | undefined, as = token) {
     body: ticket === undefined ? {} : { ticket },
   })
 }
-
 async function leave(as = token): Promise<Answer<LeavingView>> {
   const { code } = await askToLeave(as)
   const { json } = await verify(code, undefined, as)
   return await confirm(json.ticket, as)
 }
-
 function wrong(code: string): string {
   return code.replace(/^./, (digit) => String((Number(digit) + 1) % 10))
 }
-
 async function me(as = token) {
   return await call<LeavingView>(env, '/v1/me', { token: as })
 }
-
 async function enrol(): Promise<string> {
   const begun = await call<LeavingView>(env, '/v1/second', { token, body: {} })
   const row = env.db
     .prepare("select value from cached where scope = 'second-pending' order by until desc limit 1")
     .get() as { value: string }
   const secret = row.value.split(':')[1] ?? ''
-
   await call(env, '/v1/second/confirm', {
     token,
     body: { holding: begun.json.holding, code: await codeAt(secret, step()) },
   })
-
   return secret
 }
-
 function step(): number {
   return Math.floor(Date.now() / 30_000)
 }
-
 describe('the door', () => {
   test('a session alone deletes nothing', async () => {
     expect((await confirm(undefined)).status).toBe(400)
     expect((await confirm('f'.repeat(64))).status).toBe(400)
     expect((await me()).status).toBe(200)
   })
-
   test('mails a fresh code to the account’s own address, saying what it is for', async () => {
     const { answer, code, mailed } = await askToLeave()
-
     expect(answer.status).toBe(200)
     expect(answer.json.second).toBe(false)
     expect(code).toMatch(/^\d{6}$/)
     expect(mailed).toContain(ME)
     expect(mailed).toContain('delete your Orden account')
   })
-
   test('refuses a wrong code, and the account stays', async () => {
     const { code } = await askToLeave()
     const answer = await verify(wrong(code))
-
     expect(answer.status).toBe(400)
     expect(answer.json.ticket).toBeUndefined()
     expect((await me()).status).toBe(200)
   })
-
   test('refuses a code that has run out', async () => {
     const { code } = await askToLeave()
     env.db.exec('update login_codes set expires_at = 1')
-
     expect((await verify(code)).status).toBe(400)
   })
-
   test('takes a code once', async () => {
     const { code } = await askToLeave()
-
     expect((await verify(code)).status).toBe(200)
     expect((await verify(code)).status).toBe(400)
   })
-
   test('and deletes with the ticket the codes earned', async () => {
     const answer = await leave()
-
     expect(answer.status).toBe(200)
     expect(answer.json.ok).toBe(true)
     expect((await me()).status).toBe(401)
   })
-
   test('and says so to the address afterwards', async () => {
     const { code } = await askToLeave()
     const { json } = await verify(code)
-
     const receipt = await mail(() => confirm(json.ticket))
-
     expect(receipt).toContain(ME)
     expect(receipt).toContain('Your Orden account has been deleted')
     expect(env.db.prepare('select count(*) as many from limits where key = ?').get(ME)).toEqual({
       many: 0,
     })
   })
-
   test('afterwards the ticket alone can ask whether it went, so a lost answer is not guessed at', async () => {
     const { code } = await askToLeave()
     const { json } = await verify(code)
     const ticket = json.ticket ?? ''
-
     expect((await call<LeavingView>(env, '/v1/account/left', { body: { ticket } })).json).toEqual({
       gone: false,
     })
-
     expect((await confirm(ticket)).status).toBe(200)
     expect((await confirm(ticket)).status).toBe(401)
-
     const asked = await call<LeavingView>(env, '/v1/account/left', { body: { ticket } })
     expect(asked.status).toBe(200)
     expect(asked.json).toEqual({ gone: true })
@@ -176,12 +142,10 @@ describe('the door', () => {
       gone: false,
     })
   })
-
   test('a session ended elsewhere deletes nothing, and the ticket says so', async () => {
     const { code } = await askToLeave()
     const { json } = await verify(code)
     await call(env, '/v1/auth/signout', { token, body: {} })
-
     expect((await confirm(json.ticket)).status).toBe(401)
     expect((await call<LeavingView>(env, '/v1/account/left', { body: { ticket: json.ticket } })).json).toEqual({
       gone: false,
@@ -190,67 +154,53 @@ describe('the door', () => {
       many: 1,
     })
   })
-
   test('a ticket runs out', async () => {
     const { code } = await askToLeave()
     const { json } = await verify(code)
     env.db.exec("update cached set until = 1 where scope = 'leaving'")
-
     expect((await confirm(json.ticket)).status).toBe(400)
     expect((await me()).status).toBe(200)
   })
-
   test('somebody else’s ticket deletes nobody', async () => {
     const other = await signIn(env, OTHER)
     const { code } = await askToLeave()
     const { json } = await verify(code)
-
     expect((await confirm(json.ticket, other)).status).toBe(400)
     expect((await me(other)).status).toBe(200)
     expect((await me()).status).toBe(200)
-
     expect((await confirm(json.ticket)).status).toBe(200)
     expect((await me(other)).status).toBe(200)
   })
-
   test('somebody else’s mailed code proves nothing about this account', async () => {
     const other = await signIn(env, OTHER)
     const theirs = await askToLeave(other)
     await askToLeave()
-
     expect((await verify(theirs.code)).status).toBe(400)
   })
-
   test('with a second factor, the mailed code is half of it', async () => {
     const secret = await enrol()
     const { answer, code } = await askToLeave()
     expect(answer.json.second).toBe(true)
-
     expect((await verify(code)).status).toBe(400)
     expect((await verify(code, '000000')).status).toBe(400)
-
     const right = await verify(code, await codeAt(secret, step()))
     expect(right.status).toBe(200)
     expect((await confirm(right.json.ticket)).status).toBe(200)
   })
-
   test('with a second factor, a stolen session and the mailbox are not enough', async () => {
     await enrol()
     const { code } = await askToLeave()
-
     for (const second of ['', '123456', 'aaaaa-bbbbb-ccccc-ddddd']) {
       expect((await verify(code, second)).status).toBe(400)
     }
     expect((await me()).status).toBe(200)
   })
-
   test('is shut to a guest and to a program', async () => {
     const minted = await call<LeavingView>(env, '/v1/mcp/token', {
       token,
       body: { readOnly: false },
     })
     const program = minted.json.token ?? ''
-
     const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Open' } })).json.space?.id
     const linked = await call<{ link: { url: string } }>(env, `/v1/spaces/${space}/share/link`, {
       method: 'PUT',
@@ -259,25 +209,21 @@ describe('the door', () => {
     })
     const link = /\/join\/([a-f0-9]+)/.exec(linked.json.link.url)?.[1]
     const guest = (await call<LeavingView>(env, `/v1/join/${link}`, { method: 'POST', body: {} })).json.token
-
     for (const as of [program, guest ?? '']) {
       expect((await call(env, '/v1/account/delete/code', { token: as, body: {} })).status).toBe(403)
       expect((await verify('123456', undefined, as)).status).toBe(403)
       expect((await confirm('x', as)).status).toBe(403)
     }
   })
-
   test('counts every ask, and stops at ten an hour', async () => {
     for (let ask = 0; ask < 10; ask++) {
       expect((await call(env, '/v1/account/delete/code', { token, body: {} })).status).toBe(200)
     }
-
     const refused = await call<LeavingView>(env, '/v1/account/delete/code', { token, body: {} })
     expect(refused.status).toBe(429)
     expect((await verify('123456')).status).toBe(429)
   })
 })
-
 describe('what is left', () => {
   test('nothing of the account, and the address signs up as somebody new', async () => {
     const before = (await me()).json.user?.id
@@ -286,52 +232,40 @@ describe('what is left', () => {
       token,
       body: { path: 'plan.md', content: '# Plan\n' },
     })
-
     const held = (await call<LeavingView>(env, '/v1/spaces', { token })).json.spaces ?? []
     expect(held.map((one) => one.name)).toEqual(['Notes', 'Work'])
     expect(env.keys().some((key) => key.includes(space ?? '-'))).toBe(true)
-
     expect((await leave()).status).toBe(200)
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
     expect(env.keys().filter((key) => held.some((one) => key.includes(one.id)))).toEqual([])
-
     const again = await signIn(env, ME)
     const fresh = await me(again)
     expect(fresh.json.user?.email).toBe(ME)
     expect(fresh.json.user?.id).not.toBe(before)
-
     const listed = await call<LeavingView>(env, '/v1/spaces', { token: again })
     expect(listed.json.spaces?.map((one) => one.name)).toEqual(['Notes'])
     expect(listed.json.deleted).toEqual([])
   })
-
   test('a space somebody shared with it stays theirs, with its notes, without it', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const wrote = await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
       token,
       body: { path: 'mine in theirs.md', content: 'written by the one leaving' },
     })
     expect(wrote.status).toBe(201)
-
     expect((await leave()).status).toBe(200)
-
     const listed = await call<LeavingView>(env, '/v1/spaces', { token: other })
     expect(listed.json.spaces?.map((one) => one.id)).toContain(theirs)
-
     const changes = await call<LeavingView>(env, `/v1/spaces/${theirs}/changes?since=0`, {
       token: other,
     })
     expect(changes.json.notes?.map((one) => one.path)).toContain('mine in theirs.md')
-
     const shared = await call<LeavingView>(env, `/v1/spaces/${theirs}/share`, { token: other })
     expect(shared.json.members?.map((one) => one.email)).not.toContain(ME)
   })
-
   test('a guest that only said it was at its address keeps its way in, not the address', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
@@ -348,14 +282,11 @@ describe('what is left', () => {
     })
     const { id } = env.db.prepare('select id from guests where email = ?').get(ME) as { id: string }
     await call(env, `/v1/spaces/${theirs}/share/guests/${id}`, { method: 'POST', token: other })
-
     expect((await leave()).status).toBe(200)
-
     const listed = await call<LeavingView>(env, '/v1/spaces', { token: asked.json.token })
     expect(listed.json.spaces?.map((one) => one.id)).toEqual([theirs])
     expect(env.db.prepare('select email from guests where id = ?').get(id)).toEqual({ email: null })
   })
-
   test('its own space goes for everybody it was shared with', async () => {
     const other = await signIn(env, OTHER)
     const mine = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space?.id
@@ -365,24 +296,19 @@ describe('what is left', () => {
         body: { path: 'shared.md', content: 'x' },
       })
     ).json.note?.id
-
     await joined(env, token, mine ?? '', OTHER, 'read', { as: other })
     expect((await call(env, `/v1/notes/${note}`, { token: other })).status).toBe(200)
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, `/v1/notes/${note}`, { token: other })).status).toBe(404)
     const listed = await call<LeavingView>(env, '/v1/spaces', { token: other })
     expect(listed.json.spaces?.map((one) => one.id)).not.toContain(mine)
   })
-
   test('a picture another account holds too stays; its own goes', async () => {
     const other = await signIn(env, OTHER)
     const shared = file(3, 1)
     const own = file(3, 2)
     const both = shared.hash
     const alone = own.hash
-
     for (const [picture, as] of [
       [shared, token],
       [shared, other],
@@ -395,22 +321,17 @@ describe('what is left', () => {
         headers: { 'content-type': 'image/png' },
       })
     }
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, `/i/${both}.png`)).status).toBe(200)
     expect((await call(env, `/i/${alone}.png`)).status).toBe(404)
     expect(env.keys()).toContain(`blobs/${both}`)
     expect(env.keys()).not.toContain(`blobs/${alone}`)
   })
-
   test('a picture it put into a space that stays is handed to that space’s owner', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const pictures = [file(3, 4), file(3, 5)]
     const [pasted, kept] = pictures.map((one) => one.hash) as [string, string]
     for (const picture of pictures) {
@@ -421,28 +342,22 @@ describe('what is left', () => {
         headers: { 'content-type': 'image/png' },
       })
     }
-
     await call(env, `/v1/spaces/${theirs}/notes`, {
       token,
       body: { path: 'with a picture.md', content: `![](https://nibeditor.com/i/${pasted}.png)` },
     })
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, `/i/${pasted}.png`)).status).toBe(200)
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(pasted)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])
     expect((await call(env, `/i/${kept}.png`)).status).toBe(404)
   })
-
   test('a paper it hung on a page note in a space that stays is handed to that space’s owner', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const pages = (
       await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
         token,
@@ -458,20 +373,16 @@ describe('what is left', () => {
       headers: { 'content-type': 'application/pdf' },
     })
     await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: other })).status).toBe(200)
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])
   })
-
   test('a picture it put into a space it may now only read is handed over too', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     const sent = await mail(() =>
       call(env, `/v1/spaces/${theirs}/share/invite`, {
         token: other,
@@ -482,7 +393,6 @@ describe('what is left', () => {
       method: 'POST',
       token,
     })
-
     const picture = file(3, 6)
     await call(env, `/v1/blobs/${picture.hash}`, {
       method: 'PUT',
@@ -503,15 +413,12 @@ describe('what is left', () => {
       body: { role: 'read' },
     })
     expect(demoted.status).toBe(200)
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])
   })
-
   test.each([
     ['been taken out of', 'members'],
     ['left', 'me'],
@@ -519,9 +426,7 @@ describe('what is left', () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const picture = file(3, 10)
     await call(env, `/v1/blobs/${picture.hash}`, {
       method: 'PUT',
@@ -544,23 +449,18 @@ describe('what is left', () => {
             token: other,
           })
     expect(out.status).toBe(200)
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])
   })
-
   test('a picture a stranger held too is handed over when the stranger goes', async () => {
     const other = await signIn(env, OTHER)
     const stranger = await signIn(env, 'stranger@example.com')
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const picture = file(3, 11)
     for (const as of [token, stranger]) {
       await call(env, `/v1/blobs/${picture.hash}`, {
@@ -577,23 +477,18 @@ describe('what is left', () => {
         content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
       },
     })
-
     expect((await leave()).status).toBe(200)
     expect((await leave(stranger)).status).toBe(200)
-
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])
   })
-
   test('a picture taken out of the owner’s note again is not handed over', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const picture = file(3, 12)
     await call(env, `/v1/blobs/${picture.hash}`, {
       method: 'PUT',
@@ -617,20 +512,15 @@ describe('what is left', () => {
     })
     expect(edited.status).toBe(200)
     await call(env, `/v1/spaces/${theirs}/share/me`, { method: 'DELETE', token })
-
     expect((await leave()).status).toBe(200)
-
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([])
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(404)
   })
-
   test('a paper it hung in a space it has since left is handed over too', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const pages = (
       await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
         token,
@@ -647,20 +537,16 @@ describe('what is left', () => {
     })
     await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
     await call(env, `/v1/spaces/${theirs}/share/me`, { method: 'DELETE', token })
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: other })).status).toBe(200)
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])
   })
-
   test('a picture in a note not yet read by the sweep is found in its body', async () => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
-
     const sent = await mail(() =>
       call(env, `/v1/spaces/${theirs}/share/invite`, {
         token: other,
@@ -671,7 +557,6 @@ describe('what is left', () => {
       method: 'POST',
       token,
     })
-
     const picture = file(3, 13)
     await call(env, `/v1/blobs/${picture.hash}`, {
       method: 'PUT',
@@ -690,14 +575,11 @@ describe('what is left', () => {
     ).json.note?.id
     env.db.prepare('delete from note_pictures where note_id = ?').run(note ?? '')
     env.db.prepare('update notes set front_rev = 1 where id = ?').run(note ?? '')
-
     expect((await leave()).status).toBe(200)
-
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])
   })
-
   test.each([
     ['in a code span', (hash: string) => `see \`/i/${hash}\``],
     ['in prose', (hash: string) => `see /i/${hash} there`],
@@ -720,25 +602,20 @@ describe('what is left', () => {
       headers: { 'content-type': 'application/pdf' },
     })
     await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
-
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } })).json
       .space?.id
     await call(env, `/v1/spaces/${theirs}/notes`, {
       token: stranger,
       body: { path: 'n.md', content: body(hash) },
     })
-
     expect((await leave()).status).toBe(200)
-
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
   })
-
   test.each(['a page note', 'a space'])('a paper in %s emptied for good is not handed over', async (what) => {
     const other = await signIn(env, OTHER)
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const bytes = new TextEncoder().encode('%PDF-1.4\nemptied\n%%EOF\n')
     const hash = createHash('sha256').update(bytes).digest('hex')
     await call(env, `/v1/blobs/${hash}`, {
@@ -775,12 +652,9 @@ describe('what is left', () => {
       })
       expect(purged.status).toBe(200)
     }
-
     expect((await leave()).status).toBe(200)
-
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
   })
-
   test('a picture a stranger holds as a PDF is handed over all the same', async () => {
     const other = await signIn(env, OTHER)
     const stranger = await signIn(env, 'stranger@example.com')
@@ -796,7 +670,6 @@ describe('what is left', () => {
       method: 'POST',
       token,
     })
-
     const picture = file(3, 14)
     for (const [as, type] of [
       [token, 'image/png'],
@@ -816,13 +689,10 @@ describe('what is left', () => {
         content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
       },
     })
-
     expect((await leave()).status).toBe(200)
     await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token: stranger })
-
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
   })
-
   test.each([
     [
       'a card on a canvas',
@@ -835,7 +705,6 @@ describe('what is left', () => {
     const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
       ?.id
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
-
     const picture = file(3, 15)
     await call(env, `/v1/blobs/${picture.hash}`, {
       method: 'PUT',
@@ -849,12 +718,9 @@ describe('what is left', () => {
     })
     expect(made.status).toBe(201)
     await call(env, `/v1/spaces/${theirs}/share/me`, { method: 'DELETE', token })
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
   })
-
   test('a picture of its own is not handed to a big space it only reads', async () => {
     const other = await signIn(env, OTHER)
     const big = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Big' } })).json.space?.id
@@ -874,7 +740,6 @@ describe('what is left', () => {
         .run(`n${String(at)}`, big, `n${String(at)}.md`, row.seq + at, row.updated_at, 5, row.hash)
     }
     await joined(env, other, big, ME, 'read', { as: token })
-
     const own = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space?.id
     const picture = file(3, 9)
     await call(env, `/v1/blobs/${picture.hash}`, {
@@ -887,13 +752,10 @@ describe('what is left', () => {
       token,
       body: { path: 'diary.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
     })
-
     expect((await leave()).status).toBe(200)
-
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([])
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(404)
   })
-
   test('a published site stops answering', async () => {
     const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Site' } })).json.space?.id
     await call(env, `/v1/spaces/${space}/notes`, {
@@ -905,12 +767,9 @@ describe('what is left', () => {
       token,
       body: { subdomain: 'leaving' },
     })
-
     const host = 'leaving.nibeditor.com'
     expect((await call(env, '/', { host })).status).toBe(200)
-
     expect((await leave()).status).toBe(200)
-
     expect((await call(env, '/', { host })).status).toBe(302)
   })
 })

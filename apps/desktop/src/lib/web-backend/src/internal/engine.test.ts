@@ -30,18 +30,14 @@ vi.mock('../../../crate/src/api', async (original) => ({
   },
 }))
 vi.mock('../../../notify/src/api', () => ({ notify: () => undefined }))
-
 const SPACE = 'sim'
 const undo: (() => void)[] = []
-
 afterEach(() => {
   for (const one of undo.splice(0)) one()
   watch.roots.length = 0
   watch.scans.length = 0
 })
-
 const settled = () => new Promise((resolve) => setTimeout(resolve, 30))
-
 async function kept(root: string) {
   const bytes = new MemoryBytes()
   let keys = 0
@@ -54,7 +50,6 @@ async function kept(root: string) {
   undo.push(mountRoot({ root, web: root, folder }))
   return { bytes, folder }
 }
-
 function commandsDisk(): Disk {
   const folderOf = (path: string) => path.slice(0, path.lastIndexOf('/'))
   return {
@@ -74,7 +69,6 @@ function commandsDisk(): Disk {
     exists: (path) => webInvoke<boolean>('path_exists', { path }),
   }
 }
-
 async function device(account: ReferenceAccount, id: string, root: string, disk: Disk) {
   const store = new MemoryStore(id)
   const seeding = store.open()
@@ -130,7 +124,6 @@ async function device(account: ReferenceAccount, id: string, root: string, disk:
   }
   return Engine.start(world, store.open(), { freshens: false })
 }
-
 describe('the engine over a space Orden keeps', () => {
   test('moves nothing for a rename another device made: the index alone, the same key', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -141,24 +134,20 @@ describe('the engine over a space Orden keeps', () => {
     if (!plan) throw new Error('no seed')
     const key = (await folder.at(plan.name))?.key
     const written = bytes.writes
-
     const there = new MemoryDisk()
     const other = await device(account, 'd1', '/device/space', there)
     await other.moving(`/device/space/${plan.name}`, '/device/space/Done/Goals.md', () =>
       there.move(`/device/space/${plan.name}`, '/device/space/Done/Goals.md'),
     )
     await other.pass(SPACE)
-
     await here.pass(SPACE)
     await here.pass(SPACE)
-
     expect((await folder.at('Done/Goals.md'))?.key).toBe(key)
     expect(await folder.at(plan.name)).toBeNull()
     expect(bytes.writes).toBe(written)
     expect(here.entryAt(`${root}/Done/Goals.md`)?.id).toBe(plan.id)
     expect(await webInvoke('read_note', { path: `${root}/Done/Goals.md` })).toBe(plan.text)
   })
-
   test('hears its folder in place of the crate: a file made, words written, a folder renamed', async () => {
     const { watchFolders } = await import('../../../sync-client/src/watching')
     const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -178,24 +167,20 @@ describe('the engine over a space Orden keeps', () => {
     await settled()
     expect(watch.roots.flat()).not.toContain(root)
     expect(watch.scans).toEqual([])
-
     await webInvoke('write_note', { path: `${root}/Work/Ideas.md`, content: 'eggs' })
     await settled()
     const ideas = here.entryAt(`${root}/Work/Ideas.md`)
     expect(ideas?.kind).toBe('note')
     expect((await here.core.doc(ideas?.id ?? ''))?.text()).toBe('eggs')
-
     await webInvoke('write_note', { path: `${root}/Work/Ideas.md`, content: 'eggs and ham' })
     await settled()
     expect((await here.core.doc(ideas?.id ?? ''))?.text()).toBe('eggs and ham')
-
     await webInvoke('rename_note', { from: `${root}/Work`, to: `${root}/Done` })
     await settled()
     expect(here.entryAt(`${root}/Done/Ideas.md`)?.id).toBe(ideas?.id)
     expect(moves).toEqual([`folder ${root}/Work -> ${root}/Done`])
     watched.stop()
   })
-
   test('is searched over its rows, and the held words follow every change', async () => {
     const { searchInternal } = await import('./search')
     const { parseQuery } = await import('@orden/scan/search/query')
@@ -203,7 +188,6 @@ describe('the engine over a space Orden keeps', () => {
     const { folder } = await kept('/internal-s')
     undo.push(mountRoot({ root, web: '/internal-s', folder }))
     await webInvoke('write_note', { path: '/internal-s/Work/Plan.md', content: 'ship the eggs' })
-
     const hits = async (words: string) => {
       const found: string[] = []
       const query = parseQuery(words)
@@ -211,7 +195,6 @@ describe('the engine over a space Orden keeps', () => {
       return found
     }
     expect(await hits('eggs')).toEqual([`${root}\\Work\\Plan.md`])
-
     await webInvoke('write_note', { path: '/internal-s/Work/Plan.md', content: 'ship the ham' })
     await settled()
     expect(await hits('eggs')).toEqual([])
@@ -220,7 +203,6 @@ describe('the engine over a space Orden keeps', () => {
     expect(await hits('ham')).toEqual([`${root}\\Ham.md`])
     expect(await searchInternal('C:\\Elsewhere', parseQuery('ham'), [], 5, () => undefined, [])).toBe(false)
   })
-
   test("keeps the space's inbox as a document only its store holds: carried, never listed or walked", async () => {
     const { watchFolders } = await import('../../../sync-client/src/watching')
     const { listInternal } = await import('./watch')
@@ -236,10 +218,8 @@ describe('the engine over a space Orden keeps', () => {
       changed: () => undefined,
     })
     await settled()
-
     await webInvoke('write_note', { path: `${root}/.Inbox.md`, content: '- [ ] buy kumquats' })
     await settled()
-
     const inbox = await folder.at('.Inbox.md')
     expect(bytes.texts.get(inbox?.key ?? '')).toBe('- [ ] buy kumquats')
     expect(here.entryAt(`${root}/.Inbox.md`)?.kind).toBe('note')
@@ -260,7 +240,6 @@ describe('the engine over a space Orden keeps', () => {
     expect(walked).toEqual([])
     watched.stop()
   })
-
   test("hands a kept space the launch has not mounted yet to neither the crate's watch nor its scan", async () => {
     const { watchFolders } = await import('../../../sync-client/src/watching')
     const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -272,7 +251,6 @@ describe('the engine over a space Orden keeps', () => {
       changed: () => undefined,
     })
     await settled()
-
     expect(watch.roots.flat()).not.toContain(root)
     expect(watch.scans).toEqual([])
     watched.stop()

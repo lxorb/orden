@@ -5,9 +5,7 @@
   import { showFeedback } from '../../surfaces/src/api'
 
   const { scratchpad }: { scratchpad: () => void } = $props()
-
   const who = $derived(account.name)
-
   function show(event: MouseEvent) {
     showAccount(
       event,
@@ -52,32 +50,26 @@
     -webkit-tap-highlight-color: transparent;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .you:active:not(:disabled) {
     transform: scale(0.92);
   }
-
   .looking {
     animation: looking 1.6s var(--ease-in-out) infinite;
   }
-
   @keyframes looking {
     0%,
     100% {
       opacity: 0.4;
     }
-
     50% {
       opacity: 0.85;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .looking {
       animation: none;
     }
   }
-
   .coming {
     min-width: 0;
     margin-inline-start: auto;
@@ -87,7 +79,6 @@
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-
   .coming + .you {
     margin-inline-start: 0;
   }

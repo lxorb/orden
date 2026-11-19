@@ -1,20 +1,14 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive, experimental_on
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PASSWORD = "tulip ladder seven"
-
 SEEN = """() => ({
   tab: !!document.querySelector('.pass'),
   tabs: window.ordenApp.workspace.tabs.filter((one) => one.kind === 'pass').length,
 })"""
-
 PALETTE = """() => [...document.querySelectorAll('.palette ul li')].map((one) => one.textContent.trim())"""
-
-
 def switch(page: Page, on: bool) -> None:
     experimental_on(page)
     row = page.locator('[role=switch][aria-label="Password manager"]')
@@ -29,8 +23,6 @@ def switch(page: Page, on: bool) -> None:
     shot(page, f"switch-{'on' if on else 'off'}")
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
-
-
 def offered(page: Page) -> list[str]:
     page.keyboard.press("Control+Shift+P")
     wait_for(page, "() => !!document.querySelector('.palette input')", "the palette")
@@ -40,8 +32,6 @@ def offered(page: Page) -> list[str]:
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
     return [one for one in rows if "Pass" in one]
-
-
 def none_of_it(page: Page, when: str) -> None:
     page.keyboard.press("Control+Alt+v")
     page.wait_for_timeout(600)
@@ -64,14 +54,10 @@ def none_of_it(page: Page, when: str) -> None:
         wrong(f"{when}: a new tab offers Pass")
     shot(page, f"none-{when.replace(' ', '-')}")
     say(f"{when}: no Pass tab, command or new-tab kind, of {cards}")
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
-
     none_of_it(page, "never turned on")
-
     switch(page, True)
     rows = offered(page)
     if not rows:
@@ -94,10 +80,8 @@ def drive(browser: Browser) -> None:
     wait_for(page, "[...document.querySelectorAll('.pass [data-item]')].some((one) => one.textContent.includes('Kept Through Off'))", "the login")
     shot(page, "made")
     say("set up, a login made")
-
     switch(page, False)
     none_of_it(page, "turned off")
-
     switch(page, True)
     page.keyboard.press("Control+Alt+v")
     wait_for(page, "document.querySelector('.pass')", "the Pass tab again")
@@ -107,12 +91,9 @@ def drive(browser: Browser) -> None:
     wait_for(page, "[...document.querySelectorAll('.pass [data-item]')].some((one) => one.textContent.includes('Kept Through Off'))", "the login kept", 180)
     shot(page, "kept")
     say("turned on again, locked, opened: the login is still there")
-
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
     page.keyboard.press("Control+Alt+v")
     wait_for(page, "document.querySelector('.pass')", "Pass after a reload, still on")
     say("still on after a reload")
-
-
 raise SystemExit(DRIVE.run(drive, "Pass is off until turned on, and keeps its vaults through off and on"))

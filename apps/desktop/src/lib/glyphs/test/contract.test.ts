@@ -10,7 +10,6 @@ describe('the glyphs', () => {
     })
     expect(render(Icon, { props: { icon: { kind: 'emoji', text: '🚀' } } }).body).toContain('🚀')
   })
-
   test('fall back to the stroked shape they are handed when nothing is chosen', () => {
     const body = render(Icon, {
       props: { icon: null, fallback: [['path', { d: 'M4 20l6-6' }]] },

@@ -4,9 +4,7 @@ import { note, NOT_FOUND, type Env, type Variables } from '../../../sync-server/
 import { appsOn } from './catalogue'
 
 const TTL = 24 * 60 * 60
-
 export const appIce = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 async function iceServers(env: Env): Promise<IceServer[]> {
   const id = env.TURN_KEY_ID
   const token = env.TURN_KEY_TOKEN
@@ -27,7 +25,6 @@ async function iceServers(env: Env): Promise<IceServer[]> {
   const servers = iceServersOf((body as { iceServers?: unknown } | null)?.iceServers)
   return servers.length > 0 ? servers : [...FALLBACK_ICE]
 }
-
 appIce.get('/', async (context) => {
   const env = context.env
   if (!(await appsOn(env))) return context.json({ error: NOT_FOUND }, 404)

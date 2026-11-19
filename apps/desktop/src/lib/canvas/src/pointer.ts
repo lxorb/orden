@@ -4,7 +4,6 @@ import { type Box, type HandleId, type Point, rubbedBetween } from '../../plane/
 
 export type Tool = 'select' | 'hand' | 'draw' | 'erase' | 'lasso' | PutTool
 export type PutTool = 'text' | 'words' | 'file' | 'picture' | 'link' | 'group' | Shape
-
 const PUT: ReadonlySet<Tool> = new Set<Tool>([
   'text',
   'words',
@@ -20,12 +19,10 @@ const PUT: ReadonlySet<Tool> = new Set<Tool>([
   'arrow',
   'elbow',
 ])
-
 export const puts = (tool: Tool): tool is PutTool => PUT.has(tool)
 const JOINS: ReadonlySet<Tool> = new Set<Tool>(['line', 'arrow', 'elbow'])
 export type PointerKind = 'mouse' | 'pen' | 'touch'
 type EdgeEnd = 'from' | 'to'
-
 export interface Hit {
   handle: HandleId | null
   port: { id: string; side: Side } | null
@@ -35,7 +32,6 @@ export interface Hit {
   stroke: string | null
   ink: HandleId | 'turn' | 'inside' | null
 }
-
 export const NOTHING: Hit = {
   handle: null,
   port: null,
@@ -45,7 +41,6 @@ export const NOTHING: Hit = {
   stroke: null,
   ink: null,
 }
-
 export interface Down {
   kind: 'down'
   id: number
@@ -61,7 +56,6 @@ export interface Down {
   sample: InkPoint
   hit: Hit
 }
-
 interface Move {
   kind: 'move'
   id: number
@@ -70,7 +64,6 @@ interface Move {
   samples: InkPoint[]
   hit: Hit
 }
-
 interface Penned {
   kind: 'penned'
   id: number
@@ -79,7 +72,6 @@ interface Penned {
   eraser: boolean
   hit: Hit
 }
-
 export type Input =
   | Down
   | Move
@@ -88,7 +80,6 @@ export type Input =
   | { kind: 'cancel'; id: number }
   | { kind: 'space'; down: boolean }
   | { kind: 'held'; at: Point }
-
 export type Effect =
   | { do: 'pick'; ids: string[]; adding: boolean }
   | { do: 'band'; from: Point; to: Point; was: string[]; adding: boolean }
@@ -128,7 +119,6 @@ export type Effect =
   | { do: 'turn'; at: Point; by: number }
   | { do: 'menu'; at: Point }
   | { do: 'assist' }
-
 export interface PendingStroke {
   tool: InkTool
   size: number
@@ -136,7 +126,6 @@ export interface PendingStroke {
   opacity: number
   points: InkPoint[]
 }
-
 type Gesture =
   | { kind: 'pan'; id: number; screen: Point; moved: boolean; bare?: boolean }
   | { kind: 'armed'; id: number; at: Point; screen: Point }
@@ -167,14 +156,12 @@ type Gesture =
   | { kind: 'erase'; whole: boolean; id: number; last: Point; lastScreen: Point }
   | { kind: 'lasso'; from: Point; points: Point[]; box: boolean; cards?: boolean }
   | { kind: 'ink'; how: 'move' | HandleId | 'turn'; box: Box; from: Point }
-
 interface Driver {
   id: number
   kind: PointerKind
   screen: Point
   since: number
 }
-
 export interface Machine {
   gesture: Gesture | null
   driver: Driver | null
@@ -183,7 +170,6 @@ export interface Machine {
   spare: { id: number; screen: Point }[]
   hovered: string | null
 }
-
 export const start = (): Machine => ({
   gesture: null,
   driver: null,
@@ -192,16 +178,13 @@ export const start = (): Machine => ({
   spare: [],
   hovered: null,
 })
-
 const SLOP = 3
 export const FORGIVING = 8
 const TWO_FINGERS = 250
-
 export interface Step {
   machine: Machine
   effects: Effect[]
 }
-
 export interface Context {
   tool: Tool
   picked: string[]
@@ -218,19 +201,15 @@ export interface Context {
   penSeen: boolean
   fingerDraws: boolean
 }
-
 function rubbing(context: Context, shift: boolean, touch: boolean) {
   const whole = context.eraser.whole || shift
   const stroke = context.eraser.stroke + (touch ? FORGIVING : 0)
   return { whole, reach: (whole ? stroke : context.eraser.size) / context.scale }
 }
-
 const rubbed = (rub: { whole: boolean; reach: number }, ats: Point[]): Effect[] =>
   ats.length ? [{ do: rub.whole ? 'rub' : 'cut', ats, reach: rub.reach }] : []
-
 function rubbingOut(held: Machine, input: Down, context: Context): Step {
   const rub = rubbing(context, input.shift, input.pointer === 'touch')
-
   return {
     machine: {
       ...held,
@@ -245,24 +224,18 @@ function rubbingOut(held: Machine, input: Down, context: Context): Step {
     effects: rubbed(rub, [input.at]),
   }
 }
-
 function facing(from: Point, to: Point): Side {
   const across = to.x - from.x
   const down = to.y - from.y
-
   if (Math.abs(across) >= Math.abs(down)) return across >= 0 ? 'right' : 'left'
   return down >= 0 ? 'bottom' : 'top'
 }
-
 const ring = (from: Point, to: Point): Point[] => [from, { x: to.x, y: from.y }, to, { x: from.x, y: to.y }]
-
 export function takesOver(kind: string, since: number, now: number): boolean {
   if (kind === 'pinch') return false
   if (kind !== 'draw' && kind !== 'erase') return true
-
   return now - since <= TWO_FINGERS
 }
-
 function begun(gesture: Gesture): boolean {
   switch (gesture.kind) {
     case 'pan':
@@ -288,20 +261,15 @@ function begun(gesture: Gesture): boolean {
       return true
   }
 }
-
 function onPenned(machine: Machine, input: Penned, context: Context): Step {
   const driver = machine.driver
   if (driver?.id !== input.id) return { machine, effects: [] }
-
   const pen: Driver = { ...driver, kind: 'pen' }
   const now: Machine = { ...machine, penDown: true, driver: pen }
-
   const drawing = machine.gesture?.kind === 'draw'
-
   if (!(input.eraser && drawing) && machine.gesture && begun(machine.gesture)) {
     return { machine: now, effects: [] }
   }
-
   const tool = input.eraser ? 'erase' : context.tool
   const down: Down = {
     kind: 'down',
@@ -318,9 +286,7 @@ function onPenned(machine: Machine, input: Penned, context: Context): Step {
     sample: input.sample,
     hit: input.hit,
   }
-
   if (tool === 'erase') return rubbingOut({ ...now, gesture: null }, down, context)
-
   if (tool === 'draw') {
     return {
       machine: {
@@ -330,20 +296,15 @@ function onPenned(machine: Machine, input: Penned, context: Context): Step {
       effects: [{ do: 'leave' }],
     }
   }
-
   return { machine: now, effects: [] }
 }
-
 const INK: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
-
 function toolFor(input: Down, context: Context): Tool {
   if (inks(input.pointer, context)) return context.tool
   return INK.has(context.tool) ? 'select' : context.tool
 }
-
 export const inks = (pointer: PointerKind, glass: { penSeen: boolean; fingerDraws: boolean }): boolean =>
   pointer !== 'touch' || !glass.penSeen || glass.fingerDraws
-
 export function step(machine: Machine, input: Input, context: Context): Step {
   switch (input.kind) {
     case 'space':
@@ -354,7 +315,6 @@ export function step(machine: Machine, input: Input, context: Context): Step {
       const next = onMove(machine, input, context)
       const driver = next.machine.driver
       if (driver?.id !== input.id) return next
-
       return {
         machine: { ...next.machine, driver: { ...driver, screen: input.screen } },
         effects: next.effects,
@@ -370,12 +330,10 @@ export function step(machine: Machine, input: Input, context: Context): Step {
       return onHeld(machine, input.at, context)
   }
 }
-
 export function drives(machine: Machine, id: number): boolean {
   const one = machine.gesture
   return machine.driver === null || machine.driver.id === id || (one?.kind === 'pinch' && one.ids.includes(id))
 }
-
 function onCancel(machine: Machine, id: number): Step {
   if (!drives(machine, id)) {
     return {
@@ -383,31 +341,24 @@ function onCancel(machine: Machine, id: number): Step {
       effects: [],
     }
   }
-
   const palmRubbed = machine.gesture?.kind === 'erase' && machine.driver?.kind === 'touch'
   return {
     machine: { ...machine, gesture: null, spare: [], penDown: false, driver: null },
     effects: palmRubbed ? [{ do: 'unrub' }] : [],
   }
 }
-
 function onDown(machine: Machine, input: Down, context: Context): Step {
   const next = landing(machine, input, context)
   const palmRubbed = input.pointer === 'pen' && machine.gesture?.kind === 'erase' && machine.driver?.kind === 'touch'
   return palmRubbed ? { ...next, effects: [{ do: 'unrub' }, ...next.effects] } : next
 }
-
 function landing(machine: Machine, input: Down, context: Context): Step {
   if (input.pointer === 'touch' && machine.penDown) return { machine, effects: [] }
-
   const now: Machine = input.pointer === 'pen' ? { ...machine, gesture: null, spare: [], driver: null } : machine
-
   const penDown = now.penDown || input.pointer === 'pen'
   const tool = toolFor(input, context)
-
   if (input.pointer === 'touch' && now.gesture && now.driver) {
     const first = now.driver
-
     if (first.kind === 'touch' && takesOver(now.gesture.kind, first.since, input.time)) {
       return {
         machine: {
@@ -427,7 +378,6 @@ function landing(machine: Machine, input: Down, context: Context): Step {
         effects: now.gesture.kind === 'erase' ? [{ do: 'unrub' }] : [],
       }
     }
-
     return {
       machine: {
         ...now,
@@ -437,24 +387,19 @@ function landing(machine: Machine, input: Down, context: Context): Step {
       effects: [],
     }
   }
-
   if (now.gesture) return { machine: { ...now, penDown }, effects: [] }
-
   const held: Machine = {
     ...now,
     penDown,
     driver: { id: input.id, kind: input.pointer, screen: input.screen, since: input.time },
   }
-
   if (input.eraser) return rubbingOut(held, input, context)
-
   if (input.button === 2 && input.pointer !== 'pen') {
     return {
       machine: { ...held, driver: now.driver },
       effects: [{ do: 'menu', at: input.at }],
     }
   }
-
   if (now.spacing || input.button === 1 || tool === 'hand') {
     return {
       machine: {
@@ -464,7 +409,6 @@ function landing(machine: Machine, input: Down, context: Context): Step {
       effects: [],
     }
   }
-
   if (puts(tool)) {
     return {
       machine: {
@@ -474,7 +418,6 @@ function landing(machine: Machine, input: Down, context: Context): Step {
       effects: [{ do: 'leave' }],
     }
   }
-
   switch (tool) {
     case 'draw':
       return {
@@ -505,7 +448,6 @@ function landing(machine: Machine, input: Down, context: Context): Step {
           effects: [],
         }
       }
-
       return {
         machine: {
           ...held,
@@ -521,13 +463,10 @@ function landing(machine: Machine, input: Down, context: Context): Step {
     case 'select':
       break
   }
-
   return select(held, input, context)
 }
-
 function select(machine: Machine, input: Down, context: Context): Step {
   const { hit } = input
-
   if (hit.handle && context.picked.length) {
     return {
       machine: {
@@ -545,7 +484,6 @@ function select(machine: Machine, input: Down, context: Context): Step {
       effects: [],
     }
   }
-
   if (hit.endpoint) {
     return {
       machine: {
@@ -560,7 +498,6 @@ function select(machine: Machine, input: Down, context: Context): Step {
       effects: [],
     }
   }
-
   if (hit.port) {
     return {
       machine: {
@@ -570,18 +507,15 @@ function select(machine: Machine, input: Down, context: Context): Step {
       effects: [],
     }
   }
-
   if (hit.edge) {
     return {
       machine,
       effects: [{ do: 'pick', ids: [hit.edge], adding: input.adds || input.shift }, { do: 'leave' }],
     }
   }
-
   if (context.editing !== null && hit.node === context.editing) {
     return { machine: { ...machine, driver: null }, effects: [] }
   }
-
   if (!hit.node) {
     if (input.pointer === 'touch') {
       return {
@@ -592,7 +526,6 @@ function select(machine: Machine, input: Down, context: Context): Step {
         effects: [{ do: 'leave' }],
       }
     }
-
     const adding = input.adds || input.shift
     return {
       machine: {
@@ -608,13 +541,11 @@ function select(machine: Machine, input: Down, context: Context): Step {
       effects: adding ? [{ do: 'leave' }] : [{ do: 'leave' }, { do: 'clear' }],
     }
   }
-
   const adding = input.adds || input.shift
   const effects: Effect[] = [{ do: 'leave' }]
   if (adding || !context.picked.includes(hit.node)) {
     effects.push({ do: 'pick', ids: [hit.node], adding })
   }
-
   const ids = adding
     ? context.picked.includes(hit.node)
       ? context.picked.filter((one) => one !== hit.node)
@@ -622,11 +553,8 @@ function select(machine: Machine, input: Down, context: Context): Step {
     : context.picked.includes(hit.node)
       ? [...context.picked]
       : [hit.node]
-
   if (!ids.length) return { machine: { ...machine, driver: null }, effects }
-
   if (input.alt) effects.push({ do: 'clone' })
-
   return {
     machine: {
       ...machine,
@@ -635,10 +563,8 @@ function select(machine: Machine, input: Down, context: Context): Step {
     effects,
   }
 }
-
 function onMove(machine: Machine, input: Move, context: Context): Step {
   const one = machine.gesture
-
   if (!one) {
     const hovered = input.hit.node
     return {
@@ -646,18 +572,14 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       effects: [],
     }
   }
-
   if (machine.driver && input.id !== machine.driver.id && one.kind !== 'pinch') {
     return { machine, effects: [] }
   }
-
   switch (one.kind) {
     case 'pan': {
       if (input.id !== one.id) return { machine, effects: [] }
-
       const dx = input.screen.x - one.screen.x
       const dy = input.screen.y - one.screen.y
-
       return {
         machine: {
           ...machine,
@@ -666,11 +588,9 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects: [{ do: 'pan', dx, dy }],
       }
     }
-
     case 'pinch': {
       const which = one.ids.indexOf(input.id)
       if (which < 0) return { machine, effects: [] }
-
       const screens: [Point, Point] = which === 0 ? [input.screen, one.screens[1]] : [one.screens[0], input.screen]
       const apart = Math.hypot(screens[1].x - screens[0].x, screens[1].y - screens[0].y)
       const middle = {
@@ -681,25 +601,21 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         x: (one.screens[0].x + one.screens[1].x) / 2,
         y: (one.screens[0].y + one.screens[1].y) / 2,
       }
-
       const effects: Effect[] = [{ do: 'pan', dx: middle.x - was.x, dy: middle.y - was.y }]
       if (one.apart > 0 && Math.abs(apart - one.apart) > 0.5) {
         effects.push({ do: 'zoom', at: middle, by: apart / one.apart })
       }
-
       const angle = angleOf(screens[0], screens[1])
       const turning = one.turning || (!!context.turns && Math.abs(settledTurn(angle - one.began)) >= TURN_DEADBAND)
       if (turning && context.turns) {
         const by = settledTurn(angle - (one.turning ? one.angle : one.began))
         if (by) effects.push({ do: 'turn', at: middle, by })
       }
-
       return {
         machine: { ...machine, gesture: { ...one, screens, apart, angle, turning } },
         effects,
       }
     }
-
     case 'drag':
     case 'resize':
       return {
@@ -712,7 +628,6 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         },
         effects: [],
       }
-
     case 'band': {
       const band = { ...one, to: input.at }
       return {
@@ -720,18 +635,14 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects: [{ do: 'band', from: band.from, to: band.to, was: band.was, adding: band.adding }],
       }
     }
-
     case 'connect':
     case 'reconnect':
     case 'pull':
       return { machine: { ...machine, gesture: { ...one, to: input.at } }, effects: [] }
-
     case 'draw': {
       if (input.id !== one.id) return { machine, effects: [] }
-
       const points = input.samples.length ? input.samples : []
       if (!points.length) return { machine, effects: [] }
-
       return {
         machine: {
           ...machine,
@@ -740,10 +651,8 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects: [],
       }
     }
-
     case 'erase': {
       if (input.id !== one.id) return { machine, effects: [] }
-
       const touch = machine.driver?.kind === 'touch'
       const rub = rubbing(context, one.whole, touch)
       return {
@@ -754,7 +663,6 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects: rubbed(rub, rubbedBetween({ at: one.last, screen: one.lastScreen }, input, context.scale, rub.reach)),
       }
     }
-
     case 'lasso':
       return {
         machine: {
@@ -766,7 +674,6 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         },
         effects: [],
       }
-
     case 'armed': {
       if (input.id !== one.id) return { machine, effects: [] }
       if (Math.hypot(input.screen.x - one.screen.x, input.screen.y - one.screen.y) <= SLOP) {
@@ -786,16 +693,13 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects: [{ do: 'unmenu' }],
       }
     }
-
     case 'ink':
       return { machine, effects: [inkEffect(one, input.at)] }
   }
 }
-
 function inkEffect(one: Extract<Gesture, { kind: 'ink' }>, at: Point): Effect {
   const box = one.box
   const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-
   if (one.how === 'move') {
     return {
       do: 'ink',
@@ -806,27 +710,21 @@ function inkEffect(one: Extract<Gesture, { kind: 'ink' }>, at: Point): Effect {
       about: middle,
     }
   }
-
   if (one.how === 'turn') {
     const was = Math.atan2(one.from.y - middle.y, one.from.x - middle.x)
     const now = Math.atan2(at.y - middle.y, at.x - middle.x)
     return { do: 'ink', dx: 0, dy: 0, scale: 1, turn: now - was, about: middle }
   }
-
   const reach = Math.max(box.width, box.height, 1) / 2
   const was = Math.hypot(one.from.x - middle.x, one.from.y - middle.y)
   const now = Math.hypot(at.x - middle.x, at.y - middle.y)
   const scale = was > reach * 0.1 ? Math.max(0.05, now / was) : 1
-
   return { do: 'ink', dx: 0, dy: 0, scale, turn: 0, about: middle }
 }
-
 function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: Context): Step {
   const one = machine.gesture
   const spare = machine.spare.filter((held) => held.id !== input.id)
-
   if (!one) return { machine: { ...machine, spare, penDown: false, driver: null }, effects: [] }
-
   if (one.kind === 'pinch' && one.ids.includes(input.id)) {
     const left = one.ids[0] === input.id ? 1 : 0
     return {
@@ -844,24 +742,19 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       effects: [],
     }
   }
-
   if (machine.driver !== null && machine.driver.id !== input.id) {
     return { machine: { ...machine, spare }, effects: [] }
   }
-
   const rest: Machine = { ...machine, gesture: null, spare, penDown: false, driver: null }
-
   switch (one.kind) {
     case 'pan':
       return { machine: rest, effects: one.moved ? [] : [{ do: 'clear' }] }
     case 'pinch':
       return { machine: rest, effects: [] }
-
     case 'drag': {
       if (Math.hypot(one.dx, one.dy) * context.scale <= SLOP) return { machine: rest, effects: [] }
       return { machine: rest, effects: [{ do: 'move', ids: one.ids, dx: one.dx, dy: one.dy }] }
     }
-
     case 'resize': {
       if (Math.hypot(one.dx, one.dy) * context.scale <= SLOP) return { machine: rest, effects: [] }
       return {
@@ -878,36 +771,29 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
         ],
       }
     }
-
     case 'band':
       return { machine: rest, effects: [] }
-
     case 'connect': {
       const target = input.hit.node
       if (!target || target === one.id) return { machine: rest, effects: [] }
-
       return {
         machine: rest,
         effects: [{ do: 'connect', from: one.id, fromSide: one.side, to: target, toSide: 'auto' }],
       }
     }
-
     case 'reconnect': {
       const target = input.hit.node
       if (!target) return { machine: rest, effects: [] }
-
       return {
         machine: rest,
         effects: [{ do: 'reconnect', edge: one.edge, end: one.end, to: target }],
       }
     }
-
     case 'pull': {
       const span = Math.hypot(one.to.x - one.from.x, one.to.y - one.from.y)
       if (span * context.scale <= SLOP) {
         return { machine: rest, effects: [{ do: 'place', tool: one.tool, at: one.from }] }
       }
-
       const target = input.hit.node
       if (JOINS.has(one.tool) && one.fromNode && target && target !== one.fromNode) {
         return {
@@ -924,16 +810,13 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
           ],
         }
       }
-
       return {
         machine: rest,
         effects: [{ do: 'pull', tool: one.tool, from: one.from, to: one.to }],
       }
     }
-
     case 'draw':
       return { machine: rest, effects: [{ do: 'stroke', stroke: one.stroke }] }
-
     case 'erase': {
       if (input.id !== one.id) return { machine: rest, effects: [] }
       const touch = machine.driver?.kind === 'touch'
@@ -946,27 +829,21 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
           : [],
       }
     }
-
     case 'lasso':
       return {
         machine: rest,
         effects: [{ do: 'catch', lasso: one.points, ...(one.cards ? { cards: true } : {}) }],
       }
-
     case 'armed':
       return { machine: rest, effects: [] }
-
     case 'ink':
       return { machine: rest, effects: [] }
   }
 }
-
 function onHeld(machine: Machine, at: Point, context: Context): Step {
   const one = machine.gesture
   if (!one) return { machine, effects: [] }
-
   if (one.kind === 'draw') return { machine, effects: context.straighten ? [{ do: 'assist' }] : [] }
-
   if (one.kind === 'pan' && one.bare && !one.moved && machine.driver?.kind === 'touch') {
     return {
       machine: { ...machine, gesture: { kind: 'armed', id: one.id, at, screen: one.screen } },
@@ -976,12 +853,9 @@ function onHeld(machine: Machine, at: Point, context: Context): Step {
   if ((one.kind === 'pan' || one.kind === 'drag') && machine.driver?.kind !== 'pen') {
     return { machine: { ...machine, gesture: null }, effects: [{ do: 'menu', at }] }
   }
-
   return { machine, effects: [] }
 }
-
 const angleOf = (one: Point, other: Point): number => Math.atan2(other.y - one.y, other.x - one.x)
-
 function planeDelta(dx: number, dy: number, context: Context): { dx: number; dy: number } {
   const by = turnedBy(dx, dy, -(context.turn ?? 0))
   return { dx: by.x / context.scale, dy: by.y / context.scale }

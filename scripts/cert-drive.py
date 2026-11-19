@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import re
 import socket
 import ssl
@@ -11,11 +10,9 @@ from linux_app import run
 
 OUT, HOST = Path(sys.argv[1]), sys.argv[2]
 failures = []
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 def served():
     context = ssl.create_default_context()
     with socket.create_connection((HOST, 443), timeout=10) as raw:
@@ -23,13 +20,11 @@ def served():
             peer = tls.getpeercert()
     name = lambda part: dict(pair for one in peer[part] for pair in one)  # noqa: E731
     return name("subject").get("commonName", ""), name("issuer").get("commonName", "")
-
 for _ in range(60):
     if run("[...document.querySelectorAll('input')].some((one) => one.value.startsWith('https://'))"):
         break
     time.sleep(0.5)
 time.sleep(3)
-
 opened = run("(() => { const mark = document.querySelector('[data-opens=\"site\"]'); if (!mark) return false; mark.click(); return true })()")
 if not opened:
     fail("there is no site mark to open the popover from")
@@ -37,7 +32,6 @@ time.sleep(1)
 said = run("document.querySelector('.site.orden-bubble')?.innerText ?? ''") or ""
 if "Connection is secure" not in said:
     fail(f"the popover does not say the connection is secure: {said!r}")
-
 pressed = run("(() => { const one = document.querySelector('.site.orden-bubble button.how'); if (!one) return false; one.click(); return true })()")
 if not pressed:
     fail("the line saying the connection is secure cannot be pressed")
@@ -56,7 +50,6 @@ for role, name in chain:
     print(f"  {role}: {name}")
 if run("!!document.querySelector('.site.orden-bubble .certificate .note')"):
     fail("the chain was read separately, not from the page's own connection")
-
 details = run("document.querySelector('.site.orden-bubble .details')?.innerText ?? ''") or ""
 (OUT / "certificate.txt").write_text(details)
 print("the popover's certificate:")
@@ -74,7 +67,6 @@ if not re.search(r"SHA-256 fingerprint\s*\n([0-9A-F]{2}:){31}[0-9A-F]{2}", detai
     fail("there is no SHA-256 fingerprint")
 if not re.search(r"Serial number\s*\n([0-9A-F]{2})(:[0-9A-F]{2})*", details):
     fail("there is no serial number")
-
 roles = [role for role, _ in chain]
 if len(chain) < 2 or roles[0] != "site":
     fail(f"the chain is not the site's and its issuers: {chain!r}")
@@ -82,5 +74,4 @@ elif by not in chain[1][1]:
     fail(f"the second of the chain is {chain[1][1]!r}, not the site's issuer {by!r}")
 if roles and roles[-1] != "root":
     fail(f"the chain ends at {roles[-1]!r}, not at a root")
-
 sys.exit(1 if failures else 0)

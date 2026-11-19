@@ -1,5 +1,4 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 pub mod browser_data;
 pub mod browser_profiles;
 pub mod chromium_profiles;

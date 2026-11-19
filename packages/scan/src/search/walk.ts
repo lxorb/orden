@@ -3,23 +3,18 @@ import { type Hit, Matcher, type SearchNote } from './match'
 import type { Query } from './query'
 
 const BATCH = 24
-
 export interface Found {
   hits: Hit[]
   loose: FuzzyHit[]
 }
-
 function leftOut(relative: string, excluded: ReadonlySet<string>): boolean {
   if (!excluded.size) return false
   if (excluded.has(relative)) return true
-
   for (let at = relative.lastIndexOf('/'); at > 0; at = relative.lastIndexOf('/', at - 1)) {
     if (excluded.has(relative.slice(0, at))) return true
   }
-
   return false
 }
-
 export async function walkSearch(
   each: (visit: (note: SearchNote) => boolean) => Promise<void>,
   query: Query,
@@ -35,11 +30,9 @@ export async function walkSearch(
   let found = 0
   let hits: Hit[] = []
   let loose: FuzzyHit[] = []
-
   await each((note) => {
     if (found >= limit) return false
     if (leftOut(note.relative, left)) return true
-
     const exact = matcher.hits(note, limit - found)
     if (exact.length) {
       found += exact.length
@@ -50,16 +43,12 @@ export async function walkSearch(
       }
       return true
     }
-
     if (narrowed?.spans(note) == null) return true
-
     const guess = fuzzy.best(note)
     if (guess) loose.push(guess)
     if (loose.length > limit * 2) loose = best(loose, limit)
     return true
   })
-
   onFound({ hits, loose: best(loose, limit) })
 }
-
 const best = (loose: FuzzyHit[], most: number): FuzzyHit[] => loose.sort((a, b) => b.score - a.score).slice(0, most)

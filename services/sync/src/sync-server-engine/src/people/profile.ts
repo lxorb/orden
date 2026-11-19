@@ -8,9 +8,7 @@ export interface Status {
   until: number | null
   quiet: boolean
 }
-
 export type Presence = 'active' | 'away' | 'offline'
-
 export interface ProfileRow {
   id: string
   email: string
@@ -22,32 +20,26 @@ export interface ProfileRow {
   zone: string | null
   hidden: number
 }
-
 export const PROFILE_COLUMNS = 'u.id, u.email, u.name, u.avatar, u.pronouns, u.bio, u.status, u.zone, u.hidden'
-
 const PRONOUNS_LIMIT = 40
 const BIO_LIMIT = 190
 const STATUS_LIMIT = 100
 const EMOJI_LIMIT = 16
 export const NICK_LIMIT = 60
 export const AVATAR_BYTES = 100 * 1024
-
 export function statusIn(raw: string | null, now: number): Status | null {
   const held = objectIn(raw)
   if (!held) return null
-
   const status = statusFrom(held)
   if (!status || (status.until !== null && status.until <= now)) return null
   return status
 }
-
 function statusFrom(value: Record<string, unknown>): Status | null {
   const { emoji, text, until, quiet } = value
   if (typeof emoji !== 'string' || emoji.length > EMOJI_LIMIT) return null
   if (typeof text !== 'string' || text.length > STATUS_LIMIT) return null
   if (until !== null && until !== undefined && !Number.isSafeInteger(until)) return null
   if (quiet !== undefined && typeof quiet !== 'boolean') return null
-
   const words = cleanPersonName(text)
   if (!emoji.trim() && !words && quiet !== true) return null
   return {
@@ -57,7 +49,6 @@ function statusFrom(value: Record<string, unknown>): Status | null {
     quiet: quiet === true,
   }
 }
-
 function isZone(zone: string): boolean {
   if (zone.length > 64) return false
   try {
@@ -67,7 +58,6 @@ function isZone(zone: string): boolean {
     return false
   }
 }
-
 export interface ProfileChanges {
   pronouns?: string | null
   bio?: string | null
@@ -75,10 +65,8 @@ export interface ProfileChanges {
   zone?: string | null
   hidden?: boolean
 }
-
 export function profileChanges(fields: Record<string, unknown>): { changes: ProfileChanges } | { problem: string } {
   const changes: ProfileChanges = {}
-
   const words = (
     name: 'pronouns' | 'bio',
     limit: number,
@@ -91,7 +79,6 @@ export function profileChanges(fields: Record<string, unknown>): { changes: Prof
     if (kept.length > limit) return { problem: `use at most ${limit} characters` }
     return { kept: kept || null }
   }
-
   for (const [name, limit] of [
     ['pronouns', PRONOUNS_LIMIT],
     ['bio', BIO_LIMIT],
@@ -100,7 +87,6 @@ export function profileChanges(fields: Record<string, unknown>): { changes: Prof
     if ('problem' in read) return read
     if (read.kept !== undefined) changes[name] = read.kept
   }
-
   if (Object.hasOwn(fields, 'status')) {
     const value = fields.status
     if (value === null) changes.status = null
@@ -110,7 +96,6 @@ export function profileChanges(fields: Record<string, unknown>): { changes: Prof
       changes.status = status
     } else return { problem: 'status must be an object' }
   }
-
   if (Object.hasOwn(fields, 'zone')) {
     const value = fields.zone
     if (value !== null && (typeof value !== 'string' || !isZone(value))) {
@@ -118,15 +103,12 @@ export function profileChanges(fields: Record<string, unknown>): { changes: Prof
     }
     changes.zone = value
   }
-
   if (Object.hasOwn(fields, 'hidden')) {
     if (typeof fields.hidden !== 'boolean') return { problem: 'hidden must be true or false' }
     changes.hidden = fields.hidden
   }
-
   return { changes }
 }
-
 function presentFace(row: ProfileRow) {
   return {
     id: row.id,
@@ -134,7 +116,6 @@ function presentFace(row: ProfileRow) {
     avatar: avatarIn(row.avatar),
   }
 }
-
 export function presentProfile(row: ProfileRow, presence: Presence | null, now: number, asker: string) {
   const mine = row.id === asker
   return {
@@ -146,7 +127,6 @@ export function presentProfile(row: ProfileRow, presence: Presence | null, now: 
     presence: !mine && row.hidden ? 'offline' : (presence ?? 'offline'),
   }
 }
-
 export function presentOwnProfile(row: ProfileRow, now: number) {
   return {
     avatar: avatarIn(row.avatar),

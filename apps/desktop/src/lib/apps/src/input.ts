@@ -8,7 +8,6 @@ function drawn(box: DOMRectReadOnly, width: number, height: number) {
     scale,
   }
 }
-
 export function displayPoint(
   clientX: number,
   clientY: number,
@@ -24,10 +23,8 @@ export function displayPoint(
     y: Math.round(clamp((clientY - top) / scale, height)),
   }
 }
-
 const PIXELS_A_CLICK = 100
 const LINES_A_CLICK = 3
-
 export function wheelClicks(
   left: { x: number; y: number },
   deltaX: number,
@@ -40,26 +37,20 @@ export function wheelClicks(
   const whole = (value: number) => Math.trunc(value) || 0
   return { x: whole(x), y: whole(y), left: { x: x - whole(x), y: y - whole(y) } }
 }
-
 export function keyEvent(event: Pick<KeyboardEvent, 'key' | 'code' | 'isComposing'>, down: boolean): InputEvent | null {
   const unsent = event.isComposing || ['Dead', 'Process', 'Unidentified'].includes(event.key)
   if (down && unsent) return null
   return { t: 'key', key: event.key, code: event.code, down }
 }
-
 export function isPaste(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey'>): boolean {
   const v = event.key.toLowerCase() === 'v'
   return ((event.ctrlKey || event.metaKey) && v) || (event.shiftKey && event.key === 'Insert')
 }
-
 export const textEvent = (text: string | null | undefined): InputEvent | null => (text ? { t: 'text', text } : null)
-
 export const drivesPointer = (event: Pick<PointerEvent, 'isPrimary'>): boolean => event.isPrimary
-
 export class HeldKeys {
   private readonly held = new Set<string>()
   private readonly pressed = new Set<number>()
-
   saw(event: InputEvent): void {
     if (event.t === 'button') {
       if (event.down) this.pressed.add(event.button)
@@ -69,13 +60,11 @@ export class HeldKeys {
     if (event.down) this.held.add(event.code)
     else this.held.delete(event.code)
   }
-
   letGo(): InputEvent[] {
     const all = [...this.held].map((code): InputEvent => ({ t: 'key', key: '', code, down: false }))
     this.held.clear()
     return all
   }
-
   letGoButtons(): InputEvent[] {
     const all = [...this.pressed].map((button): InputEvent => ({
       t: 'button',
@@ -86,7 +75,6 @@ export class HeldKeys {
     return all
   }
 }
-
 export function pointerStyle(pointer: PointerShape | null, dpr: number): string {
   if (!pointer) return ''
   if ('hidden' in pointer) return 'none'

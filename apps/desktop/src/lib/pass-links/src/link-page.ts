@@ -11,9 +11,7 @@ export interface LinkWorld {
   clipboard: Pick<Clipboard, 'writeText'> | null
   now(): number
 }
-
 export type LinkShown = 'incomplete' | 'missing' | 'gone' | 'busy' | 'offline' | 'broken' | 'open'
-
 const SAID: Record<Exclude<LinkShown, 'open'>, { head: string; body: string }> = {
   incomplete: {
     head: 'This link is incomplete',
@@ -40,10 +38,8 @@ const SAID: Record<Exclude<LinkShown, 'open'>, { head: string; body: string }> =
     body: 'The link may have been copied wrong. Ask for it again.',
   },
 }
-
 const MASK = '••••••••••••'
 const COPIED_FOR = 1500
-
 function made<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   className: string,
@@ -54,7 +50,6 @@ function made<K extends keyof HTMLElementTagNameMap>(
   if (text !== undefined) element.textContent = text
   return element
 }
-
 function said(root: HTMLElement, shown: Exclude<LinkShown, 'open'>): LinkShown {
   const box = made('section', 'link-said')
   box.dataset.shown = shown
@@ -62,7 +57,6 @@ function said(root: HTMLElement, shown: Exclude<LinkShown, 'open'>): LinkShown {
   root.replaceChildren(box)
   return shown
 }
-
 function copyButton(world: LinkWorld, value: () => string): HTMLButtonElement {
   const button = made('button', 'link-button', 'Copy')
   button.type = 'button'
@@ -76,7 +70,6 @@ function copyButton(world: LinkWorld, value: () => string): HTMLButtonElement {
   })
   return button
 }
-
 function totpRow(world: LinkWorld, field: LinkField, value: HTMLElement): () => string {
   const totp = totpIn(field.value)
   if (totp === null) {
@@ -99,7 +92,6 @@ function totpRow(world: LinkWorld, field: LinkField, value: HTMLElement): () => 
   tick()
   return () => current
 }
-
 function fieldRow(world: LinkWorld, field: LinkField): HTMLElement {
   const row = made('div', 'link-field')
   row.dataset.field = field.id
@@ -128,7 +120,6 @@ function fieldRow(world: LinkWorld, field: LinkField): HTMLElement {
   row.append(text, actions)
   return row
 }
-
 function whenText(opened: LinkOpened): string {
   const day = new Date(opened.expires).toLocaleString(undefined, {
     dateStyle: 'medium',
@@ -142,7 +133,6 @@ function whenText(opened: LinkOpened): string {
         : ` ${String(opened.left)} ${opened.left === 1 ? 'view' : 'views'} left.`
   return `Expires ${day}.${views}`
 }
-
 function shownItem(root: HTMLElement, world: LinkWorld, content: Content, opened: LinkOpened): LinkShown {
   const card = made('article', 'link-card')
   const head = made('header', 'link-head')
@@ -172,13 +162,11 @@ function shownItem(root: HTMLElement, world: LinkWorld, content: Content, opened
   root.replaceChildren(card)
   return 'open'
 }
-
 export function linkIdOf(pathname: string): string | null {
   if (!pathname.startsWith(LINK_PATH)) return null
   const id = pathname.slice(LINK_PATH.length).replace(/\/+$/, '')
   return isPassId(id) ? id : null
 }
-
 async function answerOf(world: LinkWorld, id: string): Promise<Response | null> {
   try {
     return await world.fetch(`${OPEN_PATH}${encodeURIComponent(id)}`, {
@@ -190,9 +178,7 @@ async function answerOf(world: LinkWorld, id: string): Promise<Response | null> 
     return null
   }
 }
-
 const TRY_AGAIN: ReadonlySet<LinkShown> = new Set(['offline', 'busy'])
-
 export async function shownLink(root: HTMLElement, world: LinkWorld): Promise<LinkShown> {
   const { pathname, search, hash } = world.location
   const shown = await linkShown(root, world, pathname, hash)
@@ -201,7 +187,6 @@ export async function shownLink(root: HTMLElement, world: LinkWorld): Promise<Li
   }
   return shown
 }
-
 async function linkShown(root: HTMLElement, world: LinkWorld, pathname: string, hash: string): Promise<LinkShown> {
   const id = linkIdOf(pathname)
   const key = linkKeyIn(hash)

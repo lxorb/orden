@@ -9,7 +9,6 @@ pub struct Device {
     pub cores: usize,
     pub memory: Option<u64>,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Fit {
@@ -18,9 +17,7 @@ pub enum Fit {
     Cores,
     Memory,
 }
-
 const LEAST_CORES: usize = 4;
-
 pub fn fit(device: &Device, model: &Model) -> Fit {
     if rid_of(device.os, device.arch).is_none() {
         return Fit::Platform;
@@ -33,11 +30,9 @@ pub fn fit(device: &Device, model: &Model) -> Fit {
     }
     Fit::Fits
 }
-
 pub fn threads(cores: usize) -> i32 {
     i32::try_from((cores / 2).clamp(1, 4)).unwrap_or(1)
 }
-
 pub fn this() -> Device {
     Device {
         os: std::env::consts::OS,
@@ -46,7 +41,6 @@ pub fn this() -> Device {
         memory: memory().map(|bytes| bytes / (1 << 30)),
     }
 }
-
 #[cfg(target_os = "linux")]
 fn memory() -> Option<u64> {
     let info = std::fs::read_to_string("/proc/meminfo").ok()?;
@@ -54,7 +48,6 @@ fn memory() -> Option<u64> {
     let kb: u64 = line.split_whitespace().nth(1)?.parse().ok()?;
     Some(kb * 1024)
 }
-
 #[cfg(target_os = "macos")]
 fn memory() -> Option<u64> {
     let out = orden_base::printed::output(
@@ -64,7 +57,6 @@ fn memory() -> Option<u64> {
     .ok()?;
     String::from_utf8(out.stdout).ok()?.trim().parse().ok()
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn memory() -> Option<u64> {
@@ -77,12 +69,10 @@ fn memory() -> Option<u64> {
     unsafe { GlobalMemoryStatusEx(&raw mut status) }.ok()?;
     Some(status.ullTotalPhys)
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 fn memory() -> Option<u64> {
     None
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -96,7 +86,6 @@ mod tests {
             memory,
         }
     }
-
     #[test]
     fn a_laptop_of_today_fits() {
         assert_eq!(
@@ -112,7 +101,6 @@ mod tests {
             Fit::Fits
         );
     }
-
     #[test]
     fn what_cannot_keep_up_says_why() {
         assert_eq!(
@@ -132,7 +120,6 @@ mod tests {
             Fit::Platform
         );
     }
-
     #[test]
     fn a_pass_leaves_the_app_half_the_cores() {
         assert_eq!(threads(1), 1);
@@ -140,7 +127,6 @@ mod tests {
         assert_eq!(threads(8), 4);
         assert_eq!(threads(32), 4);
     }
-
     #[test]
     fn this_machine_is_read() {
         let here = this();

@@ -20,26 +20,21 @@ import { normalizeUrl } from '../urls'
 import type { Imported, ImportedItem, Skipped } from './types'
 
 export type Files = Record<string, Uint8Array>
-
 export function textOf(bytes: Uint8Array): string {
   return new TextDecoder('utf-8').decode(bytes)
 }
-
 export function stringOf(value: unknown): string {
   if (typeof value === 'string') return value
   if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   if (typeof value === 'boolean') return String(value)
   return ''
 }
-
 export function recordOf(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
 }
-
 export function listOf(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
-
 export function jsonOf(text: string): unknown {
   try {
     return JSON.parse(text.charCodeAt(0) === 0xfeff ? text.slice(1) : text) as unknown
@@ -47,11 +42,9 @@ export function jsonOf(text: string): unknown {
     throw new ImportError('The file is not JSON.')
   }
 }
-
 export class ImportError extends Error {
   override name = 'ImportError'
 }
-
 export function pick(record: Readonly<Record<string, string>>, ...names: string[]): string {
   for (const name of names) {
     const found = record[name]
@@ -64,11 +57,9 @@ export function pick(record: Readonly<Record<string, string>>, ...names: string[
   }
   return ''
 }
-
 export function newId(): string {
   return globalThis.crypto.randomUUID()
 }
-
 export function fieldKindOf(kind: string): FieldKind {
   const word = kind.toLowerCase()
   if (['hidden', 'concealed', 'password', 'secret', 'pin', 'protected', 'masked'].includes(word)) {
@@ -78,39 +69,32 @@ export function fieldKindOf(kind: string): FieldKind {
   if (['date', 'timestamp', 'monthyear', 'birthdate'].includes(word)) return 'date'
   return 'text'
 }
-
 export function fieldOf(name: string, value: string, kind: FieldKind = 'text'): Field {
   return { id: newId(), name, kind, value: kind === 'totp' ? totpOf(value) : value }
 }
-
 export interface Extra {
   name: string
   value: string
   kind?: FieldKind
 }
-
 export function fieldsOf(entries: readonly Extra[]): Field[] {
   return entries.filter((one) => one.value !== '').map((one) => fieldOf(one.name, one.value, one.kind))
 }
-
 export function sectionOf(name: string, fields: Field[]): Section {
   return { id: newId(), name, fields }
 }
-
 export function totpOf(text: string): string {
   const trimmed = text.trim()
   if (trimmed === '') return ''
   const parsed = totpIn(trimmed)
   return parsed === null ? trimmed : totpUri(parsed)
 }
-
 export function urlsIn(text: string): string[] {
   return text
     .split(/[\r\n]+|,\s*(?=[a-z][a-z0-9+.-]*:\/\/)/i)
     .map((one) => one.trim())
     .filter((one) => one !== '')
 }
-
 export function websitesOf(urls: readonly string[]): Website[] {
   const seen = new Set<string>()
   const websites: Website[] = []
@@ -122,7 +106,6 @@ export function websitesOf(urls: readonly string[]): Website[] {
   }
   return websites
 }
-
 export function websitesMatched(
   entries: readonly unknown[],
   read: (entry: Record<string, unknown>) => [url: unknown, match: MatchRule | undefined],
@@ -136,11 +119,9 @@ export function websitesMatched(
   }
   return websites
 }
-
 export function skippedOnly(name: string, reason: string): Imported {
   return { vaults: [], skipped: [{ reason, title: name }] }
 }
-
 export interface LoginParts {
   title?: string
   note?: string
@@ -152,7 +133,6 @@ export interface LoginParts {
   fields?: Field[]
   passkeys?: Passkey[]
 }
-
 export function loginOf(parts: LoginParts): Login {
   const login = blank('login')
   const email = (parts.email ?? '').trim()
@@ -172,7 +152,6 @@ export function loginOf(parts: LoginParts): Login {
     fields: parts.fields ?? [],
   }
 }
-
 function titleFromWebsites(websites: readonly Website[]): string {
   const first = websites[0]
   if (!first) return ''
@@ -182,11 +161,9 @@ function titleFromWebsites(websites: readonly Website[]): string {
     return first.url
   }
 }
-
 export function noteOf(title: string, note: string, fields: Field[] = []): Note {
   return { ...blank('note'), title: title.trim(), note, fields }
 }
-
 export interface CardParts {
   title?: string
   note?: string
@@ -197,7 +174,6 @@ export interface CardParts {
   pin?: string
   fields?: Field[]
 }
-
 export function cardOf(parts: CardParts): Card {
   const number = (parts.number ?? '').replace(/[\s-]/g, '')
   return {
@@ -213,7 +189,6 @@ export function cardOf(parts: CardParts): Card {
     fields: parts.fields ?? [],
   }
 }
-
 export function brandOf(number: string): CardBrand {
   const digits = number.replace(/\D/g, '')
   if (digits.startsWith('4')) return 'visa'
@@ -222,18 +197,15 @@ export function brandOf(number: string): CardBrand {
   if (/^(6011|65|64[4-9]|622)/.test(digits)) return 'discover'
   return 'other'
 }
-
 function fullYear(year: string): number {
   const n = Number(year)
   return year.length <= 2 ? 2000 + n : n
 }
-
 function yearMonth(year: number, month: number): string {
   if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return ''
   if (year < 1900 || year > 2999) return ''
   return `${String(year)}-${String(month).padStart(2, '0')}`
 }
-
 export function expiryOf(text: string, year?: string): string {
   const raw = text.trim()
   if (year !== undefined) {
@@ -254,13 +226,10 @@ export function expiryOf(text: string, year?: string): string {
   if (match) return yearMonth(Number(match[1]), Number(match[2]))
   return ''
 }
-
 const IDENTITY_KEYS = new Set<string>(Object.values(IDENTITY_FIELDS).flat())
-
 export function isIdentityKey(key: string): key is IdentityKey {
   return IDENTITY_KEYS.has(key)
 }
-
 export interface IdentityParts {
   title?: string
   note?: string
@@ -268,7 +237,6 @@ export interface IdentityParts {
   extra?: readonly Extra[]
   fields?: Field[]
 }
-
 export function identityOf(parts: IdentityParts): Identity {
   const values: Partial<Record<IdentityKey, string>> = {}
   for (const [key, value] of Object.entries(parts.values)) {
@@ -289,7 +257,6 @@ export function identityOf(parts: IdentityParts): Identity {
     fields: parts.fields ?? [],
   }
 }
-
 export function dateOf(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
     return value < 1e11 ? Math.round(value * 1000) : Math.round(value)
@@ -300,7 +267,6 @@ export function dateOf(value: unknown): number | null {
   const parsed = Date.parse(text)
   return Number.isNaN(parsed) ? null : parsed
 }
-
 export interface ItemParts {
   created?: number | null
   modified?: number | null
@@ -308,7 +274,6 @@ export interface ItemParts {
   trashed?: boolean
   folder?: string | null
 }
-
 export function itemOf(content: Content, parts: ItemParts = {}): ImportedItem {
   const folder = (parts.folder ?? '').trim()
   return {
@@ -320,7 +285,6 @@ export function itemOf(content: Content, parts: ItemParts = {}): ImportedItem {
     folder: folder === '' ? null : folder,
   }
 }
-
 export function isEmptyContent(content: Content): boolean {
   if (content.title !== '' || content.note !== '' || content.fields.length > 0) return false
   switch (content.kind) {
@@ -347,18 +311,14 @@ export function isEmptyContent(content: Content): boolean {
       return content.sections.length === 0
   }
 }
-
 export class Collector {
   private readonly vaults = new Map<string, ImportedItem[]>()
   private readonly skipped: Skipped[] = []
-
   constructor(private readonly fallback: string) {}
-
   vault(name: string): void {
     const key = name.trim() || this.fallback
     if (!this.vaults.has(key)) this.vaults.set(key, [])
   }
-
   add(item: ImportedItem, vault = ''): void {
     if (isEmptyContent(item.content)) return
     const key = vault.trim() || this.fallback
@@ -366,11 +326,9 @@ export class Collector {
     if (list) list.push(item)
     else this.vaults.set(key, [item])
   }
-
   skip(reason: string, title: string): void {
     this.skipped.push({ reason, title })
   }
-
   result(): Imported {
     return {
       vaults: [...this.vaults].filter(([, items]) => items.length > 0).map(([name, items]) => ({ name, items })),
@@ -378,7 +336,6 @@ export class Collector {
     }
   }
 }
-
 export function unknownKind(
   into: Collector,
   kind: string,

@@ -17,18 +17,14 @@ import { enterCgroup } from './limits'
 import { Ring } from './ring'
 
 export const HELD = 4 * 1024 * 1024
-
 const PART = 64 * 1024
-
 const BEHIND = 1024 * 1024
-
 function hold(spec: Spec, env: Record<string, string>): void {
   const ring = new Ring(spec.base, HELD)
   let size = { cols: spec.cols, rows: spec.rows }
   let client: Socket | null = null
   let attached = false
   let exited: Exit | null = null
-
   const pty = spawn(spec.file, spec.args, {
     name: 'xterm-256color',
     cols: spec.cols,
@@ -37,7 +33,6 @@ function hold(spec: Spec, env: Record<string, string>): void {
     env,
     encoding: null,
   })
-
   const say = (socket: Socket, frame: FromHolder): void => {
     socket.write(frameOf(frame))
   }
@@ -53,7 +48,6 @@ function hold(spec: Spec, env: Record<string, string>): void {
     say(socket, { t: 'exit', ...(exited ?? { code: null }) })
     socket.end(quit)
   }
-
   pty.onData((data: string | Buffer) => {
     const bytes = typeof data === 'string' ? Buffer.from(data) : data
     const view = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
@@ -67,7 +61,6 @@ function hold(spec: Spec, env: Record<string, string>): void {
     exited = { code: signal ? null : exitCode }
     if (client && attached) finish(client)
   })
-
   const heard = (socket: Socket, raw: Raw): void => {
     const frame = toHolderOf(raw)
     if (!frame || socket !== client) return
@@ -92,7 +85,6 @@ function hold(spec: Spec, env: Record<string, string>): void {
         return
     }
   }
-
   const server = createServer((socket) => {
     client?.destroy()
     client = socket
@@ -132,7 +124,6 @@ function hold(spec: Spec, env: Record<string, string>): void {
   server.listen(spec.socket)
   process.umask(umask)
 }
-
 function main(): void {
   const spec = specOf(process.env[HOLD_SPEC])
   Reflect.deleteProperty(process.env, HOLD_SPEC)
@@ -143,5 +134,4 @@ function main(): void {
   for (const [key, value] of Object.entries(process.env)) if (value !== undefined) env[key] = value
   hold(spec, env)
 }
-
 main()

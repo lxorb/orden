@@ -8,14 +8,12 @@ let target: HTMLElement
 let note: HTMLElement
 let field: HTMLInputElement
 let shown: ReturnType<typeof mount> | undefined
-
 beforeEach(() => {
   target = document.createElement('div')
   note = document.createElement('div')
   note.tabIndex = 0
   field = document.createElement('input')
   document.body.append(target, note, field)
-
   viewport.device = 'phone'
   viewport.typing = true
   shown = mount(FormatBar, {
@@ -24,7 +22,6 @@ beforeEach(() => {
   })
   flushSync()
 })
-
 afterEach(async () => {
   if (shown) await unmount(shown)
   shown = undefined
@@ -32,27 +29,21 @@ afterEach(async () => {
   viewport.typing = false
   document.body.replaceChildren()
 })
-
 async function settled() {
   await Promise.resolve()
   await tick()
   flushSync()
 }
-
 const docked = () => target.querySelector('.orden-bar.docked') !== null
-
 test('docks while the note has the keyboard', async () => {
   note.focus()
   await settled()
-
   expect(docked()).toBe(true)
 })
-
 test('and not for another field the keys came up for', async () => {
   note.focus()
   await settled()
   field.focus()
   await settled()
-
   expect(docked()).toBe(false)
 })

@@ -19,7 +19,6 @@ pub fn agents_stop(
         None => stop::stop(&app),
     })
 }
-
 #[tauri::command]
 pub fn agents_resume(
     webview: tauri::Webview,
@@ -30,7 +29,6 @@ pub fn agents_resume(
     stop::resume(&app, agent.as_deref());
     Ok(())
 }
-
 #[tauri::command]
 pub async fn agents_dialog_path(
     webview: tauri::Webview,
@@ -61,7 +59,6 @@ pub async fn agents_dialog_path(
     })
     .await
 }
-
 #[tauri::command(async)]
 pub fn agents_answer(
     webview: tauri::Webview,
@@ -85,7 +82,6 @@ pub fn agents_answer(
     }
     Ok(approval)
 }
-
 #[tauri::command(async)]
 pub fn agents_ask(
     webview: tauri::Webview,
@@ -120,7 +116,6 @@ pub fn agents_ask(
         },
     )
 }
-
 #[tauri::command(async)]
 pub fn agents_log(
     webview: tauri::Webview,
@@ -130,7 +125,6 @@ pub fn agents_log(
     orden_base::labels::from_the_app(&webview)?;
     Ok(log::read_day(&app, &day))
 }
-
 #[tauri::command(async)]
 pub fn agents_log_after(
     webview: tauri::Webview,
@@ -141,13 +135,11 @@ pub fn agents_log_after(
     orden_base::labels::from_the_app(&webview)?;
     Ok(log::read_after(&app, &day, from))
 }
-
 #[tauri::command(async)]
 pub fn agents_log_days(webview: tauri::Webview, app: AppHandle) -> Result<Vec<String>, String> {
     orden_base::labels::from_the_app(&webview)?;
     Ok(log::days(&app))
 }
-
 #[tauri::command(async)]
 pub fn agents_log_clear(
     webview: tauri::Webview,

@@ -8,13 +8,10 @@ import { embedWidget } from './embed'
 import { type NoteIndex, noteIndex } from './notes'
 
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const SHOPPING = ['# Shopping', '', '- milk', '- eggs', '- bread', '', '^groceries', ''].join('\n')
-
 const SPACE: NoteIndex = {
   notes: [
     {
@@ -30,7 +27,6 @@ const SPACE: NoteIndex = {
   read: () => Promise.resolve(SHOPPING),
   render: (source) => Promise.resolve(source),
 }
-
 async function embedded(inner: string): Promise<string> {
   const parsed = parseWikilink(inner, true)
   if (!parsed) throw new Error(`${inner} is not a link`)
@@ -46,7 +42,6 @@ async function embedded(inner: string): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 0))
   return frame.querySelector('.orden-embed-body')?.innerHTML ?? ''
 }
-
 describe('an id on its own line under a list names the whole list', () => {
   test('the embed shows every item, not just the last one', async () => {
     const shown = await embedded('Shopping#^groceries')
@@ -54,7 +49,6 @@ describe('an id on its own line under a list names the whole list', () => {
     expect(shown).toContain('- eggs')
     expect(shown).toContain('- bread')
   })
-
   test('the section the hover card and embeds read holds the whole list', () => {
     expect(sectionOf(SHOPPING, { heading: null, block: 'groceries' })).toBe('- milk\n- eggs\n- bread')
     expect(sectionOf('1. one\n2. two\n\n^steps\n', { heading: null, block: 'steps' })).toBe('1. one\n2. two')

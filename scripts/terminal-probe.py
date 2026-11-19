@@ -33,9 +33,7 @@ A photograph of the window is written to `--shots`, off the app's own window and
 Build the exe as `scripts/probe_app.py` says; `run_probe` starts it off the screen and
 without the keyboard, and nothing here moves it or presses a real key.
 """
-
 from __future__ import annotations
-
 import argparse
 import ctypes
 import importlib.util
@@ -47,38 +45,29 @@ import sys
 import tempfile
 import time
 from ctypes import wintypes
-
 from probe_app import close_app, main_window, run_probe, sized
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 SPACE = "Terminal probe"
-
 failures: list[str] = []
-
 def borrowed(name: str, file: str):
-
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
         raise SystemExit(f"could not read {file}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
 tabs = borrowed("tabs", "new-tabs-probe.py")
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 def check(ok: bool, words: str) -> None:
     if ok:
         say(f"ok   {words}")
     else:
         failures.append(words)
         say(f"FAIL {words}")
-
 class Entry(ctypes.Structure):
-
     _fields_ = [
         ("dwSize", wintypes.DWORD),
         ("cntUsage", wintypes.DWORD),
@@ -91,9 +80,7 @@ class Entry(ctypes.Structure):
         ("dwFlags", wintypes.DWORD),
         ("szExeFile", ctypes.c_wchar * 260),
     ]
-
 def processes() -> list[tuple[int, int, str]]:
-
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     kernel.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
     snapshot = kernel.CreateToolhelp32Snapshot(0x2, 0)
@@ -106,11 +93,8 @@ def processes() -> list[tuple[int, int, str]]:
         more = kernel.Process32NextW(snapshot, ctypes.byref(entry))
     kernel.CloseHandle(snapshot)
     return found
-
 SHELLS = {"cmd.exe", "powershell.exe", "pwsh.exe", "conhost.exe", "openconsole.exe", "ping.exe"}
-
 def shells_of(pid: int) -> list[tuple[int, str]]:
-
     listed = processes()
     below = {pid}
     grew = True
@@ -121,19 +105,14 @@ def shells_of(pid: int) -> list[tuple[int, str]]:
                 below.add(one)
                 grew = True
     return [(one, name) for one, parent, name in listed if one in below and name in SHELLS]
-
 def alive(pid: int) -> bool:
     return any(one == pid for one, _parent, _name in processes())
-
 class Window:
-
     def __init__(self, port: int, secret: str) -> None:
         self.port = port
         self.secret = secret
-
     def run(self, code: str) -> object:
         return tabs.ran(self.port, self.secret, code)
-
     def open(self, shell: str, label: str, key: str) -> str:
         code = (
             "(() => { const ws = orden.workspace; const root = ws.activeSpace ? ws.activeSpace.root : null; "
@@ -141,7 +120,6 @@ class Window:
             "return ws.activeTabId })()"
         )
         return str(self.run(code))
-
     def rows(self) -> list[str]:
         said = self.run(
             "JSON.stringify([...document.querySelectorAll('.xterm-rows > div')]"
@@ -151,29 +129,23 @@ class Window:
             return json.loads(said) if isinstance(said, str) else []
         except ValueError:
             return []
-
     def typed(self, words: str) -> None:
-
         self.run(
             "(() => { const field = document.querySelector('.xterm-helper-textarea'); "
             f"field.dispatchEvent(new InputEvent('input', {{ data: {json.dumps(words)}, inputType: 'insertText', bubbles: true }})); "
             "return true })()"
         )
-
     def chord(self, key: str, code: str, key_code: int) -> None:
-
         self.run(
             "(() => { const field = document.querySelector('.xterm-helper-textarea'); "
             f"const press = new KeyboardEvent('keydown', {{ key: {json.dumps(key)}, code: {json.dumps(code)}, ctrlKey: true, bubbles: true, cancelable: true }}); "
             f"Object.defineProperty(press, 'keyCode', {{ get: () => {key_code} }}); "
             "field.dispatchEvent(press); return true })()"
         )
-
     def invoke(self, command: str, args: dict[str, object]) -> object:
         return self.run(
             f"window.__TAURI_INTERNALS__.invoke({json.dumps(command)}, {json.dumps(args)})"
         )
-
     def spec(self, tab: str) -> dict:
         said = self.run(
             f"(() => {{ const tab = orden.workspace.tabs.find((one) => one.id === {json.dumps(tab)}); return tab ? tab.doc : null }})()"
@@ -182,13 +154,10 @@ class Window:
             return json.loads(said) if isinstance(said, str) else {}
         except ValueError:
             return {}
-
     def open_tabs(self) -> list[str]:
         said = self.run("JSON.stringify(orden.workspace.tabs.map((one) => one.id))")
         return json.loads(said) if isinstance(said, str) else []
-
 def paged(window, key: str, code: int, times: int) -> None:
-
     window.run(
         "(() => { const field = document.querySelector('.xterm-helper-textarea'); "
         f"for (let i = 0; i < {times}; i++) {{ "
@@ -197,54 +166,43 @@ def paged(window, key: str, code: int, times: int) -> None:
         "return true })()"
     )
     time.sleep(0.5)
-
 def above(window) -> list[str]:
-
     paged(window, "PageUp", 33, 20)
     rows = window.rows()
     paged(window, "PageDown", 34, 20)
     return rows
-
 def until(ask, seconds: float = 20.0, every: float = 0.25):
-
     end = time.perf_counter() + seconds
     got = ask()
     while not got and time.perf_counter() < end:
         time.sleep(every)
         got = ask()
     return got
-
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this probe is Windows only")
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
-
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
     parsed.add_argument("--identifier", default="so.orden.Orden.probe.terminal")
     parsed.add_argument("--shots", default=str(ROOT / "apps/desktop/test/e2e/shots/terminal-probe"))
     args = parsed.parse_args()
-
     exe = pathlib.Path(args.exe).resolve()
     shots = pathlib.Path(args.shots)
     shots.mkdir(parents=True, exist_ok=True)
-
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-terminal-"))
     (spaces / SPACE / "inside").mkdir(parents=True, exist_ok=True)
     (spaces / SPACE / "A note.md").write_text("# A note\n\nWords.\n", encoding="utf-8")
     say(f"spaces root {spaces}")
-
     tabs.wipe(args.identifier)
     environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
-
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)
     tabs.allow_eval(args.identifier)
     first.terminate()
     first.wait(timeout=15)
     time.sleep(6.0)
-
     app = run_probe(exe, env=environment)
     try:
         hwnd = until(lambda: main_window(app.pid), 120, 0.25)
@@ -254,16 +212,13 @@ def main() -> int:
         window = Window(port, secret)
         until(lambda: window.run("1 + 1") == 2, 30)
         say(f"window 0x{hwnd:X}, pid {app.pid}, endpoint {port}")
-
         cmd = window.open("cmd", "Command Prompt", "probe-cmd")
         say(f"command prompt tab {cmd}")
         prompt = until(lambda: any(row.endswith(">") for row in window.rows()), 30)
         check(bool(prompt), "Command Prompt draws its prompt")
-
         window.typed("echo hi\r")
         answered = until(lambda: "hi" in window.rows(), 20)
         check(bool(answered), "echo hi comes back as a line of its own in Command Prompt")
-
         start = window.spec(cmd).get("folder")
         window.typed("cd inside\r")
         moved = until(lambda: window.spec(cmd).get("folder") != start, 10)
@@ -271,7 +226,6 @@ def main() -> int:
             bool(moved) and str(window.spec(cmd).get("folder", "")).endswith("inside"),
             f"cd is said back, and the tab's folder follows it ({window.spec(cmd).get('folder')})",
         )
-
         pty = f"{cmd}-1"
         window.typed("ping -n 30 127.0.0.1\r")
         time.sleep(1.5)
@@ -279,11 +233,9 @@ def main() -> int:
         window.chord("c", "KeyC", 67)
         idle = until(lambda: window.invoke("pty_busy", {"id": pty}) is False, 10)
         check(bool(idle), "Ctrl+C stops it, and the shell is idle again")
-
         window.chord("w", "KeyW", 87)
         time.sleep(0.5)
         check(cmd in window.open_tabs(), "Ctrl+W in a terminal is the shell's and closes nothing")
-
         window.run(
             "(() => { const screen = document.querySelector('.xterm-screen'); const box = screen.getBoundingClientRect(); "
             "screen.dispatchEvent(new MouseEvent('contextmenu', { clientX: box.left + 40, clientY: box.top + 40, button: 2, bubbles: true, cancelable: true })); "
@@ -305,7 +257,6 @@ def main() -> int:
             "(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true })()"
         )
         time.sleep(0.4)
-
         note = str(spaces / SPACE / "A note.md")
         window.run(
             "(() => { const transfer = new DataTransfer(); "
@@ -319,14 +270,11 @@ def main() -> int:
         check(bool(typed_path), "a row dropped on the terminal is its quoted path at the prompt")
         window.typed("\x1b")
         time.sleep(0.4)
-
         shoot = shots / "terminal-cmd.png"
         tabs.shoot(app.pid, shoot)
         say(f"photographed {shoot}")
-
         before = shells_of(app.pid)
         say(f"running below the app: {before}")
-
         window.chord("t", "KeyT", 84)
         asked = until(
             lambda: window.run(
@@ -355,7 +303,6 @@ def main() -> int:
         tabs.shoot(app.pid, shots / "terminal-new-kinds.png")
         window.run("(() => { orden.workspace.close(orden.workspace.activeTabId); return true })()")
         time.sleep(0.5)
-
         window.run("(() => { document.querySelector('.strip button.new').click(); return true })()")
         until(lambda: window.run("!!document.querySelector('[data-new-here] [data-more]')") is True, 5)
         time.sleep(0.3)
@@ -378,7 +325,6 @@ def main() -> int:
         time.sleep(0.4)
         window.run("(() => { orden.workspace.close(orden.workspace.activeTabId); return true })()")
         time.sleep(0.4)
-
         shells = window.invoke("terminal_shells", {})
         ids = [one.get("id") for one in shells] if isinstance(shells, list) else []
         say(f"shells found: {ids}")
@@ -387,16 +333,13 @@ def main() -> int:
         say(f"powershell tab {power} ({ps})")
         ready = until(lambda: any(row.rstrip().endswith(">") for row in window.rows()), 40)
         check(bool(ready), "PowerShell draws its prompt")
-
         window.typed("echo hi\r")
         answered = until(lambda: "hi" in window.rows(), 20)
         check(bool(answered), "echo hi comes back as a line of its own in PowerShell")
-
         width = "Write-Output ('cols=' + $Host.UI.RawUI.WindowSize.Width)\r"
         window.typed(width)
         wide = until(lambda: next((row for row in window.rows() if row.startswith("cols=")), None), 20)
         say(f"PowerShell said {wide}")
-
         box = wintypes.RECT()
         ctypes.WinDLL("user32").GetWindowRect(hwnd, ctypes.byref(box))
         sized(hwnd, int((box.right - box.left) * 0.6), box.bottom - box.top)
@@ -413,15 +356,12 @@ def main() -> int:
             )
         except (IndexError, ValueError):
             check(False, "PowerShell said how wide it is, before and after")
-
         shoot = shots / "terminal-powershell.png"
         tabs.shoot(app.pid, shoot)
         say(f"photographed {shoot}")
-
         window.typed("exit\r")
         gone = until(lambda: power not in window.open_tabs(), 15)
         check(bool(gone), "exit in PowerShell closes its own tab")
-
         window.typed("\x1becho orden-before-restart\r")
         until(lambda: "orden-before-restart" in window.rows(), 10)
         running = shells_of(app.pid)
@@ -429,7 +369,6 @@ def main() -> int:
         check(close_app(app), "the window closes with a shell running in it, asking nothing")
         ended = until(lambda: not any(alive(pid) for pid, _name in running), 15)
         check(bool(ended), f"no shell outlives the app (were {running})")
-
         time.sleep(6.0)
         app = run_probe(exe, env=environment)
         if not until(lambda: main_window(app.pid), 120, 0.25):
@@ -437,7 +376,6 @@ def main() -> int:
         port, secret = tabs.endpoint(args.identifier, 150, unlike=port)
         window = Window(port, secret)
         until(lambda: window.run("1 + 1") == 2, 30)
-
         back = window.run(
             "(() => { const tab = orden.workspace.tabs.find((one) => one.kind === 'terminal'); "
             "if (!tab) return null; orden.workspace.activate(tab.id); return tab.id })()"
@@ -454,11 +392,9 @@ def main() -> int:
                 any("orden-before-restart" in row for row in above(window)),
                 "and its last lines above that",
             )
-
             shoot = shots / "terminal-restored.png"
             tabs.shoot(app.pid, shoot)
             say(f"photographed {shoot}")
-
             running = shells_of(app.pid)
             window.run(f"orden.workspace.close({json.dumps(back)})")
             ended = until(lambda: not any(alive(pid) for pid, _name in running), 15)
@@ -468,16 +404,13 @@ def main() -> int:
     finally:
         if app.poll() is None and not close_app(app):
             app.kill()
-
     print()
     if failures:
         print(f"{len(failures)} failed:")
         for one in failures:
             print(f"  - {one}")
         return 1
-
     print("every check passed")
     return 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

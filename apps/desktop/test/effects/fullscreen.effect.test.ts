@@ -8,7 +8,6 @@ import { reactive, root, watch } from './runes.svelte'
 beforeEach(() => {
   viewport.device = 'desktop'
 })
-
 function panes() {
   return reactive<{
     fills: string | null
@@ -20,83 +19,64 @@ function panes() {
     focused: { activeTabId: 'a' },
   })
 }
-
 afterEach(async () => {
   await fullscreen.leave()
   viewport.device = 'desktop'
 })
-
 test('full screen follows the pane worked in, and settles every time', async () => {
   const two = panes()
   let runs = 0
-
   const stop = root(() => {
     watch(() => {
       runs++
       fullscreen.follow()
     })
   })
-
   flushSync()
   expect(runs).toBe(1)
-
   await fullscreen.enter(two)
   flushSync()
   expect(two.fills).toBe('left')
   expect(runs).toBe(2)
-
   two.focusedId = 'right'
   flushSync()
   expect(two.fills).toBe('right')
   expect(runs).toBe(4)
-
   two.focused.activeTabId = null
   flushSync()
   expect(fullscreen.on).toBe(false)
   expect(two.fills).toBe(null)
   expect(runs).toBe(6)
-
   stop()
 })
-
 test('on a phone, back leaves full screen rather than the app', async () => {
   viewport.device = 'phone'
-
   const stop = root(() => {
     watch(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
   })
-
   flushSync()
   const before = history.length
-
   await fullscreen.enter(panes())
   flushSync()
   expect(history.length).toBe(before + 1)
-
   const heard = new Promise<void>((resolve) => {
     window.addEventListener('popstate', () => resolve(), { once: true })
   })
   history.back()
   await heard
   flushSync()
-
   expect(fullscreen.on).toBe(false)
-
   stop()
 })
-
 test('on a desktop, back means the previous page and nothing is registered', async () => {
   const stop = root(() => {
     watch(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
   })
-
   flushSync()
   const before = history.length
-
   await fullscreen.enter(panes())
   flushSync()
   expect(fullscreen.on).toBe(true)
   expect(history.length).toBe(before)
-
   stop()
 })

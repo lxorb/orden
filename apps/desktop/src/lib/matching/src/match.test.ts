@@ -7,13 +7,11 @@ describe('the best place to start', () => {
     expect(fuzzyFolded('plan', 'project plan')).toBeGreaterThan(fuzzy('plan', 'project plan') ?? 0)
     expect(fuzzyPlaces('plan', 'Project plan')).toEqual([8, 9, 10, 11])
   })
-
   test('answers what `fuzzy` answers where the first place was already the best', () => {
     expect(fuzzyFolded('rdm', 'read me')).toBe(fuzzy('rdm', 'read me'))
     expect(fuzzyFolded('zz', 'read me')).toBeNull()
   })
 })
-
 describe('one slip', () => {
   test('is a letter wrong, missing, extra, or two swapped', () => {
     expect(oneSlip('setings', 'settings')).toBe(true)
@@ -23,7 +21,6 @@ describe('one slip', () => {
     expect(oneSlip('stetings', 'settings')).toBe(true)
     expect(oneSlip('sttngs', 'settings')).toBe(false)
   })
-
   test('finds a word at the start of a word in a name, for five letters and more', () => {
     expect(nearly('shotrcuts', 'keyboard shortcuts')).toBe(true)
     expect(nearly('tbale', 'insert table')).toBe(true)

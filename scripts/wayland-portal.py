@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-
 import json
 import sys
 import time
-
 from gi.repository import Gio, GLib
 
 DESKTOP = "org.freedesktop.portal.Desktop"
 PATH = "/org/freedesktop/portal/desktop"
-
 INTERFACES = Gio.DBusNodeInfo.new_for_xml(
     """
 <node>
@@ -54,18 +51,13 @@ INTERFACES = Gio.DBusNodeInfo.new_for_xml(
 </node>
 """
 )
-
 log_file = open(sys.argv[1], "a", buffering=1)
 sessions = {}
-
 def said(**what):
     log_file.write(json.dumps(what) + "\n")
-
 def sender_part(sender):
     return sender.lstrip(":").replace(".", "_")
-
 def respond(bus, path, results):
-
     def send():
         bus.emit_signal(
             None,
@@ -75,9 +67,7 @@ def respond(bus, path, results):
             GLib.Variant("(ua{sv})", (0, results)),
         )
         return False
-
     GLib.timeout_add(50, send)
-
 def press(bus, session, shortcut):
     def send():
         said(call="Activated", session=session, shortcut=shortcut)
@@ -97,14 +87,11 @@ def press(bus, session, shortcut):
             ),
         )
         return False
-
     GLib.timeout_add(2000, send)
-
 def session_call(bus, sender, path, interface, method, variant, invocation):
     said(call=method, session=path)
     sessions.pop(path, None)
     invocation.return_value(None)
-
 def call(bus, sender, path, interface, method, variant, invocation):
     who = sender_part(sender)
     params = variant.unpack()
@@ -149,17 +136,13 @@ def call(bus, sender, path, interface, method, variant, invocation):
     elif method == "ConfigureShortcuts":
         said(call=method, session=params[0])
         invocation.return_value(None)
-
 def property_of(bus, sender, path, interface, name):
     return GLib.Variant("u", 2)
-
 def acquired(bus, name):
     bus.register_object(PATH, INTERFACES.interfaces[0], call, property_of, None)
     bus.register_object(PATH, INTERFACES.interfaces[1], call, None, None)
-
 def owned(bus, name):
     said(call="owned", name=name)
-
 Gio.bus_own_name(
     Gio.BusType.SESSION, DESKTOP, Gio.BusNameOwnerFlags.NONE, acquired, owned, None
 )

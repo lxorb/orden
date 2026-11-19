@@ -13,7 +13,6 @@ function openAlready(spec: ViewSpec, path: string | null) {
     return there !== null && sameView(there, spec)
   })
 }
-
 function openSpec(spec: ViewSpec, name: string, path: string | null = null, how: OpenHow = {}) {
   const there = openAlready(spec, path)
   if (there) {
@@ -22,9 +21,7 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
   }
   return workspace.openView(writeViewSpec(spec), name, path, how)
 }
-
 export const openTodos = (how: OpenHow = {}) => openSpec({ builtin: 'todos' }, builtinName('todos'), null, how)
-
 export function openBaseFile(path: string, how: OpenHow = {}, view?: string) {
   if (!basesOn()) return null
   const name = nameOf(path).replace(/\.base$/i, '')

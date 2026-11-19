@@ -7,9 +7,7 @@ import type { LocalKind } from '../providers'
 import type { Ending } from './trouble'
 
 type ToolsOf = Mode | null
-
 export type Level = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
-
 export interface Opening {
   tool: LocalKind
   agent: { id: string; name: string }
@@ -20,12 +18,10 @@ export interface Opening {
   thread?: string
   without?: string[]
 }
-
 interface Picture {
   mime: string
   data: string
 }
-
 export type Say =
   | { kind: 'turn'; text: string; images: Picture[] }
   | { kind: 'steer'; text: string }
@@ -39,12 +35,10 @@ export type Say =
       kind: 'goal'
       goal: { do: 'set'; objective: string; budget?: number } | { do: 'pause' | 'resume' | 'clear' | 'get' }
     }
-
 export type Heard =
   | { kind: 'line'; line: string }
   | { kind: 'reply'; to: string; result: unknown; error: string | null }
   | { kind: 'end'; end: Ending }
-
 export function heardIn(value: unknown): Heard | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
@@ -68,7 +62,6 @@ export function heardIn(value: unknown): Heard | null {
     },
   }
 }
-
 export interface Session {
   readonly id: string
   readonly opening: Opening
@@ -76,7 +69,6 @@ export interface Session {
   say(say: Say): Promise<void>
   close(): Promise<void>
 }
-
 export async function openSession(opening: Opening, heard: (said: Heard) => void): Promise<Session> {
   const id = `s-${identifier()}`
   let ended = false
@@ -123,7 +115,6 @@ export async function openSession(opening: Opening, heard: (said: Heard) => void
     },
   }
 }
-
 export async function listedModels(tool: LocalKind, account: string): Promise<unknown> {
   return await invoke<unknown>('ai_cli_models', { tool, account })
 }

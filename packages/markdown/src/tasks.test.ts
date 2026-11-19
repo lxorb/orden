@@ -5,7 +5,6 @@ const words = (line: string) => {
   const task = taskAt(line)
   return task ? line.slice(task.marker) : null
 }
-
 describe('a task item', () => {
   test('is a list marker, a box and what comes after it', () => {
     const task = taskAt('- [ ] buy milk')
@@ -14,7 +13,6 @@ describe('a task item', () => {
     expect(task?.box).toBe(2)
     expect(words('- [ ] buy milk')).toBe('buy milk')
   })
-
   test('is done when the box holds anything but a space; is written with any of the markers a list is; keeps its indentation, however deep', () => {
     expect(taskAt('- [x] buy milk')?.done).toBe(true)
     expect(taskAt('- [X] buy milk')?.done).toBe(true)
@@ -28,12 +26,10 @@ describe('a task item', () => {
     expect(task?.box).toBe(6)
     expect(words('    - [x] nested')).toBe('nested')
   })
-
   test('is a task with nothing written in it yet', () => {
     expect(taskAt('- [ ]')?.done).toBe(false)
     expect(words('- [ ]')).toBe('')
   })
-
   test('and is not a list, a link, or a box with nothing in it', () => {
     expect(taskAt('- buy milk')).toBeNull()
     expect(taskAt('a [x] in a sentence')).toBeNull()
@@ -43,13 +39,11 @@ describe('a task item', () => {
     expect(taskAt('')).toBeNull()
     expect(taskAt('- []] buy milk')).toBeNull()
   })
-
   test('holds an emoji in its box as one mark', () => {
     expect(taskAt('- [🎉] party')?.mark).toBe('🎉')
     expect(words('- [🎉] party')).toBe('party')
   })
 })
-
 test('where a tick is written: the box, so one character changes and the rest of the line does not', () => {
   const task = taskAt('  * [x] buy milk')
   expect(task?.box).toBe(4)

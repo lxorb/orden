@@ -32,14 +32,11 @@ export interface Converts {
   loadTree(): Promise<void>
   bin(path: string, isFolder: boolean): Promise<{ trashId?: string; back?: string } | null>
 }
-
 export async function asShortcut(ws: Converts, path: string): Promise<string | null> {
   if (ws.documentAt(path)) return null
-
   const text = await invoke<string>('read_note', { path }).catch(() => null)
   const url = webUrlOf(text)
   if (text === null || url === null) return null
-
   const title = webTitleOf(text) ?? shownName(nameOf(path))
   const written = writeShortcut(url, title, new Date())
   const shortcut = `${withoutExtension(path)}.url`
@@ -49,23 +46,19 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   const already = said !== null && sameSite(said.home ?? said.url, url)
   const free = taken && !already ? await ws.freeNameOnDisk(folderOf(path), nameOf(shortcut)) : null
   const target = free === null ? shortcut : joinPath(folderOf(path), free)
-
   if (!already) {
     ws.showEntry(ws.freshEntry(target, false))
     await writeFile(target, written)
   }
   ws.protection.copied(path, target, ws.rootHolding(path), ws.rootHolding(target))
-
   const kept = keptBody(text)
   if (kept === null) {
     const binned = await oldNoteGone(ws, path)
     if (binned) await ws.fileGone(path, 'file', binned.back)
   } else await writeFile(path, kept).catch(() => undefined)
-
   await ws.loadTree()
   return target
 }
-
 async function oldNoteGone(ws: Converts, path: string): Promise<{ back: string | undefined } | null> {
   const kept = await ws.bin(path, false).then(
     (one) => one ?? {},
@@ -73,14 +66,11 @@ async function oldNoteGone(ws: Converts, path: string): Promise<{ back: string |
   )
   return kept && { back: kept.trashId ?? kept.back }
 }
-
 export async function convertWebsites(ws: Converts): Promise<number> {
   if (!ws.activeSpace) return 0
-
   const notes = ws.notes.filter((one) => isMarkdownPath(one.name) && links.urlOf(one.path) !== null)
   let done = 0
   for (const note of notes) if ((await asShortcut(ws, note.path)) !== null) done += 1
-
   if (done) await ws.loadTree()
   return done
 }

@@ -7,19 +7,14 @@
   import { atEdge, escapeLeaves, mayHide, stillFills } from './rules'
 
   const { children }: { children: Snippet } = $props()
-
   const GOES_AFTER = GRACE
-
   let shown = $state(false)
   let pointer = false
   let keyboard = false
   let within = false
   let bar = $state<HTMLElement>()
-
   let going: ReturnType<typeof setTimeout> | undefined
-
   const lights = document.documentElement.hasAttribute('data-lights')
-
   function moved(y: number) {
     if (shown) {
       pointer = y >= 0 && y < (bar?.getBoundingClientRect().bottom ?? 0)
@@ -27,33 +22,27 @@
       else letGo()
       return
     }
-
     if (!atEdge(y)) return
     shown = true
     pointer = true
   }
-
   function letGo() {
     going ??= setTimeout(() => {
       going = undefined
       if (mayHide({ pointer, keyboard, layers: overlays.depth })) shown = false
     }, GOES_AFTER)
   }
-
   function hold() {
     clearTimeout(going)
     going = undefined
   }
-
   function onKeydown(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
-
     const holder = document.activeElement
     queueMicrotask(() => {
       if (!event.defaultPrevented && escapeLeaves(holder)) unfill()
     })
   }
-
   $effect(() => {
     const panes = workspace.panes
     const holds = stillFills({
@@ -63,13 +52,11 @@
     })
     if (!holds) untrack(unfill)
   })
-
   $effect(() =>
     overlays.watch(() => {
       if (shown && overlays.depth === 0) letGo()
     }),
   )
-
   onDestroy(() => {
     clearTimeout(going)
     const stranded = within
@@ -123,7 +110,6 @@
       box-shadow var(--dur-fast) var(--ease-out),
       visibility 0s linear var(--dur-fast);
   }
-
   .bar.shown {
     transform: none;
     visibility: visible;
@@ -132,7 +118,6 @@
       transform var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .lights {
     flex: none;
     height: var(--titlebar-height);

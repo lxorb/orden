@@ -1,13 +1,10 @@
 import base64
 import json
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for, waited = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for, DRIVE.waited
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -27,7 +24,6 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 def paper(count: int = 1) -> bytes:
     w, h = 595, 842
     objects: dict[int, bytes] = {3: b"<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>"}
@@ -52,8 +48,6 @@ def paper(count: int = 1) -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
-
-
 SHARPNESS = """
 () => {
   const card = document.querySelector('.node[data-id="p"] .pdf')
@@ -72,8 +66,6 @@ SHARPNESS = """
   }
 }
 """
-
-
 def looked(page, scale: float, what: str) -> None:
     page.evaluate(
         "(scale) => { const tab = window.ordenApp.workspace.active;"
@@ -86,8 +78,6 @@ def looked(page, scale: float, what: str) -> None:
     else:
         say(f"  it shows {page.evaluate(SHARPNESS)}")
         shot(page, f"blurry-{scale}")
-
-
 def drive(browser: Browser) -> None:
     for dpr in (1, 2):
         context = browser.new_context(viewport={"width": 1100, "height": 800}, device_scale_factor=dpr)
@@ -111,6 +101,4 @@ def drive(browser: Browser) -> None:
             looked(page, scale, f"[x{dpr}] the PDF card at {scale * 100}% as sharp as the screen")
         looked(page, 1, f"[x{dpr}] the PDF card back at 100% as sharp as the screen")
         context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a PDF card is as sharp as the screen at any zoom"))

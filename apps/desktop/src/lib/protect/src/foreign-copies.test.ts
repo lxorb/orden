@@ -2,16 +2,12 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import '../test/storage'
 
 const { Protection } = await import('./protection.svelte')
-
 const ROOT = '/space'
 const NOTE = `${ROOT}/Diary.md`
 const DROPBOX = `${ROOT}/Diary (Laptop's conflicted copy 2026-11-15).md`
 const SYNCTHING = `${ROOT}/Diary.sync-conflict-20261115-101010-ABCDEFG.md`
-
 beforeEach(() => localStorage.clear())
-
 const beside = (protection: InstanceType<typeof Protection>) => protection.seesFiles(() => [NOTE, DROPBOX, SYNCTHING])
-
 describe('a foreign sync tool copy beside a locked note', () => {
   test('is locked while the note keeps its name', () => {
     const protection = new Protection()
@@ -19,7 +15,6 @@ describe('a foreign sync tool copy beside a locked note', () => {
     expect(protection.locked(DROPBOX)).toBe(true)
     expect(protection.agentsMay(SYNCTHING)).toBe(false)
   })
-
   test('stays locked when the locked note is renamed or moved into another folder', () => {
     const protection = new Protection()
     beside(protection)
@@ -29,7 +24,6 @@ describe('a foreign sync tool copy beside a locked note', () => {
     expect(protection.locked(DROPBOX)).toBe(true)
     expect(new Protection().agentsMay(SYNCTHING)).toBe(false)
   })
-
   test('stays locked when the locked note is deleted', async () => {
     const protection = new Protection()
     beside(protection)
@@ -39,7 +33,6 @@ describe('a foreign sync tool copy beside a locked note', () => {
     expect(protection.agentsMay(SYNCTHING)).toBe(false)
   })
 })
-
 test('a sync tool’s copy of a copy of a locked note is locked too', () => {
   const protection = new Protection()
   protection.set(ROOT, NOTE, 'password')

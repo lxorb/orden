@@ -21,35 +21,28 @@ import { Channel, type LinkWorld, type Opened, pageWorld } from '../../online-li
 import { find } from './session.svelte'
 
 export const FIRST_VIEW: View = { width: 1280, height: 800, dpr: 1, hz: 60 }
-
 export class HostLink extends Channel<RelayToHost, HostFrame> {
   protected path(app: string): string {
     return appSocketPath(app)
   }
-
   protected helloFrame(): HostFrame {
     return { t: 'host' }
   }
-
   protected read(data: string | ArrayBuffer): RelayToHost | null {
     return typeof data === 'string' ? toHostOf(data) : null
   }
-
   protected final(): boolean {
     return false
   }
-
   protected override role(): string[] {
     return [HOST_PROTOCOL]
   }
 }
-
 export interface Said {
   state: 'running' | 'stopped' | 'exited'
   code: number | null
   why?: string
 }
-
 export interface Runner {
   start(key: string, file: AppFile, view: View, said: (what: Said) => void): Promise<NotStarted | null>
   watch(key: string, said: (what: Said) => void): Promise<boolean>
@@ -57,25 +50,20 @@ export interface Runner {
   signal(key: string, data: string): Promise<string | null>
   view(key: string, view: View): Promise<void>
 }
-
 export const BYE = toHostText({ bye: true })
-
 export interface Speaking {
   open(): void
   close(): void
   say(frame: HostFrame): boolean
 }
-
 class Hosting {
   private view: View = FIRST_VIEW
   private state: StateFrame
-
   private restarting = false
   private holder: string | null = null
   private signalling: Promise<unknown> = Promise.resolve()
   private ended = false
   readonly link: Speaking
-
   constructor(
     private readonly key: string,
     private readonly file: AppFile,
@@ -86,12 +74,10 @@ class Hosting {
     this.state = { t: 'state', state: 'stopped', ...(cannot ? { why: cannot } : {}) }
     this.link = link((what) => this.heard(what))
   }
-
   open(): void {
     this.link.open()
     void this.runner.watch(this.key, (said) => this.said(said)).catch(() => false)
   }
-
   private heard(what: RelayToHost | Opened): void {
     switch (what.t) {
       case 'open':
@@ -128,11 +114,9 @@ class Hosting {
         return
     }
   }
-
   private bye(): void {
     this.signalling = this.signalling.then(() => this.runner.signal(this.key, BYE)).catch(() => undefined)
   }
-
   private async start(): Promise<void> {
     if (this.ended || this.state.state === 'running' || this.state.state === 'starting') return
     if (this.cannot) {
@@ -145,7 +129,6 @@ class Hosting {
       .catch((): NotStarted => 'failed')
     if (why !== null) this.tell({ t: 'state', state: 'stopped', why })
   }
-
   private said(said: Said): void {
     if (said.state === 'running') {
       this.tell({ t: 'state', state: 'running' })
@@ -162,12 +145,10 @@ class Hosting {
       void this.start()
     }
   }
-
   private tell(state: StateFrame): void {
     this.state = state
     this.link.say(state)
   }
-
   end(stop: boolean): void {
     this.ended = true
     this.link.close()
@@ -175,7 +156,6 @@ class Hosting {
     if (stop) void this.runner.stop(this.key)
   }
 }
-
 export interface HostWorld {
   device(): Promise<string>
   files(): string[]
@@ -186,9 +166,7 @@ export interface HostWorld {
   runner: Runner
   link(app: string, heard: (what: RelayToHost | Opened) => void): Speaking
 }
-
 export const LOOKS_AT_ONCE = 4
-
 export function host(world: HostWorld, follow: (changed: () => void) => () => void): () => void {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry; nothing renders from it
   const hosting = new Map<string, { id: string; one: Hosting }>()
@@ -196,7 +174,6 @@ export function host(world: HostWorld, follow: (changed: () => void) => () => vo
   const over = () => stopped
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry; nothing renders from it
   const asking = new Set<string>()
-
   const hostIf = async (path: string, device: string) => {
     if (over() || hosting.has(path) || asking.has(path)) return
     asking.add(path)
@@ -213,7 +190,6 @@ export function host(world: HostWorld, follow: (changed: () => void) => () => vo
       asking.delete(path)
     }
   }
-
   const look = async () => {
     if (!(await world.serves())) return
     const device = await world.device()
@@ -256,7 +232,6 @@ export function host(world: HostWorld, follow: (changed: () => void) => () => vo
     hosting.clear()
   }
 }
-
 export function applicationFiles(
   tree: { path: string; is_dir: boolean; children?: readonly unknown[] } | null,
 ): string[] {
@@ -268,7 +243,6 @@ export function applicationFiles(
   if (tree) walk(tree)
   return found
 }
-
 async function appWorld(): Promise<{
   world: HostWorld
   follow: (changed: () => void) => () => void
@@ -282,7 +256,6 @@ async function appWorld(): Promise<{
       import('../../platform/src/api'),
     ])
   const linkWorld: LinkWorld = pageWorld(BASE, () => account.accountToken, deviceId)
-
   const runner: Runner = {
     async start(key, file, view, said) {
       const events = new native.Channel<Said>()
@@ -308,7 +281,6 @@ async function appWorld(): Promise<{
     signal: (key, data) => native.invoke<string | null>('apps_signal', { key, data }).catch(() => null),
     view: (key, view) => native.invoke<undefined>('apps_view', { key, view }).catch(() => undefined),
   }
-
   void native
     .invoke<unknown>('apps_installed')
     .then((listed) => {
@@ -318,7 +290,6 @@ async function appWorld(): Promise<{
       return request(CATALOGUE_PATH, { method: 'PUT', token, body: { apps: fitCatalogue(apps) } })
     })
     .catch(() => undefined)
-
   let served: { yes: boolean; at: number } | null = null
   const serves = async (): Promise<boolean> => {
     if (served && Date.now() - served.at < 10 * 60_000) return served.yes
@@ -331,7 +302,6 @@ async function appWorld(): Promise<{
     served = { yes, at: Date.now() }
     return yes
   }
-
   return {
     world: {
       device: deviceId,
@@ -359,7 +329,6 @@ async function appWorld(): Promise<{
     },
   }
 }
-
 /** @public */
 export function hostApps(): () => void {
   let stop: (() => void) | null = null

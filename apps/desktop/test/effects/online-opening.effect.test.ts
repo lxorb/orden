@@ -8,7 +8,6 @@ const state = vi.hoisted(() => ({
   tabs: [] as { id: string }[],
   active: null as string | null,
 }))
-
 vi.mock('../../src/lib/workspace/src/api', async () => {
   const { reactive } = await import('./online-opening-world.svelte')
   return { workspace: reactive(state, opened, closed) }
@@ -23,17 +22,13 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 const { Opener, Pace, whereToOpen } = await import('../../src/lib/terminal/src/online/opening.svelte')
 const { land, reset } = await import('./online-opening-world.svelte')
-
 const SIGN_IN =
   'https://claude.ai/oauth/authorize?code=true&redirect_uri=http%3A%2F%2Flocalhost%3A54545%2Fcallback&state=s'
 const DESKTOP = { pages: true, native: true }
-
 let calledBack: string[]
 let offered: string[]
-
 beforeEach(() => {
   opened.length = 0
   closed.length = 0
@@ -44,7 +39,6 @@ beforeEach(() => {
   state.active = 'terminal'
   reset()
 })
-
 function opener(build = DESKTOP) {
   return new Opener(
     () => 'terminal',
@@ -53,7 +47,6 @@ function opener(build = DESKTOP) {
     (url) => offered.push(url),
   )
 }
-
 test('a desktop opens a tab beside the terminal, in front only while it is looked at', () => {
   const one = opener()
   one.open('https://github.com/login/device', true, 0)
@@ -63,34 +56,27 @@ test('a desktop opens a tab beside the terminal, in front only while it is looke
     { url: 'https://example.com/', ask: 'behind', opener: 'terminal' },
   ])
 })
-
 test('a sign-in’s way back is made on the machine, then the tab goes and the terminal is back', () => {
   const one = opener()
   one.open(SIGN_IN, true, 0)
   expect(opened).toHaveLength(1)
-
   land('tab-1', 'https://claude.ai/oauth/authorize?code=true')
   flushSync()
   expect(calledBack).toEqual([])
-
   land('tab-1', 'http://localhost:9999/callback?code=c')
   flushSync()
   expect(calledBack).toEqual([])
-
   state.active = 'tab-1'
   land('tab-1', 'http://localhost:54545/callback?code=c&state=s')
   flushSync()
   expect(calledBack).toEqual(['http://localhost:54545/callback?code=c&state=s'])
-
   land('tab-1', 'http://localhost:54545/callback?code=c&state=s#again')
   flushSync()
   expect(calledBack).toHaveLength(1)
-
   one.called('http://localhost:54545/callback?code=c&state=s', 302)
   expect(closed).toEqual(['tab-1'])
   expect(state.active).toBe('terminal')
 })
-
 test('a way back the program refused leaves the tab to show it', () => {
   const one = opener()
   one.open(SIGN_IN, true, 0)
@@ -99,20 +85,17 @@ test('a way back the program refused leaves the tab to show it', () => {
   one.called('http://localhost:54545/callback?code=c&state=s', 0)
   expect(closed).toEqual([])
 })
-
 test('a phone hands it to the system browser, a browser build offers it, and neither a sign-in it cannot finish', () => {
   const phone = opener({ pages: false, native: true })
   phone.open('https://github.com/login/device', true, 0)
   phone.open(SIGN_IN, true, 10_000)
   expect(external).toEqual(['https://github.com/login/device'])
-
   const web = opener({ pages: false, native: false })
   web.open('https://github.com/login/device', true, 0)
   web.open(SIGN_IN, true, 10_000)
   expect(offered).toEqual(['https://github.com/login/device'])
   expect(opened).toEqual([])
 })
-
 test('only the web, ever', () => {
   for (const url of ['file:///etc/passwd', 'javascript:alert(1)', 'ms-settings:', 'vscode://x']) {
     expect(whereToOpen(url, DESKTOP)).toBe('none')
@@ -121,7 +104,6 @@ test('only the web, ever', () => {
   one.open('file:///etc/passwd', true, 0)
   expect(opened).toEqual([])
 })
-
 test('six a minute, and the same address not twice in a breath', () => {
   const pace = new Pace()
   expect(pace.allows('https://a.b/', 0)).toBe(true)

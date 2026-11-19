@@ -18,9 +18,7 @@ const MARKED = [
   'id',
   'block',
 ] as const
-
 const SPOKEN = ['en', 'de']
-
 export const quickWords =
   (langs: readonly string[], now: Date): ReadWords =>
   (said) => {

@@ -30,12 +30,10 @@ export interface Kit {
   change(edit: (base: Base, at: number) => Base, unlocking?: boolean): void
   changed(edit: (base: Base, at: number) => Base, show?: number): Promise<boolean>
 }
-
 export function notePath(row: Row): string | null {
   const space = workspace.spaces.find((one) => one.name === row.space)
   return space ? insideSpace(space.root, row.path) : null
 }
-
 function walkOf(live: LiveView): string[] {
   const seen = new Set<string>()
   const layout = layoutOf(live.view?.type ?? 'table')
@@ -49,7 +47,6 @@ function walkOf(live: LiveView): string[] {
   }
   return [...seen]
 }
-
 export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, compact: boolean): Kit {
   const writes = (row: Row) => {
     const path = notePath(row)

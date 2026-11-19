@@ -55,11 +55,9 @@ import { unlocks } from '../../protect/src/api'
 
 function runCommand(view: EditorView | undefined, command: StateCommand) {
   if (!view) return
-
   command({ state: view.state, dispatch: (transaction: Transaction) => view.dispatch(transaction) })
   view.focus()
 }
-
 function blockName(kind: BlockKind): string {
   switch (kind) {
     case 'heading':
@@ -84,20 +82,15 @@ function blockName(kind: BlockKind): string {
       return 'Block'
   }
 }
-
 export const blockLinkName = (path: string | null | undefined): string | null =>
   path && isMarkdownPath(path) ? noteName(path) : null
-
 function blockEntries(view: EditorView | undefined, at: number | null, path: string | null | undefined): MenuEntry[] {
   if (!view || at === null || view.state.readOnly) return []
-
   const spans = blocksFor(view, at)
   if (!spans.length) return []
-
   const words = countText(spans.map((span) => view.state.doc.sliceString(span.from, span.to)).join('\n')).words
   const name = blockLinkName(path)
   const first = spans[0]
-
   return [
     DIVIDER,
     {
@@ -123,7 +116,6 @@ function blockEntries(view: EditorView | undefined, at: number | null, path: str
       run: () => {
         const targets = name ? blockTargets(view, at) : []
         if (!name || !targets.length) return
-
         const root = path ? workspace.rootHolding(path) : null
         const relative = root !== null && path?.startsWith(root) ? relativeTo(root, path) : null
         void copyText(
@@ -142,11 +134,9 @@ function blockEntries(view: EditorView | undefined, at: number | null, path: str
     ...blockBookmark(view, at, path),
   ]
 }
-
 function calloutEntries(view: EditorView): MenuEntry[] {
   const sign = calloutSign(view.state)
   if (sign === null) return []
-
   return [
     DIVIDER,
     {
@@ -161,7 +151,6 @@ function calloutEntries(view: EditorView): MenuEntry[] {
     },
   ]
 }
-
 const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
   { shape: 'heading1', label: () => 'Heading 1' },
   { shape: 'heading2', label: () => 'Heading 2' },
@@ -172,18 +161,15 @@ const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
   { shape: 'task', label: () => 'Task list' },
   { shape: 'quote', label: () => 'Quote' },
 ]
-
 async function turnInto(view: EditorView, at: number) {
   const { prompt } = await import('../../ui-kit/src/api')
   const chosen = await prompt.find({
     title: 'Turn into',
     options: SHAPES.map((one) => ({ id: one.shape, label: one.label() })),
   })
-
   const shape = SHAPES.find((one) => one.shape === chosen)
   if (shape) turnBlocksInto(view, at, shape.shape)
 }
-
 function firstWords(text: string): string {
   const line = text.split('\n')[0] ?? ''
   return line
@@ -191,21 +177,17 @@ function firstWords(text: string): string {
     .trim()
     .slice(0, 60)
 }
-
 function blockBookmark(view: EditorView, at: number, path: string | null | undefined): MenuEntry[] {
   const root = workspace.activeSpace?.root
   if (!path || root === undefined || !path.startsWith(root)) return []
-
   const relative = relativeTo(root, path)
   const spans = blocksFor(view, at)
   const span = spans[0]
   if (!span) return []
-
   const words = firstWords(view.state.doc.sliceString(span.from, span.to))
   const held = workspace.bookmarks.list.find(
     (one) => one.kind === 'block' && one.path.startsWith(`${relative}#`) && one.text === words,
   )
-
   return [
     held
       ? { label: 'Remove from Essentials', run: () => workspace.bookmarks.toggle(held) }
@@ -213,7 +195,6 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
           label: spans.length > 1 ? 'Add blocks to Essentials' : 'Add block to Essentials',
           run: () => {
             const said = blocksFor(view, at).map((one) => firstWords(view.state.doc.sliceString(one.from, one.to)))
-
             for (const [index, target] of blockTargets(view, at).entries()) {
               const mark = workspace.bookmarks.forBlock(relative, target, said[index] ?? words)
               if (mark) workspace.bookmarks.toggle(mark)
@@ -222,10 +203,8 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
         },
   ]
 }
-
 const rowsFor = (place: CommandPlace, on: object | undefined): MenuEntry[] =>
   commandRows(place, on).map(({ label, run }) => ({ label, run }))
-
 function pasteInto(view: EditorView, cell: HTMLElement | null): void {
   if (!cell) {
     pasteHere(view)
@@ -237,14 +216,12 @@ function pasteInto(view: EditorView, cell: HTMLElement | null): void {
     .then((text) => pasteIntoCell(cell, text))
     .catch(() => undefined)
 }
-
 function editorMenu(view: EditorView | undefined, block: MenuEntry[], cell: HTMLElement | null = null): MenuEntry[] {
   const selected = cell
     ? !(cell.ownerDocument.getSelection()?.isCollapsed ?? true)
     : !!view && !view.state.selection.main.empty
   const locked = !!view && view.state.readOnly
   const run = (command: StateCommand) => () => runCommand(view, command)
-
   const clipboard: MenuEntry[] = [
     {
       label: 'Cut',
@@ -267,9 +244,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[], cell: HTML
       },
     },
   ]
-
   if (viewport.touch) return [...clipboard, ...block]
-
   if (locked) {
     return [
       ...clipboard,
@@ -281,7 +256,6 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[], cell: HTML
       },
     ]
   }
-
   return [
     ...clipboard,
     ...block,
@@ -336,22 +310,18 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[], cell: HTML
     },
   ]
 }
-
 function recordingEntries(view: EditorView | undefined, at: number | null): MenuEntry[] {
   const rows = view && at !== null ? rowsFor('transcribe', { view, at }) : []
   return rows.length ? [DIVIDER, ...rows] : []
 }
-
 function linkEntries(view: EditorView | undefined, event: MouseEvent, path: string | null | undefined): MenuEntry[] {
   const target = event.target
   const link = target instanceof Element ? target.closest('.orden-link') : null
   if (!link) return []
-
   const href = link.getAttribute('data-href')
   const at = view?.contentDOM.contains(link) ? view.posAtDOM(link) : null
   const parts = view && at !== null && !view.state.readOnly ? linkPartsAt(view.state, at) : null
   const jump = view && at !== null && link.hasAttribute('data-note') ? jumpAt(view.state, at) : null
-
   return [
     ...(jump && view ? noteEntries(jump, path ?? null, view.state) : []),
     ...(href && webHref(href) !== null ? [{ label: 'Open in the browser', run: () => void openExternal(href) }] : []),
@@ -367,7 +337,6 @@ function linkEntries(view: EditorView | undefined, event: MouseEvent, path: stri
     DIVIDER,
   ]
 }
-
 const noteEntries = (jump: NoteJump, from: string | null, state: EditorState): MenuEntry[] => [
   { label: 'Open in new tab', run: () => void workspace.followLink(jump, 'behind', from) },
   ...(viewport.touch
@@ -380,22 +349,18 @@ const noteEntries = (jump: NoteJump, from: string | null, state: EditorState): M
       ]),
   { label: 'Copy link', run: () => void copyText(linkOf(jump, state)) },
 ]
-
 function linkOf(jump: NoteJump, state: EditorState): string {
   const fragment =
     jump.block !== null ? `^${jump.block}` : (jump.heading ?? (jump.page === null ? null : `page=${String(jump.page)}`))
-
   const name = jump.path ? (linkNameAt(state, jump.path) ?? noteName(jump.path)) : jump.target
   return linkTo(name, null, {
     path: jump.path,
     fragment,
   })
 }
-
 function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
   const picture = view ? pressedPicture(view, event.target) : null
   if (!view || !picture) return []
-
   return [
     {
       label: 'Copy picture',
@@ -414,10 +379,8 @@ function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEn
     DIVIDER,
   ]
 }
-
 export function showEditorMenu(event: MouseEvent, view: EditorView | undefined, path?: string | null) {
   const at = view ? view.posAtCoords({ x: event.clientX, y: event.clientY }, false) : null
-
   menu.show(
     event,
     [

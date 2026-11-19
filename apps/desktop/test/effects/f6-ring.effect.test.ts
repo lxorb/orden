@@ -2,9 +2,7 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 import { stepRegionFocus } from '../../src/lib/workspace/src/api'
 
 Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList
-
 let page: HTMLElement
-
 function region(name: string, ...marks: string[]): HTMLElement {
   const box = document.createElement('div')
   box.dataset.region = name
@@ -15,31 +13,25 @@ function region(name: string, ...marks: string[]): HTMLElement {
   page.append(box)
   return box
 }
-
 const here = () => document.activeElement?.closest<HTMLElement>('[data-region]')?.dataset.region
-
 beforeEach(() => {
   page = document.createElement('div')
   document.body.append(page)
 })
-
 afterEach(() => {
   page.remove()
 })
-
 test('a shut right side is stepped over, and the walk goes round', () => {
   region('space')
   region('editor')
   const status = region('status')
   region('right', 'inert').style.visibility = 'hidden'
-
   status.querySelector('button')?.focus()
   expect(stepRegionFocus(1)).toBe(true)
   expect(here()).toBe('space')
   expect(stepRegionFocus(-1)).toBe(true)
   expect(here()).toBe('status')
 })
-
 test.each([
   ['only hidden', (box: HTMLElement) => (box.style.visibility = 'hidden')],
   ['only inert', (box: HTMLElement) => box.setAttribute('inert', '')],
@@ -47,31 +39,25 @@ test.each([
   region('editor')
   region('status')
   shut(region('right'))
-
   page.querySelector<HTMLElement>('[data-region=status] button')?.focus()
   expect(stepRegionFocus(1)).toBe(true)
   expect(here()).toBe('editor')
 })
-
 test('an open right side is where F6 goes after the status bar', () => {
   region('editor')
   region('status')
   region('right')
-
   page.querySelector<HTMLElement>('[data-region=status] button')?.focus()
   expect(stepRegionFocus(1)).toBe(true)
   expect(here()).toBe('right')
 })
-
 test('the notices row is a stop ahead of the note while a card is up, and none while it is empty', () => {
   region('tabs')
   const notices = region('notices')
   region('editor')
-
   page.querySelector<HTMLElement>('[data-region=editor] button')?.focus()
   expect(stepRegionFocus(-1)).toBe(true)
   expect(here()).toBe('notices')
-
   notices.replaceChildren()
   page.querySelector<HTMLElement>('[data-region=editor] button')?.focus()
   expect(stepRegionFocus(-1)).toBe(true)

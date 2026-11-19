@@ -1,22 +1,18 @@
 globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
   const args = JSON.parse(argsJson)
-
   function bytes(text) {
     const binary = atob(text)
     const out = new Uint8Array(binary.length)
     for (let at = 0; at < binary.length; at++) out[at] = binary.charCodeAt(at)
     return out
   }
-
   function buffer(text) {
     return bytes(text).buffer
   }
-
   function number(encoded) {
     if (!Array.isArray(encoded)) return encoded
     return { NaN, Infinity, '-Infinity': -Infinity, '-0': -0 }[encoded[1]]
   }
-
   function algorithmFrom(algorithm) {
     const out = {}
     for (const [key, value] of Object.entries(algorithm)) {
@@ -26,7 +22,6 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
     }
     return out
   }
-
   async function imported(encoded, into) {
     if (!Array.isArray(encoded)) return
     const [tag] = encoded
@@ -54,15 +49,12 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
       default:
     }
   }
-
   function decode(root, keys) {
     const made = []
-
     function reserve() {
       made.push(undefined)
       return made.length - 1
     }
-
     function own(target, key, value) {
       Object.defineProperty(target, key, {
         value,
@@ -71,7 +63,6 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
         configurable: true,
       })
     }
-
     function decoded(encoded) {
       if (!Array.isArray(encoded)) return encoded
       const [tag] = encoded
@@ -194,17 +185,14 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
           throw new Error(`nothing is encoded as ${String(tag)}`)
       }
     }
-
     return decoded(root)
   }
-
   function answered(request) {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result)
       request.onerror = () => reject(request.error ?? new Error('the request failed'))
     })
   }
-
   function deleted(name) {
     return new Promise((resolve, reject) => {
       const request = indexedDB.deleteDatabase(name)
@@ -219,7 +207,6 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
       }
     })
   }
-
   async function cleared() {
     localStorage.clear()
     for (const one of await indexedDB.databases()) {
@@ -227,13 +214,11 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
     }
     return {}
   }
-
   function replaced(storage, items) {
     storage.clear()
     for (const [key, value] of items) storage.setItem(key, value)
     return { items: items.length }
   }
-
   async function rebuilt(db) {
     const keys = new Map()
     for (const store of db.stores) {
@@ -242,7 +227,6 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
         await imported(value, keys)
       }
     }
-
     const request = indexedDB.open(db.name, db.version)
     request.onupgradeneeded = () => {
       const opened = request.result
@@ -260,7 +244,6 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
       }
     }
     const opened = await answered(request)
-
     let count = 0
     try {
       if (db.stores.length) {
@@ -289,7 +272,6 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
     }
     return { records: count }
   }
-
   switch (op) {
     case 'clear':
       return JSON.stringify(await cleared())

@@ -3,7 +3,6 @@ import type { Call } from './call'
 import { answerOf, Refused } from './problem'
 
 export type Verb = (call: Call) => AgentAnswer | Promise<AgentAnswer>
-
 function ran(verb: Verb): AgentVerb {
   return async (name, args, caller, deadline) => {
     try {
@@ -13,11 +12,9 @@ function ran(verb: Verb): AgentVerb {
     }
   }
 }
-
 export function verbsOf(table: Readonly<Record<string, Verb>>): AgentVerbs {
   return Object.fromEntries(Object.entries(table).map(([name, verb]) => [name, ran(verb)]))
 }
-
 export function gatedBy(on: () => boolean, what: string, verb: Verb): Verb {
   return (call) => {
     if (!on()) throw new Refused('not_granted', `${what} turned off; the reader turns it on in Settings, Experimental`)

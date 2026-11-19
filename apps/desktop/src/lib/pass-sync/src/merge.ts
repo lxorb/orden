@@ -2,44 +2,33 @@ import type { Attachment, Content, Envelope } from '@orden/pass/types'
 import { isFields } from './sync'
 
 type Side = 'mine' | 'theirs'
-
 export interface Merged {
   envelope: Envelope
   lost: Side | null
 }
-
 interface Picked<T> {
   value: T
   clashed: boolean
 }
-
 type Fields = Record<string, unknown>
-
 const UNKNOWN: unique symbol = Symbol('unknown')
-
 type Base = unknown
-
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
-
 function idOf(value: unknown): string | null {
   return isFields(value) && typeof value.id === 'string' ? value.id : null
 }
-
 function isListById(value: unknown): value is Fields[] {
   return Array.isArray(value) && value.every((one) => idOf(one) !== null)
 }
-
 function byId(list: readonly Fields[]): Map<string, Fields> {
   return new Map(list.map((one) => [idOf(one) ?? '', one]))
 }
-
 function under(base: Base, key: string): Base {
   if (base === UNKNOWN) return UNKNOWN
   return isFields(base) ? base[key] : undefined
 }
-
 function pickedList(base: Base, mine: Fields[], theirs: Fields[], mineWins: boolean): Picked<Fields[]> {
   const was = base === UNKNOWN ? null : byId(isListById(base) ? base : [])
   const ours = byId(mine)
@@ -54,7 +43,6 @@ function pickedList(base: Base, mine: Fields[], theirs: Fields[], mineWins: bool
   }
   return { value, clashed }
 }
-
 function pickedFields(base: Base, mine: Fields, theirs: Fields, mineWins: boolean): Picked<Fields> {
   const keys = [...new Set([...Object.keys(mine), ...Object.keys(theirs)])]
   let clashed = false
@@ -66,7 +54,6 @@ function pickedFields(base: Base, mine: Fields, theirs: Fields, mineWins: boolea
   }
   return { value, clashed }
 }
-
 function picked(base: Base, mine: unknown, theirs: unknown, mineWins: boolean): Picked<unknown> {
   if (same(mine, theirs)) return { value: mine, clashed: false }
   if (base !== UNKNOWN && same(base, mine)) return { value: theirs, clashed: false }
@@ -75,23 +62,19 @@ function picked(base: Base, mine: unknown, theirs: unknown, mineWins: boolean): 
   if (isListById(mine) && isListById(theirs)) return pickedList(base, mine, theirs, mineWins)
   return { value: mineWins ? mine : theirs, clashed: true }
 }
-
 function pickedContent(base: Content | null, mine: Content, theirs: Content, mineWins: boolean): Picked<Content> {
   if (mine.kind !== theirs.kind) return { value: mineWins ? mine : theirs, clashed: true }
   const was: Base = base?.kind === mine.kind ? base : UNKNOWN
   const one = pickedFields(was, mine as unknown as Fields, theirs as unknown as Fields, mineWins)
   return { value: one.value as unknown as Content, clashed: one.clashed }
 }
-
 export function mergedFields<T extends object>(base: T | null, mine: T, theirs: T): T {
   const was: Base = base ?? UNKNOWN
   return pickedFields(was, mine as unknown as Fields, theirs as unknown as Fields, true).value as T
 }
-
 function pickedOne<T>(base: Base, mine: T, theirs: T, mineWins: boolean): T {
   return picked(base, mine, theirs, mineWins).value as T
 }
-
 export function mergedAttachments(
   base: readonly Attachment[] | null,
   mine: readonly Attachment[],
@@ -108,13 +91,11 @@ export function mergedAttachments(
   }
   return [...out.values()]
 }
-
 function laterOf(a: number | null, b: number | null): number | null {
   if (a === null) return b
   if (b === null) return a
   return Math.max(a, b)
 }
-
 export function mergedEnvelope(base: Envelope | null, mine: Envelope, theirs: Envelope): Merged {
   const mineWins = mine.modified >= theirs.modified
   const was = (key: keyof Envelope): Base => (base === null ? UNKNOWN : base[key])

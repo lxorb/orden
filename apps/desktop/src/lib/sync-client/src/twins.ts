@@ -1,12 +1,10 @@
 import { folderOf, joined, nameOf, type SpaceState } from './places'
 
 const NUMBERED = /^(.+) ([2-9]|[1-9]\d+)(\.[^. ]+)$/
-
 export interface Twin {
   from: string
   to: string
 }
-
 export function madeTwice(space: SpaceState): Twin[] {
   const entries = [...space.entries.values()]
   const lost = new Map<string, Set<string>>()

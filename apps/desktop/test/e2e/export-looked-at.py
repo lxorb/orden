@@ -1,19 +1,15 @@
 
 import base64
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 DOC = "# Plain\n\nJust some plain words here, **bold** too.\n"
 CHARTED = (
     "# Charted\n\nwords\n\n```mermaid\ngraph TD\nA-->B\n```\n\n"
     "```chart\ntype: bar\nlabels: [a,b]\nseries:\n  - name: x\n    data: [1,2]\n```\n\nlast words\n"
 )
-
 READ = """
 async (encoded) => {
   const bytes = Uint8Array.from(atob(encoded), (one) => one.charCodeAt(0))
@@ -36,7 +32,6 @@ async (encoded) => {
   return { width: bitmap.width, height: bitmap.height, corner, dark, last }
 }
 """
-
 FORMATS = {
     "Export as PNG": "png",
     "Export as JPG": "jpg",
@@ -46,24 +41,19 @@ FORMATS = {
     "Export as RTF": "rtf",
     "Export as Word": "docx",
 }
-
 def exported(page: Page, row: str) -> tuple[bytes, str]:
     go = DRIVE.pick_export(page, FORMATS[row])
     with page.expect_download(timeout=30000) as asked:
         go.click()
     path = asked.value.path()
     return path.read_bytes(), asked.value.suggested_filename
-
 def looked_at(page: Page, row: str) -> dict:
     bytes_, _name = exported(page, row)
     return page.evaluate(READ, base64.b64encode(bytes_).decode())
-
 def light(rgb: list[int]) -> bool:
     return min(rgb) > 230
-
 def dark(rgb: list[int]) -> bool:
     return max(rgb) < 60
-
 def note_pictures(browser: Browser) -> None:
     say("a note's PNG and JPG are light paper with dark words, in a light app and a dark one")
     for scheme in ("light", "dark"):
@@ -79,21 +69,18 @@ def note_pictures(browser: Browser) -> None:
                 wrong(f"{row} from a {scheme} app has paper of {seen['corner']}")
             if seen["dark"] < 200:
                 wrong(f"{row} from a {scheme} app has no dark words on it: {seen['dark']} pixels")
-
         say("  the paper stops where the note does, a chart and a diagram included")
         DRIVE.open_note(page, "Charted")
         seen = looked_at(page, "Export as PNG")
         say(f"  charted: {seen}")
         if seen["height"] - seen["last"] > 300:
             wrong(f"empty paper under the note: {seen['height']} tall, the last mark at {seen['last']}")
-
         say("  Appearance dark is dark paper with light words")
         page.evaluate("() => { window.ordenApp.choices.exportAppearance = 'dark' }")
         seen = looked_at(page, "Export as PNG")
         if not dark(seen["corner"]):
             wrong(f"a dark export has paper of {seen['corner']}")
         context.close()
-
 def canvas_pictures(browser: Browser) -> None:
     say("a canvas from a dark app follows Appearance: light, then as the app is")
     context = DRIVE.context(browser, color_scheme="dark", viewport={"width": 1280, "height": 860})
@@ -111,20 +98,17 @@ def canvas_pictures(browser: Browser) -> None:
     page.mouse.move(x + 200, y + 60, steps=12)
     page.mouse.up()
     page.keyboard.press("v")
-
     seen = looked_at(page, "Export as PNG")
     say(f"  Appearance light: {seen}")
     if not light(seen["corner"]):
         wrong(f"a canvas's PNG under Appearance light has paper of {seen['corner']}")
     if seen["dark"] < 50:
         wrong(f"a canvas's PNG under Appearance light has no dark ink: {seen['dark']} pixels")
-
     page.evaluate("() => { window.ordenApp.choices.exportAppearance = 'app' }")
     seen = looked_at(page, "Export as PNG")
     say(f"  Appearance as the app is: {seen}")
     if not dark(seen["corner"]):
         wrong(f"a canvas's PNG as the dark app is has paper of {seen['corner']}")
-
     say("  the printed sheet is light whatever the setting")
     page.evaluate(
         """() => {
@@ -149,9 +133,7 @@ def canvas_pictures(browser: Browser) -> None:
     say(f"  sheet paper: {fill}")
     if not fill or fill.lower() not in ("#fbfcfd", "#fbfbfd", "#ffffff", "#fff"):
         wrong(f"the printed sheet has paper of {fill}")
-
     context.close()
-
 def page_note_at_once(browser: Browser) -> None:
     say("a page note exported straight after a stroke has the stroke")
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
@@ -170,10 +152,8 @@ def page_note_at_once(browser: Browser) -> None:
     say(f"  with a stroke {len(drawn)} bytes")
     if len(drawn) < 800:
         wrong(f"the PDF is from before the stroke: {len(drawn)} bytes")
-
 def drive(browser: Browser) -> None:
     note_pictures(browser)
     canvas_pictures(browser)
     page_note_at_once(browser)
-
 raise SystemExit(DRIVE.run(drive))

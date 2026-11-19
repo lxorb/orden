@@ -8,23 +8,17 @@ use tauri::{AppHandle, Emitter as _};
 use crate::verbs::{Event, EVENT};
 
 static GENERATION: AtomicU64 = AtomicU64::new(0);
-
 static STOPPED: AtomicBool = AtomicBool::new(false);
-
 static HALTED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
-
 pub fn generation() -> u64 {
     GENERATION.load(Ordering::SeqCst)
 }
-
 pub fn cancelled(since: u64) -> bool {
     GENERATION.load(Ordering::SeqCst) != since
 }
-
 pub fn stopped() -> bool {
     STOPPED.load(Ordering::SeqCst)
 }
-
 pub fn stopped_for(agent: &str) -> bool {
     stopped()
         || HALTED
@@ -32,7 +26,6 @@ pub fn stopped_for(agent: &str) -> bool {
             .as_ref()
             .is_some_and(|all| all.contains(agent))
 }
-
 pub fn halted() -> Vec<String> {
     HALTED
         .held()
@@ -40,7 +33,6 @@ pub fn halted() -> Vec<String> {
         .map(|all| all.iter().cloned().collect())
         .unwrap_or_default()
 }
-
 pub fn halt(app: &AppHandle, agent: &str) {
     let fresh = HALTED
         .held()
@@ -56,11 +48,9 @@ pub fn halt(app: &AppHandle, agent: &str) {
         );
     }
 }
-
 pub fn quitting() {
     crate::process::end_for_good();
 }
-
 pub fn stop(app: &AppHandle) -> bool {
     GENERATION.fetch_add(1, Ordering::SeqCst);
     let again = STOPPED.swap(true, Ordering::SeqCst);
@@ -73,7 +63,6 @@ pub fn stop(app: &AppHandle) -> bool {
     let _ = app.emit(EVENT, Event::Stopped { closed: again });
     again
 }
-
 pub fn resume(app: &AppHandle, agent: Option<&str>) {
     {
         let mut halted = HALTED.held();
@@ -95,7 +84,6 @@ pub fn resume(app: &AppHandle, agent: Option<&str>) {
         },
     );
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -107,7 +95,6 @@ mod tests {
         GENERATION.fetch_add(1, Ordering::SeqCst);
         assert!(cancelled(started));
     }
-
     #[test]
     fn one_agent_stopped_is_that_agent_and_nobody_else() {
         HALTED

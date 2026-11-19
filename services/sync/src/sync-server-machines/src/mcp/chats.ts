@@ -17,14 +17,10 @@ import type { TokenRow } from './tokens'
 import { zoneOf } from './zone'
 
 const string = { type: 'string' }
-
 const VIA = { agent: 'Orden connector' }
-
 const MOST_LISTED = 500
-
 const MOST_READ = 200
 const MOST_FOUND = 50
-
 export const CHAT_TOOLS = [
   {
     name: 'list_chats',
@@ -71,23 +67,19 @@ export const CHAT_TOOLS = [
     },
   },
 ]
-
 function words(args: Record<string, unknown>, name: string): string | undefined {
   const value = args[name]
   return typeof value === 'string' && value.trim() ? value : undefined
 }
-
 function whole(args: Record<string, unknown>, name: string, fallback: number, most: number) {
   const sent = args[name]
   const value = sent === null ? Number.NaN : Number(sent)
   return Number.isFinite(value) ? Math.min(Math.max(1, Math.floor(value)), most) : fallback
 }
-
 interface Known extends Listed {
   role: 'read' | 'write' | 'owner'
   posting: 'writers' | 'owner'
 }
-
 async function chatsOf(env: Env, who: Whoever, most: number | null = MOST_LISTED): Promise<Known[]> {
   const rows = await listed(env, who, null, most)
   if (!rows.length) return []
@@ -128,11 +120,9 @@ async function chatsOf(env: Env, who: Whoever, most: number | null = MOST_LISTED
     ]
   })
 }
-
 function whoOf(who: Whoever): Who {
   return who.kind === 'user' ? `user:${who.user.id}` : `guest:${who.guest.id}`
 }
-
 async function chatNamed(
   env: Env,
   who: Whoever,
@@ -153,7 +143,6 @@ async function chatNamed(
   if (!known || !reached) return `No chat called ${wanted}. list_chats names them.`
   return { known, reached }
 }
-
 async function readingOf(env: Env, who: Whoever, chats: readonly string[]): Promise<Reading> {
   const names = new Map<Who, string>()
   for (const chat of chats) {
@@ -163,21 +152,18 @@ async function readingOf(env: Env, who: Whoever, chats: readonly string[]): Prom
   }
   return { me: whoOf(who), nameOf: (person) => names.get(person) ?? person }
 }
-
 async function stateOf(env: Env, reached: Reached, query: Record<string, string>): Promise<Message[]> {
   const url = `https://chats.invalid/${reached.chat}/state?${new URLSearchParams(query).toString()}`
   const answer = await askChat(env, reached.chat, 'state', asking(reached), { url })
   if (!answer?.ok) return []
   return (await answer.json<{ messages: Message[] }>()).messages
 }
-
 async function messageOf(env: Env, reached: Reached, id: string): Promise<Message | null> {
   const url = `https://chats.invalid/${reached.chat}/message?id=${encodeURIComponent(id)}`
   const answer = await askChat(env, reached.chat, 'message', asking(reached), { url })
   if (!answer?.ok) return null
   return (await answer.json<{ message: Message | null }>()).message
 }
-
 async function listChats(env: Env, who: Whoever, args: Record<string, unknown>) {
   const space = words(args, 'space')?.toLowerCase()
   const unread = args.unread === true
@@ -187,7 +173,6 @@ async function listChats(env: Env, who: Whoever, args: Record<string, unknown>) 
       .filter((one) => !unread || one.unread !== 0 || one.mentions > 0),
   )
 }
-
 async function readChat(env: Env, who: Whoever, args: Record<string, unknown>) {
   const named = await chatNamed(env, who, args)
   if (typeof named === 'string') return named
@@ -195,7 +180,6 @@ async function readChat(env: Env, who: Whoever, args: Record<string, unknown>) {
   const limit = whole(args, 'limit', 50, MOST_READ)
   const parent = words(args, 'replies_of')
   const before = words(args, 'before')
-
   let from: number | undefined
   if (before) {
     const found = await messageOf(env, reached, before)
@@ -213,7 +197,6 @@ async function readChat(env: Env, who: Whoever, args: Record<string, unknown>) {
     .reverse()
   return messagesText(known.name, shown, await readingOf(env, who, [known.id]))
 }
-
 async function searchChats(env: Env, token: TokenRow, who: Whoever, args: Record<string, unknown>) {
   const query = words(args, 'query')
   if (!query) return 'Search for what?'
@@ -230,7 +213,6 @@ async function searchChats(env: Env, token: TokenRow, who: Whoever, args: Record
   const reading = await readingOf(env, who, [...new Set(picked.map((one) => one.id))])
   return hitsText(hits, reading)
 }
-
 async function sent(env: Env, reached: Reached, event: Post | Record<string, unknown>) {
   const checked = postEventsOf({ events: [event] })
   if (!checked)
@@ -246,13 +228,11 @@ async function sent(env: Env, reached: Reached, event: Post | Record<string, unk
   const refused = results[0]?.refused
   return refused ? `The chat refused it: ${refused}.` : null
 }
-
 function mayWrite(token: TokenRow, known: Known): string | null {
   if (token.read_only) return 'This connection may only read. Reconnect it with writing allowed.'
   if (!may(known.role, 'post', known.posting)) return `You may only read #${known.name}.`
   return null
 }
-
 async function postMessage(env: Env, token: TokenRow, who: Whoever, args: Record<string, unknown>) {
   const named = await chatNamed(env, who, args)
   if (typeof named === 'string') return named
@@ -281,7 +261,6 @@ async function postMessage(env: Env, token: TokenRow, who: Whoever, args: Record
   }
   return (await sent(env, reached, post)) ?? `Posted in #${known.name} as ${post.message}.`
 }
-
 async function react(env: Env, token: TokenRow, who: Whoever, args: Record<string, unknown>) {
   const named = await chatNamed(env, who, args)
   if (typeof named === 'string') return named
@@ -297,7 +276,6 @@ async function react(env: Env, token: TokenRow, who: Whoever, args: Record<strin
     (await sent(env, reached, event)) ?? `${on ? 'Reacted' : 'Took back'} ${emoji} on ${message} in #${known.name}.`
   )
 }
-
 export async function callChatTool(
   env: Env,
   token: TokenRow,

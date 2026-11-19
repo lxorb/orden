@@ -9,13 +9,9 @@ use orden_base::paths::folder_named;
 pub(crate) const BROWSERS: [&str; 8] = [
     "chrome", "edge", "brave", "chromium", "vivaldi", "opera", "opera-gx", "arc",
 ];
-
 const ARC_SIDEBAR: &str = "StorableSidebar.json";
-
 const MOST_SIDEBAR_BYTES: u64 = 64 * 1024 * 1024;
-
 const SESSIONS_KEPT: usize = 3;
-
 pub(crate) fn profiles(browser: &str) -> Vec<Profile> {
     once(
         user_data_folders(browser)
@@ -23,12 +19,10 @@ pub(crate) fn profiles(browser: &str) -> Vec<Profile> {
             .flat_map(|home| profiles_in(home)),
     )
 }
-
 fn user_data_folders(browser: &str) -> Vec<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(BROWSERS_DIR).as_deref()) {
         return vec![named.join(browser)];
     }
-
     let mut found = Vec::new();
     #[cfg(target_os = "linux")]
     {
@@ -104,10 +98,8 @@ fn user_data_folders(browser: &str) -> Vec<PathBuf> {
             _ => {}
         }
     }
-
     found
 }
-
 #[cfg(windows)]
 fn arc_homes(local: &Path) -> Vec<PathBuf> {
     fs::read_dir(local.join("Packages"))
@@ -123,7 +115,6 @@ fn arc_homes(local: &Path) -> Vec<PathBuf> {
         .map(|entry| entry.path().join("LocalCache/Local/Arc/User Data"))
         .collect()
 }
-
 #[tauri::command(async)]
 pub fn read_arc_sidebar(profile: String) -> Result<String, String> {
     let listed = profiles("arc");
@@ -141,12 +132,10 @@ pub fn read_arc_sidebar(profile: String) -> Result<String, String> {
     }
     fs::read_to_string(&path).map_err(|error| format!("{ARC_SIDEBAR} could not be read: {error}"))
 }
-
 fn sidebar_of(profile: &Path) -> Option<PathBuf> {
     let path = profile.parent()?.parent()?.join(ARC_SIDEBAR);
     path.is_file().then_some(path)
 }
-
 fn profiles_in(home: &Path) -> Vec<Profile> {
     let state = fs::read_to_string(home.join("Local State"))
         .ok()
@@ -155,7 +144,6 @@ fn profiles_in(home: &Path) -> Vec<Profile> {
         || vec![("Default".to_owned(), "Default".to_owned())],
         names_in,
     );
-
     let listed: Vec<Profile> = named
         .into_iter()
         .filter(|(folder, _)| is_profile_folder(folder))
@@ -172,7 +160,6 @@ fn profiles_in(home: &Path) -> Vec<Profile> {
     if !listed.is_empty() {
         return listed;
     }
-
     let files = files_of(home);
     if files.iter().any(|one| one != "Preferences") {
         return vec![Profile {
@@ -183,13 +170,11 @@ fn profiles_in(home: &Path) -> Vec<Profile> {
     }
     Vec::new()
 }
-
 fn names_in(state: &Value) -> Vec<(String, String)> {
     let profile = &state["profile"];
     let Some(cache) = profile["info_cache"].as_object() else {
         return Vec::new();
     };
-
     let mut folders: Vec<&str> = profile["profiles_order"]
         .as_array()
         .into_iter()
@@ -204,7 +189,6 @@ fn names_in(state: &Value) -> Vec<(String, String)> {
         .collect();
     rest.sort_unstable();
     folders.extend(rest);
-
     folders
         .into_iter()
         .map(|folder| {
@@ -217,11 +201,9 @@ fn names_in(state: &Value) -> Vec<(String, String)> {
         })
         .collect()
 }
-
 fn is_profile_folder(folder: &str) -> bool {
     !folder.is_empty() && folder != "." && folder != ".." && !folder.contains(['/', '\\', ':'])
 }
-
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found = present(profile, &["Bookmarks", "AccountBookmarks"]);
     found.extend(newest(profile, "Sessions", SESSIONS_KEPT));
@@ -230,7 +212,6 @@ fn files_of(profile: &Path) -> Vec<String> {
     found.extend(present(profile, &["Preferences", "History", "Favicons"]));
     found
 }
-
 fn newest(profile: &Path, folder: &str, most: usize) -> Vec<String> {
     let mut names: Vec<String> = fs::read_dir(profile.join(folder))
         .into_iter()
@@ -251,7 +232,6 @@ fn newest(profile: &Path, folder: &str, most: usize) -> Vec<String> {
         .map(|name| format!("{folder}/{name}"))
         .collect()
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -261,14 +241,12 @@ mod tests {
         fs::create_dir_all(at.parent().expect("a folder")).expect("the folder");
         fs::write(at, b"SNSS").expect("a file");
     }
-
     const STATE: &str = r#"{"profile":{"info_cache":{
         "Default":{"name":"Person 1"},
         "Profile 2":{"name":"Work"},
         "Profile 3":{"name":"  "},
         "../../etc":{"name":"Elsewhere"}
       },"profiles_order":["Profile 2","Default","Gone"]}}"#;
-
     #[test]
     fn the_profiles_come_in_the_pickers_order_with_their_names() {
         let home = tempfile::tempdir().expect("a folder");
@@ -281,7 +259,6 @@ mod tests {
         );
         touch(&home.path().join("Profile 3/Bookmarks"));
         touch(&home.path().join("Profile 4/Bookmarks"));
-
         let found = profiles_in(home.path());
         let names: Vec<(&str, &str)> = found
             .iter()
@@ -302,7 +279,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_profile_lists_both_bookmark_files_its_newest_sessions_and_its_newest_encrypted_one() {
         let home = tempfile::tempdir().expect("a folder");
@@ -322,7 +298,6 @@ mod tests {
         ] {
             touch(&profile.join(file));
         }
-
         assert_eq!(
             files_of(&profile),
             vec![
@@ -336,7 +311,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn the_engine_and_the_databases_come_last() {
         let home = tempfile::tempdir().expect("a folder");
@@ -355,7 +329,6 @@ mod tests {
             vec!["Bookmarks", "Preferences", "History", "Favicons"]
         );
     }
-
     #[test]
     fn operas_first_profile_is_its_user_data_folder() {
         let home = tempfile::tempdir().expect("a folder");
@@ -366,12 +339,10 @@ mod tests {
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].path, home.path().to_string_lossy());
         assert_eq!(found[0].files, vec!["Bookmarks", "Preferences"]);
-
         let bare = tempfile::tempdir().expect("a folder");
         touch(&bare.path().join("Preferences"));
         assert!(profiles_in(bare.path()).is_empty());
     }
-
     #[test]
     fn arcs_sidebar_is_beside_its_user_data() {
         let arc = tempfile::tempdir().expect("a folder");
@@ -381,7 +352,6 @@ mod tests {
         touch(&arc.path().join(ARC_SIDEBAR));
         assert_eq!(sidebar_of(&profile), Some(arc.path().join(ARC_SIDEBAR)));
     }
-
     #[test]
     fn a_folder_without_local_state_has_its_default_profile() {
         let home = tempfile::tempdir().expect("a folder");
@@ -391,7 +361,6 @@ mod tests {
         assert_eq!(found[0].name, "Default");
         assert!(profiles_in(&home.path().join("nowhere")).is_empty());
     }
-
     #[test]
     fn only_a_listed_file_of_a_listed_profile_is_read() {
         let listed = vec![Profile {

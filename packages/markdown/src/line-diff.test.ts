@@ -4,12 +4,10 @@ import { diffCount, lineDiff, type Row, trimmed, workDone } from './line-diff'
 function shown(before: string, after: string): string[] {
   return lineDiff(before, after).map((row) => `${mark(row)}${row.text}`)
 }
-
 function mark(row: Row): string {
   if (row.change === 'added') return '+'
   return row.change === 'removed' ? '-' : ' '
 }
-
 describe('a line diff', () => {
   test('says nothing about two texts that are the same; finds a line that changed; finds a line that was added; finds a line that went', () => {
     expect(shown('a\nb', 'a\nb')).toEqual([' a', ' b'])
@@ -18,7 +16,6 @@ describe('a line diff', () => {
     expect(shown('a\nc', 'a\nb\nc')).toEqual([' a', '+b', ' c'])
     expect(shown('a\nb\nc', 'a\nc')).toEqual([' a', '-b', ' c'])
   })
-
   test('keeps the lines both texts share in the middle; counts what it changed; numbers the lines on the side that has them', () => {
     expect(shown('a\nkeep\nb', 'x\nkeep\ny')).toEqual(['-a', '+x', ' keep', '-b', '+y'])
     expect(diffCount(lineDiff('a\nb\nc', 'a\nB\nC\nd'))).toEqual({ added: 3, removed: 2 })
@@ -29,14 +26,12 @@ describe('a line diff', () => {
       ['+', undefined, 2],
     ])
   })
-
   test('an empty text on either side is all of the other one; a moved line reads as one taken away and one put back', () => {
     expect(shown('', 'a\nb')).toEqual(['+a', '+b'])
     expect(shown('a\nb', '')).toEqual(['-a', '-b'])
     expect(shown('', '')).toEqual([])
     expect(shown('a\nb\nc', 'b\nc\na')).toEqual(['-a', ' b', ' c', '+a'])
   })
-
   test('two long versions of the same note are quick', () => {
     const before = Array.from({ length: 4000 }, (_, at) => `line ${at}`).join('\n')
     const after = before.replace('line 2000', 'line two thousand')
@@ -47,7 +42,6 @@ describe('a line diff', () => {
     expect(work.matched).toBe(3999)
     expect(work.cells).toBe(1)
   })
-
   test('a short text against a very long one stops at a bounded amount of work', () => {
     const before = Array.from({ length: 1000 }, (_, at) => `old ${at}`).join('\n')
     const after = Array.from({ length: 100_000 }, (_, at) => `new ${at}`).join('\n')
@@ -57,14 +51,12 @@ describe('a line diff', () => {
     expect(diffCount(rows)).toEqual({ added: 100_000, removed: 1000 })
     expect(work.cells).toBeLessThanOrEqual(8_000_000)
   })
-
   test('two texts with nothing in common read as one replacement', () => {
     const before = Array.from({ length: 2000 }, (_, at) => `old ${at}`).join('\n')
     const after = Array.from({ length: 2000 }, (_, at) => `new ${at}`).join('\n')
     expect(diffCount(lineDiff(before, after))).toEqual({ added: 2000, removed: 2000 })
   })
 })
-
 describe('what is worth showing', () => {
   test('the changes, with a couple of lines around them', () => {
     const before = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].join('\n')
@@ -78,7 +70,6 @@ describe('what is worth showing', () => {
       ' f',
     ])
   })
-
   test('nothing at all where nothing changed', () => {
     expect(trimmed(lineDiff('a\nb', 'a\nb'))).toEqual([])
   })

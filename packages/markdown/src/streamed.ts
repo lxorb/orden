@@ -1,8 +1,6 @@
 type Maths = 'inline' | 'display' | null
-
 const BLANK = /[ \t]/
 const LINE_LEAD = /^[ \t>]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+)*/
-
 export class TexDelimiters {
   #rest = ''
   #fence: { mark: string; size: number } | null = null
@@ -12,21 +10,17 @@ export class TexDelimiters {
   #words = false
   #last = '\n'
   #breakNext = false
-
   push(piece: string): string {
     this.#rest += piece
     return this.#run(false)
   }
-
   end(): string {
     return this.#run(true)
   }
-
   #run(final: boolean): string {
     const text = this.#rest
     let out = ''
     let at = 0
-
     const write = (words: string) => {
       if (!words) return
       if (this.#breakNext) {
@@ -46,10 +40,8 @@ export class TexDelimiters {
       while (to < text.length && text[to] === text[from]) to++
       return to
     }
-
     reading: while (at < text.length) {
       const one = text.charAt(at)
-
       if (one === '\n') {
         write('\n')
         at++
@@ -61,7 +53,6 @@ export class TexDelimiters {
         this.#fresh = true
         continue
       }
-
       if (this.#fence) {
         const end = text.indexOf('\n', at)
         const line = end === -1 ? text.slice(at) : text.slice(at, end)
@@ -80,7 +71,6 @@ export class TexDelimiters {
         at += line.length
         continue
       }
-
       if (this.#fresh && this.#code === 0 && this.#maths === null) {
         const lead = LINE_LEAD.exec(text.slice(at))?.[0].length ?? 0
         const from = at + lead
@@ -100,7 +90,6 @@ export class TexDelimiters {
         }
         this.#fresh = false
       }
-
       if (one === '`' && this.#maths === null) {
         const to = run(at)
         if (to === text.length && !final) break reading
@@ -112,14 +101,12 @@ export class TexDelimiters {
         at = to
         continue
       }
-
       if (this.#code > 0) {
         if (!BLANK.test(one)) this.#words = true
         write(one)
         at++
         continue
       }
-
       if (one === '\\') {
         if (at + 1 === text.length) {
           if (!final) break reading
@@ -130,7 +117,6 @@ export class TexDelimiters {
         const next = text.charAt(at + 1)
         const spoken = this.#words
         this.#words = true
-
         if (next === '(' && this.#maths === null) {
           const from = blanks(at + 2)
           if (from === text.length && !final) break reading
@@ -139,7 +125,6 @@ export class TexDelimiters {
           at = from
           continue
         }
-
         if (next === '[' && this.#maths === null) {
           const from = blanks(at + 2)
           if (from === text.length && !final) break reading
@@ -149,14 +134,12 @@ export class TexDelimiters {
           at = from
           continue
         }
-
         if (next === ')' && this.#maths === 'inline') {
           write('$')
           this.#maths = null
           at += 2
           continue
         }
-
         if (next === ']' && this.#maths === 'display') {
           write(this.#last === '\n' ? '$$' : '\n$$')
           this.#maths = null
@@ -164,12 +147,10 @@ export class TexDelimiters {
           at += 2
           continue
         }
-
         write(text.slice(at, at + 2))
         at += 2
         continue
       }
-
       if (BLANK.test(one) && this.#maths !== null) {
         const to = blanks(at)
         const closer = this.#maths === 'inline' ? '\\)' : '\\]'
@@ -179,31 +160,25 @@ export class TexDelimiters {
         at = to
         continue
       }
-
       if (one !== '>' && !BLANK.test(one)) this.#words = true
       write(one)
       at++
     }
-
     this.#rest = text.slice(at)
     return out
   }
 }
-
 export function dollarMaths(text: string): string {
   if (!text.includes('\\(') && !text.includes('\\[')) return text
   const spelled = new TexDelimiters()
   return spelled.push(text) + spelled.end()
 }
-
 const TEX_LIKE = /[\\^_{}]/
-
 export function settled(text: string): string {
   let fence: { mark: string; size: number } | null = null
   let display: { at: number; inline: string } | null = null
   let last = ''
   let at = 0
-
   for (const line of text.split('\n')) {
     const start = at
     at += line.length + 1
@@ -229,7 +204,6 @@ export function settled(text: string): string {
       display = { at: start, inline: trimmed.slice(2).trim() }
     }
   }
-
   if (fence) return text
   if (display) {
     const formula = text.slice(display.at).replace(/^[^$]*\$\$/, '')
@@ -237,15 +211,12 @@ export function settled(text: string): string {
     if (!formula.includes('\n')) return `${text.trimEnd()}$$`
     return `${text.trimEnd()}\n$$`
   }
-
   const closers = closersFor(last.trimEnd())
   return closers ? text.trimEnd() + closers : text
 }
-
 function closersFor(line: string): string {
   const open: { mark: string; at: number }[] = []
   let at = 0
-
   while (at < line.length) {
     const one = line.charAt(at)
     if (one === '\\') {
@@ -284,7 +255,6 @@ function closersFor(line: string): string {
     }
     at++
   }
-
   let close = ''
   for (const one of open.reverse()) {
     const formula = line.slice(one.at + 1)

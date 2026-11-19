@@ -1,18 +1,14 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 NOTE = "# Long walk\n\n" + "\n\n".join(
     f"## Stage {at}\n\nThe path climbs past the {at}th cairn, and the wind comes round to the west"
     " as it always does in the afternoon. Somebody left a flask on the wall."
     for at in range(80)
 )
-
 WATCH = r"""
 window.__first = { drawn: null, editor: null, gone: null, top: null, lines: null, list: null, raw: 0, rawSeen: 0 }
 const first = window.__first
@@ -65,7 +61,6 @@ const look = () => {
 }
 requestAnimationFrame(look)
 """
-
 EDITOR_LINES = r"""() => {
   const content = [...document.querySelectorAll('.cm-content')].find((one) => !one.closest('.panes > .first'))
   const box = content.closest('.cm-scroller').getBoundingClientRect()
@@ -73,7 +68,6 @@ EDITOR_LINES = r"""() => {
     .map((one) => ({ text: one.textContent, y: Math.round(one.getBoundingClientRect().top * 10) / 10, h: Math.round(one.getBoundingClientRect().height * 10) / 10 }))
     .filter((one) => one.y + one.h > box.top && one.y < box.bottom)
 }"""
-
 EDITOR_TOP = r"""() => {
   const content = [...document.querySelectorAll('.cm-content')].find((one) => !one.closest('.panes > .first'))
   const scroller = content.closest('.cm-scroller')
@@ -81,19 +75,15 @@ EDITOR_TOP = r"""() => {
   const line = [...content.querySelectorAll('.cm-line')].find((one) => one.getBoundingClientRect().bottom > box.top + 1)
   return line ? { text: line.textContent, y: Math.round(line.getBoundingClientRect().top * 10) / 10 } : null
 }"""
-
 KEPT = "() => !!localStorage.getItem('orden:first-screen')"
-
 def left_alone(page: Page) -> None:
     page.wait_for_timeout(1500)
     DRIVE.wait_for(page, KEPT, "the first screen to be kept", 20)
     page.wait_for_timeout(500)
-
 def region(page: Page) -> dict[str, float]:
     return page.evaluate(
         "() => { const r = document.querySelector('.panes').getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } }"
     )
-
 def relaunched(page: Page, cdp) -> dict:
     cdp.send("Emulation.setCPUThrottlingRate", {"rate": 4})
     page.reload(wait_until="domcontentloaded")
@@ -108,7 +98,6 @@ def relaunched(page: Page, cdp) -> dict:
     found = page.evaluate("() => window.__first")
     found["held"] = held
     return found
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
     page.add_init_script(WATCH)
@@ -123,7 +112,6 @@ def drive(browser: Browser) -> None:
     left_alone(page)
     left = page.evaluate(EDITOR_TOP)
     say(f"left at {json.dumps(left)}")
-
     found = relaunched(page, cdp)
     at = lambda key: "-" if found[key] is None else f"{found[key]:.0f}"  # noqa: E731
     say(f"list at {at('list')} ms, drawing at {at('drawn')} ms, editor at {at('editor')} ms, drawing gone at {at('gone')} ms")
@@ -140,7 +128,6 @@ def drive(browser: Browser) -> None:
     say(f"first screen drawn at {drawn_at:.0f} ms, first frame painted at {frame_at:.0f} ms")
     if drawn_at is None or frame_at is None or drawn_at > frame_at + 20:
         wrong("the drawing was not in the launch's first frame")
-
     top = found["top"]
     after = page.evaluate(EDITOR_TOP)
     say(f"drawn top {json.dumps(top)}, editor top {json.dumps(after)}")
@@ -148,11 +135,9 @@ def drive(browser: Browser) -> None:
         wrong("the editor's top line is not the drawing's")
     if not left or not after or left["text"] != after["text"]:
         wrong("the note did not come back where it was left")
-
     say(f"frames with a heading's marks on screen: {found['raw']}, of them with nothing over them: {found['rawSeen']}")
     if found["rawSeen"]:
         wrong(f"the note showed its marks for {found['rawSeen']} frames")
-
     drawn = found["lines"] or []
     now = page.evaluate(EDITOR_LINES)
     moved = [
@@ -163,16 +148,13 @@ def drive(browser: Browser) -> None:
     say(f"{len(drawn)} lines drawn, {len(now)} in the editor, {len(moved)} moved")
     if not drawn or len(drawn) != len(now) or moved:
         wrong(f"lines moved at the handover: {moved[:3]}")
-
     if found["held"] is not None:
         (DRIVE.shots / "01-drawn.png").write_bytes(found["held"])
         (DRIVE.shots / "02-editor.png").write_bytes(page.screenshot(clip=region(page), animations="disabled"))
-
     page.evaluate("() => sessionStorage.setItem('first-screen-other-words', '1')")
     changed = relaunched(page, cdp)
     if changed["drawn"] is not None:
         wrong("a screen kept of other words was drawn")
     else:
         say("a screen kept of other words was not drawn")
-
 raise SystemExit(DRIVE.run(drive, "the note was on screen in the first frame and its editor took over in place"))

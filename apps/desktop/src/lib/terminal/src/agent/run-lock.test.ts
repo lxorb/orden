@@ -2,16 +2,13 @@ import { describe, expect, test, vi } from 'vitest'
 import { callerOf } from '../../../automation/src/api'
 
 const spaceW = { id: 'w', root: '/s/Work', name: 'Work' }
-
 vi.mock('../../../workspace/src/api', () => ({
   agentMarks: { opened: {}, on: {} },
   workspace: { spaces: [spaceW], activeSpace: spaceW, tabs: [], spaceOf: () => 'w' },
 }))
-
 vi.mock('../shells.svelte', () => ({
   shells: { ask: async () => [], chosen: { id: 'bash', name: 'bash' } },
 }))
-
 const channels: { onmessage: (message: unknown) => void }[] = []
 vi.mock('../../../crate/src/api', () => ({
   Channel: class {
@@ -21,7 +18,6 @@ vi.mock('../../../crate/src/api', () => ({
     }
   },
 }))
-
 const calls: { name: string; args: Record<string, unknown> }[] = []
 vi.mock('../../../platform/src/api', async (original) => ({
   ...(await original<Record<string, unknown>>()),
@@ -36,18 +32,14 @@ vi.mock('../../../platform/src/api', async (original) => ({
     return null
   },
 }))
-
 vi.mock('../../../agent-verbs/src/api', async (original) => ({
   ...(await original<Record<string, unknown>>()),
   stopSignal: async () => ({ signal: new AbortController().signal, end: () => undefined }),
 }))
-
 const { protection } = await import('../../../protect/src/api')
 const { runTerminal } = await import('./run')
-
 const agent = (mode: string) =>
   callerOf({ id: 'x', name: 'X', scopes: ['terminal'], spaces: ['Work'], mode, programs: ['git'] })
-
 describe('a listed command an agent runs', () => {
   test.each([
     ['in a folder shut to agents', 'Private'],
@@ -63,7 +55,6 @@ describe('a listed command an agent runs', () => {
     expect(calls.find((one) => one.name === 'agents_ask')?.args.category).toBe('terminal')
     protection.set('/s/Work', '/s/Work/Private', null)
   })
-
   test('runs unasked where nothing is shut', async () => {
     calls.length = 0
     const answer = await runTerminal({
@@ -74,7 +65,6 @@ describe('a listed command an agent runs', () => {
     expect(answer).toMatchObject({ status: 'ok' })
     expect(calls.some((one) => one.name === 'agents_ask')).toBe(false)
   })
-
   test('asks as writing when every change is confirmed', async () => {
     calls.length = 0
     await runTerminal({

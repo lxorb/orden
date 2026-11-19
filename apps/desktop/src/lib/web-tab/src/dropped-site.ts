@@ -10,7 +10,6 @@ const ENTITIES: Record<string, string> = {
   apos: "'",
   nbsp: ' ',
 }
-
 export function linkWords(html: string): string {
   const inner = /<a(?:\s[^>]*)?>([\s\S]*?)<\/a>/i.exec(html)?.[1] ?? ''
   return inner
@@ -24,12 +23,10 @@ export function linkWords(html: string): string {
     .replace(/\s+/g, ' ')
     .trim()
 }
-
 export async function siteDropped(ws: Sites, folder: string, list: string, html: string): Promise<string | null> {
   if (!canWriteAt(folder)) return null
   const url = droppedAddress((type) => (type === 'text/uri-list' ? list : ''))
   if (url === null) return null
-
   const words = linkWords(html)
   const title = words && words !== url ? words : plainOrigin(url)
   return newSite(ws, folder, title, url)

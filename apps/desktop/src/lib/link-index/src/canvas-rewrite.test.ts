@@ -15,10 +15,8 @@ const rewriteCanvasLinks = (
     (file) => (file === move.from ? move.to : null),
     (link) => (points(link) ? move.to : null),
   )
-
 const move = { from: 'Old.md', to: 'New.md' }
 const namesOld = (link: { target: string }) => link.target === 'Old' || link.target === 'Old.md'
-
 const obsidian = JSON.stringify(
   {
     nodes: [
@@ -54,34 +52,27 @@ const obsidian = JSON.stringify(
   null,
   '\t',
 )
-
 describe('a canvas linking a renamed note', () => {
   test('changes the paths to it and not one other character', () => {
     const out = rewriteCanvasLinks(obsidian, 'Board.canvas', move, namesOld)
-
     const expected = obsidian.replace('"file": "Old.md"', '"file": "New.md"').replace('[[Old]]', '[[New]]')
     expect(out).toBe(expected)
   })
-
   test('is written as it is when nothing on it names the note', () => {
     const other = { from: 'Elsewhere.md', to: 'There.md' }
     expect(rewriteCanvasLinks(obsidian, 'Board.canvas', other, () => false)).toBeNull()
   })
-
   test('takes a new name that JSON has to escape', () => {
     const quoted = { from: 'Old.md', to: 'A "quoted" name.md' }
     const out = rewriteCanvasLinks(obsidian, 'Board.canvas', quoted, namesOld)
-
     expect(out).not.toBeNull()
     const nodes = (JSON.parse(out ?? '{}') as { nodes: { id: string; file?: string }[] }).nodes
     expect(nodes.find((one) => one.id === 'a')?.file).toBe('A "quoted" name.md')
   })
-
   test('leaves a file that is not JSON alone', () => {
     expect(rewriteCanvasLinks('{"nodes": [', 'Board.canvas', move, namesOld)).toBeNull()
   })
 })
-
 describe('a plane that keeps times, linking a renamed note', () => {
   const plane = (at: string) =>
     `{"nodes":[{"id":"a","type":"file","file":"Old.md","x":0,"y":0,"width":1,"height":1},` +
@@ -98,11 +89,9 @@ describe('a plane that keeps times, linking a renamed note', () => {
       (link) => (namesOld(link) ? 'New.md' : null),
       500,
     )
-
   test('stamps the cards it changed as changed now, and no other', () => {
     expect(times(rewrite(plane('{"a": 1, "b": 2, "c": 3}')))).toEqual({ a: 500, b: 500, c: 3 })
   })
-
   test('gives a card that had no time one', () => {
     expect(times(rewrite(plane('{"c": 3}')))).toEqual({ a: 500, b: 500, c: 3 })
     expect(times(rewrite(plane('{}')))).toEqual({ a: 500, b: 500 })

@@ -15,16 +15,13 @@
     choose: (space: Space) => void
     about?: (event: MouseEvent, space: Space) => void
   } = $props()
-
   const buttons = $state<Record<number, HTMLButtonElement | null>>({})
-
   const shown = $derived(
     typing.reading.shown.flatMap((at) => {
       const space = workspace.shownSpaces[at]
       return space ? [{ space, at }] : []
     }),
   )
-
   $effect(() => {
     const best = typing.reading.best
     if (best >= 0) void tick().then(() => buttons[best]?.focus())
@@ -58,16 +55,13 @@
     display: flex;
     align-items: center;
   }
-
   .line .orden-row {
     flex: 1;
     min-width: 0;
   }
-
   button:focus-visible {
     outline-offset: -1px;
   }
-
   button:global(.is-drop) {
     box-shadow: inset 0 0 0 1px var(--accent);
     background: var(--accent-soft);

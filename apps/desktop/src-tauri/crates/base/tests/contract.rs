@@ -16,13 +16,11 @@ fn a_lane_does_its_work_in_the_order_it_was_handed() {
         (0..10).collect::<Vec<_>>()
     );
 }
-
 #[test]
 fn work_off_the_runtime_hands_back_what_it_made() {
     let made = tauri::async_runtime::block_on(lane::off_the_runtime(|| 6 * 7));
     assert_eq!(made, 42);
 }
-
 #[test]
 fn a_folded_path_stays_inside_its_root_and_climbing_out_is_seen() {
     let root = Path::new("/spaces/Work");
@@ -37,7 +35,6 @@ fn a_folded_path_stays_inside_its_root_and_climbing_out_is_seen() {
     assert!(paths::is_markdown(Path::new("a/b.md")));
     assert!(!paths::is_markdown(Path::new("a/b.pdf")));
 }
-
 #[test]
 fn a_rename_never_takes_the_place_of_what_is_there() {
     let dir = tempfile::tempdir().expect("a folder");
@@ -51,7 +48,6 @@ fn a_rename_never_takes_the_place_of_what_is_there() {
     carry::rename_new(&from, &free).expect("a free name");
     assert_eq!(std::fs::read_to_string(&free).expect("moved"), "a");
 }
-
 #[test]
 fn a_whole_write_lands_whole() {
     let dir = tempfile::tempdir().expect("a folder");
@@ -62,14 +58,12 @@ fn a_whole_write_lands_whole() {
         Some(b"{}".to_vec())
     );
 }
-
 #[test]
 fn only_the_main_and_numbered_windows_hold_documents() {
     assert!(labels::is_document_window(labels::MAIN));
     assert!(labels::is_document_window("orden-3"));
     assert!(!labels::is_document_window("orden-quick-add"));
 }
-
 #[test]
 fn bytes_come_raw_or_as_numbers() {
     let raw = InvokeBody::Raw(vec![1, 2]);
@@ -81,7 +75,6 @@ fn bytes_come_raw_or_as_numbers() {
     );
     assert!(sent::bytes_sent(&InvokeBody::Json(serde_json::json!("x"))).is_none());
 }
-
 #[test]
 fn a_moment_is_written_the_iso_way() {
     assert_eq!(clock::iso(0), "1970-01-01T00:00:00.000Z");

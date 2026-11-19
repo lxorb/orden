@@ -6,7 +6,6 @@ pub struct Program {
     pub exe: PathBuf,
     pub path: OsString,
 }
-
 pub fn endings(command: &str) -> Vec<String> {
     if cfg!(windows) && Path::new(command).extension().is_none() {
         [".exe", ".cmd", ".bat", ".com"]
@@ -17,7 +16,6 @@ pub fn endings(command: &str) -> Vec<String> {
         vec![command.to_owned()]
     }
 }
-
 pub fn runnable(file: &Path) -> bool {
     #[cfg(unix)]
     {
@@ -30,7 +28,6 @@ pub fn runnable(file: &Path) -> bool {
         file.is_file()
     }
 }
-
 pub fn installed_in(home: Option<&Path>, appdata: Option<&Path>) -> Vec<PathBuf> {
     let mut found = Vec::new();
     if let Some(home) = home {
@@ -67,7 +64,6 @@ pub fn installed_in(home: Option<&Path>, appdata: Option<&Path>) -> Vec<PathBuf>
     }
     found
 }
-
 pub fn first_in(
     folders: &[PathBuf],
     names: &[String],
@@ -78,24 +74,20 @@ pub fn first_in(
         .flat_map(|folder| names.iter().map(move |name| folder.join(name)))
         .find(|candidate| is_file(candidate))
 }
-
 pub fn with_first(folder: Option<&Path>, path: &OsStr) -> OsString {
     let mut folders: Vec<PathBuf> = folder.map(Path::to_path_buf).into_iter().collect();
     folders.extend(std::env::split_paths(path));
     std::env::join_paths(folders).unwrap_or_else(|_| path.to_owned())
 }
-
 pub fn find(command: &str, outright: &str) -> Option<Program> {
     let path = search_path();
     let exe = named_outright(outright).or_else(|| on(command, &path))?;
     let path = with_first(exe.parent(), &path);
     Some(Program { exe, path })
 }
-
 pub fn which(command: &str) -> Option<PathBuf> {
     on(command, &search_path())
 }
-
 fn on(command: &str, path: &OsStr) -> Option<PathBuf> {
     let home = dirs::home_dir();
     let appdata = std::env::var_os("APPDATA").map(PathBuf::from);
@@ -103,13 +95,11 @@ fn on(command: &str, path: &OsStr) -> Option<PathBuf> {
     folders.extend(installed_in(home.as_deref(), appdata.as_deref()));
     first_in(&folders, &endings(command), runnable)
 }
-
 fn named_outright(name: &str) -> Option<PathBuf> {
     std::env::var_os(name)
         .map(PathBuf::from)
         .filter(|path| path.is_file())
 }
-
 pub fn search_path() -> OsString {
     let own = std::env::var_os("PATH").unwrap_or_default();
     #[cfg(unix)]
@@ -122,16 +112,13 @@ pub fn search_path() -> OsString {
     }
     own
 }
-
 #[cfg(unix)]
 fn login_path() -> Option<&'static OsStr> {
     static ASKED: std::sync::OnceLock<Option<OsString>> = std::sync::OnceLock::new();
     ASKED.get_or_init(ask_login_shell).as_deref()
 }
-
 #[cfg(any(unix, test))]
 const MARK: &str = "__orden_path__=";
-
 #[cfg(any(unix, test))]
 fn marked_path(printed: &str) -> Option<&str> {
     printed
@@ -140,7 +127,6 @@ fn marked_path(printed: &str) -> Option<&str> {
         .find_map(|line| line.trim().strip_prefix(MARK))
         .filter(|path| !path.is_empty())
 }
-
 #[cfg(unix)]
 fn ask_login_shell() -> Option<OsString> {
     let shell = std::env::var_os("SHELL")?;
@@ -149,7 +135,6 @@ fn ask_login_shell() -> Option<OsString> {
         std::time::Duration::from_secs(5),
     )
 }
-
 #[cfg(unix)]
 fn path_from_shell(
     mut shell: std::process::Command,
@@ -168,7 +153,6 @@ fn path_from_shell(
         .spawn()
         .ok()?;
     let heard = crate::printed::chunks(child.stdout.take()?);
-
     let started = Instant::now();
     let mut printed = Vec::new();
     let found = loop {
@@ -195,7 +179,6 @@ fn path_from_shell(
     }
     found.map(|path| OsString::from_vec(path.into_bytes()))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -214,18 +197,15 @@ mod tests {
         )
         .expect("a shell");
         std::fs::set_permissions(&shell, std::fs::Permissions::from_mode(0o755)).expect("runnable");
-
         let started = std::time::Instant::now();
         let found = path_from_shell(
             std::process::Command::new(&shell),
             std::time::Duration::from_secs(20),
         );
-
         assert_eq!(found.as_deref(), Some(OsStr::new("/from/the/shell")));
         assert!(started.elapsed() < std::time::Duration::from_secs(5));
         let _ = std::fs::remove_dir_all(&dir);
     }
-
     #[test]
     fn the_path_first_then_where_installers_put_it() {
         let home = Path::new("/home/e");
@@ -238,7 +218,6 @@ mod tests {
             assert!(found.contains(&home.join(".local/share/mise/shims")));
         }
     }
-
     #[test]
     fn the_first_folder_that_holds_one_wins_and_an_exe_before_npm_s_cmd() {
         let folders = [PathBuf::from("a"), PathBuf::from("b")];
@@ -257,7 +236,6 @@ mod tests {
             assert_eq!(endings("claude.cmd"), ["claude.cmd"]);
         }
     }
-
     #[test]
     fn the_program_s_own_folder_goes_first_on_its_path() {
         let path = std::env::join_paths([PathBuf::from("x"), PathBuf::from("y")]).expect("joined");
@@ -272,7 +250,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn the_login_shell_s_path_is_the_marked_line() {
         let printed = "Welcome\n[oh-my-zsh] update\n\n__orden_path__=/opt/homebrew/bin:/usr/bin\n";
@@ -280,7 +257,6 @@ mod tests {
         assert_eq!(marked_path("no mark here"), None);
         assert_eq!(marked_path("__orden_path__=\n"), None);
     }
-
     #[cfg(unix)]
     fn home_with_rc(rc: &str) -> PathBuf {
         let home =
@@ -291,7 +267,6 @@ mod tests {
         }
         home
     }
-
     #[cfg(unix)]
     fn login_shells() -> Vec<&'static str> {
         ["/bin/zsh", "/bin/bash"]
@@ -299,7 +274,6 @@ mod tests {
             .filter(|shell| Path::new(shell).exists())
             .collect()
     }
-
     #[cfg(unix)]
     fn asked(shell: &str, home: &Path, patience: std::time::Duration) -> Option<OsString> {
         let mut command = std::process::Command::new(shell);
@@ -309,7 +283,6 @@ mod tests {
             .env_remove("BASH_ENV");
         path_from_shell(command, patience)
     }
-
     #[cfg(unix)]
     #[test]
     fn a_real_login_shell_says_the_path_its_rc_sets_up() {
@@ -330,7 +303,6 @@ mod tests {
         }
         let _ = std::fs::remove_dir_all(&home);
     }
-
     #[cfg(unix)]
     #[test]
     fn a_login_shell_whose_rc_hangs_is_given_up_on() {
@@ -346,7 +318,6 @@ mod tests {
         }
         let _ = std::fs::remove_dir_all(&home);
     }
-
     #[test]
     fn a_command_is_looked_for_with_every_ending_windows_runs() {
         if cfg!(windows) {
@@ -359,7 +330,6 @@ mod tests {
             assert_eq!(endings("pandoc"), ["pandoc"]);
         }
     }
-
     #[test]
     fn the_folders_package_managers_use_are_all_looked_in() {
         let home = Path::new("/home/e");

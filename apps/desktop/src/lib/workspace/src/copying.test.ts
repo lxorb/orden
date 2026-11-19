@@ -7,7 +7,6 @@ const { told, disk, reads } = vi.hoisted(() => ({
   told: [] as string[],
   disk: new Map<string, string>(),
 }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: async (command: string, args: { from: string; to: string; path: string; content: string }) => {
@@ -34,9 +33,7 @@ vi.mock('../../file-writes/src/api', async (original) => ({
   writeBytes: async () => undefined,
   writeFile: async (path: string, content: string) => void disk.set(path, content),
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { serveWorkspace } = await import('./services')
 serveWorkspace({
   rowsCopied: () =>
@@ -49,9 +46,7 @@ serveWorkspace({
 const { copyRows } = await import('./copying')
 const { ItemMetaStore } = await import('../../space-kept/src/api')
 const { Protection } = await import('../../protect/src/protection.svelte')
-
 const meta = new ItemMetaStore((path) => (path?.startsWith('/t/') ? '/t' : '/s'))
-
 const entry = (path: string, children: Entry[] = []): Entry => ({
   name: path.replace(/^.*\//, ''),
   path,
@@ -60,7 +55,6 @@ const entry = (path: string, children: Entry[] = []): Entry => ({
   created: 0,
   children,
 })
-
 function rig(entries: Entry[]) {
   told.length = 0
   reads.length = 0
@@ -84,7 +78,6 @@ function rig(entries: Entry[]) {
     pageNoteForPdf: async () => null,
   }
 }
-
 describe('a copied folder note', () => {
   test('is renamed before the copy is told, and is never told as a move', async () => {
     disk.clear()
@@ -99,7 +92,6 @@ describe('a copied folder note', () => {
     ])
   })
 })
-
 describe('a copied note in a base that numbers its rows', () => {
   test('comes without the id, so the original keeps it', async () => {
     disk.clear()
@@ -114,7 +106,6 @@ describe('a copied note in a base that numbers its rows', () => {
     expect(disk.get('/s/Bugs/2025/A.md')).toBe('---\nstatus: Doing\n---\nText\n')
     expect(disk.get('/s/Bugs/A.md')).toContain('id: BUG-2')
   })
-
   test('and every note of a copied folder does too', async () => {
     disk.clear()
     disk.set('/s/Bugs/Sprint/X.md', '---\nid: BUG-3\n---\n')
@@ -131,7 +122,6 @@ describe('a copied note in a base that numbers its rows', () => {
     expect(told.at(-1)).toBe('came /s/Bugs/2025/Sprint')
   })
 })
-
 describe('a copy keeps what Orden keeps about the item', () => {
   test('a copied note keeps its metadata, icon and all', async () => {
     disk.clear()
@@ -150,7 +140,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
       'done-on': 'abc:20261101',
     })
   })
-
   test('every note of a copied folder keeps its own, the renamed folder note too', async () => {
     disk.clear()
     disk.set('/s/Trip/Trip.md', '# Trip\n')
@@ -166,7 +155,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
     expect(meta.of('/s/Trip copy/Packing.md')).toEqual({ 'todo-list': 'yes' })
     expect(meta.of('/s/Trip/Trip.md')).toEqual({ cover: 'sea' })
   })
-
   test('a note copied into another space takes it there', async () => {
     disk.clear()
     disk.set('/s/Plan.md', '- [ ] Call\n')
@@ -175,7 +163,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
     await copyRows(ws as never, [{ from: '/s/Plan.md', into: '/t' }])
     expect(meta.of('/t/Plan.md', '/t')).toEqual({ 'todo-list': 'yes' })
   })
-
   test('a protected note copied leaves a copy that is as protected', async () => {
     disk.clear()
     disk.set('/s/Diary.md', 'what nobody may read\n')
@@ -192,7 +179,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
     )
     expect(protection.covering('/t/Diary.md')).toEqual([{ root: '/t', key: 'Diary.md', way: 'password' }])
   })
-
   test('a folder whose folder note is protected leaves a copy whose renamed folder note is as protected', async () => {
     disk.clear()
     disk.set('/s/Trip/Trip.md', '# Trip\n')
@@ -204,7 +190,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
     expect(protection.agentsMay('/s/Trip copy/Trip copy.md')).toBe(false)
   })
 })
-
 describe('a copy that fails', () => {
   test('takes its placeholder row out of the tree again', async () => {
     disk.clear()

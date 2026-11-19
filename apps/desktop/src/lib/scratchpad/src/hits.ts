@@ -8,7 +8,6 @@ export async function scratchpadHits(query: Query, most: number): Promise<Hit[]>
   const path = await scratchpad.where().catch(() => null)
   const body = path === null ? '' : await scratchpad.text()
   if (path === null || !body.trim()) return []
-
   const name = noteName(SCRATCHPAD)
   return new Matcher(query).hits({ path, relative: name, name, body }, most)
 }

@@ -12,15 +12,12 @@ export async function openExplorer(folder?: string, activate = true): Promise<Ta
   const words = at ? writeSpec({ folder: at, back: [], ahead: [] }) : ''
   return workspace.openUnsaved('explorer', words, at ? folderName(at) : 'File explorer', null, activate)
 }
-
 export function ordenOpens(path: string): boolean {
   if (!inASpace(path)) return false
   const mark = fileMark(nameOf(path))
   return mark !== 'file' && mark !== 'picture'
 }
-
 export const inASpace = (path: string): boolean => spaceHolding(workspace.spaces, path) !== null
-
 export async function openFile(path: string) {
   if (ordenOpens(path)) await workspace.openEntry(path)
   else await openWithSystem(path)

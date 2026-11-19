@@ -1,7 +1,6 @@
 pub fn forget() {
     platform::forget();
 }
-
 mod platform {
     use std::ptr;
     use windows::core::{w, PCWSTR};
@@ -16,7 +15,6 @@ mod platform {
     const EXTENSION: PCWSTR = w!("Software\\Classes\\.md");
     const TYPE: &str = "Orden.Markdown";
     const TYPE_KEY: PCWSTR = w!("Software\\Classes\\Orden.Markdown");
-
     #[allow(unsafe_code)]
     fn default_of(root: HKEY, key: PCWSTR) -> Option<String> {
         let mut buffer = [0u16; 260];
@@ -38,16 +36,13 @@ mod platform {
         let length = buffer.iter().position(|unit| *unit == 0).unwrap_or(0);
         Some(String::from_utf16_lossy(&buffer[..length])).filter(|text| !text.is_empty())
     }
-
     #[allow(unsafe_code)]
     fn told() {
         unsafe { SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None) };
     }
-
     #[allow(unsafe_code)]
     pub fn read() -> bool {
         let mut key = HKEY::default();
-
         unsafe {
             let opened =
                 RegOpenKeyExW(HKEY_CURRENT_USER, KEY, 0, KEY_READ, ptr::from_mut(&mut key));
@@ -56,10 +51,8 @@ mod platform {
             }
             let _ = RegCloseKey(key);
         }
-
         true
     }
-
     #[allow(unsafe_code)]
     pub fn forget() {
         if !read() {
@@ -75,7 +68,6 @@ mod platform {
         told();
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::platform::{forget, read};
@@ -102,7 +94,6 @@ mod tests {
             let _ = RegCloseKey(key);
         }
     }
-
     #[test]
     fn an_entry_an_older_build_put_in_explorers_new_menu_goes() {
         if std::env::var_os("CI").is_none() {

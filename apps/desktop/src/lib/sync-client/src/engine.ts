@@ -38,12 +38,10 @@ import { put, type Change, type EntryRow, type LogRow, type SyncStore } from './
 import type { World } from './world'
 
 type Listeners = { [T in keyof EngineEvents]: Set<(event: EngineEvents[T]) => void> }
-
 export interface Starting {
   names?: Names
   freshens?: boolean
 }
-
 export interface AwayFile {
   id: string
   space: string
@@ -53,12 +51,10 @@ export interface AwayFile {
   modified: number
   docSeq: number
 }
-
 export interface Placed {
   space: SpaceState
   path: string
 }
-
 export class Engine implements AskedEngine {
   readonly held: HeldList
   private readonly listeners: Listeners = {
@@ -68,7 +64,6 @@ export class Engine implements AskedEngine {
     file: new Set(),
     placed: new Set(),
   }
-
   private constructor(
     readonly core: Core,
     names: Names,
@@ -87,9 +82,7 @@ export class Engine implements AskedEngine {
       }
     }
   }
-
   private readonly unheld = new Map<string, Set<() => void>>()
-
   whenLetGo(id: string, then: () => void): () => void {
     const told = this.unheld.get(id) ?? new Set()
     told.add(then)
@@ -99,7 +92,6 @@ export class Engine implements AskedEngine {
       if (!told.size) this.unheld.delete(id)
     }
   }
-
   static async start(world: World, store: SyncStore, how: Starting = {}): Promise<Engine> {
     const core = await Core.open(world, store)
     const engine = new Engine(core, how.names ?? ((device) => Promise.resolve(device ?? '')))
@@ -107,29 +99,24 @@ export class Engine implements AskedEngine {
     await engine.held.refresh()
     return engine
   }
-
   get store(): Pick<SyncStore, 'read'> {
     return this.core.store
   }
-
   on<T extends keyof EngineEvents>(type: T, listener: (event: EngineEvents[T]) => void): () => void {
     const listening: Set<(event: EngineEvents[T]) => void> = this.listeners[type]
     listening.add(listener)
     return () => listening.delete(listener)
   }
-
   private emit<T extends keyof EngineEvents>(type: T, event: EngineEvents[T]) {
     const listening: Set<(event: EngineEvents[T]) => void> = this.listeners[type]
     for (const listener of [...listening]) listener(event)
   }
-
   async said(spaceId: string, failed: string): Promise<void> {
     const at = this.core.world.now()
     const row: LogRow = { at, space: spaceId, pulled: null, pushed: null, failed }
     await this.core.commit([put('log', row)]).catch(() => undefined)
     this.emit('pass', row)
   }
-
   async pass(spaceId: string): Promise<Passed | null> {
     const space = this.core.spaces.get(spaceId)
     if (!space) return null
@@ -157,7 +144,6 @@ export class Engine implements AskedEngine {
     }
     return passed
   }
-
   waiting(spaceId: string): boolean {
     const space = this.core.spaces.get(spaceId)
     if (!space) return false
@@ -167,7 +153,6 @@ export class Engine implements AskedEngine {
     }
     return false
   }
-
   placed(path: string): Placed | null {
     const spaces = [...this.core.spaces.values()]
     for (const foldsCase of this.core.world.foldsCase ? [false, true] : [false]) {
@@ -178,13 +163,11 @@ export class Engine implements AskedEngine {
     }
     return null
   }
-
   entryAt(path: string) {
     const placed = this.placed(path)
     if (!placed || inForeignCopy(placed.path)) return null
     return placed.space.at(placed.path)
   }
-
   foreignCopies(): { space: SpaceState; entry: EntryRow }[] {
     const found: { space: SpaceState; entry: EntryRow }[] = []
     for (const space of this.core.spaces.values()) {
@@ -196,7 +179,6 @@ export class Engine implements AskedEngine {
     }
     return found
   }
-
   unsync(): Promise<number> {
     return this.core.use(async () => {
       const copies = this.foreignCopies()
@@ -205,7 +187,6 @@ export class Engine implements AskedEngine {
       return copies.length
     })
   }
-
   private folderPlaced(folder: string): Placed | null {
     for (const foldsCase of this.core.world.foldsCase ? [false, true] : [false]) {
       for (const space of this.core.spaces.values()) {
@@ -214,13 +195,11 @@ export class Engine implements AskedEngine {
     }
     return this.placed(folder)
   }
-
   placedIn(folder: string): string[] | null {
     const placed = this.folderPlaced(folder)
     if (!placed?.space.ordering.on) return null
     return placed.space.placedNames().get(placed.space.key(placed.path))?.names ?? null
   }
-
   placedFolders(root: string): Map<string, string[]> {
     const placed = this.folderPlaced(root)
     const out = new Map<string, string[]>()
@@ -228,18 +207,15 @@ export class Engine implements AskedEngine {
     for (const { folder, names } of placed.space.placedNames().values()) out.set(folder, names)
     return out
   }
-
   keepsPlaces(folder: string): boolean {
     const placed = this.folderPlaced(folder)
     return !!placed?.space.ordering.on && placed.space.folderAt(placed.path) !== undefined
   }
-
   describedIn(root: string): Record<string, ItemMeta> | null {
     const placed = this.folderPlaced(root)
     if (!placed?.space.ordering.describes || placed.path) return null
     return Object.fromEntries(placed.space.described())
   }
-
   describe(root: string, patches: Readonly<Record<string, MetaPatch>>): Promise<string[] | null> {
     return this.core.use(async () => {
       const placed = this.folderPlaced(root)
@@ -256,7 +232,6 @@ export class Engine implements AskedEngine {
       return left
     })
   }
-
   arrange(folder: string, order: readonly string[], count: number): Promise<boolean> {
     return this.core.use(async () => {
       const placed = this.folderPlaced(folder)
@@ -276,7 +251,6 @@ export class Engine implements AskedEngine {
       return true
     })
   }
-
   awayFiles(): AwayFile[] {
     const out: AwayFile[] = []
     for (const space of this.core.spaces.values()) {
@@ -298,7 +272,6 @@ export class Engine implements AskedEngine {
     }
     return out
   }
-
   awayAt(path: string): Pick<AwayFile, 'id' | 'path' | 'size' | 'modified'> | null {
     if (this.core.handPaths.length) return null
     const placed = this.placed(path)
@@ -306,7 +279,6 @@ export class Engine implements AskedEngine {
     if (!placed || !entry || !away(placed.space, entry)) return null
     return { id: entry.id, path, size: entry.size ?? 0, modified: entry.mtime ?? 0 }
   }
-
   fetch(path: string): Promise<boolean> {
     return this.core.use(async () => {
       const placed = this.placed(path)
@@ -322,7 +294,6 @@ export class Engine implements AskedEngine {
       return this.bring(placed.space, left)
     })
   }
-
   private async bring(space: SpaceState, entries: readonly EntryRow[]): Promise<boolean> {
     if (!entries.length) return true
     const ids = new Set(entries.map((one) => one.id))
@@ -344,7 +315,6 @@ export class Engine implements AskedEngine {
     await this.core.commit(kept ? [keepingChange(space)] : [])
     return true
   }
-
   private async carryAway(was: Placed, now: Placed): Promise<boolean> {
     const left = awayUnder(was.space, was.path)
     if (!left.length) return true
@@ -360,7 +330,6 @@ export class Engine implements AskedEngine {
     }
     return true
   }
-
   keptIds(spaceId: string): string[] {
     const space = this.core.spaces.get(spaceId)
     if (!space?.keepsFew) return []
@@ -368,13 +337,11 @@ export class Engine implements AskedEngine {
       entry.local_path && this.core.hasDoc(entry.id) ? [entry.id] : [],
     )
   }
-
   keepingFew(): { id: string; root: string }[] {
     return [...this.core.spaces.values()].flatMap((space) =>
       space.keepsFew ? [{ id: space.id, root: space.row.root }] : [],
     )
   }
-
   keepWhole(spaceId: string): Promise<void> {
     return this.core.use(async () => {
       const space = this.core.spaces.get(spaceId)
@@ -383,21 +350,16 @@ export class Engine implements AskedEngine {
       await this.core.commit([keepingChange(space)])
     })
   }
-
   isLive(id: string): boolean {
     return this.core.spaceOf(id)?.isLive(id) ?? false
   }
-
   trim(budget: number, how: LettingGo): Promise<number> {
     return this.core.use(() => trim(this.core, budget, how))
   }
-
   created(path: string, folder: boolean, text?: string, mergeable?: string): Promise<string | null> {
     return this.core.use(() => this.oneAt(path, () => this.make(path, folder, text, mergeable)))
   }
-
   private readonly making = new Map<string, Promise<unknown>>()
-
   private async oneAt<T>(path: string, work: () => Promise<T>): Promise<T> {
     const at = path.replace(/\\/g, '/').normalize('NFC')
     const key = this.core.world.foldsCase ? at.toLowerCase() : at
@@ -410,7 +372,6 @@ export class Engine implements AskedEngine {
       if (this.making.get(key) === settled) this.making.delete(key)
     }
   }
-
   private async make(path: string, folder: boolean, text?: string, mergeable?: string): Promise<string | null> {
     const placed = this.placed(path)
     if (!placed) return null
@@ -433,11 +394,9 @@ export class Engine implements AskedEngine {
     await this.settle(placed.space)
     return id
   }
-
   moved(from: string, to: string): Promise<void> {
     return this.core.use(() => this.move(from, to))
   }
-
   private async move(from: string, to: string): Promise<void> {
     const was = this.placed(from)
     const now = this.placed(to)
@@ -474,7 +433,6 @@ export class Engine implements AskedEngine {
     await this.core.commit(moved(this.core, was.space, was.path, now.path))
     await this.settle(was.space)
   }
-
   async moving(from: string, to: string, run: () => Promise<void>): Promise<void> {
     const was = this.placed(from)
     const now = this.placed(to)
@@ -504,7 +462,6 @@ export class Engine implements AskedEngine {
     }
     await this.core.use(() => this.settle(space))
   }
-
   private async leaving(was: Placed, run: () => Promise<void>): Promise<void> {
     const { space } = was
     const here = await this.core.use(() => this.bring(space, awayUnder(space, was.path)))
@@ -516,7 +473,6 @@ export class Engine implements AskedEngine {
       release()
     }
   }
-
   async removing(path: string, run: () => Promise<unknown>): Promise<void> {
     const placed = this.placed(path)
     const release = this.handle(placed ? atOrUnder(placed.space, placed.path) : [], [path])
@@ -527,7 +483,6 @@ export class Engine implements AskedEngine {
       release()
     }
   }
-
   private handle(entries: readonly EntryRow[], paths: readonly string[]): () => void {
     const { inHand, handPaths } = this.core
     for (const entry of entries) inHand.set(entry.id, (inHand.get(entry.id) ?? 0) + 1)
@@ -545,11 +500,9 @@ export class Engine implements AskedEngine {
       }
     }
   }
-
   private normed(path: string): string {
     return norm(this.placed(path)?.space.row.root ?? path, path)
   }
-
   ownWork(path: string): boolean {
     const at = this.normed(path)
     const folded = (one: string) => (this.core.world.foldsCase ? one.toLowerCase() : one)
@@ -569,16 +522,13 @@ export class Engine implements AskedEngine {
     }
     return false
   }
-
   private async heldPaper(path: string): Promise<boolean> {
     const holder = holderOf(path)
     return holder !== null && (await this.core.world.disk.read(holder)) !== null
   }
-
   removed(path: string, back?: string): Promise<void> {
     return this.core.use(() => this.remove(path, back))
   }
-
   restored(path: string, back: string): Promise<boolean> {
     return this.core.use(async () => {
       const placed = this.placed(path)
@@ -593,7 +543,6 @@ export class Engine implements AskedEngine {
       return true
     })
   }
-
   private async remove(path: string, back?: string): Promise<void> {
     const placed = this.placed(path)
     if (!placed) return
@@ -602,7 +551,6 @@ export class Engine implements AskedEngine {
     await this.settle(placed.space)
     await this.held.refresh()
   }
-
   private async settle(space: SpaceState) {
     const forgets: Change[] = []
     const changed = await settle(space, {
@@ -615,7 +563,6 @@ export class Engine implements AskedEngine {
     await this.core.commit([...this.core.entryChanges(changed), ...forgets])
     if (changed.length) this.core.events.placed?.({ moved: changed.length })
   }
-
   foldWritten(path: string): Promise<void> {
     return this.core.use(async () => {
       const placed = this.placed(path)
@@ -623,11 +570,9 @@ export class Engine implements AskedEngine {
       if (placed && entry) await this.core.commit(await foldIn(this.core, placed.space, entry))
     })
   }
-
   saved(path: string, text: string): Promise<void> {
     return this.core.use(() => this.wroteDown(path, text))
   }
-
   private async wroteDown(path: string, text: string): Promise<void> {
     const placed = this.placed(path)
     const entry = this.entryAt(path)
@@ -642,7 +587,6 @@ export class Engine implements AskedEngine {
     }
     await this.core.commit(await foldIn(this.core, placed.space, entry))
   }
-
   keepLost(id: string, lost: { local: boolean; remote: boolean }, local: string, remote: string): Promise<void> {
     return this.core.use(async () => {
       const space = this.core.spaceOf(id)
@@ -650,7 +594,6 @@ export class Engine implements AskedEngine {
       await this.core.commit(keepLosers(this.core, space, id, lost, local, remote))
     })
   }
-
   holdFile(id: string, base: string, local: string): Promise<void> {
     const against = { t: 'file', base, local } as const
     return this.core.commit(
@@ -666,11 +609,9 @@ export class Engine implements AskedEngine {
       }),
     )
   }
-
   pause(): Promise<void> {
     return this.core.use(() => this.paused())
   }
-
   private async paused(): Promise<void> {
     const changes: Change[] = []
     for (const doc of [...this.core.docs.values()]) {
@@ -682,7 +623,6 @@ export class Engine implements AskedEngine {
     }
     await this.core.commit(changes)
   }
-
   foreign(path: string): Promise<void> {
     return this.core.use(async () => {
       const placed = this.placed(path)
@@ -695,7 +635,6 @@ export class Engine implements AskedEngine {
       await this.core.commit(await foldIn(this.core, placed.space, entry))
     })
   }
-
   stamped(path: string, mtime: number, size: number): Promise<void> {
     return this.core.use(async () => {
       const placed = this.placed(path)
@@ -710,7 +649,6 @@ export class Engine implements AskedEngine {
       await this.core.commit(this.core.entryChanges([entry]))
     })
   }
-
   meet(id: string, update: Uint8Array): Promise<'go' | 'hold'> {
     return this.core.use(async () => {
       const doc = this.core.docs.get(id)
@@ -723,7 +661,6 @@ export class Engine implements AskedEngine {
       return met.held ? 'hold' : 'go'
     })
   }
-
   acked(id: string, seq: number, sv: Uint8Array): Promise<void> {
     return this.core.use(async () => {
       const doc = this.core.docs.get(id)
@@ -733,7 +670,6 @@ export class Engine implements AskedEngine {
       await this.core.commit(this.core.docChanges(doc))
     })
   }
-
   hold(id: string): Promise<Doc | null> {
     return this.core.use(async () => {
       const doc = await this.core.doc(id)
@@ -745,7 +681,6 @@ export class Engine implements AskedEngine {
       return doc
     })
   }
-
   letGo(id: string): Promise<void> {
     return this.core.use(async () => {
       this.core.pinned.delete(id)
@@ -755,39 +690,32 @@ export class Engine implements AskedEngine {
       await this.core.commit(this.core.dirtyChanges())
     })
   }
-
   flush(): Promise<void> {
     return this.core.use(() => this.writtenDown())
   }
-
   quit(): Promise<void> {
     return this.core.use(async () => {
       await this.writtenDown()
       await this.core.endedCleanly()
     })
   }
-
   private async writtenDown(): Promise<void> {
     for (const doc of this.core.docs.values()) doc.flush()
     await this.core.commit(this.core.dirtyChanges())
   }
-
   stop() {
     this.core.life += 1
     for (const doc of this.core.docs.values()) doc.close()
   }
 }
-
 function norm(root: string, value: string): string {
   return (windowsPath(root) ? value.replace(/\\/g, '/') : value).replace(/\/+$/, '')
 }
-
 function sameFolder(root: string, folder: string, foldsCase: boolean): boolean {
   const base = norm(root, root)
   const full = norm(root, folder)
   return foldsCase ? full.toLowerCase() === base.toLowerCase() : full === base
 }
-
 export function relative(root: string, path: string, foldsCase: boolean): string | null {
   const base = norm(root, root)
   const full = norm(root, path)

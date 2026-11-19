@@ -9,7 +9,6 @@
   import { workspace, middleOpens } from '../../workspace/src/api'
 
   type Row = Reference | Outgoing
-
   const {
     rows: all,
     onpick,
@@ -17,7 +16,6 @@
     rows: readonly Row[]
     onpick: (row: Row, press: MouseEvent) => void
   } = $props()
-
   const WALK = {
     rows: '.hit',
     open: (row: HTMLElement) => row.click(),
@@ -26,10 +24,8 @@
       row.focus()
     },
   }
-
   const root = $derived(workspace.activeSpace?.root ?? null)
   const noteOf = (row: Row): string | null => ('to' in row ? row.to : row.path)
-
   function placeOf(row: Row) {
     const note = noteOf(row)
     return {
@@ -38,16 +34,13 @@
       folder: note === null ? '' : folderOf(note),
     } as const
   }
-
   const OVERSCAN = 6
   const LEAST = 40
   let list = $state<HTMLUListElement>()
   const where = new ListView()
   let standing = $state<number | null>(null)
   let reaching = $state<number | null>(null)
-
   const pinned = $derived([standing, reaching].filter((one): one is number => one !== null && one < all.length))
-
   const rows = $derived<Rows>({
     count: all.length,
     height: where.row || LEAST,
@@ -56,60 +49,44 @@
     overscan: OVERSCAN,
     pinned,
   })
-
   const view = $derived(windowFor(rows))
-
   const drawn = $derived.by(() => {
     const out: { at: number; row: Reference; away: boolean }[] = []
-
     for (let at = 0; at < all.length; at++) {
       const row = all[at]
       if (!row) continue
-
       const inside = at >= view.first && at <= view.last
       const away = !inside && view.pinned.includes(at)
       if (inside || away) out.push({ at, row, away })
     }
-
     return out
   })
-
   $effect(() => {
     const ul = list
     if (!ul) return
-
     return where.follow(ul, (one) => measuredRow(one, LEAST))
   })
-
   async function reach(index: number): Promise<HTMLElement | null> {
     if (index < 0 || index >= all.length) return null
-
     reaching = index
     await tick()
-
     const line = list?.querySelector(`li[data-row="${index}"]`)
     if (!(line instanceof HTMLElement)) return null
-
     line.scrollIntoView({ block: 'nearest' })
     where.refresh()
-
     const found = line.querySelector('.hit')
     return found instanceof HTMLElement ? found : null
   }
-
   function indexOf(row: HTMLElement): number {
     const said = row.closest('li')?.dataset.row
     return said === undefined ? -1 : Number(said)
   }
-
   function onFocus(event: FocusEvent) {
     const from = event.target
     if (!(from instanceof HTMLElement)) return
-
     const at = indexOf(from)
     standing = at < 0 ? null : at
   }
-
   function onBlur() {
     standing = null
   }
@@ -164,11 +141,9 @@
     padding-top: var(--space-1);
     padding-bottom: var(--space-1);
   }
-
   .hit :global(.mark) {
     margin-top: calc((1lh - var(--icon-md)) / 2);
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -176,14 +151,12 @@
     flex-direction: column;
     gap: 1px;
   }
-
   .head {
     display: flex;
     align-items: baseline;
     gap: var(--row-gap);
     min-width: 0;
   }
-
   .hit-line {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -191,32 +164,26 @@
     color: var(--muted-strong);
     font-size: var(--text-xs);
   }
-
   .link {
     color: var(--accent);
   }
-
   .missing .orden-row-label {
     color: var(--muted);
     text-decoration: underline dotted;
     text-underline-offset: 0.16em;
   }
-
   :global([data-touch]) .hit-line {
     font-size: var(--text-sm);
   }
-
   ul {
     list-style: none;
     margin: 0;
     padding: 0;
     position: relative;
   }
-
   .gap {
     pointer-events: none;
   }
-
   .away {
     position: absolute;
     left: 0;

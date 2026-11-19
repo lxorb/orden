@@ -4,19 +4,15 @@ import { verbOf } from './verbs'
 type Notice = Extract<Part, { kind: 'notice' }>
 type Tool = Extract<Part, { kind: 'tool' }>
 type Row = Extract<Part, { kind: 'thinking' | 'tool' }>
-
 export type Block =
   | { kind: 'words'; text: string; at: number }
   | { kind: 'notice'; notice: Notice; at: number }
   | { kind: 'row'; row: Row; at: number }
   | { kind: 'explored'; rows: Tool[]; at: number }
-
 const LOOKING = new Set(['Read', 'Searched', 'Listed', 'Checked'])
-
 function looks(part: Part): part is Tool {
   return part.kind === 'tool' && part.state !== 'asking' && LOOKING.has(verbOf(part.verb) ?? '')
 }
-
 export function blocksOf(parts: readonly Part[]): Block[] {
   const out: Block[] = []
   parts.forEach((part, at) => {
@@ -32,7 +28,6 @@ export function blocksOf(parts: readonly Part[]): Block[] {
   })
   return out
 }
-
 export function foldOf(blocks: readonly Block[], live: boolean): { before: Block[]; work: Block[]; after: Block[] } {
   const first = blocks.findIndex((one) => one.kind === 'row' || one.kind === 'explored')
   const called = blocks.some((one) => one.kind === 'explored' || (one.kind === 'row' && one.row.kind === 'tool'))

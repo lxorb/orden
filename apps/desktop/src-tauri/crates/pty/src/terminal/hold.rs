@@ -15,37 +15,22 @@ use serde::{Deserialize, Serialize};
 use super::wire;
 
 pub const MODE: &str = "terminal-hold";
-
 pub const SPEC: &str = "ORDEN_HOLD";
-
 const SAID: &str = "orden-hold ";
-
 const REFUSED: &str = "orden-hold-refused ";
-
 const KEPT: usize = 4 << 20;
-
 const BEHIND: usize = 1 << 20;
-
 const PART: usize = 64 * 1024;
-
 const GREETED_WITHIN: Duration = Duration::from_secs(5);
-
 const STARTED_WITHIN: Duration = Duration::from_secs(20);
-
 const PARTING: Duration = Duration::from_secs(3);
-
 const SAID_AGAIN: Duration = Duration::from_millis(500);
-
 const LINGER: Duration = Duration::from_millis(500);
-
 const UNSEEN: Duration = Duration::from_secs(24 * 60 * 60);
-
 const SCREENS: [u16; 3] = [47, 1047, 1049];
-
 const TRACKED: [u16; 15] = [
     1, 7, 25, 47, 66, 1000, 1002, 1003, 1004, 1005, 1006, 1015, 1047, 1049, 2004,
 ];
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Spec {
     pub program: PathBuf,
@@ -61,7 +46,6 @@ pub struct Spec {
     #[serde(default)]
     pub label: Label,
 }
-
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Label {
     pub shell: String,
@@ -70,7 +54,6 @@ pub struct Label {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub folder: Option<String>,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Record {
     pub v: u32,
@@ -84,13 +67,11 @@ pub struct Record {
     #[serde(default)]
     pub label: Label,
 }
-
 #[derive(Clone, Debug)]
 pub struct Starter {
     pub program: PathBuf,
     pub args: Vec<String>,
 }
-
 #[derive(Default)]
 struct Modes {
     set: BTreeMap<u16, bool>,
@@ -98,7 +79,6 @@ struct Modes {
     number: u32,
     numbers: Vec<u32>,
 }
-
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 enum Scan {
     #[default]
@@ -107,14 +87,12 @@ enum Scan {
     Csi,
     Private,
 }
-
 impl Modes {
     fn feed(&mut self, bytes: impl IntoIterator<Item = u8>) {
         for byte in bytes {
             self.one(byte);
         }
     }
-
     fn one(&mut self, byte: u8) {
         self.at = match (self.at, byte) {
             (_, 0x1b) => Scan::Escape,
@@ -152,7 +130,6 @@ impl Modes {
             _ => Scan::Ground,
         };
     }
-
     fn prelude(&self) -> Vec<u8> {
         let screens = self.set.iter().filter(|(mode, _)| SCREENS.contains(mode));
         let rest = self.set.iter().filter(|(mode, _)| !SCREENS.contains(mode));
@@ -164,19 +141,16 @@ impl Modes {
             .collect()
     }
 }
-
 #[derive(Default)]
 struct Ring {
     bytes: VecDeque<u8>,
     start: u64,
     base: Modes,
 }
-
 impl Ring {
     fn end(&self) -> u64 {
         self.start + self.bytes.len() as u64
     }
-
     fn push(&mut self, more: &[u8]) {
         self.bytes.extend(more);
         if self.bytes.len() > KEPT {
@@ -185,28 +159,24 @@ impl Ring {
             self.start += over as u64;
         }
     }
-
     fn after(&self, at: u64, most: usize) -> Vec<u8> {
         let skip = usize::try_from(at.saturating_sub(self.start)).unwrap_or(usize::MAX);
         let skip = skip.min(self.bytes.len());
         let end = skip.saturating_add(most).min(self.bytes.len());
         self.bytes.range(skip..end).copied().collect()
     }
-
     fn whole(&self) -> Vec<u8> {
         let mut out = self.base.prelude();
         out.extend(self.bytes.iter());
         out
     }
 }
-
 struct Client {
     id: u64,
     at: u64,
     writer: bool,
     told: bool,
 }
-
 #[derive(Default)]
 struct State {
     ring: Ring,
@@ -221,16 +191,13 @@ struct State {
     ending: Option<Instant>,
     swept: bool,
 }
-
 impl State {
     fn client(&mut self, id: u64) -> Option<&mut Client> {
         self.clients.iter_mut().find(|one| one.id == id)
     }
-
     fn writing(&self, id: u64) -> bool {
         self.clients.iter().any(|one| one.id == id && one.writer)
     }
-
     fn lag(&self) -> usize {
         let end = self.ring.end();
         self.clients
@@ -240,18 +207,15 @@ impl State {
             .max()
             .unwrap_or(0)
     }
-
     fn take(&mut self, id: u64) {
         for one in &mut self.clients {
             one.writer = one.id == id;
         }
     }
-
     fn gone(&mut self, id: u64) {
         self.clients.retain(|one| one.id != id);
     }
 }
-
 struct Holder {
     state: Mutex<State>,
     changed: Condvar,
@@ -264,30 +228,25 @@ struct Holder {
     file: PathBuf,
     record: Mutex<Record>,
 }
-
 impl Holder {
     fn lock(&self) -> MutexGuard<'_, State> {
         self.state.held()
     }
-
     fn wait<'a>(&self, state: MutexGuard<'a, State>) -> MutexGuard<'a, State> {
         self.changed
             .wait(state)
             .unwrap_or_else(PoisonError::into_inner)
     }
-
     fn resize(&self, cols: u16, rows: u16) {
         if let Some(master) = self.master.held().as_deref() {
             let _ = master.resize(size(cols, rows));
         }
     }
-
     fn write(&self, bytes: &[u8]) {
         let mut input = self.input.held();
         let _ = input.write_all(bytes).and_then(|()| input.flush());
     }
 }
-
 fn size(cols: u16, rows: u16) -> PtySize {
     PtySize {
         rows: rows.clamp(1, 1000),
@@ -296,7 +255,6 @@ fn size(cols: u16, rows: u16) -> PtySize {
         pixel_height: 0,
     }
 }
-
 pub fn serve() -> i32 {
     let Some(spec) = std::env::var(SPEC)
         .ok()
@@ -311,7 +269,6 @@ pub fn serve() -> i32 {
     });
     i32::from(told.is_err())
 }
-
 #[cfg(unix)]
 #[allow(unsafe_code)]
 fn on_its_own() {
@@ -319,14 +276,12 @@ fn on_its_own() {
         libc::setsid();
     }
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn on_its_own() {
     use windows::Win32::System::Console::SetConsoleCtrlHandler;
     let _ = unsafe { SetConsoleCtrlHandler(None, false) };
 }
-
 fn hold(spec: Spec, say: impl Fn(String)) -> Result<(), String> {
     let opened = open(&spec);
     let (holder, reader, child, listener) = match opened {
@@ -356,7 +311,6 @@ fn hold(spec: Spec, say: impl Fn(String)) -> Result<(), String> {
         return Err(error);
     }
     say(format!("{SAID}{port}"));
-
     let reading = Arc::clone(&holder);
     thread::spawn(move || read(&reading, reader));
     let waiting = Arc::clone(&holder);
@@ -368,7 +322,6 @@ fn hold(spec: Spec, say: impl Fn(String)) -> Result<(), String> {
             thread::spawn(move || attached(&one, stream));
         }
     });
-
     let mut state = holder.lock();
     loop {
         let done = match state.ending {
@@ -392,14 +345,12 @@ fn hold(spec: Spec, say: impl Fn(String)) -> Result<(), String> {
     forget_record(&spec.file, &spec.token);
     Ok(())
 }
-
 type Opened = (
     Arc<Holder>,
     Box<dyn Read + Send>,
     Box<dyn Child + Send + Sync>,
     TcpListener,
 );
-
 fn open(spec: &Spec) -> Result<Opened, String> {
     let pair = native_pty_system()
         .openpty(size(spec.cols, spec.rows))
@@ -453,7 +404,6 @@ fn open(spec: &Spec) -> Result<Opened, String> {
     });
     Ok((holder, reader, child, listener))
 }
-
 fn read(holder: &Holder, mut reader: Box<dyn Read + Send>) {
     let mut buffer = vec![0u8; 64 * 1024];
     loop {
@@ -479,7 +429,6 @@ fn read(holder: &Holder, mut reader: Box<dyn Read + Send>) {
     holder.lock().drained = true;
     holder.changed.notify_all();
 }
-
 fn wait(holder: &Holder, mut child: Box<dyn Child + Send + Sync>) {
     let code = child
         .wait()
@@ -503,7 +452,6 @@ fn wait(holder: &Holder, mut child: Box<dyn Child + Send + Sync>) {
     drop(state);
     holder.changed.notify_all();
 }
-
 fn end(holder: &Arc<Holder>) {
     {
         let mut state = holder.lock();
@@ -539,7 +487,6 @@ fn end(holder: &Arc<Holder>) {
         holder.changed.notify_all();
     });
 }
-
 fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
     let _ = stream.set_read_timeout(Some(GREETED_WITHIN));
     let Ok((wire::HELLO, hello)) = wire::heard(&mut stream) else {
@@ -560,7 +507,6 @@ fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
     let Ok(out) = stream.try_clone() else {
         return;
     };
-
     let (id, hi, screen, nudge) = {
         let mut state = holder.lock();
         let id = state.next;
@@ -593,10 +539,8 @@ fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
         (id, hi, state.ring.whole(), nudge.then_some(state.size))
     };
     holder.changed.notify_all();
-
     let sending = Arc::clone(holder);
     thread::spawn(move || send(&sending, id, out, &hi, &screen, nudge));
-
     loop {
         match wire::heard(&mut stream) {
             Ok((wire::INPUT, bytes)) => {
@@ -637,7 +581,6 @@ fn attached(holder: &Arc<Holder>, mut stream: TcpStream) {
     holder.lock().gone(id);
     holder.changed.notify_all();
 }
-
 fn asked(holder: &Arc<Holder>, mut stream: TcpStream) {
     let hi = {
         let state = holder.lock();
@@ -667,20 +610,17 @@ fn asked(holder: &Arc<Holder>, mut stream: TcpStream) {
         }
     }
 }
-
 fn renamed(holder: &Holder, body: &[u8]) {
     let name = String::from_utf8_lossy(body).trim().to_owned();
     let mut record = holder.record.held();
     record.label.name = (!name.is_empty()).then(|| name.chars().take(200).collect());
     let _ = write_record(&holder.file, &record);
 }
-
 enum Next {
     Bytes(Vec<u8>),
     Writer(bool),
     Exit(i64),
 }
-
 fn send(
     holder: &Holder,
     id: u64,
@@ -703,7 +643,6 @@ fn send(
         thread::sleep(Duration::from_millis(50));
         holder.resize(cols, rows);
     }
-
     loop {
         let next = {
             let mut state = holder.lock();
@@ -755,7 +694,6 @@ fn send(
         }
     }
 }
-
 fn write_record(file: &Path, record: &Record) -> Result<(), String> {
     let parent = file
         .parent()
@@ -776,20 +714,17 @@ fn write_record(file: &Path, record: &Record) -> Result<(), String> {
             error.to_string()
         })
 }
-
 pub fn read_record(file: &Path) -> Option<Record> {
     let bytes = std::fs::read(file)
         .ok()
         .filter(|bytes| bytes.len() <= 4096)?;
     serde_json::from_slice(&bytes).ok()
 }
-
 pub fn forget_record(file: &Path, token: &str) {
     if read_record(file).is_some_and(|record| record.token == token) {
         let _ = std::fs::remove_file(file);
     }
 }
-
 pub fn start(how: &Starter, spec: &Spec) -> Result<u16, String> {
     let told = serde_json::to_string(spec).map_err(|error| error.to_string())?;
     let mut command = Command::new(&how.program);
@@ -807,7 +742,6 @@ pub fn start(how: &Starter, spec: &Spec) -> Result<u16, String> {
     thread::spawn(move || {
         let _ = child.wait();
     });
-
     let (tell, heard) = mpsc::channel();
     thread::spawn(move || {
         for line in BufReader::new(out).lines() {
@@ -831,7 +765,6 @@ pub fn start(how: &Starter, spec: &Spec) -> Result<u16, String> {
         .recv_timeout(STARTED_WITHIN)
         .map_err(|_| "the session did not start in time".to_owned())?
 }
-
 #[cfg(windows)]
 fn spawned(command: &mut Command) -> std::io::Result<std::process::Child> {
     use std::os::windows::process::CommandExt;
@@ -844,12 +777,10 @@ fn spawned(command: &mut Command) -> std::io::Result<std::process::Child> {
         command.spawn()
     })
 }
-
 #[cfg(not(windows))]
 fn spawned(command: &mut Command) -> std::io::Result<std::process::Child> {
     command.spawn()
 }
-
 pub fn token() -> Result<String, String> {
     use std::fmt::Write as _;
     let mut random = [0u8; 32];
@@ -859,7 +790,6 @@ pub fn token() -> Result<String, String> {
         out
     }))
 }
-
 #[cfg(unix)]
 #[allow(unsafe_code)]
 fn signal(pid: i32, signal: i32) {
@@ -867,7 +797,6 @@ fn signal(pid: i32, signal: i32) {
         libc::kill(pid, signal);
     }
 }
-
 #[cfg(unix)]
 fn end_tree(shell: Option<u32>) {
     let Some(session) = shell
@@ -894,10 +823,8 @@ fn end_tree(shell: Option<u32>) {
         thread::sleep(Duration::from_millis(20));
     }
 }
-
 #[cfg(windows)]
 fn end_tree(_shell: Option<u32>) {}
-
 #[cfg(target_os = "linux")]
 pub fn members(session: i32) -> Vec<i32> {
     let Ok(listed) = std::fs::read_dir("/proc") else {
@@ -910,7 +837,6 @@ pub fn members(session: i32) -> Vec<i32> {
         })
         .collect()
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 pub fn members(session: i32) -> Vec<i32> {
@@ -927,7 +853,6 @@ pub fn members(session: i32) -> Vec<i32> {
         .filter(|pid| *pid > 0 && unsafe { libc::getsid(*pid) } == session && !zombie(*pid))
         .collect()
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 fn zombie(pid: i32) -> bool {
@@ -947,12 +872,10 @@ fn zombie(pid: i32) -> bool {
     };
     written != size || unsafe { info.assume_init() }.pbi_status == ZOMBIE
 }
-
 #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
 pub fn members(_session: i32) -> Vec<i32> {
     Vec::new()
 }
-
 #[cfg(test)]
 pub mod tests {
     use super::*;
@@ -964,7 +887,6 @@ pub mod tests {
             std::process::exit(serve());
         }
     }
-
     pub fn starter() -> Starter {
         Starter {
             program: std::env::current_exe().expect("the test binary"),
@@ -980,13 +902,11 @@ pub mod tests {
             .to_vec(),
         }
     }
-
     fn modes(bytes: &[u8]) -> Vec<u8> {
         let mut modes = Modes::default();
         modes.feed(bytes.iter().copied());
         modes.prelude()
     }
-
     #[test]
     fn the_modes_a_dropped_part_set_are_set_again_first() {
         assert_eq!(modes(b"plain text\r\n"), b"");
@@ -998,7 +918,6 @@ pub mod tests {
         assert_eq!(modes(b"\x1b[?1049h\x1bc"), b"");
         assert_eq!(modes(b"\x1b[?9999h\x1b[1049h"), b"");
     }
-
     #[test]
     fn a_mode_split_between_two_reads_is_still_seen() {
         let mut modes = Modes::default();
@@ -1006,7 +925,6 @@ pub mod tests {
         modes.feed(b"49h".iter().copied());
         assert_eq!(modes.prelude(), b"\x1b[?1049h".to_vec());
     }
-
     #[test]
     fn the_ring_keeps_its_end_and_what_it_dropped_shapes_the_screen() {
         let mut ring = Ring::default();

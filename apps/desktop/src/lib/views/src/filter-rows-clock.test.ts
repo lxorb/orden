@@ -11,7 +11,6 @@ describe('a filter that starts with today()', () => {
       }),
     ).toEqual({ and: ['task.due < today() && !task.done', 'note.status == "x"'] })
   })
-
   test('still reads a plain comparison with the clock as a row', () => {
     expect(rowsOf('task.due < today() + "7d"').rows).toEqual([
       { property: 'task.due', op: '<', value: 'today() + "7d"' },

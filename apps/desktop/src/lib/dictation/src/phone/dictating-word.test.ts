@@ -2,7 +2,6 @@ import { expect, test, vi } from 'vitest'
 
 const listen = vi.fn(() => true)
 const held = { on: 0, off: 0 }
-
 vi.mock('../../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../../platform/src/api')>()),
   frameWord: () => Promise.resolve(''),
@@ -24,13 +23,10 @@ vi.mock('../../../panes/src/api', async (importOriginal) => ({
   views: { of: () => null },
 }))
 vi.mock('../../../workspace/src/api', () => ({ workspace: { panes: { focusedId: 'a' } } }))
-
 const { dictating, toggle } = await import('./dictating')
-
 test('a microphone the activity was not asked for with a word is not listening', async () => {
   toggle({} as Parameters<typeof toggle>[0])
   expect(dictating()).toBe(true)
-
   await vi.waitFor(() => expect(dictating()).toBe(false))
   expect(listen).not.toHaveBeenCalledWith('', true)
   await vi.waitFor(() => expect(held.off).toBe(1))

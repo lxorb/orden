@@ -10,9 +10,7 @@ export interface Wikilink {
   alias: string | null
   embed: boolean
 }
-
 export type LinkKind = 'wikilink' | 'markdown'
-
 export interface FoundLink extends Wikilink {
   kind: LinkKind
   from: number
@@ -21,14 +19,12 @@ export interface FoundLink extends Wikilink {
   targetTo: number
   line: number
 }
-
 export const WIKILINK_INNER = '[^[\\]\\n]+'
 const WIKILINK = new RegExp(`(${WIKILINK_INNER})\\]\\]`, 'y')
 const LONGEST_LINK = 1000
 const DEEPEST_PARENS = 32
 const BLANK = /\s/
 const endsTarget = (one: string): boolean => (one <= ' ' || one >= '\u0080') && BLANK.test(one)
-
 interface MarkdownLink {
   label: string
   labelTo: number
@@ -36,13 +32,10 @@ interface MarkdownLink {
   writtenFrom: number
   to: number
 }
-
 const isImageOpen = (line: string, open: number): boolean => line[open - 1] === '!' && line[open - 2] !== '\\'
-
 export function labelEnds(line: string): Map<number, number> {
   const ends = new Map<number, number>()
   const open: number[] = []
-
   for (let at = 0; at < line.length; at++) {
     const one = line[at]
     if (one === '\\') {
@@ -57,14 +50,11 @@ export function labelEnds(line: string): Map<number, number> {
       if (line[at + 1] === '(' && !isImageOpen(line, from)) open.length = 0
     }
   }
-
   return ends
 }
-
 function bareTargetEnd(line: string, from: number, stop: number): number {
   let depth = 0
   let at = from
-
   while (at < stop) {
     const one = line[at] ?? ''
     if (endsTarget(one)) break
@@ -79,10 +69,8 @@ function bareTargetEnd(line: string, from: number, stop: number): number {
     }
     at++
   }
-
   return at < stop && depth === 0 ? at : -1
 }
-
 function looseTarget(line: string, from: number, stop: number): { to: number; end: number } | null {
   let depth = 0
   for (let at = from; at < stop; at++) {
@@ -98,7 +86,6 @@ function looseTarget(line: string, from: number, stop: number): { to: number; en
   }
   return null
 }
-
 function markdownLinkAt(
   line: string,
   open: number,
@@ -111,14 +98,11 @@ function markdownLinkAt(
     while (at < stop && endsTarget(line[at] ?? '')) at++
     return at
   }
-
   const close = ends.get(open)
   if (close === undefined || close >= stop || line[close + 1] !== '(') return null
-
   let at = skipBlanks(close + 2)
   let writtenFrom = at
   let writtenTo: number
-
   if (line[at] === '<') {
     writtenFrom = at + 1
     writtenTo = writtenFrom
@@ -140,7 +124,6 @@ function markdownLinkAt(
     if (writtenTo <= at) return null
     at = writtenTo
   }
-
   at = skipBlanks(at)
   const quote = line[at]
   if (quote === '"' || quote === "'") {
@@ -148,9 +131,7 @@ function markdownLinkAt(
     if (at === 0 || at >= stop) return null
     at = skipBlanks(at)
   }
-
   if (at >= stop || line[at] !== ')') return null
-
   return {
     label: line.slice(open + 1, close),
     labelTo: close,
@@ -159,38 +140,28 @@ function markdownLinkAt(
     to: at + 1,
   }
 }
-
 export const MOST_LINKS = 5000
 const BLOCK_ID = /(?:^|[ \t])\^([A-Za-z0-9-]+)[ \t]*(?=\r?$)/
-
 function schemeOf(target: string): string {
   if (target.startsWith('//')) return 'https'
   return /^([a-z][a-z\d+.-]*):/i.exec(target)?.[1]?.toLowerCase() ?? ''
 }
-
 export const foldName = (name: string): string => name.normalize('NFC').toLowerCase()
 export const isNoteTarget = (target: string): boolean => schemeOf(target) === ''
 export const PDF_SIDECAR = '.highlights.json'
 const ending = (pattern: RegExp) => (target: string) => pattern.test(target.trim())
 export const isPdfTarget = ending(/\.pdf$/i)
 export const isCanvasTarget = ending(/\.canvas$/i)
-
 export const isBaseTarget = (target: string): boolean => /\.base$/i.test(target.split('#')[0]?.trim() ?? '')
-
 export const isChatTarget = (target: string): boolean => /\.chat$/i.test(target)
-
 export const isApplicationTarget = (target: string | null): boolean => target !== null && /\.application$/i.test(target)
-
 export const isTermTarget = (target: string | null): boolean => target !== null && /\.term$/i.test(target)
-
 export const isPagesTarget = ending(/\.pages$/i)
 export const isWebTarget = ending(/\.(url|webloc)$/i)
 export const isImageTarget = ending(/\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i)
 export const isAudioTarget = ending(/\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|weba)$/i)
 export const isVideoTarget = ending(/\.(mp4|m4v|webm|mov|ogv|mkv|avi)$/i)
-
 export type EmbedKind = 'image' | 'audio' | 'video' | 'pdf' | 'canvas' | 'base'
-
 const EMBEDS: readonly [EmbedKind, (target: string) => boolean][] = [
   ['image', isImageTarget],
   ['video', isVideoTarget],
@@ -199,22 +170,16 @@ const EMBEDS: readonly [EmbedKind, (target: string) => boolean][] = [
   ['canvas', isCanvasTarget],
   ['base', isBaseTarget],
 ]
-
 export const embedKind = (target: string): EmbedKind | null => EMBEDS.find(([, is]) => is(target))?.[0] ?? null
-
 export const isTabFile = (target: string): boolean =>
   [isPdfTarget, isCanvasTarget, isPagesTarget, isWebTarget, isBaseTarget].some((is) => is(target))
-
 const SIZE = /^(\d+)(?:x(\d+))?$/
-
 export function embedSize(alias: string | null): { width: number; height: number | null } | null {
   const found = alias === null ? null : SIZE.exec(alias)
   if (!found || Number(found[1]) === 0) return null
-
   const height = found[2]
   return { width: Number(found[1]), height: height === undefined ? null : Number(height) }
 }
-
 export function sizedAlt(alt: string): {
   alt: string
   size: { width: number; height: number | null } | null
@@ -223,15 +188,12 @@ export function sizedAlt(alt: string): {
   const size = found ? embedSize(found[2] ?? '') : null
   return found && size ? { alt: found[1] ?? '', size } : { alt, size: null }
 }
-
 export function pageFragment(fragment: string | null): number | null {
   const digits = fragment === null ? null : /^page=(\d+)$/i.exec(fragment.trim())?.[1]
   if (digits === undefined || digits === null) return null
-
   const page = Number(digits)
   return page >= 1 ? page : null
 }
-
 export function parseWikilink(inner: string, embed = false): Wikilink | null {
   const bar = inner.indexOf('|')
   const named = bar === -1 ? inner : inner.slice(0, bar).replace(/\\$/, '')
@@ -241,84 +203,65 @@ export function parseWikilink(inner: string, embed = false): Wikilink | null {
   const fragment = hash === -1 ? '' : named.slice(hash + 1).trim()
   const block = fragment.startsWith('^') ? fragment.slice(1) : null
   const heading = block === null && fragment ? fragment : null
-
   if (!target && !heading && !block) return null
-
   return { target, heading, block, alias: alias === '' ? null : alias, embed }
 }
-
 const NOT_IN_WIKILINK = /[#^[\]|`]/
 export const wikilinkCannotName = (name: string): boolean => NOT_IN_WIKILINK.test(name)
-
 export function formatWikilink(link: Wikilink): string {
   const alias = link.alias === null ? '' : `|${link.alias}`
   return `${link.embed ? '!' : ''}[[${linkTarget(link)}${alias}]]`
 }
-
 export function linkTarget(link: Wikilink): string {
   if (link.block !== null) return `${link.target}#^${link.block}`
   if (link.heading !== null) return `${link.target}#${link.heading}`
   return link.target
 }
-
 export const shownText = (link: Wikilink): string => link.alias ?? linkTarget(link)
-
 export function shownSpan(inner: string): { from: number; to: number } {
   const bar = inner.indexOf('|')
   const aliased = bar !== -1 && inner.slice(bar + 1).trim() !== ''
   let from = aliased ? bar + 1 : 0
   let to = aliased ? inner.length : bar === -1 ? inner.length : bar
-
   while (from < to && isBlank(inner[from])) from++
   while (to > from && isBlank(inner[to - 1])) to--
-
   return { from, to }
 }
-
 const isBlank = (character: string | undefined): boolean => character === ' ' || character === '\t'
-
 function escaped(line: string, from: number, at: number): boolean {
   let slashes = 0
   while (at - slashes > from && line[at - slashes - 1] === '\\') slashes++
   return slashes % 2 === 1
 }
-
 export function withoutCode(line: string): string {
   let out = ''
   let at = 0
-
   while (at < line.length) {
     const tick = line.indexOf('`', at)
     if (tick === -1) {
       out += line.slice(at)
       break
     }
-
     if (escaped(line, at, tick)) {
       out += line.slice(at, tick + 1)
       at = tick + 1
       continue
     }
-
     let openEnd = tick
     while (openEnd < line.length && line[openEnd] === '`') openEnd++
     const marks = line.slice(tick, openEnd)
     const close = closingTicks(line, openEnd, marks.length)
-
     out += line.slice(at, tick)
     if (close === -1) {
       out += marks
       at = openEnd
       continue
     }
-
     out += ' '.repeat(close + marks.length - tick)
     at = close + marks.length
   }
-
   return out
 }
-
 export function findLinks(text: string, loose = false): FoundLink[] {
   const found: FoundLink[] = []
   const rows = rowsOf(text)
@@ -328,7 +271,6 @@ export function findLinks(text: string, loose = false): FoundLink[] {
     if (group.length) collectIn(group, found, loose)
     group = []
   }
-
   for (const [at, row] of rows.entries()) {
     if (found.length >= MOST_LINKS) break
     if (row.matter) {
@@ -341,16 +283,13 @@ export function findLinks(text: string, loose = false): FoundLink[] {
     }
   }
   flush()
-
   return found.length > MOST_LINKS ? found.slice(0, MOST_LINKS) : found
 }
-
 function collectIn(group: readonly Row[], found: FoundLink[], loose: boolean) {
   const [first] = group
   if (!first) return
   const words = mathsBlanked(commentsBlanked(withoutCode(group.map((row) => row.text).join('\n'))))
   if (!words.includes('[')) return
-
   const starts = group.map((row) => row.from - first.from)
   const lineOf = (at: number) => {
     let low = 0
@@ -362,7 +301,6 @@ function collectIn(group: readonly Row[], found: FoundLink[], loose: boolean) {
     }
     return group[low]?.line ?? first.line
   }
-
   const mine: FoundLink[] = []
   for (const [at, row] of group.entries()) {
     const start = starts[at] ?? 0
@@ -371,15 +309,12 @@ function collectIn(group: readonly Row[], found: FoundLink[], loose: boolean) {
   collect(words, first.from, lineOf, mine, loose)
   found.push(...mine.sort((one, other) => one.from - other.from))
 }
-
 const DEFINITION =
   /^ {0,3}\[((?!\^)(?:[^[\]\\\n]|\\.)+)\]:[ \t]*(?:<([^<>\n]*)>|([^\s<]\S*))(?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'|\([^()\n]*\)))?[ \t]*\r?$/
-
 function defined(line: string, offset: number, at: number, found: FoundLink[], loose: boolean) {
   const said = DEFINITION.exec(line)
   const written = said?.[2] ?? said?.[3]
   if (!said || written === undefined || (!loose && !isNoteTarget(written))) return
-
   const open = line.indexOf('[')
   const link = markdownFound(written, offset + line.indexOf(written, open + (said[1]?.length ?? 0) + 3), {
     alias: said[1] ?? null,
@@ -390,7 +325,6 @@ function defined(line: string, offset: number, at: number, found: FoundLink[], l
   })
   if (link) found.push(link)
 }
-
 function markdownFound(
   written: string,
   targetFrom: number,
@@ -411,10 +345,8 @@ function markdownFound(
     targetTo: targetFrom + target.length,
   }
 }
-
 const blanked = (text: string, from: number, to: number): string =>
   text.slice(0, from) + text.slice(from, to).replace(/[^\n]/g, ' ') + text.slice(to)
-
 function commentsBlanked(text: string): string {
   let out = text
   for (let at = out.indexOf('<!--'); at !== -1; at = out.indexOf('<!--', at + 4)) {
@@ -424,7 +356,6 @@ function commentsBlanked(text: string): string {
   }
   return out
 }
-
 function mathsBlanked(text: string): string {
   if (!text.includes('$')) return text
   let out = text
@@ -440,7 +371,6 @@ function mathsBlanked(text: string): string {
   }
   return out
 }
-
 function mathsEnd(text: string, at: number): number {
   if (escaped(text, 0, at)) return -1
   if (text[at + 1] === '$') {
@@ -462,13 +392,11 @@ function mathsEnd(text: string, at: number): number {
   }
   return -1
 }
-
 function collectInMatter(row: Row, found: FoundLink[], loose: boolean) {
   const read = readInQuotes(row.text)
   const local: FoundLink[] = []
   collect(withoutCode(read.text), 0, () => row.line, local, loose)
   const raw = (at: number) => row.from + (read.at[at] ?? row.text.length)
-
   for (const link of local) {
     found.push({
       ...link,
@@ -479,7 +407,6 @@ function collectInMatter(row: Row, found: FoundLink[], loose: boolean) {
     })
   }
 }
-
 export interface Row {
   text: string
   from: number
@@ -488,14 +415,12 @@ export interface Row {
   matter: boolean
   fenceName: string | null
 }
-
 export function* lines(text: string): Generator<Row> {
   const code = new CodeBlocks()
   const matter = frontMatterBlock(text)
   const wordsAt = matter ? matter.close + 1 : 0
   let line = 0
   let at = 0
-
   for (;;) {
     const end = text.indexOf('\n', at)
     const row = text.slice(at, end === -1 ? text.length : end)
@@ -509,15 +434,12 @@ export function* lines(text: string): Generator<Row> {
       matter: matters,
       fenceName: isCode ? code.closedName : null,
     }
-
     if (end === -1) break
     at = end + 1
     line++
   }
 }
-
 export const rowsOf = (text: string): Row[] => [...lines(text)]
-
 function collect(line: string, offset: number, lineOf: (at: number) => number, found: FoundLink[], loose = false) {
   if (!line.includes('[')) return
   const ends = line.includes('](') ? labelEnds(line) : new Map<number, number>()
@@ -529,15 +451,12 @@ function collect(line: string, offset: number, lineOf: (at: number) => number, f
       continue
     }
     if (line[open - 1] === '\\') continue
-
     const embed = line[open - 1] === '!' && line[open - 2] !== '\\'
     const from = offset + (embed ? open - 1 : open)
-
     if (line[open + 1] === '[') {
       WIKILINK.lastIndex = open + 2
       const inner = WIKILINK.exec(line)?.[1]
       if (inner === undefined) continue
-
       const link = parseWikilink(inner, embed)
       const closed = open + 2 + inner.length + 2
       if (link) {
@@ -555,10 +474,8 @@ function collect(line: string, offset: number, lineOf: (at: number) => number, f
       open = closed - 1
       continue
     }
-
     const link = markdownLinkAt(line, open, ends, loose)
     if (!link) continue
-
     after ??= { label: link.labelTo, to: link.to }
     if (!loose && !isNoteTarget(link.written)) continue
     const one = markdownFound(link.written, offset + link.writtenFrom, {
@@ -571,14 +488,11 @@ function collect(line: string, offset: number, lineOf: (at: number) => number, f
     if (one) found.push(one)
   }
 }
-
 const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
 const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
 const WRITTEN = /\\([!-/:-@[-`{-~])|(?:%[0-9A-Fa-f]{2})+/g
 const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
-
 const bytesOf = (run: string): Uint8Array => Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))
-
 export function decodeTarget(target: string): string {
   try {
     return target.replace(WRITTEN, (run, mark?: string) => mark ?? STRICT_UTF8.decode(bytesOf(run)))
@@ -586,48 +500,38 @@ export function decodeTarget(target: string): string {
     return target
   }
 }
-
 const MUST_ENCODE = /[%\\<>#?:()|`]|\s/gu
-
 export const encodeTarget = (path: string): string =>
   path.replace(MUST_ENCODE, (one) =>
     one.charCodeAt(0) < 0x80
       ? `%${one.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`
       : encodeURIComponent(one),
   )
-
 export const decodeFragment = (fragment: string): string =>
   fragment.replace(ESCAPES, (run) => UTF8.decode(bytesOf(run)))
-
 export function blockIdOf(line: string): string | null {
   if (!line.includes('^')) return null
   return BLOCK_ID.exec(line)?.[1] ?? null
 }
-
 export const slugify = (text: string): string =>
   text
     .toLowerCase()
     .trim()
     .replace(/[^\p{L}\p{N}\s_-]/gu, '')
     .replace(/\s+/g, '-') || 'section'
-
 const HEADING = /^[ \t]{0,3}(#{1,6})[ \t]+(.*)\r?$/
 const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)\r?$/
 const CLOSING_HASHES = /[ \t]+#+[ \t]*$/
 export const isHeading = (line: string): boolean => HEADING.test(line)
-
 export function headingText(written: string): string {
   const line = written.includes('%%') || written.includes('<!--') ? stripLine(written, null).text : written
   const found = HEADING_LINE.exec(line)
   if (found === null) return line.trim()
-
   return (found[1] ?? '').replace(BLOCK_ID, '').replace(CLOSING_HASHES, '').trim()
 }
-
 function hiddenLines(text: string, rows: readonly Row[]): Set<number> {
   const hidden = new Set<number>()
   if (!text.includes('<!--') && !text.includes('%%')) return hidden
-
   let inside: string | null = null
   for (const row of rows) {
     if (row.matter || (row.code && inside === null)) continue
@@ -638,9 +542,7 @@ function hiddenLines(text: string, rows: readonly Row[]): Set<number> {
   }
   return hidden
 }
-
 export const commentedLines = (text: string): Set<number> => hiddenLines(text, rowsOf(text))
-
 export function* wordRows(text: string): Generator<Row> {
   const rows = rowsOf(text)
   const hidden = hiddenLines(text, rows)
@@ -648,26 +550,21 @@ export function* wordRows(text: string): Generator<Row> {
     if (!row.code && !row.matter && !hidden.has(row.line)) yield row
   }
 }
-
 export interface HeadingRow {
   level: number
   text: string
   line: number
   from: number
 }
-
 const ATX = /^[ \t]{0,3}(#{1,6})[ \t]/
 const UNDERLINE = /^ {0,3}(=+|-+)[ \t]*\r?$/
-
 const NOT_PROSE =
   /^(?: {4}|\t|[ \t]*(?:[>|]|(?:[-*+]|\d{1,9}[.)])(?:[ \t]|\r?$))| {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*\r?$)/
-
 export function headingRows(text: string): HeadingRow[] {
   const found: HeadingRow[] = []
   let prose: Row[] | null = []
   const rows = rowsOf(text)
   const hidden = hiddenLines(text, rows)
-
   for (const row of rows) {
     if (row.code || row.matter || hidden.has(row.line)) {
       prose = []
@@ -690,18 +587,14 @@ export function headingRows(text: string): HeadingRow[] {
     }
     prose = []
   }
-
   return found
 }
-
 export const headingsOf = (text: string): string[] => headingRows(text).map((one) => one.text)
-
 export function sectionOf(source: string, link: Pick<Wikilink, 'heading' | 'block'>): string | null {
   if (link.block !== null) return blockSection(source, link.block)?.text ?? null
   if (link.heading !== null) return headingSection(source, link.heading)
   return source
 }
-
 function headingSection(source: string, wanted: string): string | null {
   const needle = wanted.trim().toLowerCase()
   const slug = slugify(wanted)
@@ -709,24 +602,18 @@ function headingSection(source: string, wanted: string): string | null {
   const at = all.findIndex((one) => one.text.toLowerCase() === needle || slugify(one.text) === slug)
   const start = all[at]
   if (!start) return null
-
   const end = all.slice(at + 1).find((one) => one.level <= start.level)
   return source.split('\n').slice(start.line, end?.line).join('\n').trimEnd()
 }
-
 const OWN_BLOCK =
   /^ {0,3}(?:#{1,6}(?:[ \t\r]|$)|`{3,}|~{3,}|\||(?:-[ \t\r]*){3,}$|(?:\*[ \t\r]*){3,}$|(?:_[ \t\r]*){3,}$)/
-
 const TABLE_ROW = /^ {0,3}\|/
-
 const QUOTED = /^ {0,3}>/
-
 export function blockAround(rows: readonly Row[], at: number): { start: number; end: number } {
   const row = rows[at]
   const text = row?.text ?? ''
   let start = at
   let end = at
-
   const spread = (joins: (one: Row) => boolean) => {
     const joinsAt = (index: number) => {
       const one = rows[index]
@@ -735,7 +622,6 @@ export function blockAround(rows: readonly Row[], at: number): { start: number; 
     while (start > 0 && joinsAt(start - 1)) start--
     while (joinsAt(end + 1)) end++
   }
-
   if (row?.code) {
     spread((one) => one.code)
   } else if (TABLE_ROW.test(text)) {
@@ -753,24 +639,19 @@ export function blockAround(rows: readonly Row[], at: number): { start: number; 
     )
     if (item) start = at
   }
-
   return { start, end }
 }
-
 export function sectionLine(source: string, link: Pick<Wikilink, 'heading' | 'block'>): number | null {
   return link.block === null ? null : (blockSection(source, link.block)?.from ?? null)
 }
-
 interface Section {
   from: number
   to: number
   text: string
 }
-
 function blockSection(source: string, wanted: string): Section | null {
   const found = blockIds(source).find((one) => one.id === wanted)
   if (!found) return null
-
   const { first, last, indent } = blockSpan(rowsOf(source), found.line)
   const lines = source.split('\n')
   const block = lines
@@ -778,7 +659,6 @@ function blockSection(source: string, wanted: string): Section | null {
     .map((line, at) => (first + at === found.line ? line.replace(BLOCK_ID, '') : line))
   return { from: first, to: last, text: unindented(block, lines, first, indent) }
 }
-
 function unindented(block: string[], lines: readonly string[], first: number, indent: number) {
   if (indent > 0) {
     const column = indentOf(block[0] ?? '')
@@ -790,11 +670,8 @@ function unindented(block: string[], lines: readonly string[], first: number, in
   const least = block.filter((line) => line.trim()).reduce((most, line) => Math.min(most, indentOf(line)), Infinity)
   return least >= 4 ? outOfItem(block, itemColumn(lines, first)) : block.join('\n').trimEnd()
 }
-
 type Lined = Pick<Row, 'text' | 'code' | 'matter' | 'fenceName'>
-
 const MATHS_CLOSE = /^\s*\$\$\s*(?:\^[\w-]+\s*)?$/u
-
 const OPENERS: readonly {
   opens: RegExp
   closes: (line: string, tag: string) => boolean
@@ -806,12 +683,10 @@ const OPENERS: readonly {
     closes: (line, tag) => line.toLowerCase().includes(`</${tag}>`),
   },
 ]
-
 export interface Held {
   first: number
   last: number
 }
-
 export function heldBlocks(rows: readonly Lined[]): Map<number, Held> {
   const held = new Map<number, Held>()
   const missing = new Set<string>()
@@ -838,14 +713,12 @@ export function heldBlocks(rows: readonly Lined[]): Map<number, Held> {
   }
   return held
 }
-
 export interface Layout {
   held: Map<number, Held>
   goesOn: boolean[]
   runOf: number[]
   unclosed: Set<number>
 }
-
 export function layoutOf(rows: readonly Lined[]): Layout {
   const runOf: number[] = []
   const unclosed = new Set<number>()
@@ -879,7 +752,6 @@ export function layoutOf(rows: readonly Lined[]): Layout {
     }
   }
   ends()
-
   const goesOn: boolean[] = new Array<boolean>(rows.length).fill(false)
   let next = -1
   for (let at = rows.length - 1; at >= 0; at--) {
@@ -891,25 +763,21 @@ export function layoutOf(rows: readonly Lined[]): Layout {
   }
   return { held: heldBlocks(rows), goesOn, runOf, unclosed }
 }
-
 export interface BlockSpan {
   first: number
   last: number
   indent: number
   apart: boolean
 }
-
 export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
   const text = (line: number) => rows[line]?.text ?? ''
   const filled = (line: number) => text(line).trim() !== '' && rows[line]?.matter !== true
   const { held: blocks, goesOn, runOf } = layoutOf(rows)
   const held = (line: number) => filled(line) || goesOn[line] === true || blocks.has(line)
   const row = rows[at]
-
   if (row?.code && row.fenceName) {
     return { first: runOf[at] ?? at, last: at, indent: 0, apart: false }
   }
-
   const plain = (line: number) => rows[line]?.code !== true && !blocks.has(line)
   const reach = (from: number, apart = false) => {
     let first = from
@@ -924,7 +792,6 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
     }
     return first
   }
-
   if (ownLine(text(at)) && !row?.code) {
     if (at > 0 && !held(at - 1)) {
       let last = at - 1
@@ -940,17 +807,13 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
       apart: false,
     }
   }
-
   if (row && !row.code && HEADING.test(row.text)) {
     return { first: at, last: at, indent: 0, apart: false }
   }
-
   const item = itemLines(rows, at)
   if (item) return { ...item, apart: false }
-
   const inside = blocks.get(at) ?? quoteAround(rows, at)
   if (inside) return { first: inside.first, last: inside.last, indent: 0, apart: false }
-
   const quoted = quotedRows(rows)
   const stops = (line: number) => {
     const one = rows[line]
@@ -970,7 +833,6 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
   while (last + 1 < rows.length && !stops(last + 1)) last++
   return { first, last, indent: 0, apart: false }
 }
-
 function looseListStart(rows: readonly Lined[], first: number, blocks: Map<number, Held>): number {
   const item = itemLines(rows, first, blocks)
   if (item?.first !== first) return first
@@ -987,9 +849,7 @@ function looseListStart(rows: readonly Lined[], first: number, blocks: Map<numbe
   }
   return start
 }
-
 export const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
-
 export function nameIndent(rows: readonly Lined[], at: number): string {
   const code = new CodeBlocks()
   for (let line = 0; line <= at && line < rows.length; line++) {
@@ -998,7 +858,6 @@ export function nameIndent(rows: readonly Lined[], at: number): string {
   }
   return ' '.repeat(code.listWidth)
 }
-
 export function openFenceIn(rows: readonly Lined[], first: number, last: number): boolean {
   const { runOf, unclosed } = layoutOf(rows)
   for (let line = first; line <= last; line++) {
@@ -1006,7 +865,6 @@ export function openFenceIn(rows: readonly Lined[], first: number, last: number)
   }
   return false
 }
-
 export function quotedRows(rows: readonly Lined[]): boolean[] {
   const code = new CodeBlocks()
   const held = heldBlocks(rows)
@@ -1020,7 +878,6 @@ export function quotedRows(rows: readonly Lined[]): boolean[] {
     return code.quoted
   })
 }
-
 export function quoteAround(rows: readonly Lined[], at: number): Held | null {
   const inQuote = quotedRows(rows)
   const quoted = (line: number) => inQuote[line] === true
@@ -1031,7 +888,6 @@ export function quoteAround(rows: readonly Lined[], at: number): Held | null {
   while (last + 1 < rows.length && quoted(last + 1)) last++
   return { first, last }
 }
-
 export function itemLines(
   rows: readonly Lined[],
   at: number,
@@ -1039,7 +895,6 @@ export function itemLines(
 ): { first: number; last: number; indent: number } | null {
   const first = itemStart(rows, at, blocks)
   if (first === null) return null
-
   const marker = LIST_ITEM.exec(rows[first]?.text ?? '')
   const indent = depthOf(marker?.[1] ?? '')
   const content = depthOf(marker?.[0].replace(/\S/gu, ' ') ?? '')
@@ -1069,11 +924,9 @@ export function itemLines(
   }
   return { first, last, indent: marker?.[1]?.length ?? 0 }
 }
-
 function itemStart(rows: readonly Lined[], at: number, blocks: Map<number, Held>): number | null {
   const line = rows[at]?.text ?? ''
   if (!rows[at]?.code && !blocks.has(at) && LIST_ITEM.test(line)) return at
-
   const block = rows[at]?.code === true || blocks.has(at)
   let opening = blocks.get(at)?.first ?? at
   while (rows[at]?.code && opening > 0 && rows[opening - 1]?.code) opening--
@@ -1095,7 +948,6 @@ function itemStart(rows: readonly Lined[], at: number, blocks: Map<number, Held>
   }
   return null
 }
-
 export function itemColumn(lines: readonly string[], at: number): number {
   const indent = indentOf(lines[at] ?? '')
   if (!indent) return 0
@@ -1110,7 +962,6 @@ export function itemColumn(lines: readonly string[], at: number): number {
   }
   return 0
 }
-
 function outOfItem(block: readonly string[], column: number): string {
   const least = block.filter((line) => line.trim()).reduce((most, line) => Math.min(most, indentOf(line)), Infinity)
   const cut = least >= column && least < column + 4 ? least : column
@@ -1119,7 +970,6 @@ function outOfItem(block: readonly string[], column: number): string {
     .join('\n')
     .trimEnd()
 }
-
 export function blockSpanAt(source: string, at: number): { start: number; end: number } {
   const lines = source.split('\n')
   if (ownLine(lines[at] ?? '')) return { start: blockAbove(source, lines, at).from, end: at }
@@ -1127,7 +977,6 @@ export function blockSpanAt(source: string, at: number): { start: number; end: n
   if (item) return { start: item.from, end: item.to }
   return blockAround(rowsOf(source), at)
 }
-
 export function indentOf(line: string): number {
   let columns = 0
   for (const one of /^[ \t]*/.exec(line)?.[0] ?? '') {
@@ -1135,7 +984,6 @@ export function indentOf(line: string): number {
   }
   return columns
 }
-
 export function leadTo(line: string, wanted: number): string {
   let columns = 0
   let at = 0
@@ -1147,12 +995,10 @@ export function leadTo(line: string, wanted: number): string {
   }
   return line.slice(0, at)
 }
-
 export function withoutColumns(line: string, wanted: number): string {
   const lead = leadTo(line, wanted)
   return ' '.repeat(Math.max(0, indentOf(lead) - wanted)) + line.slice(lead.length)
 }
-
 export function itemHolding(lines: readonly string[], at: number): number | null {
   if (LIST_ITEM.test(lines[at] ?? '')) return at
   const indent = indentOf(lines[at] ?? '')
@@ -1164,7 +1010,6 @@ export function itemHolding(lines: readonly string[], at: number): number | null
   }
   return null
 }
-
 function depthOf(line: string): number {
   let width = 0
   for (const one of line) {
@@ -1174,11 +1019,9 @@ function depthOf(line: string): number {
   }
   return width
 }
-
 function itemSection(lines: readonly string[], at: number): Section | null {
   const owner = itemHolding(lines, at)
   if (owner === null) return null
-
   const depth = indentOf(lines[owner] ?? '')
   let end = at
   for (let next = at + 1; next < lines.length; next++) {
@@ -1187,28 +1030,23 @@ function itemSection(lines: readonly string[], at: number): Section | null {
     if (indentOf(line) <= depth) break
     end = next
   }
-
   const text = lines
     .slice(owner, end + 1)
     .map((line, index) => (owner + index === at ? line.replace(BLOCK_ID, '') : line))
     .map((line) => withoutColumns(line, depth))
     .join('\n')
     .trimEnd()
-
   return { from: owner, to: end, text }
 }
-
 export function ownLine(line: string): boolean {
   const trimmed = line.trim()
   return trimmed.startsWith('^') && blockIdOf(trimmed) === trimmed.slice(1)
 }
-
 function inList(line: string, depth: number): boolean {
   const indent = indentOf(line)
   if (QUOTED.test(line) || indent < depth) return false
   return LIST_ITEM.test(line) || (!!line.trim() && indent > depth)
 }
-
 function listStart(lines: readonly string[], last: number, depth: number): number | null {
   let start: number | null = null
   for (let above = last; above >= 0; above--) {
@@ -1219,54 +1057,43 @@ function listStart(lines: readonly string[], last: number, depth: number): numbe
   }
   return start
 }
-
 function blockAbove(source: string, lines: readonly string[], under: number): Section {
   const rows = rowsOf(source)
   let last = under - 1
   while (last > 0 && !(lines[last] ?? '').trim() && !rows[last]?.code) last--
   if (last < 0) return { from: 0, to: 0, text: '' }
-
   const touching = last === under - 1
   const item = touching ? itemSection(lines, last) : null
   if (item) return item
-
   const depth = indentOf(lines[under] ?? '')
   const start = (touching ? null : listStart(lines, last, depth)) ?? blockAround(rows, last).start
-
   return {
     from: start,
     to: last,
     text: outOfItem(lines.slice(start, last + 1), itemColumn(lines, start)),
   }
 }
-
 export function freeBlockId(taken: ReadonlySet<string>): string {
   for (;;) {
     const id = Math.random().toString(36).slice(2, 8)
     if (id.length === 6 && !taken.has(id)) return id
   }
 }
-
 export function blockIds(text: string): { id: string; line: number }[] {
   const found: { id: string; line: number }[] = []
-
   for (const row of lines(text)) {
     if (row.matter) continue
     const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (id) found.push({ id, line: row.line })
   }
-
   return found
 }
-
 export interface NoteBlock {
   line: number
   text: string
   id: string | null
 }
-
 const BLOCK_LABEL = 80
-
 export function blocksOf(text: string): NoteBlock[] {
   const found: NoteBlock[] = []
   let current: NoteBlock | null = null
@@ -1293,7 +1120,6 @@ export function blocksOf(text: string): NoteBlock[] {
       after = false
       continue
     }
-
     const above = run ?? found.at(-1)
     if (above && !row.code && ownLine(row.text)) {
       const { first } = blockSpan(rows, row.line)
@@ -1301,7 +1127,6 @@ export function blocksOf(text: string): NoteBlock[] {
       block.id = blockIdOf(row.text)
       continue
     }
-
     const heading = !row.code && HEADING.test(row.text)
     const starts = heading || (!row.code && LIST_ITEM.test(row.text)) || after
     if (!current || (starts && !inside) || edge) {
@@ -1310,24 +1135,18 @@ export function blocksOf(text: string): NoteBlock[] {
       run ??= current
       listing = !row.code && !inside && LIST_ITEM.test(row.text)
     }
-
     after = heading
     const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (id) current.id = id
   }
-
   return found
 }
-
 export const withoutBlockIds = (text: string): string => replacingBlockIds(text, (kept) => kept)
-
 export const blockIdsBlanked = (text: string): string =>
   replacingBlockIds(text, (kept, length, row) => kept + (row.code ? ' ' : '\t').repeat(length))
-
 const ANCHOR_OPEN = '\uE0F0'
 const ANCHOR_CLOSE = '\uE0F1'
 const TABLE_RULE = /^\s*\|?[\s:|-]+\|?\s*$/
-
 export function blockIdsAnchored(text: string, holds: (line: number, words: string) => boolean): string {
   return replacingBlockIds(text, (kept, _length, row, id) => {
     const words = kept.slice(kept.lastIndexOf('\n') + 1)
@@ -1343,12 +1162,10 @@ export function blockIdsAnchored(text: string, holds: (line: number, words: stri
     return `${after(kept.slice(0, start - carriage))}${kept.slice(start - carriage)}`
   })
 }
-
 export function blockMarksOff(text: string): string {
   if (!text.includes(ANCHOR_OPEN)) return text
   return text.replace(new RegExp(`\\s?${ANCHOR_OPEN}[\\w-]+${ANCHOR_CLOSE}`, 'g'), '')
 }
-
 export function blockAnchorsDrawn(html: string): string {
   if (!html.includes(ANCHOR_OPEN)) return html
   const mark = `${ANCHOR_OPEN}([\\w-]+)${ANCHOR_CLOSE}`
@@ -1359,28 +1176,22 @@ export function blockAnchorsDrawn(html: string): string {
     .replace(new RegExp(`<p>\\s*${mark}\\s*</p>`, 'g'), (_, id: string) => anchor(id))
     .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
 }
-
 function replacingBlockIds(text: string, by: (kept: string, length: number, row: Row, id: string) => string): string {
   let out = ''
   let at = 0
-
   for (const row of lines(text)) {
     if (row.matter) continue
     const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (!id) continue
-
     const end = row.from + row.text.trimEnd().length
     const caret = end - id.length - 1
     const before = text[caret - 1]
     const from = before === ' ' || before === '\t' ? caret - 1 : caret
-
     out += by(text.slice(at, from), end - from, row, id)
     at = end
   }
-
   return at === 0 ? text : out + text.slice(at)
 }
-
 const firstWords = (line: string): string =>
   line
     .replace(BLOCK_ID, '')

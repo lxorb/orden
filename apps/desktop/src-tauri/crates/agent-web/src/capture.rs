@@ -6,20 +6,17 @@ use orden_agents::Caller;
 use orden_documents::pdf::PdfPage;
 
 const VERB: &str = "capture_to_note";
-
 pub struct Asked {
     pub shape: CaptureAs,
     pub full_page: bool,
     pub paper: Option<PdfPage>,
 }
-
 pub fn answer(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     if let Err(refused) = may_capture(caller, &asked) {
         return refused;
     }
     taken(app, caller, tab, asked)
 }
-
 fn may_capture(caller: &Caller, asked: &Asked) -> Result<(), Answer> {
     if orden_agents::stop::stopped() {
         return Err(Answer::error(
@@ -40,11 +37,9 @@ fn may_capture(caller: &Caller, asked: &Asked) -> Result<(), Answer> {
     }
     Ok(())
 }
-
 fn no_paper() -> Answer {
     Answer::error(Code::BadArguments, "a PDF needs the paper it is printed on")
 }
-
 fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     use crate::engines;
     use orden_agents::verbs::Captured;
@@ -52,7 +47,6 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     if engines::cannot(VERB).is_some() {
         return engines::refused(VERB);
     }
-
     if crate::tabs::find(caller.id(), tab).is_some() && !caller.holds(Scope::Browser) {
         return Answer::error(
             Code::NotGranted,
@@ -100,7 +94,6 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
         }
     })
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -118,20 +111,17 @@ mod tests {
             }),
         }
     }
-
     fn agent(scopes: &[Scope]) -> Caller {
         let mut grant = Grant::own("a".into(), "A");
         grant.scopes = scopes.to_vec();
         Caller::Agent(Box::new(grant))
     }
-
     fn code(refused: Result<(), Answer>) -> Option<Code> {
         match refused {
             Err(Answer::Error { code, .. }) => Some(code),
             _ => None,
         }
     }
-
     #[test]
     fn a_capture_needs_what_capture_to_note_needs_and_a_browser() {
         let clip = asked(CaptureAs::Clip);
@@ -147,7 +137,6 @@ mod tests {
         assert!(may_capture(&agent(&[Scope::NotesWrite, Scope::BrowserReader]), &clip).is_ok());
         assert!(may_capture(&Caller::Reader, &clip).is_ok());
     }
-
     #[test]
     fn a_pdf_needs_the_paper() {
         let mut pdf = asked(CaptureAs::Pdf);
@@ -161,7 +150,6 @@ mod tests {
         shot.paper = None;
         assert!(may_capture(&Caller::Reader, &shot).is_ok());
     }
-
     #[test]
     fn the_shapes_are_the_windows_words() {
         for (shape, word) in [

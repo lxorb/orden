@@ -27,7 +27,6 @@
     width: number
     height: number
   } = $props()
-
   const SETTLED = 250
   const SOONEST = 800
   const LONGEST = 2500
@@ -37,14 +36,12 @@
   )
   let current = $state<Tab | null>(null)
   let stage = $state<HTMLElement>()
-
   $effect(() => {
     const one = next
     if (current || !one) return
     tried.add(one.id)
     current = one
   })
-
   $effect(() => {
     const tab = current
     const node = stage

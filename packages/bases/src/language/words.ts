@@ -4,7 +4,6 @@ export interface Word {
   from: number
   to: number
 }
-
 export function wordsOf(text: string): Word[] {
   const out: Word[] = []
   for (const found of text.matchAll(/\S+/gu)) {
@@ -18,12 +17,9 @@ export function wordsOf(text: string): Word[] {
   }
   return out
 }
-
 export const bare = (word: Word | undefined): string => (word?.key ?? '').replace(/\.$/u, '')
-
 const phraseAt = (words: readonly Word[], at: number, phrase: readonly string[]): boolean =>
   phrase.every((one, index) => bare(words[at + index]) === one)
-
 export function longestAt(words: readonly Word[], at: number, phrases: readonly (readonly string[])[]): number {
   let most = 0
   for (const phrase of phrases) {

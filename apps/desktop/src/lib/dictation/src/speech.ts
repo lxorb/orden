@@ -1,23 +1,14 @@
 export const FRAME = 480
-
 const OVER_ROOM = 3
-
 const LEAST = 0.005
-
 const ROOM_FRAMES = 100
-
 const LOUDEST_ROOM = 0.01
-
 const SPOKEN_FRAMES = 8
-
 const BEFORE = 10
 const AFTER = 15
-
 const PAUSE_FRAMES = 27
-
 const SHORTEST = 133
 const LONGEST = 833
-
 function levelOf(samples: Float32Array, from: number): number {
   const to = Math.min(samples.length, from + FRAME)
   let sum = 0
@@ -27,12 +18,10 @@ function levelOf(samples: Float32Array, from: number): number {
   }
   return to > from ? Math.sqrt(sum / (to - from)) : 0
 }
-
 export class Ear {
   readonly levels: number[] = []
   readonly speech: boolean[] = []
   private heard = 0
-
   hear(samples: Float32Array): void {
     while (this.heard + FRAME <= samples.length) {
       const level = levelOf(samples, this.heard)
@@ -41,7 +30,6 @@ export class Ear {
       this.heard += FRAME
     }
   }
-
   private room(): number {
     let quietest = LOUDEST_ROOM
     for (let at = Math.max(0, this.levels.length - ROOM_FRAMES); at < this.levels.length; at++) {
@@ -49,7 +37,6 @@ export class Ear {
     }
     return quietest
   }
-
   spokenIn(from: number, to: number): number {
     let count = 0
     for (let at = Math.max(0, from); at < Math.min(to, this.speech.length); at++) {
@@ -57,11 +44,9 @@ export class Ear {
     }
     return count
   }
-
   saysAnything(from: number, to: number): boolean {
     return this.spokenIn(from, to) >= SPOKEN_FRAMES
   }
-
   trimmed(from: number, to: number): { from: number; to: number } | null {
     let first = -1
     let last = -1
@@ -73,11 +58,9 @@ export class Ear {
     if (first < 0) return null
     return { from: Math.max(from, first - BEFORE), to: Math.min(to, last + 1 + AFTER) }
   }
-
   endOf(from: number, to: number): number | null {
     const length = to - from
     if (length < SHORTEST) return null
-
     let pause = 0
     let found: number | null = null
     for (let at = from + SHORTEST; at < to; at++) {
@@ -89,7 +72,6 @@ export class Ear {
     if (found !== null) return found
     return length >= LONGEST ? this.quietest(from + SHORTEST, to) : null
   }
-
   piecesOf(from: number, to: number, most: number): { from: number; to: number }[] {
     const out: { from: number; to: number }[] = []
     let start = from
@@ -101,7 +83,6 @@ export class Ear {
     out.push({ from: start, to })
     return out
   }
-
   private quietest(from: number, to: number): number {
     let best = from
     for (let at = from; at < Math.min(to, this.levels.length); at++) {
@@ -110,7 +91,6 @@ export class Ear {
     return best
   }
 }
-
 export function meter(level: number): number {
   if (level <= 0) return 0
   const decibels = 20 * Math.log10(level)

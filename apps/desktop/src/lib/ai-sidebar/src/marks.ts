@@ -4,7 +4,6 @@ export interface Marks {
   unread: boolean
   state: SessionState
 }
-
 export function rowName(title: string, marks: Marks): string {
   let name = title || 'Untitled'
   if (marks.unread) name = `${name}, unread`

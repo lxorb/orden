@@ -15,7 +15,6 @@ function straightAt(marked: string): boolean {
   )
   return keepsStraightQuotes(state, caret)
 }
-
 describe('front matter typed from the top, before its closing fence is written', () => {
   test('keeps its quotes straight, as closed front matter does', () => {
     expect(straightAt('---\ntitle: "a|\n---\n')).toBe(true)

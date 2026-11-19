@@ -8,7 +8,6 @@ pub const SHARED: [&str; 6] = [
     "list_backlinks",
     "write_note",
 ];
-
 pub fn text(tool: &str, args: &Value, result: &Value) -> Option<String> {
     if !SHARED.contains(&tool) {
         return None;
@@ -55,7 +54,6 @@ pub fn text(tool: &str, args: &Value, result: &Value) -> Option<String> {
         _ => return None,
     })
 }
-
 fn lines(result: &Value, row: impl Fn(&Value) -> Option<String>, none: &str) -> String {
     let rows: Vec<String> = result
         .as_array()
@@ -67,13 +65,11 @@ fn lines(result: &Value, row: impl Fn(&Value) -> Option<String>, none: &str) -> 
         rows.join("\n")
     }
 }
-
 fn field(row: &Value, key: &str) -> Option<String> {
     row.as_str()
         .or_else(|| row.get(key).and_then(Value::as_str))
         .map(str::to_owned)
 }
-
 fn words(value: &Value, key: &str) -> String {
     value
         .get(key)
@@ -81,7 +77,6 @@ fn words(value: &Value, key: &str) -> String {
         .unwrap_or_default()
         .to_owned()
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -160,7 +155,6 @@ mod tests {
             Some("Saved plan.md.")
         );
     }
-
     #[test]
     fn a_read_or_a_window_is_heard_as_it_is_and_another_tool_is_not_the_connectors() {
         let asked = json!({ "path": "plan.md", "include": ["outline"] });

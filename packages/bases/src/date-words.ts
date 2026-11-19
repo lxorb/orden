@@ -4,9 +4,7 @@ export interface DateWordOptions {
   lang?: string
   today?: string
 }
-
 const quote = (text: string) => JSON.stringify(text)
-
 const DAYS: Record<string, number> = {
   monday: 1,
   mon: 1,
@@ -39,7 +37,6 @@ const DAYS: Record<string, number> = {
   sonntag: 7,
   so: 7,
 }
-
 const MONTHS: Record<string, number> = {}
 ;[
   ['january', 'jan', 'januar', 'jän'],
@@ -55,16 +52,13 @@ const MONTHS: Record<string, number> = {}
   ['november', 'nov'],
   ['december', 'dec', 'dezember', 'dez'],
 ].forEach((names, at) => names.forEach((name) => (MONTHS[name] = at + 1)))
-
 const TODAY = new Set(['today', 'tod', 'heute'])
 const TOMORROW = new Set(['tomorrow', 'tmr', 'tom', 'morgen'])
 const YESTERDAY = new Set(['yesterday', 'gestern'])
-
 export function weekdayFrom(day: number, fromToday: boolean): string {
   const ahead = `(${day} - number(today().format("E")) + 7) % 7`
   return fromToday ? `today() + duration((${ahead}) + "d")` : `today() + duration(((${ahead}) || 7) + "d")`
 }
-
 function spanOf(count: string, unit: string): { text: string; clock: boolean } | null {
   const word = unit.toLowerCase()
   if (/^(hours?|hrs?|h|stunden?|std)$/.test(word)) return { text: `${count}h`, clock: true }
@@ -75,7 +69,6 @@ function spanOf(count: string, unit: string): { text: string; clock: boolean } |
   if (/^(years?|jahre?n?)$/.test(word)) return { text: `${count}y`, clock: false }
   return null
 }
-
 export function dateWords(words: string, options: DateWordOptions): { expression: string; clock: boolean } | null {
   const text = words.trim().toLowerCase().replace(/\s+/g, ' ')
   if (TODAY.has(text)) return { expression: 'today()', clock: false }
@@ -83,7 +76,6 @@ export function dateWords(words: string, options: DateWordOptions): { expression
   if (YESTERDAY.has(text)) return { expression: 'today() - "1d"', clock: false }
   if (text === 'now' || text === 'jetzt') return { expression: 'now()', clock: true }
   if (civil(text)) return { expression: `date(${quote(text)})`, clock: false }
-
   const relative = /^(?:in )?([+-]?)(\d+) ([a-zäö]+)(?: ago| her)?$/.exec(text)
   if (relative) {
     const span = spanOf(relative[2] ?? '0', relative[3] ?? '')
@@ -95,13 +87,11 @@ export function dateWords(words: string, options: DateWordOptions): { expression
       }
     }
   }
-
   const next = /^(?:next|nächsten?|naechsten?) ([a-zäö]+)$/.exec(text)
   const nextDay = next ? DAYS[next[1] ?? ''] : undefined
   if (nextDay !== undefined) return { expression: weekdayFrom(nextDay, false), clock: false }
   const day = DAYS[text]
   if (day !== undefined) return { expression: weekdayFrom(day, true), clock: false }
-
   const year = Number((options.today ?? todayOf()).slice(0, 4))
   const named =
     /^(?:([a-zäö]+)\.? (\d{1,2})(?:st|nd|rd|th)?|(\d{1,2})(?:st|nd|rd|th|\.)? ([a-zäö]+)\.?)(?:,? (\d{4}))?$/.exec(text)
@@ -111,7 +101,6 @@ export function dateWords(words: string, options: DateWordOptions): { expression
     const iso = month ? isoOf(named[5] ? Number(named[5]) : year, month, dayOf) : ''
     if (civil(iso)) return { expression: `date(${quote(iso)})`, clock: false }
   }
-
   const numeric = /^(\d{1,2})[./](\d{1,2})\.?(?:[./](\d{2,4}))?$/.exec(text)
   if (numeric) {
     const first = Number(numeric[1])

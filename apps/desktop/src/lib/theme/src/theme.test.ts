@@ -15,17 +15,14 @@ let resolves: Record<string, string> = {}
 let painted: Record<string, string> = {}
 let style: { id: string; textContent: string; remove: () => void } | null = null
 let hearing: ((event: { key: string | null }) => void)[] = []
-
 function writtenElsewhere(values: Record<string, string>) {
   for (const [key, value] of Object.entries(values)) kept.setItem(key, value)
   for (const key of Object.keys(values)) for (const heard of hearing) heard({ key })
 }
-
 function systemPrefers(light: boolean) {
   media.light = light
   for (const listener of media.listeners) listener({ matches: light })
 }
-
 function stubs(storage = memoryStorage()) {
   kept = storage
   media.light = false
@@ -74,18 +71,14 @@ function stubs(storage = memoryStorage()) {
     head: { append: () => undefined, insertBefore: () => undefined },
   })
 }
-
 const injected = () => style?.textContent ?? ''
-
 stubs()
-
 const folder = vi.hoisted(() => ({
   files: new Map<string, string>(),
   listing: true,
   reading: true,
 }))
 const host = vi.hoisted(() => ({ platform: 'windows', called: [] as string[] }))
-
 vi.mock('../../platform/src/tauri', () => ({
   isDesktop: true,
   isNative: true,
@@ -114,9 +107,7 @@ vi.mock('../../platform/src/tauri', () => ({
     return Promise.resolve('')
   },
 }))
-
 vi.mock('../../ui-kit/src/insets', () => ({ tintSystemBars: () => undefined }))
-
 const { chosenFirst, theme } = await import('./theme.svelte')
 const { stamped, stampOf } = await import('./stamp')
 await Promise.all([
@@ -128,39 +119,32 @@ await Promise.all([
   import('../../theme-looks/src/wallpaper/settings'),
   import('./declared'),
 ])
-
 const PAIR = `[data-theme=light] { --bg: #fff; }\n[data-theme=dark] { --bg: #000; }`
 const ONLY_LIGHT = `[data-theme=light] { color-scheme: light; --bg: #fff; }`
 const BUILT_IN = ['Classic', 'Contrast', 'Glass', 'Wallpaper']
-
 function installed(id: string, name: string, css: string, version = '1.0.0') {
   folder.files.set(id, stamped({ id, name, author: 'Orden', version }, css))
 }
-
 async function chosen(id: string, name: string, css: string) {
   installed(id, name, css)
   await theme.reload()
   theme.select(`file:${id}`)
 }
-
 const ids = () => theme.all.map((one) => one.id)
 const settingIds = () => theme.settings.map((one) => one.id)
 const ownIds = () => theme.settings.filter((one) => one.own === true).map((one) => one.id)
 const offeredOn = (id: string) => theme.all.some((one) => one.id === id)
-
 function relaunch() {
   stubs(kept)
   theme.id = 'default'
   theme.init()
 }
-
 const settled = async (done?: () => boolean) => {
   for (let turn = 0; turn < 400; turn++) {
     await new Promise((next) => setTimeout(next, 1))
     if (!done || done()) return
   }
 }
-
 beforeEach(() => {
   vi.unstubAllGlobals()
   stubs()
@@ -176,7 +160,6 @@ beforeEach(() => {
   theme.scheme = 'system'
   theme.offerContrast = false
 })
-
 describe('what the dropdown offers', () => {
   test('is the four the app ships with, never a Dark or a Light, and then what is installed', async () => {
     await theme.reload()
@@ -189,7 +172,6 @@ describe('what the dropdown offers', () => {
     expect(ids()).toEqual(['default', 'contrast', 'glass', 'wallpaper', 'file:rose', 'file:warm-paper'])
     expect(theme.all.slice(0, 3).map((one) => one.name)).toEqual(BUILT_IN.slice(0, 3))
   })
-
   test('the built-in contrast theme brings its own palette, and the built-in carries both schemes', () => {
     const found = theme.all.find((one) => one.id === 'contrast')
     expect(found?.path).toBeUndefined()
@@ -200,7 +182,6 @@ describe('what the dropdown offers', () => {
     expect(theme.active.variants).toEqual(['dark', 'light'])
     expect(theme.switchable).toBe(true)
   })
-
   test('and choosing contrast puts its palette on the page with nothing to fetch', () => {
     theme.select('contrast')
     expect(theme.id).toBe('contrast')
@@ -208,7 +189,6 @@ describe('what the dropdown offers', () => {
     expect(theme.accentIsTheme).toBe(true)
   })
 })
-
 describe('a second window', () => {
   test('is heard over a preview that has ended', () => {
     theme.init()
@@ -219,7 +199,6 @@ describe('a second window', () => {
     writtenElsewhere({ 'orden:theme-settings': JSON.stringify({ '*': { accent: second } }) })
     expect(theme.accent).toBe(second)
   })
-
   test('reads the folder again for a theme it has not listed', async () => {
     theme.init()
     await settled()
@@ -228,7 +207,6 @@ describe('a second window', () => {
     await settled(() => theme.active.id === 'file:rose')
     expect(theme.active.id).toBe('file:rose')
   })
-
   test('is heard when it changes the theme or the scheme', () => {
     theme.init()
     writtenElsewhere({ 'orden:theme': 'contrast' })
@@ -237,7 +215,6 @@ describe('a second window', () => {
     writtenElsewhere({ 'orden:theme-scheme': 'light' })
     expect(theme.scheme).toBe('light')
   })
-
   test('keeps a theme setting it chose when this one changes another', () => {
     theme.init()
     const accent = theme.accents.at(-1)?.id ?? ''
@@ -248,7 +225,6 @@ describe('a second window', () => {
     expect(written['*']?.accent).toBe(accent)
   })
 })
-
 describe('the scheme, which is not a theme', () => {
   test('follows the system until one of the two is asked for, then stops', () => {
     theme.init()
@@ -262,7 +238,6 @@ describe('the scheme, which is not a theme', () => {
     expect(kept.getItem('orden:theme')).toBe('default')
     expect(kept.getItem('orden:theme-scheme')).toBe('dark')
   })
-
   test('is not touched by choosing a theme', async () => {
     theme.init()
     theme.setScheme('light')
@@ -272,7 +247,6 @@ describe('the scheme, which is not a theme', () => {
     expect(theme.current).toBe('light')
   })
 })
-
 describe('a theme with one scheme', () => {
   test('shows the scheme it has, whatever was asked for, and the control points at it', async () => {
     theme.init()
@@ -284,7 +258,6 @@ describe('a theme with one scheme', () => {
     theme.select('default')
     expect(theme.shown).toBe('dark')
   })
-
   test('offers neither the other scheme nor the system, refuses it, and the panel foot cannot switch it', async () => {
     await chosen('warm-paper', 'Warm Paper', ONLY_LIGHT)
     expect(theme.offers('light')).toBe(true)
@@ -297,7 +270,6 @@ describe('a theme with one scheme', () => {
     expect(theme.id).toBe('file:warm-paper')
   })
 })
-
 describe('the switch in the panel foot', () => {
   test('flips the scheme and leaves the theme where it is', async () => {
     theme.init()
@@ -307,7 +279,6 @@ describe('the switch in the panel foot', () => {
     expect(theme.current).not.toBe(was)
     expect(theme.id).toBe('file:rose')
   })
-
   test('turns following the system into a choice, since that is what a press is', () => {
     theme.init()
     expect(theme.scheme).toBe('system')
@@ -315,7 +286,6 @@ describe('the switch in the panel foot', () => {
     expect(theme.scheme).toBe('light')
   })
 })
-
 describe('what an older device wrote down', () => {
   test.each(['dark', 'light', 'system'] as const)(
     'a theme of %s means Default in that scheme, written back in the new spelling',
@@ -329,14 +299,12 @@ describe('what an older device wrote down', () => {
       expect(kept.getItem('orden:theme-scheme')).toBe(scheme)
     },
   )
-
   test('nothing written down at all is a first launch, and not the built-in', () => {
     kept.removeItem('orden:theme')
     theme.init()
     expect(theme.id).toBe('glass')
     expect(theme.scheme).toBe('system')
   })
-
   test('a scheme already written down outranks either of those', () => {
     kept.setItem('orden:theme', 'dark')
     kept.setItem('orden:theme-scheme', 'system')
@@ -344,7 +312,6 @@ describe('what an older device wrote down', () => {
     expect(theme.scheme).toBe('system')
   })
 })
-
 describe('a folder that will not answer', () => {
   test('leaves the themes already found and the chosen one where they are', async () => {
     installed('rose', 'Rose', PAIR)
@@ -359,7 +326,6 @@ describe('a folder that will not answer', () => {
     expect(theme.id).toBe('file:rose')
     expect(kept.getItem('orden:theme')).toBe('file:rose')
   })
-
   test('and a folder that does answer still notices a theme that is gone', async () => {
     await chosen('rose', 'Rose', PAIR)
     folder.files.delete('rose')
@@ -367,7 +333,6 @@ describe('a folder that will not answer', () => {
     expect(theme.id).toBe('default')
     expect(theme.files).toEqual([])
   })
-
   test('a file that lists but will not read keeps the name and version it had', async () => {
     installed('rose', 'Rose', PAIR, '2.0.0')
     await theme.reload()
@@ -378,19 +343,16 @@ describe('a folder that will not answer', () => {
     expect(theme.installed.get('rose')?.stamp?.version).toBe('2.0.0')
   })
 })
-
 describe('a look shown and not kept', () => {
   beforeEach(async () => {
     installed('rose', 'Rose', PAIR)
     await theme.reload()
   })
-
   test('paints a file theme in the frame it is asked for, with no read in between', () => {
     folder.reading = false
     theme.select('file:rose')
     expect(injected()).toContain('--bg: #000')
   })
-
   test('is on the page and in the store, and nowhere in the storage', () => {
     theme.select('default')
     theme.setScheme('dark')
@@ -404,7 +366,6 @@ describe('a look shown and not kept', () => {
     expect(theme.accent).toBe('teal')
     expect(kept.getItem('orden:theme-settings')).toBe(JSON.stringify({ '*': { accent: 'violet' } }))
   })
-
   test('and showing the kept one again is the kept one exactly', () => {
     theme.select('default')
     theme.setScheme('system')
@@ -415,7 +376,6 @@ describe('a look shown and not kept', () => {
     expect(theme.accent).toBe('violet')
     expect(dataset.theme).toBe('dark')
   })
-
   test('the look already on is not put on again', async () => {
     theme.preview('file:rose', 'dark', 'teal')
     await settled(() => injected().includes('--bg: #000'))
@@ -425,7 +385,6 @@ describe('a look shown and not kept', () => {
     expect(injected()).toBe('worn once')
   })
 })
-
 describe('a look kept with the account', () => {
   test('tells of a pick, and not of a look shown, a dial tried or a fall back', async () => {
     theme.init()
@@ -445,7 +404,6 @@ describe('a look kept with the account', () => {
     expect(told).toBe(4)
     stop()
   })
-
   test('is the kept look, not one being shown, and carries the sheet of a theme from the folder', async () => {
     theme.init()
     await chosen('rose', 'Rose', PAIR)
@@ -462,7 +420,6 @@ describe('a look kept with the account', () => {
     expect(look.values['*']?.accent).toBe('violet')
     expect(look.css).toBe('')
   })
-
   test('from another device is worn, the theme it names written where it was missing', async () => {
     theme.init()
     let told = 0
@@ -484,7 +441,6 @@ describe('a look kept with the account', () => {
     expect(told).toBe(0)
     stop()
   })
-
   test('waits for the folder to be read before calling a theme missing', async () => {
     installed('rose', 'Rose', PAIR)
     theme.init()
@@ -492,7 +448,6 @@ describe('a look kept with the account', () => {
     expect(theme.id).toBe('file:rose')
     expect(theme.kept.id).toBe('file:rose')
   })
-
   test('keeps the theme on this device when the one named is nowhere to be had', async () => {
     theme.init()
     theme.select('contrast')
@@ -501,7 +456,6 @@ describe('a look kept with the account', () => {
     expect(theme.kept.scheme).toBe('dark')
     expect(folder.files.has('gone')).toBe(false)
   })
-
   test('moves a look being shown onto the new kept one', async () => {
     theme.init()
     theme.select('contrast')
@@ -518,7 +472,6 @@ describe('a look kept with the account', () => {
     stop()
   })
 })
-
 describe('an installed theme across a restart', () => {
   test('is in the dropdown, under its own name, still chosen', async () => {
     installed('rose', 'Rose', PAIR, '2.0.0')
@@ -531,7 +484,6 @@ describe('an installed theme across a restart', () => {
     expect(theme.current).toBe('light')
     expect(theme.installed.has('rose')).toBe(true)
   })
-
   test('one saved from a browser before is still the Orden theme it was saved as', async () => {
     const css = `[data-theme=dark] { color-scheme: dark; --bg: #1c1b22; --text: #fbfbfe; }`
     folder.files.set('balanced', stamped({ id: 'balanced', name: 'Balanced', author: 'Firefox', version: '1' }, css))
@@ -544,7 +496,6 @@ describe('an installed theme across a restart', () => {
     expect(folder.files.get('balanced')).toContain(css)
   })
 })
-
 describe('a store copy of the contrast theme', () => {
   test('is not a second card', async () => {
     installed('contrast', 'Contrast', PAIR, '2.0.1')
@@ -553,7 +504,6 @@ describe('a store copy of the contrast theme', () => {
     expect(theme.all.map((one) => one.name)).toEqual([...BUILT_IN, 'Rose'])
     expect(theme.installed.has('contrast')).toBe(false)
   })
-
   test('and a reader who had it chosen is on the built-in after a restart', async () => {
     installed('contrast', 'Contrast', PAIR, '2.0.1')
     kept.setItem('orden:theme', 'file:contrast')
@@ -565,7 +515,6 @@ describe('a store copy of the contrast theme', () => {
     expect(theme.current).toBe('light')
     expect(injected()).toContain('--text: #000000')
   })
-
   test('while a hand-made contrast.css is a theme of its own', async () => {
     folder.files.set('contrast', PAIR)
     kept.setItem('orden:theme', 'file:contrast')
@@ -575,7 +524,6 @@ describe('a store copy of the contrast theme', () => {
     expect(ids()).toContain('file:contrast')
   })
 })
-
 describe('answering a system that asks for more contrast', () => {
   test('is made once to a fresh install whose system asks, with the theme chosen, written down and not painted as contrast', () => {
     media.contrast = true
@@ -591,13 +539,11 @@ describe('answering a system that asks for more contrast', () => {
     theme.init()
     expect(theme.offerContrast).toBe(false)
   })
-
   test('and to nobody whose system is not asking', () => {
     theme.init()
     expect(theme.offerContrast).toBe(false)
     expect(kept.getItem('orden:contrast-offered')).toBe(null)
   })
-
   test('and never over a theme the reader had already chosen for themselves', async () => {
     await chosen('rose', 'Rose', PAIR)
     media.contrast = true
@@ -606,10 +552,8 @@ describe('answering a system that asks for more contrast', () => {
     expect(theme.id).toBe('file:rose')
   })
 })
-
 describe('a first launch', () => {
   beforeEach(() => kept.removeItem('orden:theme'))
-
   test('is glass, in green, following the system, writing the accent down and not the theme', async () => {
     theme.init()
     expect(kept.getItem('orden:theme')).toBe(null)
@@ -625,7 +569,6 @@ describe('a first launch', () => {
     expect(theme.id).toBe('glass')
     expect(theme.accent).toBe('green')
   })
-
   test('keeps the green on any theme chosen after it, since the accent is the reader’s', () => {
     theme.init()
     theme.select('default')
@@ -633,7 +576,6 @@ describe('a first launch', () => {
     expect(theme.id).toBe('default')
     expect(theme.accent).toBe('green')
   })
-
   test('and an accent chosen on it outlives the next launch', () => {
     theme.init()
     theme.setAccent('teal')
@@ -642,13 +584,11 @@ describe('a first launch', () => {
     expect(theme.accent).toBe('teal')
     expect(kept.getItem('orden:accent-given')).toBe('')
   })
-
   test('nor over an accent an older device kept under a key of its own', () => {
     kept.setItem('orden:accent', 'green')
     theme.init()
     expect(theme.accent).toBe('green')
   })
-
   test('still offers the contrast theme to a system that asks for it, then or later', () => {
     theme.init()
     expect(theme.offerContrast).toBe(false)
@@ -658,10 +598,8 @@ describe('a first launch', () => {
     expect(theme.id).toBe('contrast')
   })
 })
-
 describe('an install on the built-in', () => {
   beforeEach(() => kept.removeItem('orden:theme-moved'))
-
   test('moves to glass once, in green where no accent was ever chosen', () => {
     theme.init()
     expect(theme.id).toBe('glass')
@@ -669,7 +607,6 @@ describe('an install on the built-in', () => {
     expect(kept.getItem('orden:theme')).toBe(null)
     expect(kept.getItem('orden:theme-moved')).toBe('yes')
   })
-
   test('drops a setting the app no longer has, once, and keeps the rest', () => {
     kept.setItem(
       'orden:theme-settings',
@@ -682,7 +619,6 @@ describe('an install on the built-in', () => {
       glass: { warmth: 30 },
     })
   })
-
   test('keeps the accent and the scheme it chose', () => {
     kept.setItem('orden:theme-settings', JSON.stringify({ '*': { accent: 'teal' } }))
     kept.setItem('orden:theme-scheme', 'light')
@@ -691,14 +627,12 @@ describe('an install on the built-in', () => {
     expect(theme.accent).toBe('teal')
     expect(theme.scheme).toBe('light')
   })
-
   test('the old spellings of the built-in move too', () => {
     kept.setItem('orden:theme', 'dark')
     theme.init()
     expect(theme.id).toBe('glass')
     expect(theme.scheme).toBe('dark')
   })
-
   test.each([true, false])('and one who picks the built-in again afterwards keeps it (new install: %s)', (fresh) => {
     if (fresh) kept.removeItem('orden:theme')
     theme.init()
@@ -707,7 +641,6 @@ describe('an install on the built-in', () => {
     theme.init()
     expect(theme.id).toBe('default')
   })
-
   test('any other theme stays where it is', () => {
     kept.setItem('orden:theme', 'contrast')
     theme.init()
@@ -715,12 +648,9 @@ describe('an install on the built-in', () => {
     expect(theme.accent).toBe('violet')
   })
 })
-
 describe('an accent the first look gave', () => {
   beforeEach(() => kept.removeItem('orden:theme'))
-
   const given = (accent: string) => kept.setItem('orden:theme-settings', JSON.stringify({ '*': { accent } }))
-
   test('the day’s yellow, on an install still on the first look, turns green once', () => {
     given('yellow')
     theme.init()
@@ -731,7 +661,6 @@ describe('an accent the first look gave', () => {
     theme.init()
     expect(theme.accent).toBe('yellow')
   })
-
   test('but not once a theme was chosen, which is somebody in Appearance', () => {
     kept.setItem('orden:theme', 'glass')
     given('yellow')
@@ -739,7 +668,6 @@ describe('an accent the first look gave', () => {
     expect(theme.accent).toBe('yellow')
     expect(kept.getItem('orden:accent-given')).toBe('')
   })
-
   test.each([
     ['an older device kept its yellow under the old key', 'orden:accent', 'yellow'],
     ['an install from before the marker holds another accent', 'orden:theme-settings', 'teal'],
@@ -749,7 +677,6 @@ describe('an accent the first look gave', () => {
     theme.init()
     expect(theme.accent).toBe(accent)
   })
-
   test('follows whatever the first look gives now, on any theme, until one is picked', () => {
     kept.setItem('orden:theme', 'wallpaper')
     kept.setItem('orden:accent-given', 'teal')
@@ -761,10 +688,8 @@ describe('an accent the first look gave', () => {
     expect(kept.getItem('orden:accent-given')).toBe('')
   })
 })
-
 const DIALLED = `:root { --orden-setting-warmth: range "Warmth" 0 100 40 %; }`
 const WARMTH = { '--orden-setting-warmth': 'range "Warmth" 0 100 40 %' }
-
 async function warmChosen(css = DIALLED, dials: Record<string, string> = WARMTH) {
   folder.files.clear()
   installed('warm', 'Warm', css)
@@ -773,7 +698,6 @@ async function warmChosen(css = DIALLED, dials: Record<string, string> = WARMTH)
   theme.select('file:warm')
   await settled(() => (css === DIALLED ? theme.settings.length > 1 : theme.settings.length === 1))
 }
-
 describe('the settings a theme offers', () => {
   test('are the app’s own on a theme that brings no palette, one choice painting every token on it', () => {
     theme.init()
@@ -791,7 +715,6 @@ describe('the settings a theme offers', () => {
       '--selection',
     ])
   })
-
   test('are withdrawn where the theme paints their tokens itself, and come back on the colour chosen', async () => {
     theme.init()
     theme.setAccent('teal')
@@ -805,7 +728,6 @@ describe('the settings a theme offers', () => {
     expect(theme.accent).toBe('teal')
     expect(painted['--accent']).toBe('#33c7ba')
   })
-
   test('follow the reader from one theme to the next, because the accent is the app’s', async () => {
     installed('rose', 'Rose', PAIR)
     await theme.reload()
@@ -816,7 +738,6 @@ describe('the settings a theme offers', () => {
     expect(settingIds()).toEqual(['accent'])
     expect(theme.accent).toBe('pink')
   })
-
   test('include whatever the theme declared, kept when it is switched away from and found again', async () => {
     await warmChosen()
     expect(settingIds()).toEqual(['accent', 'warmth'])
@@ -831,7 +752,6 @@ describe('the settings a theme offers', () => {
     expect(theme.values.warmth).toBe(75)
     expect(painted['--orden-warmth']).toBe('75%')
   })
-
   test('and a setting the theme has stopped offering is simply not read', async () => {
     await warmChosen()
     theme.set('warmth', 75)
@@ -841,7 +761,6 @@ describe('the settings a theme offers', () => {
     await warmChosen()
     expect(theme.values.warmth).toBe(75)
   })
-
   test('read the accent an older device wrote under a key of its own, until this one writes', () => {
     kept.setItem('orden:accent', 'orange')
     theme.init()
@@ -852,12 +771,10 @@ describe('the settings a theme offers', () => {
     expect(theme.accent).toBe('green')
   })
 })
-
 describe('the glass theme', () => {
   beforeEach(() => {
     vi.resetModules()
   })
-
   test('is fetched rather than carried, offered on every platform, and still worn by its id', async () => {
     const found = theme.all.find((one) => one.id === 'glass')
     expect(found?.path).toBeUndefined()
@@ -871,7 +788,6 @@ describe('the glass theme', () => {
     await settled(() => injected().includes('--glass-chrome'))
     expect(theme.id).toBe('glass')
   })
-
   test('puts its sheet on the page and keeps the reader’s accent beside it, its own dials in a card', async () => {
     theme.init()
     theme.select('glass')
@@ -882,7 +798,6 @@ describe('the glass theme', () => {
     await settled(() => settingIds().includes('follow'))
     expect(ownIds()).toEqual(['follow', 'tint', 'pair', 'tab'])
   })
-
   test('passes over the material, opacity and content an older build kept for it (#2162)', async () => {
     kept.setItem(
       'orden:theme-settings',
@@ -898,7 +813,6 @@ describe('the glass theme', () => {
     expect(dataset.translucent).toBeUndefined()
     expect(host.called).not.toContain('set_translucency')
   })
-
   test('is shown as glass by the picker, and pointing away gives the window back', async () => {
     theme.init()
     await theme.reload()
@@ -908,7 +822,6 @@ describe('the glass theme', () => {
     await settled(() => injected() === '')
     expect(kept.getItem('orden:theme')).not.toBe('glass')
   })
-
   test('opens a launch in the sheet it wore last time, before its own chunk is in', async () => {
     theme.init()
     theme.select('glass')
@@ -916,14 +829,12 @@ describe('the glass theme', () => {
     relaunch()
     expect(injected()).toBe(glassCss)
   })
-
   test('hands its sheet to the picker, which draws its card from it', async () => {
     theme.warm()
     await settled(() => theme.all.find((one) => one.id === 'glass')?.css !== undefined)
     expect(theme.all.find((one) => one.id === 'glass')?.css).toBe(glassCss)
   })
 })
-
 describe('a dial being dragged', () => {
   test('is shown and kept nowhere, and letting go keeps it', async () => {
     theme.init()
@@ -940,7 +851,6 @@ describe('a dial being dragged', () => {
     expect(theme.keptFor('wallpaper', 'dim')).toBe(55)
   })
 })
-
 describe('the wallpaper theme', () => {
   const DIALS = ['blur', 'dim', 'saturation', 'tint', 'tint-colour', 'grain', 'fit', 'empty', 'content']
   const HELD = {
@@ -950,16 +860,13 @@ describe('the wallpaper theme', () => {
     light: { floor: 0.61, ground: '#e9ecf2' },
   }
   const pictured = () => injected().includes('--wallpaper-picture:')
-
   async function worn(held: boolean) {
     if (held) kept.setItem('orden:wallpaper', JSON.stringify(HELD))
     theme.init()
     theme.select('wallpaper')
     await settled(held ? pictured : () => settingIds().includes('dim'))
   }
-
   beforeEach(() => theme.rewear('wallpaper'))
-
   test('is offered everywhere, since the page draws it rather than the platform', () => {
     for (const platform of ['windows', 'macos', 'linux', 'android', 'ios']) {
       host.platform = platform
@@ -967,7 +874,6 @@ describe('the wallpaper theme', () => {
       expect(offeredOn('wallpaper'), platform).toBe(true)
     }
   })
-
   test('is fetched rather than carried, and with nothing chosen is its sheet and dials', async () => {
     const found = theme.all.find((one) => one.id === 'wallpaper')
     expect(found?.path).toBeUndefined()
@@ -980,7 +886,6 @@ describe('the wallpaper theme', () => {
     expect(wallpaperCss).not.toMatch(/--accent\s*:/)
     expect(theme.accentIsTheme).toBe(false)
   })
-
   test('says the picture written down after its own sheet, with both floors, and opens a launch on it', async () => {
     await worn(true)
     expect(injected().startsWith(wallpaperCss)).toBe(true)
@@ -990,7 +895,6 @@ describe('the wallpaper theme', () => {
     relaunch()
     expect(injected()).toContain(`url("${HELD.picture}")`)
   })
-
   test('wears a new picture when it is read again, and keeps its dials meanwhile', async () => {
     await worn(false)
     kept.setItem('orden:wallpaper', JSON.stringify(HELD))
@@ -999,7 +903,6 @@ describe('the wallpaper theme', () => {
     await settled(pictured)
     expect(settingIds()).toEqual(['accent', ...DIALS])
   })
-
   test('is shown by the picker as it would be, and pointing away keeps nothing', async () => {
     kept.setItem('orden:wallpaper', JSON.stringify(HELD))
     theme.init()
@@ -1009,7 +912,6 @@ describe('the wallpaper theme', () => {
     await settled(() => injected() === '')
     expect(kept.getItem('orden:theme')).not.toBe('wallpaper')
   })
-
   test('says its dials in code, which Appearance draws in a card of its own', async () => {
     await worn(false)
     expect(settingIds()).toEqual(['accent', ...DIALS])
@@ -1019,7 +921,6 @@ describe('the wallpaper theme', () => {
     expect(theme.keptFor('wallpaper', 'dim')).toBe(35)
   })
 })
-
 describe('a theme’s own faces', () => {
   test.each([
     [
@@ -1045,10 +946,8 @@ describe('a theme’s own faces', () => {
     expect(chosenFirst(out)).toBe(out)
   })
 })
-
 describe('another window of the app', () => {
   const accented = (accent: string) => JSON.stringify({ '*': { accent } })
-
   test('quick add wears the look the app chose and follows each change, keeping nothing', async () => {
     writtenElsewhere({
       'orden:theme': 'contrast',
@@ -1072,7 +971,6 @@ describe('another window of the app', () => {
     expect(kept.getItem('orden:theme-settings')).toBe(accented('teal'))
     expect(kept.getItem('orden:theme-sheet')).toBeNull()
   })
-
   test('a second window of notes follows a scheme and accent chosen in the first', async () => {
     theme.init()
     writtenElsewhere({ 'orden:theme-scheme': 'light', 'orden:theme-settings': accented('orange') })

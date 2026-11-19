@@ -7,7 +7,6 @@ const ROOTS: [string, keyof typeof WORDS][] = [
   ['other', 'other'],
   ['synced', 'mobile'],
 ]
-
 export function chromiumSidebar(
   session: SnssSession | null,
   bookmarks: unknown,
@@ -19,11 +18,9 @@ export function chromiumSidebar(
   readBookmarks([rootsOf(account, 'account:'), rootsOf(bookmarks, '')], made)
   return made.sidebar(name)
 }
-
 function rootsOf(file: unknown, prefix: string): { roots: Said; prefix: string } | null {
   return isObject(file) && isObject(file.roots) ? { roots: file.roots, prefix } : null
 }
-
 function readWindows(session: SnssSession, made: Made) {
   for (const window of session.windows) {
     for (const tab of window.tabs) {
@@ -44,10 +41,8 @@ function readWindows(session: SnssSession, made: Made) {
     }
   }
 }
-
 const CUSTOM = 'custom_root'
 const TRASH = 'trash'
-
 function readBookmarks(files: ({ roots: Said; prefix: string } | null)[], made: Made) {
   const root = (key: string, name: string, node: Said, prefix: string) => {
     made.folder('bookmarks', WORDS.bookmarks, null)
@@ -55,7 +50,6 @@ function readBookmarks(files: ({ roots: Said; prefix: string } | null)[], made: 
     made.folder(id, name, 'bookmarks')
     walk(node, id, prefix, made, 0)
   }
-
   for (const [key, word] of ROOTS) {
     for (const file of files) {
       const node = file?.roots[key]
@@ -71,9 +65,7 @@ function readBookmarks(files: ({ roots: Said; prefix: string } | null)[], made: 
     }
   }
 }
-
 const DEEPEST = 64
-
 function walk(folder: Said, id: string, prefix: string, made: Made, depth: number) {
   if (depth > DEEPEST) return
   list(folder.children).forEach((node, at) => {
@@ -96,9 +88,7 @@ function walk(folder: Said, id: string, prefix: string, made: Made, depth: numbe
     }
   })
 }
-
 const EPOCH_GAP = 11_644_473_600_000_000n
-
 function addedOf(value: unknown): { added?: Date } {
   if (typeof value !== 'string' || !/^\d+$/.test(value)) return {}
   const micro = BigInt(value) - EPOCH_GAP

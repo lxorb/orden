@@ -6,7 +6,6 @@ export interface SafariFiles {
   tabs: unknown
   session: unknown
 }
-
 const PINNED = 'TopScopedBookmarkList'
 const LOCAL = 'Local'
 const PRIVATE = new Set(['private', 'privatepinned'])
@@ -15,7 +14,6 @@ const MENU = 'BookmarksMenu'
 const READING_LIST = 'com.apple.ReadingList'
 const FOLDER = 1
 const TAB = 0
-
 export function safariSidebar(files: SafariFiles, name: string): Sidebar {
   const made = new Made()
   if (Array.isArray(files.tabs)) readTabs(files.tabs.filter(isObject), made)
@@ -23,7 +21,6 @@ export function safariSidebar(files: SafariFiles, name: string): Sidebar {
   if (isObject(files.bookmarks)) readBookmarks(files.bookmarks, made)
   return made.sidebar(name)
 }
-
 interface Row {
   id: number
   parent: number | null
@@ -31,7 +28,6 @@ interface Row {
   title: string
   url: string
 }
-
 function rowOf(said: Said): Row | null {
   if (said.deleted === true || typeof said.id !== 'number') return null
   return {
@@ -42,9 +38,7 @@ function rowOf(said: Said): Row | null {
     url: text(said.url) ?? '',
   }
 }
-
 const DEEPEST = 16
-
 function readTabs(said: Said[], made: Made) {
   const rows = said.map(rowOf).filter((one): one is Row => one !== null)
   const ids = new Set(rows.map((one) => one.id))
@@ -56,7 +50,6 @@ function readTabs(said: Said[], made: Made) {
     else inside.set(parent, [row])
   }
   const tabsIn = (folder: Row) => (inside.get(folder.id) ?? []).filter((one) => one.type === TAB)
-
   const walk = (parent: number | null, depth: number) => {
     if (depth > DEEPEST) return
     for (const folder of inside.get(parent) ?? []) {
@@ -79,7 +72,6 @@ function readTabs(said: Said[], made: Made) {
   }
   walk(null, 0)
 }
-
 function page(made: Made, tab: Row, where: { folder?: string; essential?: boolean }) {
   if (!tab.url) return
   made.tab({
@@ -92,7 +84,6 @@ function page(made: Made, tab: Row, where: { folder?: string; essential?: boolea
     container: 0,
   })
 }
-
 function readSession(session: Said, made: Made) {
   for (const window of list(session.SessionWindows)) {
     if (window.IsPrivateWindow === true) continue
@@ -112,26 +103,22 @@ function readSession(session: Said, made: Made) {
     }
   }
 }
-
 function readBookmarks(root: Said, made: Made) {
   const lists = list(root.Children).filter((one) => one.WebBookmarkType === 'WebBookmarkTypeList')
   const named = (title: string | null) =>
     title === BAR ? WORDS.favorites : title === MENU ? WORDS.menu : (title ?? WORDS.other)
-
   for (const one of lists.filter((each) => text(each.Title) !== READING_LIST)) {
     made.folder('bookmarks', WORDS.bookmarks, null)
     const id = `bookmark:${text(one.WebBookmarkUUID) ?? named(text(one.Title))}`
     made.folder(id, named(text(one.Title)), 'bookmarks')
     walk(one, id, made, 0)
   }
-
   const reading = lists.find((each) => text(each.Title) === READING_LIST)
   if (reading) {
     made.folder('reading', WORDS.readingList, null)
     walk(reading, 'reading', made, 0)
   }
 }
-
 function walk(folder: Said, id: string, made: Made, depth: number) {
   if (depth > DEEPEST) return
   list(folder.Children).forEach((node, at) => {
@@ -155,7 +142,6 @@ function walk(folder: Said, id: string, made: Made, depth: number) {
     }
   })
 }
-
 function addedOf(value: unknown): { added?: Date } {
   if (typeof value !== 'string') return {}
   const when = new Date(value)

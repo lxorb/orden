@@ -1,5 +1,4 @@
 pub const NOT_ANSWERING: &str = "that page is not answering";
-
 pub fn said(app: &tauri::AppHandle) {
     use std::sync::Mutex;
     use std::time::{Duration, Instant};
@@ -16,13 +15,10 @@ pub fn said(app: &tauri::AppHandle) {
         "stall: a web page's browser is not answering; the page waits rather than the window",
     );
 }
-
 pub fn answers(_view: &tauri::Webview) -> bool {
     true
 }
-
 pub fn put_away(_view: &tauri::Webview) {}
-
 pub fn close_when_answering(app: &tauri::AppHandle, label: String) {
     use tauri::Manager as _;
     let app = app.clone();

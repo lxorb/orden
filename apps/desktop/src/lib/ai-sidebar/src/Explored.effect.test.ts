@@ -4,9 +4,7 @@ import { expect, test, vi } from 'vitest'
 vi.mock('../../ai-chat/src/store/chat.svelte', () => ({
   chat: { unfolded: true, root: '/n/Work' },
 }))
-
 const Explored = (await import('./Explored.svelte')).default
-
 test('two reads with one id are two rows', () => {
   const read = (path: string) => ({
     kind: 'tool' as const,

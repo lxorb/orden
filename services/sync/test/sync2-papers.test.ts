@@ -6,13 +6,11 @@ import { type Live, live } from './sync2'
 interface SpaceState {
   id: string
 }
-
 interface Core {
   spaces: Map<string, SpaceState>
   addSpace(id: string, root: string, role: string): unknown[]
   commit(changes: unknown[]): Promise<void>
 }
-
 interface Device {
   root: string
   disk: {
@@ -27,7 +25,6 @@ interface Device {
     moved(from: string, to: string): Promise<void>
   }
 }
-
 interface Kit {
   testDevice(making: {
     fetch: (request: Request) => Promise<Response>
@@ -36,7 +33,6 @@ interface Kit {
   }): Promise<Device>
   firstPass(core: Core, space: SpaceState, v1: null): Promise<boolean>
 }
-
 async function kit(): Promise<Kit> {
   const at = (file: string) => new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate] = await Promise.all([
@@ -45,31 +41,25 @@ async function kit(): Promise<Kit> {
   ])
   return { ...(device as object), ...(migrate as object) } as Kit
 }
-
 const PAGES = '{\n\t"nodes": [],\n\t"edges": []\n}\n'
 const PDF = new TextEncoder().encode('%PDF-1.4\n%%EOF\n')
-
 let env: TestEnv
 let rooms: Live
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   rooms = live(env)
   token = await signIn(env, 'pages@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Lectures' } })).json.space.id
 })
-
 afterEach(() => env.close())
-
 function onAccount(): string[] {
   const rows = env.db
     .prepare('select path, kind from notes where space_id = ? and deleted = 0 order by path')
     .all(space) as { path: string; kind: string }[]
   return rows.map((row) => `${row.path} ${row.kind}`)
 }
-
 async function synced(files: Record<string, string | Uint8Array>) {
   const engine = await kit()
   const device = await engine.testDevice({
@@ -90,32 +80,26 @@ async function synced(files: Record<string, string | Uint8Array>) {
   await pass()
   return { device, pass }
 }
-
 test('a folder read for the first time holds the page note and not its paper', async () => {
   await synced({
     'Lecture.pages': PAGES,
     'Lecture.pages.pdf': PDF,
     'Report.pages.pdf': PDF,
   })
-
   expect(onAccount()).toEqual(['Lecture.pages pages', 'Report.pages.pdf file'])
 })
-
 test('a PDF turned into a page note leaves the tree as the note takes it in', async () => {
   const { device, pass } = await synced({ 'Notes.md': 'words\n' })
   const at = (path: string) => `${device.root}/${path}`
-
   await device.disk.writeBytes(at('Week 1.pdf'), PDF)
   await device.engine.created(at('Week 1.pdf'), false)
   await pass()
   expect(onAccount()).toEqual(['Notes.md note', 'Week 1.pdf file'])
-
   await device.disk.write(at('Week 1.pages'), PAGES)
   await device.engine.created(at('Week 1.pages'), false, PAGES)
   await device.disk.move(at('Week 1.pdf'), at('Week 1.pages.pdf'))
   await device.engine.moved(at('Week 1.pdf'), at('Week 1.pages.pdf'))
   await device.engine.created(at('Week 1.pages.pdf'), false)
   await pass()
-
   expect(onAccount()).toEqual(['Notes.md note', 'Week 1.pages pages'])
 })

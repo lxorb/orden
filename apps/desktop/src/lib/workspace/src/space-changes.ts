@@ -8,27 +8,21 @@ import { services } from './services'
 export async function adoptSpace(ws: HoldsSpaces, name: string, fresh = false, home?: string): Promise<string | null> {
   const existing = fresh ? undefined : ws.spaces.find((space) => space.name === name)
   if (existing) return existing.root
-
   const created =
     (fresh && home === undefined ? null : await keptFolder(name.trim(), fresh ? home : undefined)) ??
     (await invoke<{ name: string; path: string }>('create_space', {
       name: name.trim(),
     }).catch(() => null))
-
   if (!created) return null
-
   if (!ws.spaces.some((space) => samePath(space.root, created.path))) {
     const space: Space = { id: identifier(), name: created.name, root: created.path }
     ws.spaces = [...ws.spaces, space]
     windows.say('spaces-again')
-
     if (ws.activeSpaceId) ws.persist()
     else await selectSpace(ws, space.id)
   }
-
   return created.path
 }
-
 async function keptFolder(name: string, home?: string): Promise<{ name: string; path: string } | null> {
   const listed = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => null)
   const who = account.user?.id ?? null
@@ -39,16 +33,12 @@ async function keptFolder(name: string, home?: string): Promise<{ name: string; 
     ) ?? null
   )
 }
-
 export async function addSpace(ws: HoldsSpaces, name: string) {
   if (!name.trim()) return
-
   const created = await invoke<{ name: string; path: string }>('create_space', {
     name: name.trim(),
   }).catch(() => null)
-
   if (!created) return
-
   forgetHome(created.path)
   const listed = ws.spaces.find((one) => samePath(one.root, created.path))
   const space: Space = listed ?? { id: identifier(), name: created.name, root: created.path }
@@ -57,22 +47,17 @@ export async function addSpace(ws: HoldsSpaces, name: string) {
   await selectSpace(ws, space.id)
   return space
 }
-
 export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space || !name.trim()) return
-
   ws.naming = null
-
   const done = { moved: false }
   await ws.holdingUnder(space.root, async () => {
     const renamed = await invoke<{ name: string; path: string }>('rename_space', {
       from: space.root,
       name: name.trim(),
     }).catch(() => null)
-
     if (!renamed) return
-
     const from = space.root
     space.name = renamed.name
     space.root = renamed.path
@@ -80,16 +65,13 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
     await ws.fileMoved(from, renamed.path, 'space')
     done.moved = true
   })
-
   if (!done.moved) return
   if (ws.activeSpaceId === id) await ws.loadTree()
   ws.persist()
 }
-
 export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space) return
-
   const toAccount = account.signedIn && !keep && (await accountHoldsSpace(space.root))
   const gone = await (
     toAccount
@@ -98,12 +80,10 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
           back: entry.id,
         }))
   ).catch(() => null)
-
   if (!gone) return
   if (toAccount) leftGone(space.root)
   await spaceGone(ws, space, gone.back)
 }
-
 export async function dropSpace(ws: HoldsSpaces, id: string) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space) return
@@ -117,14 +97,12 @@ export async function dropSpace(ws: HoldsSpaces, id: string) {
   leftGone(space.root)
   await spaceGone(ws, space)
 }
-
 async function spaceGone(ws: HoldsSpaces, space: Space, back?: string) {
   const id = space.id
   await ws.fileGone(space.root, 'space', back)
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
   const fetched =
     tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length ? (await import('./sets.svelte')).sets : null
-
   if (ws.activeSpaceId === id) {
     ws.activeSpaceId = ws.spaces[0]?.id ?? null
     ws.tree = null
@@ -133,7 +111,6 @@ async function spaceGone(ws: HoldsSpaces, space: Space, back?: string) {
   await fetched?.gone(id)
   ws.persist()
 }
-
 export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean> {
   const tabs = tabSets.fetched
     ? (await import('./sets.svelte')).sets.tabsOf(id)
@@ -143,7 +120,6 @@ export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean>
   if (!tabs.some((tab) => tab.kind === 'terminal')) return true
   return await services().mayEnd(tabs)
 }
-
 async function accountHoldsSpace(root: string): Promise<boolean> {
   const { sync } = await import('../../sync-store/src/api')
   const id = sync.remoteIdFor(root)

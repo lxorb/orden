@@ -5,7 +5,6 @@ import { escapeText } from './escapes'
 import { renderMarkdown } from './index'
 
 const MARKED = /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/
-
 function asMarked(address: string): string {
   for (let before = ''; before !== address;) {
     before = address
@@ -13,7 +12,6 @@ function asMarked(address: string): string {
   }
   return address
 }
-
 const PIECES = [
   'a',
   'b1',
@@ -37,14 +35,12 @@ const PIECES = [
   '#',
   'é',
 ]
-
 function seeded(seed: number): () => number {
   return () => {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff
     return seed / 0x80000000
   }
 }
-
 describe('the end of a bare address', () => {
   test('is cut where marked cuts it', () => {
     const random = seeded(11)
@@ -55,7 +51,6 @@ describe('the end of a bare address', () => {
       expect(backpedal(address), address).toBe(asMarked(address))
     }
   }, 60_000)
-
   test('is cut in time that grows with its length', () => {
     const units = ['.,', ')', '*_', '&a;', '&a;.', '(', '((x)', 'x)', '.(', ';&', '&amp;)', "'"]
     for (const unit of units) {

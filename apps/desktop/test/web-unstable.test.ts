@@ -7,7 +7,6 @@ import { describe, expect, test } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url))
 const WORKFLOW = readFileSync(join(ROOT, '.github/workflows/web-unstable.yml'), 'utf8')
-
 function script(id: string): string {
   const lines = WORKFLOW.split('\n')
   const at = lines.findIndex((line) => line.trim() === `id: ${id}`)
@@ -20,12 +19,10 @@ function script(id: string): string {
   }
   return body.join('\n')
 }
-
 interface Version {
   id: string
   annotations: Record<string, string>
 }
-
 const MAIN = 'd6bbe05c414b22b79b8ec3d84ec4fb428be3cda1'
 const upload = (id: string, main = MAIN): Version => ({
   id,
@@ -36,9 +33,7 @@ const upload = (id: string, main = MAIN): Version => ({
 })
 const secret = (id: string): Version => ({ id, annotations: { 'workers/triggered_by': 'secret' } })
 const bare = (id: string): Version => ({ id, annotations: { 'workers/triggered_by': 'upload' } })
-
 const jq = spawnSync('jq', ['--version']).status === 0
-
 function live(versions: Version[]): { status: number | null; out: string; main: string } {
   const dir = mkdtempSync(join(tmpdir(), 'web-unstable-'))
   const deployments = versions.map((one, index) => ({
@@ -67,30 +62,25 @@ esac
   const main = /^main=(\S*)/m.exec(readFileSync(output, 'utf8'))?.[1] ?? ''
   return { status: run.status, out: `${run.stdout}${run.stderr}`, main }
 }
-
 describe.skipIf(!jq)('which main is live, for the edge to deploy beside', () => {
   test('is the one the live version names', () => {
     const other = 'a'.repeat(40)
     expect(live([upload('one', other), upload('two')])).toMatchObject({ status: 0, main: MAIN })
   })
-
   test('is found back through versions that only changed a secret', () => {
     const result = live([upload('one'), secret('two'), secret('three')])
     expect(result).toMatchObject({ status: 0, main: MAIN })
   })
-
   test('not known is red, never a green run that deployed nothing', () => {
     const result = live([upload('one'), bare('two'), secret('three')])
     expect(result.status).toBe(1)
     expect(result.main).toBe('')
     expect(result.out).toContain('::error::')
   })
-
   test('with no version that says it is red too', () => {
     expect(live([secret('one')]).status).toBe(1)
   })
 })
-
 test('web-unstable.yml has no notice that says nothing was deployed', () => {
   expect(WORKFLOW).not.toMatch(/::notice::[^\n]*[Nn]othing deployed/)
 })

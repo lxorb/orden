@@ -9,9 +9,7 @@ import { canWriteAt } from '../../sharing/src/api'
 import { workspace } from '../../workspace/src/api'
 
 type KindLine = 'notes' | 'chats' | 'terminals' | 'browser' | 'apps'
-
 const LINES: readonly KindLine[] = ['notes', 'chats', 'terminals', 'browser', 'apps']
-
 const LINE_TITLES: Record<KindLine, string> = {
   notes: 'Notes',
   chats: 'Chats',
@@ -19,9 +17,7 @@ const LINE_TITLES: Record<KindLine, string> = {
   browser: 'Browser',
   apps: 'Apps',
 }
-
 export const lineTitle = (line: KindLine): string => LINE_TITLES[line]
-
 export interface NewKindRow {
   kind: KindName
   line: KindLine
@@ -34,28 +30,23 @@ export interface NewKindRow {
   others?: (paneId?: string) => Promise<MenuEntry[]>
   ready?: () => void
 }
-
 const making = () => {
   const found = portOf('terminal.making')
   return found.ok ? found.value : null
 }
-
 function inPane(paneId: string | undefined, make: () => unknown) {
   if (paneId !== undefined) workspace.focusPane(paneId)
   void make()
 }
-
 export function newKinds(): NewKindRow[] {
   return kindsHere().map((kind) => ROWS[kind]())
 }
-
 export function offeredKinds(): NewKindRow[] {
   const shown = hiddenKinds.shown
   const root = workspace.activeSpace?.root
   const chats = !root || canWriteAt(root)
   return newKinds().filter((one) => shown.includes(one.kind) && (chats || one.kind !== 'chat'))
 }
-
 const SPARK: IconNode = [
   [
     'path',
@@ -64,7 +55,6 @@ const SPARK: IconNode = [
     },
   ],
 ]
-
 const ROWS: Record<KindName, () => NewKindRow> = {
   note: () => ({
     kind: 'note',
@@ -165,11 +155,9 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     make: (paneId) => inPane(paneId, () => workspace.openWebsite(true)),
   }),
 }
-
 export function kindLines(kinds: readonly NewKindRow[]): NewKindRow[][] {
   return LINES.map((line) => kinds.filter((one) => one.line === line)).filter((line) => line.length > 0)
 }
-
 export function groupOf(line: readonly NewKindRow[]): NewKindRow | null {
   const [first] = line
   if (!first || line.length === 1) return first ?? null
@@ -193,7 +181,6 @@ export function groupOf(line: readonly NewKindRow[]): NewKindRow | null {
       ),
   }
 }
-
 export function fitsWhole(
   lines: readonly NewKindRow[][],
   room: { width: number; height: number },
@@ -205,13 +192,11 @@ export function fitsWhole(
   const rows = lines.reduce((sum, line) => sum + Math.ceil(line.length / across), 0)
   return rows * card.height + (rows - 1) * card.gap <= room.height
 }
-
 const ONLINE: IconNode = [
   ['path', { d: 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z' }],
   ['path', { d: 'm7.5 11.5 2 1.75-2 1.75' }],
   ['path', { d: 'M12 15h3' }],
 ]
-
 function onlineRow(): NewKindRow {
   return {
     kind: 'online',
@@ -225,7 +210,6 @@ function onlineRow(): NewKindRow {
     },
   }
 }
-
 function remoteRow(): NewKindRow {
   return {
     kind: 'remote',
@@ -238,7 +222,6 @@ function remoteRow(): NewKindRow {
     },
   }
 }
-
 function terminalRow(): NewKindRow {
   return {
     kind: 'terminal',
@@ -254,11 +237,9 @@ function terminalRow(): NewKindRow {
     ready: () => void making()?.warm(),
   }
 }
-
 export function showOthers(one: NewKindRow, card: Element, paneId?: string, before?: () => void): boolean {
   const others = one.others
   if (!others) return false
-
   const box = card.getBoundingClientRect()
   void others(paneId).then((rows) => {
     const at = new MouseEvent('contextmenu', { clientX: box.left, clientY: box.bottom })

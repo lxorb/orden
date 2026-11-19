@@ -14,13 +14,10 @@ export function csvValue(value: Value): string {
   }
   return text(value)
 }
-
 export function sheetSafe(cell: string): string {
   if (!/^[=+\-@\t\r]/.test(cell) || !Number.isNaN(Number(cell))) return cell
   return `'${cell}`
 }
-
 const quoted = (cell: string) => (/[",\r\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell)
-
 export const csvText = (header: readonly string[], rows: readonly (readonly string[])[]): string =>
   [header, ...rows].map((row) => row.map(quoted).join(',')).join('\r\n') + '\r\n'

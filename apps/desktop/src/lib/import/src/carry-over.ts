@@ -8,7 +8,6 @@ export async function carryOver(carried: Carried) {
     const preset = presetById(carried.keys)
     if (preset && shortcuts.preset !== 'custom') shortcuts.choose(preset)
   }
-
   if (carried.vim !== undefined) modes.setVimKeys(carried.vim)
   if (carried.linkFormat) modes.setLinkFormat(carried.linkFormat)
   if (carried.attachments) modes.setAttachments(carried.attachments)

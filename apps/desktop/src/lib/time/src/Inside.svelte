@@ -26,7 +26,6 @@
     title?: string | null
     onpick: (next: Picked) => void
   } = $props()
-
   const found = $derived(within(spans, minutes, picked.from, picked.to, now))
   const entry = $derived(picked.span ? time.span(picked.span) : null)
   const lasted = $derived(picked.to - picked.from)
@@ -45,12 +44,10 @@
       .map(([lane, label]) => ({ lane, label, list: found.places[lane].slice(0, 5) }))
       .filter((one) => one.list.length),
   )
-
   function recordAs(activity: string) {
     const span = time.addSpan({ start: picked.from, end: picked.to, activity })
     onpick({ from: span.start, to: span.end ?? picked.to, span: span.id })
   }
-
   function moved(which: 'start' | 'end', value: string) {
     const span = entry
     if (!span) return
@@ -200,7 +197,6 @@
     gap: var(--space-2);
     min-width: 0;
   }
-
   .range {
     display: flex;
     align-items: baseline;
@@ -211,46 +207,38 @@
     font-variant-numeric: tabular-nums;
     font-weight: var(--weight-strong);
   }
-
   .long {
     color: var(--muted-strong);
     font-size: var(--text-sm);
   }
-
   .entry {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .clocks {
     display: flex;
     gap: var(--space-2);
   }
-
   .acts,
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
   }
-
   .as {
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .as .dot {
     background: var(--tint);
   }
-
   ul {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   li {
     display: flex;
     align-items: center;
@@ -258,14 +246,12 @@
     min-height: 22px;
     font-size: var(--text-sm);
   }
-
   .dot {
     flex: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
   }
-
   .label {
     flex: 1;
     min-width: 0;
@@ -273,7 +259,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .bar {
     flex: 0 0 25%;
     height: 6px;
@@ -281,25 +266,21 @@
     border-radius: 3px;
     background: var(--surface-2);
   }
-
   .bar span {
     display: block;
     height: 100%;
     background: var(--tint);
   }
-
   @media (forced-colors: active) {
     .bar span {
       background: Highlight;
     }
   }
-
   .meta {
     flex: none;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

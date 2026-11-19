@@ -1,11 +1,9 @@
 
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 def delete_after_typing(page: Page) -> None:
     say("a note deleted straight after typing comes back with what was typed")
     page.locator(".cm-content").first.click()
@@ -23,7 +21,6 @@ def delete_after_typing(page: Page) -> None:
     text = page.evaluate("(path) => window.ordenApp.workspace.noteText(path)", path)
     if "last words" not in (text or ""):
         wrong(f"undo put the note back as {text!r}")
-
 def palette_rename(page: Page) -> None:
     say("the palette's Rename promises no key the note cannot hear")
     page.keyboard.press("Control+Shift+P")
@@ -36,7 +33,6 @@ def palette_rename(page: Page) -> None:
     if "F2" in row:
         wrong(f"the row says {row!r}")
     page.keyboard.press("Escape")
-
 def enter_as_a_key(page: Page) -> None:
     say("Enter is not taken as an app key, and Ctrl+F9 is")
     page.keyboard.press("Control+,")
@@ -65,7 +61,6 @@ def enter_as_a_key(page: Page) -> None:
         say(f"  {key}: {said}")
         if bool(said) != taken:
             wrong(f"{key} {'was' if said else 'was not'} taken as an app key: {said!r}")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -75,5 +70,4 @@ def drive(browser: Browser) -> None:
     DRIVE.open_note(page, "Other")
     palette_rename(page)
     enter_as_a_key(page)
-
 raise SystemExit(DRIVE.run(drive))

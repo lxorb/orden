@@ -1,8 +1,6 @@
 import sys
 import time
-
 from playwright.sync_api import Page
-
 import harness
 from harness import Drive
 
@@ -11,19 +9,15 @@ say = DRIVE.say
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 APP = harness.APP
-
 PATIENCE = 40
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 def check(fine: bool, what: str, got: object = None) -> None:
     if fine:
         say(f"ok   {what}")
     else:
         failures.append(what)
         say(f"WRONG {what}: {got!r}")
-
 def wait_for(page: Page, script: str, what: str, arg: object = None):
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
@@ -32,7 +26,6 @@ def wait_for(page: Page, script: str, what: str, arg: object = None):
             return answer
         page.wait_for_timeout(50)
     raise SystemExit(f"gave up waiting for {what}")
-
 OPEN = """
 async (text) => {
   const ws = window.ordenApp.workspace
@@ -52,7 +45,6 @@ async (text) => {
   return document.querySelectorAll('.cm-content').length === 1 && !!window.orden
 }
 """
-
 MARKED = """
 () => {
   const view = window.orden
@@ -64,7 +56,6 @@ MARKED = """
   return { marked, ranges: view.state.selection.ranges.length }
 }
 """
-
 SELECT = """
 ([from, to]) => {
   const view = window.orden
@@ -72,7 +63,6 @@ SELECT = """
   view.dispatch({ selection: { anchor: from, head: to } })
 }
 """
-
 PASTE = """
 (text) => {
   const data = new DataTransfer()
@@ -81,18 +71,14 @@ PASTE = """
   window.orden.contentDOM.dispatchEvent(event)
 }
 """
-
 def marked(page: Page) -> str:
     return page.evaluate(MARKED)["marked"]
-
 def open_note(page: Page, text: str) -> None:
     wait_for(page, OPEN, "the drive's note to be the one open", text)
     page.wait_for_timeout(150)
-
 def select(page: Page, doc: str, words: str, caret_only: bool = False) -> None:
     at = doc.index(words)
     page.evaluate(SELECT, [at, at if caret_only else at + len(words)])
-
 def palette(page: Page, label: str) -> None:
     page.keyboard.press("Control+Shift+p")
     page.wait_for_timeout(250)
@@ -100,7 +86,6 @@ def palette(page: Page, label: str) -> None:
     page.wait_for_timeout(250)
     page.keyboard.press("Enter")
     page.wait_for_timeout(200)
-
 def landed(page: Page, address: str) -> None:
     wait_for(
         page,
@@ -108,11 +93,9 @@ def landed(page: Page, address: str) -> None:
         f"the pasted {address} to land",
         address,
     )
-
 def pasting(page: Page) -> None:
     doc = "# Paste drive\n\nRead the docs first, and run `npm test` too.\n"
     open_note(page, doc)
-
     select(page, doc, "the docs")
     page.evaluate(PASTE, "https://example.com/docs")
     landed(page, "https://example.com/docs")
@@ -121,7 +104,6 @@ def pasting(page: Page) -> None:
         "an address pasted over words links them",
         marked(page),
     )
-
     now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "npm test")
     page.evaluate(PASTE, "https://example.com/npm")
@@ -131,12 +113,10 @@ def pasting(page: Page) -> None:
         "in inline code the address goes in as it stands",
         marked(page),
     )
-
 def growing(page: Page) -> None:
     doc = "# Grow drive\n\nSome **bold words** here.\n\nNext.\n"
     open_note(page, doc)
     select(page, doc, "old", caret_only=True)
-
     seen = []
     for _ in range(4):
         page.keyboard.press("Shift+Alt+ArrowRight")
@@ -148,15 +128,12 @@ def growing(page: Page) -> None:
         "Shift+Alt+Right grows word, inside the marks, the marks, the paragraph",
         seen,
     )
-
     page.keyboard.press("Shift+Alt+ArrowLeft")
     page.wait_for_timeout(60)
     check("«**bold words**»" in marked(page), "Shift+Alt+Left shrinks a step", marked(page))
-
 def tasks_and_lines(page: Page) -> None:
     doc = "# Lines drive\n\nmilk\ncheese\n  two\nfirst\nsecond\n"
     open_note(page, doc)
-
     select(page, doc, "milk", caret_only=True)
     page.keyboard.press("Control+Enter")
     page.wait_for_timeout(60)
@@ -164,23 +141,19 @@ def tasks_and_lines(page: Page) -> None:
     page.keyboard.press("Control+Enter")
     page.wait_for_timeout(60)
     check("- [x] " in marked(page), "and ticks it on the next press", marked(page))
-
     now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "two", caret_only=True)
     page.keyboard.press("Control+Shift+Enter")
     page.wait_for_timeout(60)
     check("cheese\n  |\n  two" in marked(page), "Ctrl+Shift+Enter opens a line above", marked(page))
-
     now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "first", caret_only=True)
     page.keyboard.press("Control+j")
     page.wait_for_timeout(60)
     check("first| second" in marked(page), "Ctrl+J joins the next line on", marked(page))
-
 def from_the_palette(page: Page) -> None:
     doc = "# Palette drive\n\n- pear\n- apple\n- fig\n\nshout this\n\ngone\nstays\n"
     open_note(page, doc)
-
     select(page, doc, "apple", caret_only=True)
     palette(page, "Sort the lines")
     check(
@@ -188,34 +161,28 @@ def from_the_palette(page: Page) -> None:
         "Sort the lines sorts the list the caret is in",
         marked(page),
     )
-
     now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "shout this")
     palette(page, "Upper case")
     check("«SHOUT THIS»" in marked(page), "Upper case, from the palette", marked(page))
-
     now = page.evaluate("() => window.orden.state.doc.toString()")
     select(page, now, "gone", caret_only=True)
     palette(page, "Delete the line")
     check("\n|stays" in marked(page) and "gone" not in marked(page), "Delete the line", marked(page))
-
 def every_match(page: Page) -> None:
     doc = "# Match drive\n\nwind and wind and more wind.\n"
     open_note(page, doc)
     select(page, doc, "and", caret_only=True)
-
     page.keyboard.press("Control+f")
     wait_for(page, "() => !!document.querySelector('.findbar input')", "the find bar")
     page.keyboard.type("wind")
     page.wait_for_timeout(300)
     page.keyboard.press("Alt+Enter")
     page.wait_for_timeout(200)
-
     state = page.evaluate(MARKED)
     bar = page.evaluate("() => !!document.querySelector('.findbar')")
     check(state["ranges"] == 3, "Alt+Enter in the find bar selects every match", state)
     check(not bar, "and the bar goes", bar)
-
 def slash_menu(page: Page) -> None:
     doc = "# Slash drive\n\n"
     open_note(page, doc)
@@ -228,19 +195,16 @@ def slash_menu(page: Page) -> None:
     )
     check(any("Quote" in one for one in shown), "the / menu still offers the blocks", shown)
     page.keyboard.press("Escape")
-
 def hidden_front_matter(page: Page) -> None:
     doc = "---\nicon: list-checks\n---\n# Hidden drive\nwords\n"
     open_note(page, doc)
     select(page, doc, "# Hidden", caret_only=True)
-
     page.keyboard.press("Control+Shift+Enter")
     page.keyboard.press("Alt+ArrowUp")
     page.wait_for_timeout(60)
     palette(page, "Delete the line")
     text = page.evaluate("() => window.orden.state.doc.toString()")
     check(text.startswith("---\nicon: list-checks\n---\n"), "hidden front matter stays whole", text)
-
 def main() -> int:
     with DRIVE.session() as browser:
         context = browser.new_context(viewport={"width": 1280, "height": 860})
@@ -249,7 +213,6 @@ def main() -> int:
         page.goto(ORIGIN, wait_until="domcontentloaded")
         wait_for(page, "() => !!window.ordenApp?.workspace?.activeSpace", "a space")
         wait_for(page, "() => window.ordenApp.workspace.tabs.length > 0", "the launch")
-
         pasting(page)
         growing(page)
         tasks_and_lines(page)
@@ -257,7 +220,5 @@ def main() -> int:
         every_match(page)
         slash_menu(page)
         hidden_front_matter(page)
-
     return DRIVE.verdict("the line and text commands answer their keys, the palette and a paste")
-
 sys.exit(main())

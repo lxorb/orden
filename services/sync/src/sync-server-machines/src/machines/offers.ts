@@ -11,17 +11,13 @@ interface Offer {
   arch: 'x86' | 'arm'
   prices: { location: string; monthly: number; hourly: number }[]
 }
-
 export interface Offers {
   currency: string
   locations: Location[]
   types: Offer[]
 }
-
 const KEPT_FOR = 10 * 60_000
-
 let kept: { token: string; at: number; offers: Offers } | null = null
-
 export async function offersOf(env: Env, at: number): Promise<Offers | null> {
   const token = env.HETZNER_TOKEN
   if (!token) return null

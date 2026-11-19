@@ -8,10 +8,8 @@
   import { pass } from '../../pass-sync/src/api'
 
   const { item, content }: { item: Item; content: Login } = $props()
-
   const role = $derived(pass.vaults.find((one) => one.id === item.vault)?.role ?? 'viewer')
   const editable = $derived(item.trashed === null && atLeast(role, 'editor'))
-
   async function remove(id: string, site: string) {
     const sure = await prompt.confirm({
       until: pass.opened,
@@ -63,7 +61,6 @@
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }
-
   .line {
     display: flex;
     align-items: center;
@@ -71,18 +68,15 @@
     min-height: var(--row-height);
     padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
   }
-
   .line + .line {
     border-top: 1px solid var(--line);
   }
-
   .words {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
   }
-
   .user {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -90,7 +84,6 @@
     font-size: var(--text-row);
     color: var(--text);
   }
-
   .meta {
     font-size: var(--text-sm);
     color: var(--muted);

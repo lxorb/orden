@@ -8,11 +8,8 @@
     colour?: string | null
     asked: string
   }
-
   const { name, icon = null, colour = null, asked }: Props = $props()
-
   let sent = $derived(hasRequested(asked))
-
   function ask() {
     request(asked)
     sent = true
@@ -39,7 +36,6 @@
     padding: 13px 16px;
     font-size: 15px;
   }
-
   .name {
     font-weight: 600;
     min-width: 0;

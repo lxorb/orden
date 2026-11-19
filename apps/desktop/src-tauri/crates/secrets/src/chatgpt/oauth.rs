@@ -6,28 +6,19 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
 pub const AUTHORIZE: &str = "https://auth.openai.com/api/accounts/authorize";
-
 pub const TOKEN: &str = "https://auth.openai.com/api/accounts/oauth/token";
-
 pub const CONFIGURATION: &str = "https://auth.openai.com/.well-known/openid-configuration";
-
 pub const REGISTERING: &str = "dynamic_agent_client";
-
 pub const RESOURCE: &str = "https://api.openai.com/v1";
-
 pub const SCOPE: &str =
     "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct";
-
 pub const NAME: &str = "Orden";
-
 pub const CALLBACK_PATH: &str = "/auth/callback";
-
 pub struct Attempt {
     pub verifier: String,
     pub state: String,
     pub nonce: String,
 }
-
 impl Attempt {
     pub fn from_random(random: &[u8; 96]) -> Self {
         Self {
@@ -36,16 +27,13 @@ impl Attempt {
             nonce: URL_SAFE_NO_PAD.encode(&random[72..]),
         }
     }
-
     pub fn challenge(&self) -> String {
         URL_SAFE_NO_PAD.encode(Sha256::digest(self.verifier.as_bytes()))
     }
 }
-
 pub fn redirect(port: u16) -> String {
     format!("http://127.0.0.1:{port}{CALLBACK_PATH}")
 }
-
 pub fn encoded(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     for byte in text.bytes() {
@@ -57,7 +45,6 @@ pub fn encoded(text: &str) -> String {
     }
     out
 }
-
 pub fn form(pairs: &[(&str, &str)]) -> String {
     pairs
         .iter()
@@ -65,7 +52,6 @@ pub fn form(pairs: &[(&str, &str)]) -> String {
         .collect::<Vec<_>>()
         .join("&")
 }
-
 pub fn authorize_url(attempt: &Attempt, port: u16, host: &str, client: Option<&str>) -> String {
     let redirect = redirect(port);
     let challenge = attempt.challenge();
@@ -86,7 +72,6 @@ pub fn authorize_url(attempt: &Attempt, port: u16, host: &str, client: Option<&s
     }
     format!("{AUTHORIZE}?{}", form(&pairs))
 }
-
 pub fn decoded(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
@@ -109,7 +94,6 @@ pub fn decoded(text: &str) -> String {
     }
     String::from_utf8_lossy(&out).into_owned()
 }
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum Callback {
     Code {
@@ -119,7 +103,6 @@ pub enum Callback {
     Refused(String),
     Other,
 }
-
 pub fn callback(request_line: &str, state: &str) -> Callback {
     let mut parts = request_line.split_whitespace();
     let (Some("GET"), Some(target)) = (parts.next(), parts.next()) else {
@@ -129,7 +112,6 @@ pub fn callback(request_line: &str, state: &str) -> Callback {
     if path != CALLBACK_PATH {
         return Callback::Other;
     }
-
     let mut code = None;
     let mut client = None;
     let mut said_state = None;
@@ -147,7 +129,6 @@ pub fn callback(request_line: &str, state: &str) -> Callback {
             _ => {}
         }
     }
-
     if said_state.as_deref() != Some(state) {
         return Callback::Other;
     }
@@ -162,7 +143,6 @@ pub fn callback(request_line: &str, state: &str) -> Callback {
         _ => Callback::Refused("no code came back".to_owned()),
     }
 }
-
 #[derive(Debug, Deserialize)]
 pub struct Tokens {
     pub access_token: String,
@@ -173,7 +153,6 @@ pub struct Tokens {
     #[serde(default)]
     pub expires_in: Option<u64>,
 }
-
 pub fn token_error(body: &[u8]) -> Option<String> {
     let value: serde_json::Value = serde_json::from_slice(body).ok()?;
     let error = value.get("error")?;
@@ -182,7 +161,6 @@ pub fn token_error(body: &[u8]) -> Option<String> {
         .or_else(|| error.get("code").and_then(serde_json::Value::as_str))?;
     Some(code.to_owned())
 }
-
 pub fn grant_gone(code: &str) -> bool {
     matches!(
         code,
@@ -194,7 +172,6 @@ pub fn grant_gone(code: &str) -> bool {
             | "refresh_token_invalidated"
     )
 }
-
 pub fn email_in(id_token: &str) -> Option<String> {
     let payload = id_token.split('.').nth(1)?;
     let bytes = URL_SAFE_NO_PAD.decode(payload.trim_end_matches('=')).ok()?;
@@ -204,7 +181,6 @@ pub fn email_in(id_token: &str) -> Option<String> {
         .and_then(serde_json::Value::as_str)
         .map(str::to_owned)
 }
-
 pub fn host_id(random: &[u8; 16]) -> String {
     let mut bytes = *random;
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
@@ -222,7 +198,6 @@ pub fn host_id(random: &[u8; 16]) -> String {
         &hex[20..]
     )
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -234,7 +209,6 @@ mod tests {
         }
         Attempt::from_random(&random)
     }
-
     #[test]
     fn a_first_sign_in_registers_with_the_app_s_name_and_host() {
         let url = authorize_url(&attempt(), 1455, "urn:uuid:x", None);
@@ -247,7 +221,6 @@ mod tests {
         assert!(url.contains("resource=https%3A%2F%2Fapi.openai.com%2Fv1"));
         assert!(url.contains("code_challenge_method=S256"));
     }
-
     #[test]
     fn a_later_sign_in_is_the_issued_client() {
         let url = authorize_url(&attempt(), 50123, "urn:uuid:x", Some("oaiapp_1"));
@@ -255,7 +228,6 @@ mod tests {
         assert!(!url.contains("dynamic_agent_client"));
         assert!(url.contains("127.0.0.1%3A50123"));
     }
-
     #[test]
     fn the_challenge_is_s256_of_the_verifier() {
         let example = Attempt {
@@ -269,7 +241,6 @@ mod tests {
         );
         assert!(attempt().verifier.len() >= 43);
     }
-
     #[test]
     fn the_callback_is_read_only_with_this_attempt_s_state() {
         let state = attempt().state;
@@ -298,14 +269,12 @@ mod tests {
             Callback::Refused("You said no".to_owned())
         );
     }
-
     #[test]
     fn decoding_leaves_a_stray_percent_alone() {
         assert_eq!(decoded("a%20b+c"), "a b c");
         assert_eq!(decoded("100%"), "100%");
         assert_eq!(decoded("%zz"), "%zz");
     }
-
     #[test]
     fn an_id_token_names_whose_plan_it_is() {
         let payload = URL_SAFE_NO_PAD.encode(br#"{"email":"reader@example.com","sub":"x"}"#);
@@ -315,7 +284,6 @@ mod tests {
         );
         assert_eq!(email_in("not a token"), None);
     }
-
     #[test]
     fn a_refresh_that_is_gone_is_told_from_one_that_failed() {
         assert_eq!(
@@ -330,7 +298,6 @@ mod tests {
         assert!(!grant_gone("invalid_client"));
         assert_eq!(token_error(b"<html>"), None);
     }
-
     #[test]
     fn a_host_id_is_a_version_four_uuid() {
         let id = host_id(&[0xff; 16]);

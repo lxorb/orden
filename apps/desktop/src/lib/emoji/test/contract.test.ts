@@ -8,14 +8,11 @@ describe('the module stands on its own', () => {
     expect(typeof emojiRecent).toBe('object')
   })
 })
-
 describe('a skin tone', () => {
   const TONED = new Set(['👍', '👋'])
-
   test('goes after the first character of an emoji that takes one', () => {
     expect(inTone('👍', 3, TONED)).toBe('👍🏽')
   })
-
   test('leaves alone an emoji that takes none, and every emoji at the default tone', () => {
     expect(inTone('🎉', 3, TONED)).toBe('🎉')
     expect(inTone('👍', 0, TONED)).toBe('👍')

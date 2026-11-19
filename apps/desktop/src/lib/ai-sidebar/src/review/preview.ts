@@ -7,30 +7,24 @@ import { protection } from '../../../protect/src/api'
 import { spaceNamed, verbOf } from '../chat-parts'
 
 export type Words = (path: string) => Promise<string | null>
-
 export interface Preview {
   path: string
   rows: Row[]
 }
-
 interface Space {
   id: string
   name: string
   root: string
 }
-
 function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 }
-
 function said(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
-
 function sent(args: Record<string, unknown>): string | null {
   return said(args.content) ?? said(args.text)
 }
-
 function editsOf(verb: string, args: Record<string, unknown>, words: string): Replacement[] | null {
   try {
     if (verb === 'edit_note') return plan(readEdits(args.edits), words, null).edits
@@ -52,7 +46,6 @@ function editsOf(verb: string, args: Record<string, unknown>, words: string): Re
   }
   return null
 }
-
 export async function previewOf(
   name: string,
   args: unknown,

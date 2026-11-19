@@ -17,9 +17,7 @@
     onwho?: (event: MouseEvent) => void
     onsettings?: () => void
   } = $props()
-
   const who = $derived(account.name)
-
   const pad = sidebarPart('scratchpad')
   const padOn = $derived(pad?.open?.() ?? false)
 </script>
@@ -104,7 +102,6 @@
     padding: 0 var(--space-1);
     border-top: 1px solid var(--chrome-seam);
   }
-
   .who {
     display: flex;
     align-items: center;
@@ -117,7 +114,6 @@
     transition:
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
-
     flex: 1;
     min-width: 0;
     gap: var(--row-gap);
@@ -126,42 +122,34 @@
     font-size: var(--text-row);
     text-align: start;
   }
-
   button:focus-visible {
     outline-offset: -1px;
   }
-
   @media (hover: hover) {
     .who:hover:not(:disabled) {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
-
   .who:active:not(:disabled) {
     background: var(--surface-press);
     color: var(--text-strong);
   }
-
   .who .orden-row-label {
     flex: 0 1 auto;
   }
-
   .looking {
     animation: looking 1.6s var(--ease-in-out) infinite;
   }
-
   @keyframes looking {
     0%,
     100% {
       opacity: 0.4;
     }
-
     50% {
       opacity: 0.85;
     }
   }
-
   .coming {
     flex: none;
     color: var(--muted);
@@ -172,28 +160,23 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .acts {
     flex: none;
     display: flex;
     gap: 2px;
   }
-
   .act .gear {
     stroke-width: 1.6;
   }
-
   .act .bug {
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   @media (prefers-reduced-motion: reduce) {
     .looking {
       animation: none;
     }
   }
-
   :global([data-touch]:not([data-device='phone'])) .foot {
     padding-bottom: max(0px, calc(var(--inset-bottom) - var(--keyboard, 0px)));
   }

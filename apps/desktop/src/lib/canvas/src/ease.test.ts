@@ -5,32 +5,26 @@ describe('coming up to a number', () => {
   test('goes towards it and never past it', () => {
     let at = 0
     for (let step = 0; step < 200; step++) at = approach(at, 100, 16, 70)
-
     expect(at).toBeGreaterThan(99.9)
     expect(at).toBeLessThanOrEqual(100)
   })
-
   test('never overshoots, however long the frame was', () => {
     expect(approach(0, 100, 5000, 70)).toBeLessThanOrEqual(100)
     expect(approach(100, 0, 5000, 70)).toBeGreaterThanOrEqual(0)
   })
-
   test('covers more of the gap in a longer frame', () => {
     const short = approach(0, 100, 8, 70)
     const long = approach(0, 100, 32, 70)
     expect(long).toBeGreaterThan(short)
   })
-
   test('closes about two thirds of the gap in one time constant', () => {
     expect(approach(0, 100, 70, 70)).toBeCloseTo(63.2, 0)
   })
-
   test('arrives at once when there is no time to take', () => {
     expect(approach(0, 100, 16, 0)).toBe(100)
     expect(approach(0, 100, 0, 70)).toBe(100)
   })
 })
-
 test('near enough to stop is under a pixel at whatever zoom is on', () => {
   expect(arrived({ x: 0, y: 0 }, { x: 0.2, y: 0.2 })).toBe(true)
   expect(arrived({ x: 0, y: 0 }, { x: 4, y: 0 })).toBe(false)

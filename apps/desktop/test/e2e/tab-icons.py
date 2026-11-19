@@ -1,7 +1,5 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -9,22 +7,15 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 DIST = harness.DIST
-
 def shot(page: Page, name: str, selector: str | None = None) -> None:
     DRIVE.shot(page.locator(selector) if selector else page, name)
-
 MARK = "/mark.png"
-
 DRESSED = "---\nicon: rocket\n---\n\n# Plan\n\nA note that chose an icon.\n"
-
 def shortcut(url: str, title: str, icon: str | None) -> str:
-
     rows = [f"URL={url}", f"Title={title}", "Orden-Added=2026-09-13T08:00:00.000Z"]
     if icon:
         rows.append(f"Orden-Icon={icon}")
-
     return "[InternetShortcut]\r\n" + "\r\n".join(rows) + "\r\n"
-
 SEED = """
 async (site) => {
   const ws = window.ordenApp.workspace
@@ -49,7 +40,6 @@ async (site) => {
   }
 }
 """
-
 OPEN = """
 async (where) => {
   const ws = window.ordenApp.workspace
@@ -72,7 +62,6 @@ async (where) => {
   return ws.tabs.map((one) => [one.kind, one.shown])
 }
 """
-
 STRIP = """
 () => {
   const hairline = (svg) => {
@@ -111,7 +100,6 @@ STRIP = """
   })
 }
 """
-
 PIN = """
 () => {
   const ws = window.ordenApp.workspace
@@ -119,7 +107,6 @@ PIN = """
   ws.activate(other.id)
 }
 """
-
 CHOOSE = """
 () => {
   const ws = window.ordenApp.workspace
@@ -128,7 +115,6 @@ CHOOSE = """
   return canvas.path
 }
 """
-
 ROWS = """
 () =>
   Object.fromEntries(
@@ -138,13 +124,11 @@ ROWS = """
     ]),
   )
 """
-
 @DRIVE.answers
 def marks(request: harness.Files) -> bool:
     if request.path not in {MARK, "/favicon.ico"}:
         return False
     return request.reply((DIST / "icon-256.png").read_bytes(), "image/png")
-
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
     page = context.new_page()
@@ -164,40 +148,31 @@ def fresh(browser: Browser, scheme: str) -> Page:
     DRIVE.open(page)
     page.wait_for_timeout(300)
     return page
-
 def website(path: str) -> str:
     return f"{ORIGIN}{path}"
-
 def iconned(page: Page, scheme: str) -> None:
-
     page.evaluate(PIN)
     page.wait_for_timeout(700)
-
     strip = page.evaluate(STRIP)
     chip = next((one for one in strip if (one["name"] or "").startswith("Plan")), None)
     beside = next((one for one in strip if one is not chip), None)
     say(f"[{scheme}] the icon chip: {json.dumps(chip, ensure_ascii=False)}")
     shot(page, f"03-the-icon-chip-{scheme}", ".strip")
-
     if not chip or not beside:
         wrong(f"[{scheme}] the strip lost its tabs when another was put in front")
         return
-
     if not chip["icon"]:
         wrong(f"[{scheme}] the tab behind is not drawn as its icon")
     if chip["shut"]:
         wrong(f"[{scheme}] a tab drawn as its icon offers a cross")
     if chip["tab"] > 48:
         wrong(f"[{scheme}] a tab drawn as its icon is as wide as a named one: {chip['tab']}px")
-
     row = page.evaluate(ROWS).get("Plan", "")
     if chip["drawing"] != row:
         wrong(f"[{scheme}] the icon chip wears {chip['drawing']!r} where the row wears {row!r}")
     if (chip["width"], chip["height"]) != (beside["width"], beside["height"]):
         wrong(f"[{scheme}] the chip's mark is not the box the other tabs keep: {chip}")
-
 def chooses(page: Page, scheme: str) -> None:
-
     say(f"[{scheme}] choosing an icon for {page.evaluate(CHOOSE)}")
     page.locator(".sheet").wait_for(state="visible", timeout=30_000)
     page.locator(".sheet input.orden-field").fill("anchor")
@@ -207,7 +182,6 @@ def chooses(page: Page, scheme: str) -> None:
     page.wait_for_timeout(900)
     page.evaluate("() => window.ordenApp.iconChoice.close()")
     page.wait_for_timeout(400)
-
     strip = page.evaluate(STRIP)
     rows = page.evaluate(ROWS)
     tab = next((one for one in strip if one["name"] == "Roadmap"), None)
@@ -215,12 +189,10 @@ def chooses(page: Page, scheme: str) -> None:
     drawn = tab["drawing"] if tab else None
     say(f"[{scheme}] Roadmap now wears {row!r} in the list and {drawn!r} in the strip")
     shot(page, f"04-an-icon-chosen-{scheme}", ".strip")
-
     if not row:
         wrong(f"[{scheme}] the chosen icon never reached the row it was chosen on")
     elif drawn != row:
         wrong(f"[{scheme}] an icon chosen in the list did not reach the tab: {drawn!r}")
-
 def drive(page: Page, scheme: str) -> list[dict]:
     where = page.evaluate(
         SEED,
@@ -232,30 +204,23 @@ def drive(page: Page, scheme: str) -> list[dict]:
     )
     say(f"[{scheme}] the space holds {json.dumps(where['held'], ensure_ascii=False)}")
     page.wait_for_timeout(600)
-
     opened = page.evaluate(OPEN, where)
     say(f"[{scheme}] the tabs: {json.dumps(opened, ensure_ascii=False)}")
     page.wait_for_timeout(2000)
-
     page.keyboard.press("Control+Shift+e")
     page.wait_for_timeout(900)
-
     strip = page.evaluate(STRIP)
     say(f"[{scheme}] the strip: {json.dumps(strip, ensure_ascii=False)}")
-
     shot(page, f"01-the-strip-{scheme}", ".strip")
     shot(page, f"02-the-window-{scheme}")
-
     if len(strip) != 6:
         wrong(f"[{scheme}] the strip holds {len(strip)} tabs rather than six")
         return strip
-
     for one in strip:
         if one["marks"] != 1:
             wrong(f"[{scheme}] {one['name']} wears {one['marks']} marks rather than one")
         if one["kind"] == "nothing":
             wrong(f"[{scheme}] {one['name']} wears no mark at all")
-
     boxes = {(one["width"], one["height"]) for one in strip}
     seats = {(one["at"], one["middle"]) for one in strip}
     if len(boxes) != 1:
@@ -263,16 +228,13 @@ def drive(page: Page, scheme: str) -> list[dict]:
     if len(seats) != 1:
         wrong(f"[{scheme}] the marks do not sit in one place: {sorted(seats)}")
     say(f"[{scheme}] one box {boxes.pop()} at one place {seats.pop()}")
-
     hairlines = {one["hairline"] for one in strip if one["hairline"] is not None}
     if max(hairlines) - min(hairlines) > 0.02:
         wrong(f"[{scheme}] the strokes are not one weight: {sorted(hairlines)}")
     say(f"[{scheme}] one hairline: {sorted(hairlines)}")
-
     drawings = [one["drawing"] for one in strip if one["drawing"]]
     if len(set(drawings)) != len(drawings):
         wrong(f"[{scheme}] two tabs wear the same drawing: {drawings}")
-
     marked = next((one for one in strip if "with a mark" in (one["name"] or "")), None)
     plain = next((one for one in strip if "with no mark" in (one["name"] or "")), None)
     if not marked or marked["kind"] != "picture":
@@ -283,7 +245,6 @@ def drive(page: Page, scheme: str) -> list[dict]:
         wrong(f"[{scheme}] the favicon was asked for and never arrived")
     if not plain or plain["kind"] != "stroke":
         wrong(f"[{scheme}] the site with no mark does not fall back to the globe: {plain}")
-
     rows = page.evaluate(ROWS)
     tab = next((one for one in strip if one["name"] == "Plan"), None)
     row = rows.get("Plan", "")
@@ -292,11 +253,9 @@ def drive(page: Page, scheme: str) -> list[dict]:
         wrong(f"[{scheme}] there is no row for the note that chose an icon")
     elif tab and row != tab["drawing"]:
         wrong(f"[{scheme}] the tab wears {tab['drawing']!r} where the row wears {row!r}")
-
     iconned(page, scheme)
     chooses(page, scheme)
     return strip
-
 def main() -> int:
     measured: dict[str, list[dict]] = {}
     with DRIVE.session() as browser:
@@ -307,7 +266,6 @@ def main() -> int:
                 measured[scheme] = drive(page, scheme)
             finally:
                 page.context.close()
-
     if len(measured) == 2:
         shapes = [
             [(one["name"], one["width"], one["at"], one["tab"]) for one in rows]
@@ -315,10 +273,8 @@ def main() -> int:
         ]
         if shapes[0] != shapes[1]:
             wrong(f"the strip is not the same shape in both schemes: {shapes}")
-
     return DRIVE.verdict(
         "six kinds of tab, one mark each, one box, one weight, one place - and the"
         " file's own mark in the strip as in the list, down to the chip a tab behind is drawn as"
     )
-
 raise SystemExit(main())

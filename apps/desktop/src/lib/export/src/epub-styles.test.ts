@@ -13,7 +13,6 @@ Packing: ==🔴 passport== and ==🟢 tickets==.
 | - | - |
 | 1 | Rome |
 `
-
 async function chapter(): Promise<{ css: string; page: Document }> {
   const bytes = await toEpub({
     title: 'Trip',
@@ -30,14 +29,12 @@ async function chapter(): Promise<{ css: string; page: Document }> {
   const xhtml = (await zip.file('OEBPS/text/section-1.xhtml')?.async('string')) ?? ''
   return { css, page: new DOMParser().parseFromString(xhtml, 'application/xhtml+xml') }
 }
-
 test('the book keeps the colour of a red highlight', async () => {
   const { css, page } = await chapter()
   expect(css).toContain('#write mark.tone-1')
   expect(page.querySelector('mark.tone-1')).not.toBeNull()
   expect(page.querySelector('#write mark.tone-1')).not.toBeNull()
 })
-
 test('the book keeps the borders of a table', async () => {
   const { css, page } = await chapter()
   expect(css).toContain('#write td')

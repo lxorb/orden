@@ -20,7 +20,6 @@ import type { EntryRow } from '../src/store'
 import { EngineDevice, freshDevice } from './sim-device'
 
 const settle: Step = { t: 'wait', ticks: 40 }
-
 function road(script: readonly Step[]): Promise<Report> {
   return simulate({
     seed: 7,
@@ -30,16 +29,12 @@ function road(script: readonly Step[]): Promise<Report> {
     device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
   })
 }
-
 function textOf(report: Report, name: string): string {
   const entry = report.account.entries.find((one) => one.name === name)
   return entry ? (report.account.texts[entry.id] ?? '') : ''
 }
-
 const PLAN = 0
-
 const SHELL = ['workspace/', 'account.svelte', 'settings/', 'tauri', 'stored', 'api', 'new-tab']
-
 function sources(folder: string): string[] {
   const out: string[] = []
   for (const entry of readdirSync(folder, { withFileTypes: true })) {
@@ -49,7 +44,6 @@ function sources(folder: string): string[] {
   }
   return out
 }
-
 describe('the module stands on its own', () => {
   test('its api loads with no port bound, and binds nothing itself', () => {
     expect(portProvided('sync.account')).toBe(false)
@@ -57,7 +51,6 @@ describe('the module stands on its own', () => {
     expect(new MemoryStore('d').rows('spaces')).toEqual([])
     expect(new MemoryDisk().files.size).toBe(0)
   })
-
   test('reaches the shell, the account and the host only through ports', () => {
     const reaching: string[] = []
     for (const file of sources(join(import.meta.dirname, '../src'))) {
@@ -71,14 +64,12 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 })
-
 describe('a device that has never synced', () => {
   test('reads the whole tree from the feed at cursor 0, and writes every note to its disk', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const here = await freshDevice(account, 'fresh-empty')
     expect(await firstPass(here.engine.core, here.space(), null)).toBe(true)
     await here.engine.pass('sim')
-
     const names = [...here.space().entries.values()].map((one) => one.name).sort()
     expect(names).toEqual(SEEDED.map((one) => one.name).sort())
     for (const note of SEEDED) {
@@ -87,16 +78,13 @@ describe('a device that has never synced', () => {
     }
     expect(here.space().outbox).toEqual([])
   })
-
   test('whose disk already holds the notes claims them at their place, and makes nothing twice', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const files = Object.fromEntries(SEEDED.map((one) => [one.name, one.text]))
     const here = await freshDevice(account, 'fresh-held', files)
     const before = (await account.view()).entries.map((one) => one.id).sort()
-
     expect(await firstPass(here.engine.core, here.space(), null)).toBe(true)
     await here.engine.pass('sim')
-
     const after = await account.view()
     expect(after.entries.map((one) => one.id).sort()).toEqual(before)
     expect(after.entries.map((one) => one.name).sort()).toEqual(['Ideas.md', 'Plan.md'])
@@ -105,7 +93,6 @@ describe('a device that has never synced', () => {
     expect(here.space().outbox).toEqual([])
   })
 })
-
 describe('a name made twice', () => {
   function row(id: string, name: string, local: string, hash: string, deleted = false): EntryRow {
     return {
@@ -123,27 +110,23 @@ describe('a name made twice', () => {
       deleted,
     }
   }
-
   function space(rows: EntryRow[]) {
     return new SpaceState({ space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null }, rows, [], 'd', {
       platform: 'linux',
       foldsCase: true,
     } as never)
   }
-
   test('a numbered twin goes back to its name once the original is gone with the same bytes', () => {
     expect(
       madeTwice(space([row('a', 'Photo.png', '', 'p1', true), row('b', 'Photo 2.png', 'Photo 2.png', 'p1')])),
     ).toEqual([{ from: 'Photo 2.png', to: 'Photo.png' }])
   })
-
   test('a numbered name the reader chose, or other bytes, is kept', () => {
     expect(madeTwice(space([row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'h1')]))).toEqual([])
     expect(
       madeTwice(space([row('a', 'Plan.pdf', '', 'old', true), row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'new')])),
     ).toEqual([])
   })
-
   test('two notes of one name made apart are two notes, the second numbered', async () => {
     const make = (device: number, marker: string): Step => ({
       t: 'act',
@@ -169,7 +152,6 @@ describe('a name made twice', () => {
     ])
   })
 })
-
 describe('offline, then back', () => {
   test('what was typed offline waits in the outbox and goes up on the first pass online', async () => {
     const report = await road([
@@ -184,7 +166,6 @@ describe('offline, then back', () => {
     expect(report.failures).toEqual([])
     expect(markersIn(textOf(report, 'Plan.md'))).toContain('mk401z')
   })
-
   test('an edit made offline and one made elsewhere merge character by character, with no copy', async () => {
     const report = await road([
       { t: 'offline', device: 0 },
@@ -202,7 +183,6 @@ describe('offline, then back', () => {
     expect(report.account.entries.filter((one) => one.name.includes('from another'))).toEqual([])
   })
 })
-
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })

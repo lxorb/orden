@@ -9,20 +9,17 @@
   import type { ExplorerView } from './view.svelte'
 
   const { view, large = false }: { view: ExplorerView; large?: boolean } = $props()
-
   const entry = $derived<Entry | null>(
     view.picked.cursor === null ? null : (view.rows.find((one) => one.name === view.picked.cursor) ?? null),
   )
   const path = $derived(entry ? view.pathOf(entry.name) : (view.listing?.path ?? null))
   const same = $derived(entry ? [entry.name, entry.folder, entry.size, entry.modified].join('\u0000') : null)
-
   let facts = $state<Facts | null>(null)
   const SETTLED_MS = 150
   let media = $state<{ shown: 'picture' | 'sound' | 'film'; url: string } | null>(null)
   let text = $state<{ words: string; cut: boolean } | null>(null)
   let count = $state<Count | null>(null)
   let counting = $state<string | null>(null)
-
   $effect(() => {
     const at = path
     const shown = same === null ? null : untrack(() => entry)
@@ -67,7 +64,6 @@
       counting = null
     }
   })
-
   function countNow() {
     const at = path
     if (!at || counting) return
@@ -153,19 +149,16 @@
     border-inline-start: 1px solid var(--line);
     font-size: var(--text-sm);
   }
-
   .preview.large {
     width: 100%;
     height: 100%;
     border: none;
   }
-
   @container (max-width: 40rem) {
     .preview:not(.large) {
       display: none;
     }
   }
-
   .shown {
     display: grid;
     place-items: center;
@@ -174,23 +167,19 @@
     background: var(--surface-2);
     overflow: hidden;
   }
-
   .large .shown {
     flex: 1;
     min-height: 0;
   }
-
   .shown img,
   .shown video {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
   }
-
   .shown audio {
     width: 100%;
   }
-
   .words {
     align-self: stretch;
     justify-self: stretch;
@@ -204,17 +193,14 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
-
   .large .words {
     max-height: none;
     height: 100%;
   }
-
   .big :global(.mark) {
     width: 48px;
     height: 48px;
   }
-
   .named {
     margin: 0;
     color: var(--text-strong);
@@ -223,32 +209,26 @@
     word-break: break-word;
     unicode-bidi: isolate;
   }
-
   dl {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: var(--space-1) var(--space-3);
     margin: 0;
   }
-
   dt {
     color: var(--muted);
   }
-
   dd {
     margin: 0;
     color: var(--text);
   }
-
   .path {
     word-break: break-all;
     unicode-bidi: isolate;
   }
-
   .mono {
     font-family: var(--font-mono);
   }
-
   .count {
     margin: 0;
     color: var(--text);

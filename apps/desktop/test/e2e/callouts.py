@@ -1,13 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 SHOTS = DRIVE.shots
-
 LOOKS = {
     "note": "note",
     "abstract": "abstract",
@@ -25,9 +22,7 @@ LOOKS = {
     "example": "example",
     "quote": "quote",
 }
-
 KINDS = list(LOOKS)
-
 ALIASES = {
     "summary": "abstract",
     "tldr": "abstract",
@@ -42,25 +37,20 @@ ALIASES = {
     "error": "danger",
     "cite": "quote",
 }
-
 NOTE = "# Callouts\n\n" + "".join(f"> [!{kind}]\n> The {kind} one.\n\n" for kind in KINDS)
-
 ALIAS_NOTE = "# Other names\n\n" + "".join(f"> [!{one}]\n> Also known.\n\n" for one in ALIASES)
-
 ODD_NOTE = (
     "# The odd ones\n\n"
     "> [!tip] Mind the gap\n> A title of the writer's own.\n\n"
     "> [!recipe]\n> A type nothing knows.\n\n"
     "> Just a quote, with **bold** in it.\n"
 )
-
 FOLD_NOTE = (
     "# Folding\n\n"
     "> [!warning]- Shut to begin with\n> Behind the sign.\n> And more behind it.\n\n"
     "> [!info]+ Open to begin with\n> In front of the sign.\n\n"
     "> [!note] No sign at all\n> Always in front.\n"
 )
-
 SEED = """
 async (notes) => {
   const ws = window.ordenApp.workspace
@@ -70,12 +60,10 @@ async (notes) => {
   return ws.notes.map((one) => one.name)
 }
 """
-
 def shot(page: Page, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SHOTS / f"{name}.png"), full_page=True)
     say(f"shot {name}.png")
-
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme=scheme)
     page = context.new_page()
@@ -90,7 +78,6 @@ def fresh(browser: Browser, scheme: str) -> Page:
     say(f"the space holds {page.evaluate(SEED, [NOTE, ALIAS_NOTE, ODD_NOTE, FOLD_NOTE])}")
     page.wait_for_timeout(400)
     return page
-
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
@@ -102,7 +89,6 @@ def open_note(page: Page, starts: str) -> None:
     )
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
-
 WRITTEN = """
 () => {
   const lines = [...document.querySelectorAll('.cm-content .cm-line[data-callout]')]
@@ -121,7 +107,6 @@ WRITTEN = """
   return Object.fromEntries(seen)
 }
 """
-
 READ = """
 () => {
   const found = [...document.querySelectorAll('.callout')]
@@ -134,15 +119,12 @@ READ = """
   }))
 }
 """
-
 def swept(page: Page) -> dict:
     found: dict = {}
     seen = -1
-
     while True:
         for name, one in page.evaluate(WRITTEN).items():
             found.setdefault(name, one)
-
         at = page.evaluate(
             """() => {
               const box = document.querySelector('.cm-scroller')
@@ -155,12 +137,10 @@ def swept(page: Page) -> dict:
         if at == seen:
             return found
         seen = at
-
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
     open_note(page, "Callouts")
     shot(page, f"01-written-{scheme}")
-
     written = swept(page)
     say(f"[{scheme}] written: {len(written)} types marked")
     for kind in KINDS:
@@ -172,17 +152,14 @@ def drive(browser: Browser, scheme: str) -> None:
             wrong(f"{kind} wears {one['look']} rather than orden-callout-{LOOKS[kind]}")
         if not one["icon"]:
             wrong(f"{kind} has no icon")
-
     accents = {kind: written[kind]["accent"] for kind in KINDS if kind in written}
     say(f"[{scheme}] accents: {json.dumps(accents)}")
     if len(set(accents.values())) < 6:
         wrong(f"the looks barely differ: {sorted(set(accents.values()))}")
-
     open_note(page, "The odd ones")
     odd = swept(page)
     say(f"[{scheme}] the odd ones: {json.dumps(odd)}")
     shot(page, f"02-odd-{scheme}")
-
     unknown = odd.get("recipe")
     if not unknown:
         wrong("a type nothing knows is not a callout at all")
@@ -190,13 +167,11 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong(f"a type nothing knows was given a look: {unknown['look']}")
     elif unknown["icon"]:
         wrong("a type nothing knows was given an icon")
-
     titled = odd.get("tip")
     if not titled:
         wrong("a callout with a title of its own is not a callout")
     elif (titled["words"] or "").strip():
         wrong(f"a callout with a title of its own also shows the type: {titled['words']!r}")
-
     page.evaluate(
         """() => {
           const sheet = document.createElement('style')
@@ -212,7 +187,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if dressed != "rgb(194, 65, 12)":
         wrong(f"a theme could not reach an unknown type through data-callout: {dressed}")
     shot(page, f"03-theme-dressed-{scheme}")
-
     open_note(page, "Other names")
     others = swept(page)
     say(f"[{scheme}] other names: {json.dumps({k: v['look'] for k, v in others.items()})}")
@@ -220,7 +194,6 @@ def drive(browser: Browser, scheme: str) -> None:
     for name, look in ALIASES.items():
         if others.get(name, {}).get("look") != f"orden-callout-{look}":
             wrong(f"{name} does not wear orden-callout-{look}: {others.get(name)}")
-
     open_note(page, "Callouts")
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
@@ -236,7 +209,6 @@ def drive(browser: Browser, scheme: str) -> None:
             wrong(f"{one['type']} has no icon in the reading view")
         if one["title"] != one["type"].capitalize():
             wrong(f"{one['type']} is called {one['title']!r} in the reading view")
-
     open_note(page, "The odd ones")
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
@@ -249,10 +221,8 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong("the reading view lost the writer's own title")
     if next((one for one in odd_read if one["type"] == "recipe"), {}).get("icon"):
         wrong("a type nothing knows was given an icon in the reading view")
-
     fold(page, scheme)
     page.context.close()
-
 FOLDED = """
 () => ({
   marks: document.querySelectorAll('.orden-folded').length,
@@ -261,7 +231,6 @@ FOLDED = """
     .filter((text) => text.length),
 })
 """
-
 DISCLOSED = """
 () => [...document.querySelectorAll('.callout')].map((one) => ({
   type: one.dataset.callout,
@@ -272,7 +241,6 @@ DISCLOSED = """
   behind: one.querySelector('.callout-body')?.textContent?.trim(),
 }))
 """
-
 def fold(page: Page, scheme: str) -> None:
     open_note(page, "Folding")
     written = page.evaluate(FOLDED)
@@ -284,7 +252,6 @@ def fold(page: Page, scheme: str) -> None:
         wrong("what the sign shut is still on the page")
     if not any("In front of the sign" in one for one in written["shown"]):
         wrong("a plus shut a callout it should have left open")
-
     page.locator(".cm-line[data-callout] .orden-fold-hinge").first.click()
     page.wait_for_timeout(500)
     opened = page.evaluate(FOLDED)
@@ -292,17 +259,14 @@ def fold(page: Page, scheme: str) -> None:
     shot(page, f"08-fold-opened-{scheme}")
     if opened["marks"]:
         wrong("the chevron did not open a callout the note said was shut")
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, f"09-fold-reading-{scheme}")
     disclosed = page.evaluate(DISCLOSED)
     say(f"[{scheme}] read: {json.dumps(disclosed)}")
-
     shut = next((one for one in disclosed if one["type"] == "warning"), None)
     ajar = next((one for one in disclosed if one["type"] == "info"), None)
     plain = next((one for one in disclosed if one["type"] == "note"), None)
-
     if not shut or shut["tag"] != "details" or shut["open"] is not False:
         wrong(f"a minus did not read as a shut details: {json.dumps(shut)}")
     if not shut or not shut["chevron"]:
@@ -313,20 +277,16 @@ def fold(page: Page, scheme: str) -> None:
         wrong(f"a plus did not read as an open details: {json.dumps(ajar)}")
     if not plain or plain["tag"] != "div" or plain["chevron"]:
         wrong(f"a callout with no sign was made foldable anyway: {json.dumps(plain)}")
-
     page.locator("details.callout > summary").first.click()
     page.wait_for_timeout(500)
     after = page.evaluate(DISCLOSED)
     shot(page, f"10-fold-reading-opened-{scheme}")
     if next((one for one in after if one["type"] == "warning"), {}).get("open") is not True:
         wrong("a press on the title did not open the callout in the reading view")
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
             say(f"--- {scheme} ---")
             drive(browser, scheme)
-
     return DRIVE.verdict("every kind of callout is drawn, named and coloured")
-
 raise SystemExit(main())

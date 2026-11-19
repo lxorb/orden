@@ -13,67 +13,52 @@ beforeEach(async () => {
   workspace.right = []
   await settle()
 })
-
 afterEach(() => {
   workspace.panel = null
   workspace.right = [...panels.STARTS_RIGHT]
   viewport.device = 'desktop'
 })
-
 function registerAsTheAppDoes(): () => void {
   return root(() => {
     const covered = computed(() => !!workspace.panel)
     watch(() => closeOnBack(covered(), () => workspace.closePanel()))
   })
 }
-
 test('one drawer is one history entry, however often the panel inside it changes', () => {
   const stop = registerAsTheAppDoes()
   flushSync()
-
   const before = history.length
-
   workspace.showPanel('outline')
   flushSync()
   expect(workspace.panel).toBe('outline')
   expect(history.length).toBe(before + 1)
-
   workspace.showPanel('links')
   flushSync()
   expect(workspace.panel).toBe('links')
   expect(history.length).toBe(before + 1)
-
   workspace.showPanel('outline')
   flushSync()
   expect(workspace.panel).toBe('outline')
   expect(history.length).toBe(before + 1)
-
   workspace.showPanel('search')
   flushSync()
   expect(workspace.panel).toBe('search')
   expect(history.length).toBe(before + 1)
-
   stop()
 })
-
 test('and the entry is given back when the drawer itself closes', async () => {
   const stop = registerAsTheAppDoes()
   flushSync()
-
   workspace.showPanel('outline')
   flushSync()
   expect((history.state as { ordenDepth?: number } | null)?.ordenDepth).toBe(1)
-
   const heard = new Promise<void>((resolve) => {
     window.addEventListener('popstate', () => resolve(), { once: true })
   })
-
   workspace.closePanel()
   flushSync()
   await heard
   flushSync()
-
   expect(workspace.panel).toBe(null)
-
   stop()
 })

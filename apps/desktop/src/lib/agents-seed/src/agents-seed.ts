@@ -6,7 +6,6 @@ These are my notes. Write in the language and style they are written in, and ask
 
 ## Memory
 `
-
 export function isUntouchedAgents(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
   return name === AGENTS_NAME && content === AGENTS_SEED

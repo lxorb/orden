@@ -16,7 +16,6 @@ pub struct Found {
     pub id: Option<String>,
     pub unlisted: bool,
 }
-
 pub fn ignored(name: &str) -> bool {
     name.starts_with('.')
         || name.starts_with("~$")
@@ -24,13 +23,10 @@ pub fn ignored(name: &str) -> bool {
         || name.eq_ignore_ascii_case("desktop.ini")
         || name == "Icon\r"
 }
-
 const CARRIED: &str = ".Inbox.md";
-
 fn carried(rel: &Path) -> bool {
     rel.as_os_str() == CARRIED
 }
-
 pub fn ignored_path(rel: &Path) -> bool {
     if carried(rel) {
         return false;
@@ -38,22 +34,18 @@ pub fn ignored_path(rel: &Path) -> bool {
     rel.components()
         .any(|part| part.as_os_str().to_str().is_none_or(ignored))
 }
-
 pub fn found(root: &Path, rel: &Path) -> Option<Found> {
     looked(root, rel).ok().flatten()
 }
-
 pub fn found_hidden(root: &Path, rel: &Path) -> Option<Found> {
     measured(root, rel).ok().flatten()
 }
-
 fn looked(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
     if ignored_path(rel) {
         return Ok(None);
     }
     measured(root, rel)
 }
-
 fn measured(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
     if rel.as_os_str().is_empty() {
         return Ok(None);
@@ -67,7 +59,6 @@ fn measured(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
     if meta.file_type().is_symlink() {
         return Ok(None);
     }
-
     Ok(Some(Found {
         rel: rel.to_path_buf(),
         dir: meta.is_dir(),
@@ -82,7 +73,6 @@ fn measured(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
         unlisted: false,
     }))
 }
-
 pub fn says_gone(error: &std::io::Error) -> bool {
     matches!(
         error.kind(),
@@ -91,7 +81,6 @@ pub fn says_gone(error: &std::io::Error) -> bool {
             | std::io::ErrorKind::InvalidFilename
     )
 }
-
 pub fn present(root: &Path, rel: &Path) -> bool {
     !rel.as_os_str().is_empty()
         && !ignored_path(rel)
@@ -100,12 +89,10 @@ pub fn present(root: &Path, rel: &Path) -> bool {
             Err(error) => !says_gone(&error),
         }
 }
-
 struct Listing {
     found: Vec<Found>,
     whole: bool,
 }
-
 fn listed_in(root: &Path, rel: &Path) -> std::io::Result<Listing> {
     let mut names = Vec::new();
     for entry in fs::read_dir(root.join(rel))? {
@@ -116,7 +103,6 @@ fn listed_in(root: &Path, rel: &Path) -> std::io::Result<Listing> {
         }
     }
     names.sort_unstable();
-
     let mut listing = Listing {
         found: Vec::with_capacity(names.len()),
         whole: true,
@@ -130,7 +116,6 @@ fn listed_in(root: &Path, rel: &Path) -> std::io::Result<Listing> {
     }
     Ok(listing)
 }
-
 pub fn walk(
     root: &Path,
     rel: &Path,
@@ -149,7 +134,6 @@ pub fn walk(
         )),
     }
 }
-
 fn walk_listing(
     root: &Path,
     listing: Listing,
@@ -160,7 +144,6 @@ fn walk_listing(
         *left = left
             .checked_sub(1)
             .ok_or_else(|| format!("this space holds more than {MAX_ENTRIES} files and folders"))?;
-
         let child = one.rel.clone();
         let inside =
             (one.dir && child.components().count() < MAX_DEPTH).then(|| listed_in(root, &child));
@@ -175,10 +158,8 @@ fn walk_listing(
             walk_listing(root, listing, left, visit)?;
         }
     }
-
     Ok(())
 }
-
 #[cfg(test)]
 pub fn everything(root: &Path) -> Result<Vec<Found>, String> {
     let mut all = Vec::new();
@@ -186,7 +167,6 @@ pub fn everything(root: &Path) -> Result<Vec<Found>, String> {
     walk(root, Path::new(""), &mut left, &mut |one| all.push(one))?;
     Ok(all)
 }
-
 #[cfg(test)]
 mod tests {
     #[cfg(unix)]
@@ -203,7 +183,6 @@ mod tests {
             .map(|one| one.rel)
             .collect()
     }
-
     #[test]
     fn a_space_is_every_file_in_it_but_what_sync_leaves_alone() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -217,7 +196,6 @@ mod tests {
         fs::write(root.join("Thumbs.db"), "").expect("clutter");
         fs::write(root.join("~$Report.docx"), "").expect("an owner file");
         fs::write(root.join("Reading").join("Deep.md"), "").expect("a nested note");
-
         assert_eq!(
             rels(root),
             [
@@ -227,7 +205,6 @@ mod tests {
                 PathBuf::from("shot.png"),
             ]
         );
-
         let all = everything(root).expect("a walk");
         let picture = all
             .iter()
@@ -238,7 +215,6 @@ mod tests {
         assert!(picture.id.is_some());
         assert!(all[1].dir && all[1].id.is_some());
     }
-
     #[test]
     fn a_link_is_not_followed_or_listed() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -251,22 +227,18 @@ mod tests {
         if !link_to(&elsewhere, &root.join("out")) || !link_to(&root, &root.join("loop")) {
             return;
         }
-
         assert_eq!(rels(&root), [PathBuf::from("Plan.md")]);
     }
-
     #[test]
     fn a_space_larger_than_the_walk_says_so() {
         let dir = tempfile::tempdir().expect("a folder");
         let root = dir.path();
         fs::write(root.join("a.md"), "").expect("a note");
         fs::write(root.join("b.md"), "").expect("a note");
-
         let mut left = 1;
         let refused = walk(root, Path::new(""), &mut left, &mut |_| {});
         assert!(refused.expect_err("too many").contains("files and folders"));
     }
-
     #[test]
     fn the_spaces_own_inbox_is_carried_and_no_other_hidden_file() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -276,7 +248,6 @@ mod tests {
         fs::create_dir_all(root.join("Work")).expect("a folder");
         fs::write(root.join("Work").join(".Inbox.md"), "").expect("not it");
         fs::write(root.join("Plan.md"), "").expect("a note");
-
         assert_eq!(
             rels(root),
             [
@@ -289,7 +260,6 @@ mod tests {
         assert!(super::ignored_path(Path::new(".other.md")));
         assert!(super::ignored_path(&Path::new("Work").join(".Inbox.md")));
     }
-
     #[test]
     fn clutter_is_named_as_such() {
         for name in [
@@ -305,10 +275,8 @@ mod tests {
             assert!(!ignored(name), "{name:?}");
         }
     }
-
     #[cfg(unix)]
     struct Locked(PathBuf);
-
     #[cfg(unix)]
     impl Locked {
         fn up(folder: PathBuf) -> Option<Self> {
@@ -321,7 +289,6 @@ mod tests {
             Some(Self(folder))
         }
     }
-
     #[cfg(unix)]
     impl Drop for Locked {
         fn drop(&mut self) {
@@ -329,7 +296,6 @@ mod tests {
             let _ = fs::set_permissions(&self.0, fs::Permissions::from_mode(0o755));
         }
     }
-
     #[cfg(unix)]
     #[test]
     fn a_folder_that_will_not_list_says_so_and_the_walk_goes_on() {
@@ -341,7 +307,6 @@ mod tests {
         let Some(_locked) = Locked::up(root.join("Shut")) else {
             return;
         };
-
         let all = everything(root).expect("the rest of the space");
         let shut = all
             .iter()
@@ -357,7 +322,6 @@ mod tests {
         assert!(!present(root, Path::new("Open.md/Inside.md")));
         assert!(!present(root, Path::new("Never.md")));
     }
-
     #[cfg(unix)]
     #[test]
     fn a_folder_whose_children_will_not_stat_is_unlisted_too() {
@@ -372,7 +336,6 @@ mod tests {
             fs::set_permissions(&half, fs::Permissions::from_mode(0o755)).expect("opened");
             return;
         }
-
         let all = everything(root).expect("a walk");
         fs::set_permissions(&half, fs::Permissions::from_mode(0o755)).expect("opened");
         let folder = all
@@ -382,7 +345,6 @@ mod tests {
         assert!(folder.unlisted);
         assert!(!all.iter().any(|one| one.rel.ends_with("Inside.md")));
     }
-
     #[cfg(unix)]
     #[test]
     fn a_space_that_will_not_list_is_an_error_not_an_empty_space() {
@@ -394,7 +356,6 @@ mod tests {
         };
         assert!(everything(&root).is_err());
     }
-
     #[test]
     fn an_empty_folder_is_listed_and_one_past_the_limit_is_not() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -402,7 +363,6 @@ mod tests {
         fs::create_dir(root.join("Empty")).expect("a folder");
         let deep = (0..orden_base::paths::MAX_DEPTH).fold(PathBuf::new(), |at, _| at.join("d"));
         fs::create_dir_all(root.join(&deep)).expect("deep folders");
-
         let all = everything(root).expect("a walk");
         let of = |rel: &Path| {
             all.iter()

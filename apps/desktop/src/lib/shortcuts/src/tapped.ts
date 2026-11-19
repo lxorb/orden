@@ -5,9 +5,7 @@ import { type AppContext, offeredHere, SHORTCUTS } from './registry'
 import { shortcuts } from './shortcuts.svelte'
 
 type Hearer = (key: Modifier) => void
-
 const hearers: Hearer[] = []
-
 export function hearTaps(hearer: Hearer): () => void {
   hearers.push(hearer)
   return () => {
@@ -15,15 +13,12 @@ export function hearTaps(hearer: Hearer): () => void {
     if (at >= 0) hearers.splice(at, 1)
   }
 }
-
 export function heard(key: Modifier): void {
   hearers.at(-1)?.(key)
 }
-
 export function listenForTaps(target: Window = window): () => void {
   const taps = new DoubleTap()
   const now = () => performance.now()
-
   const down = (event: KeyboardEvent) => {
     if (!fromPage(event)) taps.pressed(event, now())
   }
@@ -36,14 +31,12 @@ export function listenForTaps(target: Window = window): () => void {
   const left = (event: Event) => {
     if (event.target === target) taps.broken()
   }
-
   const options = { capture: true, passive: true }
   target.addEventListener('keydown', down, options)
   target.addEventListener('keyup', up, options)
   target.addEventListener('pointerdown', broken, options)
   target.addEventListener('wheel', broken, options)
   target.addEventListener('blur', left, options)
-
   return () => {
     target.removeEventListener('keydown', down, options)
     target.removeEventListener('keyup', up, options)
@@ -52,27 +45,22 @@ export function listenForTaps(target: Window = window): () => void {
     target.removeEventListener('blur', left, options)
   }
 }
-
 export function runTap(key: Modifier, context: AppContext): boolean {
   for (const entry of SHORTCUTS) {
     const held = shortcuts.keyFor(entry.id)
     if (entry.scope !== 'app' || !entry.run || !held || !offeredHere(entry)) continue
     if (tapOf(held, shortcuts.platform) !== key) continue
-
     ran(entry.id, 'shortcut')
     entry.run(context)
     return true
   }
-
   return false
 }
-
 export function hear(context: () => AppContext, target: Window = window): () => void {
   const unlisten = listenForTaps(target)
   const unhear = hearTaps((key) => {
     runTap(key, { ...context(), tapped: true })
   })
-
   return () => {
     unlisten()
     unhear()

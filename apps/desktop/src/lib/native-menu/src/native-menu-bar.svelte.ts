@@ -34,29 +34,22 @@ export interface MenuBarContext {
   onhistory(): void
   app: AppContext
 }
-
 const NAME = 'Orden'
-
 const SETTLE = 60
-
 type Native = TauriMenuItem | CheckMenuItem | PredefinedMenuItem | Submenu
-
 interface Built {
   made: Native[]
   byId: Map<string, Native>
   windows: Submenu | null
   help: Submenu | null
 }
-
 async function othersOpen(): Promise<boolean> {
   const { getAllWindows } = await import('@tauri-apps/api/window')
   return documentWindows((await getAllWindows()).map((one) => one.label)) > 1
 }
-
 async function close(objects: { close(): Promise<void> }[]): Promise<void> {
   await Promise.all(objects.map((one) => one.close().catch(() => undefined)))
 }
-
 function words(): MenuBarWords {
   return {
     app: NAME,
@@ -73,7 +66,6 @@ function words(): MenuBarWords {
     find: 'Find',
   }
 }
-
 function entryRow(id: string, context: MenuBarContext, row: Partial<MenuItem> = {}): MenuItem {
   return {
     label: BY_ID.get(id)?.label() ?? id,
@@ -82,10 +74,8 @@ function entryRow(id: string, context: MenuBarContext, row: Partial<MenuItem> = 
     ...row,
   }
 }
-
 function fileRows(context: MenuBarContext): MenuBarSources['file'] {
   const open = !!workspace.active
-
   return {
     opening: [
       ...(hiddenKinds.offers('note') ? [entryRow('app.new', context)] : []),
@@ -100,9 +90,7 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
     ],
   }
 }
-
 const RELOADING = new Set(['web.reload', 'web.fresh', 'web.back', 'web.forward'])
-
 function reloadRows(context: MenuBarContext): MenuItem[] {
   const web = workspace.active?.kind === 'web'
   const step = (how: 'reload' | 'fresh') => () => {
@@ -120,9 +108,7 @@ function reloadRows(context: MenuBarContext): MenuItem[] {
       : []),
   ]
 }
-
 type AppMenu = Awaited<ReturnType<typeof appMenuRows>>
-
 function describeNow(appMenu: AppMenu, context: MenuBarContext): Described {
   return describeMenuBar({
     groups: appMenu(context),
@@ -136,7 +122,6 @@ function describeNow(appMenu: AppMenu, context: MenuBarContext): Described {
     words: words(),
   })
 }
-
 export function followDescribed(
   appMenu: AppMenu,
   context: () => MenuBarContext,
@@ -149,7 +134,6 @@ export function followDescribed(
     })
   })
 }
-
 class MenuBar {
   private described: Described | null = null
   private context: MenuBarContext | null = null
@@ -166,16 +150,13 @@ class MenuBar {
   private front = false
   private passing: Promise<void> = Promise.resolve()
   private seen: SeenKey | null = null
-
   private readonly soon = afterQuiet(() => this.pass(), SETTLE)
-
   async follow(context: () => MenuBarContext): Promise<void> {
     const frame = await currentWindow()
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const own = getCurrentWindow()
     this.label = own.label
     this.front = await own.isFocused()
-
     window.addEventListener(
       'keydown',
       (event) => {
@@ -183,43 +164,33 @@ class MenuBar {
       },
       true,
     )
-
     await own.onFocusChanged(({ payload }) => {
       this.front = payload
       if (payload) this.pass(true)
     })
-
     this.followFullscreen(frame)
-
     followDescribed(await appMenuRows(), context, (described, now) => {
       this.described = described
       this.context = now
       this.soon()
     })
   }
-
   private pass(raise = false): void {
     this.passing = this.passing.then(() => this.catchUp(raise)).catch(() => undefined)
   }
-
   private async catchUp(raise: boolean): Promise<void> {
     const described = this.described
     if (!described) return
-
     const entries = this.owned(described.entries)
-
     this.runs = new Map([...described.runs].map(([id, run]) => [this.idOf(id), run]))
     this.live = new Map(flatten(entries).flatMap((one) => (one.kind === 'item' ? [[one.id, one]] : [])))
-
     const fresh = raise && this.told !== null && (await othersOpen())
     const changes = this.menu && !fresh ? changesBetween(this.shown, entries) : null
     if (changes) await this.patch(changes)
     else await this.build(entries)
-
     this.shown = entries
     if (this.front && (raise || !changes)) await this.raise()
   }
-
   private async raise(): Promise<void> {
     await this.menu?.setAsAppMenu()
     await this.help?.setAsHelpMenuForNSApp()
@@ -228,24 +199,20 @@ class MenuBar {
       this.told = this.windows
     }
   }
-
   private idOf(id: string): string {
     return `${this.label}/${id}`
   }
-
   private owned(entries: NativeEntry[]): NativeEntry[] {
     return entries.map((one): NativeEntry => {
       const id = this.idOf(one.id)
       return one.kind === 'submenu' ? { ...one, id, items: this.owned(one.items) } : { ...one, id }
     })
   }
-
   private async patch(changes: Change[]): Promise<void> {
     await Promise.all(
       changes.map(async (change) => {
         const native = this.byId.get(change.id)
         if (!native) return
-
         if (change.text !== undefined) await native.setText(change.text)
         if ('setEnabled' in native && change.enabled !== undefined) {
           await native.setEnabled(change.enabled)
@@ -259,16 +226,13 @@ class MenuBar {
       }),
     )
   }
-
   private async build(entries: NativeEntry[]): Promise<void> {
     const { Menu } = await import('@tauri-apps/api/menu')
     const built: Built = { made: [], byId: new Map(), windows: null, help: null }
-
     try {
       const items = await Promise.all(entries.map((one) => this.make(one, built)))
       const menu = await Menu.new({ items })
       const before = [...this.made, ...(this.menu ? [this.menu] : [])]
-
       this.menu = menu
       this.made = built.made
       this.byId = built.byId
@@ -280,11 +244,9 @@ class MenuBar {
       throw error
     }
   }
-
   private async make(entry: NativeEntry, built: Built): Promise<Native> {
     const api = await import('@tauri-apps/api/menu')
     let made: Native
-
     if (entry.kind === 'rule') {
       made = await api.PredefinedMenuItem.new({ item: 'Separator' })
     } else if (entry.kind === 'system') {
@@ -314,32 +276,25 @@ class MenuBar {
           ? await api.MenuItem.new(options)
           : await api.CheckMenuItem.new({ ...options, checked: entry.checked })
     }
-
     built.made.push(made)
     built.byId.set(entry.id, made)
     return made
   }
-
   private dispatch(id: string): void {
     const entry = this.live.get(id)
     const run = this.runs.get(id)
     if (!entry || !run) return
-
     if (entry.key && letPass(entry.key, this.seen, performance.now())) return
-
     const away = !document.hasFocus()
     if (entry.standIn) {
       this.standIn(entry.standIn, entry.key, away)
       return
     }
-
     const at: KeyboardAt = away ? 'away' : this.context?.view?.hasFocus ? 'note' : 'page'
     if (entry.key && !keyRuns(entry.anywhere, at)) return
     if (away) void takeKeyboard()
-
     run()
   }
-
   private standIn(action: StandIn, key: string | null, away: boolean): void {
     const keystroke = key ? keystrokeOf(key) : null
     if (!away && keystroke) {
@@ -347,10 +302,8 @@ class MenuBar {
       ;(document.activeElement ?? document.body).dispatchEvent(event)
       if (event.defaultPrevented) return
     }
-
     void invoke('hand_to_keyboard', { action }).catch(() => undefined)
   }
-
   private followFullscreen(frame: Awaited<ReturnType<typeof currentWindow>>): void {
     let was = false
     void frame.isFullscreen().then((now) => (was = now))
@@ -362,7 +315,6 @@ class MenuBar {
     })
   }
 }
-
 export function followMenuBar(context: () => MenuBarContext): void {
   void new MenuBar().follow(context)
 }

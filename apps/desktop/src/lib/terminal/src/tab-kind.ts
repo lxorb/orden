@@ -9,15 +9,12 @@ import { openTerminal, shellRows } from './open'
 import { readSpec } from './spec'
 
 const terminalOf = (id: string) => workspace.tabs.find((one) => one.id === id && one.kind === 'terminal') ?? null
-
 function menu(id: string): TabMenuEntry[] {
   const tab = terminalOf(id)
   if (!tab) return []
-
   if (isOnlineTab(tab)) {
     return [{ label: 'Open another', run: () => void openOnline(true) }, ...iconEntries(tab.path)]
   }
-
   const spec = readSpec(tab.doc)
   const beside = { folder: spec?.folder ?? null, beside: tab.id }
   return [
@@ -29,12 +26,10 @@ function menu(id: string): TabMenuEntry[] {
     ...(spec ? [{ label: 'Choose an icon', run: () => iconChoice.terminal(tab.id) }] : []),
   ]
 }
-
 const specOf = (id: string) => {
   const tab = terminalOf(id)
   return tab ? readSpec(tab.doc) : null
 }
-
 export const terminalTabKind: TabKindParts = {
   open: async (path, how) => {
     await openTerm(path, how)

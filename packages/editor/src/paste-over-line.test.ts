@@ -16,16 +16,13 @@ function pastedOver(doc: string, line: string, text: string): string {
   )
   return state.update(placed(state, text)).state.doc.toString()
 }
-
 describe('edit29 a paste copied in Orden over a line picked with a triple click', () => {
   test('a list over an item keeps the next item on its own line', () => {
     expect(pastedOver('- one\n- two\n- three', '- two', '- x\n- y')).toBe('- one\n- x\n- y\n- three')
   })
-
   test('words over a paragraph line keep the next line apart', () => {
     expect(pastedOver('Old words.\nNext line.', 'Old words.', '**New** words.')).toBe('**New** words.\nNext line.')
   })
-
   test('a quote over an item does not swallow the next item', () => {
     expect(pastedOver('- one\n- two\n- three', '- two', '> q')).toBe('- one\n> q\n- three')
   })

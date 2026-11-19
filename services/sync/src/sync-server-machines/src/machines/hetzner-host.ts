@@ -10,11 +10,8 @@ import { type Access, Tunnels } from './tunnel'
 
 const SERVER_TYPE = 'cx43'
 const LOCATIONS: readonly string[] = ['nbg1', 'fsn1']
-
 const LABEL = 'orden-machine'
-
 const LABELS = [LABEL, 'nib-machine']
-
 async function serverOfMachine(hetzner: Hetzner, id: string) {
   for (const key of LABELS) {
     const found = await hetzner.serverLabelled(key, id)
@@ -22,7 +19,6 @@ async function serverOfMachine(hetzner: Hetzner, id: string) {
   }
   return null
 }
-
 export async function firewallOfMachine(hetzner: Hetzner, id: string): Promise<number | null> {
   for (const key of LABELS) {
     const found = await hetzner.firewallLabelled(key, id)
@@ -30,21 +26,16 @@ export async function firewallOfMachine(hetzner: Hetzner, id: string): Promise<n
   }
   return null
 }
-
 const UNAVAILABLE = new Set(['resource_unavailable', 'placement_error', 'unavailable', 'resource_limit_exceeded'])
-
 const LINK_TRIES = 3
 const LINK_WAIT = 1000
-
 const SECRET = 'secret'
-
 export class HostRefused extends Error {
   constructor(readonly refusal: Refusal) {
     super(`refused: ${refusal}`)
     this.name = 'HostRefused'
   }
 }
-
 export function hetznerMissing(env: Env): string[] {
   const needed: [string, string | undefined][] = [
     ['HETZNER_TOKEN', env.HETZNER_TOKEN],
@@ -54,9 +45,7 @@ export function hetznerMissing(env: Env): string[] {
   ]
   return needed.filter(([, value]) => !value).map(([name]) => name)
 }
-
 export type MayCost = (monthly: number, currency: string) => Promise<boolean>
-
 export interface Setup {
   hetzner: Hetzner
   tunnels: Tunnels
@@ -67,7 +56,6 @@ export interface Setup {
   mayCost: MayCost
   fetcher: typeof fetch
 }
-
 export function setupOf(env: Env, mayCost: MayCost): Setup | null {
   if (hetznerMissing(env).length) return null
   const origin = new URL(env.APP_ORIGIN).origin
@@ -88,7 +76,6 @@ export function setupOf(env: Env, mayCost: MayCost): Setup | null {
     fetcher: (input, init) => fetch(input, init),
   }
 }
-
 export function namesOf(id: string, domain: string) {
   const slug = id
     .replace(/^m_/, '')
@@ -102,16 +89,13 @@ export function namesOf(id: string, domain: string) {
     formerTunnel: `nib-machine-${slug}`,
   }
 }
-
 export function machineDomain(env: Env): string {
   return env.MACHINE_DOMAIN ?? new URL(env.APP_ORIGIN).hostname
 }
-
 export function isMachineHost(hostname: string, domain: string): boolean {
   const escaped = domain.toLowerCase().replaceAll('.', '\\.')
   return new RegExp(`^m-[0-9a-f]{32}\\.${escaped}$`).test(hostname.toLowerCase())
 }
-
 export function firewallRules(ssh: boolean): unknown[] {
   return ssh
     ? [
@@ -125,13 +109,11 @@ export function firewallRules(ssh: boolean): unknown[] {
       ]
     : []
 }
-
 interface Row {
   ssh_key: string | null
   size: string
   region: string
 }
-
 interface Priced {
   size: string
   price_month: number | null
@@ -139,11 +121,9 @@ interface Priced {
   priced_at: number | null
   spent: number
 }
-
 function chosenOf(row: { size: string; region: string }) {
   return row.size !== 'small' && row.region !== 'eu' ? row : null
 }
-
 export function costOf(type: ServerType, location: string, pricing: Pricing) {
   const price = type.prices.find((one) => one.location === location)
   const ip = pricing.ipv4.get(location)
@@ -152,35 +132,27 @@ export function costOf(type: ServerType, location: string, pricing: Pricing) {
     hourly: Math.round(((price?.hourly ?? 0) + (ip?.hourly ?? 0)) * 10_000) / 10_000,
   }
 }
-
 const specOf = (type: ServerType) => JSON.stringify({ cores: type.cores, memory: type.memory, disk: type.disk })
-
 export class HetznerHost implements MachineHost {
   readonly alwaysOn = true
-
   constructor(
     private readonly env: Env,
     private readonly storage: Pick<DurableObjectStorage, 'get'>,
     private readonly setup: Setup | null,
   ) {}
-
   private need(): Setup {
     if (this.setup) return this.setup
     throw new Error(`Hetzner machines are not set up: ${hetznerMissing(this.env).join(', ')} missing`)
   }
-
   private names(id: string) {
     return namesOf(id, this.need().domain)
   }
-
   async start(id: string, _image: string, env: Record<string, string>): Promise<void> {
     const setup = this.need()
     const names = this.names(id)
-
     const tunnel = (await setup.tunnels.found(names.formerTunnel)) ?? (await setup.tunnels.tunnel(names.tunnel))
     await setup.tunnels.route(tunnel, names.hostname, setup.access)
     await setup.tunnels.hostname(names.hostname, tunnel)
-
     const found = await serverOfMachine(setup.hetzner, id)
     if (found) {
       if (found.status === 'off') await setup.hetzner.powerOn(found.id)
@@ -190,12 +162,10 @@ export class HetznerHost implements MachineHost {
       })
       return
     }
-
     const secret = env.ORDEND_SECRET
     const bundle = await bundleSha()
     if (!secret) throw new Error('no link secret for the new server')
     if (!bundle) throw new Error('this Worker carries no machine bundle')
-
     const row = await this.env.DB.prepare('select ssh_key, size, region from machines where id = ?')
       .bind(id)
       .first<Row>()
@@ -203,14 +173,12 @@ export class HetznerHost implements MachineHost {
     const chosen = row ? chosenOf(row) : null
     const wanted = chosen?.size ?? SERVER_TYPE
     const asked = chosen ? [chosen.region] : LOCATIONS
-
     const type = await setup.hetzner.serverType(wanted)
     const places = asked.filter((one) => !type.available.length || type.available.includes(one))
     const first = places[0]
     if (!first) throw new HetznerError(503, 'resource_unavailable', `no ${wanted} to be had in ${asked.join(' or ')}`)
     const pricing = await setup.hetzner.pricing()
     if (!(await setup.mayCost(costOf(type, first, pricing).monthly, pricing.currency))) throw new HostRefused('budget')
-
     const firewall =
       (await firewallOfMachine(setup.hetzner, id)) ??
       (await setup.hetzner.createFirewall(names.server, { [LABEL]: id }, firewallRules(sshKey !== null)))
@@ -222,7 +190,6 @@ export class HetznerHost implements MachineHost {
       bundle,
       sshKey,
     })
-
     let last: unknown = null
     for (const location of places) {
       try {
@@ -257,7 +224,6 @@ export class HetznerHost implements MachineHost {
     }
     throw last instanceof Error ? last : new Error(`no ${wanted} could be made`)
   }
-
   async resize(id: string, type: string, hard: boolean): Promise<boolean> {
     const setup = this.need()
     const server = await serverOfMachine(setup.hetzner, id)
@@ -276,7 +242,6 @@ export class HetznerHost implements MachineHost {
       throw error
     }
   }
-
   private async priced(id: string, size: string, location: string): Promise<void> {
     const had = await this.env.DB.prepare(
       'select size, price_month, price_hour, priced_at, spent from machines where id = ?',
@@ -299,7 +264,6 @@ export class HetznerHost implements MachineHost {
     })
     await audit(this.env, id, 'resize', { detail: size as Named })
   }
-
   private async record(id: string, fields: Record<string, string | number>): Promise<void> {
     const entries = Object.entries(fields)
     const sets = entries.map(([key], at) => `${key} = ?${String(at + 2)}`).join(', ')
@@ -307,17 +271,14 @@ export class HetznerHost implements MachineHost {
       .bind(id, ...entries.map(([, value]) => value))
       .run()
   }
-
   stop(): Promise<void> {
     return Promise.resolve()
   }
-
   async running(id: string): Promise<boolean> {
     if (!this.setup) return false
     const server = await serverOfMachine(this.setup.hetzner, id)
     return server?.status === 'running'
   }
-
   async link(id: string): Promise<WebSocket> {
     const setup = this.need()
     const secret = await this.storage.get<string>(SECRET)
@@ -348,23 +309,18 @@ export class HetznerHost implements MachineHost {
     }
     throw last instanceof Error ? last : new Error('ordend did not answer')
   }
-
   snapshot(): Promise<string> {
     return Promise.reject(new Error('a machine that is always on keeps its own disk'))
   }
-
   backup(): Promise<string> {
     return Promise.reject(new Error('a machine that is always on keeps its own disk'))
   }
-
   restore(): Promise<void> {
     return Promise.resolve()
   }
-
   usage(): Promise<{ cpuS: number; egressBytes: number }> {
     return Promise.resolve({ cpuS: 0, egressBytes: 0 })
   }
-
   async reboot(id: string): Promise<void> {
     const setup = this.need()
     const server = await serverOfMachine(setup.hetzner, id)
@@ -372,7 +328,6 @@ export class HetznerHost implements MachineHost {
     await setup.hetzner.reset(server.id)
     await this.record(id, { server_status: 'starting' })
   }
-
   async remove(id: string): Promise<void> {
     if (!this.setup) return
     const { hetzner, tunnels } = this.setup
@@ -385,7 +340,6 @@ export class HetznerHost implements MachineHost {
     await tunnels.remove(names.formerTunnel, names.hostname)
   }
 }
-
 async function deleteWhenFree(hetzner: Hetzner, id: number): Promise<void> {
   for (let tried = 0; ; tried++) {
     try {
@@ -398,7 +352,6 @@ async function deleteWhenFree(hetzner: Hetzner, id: number): Promise<void> {
     }
   }
 }
-
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }

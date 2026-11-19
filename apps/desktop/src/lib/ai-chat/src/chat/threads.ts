@@ -32,7 +32,6 @@ import { noUsage } from './usage'
 import { webMeta } from '../../../web-backend/src/api'
 
 const WORDS = 2_000
-
 export function newThread(
   space: string,
   provider: string,
@@ -55,7 +54,6 @@ export function newThread(
     updated: now,
   }
 }
-
 export function wordsOf(thread: Thread): string {
   return thread.turns
     .flatMap((turn) => [
@@ -66,7 +64,6 @@ export function wordsOf(thread: Thread): string {
     .replace(/\s+/g, ' ')
     .slice(0, WORDS)
 }
-
 export function headOf(thread: Thread, words = wordsOf(thread)): ThreadHead {
   return {
     id: thread.id,
@@ -83,16 +80,13 @@ export function headOf(thread: Thread, words = wordsOf(thread)): ThreadHead {
     words,
   }
 }
-
 export function chatsOf<T extends ThreadHead>(heads: readonly T[]): T[] {
   const ids = new Set(heads.map((one) => one.id))
   return heads.filter((one) => !one.parent || !ids.has(one.parent))
 }
-
 function copied<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
 }
-
 export function branchThread(thread: Thread, upTo: string, title?: string): Thread {
   const copy = copied(thread)
   const at = copy.turns.findIndex((one) => one.id === upTo)
@@ -116,7 +110,6 @@ export function branchThread(thread: Thread, upTo: string, title?: string): Thre
     updated: now,
   }
 }
-
 function usageIn(value: unknown): Usage {
   if (!isRecord(value)) return noUsage(null)
   const number = (one: unknown) => (isNumber(one) ? one : 0)
@@ -129,7 +122,6 @@ function usageIn(value: unknown): Usage {
     ...(isNumber(value.cost) ? { cost: value.cost } : {}),
   }
 }
-
 const NOTICES: readonly NoticeCode[] = [
   'compacted',
   'model',
@@ -143,7 +135,6 @@ const NOTICES: readonly NoticeCode[] = [
   'tasks',
 ]
 const STATES: readonly ToolState[] = ['running', 'ok', 'error', 'asking']
-
 function outputIn(value: unknown): ToolOutput | undefined {
   if (!isRecord(value)) return undefined
   const images = Array.isArray(value.images)
@@ -161,7 +152,6 @@ function outputIn(value: unknown): ToolOutput | undefined {
     ...(isString(value.agent) ? { agent: value.agent } : {}),
   }
 }
-
 function partIn(value: unknown): Part | null {
   if (!isRecord(value)) return null
   const { kind, text } = value
@@ -195,7 +185,6 @@ function partIn(value: unknown): Part | null {
       : {}),
   }
 }
-
 function turnIn(value: unknown): Turn | null {
   if (!isRecord(value) || !isString(value.id) || (value.role !== 'you' && value.role !== 'model')) {
     return null
@@ -205,9 +194,7 @@ function turnIn(value: unknown): Turn | null {
   if (!isString(turn.context)) delete turn.context
   return turn
 }
-
 const GONE_AFTER = 3 * 60_000
-
 function thisWindow(): string {
   try {
     const held = sessionStorage.getItem(WINDOW_KEY)
@@ -219,10 +206,8 @@ function thisWindow(): string {
     return THIS_PAGE
   }
 }
-
 const WINDOW_KEY = 'orden:ai-window'
 const THIS_PAGE = crypto.randomUUID()
-
 function answeredElsewhere(value: Record<string, unknown>): boolean {
   const { answeringAt, answeringIn } = value
   return (
@@ -232,19 +217,14 @@ function answeredElsewhere(value: Record<string, unknown>): boolean {
     Date.now() - answeringAt < GONE_AFTER
   )
 }
-
 function cutOff(turns: Turn[], answering: string): void {
   const turn = turns.find((one) => one.id === answering)
   if (!turn || turn.parts.some((one) => one.kind === 'notice' && ENDED.has(one.code))) return
   turn.parts.push({ kind: 'notice', code: 'stopped', text: '' })
 }
-
 const ENDED: ReadonlySet<NoticeCode> = new Set<NoticeCode>(['stopped', 'error', 'steps', 'max_tokens', 'refusal'])
-
 const SAYS_WITHIN = 1_500
-
 const answeringHere = new Map<string, Thread>()
-
 function saidAnswering(id: string): Promise<boolean> {
   return new Promise((resolve) => {
     const stop = windows.hear('thread-answering', (said) => {
@@ -260,7 +240,6 @@ function saidAnswering(id: string): Promise<boolean> {
     windows.say('thread-answering?', { id })
   })
 }
-
 let answersOthers = false
 function answerOthers(): void {
   if (answersOthers) return
@@ -277,11 +256,8 @@ function answerOthers(): void {
     void keepThread(thread).catch(() => undefined)
   })
 }
-
 const claims = new Map<string, () => void>()
-
 const LOCK_PATIENCE = 2_000
-
 function inTime<T>(asked: () => Promise<T>, otherwise: T): Promise<T> {
   return new Promise<T>((resolve) => {
     const timer = setTimeout(() => resolve(otherwise), LOCK_PATIENCE)
@@ -296,7 +272,6 @@ function inTime<T>(asked: () => Promise<T>, otherwise: T): Promise<T> {
     }
   })
 }
-
 export async function claimAnswer(id: string): Promise<boolean> {
   if (claims.has(id)) return false
   const locks = locksHere()
@@ -321,7 +296,6 @@ export async function claimAnswer(id: string): Promise<boolean> {
   late = true
   return won ?? !claims.has(id)
 }
-
 function answerHeld(id: string): Promise<boolean | null> {
   const locks = locksHere()
   if (!locks) return Promise.resolve(null)
@@ -330,7 +304,6 @@ function answerHeld(id: string): Promise<boolean | null> {
     return held.some((one) => one.name === `orden-ai-answer:${id}`)
   }, null)
 }
-
 export async function answerFreed(id: string): Promise<void> {
   const locks = locksHere()
   if (!locks || !(await locksWork(locks))) return
@@ -340,18 +313,15 @@ export async function answerFreed(id: string): Promise<void> {
     return
   }
 }
-
 export function unclaimAnswer(id: string): void {
   claims.get(id)?.()
   claims.delete(id)
 }
-
 export function otherWindowWrote(listener: (id: string) => void): () => void {
   return windows.hear('thread-written', (said) => {
     if (typeof said.id === 'string') listener(said.id)
   })
 }
-
 export function otherWindowDeleted(listener: (id: string) => void): () => void {
   return windows.hear('thread-deleted', (said) => {
     const { id, space } = said
@@ -362,7 +332,6 @@ export function otherWindowDeleted(listener: (id: string) => void): () => void {
     listener(id)
   })
 }
-
 function ownFields(thread: Thread): Record<string, unknown> {
   const fields = {
     ...thread,
@@ -374,9 +343,7 @@ function ownFields(thread: Thread): Record<string, unknown> {
   }
   return JSON.parse(JSON.stringify(fields)) as Record<string, unknown>
 }
-
 const readHere = new Map<string, Record<string, unknown>>()
-
 function changedHere(thread: Thread): Record<string, unknown> {
   const fields = ownFields(thread)
   const read = readHere.get(thread.id) ?? {}
@@ -385,7 +352,6 @@ function changedHere(thread: Thread): Record<string, unknown> {
     Object.entries(fields).filter(([name, value]) => JSON.stringify(value) !== JSON.stringify(read[name])),
   )
 }
-
 export function threadIn(value: unknown, gone = false): Thread | null {
   if (!isRecord(value)) return null
   const { id, space, title, provider, model, effort, mode } = value
@@ -435,21 +401,18 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     ...(elsewhere ? { elsewhere } : {}),
   }
 }
-
 function timesIn(value: Record<string, unknown>): { answered?: number; seen?: number } {
   return {
     ...(isNumber(value.answered) ? { answered: value.answered } : {}),
     ...(isNumber(value.seen) ? { seen: value.seen } : {}),
   }
 }
-
 function placeIn(value: Record<string, unknown>): { state?: SessionState; pinned?: number } {
   return {
     ...(isSessionState(value.state) ? { state: value.state } : {}),
     ...(isNumber(value.pinned) ? { pinned: value.pinned } : {}),
   }
 }
-
 function headIn(value: unknown): ThreadHead | null {
   if (!isRecord(value) || !isString(value.id)) return null
   const updated = isNumber(value.updated) ? value.updated : 0
@@ -467,9 +430,7 @@ function headIn(value: unknown): ThreadHead | null {
     words: isString(value.words) ? value.words : '',
   }
 }
-
 const listing = new Map<string, Promise<void>>()
-
 function inTurn(space: string, run: () => Promise<void>): Promise<void> {
   const done = (listing.get(space) ?? Promise.resolve()).then(run)
   const settled = done.catch(() => undefined)
@@ -479,7 +440,6 @@ function inTurn(space: string, run: () => Promise<void>): Promise<void> {
   })
   return done
 }
-
 async function web() {
   const meta = await webMeta()
   const listKey = (space: string) => `ai-threads:${space}`
@@ -495,15 +455,12 @@ async function web() {
   }
   return { meta, listKey, threadKey, heads }
 }
-
 export async function listThreads(space: string): Promise<ThreadHead[]> {
   const read = isNative ? await invoke<unknown>('ai_threads_list', { space }) : await (await web()).heads(space)
   const heads = Array.isArray(read) ? read.map(headIn).filter((one) => one !== null) : []
   return heads.sort((a, b) => b.updated - a.updated)
 }
-
 export type Listed = ThreadHead & { space: string }
-
 export async function listEveryThread(spaces: readonly string[]): Promise<Listed[]> {
   const each = await Promise.all(
     [...new Set(spaces)].map(async (space) =>
@@ -512,7 +469,6 @@ export async function listEveryThread(spaces: readonly string[]): Promise<Listed
   )
   return each.flat().sort((a, b) => b.updated - a.updated)
 }
-
 export async function findParents(space: string): Promise<number> {
   const threads = new Map<string, Thread & { helpers?: unknown }>()
   for (const head of await listThreads(space)) {
@@ -542,7 +498,6 @@ export async function findParents(space: string): Promise<number> {
   }
   return wrote
 }
-
 export function unreadOf(heads: readonly ThreadHead[]): Set<string> {
   const byId = new Map(heads.map((one) => [one.id, one]))
   const topOf = (head: ThreadHead): ThreadHead => {
@@ -563,7 +518,6 @@ export function unreadOf(heads: readonly ThreadHead[]): Set<string> {
   }
   return unread
 }
-
 export async function readThread(space: string, id: string): Promise<Thread | null> {
   const store = isNative ? null : await web()
   const text = store
@@ -585,15 +539,12 @@ export async function readThread(space: string, id: string): Promise<Thread | nu
   readHere.delete(id)
   return threadIn(value, true)
 }
-
 function aliveIn(thread: Thread): { answeringAt?: number; answeringIn?: string } {
   return thread.answering ? { answeringAt: Date.now(), answeringIn: thisWindow() } : {}
 }
-
 function asWritten({ own, ...thread }: Thread): Thread {
   return { ...thread, ...own, ...aliveIn(thread) }
 }
-
 export async function writeThread(given: Thread): Promise<void> {
   const thread = asWritten(given)
   const head = { ...headOf(thread), ...aliveIn(thread) }
@@ -609,20 +560,15 @@ export async function writeThread(given: Thread): Promise<void> {
     await store.meta.put(store.listKey(thread.space), JSON.stringify([...others, head]))
   })
 }
-
 const removed = new Set<string>()
-
 export function isDeleted(id: string): boolean {
   return removed.has(id)
 }
-
 const deleting = new Map<string, Promise<void>>()
-
 export async function staysDeleted(id: string): Promise<boolean> {
   await deleting.get(id)?.catch(() => undefined)
   return removed.has(id)
 }
-
 export function deleteThread(space: string, id: string): Promise<void> {
   removed.add(id)
   const done = (async () => {
@@ -640,7 +586,6 @@ export function deleteThread(space: string, id: string): Promise<void> {
   deleting.set(id, done)
   return done
 }
-
 async function deleted(space: string, id: string): Promise<void> {
   if (isNative) {
     await invoke<null>('ai_thread_delete', { space, id })
@@ -653,7 +598,6 @@ async function deleted(space: string, id: string): Promise<void> {
     await store.meta.put(store.listKey(space), JSON.stringify(left))
   })
 }
-
 export async function forgetSpace(space: string): Promise<void> {
   if (isNative) {
     await invoke<null>('ai_threads_forget', { space })
@@ -668,13 +612,10 @@ export async function forgetSpace(space: string): Promise<void> {
     await store.meta.remove(store.listKey(space))
   })
 }
-
 const writing = new Map<string, { next: boolean; thread: Thread; done: Promise<void> }>()
-
 function again(entry: { next: boolean }): boolean {
   return entry.next
 }
-
 export function keepThread(thread: Thread): Promise<void> {
   if (removed.has(thread.id)) return Promise.resolve()
   answerOthers()

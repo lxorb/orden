@@ -19,35 +19,28 @@ const LIST = [
   { id: 'orden', name: 'Orden Pass', accept: ['.json'] },
   { id: 'csv', name: 'Another app (CSV)', accept: ['.csv'] },
 ] as const
-
 export type SourceId = (typeof LIST)[number]['id']
-
 export interface Source {
   id: SourceId
   name: string
   accept: readonly string[]
 }
-
 export const SOURCES: readonly Source[] = LIST
 export const SOURCE_IDS: readonly SourceId[] = LIST.map((one) => one.id)
-
 export function sourceOf(id: SourceId): Source {
   const found = SOURCES.find((one) => one.id === id)
   if (!found) throw new Error(`pass: no import source ${id}`)
   return found
 }
-
 export function extensionOf(fileName: string): string {
   const dot = fileName.lastIndexOf('.')
   return dot < 0 ? '' : fileName.slice(dot).toLowerCase()
 }
-
 const ZIPPED: Partial<Record<SourceId, readonly string[]>> = {
   proton: ['.zip'],
   onepassword: ['.1pux'],
   dashlane: ['.zip'],
 }
-
 export function needsZip(source: SourceId, fileName: string): boolean {
   return ZIPPED[source]?.includes(extensionOf(fileName)) ?? false
 }

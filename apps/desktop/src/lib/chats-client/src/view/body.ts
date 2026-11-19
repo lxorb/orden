@@ -2,10 +2,8 @@ import { links } from '../../../link-index/src/api'
 import { drawing, viewHtml } from '../../../chat-kit/src/api'
 
 const MOST_KEPT = 2000
-
 const kept = new Map<string, string>()
 let keptAt = ''
-
 export function bodyHtml(body: string, from: string | null = null): string {
   const at = `${links.version} ${drawing.version}`
   if (keptAt !== at) {
@@ -31,12 +29,10 @@ export function bodyHtml(body: string, from: string | null = null): string {
   kept.set(key, html)
   return html
 }
-
 export function firstLine(body: string): string {
   const end = body.indexOf('\n')
   return end === -1 ? body : body.slice(0, end)
 }
-
 export function onlyEmoji(body: string): boolean {
   const trimmed = body.trim()
   if (!trimmed || trimmed.length > 24) return false

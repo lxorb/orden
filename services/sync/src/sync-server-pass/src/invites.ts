@@ -9,7 +9,6 @@ import { fromOf, tellVault } from './tell'
 import { fieldsSent, jsonOf, optionalIn } from './trust-body'
 
 export const invites = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 invites.post('/invites/:vault/accept', async (context) => {
   const user = context.get('user')
   const vault = context.req.param('vault')
@@ -21,7 +20,6 @@ invites.post('/invites/:vault/accept', async (context) => {
     return context.json({ error: NO_SUCH_INVITE }, 404)
   }
   if (held.key === null) return context.json({ error: NOT_READY }, 409)
-
   const db = context.env.DB
   const results = await db.batch([
     bump(db),
@@ -40,7 +38,6 @@ invites.post('/invites/:vault/accept', async (context) => {
   const after = await membershipOf(context.env, vault, user.email)
   return context.json({ vault: after && vaultRowOf(after, user.id) })
 })
-
 invites.post('/invites/:vault/decline', async (context) => {
   const user = context.get('user')
   const vault = context.req.param('vault')

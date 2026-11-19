@@ -18,7 +18,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: '' })
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
-
 const SESSION = {
   version: 2,
   spaces: [{ id: 'one', name: 'One', root: '/spaces/One' }],
@@ -27,7 +26,6 @@ const SESSION = {
   tabs: [{ kind: 'note', path: '/spaces/One/a.md', name: 'a.md', doc: '', dirty: false }],
   active: 0,
 }
-
 async function launch(session: object | null, failing: 'loadSpaces' | 'loadTree') {
   vi.resetModules()
   localStorage.clear()
@@ -41,7 +39,6 @@ async function launch(session: object | null, failing: 'loadSpaces' | 'loadTree'
   await vi.waitFor(() => expect(doors).toBe(true), { timeout: 3000 })
   expect(workspace.restored).toBe(true)
 }
-
 describe('a launch whose restore throws before the first paint', () => {
   test.each([
     ['loadSpaces', 'a kept session', SESSION],

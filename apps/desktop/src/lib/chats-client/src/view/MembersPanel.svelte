@@ -26,22 +26,17 @@
     onmention: (words: string) => void
     onclose: () => void
   } = $props()
-
   const HEIGHTS = { group: 36, member: 44 }
   const SPARE = 8
-
   let panel = $state<HTMLElement>()
   let filter = $state('')
   let top = $state(0)
   let height = $state(0)
-
   const width = membersOpen.width
-
   function presenceOf(who: Who) {
     const id = accountOf(who)
     return id ? (people.of(id)?.presence ?? null) : null
   }
-
   const listed = $derived(listedOf(page.view.members, (who) => nameOf(who, page.members, space), presenceOf))
   const groups = $derived(grouped(listed, filter))
   const laid = $derived(placed(linesOf(groups), HEIGHTS))
@@ -52,17 +47,13 @@
         : { key: row.line.member.who, top: row.top, height: row.height, member: row.line.member },
     ),
   )
-
   const RANK_WORDS: Record<Rank, string> = { owner: 'Owners', member: 'Members', bot: 'Bots' }
-
   $effect(() => (sheet ? overlays.show(onclose, () => [panel]) : undefined))
   $effect(() => closeOnBack(sheet, onclose))
-
   function press(event: MouseEvent, member: Listed) {
     const id = accountOf(member.who)
     if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
   }
-
   function showMenu(event: MouseEvent, member: Listed) {
     event.preventDefault()
     const entries: MenuEntry[] = []
@@ -77,7 +68,6 @@
     entries.push({ label: 'Copy name', run: () => void copyText(member.name) })
     menu.show(event, entries)
   }
-
   function onEdgeKey(event: KeyboardEvent) {
     if (viewport.touch) return
     if (width.step(event.key, panel)) event.preventDefault()
@@ -190,7 +180,6 @@
     background: var(--surface);
     font-family: var(--font-ui);
   }
-
   .members.sheet {
     position: absolute;
     inset-block: 0;
@@ -200,13 +189,11 @@
     padding-bottom: var(--inset-bottom);
     box-shadow: var(--shadow-lg);
   }
-
   .scrim {
     position: absolute;
     inset: 0;
     z-index: var(--z-raised);
   }
-
   .edge {
     position: absolute;
     top: 0;
@@ -216,7 +203,6 @@
     z-index: var(--z-lifted);
     cursor: col-resize;
   }
-
   .edge::after {
     content: '';
     position: absolute;
@@ -227,12 +213,10 @@
     background: transparent;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .edge:hover::after,
   .resizing .edge::after {
     background: var(--accent);
   }
-
   .top {
     --glyph-size: 15px;
     flex: none;
@@ -243,28 +227,23 @@
     padding: 0 var(--space-2);
     border-bottom: 1px solid var(--line);
   }
-
   .look {
     flex: 1;
     min-width: 0;
   }
-
   .list {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
   }
-
   .room {
     position: relative;
   }
-
   .group,
   .member {
     position: absolute;
     inset-inline: var(--space-2);
   }
-
   .group {
     display: flex;
     align-items: flex-end;
@@ -275,20 +254,17 @@
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
   }
-
   .group-name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .group-count {
     flex: none;
     font-variant-numeric: tabular-nums;
     font-weight: normal;
   }
-
   .member {
     display: flex;
     align-items: center;
@@ -301,31 +277,26 @@
     font: inherit;
     text-align: start;
   }
-
   @media (hover: hover) {
     .member:hover {
       background: var(--surface-hover);
     }
   }
-
   .words {
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
-
   .name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .name {
     color: var(--text-strong);
     font-size: var(--text-row);
   }
-
   .none {
     margin: var(--space-4);
     color: var(--muted);

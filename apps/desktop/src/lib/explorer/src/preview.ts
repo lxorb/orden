@@ -1,7 +1,6 @@
 import { endingOf } from './order'
 
 export type Shown = 'picture' | 'sound' | 'film' | 'text' | null
-
 const KINDS: Record<string, { shown: Exclude<Shown, 'text' | null>; type: string }> = {
   png: { shown: 'picture', type: 'image/png' },
   jpg: { shown: 'picture', type: 'image/jpeg' },
@@ -24,28 +23,23 @@ const KINDS: Record<string, { shown: Exclude<Shown, 'text' | null>; type: string
   webm: { shown: 'film', type: 'video/webm' },
   mov: { shown: 'film', type: 'video/quicktime' },
 }
-
 export const MOST_TEXT = 64 * 1024
 export const MOST_MEDIA = 48 * 1024 * 1024
-
 export function shownAs(name: string, size: number): Shown {
   const known = KINDS[endingOf(name)]
   if (known) return size <= MOST_MEDIA ? known.shown : null
   return 'text'
 }
-
 export function mediaUrl(name: string, read: { bytes: Uint8Array; cut: boolean }): string | null {
   const known = KINDS[endingOf(name)]
   if (!known || read.cut) return null
   return URL.createObjectURL(new Blob([read.bytes.slice().buffer], { type: known.type }))
 }
-
 export function pictureBlob(name: string, read: { bytes: Uint8Array; cut: boolean }): Blob | null {
   const known = KINDS[endingOf(name)]
   if (known?.shown !== 'picture' || read.cut) return null
   return new Blob([read.bytes.slice().buffer], { type: known.type })
 }
-
 export function textOf(bytes: Uint8Array): string | null {
   if (bytes.includes(0)) return null
   try {
@@ -60,7 +54,6 @@ export function textOf(bytes: Uint8Array): string | null {
     }
   }
 }
-
 function lastWhole(bytes: Uint8Array): number | null {
   for (let at = bytes.length; at > bytes.length - 4 && at > 0; at--) {
     const byte = bytes[at - 1] ?? 0

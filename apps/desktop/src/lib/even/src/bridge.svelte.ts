@@ -27,39 +27,28 @@ import { rooms } from '../../collab/src/api'
 import { workspace } from '../../workspace/src/api'
 
 const SETTLE = 700
-
 const SHARED = 80
-
 const FLASH = 1400
-
 const STEERING = 500
-
 type Folds = ((path: string) => boolean) | null
-
 function saying(field: Field): string {
   if (field.kind === 'switch') return field.get() ? 'On' : 'Off'
   if (field.kind === 'slider') return `${String(field.get())}${field.unit ?? ''}`
   if (field.kind === 'text') return field.get() || field.placeholder
   if (field.kind === 'value') return field.get()
   if (field.kind === 'picture') return ''
-
   const value = field.get()
   return field.options.find((one) => one.value === value)?.label ?? value
 }
-
 function why(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
-
 type Health = 'alone' | 'reaching' | 'live' | 'stalled' | 'failed'
-
 function rowsOf(entry: Entry | null, folds: Folds, depth = 0): Row[] {
   if (!entry) return []
-
   const out: Row[] = []
   for (const child of entry.children) {
     if (workspace.archive.has(child.path) || workspace.instructionsAt(child.path)) continue
-
     if (child.is_dir) {
       const open = folds === null || folds(child.path)
       out.push({
@@ -73,9 +62,7 @@ function rowsOf(entry: Entry | null, folds: Folds, depth = 0): Row[] {
       if (open) out.push(...rowsOf(child, folds, depth + 1))
       continue
     }
-
     if (fileMark(child.name) !== 'note') continue
-
     out.push({
       label: shownName(child.name),
       depth,
@@ -85,10 +72,8 @@ function rowsOf(entry: Entry | null, folds: Folds, depth = 0): Row[] {
       id: child.path,
     })
   }
-
   return out
 }
-
 class Bridge {
   showing = $state<{ from: number; to: number; page: number; count: number } | null>(null)
   health = $state<Health>('reaching')
@@ -106,7 +91,6 @@ class Bridge {
     detail: '',
     took: null,
   })
-
   private glasses: Glasses | null = null
   private panel: Panel | null = null
   private shell: Shell | null = null
@@ -124,7 +108,6 @@ class Bridge {
   private steerUntil = 0
   private since: number | null = null
   private cost = 0
-
   startWhile(wanted: () => boolean): () => void {
     let stop: (() => void) | null = null
     const end = $effect.root(() => {
@@ -144,7 +127,6 @@ class Bridge {
       stop?.()
     }
   }
-
   start(): () => void {
     let stop: (() => void) | undefined
     void this.connect().then(
@@ -156,7 +138,6 @@ class Bridge {
         console.warn('Orden for g2:', why(error))
       },
     )
-
     return () => {
       clearTimeout(this.timer)
       clearTimeout(this.flashing)
@@ -164,17 +145,14 @@ class Bridge {
       stop?.()
     }
   }
-
   private async connect(): Promise<(() => void) | undefined> {
     const glasses = await connectGlasses()
     if (!glasses) {
       this.health = 'alone'
       return undefined
     }
-
     this.glasses = glasses
     modes.sawGlasses()
-
     const panel = new Panel(glasses, modes.glassesLineNumbers)
     const made = await panel.open()
     if (made !== 'made') {
@@ -182,7 +160,6 @@ class Bridge {
       console.warn('Orden for g2: the page was not made:', made)
       return undefined
     }
-
     this.panel = panel
     this.shell = new Shell(this.world(), () => this.words(), this.session, this.settings())
     this.voice = new Voice({
@@ -198,17 +175,14 @@ class Bridge {
       },
     })
     this.health = 'live'
-
     const listening = glasses.listen((input) => this.input(input))
     const watching = this.watch()
     if (modes.glassesVoice) void this.listen(true)
-
     return () => {
       listening()
       watching()
     }
   }
-
   private world(): World {
     return {
       space: () => workspace.activeSpace?.name ?? 'Notes',
@@ -240,7 +214,6 @@ class Bridge {
       },
     }
   }
-
   private words(): Words {
     return {
       spaces: 'Spaces',
@@ -258,44 +231,34 @@ class Bridge {
       today: 'Todos',
     }
   }
-
   private settings(): Settings {
     const found = (id: string) => glassesSettings().find((one) => one.id === id)
-
     return {
       rows: () =>
         glassesSettings()
           .filter((one) => one.onGlasses)
           .map((one) => ({ id: one.id, label: one.field.label, value: saying(one.field) })),
-
       tap: (id) => {
         const field = found(id)?.field
         if (!field) return null
-
         if (field.kind === 'switch') {
           field.set(!field.get())
           return null
         }
-
         if (field.kind === 'select') return field.options
-
         if (field.kind === 'slider') {
           const next = field.get() + field.step
           field.set(next > field.max ? field.min : next)
         }
-
         return null
       },
-
       pick: (id, value) => {
         const field = found(id)?.field
         if (field?.kind === 'select') field.set(value)
       },
-
       reset: () => resetGlasses(),
     }
   }
-
   private paging(): Paging {
     return {
       breakAt: modes.glassesBreak,
@@ -306,33 +269,27 @@ class Bridge {
       compaction: modes.glassesCompaction,
     }
   }
-
   private readonly reading = $derived.by(() => {
     const tab = workspace.active
     const note = tab?.kind === 'note' ? tab.note : null
     if (!note) return null
-
     return {
       note,
       revision: note.revision,
       shared: (rooms.present[note.key] ?? 0) > 0,
     }
   })
-
   private watch(): () => void {
     return $effect.root(() => {
       $effect(() => {
         const reading = this.reading
         if (!reading) return
-
         const { note } = reading
         clearTimeout(this.timer)
-
         const switching = this.session.showing?.key !== note.key
         const now = performance.now()
         this.since = switching ? now : (this.since ?? now)
         const quiet = switching ? 0 : quietFor(reading.shared ? SHARED : SETTLE, this.cost)
-
         this.timer = setTimeout(
           () => {
             this.since = null
@@ -345,33 +302,27 @@ class Bridge {
           waitFor(quiet, this.since, now),
         )
       })
-
       $effect(() => {
         const numbered = modes.glassesLineNumbers
         const panel = this.panel
         if (!panel) return
-
         void panel.renumber(numbered).then(() => {
           this.again()
         })
       })
-
       $effect(() => {
         const stamp = glassesStamp()
         if (!this.panel || !stamp) return
-
         this.again()
       })
     })
   }
-
   private again(): void {
     const reading = this.reading
     if (reading) {
       const name = shownName(reading.note.name)
       this.session.follow({ key: reading.note.key, name, text: reading.note.text }, this.paging())
     }
-
     this.showing = this.session.showing
       ? {
           from: this.session.showing.from,
@@ -380,10 +331,8 @@ class Bridge {
           count: this.session.showing.count,
         }
       : null
-
     this.draw()
   }
-
   private follow(note: OpenNote | null): void {
     this.session.follow(note, this.paging())
     this.showing = this.session.showing
@@ -394,18 +343,14 @@ class Bridge {
           count: this.session.showing.count,
         }
       : null
-
     if (!this.session.moved && this.shell?.screen.kind === 'note') return
-
     this.draw()
   }
-
   private input(input: Input): void {
     if (input.kind === 'audio') {
       this.voice?.frame(input.pcm)
       return
     }
-
     if (input.kind === 'life') {
       if (input.life === 'foreground') {
         this.panel?.forget()
@@ -413,16 +358,13 @@ class Bridge {
       }
       return
     }
-
     this.act(this.shell?.handle(input.gesture) ?? 'none')
   }
-
   private act(wish: Wish): void {
     if (wish === 'leave') {
       void this.glasses?.leave()
       return
     }
-
     if (wish === 'draw') {
       this.showing = this.session.showing
         ? {
@@ -436,32 +378,25 @@ class Bridge {
       this.draw()
     }
   }
-
   private steer(): void {
     const showing = this.session.showing
     const path = workspace.active?.path
     if (!showing || !path || this.shell?.screen.kind !== 'note') return
-
     this.steerUntil = performance.now() + STEERING
     workspace.goto = { path, line: showing.firstLine }
   }
-
   get steering(): boolean {
     return performance.now() < this.steerUntil
   }
-
   regionAt(offset: number): { from: number; to: number; page: number; count: number } | null {
     const where = this.session.regionAt(offset)
     if (!where) return null
-
     return { from: where.from, to: where.to, page: where.page, count: where.count }
   }
-
   scrolled(offset: number): void {
     if (performance.now() < this.steerUntil || !this.panel) return
     if (this.shell?.screen.kind !== 'note') return
     if (this.session.holds(offset)) return
-
     this.session.goToOffset(offset)
     this.showing = this.session.showing
       ? {
@@ -473,23 +408,19 @@ class Bridge {
       : null
     this.draw()
   }
-
   private draw(): void {
     this.wanted = true
     if (this.drawing) return
-
     this.drawing = this.pump()
     void this.drawing.finally(() => {
       this.drawing = null
       if (this.wanted) this.draw()
     })
   }
-
   private async pump(): Promise<void> {
     const panel = this.panel
     const shell = this.shell
     if (!panel || !shell) return
-
     while (this.wanted) {
       this.wanted = false
       try {
@@ -503,7 +434,6 @@ class Bridge {
       }
     }
   }
-
   private flash(said: string): void {
     this.shell?.flash(said)
     this.draw()
@@ -513,11 +443,9 @@ class Bridge {
       this.draw()
     }, FLASH)
   }
-
   private async listen(on: boolean): Promise<void> {
     const voice = this.voice
     if (!voice) return
-
     if (on) {
       const opened = await voice.start()
       this.listening = opened
@@ -525,58 +453,45 @@ class Bridge {
       await voice.stop()
       this.listening = false
     }
-
     modes.setGlassesVoice(this.listening)
     this.draw()
   }
-
   private async transcribe(wav: Uint8Array<ArrayBuffer>): Promise<string | null> {
     const token = account.accountToken
     if (!token) throw new Error('sign in first')
-
     return (await api.askHeard(token, wav, this.vocabulary())).said
   }
-
   private vocabulary(): string {
     return commandWords()
       .map((one) => modes.glassesWords[one.id] ?? one.said)
       .join(', ')
   }
-
   private heard(said: string, ended: number): void {
     const command = commandIn(said, modes.glassesWords)
     if (!command) return
-
     this.flash(said.slice(0, 40))
     this.obey(command, said)
     this.latency = performance.now() - ended
   }
-
   private obey(command: Command, said = ''): void {
     const shell = this.shell
     if (!shell) return
-
     switch (command.kind) {
       case 'next':
         this.act(shell.handle('down'))
         return
-
       case 'back':
         this.act(shell.open ? shell.back() : shell.handle('up'))
         return
-
       case 'close':
         this.act(shell.close())
         return
-
       case 'spaces':
         this.act(shell.show('spaces'))
         return
-
       case 'notes':
         this.act(shell.show('tree'))
         return
-
       case 'switchSpace': {
         const spaces = workspace.shownSpaces
         const name = bestOf(
@@ -588,12 +503,10 @@ class Bridge {
           this.act(shell.show('spaces'))
           return
         }
-
         void workspace.showSpace(found.id)
         this.act(shell.close())
         return
       }
-
       case 'switchNote': {
         const notes = workspace.notes.filter((one) => !workspace.archive.has(one.path))
         const name = bestOf(
@@ -605,48 +518,38 @@ class Bridge {
           this.act(shell.show('tree'))
           return
         }
-
         void workspace.openEntry(found.path)
         this.act(shell.close())
         return
       }
-
       case 'page':
         this.act(shell.goToPage(command.number))
         return
-
       case 'line':
         this.act(shell.goToLine(command.number))
         return
-
       case 'voice':
         void this.listen(command.on)
         return
-
       case 'question':
         void this.ask(command.asked)
         return
-
       case 'task':
         void this.addSpoken(spokenTask(said) || command.said)
         return
     }
   }
-
   private async addSpoken(words: string): Promise<void> {
     const { addTask } = await import('../../tasks-model/src/api')
     const added = await addTask(words).catch(() => null)
     if (added) this.flash('Done')
   }
-
   private async ask(question: string): Promise<void> {
     const shell = this.shell
     if (!shell) return
-
     this.asked = question
     this.answer = ''
     this.act(shell.asking(question))
-
     try {
       const { answerOf } = await import('./asking')
       const answer = await answerOf(question)
@@ -657,10 +560,8 @@ class Bridge {
       this.act(shell.answered(question, why(error)))
     }
   }
-
   get page(): Page | null {
     return this.session.page
   }
 }
-
 export const bridge = new Bridge()

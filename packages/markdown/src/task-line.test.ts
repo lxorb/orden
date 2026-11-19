@@ -54,17 +54,14 @@ const PLUGIN_LINES: [string, Partial<TaskFields>][] = [
     },
   ],
 ]
-
 describe('a task line read the way the Tasks plugin reads it', () => {
   test.each(PLUGIN_LINES)('%s', (line, expected) => {
     expect(readTask(line)).toMatchObject(expected)
   })
-
   test('is null for a line that is not a task', () => {
     expect(readTask('- buy milk')).toBeNull()
     expect(readTask('a [x] in a sentence')).toBeNull()
   })
-
   test("takes Orden's fields before the tags and the emoji", () => {
     const task = readTask('- [ ] Call the bank about the card [time:: 16:00] [remind:: 15m] #admin ⏫ 📅 2026-10-06')
     expect(task).toMatchObject({
@@ -76,7 +73,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
       due: '2026-10-06',
     })
   })
-
   test('reads every example line of the design', () => {
     expect(readTask('- [x] Water the plants 🔁 every 3 days when done 📅 2026-10-01 ✅ 2026-10-01')).toMatchObject({
       done: true,
@@ -95,7 +91,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
       done: false,
     })
   })
-
   test('reads fields in any order, as the plugin does; reads the alternative emoji and the variation selector; stops at the first thing that is not a field', () => {
     expect(readTask('- [ ] a 📅 2026-10-06 ⏫ 🛫 2026-10-01')).toMatchObject({
       due: '2026-10-06',
@@ -112,7 +107,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     expect(task?.due).toBeUndefined()
     expect(task?.text).toBe('pay 📅 2026-10-06 the rent')
   })
-
   test('keeps tags among the words and after them; reads a block id at the very end', () => {
     const task = readTask('- [ ] #work call #mum about #home/garden 📅 2026-10-06 #later')
     expect(task?.tags).toEqual(['work', 'mum', 'home/garden', 'later'])
@@ -122,7 +116,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
       due: '2026-10-06',
     })
   })
-
   test('reads bracket fields wherever they stand, and keeps the ones Orden has no name for', () => {
     const task = readTask('- [ ] Review [assignee:: Lucile] the PR [effort:: big] (due:: 2026-10-06)')
     expect(task).toMatchObject({
@@ -132,7 +125,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
       fields: { effort: 'big' },
     })
   })
-
   test('reads a reminder, a priority and dependencies among the words like a date', () => {
     const task = readTask('- [ ] call mom [remind:: 15m] tomorrow [time:: 10:00] 🛫 2026-10-06')
     expect(task).toMatchObject({ text: 'call mom tomorrow', remind: [{ before: 15 }], fields: {} })
@@ -146,7 +138,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
       fields: { remind: '1h' },
     })
   })
-
   test('keeps a value a field cannot hold as an unknown field; refuses dates that do not exist; reads a time with its zone', () => {
     const task = readTask('- [ ] a [due:: someday]')
     expect(task?.due).toBeUndefined()
@@ -157,7 +148,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
       zone: 'Europe/Zurich',
     })
   })
-
   test('reads boxes Orden does not name as open, with their mark', () => {
     expect(readTask('- [>] forwarded')).toMatchObject({
       status: '>',
@@ -166,7 +156,6 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     })
   })
 })
-
 describe("the values of Orden's fields", () => {
   test.each([
     ['45m', 45],
@@ -180,7 +169,6 @@ describe("the values of Orden's fields", () => {
   ])('duration %s is %i minutes', (written, minutes) => {
     expect(readDuration(written)).toBe(minutes)
   })
-
   test('a duration that is not one; times; a zone with digits in its name', () => {
     expect(readDuration('soon')).toBeNull()
     expect(readDuration('')).toBeNull()
@@ -190,7 +178,6 @@ describe("the values of Orden's fields", () => {
     expect(readTime('16:00 Etc/GMT+5')).toEqual({ time: '16:00', zone: 'Etc/GMT+5' })
     expect(readTime('16:00 EST5EDT')).toEqual({ time: '16:00', zone: 'EST5EDT' })
   })
-
   test('reminders: before, at a time on the day, at a moment', () => {
     expect(readRemind('15m, 1h, 1d, 9:00, 2026-10-06 09:00')).toEqual([
       { before: 15 },
@@ -202,7 +189,6 @@ describe("the values of Orden's fields", () => {
     expect(readRemind('whenever')).toBeNull()
   })
 })
-
 describe('words an object would answer from its prototype', () => {
   test('are unknown fields, kept as written', () => {
     const task = readTask('- [ ] Pay [constructor:: 1] [__proto__:: 2] [toString:: 3]')
@@ -212,17 +198,14 @@ describe('words an object would answer from its prototype', () => {
       ['toString', '3'],
     ])
   })
-
   test('are not a priority', () => {
     const task = readTask('- [ ] Pay [priority:: constructor]')
     expect(task?.priority).toBe(4)
     expect(task?.fields).toEqual({ priority: 'constructor' })
   })
 })
-
 describe('a line built to make the reader backtrack', () => {
   const quick = (line: (size: number) => string, size: number) => linearly((one) => readTask(line(one)), size)
-
   test('is read in linear time, a dependency list that ends badly among them', () => {
     expect(readTask(`- [ ] x ⛔ a${' , a'.repeat(40)} !`)?.dependsOn).toEqual([])
     quick((n) => `- [ ] x ⛔ a${' '.repeat(n)} !`, 100_000)
@@ -232,14 +215,12 @@ describe('a line built to make the reader backtrack', () => {
     quick((n) => `- [ ] x ${'(a:: '.repeat(n)}`, 20_000)
     quick((n) => `- [ ] x ${'[a:: '.repeat(n)}] (b:: c)`, 20_000)
   }, 60_000)
-
   test('reads the same fields as before', () => {
     expect(readTask('- [ ] x ⛔ a , b,c  ')?.dependsOn).toEqual(['a', 'b', 'c'])
     expect(readTask(`- [ ] x [a::${' '.repeat(10_000)}y  ]`)?.fields).toEqual({ a: 'y' })
     expect(readTask('- [ ] x [a:: [b] (c:: d [e:: f]')?.fields).toEqual({ a: '[b', e: 'f' })
   })
 })
-
 describe('words written as a task that no field is read from', () => {
   test('read back as the words', () => {
     const said = 'Plan #tips [due:: 2026-11-01] (priority:: high) 📅 2026-11-01 ⏫ 🔁 every month'
@@ -251,7 +232,6 @@ describe('words written as a task that no field is read from', () => {
     expect(task?.text.replace(/\u2060/g, '').replace(/\\(.)/g, '$1')).toBe(said)
   })
 })
-
 test('an escaped bracket in a task: opens no field; while one that is not escaped still does', () => {
   const task = readTask('- [ ] a \\[due:: 2026-01-01\\]')
   expect(task?.due).toBeUndefined()
@@ -259,7 +239,6 @@ test('an escaped bracket in a task: opens no field; while one that is not escape
   expect(task?.text).toBe('a \\[due:: 2026-01-01\\]')
   expect(readTask('- [ ] a [due:: 2026-01-01]')?.due).toBe('2026-01-01')
 })
-
 describe('code in a task', () => {
   test('is left as it is by taskWords; holds no field', () => {
     expect(taskWords('use `std::move` on `x #b` now')).toBe('use `std::move` on `x #b` now')
@@ -268,7 +247,6 @@ describe('code in a task', () => {
     expect(task?.fields).toEqual({})
     expect(task?.text).toBe('`[due:: 2026-01-01]` x')
   })
-
   test('holds no tag at the end of the line; holds no tag among the words; while the words around it are still escaped', () => {
     const task = readTask('- [ ] run `git tag #v2`')
     expect(task?.tags).toEqual([])
@@ -278,11 +256,9 @@ describe('code in a task', () => {
     expect(taskWords('`a` #b [due:: 2026-01-01]')).toBe('`a` \\#b [due:\\: 2026-01-01]')
   })
 })
-
 test('an address with two colons in it is left as it is by taskWords', () => {
   expect(taskWords('see https://example.com/a::b')).toBe('see https://example.com/a::b')
 })
-
 test('a parenthesis in the words before a field: does not take the field into a key of its own; and a field of either kind still reads', () => {
   expect(readTask('- [ ] buy (before work [due:: 2026-05-06])')?.due).toBe('2026-05-06')
   expect(readTask('- [ ] buy [before (due:: 2026-05-06)]')?.due).toBe('2026-05-06')

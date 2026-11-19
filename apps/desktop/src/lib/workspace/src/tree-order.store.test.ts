@@ -32,9 +32,7 @@ held.disk.files.set('/spaces/Two/two.md', 'two\n')
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: '' })
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
-
 const { workspace } = await import('./workspace.svelte')
-
 describe('a tree that comes back after the space changed', () => {
   test('never replaces the tree of the space now shown', async () => {
     await workspace.loadSpaces()

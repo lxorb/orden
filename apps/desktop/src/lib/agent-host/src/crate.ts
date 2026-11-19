@@ -13,11 +13,9 @@ async function storeFor(args: Said): Promise<StoreSaid> {
   const lending = portOf('web.lending')
   return { space: place.space.name, store: lending.ok ? await lending.value.readerStore() : null }
 }
-
 async function markdown(args: Said): Promise<string> {
   const html = typeof args.html === 'string' ? args.html : ''
   if (!html.trim()) return ''
-
   const url = said(args, 'url') ?? ''
   const [read, { htmlToMarkdown }] = await Promise.all([
     webPages().articleOf({ url, title: '', html }),
@@ -25,10 +23,8 @@ async function markdown(args: Said): Promise<string> {
   ])
   return read.trim() ? htmlToMarkdown(read).trim() : ''
 }
-
 const words = (value: unknown): string[] | null =>
   Array.isArray(value) && value.every((one) => typeof one === 'string') ? value : null
-
 async function programFree(args: Said): Promise<boolean> {
   const program = said(args, 'program')
   const given = words(args.args)
@@ -38,7 +34,6 @@ async function programFree(args: Said): Promise<boolean> {
   if (!program || !given || !programs || !cwd || !judge.ok) return false
   return judge.value.runsFree(program, given, programs, cwd).catch(() => false)
 }
-
 export async function answerTheCrate(name: string, args: Said): Promise<unknown> {
   switch (name) {
     case 'agent.reader_tabs':

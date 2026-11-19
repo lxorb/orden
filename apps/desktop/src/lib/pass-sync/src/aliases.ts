@@ -13,7 +13,6 @@ export type {
   AliasStats,
 } from './alias-http'
 export { AliasRefused } from './alias-http'
-
 export function aliasClient(
   provider: AliasService,
   key: string,

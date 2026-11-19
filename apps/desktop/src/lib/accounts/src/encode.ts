@@ -4,22 +4,18 @@ const SMALL = 96
 const LARGE = 512
 const MOST_BYTES = 100 * 1024
 const LONGEST = 2048
-
 export interface Encoded {
   bytes: ArrayBuffer
   type: 'image/webp' | 'image/jpeg'
 }
-
 export function decode(file: Blob): Promise<ImageBitmap> {
   return createImageBitmap(file, { imageOrientation: 'from-image' })
 }
-
 export function prepared(picture: ImageBitmap, turns: number): HTMLCanvasElement {
   const shrink = Math.min(1, LONGEST / Math.max(picture.width, picture.height))
   const width = Math.round(picture.width * shrink)
   const height = Math.round(picture.height * shrink)
   const [outWidth, outHeight] = turned(width, height, turns)
-
   const canvas = document.createElement('canvas')
   canvas.width = outWidth
   canvas.height = outHeight
@@ -30,7 +26,6 @@ export function prepared(picture: ImageBitmap, turns: number): HTMLCanvasElement
   context.drawImage(picture, -width / 2, -height / 2, width, height)
   return canvas
 }
-
 export async function faceFrom(
   picture: HTMLCanvasElement,
   crop: Crop,
@@ -41,7 +36,6 @@ export async function faceFrom(
   if (!s || !l) throw new Error('no picture')
   return { s, l }
 }
-
 function drawn(
   picture: HTMLCanvasElement,
   square: { left: number; top: number; side: number },
@@ -56,7 +50,6 @@ function drawn(
   context.drawImage(picture, square.left, square.top, square.side, square.side, 0, 0, size, size)
   return canvas
 }
-
 async function encodedSmall(canvas: HTMLCanvasElement): Promise<Encoded> {
   for (const quality of [0.9, 0.82, 0.74, 0.66, 0.58, 0.5]) {
     const webp = await blobOf(canvas, 'image/webp', quality)
@@ -72,17 +65,14 @@ async function encodedSmall(canvas: HTMLCanvasElement): Promise<Encoded> {
   }
   throw new Error('that picture is too big')
 }
-
 function blobOf(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
   return new Promise((done) => {
     canvas.toBlob(done, type, quality)
   })
 }
-
 const WEBP_METADATA = new Set(['EXIF', 'XMP '])
 const VP8X_METADATA = 0x0c
 const JPEG_METADATA = 0xe1
-
 function joined(head: Uint8Array, parts: readonly Uint8Array[]): Uint8Array {
   const out = new Uint8Array(parts.reduce((sum, one) => sum + one.length, head.length))
   out.set(head)
@@ -93,10 +83,8 @@ function joined(head: Uint8Array, parts: readonly Uint8Array[]): Uint8Array {
   }
   return out
 }
-
 export function withoutMetadata(bytes: Uint8Array): Uint8Array | null {
   const ascii = (at: number, length: number) => String.fromCharCode(...bytes.subarray(at, at + length))
-
   if (ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WEBP') {
     const kept: Uint8Array[] = []
     for (let at = 12; at + 8 <= bytes.length;) {
@@ -114,7 +102,6 @@ export function withoutMetadata(bytes: Uint8Array): Uint8Array | null {
     new DataView(out.buffer).setUint32(4, out.length - 8, true)
     return out
   }
-
   if (bytes[0] === 0xff && bytes[1] === 0xd8) {
     const kept: Uint8Array[] = []
     let at = 2
@@ -126,6 +113,5 @@ export function withoutMetadata(bytes: Uint8Array): Uint8Array | null {
     kept.push(bytes.subarray(at))
     return joined(bytes.subarray(0, 2), kept)
   }
-
   return null
 }

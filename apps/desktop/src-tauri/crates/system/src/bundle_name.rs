@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 
 const OLD: [&str; 2] = ["Nib.app", "nibeditor.app"];
 const NEW: &str = "Orden.app";
-
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 const CASKROOMS: [&str; 4] = [
     "/opt/homebrew/Caskroom/nib",
@@ -10,28 +9,23 @@ const CASKROOMS: [&str; 4] = [
     "/opt/homebrew/Caskroom/orden",
     "/usr/local/Caskroom/orden",
 ];
-
 #[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 fn renamed(exe: &Path) -> Option<(PathBuf, PathBuf)> {
     let macos = exe.parent()?;
     let contents = macos.parent()?;
     let bundle = contents.parent()?;
     let named = |path: &Path, name: &str| path.file_name().is_some_and(|own| own == name);
-
     (named(macos, "MacOS")
         && named(contents, "Contents")
         && OLD.iter().any(|old| named(bundle, old)))
     .then(|| (bundle.to_path_buf(), bundle.with_file_name(NEW)))
 }
-
 #[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 const RELAUNCH: &str = r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1; done; /bin/sleep 0.5; exec /usr/bin/open -n "$2""#;
-
 #[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 fn brewed(rooms: &[&str]) -> bool {
     rooms.iter().any(|room| Path::new(room).exists())
 }
-
 #[cfg(target_os = "macos")]
 pub fn carry_over(identifier: &str) {
     use std::os::unix::process::CommandExt as _;
@@ -46,7 +40,6 @@ pub fn carry_over(identifier: &str) {
     if brewed(&CASKROOMS) || orden_base::carry::rename_new(&from, &to).is_err() {
         return;
     }
-
     let started = Command::new("/bin/sh")
         .args(["-c", RELAUNCH, "sh"])
         .arg(std::process::id().to_string())
@@ -60,7 +53,6 @@ pub fn carry_over(identifier: &str) {
         std::process::exit(0);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{brewed, renamed, CASKROOMS, NEW, OLD, RELAUNCH};
@@ -77,7 +69,6 @@ mod tests {
             .expect("renamed");
             assert_eq!(from, Path::new("/Applications").join(old));
             assert_eq!(to, PathBuf::from("/Applications/Orden.app"));
-
             let (_, to) = renamed(
                 &Path::new("/Users/a/Apps")
                     .join(old)
@@ -87,7 +78,6 @@ mod tests {
             assert_eq!(to, PathBuf::from("/Users/a/Apps/Orden.app"));
         }
     }
-
     #[test]
     fn anything_else_keeps_its_name() {
         for exe in [
@@ -102,25 +92,21 @@ mod tests {
             assert_eq!(renamed(Path::new(exe)), None, "{exe}");
         }
     }
-
     #[test]
     fn a_cask_in_either_home_is_homebrews() {
         let dir = std::env::temp_dir().join(format!("nib-caskroom-{}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("a caskroom");
         let here = dir.to_string_lossy().into_owned();
-
         assert!(brewed(&["/nowhere/Caskroom/nib", &here]));
         assert!(!brewed(&["/nowhere/Caskroom/nib", "/nowhere/either"]));
         let _ = std::fs::remove_dir(&dir);
     }
-
     #[test]
     fn the_app_starts_again_as_a_new_instance_once_this_one_has_gone() {
         let (wait, start) = RELAUNCH.split_once("done;").expect("a wait, then a start");
         assert!(wait.contains(r#"kill -0 "$1""#));
         assert!(start.trim_end().ends_with(r#"exec /usr/bin/open -n "$2""#));
     }
-
     #[test]
     fn the_cask_is_looked_for_under_both_tokens() {
         for token in ["nib", "orden"] {
@@ -130,7 +116,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn the_new_folder_is_the_product_s_name() {
         let config: serde_json::Value =

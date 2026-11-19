@@ -4,13 +4,11 @@ import type { AgentEvent, AgentTab, Approval, Grant, Overview } from '../../../a
 interface Held extends AgentTab {
   agent: string
 }
-
 interface Touch {
   agent: string
   verb: string
   at: number
 }
-
 export interface Seen {
   agents: Grant[]
   tabs: Record<string, Held>
@@ -21,7 +19,6 @@ export interface Seen {
   acting: Record<string, Touch>
   doing: Record<string, Touch & { tab: string | null }>
 }
-
 export function nothing(): Seen {
   return {
     agents: [],
@@ -34,7 +31,6 @@ export function nothing(): Seen {
     doing: {},
   }
 }
-
 export function overviewed(seen: Seen, overview: Overview, now: number): void {
   seen.agents = overview.agents
   seen.tabs = Object.fromEntries(overview.tabs.map(([agent, tab]) => [tab.id, { ...tab, agent }] as const))
@@ -43,7 +39,6 @@ export function overviewed(seen: Seen, overview: Overview, now: number): void {
   seen.halted = Object.fromEntries(overview.halted.map((agent) => [agent, seen.halted[agent] ?? now]))
   seen.connected = overview.connected
 }
-
 export function heard(seen: Seen, event: AgentEvent, now: number): void {
   switch (event.kind) {
     case 'acting': {
@@ -90,27 +85,22 @@ export function heard(seen: Seen, event: AgentEvent, now: number): void {
       return
   }
 }
-
 function resumed(seen: Seen, agent: string): void {
   if (agent === '') {
     seen.stopped = null
     seen.halted = {}
     return
   }
-
   seen.halted = without(seen.halted, agent)
 }
-
 function closed(seen: Seen, id: string): void {
   seen.tabs = without(seen.tabs, id)
   seen.acting = without(seen.acting, id)
 }
-
 export function wrote(seen: Seen, agent: string, tabs: readonly string[], now: number): void {
   for (const tab of tabs) seen.acting[tab] = { agent, verb: 'edit_note', at: now }
   seen.doing[agent] = { agent, verb: 'edit_note', at: now, tab: tabs[0] ?? null }
 }
-
 export function isStopped(seen: Seen, agent: string): boolean {
   return seen.stopped !== null || agent in seen.halted
 }

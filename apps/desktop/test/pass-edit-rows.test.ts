@@ -5,14 +5,12 @@ import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
 
 const PASS = fileURLToPath(new URL('../src/lib/pass-ui/src/', import.meta.url))
-
 interface Node {
   type: string
   name?: string
   attributes?: { type: string; name?: string; value?: unknown }[]
   [key: string]: unknown
 }
-
 function textOf(node: Node, name: string): string | null {
   const found = node.attributes?.find((one) => one.type === 'Attribute' && one.name === name)
   if (!found || !Array.isArray(found.value)) return null
@@ -20,11 +18,9 @@ function textOf(node: Node, name: string): string | null {
     .map((one) => (one.type === 'Text' ? (one.data ?? '') : ''))
     .join('')
 }
-
 function framed(node: Node): boolean {
   return (textOf(node, 'class') ?? '').split(/\s+/).includes('orden-edit-row')
 }
-
 function* bare(node: unknown, inRow: boolean): Generator<string> {
   if (!node || typeof node !== 'object') return
   if (Array.isArray(node)) {
@@ -45,7 +41,6 @@ function* bare(node: unknown, inRow: boolean): Generator<string> {
     if (key !== 'attributes' && value && typeof value === 'object') yield* bare(value, row)
   }
 }
-
 test('every field typed into a Pass item editor sits in a row that frames it on focus', () => {
   const editors = readdirSync(PASS).filter(
     (name) => name.endsWith('Edit.svelte') || name === 'EditField.svelte' || name === 'PasswordField.svelte',

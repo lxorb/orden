@@ -14,14 +14,11 @@
 
   const user = $derived(account.user)
   const status = $derived(user && stands(user.status, Date.now()) ? (user.status ?? null) : null)
-
   let source = $state<{ file: Blob } | { camera: true } | null>(null)
   let clears = $state<Clears>('today')
   let wrong = $state<string | null>(null)
   let picking = $state<Box | null>(null)
-
   const camera = typeof navigator !== 'undefined' && (viewport.touch || !!navigator.mediaDevices)
-
   const CLEAR_WORDS: Record<Clears, string> = {
     '30m': '30 minutes',
     '1h': '1 hour',
@@ -30,7 +27,6 @@
     week: 'This week',
     never: 'Never',
   }
-
   async function kept(work: () => Promise<void>) {
     wrong = null
     try {
@@ -39,7 +35,6 @@
       wrong = message(error, 'that did not work')
     }
   }
-
   function withStatus(changes: Partial<Omit<Status, 'until'>>) {
     const next = {
       emoji: status?.emoji ?? '',
@@ -54,17 +49,14 @@
       }),
     )
   }
-
   async function choose(fromCamera = false) {
     const [file] = await chooseFiles({ accept: PICTURES, camera: fromCamera })
     if (file) source = { file }
   }
-
   function takePhoto() {
     if (viewport.touch) void choose(true)
     else source = { camera: true }
   }
-
   function change(event: MouseEvent) {
     if (!camera) return void choose()
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
@@ -77,12 +69,10 @@
       { title: 'Picture' },
     )
   }
-
   function pickEmoji(from: HTMLElement) {
     const box = from.getBoundingClientRect()
     picking = { left: box.left, top: box.top, right: box.right, bottom: box.bottom }
   }
-
   function given(files: FileList | null | undefined) {
     const file = [...(files ?? [])].find((one) => one.type.startsWith('image/'))
     if (file) source = { file }
@@ -265,31 +255,26 @@
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
-
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .setting .name {
     flex: 1;
   }
-
   .ends {
     flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
   }
-
   :global(.sheet.phone) .setting {
     position: relative;
     gap: var(--touch-gap);
@@ -297,7 +282,6 @@
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   :global(.sheet.phone) .setting + .setting::before {
     content: '';
     position: absolute;
@@ -307,11 +291,9 @@
     height: 1px;
     background: var(--line);
   }
-
   .pressable {
     cursor: default;
   }
-
   .wrong {
     margin: var(--space-2) 0 0;
     color: var(--danger);

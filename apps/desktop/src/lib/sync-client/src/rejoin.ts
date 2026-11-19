@@ -31,11 +31,9 @@ export async function rejoin(
   }
   const { base, local, remote, merged, times } = now
   const held = judged.resolution === null
-
   if (doc.shape !== 'link') {
     core.classified.push({ id: doc.id, base, local, remote, times, merged, held })
   }
-
   if (judged.resolution === null) {
     const holding: Holding = {
       row: {
@@ -49,7 +47,6 @@ export async function rejoin(
     }
     return { changes: core.holdChanges(holding), held: true }
   }
-
   const changes: Change[] = []
   doc.took(update, seq)
   const resolution = judged.resolution
@@ -59,7 +56,6 @@ export async function rejoin(
   changes.push(...core.docChanges(doc))
   return { changes, held: false }
 }
-
 export function keepLosers(
   core: Core,
   space: SpaceState,

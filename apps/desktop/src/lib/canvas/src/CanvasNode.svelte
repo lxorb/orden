@@ -65,13 +65,10 @@
     onfollow?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
     onplaying?: (on: boolean) => void
   } = $props()
-
   const colour = $derived(shownColour(node.color))
   let source = $state<EmbeddedNote | null>(null)
-
   $effect(() => {
     if (node.type !== 'file' || fileShown(node.file) !== 'words') return
-
     const wanted = node.file
     const subpath = node.subpath
     links.locksSeen()
@@ -79,41 +76,30 @@
     void fileSource(wanted, canvasPath, subpath).then((text) => {
       if (mine) source = text
     })
-
     return () => {
       mine = false
     }
   })
-
   const words = $derived(node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source?.text)
   const markup = $derived(trusted && !(node.type === 'file' && source?.escapeHtml !== false))
-
   const drawnFrom = $derived(node.type === 'file' ? (source?.path ?? canvasPath) : canvasPath)
-
   const html = $derived(words ? cardHtml(words, drawnFrom, markup) : '')
-
   const drawing = $derived.by(() => {
     if (node.type !== 'shape') return null
-
     const points = shapePath(node).map((one) => ({ x: one.x - node.x, y: one.y - node.y }))
     const d = `M ${points.map((one) => `${one.x} ${one.y}`).join(' L ')}`
     const open = isLineShape(node.shape)
-
     return { d: open ? d : `${d} Z`, open, points }
   })
-
   const HEAD = 11
-
   const head = $derived.by(() => {
     if (node.type !== 'shape' || node.shape !== 'arrow') return null
-
     const ends = shapeLine(node)
     const from = { x: ends.from.x - node.x, y: ends.from.y - node.y }
     const to = { x: ends.to.x - node.x, y: ends.to.y - node.y }
     const dx = to.x - from.x
     const dy = to.y - from.y
     const away = Math.hypot(dx, dy) || 1
-
     return {
       x: to.x,
       y: to.y,
@@ -121,23 +107,19 @@
       size: Math.min(HEAD, away / 3),
     }
   })
-
   let broken = $state(false)
   let instead = $state<string | null>(null)
-
   $effect(() => {
     if (node.type === 'file' && node.file) {
       broken = false
       instead = null
     }
   })
-
   function unloaded(file: string) {
     const elsewhere = instead ? null : keptByAccount(file, !!account.accountToken)
     if (elsewhere) instead = elsewhere
     else broken = true
   }
-
   const host = $derived.by(() => {
     if (node.type !== 'link') return ''
     try {
@@ -146,21 +128,16 @@
       return node.url
     }
   })
-
   let editor: EditorView | undefined
   let typed = ''
   let handed: string | null = null
-
   function hand() {
     if (typed === handed) return
-
     handed = typed
     ontext?.(typed)
   }
-
   function edit(host: HTMLElement) {
     if (node.type !== 'text' && node.type !== 'shape') return
-
     typed = words ?? ''
     handed = null
     editor = createEditor({
@@ -180,7 +157,6 @@
     if (readOnly) setReadOnlyMode(editor, true)
     editor.focus()
     const release = holdEdits(hand)
-
     return {
       destroy: () => {
         release()
@@ -190,29 +166,23 @@
       },
     }
   }
-
   let sounds: readonly EventTarget[] = []
-
   onDestroy(() => {
     editor?.destroy()
     editor = undefined
     if (sounds.length) onplaying?.(false)
   })
-
   function embeds(host: HTMLElement) {
     const held = (event: PointerEvent) => {
       const target = event.target
       if (!(target instanceof Element)) return
-
       const card = target.closest('.embed-web')
       if (card instanceof HTMLElement && card.dataset.loaded === undefined) {
         event.stopPropagation()
       }
     }
-
     host.addEventListener('pointerdown', held)
     const away = embedClicks(host)
-
     return {
       destroy: () => {
         host.removeEventListener('pointerdown', held)
@@ -220,7 +190,6 @@
       },
     }
   }
-
   function sounding(event: Event) {
     const one = event.target
     if (!one) return
@@ -228,10 +197,8 @@
     sounds = event.type === 'play' ? [...others, one] : others
     onplaying?.(sounds.length > 0)
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
-
     event.preventDefault()
     event.stopPropagation()
     onleave?.()
@@ -361,26 +328,21 @@
       box-shadow var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out);
   }
-
   .node.coloured {
     background: color-mix(in srgb, var(--card-colour) 9%, var(--surface));
   }
-
   .node.dimmed {
     opacity: 0.25;
   }
-
   .node.picked {
     border-color: var(--accent);
     box-shadow:
       0 0 0 1px var(--accent),
       var(--shadow-md);
   }
-
   .node.editing {
     box-shadow: var(--shadow-md);
   }
-
   .node.group {
     background: color-mix(in srgb, var(--card-colour, var(--muted)) 7%, transparent);
     border-style: dashed;
@@ -388,38 +350,32 @@
     box-shadow: none;
     overflow: visible;
   }
-
   .node.shape {
     background: none;
     border: none;
     box-shadow: none;
     overflow: visible;
   }
-
   .node.shape.picked {
     box-shadow: none;
   }
-
   .node.bare,
   .node.bare.coloured {
     border-color: transparent;
     background: none;
     box-shadow: none;
   }
-
   .node.bare.picked,
   .node.bare.editing {
     border-color: color-mix(in srgb, var(--accent) 55%, transparent);
     box-shadow: none;
   }
-
   .node.bare .card,
   .node.bare .editor :global(#write) {
     padding: 4px 6px;
     color: var(--card-colour, var(--text));
     font-size: 16px;
   }
-
   .drawn {
     display: block;
     overflow: visible;
@@ -429,18 +385,15 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .drawn.filled rect,
   .drawn.filled ellipse,
   .drawn.filled .body {
     fill: color-mix(in srgb, var(--card-colour, var(--muted)) 14%, transparent);
   }
-
   .drawn .point {
     fill: var(--card-colour, var(--text-strong));
     stroke: none;
   }
-
   .inside {
     position: absolute;
     inset: 0;
@@ -450,17 +403,14 @@
     text-align: center;
     pointer-events: none;
   }
-
   .editor.inside {
     pointer-events: auto;
     height: auto;
     text-align: start;
   }
-
   .editor.inside :global(.cm-editor) {
     height: auto;
   }
-
   .label {
     position: absolute;
     left: 2px;
@@ -472,7 +422,6 @@
     font-weight: var(--weight-strong);
     white-space: nowrap;
   }
-
   .card {
     width: 100%;
     height: 100%;
@@ -483,15 +432,12 @@
     font-size: 13px;
     line-height: 1.55;
   }
-
   .card.page :global(> :first-child) {
     margin-top: 0;
   }
-
   .card.page :global(> :last-child) {
     margin-bottom: 0;
   }
-
   .card.page :global(h1),
   .card.page :global(h2),
   .card.page :global(h3) {
@@ -500,35 +446,28 @@
     line-height: 1.3;
     color: var(--text-strong);
   }
-
   .card.page :global(p) {
     margin: 0 0 6px;
   }
-
   .card.page :global(ul),
   .card.page :global(ol) {
     margin: 0 0 6px;
     padding-inline-start: 1.2em;
   }
-
   .card.page :global(img) {
     max-width: 100%;
   }
-
   .card.page :global(a) {
     color: var(--accent);
     text-decoration: none;
   }
-
   .card.page :global(code) {
     font-family: var(--font-mono);
     font-size: 0.92em;
   }
-
   .embed {
     color: var(--muted-strong);
   }
-
   .picture {
     display: block;
     width: 100%;
@@ -537,30 +476,25 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .film {
     object-fit: contain;
     background: #000;
   }
-
   .sound {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     justify-content: center;
   }
-
   .sound audio {
     width: 100%;
   }
-
   .link {
     display: flex;
     flex-direction: column;
     gap: 2px;
     justify-content: center;
   }
-
   .host {
     color: var(--text-strong);
     font-family: var(--font-ui);
@@ -570,7 +504,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .url {
     color: var(--muted);
     font-family: var(--font-ui);
@@ -579,7 +512,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .missing {
     margin: 0;
     padding: 8px 12px;
@@ -587,17 +519,14 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .editor {
     width: 100%;
     height: 100%;
     overflow: hidden;
   }
-
   .editor :global(.cm-editor) {
     height: 100%;
   }
-
   .editor :global(#write) {
     max-width: none;
     margin: 0;

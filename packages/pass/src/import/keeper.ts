@@ -26,15 +26,12 @@ interface Custom {
   label: string
   value: unknown
 }
-
 const IDENTITY_TYPES = new Set(
   `address contact passport driverLicense ssnCard birthCertificate
   healthInsurance membership`.split(/\s+/),
 )
-
 const HIDDEN_TYPES = new Set(['secret', 'pinCode', 'password', 'accountNumber', 'licenseNumber'])
 const DATE_TYPES = new Set(['date', 'birthDate', 'expirationDate'])
-
 export function keeperFolderOf(path: string): string {
   return path
     .split(/(?<!\\)\\(?!\\)/)
@@ -42,20 +39,17 @@ export function keeperFolderOf(path: string): string {
     .filter((part) => part !== '')
     .join('/')
 }
-
 function customsOf(fields: unknown): Custom[] {
   return Object.entries(recordOf(fields)).map(([key, value]) => {
     const match = /^\$([A-Za-z]+)(?::(.*?))?(?::\d+)?$/.exec(key)
     return match ? { type: match[1] ?? '', label: match[2] ?? '', value } : { type: 'text', label: key, value }
   })
 }
-
 function labelOf(custom: Custom): string {
   if (custom.label !== '') return custom.label
   const words = custom.type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()
   return `${words[0]?.toUpperCase() ?? ''}${words.slice(1)}`
 }
-
 function textOfValue(type: string, value: unknown): string {
   if (DATE_TYPES.has(type) && typeof value === 'number') return dayOf(dateOf(value))
   if (Array.isArray(value))
@@ -71,7 +65,6 @@ function textOfValue(type: string, value: unknown): string {
   }
   return stringOf(value)
 }
-
 function extraOf(custom: Custom): Extra {
   const kind: FieldKind = HIDDEN_TYPES.has(custom.type)
     ? 'hidden'
@@ -82,7 +75,6 @@ function extraOf(custom: Custom): Extra {
         : fieldKindOf(custom.type)
   return { name: labelOf(custom), value: textOfValue(custom.type, custom.value), kind }
 }
-
 function identityValues(
   customs: readonly Custom[],
   type: string,
@@ -135,7 +127,6 @@ function identityValues(
   }
   return { values, rest }
 }
-
 function recordInto(into: Collector, raw: unknown, sharedFolders: Map<string, string>): void {
   const record = recordOf(raw)
   const type = stringOf(record.$type) || 'login'
@@ -227,7 +218,6 @@ function recordInto(into: Collector, raw: unknown, sharedFolders: Map<string, st
   }
   unknownKind(into, type, title, note, customs.map(extraOf), parts, vault)
 }
-
 function parseKeeperJson(text: string): Imported {
   const root = recordOf(jsonOf(text))
   const into = new Collector('Keeper')
@@ -242,7 +232,6 @@ function parseKeeperJson(text: string): Imported {
   for (const record of listOf(root.records)) recordInto(into, record, shared)
   return into.result()
 }
-
 function parseKeeperCsv(text: string): Imported {
   const into = new Collector('Keeper')
   for (const row of csvRows(text)) {
@@ -269,7 +258,6 @@ function parseKeeperCsv(text: string): Imported {
   }
   return into.result()
 }
-
 export function parseKeeper(text: string): Imported {
   return text.trimStart().startsWith('{') ? parseKeeperJson(text) : parseKeeperCsv(text)
 }

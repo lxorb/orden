@@ -7,17 +7,11 @@ use rusqlite::types::Value as Column;
 use serde_json::{json, Map, Value};
 
 const CHROMIUM_PREFIX: &str = "http_tauri.localhost_0.indexeddb.";
-
 const WEBKIT_DATABASE: &str = "IndexedDB.sqlite3";
-
 const WEBKIT_LEGACY_ORIGIN: &str = "tauri_localhost_0";
-
 const TERMINATOR: u32 = 0xffff_ffff;
-
 const STRING_POOL: u32 = 0xffff_fffe;
-
 const EIGHT_BIT: u32 = 0x8000_0000;
-
 pub(super) fn carry_chromium(old: &Path, profile: &Path) -> Result<bool, String> {
     let to = profile.join("IndexedDB");
     let mut carried = false;
@@ -43,7 +37,6 @@ pub(super) fn carry_chromium(old: &Path, profile: &Path) -> Result<bool, String>
     }
     Ok(carried)
 }
-
 fn copied(from: &Path, to: &Path) -> std::io::Result<()> {
     fs::create_dir_all(to)?;
     for entry in fs::read_dir(from)?.flatten() {
@@ -57,7 +50,6 @@ fn copied(from: &Path, to: &Path) -> std::io::Result<()> {
     }
     Ok(())
 }
-
 pub(super) fn webkit(root: &Path) -> Vec<Value> {
     let mut found = Vec::new();
     webkit_databases(root, 0, &mut found);
@@ -73,7 +65,6 @@ pub(super) fn webkit(root: &Path) -> Vec<Value> {
     }
     named
 }
-
 fn webkit_databases(dir: &Path, depth: usize, found: &mut Vec<PathBuf>) {
     if depth > 8 {
         return;
@@ -87,7 +78,6 @@ fn webkit_databases(dir: &Path, depth: usize, found: &mut Vec<PathBuf>) {
         }
     }
 }
-
 fn of_the_app(database: &Path) -> bool {
     let folder = database.parent().and_then(Path::parent);
     if folder
@@ -101,7 +91,6 @@ fn of_the_app(database: &Path) -> bool {
         .and_then(Path::parent)
         .is_some_and(super::webkit_app_origin)
 }
-
 fn text_of(column: Column) -> Option<String> {
     match column {
         Column::Text(text) => Some(text),
@@ -110,7 +99,6 @@ fn text_of(column: Column) -> Option<String> {
         _ => None,
     }
 }
-
 fn webkit_database(path: &Path) -> Option<Value> {
     let db = rusqlite::Connection::open_with_flags(
         path,
@@ -203,7 +191,6 @@ fn webkit_database(path: &Path) -> Option<Value> {
     }
     Some(json!({ "name": name, "version": version, "stores": stores, "skipped": skipped }))
 }
-
 fn key_path(bytes: &[u8]) -> Option<Value> {
     let said: plist::Value = plist::from_bytes(bytes).ok()?;
     let said = said.as_dictionary()?;
@@ -226,7 +213,6 @@ fn key_path(bytes: &[u8]) -> Option<Value> {
         _ => None,
     }
 }
-
 fn record_key(bytes: &[u8]) -> Option<Value> {
     let (version, rest) = bytes.split_first()?;
     if *version != 0 {
@@ -235,7 +221,6 @@ fn record_key(bytes: &[u8]) -> Option<Value> {
     let (key, rest) = key_of(rest)?;
     rest.is_empty().then_some(key)
 }
-
 fn key_of(bytes: &[u8]) -> Option<(Value, &[u8])> {
     let (kind, rest) = bytes.split_first()?;
     match kind {
@@ -268,34 +253,28 @@ fn key_of(bytes: &[u8]) -> Option<(Value, &[u8])> {
         _ => None,
     }
 }
-
 fn take<const N: usize>(bytes: &[u8]) -> Option<([u8; N], &[u8])> {
     let (head, rest) = bytes.split_first_chunk::<N>()?;
     Some((*head, rest))
 }
-
 fn number_of(number: f64) -> Option<Value> {
     serde_json::Number::from_f64(number).map(Value::Number)
 }
-
 fn marked(kind: &str, said: Value) -> Value {
     let mut out = Map::new();
     out.insert("$orden".into(), Value::String(kind.into()));
     out.insert("said".into(), said);
     Value::Object(out)
 }
-
 enum Text {
     Said(String),
     Ended,
 }
-
 struct Script<'a> {
     bytes: &'a [u8],
     at: usize,
     pool: Vec<String>,
 }
-
 impl Script<'_> {
     fn read(bytes: &[u8]) -> Option<Value> {
         let mut script = Script {
@@ -307,32 +286,26 @@ impl Script<'_> {
         let value = script.value()?;
         (script.at == bytes.len()).then_some(value)
     }
-
     fn byte(&mut self) -> Option<u8> {
         let one = *self.bytes.get(self.at)?;
         self.at += 1;
         Some(one)
     }
-
     fn slice(&mut self, size: usize) -> Option<&[u8]> {
         let end = self.at.checked_add(size)?;
         let out = self.bytes.get(self.at..end)?;
         self.at = end;
         Some(out)
     }
-
     fn u32(&mut self) -> Option<u32> {
         Some(u32::from_le_bytes(self.slice(4)?.try_into().ok()?))
     }
-
     fn u64(&mut self) -> Option<u64> {
         Some(u64::from_le_bytes(self.slice(8)?.try_into().ok()?))
     }
-
     fn f64(&mut self) -> Option<f64> {
         Some(f64::from_le_bytes(self.slice(8)?.try_into().ok()?))
     }
-
     fn pooled(&mut self) -> Option<String> {
         let at = if self.pool.len() <= 0xff {
             usize::from(self.byte()?)
@@ -343,7 +316,6 @@ impl Script<'_> {
         };
         self.pool.get(at).cloned()
     }
-
     fn string(&mut self) -> Option<Text> {
         let length = self.u32()?;
         if length == TERMINATOR {
@@ -364,7 +336,6 @@ impl Script<'_> {
         self.pool.push(text.clone());
         Some(Text::Said(text))
     }
-
     fn properties(&mut self, out: &mut Map<String, Value>) -> Option<()> {
         while let Text::Said(name) = self.string()? {
             let value = self.value()?;
@@ -372,7 +343,6 @@ impl Script<'_> {
         }
         Some(())
     }
-
     fn value(&mut self) -> Option<Value> {
         match self.byte()? {
             1 => {
@@ -433,7 +403,6 @@ impl Script<'_> {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{carry_chromium, key_path, record_key, webkit, Script};
@@ -448,7 +417,6 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         dir
     }
-
     fn fixture() -> PathBuf {
         let dir =
             scratch(&format!("webkit-{:?}", std::thread::current().id()).replace(['(', ')'], ""));
@@ -459,11 +427,9 @@ mod tests {
         .unwrap();
         dir
     }
-
     fn named<'a>(found: &'a [serde_json::Value], name: &str) -> &'a serde_json::Value {
         found.iter().find(|one| one["name"] == name).expect(name)
     }
-
     fn store<'a>(database: &'a serde_json::Value, name: &str) -> &'a serde_json::Value {
         database["stores"]
             .as_array()
@@ -472,7 +438,6 @@ mod tests {
             .find(|one| one["name"] == name)
             .expect(name)
     }
-
     #[test]
     fn what_the_last_release_kept_in_webkit_comes_back_as_it_was_written() {
         let found = webkit(&fixture());
@@ -532,7 +497,6 @@ mod tests {
         assert_eq!(items["values"][1]["body"].as_str().unwrap().len(), 5000);
         assert_eq!(store(ci, "auto")["autoIncrement"], true);
     }
-
     #[test]
     fn pass_comes_back_sealed_as_it_was_kept() {
         let found = webkit(&fixture());
@@ -559,7 +523,6 @@ mod tests {
             .enumerate()
             .all(|(at, one)| usize::from(*one) == at % 251));
     }
-
     #[test]
     fn a_value_or_key_it_does_not_know_is_left_out_rather_than_guessed() {
         assert_eq!(Script::read(&[15, 0, 0, 0, 0x7f]), None);
@@ -572,7 +535,6 @@ mod tests {
         );
         assert_eq!(key_path(b"not a plist"), None);
     }
-
     #[test]
     fn chromium_databases_are_carried_whole_and_never_over_what_cef_wrote() {
         let dir = scratch("chromium");

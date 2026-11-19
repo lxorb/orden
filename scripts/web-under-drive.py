@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import ctypes
 import http.server
@@ -15,7 +14,6 @@ import threading
 import time
 from ctypes import wintypes
 from typing import Any
-
 from PIL import Image, ImageChops, ImageGrab, ImageStat
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -23,10 +21,8 @@ from carry_page import PAGE as CARRY_PAGE, carried  # noqa: E402
 from probe_app import main_window, refuse_updating  # noqa: E402
 from fresh_app import ended, fresh  # noqa: E402
 from native_app import App, config_of, endpoint
-
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
-
 COLOUR = (255, 0, 255)
 LAYER = (0, 160, 0)
 WIDTH, HEIGHT = 1280, 800
@@ -52,7 +48,6 @@ addEventListener('contextmenu', (e) => e.preventDefault())
 document.getElementById('drop').addEventListener('dragover', (e) => e.preventDefault())
 document.getElementById('drop').addEventListener('drop', (e) => e.preventDefault())
 </script>"""
-
 MOUSEEVENTF_MOVE = 0x1
 MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP = 0x2, 0x4
 MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP = 0x8, 0x10
@@ -60,11 +55,9 @@ MOUSEEVENTF_WHEEL = 0x800
 KEYEVENTF_KEYUP = 0x2
 VK_MENU = 0x12
 IDC_IBEAM = 32513
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
-
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
         page = CARRY_PAGE if self.path.startswith("/carry") else PAGE
         self.send_response(200)
@@ -72,14 +65,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(page)))
         self.end_headers()
         self.wfile.write(page)
-
 def client_box(hwnd: int) -> tuple[int, int, int, int]:
     rect = wintypes.RECT()
     user32.GetClientRect(hwnd, ctypes.byref(rect))
     origin = wintypes.POINT(0, 0)
     user32.ClientToScreen(hwnd, ctypes.byref(origin))
     return origin.x, origin.y, origin.x + rect.right, origin.y + rect.bottom
-
 def forward(hwnd: int) -> None:
     front = user32.GetForegroundWindow()
     theirs = user32.GetWindowThreadProcessId(front, None)
@@ -88,7 +79,6 @@ def forward(hwnd: int) -> None:
     user32.SetForegroundWindow(hwnd)
     user32.BringWindowToTop(hwnd)
     user32.AttachThreadInput(ours, theirs, False)
-
 def press(x: int, y: int, down: int = MOUSEEVENTF_LEFTDOWN, up: int = MOUSEEVENTF_LEFTUP) -> None:
     user32.SetCursorPos(x, y)
     time.sleep(0.15)
@@ -96,7 +86,6 @@ def press(x: int, y: int, down: int = MOUSEEVENTF_LEFTDOWN, up: int = MOUSEEVENT
     time.sleep(0.06)
     user32.mouse_event(up, 0, 0, 0, 0)
     time.sleep(0.4)
-
 def typed(text: str) -> None:
     for letter in text:
         key = user32.VkKeyScanW(ord(letter)) & 0xFF
@@ -105,7 +94,6 @@ def typed(text: str) -> None:
         user32.keybd_event(key, 0, KEYEVENTF_KEYUP, 0)
         time.sleep(0.05)
     time.sleep(0.4)
-
 def dragged(start: tuple[int, int], end: tuple[int, int], midway: Any = None) -> None:
     user32.SetCursorPos(*start)
     time.sleep(0.2)
@@ -122,14 +110,12 @@ def dragged(start: tuple[int, int], end: tuple[int, int], midway: Any = None) ->
         midway()
     user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
     time.sleep(0.6)
-
 def alt_twice() -> None:
     for _ in range(2):
         user32.keybd_event(VK_MENU, 0, 0, 0)
         time.sleep(0.03)
         user32.keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0)
         time.sleep(0.06)
-
 class POINTER_INFO(ctypes.Structure):  # noqa: N801 - the system's name
     _fields_ = [
         ("pointerType", wintypes.DWORD), ("pointerId", wintypes.UINT), ("frameId", wintypes.UINT),
@@ -139,15 +125,12 @@ class POINTER_INFO(ctypes.Structure):  # noqa: N801 - the system's name
         ("dwTime", wintypes.DWORD), ("historyCount", wintypes.UINT), ("InputData", ctypes.c_int32),
         ("dwKeyStates", wintypes.DWORD), ("PerformanceCount", ctypes.c_uint64), ("ButtonChangeType", ctypes.c_int),
     ]
-
 class POINTER_TOUCH_INFO(ctypes.Structure):  # noqa: N801 - the system's name
     _fields_ = [
         ("pointerInfo", POINTER_INFO), ("touchFlags", wintypes.DWORD), ("touchMask", wintypes.DWORD),
         ("rcContact", wintypes.RECT), ("rcContactRaw", wintypes.RECT), ("orientation", wintypes.UINT), ("pressure", wintypes.UINT),
     ]
-
 def tapped(x: int, y: int) -> bool:
-
     if not user32.InitializeTouchInjection(1, 3):
         print(f"no touch to inject here: {ctypes.get_last_error()}", flush=True)
         return False
@@ -168,18 +151,14 @@ def tapped(x: int, y: int) -> bool:
         time.sleep(0.05)
     time.sleep(0.6)
     return True
-
 class CURSORINFO(ctypes.Structure):
     _fields_ = [("cbSize", wintypes.DWORD), ("flags", wintypes.DWORD), ("hCursor", wintypes.HANDLE), ("ptScreenPos", wintypes.POINT)]
-
 def cursor_now() -> int:
     info = CURSORINFO()
     info.cbSize = ctypes.sizeof(CURSORINFO)
     user32.GetCursorInfo(ctypes.byref(info))
     return int(info.hCursor or 0)
-
 def window_at(x: int, y: int) -> str:
-
     hwnd = user32.WindowFromPoint(wintypes.POINT(x, y))
     name = ctypes.create_unicode_buffer(256)
     user32.GetClassNameW(hwnd, name, 256)
@@ -189,27 +168,20 @@ def window_at(x: int, y: int) -> str:
     above = ctypes.create_unicode_buffer(256)
     user32.GetClassNameW(parent, above, 256)
     return f"{name.value} of {owner.value} in {above.value}"
-
 def cursor_shown() -> bool:
     info = CURSORINFO()
     info.cbSize = ctypes.sizeof(CURSORINFO)
     user32.GetCursorInfo(ctypes.byref(info))
     return bool(info.flags & 1)
-
 def colour_at(image: Image.Image, x: int, y: int) -> tuple[int, int, int]:
     patch = ImageStat.Stat(image.convert("RGB").crop((x - 3, y - 3, x + 3, y + 3))).mean
     return (round(patch[0]), round(patch[1]), round(patch[2]))
-
 def near(one: tuple[int, int, int], other: tuple[int, int, int], by: int = 40) -> bool:
     return all(abs(one[k] - other[k]) < by for k in range(3))
-
 def named_at(x: int, y: int) -> str:
-
     import comtypes.client  # noqa: PLC0415 - the drive's own, on Windows
-
     comtypes.client.GetModule("UIAutomationCore.dll")
     from comtypes.gen import UIAutomationClient as uia  # noqa: PLC0415
-
     client = comtypes.client.CreateObject(uia.CUIAutomation, interface=uia.IUIAutomation)
     found = "nothing"
     for _ in range(8):
@@ -224,22 +196,18 @@ def named_at(x: int, y: int) -> str:
         found = f"only {at.CurrentControlType}:{at.CurrentClassName}" if at else "nothing"
         time.sleep(2)
     return found
-
 class Film:
     def __init__(self, box: tuple[int, int, int, int]) -> None:
         self.box, self.frames, self.going = box, [], True
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()
-
     def run(self) -> None:
         while self.going:
             self.frames.append((time.time() * 1000, ImageGrab.grab(bbox=self.box, include_layered_windows=True)))
-
     def stop(self) -> list[tuple[float, Image.Image]]:
         self.going = False
         self.thread.join()
         return self.frames
-
 OPENING = """
 (() => {
   window.__ov = []
@@ -255,7 +223,6 @@ OPENING = """
 })()
 """
 OPENED = "(() => { const got = window.__ov; window.__ov = null; return got })()"
-
 def opened_at(log: list[list[Any]], at: float) -> float | None:
     best = None
     for when, open in log:
@@ -264,7 +231,6 @@ def opened_at(log: list[list[Any]], at: float) -> float | None:
         else:
             break
     return best
-
 def overview(app: App, hwnd: int, hole: tuple[int, int, int, int], out: pathlib.Path, by_keys: bool) -> list[str]:
     name = "keys" if by_keys else "button"
     wrong: list[str] = []
@@ -304,9 +270,7 @@ def overview(app: App, hwnd: int, hole: tuple[int, int, int, int], out: pathlib.
             wrong.append(f"[overview {name}] frame {index}: the page is drawn over the overview, {open:.2f} out")
     print(f"[overview {name}] {len(frames)} frames, open {[None if o is None else round(o, 2) for o in opens]}", flush=True)
     return wrong
-
 def stacks(pid: int, out: pathlib.Path) -> None:
-
     for root in (r"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64", r"C:\Program Files\Windows Kits\10\Debuggers\x64"):
         cdb = pathlib.Path(root) / "cdb.exe"
         if cdb.exists():
@@ -315,9 +279,7 @@ def stacks(pid: int, out: pathlib.Path) -> None:
             print(said.stdout[-20000:], flush=True)
             return
     print("no debugger on this machine", flush=True)
-
 def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str, str], url: str, out: pathlib.Path) -> list[str]:
-
     said = open(out / "carry-app.log", "wb")
     process = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent), stdout=said, stderr=subprocess.STDOUT)
     try:
@@ -339,15 +301,12 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
         time.sleep(3)
         scale = float(app.eval("devicePixelRatio") or 1)
         left, top, _, _ = client_box(hwnd)
-
         def screen(x: float, y: float) -> tuple[int, int]:
             return left + round(x * scale), top + round(y * scale)
-
         def dragged_to(start: tuple[float, float], end: tuple[float, float], midway: Any = None) -> None:
             dragged((round(start[0]), round(start[1])), (round(end[0]), round(end[1])), midway)
             if midway:
                 print(f"carry: under the pointer as it was let go: {window_at(round(end[0]), round(end[1]))}", flush=True)
-
         missed, unsure = carried(app.eval, screen, dragged_to, url, "under")
         ImageGrab.grab().save(out / "carried.png")
         for one in unsure:
@@ -355,7 +314,6 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
         return missed
     finally:
         ended(process, gentle=True)
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -366,18 +324,15 @@ def main() -> int:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
     refuse_updating(args.exe)
     args.out.mkdir(parents=True, exist_ok=True)
-
     site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=site.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{site.server_address[1]}/under"
-
     config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-under-spaces-"))
     user32.SystemParametersInfoW(0x1043, 0, ctypes.c_void_p(1), 0x3)
-
     env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     said = open(args.out / "app.log", "wb")
     process = subprocess.Popen([str(args.exe)], env=env, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)
@@ -399,7 +354,6 @@ def main() -> int:
         user32.SetWindowPos(hwnd, None, desk.left, desk.top, min(WIDTH, desk.right - desk.left), min(HEIGHT, desk.bottom - desk.top), 0x0004)
         forward(hwnd)
         time.sleep(3)
-
         ImageGrab.grab().save(args.out / "start.png")
         app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         until = time.monotonic() + 40
@@ -443,17 +397,14 @@ def main() -> int:
         print(f"the page with the window's HTML at no opacity: {colour_at(bare, (hole[0] + hole[2]) // 2, (hole[1] + hole[3]) // 2)}", flush=True)
         app.eval("document.documentElement.style.opacity = ''; return true")
         time.sleep(1)
-
         def told() -> dict:
             title = app.eval("orden.pages.each().map(([, one]) => one.title).find((one) => (one || '').startsWith('under ')) || ''")
             try:
                 return json.loads(str(title)[len("under "):])
             except ValueError:
                 return {"v": None, "y": None, "log": []}
-
         heard = lambda: told()["log"]  # noqa: E731
         live = lambda: app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is True  # noqa: E731
-
         shot = ImageGrab.grab()
         shot.save(args.out / "page.png")
         middle = at(600, 470)
@@ -477,7 +428,6 @@ def main() -> int:
             wrong.append("the page steps behind its picture for a layer over part of it")
         app.eval("document.getElementById('drive-layer')?.remove(); return true")
         time.sleep(1)
-
         low = pane["height"] - 90
         app.eval(
             "const row = document.createElement('div'); row.dataset.notices = ''; row.id = 'drive-notices';"
@@ -500,7 +450,6 @@ def main() -> int:
             wrong.append("the page steps behind its picture for a notice over part of it")
         app.eval("document.getElementById('drive-notices')?.remove(); return true")
         time.sleep(1)
-
         user32.SetCursorPos(*at(200, 60))
         time.sleep(0.5)
         user32.SetCursorPos(*at(210, 62))
@@ -511,7 +460,6 @@ def main() -> int:
             print("no cursor is shown on this machine, so which one the page asked for is not seen", flush=True)
         elif cursor_now() != beam:
             wrong.append(f"the cursor over the page's field is not the I-beam: {cursor_now():#x}, {beam:#x}")
-
         press(*at(120, 60))
         typed("under")
         value = told()["v"]
@@ -521,11 +469,9 @@ def main() -> int:
         log = heard()
         if not any(one[0] == "click" and one[1] == "field" for one in log):
             wrong.append("a click on the page's field was not heard")
-
         press(*at(150, 150), MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP)
         if not any(one[0] == "contextmenu" for one in heard()):
             wrong.append("a right click on the page was not heard")
-
         user32.SetCursorPos(*at(600, 500))
         time.sleep(0.3)
         user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, ctypes.c_uint32(-360 & 0xFFFFFFFF).value, 0)
@@ -534,43 +480,35 @@ def main() -> int:
         print(f"scrolled: {scrolled}", flush=True)
         if not isinstance(scrolled, (int, float)) or scrolled <= 0:
             wrong.append(f"the wheel over the page did not scroll it: {scrolled}")
-
         named = named_at(*at(150, 150))
         print(f"UI Automation at the button: {named!r}", flush=True)
         if "Pressable" not in named:
             wrong.append(f"UI Automation does not find the page's button: {named!r}")
-
         if tapped(*at(150, 150)):
             log = heard()
             print(f"after a tap: {log[-4:]}", flush=True)
             if not any(one[0] == "pointerdown" and one[2] == "touch" for one in log):
                 wrong.append(f"a touch on the page was not heard as one: {log[-6:]}")
-
         press(*at(120, 60))
         wrong += overview(app, hwnd, hole, args.out, True)
-
         dragged(at(80, 260), at(400, 300))
         log = heard()
         if not any(one[0] == "drop" and one[1] == "drop" for one in log):
             wrong.append(f"a drag inside the page was not dropped: {log[-8:]}")
-
         user32.SetCursorPos(*at(600, 500))
         user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, 2000, 0)
         time.sleep(1)
         wrong += overview(app, hwnd, hole, args.out, False)
-
         ended(process, gentle=True)
         wrong += carried_alone(args.exe, args.identifier, secret, env, url.replace("/under", "/carry"), args.out)
     finally:
         ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     (args.out / "wrong.json").write_text(json.dumps(wrong, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

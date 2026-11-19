@@ -3,7 +3,6 @@ import { type Counted, eventIn, type Heard, type Limit, record } from './heard'
 import { saysLimit, saysSignedOut } from './heard'
 
 const NEAR = 80
-
 export function codexReader(): (line: string) => Heard {
   const said = new Map<string, number>()
   function more(id: string, text: string, whole: boolean): Heard {
@@ -62,7 +61,6 @@ export function codexReader(): (line: string) => Heard {
     }
   }
 }
-
 const GOALS: Record<string, GoalState> = {
   active: 'pursuing',
   complete: 'met',
@@ -71,16 +69,12 @@ const GOALS: Record<string, GoalState> = {
   blocked: 'paused',
   usageLimited: 'paused',
 }
-
 const goalIn = (status: unknown): GoalState | null =>
   typeof status === 'string' && Object.hasOwn(GOALS, status) ? (GOALS[status] ?? null) : null
-
 function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
-
 const OWN = 'orden'
-
 function toolIn(item: Record<string, unknown>, done: boolean): Heard {
   if (item.server !== OWN || typeof item.id !== 'string' || typeof item.tool !== 'string') return {}
   const tool = { id: item.id, name: item.tool, args: item.arguments ?? {} }
@@ -97,7 +91,6 @@ function toolIn(item: Record<string, unknown>, done: boolean): Heard {
     tool: { ...tool, done: { text: words, error: item.status === 'failed' || !!failed } },
   }
 }
-
 function countsIn(last: Record<string, unknown> | null, window: unknown): Counted {
   const number = (key: string) => (typeof last?.[key] === 'number' ? last[key] : 0)
   return {
@@ -108,7 +101,6 @@ function countsIn(last: Record<string, unknown> | null, window: unknown): Counte
     ...(typeof window === 'number' && window > 0 ? { window } : {}),
   }
 }
-
 function limitIn(limits: Record<string, unknown> | null): Limit | null {
   if (!limits) return null
   const windows = [record(limits.primary), record(limits.secondary)].filter(
@@ -121,7 +113,6 @@ function limitIn(limits: Record<string, unknown> | null): Limit | null {
   const until = typeof fullest?.resetsAt === 'number' ? fullest.resetsAt * 1000 : null
   return { state, until, untilWords: null }
 }
-
 function trouble(error: Record<string, unknown> | null): Heard {
   const words = text(error?.message)
   if (!words) return {}
@@ -132,7 +123,6 @@ function trouble(error: Record<string, unknown> | null): Heard {
     ...(limited ? { limit: { state: 'reached', until: null, untilWords: againAt(words) } } : {}),
   }
 }
-
 export function againAt(words: string): string | null {
   const found = /try again (?:at|in) ([^.]+?)\.?$/i.exec(words.trim())
   return found?.[1]?.trim() ?? null

@@ -5,7 +5,6 @@ export class FakeTimeServer implements TimeServer {
   readonly entries = new Map<string, TimeEntry>()
   pushes = 0
   private next = 1
-
   pull(since: number) {
     const page = [...this.entries.values()].filter((one) => one.seq > since).sort((one, other) => one.seq - other.seq)
     const shown = page.slice(0, TIME_PAGE)
@@ -15,7 +14,6 @@ export class FakeTimeServer implements TimeServer {
       more: page.length > TIME_PAGE,
     })
   }
-
   push(changes: readonly TimeChange[]) {
     this.pushes += 1
     if (!timeChangesOf({ changes })) return Promise.reject(new Error('400: not a time change'))
@@ -26,7 +24,6 @@ export class FakeTimeServer implements TimeServer {
     return Promise.resolve(true)
   }
 }
-
 export const OLD_SERVER: TimeServer = {
   pull: () => Promise.resolve(null),
   push: () => Promise.resolve(false),

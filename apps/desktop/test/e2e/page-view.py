@@ -1,27 +1,21 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 CAMERA = """() => {
   const tab = window.ordenApp.workspace.active
   return tab?.camera ? { ...tab.camera } : null
 }"""
-
 def camera(page: Page) -> dict | None:
     return page.evaluate(CAMERA)
-
 def near(one: dict | None, other: dict | None) -> bool:
     if not one or not other:
         return False
     return all(abs(one[k] - other[k]) <= max(2, abs(other[k]) * 0.02) for k in ("x", "y", "scale"))
-
 def open_path(page: Page, path: str) -> None:
     page.evaluate("async (path) => { await window.ordenApp.workspace.openEntry(path, { activate: true }) }", path)
     page.wait_for_timeout(900)
-
 def moved(page: Page, surface: str) -> dict:
     box = page.locator(surface).first.bounding_box()
     assert box
@@ -38,18 +32,15 @@ def moved(page: Page, surface: str) -> dict:
     left = camera(page)
     assert left
     return left
-
 def check(page: Page, label: str, path: str, surface: str, other: str) -> None:
     left = moved(page, surface)
     say(f"[{label}] left at {left}")
-
     open_path(page, other)
     open_path(page, path)
     if near(camera(page), left):
         say(f"ok   [{label}] another tab and back: where it was")
     else:
         wrong(f"[{label}] another tab and back: {camera(page)}, left at {left}")
-
     tab = page.evaluate("() => window.ordenApp.workspace.active.id")
     page.evaluate("async (id) => { await window.ordenApp.workspace.close(id, false) }", tab)
     page.wait_for_timeout(400)
@@ -58,7 +49,6 @@ def check(page: Page, label: str, path: str, surface: str, other: str) -> None:
         say(f"ok   [{label}] closed and opened again: where it was")
     else:
         wrong(f"[{label}] closed and opened again: {camera(page)}, left at {left}")
-
     page.reload()
     DRIVE.open(page)
     open_path(page, path)
@@ -67,14 +57,12 @@ def check(page: Page, label: str, path: str, surface: str, other: str) -> None:
         say(f"ok   [{label}] the app started again: where it was")
     else:
         wrong(f"[{label}] the app started again: {camera(page)}, left at {left}")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
     DRIVE.seed(page, "# Other\n\nAnother note.\n")
     root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     other = f"{root}/Other.md"
-
     for _ in range(4):
         page.evaluate("() => window.ordenApp.workspace.createPages()")
         page.wait_for_timeout(700)
@@ -84,7 +72,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(600)
     pages = page.evaluate("() => window.ordenApp.workspace.active.path")
     check(page, "page note", pages, ".pages", other)
-
     page.evaluate("() => window.ordenApp.pages.current?.store.fitAgain()")
     page.wait_for_timeout(300)
     box = page.locator(".pages").first.bounding_box()
@@ -107,12 +94,10 @@ def drive(browser: Browser) -> None:
         say(f"ok   [page note] scrolled, not zoomed: kept, back and after a restart ({left})")
     else:
         wrong(f"[page note] scrolled, not zoomed: left at {left}, back {back}, restarted {again}")
-
     page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }")
     wait_for(page, "!!document.querySelector('.canvas')", "the canvas")
     page.wait_for_timeout(600)
     board = page.evaluate("() => window.ordenApp.workspace.active.path")
     check(page, "canvas", board, ".canvas", other)
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "a page note and a canvas come back where they were left"))

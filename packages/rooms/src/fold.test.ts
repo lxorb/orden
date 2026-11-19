@@ -7,7 +7,6 @@ function applied(held: string, mine: string): string {
   const doc = new Y.Doc()
   const text = doc.getText(TEXT)
   text.insert(0, held)
-
   const change = fold(held, mine)
   if (change) {
     doc.transact(() => {
@@ -15,39 +14,30 @@ function applied(held: string, mine: string): string {
       if (change.insert) text.insert(change.from, change.insert)
     })
   }
-
   return text.toJSON()
 }
-
 function halved(text: string, at: number): boolean {
   if (at <= 0 || at >= text.length) return false
-
   const before = text.charCodeAt(at - 1)
   return before >= 0xd800 && before <= 0xdbff
 }
-
 function halves(text: string): boolean {
   const leads = (at: number) => text.charCodeAt(at) >= 0xd800 && text.charCodeAt(at) <= 0xdbff
   const trails = (at: number) => text.charCodeAt(at) >= 0xdc00 && text.charCodeAt(at) <= 0xdfff
-
   for (let at = 0; at < text.length; at++) {
     if (leads(at)) {
       if (!trails(at + 1)) return true
       at++
       continue
     }
-
     if (trails(at)) return true
   }
-
   return false
 }
-
 describe('folding a text written while away', () => {
   test('has nothing to do when the two agree', () => {
     expect(fold('one two', 'one two')).toBeNull()
   })
-
   test('names only the middle that differs', () => {
     expect(fold('# Note\nalpha\nend\n', '# Note\nbeta\nend\n')).toEqual({
       from: 7,
@@ -55,29 +45,23 @@ describe('folding a text written while away', () => {
       insert: 'bet',
     })
   })
-
   test('names an insertion at the end', () => {
     expect(fold('one\n', 'one\ntwo\n')).toEqual({ from: 4, to: 4, insert: 'two\n' })
   })
-
   test('names an insertion at the start', () => {
     expect(fold('two\n', 'one\ntwo\n')).toEqual({ from: 0, to: 0, insert: 'one\n' })
   })
-
   test('names a deletion', () => {
     expect(fold('one\ntwo\n', 'one\n')).toEqual({ from: 4, to: 8, insert: '' })
   })
-
   test('never cuts a character in half', () => {
     const change = fold('a👍b', 'a👎b')
     expect(change).not.toBeNull()
     expect(applied('a👍b', 'a👎b')).toBe('a👎b')
   })
-
   test('never cuts one in half at the back of the change either', () => {
     expect(fold('a👍', 'b👍')).toEqual({ from: 0, to: 1, insert: 'b' })
   })
-
   test('names a change whose ends are both whole characters', () => {
     const pairs: [string, string][] = [
       ['a👍', 'b👍'],
@@ -87,12 +71,10 @@ describe('folding a text written while away', () => {
       ['x👍👎', 'y👍👎'],
       ['👍👎', '👍a👎'],
     ]
-
     for (const [held, mine] of pairs) {
       const change = fold(held, mine)
       expect(change, `${held} -> ${mine}`).not.toBeNull()
       if (!change) continue
-
       const said = `${held} -> ${mine}`
       expect(halved(held, change.from), said).toBe(false)
       expect(halved(held, change.to), said).toBe(false)
@@ -100,7 +82,6 @@ describe('folding a text written while away', () => {
       expect(applied(held, mine), said).toBe(mine)
     }
   })
-
   test('turns one text into the other, whatever the edit was', () => {
     const pairs: [string, string][] = [
       ['', 'first words\n'],
@@ -111,7 +92,6 @@ describe('folding a text written while away', () => {
       ['abcabc', 'abc'],
       ['line\n', 'line\nline\n'],
     ]
-
     for (const [held, mine] of pairs) expect(applied(held, mine), `${held} -> ${mine}`).toBe(mine)
   })
 })

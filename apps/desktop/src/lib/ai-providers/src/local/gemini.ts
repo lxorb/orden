@@ -2,7 +2,6 @@ import { eventIn, type Heard, record, saysLimit, saysSignedOut } from './heard'
 
 const OWN = /^mcp_orden_/
 const QUOTA = /quota|resource_exhausted|\b429\b/i
-
 export function geminiReader(): (line: string) => Heard {
   let streamed = false
   return (line) => {
@@ -46,12 +45,10 @@ export function geminiReader(): (line: string) => Heard {
     }
   }
 }
-
 function messageOf(error: unknown): string {
   const message = record(error)?.message
   return typeof message === 'string' ? message : ''
 }
-
 function trouble(words: string): Heard {
   const limited = saysLimit(words) || QUOTA.test(words)
   return {
@@ -60,7 +57,6 @@ function trouble(words: string): Heard {
     ...(limited ? { limit: { state: 'reached', until: null, untilWords: null } } : {}),
   }
 }
-
 function usageOf(stats: Record<string, unknown> | null): Heard {
   if (!stats) return {}
   const number = (key: string) => (typeof stats[key] === 'number' ? stats[key] : 0)

@@ -1,12 +1,10 @@
 const MB: u64 = 1024 * 1024;
-
 pub fn too_much(ceiling: u32) -> Option<String> {
     if ceiling == 0 {
         return None;
     }
     past(engine_bytes(), ceiling)
 }
-
 fn past(used: u64, ceiling: u32) -> Option<String> {
     let most = u64::from(ceiling) * MB;
     (ceiling > 0 && used > most).then(|| {
@@ -17,7 +15,6 @@ fn past(used: u64, ceiling: u32) -> Option<String> {
         )
     })
 }
-
 #[cfg(windows)]
 fn engine_bytes() -> u64 {
     let own = std::process::id();
@@ -35,7 +32,6 @@ fn engine_bytes() -> u64 {
     }
     below.iter().skip(1).map(|pid| working_set(*pid)).sum()
 }
-
 #[cfg(windows)]
 #[allow(unsafe_code)]
 fn working_set(pid: u32) -> u64 {
@@ -61,12 +57,10 @@ fn working_set(pid: u32) -> u64 {
         }
     }
 }
-
 #[cfg(not(windows))]
 fn engine_bytes() -> u64 {
     0
 }
-
 #[cfg(test)]
 mod tests {
     use super::{past, too_much, MB};
@@ -78,7 +72,6 @@ mod tests {
         assert!(past(u64::MAX, 0).is_none());
         assert!(past(64 * 1024 * MB, 0).is_none());
     }
-
     #[test]
     fn a_ceiling_somebody_set_still_holds() {
         assert!(past(3 * 1024 * MB, 4096).is_none());
@@ -87,7 +80,6 @@ mod tests {
         assert!(why.contains("5120 MB"), "{why}");
         assert!(why.contains("4096 MB"), "{why}");
     }
-
     #[test]
     fn the_test_runner_itself_holds_no_engine() {
         assert!(super::engine_bytes() < 1024 * MB);

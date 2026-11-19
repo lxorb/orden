@@ -59,52 +59,39 @@ export type FileAction =
       closed: string[]
     }
   | { kind: 'outside'; steps: OutsideStep[] }
-
 export type OutsideStep =
   | { op: 'moved' | 'copied'; pairs: { from: string; to: string }[] }
   | { op: 'made'; path: string; ticket?: OutsideTicket }
   | { op: 'trashed' | 'replaced'; tickets: OutsideTicket[] }
-
 export interface OutsideTicket {
   path: string
   back: string
   at: number
 }
-
 export type Kept = Omit<Extract<FileAction, { kind: 'delete' }>, 'kind' | 'path'>
-
 export interface Binning {
   source?: string | undefined
   madeHere?: boolean
   settled?: boolean
 }
-
 export interface Copied {
   path: string
   folder: boolean
   from?: string
 }
-
 import { shownName, folderOf, nameOf, samePath } from '../../platform/src/api'
 import type { FileOp } from '../../file-ops/src/api'
-
 const KEPT = 20
-
 export const LANDS_WITHIN = 10_000
-
 export class FileActions {
   stack = $state<FileAction[]>([])
-
   get last(): FileAction | undefined {
     return this.stack.at(-1)
   }
-
   ahead = $state<FileAction[]>([])
-
   get next(): FileAction | undefined {
     return this.ahead.at(-1)
   }
-
   record(action: FileAction) {
     if (this.#held) {
       this.#held.push(action)
@@ -113,9 +100,7 @@ export class FileActions {
     this.stack = [...this.stack, action].slice(-KEPT)
     this.ahead = []
   }
-
   #held: FileAction[] | null = null
-
   async batch<T>(work: () => Promise<T>): Promise<T> {
     this.#under += 1
     try {
@@ -136,11 +121,9 @@ export class FileActions {
       }
     }
   }
-
   #under = 0
   #waiting: (() => void)[] = []
   #overdue = false
-
   landed(): Promise<boolean> {
     if (!this.#under) return Promise.resolve(true)
     if (this.#overdue) return Promise.resolve(false)
@@ -155,42 +138,34 @@ export class FileActions {
       })
     })
   }
-
   async follow(op: FileOp) {
     if (op.op !== 'moved' || (!op.heard && op.kind !== 'space')) return
     const { heardMove } = await import('./undo-moved')
     heardMove(this.steps, op)
   }
-
   async moved(from: string, to: string) {
     const { rewritten } = await import('./undo-moved')
     for (const action of this.steps) rewritten(action, from, to)
   }
-
   private get steps(): FileAction[] {
     return [...this.stack, ...this.ahead, ...(this.#held ?? [])]
   }
-
   giveUp(action: FileAction) {
     this.stack = this.stack.filter((one) => one !== action)
   }
-
   drop() {
     const last = this.last
     this.stack = this.stack.slice(0, -1)
     if (last) this.ahead = doesAgain(last) ? [...this.ahead, last] : []
   }
-
   redone(rest: FileAction[]) {
     this.ahead = rest
   }
-
   trashed(path: string, id: string) {
     const last = this.#held?.at(-1) ?? this.last
     const step = last?.kind === 'many' ? last.steps.at(-1) : last
     if (step?.kind === 'delete' && samePath(step.path, path)) step.trashId = id
   }
-
   forget(trashId: string) {
     const kept = (action: FileAction) => action.kind !== 'delete' || action.trashId !== trashId
     this.stack = this.stack.flatMap((action): FileAction[] => {
@@ -199,19 +174,15 @@ export class FileActions {
       return steps.length ? [{ kind: 'many' as const, steps }] : []
     })
   }
-
   get label(): string | null {
     return labelOf(this.last)
   }
-
   get canRedo(): boolean {
     return this.next !== undefined
   }
 }
-
 function labelOf(action: FileAction | undefined): string | null {
   if (!action) return null
-
   switch (action.kind) {
     case 'move':
       return `Undo moving ${shownName(nameOf(action.to))}`
@@ -250,7 +221,6 @@ function labelOf(action: FileAction | undefined): string | null {
     }
   }
 }
-
 function doesAgain(action: FileAction): boolean {
   switch (action.kind) {
     case 'move':
@@ -275,7 +245,6 @@ function doesAgain(action: FileAction): boolean {
       return false
   }
 }
-
 function outsideLabel(steps: readonly OutsideStep[]): string | null {
   const step = steps.find((one) => one.op !== 'replaced')
   if (!step) return null
@@ -298,9 +267,7 @@ function outsideLabel(steps: readonly OutsideStep[]): string | null {
     }
   }
 }
-
 let sidebarLast = false
-
 export function used(target: EventTarget | null) {
   if (!(target instanceof Element) || target.matches('body,html')) return
   if (target.closest('[data-sidebar]')) {
@@ -309,7 +276,6 @@ export function used(target: EventTarget | null) {
     sidebarLast = false
   }
 }
-
 export function sidebarKey(event: KeyboardEvent, pressed: (id: string) => boolean) {
   const key =
     event.defaultPrevented || !sidebarLast

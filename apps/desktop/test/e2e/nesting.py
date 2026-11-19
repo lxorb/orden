@@ -1,7 +1,5 @@
 import sys
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -11,27 +9,21 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 PATIENCE = 40
-
 DESKTOP = {"width": 1180, "height": 760}
 PHONE = {"width": 390, "height": 844}
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 def check(fine: bool, what: str) -> None:
     say(("ok   " if fine else "FAIL ") + what)
     if not fine:
         failures.append(what)
-
 def fresh(browser: Browser, label: str, viewport: dict[str, int]) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme="dark")
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     DRIVE.open(page)
     return page
-
 AS_PHONE = """
 () => {
   const app = window.ordenApp
@@ -46,7 +38,6 @@ AS_PHONE = """
   root.toggleAttribute('data-narrow', true)
 }
 """
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -62,7 +53,6 @@ async () => {
   return ws.tree.children.map((one) => one.name)
 }
 """
-
 NEST = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -77,7 +67,6 @@ async () => {
   return ws.notes.map((one) => one.path).sort()
 }
 """
-
 UNNEST = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -91,12 +80,10 @@ async () => {
   return ws.notes.map((one) => one.path).sort()
 }
 """
-
 ROWS = """
 () => [...document.querySelectorAll('aside .row')].map((row) =>
   [row.className.replace(/svelte-\\w+/, '').trim(), row.textContent.trim().slice(0, 30)].join(' | '))
 """
-
 def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
     label = where
     page = fresh(browser, label, viewport)
@@ -109,20 +96,15 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
                 " if (!ws.panel) ws.showPanel('tree') }"
             )
             page.wait_for_timeout(350)
-
         page.wait_for_timeout(400)
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"before-{where}.png"))
         say(f"[{label}] wrote before-{where}.png")
-
         say(f"[{label}] nested: {page.evaluate(NEST)}")
         page.wait_for_timeout(600)
-
         for one in page.evaluate(ROWS):
             say(f"[{label}] {one}")
-
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"nested-{where}.png"))
         say(f"[{label}] wrote nested-{where}.png")
-
         check(
             page.evaluate(
                 "() => window.ordenApp.workspace.notes.some((one) =>"
@@ -150,12 +132,10 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
             == 1,
             f"[{label}] and the note is not listed a second time inside itself",
         )
-
         say(f"[{label}] unnested: {page.evaluate(UNNEST)}")
         page.wait_for_timeout(600)
         page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"unnested-{where}.png"))
         say(f"[{label}] wrote unnested-{where}.png")
-
         check(
             page.evaluate(
                 "() => window.ordenApp.workspace.notes.some((one) =>"
@@ -169,12 +149,9 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         )
     finally:
         page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         shoot(browser, "desktop", DESKTOP)
         shoot(browser, "phone", PHONE)
-
     return DRIVE.verdict("a note held notes, and stopped holding them again")
-
 sys.exit(main())

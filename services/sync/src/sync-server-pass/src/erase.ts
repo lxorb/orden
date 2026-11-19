@@ -1,7 +1,6 @@
 import { SEQ } from './seq'
 
 const OWNED = 'select id from pass_vaults where owner_id = ?1'
-
 export const PASS_ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['pass_seq', 'update pass_seq set seq = seq + 1 where id = 1'],
   [

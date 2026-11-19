@@ -8,14 +8,11 @@
 
   const invitation = $derived(joining.invitation)
   const who = $derived(invitation?.from ?? 'Somebody')
-
   const shared = $derived(invitation ? `${who} shared ${invitation.note ?? invitation.space} with you` : null)
-
   function close() {
     if (joining.step === 'waiting' || joining.step === 'asking') joining.close()
     else joining.dismiss()
   }
-
   $effect(() => (joining.shown ? overlays.show(close) : undefined))
 </script>
 
@@ -100,7 +97,6 @@
   .scrim {
     --scrim-z: var(--z-screen);
   }
-
   .panel {
     display: flex;
     flex-direction: column;
@@ -108,14 +104,12 @@
     z-index: var(--z-screen);
     padding: var(--space-5);
   }
-
   .shared {
     margin: 0;
     font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--muted-strong);
   }
-
   .quiet {
     display: flex;
     align-items: center;
@@ -124,7 +118,6 @@
     font-size: var(--text-base);
     color: var(--text);
   }
-
   .pulse {
     width: 7px;
     height: 7px;
@@ -133,7 +126,6 @@
     background: var(--accent);
     animation: breathe 1.8s var(--ease-out) infinite;
   }
-
   @keyframes breathe {
     0%,
     100% {
@@ -145,19 +137,16 @@
       transform: scale(1);
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .pulse {
       animation: none;
     }
   }
-
   form {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
   }
-
   input {
     width: 100%;
     min-height: var(--row-height);
@@ -172,23 +161,19 @@
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   input::placeholder {
     color: var(--muted);
   }
-
   .actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-2);
   }
-
   .wrong {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--danger);
   }
-
   :global([data-touch]) .panel {
     top: auto;
     bottom: var(--keyboard);

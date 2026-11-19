@@ -11,15 +11,10 @@ import {
 } from 'svelte/transition'
 
 const STILL = '(prefers-reduced-motion: reduce)'
-
 const query = typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(STILL) : null
-
 export const stillness = (): boolean => query?.matches ?? false
-
 export const dur = (ms: number): number => (stillness() ? 0 : ms)
-
 export const calm = (ms: number): number => ms
-
 export const LAYER = {
   get fade(): number {
     return dur(130)
@@ -29,7 +24,6 @@ export const LAYER = {
   },
   start: 0.97,
 } as const
-
 function moving<Params extends { delay?: number; duration?: number }>(
   move: (node: Element, params?: Params) => TransitionConfig,
 ): (node: Element, params?: Params) => TransitionConfig {
@@ -38,7 +32,6 @@ function moving<Params extends { delay?: number; duration?: number }>(
     return duration === 0 ? { delay, duration } : move(node, params)
   }
 }
-
 export const fade = moving<FadeParams>(fading)
 export const fly = moving<FlyParams>(flying)
 export const scale = moving<ScaleParams>(scaling)

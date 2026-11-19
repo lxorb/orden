@@ -7,19 +7,15 @@ const PLACES: readonly (readonly [string, number | 'last'])[] = [
   ['app.note-ninth', 8],
   ['app.note-9.alt', 'last'],
 ]
-
 export function numerals(count: number, keyFor: (id: string) => string | null, platform: Platform): (string | null)[] {
   const worn: (string | null)[] = Array.from({ length: count }, () => null)
-
   for (const [id, place] of PLACES) {
     const said = underAlt(keyFor(id), platform)
     const at = place === 'last' ? count - 1 : place
     if (said !== null && at >= 0 && at < count) worn[at] = said
   }
-
   return worn
 }
-
 export interface Stroke {
   key: string
   code: string
@@ -30,21 +26,17 @@ export interface Stroke {
   repeat: boolean
   altGraph: boolean
 }
-
 function isDigit(stroke: Stroke): boolean {
   return /^Digit\d$/.test(stroke.code) || (/^\d$/.test(stroke.key) && !stroke.code.startsWith('Numpad'))
 }
-
 export class AltHold {
   holding = false
   private spent = false
   private tapped = Number.NEGATIVE_INFINITY
   private since = Number.NEGATIVE_INFINITY
   private quiet = false
-
   down(stroke: Stroke, now = Number.NaN, claimed = false): boolean {
     const alone = !stroke.ctrlKey && !stroke.shiftKey && !stroke.metaKey && !stroke.altGraph
-
     if (stroke.key === 'Alt') {
       if (stroke.repeat || this.holding || this.spent) return false
       this.since = now
@@ -57,7 +49,6 @@ export class AltHold {
       this.spent = !alone
       return this.holding
     }
-
     this.tapped = Number.NEGATIVE_INFINITY
     if (!stroke.altKey) {
       this.forget()
@@ -70,7 +61,6 @@ export class AltHold {
     this.quiet = false
     return true
   }
-
   sense(alt: boolean, altGraph = false): boolean {
     if (!alt) {
       this.forget()
@@ -80,7 +70,6 @@ export class AltHold {
     this.holding = true
     return true
   }
-
   released(now = Number.NaN): void {
     const tap = (this.holding || this.quiet) && now - this.since <= WITHIN
     this.tapped = tap ? now : Number.NEGATIVE_INFINITY
@@ -88,7 +77,6 @@ export class AltHold {
     this.holding = false
     this.spent = false
   }
-
   private forget() {
     this.holding = false
     this.spent = false

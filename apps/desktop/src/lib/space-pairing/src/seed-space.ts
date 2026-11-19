@@ -8,12 +8,10 @@ export interface Listed {
   evicted?: boolean
   unlisted?: boolean
 }
-
 export interface Reading {
   tree(root: string): Promise<Listed | null>
   note(path: string): Promise<string | null>
 }
-
 async function holdsOnlySeeds(tree: Listed, read: Reading['note']): Promise<boolean> {
   for (const child of tree.children) {
     if (child.is_dir || child.evicted || child.unlisted) return false
@@ -25,7 +23,6 @@ async function holdsOnlySeeds(tree: Listed, read: Reading['note']): Promise<bool
   }
   return true
 }
-
 export async function untouchedSeedSpace(
   seeded: string | null,
   roots: readonly string[],

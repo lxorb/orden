@@ -10,33 +10,27 @@ vi.mock('../../gates/src/api', async (original) => ({
   ...(await original<typeof import('../../gates/src/api')>()),
   passOn: () => true,
 }))
-
 const { account } = await import('../../accounts/src/account.svelte')
 const PassTab = (await import('./PassTab.svelte')).default
-
 let setupSeen = 0
 const watcher = new MutationObserver(() => {
   if (target.textContent.includes('Set up Pass')) setupSeen++
 })
-
 function signedInAs(id: string): void {
   account.token = `token-${id}`
   account.user = { id, email: `${id}@example.com` } as Account
   flushSync()
 }
-
 beforeAll(() => {
   landed()
   watcher.observe(target, { childList: true, subtree: true, characterData: true })
   signedInAs('ada')
   draw(PassTab, { tab: null, focused: true })
 })
-
 afterAll(() => {
   watcher.disconnect()
   closed()
 })
-
 describe('Pass before the account has answered', () => {
   test('waits instead of offering setup while the account is unheard', async () => {
     await idle(200)
@@ -44,13 +38,11 @@ describe('Pass before the account has answered', () => {
     expect(target.querySelector('input[type=password]')).toBeNull()
     expect(setupSeen).toBe(0)
   })
-
   test('offers setup once the account answered without a vault', async () => {
     pass.accountHeard('ada')
     await until(() => pass.state === 'new', 'the setup screen')
     expect(target.textContent).toContain('Set up Pass')
   })
-
   test('waits again for another account, then opens to its lock, never setup', async () => {
     signedInAs('grace')
     await until(() => pass.state === 'loading', 'waiting for the other account')

@@ -14,7 +14,6 @@ const SKIPPED = new Set([
   'shots',
   'tauri-runtime-cef',
 ])
-
 const NOT_OURS = [
   /(^|\/)dist[^/]*\//,
   /^apps\/desktop\/src-tauri\/gen\/(?!android\/)/,
@@ -22,7 +21,6 @@ const NOT_OURS = [
   /\/fixtures\/[^/]+\.html$/,
   /^apps\/desktop\/src-tauri\/linux\/Cargo\.toml$/,
 ]
-
 const LANGUAGES: [RegExp, (text: string) => string[]][] = [
   [/\.(rs|kt|kts|swift|gradle|jsonc)$/, slashed],
   [/\.css$/, (text) => blocks(text)],
@@ -38,14 +36,12 @@ const LANGUAGES: [RegExp, (text: string) => string[]][] = [
     hashed,
   ],
 ]
-
 const ALLOWED = [
   /^#!/,
   /^#\s*(noqa|type:\s*ignore|pyright:|shellcheck\s|yaml-language-server:|fmt:\s*(off|on|skip)|-\*-\s*coding)/,
   /^#\s+on (amd64|arm64): sha256\/[0-9a-f]{64}$/,
   /^# (Maintainer|Contributor):/,
 ]
-
 function walk(dir: string, found: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (SKIPPED.has(entry.name)) continue
@@ -55,14 +51,12 @@ function walk(dir: string, found: string[] = []): string[] {
   }
   return found
 }
-
 function quoted(text: string, at: number, quote: string): number {
   let index = at + quote.length
   while (index < text.length && !text.startsWith(quote, index))
     index += text[index] === '\\' && quote.length === 1 ? 2 : 1
   return index + quote.length
 }
-
 function slashed(text: string): string[] {
   const found: string[] = []
   let index = 0
@@ -94,7 +88,6 @@ function slashed(text: string): string[] {
   }
   return found
 }
-
 function blocks(text: string): string[] {
   const found: string[] = []
   let index = 0
@@ -109,7 +102,6 @@ function blocks(text: string): string[] {
   }
   return found
 }
-
 function dashed(text: string): string[] {
   return text.split('\n').flatMap((line) => {
     const bare = line.replace(/'(?:[^']|'')*'/g, "''")
@@ -117,7 +109,6 @@ function dashed(text: string): string[] {
     return at < 0 ? [] : [bare.slice(at)]
   })
 }
-
 function hashed(text: string): string[] {
   const found: string[] = []
   let heredoc: string | null = null
@@ -133,7 +124,6 @@ function hashed(text: string): string[] {
   }
   return found
 }
-
 function python(text: string): string[] {
   const found: string[] = []
   let index = 0
@@ -168,14 +158,11 @@ function python(text: string): string[] {
   }
   return found
 }
-
 const files = walk(ROOT).filter((path) => !NOT_OURS.some((one) => one.test(path)))
-
 describe('no comments', () => {
   test('there are files to read', () => {
     expect(files.filter((path) => path.endsWith('.rs')).length).toBeGreaterThan(100)
   })
-
   for (const [kind, read] of LANGUAGES)
     test(`in ${String(kind)}`, () => {
       const prose = files

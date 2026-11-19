@@ -6,22 +6,18 @@ const EMIL: Who = 'user:emil'
 export const LUCILE: Who = 'user:lucile'
 const MIA: Who = 'user:mia'
 const PAUL: Who = 'user:paul'
-
 const TEAM: ChatMember[] = [
   { who: EMIL, name: 'Emil Vinu', role: 'owner' },
   { who: LUCILE, name: 'Lucile', role: 'write' },
   { who: MIA, name: 'Mia Keller', role: 'write' },
   { who: PAUL, name: 'Paul Okafor', role: 'write' },
 ]
-
 const MINUTE = 60_000
-
 function voice(random: () => number): number[] {
   return Array.from({ length: 64 }, (_, at) =>
     Math.round(60 + 150 * Math.abs(Math.sin(at / 3.1)) * (0.5 + random() / 2)),
   )
 }
-
 export function seeded(now = Date.now()): { store: FixtureChats; thesis: string; general: string } {
   let at = now
   const store = new FixtureChats(EMIL, { seed: 11, now: () => at })
@@ -31,7 +27,6 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
   })
   const general = store.add('general', TEAM)
   store.add('design', TEAM)
-
   const yesterday = new Date(now - 24 * 60 * MINUTE)
   yesterday.setHours(16, 40, 0, 0)
   const start = yesterday.getTime()
@@ -43,7 +38,6 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
     at = start + minutes * MINUTE
     store.place(thesis, who, made)
   }
-
   const draft = say(0, EMIL, 'Draft of chapter 3 is up: [[Chapter 3]] has the second experiment in it.')
   event(1, EMIL, { kind: 'react', id: store.id(), target: draft, emoji: '🎉', on: true })
   event(2, LUCILE, { kind: 'react', id: store.id(), target: draft, emoji: '🎉', on: true })
@@ -104,7 +98,6 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
   say(60, MIA, 'and the dataset', {
     files: [fixtureFile(random, { name: 'residuals-2026-10.csv', size: 1_840_000, type: 'text/csv' })],
   })
-
   const morning = new Date(now)
   morning.setHours(9, 0, 0, 0)
   const later = (minutes: number) => (morning.getTime() - start) / MINUTE + minutes
@@ -137,20 +130,16 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
   })
   say(later(19), PAUL, 'Seen the voice note, agree with all of it', { quote: quoted })
   say(later(20), PAUL, '🎉🎉')
-
   store.readTo(thesis, LUCILE, store.must(thesis).state.seq)
   store.readTo(thesis, MIA, store.must(thesis).state.seq - 2)
-
   at = now - 3 * 60 * MINUTE
   store.speak(general, LUCILE, 'Lunch at 12?')
   at = now - 2 * 60 * MINUTE
   store.speak(general, PAUL, 'Yes')
   store.readHere(general, store.must(general).state.seq)
-
   at = now
   return { store, thesis, general }
 }
-
 export function bigChat(count: number, now = Date.now()): { store: FixtureChats; chat: string } {
   let at = now - count * MINUTE
   const store = new FixtureChats(EMIL, { seed: 5, now: () => at })

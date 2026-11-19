@@ -24,21 +24,16 @@ vi.mock('../../platform/src/tauri', () => ({
   },
   isDesktop: true,
 }))
-
 const { vaultSources } = await import('./vaults')
-
 describe('a vault read where it is', () => {
   test('names the file it could not read', async () => {
     const sources = await vaultSources({ name: 'Brain', path: '/home/me/Brain' })
     const [locked, home] = sources
-
     await expect(home?.text()).resolves.toBe('# Home')
     await expect(locked?.bytes()).rejects.toThrow('Attachments/locked.png could not be read.')
   })
-
   test('reads a note written in another encoding as the words it holds', async () => {
     const [, , cafe, wide] = await vaultSources({ name: 'Brain', path: '/home/me/Brain' })
-
     await expect(cafe?.text()).resolves.toBe('Café')
     await expect(wide?.text()).resolves.toBe('Wé')
   })

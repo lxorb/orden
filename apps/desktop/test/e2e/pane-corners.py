@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 LOOK = """
 () => {
   const box = (one) => {
@@ -26,7 +24,6 @@ LOOK = """
   }
 }
 """
-
 def inside(inner: dict, outer: dict) -> bool:
     return (
         inner["left"] >= outer["left"] - 0.5
@@ -34,7 +31,6 @@ def inside(inner: dict, outer: dict) -> bool:
         and inner["top"] >= outer["top"] - 0.5
         and inner["bottom"] <= outer["bottom"] + 0.5
     )
-
 def meets(one: dict, other: dict) -> bool:
     return not (
         one["right"] <= other["left"]
@@ -42,7 +38,6 @@ def meets(one: dict, other: dict) -> bool:
         or one["bottom"] <= other["top"]
         or other["bottom"] <= one["top"]
     )
-
 def checked(page: Page, label: str, what: str = "counter") -> dict:
     said = page.evaluate(LOOK)
     say(f"[{label}] {said}")
@@ -59,7 +54,6 @@ def checked(page: Page, label: str, what: str = "counter") -> dict:
     if said["left"] and meets(thing, said["left"]):
         wrong(f"[{label}] the {what} {thing} is under the left side {said['left']}")
     return said
-
 def page_note(page: Page) -> None:
     there = "window.ordenApp.workspace.active?.path?.endsWith('.pages')"
     for _try in range(4):
@@ -71,7 +65,6 @@ def page_note(page: Page) -> None:
         wrong("no page note ever opened")
     page.wait_for_selector(".pages", timeout=15000)
     wait_for(page, "!!document.querySelector('footer[data-region=\"status\"] .page')", "the counter")
-
 def right_open(page: Page) -> None:
     page.evaluate(
         """() => {
@@ -82,27 +75,22 @@ def right_open(page: Page) -> None:
     )
     wait_for(page, "!!document.querySelector('.panels.right.open')", "the right side open")
     page.wait_for_timeout(400)
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 800}, reduced_motion="reduce")
     page = context.new_page()
     DRIVE.open(page)
     wait_for(page, "window.ordenApp.workspace.spaces.length > 0", "a space")
-
     page_note(page)
     right_open(page)
     checked(page, "the right side open")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
     checked(page, "both sides open")
-
     page.set_viewport_size({"width": 820, "height": 700})
     page.wait_for_timeout(500)
     checked(page, "a narrow window")
     page.set_viewport_size({"width": 1280, "height": 800})
     page.wait_for_timeout(400)
-
     page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('[data-pane]').length === 2", "the split")
     for at in (0, 1):
@@ -111,7 +99,6 @@ def drive(browser: Browser) -> None:
         )
         page.wait_for_timeout(400)
         checked(page, f"split, pane {at + 1} focused")
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -125,5 +112,4 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(400)
     checked(page, "a word note, the right side open", "bar")
     context.close()
-
 raise SystemExit(DRIVE.run(drive, "the note's corners stay inside its pane"))

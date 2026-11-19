@@ -34,7 +34,6 @@
     onplay: () => void
     onscrub: (at: number) => void
   } = $props()
-
   const CARD_MARK = 'M2 3.5h9M2 9.5h9M4.6 1.9v3.2M8.4 7.9v3.2'
   const ADD_MARK = 'M6.5 3v7M3 6.5h7'
   const DROP_MARK = 'M3.8 3.8l5.4 5.4M9.2 3.8l-5.4 5.4'
@@ -53,32 +52,26 @@
       : undefined,
   )
   $effect(() => closeOnBack(open, () => onopen(false)))
-
   function addGroup() {
     const held = settings.groups
     const colour = (held.length % MOST_GROUPS) + 1
     workspace.graphSettings.set({ groups: [...held, { query: '', colour }] })
   }
-
   function setGroup(index: number, change: { query?: string; colour?: number }) {
     workspace.graphSettings.set({
       groups: settings.groups.map((group, one) => (one === index ? { ...group, ...change } : group)),
     })
   }
-
   function dropGroup(index: number) {
     workspace.graphSettings.set({ groups: settings.groups.filter((_one, at) => at !== index) })
   }
-
   function nextColour(index: number, colour: number) {
     setGroup(index, { colour: (colour % MOST_GROUPS) + 1 })
   }
-
   async function keepView() {
     const { prompt } = await import('../../ui-kit/src/api')
     const name = await prompt.ask({ title: 'Add view to Essentials', confirmLabel: 'Keep' })
     if (!name) return
-
     workspace.bookmarks.toggle(workspace.bookmarks.forGraph(name, settings))
   }
 </script>
@@ -349,7 +342,6 @@
     gap: var(--space-2);
     max-width: calc(100% - 2 * var(--space-2));
   }
-
   .card {
     box-sizing: border-box;
     width: min(21rem, 100%);
@@ -363,32 +355,27 @@
     overscroll-behavior-y: contain;
     animation: lift var(--dur-fast) var(--ease-out);
   }
-
   @keyframes lift {
     from {
       opacity: 0;
       translate: 0 6px;
     }
   }
-
   .rule {
     flex: none;
     height: 1px;
     margin: var(--space-2) var(--row-pad);
     background: var(--line);
   }
-
   .group {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .group input {
     flex: 1;
     min-width: 0;
   }
-
   .swatch {
     flex: none;
     width: var(--icon-lg);
@@ -401,11 +388,9 @@
     cursor: default;
     transition: scale var(--dur-fast) var(--ease-spring);
   }
-
   .swatch:active {
     scale: 1.08;
   }
-
   .tab,
   .drop,
   .press {
@@ -424,35 +409,29 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .tab {
     background: var(--surface-3);
     border: 1px solid var(--line-strong);
     box-shadow: var(--shadow-md);
   }
-
   @media (hover: hover) {
     .drop:hover,
     .press:hover {
       color: var(--text-strong);
       background: var(--surface-hover);
     }
-
     .tab:hover {
       color: var(--text-strong);
       border-color: var(--muted);
     }
   }
-
   .drop:active,
   .press:active {
     background: var(--press);
   }
-
   .tab.on {
     color: var(--accent);
   }
-
   svg {
     width: var(--icon-md);
     height: var(--icon-md);
@@ -462,12 +441,10 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   svg.filled {
     fill: currentColor;
     stroke: none;
   }
-
   .chevron {
     display: block;
     flex: none;
@@ -475,7 +452,6 @@
     height: var(--icon-md);
     color: var(--muted);
   }
-
   .dial {
     display: flex;
     align-items: center;
@@ -484,7 +460,6 @@
     min-height: var(--row-height);
     padding: 0 var(--row-pad);
   }
-
   .dial span {
     flex: none;
     min-width: 7rem;
@@ -492,30 +467,25 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .dial input {
     flex: 0 1 11rem;
     min-width: 0;
   }
-
   .time {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .time input {
     flex: 1;
     min-width: 0;
   }
-
   :global([data-touch]) .tab,
   :global([data-touch]) .drop,
   :global([data-touch]) .press {
     width: var(--touch-target);
     height: var(--touch-target);
   }
-
   :global([data-touch]) svg {
     width: var(--icon-lg);
     height: var(--icon-lg);

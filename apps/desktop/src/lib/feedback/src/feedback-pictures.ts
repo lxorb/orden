@@ -1,22 +1,17 @@
 export const MOST_PICTURES = 4
 export const MOST_PICTURE_BYTES = 1_000_000
-
 export const LONGEST_EDGE = 2400
-
 export type PictureType = 'image/png' | 'image/jpeg'
-
 export interface Picture {
   id: string
   dataUrl: string
   preview: string
 }
-
 export interface Drawing {
   open(file: Blob): Promise<{ width: number; height: number } | null>
   write(width: number, height: number, type: PictureType, quality: number): Promise<Blob>
   close(): void
 }
-
 export function fitWithin(width: number, height: number, edge: number): { width: number; height: number } {
   const scale = Math.min(1, edge / Math.max(width, height, 1))
   return {
@@ -24,15 +19,12 @@ export function fitWithin(width: number, height: number, edge: number): { width:
     height: Math.max(1, Math.round(height * scale)),
   }
 }
-
 export function writtenAs(type: string): PictureType {
   return type === 'image/jpeg' || type === 'image/heic' || type === 'image/heif' ? 'image/jpeg' : 'image/png'
 }
-
 export function picturesAmong(files: Iterable<File>): File[] {
   return [...files].filter((file) => file.type.startsWith('image/'))
 }
-
 function tries(type: PictureType): { edge: number; type: PictureType; quality: number }[] {
   return [
     { edge: LONGEST_EDGE, type, quality: 0.88 },
@@ -42,7 +34,6 @@ function tries(type: PictureType): { edge: number; type: PictureType; quality: n
     { edge: 1000, type: 'image/jpeg', quality: 0.75 },
   ]
 }
-
 export async function redrawn(file: Blob, drawing: Drawing): Promise<{ blob: Blob; type: PictureType } | null> {
   const size = await drawing.open(file).catch(() => null)
   if (!size) return null
@@ -57,12 +48,10 @@ export async function redrawn(file: Blob, drawing: Drawing): Promise<{ blob: Blo
     drawing.close()
   }
 }
-
 interface Sheet {
   context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null
   blob(type: PictureType, quality: number): Promise<Blob>
 }
-
 export function pageSheet(width: number, height: number): Sheet {
   const canvas = document.createElement('canvas')
   canvas.width = width
@@ -75,7 +64,6 @@ export function pageSheet(width: number, height: number): Sheet {
       }),
   }
 }
-
 export function offscreenSheet(width: number, height: number): Sheet {
   const canvas = new OffscreenCanvas(width, height)
   return {
@@ -83,7 +71,6 @@ export function offscreenSheet(width: number, height: number): Sheet {
     blob: (type, quality) => canvas.convertToBlob({ type, quality }),
   }
 }
-
 export function sheetDrawing(sheetOf: (width: number, height: number) => Sheet): Drawing {
   let bitmap: ImageBitmap | null = null
   return {
@@ -109,7 +96,6 @@ export function sheetDrawing(sheetOf: (width: number, height: number) => Sheet):
     },
   }
 }
-
 export async function dataUrlOf(blob: Blob, type: PictureType): Promise<string> {
   const bytes = new Uint8Array(await blob.arrayBuffer())
   let binary = ''

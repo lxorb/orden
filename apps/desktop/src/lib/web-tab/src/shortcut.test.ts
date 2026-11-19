@@ -3,7 +3,6 @@ import { withOwn } from './own-file'
 import { apartOf, readShortcut, readWebloc, writeShortcut } from '@orden/scan/shortcut'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
-
 describe('the file a website is written as', () => {
   test('is an internet shortcut, and nothing more than one', () => {
     expect(writeShortcut('https://svelte.dev/docs', 'Svelte docs', WHEN)).toBe(
@@ -13,22 +12,18 @@ describe('the file a website is written as', () => {
         'Orden-Added=2026-09-12T08:30:00.000Z\r\n',
     )
   })
-
   test('is written with the line ending the format is read with', () => {
     expect(writeShortcut('https://a.example/', 'A', WHEN)).not.toContain('\n\n')
     expect(writeShortcut('https://a.example/', 'A', WHEN).split('\r\n')).toHaveLength(5)
   })
-
   test('says the address where a page has no title of its own', () => {
     expect(writeShortcut('https://a.example/', '   ', WHEN)).toContain('Title=https://a.example/')
   })
-
   test('keeps a title that arrived with a newline in it on one line', () => {
     const written = writeShortcut('https://a.example/', 'Two\nlines', WHEN)
     expect(written).toContain('Title=Two lines')
     expect(written.split('\r\n')).toHaveLength(5)
   })
-
   test('reads back exactly what it wrote', () => {
     const said = readShortcut(writeShortcut('https://svelte.dev/docs', 'Svelte docs', WHEN))
     expect(said).toEqual({
@@ -42,14 +37,12 @@ describe('the file a website is written as', () => {
       chosenColour: null,
     })
   })
-
   test('says a note keeps its own web data, and reads it back', () => {
     const written = writeShortcut('https://a.example', 'A', WHEN, null, null, '3f9a0c17e2b4d685')
     expect(written).toContain('Orden-Data=3f9a0c17e2b4d685\r\n')
     expect(readShortcut(written)?.own).toBe('3f9a0c17e2b4d685')
     expect(writeShortcut('https://a.example', 'A', WHEN)).not.toContain('Orden-Data')
   })
-
   test('a tab is on its file’s web data, and one with no file on what it took along', () => {
     const own = '3f9a0c17e2b4d685'
     const doc = writeShortcut('https://a.example', 'A', WHEN, null, null, own)
@@ -60,7 +53,6 @@ describe('the file a website is written as', () => {
     expect(apartOf({ path: null, doc: '', apart: own })).toBe(own)
     expect(apartOf({ path: null, doc: '' })).toBeNull()
   })
-
   test('and reads anything else in that key as a note that shares the one store', () => {
     for (const value of ['', 'yes', '3F9A0C17E2B4D68', '../web', '3f9a0c17e2b4d685x']) {
       const text = `[InternetShortcut]\r\nURL=https://a.example\r\nOrden-Data=${value}\r\n`
@@ -70,7 +62,6 @@ describe('the file a website is written as', () => {
     expect(readShortcut(loose)?.own).toBe('3f9a0c17e2b4d685')
     expect(writeShortcut('https://a.example', 'A', WHEN, null, null, 'not an id')).not.toContain('Orden-Data')
   })
-
   test('keeps where the note points when the reading has moved on', () => {
     const written = writeShortcut(
       'https://svelte.dev/docs/svelte/what-are-runes',
@@ -79,17 +70,14 @@ describe('the file a website is written as', () => {
       'https://svelte.dev/docs',
       'https://svelte.dev/favicon.png',
     )
-
     expect(written).toContain('URL=https://svelte.dev/docs/svelte/what-are-runes')
     expect(written).toContain('Orden-Home=https://svelte.dev/docs')
     expect(written).toContain('Orden-Icon=https://svelte.dev/favicon.png')
-
     const said = readShortcut(written)
     expect(said?.url).toBe('https://svelte.dev/docs/svelte/what-are-runes')
     expect(said?.home).toBe('https://svelte.dev/docs')
     expect(said?.icon).toBe('https://svelte.dev/favicon.png')
   })
-
   test('says nothing about home when the reading is where the note points', () => {
     const written = writeShortcut('https://a.example/', 'A', WHEN, 'https://a.example/', null)
     expect(written).not.toContain('Orden-Home')
@@ -97,19 +85,16 @@ describe('the file a website is written as', () => {
     expect(written.split('\r\n')).toHaveLength(5)
   })
 })
-
 describe('a shortcut somebody else wrote', () => {
   test('is read whatever case and spacing it uses', () => {
     const said = readShortcut('[internetshortcut]\r\n url = https://a.example/page \r\n')
     expect(said?.url).toBe('https://a.example/page')
     expect(said?.title).toBe(null)
   })
-
   test('keeps every equals sign after the first, because an address is full of them', () => {
     const said = readShortcut('[InternetShortcut]\nURL=https://a.example/?a=1&b=2\n')
     expect(said?.url).toBe('https://a.example/?a=1&b=2')
   })
-
   test('steps over the keys a browser leaves behind', () => {
     const said = readShortcut(
       '[InternetShortcut]\r\nIDList=\r\nURL=https://a.example/\r\n' +
@@ -117,7 +102,6 @@ describe('a shortcut somebody else wrote', () => {
     )
     expect(said?.url).toBe('https://a.example/')
   })
-
   test('reads only the keys in the shortcut block', () => {
     const said = readShortcut(
       '[DEFAULT]\r\nBASEURL=https://wrong.example/\r\n' +
@@ -126,12 +110,10 @@ describe('a shortcut somebody else wrote', () => {
     )
     expect(said?.url).toBe('https://right.example/')
   })
-
   test('takes the first of two keys that say the same thing twice', () => {
     const said = readShortcut('[InternetShortcut]\nURL=https://first.example/\nURL=https://b/\n')
     expect(said?.url).toBe('https://first.example/')
   })
-
   test('is not a website when it points anywhere but the web', () => {
     expect(readShortcut('[InternetShortcut]\r\nURL=file:///C:/notes/Idea.md\r\n')).toBe(null)
     expect(readShortcut('[InternetShortcut]\r\nURL=javascript:alert(1)\r\n')).toBe(null)
@@ -141,7 +123,6 @@ describe('a shortcut somebody else wrote', () => {
     expect(readShortcut(null)).toBe(null)
   })
 })
-
 describe('a shortcut a Mac wrote', () => {
   test('is the string after the key called URL', () => {
     expect(
@@ -151,13 +132,11 @@ describe('a shortcut a Mac wrote', () => {
       ),
     ).toBe('https://svelte.dev/docs')
   })
-
   test('comes back with its escapes undone', () => {
     expect(readWebloc('<dict><key>URL</key><string>https://a.example/?a=1&amp;b=2</string></dict>')).toBe(
       'https://a.example/?a=1&b=2',
     )
   })
-
   test('and is nothing when the plist says nothing this app can open', () => {
     expect(readWebloc('<dict><key>URL</key><string>ftp://a.example/</string></dict>')).toBe(null)
     expect(readWebloc('<dict><key>Name</key><string>A</string></dict>')).toBe(null)
@@ -166,7 +145,6 @@ describe('a shortcut a Mac wrote', () => {
     expect(readWebloc(null)).toBe(null)
   })
 })
-
 describe('a web note turned apart or shared again', () => {
   test('keeps everything the file said, its own web data aside', () => {
     const was = writeShortcut('https://a.example/page', 'A', WHEN, 'https://a.example', 'data:x')
@@ -174,7 +152,6 @@ describe('a web note turned apart or shared again', () => {
     expect(readShortcut(apart)).toEqual({ ...readShortcut(was), own: '3f9a0c17e2b4d685' })
     expect(withOwn('/S/A.url', apart, null)).toBe(was)
   })
-
   test('and writes nothing over a file it does not write', () => {
     expect(withOwn('/S/A.webloc', '<plist/>', '3f9a0c17e2b4d685')).toBeNull()
     expect(withOwn('/S/A.url', 'not a shortcut', '3f9a0c17e2b4d685')).toBeNull()

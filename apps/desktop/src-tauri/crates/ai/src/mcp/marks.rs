@@ -1,5 +1,4 @@
 const TAG: &str = "untrusted";
-
 pub fn marked(source: &str, words: &str) -> String {
     format!(
         "<{TAG} source=\"{}\">\n{}\n</{TAG}>",
@@ -7,20 +6,17 @@ pub fn marked(source: &str, words: &str) -> String {
         inert(words)
     )
 }
-
 pub fn one_line(words: &str) -> String {
     words
         .chars()
         .map(|one| if breaks(one) { ' ' } else { one })
         .collect()
 }
-
 fn breaks(one: char) -> bool {
     one.is_control()
         || orden_base::letters::is_format(one)
         || matches!(one, '\u{2028}' | '\u{2029}')
 }
-
 fn inert(words: &str) -> String {
     let mut out = String::with_capacity(words.len());
     for (at, one) in words.char_indices() {
@@ -32,7 +28,6 @@ fn inert(words: &str) -> String {
     }
     out
 }
-
 fn opens(one: char, rest: &str) -> bool {
     if !matches!(orden_base::letters::look_alike(one), '<' | '\u{FE64}') {
         return false;
@@ -51,7 +46,6 @@ fn opens(one: char, rest: &str) -> bool {
         .trim_start()
         .starts_with(TAG)
 }
-
 fn attribute(source: &str) -> String {
     let mut out = String::new();
     for one in source.chars().take(300) {
@@ -66,7 +60,6 @@ fn attribute(source: &str) -> String {
     }
     out
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -84,7 +77,6 @@ mod tests {
         assert!(said.starts_with("<untrusted source=\"a&quot; onload=&quot;x &lt;b&gt;\">"));
         assert_eq!(inert("日本語 < über <u"), "日本語 < über <u");
     }
-
     #[test]
     fn a_page_cannot_end_the_mark() {
         let said = marked(
@@ -97,7 +89,6 @@ mod tests {
         assert!(said.contains("&lt;/untrusted>"));
         assert!(said.contains("&lt;UNTRUSTED"));
     }
-
     #[test]
     fn a_page_cannot_end_the_mark_with_spaces_inside_the_tag() {
         for close in [
@@ -111,7 +102,6 @@ mod tests {
         }
         assert_eq!(inert("a < b and c </ d"), "a < b and c </ d");
     }
-
     #[test]
     fn a_page_cannot_end_the_mark_with_hidden_or_look_alike_letters() {
         for close in [

@@ -4,7 +4,6 @@ import type { LinkLife } from './link-make'
 const MINUTE = 60e3
 const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
-
 export function lifeName(life: LinkLife): string {
   if (life === HOUR) return '1 hour'
   if (life === DAY) return '1 day'
@@ -12,11 +11,9 @@ export function lifeName(life: LinkLife): string {
   if (life === 14 * DAY) return '2 weeks'
   return '30 days'
 }
-
 export function isExpired(link: Pick<LinkRow, 'expires' | 'views' | 'seen'>, now: number): boolean {
   return link.expires <= now || (link.views !== null && link.seen >= link.views)
 }
-
 export function expiresIn(expires: number, now: number): string {
   const left = expires - now
   if (left <= 0) return 'Expired'
@@ -30,7 +27,6 @@ export function expiresIn(expires: number, now: number): string {
     ? 'in 1 minute'
     : `in ${Math.max(1, Math.round(left / MINUTE))} minutes`
 }
-
 export function viewsWord(link: Pick<LinkRow, 'views' | 'seen'>): string {
   if (link.views === null) return link.seen === 1 ? '1 view' : `${link.seen} views`
   return link.views === 1 ? `${link.seen} of 1 view` : `${link.seen} of ${link.views} views`

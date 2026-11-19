@@ -1,7 +1,6 @@
 import { providePort } from '@orden/contracts'
 
 const looks = () => import('./theme-looks/src/api')
-
 providePort('theme.looks', {
   glassSettings: () => looks().then((one) => one.glassSettings),
   wallpaperSheet: () => looks().then((one) => one.wallpaperSheet()),

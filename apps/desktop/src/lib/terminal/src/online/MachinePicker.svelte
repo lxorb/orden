@@ -27,7 +27,6 @@
     running: number
     chosen: () => Promise<void>
   } = $props()
-
   const made = $derived(server?.made === true)
   let picked = $state<string | null>(null)
   const location = $derived(made ? (server?.location ?? null) : (picked ?? placeOf(offers, server)))
@@ -36,11 +35,8 @@
   let arch = $state<Arch>('any')
   let busy = $state(false)
   let said = $state<string | null>(null)
-
   const picks = $derived(picksOf(offers, location, sort, kind, arch, server))
-
   const places = $derived(offers.locations.map((one) => ({ value: one.name, label: one.city })))
-
   const SORTS = [
     { value: 'price', label: 'Price' },
     { value: 'cores', label: 'vCPU' },
@@ -58,10 +54,8 @@
     { value: 'x86', label: 'x86' },
     { value: 'arm', label: 'Arm' },
   ]
-
   const blockedWords = (pick: Pick) =>
     pick.blocked === 'disk' ? 'Smaller disk' : pick.blocked === 'arch' ? 'Other CPU' : null
-
   async function use(pick: Pick) {
     said = null
     if (server && made) {
@@ -143,13 +137,11 @@
     gap: var(--space-3);
     width: 100%;
   }
-
   .controls {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-3);
   }
-
   .control {
     display: flex;
     flex-direction: column;
@@ -159,13 +151,11 @@
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .types {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .setting .name {
     flex: 1;
     display: flex;
@@ -173,12 +163,10 @@
     gap: 1px;
     min-width: 0;
   }
-
   .setting small {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .price {
     flex: none;
     display: flex;
@@ -188,7 +176,6 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-
   .row {
     flex: none;
     display: flex;
@@ -196,7 +183,6 @@
     justify-content: flex-end;
     min-width: 5.5em;
   }
-
   .hint {
     margin: 0;
     font-family: var(--font-ui);
@@ -204,15 +190,12 @@
     color: var(--muted);
     line-height: 1.5;
   }
-
   .said {
     color: var(--text);
   }
-
   :global(.sheet.phone) .picker {
     padding: var(--touch-pad);
   }
-
   :global(.sheet.phone) .setting {
     flex-wrap: wrap;
     gap: var(--space-1) var(--touch-gap);
@@ -220,16 +203,13 @@
     padding: var(--space-2) 0;
     font-size: var(--touch-text);
   }
-
   :global(.sheet.phone) .setting .name {
     flex-basis: 100%;
   }
-
   :global(.sheet.phone) .price {
     flex: 1;
     align-items: flex-start;
   }
-
   :global(.sheet.phone) .setting small,
   :global(.sheet.phone) .hint,
   :global(.sheet.phone) .control {

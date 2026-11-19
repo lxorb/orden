@@ -2,13 +2,11 @@
 import base64
 import io
 import zipfile
-
 from harness import Drive
 from playwright.sync_api import Browser, Page
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PLAIN = (
     "JVBERi0xLjcKJcfsj6IKJSVJbnZvY2F0aW9uOiBncyAtcSAtZE5PUEFVU0UgLWRCQVRDSCAtc0RFVklDRT1wZGZ3"
     "cml0ZSAtc091dHB1dEZpbGU9PyA/CjUgMCBvYmoKPDwvTGVuZ3RoIDYgMCBSL0ZpbHRlciAvRmxhdGVEZWNvZGU+"
@@ -114,7 +112,6 @@ LOCKED = (
     "0e8kSAiYhh1YgYoJ6G8kFmGxI0eaJ9sy0Ls8wJiZZC9IT8Jd209oOStJto+LVbWBy4/c4krWlmwOH2VcBf4KZW5k"
     "c3RyZWFtCmVuZG9iagpzdGFydHhyZWYKMzA3NQolJUVPRgo="
 )
-
 IMPORT = """
 async ({ base64, name }) => {
   const binary = atob(base64)
@@ -130,7 +127,6 @@ async ({ base64, name }) => {
   await window.ordenApp.workspace.openEntry(path)
 }
 """
-
 DARK = """
 async (src) => {
   const image = new Image()
@@ -149,7 +145,6 @@ async (src) => {
   return dark
 }
 """
-
 FORMATS = {
     "Export as PNG": "png",
     "Export as JPG": "jpg",
@@ -159,13 +154,11 @@ FORMATS = {
     "Export as RTF": "rtf",
     "Export as Word": "docx",
 }
-
 def exported(page: Page, row: str) -> bytes:
     go = DRIVE.pick_export(page, FORMATS[row])
     with page.expect_download(timeout=30000) as asked:
         go.click()
     return asked.value.path().read_bytes()
-
 def opened_with_ink(page: Page, name: str, paper: str) -> None:
     page.evaluate(IMPORT, {"base64": paper, "name": name})
     page.wait_for_selector(".pages", timeout=15000)
@@ -180,18 +173,15 @@ def opened_with_ink(page: Page, name: str, paper: str) -> None:
     page.mouse.up()
     page.keyboard.press("v")
     page.wait_for_timeout(300)
-
 def looked_at(page: Page, name: str, mime: str, body: bytes) -> int:
     src = f"data:{mime};base64,{base64.b64encode(body).decode()}"
     dark = page.evaluate(DARK, src)
     say(f"{name}: {dark} dark pixels")
     return dark
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
     wait_for(page, "!!window.ordenApp.importing", "the import store")
-
     opened_with_ink(page, "Real.pdf", PLAIN)
     for row, kind, mime in (
         ("Export as PNG", ".png", "image/png"),
@@ -204,17 +194,14 @@ def drive(browser: Browser) -> None:
         for name in names:
             if looked_at(page, name, mime, pictures.read(name)) < 500:
                 wrong(f"{row}: {name} is a white sheet, the paper's page is not on it")
-
     opened_with_ink(page, "Locked.pdf", LOCKED)
     word = "document.querySelector('.track.failed .said')?.innerText === 'This PDF is locked by its owner'"
     DRIVE.pick_export(page, "pdf").click()
     wait_for(page, word, "the word on Export as PDF")
     shot(page, "01-locked-said")
-
     pictures = zipfile.ZipFile(io.BytesIO(exported(page, "Export as PNG")))
     wait_for(page, word, "the word on Export as PNG")
     for name in sorted(one for one in pictures.namelist() if one.endswith(".png")):
         if looked_at(page, name, "image/png", pictures.read(name)) > 5000:
             wrong(f"the locked paper's page came out in {name}")
-
 raise SystemExit(DRIVE.run(drive))

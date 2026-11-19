@@ -17,22 +17,17 @@ const USER = 'e2e-user'
 const DEVICE = 'e2edevice01'
 const windows = process.platform === 'win32'
 const WRANGLER = join(SYNC, 'node_modules/wrangler/bin/wrangler.js')
-
 const state = mkdtempSync(join(tmpdir(), 'orden-online-e2e-'))
 const vars = join(state, 'dev.vars')
 let worker = null
 const opened = []
-
 function log(...what) {
   console.log('[online-e2e]', ...what)
 }
-
 function sql(command) {
   sqlLocal(state, command)
 }
-
 const pause = (ms) => new Promise((settle) => setTimeout(settle, ms))
-
 async function until(what, check, ms) {
   const end = Date.now() + ms
   for (;;) {
@@ -42,7 +37,6 @@ async function until(what, check, ms) {
     await pause(200)
   }
 }
-
 function refusal(url) {
   return new Promise((settle) => {
     const asked = request(url.replace(/^ws/, 'http'), {
@@ -64,7 +58,6 @@ function refusal(url) {
     asked.end()
   })
 }
-
 async function socket(session, since) {
   const url = `${BASE.replace(/^http/, 'ws')}/v2/online/${encodeURIComponent(session)}/socket`
   const ws = new WebSocket(url, [`orden.token.${TOKEN}`, `orden.device.${DEVICE}`])
@@ -128,7 +121,6 @@ async function socket(session, since) {
       }),
   }
 }
-
 async function roundTrips(on, label) {
   const times = []
   for (let at = 0; at < 40; at++) {
@@ -140,7 +132,6 @@ async function roundTrips(on, label) {
   const ms = (value) => `${value.toFixed(1)} ms`
   log(`echo ${label}: p50 ${ms(pick(0.5))}, p90 ${ms(pick(0.9))}, max ${ms(pick(1))}`)
 }
-
 async function main() {
   log('state in', state)
   await until(
@@ -154,7 +145,6 @@ async function main() {
   )
   mkdirSync(join(ROOT, 'apps/desktop/dist'), { recursive: true })
   writeFileSync(vars, `MACHINE_DEV_ORDEND="${ORDEND}"\nMACHINE_DEV_SECRET="dev"\n`)
-
   migrateLocal(state)
   const hash = createHash('sha256').update(TOKEN).digest('hex')
   const now = Date.now()
@@ -165,7 +155,6 @@ async function main() {
        values ('${hash}', '${USER}', ${now}, ${now + 86_400_000}, 'e2e-session', 'e2e', ${now});`,
   )
   log('database ready')
-
   worker = spawn(
     process.execPath,
     [
@@ -194,7 +183,6 @@ async function main() {
   )
   worker.stdout.on('data', (chunk) => process.stdout.write(`[wrangler] ${chunk}`))
   worker.stderr.on('data', (chunk) => process.stdout.write(`[wrangler] ${chunk}`))
-
   const api = (path, init = {}) =>
     fetch(`${BASE}${path}`, {
       ...init,
@@ -210,7 +198,6 @@ async function main() {
     120_000,
   )
   log('Worker up')
-
   const asked = performance.now()
   const made = await api('/v2/online/terms', { method: 'POST', body: '{}' })
   const term = await made.json()
@@ -218,7 +205,6 @@ async function main() {
     throw new Error(`POST /v2/online/terms {} answered ${made.status} ${JSON.stringify(term)}`)
   }
   log('session', term.session, 'on', term.machine, `in ${Math.round(performance.now() - asked)} ms`)
-
   const first = await socket(term.session)
   await until(
     'the machine awake',
@@ -232,7 +218,6 @@ async function main() {
   first.typeBytes('echo bytes-$((5*5))\r')
   await until('bytes-25 printed', () => first.text().includes('bytes-25'), 30_000)
   log('typed and answered, as text and as bytes')
-
   first.type('sleep 3; echo later-$((7*6))\r')
   await pause(500)
   const since = first.end()
@@ -246,7 +231,6 @@ async function main() {
     throw new Error(`a reconnect from ${since} was sent what it drew: ${JSON.stringify(back.heard)}`)
   }
   log('reconnected from', since, 'and got the rest')
-
   const late = await socket(term.session)
   await until(
     'the late joiner’s screen',
@@ -255,7 +239,6 @@ async function main() {
   )
   if (!late.text().includes('hi-42')) throw new Error('the late joiner’s screen is missing hi-42')
   log('late joiner got the screen')
-
   await roundTrips(back, 'at a quiet prompt')
   back.type('\x15')
   back.type('while :; do printf .; sleep 0.003; done\r')
@@ -271,7 +254,6 @@ async function main() {
     30_000,
   )
   log('xdg-open reached the owner’s socket')
-
   back.type(
     '(cd /tmp && python3 -m http.server 8766 --bind 127.0.0.1 >/dev/null 2>&1 &); sleep 1; echo served-$((1+1))\r',
   )
@@ -283,19 +265,16 @@ async function main() {
     30_000,
   )
   log('a sign-in callback was made on the machine')
-
   back.type('stty -icanon; head -c 200000 > /tmp/big; stty icanon; echo big-$(wc -c < /tmp/big)\r')
   await pause(1000)
   const paste = 'x'.repeat(200_000)
   for (let at = 0; at < paste.length; at += 64 * 1024) back.type(paste.slice(at, at + 64 * 1024))
   await until('the whole paste', () => back.text().includes('big-200000'), 60_000)
   log('a paste of four frames arrived whole')
-
   back.close()
   late.close()
   log('passed')
 }
-
 async function stop() {
   if (worker && worker.exitCode === null) {
     const exited = new Promise((settle) => worker.once('exit', settle))
@@ -309,7 +288,6 @@ async function stop() {
     log('left', state, String(error))
   }
 }
-
 let failed = false
 try {
   await main()

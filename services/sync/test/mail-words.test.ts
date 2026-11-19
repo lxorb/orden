@@ -20,9 +20,7 @@ const SENT = {
   }),
   request: requestMessage({ space: 'Plans', who: 'Kim', link: 'https://orden.so/s/a' }),
 }
-
 const OLD_NAME = /(?<![A-Za-z@./])(?:Nib|nibeditor)(?![A-Za-z@])/i
-
 describe('every message the service sends', () => {
   test('never calls the app by its old name', () => {
     for (const [kind, message] of Object.entries(SENT)) {
@@ -31,7 +29,6 @@ describe('every message the service sends', () => {
       }
     }
   })
-
   test('names it where it names it at all', () => {
     expect(SENT.code.subject).toBe('123456 is your Orden code')
     expect(SENT.leaving.subject).toBe('123456 deletes your Orden account')

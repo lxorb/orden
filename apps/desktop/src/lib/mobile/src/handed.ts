@@ -19,32 +19,25 @@ import { workspace } from '../../workspace/src/api'
 import { watchWidgets } from './widgets.svelte'
 
 const SLICE = 256 * 1024
-
 const SHOWN = 160
-
 interface Asked {
   command: string
   open: string
   tick: string
   tickSpace: string
 }
-
 export const HANDED: ReadonlySet<string> = new Set(['new', 'search-space', 'record', 'quick-add'])
-
 export function askedFrom(json: string): Asked {
   const nothing: Asked = { command: '', open: '', tick: '', tickSpace: '' }
   if (!json) return nothing
-
   let parsed: unknown
   try {
     parsed = JSON.parse(json)
   } catch {
     return nothing
   }
-
   if (typeof parsed !== 'object' || parsed === null) return nothing
   const held = parsed as Record<string, unknown>
-
   const words = (value: unknown) => (typeof value === 'string' ? value : '')
   return {
     command: HANDED.has(words(held.command)) ? words(held.command) : '',
@@ -53,33 +46,26 @@ export function askedFrom(json: string): Asked {
     tickSpace: words(held.tickSpace),
   }
 }
-
 async function run(id: string): Promise<boolean> {
   if (!id) return false
-
   await commandRowsLoaded()
   const view = views.of(workspace.panes.focusedId)
   const found = appCommands(view).find((one) => one.id === id)
   if (!found || found.disabled) return false
-
   found.run()
   return true
 }
-
 export function openable(said: string): string | null {
   const found = insideAnyOf(
     workspace.spaces.map((one) => one.root),
     said,
   )
   if (!found) log('error', `handed: ${said} is not a note in any space`)
-
   return found
 }
-
 let retaking = false
 let taking: Promise<void> | null = null
 let again = false
-
 function takeOnce(): void {
   if (taking) {
     again = true
@@ -92,7 +78,6 @@ function takeOnce(): void {
     takeOnce()
   })
 }
-
 async function take(): Promise<void> {
   const word = await frameWord()
   if (!word) {
@@ -103,39 +88,32 @@ async function take(): Promise<void> {
     return
   }
   const asked = askedFrom(method('handed')?.(word) ?? '')
-
   const open = asked.open ? openable(asked.open) : null
   if (open) await workspace.open(open).catch(() => undefined)
   if (asked.command) await run(asked.command)
   if (asked.tick) await ticked(asked.tick)
-
   await taken(word)
 }
-
 async function ticked(at: string): Promise<void> {
   const { tickTask } = await import('../../tasks-model/src/api')
   await tickTask(at, true).catch((error: unknown) => {
     log('error', `handed: a task could not be ticked: ${String(error)}`)
   })
 }
-
 function importing(): ImportBringPort | null {
   const port = portOf('import.bring')
   return port.ok ? port.value : null
 }
-
 async function taken(word: string): Promise<void> {
   const said = method('shared')?.(word) ?? ''
   const port = said ? importing() : null
   const shared = port ? await port.shared(said) : null
   if (!port || !shared) return
-
   let answered = true
   try {
     const bytes = await carried(shared, word)
     const root = await landing()
     const where = await ask(shared, root)
-
     if (where === 'kept') {
       answered = false
       log('error', 'shared: no space may be written in, so the share is kept')
@@ -148,52 +126,40 @@ async function taken(word: string): Promise<void> {
     if (answered) method('sharedDone')?.(word)
   }
 }
-
 async function carried(shared: Shared, word: string): Promise<Map<number, Uint8Array>> {
   const read = method('sharedBytes')
   const held = new Map<number, Uint8Array>()
   if (!read) return held
-
   for (const [at, item] of shared.items.entries()) {
     if (item.text !== null || item.size <= 0) continue
-
     const parts: Uint8Array[] = []
     let got = 0
-
     while (got < item.size) {
       const text = read(word, at, got, SLICE)
       if (!text) break
-
       const bytes = fromBase64(text)
       if (!bytes.length) break
-
       parts.push(bytes)
       got += bytes.length
       await waited()
     }
-
     if (!got) continue
-
     const whole = new Uint8Array(got)
     let put = 0
     for (const part of parts) {
       whole.set(part, put)
       put += part.length
     }
-
     held.set(at, whole)
   }
-
   return held
 }
-
 async function landing(): Promise<string | null> {
   const { canWriteAt } = await import('../../sharing/src/api')
   const open = workspace.activeSpace?.root
   if (open !== undefined && canWriteAt(open)) return open
   return workspace.spaces.find((one) => canWriteAt(one.root))?.root ?? null
 }
-
 async function ask(shared: Shared, root: string | null): Promise<'new' | 'here' | 'task' | 'kept' | null> {
   const tab = workspace.active
   const view = views.of(workspace.panes.focusedId)
@@ -201,7 +167,6 @@ async function ask(shared: Shared, root: string | null): Promise<'new' | 'here' 
   const words = shared.items.every((one) => one.text !== null)
   if (root === null && !into) return 'kept'
   if (root !== null && !into && !words) return 'new'
-
   const chosen = await prompt.choose({
     title: 'Shared',
     detail: summary(shared),
@@ -211,26 +176,21 @@ async function ask(shared: Shared, root: string | null): Promise<'new' | 'here' 
       ...(root !== null && words ? [{ id: 'task', label: 'As a task' }] : []),
     ],
   })
-
   if (chosen === 'new' || chosen === 'here' || chosen === 'task') return chosen
   return null
 }
-
 async function asATask(shared: Shared) {
   const { addTask } = await import('../../tasks-model/src/api')
   await addTask(shared.task, { typed: false })
 }
-
 function summary(shared: Shared): string {
   const words = shared.words.replace(/\s+/g, ' ').trim()
   if (words) return words.length > SHOWN ? `${words.slice(0, SHOWN)}…` : words
-
   return shared.items
     .map((one) => one.name)
     .filter(Boolean)
     .join(', ')
 }
-
 async function intoANewNote(
   port: ImportBringPort,
   shared: Shared,
@@ -241,30 +201,22 @@ async function intoANewNote(
   const first = await port.landShared(shared, bytes, root, folder)
   if (first) await workspace.openEntry(first)
 }
-
 async function intoTheOpenNote(shared: Shared, bytes: ReadonlyMap<number, Uint8Array>) {
   const view = views.of(workspace.panes.focusedId)
   if (!view) return
-
   if (shared.markdown) writeAtCaret(view, shared.markdown)
-
   for (const [at, item] of shared.items.entries()) {
     const held = bytes.get(at)
     if (item.text !== null || !held?.length) continue
-
     const file = new File([new Uint8Array(held)], item.name || 'shared', { type: item.mime })
     await putPicture(view, file)
   }
 }
-
 export function startHanded(): () => void {
   if (!onTheActivity()) return () => undefined
-
   const stopWidgets = watchWidgets()
-
   answer('__ordenHanded', takeOnce)
   takeOnce()
-
   return () => {
     answer('__ordenHanded', undefined)
     stopWidgets()

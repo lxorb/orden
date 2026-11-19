@@ -14,18 +14,14 @@ class Rewriting {
   after = $state('')
   running = $state(false)
   trouble = $state<string | null>(null)
-
   private view: EditorView | null = null
   private shows: SharedDoc | null = null
   private place: { from: number; to: number } | null = null
   private stopper: AbortController | null = null
-
   show(view: EditorView) {
     const range = view.state.selection.main
     if (range.empty || view.state.readOnly) return
-
     void askSheet('rewrite')
-
     this.view = view
     this.shows = documentOf(view)
     this.place = { from: range.from, to: range.to }
@@ -37,13 +33,11 @@ class Rewriting {
     this.language = defaultLanguage(systemLocale())
     this.open = true
   }
-
   run(verb: Verb) {
     const provider = ai.providerFor('rewrite')
     this.verb = verb
     this.after = ''
     this.trouble = null
-
     if (!provider) {
       this.trouble = 'Add an AI provider in Settings first.'
       return
@@ -52,12 +46,10 @@ class Rewriting {
       this.trouble = SHUT_TO_AGENTS
       return
     }
-
     this.stopper?.abort()
     const stopper = new AbortController()
     this.stopper = stopper
     this.running = true
-
     void complete({
       provider,
       model: provider.model,
@@ -75,7 +67,6 @@ class Rewriting {
         if (this.stopper === stopper) this.running = false
       })
   }
-
   accept() {
     const view = this.view
     const place = this.place
@@ -89,7 +80,6 @@ class Rewriting {
       this.trouble = 'The words chosen are no longer in the note, so nothing was replaced.'
       return
     }
-
     view.dispatch({
       changes: { from: now.from, to: now.to, insert: text },
       selection: { anchor: now.from, head: now.from + text.length },
@@ -97,7 +87,6 @@ class Rewriting {
     view.focus()
     this.close()
   }
-
   close() {
     this.stopper?.abort()
     this.stopper = null
@@ -112,9 +101,7 @@ class Rewriting {
     this.trouble = null
   }
 }
-
 export const rewriting = new Rewriting()
-
 export function rewriteRows(view?: object): CommandExtension[] {
   return view ? [{ id: 'rewrite', label: 'Rewrite…', run: () => rewriting.show(view as EditorView) }] : []
 }

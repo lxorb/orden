@@ -3,12 +3,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const readOnly = new Set<string>()
 const writable = (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`))
-
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: writable,
   canWriteIn: (note: { path: string | null } | null) => !note?.path || writable(note.path),
 }))
-
 const workspace = vi.hoisted(() => ({
   activeSpace: null as { id: string; name: string; root: string } | null,
   active: null as { path: string | null; note: { path: string | null; shared: null } } | null,
@@ -19,14 +17,12 @@ const workspace = vi.hoisted(() => ({
     return Promise.resolve()
   },
 }))
-
 vi.mock('../../workspace/src/api', async () => {
   const { carvable, mergeable } = await vi.importActual<typeof import('../../workspace/src/composing')>(
     '../../workspace/src/composing',
   )
   return { workspace, carvable, mergeable }
 })
-
 const asked = vi.hoisted(() => ({ offered: [] as string[], answer: null as string | null }))
 vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
@@ -37,11 +33,8 @@ vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
     },
   },
 }))
-
 const { composerCommands } = await import('./composer-commands')
-
 const SPACE = '/space'
-
 const reading = {
   state: {
     readOnly: true,
@@ -49,7 +42,6 @@ const reading = {
     doc: { sliceString: () => '' },
   },
 } as unknown as EditorView
-
 function openAt(path: string) {
   workspace.activeSpace = { id: 's1', name: 'space', root: SPACE }
   workspace.active = { path, note: { path, shared: null } }
@@ -58,46 +50,38 @@ function openAt(path: string) {
     { path: `${SPACE}/b.md`, name: 'b.md' },
   ]
 }
-
 function mergeOffered(view?: EditorView): boolean {
   const merge = composerCommands(view).find((command) => command.id === 'merge-into')
   return !merge?.disabled
 }
-
 beforeEach(() => {
   readOnly.clear()
   workspace.merged = []
   asked.offered = []
   asked.answer = null
 })
-
 describe('merge into another note', () => {
   test('is offered for a note of the open space', () => {
     openAt(`${SPACE}/a.md`)
     expect(mergeOffered()).toBe(true)
   })
-
   test('is not offered in a space shared to be read', () => {
     readOnly.add(SPACE)
     openAt(`${SPACE}/a.md`)
     expect(mergeOffered()).toBe(false)
   })
-
   test('is not offered in an editor that will not be typed in', () => {
     openAt(`${SPACE}/a.md`)
     expect(mergeOffered(reading)).toBe(false)
   })
-
   test('is not offered for a note of a space that is not the open one', () => {
     openAt('/other/a.md')
     expect(mergeOffered()).toBe(false)
   })
-
   test('is not offered for a page note, whose paper merging would delete', () => {
     openAt(`${SPACE}/Lecture.pages`)
     expect(mergeOffered()).toBe(false)
   })
-
   test('is not offered for a canvas, a web tab or a base', () => {
     for (const file of ['Board.canvas', 'Site.url', 'Books.base']) {
       openAt(`${SPACE}/${file}`)
@@ -105,15 +89,12 @@ describe('merge into another note', () => {
     }
   })
 })
-
 describe('the notes offered to merge into', () => {
   const CHAT = `${SPACE}/Team.chat`
-
   function withChat() {
     openAt(`${SPACE}/a.md`)
     workspace.notes.push({ path: CHAT, name: 'Team.chat' })
   }
-
   async function runMerge() {
     composerCommands()
       .find((command) => command.id === 'merge-into')
@@ -121,13 +102,11 @@ describe('the notes offered to merge into', () => {
     await vi.waitFor(() => expect(asked.offered.length).toBeGreaterThan(0))
     await new Promise((settle) => setTimeout(settle, 0))
   }
-
   test('are the other markdown notes, and never a chat', async () => {
     withChat()
     await runMerge()
     expect(asked.offered).toEqual([`${SPACE}/b.md`])
   })
-
   test('so merge is not offered when a chat is the only other one', () => {
     openAt(`${SPACE}/a.md`)
     workspace.notes = [
@@ -136,7 +115,6 @@ describe('the notes offered to merge into', () => {
     ]
     expect(mergeOffered()).toBe(false)
   })
-
   test('and a markdown note picked is merged into', async () => {
     withChat()
     asked.answer = `${SPACE}/b.md`
@@ -144,7 +122,6 @@ describe('the notes offered to merge into', () => {
     expect(workspace.merged).toEqual([`${SPACE}/a.md -> ${SPACE}/b.md`])
   })
 })
-
 const typing = {
   state: {
     readOnly: false,
@@ -152,29 +129,24 @@ const typing = {
     doc: { sliceString: () => 'some words' },
   },
 } as unknown as EditorView
-
 function offered(id: string, view?: EditorView): boolean {
   return !composerCommands(view).find((command) => command.id === id)?.disabled
 }
-
 describe.each(['split-at-caret', 'extract-selection'])('%s', (id) => {
   test('is offered for a note of the open space', () => {
     openAt(`${SPACE}/a.md`)
     expect(offered(id, typing)).toBe(true)
   })
-
   test('is not offered for a file that is not a markdown note', () => {
     for (const file of ['snippets.json', 'custom.css', 'notes.txt', 'main.rs', 'Board.canvas']) {
       openAt(`${SPACE}/${file}`)
       expect(offered(id, typing)).toBe(false)
     }
   })
-
   test('is offered for a note of a space that is not the open one, which it carves beside', () => {
     openAt('/other/a.md')
     expect(offered(id, typing)).toBe(true)
   })
-
   test('is not offered in a space shared to be read', () => {
     readOnly.add(SPACE)
     openAt(`${SPACE}/a.md`)

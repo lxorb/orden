@@ -9,16 +9,13 @@ async function moved(root: string, from: string, to: string): Promise<void> {
   const { movedIn } = await (await import('../../../automation/src/api')).automationMoving()
   await movedIn(root, from, to, true)
 }
-
 function rootOf(change: FileChange, thread: Pick<Thread, 'space'>): string | null {
   const named = change.space
   const space =
     (named ? spaceNamed(workspace.spaces, named) : undefined) ?? workspace.spaces.find((one) => one.id === thread.space)
   return space?.root ?? null
 }
-
 const unmade = new WeakSet()
-
 function deletion(path: string): Extract<FileAction, { kind: 'delete' }> | null {
   for (const action of [...workspace.undone.stack].reverse()) {
     const step = action.kind === 'many' ? action.steps[0] : action
@@ -26,12 +23,10 @@ function deletion(path: string): Extract<FileAction, { kind: 'delete' }> | null 
   }
   return null
 }
-
 export function markUnmade(path: string): void {
   const step = deletion(path)
   if (step) unmade.add(step)
 }
-
 export async function undoFile(change: FileChange, thread: Pick<Thread, 'space'>): Promise<boolean> {
   const root = rootOf(change, thread)
   if (!root) return false
@@ -58,9 +53,7 @@ export async function undoFile(change: FileChange, thread: Pick<Thread, 'space'>
     return false
   }
 }
-
 const cameBackAt = new WeakMap<FileChange, string>()
-
 export async function redoFile(change: FileChange, thread: Pick<Thread, 'space'>): Promise<void> {
   const root = rootOf(change, thread)
   if (!root) throw new Error(`the space of ${change.path} is not here`)

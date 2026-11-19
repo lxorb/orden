@@ -80,22 +80,14 @@ import { forgetAccount, leaveSpaces } from '../../left-spaces/src/api'
 import { dropLeft, leaveUnsent, ownRoots, unsentRoots } from './left'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
-
 const ASKS_AT_MOST = 30_000
-
 const ASK_ALIVE_EVERY = 10_000
-
 const ASK_LONGEST = 10 * 60_000
-
 const SIGN_OUT_WAITS = 10_000
-
 const NUDGE = 2_000
-
 const FALLBACK = 30_000
 const HIDDEN_FALLBACK = 5 * 60_000
-
 const FIRST = 'first:'
-
 function v1Spaces(accountId: string): Map<string, V1Space> {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once by the first pass; nothing renders from it
   const out = new Map<string, V1Space>()
@@ -109,7 +101,6 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
   }
   return out
 }
-
 async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
   const waiting = (path: string) => /^\.(orden|nib)-moving-/.test(path.split('/').pop() ?? '')
   if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
@@ -120,20 +111,16 @@ async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null
     ...(v1.untold ? { untold: v1.untold } : {}),
   }
 }
-
 class Runner {
   status = $state<Light>('off')
   lastError = $state<string | null>(null)
   lastSyncedAt = $state<number | null>(null)
   heldNotes = $state.raw<readonly Held[]>([])
-
   private current = $state.raw<Engine | null>(null)
-
   get engine(): Engine | null {
     return this.local ? null : this.current
   }
   private accountId: string | null = null
-
   get accountNow(): string | null {
     return this.accountId
   }
@@ -158,17 +145,13 @@ class Runner {
   >()
   private binding = Promise.resolve()
   private watched: Watched | null = null
-
   private local = $state(false)
-
   private lane: Promise<unknown> = Promise.resolve()
-
   private inLane<T>(work: () => Promise<T>): Promise<T> {
     const next = this.lane.then(work)
     this.lane = next.catch(() => undefined)
     return next
   }
-
   async start(): Promise<void> {
     if (this.local) await this.inLane(() => this.carryLocal())
     if (this.current && this.attempt !== this.leadOf) await this.inLane(() => Promise.resolve())
@@ -206,16 +189,13 @@ class Runner {
       throw error
     }
   }
-
   private giving: AbortController | null = null
   private attempt = 0
   private leadOf = 0
   private lead: Leadership | null = null
-
   private storeLead: Leadership | null = null
   private storeWait: Promise<Leadership | null> | null = null
   private storeGiving: AbortController | null = null
-
   private holdStore(): Promise<Leadership | null> {
     if (this.storeLead) return Promise.resolve(this.storeLead)
     if (this.storeWait) return this.storeWait
@@ -236,15 +216,12 @@ class Runner {
     this.storeWait = wait
     return wait
   }
-
   private stopHolding() {
     this.storeGiving?.abort()
     this.storeGiving = null
     this.storeWait = null
   }
-
   private storeUses = 0
-
   private async usingStore<T>(work: () => Promise<T>): Promise<T | undefined> {
     this.storeUses += 1
     try {
@@ -255,15 +232,12 @@ class Runner {
       this.settleStore()
     }
   }
-
   private settleStore() {
     if (this.current || this.lead || this.giving || this.storeWait || this.storeUses) return
     this.storeLead?.release()
     this.storeLead = null
   }
-
   private carrying = new Map<string, string>()
-
   private async carryLocal(): Promise<void> {
     if (!this.storeLead) return
     try {
@@ -286,14 +260,11 @@ class Runner {
       log('warn', `sync: the store kept signed out stays - ${String(error)}`)
     }
   }
-
   private keepCarried(ids: ReadonlyMap<string, string>) {
     this.carriedFrom = null
     for (const [root, kept] of ids) this.carrying.set(root, kept)
   }
-
   private carriedFrom: string | null = null
-
   private async carriedIn(engine: Engine) {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away within this call
     const carried = new Map(this.carrying)
@@ -304,7 +275,6 @@ class Runner {
     }
     if (carried.size) await engine.core.commit(carriedRows(carried))
   }
-
   private async running(user: { id: string }, live: () => boolean): Promise<Engine | null> {
     const store = await openSyncStore(user.id, true, madeDeviceId(user.id))
     const engine = await Engine.start(appWorld(tokenOf(user.id), this.telling), store, {
@@ -330,7 +300,6 @@ class Runner {
     await this.carriedIn(engine)
     engine.held.changed = (notes) => (this.heldNotes = notes)
     this.heldNotes = engine.held.notes
-
     const notes = () => this.heldNotes
     this.stops.push(
       asking.connect({
@@ -394,17 +363,14 @@ class Runner {
         this.watched = null
       })
     }
-
     this.status = 'idle'
     this.kick()
     return engine
   }
-
   async startLocal(): Promise<void> {
     if (account().user) return
     await this.usingStore(() => this.inLane(() => this.startLocalNow()))
   }
-
   private async startLocalNow(): Promise<void> {
     if (this.current || account().user) return
     const store = await openSyncStore(LOCAL_STORE)
@@ -443,17 +409,14 @@ class Runner {
     }
     this.kick()
   }
-
   async dropLocal(): Promise<void> {
     await this.usingStore(() => this.inLane(() => (account().user ? this.carryLocal() : Promise.resolve())))
   }
-
   async deviceOf(accountId: string): Promise<string | null> {
     const engine = this.engine
     if (engine && this.accountId === accountId) return engine.core.store.opened.device
     return await deviceOfSyncStore(accountId).catch(() => null)
   }
-
   async answer(id: string, answer: HeldAnswer): Promise<string | undefined> {
     const engine = this.current
     if (!engine) return undefined
@@ -463,13 +426,10 @@ class Runner {
     if (copy) this.treeStale()
     return copy
   }
-
   stop(): Promise<void> {
     return this.leaving ?? this.halt()
   }
-
   private leaving: Promise<void> | null = null
-
   private halt(keepLead = false): Promise<void> {
     const at = ++this.attempt
     this.giving?.abort()
@@ -482,7 +442,6 @@ class Runner {
     for (const stop of this.hearings.splice(0)) stop()
     return this.inLane(() => this.letGo(keepLead, () => this.attempt !== at))
   }
-
   private async letGo(keepLead = false, overtaken: () => boolean = () => false): Promise<void> {
     for (const stop of this.stops.splice(0)) stop()
     for (const key of this.carried) uncarry(key)
@@ -512,13 +471,11 @@ class Runner {
     if (keepLead) return
     if (!newer || (this.lead && this.leadOf !== this.attempt)) this.letGoLead()
   }
-
   private letGoLead() {
     this.lead?.release()
     this.lead = null
     this.settleStore()
   }
-
   flushing() {
     const engine = this.current
     if (!engine) return
@@ -529,7 +486,6 @@ class Runner {
         .catch(() => undefined),
     )
   }
-
   parting() {
     const engine = this.current
     if (!engine) return
@@ -540,14 +496,12 @@ class Runner {
         .catch(() => undefined),
     )
   }
-
   rollBack(): Promise<boolean> {
     return this.inLane(async () => {
       if (this.local) await this.letGo(true)
       return await this.rollBackNow()
     })
   }
-
   private async rollBackNow(): Promise<boolean> {
     const user = account().user
     const token = account().token
@@ -582,7 +536,6 @@ class Runner {
       }
     }
   }
-
   async walkBack(alive: () => boolean): Promise<boolean> {
     const walked = await this.usingStore(async () => {
       const lead = await leadSync(undefined, account().user?.id)
@@ -598,7 +551,6 @@ class Runner {
     })
     return walked ?? false
   }
-
   private async kept(engine: Engine): Promise<ReadonlySet<string>> {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it
     const done = new Set<string>()
@@ -607,7 +559,6 @@ class Runner {
     }
     return done
   }
-
   private async mirrorsNow(
     engine: Engine,
     accountId: string,
@@ -621,12 +572,10 @@ class Runner {
     }
     return { ...out, ...(await mirrorsFrom(engine.core, listings, (id) => done.has(id))) }
   }
-
   signedOut(accountId: string, keepHere = false): Promise<void> {
     this.leaving ??= this.leave(accountId, keepHere).finally(() => (this.leaving = null))
     return this.leaving
   }
-
   async sentBeforeLeaving(): Promise<boolean> {
     if (isNative()) return true
     await workspace()
@@ -647,7 +596,6 @@ class Runner {
     }
     return await leaveUnsent()
   }
-
   private async leave(accountId: string, keepHere: boolean): Promise<void> {
     const engine = this.current
     const roots = ownRoots(accountId)
@@ -702,11 +650,9 @@ class Runner {
       .finally(() => lead?.release())
     if (!isNative()) await forgetIndex(accountId)
   }
-
   get passing(): boolean {
     return this.passing_ !== null
   }
-
   async passNow(): Promise<boolean> {
     if (!this.current) {
       return this.leaderId ? (await this.ask('pass', {})) === true : false
@@ -716,7 +662,6 @@ class Runner {
     await this.passing_
     return this.lastSyncedAt !== before
   }
-
   kick(space?: string) {
     const engine = this.current
     if (!engine) {
@@ -734,7 +679,6 @@ class Runner {
       this.schedule()
     })
   }
-
   nudge() {
     if (!this.current) {
       if (this.accountId) this.say('sync-kick', {})
@@ -744,7 +688,6 @@ class Runner {
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.kick(), NUDGE)
   }
-
   private schedule() {
     const engine = this.current
     if (!engine) return
@@ -761,7 +704,6 @@ class Runner {
           : pollDelay(this.quiet, document.hidden)
     this.timer = setTimeout(() => this.kick(), delay)
   }
-
   private async run(): Promise<void> {
     const engine = this.current
     if (!engine) return
@@ -854,34 +796,28 @@ class Runner {
       this.lastError = error instanceof Error ? error.message : String(error)
     }
   }
-
   private async describedHeard(root: string) {
     await workspace().metaFromEngine(root)
     if (!workspace().describes(root)) return
     await workspace().notesDescribed(root)
   }
-
   private reorders = -1
-
   private placesHeard(engine: Engine, root: string) {
     workspace().placesFrom(root)
     if (engine.core.reorders === this.reorders) return
     this.reorders = engine.core.reorders
     workspace().repositioned()
   }
-
   private async firstDone(engine: Engine, id: string): Promise<boolean> {
     if (this.firsts.has(id)) return true
     const [row] = await engine.core.store.read([get('meta', `${FIRST}${id}`)])
     if (row !== null) this.firsts.add(id)
     return row !== null
   }
-
   private spaceOnScreen(engine: Engine): string | null {
     const root = workspace().activeSpace?.root
     return spaceRooted(engine.core.spaces.values(), root)?.id ?? null
   }
-
   private async pairLocal(engine: Engine) {
     this.reconciledAt = Date.now()
     const core = engine.core
@@ -900,7 +836,6 @@ class Runner {
     this.watched?.follow()
     for (const id of core.spaces.keys()) this.due.add(id)
   }
-
   private async reconcile(engine: Engine) {
     const token = account().token
     if (!token || account().user?.id !== this.accountId) return
@@ -951,7 +886,6 @@ class Runner {
       log('warn', `sync: spaces kept on this device not heard: ${String(error)}`),
     )
   }
-
   private async unpairedHeard(core: Engine['core']) {
     const synced = [...core.spaces.values()].map((space) => space.row.root)
     const unpaired = workspace()
@@ -960,7 +894,6 @@ class Runner {
     if (!unpaired.length) return
     for (const root of unpaired) await workspace().spaceUnpaired(root)
   }
-
   private readonly telling: Telling = {
     holdingWrites: (from, run, stalled) => workspace().holdingWrites(from, run, stalled),
     moved: async (from, to, kind) => {
@@ -1002,13 +935,11 @@ class Runner {
       })
     },
   }
-
   private treeTimer: ReturnType<typeof setTimeout> | undefined
   private treeStale() {
     clearTimeout(this.treeTimer)
     this.treeTimer = setTimeout(() => void workspace().loadTree(), 200)
   }
-
   readonly doer: SyncFileDoer = async (op, run) => {
     const engine = this.current
     if (!engine || op.kind === 'space' || op.op === 'created') {
@@ -1034,13 +965,9 @@ class Runner {
     }
     this.nudge()
   }
-
   private awayPaths = new Map<string, string>()
-
   private awayOwed = false
-
   private awaySaid = ''
-
   private async awayHeard(engine: Engine, told: boolean) {
     if (isNative() || this.current !== engine) return
     if (engine.core.handPaths.length) {
@@ -1070,7 +997,6 @@ class Runner {
     if (back.length || files.length !== was.size) this.treeStale()
     for (const path of back) void workspace().arrived(path)
   }
-
   private async fetchAway(engine: Engine, path: string): Promise<boolean> {
     if (this.current !== engine) return false
     const here = await engine.fetch(path)
@@ -1078,10 +1004,8 @@ class Runner {
     this.trimSoon()
     return here
   }
-
   private indexing: Indexing | null = null
   private indexStore: IndexStore | null = null
-
   private async indexHeard(engine: Engine) {
     const indexing = this.indexing
     if (!indexing || this.current !== engine) return
@@ -1094,9 +1018,7 @@ class Runner {
     for (const one of refreshed) links.indexed(one.root, one.scans)
     if (!engine.keepingFew().length) await this.awayHeard(engine, false)
   }
-
   private trimTimer: ReturnType<typeof setTimeout> | undefined
-
   private trimSoon() {
     const engine = this.current
     if (isNative() || !engine) return
@@ -1118,7 +1040,6 @@ class Runner {
       })().catch((error: unknown) => log('warn', `sync: words kept stayed - ${String(error)}`))
     }, TRIM_AFTER)
   }
-
   follow(op: SyncFileOp): Promise<void> | undefined {
     const engine = this.current
     if (!engine) {
@@ -1131,7 +1052,6 @@ class Runner {
     }
     const key = op.op === 'moved' ? `moved:${op.from}` : op.op === 'removed' ? `removed:${op.path}` : ''
     if (key && this.own.has(key)) return undefined
-
     const done = (async () => {
       if (op.op === 'created') {
         const document = op.key ? workspace().documents.find((one) => one.key === op.key) : undefined
@@ -1163,14 +1083,11 @@ class Runner {
       log('error', `sync: ${op.op} - ${String(error)}`)
     })
   }
-
   private readonly mergeables = new Set<string>()
-
   mergeable(path: string) {
     if (!this.engine && this.accountId) this.say('sync-mergeable', { path })
     this.mergeables.add(path)
   }
-
   async wrote(path: string, text: string): Promise<void> {
     const engine = this.current
     if (!engine) {
@@ -1182,7 +1099,6 @@ class Runner {
     })
     this.nudge()
   }
-
   private async named(spaceId: string, root: string) {
     const token = account().token
     const { holder, sendName } = await import('../../space-owed/src/api')
@@ -1195,17 +1111,14 @@ class Runner {
       .loadSpaces()
       .catch(() => undefined)
   }
-
   remoteIdFor(root: string): string | null {
     if (!this.engine) return this.seen.spaces.find((one) => samePath(one.root, root))?.id ?? null
     return spaceRooted(this.engine.core.spaces.values(), root)?.id ?? null
   }
-
   roleKept(root: string): string | null {
     if (!this.engine) return this.seen.spaces.find((one) => samePath(one.root, root))?.role ?? null
     return spaceRooted(this.engine.core.spaces.values(), root)?.row.role ?? null
   }
-
   fileOf(id: string): string | null {
     if (!this.engine) return this.seen.notes.find((one) => one.id === id)?.path ?? null
     for (const space of this.engine.core.spaces.values()) {
@@ -1214,7 +1127,6 @@ class Runner {
     }
     return null
   }
-
   tracked(path: string): { id: string; version: number; hash: string } | null {
     if (!this.engine) return this.seenAt.get(pathKey(path)) ?? null
     const engine = this.engine
@@ -1226,14 +1138,12 @@ class Runner {
       hash: entry.written_hash ?? '',
     }
   }
-
   async idAt(path: string): Promise<IdAt> {
     if (this.engine) return idIn(this.engine, path, this.reconciledAt > 0)
     if (!this.accountId || !this.leaderId) return { none: 'not-running' }
     const said = await this.ask('id-at', { path })
     return isIdAt(said) ? said : { none: 'not-running' }
   }
-
   async holds(path: string, how: HoldCheck = {}): Promise<boolean> {
     if (!this.engine && this.accountId) return (await this.ask('holds', { path })) === true
     const engine = this.engine
@@ -1244,14 +1154,12 @@ class Runner {
     }
     const core = engine.core
     if (core.isHeld(entry.id)) return false
-
     if (holdsDocument(entry.kind)) {
       if (core.hasPending(entry.id)) return false
       const words = await core.world.disk.read(path)
       if (words === null || !spend(how, words.length)) return false
       return (await core.world.digest(unixLines(words))) === entry.written_hash
     }
-
     if (core.touched.has(entry.id) || entry.file_key !== entry.written_hash) return false
     const blobs = core.world.blobs
     if (!blobs || (how.budget && (entry.size ?? Infinity) > how.budget.left)) return false
@@ -1259,7 +1167,6 @@ class Runner {
     if (!bytes || !spend(how, bytes.byteLength)) return false
     return (await blobs.hash(bytes)) === entry.written_hash
   }
-
   async forget(root: string): Promise<void> {
     if (!this.current && this.accountId) {
       await this.ask('forget', { root })
@@ -1269,7 +1176,6 @@ class Runner {
     const space = engine ? spaceRooted(engine.core.spaces.values(), root) : undefined
     if (engine && space) await engine.core.commit(engine.core.forgetSpace(space.id))
   }
-
   private names: { account: string; asked: Promise<Map<string, string>> } | null = null
   private async nameOf(device: string | null): Promise<string> {
     const owner = this.accountId
@@ -1292,7 +1198,6 @@ class Runner {
     const names = await held.asked.catch(() => null)
     return names?.get(device) ?? ''
   }
-
   private seen = $state.raw<Rows>({ spaces: [], notes: [] })
   private seenAt = $state.raw(new Map<string, { id: string; version: number; hash: string }>())
   private readonly relay = new LiveRelay((kind, what) => this.say(kind, what))
@@ -1305,27 +1210,22 @@ class Runner {
   private readonly owed = new Owed((item) => this.say('sync-owed', { item }))
   private leaderId: string | null = null
   private beat: ReturnType<typeof setInterval> | undefined
-
   private get owedTo(): boolean {
     return !!this.giving || !!this.lead || !!this.leaderId
   }
-
   private say(kind: string, what: Record<string, unknown> = {}) {
     windows.say(kind, { ...what, account: this.accountId })
   }
-
   private hear(kind: string, listener: (said: Said) => void) {
     return windows.hear(kind, (said) => {
       if (this.accountId && said.account === this.accountId) listener(said)
     })
   }
-
   private leaderIs(id: unknown) {
     if (typeof id !== 'string' || this.engine) return
     this.leaderId = id
     this.beat ??= setInterval(() => this.lookedAt(), FALLBACK)
   }
-
   private noLeader() {
     this.leaderId = null
     clearInterval(this.beat)
@@ -1333,7 +1233,6 @@ class Runner {
     for (const answer of [...this.asked.values()]) answer(null)
     this.mirrors.clear()
   }
-
   private lookedAt() {
     if (!this.engine && this.leaderId && document.visibilityState !== 'hidden') {
       this.say('sync-kick')
@@ -1342,10 +1241,8 @@ class Runner {
   private readonly hearings: (() => void)[] = []
   private readonly asked = new Map<string, (value: unknown) => void>()
   private taking: Promise<unknown> = Promise.resolve()
-
   private readonly parts = new Map<string, (value: unknown) => void>()
   private readonly alive = new Map<string, () => void>()
-
   private ask(what: string, args: Record<string, unknown>, part?: (value: unknown) => void): Promise<unknown> {
     if (!this.leaderId) return Promise.resolve(null)
     return new Promise((resolve) => {
@@ -1376,7 +1273,6 @@ class Runner {
       this.say('sync-ask', { id, what, args })
     })
   }
-
   private hearsWrites(): () => void {
     return workspace().hearWrites({
       there: (path) => onDisk(path),
@@ -1384,7 +1280,6 @@ class Runner {
       wrote: (path, content) => void this.wrote(path, content),
     })
   }
-
   private hearLeader() {
     if (!isNative()) holdThisWindow()
     if (this.hearings.length) return
@@ -1458,7 +1353,6 @@ class Runner {
     )
     this.say('sync-hello')
   }
-
   private async tookOver(engine: Engine) {
     this.noLeader()
     this.stops.push(
@@ -1507,7 +1401,6 @@ class Runner {
       })
     }
   }
-
   private heardAsk(said: Said) {
     const beat = setInterval(() => {
       this.say('sync-alive', { id: said.id, to: said.from })
@@ -1526,13 +1419,11 @@ class Runner {
     if (said.what === 'search-away') void answer()
     else this.inTurn(answer)
   }
-
   private inTurn(run: () => Promise<void>) {
     this.taking = this.taking.then(run).catch((error: unknown) => {
       log('error', `sync: another window's - ${String(error)}`)
     })
   }
-
   private async took(engine: Engine, item: Owing, from = ''): Promise<void> {
     const what = item.what
     const id = what.kind === 'wrote' ? engine.entryAt(what.path)?.id : undefined
@@ -1544,7 +1435,6 @@ class Runner {
     }
     this.nudge()
   }
-
   private async answering(said: Said): Promise<unknown> {
     const args = (said.args ?? {}) as { path?: string; root?: string }
     if (said.what === 'pass') {
@@ -1578,24 +1468,20 @@ class Runner {
     }
     return null
   }
-
   private light() {
     return { status: this.status, lastError: this.lastError, lastSyncedAt: this.lastSyncedAt }
   }
-
   private sayAll() {
     this.sayRows()
     if (this.engine) this.sayAway(this.engine.awayFiles())
     this.say('sync-light', this.light())
   }
-
   private sayAway(files: readonly AwayFile[]) {
     if (isNative() || windows.alone) return
     this.say('sync-away', {
       files: files.map(({ id, path, size, modified }) => ({ id, path, size, modified })),
     })
   }
-
   private heardAway(said: unknown) {
     if (!Array.isArray(said)) return
     const files = (said as unknown[]).filter(isAway)
@@ -1614,7 +1500,6 @@ class Runner {
     if (back.length || files.length !== had) this.treeStale()
     for (const path of back) void workspace().arrived(path)
   }
-
   private sayRows() {
     const engine = this.engine
     if (!engine || windows.alone) return
@@ -1633,7 +1518,6 @@ class Runner {
     }
     this.say('sync-rows', { rows })
   }
-
   joinedOf(note: LiveNote): { text(): string; put(to: string): void } | null {
     const engine = this.engine
     const entry = note.path === null ? null : engine?.entryAt(note.path)
@@ -1646,7 +1530,6 @@ class Runner {
       put: (to) => doc.write((live) => turn('words', live, doc.text(), to, MINE)),
     }
   }
-
   private followOpen(): () => void {
     return $effect.root(() => {
       $effect(() => {
@@ -1655,7 +1538,6 @@ class Runner {
       })
     })
   }
-
   private followMirrored(): () => void {
     return $effect.root(() => {
       $effect(() => {
@@ -1668,18 +1550,15 @@ class Runner {
       })
     })
   }
-
   livesWith(note: LiveNote, from: string): boolean {
     const engine = this.engine
     if (!engine) return this.mirrors.joins(note.key)
     const id = note.path === null ? null : engine.entryAt(note.path)?.id
     return !!id && this.relay.joined(from, id)
   }
-
   private liveOf(engine: Engine, id: string): Y.Doc | null {
     return engine.core.pinned.has(id) ? (engine.core.docs.get(id)?.live ?? null) : null
   }
-
   private async liveMeet(from: string, args: unknown): Promise<unknown> {
     const engine = this.current
     const { id, mine, plane } = (args ?? {}) as { id?: unknown; mine?: unknown; plane?: unknown }
@@ -1697,7 +1576,6 @@ class Runner {
     const gen = this.relay.genOf(id)
     return gen === null || !live ? null : { gen, whole: Y.encodeStateAsUpdate(live) }
   }
-
   private async relayHold(
     engine: Engine,
     id: string,
@@ -1716,11 +1594,9 @@ class Runner {
       void engine.letGo(id)
     }
   }
-
   private rebind(open = workspace().openNotes) {
     this.binding = this.binding.then(() => this.bindNow(open)).catch(() => undefined)
   }
-
   private async bindNow(open: ReturnType<typeof workspace>['openNotes']) {
     const engine = this.current
     if (!engine) return
@@ -1742,7 +1618,6 @@ class Runner {
       if (!own.has(id) && engine.core.hasDoc(id) && relayable(engine.core.entry(id)?.kind))
         wanted.set(`${RELAY}${id}`, { id, on: { relay: true }, arrivals: () => 0 })
     }
-
     for (const [key, one] of this.bound) {
       if (wanted.get(key)?.id === one.id) continue
       uncarry(key)
@@ -1750,7 +1625,6 @@ class Runner {
       one.part()
       this.bound.delete(key)
     }
-
     for (const [key, one] of wanted) {
       if (this.bound.has(key)) {
         if (!this.carried.has(key)) this.enter(engine, key, one.id, one.on)
@@ -1788,18 +1662,14 @@ class Runner {
     this.relay.roomsHeld(new Set([...this.bound].flatMap(([key, one]) => (this.carried.has(key) ? [one.id] : []))))
     this.relay.follow((id) => this.liveOf(engine, id))
   }
-
   private readonly told = new Set<string>()
-
   private mismatched(key: string, path: string) {
     if (this.told.has(key)) return
     this.told.add(key)
     log('warn', `sync2: ${path} is open as another kind than it syncs as`)
     void unsyncedToast(path.split(/[\\/]/).pop() ?? path)
   }
-
   private readonly carried = new Set<string>()
-
   private enter(engine: Engine, key: string, id: string, on: On) {
     const core = engine.core
     const doc = core.docs.get(id)
@@ -1807,7 +1677,6 @@ class Runner {
     const space = core.spaceOf(id)
     if (!doc?.live || entry?.seq == null || !space || core.isHeld(id)) return
     if (doc.epoch < (core.epochs.get(id) ?? doc.epoch) || !account().token) return
-
     this.carried.add(key)
     const room = carry(key, {
       noteId: id,
@@ -1853,12 +1722,10 @@ class Runner {
     })
   }
 }
-
 interface Rows {
   spaces: { id: string; root: string; role: string | null }[]
   notes: { path: string; id: string; version: number; hash: string }[]
 }
-
 function spaceRooted<T extends { row: { root: string } }>(
   spaces: Iterable<T>,
   root: string | null | undefined,
@@ -1866,39 +1733,30 @@ function spaceRooted<T extends { row: { root: string } }>(
   for (const space of spaces) if (samePath(space.row.root, root)) return space
   return undefined
 }
-
 function idsIn(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
 }
-
 function withoutKey(op: SyncFileOp): SyncFileOp {
   if (op.op !== 'created') return op
   const said = { ...op }
   delete said.key
   return said
 }
-
 function signedIn(): boolean {
   return account().user !== null
 }
-
 type On = { note: LiveNote } | { surface: PlaneSurface } | { relay: true }
-
 const RELAY = 'relay:'
-
 function relayable(kind: string | undefined): boolean {
   const shape = shapeOf(kind ?? '')
   return shape === 'words' || shape === 'plane'
 }
-
 function unreachable(error: unknown): boolean {
   const status = remote().statusOf(error)
   if (status !== null) return passing(status)
   return error instanceof TypeError
 }
-
 export type IdAt = { id: string; own: boolean } | { none: 'not-running' | 'outside' | 'untaken' }
-
 export function idIn(engine: Engine, path: string, paired: boolean): IdAt {
   const placed = engine.placed(path)
   if (!placed) return { none: paired ? 'outside' : 'not-running' }
@@ -1907,22 +1765,16 @@ export function idIn(engine: Engine, path: string, paired: boolean): IdAt {
   const role = placed.space.row.role
   return { id: entry.id, own: role === null || role === 'owner' }
 }
-
 function isIdAt(value: unknown): value is IdAt {
   if (!isRecord(value)) return false
   if (typeof value.id === 'string') return typeof value.own === 'boolean'
   return value.none === 'not-running' || value.none === 'outside' || value.none === 'untaken'
 }
-
 export const runner = new Runner()
-
 owesLast(() => runner.flushing())
 owesAtTheEnd(() => runner.parting())
-
 const SENDING_ROUNDS = 4
-
 const SETTLING = 1_500
-
 async function searchedAway(args: unknown, part: (found: Found) => void): Promise<Found[] | null> {
   const asked = (args ?? {}) as {
     root?: string
@@ -1946,7 +1798,6 @@ async function searchedAway(args: unknown, part: (found: Found) => void): Promis
   )
   return whole ? found : null
 }
-
 function isAway(value: unknown): value is { id: string; path: string; size: number; modified: number } {
   if (typeof value !== 'object' || value === null) return false
   const one = value as Record<string, unknown>
@@ -1957,7 +1808,6 @@ function isAway(value: unknown): value is { id: string; path: string; size: numb
     typeof one.modified === 'number'
   )
 }
-
 async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
   const notes: V1Listing['notes'][number][] = []
   let cursor = 0
@@ -1969,11 +1819,9 @@ async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
     if (!page.more || cursor === asked) return { cursor, notes }
   }
 }
-
 function tokenOf(id: string): () => string | null {
   return () => (account().user?.id === id ? account().token : null)
 }
-
 whenPortProvided('sync.account', (signedIn) => {
   signedIn.forgetWithSession((keepHere) => {
     const id = runner.accountNow
@@ -1981,7 +1829,6 @@ whenPortProvided('sync.account', (signedIn) => {
   })
   signedIn.askBeforeLeaving(() => runner.sentBeforeLeaving())
 })
-
 function pageNotes(engine: Engine): Carried[] {
   const out: Carried[] = []
   for (const space of engine.core.spaces.values()) {

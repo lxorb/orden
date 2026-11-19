@@ -11,7 +11,6 @@ describe('a path that steps back out of a folder', () => {
     expect(within(folder, path)).toBeNull()
     expect(movedTo(path, folder, '/s/Elsewhere')).toBeNull()
   })
-
   test('and a path that only names a dotted file is still inside', () => {
     expect(within('/s/Work', '/s/Work/..notes/x.md')).toBe('..notes/x.md')
     expect(within('/s/Work', '/s/Work/a/b.md')).toBe('a/b.md')

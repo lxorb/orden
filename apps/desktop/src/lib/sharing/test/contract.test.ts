@@ -8,7 +8,6 @@ describe('the module stands on its own', () => {
     expect(typeof protectionOn()).toBe('boolean')
   })
 })
-
 describe('inviting', () => {
   test('addresses are read from what was typed, once each whatever their case', () => {
     expect(addressesIn('Ann <ann@example.org>, bob@example.com; ANN@example.org')).toEqual([
@@ -16,7 +15,6 @@ describe('inviting', () => {
       'bob@example.com',
     ])
   })
-
   test('an address needs a name, an at and a dotted domain', () => {
     expect(looksLikeAddress('bob@example.com')).toBe(true)
     expect(looksLikeAddress('bob@example')).toBe(false)

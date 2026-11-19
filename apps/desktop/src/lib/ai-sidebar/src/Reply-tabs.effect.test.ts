@@ -3,7 +3,6 @@ import { SvelteMap } from 'svelte/reactivity'
 import { expect, test, vi } from 'vitest'
 
 const drawing = vi.hoisted(() => ({ count: 0 }))
-
 vi.mock('./drawn', async (importOriginal) => {
   const real = await importOriginal<typeof import('./drawn')>()
   return {
@@ -14,14 +13,11 @@ vi.mock('./drawn', async (importOriginal) => {
     },
   }
 })
-
 vi.mock('../../ai-chat/src/store/chat.svelte', () => ({
   chat: { unfolded: false, root: '/n/Work', head: null, provider: null, models: {}, resets: {} },
 }))
-
 const { workspace } = await import('../../workspace/src/api')
 const Reply = (await import('./Reply.svelte')).default
-
 test('an answer is not drawn again when another tab comes to the front', () => {
   const front = new SvelteMap<'tab', { id: string; path: string }>([['tab', { id: 'a', path: '/n/Work/Herons.md' }]])
   Object.defineProperty(workspace, 'panelTab', {

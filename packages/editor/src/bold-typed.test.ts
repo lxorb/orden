@@ -14,18 +14,15 @@ function stateOf(doc: string, at: number): EditorState {
     }),
   )
 }
-
 function pressed(command: ReturnType<typeof toggleWrap>, state: EditorState): EditorState {
   let next = state
   command({ state, dispatch: (one: Transaction) => (next = parsed(one.state)) })
   return next
 }
-
 function typed(state: EditorState, words: string): EditorState {
   const at = state.selection.main.head
   return parsed(state.update({ changes: { from: at, insert: words }, selection: { anchor: at + words.length } }).state)
 }
-
 describe('bold pressed, words typed, bold pressed again', () => {
   test('keeps the typed words bold and steps the caret out of the run', () => {
     const bold = toggleWrap('**')

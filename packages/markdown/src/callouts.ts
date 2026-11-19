@@ -31,7 +31,6 @@ const LOOKS: ReadonlyMap<string, IconNode> = new Map(
     quote: Quote,
   }),
 )
-
 const ALIASES: ReadonlyMap<string, string> = new Map(
   Object.entries({
     summary: 'abstract',
@@ -50,10 +49,8 @@ const ALIASES: ReadonlyMap<string, string> = new Map(
     cite: 'quote',
   }),
 )
-
 const SHOUTED = new Set(['tldr', 'faq'])
 const MARKER = /^([ \t]*\[!([^\]\n]+)\]([-+])?[ \t]*)([^\n]*)/
-
 export interface Callout {
   type: string
   look: string | null
@@ -64,24 +61,19 @@ export interface Callout {
   taken: number
   rest: string
 }
-
 export function opensCallout(block: { type: string; raw: string }): boolean {
   if (block.type === 'paragraph') return true
   return block.type === 'heading' && !/^ {0,3}#/.test(block.raw)
 }
-
 export function calloutOf(text: string): Callout | null {
   const found = MARKER.exec(text)
   if (!found) return null
-
   const type = (found[2] ?? '').trim().toLowerCase()
   if (!type) return null
-
   const sign = found[3]
   const title = (found[4] ?? '').trim()
   const after = text.slice(found[0].length)
   const body = after.startsWith('\n') ? after.slice(1) : after
-
   return {
     type,
     look: LOOKS.has(type) ? type : (ALIASES.get(type) ?? null),
@@ -93,15 +85,12 @@ export function calloutOf(text: string): Callout | null {
     rest: body,
   }
 }
-
 export function calloutIconParts(look: string | null): IconParts | null {
   const node = look === null ? undefined : LOOKS.get(look)
   return node ?? null
 }
-
 export function calloutIcon(look: string | null): string {
   const parts = calloutIconParts(look)
   return parts ? iconMarkup(parts, 'callout-icon') : ''
 }
-
 export const calloutChevron = (): string => iconMarkup(CHEVRON, 'callout-fold')

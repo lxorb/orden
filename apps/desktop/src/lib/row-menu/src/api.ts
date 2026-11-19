@@ -12,21 +12,17 @@ import { entryAt, folderNote } from '../../tree/src/api'
 const essentials = (all: boolean, run: () => void): MenuEntry[] => [
   { label: all ? 'Remove from Essentials' : 'Add to Essentials', run },
 ]
-
 export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
   return mark ? essentials(workspace.bookmarks.has(mark), () => workspace.bookmarks.toggle(mark)) : []
 }
-
 export function searchAgainEntry(path: string | null | undefined): MenuEntry[] {
   return path && workspace.excluded.names(path)
     ? [{ label: 'Search here again', run: () => workspace.excluded.toggle(path) }]
     : []
 }
-
 export function archiveEntry(path: string | null | undefined): MenuEntry[] {
   const root = workspace.activeSpace?.root
   if (!path || !root || withinSpace(root, path) === null || !canWriteAt(path)) return []
-
   const archiving = portOf('archive')
   if (!archiving.ok) return []
   const archived = workspace.archive.has(path)
@@ -37,7 +33,6 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
     },
   ]
 }
-
 export function iconEntries(path: string | null | undefined, folder = false): MenuEntry[] {
   if (!path || !canWriteAt(path)) return []
   const chat = !__EVEN_PLUGIN__ && isChatTarget(path)
@@ -52,10 +47,8 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
     },
   ]
 }
-
 export function coverEntries(path: string | null | undefined): MenuEntry[] {
   if (!path || !isMarkdownPath(path) || !canWriteAt(path)) return []
-
   const there = links.coverOf(path) !== null || workspace.itemMeta.valueOf(path, COVER_KEY) !== null
   const cover = (label: string, how: 'chooseCover' | 'removeCover') => ({
     label,
@@ -65,10 +58,8 @@ export function coverEntries(path: string | null | undefined): MenuEntry[] {
     ? [cover('Change cover', 'chooseCover'), cover('Remove cover', 'removeCover')]
     : [cover('Set cover', 'chooseCover')]
 }
-
 export function stackEntries(paneId: string): MenuEntry[] {
   if (!workspace.canStack(paneId)) return []
-
   return [
     {
       label: workspace.stacked(paneId) ? 'Unstack tabs' : 'Stack tabs',
@@ -78,18 +69,15 @@ export function stackEntries(paneId: string): MenuEntry[] {
     DIVIDER,
   ]
 }
-
 export function shareEntry(path: string | null | undefined): MenuEntry[] {
   return path && canShareItem(path) ? [{ label: 'Share', run: () => void shareThisFile(path) }] : []
 }
-
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
   const { path } = entry
   const sites = portOf('web.sites')
   if (!isDesktop || entry.is_dir || !/\.url$/i.test(path) || !canWriteAt(path) || !sites.ok) return []
   return [{ label: 'Web data', keep: true, run: () => void sites.value.showData(path) }]
 }
-
 export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   const marks = paths.flatMap((path) => {
     const entry = entryAt(workspace.tree, path)
@@ -102,5 +90,4 @@ export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
     () => workspace.bookmarks.toggleAll(marks),
   )
 }
-
 export const rowMenus = () => import('./row-menu')

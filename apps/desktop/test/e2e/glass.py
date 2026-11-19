@@ -1,14 +1,11 @@
 import re
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
-
 NOTE = """# A window
 
 Ordinary words, and *some* of them `marked up`, with a [link](https://example.com)
@@ -20,7 +17,6 @@ read rather than glanced at.
 - A list, because a list is mostly second-level ink
 - And a second line of it
 """
-
 SEED = """
 async ([note, name]) => {
   const ws = window.ordenApp.workspace
@@ -31,7 +27,6 @@ async ([note, name]) => {
   return ws.notes.length
 }
 """
-
 READINGS = [
     ("text in the bar", "--text", ["--shell-ground"]),
     ("quiet text in the bar", "--muted", ["--shell-ground"]),
@@ -46,9 +41,7 @@ READINGS = [
     ("text on the paper", "--text", ["--bg"]),
     ("quiet text on the paper", "--muted", ["--bg"]),
 ]
-
 FLOOR = 4.5
-
 MEASURE = """
 ([readings, backdrop]) => {
   const probe = document.createElement('span')
@@ -100,7 +93,6 @@ MEASURE = """
   return out
 }
 """
-
 SCROLL = """
 () => new Promise((done) => {
   const scroller = document.querySelector('.cm-scroller')
@@ -133,7 +125,6 @@ SCROLL = """
   requestAnimationFrame(step)
 })
 """
-
 FILTERS = """
 () => [...document.querySelectorAll('*')]
   .filter((one) => {
@@ -142,7 +133,6 @@ FILTERS = """
   })
   .map((one) => one.tagName.toLowerCase() + '.' + [...one.classList].join('.'))
 """
-
 FIRST_FRAME = """
 (() => {
   const look = () => {
@@ -154,37 +144,28 @@ FIRST_FRAME = """
   requestAnimationFrame(look)
 })()
 """
-
 TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
-
 finished: set[object] = set()
-
 def channels(said: str) -> tuple[int, ...]:
     parts = [float(one) for one in re.findall(r"[\d.]+", said)]
     scale = 255 if said.startswith("color(") else 1
     alpha = parts[3] if len(parts) > 3 else 1
     return (*(round(one * scale) for one in parts[:3]), round(alpha * 255))
-
 def shows(what: str, saw: object, wanted: object) -> None:
     if saw == wanted:
         say(f"ok   {what}: {saw!r}")
         return
-
     failures.append(what)
     say(f"NOT  {what}: {saw!r}, wanted {wanted!r}")
-
 def holds(what: str, ratio: float, floor: float = FLOOR) -> None:
     if ratio >= floor:
         say(f"ok   {what}: {ratio}:1")
         return
-
     failures.append(what)
     say(f"NOT  {what}: {ratio}:1, under {floor}")
-
 def done_with(page: Page) -> None:
     finished.add(page)
     page.context.close()
-
 def fresh(browser: Browser, scheme: str, note: str = NOTE, name: str = "A window") -> Page:
     context = browser.new_context(
         viewport={"width": 1240, "height": 760},
@@ -210,7 +191,6 @@ def fresh(browser: Browser, scheme: str, note: str = NOTE, name: str = "A window
         page.wait_for_timeout(1500)
         if not page.evaluate("() => !!window.ordenApp"):
             page.reload(wait_until="domcontentloaded")
-
     wait_for(page, "window.ordenApp", "the app")
     wait_for(page, "window.ordenApp.workspace.activeSpace", "a space")
     page.evaluate(SEED, [note, name])
@@ -219,7 +199,6 @@ def fresh(browser: Browser, scheme: str, note: str = NOTE, name: str = "A window
     wait_for(page, "document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(400)
     return page
-
 def choose(page: Page, theme: str) -> None:
     page.evaluate(f"() => window.ordenApp.theme.select('{theme}')")
     if theme == "glass":
@@ -229,7 +208,6 @@ def choose(page: Page, theme: str) -> None:
             "glass's sheet",
         )
     page.wait_for_timeout(300)
-
 def read_over(page: Page, where: str, unders: list[str]) -> None:
     paired = page.evaluate("() => document.documentElement.hasAttribute('data-paired')")
     grounds = ["--glass-from", "--glass-to"] if paired else ["--shell-ground"]
@@ -241,16 +219,13 @@ def read_over(page: Page, where: str, unders: list[str]) -> None:
     for under in unders:
         for what, ratio in page.evaluate(MEASURE, [readings, under]):
             holds(f"[{where} over {under}] {what}", ratio)
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("dark", "light"):
             first_look(browser, scheme)
             drive(browser, scheme)
         scrolling(browser)
-
     return DRIVE.verdict("every reading held")
-
 def first_look(browser: Browser, scheme: str) -> None:
     context = browser.new_context(
         viewport={"width": 1240, "height": 760},
@@ -280,7 +255,6 @@ def first_look(browser: Browser, scheme: str) -> None:
     page.wait_for_timeout(400)
     shot(page, f"{scheme}-first-look")
     done_with(page)
-
     context = browser.new_context(color_scheme=scheme, first_look=True)
     context.add_init_script(
         "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
@@ -298,7 +272,6 @@ def first_look(browser: Browser, scheme: str) -> None:
     wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space")
     shows(f"[{scheme}] and Classic chosen again stays", page.evaluate(read), ["default", "teal"])
     done_with(page)
-
     context = browser.new_context(color_scheme=scheme, first_look=True)
     context.add_init_script(
         "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
@@ -315,12 +288,9 @@ def first_look(browser: Browser, scheme: str) -> None:
     wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space")
     shows(f"[{scheme}] and a yellow picked after stays", page.evaluate(read), ["glass", "yellow"])
     done_with(page)
-
 def drive(browser: Browser, scheme: str) -> None:
     page = fresh(browser, scheme)
-
     shot(page, f"{scheme}-default")
-
     choose(page, "glass")
     shows(f"[{scheme}] glass is worn", page.evaluate("() => window.ordenApp.theme.id"), "glass")
     shows(
@@ -328,11 +298,8 @@ def drive(browser: Browser, scheme: str) -> None:
         page.evaluate("() => window.ordenApp.theme.accentIsTheme"),
         False,
     )
-
     read_over(page, f"{scheme}, nothing behind", ["rgb(255, 0, 255)"])
-
     shot(page, f"{scheme}-glass")
-
     shows(
         f"[{scheme}] the note stands on paper of its own",
         channels(page.evaluate("() => getComputedStyle(document.querySelector('.pane')).backgroundColor")),
@@ -354,7 +321,6 @@ def drive(browser: Browser, scheme: str) -> None:
         True,
     )
     shows(f"[{scheme}] nothing repaints what is behind it on every frame", page.evaluate(FILTERS), [])
-
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     rows = page.evaluate(
@@ -367,7 +333,6 @@ def drive(browser: Browser, scheme: str) -> None:
     for gone in ("Material", "Opacity", "Content"):
         shows(f"[{scheme}] Appearance has no {gone} row", gone in names, False)
     shot(page, f"{scheme}-glass-settings")
-
     row = page.locator(".orden-setting", has_text="Tint colour")
     shows(f"[{scheme}] the pair row offers seven and two of one's own", row.locator(".swatch").count(), 9)
     row.scroll_into_view_if_needed()
@@ -393,7 +358,6 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     shot(page, f"{scheme}-glass-own-pair")
     page.evaluate("() => window.ordenApp.theme.set('pair', 'dawn')")
-
     page.add_init_script(FIRST_FRAME)
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.__glassFirstFrame !== undefined", "the first frame")
@@ -409,18 +373,14 @@ def drive(browser: Browser, scheme: str) -> None:
         f"     [{scheme}] and without last time's sheet, the first frame wears it: "
         f"{page.evaluate('() => window.__glassFirstFrame')}"
     )
-
     done_with(page)
-
 def scrolling(browser: Browser) -> None:
     long_note = "# A long note\n\n" + "\n\n".join(
         f"## Section {one}\n\nA paragraph of ordinary words, long enough to wrap and be"
         " read rather than glanced at, which is what a note is mostly made of."
         for one in range(120)
     )
-
     page = fresh(browser, "dark", note=long_note, name="A long note")
-
     for what in ("default", "glass"):
         choose(page, what)
         page.wait_for_timeout(500)
@@ -429,7 +389,5 @@ def scrolling(browser: Browser) -> None:
             f"     scrolling on {what}: {seen['frames']} frames, median {seen['median']}ms,"
             f" worst {seen['worst']}ms, {seen['slow']} over 16.7"
         )
-
     done_with(page)
-
 raise SystemExit(main())

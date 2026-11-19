@@ -1,10 +1,8 @@
 const LETTERS = /^[\p{L}\p{N}\p{M}_]$/u
 const UNSPACED = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]$/u
-
 export function isWordChar(char: string): boolean {
   return char !== '' && LETTERS.test(char) && !UNSPACED.test(char)
 }
-
 export function charBefore(text: string, at: number): string {
   if (at <= 0) return ''
   const low = text.charCodeAt(at - 1)
@@ -14,13 +12,11 @@ export function charBefore(text: string, at: number): string {
   }
   return text.charAt(at - 1)
 }
-
 export function charAt(text: string, at: number): string {
   if (at >= text.length) return ''
   const code = text.codePointAt(at) ?? 0
   return String.fromCodePoint(code)
 }
-
 export function wordStart(text: string, at: number): number {
   let place = at
   for (let char = charBefore(text, place); isWordChar(char); char = charBefore(text, place)) {
@@ -28,7 +24,6 @@ export function wordStart(text: string, at: number): number {
   }
   return place
 }
-
 export function wordEnd(text: string, at: number): number {
   let place = at
   for (let char = charAt(text, place); isWordChar(char); char = charAt(text, place)) {
@@ -36,7 +31,6 @@ export function wordEnd(text: string, at: number): number {
   }
   return place
 }
-
 export function tokens(text: string): string[] {
   const out: string[] = []
   let at = 0

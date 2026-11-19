@@ -9,7 +9,6 @@ describe('where a note waits aside under v1', () => {
       expect(asideOf('A.md', id)).toMatch(/^\.orden-moving-[a-z0-9]+-A\.md$/)
     },
   )
-
   test('gives back its name, spelled now or by an older version', () => {
     const id = 'c81e728d-9d4c-4f6b-a1b2-3c4d5e6f7a8b'
     expect(nameSetAside(asideOf('folder/A b-c.md', id), id)).toBe('A b-c.md')

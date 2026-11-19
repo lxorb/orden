@@ -7,10 +7,8 @@ pub enum Asked {
     Behind,
     Front,
 }
-
 const BEHIND: &str = "orden-behind";
 const FRONT: &str = "orden-front";
-
 const FIND: &str = "orden-find";
 const FIND_NEXT: &str = "orden-find-next";
 const FIND_PREVIOUS: &str = "orden-find-previous";
@@ -21,19 +19,13 @@ const CTRL_SPACE: &str = "orden-ctrl-space";
 const CTRL_SHIFT_SPACE: &str = "orden-ctrl-shift-space";
 const CTRL_H: &str = "orden-ctrl-h";
 const CTRL_SHIFT_DELETE: &str = "orden-ctrl-shift-delete";
-
 const ACTUAL: &str = "orden-actual-size";
-
 const INSTALL: &str = "orden-install-extension";
-
 const ESCAPE: &str = "orden-escape";
-
 const TWICE_SHIFT: &str = "orden-twice-shift";
 const TWICE_CTRL: &str = "orden-twice-ctrl";
 const TWICE_ALT: &str = "orden-twice-alt";
-
 const PASSED: &str = "orden://web-passed";
-
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Passed {
@@ -50,19 +42,16 @@ pub enum Passed {
     Install,
     Escape,
 }
-
 impl Passed {
     fn wanted_by(self, window: &str) -> bool {
         self != Self::Escape || orden_system::full_screen::is_on(window)
     }
 }
-
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 struct Ask {
     tab: String,
     key: Passed,
 }
-
 fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
     let ask = Ask {
         tab: tab.to_string(),
@@ -70,11 +59,9 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
     };
     told(app, window, PASSED, ask);
 }
-
 fn played(app: &tauri::AppHandle, window: &str, key: Pressed) {
     told(app, window, PRESSED, key);
 }
-
 fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str, said: S) {
     use tauri::{Emitter, Manager};
 
@@ -83,11 +70,8 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
     }
     let _ = app.emit_to(window, event, said);
 }
-
 const PRESSED_IN: &str = "orden-pressed";
-
 const BLOCKED: &str = "orden-popup-blocked";
-
 pub const PAGE_SCRIPT: &str = r"(function () {
   if (typeof Proxy !== 'function' || typeof WeakSet !== 'function') return
   var ours = true
@@ -261,7 +245,6 @@ pub const PAGE_SCRIPT: &str = r"(function () {
   }
   guard(window)
 })()";
-
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
   var windows = window.open.bind(window)
@@ -458,10 +441,8 @@ pub const SCRIPT: &str = r"(function () {
     }, true)
   }
 })()";
-
 const STORE_PART: &str = "  var here = typeof location";
 const STORE_END: &str = "    }, true)\n  }\n";
-
 fn without_store_button(script: &str) -> String {
     let Some(start) = script.find(STORE_PART) else {
         return script.to_owned();
@@ -471,7 +452,6 @@ fn without_store_button(script: &str) -> String {
         .map_or(start, |at| start + at + STORE_END.len());
     format!("{}{}", &script[..start], &script[end..])
 }
-
 pub fn chord(name: &str) -> Option<Pressed> {
     match name {
         CTRL_D => Some(Pressed::with_ctrl("d", "KeyD", false)),
@@ -483,7 +463,6 @@ pub fn chord(name: &str) -> Option<Pressed> {
         _ => None,
     }
 }
-
 pub fn sought(name: &str) -> Option<Passed> {
     match name {
         FIND => Some(Passed::Find),
@@ -498,18 +477,15 @@ pub fn sought(name: &str) -> Option<Passed> {
         _ => None,
     }
 }
-
 pub fn actual(name: &str) -> bool {
     name == ACTUAL
 }
-
 pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
     match name {
         BEHIND => return Some(Asked::Behind),
         FRONT => return Some(Asked::Front),
         _ => {}
     }
-
     if !user {
         return None;
     }
@@ -525,9 +501,7 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
     }
     menu.then_some(Asked::Behind)
 }
-
 pub const BINDING: &str = "ordenAsked";
-
 pub fn script() -> String {
     without_store_button(SCRIPT)
         .replacen(
@@ -542,9 +516,7 @@ pub fn script() -> String {
         )
         .replacen(STOPPED_ENGINE_KEYS, "/^$/", 1)
 }
-
 const STOPPED_ENGINE_KEYS: &str = "/^orden-(find|actual)/";
-
 pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
     let Ok((url, name)) = serde_json::from_str::<(String, String)>(payload) else {
         return;
@@ -579,7 +551,6 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
         crate::web_tabs::opened_beside(app, window, tab, &url, asked == Asked::Behind);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{actual, chord, placed, sought, Ask, Asked, Held, Passed, SCRIPT};
@@ -599,7 +570,6 @@ mod tests {
         shift: true,
         alt: false,
     };
-
     #[test]
     fn the_script_opens_its_windows_through_the_line_chromium_swaps() {
         assert_eq!(
@@ -609,7 +579,6 @@ mod tests {
             1
         );
     }
-
     #[test]
     fn on_chromium_the_script_asks_through_the_binding_where_there_is_one() {
         let script = super::script();
@@ -620,7 +589,6 @@ mod tests {
         assert!(SCRIPT.contains(super::STOPPED_ENGINE_KEYS));
         assert!(!script.contains(super::STOPPED_ENGINE_KEYS));
     }
-
     #[test]
     fn a_window_is_placed_by_its_name_then_by_the_keys_of_a_press_and_the_page_s_menu() {
         for (name, pressed, held, menu, asked) in [
@@ -647,7 +615,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn the_script_answers_the_middle_button_and_ctrl_or_shift_on_a_link() {
         assert!(SCRIPT.contains("last('auxclick'"));
@@ -662,7 +629,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn eight_names_ask_for_orden_s_answer_and_nothing_else_does() {
         for (name, passed) in [
@@ -691,7 +657,6 @@ mod tests {
             assert_eq!(sought(name), None, "{name:?}");
         }
     }
-
     #[test]
     fn ctrl_d_let_go_by_goes_back_as_the_key_it_was() {
         let key = chord("orden-ctrl-d").map(|one| serde_json::to_value(one).expect("a key"));
@@ -700,7 +665,6 @@ mod tests {
         assert_eq!(key["code"], "KeyD");
         assert_eq!(key["ctrl"], true);
         assert_eq!(key["down"], true);
-
         for name in [
             "",
             "orden-find",
@@ -713,7 +677,6 @@ mod tests {
         }
         assert_eq!(sought("orden-ctrl-d"), None);
     }
-
     #[test]
     fn ctrl_shift_d_let_go_by_goes_back_with_its_shift() {
         let key = chord("orden-ctrl-shift-d").map(|one| serde_json::to_value(one).expect("a key"));
@@ -727,7 +690,6 @@ mod tests {
         assert!(chord("orden-ctrl-shift-d ").is_none());
         assert!(SCRIPT.contains("name = back ? 'orden-ctrl-shift-d' : 'orden-ctrl-d'"));
     }
-
     #[test]
     fn ctrl_h_and_ctrl_shift_delete_let_go_by_go_back_as_the_keys_they_were() {
         let history = chord("orden-ctrl-h").map(|one| serde_json::to_value(one).expect("a key"));
@@ -736,7 +698,6 @@ mod tests {
         assert_eq!(history["code"], "KeyH");
         assert_eq!(history["ctrl"], true);
         assert_eq!(history["shift"], false);
-
         let clear =
             chord("orden-ctrl-shift-delete").map(|one| serde_json::to_value(one).expect("a key"));
         let clear = clear.expect("Ctrl+Shift+Delete");
@@ -744,13 +705,11 @@ mod tests {
         assert_eq!(clear["code"], "Delete");
         assert_eq!(clear["ctrl"], true);
         assert_eq!(clear["shift"], true);
-
         assert_eq!(sought("orden-ctrl-h"), None);
         assert!(chord("orden-ctrl-delete").is_none());
         assert!(SCRIPT
             .contains("else if (ctrl && code === 46 && back) name = 'orden-ctrl-shift-delete'"));
     }
-
     #[test]
     fn ctrl_space_let_go_by_goes_back_as_the_space_switcher() {
         for (name, shift) in [
@@ -772,7 +731,6 @@ mod tests {
             "else if (ctrl && code === 32) name = back ? 'orden-ctrl-shift-space' : 'orden-ctrl-space'"
         ));
     }
-
     #[test]
     fn the_script_asks_by_the_names_read_here() {
         for name in [
@@ -795,7 +753,6 @@ mod tests {
             assert!(SCRIPT.contains(name), "{name}");
         }
     }
-
     #[test]
     fn chromium_leaves_the_store_s_button_to_the_store() {
         let left = super::without_store_button(SCRIPT);
@@ -813,7 +770,6 @@ mod tests {
             })
         );
     }
-
     #[test]
     fn ctrl_0_asks_by_a_name_of_its_own() {
         assert!(actual("orden-actual-size"));
@@ -830,7 +786,6 @@ mod tests {
         }
         assert!(SCRIPT.contains("ctrl && (code === 48 || code === 96) && !back"));
     }
-
     #[test]
     fn an_ask_reaches_the_window_as_one_of_eight_words_for_its_tab() {
         let said = |key| {

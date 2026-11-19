@@ -7,7 +7,6 @@ const calls = vi.hoisted(() => ({
   logged: [] as string[],
   kept: new Map<string, string>(),
 }))
-
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
   invoke: (command: string) => {
@@ -20,9 +19,7 @@ vi.mock('../../platform/src/api', async (original) => ({
     return true
   },
 }))
-
 const { added, carryOldDatabases, PASS_LEFT_BEHIND, revived } = await import('./old-engine')
-
 function opened(name: string, version?: number, make?: (db: IDBDatabase) => void) {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(name, version)
@@ -31,7 +28,6 @@ function opened(name: string, version?: number, make?: (db: IDBDatabase) => void
     request.onerror = () => reject(request.error ?? new Error('no'))
   })
 }
-
 async function all(name: string, store: string): Promise<[IDBValidKey[], unknown[]]> {
   const db = await opened(name)
   const reading = db.transaction(store).objectStore(store)
@@ -41,7 +37,6 @@ async function all(name: string, store: string): Promise<[IDBValidKey[], unknown
   db.close()
   return out
 }
-
 const PASS = {
   name: 'orden-pass',
   version: 2,
@@ -65,7 +60,6 @@ const PASS = {
     },
   ],
 }
-
 beforeEach(() => {
   vi.stubGlobal('indexedDB', new IDBFactory())
   calls.said = null
@@ -73,7 +67,6 @@ beforeEach(() => {
   calls.logged = []
   calls.kept.clear()
 })
-
 describe('what the old engine kept in its databases', () => {
   test('comes back with its bytes, its undefined and its dates', () => {
     expect(
@@ -90,7 +83,6 @@ describe('what the old engine kept in its databases', () => {
       list: [new Uint8Array(0), 'x'],
     })
   })
-
   test('is written into a database the new engine never made, shaped as it was', async () => {
     await added(PASS)
     const db = await opened('orden-pass')
@@ -103,7 +95,6 @@ describe('what the old engine kept in its databases', () => {
     const [, files] = await all('orden-pass', 'files')
     expect((files[0] as { bytes: Uint8Array }).bytes).toEqual(new Uint8Array([1, 2, 3, 250, 0, 255]))
   })
-
   test('never takes the place of what the new engine already wrote, and adds what it lacks', async () => {
     const db = await opened('orden-pass', 3, (made) => {
       made.createObjectStore('keyring')
@@ -126,7 +117,6 @@ describe('what the old engine kept in its databases', () => {
     expect(again.version).toBe(3)
     again.close()
   })
-
   test('is asked for once, said carried, and Pass is told when part of it stayed behind', async () => {
     calls.said = JSON.stringify([{ ...PASS, skipped: 1 }])
     await carryOldDatabases()
@@ -136,7 +126,6 @@ describe('what the old engine kept in its databases', () => {
     const [keys] = await all('orden-pass', 'keyring')
     expect(keys).toEqual(['this'])
   })
-
   test('asks nothing more when the old engine left nothing', async () => {
     await carryOldDatabases()
     expect(calls.asked).toEqual(['old_engine_databases'])

@@ -41,7 +41,6 @@ import { clear, get, put, remove, scan, type Change, type EntryRow, type HeldRow
 import type { World } from './world'
 
 const CLIENTS = 'clients'
-
 export interface Classification {
   id: string
   base: string
@@ -51,12 +50,10 @@ export interface Classification {
   merged?: string
   held: boolean
 }
-
 export interface Holding {
   row: HeldRow
   against: Against
 }
-
 export interface CoreEvents {
   resurrected: (event: { id: string; name: string; device: string }) => void
   held: () => void
@@ -64,7 +61,6 @@ export interface CoreEvents {
   file: (event: { id: string; text: string }) => void
   placed: (event: { moved: number }) => void
 }
-
 export class Core {
   readonly spaces = new SvelteMap<string, SpaceState>()
   readonly numbers = new Map<string, DocNumbers>()
@@ -95,16 +91,13 @@ export class Core {
   private refused: Change[] = []
   private counter = 0
   private lastMade = 0
-
   private constructor(
     readonly world: World,
     readonly store: SyncStore,
   ) {}
-
   get device(): string {
     return this.store.opened.device
   }
-
   static async open(world: World, store: SyncStore): Promise<Core> {
     const core = new Core(world, store)
     const [spaces, entries, outbox, meta, held] = await store.read([
@@ -114,7 +107,6 @@ export class Core {
       scan('meta'),
       scan('held'),
     ])
-
     const orderings = new Map<string, Ordering>()
     const gones = new Map<string, Gone>()
     const keepings = new Map<string, Keeping>()
@@ -152,7 +144,6 @@ export class Core {
       core.generation += 1
       await core.commit([put('meta', { key: CLIENTS, value: core.generation })])
     }
-
     for (const space of spaces) {
       const mine = entries.filter((entry) => entry.space_id === space.space_id)
       const waiting: Outboxed[] = []
@@ -176,14 +167,12 @@ export class Core {
       for (const [id, one] of useds.get(space.space_id) ?? []) state.keeping.used.took(id, one)
       core.spaces.set(space.space_id, state)
     }
-
     for (const row of held) {
       const against = againstOf(row.remote)
       if (against) core.held.set(row.id, { row, against })
     }
     return core
   }
-
   commit(changes: readonly Change[]): Promise<void> {
     const wanted = this.wantChanges()
     if (!changes.length && !wanted.length && !this.refused.length) {
@@ -206,9 +195,7 @@ export class Core {
     this.writing = next.catch(() => undefined)
     return next
   }
-
   private clean = false
-
   endedCleanly(): Promise<void> {
     const next = this.writing.then(async () => {
       await this.store.cleanExit(true)
@@ -217,33 +204,27 @@ export class Core {
     this.writing = next.catch(() => undefined)
     return next
   }
-
   nextId(prefix: string): string {
     this.counter += 1
     const random = Math.floor(this.world.random() * 2 ** 32).toString(36)
     return `${this.device}.${prefix}${this.counter.toString(36)}.${random}`
   }
-
   counterRow(): Change {
     return put('meta', { key: COUNTER, value: this.counter })
   }
-
   readonly lastByMe = (id: string): boolean => {
     const by = this.by.get(id)
     return by !== undefined && this.mine.has(by)
   }
-
   freshClient(): number {
     return (Math.floor(this.world.random() * 0xffffffff) >>> 0) + 1
   }
-
   addSpace(spaceId: string, root: string, role: string | null): Change[] {
     const row = { space_id: spaceId, root, cursor: 0, role, store: null }
     const space = new SpaceState(row, [], [], this.device, this.world, undefined, this.lastByMe)
     this.spaces.set(spaceId, space)
     return [put('spaces', row)]
   }
-
   forgetSpace(spaceId: string): Change[] {
     const space = this.spaces.get(spaceId)
     if (!space) return []
@@ -272,41 +253,33 @@ export class Core {
     )
     return changes
   }
-
   rootMoved(spaceId: string, root: string): Change[] {
     const space = this.spaces.get(spaceId)
     if (!space) return []
     space.row = { ...space.row, root }
     return [put('spaces', { ...space.row })]
   }
-
   spaceOf(id: string): SpaceState | null {
     for (const space of this.spaces.values()) if (space.entries.has(id)) return space
     return null
   }
-
   entry(id: string): EntryRow | null {
     return this.spaceOf(id)?.entries.get(id) ?? null
   }
-
   shapeOfEntry(id: string): Shape | null {
     const entry = this.entry(id)
     return entry ? shapeOf(entry.kind) : null
   }
-
   entryChanges(rows: Iterable<EntryRow>): Change[] {
     return [...rows].map((row) => put('entries', { ...row }))
   }
-
   reorders = 0
-
   orderChanges(space: SpaceState): Change[] {
     if (!space.repositioned) return []
     space.repositioned = false
     this.reorders += 1
     return [put('meta', orderingRow(space.id, space.ordering))]
   }
-
   wanted(space: string): Wants {
     let wanted = this.wants.get(space)
     if (!wanted) {
@@ -315,7 +288,6 @@ export class Core {
     }
     return wanted
   }
-
   private wantChanges(): Change[] {
     const changes: Change[] = []
     for (const [space, wants] of this.wants) {
@@ -343,11 +315,9 @@ export class Core {
     }
     return changes
   }
-
   hasDoc(id: string): boolean {
     return this.docs.has(id) || this.numbers.has(id)
   }
-
   async doc(id: string): Promise<Doc | null> {
     const held = this.docs.get(id)
     if (held) return held
@@ -362,14 +332,12 @@ export class Core {
     this.adopt(doc)
     return doc
   }
-
   made(id: string, shape: Shape, epoch: number, confirmed?: Uint8Array, seq = 0): Doc {
     const doc = Doc.fresh(id, shape, epoch, this.freshClient(), () => this.world.now(), confirmed, seq)
     this.generations.set(id, this.generation)
     this.adopt(doc)
     return doc
   }
-
   private adopt(doc: Doc) {
     this.docs.set(doc.id, doc)
     this.numbers.set(doc.id, doc.numbers())
@@ -378,7 +346,6 @@ export class Core {
       this.generations.set(doc.id, this.generation)
     }
   }
-
   docChanges(doc: Doc): Change[] {
     doc.dirty = false
     this.numbers.set(doc.id, doc.numbers())
@@ -388,13 +355,11 @@ export class Core {
       put('meta', { key: `${GEN}${doc.id}`, value: this.generations.get(doc.id) ?? 0 }),
     ]
   }
-
   dirtyChanges(): Change[] {
     const out: Change[] = []
     for (const doc of this.docs.values()) if (doc.dirty) out.push(...this.docChanges(doc))
     return out
   }
-
   forgetChanges(id: string): Change[] {
     this.docs.get(id)?.close()
     this.docs.delete(id)
@@ -403,15 +368,12 @@ export class Core {
     this.pinned.delete(id)
     return [remove('docs', id), remove('written', id), remove('meta', numbersKey(id)), remove('meta', `${GEN}${id}`)]
   }
-
   hasPending(id: string): boolean {
     const doc = this.docs.get(id)
     if (doc) return doc.hasPending
     return this.numbers.get(id)?.pending ?? false
   }
-
   private busy = 0
-
   async use<T>(work: () => Promise<T>): Promise<T> {
     this.busy += 1
     try {
@@ -421,11 +383,9 @@ export class Core {
       if (!this.busy) this.release()
     }
   }
-
   current(doc: Doc): boolean {
     return this.docs.get(doc.id) === doc
   }
-
   private release() {
     for (const [id, doc] of this.docs) {
       if (this.pinned.has(id) || doc.dirty || doc.unsaved.length) continue
@@ -433,7 +393,6 @@ export class Core {
       this.docs.delete(id)
     }
   }
-
   outgoing(space: SpaceState, record: Outgoing, seen: number): { one: Outboxed; change: Change } {
     this.lastMade = Math.max(this.world.now(), this.lastMade + 1)
     const row = {
@@ -446,27 +405,22 @@ export class Core {
     const one: Outboxed = { row, record }
     return { one, change: put('outbox', row) }
   }
-
   holdChanges(holding: Holding): Change[] {
     this.held.set(holding.row.id, holding)
     this.events.held?.()
     return [put('held', holding.row)]
   }
-
   letGoChanges(id: string): Change[] {
     if (!this.held.delete(id)) return []
     this.events.held?.()
     return [remove('held', id)]
   }
-
   isHeld(id: string): boolean {
     return this.held.has(id)
   }
-
   static isDocument(entry: EntryRow): boolean {
     return holdsDocument(entry.kind)
   }
 }
-
 const GEN = 'gen:'
 const COUNTER = 'counter'

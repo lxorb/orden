@@ -10,12 +10,10 @@ vi.stubGlobal(
     disconnect = vi.fn()
   },
 )
-
 const { FixtureChats } = await import('../../src/lib/chats-client/src/view/fixture.svelte')
 const { useStore } = await import('../../src/lib/chats-client/src/view/source.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const ChatTab = (await import('../../src/lib/chats-client/src/view/ChatTab.svelte')).default
-
 test('a note dropped on a chat is linked in the composer', async () => {
   const chats = new FixtureChats('user:me')
   chats.add('General', [{ who: 'user:me', role: 'owner' }] as never)
@@ -26,17 +24,14 @@ test('a note dropped on a chat is linked in the composer', async () => {
   const target = document.body.appendChild(document.createElement('div'))
   const drawn = mount(ChatTab, { target, props: { tab } })
   await vi.waitFor(() => expect(target.querySelector('.cm-editor')).not.toBeNull())
-
   const drop = new Event('drop', { bubbles: true, cancelable: true })
   const transfer = { types: ['text/orden-path'], files: [], getData: () => '/spaces/Team/Plan.md' }
   Object.defineProperty(drop, 'dataTransfer', { value: transfer })
   target.querySelector('.chat-tab')?.dispatchEvent(drop)
-
   expect(drop.defaultPrevented).toBe(true)
   const field = target.querySelector<HTMLElement>('.cm-editor')
   const words = () => (field ? EditorView.findFromDOM(field)?.state.doc.toString() : null)
   await vi.waitFor(() => expect(words()).toBe('[[Plan]] '))
-
   workspace.tabs = [{ id: 'w', kind: 'web', address: 'https://svelte.dev/' }] as never
   const web = new Event('drop', { bubbles: true, cancelable: true })
   const getData = (one: string) => (one === 'text/orden-tab' ? 'w' : '')

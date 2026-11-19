@@ -1,11 +1,9 @@
 from pathlib import Path
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
@@ -14,13 +12,11 @@ TABLET_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 DEVICES = [
     ("desktop-light", 1440, 900, DESKTOP_AGENT, False, "light"),
     ("desktop-dark", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("tablet-keys", 1194, 834, TABLET_AGENT, True, "light"),
 ]
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -49,7 +45,6 @@ async () => {
   return ws.files.map((one) => one.name)
 }
 """
-
 WHERE = """
 () => {
   const at = document.activeElement
@@ -67,7 +62,6 @@ WHERE = """
   return `${region} | ${tag}.${cls} | ${JSON.stringify(named)} | list stops: ${stops}`
 }
 """
-
 RING = """
 () => {
   const at = document.activeElement
@@ -78,10 +72,8 @@ RING = """
   return `${visible ? 'ring' : 'no ring'}: ${style.outlineWidth} ${style.outlineStyle} ${style.outlineColor}`
 }
 """
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     out.mkdir(parents=True, exist_ok=True)
-
     context = browser.new_context(
         viewport={"width": width, "height": height},
         user_agent=agent,
@@ -99,40 +91,32 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(200)
     say(f"[{name}] the space holds {page.evaluate(SEED)}")
     page.wait_for_timeout(700)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(out / f"{name}-{tag}.png"))
         say(f"    shot {name}-{tag}.png")
-
     def press(key: str, wait: int = 260) -> str:
         page.keyboard.press(key)
         page.wait_for_timeout(wait)
         return page.evaluate(WHERE)
-
     def step(key: str, wait: int = 260) -> None:
         say(f"    {key:<18} -> {press(key, wait)}")
-
     def region() -> str:
         return page.evaluate("() => document.activeElement?.closest('[data-region]')?.dataset.region ?? '-'")
-
     def open_panel() -> None:
         if not page.evaluate("() => !!window.ordenApp.workspace.panel"):
             page.keyboard.press("Control+Shift+L")
             page.wait_for_timeout(400)
-
     say(f"[{name}] --- the regions, walked with F6 ---")
     open_panel()
     page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.wait_for_timeout(200)
     say(f"    the note has it     -> {page.evaluate(WHERE)}")
-
     walked = []
     for _ in range(8):
         step("F6")
         walked.append(region())
     say(f"    F6 went round: {' -> '.join(walked)}")
     shot("region-ring")
-
     say(f"[{name}] --- Tab stops once per list, not once per row ---")
     page.keyboard.press("Control+Shift+E")
     page.wait_for_timeout(500)
@@ -142,7 +126,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     for _ in range(4):
         step("Tab")
     say("    (four presses of Tab; a space of six notes did not eat them)")
-
     def into_tree() -> None:
         if region() != "list":
             page.keyboard.press("Control+Shift+E")
@@ -152,7 +135,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
                 return
             page.keyboard.press("Tab")
             page.wait_for_timeout(200)
-
     say(f"[{name}] --- the list, walked with the arrows ---")
     into_tree()
     say(f"    into the tree       -> {page.evaluate(WHERE)}")
@@ -163,14 +145,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(300)
     say(f"    typed 're'          -> {page.evaluate(WHERE)}")
     shot("typeahead-ring")
-
     say(f"[{name}] --- a folder, opened and stepped into ---")
     page.keyboard.press("Home")
     page.wait_for_timeout(200)
     say(f"    Home                -> {page.evaluate(WHERE)}")
     for key in ["ArrowRight", "ArrowRight", "ArrowLeft", "ArrowLeft"]:
         step(key)
-
     say(f"[{name}] --- Enter opens a note and the caret follows ---")
     into_tree()
     page.keyboard.press("End")
@@ -179,13 +159,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     step("Enter", 700)
     after = page.evaluate("() => window.ordenApp.workspace.active?.name ?? '-'")
     say(f"    the note went from {before!r} to {after!r}")
-
     say(f"[{name}] --- Escape hands the keyboard back to the note ---")
     into_tree()
     step("ArrowDown")
     step("Escape")
     step("Escape")
-
     say(f"[{name}] --- the four panels, each on its own chord ---")
     for chord, panel in [
         ("Control+Shift+E", "tree"),
@@ -200,7 +178,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         )
         say(f"    {chord:<18} -> panel {showing!r} (wanted {panel!r}), {page.evaluate(WHERE)}")
     shot("panels-links")
-
     say(f"[{name}] --- the panel tabs: left and right, changing on arrival ---")
     for _ in range(9):
         if region() == "panels":
@@ -214,7 +191,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         panel = page.evaluate("() => window.ordenApp.workspace.panel")
         say(f"    {key:<18} -> panel {panel!r}")
     shot("panel-tabs-ring")
-
     say(f"[{name}] --- the outline of a note that has headings ---")
     into_tree()
     page.keyboard.type("k", delay=60)
@@ -228,7 +204,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     for key in ["ArrowDown", "ArrowDown", " "]:
         step(key, 400)
     shot("outline-ring")
-
     if not finger:
         say(f"[{name}] --- the strip: one stop, arrows inside it ---")
         for _ in range(8):
@@ -241,13 +216,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         for key in ["ArrowRight", "ArrowRight", "ArrowLeft", "Enter"]:
             step(key, 400)
         say(f"    the note in front is {page.evaluate('() => window.ordenApp.workspace.active?.name')!r}")
-
         say(f"[{name}] --- Ctrl+Tab round the strip ---")
         for _ in range(2):
             page.keyboard.press("Control+Tab")
             page.wait_for_timeout(400)
             say(f"    Ctrl+Tab            -> {page.evaluate('() => window.ordenApp.workspace.active?.name')!r}")
-
     say(f"[{name}] --- the layers: opened, trapped, closed, and given back ---")
     layers = [
         ("Control+O", "the palette"),
@@ -261,7 +234,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         page.keyboard.press("ArrowDown")
         page.wait_for_timeout(200)
         from_here = page.evaluate(WHERE)
-
         page.keyboard.press(chord)
         page.wait_for_timeout(600)
         inside = page.evaluate(WHERE)
@@ -274,13 +246,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         say(f"    {chord:<18} {what}: {inside}")
         say(f"        overlays {depth}, Tab {held}")
         shot(f"layer-{chord.replace('+', '-').lower()}")
-
         page.keyboard.press("Escape")
         page.wait_for_timeout(700)
         back = page.evaluate(WHERE)
         say(f"        Escape -> {back}")
         say(f"        opened from {from_here.split(' | ')[2] if ' | ' in from_here else from_here}")
-
     say(f"[{name}] --- a row's own menu, on the key a keyboard has for it ---")
     into_tree()
     step("Shift+F10", 600)
@@ -288,7 +258,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     shot("row-menu-ring")
     for key in ["ArrowDown", "ArrowDown", "End", "Escape"]:
         step(key, 400)
-
     say(f"[{name}] --- and the bar under the note, which had no way in at all ---")
     for _ in range(9):
         if region() == "status":
@@ -299,16 +268,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     say(f"    {page.evaluate(RING)}")
     say(f"    counts showing: {page.evaluate('() => !!document.querySelector(\"footer.looking\")')}")
     shot("status-ring")
-
     context.close()
-
 def main() -> int:
     out = DRIVE.shots
     with DRIVE.session() as browser:
         for one in DEVICES:
             say(f"=== {one[0]} ===")
             drive(browser, out, *one)
-
     return DRIVE.verdict(f"shots in {out}")
-
 raise SystemExit(main())

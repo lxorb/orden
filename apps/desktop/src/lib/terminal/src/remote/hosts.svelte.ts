@@ -25,7 +25,6 @@ function readAnswer(value: unknown): { config: ConfigHost[]; kept: Kept; file: s
     file: typeof answer.file === 'string' ? answer.file : null,
   }
 }
-
 function readKept(value: unknown): Kept {
   if (!isRecord(value)) return NOTHING_KEPT
   const kept = value as Partial<Kept>
@@ -36,24 +35,19 @@ function readKept(value: unknown): Kept {
     groups: Array.isArray(kept.groups) ? kept.groups : [],
   }
 }
-
 function ownId(): string {
   return `n-${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`
 }
-
 class Remote {
   hosts = $state.raw<Host[]>([])
   kept = $state.raw<Kept>(NOTHING_KEPT)
   file = $state<string | null>(null)
   read = $state(false)
-
   private config: ConfigHost[] = []
   private asking: Promise<void> | null = null
   private changes = 0
-
   refresh(): Promise<void> {
     if (!isDesktop) return Promise.resolve()
-
     const changes = this.changes
     this.asking ??= invoke<unknown>('remote_hosts')
       .then((answer) => {
@@ -69,20 +63,16 @@ class Remote {
       })
     return this.asking
   }
-
   async ready(): Promise<void> {
     if (!this.read) await this.refresh()
   }
-
   byId(id: string): Host | undefined {
     return this.hosts.find((host) => host.id === id)
   }
-
   private take(kept: Kept) {
     this.kept = kept
     this.hosts = hostsOf(this.config, kept)
   }
-
   async keep(change: (kept: Kept) => Kept): Promise<void> {
     const next = change(this.kept)
     const turn = ++this.changes
@@ -95,7 +85,6 @@ class Remote {
       await this.refresh()
     }
   }
-
   async make(wanted: Destination, name?: string): Promise<Host | undefined> {
     const own: Own = {
       id: ownId(),
@@ -107,15 +96,12 @@ class Remote {
     await this.keep((kept) => ({ ...kept, own: [...kept.own, own] }))
     return this.byId(own.id)
   }
-
   reached(id: string): void {
     void this.keep((kept) => withAbout(kept, id, { last: Date.now() }))
   }
-
   connected(id: string): void {
     const about = { ...this.kept.about, [id]: { ...this.kept.about[id], last: Date.now() } }
     this.take({ ...this.kept, about })
   }
 }
-
 export const remote = new Remote()

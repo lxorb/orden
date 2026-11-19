@@ -1,9 +1,7 @@
 import json
 import os
 import random
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -11,9 +9,7 @@ say, wrong = DRIVE.say, DRIVE.wrong
 WS = "window.ordenApp.workspace"
 SEED = int(os.environ.get("FUZZ_SEED", "1"))
 OPS = int(os.environ.get("FUZZ_OPS", "300"))
-
 PICK = "const pick = (xs) => xs[Math.floor(Math.random() * xs.length)]"
-
 ACTS: list[tuple[str, str]] = [
     ("note", f"{WS}.openBlank('N' + Math.random().toString(36).slice(2, 6), '# N\\n\\nwords ' + Math.random())"),
     ("new tab", f"{WS}.newTab()"),
@@ -29,9 +25,7 @@ ACTS: list[tuple[str, str]] = [
     ("reading", f"{WS}.toggleReading()"),
     ("deselect", f"{WS}.deselect()"),
 ]
-
 KEYS = ["Control+Tab", "Control+Shift+Tab", "Control+w", "Control+Shift+t", "Control+t", "Alt", "Control+\\", "Escape"]
-
 CHECK = f"""() => {{
   const ws = {WS}
   const bad = []
@@ -50,7 +44,6 @@ CHECK = f"""() => {{
   const shown = document.querySelectorAll('[role=tab]').length
   return {{ bad, tabs: ws.tabs.length, panes: panes.length, shown }}
 }}"""
-
 DOM = f"""() => {{
   const ws = {WS}
   const bad = []
@@ -66,14 +59,11 @@ DOM = f"""() => {{
   if (missing) bad.push(`${{missing}} tabs not drawn`)
   return bad
 }}"""
-
 LONG = """
 window.__long = []
 new PerformanceObserver((list) => { for (const one of list.getEntries()) if (one.duration > 400) window.__long.push(Math.round(one.duration)) })
   .observe({ type: 'longtask', buffered: true })
 """
-
-
 def drive(browser: Browser) -> None:
     rand = random.Random(SEED)
     page = DRIVE.page(browser, viewport={"width": 1200, "height": 800})
@@ -124,6 +114,4 @@ def drive(browser: Browser) -> None:
             say(f"step {step}: tabs {said['tabs']}, panes {said['panes']}, strip tabs {said['shown']}, long tasks {page.evaluate('() => window.__long.splice(0)')}")
     say(f"seed {SEED}: {OPS} steps, long tasks {page.evaluate('() => window.__long')}")
     say("trail tail " + json.dumps(trail[-10:]))
-
-
 raise SystemExit(DRIVE.run(drive))

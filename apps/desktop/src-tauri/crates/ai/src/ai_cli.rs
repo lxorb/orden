@@ -37,15 +37,10 @@ fn claude_code_offered() -> bool {
         Some("off" | "0" | "false")
     )
 }
-
 const ASKING: Duration = Duration::from_secs(300);
-
 const IDLE: Duration = Duration::from_secs(600);
-
 const TELLING: Duration = Duration::from_secs(30);
-
 const GONE: &str = "the page that asked has gone";
-
 #[derive(Default)]
 pub struct Asks {
     running: Mutex<HashMap<String, Held>>,
@@ -54,14 +49,12 @@ pub struct Asks {
     closing: AtomicBool,
     loads: Mutex<HashMap<String, u64>>,
 }
-
 struct Held {
     owner: String,
     opening: u64,
     running: Option<Running>,
     stopped: bool,
 }
-
 impl Held {
     fn stop(&mut self) {
         self.stopped = true;
@@ -70,26 +63,22 @@ impl Held {
         }
     }
 }
-
 struct Session {
     owner: String,
     opening: u64,
     on: Arc<On>,
 }
-
 enum On {
     Claude(Claude),
     Codex(Arc<Host>),
     Gemini(Box<Gemini>),
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 struct HostKey {
     owner: String,
     agent: Option<(String, Mode)>,
     home: Option<Home>,
 }
-
 impl On {
     fn end(&self, id: &str) {
         match self {
@@ -99,21 +88,17 @@ impl On {
         }
     }
 }
-
 impl Asks {
     fn load_of(&self, owner: &str) -> u64 {
         self.loads.held().get(owner).copied().unwrap_or(0)
     }
-
     fn gone(&self, owner: &str, load: u64) -> bool {
         self.closing.load(Ordering::SeqCst) || self.load_of(owner) != load
     }
-
     fn page_started(&self, owner: &str) {
         *self.loads.held().entry(owner.to_owned()).or_insert(0) += 1;
         self.stop_where(Some(owner));
     }
-
     fn stop_where(&self, owner: Option<&str>) {
         let mine = |one: &str| owner.is_none_or(|owner| one == owner);
         for held in self.running.held().values_mut() {
@@ -151,30 +136,25 @@ impl Asks {
         }
     }
 }
-
 pub fn window_gone(app: &AppHandle, label: &str) {
     if let Some(asks) = app.try_state::<Asks>() {
         asks.stop_where(Some(label));
     }
 }
-
 pub fn page_started(app: &AppHandle, label: &str) {
     if let Some(asks) = app.try_state::<Asks>() {
         asks.page_started(label);
     }
 }
-
 pub fn end_all(app: &AppHandle) {
     if let Some(asks) = app.try_state::<Asks>() {
         asks.closing.store(true, Ordering::SeqCst);
         asks.stop_where(None);
     }
 }
-
 fn owner(webview: &Webview) -> Result<String, String> {
     orden_base::labels::own_window(webview)
 }
-
 fn usable(id: &str) -> Result<(), String> {
     let fits = !id.is_empty()
         && id.len() <= 80
@@ -184,14 +164,12 @@ fn usable(id: &str) -> Result<(), String> {
     fits.then_some(())
         .ok_or_else(|| "not a question's name".to_owned())
 }
-
 fn offered(tool: Tool) -> Result<(), String> {
     if tool == Tool::ClaudeCode && !claude_code_offered() {
         return Err("not in this build".to_owned());
     }
     Ok(())
 }
-
 fn command(
     program: &Program,
     args: &[impl AsRef<std::ffi::OsStr>],
@@ -208,14 +186,12 @@ fn command(
     }
     command
 }
-
 fn home_for(app: &AppHandle, tool: Tool, account: Option<&str>) -> Result<Option<Home>, String> {
     if let Some(id) = account {
         usable(id)?;
     }
     home::of(app, tool, account)
 }
-
 fn workroom(app: &AppHandle) -> Result<PathBuf, String> {
     let folder = app
         .path()
@@ -225,14 +201,12 @@ fn workroom(app: &AppHandle) -> Result<PathBuf, String> {
     std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
     Ok(folder)
 }
-
 fn caps_of(program: &Program, folder: &Path) -> args::Caps {
     static KNOWN: OnceLock<Mutex<HashMap<PathBuf, args::Caps>>> = OnceLock::new();
     let known = KNOWN.get_or_init(Mutex::default);
     if let Some(caps) = known.held().get(&program.exe).cloned() {
         return caps;
     }
-
     let help = run::run_to_end(command(program, &args::HELP, folder, None), TELLING)
         .map(|said| format!("{}\n{}", said.out, said.ended.err))
         .unwrap_or_default();
@@ -240,7 +214,6 @@ fn caps_of(program: &Program, folder: &Path) -> args::Caps {
     known.held().insert(program.exe.clone(), caps.clone());
     caps
 }
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Status {
@@ -249,7 +222,6 @@ pub struct Status {
     #[serde(flatten)]
     said: Said,
 }
-
 #[tauri::command]
 pub async fn ai_cli_status(
     webview: Webview,
@@ -280,23 +252,19 @@ pub async fn ai_cli_status(
     })
     .await
 }
-
 pub fn keep_enrolled(app: &AppHandle) {
     enroll::keep_enrolled(app);
 }
-
 #[tauri::command(async)]
 pub fn ai_cli_enroll_read(webview: Webview) -> Result<enroll::Standing, String> {
     owner(&webview)?;
     Ok(enroll::standing(webview.app_handle()))
 }
-
 #[tauri::command(async)]
 pub fn ai_cli_enroll_write(webview: Webview, on: bool) -> Result<(), String> {
     owner(&webview)?;
     enroll::turned(webview.app_handle(), on)
 }
-
 #[tauri::command]
 pub async fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
@@ -316,13 +284,11 @@ pub async fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Res
     })
     .await
 }
-
 fn sent(output: &Channel<Value>, message: Message) {
     if let Ok(value) = serde_json::to_value(message) {
         let _ = output.send(value);
     }
 }
-
 #[tauri::command]
 pub async fn ai_cli_ask(
     webview: Webview,
@@ -347,7 +313,6 @@ pub async fn ai_cli_ask(
         let folder = workroom(&app)?;
         let model = model.filter(|one| !one.trim().is_empty());
         let args = args::ask(model.as_deref(), &caps_of(&program, &folder))?;
-
         let asks = webview.state::<Asks>();
         let opening = next_opening();
         {
@@ -368,7 +333,6 @@ pub async fn ai_cli_ask(
                 },
             );
         }
-
         let name = id.clone();
         let started = run::start(
             command(&program, &args, &folder, home.as_ref()),
@@ -390,7 +354,6 @@ pub async fn ai_cli_ask(
                 sent(&output, message);
             },
         );
-
         let mut running = asks.running.held();
         let mine = running.get(&id).is_some_and(|one| one.opening == opening);
         let started = match started {
@@ -412,7 +375,6 @@ pub async fn ai_cli_ask(
     })
     .await
 }
-
 #[tauri::command(async)]
 pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -423,12 +385,10 @@ pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     }
     Ok(())
 }
-
 fn next_opening() -> u64 {
     static OPENINGS: AtomicU64 = AtomicU64::new(1);
     OPENINGS.fetch_add(1, Ordering::SeqCst)
 }
-
 fn session_output(
     app: &AppHandle,
     id: &str,
@@ -456,7 +416,6 @@ fn session_output(
         sent(&output, message);
     })
 }
-
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Opening {
@@ -471,7 +430,6 @@ pub struct Opening {
     #[serde(default)]
     without: Vec<String>,
 }
-
 #[tauri::command]
 pub async fn ai_cli_open(
     webview: Webview,
@@ -501,7 +459,6 @@ pub async fn ai_cli_open(
             .map(|mode| crate::ai_agent::lend(&app, &opening.agent, mode))
             .transpose()?;
         let home = home_for(&app, tool, opening.account.as_deref())?;
-
         let claude = match tool {
             Tool::ClaudeCode => Some(claude_command(
                 &program,
@@ -513,7 +470,6 @@ pub async fn ai_cli_open(
             )?),
             Tool::Codex | Tool::Gemini => None,
         };
-
         let asks = webview.state::<Asks>();
         if asks.sessions.held().contains_key(&id) {
             return Err(format!("{id} is already open"));
@@ -521,7 +477,6 @@ pub async fn ai_cli_open(
         let number = next_opening();
         let ended = Arc::new(AtomicBool::new(false));
         let output = session_output(&app, &id, number, output, &ended);
-
         let on = match (tool, claude) {
             (Tool::ClaudeCode, Some(command)) => {
                 let output = Arc::clone(&output);
@@ -579,7 +534,6 @@ pub async fn ai_cli_open(
     })
     .await
 }
-
 fn kept(
     asks: &Asks,
     id: String,
@@ -604,7 +558,6 @@ fn kept(
     }
     Ok(())
 }
-
 fn claude_command(
     program: &Program,
     folder: &Path,
@@ -641,7 +594,6 @@ fn claude_command(
     }
     Ok(command)
 }
-
 fn host_for(
     asks: &Asks,
     key: HostKey,
@@ -678,7 +630,6 @@ fn host_for(
     hosts.insert(key, Arc::clone(&host));
     Ok(host)
 }
-
 #[tauri::command(async)]
 pub fn ai_cli_say(webview: Webview, id: String, say: Value) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -699,7 +650,6 @@ pub fn ai_cli_say(webview: Webview, id: String, say: Value) -> Result<(), String
         On::Gemini(gemini) => gemini.say(say),
     }
 }
-
 #[tauri::command(async)]
 pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -716,13 +666,11 @@ pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     }
     Ok(())
 }
-
 #[derive(Clone, Copy)]
 enum Asking {
     Models,
     Usage,
 }
-
 #[tauri::command]
 pub async fn ai_cli_models(
     webview: Webview,
@@ -731,7 +679,6 @@ pub async fn ai_cli_models(
 ) -> Result<Value, String> {
     ask_program(webview, tool, account, Asking::Models).await
 }
-
 #[tauri::command]
 pub async fn ai_cli_usage(
     webview: Webview,
@@ -740,7 +687,6 @@ pub async fn ai_cli_usage(
 ) -> Result<Value, String> {
     ask_program(webview, tool, account, Asking::Usage).await
 }
-
 async fn ask_program(
     webview: Webview,
     tool: Tool,
@@ -800,7 +746,6 @@ async fn ask_program(
     })
     .await
 }
-
 #[cfg(test)]
 mod tests {
     use super::run::{run_to_end, start, Ended, Heard};
@@ -817,7 +762,6 @@ mod tests {
             .find(|script| script.is_file())
             .expect("scripts/fake-ai-cli.mjs above the crate")
     }
-
     #[test]
     fn a_start_from_a_page_since_reloaded_or_an_app_quitting_is_refused() {
         let asks = Asks::default();
@@ -832,7 +776,6 @@ mod tests {
         assert!(asks.gone("orden-1", now));
         assert!(asks.gone("orden-2", asks.load_of("orden-2")));
     }
-
     macro_rules! needs_node {
         () => {
             if Command::new("node").arg("--version").output().is_err() {
@@ -841,7 +784,6 @@ mod tests {
             }
         };
     }
-
     fn fake(tool: Tool, mode: &str, args: &[impl AsRef<std::ffi::OsStr>]) -> Command {
         let mut command = Command::new("node");
         command
@@ -852,7 +794,6 @@ mod tests {
             .env_remove(args::TOKEN_VAR);
         command
     }
-
     fn heard_all(command: Command, input: &str, timeout: Duration) -> (Vec<String>, Ended) {
         let (sent, heard) = mpsc::channel();
         start(command, input.as_bytes().to_vec(), timeout, move |one| {
@@ -868,7 +809,6 @@ mod tests {
         }
         panic!("no end was heard");
     }
-
     #[test]
     fn a_second_account_signs_in_and_out_in_a_home_of_its_own() {
         needs_node!();
@@ -882,7 +822,6 @@ mod tests {
         let home = home::under(dir.path(), Tool::ClaudeCode, Some("claude-code-2"))
             .expect("read")
             .expect("a home");
-
         let mut asked = fake(Tool::ClaudeCode, "answer", args::status(Tool::ClaudeCode));
         asked.env("ANTHROPIC_API_KEY", "from-the-shell");
         home.apply(&mut asked);
@@ -893,7 +832,6 @@ mod tests {
             said.out
         );
         assert!(said.out.contains("\"claude.ai\""), "{}", said.out);
-
         let mut out = fake(Tool::ClaudeCode, "answer", args::logout(Tool::ClaudeCode));
         home.apply(&mut out);
         run_to_end(out, TELLING).expect("logout");
@@ -901,7 +839,6 @@ mod tests {
         home::removed(&home).expect("removed");
         assert!(!home.dir().exists());
     }
-
     fn fake_program(dir: &Path, tool: Tool) -> Program {
         let name = tool.command();
         #[cfg(windows)]
@@ -935,7 +872,6 @@ exec node '{}' {name} \"$@\"
             path: std::env::var_os("PATH").unwrap_or_default(),
         }
     }
-
     #[test]
     fn orden_connects_itself_to_an_agent_once_and_lets_go_only_of_its_own() {
         needs_node!();
@@ -963,20 +899,17 @@ exec node '{}' {name} \"$@\"
             let off = || enroll::unenroll(&program, tool, dir.path(), &orden, Some(&home));
             let carry = || enroll::carry_over(&program, tool, dir.path(), &orden, Some(&home));
             let holds = |want: Value| assert_eq!(servers(), want, "{tool:?}");
-
             std::fs::remove_file(&kept).ok();
             on();
             on();
             holds(json!({ "orden": ours() }));
             off();
             holds(json!({}));
-
             let theirs = json!({ "orden": elsewhere() });
             start(theirs.clone());
             on();
             off();
             holds(theirs);
-
             for enrolling in [true, false] {
                 start(json!({ "nib": ours() }));
                 for _ in 0..2 {
@@ -988,35 +921,29 @@ exec node '{}' {name} \"$@\"
                 }
                 holds(json!({ "orden": ours() }));
             }
-
             start(json!({ "nib": ours(), "orden": ours() }));
             carry();
             holds(json!({ "orden": ours() }));
-
             start(json!({ "nib": elsewhere() }));
             carry();
             holds(json!({ "nib": elsewhere() }));
             on();
             holds(json!({ "nib": elsewhere(), "orden": ours() }));
-
             let kept_both = json!({ "nib": ours(), "orden": elsewhere() });
             start(kept_both.clone());
             on();
             holds(kept_both);
-
             start(json!({ "nib": ours(), "orden": elsewhere() }));
             off();
             holds(json!({ "orden": elsewhere() }));
             std::fs::remove_file(&kept).ok();
         }
     }
-
     fn full_caps() -> args::Caps {
         let said =
             run_to_end(fake(Tool::ClaudeCode, "answer", &["--help"]), TELLING).expect("help");
         args::Caps::from_help(&said.out)
     }
-
     #[test]
     fn claude_code_answers_line_by_line_with_the_question_on_stdin() {
         needs_node!();
@@ -1026,7 +953,6 @@ exec node '{}' {name} \"$@\"
             "the rules\n\nwhat is a heron",
             TELLING,
         );
-
         assert_eq!(ended.code, Some(0), "{}", ended.err);
         assert!(!ended.stopped && !ended.timed_out);
         assert!(lines[0].contains("\"subtype\":\"init\""));
@@ -1037,7 +963,6 @@ exec node '{}' {name} \"$@\"
             .last()
             .is_some_and(|line| line.contains("what is a heron")));
     }
-
     #[test]
     fn a_question_without_the_policy_flags_is_refused_by_the_stand_in() {
         needs_node!();
@@ -1045,7 +970,6 @@ exec node '{}' {name} \"$@\"
         assert_eq!(ended.code, Some(2));
         assert!(ended.err.contains("asked with tools"));
     }
-
     fn pids_in(file: &Path) -> Vec<u32> {
         let started = Instant::now();
         while started.elapsed() < Duration::from_secs(20) {
@@ -1062,7 +986,6 @@ exec node '{}' {name} \"$@\"
         }
         panic!("the stand-in never said who it started");
     }
-
     fn gone_soon(pid: u32) -> bool {
         let started = Instant::now();
         while started.elapsed() < Duration::from_secs(10) {
@@ -1073,7 +996,6 @@ exec node '{}' {name} \"$@\"
         }
         false
     }
-
     #[test]
     fn a_stop_ends_the_program_and_everything_it_started() {
         needs_node!();
@@ -1082,17 +1004,14 @@ exec node '{}' {name} \"$@\"
         let args = args::ask(None, &args::Caps::default()).expect("args");
         let mut command = fake(Tool::ClaudeCode, "hang", &args);
         command.env("FAKE_AI_CLI_PIDS", &pids);
-
         let (sent, heard) = mpsc::channel();
         let running = start(command, b"hold on".to_vec(), TELLING, move |one| {
             let _ = sent.send(one);
         })
         .expect("started");
-
         let family = pids_in(&pids);
         assert!(family.iter().all(|&pid| orden_base::stat::running(pid)));
         running.stop();
-
         let ended = heard
             .iter()
             .find_map(|one| match one {
@@ -1105,7 +1024,6 @@ exec node '{}' {name} \"$@\"
             assert!(gone_soon(pid), "{pid} outlived the stop");
         }
     }
-
     #[test]
     fn a_run_past_its_time_is_ended_with_its_family() {
         needs_node!();
@@ -1114,7 +1032,6 @@ exec node '{}' {name} \"$@\"
         let args = args::ask(None, &args::Caps::default()).expect("args");
         let mut command = fake(Tool::ClaudeCode, "hang", &args);
         command.env("FAKE_AI_CLI_PIDS", &pids);
-
         let (_, ended) = heard_all(command, "hold on", Duration::from_secs(3));
         assert!(ended.timed_out);
         assert!(!ended.stopped);
@@ -1122,7 +1039,6 @@ exec node '{}' {name} \"$@\"
             assert!(gone_soon(pid), "{pid} outlived the timeout");
         }
     }
-
     #[test]
     fn the_status_question_is_answered_whole() {
         needs_node!();
@@ -1133,7 +1049,6 @@ exec node '{}' {name} \"$@\"
         .expect("status");
         assert_eq!(claude.ended.code, Some(0));
         assert!(claude.out.contains("\"loggedIn\": true"));
-
         let codex = run_to_end(
             fake(Tool::Codex, "signed-out", args::status(Tool::Codex)),
             TELLING,
@@ -1142,7 +1057,6 @@ exec node '{}' {name} \"$@\"
         assert_eq!(codex.ended.code, Some(1));
         assert!(codex.ended.err.contains("Not logged in"));
     }
-
     fn until(
         heard: &Receiver<Message>,
         patience: Duration,
@@ -1162,15 +1076,12 @@ exec node '{}' {name} \"$@\"
         }
         panic!("not heard in time; heard {seen:#?}");
     }
-
     fn line_has(message: &Message, words: &str) -> bool {
         matches!(message, Message::Line { line } if line.contains(words))
     }
-
     fn reply_to(message: &Message, to: &str) -> bool {
         matches!(message, Message::Reply { to: said, .. } if said == to)
     }
-
     fn result_of<'a>(messages: &'a [Message], to: &str) -> &'a Value {
         messages
             .iter()
@@ -1182,14 +1093,12 @@ exec node '{}' {name} \"$@\"
             })
             .unwrap_or_else(|| panic!("no reply to {to} in {messages:#?}"))
     }
-
     fn turn(text: &str) -> Say {
         Say::Turn {
             text: text.to_owned(),
             images: Vec::new(),
         }
     }
-
     fn claude_session(mode: &str, shape: Shape, folder: &Path) -> (Claude, Receiver<Message>) {
         let config = folder.join("orden-mcp.json");
         std::fs::write(
@@ -1210,7 +1119,6 @@ exec node '{}' {name} \"$@\"
         .expect("started");
         (claude, heard)
     }
-
     #[test]
     fn a_claude_code_session_answers_turn_after_turn_and_is_told_what_to_use() {
         needs_node!();
@@ -1222,7 +1130,6 @@ exec node '{}' {name} \"$@\"
             without: &[],
         };
         let (claude, heard) = claude_session("answer", shape, dir.path());
-
         claude.say(&turn("what is a heron")).expect("said");
         let first = until(&heard, TELLING, |one| line_has(one, "\"type\":\"result\""));
         let init = first
@@ -1242,11 +1149,9 @@ exec node '{}' {name} \"$@\"
         assert!(first
             .iter()
             .any(|one| line_has(one, "You asked: what is a heron")));
-
         claude.say(&Say::Context).expect("said");
         let context = until(&heard, TELLING, |one| reply_to(one, "context"));
         assert_eq!(result_of(&context, "context")["maxTokens"], 200_000);
-
         claude
             .say(&Say::Model {
                 model: "sonnet".into(),
@@ -1271,12 +1176,10 @@ exec node '{}' {name} \"$@\"
         assert!(second
             .iter()
             .any(|one| line_has(one, "\"model\":\"sonnet\"")));
-
         claude.stop();
         let end = until(&heard, TELLING, |one| matches!(one, Message::End(_)));
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.stopped));
     }
-
     #[test]
     fn a_session_stopped_mid_turn_is_interrupted_and_keeps_its_words() {
         needs_node!();
@@ -1293,7 +1196,6 @@ exec node '{}' {name} \"$@\"
         let end = until(&heard, TELLING, |one| matches!(one, Message::End(_)));
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.code == Some(0)));
     }
-
     #[test]
     fn a_session_nobody_talks_to_is_ended_with_its_family() {
         needs_node!();
@@ -1318,7 +1220,6 @@ exec node '{}' {name} \"$@\"
             assert!(gone_soon(pid), "{pid} outlived the idle end");
         }
     }
-
     fn codex_host(mode: &str, token: bool, folder: &Path) -> Host {
         let mut command = fake(Tool::Codex, mode, &args::codex_server());
         if token {
@@ -1332,7 +1233,6 @@ exec node '{}' {name} \"$@\"
         )
         .expect("started")
     }
-
     fn route() -> (codex_app::Output, Receiver<Message>) {
         let (sent, heard) = mpsc::channel();
         let sent = Mutex::new(sent);
@@ -1341,7 +1241,6 @@ exec node '{}' {name} \"$@\"
         });
         (output, heard)
     }
-
     #[test]
     fn codex_threads_share_the_app_server_and_stream_their_turns() {
         needs_node!();
@@ -1371,7 +1270,6 @@ exec node '{}' {name} \"$@\"
             codex_app::From::default(),
         )
         .expect("opened");
-
         host.say("one", turn("what is a heron")).expect("said");
         let heard = until(&first, TELLING, |one| line_has(one, "turn/completed"));
         let told = &result_of(&heard, "thread")["told"];
@@ -1390,10 +1288,8 @@ exec node '{}' {name} \"$@\"
         assert!(heard
             .iter()
             .any(|one| line_has(one, "You asked: what is a heron")));
-
         let others: Vec<Message> = second.try_iter().collect();
         assert!(others.iter().all(|one| !line_has(one, "agentMessage")));
-
         host.say(
             "one",
             Say::Goal {
@@ -1413,7 +1309,6 @@ exec node '{}' {name} \"$@\"
         )
         .expect("said");
         until(&first, TELLING, |one| reply_to(one, "compact"));
-
         let models = host.models(TELLING).expect("models");
         assert!(models["data"][0]["supportedReasoningEfforts"].is_array());
         let limits = host.limits(TELLING).expect("limits");
@@ -1421,7 +1316,6 @@ exec node '{}' {name} \"$@\"
             limits["rateLimits"]["secondary"]["windowDurationMins"],
             10080
         );
-
         host.close("one");
         let end = until(&first, TELLING, |one| matches!(one, Message::End(_)));
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.stopped));
@@ -1430,7 +1324,6 @@ exec node '{}' {name} \"$@\"
         host.stop();
         until(&second, TELLING, |one| matches!(one, Message::End(_)));
     }
-
     #[test]
     fn codex_is_steered_and_stopped_mid_turn() {
         needs_node!();
@@ -1456,7 +1349,6 @@ exec node '{}' {name} \"$@\"
         assert!(rest.iter().any(|one| line_has(one, "\"interrupted\"")));
         host.stop();
     }
-
     #[test]
     fn codex_s_requests_for_approval_are_declined() {
         needs_node!();
@@ -1471,7 +1363,6 @@ exec node '{}' {name} \"$@\"
         assert!(heard.iter().any(|one| line_has(one, "answered decline")));
         host.stop();
     }
-
     #[test]
     fn a_thread_with_tools_on_a_host_with_no_token_is_refused_by_the_stand_in() {
         needs_node!();
@@ -1491,7 +1382,6 @@ exec node '{}' {name} \"$@\"
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.err.contains("token")));
         host.stop();
     }
-
     #[test]
     fn nothing_on_the_command_line_comes_from_the_window_but_what_it_names() {
         let caps = args::Caps::from_help(
@@ -1524,7 +1414,6 @@ exec node '{}' {name} \"$@\"
             .iter()
             .all(|arg| arg == "app-server" || arg == "-c" || arg.contains('=')));
     }
-
     #[cfg(windows)]
     #[test]
     fn every_argument_survives_an_npm_shim() {
@@ -1542,7 +1431,6 @@ exec node '{}' {name} \"$@\"
                 path: std::env::var_os("PATH").unwrap_or_default(),
             }
         };
-
         let program = shim("claude.cmd", "claude");
         let args = args::ask(Some("opus"), &args::Caps::default()).expect("args");
         let (lines, ended) = heard_all(
@@ -1552,7 +1440,6 @@ exec node '{}' {name} \"$@\"
         );
         assert_eq!(ended.code, Some(0), "{}", ended.err);
         assert!(lines[0].contains("opus[1m]"));
-
         let program = shim("codex.cmd", "codex");
         let mut command = command(&program, &args::codex_server(), dir.path(), None);
         command.env("FAKE_AI_CLI_MODE", "answer");
@@ -1566,7 +1453,6 @@ exec node '{}' {name} \"$@\"
         assert!(host.models(TELLING).is_ok());
         host.stop();
     }
-
     #[test]
     #[ignore = "asks the real Claude Code on this machine, which spends a little of a plan"]
     fn real_claude_says_ok() {
@@ -1602,7 +1488,6 @@ exec node '{}' {name} \"$@\"
             .expect("init");
         assert!(init.contains("\"tools\":[]"), "{init}");
         assert!(init.contains("\"mcp_servers\":[]"), "{init}");
-
         let shape = Shape {
             model: Some("haiku"),
             effort: Some(Effort::Low),
@@ -1635,7 +1520,6 @@ exec node '{}' {name} \"$@\"
         assert!(usage.is_ok_and(|usage| usage["rate_limits"]["seven_day"]["utilization"] == 42));
         claude.stop();
     }
-
     fn gemini_session(
         mode: &'static str,
         folder: &Path,
@@ -1657,7 +1541,6 @@ exec node '{}' {name} \"$@\"
             Gemini::start(launch, "g-1", None, IDLE, orden.as_deref(), output).expect("started");
         (gemini, heard)
     }
-
     fn lines_until_result(heard: &Receiver<Message>) -> Vec<String> {
         until(heard, TELLING, |one| {
             matches!(one, Message::End(_))
@@ -1670,7 +1553,6 @@ exec node '{}' {name} \"$@\"
         })
         .collect()
     }
-
     #[test]
     fn a_gemini_session_resumes_its_session_turn_by_turn_and_lends_orden() {
         needs_node!();
@@ -1682,7 +1564,6 @@ exec node '{}' {name} \"$@\"
         assert!(first.contains("mcp_orden_read_note"), "{first}");
         assert!(first.contains("set:abc123"), "{first}");
         assert!(first.contains(r#""content":" what is a heron""#), "{first}");
-
         let mut said = Err(String::new());
         for _ in 0..100 {
             said = gemini.say(turn("and a stork"));
@@ -1696,7 +1577,6 @@ exec node '{}' {name} \"$@\"
         assert!(second.contains(r#""content":"again""#), "{second}");
         assert!(second.contains("fake-session-1"), "{second}");
         assert!(heard.recv_timeout(Duration::from_millis(500)).is_err());
-
         let pictured = Say::Turn {
             text: "this".to_owned(),
             images: vec![say::Image {
@@ -1716,7 +1596,6 @@ exec node '{}' {name} \"$@\"
         }
         assert!(!files.exists());
     }
-
     #[test]
     fn a_gemini_turn_that_dies_unanswered_ends_the_session_with_its_words() {
         needs_node!();
@@ -1727,14 +1606,12 @@ exec node '{}' {name} \"$@\"
         assert!(
             matches!(end.last(), Some(Message::End(ended)) if ended.code == Some(1) && ended.err.contains("boom"))
         );
-
         let (signed_out, heard) = gemini_session("signed-out", dir.path(), None);
         signed_out.say(turn("hello")).expect("said");
         let lines = lines_until_result(&heard).join("\n");
         assert!(lines.contains("Auth method"), "{lines}");
         assert!(heard.recv_timeout(Duration::from_millis(500)).is_err());
     }
-
     #[test]
     fn an_interrupted_gemini_turn_ends_stopped() {
         needs_node!();

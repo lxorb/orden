@@ -1,34 +1,27 @@
 use serde_json::{json, Value};
 
 pub const WORLD: &str = "orden";
-
 const MARK: &str = "void 0";
-
 fn taken_back(last: &str) -> Option<std::ops::RangeInclusive<u32>> {
     let last = last.trim().parse::<u32>().ok().filter(|one| *one > 0)?;
     Some(1..=last)
 }
-
 fn registering(source: &str) -> String {
     json!({ "source": source, "worldName": WORLD }).to_string()
 }
-
 fn frame_of(tree: &str) -> Option<String> {
     let said: Value = serde_json::from_str(tree).ok()?;
     said.pointer("/frameTree/frame/id")?
         .as_str()
         .map(str::to_string)
 }
-
 fn world_in(frame: &str) -> String {
     json!({ "frameId": frame, "worldName": WORLD }).to_string()
 }
-
 fn context_of(world: &str) -> Option<i64> {
     let said: Value = serde_json::from_str(world).ok()?;
     said.get("executionContextId")?.as_i64()
 }
-
 fn evaluating(expression: &str, context: i64) -> String {
     json!({
         "expression": expression,
@@ -38,11 +31,8 @@ fn evaluating(expression: &str, context: i64) -> String {
     })
     .to_string()
 }
-
 const IN_THE_PAGE: &[&str] = &["iframe", "worker"];
-
 const IN_A_FRAME: &[&str] = &["iframe", "worker"];
-
 fn attaching(kinds: &[&str]) -> String {
     let filter: Vec<Value> = kinds.iter().map(|kind| json!({ "type": kind })).collect();
     json!({
@@ -53,13 +43,11 @@ fn attaching(kinds: &[&str]) -> String {
     })
     .to_string()
 }
-
 #[derive(Debug, PartialEq, Eq)]
 enum Attached {
     Frame(String),
     Held(String),
 }
-
 fn attached(event: &str) -> Option<Attached> {
     let said: Value = serde_json::from_str(event).ok()?;
     let session = said.get("sessionId")?.as_str()?.to_string();
@@ -71,7 +59,6 @@ fn attached(event: &str) -> Option<Attached> {
         .unwrap_or(false)
         .then_some(Attached::Held(session))
 }
-
 fn bindings() -> [(&'static str, Value); 4] {
     [
         crate::web_opens::BINDING,
@@ -86,11 +73,9 @@ fn bindings() -> [(&'static str, Value); 4] {
         )
     })
 }
-
 fn let_go() -> (&'static str, String) {
     ("Runtime.runIfWaitingForDebugger", "{}".to_string())
 }
-
 fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
     [
         ("Page.enable", "{}".to_string()),
@@ -102,7 +87,6 @@ fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
         let_go(),
     ]
 }
-
 #[derive(Default)]
 pub struct Cleared {
     swept: bool,
@@ -110,7 +94,6 @@ pub struct Cleared {
     ours: bool,
     frames: bool,
 }
-
 impl Cleared {
     pub fn said(&self) -> String {
         let swept = match (self.swept, self.counted) {
@@ -131,7 +114,6 @@ impl Cleared {
         format!("{swept}, Orden's own {ours}{frames}")
     }
 }
-
 pub use engine::{asking, sent, value};
 
 mod engine {
@@ -148,7 +130,6 @@ mod engine {
     };
 
     const PATIENCE: Duration = Duration::from_secs(10);
-
     pub(super) fn bound_again(method: &str) -> Vec<(&'static str, Value)> {
         if method == "Page.frameNavigated" {
             bindings().to_vec()
@@ -156,7 +137,6 @@ mod engine {
             Vec::new()
         }
     }
-
     pub fn asking(view: &Webview, app: &tauri::AppHandle, tab: &str, window: &str) {
         let (app, tab, window) = (app.clone(), tab.to_string(), window.to_string());
         let page = view.clone();
@@ -184,12 +164,10 @@ mod engine {
             }
         });
     }
-
     fn called(view: &Webview, method: &str, params: &str) -> Option<Value> {
         let params: Value = serde_json::from_str(params).ok()?;
         devtools::call(view, None, method, &params, PATIENCE).ok()
     }
-
     pub fn sent(view: &Webview, url: &Url, scripts: &str) -> Cleared {
         let enabled = called(view, "Page.enable", "{}").is_some();
         let taken = called(
@@ -212,7 +190,6 @@ mod engine {
                 })
                 .count()
         });
-
         for (method, params) in bindings() {
             let _ = called(view, method, &params.to_string());
         }
@@ -232,7 +209,6 @@ mod engine {
                 &json!({ "source": crate::web_opens::PAGE_SCRIPT }).to_string(),
             );
         }
-
         let _ = view.navigate(url.clone());
         Cleared {
             swept: taken.is_some(),
@@ -241,7 +217,6 @@ mod engine {
             frames,
         }
     }
-
     fn following(view: &Webview, scripts: &str) -> bool {
         let telling = view.clone();
         let scripts = scripts.to_string();
@@ -272,7 +247,6 @@ mod engine {
         });
         heard.is_ok() && called(view, "Target.setAutoAttach", &attaching(IN_THE_PAGE)).is_some()
     }
-
     pub fn value(view: &Webview, expression: &str) -> Option<Value> {
         let tree = called(view, "Page.getFrameTree", "{}")?;
         let frame = frame_of(&tree.to_string())?;
@@ -283,7 +257,6 @@ mod engine {
             .cloned()
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -309,20 +282,17 @@ mod tests {
             "the runtime's scripts left in, Orden's own missing, not in other sites' frames"
         );
     }
-
     #[test]
     fn every_script_up_to_the_marker_is_taken_back() {
         assert_eq!(taken_back("7"), Some(1..=7));
         assert_eq!(taken_back("1"), Some(1..=1));
     }
-
     #[test]
     fn a_numbering_this_does_not_read_takes_nothing_back() {
         for said in ["", "0", "-3", "{A1B2}", "7a", "4294967296"] {
             assert_eq!(taken_back(said), None, "{said:?}");
         }
     }
-
     #[test]
     fn orden_s_scripts_are_registered_in_orden_s_world_and_never_the_page_s() {
         let asked: serde_json::Value =
@@ -331,7 +301,6 @@ mod tests {
         assert_eq!(asked["source"], "(function () {})()");
         assert!(!WORLD.is_empty());
     }
-
     #[test]
     fn the_world_is_asked_for_in_the_page_s_own_frame() {
         let tree =
@@ -339,12 +308,10 @@ mod tests {
         assert_eq!(frame_of(tree).as_deref(), Some("4F2A"));
         assert_eq!(frame_of("{}"), None);
         assert_eq!(frame_of("not json"), None);
-
         let asked: serde_json::Value = serde_json::from_str(&world_in("4F2A")).expect("json");
         assert_eq!(asked["frameId"], "4F2A");
         assert_eq!(asked["worldName"], WORLD);
     }
-
     #[test]
     fn a_document_arriving_has_orden_s_binding_put_in_its_world() {
         let again = super::engine::bound_again("Page.frameNavigated");
@@ -367,7 +334,6 @@ mod tests {
         );
         assert!(super::engine::bound_again("Runtime.bindingCalled").is_empty());
     }
-
     #[test]
     fn a_frame_from_another_site_is_followed_and_held_until_it_has_orden_s_world() {
         let asked: serde_json::Value = serde_json::from_str(&attaching(IN_THE_PAGE)).expect("json");
@@ -378,25 +344,21 @@ mod tests {
             asked["filter"],
             serde_json::json!([{ "type": "iframe" }, { "type": "worker" }])
         );
-
         let frame = r#"{"sessionId":"S1","targetInfo":{"targetId":"T1","type":"iframe","url":"https://b.example/"},"waitingForDebugger":true}"#;
         assert_eq!(attached(frame), Some(Attached::Frame("S1".into())));
         assert_eq!(attached("{}"), None);
         assert_eq!(attached("not json"), None);
     }
-
     #[test]
     fn anything_else_held_at_its_start_is_let_go_and_given_nothing() {
         let worker = r#"{"sessionId":"S2","targetInfo":{"targetId":"T2","type":"worker","url":"blob:https://challenges.cloudflare.com/1"},"waitingForDebugger":true}"#;
         assert_eq!(attached(worker), Some(Attached::Held("S2".into())));
         assert_eq!(let_go().0, "Runtime.runIfWaitingForDebugger");
-
         let running = r#"{"sessionId":"S3","targetInfo":{"targetId":"T3","type":"worker"},"waitingForDebugger":false}"#;
         assert_eq!(attached(running), None);
         let unsaid = r#"{"sessionId":"S4","targetInfo":{"targetId":"T4","type":"service_worker"}}"#;
         assert_eq!(attached(unsaid), None);
     }
-
     #[test]
     fn a_frame_is_given_orden_s_world_and_always_let_go_last() {
         let sent = in_frame("(function () {})()");
@@ -412,7 +374,6 @@ mod tests {
         );
         let registered: serde_json::Value = serde_json::from_str(&sent[1].1).expect("json");
         assert_eq!(registered["worldName"], WORLD);
-
         let following: serde_json::Value = serde_json::from_str(&sent[2].1).expect("json");
         assert_eq!(following["waitForDebuggerOnStart"], true);
         assert_eq!(
@@ -421,13 +382,11 @@ mod tests {
         );
         assert_eq!(sent[2].1, attaching(IN_A_FRAME));
     }
-
     #[test]
     fn an_expression_runs_in_that_world_and_answers_with_its_value() {
         assert_eq!(context_of(r#"{"executionContextId":12}"#), Some(12));
         assert_eq!(context_of(r#"{"executionContextId":"12"}"#), None);
         assert_eq!(context_of("{}"), None);
-
         let asked: serde_json::Value =
             serde_json::from_str(&evaluating("1 + 1", 12)).expect("json");
         assert_eq!(asked["contextId"], 12);

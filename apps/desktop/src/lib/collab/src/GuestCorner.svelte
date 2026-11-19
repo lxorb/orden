@@ -15,26 +15,20 @@
   let error = $state<string | null>(null)
   let corner = $state<HTMLElement>()
   let field = $state<HTMLInputElement>()
-
   const name = $derived(account.guest?.name ?? '')
   const fill = $derived(accentColour(deviceAccent(), theme.current))
-
   $effect(() => closeOnBack(open, shut))
   $effect(() => (open ? overlays.show(shut, () => [corner]) : undefined))
-
   $effect(() => {
     if (open && !viewport.touch) field?.select()
   })
-
   function toggle() {
     open = !open
     error = null
   }
-
   function shut() {
     open = false
   }
-
   async function rename(to: string) {
     if (to.trim() === name) return
     error = null
@@ -44,7 +38,6 @@
       error = message(failed, 'that did not work')
     }
   }
-
   function signIn() {
     shut()
     account.open = true
@@ -91,13 +84,11 @@
     inset-inline-end: max(var(--space-2), var(--inset-right));
     z-index: var(--z-float);
   }
-
   :global([data-touch]) .guest-corner {
     --face: calc(var(--touch-target) * 0.75);
     top: var(--inset-top);
     inset-inline-end: max(var(--space-1), var(--inset-right));
   }
-
   .who {
     display: grid;
     place-items: center;
@@ -108,7 +99,6 @@
     background: none;
     cursor: default;
   }
-
   .face {
     --badge-ink: var(--accent-ink);
     width: var(--face);
@@ -121,28 +111,23 @@
       box-shadow var(--dur-fast) var(--ease-out);
     animation: arrive var(--dur-base) var(--ease-out);
   }
-
   @keyframes arrive {
     from {
       opacity: 0;
     }
   }
-
   @media (hover: hover) {
     .who:hover .face {
       box-shadow: var(--shadow-md);
     }
   }
-
   .who:active .face {
     transform: scale(0.94);
   }
-
   .who:focus-visible {
     border-radius: 50%;
     outline-offset: 2px;
   }
-
   .pop {
     position: absolute;
     top: calc(100% + var(--space-2));
@@ -155,17 +140,14 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .name {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
   }
-
   .caption {
     color: var(--muted);
   }
-
   .error {
     margin: 0;
     color: var(--danger);

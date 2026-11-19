@@ -6,7 +6,6 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void held.set(key, value),
   removeItem: (key: string) => void held.delete(key),
 })
-
 const world = vi.hoisted(() => {
   class Said extends Error {
     constructor(readonly status: number) {
@@ -21,7 +20,6 @@ const world = vi.hoisted(() => {
     asked: [] as string[],
   }
 })
-
 vi.mock('../../accounts/src/api', () => {
   const ask = (what: string) => () => {
     world.asked.push(what)
@@ -48,9 +46,7 @@ vi.mock('../../accounts/src/api', () => {
     fromServer: (error: unknown) => error instanceof world.Said,
   }
 })
-
 const owed = await import('../src/api')
-
 beforeEach(() => {
   held.clear()
   world.user = null
@@ -58,7 +54,6 @@ beforeEach(() => {
   world.answer = 0
   world.asked = []
 })
-
 describe('who owes the server', () => {
   test('is the person signed in, else the guest, else nobody', () => {
     expect(owed.holder()).toBeNull()
@@ -68,7 +63,6 @@ describe('who owes the server', () => {
     expect(owed.holder()).toBe('u1')
   })
 })
-
 describe('what the server did not hear', () => {
   test('a space ended offline stays owed until the server takes it', async () => {
     await owed.endSpace('t', 'u1', 's1', 'delete')
@@ -79,7 +73,6 @@ describe('what the server did not hear', () => {
     expect(world.asked).toEqual(['delete', 'delete'])
     expect(owed.endsOwed('u1')).toEqual(new Set())
   })
-
   test('a refusal settles it, a server that is struggling does not', async () => {
     world.answer = 503
     await owed.endSpace('t', 'u1', 's1', 'leave')
@@ -88,7 +81,6 @@ describe('what the server did not hear', () => {
     await owed.settleEnds('t', 'u1')
     expect(owed.endsOwed('u1')).toEqual(new Set())
   })
-
   test('an icon is owed until sent', async () => {
     await owed.sendIcon('t', 'u1', 's1', { icon: 'star', tint: null })
     expect(owed.iconOwed('u1', 's1')).toEqual({ icon: 'star', tint: null })
@@ -96,7 +88,6 @@ describe('what the server did not hear', () => {
     await owed.sendIcon('t', 'u1', 's1', { icon: 'star', tint: null })
     expect(owed.iconOwed('u1', 's1')).toBeNull()
   })
-
   test('names and the order of spaces are sent again once heard', async () => {
     await owed.sendName('t', 'u1', 's1', 'Work')
     await owed.sendOrder('t', 'u1', ['s2', 's1'])

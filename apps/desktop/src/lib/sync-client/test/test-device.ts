@@ -11,7 +11,6 @@ export interface TestDevice {
   asked: string[]
   reading: Reading
 }
-
 export interface Making {
   fetch: (request: Request) => Promise<Response>
   token: string
@@ -20,13 +19,11 @@ export interface Making {
   base?: string
   lazy?: boolean
 }
-
 async function sha256(data: string | Uint8Array): Promise<string> {
   const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : new Uint8Array(data)
   const digest = await crypto.subtle.digest('SHA-256', bytes)
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
-
 export async function testDevice(making: Making): Promise<TestDevice> {
   const root = '/device/space'
   const disk = new MemoryDisk()

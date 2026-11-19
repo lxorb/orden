@@ -6,15 +6,12 @@ import { movedTo, placedBeside, stepped, trimmed } from './tree-arranging'
 function file(name: string): Entry {
   return { name, path: `/s/${name}`, is_dir: false, modified: 0, created: 0, children: [] }
 }
-
 function folder(name: string): Entry {
   return { ...file(name), is_dir: true }
 }
-
 describe('what a folder keeps of the order it is drawn in', () => {
   const three = [file('a.md'), file('b.md'), file('c.md')]
   const mixed = [folder('A'), folder('B'), file('a.md'), file('b.md')]
-
   test.each([
     ['nothing while the order is the one it would have read in anyway', 'abc', ['a.md', 'b.md', 'c.md'], []],
     ['only as far as somebody actually arranged', 'abc', ['c.md', 'a.md', 'b.md'], ['c.md']],
@@ -24,22 +21,18 @@ describe('what a folder keeps of the order it is drawn in', () => {
   ])('%s', (_, which, order, kept) => {
     expect(trimmed(which === 'abc' ? three : mixed, order)).toEqual(kept)
   })
-
   test('what it keeps draws the order it was given', () => {
     const four = [file('a.md'), file('b.md'), file('c.md'), file('d.md')]
     const want = ['c.md', 'a.md', 'b.md', 'd.md']
     expect(shownNames(four, 'manual', trimmed(four, want))).toEqual(want)
   })
-
   test('and the same where a note sits between two folders', () => {
     const want = ['A', 'a.md', 'B', 'b.md']
     expect(shownNames(mixed, 'manual', trimmed(mixed, want))).toEqual(want)
   })
 })
-
 describe('a row put somewhere by hand', () => {
   const four = ['a.md', 'b.md', 'c.md', 'd.md']
-
   test.each([
     ['lands above the row it was dropped on', ['d.md'], 1, ['a.md', 'd.md', 'b.md', 'c.md']],
     ['lands below it', ['a.md'], 3, ['b.md', 'c.md', 'a.md', 'd.md']],
@@ -51,19 +44,15 @@ describe('a row put somewhere by hand', () => {
     expect(movedTo(four, moving, at)).toEqual(order)
   })
 })
-
 describe('dropping a row beside another', () => {
   const children = [folder('Deep'), file('a.md'), file('b.md'), file('c.md')]
-
   test('above the row it was dropped on', () => {
     expect(placedBeside(children, [], ['c.md'], 'a.md', false)).toEqual(['Deep', 'c.md'])
   })
-
   test('below it, and the list runs only as far as the move reached', () => {
     expect(placedBeside(children, [], ['a.md'], 'b.md', true)).toEqual(['Deep', 'b.md'])
     expect(shownNames(children, 'manual', ['Deep', 'b.md'])).toEqual(['Deep', 'b.md', 'a.md', 'c.md'])
   })
-
   test('a folder dropped among the notes stays where it was dropped', () => {
     expect(shownNames(children, 'manual', placedBeside(children, [], ['Deep'], 'b.md', true))).toEqual([
       'a.md',
@@ -72,7 +61,6 @@ describe('dropping a row beside another', () => {
       'c.md',
     ])
   })
-
   test('and a note dropped above the folder stays above it', () => {
     expect(shownNames(children, 'manual', placedBeside(children, [], ['c.md'], 'Deep', false))).toEqual([
       'c.md',
@@ -82,10 +70,8 @@ describe('dropping a row beside another', () => {
     ])
   })
 })
-
 describe('one step with a key', () => {
   const three = ['a.md', 'b.md', 'c.md']
-
   test.each([
     ['up', three, 'c.md', -1, ['a.md', 'c.md', 'b.md']],
     ['down', three, 'a.md', 1, ['b.md', 'a.md', 'c.md']],

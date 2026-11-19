@@ -11,17 +11,14 @@ const hearing = door(() =>
     }),
   ),
 )
-
 function hear(): Promise<unknown> {
   if (!isDesktop) return Promise.resolve()
   return hearing().catch(() => undefined)
 }
-
 function relativeName(root: string, one: Found): string {
   const folder = within(root, one.within) ?? ''
   return folder ? `${folder}/${one.name}` : one.name
 }
-
 export class Search {
   readonly root: string
   readonly query: string
@@ -29,12 +26,10 @@ export class Search {
   found = $state.raw<Entry[]>([])
   done = $state(false)
   cut = $state(false)
-
   constructor(root: string, query: string) {
     this.root = root
     this.query = query
   }
-
   async run(hidden: boolean) {
     running.set(this.job, this)
     try {
@@ -46,11 +41,9 @@ export class Search {
       this.done = true
     }
   }
-
   heard(batch: readonly Found[]) {
     this.found = [...this.found, ...batch.map((one) => ({ ...one, name: relativeName(this.root, one) }))]
   }
-
   moved(from: string, to: string): string | null {
     const was = within(this.root, from)
     const now = within(this.root, to)
@@ -58,7 +51,6 @@ export class Search {
     this.found = this.found.map((one) => (one.name === was ? { ...one, name: now } : one))
     return now
   }
-
   movedAll(pairs: readonly { from: string; to: string }[]) {
     const names = pairs.flatMap(({ from, to }) => {
       const was = within(this.root, from)
@@ -71,7 +63,6 @@ export class Search {
       return now === undefined ? one : { ...one, name: now }
     })
   }
-
   stop() {
     if (!this.done) void cancelJob(this.job)
   }

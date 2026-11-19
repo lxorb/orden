@@ -16,7 +16,6 @@ export function zoneOffset(zone: string, at: number): number | null {
     return null
   }
 }
-
 export function farApart(zone: string, here: string, at: number): boolean {
   const theirs = zoneOffset(zone, at)
   const ours = zoneOffset(here, at)

@@ -7,7 +7,6 @@ import { FIRST_VIEW, writeView } from './view'
 function passTab(): Tab | null {
   return workspace.singleHere('pass')
 }
-
 export function openPass(intent: PassIntent | null = null): Tab | null {
   if (!passOn()) return null
   if (intent) asked.intent = intent
@@ -18,12 +17,10 @@ export function openPass(intent: PassIntent | null = null): Tab | null {
   }
   return workspace.openUnsaved('pass', writeView(FIRST_VIEW), 'Pass')
 }
-
 export async function lockPass(): Promise<void> {
   const { pass } = await import('./store.svelte')
   pass.lock()
 }
-
 export async function quietPass(): Promise<void> {
   const [{ pass }, { autofill }] = await Promise.all([import('./store.svelte'), import('./autofill')])
   autofill.quiet()

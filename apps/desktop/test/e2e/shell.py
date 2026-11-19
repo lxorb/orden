@@ -1,15 +1,12 @@
 import os
 import sys
 from pathlib import Path
-
 from settling import HIDE_CARET, steady as held
-
 from harness import Drive
 
 DRIVE = Drive(__file__, fresh=False)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -22,7 +19,6 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 DEVICES = [
     ("desktop-light", 1440, 900, DESKTOP_AGENT, False, "light"),
     ("desktop-dark", 1440, 900, DESKTOP_AGENT, False, "dark"),
@@ -31,7 +27,6 @@ DEVICES = [
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
     ("phone-wide", 844, 390, PHONE_AGENT, True, "dark"),
 ]
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -63,24 +58,19 @@ async () => {
   return ws.files.map((one) => one.name)
 }
 """
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 LAYERS = "[role=menu], .palette, .orden-screen.sheet"
-
 def dismiss(page) -> None:
     for _ in range(4):
         if not page.locator(LAYERS).count():
             return
-
         page.keyboard.press("Escape")
         try:
             page.wait_for_selector(LAYERS, state="detached", timeout=1500)
             return
         except Exception:
             pass
-
         scrim = page.locator(".scrim:visible").last
         if not scrim.count():
             return
@@ -88,22 +78,17 @@ def dismiss(page) -> None:
             scrim.click(force=True, position={"x": 4, "y": 4}, timeout=2000)
         except Exception:
             return
-
     if page.locator(LAYERS).count():
         say("a layer would not go")
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
-
     def steady(take) -> bytes:
         return held(page, take, say, f"[{name}]")
-
     def shot(tag: str) -> None:
         picture = steady(lambda: page.screenshot())
         (shots / f"{name}-{tag}.png").write_bytes(picture)
         say(f"shot {name}-{tag}.png")
-
     def strip(tag: str, selector: str, pad: int = 8) -> None:
         try:
             box = page.locator(selector).first.bounding_box()
@@ -113,7 +98,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         if not box:
             say(f"[{name}] {selector} has no box")
             return
-
         clip = {
             "x": max(0, box["x"] - pad),
             "y": max(0, box["y"] - pad),
@@ -123,7 +107,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         picture = steady(lambda: page.screenshot(clip=clip))
         (shots / f"{name}-{tag}.png").write_bytes(picture)
         say(f"shot {name}-{tag}.png")
-
     context = browser.new_context(
         viewport={"width": width, "height": height},
         user_agent=agent,
@@ -136,7 +119,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page = context.new_page()
     page.add_init_script(HIDE_CARET)
-
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     DRIVE.open(page)
@@ -151,13 +133,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         )
     say(f"[{name}] the space holds {page.evaluate(SEED)}")
     page.wait_for_timeout(600)
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(600)
     shot("files")
-
     strip("foot", "aside .foot")
-
     if finger:
         strip("drawerhead", "aside .head")
         page.evaluate("() => window.ordenApp.workspace.closePanel()")
@@ -172,7 +151,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         strip("collapsed", "header")
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
-
     switcher = page.locator("aside .name")
     if switcher.count():
         try:
@@ -182,7 +160,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         except Exception as why:
             say(f"[{name}] no switcher: {why}")
         dismiss(page)
-
     rows = page.locator("aside .row")
     if rows.count():
         try:
@@ -192,11 +169,9 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         except Exception as why:
             say(f"[{name}] no row menu: {why}")
         dismiss(page)
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
     shot("outline")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
     page.wait_for_timeout(400)
     box = page.locator("aside input").first
@@ -207,14 +182,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         except Exception as why:
             say(f"[{name}] nothing to type in: {why}")
     shot("search")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('links')")
     page.wait_for_timeout(600)
     shot("links")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
-
     page.evaluate("() => window.ordenApp.workspace.openGraph()")
     try:
         page.wait_for_selector(".graph", timeout=20000)
@@ -229,7 +201,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             say(f"[{name}] no card on the graph")
     except Exception as why:
         say(f"[{name}] no graph: {why}")
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -238,7 +209,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         }"""
     )
     page.wait_for_timeout(700)
-
     page.keyboard.press("Control+KeyP")
     try:
         page.wait_for_selector(".palette", state="visible", timeout=8000)
@@ -246,23 +216,18 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     except Exception as why:
         say(f"[{name}] no palette: {why}")
     dismiss(page)
-
     if finger:
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
-
     page.evaluate("() => window.ordenApp.settings.show()")
     page.wait_for_selector(".orden-screen.sheet, .sheet", state="visible", timeout=8000)
     shot("settings")
-
     page.evaluate(
         "() => { window.ordenApp.settings.section = 'appearance'; window.ordenApp.settings.listing = false }"
     )
     page.wait_for_selector(".sheet .segmented, .sheet", state="visible", timeout=8000)
     shot("settings-appearance")
-
     page.evaluate("() => window.ordenApp.settings.hide?.() ?? (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(400)
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -272,9 +237,7 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_timeout(900)
     shot("table")
-
     context.close()
-
 def main() -> int:
     tag = sys.argv[1] if len(sys.argv) > 1 else "now"
     out = DRIVE.shots / tag
@@ -282,8 +245,6 @@ def main() -> int:
         for one in DEVICES:
             say(f"--- {one[0]} ---")
             drive(browser, out, *one)
-
     return DRIVE.verdict(f"shots in {out}")
-
 if __name__ == "__main__":
     raise SystemExit(main())

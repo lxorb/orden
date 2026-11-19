@@ -5,7 +5,6 @@
   import { nameOf } from '../../platform/src/api'
 
   const { path }: { path: string | null } = $props()
-
   const copy = $derived(path === null ? null : foreignCopy(nameOf(path)))
 </script>
 
@@ -19,7 +18,6 @@
   .foreign {
     display: contents;
   }
-
   :global(:is(.orden-row-label, :has(+ .orden-row-label)):has(~ .foreign)) {
     opacity: 0.5;
   }

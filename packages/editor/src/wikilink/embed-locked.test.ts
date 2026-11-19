@@ -9,13 +9,11 @@ import { type NoteIndex, noteIndex } from './notes'
 
 let view: EditorView | undefined
 afterEach(() => view?.destroy())
-
 function link(inner: string): LinkSpan {
   const parsed = parseWikilink(inner, true)
   if (!parsed) throw new Error(`${inner} is not a link`)
   return { ...parsed, kind: 'wikilink', from: 0, to: 0 }
 }
-
 describe('an embedded note that is protected and shut', () => {
   test('says so, and its words are never asked for', () => {
     const asked: string[] = []
@@ -33,7 +31,6 @@ describe('an embedded note that is protected and shut', () => {
     view = new EditorView({ state })
     const widget = embedWidget(state, link('Diary'))
     expect(widget).toBeInstanceOf(EmbedWidget)
-
     const drawn = widget.toDOM(view)
     expect(drawn.textContent).toContain('Protected')
     expect(drawn.textContent).not.toContain('secret')

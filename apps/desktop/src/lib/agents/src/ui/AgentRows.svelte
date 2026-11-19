@@ -5,9 +5,7 @@
   import Spark from './Spark.svelte'
 
   const { open, onopen }: { open: string | null; onopen: (agent: string) => void } = $props()
-
   const activity = started()
-
   const rows = $derived(
     activity.listed.map((agent) => {
       const last = activity.seen.doing[agent]
@@ -64,17 +62,14 @@
     font-family: var(--font-ui);
     font-size: var(--text-xs);
   }
-
   .agent {
     width: 100%;
   }
-
   .orden-row-label {
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
-
   .name,
   .asking {
     overflow: hidden;
@@ -82,12 +77,10 @@
     white-space: nowrap;
     unicode-bidi: isolate;
   }
-
   .asking {
     color: var(--accent);
     font-size: var(--text-xs);
   }
-
   .asks {
     flex: none;
     min-width: 15px;
@@ -101,7 +94,6 @@
     line-height: 15px;
     text-align: center;
   }
-
   .connected {
     flex: none;
     width: 6px;

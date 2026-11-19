@@ -1,17 +1,14 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PHONE = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 PASSWORD = "tulip ladder seven"
 TITLE = "Averyveryverylongunbrokentitlewithoutanyspacesthatgoesonandon"
-
 PAST = """() => {
   const wide = document.documentElement.clientWidth
   const clipped = (one) => {
@@ -30,12 +27,10 @@ PAST = """() => {
     .slice(0, 4)
     .map(([one, box]) => `${one.tagName.toLowerCase()}.${one.className} ${Math.round(box.left)}..${Math.round(box.right)}`)
 }"""
-
 SQUEEZED = """() => [...document.querySelectorAll('.pass [data-scrolls] > *')]
   .filter((one) => one.checkVisibility() && getComputedStyle(one).overflowY !== 'visible' && one.scrollHeight > one.clientHeight + 2)
   .slice(0, 4)
   .map((one) => `${one.tagName.toLowerCase()}.${one.className} ${one.clientHeight} of ${one.scrollHeight}`)"""
-
 UNDER = """() => {
   const plus = document.querySelector('main .fab')?.getBoundingClientRect()
   if (!plus) return []
@@ -46,17 +41,13 @@ UNDER = """() => {
     .filter(([, box]) => box.width && box.right > plus.left && box.left < plus.right && box.bottom > plus.top && box.top < plus.bottom)
     .map(([one]) => one.getAttribute('aria-label') || one.textContent.trim() || one.tagName.toLowerCase())
 }"""
-
 CUT = """() => [...document.querySelectorAll('.sheet *')]
   .filter((one) => one.checkVisibility() && one.scrollWidth > one.clientWidth + 1)
   .filter((one) => one.textContent.trim())
   .filter((one) => /hidden|clip/.test(getComputedStyle(one).overflowX))
   .filter((one) => getComputedStyle(one).textOverflow !== 'ellipsis' || /flex|grid/.test(getComputedStyle(one).display))
   .map((one) => one.className || one.tagName)"""
-
 SHOWN = """() => ['side', 'list', 'item'].filter((one) => document.querySelector(`.pass .column.${one}`)?.checkVisibility())"""
-
-
 def fits(page: Page, where: str) -> None:
     page.wait_for_timeout(400)
     past = page.evaluate(PAST)
@@ -71,8 +62,6 @@ def fits(page: Page, where: str) -> None:
     if under:
         wrong(f"{where}: the end cannot be scrolled out from under the + button: {under}")
         shot(page, f"under-{where}")
-
-
 def column(page: Page, want: str, where: str) -> None:
     page.wait_for_timeout(600)
     if not page.evaluate("() => !!window.ordenApp && !!document.querySelector('.pass')"):
@@ -81,8 +70,6 @@ def column(page: Page, want: str, where: str) -> None:
     shown = page.evaluate(SHOWN)
     if shown != [want]:
         wrong(f"{where}: shows {shown}, not the {want}")
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 360, "height": 740},
@@ -98,7 +85,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Control+Alt+v")
     wait_for(page, "document.querySelector('.pass')?.textContent.includes('Set up Pass')", "the setup screen", 60)
     fits(page, "setup")
-
     fields = page.locator(".pass input[type=password]")
     fields.nth(0).fill(PASSWORD)
     fields.nth(1).fill(PASSWORD)
@@ -109,7 +95,6 @@ def drive(browser: Browser) -> None:
     wait_for(page, "document.querySelector('.pass .column.list')?.checkVisibility()", "the list")
     fits(page, "empty list")
     shot(page, "list")
-
     page.get_by_role("button", name="New login", exact=True).click()
     page.get_by_label("Title", exact=True).fill(TITLE)
     page.locator(".pass main input[type=password]").first.fill("pw-" + TITLE)
@@ -118,7 +103,6 @@ def drive(browser: Browser) -> None:
     wait_for(page, f"document.querySelector('.pass main h2')?.textContent.includes({TITLE!r})", "the login shown")
     fits(page, "login")
     column(page, "item", "the login made")
-
     page.locator(".pass main").get_by_role("button", name="Edit", exact=True).click()
     page.get_by_label("Title", exact=True).fill(TITLE + "again")
     page.get_by_role("button", name="Save", exact=True).click()
@@ -132,11 +116,9 @@ def drive(browser: Browser) -> None:
     shot(page, "history")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.sheet')", "the history closed")
-
     page.go_back()
     column(page, "list", "Back from a login")
     fits(page, "list of one")
-
     page.locator(".pass [data-item]").first.click()
     column(page, "item", "a login tapped")
     page.locator(".pass main").get_by_role("button", name="Back", exact=True).click()
@@ -144,7 +126,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(400)
     if page.evaluate("() => history.state?.ordenDepth ?? 0"):
         wrong("the login's own Back left a step behind for the phone's Back")
-
     page.locator(".pass .column.list").get_by_role("button", name="Back", exact=True).click()
     column(page, "side", "the list's own Back")
     fits(page, "vaults")
@@ -165,9 +146,6 @@ def drive(browser: Browser) -> None:
         column(page, "list", f"Back from {name}")
         if page.evaluate("() => !document.querySelector('.pass [data-item]')"):
             wrong(f"Back from {name} does not show the list of logins")
-
     say("Back steps a phone's Pass from a login, the vaults, Monitor, Settings or Trash to the list, and the list fits the phone")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "Pass on a phone fits it and its Back steps back through the columns"))

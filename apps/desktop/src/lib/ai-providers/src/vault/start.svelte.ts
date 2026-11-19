@@ -14,12 +14,9 @@ import VaultApprove from './VaultApprove.svelte'
 const SETTLE = 800
 const EVERY = 5 * 60_000
 const keyed = (kind: ProviderKind) => !isLocal(kind) && kind !== 'chatgpt'
-
 const baseKey = (id: string) => `orden:ai-vault-base:${id}`
-
 const BROWSER_KEY = 'orden:ai-vault-browser'
 export const browserVault = $state({ on: storedText(BROWSER_KEY) === 'yes' })
-
 export async function keepBrowserInVault(on: boolean): Promise<void> {
   browserVault.on = on
   if (on) keep(BROWSER_KEY, 'yes')
@@ -30,7 +27,6 @@ export async function keepBrowserInVault(on: boolean): Promise<void> {
   }
   await vault.leave()
 }
-
 async function signIns(): Promise<Record<string, string>> {
   if (__EVEN_PLUGIN__) return {}
   const { plans } = await import('../local/status.svelte')
@@ -45,7 +41,6 @@ async function signIns(): Promise<Record<string, string>> {
   }
   return seen
 }
-
 async function whoStayed(after: Contents, moved: Record<string, string>): Promise<Record<string, string>> {
   const who: Record<string, string> = {}
   for (const from of Object.keys(moved)) {
@@ -56,7 +51,6 @@ async function whoStayed(after: Contents, moved: Record<string, string>): Promis
   }
   return who
 }
-
 export const world: VaultWorld = {
   account: () => (account.user && account.token && (isNative || browserVault.on) ? account.user.id : null),
   call: (path, method, body) =>
@@ -97,10 +91,8 @@ export const world: VaultWorld = {
     else forget(baseKey(id))
   },
 }
-
 export const vault = new Vault(world)
 let started = false
-
 export function startVault(): void {
   if (started) return
   started = true

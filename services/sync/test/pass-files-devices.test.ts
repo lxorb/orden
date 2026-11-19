@@ -9,7 +9,6 @@ const FAST = { m: 64, t: 1, p: 1 }
 const PASSWORD = 'correct horse battery staple'
 const EMAIL = 'ada@example.com'
 const BASE = 'https://nibeditor.com'
-
 interface Part {
   item: string
   file: string
@@ -17,12 +16,10 @@ interface Part {
   parts: number
   bytes: Uint8Array<ArrayBuffer>
 }
-
 interface Rows {
   read(key: string): Promise<unknown>
   keep(key: string, value: unknown): Promise<void>
 }
-
 interface Device {
   rows: Rows
   items: Item[]
@@ -36,11 +33,9 @@ interface Device {
   remove(id: string): Promise<void>
   item(id: string): Item
 }
-
 interface FileApi {
   get(vault: string, item: string, file: string, part: number): Promise<Uint8Array<ArrayBuffer>>
 }
-
 interface Kit {
   TestDevice: new (kdf: typeof FAST) => Device
   PassApi: new (call: unknown) => unknown
@@ -66,7 +61,6 @@ interface Kit {
   ): Promise<Uint8Array<ArrayBuffer>>
   FILE_PART: number
 }
-
 async function kit(): Promise<Kit> {
   const at = (file: string) => new URL(`../../../${file}`, import.meta.url).href
   const loaded = await Promise.all(
@@ -79,41 +73,33 @@ async function kit(): Promise<Kit> {
   )
   return Object.assign({}, ...loaded) as Kit
 }
-
 let env: TestEnv
 let k: Kit
 let token: string
 let account: string
-
 beforeEach(async () => {
   env = testEnv()
   k = await kit()
   token = await signIn(env, EMAIL)
   account = (env.db.prepare('select id from users where email = ?').get(EMAIL) as { id: string }).id
 })
-
 afterEach(() => env.close())
-
 function worker(request: Request): Promise<Response> {
   return Promise.resolve(app.fetch(request, env))
 }
-
 function withLength(init: RequestInit): RequestInit {
   if (!(init.body instanceof Uint8Array)) return init
   const headers = new Headers(init.headers)
   headers.set('content-length', String(init.body.byteLength))
   return { ...init, headers }
 }
-
 const fetched = (input: string, init: RequestInit) => worker(new Request(input, withLength(init)))
-
 class Kept {
   readonly parts: Part[] = []
   of(item: string, file: string): Promise<Part[]> {
     return Promise.resolve(this.parts.filter((one) => one.item === item && one.file === file))
   }
 }
-
 function synced(device: Device, kept: Kept): Promise<string> {
   const api = new k.PassApi(k.fetchCall(worker, BASE, token))
   const world = {
@@ -127,7 +113,6 @@ function synced(device: Device, kept: Kept): Promise<string> {
   }
   return k.syncOnce(world)
 }
-
 async function attached(device: Device, kept: Kept, id: string, bytes: Uint8Array): Promise<Attachment> {
   const key = device.held?.items.get(id)?.key
   if (!key) throw new Error('no item key')
@@ -146,7 +131,6 @@ async function attached(device: Device, kept: Kept, id: string, bytes: Uint8Arra
   await device.change(id, (one) => ({ ...one, attachments: [...one.attachments, attachment] }))
   return attachment
 }
-
 async function downloaded(device: Device, id: string, attachment: Attachment): Promise<Uint8Array> {
   const item = device.item(id)
   const key = device.held?.items.get(id)?.key
@@ -159,9 +143,7 @@ async function downloaded(device: Device, id: string, attachment: Attachment): P
   }
   return await k.openFile(key, id, attachment.id, attachment.key, parts, attachment.size)
 }
-
 const objects = () => env.keys().filter((key) => key.startsWith('pass/files/'))
-
 describe('a file attached on one device', () => {
   test('reaches the account in its parts and opens on the other device', async () => {
     const a = new k.TestDevice(FAST)
@@ -173,7 +155,6 @@ describe('a file attached on one device', () => {
     expect(await synced(a, keptA)).toBe('synced')
     expect(await k.waitingFiles(a.rows)).toEqual([])
     expect(objects()).toHaveLength(2)
-
     const b = new k.TestDevice(FAST)
     expect(await synced(b, new Kept())).toBe('synced')
     expect(await b.unlock(PASSWORD)).toBe(true)
@@ -183,7 +164,6 @@ describe('a file attached on one device', () => {
     expect(opened.length).toBe(bytes.length)
     expect(opened.every((one) => one === 42)).toBe(true)
   })
-
   test('goes in the same exchange as the new item it belongs to', async () => {
     const a = new k.TestDevice(FAST)
     const kept = new Kept()
@@ -193,7 +173,6 @@ describe('a file attached on one device', () => {
     expect(await synced(a, kept)).toBe('synced')
     expect(objects()).toHaveLength(1)
   })
-
   test('is deleted on the account when it is taken off the item', async () => {
     const a = new k.TestDevice(FAST)
     const kept = new Kept()
@@ -207,7 +186,6 @@ describe('a file attached on one device', () => {
     expect(objects()).toEqual([])
     expect(await k.waitingFiles(a.rows)).toEqual([])
   })
-
   test('goes with its item', async () => {
     const a = new k.TestDevice(FAST)
     const kept = new Kept()

@@ -10,13 +10,11 @@
   const asking = $derived(vault.asking[0] ?? null)
   const device = $derived(asking?.name ?? '')
   let card = $state<HTMLElement>()
-
   $effect(() => {
     const one = asking
     if (!one) return
     return overlays.show(() => vault.dismiss(one.id))
   })
-
   onMount(() => card?.focus({ preventScroll: true }))
 </script>
 
@@ -59,7 +57,6 @@
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .what {
     margin: 0;
     display: flex;
@@ -69,20 +66,17 @@
     color: var(--text-strong);
     font-size: var(--text-row);
   }
-
   .device {
     flex: 1;
     min-width: 0;
     overflow-wrap: anywhere;
   }
-
   .digits {
     flex: none;
     color: var(--text-strong);
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.04em;
   }
-
   .rows {
     display: flex;
     justify-content: flex-end;

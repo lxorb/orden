@@ -3,10 +3,8 @@ import { SORTS, TYPE_FILTERS, type Scope, type Sort, type TypeFilter } from './l
 
 const PAGES = ['items', 'monitor', 'settings', 'links'] as const
 export type Page = (typeof PAGES)[number]
-
 export const SETTINGS_TABS = ['general', 'security', 'aliases', 'import', 'export'] as const
 export type SettingsTab = (typeof SETTINGS_TABS)[number]
-
 export interface PassView {
   scope: Scope
   filter: TypeFilter
@@ -15,7 +13,6 @@ export interface PassView {
   page: Page
   settingsTab: SettingsTab
 }
-
 export const FIRST_VIEW: PassView = {
   scope: { kind: 'all' },
   filter: 'all',
@@ -24,11 +21,9 @@ export const FIRST_VIEW: PassView = {
   page: 'items',
   settingsTab: 'general',
 }
-
 function oneOf<T>(words: readonly T[], value: unknown, fallback: T): T {
   return words.includes(value as T) ? (value as T) : fallback
 }
-
 function scopeIn(value: unknown): Scope {
   if (!isRecord(value)) return FIRST_VIEW.scope
   switch (value.kind) {
@@ -48,7 +43,6 @@ function scopeIn(value: unknown): Scope {
       return FIRST_VIEW.scope
   }
 }
-
 export function viewIn(text: string): PassView {
   let value: unknown
   try {
@@ -66,7 +60,6 @@ export function viewIn(text: string): PassView {
     settingsTab: oneOf(SETTINGS_TABS, value.settingsTab, FIRST_VIEW.settingsTab),
   }
 }
-
 export function writeView(view: PassView): string {
   return JSON.stringify(view)
 }

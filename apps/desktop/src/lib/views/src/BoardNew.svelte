@@ -23,7 +23,6 @@
     asked?: number
     onmade?: (path: string) => void
   } = $props()
-
   let typing = $state(false)
   let words = $state('')
   let field = $state<HTMLInputElement>()
@@ -34,12 +33,10 @@
     seen = asked
     untrack(open)
   })
-
   function open() {
     typing = true
     queueMicrotask(() => field?.focus())
   }
-
   function valued(): Record<string, Value> {
     const out: Record<string, Value> = {}
     const key = group.key
@@ -48,7 +45,6 @@
       out[lane.property.slice(5)] = lane.list ? [lane.key] : lane.key
     return out
   }
-
   async function commit(again: boolean) {
     const title = words.trim()
     const base = kit.live.base
@@ -120,7 +116,6 @@
     background: var(--surface);
     box-shadow: var(--shadow-sm);
   }
-
   .field {
     width: 100%;
     padding: 0;
@@ -132,7 +127,6 @@
     font-size: var(--text-row);
     font-weight: var(--weight-strong);
   }
-
   .new {
     display: flex;
     align-items: center;
@@ -152,18 +146,15 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .new:hover {
       background: var(--surface-hover);
       color: var(--text);
     }
   }
-
   .new:active {
     background: var(--surface-press);
   }
-
   .new svg {
     width: var(--icon-sm);
     height: var(--icon-sm);

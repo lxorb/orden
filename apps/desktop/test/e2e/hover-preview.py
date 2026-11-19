@@ -1,13 +1,10 @@
 import json
 import time
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 TARGET = """---
 title: Everything
 tags:
@@ -48,12 +45,10 @@ Only this much, for a link that names the heading.
 
 [^1]: The note.
 """
-
 SOURCE = """# Glance
 
 A link to [[Everything]] and one to [[Everything#Later]].
 """
-
 SEED = """
 async ([target, source]) => {
   const ws = window.ordenApp.workspace
@@ -63,7 +58,6 @@ async ([target, source]) => {
   return ws.notes.map((one) => one.name)
 }
 """
-
 BLOCKS = """
 (root) => {
   if (!root) return null
@@ -107,7 +101,6 @@ BLOCKS = """
   }
 }
 """
-
 INSIDE = """
 () => {
   const card = document.querySelector('.orden-note-preview')
@@ -146,17 +139,14 @@ INSIDE = """
   }
 }
 """
-
 PANE_BLOCKS = """
 () => {
   const pane = document.querySelector('.cm-content')
   return pane ? BLOCKS(pane) : null
 }
 """
-
 def asking(reading: str) -> str:
     return reading.replace("BLOCKS(", f"({BLOCKS.strip()})(")
-
 PANE = """
 () => {
   const content = document.querySelector('.cm-content')
@@ -171,20 +161,15 @@ PANE = """
   }
 }
 """
-
 EXCUSED = ("/asset/", "no such file in the space")
-
 def complain(label: str, message: object) -> None:
     if getattr(message, "type", "") != "error":
         return
-
     text = getattr(message, "text", "")
     where = getattr(getattr(message, "location", None), "get", lambda _k, _d: "")("url", "")
     if any(one in text or one in str(where) for one in EXCUSED):
         return
-
     wrong(f"[{label}] console error: {text} ({where})")
-
 def fresh(
     browser: Browser,
     label: str,
@@ -212,7 +197,6 @@ def fresh(
     page.on("console", lambda message: complain(label, message))
     DRIVE.open(page)
     say(f"[{label}] the space holds {page.evaluate(SEED, [TARGET, SOURCE])}")
-
     wait_for(page, "window.ordenApp.workspace.notes.length > 1", f"[{label}] the notes")
     for _ in range(6):
         page.evaluate(
@@ -229,11 +213,8 @@ def fresh(
         page.wait_for_timeout(700)
         if page.evaluate("() => window.orden.state.doc.toString().startsWith('# Glance')"):
             return page
-
         say(f"[{label}] the pane holds another note; asking again")
-
     raise SystemExit(f"[{label}] {open_note} never arrived in the pane")
-
 def glance(page: Page, label: str, which: int = 0) -> dict | None:
     wait_for(
         page,
@@ -246,16 +227,13 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
         page.wait_for_timeout(100)
     if not page.evaluate(f"() => !!({drawn})"):
         say(f"[{label}] the pane: {json.dumps(page.evaluate(PANE), ensure_ascii=False)}")
-
     links = page.locator(".cm-content .orden-link")
     found = links.count()
     if found < which + 1:
         wrong(f"[{label}] the note draws {found} links, so there is none to rest on")
         return None
-
     link = links.nth(which)
     link.scroll_into_view_if_needed()
-
     page.keyboard.down("Control")
     for attempt in range(3):
         page.mouse.move(4, 4)
@@ -263,7 +241,6 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
         link.hover()
         page.wait_for_timeout(120)
         link.hover(position={"x": 3, "y": 3}, force=True)
-
         try:
             page.wait_for_selector(".orden-note-preview-body > *", timeout=10_000)
             break
@@ -272,12 +249,10 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
             if attempt == 2:
                 page.keyboard.up("Control")
                 return None
-
     page.wait_for_timeout(400)
     inside = page.evaluate(asking(INSIDE))
     page.keyboard.up("Control")
     return inside
-
 def drive_desktop(browser: Browser) -> None:
     page = fresh(browser, "desktop")
     card = glance(page, "desktop")
@@ -285,20 +260,16 @@ def drive_desktop(browser: Browser) -> None:
         wrong("no hover preview at all on the desktop")
         page.context.close()
         return
-
     say(f"[desktop] the card: {json.dumps(card, ensure_ascii=False)}")
     shot(page, "01-preview")
-
     if card["scope"] != "write":
         wrong(f"the card is not a writing surface, so no prose rule reaches it: {card['scope']!r}")
     if card["name"] != "Everything":
         wrong(f"the card does not name the note: {card['name']!r}")
-
     if not card["editor"] or card["written"] != "yes":
         wrong(f"the card is a reading of the note rather than the note: {card}")
     if card["editable"] != "true":
         wrong(f"the note in the card cannot be written in: {card['editable']!r}")
-
     if not card["fence"]:
         wrong("a fenced code block came out unframed")
     if card["caption"] != "pipeline.ts":
@@ -329,7 +300,6 @@ def drive_desktop(browser: Browser) -> None:
         wrong("the front matter is not shown as its own source")
     if not card["footnotes"]:
         wrong("the footnotes were not drawn")
-
     if card["animation"] != "settle-in":
         wrong(f"the card does not settle in: {card['animation']!r}")
     if card["duration"] in ("0s", "0ms"):
@@ -339,7 +309,6 @@ def drive_desktop(browser: Browser) -> None:
         wrong(f"the card runs off the side: {rect} in {window}")
     if rect["top"] < 0 or rect["bottom"] > window["height"] + 1:
         wrong(f"the card runs off the bottom: {rect} in {window}")
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -352,7 +321,6 @@ def drive_desktop(browser: Browser) -> None:
     pane = page.evaluate(asking(PANE_BLOCKS))
     say(f"[desktop] the same note in a pane: {json.dumps(pane, ensure_ascii=False)}")
     shot(page, "02-pane")
-
     for what in (
         "fence",
         "caption",
@@ -373,12 +341,9 @@ def drive_desktop(browser: Browser) -> None:
     ):
         if card[what] != pane[what]:
             wrong(f"{what} differs: the card says {card[what]!r}, a pane {pane[what]!r}")
-
     if card["picture"] != pane["picture"]:
         wrong(f"the picture differs: the card {card['picture']!r}, a pane {pane['picture']!r}")
-
     page.context.close()
-
 def drive_section(browser: Browser) -> None:
     page = fresh(browser, "section")
     card = glance(page, "section", which=1)
@@ -386,15 +351,11 @@ def drive_section(browser: Browser) -> None:
         wrong("no hover preview over a link that names a heading")
         page.context.close()
         return
-
     say(f"[section] the card is showing {card['showing']!r}")
     shot(page, "10-section")
-
     if "Only this much" not in card["showing"]:
         wrong(f"the card did not open on the heading the link names: {card['showing']!r}")
-
     page.context.close()
-
 def drive_still(browser: Browser) -> None:
     page = fresh(browser, "still", still=True)
     card = glance(page, "still")
@@ -402,27 +363,21 @@ def drive_still(browser: Browser) -> None:
         wrong("no hover preview with reduced motion asked for")
         page.context.close()
         return
-
     say(f"[still] the card settles in over {card['duration']}")
     shot(page, "20-reduced-motion")
-
     if card["duration"] not in ("0s", "0ms"):
         wrong(f"the card still moves where no motion was asked for: {card['duration']}")
     if not card["fence"]:
         wrong("the card lost its blocks along with its motion")
-
     page.context.close()
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
     card = glance(page, "phone")
     shot(page, "30-phone")
-
     if card is None:
         say("[phone] no card over a link, which is what a screen with no hover does")
         page.context.close()
         return
-
     say(f"[phone] the card: {json.dumps(card['rect'])} in {json.dumps(card['window'])}")
     rect, window = card["rect"], card["window"]
     if rect["left"] < 0 or rect["right"] > window["width"] + 1:
@@ -431,9 +386,7 @@ def drive_finger(browser: Browser) -> None:
         wrong(f"the card runs off the bottom of a phone: {rect} in {window}")
     if card["scope"] != "write":
         wrong("the card is not a writing surface on a phone")
-
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a glance at a note ---")
@@ -444,7 +397,5 @@ def main() -> int:
         drive_still(browser)
         say("--- a finger ---")
         drive_finger(browser)
-
     return DRIVE.verdict("the note behind a link reads exactly as the note does")
-
 raise SystemExit(main())

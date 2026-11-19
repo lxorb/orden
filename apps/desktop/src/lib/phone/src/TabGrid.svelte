@@ -9,46 +9,36 @@
   import { tabsAway } from './swipe'
 
   const { onclose }: { onclose: () => void } = $props()
-
   const PLUS_MARK = 'M12 5v14M5 12h14'
   const PREVIEW = 600
-
   const tabs = $derived(workspace.tabsIn(workspace.panes.focusedId))
   const count = $derived(tabs.length === 1 ? '1 tab' : `${tabs.length} tabs`)
-
   let held = $state<{ id: string; x: number; dx: number; wide: number } | null>(null)
   let slid = false
   let flung = 0
-
   $effect(() => closeOnBack(true, onclose))
-
   $effect(() => {
     if (workspace.panel) onclose()
   })
-
   function pick(tab: Tab) {
     if (slid) return
     workspace.activate(tab.id)
     onclose()
   }
-
   function fresh(event: Event) {
     onclose()
     writeNew(event)
   }
-
   function down(event: PointerEvent, tab: Tab) {
     slid = false
     const card = event.currentTarget as HTMLElement
     held = { id: tab.id, x: event.clientX, dx: 0, wide: card.offsetWidth }
   }
-
   function moved(event: PointerEvent) {
     if (!held) return
     held.dx = event.clientX - held.x
     if (Math.abs(held.dx) > 8) slid = true
   }
-
   function up(tab: Tab) {
     const was = held
     held = null
@@ -56,16 +46,13 @@
     flung = was.dx
     workspace.close(tab.id)
   }
-
   function shut(tab: Tab) {
     flung = 0
     workspace.close(tab.id)
   }
-
   function keyed(event: KeyboardEvent) {
     if (event.key === 'Escape') onclose()
   }
-
   function preview(tab: Tab): string | null {
     return TAB_KINDS[tab.kind].editor ? tab.doc.trimStart().slice(0, PREVIEW) : null
   }
@@ -147,7 +134,6 @@
     background: var(--surface);
     touch-action: pan-y;
   }
-
   .cards {
     flex: 1;
     min-height: 0;
@@ -160,7 +146,6 @@
     padding: calc(var(--inset-top) + var(--space-3)) max(var(--space-3), var(--inset-right)) var(--space-3)
       max(var(--space-3), var(--inset-left));
   }
-
   .card {
     position: relative;
     display: flex;
@@ -178,17 +163,14 @@
       translate var(--dur-fast) var(--ease-out),
       opacity var(--dur-fast) var(--ease-out);
   }
-
   .card.held {
     transition: none;
   }
-
   .card.on {
     box-shadow:
       var(--shadow-sm),
       0 0 0 2px var(--accent);
   }
-
   .head {
     flex: none;
     display: flex;
@@ -200,13 +182,11 @@
     color: var(--text-strong);
     box-shadow: inset 0 -1px var(--line);
   }
-
   .mark {
     flex: none;
     display: grid;
     place-items: center;
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -214,7 +194,6 @@
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-
   .shut {
     flex: none;
     width: var(--touch-target);
@@ -227,13 +206,11 @@
     color: var(--muted);
     -webkit-tap-highlight-color: transparent;
   }
-
   .shut :global(svg) {
     width: 10px;
     height: 10px;
     stroke-width: 1.4;
   }
-
   .page {
     flex: 1;
     min-height: 0;
@@ -250,7 +227,6 @@
     -webkit-tap-highlight-color: transparent;
     mask-image: linear-gradient(to bottom, black 70%, transparent);
   }
-
   .words {
     display: block;
     white-space: pre-wrap;
@@ -259,7 +235,6 @@
     font-size: 0.6875rem;
     line-height: 1.4;
   }
-
   .big {
     height: 100%;
     display: grid;
@@ -267,14 +242,12 @@
     color: var(--muted);
     transform: scale(2.4);
   }
-
   .none {
     grid-column: 1 / -1;
     margin: var(--space-6) 0;
     text-align: center;
     color: var(--muted);
   }
-
   .bar {
     flex: none;
     display: flex;
@@ -287,17 +260,14 @@
     background: var(--bg);
     box-shadow: inset 0 1px var(--line);
   }
-
   .plus svg {
     stroke-width: 2;
   }
-
   .count {
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
-
   .done {
     min-width: var(--touch-target);
     min-height: var(--touch-target);

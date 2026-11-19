@@ -18,14 +18,12 @@ pub fn icon(ending: &str) -> Option<String> {
     known.lock().ok()?.insert(ending, found.clone());
     found
 }
-
 fn sane(ending: &str) -> bool {
     ending.len() <= 16
         && ending
             .bytes()
             .all(|one| one.is_ascii_alphanumeric() || matches!(one, b'_' | b'-' | b'+'))
 }
-
 #[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 fn drawn(ending: &str) -> Option<String> {
@@ -93,7 +91,6 @@ fn drawn(ending: &str) -> Option<String> {
         &icons::rgba_png_within(&rgba, width, height, icons::KIND_SIDE)?,
     ))
 }
-
 #[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 fn icon_rgba(icon: windows::Win32::UI::WindowsAndMessaging::HICON) -> Option<(Vec<u8>, u32, u32)> {
@@ -123,7 +120,6 @@ fn icon_rgba(icon: windows::Win32::UI::WindowsAndMessaging::HICON) -> Option<(Ve
     }
     Some((rgba, width, height))
 }
-
 #[cfg(any(target_os = "windows", test))]
 fn masked(rgba: &mut [u8], size: (u32, u32), holes: &[u8], hole_size: (u32, u32)) {
     if size != hole_size || rgba.len() != holes.len() {
@@ -143,7 +139,6 @@ fn masked(rgba: &mut [u8], size: (u32, u32), holes: &[u8], hole_size: (u32, u32)
         }
     }
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 fn drawn(ending: &str) -> Option<String> {
@@ -195,7 +190,6 @@ fn drawn(ending: &str) -> Option<String> {
     let bytes = data.to_vec();
     (!bytes.is_empty()).then(|| icons::data_url("image/png", &bytes))
 }
-
 #[cfg(target_os = "linux")]
 fn drawn(ending: &str) -> Option<String> {
     static FOUND: OnceLock<(Mime, super::linux::Icons)> = OnceLock::new();
@@ -213,12 +207,10 @@ fn drawn(ending: &str) -> Option<String> {
     });
     mime.names(ending).iter().find_map(|name| icons.find(name))
 }
-
 #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
 fn drawn(_ending: &str) -> Option<String> {
     None
 }
-
 #[cfg(any(target_os = "linux", test))]
 #[derive(Default)]
 struct Mime {
@@ -226,7 +218,6 @@ struct Mime {
     icons: HashMap<String, String>,
     generic: HashMap<String, String>,
 }
-
 #[cfg(any(target_os = "linux", test))]
 impl Mime {
     fn read(globs: &[String], icons: &[String], generic: &[String]) -> Mime {
@@ -278,7 +269,6 @@ impl Mime {
         mime.generic = pairs(generic);
         mime
     }
-
     fn names(&self, ending: &str) -> Vec<String> {
         let kind = self
             .globs
@@ -301,7 +291,6 @@ impl Mime {
         names
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -316,7 +305,6 @@ mod tests {
         assert!(!sane("averyveryverylongending"));
         assert_eq!(icon("a/b"), None);
     }
-
     #[test]
     fn a_kind_is_found_by_its_ending_with_the_heaviest_glob_winning() {
         let globs =
@@ -366,7 +354,6 @@ mod tests {
             ["application-octet-stream", "application-x-generic"]
         );
     }
-
     #[test]
     fn an_old_icon_without_alpha_is_cut_out_by_its_mask() {
         let mut solid = [10, 20, 30, 255, 40, 50, 60, 255].to_vec();
@@ -377,7 +364,6 @@ mod tests {
             (2, 1),
         );
         assert_eq!(solid, [0, 0, 0, 0, 40, 50, 60, 255]);
-
         let mut soft = [10, 20, 30, 128, 40, 50, 60, 255].to_vec();
         masked(
             &mut soft,

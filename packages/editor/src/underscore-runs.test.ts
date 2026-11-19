@@ -17,16 +17,13 @@ function pressed(mark: string, doc: string, picked: string): string {
   toggleWrap(mark)({ state, dispatch: (one: Transaction) => (state = one.state) })
   return state.doc.toString()
 }
-
 describe('taking a mark off a word picked inside a run written with underscores', () => {
   test('italic over a word inside an underscore run closes and reopens it with underscores', () => {
     expect(pressed('*', 'a _one two three_ b', 'two')).toBe('a _one_ two _three_ b')
   })
-
   test('bold over a word inside a double underscore run keeps the run whole on each side', () => {
     expect(pressed('**', 'a __one two three__ b', 'two')).toBe('a __one__ two __three__ b')
   })
-
   test('bold over the first word of a double underscore run leaves the rest bold', () => {
     expect(pressed('**', 'a __one two__ b', 'one')).toBe('a one __two__ b')
   })

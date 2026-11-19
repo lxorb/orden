@@ -22,18 +22,15 @@ function concealed(doc: string): string[] {
   })
   return out
 }
-
 describe('words after an HTML comment that opens a line', () => {
   test('stay shown, as the reading view shows them', () => {
     expect(renderMarkdown('<!-- todo --> call the bank')).toContain('call the bank')
     expect(concealed('<!-- todo --> call the bank')).toEqual(['<!-- todo -->'])
   })
-
   test('stay shown on a paragraph line that the comment interrupts', () => {
     expect(concealed('Monday\n<!-- later --> buy milk')).toEqual(['<!-- later -->'])
   })
 })
-
 describe('words after a web frame that opens a line', () => {
   test('stay shown beside the frame, as the reading view shows them', () => {
     const doc = '<iframe src="https://www.youtube.com/embed/x"></iframe> watch this'

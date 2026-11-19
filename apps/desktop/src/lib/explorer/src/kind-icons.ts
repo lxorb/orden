@@ -3,25 +3,20 @@ import { invoke, isDesktop } from '../../platform/src/api'
 import { endingOf } from './order'
 
 const AT_ONCE = 4
-
 type Ask = (ending: string) => Promise<string | null>
-
 export function kindOf(name: string): string {
   const ending = endingOf(name)
   return /^[a-z0-9_+-]{1,16}$/.test(ending) ? ending : ''
 }
-
 export class KindIcons {
   readonly #shown = new SvelteMap<string, string>()
   readonly #asked = new Set<string>()
   #waiting: string[] = []
   #running = 0
   readonly #ask: Ask | null
-
   constructor(ask: Ask | null) {
     this.#ask = ask
   }
-
   of(name: string): string | null {
     const kind = kindOf(name)
     const shown = this.#shown.get(kind)
@@ -33,7 +28,6 @@ export class KindIcons {
     }
     return null
   }
-
   #next(): void {
     const ask = this.#ask
     if (!ask) return
@@ -53,7 +47,6 @@ export class KindIcons {
     }
   }
 }
-
 export const kindIcons = new KindIcons(
   isDesktop ? (ending) => invoke<string | null>('explorer_icon', { ending }) : null,
 )

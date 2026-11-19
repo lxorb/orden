@@ -4,7 +4,6 @@ import type { TodoServer } from './records'
 
 const ROUTE = '/v2/inbox'
 const MISSING = new Set([404, 405])
-
 async function answered(
   api: SyncApiPort,
   token: string,
@@ -21,7 +20,6 @@ async function answered(
   const body: unknown = await response.json().catch(() => null)
   return { status: response.status, body }
 }
-
 export function todoServer(token: string): TodoServer | null {
   const port = portOf('sync.api')
   if (!port.ok) return null

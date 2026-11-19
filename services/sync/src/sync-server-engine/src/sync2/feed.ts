@@ -21,7 +21,6 @@ interface Row {
   pos: string | null
   meta: string | null
 }
-
 const CHANGED = `select * from (
     select id, kind, folder_id as parent, name, deleted, seq, doc_seq, epoch, epoch_base, hash,
            size, updated_by as by, updated_at as at, 0 as folder, pos, meta
@@ -31,7 +30,6 @@ const CHANGED = `select * from (
            updated_at, 1, pos, meta
       from folders where space_id = ?1 and seq > ?2
   ) order by seq limit ?3`
-
 export async function feedPage(
   env: Env,
   spaceId: string,
@@ -45,12 +43,10 @@ export async function feedPage(
   index: true
 }> {
   let rows = await changedSince(env, spaceId, since)
-
   if (rows.some((row) => row.name === null)) {
     await prepareSpace(env, spaceId)
     rows = await changedSince(env, spaceId, since)
   }
-
   const whole = rows.slice(0, FEED_PAGE)
   const unnamed = whole.findIndex((row) => row.name === null)
   const page = unnamed === -1 ? whole : whole.slice(0, unnamed)
@@ -66,14 +62,12 @@ export async function feedPage(
     index: true,
   }
 }
-
 function changedSince(env: Env, spaceId: string, since: number): Promise<Row[]> {
   return env.DB.prepare(CHANGED)
     .bind(spaceId, since, FEED_PAGE + 1)
     .all<Row>()
     .then(({ results }) => results)
 }
-
 function itemOf(row: Row, name: string): FeedItem {
   const item: FeedItem = {
     id: row.id,
@@ -97,7 +91,6 @@ function itemOf(row: Row, name: string): FeedItem {
   }
   return item
 }
-
 function kindOf(value: string, name: string): FeedItem['kind'] {
   switch (value) {
     case 'note':

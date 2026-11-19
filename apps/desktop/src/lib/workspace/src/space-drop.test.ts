@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
 const purged: string[] = []
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -18,9 +17,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
-
 const { dropSpace } = await import('./space-changes')
-
 describe('a space dropped for good', () => {
   test('purges what was deleted inside it, also where paths are written with backslashes', async () => {
     const uni = { id: 'uni', name: 'Uni', root: 'C:\\Spaces\\Uni' }

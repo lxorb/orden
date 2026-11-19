@@ -1,7 +1,5 @@
 pub const SWITCH: (&str, &str) = ("--force-device-scale-factor", "1");
-
 pub const CHROMIUM_SCALES_ITSELF: bool = !cfg!(target_os = "linux");
-
 pub fn switches() -> Vec<(String, Option<String>)> {
     if CHROMIUM_SCALES_ITSELF {
         Vec::new()
@@ -9,18 +7,14 @@ pub fn switches() -> Vec<(String, Option<String>)> {
         vec![(SWITCH.0.to_owned(), Some(SWITCH.1.to_owned()))]
     }
 }
-
 fn zoom_is_off(ratio: f64, native: f64, zoom: f64) -> bool {
     (ratio / native - zoom).abs() > 0.01
 }
-
 pub const SCRIPT: &str = include_str!("page_scale.js");
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn scale_of_dpi(xft_dpi: i32) -> Option<f64> {
     (xft_dpi > 0).then(|| (f64::from(xft_dpi) / 1024.0 / 96.0).clamp(0.5, 4.0))
 }
-
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     let big = *data.first()? == b'B';
@@ -63,9 +57,7 @@ pub fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     }
     None
 }
-
 const RUNGS: [f64; 8] = [0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0];
-
 fn zoom_of(factor: f64) -> Option<f64> {
     (factor.is_finite() && factor > 0.0).then(|| {
         RUNGS
@@ -74,14 +66,12 @@ fn zoom_of(factor: f64) -> Option<f64> {
             .unwrap_or(1.0)
     })
 }
-
 #[tauri::command(async)]
 pub fn interface_zoom_chosen() -> f64 {
     {
         engine::in_force()
     }
 }
-
 #[tauri::command(async)]
 pub fn interface_zoom_choose(
     app: tauri::AppHandle<orden_base::Engine>,
@@ -91,24 +81,19 @@ pub fn interface_zoom_choose(
         engine::choose(&app, factor)
     }
 }
-
 pub fn read_chosen(app: &tauri::AppHandle<orden_base::Engine>) {
     engine::read_chosen(app);
 }
-
 mod engine {
     use orden_base::Held as _;
     use std::collections::HashMap;
     use std::sync::{LazyLock, Mutex, OnceLock};
 
     const FILE: &str = "interface-zoom";
-
     static CHOSEN: Mutex<f64> = Mutex::new(1.0);
-
     pub fn in_force() -> f64 {
         *CHOSEN.held()
     }
-
     pub fn read_chosen(app: &tauri::AppHandle<orden_base::Engine>) {
         let kept = orden_base::paths::config_dir(app)
             .ok()
@@ -119,7 +104,6 @@ mod engine {
             *CHOSEN.held() = zoom;
         }
     }
-
     pub fn choose(app: &tauri::AppHandle<orden_base::Engine>, factor: f64) -> Result<(), String> {
         use tauri::Manager as _;
 
@@ -128,7 +112,6 @@ mod engine {
         orden_base::paths::made(&config)?;
         orden_base::paths::write_atomically(&config.join(FILE), zoom.to_string().as_bytes())?;
         *CHOSEN.held() = zoom;
-
         for window in orden_base::labels::document_windows(app) {
             zooming(window.label());
             if let Some(view) = app.get_webview(window.label()) {
@@ -137,29 +120,21 @@ mod engine {
         }
         Ok(())
     }
-
     static READ: OnceLock<f64> = OnceLock::new();
-
     pub fn desktop() -> f64 {
         READ.get().copied().unwrap_or(1.0)
     }
-
     pub fn start() -> f64 {
         *READ.get_or_init(|| read().unwrap_or(1.0))
     }
-
     fn read() -> Option<f64> {
         crate::host::system().desktop_scale()
     }
-
     static SAID: LazyLock<Mutex<HashMap<String, f64>>> = LazyLock::new(Mutex::default);
-
     static NATIVE: LazyLock<Mutex<HashMap<String, f64>>> = LazyLock::new(Mutex::default);
-
     fn native_of(window: &str) -> f64 {
         NATIVE.held().get(window).copied().unwrap_or(1.0)
     }
-
     fn native_read(window: &tauri::Window<orden_base::Engine>) -> f64 {
         if super::CHROMIUM_SCALES_ITSELF {
             window
@@ -171,7 +146,6 @@ mod engine {
             1.0
         }
     }
-
     pub fn heard(webview: &tauri::Webview<orden_base::Engine>, ratio: f64) {
         let window = webview.window();
         let native = native_read(&window);
@@ -183,12 +157,10 @@ mod engine {
             let _ = webview.set_zoom(scale);
         }
     }
-
     pub fn zooming(window: &str) {
         let ratio = native_of(window) * desktop() * in_force();
         SAID.held().insert(window.to_owned(), ratio);
     }
-
     pub fn of(window: &tauri::Window<orden_base::Engine>) -> f64 {
         SAID.held()
             .get(window.label())
@@ -196,7 +168,6 @@ mod engine {
             .unwrap_or_else(|| native_of(window.label()) * desktop() * in_force())
     }
 }
-
 pub fn start(app: &tauri::AppHandle<orden_base::Engine>) {
     let scale = engine::start();
     orden_base::logs::say(
@@ -212,7 +183,6 @@ pub fn start(app: &tauri::AppHandle<orden_base::Engine>) {
         ),
     );
 }
-
 #[tauri::command(async)]
 pub fn page_scale_seen(webview: tauri::Webview<orden_base::Engine>, ratio: f64) {
     if !ratio.is_finite() || ratio <= 0.0 {
@@ -220,20 +190,17 @@ pub fn page_scale_seen(webview: tauri::Webview<orden_base::Engine>, ratio: f64) 
     }
     engine::heard(&webview, ratio);
 }
-
 #[allow(clippy::unnecessary_wraps)]
 pub fn of(window: &tauri::Window<orden_base::Engine>) -> tauri::Result<f64> {
     {
         Ok(engine::of(window))
     }
 }
-
 pub fn web(factor: f64) -> f64 {
     {
         factor * engine::desktop()
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -247,7 +214,6 @@ mod tests {
         assert_eq!(forced, cfg!(target_os = "linux"));
         assert_eq!(CHROMIUM_SCALES_ITSELF, !cfg!(target_os = "linux"));
     }
-
     #[test]
     fn a_retina_page_at_its_zoom_is_left_alone() {
         assert!(!zoom_is_off(2.0, 2.0, 1.0));
@@ -256,7 +222,6 @@ mod tests {
         assert!(!zoom_is_off(1.25, 1.0, 1.25));
         assert!(zoom_is_off(1.0, 1.0, 1.25));
     }
-
     #[test]
     fn a_zoom_is_the_nearest_rung() {
         assert_eq!(zoom_of(1.25), Some(1.25));
@@ -267,7 +232,6 @@ mod tests {
         assert_eq!(zoom_of(0.0), None);
         assert_eq!(zoom_of(f64::NAN), None);
     }
-
     #[test]
     fn the_rungs_are_the_ones_settings_offers() {
         let modes = include_str!("../../../../src/lib/modes/src/modes.svelte.ts");
@@ -277,7 +241,6 @@ mod tests {
             "{listed}"
         );
     }
-
     fn settings(dpi: i32) -> Vec<u8> {
         let mut data = vec![b'l', 0, 0, 0];
         data.extend(7_u32.to_le_bytes());
@@ -300,7 +263,6 @@ mod tests {
         data.extend([0; 8]);
         data
     }
-
     #[test]
     fn the_desktop_s_scale_is_read_from_its_dpi() {
         let data = settings(131_072);
@@ -312,7 +274,6 @@ mod tests {
         assert_eq!(scale_of_dpi(-1), None);
         assert_eq!(xsettings_int(&data[..20], "Xft/DPI"), None);
     }
-
     #[test]
     fn the_script_says_the_ratio_by_the_command_s_name() {
         assert!(SCRIPT.contains("'page_scale_seen'"));

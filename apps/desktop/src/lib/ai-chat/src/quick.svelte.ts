@@ -11,27 +11,22 @@ import type { Around } from './store/chat.svelte'
 import type { Mention } from './store/mentions'
 
 type Chat = (typeof import('./store/chat.svelte'))['chat']
-
 interface Context {
   kind: ContextKind
   name: string
   around: Around
   chips: Mention[]
 }
-
 interface Said {
   role: 'you' | 'model'
   text: string
 }
-
 function saidOf(turn: Turn): Said {
   if (turn.role === 'you') return { role: 'you', text: turn.draft?.text ?? '' }
   const text = turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join('\n\n')
   return { role: 'model', text }
 }
-
 const chatStore = door<Chat>(() => import('./store/chat.svelte').then((one) => one.chat))
-
 class Quick {
   open = $state(false)
   of = $state<string | null>(null)
@@ -43,20 +38,15 @@ class Quick {
   private failed = $state<string | null>(null)
   private session = 0
   private loading = false
-
   private target: { view: EditorView; at: number; doc: Text; shows: SharedDoc | null } | null = null
-
   constructor(readonly docked = false) {}
-
   get ready(): boolean {
     return ai.providerFor('ask') !== null
   }
-
   private get drawn(): readonly Turn[] {
     const thread = this.thread
     return thread ? (this.chat?.watched[thread.id] ?? []) : []
   }
-
   get turns(): Said[] {
     const thread = this.thread
     if (!this.chat || !thread) return []
@@ -64,39 +54,32 @@ class Quick {
     const pending = this.chat.pending[thread.id]
     return pending !== undefined ? [...said, { role: 'you', text: pending }] : said
   }
-
   get asking(): boolean {
     return this.drawn.some((turn) => turn.parts.some((part) => part.kind === 'tool' && part.state === 'asking'))
   }
-
   get running(): boolean {
     return !!this.thread && !!this.chat?.running.includes(this.thread.id)
   }
-
   get trouble(): string | null {
     if (this.running) return null
     const parts = this.drawn.at(-1)?.parts ?? []
     const notice = parts.filter((part) => part.kind === 'notice' && part.code === 'error').at(-1)
     return notice?.kind === 'notice' ? notice.text : this.failed
   }
-
   show() {
     if (this.open) {
       this.close()
       return
     }
-
     void askSheet('quick-question')
     this.reset()
     this.gather()
     this.open = true
   }
-
   close() {
     this.open = false
     if (!this.docked) this.reset()
   }
-
   aside(main: Thread) {
     if (this.of !== main.id) {
       this.reset()
@@ -109,13 +92,11 @@ class Quick {
     }
     this.open = true
   }
-
   end() {
     this.open = false
     this.of = null
     this.reset()
   }
-
   private reset() {
     if (this.thread) this.chat?.unwatch(this.thread)
     this.session += 1
@@ -126,17 +107,14 @@ class Quick {
     this.thread = null
     this.failed = null
   }
-
   private gather() {
     const tab = workspace.panelTab
     if (!tab) return
-
     if (tab.kind === 'web') {
       const chip: Mention = { kind: 'tab', id: tab.id, label: tab.shown }
       this.context = { kind: 'page', name: tab.shown, around: nothing(), chips: [chip] }
       return
     }
-
     if (tab.kind !== 'note') return
     const view = views.of(workspace.panes.focusedId)
     const range = view?.state.selection.main
@@ -157,35 +135,28 @@ class Quick {
       this.context = { kind: 'note', name: front.name, around, chips: [] }
     }
   }
-
   drop() {
     this.context = null
   }
-
   take(label: string, text: string) {
     this.failed = null
     this.texts = [...this.texts, { kind: 'words', id: crypto.randomUUID(), label, text }]
   }
-
   refuse(why: string) {
     this.failed = why
   }
-
   dropText(id: string) {
     this.texts = this.texts.filter((one) => one.id !== id)
   }
-
   stop() {
     if (this.thread) this.chat?.stopIn(this.thread.id)
   }
-
   async ask() {
     const question = this.question.trim()
     const texts = this.texts
     if ((!question && !texts.length) || this.running || this.loading || !this.ready) return
     this.question = ''
     this.texts = []
-
     this.failed = null
     const session = this.session
     const thread = this.thread
@@ -216,7 +187,6 @@ class Quick {
     void chat.saw(asked.id)
     if (end.stop === 'error' && !end.turn && end.error) this.failed = end.error
   }
-
   async continueInPanel() {
     const thread = this.thread
     if (!thread || !workspace.offers('ask')) return
@@ -225,7 +195,6 @@ class Quick {
     revealChat()
     await chat.openThread(thread.id)
   }
-
   async addToNote(text: string) {
     const target = this.target
     if (
@@ -248,17 +217,13 @@ class Quick {
       view.focus()
       return
     }
-
     const { pad } = await import('../../scratchpad/src/api')
     await (await pad()).append(text)
     this.close()
   }
 }
-
 function nothing(): Around {
   return { front: null, selection: '', picked: null }
 }
-
 export const quick = new Quick()
-
 export const side = new Quick(true)

@@ -6,7 +6,6 @@ export interface SpaceChats {
   name: string
   chats: ChatEntry[]
 }
-
 export function bySpace(chats: readonly ChatEntry[], spaces: readonly { root: string; name: string }[]): SpaceChats[] {
   const groups = spaces
     .map((space) => ({

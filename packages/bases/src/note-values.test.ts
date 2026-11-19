@@ -39,20 +39,16 @@ describe('front matter as values', () => {
       empty: null,
     })
   })
-
   test('takes the block without its fences, as the scan carries it', () => {
     expect(noteValues('status: Doing\npriority: 2\n')).toEqual({ status: 'Doing', priority: 2 })
   })
-
   test('falls back to YAML for a block the panel leaves as source', () => {
     const values = noteValues('---\n# a comment\nstatus: Doing\nnested:\n  a:\n    - 1\n---\n')
     expect(values).toEqual({ status: 'Doing', nested: { a: [1] } })
   })
-
   test('a key named kind is a key like any other', () => {
     expect(noteValues('---\n# c\nkind: date\n---\n')).toEqual({ kind: 'date' })
   })
-
   test('a quoted value is the string it says, as YAML reads it', () => {
     const quoted = [
       "zip: '007'",
@@ -74,12 +70,10 @@ describe('front matter as values', () => {
     expect(noteValues(`---\n${quoted.join('\n')}\n---\n`)).toEqual(expected)
     expect(noteValues(`---\n# c\n${quoted.join('\n')}\n---\n`)).toEqual(expected)
   })
-
   test('a filter on a quoted zip code finds it', () => {
     const row = noteRow('A.md', "---\nzip: '007'\n---\n")
     expect(compile('zip == "007"').evaluate(row, contextAt(), {})).toBe(true)
   })
-
   test('scalars', () => {
     expect(scalarValue('~')).toBeNull()
     expect(scalarValue('-3.5')).toBe(-3.5)
@@ -92,7 +86,6 @@ describe('front matter as values', () => {
     })
   })
 })
-
 function inZone(zone: string, run: () => void): void {
   const was = process.env.TZ
   process.env.TZ = zone
@@ -103,11 +96,9 @@ function inZone(zone: string, run: () => void): void {
     else process.env.TZ = was
   }
 }
-
 describe('a date written with its offset', () => {
   const at = contextAt({ today: '2026-11-15', now: '2026-11-15T09:00:00' })
   const said = (row: ReturnType<typeof noteRow>, expression: string) => compile(expression).evaluate(row, at, {})
-
   test('is the moment it names, on the clock of whoever reads it', () => {
     inZone('America/Los_Angeles', () => {
       const row = noteRow('Clips/Page.md', '---\nclipped: 2026-11-15T17:00:00.000Z\n---\n')
@@ -123,7 +114,6 @@ describe('a date written with its offset', () => {
       expect(said(row, 'clipped.format("YYYY-MM-DD HH:mm")')).toBe('2026-11-15 09:00')
     })
   })
-
   test('is earlier or later than another by the moments, not the numbers written', () => {
     inZone('America/Los_Angeles', () => {
       const row = noteRow('A.md', '---\na: 2024-03-10T23:30:00+05:00\nb: 2024-03-10T20:00:00Z\n---\n')
@@ -142,7 +132,6 @@ describe('a date written with its offset', () => {
       expect(said(row, 'a.date() == date("2026-01-02")')).toBe(true)
     })
   })
-
   test('is read on the clock of the zone the reader is in, not the clock of the machine', () => {
     inZone('UTC', () => {
       const row = noteRow('Trip.md', '---\nleaves: 2026-03-11T02:00:00+09:00\nlands: 2026-03-11T01:00:00\n---\n')
@@ -162,7 +151,6 @@ describe('a date written with its offset', () => {
       expect(said(row, 'leaves.date() == date("2026-03-10")')).toBe(true)
     })
   })
-
   test('reads the same quoted or written in a list', () => {
     inZone('Europe/Berlin', () => {
       expect(noteValues('---\na: "2026-06-01T10:00Z"\nb:\n  - 2026-06-01T10:00:00+02:00\n---\n')).toEqual({
@@ -171,7 +159,6 @@ describe('a date written with its offset', () => {
       })
     })
   })
-
   test('while one with no offset stays as it is written', () => {
     inZone('America/Los_Angeles', () => {
       expect(noteValues('---\na: 2026-11-15T17:00\nb: 2026-11-15\n---\n')).toEqual({
@@ -181,7 +168,6 @@ describe('a date written with its offset', () => {
     })
   })
 })
-
 describe('a day no calendar has', () => {
   test('is words, not a date', () => {
     expect(noteValues('---\ndue: 2026-02-30\nleft: 2026-13-01T10:00\nleap: 2028-02-29\n---\n')).toEqual({
@@ -192,7 +178,6 @@ describe('a day no calendar has', () => {
     expect(scalarValue('2027-02-29')).toBe('2027-02-29')
   })
 })
-
 describe('a task hash', () => {
   test('is stable and short, and differs with the words', () => {
     expect(taskHash('Call the bank')).toBe(taskHash('Call the bank'))
@@ -200,7 +185,6 @@ describe('a task hash', () => {
     expect(taskHash('')).toMatch(/^[0-9a-z]+$/)
   })
 })
-
 describe('a block list rewritten with a chip', () => {
   function readBack(note: string): unknown {
     const ids = readProperties(note)?.find((one) => one.key === 'ids')
@@ -210,7 +194,6 @@ describe('a block list rewritten with a chip', () => {
     const body = after.split('---\n')[1] ?? ''
     return (parse(body) as { ids?: unknown }).ids
   }
-
   test('is YAML that holds the members it held and the one put on', () => {
     expect(readBack('---\nids:\n  - a\n  -\n  - b\n---\n')).toEqual(['a', null, 'b', 'z'])
     expect(readBack('---\nids:\n  - a\n  - e # note\n  - 007\n---\n')).toEqual(['a', 'e', 7, 'z'])
@@ -220,7 +203,6 @@ describe('a block list rewritten with a chip', () => {
     expect(readBack("---\nids:\n  - 'x' # it's 'y'\n  - b\n---\n")).toEqual(['x', 'b', 'z'])
   })
 })
-
 describe('a list in a block the rows cannot draw', () => {
   test('is read in a note whose lines end in CRLF, its span short of the line break', () => {
     const note = '---\r\n# kept\r\nids:\r\n  - 007\r\n  - "x"\r\ntitle: t\r\n---\r\n'
@@ -233,7 +215,6 @@ describe('a list in a block the rows cannot draw', () => {
     expect(found.property.writtenItems).toEqual(['007', '"x"'])
   })
 })
-
 describe('a key written twice', () => {
   test('reads the first, which is the one an edit writes', () => {
     const note = '---\nstatus: a\nstatus: b\n---\n'
@@ -241,12 +222,10 @@ describe('a key written twice', () => {
     const edit = writeProperty(note, 'status', 'c', 'text')
     expect(edit && noteValues(appliedEdits(note, [edit])).status).toBe('c')
   })
-
   test('and keys keep the order they are written in', () => {
     expect(Object.keys(noteValues('---\nb: 1\na: 2\nb: 3\n---\n'))).toEqual(['b', 'a'])
   })
 })
-
 test.each<[unknown, ...Parameters<typeof noteValues>]>([
   [{}, 'just words'],
   [{}, '---\n: : :\n  - [\n---\n'],

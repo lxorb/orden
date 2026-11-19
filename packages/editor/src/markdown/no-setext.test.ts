@@ -14,7 +14,6 @@ function names(text: string): string[] {
   })
   return out
 }
-
 function typed(state: EditorState, words: string): EditorState {
   const at = state.selection.main.head
   return state.update({
@@ -22,7 +21,6 @@ function typed(state: EditorState, words: string): EditorState {
     selection: EditorSelection.cursor(at + words.length),
   }).state
 }
-
 function entered(state: EditorState): EditorState {
   let next = state
   const target = {
@@ -34,7 +32,6 @@ function entered(state: EditorState): EditorState {
   if (!insertNewlineContinueMarkupCommand()(target)) insertNewlineAndIndent(target)
   return next
 }
-
 function blocksOf(state: EditorState): string[] {
   const tree = ensureSyntaxTree(state, state.doc.length, 10_000)
   const out: string[] = []
@@ -45,7 +42,6 @@ function blocksOf(state: EditorState): string[] {
   }
   return out
 }
-
 describe('a line with something under it', () => {
   test('typing words, Enter and a dash keeps the words a paragraph, and the dash starts a list', () => {
     let state = EditorState.create({
@@ -56,11 +52,9 @@ describe('a line with something under it', () => {
     state = typed(state, '-')
     expect(state.doc.toString()).toBe('text\n-')
     expect(blocksOf(state)).toEqual(['Paragraph'])
-
     state = typed(state, ' item')
     expect(blocksOf(state)).toEqual(['Paragraph', 'BulletList'])
   })
-
   test.each([
     'text\n-',
     'text\n=',
@@ -73,7 +67,6 @@ describe('a line with something under it', () => {
   ])('%j makes no heading', (text) => {
     expect(names(text).filter((name) => name.includes('Heading'))).toEqual([])
   })
-
   test.each([
     ['text\n---', ['Document', 'Paragraph', 'HorizontalRule']],
     ['text\n===', ['Document', 'Paragraph']],

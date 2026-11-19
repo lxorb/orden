@@ -7,7 +7,6 @@ const NAMES: Record<ContentLevel, string> = {
   tinted: 'Tinted',
   clear: 'See-through',
 }
-
 export function contentSetting(): ThemeSetting {
   return {
     id: 'content',
@@ -20,11 +19,9 @@ export function contentSetting(): ThemeSetting {
     paint: () => ({}),
   }
 }
-
 export function contentOf(value: unknown): ContentLevel {
   return CONTENT_LEVELS.find((one) => one === value) ?? CONTENT_INITIAL
 }
-
 export function rangeSetting(
   id: string,
   label: string,
@@ -48,9 +45,7 @@ export function rangeSetting(
     paint: () => ({}),
   }
 }
-
 export const ACCENT_SWATCH = 'accent'
-
 export function tintColourSetting(id: string, when: () => boolean): ThemeSetting {
   return {
     id,

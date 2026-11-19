@@ -6,21 +6,18 @@ import { type CarriedFiles, imageHandling } from './images'
 import { noRects } from '../test/views'
 
 beforeAll(noRects)
-
 const ROWS = {
   types: ['text/orden-explorer'],
   files: [],
   items: [],
   getData: () => '',
 } as unknown as DataTransfer
-
 function dragged(type: 'dragover' | 'drop', view: EditorView): Event {
   const event = new Event(type, { bubbles: true, cancelable: true })
   Object.defineProperty(event, 'dataTransfer', { value: ROWS })
   view.contentDOM.dispatchEvent(event)
   return event
 }
-
 test('rows carried from outside as files land in the note as dropped files do', async () => {
   const carried: CarriedFiles = {
     carries: (transfer) => transfer === ROWS,
@@ -40,7 +37,6 @@ test('rows carried from outside as files land in the note as dropped files do', 
       extensions: [imageHandling((file) => Promise.resolve(`assets/${file.name}`), carried)],
     }),
   })
-
   view.posAtCoords = () => 4
   expect(dragged('dragover', view).defaultPrevented).toBe(true)
   expect(dragged('drop', view).defaultPrevented).toBe(true)

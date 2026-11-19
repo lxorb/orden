@@ -23,13 +23,9 @@ export interface Party extends Holder {
   hold?: boolean
   view?: View
 }
-
 const NOT_THEIRS = 4404
-
 const STATE = 'state'
-
 const OPEN = 1
-
 function partyOf(socket: WebSocket): Party | null {
   const held: unknown = socket.deserializeAttachment()
   if (typeof held !== 'object' || held === null) return null
@@ -37,22 +33,17 @@ function partyOf(socket: WebSocket): Party | null {
   if (typeof one.session !== 'string' || (one.role !== 'host' && one.role !== 'viewer')) return null
   return one as Party
 }
-
 function drives(party: Party): boolean {
   return party.role === 'viewer' && party.hold === true
 }
-
 function aside(at: string, work: Promise<unknown>): void {
   work.catch((error: unknown) => {
     note(at, error, null)
   })
 }
-
 export class AppRelay implements DurableObject {
   private readonly lock: SocketLock<Party>
-
   readonly env: Env
-
   constructor(
     private readonly ctx: DurableObjectState,
     env: Env,
@@ -71,7 +62,6 @@ export class AppRelay implements DurableObject {
       },
     })
   }
-
   fetch(request: Request): Response {
     if (request.headers.get('x-orden-app') !== 'join')
       return new Response('not something an application does', { status: 400 })
@@ -79,7 +69,6 @@ export class AppRelay implements DurableObject {
     aside('app enter', this.enter(pair[1], partyFrom(request.headers)))
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
-
   async enter(socket: WebSocket, party: Party): Promise<void> {
     this.ctx.acceptWebSocket(socket, [party.session, party.role])
     socket.serializeAttachment(party)
@@ -98,7 +87,6 @@ export class AppRelay implements DurableObject {
     const state = await this.ctx.storage.get<{ state: AppState; code?: number | null }>(STATE)
     if (state) this.say(socket, { t: 'state', ...state })
   }
-
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string): Promise<void> {
     this.lock.heard(socket)
     const party = partyOf(socket)
@@ -107,7 +95,6 @@ export class AppRelay implements DurableObject {
       await this.fromHost(party, message)
       return
     }
-
     const frame = viewerFrameOf(message)
     if (!frame) return
     switch (frame.t) {
@@ -138,15 +125,12 @@ export class AppRelay implements DurableObject {
         return
     }
   }
-
   async webSocketClose(socket: WebSocket): Promise<void> {
     await this.gone(socket)
   }
-
   async webSocketError(socket: WebSocket): Promise<void> {
     await this.gone(socket)
   }
-
   async alarm(): Promise<void> {
     const sockets = this.ctx.getWebSockets().flatMap((socket) => {
       const party = partyOf(socket)
@@ -154,7 +138,6 @@ export class AppRelay implements DurableObject {
     })
     const first = sockets[0]?.party
     if (!first) return
-
     const live = await stillSignedIn(
       this.env,
       sockets.flatMap(({ party }) => party.login ?? []),
@@ -170,16 +153,13 @@ export class AppRelay implements DurableObject {
       else socket.close(NOT_THEIRS, 'this application is gone')
       await this.gone(socket)
     }
-
     const held = await this.lock.holder(first.session)
     await this.lock.settle(first.session)
     if (held && !(await this.lock.holder(first.session))) await this.toldWho(first.session)
-
     if (this.ctx.getWebSockets().some((socket) => socket.readyState === OPEN)) {
       await this.ctx.storage.setAlarm(Date.now() + ASK_SIGNINS_EVERY)
     }
   }
-
   private async gone(socket: WebSocket): Promise<void> {
     const party = partyOf(socket)
     if (!party) return
@@ -190,7 +170,6 @@ export class AppRelay implements DurableObject {
     }
     if (drives(party) && !party.parked) await this.lock.settle(party.session, socket)
   }
-
   private async fromHost(party: Party, message: string): Promise<void> {
     const frame = hostFrameOf(message)
     if (!frame) return
@@ -214,12 +193,10 @@ export class AppRelay implements DurableObject {
       }
     }
   }
-
   private async holds(party: Party): Promise<boolean> {
     if (!drives(party) || party.parked) return false
     return (await this.lock.holder(party.session))?.device === party.device
   }
-
   private async toldWho(session: string): Promise<void> {
     const hold = await this.lock.holder(session)
     this.toHost(session, { t: 'viewer', device: hold?.device ?? null, name: hold?.name ?? '' })
@@ -232,27 +209,22 @@ export class AppRelay implements DurableObject {
       }
     }
   }
-
   private hosts(session: string): WebSocket[] {
     return this.ctx
       .getWebSockets(session)
       .filter((socket) => socket.readyState === OPEN && partyOf(socket)?.role === 'host')
   }
-
   private toHost(session: string, frame: RelayToHost): void {
     for (const socket of this.hosts(session)) this.send(socket, frame)
   }
-
   private toViewers(session: string, frame: RelayToViewer): void {
     for (const socket of this.ctx.getWebSockets(session)) {
       if (partyOf(socket)?.role === 'viewer') this.send(socket, frame)
     }
   }
-
   private say(socket: WebSocket, frame: RelayToViewer): void {
     this.send(socket, frame)
   }
-
   private send(socket: WebSocket, frame: RelayToViewer | RelayToHost): void {
     try {
       socket.send(JSON.stringify(frame))
@@ -261,7 +233,6 @@ export class AppRelay implements DurableObject {
     }
   }
 }
-
 function partyFrom(headers: Headers): Party {
   let name = ''
   try {

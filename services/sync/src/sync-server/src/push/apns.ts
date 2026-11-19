@@ -8,7 +8,6 @@ export interface ApnsConfig {
   topic: string
   sandbox: boolean
 }
-
 export async function sendApns(
   token: string,
   alert: { title: string; body: string; id: string },

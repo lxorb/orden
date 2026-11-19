@@ -4,7 +4,6 @@ import { Tab } from '../../documents/src/api'
 
 const peeks = new Map<string, { tab: string; walk: string[]; back: HTMLElement | null }>()
 let listening = false
-
 export async function peek(
   path: string,
   walk: readonly string[] = [],
@@ -28,7 +27,6 @@ export async function peek(
     } else workspace.activeTabId = old.id
     return
   }
-
   const before = new Set(workspace.tabs.map((one) => one.id))
   const showing = workspace.panes.at(from)?.activeTabId ?? null
   await workspace.openAside(path)
@@ -49,7 +47,6 @@ export async function peek(
     window.addEventListener('keydown', key)
   }
 }
-
 async function showIn(pane: string, path: string, old: Tab) {
   const open = workspace.tabs.find((one) => samePath(one.path, path) && one.kind === 'note')
   if (!open) {
@@ -63,7 +60,6 @@ async function showIn(pane: string, path: string, old: Tab) {
   workspace.activeTabId = tab.id
   workspace.persist()
 }
-
 function key(event: KeyboardEvent) {
   if (event.defaultPrevented) return
   const active = workspace.active
@@ -101,6 +97,5 @@ function key(event: KeyboardEvent) {
   if (workspace.panes.at(from)) workspace.panes.focus(from)
   if (held.back?.isConnected) held.back.focus()
 }
-
 const writable = (target: HTMLElement): boolean =>
   target.isContentEditable || target.closest('input, textarea, select') !== null

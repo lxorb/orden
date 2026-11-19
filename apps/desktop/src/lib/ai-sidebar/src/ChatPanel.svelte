@@ -21,21 +21,17 @@
     wide = false,
     tab,
   }: { ongoto?: ((line: number) => void) | undefined; wide?: boolean; tab?: Tab } = $props()
-
   const host = untrack(() => tab?.id ?? (wide ? 'tab' : 'side'))
   setHost(host)
-
   let turning = $state(false)
   const bound = $derived(!tab || (tab.address ?? null) === (chat.head?.kept ? chat.head.id : null))
   const shown = $derived(bound || turning || chat.host === host)
   const front = $derived(
     !!tab && workspace.panes.focusedId === tab.paneId && workspace.panes.at(tab.paneId)?.activeTabId === tab.id,
   )
-
   $effect(() => {
     if (front) untrack(claim)
   })
-
   $effect(() => {
     const head = chat.head
     if (!tab || turning || chat.host !== host) return
@@ -48,7 +44,6 @@
       workspace.persist()
     })
   })
-
   let root = $state<HTMLElement>()
   let railed = $state(railOpen())
   const ready = $derived(ai.providerFor('ask') !== null)
@@ -59,16 +54,13 @@
   $effect(() => {
     if (agentMarks.open !== null) untrack(() => (chat.listing = false))
   })
-
   const BACK = 'M8 3.2L4.7 6.5 8 9.8'
   const RAIL = 'M2.6 2.2h7.8a1 1 0 0 1 1 1v6.6a1 1 0 0 1-1 1H2.6a1 1 0 0 1-1-1V3.2a1 1 0 0 1 1-1zM5 2.2v8.6'
   const NEW = 'M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z'
-
   function toggleRail() {
     railed = !railed
     rememberRail(railed)
   }
-
   function titleMenu(event: MouseEvent) {
     const thread = chat.thread
     menu.show(event, [
@@ -81,7 +73,6 @@
       { label: 'Delete', danger: true, run: () => void chat.remove() },
     ])
   }
-
   function claim() {
     if (chat.host !== host) {
       chat.popover = null
@@ -104,7 +95,6 @@
       chat.listing = true
     })
   }
-
   onMount(() => {
     if (!tab) chat.host = host
     hearAgain(() => {
@@ -208,21 +198,17 @@
 <style>
   .ask {
     --ground: var(--side-bar-bg-color);
-
     flex: 1;
     min-height: 0;
     min-width: 0;
     display: flex;
   }
-
   .ask.wide {
     --column: 48rem;
     --ground: var(--bg);
-
     height: 100%;
     background: var(--bg);
   }
-
   .main {
     flex: 1;
     min-width: 0;
@@ -230,7 +216,6 @@
     display: flex;
     flex-direction: column;
   }
-
   .elsewhere {
     margin: auto;
     display: flex;
@@ -239,12 +224,10 @@
     gap: var(--space-1);
     color: var(--text);
   }
-
   .elsewhere .hint {
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .shelf {
     flex: none;
     display: flex;
@@ -253,7 +236,6 @@
     border-inline-end: 1px solid var(--line);
     background: var(--surface);
   }
-
   .top {
     flex: none;
     display: flex;
@@ -262,19 +244,15 @@
     min-width: 0;
     padding: 0 var(--space-1) var(--space-1);
   }
-
   .ask.wide .top {
     padding: var(--space-2) var(--space-2) var(--space-1);
   }
-
   .top svg {
     stroke-width: 1.3;
   }
-
   .gap {
     flex: 1;
   }
-
   .title {
     flex: 0 1 auto;
     display: flex;
@@ -292,14 +270,12 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .title span {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .title svg {
     flex: none;
     width: 11px;
@@ -310,7 +286,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   @media (hover: hover) {
     .title:hover {
       background: var(--surface-hover);

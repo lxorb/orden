@@ -11,13 +11,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string, at: number): EditorView {
   const view = new EditorView({
     state: parsed(editorState({ doc, selection: { anchor: at } })),
@@ -27,9 +24,7 @@ function viewOf(doc: string, at: number): EditorView {
   view.dispatch({ selection: EditorSelection.cursor(at), userEvent: 'select' })
   return view
 }
-
 const embeds = (view: EditorView) => view.contentDOM.querySelectorAll('.orden-embed').length
-
 describe('words taken off the end of a note embed line', () => {
   test('the embed is drawn once the caret leaves, after a trailing word is deleted', () => {
     const doc = 'Intro\n\n![[Agenda]] draft'
@@ -40,7 +35,6 @@ describe('words taken off the end of a note embed line', () => {
     view.dispatch({ selection: EditorSelection.cursor(0), userEvent: 'select.pointer' })
     expect(embeds(view)).toBe(1)
   })
-
   test('the embed is drawn once the caret leaves, after a stray space is deleted', () => {
     const doc = 'Intro\n\n![[Agenda]] '
     const view = viewOf(doc, doc.length)
@@ -48,7 +42,6 @@ describe('words taken off the end of a note embed line', () => {
     view.dispatch({ selection: EditorSelection.cursor(0), userEvent: 'select.pointer' })
     expect(embeds(view)).toBe(1)
   })
-
   test('a table of contents is drawn once the caret leaves, after the words behind it are deleted', () => {
     const doc = 'Intro\n\n[toc] goes here, above the plan\n\n# One'
     const view = viewOf(doc, doc.indexOf(', above the plan') + ', above the plan'.length)
@@ -62,7 +55,6 @@ describe('words taken off the end of a note embed line', () => {
     view.dispatch({ selection: EditorSelection.cursor(0), userEvent: 'select.pointer' })
     expect(view.contentDOM.querySelectorAll('.orden-toc').length).toBe(1)
   })
-
   test('opening the same note draws it', () => {
     const view = viewOf('Intro\n\n![[Agenda]]', 0)
     expect(embeds(view)).toBe(1)

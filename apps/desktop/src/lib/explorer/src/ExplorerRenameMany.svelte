@@ -7,7 +7,6 @@
   import type { ExplorerView } from './view.svelte'
 
   const { view, paths, onclose }: { view: ExplorerView; paths: readonly string[]; onclose: () => void } = $props()
-
   let find = $state('')
   let replace = $state('')
   let numbered = $state(false)
@@ -19,18 +18,15 @@
   )
   const clashes = $derived(clashing(listed, next, view.names, !inASpace(view.listing?.path ?? '')))
   const changed = $derived(next.some((name, at) => name !== names[at]))
-
   onMount(() => {
     first?.focus()
   })
-
   async function apply() {
     if (!changed || clashes.size) return
     const pairs = paths.map((from, at) => ({ from, name: next[at] ?? nameOf(from) }))
     onclose()
     await renameMany(view, pairs)
   }
-
   function onkey(event: KeyboardEvent) {
     if (event.key === 'Escape') onclose()
     else if (event.key === 'Enter' && event.target instanceof HTMLInputElement && event.target.type === 'text')
@@ -85,26 +81,22 @@
     box-shadow: var(--shadow-lg);
     font-size: var(--text-sm);
   }
-
   .fields {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-3);
     align-items: end;
   }
-
   label {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
     color: var(--muted-strong);
   }
-
   .tick {
     flex-direction: row;
     align-items: center;
   }
-
   .names {
     flex: 1;
     min-height: 0;
@@ -113,7 +105,6 @@
     overflow-y: auto;
     list-style: none;
   }
-
   .names li {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -121,19 +112,16 @@
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-sm);
   }
-
   .was {
     color: var(--muted);
     overflow-wrap: anywhere;
     unicode-bidi: isolate;
   }
-
   .now {
     color: var(--text-strong);
     overflow-wrap: anywhere;
     unicode-bidi: isolate;
   }
-
   .buttons {
     display: flex;
     gap: var(--space-2);

@@ -5,12 +5,10 @@ import { noteChanges } from './navigation'
 import { TableView } from './view'
 
 export { flushTableEdits } from './view'
-
 const views = new WeakMap<HTMLElement, TableView>()
 const live = new Set<TableView>()
 const showing = new WeakMap<EditorView, object>()
 const drawnIn = new WeakMap<TableView, object | undefined>()
-
 export const tableTracking = ViewPlugin.define((view) => {
   showing.set(view, {})
   return {
@@ -21,12 +19,10 @@ export const tableTracking = ViewPlugin.define((view) => {
     },
   }
 })
-
 export function tableViewAt(editor: EditorView, from: number): TableView | null {
   for (const table of live) if (table.editor === editor && table.span()?.from === from) return table
   return null
 }
-
 export class TableWidget extends OrdenWidget {
   constructor(
     readonly source: string,
@@ -36,15 +32,12 @@ export class TableWidget extends OrdenWidget {
   ) {
     super()
   }
-
   override eq(other: TableWidget) {
     return other.source === this.source && other.from === this.from && other.writable === this.writable
   }
-
   override ignoreEvent() {
     return true
   }
-
   toDOM(view: EditorView) {
     const model = parseTable(this.source)
     if (!model) {
@@ -54,28 +47,22 @@ export class TableWidget extends OrdenWidget {
       wrap.textContent = this.source
       return wrap
     }
-
     const table = new TableView(view, this, model)
     views.set(table.dom, table)
     live.add(table)
     drawnIn.set(table, showing.get(view))
     return table.dom
   }
-
   override updateDOM(dom: HTMLElement, _view: EditorView, previous: TableWidget) {
     const table = views.get(dom)
     if (!table) return false
-
     const model = table.modelFor(this.source)
     if (!model) return false
-
     const moved = previous.from !== this.from && previous.source !== this.source
     if (moved && !(table.continues(this) && table.sameTable(model))) return false
-
     table.adopt(this, model)
     return true
   }
-
   override destroy(dom: HTMLElement) {
     const table = views.get(dom)
     if (table) {

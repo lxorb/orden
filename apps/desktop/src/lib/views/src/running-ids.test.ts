@@ -38,15 +38,12 @@ vi.mock('../../file-writes/src/api', async (original) => ({
   ...(await original<typeof import('../../file-writes/src/api')>()),
   writeFile: async () => undefined,
 }))
-
 const { readHeld } = await import('./running')
 const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
 const { withoutIds } = await import('./copied')
-
 test("a copy is written without the ids its space's bases number by, and nothing else", async () => {
   await readHeld('/s/Notes/Bugs.base')
-
   expect(withoutIds('/s/Notes/Bugs/2025/A.md', '---\nid: BUG-2\nstatus: Doing\n---\nText\n')).toBe(
     '---\nstatus: Doing\n---\nText\n',
   )
@@ -54,11 +51,9 @@ test("a copy is written without the ids its space's bases number by, and nothing
   expect(withoutIds('/s/Notes/A.md', '---\nstatus: Doing\n---\n')).toBeNull()
   expect(withoutIds('/s/Other/A.md', '---\nid: BUG-2\n---\n')).toBeNull()
 })
-
 test('a copy that lands outside every base keeps its id', async () => {
   await readHeld('/s/Notes/Bugs.base')
   await readHeld('/s/Notes/Reading.base')
-
   expect(withoutIds('/s/Notes/Archive/A.md', '---\nid: BUG-2\n---\n')).toBeNull()
   expect(withoutIds('/s/Notes/Papers/Smith.md', '---\nid: 2019\n---\n')).toBeNull()
   expect(withoutIds('/s/Notes/Lit/Smith.md', '---\nid: 2019\ntitle: S\n---\n')).toBe('---\ntitle: S\n---\n')

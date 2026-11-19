@@ -45,11 +45,9 @@ export interface PutsBack {
   readonly bookmarks: { put(root: string, list: Bookmark[]): void }
   bin(path: string, isFolder: boolean, how?: Binning): Promise<Kept | null>
 }
-
 export async function undoLastFileAction(ws: PutsBack): Promise<void> {
   const action = ws.undone.last
   if (!action) return
-
   if (action.kind === 'many') {
     const steps = [...action.steps]
     for (let step = steps.at(-1); step; step = steps.at(-1)) {
@@ -65,12 +63,10 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
     await refused(ws, action)
     return
   }
-
   ws.undone.drop()
   await ws.loadTree()
   ws.persist()
 }
-
 async function refused(ws: PutsBack, action: FileAction) {
   const { failed } = await import('./notices.svelte')
   failed.tell(
@@ -79,7 +75,6 @@ async function refused(ws: PutsBack, action: FileAction) {
     () => ws.undone.giveUp(action),
   )
 }
-
 async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
   try {
     switch (action.kind) {
@@ -144,7 +139,6 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
   }
   return true
 }
-
 async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'import' }>) {
   for (const path of action.paths) {
     const wrote = action.wrote[path]
@@ -153,24 +147,20 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
       if (kept !== false) await ws.fileGone(path, 'file', kept?.trashId ?? kept?.back)
       continue
     }
-
     const now = await invoke<string>('read_note', { path }).catch(() => null)
     if (now === null || (await sha256(now)) !== wrote) continue
-
     const gone = await invoke('delete_note', { path })
       .then(() => true)
       .catch(() => false)
     if (gone) await ws.fileGone(path, 'file')
   }
 }
-
 async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }>) {
   for (const { path, folder } of action.made) {
     const kept = await ws.bin(path, folder, { madeHere: true })
     await ws.fileGone(path, folder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
   }
 }
-
 export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): Promise<string> {
   if (!action.trashId && action.notes) {
     await invoke('create_folder', { path: action.path })
@@ -178,23 +168,17 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
     for (const note of action.notes) await writeBeside(note.path, note.content)
     return action.path
   }
-
   if (!action.trashId) {
     if (!action.content && !(isMarkdownPath(action.path) && !action.folder)) {
       throw new Error('there is nothing to put back')
     }
-
     return writeBeside(action.path, action.content)
   }
-
   const restored = await invoke<string>('restore_trash', { id: action.trashId }).catch(() => null)
-
   if (restored !== null) return action.trashedAt ? cameOver(action, restored) : restored || action.path
   if (!action.content) throw new Error('the deleted note is no longer in the trash')
-
   return writeBeside(action.path, action.content)
 }
-
 async function cameOver(action: Extract<FileAction, { kind: 'delete' }>, restored: string) {
   const left = action.trashedAt
   const from = restored || left?.path
@@ -212,13 +196,11 @@ async function cameOver(action: Extract<FileAction, { kind: 'delete' }>, restore
   delete action.trashedAt
   return to
 }
-
 async function writeBeside(path: string, content: string): Promise<string> {
   const at = await freeBeside(path)
   await invoke('write_note', { path: at, content })
   return at
 }
-
 async function freeBeside(path: string): Promise<string> {
   const found: string[] = []
   for (;;) {
@@ -227,7 +209,6 @@ async function freeBeside(path: string): Promise<string> {
     found.push(at)
   }
 }
-
 async function stillSays(ws: PutsBack, path: string, words: string): Promise<boolean> {
   const open = ws.documentAt(path)
   if (open) open.flush()
@@ -235,7 +216,6 @@ async function stillSays(ws: PutsBack, path: string, words: string): Promise<boo
   if (now === null) return false
   return now.replace(/\r\n/g, '\n') === words.replace(/\r\n/g, '\n')
 }
-
 export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
   const away = keptAway.under(path)
   if (away.reduce((all, one) => all + one.size, 0) > HELD) return null
@@ -243,7 +223,6 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
   const options = { papers: true, every: true }
   const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)
   if (!listed) return null
-
   const notes: { path: string; content: string }[] = []
   const folders: string[] = []
   let size = 0
@@ -265,7 +244,6 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
   }
   return (await walk(listed)) ? { notes, folders } : null
 }
-
 export async function accountHoldsAll(
   path: string,
   holds: (path: string, how: HoldCheck) => Promise<boolean>,
@@ -273,7 +251,6 @@ export async function accountHoldsAll(
   const options = { papers: true, every: true, showHidden: true }
   const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)
   if (!listed) return false
-
   const budget = { left: HOLDS_READ }
   const walk = async (entry: Entry): Promise<boolean> => {
     if (entry.unlisted) return false
@@ -293,25 +270,19 @@ export async function accountHoldsAll(
   }
   return walk(listed)
 }
-
 const HOLDS_READ = 16_000_000
-
 const CLUTTER = /^(~\$.*|thumbs\.db|desktop\.ini|Icon\r)$/i
-
 const HELD = 4_000_000
-
 async function unarchive(ws: PutsBack, action: Extract<FileAction, { kind: 'archive' | 'unarchive' }>) {
   await ws.archive.change(action.root, action.restored, action.archived)
   for (const path of action.closed) await ws.openEntry(path)
 }
-
 async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'replace' }>) {
   for (const note of action.notes) {
     if (ws.documentAt(note.path)) continue
     const now = await readText(note.path)
     if (now === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
   }
-
   for (const note of action.notes) {
     const open = ws.documentAt(note.path)
     if (open) {
@@ -322,7 +293,6 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
       if (written !== null) links.noteSaved(note.path, written)
       continue
     }
-
     const down = await oneWriteAt(note.path, async () => {
       const file = await readText(note.path)
       if (file === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
@@ -334,35 +304,29 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
     links.noteSaved(note.path, down)
   }
 }
-
 function carriedPast(note: { after: string; edits: readonly Edit[] }, file: string, now: string): string {
   const since = oneEdit(note.after, now)
   if (!since) return applied(now, note.edits)
-
   const grew = since.insert.length - (since.to - since.from)
   const carried = note.edits.flatMap((one) => {
     if (one.to <= since.from) return [one]
     if (one.from >= since.to) return [{ ...one, from: one.from + grew, to: one.to + grew }]
     return []
   })
-
   return file === now ? applied(now, carried) : appliedToFile(file, carried)
 }
-
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
   if (action.kind === 'move' && action.carries) {
     ;(await import('./moving-space')).followsTo(action.from)
   }
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
   const back = action.kind === 'move' ? await services().chatsCarried(action.to, folderOf(action.from)) : null
-
   await inFlight(action.from, () =>
     ws.holdingUnder(action.to, async () => {
       await ws.renameOnDisk(action.to, action.from, kind).catch(async (error: unknown) => {
         await back?.()
         throw error
       })
-
       if (action.rewrote) await ws.retarget(action.to, action.from, { moved: true }).catch(() => undefined)
       await ws.fileMoved(action.to, action.from, kind)
       if (action.retitled) await titledBack(ws, action.from, action.to)
@@ -375,29 +339,24 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
     await (await import('./moving-space')).tabsFollow(action.from)
   }
 }
-
 async function titledBack(ws: PutsBack, path: string, renamed: string) {
   const open = ws.documentAt(path)
   const text = open?.text ?? (await invoke<string>('read_note', { path }).catch(() => null))
   const title = `# ${shownName(nameOf(renamed))}`
   if (text === null || (text !== title && !text.startsWith(`${title}\n`))) return
-
   const back = `# ${shownName(nameOf(path))}${text.slice(title.length)}`
   await writeFile(path, back)
   ws.reload(path, back)
 }
-
 async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge' }>) {
   if (!(await stillSays(ws, action.into, action.intoAfter))) {
     throw new Error(`${action.into} has been written in since the merge`)
   }
-
   await writeFile(action.into, action.intoContent)
   const from = await freeBeside(action.from)
   await writeFile(from, action.fromContent)
   if (action.back) await ws.fileCame(from, 'file', undefined, action.back)
   ws.reload(action.into, action.intoContent)
-
   const others = (path: string) => !samePath(path, action.into) && !samePath(path, action.from)
   const back = samePath(from, action.from) ? (action.relinks ?? []) : []
   const restored: string[] = []
@@ -410,13 +369,11 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
   const rest = action.relinked?.filter(others).filter((path) => !restored.some((one) => samePath(one, path)))
   if (!rest || rest.length) await ws.retarget(action.into, from, rest ? { only: rest } : {})
 }
-
 async function uncarve(ws: PutsBack, action: Extract<FileAction, { kind: 'split' | 'extract' }>) {
   if (!(await stillSays(ws, action.from, action.fromAfter))) {
     throw new Error(`${action.from} has been written in since it was carved`)
   }
   const untouched = await stillSays(ws, action.created, action.createdContent)
-
   await writeFile(action.from, action.fromContent)
   if (untouched) {
     await invoke('delete_note', { path: action.created }).catch(() => undefined)

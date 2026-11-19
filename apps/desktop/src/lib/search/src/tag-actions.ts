@@ -9,32 +9,26 @@ function refusedAsTag(name: string): boolean {
   sayNotice('That tag could not be renamed.')
   return true
 }
-
 export async function renameTag(node: TagNode) {
   const { prompt } = await import('../../ui-kit/src/api')
-
   const typed = await prompt.ask({
     title: `Rename ${node.name}`,
     value: node.name,
     confirmLabel: 'Rename',
   })
   if (typed === null) return
-
   const to = renamedTo(node.path, typed)
   if (!to || to === node.path) return
   if (refusedAsTag(to)) return
-
   try {
     await workspace.retagNotes(node.path, to)
   } catch (error) {
     sayNotice(message(error, 'That tag could not be renamed.'))
   }
 }
-
 export async function removeTag(node: TagNode) {
   const { prompt } = await import('../../ui-kit/src/api')
   const up = liftedFrom(node.path)
-
   const answer = await prompt.choose({
     title: `Delete ${node.name}?`,
     options: [
@@ -43,9 +37,7 @@ export async function removeTag(node: TagNode) {
       { id: 'cancel', label: 'Cancel' },
     ],
   })
-
   if (answer !== 'up' && answer !== 'away') return
-
   try {
     await workspace.retagNotes(node.path, answer === 'up' ? up : null)
   } catch (error) {

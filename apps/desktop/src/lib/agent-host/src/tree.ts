@@ -31,7 +31,6 @@ import { readableAll } from './guarded'
 
 const KINDS = ['note', 'canvas', 'page', 'pdf', 'web', 'file'] as const
 type Kind = (typeof KINDS)[number]
-
 function kindOf(path: string): Kind {
   if (isCanvasTarget(path)) return 'canvas'
   if (isPagesTarget(path)) return 'page'
@@ -39,35 +38,27 @@ function kindOf(path: string): Kind {
   if (isWebTarget(path)) return 'web'
   return isMarkdownPath(path) ? 'note' : 'file'
 }
-
 const ROWS = 1000
 const MOST_ROWS = 5000
-
 export async function treeOf(place: Place): Promise<Entry | null> {
   if (place.open) return workspace.tree
-
   return invoke<Entry>('read_tree', {
     root: place.space.root,
     options: { showHidden: false },
   }).catch(() => null)
 }
-
 export async function entryIn(place: Place, relative: string): Promise<Entry | null> {
   return entryAt(await treeOf(place), onDisk(place, relative))
 }
-
 async function named(place: Place, asked: string): Promise<{ relative: string; entry: Entry }> {
   const relative = judgedForWriting(asked)
   const entry = await entryIn(place, relative)
   if (entry) return { relative, entry }
-
   const note = isMarkdownPath(relative) ? null : notePath(relative)
   const found = note === null ? null : await entryIn(place, note)
   if (note !== null && found) return { relative: note, entry: found }
-
   throw new Refused('no_such_file', `there is nothing at ${asked} in ${place.space.name}`)
 }
-
 export async function listNotes(call: Call): Promise<AgentAnswer> {
   const place = placeOf(call)
   const asked = maybe(call, 'folder')
@@ -76,45 +67,35 @@ export async function listNotes(call: Call): Promise<AgentAnswer> {
   if (kind !== null && !KINDS.some((one) => one === kind)) {
     throw new Refused('bad_arguments', `kind is one of ${KINDS.join(', ')}`)
   }
-
   const root = place.space.root
   const archived = workspace.archive.keysOf(root)
   const showArchived = flag(call, 'archived')
   const rows: { path: string; kind: Kind; modified: number; archived?: true }[] = []
-
   const walk = (entry: Entry) => {
     for (const child of entry.children) {
       if (child.is_dir) {
         walk(child)
         continue
       }
-
       const path = relativeTo(root, child.path)
       if (folder !== null && !path.startsWith(`${folder}/`)) continue
-
       const what = kindOf(path)
       if (kind !== null && what !== kind) continue
-
       const put = coveredBy(archived, path) !== null
       if (put && !showArchived) continue
-
       rows.push({ path, kind: what, modified: child.modified, ...(put ? { archived: true } : {}) })
     }
   }
-
   const tree = await treeOf(place)
   if (tree) walk(tree)
-
   rows.sort((one, other) => one.path.localeCompare(other.path, undefined, { sensitivity: 'base', numeric: true }))
   return done(rows.slice(0, count(call, 'limit', ROWS, MOST_ROWS)), sharedSource(place))
 }
-
 export async function moveFile(call: Call): Promise<AgentAnswer> {
   const place = placeOf(call)
   const { relative: from, entry } = await named(place, need(call, 'path'))
   const { movedIn, movedPath, ONTO_INSTRUCTIONS, ontoInstructions } = await automationMoving()
   const to = movedPath(from, judgedForWriting(need(call, 'to')), entry.is_dir)
-
   if (to === from) return done({ from, to, space: place.space.id })
   if (entry.is_dir && to.startsWith(`${from}/`)) {
     throw new Refused('bad_arguments', `${from} cannot go inside itself`)
@@ -122,28 +103,21 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   if (await entryIn(place, to)) {
     throw new Refused('exists', `${to} is already there, and nothing is written over`)
   }
-
   if (ontoInstructions(place.space.root, from, to)) {
     throw new Refused('bad_arguments', `${to} is this space's instructions: ${ONTO_INSTRUCTIONS}`)
   }
-
   const source = onDisk(place, from)
   readable(source, from)
   writableAt(place, source)
   readableAll(source, from)
-
   const question = await asked(call, null, `Move ${from} to ${to} in ${place.space.name}`)
   if (question) return question
-
   if (place.open) await movedIn(place.space.root, from, to)
   else await movedAway(place, source, onDisk(place, to), entry.is_dir)
-
   return done({ from, to, space: place.space.id })
 }
-
 async function movedAway(place: Place, from: string, to: string, folder: boolean): Promise<void> {
   const index = await indexOf(place)
-
   await moving(to, () =>
     workspace.holdingUnder(from, async () => {
       await workspace.renameOnDisk(from, to, folder ? 'folder' : 'file')
@@ -153,23 +127,19 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
     }),
   )
 }
-
 function everyPathIn(entry: Entry): string[] {
   return [entry.path, ...entry.children.flatMap(everyPathIn)]
 }
-
 export async function trashFile(call: Call): Promise<AgentAnswer> {
   const place = placeOf(call)
   const { relative, entry } = await named(place, need(call, 'path'))
   const path = onDisk(place, relative)
-
   if (workspace.keepsArchived(path)) {
     throw new Refused('archived', `${relative} is archived, and archived files are kept`)
   }
   for (const held of everyPathIn(entry)) readable(held, relativeTo(place.space.root, held))
   writableAt(place, path)
   readableAll(path, relative)
-
   const rev = maybe(call, 'if_rev')
   if (rev !== null && !entry.is_dir) {
     const words = await workspace.noteText(path)
@@ -177,7 +147,6 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
       throw new Refused('rev_changed', `${relative} has changed since it was read`)
     }
   }
-
   const shown = workspace.tabs.some(
     (tab) =>
       tab.path !== null &&
@@ -185,28 +154,20 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
       (tab.path === path || tab.path.startsWith(`${path}/`)),
   )
   if (shown) needScope(call, 'workspace.focus', 'a file open in front of the reader')
-
   const question = await asked(call, null, `Move ${relative} to Recently deleted`, undefined, 'trashing')
   if (question) return question
-
   await workspace.remove(path, entry.is_dir, sourceOf(call))
-
   return done({ path: relative, trashed: true, space: place.space.id })
 }
-
 export async function createFolder(call: Call): Promise<AgentAnswer> {
   const place = placeOf(call)
   const relative = judgedForWriting(need(call, 'path'))
   if (await entryIn(place, relative)) return done({ path: relative, made: false })
-
   const path = onDisk(place, relative)
   writableAt(place, path)
-
   const question = await asked(call, null, `Make the folder ${relative} in ${place.space.name}`)
   if (question) return question
-
   await invoke('create_folder', { path })
   if (place.open) await workspace.loadTree()
-
   return done({ path: relative, made: true })
 }

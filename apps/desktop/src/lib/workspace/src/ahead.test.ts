@@ -1,37 +1,30 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const sent: unknown[] = []
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
   invoke: async (command: string, args?: Record<string, unknown>) => void sent.push([command, args]),
 }))
-
 function arrived(answer: unknown) {
   vi.stubGlobal('window', { ordenEarly: Promise.resolve(answer) })
 }
-
 const ROOT = 'C:\\Orden\\Work'
 const TREE = { name: 'Work', path: ROOT, is_dir: true, modified: 0, created: 0, children: [] }
-
 const READ = {
   plan: { root: ROOT, options: { showHidden: false }, notes: [`${ROOT}\\Plan.md`], web: false },
   spaces: [{ name: 'Work', path: ROOT }],
   tree: TREE,
   notes: { [`${ROOT}\\Plan.md`]: '# Plan' },
 }
-
 async function fresh() {
   vi.resetModules()
   return import('./ahead')
 }
-
 beforeEach(() => {
   sent.length = 0
   vi.unstubAllGlobals()
 })
-
 describe('what was read ahead', () => {
   test('goes to the question it answers, once', async () => {
     arrived(READ)
@@ -44,7 +37,6 @@ describe('what was read ahead', () => {
     expect(await ahead.noteAhead(`${ROOT}\\Plan.md`)).toBe('# Plan')
     expect(await ahead.noteAhead(`${ROOT}\\Plan.md`)).toBeNull()
   })
-
   test('and to no other: another space, other options, another note', async () => {
     arrived(READ)
     const ahead = await fresh()
@@ -53,7 +45,6 @@ describe('what was read ahead', () => {
     expect(await ahead.noteAhead(`${ROOT}\\Other.md`)).toBeNull()
     expect(await ahead.treeAhead(ROOT, { showHidden: false })).toEqual(TREE)
   })
-
   test('is let go of once the launch is past its reads', async () => {
     arrived(READ)
     const ahead = await fresh()
@@ -63,7 +54,6 @@ describe('what was read ahead', () => {
     expect(await ahead.treeAhead(ROOT, { showHidden: false })).toBeNull()
     expect(await ahead.noteAhead(`${ROOT}\\Plan.md`)).toBeNull()
   })
-
   test('is nothing where nothing was asked, or the answer is not one', async () => {
     vi.stubGlobal('window', {})
     const none = await fresh()
@@ -73,7 +63,6 @@ describe('what was read ahead', () => {
     expect(await odd.treeAhead(ROOT, { showHidden: false })).toBeNull()
   })
 })
-
 describe('what the next launch asks for first', () => {
   test('is written down when it changes, and only then', async () => {
     arrived(null)

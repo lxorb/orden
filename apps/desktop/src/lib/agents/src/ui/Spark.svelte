@@ -29,22 +29,18 @@
       fill var(--dur-base) var(--ease-out),
       stroke var(--dur-base) var(--ease-out);
   }
-
   .paused {
     fill: var(--muted);
     stroke: var(--muted);
   }
-
   .turning {
     animation: turn 1s linear infinite;
   }
-
   @media (prefers-reduced-motion: reduce) {
     .turning {
       animation: none;
     }
   }
-
   @keyframes turn {
     to {
       transform: rotate(1turn);

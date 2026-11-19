@@ -8,7 +8,6 @@
     onpick: () => void
     children: Snippet
   }
-
   const { label, checked, tight = false, onpick, children }: Props = $props()
 </script>
 
@@ -39,21 +38,17 @@
       border-color 0.25s var(--ease-out),
       transform 0.25s var(--ease-out);
   }
-
   .card:hover {
     transform: translateY(-2px);
   }
-
   .card[aria-checked='true'] {
     border-color: var(--accent);
   }
-
   .label {
     display: flex;
     align-items: center;
     gap: 6px;
   }
-
   .ring {
     width: 18px;
     height: 18px;
@@ -62,12 +57,10 @@
     display: grid;
     place-items: center;
   }
-
   .card[aria-checked='true'] .ring {
     background: var(--accent);
     border-color: var(--accent);
   }
-
   .card[aria-checked='true'] .ring::after {
     content: '';
     width: 6px;
@@ -75,7 +68,6 @@
     border-radius: 50%;
     background: #fff;
   }
-
   @media (max-width: 640px) {
     .tight {
       padding: 10px 8px;

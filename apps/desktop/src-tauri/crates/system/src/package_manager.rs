@@ -14,7 +14,6 @@ enum Manager {
     Choco,
     Brew,
 }
-
 impl Manager {
     fn name(self) -> &'static str {
         match self {
@@ -30,11 +29,8 @@ impl Manager {
         }
     }
 }
-
 const PACKAGES: [&str; 2] = ["nib", "orden"];
-
 const CASKROOMS: [&str; 2] = ["/opt/homebrew/Caskroom", "/usr/local/Caskroom"];
-
 struct Install<'a> {
     os: &'a str,
     exe: &'a str,
@@ -42,17 +38,14 @@ struct Install<'a> {
     env: &'a dyn Fn(&str) -> Option<String>,
     exists: &'a dyn Fn(&str) -> bool,
 }
-
 fn folded(path: &str) -> String {
     let path = path.strip_prefix(r"\\?\").unwrap_or(path);
     path.replace('\\', "/").to_lowercase()
 }
-
 fn under(path: &str, root: &str) -> bool {
     path.strip_prefix(root.trim_end_matches('/'))
         .is_some_and(|rest| rest.starts_with('/'))
 }
-
 fn kept_by(at: &Install) -> Option<Manager> {
     match at.os {
         "linux" => linux(at),
@@ -61,7 +54,6 @@ fn kept_by(at: &Install) -> Option<Manager> {
         _ => None,
     }
 }
-
 fn linux(at: &Install) -> Option<Manager> {
     if (at.exists)("/.flatpak-info") {
         return Some(Manager::Flatpak);
@@ -79,7 +71,6 @@ fn linux(at: &Install) -> Option<Manager> {
         _ => None,
     }
 }
-
 fn windows(at: &Install) -> Option<Manager> {
     let exe = folded(at.exe);
     let scoop = ["SCOOP", "SCOOP_GLOBAL"]
@@ -94,7 +85,6 @@ fn windows(at: &Install) -> Option<Manager> {
     if scoop || exe.contains("/scoop/apps/") {
         return Some(Manager::Scoop);
     }
-
     if at.bundle == Some(BundleType::Msi) {
         let root = (at.env)("ChocolateyInstall")
             .or_else(|| (at.env)("ProgramData").map(|data| format!(r"{data}\chocolatey")))?;
@@ -108,7 +98,6 @@ fn windows(at: &Install) -> Option<Manager> {
     }
     None
 }
-
 fn mac(at: &Install) -> Option<Manager> {
     CASKROOMS
         .iter()
@@ -119,13 +108,11 @@ fn mac(at: &Install) -> Option<Manager> {
         })
         .then_some(Manager::Brew)
 }
-
 #[tauri::command(async)]
 pub fn install_manager() -> Option<&'static str> {
     let exe = std::env::current_exe().ok()?;
     let env = |name: &str| std::env::var(name).ok().filter(|value| !value.is_empty());
     let exists = |path: &str| Path::new(path).exists();
-
     kept_by(&Install {
         os: std::env::consts::OS,
         exe: &exe.to_string_lossy(),
@@ -135,7 +122,6 @@ pub fn install_manager() -> Option<&'static str> {
     })
     .map(Manager::name)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{kept_by, BundleType, Install, Manager};
@@ -161,9 +147,7 @@ mod tests {
             exists: &exists,
         })
     }
-
     const DEB_EXE: &str = "/usr/bin/orden";
-
     #[test]
     fn an_appimage_updates_itself() {
         let exe = "/tmp/.mount_OrdenX/usr/bin/orden";
@@ -173,7 +157,6 @@ mod tests {
             None
         );
     }
-
     #[test]
     fn a_deb_is_apts_and_on_arch_the_aurs() {
         assert_eq!(
@@ -191,7 +174,6 @@ mod tests {
             Some(Manager::Aur)
         );
     }
-
     #[test]
     fn an_rpm_is_dnfs() {
         assert_eq!(
@@ -199,7 +181,6 @@ mod tests {
             Some(Manager::Dnf)
         );
     }
-
     #[test]
     fn a_flatpak_is_known_by_its_sandbox_whatever_the_bundle() {
         assert_eq!(
@@ -207,7 +188,6 @@ mod tests {
             Some(Manager::Flatpak)
         );
     }
-
     #[test]
     fn a_snap_is_known_by_its_own_folder() {
         let vars = [("SNAP", "/snap/orden/12")];
@@ -233,7 +213,6 @@ mod tests {
             None
         );
     }
-
     #[test]
     fn the_nix_store_is_nixs_even_for_the_appimage_it_wraps() {
         let exe = "/nix/store/abc-orden-0.15.0-extracted/usr/bin/orden";
@@ -244,7 +223,6 @@ mod tests {
         );
         assert_eq!(on("linux", "/nix/storefront/nib", None, &[], &[]), None);
     }
-
     #[test]
     fn a_build_of_nobodys_updates_itself() {
         assert_eq!(
@@ -252,7 +230,6 @@ mod tests {
             None
         );
     }
-
     #[test]
     fn scoop_is_known_by_where_it_unpacks() {
         let exe = r"C:\Users\A\scoop\apps\nib\current\nib.exe";
@@ -267,7 +244,6 @@ mod tests {
             Some(Manager::Scoop)
         );
     }
-
     #[test]
     fn chocolatey_is_known_by_its_record_of_the_msi() {
         let exe = r"C:\Program Files\Orden\orden.exe";
@@ -288,7 +264,6 @@ mod tests {
             None
         );
     }
-
     #[test]
     fn a_downloaded_installer_updates_itself() {
         let vars = [("ChocolateyInstall", r"C:\ProgramData\chocolatey")];
@@ -313,7 +288,6 @@ mod tests {
             None
         );
     }
-
     #[test]
     fn homebrew_is_known_by_its_caskroom() {
         let exe = "/Applications/Orden.app/Contents/MacOS/orden";
@@ -326,7 +300,6 @@ mod tests {
         }
         assert_eq!(on("macos", exe, Some(BundleType::App), &[], &[]), None);
     }
-
     #[test]
     fn every_name_is_one_the_window_knows() {
         let names = [

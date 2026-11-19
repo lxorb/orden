@@ -3,20 +3,16 @@ import { noteRootsMoved, ROOTS_MOVED } from './roots-moved'
 import { readSession } from '../../session/src/api'
 
 export const SPACES_ROOT = 'orden:spaces-root'
-
 function parentOf(path: string): string {
   const cut = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
   return cut > 0 ? path.slice(0, cut) : path
 }
-
 export function formerRoot(written: string | null, roots: readonly string[]): string | null {
   if (written) return written
   if (!roots.length) return null
-
   const parents = new Set(roots.map(parentOf))
   return parents.size === 1 ? ([...parents][0] ?? null) : null
 }
-
 export function hasMoved(
   was: string | null,
   now: string,
@@ -24,25 +20,20 @@ export function hasMoved(
   listed: readonly string[],
 ): was is string {
   if (!was || was === now || !roots.length) return false
-
   const there = new Set(listed)
   return roots.every((root) => root.startsWith(was) && there.has(now + root.slice(was.length)))
 }
-
 export function rebased(text: string, was: string, now: string): string {
   const escape = (path: string) => JSON.stringify(path).slice(1, -1)
   const under = (from: string, to: string, value: string) =>
     value.replaceAll(`${from}/`, `${to}/`).replaceAll(`${from}\\`, `${to}\\`).replaceAll(`"${from}"`, `"${to}"`)
-
   const plain = under(was, now, text)
   return escape(was) === was ? plain : under(escape(was), escape(now), plain)
 }
-
 function pathMoved(text: string, was: string, now: string): string {
   if (text === was) return now
   return text.replaceAll(`${was}/`, `${now}/`).replaceAll(`${was}\\`, `${now}\\`)
 }
-
 export function joined(moved: unknown, there: unknown): unknown {
   if (Array.isArray(moved) && Array.isArray(there)) {
     const before: unknown[] = there
@@ -56,7 +47,6 @@ export function joined(moved: unknown, there: unknown): unknown {
   }
   return out
 }
-
 function valueMoved(value: unknown, was: string, now: string): unknown {
   if (typeof value === 'string') return pathMoved(value, was, now)
   if (Array.isArray(value)) {
@@ -78,7 +68,6 @@ function valueMoved(value: unknown, was: string, now: string): unknown {
   }
   return out
 }
-
 export function restated(text: string, was: string, now: string): string {
   if (!text.includes(was) && !text.includes(JSON.stringify(was).slice(1, -1))) return text
   let value: unknown
@@ -90,7 +79,6 @@ export function restated(text: string, was: string, now: string): string {
   const moved = JSON.stringify(valueMoved(value, was, now))
   return moved === JSON.stringify(value) ? text : moved
 }
-
 export function restate(was: string, now: string, storage: Storage = localStorage): number {
   let changed = 0
   const keys: string[] = []
@@ -98,7 +86,6 @@ export function restate(was: string, now: string, storage: Storage = localStorag
     const key = storage.key(at)
     if (key?.startsWith('orden:') && key !== SPACES_ROOT && key !== ROOTS_MOVED) keys.push(key)
   }
-
   for (const key of keys) {
     const text = storage.getItem(key)
     if (text === null) continue
@@ -107,14 +94,11 @@ export function restate(was: string, now: string, storage: Storage = localStorag
     storage.setItem(key, moved)
     changed++
   }
-
   return changed
 }
-
 export function settleRoot(now: string, roots: readonly string[], listed: readonly string[]): string | null {
   const written = storedText(SPACES_ROOT)
   const was = formerRoot(written, roots)
-
   if (hasMoved(was, now, roots, listed)) {
     try {
       restate(was, now)
@@ -125,14 +109,11 @@ export function settleRoot(now: string, roots: readonly string[], listed: readon
     keep(SPACES_ROOT, now)
     return was
   }
-
   if (written !== now) keep(SPACES_ROOT, now)
   return null
 }
-
 export async function spacesMoved(): Promise<boolean> {
   if (!isMobile) return false
-
   const roots = readSession(stored('orden:workspace'))?.spaces.map((space) => space.root) ?? []
   try {
     const [now, listed] = await Promise.all([
@@ -145,7 +126,6 @@ export async function spacesMoved(): Promise<boolean> {
       listed.map((one) => one.path),
     )
     if (was === null) return false
-
     await invoke<number>('rehome_snapshots', { from: was, to: now }).catch(() => 0)
     noteRootsMoved([{ from: was, to: now }])
     return true

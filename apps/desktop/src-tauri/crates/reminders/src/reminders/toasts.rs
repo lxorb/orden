@@ -9,20 +9,16 @@ use super::schedule::System;
 use super::{toast, Planned, Words};
 
 const GROUP: &str = "orden.reminders";
-
 const EPOCH_GAP_MS: i64 = 11_644_473_600_000;
-
 pub struct Toasts {
     notifier: ToastNotifier,
 }
-
 impl Toasts {
     pub fn of(app_id: &str) -> Result<Self, String> {
         let notifier = ToastNotificationManager::CreateToastNotifierWithId(&HSTRING::from(app_id))
             .map_err(|error| error.message())?;
         Ok(Self { notifier })
     }
-
     fn ours(&self) -> Result<Vec<(String, ScheduledToastNotification)>, String> {
         let listed = self
             .notifier
@@ -46,12 +42,10 @@ impl Toasts {
         Ok(found)
     }
 }
-
 impl System for Toasts {
     fn scheduled(&self) -> Result<Vec<String>, String> {
         Ok(self.ours()?.into_iter().map(|(tag, _)| tag).collect())
     }
-
     fn add(&self, one: &Planned, nonce: &str, words: &Words) -> Result<(), String> {
         let document = XmlDocument::new().map_err(|error| error.message())?;
         document
@@ -73,7 +67,6 @@ impl System for Toasts {
             .AddToSchedule(&scheduled)
             .map_err(|error| error.message())
     }
-
     fn remove(&self, id: &str) -> Result<(), String> {
         for (tag, one) in self.ours()? {
             if tag == id {

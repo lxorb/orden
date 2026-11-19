@@ -9,12 +9,9 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void held.set(key, value),
   removeItem: (key: string) => void held.delete(key),
 })
-
 const { appCommands, blockCommands, blockRows, paletteCommands, runRow } = await import('../src/api')
-
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
@@ -22,9 +19,7 @@ function sources(folder: string): string[] {
     return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
   })
 }
-
 const row = (id: string, label: string, run: () => void = () => undefined) => ({ id, label, run })
-
 describe('the module stands on its own', () => {
   test('no file under src names a feature or a content module: their rows and runs are registered', () => {
     const named = sources(SRC).filter((file) =>
@@ -35,7 +30,6 @@ describe('the module stands on its own', () => {
     expect(named).toEqual([])
   })
 })
-
 describe('the rows', () => {
   test('a feature’s rows show once loaded, where its place is', async () => {
     expect(appCommands().some((one) => one.id === 'web-reload')).toBe(false)
@@ -45,7 +39,6 @@ describe('the rows', () => {
     unregister()
     expect(appCommands().some((one) => one.id === 'web-reload')).toBe(false)
   })
-
   test('the palette folds the export formats into one row but keeps the page setup', async () => {
     const unregister = registerCommandRows('export', () =>
       Promise.resolve(() => [row('export-pdf', 'Export as PDF'), row('page-setup', 'Page setup')]),
@@ -57,7 +50,6 @@ describe('the rows', () => {
     expect(ids(paletteCommands())).not.toContain('export-pdf')
     unregister()
   })
-
   test('a recorded block joins the blocks and the slash rows', async () => {
     const unregister = registerCommandRows('record', () =>
       Promise.resolve(() => [{ ...row('record', 'Record'), byHand: true }]),
@@ -68,7 +60,6 @@ describe('the rows', () => {
     expect(blockRows().map((one) => one.label)).toContain('Record')
     unregister()
   })
-
   test('a row of a feature runs the command the feature registered', async () => {
     const ran: string[] = []
     const unregister = registerCommand('app.quick-question', () => Promise.resolve(() => void ran.push('asked')))

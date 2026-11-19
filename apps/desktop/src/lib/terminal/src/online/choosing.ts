@@ -4,7 +4,6 @@ import { cityOf, type Offer, type Offers, type Refit, type ServerInfo } from './
 export type Sort = 'price' | 'cores' | 'memory' | 'disk' | 'name'
 export type Kind = 'any' | 'shared' | 'dedicated'
 export type Arch = 'any' | 'x86' | 'arm'
-
 export interface Pick {
   offer: Offer
   monthly: number
@@ -12,22 +11,18 @@ export interface Pick {
   blocked: 'disk' | 'arch' | null
   current: boolean
 }
-
 const DEFAULT_PLACES = ['nbg1', 'fsn1']
-
 export function placeOf(offers: Offers, server: ServerInfo | null): string | null {
   if (server?.location) return server.location
   const names = offers.locations.map((one) => one.name)
   return DEFAULT_PLACES.find((one) => names.includes(one)) ?? names[0] ?? null
 }
-
 const keyOf: Record<Exclude<Sort, 'name'>, (pick: Pick) => number> = {
   price: (pick) => pick.monthly,
   cores: (pick) => pick.offer.cores,
   memory: (pick) => pick.offer.memoryGb,
   disk: (pick) => pick.offer.diskGb,
 }
-
 export function picksOf(
   offers: Offers,
   location: string | null,
@@ -53,7 +48,6 @@ export function picksOf(
       : keyOf[sort](one) - keyOf[sort](other) || one.monthly - other.monthly,
   )
 }
-
 export function money(amount: number, currency: string, hourly = false): string {
   return new Intl.NumberFormat(region(), {
     style: 'currency',
@@ -61,21 +55,16 @@ export function money(amount: number, currency: string, hourly = false): string 
     ...(hourly ? { minimumFractionDigits: 2, maximumFractionDigits: 4 } : {}),
   }).format(amount)
 }
-
 const gb = (value: number) => `${localNumber(Math.round(value))} GB`
-
 const sizeOf = (one: Offer | ServerInfo) => [
   `${localNumber(one.cores)} vCPU`,
   `${gb(one.memoryGb)} RAM`,
   `${gb(one.diskGb)} disk`,
 ]
-
 export function factsOf(offer: Pick['offer']): string[] {
   return [...sizeOf(offer), offer.cpu === 'dedicated' ? 'Dedicated' : 'Shared', offer.arch === 'arm' ? 'Arm' : 'x86']
 }
-
 const kept = (part: string) => part.replaceAll(' ', '\u00a0')
-
 export function summaryOf(server: ServerInfo): { about: string[]; cost: string[] } {
   const about = [server.type.toUpperCase(), ...(server.location ? [cityOf(server.location)] : []), ...sizeOf(server)]
   const cost =
@@ -87,14 +76,12 @@ export function summaryOf(server: ServerInfo): { about: string[]; cost: string[]
       : []
   return { about: about.map(kept), cost: cost.map(kept) }
 }
-
 export function warningOf(running: number): string | null {
   if (running <= 0) return null
   return running === 1
     ? 'A terminal is running. Resizing restarts the machine, and what runs in it stops.'
     : `${localNumber(running)} terminals are running. Resizing restarts the machine, and what runs in them stops.`
 }
-
 export function askedOf(server: ServerInfo, pick: Pick, currency: string): { title: string; detail: string } {
   const disk =
     pick.offer.diskGb > server.diskGb
@@ -114,7 +101,6 @@ export function askedOf(server: ServerInfo, pick: Pick, currency: string): { tit
     ].join(' '),
   }
 }
-
 export function refitWords(why: Refit): string {
   return {
     disk: 'A smaller disk cannot be chosen',

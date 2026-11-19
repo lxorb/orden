@@ -10,7 +10,6 @@ pub fn seen(said: &str) -> String {
         })
         .collect()
 }
-
 pub fn hidden(one: char) -> bool {
     is_format(one)
         || matches!(one,
@@ -20,7 +19,6 @@ pub fn hidden(one: char) -> bool {
             | '\u{E0100}'..='\u{E01EF}'
         )
 }
-
 pub fn look_alike(one: char) -> char {
     let at = u32::from(one);
     let latin = |offset: u32| char::from_u32(offset).unwrap_or(one);
@@ -48,7 +46,6 @@ pub fn look_alike(one: char) -> char {
         }
     }
 }
-
 fn like_latin(small: char) -> Option<char> {
     Some(match small {
         '\u{430}' | '\u{3b1}' => 'a',
@@ -72,7 +69,6 @@ fn like_latin(small: char) -> Option<char> {
         _ => return None,
     })
 }
-
 pub fn is_format(one: char) -> bool {
     matches!(one,
         '\u{00AD}'
@@ -99,7 +95,6 @@ pub fn is_format(one: char) -> bool {
         | '\u{E0020}'..='\u{E007F}'
     )
 }
-
 pub fn is_blank(one: char) -> bool {
     matches!(one,
         '\u{00A0}'
@@ -115,7 +110,6 @@ pub fn is_blank(one: char) -> bool {
         | '\u{FFA0}'
     )
 }
-
 pub fn plain_name(said: &str) -> String {
     said.chars()
         .filter(|one| !is_format(*one))
@@ -131,7 +125,6 @@ pub fn plain_name(said: &str) -> String {
         .collect::<Vec<_>>()
         .join(" ")
 }
-
 pub fn spelled_out(said: &str) -> String {
     let mut out = String::with_capacity(said.len());
     for one in said.chars() {

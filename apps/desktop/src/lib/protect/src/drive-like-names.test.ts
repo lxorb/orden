@@ -2,11 +2,8 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import '../test/storage'
 
 const { Protection, protectedMap } = await import('./protection.svelte')
-
 const ROOT = '/space'
-
 beforeEach(() => localStorage.clear())
-
 describe('a locked note whose name begins with a letter and a colon', () => {
   test('is locked when the reader locks it, and after the app starts again', () => {
     const protection = new Protection()
@@ -16,7 +13,6 @@ describe('a locked note whose name begins with a letter and a colon', () => {
       'Q: Diary.md': 'password',
     })
   })
-
   test('keeps its lock when it is moved out of a locked folder or renamed', () => {
     const protection = new Protection()
     protection.set(ROOT, `${ROOT}/Private`, 'password')
@@ -27,7 +23,6 @@ describe('a locked note whose name begins with a letter and a colon', () => {
     expect(again.locked(`${ROOT}/Q: Diary.md`)).toBe(true)
     expect(again.locked(`${ROOT}/W: Work/Plan.md`)).toBe(true)
   })
-
   test('is locked when it is copied out of a locked folder', () => {
     const protection = new Protection()
     protection.set(ROOT, `${ROOT}/Private`, 'password')

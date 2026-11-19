@@ -2,27 +2,21 @@ import { heardElsewhere, movedTo, samePath, keepJson, stored, stringList } from 
 
 const PINNED = 'orden:explorer-pinned'
 const read = (): string[] => stringList(stored(PINNED)) ?? []
-
 class Pins {
   list = $state<string[]>(read())
-
   constructor() {
     heardElsewhere([PINNED], () => (this.list = read()))
   }
-
   has(path: string): boolean {
     return this.list.some((one) => samePath(one, path))
   }
-
   pin(path: string) {
     if (this.has(path)) return
     this.keep([...this.list, path])
   }
-
   unpin(path: string) {
     this.keep(this.list.filter((one) => !samePath(one, path)))
   }
-
   moved(from: string, to: string) {
     const held = read()
     const now: string[] = []
@@ -36,11 +30,9 @@ class Pins {
     }
     this.keep(now)
   }
-
   private keep(list: string[]) {
     this.list = list
     keepJson(PINNED, list)
   }
 }
-
 export const pins = new Pins()

@@ -1,11 +1,9 @@
 import { deflateSync } from 'node:zlib'
 
 export const GRID = 1024
-
 export const SKY = [0xbf, 0xdd, 0xfb]
 export const BLUSH = [0xe7, 0xc6, 0xec]
 export const INK = [0x1c, 0x22, 0x33]
-
 const T = 136
 const GAP = 22
 const A = 248
@@ -18,30 +16,25 @@ const BARS = [
   [A + T + GAP, M, B, B],
   [A, A + T + GAP, A + T, B],
 ]
-
 function inRoundedRect(x, y, [x0, y0, x1, y1]) {
   if (x < x0 || x > x1 || y < y0 || y > y1) return false
   const cx = Math.min(Math.max(x, x0 + R), x1 - R)
   const cy = Math.min(Math.max(y, y0 + R), y1 - R)
   return (x - cx) ** 2 + (y - cy) ** 2 <= R * R
 }
-
 export function onBars(x, y, size = GRID) {
   const k = GRID / size
   const gx = GRID / 2 + (x - GRID / 2) * k
   const gy = GRID / 2 + (y - GRID / 2) * k
   return BARS.some((bar) => inRoundedRect(gx, gy, bar))
 }
-
 export function inSquircle(x, y, size = GRID) {
   const a = size / 2
   const dx = Math.abs(x - GRID / 2) / a
   const dy = Math.abs(y - GRID / 2) / a
   return dx ** 5 + dy ** 5 <= 1
 }
-
 const mix = (p, q, t) => p.map((v, i) => v + (q[i] - v) * t)
-
 export function wash(x, y, size = GRID) {
   const o = (GRID - size) / 2
   const u = (x - o) / size
@@ -55,19 +48,16 @@ export function wash(x, y, size = GRID) {
   glow(0.84, 0.84, BLUSH)
   return colour
 }
-
 const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
   let c = n
   for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
   return c >>> 0
 })
-
 function crc32(buf) {
   let c = 0xffffffff
   for (const byte of buf) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8)
   return (c ^ 0xffffffff) >>> 0
 }
-
 function chunk(type, data) {
   const length = Buffer.alloc(4)
   length.writeUInt32BE(data.length)
@@ -76,7 +66,6 @@ function chunk(type, data) {
   crc.writeUInt32BE(crc32(body))
   return Buffer.concat([length, body, crc])
 }
-
 function encode(size, type, raw, palette, alpha) {
   const ihdr = Buffer.alloc(13)
   ihdr.writeUInt32BE(size, 0)
@@ -91,7 +80,6 @@ function encode(size, type, raw, palette, alpha) {
     chunk('IEND', Buffer.alloc(0)),
   ])
 }
-
 function indexed(size, rgba) {
   for (let step = 3; ; step++) {
     const round = (v) => Math.min(255, Math.round(v / step) * step)
@@ -122,9 +110,7 @@ function indexed(size, rgba) {
     return encode(size, 3, raw, palette, alpha)
   }
 }
-
 const SS = 4
-
 export function png(size, at, { grey = false, small = false } = {}) {
   const rgba = Buffer.alloc(size * size * 4)
   for (let y = 0; y < size; y++) {

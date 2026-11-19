@@ -6,17 +6,14 @@ describe('the extension a copy keeps', () => {
     expect(extensionOf('/space/Paper.PDF')).toBe('pdf')
     expect(extensionOf('C:\\Notes\\shot.png')).toBe('png')
   })
-
   test('is bin for a file with no extension at all', () => {
     expect(extensionOf('/space/README')).toBe('bin')
   })
-
   test('never reads a dot in a folder name as one', () => {
     expect(extensionOf('/my.notes/paper')).toBe('bin')
     expect(extensionOf('/my.notes/paper.pdf')).toBe('pdf')
   })
 })
-
 describe('what a copy says it is', () => {
   test('names the papers and pictures a browser can open', () => {
     expect(mimeOf('/s/a.pdf')).toBe('application/pdf')
@@ -24,7 +21,6 @@ describe('what a copy says it is', () => {
     expect(mimeOf('/s/a.jpg')).toBe('image/jpeg')
     expect(mimeOf('/s/a.png')).toBe('image/png')
   })
-
   test('claims nothing about a file it does not know', () => {
     expect(mimeOf('/s/a.xyz')).toBe('application/octet-stream')
   })

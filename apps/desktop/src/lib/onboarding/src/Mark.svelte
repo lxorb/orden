@@ -3,7 +3,6 @@
     size: number
     assemble?: boolean
   }
-
   const { size, assemble = false }: Props = $props()
 </script>
 
@@ -18,34 +17,27 @@
   .mark {
     display: block;
   }
-
   rect {
     fill: #1b2232;
   }
-
   .assemble rect {
     animation: snap 0.9s var(--ease-spring) both;
   }
-
   .assemble rect:nth-child(2) {
     animation-delay: 0.1s;
   }
-
   .assemble rect:nth-child(3) {
     animation-delay: 0.2s;
   }
-
   .assemble rect:nth-child(4) {
     animation-delay: 0.3s;
   }
-
   @keyframes snap {
     from {
       opacity: 0;
       transform: translate(var(--dx), var(--dy));
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .assemble rect {
       animation: none;

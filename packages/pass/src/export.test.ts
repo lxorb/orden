@@ -9,7 +9,6 @@ import type { Envelope, VaultMeta } from './types'
 
 const FAST: KdfParams = { m: 64, t: 1, p: 1 }
 const utf8 = (text: string): Uint8Array => new TextEncoder().encode(text)
-
 const meta = (name: string, folders: VaultMeta['folders'] = []): VaultMeta => ({
   v: 1,
   name,
@@ -19,11 +18,9 @@ const meta = (name: string, folders: VaultMeta['folders'] = []): VaultMeta => ({
   folders,
   hidePasswordsFromViewers: false,
 })
-
 function envelope(content: Envelope['content'], extra: Partial<Envelope> = {}): Envelope {
   return { ...newEnvelope(content, 1_700_000_000_000), ...extra }
 }
-
 const login = envelope(
   loginOf({
     title: 'Grüße "Bank"',
@@ -53,7 +50,6 @@ const vaults = [
   },
   { meta: meta('Work'), items: [envelope(loginOf({ title: 'Work', password: 'x' }))] },
 ]
-
 describe('exportJson', () => {
   it('reads back through the Orden import as the same items', () => {
     const text = exportJson(vaults)
@@ -73,7 +69,6 @@ describe('exportJson', () => {
     })
     expect(personal[3]?.trashed).toBe(true)
   })
-
   it('leaves attachments out', () => {
     const withFile = envelope(noteOf('n', 'x'), {
       attachments: [{ id: 'a', name: 'a.txt', type: 'text/plain', size: 1, key: 'k' }],
@@ -82,7 +77,6 @@ describe('exportJson', () => {
     expect(text).not.toContain('a.txt')
   })
 })
-
 describe('exportCsv', () => {
   it('writes the logins that are not in the trash', () => {
     const items = [
@@ -104,7 +98,6 @@ describe('exportCsv', () => {
       note: 'line 1\nline 2',
     })
   })
-
   it('keeps a spreadsheet from reading a cell as a formula, and a password exactly as it is', () => {
     const risky = envelope(
       loginOf({
@@ -124,7 +117,6 @@ describe('exportCsv', () => {
       note: "'\tcmd",
     })
   })
-
   it('reads back through the CSV import', () => {
     const back = importFile('csv', 'x.csv', utf8(exportCsv([login])))
     const content = back.vaults[0]?.items[0]?.content
@@ -135,7 +127,6 @@ describe('exportCsv', () => {
     expect(content.totp).toBe(login.content.totp)
   })
 })
-
 describe('sealExport', () => {
   it('opens with the passphrase', async () => {
     const text = exportJson(vaults)
@@ -152,12 +143,10 @@ describe('sealExport', () => {
     expect(guessSource('x.json', sealed)).toBe('orden')
     expect(await openExport(sealed, 'correct horse')).toBe(text)
   })
-
   it('refuses a wrong passphrase', async () => {
     const sealed = await sealExport('secret', 'right', FAST)
     await expect(openExport(sealed, 'wrong')).rejects.toBeInstanceOf(WrongSecret)
   })
-
   it('refuses a tampered seal', async () => {
     const sealed = JSON.parse(await sealExport('secret', 'right', FAST)) as Record<string, string>
     const bytes = atob(sealed.sealed ?? '')
@@ -165,7 +154,6 @@ describe('sealExport', () => {
     const tampered = JSON.stringify({ ...sealed, sealed: btoa(flipped) })
     await expect(openExport(tampered, 'right')).rejects.toBeInstanceOf(WrongSecret)
   })
-
   it('refuses stretching it cannot trust and what is not a sealed export', async () => {
     const sealed = JSON.parse(await sealExport('secret', 'right', FAST)) as Record<string, unknown>
     const huge = JSON.stringify({ ...sealed, kdf: { ...(sealed.kdf as object), m: 1 << 30 } })
@@ -173,7 +161,6 @@ describe('sealExport', () => {
     await expect(openExport('{"format":"other"}', 'right')).rejects.toThrow(/not a sealed export/)
     await expect(openExport('nope', 'right')).rejects.toThrow(/not a sealed export/)
   })
-
   it('the Orden import asks for the passphrase first', async () => {
     const sealed = await sealExport('{}', 'right', FAST)
     expect(() => importFile('orden', 'x.json', utf8(sealed))).toThrow(/passphrase/)

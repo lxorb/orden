@@ -11,7 +11,6 @@ struct SourceFuncs {
     closure_callback: *const c_void,
     closure_marshal: *const c_void,
 }
-
 #[repr(C)]
 struct Source {
     callback_data: *mut c_void,
@@ -21,13 +20,9 @@ struct Source {
     context: *mut c_void,
     priority: c_int,
 }
-
 const DEFAULT_IDLE: c_int = 200;
-
 type Prepare = unsafe extern "C" fn(*mut Source, *mut c_int) -> c_int;
-
 static CHROMIUM: OnceLock<Prepare> = OnceLock::new();
-
 #[allow(unsafe_code)]
 unsafe extern "C" fn prepare(source: *mut Source, timeout: *mut c_int) -> c_int {
     let Some(own) = CHROMIUM.get() else {
@@ -41,7 +36,6 @@ unsafe extern "C" fn prepare(source: *mut Source, timeout: *mut c_int) -> c_int 
         ready
     }
 }
-
 #[allow(unsafe_code)]
 fn in_cef(address: *const c_void) -> bool {
     let mut info = libc::Dl_info {
@@ -59,13 +53,11 @@ fn in_cef(address: *const c_void) -> bool {
             .ends_with("libcef.so")
     }
 }
-
 #[allow(unsafe_code)]
 fn glib(name: &CStr) -> Option<*mut c_void> {
     let found = unsafe { libc::dlsym(libc::RTLD_DEFAULT, name.as_ptr().cast::<c_char>()) };
     (!found.is_null()).then_some(found)
 }
-
 #[allow(unsafe_code)]
 fn quiet() -> usize {
     type Default = unsafe extern "C" fn() -> *mut c_void;
@@ -113,7 +105,6 @@ fn quiet() -> usize {
     }
     quieted
 }
-
 pub fn start(app: &tauri::AppHandle) {
     orden_base::logs::say(
         app,

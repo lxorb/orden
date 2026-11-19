@@ -7,7 +7,6 @@ const state = vi.hoisted(() => ({
   web: null as string | null,
   asked: [] as { command: string; args: unknown }[],
 }))
-
 vi.mock('../../platform/src/tauri', () => ({
   isDesktop: true,
   invoke: (command: string, args: unknown) => {
@@ -41,12 +40,9 @@ vi.mock('./workspace.svelte', () => ({
     showing: (id: string) => (id === state.web ? { id: `tab-${id}`, kind: 'web' } : { kind: 'note' }),
   },
 }))
-
 vi.stubGlobal('CSS', { escape: (text: string) => text })
-
 const { followPointer, keyboardStays, movePane } = await import('./pane-moves')
 followPointer()
-
 function panes() {
   document.body.innerHTML =
     ['a', 'b']
@@ -56,12 +52,10 @@ function panes() {
       )
       .join('') + '<aside><input class="search"></aside>'
 }
-
 const note = (id: string) => document.querySelector<HTMLElement>(`[data-pane="${id}"] .cm-content`)!
 const tab = (id: string) => document.querySelector<HTMLElement>(`[data-pane="${id}"] .tab`)!
 const over = (target: Element, init: PointerEventInit = {}) =>
   target.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse', ...init }))
-
 beforeEach(() => {
   panes()
   state.focused = 'a'
@@ -71,7 +65,6 @@ beforeEach(() => {
   state.asked = []
   document.documentElement.removeAttribute('data-keyboard-in-page')
 })
-
 describe('Alt and a way', () => {
   test('takes the focus and the keyboard into the pane next over', () => {
     note('a').focus()
@@ -79,13 +72,11 @@ describe('Alt and a way', () => {
     expect(state.focused).toBe('b')
     expect(document.activeElement).toBe(note('b'))
   })
-
   test('into a web page, by the crate, which holds its keyboard', () => {
     state.web = 'b'
     movePane('right')
     expect(state.asked).toEqual([{ command: 'keyboard_back', args: { tab: 'tab-b' } }])
   })
-
   test('at the window edge moves nothing', () => {
     note('a').focus()
     movePane('left')
@@ -93,7 +84,6 @@ describe('Alt and a way', () => {
     expect(document.activeElement).toBe(note('a'))
   })
 })
-
 describe('the pointer over another pane', () => {
   test('makes it the active pane, and leaves the keyboard in the note being written', () => {
     note('a').focus()
@@ -101,14 +91,12 @@ describe('the pointer over another pane', () => {
     expect(state.focused).toBe('b')
     expect(document.activeElement).toBe(note('a'))
   })
-
   test('takes the keyboard along out of a pane nobody was typing in', () => {
     tab('a').focus()
     over(note('b'))
     expect(state.focused).toBe('b')
     expect(document.activeElement).toBe(note('b'))
   })
-
   test('leaves the keyboard in the sidebar, and in a web page', () => {
     const search = document.querySelector<HTMLElement>('.search')!
     search.focus()
@@ -118,7 +106,6 @@ describe('the pointer over another pane', () => {
     document.documentElement.setAttribute('data-keyboard-in-page', '')
     expect(keyboardStays('a')).toBe(true)
   })
-
   test('does nothing with the setting off, a button held, a finger, or a drag', () => {
     state.follows = false
     over(tab('b'))

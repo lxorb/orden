@@ -8,17 +8,14 @@ export interface Picture {
   kind: ImageKind
   bytes: () => Promise<Uint8Array>
 }
-
 export function pictureOf(blob: Blob): Picture | null {
   const kind = imageKindOf(blob.type)
   return kind && { kind, bytes: async () => new Uint8Array(await blob.arrayBuffer()) }
 }
-
 export function pictureAt(path: string): Picture | null {
   const kind = imageKindAt(path)
   return kind && { kind, bytes: () => fileBytes(path) }
 }
-
 export async function clipboardPicture(): Promise<Picture | null> {
   try {
     for (const item of await navigator.clipboard.read()) {
@@ -30,11 +27,9 @@ export async function clipboardPicture(): Promise<Picture | null> {
   }
   return null
 }
-
 export async function carried(source: Source, pictures: Picture[], shell: string): Promise<string | null> {
   const image = source.image?.bind(source)
   if (!image || !pictures.length) return null
-
   try {
     const paths = await busy.run('Sending the image', async () => {
       const paths: string[] = []

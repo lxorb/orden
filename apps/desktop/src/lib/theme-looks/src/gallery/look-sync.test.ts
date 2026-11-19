@@ -7,16 +7,13 @@ import { OwedMark } from './owed-mark'
 const DARK_GLASS: Look = { theme: 'glass', scheme: 'dark', values: { '*': { accent: 'blue' } } }
 const LIGHT_ROSE: Look = { theme: 'file:rose', scheme: 'light', values: {}, css: ':root{}' }
 const CLASSIC: Look = { theme: 'default', scheme: 'system', values: {} }
-
 interface Server {
   settings: Map<string, Record<string, unknown>>
   devices: Set<Device>
   away: boolean
   held: Promise<void> | null
 }
-
 let server: Server
-
 interface Device {
   account: AccountDouble
   sync: LookSync
@@ -25,11 +22,9 @@ interface Device {
   hear(): void
   settle(): Promise<void>
 }
-
 function userOf(token: string): string {
   return token.replace(/^token-/, '')
 }
-
 function device(
   start: Look,
   user: string | null = 'a',
@@ -41,7 +36,6 @@ function device(
     pending.push(work)
     return work
   }
-
   const one: Device = {
     account,
     worn: start,
@@ -87,21 +81,17 @@ function device(
   server.devices.add(one)
   return one
 }
-
 function signIn(one: Device): Promise<void> {
   const token = one.account.accountToken
   return token ? one.sync.adopt(token) : Promise.resolve()
 }
-
 async function settled(...devices: Device[]) {
   await new Promise((resolve) => setTimeout(resolve, 0))
   for (const one of devices) await one.settle()
 }
-
 beforeEach(() => {
   server = { settings: new Map(), devices: new Set(), away: false, held: null }
 })
-
 describe('a theme that follows the account', () => {
   test('picked on one device is worn on the other', async () => {
     const laptop = device(CLASSIC)
@@ -113,7 +103,6 @@ describe('a theme that follows the account', () => {
     expect(phone.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
-
   test('takes the account’s theme the first time a device syncs', async () => {
     server.settings.set('a', { look: DARK_GLASS })
     const fresh = device(LIGHT_ROSE)
@@ -121,7 +110,6 @@ describe('a theme that follows the account', () => {
     expect(fresh.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
-
   test('gives the account this device’s theme when the account has none yet', async () => {
     server.settings.set('a', { ligatures: true })
     const first = device(LIGHT_ROSE)
@@ -129,14 +117,12 @@ describe('a theme that follows the account', () => {
     expect(first.worn).toEqual(LIGHT_ROSE)
     expect(server.settings.get('a')).toEqual({ ligatures: true, look: LIGHT_ROSE })
   })
-
   test('reads an account an older build wrote, with settings it does not know', async () => {
     server.settings.set('a', { look: { ...DARK_GLASS, someday: 1 }, vim: true })
     const one = device(CLASSIC)
     await signIn(one)
     expect(one.worn).toEqual(DARK_GLASS)
   })
-
   test('keeps a theme picked while signed out on this device only', async () => {
     server.settings.set('a', { look: DARK_GLASS })
     const one = device(CLASSIC, null)
@@ -146,7 +132,6 @@ describe('a theme that follows the account', () => {
     expect(one.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
-
   test('keeps the last theme on the device after signing out', async () => {
     server.settings.set('a', { look: DARK_GLASS })
     const one = device(CLASSIC)
@@ -156,7 +141,6 @@ describe('a theme that follows the account', () => {
     one.pick(LIGHT_ROSE)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
-
   test('sends a pick that could not be sent before reading the account again', async () => {
     const laptop = device(CLASSIC)
     await signIn(laptop)
@@ -168,7 +152,6 @@ describe('a theme that follows the account', () => {
     expect(laptop.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
-
   test('never carries a pick owed to one account into the next', async () => {
     server.settings.set('b', { look: CLASSIC })
     const one = device(CLASSIC)
@@ -183,7 +166,6 @@ describe('a theme that follows the account', () => {
     expect(server.settings.get('a')?.look).toEqual(CLASSIC)
     expect(one.worn).toEqual(CLASSIC)
   })
-
   test('never wears what one account answered after switching to another', async () => {
     server.settings.set('a', { look: DARK_GLASS })
     server.settings.set('b', { look: LIGHT_ROSE })
@@ -197,7 +179,6 @@ describe('a theme that follows the account', () => {
     await Promise.all([reading, next])
     expect(one.worn).toEqual(LIGHT_ROSE)
   })
-
   test('a pick made while the account is being read wins over the answer', async () => {
     server.settings.set('a', { look: DARK_GLASS })
     const one = device(CLASSIC)
@@ -213,7 +194,6 @@ describe('a theme that follows the account', () => {
     expect(server.settings.get('a')?.look).toEqual(LIGHT_ROSE)
   })
 })
-
 describe('a theme picked while the account could not hear it', () => {
   test('outlives a relaunch and wins over the account’s older one', async () => {
     server.settings.set('a', { look: CLASSIC })
@@ -229,7 +209,6 @@ describe('a theme picked while the account could not hear it', () => {
     expect(again.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
-
   test('picked before the account is known is not undone once it is', async () => {
     server.settings.set('a', { look: CLASSIC })
     const account = accountDouble('a')

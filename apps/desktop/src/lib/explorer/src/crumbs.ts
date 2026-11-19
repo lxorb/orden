@@ -2,7 +2,6 @@ export interface Crumb {
   name: string
   path: string
 }
-
 function parts(path: string): { top: string; steps: string[]; separator: string } | null {
   const unc = /^[\\/]{2}([^\\/]+)[\\/]+([^\\/]+)(.*)$/.exec(path)
   if (unc) {
@@ -17,11 +16,9 @@ function parts(path: string): { top: string; steps: string[]; separator: string 
   if (path.startsWith('/')) return { top: '/', steps: split(path), separator: '/' }
   return null
 }
-
 function split(rest: string): string[] {
   return rest.split(/[\\/]+/).filter(Boolean)
 }
-
 export function crumbsOf(folder: string): Crumb[] {
   const said = parts(folder)
   if (!said) return [{ name: folder, path: folder }]
@@ -33,18 +30,14 @@ export function crumbsOf(folder: string): Crumb[] {
   }
   return out
 }
-
 function topName(top: string): string {
   return top === '/' ? '/' : top.replace(/\\$/, '')
 }
-
 export const folderName = (folder: string): string => crumbsOf(folder).at(-1)?.name ?? folder
-
 export function parentOf(folder: string): string | null {
   const crumbs = crumbsOf(folder)
   return crumbs.length > 1 ? (crumbs.at(-2)?.path ?? null) : null
 }
-
 export function typedFolder(typed: string, here: string, home: string | null): string | null {
   const said = typed.trim()
   if (!said) return null

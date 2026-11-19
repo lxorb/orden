@@ -18,13 +18,10 @@ beforeAll(async () => {
   await loadLineCommands()
   noRects()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string, at: number): EditorView {
   const view = new EditorView({
     state: EditorState.create({
@@ -44,41 +41,34 @@ function viewOf(doc: string, at: number): EditorView {
   open.push(view)
   return view
 }
-
 function press(view: EditorView, key: string, shiftKey = false) {
   const keyCode = ({ Tab: 9, Escape: 27 } as Record<string, number>)[key] ?? 0
   view.contentDOM.dispatchEvent(
     new KeyboardEvent('keydown', { key, keyCode, shiftKey, bubbles: true, cancelable: true }),
   )
 }
-
 const NOTE = '# One\n\nfirst\n\n## Under one\n\nnested\n\n# Two\n\n- a\n  - b\n  - c\n- d\n'
-
 describe('Tab in normal mode, as Org mode has it', () => {
   test('folds the heading the caret is on, and opens it again', () => {
     const view = viewOf(NOTE, 2)
     press(view, 'Tab')
     expect(foldLines(view.state)).toEqual([[1, 7]])
-
     press(view, 'Tab')
     expect(foldLines(view.state)).toEqual([])
     expect(view.state.doc.toString()).toBe(NOTE)
   })
-
   test('folds a list item over the items nested under it, and writes nothing', () => {
     const view = viewOf(NOTE, NOTE.indexOf('- a') + 2)
     press(view, 'Tab')
     expect(foldLines(view.state)).toEqual([[11, 13]])
     expect(view.state.doc.toString()).toBe(NOTE)
   })
-
   test('never indents the line, even where there is nothing to fold', () => {
     const flat = '- one\n- two\n'
     const view = viewOf(flat, flat.indexOf('two'))
     press(view, 'Tab')
     expect(view.state.doc.toString()).toBe(flat)
   })
-
   test('Shift+Tab folds every heading, and again opens everything', () => {
     const view = viewOf(NOTE, NOTE.indexOf('nested'))
     press(view, 'Tab', true)
@@ -86,57 +76,48 @@ describe('Tab in normal mode, as Org mode has it', () => {
       [1, 7],
       [9, 14],
     ])
-
     press(view, 'Tab', true)
     expect(foldLines(view.state)).toEqual([])
     expect(view.state.doc.toString()).toBe(NOTE)
   })
-
   test('right after Escape leaves insert mode, and again after Escape in normal mode', async () => {
     const view = viewOf(NOTE, 2)
     const cm = getCM(view)
     if (!cm) throw new Error('no Vim in the view')
     Vim.handleKey(cm, 'i', 'user')
-
     press(view, 'Escape')
     await Promise.resolve()
     expect(cm.state.vim?.insertMode).toBe(false)
     press(view, 'Tab')
     expect(foldLines(view.state)).toEqual([[1, 7]])
-
     press(view, 'Escape')
     await Promise.resolve()
     press(view, 'Tab')
     expect(foldLines(view.state)).toEqual([])
   })
-
   test('in insert mode is still the indent it always was', () => {
     const flat = '- one\n- two\n'
     const view = viewOf(flat, flat.indexOf('two'))
     const cm = getCM(view)
     if (!cm) throw new Error('no Vim in the view')
     Vim.handleKey(cm, 'i', 'user')
-
     press(view, 'Tab')
     expect(view.state.doc.toString()).not.toBe(flat)
     expect(foldLines(view.state)).toEqual([])
   })
 })
-
 describe("Vim's own fold keys", () => {
   function keys(view: EditorView, typed: string) {
     const cm = getCM(view)
     if (!cm) throw new Error('no Vim in the view')
     for (const key of typed) Vim.handleKey(cm, key, 'user')
   }
-
   test('za folds and opens, zc only folds, zo only opens', () => {
     const view = viewOf(NOTE, 2)
     keys(view, 'za')
     expect(foldLines(view.state)).toEqual([[1, 7]])
     keys(view, 'za')
     expect(foldLines(view.state)).toEqual([])
-
     keys(view, 'zo')
     expect(foldLines(view.state)).toEqual([])
     keys(view, 'zc')
@@ -147,7 +128,6 @@ describe("Vim's own fold keys", () => {
     expect(foldLines(view.state)).toEqual([])
     expect(view.state.doc.toString()).toBe(NOTE)
   })
-
   test('zM folds every heading and zR opens everything', () => {
     const view = viewOf(NOTE, NOTE.indexOf('- a'))
     keys(view, 'zM')
@@ -159,7 +139,6 @@ describe("Vim's own fold keys", () => {
     expect(foldLines(view.state)).toEqual([])
   })
 })
-
 describe('Tab, as normal mode reads it', () => {
   const tab = {
     key: 'Tab',
@@ -171,12 +150,10 @@ describe('Tab, as normal mode reads it', () => {
   }
   const idle = { prefixRepeat: [], operator: null, keyBuffer: [] }
   const normal = { insertMode: false, visualMode: false, inputState: idle }
-
   test.each([
     [tab, 'one', normal],
     [{ ...tab, shiftKey: true }, 'all', normal],
   ])('%j', (input, wanted, extra) => expect(normalTab(input, extra)).toEqual(wanted))
-
   test.each([
     [tab, { ...normal, insertMode: true }],
     [tab, { ...normal, visualMode: true }],

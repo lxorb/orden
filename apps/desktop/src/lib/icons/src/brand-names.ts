@@ -33,7 +33,6 @@ export const CALLED: Readonly<Record<string, string>> = {
   nodedotjs: 'Node.js',
   latex: 'LaTeX',
 }
-
 export const ALSO: Readonly<Record<string, string>> = {
   orden: 'notes app',
   anthropic: 'claude ai',

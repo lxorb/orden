@@ -10,7 +10,6 @@ const open: EditorView[] = []
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string): EditorView {
   const view = new EditorView({
     state: EditorState.create({
@@ -22,7 +21,6 @@ function viewOf(doc: string): EditorView {
   open.push(view)
   return view
 }
-
 describe('what an agent does to an editor (#1078)', () => {
   test('selections are read and set by line and character, several at once', () => {
     const view = viewOf('one two\nthree four\n')
@@ -37,7 +35,6 @@ describe('what an agent does to an editor (#1078)', () => {
     select(view, [{ anchor: { line: 99, ch: 99 }, head: { line: 99, ch: 99 } }])
     expect(selectionsOf(view)[0]?.head).toEqual({ line: 3, ch: 0 })
   })
-
   test('marks are an agent’s own, move with the words, and are replaced whole', () => {
     const view = viewOf('teh cat\n')
     setAgentMarks(view, 'claude', [
@@ -59,7 +56,6 @@ describe('what an agent does to an editor (#1078)', () => {
       },
     ])
     expect(view.dom.querySelector('.cm-agent-mark-warning')?.getAttribute('title')).toBe('the?')
-
     view.dispatch({ changes: { from: 0, insert: 'so ' } })
     expect(agentMarksIn(view, 'claude')).toEqual([
       {
@@ -70,12 +66,10 @@ describe('what an agent does to an editor (#1078)', () => {
         severity: 'warning',
       },
     ])
-
     setAgentMarks(view, 'claude', [])
     expect(agentMarksIn(view, 'claude')).toEqual([])
     expect(agentMarksIn(view)).toHaveLength(1)
   })
-
   test('a heading’s section folds and unfolds by its line', () => {
     const view = viewOf('# One\n\nwords\n\n# Two\n')
     expect(foldLine(view, 1)).toBe(true)

@@ -16,10 +16,8 @@
     path?: string | undefined
     url?: string | undefined
   } = $props()
-
   const chosen = $derived(path === undefined ? null : readIcon(chosenIcon(path)))
   const tint = $derived(path === undefined ? null : chosenTint(path))
-
   const term = $derived(
     path !== undefined && isTermTarget(path)
       ? (workspace.tabs.find((one) => one.path !== null && samePath(one.path, path)) ?? {
@@ -29,13 +27,11 @@
         })
       : null,
   )
-
   const source = $derived(sourceMark(mark, path, url))
   const shown = $derived<FileMark>(source.mark)
   const worn = $derived(chosen ?? readIcon(source.icon))
   const favicon = $derived(mark === 'web' ? faviconFor(path, url) : null)
   let broken = $state(false)
-
   $effect(() => {
     if (favicon) broken = false
   })
@@ -69,11 +65,9 @@
     stroke: currentColor;
     stroke-width: 1.6;
   }
-
   .quiet {
     opacity: 0.8;
   }
-
   .picture img {
     display: block;
     width: 100%;

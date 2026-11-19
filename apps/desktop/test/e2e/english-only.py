@@ -3,9 +3,7 @@ from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 GERMAN = ["Einstellungen", "Neue Notiz", "Suchen", "Aussehen", "Allgemein", "Sprache"]
-
 READ = """
 () => ({
   dir: document.documentElement.dir,
@@ -14,8 +12,6 @@ READ = """
   text: document.body.innerText,
 })
 """
-
-
 def look(browser, locale: str, timezone: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, locale=locale, timezone_id=timezone)
     page.context.add_init_script("try { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('orden:language', 'ar'); sessionStorage.setItem('seeded', '1') } } catch (_) {}")
@@ -42,14 +38,10 @@ def look(browser, locale: str, timezone: str) -> None:
     clock = page.evaluate("() => new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle")
     say(f"{locale}: the system clock runs {clock}")
     page.context.close()
-
-
 def main() -> int:
     with DRIVE.session() as browser:
         look(browser, "de-DE", "Europe/Zurich")
         look(browser, "ar-EG", "Africa/Cairo")
         look(browser, "en-US", "America/New_York")
     return DRIVE.verdict("the app is in English, left to right, whatever the system speaks")
-
-
 raise SystemExit(main())

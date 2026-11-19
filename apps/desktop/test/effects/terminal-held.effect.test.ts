@@ -6,7 +6,6 @@ const asked: { command: string; args: Record<string, unknown> }[] = []
 let stillHeld = false
 let listed: unknown[] = []
 let tmuxListed: unknown[] = []
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -33,9 +32,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(null)
   },
 }))
-
 const channels: { onmessage: ((message: unknown) => void) | null }[] = []
-
 vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
@@ -45,11 +42,9 @@ vi.mock('../../src/lib/crate/src/native', () => ({
   },
   invoke: () => Promise.resolve(null),
 }))
-
 let typing: ((data: string) => void) | null = null
 const written: string[] = []
 let resets = 0
-
 vi.mock('@xterm/xterm', () => ({
   Terminal: class {
     cols = 80
@@ -116,12 +111,10 @@ vi.mock('@xterm/addon-unicode11', () => ({
     activate = () => undefined
   },
 }))
-
 Object.defineProperty(document, 'fonts', {
   configurable: true,
   value: { load: () => Promise.resolve([]) },
 })
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { writeSpec } = await import('../../src/lib/terminal/src/spec')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
@@ -134,13 +127,10 @@ const { heldCall } = await import('../../src/lib/terminal/src/agent/held')
 const TerminalTab = (await import('../../src/lib/terminal/src/TerminalTab.svelte')).default
 const SessionsCard = (await import('../../src/lib/terminal/src/remote/SessionsCard.svelte')).default
 const { mount, unmount } = await import('svelte')
-
 const calls = (command: string) => asked.filter((one) => one.command === command)
 const spawns = () => calls('pty_spawn')
 const said = (message: unknown) => channels.at(-1)?.onmessage?.(message)
-
 let place: HTMLElement
-
 beforeEach(() => {
   asked.length = 0
   written.length = 0
@@ -156,21 +146,18 @@ beforeEach(() => {
   place = document.createElement('div')
   document.body.append(place)
 })
-
 afterEach(() => {
   vi.restoreAllMocks()
   workspace.tabs = []
   flushSync()
   place.remove()
 })
-
 function reopened(shell: string, key: string) {
   workspace.openUnsaved('terminal', writeSpec({ shell, folder: null, key, name: null }), 'Shell')
   const tab = workspace.tabs.at(-1)
   if (!tab) throw new Error('no tab')
   return tab
 }
-
 async function connected() {
   await openRemote('pi')
   const tab = workspace.tabs.at(-1)
@@ -179,27 +166,22 @@ async function connected() {
   await vi.waitFor(() => expect(spawns()).toHaveLength(1))
   return tab
 }
-
 function later(by: number) {
   const now = Date.now()
   vi.spyOn(Date, 'now').mockReturnValue(now + by)
 }
-
 test('a shell still running after a restart is attached to, not replaced by its saved screen', async () => {
   stillHeld = true
   const tab = reopened('pwsh', 'k-held')
   await sessionOf(tab).attach(place, false)
   await vi.waitFor(() => expect(spawns()).toHaveLength(1))
-
   expect(spawns()[0]?.args.key).toBe('k-held')
   expect(calls('terminal_history_read')).toHaveLength(0)
   expect(written.join('')).not.toContain('saved-before')
-
   said({ screen: 'vim on its own screen', cols: 100, rows: 30 })
   await vi.waitFor(() => expect(written).toContain('vim on its own screen'))
   expect(resets).toBe(1)
 })
-
 test('a shell whose session is gone comes back from its saved screen and starts again', async () => {
   const tab = reopened('pwsh', 'k-gone')
   await sessionOf(tab).attach(place, false)
@@ -207,7 +189,6 @@ test('a shell whose session is gone comes back from its saved screen and starts 
   expect(written.join('')).toContain('saved-before')
   expect(spawns()[0]?.args.key).toBe('k-gone')
 })
-
 test('a remote tab whose session still runs attaches at once, with no Reconnect to press', async () => {
   stillHeld = true
   const tab = reopened('ssh:pi', 'r-held')
@@ -216,7 +197,6 @@ test('a remote tab whose session still runs attaches at once, with no Reconnect 
   expect(sessionOf(tab).offline).toBe(false)
   expect(spawns()[0]?.args).toMatchObject({ shell: 'ssh:pi', key: 'r-held', plain: false })
 })
-
 test('a connection that drops after it was up comes back by itself, to the same session', async () => {
   const tab = await connected()
   const key = spawns()[0]?.args.key
@@ -225,12 +205,10 @@ test('a connection that drops after it was up comes back by itself, to the same 
   flushSync()
   expect(sessionOf(tab).offline).toBe(true)
   expect(written.join('')).toContain('Disconnected from pi, reconnecting')
-
   await vi.waitFor(() => expect(spawns()).toHaveLength(2), { timeout: 3000 })
   expect(spawns()[1]?.args).toMatchObject({ shell: 'ssh:pi', key, plain: false })
   expect(sessionOf(tab).offline).toBe(false)
 })
-
 test('a connection that keeps failing goes on trying, slower each time', async () => {
   await connected()
   later(11_000)
@@ -242,7 +220,6 @@ test('a connection that keeps failing goes on trying, slower each time', async (
   expect(spawns()).toHaveLength(2)
   await vi.waitFor(() => expect(spawns()).toHaveLength(3), { timeout: 3000 })
 })
-
 test('closing a tab ends its session, and Detach lets it go on running', async () => {
   const one = reopened('pwsh', 'k-close')
   await sessionOf(one).attach(place, false)
@@ -251,7 +228,6 @@ test('closing a tab ends its session, and Detach lets it go on running', async (
   flushSync()
   expect(calls('pty_kill')).toHaveLength(1)
   expect(calls('pty_detach')).toHaveLength(0)
-
   const other = reopened('pwsh', 'k-detach')
   const session = sessionOf(other)
   await session.attach(place, false)
@@ -263,7 +239,6 @@ test('closing a tab ends its session, and Detach lets it go on running', async (
   expect(calls('pty_detach')).toHaveLength(1)
   expect(calls('pty_kill')).toHaveLength(1)
 })
-
 test('closing a remote tab while it is disconnected asks the host to end the session', async () => {
   const tab = reopened('ssh:pi', 'r-down')
   await sessionOf(tab).attach(place, false)
@@ -273,7 +248,6 @@ test('closing a remote tab while it is disconnected asks the host to end the ses
   await vi.waitFor(() => expect(calls('remote_end')).toHaveLength(1))
   expect(calls('remote_end')[0]?.args).toEqual({ host: 'pi', key: 'r-down' })
 })
-
 test('a host without tmux is connected to plainly and said to be not persistent', async () => {
   const tab = await connected()
   said({ exit: 127 })
@@ -282,7 +256,6 @@ test('a host without tmux is connected to plainly and said to be not persistent'
   expect(written.join('')).toContain('pi has no tmux, so this session is not persistent')
   expect(sessionOf(tab).offline).toBe(false)
 })
-
 test('a tab another window took over only watches, until Take over gives it the keys back', async () => {
   const tab = reopened('pwsh', 'k-shared')
   const surface = mount(TerminalTab, { target: place, props: { tab, focused: false } })
@@ -296,7 +269,6 @@ test('a tab another window took over only watches, until Take over gives it the 
   typing?.('ls\r')
   await idle(50)
   expect(calls('pty_write')).toHaveLength(0)
-
   bar()
     .find((one) => one.textContent === 'Take over')
     ?.click()
@@ -307,7 +279,6 @@ test('a tab another window took over only watches, until Take over gives it the 
   await vi.waitFor(() => expect(calls('pty_write')).toHaveLength(1))
   void unmount(surface, { outro: false })
 })
-
 test('a name given to a terminal goes to its session, so the list shows it once it is let go', async () => {
   const tab = reopened('pwsh', 'k-named')
   await sessionOf(tab).attach(place, false)
@@ -315,7 +286,6 @@ test('a name given to a terminal goes to its session, so the list shows it once 
   expect(calls('pty_name').at(-1)?.args).toEqual({ key: 'k-named', name: 'Build' })
   expect(spawns()[0]?.args.name ?? null).toBeNull()
 })
-
 const one = (key: string, more: Record<string, unknown> = {}) => ({
   key,
   label: { shell: 'pwsh', name: 'Build', folder: 'C:\\work' },
@@ -328,7 +298,6 @@ const one = (key: string, more: Record<string, unknown> = {}) => ({
   open: false,
   ...more,
 })
-
 test('the session list opens a detached session in a tab of its own, and ends one', async () => {
   listed = [one('d1'), one('d2', { last: 9, label: { shell: 'ssh:pi' } })]
   await held.refresh()
@@ -336,12 +305,10 @@ test('the session list opens a detached session in a tab of its own, and ends on
     ['d2', 'pi', null],
     ['d1', null, 'Build'],
   ])
-
   const id = held.open(held.list[1] as never)
   const tab = workspace.tabs.find((it) => it.id === id)
   expect(JSON.parse(tab?.doc ?? '{}')).toMatchObject({ shell: 'pwsh', key: 'd1', name: 'Build' })
   expect(held.open(held.list[1] as never)).toBe(id)
-
   await held.end(held.list[0] as never)
   expect(calls('pty_end').at(-1)?.args).toEqual({ key: 'd2' })
   await held.end(held.list[1] as never)
@@ -349,7 +316,6 @@ test('the session list opens a detached session in a tab of its own, and ends on
   expect(workspace.tabs.some((it) => it.id === id)).toBe(false)
   expect(calls('pty_end')).toHaveLength(1)
 })
-
 test('sessions let go of and left alone for a week are offered for ending, and only they end', async () => {
   const now = Date.now()
   const week = 7 * 24 * 60 * 60 * 1000
@@ -363,7 +329,6 @@ test('sessions let go of and left alone for a week are offered for ending, and o
   await held.endIdle()
   expect(calls('pty_end').map((call) => call.args.key)).toEqual(['old'])
 })
-
 test('the Remote settings list every session here with where it runs and what to do with it', async () => {
   const week = 7 * 24 * 60 * 60 * 1000
   listed = [
@@ -388,7 +353,6 @@ test('the Remote settings list every session here with where it runs and what to
   expect(place.querySelector('.idle')?.textContent).toContain('A session has been idle for a week')
   void unmount(card, { outro: false })
 })
-
 test('a tmux session of this computer is opened in a tab that attaches to it', async () => {
   tmuxListed = [{ name: 'mine', attached: false, last: 3, program: 'vim', folder: '/srv' }]
   await held.refresh()
@@ -396,7 +360,6 @@ test('a tmux session of this computer is opened in a tab that attaches to it', a
   const tab = workspace.tabs.find((it) => it.id === id)
   expect(JSON.parse(tab?.doc ?? '{}')).toMatchObject({ shell: 'tmux:mine', name: 'mine' })
 })
-
 test('an agent lists detached sessions and names one as a tab, which opens it behind the reader', async () => {
   listed = [one('d3')]
   const caller = { agent: null } as never

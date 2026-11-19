@@ -2,7 +2,6 @@ interface World {
   tabs: { id: string }[]
   active: string | null
 }
-
 class Page {
   url = $state<string | null>(null)
   readonly title = ''
@@ -18,12 +17,10 @@ class Page {
   readonly playing = false
   readonly muted = false
 }
-
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the pages are reactive, not the list
 const pages = new Map<string, Page>()
 const tabs = $state<{ id: string }[]>([])
 let made = 0
-
 function pageOf(id: string): Page {
   let page = pages.get(id)
   if (!page) {
@@ -32,15 +29,12 @@ function pageOf(id: string): Page {
   }
   return page
 }
-
 export function pagesOf() {
   return { of: pageOf }
 }
-
 export function land(id: string, url: string) {
   pageOf(id).url = url
 }
-
 export function reactive(
   world: World,
   opened: { url: string; ask: string; opener: string | undefined }[],
@@ -71,7 +65,6 @@ export function reactive(
     },
   }
 }
-
 export function reset() {
   made = 0
   tabs.length = 0

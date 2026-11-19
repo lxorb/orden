@@ -1,5 +1,4 @@
 #![cfg(not(target_os = "android"))]
-
 #[cfg(desktop)]
 pub mod chatgpt;
 pub mod owner;

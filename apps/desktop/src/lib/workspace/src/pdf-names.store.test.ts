@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -11,15 +10,11 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk(true)
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('./api')
-
 const ROOT = '/space'
-
 describe('a PDF’s name', () => {
   beforeEach(async () => {
     const one = disk.current!
@@ -30,11 +25,9 @@ describe('a PDF’s name', () => {
     workspace.tabs = []
     await workspace.loadTree()
   })
-
   test('is taken where a page note would take the PDF for its paper', () => {
     expect(workspace.freeName(ROOT, 'Report.pages.pdf')).toBe('Report.pages 2.pdf')
   })
-
   test('and only where that note is', () => {
     expect(workspace.freeName(ROOT, 'Lecture.pages.pdf')).toBe('Lecture.pages.pdf')
   })

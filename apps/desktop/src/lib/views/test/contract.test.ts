@@ -15,7 +15,6 @@ import {
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 test('the module stands on its own loads nothing with it, and the rest through doors', () => {
   const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
   const loaded = [...api.matchAll(/^export \{[^}]*\} from '([^']+)'/gm)].map((one) => one[1])

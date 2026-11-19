@@ -14,7 +14,6 @@ function pathOf(row: Row): string | null {
   const space = workspace.spaces.find((one) => one.name === row.space)
   return space ? insideSpace(space.root, row.path) : null
 }
-
 async function rewrite(path: string, after: (before: string) => string | null): Promise<boolean> {
   const before = await noteText(workspace, path)
   if (before === null) return false
@@ -24,14 +23,12 @@ async function rewrite(path: string, after: (before: string) => string | null): 
   if (!edit) return false
   return replaced([changeOf(path, before, [edit])])
 }
-
 async function replaced(changes: readonly Change[], said?: Said): Promise<boolean> {
   if (!(await replaceInNotes(workspace, changes))) return false
   const last = workspace.undone.last
   if (said && last) undoToast.tell(last, said, workspace.undone.stack)
   return true
 }
-
 export async function asOneUndo(steps: readonly (() => Promise<unknown>)[]): Promise<void> {
   let made = 0
   for (const step of steps) {
@@ -43,9 +40,7 @@ export async function asOneUndo(steps: readonly (() => Promise<unknown>)[]): Pro
   if (made < 2) return
   for (; made > 1; made--) if (!(await gatherLast(workspace.undone))) return
 }
-
 export const writeRow = (row: Row, change: RowChange): Promise<boolean> => rows.write(row, change)
-
 export async function writeEach(
   pairs: readonly { row: Row; change: RowChange }[],
   join = false,
@@ -60,7 +55,6 @@ export async function writeEach(
       else byNote.set(path, [pair])
     }
   }
-
   const changes = []
   for (const [path, inNote] of byNote) {
     const before = await noteText(workspace, path)
@@ -75,15 +69,12 @@ export async function writeEach(
   if (join) await joinLast(workspace.undone)
   return true
 }
-
 export const dropRow = (row: Row, drop: Drop): Promise<boolean> => writeRow(row, drop.change)
-
 export async function pressRow(row: Row, change: RowChange): Promise<boolean> {
   const path = pathOf(row)
   if (path === null) return false
   return rewrite(path, (before) => (Object.keys(change.note ?? {}).length ? changed(before, row, change) : before))
 }
-
 async function rewriteTask(
   row: Row,
   after: (before: string, anchor: { line: number; hash: string }) => string | null,
@@ -99,10 +90,8 @@ async function rewriteTask(
   if (!edit) return false
   return replaced([changeOf(path, before, [edit])], said)
 }
-
 export const deleteTask = (row: Row): Promise<boolean> => rewriteTask(row, withoutTask, 'deleted')
 export const duplicateTask = (row: Row): Promise<boolean> => rewriteTask(row, duplicatedTask)
-
 export async function linkToTask(row: Row): Promise<string | null> {
   const note = row.path.replace(/\.md$/i, '')
   if (row.task?.block) return `[[${note}#^${row.task.block}]]`

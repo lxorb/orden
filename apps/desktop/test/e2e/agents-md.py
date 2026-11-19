@@ -1,20 +1,16 @@
 import sys
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wait_for = DRIVE.say, DRIVE.wait_for
 SHOTS = DRIVE.shots
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
     page.on("pageerror", lambda error: say(f"page error: {error}"))
     DRIVE.open(page)
     return page
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -29,20 +25,17 @@ async () => {
   return root
 }
 """
-
 def new_row(page: Page, name: str) -> None:
     page.evaluate(
         "() => { const ws = window.ordenApp.workspace; ws.startNaming('note', ws.activeSpace.root) }"
     )
     page.wait_for_selector(".naming input")
     page.fill(".naming input", name)
-
 def drive(browser: Browser) -> None:
     page = fresh(browser)
     try:
         root = page.evaluate(SEED)
         agents = f"{root}/AGENTS.md"
-
         wait_for(
             page,
             """() => {
@@ -54,7 +47,6 @@ def drive(browser: Browser) -> None:
             "the file on disk, with no row",
         )
         say("the tree shows no root AGENTS.md")
-
         new_row(page, "agents")
         hint = page.locator(".reason.held button")
         hint.wait_for()
@@ -76,7 +68,6 @@ def drive(browser: Browser) -> None:
         if page.locator(".reason[aria-live=polite] button").count() != 1:
             raise SystemExit("the hint is not in a live region")
         hint.click()
-
         box = page.locator(".orden-setting textarea")
         box.wait_for()
         wait_for(
@@ -86,7 +77,6 @@ def drive(browser: Browser) -> None:
         )
         page.screenshot(path=str(SHOTS / "agents-md-field.png"))
         say("the hint lands in the field")
-
         page.keyboard.press("Control+End")
         page.keyboard.type("- tea\n")
         page.keyboard.press("Escape")
@@ -101,7 +91,6 @@ def drive(browser: Browser) -> None:
         )
         if names.count("AGENTS.md") != 2 or any(n.lower().startswith("agents ") for n in names):
             raise SystemExit(f"the refused name wrote something: {names}")
-
         new_row(page, "AGENTS")
         page.wait_for_selector(".reason.held button")
         page.keyboard.press("Tab")
@@ -118,7 +107,6 @@ def drive(browser: Browser) -> None:
         )
         page.keyboard.press("Escape")
         say("the keyboard reaches the hint and goes through it")
-
         new_row(page, "AGENTS")
         page.wait_for_selector(".reason.held button")
         page.keyboard.press("Enter")
@@ -136,7 +124,6 @@ def drive(browser: Browser) -> None:
         )
         page.keyboard.press("Escape")
         say("Enter refuses, and the toast goes to the field")
-
         page.keyboard.press("Control+o")
         page.wait_for_selector(".palette input")
         page.keyboard.type("Folder/AGENTS.md")
@@ -145,7 +132,6 @@ def drive(browser: Browser) -> None:
         page.locator(".orden-setting textarea").wait_for()
         page.keyboard.press("Escape")
         say("the palette's row goes to the field")
-
         nested = f"{root}/Folder/AGENTS.md"
         page.evaluate("(path) => window.ordenApp.workspace.open(path)", nested)
         wait_for(
@@ -153,7 +139,6 @@ def drive(browser: Browser) -> None:
             f"() => window.ordenApp.workspace.active?.path === {nested!r}",
             "the nested note in a tab",
         )
-
         page.evaluate("(path) => window.ordenApp.workspace.open(path)", agents)
         page.locator(".orden-setting textarea").wait_for()
         if page.evaluate(
@@ -163,11 +148,8 @@ def drive(browser: Browser) -> None:
         say("the root file opens as the field, and a nested one as a note")
     finally:
         page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
-
     return DRIVE.verdict("AGENTS.md is a field, the name is refused, and the hint goes there")
-
 sys.exit(main())

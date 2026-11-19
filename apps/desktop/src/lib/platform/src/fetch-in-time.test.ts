@@ -6,7 +6,6 @@ afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
-
 function hanging(after: 'headers' | 'body') {
   vi.stubGlobal('fetch', (_request: Request, init: RequestInit) => {
     const signal = init.signal
@@ -24,7 +23,6 @@ function hanging(after: 'headers' | 'body') {
     return Promise.resolve(new Response(body, { status: 200 }))
   })
 }
-
 describe('a request to the account', () => {
   test.each(['headers', 'body'] as const)(
     'that never finishes its %s is given up, as a network that is not there',
@@ -36,7 +34,6 @@ describe('a request to the account', () => {
       await failed
     },
   )
-
   test('that answers is read whole, status and headers too', async () => {
     vi.stubGlobal('fetch', () =>
       Promise.resolve(new Response('{"ok":true}', { status: 201, headers: { 'x-orden-cursor': '7' } })),
@@ -46,13 +43,11 @@ describe('a request to the account', () => {
     expect(response.headers.get('x-orden-cursor')).toBe('7')
     expect(await response.json()).toEqual({ ok: true })
   })
-
   test('that answers with no body keeps none', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response(null, { status: 204 })))
     const response = await fetchInTime(new Request('https://orden.so/v2/spaces'))
     expect(response.status).toBe(204)
   })
-
   test('called off by its caller is called off at once, not taken for a network gone', async () => {
     hanging('headers')
     const stop = new AbortController()

@@ -16,19 +16,15 @@ function labelsFor(doc: string): string[] {
   const result = snippetCompletions(new CompletionContext(state, doc.length, false))
   return result?.options.map((option) => option.label) ?? []
 }
-
 afterEach(() => setSnippets({}))
-
 test('a Hindi trigger is offered when typed in full', () => {
   setSnippets({ नमस्ते: 'नमस्ते, आप कैसे हैं?' })
   expect(labelsFor('मैंने कहा नमस्ते')).toEqual(['नमस्ते'])
 })
-
 test('a Thai trigger is offered when typed in full', () => {
   setSnippets({ สวัสดี: 'สวัสดีครับ' })
   expect(labelsFor('พูดว่า สวัสดี')).toEqual(['สวัสดี'])
 })
-
 test('a trigger written with a combining accent is offered when typed in full', () => {
   setSnippets({ café: 'Coffee break at ' })
   expect(labelsFor('Meet at café')).toEqual(['café'])

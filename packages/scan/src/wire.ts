@@ -6,25 +6,16 @@ import type { Hit, Range } from './search/match'
 import type { Query, Unit } from './search/query'
 
 const INDEX_BATCH = 200
-
 const MOST_HITS = 200
-
 const MOST_SKIPPED = 5000
-
 const MOST_EXCLUDED = 2000
-
 const LONGEST = 4096
-
 const DEEPEST = 32
-
 export type IndexedNote = ScannedNote & Partial<ScannedRows> & { stamp?: Stamp | null }
-
 export type IndexItem = { id: string; docSeq: number; scan: IndexedNote | null } | { id: string; refused: 'gone' }
-
 export interface IndexRequest {
   ids: string[]
 }
-
 export interface SearchRequest {
   query: Query
   terms: string[]
@@ -33,37 +24,26 @@ export interface SearchRequest {
   skip?: string[]
   excluded?: string[]
 }
-
 export type FoundHit = Hit & { id: string }
 export type FoundLoose = FuzzyHit & { id: string }
-
 export interface SearchAnswer {
   hits: FoundHit[]
   loose: FoundLoose[]
   after: string | null
 }
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const isText = (value: unknown): value is string => typeof value === 'string' && value.length <= LONGEST
-
 const isId = (value: unknown): value is string => isText(value) && value.length > 0
-
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-
 const isTextOrNull = (value: unknown): value is string | null => value === null || typeof value === 'string'
-
 const isTexts = (value: unknown, most = Infinity): value is string[] =>
   Array.isArray(value) && value.length <= most && value.every(isText)
-
 const isIds = (value: unknown, most: number): value is string[] =>
   Array.isArray(value) && value.length <= most && value.every(isId)
-
 const UNITS: readonly Unit[] = ['line', 'block', 'section', 'task', 'task-todo', 'task-done']
 const COMPARES = ['has', 'is', 'null', 'lt', 'lte', 'gt', 'gte', 'range']
-
 export function queryOf(value: unknown, depth = 0): Query | null {
   if (!isRecord(value) || depth > DEEPEST) return null
   const deeper = (one: unknown) => queryOf(one, depth + 1)
@@ -119,12 +99,10 @@ export function queryOf(value: unknown, depth = 0): Query | null {
       return null
   }
 }
-
 export function indexRequestOf(value: unknown): IndexRequest | null {
   if (!isRecord(value) || !isIds(value.ids, INDEX_BATCH)) return null
   return { ids: value.ids }
 }
-
 export function searchRequestOf(value: unknown): SearchRequest | null {
   if (!isRecord(value)) return null
   const query = queryOf(value.query)
@@ -145,9 +123,7 @@ export function searchRequestOf(value: unknown): SearchRequest | null {
   }
   return request
 }
-
 const LINK_KINDS: readonly LinkKind[] = ['wikilink', 'markdown']
-
 const isLink = (value: unknown): boolean =>
   isRecord(value) &&
   LINK_KINDS.some((one) => one === value.kind) &&
@@ -158,7 +134,6 @@ const isLink = (value: unknown): boolean =>
   typeof value.embed === 'boolean' &&
   isCount(value.line) &&
   typeof value.text === 'string'
-
 const isTask = (value: unknown): value is ScannedTask =>
   isRecord(value) &&
   isCount(value.line) &&
@@ -169,13 +144,10 @@ const isTask = (value: unknown): value is ScannedTask =>
   value.section.every((one) => typeof one === 'string') &&
   (value.description === undefined || typeof value.description === 'string') &&
   (value.comments === undefined || isCount(value.comments))
-
 const isStamp = (value: unknown): value is Stamp =>
   isRecord(value) && isCount(value.size) && isCount(value.mtime) && isCount(value.ctime)
-
 const strings = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((one) => typeof one === 'string')
-
 export function indexedOf(value: unknown): IndexedNote | null {
   if (!isRecord(value)) return null
   const fields =
@@ -201,7 +173,6 @@ export function indexedOf(value: unknown): IndexedNote | null {
   if (value.stamp !== undefined && value.stamp !== null && !isStamp(value.stamp)) return null
   return value as unknown as IndexedNote
 }
-
 function indexItemOf(value: unknown): IndexItem | null {
   if (!isRecord(value) || !isId(value.id)) return null
   if (value.refused === 'gone') return { id: value.id, refused: 'gone' }
@@ -210,7 +181,6 @@ function indexItemOf(value: unknown): IndexItem | null {
   const scan = indexedOf(value.scan)
   return scan ? { id: value.id, docSeq: value.docSeq, scan } : null
 }
-
 export function indexAnswerOf(value: unknown): IndexItem[] | null {
   if (!isRecord(value) || !Array.isArray(value.items)) return null
   return value.items.flatMap((one) => {
@@ -218,10 +188,8 @@ export function indexAnswerOf(value: unknown): IndexItem[] | null {
     return item ? [item] : []
   })
 }
-
 const isRanges = (value: unknown): value is Range[] =>
   Array.isArray(value) && value.every((one) => isRecord(one) && isCount(one.from) && isCount(one.to))
-
 const isHit = (value: unknown): value is FoundHit =>
   isRecord(value) &&
   isId(value.id) &&
@@ -232,10 +200,8 @@ const isHit = (value: unknown): value is FoundHit =>
   isRanges(value.ranges) &&
   (value.bare === undefined || value.bare === true) &&
   (value.score === undefined || typeof value.score === 'number')
-
 const isLoose = (value: unknown): value is FoundLoose =>
   isRecord(value) && typeof value.score === 'number' && isHit(value)
-
 export function searchAnswerOf(value: unknown): SearchAnswer | null {
   if (!isRecord(value) || !(value.after === null || isText(value.after))) return null
   if (!Array.isArray(value.hits) || !value.hits.every(isHit)) return null

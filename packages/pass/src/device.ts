@@ -7,14 +7,11 @@ export interface DeviceSeal {
   sealed: string
   tries: number
 }
-
 const SALT = 16
-
 export function pinIn(text: string): string | null {
   const pin = text.trim()
   return /^[0-9]{4,12}$/.test(pin) ? pin : null
 }
-
 async function deviceKey(
   deviceSecret: Uint8Array<ArrayBuffer>,
   pin: { pin: string; salt: Uint8Array<ArrayBuffer>; params: KdfParams } | null,
@@ -22,7 +19,6 @@ async function deviceKey(
   const stretched = pin === null ? new Uint8Array(0) : await stretch(pin.pin, pin.salt, pin.params)
   return await subkey(joined(deviceSecret, stretched), 'orden pass device')
 }
-
 export async function sealForDevice(
   root: Uint8Array<ArrayBuffer>,
   deviceSecret: Uint8Array<ArrayBuffer>,
@@ -39,7 +35,6 @@ export async function sealForDevice(
   const key = await deviceKey(deviceSecret, { pin: checked, salt, params })
   return { way: 'pin', salt: base64(salt), sealed: await seal(key, root, 'local', 'pin'), tries: 0 }
 }
-
 function saltOf(text: string | null): Uint8Array<ArrayBuffer> {
   if (text === null) throw new WrongSecret()
   try {
@@ -48,7 +43,6 @@ function saltOf(text: string | null): Uint8Array<ArrayBuffer> {
     throw new WrongSecret()
   }
 }
-
 export async function openForDevice(
   deviceSeal: DeviceSeal,
   deviceSecret: Uint8Array<ArrayBuffer>,

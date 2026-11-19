@@ -13,7 +13,6 @@ const MAKERS: readonly [RegExp, string][] = [
   [/minimax/i, 'minimax'],
   [/sonar|perplexity/i, 'perplexity'],
 ]
-
 const KINDS: Partial<Record<ProviderKind, string>> = {
   anthropic: 'claude',
   'claude-code': 'claude',
@@ -23,25 +22,21 @@ const KINDS: Partial<Record<ProviderKind, string>> = {
   gemini: 'googlegemini',
   'gemini-cli': 'googlegemini',
 }
-
 export function providerBrand(kind: ProviderKind | null | undefined, model: string): string | null {
   const name = model.split('/').at(-1) ?? model
   for (const [words, brand] of MAKERS) if (words.test(name)) return brand
   return kind ? (KINDS[kind] ?? null) : null
 }
-
 const HOSTS: Readonly<Record<string, string>> = {
   googleapis: 'googlegemini',
   mistral: 'mistralai',
   moonshot: 'moonshotai',
   anthropic: 'claude',
 }
-
 const PORTS: Readonly<Record<string, string>> = {
   '11434': 'ollama',
   '1234': 'lmstudio',
 }
-
 const SERVERS: readonly [RegExp, string][] = [
   [/ollama/i, 'ollama'],
   [/lm ?studio/i, 'lmstudio'],
@@ -51,14 +46,12 @@ const SERVERS: readonly [RegExp, string][] = [
   [/google/i, 'googlegemini'],
   ...MAKERS,
 ]
-
 const KNOWN: ReadonlySet<string> = new Set([
   ...Object.values(HOSTS),
   ...Object.values(PORTS),
   ...SERVERS.map(([, brand]) => brand),
   'nvidia',
 ])
-
 export function accountBrand(account: Pick<Provider, 'kind' | 'baseUrl' | 'name'>): string | null {
   if (account.kind !== 'compatible') return KINDS[account.kind] ?? null
   const port = portOf(account.baseUrl)
@@ -69,7 +62,6 @@ export function accountBrand(account: Pick<Provider, 'kind' | 'baseUrl' | 'name'
   for (const [words, brand] of SERVERS) if (words.test(account.name)) return brand
   return host
 }
-
 function portOf(address: string | undefined): string {
   try {
     return new URL(address ?? '').port

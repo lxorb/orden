@@ -15,12 +15,10 @@ const Claude: IconNode = [
     },
   ],
 ]
-
 const Codex: IconNode = [0, 60, 120].map((turn) => [
   'rect',
   { x: '8', y: '2', width: '8', height: '20', rx: '4', transform: `rotate(${turn} 12 12)` },
 ])
-
 const Python: IconNode = [
   [
     'path',
@@ -36,18 +34,15 @@ const Python: IconNode = [
   ],
   ['path', { d: 'M11 5h.01M13 19h.01' }],
 ]
-
 const Vim: IconNode = [
   ['path', { d: 'M12 2 22 12 12 22 2 12Z' }],
   ['path', { d: 'm8.5 9 3.5 6.5L15.5 9' }],
 ]
-
 const PowerShell: IconNode = [
   ['path', { d: 'M6.5 4h15l-4 16h-15Z' }],
   ['path', { d: 'm8.5 9 3 3-4.5 3' }],
   ['path', { d: 'M12 15h3' }],
 ]
-
 export const TERMINAL_MARKS: Record<TerminalMark, IconNode> = {
   claude: Claude,
   codex: Codex,

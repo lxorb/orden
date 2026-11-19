@@ -6,11 +6,9 @@ interface Result {
   isFinal: boolean
   0?: { transcript: string }
 }
-
 interface Heard {
   results: ArrayLike<Result | undefined>
 }
-
 interface Recogniser {
   continuous: boolean
   interimResults: boolean
@@ -24,17 +22,13 @@ interface Recogniser {
   stop(): void
   abort(): void
 }
-
 const LAST_WORDS = 1_500
-
 const MOST_RESTARTS = 3
-
 export async function listenOnDevice(field: Field, hooks: Hooks): Promise<Listening> {
   const session = new DeviceSession(field, hooks)
   await session.open()
   return { finish: () => session.finish(), cancel: () => session.cancel() }
 }
-
 export class DeviceSession {
   private readonly spot: Spot
   private sure: string[] = []
@@ -45,14 +39,12 @@ export class DeviceSession {
   private webNow = ''
   private restarts = 0
   private lastWords: (() => void) | null = null
-
   constructor(
     field: Field,
     private readonly hooks: Hooks,
   ) {
     this.spot = new Spot(field, () => this.brokenOff())
   }
-
   async open(): Promise<void> {
     try {
       if (method('listen')) await this.openPhone()
@@ -62,7 +54,6 @@ export class DeviceSession {
       throw error
     }
   }
-
   private async openPhone(): Promise<void> {
     const listen = method('listen')
     if (!listen) return
@@ -71,7 +62,6 @@ export class DeviceSession {
     if (!word) throw new Error('That microphone could not be opened.')
     listen(word, true)
   }
-
   private phoneSaid(json: string): void {
     if (this.over) return
     let held: unknown
@@ -81,7 +71,6 @@ export class DeviceSession {
       return
     }
     if (!isRecord(held)) return
-
     if (typeof held.level === 'number') {
       this.hooks.level(Math.min(1, Math.max(0, (held.level + 2) / 12)))
     }
@@ -94,7 +83,6 @@ export class DeviceSession {
       this.endedItself()
     }
   }
-
   private openWeb(): void {
     const makes = speechRecogniser() as (new () => Recogniser) | undefined
     if (!makes) throw new Error('That microphone could not be opened.')
@@ -102,7 +90,6 @@ export class DeviceSession {
     one.continuous = true
     one.interimResults = true
     one.lang = systemLocale()
-
     one.onresult = (event) => {
       this.restarts = 0
       let sure = ''
@@ -139,38 +126,31 @@ export class DeviceSession {
         this.endedItself()
       }
     }
-
     one.start()
     this.web = one
   }
-
   private webSure(): string[] {
     const was = this.webNow.trim()
     this.webNow = ''
     return was ? [was] : []
   }
-
   private webHeard(sure: string, live: string): void {
     this.webNow = sure
     this.sure = [...this.webDone, ...(sure.trim() ? [sure.trim()] : [])]
     this.live = live.trim()
     this.show()
   }
-
   private heard(words: string, sure: boolean): void {
     if (sure) this.sure.push(words.trim())
     this.live = sure ? '' : words.trim()
     this.show()
   }
-
   private said(): string {
     return [...this.sure, this.live].filter(Boolean).join(' ')
   }
-
   private show(): void {
     if (!this.over) this.spot.show(this.said(), !!this.live)
   }
-
   async finish(): Promise<void> {
     if (this.over) return
     const one = this.web
@@ -190,13 +170,11 @@ export class DeviceSession {
     }
     this.keep()
   }
-
   private endedItself(): void {
     if (this.over) return
     this.keep()
     this.hooks.ended()
   }
-
   private keep(): void {
     if (this.over) return
     this.over = true
@@ -204,7 +182,6 @@ export class DeviceSession {
     this.spot.show(this.said(), false)
     this.spot.release()
   }
-
   cancel(): void {
     if (this.over) return
     this.over = true
@@ -212,7 +189,6 @@ export class DeviceSession {
     this.spot.restore()
     this.spot.release()
   }
-
   private stop(): void {
     this.hooks.level(0)
     const listen = method('listen')
@@ -233,7 +209,6 @@ export class DeviceSession {
       }
     }
   }
-
   private brokenOff(): void {
     if (this.over) return
     this.over = true

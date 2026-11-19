@@ -4,19 +4,15 @@
   import type { ExplorerView } from './view.svelte'
 
   const { view, onclose }: { view: ExplorerView; onclose: () => void } = $props()
-
   let box = $state<HTMLElement>()
-
   onMount(() => {
     box?.focus()
   })
-
   function step(by: number) {
     const at = view.picked.cursor === null ? -1 : view.names.indexOf(view.picked.cursor)
     const name = view.names[Math.min(view.names.length - 1, Math.max(0, at + by))]
     if (name !== undefined) view.pick(name, 'one')
   }
-
   function onkey(event: KeyboardEvent) {
     const key = event.key
     if (event.key === 'Escape' || event.key === ' ') onclose()

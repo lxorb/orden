@@ -3,22 +3,18 @@ import { call, invitation, mail, signIn, testEnv, type JoinView, type ShareView,
 
 const NO_FACE = { id: null, avatar: null }
 const A_FACE = { id: expect.any(String), avatar: null }
-
 const OWNER = 'owner@example.com'
 const GUEST = 'guest@example.com'
 const STRANGER = 'nobody@example.com'
 const SHARED = 'Plans'
-
 let env: TestEnv
 let owner: string
 let space: string
 let note: string
-
 beforeEach(async () => {
   env = testEnv()
   owner = await signIn(env, OWNER)
   await call(env, '/v1/me', { method: 'PATCH', token: owner, body: { name: 'Emil' } })
-
   space = (await call(env, '/v1/spaces', { token: owner, body: { name: SHARED } })).json.space.id
   note = (
     await call(env, `/v1/spaces/${space}/notes`, {
@@ -27,23 +23,18 @@ beforeEach(async () => {
     })
   ).json.note.id
 })
-
 afterEach(() => env.close())
-
 async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {
   const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
     method: 'PUT',
     token: owner,
     body: { role, mode },
   })
-
   const found = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')
   if (!found?.[1]) throw new Error('no link was made')
   return found[1]
 }
-
 const inviteLink = (email: string, role: 'write' | 'read') => invitation(env, owner, space, email, role)
-
 function follow(token: string, options: { as?: string; body?: unknown } = {}) {
   return call(env, `/v1/join/${token}`, {
     method: 'POST',
@@ -51,22 +42,18 @@ function follow(token: string, options: { as?: string; body?: unknown } = {}) {
     ...(options.body === undefined ? {} : { body: options.body }),
   })
 }
-
 function shareView() {
   return call<ShareView>(env, `/v1/spaces/${space}/share`, { token: owner })
 }
-
 function rail(as: string) {
   return call(env, '/v1/spaces', { token: as })
 }
-
 async function codeOf(work: () => Promise<unknown>): Promise<string> {
   const logged = await mail(work)
   const code = /(\d{3}) (\d{3})/.exec(logged)
   if (!code) throw new Error(`no code was sent:\n${logged}`)
   return `${code[1]}${code[2]}`
 }
-
 async function walkedIn(link: string, email: string, guest?: string) {
   let asked: Awaited<ReturnType<typeof follow>> | undefined
   const code = await codeOf(async () => {
@@ -78,7 +65,6 @@ async function walkedIn(link: string, email: string, guest?: string) {
   const token: string = verified.json.token
   return { asked, token, joined: await follow(link, { as: token }) }
 }
-
 describe('the link in an invitation', () => {
   test('mails a code to the address it was sent to, and signs nobody in', async () => {
     const link = await inviteLink(GUEST, 'write')
@@ -87,120 +73,93 @@ describe('the link in an invitation', () => {
       expect(status).toBe(200)
       expect(json).toEqual({ code: true, email: GUEST, resendIn: expect.any(Number) })
     })
-
     expect(logged).toContain(GUEST)
     expect(logged).toMatch(/\d{3} \d{3}/)
     expect((await shareView()).json.members[0]?.pending).toBe(true)
   })
-
   test('opens the space once the mailed code is typed', async () => {
     const link = await inviteLink(GUEST, 'write')
     const { joined, token } = await walkedIn(link, GUEST)
-
     expect(joined.status).toBe(200)
     expect(joined.json.space.name).toBe(SHARED)
     expect(joined.json.space.role).toBe('write')
-
     const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => [one.name, one.role])).toEqual([
       ['Notes', 'owner'],
       [SHARED, 'write'],
     ])
   })
-
   test('makes the account for an address that has never been used', async () => {
     const link = await inviteLink('later@example.com', 'read')
     const { token } = await walkedIn(link, 'later@example.com')
-
     const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
-
   test('opens the account that address already had', async () => {
     const already = await signIn(env, GUEST)
     const mine = (await call(env, '/v1/spaces', { token: already, body: { name: 'Mine' } })).json.space.id
-
     const { token } = await walkedIn(await inviteLink(GUEST, 'read'), GUEST)
-
     const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => one.id)).toContain(mine)
   })
-
   test('is in the space the moment it is walked through, not pending', async () => {
     const link = await inviteLink(GUEST, 'read')
     expect((await shareView()).json.members[0]?.pending).toBe(true)
-
     await walkedIn(link, GUEST)
     expect((await shareView()).json.members[0]?.pending).toBe(false)
   })
-
   test('works once, and says so afterwards', async () => {
     const link = await inviteLink(GUEST, 'write')
     expect((await walkedIn(link, GUEST)).joined.status).toBe(200)
-
     expect((await follow(link)).status).toBe(404)
     const { status, json } = await call<JoinView>(env, `/v1/join/${link}`)
     expect(status).toBe(404)
     expect(json.error).toBe('that link has expired')
   })
-
   test('leaves the code as the way in once it has been used', async () => {
     const link = await inviteLink(GUEST, 'write')
     await walkedIn(link, GUEST)
-
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
-
   test('opens nothing once it has run out', async () => {
     const link = await inviteLink(GUEST, 'write')
     env.db.exec('update space_members set expires_at = 1')
-
     expect((await follow(link)).status).toBe(404)
   })
-
   test('still refuses an account signed in as somebody else', async () => {
     const link = await inviteLink(GUEST, 'read')
     const stranger = await signIn(env, STRANGER)
-
     const { status, json } = await follow(link, { as: stranger })
     expect(status).toBe(403)
     expect(json.error).toBe('that invitation was sent to another address')
   })
-
   test('changes nothing on a GET, which is what a mail client follows', async () => {
     const link = await inviteLink(GUEST, 'read')
     await call(env, `/v1/join/${link}`)
-
     expect((await shareView()).json.members[0]?.pending).toBe(true)
     expect((await follow(link)).status).toBe(200)
   })
 })
-
 describe('a link anybody may follow', () => {
   test('hands out a guest, in the space, at once', async () => {
     const link = await shareLink('write', 'open')
     const { status, json } = await follow(link, { body: { device: 'iPhone' } })
-
     expect(status).toBe(200)
     expect(json.token).toBeTruthy()
     expect(json.space.name).toBe(SHARED)
     expect(json.space.role).toBe('write')
     expect(json.guest.name).toMatch(/^iPhone \w+$/)
   })
-
   test('takes a guest that names no device, and still names them', async () => {
     const { json } = await follow(await shareLink('read', 'open'))
     expect(json.guest.name).toMatch(/^Guest \w+$/)
   })
-
   test('lets that guest read the note, and write in it when the link says write', async () => {
     const { json } = await follow(await shareLink('write', 'open'))
-
     const read = await call(env, `/v1/notes/${note}`, { token: json.token })
     expect(read.status).toBe(200)
     expect(read.json.content).toBe('# Plan\n')
-
     const wrote = await call(env, `/v1/notes/${note}`, {
       method: 'PUT',
       token: json.token,
@@ -208,10 +167,8 @@ describe('a link anybody may follow', () => {
     })
     expect(wrote.status).toBe(200)
   })
-
   test('refuses the keystroke when the link says read', async () => {
     const { json } = await follow(await shareLink('read', 'open'))
-
     expect((await call(env, `/v1/notes/${note}`, { token: json.token })).status).toBe(200)
     const wrote = await call(env, `/v1/notes/${note}`, {
       method: 'PUT',
@@ -221,25 +178,19 @@ describe('a link anybody may follow', () => {
     expect(wrote.status).toBe(403)
     expect(wrote.json.error).toBe('you can only read this space')
   })
-
   test('lists the one space and nothing else', async () => {
     const { json } = await follow(await shareLink('read', 'open'))
-
     const { json: rails } = await rail(json.token)
     expect(rails.spaces.map((one) => [one.name, one.role, one.shared])).toEqual([[SHARED, 'read', true]])
   })
-
   test('keeps the guest across requests, and says who they are', async () => {
     const { json } = await follow(await shareLink('read', 'open'), { body: { device: 'Android' } })
-
     const me = await call(env, '/v1/me', { token: json.token })
     expect(me.json.guest).toEqual({ id: json.guest.id, name: json.guest.name })
     expect(me.json.user).toBeUndefined()
   })
-
   test('lets the guest rename themselves, so a caret carries a real name', async () => {
     const { json } = await follow(await shareLink('write', 'open'))
-
     const named = await call(env, '/v1/me', {
       method: 'PATCH',
       token: json.token,
@@ -248,10 +199,8 @@ describe('a link anybody may follow', () => {
     expect(named.json.guest.name).toBe('Ada Lovelace')
     expect((await call(env, '/v1/me', { token: json.token })).json.guest.name).toBe('Ada Lovelace')
   })
-
   test('keeps the name they had when the field comes back empty', async () => {
     const { json } = await follow(await shareLink('write', 'open'))
-
     const named = await call(env, '/v1/me', {
       method: 'PATCH',
       token: json.token,
@@ -259,10 +208,8 @@ describe('a link anybody may follow', () => {
     })
     expect(named.json.guest.name).toBe(json.guest.name)
   })
-
   test('shows the guest to the owner, and marks the space as shared', async () => {
     const { json } = await follow(await shareLink('write', 'open'), { body: { device: 'Windows' } })
-
     const { json: who } = await shareView()
     expect(who.members).toEqual([
       {
@@ -274,95 +221,73 @@ describe('a link anybody may follow', () => {
         pending: false,
       },
     ])
-
     const { json: rails } = await rail(owner)
     expect(rails.spaces.find((one) => one.id === space)?.shared).toBe(true)
   })
-
   test('takes one guest per link followed, not one per request', async () => {
     const link = await shareLink('read', 'open')
     const first = await follow(link)
     const again = await follow(link, { as: first.json.token })
-
     expect(again.json.guest.id).toBe(first.json.guest.id)
     expect(again.json.space.name).toBe(SHARED)
     expect((await shareView()).json.members).toHaveLength(1)
   })
-
   test('one guest at the link twice at once is still one row', async () => {
     const link = await shareLink('read', 'open')
     const arrived = await follow(link)
     const guest = arrived.json.guest.id
-
     env.db.prepare('delete from guest_members where guest_id = ?').run(guest)
     env.justBefore(/insert into guest_members/, () => {
       env.db
         .prepare('insert into guest_members (space_id, guest_id, role, joined_at, created_at) values (?, ?, ?, ?, ?)')
         .run(space, guest, 'read', Date.now(), Date.now())
     })
-
     const again = await follow(link, { as: arrived.json.token })
     expect(again.status).not.toBe(500)
     expect((await shareView()).json.members).toHaveLength(1)
   })
-
   test('opens nothing once it is revoked, and ends what it opened', async () => {
     const link = await shareLink('read', 'open')
     const { json } = await follow(link)
-
     await call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token: owner })
-
     expect((await follow(link)).status).toBe(404)
     expect((await call(env, `/v1/notes/${note}`, { token: json.token })).status).toBe(200)
   })
-
   test('stops taking guests when it has taken a crowd in a minute', async () => {
     const link = await shareLink('read', 'open')
-
     let refused = 0
     for (let attempt = 0; attempt < 22; attempt++) {
       if ((await follow(link)).status === 429) refused++
     }
-
     expect(refused).toBeGreaterThan(0)
   })
 })
-
 describe('a link that asks first', () => {
   test('says it will ask, before anybody has followed it', async () => {
     const link = await shareLink('read', 'approval')
     const { json } = await call<JoinView>(env, `/v1/join/${link}`)
-
     expect(json).toMatchObject({ kind: 'link', space: SHARED, asks: true, from: 'Emil' })
   })
-
   test('will not take somebody who says nothing about themselves', async () => {
     const link = await shareLink('read', 'approval')
     const { status, json } = await follow(link, { body: { device: 'Windows' } })
-
     expect(status).toBe(400)
     expect(json.error).toBe('say who you are')
   })
-
   test('takes a name, and leaves them waiting', async () => {
     const link = await shareLink('write', 'approval')
     const { json } = await follow(link, { body: { name: 'Ada' } })
-
     expect(json.waiting).toBe(true)
     expect(json.space).toBeUndefined()
     expect(json.token).toBeTruthy()
-
     expect((await call(env, `/v1/notes/${note}`, { token: json.token })).status).toBe(404)
     expect((await rail(json.token)).json.spaces).toEqual([])
   })
-
   test('shows the owner who is waiting, and what they said', async () => {
     const link = await shareLink('write', 'approval')
     const sent = await mail(() => follow(link, { body: { email: 'Ada@Example.com' } }))
-
     expect(sent).toContain(OWNER)
     expect(sent).toContain(`would like to join ${SHARED}`)
-
     const { json } = await shareView()
     expect(json.requests).toHaveLength(1)
     expect(json.requests[0]).toMatchObject({
@@ -373,19 +298,15 @@ describe('a link that asks first', () => {
     expect(json.requests[0]?.guest).toBeTruthy()
     expect(json.members).toEqual([])
   })
-
   test('turns into the space when the owner accepts, at the role it promised', async () => {
     const link = await shareLink('write', 'approval')
     const { json } = await follow(link, { body: { name: 'Ada' } })
-
     await shareLink('read', 'approval')
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
-
     const again = await follow(link, { as: json.token })
     expect(again.json.space.name).toBe(SHARED)
     expect(again.json.space.role).toBe('write')
-
     const wrote = await call(env, `/v1/notes/${note}`, {
       method: 'PUT',
       token: json.token,
@@ -393,46 +314,36 @@ describe('a link that asks first', () => {
     })
     expect(wrote.status).toBe(200)
   })
-
   test('says so when the owner declines', async () => {
     const link = await shareLink('read', 'approval')
     const { json } = await follow(link, { body: { name: 'Ada' } })
-
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'DELETE', token: owner })
-
     const again = await follow(link, { as: json.token })
     expect(again.json.declined).toBe(true)
     expect(again.json.space).toBeUndefined()
-
     const { json: who } = await shareView()
     expect(who.requests).toEqual([])
     expect(who.members).toEqual([])
   })
-
   test('leaves an account walking through it exactly where it did', async () => {
     const link = await shareLink('read', 'approval')
     const stranger = await signIn(env, STRANGER)
-
     const { json } = await follow(link, { as: stranger })
     expect(json.waiting).toBe(true)
     expect((await shareView()).json.requests[0]?.email).toBe(STRANGER)
   })
 })
-
 describe('a wait the reader ends', () => {
   function withdraw(token: string, as?: string) {
     return call(env, `/v1/join/${token}`, { method: 'DELETE', ...(as ? { token: as } : {}) })
   }
-
   test("takes a guest off the owner's list, and Accept finds nobody", async () => {
     const link = await shareLink('write', 'approval')
     const { json } = await follow(link, { body: { name: 'Ada' } })
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
-
     expect((await withdraw(link, json.token)).status).toBe(200)
     expect((await shareView()).json.requests).toEqual([])
-
     const accepted = await call(env, `/v1/spaces/${space}/share/guests/${guest}`, {
       method: 'POST',
       token: owner,
@@ -440,15 +351,12 @@ describe('a wait the reader ends', () => {
     expect(accepted.status).toBe(404)
     expect((await follow(link, { as: json.token, body: { again: true } })).json.space).toBeUndefined()
   })
-
   test("takes an account off the owner's list, and Accept finds nobody", async () => {
     const link = await shareLink('read', 'approval')
     const stranger = await signIn(env, STRANGER)
     await follow(link, { as: stranger })
-
     expect((await withdraw(link, stranger)).status).toBe(200)
     expect((await shareView()).json.requests).toEqual([])
-
     const accepted = await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
       method: 'POST',
       token: owner,
@@ -456,16 +364,13 @@ describe('a wait the reader ends', () => {
     expect(accepted.status).toBe(404)
     expect((await rail(stranger)).json.spaces.map((one: { id: string }) => one.id)).not.toContain(space)
   })
-
   test('ends with the link: turning it off leaves nobody waiting to be let in', async () => {
     const link = await shareLink('read', 'approval')
     await follow(link, { body: { name: 'Ada' } })
     const stranger = await signIn(env, STRANGER)
     await follow(link, { as: stranger })
     expect((await shareView()).json.requests).toHaveLength(2)
-
     await call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token: owner })
-
     expect((await shareView()).json.requests).toEqual([])
     const accepted = await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
       method: 'POST',
@@ -473,53 +378,42 @@ describe('a wait the reader ends', () => {
     })
     expect(accepted.status).toBe(404)
   })
-
   test('leaves no guest behind that the request was all of', async () => {
     const link = await shareLink('read', 'approval')
     const asked = (await follow(link, { body: { name: 'Ada' } })).json
     const other = (await follow(link, { body: { name: 'Bo' } })).json
-
     await withdraw(link, asked.token)
     await call(env, `/v1/spaces/${space}/share/link`, { method: 'DELETE', token: owner })
-
     expect(env.db.prepare('select count(*) as n from guests').get()).toEqual({ n: 0 })
     expect((await call(env, '/v1/me', { token: other.token })).status).toBe(401)
   })
-
   test("is nobody's to end without a session", async () => {
     const link = await shareLink('read', 'approval')
     expect((await withdraw(link)).status).toBe(401)
   })
-
   test('a guest asking again after the request ran out is not put back', async () => {
     const link = await shareLink('read', 'approval')
     const { json } = await follow(link, { body: { name: 'Ada' } })
     env.db.prepare('delete from guest_members where space_id = ?').run(space)
-
     const again = await follow(link, { as: json.token, body: { again: true } })
     expect(again.status).toBe(410)
     expect((await shareView()).json.requests).toEqual([])
   })
-
   test('an account asking again after the request ran out is not put back', async () => {
     const link = await shareLink('read', 'approval')
     const stranger = await signIn(env, STRANGER)
     await follow(link, { as: stranger })
     env.db.prepare('delete from space_requests where space_id = ?').run(space)
-
     const again = await follow(link, { as: stranger, body: { again: true } })
     expect(again.status).toBe(410)
     expect((await shareView()).json.requests).toEqual([])
   })
 })
-
 describe('a guest session', () => {
   let guest: string
-
   beforeEach(async () => {
     guest = (await follow(await shareLink('write', 'open'))).json.token
   })
-
   const CLOSED: { what: string; go: (token: string) => Promise<{ status: number }> }[] = [
     { what: 'the storage it is using', go: (token) => call(env, '/v1/usage', { token }) },
     { what: 'the settings', go: (token) => call(env, '/v1/settings', { token }) },
@@ -567,19 +461,16 @@ describe('a guest session', () => {
     },
     { what: 'the devices', go: (token) => call(env, '/v2/devices', { token }) },
   ]
-
   for (const closed of CLOSED) {
     test(`is refused ${closed.what}`, async () => {
       const { status } = await closed.go(guest)
       expect(status).toBe(403)
     })
   }
-
   test('says the same thing about every one of them', async () => {
     const { json } = await call(env, '/v1/usage', { token: guest })
     expect(json.error).toBe('sign in to do that')
   })
-
   test('cannot share the space it was lent', async () => {
     for (const [path, method] of [
       [`/v1/spaces/${space}/share`, 'GET'],
@@ -592,7 +483,6 @@ describe('a guest session', () => {
       expect(status, path).toBe(403)
     }
   })
-
   test('cannot publish it, rename it, or ask after its domain', async () => {
     for (const [path, method] of [
       [`/v1/spaces/${space}/blog`, 'PUT'],
@@ -605,36 +495,28 @@ describe('a guest session', () => {
       expect(status, path).toBe(403)
     }
   })
-
   test('reaches no space no link gave it', async () => {
     const other = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Private' } })).json.space.id
-
     const { status } = await call(env, `/v1/spaces/${other}/changes?since=0`, { token: guest })
     expect(status).toBe(404)
   })
-
   test('is over once it has run out', async () => {
     env.db.exec('update guest_sessions set expires_at = 1')
     expect((await call(env, '/v1/me', { token: guest })).status).toBe(401)
   })
-
   test('is over once it signs out, and the token opens nothing after (#519)', async () => {
     expect((await call(env, '/v1/me', { token: guest })).status).toBe(200)
     expect((await call(env, '/v1/auth/signout', { method: 'POST', token: guest })).status).toBe(200)
-
     expect((await call(env, '/v1/me', { token: guest })).status).toBe(401)
     expect(env.db.prepare('select count(*) as held from guest_sessions').get()).toEqual({ held: 0 })
   })
-
   test('ends when the owner takes them out, and is nobody afterwards', async () => {
     const who = (await shareView()).json.members[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${who}`, { method: 'DELETE', token: owner })
-
     expect((await shareView()).json.members).toEqual([])
     expect((await call(env, `/v1/notes/${note}`, { token: guest })).status).toBe(401)
     expect((await rail(guest)).status).toBe(401)
   })
-
   test('keeps the other space when one of two is taken away', async () => {
     const second = (await call(env, '/v1/spaces', { token: owner, body: { name: 'More' } })).json.space.id
     const { json } = await call<ShareView>(env, `/v1/spaces/${second}/share/link`, {
@@ -644,13 +526,10 @@ describe('a guest session', () => {
     })
     const other = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
     await follow(other, { as: guest })
-
     const who = (await shareView()).json.members[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${who}`, { method: 'DELETE', token: owner })
-
     expect((await rail(guest)).json.spaces.map((one) => one.name)).toEqual(['More'])
   })
-
   test('narrows the moment the owner narrows it', async () => {
     const who = (await shareView()).json.members[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${who}`, {
@@ -658,7 +537,6 @@ describe('a guest session', () => {
       token: owner,
       body: { role: 'read' },
     })
-
     const wrote = await call(env, `/v1/notes/${note}`, {
       method: 'PUT',
       token: guest,
@@ -666,83 +544,64 @@ describe('a guest session', () => {
     })
     expect(wrote.status).toBe(403)
   })
-
   test('costs the owner of the space the bytes it writes, as a writer does', async () => {
     const before = (await call(env, '/v1/usage', { token: owner })).json.used
-
     await call(env, `/v1/spaces/${space}/notes`, {
       token: guest,
       body: { path: 'theirs.md', content: 'x'.repeat(400) },
     })
-
     expect((await call(env, '/v1/usage', { token: owner })).json.used).toBe(before + 400)
   })
-
   test('keeps no bytes of its own, so its file list adds nothing', async () => {
     const { json } = await call(env, `/v1/spaces/${space}/files`, {
       method: 'PUT',
       token: guest,
       body: { files: [{ path: 'paper.pdf', hash: 'a'.repeat(64) }] },
     })
-
     expect(json.files).toEqual([])
     expect(json.missing).toEqual(['a'.repeat(64)])
   })
 })
-
 describe('a guest becoming an account', () => {
   test('keeps what the device was given, when that device signs in', async () => {
     const { json } = await follow(await shareLink('write', 'open'))
-
     const token = await signIn(env, GUEST, json.token)
     const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => [one.name, one.role])).toEqual([
       ['Notes', 'owner'],
       [SHARED, 'write'],
     ])
-
     const { json: who } = await shareView()
     expect(who.members).toEqual([{ ...A_FACE, email: GUEST, guest: null, name: null, role: 'write', pending: false }])
   })
-
   test('leaves the guest session with nothing to reach afterwards', async () => {
     const { json } = await follow(await shareLink('read', 'open'))
     await signIn(env, GUEST, json.token)
-
     expect((await call(env, '/v1/me', { token: json.token })).status).toBe(401)
   })
-
   test('hands nothing to the account at an address a guest only typed', async () => {
     const link = await shareLink('write', 'approval')
     await follow(link, { body: { name: 'Bob', email: GUEST } })
-
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
-
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes'])
     expect((await call(env, `/v1/notes/${note}`, { token })).status).not.toBe(200)
   })
-
   test('hands over what a guest asked for and was let in to, when its device signs in', async () => {
     const link = await shareLink('read', 'approval')
     const asked = await follow(link, { body: { email: GUEST } })
-
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
-
     const token = await signIn(env, GUEST, asked.json.token)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes', SHARED])
   })
-
   test('hands over nothing the owner has not answered yet', async () => {
     await follow(await shareLink('read', 'approval'), { body: { email: GUEST } })
-
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name)).toEqual(['Notes'])
     expect((await shareView()).json.requests).toHaveLength(1)
   })
-
   async function inviteToMore(email: string): Promise<string> {
     const second = (await call(env, '/v1/spaces', { token: owner, body: { name: 'More' } })).json.space.id
     const sent = await mail(() =>
@@ -753,29 +612,22 @@ describe('a guest becoming an account', () => {
     )
     return /\/join\/([a-f0-9]+)/.exec(sent)?.[1] ?? ''
   }
-
   test('is not handed to whatever address an invitation it holds was mailed to', async () => {
     const open = await follow(await shareLink('write', 'open'))
     const link = await inviteToMore(GUEST)
-
     const { status, json } = await follow(link, { as: open.json.token })
     expect(status).toBe(403)
     expect(json.error).toBe('that invitation was sent to another address')
     expect(json.token).toBeUndefined()
-
     expect((await call(env, '/v1/me', { token: open.json.token })).json.guest.id).toBe(open.json.guest.id)
     expect((await rail(open.json.token)).json.spaces.map((one) => one.name)).toEqual([SHARED])
-
     const token = await signIn(env, GUEST)
     expect((await rail(token)).json.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes'])
     expect((await call(env, `/v1/notes/${note}`, { token })).status).not.toBe(200)
-
     expect((await call<JoinView>(env, `/v1/join/${link}`)).status).toBe(200)
   })
-
   test('keeps a space owned by somebody else out of an invitation another owner sent', async () => {
     const open = await follow(await shareLink('write', 'open'))
-
     const other = await signIn(env, 'other@example.com')
     const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'B' } })).json.space.id
     const sent = await mail(() =>
@@ -785,9 +637,7 @@ describe('a guest becoming an account', () => {
       }),
     )
     const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1] ?? ''
-
     expect((await follow(link, { as: open.json.token })).status).toBe(403)
-
     const token = await signIn(env, 'other2@example.com')
     expect((await rail(token)).json.spaces.map((one) => one.name).sort()).toEqual(['B', 'Notes'])
     expect((await call(env, `/v1/notes/${note}`, { token })).status).not.toBe(200)
@@ -802,44 +652,34 @@ describe('a guest becoming an account', () => {
     ).not.toBe(200)
     expect((await call(env, '/v1/me', { token: open.json.token })).status).toBe(200)
   })
-
   test('keeps what it had when the invitation is to the address it said it was at', async () => {
     const link = await shareLink('read', 'approval')
     const asked = await follow(link, { body: { email: GUEST } })
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
-
     const { asked: told, joined, token } = await walkedIn(await inviteToMore(GUEST), GUEST, asked.json.token)
     expect(told?.json.token).toBeUndefined()
     expect(joined.status).toBe(200)
-
     const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes', SHARED])
   })
-
   test('keeps what it had when the device signs in, then walks through the invitation', async () => {
     const open = await follow(await shareLink('write', 'open'))
     const link = await inviteToMore(GUEST)
-
     const token = await signIn(env, GUEST, open.json.token)
     expect((await follow(link, { as: token })).status).toBe(200)
-
     const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes', SHARED])
   })
-
   test('makes no member of the owner who followed their own link', async () => {
     const { json } = await follow(await shareLink('read', 'open'))
     await signIn(env, OWNER, json.token)
-
     expect((await shareView()).json.members).toEqual([])
     expect((await call(env, '/v1/me', { token: json.token })).status).toBe(401)
   })
-
   test('is nobody once claimed, so the owner is not shown a ghost', async () => {
     const { json } = await follow(await shareLink('read', 'open'))
     await signIn(env, GUEST, json.token)
-
     const held = env.db.prepare('select count(*) as held from guests').get() as { held: number }
     expect(held.held).toBe(0)
   })

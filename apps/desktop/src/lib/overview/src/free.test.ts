@@ -11,9 +11,7 @@ const at = (id: string, x: number, y: number, paneId = 'p'): Slot => ({
   w: 200,
   h: 120,
 })
-
 const clear = (all: readonly Slot[]) => all.every((a, i) => all.every((b, j) => i === j || !overlaps(a, b)))
-
 test('a window let go on others keeps its place, and they are pushed out of its way', () => {
   const windows = [at('a', 0, 0), at('b', 240, 0), at('c', 480, 0), at('held', 220, 20)]
   const after = settled(windows, new Set(['held']))
@@ -21,12 +19,10 @@ test('a window let go on others keeps its place, and they are pushed out of its 
   expect(clear(after)).toBe(true)
   expect(after.find((one) => one.id === 'b')).not.toEqual(windows[1])
 })
-
 test('windows clear of each other are not moved at all', () => {
   const windows = [at('a', 0, 0), at('b', 400, 0), at('c', 0, 400)]
   expect(settled(windows, new Set())).toEqual(windows)
 })
-
 test('whatever lies where, nothing lies on anything after, and what is held stays', () => {
   let seed = 11
   const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
@@ -40,7 +36,6 @@ test('whatever lies where, nothing lies on anything after, and what is held stay
     expect(after[0]).toEqual(windows[0])
   }
 })
-
 test('let go among a pane’s windows, it lands in its strip where it reads among them', () => {
   const slots = [at('a', 0, 0), at('b', 300, 0), at('c', 0, 300), at('q', 900, 0, 'other')]
   expect(stripLanding(slots, 'x', { x: 130, y: 10, w: 200, h: 120 })).toEqual({
@@ -57,7 +52,6 @@ test('let go among a pane’s windows, it lands in its strip where it reads amon
   })
   expect(stripLanding([], 'x', { x: 0, y: 0, w: 1, h: 1 })).toBe(null)
 })
-
 test('a window is never pushed onto the name under another, however much room the name takes', () => {
   const named = 140
   const windows = [at('a', 0, 0), at('b', 0, 150), at('c', 230, 100), at('held', 10, 260)]
@@ -71,7 +65,6 @@ test('a window is never pushed onto the name under another, however much room th
   }
   expect(after.every((a, i) => after.every((b, j) => i === j || !overlaps(a, b, named)))).toBe(true)
 })
-
 test('a held window pushes only the windows of the cell it is in, so a cell of one window it comes to is still there to point into', () => {
   const windows = [at('a1', 0, 0), at('a2', 240, 0), at('b1', 900, 0), at('held', 0, 0)]
   const cell = (id: string) => (id.startsWith('b') ? 'b' : 'a')
@@ -86,7 +79,6 @@ test('a held window pushes only the windows of the cell it is in, so a cell of o
   expect(inB.filter((one) => cell(one.id) === 'a' && one.id !== 'held')).toEqual(windows.slice(0, 2))
   expect(clear(inB.filter((one) => one.id !== 'a1' && one.id !== 'a2'))).toBe(true)
 })
-
 test('several windows held at once each stay under the hand, and the cell makes room for all', () => {
   const windows = [at('a1', 0, 0), at('a2', 228, 0), at('a3', 456, 0), at('x', 0, 300)]
   const held = new Map([
@@ -98,7 +90,6 @@ test('several windows held at once each stay under the hand, and the cell makes 
   expect(out.find((one) => one.id === 'a3')).toMatchObject(held.get('a3') ?? {})
   expect(clear(out)).toBe(true)
 })
-
 test('windows each kept where they were put are moved apart where they lie on each other, at rest', () => {
   const windows = [at('a', 0, 0), at('b', 40, 30), at('c', 400, 0), at('d', 420, 20)]
   const still = new Set(['a', 'b', 'c', 'd'])
@@ -108,7 +99,6 @@ test('windows each kept where they were put are moved apart where they lie on ea
   expect(after[0]).toEqual(windows[0])
   expect(after[2]).toEqual(windows[2])
 })
-
 test('new windows opened among windows kept where they were let go never lie on any of them', () => {
   const kept: Slot[] = []
   for (let row = 0; row < 3; row++)
@@ -119,7 +109,6 @@ test('new windows opened among windows kept where they were let go never lie on 
   expect(clear(after)).toBe(true)
   for (const one of kept) expect(after.find((other) => other.id === one.id)).toEqual(one)
 })
-
 test('whatever is kept and whatever is new, nothing lies on anything after', () => {
   let seed = 7
   const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
@@ -133,7 +122,6 @@ test('whatever is kept and whatever is new, nothing lies on anything after', () 
     expect(clear(settled(windows, still, 0, false))).toBe(true)
   }
 })
-
 test('a window kept where it was let go takes the shape its pane has now', () => {
   const slot = { ...at('a', 0, 0), w: 300, h: 150 }
   expect(keptAt(slot, { x: 40, y: 50, w: 200, h: 200 })).toEqual({
@@ -144,14 +132,12 @@ test('a window kept where it was let go takes the shape its pane has now', () =>
     h: 100,
   })
 })
-
 test('a window let go before another lands at that one’s place among the strip’s tabs', () => {
   expect(stripPlace(['a', 'b', 'c'], 'c', 'b')).toBe(1)
   expect(stripPlace(['a', 'b', 'c'], 'a', null)).toBe(2)
   expect(stripPlace(['a', 'b'], 'x', 'b')).toBe(1)
   expect(stripPlace(['a', 'b'], 'x', 'essential')).toBe(2)
 })
-
 test('a window let go where it already is moves nowhere', () => {
   expect(stripPlace(['a', 'b', 'c'], 'b', 'c')).toBeNull()
   expect(stripPlace(['a', 'b', 'c'], 'c', null)).toBeNull()

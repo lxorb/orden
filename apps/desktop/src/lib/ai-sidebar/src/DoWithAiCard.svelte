@@ -8,7 +8,6 @@
   let tasked = $state(taskMode())
   const taskTools = $state(Object.fromEntries(TASK_TOOLS.map((one) => [one, taskUses(one)])))
   let taskWords = $state(taskAsk())
-
   const TOOL_WORDS: Record<TaskTool, { label: string; hint: string }> = {
     browser: {
       label: 'Use the browser',
@@ -23,7 +22,6 @@
       hint: 'Lets a task done with AI write, move and delete notes other than the task.',
     },
   }
-
   function turnTaskTool(tool: TaskTool): void {
     const on = !taskTools[tool]
     taskTools[tool] = on
@@ -100,44 +98,37 @@
     font-weight: 600;
     color: var(--muted-strong);
   }
-
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .setting .name {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .pressable {
     cursor: pointer;
   }
-
   .asking {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-1);
   }
-
   .ask {
     min-height: 4.5rem;
     padding: var(--space-1) var(--row-pad);
     line-height: 1.45;
     resize: vertical;
   }
-
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
   }
-
   :global(.sheet.phone) .setting {
     position: relative;
     gap: var(--touch-gap);

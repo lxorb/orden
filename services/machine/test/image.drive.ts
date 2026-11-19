@@ -4,7 +4,6 @@ import { bytes, healthy, linked, until } from './link'
 const URL = process.env.ORDEND_URL ?? ''
 const TRACED = process.env.ORDEND_TRACED_URL ?? ''
 const SECRET = process.env.ORDEND_SECRET ?? ''
-
 async function ran(url: string, session: string, command: string): Promise<string> {
   const link = await linked(url, SECRET)
   link.send({ t: 'open', session, cols: 200, rows: 50 })
@@ -14,7 +13,6 @@ async function ran(url: string, session: string, command: string): Promise<strin
   link.close()
   return text
 }
-
 describe.runIf(URL)('the image', () => {
   test('answers on the link with a login shell of the machine user, with its tools', async () => {
     await healthy(URL)
@@ -35,7 +33,6 @@ describe.runIf(URL)('the image', () => {
     expect(text).toContain('shim-ok')
     expect(text).toMatch(/path=\/home\/nib\/\.local\/bin:/)
   })
-
   test('runs Claude Code and Codex from the home once the first boot installed them', async () => {
     const text = await ran(
       URL,
@@ -46,7 +43,6 @@ describe.runIf(URL)('the image', () => {
     expect(text).toMatch(/codex-cli \d+\.\d+/)
   })
 })
-
 describe.runIf(URL)('a browser on the owner’s computer', () => {
   test('xdg-open, sensible-browser and $BROWSER say the address up the link, and only the web', async () => {
     await healthy(URL)
@@ -73,7 +69,6 @@ describe.runIf(URL)('a browser on the owner’s computer', () => {
       frame.t === 'browse' ? [{ session: frame.session, url: frame.url }] : [],
     )
     link.close()
-
     expect(text).toContain('browser=orden-open program=orden')
     expect(text).toContain('open=0')
     expect(text).toContain('sensible=0')
@@ -84,7 +79,6 @@ describe.runIf(URL)('a browser on the owner’s computer', () => {
       { session, url: 'https://docs.python.org/' },
     ])
   })
-
   test('a sign-in callback is made on the machine, where the program listens', async () => {
     await healthy(URL)
     const session = 's_callback'
@@ -110,7 +104,6 @@ describe.runIf(URL)('a browser on the owner’s computer', () => {
     link.close()
   })
 })
-
 describe.runIf(TRACED)('the traced machine', () => {
   test('a session reads the agents files, as a person would', async () => {
     await healthy(TRACED)

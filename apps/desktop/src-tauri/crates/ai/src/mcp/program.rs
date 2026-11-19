@@ -1,15 +1,10 @@
 use std::path::{Component, Path, PathBuf};
 
 const STORE: &str = "/nix/store";
-
 const NAMES: [&str; 2] = ["orden", "nib"];
-
 const BUNDLES: [&str; 3] = ["Orden.app", "Nib.app", "nibeditor.app"];
-
 const FORMER: [&str; 2] = ["nib", "nib.exe"];
-
 const FORMER_FOLDERS: [&str; 2] = ["nib", "nibeditor"];
-
 pub fn program() -> Result<PathBuf, String> {
     let exe = std::env::current_exe()
         .map_err(|error| format!("this program cannot find itself: {error}"))?;
@@ -25,7 +20,6 @@ pub fn program() -> Result<PathBuf, String> {
         |candidate| std::fs::canonicalize(candidate).ok(),
     ))
 }
-
 fn chosen(
     exe: &Path,
     appimage: Option<PathBuf>,
@@ -45,7 +39,6 @@ fn chosen(
         .find(|candidate| resolve(candidate).is_some_and(|target| target.starts_with(&copy)));
     lasting.unwrap_or_else(|| unwrapped(exe))
 }
-
 fn store_copy(exe: &Path) -> Option<PathBuf> {
     let inside = exe.strip_prefix(STORE).ok()?;
     let Some(Component::Normal(package)) = inside.components().next() else {
@@ -53,14 +46,12 @@ fn store_copy(exe: &Path) -> Option<PathBuf> {
     };
     Some(Path::new(STORE).join(package))
 }
-
 fn unwrapped(exe: &Path) -> PathBuf {
     exe.file_name()
         .and_then(|name| name.to_str())
         .and_then(|name| name.strip_prefix('.')?.strip_suffix("-wrapped"))
         .map_or_else(|| exe.to_owned(), |name| exe.with_file_name(name))
 }
-
 pub fn older_copy(command: &str, now: &Path) -> bool {
     let command = command.trim().trim_matches(|c| c == '"' || c == '\'');
     let path = Path::new(command);
@@ -117,7 +108,6 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
         })
     })
 }
-
 fn moved_from_former_folder(path: &Path, now: &Path) -> bool {
     let name_of = |path: &Path| {
         path.file_name()
@@ -132,7 +122,6 @@ fn moved_from_former_folder(path: &Path, now: &Path) -> bool {
         && name_of(was).is_some_and(|name| FORMER_FOLDERS.contains(&name.as_str()))
         && name_of(is).as_deref() == Some("orden")
 }
-
 pub fn command_in(said: &str) -> Option<&str> {
     said.lines().find_map(|line| {
         let line = line.trim();
@@ -143,13 +132,11 @@ pub fn command_in(said: &str) -> Option<&str> {
             .filter(|rest| !rest.is_empty())
     })
 }
-
 #[tauri::command(async)]
 pub fn mcp_program(webview: tauri::Webview) -> Result<String, String> {
     orden_base::labels::from_the_app(&webview)?;
     program().map(|path| path.display().to_string())
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -164,9 +151,7 @@ mod tests {
         let deb = Path::new("/usr/bin/nib");
         assert_eq!(chosen(deb, None, &[PathBuf::from("/usr/bin")], links), deb);
     }
-
     const NOW: &str = "/nix/store/aaa-orden-0.15.0/bin/.nib-wrapped";
-
     fn links(candidate: &Path) -> Option<PathBuf> {
         match candidate.to_str()?.replace('\\', "/").as_str() {
             "/run/current-system/sw/bin/orden" => {
@@ -179,7 +164,6 @@ mod tests {
             _ => None,
         }
     }
-
     #[test]
     fn an_appimage_is_named_and_never_its_mount() {
         let mount = Path::new("/tmp/.mount_OrdenX1/usr/bin/nib");
@@ -190,7 +174,6 @@ mod tests {
             mount
         );
     }
-
     #[test]
     fn a_nix_copy_is_named_by_the_path_that_leads_to_it() {
         let path = [
@@ -207,7 +190,6 @@ mod tests {
             PathBuf::from("/nix/store/aaa-orden-0.15.0/bin/nib")
         );
     }
-
     #[test]
     fn an_older_copy_of_this_app_is_known_and_nothing_else_is() {
         let now = Path::new("/run/current-system/sw/bin/orden");
@@ -245,7 +227,6 @@ mod tests {
             assert!(!older_copy(theirs, now), "{theirs}");
         }
     }
-
     #[test]
     fn the_program_under_its_former_name_beside_this_one_is_an_older_copy() {
         for (older, now) in [
@@ -270,7 +251,6 @@ mod tests {
             Path::new("/usr/share/Orden/orden")
         ));
     }
-
     #[test]
     fn the_program_in_the_folder_of_a_former_name_beside_this_one_is_an_older_copy() {
         let now = Path::new("/c/Users/e/AppData/Local/Orden/orden.exe");
@@ -294,7 +274,6 @@ mod tests {
             Path::new("/c/Users/e/AppData/Local/Elsewhere/orden.exe")
         ));
     }
-
     #[test]
     fn the_command_is_read_off_either_client_s_description() {
         let claude =

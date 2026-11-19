@@ -3,7 +3,6 @@ import type { EntryKind } from '../../src/wire'
 import type { ItemMeta } from '../../src/meta'
 
 export type Route = 'ops' | 'feed' | 'pull' | 'push' | 'keep'
-
 export interface EntryView {
   id: string
   kind: EntryKind
@@ -12,25 +11,19 @@ export interface EntryView {
   pos?: string
   meta?: ItemMeta
 }
-
 export interface View {
   entries: EntryView[]
   texts: Record<string, string>
 }
-
 export interface AccountView extends View {
   versions: string[]
 }
-
 export interface AccountAdapter {
   handle(device: string, route: Route, body: Uint8Array): Promise<Uint8Array>
   view(): Promise<AccountView>
 }
-
 export type Link = (route: Route, body: Uint8Array) => Promise<Uint8Array | null>
-
 export type Pick = number
-
 export type Action =
   | { t: 'type'; note: Pick; at: number; words: string }
   | { t: 'cut'; note: Pick; at: number; length: number }
@@ -45,7 +38,6 @@ export type Action =
   | { t: 'append-day'; name: string; words: string }
   | { t: 'edit-file'; note: Pick; at: number; words: string; cut: number }
   | { t: 'save' }
-
 export interface Held {
   id: string
   base: string
@@ -53,7 +45,6 @@ export interface Held {
   remote: string
   times: Times
 }
-
 export interface Classification {
   id: string
   base: string
@@ -63,9 +54,7 @@ export interface Classification {
   merged?: string
   held: boolean
 }
-
 export type Answer = 'mine' | 'theirs' | 'both'
-
 export interface DeviceAdapter {
   readonly id: string
   readonly running: boolean

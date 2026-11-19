@@ -33,14 +33,12 @@ export const FIELD_ICONS = {
   privateKey: KeySquare,
   publicKey: Key,
 } satisfies Record<string, IconNode>
-
 const KIND_FIELD_ICONS: Record<FieldKind, IconNode> = {
   text: Type,
   hidden: EyeOff,
   totp: Clock,
   date: Calendar,
 }
-
 export function fieldKindIcon(kind: FieldKind): IconNode {
   return KIND_FIELD_ICONS[kind]
 }

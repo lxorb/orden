@@ -3,49 +3,38 @@ import { closes } from './validate'
 
 export const FRAME = 'orden-mini'
 const PAGE = 'orden-mini-page'
-
 const SURFACE = `.${PAGE}`
-
 const CARD_HEIGHT = 296
 export const FULL_HEIGHT = 428
-
 export function* rules(source: string): Generator<{ prelude: string; body: string }> {
   const css = source.replace(/\/\*[\s\S]*?\*\//g, ' ')
   let at = 0
   let start = 0
-
   while (at < css.length) {
     const open = css.indexOf('{', at)
     if (open < 0) return
-
     const close = closes(css, open)
     const prelude = css.slice(start, open).trim()
     const body = css.slice(open + 1, close)
-
     start = close + 1
     at = close + 1
-
     if (!prelude.startsWith('@') && !body.includes('{')) yield { prelude, body }
   }
 }
-
 export function rescoped(css: string, surface = SURFACE): string {
   return [...rules(css)]
     .filter((rule) => rule.prelude.includes('#write'))
     .map((rule) => `${rule.prelude.replace(/#write/g, surface)} {${rule.body}}`)
     .join('\n')
 }
-
 export function scopedRoots(css: string, scope = `.${FRAME}`): string {
   return [...rules(css)]
     .filter((rule) => rule.prelude === ':root')
     .map((rule) => `${scope} {${rule.body}}`)
     .join('\n')
 }
-
 export async function miniatureCss(): Promise<string> {
   const { proseCss, tokensCss } = await import('@orden/themes/raw')
-
   return `${scopedRoots(tokensCss)}
 
 ${rescoped(proseCss)}
@@ -97,30 +86,24 @@ ${rescoped(proseCss)}
     color var(--dur-slow) var(--ease-in-out);
 }`
 }
-
 export function paletteCss(themes: StoreTheme[]): string {
   const block = (id: string, scheme: string, palette: Palette) => {
     const lines = Object.entries(palette).map(([token, value]) => `  ${token}: ${value};`)
     if (!lines.length) return ''
-
     return `[data-palette='${id}'][data-theme='${scheme}'] {\n${lines.join('\n')}\n}`
   }
-
   return themes
     .flatMap((theme) => [block(theme.id, 'light', theme.palettes.light), block(theme.id, 'dark', theme.palettes.dark)])
     .filter(Boolean)
     .join('\n')
 }
-
 export function sampleHtml(full = false): string {
   const sentence = `Words with <strong>bold</strong> and a <a>link</a>.`
-
   const more = full
     ? `
 <blockquote><p>Every note is a Markdown file you own, with bases and boards right inside.</p></blockquote>
 <hr>`
     : ''
-
   return `<h2>A note</h2>
 <p>${sentence}</p>
 <ul><li>One thing</li><li>Another</li></ul>

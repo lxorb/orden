@@ -1,22 +1,17 @@
 export interface Env {
   DB: D1Database
   NOTES: R2Bucket
-
   ROOMS?: DurableObjectNamespace
-
   HUB?: DurableObjectNamespace
-
   CHATS?: DurableObjectNamespace
   APPS?: DurableObjectNamespace
   TURN_KEY_ID?: string
   TURN_KEY_TOKEN?: string
-
   MACHINES?: DurableObjectNamespace
   HOMES?: R2Bucket
   MACHINE_EGRESS?: string
   MACHINE_DEV_ORDEND?: string
   MACHINE_DEV_SECRET?: string
-
   HETZNER_TOKEN?: string
   MACHINE_TUNNEL_TOKEN?: string
   CF_ACCOUNT_ID?: string
@@ -24,7 +19,6 @@ export interface Env {
   MACHINE_ACCESS_SECRET?: string
   MACHINE_ACCESS_TEAM?: string
   MACHINE_ACCESS_AUD?: string
-
   BLOG_ROOT: string
   OTHER_BLOG_ROOTS?: string
   BLOG_CNAME_TARGET: string
@@ -32,29 +26,20 @@ export interface Env {
   OTHER_ORIGINS?: string
   PASS_ORIGIN?: string
   MACHINE_DOMAIN?: string
-
   CF_ZONE_ID?: string
   CF_API_TOKEN?: string
-
   ASSETS?: { fetch(request: Request): Promise<Response> }
-
   EMAIL?: EmailSender
   MAIL_FROM?: string
   FEEDBACK_TO?: string
   FEEDBACK_REPO?: string
   GITHUB_FEEDBACK_TOKEN?: string
   FEEDBACK_PROJECT?: string
-
   CRASH_READER_TOKEN?: string
-
   POSTHOG_KEY?: string
-
   AI?: { run(model: string, input: unknown): Promise<unknown> }
-
   OPENAI_KEY_SECRET?: string
-
   SECOND_FACTOR_SECRET?: string
-
   VAPID_PUBLIC_KEY?: string
   VAPID_PRIVATE_KEY?: string
   VAPID_SUBJECT?: string
@@ -65,7 +50,6 @@ export interface Env {
   APNS_TOPIC?: string
   APNS_SANDBOX?: string
 }
-
 export interface EmailSender {
   send(message: {
     from: string | { name: string; email: string }
@@ -75,23 +59,19 @@ export interface EmailSender {
     html?: string
   }): Promise<{ messageId?: string }>
 }
-
 export interface User {
   id: string
   email: string
   name: string | null
   created_at: number
 }
-
 export interface Guest {
   id: string
   name: string
   email: string | null
   created_at: number
 }
-
 export type Whoever = { kind: 'user'; user: User } | { kind: 'guest'; guest: Guest }
-
 export interface Space {
   id: string
   user_id: string
@@ -123,7 +103,6 @@ export interface Space {
   mended_at?: number | null
   deleted_at: number | null
 }
-
 export interface Note {
   id: string
   space_id: string
@@ -149,23 +128,18 @@ export interface Note {
   paper?: string | null
   meta?: string | null
 }
-
 export type Role = 'owner' | 'write' | 'read'
-
 export interface Reached extends Space {
   role: Role
 }
-
 export interface Scope {
   id: string
   path: string | null
 }
-
 export interface SpaceFile {
   path: string
   hash: string
 }
-
 export interface Variables {
   who: Whoever & { program?: true; readOnly?: boolean }
   user: User

@@ -9,13 +9,11 @@ const ROOT = '/space'
 const PATH = `${ROOT}/Diary.md`
 let target: HTMLElement | undefined
 let shown: ReturnType<typeof mount> | undefined
-
 afterEach(() => {
   if (shown) void unmount(shown)
   target?.remove()
   workspace.protection.set(ROOT, PATH, null)
 })
-
 async function face(drawn: (shown: HTMLElement) => boolean): Promise<HTMLElement> {
   const note = new NoteDoc(
     {
@@ -42,13 +40,11 @@ async function face(drawn: (shown: HTMLElement) => boolean): Promise<HTMLElement
   )
   return shownIn
 }
-
 describe('a window of the overview', () => {
   test('of a note shows its words', async () => {
     const drawn = await face((one) => one.textContent.includes('secret words'))
     expect(drawn.textContent).toContain('secret words')
   })
-
   test('of the same note protected and shut shows its name and none of its words', async () => {
     workspace.protection.set(ROOT, PATH, 'password')
     unlocks.lockAll()

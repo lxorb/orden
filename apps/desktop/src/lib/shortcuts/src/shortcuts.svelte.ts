@@ -28,23 +28,15 @@ import { saveFront } from '../../save-place/src/api'
 import { ran } from '../../usage/src/api'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './registry'
-
 const STORAGE_KEY = 'orden:shortcuts'
-
 const WRITE_CHORD = 'Mod-s'
 const PRESET_KEY = 'orden:preset'
 const OWED_KEY = 'orden:shortcuts-owed'
-
 const MOST_OVERRIDES = 200
-
 const NAMED_KEY = /^[A-Z][A-Za-z0-9]*$/
-
 const PRINTED_ELSEWHERE = /^[^\s!-~]{1,4}$/u
-
 const printed = (key: string) => key.length === 1 || PRINTED_ELSEWHERE.test(key)
-
 const namesAKey = (key: string) => printed(key) || NAMED_KEY.test(key)
-
 const TYPING_KEYS: ReadonlySet<string> = new Set([
   'Enter',
   'Tab',
@@ -59,97 +51,75 @@ const TYPING_KEYS: ReadonlySet<string> = new Set([
   'PageUp',
   'PageDown',
 ])
-
 class Shortcuts {
   overrides = $state<KeyOverrides>({})
-
   preset = $state<PresetId>('default')
-
   readonly platform = currentPlatform()
-
   restore() {
     this.unkept = false
     this.overrides = usable(stored(STORAGE_KEY))
     this.preset = knownPreset(storedText(PRESET_KEY)) ?? (Object.keys(this.overrides).length ? 'custom' : 'default')
     for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
-
   private unkept = false
-
   private get written(): KeyOverrides {
     const held = stored(STORAGE_KEY)
     return held === null || this.unkept ? this.overrides : usable(held)
   }
-
   choose(preset: Pick<Preset, 'id' | 'keys' | 'mac'>) {
     this.preset = preset.id
     this.overrides = presetKeys(preset, this.platform)
     this.settle()
   }
-
   keyFor(id: string): string | null {
     const chosen = this.overrides[id]
     if (chosen !== undefined) return chosen
-
     const entry = BY_ID.get(id)
     return entry ? defaultKeyFor(entry, this.platform) : null
   }
-
   defaultFor(id: string): string | null {
     const entry = BY_ID.get(id)
     return entry ? defaultKeyFor(entry, this.platform) : null
   }
-
   changed(id: string): boolean {
     return id in this.overrides && this.overrides[id] !== this.defaultFor(id)
   }
-
   hint(id: string): string | undefined {
     const key = this.keyFor(id)
     return key ? showCombination(key, this.platform) : undefined
   }
-
   tooltip(label: string, id: string | null = null): string {
     const key = id !== null && !viewport.touch ? this.hint(id) : undefined
     return key ? `${label} (${key})` : label
   }
-
   conflicts(id: string, key: string): Shortcut[] {
     if (!key) return []
     const places = BY_ID.get(id)?.contextual ? placesOf(id) : null
-
     return SHORTCUTS.filter((one) => {
       if (one.id === id || one.scope === 'fixed') return false
       if (!one.contextual !== !places) return false
       if (places && !placesOf(one.id).some((place) => places.includes(place))) return false
-
       const held = this.keyFor(one.id)
       return !!held && sameCombination(held, key, this.platform)
     })
   }
-
   fixedHolder(key: string): Shortcut | undefined {
     if (!key) return undefined
-
     return FIXED_ENTRIES.find((one) => {
       const held = defaultKeyFor(one, this.platform)
       return !!held && sameCombination(held, key, this.platform)
     })
   }
-
   warning(key: string | null): string | null {
     if (!key) return null
-
     const taken = (list: string[]) => list.some((one) => sameCombination(one, key, this.platform))
     if (taken(SYSTEM_KEYS[this.platform])) return 'Your system takes this key before the app sees it.'
     const said = key.trim().toLowerCase().split(/\s+/).join(' ')
     if (DICTATION_TAPS[this.platform].some((one) => one.toLowerCase() === said))
       return 'macOS can start dictation with this key too.'
     if (!isNative && taken(BROWSER_KEYS)) return 'Your browser takes this key before the app sees it.'
-
     return null
   }
-
   refuse(key: string, row?: string): string | null {
     const combination = parseCombination(key, this.platform)
     if (!combination) return 'That is not a key combination.'
@@ -157,72 +127,56 @@ class Shortcuts {
     if (!namesAKey(combination.key) && !tapOf(key, this.platform)) {
       return 'That is not a key combination.'
     }
-
     const bare = !combination.ctrl && !combination.meta && !combination.alt
     const typed = printed(combination.key) || TYPING_KEYS.has(combination.key)
     if (bare && typed && !this.inAList(row) && !this.ownKey(row, key)) {
       return this.platform === 'mac' ? 'Hold ⌃, ⌥ or ⌘ as well.' : 'Hold Ctrl or Alt as well.'
     }
-
     const fixed = this.fixedHolder(key)
     if (fixed && !this.inAList(row) && !this.ownKey(row, key)) {
       return `${showCombination(key, this.platform)} already runs ${fixed.label()}.`
     }
-
     return null
   }
-
   private ownKey(row: string | undefined, key: string): boolean {
     return row !== undefined && this.defaultFor(row) === key
   }
-
   private inAList(row: string | undefined): boolean {
     return SHORTCUTS.find((one) => one.id === row)?.scope === 'panel'
   }
-
   set(id: string, key: string | null) {
     const held = this.written
     if (Object.keys(held).length >= MOST_OVERRIDES && !(id in held)) return
-
     this.overrides = { ...held, [id]: key }
     this.preset = 'custom'
     this.settle()
   }
-
   reset(id: string) {
     this.overrides = without(this.written, id)
     this.preset = 'custom'
     this.settle()
   }
-
   resetAll() {
     this.choose({ id: 'default', keys: {} })
   }
-
   private settle() {
     this.unkept = !keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
     this.share()
   }
-
   private readonly views = new Set<EditorView>()
-
   apply(view: EditorView) {
     this.views.add(view)
     setShortcutKeys(view, this.overrides)
   }
-
   forget(view: EditorView) {
     this.views.delete(view)
   }
-
   get forEditor(): KeyOverrides {
     return this.overrides
   }
-
   private readonly owed = new AccountOwed(OWED_KEY)
-
   receive(remote: AccountSettings) {
     const theirs = remote.shortcuts
     if (this.owed.standing) {
@@ -233,62 +187,49 @@ class Shortcuts {
       if (Object.keys(this.overrides).length || this.preset !== 'default') this.share()
       return
     }
-
     const usableOnes = usable(theirs)
     const named = knownPreset(remote.preset) ?? this.preset
     if (JSON.stringify(usableOnes) === JSON.stringify(this.overrides) && named === this.preset) {
       return
     }
-
     this.overrides = usableOnes
     this.preset = named
     this.unkept = !keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
-
   private share() {
     this.owed.send({ shortcuts: this.overrides, preset: this.preset })
   }
-
   pressed(id: string, event: Keystroke): boolean {
     const key = this.keyFor(id)
     return !!key && matchesCombination(key, event, this.platform)
   }
-
   handle(event: KeyboardEvent, context: AppContext): boolean {
     if (event.defaultPrevented) return false
-
     for (const entry of SHORTCUTS) {
       if (entry.scope !== 'app' || !entry.run || !offeredHere(entry)) continue
-
       const key = this.keyFor(entry.id)
       if (!key || !matchesCombination(key, event, this.platform)) continue
-
       event.preventDefault()
       ran(entry.id, 'shortcut')
       entry.run({ ...context, held: event.ctrlKey || event.metaKey || event.altKey })
       return true
     }
-
     return false
   }
-
   get saveHint(): string {
     return showCombination(WRITE_CHORD, this.platform)
   }
-
   writeKey(event: KeyboardEvent): boolean {
     if (event.defaultPrevented || !matchesCombination(WRITE_CHORD, event, this.platform)) {
       return false
     }
-
     event.preventDefault()
     saveFront()
     return true
   }
 }
-
 const EXPLORER_TREE_KEYS: ReadonlySet<string> = new Set([
   'tree.delete',
   'tree.deselect',
@@ -301,26 +242,19 @@ const EXPLORER_TREE_KEYS: ReadonlySet<string> = new Set([
   'tree.toggle',
   'tree.up',
 ])
-
 function placesOf(id: string): string[] {
   const prefix = id.split('.')[0] ?? id
   return EXPLORER_TREE_KEYS.has(id) ? [prefix, 'explorer'] : [prefix]
 }
-
 function usable(value: unknown): KeyOverrides {
   if (!isRecord(value)) return {}
-
   const kept: KeyOverrides = {}
   for (const [id, key] of Object.entries(value)) {
     if (key === null) kept[id] = null
     else if (typeof key === 'string' && key.length <= 40 && key.length > 0) kept[id] = key
-
     if (Object.keys(kept).length >= MOST_OVERRIDES) break
   }
-
   return kept
 }
-
 export const shortcuts = new Shortcuts()
-
 heardElsewhere([STORAGE_KEY, PRESET_KEY], () => shortcuts.restore())

@@ -10,13 +10,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string, at: number): EditorView {
   const view = new EditorView({
     state: parsed(editorState({ doc, selection: { anchor: at } })),
@@ -26,7 +23,6 @@ function viewOf(doc: string, at: number): EditorView {
   view.dispatch({ selection: EditorSelection.cursor(at), userEvent: 'select' })
   return view
 }
-
 function type(view: EditorView, words: string) {
   for (const character of words) {
     const at = view.state.selection.main.head
@@ -37,9 +33,7 @@ function type(view: EditorView, words: string) {
     })
   }
 }
-
 const embeds = (view: EditorView) => view.contentDOM.querySelectorAll('.orden-embed').length
-
 describe('a line above a note embed made a heading by typing its marker', () => {
   test('draws the embed under the new heading once the caret leaves', () => {
     const doc = 'Intro\n\nStandup\n![[Agenda]]\n\nend'
@@ -50,7 +44,6 @@ describe('a line above a note embed made a heading by typing its marker', () => 
     view.dispatch({ selection: EditorSelection.cursor(0), userEvent: 'select.pointer' })
     expect(embeds(view)).toBe(1)
   })
-
   test('opening the same note draws it', () => {
     const view = viewOf('Intro\n\n## Standup\n![[Agenda]]\n\nend', 0)
     expect(embeds(view)).toBe(1)

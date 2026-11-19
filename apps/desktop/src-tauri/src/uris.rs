@@ -3,19 +3,15 @@ use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_deep_link::DeepLinkExt as _;
 
 const OPENED: &str = "orden://open-url";
-
 #[derive(Default)]
 pub struct Pending(pub Mutex<Vec<String>>);
-
 pub fn watch(app: &AppHandle) {
     #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
     {
         let _ = app.deep_link().register_all();
     }
-
     #[cfg(desktop)]
     let handing: fn(&AppHandle, Vec<String>) = hand_over;
-
     let opened = app.clone();
     app.deep_link().on_open_url(move |event| {
         let urls = said(event.urls());
@@ -27,13 +23,11 @@ pub fn watch(app: &AppHandle) {
         if urls.is_empty() {
             return;
         }
-
         #[cfg(desktop)]
         handing(&opened, urls);
         #[cfg(mobile)]
         let _ = opened.emit_to("main", OPENED, urls);
     });
-
     let launched = said(
         app.deep_link()
             .get_current()
@@ -49,14 +43,12 @@ pub fn watch(app: &AppHandle) {
     if launched.is_empty() {
         return;
     }
-
     if let Some(pending) = app.try_state::<Pending>() {
         if let Ok(mut waiting) = pending.0.lock() {
             *waiting = launched;
         }
     }
 }
-
 #[cfg(desktop)]
 fn hand_over(app: &AppHandle, urls: Vec<String>) {
     let waiting = app.state::<orden_agents::endpoint::Waiting>();
@@ -82,7 +74,6 @@ fn hand_over(app: &AppHandle, urls: Vec<String>) {
     }
     crate::launch::open_for_what_waits(app);
 }
-
 #[cfg(desktop)]
 struct LinkWindow {
     label: String,
@@ -90,7 +81,6 @@ struct LinkWindow {
     visible: bool,
     listening: bool,
 }
-
 #[cfg(desktop)]
 fn link_window(windows: &[LinkWindow]) -> Option<String> {
     windows
@@ -106,7 +96,6 @@ fn link_window(windows: &[LinkWindow]) -> Option<String> {
         })
         .map(|one| one.label.clone())
 }
-
 #[cfg(desktop)]
 pub fn launched_quietly(app: &AppHandle) -> bool {
     if crate::launch::in_background(&std::env::args_os().collect::<Vec<_>>()) {
@@ -125,31 +114,25 @@ pub fn launched_quietly(app: &AppHandle) -> bool {
     }
     quiet
 }
-
 #[tauri::command]
 pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
     let Ok(mut urls) = pending.0.lock() else {
         return Vec::new();
     };
-
     std::mem::take(&mut *urls)
 }
-
 const SCHEME: &str = "orden:";
-
 fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
     urls.iter()
         .map(ToString::to_string)
         .filter(|one| is_ours(one))
         .collect()
 }
-
 fn is_ours(url: &str) -> bool {
     let url = url.trim_start();
     url.get(..SCHEME.len())
         .is_some_and(|scheme| scheme.eq_ignore_ascii_case(SCHEME))
 }
-
 #[cfg(test)]
 mod tests {
     use super::said;
@@ -165,7 +148,6 @@ mod tests {
             listening,
         }
     }
-
     #[cfg(desktop)]
     #[test]
     fn a_link_goes_to_the_window_in_front_and_never_to_one_hidden_while_another_shows() {
@@ -174,26 +156,22 @@ mod tests {
             window("orden-2", false, true, true),
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("orden-2"));
-
         let windows = [
             window("main", false, true, true),
             window("orden-2", true, true, true),
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("orden-2"));
-
         let windows = [
             window("orden-3", false, true, true),
             window("main", false, true, true),
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
-
         let windows = [
             window("orden-2", false, false, true),
             window("main", false, false, true),
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
     }
-
     #[cfg(desktop)]
     #[test]
     fn a_link_waits_when_nothing_listens() {
@@ -206,7 +184,6 @@ mod tests {
         ];
         assert_eq!(link_window(&windows).as_deref(), Some("main"));
     }
-
     #[test]
     fn says_every_link_it_is_given() {
         let urls = vec![
@@ -221,13 +198,11 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn leaves_out_an_address_that_says_nothing() {
         assert!(said(vec![String::new()]).is_empty());
         assert!(said(Vec::<String>::new()).is_empty());
     }
-
     #[test]
     fn a_file_the_finder_opened_is_no_link() {
         let urls = vec![
@@ -237,13 +212,11 @@ mod tests {
         ];
         assert_eq!(said(urls), vec!["orden://open?path=Idea.md".to_string()]);
     }
-
     #[test]
     fn says_no_link_under_the_name_before_the_rename() {
         assert!(said(vec!["nib://open?path=Idea.md".to_string()]).is_empty());
         assert!(said(vec!["NIB://search".to_string()]).is_empty());
     }
-
     #[test]
     fn reads_the_scheme_in_any_case() {
         assert_eq!(said(vec!["ORDEN://search".to_string()]).len(), 1);

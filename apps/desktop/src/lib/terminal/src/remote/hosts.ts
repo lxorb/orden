@@ -1,7 +1,5 @@
 export type Colour = '1' | '2' | '3' | '4' | '5' | '6'
-
 export const COLOURS: readonly Colour[] = ['1', '2', '3', '4', '5', '6']
-
 export interface ConfigHost {
   id: string
   also: string[]
@@ -10,7 +8,6 @@ export interface ConfigHost {
   port?: number
   group?: string
 }
-
 export interface Own {
   id: string
   name: string
@@ -18,23 +15,19 @@ export interface Own {
   user?: string
   port?: number
 }
-
 export interface About {
   colour?: Colour
   group?: string
   pinned?: boolean
   last?: number
 }
-
 export interface Kept {
   own: Own[]
   about: Record<string, About>
   order: string[]
   groups: string[]
 }
-
 export const NOTHING_KEPT: Kept = { own: [], about: {}, order: [], groups: [] }
-
 export interface Host {
   id: string
   name: string
@@ -49,16 +42,13 @@ export interface Host {
   pinned: boolean
   last: number | null
 }
-
 function detailOf(user: string | null, hostname: string | null, port: number | null, name: string) {
   const address = hostname ?? (user || port ? name : null)
   if (!address) return null
-
   const at = user ? `${user}@${address}` : address
   const said = port && port !== 22 ? `${at}:${port}` : at
   return said === name ? null : said
 }
-
 export function hostsOf(config: readonly ConfigHost[], kept: Kept): Host[] {
   const hostOf = (one: Omit<ConfigHost, 'also'>, name: string, also: string[], own = false) => {
     const known: About = kept.about[one.id] ?? {}
@@ -78,7 +68,6 @@ export function hostsOf(config: readonly ConfigHost[], kept: Kept): Host[] {
       last: known.last ?? null,
     }
   }
-
   const all: Host[] = [
     ...config.map((one) => hostOf(one, one.id, [...one.also, ...(one.hostname ? [one.hostname] : [])])),
     ...kept.own.map((one) => hostOf(one, one.name, [one.hostname], true)),
@@ -90,21 +79,17 @@ export function hostsOf(config: readonly ConfigHost[], kept: Kept): Host[] {
     .sort((a, b) => rank(a.host) - rank(b.host) || a.at - b.at)
     .map(({ host }) => host)
 }
-
 export function groupsOf(hosts: readonly Host[], kept: Kept): string[] {
   const out = [...kept.groups]
   for (const host of hosts) if (host.group && !out.includes(host.group)) out.push(host.group)
   return out.filter((group) => hosts.some((host) => host.group === group))
 }
-
 export const RECENT = 5
-
 export interface Placed {
   host: Host
   head: string | null
   parted: boolean
 }
-
 export function pickerOrder(hosts: readonly Host[], kept: Kept): Placed[] {
   const pinned = hosts.filter((host) => host.pinned)
   const left = new Map<string, number>()
@@ -124,14 +109,12 @@ export function pickerOrder(hosts: readonly Host[], kept: Kept): Placed[] {
   }
   const taken = new Set([...pinned, ...recent].map((host) => host.id))
   const rest = hosts.filter((host) => !taken.has(host.id))
-
   const sections: [readonly Host[], string | null][] = [
     [pinned, null],
     [recent, null],
     [rest.filter((host) => !host.group), null],
     ...groupsOf(rest, kept).map((group): [Host[], string] => [rest.filter((host) => host.group === group), group]),
   ]
-
   const out: Placed[] = []
   for (const [list, group] of sections) {
     const parted = out.length > 0 && group === null
@@ -141,28 +124,22 @@ export function pickerOrder(hosts: readonly Host[], kept: Kept): Placed[] {
   }
   return out
 }
-
 export function searchName(host: Host): string {
   return [host.name, ...host.also].join(' ')
 }
-
 export interface Destination {
   user: string | null
   hostname: string
   port: number | null
 }
-
 const ADDRESS = /^(?!-)[A-Za-z0-9._:%-]{1,253}$/
 const USER = /^(?!-)[A-Za-z0-9._@\\$-]{1,64}$/
-
 export function destinationOf(typed: string): Destination | null {
   const text = typed.trim().replace(/^ssh\s+/i, '')
   if (!text || /\s/.test(text)) return null
-
   const at = text.lastIndexOf('@')
   const user = at > 0 ? text.slice(0, at) : null
   const rest = at > 0 ? text.slice(at + 1) : text
-
   let hostname = rest
   let port: number | null = null
   const bracketed = /^\[([^\]]+)\](?::(\d+))?$/.exec(rest)
@@ -174,20 +151,16 @@ export function destinationOf(typed: string): Destination | null {
     hostname = portEnd[1]
     port = Number(portEnd[2])
   }
-
   if (!ADDRESS.test(hostname) || (user !== null && !USER.test(user))) return null
   if (port !== null && (port < 1 || port > 65535)) return null
   return { user, hostname, port }
 }
-
 export function mayBeDestination(typed: string): boolean {
   return /^[A-Za-z0-9._:%@\\$[\]-]+$/.test(typed)
 }
-
 export function plainlyDestination(typed: string): boolean {
   return /[@:.]/.test(typed)
 }
-
 export function hostFor(hosts: readonly Host[], wanted: Destination): Host | null {
   const plain = !wanted.user && wanted.port === null
   return (
@@ -198,7 +171,6 @@ export function hostFor(hosts: readonly Host[], wanted: Destination): Host | nul
     ) ?? null
   )
 }
-
 export function hostReached(hosts: readonly Host[], reached: Destination): Host | null {
   return (
     hostFor(hosts, reached) ??
@@ -211,21 +183,16 @@ export function hostReached(hosts: readonly Host[], reached: Destination): Host 
     null
   )
 }
-
 export function groupHosts(hosts: readonly Host[], group: string): Host[] {
   return hosts.filter((host) => host.group === group)
 }
-
 export function said(wanted: Destination): string {
   const at = (address: string) => (wanted.user ? `${wanted.user}@${address}` : address)
   if (wanted.port === null) return at(wanted.hostname)
-
   const address = wanted.hostname.includes(':') ? `[${wanted.hostname}]` : wanted.hostname
   return `${at(address)}:${wanted.port}`
 }
-
 export type Change<T> = { [K in keyof T]?: T[K] | undefined }
-
 export function withAbout(kept: Kept, id: string, change: Change<About>): Kept {
   const merged = { ...kept.about[id], ...change }
   const about = Object.fromEntries(
@@ -237,7 +204,6 @@ export function withAbout(kept: Kept, id: string, change: Change<About>): Kept {
     about: Object.keys(about).length ? { ...rest, [id]: about } : rest,
   }
 }
-
 export function withOwn(kept: Kept, id: string, change: Change<Omit<Own, 'id'>>): Kept {
   return {
     ...kept,
@@ -255,7 +221,6 @@ export function withOwn(kept: Kept, id: string, change: Change<Omit<Own, 'id'>>)
     }),
   }
 }
-
 export function withoutOwn(kept: Kept, id: string): Kept {
   const about = Object.fromEntries(Object.entries(kept.about).filter(([one]) => one !== id))
   return {
@@ -265,13 +230,11 @@ export function withoutOwn(kept: Kept, id: string): Kept {
     order: kept.order.filter((one) => one !== id),
   }
 }
-
 export function moved(kept: Kept, hosts: readonly Host[], from: number, to: number): Kept {
   const ids = hosts.map((host) => host.id)
   const [one] = ids.splice(from, 1)
   if (one === undefined) return kept
   ids.splice(Math.max(0, Math.min(to, ids.length)), 0, one)
-
   const byId = new Map(hosts.map((host) => [host.id, host]))
   const groups: string[] = []
   for (const id of ids) {

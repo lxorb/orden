@@ -9,12 +9,10 @@ import { paperText } from './text-cache'
 
 const PAGES = 400
 let reading: string | null = null
-
 function sparing(): boolean {
   const connection = (navigator as { connection?: { saveData?: boolean } }).connection
   return connection?.saveData === true
 }
-
 export function walkedOf(root: string, tree: Entry): Walked {
   const notes: string[] = []
   const folders: string[] = [root]
@@ -31,18 +29,14 @@ export function walkedOf(root: string, tree: Entry): Walked {
   walk(tree)
   return { notes, folders }
 }
-
 export async function readPapers(root: string, files: readonly Entry[], tree: Entry | null): Promise<void> {
   reading = root
   const papers = files.filter((one) => isPdfTarget(one.name))
   const stamps = new Map(papers.map((one) => [one.path, one.modified]))
   const notes = tree ? walkedOf(root, tree) : null
-
   papersListed(root, stamps, notes)
-
   await startup.turn('search')
   if (reading !== root) return
-
   if (files.some((one) => isPagesTarget(one.name))) {
     const held = await heldPapers(root, files)
     if (reading !== root) return
@@ -50,24 +44,18 @@ export async function readPapers(root: string, files: readonly Entry[], tree: En
     if (held.length) papersListed(root, stamps, notes)
     papers.push(...held)
   }
-
   mark(`papers: ${papers.length} in the space`)
   await papersFor(root)
   if (reading !== root || sparing()) return
-
   for (const paper of papers) {
     if (reading !== root) return
-
     if (await paperText(paper.path, paper.modified)) continue
-
     await readOne(paper)
     await writePapers()
     await breathe()
   }
-
   mark('papers read')
 }
-
 export async function heldPapers(root: string, files: readonly Entry[]): Promise<Entry[]> {
   const notes = new Set(files.filter((one) => isPagesTarget(one.name)).map((one) => pathKey(one.path)))
   const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(() => null)
@@ -82,18 +70,14 @@ export async function heldPapers(root: string, files: readonly Entry[]): Promise
   if (tree) walk(tree)
   return out
 }
-
 async function readOne(paper: Entry): Promise<void> {
   const held = await openDocument(paper.path).catch(() => null)
   if (!held) return
-
   try {
     paperOpened(paper.path, held.hash, paper.modified)
-
     const pages = Math.min(held.doc.numPages, PAGES)
     for (let number = 1; number <= pages; number++) {
       if (reading === null) return
-
       const page = await held.doc.getPage(number)
       paperRead(paper.path, number, await textOf(page))
       page.cleanup()

@@ -15,5 +15,4 @@ const WORDS: Record<Refused | Refusal, string | null> = {
   rate: null,
   large: null,
 }
-
 export const refusalWords = (why: Refused | Refusal): string | null => WORDS[why]

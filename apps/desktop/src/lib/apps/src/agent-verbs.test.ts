@@ -15,7 +15,6 @@ interface FakeSession {
   run: (what: string) => void
   take: () => void
 }
-
 const tabs = [
   { id: 'a1', kind: 'application', path: '/s/Work/GIMP.application' },
   { id: 'n1', kind: 'note', path: '/s/Work/Plan.md' },
@@ -28,14 +27,12 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-
 const sessions = new Map<string, FakeSession>()
 const frames = vi.hoisted((): { next: unknown } => ({ next: null }))
 vi.mock('./session.svelte', () => ({
   appSessionIfAny: (tab: { id: string }) => sessions.get(tab.id) ?? null,
 }))
 vi.mock('./frame', () => ({ frameOf: () => Promise.resolve(frames.next) }))
-
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 vi.mock('../../platform/src/api', async (original) => ({
@@ -45,15 +42,12 @@ vi.mock('../../platform/src/api', async (original) => ({
     return Promise.resolve(answer)
   },
 }))
-
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: () => true,
   reachedAs: () => null,
   reachedByOthersIn: () => false,
 }))
-
 const { applicationTabs, inputOf } = await import('./agent-verbs')
-
 function session(change: Partial<FakeSession> = {}): FakeSession & {
   sent: InputEvent[]
   ran: string[]
@@ -82,7 +76,6 @@ function session(change: Partial<FakeSession> = {}): FakeSession & {
   }
   return made
 }
-
 const call = (args: Record<string, unknown>, mode = 'unsupervised') =>
   applicationTabs({
     verb: 'application_tabs',
@@ -95,14 +88,12 @@ const call = (args: Record<string, unknown>, mode = 'unsupervised') =>
       mode,
     }),
   }).catch((error: unknown) => error)
-
 beforeEach(() => {
   sessions.clear()
   asked.length = 0
   answer = { status: 'ok', result: {} }
   frames.next = { png: 'iVBOR', width: 800, height: 600 }
 })
-
 describe('the applications', () => {
   test('are listed with where each runs and whether this device holds it', async () => {
     sessions.set('a1', session())
@@ -116,7 +107,6 @@ describe('the applications', () => {
       },
     })
   })
-
   test('are started, stopped and restarted on their host while held here', async () => {
     const gimp = session()
     sessions.set('a1', gimp)
@@ -126,7 +116,6 @@ describe('the applications', () => {
     expect(gimp.ran).toEqual(['start', 'stop', 'restart'])
     expect(asked).toEqual([])
   })
-
   test('are seen as the frame the tab receives, marked as the application’s', async () => {
     sessions.set('a1', session())
     expect(await call({ op: 'picture', tab: 'a1' })).toMatchObject({
@@ -135,7 +124,6 @@ describe('the applications', () => {
       untrusted: 'the application GIMP',
     })
   })
-
   test('are used through the picture’s own channel', async () => {
     const gimp = session()
     sessions.set('a1', gimp)
@@ -157,7 +145,6 @@ describe('the applications', () => {
     ])
   })
 })
-
 describe('the lock', () => {
   test('held by another device, nothing goes and nothing is taken over', async () => {
     const elsewhere = session({
@@ -180,7 +167,6 @@ describe('the lock', () => {
     expect(elsewhere.sent).toEqual([])
     expect(elsewhere.taken).toBe(0)
   })
-
   test('not held yet - connecting, the host away - nothing goes either', async () => {
     const away = session({ holds: false, status: { is: 'away' } })
     sessions.set('a1', away)
@@ -188,13 +174,11 @@ describe('the lock', () => {
     expect(away.ran).toEqual([])
     expect(away.taken).toBe(0)
   })
-
   test('a tab not connected yet, another kind of tab and no tab are refused', async () => {
     expect(await call({ op: 'start', tab: 'a1' })).toMatchObject({ code: 'bad_arguments' })
     expect(await call({ op: 'start', tab: 'n1' })).toMatchObject({ code: 'bad_arguments' })
     expect(await call({ op: 'start', tab: 'gone' })).toMatchObject({ code: 'no_such_tab' })
   })
-
   test('input waits for the picture’s channel, and a picture for the picture', async () => {
     sessions.set(
       'a1',
@@ -208,7 +192,6 @@ describe('the lock', () => {
     })
   })
 })
-
 describe('asked as #1072 decided', () => {
   test('in confirm mode a start and any input ask first, with Always for that application', async () => {
     const gimp = session()
@@ -227,7 +210,6 @@ describe('asked as #1072 decided', () => {
     expect(gimp.ran).toEqual([])
     expect(gimp.sent).toEqual([])
   })
-
   test('under Full permissions nothing asks, and seeing it never asks', async () => {
     const gimp = session()
     sessions.set('a1', gimp)
@@ -237,7 +219,6 @@ describe('asked as #1072 decided', () => {
     expect(gimp.ran).toEqual(['restart'])
   })
 })
-
 describe('input, as the host plays it', () => {
   test('a chord presses its modifiers around the key, each let go of', () => {
     expect(inputOf([{ type: 'key', key: 'Ctrl+Shift+S' }])).toEqual([
@@ -255,7 +236,6 @@ describe('input, as the host plays it', () => {
       down: true,
     })
   })
-
   test('a key the host plays: named as people name it, the plus key too, and nothing it drops', () => {
     const pressed = (key: string) =>
       inputOf([{ type: 'key', key }])
@@ -275,7 +255,6 @@ describe('input, as the host plays it', () => {
       expect(() => inputOf([{ type: 'key', key }]), key).toThrow()
     }
   })
-
   test('the wheel, a double click with the right button, a press held', () => {
     expect(
       inputOf([
@@ -296,7 +275,6 @@ describe('input, as the host plays it', () => {
       { t: 'button', button: 0, down: false },
     ])
   })
-
   test('what does not say what to do is refused before anything is sent', () => {
     for (const [at, events] of [
       undefined,
@@ -312,7 +290,6 @@ describe('input, as the host plays it', () => {
       expect(() => inputOf(events), `case ${at}`).toThrow()
     }
   })
-
   test('a point is a finite pixel, and a chord holds each modifier once, so one event never turns into thousands', () => {
     for (const [at, events] of [
       [{ type: 'move', x: Infinity, y: 2 }],

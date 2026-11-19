@@ -18,40 +18,32 @@ export const LONGEST_EMAIL = 254
 export const LONGEST_NAME = 200
 export const MOST_HANDOVERS = 50
 export const MEMBER_STATES = ['pending', 'active', 'confirm'] as const
-
 export type MemberState = (typeof MEMBER_STATES)[number]
-
 export interface KeyProof {
   by: string
   sig: string
   vouch: string | null
 }
-
 export interface Handover {
   to: string
   sig: string
 }
-
 export interface Accepted {
   owner: string
   sig: string
 }
-
 export interface Pin {
   owner: string
   vouch: string | null
 }
-
 export interface PersonKey {
   pub: string
   signPub: string
 }
-
 export interface KeyringRow {
   keyring: Keyring
   rev: number
 }
-
 export interface VaultRow {
   id: string
   rev: number
@@ -66,7 +58,6 @@ export interface VaultRow {
   handovers: Handover[]
   accepted: Accepted | null
 }
-
 export interface ItemRow {
   vault: string
   id: string
@@ -77,7 +68,6 @@ export interface ItemRow {
   at: number
   deleted: boolean
 }
-
 export interface Version {
   rev: number
   key: string
@@ -85,7 +75,6 @@ export interface Version {
   keyVersion: number
   at: number
 }
-
 export interface Invite {
   vault: string
   from: string
@@ -98,7 +87,6 @@ export interface Invite {
   proof: KeyProof | null
   pin: Pin | null
 }
-
 export interface Member {
   email: string
   name: string
@@ -108,7 +96,6 @@ export interface Member {
   signPub: string | null
   vouch: string | null
 }
-
 export interface Changes {
   seq: number
   more: boolean
@@ -117,12 +104,10 @@ export interface Changes {
   items: ItemRow[]
   invites: Invite[]
 }
-
 export interface ItemPage {
   items: ItemRow[]
   more: boolean
 }
-
 export interface LinkRow {
   id: string
   vault: string
@@ -132,49 +117,37 @@ export interface LinkRow {
   seen: number
   created: number
 }
-
 export interface LinkOpened {
   body: string
   expires: number
   left: number | null
 }
-
 const ID = /^[A-Za-z0-9_-]{8,64}$/
-
 type Fields = Record<string, unknown>
-
 function fieldsOf(value: unknown): Fields | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Fields) : null
 }
-
 export function isPassId(value: unknown): value is string {
   return typeof value === 'string' && ID.test(value)
 }
-
 export function isSealed(value: unknown, most: number): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= most && BASE64.test(value)
 }
-
 export function isCount(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
-
 export function isRole(value: unknown): value is Role {
   return typeof value === 'string' && (ROLES as readonly string[]).includes(value)
 }
-
 function isState(value: unknown): value is MemberState {
   return typeof value === 'string' && (MEMBER_STATES as readonly string[]).includes(value)
 }
-
 function isText(value: unknown, most: number): value is string {
   return typeof value === 'string' && value.length <= most
 }
-
 function sealedOrNull(value: unknown, most: number): value is string | null {
   return value === null || isSealed(value, most)
 }
-
 function listOf<T>(value: unknown, each: (one: unknown) => T | null): T[] | null {
   if (!Array.isArray(value)) return null
   const read: T[] = []
@@ -185,7 +158,6 @@ function listOf<T>(value: unknown, each: (one: unknown) => T | null): T[] | null
   }
   return read
 }
-
 export function keyProofIn(value: unknown): KeyProof | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
@@ -193,53 +165,45 @@ export function keyProofIn(value: unknown): KeyProof | null {
   if (!isSignPub(by) || !isSignature(sig) || !(vouch === null || isSignature(vouch))) return null
   return { by, sig, vouch }
 }
-
 export function handoverIn(value: unknown): Handover | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
   const { to, sig } = raw
   return isSignPub(to) && isSignature(sig) ? { to, sig } : null
 }
-
 export function handoversIn(value: unknown): Handover[] | null {
   const read = listOf(value, handoverIn)
   return read !== null && read.length <= MOST_HANDOVERS ? read : null
 }
-
 export function acceptedIn(value: unknown): Accepted | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
   const { owner, sig } = raw
   return isSignPub(owner) && isSignature(sig) ? { owner, sig } : null
 }
-
 export function pinIn(value: unknown): Pin | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
   const { owner, vouch } = raw
   return isSignPub(owner) && (vouch === null || isSignature(vouch)) ? { owner, vouch } : null
 }
-
 export function personKeyIn(value: unknown): PersonKey | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
   const { pub, signPub } = raw
   return isSealed(pub, MOST_KEY_BYTES) && isSignPub(signPub) ? { pub, signPub } : null
 }
-
 function optional<T>(value: unknown, read: (one: unknown) => T | null): T | null | undefined {
   if (value === undefined || value === null) return null
   const one = read(value)
   return one ?? undefined
 }
-
 export function keyringRowIn(value: unknown): KeyringRow | null {
   const raw = fieldsOf(value)
   if (raw === null || !isCount(raw.rev) || raw.rev < 1) return null
   const keyring = keyringIn(raw.keyring)
   return keyring === null ? null : { keyring, rev: raw.rev }
 }
-
 export function vaultRowIn(value: unknown): VaultRow | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
@@ -277,7 +241,6 @@ export function vaultRowIn(value: unknown): VaultRow | null {
     accepted,
   }
 }
-
 export function itemRowIn(value: unknown): ItemRow | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
@@ -296,7 +259,6 @@ export function itemRowIn(value: unknown): ItemRow | null {
   if (!sealed) return null
   return { vault, id, rev, key: key as string, body: body as string, keyVersion, at, deleted }
 }
-
 export function versionIn(value: unknown): Version | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
@@ -312,7 +274,6 @@ export function versionIn(value: unknown): Version | null {
     return null
   return { rev, key, body, keyVersion, at }
 }
-
 export function inviteIn(value: unknown): Invite | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
@@ -336,7 +297,6 @@ export function inviteIn(value: unknown): Invite | null {
     return null
   return { vault, from, fromName, role, key, meta, keyVersion, fromKey, proof, pin }
 }
-
 export function memberIn(value: unknown): Member | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
@@ -356,7 +316,6 @@ export function memberIn(value: unknown): Member | null {
     return null
   return { email, name, role, state, pub, signPub, vouch }
 }
-
 export function changesIn(value: unknown): Changes | null {
   const raw = fieldsOf(value)
   if (raw === null || !isCount(raw.seq) || typeof raw.more !== 'boolean') return null
@@ -368,14 +327,12 @@ export function changesIn(value: unknown): Changes | null {
   if (vaults === null || items === null || invites === null) return null
   return { seq: raw.seq, more: raw.more, keyring, vaults, items, invites }
 }
-
 export function itemPageIn(value: unknown): ItemPage | null {
   const raw = fieldsOf(value)
   if (raw === null || typeof raw.more !== 'boolean') return null
   const items = listOf(raw.items, itemRowIn)
   return items === null ? null : { items, more: raw.more }
 }
-
 export function linkRowIn(value: unknown): LinkRow | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
@@ -392,7 +349,6 @@ export function linkRowIn(value: unknown): LinkRow | null {
     return null
   return { id, vault, item, expires, views, seen, created }
 }
-
 export function linkOpenedIn(value: unknown): LinkOpened | null {
   const raw = fieldsOf(value)
   if (raw === null) return null

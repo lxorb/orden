@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const opened = vi.hoisted(() => [] as string[])
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: false,
@@ -21,22 +20,18 @@ vi.mock('../../workspace/src/api', () => ({
 vi.mock('./letters.svelte', () => ({
   essentialLetters: { pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null) },
 }))
-
 vi.stubGlobal('CSS', { escape: (text: string) => text })
 vi.stubGlobal('requestAnimationFrame', (then: FrameRequestCallback) => {
   then(0)
   return 1
 })
-
 const { numbers } = await import('./numbers.svelte')
-
 const key = (init: KeyboardEventInit, target: EventTarget = document.body) => {
   const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
   target.dispatchEvent(event)
   return event
 }
 const up = () => dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt' }))
-
 function tile(letter: string, box = { left: 10, right: 40, top: 10, bottom: 40 }) {
   const button = document.createElement('button')
   button.dataset.essentialLetter = letter
@@ -44,14 +39,12 @@ function tile(letter: string, box = { left: 10, right: 40, top: 10, bottom: 40 }
   document.body.append(button)
   return button
 }
-
 beforeEach(() => {
   up()
   key({ key: 'a', code: 'KeyA' })
   document.body.replaceChildren()
   opened.length = 0
 })
-
 describe("an Essential's letter", () => {
   test('is worn at its tile while Alt is held, and gone as Alt is let go of', () => {
     tile('N')
@@ -60,13 +53,11 @@ describe("an Essential's letter", () => {
     up()
     expect(numbers.worn).toEqual([])
   })
-
   test('is not worn by a tile out of sight, as in a folded sidebar', () => {
     tile('N', { left: -300, right: -270, top: 10, bottom: 40 })
     key({ key: 'Alt', altKey: true })
     expect(numbers.worn).toEqual([])
   })
-
   test('with Alt goes to its Essential, taken from what is focused, and keeps the hold', async () => {
     tile('N')
     key({ key: 'Alt', altKey: true })
@@ -75,7 +66,6 @@ describe("an Essential's letter", () => {
     await vi.waitFor(() => expect(opened).toEqual(['/space/Notes.md']))
     expect(numbers.worn).toHaveLength(1)
   })
-
   test('no Essential wears is left alone, and the hold goes on (#1053)', () => {
     tile('N')
     key({ key: 'Alt', altKey: true })
@@ -84,7 +74,6 @@ describe("an Essential's letter", () => {
     expect(opened).toEqual([])
     expect(numbers.worn).toHaveLength(1)
   })
-
   test("is worn and taken in a terminal too, and another letter is the shell's", async () => {
     tile('N')
     const screen = document.createElement('div')
@@ -102,10 +91,8 @@ describe("an Essential's letter", () => {
     await vi.waitFor(() => expect(opened).toEqual(['/space/Notes.md']))
   })
 })
-
 describe('Alt held', () => {
   const pointer = (name: string, altKey: boolean) => dispatchEvent(new PointerEvent(name, { altKey, bubbles: true }))
-
   test('stays through other keys and the pointer, and goes as Alt is let go of', () => {
     tile('N')
     key({ key: 'Alt', altKey: true })
@@ -113,18 +100,15 @@ describe('Alt held', () => {
     pointer('pointerdown', true)
     dispatchEvent(new WheelEvent('wheel', { altKey: true }))
     expect(numbers.worn).toHaveLength(1)
-
     up()
     expect(numbers.worn).toEqual([])
   })
-
   test('goes at the first press or move that says Alt is up, a release nobody heard', () => {
     tile('N')
     key({ key: 'Alt', altKey: true })
     pointer('pointermove', false)
     expect(numbers.worn).toEqual([])
   })
-
   test('comes at the first move that says Alt is down, where its press was not heard', () => {
     tile('N')
     pointer('pointermove', true)

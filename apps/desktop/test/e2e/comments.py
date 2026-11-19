@@ -1,12 +1,9 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = (
     "# Comments\n\n"
     "A line with %%a note to myself%% inside it.\n\n"
@@ -18,7 +15,6 @@ NOTE = (
     "%% kept, because a fence is showing it %%\n"
     "```\n"
 )
-
 SEED = """
 async (note) => {
   const ws = window.ordenApp.workspace
@@ -27,7 +23,6 @@ async (note) => {
   return ws.notes.map((one) => one.name)
 }
 """
-
 WRITTEN = """
 () => ({
   shown: [...document.querySelectorAll('.cm-content .cm-line')]
@@ -36,7 +31,6 @@ WRITTEN = """
   doc: window.orden.state.doc.toString(),
 })
 """
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
     page = context.new_page()
@@ -50,7 +44,6 @@ def fresh(browser: Browser) -> Page:
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
     page.wait_for_timeout(400)
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -61,14 +54,11 @@ def fresh(browser: Browser) -> Page:
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(700)
     return page
-
 def drive(browser: Browser) -> None:
     page = fresh(browser)
-
     written = page.evaluate(WRITTEN)
     say(f"[written] {json.dumps(written['shown'])}")
     shot(page, "01-written")
-
     if "a note to myself" in written["shown"]:
         wrong("a percent comment is on the page in the editor")
     if "the other spelling" in written["shown"]:
@@ -79,14 +69,11 @@ def drive(browser: Browser) -> None:
         wrong("a comment inside a fence was hidden, and a fence is showing it")
     if "A line with  inside it." not in written["shown"]:
         wrong("the words around a comment did not stay")
-
     for across in ("written across", "broken over a line"):
         if across not in written["shown"]:
             wrong(f"a comment across lines is not on the page: {across}")
-
     if "%%a note to myself%%" not in written["doc"]:
         wrong("the comment was rewritten in the note")
-
     at = written["doc"].index("a note to myself") + 4
     page.evaluate(
         """(at) => {
@@ -100,7 +87,6 @@ def drive(browser: Browser) -> None:
     shot(page, "02-caret-inside")
     if "a note to myself" not in revealed["shown"]:
         wrong("the comment did not come back with the caret inside it")
-
     page.evaluate(
         """() => {
           const end = window.orden.state.doc.length
@@ -113,13 +99,11 @@ def drive(browser: Browser) -> None:
         wrong(f"typing went somewhere else: {json.dumps(typed['doc'][-40:])}")
     if "TYPED" not in typed["shown"]:
         wrong("what was typed is not on the page")
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
     shot(page, "03-reading")
     read = page.evaluate("() => document.querySelector('#write')?.textContent ?? ''")
     say(f"[reading] {json.dumps(read[:160])}")
-
     for hidden in (
         "a note to myself",
         "the other spelling",
@@ -133,10 +117,7 @@ def drive(browser: Browser) -> None:
         wrong("the fence stopped showing what it was showing")
     if "A line with  inside it." not in read:
         wrong("the words around a comment did not survive the reading view")
-
     page.context.close()
-
 def main() -> int:
     return DRIVE.run(drive, "a note to yourself stays one, whichever way it is written")
-
 raise SystemExit(main())

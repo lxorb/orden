@@ -13,16 +13,13 @@ function crate() {
   )
   return { latest, sent, answers }
 }
-
 const settled = () => new Promise((go) => setTimeout(go, 0))
-
 describe('one placement in the air', () => {
   test('the first is sent at once', () => {
     const { latest, sent } = crate()
     void latest.put(1)
     expect(sent).toEqual([1])
   })
-
   test('nothing more is sent while one is flying', () => {
     const { latest, sent } = crate()
     void latest.put(1)
@@ -30,7 +27,6 @@ describe('one placement in the air', () => {
     void latest.put(3)
     expect(sent).toEqual([1])
   })
-
   test('only the newest of those waiting follows it, never one in between', async () => {
     const { latest, sent, answers } = crate()
     void latest.put(1)
@@ -41,7 +37,6 @@ describe('one placement in the air', () => {
     await settled()
     expect(sent).toEqual([1, 4])
   })
-
   test('the last word is always the one that lands last', async () => {
     const { latest, sent, answers } = crate()
     for (let frame = 1; frame <= 30; frame++) {
@@ -57,7 +52,6 @@ describe('one placement in the air', () => {
     expect([...sent].sort((a, b) => a - b)).toEqual(sent)
     expect(latest.idle).toBe(true)
   })
-
   test('a replaced placement answers when the one that carried it lands', async () => {
     const { latest, answers } = crate()
     void latest.put(1)
@@ -72,7 +66,6 @@ describe('one placement in the air', () => {
     await settled()
     expect([second, third]).toEqual([true, true])
   })
-
   test('a refused call does not hold up the one behind it', async () => {
     const { latest, sent, answers } = crate()
     const first = latest.put(1).catch(() => 'refused')
@@ -82,7 +75,6 @@ describe('one placement in the air', () => {
     await settled()
     expect(sent).toEqual([1, 2])
   })
-
   test('the refusal reaches the caller whose placement it was', async () => {
     const { latest, answers } = crate()
     void latest.put(1)
@@ -95,7 +87,6 @@ describe('one placement in the air', () => {
     answers[1]?.refuse()
     expect(await second).toBe('refused')
   })
-
   test('idle again once everything has landed', async () => {
     const { latest, answers } = crate()
     void latest.put(1)

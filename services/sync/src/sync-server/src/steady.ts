@@ -1,29 +1,21 @@
 import type { Env } from './types'
 
 const NOT_RUN = /SQLITE_BUSY|database is locked|D1 DB is overloaded/i
-
 const PASSING =
   /Network connection lost|storage caused object to be reset|reset because its code was updated|D1_ERROR: internal error/i
-
 const PAUSES = [20, 80, 300]
-
 const READS = /^\s*(select|with|pragma)\b/i
 const WRITES = /\b(insert|update|delete|replace|create|drop|alter)\b/i
-
 const ANSWERS = new Set<PropertyKey>(['first', 'all', 'raw', 'run'])
-
 const unwrapped = new WeakMap<object, D1PreparedStatement>()
-
 function said(error: unknown): string {
   if (!(error instanceof Error)) return String(error)
   return error.cause instanceof Error ? `${error.message} ${error.cause.message}` : error.message
 }
-
 function tryAgain(error: unknown, reads: boolean): boolean {
   const words = said(error)
   return NOT_RUN.test(words) || (reads && PASSING.test(words))
 }
-
 async function steadily<T>(work: () => Promise<T>, reads: boolean): Promise<T> {
   for (let at = 0; ; at += 1) {
     try {
@@ -35,7 +27,6 @@ async function steadily<T>(work: () => Promise<T>, reads: boolean): Promise<T> {
     }
   }
 }
-
 function steadyStatement(statement: D1PreparedStatement, sql: string): D1PreparedStatement {
   const reads = READS.test(sql) && !WRITES.test(sql)
   const held = new Proxy(statement, {
@@ -54,11 +45,8 @@ function steadyStatement(statement: D1PreparedStatement, sql: string): D1Prepare
   unwrapped.set(held, statement)
   return held
 }
-
 const steadied = new WeakMap<D1Database, D1Database>()
-
 const steadyOnes = new WeakSet<D1Database>()
-
 export function steadyDb(db: D1Database): D1Database {
   if (steadyOnes.has(db)) return db
   const had = steadied.get(db)
@@ -80,7 +68,6 @@ export function steadyDb(db: D1Database): D1Database {
   steadyOnes.add(held)
   return held
 }
-
 export function steadyEnv(env: Env): Env {
   return new Proxy(env, {
     get(target, key) {

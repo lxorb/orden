@@ -1,7 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
 const kept = new Map<string, string>()
-
 vi.stubGlobal('localStorage', {
   get length() {
     return kept.size
@@ -12,9 +11,7 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void kept.delete(key),
   clear: () => kept.clear(),
 })
-
 const pushed: string[] = []
-
 vi.mock('../../space-kept/src/api', async (original) => ({
   ...(await original<typeof import('../../space-kept/src/api')>()),
   push: async (root: string, _save: unknown, heard?: (landed: boolean) => void) => {
@@ -22,17 +19,13 @@ vi.mock('../../space-kept/src/api', async (original) => ({
     heard?.(true)
   },
 }))
-
 const { SpaceSorting } = await import('./arranged.svelte')
-
 test('a sort that reached the account gives way when another device changes it', async () => {
   const sorting = new SpaceSorting(() => '/space')
   sorting.adopt('/space', 'name', 'account')
-
   sorting.set('manual')
   await new Promise((done) => setTimeout(done))
   expect(pushed).toEqual(['/space'])
-
   sorting.adopt('/space', 'modified-desc', 'account')
   await new Promise((done) => setTimeout(done))
   expect(sorting.of('/space')).toBe('modified-desc')

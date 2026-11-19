@@ -11,9 +11,7 @@
     offers: () => Offer[]
     ongo: (section: SettingsSectionId, label: string) => void
   } = $props()
-
   const SPARK = 'M6.5 1.6c.4 2.6 1.9 4.1 4.5 4.5-2.6.4-4.1 1.9-4.5 4.5-.4-2.6-1.9-4.1-4.5-4.5 2.6-.4 4.1-1.9 4.5-4.5z'
-
   let asked = $state('')
   let busy = $state(false)
   let answer = $state.raw<Answer | null>(null)
@@ -21,9 +19,7 @@
   let unready = $state(false)
   let settled = $state<Record<string, 'changed' | 'skipped'>>({})
   let session = 0
-
   const busied = $derived(asked !== '' || answer !== null || trouble !== null || unready || busy)
-
   async function ask() {
     const said = asked.trim()
     const port = portOf('settings.ask')
@@ -46,7 +42,6 @@
       if (mine === session) busy = false
     }
   }
-
   function readable(reply: string, all: Offer[]): Answer {
     try {
       return answerOf(reply, all)
@@ -54,7 +49,6 @@
       return { say: reply.trim(), show: [], changes: [] }
     }
   }
-
   function settle(change: Change, how: 'changed' | 'skipped') {
     if (how === 'changed' && !apply(change)) {
       trouble = `${change.offer.label} could not be changed.`
@@ -62,7 +56,6 @@
     }
     settled = { ...settled, [change.offer.id]: how }
   }
-
   function clear() {
     session += 1
     asked = ''
@@ -71,7 +64,6 @@
     trouble = null
     unready = false
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.isComposing) return
     if (event.key === 'Enter') {
@@ -150,12 +142,10 @@
     max-width: var(--screen-pair);
     margin-bottom: var(--space-4);
   }
-
   .spark {
     fill: currentColor;
     stroke: none;
   }
-
   .drop {
     flex: none;
     display: grid;
@@ -169,24 +159,20 @@
     color: var(--muted);
     cursor: default;
   }
-
   .drop :global(svg) {
     width: 8px;
     height: 8px;
     stroke-width: 1.4;
   }
-
   .note {
     margin: 0;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   .note.bad {
     color: var(--danger);
   }
-
   .link {
     padding: 0;
     border: 0;
@@ -195,7 +181,6 @@
     font: inherit;
     cursor: default;
   }
-
   .answer {
     display: flex;
     flex-direction: column;
@@ -204,7 +189,6 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
   }
-
   .said {
     margin: 0 0 var(--space-1);
     font-family: var(--font-ui);
@@ -212,7 +196,6 @@
     line-height: 1.5;
     color: var(--text-strong);
   }
-
   .row {
     display: flex;
     align-items: center;
@@ -228,19 +211,16 @@
     text-align: start;
     cursor: default;
   }
-
   .row .name {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
-
   .row small {
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .chevron {
     width: 14px;
     height: 14px;
@@ -248,7 +228,6 @@
     stroke: var(--muted);
     stroke-width: 1.4;
   }
-
   .done {
     color: var(--muted);
     font-size: var(--text-sm);

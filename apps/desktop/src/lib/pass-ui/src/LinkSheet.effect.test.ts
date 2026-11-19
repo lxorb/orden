@@ -8,11 +8,9 @@ import { button, closed, draw, landed, target, typed, vaultAs } from '../test/dr
 const HOUR = 3600e3
 const DAY = 24 * HOUR
 const NOW = Date.UTC(2026, 10, 6, 12)
-
 interface Signed {
   user: { id: string; email: string; name: string } | null
 }
-
 const fake = vi.hoisted(() => {
   const account: Signed = { user: { id: 'ada', email: 'ada@example.com', name: 'Ada' } }
   return {
@@ -24,7 +22,6 @@ const fake = vi.hoisted(() => {
     removeExpired: vi.fn(),
   }
 })
-
 vi.mock('../../pass-sync/src/store.svelte', () => ({ pass: fake.pass }))
 vi.mock('../../accounts/src/api', async (real) => ({
   ...(await real<typeof import('../../accounts/src/api')>()),
@@ -41,11 +38,9 @@ vi.mock('../../pass-sync/src/api', async () => ({
   removeLink: fake.removeLink,
   removeExpired: fake.removeExpired,
 }))
-
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const LinkSheet = (await import('./LinkSheet.svelte')).default
 const LinksPage = (await import('./LinksPage.svelte')).default
-
 const ITEM: Item = {
   id: 'i1',
   vault: 'v1',
@@ -59,9 +54,7 @@ const ITEM: Item = {
   trashed: null,
   monitored: true,
 } as unknown as Item
-
 const URL_MADE = 'https://orden.so/pass-link/AAAAAAAAAAAAAAAAAAAAAA#key'
-
 beforeEach(() => {
   for (const one of [fake.createLink, fake.links, fake.removeLink, fake.removeExpired, fake.pass.copy]) one.mockReset()
   fake.pass.vaults = [vaultAs('editor')]
@@ -69,19 +62,16 @@ beforeEach(() => {
   fake.account.user = { id: 'ada', email: 'ada@example.com', name: 'Ada' }
   landed()
 })
-
 afterEach(() => {
   closed()
   vi.useRealTimers()
 })
-
 function sheet() {
   const ui = new PassUi(null)
   ui.sheet = { kind: 'link', item: 'i1' }
   draw(LinkSheet, { ui })
   return ui
 }
-
 function option(name: string): HTMLElement {
   const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
     (one) => one.textContent.trim() === name,
@@ -89,11 +79,9 @@ function option(name: string): HTMLElement {
   if (!found) throw new Error(`no ${name} option`)
   return found
 }
-
 function views(): HTMLInputElement {
   return target.querySelector<HTMLInputElement>('input[aria-label="Max views"]')!
 }
-
 describe('making a secure link', () => {
   test('lasts a week with unlimited views unless told otherwise', async () => {
     fake.createLink.mockResolvedValue({ url: URL_MADE, link: {} })
@@ -103,7 +91,6 @@ describe('making a secure link', () => {
     button('Create').click()
     await vi.waitFor(() => expect(fake.createLink).toHaveBeenCalledWith(ITEM, { expires: 7 * DAY, views: null }))
   })
-
   test('offers each life, and takes the one chosen and a view limit', async () => {
     fake.createLink.mockResolvedValue({ url: URL_MADE, link: {} })
     sheet()
@@ -117,7 +104,6 @@ describe('making a secure link', () => {
     button('Create').click()
     await vi.waitFor(() => expect(fake.createLink).toHaveBeenCalledWith(ITEM, { expires: HOUR, views: 3 }))
   })
-
   test('shows the address once made, and copies it', async () => {
     fake.createLink.mockResolvedValue({ url: URL_MADE, link: {} })
     sheet()
@@ -126,7 +112,6 @@ describe('making a secure link', () => {
     button('Copy').click()
     await vi.waitFor(() => expect(fake.pass.copy).toHaveBeenCalledWith(URL_MADE))
   })
-
   test('refuses a view limit out of range', () => {
     sheet()
     typed(views(), '101')
@@ -137,14 +122,12 @@ describe('making a secure link', () => {
     typed(views(), '')
     expect(button('Create').disabled).toBe(false)
   })
-
   test('says what went wrong', async () => {
     fake.createLink.mockRejectedValue(new Error('pass: too many links'))
     sheet()
     button('Create').click()
     await vi.waitFor(() => expect(target.querySelector('[role="alert"]')?.textContent).toContain('too many links'))
   })
-
   test('asks to sign in, and is not offered to a viewer', () => {
     fake.account.user = null
     sheet()
@@ -157,7 +140,6 @@ describe('making a secure link', () => {
     expect(() => button('Create')).toThrow()
   })
 })
-
 describe('the secure links page', () => {
   const link = (id: string, more: Partial<LinkRow>): LinkRow => ({
     id,
@@ -169,13 +151,11 @@ describe('the secure links page', () => {
     created: NOW - HOUR,
     ...more,
   })
-
   function page() {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(NOW)
     draw(LinksPage, {})
   }
-
   test('lists each link with its item, when it expires and its views, and removes one', async () => {
     fake.links.mockResolvedValue([
       link('a', { expires: NOW + 3 * DAY, views: 5, seen: 2 }),
@@ -191,12 +171,10 @@ describe('the secure links page', () => {
     expect(over?.querySelector('[data-expires]')?.textContent).toBe('Expired')
     expect(over?.querySelector('[data-views]')?.textContent).toBe('1 view')
     expect(() => button('Copy link')).toThrow()
-
     button('Remove link').click()
     await vi.waitFor(() => expect(fake.removeLink).toHaveBeenCalledWith('a'))
     await vi.waitFor(() => expect(fake.links).toHaveBeenCalledTimes(2))
   })
-
   test('removes all the expired links at once', async () => {
     fake.links.mockResolvedValueOnce([link('b', { expires: NOW - HOUR })]).mockResolvedValue([])
     fake.removeExpired.mockResolvedValue(1)
@@ -206,7 +184,6 @@ describe('the secure links page', () => {
     await vi.waitFor(() => expect(fake.removeExpired).toHaveBeenCalledOnce())
     await vi.waitFor(() => expect(target.textContent).toContain('No secure links yet'))
   })
-
   test('asks to sign in', () => {
     fake.account.user = null
     page()

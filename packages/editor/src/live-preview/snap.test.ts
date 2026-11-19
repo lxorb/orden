@@ -6,7 +6,6 @@ import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 const PARK = '\n\nx'
-
 function state(doc: string, cursor: number) {
   return parsed(
     EditorState.create({
@@ -16,7 +15,6 @@ function state(doc: string, cursor: number) {
     }),
   )
 }
-
 function click(doc: string, pos: number, parkedAt?: number): number {
   const full = parkedAt === undefined ? doc + PARK : doc
   const before = state(full, parkedAt ?? full.length)
@@ -26,10 +24,8 @@ function click(doc: string, pos: number, parkedAt?: number): number {
   })
   return after.state.selection.main.head
 }
-
 describe('inline code', () => {
   const doc = 'a `code` b'
-
   test.each([
     [doc, 8, 7],
     [doc, 2, 3],
@@ -37,13 +33,11 @@ describe('inline code', () => {
     [doc, 8, 8],
     [doc, 2, 2],
   ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
-
   test.each([
     [doc, 7, 7, 4],
     [doc, 3, 3, 4],
   ])('%j', (input, wanted, extra, last) => expect(click(input, extra, last)).toEqual(wanted))
 })
-
 describe('emphasis', () => {
   test.each([
     ['**bold** x', 8, 6],
@@ -53,14 +47,12 @@ describe('emphasis', () => {
     ['**a**`b`', 5, 3],
     ['**a**`b`', 5, 6],
   ])('%j', (input, wanted, extra) => expect(click(input, extra)).toBe(wanted))
-
   test.each([
     ['_i_ x', 3, 2],
     ['~~s~~ x', 5, 3],
     ['==h== x', 5, 3],
   ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
 })
-
 describe('links', () => {
   test('the whole target is stepped over', () => {
     const doc = 'see [docs](https://x.dev) now'
@@ -68,20 +60,17 @@ describe('links', () => {
     expect(click(doc, label + 4)).toBe(doc.indexOf(')') + 1)
     expect(click(doc, label)).toBe(doc.indexOf('['))
   })
-
   test('a title after a space is part of the target', () => {
     const doc = 'see [docs](https://x.dev "t") now'
     expect(click(doc, doc.indexOf(']'))).toBe(doc.indexOf(')') + 1)
   })
 })
-
 describe('constructs that are not applicable', () => {
   test('a rendered image is already atomic', () => {
     const doc = '![](pic.png)'
     expect(click(doc, 0)).toBe(0)
     expect(click(doc, doc.length)).toBe(doc.length)
   })
-
   test.each([
     ['mass $E$ here', 5, 5],
     ['mass $E$ here', 8, 8],
@@ -91,20 +80,17 @@ describe('constructs that are not applicable', () => {
     ['*[HTML]: Markup', 2, 2],
     ['text[^1] more', 8, 7],
   ])('%j', (input, wanted, extra) => expect(click(input, extra)).toBe(wanted))
-
   test.each([
     ['# Title', 2, 2],
     ['> quoted', 2, 2],
   ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
 })
-
 describe('only clicks', () => {
   test('keyboard selection changes are left alone', () => {
     const before = state('a `code` b' + PARK, 12)
     const after = before.update({ selection: EditorSelection.cursor(7) })
     expect(after.state.selection.main.head).toBe(7)
   })
-
   test('dragged ranges are left alone', () => {
     const before = state('a `code` b' + PARK, 12)
     const after = before.update({
@@ -113,7 +99,6 @@ describe('only clicks', () => {
     })
     expect(after.state.selection.main).toMatchObject({ from: 3, to: 7 })
   })
-
   test.each([
     [state('a `code` b' + PARK, ('a `code` b' + PARK).length), 8, 7],
     [state('a `code` b' + PARK, ('a `code` b' + PARK).length), 2, 3],

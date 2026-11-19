@@ -8,7 +8,6 @@ import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 const PARK = '\n\nx'
-
 function concealed(doc: string): string[] {
   const full = doc + PARK
   const state = parsed(
@@ -24,18 +23,14 @@ function concealed(doc: string): string[] {
   })
   return out
 }
-
 describe('two equals signs with spaces around them', () => {
   const doc = 'if a == b and c == d then stop'
-
   test('are not read as a highlight by the reading view', () => {
     expect(renderMarkdown(doc)).not.toContain('<mark')
   })
-
   test('are shown in the editor too, not hidden as highlight marks', () => {
     expect(concealed(doc)).toEqual([])
   })
-
   test('a highlight written tight still hides its marks', () => {
     expect(concealed('a ==b== c')).toEqual(['==', '=='])
   })

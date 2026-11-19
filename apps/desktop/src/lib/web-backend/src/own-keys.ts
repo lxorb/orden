@@ -6,7 +6,6 @@ import { scalar } from '@orden/markdown/yaml'
 import { appliedEdits } from '@orden/markdown/edits'
 
 export const OWN_KEYS = [ICON_KEY, ICON_COLOUR_KEY, COVER_KEY, COVER_POSITION_KEY] as const
-
 export function withOwnKeys(text: string, meta: ItemMeta | null | undefined): string {
   if (!meta) return text
   const rows = OWN_KEYS.flatMap((key): [string, string][] => {
@@ -17,17 +16,14 @@ export function withOwnKeys(text: string, meta: ItemMeta | null | undefined): st
   const edit = frontMatterEdits(text, rows)
   return edit ? appliedEdits(text, [edit]) : text
 }
-
 interface Taken {
   meta: MetaPatch
   text: string
 }
-
 const NEEDS: Readonly<Record<string, string>> = {
   [ICON_COLOUR_KEY]: ICON_KEY,
   [COVER_POSITION_KEY]: COVER_KEY,
 }
-
 export function ownKeysTaken(text: string): Taken | null {
   const said = OWN_KEYS.flatMap((key): [string, string][] => {
     const value = frontMatterValue(text, key)?.trim()

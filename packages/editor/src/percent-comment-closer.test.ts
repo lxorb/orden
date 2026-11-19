@@ -19,7 +19,6 @@ function stateOf(doc: string): EditorState {
     }),
   )
 }
-
 function drawnHeadings(doc: string): string[] {
   const state = stateOf(doc)
   const found: string[] = []
@@ -29,7 +28,6 @@ function drawnHeadings(doc: string): string[] {
   })
   return found
 }
-
 function fadedText(doc: string): string {
   const state = stateOf(doc)
   let faded = ''
@@ -38,7 +36,6 @@ function fadedText(doc: string): string {
   })
   return faded
 }
-
 const NOTES: Record<string, string> = {
   'a comment opened after words, over paragraphs':
     'Intro. %% draft\n\nSecond draft paragraph.\n\n%%\n\n# Next\n\nCall the bank',
@@ -46,7 +43,6 @@ const NOTES: Record<string, string> = {
   'a comment under a paragraph that shows %% as code':
     'Wrap words in `%%` to hide them.\n%%\nold plan\n%%\n\n# Next\n\nCall the bank',
 }
-
 describe('the line closing a %% comment opened earlier', () => {
   for (const [name, note] of Object.entries(NOTES)) {
     test(`${name}: the reading view and heading links still show the heading below`, () => {
@@ -54,11 +50,9 @@ describe('the line closing a %% comment opened earlier', () => {
       expect(renderMarkdown(note)).toContain('Call the bank')
       expect(headingsOf(note)).toContain('Next')
     })
-
     test(`${name}: the contents widget lists the heading below`, () => {
       expect(headings(stateOf(note)).map((one) => one.text)).toContain('Next')
     })
-
     test(`${name}: Live Preview draws the heading below and does not fade the words after it as a comment`, () => {
       expect(fadedText(note)).not.toContain('Call the bank')
       expect(drawnHeadings(note)).toContain('# Next')

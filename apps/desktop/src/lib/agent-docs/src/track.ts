@@ -5,24 +5,18 @@ import type { Replacement } from './edits'
 import { Steps } from './steps'
 
 let minted = 0
-
 const AGENT_EVENT = 'agent'
-
 const UNDO_EVENT = 'undo.agent'
-
 function ropeOf(words: string): Text {
   return Text.of(words.split('\n'))
 }
-
 type ChangeDesc = ChangeSet['desc']
-
 export interface Span {
   from: number
   to: number
   removed: string
   inserted: string
 }
-
 function spansOf(changes: ChangeSet, before: Text): Span[] {
   const spans: Span[] = []
   changes.iterChanges((fromA, toA, from, to, inserted) => {
@@ -30,13 +24,11 @@ function spansOf(changes: ChangeSet, before: Text): Span[] {
   })
   return spans
 }
-
 function spanThrough(span: Span, change: ChangeDesc): Span | null {
   const from = change.mapPos(span.from, 1)
   const to = Math.max(from, change.mapPos(span.to, -1))
   return to > from || span.removed ? { ...span, from, to } : null
 }
-
 function replacementsOf(changes: ChangeSet): Replacement[] {
   const edits: Replacement[] = []
   changes.iterChanges((from, to, _fromB, _toB, inserted) => {
@@ -44,7 +36,6 @@ function replacementsOf(changes: ChangeSet): Replacement[] {
   })
   return edits
 }
-
 export class Track {
   readonly steps = new Steps()
   private held: { note: NoteDoc; stop: () => void } | null = null
@@ -55,78 +46,62 @@ export class Track {
   private readonly when = new Map<string, number>()
   private readonly whose = new Map<string, string>()
   private readonly takenBack = new Map<string, { ids: string[]; changes: ChangeSet }>()
-
   constructor(
     private readonly prefix: string,
     private readonly told: (edits: number) => void,
   ) {}
-
   nextId(thread?: string): string {
     minted++
     const id = `${this.prefix}:${String(minted)}`
     if (thread) this.whose.set(id, thread)
     return id
   }
-
   catchUp(open: NoteDoc | null, words: string) {
     if (open && this.held?.note === open) return
     this.letGo()
-
     if (this.seen !== null && this.seen !== words) {
       const since = open?.live.since(this.seen) ?? null
       const span = since ? null : fold(this.seen, words)
       this.carry(since?.desc ?? ChangeSet.of(span ? [span] : [], this.seen.length).desc)
     }
-
     this.seen = words
     if (open) this.hold(open)
     this.tell()
   }
-
   applyOpen(note: NoteDoc, edits: readonly Replacement[], id: string): ChangeSet {
     this.catchUp(note, note.live.text.toString())
     const before = note.live.text
-
     const changes = this.editOpen(note, edits, [id], false)
     this.recorded(id, changes, before)
     return changes
   }
-
   recordClosed(before: string, edits: readonly Replacement[], after: string, id: string) {
     this.seen = after
     this.recorded(id, ChangeSet.of(edits, before.length), ropeOf(before))
   }
-
   follow(open: NoteDoc) {
     if (this.held?.note !== open) this.catchUp(open, open.live.text.toString())
   }
-
   get ids(): string[] {
     return this.steps.ids
   }
-
   spansOf(id: string): readonly Span[] {
     return this.where.get(id) ?? []
   }
-
   madeAt(id: string): number {
     return this.when.get(id) ?? 0
   }
-
   threadOf(id: string): string | null {
     return this.whose.get(id) ?? null
   }
-
   undoSomeOpen(note: NoteDoc, ids: ReadonlySet<string>, token?: string): string[] {
     this.catchUp(note, note.live.text.toString())
     const before = note.live.text
     const some = this.steps.take(ids, before)
     if (!some?.ids.length) return []
-
     this.tookBack(some.ids, this.editOpen(note, some.changes, some.ids, true), before, token)
     return some.ids
   }
-
   private saved(): () => void {
     const steps = this.steps.saved()
     const seen = this.seen
@@ -143,7 +118,6 @@ export class Track {
       this.tell()
     }
   }
-
   undoSomeClosed(
     words: string,
     ids: ReadonlySet<string>,
@@ -154,43 +128,35 @@ export class Track {
     const before = ropeOf(words)
     const some = this.steps.take(ids, before)
     if (!some?.ids.length) return null
-
     this.tookBack(some.ids, some.changes, before, token)
     return { edits: this.closedBy(before, some.changes), ids: some.ids, refused }
   }
-
   putBackOpen(note: NoteDoc, token: string): string[] {
     this.catchUp(note, note.live.text.toString())
     const back = this.takenBack.get(token)
     if (!back) return []
     this.takenBack.delete(token)
-
     const before = note.live.text
     this.recorded(back.ids, this.editOpen(note, back.changes, back.ids, false), before)
     return back.ids
   }
-
   putBackClosed(words: string, token: string): { edits: Replacement[]; ids: string[]; refused: () => void } | null {
     this.catchUp(null, words)
     const refused = this.saved()
     const back = this.takenBack.get(token)
     if (!back) return null
     this.takenBack.delete(token)
-
     const before = ropeOf(words)
     const edits = this.closedBy(before, back.changes)
     this.recorded(back.ids, back.changes, before)
     return { edits, ids: back.ids, refused }
   }
-
   holds(token: string): boolean {
     return this.takenBack.has(token)
   }
-
   forgetTaken(token: string) {
     this.takenBack.delete(token)
   }
-
   private recorded(ids: string | readonly string[], changes: ChangeSet, before: Text) {
     const all = typeof ids === 'string' ? [ids] : [...ids]
     this.mapSpans(changes.desc)
@@ -203,7 +169,6 @@ export class Track {
     }
     this.tell()
   }
-
   private tookBack(ids: readonly string[], changes: ChangeSet, before: Text, token?: string) {
     for (const id of ids) this.where.delete(id)
     this.mapSpans(changes.desc)
@@ -211,20 +176,17 @@ export class Track {
     if (token) this.takenBack.set(token, { ids: [...ids], changes: changes.invert(before) })
     this.tell()
   }
-
   private carry(change: ChangeDesc) {
     this.steps.carry(change)
     this.mapSpans(change)
     this.mapTaken(change)
   }
-
   private mapTaken(change: ChangeDesc) {
     if (change.empty) return
     for (const [name, back] of this.takenBack) {
       this.takenBack.set(name, { ...back, changes: back.changes.map(change) })
     }
   }
-
   private mapSpans(change: ChangeDesc) {
     if (change.empty) return
     for (const [id, spans] of this.where) {
@@ -233,29 +195,24 @@ export class Track {
       else this.where.delete(id)
     }
   }
-
   undoOpen(note: NoteDoc): number {
     this.catchUp(note, note.live.text.toString())
     const before = note.live.text
     const all = this.steps.takeAll()
     if (!all) return 0
-
     this.tookBack(all.ids, this.editOpen(note, all.changes, all.ids, true), before)
     return all.ids.length
   }
-
   undoClosed(words: string): { edits: Replacement[]; count: number; refused: () => void } | null {
     this.catchUp(null, words)
     const refused = this.saved()
     const all = this.steps.takeAll()
     if (!all) return null
-
     const before = ropeOf(words)
     const edits = this.closedBy(before, all.changes)
     this.tookBack(all.ids, all.changes, before)
     return { edits, count: all.ids.length, refused }
   }
-
   private hold(note: NoteDoc) {
     const stop = note.live.listen((heard) => {
       this.heard(heard)
@@ -263,33 +220,26 @@ export class Track {
     this.held = { note, stop }
     this.seen = null
   }
-
   setAside() {
     this.letGo()
   }
-
   get says(): string | null {
     return this.held ? this.held.note.live.text.toString() : this.seen
   }
-
   private letGo() {
     if (!this.held) return
-
     this.seen = this.held.note.live.text.toString()
     this.held.stop()
     this.held = null
   }
-
   private heard(heard: Heard) {
     if (this.making) return
-
     if (heard.by === 'switch') {
       this.seen = heard.before.toString()
       this.held?.stop()
       this.held = null
       return
     }
-
     const had = new Set(this.steps.ids)
     if (this.steps.heard(heard)) {
       this.mapSpans(heard.changes.desc)
@@ -303,23 +253,19 @@ export class Track {
     }
     this.tell()
   }
-
   private tell() {
     if (this.where.size > this.steps.ids.length) {
       const ids = new Set(this.steps.ids)
       for (const id of this.where.keys()) if (!ids.has(id)) this.where.delete(id)
     }
     if (this.steps.size === this.said) return
-
     this.said = this.steps.size
     this.told(this.said)
   }
-
   private closedBy(before: Text, changes: ChangeSet): Replacement[] {
     this.seen = changes.apply(before).toString()
     return replacementsOf(changes)
   }
-
   private editOpen(
     note: NoteDoc,
     changes: readonly Replacement[] | ChangeSet,

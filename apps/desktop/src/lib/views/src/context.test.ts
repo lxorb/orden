@@ -12,15 +12,12 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
     },
   },
 }))
-
 const { contextFor } = await import('./context')
-
 const rows = noteRowsOf(
   'Mine',
   'Errands.md',
   '- [ ] Mine [assignee:: Emil]\n- [ ] Also mine [assignee:: emil]\n- [ ] Theirs [assignee:: Ada]\n- [ ] Nobody’s\n',
 )
-
 const assigned = () =>
   answer(
     builtinView('assigned'),
@@ -28,19 +25,16 @@ const assigned = () =>
     rows,
     contextFor({ rows, today: '2026-11-06', now: '2026-11-06T10:00' }),
   ).groups.flatMap((group) => group.rows.map((row) => row.task?.text))
-
 describe('a view’s tasks assigned to me (#1254)', () => {
   test('are the ones assigned to the signed-in reader, whatever the capitals', () => {
     signed.name = 'Emil'
     expect(assigned()).toEqual(['Mine', 'Also mine'])
   })
-
   test('are none while nobody is signed in', () => {
     signed.name = null
     expect(assigned()).toEqual([])
   })
 })
-
 test('the notes that link to a note are gathered in time that grows with the notes, however many link to one', () => {
   const index = noteRowsOf('Mine', 'Index.md', '# Index\n')
   const days = new Map<number, ReturnType<typeof noteRowsOf>>()
@@ -67,7 +61,6 @@ test('the notes that link to a note are gathered in time that grows with the not
   )
   expect(linking).toHaveLength(16_000)
 })
-
 describe('a link in a base', () => {
   const rows = [
     ...noteRowsOf('Mine', 'Plan.md', '# Top plan\n'),
@@ -82,20 +75,17 @@ describe('a link in a base', () => {
     return found
   }
   const context = contextFor({ rows, today: '2026-11-06', now: '2026-11-06T10:00' })
-
   test('reaches the namesake the editor opens, not the first note of that name', () => {
     expect(context.resolve?.('Plan', note('Work/Journal.md'))).toBe('Work/Plan.md')
     expect(context.resolve?.('Work/Plan', note('Other.md'))).toBe('Work/Plan.md')
     expect(context.resolve?.('Plan', note('Other.md'))).toBe('Plan.md')
     expect(context.resolve?.('../Plan.md', note('Work/Notes.md'))).toBe('Plan.md')
   })
-
   test('counts as a backlink of the note it reaches', () => {
     expect(context.backlinks?.(note('Work/Plan.md'))).toEqual(['Work/Journal.md', 'Other.md'])
     expect(context.backlinks?.(note('Plan.md'))).toEqual(['Work/Notes.md'])
   })
 })
-
 describe('the links a base follows', () => {
   const build = (files: Record<string, string>) => {
     const rows = Object.entries(files).flatMap(([path, text]) => noteRowsOf('Mine', path, text))
@@ -107,7 +97,6 @@ describe('the links a base follows', () => {
     return { note, context: contextFor({ rows, today: '2026-11-06', now: '2026-11-06T10:00' }) }
   }
   const formula = (source: string) => readBase(`formulas:\n  it: ${source}\nviews:\n  - type: table\n    name: T\n`)
-
   test('reach a backlink’s own note, not a namesake beside the row', () => {
     const { note, context } = build({
       'Projects/Alpha.md': '# Alpha\n',
@@ -127,7 +116,6 @@ describe('the links a base follows', () => {
       ),
     ).toHaveLength(1)
   })
-
   test('reach a note by its alias, as the editor does', () => {
     const { note, context } = build({
       'Plan.md': '---\naliases: [Roadmap]\n---\n',
@@ -136,7 +124,6 @@ describe('the links a base follows', () => {
     expect(cellValue(formula('file.hasLink(link("Plan"))'), 'formula.it', note('A.md'), context)).toBe(true)
     expect(context.backlinks?.(note('Plan.md'))).toEqual(['A.md'])
   })
-
   test('count a note that links twice as one backlink', () => {
     const { note, context } = build({
       'Plan.md': '',
@@ -144,7 +131,6 @@ describe('the links a base follows', () => {
     })
     expect(context.backlinks?.(note('Plan.md'))).toEqual(['A.md'])
   })
-
   test('are gathered in time that grows with the notes, however many share a name', () => {
     const made = new Map<number, Row[]>()
     const rowsFor = (count: number) => {

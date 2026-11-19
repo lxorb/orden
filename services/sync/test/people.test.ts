@@ -10,7 +10,6 @@ const OWNER = 'owner@example.com'
 const MEMBER = 'member@example.com'
 const OTHER = 'other@example.com'
 const STRANGER = 'stranger@example.com'
-
 interface PeopleReply {
   people: Record<string, unknown>[]
   profile: { avatar: unknown }
@@ -19,7 +18,6 @@ interface PeopleReply {
   spaces: { id: string; people?: string[] }[]
   link: { url: string }
 }
-
 describe('a profile change', () => {
   test('keeps what it names and leaves out what it does not', () => {
     expect(profileChanges({ pronouns: ' she / her ', bio: null })).toEqual({
@@ -27,14 +25,12 @@ describe('a profile change', () => {
     })
     expect(profileChanges({})).toEqual({ changes: {} })
   })
-
   test('keeps a bio on its lines and an empty one as none', () => {
     expect(profileChanges({ bio: 'Line one\nline two\u0007' })).toEqual({
       changes: { bio: 'Line one\nline two' },
     })
     expect(profileChanges({ bio: '   ' })).toEqual({ changes: { bio: null } })
   })
-
   test('says what is wrong with what it cannot keep', () => {
     expect(profileChanges({ pronouns: 'x'.repeat(41) })).toEqual({
       problem: 'use at most 40 characters',
@@ -50,36 +46,29 @@ describe('a profile change', () => {
     expect(profileChanges({ hidden: 'yes' })).toEqual({ problem: 'hidden must be true or false' })
     expect(profileChanges({ status: 'busy' })).toEqual({ problem: 'status must be an object' })
   })
-
   test('takes a status as an emoji, a line, an end and quiet', () => {
     expect(profileChanges({ status: { emoji: '🌴', text: ' On  leave ', until: 5000, quiet: true } })).toEqual({
       changes: { status: { emoji: '🌴', text: 'On leave', until: 5000, quiet: true } },
     })
   })
 })
-
 describe('a status', () => {
   const kept = JSON.stringify({ emoji: '🍝', text: 'Lunch', until: 1000, quiet: false })
-
   test('stands until its time', () => {
     expect(statusIn(kept, 999)).toEqual({ emoji: '🍝', text: 'Lunch', until: 1000, quiet: false })
   })
-
   test('is gone at its time, with nothing run to take it away', () => {
     expect(statusIn(kept, 1000)).toBeNull()
   })
-
   test('without an end stands for good', () => {
     const forever = JSON.stringify({ emoji: '🎧', text: 'Focus', until: null })
     expect(statusIn(forever, Number.MAX_SAFE_INTEGER)?.text).toBe('Focus')
   })
-
   test('that holds nothing is none', () => {
     expect(statusIn(JSON.stringify({ emoji: '', text: ' ', until: null }), 0)).toBeNull()
     expect(statusIn('not json', 0)).toBeNull()
   })
 })
-
 describe('presence, worked out', () => {
   test('is active with any device in use, away with one connected, offline with none', () => {
     expect(presenceOf([])).toBe('offline')
@@ -92,7 +81,6 @@ describe('presence, worked out', () => {
     ).toBe('active')
   })
 })
-
 describe('the routes', () => {
   let env: TestEnv
   let owner: string
@@ -100,18 +88,14 @@ describe('the routes', () => {
   let other: string
   let stranger: string
   let space: string
-
   async function idOf(token: string): Promise<string> {
     return (await call(env, '/v1/me', { token })).json.user.id
   }
-
   const invite = (email: string) => joined(env, owner, space, email)
-
   async function seen(token: string, ids: string[]): Promise<Record<string, unknown>[]> {
     const { json } = await call<PeopleReply>(env, `/v2/people?ids=${ids.join(',')}`, { token })
     return json.people
   }
-
   async function upload(token: string, bytes: string, type = 'image/webp'): Promise<string> {
     const hash = await sha256(bytes)
     const put = await call(env, `/v1/blobs/${hash}`, {
@@ -123,7 +107,6 @@ describe('the routes', () => {
     expect(put.status).toBeLessThan(300)
     return hash
   }
-
   beforeEach(async () => {
     env = testEnv()
     owner = await signIn(env, OWNER)
@@ -132,9 +115,7 @@ describe('the routes', () => {
     member = await invite(MEMBER)
     other = await invite(OTHER)
   })
-
   afterEach(() => env.close())
-
   test('a profile is written and read back with the account', async () => {
     const put = await call(env, '/v2/me/profile', {
       method: 'PUT',
@@ -148,7 +129,6 @@ describe('the routes', () => {
       },
     })
     expect(put.status).toBe(200)
-
     const { json } = await call(env, '/v1/me', { token: member })
     expect(json.user).toMatchObject({
       pronouns: 'they/them',
@@ -161,7 +141,6 @@ describe('the routes', () => {
     })
     expect(json.user).not.toHaveProperty('accent')
   })
-
   test('a profile change that is wrong is refused with its sentence', async () => {
     const put = await call(env, '/v2/me/profile', {
       method: 'PUT',
@@ -171,28 +150,23 @@ describe('the routes', () => {
     expect(put.status).toBe(400)
     expect(put.json.error).toBe('use at most 190 characters')
   })
-
   test('is read by the people who share something with them, and by nobody else', async () => {
     const ownerId = await idOf(owner)
     const memberId = await idOf(member)
     const otherId = await idOf(other)
     const strangerId = await idOf(stranger)
     const all = [ownerId, memberId, otherId, strangerId]
-
     const names = async (token: string) => (await seen(token, all)).map((one) => one.id).sort()
-
     expect(await names(owner)).toEqual([ownerId, memberId, otherId].sort())
     expect(await names(member)).toEqual([ownerId, memberId, otherId].sort())
     expect(await names(stranger)).toEqual([strangerId])
   })
-
   test('says a name, never an address', async () => {
     const memberId = await idOf(member)
     const [person] = await seen(owner, [memberId])
     expect(person).toMatchObject({ id: memberId, name: 'member', avatar: null })
     expect(JSON.stringify(person)).not.toContain('@')
   })
-
   test('an invitation not yet opened shows the face to its owner only', async () => {
     const late = await signIn(env, 'late@example.com')
     await mail(() =>
@@ -202,25 +176,20 @@ describe('the routes', () => {
       }),
     )
     const [ownerId, lateId] = await Promise.all([idOf(owner), idOf(late)])
-
     expect((await seen(owner, [lateId])).map((one) => one.id)).toEqual([lateId])
     expect(await seen(late, [ownerId])).toEqual([])
   })
-
   test('a face is two WebP pictures of the account, and the old one is given back', async () => {
     const small = await upload(member, 'small face')
     const large = await upload(member, 'large face')
-
     const put = await call<PeopleReply>(env, '/v2/me/avatar', {
       method: 'PUT',
       token: member,
       body: { s: small, l: large },
     })
     expect(put.json.profile.avatar).toEqual({ s: small, l: large })
-
     const [person] = await seen(owner, [await idOf(member)])
     expect(person?.avatar).toEqual({ s: small, l: large })
-
     const next = [await upload(member, 'small two'), await upload(member, 'large two')]
     await call(env, '/v2/me/avatar', {
       method: 'PUT',
@@ -232,26 +201,21 @@ describe('the routes', () => {
       .all(small, large, ...next)
       .map((row) => (row as { hash: string }).hash)
     expect(held.sort()).toEqual([...next].sort())
-
     const gone = await call<PeopleReply>(env, '/v2/me/avatar', { method: 'DELETE', token: member })
     expect(gone.json.profile.avatar).toBeNull()
     expect(env.db.prepare('select count(*) as n from blobs').get()).toEqual({ n: 0 })
   })
-
   test('signing in again brings the account’s face with it, as reading the account does', async () => {
     const small = await upload(member, 'small face')
     const large = await upload(member, 'large face')
     await call(env, '/v2/me/avatar', { method: 'PUT', token: member, body: { s: small, l: large } })
-
     const logged = await mail(() => call(env, '/v1/auth/code', { body: { email: MEMBER } }))
     const code = /(\d{3}) (\d{3})/.exec(logged)
     const verified = await call<{ user: { avatar: unknown } }>(env, '/v1/auth/verify', {
       body: { email: MEMBER, code: `${code?.[1]}${code?.[2]}` },
     })
-
     expect(verified.json.user.avatar).toEqual({ s: small, l: large })
   })
-
   test('a face given back stays where the account’s own note shows it', async () => {
     const small = await upload(owner, 'small face')
     const large = await upload(owner, 'large face')
@@ -260,15 +224,12 @@ describe('the routes', () => {
       token: owner,
       body: { path: 'me.md', content: `![](https://nibeditor.com/i/${small}.webp)` },
     })
-
     await call(env, '/v2/me/avatar', { method: 'DELETE', token: owner })
-
     expect((await call(env, `/i/${small}.webp`)).status).toBe(200)
     expect(env.db.prepare('select count(*) as n from blobs where hash = ?').get(small)).toEqual({
       n: 1,
     })
   })
-
   test('a face given back that cannot be decided yet is asked about again', async () => {
     const small = await upload(owner, 'small undecided')
     const large = await upload(owner, 'large undecided')
@@ -280,21 +241,17 @@ describe('the routes', () => {
       })
     ).json.note.id
     env.db.prepare('update notes set front_rev = 1 where id = ?').run(old)
-
     await call(env, '/v2/me/avatar', { method: 'DELETE', token: owner })
-
     const queued = env.db
       .prepare('select hash from unused_blobs order by hash')
       .all()
       .map((row) => (row as { hash: string }).hash)
     expect(queued).toEqual([small, large].sort())
   })
-
   test('a face that is not WebP or JPEG, or not this account’s, is refused', async () => {
     const png = await upload(member, 'png bytes', 'image/png')
     const webp = await upload(member, 'webp bytes')
     const theirs = await upload(other, 'their bytes')
-
     for (const body of [
       { s: png, l: webp },
       { s: webp, l: theirs },
@@ -303,7 +260,6 @@ describe('the routes', () => {
       expect(put.status).toBe(400)
       expect(put.json.error).toBe('upload both pictures first')
     }
-
     const bad = await call(env, '/v2/me/avatar', {
       method: 'PUT',
       token: member,
@@ -311,7 +267,6 @@ describe('the routes', () => {
     })
     expect(bad.json.error).toBe('that is not a hash')
   })
-
   test('a nickname is the account’s own in one space, and empty takes it away', async () => {
     const memberId = await idOf(member)
     const set = await call(env, `/v2/spaces/${space}/nick`, {
@@ -320,14 +275,12 @@ describe('the routes', () => {
       body: { nick: '  Lu  ' },
     })
     expect(set.json).toEqual({ nick: 'Lu' })
-
     expect((await call(env, `/v2/spaces/${space}/nicks`, { token: owner })).json).toEqual({
       nicks: { [memberId]: 'Lu' },
     })
     expect((await call<PeopleReply>(env, '/v1/me', { token: member })).json.user.nicks).toEqual({
       [space]: 'Lu',
     })
-
     await call(env, `/v2/spaces/${space}/nick`, {
       method: 'PUT',
       token: member,
@@ -337,7 +290,6 @@ describe('the routes', () => {
       nicks: {},
     })
   })
-
   test('a nickname is nothing to somebody outside the space', async () => {
     const put = await call(env, `/v2/spaces/${space}/nick`, {
       method: 'PUT',
@@ -347,31 +299,25 @@ describe('the routes', () => {
     expect(put.status).toBe(404)
     expect((await call(env, `/v2/spaces/${space}/nicks`, { token: stranger })).status).toBe(404)
   })
-
   test('the switcher is told up to three faces of the others in a shared space', async () => {
     const ownerId = await idOf(owner)
     const memberId = await idOf(member)
     const otherId = await idOf(other)
     const peopleIn = async (token: string) =>
       (await call<PeopleReply>(env, '/v1/spaces', { token })).json.spaces.find((one) => one.id === space)?.people
-
     expect(await peopleIn(owner)).toEqual([memberId, otherId])
     expect(await peopleIn(member)).toEqual([ownerId, otherId])
   })
-
   test('presence says offline for somebody who appears offline, to everybody but them', async () => {
     const memberId = await idOf(member)
     env.db.prepare("insert into presence (user_id, state, at) values (?, 'active', 1)").run(memberId)
-
     const read = async (token: string) =>
       (await call<PeopleReply>(env, `/v2/presence?ids=${memberId}`, { token })).json.presence[memberId]
     expect(await read(owner)).toBe('active')
-
     await call(env, '/v2/me/profile', { method: 'PUT', token: member, body: { hidden: true } })
     expect(await read(owner)).toBe('offline')
     expect(await read(member)).toBe('active')
   })
-
   test('a change is told to every chat open in the spaces the person is in', async () => {
     const memberId = await idOf(member)
     const asked: { chat: string; ask: string | null; who: string | null }[] = []
@@ -394,11 +340,9 @@ describe('the routes', () => {
          values ('c_open', ?, 'user:someone', 1), ('c_elsewhere', 'another-space', 'user:x', 1)`,
       )
       .run(space)
-
     await call(env, '/v2/me/profile', { method: 'PUT', token: member, body: { pronouns: 'he' } })
     expect(asked).toEqual([{ chat: 'c_open', ask: 'profile', who: `user:${memberId}` }])
   })
-
   test('a guest reaches none of it', async () => {
     const link = await call<PeopleReply>(env, `/v1/spaces/${space}/share/link`, {
       method: 'PUT',
@@ -407,12 +351,10 @@ describe('the routes', () => {
     })
     const token = /\/join\/([a-f0-9]+)/.exec(link.json.link.url)?.[1] ?? ''
     const guest = (await call(env, `/v1/join/${token}`, { method: 'POST', body: {} })).json.token
-
     expect((await call(env, '/v2/people?ids=x', { token: guest })).status).toBe(403)
     expect((await call(env, '/v2/me/profile', { method: 'PUT', token: guest, body: {} })).status).toBe(403)
   })
 })
-
 describe('two people each given one note of a space', () => {
   test('are not shown to each other; somebody in the whole space is', async () => {
     const env = testEnv()
@@ -434,7 +376,6 @@ describe('two people each given one note of a space', () => {
       const id = (await call(env, '/v1/me', { token: about })).json.user.id
       return (await call<PeopleReply>(env, `/v2/people?ids=${id}`, { token })).json.people.length
     }
-
     expect(await sees(holder, elsewhere)).toBe(0)
     expect(await sees(elsewhere, holder)).toBe(0)
     expect(await sees(holder, sameNote)).toBe(1)
@@ -443,28 +384,23 @@ describe('two people each given one note of a space', () => {
     env.close()
   })
 })
-
 describe('presence, kept by the hub', () => {
   const USER = 'user-presence'
   const T0 = Date.UTC(2026, 9, 7, 9)
   let env: TestEnv
-
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(T0)
     env = testEnv()
     env.db.prepare('insert into users (id, email, created_at) values (?, ?, 1)').run(USER, 'p@q.r')
   })
-
   afterEach(() => {
     vi.useRealTimers()
     env.close()
   })
-
   const row = () =>
     env.db.prepare('select state, at from presence where user_id = ?').get(USER) as
       { state: string; at: number } | undefined
-
   async function device(made: ReturnType<typeof hub>['hub'], id: string) {
     env.db
       .prepare(
@@ -476,30 +412,24 @@ describe('presence, kept by the hub', () => {
     await send(made, socket, { t: 'hello', device: id, name: id, platform: 'windows', app: '1' })
     return socket
   }
-
   test('is written when it changes, and only then', async () => {
     const { hub: made, state } = hub(env)
-
     const laptop = await device(made, 'device-laptop')
     expect(row()).toEqual({ state: 'active', at: T0 })
-
     vi.setSystemTime(T0 + 1000)
     const phone = await device(made, 'device-phone')
     expect(row()).toEqual({ state: 'active', at: T0 })
-
     vi.setSystemTime(T0 + 2000)
     await send(made, laptop, { t: 'idle' })
     expect(row()?.state).toBe('active')
     await send(made, phone, { t: 'idle' })
     expect(row()).toEqual({ state: 'away', at: T0 + 2000 })
-
     vi.setSystemTime(T0 + 3000)
     await hangUp(made, state, laptop)
     expect(row()?.state).toBe('away')
     await hangUp(made, state, phone)
     expect(row()).toEqual({ state: 'offline', at: T0 + 3000 })
   })
-
   test('is nothing a guest’s socket says', async () => {
     const { hub: made } = hub(env)
     connect(made, { device: 'g', who: 'guest-1', guest: true })

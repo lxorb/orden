@@ -20,63 +20,50 @@ const PICTURES: Picture[] = [
     bytes: new Uint8Array([0xff, 0xd8, 9, 9]),
   },
 ]
-
 const files = bundleFiles(CORPUS, PICTURES)
 const byPath = new Map(files.map((file) => [file.path, file.body]))
-
 const text = () => {
   const body = byPath.get('text.md')
   expect(typeof body).toBe('string')
   return body as string
 }
-
 describe('a TextBundle', () => {
   test('holds its metadata, its text and its pictures, in that order', () => {
     expect(files.map((file) => file.path)).toEqual(['info.json', 'text.md', 'assets/pic.png', 'assets/remote.jpg'])
   })
-
   test('says it is version two of the format, in plain markdown', () => {
     const info = JSON.parse(String(byPath.get('info.json'))) as Record<string, unknown>
-
     expect(info.version).toBe(2)
     expect(info.type).toBe('net.daringfireball.markdown')
     expect(info.transient).toBe(false)
     expect(typeof info.creatorIdentifier).toBe('string')
   })
-
   test('keeps the note whole, front matter and all', () => {
     expect(text().startsWith('---\ntitle: Export corpus')).toBe(true)
     expect(text()).toContain('**bold**')
   })
-
   test('points every picture at the assets folder beside the text', () => {
     expect(text()).toContain('![Pasted picture](assets/pic.png)')
     expect(text()).toContain('![Remote picture](assets/remote.jpg)')
   })
-
   test('carries each picture’s own bytes', () => {
     expect([...(byPath.get('assets/pic.png') as Uint8Array)]).toEqual([0x89, 0x50, 0x4e, 0x47, 1, 2, 3])
     expect([...(byPath.get('assets/remote.jpg') as Uint8Array)]).toEqual([0xff, 0xd8, 9, 9])
   })
-
   test('turns a wikilink into a real link when the caller resolves one', () => {
     const resolved = bundleFiles(CORPUS, [], {
       link: (link) => (link.target === 'Another note' ? 'Another note.md' : null),
     })
-
     expect(String(resolved[1]?.body)).toContain('[Another note](Another%20note.md)')
   })
-
   test('leaves a picture the caller could not read pointing where the note wrote', () => {
     const none = bundleFiles('![A](assets/gone.png)\n', [])
     expect(String(none[1]?.body)).toBe('![A](assets/gone.png)\n')
   })
-
   test('a bundle of a note with no pictures is two files', () => {
     expect(bundleFiles('Just words.\n', []).map((one) => one.path)).toEqual(['info.json', 'text.md'])
   })
 })
-
 describe('a TextPack', () => {
   test('is one zip whose only top-level entry is the bundle folder', async () => {
     const entries = packEntries('Export corpus.textbundle', files)
@@ -86,21 +73,17 @@ describe('a TextPack', () => {
       'Export corpus.textbundle/assets/pic.png',
       'Export corpus.textbundle/assets/remote.jpg',
     ])
-
     const zip = await JSZip.loadAsync(await zipOf(entries))
     const tops = new Set(Object.keys(zip.files).map((path) => path.split('/')[0]))
     expect([...tops]).toEqual(['Export corpus.textbundle'])
   })
-
   test('unzips to the very files the bundle held', async () => {
     const zip = await JSZip.loadAsync(await zipOf(packEntries('N.textbundle', files)))
     const picture = await zip.file('N.textbundle/assets/pic.png')?.async('uint8array')
-
     expect([...(picture ?? [])]).toEqual([0x89, 0x50, 0x4e, 0x47, 1, 2, 3])
     expect(await zip.file('N.textbundle/text.md')?.async('string')).toBe(text())
   })
 })
-
 describe('the zip the packages are built with', () => {
   test('keeps the order it was given, which is what an ePub needs', async () => {
     const zip = await JSZip.loadAsync(
@@ -109,26 +92,21 @@ describe('the zip the packages are built with', () => {
         { path: 'second.txt', body: 'second' },
       ]),
     )
-
     expect(Object.keys(zip.files)).toEqual(['mimetype', 'second.txt'])
   })
-
   test('leaves an entry that asked to be stored uncompressed', async () => {
     const bytes = await zipOf([
       { path: 'mimetype', body: 'application/epub+zip', stored: true },
       { path: 'other.txt', body: 'x'.repeat(400) },
     ])
-
     expect(bytes[8]).toBe(0)
     expect(bytes[9]).toBe(0)
   })
-
   test('writes text as UTF-8', async () => {
     const zip = await JSZip.loadAsync(await zipOf([{ path: 'a.txt', body: 'grüezi 日本語' }]))
     expect(await zip.file('a.txt')?.async('string')).toBe('grüezi 日本語')
   })
 })
-
 describe('a picture however it was written', () => {
   const asked = (source: string, src: string, name: string) =>
     String(
@@ -136,17 +114,14 @@ describe('a picture however it was written', () => {
         (file) => file.path === 'text.md',
       )?.body,
     )
-
   test('an embed stays a picture, in the bundle', () => {
     expect(asked('![[photo.png]]\n', 'photo.png', 'photo.png')).toBe('![](assets/photo.png)\n')
     expect(asked('a ![[photo.png]] b\n', 'photo.png', 'p.png')).toBe('a ![](assets/p.png) b\n')
   })
-
   test('an embed keeps its words, and a size is not words', () => {
     expect(asked('![[photo.png|A cat]]\n', 'photo.png', 'photo.png')).toBe('![A cat](assets/photo.png)\n')
     expect(asked('![[photo.png|300]]\n', 'photo.png', 'photo.png')).toBe('![](assets/photo.png)\n')
   })
-
   test('a name with a hash, a question mark or a percent sign is written so a reader finds it', () => {
     expect(asked('![](<Invoice #2.png>)\n', 'Invoice #2.png', 'Invoice #2.png')).toBe(
       '![](<assets/Invoice %232.png>)\n',
@@ -154,7 +129,6 @@ describe('a picture however it was written', () => {
     expect(asked('![[q?.png]]\n', 'q?.png', 'q?.png')).toBe('![](assets/q%3F.png)\n')
     expect(asked('![](lit%2520.png)\n', 'lit%2520.png', 'lit%20.png')).toBe('![](assets/lit%2520.png)\n')
   })
-
   test('an embed stays a picture when links are resolved too', () => {
     const resolved = bundleFiles(
       '![[photo.png]] and [[Note]]\n',
@@ -165,22 +139,18 @@ describe('a picture however it was written', () => {
       '![](assets/photo.png) and [Note](../elsewhere/x.png)\n',
     )
   })
-
   test('an embed whose picture did not come along is still a link', () => {
     const resolved = bundleFiles('![[gone.png]]\n', [], { link: () => '../gone.png' })
     expect(resolved.find((file) => file.path === 'text.md')?.body).toBe('[gone.png](../gone.png)\n')
   })
-
   test('parentheses in the source', () => {
     expect(asked('![a](photo(1).png)\n', 'photo(1).png', 'photo1.png')).toBe('![a](assets/photo1.png)\n')
     expect(asked('![a](photo(1).png "T")\n', 'photo(1).png', 'photo1.png')).toBe('![a](assets/photo1.png "T")\n')
   })
-
   test('parentheses in the name it lands under', () => {
     expect(asked('![a](x.png)\n', 'x.png', 'photo(1).png')).toBe('![a](assets/photo(1).png)\n')
     expect(asked('![a](x.png)\n', 'x.png', 'photo(1.png')).toBe('![a](<assets/photo(1.png>)\n')
   })
-
   test('a reference definition', () => {
     expect(asked('![x][ref]\n\n[ref]: pic.png\n', 'pic.png', 'p.png')).toBe('![x][ref]\n\n[ref]: assets/p.png\n')
     expect(asked('![ref]\n\n[ref]: <my pic.png> "T"\n', 'my pic.png', 'p.png')).toBe(
@@ -188,14 +158,12 @@ describe('a picture however it was written', () => {
     )
     expect(asked('![x][ref]\n\n> [REF]: pic.png\n', 'pic.png', 'p.png')).toBe('![x][ref]\n\n> [REF]: assets/p.png\n')
   })
-
   test('a definition of something else, a footnote and code are left alone', () => {
     const source = '![x][ref]\n\n[ref]: pic.png\n[other]: else.png\n[^1]: pic.png\n\n```\n[ref]: pic.png\n```\n'
     expect(asked(source, 'pic.png', 'p.png')).toBe(
       '![x][ref]\n\n[ref]: assets/p.png\n[other]: else.png\n[^1]: pic.png\n\n```\n[ref]: pic.png\n```\n',
     )
   })
-
   test.each([
     ['![[photo.png]]\n'],
     ['![a](photo(1).png)\n'],
@@ -211,23 +179,19 @@ describe('a picture however it was written', () => {
     expect(text).toContain('assets/landed.png')
     expect(text).not.toContain(src)
   })
-
   test('a line of a paragraph is not a definition', () => {
     const source = '![x][r]\n\npara\n[r]: pic.png\n'
     expect(asked(source, 'pic.png', 'p.png')).toBe(source)
   })
-
   test('a definition after a blank line, a heading or another definition is', () => {
     expect(asked('# T\n[r]: pic.png\n', 'pic.png', 'p.png')).toBe('# T\n[r]: assets/p.png\n')
     expect(asked('[a]: b.png\n[r]: pic.png\n', 'pic.png', 'p.png')).toBe('[a]: b.png\n[r]: assets/p.png\n')
     expect(asked('> q\n>\n> [r]: pic.png\n', 'pic.png', 'p.png')).toBe('> q\n>\n> [r]: assets/p.png\n')
   })
-
   test('front matter is the note’s own, whatever it looks like', () => {
     const front = '---\nref: "[r]: pic.png"\nalt: ![a](pic.png)\ncover: "![[pic.png]]"\n---\n'
     expect(asked(`${front}\n![a](pic.png)\n`, 'pic.png', 'p.png')).toBe(`${front}\n![a](assets/p.png)\n`)
   })
-
   test('an escaped parenthesis is the parenthesis', () => {
     expect(asked('![x](pic\\(1\\).png)\n', 'pic(1).png', 'p.png')).toBe('![x](assets/p.png)\n')
     expect(asked('![x][r]\n\n[r]: pic\\(1.png\n', 'pic(1.png', 'p.png')).toBe('![x][r]\n\n[r]: assets/p.png\n')

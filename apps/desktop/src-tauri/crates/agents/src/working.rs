@@ -4,20 +4,15 @@ use std::time::Duration;
 use tauri::AppHandle;
 
 pub const VERB: &str = "agent.working_folder";
-
 const KEPT: &str = ".orden";
-
 const WORKING: &str = ".work";
-
 const PATIENCE: Duration = Duration::from_secs(120);
-
 #[derive(Debug, PartialEq, Eq)]
 enum Kept {
     No,
     Store,
     Space,
 }
-
 fn same_name(one: &str, other: &str) -> bool {
     if cfg!(any(windows, target_os = "macos")) {
         one.to_lowercase() == other.to_lowercase()
@@ -25,7 +20,6 @@ fn same_name(one: &str, other: &str) -> bool {
         one == other
     }
 }
-
 fn kept(spaces: &Path, path: &Path) -> Kept {
     let home = spaces.join(KEPT);
     if !orden_base::paths::inside(&home, path) {
@@ -45,7 +39,6 @@ fn kept(spaces: &Path, path: &Path) -> Kept {
         _ => Kept::Store,
     }
 }
-
 pub fn kept_twin(spaces: &Path, path: &Path) -> Option<PathBuf> {
     let rest = orden_base::paths::folded(path)
         .strip_prefix(orden_base::paths::folded(spaces))
@@ -61,7 +54,6 @@ pub fn kept_twin(spaces: &Path, path: &Path) -> Option<PathBuf> {
     let root = spaces.join(KEPT).join(name).join(name);
     root.is_file().then(|| root.join(parts.as_path()))
 }
-
 pub fn on_disk(app: &AppHandle, path: &Path) -> Result<PathBuf, String> {
     let Ok(spaces) = orden_base::paths::spaces_dir(app) else {
         return Ok(path.to_path_buf());
@@ -86,7 +78,6 @@ pub fn on_disk(app: &AppHandle, path: &Path) -> Result<PathBuf, String> {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -98,7 +89,6 @@ mod tests {
         std::fs::create_dir_all(spaces.join(KEPT).join("Notes")).expect("kept");
         std::fs::write(spaces.join(KEPT).join("Notes").join("Notes"), "").expect("root");
         std::fs::create_dir_all(spaces.join("Work")).expect("a folder space");
-
         assert_eq!(
             kept_twin(spaces, &spaces.join("Notes").join("Lists").join("a.pdf")),
             Some(
@@ -114,7 +104,6 @@ mod tests {
         assert_eq!(kept_twin(spaces, &spaces.join(KEPT).join("Notes")), None);
         assert_eq!(kept_twin(spaces, Path::new("/elsewhere/Notes/a.pdf")), None);
     }
-
     #[test]
     fn a_path_of_a_kept_space_is_told_from_its_storage_and_from_the_rest() {
         let spaces = Path::new("/spaces");

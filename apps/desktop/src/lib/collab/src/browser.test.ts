@@ -4,49 +4,39 @@ import { browserName } from './browser'
 const brands = (...names: string[]) => ({
   userAgentData: { brands: names.map((brand) => ({ brand, version: '140' })) },
 })
-
 describe('a browser that says which one it is', () => {
   test('Chrome', () => {
     expect(browserName(brands('Not_A Brand', 'Chromium', 'Google Chrome'))).toBe('Chrome')
   })
-
   test('Edge, which also says Chrome and Chromium', () => {
     expect(browserName(brands('Chromium', 'Not;A=Brand', 'Microsoft Edge'))).toBe('Edge')
   })
-
   test('Brave', () => {
     expect(browserName(brands('Not/A)Brand', 'Brave', 'Chromium'))).toBe('Brave')
   })
-
   test('Opera', () => {
     expect(browserName(brands('Chromium', 'Not=A?Brand', 'Opera'))).toBe('Opera')
   })
-
   test('Samsung Internet', () => {
     expect(browserName(brands('Chromium', 'Not.A/Brand', 'Samsung Internet'))).toBe('Samsung Internet')
   })
-
   test('a Chromium that names nothing else is Chromium', () => {
     expect(browserName(brands('Chromium', 'Not A;Brand'))).toBe('Chromium')
   })
-
   test('one this version has never heard of is called what it calls itself', () => {
     expect(browserName(brands('Chromium', ' Not A;Brand', 'Comet'))).toBe('Comet')
   })
-
   test('a list of nothing but grease falls back to the user agent', () => {
     const chrome =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
     expect(browserName({ ...brands('Not)A;Brand'), userAgent: chrome })).toBe('Chrome')
   })
-
   test('a name that is not a name at all is not taken', () => {
     expect(browserName(brands('<script>'))).toBe(null)
     expect(browserName(brands('a browser with a very long name indeed'))).toBe(null)
     expect(browserName(brands('   '))).toBe(null)
   })
 })
-
 describe('a browser with no brands, read off its user agent', () => {
   const agents: [string, string][] = [
     ['Firefox', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) Gecko/20100101 Firefox/143.0'],
@@ -87,11 +77,9 @@ describe('a browser with no brands, read off its user agent', () => {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Vivaldi/7.5.3735.54',
     ],
   ]
-
   test.each(agents)('%s', (name, userAgent) => {
     expect(browserName({ userAgent })).toBe(name)
   })
-
   test('a browser nothing recognises is left to the caller to name', () => {
     expect(browserName({ userAgent: 'Mozilla/5.0 (compatible; Lynx)' })).toBe(null)
     expect(browserName({})).toBe(null)

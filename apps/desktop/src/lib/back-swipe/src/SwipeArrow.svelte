@@ -5,7 +5,6 @@
   import { swiping } from './shown.svelte'
 
   const { unseen }: { unseen: () => void } = $props()
-
   const seen = $derived(
     swipeChoice.on &&
       swiping.tab !== null &&
@@ -15,12 +14,9 @@
   $effect(() => {
     if (swiping.tab !== null && !seen) unseen()
   })
-
   const EXTRA = 72
   const SIZE = 40
-
   const eased = (t: number) => 1 - (1 - t) ** 3
-
   const reach = $derived.by(() => {
     const progress = Math.max(0, swiping.progress)
     if (swiping.stage === 'stayed' || progress === 0) return 0
@@ -29,23 +25,18 @@
     const far = travel / progress
     return far + EXTRA * eased(Math.min(1, (travel - far) / (EXTRA * 3)))
   })
-
   const whole = (length: number) => {
     const ratio = window.devicePixelRatio || 1
     return Math.round(length * ratio) / ratio
   }
-
   const shift = $derived(swiping.side === 'left' ? reach - SIZE : (swiping.room?.width ?? 0) - reach)
-
   const drop = $derived.by(() => {
     const room = swiping.room
     if (!room) return 0
     return whole(room.y + (room.height - SIZE) / 2) - room.y
   })
   const across = $derived(swiping.room ? whole(swiping.room.x + shift) - swiping.room.x : 0)
-
   const shade = $derived(swiping.stage === 'tracking' ? 1 : 0)
-
   const filled = $derived(Math.min(1, Math.max(0, swiping.progress)))
 </script>
 
@@ -87,7 +78,6 @@
     overflow: hidden;
     pointer-events: none;
   }
-
   .orden-swipe {
     --size: 40px;
     position: absolute;
@@ -104,7 +94,6 @@
     color: var(--accent);
     will-change: transform, opacity;
   }
-
   .arrow {
     width: 24px;
     height: 24px;
@@ -114,11 +103,9 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .orden-swipe.right .arrow {
     transform: scaleX(-1);
   }
-
   .ring {
     position: absolute;
     inset: -1px;
@@ -131,25 +118,20 @@
     stroke-linecap: round;
     stroke-dasharray: 1;
   }
-
   .orden-swipe.right .ring {
     transform: rotate(-90deg);
   }
-
   .armed .ring {
     opacity: 0;
   }
-
   .armed .arrow {
     scale: 1.15;
   }
-
   .orden-swipe.armed {
     border-color: var(--accent);
     background: var(--accent);
     color: var(--accent-ink);
   }
-
   .orden-swipe.went {
     scale: 1.2;
     transition:
@@ -159,15 +141,12 @@
       color var(--dur-base) var(--ease-out),
       border-color var(--dur-base) var(--ease-out);
   }
-
   .went .ring {
     transition: opacity var(--dur-base) var(--ease-out);
   }
-
   .went .arrow {
     transition: scale var(--dur-base) var(--ease-out);
   }
-
   .orden-swipe.stayed {
     transition:
       transform var(--dur-base) var(--ease-out),

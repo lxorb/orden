@@ -25,7 +25,6 @@ export async function vaultDistrust(
   const owners = await ownersFrom(row.id, pinned, row.handovers)
   return (await isProven(row.id, row.keyVersion, key, row.proof, owners)) ? null : 'unproven'
 }
-
 export async function ownersOf(
   me: string | null,
   vault: string,
@@ -34,7 +33,6 @@ export async function ownersOf(
   const pinned = me === null ? null : await pinnedOwnerOf(me, vault, row.accepted ?? null)
   return pinned === null ? [] : await ownersFrom(vault, pinned, row.handovers ?? [])
 }
-
 export async function keptPin(
   me: string | null,
   row: WireVault,

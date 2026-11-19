@@ -16,28 +16,19 @@ use super::reach::{Explored, Use};
 use orden_base::paths::{first_spot, inside, path_key, taken};
 
 const PROGRESS: &str = "explorer://progress";
-
 const FOUND: &str = "explorer://found";
-
 const EVERY: Duration = Duration::from_millis(120);
-
 const CHUNK: usize = 1024 * 1024;
-
 const MOST_FOUND: usize = 5_000;
 const MOST_WALKED: usize = 500_000;
-
 static RUNNING: LazyLock<Mutex<HashMap<String, Arc<AtomicBool>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
-
 static CANCELLED_EARLY: Mutex<VecDeque<String>> = Mutex::new(VecDeque::new());
-
 const MOST_CANCELLED_EARLY: usize = 64;
-
 struct Job {
     id: String,
     stop: Arc<AtomicBool>,
 }
-
 impl Job {
     fn begin(id: &str) -> Self {
         let early = CANCELLED_EARLY.lock().is_ok_and(|mut early| {
@@ -53,12 +44,10 @@ impl Job {
             stop,
         }
     }
-
     fn stopped(&self) -> bool {
         self.stop.load(Ordering::Relaxed)
     }
 }
-
 impl Drop for Job {
     fn drop(&mut self) {
         if let Ok(mut running) = RUNNING.lock() {
@@ -66,7 +55,6 @@ impl Drop for Job {
         }
     }
 }
-
 #[tauri::command]
 pub fn explorer_cancel(job: String) {
     if let Ok(running) = RUNNING.lock() {
@@ -82,14 +70,12 @@ pub fn explorer_cancel(job: String) {
         early.push_back(job);
     }
 }
-
 #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum How {
     Copy,
     Move,
 }
-
 #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Clash {
@@ -97,7 +83,6 @@ pub enum Clash {
     Skip,
     Keep,
 }
-
 #[derive(Serialize, Clone)]
 struct Progress<'a> {
     job: &'a str,
@@ -107,7 +92,6 @@ struct Progress<'a> {
     count: usize,
     name: &'a str,
 }
-
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct Moved {
     pub from: String,
@@ -115,13 +99,11 @@ pub struct Moved {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub stayed: bool,
 }
-
 #[derive(Serialize, Clone, Debug)]
 pub struct Failed {
     pub path: String,
     pub why: String,
 }
-
 #[derive(Serialize, Default, Debug)]
 pub struct Transferred {
     pub done: Vec<Moved>,
@@ -130,7 +112,6 @@ pub struct Transferred {
     pub failed: Vec<Failed>,
     pub cancelled: bool,
 }
-
 #[tauri::command]
 pub async fn explorer_clashes(
     app: AppHandle,
@@ -154,7 +135,6 @@ pub async fn explorer_clashes(
     })
     .await
 }
-
 fn same(one: &Path, other: &Path) -> bool {
     (inside(one, other) && inside(other, one))
         || orden_base::paths::same_entry(one, other)
@@ -164,7 +144,6 @@ fn same(one: &Path, other: &Path) -> bool {
                 (Ok(one), Ok(other)) if one == other
             ))
 }
-
 #[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn explorer_transfer(
@@ -247,14 +226,12 @@ pub async fn explorer_transfer(
     })
     .await
 }
-
 fn failed(path: &Path, why: String) -> Failed {
     Failed {
         path: path.display().to_string(),
         why,
     }
 }
-
 #[cfg(test)]
 fn planned(
     froms: &[PathBuf],
@@ -265,7 +242,6 @@ fn planned(
 ) -> Vec<(PathBuf, PathBuf)> {
     planned_by(froms, folder, &|_| how, clash, out)
 }
-
 fn planned_by(
     froms: &[PathBuf],
     folder: &Path,
@@ -327,7 +303,6 @@ fn planned_by(
     }
     plan
 }
-
 fn weight(path: &Path, running: &Job) -> u64 {
     let Ok(meta) = fs::symlink_metadata(path) else {
         return 0;
@@ -353,12 +328,10 @@ fn weight(path: &Path, running: &Job) -> u64 {
     }
     total
 }
-
 enum Stop {
     Cancelled,
     Failed(String),
 }
-
 struct Meter<'a> {
     app: Option<&'a AppHandle>,
     job: &'a str,
@@ -368,7 +341,6 @@ struct Meter<'a> {
     count: usize,
     said: Option<Instant>,
 }
-
 impl Meter<'_> {
     fn add(&mut self, bytes: u64, name: &str) {
         self.bytes += bytes;
@@ -377,14 +349,12 @@ impl Meter<'_> {
             self.emit(name);
         }
     }
-
     fn say(&mut self, last: bool) {
         if last || self.said.is_none_or(|at| at.elapsed() >= EVERY) {
             self.said = Some(Instant::now());
             self.emit("");
         }
     }
-
     fn emit(&self, name: &str) {
         let Some(app) = self.app else {
             return;
@@ -402,7 +372,6 @@ impl Meter<'_> {
         );
     }
 }
-
 fn carried(from: &Path, to: &Path, how: How, running: &Job, meter: &mut Meter) -> Result<(), Stop> {
     if fs::symlink_metadata(to).is_ok() {
         return Err(Stop::Failed(format!("{} is already there", to.display())));
@@ -427,7 +396,6 @@ fn carried(from: &Path, to: &Path, how: How, running: &Job, meter: &mut Meter) -
     }
     Ok(())
 }
-
 fn copied(
     from: &Path,
     to: &Path,
@@ -486,13 +454,11 @@ fn copied(
     let _ = target.set_permissions(meta.permissions());
     Ok(())
 }
-
 #[derive(Deserialize, Clone, Debug)]
 pub struct Pair {
     pub from: String,
     pub to: String,
 }
-
 #[tauri::command]
 pub async fn explorer_put(
     app: AppHandle,
@@ -532,7 +498,6 @@ pub async fn explorer_put(
     })
     .await
 }
-
 fn put_all(
     judged: Vec<(PathBuf, PathBuf)>,
     how: How,
@@ -573,7 +538,6 @@ fn put_all(
         meter.items += 1;
     }
 }
-
 #[derive(Serialize, Default)]
 pub struct Count {
     pub files: u64,
@@ -581,7 +545,6 @@ pub struct Count {
     pub bytes: u64,
     pub cancelled: bool,
 }
-
 #[tauri::command]
 pub async fn explorer_count(app: AppHandle, job: String, path: String) -> Result<Count, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Count, String> {
@@ -612,27 +575,23 @@ pub async fn explorer_count(app: AppHandle, job: String, path: String) -> Result
     })
     .await
 }
-
 #[derive(Serialize, Clone)]
 pub struct Found {
     pub within: String,
     #[serde(flatten)]
     pub entry: Entry,
 }
-
 #[derive(Serialize, Clone)]
 struct Finding<'a> {
     job: &'a str,
     found: &'a [Found],
 }
-
 #[derive(Serialize, Default)]
 pub struct Searched {
     pub found: usize,
     pub cut: bool,
     pub cancelled: bool,
 }
-
 #[tauri::command]
 pub async fn explorer_search(
     app: AppHandle,
@@ -683,7 +642,6 @@ pub async fn explorer_search(
     })
     .await
 }
-
 fn walk_matching(
     root: &Path,
     query: &str,
@@ -725,7 +683,6 @@ fn walk_matching(
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{
@@ -744,22 +701,18 @@ mod tests {
         fs::write(here.join("a.txt"), "new").expect("a");
         fs::write(there.join("a.txt"), "old").expect("a there");
         let from = vec![here.join("a.txt")];
-
         let mut out = Transferred::default();
         let plan = planned(&from, &there, How::Copy, Clash::Skip, &mut out);
         assert!(plan.is_empty());
         assert_eq!(out.skipped.len(), 1);
-
         let mut out = Transferred::default();
         let plan = planned(&from, &there, How::Copy, Clash::Keep, &mut out);
         assert_eq!(plan, [(here.join("a.txt"), there.join("a 2.txt"))]);
-
         let mut out = Transferred::default();
         let plan = planned(&from, &there, How::Move, Clash::Replace, &mut out);
         assert_eq!(plan, [(here.join("a.txt"), there.join("a.txt"))]);
         assert_eq!(fs::read_to_string(there.join("a.txt")).expect("old"), "old");
     }
-
     #[test]
     fn a_copy_into_its_own_folder_lands_beside_itself_and_a_move_there_is_nothing() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -773,7 +726,6 @@ mod tests {
         );
         assert!(planned(&from, dir.path(), How::Move, Clash::Skip, &mut out).is_empty());
     }
-
     #[cfg(unix)]
     #[test]
     fn a_file_carried_into_its_own_folder_by_another_way_is_never_replaced_by_itself() {
@@ -810,7 +762,6 @@ mod tests {
         );
         assert_eq!(plan, [(docs.clone(), into.join("docs"))]);
     }
-
     #[test]
     fn a_folder_cannot_go_inside_itself() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -826,7 +777,6 @@ mod tests {
         );
         assert!(plan.is_empty());
         assert_eq!(out.failed.len(), 1);
-
         let seen = dir.path().join("seen");
         if orden_base::paths::link_to(&folder, &seen) {
             let mut out = Transferred::default();
@@ -841,7 +791,6 @@ mod tests {
             assert_eq!(out.failed.len(), 1);
         }
     }
-
     #[test]
     fn a_replace_never_puts_away_the_folder_that_holds_what_is_carried() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -863,7 +812,6 @@ mod tests {
         assert!(inner.join("a.jpg").exists());
         assert!(outer.join("kept.txt").exists());
     }
-
     fn meter() -> Meter<'static> {
         Meter {
             app: None,
@@ -875,7 +823,6 @@ mod tests {
             said: None,
         }
     }
-
     #[test]
     fn a_put_back_never_copies_a_folder_into_itself() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -894,7 +841,6 @@ mod tests {
         assert!(out.done.is_empty());
         assert!(!folder.join("deeper").join("f").exists());
     }
-
     #[test]
     fn a_folder_is_copied_whole_and_moved_with_nothing_left_behind() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -917,7 +863,6 @@ mod tests {
         assert!(moved.join("b.txt").is_file());
         assert!(from.join("b.txt").is_file());
     }
-
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn a_folder_with_a_pipe_in_it_is_refused_at_once_and_nothing_is_left_half_copied() {
@@ -942,7 +887,6 @@ mod tests {
         assert!(from.join("a.txt").is_file());
         assert!(from.join("pipe.txt").exists());
     }
-
     #[test]
     fn a_cancelled_copy_takes_away_what_it_wrote() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -957,7 +901,6 @@ mod tests {
         assert!(!to.exists());
         assert!(from.join("a.txt").is_file());
     }
-
     #[test]
     fn a_job_cancelled_before_it_began_begins_stopped_and_only_once() {
         files_tab_cancel_named("test-early");
@@ -968,11 +911,9 @@ mod tests {
         }
         assert!(super::CANCELLED_EARLY.lock().expect("the list").len() <= 64);
     }
-
     fn files_tab_cancel_named(job: &str) {
         super::explorer_cancel(job.to_owned());
     }
-
     #[test]
     fn a_search_finds_names_below_and_keeps_out_of_hidden_folders() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -1002,7 +943,6 @@ mod tests {
         });
         assert_eq!(all, 2);
     }
-
     #[test]
     fn a_copy_that_finds_its_place_taken_says_it_made_nothing() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -1014,7 +954,6 @@ mod tests {
         let (theirs, their_folder) = (dir.path().join("b.txt"), dir.path().join("g"));
         fs::write(&theirs, "theirs").expect("their file");
         fs::create_dir(&their_folder).expect("their folder");
-
         for (from, to) in [(&file, &theirs), (&folder, &their_folder)] {
             let mut made = false;
             assert!(super::copied(from, to, &running, &mut counted, &mut made).is_err());
@@ -1026,7 +965,6 @@ mod tests {
         assert!(made);
         assert_eq!(fs::read_to_string(&theirs).expect("kept"), "theirs");
     }
-
     #[test]
     fn two_things_of_one_name_never_land_on_each_other() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -1041,7 +979,6 @@ mod tests {
         fs::write(one.join("a.txt"), "one").expect("a");
         fs::write(other.join("a.txt"), "other").expect("a");
         let from = vec![one.join("a.txt"), other.join("a.txt")];
-
         for clash in [Clash::Keep, Clash::Replace] {
             let mut out = Transferred::default();
             let plan = planned(&from, &into, How::Move, clash, &mut out);
@@ -1057,7 +994,6 @@ mod tests {
         let plan = planned(&from, &into, How::Move, Clash::Skip, &mut out);
         assert_eq!(plan, [(one.join("a.txt"), into.join("a.txt"))]);
         assert_eq!(out.skipped.len(), 1);
-
         let running = Job::begin("test-land");
         let mut counted = meter();
         let to = into.join("a.txt");

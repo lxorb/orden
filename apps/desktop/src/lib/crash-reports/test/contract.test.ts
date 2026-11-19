@@ -8,7 +8,6 @@ describe('the module stands on its own', () => {
     expect(typeof crashReports.on).toBe('boolean')
   })
 })
-
 describe('what a crash report may carry', () => {
   test('no secret, address or page path leaves the device', () => {
     const text = scrubbedText(
@@ -18,7 +17,6 @@ describe('what a crash report may carry', () => {
     expect(text).not.toContain('anna@example.org')
     expect(text).not.toContain('/login?account=42')
   })
-
   test('an answer is taken only while the question is open', () => {
     crashReports.set(true)
     crashReports.answer(false)

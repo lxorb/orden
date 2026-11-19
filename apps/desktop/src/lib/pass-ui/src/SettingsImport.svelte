@@ -15,12 +15,9 @@
   let busy = $state(false)
   let done = $state<{ added: number; skipped: Imported['skipped'] } | null>(null)
   let picker = $state<HTMLInputElement>()
-
   const accept = $derived(SOURCES.find((one) => one.id === source)?.accept.join(',') ?? '')
   const shown = $derived(SOURCES.find((one) => one.id === source))
-
   let latest = 0
-
   function pick(id: SourceId) {
     source = id
     asked = true
@@ -36,7 +33,6 @@
   }
   const sealed = $derived(file !== null && isSealed(source, file.bytes))
   const counted = $derived(imported?.vaults.reduce((sum, one) => sum + one.items.length, 0) ?? 0)
-
   async function chosen(event: Event) {
     const input = event.currentTarget as HTMLInputElement
     const picked = input.files?.[0]
@@ -54,7 +50,6 @@
     wrong = ''
     if (!isSealed(source, bytes)) await read()
   }
-
   async function read() {
     const reading = file
     if (!reading) return
@@ -71,7 +66,6 @@
       if (file === reading) busy = false
     }
   }
-
   async function brought() {
     if (!imported) return
     busy = true
@@ -205,21 +199,17 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .card.padded {
     padding: var(--space-2) var(--space-3);
   }
-
   .picker {
     display: none;
   }
-
   .sources {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
     gap: var(--space-2);
   }
-
   .source {
     display: flex;
     align-items: center;
@@ -233,15 +223,12 @@
     font-family: var(--font-ui);
     text-align: start;
   }
-
   .source:hover {
     background: var(--surface-hover);
   }
-
   .source.on {
     border-color: var(--accent);
   }
-
   .mark {
     flex: none;
     width: 28px;
@@ -249,52 +236,43 @@
     font-family: var(--font-ui);
     font-weight: 700;
   }
-
   .words {
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
-
   .kinds {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-
   .title {
     overflow-wrap: anywhere;
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
   }
-
   .kinds {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .steps {
     margin: var(--space-2) 0 0;
     font-size: var(--text-sm);
     color: var(--muted-strong);
   }
-
   .orden-section {
     margin: var(--space-3) 0 0;
   }
-
   .meta {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   .buttons {
     display: flex;
     justify-content: flex-end;
     padding-top: var(--space-2);
   }
-
   .added {
     margin: 0 0 var(--space-1);
     font-weight: var(--weight-strong);

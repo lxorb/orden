@@ -11,29 +11,22 @@ interface Setting {
   write: (value: unknown, call: Call) => Change | Promise<Change>
   choices?: readonly string[]
 }
-
 type Change = () => unknown
-
 function oneOf<T extends string>(value: unknown, choices: readonly T[], name: string): T {
   const found = choices.find((one) => one === value)
   if (found === undefined) throw new Refused('bad_arguments', `${name} is one of ${choices.join(', ')}`)
-
   return found
 }
-
 function isOn(value: unknown, name: string): boolean {
   if (typeof value === 'boolean') return value
   throw new Refused('bad_arguments', `${name} is true or false`)
 }
-
 function numberIn(value: unknown, choices: readonly number[], name: string): number {
   const said = Number(value)
   const found = choices.find((one) => Math.abs(one - said) < 1e-9)
   if (found === undefined) throw new Refused('bad_arguments', `${name} is one of ${choices.join(', ')}`)
-
   return found
 }
-
 function toggled(read: () => boolean, toggle: () => void, about: string): Setting {
   return {
     about,
@@ -46,7 +39,6 @@ function toggled(read: () => boolean, toggle: () => void, about: string): Settin
     },
   }
 }
-
 const SETTINGS: Record<string, Setting> = {
   theme: {
     about: 'the theme, by id',
@@ -131,12 +123,10 @@ const SETTINGS: Record<string, Setting> = {
     },
   },
 }
-
 async function rows(): Promise<Field[]> {
   const { declarations } = await settingDeclarations()
   return declarations()
 }
-
 async function declaredSetting(key: string, all: Field[]): Promise<Setting | null> {
   const { refusal, schemaOf } = await settingSchema()
   const named = all.filter((one) => one.key === key)
@@ -148,7 +138,6 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
     open?.kind === 'select' && open.options.length
       ? { ...declared, enum: open.options.map((one) => one.value) }
       : declared
-
   const read = () =>
     schema.type === 'list'
       ? named.filter((one) => one.kind === 'switch' && one.get()).map((one) => one.member)
@@ -166,7 +155,6 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
         named.map((one) => (typeof value === 'string' ? (one.check?.(value) ?? null) : null)).find(Boolean) ??
         null
       if (why !== null) throw new Refused('bad_arguments', `${key} ${why}`)
-
       return () => {
         if (schema.type === 'list') {
           const listed = value as string[]
@@ -179,12 +167,10 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
     },
   }
 }
-
 function put(field: Field, value: unknown): void {
   const one = field as unknown as { get(): unknown; set(value: unknown): void }
   if (one.get() !== value) one.set(value)
 }
-
 async function settingOf(call: Call): Promise<{ key: string; setting: Setting }> {
   const key = need(call, 'key')
   const setting =
@@ -195,10 +181,8 @@ async function settingOf(call: Call): Promise<{ key: string; setting: Setting }>
       `${key} is no setting: name one as the settings file does (appearance.accent), list a pane's with its name (appearance, editor, general), or use ${Object.keys(SETTINGS).join(', ')}`,
     )
   }
-
   return { key, setting }
 }
-
 async function paneOf(prefix: string, call: Call): Promise<AgentAnswer | null> {
   const all = await rows()
   const keys = [...new Set(all.map((one) => one.key ?? '').filter((one) => one.startsWith(`${prefix}.`)))]
@@ -216,7 +200,6 @@ async function paneOf(prefix: string, call: Call): Promise<AgentAnswer | null> {
   }
   return done({ pane: prefix, settings: listed })
 }
-
 export async function readSetting(call: Call): Promise<AgentAnswer> {
   const named = need(call, 'key')
   if (!named.includes('.') && !Object.hasOwn(SETTINGS, named)) {
@@ -231,19 +214,15 @@ export async function readSetting(call: Call): Promise<AgentAnswer> {
     ...(setting.choices ? { choices: setting.choices } : {}),
   })
 }
-
 export async function writeSetting(call: Call): Promise<AgentAnswer> {
   const { key, setting } = await settingOf(call)
   if (!('value' in call.args)) throw new Refused('bad_arguments', 'say the value')
-
   const value = call.args.value
   const was = await setting.read(call)
   if (JSON.stringify(was) === JSON.stringify(value)) return done({ key, value, changed: false })
-
   const change = await setting.write(value, call)
   const question = await asked(call, 'settings', `Change ${key} to ${JSON.stringify(value)}`)
   if (question) return question
-
   await change()
   return done({ key, value: await setting.read(call), changed: true })
 }

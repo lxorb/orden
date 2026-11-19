@@ -16,7 +16,6 @@ export async function makeApplication(): Promise<Tab | null> {
   }
   const root = workspace.activeSpace?.root
   if (!root || !canWriteAt(root)) return null
-
   const { request } = await import('../../accounts/src/api')
   const { prompt } = await import('../../ui-kit/src/api')
   const listed = await request<{ devices?: Computer[] }>('/v2/devices', { token }).catch(() => null)
@@ -28,13 +27,11 @@ export async function makeApplication(): Promise<Tab | null> {
     })
     return null
   }
-
   const host = await prompt.choose({
     title: 'Where does it run?',
     options: hostChoices(computers, (device) => `${device} (this device)`),
   })
   if (!host) return null
-
   const here = computers.find((one) => one.id === host)?.current ?? false
   const installed = await installedOn(host, here, token)
   let run: AppRun | null = null
@@ -68,7 +65,6 @@ export async function makeApplication(): Promise<Tab | null> {
     if (!program) return null
     run = { kind: 'path', ...program, cwd: null }
   }
-
   const name = (run.kind === 'installed' ? run.name : nameOf(run.path).replace(/\.(exe|app)$/i, '')) || 'Application'
   const path = joinPath(root, await workspace.freeNameOnDisk(root, `${name}.application`))
   await writeFile(path, appFileText({ v: 1, host, run }))
@@ -77,9 +73,7 @@ export async function makeApplication(): Promise<Tab | null> {
   void workspace.loadTree()
   return tab
 }
-
 const ANOTHER = '\u0000another'
-
 async function installedOn(host: string, here: boolean, token: string): Promise<Installed[]> {
   if (here) {
     const { invoke, isDesktop } = await import('../../platform/src/api')

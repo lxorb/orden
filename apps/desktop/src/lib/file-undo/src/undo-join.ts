@@ -4,7 +4,6 @@ import { samePath } from '../../platform/src/api'
 import type { FileAction, FileActions } from './undo.svelte'
 
 type Replaced = Extract<FileAction, { kind: 'replace' }>['notes'][number]
-
 export function joinedAction(earlier: FileAction | undefined, notes: readonly Replaced[]): FileAction | null {
   if (earlier?.kind !== 'replace') return null
   const next = [...earlier.notes]
@@ -22,7 +21,6 @@ export function joinedAction(earlier: FileAction | undefined, notes: readonly Re
   }
   return { kind: 'replace', notes: next }
 }
-
 export function joinLast(undone: FileActions): boolean {
   const last = undone.stack.at(-1)
   if (last?.kind !== 'replace') return false
@@ -31,7 +29,6 @@ export function joinLast(undone: FileActions): boolean {
   undone.stack = [...undone.stack.slice(0, -2), action]
   return true
 }
-
 export function gatheredAction(earlier: FileAction | undefined, notes: readonly Replaced[]): FileAction | null {
   if (earlier?.kind !== 'replace') return null
   const mine = notes.filter((note) => earlier.notes.some((one) => samePath(one.path, note.path)))
@@ -40,7 +37,6 @@ export function gatheredAction(earlier: FileAction | undefined, notes: readonly 
   const rest = notes.filter((note) => !mine.includes(note))
   return { kind: 'replace', notes: [...joined.notes, ...rest] }
 }
-
 export function gatherLast(undone: FileActions): boolean {
   const last = undone.stack.at(-1)
   if (last?.kind !== 'replace') return false

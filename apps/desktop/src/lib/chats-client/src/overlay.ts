@@ -5,14 +5,12 @@ import type { OutboxRow } from './cache'
 import { fold, type Kept } from './fold'
 
 export type Filter = (message: Message) => boolean
-
 function aboutOf(row: OutboxRow): string[] {
   const event = row.event
   if (event.kind === 'post') return [event.message]
   if (event.kind === 'schedule' || event.kind === 'meta') return []
   return [event.target]
 }
-
 export async function overlay(
   placed: readonly Kept[],
   outbox: readonly OutboxRow[],
@@ -23,7 +21,6 @@ export async function overlay(
   const posted: string[] = []
   const sending = new Set<string>()
   const refusals = new Map<string, Refusal>()
-
   let seq = Number.MAX_SAFE_INTEGER - outbox.length - 1
   for (const row of outbox) {
     seq += 1
@@ -46,7 +43,6 @@ export async function overlay(
       known.set(one.message.id, one)
     }
   }
-
   const shown = (message: Message): Shown => ({
     ...message,
     sending: sending.has(message.id),

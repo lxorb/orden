@@ -10,7 +10,6 @@ const EFFORTS: Record<Effort, string> = {
   xhigh: 'Extra',
   max: 'Max',
 }
-
 export function effortWord(effort: Effort): string {
   return EFFORTS[effort]
 }

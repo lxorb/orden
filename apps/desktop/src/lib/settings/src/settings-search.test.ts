@@ -74,15 +74,12 @@ const panes: Pane[] = [
     ],
   },
 ]
-
 const places: Place[] = [
   { section: 'account', label: 'Storage', text: ['used', 'limit'] },
   { section: 'export', label: 'Export as PDF', text: [] },
 ]
-
 const labels = (query: string) =>
   search(query, panes, places).map((hit) => (hit.kind === 'field' ? hit.field.label : hit.label))
-
 describe('searching the settings', () => {
   test.each([
     ['wait', ['Wait before saving']],
@@ -99,7 +96,6 @@ describe('searching the settings', () => {
   ])('finds %j by name, group, choice, unit, explanation or a word on a hand-written pane', (query, found) => {
     expect(labels(query)).toEqual(found)
   })
-
   test('finds a field by the pane it lives in, and says which pane a hit belongs to', () => {
     expect(labels('general')).toHaveLength(5)
     const [hit] = search('pdf', panes, places)
@@ -108,10 +104,8 @@ describe('searching the settings', () => {
     expect(field?.kind === 'field' ? field.pane.id : null).toBe('general')
   })
 })
-
 describe('the hand-written panes the search knows about', () => {
   const source = readFileSync(join(import.meta.dirname, './places.ts'), 'utf8')
-
   test('name how long the account keeps a note’s history, and the rescue under it', () => {
     expect(source).toContain("label: 'History on the account'")
     expect(source).toContain("'Keep versions'")

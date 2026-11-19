@@ -7,14 +7,12 @@ pub enum Kind {
     Packed,
     Any,
 }
-
 #[derive(Debug)]
 pub struct Column {
     pub name: &'static str,
     pub kind: Kind,
     pub required: bool,
 }
-
 #[derive(Debug)]
 pub struct Table {
     pub name: &'static str,
@@ -23,7 +21,6 @@ pub struct Table {
     pub order: &'static str,
     pub columns: &'static [Column],
 }
-
 const fn maybe(name: &'static str, kind: Kind) -> Column {
     Column {
         name,
@@ -31,7 +28,6 @@ const fn maybe(name: &'static str, kind: Kind) -> Column {
         required: false,
     }
 }
-
 const fn always(name: &'static str, kind: Kind) -> Column {
     Column {
         name,
@@ -39,7 +35,6 @@ const fn always(name: &'static str, kind: Kind) -> Column {
         required: true,
     }
 }
-
 pub const TABLES: [Table; 10] = [
     Table {
         name: "meta",
@@ -162,14 +157,12 @@ pub const TABLES: [Table; 10] = [
         ],
     },
 ];
-
 pub fn table(name: &str) -> Result<&'static Table, String> {
     TABLES
         .iter()
         .find(|one| one.name == name)
         .ok_or_else(|| format!("the sync store has no table {name}"))
 }
-
 impl Table {
     pub fn column(&self, name: &str) -> Result<&'static Column, String> {
         self.columns
@@ -177,12 +170,10 @@ impl Table {
             .find(|one| one.name == name)
             .ok_or_else(|| format!("{} has no column {name}", self.name))
     }
-
     pub fn keyed(&self) -> Result<&'static str, String> {
         self.key
             .ok_or_else(|| format!("{} rows have no key to find one by", self.name))
     }
-
     pub fn listed(&self) -> String {
         self.columns
             .iter()
@@ -191,7 +182,6 @@ impl Table {
             .join(", ")
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{table, Kind, TABLES};
@@ -202,7 +192,6 @@ mod tests {
     fn the_list_is_what_the_migrations_make() {
         let conn = Connection::open_in_memory().expect("a store in memory");
         migrated(&conn).expect("the migrations");
-
         for one in &TABLES {
             let mut asked = conn
                 .prepare(&format!("pragma table_info({})", one.name))
@@ -219,11 +208,9 @@ mod tests {
                 .expect("its columns")
                 .collect::<Result<_, _>>()
                 .expect("every column");
-
             let names: Vec<&str> = made.iter().map(|(name, ..)| name.as_str()).collect();
             let listed: Vec<&str> = one.columns.iter().map(|column| column.name).collect();
             assert_eq!(names, listed, "{}", one.name);
-
             for (column, (name, declared, not_null, key)) in one.columns.iter().zip(&made) {
                 assert_eq!(column.required, *not_null || *key, "{}.{name}", one.name);
                 assert_eq!(one.key == Some(column.name), *key, "{}.{name}", one.name);
@@ -235,7 +222,6 @@ mod tests {
                 assert!(fits, "{}.{name} is {declared}", one.name);
             }
         }
-
         let count: i64 = conn
             .query_row(
                 "select count(*) from sqlite_master where type = 'table'",
@@ -245,7 +231,6 @@ mod tests {
             .expect("the tables");
         assert_eq!(usize::try_from(count).ok(), Some(TABLES.len()));
     }
-
     #[test]
     fn a_name_nobody_made_is_refused() {
         assert!(table("docs").is_ok());

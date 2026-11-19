@@ -22,12 +22,10 @@ export interface HoldsSpaces {
   loadTree(): Promise<void>
   persist(): void
 }
-
 async function withKept(ahead: { name: string; path: string }[]): Promise<{ name: string; path: string }[]> {
   if (!isDesktop) return ahead
   return await listedWith(ahead).catch(() => ahead)
 }
-
 export async function loadSpaces(ws: HoldsSpaces) {
   let found: { name: string; path: string }[] | null = null
   let before = ws.spaces
@@ -46,7 +44,6 @@ export async function loadSpaces(ws: HoldsSpaces) {
     const { leftByAnother } = await import('../../left-spaces/src/api')
     found = found.filter((one) => !leftByAnother(one.path, who))
   }
-
   const had = new Set(before.map((space) => space.root))
   const has = new Set(ws.spaces.map((space) => space.root))
   const listed = new Set(found.map((entry) => entry.path))
@@ -56,17 +53,13 @@ export async function loadSpaces(ws: HoldsSpaces) {
       .filter((space) => !had.has(space.root) && !listed.has(space.root))
       .map((space) => ({ name: space.name, path: space.root })),
   ]
-
   const byRoot = new Map(ws.spaces.map((space) => [space.root, space]))
-
   const rank = new Map(ws.spaces.map((space, index) => [space.root, index]))
   const at = (root: string) => rank.get(root) ?? Number.MAX_SAFE_INTEGER
-
   ws.spaces = found
     .map((entry, index) => ({ entry, index }))
     .sort((a, b) => at(a.entry.path) - at(b.entry.path) || a.index - b.index)
     .map(({ entry }) => byRoot.get(entry.path) ?? { id: identifier(), name: entry.name, root: entry.path })
-
   const gone = ws.activeSpaceId
   if (ws.spaces.some((space) => space.id === gone)) return
   const next = ws.spaces[0]?.id ?? null
@@ -78,55 +71,42 @@ export async function loadSpaces(ws: HoldsSpaces) {
   await sets.toSpace(next)
   await sets.gone(gone)
 }
-
 export function moveSpace(ws: HoldsSpaces, id: string, beforeId: string | null): boolean {
   const moving = ws.spaces.find((space) => space.id === id)
   if (!moving || id === beforeId) return false
-
   const rest = ws.spaces.filter((space) => space.id !== id)
   const at = beforeId ? rest.findIndex((space) => space.id === beforeId) : rest.length
   if (at < 0) return false
-
   const next = [...rest.slice(0, at), moving, ...rest.slice(at)]
   if (sameOrder(ws, next)) return false
-
   ws.spaces = next
   ws.persist()
   return true
 }
-
 function sameOrder(ws: HoldsSpaces, next: readonly Space[]): boolean {
   return next.every((space, index) => space.id === ws.spaces[index]?.id)
 }
-
 export function applySpaceOrder(ws: HoldsSpaces, roots: string[]): boolean {
   const at = (root: string) => {
     const index = roots.findIndex((one) => samePath(one, root))
     return index < 0 ? Number.MAX_SAFE_INTEGER : index
   }
-
   const next = ws.spaces
     .map((space, index) => ({ space, index }))
     .sort((a, b) => at(a.space.root) - at(b.space.root) || a.index - b.index)
     .map((entry) => entry.space)
-
   if (sameOrder(ws, next)) return false
-
   ws.spaces = next
   ws.persist()
   return true
 }
-
 export const TABS_KEY = 'orden:space-tabs'
-
 export const tabSets = { fetched: false }
-
 export async function selectSpace(ws: HoldsSpaces, id: string) {
   if (tabSets.fetched || ws.tabs.length) {
     const { sets } = await import('./sets.svelte')
     return sets.toSpace(id)
   }
-
   ws.activeSpaceId = id
   ws.clearSelection()
   await ws.loadTree()

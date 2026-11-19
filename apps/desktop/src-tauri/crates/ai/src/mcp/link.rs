@@ -13,19 +13,12 @@ use super::results::Outcome;
 use orden_agents::grants::Grant;
 
 const PAIRING_WAIT: Duration = Duration::from_secs(20);
-
 const LOOK_EVERY: Duration = Duration::from_secs(2);
-
 const PATIENCE: Duration = Duration::from_secs(150);
-
 const APPROVAL_WAIT: Duration = Duration::from_secs(7 * 60);
-
 const APPROVAL_LOOK: Duration = Duration::from_millis(400);
-
 const HELPER_WAIT: Duration = Duration::from_secs(9 * 60);
-
 const WINDOW_WAIT: Duration = Duration::from_secs(5);
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Standing {
     Connecting,
@@ -35,19 +28,16 @@ pub enum Standing {
     Unreachable(String),
     Paired,
 }
-
 #[derive(Clone, Debug)]
 pub struct Seen {
     pub standing: Standing,
     pub grant: Option<Grant>,
     pub window: Option<BTreeSet<String>>,
 }
-
 enum Refusal {
     Unknown,
     Unreachable(String),
 }
-
 #[derive(Default)]
 struct Held {
     standing: Option<Standing>,
@@ -56,7 +46,6 @@ struct Held {
     grant: Option<Grant>,
     window: Option<BTreeSet<String>>,
 }
-
 pub struct Link {
     dir: Option<PathBuf>,
     pub client: Client,
@@ -65,7 +54,6 @@ pub struct Link {
     changed: Condvar,
     heard: Box<dyn Fn() + Send + Sync>,
 }
-
 impl Link {
     pub fn open(client: Client, heard: impl Fn() + Send + Sync + 'static) -> Arc<Self> {
         let link = Arc::new(Link {
@@ -80,16 +68,13 @@ impl Link {
         std::thread::spawn(move || running.run());
         link
     }
-
     fn paired(&self) -> Option<(Endpoint, Kept)> {
         let held = self.held();
         Some((held.endpoint.clone()?, held.kept.clone()?))
     }
-
     fn held(&self) -> MutexGuard<'_, Held> {
         self.held.held()
     }
-
     fn seen_now(&self) -> Seen {
         let held = self.held();
         Seen {
@@ -98,7 +83,6 @@ impl Link {
             window: held.window.clone(),
         }
     }
-
     pub fn seen(&self, patience: Duration, through_asking: bool) -> Seen {
         let started = Instant::now();
         let mut held = self.held();
@@ -119,22 +103,18 @@ impl Link {
         drop(held);
         self.seen_now()
     }
-
     fn change(&self, change: impl FnOnce(&mut Held)) {
         change(&mut self.held());
         self.changed.notify_all();
         (self.heard)();
     }
-
     fn settle(&self, standing: Standing) {
         self.change(|held| held.standing = Some(standing));
     }
-
     fn ended(&self, standing: Standing) -> bool {
         self.settle(standing);
         false
     }
-
     fn run(&self) {
         let Some(dir) = self.dir.clone() else {
             self.settle(Standing::Unreachable(
@@ -148,7 +128,6 @@ impl Link {
         }
         self.watch(&dir);
     }
-
     fn reach(&self, dir: &Path, endpoint: Endpoint) {
         self.change(|held| {
             held.endpoint = Some(endpoint.clone());
@@ -159,7 +138,6 @@ impl Link {
             self.settle(Standing::Paired);
         }
     }
-
     fn pair(&self, dir: &Path, endpoint: &Endpoint) -> bool {
         if let Some(token) = handed() {
             return self.prove_handed(endpoint, token);
@@ -180,7 +158,6 @@ impl Link {
                     }
                 }
             }
-
             let asked = json!({
                 "verb": "agent_pair",
                 "args": {
@@ -227,7 +204,6 @@ impl Link {
             }
         }
     }
-
     fn prove_handed(&self, endpoint: &Endpoint, token: String) -> bool {
         match grant_of(endpoint, &token, &self.session) {
             Ok(grant) => {
@@ -244,7 +220,6 @@ impl Link {
             Err(Refusal::Unreachable(why)) => self.ended(Standing::Unreachable(why)),
         }
     }
-
     fn ask_window(&self, endpoint: &Endpoint, patience: Duration) {
         let started = Instant::now();
         loop {
@@ -273,7 +248,6 @@ impl Link {
             std::thread::sleep(Duration::from_millis(500));
         }
     }
-
     fn watch(&self, dir: &Path) {
         let automation = dir.join("automation.json");
         let grants = dir.join("agents.json");
@@ -281,7 +255,6 @@ impl Link {
         let mut granted = modified(&grants);
         loop {
             std::thread::sleep(LOOK_EVERY);
-
             let now = modified(&automation);
             if now != launched {
                 launched = now;
@@ -292,7 +265,6 @@ impl Link {
                 granted = now;
                 self.regrant();
             }
-
             let seen = self.seen_now();
             if seen.standing == Standing::Paired && seen.window.is_none() {
                 let endpoint = self.held().endpoint.clone();
@@ -302,7 +274,6 @@ impl Link {
             }
         }
     }
-
     fn relaunched(&self, dir: &Path) {
         let Some(now) = app::endpoint(dir) else {
             return;
@@ -315,7 +286,6 @@ impl Link {
             _ => self.reach(dir, now),
         }
     }
-
     fn regrant(&self) {
         let Some((endpoint, kept)) = self.paired() else {
             return;
@@ -330,7 +300,6 @@ impl Link {
             Err(Refusal::Unreachable(_)) => {}
         }
     }
-
     fn removed(&self) {
         if let (Some(dir), None) = (&self.dir, handed()) {
             pairing::forget(dir, &self.client);
@@ -341,7 +310,6 @@ impl Link {
             held.standing = Some(Standing::Removed);
         });
     }
-
     pub fn call(&self, verb: &str, args: &Value) -> Outcome {
         let outcome = self.call_once(verb, args);
         if verb == "run_agent" || verb == "agent_result" {
@@ -359,7 +327,6 @@ impl Link {
             None => outcome,
         }
     }
-
     fn helped(&self, mut outcome: Outcome) -> Outcome {
         let started = Instant::now();
         while let Some(agent) = super::results::still_working(&outcome) {
@@ -370,7 +337,6 @@ impl Link {
         }
         outcome
     }
-
     fn answered(&self, approval: &str) -> Option<bool> {
         let started = Instant::now();
         while started.elapsed() < APPROVAL_WAIT {
@@ -387,7 +353,6 @@ impl Link {
         }
         None
     }
-
     fn call_once(&self, verb: &str, args: &Value) -> Outcome {
         let Some((endpoint, kept)) = self.paired() else {
             return Outcome::failed("not_paired", self.sentence());
@@ -421,14 +386,12 @@ impl Link {
         }
         Outcome::from_endpoint(said.status, &said.body)
     }
-
     pub fn bye(&self) {
         if let Some((endpoint, kept)) = self.paired() {
             let asked = json!({ "verb": "agent_bye", "args": {}, "session": self.session });
             let _ = app::post(&endpoint, Some(&kept.token), &asked, Duration::from_secs(3));
         }
     }
-
     pub fn sentence(&self) -> String {
         let name = &self.client.name;
         match self.seen_now().standing {
@@ -447,7 +410,6 @@ impl Link {
         }
     }
 }
-
 fn fresh_session() -> String {
     let mut bytes = [0_u8; 16];
     if getrandom::fill(&mut bytes).is_err() {
@@ -459,17 +421,14 @@ fn fresh_session() -> String {
     }
     hex
 }
-
 fn patience_for(verb: &str, args: &Value) -> Duration {
     PATIENCE + orden_agents::endpoint::declared_wait(verb, args)
 }
-
 fn handed() -> Option<String> {
     std::env::var("ORDEN_MCP_TOKEN")
         .ok()
         .filter(|token| !token.is_empty() && token.bytes().all(|one| one.is_ascii_alphanumeric()))
 }
-
 fn thread_handed() -> Option<String> {
     std::env::var(THREAD_VAR).ok().filter(|thread| {
         !thread.is_empty()
@@ -479,9 +438,7 @@ fn thread_handed() -> Option<String> {
                 .all(|one| one.is_ascii_alphanumeric() || one == b'-' || one == b'_')
     })
 }
-
 const THREAD_VAR: &str = "ORDEN_MCP_THREAD";
-
 fn grant_of(endpoint: &Endpoint, token: &str, session: &str) -> Result<Grant, Refusal> {
     let asked = json!({ "verb": "agent_status", "args": {}, "session": session });
     let said = app::post(endpoint, Some(token), &asked, Duration::from_secs(10))
@@ -499,15 +456,12 @@ fn grant_of(endpoint: &Endpoint, token: &str, session: &str) -> Result<Grant, Re
         Outcome::Asked { .. } => Err(Refusal::Unreachable("Orden asked instead".to_owned())),
     }
 }
-
 fn unreachable(error: &std::io::Error) -> String {
     format!("Orden is not running or did not answer ({error}); ask the reader to open Orden, then call again")
 }
-
 fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|one| one.modified()).ok()
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -519,7 +473,6 @@ mod tests {
         let asked = json!({ "verb": "agent_bye", "session": one });
         assert_eq!(orden_agents::session_of(&asked), one);
     }
-
     #[test]
     fn a_call_waits_on_orden_longer_than_orden_waits_on_its_window() {
         for (verb, args) in [

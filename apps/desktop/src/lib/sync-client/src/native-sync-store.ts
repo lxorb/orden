@@ -15,7 +15,6 @@ import {
 
 export async function openNative(account: string, lead = false, device?: string): Promise<SyncStore> {
   const opened = openedOf(await invoke('sync_store_open', { account, lead, device }))
-
   return {
     opened,
     async read<const Q extends readonly Query[]>(queries: Q): Promise<Answers<Q>> {
@@ -34,16 +33,13 @@ export async function openNative(account: string, lead = false, device?: string)
     close: () => invoke('sync_store_close'),
   }
 }
-
 export async function deviceNative(account: string): Promise<string | null> {
   const device = await invoke<unknown>('sync_store_device', { account })
   return typeof device === 'string' ? device : null
 }
-
 export function forgetNative(account: string): Promise<void> {
   return invoke('sync_store_forget', { account })
 }
-
 export function bytesOf(raw: unknown): Uint8Array {
   if (raw instanceof Uint8Array) return raw
   if (raw instanceof ArrayBuffer) return new Uint8Array(raw)

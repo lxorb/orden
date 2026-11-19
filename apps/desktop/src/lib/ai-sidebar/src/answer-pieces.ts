@@ -1,9 +1,7 @@
 const AT_ONCE = 40_000
 const PIECE = 6_000
 const AT_A_STEP = 2
-
 type Later = (run: () => void) => () => void
-
 const soon: Later = (run) => {
   let timer: ReturnType<typeof setTimeout> | undefined
   const frame = requestAnimationFrame(() => (timer = setTimeout(run, 0)))
@@ -12,28 +10,23 @@ const soon: Later = (run) => {
     clearTimeout(timer)
   }
 }
-
 interface Drawing {
   node: HTMLElement
   pieces: Node[][]
   next: number
   box?: Element | null
 }
-
 interface Turn {
   drawings: Set<Drawing>
   stop: (() => void) | null
 }
-
 const turns = new Map<Later, Turn>()
-
 function scrollerOf(node: Element): Element | null {
   for (let at = node.parentElement; at; at = at.parentElement) {
     if (/(auto|scroll)/.test(getComputedStyle(at).overflowY)) return at
   }
   return null
 }
-
 function piecesOf(nodes: readonly Node[], most = PIECE): Node[][] {
   const pieces: Node[][] = []
   let piece: Node[] = []
@@ -52,7 +45,6 @@ function piecesOf(nodes: readonly Node[], most = PIECE): Node[][] {
   if (piece.length) pieces.push(piece)
   return pieces
 }
-
 function step(drawings: readonly Drawing[]): void {
   for (const one of drawings) one.box ??= scrollerOf(one.node)
   const boxes = new Map<Element, { below: number; above: Drawing[]; rest: number }>()
@@ -79,7 +71,6 @@ function step(drawings: readonly Drawing[]): void {
     box.scrollTop += grew
   }
 }
-
 function schedule(later: Later): void {
   const turn = turns.get(later)
   if (!turn || turn.stop) return
@@ -95,7 +86,6 @@ function schedule(later: Later): void {
     else turns.delete(later)
   })
 }
-
 export function drawInPieces(node: HTMLElement, html: string, later: Later = soon): () => void {
   if (html.length <= AT_ONCE) {
     node.innerHTML = html

@@ -14,11 +14,8 @@ export class Refused extends Error {
     super(message)
   }
 }
-
 const OCTETS = 'application/octet-stream'
-
 export const FULL = 507
-
 function pathOf(route: Route, space: string, body: unknown): string {
   const at = encodeURIComponent(space)
   switch (route) {
@@ -35,14 +32,12 @@ function pathOf(route: Route, space: string, body: unknown): string {
       return `/v2/docs/${route}`
   }
 }
-
 export interface Reaching {
   base: string
   token: () => string | null
   device: () => string
   fetch: (request: Request) => Promise<Response>
 }
-
 export function accountOver(reaching: Reaching): Account {
   return {
     async ask(route, body, space) {
@@ -59,7 +54,6 @@ export function accountOver(reaching: Reaching): Account {
         },
         ...(reading ? {} : { body: new Uint8Array(frame(body)) }),
       })
-
       let response: Response
       try {
         response = await reaching.fetch(request)
@@ -76,7 +70,6 @@ export function accountOver(reaching: Reaching): Account {
     },
   }
 }
-
 export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 'replace' | 'have'> {
   const send = async (path: string, init: RequestInit, full = false): Promise<Response | null> => {
     const token = reaching.token()
@@ -92,7 +85,6 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       return null
     }
   }
-
   return {
     async up(hash, bytes) {
       const response = await send(
@@ -146,12 +138,10 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
     },
   }
 }
-
 export interface Reading {
   index(space: string, ids: readonly string[]): Promise<IndexItem[] | 'missing' | null>
   search(space: string, request: SearchRequest): Promise<SearchAnswer | 'missing' | null>
 }
-
 export function readingOver(reaching: Reaching): Reading {
   const ask = async (space: string, route: 'index' | 'search', body: object) => {
     const token = reaching.token()
@@ -179,7 +169,6 @@ export function readingOver(reaching: Reaching): Reading {
     }
     return response.ok ? said : null
   }
-
   return {
     async index(space, ids) {
       const said = await ask(space, 'index', { ids })

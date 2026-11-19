@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
 const saved = vi.hoisted(() => [] as Record<string, unknown>[])
-
 vi.mock('../../accounts/src/account.svelte', () => ({ account: { accountToken: 'token' } }))
 vi.mock('../../accounts/src/client', () => ({
   api: {
@@ -11,20 +10,16 @@ vi.mock('../../accounts/src/client', () => ({
     },
   },
 }))
-
 const { hush, WEEKDAYS } = await import('./hush.svelte')
-
 describe('hush', () => {
   it('reads keywords off a line, each once, and tells the account', () => {
     hush.setKeywords(' thesis, final draft,, thesis ,')
     expect(hush.keywords).toEqual(['thesis', 'final draft'])
     expect(saved.at(-1)).toEqual({ chatKeywords: ['thesis', 'final draft'] })
-
     const before = saved.length
     hush.setKeywords('thesis, final draft')
     expect(saved).toHaveLength(before)
   })
-
   it('keeps hours that read, and null for every hour', () => {
     hush.setHours({ days: WEEKDAYS, from: 540, to: 1080 })
     expect(saved.at(-1)).toEqual({ chatHours: { days: WEEKDAYS, from: 540, to: 1080 } })
@@ -33,7 +28,6 @@ describe('hush', () => {
     hush.setHours(null)
     expect(hush.hours).toBeNull()
   })
-
   it('takes over what the account holds, and only what reads', () => {
     hush.receive({
       chatKeywords: ['deadline'],
@@ -47,7 +41,6 @@ describe('hush', () => {
       false,
       true,
     ])
-
     hush.receive({})
     expect(hush.keywords).toEqual(['deadline'])
     hush.receive({ chatHours: null })

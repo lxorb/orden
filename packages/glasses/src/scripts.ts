@@ -5,7 +5,6 @@ export interface Script {
   draws: boolean
   languages: readonly string[]
 }
-
 export const SCRIPTS: readonly Script[] = [
   {
     code: 'Latn',
@@ -74,7 +73,6 @@ export const SCRIPTS: readonly Script[] = [
     draws: true,
     languages: ['ko'],
   },
-
   {
     code: 'Deva',
     name: 'Devanagari',
@@ -160,11 +158,8 @@ export const SCRIPTS: readonly Script[] = [
     languages: ['am'],
   },
 ]
-
 export function drawsScript(code: string | undefined): boolean {
   if (!code) return true
-
   return SCRIPTS.find((one) => one.code === code)?.draws ?? true
 }
-
 export const scriptsNotDrawn = (): readonly Script[] => SCRIPTS.filter((one) => !one.draws)

@@ -17,14 +17,12 @@ describe('the built-in theme', () => {
     expect(light.side).toBe('#f3f5f8')
     expect(light.text).toBe('#1a1d23')
   })
-
   test('wears the reader’s accent, and the open row is a wash of it', () => {
     const look = lookOf([tokens], 'dark', accentTokens('teal', 'dark'))
     expect(look.accent).toBe('#33c7ba')
     expect(look.open).toBe('color-mix(in srgb, #33c7ba 16%, transparent)')
   })
 })
-
 describe('a theme on top of the tokens', () => {
   test('states a side of its own, and the other side is untouched', () => {
     const pair = `[data-theme='light'] { --bg: #fdf6e3; } [data-theme="dark"] { --bg: #002b36; }`
@@ -32,7 +30,6 @@ describe('a theme on top of the tokens', () => {
     expect(lookOf([tokens, pair], 'dark').ground).toBe('#002b36')
     expect(lookOf([tokens, pair], 'dark').text).toBe('#dde2ea')
   })
-
   test.each([
     [`:root { --surface: #222222; }`, 'dark', 'side', '#222222'],
     [`:root { --side-bar-bg-color: #eeeeee; --text-color: #333; }`, 'light', 'side', '#eeeeee'],
@@ -48,7 +45,6 @@ describe('a theme on top of the tokens', () => {
       expect(lookOf([tokens, css], scheme)[part]).toBe(shown)
     },
   )
-
   test('outranks the reader’s accent only where the app lets it, which is never inline', () => {
     const own = `:root { --accent: #ff0000; }`
     expect(lookOf([tokens, own], 'dark').accent).toBe('#ff0000')
@@ -57,7 +53,6 @@ describe('a theme on top of the tokens', () => {
     expect(lookOf([tokens, loud], 'dark', { '--accent': '#00ff00' }).accent).toBe('#ff0000')
   })
 })
-
 describe('the contrast theme', () => {
   test('is black and white, in its own accent', () => {
     expect(lookOf([tokens, contrastCss], 'dark').ground).toBe('#000000')
@@ -65,7 +60,6 @@ describe('the contrast theme', () => {
     expect(lookOf([tokens, contrastCss], 'light').accent).toBe('#3a25c9')
   })
 })
-
 describe('custom.css', () => {
   test('is on top of the theme, as it is on the page', () => {
     const custom = `:root { --bg: #abcdef; }`

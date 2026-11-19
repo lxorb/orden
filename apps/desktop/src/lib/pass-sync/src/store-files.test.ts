@@ -14,16 +14,13 @@ import { configurePass, PassStore } from './store.svelte'
 
 const FAST = { m: 64, t: 1, p: 1 }
 configurePass({ kdf: FAST, pinKdf: FAST })
-
 beforeEach(async () => {
   await forgetLocal()
   vi.stubGlobal('localStorage', memoryStorage())
 })
-
 afterEach(() => {
   vi.unstubAllGlobals()
 })
-
 async function opened(): Promise<{ store: PassStore; vault: string }> {
   const store = new PassStore()
   store.fileSource = () => Promise.resolve(null)
@@ -31,9 +28,7 @@ async function opened(): Promise<{ store: PassStore; vault: string }> {
   await store.setup('correct horse battery staple')
   return { store, vault: store.vaults[0]?.id ?? '' }
 }
-
 const picked = (bytes: Uint8Array, name = 'scan.pdf') => ({ name, type: 'application/pdf', bytes })
-
 describe('a file attached to an item', () => {
   test('is sealed on this device, listed on the item and opened again', async () => {
     const { store, vault } = await opened()
@@ -49,7 +44,6 @@ describe('a file attached to an item', () => {
     expect(parts[0]?.bytes).not.toEqual(bytes)
     expect(await waitingFiles(deviceRows)).toEqual([{ item: item.id, file: attachment.id, parts: 1, gone: null }])
   })
-
   test('over 4 MiB is kept in parts', async () => {
     const { store, vault } = await opened()
     const item = await store.create(vault, { ...blank('note'), title: 'Scan' })
@@ -61,7 +55,6 @@ describe('a file attached to an item', () => {
     expect(back.length).toBe(bytes.length)
     expect(back.every((one) => one === 9)).toBe(true)
   })
-
   test('taken off is forgotten here, and never sent', async () => {
     const { store, vault } = await opened()
     const item = await store.create(vault, { ...blank('note'), title: 'Deed' })
@@ -72,7 +65,6 @@ describe('a file attached to an item', () => {
     expect(await readFileParts(item.id, id)).toEqual([])
     expect(await waitingFiles(deviceRows)).toEqual([])
   })
-
   test('still opens after its item moves to another vault and gets a new key', async () => {
     const { store, vault } = await opened()
     const other = await store.createVault({ name: 'Work' })
@@ -86,7 +78,6 @@ describe('a file attached to an item', () => {
     expect(moved?.attachments[0]?.key).not.toBe(key)
     expect(await store.fileBytes(item.id, id)).toEqual(new Uint8Array([7, 7]))
   })
-
   test('goes from this device with its item', async () => {
     const { store, vault } = await opened()
     const item = await store.create(vault, { ...blank('note'), title: 'Old' })
@@ -96,7 +87,6 @@ describe('a file attached to an item', () => {
     expect(await readFileParts(item.id, id)).toEqual([])
     expect(await waitingFiles(deviceRows)).toEqual([])
   })
-
   test('not on this device is fetched from the account, and kept', async () => {
     const { store, vault } = await opened()
     const item = await store.create(vault, { ...blank('note'), title: 'Far' })
@@ -122,7 +112,6 @@ describe('a file attached to an item', () => {
     expect(await readFileParts(item.id, id)).toHaveLength(1)
   })
 })
-
 describe('the alias service', () => {
   test('is kept sealed, read back and forgotten', async () => {
     const { store } = await opened()
@@ -134,7 +123,6 @@ describe('the alias service', () => {
     await store.setAliasProvider(null)
     expect(await store.aliasProvider()).toBeNull()
   })
-
   test('turns off an alias moved to the trash', async () => {
     const { store, vault } = await opened()
     await store.setAliasProvider({ provider: 'addy', key: 'k', mailbox: null, suffix: null })
@@ -159,7 +147,6 @@ describe('the alias service', () => {
     expect(after?.trashed).not.toBeNull()
     expect(after?.content.kind === 'alias' && after.content.enabled).toBe(false)
   })
-
   test('leaves an alias of its own alone in the trash', async () => {
     const { store, vault } = await opened()
     const fetching = vi.fn()

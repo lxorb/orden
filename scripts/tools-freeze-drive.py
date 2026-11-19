@@ -23,9 +23,7 @@ hung for longer than `--most` seconds, or the page stopped answering.
 
     python scripts/tools-freeze-drive.py --exe <probe orden.exe> --identifier <probe id>
 """
-
 from __future__ import annotations
-
 import argparse
 import importlib.util
 import json
@@ -35,12 +33,9 @@ import sys
 import tempfile
 import threading
 import time
-
 from probe_app import main_window, run_probe, sized
 
 HERE = pathlib.Path(__file__).resolve().parent
-
-
 def borrowed(name: str, file: str):
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -48,13 +43,9 @@ def borrowed(name: str, file: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
-
 tabs = borrowed("tabs", "new-tabs-probe.py")
 freeze = borrowed("freeze", "web-freeze-probe.py")
 terminal = borrowed("terminal", "terminal-probe.py")
-
-
 class Watch:
     def __init__(self, hwnd: int, port: int, secret: str) -> None:
         self.hwnd = hwnd
@@ -64,18 +55,15 @@ class Watch:
         self.pumps: list[tuple[str, bool, float, bool]] = []
         self.beats: list[tuple[str, bool, float]] = []
         self.going = True
-
     def start(self) -> None:
         threading.Thread(target=self.pump, daemon=True).start()
         threading.Thread(target=self.beat, daemon=True).start()
-
     def pump(self) -> None:
         while self.going:
             answered, cost = freeze.ask(self.hwnd)
             hung = bool(freeze.user32.IsHungAppWindow(self.hwnd))
             self.pumps.append((self.phase, answered, cost, hung))
             time.sleep(0.25)
-
     def beat(self) -> None:
         while self.going:
             began = time.perf_counter()
@@ -83,7 +71,6 @@ class Watch:
             cost = (time.perf_counter() - began) * 1000
             self.beats.append((self.phase, said.startswith('{"ok":true'), cost))
             time.sleep(1.0)
-
     def longest_hang(self, phase: str) -> float:
         longest = 0.0
         run = 0.0
@@ -96,39 +83,31 @@ class Watch:
             else:
                 run = 0.0
         return longest
-
     def report(self, phase: str) -> tuple[float, float, int]:
         pump = max((cost for one, _, cost, _ in self.pumps if one == phase), default=0.0)
         beat = max((cost for one, _, cost in self.beats if one == phase), default=0.0)
         missed = sum(1 for one, ok, _ in self.beats if one == phase and not ok)
         return pump, beat, missed
-
-
 TURN_ON = (
     "(() => { localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-explorer']));"
     " setTimeout(() => location.reload(), 50); return true })()"
 )
 TURNED_ON = "!!orden.workspace && JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]').includes('experimental-explorer')"
-
-
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this drive is Windows only")
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
     freeze.bind_names()
-
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
     parsed.add_argument("--identifier", required=True)
     parsed.add_argument("--most", type=float, default=3.0)
     args = parsed.parse_args()
-
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-tools-"))
     (spaces / "Tools probe").mkdir(parents=True, exist_ok=True)
     (spaces / "Tools probe" / "A note.md").write_text("# A note\n", encoding="utf-8")
     environment = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
-
     exe = pathlib.Path(args.exe).resolve()
     tabs.wipe(args.identifier)
     first = run_probe(exe, env=environment)
@@ -137,7 +116,6 @@ def main() -> int:
     first.terminate()
     first.wait(timeout=15)
     time.sleep(6.0)
-
     app = run_probe(exe, env=environment)
     phases: list[str] = []
     failed_columns = True
@@ -153,18 +131,15 @@ def main() -> int:
         terminal.until(lambda: window.run(TURNED_ON) is True, 60)
         watch = Watch(hwnd, port, secret)
         watch.start()
-
         def phase(name: str) -> None:
             watch.phase = name
             phases.append(name)
             print(f"-- {name}", flush=True)
-
         time.sleep(3)
         phase("open")
         shells = ["cmd", "cmd", "cmd", "cmd", "powershell", "powershell"]
         opened = [window.open(shell, f"T{at}", f"probe-t{at}") for at, shell in enumerate(shells)]
         time.sleep(8)
-
         phase("flood")
         flood = (
             "(async () => { const ts = orden.workspace.tabs.filter((one) => one.kind === 'terminal');"
@@ -179,7 +154,6 @@ def main() -> int:
             window.typed("x")
             time.sleep(0.25)
         time.sleep(5)
-
         phase("paste")
         window.open("cmd", "Paste", "probe-paste")
         time.sleep(3)
@@ -197,7 +171,6 @@ def main() -> int:
         time.sleep(4)
         window.run("(() => { const b = [...document.querySelectorAll('button')].find((one) => /paste/i.test(one.textContent)); b && b.click(); return !!b })()")
         time.sleep(15)
-
         phase("ask")
         ask = (
             "(async () => { const inv = window.__TAURI_INTERNALS__.invoke;"
@@ -207,7 +180,6 @@ def main() -> int:
             " return n })()"
         )
         print("asked", window.run(ask), flush=True)
-
         phase("resize")
         resize = (
             "(async () => { const ids = orden.workspace.tabs.filter((one) => one.kind === 'terminal').map((one) => JSON.parse(one.doc || '{}').key).filter(Boolean);"
@@ -219,7 +191,6 @@ def main() -> int:
         for at in range(10):
             sized(hwnd, 500 + (at % 2) * 900, 400 + (at % 2) * 500)
             time.sleep(0.4)
-
         phase("churn")
         for at in range(20):
             window.open("cmd", f"C{at}", f"probe-c{at}")
@@ -230,7 +201,6 @@ def main() -> int:
         )
         print("closed", window.run(close_all), flush=True)
         time.sleep(8)
-
         phase("explorer")
         explorer = (
             "(() => { const ws = orden.workspace;"
@@ -247,7 +217,6 @@ def main() -> int:
             )
             time.sleep(1.5)
         time.sleep(10)
-
         phase("columns")
         window.run(
             "(() => { const press = new KeyboardEvent('keydown', { key: '3', ctrlKey: true, bubbles: true, cancelable: true });"
@@ -282,7 +251,6 @@ def main() -> int:
             app.wait(timeout=20)
         except Exception:  # noqa: BLE001 - a frozen app is killed
             app.kill()
-
     worst = 0.0
     failed = failed_columns
     for name in phases:
@@ -294,7 +262,5 @@ def main() -> int:
             failed = True
     print(f"longest hang {worst:.1f} s")
     return 1 if failed else 0
-
-
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -14,9 +14,7 @@ use tauri::{AppHandle, Emitter as _, Manager as _};
 
 #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 const PRESSED: &str = "orden://notice";
-
 const LONGEST_TAG: usize = 64;
-
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Notice {
@@ -31,14 +29,12 @@ pub struct Notice {
     #[cfg_attr(not(any(windows, target_os = "macos", test)), allow(dead_code))]
     pub reply: Option<Reply>,
 }
-
 #[derive(Clone, Debug, Deserialize)]
 #[cfg_attr(not(any(windows, target_os = "macos", test)), allow(dead_code))]
 pub struct Reply {
     pub placeholder: String,
     pub send: String,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
@@ -46,7 +42,6 @@ pub enum Act {
     Open,
     Reply,
 }
-
 #[derive(Clone, Debug, Serialize)]
 #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 struct Answer {
@@ -55,16 +50,12 @@ struct Answer {
     #[serde(skip_serializing_if = "Option::is_none")]
     text: Option<String>,
 }
-
 static WINDOWS: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
-
 fn in_windows<T>(alter: impl FnOnce(&mut HashMap<String, String>) -> T) -> T {
     let mut held = WINDOWS.held();
     alter(held.get_or_insert_with(HashMap::new))
 }
-
 const KEPT: usize = 64;
-
 fn plain(notice: &Notice) -> bool {
     let word = |text: &str, most: usize| {
         !text.is_empty()
@@ -75,11 +66,9 @@ fn plain(notice: &Notice) -> bool {
     };
     word(&notice.id, 64) && word(&notice.tag, LONGEST_TAG)
 }
-
 fn probing() -> bool {
     orden_placement::placement::away().is_some()
 }
-
 #[tauri::command(async)]
 pub fn notice_show(webview: tauri::Webview, app: AppHandle, notice: Notice) -> Result<(), String> {
     orden_base::labels::from_the_app(&webview)?;
@@ -97,7 +86,6 @@ pub fn notice_show(webview: tauri::Webview, app: AppHandle, notice: Notice) -> R
     });
     shown(&app, &notice)
 }
-
 #[tauri::command(async)]
 pub fn notice_clear(webview: tauri::Webview, app: AppHandle, tag: String) -> Result<(), String> {
     orden_base::labels::from_the_app(&webview)?;
@@ -112,7 +100,6 @@ pub fn notice_clear(webview: tauri::Webview, app: AppHandle, tag: String) -> Res
     let _ = (app, tag);
     Ok(())
 }
-
 pub fn clear_all(app: &AppHandle) {
     #[cfg(windows)]
     windows::clear_all(app);
@@ -124,7 +111,6 @@ pub fn clear_all(app: &AppHandle) {
     #[cfg(not(any(windows, target_os = "macos")))]
     let _ = app;
 }
-
 #[cfg_attr(
     not(any(windows, target_os = "macos")),
     allow(clippy::unnecessary_wraps)
@@ -150,7 +136,6 @@ fn shown(app: &AppHandle, notice: &Notice) -> Result<(), String> {
         Ok(())
     }
 }
-
 #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 pub fn answered(app: &AppHandle, id: &str, act: Act, text: Option<String>) {
     let label = in_windows(|windows| windows.get(id).cloned());
@@ -172,7 +157,6 @@ pub fn answered(app: &AppHandle, id: &str, act: Act, text: Option<String>) {
     };
     let _ = app.emit_to(window.label(), PRESSED, answer);
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -188,7 +172,6 @@ mod tests {
             reply: None,
         }
     }
-
     #[test]
     fn a_notice_is_named_by_plain_characters() {
         assert!(plain(&notice(
@@ -202,7 +185,6 @@ mod tests {
         assert!(!plain(&notice("ab", &"x".repeat(65))));
         assert!(!plain(&notice("a\"b", "a")));
     }
-
     #[test]
     fn the_page_reads_a_notice_as_it_writes_one() {
         let read: Notice = serde_json::from_value(serde_json::json!({

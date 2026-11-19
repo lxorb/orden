@@ -4,7 +4,6 @@ import { call, signIn, testEnv, type TestEnv } from './harness'
 let env: TestEnv
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
@@ -23,9 +22,7 @@ beforeEach(async () => {
     body: { protected: { Diary: 'password' } },
   })
 })
-
 afterEach(() => env.close())
-
 describe('a published space with a locked folder', () => {
   test('neither lists nor serves the locked note, and still serves the rest', async () => {
     await call(env, `/v1/spaces/${space}/blog`, {

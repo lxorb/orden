@@ -9,7 +9,6 @@ function pickedFromCompletion(source: string, label: string): string | null {
   if (!named) return null
   return sectionOf(named.source, { heading: null, block: named.id })
 }
-
 describe('a block inside a list item after a blank, picked in the [[Note#^ completion', () => {
   test('a code block in a numbered step embeds the code, not the steps above', () => {
     const steps = '1. Install\n2. Run:\n\n   ```sh\n   make\n   ```\n3. Done\n'
@@ -17,7 +16,6 @@ describe('a block inside a list item after a blank, picked in the [[Note#^ compl
     expect(shown).toContain('make')
     expect(shown).not.toContain('Install')
   })
-
   test('a table in a bullet item embeds the table, not the item', () => {
     const list = '- Prices:\n\n  | x |\n  |---|\n  | 1 |\n- Later\n'
     const shown = pickedFromCompletion(list, '| x |') ?? ''

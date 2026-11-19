@@ -4,11 +4,9 @@ import { bestContainer, extensionOf, recordingName } from './container'
 function supporting(types: string[]) {
   vi.stubGlobal('MediaRecorder', { isTypeSupported: (type: string) => types.includes(type) })
 }
-
 afterEach(() => {
   vi.unstubAllGlobals()
 })
-
 describe('which container to record into', () => {
   test.each([
     [['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'], 'audio/webm;codecs=opus'],
@@ -19,12 +17,10 @@ describe('which container to record into', () => {
     supporting(types)
     expect(bestContainer()).toBe(best)
   })
-
   test('and nothing at all where there is no recorder', () => {
     expect(bestContainer()).toBeNull()
   })
 })
-
 describe('what a recording is called', () => {
   test.each([
     ['audio/webm;codecs=opus', 'weba'],
@@ -36,7 +32,6 @@ describe('what a recording is called', () => {
   ])('says sound rather than film for %j, falling back to sound: %s', (type, extension) => {
     expect(extensionOf(type)).toBe(extension)
   })
-
   test('with every field padded, so a folder sorts', () => {
     const at = new Date(2026, 0, 3, 9, 5)
     expect(recordingName(at, 'm4a')).toBe('recording-2026-01-03-0905.m4a')

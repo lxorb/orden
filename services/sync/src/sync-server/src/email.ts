@@ -6,41 +6,32 @@ import { mailCeilings, mailNotSent, type MailRefusal } from './limits'
 import type { EmailSender, Env } from './types'
 
 const MAIL_GAP = 30 * 1000
-
 export interface Mailable {
   ok: boolean
   refusal: MailRefusal | null
 }
-
 export async function mayMail(env: Env, address: string, machine: string | null): Promise<Mailable> {
   const last = await env.DB.prepare('select sent_at from mailed where email = ?')
     .bind(address)
     .first<{ sent_at: number }>()
-
   if (last && now() - last.sent_at < MAIL_GAP) return { ok: false, refusal: null }
-
   const refusal = await mailCeilings(env, address, machine)
   if (refusal) return { ok: false, refusal: refusal.aboutTheAddress ? null : refusal }
-
   await env.DB.prepare('delete from mailed where sent_at < ?')
     .bind(now() - MAIL_GAP)
     .run()
-
   await env.DB.prepare(
     `insert into mailed (email, sent_at) values (?, ?)
      on conflict(email) do update set sent_at = excluded.sent_at`,
   )
     .bind(address, now())
     .run()
-
   return { ok: true, refusal: null }
 }
-
 export async function forgetMailed(env: Env, address: string): Promise<void> {
   await env.DB.prepare('delete from mailed where email = ?').bind(address).run()
   await mailNotSent(env, address)
 }
-
 export function refusedMail(
   context: Context,
   refusal: { error: string; status: 400 | 429 | 503; retryAfter: number | null },
@@ -51,11 +42,9 @@ export function refusedMail(
     refusal.retryAfter ? { 'retry-after': String(refusal.retryAfter) } : {},
   )
 }
-
 export interface Mailer {
   send(to: string, subject: string, body: { text: string; html: string }): Promise<boolean>
 }
-
 function logging(): Mailer {
   return {
     send(to, subject, body) {
@@ -65,10 +54,8 @@ function logging(): Mailer {
     },
   }
 }
-
 function cloudflare(binding: EmailSender, from: string): Mailer {
   const named = sender(from)
-
   return {
     async send(to, subject, body) {
       try {
@@ -81,24 +68,19 @@ function cloudflare(binding: EmailSender, from: string): Mailer {
     },
   }
 }
-
 export function sender(from: string): string | { name: string; email: string } {
   const parts = /^(.*)<([^<>\s]+@[^<>\s]+)>$/.exec(from.trim())
   if (!parts) return from.trim()
-
   const name = (parts[1] ?? '').trim().replace(/^"(.*)"$/, '$1')
   const email = parts[2] ?? ''
   return name ? { name, email } : email
 }
-
 export function mailer(env: Env): Mailer {
   if (!env.EMAIL || !env.MAIL_FROM) return logging()
   return cloudflare(env.EMAIL, env.MAIL_FROM)
 }
-
 function codeMail(code: string, subject: string, what: string, unasked: string) {
   const spaced = `${code.slice(0, 3)} ${code.slice(3)}`
-
   return {
     subject,
     text: `${what} is ${spaced}. It expires in 10 minutes.\n\n${unasked}`,
@@ -109,7 +91,6 @@ function codeMail(code: string, subject: string, what: string, unasked: string) 
 </div>`,
   }
 }
-
 export function codeMessage(code: string) {
   return codeMail(
     code,
@@ -118,7 +99,6 @@ export function codeMessage(code: string) {
     'If you did not ask for it, ignore this message.',
   )
 }
-
 export function leavingMessage(code: string) {
   return codeMail(
     code,
@@ -127,7 +107,6 @@ export function leavingMessage(code: string) {
     'If you did not ask for it, somebody is signed in as you: end every other session in Settings, Account.',
   )
 }
-
 export function addressMessage(code: string) {
   return codeMail(
     code,
@@ -136,11 +115,9 @@ export function addressMessage(code: string) {
     'If you did not ask for it, ignore this message.',
   )
 }
-
 export function addressMovedMessage(to: string, undo: string) {
   const said = `Your Orden account now signs in with ${to} instead of this address.`
   const unasked = 'If you did not do this, put it back within 7 days. Every device will be signed out.'
-
   return {
     subject: 'Your Orden address was changed',
     text: `${said}\n\n${unasked}\n${undo}`,
@@ -151,12 +128,10 @@ export function addressMovedMessage(to: string, undo: string) {
 </div>`,
   }
 }
-
 export function goneMessage() {
   const said = 'Your Orden account and everything it synced have been deleted.'
   const stays = 'The notes on your devices are still there.'
   const unasked = 'If you did not do this, somebody had your mailbox: secure it first.'
-
   return {
     subject: 'Your Orden account has been deleted',
     text: `${said} ${stays}\n\n${unasked}`,
@@ -166,14 +141,11 @@ export function goneMessage() {
 </div>`,
   }
 }
-
 export function oneLine(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
 }
-
 function letter(lines: readonly string[], action: { label: string; href: string }) {
   const paragraphs = lines.map((line) => `  <p style="margin:0 0 14px">${escape(line)}</p>`).join('\n')
-
   return {
     text: [...lines, '', action.href].join('\n\n'),
     html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.55;color:#1a1d23">
@@ -182,7 +154,6 @@ ${paragraphs}
 </div>`,
   }
 }
-
 export function inviteMessage(invite: {
   space: string
   from: string
@@ -193,7 +164,6 @@ export function inviteMessage(invite: {
   const what = invite.role === 'write' ? 'write in it' : 'read it'
   const named = invite.item ?? invite.space
   const kind = invite.item ? 'note' : 'space'
-
   return {
     subject: oneLine(`${invite.from} shared ${named} with you`),
     ...letter(
@@ -205,7 +175,6 @@ export function inviteMessage(invite: {
     ),
   }
 }
-
 export function requestMessage(request: { space: string; who: string; link: string }) {
   return {
     subject: oneLine(`${request.who} would like to join ${request.space}`),

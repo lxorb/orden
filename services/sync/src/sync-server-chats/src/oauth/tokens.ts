@@ -4,22 +4,17 @@ import { clientFor } from './clients'
 import { failure, GRANTS, resourceMatches, resourceUrl, SCOPES, textFields } from './protocol'
 
 const ACCESS_TTL = 24 * 60 * 60 * 1000
-
 export const MOST_CLIENTS_AN_ACCOUNT = 20
 export const MOST_CONNECTIONS = 200
-
 export const tokens = new Hono<{ Bindings: Env }>()
-
 async function tokenBody(context: Context<{ Bindings: Env }>): Promise<Record<string, string | undefined>> {
   const type = context.req.header('content-type') ?? ''
   const raw: unknown = type.includes('json')
     ? await context.req.json<unknown>().catch(() => ({}))
     : await context.req.parseBody().catch(() => ({}))
-
   const object = !!raw && typeof raw === 'object' && !Array.isArray(raw)
   return textFields(object ? (raw as Record<string, unknown>) : {})
 }
-
 function credentials(
   header: string | undefined,
   body: Record<string, string | undefined>,
@@ -40,26 +35,22 @@ function credentials(
   }
   return { id: body.client_id ?? '', secret: body.client_secret ?? '' }
 }
-
 function base64url(bytes: ArrayBuffer): string {
   return btoa(String.fromCharCode(...new Uint8Array(bytes)))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '')
 }
-
 async function verifierMatches(verifier: string, challenge: string): Promise<boolean> {
   if (!verifier || verifier.length < 43 || verifier.length > 128) return false
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
   return equals(base64url(digest), challenge)
 }
-
 interface Grant {
   id: string
   client_id: string
   read_only: number
 }
-
 async function issue(grant: Grant) {
   const access = `orden_${randomToken()}`
   const refresh = `ordenr_${randomToken()}`
@@ -68,7 +59,6 @@ async function issue(grant: Grant) {
     refresh: await sha256(refresh),
     expiresAt: now() + ACCESS_TTL,
   }
-
   const reply = {
     access_token: access,
     token_type: 'Bearer',
@@ -76,10 +66,8 @@ async function issue(grant: Grant) {
     refresh_token: refresh,
     scope: grant.read_only ? 'notes:read' : SCOPES.join(' '),
   }
-
   return { reply, hashes }
 }
-
 tokens.post('/token', async (context) => {
   const body = await tokenBody(context)
   const { id, secret } = credentials(context.req.header('authorization'), body)
@@ -87,13 +75,11 @@ tokens.post('/token', async (context) => {
     context.json(failure('invalid_client', 'unknown client or wrong secret'), 401, {
       'www-authenticate': 'Basic realm="oauth"',
     })
-
   const client = await clientFor(context.env, id)
   if (!client) return invalidClient()
   if (client.secretHash && (!secret || !equals(await sha256(secret), client.secretHash))) {
     return invalidClient()
   }
-
   if (body.grant_type === 'authorization_code') {
     if (!body.code || !body.code_verifier) {
       return context.json(failure('invalid_request', 'code and code_verifier are required'), 400)
@@ -101,7 +87,6 @@ tokens.post('/token', async (context) => {
     if (!resourceMatches(context.env, body.resource ?? '')) {
       return context.json(failure('invalid_target', `this server is ${resourceUrl(context.env, context.req.url)}`), 400)
     }
-
     const hash = await sha256(body.code)
     const code = await context.env.DB.prepare(
       `delete from oauth_codes where code_hash = ?
@@ -116,7 +101,6 @@ tokens.post('/token', async (context) => {
         read_only: number
         expires_at: number
       }>()
-
     if (
       !code ||
       code.expires_at < now() ||
@@ -126,10 +110,8 @@ tokens.post('/token', async (context) => {
     ) {
       return context.json(failure('invalid_grant', 'the code is not valid'), 400)
     }
-
     const grant: Grant = { id: newId(), client_id: client.id, read_only: code.read_only }
     const issued = await issue(grant)
-
     const added = await context.env.DB.prepare(
       `insert into oauth_grants
          (id, user_id, client_id, client_name, read_only, access_hash, access_expires_at, refresh_hash, created_at)
@@ -155,15 +137,12 @@ tokens.post('/token', async (context) => {
     if (!added.meta.changes) {
       return context.json(failure('invalid_grant', 'that is as many apps as one account connects'), 400)
     }
-
     return context.json(issued.reply, 200, { 'cache-control': 'no-store' })
   }
-
   if (body.grant_type === 'refresh_token') {
     if (!body.refresh_token) {
       return context.json(failure('invalid_request', 'refresh_token is required'), 400)
     }
-
     const hash = await sha256(body.refresh_token)
     const grant = await context.env.DB.prepare(
       `select id, client_id, read_only, refresh_hash from oauth_grants
@@ -171,16 +150,13 @@ tokens.post('/token', async (context) => {
     )
       .bind(hash)
       .first<Grant & { refresh_hash: string }>()
-
     if (grant && grant.refresh_hash !== hash) {
       await context.env.DB.prepare('delete from oauth_grants where id = ?').bind(grant.id).run()
       return context.json(failure('invalid_grant', 'that refresh token was already used'), 401)
     }
-
     if (grant?.client_id !== client.id) {
       return context.json(failure('invalid_grant', 'the refresh token is not valid'), 400)
     }
-
     const issued = await issue(grant)
     const rotated = await context.env.DB.prepare(
       `update oauth_grants
@@ -195,10 +171,8 @@ tokens.post('/token', async (context) => {
     }
     return context.json(issued.reply, 200, { 'cache-control': 'no-store' })
   }
-
   return context.json(failure('unsupported_grant_type', `use one of ${GRANTS.join(', ')}`), 400)
 })
-
 export async function grantForToken(env: Env, token: string): Promise<{ user_id: string; read_only: number } | null> {
   const hash = await sha256(token)
   const row = await env.DB.prepare(
@@ -206,9 +180,7 @@ export async function grantForToken(env: Env, token: string): Promise<{ user_id:
   )
     .bind(hash)
     .first<{ id: string; user_id: string; read_only: number; access_expires_at: number }>()
-
   if (!row || row.access_expires_at < now()) return null
-
   await env.DB.prepare('update oauth_grants set last_used_at = ? where id = ?').bind(now(), row.id).run()
   return { user_id: row.user_id, read_only: row.read_only }
 }

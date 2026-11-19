@@ -32,16 +32,13 @@
     scale?: number
     onactual?: () => void
   } = $props()
-
   const zoomed = $derived(
     scale !== undefined && onactual && Math.abs(scale - 1) >= 0.005 ? `${String(Math.round(scale * 100))}%` : null,
   )
-
   const early = $derived(viewport.device === 'phone')
   let scroller = $state<HTMLElement>()
   const follows = (..._values: unknown[]) => undefined
   let fades = $state({ start: false, end: false })
-
   function measure() {
     const row = scroller
     if (!row) return
@@ -52,7 +49,6 @@
     const end = along.at + along.seen < along.whole - 1
     if (start !== fades.start || end !== fades.end) fades = { start, end }
   }
-
   $effect(() => {
     const row = scroller
     if (!row) return
@@ -66,7 +62,6 @@
     for (const one of row.children) watcher.observe(one)
     return () => watcher.disconnect()
   })
-
   type Panel = 'pen' | 'rub' | 'catch' | 'put' | 'colour'
   let open = $state<Panel | null>(null)
   let popAt = $state(0)
@@ -76,7 +71,6 @@
   const drawing = $derived(tools.which === 'draw')
   const putting = $derived(PLACING.find((one) => one.id === tools.which))
   const movable = $derived(viewport.touch || hand.penSeen)
-
   $effect(() =>
     open
       ? overlays.show(
@@ -86,78 +80,61 @@
       : undefined,
   )
   $effect(() => closeOnBack(open !== null, () => (open = null)))
-
   function shut() {
     open = null
   }
-
   let was = tools.which
   $effect(() => {
     if (tools.which === was) return
-
     was = tools.which
     open = null
   })
-
   function anchor(event: Event) {
     const button = event.currentTarget
     const box = cluster?.getBoundingClientRect()
     if (!(button instanceof HTMLElement) || !box) return
-
     const own = button.getBoundingClientRect()
     popAt = upright(pens.dock) ? own.top + own.height / 2 - box.top : own.left + own.width / 2 - box.left
   }
-
   function toggle(panel: Panel, event: Event) {
     anchor(event)
     open = open === panel ? null : panel
   }
-
   function panelFor(tool: Tool): Panel | null {
     if (tool === 'erase') return 'rub'
     if (tool === 'lasso') return 'catch'
     return null
   }
-
   function pressTool(mark: ToolMark, event: Event) {
     tick()
     const panel = panelFor(mark.id)
-
     if (tools.which === mark.id && panel) {
       toggle(panel, event)
       return
     }
-
     open = null
     tools.choose(mark.id)
   }
-
   function pressPen(index: number, event: Event) {
     tick()
-
     if (drawing && pens.at === index) {
       toggle('pen', event)
       return
     }
-
     open = null
     tools.pickPen(index)
   }
-
   let grabbed = $state(false)
   let carried = $state.raw<{ x: number; y: number } | null>(null)
   let from = { x: 0, y: 0 }
-
   function onGripDown(event: PointerEvent) {
     const grip = event.currentTarget
     if (!(grip instanceof HTMLElement)) return
-
     grabbed = true
     carried = { x: 0, y: 0 }
     from = { x: event.clientX, y: event.clientY }
     grip.setPointerCapture(event.pointerId)
   }
-
   function onGripMove(event: PointerEvent) {
     if (!grabbed) return
     if (event.buttons === 0) {
@@ -168,16 +145,12 @@
       }
       return
     }
-
     carried = { x: event.clientX - from.x, y: event.clientY - from.y }
   }
-
   function onGripUp(event: PointerEvent) {
     if (!grabbed) return
-
     grabbed = false
     tick()
-
     const went = Math.hypot(event.clientX - from.x, event.clientY - from.y)
     if (went < A_TWITCH) {
       carried = null
@@ -185,23 +158,19 @@
       open = null
       return
     }
-
     const box = cluster?.getBoundingClientRect()
     const middle = box
       ? { x: box.left + box.width / 2, y: box.top + box.height / 2 }
       : { x: event.clientX, y: event.clientY }
-
     const frame = frameOf(cluster)
     pens.dockTo(nearestDock({ x: middle.x - frame.left, y: middle.y - frame.top }, frame.width, frame.height))
     carried = null
     open = null
   }
-
   function onGripLost() {
     grabbed = false
     carried = null
   }
-
   const standing = $derived(upright(pens.dock))
   const swatch = $derived(shownInk(nib.colour))
 </script>
@@ -433,18 +402,15 @@
     animation: rise var(--dur-stage) var(--ease-out);
     pointer-events: none;
   }
-
   .cluster > * {
     pointer-events: auto;
   }
-
   .cluster.top {
     bottom: auto;
     top: calc(var(--space-2) + var(--inset-top));
     flex-direction: column-reverse;
     animation: fall var(--dur-stage) var(--ease-out);
   }
-
   .cluster.left,
   .cluster.right {
     left: auto;
@@ -454,40 +420,33 @@
     justify-content: center;
     animation: none;
   }
-
   .cluster.left {
     left: calc(var(--space-2) + var(--inset-left, 0px));
     flex-direction: row-reverse;
   }
-
   .cluster.right {
     right: calc(var(--space-2) + var(--inset-right, 0px));
     flex-direction: row;
   }
-
   .cluster {
     transition: translate var(--dur-slow) var(--ease-spring);
   }
-
   .cluster.carrying {
     transition: none;
     cursor: grabbing;
   }
-
   @keyframes rise {
     from {
       opacity: 0;
       translate: 0 10px;
     }
   }
-
   @keyframes fall {
     from {
       opacity: 0;
       translate: 0 -10px;
     }
   }
-
   .bar {
     max-width: 100%;
     display: flex;
@@ -499,52 +458,43 @@
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
   }
-
   .cluster.standing .bar {
     flex-direction: column;
     max-width: none;
     max-height: 100%;
   }
-
   .cluster.standing .scroller {
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior-y: contain;
   }
-
   .cluster.standing .split {
     width: 20px;
     height: 1px;
     margin: 5px 0;
   }
-
   .cluster.standing .grip {
     width: auto;
     height: 22px;
   }
-
   .cluster.standing .grip :global(svg) {
     rotate: 90deg;
   }
-
   .cluster.standing .panel {
     align-self: flex-start;
     width: min(21rem, 60vw);
     margin-left: 0;
     margin-top: clamp(0px, calc(var(--pop) - 6rem), max(0px, calc(100% - 12rem)));
   }
-
   .cluster.standing .tab {
     margin-left: 0;
     margin-top: var(--space-5);
   }
-
   :global([data-touch]) .cluster.standing .grip {
     width: auto;
     height: 30px;
   }
-
   .scroller {
     flex: 0 1 auto;
     min-width: 0;
@@ -555,17 +505,14 @@
     overscroll-behavior-x: contain;
     scrollbar-width: none;
   }
-
   .scroller::-webkit-scrollbar {
     display: none;
   }
-
   .scroller.fade-start,
   .scroller.fade-end {
     --fade: 28px;
     --from: 0px;
     --to: 0px;
-
     mask-image: linear-gradient(
       var(--along, to right),
       transparent 0,
@@ -574,19 +521,15 @@
       transparent 100%
     );
   }
-
   .scroller.fade-start {
     --from: var(--fade);
   }
-
   .scroller.fade-end {
     --to: var(--fade);
   }
-
   .cluster.standing .scroller {
     --along: to bottom;
   }
-
   button {
     position: relative;
     flex: none;
@@ -607,23 +550,19 @@
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
   }
-
   @media (hover: hover) {
     button:hover:not(:disabled):not(.on) {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
-
   button:active:not(:disabled) {
     background: var(--surface-press);
   }
-
   button.on {
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .split {
     flex: none;
     width: 1px;
@@ -632,7 +571,6 @@
     margin: 0 var(--space-1);
     background: var(--line-strong);
   }
-
   .deeper::before {
     content: '';
     position: absolute;
@@ -643,7 +581,6 @@
     border-bottom-color: currentColor;
     border-radius: 1px;
   }
-
   .pen::after {
     content: '';
     position: absolute;
@@ -655,7 +592,6 @@
     background: var(--ink);
     box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--text) 30%, transparent);
   }
-
   .actual {
     width: auto;
     min-width: 0;
@@ -665,7 +601,6 @@
     font-variant-numeric: tabular-nums;
     color: var(--muted);
   }
-
   .swatch::after {
     content: '';
     display: block;
@@ -676,11 +611,9 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
     transition: scale var(--dur-fast) var(--ease-spring);
   }
-
   .swatch:active::after {
     scale: 1.08;
   }
-
   .grip {
     flex: none;
     display: grid;
@@ -692,12 +625,10 @@
     touch-action: none;
     transition: background-color var(--dur-instant) var(--ease-out);
   }
-
   .grip.grabbed {
     background-color: var(--accent-soft);
     color: var(--accent);
   }
-
   .tab {
     align-self: flex-start;
     min-width: 58px;
@@ -708,13 +639,11 @@
     border-bottom: none;
     box-shadow: var(--shadow-md);
   }
-
   .cluster.top .tab {
     border-radius: 0 0 var(--radius-md) var(--radius-md);
     border-bottom: 1px solid var(--line-strong);
     border-top: none;
   }
-
   .panel {
     box-sizing: border-box;
     align-self: flex-start;
@@ -723,44 +652,35 @@
     padding: var(--space-2);
     animation: lift var(--dur-fast) var(--ease-out);
   }
-
   @keyframes lift {
     from {
       opacity: 0;
       translate: 0 6px;
     }
   }
-
   .cluster.top .panel {
     animation-name: sink;
   }
-
   @keyframes sink {
     from {
       opacity: 0;
       translate: 0 -6px;
     }
   }
-
   :global([data-touch]) button {
     --mark: var(--touch-icon);
-
     min-width: var(--touch-target);
     min-height: var(--touch-target);
     font-size: var(--touch-text);
   }
-
   :global([data-touch]) .swatch::after {
     width: var(--touch-icon);
     height: var(--touch-icon);
   }
-
   :global([data-touch]) .grip {
     --mark: var(--touch-icon);
-
     width: 30px;
   }
-
   :global([data-touch]) .tab {
     min-height: var(--touch-target);
   }

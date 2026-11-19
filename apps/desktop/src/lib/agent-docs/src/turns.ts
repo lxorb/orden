@@ -1,5 +1,4 @@
 const turns = new Map<string, Promise<unknown>>()
-
 export function inTurn<T>(key: string, run: () => Promise<T>): Promise<T> {
   const mine = (turns.get(key) ?? Promise.resolve()).then(run, run)
   const done = mine.then(
@@ -12,7 +11,6 @@ export function inTurn<T>(key: string, run: () => Promise<T>): Promise<T> {
   })
   return mine
 }
-
 export function waitedUntil(ms: number, until: AbortSignal | undefined): Promise<void> {
   return new Promise((go) => {
     const done = () => {
@@ -24,7 +22,6 @@ export function waitedUntil(ms: number, until: AbortSignal | undefined): Promise
     until?.addEventListener('abort', done, { once: true })
   })
 }
-
 export function startsBefore<T>(
   deadline: AbortSignal | undefined,
   late: () => Error,
@@ -33,7 +30,6 @@ export function startsBefore<T>(
 ): Promise<T> {
   if (!deadline) return queue(run)
   if (deadline.aborted) return Promise.reject(late())
-
   let begun = false
   const turn = queue(() => {
     if (deadline.aborted) return Promise.reject(late())

@@ -4,16 +4,13 @@ import { describe, expect, test } from 'vitest'
 
 const source = readFileSync(new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url), 'utf8')
 const script = /pub const PAGE_SCRIPT: &str = r"([\s\S]*?)";/.exec(source)?.[1] ?? ''
-
 type Inside = Window &
   typeof globalThis & {
     showOpenFilePicker: () => Promise<unknown>
   }
-
 function put(on: object, name: string, value: unknown) {
   Object.defineProperty(on, name, { value, configurable: true, writable: true })
 }
-
 function page(ours = true, before?: (inside: Inside, reached: string[]) => void) {
   const dom = new JSDOM('<input id="file" type="file"><input id="text"><label id="label" for="file">a file</label>', {
     runScripts: 'outside-only',
@@ -22,7 +19,6 @@ function page(ours = true, before?: (inside: Inside, reached: string[]) => void)
   const reached: string[] = []
   let now = 1_000_000
   inside.Date.now = () => now
-
   const reach = (name: string, answer?: unknown) =>
     function () {
       reached.push(name)
@@ -53,11 +49,9 @@ function page(ours = true, before?: (inside: Inside, reached: string[]) => void)
     requestPermission: reach('notifications', Promise.resolve('granted')),
   })
   inside.open = reach('open', null) as typeof inside.open
-
   before?.(inside, reached)
   const ran = ours ? script : script.replace('var ours = true', 'var ours = false')
   inside.eval(ran.replaceAll('event.isTrusted', 'event.cancelable'))
-
   const document = inside.document
   const commands = document as unknown as { execCommand: (name: string) => boolean }
   const file = document.getElementById('file') as HTMLInputElement
@@ -96,7 +90,6 @@ function page(ours = true, before?: (inside: Inside, reached: string[]) => void)
   }
   return { inside, reached, asked, commands, pressed, later, everything }
 }
-
 function thrown(ask: () => unknown) {
   try {
     ask()
@@ -105,14 +98,12 @@ function thrown(ask: () => unknown) {
   }
   return null
 }
-
 describe('a web page with no press of the reader', () => {
   test('never reaches fullscreen, the clipboard, a file picker, a payment, a prompt or a window', () => {
     const { reached, everything } = page()
     everything()
     expect(reached).toEqual([])
   })
-
   test('is refused the way the engine refuses a page that was never pressed', async () => {
     const { asked, commands } = page()
     await expect(asked.fullscreen()).rejects.toThrow('Permissions check failed')
@@ -125,13 +116,11 @@ describe('a web page with no press of the reader', () => {
     expect(asked.open()).toBeNull()
     expect(commands.execCommand('bold')).toBe(true)
   })
-
   test('still clicks what is not a file field', () => {
     const { inside, reached } = page()
     inside.document.getElementById('text')?.click()
     expect(reached).toEqual(['click text'])
   })
-
   test('is not pressed by an event the page made itself', () => {
     const { reached, pressed, everything } = page()
     pressed(false)
@@ -139,7 +128,6 @@ describe('a web page with no press of the reader', () => {
     expect(reached).toEqual([])
   })
 })
-
 describe('a press of the reader', () => {
   test('lets each kind through once, one picker of all the pickers', () => {
     const { reached, pressed, everything } = page()
@@ -158,7 +146,6 @@ describe('a press of the reader', () => {
     everything()
     expect(reached).toEqual([])
   })
-
   test('is spent after five seconds', () => {
     const { reached, pressed, later, asked } = page()
     pressed()
@@ -171,7 +158,6 @@ describe('a press of the reader', () => {
     void asked.fullscreen()
     expect(reached).toEqual(['fullscreen'])
   })
-
   test('opens a file field through its label', () => {
     const { reached, pressed, asked } = page()
     asked.label()
@@ -180,7 +166,6 @@ describe('a press of the reader', () => {
     asked.label()
     expect(reached).toEqual(['click label'])
   })
-
   test('lets the clipboard through after the engine spent its own activation, but never a window', () => {
     const { inside, reached, pressed, asked } = page()
     Object.defineProperty(inside.navigator, 'userActivation', {
@@ -192,7 +177,6 @@ describe('a press of the reader', () => {
     asked.open()
     expect(reached).toEqual(['writeText'])
   })
-
   test('leaves a window without an opener to the engine where the engine makes it a tab', () => {
     const own = page(true)
     own.pressed()
@@ -204,7 +188,6 @@ describe('a press of the reader', () => {
     expect(engine.reached).toEqual(['open'])
   })
 })
-
 function stubbedFrames(inside: Inside, reached: string[]) {
   const owner = inside.HTMLIFrameElement.prototype
   const was = Object.getOwnPropertyDescriptor(owner, 'contentWindow') as { get?: () => unknown } | undefined
@@ -229,7 +212,6 @@ function stubbedFrames(inside: Inside, reached: string[]) {
     },
   })
 }
-
 function framedIn(inside: Inside) {
   const frame = inside.document.createElement('iframe')
   inside.document.body.append(frame)
@@ -251,7 +233,6 @@ function framedIn(inside: Inside) {
   }
   return { frame, child, tried }
 }
-
 describe('a frame the page makes itself', () => {
   test('is gated as the page is', () => {
     const { inside, reached, pressed } = page(true, stubbedFrames)
@@ -263,7 +244,6 @@ describe('a frame the page makes itself', () => {
     tried(child)
     expect(reached).toEqual(['frame fullscreen', 'frame copy', 'frame open'])
   })
-
   test('is pressed by a press in it, spent for the page as well', () => {
     const { inside, reached } = page(true, stubbedFrames)
     const { child, tried } = framedIn(inside)
@@ -273,7 +253,6 @@ describe('a frame the page makes itself', () => {
     expect(reached).toEqual(['fullscreen', 'execCommand copy', 'open'])
   })
 })
-
 describe('a file field', () => {
   test('is known by what it is, not by what the page says it is', () => {
     const { inside, reached } = page()

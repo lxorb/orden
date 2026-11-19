@@ -7,35 +7,28 @@
   import { openedWithin, unlockAt, unlockByDevice } from './unlocking'
 
   const { path, focused = false }: { path: string; focused?: boolean } = $props()
-
   let typed = $state('')
   let wrong = $state(false)
   let busy = $state(false)
   let field = $state<HTMLInputElement>()
   let device = $state(false)
-
   const password = $derived(protection.password !== null)
-
   $effect(() => {
     void deviceCan().then((can) => (device = can))
   })
-
   $effect(() => {
     const at = path
     untrack(() => openedWithin(at))
   })
-
   async function byDevice() {
     if (busy) return
     busy = true
     await unlockByDevice(path)
     busy = false
   }
-
   $effect(() => {
     if (focused) field?.focus({ preventScroll: true })
   })
-
   async function unlock(event: SubmitEvent) {
     event.preventDefault()
     if (busy || !typed) return
@@ -99,14 +92,12 @@
     color: var(--muted);
     text-align: center;
   }
-
   .mark {
     width: var(--icon-lg);
     height: var(--icon-lg);
     font-size: var(--icon-lg);
     color: var(--muted-strong);
   }
-
   .name {
     margin: 0;
     max-width: 100%;
@@ -117,24 +108,20 @@
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .unlock {
     display: flex;
     gap: var(--space-2);
     width: min(100%, 320px);
   }
-
   .unlock .orden-field {
     flex: 1;
     min-width: 0;
   }
-
   .wrong {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--danger);
   }
-
   .note {
     margin: 0;
     max-width: 320px;

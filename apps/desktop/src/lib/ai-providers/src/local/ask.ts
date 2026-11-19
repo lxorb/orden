@@ -15,22 +15,18 @@ export const PLANS: Record<LocalKind, string> = {
   codex: 'ChatGPT',
   'gemini-cli': 'Gemini',
 }
-
 function stopped(): DOMException {
   return new DOMException('The question was stopped.', 'AbortError')
 }
-
 class Listening {
   heard: Heard = {}
   answer = ''
   model = ''
-
   constructor(
     private readonly kind: LocalKind,
     private readonly ask: Ask,
     private readonly read: (line: string) => Heard,
   ) {}
-
   line(line: string): Heard['ended'] {
     const said = this.read(line)
     if (said.model) this.model = said.model
@@ -47,7 +43,6 @@ class Listening {
     }
     return said.ended
   }
-
   finish(end: Ending): string {
     if (end.stopped || this.ask.signal?.aborted) throw stopped()
     if (this.heard.signedOut) plans.signedOut(this.ask.provider.id)
@@ -57,20 +52,17 @@ class Listening {
     return this.answer
   }
 }
-
 function startError(error: unknown, kind: LocalKind): Error {
   const said = error instanceof Error ? error.message : String(error)
   if (said === 'missing') return new Error(`${KIND_NAMES[kind]} is not installed.`, { cause: error })
   return new Error(said, { cause: error })
 }
-
 export async function askLocal(ask: Ask & { provider: { kind: LocalKind } }): Promise<string> {
   if (!isDesktop) throw new Error('Only in the desktop app.')
   if (ask.signal?.aborted) throw stopped()
   const { kind } = ask.provider
   return kind === 'claude-code' ? await askClaude(ask) : await askInSession(kind, ask)
 }
-
 async function askClaude(ask: Ask): Promise<string> {
   const listening = new Listening('claude-code', ask, claudeReader())
   const id = `ask-${identifier()}`
@@ -103,7 +95,6 @@ async function askClaude(ask: Ask): Promise<string> {
     ask.signal?.removeEventListener('abort', stop)
   }
 }
-
 async function askInSession(kind: Exclude<LocalKind, 'claude-code'>, ask: Ask): Promise<string> {
   const listening = new Listening(kind, ask, readerOf(kind))
   let done: (end: Ending) => void = () => undefined

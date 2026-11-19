@@ -26,18 +26,14 @@
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
   let activity = $state.raw<Hit[]>([])
   let arranged = $state<'all' | 'priority'>('all')
-
   const chats = $derived.by(() => {
     const asked = query.trim().toLowerCase()
     return [...store().list]
       .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
-
   const grouped = $derived(bySpace(chats, workspace.spaces))
-
   startPriorities()
-
   const byLevel = $derived.by(() => {
     if (!priorities.on || arranged !== 'priority') return { pending: [], rest: [] }
     const ranked = chats.map((entry) => ({
@@ -50,22 +46,18 @@
       rest: ranked.filter((one) => one.entry.unread === 0),
     }
   })
-
   function moved(entry: ChatEntry, value: string) {
     if (!isLevel(value)) return
     priorities.reassign(entry.id, value, { title: entry.name ?? '', from: '', words: '' })
   }
-
   function useDraft(entry: ChatEntry, reply: string) {
     priorities.settle(entry.id, 'reply')
     store().offer(entry.id, reply)
     open(entry)
   }
-
   function priorityOf(value: number | undefined): Priority | undefined {
     return value === 1 || value === 2 || value === 3 || value === 4 ? value : undefined
   }
-
   function addTodo(entry: ChatEntry, todo: NonNullable<Suggestion['todo']>) {
     priorities.settle(entry.id, 'todo')
     const priority = priorityOf(todo.priority)
@@ -76,20 +68,15 @@
       ...(priority ? { fields: { priority } } : {}),
     })
   }
-
   const mentions = $derived(store().list.reduce((sum, one) => sum + one.mentions, 0))
   const now = Date.now()
-
   async function lookActive() {
     activity = await store().search('mentions:me')
   }
-
   onMount(() => void lookActive())
-
   function open(chat: ChatEntry | undefined, message?: string) {
     if (chat?.path) openChat(chat.path, {}, message)
   }
-
   const chatOf = (id: string) => store().list.find((one) => one.id === id)
 </script>
 
@@ -257,19 +244,16 @@
     display: flex;
     flex-direction: column;
   }
-
   .find {
     --glyph-size: 14px;
     margin: 0 0 var(--space-2);
     color: var(--muted);
   }
-
   .section {
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
-
   .space {
     margin: var(--space-2) 0 var(--space-1);
     padding-inline: var(--space-2);
@@ -279,50 +263,40 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .add {
     --glyph-size: 15px;
     width: 24px;
     height: 24px;
   }
-
   .entry {
     color: var(--muted);
   }
-
   .entry.unread {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .entry.muted {
     opacity: 0.55;
   }
-
   .count {
     font-variant-numeric: tabular-nums;
   }
-
   .arranged {
     margin: 0 0 var(--space-2);
   }
-
   .ranked {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .ranked .entry {
     flex: 1;
     min-width: 0;
   }
-
   .ranked.unread .entry {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .suggested {
     display: flex;
     flex-wrap: wrap;
@@ -331,7 +305,6 @@
     margin: 0 0 var(--space-2) var(--space-5);
     font-size: var(--text-sm);
   }
-
   .draft {
     flex-basis: 100%;
     margin: 0;
@@ -342,7 +315,6 @@
     line-clamp: 2;
     -webkit-box-orient: vertical;
   }
-
   .level {
     flex: none;
     max-width: 7.5em;
@@ -351,7 +323,6 @@
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .badge {
     flex: none;
     min-width: 18px;
@@ -366,11 +337,9 @@
     text-align: center;
     font-variant-numeric: tabular-nums;
   }
-
   .back {
     color: var(--muted-strong);
   }
-
   .empty {
     --glyph-size: 20px;
     display: grid;

@@ -38,17 +38,14 @@
       background var(--dur-fast) var(--ease-out);
     animation: arrive var(--dur-base) var(--ease-out);
   }
-
   @keyframes arrive {
     from {
       opacity: 0;
     }
   }
-
   .leave.idle {
     opacity: 0.22;
   }
-
   @media (hover: hover) {
     .leave:hover {
       opacity: 1;
@@ -56,18 +53,15 @@
       color: var(--text-strong);
     }
   }
-
   .leave:active {
     opacity: 1;
     background: var(--press);
     color: var(--text-strong);
   }
-
   .leave:focus-visible {
     opacity: 1;
     outline-offset: 2px;
   }
-
   .leave svg {
     width: 16px;
     height: 16px;
@@ -77,7 +71,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   :global([data-touch]) .leave svg {
     width: var(--touch-icon);
     height: var(--touch-icon);

@@ -7,7 +7,6 @@ const disk = vi.hoisted(() => ({
   backups: [] as string[],
   kept: new Map<string, string>(),
 }))
-
 vi.mock('../../crate/src/native', () => ({
   invoke: (command: string, args: { path?: string; id?: string; content?: string }) => {
     switch (command) {
@@ -40,12 +39,10 @@ vi.mock('../../crate/src/native', () => ({
     }
   },
 }))
-
 vi.mock('../../windows/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
-
 vi.mock('../../web-backend/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../web-backend/src/api')>()),
   keptCameFrom: () => Promise.resolve([{ root: '/Orden/.orden/Notes/Notes', from: '/Orden/Notes' }]),
@@ -59,15 +56,12 @@ vi.mock('../../web-backend/src/api', async (importOriginal) => ({
         : null,
     ),
 }))
-
 const { takeAdded, tasksSince, TAKEN } = await import('./shortcuts')
-
 const added: string[] = []
 const add = (text: string) => {
   added.push(text)
   return Promise.resolve(true)
 }
-
 beforeEach(() => {
   disk.notes.clear()
   disk.kept.clear()
@@ -76,7 +70,6 @@ beforeEach(() => {
   disk.backups = []
   added.length = 0
 })
-
 describe('a task from Shortcuts', () => {
   test('goes to the inbox quick add writes to, and is let go only once it is there', async () => {
     disk.waiting = [
@@ -87,36 +80,29 @@ describe('a task from Shortcuts', () => {
     expect(added).toEqual(['buy milk', 'call mum'])
     expect(disk.waiting).toEqual([])
   })
-
   test('waits while there is no inbox to write to', async () => {
     disk.waiting = [{ id: '1-0.txt', text: 'buy milk' }]
     expect(await takeAdded(() => Promise.resolve(false))).toBe(0)
     expect(disk.waiting).toHaveLength(1)
   })
 })
-
 describe('a task an older build wrote into the folder a space was moved out of', () => {
   const OLD = '/Orden/Notes/.Inbox.md'
-
   test('is picked up once: only what was written after the move', async () => {
     disk.left = OLD
     disk.backups = ['Notes 20261101 101010', 'Notes 20261105 090000', 'Other 20261106 000000']
     disk.notes.set('/Orden/.orden/.backups/Notes 20261105 090000/.Inbox.md', '- [ ] old\n')
     disk.notes.set(OLD, '- [ ] old\n- [ ] new one\n- [x] done\n')
     disk.kept.set('.Inbox.md', '- [x] old\n')
-
     expect(await takeAdded(add)).toBe(1)
     expect(added).toEqual(['new one'])
     expect(disk.notes.get(`/Orden/.orden/Notes/${TAKEN}`)).toBe(disk.notes.get(OLD))
-
     expect(await takeAdded(add)).toBe(0)
     expect(added).toEqual(['new one'])
-
     disk.notes.set(OLD, `${disk.notes.get(OLD) ?? ''}- [ ] newer\n`)
     expect(await takeAdded(add)).toBe(1)
     expect(added).toEqual(['new one', 'newer'])
   })
-
   test('without a backup, what the kept space already holds is not added again', async () => {
     disk.left = OLD
     disk.notes.set(OLD, '- [ ] old\n- [ ] new one\n')
@@ -124,14 +110,12 @@ describe('a task an older build wrote into the folder a space was moved out of',
     expect(await takeAdded(add)).toBe(1)
     expect(added).toEqual(['new one'])
   })
-
   test('is left alone in a folder that is still a space', async () => {
     disk.left = '/Orden/Work/.Inbox.md'
     disk.notes.set('/Orden/Work/.Inbox.md', '- [ ] live\n')
     expect(await takeAdded(add)).toBe(0)
     expect(added).toEqual([])
   })
-
   test('counts a line written twice as two', () => {
     expect(tasksSince('- [ ] a\n', '- [ ] a\n- [ ] a\n* [ ] b\nnot a task\n')).toEqual(['a', 'b'])
   })

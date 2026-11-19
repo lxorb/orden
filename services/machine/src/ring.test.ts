@@ -3,14 +3,12 @@ import { Ring } from './ring'
 
 const bytes = (text: string) => new TextEncoder().encode(text)
 const textOf = (data: Uint8Array | null) => (data ? new TextDecoder().decode(data) : null)
-
 test('a frame is numbered by the offset of its first byte', () => {
   const ring = new Ring()
   expect(ring.append(bytes('abc'))).toBe(0)
   expect(ring.append(bytes('de'))).toBe(3)
   expect(ring.end).toBe(5)
 })
-
 test('everything after an offset comes back as one run, from inside a frame too', () => {
   const ring = new Ring()
   ring.append(bytes('abc'))
@@ -19,7 +17,6 @@ test('everything after an offset comes back as one run, from inside a frame too'
   expect(textOf(ring.since(2))).toBe('cdef')
   expect(textOf(ring.since(6))).toBe('')
 })
-
 test('an offset the session never reached, or a broken one, is no answer', () => {
   const ring = new Ring()
   ring.append(bytes('abc'))
@@ -27,7 +24,6 @@ test('an offset the session never reached, or a broken one, is no answer', () =>
   expect(ring.since(-1)).toBeNull()
   expect(ring.since(1.5)).toBeNull()
 })
-
 test('the oldest frames go once the rest still cover the limit, and not before', () => {
   const ring = new Ring(0, 10)
   ring.append(bytes('aaaa'))
@@ -39,7 +35,6 @@ test('the oldest frames go once the rest still cover the limit, and not before',
   expect(ring.since(3)).toBeNull()
   expect(textOf(ring.since(4))).toBe('bbbbccccdddd')
 })
-
 test('the last megabyte is always kept, whatever the frames were', () => {
   const ring = new Ring()
   const frame = new Uint8Array(4096)
@@ -48,13 +43,11 @@ test('the last megabyte is always kept, whatever the frames were', () => {
   expect(ring.end - ring.start).toBeLessThan(1024 * 1024 + 4096)
   expect(ring.since(ring.end - 1024 * 1024)?.length).toBe(1024 * 1024)
 })
-
 test('a restored session numbers on from where it starts', () => {
   const ring = new Ring(500)
   expect(ring.since(0)).toBeNull()
   expect(ring.append(bytes('x'))).toBe(500)
 })
-
 test('a gap in the stream lets go of everything before it, and goes on after it', () => {
   const ring = new Ring()
   ring.append(bytes('abc'))

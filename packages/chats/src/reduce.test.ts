@@ -7,7 +7,6 @@ const EMIL: Who = 'user:emil'
 const LUCILE: Who = 'user:lucile'
 const MIA: Who = 'user:mia'
 const PAUL: Who = 'user:paul'
-
 const log = (...events: [Who, Event][]): Logged[] =>
   events.map(([author, event], index) => ({
     ...event,
@@ -15,19 +14,16 @@ const log = (...events: [Who, Event][]): Logged[] =>
     at: (index + 1) * 1000,
     author,
   }))
-
 function stateOf(events: readonly Logged[]): ChatState {
   const state = chatState()
   for (const event of events) apply(state, event)
   return state
 }
-
 function message(state: ChatState, id: string): Message {
   const found = state.messages.get(id)
   if (!found) throw new Error(`no message ${id}`)
   return found
 }
-
 const post = (id: string, body: string, extra: Partial<Extract<Event, { kind: 'post' }>> = {}): Event => ({
   kind: 'post',
   id: `p-${id}`,
@@ -35,7 +31,6 @@ const post = (id: string, body: string, extra: Partial<Extract<Event, { kind: 'p
   body,
   ...extra,
 })
-
 describe('a post', () => {
   it('is a message with its place, time and author', () => {
     const state = stateOf(log([EMIL, post('m1', 'Draft is up')]))
@@ -55,7 +50,6 @@ describe('a post', () => {
       replies: 0,
     })
   })
-
   it('is placed once, at its first place, however often it is placed', () => {
     const [first] = log([EMIL, post('m1', 'one')])
     if (!first) throw new Error('no event')
@@ -65,7 +59,6 @@ describe('a post', () => {
     expect(apply(state, { ...first, seq: 9 })).toEqual([])
     expect(message(state, 'm1').seq).toBe(1)
   })
-
   it('keeps what it carries', () => {
     const state = stateOf(
       log([
@@ -87,7 +80,6 @@ describe('a post', () => {
     expect(m1.files).toHaveLength(1)
   })
 })
-
 describe('replies', () => {
   it('are counted on their parent, with the latest time', () => {
     const state = stateOf(
@@ -100,7 +92,6 @@ describe('replies', () => {
     expect(message(state, 'm1')).toMatchObject({ replies: 2, lastReplyAt: 3000 })
     expect(message(state, 'm3')).toMatchObject({ parent: 'm1', alsoToChat: true })
   })
-
   it('change their parent too, as the reducer answers', () => {
     const state = stateOf(log([EMIL, post('m1', 'Draft')]))
     const changed = apply(state, {
@@ -111,7 +102,6 @@ describe('replies', () => {
     })
     expect(changed.map((one) => one.id)).toEqual(['m2', 'm1'])
   })
-
   it('stop counting once deleted', () => {
     const state = stateOf(
       log(
@@ -123,7 +113,6 @@ describe('replies', () => {
     )
     expect(message(state, 'm1')).toMatchObject({ replies: 1, lastReplyAt: 2000 })
   })
-
   it('wait for a parent that has not arrived', () => {
     const [parent, reply] = log([EMIL, post('m1', 'Draft')], [LUCILE, post('m2', 'Reading', { parent: 'm1' })])
     if (!parent || !reply) throw new Error('no events')
@@ -132,7 +121,6 @@ describe('replies', () => {
     expect(apply(state, parent)[0]?.replies).toBe(1)
   })
 })
-
 describe('an edit', () => {
   it('is the author’s, and the latest stands, with the earlier wordings kept', () => {
     const state = stateOf(
@@ -151,7 +139,6 @@ describe('an edit', () => {
       ],
     })
   })
-
   it('by anybody else is no edit', () => {
     const state = stateOf(
       log([EMIL, post('m1', 'one')], [LUCILE, { kind: 'edit', id: 'e1', target: 'm1', body: 'mine now' }]),
@@ -159,7 +146,6 @@ describe('an edit', () => {
     expect(message(state, 'm1')).toMatchObject({ body: 'one', history: [] })
     expect(message(state, 'm1').editedAt).toBeUndefined()
   })
-
   it('replaces the files only when it names files', () => {
     const file = (name: string) => ({ hash: 'b'.repeat(64), name, size: 1, type: 'text/plain' })
     const state = stateOf(
@@ -182,7 +168,6 @@ describe('an edit', () => {
     expect(message(state, 'm1').files).toEqual([])
   })
 })
-
 describe('a delete', () => {
   it('takes everything the message said and keeps its place', () => {
     const state = stateOf(
@@ -211,7 +196,6 @@ describe('a delete', () => {
       lastReplyAt: 4000,
     })
   })
-
   it('stands over an edit that comes after it', () => {
     const state = stateOf(
       log(
@@ -223,7 +207,6 @@ describe('a delete', () => {
     expect(message(state, 'm1')).toMatchObject({ deleted: true, body: '' })
   })
 })
-
 describe('reactions, pins and votes', () => {
   it('are a set per person and emoji, the later standing', () => {
     const state = stateOf(
@@ -238,7 +221,6 @@ describe('reactions, pins and votes', () => {
     )
     expect(message(state, 'm1').reactions).toEqual({ '👍': [MIA, LUCILE], '👀': [MIA] })
   })
-
   it('pin by the later', () => {
     const state = stateOf(
       log(
@@ -249,7 +231,6 @@ describe('reactions, pins and votes', () => {
     )
     expect(message(state, 'm1').pinned).toBe(false)
   })
-
   it('count only votes the poll takes', () => {
     const state = stateOf(
       log(
@@ -269,7 +250,6 @@ describe('reactions, pins and votes', () => {
     )
     expect(message(state, 'm1').poll?.votes).toEqual({ [LUCILE]: [2] })
   })
-
   it('take several answers where the poll does, and a vote of none takes it back', () => {
     const state = stateOf(
       log(
@@ -288,7 +268,6 @@ describe('reactions, pins and votes', () => {
     expect(message(state, 'm1').poll?.votes).toEqual({ [LUCILE]: [0, 1] })
   })
 })
-
 describe('settings', () => {
   it('are last writer per key', () => {
     const state = stateOf(
@@ -300,7 +279,6 @@ describe('settings', () => {
     )
     expect(state.meta).toEqual({ topic: 'Deadlines', posting: 'owner', slowmode: 30 })
   })
-
   it('and a schedule change no message', () => {
     const state = chatState()
     const changed = apply(state, {
@@ -316,13 +294,10 @@ describe('settings', () => {
     expect(state.messages.size).toBe(0)
   })
 })
-
 const PEOPLE: Who[] = [EMIL, LUCILE, MIA]
 const IDS = ['m1', 'm2', 'm3', 'm4']
-
 const person = fc.constantFrom(...PEOPLE)
 const id = fc.constantFrom(...IDS)
-
 const aPost: fc.Arbitrary<[Who, Event]> = fc
   .tuple(
     person,
@@ -343,7 +318,6 @@ const aPost: fc.Arbitrary<[Who, Event]> = fc
     }
     return [who, event]
   })
-
 const aMeta: fc.Arbitrary<[Who, Event]> = fc
   .tuple(
     person,
@@ -358,7 +332,6 @@ const aMeta: fc.Arbitrary<[Who, Event]> = fc
     if (slowmode !== undefined) event.slowmode = slowmode
     return [who, event]
   })
-
 const anEvent: fc.Arbitrary<[Who, Event]> = fc.oneof(
   aPost,
   fc.tuple(
@@ -401,7 +374,6 @@ const anEvent: fc.Arbitrary<[Who, Event]> = fc.oneof(
   ),
   aMeta,
 )
-
 const shuffled = fc
   .array(anEvent, { minLength: 1, maxLength: 40 })
   .map((events) => log(...events))
@@ -412,13 +384,11 @@ const shuffled = fc
       fc.subarray(events),
     ),
   )
-
 const comparable = (state: ChatState) => ({
   messages: [...state.messages.values()].sort((a, b) => a.id.localeCompare(b.id)),
   meta: state.meta,
   seq: state.seq,
 })
-
 describe('order', () => {
   it('never changes the state the same placed events make', () => {
     fc.assert(
@@ -429,7 +399,6 @@ describe('order', () => {
     )
   })
 })
-
 describe('an emoji named after what every object holds', () => {
   it.each(['constructor', '__proto__', 'toString'])('%s is one more reaction', (emoji) => {
     const state = stateOf(

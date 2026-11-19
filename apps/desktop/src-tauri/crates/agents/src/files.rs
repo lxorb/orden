@@ -13,15 +13,10 @@ use crate::Caller;
 use orden_base::paths::{linked, own_folders, real};
 
 const MOST_READ: usize = 1_000_000;
-
 const MOST_LISTED: usize = 500;
-
 const MOST_WALKED: usize = 20_000;
-
 const MOST_SEARCHED: u64 = 2_000_000;
-
 const SKIPPED: [&str; 2] = [".git", "node_modules"];
-
 pub fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer {
     if !caller.holds(Scope::Files) {
         return Answer::error(
@@ -69,11 +64,9 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer {
         Err(why) => Answer::error(Code::Failed, why),
     }
 }
-
 pub fn writable(app: &AppHandle, caller: &Caller, asked: &str) -> Result<PathBuf, Answer> {
     reachable(app, caller, asked, FilesOp::Write)
 }
-
 pub fn reachable(
     app: &AppHandle,
     caller: &Caller,
@@ -107,11 +100,9 @@ pub fn reachable(
     }
     crate::working::on_disk(app, &path).map_err(|why| Answer::error(Code::BadArguments, why))
 }
-
 pub fn pick_reach(app: &AppHandle, path: &Path) -> PathBuf {
     reach_of(&own_folders(app), path)
 }
-
 fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
     if path.is_dir() {
         return path.to_path_buf();
@@ -128,7 +119,6 @@ fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
         _ => path.to_path_buf(),
     }
 }
-
 pub fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
     behind_but_spaces(
         orden_base::paths::spaces_dir(app).ok().as_deref(),
@@ -136,7 +126,6 @@ pub fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
         path,
     )
 }
-
 pub fn behind_but_spaces(spaces: Option<&Path>, own: &[PathBuf], path: &Path) -> Option<Answer> {
     let in_spaces = spaces.is_some_and(|spaces| {
         orden_base::paths::inside(spaces, path)
@@ -147,7 +136,6 @@ pub fn behind_but_spaces(spaces: Option<&Path>, own: &[PathBuf], path: &Path) ->
     }
     behind(own, path)
 }
-
 pub fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
     let real_path = real(path);
     fenced
@@ -166,14 +154,12 @@ pub fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
             )
         })
 }
-
 fn reads(op: FilesOp) -> bool {
     matches!(
         op,
         FilesOp::Read | FilesOp::List | FilesOp::Search | FilesOp::Changes
     )
 }
-
 fn changes(op: FilesOp) -> bool {
     matches!(
         op,
@@ -185,11 +171,9 @@ fn changes(op: FilesOp) -> bool {
             | FilesOp::Delete
     )
 }
-
 pub fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
     under_home(asked, app.path().home_dir().ok().as_deref())
 }
-
 pub fn under_home(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
     let asked = asked.trim();
     let rest = asked
@@ -209,7 +193,6 @@ pub fn under_home(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
     }
     Ok(orden_base::paths::folded(&given))
 }
-
 fn fences(app: &AppHandle) -> Vec<PathBuf> {
     orden_base::paths::spaces_dir(app)
         .ok()
@@ -217,7 +200,6 @@ fn fences(app: &AppHandle) -> Vec<PathBuf> {
         .chain(own_folders(app))
         .collect()
 }
-
 fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> Option<Answer> {
     let whole = matches!(op, FilesOp::Move | FilesOp::Copy | FilesOp::Delete);
     let meets = |fence: &Path, one: &Path| {
@@ -239,7 +221,6 @@ fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> O
         format!("{} {why}", path.display()),
     ))
 }
-
 fn fenced_off(fenced: &[PathBuf], real_fenced: &[PathBuf], path: &Path) -> bool {
     fenced
         .iter()
@@ -251,7 +232,6 @@ fn fenced_off(fenced: &[PathBuf], real_fenced: &[PathBuf], path: &Path) -> bool 
                 .any(|fence| orden_base::paths::inside(fence, &real_path))
         }
 }
-
 fn question(
     app: &AppHandle,
     grant: &Grant,
@@ -291,15 +271,12 @@ fn question(
         },
     )
 }
-
 fn covered(grant: &Grant, folder: &Path) -> bool {
     ancestors(folder).any(|one| grant.always(&one.to_string_lossy(), Category::Files))
 }
-
 fn always_allowed(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> bool {
     covered(grant, &folder_of(path, op)) && to.is_none_or(|to| covered(grant, &folder_of(to, op)))
 }
-
 fn asked_about(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> PathBuf {
     let from = folder_of(path, op);
     match to.map(|to| folder_of(to, op)) {
@@ -307,7 +284,6 @@ fn asked_about(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> Pa
         _ => from,
     }
 }
-
 fn folder_of(path: &Path, op: FilesOp) -> PathBuf {
     let about_a_folder = matches!(
         op,
@@ -320,11 +296,9 @@ fn folder_of(path: &Path, op: FilesOp) -> PathBuf {
             .map_or_else(|| path.to_path_buf(), Path::to_path_buf)
     }
 }
-
 fn ancestors(folder: &Path) -> impl Iterator<Item = &Path> {
     folder.ancestors().filter(|one| !one.as_os_str().is_empty())
 }
-
 fn op_word(op: FilesOp) -> &'static str {
     match op {
         FilesOp::Read => "read",
@@ -340,7 +314,6 @@ fn op_word(op: FilesOp) -> &'static str {
         FilesOp::Changes => "changes",
     }
 }
-
 fn summary(op: FilesOp, path: &Path, to: Option<&Path>) -> String {
     let path = path.display();
     let to = to.map_or_else(String::new, |one| one.display().to_string());
@@ -357,13 +330,11 @@ fn summary(op: FilesOp, path: &Path, to: Option<&Path>) -> String {
         FilesOp::Changes => format!("Watch {path}"),
     }
 }
-
 fn millis(at: SystemTime) -> u64 {
     at.duration_since(UNIX_EPOCH).map_or(0, |since| {
         u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
     })
 }
-
 fn entry(path: &Path) -> Result<FileEntry, String> {
     let meta = fs::symlink_metadata(path).map_err(|why| format!("{}: {why}", path.display()))?;
     let kind = if meta.file_type().is_symlink() {
@@ -384,7 +355,6 @@ fn entry(path: &Path) -> Result<FileEntry, String> {
         modified: meta.modified().map_or(0, millis),
     })
 }
-
 fn done(
     asked: &Files,
     path: &Path,
@@ -435,18 +405,15 @@ fn done(
     }
     Ok(out)
 }
-
 fn needed(to: Option<&Path>) -> Result<&Path, String> {
     to.ok_or_else(|| "say where it goes, as to".to_owned())
 }
-
 fn outside_of<'a>(from: &Path, to: &'a Path) -> Result<&'a Path, String> {
     if orden_base::carry::goes_into_itself(from, to) {
         return Err(format!("{} cannot go inside itself", from.display()));
     }
     Ok(to)
 }
-
 fn content(asked: &Files) -> Result<Vec<u8>, String> {
     let words = asked
         .content
@@ -460,7 +427,6 @@ fn content(asked: &Files) -> Result<Vec<u8>, String> {
         Ok(words.as_bytes().to_vec())
     }
 }
-
 fn read(path: &Path, base64: bool, out: &mut FilesDone) -> Result<(), String> {
     if path.is_dir() {
         return Err(format!("{} is a folder: list it", path.display()));
@@ -483,7 +449,6 @@ fn read(path: &Path, base64: bool, out: &mut FilesDone) -> Result<(), String> {
     }
     Ok(())
 }
-
 fn list(path: &Path, out: &mut FilesDone) -> Result<(), String> {
     let mut names: Vec<PathBuf> = fs::read_dir(path)
         .map_err(|why| format!("{}: {why}", path.display()))?
@@ -498,7 +463,6 @@ fn list(path: &Path, out: &mut FilesDone) -> Result<(), String> {
     out.entries = names.iter().filter_map(|one| entry(one).ok()).collect();
     Ok(())
 }
-
 fn moved(from: &Path, to: &Path) -> Result<(), String> {
     if fs::symlink_metadata(to).is_ok() {
         return Err(format!("{} is there already", to.display()));
@@ -512,7 +476,6 @@ fn moved(from: &Path, to: &Path) -> Result<(), String> {
     copied(from, to)?;
     deleted(from)
 }
-
 fn copied(from: &Path, to: &Path) -> Result<(), String> {
     if fs::symlink_metadata(to).is_ok() {
         return Err(format!("{} is there already", to.display()));
@@ -539,7 +502,6 @@ fn copied(from: &Path, to: &Path) -> Result<(), String> {
     }
     Ok(())
 }
-
 fn deleted(path: &Path) -> Result<(), String> {
     let meta = fs::symlink_metadata(path).map_err(|why| format!("{}: {why}", path.display()))?;
     let gone = if meta.is_dir() {
@@ -549,7 +511,6 @@ fn deleted(path: &Path) -> Result<(), String> {
     };
     gone.map_err(|why| why.to_string())
 }
-
 fn walk(
     root: &Path,
     fenced: &[PathBuf],
@@ -596,7 +557,6 @@ fn walk(
     }
     Ok(())
 }
-
 fn searched(relative: &str, file: &FileEntry, glob: Option<&str>, text: Option<&str>) -> bool {
     if let Some(glob) = glob {
         let name = relative.rsplit('/').next().unwrap_or(relative);
@@ -614,17 +574,14 @@ fn searched(relative: &str, file: &FileEntry, glob: Option<&str>, text: Option<&
     fs::read_to_string(&file.path)
         .is_ok_and(|words| words.to_lowercase().contains(&text.to_lowercase()))
 }
-
 fn globbed(glob: &str, name: &str) -> bool {
     let glob: Vec<char> = glob.chars().collect();
     let name: Vec<char> = name.chars().collect();
     matched(&glob, &name, (0, 0), &mut std::collections::HashSet::new())
 }
-
 fn same_letter(one: char, other: char) -> bool {
     one == other || one.to_lowercase().eq(other.to_lowercase())
 }
-
 fn matched(
     glob: &[char],
     name: &[char],
@@ -662,14 +619,12 @@ fn matched(
     }
     found
 }
-
 pub fn hidden_within(root: &Path, path: &Path) -> bool {
     path.strip_prefix(root).map_or(true, |rest| {
         rest.components()
             .any(|step| step.as_os_str().to_string_lossy().starts_with('.'))
     })
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -694,7 +649,6 @@ mod tests {
         assert!(globbed("Ärger*", "ärger.txt"));
         assert!(globbed("*.MD", "Übersicht.md"));
     }
-
     #[test]
     fn a_folder_always_allowed_does_not_let_a_copy_or_move_write_elsewhere() {
         let mut grant = crate::grants::Grant::own("a".into(), "A");
@@ -739,13 +693,11 @@ mod tests {
             Path::new("/c")
         );
     }
-
     fn temp() -> (tempfile::TempDir, PathBuf) {
         let dir = tempfile::tempdir().expect("a folder");
         let root = dir.path().to_path_buf();
         (dir, root)
     }
-
     fn files(op: FilesOp, path: &Path) -> Files {
         Files {
             op,
@@ -758,12 +710,10 @@ mod tests {
             since: None,
         }
     }
-
     #[test]
     fn a_file_is_written_read_moved_copied_and_deleted() {
         let (_dir, root) = temp();
         let file = root.join("deep/down/plan.txt");
-
         let mut write = files(FilesOp::Write, &file);
         write.content = Some("first".into());
         done(&write, &file, None, &[]).expect("written");
@@ -773,11 +723,9 @@ mod tests {
         let read = done(&files(FilesOp::Read, &file), &file, None, &[]).expect("read");
         assert_eq!(read.content.as_deref(), Some("first and more"));
         assert!(!read.base64);
-
         let moved_to = root.join("elsewhere/plan.txt");
         done(&files(FilesOp::Move, &file), &file, Some(&moved_to), &[]).expect("moved");
         assert!(!file.exists() && moved_to.exists());
-
         let copy = root.join("copy");
         let elsewhere = root.join("elsewhere");
         done(
@@ -796,10 +744,8 @@ mod tests {
             &[]
         )
         .is_err());
-
         done(&files(FilesOp::Delete, &copy), &copy, None, &[]).expect("deleted");
         assert!(!copy.exists());
-
         let elsewhere = root.join("elsewhere");
         let inside = elsewhere.join("deeper");
         for op in [FilesOp::Copy, FilesOp::Move] {
@@ -808,7 +754,6 @@ mod tests {
             assert!(!inside.exists() && moved_to.exists());
         }
     }
-
     #[test]
     fn what_is_not_text_comes_back_as_base64() {
         let (_dir, root) = temp();
@@ -822,7 +767,6 @@ mod tests {
         assert!(read.base64);
         assert_eq!(read.content.as_deref(), Some("/wD+"));
     }
-
     #[test]
     fn a_search_finds_by_name_and_by_words_and_a_watch_what_changed() {
         let (_dir, root) = temp();
@@ -830,18 +774,15 @@ mod tests {
         fs::write(root.join("a/one.md"), "the Plan is here").expect("one");
         fs::write(root.join("a/two.txt"), "nothing").expect("two");
         fs::write(root.join("a/.git/three.md"), "plan").expect("three");
-
         let mut by_name = files(FilesOp::Search, &root);
         by_name.glob = Some("*.md".into());
         let found = done(&by_name, &root, None, &[]).expect("searched");
         assert_eq!(found.entries.len(), 1, "{found:?}");
-
         let mut by_words = files(FilesOp::Search, &root);
         by_words.text = Some("plan".into());
         let found = done(&by_words, &root, None, &[]).expect("searched");
         assert_eq!(found.entries.len(), 1);
         assert!(found.entries[0].path.ends_with("one.md"));
-
         let watched = done(&files(FilesOp::Changes, &root), &root, None, &[]).expect("watched");
         let since = watched.now;
         assert_eq!(watched.entries.len(), 2);
@@ -852,7 +793,6 @@ mod tests {
             .entries
             .is_empty());
     }
-
     #[test]
     fn a_list_and_a_stat_say_what_is_there() {
         let (_dir, root) = temp();
@@ -867,7 +807,6 @@ mod tests {
         assert_eq!(kinds, [(FileKind::File, 5), (FileKind::Folder, 0)]);
         assert!(done(&files(FilesOp::Read, &root), &root, None, &[]).is_err());
     }
-
     #[test]
     fn a_fence_is_never_reached_and_a_walk_goes_round_it() {
         let (_dir, root) = temp();
@@ -876,7 +815,6 @@ mod tests {
         fs::write(fence.join("agents.json"), "secret plan").expect("grants");
         fs::write(root.join("mine.txt"), "my plan").expect("mine");
         let fenced = [root.join("spaces"), fence.clone()];
-
         let inside = fence.join("agents.json");
         assert!(refused(&fenced, FilesOp::Read, &inside, None).is_some());
         assert!(refused(&fenced, FilesOp::Delete, &root, None).is_some());
@@ -888,14 +826,12 @@ mod tests {
         )
         .is_some());
         assert!(refused(&fenced, FilesOp::List, &root, None).is_none());
-
         let mut search = files(FilesOp::Search, &root);
         search.text = Some("plan".into());
         let found = done(&search, &root, None, &fenced).expect("searched");
         assert_eq!(found.entries.len(), 1);
         assert!(found.entries[0].path.ends_with("mine.txt"));
     }
-
     #[cfg(unix)]
     #[test]
     fn a_link_never_carries_a_call_behind_a_fence() {
@@ -908,18 +844,15 @@ mod tests {
         std::os::unix::fs::symlink(&fence, mine.join("door")).expect("link");
         std::os::unix::fs::symlink(&root, root.join("alias")).expect("alias");
         let fenced = [root.join("spaces"), fence.clone()];
-
         let through = mine.join("door/agents.json");
         assert!(refused(&fenced, FilesOp::Read, &through, None).is_some());
         assert!(refused(&fenced, FilesOp::Write, &mine.join("door/new.json"), None).is_some());
         assert!(refused(&fenced, FilesOp::Read, &mine.join("door"), None).is_some());
         assert!(refused(&fenced, FilesOp::List, &mine, None).is_none());
-
         let mut search = files(FilesOp::Search, &root.join("alias"));
         search.text = Some("plan".into());
         let found = done(&search, &root.join("alias"), None, &fenced).expect("searched");
         assert!(found.entries.is_empty(), "{:?}", found.entries);
-
         let copy = root.join("copy");
         copied(&mine, &copy).expect("copied");
         assert!(fs::symlink_metadata(copy.join("door"))
@@ -928,7 +861,6 @@ mod tests {
             .is_symlink());
         assert_eq!(fs::read_link(copy.join("door")).expect("where"), fence);
     }
-
     #[cfg(unix)]
     #[test]
     fn a_path_handed_to_the_system_is_never_behind_orden_s_fence() {
@@ -941,7 +873,6 @@ mod tests {
         std::os::unix::fs::symlink(&fence, mine.join("door")).expect("link");
         std::os::unix::fs::symlink(fence.join("agents.json"), mine.join("grants")).expect("link");
         let fenced = [fence.clone()];
-
         assert!(behind(&fenced, &fence).is_some());
         assert!(behind(&fenced, &fence.join("agents.json")).is_some());
         assert!(behind(&fenced, &mine.join("door")).is_some());
@@ -950,7 +881,6 @@ mod tests {
         assert!(behind(&fenced, &root).is_none());
         assert!(behind(&fenced, &mine).is_none());
     }
-
     #[cfg(unix)]
     #[test]
     fn a_path_an_agent_answers_a_dialog_with_reaches_no_further_than_a_pick() {
@@ -962,7 +892,6 @@ mod tests {
         fs::create_dir_all(&desk).expect("desk");
         std::os::unix::fs::symlink(&config, root.join("alias")).expect("alias");
         let fenced = [fence.clone()];
-
         assert_eq!(reach_of(&fenced, &desk.join("Plan.pdf")), desk);
         assert_eq!(reach_of(&fenced, &desk), desk);
         let beside = config.join("Plan.pdf");
@@ -974,7 +903,6 @@ mod tests {
             Path::new("/Plan.pdf")
         );
     }
-
     #[test]
     fn a_changed_call_and_a_reading_one_are_told_apart() {
         assert!(changes(FilesOp::Delete) && changes(FilesOp::Write));

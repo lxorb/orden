@@ -50,7 +50,6 @@
     days?: { from: string; through: string } | undefined
     adding?: number
   } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const base = $derived(live.base)
@@ -69,7 +68,6 @@
   const lists = $derived(property?.startsWith('note.') ? holdsLists(live.rows, property) : false)
   let pending = $state<Pending[]>([])
   let shuffled = $state<{ column: string; order: string[] } | null>(null)
-
   const answered = $derived(
     days
       ? withinDays(withEveryDay(live.answer?.groups ?? [], days.from, days.through), days.from, days.through)
@@ -96,21 +94,16 @@
       shuffled = null
     })
   })
-
   const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups, live.answer?.lanes))
   const noteCounts = $derived(noteNames(groups.map((one) => one.key)))
   const laneNames = $derived(noteNames(lanes))
   const walked = $derived<(Value | undefined)[]>(lanes.length ? lanes : [undefined])
   const laneLists = $derived(sub?.startsWith('note.') ? holdsLists(live.rows, sub) : false)
-
   const laneOf = (lane: string | null): Value | undefined =>
     lane === null ? undefined : lanes.find((one) => groupName(one) === lane)
-
   const placeKey = (column: string, lane: string | null) => (lane === null ? column : `${column}\n${lane}`)
-
   const placeSelector = (column: string, lane: string | null) =>
     `[data-column="${CSS.escape(column)}"]` + (lane === null ? '' : `[data-lane="${CSS.escape(lane)}"]`)
-
   const shown = $derived(cardProperties(live.columns, property, sub))
   const checked = $derived(checklists(live.rows))
   const anyChecklist = $derived(shownGroups.some((group) => group.rows.some((row) => checked.has(noteKey(row)))))
@@ -118,18 +111,15 @@
     cardLines(sizeOf(view?.orden.cardSize, notes), notes ? shown.length : 0, !notes || anyChecklist),
   )
   const height = $derived(cardHeight(lines, viewport.touch))
-
   const nothing = $derived(
     property && !days ? `No ${propertyName(property, base ? displayName(base, property) : undefined)}` : 'None',
   )
-
   function columnName(group: Group): string {
     if (days) return dayHead(group.key, live.today)
     if (isWhen(property)) return groupLabel(property, group.key, live.today)
     if (group.key === null || group.key === '') return nothing
     return groupLabel(property, group.key, live.today, noteCounts)
   }
-
   function toneOfGroup(group: Group): string | null {
     if (!coloured) return null
     const key = group.key
@@ -145,21 +135,17 @@
               : null
     return toneColour(optionFor(base, property ?? '', key)?.tone)
   }
-
   function unlisted(group: Group): boolean {
     const key = group.key
     return options.length > 0 && typeof key === 'string' && key !== '' && !options.some((one) => one.value === key)
   }
-
   let renaming = $state<string | null>(null)
-
   function moveColumn(name: string, step: -1 | 1) {
     const at = names.indexOf(name)
     const target = names[at + step]
     if (at === -1 || target === undefined) return
     kit.change((one, view) => placeColumn(one, view, names, name, target, step > 0))
   }
-
   function columnMenu(event: MouseEvent, group: Group) {
     const name = groupName(group.key)
     const hide = {
@@ -187,7 +173,6 @@
       { title: columnName(group) },
     )
   }
-
   function countMenu(event: MouseEvent) {
     if (!base) return
     const summaries = view?.summaries ?? {}
@@ -222,32 +207,26 @@
       { title: 'Calculate' },
     )
   }
-
   const sumsOf = (group: Group): string[] =>
     Object.keys(view?.summaries ?? {})
       .map((one) => valueText(group.summaries[one] ?? null, live.today))
       .filter(Boolean)
-
   let pickedFrom: { column: string; lane: string | null } | null = null
-
   function indexAt(place: HTMLElement, at: Point): number {
     const slots = [...place.querySelectorAll<HTMLElement>('[data-index]')]
     const found = placeAmong(slots, at)
     const first = Number(slots[0]?.dataset.index ?? 0)
     return slots.length ? first + found : 0
   }
-
   function rowsOf(group: Group, laneKey: Value | undefined): readonly Row[] {
     if (laneKey === undefined) return group.rows
     return group.sub?.find((one) => groupName(one.key) === groupName(laneKey))?.rows ?? []
   }
-
   function holds(where: { column: string; lane: string | null }, row: Row): boolean {
     const group = groups.find((one) => groupName(one.key) === where.column)
     const key = cardKey(row)
     return !!group && rowsOf(group, laneOf(where.lane)).some((one) => cardKey(one) === key)
   }
-
   function whereIs(row: Row, given?: string): { column: string; lane: string | null } {
     const column = given ?? columnOf(row) ?? ''
     const group = groups.find((one) => groupName(one.key) === column)
@@ -255,13 +234,11 @@
     const lane = group?.sub?.find((one) => one.rows.some((each) => cardKey(each) === key))
     return { column, lane: lane ? groupName(lane.key) : null }
   }
-
   function land(row: Row, group: Group, laneKey: Value | undefined, at: Point, place: HTMLElement) {
     const key = cardKey(row)
     const was = rowsOf(group, laneKey).findIndex((one) => cardKey(one) === key)
     carryTo(row, group, laneKey, indexWithout(indexAt(place, at), was), at)
   }
-
   function carryTo(row: Row, group: Group, laneKey: Value | undefined, index: number, at: Point | null) {
     const by = property
     if (by === undefined) return
@@ -275,14 +252,12 @@
     const id = orderId(row)
     const laneOrder = orderAfter(ids, id, index)
     const order = toLane === undefined ? laneOrder : mergedOrder(group.rows.map(orderId), laneOrder)
-
     if (from.column === name && (lane === null || from.lane === lane)) {
       if (laneOrder.join('\n') === ids.join('\n')) return
       reorder(name, order, at)
       return
     }
     if (!carries) return
-
     const fromKey = groups.find((one) => groupName(one.key) === from.column)?.key
     const written = (on: string, key: Value) => (base ? keyWritten(base, on, key, live.rows) : key)
     const first = from.column === name ? null : dropInto(by, written(by, group.key), row, fromKey)
@@ -292,7 +267,6 @@
         : null
     const drops = inTurn([first, second])
     if (!drops.length) return
-
     const card = cardKey(row)
     const moving: Pending = {
       card,
@@ -309,7 +283,6 @@
     const others = ids.filter((one) => one !== id).length
     const stored = (view?.orden.order?.[name]?.length ?? 0) > 0
     const keepOrder = !sorted && (stored || index < others)
-
     const write = async () => {
       let wrote = false as boolean
       const before = live.answer
@@ -332,7 +305,6 @@
     }
     void write()
   }
-
   function writeOrder(name: string, order: string[], unsorted = false): Promise<boolean> {
     const alive = new Set(live.rows.flatMap((row) => [orderId(row), rowId(row)]))
     return kit.changed((one, view) =>
@@ -341,7 +313,6 @@
       ),
     )
   }
-
   function reorder(name: string, order: string[], at: Point | null) {
     if (!sorted) {
       shuffle(name, order, false)
@@ -360,7 +331,6 @@
       { title: 'Remove sort?' },
     )
   }
-
   function shuffle(name: string, order: string[], unsorted: boolean) {
     const mine = { column: name, order }
     shuffled = mine
@@ -368,19 +338,16 @@
       if (!wrote && shuffled === mine) shuffled = null
     })
   }
-
   function columnOf(row: Row): string | null {
     const key = cardKey(row)
     const found = shownGroups.find((group) => group.rows.some((one) => cardKey(one) === key))
     return found ? groupName(found.key) : null
   }
-
   const titleOf = (row: Row) => row.file.basename
   let said = $state('')
   function announce(words: string) {
     said = words
   }
-
   function cardMenu(event: MouseEvent, row: Row, from: string) {
     const here = from
     menu.show(
@@ -406,16 +373,13 @@
       { title: titleOf(row) },
     )
   }
-
   let focus = $state<{ column: string; lane: string | null; card: string } | null>(null)
   const columns: Record<string, { reveal: (index: number) => void } | undefined> = {}
   let asked = $state<Record<string, number>>({})
-
   function askNew(column: string, lane: string | null) {
     const key = placeKey(column, lane)
     asked = { ...asked, [key]: (asked[key] ?? 0) + 1 }
   }
-
   const rover = $derived.by(() => {
     if (focus) {
       const at = focus
@@ -436,10 +400,8 @@
     }
     return null
   })
-
   const isFocus = (column: string, lane: string | null, row: Row): boolean =>
     rover?.column === column && rover.lane === lane && rover.card === cardKey(row)
-
   async function focusAt(column: number, lane: number, index: number) {
     const group = shownGroups[column]
     if (!group) return
@@ -454,7 +416,6 @@
     }
     await focusCard(name, laneKey, row)
   }
-
   async function focusCard(name: string, laneKey: Value | undefined, row: Row) {
     await tick()
     const group = shownGroups.find((one) => groupName(one.key) === name)
@@ -467,9 +428,7 @@
     await tick()
     board?.querySelector<HTMLElement>(`${placeSelector(name, lane)} [data-index="${index}"] [data-card]`)?.focus()
   }
-
   let board = $state<HTMLElement>()
-
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (event.defaultPrevented || keyElsewhere(event, event.currentTarget)) return
     const face = event.target instanceof HTMLElement ? event.target.closest('[data-card]') : null
@@ -488,7 +447,6 @@
     if (!group || !row || lane === -1) return
     const arrows = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'] as const
     const arrow = arrows.find((one) => one === event.key)
-
     if (arrow && event.altKey && !event.ctrlKey && !event.metaKey) {
       event.preventDefault()
       if (arrow === 'ArrowLeft' || arrow === 'ArrowRight') {
@@ -514,10 +472,8 @@
       return
     }
   }
-
   let showing = $state<string | null>(null)
   const phoneColumn = $derived(shownGroups.find((group) => groupName(group.key) === showing) ?? shownGroups[0])
-
   let swipeFrom: { x: number; y: number; id: number } | null = null
   function swipeStart(event: PointerEvent) {
     swipeFrom = isFinger(event.pointerType) ? { x: event.clientX, y: event.clientY, id: event.pointerId } : null
@@ -535,7 +491,6 @@
     const next = shownGroups[at + (forward ? 1 : -1)]
     if (next) showing = groupName(next.key)
   }
-
   let addingSeen = untrack(() => adding)
   $effect(() => {
     if (adding <= addingSeen) return
@@ -545,7 +500,6 @@
     const lane = untrack(() => lanes[0])
     untrack(() => askNew(groupName(first.key), lane === undefined ? null : groupName(lane)))
   })
-
   let naming = $state(false)
   function addGroup(words: string) {
     const value = words.trim()
@@ -784,7 +738,6 @@
     padding: var(--space-3);
     overflow-x: auto;
   }
-
   .board.phone {
     flex-direction: column;
     align-items: stretch;
@@ -792,7 +745,6 @@
     padding: var(--space-2);
     overflow: hidden;
   }
-
   .strip {
     flex: none;
     display: flex;
@@ -800,11 +752,9 @@
     overflow-x: auto;
     scrollbar-width: none;
   }
-
   .strip::-webkit-scrollbar {
     display: none;
   }
-
   .switch {
     flex: none;
     display: inline-flex;
@@ -819,66 +769,54 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .switch.on {
     background: var(--surface-3);
     color: var(--text-strong);
     font-weight: var(--weight-strong);
     box-shadow: inset 0 0 0 1px var(--line-strong);
   }
-
   .switch.toned.on {
     background: color-mix(in srgb, var(--pill) 22%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
     box-shadow: none;
   }
-
   .switch .n {
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   .one {
     flex: 1;
     display: flex;
     align-items: flex-start;
     min-height: 0;
   }
-
   .one .column {
     width: 100%;
   }
-
   .one,
   .one :global(.scroll) {
     touch-action: pan-y pinch-zoom;
   }
-
   .lanes {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     min-width: min-content;
   }
-
   .lane-heads,
   .row {
     display: flex;
     gap: var(--space-3);
   }
-
   .lane-head {
     width: 272px;
   }
-
   .row .column {
     max-height: 420px;
   }
-
   .lane {
     margin: var(--space-2) 0 0;
   }
-
   .column {
     flex: none;
     display: flex;
@@ -890,34 +828,28 @@
     background: var(--surface-2);
     transition: box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .column.washed {
     background: color-mix(in srgb, var(--wash) 7%, var(--surface-2));
   }
-
   :global([data-theme='dark']) .column.washed {
     background: color-mix(in srgb, var(--wash) 10%, var(--surface-2));
   }
-
   .cards {
     flex: 0 1 auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
-
   .head-field {
     display: flex;
     align-items: center;
     height: var(--row-height);
     padding: 0 var(--space-2);
   }
-
   .head-field input {
     width: 100%;
     min-height: var(--row-height-sm);
   }
-
   .add-column {
     flex: none;
     display: flex;
@@ -937,15 +869,12 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .add-column.field {
     padding: 0 var(--space-2);
   }
-
   .add-column.field input {
     width: 100%;
   }
-
   .add-column svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -954,23 +883,19 @@
     stroke-width: 1.4;
     stroke-linecap: round;
   }
-
   @media (hover: hover) {
     .add-column:hover {
       background: var(--surface-2);
       color: var(--text);
     }
   }
-
   .column:global(.is-carried) {
     opacity: 0.45;
   }
-
   .column:global(.is-before),
   .column:global(.is-after) {
     position: relative;
   }
-
   .column:global(.is-before)::before,
   .column:global(.is-after)::after {
     content: '';
@@ -982,28 +907,22 @@
     background: var(--accent);
     pointer-events: none;
   }
-
   .column:global(.is-before)::before {
     left: calc(var(--space-3) / -2 - 1px);
   }
-
   .column:global(.is-after)::after {
     right: calc(var(--space-3) / -2 - 1px);
   }
-
   .column:global(.is-taking) {
     box-shadow: inset 0 0 0 1px var(--accent);
   }
-
   .column.closed:global(.is-taking) {
     box-shadow: inset 0 0 0 1px var(--line-strong);
     cursor: not-allowed;
   }
-
   .add {
     flex: none;
   }
-
   .hidden {
     flex: none;
     display: flex;
@@ -1013,7 +932,6 @@
     width: 220px;
     padding: 0 0 var(--space-2);
   }
-
   .hidden-head {
     display: flex;
     align-items: center;
@@ -1024,7 +942,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .hidden-row {
     display: flex;
     align-items: center;
@@ -1039,18 +956,15 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .hidden-row:hover {
       background: var(--surface-hover);
     }
   }
-
   .hidden-row:global(.is-taking) {
     background: var(--surface-selected);
     box-shadow: inset 0 0 0 1px var(--accent);
   }
-
   .tag {
     min-width: 0;
     overflow: hidden;
@@ -1061,18 +975,15 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .tag.toned {
     background: color-mix(in srgb, var(--pill) 22%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
   }
-
   .count {
     margin-inline-start: auto;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   .said {
     position: absolute;
     width: 1px;

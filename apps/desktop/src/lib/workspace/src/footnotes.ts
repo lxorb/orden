@@ -7,22 +7,16 @@ export interface Footnote {
   defined: number | null
   used: boolean
 }
-
 const DEFINITION = /^\[\^([^\]\s]+)\]:[ \t]*(.*)$/
-
 const REFERENCE = /\[\^([^\]\s]+)\]/g
-
 export function scanFootnotes(text: string): Footnote[] {
   if (!text.includes('[^')) return []
-
   const said = new Map<string, string>()
   const definedAt = new Map<string, number>()
   const order: string[] = []
   const usedAt = new Map<string, number>()
-
   for (const { text: row, line, code } of lines(text)) {
     if (code) continue
-
     const defined = DEFINITION.exec(row)
     if (defined) {
       const id = defined[1] ?? ''
@@ -31,7 +25,6 @@ export function scanFootnotes(text: string): Footnote[] {
         definedAt.set(id, line)
       }
     }
-
     for (const found of row.matchAll(REFERENCE)) {
       const id = found[1] ?? ''
       if (defined && found.index === 0) continue
@@ -41,9 +34,7 @@ export function scanFootnotes(text: string): Footnote[] {
       }
     }
   }
-
   const unused = [...said.keys()].filter((id) => !usedAt.has(id))
-
   return [...order, ...unused].map((id) => ({
     id,
     text: said.get(id) ?? '',

@@ -5,26 +5,22 @@ import { describe, expect, test } from 'vitest'
 import { code, walk } from './files'
 
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
-
 type Way = 'text' | 'json'
 interface Use {
   way: Way
   side: 'write' | 'read'
   at: string
 }
-
 function scriptOf(path: string): string {
   const text = readFileSync(path, 'utf8')
   if (!path.endsWith('.svelte')) return text
   return [...text.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((one) => one[1]).join('\n')
 }
-
 function audit(given: readonly { name: string; text: string }[]) {
   const sources = given.map(({ name, text }) => ({
     name,
     file: ts.createSourceFile(name, text, ts.ScriptTarget.Latest, true),
   }))
-
   const constants = new Map<string, ts.Expression[]>()
   const local = new Map<string, Map<string, ts.Expression>>()
   for (const { name, file } of sources) {
@@ -39,7 +35,6 @@ function audit(given: readonly { name: string; text: string }[]) {
     }
     local.set(name, own)
   }
-
   function keyOf(node: ts.Expression, file: string, depth = 0): string | null {
     if (depth > 6) return null
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text
@@ -63,15 +58,12 @@ function audit(given: readonly { name: string; text: string }[]) {
     }
     return null
   }
-
   const called = (node: ts.CallExpression, name: string) =>
     (ts.isIdentifier(node.expression) && node.expression.text === name) ||
     (ts.isPropertyAccessExpression(node.expression) &&
       node.expression.name.text === name &&
       node.expression.expression.getText() !== 'this')
-
   const equality = [ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken]
-
   function onlyCompared(read: ts.CallExpression): boolean {
     const held = read.parent
     if (!ts.isVariableDeclaration(held) || !ts.isIdentifier(held.name)) return false
@@ -89,10 +81,8 @@ function audit(given: readonly { name: string; text: string }[]) {
     look(scope)
     return only
   }
-
   const uses = new Map<string, Use[]>()
   const stringified: string[] = []
-
   for (const { name, file } of sources) {
     const add = (key: ts.Expression | undefined, way: Way, side: Use['side'], node: ts.Node) => {
       if (!key) return
@@ -138,7 +128,6 @@ function audit(given: readonly { name: string; text: string }[]) {
     }
     visit(file)
   }
-
   const matches = (pattern: string, key: string) =>
     pattern === key ||
     (pattern.includes('*') &&
@@ -148,7 +137,6 @@ function audit(given: readonly { name: string; text: string }[]) {
           .map((one) => one.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
           .join('.*')}$`,
       ).test(key))
-
   const wrong: string[] = []
   const keys = [...uses.keys()]
   for (const key of keys) {
@@ -170,23 +158,18 @@ function audit(given: readonly { name: string; text: string }[]) {
   }
   return { count: uses.size, stringified, wrong: [...new Set(wrong)].sort() }
 }
-
 const app = audit(walk(SOURCE, code).map((path) => ({ name: path.slice(SOURCE.length + 1), text: scriptOf(path) })))
-
 describe('every key in storage', () => {
   test('is found where it is used', () => {
     expect(app.count).toBeGreaterThan(80)
   })
-
   test('is written as words or as JSON in the call, never as JSON handed to keep', () => {
     expect(app.stringified).toEqual([])
   })
-
   test('is read the way it is written', () => {
     expect(app.wrong).toEqual([])
   })
 })
-
 describe('the check itself', () => {
   test('finds a word read as JSON, through the constant that names it', () => {
     const found = audit([
@@ -196,7 +179,6 @@ describe('the check itself', () => {
     ])
     expect(found.wrong).toEqual(['orden:icon-set: read as json at b.ts:2, written as text'])
   })
-
   test('finds JSON handed to keep, and lets the two right pairs be', () => {
     const found = audit([
       {

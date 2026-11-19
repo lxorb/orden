@@ -7,14 +7,12 @@ export interface Said {
   err: string
   timedOut: boolean
 }
-
 export interface Standing {
   state: 'missing' | 'out' | 'in' | 'unknown'
   program: string | null
   plan: string | null
   account: string | null
 }
-
 export function saidIn(value: unknown): Said | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Record<string, unknown>
@@ -27,11 +25,9 @@ export function saidIn(value: unknown): Said | null {
     timedOut: one.timedOut === true,
   }
 }
-
 function titled(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
 }
-
 export function standingOf(kind: LocalKind, said: Said | null): Standing {
   if (!said) return { state: 'missing', program: null, plan: null, account: null }
   const base = { program: said.program, plan: null, account: null }
@@ -39,9 +35,7 @@ export function standingOf(kind: LocalKind, said: Said | null): Standing {
   if (kind === 'gemini-cli') return geminiStanding(said, base)
   return kind === 'claude-code' ? claudeStanding(said, base) : codexStanding(said, base)
 }
-
 const GEMINI_PLANS: Record<string, string> = { 'api-key': 'API key', vertex: 'Vertex AI' }
-
 function geminiStanding(said: Said, base: Omit<Standing, 'state'>): Standing {
   let status: Record<string, unknown> = {}
   try {
@@ -59,7 +53,6 @@ function geminiStanding(said: Said, base: Omit<Standing, 'state'>): Standing {
     account: typeof status.email === 'string' && status.email ? status.email : null,
   }
 }
-
 function claudeStanding(said: Said, base: Omit<Standing, 'state'>): Standing {
   let status: Record<string, unknown> | null = null
   try {
@@ -79,7 +72,6 @@ function claudeStanding(said: Said, base: Omit<Standing, 'state'>): Standing {
     account: typeof status.email === 'string' && status.email ? status.email : null,
   }
 }
-
 function codexStanding(said: Said, base: Omit<Standing, 'state'>): Standing {
   const words = `${said.out}\n${said.err}`
   if (/not logged in/i.test(words)) return { ...base, state: 'out' }

@@ -9,23 +9,19 @@ import { workspace } from '../../../workspace/src/api'
 import { store } from './source.svelte'
 
 const jumps = new Map<string, string>()
-
 export function takeJump(path: string): string | undefined {
   const message = jumps.get(path)
   jumps.delete(path)
   return message
 }
-
 export function chatsAreOn(): boolean {
   if (chatsOn()) return true
   busy.failed('Chats are off. Turn them on in Settings.')
   return false
 }
-
 export function chatName(path: string): string {
   return fileName(path).replace(/\.chat$/i, '')
 }
-
 export function openChat(path: string, how: OpenHow = {}, message?: string): void {
   if (!chatsAreOn()) return
   if (message) jumps.set(path, message)
@@ -37,7 +33,6 @@ export function openChat(path: string, how: OpenHow = {}, message?: string): voi
   }
   workspace.openView('', chatName(path), path, how, 'channel')
 }
-
 export async function openChatLink(href: string, how: OpenHow = {}): Promise<void> {
   const link = chatLinkOf(href)
   if (!link || !chatsAreOn()) return
@@ -49,14 +44,11 @@ export async function openChatLink(href: string, how: OpenHow = {}): Promise<voi
   if (path) openChat(path, how, link.message)
   else busy.failed('that link could not be followed')
 }
-
 const hearers = new Set<(path: string) => void>()
-
 export function hearJumps(hear: (path: string) => void): () => void {
   hearers.add(hear)
   return () => hearers.delete(hear)
 }
-
 export async function makeChat(folder?: string, named?: string): Promise<void> {
   if (!chatsAreOn()) return
   if (!account.accountToken) {
@@ -69,7 +61,6 @@ export async function makeChat(folder?: string, named?: string): Promise<void> {
     workspace.showPanel('tree')
     if (workspace.startNaming('chat', dir)) return
   }
-
   const name = chatName(named ?? workspace.freeName(dir, `Chat.chat`))
   const path = await store()
     .make(dir, name)

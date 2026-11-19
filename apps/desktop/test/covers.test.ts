@@ -7,10 +7,8 @@ import { svelte, walk } from './files'
 import { COVERS } from '../src/lib/web-tab/src/covers'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
-
 const RUNG =
   /z-index:[^;]*var\(--z-(?:popover|float|bar|drawer|screen|notice|cover|settings|store|sheet|menu|lightbox|stage|carried)\)/
-
 const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .fab': 'a touch screen only, which builds no native page',
   'lib/phone/src/PhoneTabs.svelte .new': 'a phone only, which builds no native page',
@@ -48,18 +46,15 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/tab-strip/src/TabNumbers.svelte .numeral': 'on the tabs of a strip, which no page is under',
   'lib/pass-ui/src/web/PassWeb.svelte .reload': 'Pass on its own site, which holds no web tab',
 }
-
 const MADE_BY: Record<string, string> = {
   'lib/sidebar/src/Tree.svelte .row.carried': 'lib/sidebar/src/tree-lift.ts',
 }
-
 interface Node {
   type: string
   name?: string
   attributes?: { type: string; name?: string; value?: unknown }[]
   [key: string]: unknown
 }
-
 function classesOf(node: Node): string[] {
   const words: string[] = []
   for (const one of node.attributes ?? []) {
@@ -70,14 +65,11 @@ function classesOf(node: Node): string[] {
   }
   return words.filter(Boolean)
 }
-
 const SHAPES: readonly string[] = [...COVERS.floating, ...COVERS.whole]
-
 function registered(node: Node): boolean {
   if (classesOf(node).some((one) => SHAPES.includes(one))) return true
   return (node.attributes ?? []).some((one) => one.name === 'data-covers')
 }
-
 function* elements(node: unknown, inside = false): Generator<{ node: Node; inside: boolean }> {
   if (!node || typeof node !== 'object') return
   if (Array.isArray(node)) {
@@ -94,13 +86,11 @@ function* elements(node: unknown, inside = false): Generator<{ node: Node; insid
     if (key !== 'attributes' && value && typeof value === 'object') yield* elements(value, under)
   }
 }
-
 interface Rule {
   type: string
   prelude: { start: number; end: number }
   block: { start: number; end: number }
 }
-
 function* rules(node: unknown): Generator<Rule> {
   if (!node || typeof node !== 'object') return
   if (Array.isArray(node)) {
@@ -113,7 +103,6 @@ function* rules(node: unknown): Generator<Rule> {
     if (key !== 'parent' && value && typeof value === 'object') yield* rules(value)
   }
 }
-
 function subjects(prelude: string): string[][] {
   return prelude.split(',').map((selector) => {
     const last =
@@ -125,14 +114,12 @@ function subjects(prelude: string): string[][] {
     return [...plain.matchAll(/\.([\w-]+)/g)].map((match) => match[1] ?? '')
   })
 }
-
 interface Found {
   key: string
   file: string
   registered: boolean
   elements: number
 }
-
 function layersOfTheWindow(): Found[] {
   const found: Found[] = []
   for (const path of walk(SRC, svelte)) {
@@ -160,9 +147,7 @@ function layersOfTheWindow(): Found[] {
   }
   return found
 }
-
 const found = layersOfTheWindow()
-
 test('every layer of the window is in the registry of what covers a page, or says why not', () => {
   expect(found.length).toBeGreaterThan(50)
   const missing = found
@@ -171,7 +156,6 @@ test('every layer of the window is in the registry of what covers a page, or say
     .filter((key) => !(key in NEVER_OVER_A_PAGE))
   expect([...new Set(missing)]).toEqual([])
 })
-
 test('a layer a script makes is registered by the script that makes it', () => {
   const made = found.filter((one) => one.elements === 0).map((one) => one.key)
   for (const key of made) expect(MADE_BY, key).toHaveProperty([key])
@@ -180,7 +164,6 @@ test('a layer a script makes is registered by the script that makes it', () => {
     expect(readFileSync(join(SRC, script), 'utf8')).toMatch(/dataset\.covers\s*=/)
   }
 })
-
 test('nothing is excused that is in the registry after all, or is no layer any more', () => {
   for (const key of Object.keys(NEVER_OVER_A_PAGE)) {
     const one = found.filter((each) => each.key === key)
@@ -191,7 +174,6 @@ test('nothing is excused that is in the registry after all, or is no layer any m
     ).toBe(true)
   }
 })
-
 const PLACED_INSIDE: Record<string, string> = {
   'lib/pass-ui/src/PassFill.svelte .fill': 'under a web tab’s bar: see WebSite',
   'lib/web-tab/src/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebSite',
@@ -199,7 +181,6 @@ const PLACED_INSIDE: Record<string, string> = {
   'lib/web-tab/src/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebSite',
   'lib/web-tab/src/WebSite.svelte .site': 'under a web tab’s bar, inside the tab it is about, which it never leaves',
 }
-
 test('every bubble is placed in the window, where nothing that holds it can cut it', () => {
   const OWN = new Set(['orden-bubble', 'is-pressable', 'orden-host'])
   const bubbles: string[] = []

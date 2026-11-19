@@ -5,17 +5,14 @@ import { saidIn, type Standing, standingOf } from './standing'
 
 const EVERY = 3000
 const FOR = 5 * 60_000
-
 interface Plan extends Standing {
   limit: Limit | null
   home: string | null
 }
-
 export interface LocalAccount {
   id: string
   kind: LocalKind
 }
-
 const unasked = (): Plan => ({
   state: 'unknown',
   program: null,
@@ -24,18 +21,14 @@ const unasked = (): Plan => ({
   limit: null,
   home: null,
 })
-
 class Plans {
   local = $state<Record<string, Plan>>({})
   chatgpt = $state<{ email: string | null } | null | undefined>(undefined)
   chatgptLimit = $state<Limit | null>(null)
-
   private watching = new Set<string>()
-
   of(id: string): Plan {
     return this.local[id] ?? unasked()
   }
-
   async check(account: LocalAccount): Promise<Plan> {
     const said = await invoke<unknown>('ai_cli_status', {
       tool: account.kind,
@@ -50,14 +43,12 @@ class Plans {
     this.local = { ...this.local, [account.id]: now }
     return now
   }
-
   async checkChatgpt(): Promise<void> {
     const said = await invoke<unknown>('chatgpt_account').catch(() => null)
     const email = (said as { email?: unknown } | null)?.email
     this.chatgpt =
       typeof said === 'object' && said !== null ? { email: typeof email === 'string' ? email : null } : null
   }
-
   watch(account: LocalAccount): void {
     if (this.watching.has(account.id)) return
     this.watching.add(account.id)
@@ -70,16 +61,12 @@ class Plans {
     }
     void again()
   }
-
   heard(id: string, limit: Limit): void {
     this.local = { ...this.local, [id]: { ...this.of(id), limit } }
   }
-
   signedOut(id: string): void {
     this.local = { ...this.local, [id]: { ...this.of(id), state: 'out' } }
   }
 }
-
 export const plans = /* @__PURE__ */ new Plans()
-
 export type LocalPlans = typeof plans

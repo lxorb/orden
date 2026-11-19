@@ -9,9 +9,7 @@ vi.stubGlobal('localStorage', {
   setItem: () => undefined,
   removeItem: () => undefined,
 })
-
 const { runner } = await import('./runner.svelte')
-
 describe('a note on its way to its document', () => {
   test('is not joined until it has', () => {
     const doc = { live: true, text: () => 'words', write: () => undefined }
@@ -28,13 +26,10 @@ describe('a note on its way to its document', () => {
       },
     }
     const note = { path: '/s/a.md' } as unknown as NoteDoc
-
     open.bound.set('k', { id: 'n1', part: () => undefined, joining: true })
     expect(runner.joinedOf(note)).toBeNull()
-
     open.bound.set('k', { id: 'n1', part: () => undefined })
     expect(runner.joinedOf(note)?.text()).toBe('words')
-
     open.bound.clear()
     open.current = null
   })

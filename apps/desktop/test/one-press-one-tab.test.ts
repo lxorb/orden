@@ -5,7 +5,6 @@ import { describe, expect, test } from 'vitest'
 import { code, walk } from './files'
 
 const SRC = fileURLToPath(new URL('../src', import.meta.url))
-
 const pressed = walk(SRC, code).flatMap((path) => {
   const text = readFileSync(path, 'utf8')
   return [...text.matchAll(/followHref\([^)]*\bevent\)/g)].map((one) => ({
@@ -13,12 +12,10 @@ const pressed = walk(SRC, code).flatMap((path) => {
     before: text.slice(Math.max(0, one.index - 1200), one.index),
   }))
 })
-
 describe('one press, one tab', () => {
   test('there are surfaces that follow a link out of a press', () => {
     expect(pressed.length).toBeGreaterThan(4)
   })
-
   test('every one spends the press before following it', () => {
     for (const one of pressed) {
       const body = one.before.slice(one.before.lastIndexOf('function ') + 1)
@@ -26,7 +23,6 @@ describe('one press, one tab', () => {
       expect(body.includes('.preventDefault()') || inline.includes('.preventDefault()'), one.path).toBe(true)
     }
   })
-
   test('the terminal follows a link from the press, never from xterm.js as well', () => {
     const session = readFileSync(join(SRC, 'lib/terminal/src/sessions.svelte.ts'), 'utf8')
     const links = readFileSync(join(SRC, 'lib/terminal/src/links.ts'), 'utf8')

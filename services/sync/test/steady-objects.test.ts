@@ -7,9 +7,7 @@ import type { Env } from '../src/sync-server/src/types'
 import { HubState } from './hub-fakes'
 
 const WRANGLER = fileURLToPath(new URL('../wrangler.jsonc', import.meta.url))
-
 const state = () => new HubState() as unknown as DurableObjectState
-
 const MADE: Record<string, (env: Env) => object> = {
   NoteRoom: (env) => new NoteRoom(state(), env),
   AccountHub: (env) => new AccountHub(state(), env),
@@ -17,7 +15,6 @@ const MADE: Record<string, (env: Env) => object> = {
   AppRelay: (env) => new AppRelay(state(), env),
   Machine: (env) => new Machine(state(), env),
 }
-
 function busyOnce(): { db: D1Database; asked: () => number } {
   let asked = 0
   const statement = {
@@ -31,11 +28,9 @@ function busyOnce(): { db: D1Database; asked: () => number } {
   }
   return { db: { prepare: () => statement } as unknown as D1Database, asked: () => asked }
 }
-
 test('every durable object asks the database again while it is busy, as a request does', async () => {
   const named = new Set([...readFileSync(WRANGLER, 'utf8').matchAll(/"class_name":\s*"(\w+)"/g)].map((one) => one[1]))
   expect(named.size).toBeGreaterThan(0)
-
   for (const name of named) {
     const make = name === undefined ? undefined : MADE[name]
     expect(make, `${String(name)} is not built here`).toBeDefined()

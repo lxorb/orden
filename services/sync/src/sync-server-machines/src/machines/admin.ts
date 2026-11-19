@@ -14,9 +14,7 @@ interface Admin {
   Bindings: Env
   Variables: Variables
 }
-
 export const onlineAdmin = new Hono<Admin>()
-
 const admin: MiddlewareHandler<Admin> = async (context, next) => {
   const service = await serviceOf(context.env)
   if (!service.admin || context.get('user').id !== service.admin) {
@@ -25,7 +23,6 @@ const admin: MiddlewareHandler<Admin> = async (context, next) => {
   await next()
 }
 onlineAdmin.use('*', admin)
-
 onlineAdmin.get('/', async (context) => {
   const service = await serviceOf(context.env)
   const at = Date.now()
@@ -45,7 +42,6 @@ onlineAdmin.get('/', async (context) => {
     machines,
   })
 })
-
 onlineAdmin.post('/service', async (context) => {
   const body = await readBody(context)
   const on = body.flag('online')
@@ -56,13 +52,11 @@ onlineAdmin.post('/service', async (context) => {
   const service = await serviceOf(context.env)
   return context.json({ online: service.on, ceiling: service.ceiling })
 })
-
 onlineAdmin.post('/allow', async (context) => {
   const body = await readBody(context)
   const email = body.text('email', 320)
   const on = body.flag('online')
   if (body.problem || !email || on === undefined) return context.json({ error: 'email and online' }, 400)
-
   const user = await context.env.DB.prepare('select id from users where email = ?')
     .bind(email.toLowerCase())
     .first<{ id: string }>()
@@ -70,7 +64,6 @@ onlineAdmin.post('/allow', async (context) => {
   await context.env.DB.prepare('update users set online = ? where id = ?')
     .bind(on ? 1 : 0, user.id)
     .run()
-
   if (!on) {
     const machine = await context.env.DB.prepare('select id from machines where user_id = ?')
       .bind(user.id)
@@ -88,7 +81,6 @@ onlineAdmin.post('/allow', async (context) => {
   }
   return context.json({ online: on })
 })
-
 onlineAdmin.post('/machines/:id/stop', async (context) => {
   const id = context.req.param('id')
   const body = await readBody(context)
@@ -97,7 +89,6 @@ onlineAdmin.post('/machines/:id/stop', async (context) => {
     .bind(id)
     .first<{ user_id: string }>()
   if (!row) return context.json({ error: NOT_FOUND }, 404)
-
   await context.env.DB.prepare('update machines set held = ? where id = ?')
     .bind(flag ? 'flag' : 'stopped', id)
     .run()
@@ -111,14 +102,12 @@ onlineAdmin.post('/machines/:id/stop', async (context) => {
   })
   return context.json({ held: flag ? 'flag' : 'stopped' })
 })
-
 onlineAdmin.post('/machines/:id/release', async (context) => {
   const id = context.req.param('id')
   await context.env.DB.prepare('update machines set held = null where id = ?').bind(id).run()
   await audit(context.env, id, 'release', { who: context.get('user').id })
   return context.json({ held: null })
 })
-
 onlineAdmin.post('/machines/:id/reboot', async (context) => {
   const id = context.req.param('id')
   const row = await context.env.DB.prepare('select user_id, host from machines where id = ?')
@@ -129,7 +118,6 @@ onlineAdmin.post('/machines/:id/reboot', async (context) => {
   const answer = await askMachine(context.env, id, 'reboot', { 'x-orden-user': row.user_id })
   return context.json({ state: answer ? (await answer.json<{ state: string }>()).state : null })
 })
-
 onlineAdmin.post('/machines/:id/host', async (context) => {
   const id = context.req.param('id')
   const body = await readBody(context)
@@ -151,7 +139,6 @@ onlineAdmin.post('/machines/:id/host', async (context) => {
   }
   return context.json({ host })
 })
-
 onlineAdmin.post('/machines/:id/ssh', async (context) => {
   const id = context.req.param('id')
   const body = await readBody(context)
@@ -162,7 +149,6 @@ onlineAdmin.post('/machines/:id/ssh', async (context) => {
   const row = await context.env.DB.prepare('select id from machines where id = ?').bind(id).first<{ id: string }>()
   if (!row) return context.json({ error: NOT_FOUND }, 404)
   await context.env.DB.prepare('update machines set ssh_key = ? where id = ?').bind(key, id).run()
-
   const token = context.env.HETZNER_TOKEN
   if (token) {
     const hetzner = new Hetzner(token)
@@ -171,7 +157,6 @@ onlineAdmin.post('/machines/:id/ssh', async (context) => {
   }
   return context.json({ ssh: key !== null })
 })
-
 onlineAdmin.post('/machines/:id/remove', async (context) => {
   const id = context.req.param('id')
   const row = await context.env.DB.prepare('select user_id from machines where id = ?')

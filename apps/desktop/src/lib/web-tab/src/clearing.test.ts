@@ -6,7 +6,6 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void kept.set(key, value),
   removeItem: (key: string) => void kept.delete(key),
 })
-
 const asked: { command: string; args: Record<string, unknown> }[] = []
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
@@ -15,22 +14,18 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-
 const forgotten = vi.hoisted(() => [] as number[])
 vi.mock('./site-icons.svelte', () => ({
   siteIcons: { forgetSince: (since: number) => void forgotten.push(since) },
 }))
-
 const { clearData, reach, sinceFor, sitesSince } = await import('./clearing')
 const { visited } = await import('./visited')
 const { placeKept, placeOf } = await import('./place')
 const NOW = Date.UTC(2026, 9, 3, 12)
 const HOUR = 3_600_000
-
 beforeEach(() => {
   asked.length = 0
 })
-
 describe("Chrome's time ranges", () => {
   test('reach back from now, and all time is from the start', () => {
     expect(sinceFor('quarter', NOW)).toBe(NOW - 15 * 60_000)
@@ -39,12 +34,10 @@ describe("Chrome's time ranges", () => {
     expect(sinceFor('all', NOW)).toBe(0)
   })
 })
-
 describe('whose data', () => {
   test('the store every page shares, and its one history', () => {
     expect(reach([])).toEqual({ stores: [null], books: ['orden:web-visits'] })
   })
-
   test('and the own store of each web note kept apart that is open, once each', () => {
     expect(reach(['3f9a0c17e2b4d685', null, '3f9a0c17e2b4d685', '0123456789abcdef'])).toEqual({
       stores: [null, 'note_3f9a0c17e2b4d685', 'note_0123456789abcdef'],
@@ -52,7 +45,6 @@ describe('whose data', () => {
     })
   })
 })
-
 describe('the clearing', () => {
   test("asks the engine to clear the range and names the range's sites, then forgets the range's history", async () => {
     const book = 'orden:web-visits'
@@ -68,9 +60,7 @@ describe('the clearing', () => {
     const places = await import('./place')
     places.placeKept('/Notes/New.url', { url: 'https://new.example/page', x: 0, y: 40 })
     places.placeKept('/Notes/Old.url', { url: 'https://old.example/page', x: 0, y: 80 })
-
     await fresh.clearData({ range: 'hour', history: true, site: true, cache: false }, [], NOW)
-
     const call = asked.find((one) => one.command === 'web_clear')
     expect(call?.args).toEqual({
       stores: [null],
@@ -81,7 +71,6 @@ describe('the clearing', () => {
     expect(places.placeOf('/Notes/New.url')).toBeNull()
     expect(places.placeOf('/Notes/Old.url')?.y).toBe(80)
   })
-
   test('all time names every site the history has, and nothing that is not a web page', async () => {
     const book = 'orden:web-visits-sites'
     visited.saw(book, 'a', 'https://a.example/one', 'A')
@@ -91,7 +80,6 @@ describe('the clearing', () => {
     expect(sitesSince([book], 0).sort()).toEqual(['http://b.example:8080', 'https://a.example'])
     expect(sitesSince([book], Date.now() + HOUR)).toEqual([])
   })
-
   test('history alone never reaches the engine, and all time forgets every place', async () => {
     placeKept('/Notes/A.url', { url: 'https://a.example/', x: 0, y: 1 })
     await clearData({ range: 'all', history: true, site: false, cache: false }, [], NOW)
@@ -99,7 +87,6 @@ describe('the clearing', () => {
     expect(visited.all('orden:web-visits')).toEqual([])
     expect(placeOf('/Notes/A.url')).toBeNull()
   })
-
   test("the history's range takes the account's Web icons with it, and nothing else does", async () => {
     forgotten.length = 0
     await clearData({ range: 'hour', history: false, site: true, cache: true }, [], NOW)

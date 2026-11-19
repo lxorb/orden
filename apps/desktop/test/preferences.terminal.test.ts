@@ -10,19 +10,16 @@ vi.stubGlobal('navigator', {
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
   language: 'en',
 })
-
 vi.mock('../src/lib/platform/src/tauri', async (actual) => ({
   ...(await actual<typeof import('../src/lib/platform/src/tauri')>()),
   isDesktop: true,
   invoke: () => Promise.reject(new Error('no crate')),
 }))
-
 const { preferences } = await import('../src/lib/settings/src/preferences')
 const { shells } = await import('../src/lib/terminal/src/api')
 const { shortcuts } = await import('../src/lib/shortcuts/src/shortcuts.svelte')
 await import('../src/lib/web-tab/src/api')
 await (await import('@orden/contracts')).registered()
-
 function row(label: string) {
   const found = preferences()
     .flatMap((pane) => pane.groups)
@@ -31,12 +28,10 @@ function row(label: string) {
   if (found?.kind !== 'select') throw new Error(`no ${label}`)
   return found
 }
-
 describe('a key that is both, in Settings', () => {
   test('has a row for each key answered, and none for one never asked about', () => {
     expect(() => row('Ctrl+N in a terminal')).toThrow()
     expect(() => row('Ctrl+Space in a terminal')).toThrow()
-
     shells.setWay('app.scratchpad', 'shell')
     shells.setWay('space.switcher', 'app')
     shells.setWay('app.close', 'shell')
@@ -55,17 +50,14 @@ describe('a key that is both, in Settings', () => {
       for (const command of ['app.scratchpad', 'space.switcher', 'app.close']) shells.setWay(command, null)
     }
   })
-
   test('changes the answer, and asking again takes the row away', () => {
     shells.setWay('app.scratchpad', 'shell')
     row('Ctrl+N in a terminal').set('app')
     expect(shells.ways['app.scratchpad']).toBe('app')
-
     row('Ctrl+N in a terminal').set('ask')
     expect(shells.ways['app.scratchpad']).toBeUndefined()
     expect(() => row('Ctrl+N in a terminal')).toThrow()
   })
-
   test('names the key a command is on now', () => {
     shells.setWay('app.scratchpad', 'app')
     shortcuts.set('app.scratchpad', 'Mod-Shift-y')
@@ -77,7 +69,6 @@ describe('a key that is both, in Settings', () => {
     }
   })
 })
-
 describe('a desktop’s own rows', () => {
   test('each say in one sentence what they do', () => {
     shells.setWay('app.close', 'shell')

@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -23,7 +21,6 @@ async () => {
   return { home: home.id, work: work.id }
 }
 """
-
 HOME_OF = """(name) => {
   const ws = window.ordenApp.workspace
   const tab = ws.tabs.find((one) => one.shown === name || one.kind === name)
@@ -31,13 +28,9 @@ HOME_OF = """(name) => {
   const root = tab.path && ws.spaces.find((space) => tab.path.startsWith(space.root.replace(/\\/+$/, '') + '/'))
   return root ? root.id : tab.note.home
 }"""
-
 ORDER = "() => window.ordenApp.workspace.tabs.filter((one) => one.paneId).map((one) => one.shown)"
-
 STATE = "() => window.ordenApp.workspace.tabs.map((one) => [one.shown, one.kind, one.note.home, one.path, !!window.ordenApp.workspace.panes.at(one.paneId)])"
-
 SHEET = "!!document.querySelector('.sheet form')"
-
 def window_of(page: Page, label: str) -> dict | None:
     return page.evaluate(
         """(label) => {
@@ -48,7 +41,6 @@ def window_of(page: Page, label: str) -> dict | None:
         }""",
         label,
     )
-
 def resting(page: Page, label: str) -> dict | None:
     last = window_of(page, label)
     for _ in range(40):
@@ -58,10 +50,8 @@ def resting(page: Page, label: str) -> dict | None:
             return now
         last = now
     return last
-
 def web_label(page: Page) -> str:
     return page.evaluate("() => window.ordenApp.workspace.tabs.find((one) => one.kind === 'web').shown")
-
 def drag(page: Page, start: dict, end: dict) -> None:
     page.mouse.move(start["x"], start["y"])
     page.mouse.down()
@@ -74,7 +64,6 @@ def drag(page: Page, start: dict, end: dict) -> None:
     page.wait_for_timeout(200)
     page.mouse.up()
     page.wait_for_timeout(900)
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 900})
     DRIVE.open(page)
@@ -85,7 +74,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(1200)
     page.get_by_role("button", name="Tidy up").click()
     page.wait_for_timeout(1200)
-
     order = page.evaluate(ORDER)
     before = resting(page, "Plan")
     there = window_of(page, "Over there")
@@ -121,7 +109,6 @@ def drive(browser: Browser) -> None:
         wrong(f"[cancel] the order of the tabs changed: {order} -> {page.evaluate(ORDER)}")
     if not page.evaluate("() => !!document.activeElement?.closest('.canvas')"):
         wrong("[cancel] the keyboard did not come back to the overview")
-
     drag(page, window_of(page, "Plan"), window_of(page, "Over there"))
     if not page.evaluate(SHEET):
         wrong("[move] the second drop asked nothing")
@@ -134,7 +121,6 @@ def drive(browser: Browser) -> None:
     say("ok   [move] Move took the note to Work")
     page.wait_for_timeout(800)
     shot(page, "moved")
-
     web = web_label(page)
     drag(page, window_of(page, web), window_of(page, "Over there"))
     if page.evaluate(SHEET):
@@ -148,5 +134,4 @@ def drive(browser: Browser) -> None:
             say("ok   [web] the web tab moved without a question")
     shot(page, "web-moved")
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "notes ask before moving to another space, web tabs do not"))

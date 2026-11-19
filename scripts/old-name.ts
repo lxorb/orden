@@ -4,9 +4,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
-
 const WORD = /(?<![A-Za-z])nib(?![a-z])/gi
-
 const KINDS: readonly (readonly [Kind, RegExp])[] = [
   ['package', /^@nib\//],
   ['identifier', /^ch[./]emilvinu[./]nib/i],
@@ -16,16 +14,13 @@ const KINDS: readonly (readonly [Kind, RegExp])[] = [
   ['dashed', /^nib-[A-Za-z0-9]/i],
   ['word', /^/],
 ]
-
 export type Kind = 'package' | 'identifier' | 'scheme' | 'key' | 'variable' | 'dashed' | 'word'
-
 export interface Found {
   path: string
   line: number
   kind: Kind
   name: string
 }
-
 function texts(): { path: string; text: string }[] {
   const listed = execFileSync('git', ['ls-files', '-z'], {
     cwd: ROOT,
@@ -45,7 +40,6 @@ function texts(): { path: string; text: string }[] {
       return text.includes('\0') ? [] : [{ path, text }]
     })
 }
-
 export function inText(path: string, text: string): Found[] {
   const out: Found[] = []
   for (const found of text.matchAll(WORD)) {
@@ -60,13 +54,11 @@ export function inText(path: string, text: string): Found[] {
   }
   return out
 }
-
 export function oldNames(leaving: readonly string[] = []): Found[] {
   return texts()
     .filter(({ path }) => !leaving.includes(path))
     .flatMap(({ path, text }) => inText(path, text))
 }
-
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const counts = new Map<Kind, number>()
   for (const one of oldNames()) counts.set(one.kind, (counts.get(one.kind) ?? 0) + 1)

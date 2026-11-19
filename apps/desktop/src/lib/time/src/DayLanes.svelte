@@ -26,7 +26,6 @@
     picked: Picked | null
     onpick: (next: Picked | null) => void
   } = $props()
-
   const SNAP = 5 * MINUTE
   const nowShown = $derived(from <= now && now < to)
   const whole = $derived(to - from)
@@ -56,7 +55,6 @@
     for (let one = Math.ceil(from / step) * step; one <= to; one += step) out.push(one)
     return out
   })
-
   const line = (read: (one: (typeof buckets)[number]) => number | null): string => {
     const points: string[] = []
     for (const one of buckets) {
@@ -73,21 +71,18 @@
   let track = $state<HTMLElement>()
   let pressed: { x: number; at: number; span: string | null } | null = null
   let dragging = $state(false)
-
   function timeAt(x: number): number {
     const box = track?.getBoundingClientRect()
     if (!box?.width) return from
     const share = Math.min(1, Math.max(0, (x - box.left) / box.width))
     return Math.round((from + share * whole) / SNAP) * SNAP
   }
-
   function down(event: PointerEvent) {
     if (event.button !== 0) return
     const hit = (event.target as Element | null)?.closest<HTMLElement>('[data-span]')
     pressed = { x: event.clientX, at: timeAt(event.clientX), span: hit?.dataset.span ?? null }
     track?.setPointerCapture(event.pointerId)
   }
-
   function move(event: PointerEvent) {
     if (!pressed) return
     if (!dragging && Math.abs(event.clientX - pressed.x) < 4) return
@@ -99,7 +94,6 @@
       span: null,
     })
   }
-
   function up() {
     const was = pressed
     pressed = null
@@ -250,7 +244,6 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .labels {
     display: flex;
     flex-direction: column;
@@ -259,36 +252,29 @@
     font-size: var(--text-xs);
     text-align: end;
   }
-
   .labels span {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     white-space: nowrap;
   }
-
   .labels .axis {
     height: var(--axis);
   }
-
   .said-label {
     height: var(--said);
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .lane-label {
     height: var(--lane);
   }
-
   .busy-label {
     height: var(--busy);
   }
-
   .system-label {
     height: var(--system);
   }
-
   .track {
     position: relative;
     display: flex;
@@ -298,7 +284,6 @@
     cursor: crosshair;
     touch-action: pan-y;
   }
-
   .track > .axis {
     position: relative;
     height: var(--axis);
@@ -306,13 +291,11 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .track > .axis span {
     position: absolute;
     translate: -50% 0;
     white-space: nowrap;
   }
-
   .said,
   .lane,
   .busy {
@@ -320,21 +303,17 @@
     border-radius: var(--radius-sm);
     background: var(--surface-2);
   }
-
   .said {
     height: var(--said);
   }
-
   .lane {
     height: var(--lane);
     overflow: hidden;
   }
-
   .busy {
     height: var(--busy);
     overflow: hidden;
   }
-
   .block {
     position: absolute;
     box-sizing: border-box;
@@ -353,12 +332,10 @@
     text-align: start;
     cursor: pointer;
   }
-
   .block.on {
     outline: 2px solid var(--text-strong);
     outline-offset: 1px;
   }
-
   .block .name {
     overflow: hidden;
     font-weight: var(--weight-strong);
@@ -367,12 +344,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .block .long {
     opacity: 0.85;
     font-variant-numeric: tabular-nums;
   }
-
   .band {
     position: absolute;
     top: 2px;
@@ -390,44 +365,36 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .busy span {
     position: absolute;
     bottom: 0;
     background: var(--accent);
     opacity: 0.55;
   }
-
   .busy span.away {
     background: repeating-linear-gradient(135deg, var(--muted) 0 2px, transparent 2px 4px);
     opacity: 0.8;
   }
-
   .system {
     width: 100%;
     height: var(--system);
     border-radius: var(--radius-sm);
     background: var(--surface-2);
   }
-
   .system polyline {
     fill: none;
     stroke-width: 1.5;
     vector-effect: non-scaling-stroke;
   }
-
   .cpu {
     stroke: var(--accent);
   }
-
   .memory {
     stroke: var(--muted);
   }
-
   .battery {
     stroke: var(--success);
   }
-
   .tick {
     position: absolute;
     top: var(--axis);
@@ -437,7 +404,6 @@
     opacity: 0.5;
     pointer-events: none;
   }
-
   .now {
     position: absolute;
     top: calc(var(--axis) - 2px);
@@ -447,7 +413,6 @@
     background: var(--danger);
     pointer-events: none;
   }
-
   .picked {
     position: absolute;
     top: var(--axis);
@@ -456,7 +421,6 @@
     background: color-mix(in srgb, var(--accent) 14%, transparent);
     pointer-events: none;
   }
-
   .legend {
     grid-column: 2;
     display: flex;
@@ -465,27 +429,22 @@
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .legend span {
     display: inline-flex;
     align-items: center;
     gap: 4px;
   }
-
   .legend i {
     width: 10px;
     height: 2px;
     border-radius: 1px;
   }
-
   .legend i.cpu {
     background: var(--accent);
   }
-
   .legend i.memory {
     background: var(--muted);
   }
-
   .legend i.battery {
     background: var(--success);
   }

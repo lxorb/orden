@@ -42,11 +42,9 @@ const FONT_FIELDS: readonly {
     words: ['monospace', 'code', 'terminal'],
   },
 ]
-
 function asChoice(value: string): SchemeChoice {
   return value === 'dark' || value === 'light' ? value : 'system'
 }
-
 function themeField(setting: ThemeSetting, owner = theme.id): Field {
   const label = setting.label
   const worn = () => owner === theme.id
@@ -59,7 +57,6 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
     initial: setting.initial,
     key: drawer === SHARED ? `appearance.${setting.id}` : `themes.${owner}.${setting.id}`,
   }
-
   if (setting.kind === 'range') {
     return {
       ...common,
@@ -74,7 +71,6 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
       set: put,
     }
   }
-
   if (setting.kind === 'switch') {
     return {
       ...common,
@@ -84,7 +80,6 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
       set: put,
     }
   }
-
   if (setting.kind === 'colour') {
     const pair = setting.pair
     return {
@@ -110,13 +105,11 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
       set: put,
     }
   }
-
   const options = setting.options.map((one) => ({
     value: one.value,
     label: one.label,
     ...(one.disabled ? { disabled: true } : {}),
   }))
-
   return {
     ...common,
     kind: options.length > 3 && !setting.own ? 'select' : 'segmented',
@@ -126,7 +119,6 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
     set: put,
   }
 }
-
 export async function themeDeclarations(): Promise<Field[]> {
   const fields = appSettings().map((one) => themeField(one, SHARED))
   for (const one of builtIns()) {
@@ -136,7 +128,6 @@ export async function themeDeclarations(): Promise<Field[]> {
   }
   return fields
 }
-
 function pictureField(): Field {
   const sides = (['light', 'dark'] as const).map((scheme): PictureSide => ({
     label: SCHEME_NAMES[scheme],
@@ -148,7 +139,6 @@ function pictureField(): Field {
     remove: () => wallpaper.clear(scheme),
     place: (x, y, kept) => wallpaper.place(scheme, x, y, kept),
   }))
-
   return {
     kind: 'picture',
     label: 'Picture',
@@ -161,11 +151,9 @@ function pictureField(): Field {
     sides,
   }
 }
-
 function ownFields(): Field[] {
   return theme.settings.filter((one) => one.own === true && (one.when?.() ?? true)).map((one) => themeField(one))
 }
-
 export function appearancePane(): Pane {
   const zooms = isDesktop && platform() === 'linux'
   if (zooms) void modes.askInterfaceZoom().catch(() => undefined)
@@ -204,7 +192,6 @@ export function appearancePane(): Pane {
           ...theme.settings.filter((one) => one.own !== true).map((one) => themeField(one)),
         ],
       },
-
       ...(theme.settings.some((one) => one.own === true)
         ? [
             {
@@ -213,7 +200,6 @@ export function appearancePane(): Pane {
             },
           ]
         : []),
-
       {
         title: 'Fonts',
         fields: FONT_FIELDS.map((one): Field => ({
@@ -229,7 +215,6 @@ export function appearancePane(): Pane {
           set: (value) => modes.setFont(one.place, value),
         })),
       },
-
       {
         title: 'Pointer',
         fields: [
@@ -255,7 +240,6 @@ export function appearancePane(): Pane {
           },
         ],
       },
-
       ...(isDesktop
         ? ([
             {

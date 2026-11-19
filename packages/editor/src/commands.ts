@@ -22,26 +22,21 @@ import { headingLevel } from './headings'
 import { enclosing, enclosingNamed, linkAddress } from './nodes'
 
 const SPACE = /^\s?$/u
-
 const PUNCTUATION = /^[\p{P}\p{S}]$/u
-
 export interface Span {
   from: number
   to: number
 }
-
 function plainIn(state: EditorState, run: Span, at: number): boolean {
   const node = syntaxTree(state).resolveInner(at, 1)
   return node.from === run.from && node.to === run.to
 }
-
 function flanks(state: EditorState, at: number, closing: boolean): boolean {
   const inside = state.doc.sliceString(closing ? at - 1 : at, closing ? at : at + 1)
   const outside = state.doc.sliceString(closing ? at : at - 1, closing ? at + 1 : at)
   if (SPACE.test(inside)) return false
   return !PUNCTUATION.test(inside) || SPACE.test(outside) || PUNCTUATION.test(outside)
 }
-
 export function splitPoints(
   state: EditorState,
   run: Span,
@@ -56,7 +51,6 @@ export function splitPoints(
     if (close > words.from && plainIn(state, run, close - 1)) close--
     else break
   }
-
   let open = picked.to
   while (open < words.to) {
     while (open < words.to && /\s/u.test(doc.sliceString(open, open + 1))) open++
@@ -64,28 +58,21 @@ export function splitPoints(
     if (open < words.to && plainIn(state, run, open)) open++
     else break
   }
-
   return { close: close === words.from ? null : close, open: open === words.to ? null : open }
 }
-
 export function toggleWrap(before: string, after = before): StateCommand {
   const italic = before === '*' && after === '*'
   const across = before === after ? marksAcross(before) : null
-
   return (target) => {
     const { state, dispatch } = target
     if (across && state.selection.ranges.some((range) => spansLines(state, range))) return across(target)
-
     const update = state.changeByRange((range) => {
       const { from, to } = inside(state, range.from, range.to)
       const doc = state.doc
-
       const leading = doc.sliceString(Math.max(0, from - before.length), from)
       const trailing = doc.sliceString(to, Math.min(doc.length, to + after.length))
-
       const line = doc.lineAt(from)
       const stars = italic ? (/\*+$/u.exec(line.text.slice(0, from - line.from))?.[0].length ?? 0) : 1
-
       if (leading === before && trailing === after && stars % 2 === 1) {
         return {
           changes: [
@@ -95,7 +82,6 @@ export function toggleWrap(before: string, after = before): StateCommand {
           range: EditorSelection.range(from - before.length, to - before.length),
         }
       }
-
       const run = from === to ? runAround(state, from, before, after) : null
       if (run && from === run.to - after.length) return { range: EditorSelection.cursor(run.to) }
       if (run) {
@@ -107,7 +93,6 @@ export function toggleWrap(before: string, after = before): StateCommand {
           range: EditorSelection.cursor(from - before.length),
         }
       }
-
       const holding = from < to ? runAround(state, from, before, after) : null
       if (holding && to <= holding.to - after.length) {
         const words = { from: holding.from + before.length, to: holding.to - after.length }
@@ -123,9 +108,7 @@ export function toggleWrap(before: string, after = before): StateCommand {
           range: EditorSelection.range(set.mapPos(from, 1), set.mapPos(to, -1)),
         }
       }
-
       const text = doc.sliceString(from, to)
-
       const held = italic ? (/^\*+/u.exec(text)?.[0].length ?? 0) : 1
       if (
         text.length >= before.length + after.length &&
@@ -138,34 +121,28 @@ export function toggleWrap(before: string, after = before): StateCommand {
           range: EditorSelection.range(from, to - before.length - after.length),
         }
       }
-
       return {
         changes: { from, to, insert: before + text + after },
         range: EditorSelection.range(from + before.length, to + before.length),
       }
     })
-
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
     return true
   }
 }
-
 const RUNS: Readonly<Record<string, { node: string; marks: readonly string[] }>> = {
   '**': { node: 'StrongEmphasis', marks: ['**', '__'] },
   '*': { node: 'Emphasis', marks: ['*', '_'] },
   '~~': { node: 'Strikethrough', marks: ['~~'] },
   '`': { node: 'InlineCode', marks: ['`'] },
 }
-
 function runAround(state: EditorState, at: number, before: string, after: string): { from: number; to: number } | null {
   const kind = before === after ? RUNS[before] : undefined
   if (!kind) return null
-
   const size = before.length
   for (const node of enclosing(syntaxTree(state).resolveInner(at, 0))) {
     if (node.name !== kind.node) continue
     if (at < node.from + size || at > node.to - size) continue
-
     const opens = state.doc.sliceString(node.from, node.from + size)
     const closes = state.doc.sliceString(node.to - size, node.to)
     const inner = state.doc.sliceString(node.from + size, node.to - size)
@@ -173,81 +150,63 @@ function runAround(state: EditorState, at: number, before: string, after: string
     if (kind.node === 'InlineCode' && (inner.startsWith('`') || inner.endsWith('`'))) continue
     return { from: node.from, to: node.to }
   }
-
   return null
 }
-
 export function spansLines(state: EditorState, range: SelectionRange): boolean {
   const { from, to } = inside(state, range.from, range.to)
   return state.doc.lineAt(from).number !== state.doc.lineAt(to).number
 }
-
 export const OPENING =
   /^(?:[ \t]*(?:>[ \t]?)+[ \t]*\[![^\]\s]+\][+-]?[ \t]*|[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?|\[\^[^\]\s]+\]:[ \t]*)?)/u
-
 function pastOpening(state: EditorState, start: number, end: number): number {
   const first = state.doc.lineAt(start)
   if (inCode(state, first.from)) return start
   const words = first.from + (OPENING.exec(first.text)?.[0].length ?? 0)
   return start <= words && end > words ? words : start
 }
-
 export function inside(state: EditorState, from: number, to: number): { from: number; to: number } {
   const text = state.doc.sliceString(from, to)
   const kept = text.trim()
   if (!kept) return { from, to }
-
   const end = from + text.indexOf(kept) + kept.length
   const start = pastOpening(state, from + text.indexOf(kept), end)
   const line = state.doc.lineAt(end)
   const id = blockIdOf(line.text)
   if (!id || end !== line.from + line.text.trimEnd().length) return { from: start, to: end }
-
   const words = state.doc.sliceString(start, end - id.length - 1).trimEnd()
   return { from: start, to: words ? start + words.length : end }
 }
-
 export interface Lines {
   first: number
   last: number
 }
-
 export function linesOf(state: EditorState, from: number, to: number): Lines {
   const first = state.doc.lineAt(from).number
   const end = state.doc.lineAt(to)
   const last = to > from && to === end.from && end.number > first ? end.number - 1 : end.number
   return { first, last }
 }
-
 export function selectedLines(state: Parameters<StateCommand>[0]['state']) {
   const numbers = new Set<number>()
-
   for (const range of state.selection.ranges) {
     const { first, last } = linesOf(state, range.from, range.to)
     for (let line = first; line <= last; line++) numbers.add(line)
   }
-
   return [...numbers].map((number) => state.doc.line(number))
 }
-
 const HEADING = /^(#{1,6})\s+/
-
 function headingOf(text: string): { level: number; length: number } {
   const match = HEADING.exec(text)
   const hashes = match?.[1]
   if (!match || hashes === undefined) return { level: 0, length: 0 }
   return { level: hashes.length, length: match[0].length }
 }
-
 interface Words {
   from: number
   text: string
 }
-
 const CALLOUT_MARK = /^\[![^\]\s]+\][+-]?[ \t]*/
-
 const ITEM_HEADING = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+(?=#{1,6}(?:[ \t]|$))/
-
 function inItemBody(state: EditorState, line: Line): boolean {
   const start = line.from + line.text.length - line.text.trimStart().length
   for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(start, 1); node; node = node.parent) {
@@ -255,7 +214,6 @@ function inItemBody(state: EditorState, line: Line): boolean {
   }
   return false
 }
-
 function wordsOfLine(state: EditorState, line: Line): Words {
   const quoted = (QUOTED.exec(line.text)?.[0] ?? '').length
   const callout = quoted ? (CALLOUT_MARK.exec(line.text.slice(quoted))?.[0].length ?? 0) : 0
@@ -266,58 +224,47 @@ function wordsOfLine(state: EditorState, line: Line): Words {
   const from = quote + item + indent
   return { from: line.from + from, text: line.text.slice(from) }
 }
-
 function withCaretAfter(state: EditorState, changes: ChangeSpec[]) {
   const set = state.changes(changes)
   return state.update({ changes: set, selection: state.selection.map(set, 1), userEvent: 'input' })
 }
-
 function headingLines(state: EditorState): Words[] {
   const lines = selectedLines(state).filter((line) => !inVerbatimBlock(state, line))
   if (lines.length < 2) return lines.map((line) => wordsOfLine(state, line))
   const written = lines.filter((line) => line.text.trim() !== '')
   return (written.length ? written : lines).map((line) => wordsOfLine(state, line))
 }
-
 export function setHeading(level: number): StateCommand {
   return ({ state, dispatch }) => {
     const lines = headingLines(state)
     const already = level > 0 && lines.every((line) => headingOf(line.text).level === level)
     const insert = level && !already ? `${'#'.repeat(level)} ` : ''
-
     const changes: ChangeSpec[] = lines.map((line) => {
       const item = insert ? (ITEM_MARKER.exec(line.text)?.[0].length ?? 0) : 0
       return { from: line.from, to: line.from + (item || headingOf(line.text).length), insert }
     })
-
     dispatch(withCaretAfter(state, changes))
     return true
   }
 }
-
 const ITEM_MARKER = /^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/
-
 export function shiftHeading(delta: number): StateCommand {
   return ({ state, dispatch }) => {
     const changes: ChangeSpec[] = headingLines(state).map((line) => {
       const existing = headingOf(line.text)
       const next = Math.min(6, Math.max(0, existing.level + delta))
       const item = next && !existing.level ? (ITEM_MARKER.exec(line.text)?.[0].length ?? 0) : 0
-
       return {
         from: line.from,
         to: line.from + (item || existing.length),
         insert: next ? `${'#'.repeat(next)} ` : '',
       }
     })
-
     dispatch(withCaretAfter(state, changes))
     return true
   }
 }
-
 const QUOTE_MARK = /^([ \t]*)>[ \t]?/
-
 function quoteColumn(state: EditorState, first: Line, last: Line): number {
   const tree = ensureSyntaxTree(state, last.to, 50) ?? syntaxTree(state)
   const start = first.from + (INDENT.exec(first.text)?.[0].length ?? 0)
@@ -327,7 +274,6 @@ function quoteColumn(state: EditorState, first: Line, last: Line): number {
   }
   return 0
 }
-
 function offsetAt(text: string, column: number): number {
   const space = INDENT.exec(text)?.[0] ?? ''
   let reached = 0
@@ -338,7 +284,6 @@ function offsetAt(text: string, column: number): number {
   }
   return at
 }
-
 function runsOf(lines: Line[]): Line[][] {
   const runs: Line[][] = []
   for (const line of lines) {
@@ -348,11 +293,9 @@ function runsOf(lines: Line[]): Line[][] {
   }
   return runs
 }
-
 export const toggleQuote: StateCommand = ({ state, dispatch }) => {
   const lines = selectedLines(state)
   const allQuoted = lines.every((line) => QUOTE_MARK.test(line.text))
-
   const changes: ChangeSpec[] = runsOf(lines).flatMap((run) => {
     const [first] = run
     const last = run.at(-1)
@@ -373,16 +316,12 @@ export const toggleQuote: StateCommand = ({ state, dispatch }) => {
       return { from: line.from + at, insert: `${' '.repeat(Math.max(0, pad))}> ` }
     })
   })
-
   dispatch(withCaretAfter(state, changes))
   return true
 }
-
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
-
 const INDENT = /^\s*/
 const QUOTED = /^(?:[ \t]*>[ \t]?)*/
-
 const NO_TASK_HERE = new Set([
   'Table',
   'Blockquote',
@@ -393,9 +332,7 @@ const NO_TASK_HERE = new Set([
   'LinkReference',
   'HorizontalRule',
 ])
-
 const CODE_BLOCKS = new Set(['FencedCode', 'CodeBlock'])
-
 function taskable(state: EditorState, line: Line): boolean {
   const quoted = quotedLine(line)
   const start = quoted.from + quoted.space.length
@@ -405,7 +342,6 @@ function taskable(state: EditorState, line: Line): boolean {
   }
   return true
 }
-
 function taskLines(state: EditorState): Line[] {
   const chosen = selectedLines(state)
   const written = chosen.filter((line) => line.text.trim())
@@ -413,52 +349,41 @@ function taskLines(state: EditorState): Line[] {
   const own = written.filter((line) => !carriedIn(state, quotedLine(line)))
   return own.length ? own : written
 }
-
 export const toggleTask: StateCommand = (target) => {
   const { state, dispatch } = target
   const changes: ChangeSpec[] = []
-
   for (const line of taskLines(state)) {
     if (!taskable(state, line)) continue
-
     const task = taskAt(line.text)
     if (task) {
       const at = line.from + task.box + 1
       changes.push({ from: at, to: at + task.mark.length, insert: task.done ? ' ' : 'x' })
       continue
     }
-
     const indent = (INDENT.exec(line.text)?.[0] ?? '').length
     const marker = MARKER.exec(line.text)?.[0].length ?? indent
     changes.push({ from: line.from + indent, to: line.from + marker, insert: '- [ ] ' })
   }
-
   if (!changes.length) return false
-
   const set = state.changes(changes)
   dispatch(state.update({ changes: set, selection: state.selection.map(set, 1), userEvent: 'input' }))
   return true
 }
-
 export const tickTaskAtCaret: StateCommand = (target) => {
   const { state } = target
   const { main } = state.selection
   const line = state.doc.lineAt(main.head)
   if (state.selection.ranges.length > 1 || main.from < line.from || main.to > line.to) return false
   if (!taskAt(line.text) || !taskable(state, line)) return false
-
   return toggleTask(target)
 }
-
 const NUMBERED = /^\s*\d+[.)]\s+/
 const BULLETED = /^\s*[-*+]\s+/
-
 interface Parent {
   depth: number
   levels: number[]
   shift: number
 }
-
 interface Quoted {
   start: number
   from: number
@@ -470,9 +395,7 @@ interface Quoted {
   space: string
   column: number
 }
-
 const QUOTE_LEVEL = /([ \t]*)(>[ \t]?)/y
-
 function quotedLine(line: Line): Quoted {
   const leads: string[] = []
   const marks: string[] = []
@@ -498,20 +421,17 @@ function quotedLine(line: Line): Quoted {
     column,
   }
 }
-
 function columnOf(space: string): number {
   let column = 0
   for (const character of space) column = character === '\t' ? column + 4 - (column % 4) : column + 1
   return column
 }
-
 function shiftedSpace(space: string, shift: number): string {
   if (shift > 0) return space + ' '.repeat(shift)
   if (shift === 0) return space
   const trailing = /[ ]*$/.exec(space)?.[0].length ?? 0
   return space.slice(0, space.length - Math.min(trailing, -shift))
 }
-
 function encloses(outer: number[], inner: number[], orSibling: boolean): boolean {
   const last = outer.length - 1
   if (last >= inner.length) return false
@@ -520,7 +440,6 @@ function encloses(outer: number[], inner: number[], orSibling: boolean): boolean
   const theirs = inner[last] ?? 0
   return own < theirs || (orSibling && last === inner.length - 1 && own === theirs)
 }
-
 function shiftsOf(parents: Parent[], line: Quoted): number[] {
   for (let top = parents.at(-1); top; top = parents.at(-1)) {
     if (encloses(top.levels, line.levels, false)) break
@@ -530,22 +449,18 @@ function shiftsOf(parents: Parent[], line: Quoted): number[] {
   for (const parent of parents) shifts[parent.depth] = parent.shift
   return shifts
 }
-
 function quotePrefix(line: Quoted, shifts: number[]): string {
   return line.leads.map((lead, at) => shiftedSpace(lead, shifts[at] ?? 0) + (line.marks[at] ?? '')).join('')
 }
-
 function prefixOf(line: Quoted, shifts: number[]): string {
   return quotePrefix(line, shifts) + shiftedSpace(line.space, shifts[line.depth] ?? 0)
 }
-
 function leadShifts(parents: Parent[], line: Quoted): number[] {
   const probe = [...line.levels.slice(0, -1), Number.POSITIVE_INFINITY]
   const shifts = Array.from({ length: line.depth + 1 }, () => 0)
   for (const parent of parents) if (encloses(parent.levels, probe, false)) shifts[parent.depth] = parent.shift
   return shifts
 }
-
 function siblingAbove(state: EditorState, number: number, levels: number[]): boolean {
   for (let above = number - 1; above >= 1; above--) {
     const line = quotedLine(state.doc.line(above))
@@ -554,7 +469,6 @@ function siblingAbove(state: EditorState, number: number, levels: number[]): boo
   }
   return false
 }
-
 function itemContent(state: EditorState, line: Quoted): number | null {
   const tree = ensureSyntaxTree(state, line.start + line.text.length, 50) ?? syntaxTree(state)
   const at = line.from + line.space.length
@@ -569,15 +483,11 @@ function itemContent(state: EditorState, line: Quoted): number | null {
   }
   return null
 }
-
 function carriedIn(state: EditorState, line: Quoted): boolean {
   return itemContent(state, line) !== null
 }
-
 const HELD = new Set(['FencedCode', 'CodeBlock', 'Table', 'BlockMath', 'HTMLBlock', 'CommentBlock', 'FrontMatter'])
-
 const SINGLE_LINE_FREE = new Set(['HTMLBlock', 'CommentBlock'])
-
 function inBlock(state: EditorState, line: Quoted): boolean {
   const tree = ensureSyntaxTree(state, line.start + line.text.length, 50) ?? syntaxTree(state)
   const block = enclosingNamed(tree.resolveInner(line.from + line.space.length, 1), HELD)
@@ -585,14 +495,12 @@ function inBlock(state: EditorState, line: Quoted): boolean {
   if (!SINGLE_LINE_FREE.has(block.name)) return true
   return state.doc.lineAt(block.from).number !== state.doc.lineAt(block.to).number
 }
-
 interface Restart {
   levels: number[]
   count: number
   delimiter: string
   active: boolean
 }
-
 function toggleList(own: RegExp, markerFor: (count: number) => string, boxed = false): StateCommand {
   return ({ state, dispatch }) => {
     const chosen = selectedLines(state)
@@ -606,7 +514,6 @@ function toggleList(own: RegExp, markerFor: (count: number) => string, boxed = f
     const skipsBlank = written.length > 0
     const lines = skipsBlank ? items : quoted
     const off = lines.every((line) => own.test(line.text))
-
     const picked = new Set(lines.map((line) => line.start))
     const last = chosen.at(-1)?.number ?? 0
     const counts = new Map<string, { levels: number[]; count: number }>()
@@ -616,7 +523,6 @@ function toggleList(own: RegExp, markerFor: (count: number) => string, boxed = f
     const drop = (held: Map<string, { levels: number[] }>, line: Quoted, orSibling: boolean) => {
       for (const [key, one] of held) if (!encloses(one.levels, line.levels, orSibling)) held.delete(key)
     }
-
     const first = chosen[0]?.number ?? 1
     for (let number = first; number <= state.doc.lines; number++) {
       const line = quotedLine(state.doc.line(number))
@@ -628,7 +534,6 @@ function toggleList(own: RegExp, markerFor: (count: number) => string, boxed = f
         }
         continue
       }
-
       const key = line.levels.join(',')
       if (!chose) {
         const held = inBlock(state, line)
@@ -642,7 +547,6 @@ function toggleList(own: RegExp, markerFor: (count: number) => string, boxed = f
         const shifts = shiftsOf(parents, line)
         if (!parents.length && number > last && !renumbered) break
         if (!held && own.test(line.text)) counts.set(key, { levels: line.levels, count: 1 })
-
         let widened = 0
         let marker = ''
         let to = line.from + line.space.length
@@ -662,12 +566,10 @@ function toggleList(own: RegExp, markerFor: (count: number) => string, boxed = f
         }
         continue
       }
-
       drop(counts, line, true)
       drop(restarts, line, true)
       const count = (counts.get(key)?.count ?? 0) + 1
       counts.set(key, { levels: line.levels, count })
-
       const shifts = shiftsOf(parents, line)
       const written_marker = MARKER.exec(line.text)?.[0] ?? ''
       const task = off || boxed ? taskAt(line.text) : null
@@ -687,53 +589,39 @@ function toggleList(own: RegExp, markerFor: (count: number) => string, boxed = f
           active: !siblingAbove(state, number, line.levels),
         })
       }
-
       const to = line.from + Math.max(matched, line.space.length)
       changes.push({ from: line.start, to, insert: prefixOf(line, shifts) + marker })
     }
-
     dispatch(withCaretAfter(state, changes))
     return true
   }
 }
-
 export const toggleBulletList = toggleList(BULLETED, () => '- ')
-
 export const toggleOrderedList = toggleList(NUMBERED, (count) => `${count}. `)
-
 const TASK_ITEM = /^\s*(?:[-*+]|\d+[.)])[ \t]+\[.\](?:[ \t]|$)/
-
 export const toggleTaskList = toggleList(TASK_ITEM, () => '- [ ] ', true)
-
 interface Block {
   text: string
   caret: number
 }
-
 interface Room {
   wrap?: (selected: string) => Block
   above?: boolean
   below?: boolean
 }
-
 const STRUCTURED = /^\s*(?:[-*+]\s|\d+[.)]\s|>|#{1,6}\s|\|)/
-
 function splitsStructure(state: EditorState, from: number, to: number): boolean {
   const first = state.doc.lineAt(from)
   const last = state.doc.lineAt(to)
   if (from === to && from === first.from) return false
-
   return (from > first.from && STRUCTURED.test(first.text)) || (to < last.to && STRUCTURED.test(last.text))
 }
-
 function roomAbove(state: EditorState, at: number, blank: boolean): string {
   const line = state.doc.lineAt(at)
   if (at > line.from) return blank ? '\n\n' : '\n'
   if (!blank || line.number === 1) return ''
-
   return state.doc.line(line.number - 1).text.trim() ? '\n' : ''
 }
-
 function roomBelow(state: EditorState, at: number, text: string, blank: boolean): string {
   const line = state.doc.lineAt(at)
   if (state.sliceDoc(at, line.to) !== '') {
@@ -741,12 +629,9 @@ function roomBelow(state: EditorState, at: number, text: string, blank: boolean)
     return text.endsWith('\n') ? '' : '\n'
   }
   if (!blank || line.number === state.doc.lines) return ''
-
   return state.doc.line(line.number + 1).text.trim() ? '\n' : ''
 }
-
 const HOLDS_ITS_LINES: ReadonlySet<string> = new Set(['Table', 'FencedCode', 'BlockMath'])
-
 const insertBlock =
   (build: () => Block, room: Room = {}): StateCommand =>
   ({ state, dispatch }) => {
@@ -759,14 +644,11 @@ const insertBlock =
     const splits = !!whole || splitsStructure(state, range.from, range.to)
     const wrap = splits ? undefined : room.wrap
     const below = whole ? whole.to : splits ? state.doc.lineAt(range.to).to : range.to
-
     const from = wrap ? range.from : below
     const to = wrap && state.sliceDoc(from, below).endsWith('\n') ? below - 1 : below
-
     const { text, caret } = wrap && from < to ? wrap(state.sliceDoc(from, to)) : build()
     const prefix = roomAbove(state, from, !!room.above)
     const insert = prefix + text + roomBelow(state, to, text, !!room.below)
-
     dispatch(
       state.update({
         changes: { from, to, insert },
@@ -777,7 +659,6 @@ const insertBlock =
     )
     return true
   }
-
 function fenceFor(words: string): string {
   const longest = words
     .split('\n')
@@ -785,16 +666,13 @@ function fenceFor(words: string): string {
     .reduce((high, one) => Math.max(high, one), 2)
   return '`'.repeat(longest + 1)
 }
-
 export const insertCodeFence = insertBlock(() => ({ text: '```\n\n```', caret: 3 }), {
   wrap: (selected) => {
     const fence = fenceFor(selected)
     return { text: `${fence}\n${selected}\n${fence}`, caret: fence.length }
   },
 })
-
 const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/
-
 function fenceOf(text: string): { mark: string; info: string } | null {
   const match = FENCE.exec(text)
   const mark = match?.[1]
@@ -803,32 +681,24 @@ function fenceOf(text: string): { mark: string; info: string } | null {
   if (mark.startsWith('`') && info.includes('`')) return null
   return { mark, info: info.trim() }
 }
-
 const EMPTY_QUOTE = /^ {0,3}((?:> ?)+)$/
-
 const VERBATIM = new Set(['HTMLBlock', 'CommentBlock', 'BlockMath'])
-
 function notQuoted(state: EditorState, line: Line): boolean {
   if (inCode(state, line.to, -1)) return true
   return enclosingNamed(syntaxTree(state).resolveInner(line.to, -1), VERBATIM) !== null
 }
-
 export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
   if (!range.empty) return false
-
   const line = state.doc.lineAt(range.head)
   if (range.head !== line.to) return false
-
   const marks = EMPTY_QUOTE.exec(line.text)?.[1]
   if (marks === undefined || notQuoted(state, line)) return false
-
   const levels = marks.split('>').length - 1
   const lead = levels > 1 ? `${'> '.repeat(levels - 1).trimEnd()} ` : ''
   const left = state.update({ changes: { from: line.from, to: line.to, insert: lead } })
   const apart = apartFromWords(left.newDoc, line.from + lead.length)
   const kept = (apart?.above ?? '') + lead
-
   dispatch(
     state.update({
       changes: { from: line.from, to: line.to, insert: kept + (apart?.below ?? '') },
@@ -839,21 +709,16 @@ export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   )
   return true
 }
-
 const CONTAINER = /^(?:[ \t]*>[ \t]?)*(?:[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+)?/
-
 function heldIn(prefix: string): string {
   return prefix.replace(/(?:[-*+]|\d{1,9}[.)])(?=[ \t]+$)/, (marker) => ' '.repeat(marker.length))
 }
-
 function fenceLine(text: string): { pad: string; rest: string } {
   const prefix = CONTAINER.exec(text)?.[0] ?? ''
   const rest = text.slice(prefix.length)
   return { pad: heldIn(prefix) + (/^ {0,3}/.exec(rest)?.[0] ?? ''), rest }
 }
-
 const NOT_PROSE = new Set(['CodeBlock', 'HTMLBlock', 'CommentBlock', 'Comment', 'BlockMath', 'FrontMatter'])
-
 function opensUnclosedFence(state: EditorState, line: Line): boolean {
   const tree = ensureSyntaxTree(state, state.doc.length, 50)
   if (!tree) return false
@@ -867,7 +732,6 @@ function opensUnclosedFence(state: EditorState, line: Line): boolean {
     leavesALaterFenceOpen(state, tree, state.doc.lineAt(code.to).number)
   )
 }
-
 function leavesALaterFenceOpen(state: EditorState, tree: Tree, closer: number): boolean {
   for (let number = closer + 1; number <= state.doc.lines; number++) {
     const line = state.doc.line(number)
@@ -878,7 +742,6 @@ function leavesALaterFenceOpen(state: EditorState, tree: Tree, closer: number): 
   }
   return false
 }
-
 function takesALaterOpener(state: EditorState, line: Line, closer: number): boolean {
   const own = fenceOf(fenceLine(line.text).rest)
   if (!own) return false
@@ -888,20 +751,15 @@ function takesALaterOpener(state: EditorState, line: Line, closer: number): bool
   }
   return false
 }
-
 export const closeFence: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
   if (!range.empty) return false
-
   const line = state.doc.lineAt(range.head)
   if (range.head !== line.to) return false
-
   const { pad, rest } = fenceLine(line.text)
   const fence = fenceOf(rest)
   if (!fence) return false
-
   if (!opensUnclosedFence(state, line)) return false
-
   dispatch(
     state.update({
       changes: { from: line.to, insert: `\n${pad}\n${pad}${fence.mark}` },
@@ -912,17 +770,13 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   )
   return true
 }
-
 const HOLDERS = new Set(['Blockquote', 'ListItem'])
-
 function heldCode(state: EditorState, pos: number): SyntaxNode | null {
   const code = enclosingNamed(syntaxTree(state).resolveInner(pos, -1), 'FencedCode')
   return code && enclosingNamed(code, HOLDERS) ? code : null
 }
-
 export const continueInCode: StateCommand = ({ state, dispatch }) => {
   if (!state.selection.ranges.every((range) => heldCode(state, range.head))) return false
-
   const update = state.changeByRange((range) => {
     const code = heldCode(state, range.head)
     const opener = state.doc.lineAt(code?.from ?? range.head)
@@ -933,32 +787,25 @@ export const continueInCode: StateCommand = ({ state, dispatch }) => {
     const pad = first || line.text.trim() === '' ? held : own.pad
     const indent = first ? '' : (/^[ \t]*/.exec(line.text.slice(own.pad.length))?.[0] ?? '')
     const insert = `\n${pad}${indent}`
-
     return {
       changes: { from: range.from, to: range.to, insert },
       range: EditorSelection.cursor(range.from + insert.length),
     }
   })
-
   dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
   return true
 }
-
 export const insertMathBlock = insertBlock(() => ({ text: '$$\n\n$$', caret: 3 }), {
   wrap: (selected) => ({ text: `$$\n${selected}\n$$`, caret: selected.length + 3 }),
 })
-
 export const insertChart = insertBlock(() => ({
   text: '```chart\ntype: bar\ntitle: \nlabels: [one, two, three]\nseries:\n  - data: [1, 2, 3]\n```\n',
   caret: 26,
 }))
-
 export const insertAiBlock = insertBlock(() => ({ text: '```ai\n\n```\n', caret: 6 }))
-
 export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4 }), {
   above: true,
 })
-
 export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }), {
   below: true,
   wrap: (selected) => {
@@ -969,61 +816,45 @@ export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 
     return { text, caret: text.length }
   },
 })
-
 function calloutAt(state: EditorState): { line: Line; at: number; callout: Callout } | null {
   const doc = state.doc
-
   for (let number = doc.lineAt(state.selection.main.head).number; number >= 1; number--) {
     const line = doc.line(number)
     if (!/^[ \t]*>/.test(line.text)) return null
-
     const at = line.text.indexOf('[!')
     if (at < 0 || !/^[ \t>]*$/.test(line.text.slice(0, at))) continue
-
     const callout = calloutOf(line.text.slice(at))
     if (callout) return { line, at, callout }
   }
-
   return null
 }
-
 export function calloutSign(state: EditorState): '+' | '-' | '' | null {
   const found = calloutAt(state)
   if (!found) return null
-
   return found.callout.foldable ? (found.callout.folded ? '-' : '+') : ''
 }
-
 export const setCalloutSign =
   (sign: '+' | '-'): StateCommand =>
   ({ state, dispatch }) => {
     const found = calloutAt(state)
     if (!found) return false
-
     const { line, at, callout } = found
     const closed = line.text.indexOf(']', at)
     if (closed < 0) return false
-
     const from = line.from + closed + 1
     const held = callout.foldable ? 1 : 0
     const insert = callout.foldable && (callout.folded ? '-' : '+') === sign ? '' : sign
-
     dispatch(state.update({ changes: { from, to: from + held, insert }, userEvent: 'input' }))
     return true
   }
-
 export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
-
 const BARE_MARKER = /^[ \t>]*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?|#{1,6}[ \t]+)$/
-
 export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   const text = state.doc.toString()
   const used = new Set([...text.matchAll(/\[\^([^\]\s]+)\]/g)].map((found) => found[1]))
-
   let number = 1
   while (used.has(String(number))) number++
   const label = `[^${number}]`
-
   const trimmed = text.replace(/\s+$/, '').length
   const caret = state.selection.main.to
   const line = state.doc.lineAt(caret)
@@ -1031,7 +862,6 @@ export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   const end = bare ? caret : trimmed
   const at = Math.min(caret, end)
   const definition = `\n\n${label}: `
-
   const changes: ChangeSpec[] =
     at === end
       ? [{ from: end, to: state.doc.length, insert: label + definition }]
@@ -1039,7 +869,6 @@ export const insertFootnote: StateCommand = ({ state, dispatch }) => {
           { from: at, insert: label },
           { from: end, to: state.doc.length, insert: definition },
         ]
-
   dispatch(
     state.update({
       changes,
@@ -1050,30 +879,24 @@ export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   )
   return true
 }
-
 export const insertComment = toggleWrap('<!-- ', ' -->')
-
 export const insertPageBreak = insertBlock(() => ({
   text: '<div style="page-break-after: always;"></div>\n',
   caret: 45,
 }))
-
 export function insertTable(rows = 2, columns = 2): StateCommand {
   const header = `| ${Array.from({ length: columns }, (_, i) => `Column ${i + 1}`).join(' | ')} |`
   const divider = `| ${Array.from({ length: columns }, () => '---').join(' | ')} |`
   const body = Array.from({ length: rows }, () => `| ${Array.from({ length: columns }, () => '   ').join(' | ')} |`)
-
   const block = insertBlock(() => ({ text: [header, divider, ...body].join('\n'), caret: 2 }), {
     above: true,
     below: true,
   })
-
   return (target) => {
     const line = target.state.doc.lineAt(target.state.selection.main.head)
     return !/^\s*\|/.test(line.text) && block(target)
   }
 }
-
 function linkHolding(state: EditorState, at: number): SelectionRange | null {
   const node = enclosingNamed(syntaxTree(state).resolveInner(at, 0), LINK_HOLDERS)
   if (!node || at <= node.from || at >= node.to) return null
@@ -1088,15 +911,12 @@ function linkHolding(state: EditorState, at: number): SelectionRange | null {
   const opening = node.getChildren('LinkMark')[2]
   return opening ? EditorSelection.cursor(opening.to) : null
 }
-
 const LINK_HOLDERS = new Set(['Link', 'Wikilink'])
-
 function wrapped(bang: '' | '!'): StateCommand {
   return ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
       const held = range.empty ? linkHolding(state, range.head) : null
       if (held) return { range: held }
-
       const { from, to } = range.empty ? range : inside(state, range.from, range.to)
       const label = state.doc.sliceString(from, to)
       const insert = `${bang}[${label}]()`
@@ -1105,30 +925,22 @@ function wrapped(bang: '' | '!'): StateCommand {
         range: EditorSelection.cursor(from + insert.length - 1),
       }
     })
-
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
     return true
   }
 }
-
 export const insertLink = wrapped('')
 export const insertImage = wrapped('!')
-
 const continueMarkup = insertNewlineContinueMarkupCommand({ nonTightLists: false })
-
 const ORDERED_TASK = /^(?:[ \t]*>[ \t]?)*[ \t]*\d{1,9}[.)][ \t]+\[.\]/u
 const FRESH_NUMBER = /^(?:[ \t]*>[ \t]?)*[ \t]*\d{1,9}[.)] $/u
-
 const EMPTY_ORDERED_TASK = /^((?:[ \t]*>[ \t]?)*)[ \t]*\d{1,9}[.)][ \t]+\[.\][ \t]*$/u
-
 function endEmptyTask(state: EditorState): TransactionSpec | null {
   const range = state.selection.main
   if (state.selection.ranges.length > 1 || !range.empty) return null
-
   const line = state.doc.lineAt(range.head)
   const quote = EMPTY_ORDERED_TASK.exec(line.text)?.[1]
   if (quote === undefined || range.head !== line.to || inCode(state, line.from)) return null
-
   const left = state.update({ changes: { from: line.from, to: line.to, insert: quote } })
   const apart = apartFromWords(left.newDoc, line.from + quote.length)
   const insert = (apart?.above ?? '') + quote
@@ -1138,14 +950,11 @@ function endEmptyTask(state: EditorState): TransactionSpec | null {
     userEvent: 'input',
   }
 }
-
 const QUOTED_LEAD = /^(?:[ \t]*>[ \t]?)*/u
-
 function hasWords(doc: Text, number: number): boolean {
   if (number < 1 || number > doc.lines) return false
   return !!doc.line(number).text.replace(QUOTED_LEAD, '').trim()
 }
-
 function apartFromWords(doc: Text, head: number): { above: string; below: string } | null {
   const line = doc.lineAt(head)
   const lead = QUOTED_LEAD.exec(line.text)?.[0] ?? ''
@@ -1155,9 +964,7 @@ function apartFromWords(doc: Text, head: number): { above: string; below: string
   const below = above && hasWords(doc, line.number + 1) ? `\n${blank}` : ''
   return above ? { above, below } : null
 }
-
 const ITEM_LEAD = /^(?:[ \t]*>[ \t]?)*[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+(?:\[.\][ \t]+)?$/u
-
 function opensListUnderWords(state: EditorState, line: Line, at: number): boolean {
   if (!ITEM_LEAD.test(state.doc.sliceString(line.from, at))) return false
   if (!state.doc.sliceString(at, line.to).trim() || line.number < 2) return false
@@ -1171,7 +978,6 @@ function opensListUnderWords(state: EditorState, line: Line, at: number): boolea
   const item = enclosingNamed(syntaxTree(state).resolveInner(at, -1), 'ListItem')
   return item !== null && item.from >= line.from && item.prevSibling === null
 }
-
 function foldAfterCaret(state: EditorState): { from: number; to: number } | null {
   const main = state.selection.main
   if (state.selection.ranges.length > 1 || !main.empty) return null
@@ -1182,7 +988,6 @@ function foldAfterCaret(state: EditorState): { from: number; to: number } | null
   })
   return found
 }
-
 function pastFold(made: Transaction, fold: { from: number; to: number }): Transaction {
   const changes: { from: number; to: number; insert: string }[] = []
   made.changes.iterChanges((from, to, _fromB, _toB, text) => {
@@ -1193,7 +998,6 @@ function pastFold(made: Transaction, fold: { from: number; to: number }): Transa
     (one) => one.to === fold.from && one.from >= lineStart && !made.startState.sliceDoc(one.from, one.to).trim(),
   )
   if (!opened || changes.some((one) => one !== opened && one.from < fold.to)) return made
-
   const offset = made.newSelection.main.head - made.changes.mapPos(opened.from, -1)
   const moved = ChangeSet.of(
     changes.flatMap((one) =>
@@ -1213,7 +1017,6 @@ function pastFold(made: Transaction, fold: { from: number; to: number }): Transa
     userEvent: 'input',
   })
 }
-
 export const continueLists: StateCommand = (target) => {
   const fold = foldAfterCaret(target.state)
   if (!fold) return continueListsAt(target)
@@ -1228,9 +1031,7 @@ export const continueLists: StateCommand = (target) => {
   target.dispatch(target.state.update(below))
   return true
 }
-
 const FOLD_OPENER = /^([ \t>]*)(?:(#{1,6})(?:[ \t]|$)|`{3,}|~{3,})/
-
 function belowFold(state: EditorState, fold: { from: number; to: number }): TransactionSpec | null {
   const opener = FOLD_OPENER.exec(state.doc.lineAt(fold.from).text)
   if (!opener) return null
@@ -1252,14 +1053,12 @@ function belowFold(state: EditorState, fold: { from: number; to: number }): Tran
     userEvent: 'input',
   }
 }
-
 const continueListsAt: StateCommand = ({ state, dispatch }) => {
   const ended = endEmptyTask(state)
   if (ended) {
     dispatch(state.update(ended))
     return true
   }
-
   return continueMarkup({
     state,
     dispatch: (made) => {
@@ -1267,7 +1066,6 @@ const continueListsAt: StateCommand = ({ state, dispatch }) => {
       made.newSelection.ranges.forEach((range, at) => {
         const before = state.selection.ranges[at]
         if (!before || !ORDERED_TASK.test(state.doc.lineAt(before.head).text)) return
-
         const line = made.newDoc.lineAt(range.head)
         if (FRESH_NUMBER.test(made.newDoc.sliceString(line.from, range.head))) boxes.push(range.head)
       })
@@ -1292,7 +1090,6 @@ const continueListsAt: StateCommand = ({ state, dispatch }) => {
         dispatch(made)
         return
       }
-
       const boxed = ChangeSet.of([...boxes.map((at) => ({ from: at, insert: '[ ] ' })), ...apart], made.newDoc.length)
       dispatch(
         state.update({

@@ -9,7 +9,6 @@ export interface SyncHostPort {
   invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>
   joinPath(dir: string, relative: string): string
 }
-
 export interface SyncStoragePort {
   text(key: string): string | null
   json(key: string): unknown
@@ -17,22 +16,18 @@ export interface SyncStoragePort {
   keepJson(key: string, value: unknown): boolean
   forget(key: string): void
 }
-
 export interface SyncClockPort {
   now(): number
   waited(ms?: number): Promise<void>
 }
-
 export interface SyncRemoteSpace {
   readonly id: string
   readonly name: string
   readonly role: SpaceRole
 }
-
 export interface SyncUser {
   readonly id: string
 }
-
 export interface SyncAccountPort {
   readonly token: string | null
   readonly user: SyncUser | null
@@ -44,7 +39,6 @@ export interface SyncAccountPort {
   forgetWithSession(clear: (kept: boolean) => void): void
   askBeforeLeaving(ask: () => Promise<boolean>): void
 }
-
 export interface SyncRemoteNote {
   readonly id: string
   readonly path: string
@@ -55,7 +49,6 @@ export interface SyncRemoteNote {
   readonly size: number
   readonly hash: string
 }
-
 export interface SyncApiPort {
   readonly base: string
   readonly bytesWithin: number
@@ -72,9 +65,7 @@ export interface SyncApiPort {
   statusOf(error: unknown): number | null
   saidByServer(error: unknown): boolean
 }
-
 export type SyncFileKind = 'file' | 'folder' | 'space'
-
 export type SyncFileOp = (
   | {
       op: 'created'
@@ -104,9 +95,7 @@ export type SyncFileOp = (
   heard?: true
   watched?: true
 }
-
 export type SyncFileDoer = (op: SyncFileOp, run: () => Promise<unknown>) => Promise<void>
-
 export interface SyncPositioned {
   namesIn(root: string, folder: string): readonly string[] | null
   folders(root: string): ReadonlyMap<string, readonly string[]>
@@ -116,29 +105,24 @@ export interface SyncPositioned {
     names: readonly string[],
   ): { drawn: readonly string[]; done: Promise<unknown> } | null
 }
-
 export interface SyncDescribing {
   describedIn(root: string): Readonly<Record<string, ItemMeta>> | null
   describe(root: string, patches: Readonly<Record<string, MetaPatch>>): Promise<string[] | null>
 }
-
 export interface SyncWriteHearing {
   there(path: string): Promise<boolean>
   made(path: string): Promise<void>
   wrote(path: string, content: string): void
 }
-
 export interface SyncSpace {
   readonly id: string
   readonly name: string
   readonly root: string
 }
-
 export interface SyncRootMove {
   readonly from: string
   readonly to: string
 }
-
 export interface SyncNote {
   readonly key: string
   readonly path: string | null
@@ -149,13 +133,11 @@ export interface SyncNote {
   readonly arrivals: number
   reads: boolean
 }
-
 export interface SyncOpenNote<Note extends SyncNote = SyncNote> {
   readonly key: string
   readonly path: string
   readonly note: Note
 }
-
 export interface SyncWorkspacePort<Note extends SyncNote = SyncNote> {
   readonly spaces: readonly SyncSpace[]
   readonly shownSpaces: readonly SyncSpace[]
@@ -202,7 +184,6 @@ export interface SyncWorkspacePort<Note extends SyncNote = SyncNote> {
   reload(path: string, text: string): void
   leaveTheWelcomeNote(): Promise<unknown>
 }
-
 export interface SyncStorePort {
   readonly engineReady: boolean
   readonly passing: boolean
@@ -217,18 +198,15 @@ export interface SyncStorePort {
   entryIdAt(root: string, path: string): string | null
   entryPathOf(root: string, id: string): string | null
 }
-
 export interface SyncPairing {
   pairs(): { root: string; spaceId: string; shared: boolean }[]
   pair(root: string, spaceId: string, shared: boolean): void
   unpair(root: string): void
   share(root: string, shared: boolean): void
 }
-
 export interface SyncPairingPort {
   pairSpaces(token: string, pairing: SyncPairing): Promise<void>
 }
-
 export interface SyncPorts {
   readonly 'sync.host': SyncHostPort
   readonly 'sync.storage': SyncStoragePort

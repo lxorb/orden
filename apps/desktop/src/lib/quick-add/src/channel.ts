@@ -4,25 +4,20 @@ import { isRecord } from '../../platform/src/api'
 
 export const CHANNEL = 'orden-quick-add'
 export const ANSWERING = 'orden-quick-add-answering'
-
 export type Said =
   | { kind: 'hello' }
   | { kind: 'world'; lang: string; smart: boolean }
   | { kind: 'task'; id: string; entry: Entry; open: boolean }
   | { kind: 'added'; id: string; ok: boolean }
-
 const isString = (value: unknown): value is string => typeof value === 'string'
 const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString)
-
 const optional = (value: unknown, check: (one: unknown) => boolean) => value === undefined || check(value)
-
 function isRemind(value: unknown): value is Remind {
   if (!isRecord(value)) return false
   if (typeof value.before === 'number') return true
   if (isString(value.at)) return isString(value.time)
   return isString(value.time)
 }
-
 function isEntry(value: unknown): value is Entry {
   if (!isRecord(value) || !isString(value.text) || !isRecord(value.fields)) return false
   const { fields } = value
@@ -36,7 +31,6 @@ function isEntry(value: unknown): value is Entry {
     optional(value.description, isString)
   )
 }
-
 export function heard(value: unknown): Said | null {
   if (!isRecord(value)) return null
   if (value.kind === 'hello') return { kind: 'hello' }
@@ -51,7 +45,6 @@ export function heard(value: unknown): Said | null {
   }
   return null
 }
-
 export function asking(say: (said: Said) => void, within: number) {
   const waiting = new Map<string, (ok: boolean) => void>()
   const unsettled = new Map<string, string>()
@@ -80,9 +73,7 @@ export function asking(say: (said: Said) => void, within: number) {
     },
   }
 }
-
 const REMEMBERED = 200
-
 export function addingOnce(add: (entry: Entry, open: boolean) => Promise<boolean>) {
   const adding = new Map<string, Promise<boolean>>()
   return (id: string, entry: Entry, open: boolean): Promise<boolean> => {

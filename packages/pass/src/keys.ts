@@ -23,24 +23,20 @@ import { newSigner, type Signer } from './sign'
 import type { Envelope, VaultMeta } from './types'
 
 export { keyringIn, type Keyring, type PasswordSeal, type SignSeal } from './keyring'
-
 export interface Opened {
   root: Uint8Array<ArrayBuffer>
   pair: Pair
   signer: Signer | null
 }
-
 export interface Sealing {
   keyVersion: number
   rev: number
 }
-
 export interface OpenedItem {
   envelope: Envelope
   itemKey: Uint8Array<ArrayBuffer>
   rev: number | null
 }
-
 const SALT = 16
 const MARK = [0x6f, 0x70, 0x69, 0x32]
 const HEAD = 8
@@ -48,12 +44,10 @@ const CHECKSUM = 2
 const RECOVERY_BYTES = 32
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 const RECOVERY_LENGTH = Math.ceil(((RECOVERY_BYTES + CHECKSUM) * 8) / 5)
-
 async function checksumOf(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes)
   return new Uint8Array(digest.slice(0, CHECKSUM))
 }
-
 function base32(bytes: Uint8Array): string {
   let text = ''
   let bits = 0
@@ -70,7 +64,6 @@ function base32(bytes: Uint8Array): string {
   if (bits > 0) text += CROCKFORD[(held << (5 - bits)) & 31] ?? ''
   return text
 }
-
 function unbase32(text: string, length: number): Uint8Array<ArrayBuffer> | null {
   const bytes = new Uint8Array(length)
   let bits = 0
@@ -90,13 +83,11 @@ function unbase32(text: string, length: number): Uint8Array<ArrayBuffer> | null 
   }
   return at === length && held === 0 ? bytes : null
 }
-
 export async function recoveryCode(bytes: Uint8Array<ArrayBuffer>): Promise<string> {
   if (bytes.length !== RECOVERY_BYTES) throw new Error('pass: a recovery key is 32 bytes')
   const letters = base32(joined(bytes, await checksumOf(bytes)))
   return (letters.match(/.{1,4}/g) ?? []).join('-')
 }
-
 export async function recoveryKey(code: string): Promise<Uint8Array<ArrayBuffer> | null> {
   const letters = code.toUpperCase().replace(/[\s-]/g, '').replace(/[IL]/g, '1').replace(/O/g, '0')
   if (letters.length !== RECOVERY_LENGTH) return null
@@ -105,19 +96,15 @@ export async function recoveryKey(code: string): Promise<Uint8Array<ArrayBuffer>
   const bytes = all.slice(0, RECOVERY_BYTES)
   return same(all.slice(RECOVERY_BYTES), await checksumOf(bytes)) ? bytes : null
 }
-
 async function passwordKey(password: string, salt: Uint8Array, params: KdfParams): Promise<Uint8Array<ArrayBuffer>> {
   return await subkey(await stretch(password, salt, params), 'orden pass password')
 }
-
 async function recoverySealKey(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
   return await subkey(bytes, 'orden pass recovery')
 }
-
 function passwordContext(pub: string, at: number | undefined): string[] {
   return at === undefined ? ['password'] : ['password', pub, String(at)]
 }
-
 async function passwordSealOf(
   root: Uint8Array<ArrayBuffer>,
   password: string,
@@ -130,22 +117,18 @@ async function passwordSealOf(
   const sealed = await seal(key, root, 'root', ...passwordContext(pub, at))
   return { salt: base64(salt), ...params, sealed, at }
 }
-
 export function isOldPasswordSeal(keyring: Keyring): boolean {
   return keyring.password.at === undefined
 }
-
 async function signSealOf(root: Uint8Array<ArrayBuffer>, signer: Signer): Promise<SignSeal> {
   return {
     pub: signer.pub,
     private: await seal(root, JSON.stringify(signer.priv), 'sign', signer.pub),
   }
 }
-
 function laterThan(keyring: Keyring): number {
   return Math.max(Date.now(), keyring.at + 1)
 }
-
 async function recoverySealOf(root: Uint8Array<ArrayBuffer>): Promise<{ sealed: string; recovery: string }> {
   const bytes = newKey()
   return {
@@ -153,7 +136,6 @@ async function recoverySealOf(root: Uint8Array<ArrayBuffer>): Promise<{ sealed: 
     recovery: await recoveryCode(bytes),
   }
 }
-
 export async function newKeyring(
   password: string,
   params: KdfParams = PASSWORD_KDF,
@@ -173,7 +155,6 @@ export async function newKeyring(
   }
   return { keyring, opened: { root, pair, signer }, recovery }
 }
-
 async function jwkOf(
   root: Uint8Array<ArrayBuffer>,
   sealed: string,
@@ -190,14 +171,12 @@ async function jwkOf(
   if (typeof priv !== 'object' || priv === null || Array.isArray(priv)) throw new Error('pass: unreadable keyring')
   return priv
 }
-
 export async function openedWith(keyring: Keyring, root: Uint8Array<ArrayBuffer>): Promise<Opened> {
   const priv = await jwkOf(root, keyring.private, 'private', keyring.pub)
   const sign = keyring.sign
   const signer = sign ? { pub: sign.pub, priv: await jwkOf(root, sign.private, 'sign', sign.pub) } : null
   return { root, pair: { pub: keyring.pub, priv }, signer }
 }
-
 export async function withSigner(keyring: Keyring, opened: Opened): Promise<{ keyring: Keyring; opened: Opened }> {
   if (opened.signer) return { keyring, opened }
   const signer = await newSigner()
@@ -206,7 +185,6 @@ export async function withSigner(keyring: Keyring, opened: Opened): Promise<{ ke
     opened: { ...opened, signer },
   }
 }
-
 function saltOf(seal: PasswordSeal): Uint8Array<ArrayBuffer> {
   try {
     return unbase64(seal.salt)
@@ -214,7 +192,6 @@ function saltOf(seal: PasswordSeal): Uint8Array<ArrayBuffer> {
     throw new WrongSecret()
   }
 }
-
 export async function openWithPassword(keyring: Keyring, password: string): Promise<Opened> {
   const asked = keyring.password
   if (asked.m > MOST_KDF_MEMORY || asked.t > MOST_KDF_PASSES) throw new KdfTooCostly()
@@ -224,14 +201,12 @@ export async function openWithPassword(keyring: Keyring, password: string): Prom
   const context = passwordContext(keyring.pub, asked.at)
   return await openedWith(keyring, await open(key, asked.sealed, 'root', ...context))
 }
-
 export async function openWithRecovery(keyring: Keyring, code: string): Promise<Opened> {
   const bytes = await recoveryKey(code)
   if (bytes === null || keyring.recovery === null) throw new WrongSecret()
   const root = await open(await recoverySealKey(bytes), keyring.recovery, 'root', 'recovery')
   return await openedWith(keyring, root)
 }
-
 export async function changePassword(
   keyring: Keyring,
   opened: Opened,
@@ -244,12 +219,10 @@ export async function changePassword(
     at: laterThan(keyring),
   }
 }
-
 export async function newRecovery(keyring: Keyring, opened: Opened): Promise<{ keyring: Keyring; recovery: string }> {
   const { sealed, recovery } = await recoverySealOf(opened.root)
   return { keyring: { ...keyring, recovery: sealed, at: laterThan(keyring) }, recovery }
 }
-
 function parsed(text: string, what: string): unknown {
   try {
     return JSON.parse(text)
@@ -257,11 +230,9 @@ function parsed(text: string, what: string): unknown {
     throw new Error(`pass: unreadable ${what}`)
   }
 }
-
 export async function sealVault(vaultKey: Uint8Array<ArrayBuffer>, vaultId: string, meta: VaultMeta): Promise<string> {
   return await seal(vaultKey, JSON.stringify(meta), 'vault', vaultId)
 }
-
 export async function openVault(
   vaultKey: Uint8Array<ArrayBuffer>,
   vaultId: string,
@@ -271,24 +242,19 @@ export async function openVault(
   if (meta === null) throw new Error('pass: unreadable vault')
   return meta
 }
-
 export async function wrapVaultKey(vaultKey: Uint8Array<ArrayBuffer>, pub: string, vaultId: string): Promise<string> {
   return await wrapTo(vaultKey, pub, 'vault-key', vaultId)
 }
-
 export async function unwrapVaultKey(wrapped: string, pair: Pair, vaultId: string): Promise<Uint8Array<ArrayBuffer>> {
   return await unwrapWith(wrapped, pair, 'vault-key', vaultId)
 }
-
 function itemContext(vaultId: string, itemId: string, at: Sealing): string[] {
   return [vaultId, itemId, String(at.keyVersion), String(at.rev)]
 }
-
 function revOfHead(bytes: Uint8Array<ArrayBuffer>): number | null {
   if (bytes.length < HEAD || !MARK.every((one, at) => bytes[at] === one)) return null
   return new DataView(bytes.buffer, bytes.byteOffset, HEAD).getUint32(4)
 }
-
 function bodyBytes(body: string): Uint8Array<ArrayBuffer> {
   try {
     return unbase64(body)
@@ -296,7 +262,6 @@ function bodyBytes(body: string): Uint8Array<ArrayBuffer> {
     throw new WrongSecret()
   }
 }
-
 export function sealedRevOf(body: string): number | null {
   try {
     return revOfHead(unbase64(body))
@@ -304,7 +269,6 @@ export function sealedRevOf(body: string): number | null {
     return null
   }
 }
-
 function textOf(bytes: Uint8Array<ArrayBuffer>): string {
   try {
     return fromUtf8(bytes)
@@ -312,13 +276,11 @@ function textOf(bytes: Uint8Array<ArrayBuffer>): string {
     throw new WrongSecret()
   }
 }
-
 function envelopeFrom(text: string): Envelope {
   const envelope = envelopeIn(parsed(text, 'item'))
   if (envelope === null) throw new Error('pass: unreadable item')
   return envelope
 }
-
 export async function sealItemKey(
   vaultKey: Uint8Array<ArrayBuffer>,
   vaultId: string,
@@ -327,7 +289,6 @@ export async function sealItemKey(
 ): Promise<string> {
   return await seal(vaultKey, itemKey, 'item-key', vaultId, itemId)
 }
-
 export async function openItemKey(
   vaultKey: Uint8Array<ArrayBuffer>,
   vaultId: string,
@@ -338,7 +299,6 @@ export async function openItemKey(
   if (itemKey.length !== 32) throw new Error('pass: unreadable item')
   return itemKey
 }
-
 export async function sealItemBody(
   itemKey: Uint8Array<ArrayBuffer>,
   vaultId: string,
@@ -356,7 +316,6 @@ export async function sealItemBody(
   const sealed = await sealBytes(itemKey, JSON.stringify(envelope), 'item', ...context)
   return base64(joined(head, sealed))
 }
-
 export async function openItemBody(
   itemKey: Uint8Array<ArrayBuffer>,
   vaultId: string,
@@ -372,7 +331,6 @@ export async function openItemBody(
       : await openBytes(itemKey, bytes.slice(HEAD), 'item', ...itemContext(vaultId, itemId, { keyVersion, rev }))
   return { envelope: envelopeFrom(textOf(opened)), rev }
 }
-
 export async function sealItem(
   vaultKey: Uint8Array<ArrayBuffer>,
   vaultId: string,
@@ -387,7 +345,6 @@ export async function sealItem(
     itemKey,
   }
 }
-
 export async function openItem(
   vaultKey: Uint8Array<ArrayBuffer>,
   vaultId: string,
@@ -400,7 +357,6 @@ export async function openItem(
   const { envelope, rev } = await openItemBody(itemKey, vaultId, itemId, body, keyVersion)
   return { envelope, itemKey, rev }
 }
-
 export async function sealVersion(
   vaultKey: Uint8Array<ArrayBuffer>,
   vaultId: string,
@@ -414,7 +370,6 @@ export async function sealVersion(
     body: await seal(itemKey, JSON.stringify(envelope), 'version', vaultId, itemId, String(rev)),
   }
 }
-
 export async function openVersion(
   vaultKey: Uint8Array<ArrayBuffer>,
   vaultId: string,

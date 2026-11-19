@@ -1,12 +1,9 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 VAULT = {
     "nodes": [
         {"id": "x", "type": "excalidraw", "x": -400, "y": -100, "width": 200, "height": 100, "file": "D.excalidraw"},
@@ -24,7 +21,6 @@ VAULT = {
     "edges": [{"id": "e", "fromNode": "x", "toNode": "a"}],
     "metadata": {"version": "1.0-1.0", "frontmatter": {}},
 }
-
 SEED = """
 async (text) => {
   const ws = window.ordenApp.workspace
@@ -49,7 +45,6 @@ async (text) => {
   return path
 }
 """
-
 READ = """
 async (path) => {
   await window.ordenApp.workspace.writeNow?.()
@@ -63,11 +58,9 @@ async (path) => {
   return row ? row.content : null
 }
 """
-
 def file_of(page: Page, path: str) -> dict:
     text = page.evaluate(READ, path)
     return json.loads(text) if text else {}
-
 def kept(found: dict, what: str, cards: list[str]) -> None:
     ids = sorted(one.get("id") for one in found.get("nodes", []))
     say(f"[{what}] nodes {ids}, edges {[one.get('id') for one in found.get('edges', [])]}")
@@ -78,7 +71,6 @@ def kept(found: dict, what: str, cards: list[str]) -> None:
     for card in cards:
         if card not in ids:
             wrong(f"[{what}] the card {card} is not in the file")
-
 def drive(browser: Browser) -> None:
     page = browser.new_page(viewport={"width": 1280, "height": 800})
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
@@ -87,7 +79,6 @@ def drive(browser: Browser) -> None:
     path = page.evaluate(SEED, json.dumps(VAULT, indent="\t") + "\n")
     wait_for(page, "() => !!document.querySelector('.canvas')", "the canvas")
     page.wait_for_timeout(600)
-
     box = page.locator(".canvas").bounding_box()
     if not box:
         raise SystemExit("the plane is not on screen")
@@ -96,7 +87,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.type("New card")
     page.keyboard.press("Escape")
     page.wait_for_timeout(1500)
-
     after = file_of(page, path)
     new_cards = [one["id"] for one in after.get("nodes", []) if one.get("id") not in ("x", "a")]
     if not new_cards:
@@ -109,5 +99,4 @@ def drive(browser: Browser) -> None:
         wrong(f"the edge to the plugin's node is gone: {after.get('edges')}")
     DRIVE.shot(page, "01-a-card-down")
     page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "an Obsidian canvas edited here keeps what this app does not read"))

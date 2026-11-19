@@ -5,7 +5,6 @@ export interface FolderOption {
   name: string
   depth: number
 }
-
 export function folderOptions(folders: readonly Folder[]): FolderOption[] {
   const out: FolderOption[] = []
   const known = new Set(folders.map((one) => one.id))

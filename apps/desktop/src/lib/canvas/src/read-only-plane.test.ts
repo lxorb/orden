@@ -2,7 +2,6 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 const asked = vi.hoisted(() => ({ prompts: 0, stored: 0 }))
-
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   prompt: {
     ask: () => {
@@ -27,19 +26,15 @@ vi.mock('../../workspace/src/api', async (importOriginal) => ({
     return Promise.resolve('/space/assets/picture.png')
   },
 }))
-
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   pdfjs: () => Promise.reject(new Error('no PDF here')),
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { run, place, putWords } = await import('./actions')
 const { CanvasStore } = await import('./store.svelte')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { workspace } = await import('../../workspace/src/api')
-
 function readOnlyBoard() {
   const text = JSON.stringify({
     nodes: [
@@ -56,30 +51,25 @@ function readOnlyBoard() {
   store.readOnly = true
   return store
 }
-
 const picture = () => new File([new Uint8Array([1])], 'a.png', { type: 'image/png' })
 const pdf = () => new File([new Uint8Array([37])], 'a.pdf', { type: 'application/pdf' })
-
 beforeEach(() => {
   asked.prompts = 0
   asked.stored = 0
   workspace.spaces = [{ id: 'local', name: 'space', root: '/space' }]
   workspace.activeSpaceId = 'local'
 })
-
 test('a double click on a card does not open it for typing', async () => {
   const store = readOnlyBoard()
   await run.open(store, { node: 'card', edge: null } as never, { x: 10, y: 10 })
   expect(store.editing).toBeNull()
 })
-
 test('a double click on a frame or a line asks for no name', async () => {
   const store = readOnlyBoard()
   await run.open(store, { node: 'frame', edge: null } as never, { x: 10, y: 110 })
   await run.open(store, { node: null, edge: 'line' } as never, { x: 10, y: 80 })
   expect(asked.prompts).toBe(0)
 })
-
 test('a tool pressed on the plane asks nothing and opens nothing', async () => {
   const store = readOnlyBoard()
   await place(store, 'file', { x: 0, y: 0 }, { colour: '', path: store.path })
@@ -87,7 +77,6 @@ test('a tool pressed on the plane asks nothing and opens nothing', async () => {
   expect(asked.prompts).toBe(0)
   expect(store.editing).toBeNull()
 })
-
 test('a picture or a PDF dropped or pasted is not stored', async () => {
   const store = readOnlyBoard()
   await run.dropImage(store, picture(), { x: 0, y: 0 }, store.path)

@@ -9,27 +9,22 @@ const DEVICE_SECRET = 'ai-vault-device'
 const JOINED_SECRET = 'ai-vault-joined'
 const TRIES = 3
 const MOST_BEFORE = 20
-
 function beforeIn(value: unknown): string[] {
   const kept = typeof value === 'object' && value !== null ? (value as { before?: unknown }).before : null
   return Array.isArray(kept) ? kept.filter((one): one is string => typeof one === 'string').slice(-MOST_BEFORE) : []
 }
-
 export interface Allowed {
   id: string
   name: string
   mine: boolean
 }
-
 export type Standing = 'off' | 'opening' | 'open' | 'offered' | 'waiting' | 'stranded'
-
 export interface Asking {
   id: string
   name: string
   digits: string
   pub: string
 }
-
 interface Listed {
   id: string
   name: string
@@ -40,24 +35,20 @@ interface Listed {
   revealed: string | null
   approved: boolean
 }
-
 interface Read {
   rev: number
   blob: string | null
   wrapped: string | null
   devices: Listed[]
 }
-
 interface Mine {
   nonce: string
   answer: { nonce: string; from: string; digits: string } | null
 }
-
 interface Answered {
   commitment: string
   nonce: string
 }
-
 export interface VaultWorld {
   account(): string | null
   call<T>(path: string, method?: string, body?: unknown): Promise<T>
@@ -69,22 +60,18 @@ export interface VaultWorld {
   loadBase(account: string): Base | null
   keepBase(account: string, base: Base | null): void
 }
-
 function isConflict(error: unknown): boolean {
   return typeof error === 'object' && error !== null && (error as { status?: unknown }).status === 409
 }
-
 async function printsOf(keys: Record<string, string>): Promise<Record<string, string>> {
   const entries = await Promise.all(
     Object.entries(keys).map(async ([id, key]) => [id, await fingerprint(key)] as const),
   )
   return Object.fromEntries(entries)
 }
-
 async function sideOf(contents: Contents): Promise<Side> {
   return { contents, prints: await printsOf(contents.keys) }
 }
-
 export class Vault {
   standing = $state<Standing>('off')
   digits = $state('')
@@ -92,7 +79,6 @@ export class Vault {
   seen = $state.raw<Record<string, string>>({})
   offeredBy = $state('')
   allowed = $state.raw<Allowed[]>([])
-
   private device: DeviceKey | null = null
   private registered = ''
   private mineAsking: Mine | null = null
@@ -101,9 +87,7 @@ export class Vault {
   private key: Uint8Array<ArrayBuffer> | null = null
   private running: Promise<void> | null = null
   private again = false
-
   constructor(private readonly world: VaultWorld) {}
-
   refresh(): Promise<void> {
     if (this.running) {
       this.again = true
@@ -119,11 +103,9 @@ export class Vault {
     })
     return this.running
   }
-
   private asked(): boolean {
     return this.again
   }
-
   private async mine(): Promise<DeviceKey> {
     if (this.device) return this.device
     const kept = deviceKeyIn(JSON.parse((await this.world.readSecret(DEVICE_SECRET)) ?? 'null'))
@@ -132,11 +114,9 @@ export class Vault {
     await this.world.writeSecret(DEVICE_SECRET, JSON.stringify(made))
     return (this.device = made)
   }
-
   private read(device: DeviceKey): Promise<Read> {
     return this.world.call<Read>(`/v2/ai?device=${device.id}`)
   }
-
   private async register(device: DeviceKey): Promise<void> {
     const nonce = newNonce()
     await this.world.call('/v2/ai/devices', 'POST', {
@@ -146,7 +126,6 @@ export class Vault {
     })
     this.mineAsking = { nonce, answer: null }
   }
-
   private async once(): Promise<void> {
     const account = this.world.account()
     if (!account) {
@@ -208,29 +187,24 @@ export class Vault {
       if (await this.met(account, device, read)) return
     }
   }
-
   private async before(key: Uint8Array<ArrayBuffer>, blob: string | null): Promise<string[]> {
     const opened = blob ? await open(key, blob).catch(() => null) : null
     return opened === null ? [] : beforeIn(JSON.parse(opened))
   }
-
   private async markerOf(key: Uint8Array<ArrayBuffer>): Promise<string> {
     return await fingerprint(await authOf(key))
   }
-
   private async joined(account: string): Promise<string | null> {
     const kept: unknown = JSON.parse((await this.world.readSecret(JOINED_SECRET)) ?? 'null')
     if (typeof kept !== 'object' || kept === null) return null
     const one = (kept as Record<string, unknown>)[account]
     return typeof one === 'string' ? one : null
   }
-
   private async keepJoined(account: string, marker: string): Promise<void> {
     const kept: unknown = JSON.parse((await this.world.readSecret(JOINED_SECRET)) ?? 'null')
     const all = typeof kept === 'object' && kept !== null ? (kept as Record<string, unknown>) : {}
     await this.world.writeSecret(JOINED_SECRET, JSON.stringify({ ...all, [account]: marker }))
   }
-
   async join(): Promise<void> {
     const account = this.world.account()
     if (!account || this.standing !== 'offered' || !this.offered) return
@@ -238,7 +212,6 @@ export class Vault {
     this.offered = ''
     await this.refresh()
   }
-
   private async ask(device: DeviceKey, me: Listed, devices: Listed[]): Promise<void> {
     const asking = this.mineAsking
     const answer = asking?.answer
@@ -273,7 +246,6 @@ export class Vault {
     asking.answer = { nonce: me.nonce, from: me.nonceFrom, digits: said }
     this.digits = said
   }
-
   private async first(device: DeviceKey, me: Listed): Promise<boolean> {
     if (me.pub === null) {
       await this.world.call(`/v2/ai/devices/${device.id}/reveal`, 'PUT', {
@@ -304,7 +276,6 @@ export class Vault {
     if (account) await this.keepJoined(account, await this.markerOf(key))
     return true
   }
-
   private async answer(device: DeviceKey, others: Listed[]): Promise<Asking[]> {
     const key = this.key
     if (!key) return []
@@ -343,7 +314,6 @@ export class Vault {
     }
     return shown
   }
-
   private async met(account: string, device: DeviceKey, read: Read): Promise<boolean> {
     const key = this.key
     if (!key) return true
@@ -388,7 +358,6 @@ export class Vault {
     this.world.keepBase(account, baseOf(contents, prints))
     return true
   }
-
   async allow(id: string): Promise<void> {
     const key = this.key
     const device = this.device
@@ -405,16 +374,13 @@ export class Vault {
     }
     this.forgetAsking(id)
   }
-
   private forgetAsking(id: string): void {
     this.asking = this.asking.filter((one) => one.id !== id)
     this.answered.delete(id)
   }
-
   dismiss(id: string): void {
     this.asking = this.asking.filter((one) => one.id !== id)
   }
-
   async deny(id: string): Promise<void> {
     const key = this.key
     await this.world
@@ -422,7 +388,6 @@ export class Vault {
       .catch(() => undefined)
     this.forgetAsking(id)
   }
-
   async startOver(): Promise<void> {
     const account = this.world.account()
     if (!account) return
@@ -430,11 +395,9 @@ export class Vault {
     this.world.keepBase(account, null)
     await this.refresh()
   }
-
   get deviceId(): string {
     return this.device?.id ?? ''
   }
-
   async remove(id: string): Promise<boolean> {
     const account = this.world.account()
     const device = this.device
@@ -485,7 +448,6 @@ export class Vault {
     }
     return false
   }
-
   async leave(): Promise<void> {
     const device = this.device
     if (device && this.key && this.allowed.some((one) => one.mine)) {
@@ -495,7 +457,6 @@ export class Vault {
     }
     this.signedOut()
   }
-
   signedOut(): void {
     this.standing = 'off'
     this.key = null

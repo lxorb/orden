@@ -1,16 +1,13 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 FILES = {
     "Svelte docs.url": "[InternetShortcut]\nURL=https://svelte.dev/docs/kit\n",
     "Moodle.url": "[InternetShortcut]\nURL=https://moodle-app2.let.ethz.ch/my/\n",
     "Plan.md": "# Plan\n\nNothing to do with the web.\n",
 }
-
 SEED = """
 async (files) => {
   const ws = window.ordenApp.workspace
@@ -35,7 +32,6 @@ async (files) => {
   return ws.files.map((one) => one.name)
 }
 """
-
 STATE = """
 () => {
   const ws = window.ordenApp.workspace
@@ -46,7 +42,6 @@ STATE = """
   }
 }
 """
-
 SPY = """
 () => {
   const ws = window.ordenApp.workspace
@@ -55,7 +50,6 @@ SPY = """
   ws.openEntry = (path) => { window.__asked.push(path); return Promise.resolve() }
 }
 """
-
 ROWS = """
 () => [...document.querySelectorAll('[role="option"]')].map((one) => ({
   words: one.querySelector('.words')?.textContent.trim().replace(/\\s+/g, ' '),
@@ -63,23 +57,19 @@ ROWS = """
   marked: [...one.querySelectorAll('.matched')].map((hit) => hit.textContent).join(''),
 }))
 """
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 def new_tab(page: Page) -> None:
     page.keyboard.press("Control+KeyT")
     wait_for(page, f"({STATE})().newTab", "a new tab")
     wait_for(page, "document.activeElement instanceof HTMLInputElement", "the address field to take the keys")
-
 def typed(page: Page, letters: str) -> list[dict]:
     page.keyboard.type(letters, delay=20)
     page.wait_for_timeout(300)
     return page.evaluate(ROWS)
-
 def drive(browser: Browser, scheme: str) -> None:
     page = DRIVE.page(browser, color_scheme=scheme, viewport={"width": 1180, "height": 760})
     DRIVE.open(page)
@@ -88,7 +78,6 @@ def drive(browser: Browser, scheme: str) -> None:
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
     page.wait_for_timeout(800)
-
     new_tab(page)
     rows = typed(page, "svel")
     say(f"[{scheme}] 'svel' -> {rows}")
@@ -97,7 +86,6 @@ def drive(browser: Browser, scheme: str) -> None:
     check(f"[{scheme}] and marked as saved", first.get("badge") == "Saved")
     check(f"[{scheme}] with the letters typed drawn stronger", first.get("marked") == "Svel")
     shot(page, f"{scheme}-by-name")
-
     page.keyboard.press("Control+KeyA")
     rows = typed(page, "ethz modle")
     say(f"[{scheme}] 'ethz modle' -> {rows}")
@@ -106,7 +94,6 @@ def drive(browser: Browser, scheme: str) -> None:
         bool(rows) and "Moodle" in (rows[0].get("words") or ""),
     )
     shot(page, f"{scheme}-by-address")
-
     page.evaluate(SPY)
     page.keyboard.press("ArrowDown")
     page.keyboard.press("Enter")
@@ -118,12 +105,9 @@ def drive(browser: Browser, scheme: str) -> None:
         asked[0].startswith("chosen on ") and asked[1].endswith("/Moodle.url"),
     )
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser, "light")
         drive(browser, "dark")
-
     return DRIVE.verdict("Ctrl+T finds the space's web notes and opens them")
-
 raise SystemExit(main())

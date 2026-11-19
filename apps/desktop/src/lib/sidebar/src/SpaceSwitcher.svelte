@@ -8,14 +8,10 @@
   import { workspace } from '../../workspace/src/api'
 
   let open = $state(false)
-
   const here = $derived(workspace.activeSpace)
   const name = $derived(here?.name ?? 'Spaces')
-
   const otherSpaces = $derived(workspace.spaces.filter((space) => space.id !== here?.id).map((space) => space.name))
-
   let wrong = $state(false)
-
   $effect(() =>
     open
       ? overlays.show(
@@ -96,32 +92,26 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .name:hover {
       background: var(--surface-hover);
     }
   }
-
   .name:active,
   .name.open {
     background: var(--surface-press);
   }
-
   .mark {
     flex: none;
     display: grid;
     margin-inline-end: calc(var(--row-gap) - var(--space-1));
   }
-
   .mark > .fade {
     grid-area: 1 / 1;
   }
-
   .name .orden-row-label {
     flex: 0 1 auto;
   }
-
   .chevron {
     flex: none;
     width: var(--icon-md);
@@ -134,7 +124,6 @@
     stroke-linejoin: round;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .name.open .chevron {
     transform: rotate(180deg);
   }

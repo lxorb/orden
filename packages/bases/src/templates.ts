@@ -8,7 +8,6 @@ export interface Filling {
   today: string
   time: string
 }
-
 function shifted(today: string, by: string | undefined): string {
   if (!by) return today
   const found = /^([+-])(\d+)([dwMy])$/.exec(by)
@@ -25,9 +24,7 @@ function shifted(today: string, by: string | undefined): string {
       return addDays(today, amount)
   }
 }
-
 const PLACEHOLDER = /\{\{\s*(title|date|time)\s*([+-]\d+[dwMy])?\s*(?::([^}]*))?\}\}/g
-
 export const fillTemplate = (text: string, filling: Filling): string =>
   text.replace(PLACEHOLDER, (_written, name: string, by: string | undefined, format: string | undefined) => {
     if (name === 'title') return filling.title
@@ -36,9 +33,7 @@ export const fillTemplate = (text: string, filling: Filling): string =>
     if (format?.trim()) return formatDate(value, format.trim())
     return name === 'time' ? filling.time : iso
   })
-
 const TEMPLATE_KEYS = ['repeat', 'made', 'folder'] as const
-
 export function withoutTemplateKeys(text: string): string {
   let out = text
   for (const key of TEMPLATE_KEYS) {
@@ -47,18 +42,14 @@ export function withoutTemplateKeys(text: string): string {
   }
   return out.replace(/^---\r?\n---\r?\n(\r?\n)?/, '')
 }
-
 function dayIn(value: Value | undefined): string | null {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10)
   if (value && typeof value === 'object' && !Array.isArray(value) && value.kind === 'date')
     return typeof value.iso === 'string' ? value.iso : null
   return null
 }
-
 const MOST_MISSED = 400
-
 const PERIOD_DAYS = { day: 1, week: 7, month: 31, year: 366 }
-
 export function repeatDue(note: Record<string, Value>, today: string): { day: string; missed: string[] } | null {
   const said = note.repeat
   if (typeof said !== 'string') return null

@@ -2,9 +2,7 @@ import { sha256 } from '../../sync-server/src/api'
 
 const CRASH_KINDS = ['panic', 'crash', 'freeze', 'engine', 'js', 'exit'] as const
 type CrashKind = (typeof CRASH_KINDS)[number]
-
 const CHANNELS = ['stable', 'unstable'] as const
-
 const MOST = {
   version: 64,
   build: 64,
@@ -26,22 +24,18 @@ const MOST = {
   line: 2000,
   kind: 40,
 } as const
-
 const MANY = { threads: 64, frames: 64, breadcrumbs: 100, log: 200, kinds: 50 } as const
-
 interface CrashFrame {
   module: string
   offset: string
   symbol?: string | undefined
 }
-
 interface CrashThread {
   name: string
   crashed?: boolean | undefined
   main?: boolean | undefined
   frames: CrashFrame[]
 }
-
 export interface CrashReport {
   v: 1
   id: string
@@ -63,64 +57,50 @@ export interface CrashReport {
   open?: { windows: number; kinds: Record<string, number> } | undefined
   resources?: { memory?: number | undefined; cpu?: number | undefined; uptime?: number | undefined } | undefined
 }
-
 class Wrong extends Error {}
-
 type Raw = Record<string, unknown>
-
 function isObject(value: unknown): value is Raw {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
-
 function cut(value: string, most: number): string {
   return value.length > most ? value.slice(0, most) : value
 }
-
 function absent(value: unknown): value is null | undefined {
   return value === undefined || value === null
 }
-
 function textOf(value: unknown, label: string, most: number): string {
   if (typeof value !== 'string') throw new Wrong(`${label} must be text`)
   return cut(value, most)
 }
-
 function numberOf(value: unknown, label: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new Wrong(`${label} must be a number`)
   }
   return value
 }
-
 function flagOf(value: unknown, label: string): boolean {
   if (typeof value !== 'boolean') throw new Wrong(`${label} must be true or false`)
   return value
 }
-
 function objectOf(value: unknown, label: string): Raw {
   if (!isObject(value)) throw new Wrong(`${label} must be an object`)
   return value
 }
-
 function listOf(value: unknown, label: string, most: number): unknown[] {
   if (!Array.isArray(value)) throw new Wrong(`${label} must be a list`)
   return value.slice(0, most)
 }
-
 function maybe<T>(value: unknown, read: (value: unknown) => T): T | undefined {
   return absent(value) ? undefined : read(value)
 }
-
 function oneOf<T extends string>(value: unknown, label: string, among: readonly T[]): T {
   const found = among.find((one) => one === value)
   if (!found) throw new Wrong(`${label} must be one of ${among.join(', ')}`)
   return found
 }
-
 function baseName(path: string): string {
   return path.split(/[\\/]/).pop() ?? path
 }
-
 function frameOf(value: unknown, label: string): CrashFrame {
   const frame = objectOf(value, label)
   return {
@@ -129,7 +109,6 @@ function frameOf(value: unknown, label: string): CrashFrame {
     symbol: maybe(frame.symbol, (one) => textOf(one, `${label}.symbol`, MOST.symbol)),
   }
 }
-
 function threadOf(value: unknown, label: string): CrashThread {
   const thread = objectOf(value, label)
   return {
@@ -141,7 +120,6 @@ function threadOf(value: unknown, label: string): CrashThread {
     ),
   }
 }
-
 function openOf(value: unknown): NonNullable<CrashReport['open']> {
   const open = objectOf(value, 'open')
   const kinds: Record<string, number> = {}
@@ -150,7 +128,6 @@ function openOf(value: unknown): NonNullable<CrashReport['open']> {
   }
   return { windows: numberOf(open.windows, 'open.windows'), kinds }
 }
-
 function resourcesOf(value: unknown): NonNullable<CrashReport['resources']> {
   const resources = objectOf(value, 'resources')
   return {
@@ -159,18 +136,14 @@ function resourcesOf(value: unknown): NonNullable<CrashReport['resources']> {
     uptime: maybe(resources.uptime, (one) => numberOf(one, 'resources.uptime')),
   }
 }
-
 function reportOf(sent: Raw): CrashReport {
   if (sent.v !== 1) throw new Wrong('v must be 1')
-
   const id = sent.id
   if (typeof id !== 'string' || !/^[0-9a-f]{32}$/.test(id)) {
     throw new Wrong('id must be 32 hex digits')
   }
-
   const app = objectOf(sent.app, 'app')
   const system = objectOf(sent.system, 'system')
-
   return {
     v: 1,
     id,
@@ -215,7 +188,6 @@ function reportOf(sent: Raw): CrashReport {
     resources: maybe(sent.resources, resourcesOf),
   }
 }
-
 export function crashReportOf(sent: unknown): CrashReport | string {
   if (!isObject(sent)) return 'send a JSON object'
   try {
@@ -225,20 +197,16 @@ export function crashReportOf(sent: unknown): CrashReport | string {
     throw error
   }
 }
-
 function withoutNumbers(text: string): string {
   return text.replace(/0x[0-9a-f]+/gi, '0x#').replace(/\d+/g, '#')
 }
-
 function withoutPlace(where: string): string {
   return where.replace(/(:\d+){1,2}$/, '')
 }
-
 function scriptName(location: string): string {
   const file = baseName(withoutPlace(location).replace(/[?#].*$/, ''))
   return file.replace(/-[\w-]{8}(?=\.[a-z]+$)/, '')
 }
-
 export function scriptFrames(stack: string): string[] {
   const frames: string[] = []
   for (const line of stack.split('\n')) {
@@ -251,16 +219,13 @@ export function scriptFrames(stack: string): string[] {
   }
   return frames
 }
-
 function chosenThread(threads: CrashThread[] | undefined): CrashThread | undefined {
   if (!threads?.length) return undefined
   return threads.find((one) => one.crashed) ?? threads.find((one) => one.main) ?? threads[0]
 }
-
 function frameName(frame: CrashFrame): string {
   return frame.symbol ? `${frame.module}!${frame.symbol}` : `${frame.module}+${frame.offset}`
 }
-
 function signingParts(report: CrashReport): string[] {
   switch (report.kind) {
     case 'panic':
@@ -278,13 +243,10 @@ function signingParts(report: CrashReport): string[] {
       return [report.system.os]
   }
 }
-
 export async function signatureOf(report: CrashReport): Promise<string> {
   return (await sha256([report.kind, ...signingParts(report)].join('\n'))).slice(0, 16)
 }
-
 const MOST_TITLE = 200
-
 export function titleOf(report: CrashReport): string {
   const top = chosenThread(report.threads)?.frames[0]
   const topName = top ? (top.symbol ?? frameName(top)) : null

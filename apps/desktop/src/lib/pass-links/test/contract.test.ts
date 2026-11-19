@@ -3,7 +3,6 @@ import { linkUrl, newLinkId } from '../src/api'
 import { openedLink } from '../src/link-seal'
 
 const newKey = () => crypto.getRandomValues(new Uint8Array(32))
-
 describe('a secure link', () => {
   test('keeps its key after the #, so the server never sees it', () => {
     const key = newKey()
@@ -14,7 +13,6 @@ describe('a secure link', () => {
     expect(url.search).toBe('')
     expect(url.hash.length).toBeGreaterThan(1)
   })
-
   test('opens nothing that was not sealed to its own key and id', async () => {
     expect(await openedLink(newKey(), newLinkId(), 'not a sealed link')).toBe(null)
   })

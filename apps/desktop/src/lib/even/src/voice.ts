@@ -1,31 +1,21 @@
 const RATE = 16_000
 const BYTES_PER_SAMPLE = 2
-
 export const QUIET = 420
-
 const PEEK_AFTER = 400
-
 const PEEKS = 2
-
 const PEEK_AGAIN = 450
-
 const LOUD = 0.02
-
 const LONGEST = 8_000
-
 const SHORTEST = 250
-
 interface Heard {
   said: string
   ended: number
 }
-
 export interface Took {
   spoke: number
   hang: number
   sent: number
 }
-
 export interface Ears {
   microphone: (open: boolean) => Promise<boolean>
   settled?: (said: string) => boolean
@@ -36,7 +26,6 @@ export interface Ears {
   failed: (why: string) => void
   said?: (state: Listening) => void
 }
-
 export interface Listening {
   on: boolean
   path: Path
@@ -47,11 +36,8 @@ export interface Listening {
   detail: string
   took: Took | null
 }
-
 const HOPELESS = new Set(['network', 'service-not-allowed', 'not-allowed', 'audio-capture', 'language-not-supported'])
-
 const NO_FRAMES = 2000
-
 interface Recogniser {
   continuous: boolean
   interimResults: boolean
@@ -63,7 +49,6 @@ interface Recogniser {
   onerror: ((event: { error?: string }) => void) | null
   onend: (() => void) | null
 }
-
 interface SpeechResults {
   resultIndex: number
   results: {
@@ -71,25 +56,20 @@ interface SpeechResults {
     [at: number]: { isFinal: boolean; 0?: { transcript?: string } }
   }
 }
-
 type RecogniserMaker = new () => Recogniser
-
 function recogniserOf(): RecogniserMaker | null {
   const window_ = globalThis as {
     SpeechRecognition?: RecogniserMaker
     webkitSpeechRecognition?: RecogniserMaker
   }
-
   return window_.SpeechRecognition ?? window_.webkitSpeechRecognition ?? null
 }
-
 export function wavOf(pcm: Uint8Array, rate = RATE): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(44 + pcm.length)
   const view = new DataView(out.buffer)
   const ascii = (at: number, text: string) => {
     for (let n = 0; n < text.length; n++) out[at + n] = text.charCodeAt(n)
   }
-
   ascii(0, 'RIFF')
   view.setUint32(4, 36 + pcm.length, true)
   ascii(8, 'WAVE')
@@ -104,28 +84,22 @@ export function wavOf(pcm: Uint8Array, rate = RATE): Uint8Array<ArrayBuffer> {
   ascii(36, 'data')
   view.setUint32(40, pcm.length, true)
   out.set(pcm, 44)
-
   return out
 }
-
 export function loudnessOf(pcm: Uint8Array): number {
   const samples = Math.floor(pcm.length / BYTES_PER_SAMPLE)
   if (!samples) return 0
-
   const view = new DataView(pcm.buffer, pcm.byteOffset, pcm.byteLength)
   let sum = 0
   for (let at = 0; at < samples; at++) {
     const sample = view.getInt16(at * BYTES_PER_SAMPLE, true) / 0x8000
     sum += sample * sample
   }
-
   return Math.sqrt(sum / samples)
 }
-
 function millisOf(bytes: number, rate = RATE): number {
   return (bytes / BYTES_PER_SAMPLE / rate) * 1000
 }
-
 export class Utterance {
   private frames: Uint8Array[] = []
   private held = 0
@@ -133,28 +107,22 @@ export class Utterance {
   private speaking = false
   private peeks = 0
   private looked = 0
-
   get spoken(): number {
     return millisOf(this.held) - this.quiet
   }
-
   peek(now: number): Uint8Array | null {
     if (!this.speaking || this.peeks >= PEEKS) return null
     if (this.spoken < PEEK_AFTER) return null
     if (this.peeks > 0 && now - this.looked < PEEK_AGAIN) return null
-
     this.peeks++
     this.looked = now
     return this.take()
   }
-
   forget(): void {
     this.reset()
   }
-
   hear(pcm: Uint8Array, now: number): { pcm: Uint8Array; ended: number; spoken: number } | null {
     const loud = loudnessOf(pcm) >= LOUD
-
     if (loud) {
       if (!this.speaking) {
         this.speaking = true
@@ -167,26 +135,21 @@ export class Utterance {
     } else {
       this.quiet += millisOf(pcm.length)
     }
-
     this.frames.push(pcm)
     this.held += pcm.length
-
     const gathered = millisOf(this.held)
     const done = this.quiet >= QUIET || gathered >= LONGEST
     if (!done) return null
-
     const whole = this.take()
     if (millisOf(whole.length) - this.quiet < SHORTEST) {
       this.reset()
       return null
     }
-
     const ended = now - this.quiet
     const spoken = this.spoken
     this.reset()
     return { pcm: whole, ended, spoken }
   }
-
   private take(): Uint8Array {
     const whole = new Uint8Array(this.held)
     let at = 0
@@ -194,10 +157,8 @@ export class Utterance {
       whole.set(frame, at)
       at += frame.length
     }
-
     return whole
   }
-
   private reset(): void {
     this.frames = []
     this.held = 0
@@ -207,9 +168,7 @@ export class Utterance {
     this.looked = 0
   }
 }
-
 export type Path = 'webview' | 'glasses' | 'none'
-
 export class Voice {
   private on = false
   private recogniser: Recogniser | null = null
@@ -228,18 +187,14 @@ export class Voice {
   private detail = ''
   private silence: ReturnType<typeof setTimeout> | undefined
   private turn: Promise<unknown> = Promise.resolve()
-
   constructor(private readonly ears: Ears) {}
-
   get listening(): boolean {
     return this.on
   }
-
   get path(): Path {
     if (this.recogniser) return 'webview'
     return this.hopeless || !recogniserOf() ? 'glasses' : 'webview'
   }
-
   get state(): Listening {
     return {
       on: this.on,
@@ -252,75 +207,59 @@ export class Voice {
       took: this.took,
     }
   }
-
   private tell(): void {
     this.ears.said?.(this.state)
   }
-
   private wrong(why: string, detail = ''): void {
     this.trouble = why
     this.detail = detail
     this.ears.failed(why)
     this.tell()
   }
-
   private queued<T>(step: () => Promise<T>, otherwise: T): Promise<T> {
     const next = this.turn.then(step).catch(() => otherwise)
     this.turn = next
     return next
   }
-
   start(): Promise<boolean> {
     return this.queued(() => this.starting(), false)
   }
-
   stop(): Promise<void> {
     return this.queued(() => this.stopping(), undefined)
   }
-
   private async starting(): Promise<boolean> {
     if (this.on) return true
-
     this.trouble = ''
     this.detail = ''
     this.frames = 0
     this.nothing = false
-
     const maker = this.hopeless ? null : recogniserOf()
     if (maker && this.listenHere(maker)) {
       this.on = true
       this.tell()
       return true
     }
-
     return this.listenThere()
   }
-
   private async listenThere(): Promise<boolean> {
     this.ears.warm?.()
-
     const opened = await this.ears.microphone(true)
     this.on = opened
     if (!opened) {
       this.wrong('no microphone')
       return false
     }
-
     if (!this.ears.canTranscribe()) this.wrong('sign in first')
-
     clearTimeout(this.silence)
     this.silence = setTimeout(() => {
       if (this.on && this.frames === 0) this.wrong('no sound from the glasses')
     }, NO_FRAMES)
-
     this.tell()
     return true
   }
-
   private async stopping(): Promise<void> {
     clearTimeout(this.silence)
     if (!this.on) return
-
     this.on = false
     const recogniser = this.recogniser
     this.recogniser = null
@@ -330,18 +269,14 @@ export class Voice {
       this.tell()
       return
     }
-
     await this.ears.microphone(false)
     this.tell()
   }
-
   frame(pcm: Uint8Array): void {
     if (!this.on || this.recogniser) return
-
     const first = this.frames === 0
     this.frames++
     if (first) this.tell()
-
     const now = performance.now()
     const whole = this.utterance.hear(pcm, now)
     if (whole) {
@@ -350,21 +285,17 @@ export class Voice {
       void this.transcribe(whole.pcm, whole.ended)
       return
     }
-
     const early = this.utterance.peek(now)
     if (early) void this.early(early, now, this.utterance.spoken)
   }
-
   private async early(pcm: Uint8Array, now: number, spoken: number): Promise<void> {
     if (this.busy || this.looking || !this.ears.settled || !this.ears.canTranscribe()) return
-
     const mine = this.said
     this.looking = true
     try {
       const at = performance.now()
       const said = await this.ears.transcribe(wavOf(pcm))
       if (!said || mine !== this.said || !this.ears.settled(said)) return
-
       this.took = { spoke: Math.round(spoken), hang: 0, sent: Math.round(performance.now() - at) }
       this.said++
       this.utterance.forget()
@@ -378,21 +309,18 @@ export class Voice {
       this.looking = false
     }
   }
-
   private async transcribe(pcm: Uint8Array, ended: number): Promise<void> {
     if (this.busy) return
     if (!this.ears.canTranscribe()) {
       this.wrong('sign in first')
       return
     }
-
     const mine = ++this.said
     this.busy = true
     try {
       const at = performance.now()
       const said = await this.ears.transcribe(wavOf(pcm))
       if (mine !== this.said) return
-
       this.took = {
         spoke: Math.round(this.spoke),
         hang: Math.round(this.hung),
@@ -410,18 +338,15 @@ export class Voice {
       this.busy = false
     }
   }
-
   private listenHere(maker: RecogniserMaker): boolean {
     try {
       const recogniser = new maker()
       recogniser.continuous = true
       recogniser.interimResults = false
-
       recogniser.onresult = (event) => {
         for (let at = event.resultIndex; at < event.results.length; at++) {
           const result = event.results[at]
           if (!result?.isFinal) continue
-
           const said = result[0]?.transcript ?? ''
           if (said.trim()) {
             this.lastHeard = said
@@ -431,11 +356,9 @@ export class Voice {
           }
         }
       }
-
       recogniser.onerror = (event) => {
         const why = event.error ?? 'unknown'
         if (why === 'no-speech' || why === 'aborted') return
-
         if (HOPELESS.has(why)) {
           this.hopeless = true
           this.dropRecogniser()
@@ -443,14 +366,11 @@ export class Voice {
           void this.queued(() => (this.on ? this.listenThere() : Promise.resolve(false)), false)
           return
         }
-
         this.wrong('the phone could not listen', why)
       }
-
       recogniser.onend = () => {
         if (this.on && this.recogniser === recogniser) recogniser.start()
       }
-
       recogniser.start()
       this.recogniser = recogniser
       return true
@@ -461,12 +381,10 @@ export class Voice {
       return false
     }
   }
-
   private dropRecogniser(): void {
     const recogniser = this.recogniser
     this.recogniser = null
     if (!recogniser) return
-
     recogniser.onend = null
     recogniser.onresult = null
     recogniser.onerror = null

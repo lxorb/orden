@@ -7,7 +7,6 @@ describe('the addresses a page names', () => {
     expect(sourcesOf(html)).toEqual(['a.png', 'b.mp3', 'c.mp4'])
     expect(sourcesOf('<video><source src="a.webm"><source src="a.mp4"></video>')).toEqual(['a.webm', 'a.mp4'])
   })
-
   test('and never a frame, whose address is a page somewhere else; only the ones the caller wants; nothing at all in a page that names none', () => {
     expect(sourcesOf('<iframe src="https://x.test/embed"></iframe>')).toEqual([])
     const html = '<img src="a.png"><img src="data:image/png;base64,AA">'
@@ -15,7 +14,6 @@ describe('the addresses a page names', () => {
     expect(sourcesOf('<p>words <a href="a.png">link</a></p>')).toEqual([])
   })
 })
-
 describe('pointing them somewhere else', () => {
   test('each address the caller answers for', () => {
     const html = '<img src="a.png" alt="x"><audio controls src="b.mp3"></audio>'
@@ -23,7 +21,6 @@ describe('pointing them somewhere else', () => {
       '<img src="asset://a.png" alt="x"><audio controls src="asset://b.mp3"></audio>',
     )
   })
-
   test('and leaves the rest exactly as they were; an attribute before the source is kept', () => {
     const html = '<img src="a.png"><img src="b.png">'
     expect(mapSources(html, (src) => (src === 'a.png' ? 'c.png' : null))).toBe('<img src="c.png"><img src="b.png">')
@@ -31,7 +28,6 @@ describe('pointing them somewhere else', () => {
       '<img class="wide" src="b.png" width="30">',
     )
   })
-
   test('a frame is left alone', () => {
     const html = '<iframe src="https://x.test/e"></iframe>'
     expect(mapSources(html, () => 'gone')).toBe(html)

@@ -6,9 +6,7 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void store.set(key, value),
   removeItem: (key: string) => void store.delete(key),
 })
-
 const { menu } = await import('./menu.svelte')
-
 function press(x = 10, y = 20): MouseEvent {
   return {
     clientX: x,
@@ -17,18 +15,15 @@ function press(x = 10, y = 20): MouseEvent {
     stopPropagation: () => undefined,
   } as unknown as MouseEvent
 }
-
 beforeEach(() => {
   menu.hide()
 })
-
 describe('what opens a menu', () => {
   test('an empty list is no menu at all', () => {
     menu.show(press(), [])
     expect(menu.open).toBe(false)
   })
 })
-
 describe('a menu held by a signal', () => {
   test('closes when the signal goes, but a later menu stays', () => {
     const lock = new AbortController()
@@ -42,7 +37,6 @@ describe('a menu held by a signal', () => {
     again.abort()
     expect(menu.open).toBe(true)
   })
-
   test('never opens once its signal has gone', () => {
     const lock = new AbortController()
     lock.abort()

@@ -155,7 +155,6 @@ const RECORDED: Record<string, unknown[]> = {
     },
   ],
 }
-
 function recorded() {
   const asked: { url: string; auth: string }[] = []
   const served = new Map<string, number>()
@@ -175,9 +174,7 @@ function recorded() {
   }
   return { get, asked }
 }
-
 const NOW = new Date('2026-10-04T12:00:00Z')
-
 describe('from the account', () => {
   test('every project a note, in its parent', async () => {
     const { get, asked } = recorded()
@@ -187,7 +184,6 @@ describe('from the account', () => {
     expect(asked.every((one) => one.auth === 'Bearer secret')).toBe(true)
     expect(asked.some((one) => one.url.includes('cursor=c1'))).toBe(true)
   })
-
   test('a task with all it carries, priority turned round, sub-task under it', async () => {
     const { get } = recorded()
     const plan = planOf(await readTodoistAccount(get, 'secret', { now: NOW }))
@@ -206,7 +202,6 @@ describe('from the account', () => {
       ].join('\n'),
     )
   })
-
   test('a fixed time in its zone, a rule with a start, done tasks if asked', async () => {
     const { get } = recorded()
     const plan = planOf(await readTodoistAccount(get, 'secret', { completed: true, now: NOW }))
@@ -218,12 +213,10 @@ describe('from the account', () => {
     expect(text).toContain('- [x] Pay rent ✅ 2026-10-01')
     expect(plan.lost).toEqual([])
   })
-
   test('a token Todoist does not take says so, and nothing is planned', async () => {
     const { get } = recorded()
     await expect(readTodoistAccount(get, 'wrong')).rejects.toThrow('Todoist did not take that token.')
   })
-
   const ANSWERED: Record<string, unknown> = {
     '/projects': {
       results: [{ id: 'p-1', name: 'Home', description: 'Everything about the flat.' }],
@@ -295,7 +288,6 @@ describe('from the account', () => {
       json: () => Promise.resolve(page),
     })
   }
-
   test("a project's description over its tasks, a link a comment points to, reminders that are still set at their zone's time", async () => {
     const plan = planOf(await readTodoistAccount(answering, 'secret'))
     const home = plan.files.find((one) => one.path === 'Home.md')
@@ -309,14 +301,12 @@ describe('from the account', () => {
       ].join('\n'),
     )
   })
-
   test('a done task is done though it does not say checked, and kept though its project was not read', async () => {
     const plan = planOf(await readTodoistAccount(answering, 'secret', { completed: true, now: NOW }))
     const kept = plan.files.find((one) => one.path === 'Todoist.md')
     expect(kept?.kind === 'note' ? kept.text : '').toBe('- [x] Pack the boxes ✅ 2026-10-01\n')
   })
 })
-
 describe('a task done and a comment posted in the evening, west of Greenwich', () => {
   beforeAll(() => {
     vi.stubEnv('TZ', 'America/Los_Angeles')
@@ -324,7 +314,6 @@ describe('a task done and a comment posted in the evening, west of Greenwich', (
   afterAll(() => {
     vi.unstubAllEnvs()
   })
-
   const LATE: Record<string, unknown> = {
     '/projects': { results: [{ id: 'p-1', name: 'Home' }], next_cursor: null },
     '/sections': { results: [], next_cursor: null },
@@ -372,7 +361,6 @@ describe('a task done and a comment posted in the evening, west of Greenwich', (
       json: () => Promise.resolve(page),
     })
   }
-
   test("are dated by that evening's day, not by the UTC day after it", async () => {
     const plan = planOf(await readTodoistAccount(late, 'secret', { completed: true, now: NOW }))
     const home = plan.files.find((one) => one.path === 'Home.md')
@@ -381,7 +369,6 @@ describe('a task done and a comment posted in the evening, west of Greenwich', (
     expect(text).toContain('- [x] Pack the boxes ✅ 2026-09-30')
   })
 })
-
 const CSV = [
   'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,DEADLINE,DEADLINE_LANG',
   'task,Plan the launch @work,Everything for Monday,1,1,Evan (14781400),,2026-10-06,en,Europe/Zurich,60,minute,2026-10-09,en',
@@ -391,13 +378,11 @@ const CSV = [
   'task,Water the plants,,3,1,Evan (14781400),,every monday,en,,,,,',
   'task,Clean up,,4,1,Evan (14781400),,every other fortnight-ish,en,,,,,',
 ].join('\n')
-
 describe('from a CSV', () => {
   test('is known by its header', () => {
     expect(isTodoistCsv(CSV)).toBe(true)
     expect(isTodoistCsv('Name,Status\nA,B\n')).toBe(false)
   })
-
   test('nests by indent, a section a heading, a note a comment, priorities as people count', () => {
     const plan = planOf(csvProject('Launch', CSV, 0))
     expect(plan.lost).toEqual(['Some repeating dates stay as words under their tasks'])
@@ -419,7 +404,6 @@ describe('from a CSV', () => {
       ].join('\n'),
     )
   })
-
   test('a backup zip of them: a project a file, the Inbox the inbox', async () => {
     const encoded = (text: string) => new TextEncoder().encode(text)
     const plan = await readTodoistFiles([
@@ -430,7 +414,6 @@ describe('from a CSV', () => {
     expect(plan.files.map((one) => one.path)).toEqual(['Inbox.md', 'Work.md'])
     expect(plan.inbox).toBe('Inbox.md')
   })
-
   test("keeps what is said about the project and its sections, an attachment as a link, a duration in days, a rule's time", () => {
     const csv = [
       'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,meta,DEADLINE,DEADLINE_LANG,IS_COLLAPSED',
@@ -467,7 +450,6 @@ describe('from a CSV', () => {
     )
   })
 })
-
 describe('a broken answer', () => {
   test('tasks whose parents go round in a circle are each written once, not lost', () => {
     const task = (id: string, parent: string) => ({
@@ -490,7 +472,6 @@ describe('a broken answer', () => {
     const note = plan.files[0]
     expect(note?.kind === 'note' ? note.text : '').toBe(['- [ ] A', '  - [ ] B', '  - [ ] D', '- [ ] C', ''].join('\n'))
   })
-
   test('an answer that is not JSON is Todoist not being reached', async () => {
     const page: Fetch = () =>
       Promise.resolve({
@@ -501,7 +482,6 @@ describe('a broken answer', () => {
     await expect(readTodoistAccount(page, 'secret')).rejects.toThrow('Todoist could not be reached.')
   })
 })
-
 describe('words that look like something else', () => {
   test('a checkbox in a description or a comment is no task, and a description opening with --- no properties', () => {
     const plan = planOf({
@@ -537,7 +517,6 @@ describe('words that look like something else', () => {
       ].join('\n'),
     )
   })
-
   test('a tag in what a task, a comment, a section or an assignee says stays words, since Todoist shows it as text', () => {
     const img = '<img src=https://t.example/p.gif>'
     const plan = planOf({
@@ -572,7 +551,6 @@ describe('words that look like something else', () => {
     expect(text).toContain('[assignee:: Eve \\<iframe')
     expect(text).toContain('  [a \\<img src=https://t.example/p.gif>](<https://t.example/a b.pdf>)')
   })
-
   test("a backslash in front of a tag in an attachment's name is still one backslash", () => {
     const csv = [
       'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,meta,DEADLINE,DEADLINE_LANG,IS_COLLAPSED',
@@ -585,7 +563,6 @@ describe('words that look like something else', () => {
     expect(renderMarkdown(text)).toContain('>a\\&lt;b&gt; [c].pdf</a>')
   })
 })
-
 describe('the words', () => {
   test("Todoist's rules in the Tasks plugin's words", () => {
     expect(ruleOf('every day')).toBe('every day')
@@ -594,7 +571,6 @@ describe('the words', () => {
     expect(ruleOf('every workday')).toBe('every weekday')
     expect(ruleOf('every 3rd friday')).toBeNull()
   })
-
   test('a rule said at a time, the time apart', () => {
     expect(clockOf('every day at 9am')).toEqual({ time: '09:00', rest: 'every day' })
     expect(clockOf('every mon @ 13:30')).toEqual({ time: '13:30', rest: 'every mon' })
@@ -602,7 +578,6 @@ describe('the words', () => {
     expect(clockOf('every 3 days')).toEqual({ rest: 'every 3 days' })
     expect(ruleOf('every weekday at 10:00')).toBe('every weekday')
   })
-
   test('a label as a tag', () => {
     expect(tagOf('phone calls')).toBe('phone-calls')
     expect(tagOf('@urgent!')).toBe('urgent')

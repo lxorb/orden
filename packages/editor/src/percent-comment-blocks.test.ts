@@ -11,9 +11,7 @@ import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
 const PERCENT = '# Plans\n\n%%\n# Old plan\n\nold words\n%%\n\n# Later\n\nCall the bank\n\nx'
-
 const HTML = '# Plans\n\n<!--\n# Old plan\n\nold words\n-->\n\n# Later\n\nCall the bank\n\nx'
-
 function stateOf(doc: string): EditorState {
   return parsed(
     EditorState.create({
@@ -23,7 +21,6 @@ function stateOf(doc: string): EditorState {
     }),
   )
 }
-
 function headingLines(doc: string): string[] {
   const state = stateOf(doc)
   const found: string[] = []
@@ -33,17 +30,14 @@ function headingLines(doc: string): string[] {
   })
   return found
 }
-
 describe('a section commented out with %% lines around a heading and a paragraph', () => {
   test('the reading view and heading links leave the commented heading out', () => {
     expect(renderMarkdown(PERCENT)).not.toContain('Old plan')
     expect(headingsOf(PERCENT)).toEqual(['Plans', 'Later'])
   })
-
   test('the contents widget lists only the headings the reading view shows', () => {
     expect(headings(stateOf(PERCENT)).map((one) => one.text)).toEqual(['Plans', 'Later'])
   })
-
   test('the commented heading is not drawn as a heading, as with an HTML comment', () => {
     expect(headingLines(HTML)).toEqual(['# Plans', '# Later'])
     expect(headingLines(PERCENT)).toEqual(['# Plans', '# Later'])

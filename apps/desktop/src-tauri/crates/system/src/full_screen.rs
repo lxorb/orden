@@ -2,7 +2,6 @@ use orden_base::Held as _;
 use std::sync::Mutex;
 
 static FULL: Mutex<Vec<String>> = Mutex::new(Vec::new());
-
 fn noted(label: &str, on: bool, away: bool) -> bool {
     let mut full = FULL.held();
     full.retain(|one| one != label);
@@ -11,11 +10,9 @@ fn noted(label: &str, on: bool, away: bool) -> bool {
     }
     !away
 }
-
 pub fn is_on(label: &str) -> bool {
     FULL.held().iter().any(|one| one == label)
 }
-
 #[tauri::command(async)]
 pub fn window_fullscreen(window: tauri::Window, on: bool) -> Result<(), String> {
     if !noted(window.label(), on, away()) {
@@ -25,7 +22,6 @@ pub fn window_fullscreen(window: tauri::Window, on: bool) -> Result<(), String> 
         .set_fullscreen(on)
         .map_err(|error| format!("could not change full screen: {error}"))
 }
-
 #[tauri::command(async)]
 pub fn window_is_fullscreen(window: tauri::Window) -> bool {
     if away() {
@@ -33,11 +29,9 @@ pub fn window_is_fullscreen(window: tauri::Window) -> bool {
     }
     window.is_fullscreen().unwrap_or(false)
 }
-
 fn away() -> bool {
     orden_placement::placement::asked_away()
 }
-
 #[cfg(test)]
 mod tests {
     use super::{is_on, noted, FULL};
@@ -49,7 +43,6 @@ mod tests {
         assert!(!noted("probe-1", false, true));
         assert!(!is_on("probe-1"));
     }
-
     #[test]
     fn a_window_on_the_screen_is_asked_and_remembered_once() {
         assert!(noted("main-test", true, false));
@@ -58,7 +51,6 @@ mod tests {
             .lock()
             .map(|full| full.iter().filter(|one| *one == "main-test").count());
         assert_eq!(held.ok(), Some(1));
-
         assert!(noted("other-test", true, false));
         assert!(noted("main-test", false, false));
         assert!(!is_on("main-test"));

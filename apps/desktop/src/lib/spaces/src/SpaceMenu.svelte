@@ -15,16 +15,13 @@
   import { type Space, workspace } from '../../workspace/src/api'
 
   const { close }: { close: () => void } = $props()
-
   function choose(space: Space) {
     close()
     if (space.id !== workspace.activeSpaceId) void workspace.showSpace(space.id)
   }
-
   function about(event: MouseEvent, space: Space) {
     menu.show(event, spaceMenu(space), { title: space.name })
   }
-
   function aboutShared(event: MouseEvent, item: SharedItem) {
     menu.show(
       event,
@@ -38,25 +35,20 @@
       { title: item.name },
     )
   }
-
   const archived = $derived(workspace.spaces.filter((one) => workspace.archivedSpaces.has(one.root)))
-
   async function bringBack(space: Space) {
     close()
     const { unarchiveSpace } = await import('./space-archive')
     await unarchiveSpace(space)
     await workspace.showSpace(space.id)
   }
-
   function aboutArchived(event: MouseEvent, space: Space) {
     menu.show(event, [{ label: 'Unarchive', run: () => void bringBack(space) }], {
       title: space.name,
     })
   }
-
   const typing = new SpaceTyping(choose)
   $effect(() => () => typing.stop())
-
   $effect(() => {
     if (spacePicker.open) close()
   })
@@ -178,33 +170,27 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-
   .catch {
     position: fixed;
     inset: 0;
     z-index: calc(var(--z-popover) - 1);
   }
-
   .line {
     display: flex;
     align-items: center;
   }
-
   .line .orden-row {
     flex: 1;
     min-width: 0;
   }
-
   hr {
     margin: var(--space-1);
     border: none;
     border-top: 1px solid var(--line);
   }
-
   .held {
     display: contents;
   }
-
   .from {
     margin: var(--space-1) 0 2px;
     padding: 0 var(--row-pad);
@@ -215,7 +201,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   button:focus-visible {
     outline-offset: -1px;
   }

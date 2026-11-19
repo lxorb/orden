@@ -2,13 +2,11 @@ import { expect, test } from 'vitest'
 
 const { trailSteps, webRows, zoomed, ZOOMS } = await import('./menu')
 const { Page } = await import('./pages.svelte')
-
 function page(url: string | null) {
   const made = new Page()
   made.url = url
   return made
 }
-
 const actions = {
   newTab: () => undefined,
   newPrivate: () => undefined,
@@ -23,11 +21,9 @@ const actions = {
   share: () => undefined,
   settings: () => undefined,
 }
-
 function labels(url: string | null, zoom = 1): string[] {
   return webRows(page(url), zoom, actions).flatMap((one) => (one === null ? [] : [one.label]))
 }
-
 test('is Chromes own menu, in Chromes own order', () => {
   expect(labels('https://a.example/')).toEqual([
     'New tab',
@@ -48,32 +44,26 @@ test('is Chromes own menu, in Chromes own order', () => {
     'Settings',
   ])
 })
-
 test('the middle zoom row says how large the page is being drawn', () => {
   expect(labels('https://a.example/', 1.5)).toContain('150%')
   expect(labels('https://a.example/', 0.67)).toContain('67%')
 })
-
 test('a tab with nowhere to go has no rows about a page', () => {
   const rows = webRows(page(null), 1, actions).filter((one) => one !== null)
   const off = rows.filter((one) => one.disabled).map((one) => one.label)
-
   expect(off).toContain('Print…')
   expect(off).toContain('Find')
   expect(off).toContain('Save as a note')
   expect(off).toContain('Copy link')
   expect(rows.find((one) => one.label === 'New tab')?.disabled).toBe(undefined)
 })
-
 test('the zoom rows keep the menu open and nothing else does', () => {
   const kept = webRows(page('https://a.example/'), 1, actions)
     .filter((one) => one !== null)
     .filter((one) => one.keep)
     .map((one) => one.label)
-
   expect(kept).toEqual(['Zoom out', '100%', 'Zoom in'])
 })
-
 test('steps along the ladder a browser steps along, and stops at both ends', () => {
   expect(zoomed(1, true)).toBe(1.1)
   expect(zoomed(1, false)).toBe(0.9)
@@ -83,13 +73,11 @@ test('steps along the ladder a browser steps along, and stops at both ends', () 
   expect(zoomed(1.13, true)).toBe(1.25)
   expect(zoomed(1.13, false)).toBe(1.1)
 })
-
 test('ends the two ends of the ladder where a browser ends them', () => {
   expect(ZOOMS[0]).toBe(0.25)
   expect(ZOOMS.at(-1)).toBe(5)
   expect(ZOOMS).toContain(1)
 })
-
 test('lists the pages behind and ahead, the nearest first, and how far each is', () => {
   const urls = ['a', 'b', 'c', 'd']
   expect(trailSteps(urls, 2, false)).toEqual([
@@ -100,14 +88,12 @@ test('lists the pages behind and ahead, the nearest first, and how far each is',
   expect(trailSteps(urls, 0, false)).toEqual([])
   expect(trailSteps([], 0, true)).toEqual([])
 })
-
 test('stops at a dozen rows however long the reading was', () => {
   const urls = Array.from({ length: 40 }, (_unused, index) => String(index))
   const back = trailSteps(urls, 39, false)
   expect(back).toHaveLength(12)
   expect(back[11]).toEqual({ url: '27', by: 12 })
 })
-
 test('on the History page nothing about a site is offered', () => {
   const rows = webRows(page('orden://history'), 1, actions).flatMap((one) => (one === null ? [] : [one]))
   const named = (label: string) => rows.find((one) => one.label === label)
@@ -115,20 +101,16 @@ test('on the History page nothing about a site is offered', () => {
   expect(named('Save as a note')?.disabled).toBe(true)
   expect(named('History')?.disabled).toBeFalsy()
 })
-
 test('saving the page as a note is a row of the menu, and runs the clipper', () => {
   let saved = 0
   const rows = webRows(page('https://a.example/'), 1, { ...actions, save: () => (saved += 1) })
   const row = rows.find((one) => one !== null && one.label === 'Save as a note')
-
   expect(row && !row.disabled).toBe(true)
   row?.run()
   expect(saved).toBe(1)
 })
-
 test('Share… is greyed on a page with nothing here to share', () => {
   const rows = webRows(page('https://a.example/'), 1, { ...actions, share: undefined })
   const share = rows.find((one) => one?.label === 'Share…')
-
   expect(share?.disabled).toBe(true)
 })

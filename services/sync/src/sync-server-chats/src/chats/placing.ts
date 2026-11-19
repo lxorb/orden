@@ -6,13 +6,11 @@ import type { Refusal } from '@orden/chats/wire'
 export const INVALID: Refusal = 'invalid'
 export const ROLE: Refusal = 'role'
 export const RATE: Refusal = 'rate'
-
 export interface Asker {
   who: Who
   role: Role
   device?: string
 }
-
 export interface Effects {
   called: Mention[]
   answered: Who | null
@@ -20,7 +18,6 @@ export interface Effects {
   freed: FileRef[]
   freedBy: Who | null
 }
-
 export interface EventRow extends Record<string, SqlStorageValue> {
   seq: number
   id: string
@@ -34,7 +31,6 @@ export interface EventRow extends Record<string, SqlStorageValue> {
   made_at: number | null
   body: string
 }
-
 export function loggedOf(row: EventRow): Logged {
   const placed: Logged = {
     ...(JSON.parse(row.body) as Event),
@@ -46,12 +42,10 @@ export function loggedOf(row: EventRow): Logged {
   if (row.made_at !== null) placed.madeAt = row.made_at
   return placed
 }
-
 function messageIn(sql: SqlStorage, id: string): Message | null {
   const row = sql.exec<{ json: string }>('select json from messages where id = ?', id).toArray()[0]
   return row ? (JSON.parse(row.json) as Message) : null
 }
-
 export function metaOf(sql: SqlStorage): Meta {
   const kept = new Map(
     sql
@@ -65,11 +59,9 @@ export function metaOf(sql: SqlStorage): Meta {
     slowmode: Number(kept.get('slowmode') ?? 0) || 0,
   }
 }
-
 export function readMeta(sql: SqlStorage, key: string): string | null {
   return sql.exec<{ value: string | null }>('select value from meta where key = ?', key).toArray()[0]?.value ?? null
 }
-
 export function setMeta(sql: SqlStorage, key: string, value: string | null): void {
   sql.exec(
     `insert into meta (key, value) values (?, ?)
@@ -78,7 +70,6 @@ export function setMeta(sql: SqlStorage, key: string, value: string | null): voi
     value,
   )
 }
-
 function paced(sql: SqlStorage, who: Who, kind: string, most: number, window: number, at: number): boolean {
   const row = sql
     .exec<{ since: number; count: number }>('select since, count from paces where who = ? and kind = ?', who, kind)
@@ -95,24 +86,19 @@ function paced(sql: SqlStorage, who: Who, kind: string, most: number, window: nu
   )
   return count <= most
 }
-
 function targetOf(event: Event): string | null {
   return 'target' in event ? event.target : null
 }
-
 const posts = (event: Event) =>
   event.kind === 'post' || event.kind === 'schedule' || event.kind === 'react' || event.kind === 'vote'
-
 export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): Refusal | null {
   const meta = metaOf(sql)
   const target = targetOf(event)
   const message = target === null ? null : messageIn(sql, target)
   const mine = message?.author === asker.who
-
   if (!mayEvent(asker.role, event, mine, meta.posting)) {
     return asker.role !== 'read' && posts(event) && meta.posting === 'owner' ? 'posting' : 'role'
   }
-
   if (target !== null) {
     if (!message) return 'gone'
     if (message.deleted && event.kind !== 'delete') return 'gone'
@@ -123,7 +109,6 @@ export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): 
     if (event.answers.some((one) => one >= poll.answers.length)) return 'invalid'
     if (!poll.several && event.answers.length > 1) return 'invalid'
   }
-
   const post = event.kind === 'schedule' ? event.post : event.kind === 'post' ? event : null
   if (post) {
     if (messageIn(sql, post.message) || heldFor(sql, post.message, asker.who) === 'other') {
@@ -139,18 +124,15 @@ export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): 
   }
   return paced(sql, asker.who, 'events', EVENTS_A_MINUTE, 60_000, at) ? null : 'rate'
 }
-
 function heldFor(sql: SqlStorage, message: string, who: Who): 'mine' | 'other' | null {
   const row = sql.exec<{ author: string }>('select author from scheduled where message = ?', message).toArray()[0]
   if (!row) return null
   return row.author === who ? 'mine' : 'other'
 }
-
 export function placedEvent(sql: SqlStorage, id: string): Logged | null {
   const row = sql.exec<EventRow>('select * from events where id = ?', id).toArray()[0]
   return row ? loggedOf(row) : null
 }
-
 export function place(
   sql: SqlStorage,
   event: Exclude<Event, { kind: 'schedule' }>,
@@ -160,7 +142,6 @@ export function place(
 ): { logged: Logged; effects: Effects } {
   const target = targetOf(event)
   const before = target === null ? null : messageIn(sql, target)
-
   const written = madeAt !== undefined && madeAt < at - 60_000 ? madeAt : null
   const { seq } = sql
     .exec<{ seq: number }>(
@@ -178,11 +159,9 @@ export function place(
       JSON.stringify(event),
     )
     .one()
-
   const logged: Logged = { ...event, seq, at, author: asker.who }
   if (asker.device) logged.device = asker.device
   if (written !== null) logged.madeAt = written
-
   if (event.kind === 'meta') {
     if (event.topic !== undefined) setMeta(sql, 'topic', event.topic)
     if (event.posting !== undefined) setMeta(sql, 'posting', event.posting)
@@ -197,7 +176,6 @@ export function place(
       ),
     )
   }
-
   const answered =
     event.kind === 'post' && event.parent !== undefined ? (messageIn(sql, event.parent)?.author ?? null) : null
   return {
@@ -212,18 +190,15 @@ export function place(
     },
   }
 }
-
 function namedBy(files: readonly FileRef[] | undefined, preview: Preview | undefined): FileRef[] {
   const picture = preview?.picture
   const named = [...(files ?? [])]
   if (picture) named.push({ hash: picture, name: preview.title, size: 0, type: 'image/webp' })
   return named
 }
-
 function frees(event: Event): boolean {
   return event.kind === 'delete' || (event.kind === 'edit' && event.files !== undefined)
 }
-
 function replayed(sql: SqlStorage, ids: readonly string[]): Message[] {
   if (!ids.length) return []
   const list = ids.map(() => '?').join(', ')
@@ -243,7 +218,6 @@ function replayed(sql: SqlStorage, ids: readonly string[]): Message[] {
   for (const row of rows) apply(state, loggedOf(row))
   return ids.flatMap((id) => state.messages.get(id) ?? [])
 }
-
 function keep(sql: SqlStorage, messages: readonly Message[]): void {
   for (const message of messages) {
     sql.exec(

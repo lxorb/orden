@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import base64
 import hashlib
 import hmac
@@ -15,7 +14,6 @@ import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
-
 from devtools import Session, targets
 import linux_app
 
@@ -27,24 +25,19 @@ PASS_PASSWORD = "drive the pass, drive it well"
 failures = []
 posts = []
 held = threading.Lock()
-
 def fail(what):
     print(f"::error::pass: {what}")
     failures.append(what)
-
 def note(what):
     print(f"pass: {what}", flush=True)
-
 def code_at(seconds):
     key = base64.b32decode(SECRET)
     digest = hmac.new(key, struct.pack(">Q", int(seconds) // 30), hashlib.sha1).digest()
     at = digest[-1] & 0x0F
     number = struct.unpack(">I", digest[at : at + 4])[0] & 0x7FFFFFFF
     return f"{number % 1_000_000:06d}"
-
 def page(title, body):
     return f"<!doctype html><title>{title}</title><body style='font:16px sans-serif;padding:24px'>{body}</body>"
-
 def login_form(action, said=""):
     return page(
         "sign in",
@@ -53,7 +46,6 @@ def login_form(action, said=""):
         "<label>Password <input type=password name=password autocomplete=current-password></label><br>"
         "<button type=submit>Sign in</button></form>",
     )
-
 JOIN = page(
     "join",
     "<form method=post action=/join>"
@@ -61,7 +53,6 @@ JOIN = page(
     "<label>Password <input type=password name=password autocomplete=new-password></label><br>"
     "<button type=submit>Create account</button></form>",
 )
-
 USERNAME = page(
     "who",
     "<form method=post action=/signin><label>Username <input name=username autocomplete=username></label>"
@@ -78,11 +69,9 @@ CODE = page(
     "autocomplete=one-time-code inputmode=numeric maxlength=6></label><button type=submit>Verify</button></form>",
 )
 DONE = page("signed in", "<h1>signed in</h1>")
-
 class Site(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
-
     def answer(self, body, status=200):
         data = body.encode()
         self.send_response(status)
@@ -90,13 +79,11 @@ class Site(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
-
     def moved(self, to):
         self.send_response(303)
         self.send_header("location", to)
         self.send_header("content-length", "0")
         self.end_headers()
-
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
         pages = {
@@ -108,7 +95,6 @@ class Site(http.server.BaseHTTPRequestHandler):
             "/done": DONE,
         }
         self.answer(pages.get(path, page("nothing", "nothing here")), 200 if path in pages else 404)
-
     def do_POST(self):
         path = urllib.parse.urlparse(self.path).path
         length = int(self.headers.get("content-length", "0"))
@@ -133,14 +119,11 @@ class Site(http.server.BaseHTTPRequestHandler):
             self.moved("/done" if good else "/signin/code")
         else:
             self.answer(page("nothing", "nothing here"), 404)
-
 class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
-
 def run(code, timeout=15):
     return linux_app.run(code, timeout)
-
 def until(check, seconds=20, every=0.25):
     end = time.monotonic() + seconds
     while time.monotonic() < end:
@@ -149,7 +132,6 @@ def until(check, seconds=20, every=0.25):
             return said
         time.sleep(every)
     return None
-
 HELP = """
 const typed = (el, text) => {
   const own = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value')
@@ -170,23 +152,18 @@ const pressed = (text, within = document) => {
   return true
 }
 """
-
 def app(code, timeout=15):
     return run(f"(() => {{ {HELP} return ({code}) }})()", timeout)
-
 def shown_bubble():
     return app("document.querySelector('[data-pass-fill]')?.dataset.passFill ?? null")
-
 def bubble_says():
     return app("document.querySelector('[data-pass-fill]')?.innerText ?? ''") or ""
-
 def site_page(port, path=""):
     for one in targets(DEBUG):
         url = one.get("url", "")
         if one.get("type") == "page" and url.startswith(f"http://127.0.0.1:{port}{path}"):
             return one
     return None
-
 def in_page(port, expression, path=""):
     target = until(lambda: site_page(port, path), 20)
     if not target:
@@ -196,7 +173,6 @@ def in_page(port, expression, path=""):
         return session.value(expression)
     finally:
         session.close()
-
 def opened(url):
     run("(orden.workspace.openWebsite(), 'opened')")
     time.sleep(0.5)
@@ -208,14 +184,11 @@ def opened(url):
         fail(f"{url} never loaded in a web tab")
     time.sleep(1.5)
     return tab
-
 def sent_on(port, path):
     with held:
         return [one for at, where, one in posts if at == port and where == path]
-
 def shot(name):
     subprocess.run(["grim", str(OUT / f"pass-{name}.png")], check=False, capture_output=True)
-
 def joined(port, email, password):
     opened(f"http://127.0.0.1:{port}/join")
     typed = in_page(
@@ -246,7 +219,6 @@ def joined(port, email, password):
     if until(lambda: shown_bubble() is None, 10) is not None and shown_bubble() is not None:
         fail("the save bubble stayed after Save")
     return True
-
 def pass_turned_on():
     run("(orden.settings.show('experimental'), 'shown')")
     for label in ("Enable experimental features", "Password manager"):
@@ -269,7 +241,6 @@ def pass_turned_on():
     run("(orden.settings.open = false, 'shut')")
     time.sleep(0.5)
     return True
-
 def pass_set_up():
     view = {
         "scope": {"kind": "all"},
@@ -359,14 +330,12 @@ def pass_set_up():
         return False
     note("Sign in automatically turned on in Pass's settings")
     return True
-
 def app_target():
     for one in targets(DEBUG):
         url = one.get("url", "")
         if one.get("type") == "page" and ("tauri" in url.split("/")[0] or "tauri.localhost" in url):
             return one
     return None
-
 def thrown_pressing(text):
     target = app_target()
     if not target:
@@ -402,7 +371,6 @@ def thrown_pressing(text):
     finally:
         session.close()
     return said
-
 def nothing_in_page_world(port):
     said = in_page(
         port, "JSON.stringify([typeof window.ordenPass, typeof window.__ordenPass, typeof window.ipc])"
@@ -410,7 +378,6 @@ def nothing_in_page_world(port):
     note(f"the page's own world has ordenPass, __ordenPass, ipc: {said}")
     if said != '["undefined","undefined","undefined"]':
         fail(f"the page's own world is handed Pass's channel: {said}")
-
 def mark_pressed(port):
     target = until(lambda: site_page(port, "/login"), 10)
     if not target:
@@ -436,14 +403,12 @@ def mark_pressed(port):
         return True
     finally:
         session.close()
-
 def field_values(port, path):
     return in_page(
         port,
         "JSON.stringify([document.querySelector('[name=username]').value, document.querySelector('[name=password]').value])",
         path,
     )
-
 def chosen(port, email, password):
     chose = app(
         "(() => { const one = [...document.querySelectorAll('[data-pass-choice]')].find((button) => "
@@ -460,7 +425,6 @@ def chosen(port, email, password):
         return False
     note(f"choosing {email} put {wanted} in the page's fields")
     return True
-
 def marked_fill():
     port = PORTS["mark"]
     if not (joined(port, "alice@example.com", "pw-alice") and joined(port, "bob@example.com", "pw-bob")):
@@ -490,7 +454,6 @@ def marked_fill():
     time.sleep(1.5)
     if sent_on(port, "/login"):
         fail("a fill from the mark sent the form")
-
 def three_pages():
     port = PORTS["three"]
     opened(f"http://127.0.0.1:{port}/signin")
@@ -505,7 +468,6 @@ def three_pages():
     if [where for where, _ in asked] != wanted:
         fail(f"the steps sent were {[where for where, _ in asked]}, not {wanted}")
     note("signed in by itself across the username, the password and the 2FA code")
-
 def wrong_password():
     port = PORTS["wrong"]
     if not joined(port, "dave@example.com", "not-it"):
@@ -519,7 +481,6 @@ def wrong_password():
     note(f"a wrong password was sent {count} time(s) in 8 s")
     if count != 1:
         fail(f"a wrong password was sent {count} times")
-
 for port in PORTS.values():
     threading.Thread(target=Serving(("127.0.0.1", port), Site).serve_forever, daemon=True).start()
 if not until(lambda: run("1 + 1") == 2, 60, 0.5):

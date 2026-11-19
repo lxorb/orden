@@ -3,9 +3,7 @@ from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 PICKER = '[role="dialog"][aria-label="Choose an icon"]'
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -16,7 +14,6 @@ async () => {
   return note.path
 }
 """
-
 LAID = """
 (selector) => {
   const sheet = document.querySelector(selector)
@@ -44,12 +41,10 @@ LAID = """
   }
 }
 """
-
 def opened(page, path: str) -> None:
     page.evaluate("(path) => window.ordenApp.iconChoice.file(path)", path)
     page.wait_for_selector(f"{PICKER} .grid .cell")
     quiet(page)
-
 def checked(label: str, laid: dict) -> None:
     say(f"[{label}] {laid}")
     if laid["collapsed"]:
@@ -65,7 +60,6 @@ def checked(label: str, laid: dict) -> None:
         wrong(f"[{label}] the grid is not centred under the search field: {left} and {right}")
     if laid["edge"] > 2:
         wrong(f"[{label}] the grid's scrollbar stands {laid['edge']}px in from the panel edge")
-
 def drive(browser) -> None:
     page = DRIVE.page(
         browser,
@@ -77,12 +71,10 @@ def drive(browser) -> None:
     DRIVE.open(page)
     path = page.evaluate(SEED)
     quiet(page)
-
     opened(page, path)
     first = page.locator(f"{PICKER} .grid .cell").nth(3)
     first.click()
     page.wait_for_selector(PICKER, state="detached")
-
     for width, height in [(1280, 720), (1280, 560)]:
         page.set_viewport_size({"width": width, "height": height})
         label = f"{width}x{height}"
@@ -94,7 +86,6 @@ def drive(browser) -> None:
         shot(page, f"picker-{label}")
         page.keyboard.press("Escape")
         page.wait_for_selector(PICKER, state="detached")
-
     page.set_viewport_size({"width": 1280, "height": 720})
     opened(page, path)
     glyph = page.locator(f"{PICKER} .grid .cell").nth(20).inner_html()
@@ -106,12 +97,10 @@ def drive(browser) -> None:
     if page.locator(f"{PICKER} .grid .cell").nth(20).inner_html() == glyph:
         wrong("ticking One colour left the icons as they were")
     shot(page, "picker-one-colour")
-
     page.fill(f"{PICKER} input.orden-field", "star")
     quiet(page)
     checked("searched", page.evaluate(LAID, PICKER))
     shot(page, "picker-searched")
-
     page.locator(f"{PICKER} button", has_text="Remove icon").click()
     page.wait_for_selector(PICKER, state="detached")
     opened(page, path)
@@ -119,13 +108,10 @@ def drive(browser) -> None:
         wrong("Remove icon left the icon on the note")
     shot(page, "picker-removed")
     page.keyboard.press("Escape")
-
     page.emulate_media(color_scheme="light")
     page.evaluate("() => window.ordenApp.theme?.setScheme?.('light')")
     opened(page, path)
     checked("light", page.evaluate(LAID, PICKER))
     shot(page, "picker-light")
-
     page.context.close()
-
 raise SystemExit(DRIVE.run(drive))

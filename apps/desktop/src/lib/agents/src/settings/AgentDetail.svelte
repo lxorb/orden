@@ -33,16 +33,12 @@
   import { CATEGORY_WORDS, GROUP_WORDS, LIMIT_WORDS, limitValue, RULE_WORDS, SCOPE_WORDS } from './words'
 
   const { pane, grant, onback }: { pane: AgentsPane; grant: Grant; onback: () => void } = $props()
-
   const change = (edit: (one: Grant) => Grant) => void pane.change(grant.id, edit)
-
   const spaceNames = $derived(workspace.spaces.map((one) => one.name))
   const listedSpaces = $derived(
     grant.spaces === 'all' ? spaceNames : [...spaceNames, ...grant.spaces.filter((one) => !spaceNames.includes(one))],
   )
-
   const sites = $derived(sitesOf(grant))
-
   let chatNames = $state.raw<Record<string, string>>({})
   $effect(() => {
     if (!sites.some((one) => one.site.startsWith('chat:'))) return
@@ -58,23 +54,17 @@
       label: RULE_WORDS[value](),
     })),
   )
-
   const siteTyped = async (typed: string) => typedSite(typed, await registrable())
-
   const programTyped = (typed: string) => Promise.resolve(typed.trim() || null)
-
   const listing = (list: 'scripts' | 'programs', on: boolean) => (word: string) => {
     change((one) => withListed(one, list, word, on))
   }
-
   function addSite(site: string) {
     change((one) => withSite(one, site, one.sites[site] ?? 'deny'))
   }
-
   function toggleScope(scope: Scope) {
     change((one) => withScope(one, scope, !one.scopes.includes(scope)))
   }
-
   async function remove() {
     const sure = await prompt.confirm({
       title: `Remove ${grant.name}?`,
@@ -86,11 +76,8 @@
     onback()
     await pane.remove(grant.id)
   }
-
   let moving = $state<{ limit: Limit; value: number } | null>(null)
-
   const limitOf = (limit: Limit) => (moving?.limit === limit ? moving.value : grant.limits[limit])
-
   const fraction = (limit: Limit) =>
     ((limitOf(limit) - LIMITS[limit].min) / (LIMITS[limit].max - LIMITS[limit].min)) * 100
 </script>
@@ -283,13 +270,11 @@
   .back {
     margin-inline-start: -6px;
   }
-
   .who {
     display: flex;
     align-items: center;
     gap: var(--space-3);
   }
-
   .who .name {
     flex: 1;
     min-width: 0;
@@ -297,13 +282,11 @@
     flex-direction: column;
     gap: 1px;
   }
-
   .who small {
     font-family: var(--font-ui);
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .title {
     width: 100%;
     margin-inline-start: -7px;
@@ -319,17 +302,14 @@
       border-color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .title:hover {
       border-color: var(--line);
     }
   }
-
   .title:focus {
     background: var(--bg);
   }
-
   .connected {
     margin: 0;
     font-family: var(--font-ui);
@@ -337,7 +317,6 @@
     line-height: 1.5;
     color: var(--muted);
   }
-
   .trifecta {
     display: flex;
     align-items: flex-start;
@@ -348,7 +327,6 @@
     line-height: 1.5;
     color: var(--callout-warning);
   }
-
   .trifecta svg {
     flex: none;
     width: var(--icon-md);
@@ -360,14 +338,12 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .always {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
     margin-block-start: 2px;
   }
-
   .value {
     flex: none;
     width: 3.5rem;
@@ -376,11 +352,9 @@
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .slider {
     width: 11rem;
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

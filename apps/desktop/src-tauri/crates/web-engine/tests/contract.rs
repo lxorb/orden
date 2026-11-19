@@ -20,12 +20,10 @@ struct FakePage {
     outbox: Arc<Mutex<Outbox<String>>>,
     address: Arc<Mutex<String>>,
 }
-
 impl WebPage for FakePage {
     fn label(&self) -> &str {
         &self.label
     }
-
     fn navigate(&self, url: &Url) -> Outcome<()> {
         if !allowed(url) {
             return Err(orden_contracts::Failure::new(
@@ -37,19 +35,15 @@ impl WebPage for FakePage {
         *self.address.lock().expect("address") = url.to_string();
         Ok(())
     }
-
     fn step(&self, _delta: i32) -> Outcome<()> {
         Ok(())
     }
-
     fn reload(&self) -> Outcome<()> {
         Ok(())
     }
-
     fn evaluate(&self, _script: &str) -> Outcome<()> {
         Ok(())
     }
-
     fn send(&self, message: &str) -> Outcome<u64> {
         let sending = self.outbox.lock().expect("outbox").send(message.to_owned());
         if let Some(body) = sending.now {
@@ -57,27 +51,21 @@ impl WebPage for FakePage {
         }
         Ok(sending.id)
     }
-
     fn place(&self, _position: (f64, f64), _size: (f64, f64)) -> Outcome<()> {
         Ok(())
     }
-
     fn zoom(&self, _factor: f64) -> Outcome<()> {
         Ok(())
     }
-
     fn find(&self, _text: &str, _forward: bool) -> Outcome<()> {
         Ok(())
     }
-
     fn devtools(&self) -> Outcome<()> {
         Ok(())
     }
-
     fn print_to_pdf(&self, _into: &Path) -> Outcome<()> {
         Ok(())
     }
-
     fn capture(&self) -> Outcome<Picture> {
         Ok(Picture {
             width: 1,
@@ -85,14 +73,11 @@ impl WebPage for FakePage {
             png: Vec::new(),
         })
     }
-
     fn close(&self) -> Outcome<()> {
         Ok(())
     }
 }
-
 type Held = (Arc<Mutex<Outbox<String>>>, Arc<Mutex<String>>);
-
 struct Fake {
     settings: EngineSettings,
     profiles: Profiles,
@@ -100,7 +85,6 @@ struct Fake {
     sent: Arc<Mutex<Vec<(u64, String)>>>,
     cleared: Mutex<Vec<Option<String>>>,
 }
-
 impl Default for Fake {
     fn default() -> Self {
         Self {
@@ -112,7 +96,6 @@ impl Default for Fake {
         }
     }
 }
-
 impl Fake {
     fn loaded(&self, label: &str) -> Vec<(u64, String)> {
         let pages = self.pages.lock().expect("pages");
@@ -122,16 +105,13 @@ impl Fake {
         flushed
     }
 }
-
 impl WebEngine for Fake {
     fn settings(&self) -> &EngineSettings {
         &self.settings
     }
-
     fn profiles(&self) -> &Profiles {
         &self.profiles
     }
-
     fn embed(&self, embed: Embed) -> Outcome<Box<dyn WebPage>> {
         embed_allowed(&embed, &NoExtensions)?;
         let outbox = Arc::new(Mutex::new(Outbox::default()));
@@ -147,7 +127,6 @@ impl WebEngine for Fake {
             address,
         }))
     }
-
     fn page(&self, label: &str) -> Option<Box<dyn WebPage>> {
         let pages = self.pages.lock().expect("pages");
         let (outbox, address) = pages.get(label)?;
@@ -158,11 +137,9 @@ impl WebEngine for Fake {
             address: Arc::clone(address),
         }))
     }
-
     fn cookies(&self, _store: Option<&StoreName>) -> Outcome<Vec<Cookie>> {
         Ok(Vec::new())
     }
-
     fn clear(&self, store: Option<&StoreName>) -> Outcome<()> {
         self.cleared
             .lock()
@@ -170,16 +147,13 @@ impl WebEngine for Fake {
             .push(store.map(|one| one.as_str().to_owned()));
         Ok(())
     }
-
     fn downloads(&self) -> Outcome<Vec<Download>> {
         Ok(Vec::new())
     }
 }
-
 fn url(text: &str) -> Url {
     Url::parse(text).expect(text)
 }
-
 fn embed_of(label: &str, url: &str) -> Embed {
     Embed {
         label: label.to_owned(),
@@ -191,7 +165,6 @@ fn embed_of(label: &str, url: &str) -> Embed {
         size: (800.0, 600.0),
     }
 }
-
 #[test]
 fn a_store_s_profile_is_a_direct_child_of_the_root_and_never_the_interface_s() {
     let profiles = Profiles::under(Path::new("/config"));
@@ -215,7 +188,6 @@ fn a_store_s_profile_is_a_direct_child_of_the_root_and_never_the_interface_s() {
     assert!(!APP_PROFILE.contains(['/', '\\']));
     assert!(!STORE_PROFILE.contains(['/', '\\']));
 }
-
 #[test]
 fn a_store_name_is_one_plain_folder_with_a_known_prefix() {
     assert_eq!(StoreName::parse(None).expect("none"), None);
@@ -259,7 +231,6 @@ fn a_store_name_is_one_plain_folder_with_a_known_prefix() {
     assert!(StoreName::parse(Some(&long)).is_ok());
     assert!(StoreName::parse(Some(&format!("{long}a"))).is_err());
 }
-
 #[test]
 fn the_app_s_own_hosts_are_no_web_page() {
     for host in [
@@ -287,7 +258,6 @@ fn the_app_s_own_hosts_are_no_web_page() {
         assert_eq!(allowed(&url(page)), fine, "{page}");
     }
 }
-
 #[test]
 fn an_extension_s_own_pages_open_as_tabs_and_frames_take_what_a_page_embeds() {
     let known = |one: &Url| one.scheme() == "chrome-extension" && one.host_str() == Some("abc");
@@ -317,7 +287,6 @@ fn an_extension_s_own_pages_open_as_tabs_and_frames_take_what_a_page_embeds() {
         assert_eq!(frame_may_open(&url(page), &NoExtensions), opens, "{page}");
     }
 }
-
 #[test]
 fn a_new_window_becomes_a_tab_a_window_or_nothing() {
     let site = url("https://example.com/page");
@@ -343,7 +312,6 @@ fn a_new_window_becomes_a_tab_a_window_or_nothing() {
         Becomes::Tab(popup.to_string())
     );
 }
-
 #[test]
 fn a_sign_in_page_is_known_by_its_host_or_its_path() {
     for yes in [
@@ -364,7 +332,6 @@ fn a_sign_in_page_is_known_by_its_host_or_its_path() {
         assert!(!signs_in(&url(no)), "{no}");
     }
 }
-
 #[test]
 fn the_engine_s_own_first_page_is_nobody_s_address() {
     assert!(internal(concat!(
@@ -375,7 +342,6 @@ fn the_engine_s_own_first_page_is_nobody_s_address() {
     assert!(!internal("https://example.com/?q=data-tauri-cef-internal"));
     assert!(!internal("data:text/html,<p>a page somebody made</p>"));
 }
-
 #[test]
 fn the_command_line_reads_pairs_and_bare_keys() {
     assert_eq!(
@@ -392,7 +358,6 @@ fn the_command_line_reads_pairs_and_bare_keys() {
     );
     assert!(switches("").is_empty());
 }
-
 #[test]
 fn the_extension_folders_join_what_a_run_loads() {
     let ours = [
@@ -420,7 +385,6 @@ fn the_extension_folders_join_what_a_run_loads() {
         )
     );
 }
-
 #[test]
 fn the_settings_switch_the_engine_s_swipe_off_on_every_desktop() {
     let settings = EngineSettings::default();
@@ -443,7 +407,6 @@ fn the_settings_switch_the_engine_s_swipe_off_on_every_desktop() {
     assert_eq!(more.disabled_features.len(), 1);
     assert!(more.enabled_features.contains(&"Probe".to_owned()));
 }
-
 #[test]
 fn a_run_s_sandbox_and_debug_port_are_read_the_way_the_drives_write_them() {
     assert_eq!(SandboxPolicy::parse("required"), SandboxPolicy::Required);
@@ -457,13 +420,11 @@ fn a_run_s_sandbox_and_debug_port_are_read_the_way_the_drives_write_them() {
     assert_eq!(debug_port(Some("nine")), None);
     assert_eq!(debug_port(None), None);
 }
-
 #[test]
 fn a_build_that_ships_reads_nothing_from_its_environment() {
     assert_eq!(from_run(false, "PATH"), None);
     assert!(from_run(true, "PATH").is_some());
 }
-
 #[test]
 fn an_engine_refuses_an_address_of_the_app_s_own_and_opens_the_web() {
     let engine = Fake::default();
@@ -492,7 +453,6 @@ fn an_engine_refuses_an_address_of_the_app_s_own_and_opens_the_web() {
     page.navigate(&Url::parse("https://example.org/").expect("a url"))
         .expect("navigated");
 }
-
 #[test]
 fn messages_to_a_page_arrive_once_it_is_ready_in_the_order_they_were_sent() {
     let engine = Fake::default();
@@ -512,7 +472,6 @@ fn messages_to_a_page_arrive_once_it_is_ready_in_the_order_they_were_sent() {
     );
     assert_eq!(sent[2].1, "three");
 }
-
 #[test]
 fn an_outbox_keeps_its_order_across_a_page_that_went_away() {
     let mut outbox = Outbox::default();
@@ -532,7 +491,6 @@ fn an_outbox_keeps_its_order_across_a_page_that_went_away() {
     );
     assert_eq!(outbox.waiting(), 0);
 }
-
 #[test]
 fn a_store_is_cleared_by_name_and_the_shared_one_by_none() {
     let engine = Fake::default();
@@ -550,7 +508,6 @@ fn a_store_is_cleared_by_name_and_the_shared_one_by_none() {
         Path::new("/config").join(ROOT).join("store-space_1")
     );
 }
-
 #[test]
 fn a_page_handed_inline_is_used_once_the_runtime_lets_go() {
     let lock = Arc::new(Mutex::new(()));
@@ -571,7 +528,6 @@ fn a_page_handed_inline_is_used_once_the_runtime_lets_go() {
     assert!(asked.is_ok());
     assert_eq!(*ran.lock().expect("ran"), Some((7, true)));
 }
-
 #[test]
 fn a_page_handed_later_is_used_where_it_is_handed() {
     let (said, heard) = std::sync::mpsc::channel();
@@ -589,7 +545,6 @@ fn a_page_handed_later_is_used_where_it_is_handed() {
     let (platform, on) = heard.recv().expect("handed");
     assert_eq!(platform, 1);
     assert_ne!(on, std::thread::current().id());
-
     let kept = Arc::new(Mutex::new(None::<Box<dyn FnOnce(u8) + Send>>));
     let keeping = Arc::clone(&kept);
     handed_out::<u8, ()>(
@@ -610,7 +565,6 @@ fn a_page_handed_later_is_used_where_it_is_handed() {
         (2, std::thread::current().id())
     );
 }
-
 #[test]
 fn a_page_asked_for_while_another_is_built_waits_for_it_and_never_builds_inside_it() {
     let order = Rc::new(RefCell::new(Vec::new()));
@@ -637,13 +591,11 @@ fn a_page_asked_for_while_another_is_built_waits_for_it_and_never_builds_inside_
     );
     assert_eq!(built, Ok(7));
     assert_eq!(*order.borrow(), ["outer begins", "outer ends", "waited"]);
-
     let now = Rc::new(RefCell::new(false));
     let ran = Rc::clone(&now);
     once_built(move || *ran.borrow_mut() = true);
     assert!(*now.borrow());
 }
-
 #[test]
 fn the_edges_are_the_ewmh_s_and_a_missing_edge_is_a_move() {
     let edges = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
@@ -660,7 +612,6 @@ fn the_edges_are_the_ewmh_s_and_a_missing_edge_is_a_move() {
     assert_eq!(NativeWindow(0).as_x11(), None);
     assert_eq!(NativeWindow(u64::MAX).as_x11(), None);
 }
-
 #[test]
 fn a_plain_window_system_leaves_moves_to_the_platform_and_refuses_nothing_else() {
     let system = Plain;
@@ -676,7 +627,6 @@ fn a_plain_window_system_leaves_moves_to_the_platform_and_refuses_nothing_else()
     system.hide(NativeWindow(1));
     assert_eq!(system.desktop_scale(), None);
 }
-
 #[test]
 fn a_site_s_address_is_http_or_https_with_a_host() {
     assert!(orden_web_engine::from_a_site(&url("https://example.com/")));

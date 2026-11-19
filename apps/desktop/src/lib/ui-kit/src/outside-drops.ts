@@ -5,7 +5,6 @@ export interface Said {
   paths?: string[] | null
   position?: { x: number; y: number } | null
 }
-
 interface Held {
   paths: readonly string[]
   target: Element | null
@@ -14,22 +13,16 @@ interface Held {
   taken: boolean
   timer: ReturnType<typeof setInterval>
 }
-
 const AT_REST = 350
-
 export interface Engine {
   read: (path: string) => Promise<Uint8Array>
   ratio: () => number
 }
-
 const engine: Engine = { read: fileBytes, ratio: () => window.devicePixelRatio || 1 }
-
 function typeOf(path: string): string {
   return mimeOfPath(path) ?? UNKNOWN_TYPE
 }
-
 type Holding = 'hover' | 'paths' | readonly File[]
-
 function holding(paths: readonly string[], what: Holding, effect: DataTransfer['dropEffect'] = 'none'): DataTransfer {
   const transfer = new DataTransfer()
   let allowed: DataTransfer['effectAllowed'] = 'copy'
@@ -57,7 +50,6 @@ function holding(paths: readonly string[], what: Holding, effect: DataTransfer['
   if (typeof what !== 'string') for (const one of what) transfer.items.add(one)
   return transfer
 }
-
 function said(
   type: string,
   target: Element,
@@ -80,20 +72,16 @@ function said(
     }),
   )
 }
-
 export class OutsideDrops {
   private held: Held | null = null
   private readonly engine: Engine
-
   constructor(using: Engine = engine) {
     this.engine = using
   }
-
   entered(event: Said) {
     this.left()
     const paths = (event.paths ?? []).filter((one) => one.length > 0)
     if (!paths.length) return
-
     this.held = {
       paths,
       target: null,
@@ -104,11 +92,9 @@ export class OutsideDrops {
     }
     this.moved(event)
   }
-
   moved(event: Said) {
     const held = this.held
     if (!held) return
-
     if (event.position) {
       const ratio = this.engine.ratio()
       held.x = event.position.x / ratio
@@ -116,23 +102,19 @@ export class OutsideDrops {
     }
     this.step()
   }
-
   left() {
     const held = this.held
     if (!held) return
-
     this.held = null
     clearInterval(held.timer)
     if (held.target) said('dragleave', held.target, holding(held.paths, 'hover'), held)
     carriedNothing()
   }
-
   async dropped(event: Said): Promise<void> {
     if (!this.held && event.paths?.length) this.entered(event)
     else this.moved(event)
     const held = this.held
     if (!held) return
-
     this.held = null
     clearInterval(held.timer)
     const { target, paths } = held
@@ -143,18 +125,15 @@ export class OutsideDrops {
         return
       }
       if (!said('drop', target, holding(paths, 'paths'), held)) return
-
       const files = await this.files(paths)
       if (files.length && target.isConnected) said('drop', target, holding(paths, files), held)
     } finally {
       carriedNothing()
     }
   }
-
   private step() {
     const held = this.held
     if (!held) return
-
     const under = document.elementFromPoint(held.x, held.y)
     const transfer = holding(held.paths, 'hover')
     if (under !== held.target) {
@@ -170,12 +149,10 @@ export class OutsideDrops {
     const over = holding(held.paths, 'hover', 'copy')
     held.taken = !said('dragover', under, over, held) && over.dropEffect !== 'none'
   }
-
   private files(paths: readonly string[]): Promise<File[]> {
     return filesAt(paths, this.engine.read)
   }
 }
-
 export async function filesAt(
   paths: readonly string[],
   read: (path: string) => Promise<Uint8Array> = engine.read,
@@ -188,7 +165,6 @@ export async function filesAt(
   )
   return files.filter((one): one is File => one !== null)
 }
-
 export async function hearOutsideDrops(): Promise<() => void> {
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
   const here = getCurrentWindow()

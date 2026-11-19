@@ -23,10 +23,8 @@ export class ExplorerView {
   renamingMany = $state<string[] | null>(null)
   said = $state<string | null>(null)
   #saying: ReturnType<typeof setTimeout> | undefined
-
   filter = $state('')
   search = $state<Search | null>(null)
-
   readonly sort = $derived<Sort>(sortShown(explorerPrefs.sort, !!this.search))
   readonly #sorted = $derived<Entry[]>(
     this.listing ? ordered(this.listing.entries, this.sort, explorerPrefs.hidden) : [],
@@ -35,7 +33,6 @@ export class ExplorerView {
     this.search ? ordered(this.search.found, this.sort, true) : filtered(this.#sorted, this.filter),
   )
   readonly names = $derived(this.rows.map((one) => one.name))
-
   #watching: { folder: string; issued: boolean } | null = null
   #went = 0
   #asked: string | null = null
@@ -44,16 +41,13 @@ export class ExplorerView {
   #rereading = false
   #again = false
   #alive = false
-
   constructor(tab: Tab) {
     this.tab = tab
     this.spec = readSpec(tab.doc)
   }
-
   get folder(): string | null {
     return this.spec?.folder ?? null
   }
-
   async appear() {
     this.#alive = true
     void hearChanges()
@@ -66,21 +60,17 @@ export class ExplorerView {
     if (folder) await this.show(folder, (listed) => this.spec ?? fresh(listed))
     else this.wrong = message(null, 'could not read this folder')
   }
-
   async go(folder: string) {
     await this.show(folder, (listed) => (this.spec ? wentTo(this.spec, listed) : fresh(listed)))
   }
-
   async back() {
     const spec = this.spec && steppedBack(this.spec)
     if (spec) await this.show(spec.folder, () => spec)
   }
-
   async forward() {
     const spec = this.spec && steppedForward(this.spec)
     if (spec) await this.show(spec.folder, () => spec)
   }
-
   async up() {
     const here = this.folder
     const above = here ? parentOf(here) : null
@@ -89,7 +79,6 @@ export class ExplorerView {
     const name = folderName(here)
     if (this.names.includes(name)) this.pick(name, 'one')
   }
-
   async reload() {
     if (this.#rereading) {
       this.#again = true
@@ -108,11 +97,9 @@ export class ExplorerView {
       this.#again = false
     }
   }
-
   #wantsAgain(): boolean {
     return this.#again && this.#alive
   }
-
   async #readAgain() {
     const folder = this.folder
     if (!folder || this.#landed !== this.#went) return
@@ -133,46 +120,36 @@ export class ExplorerView {
       }
     }
   }
-
   get canGoBack(): boolean {
     return (this.spec?.back.length ?? 0) > 0
   }
-
   get canGoForward(): boolean {
     return (this.spec?.ahead.length ?? 0) > 0
   }
-
   get canGoUp(): boolean {
     return this.folder !== null && parentOf(this.folder) !== null
   }
-
   pathOf(name: string): string {
     if (this.search) return joinPath(this.search.root, name)
     const folder = this.listing?.path ?? this.folder ?? ''
     const separator = folder.includes('\\') && !folder.includes('/') ? '\\' : '/'
     return /[\\/]$/.test(folder) ? `${folder}${name}` : `${folder}${separator}${name}`
   }
-
   pick(name: string, how: How) {
     this.picked = pickedAt(this.picked, this.names, name, how)
   }
-
   pickNames(names: readonly string[]) {
     this.picked = pickedOnly(names)
   }
-
   pickAll() {
     this.picked = pickedAll(this.picked, this.names)
   }
-
   pickNone() {
     this.picked = { ...NOTHING, cursor: this.picked.cursor }
   }
-
   get chosen(): string[] {
     return this.names.filter((one) => this.picked.names.has(one)).map((one) => this.pathOf(one))
   }
-
   searchBelow(query: string) {
     const root = this.listing?.path
     if (!root || !query.trim()) return
@@ -182,29 +159,24 @@ export class ExplorerView {
     this.picked = NOTHING
     void search.run(explorerPrefs.hidden)
   }
-
   endSearch() {
     this.search?.stop()
     if (this.search) this.picked = NOTHING
     this.search = null
   }
-
   tell(said: string) {
     this.said = said
     clearTimeout(this.#saying)
     this.#saying = setTimeout(() => (this.said = null), SAID_FOR)
   }
-
   stop() {
     this.#alive = false
     this.#unwatch()
   }
-
   #unwatch() {
     if (this.#watching?.issued) void unwatchFolder(this.#watching.folder)
     this.#watching = null
   }
-
   private async show(folder: string, next: (listed: string) => Spec) {
     const went = ++this.#went
     const asked = listFolder(folder)
@@ -230,46 +202,39 @@ export class ExplorerView {
     this.#landed = went
     this.#arrive(listing, next)
   }
-
   #arrive(listing: Listing, next: (listed: string) => Spec) {
     if (!this.listing || !samePath(listing.path, this.listing.path)) this.#leave()
     this.take(listing)
     this.#settle(next(listing.path), listing.path)
     if (this.#alive) this.watch(listing.path)
   }
-
   #leave() {
     this.picked = NOTHING
     this.filter = ''
     this.endSearch()
   }
-
   #settle(spec: Spec, folder: string) {
     this.spec = spec
     this.tab.name = folderName(folder)
     this.tab.note.replace(writeSpec(spec), false)
     workspace.scheduleSession()
   }
-
   private take(listing: Listing) {
     this.wrong = null
     this.listing = listing
     this.picked = stillThere(this.picked, this.names)
     this.#pickAsked()
   }
-
   pickOnArrival(name: string) {
     this.#asked = name
     this.#pickAsked()
   }
-
   #pickAsked() {
     const name = this.#asked
     if (name === null || !this.names.includes(name)) return
     this.#asked = null
     this.pick(name, 'one')
   }
-
   private watch(folder: string) {
     if (this.#watching && samePath(this.#watching.folder, folder)) return
     this.#unwatch()
@@ -281,7 +246,6 @@ export class ExplorerView {
       watchFolder(folder).catch(quiet)
     })
   }
-
   followMove() {
     const spec = readSpec(this.tab.doc)
     if (!spec || writeSpec(spec) === (this.spec && writeSpec(this.spec))) return
@@ -290,20 +254,15 @@ export class ExplorerView {
     if (went && this.#alive) void this.show(spec.folder, () => spec)
     else if (went) this.listing = null
   }
-
   heard(folders: readonly string[]) {
     const here = this.listing?.path
     if (here && folders.some((one) => samePath(one, here))) void this.reload()
   }
 }
-
 const SAID_FOR = 6000
 export const LIST_WAIT = 8000
-
 class Unanswered extends Error {}
-
 const quiet = () => undefined
-
 function inTime(asked: Promise<Listing>): Promise<Listing> {
   let late: ReturnType<typeof setTimeout> | undefined
   const gaveUp = new Promise<never>((_, failed) => {
@@ -311,18 +270,15 @@ function inTime(asked: Promise<Listing>): Promise<Listing> {
   })
   return Promise.race([asked, gaveUp]).finally(() => clearTimeout(late))
 }
-
 function why(error: unknown, folder: string): string {
   return error instanceof Unanswered
     ? `${folderName(folder)} did not answer.`
     : message(error, 'could not read this folder')
 }
-
 const MOST_REST = 2000
 const rest = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms))
 const fresh = (folder: string): Spec => ({ folder, back: [], ahead: [] })
 const views = new WeakMap<Tab, ExplorerView>()
-
 export function viewOf(tab: Tab): ExplorerView {
   let view = views.get(tab)
   if (!view) {
@@ -331,19 +287,16 @@ export function viewOf(tab: Tab): ExplorerView {
   }
   return view
 }
-
 onMoved(() => {
   for (const tab of workspace.tabs) {
     if (tab.kind === 'explorer') views.get(tab)?.followMove()
   }
 })
-
 export function relistAll() {
   for (const tab of workspace.tabs) {
     if (tab.kind === 'explorer') void views.get(tab)?.reload()
   }
 }
-
 const hearing = door(() =>
   import('@tauri-apps/api/event').then(({ listen }) =>
     listen<{ folders: string[] }>(CHANGED, (event) => {
@@ -363,12 +316,10 @@ const settle = afterQuiet(() => {
   }
   for (const hear of hearers) hear(folders)
 }, 150)
-
 function hearChanges(): Promise<void> {
   if (!isDesktop) return Promise.resolve()
   return hearing().then(quiet, () => undefined)
 }
-
 export function watchHeard(folder: string, hear: (folders: readonly string[]) => void): () => void {
   let on = true
   let issued = false

@@ -4,22 +4,18 @@ import { type Destination, destinationOf, type Host, hostFor, said } from './rem
 
 let known: readonly Host[] = []
 const opening = async () => await import('./remote/open')
-
 async function open(id: string) {
   const one = await opening()
   await one.openRemote(id)
 }
-
 async function openAll(ids: readonly string[]) {
   const one = await opening()
   await one.openAll(ids)
 }
-
 async function connect(wanted: Destination) {
   const one = await opening()
   await one.connectTo(wanted)
 }
-
 export const hosts: PaletteHosts = {
   list: async () => {
     const { remote } = await import('./remote/hosts.svelte')

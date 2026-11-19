@@ -4,7 +4,6 @@
   import { pass } from '../../pass-sync/src/api'
 
   type Format = 'sealed' | 'json' | 'csv'
-
   let format = $state<Format>('sealed')
   let password = $state('')
   let passphrase = $state('')
@@ -12,15 +11,12 @@
   let busy = $state(false)
   let wrong = $state('')
   let saved = $state('')
-
   const FORMATS: { id: Format; label: () => string }[] = [
     { id: 'sealed', label: () => 'Encrypted' },
     { id: 'json', label: () => 'JSON' },
     { id: 'csv', label: () => 'CSV' },
   ]
-
   const ready = $derived(password !== '' && (format !== 'sealed' || (passphrase !== '' && passphrase === again)))
-
   async function exported(event: SubmitEvent) {
     event.preventDefault()
     if (!ready || busy) return
@@ -109,11 +105,9 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .card.padded {
     padding: var(--space-3);
   }
-
   .warn {
     margin: 0;
     padding: var(--space-2) var(--space-3);
@@ -122,13 +116,11 @@
     font-size: var(--text-sm);
     color: var(--text-strong);
   }
-
   .meta {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   .buttons {
     display: flex;
     justify-content: flex-end;

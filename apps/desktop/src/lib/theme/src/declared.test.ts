@@ -4,7 +4,6 @@ import { declaredIn, settingOf } from './declared'
 function page(properties: Record<string, string>): (name: string) => string {
   return (name) => properties[name] ?? ''
 }
-
 describe('what a theme may declare', () => {
   test('a number in a range, with the unit it is measured in', () => {
     const found = settingOf('blur', 'range "Blur" 0 40 18 px')
@@ -12,19 +11,16 @@ describe('what a theme may declare', () => {
     expect(found?.initial).toBe(18)
     expect(found?.paint(24, 'dark')).toEqual({ '--orden-blur': '24px' })
   })
-
   test('and a bare number, which is what a multiplier is', () => {
     const found = settingOf('weight', 'range "Weight" 0 2 1')
     expect(found?.paint(1.5, 'dark')).toEqual({ '--orden-weight': '1.5' })
   })
-
   test('a switch, which writes a one or a nought so CSS can do sums with it', () => {
     const found = settingOf('paper', 'switch "Frosted paper" off')
     expect(found).toMatchObject({ kind: 'switch', initial: false })
     expect(found?.paint(true, 'dark')).toEqual({ '--orden-paper': '1' })
     expect(found?.paint(false, 'dark')).toEqual({ '--orden-paper': '0' })
   })
-
   test('a choice, whose first option is where it starts', () => {
     const found = settingOf('depth', 'choice "Depth" "Flat" 0 "Deep" 1')
     expect(found).toMatchObject({ kind: 'choice', initial: '0' })
@@ -33,7 +29,6 @@ describe('what a theme may declare', () => {
       { value: '1', label: 'Deep' },
     ])
   })
-
   test('and a colour, which is a choice whose options are painted rather than read', () => {
     const found = settingOf('glow', 'colour "Glow" "Violet" #7c6bf5 "Blue" #3584e4')
     expect(found).toMatchObject({ kind: 'colour', initial: '#7c6bf5' })
@@ -44,12 +39,10 @@ describe('what a theme may declare', () => {
       light: '#7c6bf5',
     })
   })
-
   test('a label with a space in it, which is the only reason a label is quoted', () => {
     expect(settingOf('tint', 'range "How much tint" 0 100 50 %')?.label).toBe('How much tint')
     expect(settingOf('tint', 'range Tint 0 100 50 %')?.label).toBe('Tint')
   })
-
   test('and either quote, because CSS has both and a formatter picks one', () => {
     expect(settingOf('tint', "range 'How much tint' 0 100 50 %")?.label).toBe('How much tint')
     expect(settingOf('depth', `choice 'Depth' 'Flat' 0 "Deep" 1`)).toMatchObject({
@@ -57,14 +50,12 @@ describe('what a theme may declare', () => {
       initial: '0',
     })
   })
-
   test('and a dial nobody has to choose the step of', () => {
     expect(settingOf('a', 'range "A" 0 40 1 px')).toMatchObject({ step: 1 })
     expect(settingOf('b', 'range "B" 0 100 1 %')).toMatchObject({ step: 1 })
     expect(settingOf('c', 'range "C" 0 1 0.5')).toMatchObject({ step: 0.01 })
   })
 })
-
 describe('what a theme may not', () => {
   test.each([
     ['a kind nobody has heard of', 'thing', 'colour-wheel "Glow" #fff'],
@@ -89,13 +80,11 @@ describe('what a theme may not', () => {
   ])('refuses %s', (_what, id, spec) => {
     expect(settingOf(id, spec)).toBeNull()
   })
-
   test('and writes one property, named after itself, whatever it was handed', () => {
     const found = settingOf('glow', 'colour "Glow" "Violet" #7c6bf5')
     expect(Object.keys(found?.paint('#7c6bf5', 'dark') ?? {})).toEqual(['--orden-glow'])
   })
 })
-
 describe('a stylesheet, read', () => {
   const CSS = `
     :root {
@@ -104,7 +93,6 @@ describe('a stylesheet, read', () => {
       --colour: #fff;
     }
   `
-
   test('declares what it names, with the values the page resolved', () => {
     const found = declaredIn(
       CSS,
@@ -116,13 +104,11 @@ describe('a stylesheet, read', () => {
     expect(found.map((one) => one.id)).toEqual(['tint', 'blur'])
     expect(found[0]?.initial).toBe(82)
   })
-
   test('takes the value off the page and not out of the file, so a scheme can differ', () => {
     const found = declaredIn(CSS, page({ '--orden-setting-tint': 'range "Tint" 60 100 95 %' }))
     expect(found).toHaveLength(1)
     expect(found[0]?.initial).toBe(95)
   })
-
   test('drops the one it cannot read and keeps the one it can', () => {
     const found = declaredIn(
       CSS,
@@ -133,11 +119,9 @@ describe('a stylesheet, read', () => {
     )
     expect(found.map((one) => one.id)).toEqual(['tint'])
   })
-
   test('finds nothing in a theme that declares nothing', () => {
     expect(declaredIn(':root { --bg: #000; }', page({}))).toEqual([])
   })
-
   test('stops at six, which is a theme and not a control panel', () => {
     const names = Array.from({ length: 9 }, (_one, at) => `d${at}`)
     const css = names.map((id) => `--orden-setting-${id}: x;`).join('\n')

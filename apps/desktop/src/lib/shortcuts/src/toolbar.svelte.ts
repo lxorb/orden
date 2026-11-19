@@ -6,9 +6,7 @@ import { forget, heardElsewhere, isString, keepJson, stored } from '../../platfo
 
 const STORAGE_KEY = 'orden:toolbar'
 const OWED_KEY = 'orden:toolbar-owed'
-
 const MOST_BUTTONS = 24
-
 export const DEFAULT_TOOLBAR: readonly string[] = [
   'format.bold',
   'format.italic',
@@ -20,7 +18,6 @@ export const DEFAULT_TOOLBAR: readonly string[] = [
   'format.link',
   'format.clear',
 ]
-
 const MARKS: Record<string, string> = {
   'format.bold': 'B',
   'format.italic': 'I',
@@ -48,96 +45,71 @@ const MARKS: Record<string, string> = {
   'paragraph.toc': '≡',
   'paragraph.rule': '––',
 }
-
 const GLYPHS: Record<string, IconNode> = { 'format.link': Link }
-
 const HIGH = new Set(['paragraph.quote'])
-
 export function glyphFor(id: string): IconNode | null {
   return GLYPHS[id] ?? null
 }
-
 export function lowMark(id: string): boolean {
   return HIGH.has(id)
 }
-
 export function markFor(id: string): string {
   const mark = MARKS[id]
   if (mark) return mark
-
   const label = BY_ID.get(id)?.label() ?? id
   const first = new Intl.Segmenter().segment(label)[Symbol.iterator]().next().value?.segment
   return first?.toLocaleUpperCase() ?? '?'
 }
-
 export function nameFor(id: string): string {
   return BY_ID.get(id)?.label() ?? id
 }
-
 class Toolbar {
   chosen = $state<string[] | null>(null)
-
   get ids(): readonly string[] {
     return this.held.filter(runnable)
   }
-
   private get held(): readonly string[] {
     return this.chosen ?? DEFAULT_TOOLBAR
   }
-
   get changed(): boolean {
     return this.chosen !== null
   }
-
   restore() {
     const held = stored(STORAGE_KEY)
     this.chosen = usable(held)
   }
-
   add(id: string) {
     if (!runnable(id) || this.held.includes(id) || this.held.length >= MOST_BUTTONS) return
-
     this.chosen = [...this.held, id]
     this.settle()
   }
-
   remove(id: string) {
     if (!this.ids.includes(id)) return
-
     this.chosen = this.held.filter((one) => one !== id)
     this.settle()
   }
-
   move(from: number, to: number) {
     const list = [...this.ids]
     const held = list[from]
     if (held === undefined) return
-
     const landing = Math.max(0, Math.min(list.length - 1, to))
     if (landing === from) return
-
     list.splice(from, 1)
     list.splice(landing, 0, held)
-
     const moved = list[Symbol.iterator]()
     this.chosen = this.held.map((one) => (runnable(one) ? (moved.next().value ?? one) : one))
     this.settle()
   }
-
   reset() {
     this.chosen = null
     this.settle()
   }
-
   private settle() {
     if (this.chosen) keepJson(STORAGE_KEY, this.chosen)
     else forget(STORAGE_KEY)
-
     this.share()
   }
-
   private readonly owed = new AccountOwed(OWED_KEY)
-
   receive(remote: AccountSettings) {
     const theirs = remote.toolbar
     if (this.owed.standing) {
@@ -148,33 +120,25 @@ class Toolbar {
       if (this.chosen) this.share()
       return
     }
-
     const usableOnes = theirs === null ? null : usable(theirs)
     if (JSON.stringify(usableOnes) === JSON.stringify(this.chosen)) return
-
     this.chosen = usableOnes
     if (usableOnes) keepJson(STORAGE_KEY, usableOnes)
     else forget(STORAGE_KEY)
   }
-
   private share() {
     this.owed.send({ toolbar: this.chosen })
   }
 }
-
 export function usable(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null
-
   const out: string[] = []
   for (const one of value) {
     if (!isString(one) || out.includes(one) || !known(one)) continue
     out.push(one)
     if (out.length >= MOST_BUTTONS) break
   }
-
   return out.length || value.length === 0 ? out : null
 }
-
 export const toolbar = new Toolbar()
-
 heardElsewhere([STORAGE_KEY], () => toolbar.restore())

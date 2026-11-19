@@ -8,27 +8,22 @@ import { invited, live } from './sync2'
 let env: TestEnv
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   live(env)
   token = await signIn(env, 'reading@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Reading' } })).json.space.id
 })
-
 afterEach(() => env.close())
-
 async function made(path: string, content: string): Promise<string> {
   const answer = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   if (answer.status !== 201) throw new Error(`${path}: ${answer.text}`)
   await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
   return answer.json.note.id
 }
-
 async function index(ids: unknown, as = token) {
   return await call(env, `/v2/spaces/${space}/index`, { token: as, body: { ids } })
 }
-
 async function search(request: Omit<SearchRequest, 'query' | 'terms'> & { q: string }, as = token) {
   const { q, ...rest } = request
   return await call(env, `/v2/spaces/${space}/search`, {
@@ -36,7 +31,6 @@ async function search(request: Omit<SearchRequest, 'query' | 'terms'> & { q: str
     body: { query: parseQuery(q), terms: [], ...rest },
   })
 }
-
 const NOTE = `---
 status: draft
 ---
@@ -46,13 +40,11 @@ See [[Ideas]] and #work.
 
 - [ ] Write the plan
 `
-
 describe('the index', () => {
   test("answers a note's scan as the browser makes it, with the rows it carries", async () => {
     const id = await made('Projects/Plans.md', NOTE)
     const answer = await index([id])
     expect(answer.status).toBe(200)
-
     const items = indexAnswerOf(answer.json)
     const row = env.db.prepare('select * from notes where id = ?').get(id) as {
       doc_seq: number | null
@@ -67,7 +59,6 @@ describe('the index', () => {
     expect(scan?.front).toBe('status: draft')
     expect(scan?.tasks?.map((one) => one.text)).toEqual(['Write the plan'])
   })
-
   test("a plane's marks and a website's", async () => {
     const plane = await made(
       'Board.canvas',
@@ -82,7 +73,6 @@ describe('the index', () => {
     expect(scans.get(plane)?.links.map((one) => one.target)).toEqual(['/Plans.md'])
     expect(scans.get(site)?.address).toBe('https://svelte.dev/')
   })
-
   test('a note gone, or never in this space, is gone', async () => {
     const id = await made('Gone.md', '# Gone\n')
     await call(env, `/v1/notes/${id}`, { token, method: 'DELETE' })
@@ -94,28 +84,23 @@ describe('the index', () => {
       ]),
     )
   })
-
   test("words that are not the row's - a save halfway - are left out, to be asked again", async () => {
     const id = await made('Halfway.md', '# Before\n')
     await env.NOTES.put(`spaces/${space}/${id}`, '# After\n')
     expect(indexAnswerOf((await index([id])).json)).toEqual([])
   })
-
   test('refuses what is not a request, and more than a batch', async () => {
     expect((await index('one')).status).toBe(400)
     expect((await index(Array.from({ length: 201 }, (_, at) => `n${String(at)}`))).status).toBe(400)
   })
-
   test("is a reader's too, and nobody else's", async () => {
     const id = await made('Shared.md', '# Shared\n')
     const reader = await invited(env, token, space, 'reader@example.com', 'read')
     expect(indexAnswerOf((await index([id], reader)).json)).toHaveLength(1)
-
     const stranger = await signIn(env, 'stranger@example.com')
     expect((await index([id], stranger)).status).toBeGreaterThanOrEqual(400)
   })
 })
-
 describe('the search', () => {
   test('answers hits by id, with the line, as the browser walks', async () => {
     const plans = await made('Plans.md', '# Plans\n\nthe garden in spring\n')
@@ -131,7 +116,6 @@ describe('the search', () => {
       }),
     ])
   })
-
   test('leaves out what the browser reads itself, what the space leaves out, and its own', async () => {
     const mine = await made('Mine.md', 'garden\n')
     await made('Drafts/Old.md', 'garden\n')
@@ -140,19 +124,16 @@ describe('the search', () => {
     const answer = searchAnswerOf((await search({ q: 'garden', limit: 10, skip: [mine], excluded: ['Drafts'] })).json)
     expect(answer?.hits.map((one) => one.id)).toEqual([kept])
   })
-
   test('a page at a time, and on from where the last one ended', async () => {
     const ids: string[] = []
     for (let at = 0; at < 205; at += 1) ids.push(await made(`n${String(at)}.md`, `word ${String(at)}\n`))
     const first = searchAnswerOf((await search({ q: 'word', limit: 200 })).json)
     expect(first?.hits).toHaveLength(200)
     expect(first?.after).not.toBeNull()
-
     const rest = searchAnswerOf((await search({ q: 'word', limit: 200, after: first?.after ?? '' })).json)
     expect(rest?.after).toBeNull()
     expect(new Set([...(first?.hits ?? []), ...(rest?.hits ?? [])].map((one) => one.id))).toEqual(new Set(ids))
   })
-
   test('loose guesses come back with their scores', async () => {
     await made('Garden.md', 'the gardens are green\n')
     const answer = await call(env, `/v2/spaces/${space}/search`, {
@@ -163,7 +144,6 @@ describe('the search', () => {
     expect(read?.hits).toEqual([])
     expect(read?.loose[0]?.score).toBeGreaterThan(0)
   })
-
   test('refuses a query that is not one', async () => {
     const answer = await call(env, `/v2/spaces/${space}/search`, {
       token,
@@ -172,10 +152,8 @@ describe('the search', () => {
     expect(answer.status).toBe(400)
   })
 })
-
 describe('who may ask', () => {
   const SECRET = 'the code is 4711'
-
   async function linkGuest(item?: string): Promise<{ token: string; id: string }> {
     const at = `/v1/spaces/${space}/share/link${item ? `?item=${item}` : ''}`
     const { json } = await call(env, at, {
@@ -188,7 +166,6 @@ describe('who may ask', () => {
     const joined = await call(env, `/v1/join/${found[1]}`, { method: 'POST', body: {} })
     return { token: joined.json.token, id: joined.json.guest.id }
   }
-
   async function reaches(as: string, id: string): Promise<{ index: number; search: number }> {
     const asked = await index([id], as)
     const found = await search({ q: '4711', limit: 10 }, as)
@@ -196,7 +173,6 @@ describe('who may ask', () => {
     if (found.status !== 200) expect(found.text).not.toContain('4711')
     return { index: asked.status, search: found.status }
   }
-
   test('a member and a guest of the space read both, at the read role', async () => {
     const id = await made('Plans.md', `# Plans\n\n${SECRET}\n`)
     const reader = await invited(env, token, space, 'reader@example.com', 'read')
@@ -208,7 +184,6 @@ describe('who may ask', () => {
       ])
     }
   })
-
   test("somebody handed one note reaches neither, not even that note's", async () => {
     const shared = await made('Shared.md', `# Shared\n\n${SECRET}\n`)
     await made('Private.md', `# Private\n\n${SECRET}\n`)
@@ -218,14 +193,12 @@ describe('who may ask', () => {
       expect(await reaches(as, shared)).toEqual({ index: 404, search: 404 })
     }
   })
-
   test('a member or a guest let go of reaches nothing from then on', async () => {
     const id = await made('Plans.md', `# Plans\n\n${SECRET}\n`)
     const member = await invited(env, token, space, 'gone@example.com', 'read')
     const guest = await linkGuest()
     expect(await reaches(member, id)).toEqual({ index: 200, search: 200 })
     expect(await reaches(guest.token, id)).toEqual({ index: 200, search: 200 })
-
     await call(env, `/v1/spaces/${space}/share/members/gone@example.com`, {
       method: 'DELETE',
       token,
@@ -234,12 +207,10 @@ describe('who may ask', () => {
     expect(await reaches(member, id)).toEqual({ index: 404, search: 404 })
     expect(await reaches(guest.token, id)).toEqual({ index: 401, search: 401 })
   })
-
   test("another person's space is nobody else's, and none of it answers through this one", async () => {
     const id = await made('Plans.md', `# Plans\n\n${SECRET}\n`)
     const stranger = await signIn(env, 'stranger@example.com')
     expect(await reaches(stranger, id)).toEqual({ index: 404, search: 404 })
-
     const theirs = (await call(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } })).json.space.id
     const asked = await call(env, `/v2/spaces/${theirs}/index`, {
       token: stranger,

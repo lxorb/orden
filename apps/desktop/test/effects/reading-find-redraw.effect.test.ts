@@ -44,13 +44,9 @@ vi.mock('../../src/lib/shortcuts/src/api', () => ({
     hint: () => '',
   },
 }))
-
 Range.prototype.getBoundingClientRect = () => new DOMRect()
-
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
-
 let shown: ReturnType<typeof mount> | null = null
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
@@ -58,7 +54,6 @@ afterEach(() => {
   note.doc = 'alpha beta'
   note.revision = 0
 })
-
 async function opened() {
   const tab = {
     id: 't1',
@@ -85,22 +80,18 @@ async function opened() {
   })
   return target
 }
-
 function find(target: HTMLElement, what: string) {
   const input = target.querySelector('input')!
   input.value = what
   input.dispatchEvent(new Event('input', { bubbles: true }))
   flushSync()
 }
-
 function openBar(target: HTMLElement) {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f' }))
   flushSync()
   return target.querySelector('input')!
 }
-
 const tally = (target: HTMLElement) => target.querySelector('.tally')?.textContent
-
 async function redrawn(target: HTMLElement, doc: string, shows = doc.replaceAll('\n', '')) {
   note.doc = doc
   note.revision++
@@ -110,50 +101,41 @@ async function redrawn(target: HTMLElement, doc: string, shows = doc.replaceAll(
     expect(target.querySelector('article')?.textContent).toBe(shows)
   })
 }
-
 test('the tally counts the page that is showing after a redraw', async () => {
   const target = await opened()
   openBar(target)
   find(target, 'beta')
   await vi.waitFor(() => expect(tally(target)).toBe('1 of 1'))
-
   await redrawn(target, 'beta beta beta')
   await vi.waitFor(() => expect(tally(target)).toBe('1 of 3'))
-
   find(target, 'bet')
   expect(tally(target)).toBe('1 of 3')
 })
-
 test('a bar opened again after a redraw it was open for searches the new page', async () => {
   const target = await opened()
   openBar(target)
   find(target, 'beta')
   await vi.waitFor(() => expect(tally(target)).toBe('1 of 1'))
   await redrawn(target, 'beta\nbeta')
-
   target.querySelector('input')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   flushSync()
   await vi.waitFor(() => {
     flushSync()
     expect(target.querySelector('input')).toBeNull()
   })
-
   openBar(target)
   find(target, 'beta')
   expect(tally(target)).toBe('1 of 2')
 })
-
 test('a base drawn after the page is not counted by the fence it replaced', async () => {
   const target = await opened()
   openBar(target)
   find(target, 'beta')
   await vi.waitFor(() => expect(tally(target)).toBe('1 of 1'))
-
   await redrawn(target, 'beta\n<div data-base-code="beta">beta</div>', 'betaview')
   await settle()
   expect(tally(target)).toBe('1 of 1')
 })
-
 test('Find pressed in a dialog over the page, or already taken, opens no bar behind it', async () => {
   const target = await opened()
   const dialog = document.createElement('div')
@@ -161,13 +143,11 @@ test('Find pressed in a dialog over the page, or already taken, opens no bar beh
   const field = document.createElement('input')
   dialog.append(field)
   document.body.append(dialog)
-
   field.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', bubbles: true }))
   const taken = new KeyboardEvent('keydown', { key: 'f', cancelable: true })
   taken.preventDefault()
   window.dispatchEvent(taken)
   flushSync()
   expect(target.querySelector('input')).toBeNull()
-
   expect(openBar(target)).not.toBeNull()
 })

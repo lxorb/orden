@@ -7,19 +7,15 @@ import type { ShareApi } from './share-api'
 const HOUR = 3600e3
 const DAY = 24 * HOUR
 export const LINK_LIVES = [HOUR, DAY, 7 * DAY, 14 * DAY, 30 * DAY] as const
-
 export type LinkLife = (typeof LINK_LIVES)[number]
-
 export interface LinkOptions {
   expires: LinkLife
   views: number | null
 }
-
 export interface MadeLink {
   url: string
   link: LinkRow
 }
-
 export async function madeLink(
   api: ShareApi,
   origin: string,

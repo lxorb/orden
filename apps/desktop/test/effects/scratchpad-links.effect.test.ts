@@ -2,7 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -14,9 +13,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const PAD = '/app/Scratchpad.md'
-
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 Element.prototype.scrollIntoView = () => undefined
@@ -28,10 +25,8 @@ const scratchpad = await pad()
 const { links } = await import('../../src/lib/link-index/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { startup } = await import('../../src/lib/launch/src/api')
-
 let target: HTMLElement
 let undo: (() => void)[] = []
-
 beforeEach(() => {
   disk.current = new Disk()
   disk.current.files.set(PAD, 'See [[Plan]]\n')
@@ -40,13 +35,11 @@ beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   for (const one of undo) one()
   undo = []
   target.remove()
 })
-
 test('the card hears of a note made after it came', async () => {
   void startup.shown()
   await links.build('/spaces/Work')
@@ -57,13 +50,10 @@ test('the card hears of a note made after it came', async () => {
   undo.push(() => void unmount(made, { outro: false }))
   await vi.waitFor(() => expect(scratchpad.live).not.toBe(null))
   flushSync()
-
   const held = () => scratchpad.live!.state.facet(noteIndex)
   expect(resolveNote(held(), 'Plan')).toBe(null)
-
   links.noteSaved('/spaces/Work/notes/Plan.md', '# Plan\n')
   flushSync()
-
   expect(held()).toBe(links.index(PAD))
   expect(resolveNote(held(), 'Plan')?.path).toBe('notes/Plan.md')
 })

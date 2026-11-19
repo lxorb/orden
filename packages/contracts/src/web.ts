@@ -13,7 +13,6 @@ export interface WebPageSeen {
   readonly playing: boolean
   readonly muted: boolean
 }
-
 export interface PressedKey {
   readonly key: string
   readonly code: string
@@ -23,17 +22,13 @@ export interface PressedKey {
   readonly repeat: boolean
   readonly down: boolean
 }
-
 export type OfferedEngine = { readonly id: string } | { readonly custom: string }
-
 export type EngineTaken = 'same' | 'taken' | 'kept'
-
 export interface WebClip {
   readonly url: string
   readonly title: string
   readonly html: string
 }
-
 export interface WebPagesPort {
   readonly cuts: boolean
   of(tab: string): WebPageSeen
@@ -69,47 +64,39 @@ export interface WebPagesPort {
   articleOf(page: WebClip): Promise<string>
   clipNote(page: WebClip, on: Date): Promise<string>
 }
-
 export interface WebLent {
   readonly url: string | null
   readonly space: string | null
   readonly path: string | null
   readonly own: string | null
 }
-
 export interface WebLendingPort {
   adopt(tab: string, handing: () => Promise<void>): Promise<void>
   lend(tab: string, as: WebLent): Promise<void>
   unlend(tab: string): void
   readerStore(): Promise<string | null>
 }
-
 export interface WebScriptsPort {
   readonly pages: unknown
 }
-
 export interface SiteIcon {
   readonly site: string
   readonly label: string
   readonly picture: string | null
 }
-
 export interface SiteIconsHeld {
   readonly lacking: boolean
   readonly list: readonly SiteIcon[]
   picture(site: string): string | null
   refresh(): Promise<void>
 }
-
 export interface SiteIconsPort {
   held(): Promise<SiteIconsHeld>
 }
-
 export interface WebSitesPort {
   dropped(folder: string, list: string, html: string): Promise<string | null>
   showData(path: string): Promise<void>
 }
-
 export interface WebPorts {
   readonly 'web.pages': WebPagesPort
   readonly 'web.lending': WebLendingPort
@@ -117,7 +104,6 @@ export interface WebPorts {
   readonly 'web.siteIcons': SiteIconsPort
   readonly 'web.sites': WebSitesPort
 }
-
 const BLANK: WebPageSeen = {
   url: null,
   title: '',
@@ -133,7 +119,6 @@ const BLANK: WebPageSeen = {
   playing: false,
   muted: false,
 }
-
 export const NO_WEB_PAGES: WebPagesPort = {
   cuts: false,
   of: () => BLANK,

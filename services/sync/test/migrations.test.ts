@@ -7,22 +7,17 @@ const FOLDER = fileURLToPath(new URL('../migrations/', import.meta.url))
 const MIGRATIONS = readdirSync(FOLDER)
   .filter((name) => name.endsWith('.sql'))
   .sort()
-
 function sql(name: string): string {
   return readFileSync(FOLDER + name, 'utf8')
 }
-
 function upTo(last: string): DatabaseSync {
   const database = new DatabaseSync(':memory:')
-
   for (const name of MIGRATIONS) {
     database.exec(sql(name))
     if (name === last) return database
   }
-
   throw new Error(`no migration named ${last}`)
 }
-
 function seed(database: DatabaseSync): void {
   database.exec(`insert into users (id, email, created_at) values ('u', 'a@b.c', 1)`)
   database.exec(
@@ -30,14 +25,12 @@ function seed(database: DatabaseSync): void {
      values ('sp', 'u', 'Space', 1, 1)`,
   )
 }
-
 function indexes(database: DatabaseSync, table: string): string[] {
   return database
     .prepare(`select name from sqlite_master where type = 'index' and tbl_name = ?`)
     .all(table)
     .map((row) => String((row as { name: string | null }).name))
 }
-
 describe('0017, the notes deleted before Recently deleted existed', () => {
   function deletedLongAgo(database: DatabaseSync, id: string, at: number): void {
     database.exec(
@@ -45,19 +38,15 @@ describe('0017, the notes deleted before Recently deleted existed', () => {
        values ('${id}', 'sp', '${id}.md', 1, ${at}, 1, 12, 'abc')`,
     )
   }
-
   test('stamps them with when the delete was written', () => {
     const database = upTo('0016_guests.sql')
     seed(database)
     deletedLongAgo(database, 'old', 1_700_000_000_000)
-
     database.exec(sql('0017_deleted_at.sql'))
-
     const row = database.prepare(`select deleted_at from notes where id = 'old'`).get()
     expect(row).toEqual({ deleted_at: 1_700_000_000_000 })
     database.close()
   })
-
   test('leaves a live note alone', () => {
     const database = upTo('0016_guests.sql')
     seed(database)
@@ -65,15 +54,12 @@ describe('0017, the notes deleted before Recently deleted existed', () => {
       `insert into notes (id, space_id, path, seq, updated_at, deleted, size, hash)
        values ('live', 'sp', 'live.md', 1, 5, 0, 12, 'abc')`,
     )
-
     database.exec(sql('0017_deleted_at.sql'))
-
     expect(database.prepare(`select deleted_at from notes where id = 'live'`).get()).toEqual({
       deleted_at: null,
     })
     database.close()
   })
-
   test('leaves a note already in Recently deleted where it was', () => {
     const database = upTo('0016_guests.sql')
     seed(database)
@@ -81,22 +67,18 @@ describe('0017, the notes deleted before Recently deleted existed', () => {
       `insert into notes (id, space_id, path, seq, updated_at, deleted, deleted_at, size, hash)
        values ('kept', 'sp', 'kept.md', 1, 9, 1, 7, 12, 'abc')`,
     )
-
     database.exec(sql('0017_deleted_at.sql'))
-
     expect(database.prepare(`select deleted_at from notes where id = 'kept'`).get()).toEqual({
       deleted_at: 7,
     })
     database.close()
   })
-
   test('indexes what the purge looks for', () => {
     const database = upTo('0017_deleted_at.sql')
     expect(indexes(database, 'notes')).toContain('notes_deleted_at')
     database.close()
   })
 })
-
 describe('0022, the plaintext OpenAI key an older build stored', () => {
   function chose(database: DatabaseSync, id: string, settings: string): void {
     database.exec(
@@ -104,13 +86,10 @@ describe('0022, the plaintext OpenAI key an older build stored', () => {
        values ('${id}', '${id}@b.c', 1, '${settings}')`,
     )
   }
-
   test('is dropped, and the rest of the settings stay', () => {
     const database = upTo('0021_domain_proof.sql')
     chose(database, 'one', '{"glassesKey":"sk-proj-secret","glassesModel":"gpt-6-astra","vim":true}')
-
     database.exec(sql('0022_openai_key.sql'))
-
     const row = database.prepare(`select settings, openai_key from users where id = 'one'`).get()
     const { settings, openai_key: sealed } = row as { settings: string; openai_key: unknown }
     expect(JSON.parse(settings)).toEqual({ glassesModel: 'gpt-6-astra', vim: true })
@@ -118,25 +97,20 @@ describe('0022, the plaintext OpenAI key an older build stored', () => {
     expect(sealed).toBeNull()
     database.close()
   })
-
   test('leaves an account that never set one exactly as it was', () => {
     const database = upTo('0021_domain_proof.sql')
     chose(database, 'two', '{"vim":true}')
-
     database.exec(sql('0022_openai_key.sql'))
-
     const row = database.prepare(`select settings from users where id = 'two'`).get()
     expect(JSON.parse((row as { settings: string }).settings)).toEqual({ vim: true })
     database.close()
   })
-
   test('indexes what the cache sweep looks for', () => {
     const database = upTo('0022_openai_key.sql')
     expect(indexes(database, 'cached')).toContain('cached_until')
     database.close()
   })
 })
-
 describe('0039, the account’s devices and web logins', () => {
   function device(database: DatabaseSync): void {
     database.exec(
@@ -147,64 +121,50 @@ describe('0039, the account’s devices and web logins', () => {
        insert into web_chunks (user_id, name, size, at) values ('u', 'c', 1, 1);`,
     )
   }
-
   const count = (database: DatabaseSync, table: string) =>
     (database.prepare(`select count(*) as many from ${table}`).get() as { many: number }).many
-
   test('puts every space there already is in the shared web store', () => {
     const database = upTo('0038_leftovers.sql')
     seed(database)
-
     database.exec(sql('0039_sync2_devices_web.sql'))
-
     expect(database.prepare(`select web_store from spaces where id = 'sp'`).get()).toEqual({
       web_store: 'global',
     })
     database.close()
   })
-
   test('holds a space to the three stores there are', () => {
     const database = upTo('0039_sync2_devices_web.sql')
     seed(database)
-
     expect(() => database.exec(`update spaces set web_store = 'other' where id = 'sp'`)).toThrow()
     for (const store of ['global', 'space', 'site']) {
       database.exec(`update spaces set web_store = '${store}' where id = 'sp'`)
     }
     database.close()
   })
-
   test('takes the key wrapped to a device with the device', () => {
     const database = upTo('0039_sync2_devices_web.sql')
     seed(database)
     device(database)
-
     database.exec(`delete from devices where id = 'd'`)
-
     expect(count(database, 'web_keys')).toBe(0)
     database.close()
   })
-
   test('takes everything of an account with the account', () => {
     const database = upTo('0039_sync2_devices_web.sql')
     seed(database)
     device(database)
-
     database.exec(`delete from users where id = 'u'`)
-
     for (const table of ['devices', 'web_keys', 'web_states', 'web_chunks']) {
       expect(count(database, table), table).toBe(0)
     }
     database.close()
   })
-
   test('indexes what the hub’s door and the device list look for', () => {
     const database = upTo('0039_sync2_devices_web.sql')
     expect(indexes(database, 'devices')).toEqual(expect.arrayContaining(['devices_user', 'devices_session']))
     database.close()
   })
 })
-
 describe('0042, the answers a form took before they were measured', () => {
   test('are measured in the bytes they are stored as', () => {
     const database = upTo('0041_space_archived.sql')
@@ -218,9 +178,7 @@ describe('0042, the answers a form took before they were measured', () => {
        values ('plain', 'sp', 'n', 1, '{"Your name":"Ada"}'),
               ('wide', 'sp', 'n', 1, '{"Your name":"Zoë 🌱"}')`,
     )
-
     database.exec(sql('0042_form_answer_bytes.sql'))
-
     const rows = database.prepare('select id, answers, bytes from form_answers order by id').all() as {
       id: string
       answers: string
@@ -234,7 +192,6 @@ describe('0042, the answers a form took before they were measured', () => {
     )
     database.close()
   })
-
   test('indexes what the ceiling and the sweep read', () => {
     const database = upTo('0042_form_answer_bytes.sql')
     expect(indexes(database, 'form_answers')).toEqual(
@@ -243,7 +200,6 @@ describe('0042, the answers a form took before they were measured', () => {
     database.close()
   })
 })
-
 describe('0061, the reminders of notes emptied for good', () => {
   test('go, and those of live notes and of notes in Recently deleted stay', () => {
     const database = upTo('0058_feedback_issue.sql')
@@ -261,9 +217,7 @@ describe('0061, the reminders of notes emptied for good', () => {
          values ('${note}', 'r', 'u', 'sp', 1, 'Call the bank', 'Plan', 'Plan.md', 'h', 0)`,
       )
     }
-
     database.exec(sql('0061_purged_reminders.sql'))
-
     expect(database.prepare('select note_id from push_reminders order by note_id').all()).toEqual([
       { note_id: 'live' },
       { note_id: 'trashed' },
@@ -271,7 +225,6 @@ describe('0061, the reminders of notes emptied for good', () => {
     database.close()
   })
 })
-
 describe('0063, what a note emptied for good still had sent to it', () => {
   test('lets go of its answers and its old paths, and of nothing a live note has', () => {
     const database = upTo('0058_feedback_issue.sql')
@@ -289,9 +242,7 @@ describe('0063, what a note emptied for good still had sent to it', () => {
       )
       database.exec(`insert into blog_paths (space_id, slug, note_id, at) values ('sp', '${note}', '${note}', 1)`)
     }
-
     database.exec(sql('0063_purged_answers.sql'))
-
     for (const table of ['form_answers', 'blog_paths']) {
       expect(database.prepare(`select note_id from ${table} order by note_id`).all(), table).toEqual([
         { note_id: 'live' },
@@ -301,7 +252,6 @@ describe('0063, what a note emptied for good still had sent to it', () => {
     database.close()
   })
 })
-
 describe('0060, what a note or a space emptied for good still named', () => {
   test('lets go of the paper and the files of purged rows, and of nothing live', () => {
     const database = upTo('0059_note_pictures.sql')
@@ -321,9 +271,7 @@ describe('0060, what a note or a space emptied for good still named', () => {
               ('binned', 'u', 'Binned', 1, 1, 1, 5, '${files}')`,
     )
     database.exec(`update spaces set files = '${files}' where id = 'sp'`)
-
     database.exec(sql('0060_purged_papers.sql'))
-
     expect(database.prepare('select id, paper from notes order by id').all()).toEqual([
       { id: 'live', paper },
       { id: 'purged', paper: null },
@@ -337,7 +285,6 @@ describe('0060, what a note or a space emptied for good still named', () => {
     database.close()
   })
 })
-
 describe('0064, the versions kept as they are', () => {
   test('holds the rows from just before it, and no older one', () => {
     const database = upTo('0063_purged_answers.sql')
@@ -351,9 +298,7 @@ describe('0064, the versions kept as they are', () => {
       `insert into note_versions (note_id, at, hash, size)
        values ('n', ${now - 60 * 60 * 1000}, 'old', 2), ('n', ${now - 60 * 1000}, 'new', 2)`,
     )
-
     database.exec(sql('0064_held_versions.sql'))
-
     expect(database.prepare('select hash, held from note_versions order by at').all()).toEqual([
       { hash: 'old', held: 0 },
       { hash: 'new', held: 1 },
@@ -361,7 +306,6 @@ describe('0064, the versions kept as they are', () => {
     database.close()
   })
 })
-
 describe('0066, who could once write in a space', () => {
   test('is everybody in one today, and the account behind a note written from another', () => {
     const database = upTo('0065_feedback_board.sql')
@@ -399,9 +343,7 @@ describe('0066, who could once write in a space', () => {
               ('e', 'guest', 'Hi.md', 1, 7, 0, 1, 'h', 'guest:g1', null),
               ('f', 'gone', 'Old.md', 1, 7, 0, 1, 'h', 'session:0000111122223333', null)`,
     )
-
     database.exec(sql('0066_once_shared.sql'))
-
     const rows = database.prepare(`select space_id, item from once_shared order by space_id`).all()
     expect(rows).toEqual([
       { space_id: 'gone', item: '' },
@@ -414,15 +356,12 @@ describe('0066, who could once write in a space', () => {
     database.close()
   })
 })
-
 describe('0087, the blobs already waiting to be let go of', () => {
   test('wait the whole grace from when it lands, not from when they were noted', () => {
     const database = upTo('0086_note_reminders_gone.sql')
     database.exec(`insert into unused_blobs (user_id, hash, since) values ('u', 'old', 1), ('u', 'new', 2)`)
     const before = Date.now()
-
     database.exec(sql('0087_unused_blobs_grace.sql'))
-
     const rows = database.prepare('select since from unused_blobs').all() as { since: number }[]
     expect(rows).toHaveLength(2)
     for (const row of rows) expect(row.since).toBeGreaterThanOrEqual(Math.floor(before / 1000) * 1000)

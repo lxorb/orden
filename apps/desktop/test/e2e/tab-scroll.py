@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SEED = """
 async (names) => {
   const ws = window.ordenApp.workspace
@@ -18,7 +16,6 @@ async (names) => {
   for (const one of ws.tabs.filter((tab) => !names.includes(tab.shown))) ws.close(one.id)
 }
 """
-
 LOOK = """
 () => {
   const strip = document.querySelector('.tabs')
@@ -35,19 +32,13 @@ LOOK = """
   }
 }
 """
-
 MANY = 80
-
 WIDE = 4200
-
 ACTIVATE = "(at) => { const ws = window.ordenApp.workspace; ws.activate(ws.tabs.at(at).id) }"
-
 def names(count: int, start: int = 0) -> list[str]:
     return [f"Note {at + 1:02d}" for at in range(start, start + count)]
-
 def look(page: Page) -> dict:
     return page.evaluate(LOOK)
-
 def settle(page: Page) -> None:
     page.wait_for_timeout(300)
     page.evaluate(
@@ -65,12 +56,10 @@ def settle(page: Page) -> None:
         })"""
     )
     page.wait_for_timeout(100)
-
 def over_strip(page: Page) -> None:
     seen = look(page)
     box = page.locator(".tabs").bounding_box()
     page.mouse.move(seen["right"] - 4, box["y"] + box["height"] / 2)
-
 def turns(page: Page, dx: float, dy: float, shift: bool = False, times: int = 6) -> None:
     if shift:
         page.keyboard.down("Shift")
@@ -80,20 +69,17 @@ def turns(page: Page, dx: float, dy: float, shift: bool = False, times: int = 6)
     if shift:
         page.keyboard.up("Shift")
     page.wait_for_timeout(250)
-
 def still(page: Page, where: str) -> None:
     seen = look(page)
     if seen["most"] > 0:
         wrong(f"{where}: the strip has {seen['most']}px to scroll with every tab in view")
     if seen["at"] != 0:
         wrong(f"{where}: the strip is {seen['at']}px along with every tab in view")
-
 def fitting(page: Page) -> None:
     page.evaluate(SEED, names(3))
     wait_for(page, "document.querySelectorAll('.tabs .tab').length === 3", "three tabs")
     settle(page)
     still(page, "three tabs")
-
     over_strip(page)
     for label, dx, dy, shift in (
         ("the wheel", 0, 300, False),
@@ -102,16 +88,13 @@ def fitting(page: Page) -> None:
     ):
         turns(page, dx, dy, shift)
         still(page, f"three tabs, {label}")
-
     page.evaluate("() => { document.querySelector('.tabs').scrollLeft = 2000 }")
     page.wait_for_timeout(100)
     still(page, "three tabs, asked by a script")
-
     page.evaluate(ACTIVATE, 0)
     settle(page)
     still(page, "three tabs, the first one opened")
     DRIVE.shot(page, "01-three-tabs")
-
 def to_the_end(page: Page, where: str) -> dict:
     over_strip(page)
     turns(page, 0, 400, times=40)
@@ -127,7 +110,6 @@ def to_the_end(page: Page, where: str) -> dict:
     if past < 0 or past > 8:
         wrong(f"{where}: the strip ends {past:.1f}px after the plus")
     return seen
-
 def overflowing(page: Page) -> None:
     page.set_viewport_size({"width": 900, "height": 700})
     page.evaluate(SEED, names(MANY))
@@ -137,27 +119,22 @@ def overflowing(page: Page) -> None:
     if seen["most"] <= 0:
         wrong(f"the tabs in 900px do not overflow (most {seen['most']})")
         return
-
     active = seen["active"]
     if not active or active["right"] > seen["right"] + 0.5 or active["left"] < seen["left"] - 0.5:
         wrong(f"the last tab opened is not in view: {seen}")
-
     over_strip(page)
     turns(page, 600, 0, times=10)
     seen = look(page)
     if seen["at"] > seen["most"] + 0.5:
         wrong(f"a sideways swipe went to {seen['at']} of {seen['most']}px")
-
     to_the_end(page, "eighty tabs")
     DRIVE.shot(page, "02-the-end")
     page.mouse.move(10, 400)
-
     page.evaluate(ACTIVATE, 0)
     settle(page)
     seen = look(page)
     if seen["at"] != 0:
         wrong(f"the first tab opened leaves the strip {seen['at']}px along")
-
     page.evaluate(ACTIVATE, 70)
     settle(page)
     seen = look(page)
@@ -170,7 +147,6 @@ def overflowing(page: Page) -> None:
     if gap < 0 or gap > 20:
         wrong(f"the 71st tab opened from the start is {gap:.1f}px from the strip's end")
     DRIVE.shot(page, "03-revealed")
-
     page.evaluate(ACTIVATE, 1)
     settle(page)
     seen = look(page)
@@ -179,7 +155,6 @@ def overflowing(page: Page) -> None:
     say(f"the 2nd tab opened from there: {gap:.1f}px between the strip's start and it")
     if gap < 0 or gap > 20:
         wrong(f"the 2nd tab opened from there is {gap:.1f}px from the strip's start")
-
 def closing(page: Page) -> None:
     page.set_viewport_size({"width": 900, "height": 700})
     page.evaluate(SEED, names(MANY))
@@ -193,7 +168,6 @@ def closing(page: Page) -> None:
     settle(page)
     still(page, "closed down to three")
     page.mouse.move(10, 400)
-
 def widening(page: Page) -> None:
     page.set_viewport_size({"width": 700, "height": 700})
     page.evaluate(SEED, names(MANY))
@@ -210,7 +184,6 @@ def widening(page: Page) -> None:
     turns(page, 0, 300)
     still(page, f"eighty tabs in {WIDE}px, the wheel")
     DRIVE.shot(page, "04-widened")
-
 def drive(browser: Browser) -> None:
     for step in (fitting, overflowing, closing, widening):
         for icons in (True, False):
@@ -222,5 +195,4 @@ def drive(browser: Browser) -> None:
             say(f"{step.__name__}, {'every tab but the open one its mark' if icons else 'as Chrome draws tabs'}")
             step(page)
             page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "the strip scrolls only as far as its tabs"))

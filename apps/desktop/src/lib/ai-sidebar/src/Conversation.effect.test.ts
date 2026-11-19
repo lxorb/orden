@@ -25,7 +25,6 @@ const panel = vi.hoisted(() => ({
   provider: null,
 }))
 vi.mock('../../ai-chat/src/store/chat.svelte', () => ({ chat: panel }))
-
 vi.stubGlobal(
   'ResizeObserver',
   class {
@@ -34,9 +33,7 @@ vi.stubGlobal(
     disconnect = vi.fn()
   },
 )
-
 const Conversation = (await import('./Conversation.svelte')).default
-
 const you = (id: string, text: string, attachments: unknown[] = [], at = 1) => ({
   id,
   role: 'you',
@@ -44,7 +41,6 @@ const you = (id: string, text: string, attachments: unknown[] = [], at = 1) => (
   parts: [],
   draft: { text, attachments },
 })
-
 const listed = (id: string, updated: number, more: object = {}) => ({
   id,
   title: id,
@@ -54,7 +50,6 @@ const listed = (id: string, updated: number, more: object = {}) => ({
   model: 'm',
   ...more,
 })
-
 function draw() {
   const target = document.createElement('div')
   document.body.append(target)
@@ -62,7 +57,6 @@ function draw() {
   flushSync()
   return { target, close: () => unmount(shown) }
 }
-
 test('two pasted screenshots both called image.png are drawn, both', () => {
   panel.turns = [
     you('u1', 'compare these', [
@@ -76,7 +70,6 @@ test('two pasted screenshots both called image.png are drawn, both', () => {
   expect(drawn?.target.querySelectorAll('.went span')).toHaveLength(2)
   drawn?.close()
 })
-
 test('the note in front, also @-mentioned, is drawn', () => {
   panel.turns = [
     you('u2', 'sum up', [
@@ -88,7 +81,6 @@ test('the note in front, also @-mentioned, is drawn', () => {
   expect(() => (drawn = draw())).not.toThrow()
   drawn?.close()
 })
-
 test('an unread chat open in the window in focus is read; with the window away, not', () => {
   panel.turns = []
   ;(panel as { head: unknown }).head = { id: 'c1', parent: null, kept: true }
@@ -105,7 +97,6 @@ test('an unread chat open in the window in focus is read; with the window away, 
   ;(panel as { head: unknown }).head = null
   panel.unread = new Set()
 })
-
 test('the home’s rows say unread and their state to a screen reader', () => {
   panel.turns = []
   panel.heads = [listed('a', 1, { title: 'Serie 6' }), listed('b', 1, { title: 'Garden', state: 'running' })]
@@ -120,7 +111,6 @@ test('the home’s rows say unread and their state to a screen reader', () => {
   panel.unread = new Set()
   panel.running = []
 })
-
 test('Show all shows the rest in place, and no archived chat', () => {
   panel.turns = []
   panel.heads = [
@@ -139,7 +129,6 @@ test('Show all shows the rest in place, and no archived chat', () => {
   void shown.close()
   panel.heads = []
 })
-
 test('Show all over a thousand chats draws the rows in sight, not every one', () => {
   panel.turns = []
   panel.heads = Array.from({ length: 1000 }, (_, at) => listed(`c${at}`, 1000 - at, { title: `chat ${at}` }))
@@ -153,7 +142,6 @@ test('Show all over a thousand chats draws the rows in sight, not every one', ()
   void shown.close()
   panel.heads = []
 })
-
 test('a long chat draws its last turns first and earlier ones as it is scrolled up', async () => {
   panel.turns = Array.from({ length: 100 }, (_, at) => you(`u${at}`, `question ${at}`, [], at))
   const shown = draw()

@@ -1,5 +1,4 @@
 export const UNKNOWN_TYPE = 'application/octet-stream'
-
 export const MIME_TYPES: Readonly<Record<string, string>> = {
   png: 'image/png',
   jpg: 'image/jpeg',
@@ -26,7 +25,6 @@ export const MIME_TYPES: Readonly<Record<string, string>> = {
   webm: 'video/webm',
   mov: 'video/quicktime',
 }
-
 export function mimeOfPath(path: string): string | null {
   const extension = /\.([a-z0-9]+)(?:[?#]|$)/i.exec(path)?.[1]?.toLowerCase() ?? ''
   return MIME_TYPES[extension] ?? null

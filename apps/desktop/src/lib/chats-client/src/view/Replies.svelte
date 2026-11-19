@@ -32,22 +32,17 @@
     onpicker: (from: HTMLElement, insert: (emoji: string) => void) => void
     onfiles: (message: Message, index: number) => void
   } = $props()
-
   let scroller = $state<HTMLElement>()
   let composer = $state<{ focus: () => void }>()
-
   const replies = page.view.replies(parent)
-
   onMount(() => {
     composer?.focus()
     return () => replies.close()
   })
-
   $effect(() => {
     if (!items.length) return
     queueMicrotask(() => scroller?.scrollTo({ top: scroller.scrollHeight }))
   })
-
   const items = $derived(
     rowsOf({
       messages: replies.messages,
@@ -59,7 +54,6 @@
     }).filter((item) => item.kind === 'message'),
   )
   const canPost = $derived(may(page.view.role, 'post', page.view.meta.posting))
-
   function showMenu(event: MouseEvent, message: Message) {
     menu.show(
       event,
@@ -136,7 +130,6 @@
     border-inline-start: 1px solid var(--line);
     background: var(--surface);
   }
-
   .top {
     --glyph-size: 15px;
     display: flex;
@@ -147,25 +140,21 @@
     border-bottom: 1px solid var(--line);
     color: var(--muted);
   }
-
   .title {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .count {
     flex: 1;
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
   }
-
   .list {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     padding-bottom: var(--space-2);
   }
-
   .rule {
     display: flex;
     align-items: center;
@@ -174,7 +163,6 @@
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .rule::after {
     content: '';
     flex: 1;

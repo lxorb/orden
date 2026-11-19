@@ -1,6 +1,5 @@
 export const SAMPLE_EVERY = 5000
 export const KEEP_MINUTES = 90 * 24 * 60 * 60_000
-
 export interface Sample {
   at: number
   idleMs: number | null
@@ -11,7 +10,6 @@ export interface Sample {
   lid: boolean | null
   locked: boolean | null
 }
-
 export interface Minute {
   at: number
   active: number
@@ -23,12 +21,9 @@ export interface Minute {
   lid: boolean | null
   locked: boolean | null
 }
-
 const minuteOf = (at: number): number => Math.floor(at / 60_000) * 60_000
-
 const share = (value: number | null): number | null =>
   value === null || !Number.isFinite(value) ? null : Math.min(1, Math.max(0, value))
-
 const fresh = (sample: Sample): Minute => ({
   at: minuteOf(sample.at),
   active: 0,
@@ -40,7 +35,6 @@ const fresh = (sample: Sample): Minute => ({
   lid: null,
   locked: null,
 })
-
 function folded(minute: Minute, sample: Sample): Minute {
   const busy = sample.idleMs !== null && sample.idleMs < SAMPLE_EVERY && sample.locked !== true
   const cpu = share(sample.cpu)
@@ -57,10 +51,8 @@ function folded(minute: Minute, sample: Sample): Minute {
     locked: sample.locked === true || minute.locked === true ? true : (sample.locked ?? minute.locked),
   }
 }
-
 export class MinuteFold {
   private current: Minute | null = null
-
   add(sample: Sample): Minute | null {
     const was = this.current
     if (was?.at === minuteOf(sample.at)) {
@@ -70,18 +62,15 @@ export class MinuteFold {
     this.current = folded(fresh(sample), sample)
     return was
   }
-
   flush(): Minute | null {
     const was = this.current
     this.current = null
     return was
   }
-
   get open(): Minute | null {
     return this.current
   }
 }
-
 export function minuteValue(value: unknown): Minute | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Record<string, unknown>

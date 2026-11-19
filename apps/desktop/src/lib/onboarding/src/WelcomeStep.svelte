@@ -6,11 +6,8 @@
 
   const NAME = 'Orden'
   const HOLE = '\uE000'
-
   const [before = '', after = ''] = $derived(`Welcome to ${HOLE}`.split(/\u2068?\uE000\u2069?/u))
-
   let sent = $state<Record<number, 'sending' | 'sent'>>({})
-
   async function report(id: number, text: string) {
     if (sent[id]) return
     sent = { ...sent, [id]: 'sending' }
@@ -76,7 +73,6 @@
       0 20px 50px -18px rgb(91 75 224 / 0.45),
       inset 0 0 0 1px rgb(255 255 255 / 0.5);
   }
-
   .welcome {
     font-size: clamp(40px, 7vw, 72px);
     font-weight: 600;
@@ -85,18 +81,15 @@
     text-align: center;
     color: var(--text-strong);
   }
-
   em {
     font-style: normal;
     background: linear-gradient(90deg, #6d8ff0, #a77be6, #e07cc0);
     background-clip: text;
     color: transparent;
   }
-
   .issues {
     width: min(520px, 100%);
   }
-
   .warn {
     width: 30px;
     height: 30px;
@@ -107,7 +100,6 @@
     color: #e08a00;
     flex: none;
   }
-
   .warn svg {
     width: 17px;
     height: 17px;
@@ -116,7 +108,6 @@
     stroke-width: 1.2;
     stroke-linecap: round;
   }
-
   .text {
     min-width: 0;
     flex: 1;

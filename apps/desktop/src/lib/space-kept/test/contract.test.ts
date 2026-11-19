@@ -14,19 +14,15 @@ function storage(): Storage {
     clear: () => store.clear(),
   }
 }
-
 vi.stubGlobal('localStorage', storage())
-
 beforeEach(() => {
   vi.useFakeTimers()
   localStorage.clear()
 })
-
 afterEach(() => {
   vi.clearAllTimers()
   vi.useRealTimers()
 })
-
 describe('what a space keeps beside its files', () => {
   test('an archived folder hides what is under it, and its mark moves with it', async () => {
     const archive = new Archive(() => '/s')
@@ -38,7 +34,6 @@ describe('what a space keeps beside its files', () => {
     archive.forget('/s')
     expect(archive.of('/s')).toEqual({})
   })
-
   test('a space put away is remembered until it comes back', () => {
     const spaces = new ArchivedSpaces()
     expect(spaces.set('/s', true)).toBe(true)
@@ -47,7 +42,6 @@ describe('what a space keeps beside its files', () => {
     spaces.set('/s', false)
     expect(spaces.has('/s')).toBe(false)
   })
-
   test('a bookmark is the same by kind, place and words, and a tile is a note in no group', () => {
     const plan = { kind: 'note', path: 'Plan.md', text: 'Plan' } as const
     expect(sameBookmark(plan, { ...plan })).toBe(true)
@@ -56,7 +50,6 @@ describe('what a space keeps beside its files', () => {
     expect(isTile({ ...plan, parent: 'g1' })).toBe(false)
   })
 })
-
 describe("a space's graph settings", () => {
   test('with no space open there is nothing to change', () => {
     const settings = new SpaceGraphSettings(() => null)
@@ -64,7 +57,6 @@ describe("a space's graph settings", () => {
     settings.set({ depth: DEEPEST })
     expect(settings.here).toEqual(before)
   })
-
   test('a depth is held between the shallowest and the deepest', () => {
     const settings = new SpaceGraphSettings(() => '/space')
     settings.set({ depth: DEEPEST + 10 })

@@ -8,7 +8,6 @@ const task = (fields: Record<string, unknown>) =>
     note: {},
     task: { text: 'Pay rent', status: ' ', done: false, tags: [], priority: 4, ...fields },
   }) as unknown as Row
-
 describe('a task card dropped on a board grouped by one of its fields', () => {
   test('takes the column it lands in', () => {
     expect(dropInto('task.status', 'x', task({}))).toEqual({ change: { task: { done: true } } })
@@ -26,12 +25,10 @@ describe('a task card dropped on a board grouped by one of its fields', () => {
       change: { task: { assignee: 'Ana' } },
     })
   })
-
   test('changes nothing when it lands in its own column', () => {
     expect(dropInto('task.status', ' ', task({}))).toBeNull()
     expect(dropInto('task.priority', 4, task({}))).toBeNull()
   })
-
   test('moves a task due today onto the day it is dropped on', () => {
     const today = task({ due: '2026-11-15' })
     expect(dropInto('formula.day', '2026-11-21', today, undefined, '2026-11-15')).toEqual({
@@ -42,14 +39,12 @@ describe('a task card dropped on a board grouped by one of its fields', () => {
     })
   })
 })
-
 describe('a card dragged across a column and a lane at once', () => {
   test('writes both of the changes it takes', () => {
     const row = task({})
     const drops = inTurn([dropInto('task.status', 'x', row), dropInto('task.priority', 1, row)])
     expect(drops).toEqual([{ change: { task: { done: true, priority: 1 } } }])
   })
-
   test('keeps the fields of a note and a task change together', () => {
     const drops = inTurn([
       { change: { note: { stage: 'Done' } } },
@@ -62,7 +57,6 @@ describe('a card dragged across a column and a lane at once', () => {
       },
     ])
   })
-
   test('changes nothing when neither drop does', () => {
     expect(inTurn([null, null])).toEqual([])
   })

@@ -80,54 +80,40 @@
     ongoto?: (line: number) => void
     onmovesection?: (from: number, to: number) => void
   } = $props()
-
   const rootDrop = $derived.by(() => {
     const root = workspace.activeSpace?.root
     return root !== undefined && dropTarget.lit(root)
   })
-
   function overRoot(event: DragEvent) {
     const root = workspace.activeSpace?.root
     const how = landing(event, shortcuts.platform)
     if (!how || !root) return
-
     const paths = carried()
     if (paths.length && !landsIn(paths, root, how)) return
-
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = how
     dropTarget.over(root)
   }
-
   function dropOnRoot(event: DragEvent) {
     event.preventDefault()
     dropTarget.clear()
-
     const root = workspace.activeSpace?.root
     if (root) dropOnList(event, root)
   }
-
   const HOLD_MARK = 'M4.6 2h4M6.6 2v3.2M4 5.2h5.2M6.6 5.2v5.6'
-
   const MORE_MARK = 'M3 6.5h.1M6.5 6.5h.1M10 6.5h.1'
-
   const ask = sidebarPart('ask')
   const pad = sidebarPart('scratchpad')
   const outlined = sidebarPart('outline')
   const unread = $derived(ask?.unread?.() ?? false)
-
   const phoneTabs = $derived(side === 'left' && viewport.device === 'phone' && !__EVEN_PLUGIN__)
-
   const padHere = $derived(side === 'right' && !viewport.touch && !__EVEN_PLUGIN__)
-
   const offered = (id: Panel) =>
     workspace.fills(id) &&
     (id !== 'chats' || (!!account.accountToken && chatsOn())) &&
     (id !== 'time' || timeOn()) &&
     (id !== 'ask' || !__EVEN_PLUGIN__)
-
   const open = $derived(padHere ? workspace.rightShows !== null : workspace.openOn(side) !== null)
-
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
   const showing = $derived.by((): Panel | 'scratchpad' => {
     if (side === 'right' && padHere && pad?.open?.()) return 'scratchpad'
@@ -138,7 +124,6 @@
     if (!twin && offered(chosen)) return chosen
     return mine.find((one) => one.id !== 'scratchpad' && !(twin && one.id === chosen))?.id ?? chosen
   })
-
   let entered = $state(untrack(() => !startup.reached('index')))
   onMount(() => {
     if (entered) return
@@ -146,7 +131,6 @@
     return () => cancelAnimationFrame(next)
   })
   const shut = $derived(!open || !entered)
-
   const peek = $derived(side === 'left' && shut && edgePeek.out)
   let floating = $state(false)
   $effect(() => {
@@ -162,11 +146,8 @@
     const settled = setTimeout(() => (floating = false), dur(130))
     return () => clearTimeout(settled)
   })
-
   let carrying = false
-
   let column = $state<HTMLElement>()
-
   $effect(() => {
     if (viewport.touch || side === 'right') return
     const stop = edgePeek.watch({
@@ -211,7 +192,6 @@
       window.removeEventListener('dragend', carried, true)
     }
   })
-
   $effect(() =>
     peek
       ? overlays.peek(
@@ -223,7 +203,6 @@
   $effect(() => {
     if (!shut && side === 'left') untrack(() => edgePeek.hide())
   })
-
   let moving = $state(false)
   let wasShut = untrack(() => shut)
   $effect.pre(() => {
@@ -231,11 +210,9 @@
     wasShut = shut
     moving = !viewport.touch && dur(1) > 0
   })
-
   function slid(event: TransitionEvent) {
     if (event.target === event.currentTarget && event.propertyName === 'width') moving = false
   }
-
   const PANELS: { id: Panel; label: string; path: string }[] = [
     { id: 'tree', label: 'Files', path: FILES_MARK },
     { id: 'outline', label: 'Outline', path: OUTLINE_MARK },
@@ -249,17 +226,14 @@
     { id: 'links', label: 'Links', path: LINKS_MARK },
     { id: 'ask', label: 'Ask', path: ASK_MARK },
   ]
-
   $effect(() => {
     ask?.spaces?.(workspace.spaces.map((one) => one.id))
   })
-
   const mine = $derived.by(() => {
     const held = workspace.panelsOn(
       side,
       PANELS.map((one) => one.id),
     )
-
     const pads: { id: Panel | 'scratchpad'; label: string; path: string }[] = padHere
       ? [{ id: 'scratchpad', label: 'Scratchpad', path: SCRATCHPAD_MARK }]
       : []
@@ -268,14 +242,10 @@
     )
     return [...panelsHere, ...pads]
   })
-
   const commandOf = (id: Panel | 'scratchpad') => `app.${id === 'tree' ? 'files' : id}`
-
   let firstPress: Panel | 'scratchpad' | null = null
-
   const choose = (id: Panel | 'scratchpad') =>
     id === 'scratchpad' ? workspace.showRight('scratchpad') : workspace.showPanel(id)
-
   let rowWidth = $state(0)
   let toolsWidth = $state(0)
   let markWidth = $state(0)
@@ -292,7 +262,6 @@
     const shown = panels.tabsShown(mine.length, room, Math.max(markWidth + 8, floorWidth))
     return panels.splitTabs(mine, shown, (item) => item.id === showing)
   })
-
   function showBehind(event: MouseEvent) {
     menu.show(
       event,
@@ -304,19 +273,15 @@
       { title: 'More' },
     )
   }
-
   let graphing = $state(false)
   const depth = $derived(workspace.graphSettings.here.depth)
-
   const listing = $derived(workspace.shownTree)
-
   function showOrder(event: MouseEvent) {
     event.preventDefault()
     void import('./order-menu').then(({ orderMenu, orderTitle }) =>
       menu.show(event, orderMenu(), { title: orderTitle() }),
     )
   }
-
   function showTabMenu(event: MouseEvent, id: Panel, label: string) {
     event.preventDefault()
     const own = import('./panel-menu')
@@ -326,103 +291,78 @@
       void Promise.all([own, making]).then(([{ panelMenu }, rows]) => shown(panelMenu(id, side, [...rows])))
       return
     }
-
     void Promise.all([import('./order-menu'), rowMenus(), own]).then(
       ([{ orderMenu }, { newFileRows }, { panelMenu }]) =>
         shown([...orderMenu(), DIVIDER, ...panelMenu(id, side, newFileRows())]),
     )
   }
-
   function showSpaceMenu(event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
     void rowMenus().then(({ newFileRows }) => menu.show(event, newFileRows(), titleOfSpace()))
   }
-
   function titleOfSpace(): { title?: string } {
     const name = workspace.activeSpace?.name
     return name === undefined ? {} : { title: name }
   }
-
   function runBookmarked(text: string) {
     searching()?.show(text)
   }
-
   $effect(() => {
     if (showing === 'search') void workspace.loadTags()
   })
-
   const held = $derived(workspace.held)
   const holdable = $derived(showing !== 'scratchpad' && workspace.holdable(showing))
-
   const paletteKey = $derived(shortcuts.hint('app.palette'))
-
   function jump(line: number) {
     const tab = workspace.panelTab
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     ongoto?.(line)
   }
-
   const shallowest = $derived(workspace.headings.reduce((least, heading) => Math.min(least, heading.level), 6))
-
   const current = $derived.by(() => {
     if (showing !== 'outline') return -1
-
     const tab = workspace.panelTab
     const headings = workspace.headings
     if (!tab || !headings.length) return -1
-
     const line = tab.line ?? lineOf(tab.doc, tab.cursor ?? 0)
     return headingAt(headings, line)
   })
-
   let outline = $state<HTMLElement>()
-
   let dropAt = $state<number | null>(null)
   let dropAbove = $state(false)
   let dragging = $state<number | null>(null)
-
   function startSection(event: DragEvent, at: number) {
     carrySection(event.dataTransfer, at)
     dragging = at
   }
-
   function endSection() {
     dropAt = null
     dragging = null
   }
-
   function overSection(event: DragEvent, at: number) {
     if (!isSectionDrag(event.dataTransfer)) return
     if (dragging !== null && !movesSection(workspace.headings, dragging, at)) return
-
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-
     dropAt = at
     dropAbove = dragging !== null && dragging > at
   }
-
   function dropSection(event: DragEvent, at: number) {
     event.preventDefault()
-
     const from = draggedSection(event.dataTransfer)
     endSection()
     if (from !== null) onmovesection?.(from, at)
   }
-
   function headingMenu(at: number, text: string): MenuEntry[] {
     return [...bookmarkEntry(workspace.bookmarks.forHeading(workspace.panelNote, text)), ...moveSectionEntries(at)]
   }
-
   function moveSectionEntries(at: number): MenuEntry[] {
     if (!viewport.touch) return []
-
     const targets = workspace.headings
       .map((heading, index) => ({ id: String(index), label: heading.text, index }))
       .filter((one) => movesSection(workspace.headings, at, one.index))
     if (!targets.length) return []
-
     return [
       {
         label: 'Move',
@@ -440,31 +380,24 @@
       },
     ]
   }
-
   $effect(() => {
     const list = outline
     if (!list || current < 0) return
     list.querySelector('.row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
-
   const place = $derived(workspace.shownSpaces.findIndex((one) => one.id === workspace.activeSpaceId))
   let direction = $state(1)
   let lastPlace = -1
-
   $effect.pre(() => {
     direction = place >= lastPlace ? 1 : -1
     lastPlace = place
   })
-
   let stack = $state<HTMLElement>()
-
   let arrived = untrack(() => workspace.activeSpaceId)
-
   $effect(() => {
     const id = workspace.activeSpaceId
     if (id === arrived) return
     arrived = id
-
     untrack(() => stack)?.animate(
       [
         { transform: `translateY(${16 * untrack(() => direction)}px)`, opacity: 0 },
@@ -473,13 +406,10 @@
       { duration: dur(220), easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)' },
     )
   })
-
   const size = new SidebarWidth(() => side)
   let aside = $state<HTMLElement>()
   let asideWidth = $state(0)
-
   $effect(() => () => size.release())
-
   function onEdgeKey(event: KeyboardEvent) {
     if (viewport.touch) return
     if (size.step(event.key, aside)) event.preventDefault()
@@ -885,11 +815,9 @@
       width var(--dur-base) var(--ease-out),
       visibility 0s;
   }
-
   .column.right {
     justify-content: flex-end;
   }
-
   .column.shut {
     width: 0;
     visibility: hidden;
@@ -897,22 +825,18 @@
       width var(--dur-base) var(--ease-out),
       visibility 0s var(--dur-base);
   }
-
   :global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside {
     transform: translateX(calc(-100% - var(--card-inset) - var(--space-6)));
   }
-
   :global(:root:not([data-touch], [data-drawer])) .column.right.shut:not(.moving, .peek) aside {
     transform: translateX(calc(100% + var(--card-inset) + var(--space-6)));
   }
-
   .column.shut.floating {
     position: relative;
     visibility: visible;
     overflow: visible;
     transition: none;
   }
-
   .column.shut.floating aside {
     position: absolute;
     inset-block: var(--card-inset);
@@ -929,28 +853,22 @@
       var(--shadow-lg);
     transition: transform var(--dur-fast) var(--ease-out) -16ms;
   }
-
   .column.shut.floating.peek aside {
     transform: none;
   }
-
   .column.moving,
   .column.shut {
     overflow: clip;
   }
-
   .column.resizing {
     transition: none;
   }
-
   :global([data-touch]) .column {
     display: contents;
   }
-
   :global([data-touch]:not([data-drawer])) .column.shut aside {
     display: none;
   }
-
   aside {
     position: relative;
     width: min(var(--panel-width, var(--sidebar-width)), var(--panel-room, 100vw));
@@ -961,12 +879,10 @@
     border-inline-end: 1px solid var(--chrome-seam);
     background: var(--side-ground, var(--side-bar-bg-color));
   }
-
   aside.right {
     border-inline-end: 0;
     border-inline-start: 1px solid var(--chrome-seam);
   }
-
   .edge {
     position: absolute;
     top: 0;
@@ -976,17 +892,14 @@
     z-index: var(--z-lifted);
     cursor: col-resize;
   }
-
   aside.right .edge {
     inset-inline-end: auto;
     inset-inline-start: -4px;
   }
-
   aside.right .edge::after {
     inset-inline-start: auto;
     inset-inline-end: 3px;
   }
-
   .edge::after {
     content: '';
     position: absolute;
@@ -997,12 +910,10 @@
     background: transparent;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .edge:hover::after,
   aside.resizing .edge::after {
     background: var(--accent);
   }
-
   .head {
     position: relative;
     flex: none;
@@ -1012,11 +923,9 @@
     min-height: var(--header-height);
     padding: 0 var(--space-1);
   }
-
   :global([data-lights]) .head {
     padding-inline-start: var(--traffic-lights);
   }
-
   .switch {
     position: relative;
     display: flex;
@@ -1024,36 +933,28 @@
     gap: var(--space-1);
     padding: 0 var(--space-1) var(--space-2);
   }
-
   aside.right .switch {
     padding-top: var(--space-2);
   }
-
   :global([data-drawer]) aside.right .switch {
     padding-top: calc(var(--space-2) + var(--inset-top));
   }
-
   .switch .orden-segmented {
     flex: 0 1 auto;
     min-width: 0;
   }
-
   .panels button {
     padding: 0 var(--space-2);
   }
-
   .switch .orden-segmented button {
     min-width: 0;
   }
-
   :global([data-touch]) .switch .orden-segmented button {
     min-width: var(--touch-target);
   }
-
   .switch .orden-segmented button svg {
     flex: none;
   }
-
   .waiting {
     position: absolute;
     top: 1px;
@@ -1072,12 +973,10 @@
     font-variant-numeric: tabular-nums;
     pointer-events: none;
   }
-
   .tools {
     flex: none;
     margin-inline-start: auto;
   }
-
   .holding {
     margin: 0;
     padding: 0 var(--row-pad) var(--space-1);
@@ -1087,33 +986,27 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .tools {
     display: flex;
     align-items: stretch;
     gap: 2px;
   }
-
   .tools button {
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .tools button.active {
     background: var(--surface-selected);
     color: var(--accent);
   }
-
   button:focus-visible {
     outline-offset: -1px;
   }
-
   .stack {
     position: relative;
     flex: 1;
     min-height: 0;
   }
-
   .body {
     position: absolute;
     inset: 0;
@@ -1123,20 +1016,17 @@
     overscroll-behavior: contain;
     padding: 0 var(--space-1) var(--space-4);
   }
-
   ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-
   .heading {
     position: relative;
     padding-inline-start: calc(var(--row-pad) + var(--level) * var(--row-indent));
     opacity: calc(1 - var(--level) * 0.09);
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .note-id {
     align-self: start;
     margin-top: 0.3em;
@@ -1144,7 +1034,6 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .heading.above::before,
   .heading.below::after {
     content: '';
@@ -1155,36 +1044,29 @@
     border-radius: 1px;
     background: var(--accent);
   }
-
   .heading.above::before {
     top: -1px;
   }
-
   .heading.below::after {
     bottom: -1px;
   }
-
   .heading.is-on {
     opacity: 1;
   }
-
   @media (hover: hover) {
     .heading:hover {
       transform: translateX(2px);
     }
   }
-
   .rest {
     flex: 1;
     min-height: var(--space-6);
   }
-
   .rest.dropping {
     box-shadow: inset 0 0 0 1px var(--accent);
     border-radius: var(--radius-row);
     background: var(--accent-soft);
   }
-
   .empty {
     width: 100%;
     min-height: var(--row-height);
@@ -1201,18 +1083,15 @@
       border-color var(--dur-base) var(--ease-out),
       color var(--dur-base) var(--ease-out);
   }
-
   .empty:hover {
     border-color: var(--accent);
     color: var(--accent);
   }
-
   .empty:active {
     border-color: var(--accent);
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   svg {
     fill: none;
     stroke: currentColor;
@@ -1220,56 +1099,45 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .switch svg {
     width: var(--icon-lg);
     height: var(--icon-lg);
   }
-
   :global([data-drawer]) aside {
     width: min(78vw, 20rem);
   }
-
   :global([data-touch]) .edge {
     display: none;
   }
-
   :global([data-drawer][data-narrow]) aside {
     flex: 1;
     width: auto;
     min-width: 0;
     background: var(--bg);
   }
-
   :global([data-touch]:not([data-drawer])) aside {
     width: 20rem;
     animation: dock var(--dur-base) var(--ease-out);
   }
-
   @keyframes dock {
     from {
       opacity: 0;
       transform: translateX(-12px);
     }
   }
-
   :global([data-touch]) .head {
     padding-top: var(--inset-top);
   }
-
   :global([data-touch]) .body {
     padding-bottom: var(--space-4);
   }
-
   .body[data-panel='ask'] {
     overflow: hidden;
     padding: 0;
   }
-
   aside:has(:global(.ask.is-empty)) [data-tool='new-chat'] {
     display: none;
   }
-
   :global([data-touch]) .empty {
     font-size: var(--touch-text);
   }

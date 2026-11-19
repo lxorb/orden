@@ -2,19 +2,15 @@ import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 
 const chosen: Record<string, string | null> = {}
-
 vi.mock('../../marks/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../marks/src/api')>()),
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: () => null,
 }))
-
 const TerminalMark = (await import('./TerminalMark.svelte')).default
 const { writeSpec } = await import('./spec')
-
 const drawn = (tab: { doc: string; path?: string | null; id?: string }) =>
   render(TerminalMark, { props: { tab: { running: null, ...tab } } }).body
-
 describe('a terminal’s mark', () => {
   test('an online terminal wears the icon its file chose, under its cloud', () => {
     chosen['/s/Server.term'] = '🚀'
@@ -23,7 +19,6 @@ describe('a terminal’s mark', () => {
     expect(body).toContain('class="cloud')
     expect(body).not.toContain('class="state')
   })
-
   test('one on this machine wears the icon its words chose, and its shell’s without', () => {
     const spec = { shell: 'pwsh', folder: null, key: 'k', name: null }
     expect(drawn({ doc: writeSpec({ ...spec, icon: '🐙' }) })).toContain('🐙')

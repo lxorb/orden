@@ -5,15 +5,12 @@ import { EditorView } from '@codemirror/view'
 import { Parser, type Input, type PartialParse, type TreeFragment } from '@lezer/common'
 
 let here: typeof import('@codemirror/lang-html') | null = null
-
 let held: Promise<typeof import('@codemirror/lang-html')> | null = null
-
 export function htmlGrammar(): Promise<typeof import('@codemirror/lang-html')> {
   if (held) return held
   const loading = import('@codemirror/lang-html').then((module) => {
     closers = EditorState.create({ extensions: module.autoCloseTags }).facet(EditorView.inputHandler)
     here = module
-
     return module
   })
   held = loading
@@ -22,23 +19,18 @@ export function htmlGrammar(): Promise<typeof import('@codemirror/lang-html')> {
   })
   return loading
 }
-
 export interface HtmlConfig {
   matchClosingTags?: boolean
   selfClosingTags?: boolean
   autoCloseTags?: boolean
 }
-
 class LazyParser extends Parser {
   private real: Parser | null = null
-
   private readonly config: HtmlConfig
-
   constructor(config: HtmlConfig) {
     super()
     this.config = config
   }
-
   createParse(
     input: Input,
     fragments: readonly TreeFragment[],
@@ -47,30 +39,22 @@ class LazyParser extends Parser {
     const grammar = here
     if (grammar) {
       this.real ??= grammar.html(this.config).language.parser
-
       return this.real.createParse(input, fragments, ranges)
     }
-
     return ParseContext.getSkippingParser(htmlGrammar()).createParse(input, fragments, ranges)
   }
 }
-
 const data = defineLanguageFacet({
   commentTokens: { block: { open: '<!--', close: '-->' } },
   indentOnInput: /^\s*<\/\w+\W$/,
   wordChars: '-_',
 })
-
 export function html(config: HtmlConfig = {}): LanguageSupport {
   return new LanguageSupport(new Language(data, new LazyParser(config), [], 'html'), [closeTags])
 }
-
 type InputHandler = (view: EditorView, from: number, to: number, text: string, insert: () => Transaction) => boolean
-
 let closers: readonly InputHandler[] = []
-
 const closeTags: Extension = EditorView.inputHandler.of((view, from, to, text, insert) =>
   closers.some((close) => close(view, from, to, text, insert)),
 )
-
 export const htmlCompletionSource = (_context: CompletionContext): CompletionResult | null => null

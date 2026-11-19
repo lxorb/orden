@@ -2,7 +2,6 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { idle } from './settle'
 
 const typed: string[] = []
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -14,14 +13,12 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(null)
   },
 }))
-
 vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
   },
   invoke: () => Promise.resolve(null),
 }))
-
 vi.stubGlobal(
   'ResizeObserver',
   class {
@@ -40,14 +37,12 @@ Object.defineProperty(document, 'fonts', {
   configurable: true,
   value: { load: () => Promise.resolve([]) },
 })
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
     finished: Promise.resolve(),
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
-
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
@@ -58,15 +53,12 @@ const PromptSheet = (await import('../../src/lib/surfaces/src/PromptSheet.svelte
 const { flushSync, mount, unmount } = await import('svelte')
 const { written } = await import('../../src/lib/parting/src/api')
 await import('../../src/lib/web-tab/src/api')
-
 type Opened = ReturnType<typeof sessionOf>
-
 let sheet: ReturnType<typeof mount> | undefined
 const heard: string[] = []
 const hear = (event: KeyboardEvent) => {
   heard.push(`${event.ctrlKey ? 'Ctrl+' : ''}${event.key}`)
 }
-
 async function opened(key: string): Promise<Opened> {
   const words = JSON.stringify({ shell: 'pwsh', folder: null, key })
   const doc = new NoteDoc(
@@ -77,13 +69,11 @@ async function opened(key: string): Promise<Opened> {
   workspace.tabs = [...workspace.tabs, tab]
   const place = document.createElement('div')
   document.body.append(place)
-
   const session = sessionOf(tab)
   await session.attach(place, false)
   await vi.waitFor(() => expect(session.term.textarea).toBeDefined())
   return session
 }
-
 function press(session: Opened, letter: string) {
   const space = letter === ' '
   session.term.textarea?.dispatchEvent(
@@ -98,7 +88,6 @@ function press(session: Opened, letter: string) {
   )
   flushSync()
 }
-
 function answer(words: string) {
   const button = [...document.querySelectorAll<HTMLButtonElement>('.row button')].find(
     (one) => one.textContent.trim() === words,
@@ -107,7 +96,6 @@ function answer(words: string) {
   button.click()
   flushSync()
 }
-
 beforeEach(() => {
   typed.length = 0
   heard.length = 0
@@ -115,7 +103,6 @@ beforeEach(() => {
   sheet = mount(PromptSheet, { target: document.body })
   window.addEventListener('keydown', hear)
 })
-
 afterEach(async () => {
   window.removeEventListener('keydown', hear)
   prompt.dismiss()
@@ -125,11 +112,9 @@ afterEach(async () => {
   await written()
   document.body.innerHTML = ''
 })
-
 test('the first Ctrl+N asks, and gives neither the shell nor the app the press meanwhile', async () => {
   const session = await opened('w1')
   press(session, 'n')
-
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
   expect(prompt.title).toBe('Ctrl+N in a terminal')
@@ -138,94 +123,76 @@ test('the first Ctrl+N asks, and gives neither the shell nor the app the press m
   expect(typed).toEqual([])
   expect(heard).toEqual([])
 })
-
 test('the shell, chosen, is given the character, and keeps it from then on', async () => {
   const session = await opened('w2')
   press(session, 'n')
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
-
   answer('Terminal')
   await vi.waitFor(() => expect(typed).toEqual(['\x0e']))
   expect(shells.ways['app.scratchpad']).toBe('shell')
   expect(heard).toEqual([])
-
   press(session, 'n')
   await vi.waitFor(() => expect(typed).toEqual(['\x0e', '\x0e']))
   expect(prompt.open).toBe(false)
 })
-
 test('the app, chosen, is the press played on the window, as the key it was', async () => {
   const session = await opened('w3')
   press(session, 't')
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
-
   answer('New tab')
   await vi.waitFor(() => expect(heard).toEqual(['Ctrl+t']))
   expect(typed).toEqual([])
   expect(shells.ways['app.new-kind']).toBe('app')
-
   press(session, 't')
   expect(heard).toEqual(['Ctrl+t', 'Ctrl+t'])
   expect(prompt.open).toBe(false)
 })
-
 test('"Always ask" keeps nothing, and asks again', async () => {
   const session = await opened('w4')
   press(session, 'n')
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
-
   const tick = document.querySelector<HTMLInputElement>('.tick input')
   tick?.click()
   flushSync()
   answer('Terminal')
-
   await vi.waitFor(() => expect(typed).toEqual(['\x0e']))
   expect(shells.ways['app.scratchpad']).toBeUndefined()
-
   press(session, 'n')
   await vi.waitFor(() => expect(prompt.open).toBe(true))
 })
-
 test('put away, the question gives the press to nobody', async () => {
   const session = await opened('w5')
   press(session, 'n')
   await vi.waitFor(() => expect(prompt.open).toBe(true))
-
   prompt.dismiss()
   await idle(20)
-
   expect(typed).toEqual([])
   expect(heard).toEqual([])
   expect(shells.ways['app.scratchpad']).toBeUndefined()
 })
-
 test('Ctrl+Space asks too, and the shell chosen is given NUL', async () => {
   const session = await opened('w6')
   press(session, ' ')
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
   expect(prompt.title).toBe('Ctrl+Space in a terminal')
-
   answer('Terminal')
   await vi.waitFor(() => expect(typed).toEqual(['\x00']))
   expect(shells.ways['space.switcher']).toBe('shell')
 })
-
 test('Ctrl+W asks too, and Ctrl+C never does', async () => {
   const session = await opened('w7')
   press(session, 'c')
   flushSync()
   expect(prompt.open).toBe(false)
-
   press(session, 'w')
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
   expect(prompt.title).toBe('Ctrl+W in a terminal')
 })
-
 test('a command put on F9 asks, and the shell chosen is given F9', async () => {
   shortcuts.set('app.scratchpad', 'F9')
   try {
@@ -243,7 +210,6 @@ test('a command put on F9 asks, and the shell chosen is given F9', async () => {
     await vi.waitFor(() => expect(prompt.open).toBe(true))
     flushSync()
     expect(prompt.title).toBe('F9 in a terminal')
-
     answer('Terminal')
     await vi.waitFor(() => expect(typed).toEqual(['\x1b[20~']))
     expect(shells.ways['app.scratchpad']).toBe('shell')

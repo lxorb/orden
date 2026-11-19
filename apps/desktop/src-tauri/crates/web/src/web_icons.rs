@@ -2,19 +2,15 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
 const ICON: &str = "orden://web-icon";
-
 const WANT: u32 = 32;
-
 #[derive(Clone, Serialize)]
 struct Iconed<'a> {
     tab: &'a str,
     icon: &'a str,
 }
-
 pub fn said(app: &AppHandle, window: &str, tab: &str, icon: &str) {
     let _ = app.emit_to(window, ICON, Iconed { tab, icon });
 }
-
 #[derive(Debug, Default, Deserialize)]
 struct Declared {
     #[serde(default)]
@@ -26,7 +22,6 @@ struct Declared {
     #[serde(default)]
     r#type: String,
 }
-
 #[derive(Debug, Default, Deserialize)]
 pub struct Declaring {
     #[serde(default)]
@@ -34,7 +29,6 @@ pub struct Declaring {
     #[serde(default)]
     links: Vec<Declared>,
 }
-
 pub const ASK: &str = r"(function () {
   try {
     var links = []
@@ -53,7 +47,6 @@ pub const ASK: &str = r"(function () {
     return { page: '', links: [] }
   }
 })()";
-
 fn score(declared: &Declared) -> u64 {
     let sizes = declared.sizes.to_ascii_lowercase();
     let scales = sizes.split_whitespace().any(|one| one == "any")
@@ -66,29 +59,24 @@ fn score(declared: &Declared) -> u64 {
     if scales {
         return 4_000_000;
     }
-
     let widths = || {
         sizes
             .split_whitespace()
             .filter_map(|one| one.split_once('x'))
             .filter_map(|(wide, _)| wide.parse::<u32>().ok())
     };
-
     if let Some(fits) = widths().filter(|&wide| wide >= WANT).min() {
         return 3_000_000 - u64::from(fits.min(1_000_000));
     }
-
     match widths().max() {
         Some(wide) => 1_000_000 + u64::from(wide),
         None => 2_000_000,
     }
 }
-
 fn names(rel: &str, word: &str) -> bool {
     rel.split_ascii_whitespace()
         .any(|one| one.eq_ignore_ascii_case(word))
 }
-
 pub fn best(declaring: &Declaring) -> Option<String> {
     let usable = |one: &&Declared| {
         let href = one.href.to_ascii_lowercase();
@@ -104,7 +92,6 @@ pub fn best(declaring: &Declaring) -> Option<String> {
             .max_by_key(|(at, one)| (score(one), *at))
             .map(|(_, one)| one.href.clone())
     };
-
     pick("icon")
         .or_else(|| pick("apple-touch-icon"))
         .or_else(|| pick("apple-touch-icon-precomposed"))
@@ -116,7 +103,6 @@ pub fn best(declaring: &Declaring) -> Option<String> {
                 .map(String::from)
         })
 }
-
 #[cfg(test)]
 mod tests {
     use super::{best, Declared, Declaring};
@@ -136,7 +122,6 @@ mod tests {
             links,
         })
     }
-
     #[test]
     fn a_page_the_app_cannot_name_wears_nothing() {
         let blank = Declaring {
@@ -145,7 +130,6 @@ mod tests {
         };
         assert_eq!(best(&blank), None);
     }
-
     #[test]
     fn the_best_picture_scales_or_fills_the_box_smallest_and_last_and_apple_s_only_alone() {
         let ico = "https://a.example/favicon.ico";

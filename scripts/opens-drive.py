@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import ctypes
 import http.server
 import json
@@ -18,7 +17,6 @@ DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
 POINTER = OUT / "pointer.fifo"
 PAGES = 8770
 SITE = f"http://127.0.0.1:{PAGES}"
-
 CASES = {
     "link_blank": ["GET /landing?link_blank"],
     "link_noopener": ["GET /landing?link_noopener"],
@@ -45,9 +43,7 @@ CASES = {
     "blocked": ["GET /said?blocked_null", "GET /landing?blocked"],
     "download": ["GET /download.bin"],
 }
-
 LATE = {"blocked": 6.5}
-
 TABS = {
     "link_blank",
     "link_noopener",
@@ -58,9 +54,7 @@ TABS = {
     "frame",
     "sandboxed",
 }
-
 WEB_TABS = "orden.workspace.tabs.filter((tab) => tab.kind === 'web').length"
-
 BUTTON = "display:block;box-sizing:border-box;width:100%;height:30px;margin:0 0 2px;font:14px sans-serif"
 OPENER = f"""<!doctype html><title>opener</title>
 <style>body{{margin:0}} a,button,iframe{{{BUTTON};border:0;background:#cde}}</style>
@@ -104,13 +98,10 @@ setTimeout(() => window.close(), 500)
 LANDED = """<!doctype html><title>landed</title>landed<script>
 if (window.opener) setTimeout(() => window.close(), 500)
 </script>"""
-
 heard = []
-
 class Pages(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
-
     def reply(self, body, kind="text/html", extra=()):
         self.send_response(200)
         self.send_header("content-type", kind)
@@ -119,7 +110,6 @@ class Pages(http.server.BaseHTTPRequestHandler):
             self.send_header(key, value)
         self.end_headers()
         self.wfile.write(body if isinstance(body, bytes) else body.encode())
-
     def do_GET(self):
         heard.append(f"GET {self.path}")
         if self.path.startswith("/opener"):
@@ -132,47 +122,36 @@ class Pages(http.server.BaseHTTPRequestHandler):
             self.reply(b"x" * 64, "application/octet-stream", [("content-disposition", "attachment; filename=d.bin")])
         else:
             self.reply(LANDED)
-
     def do_POST(self):
         self.rfile.read(int(self.headers.get("content-length", 0)))
         heard.append(f"POST {self.path}")
         self.reply(LANDED)
-
 class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
-
 if DESK == "sway":
-
     def window():
         def walk(node):
             if str(node.get("pid")) == APP:
                 yield node
             for child in node.get("nodes", []) + node.get("floating_nodes", []):
                 yield from walk(child)
-
         tree = json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_tree"]))
         found = sorted(walk(tree), key=lambda n: n["rect"]["width"] * n["rect"]["height"])
         rect = found[-1]["rect"]
         return rect["x"], rect["y"]
-
     def press(x, y):
         with open(POINTER, "w") as pointer:
             pointer.write(f"move {x} {y}\nclick\n")
-
     def shown():
-
         def walk(node):
             if node.get("pid") and node.get("type") in ("con", "floating_con"):
                 yield (node.get("window_properties") or {}).get("instance"), node.get("name") or ""
             for child in node.get("nodes", []) + node.get("floating_nodes", []):
                 yield from walk(child)
-
         return list(walk(json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_tree"]))))
-
     subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
     time.sleep(2)
-
 else:
     X = ctypes.CDLL("libX11.so.6")
     TEST = ctypes.CDLL("libXtst.so.6")
@@ -182,16 +161,13 @@ else:
     TEST.XTestFakeMotionEvent.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_ulong]
     TEST.XTestFakeButtonEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
     SHOWN = X.XOpenDisplay(os.environ.get("DISPLAY", ":0").encode())
-
     def window():
         return 0, 0
-
     def press(x, y):
         TEST.XTestFakeMotionEvent(SHOWN, -1, int(x), int(y), 0)
         TEST.XTestFakeButtonEvent(SHOWN, 1, 1, 0)
         TEST.XTestFakeButtonEvent(SHOWN, 1, 0, 0)
         X.XFlush(SHOWN)
-
     def shown():
         listed = subprocess.run(["xwininfo", "-root", "-children"], capture_output=True, text=True).stdout
         return [
@@ -200,21 +176,16 @@ else:
             if "IsViewable"
             in subprocess.run(["xwininfo", "-id", one.group(1)], capture_output=True, text=True).stdout
         ]
-
 CLASS = os.environ.get("CLASS", "orden")
-
 def ours():
     return sum(1 for name, _title in shown() if name == CLASS)
-
 def strangers():
     return [(name, title) for name, title in shown() if name != CLASS or title.endswith("Chromium")]
-
 def where():
     for one in reversed(heard):
         if one.startswith("GET /said?at="):
             return json.loads(unquote(one[len("GET /said?at=") :]))
     return {}
-
 def hole():
     for _ in range(40):
         sent = run(
@@ -225,9 +196,7 @@ def hole():
             return sent
         time.sleep(0.5)
     return None
-
 threading.Thread(target=Serving(("127.0.0.1", PAGES), Pages).serve_forever, daemon=True).start()
-
 for _ in range(60):
     if run("1 + 1") == 2:
         break
@@ -249,7 +218,6 @@ OTHERS = (
     f" if (tab.kind === 'web' && tab.id !== {json.dumps(OWN)}) ws.close(tab.id);"
     f" ws.activate({json.dumps(OWN)}); return true }})()"
 )
-
 failures = []
 for case, wanted in CASES.items():
     at = where().get(case)
@@ -300,7 +268,6 @@ for case, wanted in CASES.items():
         print(f"::error::{case}: windows not under {CLASS}, or Chromium's: {sorted(strange)}")
     run(OTHERS)
     time.sleep(2)
-
 (OUT / "opens.json").write_text(json.dumps({"failures": failures, "heard": heard}, indent=2))
 if failures:
     raise SystemExit(f"::error::{len(failures)} of {len(CASES)} ways of opening a window failed")

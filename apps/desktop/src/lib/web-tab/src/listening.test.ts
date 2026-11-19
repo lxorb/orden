@@ -1,10 +1,8 @@
 import { expect, test, vi } from 'vitest'
 
 const order: string[] = []
-
 vi.stubGlobal('window', {})
 vi.stubGlobal('requestAnimationFrame', (go: () => void) => setTimeout(go, 0))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -13,10 +11,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return undefined
   },
 }))
-
 let release: () => void = () => undefined
 const slow = new Promise<void>((go) => (release = go))
-
 vi.mock('../../windows/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../windows/src/api')>()),
   hearHere: async (name: string) => {
@@ -25,14 +21,11 @@ vi.mock('../../windows/src/api', async (importOriginal) => ({
     return () => undefined
   },
 }))
-
 const { pages } = await import('./pages.svelte')
-
 test('the first page is asked for only once the window hears where pages get to', async () => {
   const shown = pages.show('a', 'http://127.0.0.1:8765/', { x: 0, y: 0, width: 800, height: 600 })
   for (let turn = 0; turn < 20; turn += 1) await new Promise<void>((go) => setTimeout(go, 0))
   expect(order).not.toContain('web_open')
-
   release()
   await shown
   await vi.waitFor(() => expect(order).toContain('web_open'))

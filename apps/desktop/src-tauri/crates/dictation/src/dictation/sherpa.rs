@@ -11,9 +11,7 @@ struct FeatureConfig {
     sample_rate: i32,
     feature_dim: i32,
 }
-
 type Text = *const c_char;
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Transducer {
@@ -21,7 +19,6 @@ struct Transducer {
     decoder: Text,
     joiner: Text,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Whisper {
@@ -33,7 +30,6 @@ struct Whisper {
     enable_token_timestamps: i32,
     enable_segment_timestamps: i32,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct SenseVoice {
@@ -41,7 +37,6 @@ struct SenseVoice {
     language: Text,
     use_itn: i32,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Canary {
@@ -51,7 +46,6 @@ struct Canary {
     tgt_lang: Text,
     use_pnc: i32,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct FunAsrNano {
@@ -69,7 +63,6 @@ struct FunAsrNano {
     itn: i32,
     hotwords: Text,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Qwen3 {
@@ -84,7 +77,6 @@ struct Qwen3 {
     seed: i32,
     hotwords: Text,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Cohere {
@@ -94,7 +86,6 @@ struct Cohere {
     use_punct: i32,
     use_itn: i32,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct ModelConfig {
@@ -125,21 +116,18 @@ struct ModelConfig {
     qwen3_asr: Qwen3,
     cohere_transcribe: Cohere,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct LmConfig {
     model: Text,
     scale: f32,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct CtcFst {
     graph: Text,
     max_active: i32,
 }
-
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct RecognizerConfig {
@@ -156,17 +144,13 @@ struct RecognizerConfig {
     hr: [Text; 3],
     ctc_fst_decoder_config: CtcFst,
 }
-
 const HOTWORDS_SCORE: f32 = 1.5;
-
 #[repr(C)]
 struct RecognizerResult {
     text: Text,
 }
-
 enum Recognizer {}
 enum Stream {}
-
 type Version = unsafe extern "C" fn() -> Text;
 type Create = unsafe extern "C" fn(*const RecognizerConfig) -> *const Recognizer;
 type Destroy = unsafe extern "C" fn(*const Recognizer);
@@ -177,7 +161,6 @@ type Accept = unsafe extern "C" fn(*const Stream, i32, *const f32, i32);
 type Decode = unsafe extern "C" fn(*const Recognizer, *const Stream);
 type GetResult = unsafe extern "C" fn(*const Stream) -> *const RecognizerResult;
 type DropResult = unsafe extern "C" fn(*const RecognizerResult);
-
 struct Calls {
     destroy: Destroy,
     stream: NewStream,
@@ -188,30 +171,24 @@ struct Calls {
     result: GetResult,
     drop_result: DropResult,
 }
-
 pub struct Engine {
     recognizer: *const Recognizer,
     calls: Calls,
     _libraries: [Library; 2],
 }
-
 #[allow(unsafe_code)]
 unsafe impl Send for Engine {}
-
 pub struct Opening<'a> {
     pub files: &'a Path,
     pub threads: i32,
     pub provider: &'a str,
 }
-
 fn text(value: &str) -> Result<CString, String> {
     CString::new(value).map_err(|_| "a path with a null in it".to_owned())
 }
-
 fn path_text(folder: &Path, name: &str) -> Result<CString, String> {
     text(&folder.join(name).to_string_lossy())
 }
-
 #[allow(unsafe_code)]
 fn load(path: &Path) -> Result<Library, String> {
     #[cfg(windows)]
@@ -226,7 +203,6 @@ fn load(path: &Path) -> Result<Library, String> {
     let library = unsafe { Library::new(path) };
     library.map_err(|error| format!("the speech runtime could not be loaded: {error}"))
 }
-
 #[allow(unsafe_code)]
 fn symbol<T: Copy>(library: &Library, name: &[u8]) -> Result<T, String> {
     unsafe { library.get::<T>(name).map(|found| *found) }.map_err(|error| {
@@ -236,13 +212,11 @@ fn symbol<T: Copy>(library: &Library, name: &[u8]) -> Result<T, String> {
         )
     })
 }
-
 impl Engine {
     #[allow(unsafe_code)]
     pub fn open(runtime: &Path, onnx: &str, api: &str, opening: &Opening) -> Result<Self, String> {
         let onnxruntime = load(&runtime.join(onnx))?;
         let library = load(&runtime.join(api))?;
-
         let version: Version = symbol(&library, b"SherpaOnnxGetVersionStr\0")?;
         let said = unsafe { CStr::from_ptr(version()) }
             .to_string_lossy()
@@ -263,7 +237,6 @@ impl Engine {
             result: symbol(&library, b"SherpaOnnxGetOfflineStreamResult\0")?,
             drop_result: symbol(&library, b"SherpaOnnxDestroyOfflineRecognizerResult\0")?,
         };
-
         let folder = opening.files;
         let mut held: Vec<CString> = Vec::new();
         let mut keep = |value: CString| {
@@ -301,7 +274,6 @@ impl Engine {
             _libraries: [library, onnxruntime],
         })
     }
-
     pub fn hear(&self, samples: &[f32], names: &str) -> Result<String, String> {
         let names: Vec<String> = names
             .lines()
@@ -323,7 +295,6 @@ impl Engine {
             plain
         })
     }
-
     #[allow(unsafe_code)]
     fn pass(&self, samples: &[f32], hotwords: Option<&str>) -> Result<String, String> {
         let count = i32::try_from(samples.len()).map_err(|_| "too long a stretch".to_owned())?;
@@ -356,14 +327,12 @@ impl Engine {
         }
     }
 }
-
 fn words_of(text: &str) -> Vec<String> {
     text.split(|c: char| !c.is_alphanumeric())
         .filter(|one| !one.is_empty())
         .map(str::to_lowercase)
         .collect()
 }
-
 fn repeats_a_name(text: &str, names: &[String]) -> bool {
     let said = words_of(text);
     names.iter().any(|name| {
@@ -372,14 +341,12 @@ fn repeats_a_name(text: &str, names: &[String]) -> bool {
         !name.is_empty() && said.windows(twice.len()).any(|run| run == twice.as_slice())
     })
 }
-
 impl Drop for Engine {
     #[allow(unsafe_code)]
     fn drop(&mut self) {
         unsafe { (self.calls.destroy)(self.recognizer) }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -387,7 +354,6 @@ mod tests {
     fn names(list: &[&str]) -> Vec<String> {
         list.iter().map(|one| (*one).to_owned()).collect()
     }
-
     #[test]
     fn a_name_said_over_and_over_is_caught() {
         let list = names(&["Daniel", "Sync Worker"]);
@@ -397,7 +363,6 @@ mod tests {
         ));
         assert!(repeats_a_name("Sync Worker, Sync Worker: deploy it", &list));
     }
-
     #[test]
     fn a_name_said_once_or_apart_is_not() {
         let list = names(&["Daniel", "Sync Worker"]);

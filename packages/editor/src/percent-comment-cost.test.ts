@@ -14,20 +14,17 @@ function noteWith(commentLine: string, count = 5000): string {
   }
   return lines.join('\n')
 }
-
 function created(doc: string): EditorState {
   return EditorState.create({
     doc,
     extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
   })
 }
-
 function fullParseMs(doc: string): number {
   const started = performance.now()
   ensureSyntaxTree(created(doc), doc.length, 60_000)
   return performance.now() - started
 }
-
 function typedOnThirdLineMs(doc: string, typed: string): number {
   let state = created(doc)
   ensureSyntaxTree(state, doc.length, 60_000)
@@ -39,20 +36,17 @@ function typedOnThirdLineMs(doc: string, typed: string): number {
   }
   return performance.now() - started
 }
-
 describe('a 5,000 line note holding 200 %% comment blocks', () => {
   beforeAll(() => {
     fullParseMs(noteWith('xx'))
     fullParseMs(noteWith('%%'))
   }, 60_000)
-
   test('parses in about the time of the same note without them', { timeout: 60_000 }, () => {
     const plain = fullParseMs(noteWith('xx'))
     const commented = fullParseMs(noteWith('%%'))
     expect(commented).toBeLessThan(plain * 3 + 60)
   })
 })
-
 describe('a 10,000 line note holding 400 %% comment blocks', () => {
   test('typing %% on a line near the top reparses the note below quickly', { timeout: 60_000 }, () => {
     fullParseMs(noteWith('xx', 10_000))

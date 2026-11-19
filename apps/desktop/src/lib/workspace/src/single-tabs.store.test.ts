@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => ({ current: null as import('../../../../test/disk').Disk | null }))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: false,
@@ -18,14 +17,11 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
-
 const WORK = { id: 'work', name: 'Work', root: '/spaces/Work' }
 const FOOD = { id: 'food', name: 'Food', root: '/spaces/Food' }
-
 async function window(setsRead?: unknown) {
   await vi.dynamicImportSettled()
   vi.resetModules()
@@ -38,9 +34,7 @@ async function window(setsRead?: unknown) {
   workspace.rightPanel = null
   return workspace
 }
-
 const fetched = async () => (await import('./sets.svelte')).sets
-
 beforeEach(() => {
   const one = disk.current!
   one.reset()
@@ -48,9 +42,7 @@ beforeEach(() => {
   one.files.set(`${WORK.root}/Plan.md`, '# Plan\n')
   one.files.set(`${FOOD.root}/Food.md`, '# Food\n')
 })
-
 afterEach(() => vi.dynamicImportSettled())
-
 describe('a tab that is one of its kind', () => {
   test('is one per space: Settings asked for in each space is a tab in each', async () => {
     const workspace = await window()
@@ -69,7 +61,6 @@ describe('a tab that is one of its kind', () => {
     expect(sets.tabsOf('food').filter((one) => one.kind === 'settings')).toHaveLength(1)
     expect(workspace.tabs.filter((one) => one.kind === 'settings')).toHaveLength(2)
   })
-
   test('is still one within a space, however it is asked for', async () => {
     const workspace = await window()
     await fetched()

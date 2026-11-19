@@ -1,14 +1,11 @@
 import json
 import time
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
-
 DEEP = """# Deep note
 
 Something to point at.
@@ -19,12 +16,10 @@ Write it down.
 
 A line that already has a name ^a1b2c3
 """
-
 MONDAY = """# Monday
 
 The first thing to do.
 """
-
 HTML_NOTE = """# Interactive
 
 <div id="counted"></div>
@@ -32,7 +27,6 @@ HTML_NOTE = """# Interactive
 
 After it.
 """
-
 CALLOUTS = """# Callouts
 
 > [!important] Read this one
@@ -44,7 +38,6 @@ CALLOUTS = """# Callouts
 > [!note] Plain
 > the body.
 """
-
 CHARTS = """# Charts
 
 ```chart
@@ -62,7 +55,6 @@ series:
   - data: [1]
 ```
 """
-
 SEED = """
 async ([deep, monday, html, callouts, charts]) => {
   const ws = window.ordenApp.workspace
@@ -81,13 +73,11 @@ async ([deep, monday, html, callouts, charts]) => {
   return paths
 }
 """
-
 ROWS = """
 () => [...document.querySelectorAll('.cm-tooltip-autocomplete li')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """
-
 FRESH_LINE = """
 () => {
   const doc = window.orden.state.doc
@@ -98,13 +88,10 @@ FRESH_LINE = """
   window.orden.focus()
 }
 """
-
 def doc(page: Page) -> str:
     return page.evaluate("() => window.orden.state.doc.toString()")
-
 def rows(page: Page) -> list[str]:
     return page.evaluate(ROWS)
-
 def rows_holding(page: Page, holds: str, patience: float = 12) -> list[str]:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -112,31 +99,24 @@ def rows_holding(page: Page, holds: str, patience: float = 12) -> list[str]:
         if any(holds in one for one in found):
             return found
         page.wait_for_timeout(150)
-
     return rows(page)
-
 def open_note(page: Page, path: str) -> None:
     page.evaluate(
         "(path) => window.ordenApp.workspace.openEntry(path, { activate: true })",
         path,
     )
     page.wait_for_timeout(900)
-
 def line(page: Page) -> None:
     page.evaluate(FRESH_LINE)
     page.wait_for_timeout(250)
-
 def heard(message: object) -> None:
     if message.type != "error":  # type: ignore[attr-defined]
         return
-
     where = message.location.get("url", "")  # type: ignore[attr-defined]
     if where and not where.startswith(ORIGIN):
         say(f"[the frame said] {message.text}")  # type: ignore[attr-defined]
         return
-
     wrong(f"console error: {message.text}")  # type: ignore[attr-defined]
-
 def fresh(browser: Browser) -> tuple[Page, dict[str, str]]:
     context = browser.new_context(
         viewport={"width": 1180, "height": 900},
@@ -150,37 +130,29 @@ def fresh(browser: Browser) -> tuple[Page, dict[str, str]]:
     say(f"the space holds {json.dumps(sorted(paths))}")
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
-
     open_note(page, paths["monday"])
     return page, paths
-
 def format_to(page: Page, spelling: str) -> None:
     page.evaluate("(one) => window.ordenApp.modes.setLinkFormat(one)", spelling)
     page.wait_for_timeout(250)
-
 def picked_link(page: Page, typed: str, label: str) -> str:
     line(page)
     page.keyboard.type(typed, delay=35)
     page.wait_for_timeout(500)
-
     found = rows_holding(page, label)
     if not any(label in one for one in found):
         wrong(f"[{typed}] offered no row for {label}: {found}")
         return ""
-
     for _ in range(len(found)):
         if label in (rows(page)[0] if rows(page) else ""):
             break
         page.keyboard.press("ArrowDown")
         page.wait_for_timeout(80)
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(700)
     return doc(page).rstrip("\n").split("\n")[-1]
-
 def drive_links(page: Page, paths: dict[str, str]) -> None:
     open_note(page, paths["monday"])
-
     wanted = {
         "wikilink": "[[Deep note]]",
         "shortest": "[Deep note](Deep%20note.md)",
@@ -188,7 +160,6 @@ def drive_links(page: Page, paths: dict[str, str]) -> None:
         "absolute": "[Deep note](ideas/deep/Deep%20note.md)",
     }
     written: dict[str, str] = {}
-
     for spelling, expected in wanted.items():
         format_to(page, spelling)
         got = picked_link(page, "[[Deep", "Deep note")
@@ -196,27 +167,21 @@ def drive_links(page: Page, paths: dict[str, str]) -> None:
         say(f"[{spelling}] {json.dumps(got)}")
         if got != expected:
             wrong(f"the {spelling} spelling wrote {json.dumps(got)}, not {json.dumps(expected)}")
-
     shot(page, "01-links-four-spellings")
-
     three = {written[one] for one in ("shortest", "relative", "absolute")}
     if len(three) != 3:
         wrong(f"the three markdown spellings are not three different links: {three}")
-
     format_to(page, "relative")
     heading = picked_link(page, "[[##Next", "Next steps")
     say(f"[[[## relative] {json.dumps(heading)}")
     if heading != "[Deep note](../../ideas/deep/Deep%20note.md#next-steps)":
         wrong(f"a heading picked across the space is not the markdown link: {heading}")
-
     block = picked_link(page, "[[^^a1b", "^a1b2c3")
     say(f"[[[^^ relative] {json.dumps(block)}")
     if block != "[Deep note](../../ideas/deep/Deep%20note.md#^a1b2c3)":
         wrong(f"a block picked across the space is not the markdown link: {block}")
-
     shot(page, "02-links-heading-and-block")
     format_to(page, "wikilink")
-
 CARD = """
 () => {
   const card = document.querySelector('.orden-note-preview')
@@ -236,11 +201,9 @@ CARD = """
   }
 }
 """
-
 def drive_hover(page: Page, paths: dict[str, str]) -> None:
     away(page)
     open_note(page, paths["monday"])
-
     page.evaluate(
         """() => {
           const doc = window.orden.state.doc
@@ -253,7 +216,6 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
         }"""
     )
     page.wait_for_timeout(700)
-
     where = page.evaluate(
         """() => {
           const at = window.orden.state.doc.toString().indexOf('Deep note')
@@ -264,17 +226,14 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
     if not where:
         wrong("the link is not on screen")
         return
-
     page.keyboard.down("Control")
     page.mouse.move(where["x"] - 40, where["y"] + 60)
     page.wait_for_timeout(120)
     page.mouse.move(where["x"], where["y"])
     page.wait_for_timeout(1400)
-
     card = page.evaluate(CARD)
     say(f"[the card] {json.dumps(card)}")
     shot(page, "16-hover-card")
-
     if card is None:
         wrong("holding the modifier over a link opened no card")
         page.keyboard.up("Control")
@@ -285,11 +244,9 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
         wrong(f"the card is a reading of the note rather than the note: {card}")
     if "Something to point at" not in card["said"]:
         wrong(f"the card does not hold what the note says: {card['said']}")
-
     page.mouse.click(where["x"], where["y"] + 90)
     page.wait_for_timeout(500)
     page.keyboard.up("Control")
-
     settled = page.evaluate(CARD)
     say(f"[after the press] {json.dumps(settled)}")
     if settled is None:
@@ -297,21 +254,17 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
         return
     if settled["top"] != card["top"] or settled["height"] != card["height"]:
         wrong(f"the card moved when the caret arrived in it: {card} then {settled}")
-
     page.keyboard.type(" and a word more", delay=25)
     page.wait_for_timeout(400)
-
     page.mouse.move(40, 600)
     page.wait_for_timeout(900)
     stayed = page.evaluate(CARD)
     say(f"[pointer away] {json.dumps(stayed)}")
     shot(page, "17-hover-card-written-in")
-
     if stayed is None:
         wrong("the card closed while the caret was still in it")
     elif "and a word more" not in stayed["said"]:
         wrong(f"what was typed is not in the card: {stayed['said']}")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(1500)
     gone = page.evaluate(CARD)
@@ -319,7 +272,6 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
     shot(page, "18-hover-card-closed")
     if gone is not None:
         wrong("Escape did not put the card away")
-
     said = page.evaluate(
         "(path) => window.ordenApp.workspace.noteText(path)",
         paths["deep"],
@@ -327,7 +279,6 @@ def drive_hover(page: Page, paths: dict[str, str]) -> None:
     say(f"[the linked note] {json.dumps((said or '')[:80])}")
     if "and a word more" not in (said or ""):
         wrong(f"what was typed in the card never reached the note: {json.dumps(said)}")
-
 INDENTED = """
 () => {
   const doc = window.orden.state.doc
@@ -339,30 +290,25 @@ INDENTED = """
   window.orden.focus()
 }
 """
-
 CHEVRONS = """
 () => [...document.querySelectorAll('.cm-line')].map((line) => ({
   text: line.textContent.slice(0, 24),
   fold: !!line.querySelector('.orden-fold'),
 }))
 """
-
 def drive_fold(page: Page, paths: dict[str, str]) -> None:
     open_note(page, paths["monday"])
     page.evaluate(INDENTED)
     page.wait_for_timeout(700)
-
     marks = page.evaluate(CHEVRONS)
     indented = [one for one in marks if one["text"].strip().startswith("an indented")]
     say(f"[the indented line] {json.dumps(indented)}")
     shot(page, "03-indented-chevron")
-
     if not indented:
         wrong("the indented block is not on screen at all")
         return
     if not indented[0]["fold"]:
         wrong("the indented block has no chevron in the margin")
-
     lines = page.evaluate("() => window.orden.state.doc.lines")
     page.evaluate(
         """() => {
@@ -374,18 +320,15 @@ def drive_fold(page: Page, paths: dict[str, str]) -> None:
     page.wait_for_timeout(200)
     page.keyboard.press("Control+Alt+BracketLeft")
     page.wait_for_timeout(700)
-
     folded = page.evaluate(
         "() => [...document.querySelectorAll('.cm-line')].map((one) => one.textContent)"
     )
     say(f"[after folding] {len(folded)} lines on screen of {lines} in the note")
     shot(page, "04-indented-folded")
-
     if any("a third" in one for one in folded):
         wrong("the indented block did not fold: its last line is still on screen")
     if not any("an indented" in one for one in folded):
         wrong("folding took the line that owns the fold with it")
-
 CARDS = """
 () => [...document.querySelectorAll('#write .embed-web')].map((one) => {
   const box = one.getBoundingClientRect()
@@ -398,15 +341,12 @@ CARDS = """
   }
 })
 """
-
 def drive_html(page: Page, paths: dict[str, str]) -> None:
     open_note(page, paths["html"])
     page.wait_for_timeout(800)
-
     found = page.evaluate(CARDS)
     say(f"[the editor's cards] {json.dumps(found)}")
     shot(page, "05-html-card-in-the-editor")
-
     card = next((one for one in found if "embed-html" in one["classes"]), None)
     if card is None:
         wrong("the editor draws nothing at all for a block of the note's own HTML")
@@ -417,17 +357,14 @@ def drive_html(page: Page, paths: dict[str, str]) -> None:
         wrong(f"the card has no room in it: {card['height']}px")
     if card["frame"]:
         wrong("the frame is there before anybody asked for it")
-
     page.click("#write .embed-web.embed-html")
     page.wait_for_timeout(900)
     after = page.evaluate(CARDS)
     say(f"[after the press] {json.dumps(after)}")
     shot(page, "06-html-card-loaded")
-
     loaded = next((one for one in after if "embed-html" in one["classes"]), None)
     if not loaded or not loaded["frame"]:
         wrong("pressing the card loaded no frame")
-
 CANVAS_CARDS = """
 () => [...document.querySelectorAll('.card .embed-web')].map((one) => {
   const box = one.getBoundingClientRect()
@@ -440,7 +377,6 @@ CANVAS_CARDS = """
   }
 })
 """
-
 def drive_canvas(page: Page) -> None:
     away(page)
     page.evaluate(
@@ -466,52 +402,42 @@ def drive_canvas(page: Page) -> None:
         }"""
     )
     page.wait_for_timeout(1500)
-
     found = page.evaluate(CANVAS_CARDS)
     say(f"[the canvas's cards] {json.dumps(found)}")
     shot(page, "07-canvas-card")
-
     if not found:
         wrong("no card on the canvas holds a web embed to press")
         return
-
     card = found[0]
     if card["bordered"] == "0px":
         wrong("the card on the canvas has none of the card's own rules: no border")
     if card["height"] < 60:
         wrong(f"the card on the canvas is a line rather than a card: {card['height']}px")
-
     page.click(".card .embed-web")
     page.wait_for_timeout(900)
     after = page.evaluate(CANVAS_CARDS)
     say(f"[after the press] {json.dumps(after)}")
     shot(page, "08-canvas-card-loaded")
-
     if not after or not after[0]["frame"]:
         wrong("pressing the card on the canvas loaded no frame")
-
 MENU = """
 () => [...document.querySelectorAll('.orden-layer .orden-row')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """
-
 SHEET = """
 () => [...document.querySelectorAll('.orden-screen.sheet .found-row')].map((one) =>
   one.textContent.replace(/\\s+/g, ' ').trim(),
 )
 """
-
 AWAY = """
 () => {
   document.activeElement instanceof HTMLElement && document.activeElement.blur()
   return document.querySelectorAll('.orden-scrim').length
 }
 """
-
 def drive_bulk(page: Page, paths: dict[str, str]) -> None:
     open_note(page, paths["monday"])
-
     page.evaluate(
         """() => {
           const doc = window.orden.state.doc
@@ -524,7 +450,6 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
         }"""
     )
     page.wait_for_timeout(500)
-
     box = page.evaluate(
         """() => {
           const line = [...document.querySelectorAll('.cm-line')].find((one) =>
@@ -537,45 +462,37 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
     if not box:
         wrong("the three blocks are not on screen")
         return
-
     page.mouse.click(box["x"], box["y"], button="right")
     page.wait_for_timeout(600)
     offered = page.evaluate(MENU)
     say(f"[the menu over three blocks] {json.dumps(offered)}")
     shot(page, "09-bulk-menu")
-
     for wanted in ("Turn into", "Indent", "Outdent", "Move up", "Move down", "Duplicate", "Delete"):
         if not any(one == wanted for one in offered):
             wrong(f"the menu over three blocks does not offer {wanted}: {offered}")
     if not any("blocks" in one for one in offered):
         wrong(f"the menu does not say how many blocks it is about: {offered}")
-
     press_row(page, "Turn into")
     page.wait_for_timeout(900)
     choices = page.evaluate(SHEET)
     say(f"[Turn into] {json.dumps(choices)}")
     shot(page, "10-turn-into")
-
     for wanted in ("Heading 1", "Bulleted list", "Numbered list", "Task list", "Quote"):
         if not any(wanted in one for one in choices):
             wrong(f"Turn into does not offer {wanted}: {choices}")
-
     page.keyboard.type("numbered", delay=35)
     page.wait_for_timeout(500)
     narrowed = page.evaluate(SHEET)
     say(f"[Turn into, narrowed] {json.dumps(narrowed)}")
     if len(narrowed) != 1 or "Numbered list" not in narrowed[0]:
         wrong(f"three letters did not narrow the list to the one row: {narrowed}")
-
     page.keyboard.press("Enter")
     page.wait_for_timeout(900)
     written = doc(page)
     say(f"[after Numbered list] {json.dumps(written)}")
     shot(page, "11-turned-into-a-list")
-
     if "1. one" not in written or "2. two" not in written or "3. three" not in written:
         wrong(f"turning three blocks into a numbered list wrote {json.dumps(written)}")
-
     page.mouse.click(box["x"], box["y"], button="right")
     page.wait_for_timeout(500)
     press_row(page, "Indent")
@@ -585,7 +502,6 @@ def drive_bulk(page: Page, paths: dict[str, str]) -> None:
     shot(page, "12-bulk-indented")
     if not indented.startswith(" ") and not indented.startswith("\t"):
         wrong(f"Indent over three blocks indented nothing: {json.dumps(indented)}")
-
 CALLOUT_LOOKS = """
 () => [...document.querySelectorAll('.cm-line')]
   .filter((one) => /orden-callout-/.test(one.className))
@@ -595,7 +511,6 @@ CALLOUT_LOOKS = """
     accent: getComputedStyle(one).getPropertyValue('--callout-accent').trim(),
   }))
 """
-
 def press_row(page: Page, label: str) -> None:
     page.evaluate(
         """(label) => {
@@ -605,43 +520,34 @@ def press_row(page: Page, label: str) -> None:
         }""",
         label,
     )
-
 def away(page: Page) -> None:
     for _ in range(3):
         if page.evaluate(AWAY) == 0:
             return
         page.keyboard.press("Escape")
         page.wait_for_timeout(400)
-
     left = page.evaluate(AWAY)
     if left:
         wrong(f"{left} scrims are still over the app")
-
 def drive_callouts(page: Page, paths: dict[str, str]) -> None:
     away(page)
     open_note(page, paths["callouts"])
     page.wait_for_timeout(900)
-
     looks = page.evaluate(CALLOUT_LOOKS)
     say(f"[the callout lines] {json.dumps(looks)}")
     shot(page, "12-callout-looks")
-
     important = next((one for one in looks if "Read this one" in one["text"]), None)
     caution = next((one for one in looks if "Careful" in one["text"]), None)
-
     if important is None or caution is None:
         wrong(f"the two callouts are not drawn: {looks}")
         return
-
     if "orden-callout-tip" not in important["classes"]:
         wrong(f"[!important] does not wear tip: {important['classes']}")
     if "orden-callout-warning" not in caution["classes"]:
         wrong(f"[!caution] does not wear warning: {caution['classes']}")
-
     tip = next((one for one in looks if "orden-callout-tip" in one["classes"]), None)
     if tip and important["accent"] != tip["accent"]:
         wrong("[!important] is not the colour tip is")
-
     page.evaluate(
         """() => {
           const text = window.orden.state.doc.toString()
@@ -650,7 +556,6 @@ def drive_callouts(page: Page, paths: dict[str, str]) -> None:
         }"""
     )
     page.wait_for_timeout(300)
-
     box = page.evaluate(
         """() => {
           const line = [...document.querySelectorAll('.cm-line')].find((one) =>
@@ -663,26 +568,21 @@ def drive_callouts(page: Page, paths: dict[str, str]) -> None:
     if not box:
         wrong("the callout being asked about is not on screen")
         return
-
     page.mouse.click(box["x"], box["y"], button="right")
     page.wait_for_timeout(600)
     offered = page.evaluate(MENU)
     say(f"[the menu on a callout] {json.dumps(offered)}")
     shot(page, "13-callout-menu")
-
     for wanted in ("Foldable", "Starts folded"):
         if not any(one == wanted for one in offered):
             wrong(f"the menu on a callout does not offer {wanted}: {offered}")
-
     press_row(page, "Starts folded")
     page.wait_for_timeout(800)
     written = doc(page)
     say(f"[after Starts folded] {json.dumps(written[:80])}")
     shot(page, "14-callout-fold-sign")
-
     if "[!important]-" not in written:
         wrong(f"the fold sign was not written: {json.dumps(written[:80])}")
-
 CHART_SHAPES = """
 () => ({
   figures: [...document.querySelectorAll('#write .chart')].map((one) => one.dataset.kind),
@@ -692,16 +592,13 @@ CHART_SHAPES = """
     one.textContent.includes('bubble')).length,
 })
 """
-
 def drive_charts(page: Page, paths: dict[str, str]) -> None:
     away(page)
     open_note(page, paths["charts"])
     page.wait_for_timeout(1200)
-
     found = page.evaluate(CHART_SHAPES)
     say(f"[the charts] {json.dumps(found)}")
     shot(page, "15-charts")
-
     if "radar" not in found["figures"]:
         wrong(f"a radar chart is not drawn as a radar: {found['figures']}")
     if found["areas"] < 1 or found["webs"] < 1:
@@ -710,10 +607,8 @@ def drive_charts(page: Page, paths: dict[str, str]) -> None:
         wrong("a kind nib does not draw came out as a bar chart")
     if found["fences"] == 0:
         wrong("the fence asking for a kind nib does not draw shows nothing at all")
-
 def drive(browser: Browser) -> None:
     page, paths = fresh(browser)
-
     say("--- the Links setting reaches the popup ---")
     drive_links(page, paths)
     say("--- the card over a link is the note ---")
@@ -730,10 +625,7 @@ def drive(browser: Browser) -> None:
     drive_charts(page, paths)
     say("--- a web card on a canvas ---")
     drive_canvas(page)
-
     page.context.close()
-
 def main() -> int:
     return DRIVE.run(drive, "every gap the audit found is closed in the built app")
-
 raise SystemExit(main())

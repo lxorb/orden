@@ -5,31 +5,24 @@ import { prepareSpace } from '../src/sync2/prepare'
 import { type TestEnv, testEnv } from '../../sync-server/test/fakes'
 
 type Op = Parameters<typeof applyOps>[4][number]
-
 type Reached = Parameters<typeof applyOps>[1]
-
 const PAGE = 1000
 const USER = 'user-1'
 const SPACE = 'space-1'
 const DEVICE = 'device-1'
-
 let env: TestEnv
 let counter = 0
-
 function op(t: Op['t'], fields: Record<string, unknown>): Op {
   counter += 1
   return { op: `op-${String(counter)}`, t, seen: 0, ...fields } as unknown as Op
 }
-
 function note(id: string, name: string, parent: string | null = null): Op {
   return op('create', { id, kind: 'note', parent, name })
 }
-
 function reached(): Reached {
   const row = env.db.prepare('select * from spaces where id = ?').get(SPACE) as Reached
   return { ...row, role: 'owner' }
 }
-
 async function heardFromZero(): Promise<{ ids: string[]; pages: number }> {
   const ids: string[] = []
   let since = 0
@@ -42,15 +35,12 @@ async function heardFromZero(): Promise<{ ids: string[]; pages: number }> {
   }
   return { ids, pages: pages + 1 }
 }
-
 function ops(list: readonly Op[]) {
   return applyOps(env, reached(), USER, DEVICE, list)
 }
-
 function names(ids: readonly string[]): string[] {
   return ids.map((id) => (env.db.prepare('select name from notes where id = ?').get(id) as { name: string }).name)
 }
-
 beforeEach(() => {
   env = testEnv()
   env.db.prepare('insert into users (id, email, created_at) values (?, ?, 1)').run(USER, 'one@example.com')
@@ -58,9 +48,7 @@ beforeEach(() => {
     .prepare('insert into spaces (id, user_id, name, created_at, updated_at) values (?, ?, ?, 1, 1)')
     .run(SPACE, USER, 'Contract')
 })
-
 afterEach(() => env.close())
-
 describe('the feed', () => {
   test('a new device reading from 0 hears the whole tree, past rows the tree never names', async () => {
     await ops([note('n-first', 'first.md')])
@@ -75,17 +63,14 @@ describe('the feed', () => {
     await ops([op('mkdir', { id: 'f-work', parent: null, name: 'Work' })])
     await ops([note('n-a', 'a.md'), note('n-b', 'b.md', 'f-work')])
     await prepareSpace(env, SPACE)
-
     const { ids } = await heardFromZero()
     expect(ids).toEqual(expect.arrayContaining(['n-first', 'f-work', 'n-a', 'n-b']))
     expect(ids).not.toContain('gone-long-ago')
   })
-
   test('pages by seq, says when more follows, and keeps deleted items in the feed', async () => {
     const many = Array.from({ length: PAGE + 5 }, (_, at) => note(`n-${String(at)}`, `${String(at)}.md`))
     await ops(many)
     await ops([op('delete', { id: 'n-3' })])
-
     const first = await feedPage(env, SPACE, 0)
     expect(first.items.length).toBe(PAGE)
     expect(first.more).toBe(true)
@@ -93,7 +78,6 @@ describe('the feed', () => {
     expect(first.items.map((item) => item.seq)).toEqual(
       [...first.items.map((item) => item.seq)].sort((one, other) => one - other),
     )
-
     const { ids, pages } = await heardFromZero()
     expect(pages).toBe(2)
     expect(new Set(ids).size).toBe(PAGE + 5)
@@ -101,7 +85,6 @@ describe('the feed', () => {
     expect(deleted?.deleted).toBe(true)
   })
 })
-
 describe('tree operations', () => {
   test('applying the same ops twice answers the same and changes nothing more', async () => {
     const batch = [
@@ -113,13 +96,11 @@ describe('tree operations', () => {
     const rows = () => env.db.prepare('select count(*) as n from notes where space_id = ?').get(SPACE)
     const before = rows()
     const again = await ops(batch)
-
     expect(again.value).toEqual(once.value)
     expect(again.changed).toBe(false)
     expect(rows()).toEqual(before)
     expect(names(['n-1'])).toEqual(['Q3.md'])
   })
-
   test('a taken name is numbered, comparing names as Windows and macOS do', async () => {
     const { value } = await ops([
       note('p-1', 'Plan.md'),
@@ -130,7 +111,6 @@ describe('tree operations', () => {
     expect(value.every((one) => 'ok' in one)).toBe(true)
     expect(names(['p-1', 'p-2', 'c-1', 'c-2'])).toEqual(['Plan.md', 'plan 2.md', 'Café.md', 'Café 2.md'])
   })
-
   test('refuses a parent that does not exist instead of inventing it', async () => {
     const { value } = await ops([note('lost', 'lost.md', 'no-such-folder')])
     expect(value).toEqual([{ op: expect.any(String), refused: 'gone' }])

@@ -6,7 +6,6 @@
     local('Segoe UI'), local('SegoeUI'), local('Noto Sans Arabic'), local('NotoSansArabic-Regular'), local('Tahoma');
   unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+1EE00-1EEFF;
 }
-
 @font-face {
   font-family: 'Orden Arabic';
   font-weight: 600 900;
@@ -16,7 +15,6 @@
     local('Tahoma Bold'), local('Tahoma-Bold');
   unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+1EE00-1EEFF;
 }
-
 :root {
   --font-arabic: 'Orden Arabic';
   --font-ui: var(--font-ui-chosen,) 'Geist', var(--font-arabic), ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
@@ -26,7 +24,6 @@
   --font-mono:
     var(--font-mono-chosen,) 'iA Writer Mono S', ui-monospace, 'Cascadia Code', 'Consolas', var(--font-arabic),
     monospace;
-
   --text-xs: 11px;
   --text-sm: 12.5px;
   --text-row: 13.5px;
@@ -36,10 +33,8 @@
   --zoom: 1;
   --text-content: calc(16.5px * var(--zoom));
   --leading-content: 1.72;
-
   --weight-row: 450;
   --weight-strong: 600;
-
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -47,13 +42,11 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
-
   --radius-sm: 5px;
   --radius-md: 9px;
   --radius-lg: 14px;
   --radius-row: 6px;
   --radius-third: 0.32;
-
   --card-radius: 10px;
   --card-inset: 6px;
   --card-gap: 6px;
@@ -64,16 +57,12 @@
   --chrome-seam: transparent;
   --side-ground: transparent;
   --strip-line: transparent;
-
   --stack-column: 22rem;
   --stack-column-wide: 44rem;
-
   --cover-height: 200px;
-
   --icon-sm: 13px;
   --icon-md: 16px;
   --icon-lg: 18px;
-
   --row-height: 28px;
   --row-height-sm: 24px;
   --row-pad: var(--space-2);
@@ -81,17 +70,13 @@
   --row-indent: 14px;
   --setting-value: 14rem;
   --selection-radius: 6px;
-
   --focus-ring: 2px solid var(--accent);
   --focus-ring-offset: -2px;
-
   --code-number-color: var(--muted);
   --code-number-rule: var(--line-strong);
   --code-number-gap: var(--space-2);
-
   --scrollbar-width: 10px;
   --scrollbar-thumb: 6px;
-
   --sidebar-width: 252px;
   --panel-narrowest: 180px;
   --panes-floor: 240px;
@@ -99,7 +84,6 @@
   --traffic-lights: 78px;
   --header-height: var(--titlebar-height);
   --measure: 42rem;
-
   --screen-ask: 24rem;
   --screen-sheet: 28rem;
   --screen-list: 36rem;
@@ -108,12 +92,9 @@
   --screen-tall: 44rem;
   --screen-gutter: var(--space-5);
   --screen-top: 16vh;
-
   --tab-frame: var(--surface-2);
-
   --touch-target: 48px;
   --swipe-edge: 32px;
-
   --touch-row: 56px;
   --touch-text: 17px;
   --touch-icon: 24px;
@@ -123,12 +104,10 @@
   --touch-indent: 18px;
   --keyboard: 0px;
   --touch-bottom: max(var(--space-4), calc(var(--space-4) + var(--inset-bottom) - var(--keyboard)));
-
   --inset-top: env(safe-area-inset-top, 0px);
   --inset-right: env(safe-area-inset-right, 0px);
   --inset-bottom: env(safe-area-inset-bottom, 0px);
   --inset-left: env(safe-area-inset-left, 0px);
-
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -138,7 +117,6 @@
   --dur-stage: 170ms;
   --dur-slow: 340ms;
   --dur-slower: 520ms;
-
   --z-under: -1;
   --z-base: 0;
   --z-raised: 1;
@@ -163,7 +141,6 @@
   --z-stage: 200;
   --z-carried: 1000;
 }
-
 [data-touch] {
   --row-height: var(--touch-row);
   --row-height-sm: var(--touch-target);
@@ -177,11 +154,9 @@
   --text-row: var(--touch-text);
   --text-head: 19px;
 }
-
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-
   --bg: #0e1013;
   --surface: #14171c;
   --surface-2: #1a1e25;
@@ -203,12 +178,10 @@
   --danger: #f5585d;
   --success: #3fcf8e;
   --selection: rgb(124 107 245 / 0.28);
-
   --syntax-number: #e0a233;
   --syntax-function: #4a8df6;
   --syntax-type: #3fcf8e;
   --syntax-property: #7c6bf5;
-
   --canvas-1: #fb464c;
   --canvas-2: #e9973f;
   --canvas-3: #e0de71;
@@ -216,28 +189,22 @@
   --canvas-5: #53dfdd;
   --canvas-6: #a882ff;
   --canvas-dot: #2b323d;
-
   --mark-1: color-mix(in srgb, var(--canvas-1) 22%, transparent);
   --mark-2: color-mix(in srgb, var(--canvas-2) 22%, transparent);
   --mark-4: color-mix(in srgb, var(--canvas-4) 22%, transparent);
   --mark-5: color-mix(in srgb, var(--canvas-5) 22%, transparent);
   --mark-6: color-mix(in srgb, var(--canvas-6) 22%, transparent);
-
   --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%23878f9d' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
-
   --tab-edge: color-mix(in srgb, var(--text) 20%, transparent);
   --ink-wash: color-mix(in srgb, var(--text) 7%, transparent);
-
   --scrollbar: #39404d;
   --scrollbar-hover: #4d5665;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.55);
   --shadow-lg: 0 24px 64px -12px rgb(0 0 0 / 0.7);
 }
-
 [data-theme='light'] {
   color-scheme: light;
-
   --bg: #fbfcfd;
   --surface: #f3f5f8;
   --surface-2: #eaeef3;
@@ -259,12 +226,10 @@
   --danger: #c91b24;
   --success: #007640;
   --selection: rgb(91 75 224 / 0.18);
-
   --syntax-number: #e0a233;
   --syntax-function: #4a8df6;
   --syntax-type: #3fcf8e;
   --syntax-property: #7c6bf5;
-
   --canvas-1: #e93147;
   --canvas-2: #ec7500;
   --canvas-3: #d9a600;
@@ -272,19 +237,15 @@
   --canvas-5: #00b3b0;
   --canvas-6: #7852ee;
   --canvas-dot: #d5dce5;
-
   --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%235c6574' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
-
   --tab-edge: color-mix(in srgb, var(--text) 24%, transparent);
   --ink-wash: color-mix(in srgb, var(--text) 7%, transparent);
-
   --scrollbar: #c3cbd6;
   --scrollbar-hover: #a7b1bf;
   --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
   --shadow-md: 0 8px 24px -6px rgb(16 24 40 / 0.12);
   --shadow-lg: 0 24px 64px -12px rgb(16 24 40 / 0.18);
 }
-
 :root {
   --bg-color: var(--bg);
   --text-color: var(--text);
@@ -308,12 +269,10 @@
   --code-block-bg-color: var(--surface);
   --table-border-color: var(--line);
   --blockquote-border-color: var(--line-strong);
-
   --surface-hover: var(--item-hover-bg-color);
   --surface-press: var(--press);
   --surface-selected: var(--active-file-bg-color);
   --surface-picked: var(--surface-3);
-
   --callout-note: #4a8df6;
   --callout-abstract: #3aada8;
   --callout-info: var(--callout-note);
@@ -327,10 +286,8 @@
   --callout-bug: #d4569b;
   --callout-example: var(--accent);
   --callout-quote: var(--muted-strong);
-
   --tag: var(--accent-hover);
 }
-
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-instant: 0ms;

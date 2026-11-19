@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import subprocess
 import sys
 import time
-
 from drive_scheme import switch
 from linux_app import run
 from linux_desk import DESK, OUT, failures, window, ratio, box, press, until
 
 SWITCHES = int(sys.argv[4]) if len(sys.argv) > 4 else 10
-
 def fail(what, name):
     print(f"::error::{DESK}: {what}")
     failures.append(what)
-
 TABS = (
     "[...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => { const r = one.getBoundingClientRect();"
     " return { id: one.dataset.tab, web: orden.pages.each().some(([id]) => id === one.dataset.tab),"
@@ -25,10 +21,8 @@ PANE = (
     "(() => { const one = document.querySelector('.pane, main'); if (!one) return null;"
     " const r = one.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } })()"
 )
-
 def tabs():
     return run(TABS) or []
-
 said = "not tried"
 for _ in range(3):
     said = switch(run, box, press, "dark")
@@ -37,7 +31,6 @@ for _ in range(3):
     time.sleep(1.5)
 if run("document.documentElement.dataset.theme") != "dark":
     raise SystemExit(f"::error::{DESK}: the app would not go dark: {said}")
-
 web = next((one for one in tabs() if one["web"]), None)
 note = next((one for one in tabs() if not one["web"]), None)
 if not web or not note:
@@ -45,7 +38,6 @@ if not web or not note:
 press(web)
 until("orden.pages.each().some(([, page]) => page.sent && page.sent.visible)", 20)
 time.sleep(3)
-
 x0, y0 = window()
 scale = ratio()
 hole = run(
@@ -61,7 +53,6 @@ area = (
     int(y0 + (hole["y"] + hole["height"]) * scale) - 4,
 )
 print(f"{DESK}: the pane is {area} on the screen")
-
 film = OUT / "flash.mkv"
 if DESK == "sway":
     output = json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_outputs"]))
@@ -78,7 +69,6 @@ else:
          "-c:v", "ffv1", str(film)],
         stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(2)
-
 for turn in range(SWITCHES):
     for one, name in ((note, "the note"), (web, "the web tab")):
         press(one)
@@ -96,7 +86,6 @@ except subprocess.TimeoutExpired:
         recorder.wait(timeout=15)
     except subprocess.TimeoutExpired:
         recorder.kill()
-
 frames = OUT / "frames"
 frames.mkdir(exist_ok=True)
 left, top, right, bottom = area
@@ -106,7 +95,6 @@ subprocess.run(
     check=True,
 )
 from PIL import Image
-
 worst, flashes, count = 0.0, [], 0
 for path in sorted(frames.glob("*.png")):
     count += 1
@@ -123,6 +111,5 @@ if not count:
     fail("no frames were filmed", "film")
 if flashes:
     fail(f"{len(flashes)} frames flashed white, the first {flashes[:5]}", "flash")
-
 (OUT / "flash.json").write_text(json.dumps({"frames": count, "worst": worst, "flashes": flashes, "failures": failures}, indent=2))
 sys.exit(1 if failures else 0)

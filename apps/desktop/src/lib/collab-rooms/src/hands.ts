@@ -7,7 +7,6 @@ import { isRecord } from '../../platform/src/api'
 import { type Seen, whoElse } from './peers'
 
 export const HAND = 'hand'
-
 export function saidHand(at: Point, drawing: InkStroke | null): Record<string, unknown> {
   return {
     x: Math.round(at.x * 10) / 10,
@@ -25,13 +24,10 @@ export function saidHand(at: Point, drawing: InkStroke | null): Record<string, u
       : {}),
   }
 }
-
 function inkIn(value: unknown, id: number): InkStroke | null {
   if (!isRecord(value)) return null
-
   return strokeOf({ ...value, id: `hand:${id}` })
 }
-
 export function handsIn(
   awareness: Awareness,
   doc: Y.Doc,
@@ -39,11 +35,9 @@ export function handsIn(
 ): { present: number; hands: Hand[]; seen: Seen } {
   const { here, nameOf, seen } = whoElse(awareness, doc, scheme)
   const hands: Hand[] = []
-
   for (const { id, who, said } of here) {
     const hand = said[HAND]
     if (!isRecord(hand) || typeof hand.x !== 'number' || typeof hand.y !== 'number') continue
-
     hands.push({
       id,
       name: nameOf(who),
@@ -52,6 +46,5 @@ export function handsIn(
       stroke: inkIn(hand.ink, id),
     })
   }
-
   return { present: here.length, hands, seen }
 }

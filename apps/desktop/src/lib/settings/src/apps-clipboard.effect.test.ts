@@ -5,7 +5,6 @@ afterEach(() => {
   localStorage.clear()
   clipboardSharing.set(true)
 })
-
 describe('sharing the clipboard with apps', () => {
   test('stops in this window when another window turns it off', () => {
     expect(clipboardSharing.on).toBe(true)

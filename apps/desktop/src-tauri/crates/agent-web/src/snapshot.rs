@@ -7,42 +7,32 @@ use serde_json::Value;
 use orden_agents::verbs::Match;
 
 const LONGEST_NAME: usize = 160;
-
 const SHORTEST_ECHO: usize = 3;
-
 const DEEPEST: usize = 256;
-
 const HIDDEN: &str = "[hidden]";
-
 pub const MOST: usize = 40_000;
-
 pub struct Part {
     pub prefix: String,
     pub nodes: Vec<Value>,
     pub owner: Option<(usize, u64)>,
 }
-
 pub struct Written {
     pub text: String,
     pub truncated: bool,
 }
-
 pub struct Asked<'a> {
     pub under: Option<(&'a str, u64)>,
     pub most: usize,
     pub secret: &'a HashSet<(String, u64)>,
     pub origin: &'a str,
 }
-
 struct Node<'a> {
     raw: &'a Value,
 }
-
 impl<'a> Node<'a> {
     fn ignored(&self) -> bool {
         self.raw.get("ignored").and_then(Value::as_bool) == Some(true)
     }
-
     fn role(&self) -> String {
         let raw = self
             .raw
@@ -51,7 +41,6 @@ impl<'a> Node<'a> {
             .unwrap_or_default();
         spoken_role(raw)
     }
-
     fn name_points_at(&self) -> Vec<u64> {
         self.raw
             .pointer("/name/sources")
@@ -70,14 +59,12 @@ impl<'a> Node<'a> {
             .filter_map(|one| one.get("backendDOMNodeId").and_then(Value::as_u64))
             .collect()
     }
-
     fn name(&self) -> &'a str {
         self.raw
             .pointer("/name/value")
             .and_then(Value::as_str)
             .unwrap_or_default()
     }
-
     fn value(&self) -> Option<String> {
         match self.raw.pointer("/value/value")? {
             Value::String(text) => Some(text.clone()),
@@ -85,11 +72,9 @@ impl<'a> Node<'a> {
             other => Some(other.to_string()),
         }
     }
-
     fn backend(&self) -> Option<u64> {
         self.raw.get("backendDOMNodeId").and_then(Value::as_u64)
     }
-
     fn children(&self) -> Vec<&'a str> {
         self.raw
             .get("childIds")
@@ -97,7 +82,6 @@ impl<'a> Node<'a> {
             .map(|ids| ids.iter().filter_map(Value::as_str).collect())
             .unwrap_or_default()
     }
-
     fn property(&self, name: &str) -> Option<&'a Value> {
         self.raw
             .get("properties")?
@@ -107,13 +91,11 @@ impl<'a> Node<'a> {
             .pointer("/value/value")
     }
 }
-
 pub fn holds_words(raw: &Value) -> bool {
     let node = Node { raw };
     (node.value().is_some_and(|value| !value.is_empty()) && node.role() != "slider")
         || node.property("editable").is_some()
 }
-
 fn spoken_role(raw: &str) -> String {
     match raw {
         "RootWebArea" | "WebArea" => "document".into(),
@@ -129,25 +111,21 @@ fn spoken_role(raw: &str) -> String {
         }
     }
 }
-
 fn silent(role: &str, name: &str) -> bool {
     matches!(
         role,
         "generic" | "none" | "presentation" | "genericContainer"
     ) && name.is_empty()
 }
-
 fn furniture(role: &str) -> bool {
     matches!(role, "inlineTextBox" | "lineBreak")
 }
-
 fn sealed(role: &str) -> bool {
     matches!(
         role,
         "date" | "dateTime" | "inputTime" | "time" | "colorWell" | "month" | "week"
     )
 }
-
 fn pressable_role(role: &str) -> bool {
     [
         "button", "link", "menuitem", "menuItem", "tab", "checkbox", "radio", "switch", "option",
@@ -155,7 +133,6 @@ fn pressable_role(role: &str) -> bool {
     ]
     .contains(&role)
 }
-
 fn has_value(role: &str) -> bool {
     [
         "textbox",
@@ -172,7 +149,6 @@ fn has_value(role: &str) -> bool {
     ]
     .contains(&role)
 }
-
 fn quoted(name: &str) -> String {
     let flat: String = name
         .chars()
@@ -185,14 +161,12 @@ fn quoted(name: &str) -> String {
     };
     format!("\"{}\"", cut.replace('\\', "\\\\").replace('"', "\\\""))
 }
-
 fn short_url(url: &str, origin: &str) -> String {
     match url.strip_prefix(origin) {
         Some(rest) if rest.starts_with('/') => rest.to_string(),
         _ => url.to_string(),
     }
 }
-
 fn states(node: &Node<'_>, role: &str, origin: &str) -> String {
     let mut out = String::new();
     let on = |name: &str| node.property(name).and_then(Value::as_bool) == Some(true);
@@ -243,7 +217,6 @@ fn states(node: &Node<'_>, role: &str, origin: &str) -> String {
     }
     out
 }
-
 fn value_of(node: &Node<'_>, role: &str, secret: bool) -> String {
     if !has_value(role) {
         return String::new();
@@ -260,14 +233,12 @@ fn value_of(node: &Node<'_>, role: &str, secret: bool) -> String {
         format!(" [value={}]", quoted(&value))
     }
 }
-
 fn masked(value: &str) -> bool {
     !value.is_empty()
         && value
             .chars()
             .all(|one| matches!(one, '\u{2022}' | '\u{25cf}' | '*' | '\u{b7}'))
 }
-
 struct Forest<'a> {
     parts: &'a [Part],
     by_id: Vec<HashMap<&'a str, &'a Value>>,
@@ -276,7 +247,6 @@ struct Forest<'a> {
     echoes: HashMap<(usize, &'a str), Vec<String>>,
     echoes_by_backend: HashMap<(usize, u64), Vec<String>>,
 }
-
 impl<'a> Forest<'a> {
     fn new(parts: &'a [Part], secret: &'a HashSet<(String, u64)>) -> Self {
         let by_id = parts
@@ -350,7 +320,6 @@ impl<'a> Forest<'a> {
         }
         forest
     }
-
     fn secret(&self, part: usize, node: &Node<'_>) -> bool {
         let named = node.backend().is_some_and(|backend| {
             self.parts
@@ -359,7 +328,6 @@ impl<'a> Forest<'a> {
         });
         named || node.value().is_some_and(|value| masked(&value))
     }
-
     fn said_of<'n>(&self, part: usize, node: &Node<'n>) -> Cow<'n, str> {
         let mut said = Cow::Borrowed(node.name());
         let id = node.raw.get("nodeId").and_then(Value::as_str);
@@ -384,7 +352,6 @@ impl<'a> Forest<'a> {
         }
         said
     }
-
     fn root(&self, part: usize) -> Option<&'a Value> {
         let nodes = &self.parts.get(part)?.nodes;
         nodes
@@ -392,11 +359,9 @@ impl<'a> Forest<'a> {
             .find(|node| node.get("parentId").is_none())
             .or_else(|| nodes.first())
     }
-
     fn child(&self, part: usize, id: &str) -> Option<&'a Value> {
         self.by_id.get(part)?.get(id).copied()
     }
-
     fn backend(&self, part: usize, backend: u64) -> Option<&'a Value> {
         self.parts
             .get(part)?
@@ -405,7 +370,6 @@ impl<'a> Forest<'a> {
             .find(|node| node.get("backendDOMNodeId").and_then(Value::as_u64) == Some(backend))
     }
 }
-
 pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
     let forest = Forest::new(parts, asked.secret);
     let mut writer = Writer {
@@ -415,7 +379,6 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
         down: 0,
         origin: asked.origin,
     };
-
     let start = match asked.under {
         Some((prefix, backend)) => found_in(parts, &forest, prefix, backend),
         None => forest.root(0).map(|root| (0, root)),
@@ -446,7 +409,6 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
         truncated: writer.truncated,
     }
 }
-
 fn found_in<'a>(
     parts: &[Part],
     forest: &Forest<'a>,
@@ -459,13 +421,11 @@ fn found_in<'a>(
         .filter(|(_, part)| part.prefix == prefix)
         .find_map(|(at, _)| forest.backend(at, backend).map(|node| (at, node)))
 }
-
 pub fn holds(parts: &[Part], prefix: &str, backend: u64) -> bool {
     let none = HashSet::new();
     let forest = Forest::new(parts, &none);
     found_in(parts, &forest, prefix, backend).is_some()
 }
-
 struct Writer<'a> {
     text: String,
     most: usize,
@@ -473,14 +433,12 @@ struct Writer<'a> {
     origin: &'a str,
     down: usize,
 }
-
 struct Around<'a> {
     depth: usize,
     skip: bool,
     said: &'a [String],
     in_list: bool,
 }
-
 impl Writer<'_> {
     fn walk(&mut self, forest: &Forest<'_>, part: usize, raw: &Value, around: &Around<'_>) {
         if self.truncated {
@@ -494,7 +452,6 @@ impl Writer<'_> {
         self.walked(forest, part, raw, around);
         self.down -= 1;
     }
-
     fn walked(&mut self, forest: &Forest<'_>, part: usize, raw: &Value, around: &Around<'_>) {
         let node = Node { raw };
         let role = node.role();
@@ -503,7 +460,6 @@ impl Writer<'_> {
         let prefix = &forest.parts[part].prefix;
         let secret = forest.secret(part, &node);
         let mut inner = around.depth;
-
         let repeats = |text: &str| around.said.iter().any(|one| one == text.trim());
         let quiet = around.skip
             || node.ignored()
@@ -532,7 +488,6 @@ impl Writer<'_> {
             self.text.push_str(&line);
             inner = around.depth + 1;
         }
-
         if sealed(&role) || secret {
             return;
         }
@@ -575,13 +530,11 @@ impl Writer<'_> {
         }
     }
 }
-
 pub struct Wanted<'a> {
     pub text: Option<&'a str>,
     pub role: Option<&'a str>,
     pub name: Option<&'a str>,
 }
-
 #[allow(clippy::implicit_hasher)]
 pub fn find(parts: &[Part], secret: &HashSet<(String, u64)>, wanted: &Wanted<'_>) -> Vec<Match> {
     let forest = Forest::new(parts, secret);
@@ -599,11 +552,8 @@ pub fn find(parts: &[Part], secret: &HashSet<(String, u64)>, wanted: &Wanted<'_>
     }
     found
 }
-
 type Holder = (String, String, String);
-
 type Found<'a> = (&'a mut Vec<Match>, &'a mut HashSet<String>, usize);
-
 fn search(
     forest: &Forest<'_>,
     part: usize,
@@ -618,7 +568,6 @@ fn search(
         found.2 -= 1;
     }
 }
-
 fn searched(
     forest: &Forest<'_>,
     part: usize,
@@ -634,7 +583,6 @@ fn searched(
     let prefix = &forest.parts[part].prefix;
     let reference = node.backend().map(|backend| format!("{prefix}e{backend}"));
     let lower = name.to_lowercase();
-
     let mut push = |element: &str, role: &str, name: &str| {
         if found.1.insert(element.to_string()) {
             found.0.push(Match {
@@ -644,7 +592,6 @@ fn searched(
             });
         }
     };
-
     let visible = !node.ignored() && !silent(&role, name) && !furniture(&role);
     if visible {
         if role == "text" {
@@ -672,7 +619,6 @@ fn searched(
             }
         }
     }
-
     let here: Option<Holder> = match (&reference, visible && role != "text") {
         (Some(element), true) => Some((element.clone(), role.clone(), name.to_string())),
         _ => None,
@@ -694,7 +640,6 @@ fn searched(
         }
     }
 }
-
 pub fn parse_ref(reference: &str) -> Option<(Option<usize>, u64)> {
     let reference = reference.trim();
     if let Some(rest) = reference.strip_prefix('f') {
@@ -704,7 +649,6 @@ pub fn parse_ref(reference: &str) -> Option<(Option<usize>, u64)> {
     }
     Some((None, reference.strip_prefix('e')?.parse().ok()?))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -720,16 +664,13 @@ mod tests {
             "childIds": children,
         })
     }
-
     fn with(mut raw: Value, key: &str, value: Value) -> Value {
         raw[key] = value;
         raw
     }
-
     fn under(parent: &str, raw: Value) -> Value {
         with(raw, "parentId", json!(parent))
     }
-
     fn alone(nodes: Vec<Value>) -> Vec<Part> {
         vec![Part {
             prefix: String::new(),
@@ -737,11 +678,9 @@ mod tests {
             owner: None,
         }]
     }
-
     fn secrets(nodes: &[u64]) -> HashSet<(String, u64)> {
         nodes.iter().map(|node| (String::new(), *node)).collect()
     }
-
     fn shown(parts: &[Part], secret: &HashSet<(String, u64)>, origin: &str) -> String {
         let asked = Asked {
             under: None,
@@ -751,7 +690,6 @@ mod tests {
         };
         render(parts, &asked).text
     }
-
     fn page() -> Vec<Value> {
         vec![
             node("1", "RootWebArea", "Shop", 1, &["2"]),
@@ -785,7 +723,6 @@ mod tests {
             under("2", node("13", "Iframe", "", 13, &[])),
         ]
     }
-
     fn frame() -> Vec<Value> {
         vec![
             node("1", "RootWebArea", "Pay", 1, &["2"]),
@@ -793,7 +730,6 @@ mod tests {
             under("2", node("3", "StaticText", "Pay now", 21, &[])),
         ]
     }
-
     fn parts() -> Vec<Part> {
         vec![
             Part {
@@ -808,7 +744,6 @@ mod tests {
             },
         ]
     }
-
     fn written(parts: &[Part], under: Option<(&str, u64)>, most: usize) -> Written {
         let secret = secrets(&[11]);
         render(
@@ -821,7 +756,6 @@ mod tests {
             },
         )
     }
-
     #[test]
     fn an_element_of_a_frame_in_the_page_s_own_process_is_held_and_written() {
         let parts = vec![
@@ -844,7 +778,6 @@ mod tests {
             "- button \"Pay now\" [ref=e20]"
         );
     }
-
     #[test]
     fn a_page_is_one_element_a_line_with_its_ref() {
         let text = written(&parts(), None, MOST).text;
@@ -862,7 +795,6 @@ mod tests {
             .join("\n")
         );
     }
-
     #[test]
     fn a_password_fields_value_is_never_written() {
         assert!(!written(&parts(), None, MOST).text.contains("hunter2"));
@@ -870,7 +802,6 @@ mod tests {
         assert!(!masked("4242"));
         assert!(!masked(""));
     }
-
     fn card_page() -> Vec<Value> {
         let field = |id: &str, name: &str, value: &str, backend: u64, children: &[&str]| {
             with(
@@ -906,7 +837,6 @@ mod tests {
             field("8", "Empty code", "", 8, &[]),
         ]
     }
-
     #[test]
     fn a_secret_field_says_only_that_it_is_filled() {
         let parts = alone(card_page());
@@ -944,7 +874,6 @@ mod tests {
         assert_eq!(named.len(), 1);
         assert_eq!(named[0].name, "Pay with [hidden]");
     }
-
     #[test]
     fn a_label_holding_a_secret_cuts_it_from_the_field_it_names() {
         let label = node("2", "LabelText", "Code 123456", 2, &["3"]);
@@ -972,7 +901,6 @@ mod tests {
         assert!(!text.contains("123456"), "{text}");
         assert!(text.contains("Code [hidden]"), "{text}");
     }
-
     #[test]
     fn a_secret_cuts_nothing_but_a_name_built_out_of_it() {
         let field = with(
@@ -1004,7 +932,6 @@ mod tests {
         assert!(text.contains("button \"report not\""), "{text}");
         assert!(text.contains("group \"PIN [hidden]\""), "{text}");
     }
-
     #[test]
     fn a_part_of_the_page_is_that_element_and_under_it() {
         let text = written(&parts(), Some(("f1", 20)), MOST).text;
@@ -1012,7 +939,6 @@ mod tests {
         assert!(holds(&parts(), "f1", 20));
         assert!(!holds(&parts(), "", 20));
     }
-
     #[test]
     fn a_long_page_is_cut_and_says_so() {
         let cut = written(&parts(), None, 80);
@@ -1020,7 +946,6 @@ mod tests {
         assert!(cut.text.ends_with("ask for one part with its ref"));
         assert!(cut.text.lines().count() < 4);
     }
-
     #[test]
     fn find_matches_role_and_name_and_words_in_text() {
         let found = |text: Option<&str>, role: Option<&str>, name: Option<&str>| {
@@ -1034,13 +959,11 @@ mod tests {
         assert_eq!(found(None, Some("button"), Some("pay")), ["f1e20"]);
         assert_eq!(found(Some("help"), None, None), ["e9"]);
     }
-
     fn recorded(page: &str) -> Vec<Part> {
         let all: Value =
             serde_json::from_str(include_str!("fixtures.json")).expect("recorded trees");
         alone(all[page].as_array().expect("a page").clone())
     }
-
     #[test]
     fn a_recorded_shop_reads_as_its_form() {
         let text = shown(&recorded("/shop"), &secrets(&[47, 50, 53]), "about:blank");
@@ -1072,7 +995,6 @@ mod tests {
             .join("\n")
         );
     }
-
     #[test]
     fn a_recorded_sign_in_never_says_its_password() {
         let parts = recorded("/signin");
@@ -1096,7 +1018,6 @@ mod tests {
         );
         assert!(found.is_empty(), "{found:?}");
     }
-
     #[test]
     fn a_ref_is_a_node_or_a_node_in_a_frame() {
         assert_eq!(parse_ref("e4812"), Some((None, 4812)));
@@ -1105,13 +1026,11 @@ mod tests {
         assert_eq!(parse_ref("x1"), None);
         assert_eq!(parse_ref("e"), None);
     }
-
     #[test]
     fn a_name_is_one_line_quoted_and_cut() {
         assert_eq!(quoted("a \"b\"\nc"), "\"a \\\"b\\\" c\"");
         assert!(quoted(&"x".repeat(500)).ends_with("\u{2026}\""));
     }
-
     #[test]
     fn the_protocols_internal_roles_read_as_words() {
         assert_eq!(spoken_role("RootWebArea"), "document");

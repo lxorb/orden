@@ -4,13 +4,11 @@ import { settle } from '../../../../../test/effects/settle'
 
 const { workspace } = await import('../../../workspace/src/api')
 const Asked = (await import('./Asked.svelte')).default
-
 const notes: Record<string, string> = {
   '/home/Diary.md': 'garden plans',
   '/work/Diary.md': 'payroll secrets',
 }
 const noteText = workspace.noteText.bind(workspace)
-
 beforeEach(() => {
   workspace.spaces = [
     { id: 'home', name: 'Home', root: '/home' },
@@ -19,11 +17,9 @@ beforeEach(() => {
   workspace.activeSpaceId = 'work'
   workspace.noteText = (path: string) => Promise.resolve(notes[path] ?? null)
 })
-
 afterEach(() => {
   workspace.noteText = noteText
 })
-
 test('a write asked in a thread of another space shows the note of the thread’s space', async () => {
   const target = document.createElement('div')
   document.body.append(target)

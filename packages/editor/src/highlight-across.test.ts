@@ -10,7 +10,6 @@ import { ordenMarkdownExtensions } from './markdown/extensions'
 beforeAll(async () => {
   await loadLineCommands()
 })
-
 function pressed(doc: string, picked: string, tone: number | null = null): string {
   const from = doc.indexOf(picked)
   let state = parsed(
@@ -26,22 +25,18 @@ function pressed(doc: string, picked: string, tone: number | null = null): strin
   })
   return state.doc.toString()
 }
-
 describe('highlight pressed over highlighted items picked inside their marks', () => {
   test('takes the highlight off both items instead of writing four equals signs', () => {
     expect(pressed('- ==alpha==\n- ==beta==', 'alpha==\n- ==beta')).toBe('- alpha\n- beta')
   })
 })
-
 describe('highlight pressed over items only some of which are highlighted', () => {
   test('a highlighted first item is not given a second pair of marks', () => {
     expect(pressed('- ==alpha==\n- beta', 'alpha==\n- beta')).toBe('- ==alpha==\n- ==beta==')
   })
-
   test('a whole highlighted item picked with its marks is not given a second pair', () => {
     expect(pressed('- alpha\n- ==beta==', 'alpha\n- ==beta==')).toBe('- ==alpha==\n- ==beta==')
   })
-
   test('a coloured highlighted item does not get its colour written twice', () => {
     expect(pressed('- ==🔴 alpha==\n- beta', '==🔴 alpha==\n- beta', 1)).not.toContain('====')
   })

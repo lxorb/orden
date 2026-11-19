@@ -1,7 +1,6 @@
 import { keep, storedText } from '../../platform/src/api'
 
 const KEY = 'orden:time-device'
-
 export function timeDevice(): string {
   const held = storedText(KEY)
   if (held) return held

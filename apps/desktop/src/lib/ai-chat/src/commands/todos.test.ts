@@ -11,9 +11,7 @@ vi.mock('../../../tasks-model/src/api', () => ({
     ],
   }),
 }))
-
 const { planDay, showTasks } = await import('./todos')
-
 function host(said = '') {
   const ask = vi.fn(() => Promise.resolve(said))
   const lines: { text: string; code?: string }[] = []
@@ -33,11 +31,9 @@ function host(said = '') {
   })
   return { fake: fake as unknown as Host, lines, sent, ask }
 }
-
 const thread = { id: 't' } as Thread
 const shown = (lines: { text: string }[]) =>
   JSON.parse(lines[0]?.text ?? '{}') as { tasks: { text: string }[]; filter?: string }
-
 describe('/tasks', () => {
   test("today's todos, as rows the thread draws", async () => {
     const { fake, lines } = host()
@@ -46,14 +42,12 @@ describe('/tasks', () => {
     expect(shown(lines).tasks.map((one) => one.text)).toEqual(['Pay rent', 'Call mum'])
     expect(shown(lines).filter).toBeUndefined()
   })
-
   test('words after the command are shown above the rows', async () => {
     const { fake, lines } = host()
     await showTasks(fake, thread, 'what is urgent')
     expect(shown(lines)).toMatchObject({ filter: 'what is urgent' })
   })
 })
-
 describe('/today', () => {
   test('asks the model to plan in Auto mode, with what the reader added', () => {
     const { fake, sent } = host()

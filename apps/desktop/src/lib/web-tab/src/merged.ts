@@ -7,12 +7,10 @@ import { bounded } from './visits'
 const OLD = 'orden:web-data'
 const OLD_UP = 'orden:web-data-up'
 export const MERGED = 'orden:web-data-merged'
-
 interface Merge {
   from: string
   origins: string[]
 }
-
 export function oldChoices(saved: unknown): Record<string, Exclude<WebData, 'global'>> {
   if (!isRecord(saved)) return {}
   const out: Record<string, Exclude<WebData, 'global'>> = {}
@@ -21,11 +19,9 @@ export function oldChoices(saved: unknown): Record<string, Exclude<WebData, 'glo
   }
   return out
 }
-
 export function oldHistory(space: string): string {
   return `${HISTORY}:${space}`
 }
-
 export function planned(
   choices: Record<string, Exclude<WebData, 'global'>>,
   historyOf: (space: string) => readonly Visit[],
@@ -61,7 +57,6 @@ export function planned(
   }
   return out
 }
-
 export function folded(into: readonly Visit[], from: readonly Visit[]): readonly Visit[] {
   const rows = new Map(into.map((one) => [one.url, one]))
   for (const one of from) {
@@ -81,24 +76,20 @@ export function folded(into: readonly Visit[], from: readonly Visit[]): readonly
   }
   return bounded([...rows.values()])
 }
-
 export async function mergeOld(): Promise<void> {
   if (!isDesktop || storedText(MERGED) !== null) return
-
   const choices = oldChoices(stored(OLD))
   const spaces = Object.keys(choices)
   if (spaces.length === 0) {
     keep(MERGED, new Date().toISOString())
     return
   }
-
   const [{ visited }, { getDomain }] = await Promise.all([import('./visited'), import('tldts')])
   const plan = planned(
     choices,
     (space) => visited.all(oldHistory(space)),
     (host) => getDomain(host, { allowPrivateDomains: true }),
   )
-
   let whole = true
   for (const one of plan) {
     try {
@@ -109,7 +100,6 @@ export async function mergeOld(): Promise<void> {
     }
   }
   if (!whole) return
-
   for (const space of spaces) {
     const from = oldHistory(space)
     visited.fold(from, HISTORY, folded(visited.all(HISTORY), visited.all(from)))

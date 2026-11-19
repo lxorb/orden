@@ -3,9 +3,7 @@ from shell import PHONE_AGENT, SEED
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
-
 OUT = DRIVE.shots
-
 CORNER = """
 () => {
   const at = document.elementsFromPoint(12, 28).map((one) => {
@@ -21,7 +19,6 @@ CORNER = """
   }
 }
 """
-
 SWIPE = """
 async () => {
   const target = document.elementFromPoint(6, 200)
@@ -46,7 +43,6 @@ async () => {
   fire('touchend', 320)
 }
 """
-
 def main() -> int:
     with DRIVE.session() as browser:
         context = browser.new_context(
@@ -60,32 +56,24 @@ def main() -> int:
         DRIVE.open(page)
         page.evaluate(SEED)
         page.wait_for_timeout(700)
-
         def corner(tag: str) -> None:
             page.screenshot(
                 path=str(OUT / f"{tag}.png"), clip={"x": 0, "y": 0, "width": 420, "height": 90}
             )
             say(f"{tag}: {page.evaluate(CORNER)}")
-
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
         corner("01-open")
-
         page.evaluate("() => window.ordenApp.workspace.closePanel()")
         page.wait_for_timeout(90)
         corner("02-going")
-
         page.wait_for_timeout(700)
         corner("03-shut")
-
         page.evaluate(SWIPE)
         page.wait_for_timeout(800)
         say(f"dragged open: panel is {page.evaluate('() => window.ordenApp.workspace.panel')}")
         corner("04-dragged-back")
-
         context.close()
-
     say(f"shots in {OUT}")
     return 0
-
 raise SystemExit(main())

@@ -23,11 +23,9 @@
     onpress?: ((event: MouseEvent) => void) | undefined
     label?: string
   } = $props()
-
   const url = $derived(faceUrl(size > 32 ? face.avatar?.l : face.avatar?.s))
   let failed = $state<string | null>(null)
   let loaded = $state<string | null>(null)
-
   const fill = $derived(accentFor(face.key ?? face.name, theme.current))
 </script>
 
@@ -76,7 +74,6 @@
     font: inherit;
     line-height: 1;
   }
-
   .face {
     display: grid;
     place-items: center;
@@ -87,11 +84,9 @@
     background: var(--fill);
     color: var(--accent-ink);
   }
-
   .face > * {
     grid-area: 1 / 1;
   }
-
   img {
     width: 100%;
     height: 100%;
@@ -101,11 +96,9 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   img.shown {
     opacity: 1;
   }
-
   .initial {
     font-family: var(--font-ui);
     font-size: calc(var(--size) * 0.46);
@@ -113,7 +106,6 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .dot {
     position: absolute;
     inset-inline-end: -1px;
@@ -124,18 +116,15 @@
     background: var(--success);
     box-shadow: 0 0 0 2px var(--avatar-ring, var(--surface));
   }
-
   .dot.away {
     background: var(--avatar-ring, var(--surface));
     box-shadow:
       0 0 0 2px var(--avatar-ring, var(--surface)),
       inset 0 0 0 1.5px var(--muted);
   }
-
   .dot.quiet {
     background: radial-gradient(circle at 30% 30%, var(--avatar-ring, var(--surface)) 34%, var(--callout-warning) 36%);
   }
-
   .mark {
     position: absolute;
     inset-inline-start: -2px;
@@ -147,20 +136,16 @@
     border-radius: 50%;
     background: var(--avatar-ring, var(--surface));
   }
-
   .pressable {
     cursor: default;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .pressable:active {
     transform: scale(0.94);
   }
-
   .pressable:focus-visible {
     outline-offset: 2px;
   }
-
   @media (prefers-reduced-motion: reduce) {
     img,
     .pressable {

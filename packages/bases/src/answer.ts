@@ -13,15 +13,12 @@ interface RowFacts {
   sub: Val
   words: string | null
 }
-
 interface Getter {
   run: (scope: Scope) => Val
   local: boolean
   clock: boolean
 }
-
 const PLAIN_NAME = /^[A-Za-z_$][\w$]*$/
-
 function keyNamed(property: string): string | null {
   const name = property.startsWith('note.')
     ? property.slice(5)
@@ -30,7 +27,6 @@ function keyNamed(property: string): string | null {
       : property
   return name === null || PLAIN_NAME.test(name) ? null : name
 }
-
 function getter(property: string): Getter {
   try {
     const compiled = compile(property)
@@ -73,10 +69,8 @@ function getter(property: string): Getter {
     }
   }
 }
-
 const thisIds = new WeakMap<Row, number>()
 let thisCount = 0
-
 function thisId(row: Row): number {
   const known = thisIds.get(row)
   if (known !== undefined) return known
@@ -84,41 +78,32 @@ function thisId(row: Row): number {
   thisIds.set(row, thisCount)
   return thisCount
 }
-
 const NONE: Getter = { local: true, clock: false, run: () => null }
-
 export function viewOf(base: Base, view: string | number | undefined): View | undefined {
   if (typeof view === 'number') return base.views[view]
   return base.views.find((one) => one.name === view) ?? base.views[0]
 }
-
 export const groupName = (key: Value): string => (key === null ? '' : text(key))
-
 function spacedPath(space: string, path: string): string {
   return `${space}//${path}`
 }
-
 export function placeOfKey(key: string): { space: string | null; path: string } {
   const at = key.lastIndexOf('//')
   return at === -1 ? { space: null, path: key } : { space: key.slice(0, at), path: key.slice(at + 2) }
 }
-
 function byNoteName(a: string, b: string): number {
   const name = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '')
   return sortCompare(name(a), name(b)) || sortCompare(a, b)
 }
-
 function optionOrder(base: Base, property: string | undefined): string[] {
   if (!property) return []
   const key = property.replace(/^note\./, '')
   return base.orden.properties[key]?.options?.map((option) => option.value) ?? []
 }
-
 export interface CompiledView {
   view: View
   answer: (rows: readonly Row[], context: Context) => Answer
 }
-
 const DEFAULT_VIEW: View = {
   type: 'table',
   name: '',
@@ -128,7 +113,6 @@ const DEFAULT_VIEW: View = {
   orden: { kept: {} },
   options: {},
 }
-
 export function compileView(base: Base, which?: string | number): CompiledView {
   const view = viewOf(base, which) ?? DEFAULT_VIEW
   const filter = compileFilters(base.filters, view.filters)
@@ -149,13 +133,11 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   const getters = [group, sub, ...sorts.map((one) => one.get), ...shown]
   const local = filter.local && [...formulas, ...getters].every((one) => one.local)
   const clock = filter.clock || [...formulas, ...getters].some((one) => one.clock)
-
   const kinds = view.orden.rows ?? 'notes'
   const fanOut = view.type === 'kanban' || view.type === 'board' || view.groupBy?.property === 'task.tags'
   const showCompleted = view.orden.showCompleted ?? false
   let facts = new WeakMap<Row, RowFacts>()
   let factsFor = ''
-
   const answer = (rows: readonly Row[], context: Context): Answer => {
     const key = [
       context.today,
@@ -176,7 +158,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       formula: (name, row) => read(name, row, scope),
     }
     const words = (context.search ?? '').toLowerCase().split(/\s+/).filter(Boolean)
-
     const factsOf = (row: Row): RowFacts => {
       const known = facts.get(row)
       if (known) return known
@@ -194,7 +175,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       facts.set(row, made)
       return made
     }
-
     const wordsOf = (row: Row, one: RowFacts): string => {
       if (one.words === null) {
         scope.row = row
@@ -204,7 +184,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       }
       return one.words
     }
-
     const kept: { row: Row; facts: RowFacts; at: number }[] = []
     const spaces = new Set<string>()
     rows.forEach((row, at) => {
@@ -217,7 +196,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       if (words.length && !words.every((word) => wordsOf(row, one).includes(word))) return
       kept.push({ row, facts: one, at })
     })
-
     kept.sort((a, b) => {
       for (let index = 0; index < sorts.length; index++) {
         const order = sortCompare(a.facts.sort[index] ?? null, b.facts.sort[index] ?? null, context.zone)
@@ -232,7 +210,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       [view.groupBy, view.orden.subGroupBy].some((by) => by?.property === 'file.path') && spaces.size > 1
     const limit = view.limit && view.limit > 0 ? view.limit : null
     const cut = <T>(members: T[]): T[] => (limit === null ? members : members.slice(0, limit))
-
     const summaries = (members: readonly { row: Row; facts: RowFacts }[]) => {
       const out: Record<string, Value> = {}
       for (const [property, name] of Object.entries(view.summaries)) {
@@ -245,7 +222,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       }
       return out
     }
-
     const orderKeys = <T extends { key: Value }>(keys: T[], by: Sort): T[] => {
       const options = optionOrder(base, by.property)
       const placed = view.orden.groups ?? []
@@ -270,7 +246,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
         })
       return keys
     }
-
     const lanesOf = (groups: Group[], by: Sort): Value[] => {
       const seen = new Map<string, { key: Value }>()
       for (const group of groups)
@@ -280,7 +255,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
         }
       return orderKeys([...seen.values()], by).map((one) => one.key)
     }
-
     const grouped = (
       members: { row: Row; facts: RowFacts }[],
       keyOf: (one: RowFacts) => Val,
@@ -326,7 +300,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
         return out
       })
     }
-
     const ordered = <T extends { row: Row }>(members: T[], name: string): T[] => {
       const manual = view.orden.order?.[name]
       if (!manual?.length) return members
@@ -334,7 +307,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       const rank = (one: T) => place.get(orderId(one.row)) ?? place.get(rowId(one.row)) ?? manual.length
       return [...members].sort((a, b) => rank(a) - rank(b))
     }
-
     const subBy = view.orden.subGroupBy
     const groups = grouped(
       kept,
@@ -349,21 +321,15 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     const limited = kept.filter((one) => onScreen.has(one.row))
     return { groups, ...laned, total: limited.length, summaries: summaries(limited) }
   }
-
   return { view, answer }
 }
-
 export const rowId = (row: Row): string => (row.anchor ? `${row.path}#${row.anchor.line}` : row.path)
-
 export const orderId = (row: Row): string => (row.anchor ? `${row.path}#^${row.anchor.hash}` : row.path)
-
 const compiledViews = new WeakMap<Base, Map<string | number, CompiledView>>()
-
 export function answer(base: Base, view: string | number | undefined, rows: readonly Row[], context: Context): Answer {
   const { value, partial } = refusing(() => underGuard(base.guarded, () => answerOf(base, view, rows, context)))
   return partial ? { ...value, partial } : value
 }
-
 function answerOf(base: Base, view: string | number | undefined, rows: readonly Row[], context: Context): Answer {
   const views = compiledViews.get(base) ?? new Map<string | number, CompiledView>()
   compiledViews.set(base, views)
@@ -375,7 +341,6 @@ function answerOf(base: Base, view: string | number | undefined, rows: readonly 
   }
   return compiled.answer(rows, context)
 }
-
 export function cellValue(base: Base, property: string, row: Row, context: Context): Value {
   const read = formulaReader(base.formulas)
   const scope: Scope = { row, context, locals: null, formula: (name, at) => read(name, at, scope) }

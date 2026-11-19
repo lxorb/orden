@@ -12,7 +12,6 @@ import type { TrustReason } from './trust-problem'
 import { keptPin, vaultDistrust } from './vault-trust'
 
 export type Pulled = 'pulled' | 'conflict' | 'deferred'
-
 interface Applying {
   world: SyncWorld
   held: Held | null
@@ -23,22 +22,18 @@ interface Applying {
   fresh: string[]
   was: Map<string, Uint8Array<ArrayBuffer>>
 }
-
 function distrusted(doing: Applying, vault: string, item: string | null, reason: TrustReason) {
   doing.world.distrusted?.({ vault, item, reason })
 }
-
 function isReplayed(local: string, incoming: string): boolean {
   const kept = sealedRevOf(local)
   if (kept === null) return false
   const sent = sealedRevOf(incoming)
   return sent === null || sent < kept
 }
-
 function sameContent(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
-
 function deviceVaultOf(row: WireVault, key: string, pub: string, accepted: Accepted | null): VaultRow {
   return {
     id: row.id,
@@ -56,7 +51,6 @@ function deviceVaultOf(row: WireVault, key: string, pub: string, accepted: Accep
     handovers: row.handovers,
   }
 }
-
 async function goneVault(doing: Applying, local: VaultRow): Promise<void> {
   const { rows } = doing.world
   doing.change.vaults.push({ ...local, pending: false, deleted: true })
@@ -76,7 +70,6 @@ async function goneVault(doing: Applying, local: VaultRow): Promise<void> {
   }
   doing.shown.goneVaults.push(local.id)
 }
-
 async function resealed(
   rows: DeviceRows,
   vault: string,
@@ -103,7 +96,6 @@ async function resealed(
   }
   return made
 }
-
 async function versionsRekeyed(
   rows: DeviceRows,
   vault: string,
@@ -120,7 +112,6 @@ async function versionsRekeyed(
   }
   return made
 }
-
 async function appliedVault(doing: Applying, row: WireVault, local: VaultRow | undefined): Promise<Pulled> {
   const { rows } = doing.world
   if (row.deleted) {
@@ -175,7 +166,6 @@ async function appliedVault(doing: Applying, row: WireVault, local: VaultRow | u
   }
   return 'pulled'
 }
-
 async function versionOfOld(doing: Applying, held: Held, local: ItemRow, row: WireItem): Promise<VersionRow[]> {
   const box = held.vaults.get(local.vault)
   if (!box || local.deleted || local.rev === row.rev) return []
@@ -194,7 +184,6 @@ async function versionOfOld(doing: Applying, held: Held, local: ItemRow, row: Wi
     return []
   }
 }
-
 async function lastVersionOf(held: Held | null, local: ItemRow): Promise<VersionRow[]> {
   const box = held?.vaults.get(local.vault)
   if (!box || local.body === '') return []
@@ -207,7 +196,6 @@ async function lastVersionOf(held: Held | null, local: ItemRow): Promise<Version
     return []
   }
 }
-
 async function forgottenHistory(doing: Applying): Promise<void> {
   const { rows } = doing.world
   const before = Date.now() - KEPT_AFTER_DELETE
@@ -216,7 +204,6 @@ async function forgottenHistory(doing: Applying): Promise<void> {
     if ((await rows.versions(one.vault, one.id)).length) doing.change.dropVersions.push(one)
   }
 }
-
 async function appliedItem(doing: Applying, row: WireItem): Promise<void> {
   const { rows } = doing.world
   const local = await rows.item(row.vault, row.id)
@@ -262,7 +249,6 @@ async function appliedItem(doing: Applying, row: WireItem): Promise<void> {
     return
   }
 }
-
 async function appliedKeyring(doing: Applying, changes: Changes): Promise<Pulled> {
   const { world } = doing
   const theirs = changes.keyring
@@ -283,12 +269,10 @@ async function appliedKeyring(doing: Applying, changes: Changes): Promise<Pulled
   doing.pub = theirs.keyring.pub
   return 'pulled'
 }
-
 async function finished(doing: Applying): Promise<void> {
   await doing.world.rows.write(doing.change)
   if (isShown(doing.shown)) doing.world.shown(doing.shown)
 }
-
 async function applying(world: SyncWorld, held: Held | null): Promise<Applying> {
   return {
     world,
@@ -301,7 +285,6 @@ async function applying(world: SyncWorld, held: Held | null): Promise<Applying> 
     was: new Map(),
   }
 }
-
 export async function appliedChanges(
   world: SyncWorld,
   held: Held | null,
@@ -324,7 +307,6 @@ export async function appliedChanges(
   world.invited(changes.invites)
   return { pulled: 'pulled', fresh: since > 0 ? doing.fresh : [] }
 }
-
 export async function appliedItems(world: SyncWorld, held: Held | null, items: readonly WireItem[]): Promise<void> {
   const doing = await applying(world, held)
   for (const row of items) await appliedItem(doing, row)

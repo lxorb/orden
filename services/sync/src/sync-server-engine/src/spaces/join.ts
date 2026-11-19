@@ -30,35 +30,24 @@ import { EMAIL_LIMIT, itemName, MOST_GUESTS, MOST_MEMBERS, personName, presentIt
 import { onceShared, presentSpace, type Given } from './space'
 
 const EXPIRED = 'that link has expired'
-
 const NO_LONGER_WAITING = 'that request has run out'
-
 async function askingAgain(context: Reply): Promise<boolean> {
   return (await objectBody(context))?.again === true
 }
-
 type Mode = 'open' | 'approval'
-
 const DEVICE_LIMIT = 24
-
 const GUESTS_A_MINUTE = 20
-
 const MOST_WAITING = MOST_MEMBERS
-
 interface About {
   item: string
   path: string | null
 }
-
 type Leads =
   | ({ kind: 'link'; space: Space; role: Given; mode: Mode } & About)
   | ({ kind: 'invite'; space: Space; role: Given; email: string; hash: string } & About)
-
 type Reply = Context<{ Bindings: Env; Variables: Variables }>
-
 async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
   if (!token || token.length > 128) return null
-
   const link = await env.DB.prepare(
     `select l.role, l.mode, l.item, n.path as item_path, sp.* from space_links l
        join spaces sp on sp.id = l.space_id
@@ -67,7 +56,6 @@ async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
   )
     .bind(token)
     .first<Space & { role: Given; mode: Mode; item: string; item_path: string | null }>()
-
   if (link) {
     return {
       kind: 'link',
@@ -78,7 +66,6 @@ async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
       path: link.item_path,
     }
   }
-
   const hash = await sha256(token)
   const invite = await env.DB.prepare(
     `select m.email, m.role, m.expires_at, m.item, n.path as item_path, sp.* from space_members m
@@ -96,10 +83,8 @@ async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
         item_path: string | null
       }
     >()
-
   if (!invite) return null
   if (invite.expires_at !== null && invite.expires_at < now()) return null
-
   return {
     kind: 'invite',
     space: invite,
@@ -110,12 +95,10 @@ async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
     path: invite.item_path,
   }
 }
-
 function landedOn(env: Env, found: Leads, role: Given | 'owner', owner: OwnerRow | null) {
   if (!found.item || found.path === null) {
     return { space: presentSpace(found.space, env, role, true) }
   }
-
   return {
     item: presentItem({
       id: found.item,
@@ -127,18 +110,15 @@ function landedOn(env: Env, found: Leads, role: Given | 'owner', owner: OwnerRow
     }),
   }
 }
-
 interface OwnerRow {
   name: string | null
   email: string
 }
-
 function ownerOf(env: Env, space: Space) {
   return env.DB.prepare('select name, email from users where id = ?')
     .bind(space.user_id)
     .first<{ name: string | null; email: string }>()
 }
-
 async function takeInvitation(env: Env, found: Leads): Promise<Given | null> {
   if (found.kind !== 'invite') return null
   const at = now()
@@ -155,10 +135,8 @@ async function takeInvitation(env: Env, found: Leads): Promise<Given | null> {
   await onceShared(env, found.space.id, found.item)
   return taken.role
 }
-
 async function memberNow(env: Env, found: Leads, email: string, role: Given): Promise<Given | null> {
   const { space, item } = found
-
   const joined = await env.DB.prepare(
     `insert into space_members (space_id, email, item, role, joined_at, created_at)
      select ?1, ?2, ?3, ?4, ?5, ?5
@@ -170,28 +148,22 @@ async function memberNow(env: Env, found: Leads, email: string, role: Given): Pr
     .run()
   if (!joined.meta.changes) return null
   await onceShared(env, space.id, item)
-
   const held = await env.DB.prepare('select role from space_members where space_id = ? and email = ? and item = ?')
     .bind(space.id, email, item)
     .first<{ role: Given }>()
-
   return held?.role ?? role
 }
-
 function spaceIsFull(context: Reply) {
   return context.json({ error: SPACE_IS_FULL }, 409)
 }
-
 const GUESTS_IN = `(select count(*) from guest_members
                       where space_id = ?1 and item = ?3 and joined_at is not null)`
-
 function waitingIn(space: string, item: string): string {
   return `((select count(*) from space_requests where space_id = ${space} and item = ${item})
          + (select count(*) from guest_members
              where space_id = ${space} and item = ${item}
                and joined_at is null and declined_at is null))`
 }
-
 async function roomForAGuest(env: Env, spaceId: string, item: string): Promise<boolean> {
   const held = await env.DB.prepare(
     `select sum(case when joined_at is not null then 1 else 0 end) as held,
@@ -200,26 +172,20 @@ async function roomForAGuest(env: Env, spaceId: string, item: string): Promise<b
   )
     .bind(spaceId, now() - 60_000, item)
     .first<{ held: number | null; lately: number | null }>()
-
   return (held?.held ?? 0) < MOST_GUESTS && (held?.lately ?? 0) < GUESTS_A_MINUTE
 }
-
 async function roomToWait(env: Env, spaceId: string, item: string): Promise<boolean> {
   const held = await env.DB.prepare(`select ${waitingIn('?1', '?2')} as waiting`)
     .bind(spaceId, item)
     .first<{ waiting: number }>()
-
   return (held?.waiting ?? 0) < MOST_WAITING
 }
-
 function linkIsBusy(context: Reply) {
   return context.json({ error: 'that link is busy, try again in a minute' }, 429)
 }
-
 function tooManyWaiting(context: Reply) {
   return context.json({ error: 'that many people are already waiting to be let in' }, 429)
 }
-
 function guestStanding(env: Env, spaceId: string, guestId: string, item: string) {
   return env.DB.prepare(
     `select role, joined_at, declined_at from guest_members
@@ -228,7 +194,6 @@ function guestStanding(env: Env, spaceId: string, guestId: string, item: string)
     .bind(spaceId, guestId, item)
     .first<{ role: Given; joined_at: number | null; declined_at: number | null }>()
 }
-
 async function writeGuestMember(
   env: Env,
   spaceId: string,
@@ -249,32 +214,24 @@ async function writeGuestMember(
   if (!waiting) await onceShared(env, spaceId, item)
   return true
 }
-
 async function tellTheOwner(context: Reply, found: Leads, who: string): Promise<void> {
   const env = context.env
   const space = found.space
   const owner = await ownerOf(env, space)
   if (!owner) return
-
   if (!(await mayTellTheOwner(env, space.id))) return
   if (!(await mayMail(env, owner.email, machineOf(context.req))).ok) return
-
   const named = found.path === null ? space.name : itemName(found.path)
   const message = requestMessage({ space: named, who, link: env.APP_ORIGIN })
-
   if (!(await mailer(env).send(owner.email, message.subject, message))) {
     await forgetMailed(env, owner.email)
   }
 }
-
 export const join = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 join.get('/:token', async (context) => {
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
   if (!found) return context.json({ error: EXPIRED }, 404)
-
   const owner = await ownerOf(context.env, found.space)
-
   return context.json({
     kind: found.kind,
     space: found.space.name,
@@ -285,37 +242,28 @@ join.get('/:token', async (context) => {
     from: owner ? personName(owner) : null,
   })
 })
-
 join.post('/:token', async (context) => {
   const who = await hooks().accounts.whoever(context.env, context.req.header('authorization'))
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
   if (!found) return context.json({ error: EXPIRED }, 404)
-
   if (found.kind === 'invite' && !who) return await redeemInvitation(context, found)
-
   if (found.kind === 'invite' && who?.kind === 'guest') {
     if (who.guest.email !== found.email) {
       return context.json({ error: 'that invitation was sent to another address' }, 403)
     }
-
     return await redeemInvitation(context, found)
   }
-
   if (who?.kind === 'user') return await asAnAccount(context, found, who.user)
   if (who?.kind === 'guest') return await asAGuest(context, found, who.guest)
-
   if (await askingAgain(context)) return context.json({ error: NO_LONGER_WAITING }, 410)
   return await asNobody(context, found)
 })
-
 join.delete('/:token', async (context) => {
   const who = await hooks().accounts.whoever(context.env, context.req.header('authorization'))
   if (!who) return context.json({ error: 'sign in first' }, 401)
-
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
   if (!found) return context.json({ error: EXPIRED }, 404)
   const { space, item } = found
-
   if (who.kind === 'user') {
     await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ? and item = ?')
       .bind(space.id, who.user.email, item)
@@ -330,49 +278,37 @@ join.delete('/:token', async (context) => {
       .run()
     await forgetEmptyGuest(context.env, who.guest.id)
   }
-
   return context.json({ ok: true })
 })
-
 async function redeemInvitation(context: Reply, found: Leads) {
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
-
   const sent = await hooks().accounts.sendCode(context.env, found.email, machineOf(context.req))
   if ('error' in sent) return refusedMail(context, sent)
-
   return context.json({ code: true, email: found.email, resendIn: sent.resendIn })
 }
-
 async function asAnAccount(context: Reply, found: Leads, user: User) {
   const { space, item } = found
   const owner = () => ownerOf(context.env, space)
-
   if (space.user_id === user.id) {
     return context.json(landedOn(context.env, found, 'owner', { name: user.name, email: user.email }))
   }
-
   if (found.kind === 'invite') {
     if (found.email !== user.email) {
       return context.json({ error: 'that invitation was sent to another address' }, 403)
     }
-
     const role = await takeInvitation(context.env, found)
     if (!role) return context.json({ error: EXPIRED }, 404)
-
     return context.json(landedOn(context.env, found, role, await owner()))
   }
-
   if (found.mode === 'approval') {
     const already = await context.env.DB.prepare(
       'select role from space_members where space_id = ? and email = ? and item = ?',
     )
       .bind(space.id, user.email, item)
       .first<{ role: Given }>()
-
     if (already) {
       return context.json(landedOn(context.env, found, already.role, await owner()))
     }
-
     if (await askingAgain(context)) {
       const waiting = await context.env.DB.prepare(
         'select 1 from space_requests where space_id = ? and email = ? and item = ?',
@@ -381,9 +317,7 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
         .first()
       if (!waiting) return context.json({ error: NO_LONGER_WAITING }, 410)
     }
-
     if (!(await roomToWait(context.env, space.id, item))) return tooManyWaiting(context)
-
     const asked = await context.env.DB.prepare(
       `insert into space_requests (space_id, email, item, role, created_at)
        select ?1, ?2, ?3, ?4, ?5
@@ -400,96 +334,75 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
         .first()
       if (!there) return tooManyWaiting(context)
     }
-
     await tellTheOwner(context, found, personName(user))
     return context.json({ waiting: true })
   }
-
   const role = await memberNow(context.env, found, user.email, found.role)
   if (!role) return spaceIsFull(context)
-
   return context.json(landedOn(context.env, found, role, await owner()))
 }
-
 async function asAGuest(context: Reply, found: Leads, guest: Guest) {
   const { space, item } = found
   const standing = await guestStanding(context.env, space.id, guest.id, item)
   const said = presentGuest(guest)
-
   if (standing?.joined_at) {
     return context.json({
       guest: said,
       ...landedOn(context.env, found, standing.role, await ownerOf(context.env, space)),
     })
   }
-
   if (standing?.declined_at) return context.json({ guest: said, declined: true })
   if (standing) return context.json({ guest: said, waiting: true })
   if (await askingAgain(context)) return context.json({ error: NO_LONGER_WAITING }, 410)
-
   if (!(await roomForAGuest(context.env, space.id, item))) {
     return linkIsBusy(context)
   }
-
   const asks = found.kind === 'link' && found.mode === 'approval'
   if (asks && !(await roomToWait(context.env, space.id, item))) return tooManyWaiting(context)
-
   if (!(await writeGuestMember(context.env, space.id, guest.id, found.role, asks, item))) {
     return asks ? tooManyWaiting(context) : linkIsBusy(context)
   }
-
   if (asks) {
     await tellTheOwner(context, found, guest.name)
     return context.json({ guest: said, waiting: true })
   }
-
   return context.json({
     guest: said,
     ...landedOn(context.env, found, found.role, await ownerOf(context.env, space)),
   })
 }
-
 async function asNobody(context: Reply, found: Leads) {
   if (found.kind !== 'link') return context.json({ error: EXPIRED }, 404)
   const { space, item } = found
-
   if (!(await roomForAGuest(context.env, space.id, item))) {
     return linkIsBusy(context)
   }
-
   const body = await readBody(context)
   const device = body.text('device', DEVICE_LIMIT)
   const said = body.text('name', NAME_LIMIT * 8)
   const address = body.text('email', EMAIL_LIMIT)
-
   if (found.mode === 'open') {
     const { guest, token } = await newGuest(context.env, device ?? null, null, null)
     if (!(await writeGuestMember(context.env, space.id, guest.id, found.role, false, item))) {
       await forgetEmptyGuest(context.env, guest.id)
       return linkIsBusy(context)
     }
-
     return context.json({
       token,
       guest: presentGuest(guest),
       ...landedOn(context.env, found, found.role, await ownerOf(context.env, space)),
     })
   }
-
   if (body.problem) return context.json({ error: body.problem }, 400)
-
   const named = cleanPersonName(said ?? '').slice(0, NAME_LIMIT)
   const gave = normaliseEmail(address ?? '')
   if (!named && !isEmail(gave)) return context.json({ error: 'say who you are' }, 400)
-
   if (!(await roomToWait(context.env, space.id, item))) return tooManyWaiting(context)
-
   const { guest, token } = await newGuest(context.env, device ?? null, named || gave, isEmail(gave) ? gave : null)
   if (!(await writeGuestMember(context.env, space.id, guest.id, found.role, true, item))) {
     await forgetEmptyGuest(context.env, guest.id)
     return tooManyWaiting(context)
   }
   await tellTheOwner(context, found, guest.name)
-
   return context.json({ token, guest: presentGuest(guest), waiting: true })
 }

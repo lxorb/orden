@@ -5,9 +5,7 @@ import { describe, expect, test } from 'vitest'
 import { walk } from './files'
 
 const CRATE = fileURLToPath(new URL('../src-tauri', import.meta.url))
-
 const RUST = ['src', 'crates'].flatMap((dir) => walk(join(CRATE, dir), (path) => path.endsWith('.rs')))
-
 function commandSignatures(text: string): string[] {
   const out: string[] = []
   for (const found of text.matchAll(/#\[tauri::command[^\]]*\]/g)) {
@@ -17,7 +15,6 @@ function commandSignatures(text: string): string[] {
   }
   return out
 }
-
 describe('a command the window calls', () => {
   test('takes the webview that asked, never a WebviewWindow, which a window of several webviews is not', () => {
     const offending = RUST.flatMap((path) =>
@@ -27,7 +24,6 @@ describe('a command the window calls', () => {
     )
     expect(offending).toEqual([])
   })
-
   test('is found by the walk', () => {
     const all = RUST.flatMap((path) => commandSignatures(readFileSync(path, 'utf8')))
     expect(all.some((one) => one.includes('fn owner_check'))).toBe(true)

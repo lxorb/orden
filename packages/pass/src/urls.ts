@@ -4,7 +4,6 @@ import type { Website } from './types'
 const SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i
 const OTHER_SCHEME = /^[a-z][a-z0-9+.-]*:(?!\d+(?:[/?#]|$))/i
 const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/
-
 function urlOf(text: string): URL | null {
   const trimmed = text.trim()
   if (trimmed === '' || (!SCHEME.test(trimmed) && OTHER_SCHEME.test(trimmed))) return null
@@ -15,29 +14,23 @@ function urlOf(text: string): URL | null {
     return null
   }
 }
-
 export function normalizeUrl(text: string): string | null {
   return urlOf(text)?.href ?? null
 }
-
 export function hostOf(url: string): string | null {
   return urlOf(url)?.hostname ?? null
 }
-
 function siteOfHost(host: string): string {
   if (host.startsWith('[') || IPV4.test(host) || host === 'localhost') return host
   return getDomain(host, { allowPrivateDomains: true }) ?? host
 }
-
 export function siteOf(url: string): string | null {
   const host = hostOf(url)
   return host === null ? null : siteOfHost(host)
 }
-
 function pathOf(url: URL): string {
   return url.origin + url.pathname.replace(/\/+$/, '')
 }
-
 export function matches(website: Website, pageUrl: string): boolean {
   if (website.match === 'never') return false
   const site = urlOf(website.url)
@@ -56,13 +49,11 @@ export function matches(website: Website, pageUrl: string): boolean {
       return page.href.startsWith(site.href)
   }
 }
-
 export function rank(website: Website, pageUrl: string): number {
   if (!matches(website, pageUrl)) return 0
   const fixed = { exact: 5, prefix: 4, host: 3, domain: 0, never: 0 }[website.match]
   return fixed || (hostOf(website.url) === hostOf(pageUrl) ? 2 : 1)
 }
-
 export function isSecurePage(url: string): boolean {
   let page: URL
   try {

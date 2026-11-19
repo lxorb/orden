@@ -12,13 +12,9 @@ use super::listing::asked;
 use super::reach::Use;
 
 const CHANGED: &str = "explorer://changed";
-
 const GATHER: Duration = Duration::from_millis(200);
-
 static GATHERED: Gathered = Gathered(Mutex::new(None));
-
 struct Gathered(Mutex<Option<BTreeSet<String>>>);
-
 impl Gathered {
     fn add(&self, folders: Vec<String>) -> bool {
         let mut held = self.0.held();
@@ -26,7 +22,6 @@ impl Gathered {
         held.get_or_insert_with(BTreeSet::new).extend(folders);
         first
     }
-
     fn take(&self) -> Vec<String> {
         self.0
             .held()
@@ -35,7 +30,6 @@ impl Gathered {
             .unwrap_or_default()
     }
 }
-
 fn heard(app: &AppHandle, folders: Vec<String>) {
     if !GATHERED.add(folders) {
         return;
@@ -49,18 +43,15 @@ fn heard(app: &AppHandle, folders: Vec<String>) {
         }
     });
 }
-
 #[derive(Default)]
 pub struct Watching(
     Mutex<Option<(RecommendedWatcher, HashMap<PathBuf, usize>)>>,
     Mutex<HashMap<String, Vec<PathBuf>>>,
 );
-
 #[derive(Serialize, Clone)]
 struct Changed {
     folders: Vec<String>,
 }
-
 fn folders_of(paths: &[PathBuf]) -> Vec<String> {
     let mut out: Vec<String> = paths
         .iter()
@@ -72,12 +63,10 @@ fn folders_of(paths: &[PathBuf]) -> Vec<String> {
     out.dedup();
     out
 }
-
 impl Watching {
     fn owned(&self) -> std::sync::MutexGuard<'_, HashMap<String, Vec<PathBuf>>> {
         self.1.held()
     }
-
     fn add(
         &self,
         owner: &str,
@@ -91,7 +80,6 @@ impl Watching {
             std::thread::sleep,
         )
     }
-
     fn try_add<H: Fn(Vec<String>) + Send + 'static>(
         &self,
         owner: &str,
@@ -131,7 +119,6 @@ impl Watching {
             .push(folder.to_path_buf());
         Ok(())
     }
-
     fn remove(&self, owner: &str, folder: &Path) {
         let folder = orden_base::paths::folded(folder);
         let Ok(mut held) = self.0.lock() else {
@@ -152,7 +139,6 @@ impl Watching {
             let_go(watcher, counts, &folder);
         }
     }
-
     pub fn end_where(&self, owner: &str) {
         let Ok(mut held) = self.0.lock() else {
             return;
@@ -165,11 +151,8 @@ impl Watching {
         }
     }
 }
-
 const WATCH_TRIES: u32 = 5;
-
 const WATCH_PAUSE: Duration = Duration::from_millis(40);
-
 fn watched_soon(
     mut watch: impl FnMut() -> Result<(), String>,
     there: impl Fn() -> bool,
@@ -187,7 +170,6 @@ fn watched_soon(
         }
     }
 }
-
 fn let_go(watcher: &mut RecommendedWatcher, counts: &mut HashMap<PathBuf, usize>, folder: &Path) {
     if let Some(count) = counts.get_mut(folder) {
         *count -= 1;
@@ -197,7 +179,6 @@ fn let_go(watcher: &mut RecommendedWatcher, counts: &mut HashMap<PathBuf, usize>
         }
     }
 }
-
 #[tauri::command]
 pub async fn explorer_watch(webview: Webview, folder: String) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
@@ -211,7 +192,6 @@ pub async fn explorer_watch(webview: Webview, folder: String) -> Result<(), Stri
     })
     .await
 }
-
 #[tauri::command]
 pub async fn explorer_unwatch(webview: Webview, folder: String) {
     orden_base::lane::off_the_runtime(move || {
@@ -221,13 +201,11 @@ pub async fn explorer_unwatch(webview: Webview, folder: String) {
     })
     .await;
 }
-
 pub fn window_gone(app: &AppHandle, label: &str) {
     if let Some(watching) = app.try_state::<Watching>() {
         watching.end_where(label);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{folders_of, watched_soon, Gathered, Watching, WATCH_TRIES};
@@ -305,7 +283,6 @@ mod tests {
             .unwrap_or_else(|why| std::panic::resume_unwind(why));
         assert!(heard, "the folder ended on is no longer heard");
     }
-
     #[test]
     fn a_watch_that_fails_while_its_folder_is_there_is_tried_again() {
         let tries = Cell::new(0);
@@ -325,7 +302,6 @@ mod tests {
         assert_eq!(watched, Ok(()));
         assert_eq!((tries.get(), paused.get()), (3, 2));
     }
-
     #[test]
     fn a_watch_on_a_folder_that_is_gone_gives_up_at_once() {
         let tries = Cell::new(0);
@@ -351,7 +327,6 @@ mod tests {
         assert_eq!(failing, Err("busy".to_owned()));
         assert_eq!(always.get(), WATCH_TRIES);
     }
-
     #[test]
     fn a_folder_gone_while_watched_leaves_the_watcher_serving_the_next() {
         let root = tempfile::tempdir().expect("a folder");
@@ -393,7 +368,6 @@ mod tests {
         }
         assert!(seen, "the folder after a gone one was not heard");
     }
-
     #[test]
     fn a_window_reloaded_or_closed_lets_go_of_every_folder_it_watched() {
         let root = tempfile::tempdir().expect("a folder");
@@ -425,7 +399,6 @@ mod tests {
         assert_eq!(counted(&one), None);
         assert!(watching.owned().is_empty());
     }
-
     #[test]
     fn changes_that_come_together_are_said_once() {
         let gathered = Gathered(Mutex::new(None));
@@ -437,7 +410,6 @@ mod tests {
         assert!(gathered.take().is_empty());
         assert!(gathered.add(vec!["/c".to_owned()]));
     }
-
     #[test]
     fn a_change_is_said_of_its_folder_and_of_itself() {
         let said = folders_of(&[PathBuf::from("/a/b/c.txt"), PathBuf::from("/a/b/d.txt")]);

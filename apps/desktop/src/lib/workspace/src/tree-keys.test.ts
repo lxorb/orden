@@ -8,7 +8,6 @@ const ROWS: TreeRow[] = [
   { path: '/s/Work/plan.md', folder: false, open: false },
   { path: '/s/Read me.md', folder: false, open: false },
 ]
-
 describe('walking the file list', () => {
   const stand = (path: string) => ({ do: 'stand', path })
   test.each([
@@ -32,7 +31,6 @@ describe('walking the file list', () => {
   ] as const)('%s', (_name, key, at, step) => {
     expect(treeStep(key, ROWS, at)).toEqual(step)
   })
-
   test('has nowhere to step into an open folder that is empty', () => {
     const rows: TreeRow[] = [
       { path: '/s/Empty', folder: true, open: true },
@@ -40,7 +38,6 @@ describe('walking the file list', () => {
     ]
     expect(treeStep('ArrowRight', rows, '/s/Empty')).toBeNull()
   })
-
   test('walks a list written with backslashes too', () => {
     const rows: TreeRow[] = [
       { path: 'C:\\s\\Work', folder: true, open: true },
@@ -51,17 +48,14 @@ describe('walking the file list', () => {
       path: 'C:\\s\\Work',
     })
   })
-
   test('has nowhere to go in an empty space', () => {
     expect(treeStep('ArrowDown', [], null)).toBeNull()
   })
 })
-
 describe('the keys the list walks with', () => {
   test('are four, one per direction', () => {
     expect(TREE_MOVES.map(([, key]) => key)).toEqual(['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft'])
   })
-
   test('are all in the file list group of the registry', () => {
     for (const [id, key] of TREE_MOVES) {
       const entry = BY_ID.get(id)

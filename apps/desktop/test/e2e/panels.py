@@ -1,12 +1,9 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 LEFT = """# The left note
 
 ## First part
@@ -17,14 +14,12 @@ Words in the first part.
 
 Words in the second part.
 """
-
 RIGHT = """# The right note
 
 ## Something else
 
 Words nobody is looking for.
 """
-
 SEED = """
 async ([left, right]) => {
   const ws = window.ordenApp.workspace
@@ -35,12 +30,10 @@ async ([left, right]) => {
   return ws.notes.map((one) => one.path)
 }
 """
-
 SIDE = "aside.right"
 HOLD = (
     '.tools .tool[aria-label="Stay on this note"], .tools .tool[aria-label="Follow the open note"]'
 )
-
 PANEL = """
 ([side, hold]) => ({
   rows: [...document.querySelectorAll(`${side} .body .row.heading .orden-row-label`)].map(
@@ -52,7 +45,6 @@ PANEL = """
   active: window.ordenApp.workspace.active?.name ?? null,
 })
 """
-
 def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     context = browser.new_context(
         viewport={"width": 1280, "height": 820} if not finger else {"width": 420, "height": 880},
@@ -80,7 +72,6 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     say(f"[{label}] the space holds {page.evaluate(SEED, [LEFT, RIGHT])}")
     page.wait_for_timeout(300)
     return page
-
 def open_note(page: Page, starts: str) -> None:
     page.evaluate(
         """async (starts) => {
@@ -91,38 +82,30 @@ def open_note(page: Page, starts: str) -> None:
         starts,
     )
     page.wait_for_timeout(500)
-
 def panel(page: Page) -> dict:
     return page.evaluate(PANEL, [SIDE, HOLD])
-
 def drive_holding(browser: Browser) -> None:
     page = fresh(browser, "desktop")
-
     open_note(page, "The left note")
     page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
-
     following = panel(page)
     say(f"[desktop] following the pane: {json.dumps(following, ensure_ascii=False)}")
     shot(page, "01-following")
-
     if following["rows"] != ["The left note", "First part", "Second part"]:
         wrong(f"the outline is not of the note being read: {following['rows']}")
     if following["held"] != "false":
         wrong("the panel says it is held before anybody held it")
     if following["holding"] is not None:
         wrong("a panel that follows says it is holding something")
-
     page.locator(HOLD).first.click()
     page.wait_for_timeout(400)
     page.evaluate("() => window.ordenApp.workspace.split('row')")
     page.wait_for_timeout(600)
     open_note(page, "The right note")
-
     holding = panel(page)
     say(f"[desktop] held while the other note is open: {json.dumps(holding, ensure_ascii=False)}")
     shot(page, "02-held")
-
     if holding["active"] != "The right note.md":
         wrong(f"the pane being worked in is not the right note: {holding['active']}")
     if holding["rows"] != ["The left note", "First part", "Second part"]:
@@ -131,7 +114,6 @@ def drive_holding(browser: Browser) -> None:
         wrong("the panel does not say it is held")
     if holding["holding"] != "The left note":
         wrong(f"the panel does not say which note it is held on: {holding['holding']!r}")
-
     page.locator(f"{SIDE} .body .row.heading", has_text="Second part").first.click()
     page.wait_for_timeout(600)
     landed = page.evaluate(
@@ -144,7 +126,6 @@ def drive_holding(browser: Browser) -> None:
     shot(page, "03-jumped-back")
     if landed["note"] != "The left note.md":
         wrong(f"pressing a row in a held panel did not go to its note: {landed['note']}")
-
     page.locator(HOLD).first.click()
     page.wait_for_timeout(300)
     page.evaluate("() => window.ordenApp.workspace.panes.focusNext()")
@@ -156,37 +137,29 @@ def drive_holding(browser: Browser) -> None:
         wrong("the panel still says it is holding something")
     if freed["rows"] and freed["rows"][0] != freed["active"].replace(".md", ""):
         wrong(f"the outline did not follow the pane again: {freed['rows']}")
-
     page.context.close()
-
 def drive_links(browser: Browser) -> None:
     page = fresh(browser, "links")
     open_note(page, "The left note")
     page.evaluate("() => window.ordenApp.workspace.showPanel('links')")
     page.wait_for_timeout(500)
-
     tools = page.evaluate("(side) => document.querySelectorAll(`${side} .tools .tool`).length", SIDE)
     say(f"[links] the tools in the row: {tools}")
     shot(page, "10-links")
     if tools != 2:
         wrong(f"the links panel offers {tools} tools, not the hold and the graph")
-
     page.context.close()
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
     open_note(page, "The left note")
     page.evaluate("() => window.ordenApp.workspace.showPanel('outline')")
     page.wait_for_timeout(500)
-
     tools = page.evaluate("(hold) => document.querySelectorAll(hold).length", HOLD)
     say(f"[phone] hold buttons: {tools}")
     shot(page, "20-phone")
     if tools:
         wrong("a screen that holds one document offers a panel to hold it against")
-
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the outline, held ---")
@@ -195,7 +168,5 @@ def main() -> int:
         drive_links(browser)
         say("--- a finger ---")
         drive_finger(browser)
-
     return DRIVE.verdict("a panel can be held on one note while another is written in")
-
 raise SystemExit(main())

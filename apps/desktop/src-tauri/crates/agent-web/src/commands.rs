@@ -29,7 +29,6 @@ pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview,
         connected: shell::connected(),
     })
 }
-
 #[derive(Serialize)]
 pub struct Overview {
     pub agents: Vec<Grant>,
@@ -39,7 +38,6 @@ pub struct Overview {
     pub halted: Vec<String>,
     pub connected: Vec<String>,
 }
-
 #[tauri::command(async)]
 pub fn agents_adopt(
     webview: tauri::Webview,
@@ -50,7 +48,6 @@ pub fn agents_adopt(
     orden_base::labels::from_the_app(&webview)?;
     tabs::adopt(&app, &agent_tab, &tab)
 }
-
 #[tauri::command(async)]
 pub fn agents_peek(
     webview: tauri::Webview,
@@ -60,7 +57,6 @@ pub fn agents_peek(
     orden_base::labels::from_the_app(&webview)?;
     browser::peek(&app, &tab)
 }
-
 #[tauri::command]
 pub async fn agents_capture(
     webview: tauri::Webview,

@@ -6,10 +6,8 @@
   import { inTone, type Tone, TONES } from './tones'
 
   const { onpick }: { onpick: (emoji: string) => void } = $props()
-
   const ACROSS = 8
   const CELL = 34
-
   let data = $state.raw<EmojiData | null>(null)
   let failed = $state(false)
   let query = $state('')
@@ -19,7 +17,6 @@
   let scroller = $state<HTMLElement>()
   let field = $state<HTMLInputElement>()
   let toning = $state(false)
-
   onMount(() => {
     field?.focus()
     emojiData().then(
@@ -27,15 +24,12 @@
       () => (failed = true),
     )
   })
-
   type Row = { head: string } | { cells: string[] }
-
   const cells = $derived.by((): string[] => {
     if (!data) return []
     if (query.trim()) return findEmoji(data, query)
     return [...emojiRecent.list, ...data.groups.flatMap((group) => group.emojis)]
   })
-
   const rows = $derived.by((): Row[] => {
     if (!data) return []
     const runs = (list: readonly string[]): Row[] => {
@@ -51,29 +45,23 @@
       ...data.groups.flatMap((group) => [{ head: group.label }, ...runs(group.emojis)]),
     ]
   })
-
   const shown = $derived(windowFor({ count: rows.length, height: CELL, top, room, overscan: 4 }))
-
   const words = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const map = new Map<string, string>()
     for (const entry of data?.entries ?? []) map.set(entry.name, entry.words)
     return map
   })
-
   const toned = (emoji: string) => (data ? inTone(emoji, emojiRecent.tone, data.toned) : emoji)
-
   function pick(emoji: string) {
     const chosen = toned(emoji)
     emojiRecent.add(chosen)
     onpick(chosen)
   }
-
   function rowOf(index: number): number {
     const emoji = cells[index]
     return rows.findIndex((row) => 'cells' in row && emoji !== undefined && row.cells.includes(emoji))
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.isComposing || !cells.length) return
     const step: Record<string, number> = {
@@ -181,39 +169,32 @@
     flex-direction: column;
     min-height: 0;
   }
-
   :global(.float.sheet) .picker {
     width: 100%;
   }
-
   .bar {
     display: flex;
     gap: var(--space-1);
     padding: var(--space-2);
   }
-
   .tone {
     font-size: 18px;
   }
-
   .tones {
     display: flex;
     justify-content: space-between;
     padding: 0 var(--space-2) var(--space-2);
   }
-
   .grid {
     height: 280px;
     overflow-y: auto;
     padding: 0 var(--space-2) var(--space-2);
   }
-
   .row {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     height: 34px;
   }
-
   .head {
     height: 34px;
     margin: 0;
@@ -222,7 +203,6 @@
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
   }
-
   .cell {
     display: grid;
     place-items: center;
@@ -239,23 +219,19 @@
       background var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-spring);
   }
-
   @media (hover: hover) {
     .cell:hover {
       background: var(--surface-hover);
       transform: scale(1.12);
     }
   }
-
   .cell:active {
     transform: scale(0.94);
   }
-
   .cell.lit,
   .cell.on {
     background: var(--accent-soft);
   }
-
   .empty {
     margin: var(--space-4) 0;
     color: var(--muted);

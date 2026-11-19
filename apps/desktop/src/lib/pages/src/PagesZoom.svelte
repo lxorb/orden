@@ -4,12 +4,10 @@
   import { dur, fade, scale as growing } from '../../platform/src/api'
 
   const { zoom }: { zoom: number } = $props()
-
   const HELD = 600
   let shown = $state(false)
   let last = 0
   let timer: ReturnType<typeof setTimeout> | undefined
-
   $effect(() => {
     const now = zoom
     if (!last) {
@@ -17,18 +15,14 @@
       return
     }
     if (now === last) return
-
     last = now
     shown = true
-
     clearTimeout(timer)
     timer = setTimeout(() => {
       shown = false
     }, HELD)
   })
-
   onDestroy(() => clearTimeout(timer))
-
   const percent = $derived(Math.round(zoom * 100))
 </script>
 

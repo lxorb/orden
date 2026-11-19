@@ -3,7 +3,6 @@ import { copyPicture } from './copy-picture'
 
 function clipboard() {
   const written: Record<string, Promise<Blob>>[] = []
-
   vi.stubGlobal(
     'ClipboardItem',
     class {
@@ -19,14 +18,11 @@ function clipboard() {
       },
     },
   })
-
   return written
 }
-
 afterEach(() => {
   vi.unstubAllGlobals()
 })
-
 describe('a picture copied from its menu', () => {
   test('goes onto the clipboard as the picture, not as its path', async () => {
     const png = new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' })
@@ -38,7 +34,6 @@ describe('a picture copied from its menu', () => {
     expect(handed?.type).toBe('image/png')
     expect(handed?.size).toBe(4)
   })
-
   test('and says so when the picture could not be read', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response(null, { status: 404 })))
     clipboard()

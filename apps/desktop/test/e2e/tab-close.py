@@ -1,14 +1,10 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 NAMES = [f"Note {letter}" for letter in "ABCDEFGHIJKL"]
-
 PARTED = 3
-
 SEED = """
 async (names) => {
   const ws = window.ordenApp.workspace
@@ -22,7 +18,6 @@ async (names) => {
   for (const one of ws.tabs.filter((tab) => !names.includes(tab.shown))) ws.close(one.id)
 }
 """
-
 WATCH = """
 () => {
   window.__frames = []
@@ -44,14 +39,11 @@ WATCH = """
   requestAnimationFrame(look)
 }
 """
-
 def tab(name: str) -> str:
     return f'.tab:has(.label:text-is("{name}"))'
-
 def frames(page: Page) -> list[list[dict]]:
     wait_for(page, "window.__frames && window.__frames.length >= 40", "forty frames")
     return page.evaluate("() => window.__frames")
-
 def closing(page: Page, look: str, icons: bool) -> None:
     page.emulate_media(color_scheme=look)  # type: ignore[arg-type]
     scheme = look if icons else f"{look}-chrome"
@@ -59,19 +51,16 @@ def closing(page: Page, look: str, icons: bool) -> None:
     wait_for(page, f"document.querySelectorAll('.tabs .tab').length === {len(NAMES)}", "the strip")
     page.locator(f"{tab('Note D')} .pick").click()
     page.wait_for_timeout(400)
-
     cross = page.locator(f"{tab('Note D')} .shut").bounding_box()
     x, y = cross["x"] + cross["width"] / 2, cross["y"] + cross["height"] / 2
     page.mouse.move(x, y)
     page.wait_for_timeout(300)
-
     page.evaluate(WATCH)
     page.mouse.down()
     page.mouse.up()
     page.wait_for_timeout(60)
     DRIVE.shot(page, f"{scheme}-01-closing")
     seen = frames(page)
-
     first = {one["name"]: one["width"] for one in seen[0] if one["name"] != "Note D"}
     front = next((one["name"] for one in seen[-1] if one["active"]), None)
     say(f"[{scheme}] in front after the close: {front}")
@@ -104,11 +93,9 @@ def closing(page: Page, look: str, icons: bool) -> None:
     say(f"[{scheme}] the closed tab's edge and the next one's: at most {worst:.1f} px apart")
     if worst > PARTED:
         wrong(f"[{scheme}] the closed tab and the next one parted by {worst:.1f} px")
-
     if icons:
         page.mouse.move(x, y + 300)
         return
-
     page.mouse.down()
     page.mouse.up()
     wait_for(page, "!window.ordenApp.workspace.tabs.some((one) => one.shown === 'Note E')", "Note E to close")
@@ -119,7 +106,6 @@ def closing(page: Page, look: str, icons: bool) -> None:
     page.mouse.move(x, y + 300)
     page.wait_for_timeout(500)
     DRIVE.shot(page, f"{scheme}-02-let-out")
-
 def drive(browser: Browser) -> None:
     for icons in (True, False):
         for scheme in ("light", "dark"):
@@ -130,5 +116,4 @@ def drive(browser: Browser) -> None:
             DRIVE.open(page)
             closing(page, scheme, icons)
             page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "a closed tab shrinks out of the way, and the rest hold still"))

@@ -5,13 +5,11 @@ pub trait System {
     fn add(&self, one: &Planned, nonce: &str, words: &Words) -> Result<(), String>;
     fn remove(&self, id: &str) -> Result<(), String>;
 }
-
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Changes {
     pub added: Vec<String>,
     pub removed: Vec<String>,
 }
-
 pub fn make_so(
     system: &impl System,
     wanted: &[(Planned, String)],
@@ -21,7 +19,6 @@ pub fn make_so(
 ) -> Result<Changes, String> {
     let held = system.scheduled()?;
     let mut changes = Changes::default();
-
     for id in &held {
         if moved.contains(id) || !wanted.iter().any(|(one, _)| &one.id == id && one.at > now) {
             system.remove(id)?;
@@ -37,7 +34,6 @@ pub fn make_so(
     }
     Ok(changes)
 }
-
 #[cfg(test)]
 pub(super) mod tests {
     use super::*;
@@ -49,7 +45,6 @@ pub(super) mod tests {
         pub refuse: bool,
         pub asked: RefCell<Vec<String>>,
     }
-
     impl System for Fake {
         fn scheduled(&self) -> Result<Vec<String>, String> {
             Ok(self.held.borrow().clone())
@@ -70,7 +65,6 @@ pub(super) mod tests {
             Ok(())
         }
     }
-
     pub fn planned(id: &str, at: i64) -> Planned {
         Planned {
             id: id.into(),
@@ -84,19 +78,16 @@ pub(super) mod tests {
             tomorrow: None,
         }
     }
-
     fn wanted(ids: &[(&str, i64)]) -> Vec<(Planned, String)> {
         ids.iter()
             .map(|(id, at)| (planned(id, *at), format!("n-{id}")))
             .collect()
     }
-
     #[test]
     fn adds_what_is_new_and_takes_off_what_went() {
         let fake = Fake::default();
         fake.held.borrow_mut().push("old".into());
         fake.held.borrow_mut().push("kept".into());
-
         let changes = make_so(
             &fake,
             &wanted(&[("kept", 2000), ("new", 3000)]),
@@ -115,19 +106,16 @@ pub(super) mod tests {
         assert_eq!(*fake.held.borrow(), ["kept", "new"]);
         assert_eq!(*fake.asked.borrow(), ["remove old", "add new n-new"]);
     }
-
     #[test]
     fn the_same_plan_twice_touches_nothing() {
         let fake = Fake::default();
         let plan = wanted(&[("a", 2000), ("b", 3000)]);
         make_so(&fake, &plan, &[], &Words::default(), 1000).expect("the first pass");
         fake.asked.borrow_mut().clear();
-
         let changes = make_so(&fake, &plan, &[], &Words::default(), 1000).expect("the second");
         assert_eq!(changes, Changes::default());
         assert!(fake.asked.borrow().is_empty());
     }
-
     #[test]
     fn a_moment_gone_is_not_handed_over_and_one_held_is_let_go() {
         let fake = Fake::default();
@@ -143,7 +131,6 @@ pub(super) mod tests {
         assert_eq!(changes.added, Vec::<String>::new());
         assert_eq!(changes.removed, ["late"]);
     }
-
     #[test]
     fn one_held_at_another_moment_is_set_again_at_its_own() {
         let fake = Fake::default();
@@ -160,7 +147,6 @@ pub(super) mod tests {
         assert_eq!(changes.removed, ["moved"]);
         assert_eq!(changes.added, ["moved"]);
     }
-
     #[test]
     fn a_refusal_is_answered_so_the_page_rings_instead() {
         let fake = Fake {

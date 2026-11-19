@@ -9,13 +9,11 @@ export interface Synced {
   count: number
   remove(): Promise<void>
 }
-
 export function syncedCopies(engine: Engine | null): Synced {
   if (!engine) return fromMirrors()
   if (!engine.copies) return { count: 0, remove: () => Promise.resolve() }
   return fromTree(engine.copies)
 }
-
 function fromTree(engine: ForeignCopies): Synced {
   return {
     count: engine.foreignCopies().length,
@@ -25,7 +23,6 @@ function fromTree(engine: ForeignCopies): Synced {
     },
   }
 }
-
 function fromMirrors(): Synced {
   const ids = savedMirrors(stored(MIRRORS_KEY), account.user?.id ?? null).flatMap((mirror) =>
     Object.entries(mirror.notes).flatMap(([path, one]) => (inForeignCopy(path) ? [one.id] : [])),
@@ -40,7 +37,6 @@ function fromMirrors(): Synced {
     },
   }
 }
-
 async function deleted(token: string, id: string) {
   try {
     await api.deleteNote(token, id)
@@ -49,7 +45,6 @@ async function deleted(token: string, id: string) {
     log('warn', `sync: a conflict copy ${id} stayed on the account - ${String(error)}`)
   }
 }
-
 function savedMirrors(saved: unknown, accountId: string | null): Mirror[] {
   const record = savedRecord(saved)
   if (!record || (record.whose !== null && record.whose !== accountId)) return []

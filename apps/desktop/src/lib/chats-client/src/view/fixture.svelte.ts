@@ -37,7 +37,6 @@ import { dayOf } from './when'
 const OPENING = 100
 const PAGE = 200
 const MOST_HELD = 1000
-
 interface Held {
   entry: ChatEntry
   state: ChatState
@@ -50,7 +49,6 @@ interface Held {
   views: Set<FixtureView | FixtureReplies>
   typing: { who: Who; parent?: string }[]
 }
-
 export function randomFrom(seed: number): () => number {
   let state = seed >>> 0
   return () => {
@@ -58,10 +56,8 @@ export function randomFrom(seed: number): () => number {
     return state / 2 ** 32
   }
 }
-
 const shown = (message: Message): Shown => ({ ...message, sending: false, refused: null })
 const isMain = (message: Message) => message.parent === undefined || message.alsoToChat
-
 export class FixtureChats implements Chats {
   readonly me: Who
   list = $state.raw<ChatEntry[]>([])
@@ -81,13 +77,11 @@ export class FixtureChats implements Chats {
   private readonly hearers = new Set<(chat: string, messages: readonly Message[]) => void>()
   private readonly random: () => number
   private readonly now: () => number
-
   constructor(me: Who, options: { seed?: number; now?: () => number } = {}) {
     this.me = me
     this.random = randomFrom(options.seed ?? 7)
     this.now = options.now ?? (() => Date.now())
   }
-
   add(name: string, members: ChatMember[], more: Partial<ChatEntry> = {}): string {
     const id = `c_${hexOf(this.random, 32)}`
     const entry: ChatEntry = {
@@ -126,7 +120,6 @@ export class FixtureChats implements Chats {
     this.list = [...this.list, entry]
     return id
   }
-
   place(chat: string, author: Who, event: Event, at = this.now()): void {
     const held = this.must(chat)
     const logged = { ...event, seq: held.state.seq + 1, at, author } as Logged
@@ -157,94 +150,76 @@ export class FixtureChats implements Chats {
       for (const hear of this.hearers) hear(chat, changed)
     }
   }
-
   speak(chat: string, author: Who, body: string, more: Partial<Post> = {}): string {
     const message = this.id()
     this.place(chat, author, { kind: 'post', id: this.id(), message, body, ...more })
     return message
   }
-
   seat(chat: string, members: ChatMember[]): void {
     const held = this.must(chat)
     held.members = members
     this.setEntry(chat, { ...held.entry, members: members.length })
     for (const view of held.views) view.refresh()
   }
-
   readTo(chat: string, who: Who, seq: number): void {
     this.must(chat).reads.set(who, seq)
     for (const view of this.must(chat).views) view.refresh()
   }
-
   typing(chat: string, who: Who, on: boolean, parent?: string): void {
     const held = this.must(chat)
     held.typing = held.typing.filter((one) => one.who !== who)
     if (on) held.typing.push({ who, ...(parent ? { parent } : {}) })
     for (const view of held.views) view.refresh()
   }
-
   readHere(chat: string, seq: number, unread = 0): void {
     this.setEntry(chat, { ...this.must(chat).entry, readSeq: seq, unread, mentions: 0 })
   }
-
   id(): string {
     return ulid(this.now(), this.random)
   }
-
   must(chat: string): Held {
     const held = this.held.get(chat)
     if (!held) throw new Error(`no chat ${chat}`)
     return held
   }
-
   ordered(chat: string): readonly Message[] {
     return this.must(chat).ordered
   }
-
   private setEntry(chat: string, entry: ChatEntry): void {
     this.must(chat).entry = entry
     this.list = this.list.map((one) => (one.id === chat ? entry : one))
     for (const listener of this.listeners) listener()
   }
-
   watch(listener: () => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   heard(listener: (chat: string, messages: readonly Message[]) => void): () => void {
     this.hearers.add(listener)
     return () => this.hearers.delete(listener)
   }
-
   entry(chat: string): ChatEntry | null {
     return this.list.find((one) => one.id === chat) ?? null
   }
-
   message(chat: string, id: string): Promise<Message | null> {
     const held = this.held.get(chat)
     return Promise.resolve(held?.state.messages.get(id) ?? null)
   }
-
   markRead(chat: string, seq: number): Promise<void> {
     if (seq > (this.entry(chat)?.readSeq ?? 0)) this.readHere(chat, seq)
     return Promise.resolve()
   }
-
   open(chat: string): ChatView {
     const view = new FixtureView(this, chat)
     void view.open()
     return view
   }
-
   hold(chat: string, view: FixtureView | FixtureReplies): void {
     this.must(chat).views.add(view)
   }
-
   release(chat: string, view: FixtureView | FixtureReplies): void {
     this.must(chat).views.delete(view)
   }
-
   async send(chat: string, event: Event): Promise<void> {
     const held = this.must(chat)
     if (event.kind === 'schedule') {
@@ -265,7 +240,6 @@ export class FixtureChats implements Chats {
     held.pending = held.pending.filter((one) => one.id !== event.message)
     this.place(chat, this.me, event)
   }
-
   private postOf(chat: string, draft: Draft): Post {
     const mentions = mentionsIn(
       draft.body,
@@ -286,28 +260,23 @@ export class FixtureChats implements Chats {
       ...(mentions.length ? { mentions } : {}),
     }
   }
-
   async post(chat: string, draft: Draft): Promise<string> {
     const post = this.postOf(chat, draft)
     this.keepDraft(chat, '')
     await this.send(chat, post)
     return post.message
   }
-
   async schedule(chat: string, draft: Draft, sendAt: number): Promise<string> {
     const post = this.postOf(chat, draft)
     await this.send(chat, { kind: 'schedule', id: this.id(), sendAt, post })
     return post.message
   }
-
   readonly retry = () => Promise.resolve()
   readonly linking = () => Promise.resolve<Hit[]>([])
   readonly preview = () => Promise.resolve<Preview | null>(null)
-
   scheduled(chat: string): Promise<Scheduled[]> {
     return Promise.resolve([...this.must(chat).scheduled])
   }
-
   edit(chat: string, message: string, body: string, files?: FileRef[]): Promise<void> {
     return this.send(chat, {
       kind: 'edit',
@@ -317,27 +286,21 @@ export class FixtureChats implements Chats {
       ...(files ? { files } : {}),
     })
   }
-
   remove(chat: string, message: string): Promise<void> {
     return this.send(chat, { kind: 'delete', id: this.id(), target: message })
   }
-
   react(chat: string, message: string, emoji: string, on: boolean): Promise<void> {
     return this.send(chat, { kind: 'react', id: this.id(), target: message, emoji, on })
   }
-
   pin(chat: string, message: string, on: boolean): Promise<void> {
     return this.send(chat, { kind: 'pin', id: this.id(), target: message, on })
   }
-
   vote(chat: string, message: string, answers: number[]): Promise<void> {
     return this.send(chat, { kind: 'vote', id: this.id(), target: message, answers })
   }
-
   setMeta(chat: string, meta: Partial<Meta>): Promise<void> {
     return this.send(chat, { kind: 'meta', id: this.id(), ...meta })
   }
-
   async unsend(chat: string): Promise<string | null> {
     const now = this.now()
     const last = [...this.must(chat).ordered]
@@ -347,27 +310,22 @@ export class FixtureChats implements Chats {
     await this.remove(chat, last.id)
     return last.body
   }
-
   discard(chat: string, message: string): Promise<void> {
     const held = this.must(chat)
     held.pending = held.pending.filter((one) => one.id !== message)
     for (const view of held.views) view.refresh()
     return Promise.resolve()
   }
-
   notifyFor(chat: string, notify: Notify | null, mutedUntil: number | null): Promise<void> {
     this.setEntry(chat, { ...this.must(chat).entry, notify, mutedUntil })
     return Promise.resolve()
   }
-
   members(chat: string): Promise<ChatMember[]> {
     return Promise.resolve(this.must(chat).members)
   }
-
   parse(query: string): SearchQuery {
     return parseSearch(query, dayOf(this.now()))
   }
-
   search(query: string, chat?: string): Promise<Hit[]> {
     const read = this.parse(query)
     const hits: Hit[] = []
@@ -386,23 +344,19 @@ export class FixtureChats implements Chats {
     }
     return Promise.resolve(hits.sort((a, b) => b.message.at - a.message.at))
   }
-
   draft(chat: string): string {
     return this.drafts.get(chat) ?? ''
   }
-
   keepDraft(chat: string, text: string): void {
     if (text) this.drafts.set(chat, text)
     else this.drafts.delete(chat)
   }
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- who to tell
   private readonly offered = new Set<(offer: Offer) => void>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
   private readonly waitingOffers = new Map<string, Offer>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the fixture's own books
   readonly reaches = new Map<string, { missing: ChatMember[]; share: boolean }>()
-
   offer(chat: string, text: string, more: { parent?: string; note?: string } = {}): void {
     const key = more.parent ? `${chat}/${more.parent}` : chat
     this.keepDraft(key, text)
@@ -410,28 +364,23 @@ export class FixtureChats implements Chats {
     this.waitingOffers.set(key, offer)
     for (const hear of this.offered) hear(offer)
   }
-
   takeOffer(chat: string, parent?: string): Offer | null {
     const key = parent ? `${chat}/${parent}` : chat
     const offer = this.waitingOffers.get(key) ?? null
     this.waitingOffers.delete(key)
     return offer
   }
-
   noteReach(_chat: string, path: string) {
     return Promise.resolve(this.reaches.get(path) ?? null)
   }
-
   shareNote(_chat: string, path: string): Promise<boolean> {
     this.reaches.delete(path)
     return Promise.resolve(true)
   }
-
   offers(listener: (offer: Offer) => void): () => void {
     this.offered.add(listener)
     return () => this.offered.delete(listener)
   }
-
   history(chat: string, ask: HistoryAsk): Promise<Message[]> {
     const state = this.must(chat).state
     const asked = ask.around === undefined ? undefined : state.messages.get(ask.around)
@@ -453,29 +402,24 @@ export class FixtureChats implements Chats {
     const before = ask.before ?? Number.MAX_SAFE_INTEGER
     return Promise.resolve(all.filter((one) => one.seq < before).slice(-ask.limit))
   }
-
   upload(bytes: Uint8Array): Promise<string | null> {
     const hash = hexOf(this.random, 64)
     this.files.set(hash, URL.createObjectURL(new Blob([bytes.slice()])))
     return Promise.resolve(hash)
   }
-
   fileUrl(_chat: string, hash: string): Promise<string | null> {
     return Promise.resolve(this.files.get(hash) ?? pictureOf(hash))
   }
-
   make(folder: string, name: string): Promise<string | null> {
     const id = this.add(name, [{ who: this.me, name: 'Me', role: 'owner' }])
     const path = `${folder}/${name}.chat`
     this.setEntry(id, { ...this.must(id).entry, path })
     return Promise.resolve(path)
   }
-
   chatAt(path: string): Promise<string | null> {
     return Promise.resolve(this.list.find((one) => one.path === path)?.id ?? null)
   }
 }
-
 function outboxMessage(post: Post, author: Who, at: number): Message {
   return {
     id: post.message,
@@ -497,7 +441,6 @@ function outboxMessage(post: Post, author: Who, at: number): Message {
     ...(post.preview ? { preview: post.preview } : {}),
   }
 }
-
 class FixtureView implements ChatView {
   messages = $state.raw<Shown[]>([])
   pending = $state.raw<Shown[]>([])
@@ -510,7 +453,6 @@ class FixtureView implements ChatView {
   private low = 0
   private high = Infinity
   private readonly listeners = new Set<() => void>()
-
   constructor(
     private readonly store: FixtureChats,
     readonly chat: string,
@@ -518,19 +460,15 @@ class FixtureView implements ChatView {
     this.lineAt = store.entry(chat)?.readSeq ?? 0
     store.hold(chat, this)
   }
-
   get entry(): ChatEntry | null {
     return this.store.entry(this.chat)
   }
-
   get meta(): Meta {
     return this.entry?.meta ?? { topic: '', posting: 'writers', slowmode: 0 }
   }
-
   get role() {
     return this.entry?.role ?? null
   }
-
   open(): Promise<void> {
     const all = this.store.ordered(this.chat)
     const head = all.at(-1)?.seq ?? 0
@@ -539,7 +477,6 @@ class FixtureView implements ChatView {
     this.loading = false
     return Promise.resolve()
   }
-
   private window(from: number, to: number): void {
     const all = this.store.ordered(this.chat)
     if (to - from > MOST_HELD) to = from + MOST_HELD
@@ -547,7 +484,6 @@ class FixtureView implements ChatView {
     this.high = to >= all.length ? Infinity : (all[to - 1]?.seq ?? Infinity)
     this.refresh()
   }
-
   private indexOf(seq: number): number {
     const all = this.store.ordered(this.chat)
     let low = 0
@@ -559,13 +495,11 @@ class FixtureView implements ChatView {
     }
     return low
   }
-
   private around(seq: number): void {
     const at = this.indexOf(seq)
     const from = Math.max(0, at - OPENING / 2)
     this.window(from, from + OPENING)
   }
-
   refresh(): void {
     const held = this.store.must(this.chat)
     const all = held.ordered
@@ -582,68 +516,56 @@ class FixtureView implements ChatView {
     }
     for (const listener of this.listeners) listener()
   }
-
   watch(listener: () => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   private shownSpan(): { from: number; to: number } {
     const to = this.high === Infinity ? this.store.ordered(this.chat).length : this.indexOf(this.high + 1)
     return { from: this.indexOf(this.low), to }
   }
-
   older(): Promise<void> {
     const { from, to } = this.shownSpan()
     const next = Math.max(0, from - PAGE)
     this.window(next, Math.min(to, next + MOST_HELD))
     return Promise.resolve()
   }
-
   newer(): Promise<void> {
     const { from, to } = this.shownSpan()
     const next = Math.min(this.store.ordered(this.chat).length, to + PAGE)
     this.window(Math.max(from, next - MOST_HELD), next)
     return Promise.resolve()
   }
-
   jump(message: string): Promise<boolean> {
     const found = this.store.must(this.chat).state.messages.get(message)
     if (!found) return Promise.resolve(false)
     this.around(found.seq)
     return Promise.resolve(true)
   }
-
   latest(): Promise<void> {
     const all = this.store.ordered(this.chat)
     this.window(Math.max(0, all.length - OPENING), all.length)
     return Promise.resolve()
   }
-
   replies(parent: string): RepliesView {
     return new FixtureReplies(this.store, this.chat, parent)
   }
-
   read(seq: number): void {
     const entry = this.store.entry(this.chat)
     if (entry && seq > entry.readSeq) this.store.readHere(this.chat, seq)
   }
-
   markUnread(seq: number): void {
     this.lineAt = Math.max(0, seq - 1)
     const unread = this.store.ordered(this.chat).filter((one) => one.seq >= seq).length
     this.store.readHere(this.chat, this.lineAt, unread)
   }
-
   typed(): void {
     // Nobody else is listening to a fixture.
   }
-
   close(): void {
     this.store.release(this.chat, this)
   }
 }
-
 class FixtureReplies implements RepliesView {
   messages = $state.raw<Shown[]>([])
   pending = $state.raw<Shown[]>([])
@@ -652,7 +574,6 @@ class FixtureReplies implements RepliesView {
   atEnd = true
   loading = false
   private readonly listeners = new Set<() => void>()
-
   constructor(
     private readonly store: FixtureChats,
     private readonly chat: string,
@@ -661,7 +582,6 @@ class FixtureReplies implements RepliesView {
     store.hold(chat, this)
     this.refresh()
   }
-
   refresh(): void {
     const held = this.store.must(this.chat)
     const all = [...held.state.messages.values()]
@@ -674,17 +594,14 @@ class FixtureReplies implements RepliesView {
     this.pending = held.pending.filter((one) => one.parent === this.id)
     for (const listener of this.listeners) listener()
   }
-
   watch(listener: () => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   close(): void {
     this.store.release(this.chat, this)
   }
 }
-
 function pictureOf(hash: string): string {
   const hue = (parseInt(hash.slice(0, 2), 16) || 0) * 1.4
   const svg =
@@ -698,10 +615,8 @@ function pictureOf(hash: string): string {
     `</svg>`
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
-
 const hexOf = (random: () => number, length: number) =>
   Array.from({ length }, () => Math.floor(random() * 16).toString(16)).join('')
-
 export function fixtureFile(random: () => number, more: Omit<FileRef, 'hash'>): FileRef {
   return { hash: hexOf(random, 64), ...more }
 }

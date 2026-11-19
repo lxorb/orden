@@ -5,7 +5,6 @@ pub struct Block {
     pub close: usize,
     pub end: usize,
 }
-
 pub fn block(body: &str) -> Option<Block> {
     let first = body.find('\n')?;
     let opening = body[..first]
@@ -14,7 +13,6 @@ pub fn block(body: &str) -> Option<Block> {
     if !is_fence(opening.strip_suffix('\r').unwrap_or(opening)) {
         return None;
     }
-
     let close = closing_fence(body, first + 1)?;
     let end = body[close..]
         .find('\n')
@@ -25,24 +23,18 @@ pub fn block(body: &str) -> Option<Block> {
         end,
     })
 }
-
 fn is_fence(line: &str) -> bool {
     line.strip_prefix("---")
         .is_some_and(|rest| rest.bytes().all(is_blank))
 }
-
 const fn is_blank(one: u8) -> bool {
     one == b' ' || one == b'\t'
 }
-
 const MOST_KEY_WORDS: usize = 6;
 const MOST_KEY_CHARACTERS: usize = 80;
-
 const SENTENCE_KEY_WORDS: usize = 3;
 const SENTENCE_VALUE_WORDS: usize = 3;
-
 const MOST_KEY_LENGTH: usize = 1024;
-
 fn not_the_first_key(text: &str) -> bool {
     let bytes = text.as_bytes();
     let Some(&first) = bytes.first() else {
@@ -62,7 +54,6 @@ fn not_the_first_key(text: &str) -> bool {
         && matches!(bytes.get(digits), Some(b'.' | b')'))
         && bytes.get(digits + 1).copied().is_some_and(is_blank)
 }
-
 fn is_tight_key(text: &str) -> bool {
     let bytes = text.as_bytes();
     let Some(&first) = bytes.first() else {
@@ -83,7 +74,6 @@ fn is_tight_key(text: &str) -> bool {
         .next()
         .is_some_and(|one| !one.is_whitespace() && one != ':')
 }
-
 fn is_key_line(text: &str) -> bool {
     let Some(past) = past_key(text.as_bytes(), 0) else {
         return is_tight_key(text);
@@ -94,7 +84,6 @@ fn is_key_line(text: &str) -> bool {
     if text.starts_with('"') || text.starts_with('\'') {
         return true;
     }
-
     let key = text[..past - 1].trim_end();
     if key.contains("://") || key.chars().count() > MOST_KEY_CHARACTERS {
         return false;
@@ -103,13 +92,11 @@ fn is_key_line(text: &str) -> bool {
     if words > MOST_KEY_WORDS {
         return false;
     }
-
     let value = text[past..].trim();
     !(words >= SENTENCE_KEY_WORDS
         && value.split_whitespace().count() >= SENTENCE_VALUE_WORDS
         && value.ends_with(['.', '!', '?', '…']))
 }
-
 fn past_quote(line: &[u8], at: usize) -> Option<usize> {
     let quote = line[at];
     let mut over = at + 1;
@@ -127,13 +114,11 @@ fn past_quote(line: &[u8], at: usize) -> Option<usize> {
     }
     None
 }
-
 fn past_key(line: &[u8], at: usize) -> Option<usize> {
     let first = *line.get(at)?;
     if b"#*>|[]{}!&%@`,".contains(&first) {
         return None;
     }
-
     let mut from = at;
     if first == b'"' || first == b'\'' {
         from = past_quote(line, at)?;
@@ -144,7 +129,6 @@ fn past_key(line: &[u8], at: usize) -> Option<usize> {
             return None;
         }
     }
-
     for (over, &one) in line.iter().enumerate().skip(from) {
         if one == b':' {
             if over - at > MOST_KEY_LENGTH {
@@ -157,13 +141,11 @@ fn past_key(line: &[u8], at: usize) -> Option<usize> {
     }
     None
 }
-
 #[derive(Default, Clone, Copy)]
 struct Open {
     quote: u8,
     depth: i32,
 }
-
 fn stays_open(line: &[u8], open: &mut Open) -> bool {
     let mut starts = true;
     let mut at = 0;
@@ -205,7 +187,6 @@ fn stays_open(line: &[u8], open: &mut Open) -> bool {
     }
     true
 }
-
 pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
     let bytes = body.as_bytes();
     let line_end = |at: usize| {
@@ -216,7 +197,6 @@ pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
     };
     let without_return =
         |line: &'_ [u8]| -> usize { line.len() - usize::from(line.last() == Some(&b'\r')) };
-
     let mut stop = line_end(from);
     let first = &bytes[from..stop];
     let blanks = first.iter().take_while(|&&one| is_blank(one)).count();
@@ -229,7 +209,6 @@ pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
     if !stays_open(said, &mut open) {
         return None;
     }
-
     while stop + 1 < limit {
         let at = stop + 1;
         stop = line_end(at);
@@ -240,7 +219,6 @@ pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
     }
     None
 }
-
 fn is_block_scalar(said: &[u8]) -> bool {
     if !matches!(said.first(), Some(b'|' | b'>')) {
         return false;
@@ -253,7 +231,6 @@ fn is_block_scalar(said: &[u8]) -> bool {
     let text = rest.iter().position(|&one| !is_blank(one));
     text.is_none_or(|at| rest[at] == b'#')
 }
-
 fn without_properties(said: &[u8]) -> &[u8] {
     let mut rest = said;
     while matches!(rest.first(), Some(b'&' | b'!')) {
@@ -267,7 +244,6 @@ fn without_properties(said: &[u8]) -> &[u8] {
     }
     rest
 }
-
 #[allow(clippy::too_many_lines)]
 fn closing_fence(body: &str, from: usize) -> Option<usize> {
     let mut base: Option<usize> = None;
@@ -279,7 +255,6 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
     let mut whole = false;
     let mut opens = true;
     let mut reread = 0;
-
     let mut at = from;
     while at <= body.len() {
         let end = body[at..].find('\n').map(|one| at + one);
@@ -287,7 +262,6 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
         let text = &body[at..stop];
         let text = text.strip_suffix('\r').unwrap_or(text);
         let line = text.as_bytes();
-
         if is_fence(text) {
             if open.is_none() {
                 return (base.is_some() || !comment).then_some(at);
@@ -297,19 +271,16 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
             at = reread;
             continue;
         }
-
         if let Some(state) = open.as_mut() {
             if !stays_open(line, state) {
                 open = None;
             }
         } else {
             let indent = line.iter().take_while(|&&one| is_blank(one)).count();
-
             if indent == line.len() {
                 gap = true;
             } else if scalar.is_none_or(|past| indent <= past) {
                 scalar = None;
-
                 if line[indent] == b'#' {
                     comment = true;
                 } else if whole {
@@ -326,7 +297,6 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                         base = Some(indent);
                     }
                     let mapping = base.unwrap_or(indent);
-
                     let mut col = indent;
                     let mut dash = None;
                     while line.get(col) == Some(&b'-')
@@ -339,7 +309,6 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                         }
                     }
                     let own = indent == mapping;
-
                     let complex = matches!(line.get(col), Some(b'?' | b':'))
                         && line.get(col + 1).is_none_or(|&next| is_blank(next));
                     let past = if complex {
@@ -353,7 +322,6 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                         return None;
                     }
                     gap = false;
-
                     let mut value = past.unwrap_or(col);
                     while line.get(value).copied().is_some_and(is_blank) {
                         value += 1;
@@ -361,12 +329,10 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                     let said = without_properties(line.get(value..).unwrap_or_default());
                     let start = said.first().copied().unwrap_or(0);
                     let empty = said.is_empty() || start == b'#';
-
                     if own && dash.is_none() {
                         list = empty;
                     }
                     whole = first && start == b'{' && past.is_none();
-
                     let as_value = past.is_some() || dash.is_some() || indent > mapping || whole;
                     if is_block_scalar(said) {
                         scalar = Some(if past.is_some() {
@@ -390,17 +356,14 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                 }
             }
         }
-
         at = end? + 1;
     }
     None
 }
-
 pub fn value(body: &str, block: &Block, key: &str) -> Option<String> {
     let line = key_line(body, block, key)?;
     unquoted(uncommented(key_of(lines_of(body, block).nth(line)?)?.1))
 }
-
 pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
     let Some(at) = key_line(body, block, key) else {
         return Vec::new();
@@ -412,7 +375,6 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
     let Some((_, said)) = key_of(line) else {
         return Vec::new();
     };
-
     let from = line.as_ptr() as usize - body.as_ptr() as usize;
     let past = said.as_ptr() as usize - line.as_ptr() as usize;
     if let Some(close) = value_closes_at(body, from + past, block.close) {
@@ -422,20 +384,17 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
             .collect();
         return flow_items(&joined.join(" "));
     }
-
     if uncommented(said).is_empty() {
         dash_items(lines)
     } else {
         flow_items(said)
     }
 }
-
 fn lines_of<'a>(body: &'a str, block: &Block) -> std::str::Lines<'a> {
     body.get(block.from..block.close)
         .unwrap_or_default()
         .lines()
 }
-
 fn key_line(body: &str, block: &Block, key: &str) -> Option<usize> {
     let mut other = None;
     for (at, line) in lines_of(body, block).enumerate() {
@@ -451,7 +410,6 @@ fn key_line(body: &str, block: &Block, key: &str) -> Option<usize> {
     }
     other
 }
-
 pub fn key_of(line: &str) -> Option<(String, &str)> {
     let (name, rest) = match line.chars().next()? {
         quote @ ('"' | '\'') => {
@@ -473,16 +431,13 @@ pub fn key_of(line: &str) -> Option<(String, &str)> {
             ));
         }
     };
-
     let rest = rest.trim_start_matches([' ', '\t']);
     let said = rest.strip_prefix(':')?;
     said_after(said).then(|| (name, said.trim()))
 }
-
 fn said_after(rest: &str) -> bool {
     rest.chars().next().is_none_or(char::is_whitespace)
 }
-
 fn closing_quote(line: &str, quote: char) -> Option<usize> {
     let bytes = line.as_bytes();
     let mark = quote as u8;
@@ -504,12 +459,10 @@ fn closing_quote(line: &str, quote: char) -> Option<usize> {
     }
     None
 }
-
 fn uncommented(value: &str) -> &str {
     let bytes = value.as_bytes();
     let mut quote: Option<u8> = None;
     let mut at = 0;
-
     while at < bytes.len() {
         let byte = bytes[at];
         match quote {
@@ -526,15 +479,12 @@ fn uncommented(value: &str) -> &str {
         }
         at += 1;
     }
-
     value
 }
-
 fn opens_quote(before: &str) -> bool {
     let before = before.trim_end();
     before.is_empty() || before.ends_with('[') || before.ends_with(',')
 }
-
 fn opens_scalar(before: &str) -> bool {
     let trimmed = before.trim_end();
     if trimmed.ends_with([':', '[', ',']) {
@@ -543,19 +493,16 @@ fn opens_scalar(before: &str) -> bool {
     let lead = trimmed.trim_start();
     lead.is_empty() || (lead == "-" && trimmed.len() < before.len())
 }
-
 pub fn read_in_quotes(line: &str) -> Cow<'_, str> {
     if !line.contains(['\'', '"']) {
         return Cow::Borrowed(line);
     }
-
     let mut text = String::with_capacity(line.len());
     let mut quote: Option<char> = None;
     let mut open = 0;
     let mut held = String::new();
     let mut before: Option<char> = None;
     let mut letters = line.char_indices().peekable();
-
     while let Some((at, one)) = letters.next() {
         let next = letters.peek().map(|&(_, letter)| letter);
         match (quote, one, next) {
@@ -591,13 +538,11 @@ pub fn read_in_quotes(line: &str) -> Cow<'_, str> {
         }
         before = Some(one);
     }
-
     if quote.is_some() {
         text.push_str(&line[open + 1..]);
     }
     Cow::Owned(text)
 }
-
 fn flow_items(value: &str) -> Vec<String> {
     let value = uncommented(value);
     if let Some(list) = value
@@ -610,17 +555,14 @@ fn flow_items(value: &str) -> Vec<String> {
             .filter_map(|one| unquoted(one.trim()))
             .collect();
     }
-
     unquoted(value).into_iter().collect()
 }
-
 fn members(inside: &str) -> Vec<&str> {
     let bytes = inside.as_bytes();
     let mut out = Vec::new();
     let mut start = 0;
     let mut quote: Option<u8> = None;
     let mut at = 0;
-
     while at < bytes.len() {
         let byte = bytes[at];
         match quote {
@@ -638,22 +580,18 @@ fn members(inside: &str) -> Vec<&str> {
         }
         at += 1;
     }
-
     if out.is_empty() || !inside[start..].trim().is_empty() {
         out.push(&inside[start..]);
     }
     out
 }
-
 fn dash_items<'a>(lines: impl Iterator<Item = &'a str>) -> Vec<String> {
     let mut out = Vec::new();
-
     for line in lines {
         let line = line.trim();
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-
         let Some(item) = line.strip_prefix('-') else {
             break;
         };
@@ -664,10 +602,8 @@ fn dash_items<'a>(lines: impl Iterator<Item = &'a str>) -> Vec<String> {
             out.push(said);
         }
     }
-
     out
 }
-
 fn unquoted(value: &str) -> Option<String> {
     let value = value.trim();
     let bare = if let Some(inside) = within(value, '\'') {
@@ -677,20 +613,17 @@ fn unquoted(value: &str) -> Option<String> {
     } else {
         value.to_string()
     };
-
     if bare.is_empty() {
         None
     } else {
         Some(bare)
     }
 }
-
 fn within(value: &str, quote: char) -> Option<&str> {
     value
         .strip_prefix(quote)
         .and_then(|one| one.strip_suffix(quote))
 }
-
 #[cfg(test)]
 mod tests {
     use super::{block, list, value};
@@ -698,11 +631,9 @@ mod tests {
     fn icon(body: &str) -> Option<String> {
         value(body, &block(body)?, "icon")
     }
-
     fn aliases(body: &str) -> Vec<String> {
         block(body).map_or_else(Vec::new, |one| list(body, &one, "aliases"))
     }
-
     #[test]
     fn a_list_reads_past_a_comment_on_its_key_and_a_space_at_the_end_of_its_first_line() {
         let read = |text: &str, key: &str| {
@@ -731,16 +662,13 @@ mod tests {
             vec!["one two"]
         );
     }
-
     #[test]
     fn the_block_is_the_lines_between_two_fences() {
         let note = "---\nicon: rocket\n---\n\n# Plan\n";
         let found = block(note).expect("a block");
-
         assert_eq!(&note[found.from..found.close], "icon: rocket\n");
         assert_eq!(&note[found.end..], "\n\n# Plan\n");
         let found = block("---\n---\n").expect("a block");
-
         assert_eq!(found.from, found.close);
         assert_eq!(found.end, 7);
         assert!(block("# Plan\n\nwords").is_none());
@@ -748,24 +676,20 @@ mod tests {
         assert!(block("---").is_none());
         assert!(block("---\nicon: rocket\n\n# Plan").is_none());
     }
-
     #[test]
     fn what_counts_as_front_matter_is_the_table_both_read() {
         let table: Vec<(String, bool)> = serde_json::from_str(include_str!(
             "../../../../../../packages/markdown/src/front-matter-table.json"
         ))
         .expect("the table parses");
-
         for (note, expected) in table {
             assert_eq!(block(&note).is_some(), expected, "{note:?}");
         }
     }
-
     #[test]
     fn a_byte_order_mark_in_front_of_the_fence() {
         let note = "\u{feff}---\naliases: [Proj]\nicon: star\n---\nbody\n";
         let found = block(note).expect("a block");
-
         assert_eq!(
             &note[found.from..found.close],
             "aliases: [Proj]\nicon: star\n"
@@ -774,7 +698,6 @@ mod tests {
         assert_eq!(icon(note).as_deref(), Some("star"));
         assert_eq!(aliases(note), vec!["Proj"]);
     }
-
     #[test]
     fn an_indented_opening_fence_opens_nothing() {
         assert!(block("  ---\nicon: rocket\n---\n").is_none());
@@ -785,7 +708,6 @@ mod tests {
             Some("rocket")
         );
     }
-
     #[test]
     fn reads_a_key_from_the_front_matter() {
         assert_eq!(
@@ -817,7 +739,6 @@ mod tests {
             Some("rocket")
         );
     }
-
     #[test]
     fn reads_a_list_however_it_is_written() {
         assert_eq!(
@@ -861,7 +782,6 @@ mod tests {
         assert!(aliases("---\nexport:\n  aliases: [One]\n---\n").is_empty());
         assert_eq!(aliases("---\naliases:\n  -\n  - Foo\n---\n"), vec!["Foo"]);
     }
-
     #[test]
     fn a_flow_list_member_keeps_a_comma_inside_its_quotes() {
         assert_eq!(
@@ -877,7 +797,6 @@ mod tests {
             vec!["Doe, Jane", "Other"]
         );
     }
-
     #[test]
     fn a_quoted_value_reads_as_the_words_its_quotes_spell() {
         assert_eq!(
@@ -894,7 +813,6 @@ mod tests {
             Some("a\\b")
         );
     }
-
     #[test]
     fn a_key_is_spelled_as_written_up_to_its_colon_and_comment() {
         assert_eq!(aliases("---\n\"aliases\": [A]\n---\n"), vec!["A"]);

@@ -25,16 +25,13 @@ export type { Files } from './build'
 export { ImportError } from './build'
 export { SOURCES, SOURCE_IDS, needsZip, sourceOf } from './sources'
 export type { Source, SourceId } from './sources'
-
 type Parser = (data: string | Files) => Imported
-
 function textOnly(parse: (text: string) => Imported): Parser {
   return (data) => {
     if (typeof data !== 'string') throw new ImportError('This kind of export is not an archive.')
     return parse(data)
   }
 }
-
 const PARSERS: Record<SourceId, Parser> = {
   proton: parseProton,
   bitwarden: textOnly(parseBitwarden),
@@ -56,7 +53,6 @@ const PARSERS: Record<SourceId, Parser> = {
   orden: textOnly(parseOrden),
   csv: textOnly(parseCsv),
 }
-
 export function importFile(source: SourceId, name: string, data: Uint8Array | Record<string, Uint8Array>): Imported {
   if (data instanceof Uint8Array) {
     if (needsZip(source, name)) throw new ImportError('Open the archive before reading it.')
@@ -64,7 +60,6 @@ export function importFile(source: SourceId, name: string, data: Uint8Array | Re
   }
   return PARSERS[source](data)
 }
-
 function jsonSource(text: string): SourceId | null {
   let value: unknown
   try {
@@ -90,7 +85,6 @@ function jsonSource(text: string): SourceId | null {
   if (has('accounts')) return 'onepassword'
   return null
 }
-
 function csvSource(name: string, header: readonly string[]): SourceId | null {
   const names = new Set(header.map((one) => one.trim().toLowerCase()))
   const all = (...wanted: string[]): boolean => wanted.every((one) => names.has(one))
@@ -117,7 +111,6 @@ function csvSource(name: string, header: readonly string[]): SourceId | null {
   if (csvLooksLike(header)) return 'csv'
   return null
 }
-
 export function guessSource(name: string, text: string): SourceId | null {
   const extension = extensionOf(name)
   const lower = name.toLowerCase()

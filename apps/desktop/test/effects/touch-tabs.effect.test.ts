@@ -3,9 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { root, watch } from './runes.svelte'
 
 const notes = new Map<string, string>()
-
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -34,12 +32,9 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     }
   },
 }))
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
-
 const open = () => workspace.tabs.map((tab) => tab.shown)
-
 beforeEach(() => {
   notes.clear()
   notes.set('/space/One.md', '# One')
@@ -51,18 +46,15 @@ beforeEach(() => {
   workspace.panes.collapse()
   viewport.device = 'desktop'
 })
-
 afterEach(() => {
   workspace.tabs = []
   viewport.device = 'desktop'
 })
-
 test('a window that becomes a phone comes down to one pane with every tab, and settles', async () => {
   await workspace.open('/space/One.md')
   await workspace.open('/space/Two.md')
   workspace.split('row')
   expect(workspace.panes.count).toBe(2)
-
   let runs = 0
   const stop = root(() => {
     watch(() => {
@@ -70,20 +62,16 @@ test('a window that becomes a phone comes down to one pane with every tab, and s
       workspace.onePane()
     })
   })
-
   flushSync()
   expect(runs).toBe(1)
   expect(workspace.panes.count).toBe(2)
-
   const kept = workspace.active?.shown
   const every = open()
   viewport.device = 'phone'
   flushSync()
-
   expect(workspace.panes.count).toBe(1)
   expect(open()).toEqual(every)
   expect(workspace.active?.shown).toBe(kept)
   expect(runs).toBe(3)
-
   stop()
 })

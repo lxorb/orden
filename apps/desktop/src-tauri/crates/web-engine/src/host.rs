@@ -4,14 +4,12 @@ use crate::MODULE;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct NativeWindow(pub u64);
-
 impl NativeWindow {
     #[must_use]
     pub fn as_x11(self) -> Option<u32> {
         u32::try_from(self.0).ok().filter(|id| *id != 0)
     }
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Edge {
     NorthWest,
@@ -24,7 +22,6 @@ pub enum Edge {
     West,
     Move,
 }
-
 impl Edge {
     #[must_use]
     pub fn parse(named: Option<&str>) -> Option<Self> {
@@ -41,7 +38,6 @@ impl Edge {
             Some(_) => return None,
         })
     }
-
     #[must_use]
     pub fn ewmh(self) -> u32 {
         match self {
@@ -56,36 +52,26 @@ impl Edge {
             Self::Move => 8,
         }
     }
-
     #[must_use]
     pub fn is_move(self) -> bool {
         self == Self::Move
     }
 }
-
 pub trait WindowSystem: Send + Sync {
     fn name(&self) -> &'static str;
-
     fn move_resize(
         &self,
         window: NativeWindow,
         edge: Edge,
         from: Option<(i32, i32)>,
     ) -> Outcome<String>;
-
     fn frame(&self, window: NativeWindow, scale: f64) -> Outcome<()>;
-
     fn float(&self, window: NativeWindow) -> Outcome<()>;
-
     fn bare(&self, page: NativeWindow);
-
     fn hide(&self, page: NativeWindow);
-
     fn desktop_scale(&self) -> Option<f64>;
 }
-
 pub struct Plain;
-
 #[must_use]
 pub fn left_to_the_platform(what: &str) -> Failure {
     Failure::new(
@@ -94,12 +80,10 @@ pub fn left_to_the_platform(what: &str) -> Failure {
         format!("{what} is the window system's own here"),
     )
 }
-
 impl WindowSystem for Plain {
     fn name(&self) -> &'static str {
         "plain"
     }
-
     fn move_resize(
         &self,
         _window: NativeWindow,
@@ -108,19 +92,14 @@ impl WindowSystem for Plain {
     ) -> Outcome<String> {
         Err(left_to_the_platform("a move or resize"))
     }
-
     fn frame(&self, _window: NativeWindow, _scale: f64) -> Outcome<()> {
         Ok(())
     }
-
     fn float(&self, _window: NativeWindow) -> Outcome<()> {
         Ok(())
     }
-
     fn bare(&self, _page: NativeWindow) {}
-
     fn hide(&self, _page: NativeWindow) {}
-
     fn desktop_scale(&self) -> Option<f64> {
         None
     }

@@ -13,28 +13,21 @@
   import { type Session, sessionsOf } from './sessions'
 
   const { pane, grant }: { pane: AgentsPane; grant: Grant } = $props()
-
   const FIRST = 3
-
   const sessions = $derived(sessionsOf(pane.calls, grant.id))
   let shown = $state(FIRST)
   let opened = $state<number | null>(null)
-
   const front = $derived(workspace.active?.kind === 'note' ? workspace.active.shown : null)
-
   const span = $derived(new Intl.DateTimeFormat(region(), { dateStyle: 'medium', timeStyle: 'short' }))
   const spanOf = (session: Session) => span.formatRange(session.start, session.end)
   const timeOf = (at: number) => localDate(at, { hour: '2-digit', minute: '2-digit' })
-
   async function earlier() {
     shown += FIRST
     while (sessions.length < shown && pane.earlier) await pane.readEarlier()
   }
-
   async function keep(session: Session) {
     await keepInNote(sessionMarkdown(grant.name, [...session.calls].reverse()))
   }
-
   async function clear() {
     const sure = await prompt.confirm({
       title: `Clear what ${grant.name} did?`,
@@ -90,24 +83,20 @@
   .session .chevron {
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .session .chevron.open {
     transform: rotate(90deg);
   }
-
   .calls {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     padding-block: var(--space-1) var(--space-2);
   }
-
   ol {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   li {
     display: flex;
     align-items: baseline;
@@ -118,16 +107,13 @@
     font-size: var(--text-sm);
     line-height: var(--row-height-sm);
   }
-
   .word {
     flex: none;
     color: var(--text);
   }
-
   .failed .word {
     color: var(--danger);
   }
-
   .about {
     flex: 1;
     min-width: 0;
@@ -135,17 +121,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .at {
     flex: none;
     font-variant-numeric: tabular-nums;
     color: var(--muted);
   }
-
   .keep {
     align-self: flex-start;
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

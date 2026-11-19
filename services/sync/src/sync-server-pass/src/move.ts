@@ -10,7 +10,6 @@ import { bump, SEQ } from './seq'
 import { fromOf, membersOf, tell } from './tell'
 
 export const moves = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 moves.post('/items/:vault/:id/move', async (context) => {
   const user = context.get('user')
   const vault = context.req.param('vault')
@@ -23,7 +22,6 @@ moves.post('/items/:vault/:id/move', async (context) => {
   if (!sent || sent.rev < 1 || !isPassId(id) || !isPassId(to) || to === vault) {
     return context.json({ error: NOT_AN_ITEM }, 400)
   }
-
   const [source, target] = await Promise.all([
     activeIn(context.env, vault, user.email),
     activeIn(context.env, to, user.email),
@@ -35,7 +33,6 @@ moves.post('/items/:vault/:id/move', async (context) => {
   if (sent.keyVersion !== target.key_version) {
     return context.json({ error: ROTATED, keyVersion: target.key_version }, 409)
   }
-
   const db = context.env.DB
   const at = now()
   const results = await db.batch([
@@ -89,7 +86,6 @@ moves.post('/items/:vault/:id/move', async (context) => {
       )
       .bind(to, vault, id),
   ])
-
   if (!results[3]?.meta.changes) {
     const [one, other] = await Promise.all([
       activeIn(context.env, vault, user.email),
@@ -110,7 +106,6 @@ moves.post('/items/:vault/:id/move', async (context) => {
     }
     return context.json({ error: TOO_MANY_ITEMS }, 409)
   }
-
   const [one, other] = await Promise.all([membersOf(context.env, vault), membersOf(context.env, to)])
   await tell(context.env, [user.id, ...one, ...other], from)
   const moved = await itemOf(context.env, to, id)

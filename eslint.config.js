@@ -8,9 +8,7 @@ import { check as checkModules, moduleOf, ROOT } from './scripts/modules.mjs'
 
 const DIRECTIVE =
   /^\s*(?:eslint(?:-disable|-enable)?(?:-next-line|-line)?\s|global\s|@ts-(?:expect-error|ignore|nocheck|check)\b|@vitest-environment\s|prettier-ignore\b|svelte-ignore\s|@vite-ignore\s*$|[@#]__PURE__\s*$|__[A-Z_]+__\s*$|kept\s*$|\*\s*@(?:public|internal)\s*$|\/\s*<reference\s)/
-
 const rule = (type, messages, create) => ({ meta: { type, schema: [], messages }, create })
-
 const noComments = rule(
   'suggestion',
   { prose: 'No comments in code: a directive to a tool, or nothing.' },
@@ -32,7 +30,6 @@ const noComments = rule(
     }
   },
 )
-
 const noSpreadMath = rule(
   'problem',
   {
@@ -46,7 +43,6 @@ const noSpreadMath = rule(
     }
   },
 )
-
 const noCopyAppend = rule(
   'problem',
   {
@@ -72,9 +68,7 @@ const noCopyAppend = rule(
     }
   },
 )
-
 const EFFECTS = new Set(['$effect', '$effect.pre'])
-
 function calleeName(callee) {
   if (callee.type === 'Identifier') return callee.name
   if (
@@ -85,7 +79,6 @@ function calleeName(callee) {
     return `${callee.object.name}.${callee.property.name}`
   return null
 }
-
 const effectImports = rule(
   'problem',
   {
@@ -115,7 +108,6 @@ const effectImports = rule(
     }
   },
 )
-
 const SETTLING = new Set([
   'tick',
   'flushSync',
@@ -123,7 +115,6 @@ const SETTLING = new Set([
   'vi.dynamicImportSettled',
   'vi.advanceTimersByTimeAsync',
 ])
-
 function settling(statement) {
   if (statement.type === 'BlockStatement') return statement.body.length > 0 && statement.body.every(settling)
   if (statement.type !== 'ExpressionStatement') return false
@@ -131,7 +122,6 @@ function settling(statement) {
   if (done.type === 'NewExpression') return done.callee.type === 'Identifier' && done.callee.name === 'Promise'
   return done.type === 'CallExpression' && SETTLING.has(calleeName(done.callee))
 }
-
 const timedWaits = rule(
   'problem',
   {
@@ -161,13 +151,9 @@ const timedWaits = rule(
     }
   },
 )
-
 const MODULES = checkModules().modules.filter((one) => one.lang === 'ts')
-
 const MODULE_FILES = MODULES.map((one) => `${one.dir}/**/*.{ts,svelte}`)
-
 const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '.js', '/index.ts']
-
 function moduleOfSpecifier(from, specifier) {
   if (specifier.startsWith('.')) {
     const target = resolve(dirname(from), specifier)
@@ -179,7 +165,6 @@ function moduleOfSpecifier(from, specifier) {
   const module = MODULES.find((one) => one.packageName === `@orden/${name}`) ?? null
   return { module, file: null, subpath: rest.length > 0 ? rest.join('/') : null, name }
 }
-
 function eachImport(context, seen) {
   const from = context.filename
   const own = moduleOf(from, MODULES)
@@ -197,7 +182,6 @@ function eachImport(context, seen) {
     ImportExpression: (node) => node.source.type === 'Literal' && look(node, node.source.value),
   }
 }
-
 const noDeepImports = rule(
   'problem',
   {
@@ -219,12 +203,9 @@ const noDeepImports = rule(
     })
   },
 )
-
 const STATIC_IMPORTS =
   /(?:^|[\n;}])[^\S\n]*(?:import|export)\s+(?!type\b)[^'"]*?\bfrom\s*['"](\.[^'"]*)['"]|(?:^|[\n;}])[^\S\n]*import\s*['"](\.[^'"]*)['"]/g
-
 const evaluatedWithApi = new Map()
-
 function withApi(module) {
   const known = evaluatedWithApi.get(module.absolute)
   if (known) return known
@@ -243,7 +224,6 @@ function withApi(module) {
   evaluatedWithApi.set(module.absolute, reached)
   return reached
 }
-
 const ownApi = rule(
   'problem',
   {
@@ -260,7 +240,6 @@ const ownApi = rule(
     })
   },
 )
-
 const pendingImports = rule(
   'problem',
   {
@@ -281,7 +260,6 @@ const pendingImports = rule(
     })
   },
 )
-
 const declaredDependencies = rule(
   'problem',
   {
@@ -302,7 +280,6 @@ const declaredDependencies = rule(
     })
   },
 )
-
 export default tseslint.config(
   {
     ignores: [

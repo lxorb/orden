@@ -15,7 +15,6 @@ const field = (kind: 'path' | 'file' | 'content', text: string, fold = true): Qu
 type Compare = Extract<Query, { kind: 'property' }>['compare']
 const property = (name: string, value: string | null, compare: Compare = 'has', upto?: string) =>
   ({ kind: 'property', name, value, compare, ...(upto === undefined ? {} : { upto }) }) as Query
-
 const READ: Record<string, [string, Query][]> = {
   'bare words': [
     ['alpha beta', all(word('alpha'), word('beta'))],
@@ -140,24 +139,20 @@ const READ: Record<string, [string, Query][]> = {
     ['first-draft:plan', word('first-draft:plan')],
   ],
 }
-
 describe.each(Object.entries(READ))('%s', (_, rows) => {
   test.each(rows)('%j reads as asked', (source, query) => {
     expect(parseQuery(source)).toEqual(query)
   })
 })
-
 test.each(['', '   ', '""', '-', 'path:', 'content:', 'case:', 'line:()', 'line:'])('%j asks nothing', (source) =>
   expect(isEmpty(parseQuery(source))).toBe(true),
 )
-
 test('a group closes after an empty scope or a lone minus, and a link is a word', () => {
   expect(parseQuery('(task-todo: OR task-done:) plan').kind).toBe('all')
   expect(parseQuery('(a OR line:) b').kind).toBe('all')
   expect(parseQuery('-(task:) plan').kind).toBe('all')
   expect(parseQuery('[docs](http://x)')).toMatchObject({ kind: 'text' })
 })
-
 describe('malformed input', () => {
   const NASTY = [
     ...['"', '((((', '))))', '-', '--', '- -', '\\', '/', '//', '///', '[', ']', '[]', '[:]'],
@@ -165,7 +160,6 @@ describe('malformed input', () => {
     ...['[a:..b]', '[a:>=]', '[a:1..]', 'case:case:case:', 'OR OR OR', 'a OR ) b (', '/(/'],
     ...['/[/', '\0', '   \n\t  '],
   ]
-
   test.each(NASTY)('never throws on %j, and answers something JSON can carry', (source) => {
     expect(() => JSON.stringify(parseQuery(source))).not.toThrow()
   })

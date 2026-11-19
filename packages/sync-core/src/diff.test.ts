@@ -13,7 +13,6 @@ function applied(old: string, list: readonly Edit[]): string {
   }
   return out + old.slice(at)
 }
-
 const line = fc
   .tuple(
     fc.constantFrom('- [ ] ', '- ', '', '# '),
@@ -23,7 +22,6 @@ const line = fc
   )
   .map(([mark, words]) => `${mark}${words.join(' ')}\n`)
 const text = fc.array(line, { maxLength: 8 }).map((lines) => lines.join(''))
-
 describe('edits', () => {
   test('property: either reading, applied in order, makes the new text', () => {
     fc.assert(
@@ -34,7 +32,6 @@ describe('edits', () => {
       { numRuns: 1000 },
     )
   })
-
   test('a line added above another is added between lines, not inside one', () => {
     expect(edits('- call Ann\n', '- L call Ann z\n- call Ann\n', 'semantic')).toEqual([
       { from: 0, to: 0, insert: '- L call Ann z\n' },

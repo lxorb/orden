@@ -3,13 +3,9 @@ use std::time::Duration;
 use tauri::AppHandle;
 
 const PAUSE: &str = "document.querySelectorAll('audio, video').forEach(function (one) { if (!one.paused) { one.pause(); one.setAttribute('data-orden-paused', '') } })";
-
 const PLAY: &str = "document.querySelectorAll('[data-orden-paused]').forEach(function (one) { one.removeAttribute('data-orden-paused'); one.play().catch(function () {}) })";
-
 type Said = tauri::async_runtime::Sender<bool>;
-
 const PATIENCE: Duration = Duration::from_secs(3);
-
 #[tauri::command]
 pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool, String> {
     let view = crate::web_tabs::found(&app, &tab)?;
@@ -23,7 +19,6 @@ pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool
     engine::lull(&view, paused, said)?;
     Ok(answered(&mut heard, PATIENCE).await)
 }
-
 async fn answered(heard: &mut tauri::async_runtime::Receiver<bool>, patience: Duration) -> bool {
     tokio::time::timeout(patience, heard.recv())
         .await
@@ -31,7 +26,6 @@ async fn answered(heard: &mut tauri::async_runtime::Receiver<bool>, patience: Du
         .flatten()
         .unwrap_or(false)
 }
-
 mod engine {
     use serde_json::json;
     use tauri::Webview;
@@ -56,7 +50,6 @@ mod engine {
         Ok(())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{answered, PAUSE, PLAY};
@@ -73,7 +66,6 @@ mod tests {
         drop(heard);
         assert!(said.is_closed());
     }
-
     #[test]
     fn a_page_that_answers_is_heard() {
         let (said, mut heard) = tauri::async_runtime::channel::<bool>(1);
@@ -82,7 +74,6 @@ mod tests {
         let paused = tauri::async_runtime::block_on(answered(&mut heard, patience));
         assert!(paused);
     }
-
     #[test]
     fn what_is_paused_is_marked_and_only_that_plays_again() {
         assert!(PAUSE.contains("if (!one.paused)"));

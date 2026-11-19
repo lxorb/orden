@@ -34,10 +34,8 @@
     markPath: string
     holds: boolean
   }
-
   const byName = (one: Entry, other: Entry) =>
     Number(other.is_dir) - Number(one.is_dir) || one.name.localeCompare(other.name)
-
   function rowOf(entry: Entry, depth: number, from: string | null): Row {
     const own = folderNote(entry)
     return {
@@ -49,14 +47,11 @@
       holds: entry.is_dir && nestedIn(entry).length > 0,
     }
   }
-
   const rows = $derived.by((): Row[] => {
     const root = workspace.activeSpace?.root
     if (root === undefined) return []
-
     const map = workspace.archive.of(root)
     const out: Row[] = []
-
     const walk = (entry: Entry, depth: number) => {
       if (!archiveList.isUnfolded(entry.path)) return
       for (const child of [...nestedIn(entry)].sort(byName)) {
@@ -65,34 +60,26 @@
         if (row.holds) walk(child, depth + 1)
       }
     }
-
     const newest = standing(workspace.archive.keysOf(root)).sort((one, other) => (map[other] ?? 0) - (map[one] ?? 0))
     for (const at of newest) {
       const entry = workspace.entryAt(insideSpace(root, at))
       if (!entry) continue
-
       const row = rowOf(entry, 0, folderOf(at) || null)
       out.push(row)
       if (row.holds) walk(entry, 1)
     }
-
     return out
   })
-
   const count = $derived(rows.filter((row) => row.depth === 0).length)
-
   function open(row: Row, how: OpenHow) {
     if (row.entry.is_dir && !folderNote(row.entry)) {
       archiveList.unfold(row.entry.path)
       return
     }
-
     void workspace.openRow(row.entry.path, how)
   }
-
   function rowMenu(row: Row): MenuEntry[] {
     const path = row.entry.path
-
     return [
       { label: 'Open', run: () => void workspace.openRow(path) },
       { label: 'Open in new tab', run: () => void workspace.openRow(path, howFor('behind')) },
@@ -100,32 +87,25 @@
       { label: 'Unarchive', run: () => void unarchive(path) },
     ]
   }
-
   let list = $state<HTMLElement | null>(null)
   $effect(() => {
     const wanted = archiveList.showing
     if (!wanted || !list || !archiveList.open) return
-
     archiveList.showing = null
     const at = rows.findIndex((row) => row.entry.path === wanted)
     list.querySelectorAll<HTMLElement>('.row')[at]?.scrollIntoView({ block: 'nearest' })
   })
-
   let dropping = $state(false)
-
   function over(event: DragEvent) {
     if (!isTreeDrag(event.dataTransfer)) return
-
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
     dropping = true
   }
-
   function dropped(event: DragEvent) {
     dropping = false
     const carried = carriedRows(event.dataTransfer)
     if (!carried.length) return
-
     event.preventDefault()
     void archive(carried)
   }
@@ -220,49 +200,41 @@
     text-align: start;
     cursor: default;
   }
-
   .archive-head:hover {
     color: var(--text);
   }
-
   .archive-head.dropping {
     box-shadow: inset 0 0 0 1px var(--accent);
     border-radius: var(--radius-row);
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .tail {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .chevron {
     display: block;
     width: var(--icon-sm);
     height: var(--icon-sm);
   }
-
   ul {
     list-style: none;
     margin: 0 0 var(--space-2);
     padding: 0;
     overflow: hidden;
   }
-
   .line {
     position: relative;
     display: flex;
     align-items: center;
   }
-
   .row {
     flex: 1;
     min-width: 0;
     padding-inline-start: calc(var(--row-pad) + var(--level, 0) * var(--row-indent));
   }
-
   .end {
     flex: none;
     display: grid;
@@ -279,36 +251,29 @@
       opacity var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .end:hover {
     color: var(--text);
   }
-
   .end:active {
     transform: scale(0.94);
   }
-
   .back {
     position: absolute;
     inset-inline-end: 0;
     background: var(--side-bar-bg-color);
     opacity: 0;
   }
-
   .line:hover .back {
     background: var(--item-hover-bg-color);
   }
-
   .line.holds .back {
     inset-inline-end: var(--row-height-sm);
   }
-
   .line:hover .back,
   .line:focus-within .back,
   :global([data-touch]) .back {
     opacity: 1;
   }
-
   svg {
     width: var(--icon-sm);
     height: var(--icon-sm);

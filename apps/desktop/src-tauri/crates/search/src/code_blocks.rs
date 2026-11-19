@@ -6,13 +6,11 @@ pub enum CodeLine {
     Code,
     Opens,
 }
-
 #[derive(Clone, Copy)]
 enum Container {
     Quote,
     Item(usize),
 }
-
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
 enum Leaf {
     #[default]
@@ -21,26 +19,22 @@ enum Leaf {
     Indented,
     Fence(u8, usize),
 }
-
 #[derive(Default)]
 pub struct CodeBlocks {
     containers: Vec<Container>,
     leaf: Leaf,
     named: Option<String>,
 }
-
 impl CodeBlocks {
     pub fn closed_name(&self) -> Option<&str> {
         self.named.as_deref()
     }
-
     pub fn line(&mut self, raw: &str) -> CodeLine {
         self.named = None;
         let line = expanded(raw.strip_suffix('\r').unwrap_or(raw));
         let line = line.as_ref();
         let mut at = 0;
         let mut matched = 0;
-
         for container in &self.containers {
             let indent = spaces_at(line, at);
             match *container {
@@ -65,9 +59,7 @@ impl CodeBlocks {
             }
             matched += 1;
         }
-
         let rest = &line[at..];
-
         if matched < self.containers.len() {
             if self.leaf == Leaf::Paragraph && !rest.trim().is_empty() && !opens_block(rest) {
                 return CodeLine::Words;
@@ -75,7 +67,6 @@ impl CodeBlocks {
             self.containers.truncate(matched);
             self.leaf = Leaf::Nothing;
         }
-
         if let Leaf::Fence(mark, length) = self.leaf {
             if closes_fence(rest, mark, length) {
                 self.leaf = Leaf::Nothing;
@@ -83,51 +74,42 @@ impl CodeBlocks {
             }
             return CodeLine::Code;
         }
-
         if self.leaf == Leaf::Indented {
             if rest.trim().is_empty() || spaces_at(rest, 0) >= 4 {
                 return CodeLine::Code;
             }
             self.leaf = Leaf::Nothing;
         }
-
         self.open(rest)
     }
-
     fn open(&mut self, start: &str) -> CodeLine {
         let mut rest = start;
-
         loop {
             let indent = spaces_at(rest, 0);
             if indent > 3 {
                 break;
             }
             let text = &rest[indent..];
-
             if let Some(inside) = text.strip_prefix('>') {
                 self.containers.push(Container::Quote);
                 self.leaf = Leaf::Nothing;
                 rest = inside.strip_prefix(' ').unwrap_or(inside);
                 continue;
             }
-
             if thematic_break(rest) {
                 break;
             }
             let Some(width) = marker(text, self.leaf == Leaf::Paragraph) else {
                 break;
             };
-
             self.containers.push(Container::Item(indent + width));
             self.leaf = Leaf::Nothing;
             rest = text.get(width..).unwrap_or("");
         }
-
         if rest.trim().is_empty() {
             self.leaf = Leaf::Nothing;
             return CodeLine::Words;
         }
-
         if spaces_at(rest, 0) >= 4 {
             if self.leaf == Leaf::Paragraph {
                 return CodeLine::Words;
@@ -135,12 +117,10 @@ impl CodeBlocks {
             self.leaf = Leaf::Indented;
             return CodeLine::Code;
         }
-
         if let Some((mark, length)) = fence_mark(rest) {
             self.leaf = Leaf::Fence(mark, length);
             return CodeLine::Opens;
         }
-
         self.leaf = if heading(rest) || thematic_break(rest) {
             Leaf::Nothing
         } else {
@@ -149,7 +129,6 @@ impl CodeBlocks {
         CodeLine::Words
     }
 }
-
 fn opens_block(rest: &str) -> bool {
     let indent = spaces_at(rest, 0);
     if indent > 3 {
@@ -162,7 +141,6 @@ fn opens_block(rest: &str) -> bool {
         || thematic_break(rest)
         || marker(text, false).is_some()
 }
-
 fn marker(text: &str, interrupting: bool) -> Option<usize> {
     let bytes = text.as_bytes();
     let (mark, number) = if matches!(bytes.first(), Some(b'-' | b'*' | b'+')) {
@@ -174,7 +152,6 @@ fn marker(text: &str, interrupting: bool) -> Option<usize> {
         }
         (digits + 1, Some(&text[..digits]))
     };
-
     let spaces = spaces_at(text, mark);
     let words = bytes.get(mark + spaces).is_some();
     if spaces == 0 && words {
@@ -183,14 +160,12 @@ fn marker(text: &str, interrupting: bool) -> Option<usize> {
     if interrupting && (!words || number.is_some_and(|number| number.parse() != Ok(1_u32))) {
         return None;
     }
-
     Some(if !words || spaces > 4 {
         mark + 1
     } else {
         mark + spaces
     })
 }
-
 fn fence_mark(line: &str) -> Option<(u8, usize)> {
     let indent = spaces_at(line, 0);
     if indent > 3 {
@@ -207,7 +182,6 @@ fn fence_mark(line: &str) -> Option<(u8, usize)> {
     }
     Some((mark, length))
 }
-
 fn closes_fence(line: &str, mark: u8, length: usize) -> bool {
     let Some((found, run)) = fence_mark(line) else {
         return false;
@@ -217,7 +191,6 @@ fn closes_fence(line: &str, mark: u8, length: usize) -> bool {
         && run >= length
         && (after.trim_start_matches([' ', '\t']).is_empty() || fence_name(line, mark).is_some())
 }
-
 fn fence_name(line: &str, mark: u8) -> Option<&str> {
     let run = line[spaces_at(line, 0)..]
         .bytes()
@@ -235,7 +208,6 @@ fn fence_name(line: &str, mark: u8) -> Option<&str> {
             .all(|one| one.is_ascii_alphanumeric() || one == b'-'))
     .then_some(name)
 }
-
 fn thematic_break(line: &str) -> bool {
     let indent = spaces_at(line, 0);
     if indent > 3 {
@@ -254,7 +226,6 @@ fn thematic_break(line: &str) -> bool {
             .fold(0, |marks, &one| marks + usize::from(one == mark))
             >= 3
 }
-
 fn heading(line: &str) -> bool {
     let indent = spaces_at(line, 0);
     let rest = &line.as_bytes()[indent..];
@@ -265,13 +236,11 @@ fn heading(line: &str) -> bool {
             .get(hashes)
             .is_none_or(|&one| one == b' ' || one == b'\t')
 }
-
 fn spaces_at(line: &str, at: usize) -> usize {
     line.as_bytes().get(at..).map_or(0, |rest| {
         rest.iter().take_while(|&&one| one == b' ').count()
     })
 }
-
 fn expanded(line: &str) -> Cow<'_, str> {
     if !line.contains('\t') {
         return Cow::Borrowed(line);
@@ -290,7 +259,6 @@ fn expanded(line: &str) -> Cow<'_, str> {
     }
     Cow::Owned(out)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{CodeBlocks, CodeLine};
@@ -301,7 +269,6 @@ mod tests {
             "../../../../../../packages/markdown/src/fence-table.json"
         ))
         .expect("the table parses");
-
         for (note, shape, ids) in table {
             assert_eq!(walk(&note), shape, "{note:?}");
             let mut code = CodeBlocks::default();
@@ -315,7 +282,6 @@ mod tests {
             assert_eq!(found, ids, "{note:?}");
         }
     }
-
     fn walk(note: &str) -> String {
         let mut code = CodeBlocks::default();
         note.split('\n')
@@ -326,7 +292,6 @@ mod tests {
             })
             .collect()
     }
-
     #[test]
     fn reads_a_fence_at_the_margin_in_a_quote_or_a_list_and_indented_code() {
         assert_eq!(walk("a\n```\n#x\n```\nb"), "woccw");
@@ -339,7 +304,6 @@ mod tests {
         assert_eq!(walk("> words\n>\n>     #no"), "wwc");
         assert_eq!(walk("```\r\n#x\r\n```\r\nb"), "occw");
     }
-
     #[test]
     fn a_fence_opens_and_closes_only_on_its_own_marks() {
         assert_eq!(walk("````\n```\n#x\n```\n````\nb"), "occccw");

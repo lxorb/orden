@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const disk = new Map<string, string>()
 const read: string[] = []
 const kept = new Map<string, unknown>()
-
 vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   platform: () => 'linux',
@@ -18,7 +17,6 @@ vi.mock('../../platform/src/tauri', () => ({
     return Promise.resolve('')
   },
 }))
-
 vi.mock('../../link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
 vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
@@ -30,21 +28,16 @@ vi.mock('../../platform/src/stored', () => ({
     return true
   },
 }))
-
 const { dropSetext, keepSetextMarked, SETEXT_GONE, SETEXT_KEY } = await import('./setext')
 const { FileActions } = await import('../../file-undo/src/api')
 const { keptAway } = await import('../../away/src/api')
 type HoldsNotes = import('./note-text').HoldsNotes & import('./setext').MarksNotes
 type ItemMeta = import('@orden/sync-core').ItemMeta
 type MetaPatch = import('@orden/sync-core').MetaPatch
-
 const SPACE = '/space'
-
 const signedOut = () => false
 const signedIn = () => true
-
 let marked: Record<string, MetaPatch>[] = []
-
 function space(notes: Record<string, string>, items: Record<string, ItemMeta> = {}, describes = true): HoldsNotes {
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
   return {
@@ -67,7 +60,6 @@ function space(notes: Record<string, string>, items: Record<string, ItemMeta> = 
     persist: () => undefined,
   } as unknown as HoldsNotes
 }
-
 beforeEach(() => {
   read.length = 0
   keptAway.clear()
@@ -75,7 +67,6 @@ beforeEach(() => {
   kept.clear()
   marked = []
 })
-
 describe('a space written with underlined headings', () => {
   test('has them written with hashes once, and nothing else touched', async () => {
     const ws = space({
@@ -91,7 +82,6 @@ describe('a space written with underlined headings', () => {
     expect(marked).toEqual([{ 'a.md': { [SETEXT_KEY]: 'gone' } }])
     expect(ws.undone.stack).toEqual([])
   })
-
   test('leaves a note alone that is being written in, or open in a room shared with others', async () => {
     const ws = space({
       [`${SPACE}/a.md`]: 'Title\n=====\n',
@@ -113,14 +103,12 @@ describe('a space written with underlined headings', () => {
     expect(disk.get(`${SPACE}/c.md`)).toBe('Third\n=====\n')
     expect(disk.get(`${SPACE}/d.md`)).toBe('Fourth\n=====\n')
   })
-
   test('is not walked again once it has been', async () => {
     const ws = space({ [`${SPACE}/a.md`]: 'Title\n=====\n' })
     kept.set(SETEXT_GONE, [SPACE])
     expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(0)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
   })
-
   test('is left alone on a device that comes to it after another device rewrote it', async () => {
     const ws = space(
       { [`${SPACE}/a.md`]: 'A rule since\n\n---\n', [`${SPACE}/b.md`]: 'Words\n---\n' },
@@ -131,14 +119,12 @@ describe('a space written with underlined headings', () => {
     expect(kept.get(SETEXT_GONE)).toEqual([SPACE])
     expect(marked).toEqual([])
   })
-
   test('marks a note for the other devices even when nothing needed rewriting', async () => {
     const ws = space({ [`${SPACE}/a.md`]: '# Fine\n', [`${SPACE}/b.md`]: 'also fine\n' })
     expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
     expect(marked).toEqual([{ 'a.md': { [SETEXT_KEY]: 'gone' } }])
     expect(kept.get(SETEXT_GONE)).toEqual([SPACE])
   })
-
   test('waits, signed in, until the account says what its notes are marked with', async () => {
     const ws = space({ [`${SPACE}/a.md`]: 'Title\n=====\n' }, {}, false)
     expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
@@ -147,7 +133,6 @@ describe('a space written with underlined headings', () => {
     expect(marked).toEqual([])
   })
 })
-
 describe('the mark a rewritten space carries', () => {
   test('is put back on a note when every note that held it has been deleted', () => {
     kept.set(SETEXT_GONE, [SPACE])
@@ -155,7 +140,6 @@ describe('the mark a rewritten space carries', () => {
     keepSetextMarked(ws, SPACE)
     expect(marked).toEqual([{ 'new.md': { [SETEXT_KEY]: 'gone' } }])
   })
-
   test('so a device that comes late after the deletion leaves the rules written since alone', async () => {
     kept.set(SETEXT_GONE, [SPACE])
     const items: Record<string, ItemMeta> = {}
@@ -168,13 +152,11 @@ describe('the mark a rewritten space carries', () => {
     expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
     expect(disk.get(`${SPACE}/new.md`)).toBe('A rule since\n---\n')
   })
-
   test('is left as it is where a note still holds it', () => {
     kept.set(SETEXT_GONE, [SPACE])
     keepSetextMarked(space({ [`${SPACE}/a.md`]: 'x\n' }, { 'b.md': { [SETEXT_KEY]: 'gone' } }), SPACE)
     expect(marked).toEqual([])
   })
-
   test('is not put on a space this device never rewrote, or one the account keeps no marks for', () => {
     keepSetextMarked(space({ [`${SPACE}/a.md`]: 'x\n' }), SPACE)
     kept.set(SETEXT_GONE, [SPACE])
@@ -182,7 +164,6 @@ describe('the mark a rewritten space carries', () => {
     expect(marked).toEqual([])
   })
 })
-
 describe('a space whose notes the browser keeps away', () => {
   function away(texts: Record<string, string>, answers = true) {
     keptAway.keep(
@@ -199,7 +180,6 @@ describe('a space whose notes the browser keeps away', () => {
       return Promise.resolve(true)
     })
   }
-
   test('brings back only those the account finds a line under words in', async () => {
     const texts = {
       [`${SPACE}/u.md`]: 'Away\n====\n',
@@ -212,7 +192,6 @@ describe('a space whose notes the browser keeps away', () => {
     expect(disk.get(`${SPACE}/u.md`)).toBe('# Away\n')
     expect(disk.get(`${SPACE}/p.md`)).toBe('# Plain\n\nwords\n')
   })
-
   test('waits for another launch when the account cannot be asked', async () => {
     const texts = { [`${SPACE}/u.md`]: 'Away\n====\n' }
     const ws = space({ [`${SPACE}/a.md`]: 'Here\n----\n', ...texts })

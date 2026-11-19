@@ -12,7 +12,6 @@ function settle(from: number, to: number, frames = 600) {
   }
   return { seconds: Infinity, past, one }
 }
-
 test('a window comes to rest where it is sent, quickly and with the least overshoot', () => {
   const { seconds, past, one } = settle(0, 600)
   expect(one.at).toBe(600)
@@ -20,27 +19,23 @@ test('a window comes to rest where it is sent, quickly and with the least oversh
   expect(seconds).toBeLessThan(FLIGHT.response * 2)
   expect(past).toBeLessThan(600 * 0.02)
 })
-
 test('sent somewhere else mid-flight, it turns from where it is at the speed it had', () => {
   const one = spring(0)
   one.to = 600
   for (let frame = 0; frame < 6; frame++) step(one, 1 / 60)
   const { at, speed } = one
   expect(speed).toBeGreaterThan(0)
-
   one.to = 0
   step(one, 1 / 60)
   expect(Math.abs(one.at - at)).toBeLessThan(speed / 60 + 1)
   expect(one.at).toBeGreaterThan(at - 1)
 })
-
 test('a long frame does not throw it past where it is going', () => {
   const one = spring(0)
   one.to = 100
   step(one, 2)
   expect(one.at).toBeLessThanOrEqual(100 + 100 * 0.02)
 })
-
 test('landing is there at once, which reduced motion asks for', () => {
   const one = spring(0)
   one.to = 42

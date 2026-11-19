@@ -31,7 +31,6 @@ import { templatesFolder, templateWords } from './templates'
 const held = new Map<string, HeldBase>()
 const leading = new Set<string>()
 const letGo = new Map<string, AbortController>()
-
 function lead(path: string) {
   if (letGo.has(path)) return
   const stop = new AbortController()
@@ -53,21 +52,17 @@ function lead(path: string) {
     stop.signal,
   )
 }
-
 function forget(path: string) {
   held.delete(path)
   letGo.get(path)?.abort()
   letGo.delete(path)
   leading.delete(path)
 }
-
 export function basesAre(paths: readonly string[]) {
   for (const path of [...held.keys()]) if (!paths.includes(path)) forget(path)
   for (const path of paths) if (!held.has(path)) void readHeld(path)
 }
-
 const running = (): boolean => held.size > 0
-
 const heldIn = (space: string, led = false): HeldBase[] =>
   [...held.entries()].flatMap(([path, one]) => {
     if ((led && !leading.has(path)) || protection.locked(path)) return []
@@ -85,22 +80,17 @@ const waiting = new Map<
     at?: string
   }
 >()
-
 const SETTLE = 80
 const runs = new Set<Promise<void>>()
 const lastRun = new Map<string, Promise<void>>()
-
 export async function settledRuns(): Promise<void> {
   while (runs.size) await Promise.allSettled([...runs])
 }
-
 const keyOf = (space: string, path: string) => `${space}\n${path}`
-
 function clock() {
   const now = nowHere()
   return { today: now.slice(0, 10), time: now.slice(11, 16) }
 }
-
 export async function readHeld(path: string): Promise<void> {
   const space = spaceHolding(workspace.spaces, path)
   try {
@@ -119,15 +109,12 @@ export async function readHeld(path: string): Promise<void> {
   }
   forget(path)
 }
-
 const rowsOf = (space: string, path: string): readonly Row[] => rows.of(space).filter((row) => row.path === path)
-
 function numbering(path: string) {
   const space = spaceHolding(workspace.spaces, path)
   const bases = space ? heldIn(space.name).filter((one) => one.base.orden.id) : []
   return { space, bases }
 }
-
 function withoutIds(path: string, text: string): string | null {
   const { space, bases } = numbering(path)
   const relative = space && within(space.root, path, space.root)
@@ -144,7 +131,6 @@ function withoutIds(path: string, text: string): string | null {
   return Object.keys(gone).length ? withProperties(text, gone) : null
 }
 leaveIdsBy({ numbers: (path) => numbering(path).bases.length > 0, without: withoutIds })
-
 async function run(space: string, path: string, removed: readonly Row[]) {
   const bases = heldIn(space, true)
   const root = workspace.spaces.find((one) => one.name === space)?.root
@@ -153,12 +139,10 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   const today = todayHere()
   const context = contextFor({ rows: all, today, now: nowHere() })
   const plan = planned(bases, removed, rowsOf(space, path), all, context, clock())
-
   for (const write of plan.writes) ours.add(keyOf(write.row.space, write.row.path))
   if (plan.writes.length && !(await writeEach(plan.writes, true))) {
     for (const write of plan.writes) ours.delete(keyOf(write.row.space, write.row.path))
   }
-
   for (const move of plan.moves) {
     const said = move.folder.replace(/^\/+|\/+$/g, '')
     const inside = said ? insideOnly(said) : ''
@@ -173,7 +157,6 @@ async function run(space: string, path: string, removed: readonly Row[]) {
     })
   }
 }
-
 export function heardChange(change: RowsChange) {
   if (change.path === null || change.firstRead || !running()) return
   if (!change.added.some((row) => row.kind === 'note')) return
@@ -183,7 +166,6 @@ export function heardChange(change: RowsChange) {
     heard(change.space, change.path, change.removed, undefined, landing(at) ? at : undefined)
   }
 }
-
 function settling(key: string, space: string, path: string, before: readonly Row[]) {
   waiting.set(key, {
     space,
@@ -204,13 +186,11 @@ function settling(key: string, space: string, path: string, before: readonly Row
     }, SETTLE),
   })
 }
-
 onLanded(() => {
   for (const [key, one] of waiting) {
     if (one.at !== undefined && !landing(one.at)) settling(key, one.space, one.path, one.removed)
   }
 })
-
 export function heard(
   space: string,
   path: string,
@@ -232,12 +212,9 @@ export function heard(
   if (at === undefined) settling(key, space, path, before)
   else waiting.set(key, { space, path, removed: before, at })
 }
-
 const MAKING = 'orden:repeat-templates'
 const MAKING_PATIENCE = 60_000
-
 export const repeatTemplates = (): Promise<void> => inTurn(() => MAKING, makeRepeats, MAKING_PATIENCE)
-
 async function makeRepeats() {
   const space = workspace.activeSpace
   if (!space || !rows.ready || !canWriteAt(space.root)) return
@@ -255,7 +232,6 @@ async function makeRepeats() {
     else note.made = made
     const due = repeatDue(note, today)
     if (!due) continue
-
     const said = typeof row.note.folder === 'string' ? row.note.folder.trim().replace(/^\/+|\/+$/g, '') : ''
     const inside = said ? insideOnly(said) : ''
     if (inside === null) continue

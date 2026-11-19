@@ -6,7 +6,6 @@ import { viewport } from '../../ui-kit/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import { closedAround } from '../../panes/src/api'
-
 import { unloadTabs } from './unload-choice.svelte'
 
 const UNLOADS: ReadonlySet<TabKind> = new Set<TabKind>([
@@ -19,30 +18,24 @@ const UNLOADS: ReadonlySet<TabKind> = new Set<TabKind>([
   'view',
   'channel',
 ])
-
 export type Unloading = 'tab' | 'others' | 'right'
-
 function inColumns(tab: Tab): boolean {
   const pane = workspace.panes.at(tab.paneId)
   return !!pane?.stacked && !viewport.touch && tab.kind === 'note' && !tab.reading
 }
-
 export function mayUnload(tab: Tab): boolean {
   if (tab.unloaded || !UNLOADS.has(tab.kind) || inColumns(tab)) return false
   if (tab.inPrivate || tab.id in agentMarks.on) return false
   return !(tab.kind === 'web' && webPages().lentOf(tab.id))
 }
-
 export function unloadsAround(tab: Tab, which: Unloading): Tab[] {
   const around = which === 'tab' ? [tab] : closedAround(workspace.tabsIn(tab.paneId), tab.id, which)
   return around.filter(mayUnload)
 }
-
 async function mayLose(tabs: readonly Tab[]): Promise<boolean> {
   const webs = tabs.filter((one) => one.kind === 'web')
   const losing = await Promise.all(webs.map((one) => webPages().losing(one.id)))
   if (!losing.some(Boolean)) return true
-
   const [only] = tabs
   const { prompt } = await import('../../ui-kit/src/api')
   return prompt.confirm({
@@ -51,12 +44,10 @@ async function mayLose(tabs: readonly Tab[]): Promise<boolean> {
     confirmLabel: 'Unload',
   })
 }
-
 function stepAside(tab: Tab, which: Unloading, going: readonly Tab[]) {
   const pane = workspace.panes.at(tab.paneId)
   const front = pane?.activeTabId ?? null
   if (!pane || front === null || !going.some((one) => one.id === front)) return
-
   if (which !== 'tab') {
     workspace.activate(tab.id)
     return
@@ -68,16 +59,13 @@ function stepAside(tab: Tab, which: Unloading, going: readonly Tab[]) {
   if (next === null) workspace.deselect(pane.id)
   else workspace.activate(next)
 }
-
 export async function unload(tab: Tab, which: Unloading): Promise<void> {
   const going = unloadsAround(tab, which)
   if (!going.length || !(await mayLose(going))) return
-
   stepAside(tab, which, going)
   await tick()
   workspace.flush()
   await workspace.writesSettled()
-
   const parks: Promise<void>[] = []
   for (const one of going) {
     const front = workspace.panes.at(one.paneId)?.activeTabId === one.id
@@ -87,18 +75,14 @@ export async function unload(tab: Tab, which: Unloading): Promise<void> {
   }
   await Promise.all(parks)
 }
-
 function afterLabel(): string {
   return 'Unload tabs to the right'
 }
-
 export function unloadEntries(tab: Tab): MenuEntry[] {
   if (!unloadTabs.on) return []
-
   const rows: MenuEntry[] = []
   if (mayUnload(tab)) rows.push({ label: 'Unload tab', run: () => void unload(tab, 'tab') })
   if (tab.essential !== null) return rows
-
   rows.push(
     {
       label: 'Unload other tabs',

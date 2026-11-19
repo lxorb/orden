@@ -25,7 +25,6 @@
     onclose: () => void
     children: Snippet
   } = $props()
-
   $effect(() => (open ? overlays.show(onclose) : undefined))
   $effect(() => closeOnBack(open, onclose))
 </script>
@@ -66,13 +65,11 @@
 <style>
   .sheet {
     --screen-width: var(--screen-sheet);
-
     display: flex;
     flex-direction: column;
     overflow: hidden;
     z-index: var(--z-sheet);
   }
-
   .head {
     flex: none;
     display: flex;
@@ -80,7 +77,6 @@
     gap: var(--space-3);
     padding: var(--space-4) var(--space-4) var(--space-3);
   }
-
   .title {
     flex: 1;
     min-width: 0;
@@ -92,7 +88,6 @@
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .body {
     flex: 1;
     min-height: 0;
@@ -102,7 +97,6 @@
     overflow-y: auto;
     padding: 0 var(--space-2) var(--space-3);
   }
-
   .foot {
     flex: none;
     display: flex;
@@ -110,13 +104,11 @@
     padding: var(--space-3) var(--space-4) var(--space-4);
     border-top: 1px solid var(--line);
   }
-
   .sheet :global(.wrong) {
     margin: 0 var(--space-2);
     font-size: var(--text-sm);
     color: var(--danger);
   }
-
   .sheet :global(h3) {
     margin: 0;
     padding: 0 var(--space-2);
@@ -126,7 +118,6 @@
     text-transform: uppercase;
     color: var(--muted);
   }
-
   .sheet :global(.card) {
     display: flex;
     flex-direction: column;
@@ -135,16 +126,13 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .sheet :global(.card h3) {
     padding: var(--space-2) 0 var(--space-1);
   }
-
   .sheet :global(.card-head) {
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .sheet :global(.line) {
     width: auto;
     height: 1px;
@@ -152,14 +140,12 @@
     border: none;
     background: var(--line);
   }
-
   .sheet :global(.stack) {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     width: 100%;
   }
-
   .sheet :global(.row) {
     display: flex;
     align-items: center;
@@ -170,7 +156,6 @@
     font-size: var(--text-sm);
     color: var(--text);
   }
-
   .sheet :global(.name) {
     flex: 1;
     min-width: 0;
@@ -179,48 +164,39 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .sheet :global(.name > *) {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .sheet :global(.name > small) {
     display: block;
     margin-top: 1px;
   }
-
   .sheet :global(.name small) {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .sheet :global(.hint) {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   .sheet :global(.hint.ok) {
     color: var(--success);
   }
-
   .sheet :global(.hint.bad) {
     color: var(--danger);
   }
-
   .sheet :global(.note) {
     margin: 0 var(--space-2);
     font-size: var(--text-sm);
     color: var(--muted-strong);
     line-height: 1.6;
   }
-
   .sheet :global(.note a) {
     color: var(--accent);
   }
-
   .sheet :global(input.field) {
     flex: 1;
     width: 100%;
@@ -234,11 +210,9 @@
     font-size: var(--text-sm);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
-
   .sheet :global(input.field:focus) {
     border-color: var(--accent);
   }
-
   :global([data-touch]) .sheet {
     top: auto;
     bottom: var(--keyboard);
@@ -248,25 +222,20 @@
     max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
-
   :global([data-touch]) .body {
     padding-bottom: var(--touch-bottom);
   }
-
   :global([data-touch]) .shut {
     margin-inline-end: calc(-1 * var(--space-2));
   }
-
   :global([data-touch]) .sheet :global(.row) {
     min-height: var(--touch-target);
   }
-
   :global([data-touch]) .sheet :global(input.field) {
     min-height: var(--touch-target);
     padding: 0 var(--touch-gap);
     font-size: var(--touch-text);
   }
-
   :global([data-touch]) .sheet :global(.hint),
   :global([data-touch]) .sheet :global(.note) {
     font-size: var(--text-base);

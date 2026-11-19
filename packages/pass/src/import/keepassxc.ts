@@ -3,7 +3,6 @@ import { csvRecords } from './csv'
 import type { Imported } from './types'
 
 const RECYCLE_BIN = 'Recycle Bin'
-
 export function parseKeePassXC(text: string): Imported {
   const into = new Collector('KeePassXC')
   for (const row of csvRecords(text)) {

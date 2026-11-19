@@ -8,13 +8,11 @@ vi.stubGlobal('localStorage', {
   key: () => null,
   length: 0,
 })
-
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas, readCanvas, writeCanvas } = await import('@orden/markdown/canvas')
 const { run } = await import('./actions')
 const { GRID } = await import('../../plane/src/api')
-
 function picked() {
   const text = writeCanvas({
     ...readCanvas(blankCanvas()),
@@ -28,7 +26,6 @@ function picked() {
   store.pick('aa')
   return store
 }
-
 const view = {
   width: 800,
   height: 600,
@@ -37,7 +34,6 @@ const view = {
   palette: {} as never,
   onfind: () => undefined,
 }
-
 const press = (key: string, shiftKey = false): KeyboardEvent =>
   ({
     key,
@@ -47,14 +43,12 @@ const press = (key: string, shiftKey = false): KeyboardEvent =>
     metaKey: false,
     altKey: false,
   }) as KeyboardEvent
-
 describe('a nudge', () => {
   test('is a pixel with a bare arrow', () => {
     const store = picked()
     expect(run.keys(store, press('ArrowRight'), view)).toBe(true)
     expect(store.canvas.nodes[0]?.x).toBe(101)
   })
-
   test('and a grid step with Shift, which is not in the binding', () => {
     const store = picked()
     expect(run.keys(store, press('ArrowRight', true), view)).toBe(true)
@@ -63,11 +57,9 @@ describe('a nudge', () => {
     expect(store.canvas.nodes[0]?.y).toBe(40 - GRID)
   })
 })
-
 describe('the zoom keys', () => {
   const chord = (key: string, code: string) =>
     ({ key, code, ctrlKey: true, altKey: true, metaKey: false, shiftKey: false }) as KeyboardEvent
-
   test('go in and out about the middle of the view', () => {
     const store = picked()
     const was = store.camera.scale

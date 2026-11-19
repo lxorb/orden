@@ -1,6 +1,5 @@
 
 from __future__ import annotations
-
 import argparse
 import http.server
 import json
@@ -14,7 +13,6 @@ import tempfile
 import threading
 import time
 from typing import Any
-
 import mss
 import numpy
 from PIL import Image, ImageStat
@@ -29,47 +27,36 @@ CELLS = (16, 10)
 FAR, STILL = 24.0, 1.5
 WIDE = 10
 MOST = 0.6
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
-
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
         self.send_header("content-length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
 if sys.platform == "win32":
     import ctypes
     from ctypes import wintypes
-
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
     from probe_app import main_window  # noqa: E402
-
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
     VK_MENU, KEYUP, WHEEL = 0x12, 0x2, 0x800
     LEFTDOWN, LEFTUP = 0x2, 0x4
-
     class Desk:
-
         def __init__(self, pid: int) -> None:
             self.pid, self.hwnd = pid, 0
-
         @staticmethod
         def config(identifier: str) -> pathlib.Path:
             return pathlib.Path(os.environ["APPDATA"]) / identifier
-
         @staticmethod
         def moving() -> None:
             user32.SystemParametersInfoW(0x1043, 0, ctypes.c_void_p(1), 0x3)
-
         def found(self) -> bool:
             self.hwnd = main_window(self.pid)
             return bool(self.hwnd)
-
         def placed(self) -> None:
             user32.ShowWindow(self.hwnd, 9)
             desk = wintypes.RECT()
@@ -77,14 +64,12 @@ if sys.platform == "win32":
             width = min(WIDTH, desk.right - desk.left)
             height = min(HEIGHT, desk.bottom - desk.top)
             user32.SetWindowPos(self.hwnd, None, desk.left, desk.top, width, height, 0x0004)
-
         def box(self) -> Box:
             rect = wintypes.RECT()
             user32.GetClientRect(self.hwnd, ctypes.byref(rect))
             origin = wintypes.POINT(0, 0)
             user32.ClientToScreen(self.hwnd, ctypes.byref(origin))
             return origin.x, origin.y, origin.x + rect.right, origin.y + rect.bottom
-
         def forward(self) -> None:
             front = user32.GetForegroundWindow()
             theirs = user32.GetWindowThreadProcessId(front, None)
@@ -93,7 +78,6 @@ if sys.platform == "win32":
             user32.SetForegroundWindow(self.hwnd)
             user32.BringWindowToTop(self.hwnd)
             user32.AttachThreadInput(ours, theirs, False)
-
         @staticmethod
         def click(x: int, y: int) -> None:
             user32.SetCursorPos(x, y)
@@ -102,7 +86,6 @@ if sys.platform == "win32":
             time.sleep(0.05)
             user32.mouse_event(LEFTUP, 0, 0, 0, 0)
             time.sleep(0.3)
-
         @staticmethod
         def alt_alt() -> float:
             scan = user32.MapVirtualKeyW(VK_MENU, 0)
@@ -114,12 +97,10 @@ if sys.platform == "win32":
                 done = time.time() * 1000
                 time.sleep(0.06)
             return done
-
         @staticmethod
         def wheel(x: int, y: int, notches: int) -> None:
             user32.SetCursorPos(x, y)
             user32.mouse_event(WHEEL, 0, 0, ctypes.c_uint32((120 * notches) & 0xFFFFFFFF).value, 0)
-
         @staticmethod
         def drag(start: tuple[int, int], end: tuple[int, int], pressed: list[tuple[float, str]]) -> None:
             user32.SetCursorPos(*start)
@@ -130,30 +111,22 @@ if sys.platform == "win32":
                 user32.SetCursorPos(start[0] + (end[0] - start[0]) * step // 20, start[1] + (end[1] - start[1]) * step // 20)
                 time.sleep(0.03)
             user32.mouse_event(LEFTUP, 0, 0, 0, 0)
-
 else:
-
     def xdo(*words: str) -> str:
         return subprocess.run(["xdotool", *words], capture_output=True, text=True, check=False).stdout
-
     class Desk:  # type: ignore[no-redef]
-
         def __init__(self, pid: int) -> None:
             self.pid, self.window = pid, ""
-
         @staticmethod
         def config(identifier: str) -> pathlib.Path:
             return pathlib.Path(os.environ.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config") / identifier
-
         @staticmethod
         def moving() -> None:
             pass
-
         @staticmethod
         def geometry(window: str) -> dict[str, int]:
             said = dict(line.split("=", 1) for line in xdo("getwindowgeometry", "--shell", window).split() if "=" in line)
             return {key: int(value) for key, value in said.items() if value.lstrip("-").isdigit()}
-
         def found(self) -> bool:
             best, area = "", 0
             for one in xdo("search", "--onlyvisible", "--pid", str(self.pid), "").split():
@@ -162,34 +135,27 @@ else:
                     best, area = one, got["WIDTH"] * got["HEIGHT"]
             self.window = best
             return bool(best)
-
         def placed(self) -> None:
             xdo("windowmove", self.window, "0", "0")
             xdo("windowsize", self.window, str(WIDTH), str(HEIGHT))
-
         def box(self) -> Box:
             got = self.geometry(self.window)
             return got["X"], got["Y"], got["X"] + got["WIDTH"], got["Y"] + got["HEIGHT"]
-
         def forward(self) -> None:
             xdo("windowactivate", self.window)
-
         @staticmethod
         def click(x: int, y: int) -> None:
             xdo("mousemove", str(x), str(y))
             xdo("click", "1")
             time.sleep(0.3)
-
         @staticmethod
         def alt_alt() -> float:
             xdo("key", "--delay", "60", "Alt_L", "Alt_L")
             return time.time() * 1000
-
         @staticmethod
         def wheel(x: int, y: int, notches: int) -> None:
             xdo("mousemove", str(x), str(y))
             xdo("click", "4" if notches > 0 else "5")
-
         @staticmethod
         def drag(start: tuple[int, int], end: tuple[int, int], pressed: list[tuple[float, str]]) -> None:
             xdo("mousemove", str(start[0]), str(start[1]))
@@ -200,14 +166,11 @@ else:
                 xdo("mousemove", str(start[0] + (end[0] - start[0]) * step // 20), str(start[1] + (end[1] - start[1]) * step // 20))
                 time.sleep(0.03)
             xdo("mouseup", "1")
-
 class Film:
-
     def __init__(self, box: Box) -> None:
         self.box, self.frames, self.going = box, [], True
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()
-
     def run(self) -> None:
         left, top, right, bottom = self.box
         with mss.mss() as screen:
@@ -215,12 +178,10 @@ class Film:
                 at = time.time() * 1000
                 shot = screen.grab({"left": left, "top": top, "width": right - left, "height": bottom - top})
                 self.frames.append((at, Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX")))
-
     def stop(self) -> list[tuple[float, Image.Image]]:
         self.going = False
         self.thread.join()
         return self.frames
-
 LOG = """
 (() => {
   window.__ov = { frames: [], puts: [] }
@@ -251,9 +212,7 @@ LOG = """
 TAKE = "(() => { const got = window.__ov; window.__ov = null; return got })()"
 TOGGLE = "document.querySelector('button.orden-glyph.overview')?.click(); return true"
 SHOWN = "document.querySelector('button.orden-glyph.overview')?.getAttribute('aria-pressed') === 'true'"
-
 def toggled(app: App, desk: Desk, up: bool, pressed: list[tuple[float, str]]) -> str:
-
     what = "open" if up else "close"
     pressed.append((desk.alt_alt(), what))
     time.sleep(0.6)
@@ -262,24 +221,18 @@ def toggled(app: App, desk: Desk, up: bool, pressed: list[tuple[float, str]]) ->
     pressed.append((time.time() * 1000, what))
     app.eval(TOGGLE)
     return "button"
-
 def small(image: Image.Image) -> numpy.ndarray:
     return numpy.asarray(image.convert("L").resize((CELLS[0] * 20, CELLS[1] * 20)), dtype=numpy.float32)
-
 def cells(a: numpy.ndarray, b: numpy.ndarray) -> list[float]:
     diff = numpy.abs(a - b).reshape(CELLS[1], 20, CELLS[0], 20).mean(axis=(1, 3))
     return [float(one) for one in diff.ravel()]
-
 def distinct(smalls: list[numpy.ndarray]) -> list[int]:
-
     kept = [0]
     for i in range(1, len(smalls)):
         if max(cells(smalls[kept[-1]], smalls[i])) >= 0.5:
             kept.append(i)
     return kept
-
 def flashes(smalls: list[numpy.ndarray], kept: list[int]) -> list[tuple[int, int, int, float]]:
-
     found = []
     for length in (1, 2, 3):
         for k in range(1, len(kept) - length):
@@ -296,9 +249,7 @@ def flashes(smalls: list[numpy.ndarray], kept: list[int]) -> list[tuple[int, int
             if len(far) >= WIDE:
                 found.append((kept[k], length, len(far), round(max(far), 1)))
     return found
-
 def pops(smalls: list[numpy.ndarray], kept: list[int], times: list[float], pressed: list[float]) -> list[tuple[int, float, float]]:
-
     found = []
     for k in range(1, len(kept)):
         i, was = kept[k], kept[k - 1]
@@ -310,7 +261,6 @@ def pops(smalls: list[numpy.ndarray], kept: list[int], times: list[float], press
         if times[i] - stood_from >= 200 and stood_from > since:
             found.append((i, round(moved, 1), round(times[i] - since)))
     return found
-
 def sheet(frames: list[tuple[float, Image.Image]], path: pathlib.Path) -> None:
     across = 10
     w, h = 256, 160
@@ -319,7 +269,6 @@ def sheet(frames: list[tuple[float, Image.Image]], path: pathlib.Path) -> None:
     for index, (_, one) in enumerate(frames):
         out.paste(one.resize((w, h)), ((index % across) * w, (index // across) * h))
     out.save(path, quality=80)
-
 def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, Any], pressed: list[tuple[float, str]], hole: dict[str, float] | None, out: pathlib.Path, scale: float) -> list[str]:
     wrong: list[str] = []
     folder = out / name
@@ -343,7 +292,6 @@ def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, An
         wrong.append(f"[{name}] frame {i} pops {moved} after the screen stood still, {since} ms after the last press")
     up = [(at, on) for at, on, *_ in log.get("frames", [])]
     outs = [(one[0], one[5] if len(one) > 5 else 0) for one in log.get("frames", [])]
-
     def up_at(at: float) -> bool:
         best = False
         for when, on in up:
@@ -351,7 +299,6 @@ def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, An
                 break
             best = bool(on)
         return best
-
     def out_at(at: float) -> float:
         best = 0.0
         for when, open in outs:
@@ -359,7 +306,6 @@ def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, An
                 break
             best = float(open or 0)
         return best
-
     if not any(on for _, on in up):
         wrong.append(f"[{name}] the overview never came up")
     elif up and up[-1][1]:
@@ -384,7 +330,6 @@ def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, An
                 break
     (folder / "log.json").write_text(json.dumps({"times": times, "steps": steps, "pressed": pressed, **log}, indent=1), encoding="utf-8")
     return wrong
-
 def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, out: pathlib.Path, scale: float) -> list[str]:
     desk.forward()
     box = desk.box()
@@ -415,7 +360,6 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
         log = {"frames": [], "puts": [], "said": log}
     print(f"[{name}] opened and closed by {how}", flush=True)
     return judged(name, frames, log, pressed, hole, out, scale) + barred(name, ground)
-
 SEE_THROUGH = """(() => {
   const bar = document.querySelector('header[data-chrome="top"]')
   if (!bar) return 'no bar'
@@ -425,11 +369,9 @@ SEE_THROUGH = """(() => {
   const blurred = [...document.querySelectorAll('.canvas *')].some((one) => (getComputedStyle(one).backdropFilter || 'none') !== 'none')
   return alpha <= 0.01 && !blurred ? 'clear' : ground + (blurred ? ' blurred' : '')
 })()"""
-
 def barred(name: str, ground: str) -> list[str]:
     print(f"[{name}] the bar over the overview: {ground}", flush=True)
     return [] if ground == "clear" else [f"[{name}] the bar over the overview is not see-through: {ground}"]
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -439,11 +381,9 @@ def main() -> int:
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
     args.out.mkdir(parents=True, exist_ok=True)
-
     site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=site.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{site.server_address[1]}/"
-
     config = Desk.config(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
@@ -485,7 +425,6 @@ def main() -> int:
         print(f"the engine: {app.eval('navigator.userAgent')}; pages under the app: {app.eval('orden.pages.under')}", flush=True)
         wrong += round_trip(app, desk, "notes", None, args.out, scale)
         wrong += round_trip(app, desk, "notes-again", None, args.out, scale)
-
         app.eval(f"orden.workspace.openPage({json.dumps(url)}); return true")
         until = time.monotonic() + 40
         while time.monotonic() < until:
@@ -508,12 +447,10 @@ def main() -> int:
         ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     (args.out / "wrong.json").write_text(json.dumps(wrong, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

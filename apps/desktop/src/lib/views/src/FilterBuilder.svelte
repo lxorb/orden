@@ -19,7 +19,6 @@
   import { propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const holds = $derived(live.base ? holdsOf(live.base, live.rows) : undefined)
@@ -28,7 +27,6 @@
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
   let typed = $state('')
   const EXAMPLE = 'today & #work | overdue'
-
   const OPERATOR_NAMES: Record<Operator, string> = {
     '==': '=',
     '!=': '≠',
@@ -41,20 +39,16 @@
     filled: 'is not empty',
     tag: '#',
   }
-
   function write(next: FilterRows) {
     kit.change((base, at) => setFilter(base, at, filterOf(next, holds)))
   }
-
   function changeRow(at: number, row: FilterRow) {
     write({ ...rows, rows: rows.rows.map((one, index) => (index === at ? row : one)) })
   }
-
   function add() {
     const property = kinds === 'notes' ? (properties.find((one) => one.startsWith('note.')) ?? 'file.name') : 'task.due'
     write({ ...rows, rows: [...rows.rows, { property, op: '==', value: '' }] })
   }
-
   function readTyped() {
     const words = typed.trim()
     if (!words) return
@@ -68,7 +62,6 @@
       // Words Todoist's grammar cannot read stay in the field to be corrected.
     }
   }
-
   const describe = (filter: unknown): string => (typeof filter === 'string' ? filter : JSON.stringify(filter))
 </script>
 
@@ -167,26 +160,21 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
   }
-
   .completed {
     align-self: flex-start;
   }
-
   .join {
     align-self: flex-start;
   }
-
   .join button {
     padding: 0 var(--space-3);
   }
-
   .row {
     display: grid;
     grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--space-2);
   }
-
   .kept {
     grid-column: 1 / 4;
     overflow: hidden;
@@ -196,11 +184,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .value {
     min-width: 0;
   }
-
   .adder .orden-row-label {
     color: var(--muted);
   }

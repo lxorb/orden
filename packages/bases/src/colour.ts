@@ -2,12 +2,10 @@ export interface ColourRule {
   when: string
   tone: string
 }
-
 export function colourExpression(rules: readonly ColourRule[]): string | undefined {
   if (!rules.length) return undefined
   return rules.reduceRight((rest, rule) => `if(${rule.when}, ${JSON.stringify(rule.tone)}, ${rest})`, 'null')
 }
-
 function argumentsOf(text: string, from: number): { args: string[]; end: number } | null {
   const args: string[] = []
   let depth = 0
@@ -33,7 +31,6 @@ function argumentsOf(text: string, from: number): { args: string[]; end: number 
   }
   return null
 }
-
 export function colourRules(expression: string | undefined): ColourRule[] | null {
   if (expression === undefined) return []
   const rules: ColourRule[] = []

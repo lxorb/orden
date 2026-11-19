@@ -5,18 +5,14 @@ import type { FormatId } from './plan'
 import { pickedFolder } from './sources'
 
 const MACHINE_MADE = /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)(?:[\s_-]+|$)/i
-
 export function folderNameFor(picked: readonly PickedFile[], format: FormatId): string {
   if (format === 'todoist') return ''
   const first = picked[0]
   const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
   const stripped = (format === 'obsidian' ? named : named.replace(MACHINE_MADE, '')).trim()
-
   const wordy = /\p{L}{2,}/u.test(stripped) && !/^[0-9a-f-]+$/i.test(stripped)
-
   return wordy ? safeName(stripped) : nameOfFormat(format)
 }
-
 export function nameOfFormat(format: FormatId): string {
   switch (format) {
     case 'notion':
@@ -53,9 +49,7 @@ export function nameOfFormat(format: FormatId): string {
       return 'Imported'
   }
 }
-
 function stemOf(picked: PickedFile): string {
   return picked.name.replace(/\.[^.]+$/, '')
 }
-
 export const onMac = (): boolean => isDesktop && platform() === 'macos'

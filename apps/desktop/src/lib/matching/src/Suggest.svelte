@@ -29,7 +29,6 @@
     marks?: (value: string, shown: string) => Piece[] | null
     badge?: (value: string) => string
   } = $props()
-
   function piecesOf(value: string, text: string): Piece[] {
     const found = marks?.(value, text)
     if (found) return found
@@ -40,11 +39,9 @@
       { text: after, hit: false },
     ].filter((one) => one.text)
   }
-
   function split(value: string) {
     const at = typed ? value.toLowerCase().indexOf(typed.trim().toLowerCase()) : -1
     if (at === -1) return { before: value, hit: '', after: '' }
-
     return {
       before: value.slice(0, at),
       hit: value.slice(at, at + typed.trim().length),
@@ -101,7 +98,6 @@
     padding: 0;
     list-style: none;
   }
-
   button {
     width: 100%;
     display: flex;
@@ -120,13 +116,11 @@
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
   }
-
   button:hover,
   button.on {
     background: var(--accent-soft);
     color: var(--text-strong);
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -134,17 +128,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .aside {
     margin-inline-start: var(--space-2);
     color: var(--muted);
   }
-
   button:hover .aside,
   button.on .aside {
     color: var(--muted-strong);
   }
-
   .badge {
     flex: none;
     padding: 0 var(--space-1);
@@ -153,12 +144,10 @@
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .matched {
     color: var(--accent);
     font-weight: var(--weight-strong);
   }
-
   :global([data-touch]) button {
     min-height: var(--touch-target);
     font-size: var(--text-base);

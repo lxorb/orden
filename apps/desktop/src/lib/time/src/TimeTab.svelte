@@ -18,7 +18,6 @@
   import { ticking, watchedMinutes } from './watched.svelte'
 
   const { tab }: { tab: Tab } = $props()
-
   const first = untrack(() => readSpec(tab.doc))
   let view = $state<View>(first.view)
   let day = $state(midnightOf(first.day ?? Date.now()))
@@ -26,18 +25,15 @@
   let picked = $state<Picked | null>(null)
   const ticker = ticking()
   const now = $derived(ticker.now)
-
   $effect(() => {
     const text = writeSpec({ view, day })
     untrack(() => {
       if (text !== tab.doc) tab.note.replace(text, false)
     })
   })
-
   $effect(() => {
     void time.exchange()
   })
-
   const range = $derived.by((): [number, number] => {
     if (view === 'day') return [day, daysAfter(day, 1)]
     const unit = view === 'week' ? 'week' : period
@@ -47,7 +43,6 @@
   const minutes = watchedMinutes(() => range)
   const own = $derived(counted(time.spans, time.rules))
   const said = $derived(time.spans.filter(isOwn))
-
   const shown = $derived(
     hoursShown(range[0], range[1], [
       ...piecesIn(time.spans, range[0], range[1], now).flatMap((one) => [one.from, one.to]),
@@ -60,35 +55,29 @@
       .filter((one) => one.span.end === null || counts(one.to - one.from))
       .sort((one, other) => other.from - one.from),
   )
-
   const loose = $derived(view === 'day' ? unsaid(time.spans, minutes.list, ...range, now) : [])
   const current = $derived(
     view === 'day' ? day === midnightOf(now) : startOf(view === 'week' ? 'week' : period, now) === range[0],
   )
-
   const titled = $derived.by(() => {
     if (view === 'day') return localDate(day, { weekday: 'long', day: 'numeric', month: 'long' })
     if (view === 'reports' && period === 'month') return localDate(range[0], { month: 'long', year: 'numeric' })
     return `${localDate(range[0], { day: 'numeric', month: 'short' })} – ${localDate(daysAfter(range[1], -1), { day: 'numeric', month: 'short', year: 'numeric' })}`
   })
-
   function step(by: number) {
     picked = null
     if (view === 'day') day = daysAfter(day, by)
     else if (view === 'week' || period === 'week') day = daysAfter(startOf('week', day), 7 * by)
     else day = stepped('month', startOf('month', day), by)
   }
-
   function toDay(one: number) {
     day = one
     view = 'day'
     picked = null
   }
-
   function showMenu(event: MouseEvent) {
     void import('./menu').then(({ trackingMenu }) => menu.show(event, trackingMenu(), { title: 'Time tracker' }))
   }
-
   const VIEWS = $derived([
     ['day', 'Day'],
     ['week', 'Week'],
@@ -246,7 +235,6 @@
     background: var(--bg);
     container-type: inline-size;
   }
-
   .head,
   .bar,
   .body {
@@ -255,11 +243,9 @@
     margin: 0 auto;
     padding: 0 var(--space-5);
   }
-
   .head {
     padding-top: var(--space-5);
   }
-
   .bar {
     display: flex;
     flex-wrap: wrap;
@@ -268,7 +254,6 @@
     padding-top: var(--space-4);
     padding-bottom: var(--space-3);
   }
-
   .moving {
     display: flex;
     flex: 1;
@@ -276,7 +261,6 @@
     gap: var(--space-1);
     min-width: 0;
   }
-
   .title {
     padding: 0 var(--space-2);
     overflow: hidden;
@@ -285,42 +269,35 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .body {
     padding-bottom: var(--space-6);
   }
-
   .day {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 18rem;
     gap: var(--space-5);
     align-items: start;
   }
-
   .hint {
     margin: var(--space-3) 0 0;
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .entries {
     margin: var(--space-3) 0 0;
     padding: 0;
     list-style: none;
   }
-
   .dot {
     flex: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
   }
-
   .named {
     display: flex;
     gap: var(--space-2);
   }
-
   .named > * {
     min-width: 0;
     overflow: hidden;
@@ -328,37 +305,30 @@
     text-align: match-parent;
     text-overflow: ellipsis;
   }
-
   .note {
     color: var(--muted);
   }
-
   .clock,
   .long {
     font-variant-numeric: tabular-nums;
   }
-
   .long {
     flex: 0 0 4.5rem;
     text-align: end;
   }
-
   .side {
     padding: var(--space-3);
     border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--surface-2) 60%, transparent);
   }
-
   @container (max-width: 760px) {
     .day {
       grid-template-columns: minmax(0, 1fr);
     }
-
     .moving {
       flex-basis: 100%;
       order: 3;
     }
-
     .head,
     .bar,
     .body {

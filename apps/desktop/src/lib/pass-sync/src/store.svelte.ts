@@ -93,16 +93,13 @@ import { madeVaultRow } from './vault-made'
 import { useNativeStretcher } from './stretcher'
 
 export type { LockWay, PassSettings } from './settings'
-
 export type PassState = 'loading' | 'new' | 'locked' | 'open'
-
 export interface Unlock {
   password?: string
   pin?: string
   device?: true
   recovery?: string
 }
-
 export const PIN_TRIES = 5
 const DEVICE_SECRET = 'pass-device'
 const LEFT_BEHIND = 'orden:pass-left-behind'
@@ -111,22 +108,17 @@ const ALIAS = 'alias'
 const SEALED_HERE = [HIBP, ALIAS]
 let kdf: KdfParams = PASSWORD_KDF
 let pinKdf: KdfParams = PIN_KDF
-
 export function configurePass(given: { kdf?: KdfParams; pinKdf?: KdfParams }): void {
   kdf = given.kdf ?? PASSWORD_KDF
   pinKdf = given.pinKdf ?? PIN_KDF
 }
-
 const unlocked = new WeakMap<PassStore, Held>()
-
 function files(): Promise<typeof import('./attachments')> {
   return import('./attachments')
 }
-
 async function signed(): Promise<Signed> {
   return (await import('./share-call')).signedSharing()
 }
-
 async function deviceSecret(): Promise<Uint8Array<ArrayBuffer> | null> {
   const text = await readSecret(DEVICE_SECRET)
   if (text === null) return null
@@ -137,7 +129,6 @@ async function deviceSecret(): Promise<Uint8Array<ArrayBuffer> | null> {
     return null
   }
 }
-
 async function ensuredDeviceSecret(): Promise<Uint8Array<ArrayBuffer>> {
   const known = await deviceSecret()
   if (known) return known
@@ -145,13 +136,10 @@ async function ensuredDeviceSecret(): Promise<Uint8Array<ArrayBuffer>> {
   await writeSecret(DEVICE_SECRET, base64(made))
   return made
 }
-
 const EXPORT_ENDS = { sealed: '.sealed.json', json: '.json', csv: '.csv' }
-
 function exportName(format: keyof typeof EXPORT_ENDS): string {
   return `orden-pass-${new Date().toISOString().slice(0, 10)}${EXPORT_ENDS[format]}`
 }
-
 export class PassStore {
   state = $state<PassState>('loading')
   vaults = $state.raw<Vault[]>([])
@@ -165,11 +153,8 @@ export class PassStore {
   error = $state<string | null>(null)
   conflict = $state(false)
   trustProblem = $state<string | null>(null)
-
   fileSource: () => Promise<FileApi | null> = async () => (await files()).accountFiles()
-
   aliasesStopped: Promise<void> = Promise.resolve()
-
   private keyring: KeyringRow | null = null
   private heardFor = $state<string | null>(null)
   private watchingAccount = false
@@ -183,7 +168,6 @@ export class PassStore {
     () => this.settings.relockAfter,
     () => this.lock(),
   )
-
   async start(): Promise<void> {
     const [keyring, device] = await Promise.all([readKeyring(), readDevice()])
     this.keyring = keyring
@@ -198,18 +182,15 @@ export class PassStore {
     this.state = keyring ? 'locked' : this.waitsForAccount() ? 'loading' : 'new'
     this.watchAccount()
   }
-
   waitsForAccount(): boolean {
     if (!passOn()) return false
     if (account.restoring) return true
     if (account.user) return this.heardFor !== account.user.id
     return !!account.token && !account.guest
   }
-
   accountHeard(id: string | null): void {
     this.heardFor = id
   }
-
   private watchAccount(): void {
     if (this.watchingAccount) return
     this.watchingAccount = true
@@ -225,7 +206,6 @@ export class PassStore {
       })
     })
   }
-
   async setup(password: string): Promise<string> {
     if (this.keyring) throw new Error('pass: Pass is already set up on this device')
     const made = await newKeyring(password, kdf)
@@ -236,7 +216,6 @@ export class PassStore {
     await this.serial(() => this.makeVault({ name: 'Personal', color: 'purple', icon: 'home' }))
     return made.recovery
   }
-
   async unlock(way: Unlock): Promise<boolean> {
     const keyring = this.keyring?.keyring
     if (!keyring) return false
@@ -254,11 +233,9 @@ export class PassStore {
       return false
     }
   }
-
   distrusted(problem: TrustProblem): void {
     this.trustProblem = trustWords(problem)
   }
-
   async backfillTrust(): Promise<number> {
     if (!unlocked.has(this)) return 0
     try {
@@ -267,11 +244,9 @@ export class PassStore {
       return 0
     }
   }
-
   get opened(): AbortSignal {
     return this.session.signal
   }
-
   lock(): void {
     this.session.abort()
     this.session = new AbortController()
@@ -282,7 +257,6 @@ export class PassStore {
     this.mustChangePassword = false
     if (this.state === 'open') this.state = 'locked'
   }
-
   async useLock(way: LockWay, pin?: string): Promise<boolean> {
     const { opened } = this.held()
     if (way === 'password') {
@@ -302,7 +276,6 @@ export class PassStore {
       return false
     }
   }
-
   async changePassword(old: string, password: string): Promise<boolean> {
     const { opened } = this.held()
     const row = this.keyring
@@ -312,7 +285,6 @@ export class PassStore {
     this.mustChangePassword = false
     return true
   }
-
   async newRecovery(password: string): Promise<string | null> {
     const { opened } = this.held()
     const row = this.keyring
@@ -321,12 +293,10 @@ export class PassStore {
     await this.keepKeyring(row, made.keyring)
     return made.recovery
   }
-
   async confirmPassword(password: string): Promise<boolean> {
     const keyring = this.keyring?.keyring
     return !!keyring && (await this.openedByPassword(keyring, password)) !== null
   }
-
   async hibpKey(): Promise<string> {
     const { opened } = this.held()
     const sealed = await readMeta(HIBP)
@@ -337,13 +307,11 @@ export class PassStore {
       return ''
     }
   }
-
   async setHibpKey(key: string): Promise<void> {
     const { opened } = this.held()
     const trimmed = key.trim()
     await writeMeta(HIBP, trimmed === '' ? null : await seal(opened.root, trimmed, 'local', HIBP))
   }
-
   async aliasProvider(): Promise<AliasAccount | null> {
     const { opened } = this.held()
     const sealed = await readMeta(ALIAS)
@@ -355,14 +323,12 @@ export class PassStore {
       return null
     }
   }
-
   async setAliasProvider(account: AliasAccount | null): Promise<void> {
     const { opened } = this.held()
     const key = account?.key.trim() ?? ''
     const text = account && key !== '' ? JSON.stringify({ ...account, key }) : null
     await writeMeta(ALIAS, text === null ? null : await seal(opened.root, text, 'local', ALIAS))
   }
-
   attach(id: string, picked: Picked): Promise<Item> {
     return this.serial(async () => {
       const held = this.held()
@@ -376,7 +342,6 @@ export class PassStore {
       return await this.putOne({ vault: item.vault, id, envelope })
     })
   }
-
   detach(id: string, file: string): Promise<Item> {
     return this.serial(async () => {
       const item = this.item(id)
@@ -387,7 +352,6 @@ export class PassStore {
       return made
     })
   }
-
   async fileBytes(id: string, file: string): Promise<Uint8Array<ArrayBuffer>> {
     const item = this.item(id)
     const attachment = item.attachments.find((one) => one.id === file)
@@ -395,15 +359,12 @@ export class PassStore {
     if (!attachment || !box) throw new Error('pass: no such file')
     return await (await files()).openedAttachment(box.key, item, attachment, this.fileSource)
   }
-
   createVault(meta: Partial<VaultMeta>): Promise<Vault> {
     return this.serial(() => this.makeVault(meta))
   }
-
   updateVault(id: string, meta: Partial<VaultMeta>): Promise<void> {
     return this.serial(() => this.changeVault(id, meta))
   }
-
   deleteVault(id: string): Promise<void> {
     return this.serial(async () => {
       const held = this.held()
@@ -424,29 +385,24 @@ export class PassStore {
       if (this.settings.defaultVault === id) this.setSetting('defaultVault', null)
     })
   }
-
   moveAll(from: string, to: string): Promise<void> {
     const ids = this.items.filter((item) => item.vault === from).map((item) => item.id)
     return this.move(ids, to, null)
   }
-
   create(vault: string, content: Content, folder: string | null = null): Promise<Item> {
     return this.serial(async () => {
       const envelope = { ...newEnvelope(content, Date.now()), folder }
       return await this.putOne({ vault, id: newId(), envelope, fresh: true })
     })
   }
-
   update(id: string, content: Content): Promise<Item> {
     return this.change(id, (envelope) => ({ ...envelope, content, modified: Date.now() }))
   }
-
   duplicate(id: string): Promise<Item> {
     const item = this.item(id)
     const content = { ...item.content, title: `Copy of ${item.content.title}` }
     return this.create(item.vault, content, item.folder)
   }
-
   async trash(ids: string[]): Promise<void> {
     const at = Date.now()
     const trashed = await this.changeAll(ids, (envelope) =>
@@ -456,11 +412,9 @@ export class PassStore {
       .then(({ stoppedAliases }) => stoppedAliases(this, trashed))
       .catch(() => undefined)
   }
-
   async restore(ids: string[]): Promise<void> {
     await this.changeAll(ids, (envelope) => (envelope.trashed === null ? null : { ...envelope, trashed: null }))
   }
-
   remove(ids: string[]): Promise<void> {
     return this.serial(async () => {
       const held = this.held()
@@ -474,11 +428,9 @@ export class PassStore {
       this.items = without(this.items, removed)
     })
   }
-
   emptyTrash(): Promise<void> {
     return this.remove(this.items.filter((item) => item.trashed !== null).map((item) => item.id))
   }
-
   move(ids: string[], vault: string, folder: string | null = null): Promise<void> {
     return this.serial(async () => {
       this.heldVault(vault)
@@ -490,53 +442,43 @@ export class PassStore {
       await this.put(puts)
     })
   }
-
   async pin(id: string, on: boolean): Promise<void> {
     await this.changeAll([id], (envelope) => (envelope.pinned === on ? null : { ...envelope, pinned: on }))
   }
-
   async monitor(id: string, on: boolean): Promise<void> {
     await this.changeAll([id], (envelope) => (envelope.monitored === on ? null : { ...envelope, monitored: on }))
   }
-
   async used(id: string): Promise<void> {
     const at = Date.now()
     await this.changeAll([id], (envelope) => ({ ...envelope, used: at }))
   }
-
   async history(id: string): Promise<Item[]> {
     const item = this.item(id)
     return await openVersions(this.heldVault(item.vault), item.vault, id)
   }
-
   async restoreVersion(id: string, rev: number): Promise<Item> {
     const version = (await this.history(id)).find((one) => one.rev === rev)
     if (!version) throw new Error('pass: no such version')
     return await this.update(id, version.content)
   }
-
   clearHistory(id: string): Promise<void> {
     return this.serial(async () => {
       const item = this.item(id)
       await write({ dropVersions: [{ vault: item.vault, id }] })
     })
   }
-
   heardSettings(): void {
     const was = this.settings.relockAfter
     this.settings = { ...readSettings(), lock: this.settings.lock }
     if (this.settings.relockAfter !== was) this.relock.rearm()
   }
-
   setSetting<K extends keyof PassSettings>(key: K, value: PassSettings[K]): void {
     this.settings = { ...this.settings, [key]: value }
     keepSettings(this.settings)
   }
-
   async copy(text: string): Promise<void> {
     await copySecret(text, this.settings.clipboardClear)
   }
-
   importItems(imported: Imported, into: string): Promise<{ added: number }> {
     return this.serial(async () => {
       const now = Date.now()
@@ -550,7 +492,6 @@ export class PassStore {
       return { added: puts.length }
     })
   }
-
   async exportAll(
     password: string,
     format: keyof typeof EXPORT_ENDS,
@@ -567,7 +508,6 @@ export class PassStore {
     if (!passphrase) throw new Error('pass: a sealed export needs a passphrase')
     return { name, text: await sealExport(json, passphrase, kdf) }
   }
-
   matching(url: string): Item[] {
     return activeLogins(this.items)
       .map((item) => ({
@@ -578,45 +518,36 @@ export class PassStore {
       .sort((a, b) => b.best - a.best || (b.item.used ?? 0) - (a.item.used ?? 0))
       .map((one) => one.item)
   }
-
   async members(vault: string): Promise<Member[]> {
     return await (await signed()).api.members(vault)
   }
-
   async person(email: string): Promise<Person> {
     return await personFor(await this.sharing(), email)
   }
-
   async memberPerson(member: Member): Promise<Person> {
     return await memberPerson(await this.sharing(), member)
   }
-
   async codesMatch(person: Person): Promise<Person> {
     return await confirmedPerson(deviceRows, person)
   }
-
   async invite(vault: string, person: Person, role: InvitedRole): Promise<MemberState> {
     const state = await invitedState(await this.sharing(), vault, person, role)
     this.changed()
     return state
   }
-
   async confirmMember(vault: string, person: Person): Promise<void> {
     await confirmedMember(await this.sharing(), vault, person)
     this.changed()
   }
-
   async setRole(vault: string, email: string, role: InvitedRole): Promise<void> {
     await roleGiven(await this.sharing(), vault, email, role)
     this.changed()
   }
-
   removeMember(vault: string, email: string): Promise<void> {
     return this.serial(async () => {
       await removedMember(await this.sharing(), vault, email)
     })
   }
-
   async leave(vault: string): Promise<void> {
     if (this.vaults.find((one) => one.id === vault)?.role === 'owner') {
       throw new Error('pass: the owner hands the vault on before leaving it')
@@ -625,26 +556,21 @@ export class PassStore {
     await api.removeMember(vault, email)
     this.changed()
   }
-
   async transfer(vault: string, email: string): Promise<void> {
     await handedOn(await this.sharing(), vault, email)
     this.changed()
   }
-
   async acceptInvite(invite: Invite): Promise<void> {
     await acceptedInvite(await this.sharing(), invite)
     this.changed()
   }
-
   async declineInvite(vault: string): Promise<void> {
     await (await signed()).api.decline(vault)
     this.changed()
   }
-
   async inviterCode(invite: Invite): Promise<string | null> {
     return invite.fromKey ? await codeOf(invite.fromKey) : null
   }
-
   async deletedElsewhere(): Promise<Item[]> {
     const held = this.held()
     const after = Date.now() - KEPT_AFTER_DELETE
@@ -659,7 +585,6 @@ export class PassStore {
     }
     return found
   }
-
   restoreDeleted(item: Item): Promise<Item> {
     return this.serial(async () => {
       const envelope = { ...envelopeOf(item), attachments: [], trashed: null, modified: Date.now() }
@@ -668,34 +593,28 @@ export class PassStore {
       return made
     })
   }
-
   async inviteMeta(invite: Invite): Promise<VaultMeta | null> {
     return await invitedMeta(this.held(), invite)
   }
-
   onLocalChange(run: () => void): () => void {
     this.listeners.add(run)
     return () => this.listeners.delete(run)
   }
-
   exclusive<T>(run: (held: Held | null) => Promise<T>): Promise<T> {
     return this.queued(() => run(unlocked.get(this) ?? null))
   }
-
   shown(update: Shown): void {
     if (this.state !== 'open') return
     const next = shownAfter(this.vaults, this.items, update)
     this.vaults = next.vaults
     this.items = next.items
   }
-
   tookKeyring(row: KeyringRow): void {
     this.keyring = row
     if (this.state === 'new' || (this.state === 'loading' && this.watchingAccount)) {
       this.state = 'locked'
     }
   }
-
   adoptAccountPass(password: string): Promise<boolean> {
     return this.serial(async () => {
       const account = await accountKeyringOf(deviceRows)
@@ -719,7 +638,6 @@ export class PassStore {
       return true
     })
   }
-
   private async openedByPassword(keyring: Keyring, password: string): Promise<Opened | null> {
     try {
       return await openWithPassword(keyring, password)
@@ -728,7 +646,6 @@ export class PassStore {
       throw error
     }
   }
-
   private async localOpened(password: string): Promise<{ opened: Opened; vaults: Vault[]; items: Item[] } | null> {
     const held = unlocked.get(this)
     if (held) return { opened: held.opened, vaults: this.vaults, items: this.items }
@@ -738,7 +655,6 @@ export class PassStore {
     const all = await openAll(opened)
     return { opened, vaults: all.vaults, items: all.items }
   }
-
   private async movedSealed(from: Opened, to: Opened): Promise<void> {
     for (const name of SEALED_HERE) {
       const sealed = await readMeta(name)
@@ -751,13 +667,11 @@ export class PassStore {
       }
     }
   }
-
   private async sharing(): Promise<Sharing> {
     const held = this.held()
     const { api, email } = await signed()
     return { api, held, rows: deviceRows, email: emailOf(email), versions: readVersions }
   }
-
   private async keptKeyring(keyring: Keyring, found: Opened, password: string | undefined): Promise<Opened> {
     const signing = await withSigner(keyring, found)
     const resealed =
@@ -768,7 +682,6 @@ export class PassStore {
     if (row && resealed !== keyring) await this.keepKeyring(row, resealed)
     return signing.opened
   }
-
   private serial<T>(run: () => Promise<T>): Promise<T> {
     const next = this.queued(run)
     void next.then(
@@ -777,37 +690,30 @@ export class PassStore {
     )
     return next
   }
-
   private queued<T>(run: () => Promise<T>): Promise<T> {
     const next = this.queue.then(run, run)
     this.queue = next.catch(() => undefined)
     return next
   }
-
   private changed(): void {
     for (const run of this.listeners) run()
   }
-
   private held(): Held {
     const held = unlocked.get(this)
     if (!held) throw new Error('pass: Pass is locked')
     return held
   }
-
   private heldVault(id: string): HeldVault {
     return heldVault(this.held(), id)
   }
-
   private item(id: string): Item {
     const item = this.items.find((one) => one.id === id)
     if (!item) throw new Error('pass: no such item')
     return item
   }
-
   private stillHeld(held: Held): void {
     if (unlocked.get(this) !== held) throw new Error('pass: Pass was locked')
   }
-
   private hold(held: Held, vaults: Vault[], items: Item[]): void {
     unlocked.set(this, held)
     this.vaults = vaults
@@ -819,7 +725,6 @@ export class PassStore {
     }
     this.relock.watch()
   }
-
   private async openedBy(keyring: Keyring, way: Unlock): Promise<Opened | null> {
     if (way.password !== undefined) return await openWithPassword(keyring, way.password)
     if (way.recovery !== undefined) return await openWithRecovery(keyring, way.recovery)
@@ -827,13 +732,11 @@ export class PassStore {
     if (way.device) return await this.openedByDevice(keyring)
     return null
   }
-
   private openedByPin(keyring: Keyring, pin: string): Promise<Opened | null> {
     const next = this.unlocking.then(() => this.openedByOnePin(keyring, pin))
     this.unlocking = next.catch(() => undefined)
     return next
   }
-
   private async openedByOnePin(keyring: Keyring, pin: string): Promise<Opened | null> {
     if (this.device?.seal.way !== 'pin') return null
     const secret = await deviceSecret()
@@ -856,7 +759,6 @@ export class PassStore {
     this.sawDevice(await clearPinTries(device.seal.sealed))
     return await openedWith(keyring, root)
   }
-
   private async openedByDevice(keyring: Keyring): Promise<Opened | null> {
     const device = this.device
     if (device?.seal.way !== 'device') return null
@@ -865,35 +767,29 @@ export class PassStore {
     if (!secret) return null
     return await openedWith(keyring, await openForDevice(device.seal, secret, undefined, device.kdf))
   }
-
   private async forgetPin(): Promise<void> {
     await this.forgetDevice()
     this.pinTries = 0
   }
-
   private async forgetDevice(): Promise<void> {
     await this.keepDevice(null)
     if (this.canPin) await forgetKey(DEVICE_SECRET, true).catch(() => undefined)
   }
-
   private async keepDevice(row: DeviceRow | null): Promise<void> {
     await writeDevice(row)
     this.sawDevice(row)
   }
-
   private sawDevice(row: DeviceRow | null): void {
     this.device = row
     this.setSetting('lock', row?.seal.way ?? 'password')
     this.pinTries = PIN_TRIES - (row?.seal.way === 'pin' ? Math.min(row.seal.tries, PIN_TRIES) : 0)
   }
-
   private async keepKeyring(was: KeyringRow, keyring: Keyring): Promise<void> {
     const row: KeyringRow = { keyring, rev: was.rev + 1, pending: true }
     await writeKeyring(row)
     this.keyring = row
     this.changed()
   }
-
   private async makeVault(given: Partial<VaultMeta>): Promise<Vault> {
     const held = this.held()
     const meta = vaultMetaIn({ ...given, v: 1 })
@@ -908,7 +804,6 @@ export class PassStore {
     this.vaults = [...this.vaults, vault]
     return vault
   }
-
   private async changeVault(id: string, given: Partial<VaultMeta>): Promise<void> {
     const held = this.held()
     const box = this.heldVault(id)
@@ -928,7 +823,6 @@ export class PassStore {
     const vault = vaultOf(row, meta)
     this.vaults = this.vaults.map((one) => (one.id === id ? vault : one))
   }
-
   private async importedInto(vault: string, imported: ImportedVault, now: number): Promise<Put[]> {
     const current = this.vaults.find((one) => one.id === vault)
     if (!current) throw new Error('pass: no such vault')
@@ -947,14 +841,12 @@ export class PassStore {
     if (folders.length !== current.folders.length) await this.changeVault(vault, { folders })
     return puts
   }
-
   private change(id: string, next: (envelope: Envelope) => Envelope): Promise<Item> {
     return this.serial(async () => {
       const item = this.item(id)
       return await this.putOne({ vault: item.vault, id, envelope: next(envelopeOf(item)) })
     })
   }
-
   private changeAll(ids: string[], next: (envelope: Envelope) => Envelope | null): Promise<Item[]> {
     return this.serial(async () => {
       const puts = ids.flatMap((id) => {
@@ -965,13 +857,11 @@ export class PassStore {
       return await this.put(puts)
     })
   }
-
   private async putOne(put: Put): Promise<Item> {
     const [made] = await this.put([put])
     if (!made) throw new Error('pass: the item was not written')
     return made
   }
-
   private async put(puts: readonly Put[]): Promise<Item[]> {
     if (!puts.length) return []
     const held = this.held()
@@ -983,9 +873,6 @@ export class PassStore {
     return sealed.made
   }
 }
-
 export const pass = new PassStore()
-
 useNativeStretcher()
-
 heardElsewhere([SETTINGS_KEY], () => pass.heardSettings())

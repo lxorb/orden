@@ -9,7 +9,6 @@ interface Gate {
   kind: TabKind
   name: () => string
 }
-
 export function whenOn(gate: Gate, run: () => void = () => undefined, off: () => void = () => undefined): void {
   let ran = false
   let was = false
@@ -37,23 +36,18 @@ export function whenOn(gate: Gate, run: () => void = () => undefined, off: () =>
     })
   })
 }
-
 export function whenTimeOn(run: () => void): void {
   whenOn({ on: timeOn, kind: 'time', name: () => 'Time tracker' }, run)
 }
-
 export function whenPassOn(run: () => void, off: () => void): void {
   whenOn({ on: passOn, kind: 'pass', name: () => 'Password manager' }, run, off)
 }
-
 export function whenChatsOn(run: () => void): void {
   whenOn({ on: chatsOn, kind: 'channel', name: () => 'Chats' }, run)
 }
-
 export function whenAppsOn(): void {
   whenOn({ on: appsOn, kind: 'application', name: () => 'Applications' })
 }
-
 export function whenExplorerOn(): void {
   whenOn({ on: explorerOn, kind: 'explorer', name: () => 'File explorer' })
 }

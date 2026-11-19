@@ -8,9 +8,7 @@ interface Store {
   readonly state: Accounts
   update(id: string, change: { model: string }): void
 }
-
 const asking = new Set<string>()
-
 export function mend(store: Store, state: Accounts): void {
   for (const account of state.accounts) {
     const { id, kind, model } = account

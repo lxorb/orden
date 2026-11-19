@@ -6,17 +6,13 @@
   import StrengthMeter from './StrengthMeter.svelte'
 
   const { onmade }: { onmade: (recovery: string) => void } = $props()
-
   const LEAST = 8
-
   let password = $state('')
   let again = $state('')
   let busy = $state(false)
   let wrong = $state('')
-
   const short = $derived(password.length > 0 && password.length < LEAST)
   const differ = $derived(again.length > 0 && again !== password)
-
   async function made(event: SubmitEvent) {
     event.preventDefault()
     if (busy || password.length < LEAST || again !== password) return

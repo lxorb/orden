@@ -6,7 +6,6 @@ import { unlinked } from './definitions'
 import { revealed } from './reveal'
 
 const BLOCK_PARENTS = new Set(['FrontMatter', 'FootnoteDef', 'DefinitionDetail', 'AbbrevDef'])
-
 function inlineMark(state: EditorState, node: SyntaxNode): boolean {
   const parent = node.parent?.name ?? ''
   if (BLOCK_PARENTS.has(parent)) return false
@@ -15,14 +14,11 @@ function inlineMark(state: EditorState, node: SyntaxNode): boolean {
   if (node.name === 'WikilinkMark') return true
   return node.name === 'CodeMark' && parent === 'InlineCode'
 }
-
 function concealed(state: EditorState, node: SyntaxNode): boolean {
   return inlineMark(state, node) && !revealed(state, node)
 }
-
 const blank = (state: EditorState, from: number, to: number): boolean =>
   from >= to || /^\s*$/.test(state.doc.sliceString(from, to))
-
 function runEnd(state: EditorState, mark: SyntaxNode, forward: boolean): number {
   let end = forward ? mark.to : mark.from
   for (
@@ -36,21 +32,17 @@ function runEnd(state: EditorState, mark: SyntaxNode, forward: boolean): number 
   }
   return end
 }
-
 function step(state: EditorState, tree: Tree, pos: number): number {
   const before = tree.resolveInner(pos, -1)
   const opening = before.parent
   if (opening && before.to === pos && concealed(state, before))
     if (pos < opening.to && runEnd(state, before, false) === opening.from) return opening.from
-
   const after = tree.resolveInner(pos, 1)
   const closing = after.parent
   if (closing && after.from === pos && concealed(state, after))
     if (pos > closing.from && runEnd(state, after, true) === closing.to) return closing.to
-
   return pos
 }
-
 export function snapOutward(state: EditorState, pos: number): number {
   const tree = syntaxTree(state)
   for (;;) {
@@ -59,36 +51,29 @@ export function snapOutward(state: EditorState, pos: number): number {
     pos = next
   }
 }
-
 export const pointerSnap = EditorState.transactionFilter.of((transaction) => {
   const selection = transaction.selection
   if (!selection || transaction.docChanged || !transaction.isUserEvent('select.pointer')) return transaction
   if (selection.ranges.some((range) => !range.empty)) return transaction
-
   const state = transaction.startState
   const ranges = selection.ranges.map((range) => {
     const pos = snapOutward(state, range.head)
     if (pos === range.head) return range
     return EditorSelection.cursor(pos, pos > range.head ? -1 : 1)
   })
-
   if (ranges.every((range, index) => range === selection.ranges[index])) return transaction
   return [transaction, { selection: EditorSelection.create(ranges, selection.mainIndex) }]
 })
-
 const WORD = /[\p{L}\p{N}]/u
 const UNSPACED = /[\p{sc=Han}\p{sc=Hiragana}\p{sc=Katakana}]/u
 const wordy = (character: string): boolean => WORD.test(character) && !UNSPACED.test(character)
-
 const at = (doc: Text, pos: number): string => (pos < 0 || pos >= doc.length ? '' : doc.sliceString(pos, pos + 1))
-
 interface Drop {
   from: number
   to: number
   at: number
   text: string
 }
-
 function dropOf(state: EditorState, changes: ChangeSet): Drop | null {
   const parts: { fromA: number; toA: number; text: string }[] = []
   changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
@@ -102,7 +87,6 @@ function dropOf(state: EditorState, changes: ChangeSet): Drop | null {
   if (!placed || placed.fromA > state.doc.length) return null
   return { from: taken?.fromA ?? -1, to: taken?.toA ?? -1, at: placed.fromA, text: placed.text }
 }
-
 function lifted(doc: Text, from: number, to: number): [number, number] {
   if (from < 0) return [from, to]
   const text = doc.sliceString(from, to)
@@ -114,16 +98,13 @@ function lifted(doc: Text, from: number, to: number): [number, number] {
   if ((before === '' || before === '\n') && after === ' ') return [from, to + 1]
   return [from, to]
 }
-
 export const dropSpacing = EditorState.transactionFilter.of((transaction) => {
   if (!transaction.isUserEvent('move.drop') && !transaction.isUserEvent('input.drop')) return transaction
   const state = transaction.startState
   const drop = dropOf(state, transaction.changes)
   if (!drop) return transaction
-
   let snapped = snapOutward(state, drop.at)
   if (drop.from >= 0 && snapped > drop.from && snapped < drop.to) snapped = drop.at
-
   const [from, to] = lifted(state.doc, drop.from, drop.to)
   const taken = from < 0 ? ChangeSet.empty(state.doc.length) : state.changes({ from, to })
   const doc = taken.apply(state.doc)
@@ -135,9 +116,7 @@ export const dropSpacing = EditorState.transactionFilter.of((transaction) => {
   const inside = wordy(before) && wordy(after) && low === high
   const lead = !inside && wordy(before) && wordy(drop.text.charAt(0)) ? ' ' : ''
   const trail = !inside && wordy(after) && wordy(drop.text.charAt(drop.text.length - 1)) ? ' ' : ''
-
   if (snapped === drop.at && from === drop.from && to === drop.to && !lead && !trail) return transaction
-
   const placed = ChangeSet.of([{ from: place, insert: lead + drop.text + trail }], doc.length)
   const changes = taken.compose(placed)
   const start = place + lead.length

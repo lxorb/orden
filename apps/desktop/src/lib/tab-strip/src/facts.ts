@@ -3,13 +3,11 @@ import type { Tab } from '../../documents/src/api'
 import { readableSize } from '../../accounts/src/api'
 
 const EVERY = 1000
-
 export function usageLine(usage: TabUsage, size: (bytes: number) => string): string[] {
   const parts = [`CPU ${Math.round(usage.cpu)}%`, `RAM ${size(usage.memory)}`]
   if (usage.gpu !== undefined) parts.push(`GPU ${Math.round(usage.gpu)}%`)
   return parts
 }
-
 export function streamLine(stream: TabStream): string[] {
   const parts: string[] = []
   if (stream.width !== null && stream.height !== null) parts.push(`${stream.width}×${stream.height}`)
@@ -19,7 +17,6 @@ export function streamLine(stream: TabStream): string[] {
   if (stream.encoder) parts.push(stream.encoder)
   return parts
 }
-
 export function watchFacts(tab: Tab, said: (lines: string[][]) => void): () => void {
   let over = false
   let timer: ReturnType<typeof setTimeout> | undefined

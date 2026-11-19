@@ -7,7 +7,6 @@
   let gone = $state.raw<Item[]>([])
   let busy = $state(false)
   let wrong = $state('')
-
   $effect(() => {
     const seen = pass.items
     let current = true
@@ -21,7 +20,6 @@
       current = false
     }
   })
-
   async function restored(item: Item) {
     if (busy) return
     busy = true
@@ -63,17 +61,14 @@
     padding: var(--space-2);
     border-top: 1px solid var(--line);
   }
-
   .orden-section {
     margin: 0;
   }
-
   .one {
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -81,13 +76,11 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .quiet {
     margin: 0;
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .wrong {
     margin: 0;
     color: var(--danger);

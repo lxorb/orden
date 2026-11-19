@@ -16,9 +16,7 @@
     label: string
     onchange: (family: string) => void
   } = $props()
-
   const id = $props.id()
-
   let host = $state<HTMLElement>()
   let field = $state<HTMLInputElement>()
   let list = $state<HTMLElement>()
@@ -26,31 +24,24 @@
   let open = $state(false)
   let active = $state(-1)
   let families = $state<Family[]>([])
-
   const MOST = 200
-
   const shown = $derived(offered(families, typed ?? '', mono).slice(0, MOST))
   const missing = $derived(value !== '' && !isInstalled(value))
-
   $effect(() => (open ? overlays.show(close, () => [host, list].filter((one) => one !== undefined)) : undefined))
-
   function show() {
     open = true
     active = -1
     void installedFamilies().then((found) => (families = found))
   }
-
   function close() {
     open = false
     typed = null
   }
-
   function choose(family: string) {
     onchange(family.trim())
     if (field) field.value = family.trim()
     close()
   }
-
   function keyed(event: KeyboardEvent) {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
@@ -140,7 +131,6 @@
   .picker {
     position: relative;
   }
-
   .list {
     max-height: 280px;
     margin: 0;
@@ -149,7 +139,6 @@
     overflow-y: auto;
     z-index: var(--z-menu);
   }
-
   .list li {
     min-height: 30px;
     padding: 5px 9px;
@@ -162,12 +151,10 @@
     text-overflow: ellipsis;
     cursor: default;
   }
-
   .list li.cursor {
     background: var(--accent-soft);
     color: var(--text-strong);
   }
-
   .missing {
     flex-basis: 100%;
     color: var(--danger);

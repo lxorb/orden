@@ -4,9 +4,7 @@ import { world } from './reading-embed-world.svelte'
 import { idle } from './settle'
 
 const ROW = 24
-
 const WORDS = 18
-
 vi.mock('../../src/lib/reading/src/drawn', () => ({ inlineFiles: () => () => undefined }))
 vi.mock('../../src/lib/reading/src/render', () => ({
   readingHtml: async (source: { text: string }) => {
@@ -36,7 +34,6 @@ vi.mock('../../src/lib/link-index/src/api', () => ({
     reachedOf: () => null,
   },
 }))
-
 const tab = {
   id: 't1',
   path: '/s/Trip.md',
@@ -52,7 +49,6 @@ const tab = {
     flush: () => undefined,
   },
 }
-
 vi.mock('../../src/lib/workspace/src/api', () => ({
   workspace: {
     rootHolding: () => null,
@@ -62,13 +58,9 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
     toggleReading: () => undefined,
   },
 }))
-
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
-
 const frames = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
-
 let shown: ReturnType<typeof mount> | null = null
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
@@ -79,11 +71,8 @@ afterEach(() => {
   tab.anchor = undefined
   top = 0
 })
-
 let top = 0
-
 const rowOf = (element: Element) => (element.parentElement ? [...element.parentElement.children].indexOf(element) : 0)
-
 Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
   configurable: true,
   value(this: Element) {
@@ -94,7 +83,6 @@ Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
 Element.prototype.scrollIntoView = function (this: Element) {
   top = rowOf(this) * ROW
 }
-
 const scrollTop = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop')
 Object.defineProperty(Element.prototype, 'scrollTop', {
   configurable: true,
@@ -110,7 +98,6 @@ Object.defineProperty(Element.prototype, 'scrollHeight', {
   configurable: true,
   get: () => 100000,
 })
-
 function laidOut(box: HTMLElement) {
   const page = box.querySelector('article')
   if (!page) throw new Error('no page')
@@ -126,7 +113,6 @@ function laidOut(box: HTMLElement) {
     },
   }
 }
-
 async function opened(doc: string) {
   world.doc = doc
   const target = document.createElement('div')
@@ -140,32 +126,25 @@ async function opened(doc: string) {
   if (!box) throw new Error('no scroller')
   return laidOut(box)
 }
-
 async function anotherNoteSaved() {
   world.version++
   flushSync()
   await idle(400)
   flushSync()
 }
-
 const lines = (count: number) =>
   Array.from({ length: count }, (_, at) => `Day ${String(at)} of the trip, see [[Plan]].`).join('\n\n')
-
 test('a reader who stops where the top edge falls between two paragraphs stays there when another note is saved', async () => {
   const layout = await opened(`# Trip\n\n${lines(300)}\n\n# Home\n\nEnd.`)
   layout.scrollTo(4800 + 20)
   await idle(50)
-
   await anotherNoteSaved()
-
   expect(Math.abs(layout.top - 4820)).toBeLessThan(ROW)
 })
-
 test('leaving the reading view where the top edge falls between two paragraphs hands the editor that place, not the top', async () => {
   const doc = `# Trip\n\n${lines(300)}\n\n# Home\n\nEnd.`
   const layout = await opened(doc)
   layout.scrollTo(4800 + 20)
   await idle(50)
-
   expect(tab.anchor ?? 0).toBeGreaterThan(doc.indexOf('Day 150 '))
 })

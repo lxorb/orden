@@ -9,9 +9,7 @@ vi.stubGlobal('document', {
     toggleAttribute: () => false,
   },
 })
-
 await import('./hints.svelte')
-
 async function restarted() {
   vi.resetModules()
   const { hints } = await import('./hints.svelte')
@@ -20,73 +18,57 @@ async function restarted() {
   hints.restore()
   return { hints, modes }
 }
-
 beforeEach(() => localStorage.clear())
-
 describe('a hint', () => {
   test('waits for the session to settle', async () => {
     const { hints } = await restarted()
     hints.want('graph', true)
     expect(hints.current).toBeNull()
-
     hints.settle()
     expect(hints.current).toBe('graph')
   })
-
   test('is the one that matters most of those wanted', async () => {
     const { hints } = await restarted()
     hints.want('palette', true)
     hints.want('graph', true)
     hints.settle()
-
     expect(hints.current).toBe('graph')
   })
-
   test('is one a session at most', async () => {
     const { hints } = await restarted()
     hints.want('graph', true)
     hints.want('palette', true)
     hints.settle()
     hints.dismiss('graph')
-
     expect(hints.current).toBeNull()
   })
-
   test('goes when its control no longer wants it', async () => {
     const { hints } = await restarted()
     hints.want('graph', true)
     hints.settle()
     hints.want('graph', false)
-
     expect(hints.current).toBeNull()
   })
-
   test('never shows in Silent mode', async () => {
     const { hints, modes } = await restarted()
     modes.toggleSilent()
     hints.want('graph', true)
     hints.settle()
-
     expect(hints.current).toBeNull()
   })
-
   test('put away stays away across a restart', async () => {
     const first = await restarted()
     first.hints.dismiss('graph')
-
     const { hints } = await restarted()
     expect(hints.seen).toEqual(['graph'])
-
     hints.want('graph', true)
     hints.want('palette', true)
     hints.settle()
     expect(hints.current).toBe('palette')
   })
-
   test('a sign-in card an earlier version put away is not read back (#415)', async () => {
     localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'palette']))
     const { hints } = await restarted()
-
     expect(hints.seen).toEqual(['palette'])
   })
 })

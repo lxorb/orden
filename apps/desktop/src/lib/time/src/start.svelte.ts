@@ -8,7 +8,6 @@ import { accountServer } from './server'
 import { time } from './time.svelte'
 
 account.forgetWithSession(forgetSessionOwner)
-
 $effect.root(() => {
   $effect(() => {
     const owner = sessionOwner(account)
@@ -23,7 +22,6 @@ $effect.root(() => {
     )
   })
 })
-
 if (typeof window !== 'undefined') {
   void import('./sense.svelte')
   void import('./reminding')

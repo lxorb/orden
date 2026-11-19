@@ -15,31 +15,26 @@
     refresh: (provider: Provider) => Promise<void>
     trouble: (said: string) => void
   }
-
   const { provider, kind, refresh, trouble }: Props = $props()
   let signingIn = $state(false)
   let signIns = 0
-
   const INSTALL: Record<LocalKind, string> = {
     'claude-code': 'https://code.claude.com/docs/en/setup',
     codex: 'https://developers.openai.com/codex/cli',
     'gemini-cli': 'https://geminicli.com/docs/get-started/installation/',
   }
-
   const USAGE_OF: Record<LocalKind | 'chatgpt', string> = {
     'claude-code': 'https://claude.ai/settings/usage',
     codex: USAGE,
     'gemini-cli': 'https://geminicli.com/docs/resources/quota-and-pricing/',
     chatgpt: USAGE,
   }
-
   const PLAN_OF: Record<LocalKind | 'chatgpt', string> = {
     'claude-code': 'Claude',
     codex: 'ChatGPT',
     'gemini-cli': 'Gemini',
     chatgpt: 'ChatGPT',
   }
-
   async function signInTo(kind: LocalKind) {
     const plan = plans.of(provider.id)
     if (!plan.program) return
@@ -47,7 +42,6 @@
     await signIn(kind, plan.program, plan.home)
     plans.watch({ id: provider.id, kind })
   }
-
   async function continueWithChatgpt() {
     const mine = ++signIns
     signingIn = true
@@ -65,7 +59,6 @@
       if (signIns === mine) signingIn = false
     }
   }
-
   async function signOutOfChatgpt() {
     await invoke('chatgpt_sign_out').catch((error: unknown) => {
       trouble(message(error, 'Could not sign out.'))
@@ -73,7 +66,6 @@
     plans.chatgptLimit = null
     await plans.checkChatgpt()
   }
-
   function limitWords(kind: LocalKind | 'chatgpt', limit: Limit | null): string {
     if (!limit || limit.state === 'fine') return ''
     if (limit.state === 'reached') return limitSentence(PLAN_OF[kind], limit)
@@ -153,31 +145,26 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .setting .name.hint {
     white-space: normal;
   }
-
   .row {
     flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .continue {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
   }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   :global(.sheet.phone) .setting {
     position: relative;
     gap: var(--touch-gap);

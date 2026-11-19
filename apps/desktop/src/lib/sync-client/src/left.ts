@@ -9,7 +9,6 @@ export function ownRoots(accountId: string | null): string[] {
     .spaces.map((space) => space.root)
     .filter((root) => !leftByAnother(root, accountId))
 }
-
 export async function unsentRoots(
   engine: Engine,
   roots: readonly string[],
@@ -22,7 +21,6 @@ export async function unsentRoots(
   }
   return unsent
 }
-
 export async function leaveUnsent(): Promise<boolean> {
   const answer = await prompt.choose({
     title: 'Some changes have not reached your account yet',
@@ -35,7 +33,6 @@ export async function leaveUnsent(): Promise<boolean> {
   })
   return answer === 'leave'
 }
-
 export async function dropLeft(roots: readonly string[]): Promise<void> {
   for (const root of roots) {
     const space = workspace().spaces.find((one) => samePath(one.root, root))

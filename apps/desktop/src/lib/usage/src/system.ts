@@ -1,6 +1,5 @@
 import { USAGE_ARCH, USAGE_OS, type UsageApp, type UsageSystem, type DailyPing } from '@orden/sync-core'
 type Common = Omit<DailyPing, 'v' | 'kind' | 'day'>
-
 export interface Seen {
   version: string
   channel: string
@@ -11,11 +10,9 @@ export interface Seen {
   width: number
   signedIn: boolean
 }
-
 function among<T extends string>(value: string | undefined, list: readonly T[]): T {
   return list.find((one) => one === value) ?? ('other' as T)
 }
-
 function osFromAgent(agent: string): UsageSystem['os'] {
   if (agent.includes('Android')) return 'android'
   if (/iPhone|iPad|iPod/.test(agent)) return 'ios'
@@ -24,7 +21,6 @@ function osFromAgent(agent: string): UsageSystem['os'] {
   if (/Linux|X11/.test(agent)) return 'linux'
   return 'other'
 }
-
 function engineOf(os: UsageSystem['os'], native: boolean, agent: string): UsageSystem['engine'] {
   if (native) {
     if (os === 'windows') return 'webview2'
@@ -36,14 +32,12 @@ function engineOf(os: UsageSystem['os'], native: boolean, agent: string): UsageS
   if (agent.includes('Safari/')) return 'webkit'
   return 'other'
 }
-
 function screenOf(width: number): Common['screen'] {
   if (width < 600) return 'small'
   if (width < 1200) return 'medium'
   if (width < 2000) return 'large'
   return 'huge'
 }
-
 export function commonOf(seen: Seen): Common {
   const native = seen.native
   const os = native ? among(native.platform, USAGE_OS) : osFromAgent(seen.agent)

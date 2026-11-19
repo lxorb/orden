@@ -2,9 +2,7 @@ import type { ILink, ILinkProvider } from '@xterm/xterm'
 import { afterEach, expect, test, vi } from 'vitest'
 
 const ADDRESS = 'https://claude.ai/oauth/authorize?scope=user%3Aprofile+user%3Amcp_servers'
-
 const made: { providers: ILinkProvider[]; options: Record<string, unknown> }[] = []
-
 vi.mock('@xterm/xterm', () => ({
   Terminal: class {
     cols = 40
@@ -70,16 +68,13 @@ vi.mock('@xterm/addon-unicode11', () => ({
     activate = () => undefined
   },
 }))
-
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')
-
 afterEach(() => {
   made.length = 0
   vi.restoreAllMocks()
 })
-
 function linksOf(provider: ILinkProvider | undefined, y: number): ILink[] {
   let found: ILink[] = []
   provider?.provideLinks(y, (links) => {
@@ -87,15 +82,12 @@ function linksOf(provider: ILinkProvider | undefined, y: number): ILink[] {
   })
   return found
 }
-
 const ctrl = () => new MouseEvent('click', { ctrlKey: true, metaKey: true })
-
 function press(screen: HTMLElement, held: MouseEventInit) {
   for (const type of ['mousedown', 'mouseup', 'click'] as const) {
     screen.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, ...held }))
   }
 }
-
 for (const [where, path, name] of [
   ['local', null, 'PowerShell'],
   ['online', 'Work/Terminal.term', 'Terminal.term'],
@@ -107,17 +99,14 @@ for (const [where, path, name] of [
     sessionOf(tab)
     const [screen] = made
     expect(screen?.providers).toHaveLength(1)
-
     for (const y of [1, 2]) {
       const [link] = linksOf(screen?.providers[0], y)
       expect(link?.text).toBe(ADDRESS)
       expect(link?.range).toEqual({ start: { x: 1, y: 1 }, end: { x: ADDRESS.length - 40, y: 2 } })
     }
-
     const [link] = linksOf(screen?.providers[0], 2)
     link?.activate(ctrl(), ADDRESS)
     expect(opened).not.toHaveBeenCalled()
-
     const session = sessionOf(tab)
     const drawn = document.createElement('div')
     session.host.append(drawn)
@@ -126,29 +115,24 @@ for (const [where, path, name] of [
     for (const type of ['mousedown', 'mouseup', 'click']) {
       drawn.addEventListener(type, () => heard.push(type))
     }
-
     link?.hover?.(new MouseEvent('mousemove'), ADDRESS)
     press(drawn, {})
     expect(opened).not.toHaveBeenCalled()
     expect(heard).toEqual(['mousedown', 'mouseup', 'click'])
-
     heard.length = 0
     press(drawn, { ctrlKey: true, metaKey: true })
     expect(opened).toHaveBeenCalledTimes(1)
     expect(opened).toHaveBeenCalledWith(ADDRESS, 'behind', tab.id)
     expect(heard).toEqual([])
-
     opened.mockClear()
     press(drawn, { button: 1 })
     expect(opened).toHaveBeenCalledTimes(1)
     expect(heard).toEqual([])
-
     link?.leave?.(new MouseEvent('mouseleave'), ADDRESS)
     opened.mockClear()
     press(drawn, { ctrlKey: true, metaKey: true })
     expect(opened).not.toHaveBeenCalled()
     expect(heard).toEqual(['mousedown', 'mouseup', 'click'])
-
     heard.length = 0
     const handler = screen?.options.linkHandler as {
       activate: (e: MouseEvent, uri: string) => void

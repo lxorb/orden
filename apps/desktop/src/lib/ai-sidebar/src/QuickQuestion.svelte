@@ -22,51 +22,41 @@
   const { quick = sheet, docked = false }: { quick?: typeof sheet; docked?: boolean } = $props()
   let talk = $state<HTMLElement>()
   let field = $state<HTMLTextAreaElement>()
-
   const voiceField: Dictates = {
     field: () => field,
     words: () => (quick.context ? [quick.context.name] : []),
   }
-
   const turns = $derived(quick.turns)
   const last = $derived(turns.at(-1))
   const waiting = $derived(quick.running && last?.role !== 'model')
   const done = $derived(last?.role === 'model' && !quick.running ? last : null)
-
   $effect(() => (quick.open && !docked ? overlays.show(() => quick.close()) : undefined))
   $effect(() => closeOnBack(quick.open && !docked, () => quick.close()))
   $effect(() => {
     if (docked && quick.open) requestAnimationFrame(() => field?.focus())
   })
-
   const follows = (..._values: unknown[]) => undefined
   let atEnd = true
-
   function onScroll() {
     const box = talk
     if (box) atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 24
   }
-
   const asked = $derived(turns.filter((one) => one.role === 'you').length)
-
   $effect(() => {
     follows(asked)
     atEnd = true
   })
-
   $effect(() => {
     follows(last?.text.length, waiting, quick.trouble)
     const box = talk
     if (box && atEnd) box.scrollTop = box.scrollHeight
   })
-
   function onPaste(event: ClipboardEvent) {
     const text = longPaste(event)
     if (text === null) return
     if (text.length > 2_000_000) quick.refuse('Text was not added: a chat takes pictures, and text files up to 2 MB.')
     else quick.take('Text', text)
   }
-
   function onKey(event: KeyboardEvent) {
     if (docked && event.key === 'Escape') {
       event.preventDefault()
@@ -77,7 +67,6 @@
     event.preventDefault()
     void quick.ask()
   }
-
   function follow(event: MouseEvent) {
     if (!opensLink(event)) return
     const anchor = (event.target as Element | null)?.closest('a')
@@ -92,9 +81,7 @@
     if (elsewhere) followHref(href, event)
     else followNote({ path: href, target: href, heading: null, block: null, page: null }, event, from)
   }
-
   const pictures = new SvelteSet<string>()
-
   function drawn(text: string, live: boolean): string {
     const from = untrack(() => workspace.panelTab?.path ?? null)
     return answerHtml(text, {
@@ -110,7 +97,6 @@
   }
   const show = (src: string) => pictures.add(src)
   const copied = new Copied()
-
   const MARKS: Record<ContextKind, string> = {
     note: 'M7.5 1.8H3.6a1 1 0 0 0-1 1v7.4a1 1 0 0 0 1 1h5.8a1 1 0 0 0 1-1V4.7zM7.5 1.8v2.9h2.9',
     selection: 'M2.5 3.5h8M2.5 6.5h8M2.5 9.5h5',
@@ -309,18 +295,15 @@
   .scrim {
     --scrim-z: var(--z-screen);
   }
-
   .quick {
     --screen-width: var(--screen-list);
     --quick-inset: var(--space-3);
     --go-inset: calc((var(--text-base) * 1.4 + 2 * var(--space-3) - 28px) / 2);
-
     z-index: var(--z-screen);
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
-
   .field {
     flex: none;
     align-items: flex-end;
@@ -333,11 +316,9 @@
     background: var(--surface);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
-
   .field:last-child {
     margin-bottom: var(--quick-inset);
   }
-
   textarea {
     min-height: 0;
     max-height: 9rem;
@@ -349,17 +330,14 @@
     resize: none;
     field-sizing: content;
   }
-
   textarea::placeholder {
     color: var(--muted);
   }
-
   .voice {
     flex: none;
     display: grid;
     margin: 0 2px calc(var(--go-inset) + 2px) 0;
   }
-
   .go {
     flex: none;
     display: grid;
@@ -378,16 +356,13 @@
       color var(--dur-fast) var(--ease-out),
       scale var(--dur-fast) var(--ease-out);
   }
-
   .go:disabled {
     background: var(--surface-hover);
     color: var(--muted);
   }
-
   .go:active:not(:disabled) {
     scale: 0.92;
   }
-
   .go svg {
     width: 14px;
     height: 14px;
@@ -397,17 +372,14 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .go .square {
     fill: currentColor;
     stroke: none;
   }
-
   .act svg,
   .chip svg {
     stroke-width: 1.3;
   }
-
   .chips {
     flex: none;
     display: flex;
@@ -415,11 +387,9 @@
     gap: var(--space-1);
     padding: var(--space-2) var(--quick-inset) var(--quick-inset);
   }
-
   .chips + .talk {
     padding-top: 0;
   }
-
   .chip {
     display: inline-flex;
     align-items: center;
@@ -433,7 +403,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-xs);
   }
-
   .chip svg {
     flex: none;
     width: 12px;
@@ -443,21 +412,17 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .what {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .chip.quoted .what::before {
     content: '\201C';
   }
-
   .chip.quoted .what::after {
     content: '\201D';
   }
-
   .drop {
     flex: none;
     display: grid;
@@ -474,24 +439,20 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .drop :global(svg) {
     width: 8px;
     height: 8px;
     stroke-width: 1.4;
   }
-
   @media (hover: hover) {
     .drop:hover {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
-
   .drop:active {
     background: var(--surface-press);
   }
-
   .talk {
     min-height: 0;
     overflow-y: auto;
@@ -501,7 +462,6 @@
     gap: var(--space-3);
     padding: var(--quick-inset);
   }
-
   .said {
     align-self: flex-end;
     max-width: 85%;
@@ -516,12 +476,10 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-
   .acts {
     display: flex;
     margin: calc(var(--space-2) * -1) 0 0 -6px;
   }
-
   .link {
     padding: 0;
     border: 0;
@@ -530,13 +488,11 @@
     font: inherit;
     cursor: default;
   }
-
   @media (hover: hover) {
     .link:hover {
       text-decoration: underline;
     }
   }
-
   .empty-text,
   .wrong {
     margin: 0;
@@ -544,19 +500,15 @@
     font-size: var(--text-row);
     color: var(--muted);
   }
-
   .empty-text {
     padding: var(--space-4);
   }
-
   .wrong {
     color: var(--danger);
   }
-
   .side {
     --quick-inset: var(--space-2);
     --go-inset: calc((var(--text-base) * 1.4 + 2 * var(--space-3) - 28px) / 2);
-
     flex: none;
     display: flex;
     flex-direction: column;
@@ -570,36 +522,30 @@
     background: var(--ground, var(--bg));
     overflow: hidden;
   }
-
   .side .head {
     flex: none;
     display: flex;
     align-items: center;
     padding: var(--space-1) var(--space-1) 0 var(--space-3);
   }
-
   .side .name {
     flex: 1;
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .side .talk {
     order: 1;
     flex: 1;
   }
-
   .side .chips {
     order: 2;
     padding: var(--space-2) var(--quick-inset) 0;
   }
-
   .side .field {
     order: 3;
     margin-bottom: var(--quick-inset);
   }
-
   .tucked {
     flex: none;
     align-self: center;
@@ -608,7 +554,6 @@
     gap: 2px;
     margin: 0 0 var(--space-2);
   }
-
   :global([data-touch]) .quick {
     top: auto;
     bottom: var(--keyboard);
@@ -619,7 +564,6 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
   }
-
   :global([data-touch]) textarea,
   :global([data-touch]) .said,
   :global([data-touch]) .empty-text,

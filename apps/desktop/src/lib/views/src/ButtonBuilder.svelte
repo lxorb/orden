@@ -10,7 +10,6 @@
   import type { Kit } from './kit'
 
   const { kit, column }: { kit: Kit; column?: string | undefined } = $props()
-
   const live = $derived(kit.live)
   let made = $state<string | undefined>(undefined)
   const name = $derived(made ?? (column?.startsWith(BUTTON) ? column.slice(BUTTON.length) : ''))
@@ -31,9 +30,7 @@
           .map((one) => ({ value: one.id, label: one.label }))
       : [],
   )
-
   const blank = (): Button => ({ name, set: {}, kept: {} })
-
   function write(change: Partial<Button>) {
     const next = { ...(button ?? blank()), ...change }
     for (const key of ['task', 'command', 'open'] as const) {
@@ -41,7 +38,6 @@
     }
     kit.change((base) => withButton(base, next.name, next))
   }
-
   function rename(words: string) {
     const next = words.trim()
     if (!next || next === name || !live.base) return
@@ -54,7 +50,6 @@
     made = next
     kit.change((base, at) => setColumns(withButton(old ? withButton(base, old, null) : base, next, kept), at, columns))
   }
-
   const sets = $derived(Object.entries(button?.set ?? {}))
 </script>
 
@@ -129,7 +124,6 @@
     align-items: center;
     gap: var(--space-2);
   }
-
   .adder .orden-row-label {
     color: var(--muted);
   }

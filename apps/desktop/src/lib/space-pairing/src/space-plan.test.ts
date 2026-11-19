@@ -4,10 +4,8 @@ import { planSpaces } from './space-plan'
 const local = (name: string) => ({ name, root: `/spaces/${name}` })
 const remote = (name: string, id = `id-${name}`) => ({ id, name })
 const mirror = (name: string, id = `id-${name}`) => ({ root: `/spaces/${name}`, spaceId: id })
-
 const plan = (input: Partial<Parameters<typeof planSpaces>[0]>) =>
   planSpaces({ local: [], remote: [], mirrors: [], deleted: [], ...input })
-
 describe('a machine that is already in step', () => {
   test('has nothing to do', () => {
     const result = plan({
@@ -15,7 +13,6 @@ describe('a machine that is already in step', () => {
       remote: [remote('Work')],
       mirrors: [mirror('Work')],
     })
-
     expect(result).toEqual({
       pair: [],
       upload: [],
@@ -27,79 +24,64 @@ describe('a machine that is already in step', () => {
     })
   })
 })
-
 describe('a space this machine has and the account does not', () => {
   test('goes up', () => {
     const result = plan({ local: [local('Work')] })
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
 })
-
 describe('a space the account has and this machine does not', () => {
   test('comes down - which is what used to be missing entirely', () => {
     const result = plan({ remote: [remote('Ideas')] })
-
     expect(result.adopt.map((one) => one.name)).toEqual(['Ideas'])
     expect(result.upload).toEqual([])
   })
-
   test('is what makes two machines agree', () => {
     const here = plan({
       local: [local('Work')],
       remote: [remote('Work'), remote('Ideas')],
       mirrors: [mirror('Work')],
     })
-
     expect(here.adopt.map((one) => one.name)).toEqual(['Ideas'])
   })
 })
-
 describe('a folder and a space with the same name', () => {
   test('are the same space, not two', () => {
     const result = plan({ local: [local('Work')], remote: [remote('Work')] })
-
     expect(result.pair).toEqual([{ root: '/spaces/Work', spaceId: 'id-Work' }])
     expect(result.upload).toEqual([])
     expect(result.adopt).toEqual([])
   })
-
   test('are never uploaded and adopted at once', () => {
     const result = plan({
       local: [local('Work'), local('Ideas')],
       remote: [remote('Ideas'), remote('Journal')],
     })
-
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
     expect(result.pair.map((one) => one.spaceId)).toEqual(['id-Ideas'])
     expect(result.adopt.map((one) => one.name)).toEqual(['Journal'])
   })
 })
-
 describe('a folder that is gone from this machine', () => {
   test('stops being mirrored', () => {
     const result = plan({ remote: [remote('Work')], mirrors: [mirror('Work')] })
     expect(result.drop).toEqual(['/spaces/Work'])
   })
 })
-
 describe('a space deleted from the account elsewhere', () => {
   test('lets go of the mirror', () => {
     const result = plan({ local: [local('Work')], mirrors: [mirror('Work')] })
     expect(result.detach).toEqual(['/spaces/Work'])
   })
-
   test('is uploaded again on the pass after, rather than stranded here', () => {
     const result = plan({ local: [local('Work')] })
-
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
-
   test('is not removed on a gap alone', () => {
     const result = plan({ local: [local('Work')], mirrors: [mirror('Work')] })
     expect(result.remove).toEqual([])
   })
 })
-
 describe('a space the account says was deleted', () => {
   test('is removed here too, so the deletion wins', () => {
     const result = plan({
@@ -107,22 +89,18 @@ describe('a space the account says was deleted', () => {
       mirrors: [mirror('Work')],
       deleted: ['id-Work'],
     })
-
     expect(result.remove).toEqual(['/spaces/Work'])
     expect(result.upload).toEqual([])
   })
-
   test('is not uploaded again by a machine that was offline', () => {
     const result = plan({
       local: [local('Work')],
       mirrors: [mirror('Work')],
       deleted: ['id-Work'],
     })
-
     expect(result.upload).toEqual([])
     expect(result.detach).toEqual([])
   })
-
   test('frees its name for a new space of the same name, in one pass', () => {
     const result = plan({
       local: [local('Work')],
@@ -130,11 +108,9 @@ describe('a space the account says was deleted', () => {
       mirrors: [mirror('Work', 'id-old')],
       deleted: ['id-old'],
     })
-
     expect(result.remove).toEqual(['/spaces/Work'])
     expect(result.adopt.map((one) => one.id)).toEqual(['id-new'])
   })
-
   test('does not upload the folder it is about to remove', () => {
     const result = plan({
       local: [local('Work')],
@@ -142,11 +118,9 @@ describe('a space the account says was deleted', () => {
       mirrors: [mirror('Work', 'id-old')],
       deleted: ['id-old'],
     })
-
     expect(result.upload).toEqual([])
     expect(result.pair).toEqual([])
   })
-
   test('leaves other spaces untouched while one is removed', () => {
     const result = plan({
       local: [local('Work'), local('Ideas')],
@@ -154,20 +128,16 @@ describe('a space the account says was deleted', () => {
       mirrors: [mirror('Work', 'id-old'), mirror('Ideas')],
       deleted: ['id-old'],
     })
-
     expect(result.remove).toEqual(['/spaces/Work'])
     expect(result.drop).toEqual([])
     expect(result.detach).toEqual([])
   })
-
   test('leaves a folder that was never mirrored alone', () => {
     const result = plan({ local: [local('Work')], deleted: ['id-Work'] })
-
     expect(result.remove).toEqual([])
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
 })
-
 describe('two folders with the same name', () => {
   test('do not both claim the one space', () => {
     const result = plan({
@@ -177,12 +147,10 @@ describe('two folders with the same name', () => {
       ],
       remote: [remote('Work')],
     })
-
     expect(result.pair).toHaveLength(1)
     expect(result.upload).toEqual([])
   })
 })
-
 describe('a space somebody shared', () => {
   const theirs = (name: string, id = `id-${name}`) => ({ id, name, shared: true })
   const shared = (name: string, id = `id-${name}`) => ({
@@ -190,57 +158,46 @@ describe('a space somebody shared', () => {
     spaceId: id,
     shared: true,
   })
-
   test('goes when it stops being listed, because the sharing was taken back', () => {
     const result = plan({ local: [local('Work')], mirrors: [shared('Work')] })
-
     expect(result.remove).toEqual(['/spaces/Work'])
     expect(result.detach).toEqual([])
     expect(result.upload).toEqual([])
   })
-
   test('is still told apart from one of the account’s own that is merely missing', () => {
     const result = plan({ local: [local('Work')], mirrors: [mirror('Work')] })
-
     expect(result.detach).toEqual(['/spaces/Work'])
     expect(result.remove).toEqual([])
   })
-
   test('never takes a folder of the same name that is already here', () => {
     const result = plan({
       local: [local('Work')],
       remote: [theirs('Work')],
     })
-
     expect(result.pair).toEqual([])
     expect(result.adopt.map((one) => one.id)).toEqual(['id-Work'])
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
-
   test('takes the folder this device remembers as its own, instead of sending it up as a copy', () => {
     const result = plan({
       local: [local('Work')],
       remote: [theirs('Work')],
       homes: [{ root: '/spaces/Work', spaceId: 'id-Work' }],
     })
-
     expect(result.pair).toEqual([{ root: '/spaces/Work', spaceId: 'id-Work' }])
     expect(result.upload).toEqual([])
     expect(result.adopt).toEqual([])
   })
-
   test('takes it before a space of the account’s own claims it by name', () => {
     const result = plan({
       local: [local('Work')],
       remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
       homes: [{ root: '/spaces/Work', spaceId: 'id-theirs' }],
     })
-
     expect(result.pair).toEqual([{ root: '/spaces/Work', spaceId: 'id-theirs' }])
     expect(result.adopt.map((one) => one.id)).toEqual(['id-mine'])
     expect(result.upload).toEqual([])
   })
-
   test('leaves a remembered folder alone once that space is gone from the account', () => {
     const result = plan({
       local: [local('Work')],
@@ -248,23 +205,19 @@ describe('a space somebody shared', () => {
       homes: [{ root: '/spaces/Work', spaceId: 'id-Work' }],
       deleted: ['id-Work'],
     })
-
     expect(result.pair).toEqual([])
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
-
   test('is adopted beside the account’s own space of the same name', () => {
     const result = plan({
       local: [local('Work')],
       remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
       mirrors: [mirror('Work', 'id-mine')],
     })
-
     expect(result.adopt.map((one) => one.id)).toEqual(['id-theirs'])
     expect(result.upload).toEqual([])
     expect(result.detach).toEqual([])
   })
-
   test('is adopted only once, however many passes go by', () => {
     const first = plan({
       local: [local('Work')],
@@ -272,13 +225,11 @@ describe('a space somebody shared', () => {
       mirrors: [mirror('Work', 'id-mine')],
     })
     expect(first.adopt).toHaveLength(1)
-
     const again = plan({
       local: [local('Work'), { name: 'Work 2', root: '/spaces/Work 2' }],
       remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
       mirrors: [mirror('Work', 'id-mine'), { root: '/spaces/Work 2', spaceId: 'id-theirs', shared: true }],
     })
-
     expect(again).toEqual({
       pair: [],
       upload: [],
@@ -290,10 +241,8 @@ describe('a space somebody shared', () => {
     })
   })
 })
-
 describe('the untouched default space', () => {
   const NOTES = '/spaces/Notes'
-
   test('goes where the account has spaces of its own, and theirs take its place', () => {
     const result = plan({
       local: [local('Notes')],
@@ -305,7 +254,6 @@ describe('the untouched default space', () => {
     expect(result.pair).toEqual([])
     expect(result.adopt.map((one) => one.name)).toEqual(['Work', 'Ideas'])
   })
-
   test('gives way to the account’s own Notes on a second device, with no Notes 2', () => {
     const result = plan({
       local: [local('Notes')],
@@ -316,13 +264,11 @@ describe('the untouched default space', () => {
     expect(result.pair).toEqual([])
     expect(result.adopt.map((one) => one.name)).toEqual(['Notes'])
   })
-
   test('becomes the first space of an empty account', () => {
     const result = plan({ local: [local('Notes')], remote: [], untouched: NOTES })
     expect(result.discard).toEqual([])
     expect(result.upload.map((one) => one.root)).toEqual([NOTES])
   })
-
   test('and of one that holds only spaces somebody shared with it', () => {
     const result = plan({
       local: [local('Notes')],
@@ -332,7 +278,6 @@ describe('the untouched default space', () => {
     expect(result.discard).toEqual([])
     expect(result.upload.map((one) => one.root)).toEqual([NOTES])
   })
-
   test('is the account’s once a pass has paired it, and stays', () => {
     const result = plan({
       local: [local('Notes')],
@@ -342,26 +287,21 @@ describe('the untouched default space', () => {
     })
     expect(result.discard).toEqual([])
   })
-
   test('touched, travels as any space: into the account’s Notes, or as one of its own', () => {
     const into = plan({ local: [local('Notes')], remote: [remote('Notes'), remote('Work')] })
     expect(into.discard).toEqual([])
     expect(into.pair).toEqual([{ root: NOTES, spaceId: 'id-Notes' }])
     expect(into.adopt.map((one) => one.name)).toEqual(['Work'])
-
     const apart = plan({ local: [local('Notes')], remote: [remote('Work')] })
     expect(apart.discard).toEqual([])
     expect(apart.upload.map((one) => one.root)).toEqual([NOTES])
   })
 })
-
 describe('a space kept under another spelling of the same folder', () => {
   const here = { name: 'Work', root: 'C:\\Users\\Ada\\Orden\\Work' }
   const kept = { root: 'C:/Users/Ada/Orden/Work', spaceId: 'id-Work' }
-
   test('is the same space, so nothing is dropped and paired again', () => {
     const result = plan({ local: [here], remote: [remote('Work')], mirrors: [kept] })
-
     expect(result).toEqual({
       pair: [],
       upload: [],
@@ -372,7 +312,6 @@ describe('a space kept under another spelling of the same folder', () => {
       discard: [],
     })
   })
-
   test('and is removed by the spelling this machine shows it under', () => {
     const result = plan({
       local: [here],
@@ -380,7 +319,6 @@ describe('a space kept under another spelling of the same folder', () => {
       mirrors: [{ ...kept, shared: true }],
       deleted: ['id-Work'],
     })
-
     expect(result.remove).toEqual([here.root])
     expect(result.drop).toEqual([])
   })

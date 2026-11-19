@@ -10,18 +10,15 @@ describe('the colour a highlight names', () => {
     expect(readHighlight('🔴 careful')).toEqual({ colour: HIGHLIGHT_COLOURS[1], from: 3 })
     expect(readHighlight('🟣 careful').colour.tone).toBe(6)
   })
-
   test('is read without the space as well, since a file may hold either; is nothing for a highlight that never named one', () => {
     expect(readHighlight('🟢careful')).toEqual({ colour: HIGHLIGHT_COLOURS[3], from: 2 })
     expect(readHighlight('careful')).toEqual({ colour: HIGHLIGHT_COLOURS[0], from: 0 })
   })
-
   test('leaves an emoji that is the whole highlight as the words; is written back the way Obsidian writes it', () => {
     expect(readHighlight('🔴')).toEqual({ colour: HIGHLIGHT_COLOURS[0], from: 0 })
     expect(writeHighlight('careful', highlightTone(1))).toBe('🔴 careful')
     expect(writeHighlight('careful', highlightTone(null))).toBe('careful')
   })
-
   test('comes back from a remembered tone, and a tone nothing names is the plain one; skips the yellow tone, which has no emoji to write it with', () => {
     expect(highlightTone(2).emoji).toBe('🟠')
     expect(highlightTone(3).emoji).toBeNull()
@@ -29,7 +26,6 @@ describe('the colour a highlight names', () => {
     expect(HIGHLIGHT_COLOURS.map((one) => one.tone)).toEqual([null, 1, 2, 4, 5, 6])
   })
 })
-
 describe('a coloured highlight rendered', () => {
   test('wears the tone as a class, and the emoji reaches the page as nothing; leaves a highlight with no colour exactly as it always was; still renders what is inside it', () => {
     const html = renderMarkdown('a ==🔴 careful== b')
@@ -38,14 +34,12 @@ describe('a coloured highlight rendered', () => {
     expect(renderMarkdown('a ==marked== b')).toContain('<mark>marked</mark>')
     expect(renderMarkdown('==🔵 **bold** here==')).toContain('<mark class="tone-5"><strong>bold</strong> here</mark>')
   })
-
   test('is escaped like anything else when publishing', () => {
     const html = renderMarkdown('==🟠 <img src=x onerror=alert(1)>==', { escapeHtml: true })
     expect(html).toContain('class="tone-2"')
     expect(html).not.toContain('<img')
   })
 })
-
 describe('whether a single newline breaks the line', () => {
   test('is CommonMark until somebody says otherwise; is the renderer’s own answer, so every caller gets it without asking', () => {
     expect(renderMarkdown('one\ntwo\n')).not.toContain('<br>')
@@ -56,7 +50,6 @@ describe('whether a single newline breaks the line', () => {
       setHardBreaks(false)
     }
   })
-
   test('is overruled by a caller that says outright', () => {
     expect(renderMarkdown('one\ntwo\n', { breaks: true })).toContain('<br>')
     setHardBreaks(true)
@@ -66,7 +59,6 @@ describe('whether a single newline breaks the line', () => {
       setHardBreaks(false)
     }
   })
-
   test('leaves a blank line a paragraph either way', () => {
     setHardBreaks(true)
     try {
@@ -78,10 +70,8 @@ describe('whether a single newline breaks the line', () => {
     }
   })
 })
-
 describe('a paragraph of highlights that never close', () => {
   const tokenizer = (highlight.extensions?.[0] as { tokenizer: (src: string, tokens: []) => unknown }).tokenizer
-
   test('is read in linear time', () => {
     const tokens: [] = []
     const lexer = { lexer: { inlineTokens: () => [] } }
@@ -95,7 +85,6 @@ describe('a paragraph of highlights that never close', () => {
     expect(growth(read, 12_500)).toBeLessThan(GROWS_AT_MOST)
     expect(found).toBe(0)
   }, 60_000)
-
   test('closes where the pattern closed, on the first `==` after something', () => {
     expect(renderMarkdown('==a == b== and ==c==')).toBe('<p><mark>a == b</mark> and <mark>c</mark></p>\n')
     expect(renderMarkdown('== a== ==b ==')).toBe('<p>== a== ==b ==</p>\n')

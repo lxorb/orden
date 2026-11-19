@@ -15,14 +15,12 @@ function stateOf(doc: string, from = 0, to = from): EditorState {
     }),
   )
 }
-
 function pressed(command: ReturnType<typeof toggleWrap>, doc: string, picked: string): string {
   const from = doc.indexOf(picked)
   let state = stateOf(doc, from, from + picked.length)
   command({ state, dispatch: (one: Transaction) => (state = one.state) })
   return state.doc.toString()
 }
-
 function strong(doc: string): string[] {
   const state = stateOf(doc)
   const found: string[] = []
@@ -33,18 +31,15 @@ function strong(doc: string): string[] {
   })
   return found
 }
-
 describe('taking a mark off a word picked inside a run when punctuation follows the word', () => {
   test('bold over a word followed by a comma keeps the other words bold', () => {
     const done = pressed(toggleWrap('**'), '**apples, pears, plums**', 'pears')
     expect(done).toBe('**apples,** pears, **plums**')
   })
-
   test('the rest of the run is still bold after taking bold off a word before a full stop', () => {
     const done = pressed(toggleWrap('**'), '**One two. Three four**', 'two')
     expect(strong(done)).toEqual(['**One**', '**Three four**'])
   })
-
   test('italic over a word followed by a comma keeps the other words italic', () => {
     expect(pressed(toggleWrap('*'), '*one, two, three*', 'two')).toBe('*one,* two, *three*')
   })

@@ -11,7 +11,6 @@
 
   $effect(() => (spacePicker.open ? overlays.show(() => spacePicker.dismiss()) : undefined))
   $effect(() => closeOnBack(spacePicker.open, () => spacePicker.dismiss()))
-
   const typing = $derived(spacePicker.open ? new SpaceTyping((space) => spacePicker.choose(space)) : null)
   $effect(() => {
     const one = typing

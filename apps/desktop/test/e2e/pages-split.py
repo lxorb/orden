@@ -1,12 +1,9 @@
 import base64
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -26,7 +23,6 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 def paper(count: int) -> bytes:
     w, h = 595, 842
     objects: dict[int, bytes] = {3: b"<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>"}
@@ -51,8 +47,6 @@ def paper(count: int) -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
-
-
 STATE = """
 () => ({
   active: window.ordenApp.workspace.active?.kind ?? null,
@@ -61,8 +55,6 @@ STATE = """
   counter: document.querySelector('footer .page')?.textContent?.trim() ?? null,
 })
 """
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1400, "height": 820})
     page = context.new_page()
@@ -79,7 +71,6 @@ def drive(browser: Browser) -> None:
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", f"{root}/Six.pdf")
     wait_for(page, "window.ordenApp.pages.current?.store.count === 6", "the page note")
     page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
-
     page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('.pages').length === 2", "the page note in two panes")
     page.evaluate("(path) => window.ordenApp.workspace.openEntry(path, { activate: true })", f"{root}/Heads.md")
@@ -89,7 +80,6 @@ def drive(browser: Browser) -> None:
         wrong(f"[note] beside a page note, the note in front does not fill the Outline and the bar: {state}")
     else:
         say(f"ok   [note] the note in front fills the Outline and the bar: {state}")
-
     page.locator(".pages").first.click(position={"x": 200, "y": 300})
     if DRIVE.waited(page, f"(() => {{ const seen = ({STATE})(); return seen.navigator && seen.counter === '1 / 6' }})()", "the page note left in front to fill the Outline and the bar", patience=10):
         say(f"ok   [pages] the page note left in front fills them again: {page.evaluate(STATE)}")
@@ -97,6 +87,4 @@ def drive(browser: Browser) -> None:
         say(f"  it shows {page.evaluate(STATE)}")
         shot(page, "lost")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "the Outline and the bar follow the tab in front, beside a page note"))

@@ -1,14 +1,12 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const heads = vi.hoisted(() => new Map<string, unknown[]>())
-
 vi.mock('../../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
   invoke: (command: string, args: Record<string, unknown>) =>
     Promise.resolve(command === 'ai_threads_list' ? (heads.get(String(args.space)) ?? []) : null),
 }))
-
 const head = (id: string, more: object) => ({
   id,
   title: id,
@@ -18,12 +16,10 @@ const head = (id: string, more: object) => ({
   words: '',
   ...more,
 })
-
 beforeEach(() => {
   heads.clear()
   vi.resetModules()
 })
-
 test('after a restart, a chat answered since it was seen puts the dot up, panel unopened', async () => {
   heads.set('work', [head('read', { answered: 1, seen: 2 })])
   heads.set('home', [head('parent', { answered: 1, seen: 2 }), head('helper', { parent: 'parent', answered: 3 })])
@@ -31,14 +27,12 @@ test('after a restart, a chat answered since it was seen puts the dot up, panel 
   await lookAtLaunch(['work', 'home'])
   expect(chatsUnread.any).toBe(true)
 })
-
 test('and nothing unread leaves it down', async () => {
   heads.set('work', [head('read', { answered: 1, seen: 2 }), head('quiet', {})])
   const { chatsUnread, lookAtLaunch } = await import('./unread.svelte')
   await lookAtLaunch(['work'])
   expect(chatsUnread.any).toBe(false)
 })
-
 test('once the panel keeps the dot, the launch’s look leaves it alone', async () => {
   heads.set('work', [head('new', { answered: 3 })])
   const { chatsUnread, lookAtLaunch, panelKeepsUnread } = await import('./unread.svelte')
@@ -46,7 +40,6 @@ test('once the panel keeps the dot, the launch’s look leaves it alone', async 
   await lookAtLaunch(['work'])
   expect(chatsUnread.any).toBe(false)
 })
-
 test('an archived chat answered since it was seen leaves it down (#2050)', async () => {
   heads.set('work', [head('shelved', { answered: 3, seen: 1, archived: true })])
   const { chatsUnread, lookAtLaunch } = await import('./unread.svelte')

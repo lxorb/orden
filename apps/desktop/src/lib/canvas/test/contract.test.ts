@@ -6,14 +6,12 @@ import { RightPan } from '../src/right-pan'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 test('the module stands on its own opens the canvas itself only through its door', () => {
   const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
   const loaded = [...api.matchAll(/from '([^']+)'/g)].map((one) => one[1])
   expect(loaded).not.toContain('./Canvas.svelte')
   expect(api).toMatch(/export const loadCanvas = \(\) =>[^;]*import\('\.\/Canvas\.svelte'\)/)
 })
-
 const plane = {
   nodes: [
     {
@@ -32,7 +30,6 @@ const plane = {
   at: {},
   gone: {},
 }
-
 describe('finding words on a plane', () => {
   test('meets cards and arrow labels in any case, with their words on one line', () => {
     expect(matches(plane, 'OPTICS')).toEqual([
@@ -41,12 +38,10 @@ describe('finding words on a plane', () => {
       { id: 'e', says: 'reads Optics' },
     ])
   })
-
   test('finds nothing for nothing', () => {
     expect(matches(plane, '   ')).toEqual([])
   })
 })
-
 describe('a right-button drag', () => {
   const at = (x: number, extra: Partial<Parameters<RightPan['down']>[0]> = {}) => ({
     pointerId: 1,
@@ -58,7 +53,6 @@ describe('a right-button drag', () => {
     timeStamp: 0,
     ...extra,
   })
-
   test('pans once it is past the slop and leaves the menu to a click', () => {
     const pan = new RightPan()
     expect(pan.down(at(0))).toBe(true)
@@ -66,7 +60,6 @@ describe('a right-button drag', () => {
     expect(pan.move(at(30))).toEqual({ dx: 30, dy: 0 })
     expect(pan.up(at(30, { buttons: 0 }))).toBe('panned')
   })
-
   test('takes no other button', () => {
     expect(new RightPan().down(at(0, { button: 0 }))).toBe(false)
   })

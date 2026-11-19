@@ -4,21 +4,17 @@ vi.mock('../../../ai-providers/src/keys', async (original) => ({
   ...(await original<typeof import('../../../ai-providers/src/keys')>()),
   readKey: () => Promise.resolve('sk-test'),
 }))
-
 const page = new EventTarget()
 vi.stubGlobal('addEventListener', page.addEventListener.bind(page))
-
 const { createApiEngine, engineFor, MOST_ROUNDS, registerLocalEngine } = await import('./engine')
 const { forgetLearnt, learnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { body, events } = await import('./recorded/read')
 const { watching } = await import('./sends')
 const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./approvals')
-
 import type { Provider } from '../../../ai-providers/src/providers'
 import type { EngineEvent, Mode, Thread, ToolOutput } from '../../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
-
 const PROVIDERS: Record<string, Provider> = {
   anthropic: { id: 'anthropic', kind: 'anthropic', name: 'Claude', model: '' },
   openai: { id: 'openai', kind: 'openai', name: 'OpenAI', model: '' },
@@ -30,7 +26,6 @@ const PROVIDERS: Record<string, Provider> = {
     baseUrl: 'http://localhost:11434',
   },
 }
-
 interface Sent {
   url: string
   body: Record<string, unknown>
@@ -39,7 +34,6 @@ interface Sent {
 let sent: Sent[] = []
 let answers: (() => Response)[] = []
 let always: (() => Response) | null = null
-
 const stream = (name: string) => () => new Response(body(name), { status: 200 })
 const json = (status: number, said: unknown) => () =>
   new Response(JSON.stringify(said), { status, headers: { 'content-type': 'application/json' } })
@@ -47,7 +41,6 @@ const lines =
   (...events: unknown[]) =>
   () =>
     new Response(events.map((one) => `data: ${JSON.stringify(one)}\n\n`).join('') + 'data: [DONE]\n\n')
-
 const MODELS: Record<string, unknown> = {
   'https://api.anthropic.com/v1/models': {
     data: [
@@ -67,7 +60,6 @@ const MODELS: Record<string, unknown> = {
   'https://api.openai.com/v1/models': { data: [{ id: 'gpt-5.4-mini' }] },
   'http://localhost:11434/v1/models': { data: [{ id: 'llama', context_length: 8_192 }] },
 }
-
 vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
   const listed = MODELS[url.split('?')[0] ?? '']
   if (listed) return Promise.resolve(json(200, listed)())
@@ -81,7 +73,6 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
   if (!next) throw new Error(`nothing to answer ${url}`)
   return Promise.resolve(next())
 })
-
 const calls: { name: string; args: unknown; mode: Mode }[] = []
 let onCall: () => unknown = () => undefined
 let where = ''
@@ -109,18 +100,15 @@ const tools: Tools = {
     return { text: 'Herons stand still for a long time.', images: [], error: false }
   },
 }
-
 const engine = createApiEngine({
   provider: (id) => Object.values(PROVIDERS).find((one) => one.id === id) ?? null,
   tools,
 })
-
 async function send(thread: Thread, text: string, controller = new AbortController()) {
   const heard: EngineEvent[] = []
   await engine.send(thread, { text, attachments: [] }, (event) => heard.push(event), controller.signal)
   return heard
 }
-
 beforeEach(() => {
   sent = []
   answers = []
@@ -130,13 +118,11 @@ beforeEach(() => {
   where = ''
   forgetLearnt()
 })
-
 describe('a call made and answered', () => {
   test('is one model turn of thinking, words, the call with its answer, and the answer’s words', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     const heard = await send(thread, 'What is in Birds.md?')
-
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
     expect(calls).toEqual([{ name: 'read_note', args: { path: 'Birds.md' }, mode: 'full' }])
     const [you, model] = thread.turns
@@ -155,12 +141,10 @@ describe('a call made and answered', () => {
     })
     expect(thread.spent).toEqual({ input: 3_060 + 3_240, output: 89 + 12 })
   })
-
   test('the second request carries the first’s blocks as they came, and the call’s answer', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     await send(thread, 'What is in Birds.md?')
-
     const second = sent[1]?.body as {
       messages: { role: string; content: unknown }[]
       system: string
@@ -181,19 +165,16 @@ describe('a call made and answered', () => {
       },
     ])
   })
-
   test('the next message sends the whole turn back as the provider’s own record', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     await send(thread, 'What is in Birds.md?')
     expect(thread.turns[1]?.replay?.messages).toHaveLength(3)
     await send(thread, 'Thanks.')
-
     const third = sent[2]?.body as { messages: { role: string }[] }
     expect(third.messages.map((one) => one.role)).toEqual(['user', 'assistant', 'user', 'assistant', 'user'])
     expect(JSON.stringify(third.messages)).toContain('EqQBCgIYAhIM')
   })
-
   test('another model is told by a notice, and gets the turns rebuilt', async () => {
     answers = [stream('anthropic-2'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
@@ -208,14 +189,12 @@ describe('a call made and answered', () => {
     expect(sent[1]?.body.model).toBe('claude-sonnet-5')
   })
 })
-
 describe('a tool the thread is not given', () => {
   test('is not listed, and a call to it never reaches the crate', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     thread.without = ['read_note']
     await send(thread, 'What is in Birds.md?')
-
     const listed = (sent[0]?.body.tools ?? []) as { name: string }[]
     expect(listed.map((one) => one.name)).not.toContain('read_note')
     expect(calls).toEqual([])
@@ -225,7 +204,6 @@ describe('a tool the thread is not given', () => {
     })
   })
 })
-
 function askingOf(answer: (id: string) => boolean | null, category = 'writing') {
   const given: { id: string; allow: boolean }[] = []
   const waited: string[] = []
@@ -265,10 +243,8 @@ function askingOf(answer: (id: string) => boolean | null, category = 'writing') 
   })
   return { engine, given, waited }
 }
-
 describe('a call that asks the reader first', () => {
   const asking = askingOf
-
   async function sent(engine: ReturnType<typeof asking>['engine'], thread: Thread) {
     const heard: EngineEvent[] = []
     await engine.send(
@@ -279,13 +255,11 @@ describe('a call that asks the reader first', () => {
     )
     return heard
   }
-
   test('waits in its row for Approve, then goes through', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
     const { engine, waited } = asking(() => true)
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     const heard = await sent(engine, thread)
-
     expect(waited).toEqual(['q1'])
     const states = heard.flatMap((one) => (one.type === 'part' && one.part.kind === 'tool' ? [one.part.state] : []))
     expect(states).toContain('asking')
@@ -295,33 +269,28 @@ describe('a call that asks the reader first', () => {
     })
     expect(calls).toEqual([{ name: 'read_note', args: { path: 'Birds.md' }, mode: 'approve' }])
   })
-
   test('denied, the model is told no and the call never runs', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
     const { engine } = asking(() => false)
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     await sent(engine, thread)
-
     expect(calls).toEqual([])
     expect(thread.turns[1]?.parts[2]).toMatchObject({
       state: 'error',
       result: { text: 'The reader said no.' },
     })
   })
-
   test('a tool said Always to in the thread is approved without waiting', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
     const { engine, given, waited } = asking(() => null)
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     sayAlways(thread, 'read_note')
     await sent(engine, thread)
-
     expect(waited).toEqual([])
     expect(given).toEqual([{ id: 'q1', allow: true }])
     expect(thread.turns[1]?.parts[2]).toMatchObject({ state: 'ok' })
   })
 })
-
 describe('Always in a thread', () => {
   test.each(['paying', 'sending', 'deleting', 'signing_in', 'terminal', 'publishing', 'files'])(
     'never answers a question about %s',
@@ -336,27 +305,23 @@ describe('Always in a thread', () => {
         () => undefined,
         new AbortController().signal,
       )
-
       expect(waited).toEqual(['q1'])
       expect(given).toEqual([{ id: 'q1', allow: false }])
       expect(calls).toEqual([])
     },
   )
-
   test('nor a question that says nothing of what it is about', () => {
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     sayAlways(thread, 'read_note')
     expect(alwaysCovers(thread, 'read_note', undefined)).toBe(false)
     expect(alwaysCovers(thread, 'read_note', 'writing')).toBe(true)
   })
-
   test.each(['trashing', 'unread'])('nor one about %s', (category) => {
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     sayAlways(thread, 'trash_file')
     expect(alwaysCovers(thread, 'trash_file', category)).toBe(false)
     expect(alwaysOffered(category)).toBe(false)
   })
-
   test('said on one site, it is about that site', () => {
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     sayAlways(thread, 'browser_click', 'shop.example')
@@ -370,7 +335,6 @@ describe('Always in a thread', () => {
     expect(alwaysOffered('writing')).toBe(true)
   })
 })
-
 describe('where the reader is', () => {
   test('goes with every message, as Orden’s own verbs said it, and stays with it', async () => {
     answers = [stream('anthropic-2'), stream('anthropic-2')]
@@ -379,7 +343,6 @@ describe('where the reader is', () => {
     await send(thread, 'What is this note about?')
     where = 'Space: Birds. In front: Egrets.md.'
     await send(thread, 'And this one?')
-
     expect(thread.turns.filter((one) => one.role === 'you').map((one) => one.context)).toEqual([
       'Space: Birds. In front: Herons.md. Open: Herons.md, Egrets.md.',
       'Space: Birds. In front: Egrets.md.',
@@ -391,7 +354,6 @@ describe('where the reader is', () => {
       '<reader-context>\nSpace: Birds. In front: Egrets.md.\n</reader-context>\n\nAnd this one?',
     ])
   })
-
   test('is asked for the thread, so it names the space the thread works in', async () => {
     answers = [stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
@@ -400,7 +362,6 @@ describe('where the reader is', () => {
     expect(contextFor).toEqual([thread.id])
   })
 })
-
 describe('tools a model refuses', () => {
   test('leave their notice in the turn, above the answer that came without them', async () => {
     answers = [
@@ -408,16 +369,13 @@ describe('tools a model refuses', () => {
       lines({ choices: [{ delta: { content: 'Herons wade.' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }] }),
     ]
     const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'full')
-
     await send(thread, 'Tell me about herons')
-
     expect(learnt('compatible-1', 'llama').tools).toBe(false)
     const parts = thread.turns.at(-1)?.parts ?? []
     expect(parts.map((part) => part.kind)).toEqual(['notice', 'text'])
     expect(parts[0]).toMatchObject({ code: 'no_tools' })
   })
 })
-
 describe('an effort the model refuses', () => {
   test('is stepped to the nearest it takes, remembered, and the request made again', async () => {
     answers = [
@@ -434,13 +392,11 @@ describe('an effort the model refuses', () => {
     ]
     const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'max', 'approve')
     const heard = await send(thread, 'hi')
-
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
     expect(sent.map((one) => (one.body.reasoning as { effort?: string }).effort)).toEqual(['max', 'xhigh'])
     expect(thread.effort).toBe('xhigh')
     expect(learnt('openai', 'gpt-5.4-mini').refused).toEqual(['minimal', 'max'])
   })
-
   test('a model that takes none is sent no reasoning again', async () => {
     answers = [
       json(400, {
@@ -459,7 +415,6 @@ describe('an effort the model refuses', () => {
     expect(learnt('openai', 'gpt-5.4-mini').reasons).toBe(false)
   })
 })
-
 describe('an effort changed mid-thread that Claude takes only once per request', () => {
   test('is asked again with no message of its own, and no effort is learnt as refused', async () => {
     answers = [
@@ -477,7 +432,6 @@ describe('an effort changed mid-thread that Claude takes only once per request',
     await send(thread, 'one')
     thread.effort = 'low'
     const heard = await send(thread, 'two')
-
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
     const again = sent[2]?.body as { messages: { role: string }[] }
     expect(again.messages.map((one) => one.role)).toEqual(['user', 'assistant', 'user'])
@@ -487,14 +441,12 @@ describe('an effort changed mid-thread that Claude takes only once per request',
     expect(thread.effort).toBe('low')
   })
 })
-
 describe('words steered into a running turn', () => {
   test('land after the call in flight as a message of their own', async () => {
     answers = [stream('anthropic-1'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     onCall = () => engine.steer(thread, 'and tag them #birds')
     await send(thread, 'What is in Birds.md?')
-
     expect(thread.turns.map((one) => `${one.role}${one.steered ? '*' : ''}`)).toEqual(['you', 'model', 'you*', 'model'])
     expect(thread.turns[1]?.replay?.messages).toHaveLength(2)
     const second = sent[1]?.body as { messages: { role: string; content: unknown }[] }
@@ -504,7 +456,6 @@ describe('words steered into a running turn', () => {
     })
   })
 })
-
 describe('a send that ends early', () => {
   test('a stop keeps what arrived, and nothing of the turn is sent back as the provider’s', async () => {
     answers = [stream('anthropic-1')]
@@ -512,13 +463,11 @@ describe('a send that ends early', () => {
     onCall = () => controller.abort()
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     const heard = await send(thread, 'What is in Birds.md?', controller)
-
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'stopped' })
     const model = thread.turns[1]
     expect(model?.replay).toBeUndefined()
     expect(model?.parts.map((one) => one.kind)).toEqual(['thinking', 'text', 'tool', 'notice'])
   })
-
   test('a call cut off by the token limit is not left running', async () => {
     const cut = events('anthropic-1').map((one) =>
       (one as { type: string }).type === 'message_delta'
@@ -532,14 +481,12 @@ describe('a send that ends early', () => {
     answers = [lines(...cut)]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     const heard = await send(thread, 'What is in Birds.md?')
-
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'max_tokens' })
     expect(calls).toEqual([])
     const parts = thread.turns[1]?.parts ?? []
     expect(parts.find((one) => one.kind === 'tool')).toMatchObject({ state: 'error' })
     expect(parts.at(-1)).toMatchObject({ kind: 'notice', code: 'max_tokens' })
   })
-
   test('a refusal is the provider’s words, in the thread and on the event', async () => {
     answers = [
       json(401, {
@@ -556,7 +503,6 @@ describe('a send that ends early', () => {
       text: 'invalid x-api-key',
     })
   })
-
   test('a model that never stops calling tools is stopped at the limit, and says so', async () => {
     always = stream('anthropic-1')
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
@@ -570,7 +516,6 @@ describe('a send that ends early', () => {
     })
   })
 })
-
 describe('compaction', () => {
   test('Claude’s own: one signed block, first in every request after it', async () => {
     answers = [
@@ -589,7 +534,6 @@ describe('compaction', () => {
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     await send(thread, 'one')
     await engine.compact(thread, 'the herons')
-
     expect(sent[1]?.body).toMatchObject({ stream: false, compaction: { type: 'summarize' } })
     expect(sent[1]?.headers['anthropic-beta']).toContain('compact-2026-09-04')
     expect(thread.compaction).toMatchObject({
@@ -597,7 +541,6 @@ describe('compaction', () => {
       summary: 'They asked about herons.',
     })
     expect(thread.turns.at(-1)?.parts).toEqual([{ kind: 'notice', code: 'compacted', text: '' }])
-
     await send(thread, 'two')
     const after = sent[2]?.body as { messages: { role: string; content: unknown }[] }
     expect(after.messages[0]).toEqual({
@@ -607,7 +550,6 @@ describe('compaction', () => {
     expect(after.messages).toHaveLength(2)
     expect(sent[2]?.headers['anthropic-beta']).toContain('compact-2026-09-04')
   })
-
   test('Orden’s own summary over calls made still lists the tools, as Claude asks', async () => {
     answers = [
       stream('anthropic-1'),
@@ -618,7 +560,6 @@ describe('compaction', () => {
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     await send(thread, 'What is in Birds.md?')
     await engine.compact(thread)
-
     const asked = sent[3]?.body as { messages: unknown[]; tools?: { name: string }[] }
     expect(JSON.stringify(asked.messages)).toContain('tool_use')
     expect(asked.tools?.map((one) => one.name)).toContain('read_note')
@@ -627,7 +568,6 @@ describe('compaction', () => {
       summary: 'Herons stand still, then they do not.',
     })
   })
-
   test('Orden’s own summary where the provider has none, and on its own near the top', async () => {
     const said = (words: string) =>
       lines(
@@ -641,7 +581,6 @@ describe('compaction', () => {
     const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
     await send(thread, 'one')
     expect(thread.usage).toMatchObject({ input: 7_000, window: 8_192 })
-
     await send(thread, 'two')
     expect(thread.compaction).toMatchObject({ kind: 'summary', summary: 'A summary of it.' })
     const asked = sent[2]?.body as { messages: { role: string; content: unknown }[] }
@@ -650,7 +589,6 @@ describe('compaction', () => {
     expect(asked.messages[2]?.content).toBe('two')
   })
 })
-
 describe('the registry', () => {
   test('one API engine a setup, so words steered reach the send they were meant for', async () => {
     const setup = { provider: () => null }
@@ -658,7 +596,6 @@ describe('the registry', () => {
     expect(await engineFor('compatible', setup)).toBe(first)
     expect(await engineFor('openai', { provider: () => null })).not.toBe(first)
   })
-
   test('a program’s engine is its own, built for the setup it is asked with', async () => {
     const setup = { provider: () => null }
     const asked: unknown[] = []
@@ -671,28 +608,23 @@ describe('the registry', () => {
     expect(asked).toEqual([setup])
   })
 })
-
 describe('a stream that stops before it says it is done', () => {
   const cut =
     (...events: unknown[]) =>
     () =>
       new Response(events.map((one) => `data: ${JSON.stringify(one)}\n\n`).join(''))
   const words = (content: string) => ({ choices: [{ delta: { content } }] })
-
   const thread = () => newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
-
   test('is an error, with the words that arrived kept', async () => {
     answers = [cut(words('Hello '), words('world'))]
     const one = thread()
     const heard = await send(one, 'Say it')
-
     expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
     expect(one.turns.at(-1)?.parts).toEqual([
       { kind: 'text', text: 'Hello world' },
       { kind: 'notice', code: 'error', text: expect.stringContaining('connection') as string },
     ])
   })
-
   test('is stopped, not an error, where the page is leaving and Safari fails the load', async () => {
     const said = new TextEncoder().encode(`data: ${JSON.stringify(words('Kept '))}\n\n`)
     let pulled = 0
@@ -714,24 +646,20 @@ describe('a stream that stops before it says it is done', () => {
     const one = thread()
     const heard = await send(one, 'Say it')
     page.dispatchEvent(new Event('pageshow'))
-
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'stopped' })
     expect(one.turns.at(-1)?.parts).toEqual([
       { kind: 'text', text: 'Kept ' },
       { kind: 'notice', code: 'stopped', text: '' },
     ])
   })
-
   test('is a whole answer where a finish was said, with or without `[DONE]`', async () => {
     answers = [cut(words('Hello'), { choices: [{ delta: {}, finish_reason: 'stop' }] })]
     expect((await send(thread(), 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
   })
-
   test('is a whole answer where only `[DONE]` was said, which some servers keep to', async () => {
     answers = [lines(words('Hello'))]
     expect((await send(thread(), 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
   })
-
   test('is whole where an end marker of the wire’s own was said, or `[DONE]`', async () => {
     const started = [
       { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
@@ -740,7 +668,6 @@ describe('a stream that stops before it says it is done', () => {
     answers = [cut(...started, { type: 'message_stop' })]
     const claude = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     expect((await send(claude, 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
-
     const words = { type: 'response.output_text.delta', output_index: 0, delta: 'Hello' }
     for (const said of [lines(words), cut(words, { type: 'response.done', response: {} })]) {
       answers = [said]
@@ -748,7 +675,6 @@ describe('a stream that stops before it says it is done', () => {
       expect((await send(gpt, 'Say it')).at(-1)).toEqual({ type: 'done', stop: 'end' })
     }
   })
-
   test('runs no call it only heard half of', async () => {
     answers = [
       cut({
@@ -756,11 +682,9 @@ describe('a stream that stops before it says it is done', () => {
       }),
     ]
     const heard = await send(thread(), 'Read it')
-
     expect(calls).toEqual([])
     expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
   })
-
   test('of the other two wires is told the same', async () => {
     answers = [
       cut(
@@ -771,25 +695,21 @@ describe('a stream that stops before it says it is done', () => {
     const claude = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
     expect((await send(claude, 'Say it')).at(-1)).toMatchObject({ type: 'done', stop: 'error' })
     expect(claude.turns.at(-1)?.parts[0]).toEqual({ kind: 'text', text: 'Hello' })
-
     answers = [cut({ type: 'response.output_text.delta', output_index: 0, delta: 'Hello' })]
     const gpt = newThread('space', 'openai', 'gpt-5.4-mini', 'auto', 'full')
     expect((await send(gpt, 'Say it')).at(-1)).toMatchObject({ type: 'done', stop: 'error' })
   })
 })
-
 describe('an answer of nothing at all', () => {
   test('says so rather than leaving the message with nothing under it', async () => {
     answers = [lines({ choices: [{ delta: {}, finish_reason: 'stop' }] })]
     const one = newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
     const heard = await send(one, 'Say it')
-
     expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
     expect(one.turns.at(-1)?.parts).toEqual([
       { kind: 'notice', code: 'error', text: expect.stringContaining('did not answer') as string },
     ])
   })
-
   test('is fine after a call, which may be all there was to do', async () => {
     answers = [
       stream('anthropic-1'),
@@ -802,7 +722,6 @@ describe('an answer of nothing at all', () => {
     expect((await send(one, 'What is in Birds.md?')).at(-1)).toEqual({ type: 'done', stop: 'end' })
   })
 })
-
 describe('an account the vault moved to a fresh id', () => {
   test('is the same model to the thread, so no notice says it changed', async () => {
     const { keepMoves } = await import('../../../ai-providers/src/api')
@@ -810,11 +729,9 @@ describe('an account the vault moved to a fresh id', () => {
     answers = [stream('anthropic-2'), stream('anthropic-2')]
     const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
     await send(thread, 'one')
-
     keepMoves({ anthropic: 'anthropic-9' }, (thread.turns.at(-1)?.at ?? 0) + 1)
     thread.provider = 'anthropic-9'
     await send(thread, 'two')
-
     delete PROVIDERS.moved
     expect(thread.turns[3]?.parts.map((part) => part.kind)).not.toContain('notice')
   })

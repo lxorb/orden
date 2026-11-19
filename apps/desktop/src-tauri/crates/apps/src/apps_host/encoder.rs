@@ -9,7 +9,6 @@ pub enum Made {
     Vp9,
     H264,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Hardware {
     None,
@@ -19,14 +18,12 @@ pub enum Hardware {
     Amf,
     VideoToolbox,
 }
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Encoder {
     pub name: &'static str,
     pub made: Made,
     pub hardware: Hardware,
 }
-
 pub const ALL: [Encoder; 9] = [
     one("h264_nvenc", Made::H264, Hardware::Nvenc),
     one("h264_vaapi", Made::H264, Hardware::Vaapi),
@@ -38,9 +35,7 @@ pub const ALL: [Encoder; 9] = [
     one("h264_videotoolbox", Made::H264, Hardware::VideoToolbox),
     SOFTWARE,
 ];
-
 pub const SOFTWARE: Encoder = one("libvpx", Made::Vp8, Hardware::None);
-
 const fn one(name: &'static str, made: Made, hardware: Hardware) -> Encoder {
     Encoder {
         name,
@@ -48,17 +43,14 @@ const fn one(name: &'static str, made: Made, hardware: Hardware) -> Encoder {
         hardware,
     }
 }
-
 const RENDER_NODE: &str = "/dev/dri/renderD128";
 const TRY_FOR: Duration = Duration::from_secs(5);
-
 pub fn chosen(working: &[Encoder], decodes: &[Made]) -> Option<Encoder> {
     working
         .iter()
         .copied()
         .find(|one| decodes.contains(&one.made))
 }
-
 pub fn working() -> &'static [Encoder] {
     static FOUND: OnceLock<Vec<Encoder>> = OnceLock::new();
     FOUND.get_or_init(|| {
@@ -73,13 +65,10 @@ pub fn working() -> &'static [Encoder] {
         found
     })
 }
-
 fn ours(hardware: Hardware) -> bool {
     (hardware == Hardware::VideoToolbox) == cfg!(target_os = "macos")
 }
-
 const MAC_FOLDERS: [&str; 3] = ["/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"];
-
 pub fn ffmpeg() -> Option<PathBuf> {
     static FOUND: OnceLock<Option<PathBuf>> = OnceLock::new();
     FOUND
@@ -99,7 +88,6 @@ pub fn ffmpeg() -> Option<PathBuf> {
         })
         .clone()
 }
-
 pub fn command() -> Command {
     let command = Command::new(ffmpeg().unwrap_or_else(|| PathBuf::from("ffmpeg")));
     #[cfg(windows)]
@@ -112,7 +100,6 @@ pub fn command() -> Command {
     };
     command
 }
-
 fn works(encoder: Encoder) -> bool {
     if encoder.hardware == Hardware::Vaapi && !std::path::Path::new(RENDER_NODE).exists() {
         return false;
@@ -146,11 +133,9 @@ fn works(encoder: Encoder) -> bool {
         }
     }
 }
-
 fn words(line: &str) -> Vec<String> {
     line.split_whitespace().map(str::to_owned).collect()
 }
-
 fn device_args(hardware: Hardware) -> Vec<String> {
     let words: &[&str] = match hardware {
         Hardware::Vaapi => &[
@@ -164,7 +149,6 @@ fn device_args(hardware: Hardware) -> Vec<String> {
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
-
 fn upload_args(hardware: Hardware) -> Vec<String> {
     let words: &[&str] = match hardware {
         Hardware::Vaapi => &["-vf", "format=nv12,hwupload"],
@@ -174,7 +158,6 @@ fn upload_args(hardware: Hardware) -> Vec<String> {
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
-
 fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
     let words: &[&str] = match encoder.name {
         "libvpx" => &[
@@ -213,7 +196,6 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
             "-profile:v",
             "constrained_baseline",
         ],
-
         "h264_qsv" => &[
             "-bf",
             "0",
@@ -251,7 +233,6 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
     }
     args
 }
-
 fn output_args(made: Made) -> Vec<String> {
     let words: &[&str] = match made {
         Made::Vp8 | Made::Vp9 => &["-f", "ivf"],
@@ -259,7 +240,6 @@ fn output_args(made: Made) -> Vec<String> {
     };
     words.iter().map(|&one| one.to_owned()).collect()
 }
-
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn frame_rate(hz: f64) -> u32 {
     if hz.is_finite() {
@@ -268,12 +248,10 @@ pub fn frame_rate(hz: f64) -> u32 {
         60
     }
 }
-
 pub fn bit_rate(width: u32, height: u32, fps: u32) -> u64 {
     let pixels = u64::from(width) * u64::from(height) * u64::from(fps);
     (pixels / 10).clamp(1_000_000, 20_000_000)
 }
-
 pub fn encoder_args(encoder: Encoder, width: u16, height: u16, fps: u32) -> Vec<String> {
     let rate = bit_rate(u32::from(width), u32::from(height), fps);
     let threads = std::thread::available_parallelism()
@@ -306,12 +284,10 @@ pub fn encoder_args(encoder: Encoder, width: u16, height: u16, fps: u32) -> Vec<
     args.extend(["-flush_packets", "1", "pipe:1"].map(str::to_owned));
     args
 }
-
 #[derive(Debug, Default)]
 pub struct AccessUnits {
     kept: Vec<u8>,
 }
-
 impl AccessUnits {
     pub fn take(&mut self, bytes: &[u8]) -> Vec<Vec<u8>> {
         let mut from = self.kept.len().saturating_sub(4).max(2);
@@ -323,12 +299,10 @@ impl AccessUnits {
         }
         frames
     }
-
     pub fn flush(&mut self) -> Option<Vec<u8>> {
         (self.kept.len() > 4).then(|| std::mem::take(&mut self.kept))
     }
 }
-
 fn next_delimiter(bytes: &[u8], from: usize) -> Option<usize> {
     let mut at = from;
     while at + 3 < bytes.len() {
@@ -343,7 +317,6 @@ fn next_delimiter(bytes: &[u8], from: usize) -> Option<usize> {
     }
     None
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -367,7 +340,6 @@ mod tests {
         );
         assert_eq!(chosen(&[SOFTWARE], &[Made::H264]), None);
     }
-
     #[test]
     fn reads_the_display_at_the_holders_refresh_rate_up_to_sixty() {
         assert_eq!(frame_rate(144.0), 60);
@@ -375,14 +347,12 @@ mod tests {
         assert_eq!(frame_rate(1.0), 10);
         assert_eq!(frame_rate(f64::NAN), 60);
     }
-
     #[test]
     fn gives_a_bigger_screen_more_bits_within_bounds() {
         assert_eq!(bit_rate(1280, 800, 60), 6_144_000);
         assert_eq!(bit_rate(64, 64, 10), 1_000_000);
         assert_eq!(bit_rate(7680, 4320, 60), 20_000_000);
     }
-
     #[test]
     fn asks_libvpx_for_vp8_with_nothing_held_back() {
         let args = encoder_args(SOFTWARE, 1280, 800, 60).join(" ");
@@ -394,7 +364,6 @@ mod tests {
         assert!(args.contains("-g 600 -fps_mode passthrough"));
         assert!(args.ends_with("-f ivf -flush_packets 1 pipe:1"));
     }
-
     #[test]
     fn uploads_to_the_gpu_and_writes_h264_with_a_delimiter_before_each_frame() {
         let vaapi = ALL[1];
@@ -408,7 +377,6 @@ mod tests {
         assert!(nvenc.contains("-tune ull -zerolatency 1"));
         assert!(!nvenc.contains("hwupload"));
     }
-
     #[test]
     fn cuts_h264_into_frames_at_each_delimiter_however_the_bytes_come() {
         let first = [
@@ -428,7 +396,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn hands_out_the_last_frame_once_the_stream_pauses() {
         let frame = [0, 0, 0, 1, 9, 0xf0, 0, 0, 1, 0x41, 4];
@@ -437,7 +404,6 @@ mod tests {
         assert_eq!(units.flush(), Some(frame.to_vec()));
         assert_eq!(units.flush(), None);
     }
-
     #[test]
     fn an_encoder_that_cannot_run_here_is_not_kept() {
         let missing = one("no_such_encoder", Made::H264, Hardware::Nvenc);

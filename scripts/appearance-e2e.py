@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import ctypes
 import json
@@ -11,30 +10,23 @@ import subprocess
 import sys
 import time
 import urllib.request
-
 from probe_app import identifier_of, main_window, run_probe
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 WORK = ROOT / "target" / "appearance-e2e"
 SHOTS = WORK / "shots"
-
 DWMWA_SYSTEMBACKDROP_TYPE = 38
 DWMSBT_DISABLE = 1
 DWMSBT_TABBEDWINDOW = 4
-
 failures: list[str] = []
-
 def say(what: str) -> None:
     print(f"  {what}", flush=True)
-
 def wrong(what: str) -> None:
     failures.append(what)
     print(f"  FAIL {what}", flush=True)
-
 user32 = ctypes.windll.user32 if sys.platform == "win32" else None
 dwmapi = ctypes.windll.dwmapi if sys.platform == "win32" else None
-
 class Rect(ctypes.Structure):
     _fields_ = [
         ("left", ctypes.c_long),
@@ -42,7 +34,6 @@ class Rect(ctypes.Structure):
         ("right", ctypes.c_long),
         ("bottom", ctypes.c_long),
     ]
-
 def window_of(pid: int, patience: float = 60) -> int:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -50,18 +41,14 @@ def window_of(pid: int, patience: float = 60) -> int:
         if found:
             return found
         time.sleep(0.2)
-
     raise SystemExit(f"process {pid} has no window")
-
 def frame_of(hwnd: int) -> int:
     assert user32
     whole = Rect()
     client = Rect()
     user32.GetWindowRect(hwnd, ctypes.byref(whole))
     user32.GetClientRect(hwnd, ctypes.byref(client))
-
     return (whole.bottom - whole.top) - (client.bottom - client.top)
-
 def backdrop_of(hwnd: int) -> int:
     assert dwmapi
     held = ctypes.c_int(0)
@@ -71,28 +58,21 @@ def backdrop_of(hwnd: int) -> int:
         ctypes.byref(held),
         ctypes.sizeof(held),
     )
-
     return held.value
-
 def endpoint_of(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier / "automation.json"
-
 def profile_of(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
-
 def allow_eval(path: pathlib.Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps({"port": 0, "secret": secrets.token_hex(32), "eval": True}),
         encoding="utf-8",
     )
-
 def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
     spaces = WORK / "spaces"
     spaces.mkdir(parents=True, exist_ok=True)
-
     return run_probe(app, env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)})
-
 def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -103,9 +83,7 @@ def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
         except (OSError, ValueError):
             pass
         time.sleep(0.4)
-
     raise SystemExit(f"no endpoint at {path} after {patience:.0f}s")
-
 def asked(held: dict, verb: str, args: dict) -> dict:
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
@@ -113,33 +91,25 @@ def asked(held: dict, verb: str, args: dict) -> dict:
         data=body,
         headers={"authorization": f"Bearer {held['secret']}", "content-type": "application/json"},
     )
-
     with urllib.request.urlopen(request, timeout=30) as answer:
         return json.loads(answer.read().decode())
-
 def ran(held: dict, code: str) -> object:
     answer = asked(held, "eval", {"code": code, "yes": True})
     if not answer.get("ok"):
         wrong(f"the window would not run {code!r}: {answer.get('error')}")
         return None
-
     return answer.get("value")
-
 def pressed(held: dict, command: str) -> None:
     answer = asked(held, "commands.run", {"id": command})
     if not answer.get("ok"):
         wrong(f"the {command} command would not run: {answer.get('error')}")
         return
-
     time.sleep(1.5)
-
 def frame_said(held: dict) -> str:
     return str(ran(held, "document.documentElement.dataset.frame") or "")
-
 def framed_as(held: dict, wanted: str) -> None:
     if frame_said(held) != wanted:
         pressed(held, "window-frame")
-
 def shot(pid: int, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     subprocess.run(
@@ -161,75 +131,57 @@ def shot(pid: int, name: str) -> None:
         timeout=120,
     )
     say(f"photographed {name}.png")
-
 def drive(app: pathlib.Path, given: str | None) -> None:
     identifier = identifier_of(app, given)
     endpoint = endpoint_of(identifier)
-
     shutil.rmtree(profile_of(identifier), ignore_errors=True)
     allow_eval(endpoint)
-
     process = started(app)
     try:
         held = waited_for(endpoint)
         say(f"{identifier} is up on port {held['port']}, pid {held.get('pid')}")
         time.sleep(3.0)
-
         hwnd = window_of(process.pid)
         say(f"its window is {hwnd}")
-
         bare = frame_of(hwnd)
         if frame_said(held) != "orden":
             wrong(f"a window came up saying its frame is {frame_said(held)!r}")
         else:
             say(f"Orden's own frame: {bare}px between the window and its client area")
-
         if not ran(held, "!!document.querySelector('header .controls')"):
             wrong("nib draws its own frame and none of its own window buttons")
-
         if backdrop_of(hwnd) == DWMSBT_TABBEDWINDOW:
             wrong("the window came up with a material behind it, which is not the default")
         shot(process.pid, "01-nib-frame")
-
         pressed(held, "window-frame")
-
         framed = frame_of(hwnd)
         if framed - bare < 20:
             wrong(f"the system's frame added {framed - bare}px, which is no titlebar")
         else:
             say(f"the system's frame: {framed - bare}px more than before, which is its titlebar")
-
         if frame_said(held) != "system":
             wrong("the root does not say which frame is on, so the shell cannot read it")
         if ran(held, "!!document.querySelector('header .controls')"):
             wrong("nib is still drawing its own window buttons under the system's titlebar")
         else:
             say("and Orden's own window buttons are gone from the bar")
-
         shot(process.pid, "02-system-frame")
-
         framed_as(held, "orden")
         if frame_of(hwnd) != bare:
             wrong(f"going back to Orden's own frame left {frame_of(hwnd) - bare}px of the system's")
-
         pressed(held, "theme:glass")
-
         if backdrop_of(hwnd) == DWMSBT_TABBEDWINDOW:
             wrong("glass put a material behind the window")
         else:
             say("glass: no material behind the window")
-
         ground = ran(held, "getComputedStyle(document.body).backgroundColor")
         if ground == "rgba(0, 0, 0, 0)":
             wrong("the window's ground is transparent under glass")
         else:
             say(f"and the app's own ground is {ground}")
-
         shot(process.pid, "03-glass")
-
         asked(held, "commands.run", {"id": "settings"})
         time.sleep(1.2)
-
         went = ran(
             held,
             "(() => { const row = [...document.querySelectorAll('button')]"
@@ -239,7 +191,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         if not went:
             wrong("the settings sheet has no Appearance row to press")
         time.sleep(1.0)
-
         pane = ran(
             held,
             "(() => { const rows = [...document.querySelectorAll('.orden-setting')]"
@@ -249,61 +200,47 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         say(f"the pane shows {pane}")
         if not pane or "Frame" not in str(pane) or "Translucency" in str(pane) or "Material" in str(pane):
             wrong(f"the Appearance pane should show the Frame row and no Translucency or Material: {pane}")
-
         shot(process.pid, "03b-the-pane")
         ran(held, "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
         time.sleep(0.8)
-
         pressed(held, "theme:default")
         framed_as(held, "system")
-
     finally:
         process.terminate()
         process.wait(timeout=30)
-
     endpoint.unlink(missing_ok=True)
     allow_eval(endpoint)
     time.sleep(1.5)
-
     process = started(app)
     try:
         held = waited_for(endpoint)
         time.sleep(3.5)
         hwnd = window_of(process.pid)
-
         if frame_said(held) != "system" or frame_of(hwnd) - bare < 20:
             wrong(f"the system's frame was not there after a restart: {frame_of(hwnd)}px")
         else:
             say("after a restart the system's frame is still on")
-
         shot(process.pid, "04-remembered")
-
         framed_as(held, "orden")
     finally:
         process.terminate()
         process.wait(timeout=30)
-
 def main() -> int:
     if sys.platform != "win32":
         print("this drive reads the Windows compositor", flush=True)
         return 0
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--app", required=True, type=pathlib.Path)
     parser.add_argument("--identifier")
     said = parser.parse_args()
-
     shutil.rmtree(SHOTS, ignore_errors=True)
     drive(said.app.resolve(), said.identifier)
-
     if failures:
         print("\n%d thing(s) wrong:" % len(failures))
         for one in failures:
             print(f"  - {one}")
         return 1
-
     print("\nthe frame is the reader's and is remembered, and glass puts no material behind the window")
     return 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

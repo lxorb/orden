@@ -21,17 +21,13 @@ const NOT_WORDS = new Set([
   'Comment',
   'FrontMatter',
 ])
-
 function linkable(state: EditorState, range: SelectionRange): boolean {
   if (range.empty) return false
-
   const words = state.sliceDoc(range.from, range.to)
   if (/\n[ \t]*\n/.test(words) || ADDRESS.test(words.trim())) return false
-
   const { from, to } = inside(state, range.from, range.to)
   const tree = syntaxTree(state)
   if (halfOfSomething(tree, from, to)) return false
-
   for (const [pos, side] of [
     [from, 1],
     [to, -1],
@@ -39,10 +35,8 @@ function linkable(state: EditorState, range: SelectionRange): boolean {
     if (insideCode(state, pos, side)) return false
     if (enclosingNamed(tree.resolveInner(pos, side), NOT_WORDS)) return false
   }
-
   return true
 }
-
 function halfOfSomething(tree: Tree, from: number, to: number): boolean {
   let half = false
   tree.iterate({
@@ -57,7 +51,6 @@ function halfOfSomething(tree: Tree, from: number, to: number): boolean {
   })
   return half
 }
-
 function label(state: EditorState, from: number, to: number): string {
   const tree = syntaxTree(state)
   return state.sliceDoc(from, to).replace(/[[\]]/g, (bracket, at: number) => {
@@ -66,7 +59,6 @@ function label(state: EditorState, from: number, to: number): string {
     return markup || inCode(state, from + at) ? bracket : `\\${bracket}`
   })
 }
-
 function destination(typed: string): string {
   const address = /^www\./i.test(typed) ? `https://${typed}` : typed
   let depth = 0
@@ -76,12 +68,10 @@ function destination(typed: string): string {
   }
   return depth === 0 ? address : `<${address}>`
 }
-
 export function linkedPaste(state: EditorState, text: string): TransactionSpec | null {
   const address = text.trim()
   if (!ADDRESS.test(address)) return null
   if (!state.selection.ranges.every((range) => linkable(state, range))) return null
-
   const target = destination(address)
   return {
     ...state.changeByRange((range) => {

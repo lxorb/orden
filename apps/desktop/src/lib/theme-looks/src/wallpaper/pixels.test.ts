@@ -15,30 +15,25 @@ function picture(
   }
   return pixels
 }
-
 function at(pixels: Uint8ClampedArray, width: number, x: number, y: number): number[] {
   const from = (y * width + x) * 4
   return [...pixels.slice(from, from + 4)]
 }
-
 describe('how small the picture is kept', () => {
   test('is a pixel per half-blur of the screen', () => {
     expect(sideFor(28, 2560)).toBe(183)
     expect(sideFor(56, 2560)).toBe(91)
   })
-
   test('and never past the largest or under the smallest', () => {
     expect(sideFor(1, 3840)).toBe(LARGEST)
     expect(sideFor(60, 800)).toBe(64)
   })
-
   test('keeps the picture’s shape and never grows it', () => {
     expect(fitted(4000, 3000, 400)).toEqual([400, 300])
     expect(fitted(3000, 4000, 400)).toEqual([300, 400])
     expect(fitted(120, 80, 400)).toEqual([120, 80])
   })
 })
-
 describe('the blur', () => {
   test('is three boxes that add up to the Gaussian asked for', () => {
     for (const sigma of [0.8, 2, 5.5, 12]) {
@@ -48,7 +43,6 @@ describe('the blur', () => {
       for (const width of boxes) expect(width % 2).toBe(1)
     }
   })
-
   test('leaves a picture of one colour that colour, edges and all', () => {
     const flat = picture(20, 12, () => [40, 120, 200])
     const out = blurred(flat, 20, 12, 3)
@@ -56,7 +50,6 @@ describe('the blur', () => {
     expect(at(out, 20, 19, 11)).toEqual([40, 120, 200, 255])
     expect(at(out, 20, 10, 6)).toEqual([40, 120, 200, 255])
   })
-
   test('spreads a point evenly every way and keeps how much light there was', () => {
     const size = 31
     const point = picture(size, size, (x, y) => (x === 15 && y === 15 ? [255, 255, 255] : [0, 0, 0]))
@@ -68,20 +61,17 @@ describe('the blur', () => {
     for (let index = 0; index < out.length; index += 4) light += out[index]!
     expect(Math.abs(light - 255)).toBeLessThan(60)
   })
-
   test('makes a picture opaque and leaves what it was given alone', () => {
     const holed = new Uint8ClampedArray([10, 20, 30, 0, 10, 20, 30, 0])
     const out = blurred(holed, 2, 1, 1)
     expect(out[3]).toBe(255)
     expect(holed[3]).toBe(0)
   })
-
   test('is no blur at all at nothing', () => {
     const one = picture(3, 3, (x) => [x * 100, 0, 0])
     expect([...blurred(one, 3, 3, 0)]).toEqual([...one])
   })
 })
-
 describe('what the picture holds', () => {
   test('is the least and the most of each channel, and the average', () => {
     const two = picture(2, 1, (x) => (x === 0 ? [0, 100, 255] : [200, 50, 55]))
@@ -91,16 +81,13 @@ describe('what the picture holds', () => {
     expect(mean).toEqual([100, 75, 155])
   })
 })
-
 describe('the tone baked into a picture', () => {
   const sunset = () => picture(2, 1, (x) => (x ? [240, 120, 40] : [20, 60, 200]))
-
   test('is the picture as it is at full saturation and no tint', () => {
     const pixels = sunset()
     toned(pixels, { saturation: 1, tint: 0, colour: [255, 0, 0] })
     expect(at(pixels, 2, 0, 0)).toEqual([20, 60, 200, 255])
   })
-
   test('greys it with no saturation, by the weights CSS greys with', () => {
     const pixels = sunset()
     toned(pixels, { saturation: 0, tint: 0, colour: [0, 0, 0] })
@@ -109,7 +96,6 @@ describe('the tone baked into a picture', () => {
     expect(g).toBe(b)
     expect(r).toBe(Math.round(0.213 * 240 + 0.715 * 120 + 0.072 * 40))
   })
-
   test('is the tint itself with all of it, and a mix with some', () => {
     const pixels = sunset()
     toned(pixels, { saturation: 1, tint: 1, colour: [124, 107, 245] })
@@ -119,7 +105,6 @@ describe('the tone baked into a picture', () => {
     expect(at(half, 2, 1, 0)).toEqual([120, 60, 20, 255])
   })
 })
-
 describe('a picture sharp enough to want the screen’s own size', () => {
   test('is one blurred by less than the kept size can hold', () => {
     expect(sharpBelow(2560)).toBeCloseTo(10.67, 1)
@@ -127,19 +112,16 @@ describe('a picture sharp enough to want the screen’s own size', () => {
     expect(sideFor(sharpBelow(2560) - 0.5, 2560)).toBe(LARGEST)
   })
 })
-
 describe('the sharp copy', () => {
   test('is the screen’s own pixels with no blur at all', () => {
     expect(sharpSide(0, 2560, 3200)).toBe(3200)
     expect(sharpSide(0.25, 2560, 3200)).toBe(3200)
   })
-
   test('holds a pixel per half-blur, as the kept picture does, so a blurred one is drawn small', () => {
     expect(sharpSide(4, 2560, 3200)).toBe(1280)
     expect(sharpSide(8, 2560, 3200)).toBe(640)
     expect(sharpSide(sharpBelow(2560) - 0.01, 2560, 3200)).toBe(LARGEST)
   })
-
   test('never holds more than the screen has', () => {
     expect(sharpSide(1, 2560, 1800)).toBe(1800)
   })

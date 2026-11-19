@@ -7,7 +7,6 @@ import { writeViewSpec } from '../src/lib/tab-kinds/src/api'
 import { noteBehind } from '../src/lib/protect/src/protection.svelte'
 
 const SOURCE = fileURLToPath(new URL('../src/lib/', import.meta.url))
-
 describe('a tab shown over a protected note', () => {
   test('is the note itself, never a task view', () => {
     const view = (spec: Parameters<typeof writeViewSpec>[0]) => ({
@@ -18,7 +17,6 @@ describe('a tab shown over a protected note', () => {
     expect(noteBehind({ kind: 'note', path: '/space/Diary.md' })).toBe('/space/Diary.md')
     expect(noteBehind(view({ builtin: 'todos', space: 'Space' }))).toBeNull()
   })
-
   test('is locked by the note behind it, not by its own path alone', () => {
     const bare = walk(SOURCE, svelte)
       .filter((path) => /protection\.locked\(tab\??\.path\)/.test(readFileSync(path, 'utf8')))

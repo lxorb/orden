@@ -13,23 +13,19 @@
     at: DOMRect
     onclose: () => void
   } = $props()
-
   const walkable = $derived(walkableRows(rows))
   let cursor = $state(0)
   let list = $state<HTMLElement>()
-
   onMount(() => {
     const checked = rows.findIndex((row) => row !== DIVIDER && row.checked === true)
     cursor = Math.max(walkable.indexOf(checked), 0)
     void tick().then(() => list?.focus())
   })
-
   function choose(row: MenuEntry) {
     if (row === DIVIDER || row.disabled) return
     onclose()
     row.run()
   }
-
   function onkeydown(event: KeyboardEvent) {
     const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0
     if (step) {
@@ -96,7 +92,6 @@
     inset: 0;
     z-index: calc(var(--z-menu) - 1);
   }
-
   .picker {
     position: fixed;
     z-index: var(--z-menu);
@@ -108,13 +103,11 @@
     list-style: none;
     outline: none;
   }
-
   .rule {
     height: 1px;
     margin: var(--space-1) var(--space-2);
     background: var(--line);
   }
-
   .tick {
     width: 1em;
     flex: none;

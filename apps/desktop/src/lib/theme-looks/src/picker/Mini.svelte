@@ -46,7 +46,6 @@
     overflow: hidden;
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent);
   }
-
   .window {
     position: absolute;
     inset: 0;
@@ -56,11 +55,9 @@
     grid-template-rows: 17% 1fr;
     background: var(--mini-ground);
   }
-
   .second {
     clip-path: polygon(100% 0, 100% 100%, 0 100%);
   }
-
   .bar {
     grid-column: 1 / -1;
     display: flex;
@@ -69,14 +66,12 @@
     background: var(--mini-frame);
     border-bottom: 1px solid var(--mini-line);
   }
-
   .tab {
     width: 30%;
     height: 72%;
     border-radius: 3px 3px 0 0;
     background: var(--mini-ground);
   }
-
   .side {
     display: flex;
     flex-direction: column;
@@ -85,7 +80,6 @@
     background: var(--mini-side);
     border-inline-end: 1px solid var(--mini-line);
   }
-
   .row {
     height: 3px;
     width: 80%;
@@ -93,11 +87,9 @@
     background: var(--mini-muted);
     opacity: 0.55;
   }
-
   .row.short {
     width: 55%;
   }
-
   .row.open {
     display: flex;
     align-items: center;
@@ -109,28 +101,24 @@
     background: var(--mini-open);
     opacity: 1;
   }
-
   .dot {
     width: 3px;
     height: 3px;
     border-radius: 50%;
     background: var(--mini-accent);
   }
-
   .note {
     display: flex;
     flex-direction: column;
     gap: 5px;
     padding: 9px 10px;
   }
-
   .head {
     width: 48%;
     height: 5px;
     border-radius: 2px;
     background: var(--mini-text);
   }
-
   .line {
     display: flex;
     justify-content: flex-end;
@@ -139,18 +127,15 @@
     border-radius: 2px;
     background: var(--mini-muted);
   }
-
   .line + .line {
     width: 68%;
   }
-
   .link {
     width: 34%;
     height: 100%;
     border-radius: 2px;
     background: var(--mini-accent);
   }
-
   .pictured .window {
     background:
       var(
@@ -160,7 +145,6 @@
         center / cover no-repeat,
       var(--mini-ground);
   }
-
   .pictured .bar,
   .pictured .side {
     border-color: transparent;
@@ -174,7 +158,6 @@
         color-mix(in srgb, var(--mini-scrim) var(--mini-floor), transparent)
       );
   }
-
   .pictured .note {
     background: var(--mini-ground);
   }

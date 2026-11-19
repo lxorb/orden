@@ -1,32 +1,25 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 UP = "!!document.querySelector('.picker[data-spaces-open]')"
 NAMES = ["Journal", "ETH", "Lab", "Reading", "Recipes", "Taxes", "Travel", "Uni", "VIS", "Work", "Zettel"]
-
 HERE = "() => window.ordenApp.workspace.activeSpace?.name"
 ROWS = """() => [...document.querySelectorAll('.picker .orden-row')].map((one) => [
   one.querySelector('.place')?.textContent,
   one.querySelector('.orden-row-label')?.textContent,
   one.querySelector('.orden-row-label b')?.textContent ?? null,
 ])"""
-
 def key(page: Page, chord: str = "Control+Space") -> None:
     page.keyboard.press(chord)
-
 def opened(page: Page, scheme: str, what: str, chord: str = "Control+Space") -> None:
     key(page, chord)
     wait_for(page, UP, f"[{scheme}] the switcher for {what}")
     page.wait_for_timeout(250)
-
 def gone(page: Page, scheme: str, what: str) -> None:
     wait_for(page, f"!({UP})", f"[{scheme}] the switcher gone {what}")
     page.wait_for_timeout(250)
-
 def switching(page: Page, scheme: str) -> None:
     page.emulate_media(color_scheme=scheme)
     first = page.evaluate(HERE)
@@ -41,7 +34,6 @@ def switching(page: Page, scheme: str) -> None:
     wait_for(page, "window.ordenApp.workspace.spaces.length >= 12", f"[{scheme}] twelve spaces")
     names = page.evaluate("() => window.ordenApp.workspace.spaces.map((one) => one.name)")
     say(f"[{scheme}] spaces: {names}")
-
     opened(page, scheme, "the first look")
     box = page.locator(".picker").bounding_box()
     view = page.viewport_size
@@ -71,7 +63,6 @@ def switching(page: Page, scheme: str) -> None:
         pass
     if any(one[0] is not None for one in page.evaluate(ROWS)):
         wrong(f"[{scheme}] the numbers stayed after Alt was let go of")
-
     page.keyboard.type("re")
     page.wait_for_timeout(300)
     rows = page.evaluate(ROWS)
@@ -91,13 +82,11 @@ def switching(page: Page, scheme: str) -> None:
     gone(page, scheme, "on Enter")
     if page.evaluate(HERE) != "Recipes":
         wrong(f"[{scheme}] Enter on 'rci' went to {page.evaluate(HERE)!r}, not Recipes")
-
     opened(page, scheme, "a digit")
     page.keyboard.press("3")
     gone(page, scheme, "on 3")
     if page.evaluate(HERE) != names[2]:
         wrong(f"[{scheme}] 3 went to {page.evaluate(HERE)!r}, not {names[2]}")
-
     opened(page, scheme, "a digit that waits")
     page.keyboard.press("1")
     page.wait_for_timeout(150)
@@ -109,14 +98,12 @@ def switching(page: Page, scheme: str) -> None:
     gone(page, scheme, "after the wait")
     if page.evaluate(HERE) != names[0]:
         wrong(f"[{scheme}] 1 went to {page.evaluate(HERE)!r}, not {names[0]}")
-
     opened(page, scheme, "two digits")
     page.keyboard.press("1")
     page.keyboard.press("2")
     gone(page, scheme, "on 12")
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] 12 went to {page.evaluate(HERE)!r}, not {names[11]}")
-
     opened(page, scheme, "Alt and a digit")
     page.keyboard.press("Alt+4")
     gone(page, scheme, "on Alt+4")
@@ -126,7 +113,6 @@ def switching(page: Page, scheme: str) -> None:
     page.keyboard.press("1")
     page.keyboard.press("2")
     gone(page, scheme, "on 12 again")
-
     opened(page, scheme, "the key again")
     key(page)
     gone(page, scheme, "on the key again")
@@ -138,22 +124,18 @@ def switching(page: Page, scheme: str) -> None:
     gone(page, scheme, "on Escape")
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] closing it changed the space")
-
     page.evaluate("() => { window.ordenApp.workspace.panel = null }")
     opened(page, scheme, "with the panel shut")
     page.keyboard.press("Escape")
     gone(page, scheme, "with the panel shut")
-
 STANDING = """() => {
   const at = document.activeElement
   return at?.closest?.('.picker') ? (at.querySelector('.orden-row-label')?.textContent ?? '') : null
 }"""
-
 def walking(page: Page, scheme: str) -> None:
     names = page.evaluate("() => window.ordenApp.workspace.shownSpaces.map((one) => one.name)")
     here = page.evaluate(HERE)
     at = names.index(here)
-
     opened(page, scheme, "the arrows")
     if page.evaluate(STANDING) != here:
         wrong(f"[{scheme}] the switcher opened with the keyboard on {page.evaluate(STANDING)!r}, not {here!r}")
@@ -173,7 +155,6 @@ def walking(page: Page, scheme: str) -> None:
     gone(page, scheme, "on Escape after the arrows")
     if page.evaluate(HERE) != here:
         wrong(f"[{scheme}] Escape after the arrows went to {page.evaluate(HERE)!r}")
-
     page.evaluate(
         "() => { const ws = window.ordenApp.workspace;"
         " ws.movePanel('outline', 'right'); ws.showPanel('outline'); ws.closePanel('left') }"
@@ -191,7 +172,6 @@ def walking(page: Page, scheme: str) -> None:
     say(f"[{scheme}] the sides before the switch {before}, after it {after}")
     if after != before:
         wrong(f"[{scheme}] the switch changed the sides of the window: {before} -> {after}")
-
     names = page.evaluate("() => window.ordenApp.workspace.shownSpaces.map((one) => one.name)")
     at = names.index(page.evaluate(HERE))
     opened(page, scheme, "the arrows with the key held")
@@ -207,7 +187,6 @@ def walking(page: Page, scheme: str) -> None:
     say(f"[{scheme}] two rows down with the key held: {page.evaluate(HERE)!r}")
     if page.evaluate(HERE) != two:
         wrong(f"[{scheme}] the arrows with the key held went to {page.evaluate(HERE)!r}, not {two!r}")
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = DRIVE.page(browser, viewport={"width": 1180, "height": 800})
@@ -215,5 +194,4 @@ def drive(browser: Browser) -> None:
         switching(page, scheme)
         walking(page, scheme)
         page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "Ctrl+Space switches space by number and by name"))

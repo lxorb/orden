@@ -10,7 +10,6 @@ import { livePreview } from '.'
 import { keptViews } from '../../test/views'
 
 const open = keptViews()
-
 function viewOf(doc: string, trusted = false): EditorView {
   const view = new EditorView({
     state: EditorState.create({
@@ -27,7 +26,6 @@ function viewOf(doc: string, trusted = false): EditorView {
   open.push(view)
   return view
 }
-
 const ACROSS = [
   '%%\nmulti\nline\n%%',
   '<!--\nmulti\nline\n-->',
@@ -37,7 +35,6 @@ const ACROSS = [
   '<iframe\nsrc="https://example.com">',
   '![a\nb](a.png)',
 ]
-
 test.each(ACROSS)('opens and types into %j', (sample) => {
   for (const trusted of [false, true]) {
     const doc = `# Opened\n\n${sample}\n\nbody`
@@ -47,7 +44,6 @@ test.each(ACROSS)('opens and types into %j', (sample) => {
     expect(view.contentDOM.textContent).toContain('bodyTYPED')
   }
 })
-
 test('a note swapped in for another is the one drawn', () => {
   const view = viewOf('# Before\n\nold words')
   const next = '# Opened\n\n%%\nmulti\nline\n%%\n\nYour notes'
@@ -60,7 +56,6 @@ test('a note swapped in for another is the one drawn', () => {
   expect(view.contentDOM.textContent).toContain('Your notes')
   expect(view.contentDOM.textContent).not.toContain('old words')
 })
-
 test('Enter inside a one-line comment, then leaving it, is not a crash', () => {
   const doc = 'a %% note %% b\n\nend'
   const view = viewOf(doc)

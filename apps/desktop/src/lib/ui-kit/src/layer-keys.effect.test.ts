@@ -1,11 +1,9 @@
 import { afterEach, describe, expect, test } from 'vitest'
 
 const { keyElsewhere } = await import('./layer-keys')
-
 afterEach(() => {
   document.body.replaceChildren()
 })
-
 function press(on: Element, key: string) {
   const event = new KeyboardEvent('keydown', {
     key,
@@ -16,7 +14,6 @@ function press(on: Element, key: string) {
   on.dispatchEvent(event)
   return event
 }
-
 function built(html: string) {
   document.body.innerHTML = html
   const at = (selector: string) => {
@@ -26,18 +23,15 @@ function built(html: string) {
   }
   return at
 }
-
 function struck(on: Element, key: string, held: Partial<KeyboardEventInit> = {}) {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...held })
   on.dispatchEvent(event)
   return event
 }
-
 function reached(on: Element, byKeys: boolean) {
   const own = on.matches.bind(on)
   on.matches = (selector: string) => (selector === ':focus-visible' ? byKeys : own(selector))
 }
-
 describe('a key pressed on a control in a view', () => {
   const asked = (host: Element, node: Element, key: string, held?: Partial<KeyboardEventInit>) => {
     let elsewhere = false
@@ -47,7 +41,6 @@ describe('a key pressed on a control in a view', () => {
     struck(node, key, held)
     return elsewhere
   }
-
   test('is the control’s when reached by keys: it presses, steps or leaves it, nothing else', () => {
     const at = built(`
       <div class="host"><button class="bar"></button><a class="link" href="#"></a>
@@ -67,7 +60,6 @@ describe('a key pressed on a control in a view', () => {
     expect(asked(host, at('.bar'), 'z', { ctrlKey: true })).toBe(false)
     expect(asked(host, at('.row'), ' ')).toBe(false)
   })
-
   test('is the view’s when the control was clicked, is the view’s own item, or is the view', () => {
     const at = built(`
       <div class="host" role="button" tabindex="0"><button class="bar"></button>
@@ -93,7 +85,6 @@ describe('a key pressed on a control in a view', () => {
     expect(elsewhere).toBe(false)
   })
 })
-
 describe('a key pressed in a layer', () => {
   test('is the layer’s own, not the list’s it lies in or over', () => {
     const at = built(`
@@ -119,7 +110,6 @@ describe('a key pressed in a layer', () => {
     expect(asked('.row', null)).toBe(false)
     expect(asked('.in', null)).toBe(true)
   })
-
   test('still drives a list that itself lies in a sheet', () => {
     const at = built(`
       <div role="dialog" aria-modal="true"><div class="list"><span class="row"></span>

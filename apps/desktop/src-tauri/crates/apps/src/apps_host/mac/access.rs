@@ -7,14 +7,12 @@ extern "C" {
     fn AXIsProcessTrustedWithOptions(options: *const c_void) -> u8;
     static kAXTrustedCheckOptionPrompt: *const c_void;
 }
-
 pub fn allowed() -> bool {
     let screen = objc2_core_graphics::CGPreflightScreenCaptureAccess()
         || objc2_core_graphics::CGRequestScreenCaptureAccess();
     let input = trusted();
     screen && input
 }
-
 #[allow(unsafe_code)]
 fn trusted() -> bool {
     unsafe {

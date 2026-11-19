@@ -6,14 +6,11 @@ export function sizeStepFor(
   overNote: boolean,
 ): number {
   if (!event.ctrlKey || event.defaultPrevented || !event.deltaY || !overNote) return 0
-
   return event.deltaY < 0 ? 1 : -1
 }
-
 function overNote(target: EventTarget | null): boolean {
   return target instanceof Element && !!target.closest('.orden-write')
 }
-
 export function watchTextSize(): () => void {
   const pinches = platform() === 'windows'
   const onWheel = (event: WheelEvent) => {
@@ -22,11 +19,9 @@ export function watchTextSize(): () => void {
       if (pinches && event.ctrlKey) event.preventDefault()
       return
     }
-
     event.preventDefault()
     modes.stepZoom(step)
   }
-
   window.addEventListener('wheel', onWheel, { passive: false })
   return () => window.removeEventListener('wheel', onWheel)
 }

@@ -4,20 +4,17 @@ import { imageOfFrame, partsOf } from './widget'
 
 const isSelected = (state: EditorState, from: number, to: number): boolean =>
   state.selection.ranges.some((range) => range.from === from && range.to === to)
-
 interface Mark {
   frame: HTMLElement
   selected: boolean
   flipped: boolean
   shift: number
 }
-
 export const imageSelection = ViewPlugin.fromClass(
   class {
     constructor(private readonly view: EditorView) {
       this.schedule()
     }
-
     update(update: ViewUpdate) {
       if (
         update.selectionSet ||
@@ -29,7 +26,6 @@ export const imageSelection = ViewPlugin.fromClass(
         this.schedule()
       }
     }
-
     private schedule() {
       this.view.requestMeasure({
         key: this,
@@ -43,28 +39,23 @@ export const imageSelection = ViewPlugin.fromClass(
         },
       })
     }
-
     private read(): Mark[] {
       const view = this.view
       const state = view.state
       const scroller = view.scrollDOM.getBoundingClientRect()
       const out: Mark[] = []
-
       for (const frame of view.contentDOM.querySelectorAll<HTMLElement>('.orden-image-frame')) {
         const parts = partsOf(frame)
         if (!parts) continue
-
         const image = imageOfFrame(view, frame)
         const active = view.hasFocus || frame.contains(document.activeElement)
         const selected = !!image && active && isSelected(state, image.from, image.to)
-
         let flipped = false
         let shift = 0
         if (selected) {
           const box = parts.box.getBoundingClientRect()
           const tools = parts.tools.getBoundingClientRect()
           flipped = box.top - scroller.top < tools.height + 16
-
           const current = parseFloat(frame.style.getPropertyValue('--orden-tools-shift')) || 0
           const left = tools.left - current
           const right = left + tools.width
@@ -72,10 +63,8 @@ export const imageSelection = ViewPlugin.fromClass(
           if (left < scroller.left + margin) shift = scroller.left + margin - left
           else if (right > scroller.right - margin) shift = scroller.right - margin - right
         }
-
         out.push({ frame, selected, flipped, shift })
       }
-
       return out
     }
   },

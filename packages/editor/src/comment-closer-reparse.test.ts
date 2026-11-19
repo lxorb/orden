@@ -8,24 +8,18 @@ import { createEditor } from './editor'
 import { ordenMarkdownParser } from './markdown/extensions'
 
 const AROUND = Array.from({ length: 10 }, (_, at) => `Paragraph ${at} of the note.`).join('\n\n')
-
 const NOTE = `${AROUND}\n\nMeeting notes %% private\nthought here\n%% back to words\n\n${AROUND}\n`
-
 const LINE_END = NOTE.indexOf('thought here') + 'thought here'.length
-
 const open: EditorView[] = []
-
 function settle(ms: number): Promise<void> {
   return new Promise((done) => setTimeout(done, ms))
 }
-
 function opened(): EditorView {
   const view = createEditor({ parent: document.body, doc: NOTE, selection: { anchor: 0 } })
   open.push(view)
   ensureSyntaxTree(view.state, NOTE.length, 5000)
   return view
 }
-
 async function typed(view: EditorView, at: number): Promise<void> {
   view.dispatch({
     changes: { from: at, insert: 'x' },
@@ -34,7 +28,6 @@ async function typed(view: EditorView, at: number): Promise<void> {
   })
   await settle(200)
 }
-
 function comments(tree: Tree, doc: string): string[] {
   const found: string[] = []
   tree.iterate({
@@ -46,17 +39,14 @@ function comments(tree: Tree, doc: string): string[] {
   })
   return found
 }
-
 beforeAll(async () => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   await typed(opened(), NOTE.indexOf('thought here'))
 })
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 describe('typing at the end of the line above the closing %% of a comment spanning paragraph lines', () => {
   test('reads as a fresh parse of the note', () => {
     const doc = `${NOTE.slice(0, LINE_END)}x${NOTE.slice(LINE_END)}`
@@ -67,7 +57,6 @@ describe('typing at the end of the line above the closing %% of a comment spanni
       comments(ordenMarkdownParser.parse(doc), doc),
     )
   })
-
   test('in the editor, does not turn the closing line into a comment block hiding the rest of the note', async () => {
     const view = opened()
     await settle(50)

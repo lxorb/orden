@@ -6,10 +6,8 @@
     label: string
     onvalue: (value: string) => void
   }
-
   const { value, label, onvalue }: Props = $props()
   let field = $state<HTMLInputElement>()
-
   onMount(() => {
     const focusing = setTimeout(() => field?.focus({ preventScroll: true }), 250)
     return () => clearTimeout(focusing)
@@ -38,7 +36,6 @@
     background: var(--card);
     box-shadow: var(--shadow-sm);
   }
-
   svg {
     width: 17px;
     height: 17px;
@@ -48,7 +45,6 @@
     stroke-width: 2;
     stroke-linecap: round;
   }
-
   input {
     font-size: 15px;
   }

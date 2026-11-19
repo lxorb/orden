@@ -1,5 +1,4 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 #[cfg(target_os = "linux")]
 pub mod chromium_pump;
 pub mod downloads;

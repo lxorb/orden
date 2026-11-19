@@ -9,16 +9,13 @@
   import { quitAsk } from './state.svelte'
 
   const NAME = 'Orden'
-
   const title = $derived(
     quitAsk.why === 'quit' ? `Quit ${NAME}?` : quitAsk.why === 'restart' ? `Restart ${NAME}?` : 'Close window?',
   )
   const going = $derived(
     quitAsk.why === 'quit' ? 'Quit anyway' : quitAsk.why === 'restart' ? 'Restart anyway' : 'Close anyway',
   )
-
   const stay = () => quitAsk.answer('stay')
-
   $effect(() => closeOnBack(quitAsk.open, stay))
   $effect(() => (quitAsk.open ? overlays.show(stay) : undefined))
 </script>
@@ -73,28 +70,24 @@
 <style>
   .sheet {
     --screen-width: var(--screen-ask);
-
     z-index: var(--z-sheet);
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
     padding: var(--space-5);
   }
-
   .title {
     margin: 0;
     font-size: var(--text-base);
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .detail {
     margin: calc(var(--space-4) * -1 + var(--space-1)) 0 0;
     font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--muted-strong);
   }
-
   .rows {
     list-style: none;
     margin: 0 calc(var(--row-pad) * -1);
@@ -102,17 +95,14 @@
     max-height: 40vh;
     overflow-y: auto;
   }
-
   .name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .is-idle {
     color: var(--muted);
   }
-
   .row {
     display: flex;
     align-items: center;

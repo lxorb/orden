@@ -22,7 +22,6 @@ export interface Carry {
   gone: () => void
   holds?: () => boolean
 }
-
 export async function carry(
   key: string,
   carried: Carry,
@@ -34,7 +33,6 @@ export async function carry(
   if (!token || rooms.carried.has(key)) return null
   const { CarriedRoom, CarriedPlaneRoom } = await import('../../collab-rooms/src/api')
   if (rooms.carried.has(key) || account().token !== token) return null
-
   const entering = {
     noteId: carried.noteId,
     token,
@@ -75,9 +73,7 @@ export async function carry(
   rooms.carried.set(key, { live, room, shown: () => room.shown() })
   return { awareness: room.awareness }
 }
-
 const NOBODY = { announce: () => undefined }
-
 export function whoHere(): Who {
   return {
     name: deviceName('Browser'),
@@ -86,7 +82,6 @@ export function whoHere(): Who {
     ...personFace(),
   }
 }
-
 export function uncarry(key: string): void {
   const carried = rooms.carried.get(key)
   if (!carried) return

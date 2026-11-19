@@ -4,11 +4,8 @@ use std::sync::mpsc::{self, Receiver, RecvTimeoutError, TryRecvError};
 use std::time::{Duration, Instant};
 
 pub const GRACE: Duration = Duration::from_millis(300);
-
 const LOOK: Duration = Duration::from_millis(10);
-
 const LAPSE_LOOK: Duration = Duration::from_millis(50);
-
 pub fn chunks(mut from: impl Read + Send + 'static) -> Receiver<Vec<u8>> {
     let (sent, heard) = mpsc::channel();
     let _ = std::thread::Builder::new()
@@ -23,13 +20,11 @@ pub fn chunks(mut from: impl Read + Send + 'static) -> Receiver<Vec<u8>> {
         });
     heard
 }
-
 pub fn left_running(mut child: Child) {
     std::thread::spawn(move || {
         let _ = child.wait();
     });
 }
-
 pub fn output(command: &mut Command, patience: Duration) -> io::Result<Output> {
     let child = command
         .stdin(Stdio::null())
@@ -38,7 +33,6 @@ pub fn output(command: &mut Command, patience: Duration) -> io::Result<Output> {
         .spawn()?;
     wait_output(child, patience)
 }
-
 pub fn wait_output(mut child: Child, patience: Duration) -> io::Result<Output> {
     let mut out = Heard::new(child.stdout.take());
     let mut err = Heard::new(child.stderr.take());
@@ -78,12 +72,10 @@ pub fn wait_output(mut child: Child, patience: Duration) -> io::Result<Output> {
         }
     }
 }
-
 struct Heard {
     from: Option<Receiver<Vec<u8>>>,
     printed: Vec<u8>,
 }
-
 impl Heard {
     fn new(from: Option<impl Read + Send + 'static>) -> Self {
         Heard {
@@ -91,7 +83,6 @@ impl Heard {
             printed: Vec::new(),
         }
     }
-
     fn take(&mut self) {
         while let Some(from) = &self.from {
             match from.try_recv() {
@@ -101,12 +92,10 @@ impl Heard {
             }
         }
     }
-
     fn done(&self) -> bool {
         self.from.is_none()
     }
 }
-
 pub struct Lapsing<F> {
     heard: Option<Receiver<Vec<u8>>>,
     kept: Vec<u8>,
@@ -114,7 +103,6 @@ pub struct Lapsing<F> {
     ended: F,
     since: Option<Instant>,
 }
-
 pub fn lapsing<F: FnMut() -> bool>(from: impl Read + Send + 'static, ended: F) -> Lapsing<F> {
     Lapsing {
         heard: Some(chunks(from)),
@@ -124,7 +112,6 @@ pub fn lapsing<F: FnMut() -> bool>(from: impl Read + Send + 'static, ended: F) -
         since: None,
     }
 }
-
 impl<F: FnMut() -> bool> Read for Lapsing<F> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         if buf.is_empty() {
@@ -162,7 +149,6 @@ impl<F: FnMut() -> bool> Read for Lapsing<F> {
         }
     }
 }
-
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
@@ -179,13 +165,11 @@ mod tests {
             std::thread::sleep(Duration::from_millis(10));
         }
     }
-
     fn sh(script: &str) -> Command {
         let mut command = Command::new("/bin/sh");
         command.args(["-c", script]);
         command
     }
-
     #[test]
     fn what_a_program_prints_is_read_when_it_ends() {
         let said = output(
@@ -197,7 +181,6 @@ mod tests {
         assert_eq!(said.stderr, b"err\n");
         assert_eq!(said.status.code(), Some(3));
     }
-
     #[test]
     fn a_program_that_leaves_something_holding_its_output_is_not_waited_for() {
         let started = Instant::now();
@@ -206,7 +189,6 @@ mod tests {
         assert_eq!(said.stdout, b"done\n");
         assert!(started.elapsed() < Duration::from_secs(5));
     }
-
     #[test]
     fn a_program_that_never_ends_is_stopped_when_its_time_is_up() {
         let started = Instant::now();
@@ -220,7 +202,6 @@ mod tests {
         );
         assert!(started.elapsed() < Duration::from_secs(5));
     }
-
     #[test]
     fn a_spawned_program_fed_its_input_is_read_to_its_end() {
         use std::io::Write as _;
@@ -239,7 +220,6 @@ mod tests {
         assert_eq!(said.stdout, b"fed");
         assert!(started.elapsed() < Duration::from_secs(5));
     }
-
     #[test]
     fn a_lapsing_read_ends_once_the_program_has_ended_though_its_pipe_is_held() {
         let mut child = sh("echo one; sleep 30 & echo two")

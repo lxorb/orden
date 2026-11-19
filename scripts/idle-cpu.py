@@ -7,11 +7,9 @@ ROOT = int(sys.argv[1])
 SPAN = float(sys.argv[2]) if len(sys.argv) > 2 else 20
 MOST = float(sys.argv[3]) if len(sys.argv) > 3 else 30
 HZ = os.sysconf("SC_CLK_TCK")
-
 def stat(path):
     text = open(path).read()
     return text[text.index("(") + 1 : text.rindex(")")], text.rsplit(")", 1)[1].split()
-
 def tree():
     kids = {}
     for pid in os.listdir("/proc"):
@@ -26,26 +24,22 @@ def tree():
         found.append(pid)
         todo += kids.get(pid, [])
     return found
-
 def args(pid):
     try:
         return open(f"/proc/{pid}/cmdline").read().split("\0")
     except OSError:
         return []
-
 def kind(pid):
     line = args(pid)
     kind = next((a.split("=", 1)[1] for a in line if a.startswith("--type=")), None)
     name = os.path.basename(line[0]) if line and line[0] else "?"
     return f"{name}:{kind}" if kind else name
-
 def ticks(pid):
     try:
         rest = stat(f"/proc/{pid}/stat")[1]
         return int(rest[11]) + int(rest[12])
     except (OSError, ValueError, IndexError):
         return None
-
 def threads(pid):
     found = {}
     try:
@@ -58,7 +52,6 @@ def threads(pid):
     except OSError:
         pass
     return found
-
 pids = tree()
 before = {pid: ticks(pid) for pid in pids}
 before_threads = {pid: threads(pid) for pid in pids}

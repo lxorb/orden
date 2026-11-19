@@ -35,7 +35,6 @@ const headingNumbers = new Compartment()
 const codeLineNumbers = new Compartment()
 const direction = new Compartment()
 const editorClass = (name: string): Extension => EditorView.editorAttributes.of({ class: name })
-
 const markdownFor = once((strict: boolean): Extension =>
   markdown({
     base: strict ? commonmarkLanguage : markdownLanguage,
@@ -45,64 +44,47 @@ const markdownFor = once((strict: boolean): Extension =>
     pasteURLAsLink: false,
   }),
 )
-
 const PARSED_AT_MOST = 512 * 1024
-
 const NO_LANGUAGE: Extension = []
-
 export const tooLongToParse = (length: number): boolean => length > PARSED_AT_MOST
 const strictly = StateEffect.define<boolean>()
-
 const strictness = StateField.define<boolean>({
   create: () => false,
   update: (was, transaction) => {
     for (const effect of transaction.effects) if (effect.is(strictly)) return effect.value
-
     return was
   },
 })
-
 const seen = StateField.define<boolean>({ create: () => false, update: () => true })
-
 const parseGuard = EditorState.transactionExtender.of((transaction) => {
   const was = transaction.startState
   const plain = tooLongToParse(transaction.newDoc.length)
-
   const crossed = plain !== tooLongToParse(was.doc.length)
   const set = transaction.effects.some((effect) => effect.is(strictly))
   if (!crossed && !set && was.field(seen, false) === true) return null
-
   return {
     effects: language.reconfigure(plain ? NO_LANGUAGE : markdownFor(strictnessAfter(was, transaction.effects))),
   }
 })
-
 function strictnessAfter(was: EditorState, effects: readonly StateEffect<unknown>[]): boolean {
   for (const effect of effects) if (effect.is(strictly)) return effect.value
-
   return was.field(strictness, false) ?? false
 }
-
 const dim = Decoration.line({ class: 'orden-dim' })
-
 const focusPlugin = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
-
     constructor(view: EditorView) {
       this.decorations = this.build(view)
     }
-
     update(update: ViewUpdate) {
       if (update.docChanged || update.selectionSet || update.viewportChanged) this.decorations = this.build(update.view)
     }
-
     private build(view: EditorView): DecorationSet {
       const { state } = view
       const head = state.selection.main.head
       const block = enclosingBlock(state, head)
       const ranges = []
-
       for (const { from, to } of view.visibleRanges) {
         for (let pos = from; pos <= to;) {
           const line = state.doc.lineAt(pos)
@@ -111,38 +93,30 @@ const focusPlugin = ViewPlugin.fromClass(
           pos = line.to + 1
         }
       }
-
       return Decoration.set(ranges, true)
     }
   },
   { decorations: (plugin) => plugin.decorations },
 )
-
 function enclosingBlock(state: EditorView['state'], pos: number) {
   let block: SyntaxNode | null = null
   for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1))) if (node.name !== 'Document') block = node
-
   if (!block) {
     const line = state.doc.lineAt(pos)
     return { from: line.from, to: line.to }
   }
-
   return { from: block.from, to: block.to }
 }
-
 const typewriterPlugin = EditorView.updateListener.of((update) => {
   if (!update.docChanged && !update.selectionSet) return
-
   const view = update.view
   const head = view.state.selection.main.head
   const block = view.lineBlockAt(head)
   const middle = view.scrollDOM.clientHeight / 2
   const offset = block.top - view.scrollDOM.scrollTop - middle + block.height / 2
-
   if (Math.abs(offset) < 1) return
   view.scrollDOM.scrollTop += offset
 })
-
 export const modeExtensions = (length = 0): Extension => [
   language.of(tooLongToParse(length) ? NO_LANGUAGE : markdownFor(false)),
   strictness,
@@ -163,7 +137,6 @@ export const modeExtensions = (length = 0): Extension => [
   direction.of(directionFor(false)),
   vimExtensions(),
 ]
-
 const readOnlyExtensions = (): Extension => [
   EditorView.editable.of(false),
   EditorState.readOnly.of(true),
@@ -172,35 +145,24 @@ const readOnlyExtensions = (): Extension => [
   EditorView.editorAttributes.of({ class: 'orden-read-only' }),
   EditorState.changeFilter.of(isExternal),
 ]
-
 const readOnlyFor = once((on: boolean): Extension => (on ? readOnlyExtensions() : []))
 const previewFor = once((source: boolean): Extension => (source ? [] : livePreview()))
-
 const focusFor = once((on: boolean): Extension => (on ? [focusPlugin, editorClass('orden-focus-mode')] : []))
-
 const typewriterFor = once((on: boolean): Extension =>
   on ? [typewriterPlugin, editorClass('orden-typewriter-mode')] : [],
 )
-
 const ligaturesFor = once((scope: LigatureScope): Extension =>
   scope === 'off' ? [] : [ligatures(scope), editorClass('orden-ligatures')],
 )
-
 const punctuationFor = once((on: boolean): Extension => (on ? smartPunctuation() : []))
-
 const headingNumbersFor = once((on: boolean): Extension =>
   on ? [editorClass('orden-numbered'), numberHeadings.of(true)] : [],
 )
-
 const codeLineNumbersFor = once((on: boolean): Extension => (on ? editorClass('orden-line-numbers') : []))
-
 const bracketsFor = once((on: boolean): Extension => (on ? wrapSelection() : []))
-
 const RIGHT_TO_LEFT = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
-
 const STRONG = /\p{L}/u
 const OWN_DIRECTION = new Set(['FencedCode', 'CodeBlock', 'Table', 'FrontMatter', 'BlockMath'])
-
 export function firstStrong(text: string): Direction | null {
   for (const char of text) {
     if (RIGHT_TO_LEFT.test(char)) return Direction.RTL
@@ -208,30 +170,23 @@ export function firstStrong(text: string): Direction | null {
   }
   return null
 }
-
 const UNSHOWN = [/^([ \t>]*(?:[-*+]|\d+[.)])[ \t]+)\[[ xX]\]/, /^([ \t>]*)\[![^\]]*\][+-]?/]
-
 const HIDDEN_WRITING = /\[\[[^\]|]*\||:[\w+-]+:|\]\([^)]*\)|<[^>]*>/g
-
 function shownText(text: string): string {
   return UNSHOWN.reduce((line, mark) => line.replace(mark, '$1'), text).replace(HIDDEN_WRITING, ' ')
 }
-
 function keepsItsOwn(state: EditorState, pos: number): boolean {
   for (let node = syntaxTree(state).resolveInner(pos, 1); node.parent; node = node.parent)
     if (OWN_DIRECTION.has(node.name)) return true
   return false
 }
-
 const asWritten = {
   [Direction.LTR]: Decoration.line({ attributes: { dir: 'ltr' } }),
   [Direction.RTL]: Decoration.line({ attributes: { dir: 'rtl' } }),
 }
-
 function directions(view: EditorView, base: Direction): DecorationSet {
   const { state } = view
   const marks = []
-
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to;) {
       const line = state.doc.lineAt(pos)
@@ -241,21 +196,17 @@ function directions(view: EditorView, base: Direction): DecorationSet {
       pos = line.to + 1
     }
   }
-
   return Decoration.set(marks)
 }
-
 function lineDirections(base: Direction): Extension {
   return [
     EditorView.perLineTextDirection.of(true),
     ViewPlugin.fromClass(
       class {
         decorations: DecorationSet
-
         constructor(view: EditorView) {
           this.decorations = directions(view, base)
         }
-
         update(update: ViewUpdate) {
           if (
             update.docChanged ||
@@ -270,16 +221,13 @@ function lineDirections(base: Direction): Extension {
     ),
   ]
 }
-
 export const leftToRightLines = lineDirections(Direction.LTR)
 export const rightToLeftLines = lineDirections(Direction.RTL)
-
 const directionFor = once((rtl: boolean): Extension =>
   rtl
     ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('orden-rtl'), rightToLeftLines]
     : [EditorView.contentAttributes.of({ dir: 'ltr' }), leftToRightLines],
 )
-
 const spellings = once((setting: string): Extension => {
   const language = setting.slice(setting.indexOf('|') + 1)
   return EditorView.contentAttributes.of({
@@ -287,9 +235,7 @@ const spellings = once((setting: string): Extension => {
     ...(language ? { lang: language } : {}),
   })
 })
-
 const spellingFor = (on: boolean, language?: string): Extension => spellings(`${on ? 'on' : 'off'}|${language ?? ''}`)
-
 export interface ModeSettings {
   source: boolean
   readOnly: boolean
@@ -309,10 +255,8 @@ export interface ModeSettings {
   ligatures: LigatureScope
   vim: boolean
 }
-
 export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
   flushTableEdits()
-
   return [
     strictly.of(settings.strict),
     language.reconfigure(markdownFor(settings.strict)),
@@ -334,20 +278,16 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     vimEffect(settings.vim),
   ]
 }
-
 export function setStrictMode(view: EditorView, on: boolean) {
   flushTableEdits()
   view.dispatch({
     effects: [strictly.of(on), language.reconfigure(markdownFor(on))],
   })
 }
-
 export const parsedFully = (state: EditorState): boolean => state.facet(currentLanguage) !== null
-
 export function setEquationNumbers(view: EditorView, on: boolean) {
   view.dispatch({ effects: equations.reconfigure(numberEquations.of(on)) })
 }
-
 export function setSourceMode(view: EditorView, on: boolean) {
   flushTableEdits()
   view.dispatch({
@@ -356,7 +296,6 @@ export function setSourceMode(view: EditorView, on: boolean) {
       : preview.reconfigure(previewFor(false)),
   })
 }
-
 export function setReadOnlyMode(view: EditorView, on: boolean) {
   flushTableEdits()
   view.dispatch({
@@ -365,57 +304,44 @@ export function setReadOnlyMode(view: EditorView, on: boolean) {
       : readOnly.reconfigure(readOnlyFor(false)),
   })
 }
-
 export function setFocusMode(view: EditorView, on: boolean) {
   view.dispatch({ effects: focus.reconfigure(focusFor(on)) })
 }
-
 export function setQuietMarks(view: EditorView, on: boolean) {
   view.dispatch({ effects: marks.reconfigure(quietMarks.of(on)) })
 }
-
 export function setTypewriterMode(view: EditorView, on: boolean) {
   view.dispatch({ effects: typewriter.reconfigure(typewriterFor(on)) })
 }
-
 export function setLigatures(view: EditorView, scope: LigatureScope) {
   view.dispatch({ effects: glyphs.reconfigure(ligaturesFor(scope)) })
 }
-
 export function setSmartPunctuation(view: EditorView, on: boolean) {
   view.dispatch({ effects: punctuation.reconfigure(punctuationFor(on)) })
 }
-
 export function setHeadingNumbers(view: EditorView, on: boolean) {
   view.dispatch({ effects: headingNumbers.reconfigure(headingNumbersFor(on)) })
 }
-
 export function setCodeLineNumbers(view: EditorView, on: boolean) {
   view.dispatch({ effects: codeLineNumbers.reconfigure(codeLineNumbersFor(on)) })
 }
-
 export function setMeasure(view: EditorView, rem: number) {
   view.dom.style.setProperty('--measure', `${rem}rem`)
   remeasure(view)
 }
-
 export function setLineHeight(view: EditorView, height: number) {
   view.dom.style.setProperty('--leading-content', String(height))
   remeasure(view)
 }
-
 export function remeasure(view: EditorView) {
   if (view.dom.isConnected) view.requestMeasure()
 }
-
 export function setSpellcheck(view: EditorView, on: boolean, language?: string) {
   view.dispatch({ effects: spelling.reconfigure(spellingFor(on, language)) })
 }
-
 export function setCloseBrackets(view: EditorView, on: boolean) {
   view.dispatch({ effects: [brackets.reconfigure(bracketsFor(on)), completionEffect(on)] })
 }
-
 export function setRightToLeft(view: EditorView, on: boolean) {
   view.dispatch({ effects: direction.reconfigure(directionFor(on)) })
 }

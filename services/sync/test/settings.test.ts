@@ -4,47 +4,38 @@ import { computer, hubs } from './hub-fakes'
 
 let env: TestEnv
 let token: string
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
 })
-
 afterEach(() => env.close())
-
 function patch(body: unknown, as = token) {
   return call(env, '/v1/settings', { method: 'PATCH', token: as, body })
 }
-
 describe('account settings', () => {
   test('start empty', async () => {
     const response = await call(env, '/v1/settings', { token })
     expect(response.status).toBe(200)
     expect(response.json.settings).toEqual({})
   })
-
   test('keep what is chosen', async () => {
     const set = await patch({ ligatures: true })
     expect(set.status).toBe(200)
     expect(set.json.settings).toEqual({ ligatures: true })
-
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings).toEqual({ ligatures: true })
   })
-
   test('a change leaves the rest as it was', async () => {
     await patch({ ligatures: true })
     expect((await patch({})).json.settings).toEqual({ ligatures: true })
     expect((await patch({ ligatures: false })).json.settings).toEqual({ ligatures: false })
   })
-
   test('refuse what the app does not know', async () => {
     expect((await patch({ colour: 'red' })).status).toBe(400)
     expect((await patch({ ligatures: 'yes' })).status).toBe(400)
     expect((await patch([true])).status).toBe(400)
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })
-
   test('the ligature scope is one of the three the app offers', async () => {
     for (const scope of ['off', 'code', 'all']) {
       const set = await patch({ ligatures: scope })
@@ -52,17 +43,14 @@ describe('account settings', () => {
       expect(set.json.settings.ligatures).toBe(scope)
     }
   })
-
   test('and a switch from an older build still reads', async () => {
     expect((await patch({ ligatures: true })).json.settings.ligatures).toBe(true)
     expect((await patch({ ligatures: false })).json.settings.ligatures).toBe(false)
   })
-
   test('but not a scope nobody has heard of', async () => {
     expect((await patch({ ligatures: 'sometimes' })).status).toBe(400)
     expect((await patch({ ligatures: 2 })).status).toBe(400)
   })
-
   describe('how long a note keeps its earlier versions', () => {
     test('is one of the intervals the app offers', async () => {
       for (const minutes of [0, 1, 5, 15]) {
@@ -70,14 +58,12 @@ describe('account settings', () => {
         expect(set.status, String(minutes)).toBe(200)
         expect(set.json.settings.recoveryEvery).toBe(minutes)
       }
-
       for (const days of [1, 7, 30]) {
         const set = await patch({ recoveryDays: days })
         expect(set.status, String(days)).toBe(200)
         expect(set.json.settings.recoveryDays).toBe(days)
       }
     })
-
     test('and nothing else', async () => {
       expect((await patch({ recoveryEvery: 3 })).status).toBe(400)
       expect((await patch({ recoveryEvery: '5' })).status).toBe(400)
@@ -85,7 +71,6 @@ describe('account settings', () => {
       expect((await patch({ recoveryDays: 365 })).status).toBe(400)
     })
   })
-
   test('are the account’s alone', async () => {
     const other = await signIn(env, 'c@d.dev')
     await patch({ ligatures: true })
@@ -93,7 +78,6 @@ describe('account settings', () => {
     expect((await call(env, '/v1/settings')).status).toBe(401)
   })
 })
-
 describe('where a pasted picture goes', () => {
   test('is one of the three folders the app offers', async () => {
     for (const folder of ['space', 'note', 'named']) {
@@ -102,19 +86,16 @@ describe('where a pasted picture goes', () => {
       expect(set.json.settings.attachments).toBe(folder)
     }
   })
-
   test('is nothing else', async () => {
     expect((await patch({ attachments: 'vault' })).status).toBe(400)
     expect((await patch({ attachments: true })).status).toBe(400)
     expect((await patch({ attachments: null })).status).toBe(400)
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })
-
   test('says which names it takes', async () => {
     expect((await patch({ attachments: 'vault' })).json.error).toContain('space, note, named')
   })
 })
-
 describe('the keyboard an account is on', () => {
   test('is one of the ones the app has', async () => {
     for (const preset of ['default', 'notion', 'obsidian', 'vscode', 'vim', 'custom']) {
@@ -123,7 +104,6 @@ describe('the keyboard an account is on', () => {
       expect(set.json.settings.preset).toBe(preset)
     }
   })
-
   test('is nothing else', async () => {
     expect((await patch({ preset: 'emacs' })).status).toBe(400)
     expect((await patch({ preset: '' })).status).toBe(400)
@@ -131,14 +111,11 @@ describe('the keyboard an account is on', () => {
     expect((await patch({ preset: null })).status).toBe(400)
     expect((await patch({ preset: ['vim'] })).status).toBe(400)
   })
-
   test('says which names it takes', async () => {
     expect((await patch({ preset: 'emacs' })).json.error).toContain('default, notion, obsidian')
   })
-
   test('travels beside the map it names', async () => {
     await patch({ preset: 'custom', shortcuts: { 'format.bold': 'Mod-Alt-b' } })
-
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings).toEqual({
       preset: 'custom',
@@ -146,36 +123,30 @@ describe('the keyboard an account is on', () => {
     })
   })
 })
-
 describe('the formatting marks kept quiet on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ quietMarks: true })).json.settings.quietMarks).toBe(true)
     expect((await patch({ quietMarks: false })).json.settings.quietMarks).toBe(false)
   })
-
   test('is nothing else', async () => {
     expect((await patch({ quietMarks: 'yes' })).status).toBe(400)
   })
 })
-
 describe('Silent mode on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ silent: true })).json.settings.silent).toBe(true)
     expect((await patch({ silent: false })).json.settings.silent).toBe(false)
   })
-
   test('is nothing else', async () => {
     expect((await patch({ silent: 1 })).status).toBe(400)
   })
 })
-
 describe('the spaces an account put away', () => {
   test('are a list of space ids', async () => {
     const kept = await patch({ archivedSpaces: ['a1B2-c3', 'x_9'] })
     expect(kept.json.settings.archivedSpaces).toEqual(['a1B2-c3', 'x_9'])
     expect((await patch({ archivedSpaces: [] })).json.settings.archivedSpaces).toEqual([])
   })
-
   test('and nothing else', async () => {
     expect((await patch({ archivedSpaces: 'a1' })).status).toBe(400)
     expect((await patch({ archivedSpaces: ['a/b'] })).status).toBe(400)
@@ -183,46 +154,38 @@ describe('the spaces an account put away', () => {
     expect((await patch({ archivedSpaces: Array.from({ length: 101 }, (_, at) => `s${at}`) })).status).toBe(400)
   })
 })
-
 describe('turning a canvas with two fingers, on an account (#351)', () => {
   test('is on or off', async () => {
     expect((await patch({ canvasTurns: true })).json.settings.canvasTurns).toBe(true)
     expect((await patch({ canvasTurns: false })).json.settings.canvasTurns).toBe(false)
   })
-
   test('is nothing else', async () => {
     const refused = await patch({ canvasTurns: 'yes' })
     expect(refused.status).toBe(400)
     expect(refused.json.error).toBe('canvasTurns must be true or false')
   })
-
   test('and its snap to right angles is on or off (#487)', async () => {
     expect((await patch({ canvasTurnSnaps: false })).json.settings.canvasTurnSnaps).toBe(false)
     expect((await patch({ canvasTurnSnaps: 'no' })).status).toBe(400)
   })
 })
-
 describe('modal editing on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ vim: true })).json.settings.vim).toBe(true)
     expect((await patch({ vim: false })).json.settings.vim).toBe(false)
   })
-
   test('is nothing else', async () => {
     expect((await patch({ vim: 'yes' })).status).toBe(400)
     expect((await patch({ vim: 1 })).status).toBe(400)
     expect((await patch({ vim: null })).status).toBe(400)
   })
-
   test('sits beside the keyboard rather than inside it', async () => {
     await patch({ preset: 'obsidian' })
     await patch({ vim: true })
-
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings).toEqual({ preset: 'obsidian', vim: true })
   })
 })
-
 describe('what an account lets ping about its chats', () => {
   test('keeps keywords, hours, previews and sound', async () => {
     const hours = { days: [1, 2, 3, 4, 5], from: 540, to: 1080 }
@@ -239,11 +202,9 @@ describe('what an account lets ping about its chats', () => {
       chatPreviews: false,
       chatSound: true,
     })
-
     const cleared = await patch({ chatHours: null })
     expect(cleared.json.settings.chatHours).toBeNull()
   })
-
   test('refuses what the decision could not read', async () => {
     expect((await patch({ chatKeywords: 'thesis' })).status).toBe(400)
     expect((await patch({ chatKeywords: [''] })).status).toBe(400)
@@ -254,54 +215,45 @@ describe('what an account lets ping about its chats', () => {
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })
 })
-
 describe('the glasses an account reads on', () => {
   test('start a page at a heading level, or at none', async () => {
     expect((await patch({ glassesBreak: 2 })).json.settings.glassesBreak).toBe(2)
     expect((await patch({ glassesBreak: 0 })).json.settings.glassesBreak).toBe(0)
     expect((await patch({ glassesBreak: 6 })).json.settings.glassesBreak).toBe(6)
   })
-
   test('refuse a heading level there is no such thing as', async () => {
     expect((await patch({ glassesBreak: 7 })).status).toBe(400)
     expect((await patch({ glassesBreak: -1 })).status).toBe(400)
     expect((await patch({ glassesBreak: '2' })).status).toBe(400)
   })
-
   test('carry the three switches', async () => {
     const set = await patch({
       glassesLineNumbers: false,
       glassesPageNumber: true,
       glassesVoice: true,
     })
-
     expect(set.json.settings).toMatchObject({
       glassesLineNumbers: false,
       glassesPageNumber: true,
       glassesVoice: true,
     })
   })
-
   test('refuse a switch that is not one', async () => {
     for (const name of ['glassesLineNumbers', 'glassesPageNumber', 'glassesVoice']) {
       expect((await patch({ [name]: 'yes' })).status, name).toBe(400)
     }
   })
-
   test('carry the model and the effort', async () => {
     const set = await patch({ glassesModel: 'gpt-6-astra', glassesEffort: 'high' })
-
     expect(set.json.settings).toMatchObject({
       glassesModel: 'gpt-6-astra',
       glassesEffort: 'high',
     })
   })
-
   test('refuse an effort the model API does not take', async () => {
     expect((await patch({ glassesEffort: 'max' })).status).toBe(200)
     expect((await patch({ glassesEffort: 'banana' })).status).toBe(400)
   })
-
   test('carry how much white space reaches the panel, and who scrolls', async () => {
     for (const level of ['none', 'collapse', 'aggressive']) {
       expect((await patch({ glassesCompaction: level })).status, level).toBe(200)
@@ -309,70 +261,55 @@ describe('the glasses an account reads on', () => {
     for (const mode of ['paged', 'native']) {
       expect((await patch({ glassesScroll: mode })).status, mode).toBe(200)
     }
-
     expect((await patch({ glassesCompaction: 'a bit' })).status).toBe(400)
     expect((await patch({ glassesScroll: 'sideways' })).status).toBe(400)
   })
-
   test('carry the markers a reader turned on, and only the ones there are', async () => {
     const set = await patch({ glassesMarks: { fence: true, bold: true } })
     expect(set.status).toBe(200)
     expect(set.json.settings.glassesMarks).toEqual({ fence: true, bold: true })
-
     expect((await patch({ glassesMarks: { subheading: true } })).status).toBe(400)
     expect((await patch({ glassesMarks: { bold: 'yes' } })).status).toBe(400)
     expect((await patch({ glassesMarks: [true] })).status).toBe(400)
   })
-
   test('carry the phrases a reader rebound', async () => {
     const set = await patch({ glassesWords: { next: 'vorwärts', close: 'zu' } })
     expect(set.status).toBe(200)
     expect(set.json.settings.glassesWords).toEqual({ next: 'vorwärts', close: 'zu' })
-
     expect((await patch({ glassesWords: { next: 'x'.repeat(61) } })).status).toBe(400)
     expect((await patch({ glassesWords: { 'Not An Id': 'no' } })).status).toBe(400)
     expect((await patch({ glassesWords: { next: 12 } })).status).toBe(400)
   })
-
   test('remember that a phone or a tablet has been used', async () => {
     expect((await patch({ mobileSeen: true })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.mobileSeen).toBe(true)
     expect((await patch({ mobileSeen: 'yes' })).status).toBe(400)
   })
-
   test('remember that a pair of glasses has answered', async () => {
     expect((await patch({ glassesSeen: true })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.glassesSeen).toBe(true)
     expect((await patch({ glassesSeen: 'yes' })).status).toBe(400)
   })
-
   test('and hand that to every other device on the account', async () => {
     const phone = await signIn(env, 'a@b.dev')
     const desktop = await signIn(env, 'a@b.dev')
-
     const before = await call(env, '/v1/settings', { token: desktop })
     expect(before.json.settings.glassesSeen).toBeUndefined()
-
     expect((await patch({ glassesSeen: true }, phone)).status).toBe(200)
-
     const after = await call(env, '/v1/settings', { token: desktop })
     expect(after.json.settings.glassesSeen).toBe(true)
   })
-
   test('refuse a model long enough to be a novel', async () => {
     expect((await patch({ glassesModel: 'x'.repeat(101) })).status).toBe(400)
     expect((await patch({ glassesModel: 'gpt-6-astra' })).status).toBe(200)
   })
-
   test('do not carry the key at all, and say only whether there is one', async () => {
     expect((await patch({ glassesKey: 'sk-proj-AbC123-_xyz' })).status).toBe(400)
-
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings.glassesKey).toBeUndefined()
     expect(read.json.key).toEqual({ set: false, tail: '' })
   })
 })
-
 describe('a name that is not a setting', () => {
   test('is refused even when Object has one of its own', async () => {
     for (const name of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
@@ -382,12 +319,10 @@ describe('a name that is not a setting', () => {
         raw: JSON.stringify({ [name]: true }),
         headers: { 'content-type': 'application/json' },
       })
-
       expect(response.status, name).toBe(400)
       expect(response.json.error, name).toContain('unknown setting')
     }
   })
-
   test('says back as much of it as is worth saying and no more', async () => {
     const long = `weather${'A'.repeat(5000)}`
     const response = await call(env, '/v1/settings', {
@@ -396,12 +331,10 @@ describe('a name that is not a setting', () => {
       raw: JSON.stringify({ [long]: true }),
       headers: { 'content-type': 'application/json' },
     })
-
     expect(response.status).toBe(400)
     expect(response.json.error).toContain('unknown setting weather')
     expect(response.json.error.length).toBeLessThanOrEqual('unknown setting '.length + 64)
   })
-
   test('leaves the settings as they were', async () => {
     await patch({ ligatures: true })
     await call(env, '/v1/settings', {
@@ -410,27 +343,22 @@ describe('a name that is not a setting', () => {
       raw: '{"__proto__":{"ligatures":false}}',
       headers: { 'content-type': 'application/json' },
     })
-
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ ligatures: true })
   })
 })
-
 describe('the kinds an account turned off', () => {
   test('are kept as a list of words', async () => {
     const set = await patch({ hiddenKinds: ['canvas', 'online'] })
     expect(set.status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.hiddenKinds).toEqual(['canvas', 'online'])
   })
-
   test('take null, which is every kind offered', async () => {
     expect((await patch({ hiddenKinds: null })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.hiddenKinds).toBeNull()
   })
-
   test('keep a kind this version has never heard of', async () => {
     expect((await patch({ hiddenKinds: ['something-new'] })).status).toBe(200)
   })
-
   test('refuse what is not a list of kinds', async () => {
     expect((await patch({ hiddenKinds: 'canvas' })).status).toBe(400)
     expect((await patch({ hiddenKinds: ['Canvas'] })).status).toBe(400)
@@ -441,63 +369,51 @@ describe('the kinds an account turned off', () => {
     expect((await patch({ hiddenKinds: many })).status).toBe(400)
   })
 })
-
 describe('the phone bar an account carries', () => {
   test('keeps the commands on it, in order', async () => {
     const set = await patch({ toolbar: ['format.bold', 'paragraph.quote'] })
     expect(set.status).toBe(200)
     expect(set.json.settings.toolbar).toEqual(['format.bold', 'paragraph.quote'])
-
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings.toolbar).toEqual(['format.bold', 'paragraph.quote'])
   })
-
   test('takes null, which is the default bar', async () => {
     expect((await patch({ toolbar: null })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.toolbar).toBeNull()
   })
-
   test('takes a bar with nothing on it', async () => {
     expect((await patch({ toolbar: [] })).status).toBe(200)
   })
-
   test('keeps a command this version has never heard of', async () => {
     expect((await patch({ toolbar: ['something.new'] })).status).toBe(200)
   })
-
   test('refuses what is not a command id', async () => {
     expect((await patch({ toolbar: ['Format Bold'] })).status).toBe(400)
     expect((await patch({ toolbar: ['../etc'] })).status).toBe(400)
     expect((await patch({ toolbar: [7] })).status).toBe(400)
     expect((await patch({ toolbar: 'format.bold' })).status).toBe(400)
   })
-
   test('refuses the same command twice', async () => {
     expect((await patch({ toolbar: ['format.bold', 'format.bold'] })).status).toBe(400)
   })
-
   test('refuses more than a bar holds', async () => {
     const many = Array.from({ length: 25 }, (_unused, index) => `app.thing-${index}`)
     expect((await patch({ toolbar: many })).status).toBe(400)
   })
 })
-
 describe('the shortcuts an account carries', () => {
   test('keep a map of keys', async () => {
     const set = await patch({ shortcuts: { 'format.bold': 'Mod-Alt-b', 'app.save': 'F2' } })
     expect(set.status).toBe(200)
     expect(set.json.settings.shortcuts).toEqual({ 'format.bold': 'Mod-Alt-b', 'app.save': 'F2' })
-
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings.shortcuts).toEqual({ 'format.bold': 'Mod-Alt-b', 'app.save': 'F2' })
   })
-
   test('take a key that was taken away', async () => {
     const set = await patch({ shortcuts: { 'format.bold': null } })
     expect(set.status).toBe(200)
     expect(set.json.settings.shortcuts).toEqual({ 'format.bold': null })
   })
-
   test('take the awkward combinations the app really writes', async () => {
     const keys = {
       'paragraph.heading-down': 'Mod--',
@@ -508,20 +424,16 @@ describe('the shortcuts an account carries', () => {
       'table.below': 'ArrowDown',
       'edit.redo.alt': 'Ctrl-Shift-z',
     }
-
     expect((await patch({ shortcuts: keys })).status).toBe(200)
   })
-
   test('keep an id this version has never heard of', async () => {
     expect((await patch({ shortcuts: { 'something.new': 'Mod-9' } })).status).toBe(200)
   })
-
   test('refuse an id that is not one', async () => {
     expect((await patch({ shortcuts: { 'Format Bold': 'Mod-b' } })).status).toBe(400)
     expect((await patch({ shortcuts: { '../etc': 'Mod-b' } })).status).toBe(400)
     expect((await patch({ shortcuts: { ['a'.repeat(65)]: 'Mod-b' } })).status).toBe(400)
   })
-
   test('refuse a value that is not a key', async () => {
     expect((await patch({ shortcuts: { 'format.bold': 'Hyper-b' } })).status).toBe(400)
     expect((await patch({ shortcuts: { 'format.bold': 'Mod b' } })).status).toBe(400)
@@ -529,44 +441,34 @@ describe('the shortcuts an account carries', () => {
     expect((await patch({ shortcuts: { 'format.bold': 7 } })).status).toBe(400)
     expect((await patch({ shortcuts: { 'format.bold': { key: 'Mod-b' } } })).status).toBe(400)
   })
-
   test('refuse anything but a map', async () => {
     expect((await patch({ shortcuts: [] })).status).toBe(400)
     expect((await patch({ shortcuts: 'Mod-b' })).status).toBe(400)
     expect((await patch({ shortcuts: null })).status).toBe(400)
   })
-
   test('refuse more than an account holds', async () => {
     const many = Object.fromEntries(Array.from({ length: 201 }, (_, index) => [`app.thing-${index}`, 'Mod-b']))
-
     expect((await patch({ shortcuts: many })).status).toBe(400)
   })
-
   test('refuse a body too big for the column', async () => {
     const big = Object.fromEntries(
       Array.from({ length: 199 }, (_, index) => [`app.${'thing'.repeat(10)}-${index}`, 'Mod-Alt-Shift-ArrowDown']),
     )
-
     expect((await patch({ shortcuts: big })).status).toBe(413)
   })
-
   test('leave nothing behind when they are refused', async () => {
     await patch({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
     await patch({ shortcuts: { 'format.bold': 'nonsense key' } })
-
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings.shortcuts).toEqual({ 'format.bold': 'Mod-Alt-b' })
   })
-
   test('sit beside the other settings rather than replacing them', async () => {
     await patch({ ligatures: true })
     await patch({ shortcuts: { 'app.save': 'F2' } })
-
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings).toEqual({ ligatures: true, shortcuts: { 'app.save': 'F2' } })
   })
 })
-
 describe('the theme kept with the account', () => {
   const LOOK = {
     theme: 'file:rose',
@@ -574,30 +476,25 @@ describe('the theme kept with the account', () => {
     values: { '*': { accent: 'teal' }, 'file:rose': { dim: 20 } },
     css: '[data-theme=dark] { --bg: #000; }',
   }
-
   test('is kept and read back as it was sent', async () => {
     expect((await patch({ look: LOOK })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ look: LOOK })
   })
-
   test('refuses one the app could not wear', async () => {
     expect((await patch({ look: { ...LOOK, scheme: 'sepia' } })).status).toBe(400)
     expect((await patch({ look: { ...LOOK, theme: 'file:../x' } })).status).toBe(400)
     expect((await patch({ look: 'dark' })).status).toBe(400)
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })
-
   test('takes a sheet larger than the room the other settings share', async () => {
     const css = `:root { --bg: #000; }${' '.repeat(20 * 1024)}`
     expect((await patch({ look: { ...LOOK, css } })).status).toBe(200)
     expect((await patch({ ligatures: true })).status).toBe(200)
   })
-
   test('leaves an older build that knows nothing of it working', async () => {
     await patch({ look: LOOK })
     expect((await patch({ vim: true })).json.settings).toEqual({ look: LOOK, vim: true })
   })
-
   test('tells every device of the account that the settings moved', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     try {
@@ -606,10 +503,8 @@ describe('the theme kept with the account', () => {
       const laptop = await computer(env, running, 'owner@example.com', 'Laptop')
       const phone = await computer(env, running, 'owner@example.com', 'Phone')
       const stranger = await computer(env, running, 'stranger@example.com', 'Stranger')
-
       const sent = await patch({ look: LOOK }, laptop.token)
       expect(sent.status).toBe(200)
-
       expect(phone.socket.take()).toEqual([{ t: 'settings' }])
       expect(laptop.socket.take()).toEqual([{ t: 'settings' }])
       expect(stranger.socket.take()).toEqual([])
@@ -618,14 +513,12 @@ describe('the theme kept with the account', () => {
     }
   })
 })
-
 describe('a setting the app no longer has', () => {
   const RETIRED: Record<string, unknown> = {
     spellWords: ['orden', 'tauri'],
     pull: 'app.palette',
     undatedInToday: false,
   }
-
   test('is taken from an older build and kept nowhere', async () => {
     for (const [name, value] of Object.entries(RETIRED)) {
       const set = await patch({ [name]: value, ligatures: true })
@@ -634,13 +527,11 @@ describe('a setting the app no longer has', () => {
     }
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ ligatures: true })
   })
-
   test('is taken whatever shape it has', async () => {
     for (const name of Object.keys(RETIRED)) {
       expect((await patch({ [name]: { not: 'what it was' } })).status, name).toBe(200)
     }
   })
-
   test('is not handed back where an account stored it before', async () => {
     env.db.exec(`update users set settings = '${JSON.stringify({ ...RETIRED, vim: true })}'`)
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ vim: true })

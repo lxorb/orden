@@ -6,9 +6,7 @@ import { BODY_INNER } from './panel'
 import fenceTable from '../../markdown/src/fence-table.json'
 
 const lines = (source: string, inner = BODY_INNER) => markLines(source, { inner }).map((one) => one.text)
-
 const one = (source: string) => lines(source).join('\n')
-
 describe('marks that only style words', () => {
   test.each([
     ['bold', 'a **bold** word', 'a bold word'],
@@ -21,92 +19,69 @@ describe('marks that only style words', () => {
   ])('%s is its words and nothing else', (_what, source, want) => {
     expect(one(source)).toBe(want)
   })
-
   test('leaves no asterisk, underscore or tilde behind', () => {
     const set = one('**bold** *italic* ~~struck~~ ==lit== ^up^ ~down~')
-
     expect(set).not.toMatch(/[*_~=]/)
   })
 })
-
 describe('marks that say what something is', () => {
   test('inline code keeps its ticks', () => {
     expect(one('call `readNote()` first')).toBe(fold('call `readNote()` first'))
     expect(one('call `readNote()` first')).toContain('‘readNote()‘')
   })
-
   test('a fence says what it is called, above it, and names its language alone', () => {
     expect(lines('```ts src/main.ts\nconst a = 1\n```\n')).toEqual(['src/main.ts', '‘‘‘ts', 'const a = 1', '‘‘‘'])
   })
-
   test('and reads a caption written the way other editors write one', () => {
     expect(lines('```ts title="What it does"\nconst a = 1\n```\n')[0]).toBe('What it does')
     expect(lines("```ts title='What it does'\nconst a = 1\n```\n")[0]).toBe('What it does')
   })
-
   test('and the caption is glued to the block it names', () => {
     const marked = markLines('```ts src/main.ts\nconst a = 1\n```\n', { inner: BODY_INNER })
-
     expect(marked.map((line) => line.glued)).toEqual([false, true, true, true])
   })
-
   test('and the caption is there even with the fence lines turned off', () => {
     const marked = markLines('```ts src/main.ts\nconst a = 1\n```\n', {
       inner: BODY_INNER,
       marks: { ...MARKS, fence: false },
     })
-
     expect(marked.map((line) => line.text)).toEqual(['src/main.ts', 'const a = 1'])
   })
-
   test('a fence keeps its code exactly, indentation and all', () => {
     const set = lines('```py\ndef go():\n    return 1\n```\n')
-
     expect(set[2]).toBe('    return 1')
   })
-
   test('a tab in a fence becomes the spaces it stood for', () => {
     expect(lines('```go\nfunc a() {\n\treturn 1\n}\n```\n')[2]).toBe('  return 1')
   })
-
   test('maths keeps its dollars, since its source is what there is to read', () => {
     expect(one('the value $E = mc^2$ here')).toBe('the value $E = mc^2$ here')
     expect(lines('$$\nE = mc^2\n$$\n')).toEqual(['$$', 'E = mc^2', '$$'])
   })
 })
-
 describe('a heading', () => {
   test('is set in capitals, with a heavy rule under a first level one', () => {
     const set = lines('# The title\n\nWords.\n')
-
     expect(set[0]).toBe('THE TITLE')
     expect(set[1]).toBe('═'.repeat(28))
     expect(width(set[1] ?? '')).toBe(BODY_INNER)
   })
-
   test('has a light rule under a second level one', () => {
     expect(lines('## A section\n')[1]).toBe('─'.repeat(28))
   })
-
   test('says which level it is, so a page can start at one', () => {
     const marked = markLines('# One\n\n## Two\n\n### Three\n', { inner: BODY_INNER })
-
     expect(marked.filter((line) => line.level > 0).map((line) => line.level)).toEqual([1, 2, 3])
   })
-
   test('marks its own underline as furniture rather than as a line of the note', () => {
     const marked = markLines('## A section\n', { inner: BODY_INNER })
-
     expect(marked.map((line) => line.under)).toEqual([false, true])
   })
-
   test('keeps a rule the author wrote apart from an underline', () => {
     const marked = markLines('## A section\n\n---\n', { inner: BODY_INNER })
-
     expect(marked.map((line) => line.under)).toEqual([false, true, false])
   })
 })
-
 describe('a list', () => {
   test('never draws a task with a glyph the font lacks', () => {
     for (const letter of one('- [ ] a\n- [x] b\n')) {
@@ -114,26 +89,21 @@ describe('a list', () => {
       expect(draws(letter.codePointAt(0) ?? 0), letter).toBe(true)
     }
   })
-
   test('sets what follows an item at the item’s own indent', () => {
     expect(lines('- one\n\n  more about one\n')).toEqual(['• one', 'more about one'])
     expect(lines('- one\n  - inside\n\n    under it\n')).toEqual(['• one', '   · inside', '   under it'])
   })
 })
-
 describe('a quote', () => {
   test('drops the callout marker itself', () => {
     expect(one('> [!note]\n> Something.\n')).not.toContain('[!note]')
   })
-
   test('says a title of the writer’s own rather than the kind, as written', () => {
     expect(lines('> [!tip] Mind the gap\n> Between the two.\n')).toEqual(['│ Mind the gap', '│ Between the two.'])
   })
-
   test('swallows the fold sign, which is not words', () => {
     expect(one('> [!warning]- Shut\n> Behind it.\n')).not.toContain(']-')
   })
-
   test('takes a marker line with a rule under it for the callout it opens', () => {
     for (const source of [
       '> [!note] Title\n> ---\n> body\n',
@@ -144,7 +114,6 @@ describe('a quote', () => {
       expect(lines(source)[0]).toMatch(/^│ (Title|NOTE)$/)
     }
   })
-
   test('reads code that starts with a marker as the code it is', () => {
     for (const source of ['>     [!note] T\n', '> ```md\n> [!note] x\n> ```\n']) {
       expect(lines(source).join('\n')).toContain('[!note]')
@@ -152,22 +121,18 @@ describe('a quote', () => {
     }
   })
 })
-
 describe('a comment', () => {
   test('is not set on the panel, whichever way it is written', () => {
     expect(one('Words %% to myself %% here.\n')).not.toContain('to myself')
     expect(one('Words <!-- to myself --> here.\n')).not.toContain('to myself')
   })
-
   test('inside a fence is what the fence is showing', () => {
     expect(one('```\n%% kept %%\n```\n')).toContain('%% kept %%')
   })
 })
-
 describe('nothing in a note is dropped', () => {
   test('a table becomes columns that line up', () => {
     const set = lines('| Kind | Size |\n| --- | ---: |\n| Image | 288 |\n| Text | 27 |\n')
-
     expect(set).toHaveLength(4)
     expect(set[1]).toMatch(/^─+$/)
     expect(set[0]).toContain('Kind')
@@ -175,56 +140,43 @@ describe('nothing in a note is dropped', () => {
     expect(set[3]).toContain('27')
     expect(width(set[0]?.split(/ {2,}/)[0] ?? '')).toBeLessThanOrEqual(width('Image  '))
   })
-
   test('a right aligned column is set to the right', () => {
     const set = lines('| a | n |\n| --- | ---: |\n| x | 1 |\n| y | 1000 |\n')
-
     expect(width(set[2] ?? '')).toBeCloseTo(width(set[3] ?? ''), -1)
   })
-
   test('a table too wide for the panel is fitted, not dropped', () => {
     const wide = `| ${'a'.repeat(80)} | ${'b'.repeat(80)} |\n| --- | --- |\n| ${'c'.repeat(80)} | ${'d'.repeat(80)} |\n`
     const set = lines(wide)
-
     expect(set).toHaveLength(3)
     for (const row of set) expect(width(row)).toBeLessThanOrEqual(BODY_INNER)
     expect(set[2]).toContain('…')
   })
-
   test('a rule reaches the whole width', () => {
     expect(width(lines('---\n')[0] ?? '')).toBe(BODY_INNER)
   })
-
   test('a titled chart is its title, because a panel of one font cannot draw one', () => {
     expect(lines('```chart\ntype: bar\ntitle: Two quarters\nseries:\n  - data: [1, 2]\n```\n')).toEqual([
       '▤ Two quarters',
     ])
   })
-
   test('and an untitled one stays its numbers, which are the part that can be read', () => {
     const said = lines('```chart\nseries:\n  - data: [1, 2]\n```\n')
     expect(said.join('\n')).toContain('data: [1, 2]')
   })
-
   test('a footnote is a superscript, and its note is set under the same mark', () => {
     const set = lines('A claim.[^1]\n\n[^1]: The evidence.\n')
-
     expect(set[0]).toBe('A claim.¹')
     expect(set).toContain('¹')
     expect(set.join('\n')).toContain('The evidence.')
   })
-
   test('a paragraph hard wrapped in the file is one line at the top compaction', () => {
     const flowed = (source: string) =>
       markLines(source, { inner: BODY_INNER, compaction: 'aggressive' }).map((one) => one.text)
-
     expect(flowed('one two\nthree four\nfive six\n')).toEqual(['one two three four five six'])
     expect(flowed('- one two\n  three four\n')).toEqual(['• one two three four'])
     expect(flowed('> one two\n> three four\n')).toEqual(['│ one two three four'])
-
     expect(lines('one two\nthree four\n')).toEqual(['one two', 'three four'])
   })
-
   test('leaves nothing of a note unaccounted for', () => {
     const note = [
       '# Everything',
@@ -268,9 +220,7 @@ describe('nothing in a note is dropped', () => {
       '[^1]: because',
       '',
     ].join('\n')
-
     const set = one(note)
-
     for (const want of [
       'EVERYTHING',
       'bold',
@@ -297,45 +247,35 @@ describe('nothing in a note is dropped', () => {
     ]) {
       expect(set, want).toContain(want)
     }
-
     for (const letter of set) {
       if (letter === '\n') continue
       expect(draws(letter.codePointAt(0) ?? 0), JSON.stringify(letter)).toBe(true)
     }
   })
 })
-
 describe('where a line came from', () => {
   test('says which line of the note each one is', () => {
     const marked = markLines('one\n\ntwo\n\nthree\n', { inner: BODY_INNER })
-
     expect(marked.map((line) => line.at)).toEqual([1, 3, 5])
   })
-
   test('counts front matter, because a reader taken there means the file', () => {
     const marked = markLines('---\na: b\n---\n\nwords\n', { inner: BODY_INNER })
-
     expect(marked[0]?.at).toBe(5)
   })
-
   test('gives every line of a fence its own place in the file', () => {
     const marked = markLines('```\nalpha\nbeta\n```\n', { inner: BODY_INNER })
-
     expect(marked.map((line) => line.at)).toEqual([1, 2, 3, 4])
   })
-
   test('only ever moves forwards through the note', () => {
     const marked = markLines('# One\n\ntext\n\n- a\n- b\n\n> q\n\n```\nc\n```\n\n| h |\n| --- |\n| r |\n', {
       inner: BODY_INNER,
     })
-
     let last = -1
     for (const line of marked) {
       expect(line.from).toBeGreaterThanOrEqual(last)
       last = line.from
     }
   })
-
   test.each([
     ['fenced', 'Intro\n\n```\ncode one\ncode two\n```\n\nAfter\n'],
     ['indented', 'Intro\n\n    code one\n    code two\n\nAfter\n'],
@@ -345,7 +285,6 @@ describe('where a line came from', () => {
   ])('puts each line of a %s code block where it stands in the note', (_what, note) => {
     const marked = markLines(note, { inner: BODY_INNER })
     const at = (text: string) => marked.find((line) => line.text.trim() === text)
-
     for (const text of ['code one', 'code two', 'After']) {
       expect(at(text)?.from).toBe(note.lastIndexOf('\n', note.indexOf(text)) + 1)
       expect(at(text)?.at).toBe(note.slice(0, note.indexOf(text)).split('\n').length)
@@ -356,7 +295,6 @@ describe('where a line came from', () => {
       last = line.from
     }
   })
-
   test('never places a line before the one above it, however a list or quote swallows lines', () => {
     const note =
       '- a\n\n  ```\n  <b> ' +
@@ -380,81 +318,63 @@ describe('where a line came from', () => {
       }
     }
   })
-
   test('glues what must not be parted from the line above it', () => {
     const marked = markLines('```\nalpha\n```\n', { inner: BODY_INNER })
-
     expect(marked.map((line) => line.glued)).toEqual([false, true, true])
   })
-
   test('glues a table to its head', () => {
     const marked = markLines('| a |\n| --- |\n| 1 |\n| 2 |\n', { inner: BODY_INNER })
-
     expect(marked.map((line) => line.glued)).toEqual([false, true, true, true])
   })
 })
-
 describe('what it costs', () => {
   const note = Array.from(
     { length: 200 },
     (_one, at) =>
       `## Section ${at}\n\nSome prose about section ${at}, long enough to wrap across the panel more than once.\n\n- a point\n- another\n`,
   ).join('\n')
-
   function marking(source: string) {
     workDone()
     const marked = markLines(source, { inner: BODY_INNER })
     return { marked, work: workDone() }
   }
-
   test('marks a note of twenty thousand characters, and counts what that took', () => {
     const { marked, work } = marking(note)
-
     expect(marked).toHaveLength(work.lines)
     expect(marked.length).toBeGreaterThan(800)
-
     expect(work.blocks).toBeGreaterThan(marked.length)
     expect(work.blocks).toBeLessThan(marked.length * 2)
-
     expect(work.folded).toBeGreaterThan(note.length / 2)
     expect(work.folded).toBeLessThan(note.length * 1.5)
-
     expect(work.searched).toBeLessThan(note.length * 2)
   })
-
   test('and twice the note is twice the work, not four times', () => {
     const once = marking(note)
     const twice = marking([note, note].join('\n'))
-
     expect(twice.work.lines).toBe(once.work.lines * 2)
     expect(twice.work.folded).toBe(once.work.folded * 2)
     expect(twice.work.blocks).toBeLessThan(once.work.blocks * 2 + 10)
     expect(twice.work.searched).toBeLessThan(once.work.searched * 2 + 100)
   })
-
   test('and does the whole of it in time in step with its length', () => {
     const sections = note.split(/(?=^## )/m)
     const marked = linearly(
       (count) => markLines(sections.slice(0, count).join(''), { inner: BODY_INNER }),
       sections.length,
     )
-
     expect(marked.length).toBeGreaterThan(800)
   })
 })
-
 describe('where a fence ends', () => {
   test('its closing line says its own line of the note', () => {
     const lines = markLines('```\na\nb\n```\n\nafter', { inner: 576 })
     expect(lines.map((line) => line.at)).toEqual([1, 2, 3, 4, 6])
   })
-
   test('with a longer fence and nothing after it', () => {
     const lines = markLines('````\na\n````', { inner: 576 })
     expect(lines.map((line) => line.at)).toEqual([1, 2, 3])
   })
 })
-
 describe('a fence, as every parser of a note reads it', () => {
   test.each(fenceTable as [string, string, string[]][])('%j', (note, shape, ids) => {
     const said = lines(note).join('\n')
@@ -463,7 +383,6 @@ describe('a fence, as every parser of a note reads it', () => {
     if (shape.endsWith('w') && last !== -1) expect(said.trimEnd().endsWith('words')).toBe(true)
   })
 })
-
 describe('a word the front matter says as well', () => {
   test('is found where the page has it', () => {
     const note = '---\ntitle: Same\n---\n\nSame\n\n> q\n> r\n'
@@ -473,19 +392,16 @@ describe('a word the front matter says as well', () => {
     expect(marked.map((line) => line.at)).toEqual([5, 7, 8])
   })
 })
-
 describe('a block name', () => {
   test('is no words of the note', () => {
     expect(lines('words ^abc123\n\nmore')).toEqual(['words', 'more'])
     expect(lines('| a |\n| - |\n\n^abc123\n\nmore').at(-1)).toBe('more')
     expect(lines('a\n\n^abc123\n\nb')).toEqual(['a', 'b'])
   })
-
   test('in code it is code', () => {
     expect(lines('```\nx ^abc123\n```').join('\n')).toContain('x ^abc123')
   })
 })
-
 describe('a block name', () => {
   test('moves no line, however many there are', () => {
     const note = Array.from({ length: 60 }, (_, at) => `Paragraph ${at} ^blk${at}\n`).join('\n')
@@ -495,7 +411,6 @@ describe('a block name', () => {
     }
     expect(marked.map((one) => one.text).join('\n')).not.toContain('^blk')
   })
-
   test('moves no line in a list, or in a paragraph that goes on under it', () => {
     const list = Array.from({ length: 6 }, (_, at) => `- item ${at} ^blk00${at}\n`).join('')
     const items = markLines(list, { inner: BODY_INNER })
@@ -510,7 +425,6 @@ describe('a block name', () => {
     }
     expect(markLines(paragraph, { inner: BODY_INNER }).at(-1)?.from).toBe(paragraph.indexOf('two'))
   })
-
   test('is set the same as with it cut, and in every kind of block', () => {
     const shown = (source: string) => markLines(source, { inner: BODY_INNER }).map((one) => one.text.trimEnd())
     for (const [named, plain] of [
@@ -524,7 +438,6 @@ describe('a block name', () => {
     }
   })
 })
-
 describe('a front matter value with a comment sign in it', () => {
   test('leaves the note under it', () => {
     for (const value of ['50%% off', '<!-- x', 'a %% b %% c']) {
@@ -537,7 +450,6 @@ describe('a front matter value with a comment sign in it', () => {
     }
   })
 })
-
 test.each<[unknown, ...Parameters<typeof one>]>([
   [['‘‘‘ts', 'const a = 1', '‘‘‘'].join('\n'), '```ts\nconst a = 1\n```\n'],
   ['before a mark after', 'before ![a mark](m.png) after'],
@@ -558,7 +470,6 @@ test.each<[unknown, ...Parameters<typeof one>]>([
 ])('%j from %j', (expected, ...args) => {
   expect(one(...args)).toBe(expected)
 })
-
 test.each<[unknown, ...Parameters<typeof lines>]>([
   [['‘‘‘', 'plain', '‘‘‘'], '```\nplain\n```\n'],
   [['DEEPER'], '### Deeper\n'],

@@ -22,26 +22,20 @@ use watching::{armed, Heard, Root, Watch, MOST_CHANGES};
 
 #[derive(Default)]
 pub struct Watching(Mutex<Option<Watch>>);
-
 impl Watching {
     fn lock(&self) -> MutexGuard<'_, Option<Watch>> {
         self.0.held()
     }
 }
-
 #[derive(Default)]
 pub struct Working(Mutex<HashMap<PathBuf, Watch>>);
-
 impl Working {
     fn lock(&self) -> MutexGuard<'_, HashMap<PathBuf, Watch>> {
         self.0.held()
     }
 }
-
 const KEPT: &str = ".orden";
-
 const WORKING: &str = ".work";
-
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Listed {
@@ -53,7 +47,6 @@ pub struct Listed {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     unlisted: bool,
 }
-
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Change {
@@ -70,7 +63,6 @@ pub enum Change {
         to: Listed,
     },
 }
-
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct News {
@@ -81,14 +73,12 @@ pub struct News {
     #[serde(skip_serializing_if = "Option::is_none")]
     unwatched: Option<watching::Unwatched>,
 }
-
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Listing {
     listed: Vec<Listed>,
     done: bool,
 }
-
 fn listed(root: &Path, one: Found) -> Listed {
     Listed {
         path: spelled(root, &one.rel),
@@ -99,11 +89,9 @@ fn listed(root: &Path, one: Found) -> Listed {
         unlisted: one.unlisted,
     }
 }
-
 fn spelled(root: &Path, rel: &Path) -> String {
     root.join(rel).to_string_lossy().into_owned()
 }
-
 fn change(root: &Path, seen: Seen) -> Change {
     match seen {
         Seen::Created(one) => Change::Created(listed(root, one)),
@@ -119,7 +107,6 @@ fn change(root: &Path, seen: Seen) -> Change {
         },
     }
 }
-
 fn news(roots: &[Root], heard: Heard) -> News {
     let root = &roots[heard.root].given;
     News {
@@ -134,11 +121,9 @@ fn news(roots: &[Root], heard: Heard) -> News {
         unwatched: heard.unwatched,
     }
 }
-
 fn judged_root(app: &AppHandle, root: &str) -> Result<Root, String> {
     rooted(a_space(app, root)?, root)
 }
-
 fn working_copy(spaces: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
     let home = spaces.join(KEPT).join(WORKING);
@@ -154,11 +139,9 @@ fn working_copy(spaces: &Path, path: &str) -> Result<PathBuf, String> {
     }
     Ok(target)
 }
-
 fn judged_working(app: &AppHandle, root: &str) -> Result<Root, String> {
     rooted(working_copy(&spaces_dir(app)?, root)?, root)
 }
-
 fn rooted(given: PathBuf, root: &str) -> Result<Root, String> {
     let real = std::fs::canonicalize(&given).map_err(|error| cannot("watch", &given, &error))?;
     if !real.is_dir() {
@@ -166,21 +149,18 @@ fn rooted(given: PathBuf, root: &str) -> Result<Root, String> {
     }
     Ok(Root { given, real })
 }
-
 #[tauri::command(async)]
 pub fn space_watch(app: AppHandle, roots: Vec<String>, news: Channel<News>) -> Result<(), String> {
     let judged = roots
         .iter()
         .map(|root| judged_root(&app, root))
         .collect::<Result<Vec<_>, _>>()?;
-
     let watching = app.state::<Watching>();
     let mut running = watching.lock();
     if judged.is_empty() {
         *running = None;
         return Ok(());
     }
-
     let spelled = judged.clone();
     let made = armed(judged)?
         .replacing(&mut running)
@@ -190,17 +170,14 @@ pub fn space_watch(app: AppHandle, roots: Vec<String>, news: Channel<News>) -> R
     *running = Some(made);
     Ok(())
 }
-
 #[tauri::command(async)]
 pub fn space_unwatch(app: AppHandle) {
     *app.state::<Watching>().lock() = None;
 }
-
 #[tauri::command(async)]
 pub fn space_scan(app: AppHandle, root: String, listing: Channel<Listing>) -> Result<(), String> {
     scanned(&judged_root(&app, &root)?, &listing)
 }
-
 #[tauri::command(async)]
 pub fn working_watch(app: AppHandle, root: String, news: Channel<News>) -> Result<(), String> {
     let judged = judged_working(&app, &root)?;
@@ -215,7 +192,6 @@ pub fn working_watch(app: AppHandle, root: String, news: Channel<News>) -> Resul
         Box::new(move |heard| news.send(self::news(&spelled, heard)).is_ok()),
     )
 }
-
 #[tauri::command(async)]
 pub fn working_unwatch(app: AppHandle, root: String) -> Result<(), String> {
     let given = working_copy(&spaces_dir(&app)?, &root)?;
@@ -223,17 +199,14 @@ pub fn working_unwatch(app: AppHandle, root: String) -> Result<(), String> {
     drop(old);
     Ok(())
 }
-
 #[tauri::command(async)]
 pub fn working_scan(app: AppHandle, root: String, listing: Channel<Listing>) -> Result<(), String> {
     scanned(&judged_working(&app, &root)?, &listing)
 }
-
 fn scanned(root: &Root, listing: &Channel<Listing>) -> Result<(), String> {
     let mut chunk = Vec::with_capacity(MOST_CHANGES);
     let mut left = MAX_ENTRIES;
     let mut sent = Ok(());
-
     walk::walk(&root.real, Path::new(""), &mut left, &mut |one| {
         chunk.push(listed(&root.given, one));
         if chunk.len() == MOST_CHANGES && sent.is_ok() {
@@ -245,7 +218,6 @@ fn scanned(root: &Root, listing: &Channel<Listing>) -> Result<(), String> {
         }
     })?;
     sent.map_err(|error| error.to_string())?;
-
     listing
         .send(Listing {
             listed: chunk,
@@ -253,12 +225,10 @@ fn scanned(root: &Root, listing: &Channel<Listing>) -> Result<(), String> {
         })
         .map_err(|error| error.to_string())
 }
-
 #[tauri::command(async)]
 pub fn file_identity(app: AppHandle, path: String) -> Result<Option<String>, String> {
     Ok(identity::identity(&in_spaces(&app, &path)?))
 }
-
 #[cfg(test)]
 mod tests {
     use super::{change, working_copy, Change, Listed, KEPT, WORKING};
@@ -292,7 +262,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn what_the_window_is_told() {
         let root = Path::new("/spaces/Work");
@@ -305,7 +274,6 @@ mod tests {
             unlisted: false,
             id: Some("2a:1f".into()),
         };
-
         let renamed = change(
             root,
             Seen::Renamed {
@@ -319,7 +287,6 @@ mod tests {
             json!({ "kind": "renamed", "from": spelled("Old.md"), "path": spelled("New.md"),
                     "dir": false, "size": 5, "mtime": 1_700_000_000_000_u64, "id": "2a:1f" })
         );
-
         let removed = change(
             root,
             Seen::Removed {
@@ -332,7 +299,6 @@ mod tests {
             serde_json::to_value(&removed).expect("json"),
             json!({ "kind": "removed", "path": spelled("Gone"), "dir": true, "id": null })
         );
-
         let created = Change::Created(Listed {
             path: "p".into(),
             dir: false,

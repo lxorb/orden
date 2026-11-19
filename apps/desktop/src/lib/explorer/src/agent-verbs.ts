@@ -9,7 +9,6 @@ import { asked, type Call, done, gatedBy, inTime, maybe, need, Refused, verbsOf 
 import type { ExplorerView as View } from './view.svelte'
 
 const OPS = 'op is list, open, go, select, trash, move, copy, rename or mkdir'
-
 export async function explorerTabs(call: Call): Promise<AgentAnswer> {
   const op = need(call, 'op')
   const { viewOf } = await import('./view.svelte')
@@ -30,11 +29,9 @@ export async function explorerTabs(call: Call): Promise<AgentAnswer> {
     await view.appear()
     return shown(tab, view)
   }
-
   const tab = explorerTab(call)
   const view = viewOf(tab)
   if (!view.listing) await view.appear()
-
   switch (op) {
     case 'go': {
       const folder = await looked(call, await absolute(need(call, 'path')))
@@ -60,7 +57,6 @@ export async function explorerTabs(call: Call): Promise<AgentAnswer> {
       throw new Refused('bad_arguments', OPS)
   }
 }
-
 async function changed(
   call: Call,
   op: 'trash' | 'move' | 'copy' | 'rename' | 'mkdir',
@@ -84,7 +80,6 @@ async function changed(
   const category: Category = op === 'trash' ? 'trashing' : call.caller.agent?.mode === 'confirm' ? 'writing' : 'files'
   const question = await asked(call, category, summary(op, paths, to, maybe(call, 'name')), folder)
   if (question) return question
-
   inTime(call, `the ${op} began`)
   const said: string[] = []
   const tell = view.tell.bind(view)
@@ -117,7 +112,6 @@ async function changed(
   if (said.length) throw new Refused('failed', said.join('; '))
   return shown(tab, view)
 }
-
 function summary(op: string, paths: readonly string[], to: string | null, name: string | null): string {
   const what = paths.length === 1 ? (paths[0] ?? '') : `${paths.length} files`
   switch (op) {
@@ -133,7 +127,6 @@ function summary(op: string, paths: readonly string[], to: string | null, name: 
       return `Make the folder ${name ?? ''}`
   }
 }
-
 async function looked(call: Call, folder: string): Promise<string | AgentAnswer> {
   const [{ inASpace }, { listFolder }] = await Promise.all([import('./open'), import('./commands')])
   let listing
@@ -154,11 +147,9 @@ async function looked(call: Call, folder: string): Promise<string | AgentAnswer>
   }
   return listing.path
 }
-
 function stepsAside(path: string): boolean {
   return /^\\\\[?.]\\/.test(path) || path.split(/[\\/]/).some((step) => step === '.' || step === '..')
 }
-
 async function absolute(asked: string): Promise<string> {
   const said = asked.trim()
   if (stepsAside(said)) {
@@ -175,7 +166,6 @@ async function absolute(asked: string): Promise<string> {
   }
   return said
 }
-
 export function namesAt(
   rows: readonly { name: string }[],
   pathOf: (name: string) => string,
@@ -185,9 +175,7 @@ export function namesAt(
   const wanted = new Set(paths.map((one) => pathKeyAs(one, folds)))
   return rows.filter((one) => wanted.has(pathKeyAs(pathOf(one.name), folds))).map((one) => one.name)
 }
-
 const MOST_PATHS = 1000
-
 async function pathsOf(call: Call, view: View): Promise<string[]> {
   const raw = call.args.paths ?? (call.args.path === undefined ? undefined : [call.args.path])
   if (!Array.isArray(raw) || !raw.length || !raw.every((one) => typeof one === 'string')) {
@@ -206,7 +194,6 @@ async function pathsOf(call: Call, view: View): Promise<string[]> {
   }
   return out
 }
-
 function explorerTab(call: Call): Tab {
   const id = need(call, 'tab')
   const tab = workspace.tabs.find((one) => one.id === id)
@@ -216,14 +203,12 @@ function explorerTab(call: Call): Tab {
   }
   return tab
 }
-
 const listed = (tab: Tab, view: View) => ({
   tab: tab.id,
   folder: view.listing?.path ?? view.folder,
   picked: view.chosen,
   view: view.search ? 'search' : 'folder',
 })
-
 const shown = (tab: Tab, view: View): AgentAnswer =>
   done(
     {
@@ -238,7 +223,6 @@ const shown = (tab: Tab, view: View): AgentAnswer =>
     },
     `the names of files in ${view.listing?.path ?? 'a folder'}`,
   )
-
 export const explorerVerbs = verbsOf({
   explorer_tabs: gatedBy(() => explorerOn(), 'the file explorer is', explorerTabs),
 })

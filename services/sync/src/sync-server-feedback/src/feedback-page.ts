@@ -8,7 +8,6 @@ export interface PageReport {
   state: IssueState | null
   images: readonly string[]
 }
-
 export function standing(report: Pick<PageReport, 'filed' | 'state'>): string {
   if (!report.filed) return 'Received. It is waiting to be filed for the team.'
   if (report.state === 'done') return 'Closed: this has been dealt with.'
@@ -16,7 +15,6 @@ export function standing(report: Pick<PageReport, 'filed' | 'state'>): string {
   if (report.state === 'open') return 'Filed. It is open and in the queue.'
   return 'Received and filed for the team.'
 }
-
 const STYLE = `
 :root { color-scheme: light dark; --bg: #f7f7f5; --card: #fff; --text: #1a1d23;
   --muted: #6b7380; --line: #e2e3e6; --accent: #2f6fde; }
@@ -40,7 +38,6 @@ h1 { font-size: 20px; margin: 0 0 8px; }
 .images img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; }
 .note { color: var(--muted); font-size: 13px; margin: 20px 0 0; }
 `
-
 function page(body: string): string {
   return `<!doctype html>
 <html lang="en">
@@ -54,7 +51,6 @@ function page(body: string): string {
 <body><main><p class="brand">Orden</p><div class="card">${body}</div></main></body>
 </html>`
 }
-
 export function reportPage(report: PageReport | null): string {
   if (!report) {
     return page(`<h1>No report here</h1>

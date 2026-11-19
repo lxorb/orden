@@ -1,7 +1,5 @@
 import sys
-
 from settling import HIDE_CARET, steady
-
 import harness
 from harness import Drive
 
@@ -11,9 +9,7 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 INSTALL = ["github", "rose", "solar", "graphite", "newsprint", "mono"]
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -26,7 +22,6 @@ async () => {
   return ws.files.length
 }
 """
-
 INSTALLING = """
 async (ids) => {
   const store = window.ordenApp.themeStore
@@ -42,7 +37,6 @@ async (ids) => {
   return theme.files.map((one) => one.id)
 }
 """
-
 STATE = """
 () => ({
   id: window.ordenApp.theme.id,
@@ -52,7 +46,6 @@ STATE = """
   open: !!document.querySelector('[role="dialog"][aria-label="Themes"]'),
 })
 """
-
 TIMED = """
 async (name) => {
   const card = [...document.querySelectorAll('[role="option"]')].find((one) => one.textContent.includes(name))
@@ -74,12 +67,10 @@ async (name) => {
   return { styled, frames, painted: performance.now() - start }
 }
 """
-
 def check(what: str, ok: bool) -> None:
     say(f"{'ok  ' if ok else 'FAIL'} {what}")
     if not ok:
         failures.append(what)
-
 def main() -> int:
     with DRIVE.session() as browser:
         context = browser.new_context(
@@ -91,18 +82,14 @@ def main() -> int:
         context.add_init_script(HIDE_CARET)
         page = context.new_page()
         page.on("pageerror", lambda error: say(f"page error: {error}"))
-
         def shot(name: str) -> None:
             picture = steady(page, lambda: page.screenshot(), say, name)
             (SHOTS / f"{name}.png").write_bytes(picture)
             say(f"shot {name}")
-
         def state() -> dict:
             return page.evaluate(STATE)
-
         def card(name: str):
             return page.locator('[role="option"]', has_text=name).first
-
         DRIVE.open(page)
         page.evaluate(SEED)
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
@@ -110,13 +97,10 @@ def main() -> int:
         say(f"installed {', '.join(installed)}")
         check("the store installed the six themes", {f"file:{one}" for one in INSTALL} <= set(installed))
         page.wait_for_timeout(300)
-
         who = page.locator('.foot [aria-haspopup="menu"]')
-
         def themes() -> None:
             who.click()
             page.locator("[role=menu] [role=menuitem]", has_text="Themes").first.click()
-
         themes()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         box = page.locator('[role="dialog"][aria-label="Themes"]').bounding_box()
@@ -129,17 +113,14 @@ def main() -> int:
             and abs(box["x"] - near["x"]) < 400,
         )
         shot("1-open-from-button")
-
         card("GitHub").hover()
         now = state()
         check("pointing at GitHub puts it on the app", now["id"] == "file:github")
         check("and writes nothing down", now["kept"] == "default")
         shot("2-pointing-github")
-
         card("Rose").hover()
         check("pointing at Rose tries Rose", state()["id"] == "file:rose")
         shot("3-pointing-rose")
-
         card("Newsprint").hover()
         now = state()
         check(
@@ -147,21 +128,18 @@ def main() -> int:
             now["id"] == "file:newsprint" and now["scheme"] == "light",
         )
         shot("4-pointing-newsprint")
-
         timing = page.evaluate(TIMED, "Solar")
         say(
             f"Solar on the page in frame {timing['frames']} after the pointer moved"
             f" ({timing['styled']:.1f} ms styled, {timing['painted']:.1f} ms painted)"
         )
         check("a theme is on the page within two frames", timing["frames"] <= 2)
-
         page.mouse.move(1200, 60)
         now = state()
         check(
             "moving off the cards gives the kept theme back",
             now["id"] == "default" and now["scheme"] == "dark" and now["open"],
         )
-
         page.keyboard.press("ArrowRight")
         check("the arrows try a theme", state()["id"] == "contrast")
         page.keyboard.press("ArrowDown")
@@ -173,14 +151,12 @@ def main() -> int:
             f"Escape after trying {tried} closes and puts back the kept theme",
             now["id"] == "default" and now["kept"] == "default" and not now["open"],
         )
-
         themes()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         card("Graphite").hover()
         page.mouse.click(1100, 400)
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]', state="detached")
         check("a press outside puts back the kept theme", state()["id"] == "default")
-
         themes()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         page.locator('[role="radiogroup"] button[aria-label="Light"]').hover()
@@ -192,7 +168,6 @@ def main() -> int:
         shot("5-pointing-light")
         card("Solar").hover()
         shot("6-pointing-solar")
-
         card("Solar").click()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]', state="detached")
         now = state()
@@ -201,7 +176,6 @@ def main() -> int:
             now["id"] == "file:solar" and now["kept"] == "file:solar" and not now["open"],
         )
         shot("7-kept-solar")
-
         page.keyboard.press("Control+Shift+P")
         page.wait_for_selector('input[role="combobox"]')
         page.keyboard.type("Switch theme")
@@ -214,7 +188,6 @@ def main() -> int:
             box is not None and abs(box["x"] + box["width"] / 2 - 640) < 4,
         )
         shot("8-open-from-palette")
-
         page.keyboard.type("gra")
         now = state()
         check("typing narrows to Graphite and tries it", now["id"] == "file:graphite")
@@ -222,7 +195,6 @@ def main() -> int:
         page.keyboard.press("Enter")
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]', state="detached")
         check("and Enter keeps it", state()["kept"] == "file:graphite")
-
         page.evaluate(
             "() => { window.ordenApp.theme.select('default'); window.ordenApp.theme.setScheme('light') }"
         )
@@ -230,12 +202,9 @@ def main() -> int:
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         shot("10-light-open")
         page.keyboard.press("Escape")
-
     if failures:
         say(f"{len(failures)} failed: {'; '.join(failures)}")
         return 1
-
     say("every promise kept")
     return 0
-
 sys.exit(main())

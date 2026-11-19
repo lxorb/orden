@@ -4,9 +4,7 @@ import { describe, expect, test } from 'vitest'
 
 const source = readFileSync(new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url), 'utf8')
 const script = /pub const SCRIPT: &str = r"([\s\S]*?)";/.exec(source)?.[1] ?? ''
-
 type Listening = 'bare' | 'stops' | 'takes'
-
 function page(listening: Listening) {
   const dom = new JSDOM('<input id="field">', { runScripts: 'outside-only' })
   const asked: string[] = []
@@ -16,7 +14,6 @@ function page(listening: Listening) {
     return null
   }
   inside.eval(script.replaceAll('!event.isTrusted', 'false'))
-
   const field = inside.document.getElementById('field') as HTMLInputElement
   for (const type of ['keydown', 'keyup']) {
     field.addEventListener(type, (event) => {
@@ -24,20 +21,17 @@ function page(listening: Listening) {
       if (listening === 'takes') event.preventDefault()
     })
   }
-
   const press = (type: 'keydown' | 'keyup', init: KeyboardEventInit & { keyCode?: number }) =>
     field.dispatchEvent(new inside.KeyboardEvent(type, { bubbles: true, cancelable: true, ...init }))
   const settled = () => new Promise((done) => inside.setTimeout(done, 5))
   return { asked, press, settled }
 }
-
 async function pressedWithCtrl(listening: Listening, keyCode: number, shiftKey = false) {
   const { asked, press, settled } = page(listening)
   press('keydown', { key: 'x', keyCode, ctrlKey: true, shiftKey })
   await settled()
   return asked
 }
-
 async function shiftTwice(listening: Listening) {
   const { asked, press, settled } = page(listening)
   for (let tap = 0; tap < 2; tap++) {
@@ -47,46 +41,37 @@ async function shiftTwice(listening: Listening) {
   await settled()
   return asked
 }
-
 describe('Ctrl+Space in a page', () => {
   test('asks when nothing in the page heard it', async () => {
     expect(await pressedWithCtrl('bare', 32)).toEqual(['orden-ctrl-space'])
   })
-
   test('asks when a field keeps it from the page and leaves its default', async () => {
     expect(await pressedWithCtrl('stops', 32)).toEqual(['orden-ctrl-space'])
     expect(await pressedWithCtrl('stops', 32, true)).toEqual(['orden-ctrl-shift-space'])
   })
-
   test("is the page's when it takes it", async () => {
     expect(await pressedWithCtrl('takes', 32)).toEqual([])
   })
 })
-
 describe('Shift twice in a page', () => {
   test('asks once when nothing in the page heard it', async () => {
     expect(await shiftTwice('bare')).toEqual(['orden-twice-shift'])
   })
-
   test('asks once when a field keeps it from the page', async () => {
     expect(await shiftTwice('stops')).toEqual(['orden-twice-shift'])
   })
-
   test("is the page's when it takes it", async () => {
     expect(await shiftTwice('takes')).toEqual([])
   })
 })
-
 describe('the keys an engine or a page has its own use for', () => {
   test("Ctrl+F kept from the page is the engine's, whose own find opens", async () => {
     expect(await pressedWithCtrl('stops', 70)).toEqual([])
     expect(await pressedWithCtrl('bare', 70)).toEqual(['orden-find'])
   })
-
   test("Ctrl+0 kept from the page is the engine's", async () => {
     expect(await pressedWithCtrl('stops', 48)).toEqual([])
   })
-
   test("an Escape kept from the page closed something of the page's", async () => {
     const { asked, press, settled } = page('stops')
     press('keydown', { key: 'Escape', keyCode: 27 })
@@ -94,10 +79,8 @@ describe('the keys an engine or a page has its own use for', () => {
     expect(asked).toEqual([])
   })
 })
-
 describe('the same keys on the engine with no answer of its own', () => {
   const onChromium = /const STOPPED_ENGINE_KEYS: &str = "(.*?)";/.exec(source)?.[1] ?? ''
-
   test.each([
     [70, 'orden-find'],
     [71, 'orden-find-next'],
@@ -126,7 +109,6 @@ describe('the same keys on the engine with no answer of its own', () => {
     expect(asked).toEqual([name])
   })
 })
-
 describe('the other chords, which only a preventDefault keeps', () => {
   test.each([
     [68, false, 'orden-ctrl-d'],
@@ -138,7 +120,6 @@ describe('the other chords, which only a preventDefault keeps', () => {
     expect(await pressedWithCtrl('takes', code, shift)).toEqual([])
   })
 })
-
 describe('a tab a page asks to open in front', () => {
   function opening(active: boolean | null = null) {
     const dom = new JSDOM('<button id="press">', { runScripts: 'outside-only' })
@@ -156,13 +137,11 @@ describe('a tab a page asks to open in front', () => {
     const press = () => happens('pointerdown')
     return { asked, asks, press, happens }
   }
-
   test('is blocked when nobody pressed anything', () => {
     const { asked, asks } = opening()
     for (let one = 0; one < 3; one++) asks(`https://ads.example/${one}`)
     expect(asked).toEqual(['orden-popup-blocked', 'orden-popup-blocked', 'orden-popup-blocked'])
   })
-
   test('opens once for a press, and the next ask in that press is blocked', () => {
     const { asked, asks, press } = opening()
     press()
@@ -170,7 +149,6 @@ describe('a tab a page asks to open in front', () => {
     asks('https://ads.example/b')
     expect(asked).toEqual(['orden-front', 'orden-popup-blocked'])
   })
-
   test('opens once for a press however many of its events the page opens in', () => {
     const { asked, asks, press, happens } = opening()
     press()
@@ -181,14 +159,12 @@ describe('a tab a page asks to open in front', () => {
     }
     expect(asked).toEqual(['orden-front', ...Array<string>(4).fill('orden-popup-blocked')])
   })
-
   test('opens once for a press in a frame inside the page, which only the activation tells of', () => {
     const { asked, asks } = opening(true)
     asks('https://example.com/a')
     asks('https://ads.example/b')
     expect(asked).toEqual(['orden-front', 'orden-popup-blocked'])
   })
-
   test('is blocked once the press is spent, whenever the page last heard one', () => {
     const { asked, asks, press } = opening(false)
     press()

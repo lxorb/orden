@@ -2,7 +2,6 @@ use std::borrow::Cow;
 use tauri::ipc::InvokeBody;
 
 pub const ARGS_HEADER: &str = "orden-args";
-
 pub fn raw_sent<'a, T: serde::de::DeserializeOwned>(
     headers: &tauri::http::HeaderMap,
     body: &'a InvokeBody,
@@ -19,7 +18,6 @@ pub fn raw_sent<'a, T: serde::de::DeserializeOwned>(
     let bytes = bytes_sent(body).ok_or("what came is not bytes")?;
     Ok((args, bytes))
 }
-
 pub fn bytes_sent(body: &InvokeBody) -> Option<Cow<'_, [u8]>> {
     match body {
         InvokeBody::Raw(bytes) => Some(Cow::Borrowed(bytes)),
@@ -31,11 +29,9 @@ pub fn bytes_sent(body: &InvokeBody) -> Option<Cow<'_, [u8]>> {
         InvokeBody::Json(_) => None,
     }
 }
-
 #[cfg(test)]
 mod tests {
     const PNG: &[u8] = &[0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff];
-
     #[test]
     fn what_is_sent_beside_raw_bytes_is_read_back_whole() {
         #[derive(serde::Deserialize, Debug, PartialEq)]
@@ -71,7 +67,6 @@ mod tests {
         assert!(read(header("%FF"), tauri::ipc::InvokeBody::Raw(PNG.to_vec())).is_err());
         assert!(read(header("%7B%7D"), tauri::ipc::InvokeBody::Raw(PNG.to_vec())).is_err());
     }
-
     #[test]
     fn bytes_arrive_raw_or_as_numbers_and_nothing_else() {
         use tauri::ipc::InvokeBody;

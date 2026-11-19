@@ -5,31 +5,26 @@ export const HOUR = 3_600_000
 export const MINUTE = 60_000
 export const counts = (ms: number): boolean => ms >= MINUTE / 2
 export type Range = 'day' | 'week' | 'month'
-
 export interface Piece {
   span: Span
   from: number
   to: number
 }
-
 export interface Total {
   activity: string | null
   ms: number
 }
-
 export function daysAfter(day: number, count: number): number {
   const date = new Date(day)
   date.setDate(date.getDate() + count)
   return midnightOf(date.getTime())
 }
-
 export function startOf(range: Range, at: number): number {
   const date = new Date(midnightOf(at))
   if (range === 'week') date.setDate(date.getDate() - ((date.getDay() + 6) % 7))
   if (range === 'month') date.setDate(1)
   return date.getTime()
 }
-
 export function endOf(range: Range, start: number): number {
   if (range === 'day') return daysAfter(start, 1)
   if (range === 'week') return daysAfter(start, 7)
@@ -37,7 +32,6 @@ export function endOf(range: Range, start: number): number {
   date.setMonth(date.getMonth() + 1)
   return date.getTime()
 }
-
 export function stepped(range: Range, start: number, by: number): number {
   if (range === 'day') return daysAfter(start, by)
   if (range === 'week') return daysAfter(start, 7 * by)
@@ -45,14 +39,11 @@ export function stepped(range: Range, start: number, by: number): number {
   date.setMonth(date.getMonth() + by)
   return date.getTime()
 }
-
 interface Reach {
   size: number
   ends: Float64Array | null
 }
-
 const reaches = new WeakMap<readonly Span[], Reach>()
-
 function reachOf(spans: readonly Span[]): Float64Array | null {
   const known = reaches.get(spans)
   if (known?.size === spans.length) return known.ends
@@ -71,7 +62,6 @@ function reachOf(spans: readonly Span[]): Float64Array | null {
   reaches.set(spans, { size: spans.length, ends })
   return ends
 }
-
 function firstWhere(size: number, past: (index: number) => boolean): number {
   let low = 0
   let high = size
@@ -82,7 +72,6 @@ function firstWhere(size: number, past: (index: number) => boolean): number {
   }
   return low
 }
-
 export function near(spans: readonly Span[], from: number, to: number): readonly Span[] {
   const ends = reachOf(spans)
   if (!ends) return spans
@@ -90,7 +79,6 @@ export function near(spans: readonly Span[], from: number, to: number): readonly
   const first = firstWhere(last, (index) => (ends[index] ?? from) >= from)
   return spans.slice(first, last)
 }
-
 export function piecesIn(
   spans: readonly Span[],
   from: number,
@@ -109,7 +97,6 @@ export function piecesIn(
   }
   return out.sort((one, other) => one.from - other.from)
 }
-
 function covered(pieces: readonly Piece[]): number {
   const sorted = [...pieces].sort((one, other) => one.from - other.from)
   let ms = 0
@@ -121,7 +108,6 @@ function covered(pieces: readonly Piece[]): number {
   }
   return ms
 }
-
 export function totalsOf(pieces: readonly Piece[]): Total[] {
   const by = new Map<string | null, Piece[]>()
   for (const piece of pieces) {
@@ -134,20 +120,16 @@ export function totalsOf(pieces: readonly Piece[]): Total[] {
     .filter((one) => counts(one.ms))
     .sort((one, other) => other.ms - one.ms)
 }
-
 export const wholeOf = (pieces: readonly Piece[]): number => covered(pieces)
-
 export function lasting(ms: number): string {
   const minutes = Math.floor(Math.max(0, ms) / MINUTE)
   return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`
 }
-
 export function ticking(ms: number): string {
   const seconds = Math.floor(Math.max(0, ms) / 1000)
   const rest = String(seconds % 60).padStart(2, '0')
   return `${lasting(seconds * 1000)}:${rest}`
 }
-
 export function atClock(day: number, clock: string): number | null {
   const found = /^(\d{1,2}):(\d{2})$/.exec(clock.trim())
   if (!found) return null
@@ -158,7 +140,6 @@ export function atClock(day: number, clock: string): number | null {
   date.setHours(hours, minutes, 0, 0)
   return date.getTime()
 }
-
 export function clockOf(at: number): string {
   const date = new Date(at)
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`

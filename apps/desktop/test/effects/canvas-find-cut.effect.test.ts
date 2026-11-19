@@ -6,13 +6,11 @@ import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
 import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
 let close: (() => void) | undefined
-
 afterEach(() => {
   close?.()
   close = undefined
   document.body.replaceChildren()
 })
-
 test('a cut in the find field leaves the card it found on the plane', () => {
   const text = writeCanvas({
     ...emptyCanvas(),
@@ -30,12 +28,10 @@ test('a cut in the find field leaves the card it found on the plane', () => {
   const shown = mount(Canvas, { target, props: { tab: new Tab(note, 'pane'), focused: true } })
   close = () => void unmount(shown, { outro: false })
   flushSync()
-
   const host = target.querySelector<HTMLElement>('.canvas')
   if (!host) throw new Error('no plane')
   host.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true }))
   flushSync()
-
   const field = target.querySelector<HTMLInputElement>('.find input')
   if (!field) throw new Error('no find field')
   field.value = 'invoice'
@@ -43,15 +39,12 @@ test('a cut in the find field leaves the card it found on the plane', () => {
   flushSync()
   field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
   flushSync()
-
   field.dispatchEvent(new Event('cut', { bubbles: true, cancelable: true }))
   flushSync()
   close()
   close = undefined
-
   expect(readCanvas(note.text).nodes.map((node) => node.id)).toEqual(['a', 'b'])
 })
-
 test('Ctrl+F with the find bar up takes the caret back to its field, the word chosen', () => {
   const text = writeCanvas({
     ...emptyCanvas(),
@@ -66,7 +59,6 @@ test('Ctrl+F with the find bar up takes the caret back to its field, the word ch
   const shown = mount(Canvas, { target, props: { tab: new Tab(note, 'pane'), focused: true } })
   close = () => void unmount(shown, { outro: false })
   flushSync()
-
   const host = target.querySelector<HTMLElement>('.canvas')
   if (!host) throw new Error('no plane')
   const find = () => {
@@ -79,14 +71,12 @@ test('Ctrl+F with the find bar up takes the caret back to its field, the word ch
   field.value = 'invoice'
   field.dispatchEvent(new Event('input', { bubbles: true }))
   flushSync()
-
   host.focus()
   expect(document.activeElement).toBe(host)
   find()
   expect(document.activeElement).toBe(field)
   expect([field.selectionStart, field.selectionEnd]).toEqual([0, 'invoice'.length])
 })
-
 test('a find goes to a locked card it finds, though a locked card cannot be picked', () => {
   const text = writeCanvas({
     ...emptyCanvas(),
@@ -118,7 +108,6 @@ test('a find goes to a locked card it finds, though a locked card cannot be pick
   const shown = mount(Canvas, { target, props: { tab, focused: true } })
   close = () => void unmount(shown, { outro: false })
   flushSync()
-
   const store = CanvasStore.drawing(note, [tab])
   if (!store) throw new Error('no store')
   store.pick('a')
@@ -133,7 +122,6 @@ test('a find goes to a locked card it finds, though a locked card cannot be pick
   flushSync()
   field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
   flushSync()
-
   expect(store.camera.x).toBeCloseTo(9125)
   expect(store.camera.y).toBeCloseTo(9030)
 })

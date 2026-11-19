@@ -5,7 +5,6 @@
   import { propertyName } from './words'
 
   const { kit, column }: { kit: Kit; column: string } = $props()
-
   const base = $derived(kit.live.base)
 </script>
 

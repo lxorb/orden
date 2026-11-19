@@ -6,17 +6,14 @@ import { svelte, walk } from './files'
 
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
 const SHEET = fileURLToPath(new URL('../../../packages/themes/src/base.css', import.meta.url))
-
 test('every field reads each line in the direction of its words, its placeholder in the app’s', () => {
   const sheet = readFileSync(SHEET, 'utf8')
   expect(sheet).toMatch(/textarea,\s*input:is\([\s\S]*?\)\s*\{\s*unicode-bidi:\s*plaintext;/)
-
   const fixed = walk(SOURCE, svelte).filter((path) =>
     /<(?:textarea|input)\b[^>]*\bdir="auto"/.test(readFileSync(path, 'utf8')),
   )
   expect(fixed).toEqual([])
 })
-
 test('a name alone in its label is laid out in its own direction, so a cut-off keeps its start', () => {
   const alone = /<(span|p|div|strong)\b(?:[^>{]|\{[^}]*\})*>\s*<bdi>\{[^<]*\}<\/bdi\s*>\s*<\/\1\s*>/g
   const isolated = walk(SOURCE, svelte).flatMap((path) =>
@@ -26,14 +23,12 @@ test('a name alone in its label is laid out in its own direction, so a cut-off k
   )
   expect(isolated).toEqual([])
 })
-
 test('no name sits in a bare bdi, whose clipped label would keep the app’s direction and cut its start', () => {
   const bare = walk(SOURCE, svelte).flatMap((path) =>
     [...readFileSync(path, 'utf8').matchAll(/<bdi\s*>/g)].map(() => path.slice(SOURCE.length)),
   )
   expect(bare).toEqual([])
 })
-
 test('a label aligned with its row says so in a way Chromium reads too', () => {
   const sheets = [SHEET, ...walk(SOURCE, svelte)]
   const lone = sheets.flatMap((path) =>
@@ -47,7 +42,6 @@ test('a label aligned with its row says so in a way Chromium reads too', () => {
   )
   expect(lone).toEqual([])
 })
-
 test('a box laid out in its name’s direction carries no gap or flow of its own that would turn with it', () => {
   const turned = walk(SOURCE, svelte).flatMap((path) => {
     const text = readFileSync(path, 'utf8')
@@ -75,7 +69,6 @@ test('a box laid out in its name’s direction carries no gap or flow of its own
   })
   expect(turned).toEqual([])
 })
-
 test('a code, key or address is laid out left to right, so its groups keep their order in right-to-left', () => {
   const sheet = readFileSync(SHEET, 'utf8')
   expect(sheet).toMatch(

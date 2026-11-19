@@ -11,14 +11,12 @@ interface TaskOut {
   due?: string
   priority?: number
 }
-
 export function priorityOf(quick: QuickPriority | undefined): Priority {
   if (quick === 1) return 3
   if (quick === 2) return 2
   if (quick === 3) return 1
   return 0
 }
-
 const taskOut = (todo: Todo): TaskOut => ({
   at: todo.id,
   space: todo.space ?? '',
@@ -27,7 +25,6 @@ const taskOut = (todo: Todo): TaskOut => ({
   ...(todo.deadline === null ? {} : { due: todo.deadline }),
   ...(todo.priority === 0 ? {} : { priority: 4 - todo.priority }),
 })
-
 export async function addTask(text: string, options: { typed?: boolean } = {}): Promise<{ id: string } | null> {
   const said = text.trim()
   if (!said) return null
@@ -44,7 +41,6 @@ export async function addTask(text: string, options: { typed?: boolean } = {}): 
   const made = await addEntry({ text: read.text || said, fields: read.fields })
   return made ? { id: made.id } : null
 }
-
 export interface Asked {
   readonly text: string
   readonly description?: string
@@ -55,7 +51,6 @@ export interface Asked {
     readonly priority?: QuickPriority
   }
 }
-
 export async function addEntry(entry: Asked): Promise<Todo | null> {
   await openTodos()
   const titled = titledOf(entry.text)
@@ -69,12 +64,10 @@ export async function addEntry(entry: Asked): Promise<Todo | null> {
   })
   return made.ok ? made.value : null
 }
-
 export async function tickTask(id: string, done: boolean): Promise<boolean> {
   await openTodos()
   return (await todos.update(id, { done })).ok
 }
-
 export async function listed(): Promise<{ total: number; tasks: TaskOut[] }> {
   await openTodos()
   const shown = sortedTodos(

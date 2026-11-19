@@ -11,7 +11,6 @@ import type { Field } from './fields'
 function shortcutKey(id: string): string {
   return `shortcuts.${id.replaceAll('.', '-')}`
 }
-
 function shortcutFields(): Field[] {
   return [
     {
@@ -42,7 +41,6 @@ function shortcutFields(): Field[] {
     })),
   ]
 }
-
 export async function declarations(view?: EditorView): Promise<Field[]> {
   await registered()
   const rows = declaredPanes(view).flatMap((pane) => pane.groups.flatMap((group) => group.fields))

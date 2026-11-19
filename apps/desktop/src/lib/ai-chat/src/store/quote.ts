@@ -9,7 +9,6 @@ export function quoteSelection(): void {
   const tab = workspace.active
   const range = view?.state.selection.main
   if (!view || !range || range.empty || tab?.kind !== 'note') return
-
   const doc = view.state.doc
   const first = doc.lineAt(range.from).number
   const last = doc.lineAt(range.to).number

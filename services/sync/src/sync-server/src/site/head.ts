@@ -4,11 +4,9 @@ const ESCAPES: Record<string, string> = {
   '>': '&gt;',
   '"': '&quot;',
 }
-
 export function escape(text: string): string {
   return text.replace(/[&<>"]/g, (character) => ESCAPES[character] ?? character)
 }
-
 export interface Head {
   title: string
   site: string
@@ -23,19 +21,15 @@ export interface Head {
   noindex?: boolean
   sheets?: readonly string[]
 }
-
 function tag(name: string, content: string | undefined): string {
   return content ? `<meta name="${name}" content="${escape(content)}">` : ''
 }
-
 function property(name: string, content: string | undefined): string {
   return content ? `<meta property="${name}" content="${escape(content)}">` : ''
 }
-
 export function headOf(head: Head, sheets: readonly string[]): string {
   const description = head.description
   const canonical = head.url
-
   return [
     '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
     `<title>${escape(head.title)}</title>`,

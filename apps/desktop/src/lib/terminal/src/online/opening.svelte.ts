@@ -5,26 +5,21 @@ import { webPages } from '@orden/contracts'
 import { workspace } from '../../../workspace/src/api'
 
 export type Where = 'tab' | 'system' | 'offer' | 'none'
-
 export interface Build {
   pages: boolean
   native: boolean
 }
-
 export function whereToOpen(url: string, build: Build): Where {
   if (!isWebUrl(url)) return 'none'
   if (build.pages && build.native) return 'tab'
   if (callbacksIn(url).length) return 'none'
   return build.native ? 'system' : 'offer'
 }
-
 const A_MINUTE = 6
 const AGAIN_AFTER = 3000
-
 export class Pace {
   private times: number[] = []
   private last = { url: '', at: -Infinity }
-
   allows(url: string, now: number): boolean {
     if (url === this.last.url && now - this.last.at < AGAIN_AFTER) return false
     this.times = this.times.filter((at) => now - at < 60_000)
@@ -34,21 +29,17 @@ export class Pace {
     return true
   }
 }
-
 const WATCHED_FOR = 15 * 60_000
-
 export class Opener {
   private readonly pace = new Pace()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping; nothing renders from it
   private readonly watched = new Map<string, { stop: () => void; landed: string | null }>()
-
   constructor(
     private readonly terminal: () => string,
     private readonly build: Build,
     private readonly callback: (url: string) => void,
     private readonly offer: (url: string) => void,
   ) {}
-
   open(url: string, front: boolean, now = Date.now()): void {
     const where = whereToOpen(url, this.build)
     if (where === 'none' || !this.pace.allows(url, now)) return
@@ -59,7 +50,6 @@ export class Opener {
       if (id !== null && callbacksIn(url).length) this.watch(id, url)
     }
   }
-
   private watch(id: string, url: string): void {
     let sent = false
     const stop = $effect.root(() => {
@@ -88,12 +78,10 @@ export class Opener {
       landed: null,
     })
   }
-
   private forget(id: string): void {
     this.watched.get(id)?.stop()
     this.watched.delete(id)
   }
-
   called(url: string, status: number): void {
     for (const [id, one] of this.watched) {
       if (one.landed !== url) continue
@@ -104,7 +92,6 @@ export class Opener {
       return
     }
   }
-
   end(): void {
     for (const id of [...this.watched.keys()]) this.forget(id)
   }

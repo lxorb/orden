@@ -32,15 +32,12 @@ const SEND_AFTER = 1500
 const TRACKING = 'tracking'
 const REMINDERS = 'reminders'
 const KINDS = ['activity', 'span', 'rule', 'goal', 'pref']
-
 export interface Opening {
   owner: string | null
   server: TimeServer | null
   device: string
 }
-
 type SpanFields = Partial<Omit<Span, 'id'>>
-
 const heardOf = (value: unknown): value is Heard => {
   if (typeof value !== 'object' || value === null) return false
   const { kind, id, value: held, at } = value as Record<string, unknown>
@@ -51,11 +48,8 @@ const heardOf = (value: unknown): value is Heard => {
     (held === null || (typeof held === 'object' && !Array.isArray(held)))
   )
 }
-
 const byStart = (one: Span, other: Span) => one.start - other.start || one.id.localeCompare(other.id)
-
 const byOrder = (one: Activity, other: Activity) => one.order - other.order || one.name.localeCompare(other.name)
-
 export class TimeStore {
   activities = $state.raw<Activity[]>([])
   spans = $state.raw<Span[]>([])
@@ -65,9 +59,7 @@ export class TimeStore {
   reminding = $state(true)
   ready = $state(false)
   kept = $state<boolean | null>(null)
-
   readonly running = $derived(this.spans.filter((span) => span.end === null))
-
   private recent: {
     activities: readonly Activity[]
     spans: readonly Span[]
@@ -85,11 +77,8 @@ export class TimeStore {
   private again = false
   private channel: BroadcastChannel | null = null
   private unheard: Heard[] | null = null
-
   private readonly sendSoon = afterQuiet(() => void this.exchange(), SEND_AFTER)
-
   constructor(private readonly open: (owner: string | null) => Promise<TimeDisk> = openTimeDisk) {}
-
   opened(how: Opening): Promise<void> {
     this.server = how.server
     this.device = how.device
@@ -102,7 +91,6 @@ export class TimeStore {
       })
     return this.opening
   }
-
   private async switchTo(owner: string | null): Promise<void> {
     const opened = this.disk !== null
     this.disk?.close()
@@ -129,7 +117,6 @@ export class TimeStore {
     this.ready = true
     if (this.server) void this.exchange()
   }
-
   private async carry(into: Ledger, disk: TimeDisk): Promise<void> {
     const local = await this.open(null)
     try {
@@ -144,7 +131,6 @@ export class TimeStore {
       local.close()
     }
   }
-
   private shown(): void {
     this.activities = this.ledger
       .live('activity')
@@ -167,7 +153,6 @@ export class TimeStore {
       .filter((one): one is Goal => one !== null && this.activity(one.activity) !== null)
     this.reminding = this.ledger.get('pref', REMINDERS)?.value?.on !== false
   }
-
   private hear(name: string): void {
     if (typeof BroadcastChannel === 'undefined') return
     const channel = new BroadcastChannel(name)
@@ -180,13 +165,11 @@ export class TimeStore {
       else this.shownAfter(this.ledger.heard(rows))
     }
   }
-
   private shownAfter(rows: readonly Row[]): void {
     if (!rows.length) return
     if (rows.every((row) => row.kind === 'span')) this.spansChanged(rows)
     else this.shown()
   }
-
   private spansChanged(rows: readonly Row[]): void {
     const ids: Record<string, true> = Object.fromEntries(rows.map((row) => [row.id, true]))
     const spans = this.spans.filter((one) => !Object.hasOwn(ids, one.id))
@@ -197,7 +180,6 @@ export class TimeStore {
     }
     this.spans = spans.sort(byStart)
   }
-
   private written(rows: readonly Row[]): void {
     if (!rows.length) return
     this.shownAfter(rows)
@@ -213,20 +195,16 @@ export class TimeStore {
       })
     if (this.server) this.sendSoon()
   }
-
   private write(kind: string, id: string, value: Record<string, unknown> | null): Row {
     return this.ledger.write(kind, id, value, Date.now())
   }
-
   activity(id: string | null): Activity | null {
     return this.activities.find((one) => one.id === id) ?? null
   }
-
   named(name: string): Activity | null {
     const wanted = activityName(name).toLocaleLowerCase()
     return this.activities.find((one) => one.name.toLocaleLowerCase() === wanted) ?? null
   }
-
   startNamed(name: string, at = Date.now()): Span | null {
     const said = activityName(name)
     if (!said) return null
@@ -234,7 +212,6 @@ export class TimeStore {
     if (found?.archived) this.changeActivity(found.id, { archived: false })
     return this.start((found ?? this.addActivity(said)).id, at)
   }
-
   addActivity(name: string, tint: string | null = null, parent: string | null = null): Activity {
     const activity: Activity = {
       id: crypto.randomUUID(),
@@ -247,7 +224,6 @@ export class TimeStore {
     this.written([this.write('activity', activity.id, activityValue(activity))])
     return activity
   }
-
   changeActivity(id: string, change: Partial<Omit<Activity, 'id'>>): void {
     const was = this.activity(id)
     if (!was) return
@@ -255,7 +231,6 @@ export class TimeStore {
     if (!activityName(next.name)) return
     this.written([this.write('activity', id, activityValue(next))])
   }
-
   removeActivity(id: string): void {
     const rows = [this.write('activity', id, null)]
     for (const rule of this.rules) {
@@ -269,11 +244,9 @@ export class TimeStore {
     }
     this.written(rows)
   }
-
   span(id: string): Span | null {
     return this.spans.find((one) => one.id === id) ?? null
   }
-
   addSpan(fields: SpanFields & { start: number }): Span {
     const span: Span = {
       id: crypto.randomUUID(),
@@ -291,7 +264,6 @@ export class TimeStore {
     this.written([this.write('span', span.id, spanValue(span))])
     return span
   }
-
   changeSpan(id: string, change: SpanFields): void {
     const was = this.span(id)
     if (!was) return
@@ -299,16 +271,13 @@ export class TimeStore {
     if (next.end !== null && next.end < next.start) return
     this.written([this.write('span', id, spanValue(next))])
   }
-
   removeSpan(id: string): void {
     if (this.span(id)) this.written([this.write('span', id, null)])
   }
-
   start(activity: string | null, at = Date.now()): Span {
     this.stop(at)
     return this.addSpan({ start: at, end: null, activity, source: 'timer' })
   }
-
   stop(at = Date.now()): void {
     const rows = this.running.map((span) =>
       at >= span.start && at - span.start < MINUTE
@@ -317,43 +286,35 @@ export class TimeStore {
     )
     this.written(rows)
   }
-
   record(on: boolean): void {
     this.written([this.write('pref', TRACKING, { on })])
   }
-
   async minutes(from: number, to: number): Promise<Minute[]> {
     await this.opening
     return (await this.disk?.minutes(from, to).catch(() => [])) ?? []
   }
-
   keepMinutes(minutes: readonly Minute[], now = Date.now()): void {
     if (!minutes.length) return
     void this.disk?.keepMinutes(minutes, now - KEEP_MINUTES).catch((error: unknown) => {
       log('warn', `time minutes were not kept: ${String(error)}`)
     })
   }
-
   remind(on: boolean): void {
     this.written([this.write('pref', REMINDERS, { on })])
   }
-
   goalFor(activity: string, per: Per): Goal | null {
     return this.goals.find((one) => one.activity === activity && one.per === per) ?? null
   }
-
   setGoal(activity: string, per: Per, ms: number | null): void {
     const id = goalId(activity, per)
     const goal: Goal = { id, activity, per, ms: ms ?? 0 }
     this.written([this.write('goal', id, ms && ms > 0 ? goalValue(goal) : null)])
   }
-
   everything(): TimeRecord[] {
     return KINDS.flatMap((kind) =>
       this.ledger.live(kind).flatMap((row) => (row.value ? [{ kind, id: row.id, value: row.value }] : [])),
     )
   }
-
   bring(records: readonly TimeRecord[]): number {
     const rows = records
       .filter((one) => KINDS.includes(one.kind) && !this.ledger.get(one.kind, one.id)?.value)
@@ -361,11 +322,9 @@ export class TimeStore {
     this.written(rows)
     return rows.length
   }
-
   ruleFor(lane: Lane, place: string): Rule | null {
     return this.rules.find((one) => one.lane === lane && one.place === place) ?? null
   }
-
   countAs(lane: Lane, place: string, activity: string | null): void {
     const was = this.ruleFor(lane, place)
     if (activity === null) {
@@ -375,7 +334,6 @@ export class TimeStore {
     const rule: Rule = { id: was?.id ?? crypto.randomUUID(), activity, lane, place }
     this.written([this.write('rule', rule.id, ruleValue(rule))])
   }
-
   latest(): Activity[] {
     const { activities, spans } = this
     const known = this.recent
@@ -384,7 +342,6 @@ export class TimeStore {
     this.recent = { activities, spans, list }
     return list
   }
-
   exchange(): Promise<void> {
     if (this.exchanging) {
       this.again = true
@@ -399,7 +356,6 @@ export class TimeStore {
     })
     return this.exchanging
   }
-
   private async exchanged(): Promise<void> {
     await this.opening
     const { server, disk, ledger } = this

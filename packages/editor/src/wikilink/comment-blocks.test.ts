@@ -6,7 +6,6 @@ describe('the blocks offered after [[Week#^ in a note with comments', () => {
     const note = 'Call the bank\n\n<!--\nold plan\n\nmore old\n-->\n\nPay rent\n'
     expect(offeredBlocks(note).map((block) => block.text)).toEqual(['Call the bank', 'Pay rent'])
   })
-
   test('leave out a percent comment', () => {
     const note = 'Call the bank\n\n%%\nold plan\n%%\n\nPay rent\n'
     expect(offeredBlocks(note).map((block) => block.text)).toEqual(['Call the bank', 'Pay rent'])

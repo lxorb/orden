@@ -3,13 +3,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { root, watch } from './runes.svelte'
 
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 const SPACES = [
   { name: 'Work', path: '/spaces/Work' },
   { name: 'Home', path: '/spaces/Home' },
   { name: 'Uni', path: '/spaces/Uni' },
 ]
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -20,29 +18,23 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const { Disk } = await import('../disk')
 disk.current = new Disk()
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 await import('../../src/lib/workspace/src/sets.svelte')
 const { deleteSpace } = await import('../../src/lib/workspace/src/space-changes')
 const { pane } = await import('../../src/lib/panes/src/api')
 const { shown: pad } = await import('../../src/lib/scratchpad/src/api')
-
 const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'
 const FOOD = '/spaces/Home/Food.md'
 const NOTES = '/spaces/Work/Notes.md'
-
 const onScreen = () => workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
-
 const tabAt = (path: string) => {
   const found = workspace.tabs.find((tab) => tab.path === path)
   if (!found) throw new Error(`nothing open at ${path}`)
   return found
 }
-
 beforeEach(async () => {
   const one = disk.current
   if (!one) throw new Error('no disk')
@@ -51,7 +43,6 @@ beforeEach(async () => {
   one.files.set(IDEAS, '# Ideas\n')
   one.files.set(FOOD, '# Food\n')
   one.files.set(NOTES, '# Notes\n')
-
   workspace.spaces = [
     { id: 'work', name: 'Work', root: '/spaces/Work' },
     { id: 'home', name: 'Home', root: '/spaces/Home' },
@@ -64,11 +55,9 @@ beforeEach(async () => {
   await workspace.loadTree()
   flushSync()
 })
-
 afterEach(() => {
   vi.useRealTimers()
 })
-
 describe('the chat at a side', () => {
   async function chattingInHome() {
     await workspace.showSpace('work')
@@ -77,73 +66,59 @@ describe('the chat at a side', () => {
     workspace.closePanel('right')
     workspace.showPanel('ask')
   }
-
   afterEach(() => {
     pad.on = false
     workspace.closePanel('right')
   })
-
   test('stays open through a space that had that side shut', async () => {
     await workspace.showSpace('home')
     workspace.closePanel('right')
     await workspace.showSpace('work')
     workspace.showPanel('ask')
-
     await workspace.showSpace('home')
     expect(workspace.openOn('right')).toBe('ask')
     await workspace.showSpace('work')
     expect(workspace.openOn('right')).toBe('ask')
   })
-
   test("leaves any other panel open too, since the side is the window's", async () => {
     await workspace.showSpace('work')
     workspace.showPanel('outline')
-
     await workspace.showSpace('home')
     expect(workspace.openOn('right')).toBe('outline')
     await workspace.showSpace('work')
     expect(workspace.openOn('right')).toBe('outline')
   })
-
   test('shut after a switch, leaves the side shut: no space kept anything under it', async () => {
     await chattingInHome()
     await workspace.showSpace('work')
     expect(workspace.openOn('right')).toBe('ask')
-
     workspace.closePanel('right')
     expect(workspace.openOn('right')).toBe(null)
   })
-
   test('shut in one space, is shut in every space', async () => {
     await chattingInHome()
     await workspace.showSpace('work')
     await workspace.showSpace('home')
     workspace.closePanel('right')
-
     await workspace.showSpace('work')
     expect(workspace.openOn('right')).toBe(null)
   })
-
   test('shut in one space does not open again in the space it came from', async () => {
     await chattingInHome()
     await workspace.showSpace('work')
     workspace.closePanel('right')
-
     await workspace.showSpace('home')
     expect(workspace.openOn('right')).toBe(null)
   })
-
   test('with another panel chosen over it, keeps that one open through a switch', async () => {
     await chattingInHome()
     await workspace.showSpace('work')
     workspace.showPanel('links')
-
     await workspace.showSpace('home')
     expect(workspace.openOn('right')).toBe('links')
     await workspace.showSpace('work')
     expect(workspace.openOn('right')).toBe('links')
   })
-
   test('stays through a switch under the scratchpad card', async () => {
     await chattingInHome()
     pad.on = true
@@ -151,7 +126,6 @@ describe('the chat at a side', () => {
     pad.on = false
     expect(workspace.openOn('right')).toBe('ask')
   })
-
   test('moved to the left, stays there through a switch, and shut leaves that side shut', async () => {
     workspace.movePanel('ask', 'left')
     try {
@@ -159,7 +133,6 @@ describe('the chat at a side', () => {
       workspace.closePanel('left')
       await workspace.showSpace('work')
       workspace.showPanel('ask')
-
       await workspace.showSpace('home')
       expect(workspace.openOn('left')).toBe('ask')
       workspace.closePanel('left')
@@ -169,7 +142,6 @@ describe('the chat at a side', () => {
     }
   })
 })
-
 describe('every space', () => {
   test('keeps its own tabs, and shows them again when it is shown', async () => {
     await workspace.openEntry(PLAN)
@@ -177,40 +149,32 @@ describe('every space', () => {
     expect(onScreen()).toEqual([])
     await workspace.openEntry(FOOD)
     expect(onScreen()).toEqual(['Food.md'])
-
     await workspace.showSpace('work')
     expect(onScreen()).toEqual(['Plan.md'])
     expect(workspace.active?.path).toBe(PLAN)
-
     await workspace.showSpace('home')
     expect(onScreen()).toEqual(['Food.md'])
   })
-
   test('a space never shown starts with an empty pane', async () => {
     await workspace.openEntry(PLAN)
     await workspace.showSpace('uni')
-
     expect(onScreen()).toEqual([])
     expect(workspace.panes.count).toBe(1)
     expect(workspace.tabs.map((tab) => tab.name)).toEqual(['Plan.md'])
   })
-
   test('comes back arranged as it was left: panes, focus and the tab in front', async () => {
     await workspace.openEntry(PLAN)
     await workspace.openEntry(IDEAS)
     workspace.split('row', tabAt(IDEAS).id)
     const focused = workspace.panes.focusedId
     const front = workspace.activeTabId
-
     await workspace.showSpace('home')
     expect(workspace.panes.count).toBe(1)
-
     await workspace.showSpace('work')
     expect(workspace.panes.count).toBe(2)
     expect(workspace.panes.focusedId).toBe(focused)
     expect(workspace.activeTabId).toBe(front)
   })
-
   test('comes back exactly: each pane’s tab in front, the focused pane, a pane put down', async () => {
     for (const path of [PLAN, IDEAS, NOTES]) await workspace.openEntry(path)
     workspace.split('row', tabAt(NOTES).id)
@@ -220,7 +184,6 @@ describe('every space', () => {
     const fronts = () => workspace.panes.all.map((one) => workspace.showing(one.id)?.name ?? null)
     expect(fronts()).toEqual(['Plan.md', 'Notes.md'])
     expect(workspace.panes.focusedId).toBe(left.id)
-
     for (const way of ['showSpace', 'selectSpace'] as const) {
       await workspace[way]('home')
       await workspace.openEntry(FOOD)
@@ -228,21 +191,18 @@ describe('every space', () => {
       expect(fronts(), way).toEqual(['Plan.md', 'Notes.md'])
       expect(workspace.panes.focusedId, way).toBe(left.id)
     }
-
     workspace.deselect(right.id)
     await workspace.showSpace('home')
     await workspace.showSpace('work')
     expect(fronts()).toEqual(['Plan.md', null])
     expect(workspace.panes.focusedId).toBe(left.id)
   })
-
   test('the first state anything sees after a switch is the new set, whole', async () => {
     await workspace.openEntry(PLAN)
     await workspace.showSpace('home')
     await workspace.openEntry(FOOD)
     await workspace.showSpace('work')
     flushSync()
-
     const seen: string[] = []
     const stop = root(() => {
       watch(() => {
@@ -250,56 +210,46 @@ describe('every space', () => {
       })
     })
     flushSync()
-
     await workspace.showSpace('home')
     flushSync()
     await workspace.showSpace('work')
     flushSync()
     stop()
-
     expect(seen).toEqual(['work: Plan.md', 'home: Food.md', 'work: Plan.md'])
   })
 })
-
 describe('what is open in a set out of sight', () => {
   test('a tab of it brought to the front brings its space', async () => {
     await workspace.openEntry(PLAN)
     await workspace.showSpace('home')
     const plan = tabAt(PLAN)
-
     workspace.activate(plan.id)
     await vi.waitFor(() => expect(workspace.activeSpaceId).toBe('work'))
     await vi.waitFor(() => expect(workspace.activeTabId).toBe(plan.id))
   })
-
   test('opening it again goes to where it is, and makes no second tab', async () => {
     await workspace.openEntry(PLAN)
     await workspace.showSpace('home')
-
     await workspace.openEntry(PLAN)
     await vi.waitFor(() => expect(workspace.activeSpaceId).toBe('work'))
     expect(workspace.tabs.filter((tab) => tab.path === PLAN)).toHaveLength(1)
   })
-
   test('a deleted space takes its set with it', async () => {
     await workspace.openEntry(PLAN)
     workspace.openBlank()
     await workspace.showSpace('home')
     expect(workspace.tabs).toHaveLength(2)
-
     await deleteSpace(workspace, 'work')
     flushSync()
     expect(workspace.tabs).toHaveLength(0)
   })
 })
-
 describe('the session', () => {
   test('writes the set on screen and every set put aside', async () => {
     await workspace.openEntry(PLAN)
     await workspace.showSpace('home')
     await workspace.openEntry(FOOD)
     workspace.persist()
-
     const written = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
       sets?: { on: string; aside: Record<string, { layout: { frame: unknown } }> }
     }

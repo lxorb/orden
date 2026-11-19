@@ -2,12 +2,10 @@ import type { AutoCompact, Usage } from '../../ai-providers/src/api'
 import { compactsAt, filled } from './chat/usage'
 
 export const ASK_FROM = 4_000
-
 export interface SwitchCost {
   tokens: number
   compacts: boolean
 }
-
 export function switchCost(
   usage: Usage,
   from: { provider: string; model: string },

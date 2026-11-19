@@ -6,37 +6,29 @@ describe('what a note gives the rows of its space', () => {
     const { tasks } = scanRows(
       '# Home\n- [ ] Water the plants 📅 2026-10-04\n## Kitchen\n  - [/] Descale\n# Bank\n1. [x] Call ✅ 2026-10-01\n',
     )
-
     expect(tasks.map((one) => [one.line, one.indent, one.mark, one.text, one.section.join(' > ')])).toEqual([
       [1, 0, ' ', 'Water the plants 📅 2026-10-04', 'Home'],
       [3, 2, '/', 'Descale', 'Home > Kitchen'],
       [5, 0, 'x', 'Call ✅ 2026-10-01', 'Bank'],
     ])
   })
-
   test('front matter is raw, and code and front matter hold no tasks', () => {
     const read = scanRows('---\nstatus: open\n# a comment\n---\n```\n- [ ] not a task\n```\n- [ ] a task\n')
-
     expect(read.front).toBe('status: open\n# a comment')
     expect(read.tasks.map((one) => [one.line, one.section])).toEqual([[7, []]])
-
     const plain = scanRows('- [ ] one\r\n')
     expect(plain.front).toBeNull()
     expect(plain.tasks[0]?.text).toBe('one')
-
     expect(scanRows('---\r\na: 1\r\n---\r\n').front).toBe('a: 1')
   })
-
   test('a line that runs on is kept to a length, cut on a character', () => {
     const { tasks } = scanRows(`- [ ] ${'😀'.repeat(LONGEST_TASK + 10)}`)
     expect(Array.from(tasks[0]?.text ?? '')).toHaveLength(LONGEST_TASK)
   })
-
   test('a heading of the same level or higher closes the one before it', () => {
     const { tasks } = scanRows('## A\n### B\n- [ ] one\n## C\n- [ ] two\n#nottag\n- [ ] three\n')
     expect(tasks.map((one) => one.section)).toEqual([['A', 'B'], ['C'], ['C']])
   })
-
   test('a task says the first line of its description and how many comments it has', () => {
     const { tasks } = scanRows(
       [
@@ -58,7 +50,6 @@ describe('what a note gives the rows of its space', () => {
         '  Under a heading, nobody.',
       ].join('\n'),
     )
-
     expect(tasks.map((one) => [one.text, one.description, one.comments])).toEqual([
       ['Call the bank', 'Their number is on the back.', 2],
       ['Find the old card', undefined, 1],
@@ -67,15 +58,12 @@ describe('what a note gives the rows of its space', () => {
       ['One step', undefined, undefined],
     ])
   })
-
   test('a description is kept to a length, and code under a task is no description', () => {
     const long = scanRows(`- [ ] a\n  ${'é'.repeat(LONGEST_DESCRIPTION + 5)}\n`)
     expect(Array.from(long.tasks[0]?.description ?? '')).toHaveLength(LONGEST_DESCRIPTION)
-
     const code = scanRows('- [ ] a\n  ```\n  not words\n  ```\n  words\r\n')
     expect(code.tasks[0]?.description).toBe('words')
   })
-
   test('a fence closes on its own mark, and code in quotes, items and indents holds no task', () => {
     const texts = (text: string) => scanRows(text).tasks.map((one) => one.text)
     expect(texts('```\n~~~\n```\n\n- [ ] call Bob\n')).toEqual(['call Bob'])
@@ -84,7 +72,6 @@ describe('what a note gives the rows of its space', () => {
     expect(texts('Words.\n\n    - [ ] example\n\n- [ ] real\n')).toEqual(['real'])
     expect(texts('- a\n  ```\n  - [ ] example\n  ```\n- [ ] real\n')).toEqual(['real'])
   })
-
   test('a task in a list item, nested or not, is still one', () => {
     const texts = (text: string) => scanRows(text).tasks.map((one) => one.text)
     expect(texts('- [ ] one\n    - [ ] two\n\t- [ ] three\n- item\n  - [ ] four\n\n  - [ ] five\n')).toEqual([
@@ -95,7 +82,6 @@ describe('what a note gives the rows of its space', () => {
       'five',
     ])
   })
-
   test('a fence in the front matter opens no code below it', () => {
     const read = scanRows('---\nscript: |\n  ```\nup: "[[Up]]"\n---\n- [ ] t [[L]]\n')
     expect(read.tasks.map((one) => one.text)).toEqual(['t [[L]]'])

@@ -1,7 +1,6 @@
 function isElement(node: Node): node is Element {
   return node.nodeType === 1
 }
-
 function sameShell(mine: Node, theirs: Node): boolean {
   if (!isElement(mine) || !isElement(theirs) || mine.tagName !== theirs.tagName) return false
   if (mine.attributes.length !== theirs.attributes.length) return false
@@ -10,17 +9,14 @@ function sameShell(mine: Node, theirs: Node): boolean {
   }
   return true
 }
-
 function deepestLast(node: Node): Node {
   let last = node
   while (last.lastChild) last = last.lastChild
   return last
 }
-
 function endsAlike(mine: Node, theirs: Node): boolean {
   return deepestLast(mine).isEqualNode(deepestLast(theirs))
 }
-
 function patchChildren(old: Node, fresh: Node): void {
   let mine = old.firstChild
   let theirs = fresh.firstChild
@@ -48,7 +44,6 @@ function patchChildren(old: Node, fresh: Node): void {
     theirs = next
   }
 }
-
 export function patchHtml(host: Element, html: string): void {
   const fresh = host.ownerDocument.createElement('template')
   fresh.innerHTML = html

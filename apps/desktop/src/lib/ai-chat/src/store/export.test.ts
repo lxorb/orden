@@ -35,7 +35,6 @@ describe('a thread as a note', () => {
       '# Kestrels\n\n> Which way?\n> And why?\n\nInto the wind [[Birds/Hovering|Hovering]].\n',
     )
   })
-
   test('is called what the reader’s language calls a thread with no title', () => {
     expect(threadMarkdown(newThread('s', 'p', 'm'), 'Untitled')).toBe('# Untitled\n')
   })

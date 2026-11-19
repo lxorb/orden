@@ -9,11 +9,8 @@
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { content = $bindable(), oninput }: { content: Identity; oninput: () => void } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   const GROUPS = Object.keys(IDENTITY_FIELDS) as IdentityGroup[]
-
   const opened = $state<Partial<Record<IdentityGroup, boolean>>>({})
-
   function shownIn(group: IdentityGroup): readonly IdentityKey[] {
     const first = IDENTITY_FIRST[group]
     return IDENTITY_FIELDS[group].filter(

@@ -8,7 +8,6 @@ const world = vi.hoisted(() => ({
   done: 0,
   handed: null as (() => void) | null,
 }))
-
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
 providePort('import.bring', {
   here: () => Promise.resolve(new Set()),
@@ -62,17 +61,13 @@ vi.mock('../../workspace/src/api', () => ({
     openEntry: () => Promise.resolve(),
   },
 }))
-
 const { startHanded } = await import('./handed')
-
 test('a share handed while the page starts, and heard again in the same moment, is asked about once', async () => {
   const stop = startHanded()
   world.handed?.()
   world.handed?.()
-
   await vi.waitFor(() => expect(world.done).toBe(1))
   await new Promise((done) => setTimeout(done, 100))
-
   expect(world.asked).toBe(1)
   expect(world.done).toBe(1)
   stop()

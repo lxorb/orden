@@ -16,13 +16,10 @@ beforeAll(async () => {
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   await loadTaskChips()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string) {
   let state = parsed(
     EditorState.create({
@@ -36,7 +33,6 @@ function viewOf(doc: string) {
   open.push(view)
   return view
 }
-
 describe('a folded block with words drawn on its first line', () => {
   test('a callout written folded shows its label once', () => {
     const doc = 'intro\n\n> [!tip]- Read me\n> hidden words\n> more words\n\nafter'
@@ -44,7 +40,6 @@ describe('a folded block with words drawn on its first line', () => {
     expect(view.dom.querySelectorAll('.orden-folded')).toHaveLength(1)
     expect(view.contentDOM.querySelectorAll('.orden-callout-label')).toHaveLength(1)
   })
-
   test('a folded item with a who chip shows the chip once', () => {
     const doc = 'intro\n\n- call the shop [by:: Ann]\n  - ask about hours\n  - ask about price\n\nafter'
     const view = viewOf(doc)
@@ -56,7 +51,6 @@ describe('a folded block with words drawn on its first line', () => {
     expect(view.contentDOM.querySelectorAll('.orden-comment-chips')).toHaveLength(1)
   })
 })
-
 describe('a folded code block', () => {
   test('shows its header once', () => {
     const doc = 'intro\n\n```js\nconst a = 1\nconst b = 2\n```\n\nafter'

@@ -8,19 +8,16 @@ import { idle } from './settle'
 const jsdomUtils = createRequire(join(process.cwd(), 'package.json'))('jsdom/lib/generated/idl/utils.js') as {
   implForWrapper(wrapper: unknown): { isTrusted: boolean; _dispatch(event: unknown): boolean }
 }
-
 interface Field {
   field: string
   role: string
   visible: boolean
 }
-
 interface Form {
   form: string
   kind: string
   fields: Field[]
 }
-
 interface Said {
   kind: string
   doc: string
@@ -32,13 +29,11 @@ interface Said {
   password?: string | null
   newPassword?: string | null
 }
-
 type Inside = Window &
   typeof globalThis & {
     ordenPass?: (words: string) => void
     __ordenPass: { fill(asked: unknown): boolean }
   }
-
 function laidOut(inside: Inside) {
   inside.HTMLElement.prototype.getBoundingClientRect = function box(this: HTMLElement) {
     const width = this.style.width ? parseFloat(this.style.width) : 200
@@ -56,7 +51,6 @@ function laidOut(inside: Inside) {
     }
   }
 }
-
 async function page(html: string, url = 'https://a.example/login') {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url, pretendToBeVisual: true })
   const inside = dom.window as unknown as Inside
@@ -100,13 +94,11 @@ async function page(html: string, url = 'https://a.example/login') {
   }
   return { inside, said, closed, document, forms, only, roles, fieldId, fill, input, trusted }
 }
-
 function at(form: Form, index: number): string {
   const field = form.fields[index]
   if (!field) throw new Error(`no field ${index}`)
   return field.field
 }
-
 test('a page with a username and a password is a login, said before anyone types', async () => {
   const { only, roles, said } = await page(`
     <form action="/session">
@@ -118,13 +110,11 @@ test('a page with a username and a password is a login, said before anyone types
   expect(roles()).toEqual(['email', 'password'])
   expect(said.every((one) => typeof one.doc === 'string' && one.doc.length === 24)).toBe(true)
 })
-
 test('a login asking for its username first, then its password, is two forms', async () => {
   const { only, roles, document } = await page(`
     <form id="step"><input name="identifier" autocomplete="username"><button>Next</button></form>`)
   expect(only().kind).toBe('username')
   expect(roles()).toEqual(['username'])
-
   document.getElementById('step')?.replaceWith(
     Object.assign(document.createElement('form'), {
       innerHTML: '<input type="password" name="Passwd"><button>Next</button>',
@@ -135,14 +125,12 @@ test('a login asking for its username first, then its password, is two forms', a
     expect(roles()).toEqual(['password'])
   })
 })
-
 test('a username page holding a hidden password field is the first of two', async () => {
   const { only } = await page(`
     <form><input type="email" name="email"><input type="password" name="hidden" style="display: none"></form>`)
   expect(only().kind).toBe('username')
   expect(only().fields.map((one) => one.visible)).toEqual([true, false])
 })
-
 test('a newsletter box with one email field is no sign-in', async () => {
   const { forms } = await page(
     `
@@ -151,25 +139,21 @@ test('a newsletter box with one email field is no sign-in', async () => {
   )
   expect(forms()).toEqual([])
 })
-
 test('a text field before the password is the username even when nothing names it', async () => {
   const { roles, only } = await page(`<form><input name="x1"><input type="password" name="x2"></form>`)
   expect(only().kind).toBe('login')
   expect(roles()).toEqual(['username', 'password'])
 })
-
 test('six boxes of one digit are a 2FA code, and a code fills across them', async () => {
   const boxes = Array.from({ length: 6 }, (_, at) => `<input maxlength="1" inputmode="numeric" name="d${at}">`).join('')
   const { only, roles, fill, document } = await page(`<form>${boxes}<button>Verify</button></form>`)
   expect(only().kind).toBe('totp')
   expect(roles()).toEqual(Array(6).fill('totp'))
-
   const first = only().fields[0]!
   expect(fill({ form: only().form, values: { [first.field]: '123456' }, submit: false })).toBe(true)
   const typed = [...document.querySelectorAll('input')].map((one) => one.value).join('')
   expect(typed).toBe('123456')
 })
-
 test('a one-time-code field is a 2FA code in any language', async () => {
   for (const html of [
     '<form><input autocomplete="one-time-code"></form>',
@@ -182,7 +166,6 @@ test('a one-time-code field is a 2FA code in any language', async () => {
     expect(roles(), html).toEqual(['totp'])
   }
 })
-
 test('a form with a username, an email and two new passwords is a sign-up', async () => {
   const { only, roles } = await page(`
     <form action="/register">
@@ -193,7 +176,6 @@ test('a form with a username, an email and two new passwords is a sign-up', asyn
   expect(only().kind).toBe('signup')
   expect(roles()).toEqual(['username', 'email', 'new-password', 'new-password'])
 })
-
 test('a current password and two new ones are a change of password', async () => {
   const { only, roles } = await page(`
     <form>
@@ -203,7 +185,6 @@ test('a current password and two new ones are a change of password', async () =>
   expect(only().kind).toBe('change')
   expect(roles()).toEqual(['password', 'new-password', 'new-password'])
 })
-
 test('a card form says each of its fields, in English and German', async () => {
   const english = await page(`
     <form>
@@ -212,7 +193,6 @@ test('a card form says each of its fields, in English and German', async () => {
     </form>`)
   expect(english.only().kind).toBe('card')
   expect(english.roles()).toEqual(['cc-name', 'cc-number', 'cc-exp', 'cc-csc'])
-
   const german = await page(`
     <form>
       <label for="n">Kartennummer</label><input id="n">
@@ -222,7 +202,6 @@ test('a card form says each of its fields, in English and German', async () => {
   expect(german.only().kind).toBe('card')
   expect(german.roles()).toEqual(['cc-number', 'cc-exp-month', 'cc-csc'])
 })
-
 test('an address form is an identity, and a select is filled by what it shows', async () => {
   const { only, roles, fill, input, document } = await page(`
     <form>
@@ -243,7 +222,6 @@ test('an address form is an identity, and a select is filled by what it shows', 
   expect(input('[name=firstName]').value).toBe('Ada')
   expect(document.querySelector<HTMLSelectElement>('select')?.value).toBe('CH')
 })
-
 test('a field nobody can see is said as unseen and never filled', async () => {
   const { only, fill, input } = await page(`
     <form>
@@ -263,7 +241,6 @@ test('a field nobody can see is said as unseen and never filled', async () => {
   expect(input('[name=tiny]').value).toBe('')
   expect(input('[name=old]').value).toBe('')
 })
-
 test('a field faint, covered, out of view or too small to read is never filled', async () => {
   const { only, fill, input, document } = await page(`
     <form>
@@ -280,7 +257,6 @@ test('a field faint, covered, out of view or too small to read is never filled',
   expect(input('[name=faint]').value).toBe('')
   expect(input('[name=small]').value).toBe('')
   expect(input('[name=password]').value).toBe('x')
-
   const password = input('[name=password]')
   const box = password.getBoundingClientRect()
   password.getBoundingClientRect = () => ({
@@ -301,13 +277,11 @@ test('a field faint, covered, out of view or too small to read is never filled',
   expect(fill({ form: form.form, values: again, submit: false })).toBe(false)
   expect(input('[name=username]').value).toBe('x')
   expect(password.value).toBe('x')
-
   Object.assign(document, { elementFromPoint: () => input('[name=username]') })
   expect(fill({ form: form.form, values: again, submit: false })).toBe(true)
   expect(input('[name=username]').value).toBe('y')
   expect(password.value).toBe('x')
 })
-
 test('fields inside open shadow roots are found, each in a design system element of its own', async () => {
   const { only, roles, document } = await page(`<form id="f"></form>`)
   const form = document.getElementById('f') as HTMLFormElement
@@ -328,7 +302,6 @@ test('fields inside open shadow roots are found, each in a design system element
     expect(roles()).toEqual(['username', 'password'])
   })
 })
-
 test('a form a single-page app draws late is said once it is there', async () => {
   const { forms, document, said } = await page('<div id="app"></div>')
   expect(said).toEqual([])
@@ -338,7 +311,6 @@ test('a form a single-page app draws late is said once it is there', async () =>
   }, 20)
   await vi.waitFor(() => expect(forms().map((one) => one.kind)).toEqual(['login']))
 })
-
 test('a form is said again only when what it is changes', async () => {
   const { said, document } = await page('<form><input name="user"><input type="password"></form>')
   const before = said.length
@@ -347,7 +319,6 @@ test('a form is said again only when what it is changes', async () => {
   await idle(400)
   expect(said.length).toBe(before)
 })
-
 test('nothing of the page is written: field names live in the script alone', async () => {
   const html = '<form><input name="user"><input type="password" name="pw"></form>'
   const { document } = await page(html)
@@ -358,7 +329,6 @@ test('nothing of the page is written: field names live in the script alone', asy
     )
   }
 })
-
 test('a fillable field wears a mark in a closed root, and only a person pressing it asks', async () => {
   const { closed, document, said, only, trusted, inside } = await page(
     '<form><input name="user"><input type="password" name="pw"></form>',
@@ -368,18 +338,15 @@ test('a fillable field wears a mark in a closed root, and only a person pressing
   expect([...marks].every((one) => one.shadowRoot === null)).toBe(true)
   expect(closed).toHaveLength(2)
   expect(closed[0]?.textContent).toBe('')
-
   const button = closed[1]!.querySelector('button')!
   button.dispatchEvent(new inside.MouseEvent('click', { bubbles: true, composed: true }))
   expect(said.filter((one) => one.kind === 'mark')).toEqual([])
-
   trusted(button, new inside.MouseEvent('click', { bubbles: true, composed: true }))
   const mark = said.filter((one) => one.kind === 'mark')
   expect(mark).toHaveLength(1)
   expect(mark[0]?.form).toBe(only().form)
   expect(mark[0]?.field).toBe(only().fields[1]?.field)
 })
-
 test('Ctrl+Shift+L asks for the field that has the keyboard', async () => {
   const { said, only, trusted, inside, input } = await page(
     '<form><input name="user"><input type="password" name="pw"></form>',
@@ -388,12 +355,10 @@ test('Ctrl+Shift+L asks for the field that has the keyboard', async () => {
   const key = { key: 'L', code: 'KeyL', ctrlKey: true, shiftKey: true, bubbles: true }
   input('[name=pw]').dispatchEvent(new inside.KeyboardEvent('keydown', key))
   expect(said.filter((one) => one.kind === 'mark')).toEqual([])
-
   trusted(input('[name=pw]'), new inside.KeyboardEvent('keydown', key))
   const asked = said.filter((one) => one.kind === 'mark')
   expect(asked.map((one) => one.field)).toEqual([only().fields[1]?.field])
 })
-
 test('a fill goes past a framework that watches the value it set itself', async () => {
   const { only, fill, input, inside } = await page('<form><input name="user"><input type="password" name="pw"></form>')
   const field = input('[name=user]')
@@ -414,13 +379,11 @@ test('a fill goes past a framework that watches the value it set itself', async 
     const now = native?.get?.call(field) as string
     if (now !== tracked) changed.push(now)
   })
-
   const form = only()
   expect(fill({ form: form.form, values: { [at(form, 0)]: 'alice' }, submit: false })).toBe(true)
   expect(changed).toEqual(['alice'])
   expect(heard).toEqual(['input', 'change', 'keyup', 'blur'])
 })
-
 test('a fill for another document, another site or another form fills nothing', async () => {
   const { only, fill, input, said } = await page('<form><input name="user"><input type="password" name="pw"></form>')
   const form = only()
@@ -440,7 +403,6 @@ test('a fill for another document, another site or another form fills nothing', 
   ).toBe(true)
   expect(input('[name=user]').value).toBe('alice')
 })
-
 test('a fill that sends submits the form, and what was sent is said once', async () => {
   const { only, fill, document, said } = await page(
     '<form><input name="user"><input type="password" name="pw"><button>Sign in</button></form>',
@@ -467,7 +429,6 @@ test('a fill that sends submits the form, and what was sent is said once', async
     },
   ])
 })
-
 test('what a person typed is read only when the form is sent', async () => {
   const { input, said, trusted, inside, document } = await page(
     '<form><input name="user"><input type="password" name="pw"></form><button id="away">x</button>',
@@ -477,12 +438,10 @@ test('what a person typed is read only when the form is sent', async () => {
   document.body.append(document.createElement('p'))
   await idle(400)
   expect(JSON.stringify(said)).not.toContain('swordfish')
-
   trusted(input('[name=pw]'), new inside.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }))
   const sent = said.filter((one) => one.kind === 'submitted')
   expect(sent.map((one) => [one.formKind, one.username, one.password])).toEqual([['login', 'bob', 'swordfish']])
 })
-
 test('a sign-up sent says its new password', async () => {
   const { input, said, document, inside } = await page(`
     <form action="/signup"><input name="username"><input type="email" name="email">
@@ -496,7 +455,6 @@ test('a sign-up sent says its new password', async () => {
     ['signup', 'carol', null, 'n3w'],
   ])
 })
-
 test('a sign-in a single-page app takes away once it is sent is said as sent', async () => {
   const { input, said, document } = await page(
     '<div id="app"><input name="user"><input type="password" name="pw"><div role="button">Log in</div></div>',
@@ -509,7 +467,6 @@ test('a sign-in a single-page app takes away once it is sent is said as sent', a
     expect(sent.map((one) => [one.formKind, one.username, one.password])).toEqual([['login', 'dan', 'secret']])
   })
 })
-
 test('a message waits for the channel when the engine has not put it in yet', async () => {
   const dom = new JSDOM('<form><input name="user"><input type="password"></form>', {
     runScripts: 'outside-only',

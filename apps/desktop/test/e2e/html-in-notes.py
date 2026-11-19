@@ -1,17 +1,14 @@
 import sys
 from pathlib import Path
-
 from harness import Drive
 
 DRIVE = Drive(__file__, fresh=False)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 BLOCK = """# A raw block
 
 <div class="card" data-kind="note">
@@ -24,14 +21,12 @@ BLOCK = """# A raw block
 
 After the block.
 """
-
 INLINE = """# An inline tag
 
 The wind was <u>steady</u> all week, and <strong>cold</strong> with it.
 
 A <span class="tint">tinted</span> word, and an <abbr title="knots">kn</abbr>.
 """
-
 FENCE = """# A fence
 
 ```html
@@ -43,15 +38,12 @@ FENCE = """# A fence
 
 After the fence.
 """
-
 TYPING = """# Typing
 
 <div>
   <p>Wind</p>
 """
-
 NOTES = [("block", BLOCK), ("inline", INLINE), ("fence", FENCE)]
-
 COLOURED = """
 () => {
   const painted = [...document.querySelectorAll('.cm-content span[class]')].filter(
@@ -63,13 +55,11 @@ COLOURED = """
   }
 }
 """
-
 OPEN = """async (text) => {
   const ws = window.ordenApp.workspace
   const path = await ws.noteFrom(text)
   if (path) await ws.openEntry(path, { activate: true })
 }"""
-
 def drive(browser, out: Path, scheme: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
     context = browser.new_context(
@@ -84,7 +74,6 @@ def drive(browser, out: Path, scheme: str) -> None:
     DRIVE.open(page)
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(400)
-
     def shot(tag: str) -> None:
         box = page.locator(".cm-content").first.bounding_box()
         if not box:
@@ -100,13 +89,11 @@ def drive(browser, out: Path, scheme: str) -> None:
             },
         )
         say(f"shot {scheme}-{tag}.png")
-
     for name, text in NOTES:
         page.evaluate(OPEN, text)
         page.wait_for_timeout(1800)
         say(f"[{scheme}] {name}: {page.evaluate(COLOURED)}")
         shot(name)
-
     page.evaluate(OPEN, TYPING)
     page.wait_for_timeout(1600)
     page.evaluate(
@@ -120,9 +107,7 @@ def drive(browser, out: Path, scheme: str) -> None:
     page.wait_for_timeout(700)
     say(f"[{scheme}] typed: {page.evaluate('() => window.orden.state.doc.toString()')!r}")
     shot("typed")
-
     context.close()
-
 def main() -> int:
     tag = sys.argv[1] if len(sys.argv) > 1 else "now"
     out = DRIVE.shots / tag
@@ -130,7 +115,5 @@ def main() -> int:
         for scheme in ("light", "dark"):
             say(f"--- {scheme} ---")
             drive(browser, out, scheme)
-
     return DRIVE.verdict(f"shots in {out}")
-
 raise SystemExit(main())

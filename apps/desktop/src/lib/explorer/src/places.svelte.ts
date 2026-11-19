@@ -23,32 +23,24 @@ const SHOWN: Record<PlaceKind, { name: () => string; mark: IconNode }> = {
   root: { name: () => 'Computer', mark: HardDrive },
   disk: { name: () => '', mark: HardDrive },
 }
-
 export const placeName = (place: Place): string =>
   place.kind === 'disk' ? (place.name ?? place.path) : SHOWN[place.kind].name()
-
 export const placeMark = (place: Place): IconNode => SHOWN[place.kind].mark
-
 class Places {
   list = $state<Place[]>([])
   #asked: Promise<Place[]> | null = null
-
   get pinned(): string[] {
     return pins.list
   }
-
   pin(path: string) {
     pins.pin(path)
   }
-
   unpin(path: string) {
     pins.unpin(path)
   }
-
   isPinned(path: string): boolean {
     return pins.has(path)
   }
-
   ask(again = false): Promise<Place[]> {
     if (!this.#asked || again)
       this.#asked = listPlaces().then(
@@ -57,11 +49,9 @@ class Places {
       )
     return this.#asked
   }
-
   async home(): Promise<string | null> {
     const found = await this.ask()
     return found.find((one) => one.kind === 'home')?.path ?? found[0]?.path ?? null
   }
 }
-
 export const places = new Places()

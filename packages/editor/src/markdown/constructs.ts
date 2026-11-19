@@ -23,7 +23,6 @@ import {
 } from './syntax'
 
 const COMMENT_DELIMITER = { resolve: 'PercentComment', mark: 'PercentCommentMark' }
-
 const PercentComment: MarkdownConfig = {
   defineNodes: [
     { name: 'PercentComment', style: tags.comment },
@@ -47,7 +46,6 @@ const PercentComment: MarkdownConfig = {
       endLeaf: (cx: BlockContext, line: Line) => opensPercentBlock(cx, restOf(line)),
       parse(cx: BlockContext, line: Line) {
         if (!opensPercentBlock(cx, restOf(line))) return false
-
         const from = cx.lineStart + line.pos
         let to = cx.lineStart + line.text.length
         while (cx.nextLine()) {
@@ -57,22 +55,18 @@ const PercentComment: MarkdownConfig = {
             break
           }
         }
-
         cx.addElement(cx.elt('CommentBlock', from, to))
         return true
       },
     },
   ],
 }
-
 function opensPercentBlock(cx: BlockContext, rest: string): boolean {
   if (!rest.startsWith('%%') || stripLine(rest, null).inside !== '%%') return false
   const { input } = cx as unknown as { input: Input }
   return commentStateAt(input, cx.lineStart) === null
 }
-
 const HIGHLIGHT_DELIMITER = { resolve: 'Highlight', mark: 'HighlightMark' }
-
 const Highlight: MarkdownConfig = {
   defineNodes: [
     { name: 'Highlight', style: markTags.highlight },
@@ -94,7 +88,6 @@ const Highlight: MarkdownConfig = {
     },
   ],
 }
-
 const Wikilink: MarkdownConfig = {
   defineNodes: [{ name: 'Wikilink' }, { name: 'WikilinkMark', style: tags.processingInstruction }],
   parseInline: [
@@ -105,23 +98,18 @@ const Wikilink: MarkdownConfig = {
       parse(cx, next, pos) {
         const embed = next === BANG
         if (!embed && next !== BRACKET_OPEN) return -1
-
         const open = embed ? pos + 1 : pos
         if (cx.char(open) !== BRACKET_OPEN || cx.char(open + 1) !== BRACKET_OPEN) return -1
-
         for (let i = open + 2; i < cx.end; i++) {
           const code = cx.char(i)
           if (code === NEWLINE || code === BRACKET_OPEN) return -1
           if (code !== BRACKET_CLOSE) continue
           if (cx.char(i + 1) !== BRACKET_CLOSE) return -1
-
           const from = open + 2
           const inner = cx.slice(from, i)
           if (!parseWikilink(inner, embed)) return -1
-
           const shown = shownSpan(inner)
           const to = i + 2
-
           return cx.addElement(
             cx.elt('Wikilink', pos, to, [
               cx.elt('WikilinkMark', pos, from + shown.from),
@@ -129,13 +117,11 @@ const Wikilink: MarkdownConfig = {
             ]),
           )
         }
-
         return -1
       },
     },
   ],
 }
-
 const Hashtag: MarkdownConfig = {
   defineNodes: [{ name: 'Hashtag', style: markTags.hashtag }],
   parseInline: [
@@ -144,28 +130,22 @@ const Hashtag: MarkdownConfig = {
       triggers: '#',
       parse(cx, next, pos) {
         if (next !== HASH) return -1
-
         const name = tagAt(cx.text, pos - cx.offset)
         if (name === null) return -1
-
         return cx.addElement(cx.elt('Hashtag', pos, pos + 1 + name.length))
       },
     },
   ],
 }
-
 interface Closing {
   from: number
   until: number
   at: number
 }
-
 const closings = new WeakMap<object, Closing>()
-
 function closingDollar(cx: InlineContext, pos: number): number {
   const known = closings.get(cx)
   if (known && pos >= known.from && pos < known.until) return known.at
-
   for (let i = pos + 1; i < cx.end; i++) {
     const code = cx.char(i)
     if (code === NEWLINE) {
@@ -181,11 +161,9 @@ function closingDollar(cx: InlineContext, pos: number): number {
       return i
     }
   }
-
   closings.set(cx, { from: pos, until: cx.end, at: -1 })
   return -1
 }
-
 const InlineMath: MarkdownConfig = {
   defineNodes: [
     { name: 'InlineMath', style: markTags.math },
@@ -199,10 +177,8 @@ const InlineMath: MarkdownConfig = {
       parse(cx, next, pos) {
         if (next !== DOLLAR || cx.char(pos + 1) === DOLLAR) return -1
         if (isSpace(cx.char(pos + 1))) return -1
-
         const close = closingDollar(cx, pos)
         if (close < 0 || isDigit(cx.char(close + 1))) return -1
-
         return cx.addElement(
           cx.elt('InlineMath', pos, close + 1, [
             cx.elt('MathMark', pos, pos + 1),
@@ -213,24 +189,19 @@ const InlineMath: MarkdownConfig = {
     },
   ],
 }
-
 const ONE_LINE = /^\$\$(?![\s$])[^\n]*?(?<![\s$])\$\$$/
 const restOf = (line: Line) => line.text.slice(line.pos).trimEnd()
 const opensBlockMath = (rest: string): boolean => ONE_LINE.test(rest) || rest.trim() === '$$'
 const CLOSES_MATH = /^\$\$(?:[ \t]+\^[A-Za-z0-9-]+)?\s*$/
-
 const BlockMath: MarkdownConfig = {
   defineNodes: [{ name: 'BlockMath', block: true, style: markTags.math }],
   parseBlock: [
     {
       name: 'BlockMath',
       before: 'HorizontalRule',
-
       endLeaf: (_cx: BlockContext, line: Line) => line.next === DOLLAR && opensBlockMath(restOf(line)),
-
       parse(cx: BlockContext, line: Line) {
         const rest = restOf(line)
-
         if (ONE_LINE.test(rest)) {
           const at = cx.lineStart + line.pos
           const end = at + rest.length
@@ -240,13 +211,10 @@ const BlockMath: MarkdownConfig = {
           cx.nextLine()
           return true
         }
-
         if (rest.trim() !== '$$') return false
-
         const from = cx.lineStart + line.pos
         const marks = [cx.elt('MathMark', from, from + 2)]
         let to = from + 2
-
         while (cx.nextLine()) {
           if (CLOSES_MATH.test(line.text.slice(line.pos))) {
             const close = cx.lineStart + line.pos
@@ -257,14 +225,12 @@ const BlockMath: MarkdownConfig = {
           }
           to = cx.lineStart + line.text.length
         }
-
         cx.addElement(cx.elt('BlockMath', from, to, marks))
         return true
       },
     },
   ],
 }
-
 const Footnote: MarkdownConfig = {
   defineNodes: [
     { name: 'FootnoteRef', style: markTags.footnote },
@@ -290,7 +256,6 @@ const Footnote: MarkdownConfig = {
       before: 'Link',
       parse(cx, next, pos) {
         if (next !== BRACKET_OPEN || cx.char(pos + 1) !== CARET) return -1
-
         for (let i = pos + 2; i < cx.end; i++) {
           const code = cx.char(i)
           if (code === NEWLINE || code === BRACKET_OPEN) return -1
@@ -319,7 +284,6 @@ const Footnote: MarkdownConfig = {
       parse(cx: BlockContext, line: Line) {
         const match = /^\[\^([^\]\s]+)\]:/.exec(line.text.slice(line.pos))
         if (!match) return false
-
         const [whole, label = ''] = match
         const from = cx.lineStart + line.pos
         const to = from + line.text.length - line.pos
@@ -337,7 +301,6 @@ const Footnote: MarkdownConfig = {
     },
   ],
 }
-
 const FrontMatter: MarkdownConfig = {
   defineNodes: [
     { name: 'FrontMatter', block: true, style: markTags.frontMatter },
@@ -352,10 +315,8 @@ const FrontMatter: MarkdownConfig = {
         const { input } = cx as unknown as { input: Input }
         const block = frontMatterBlock(input.read(0, input.length))
         if (!block) return false
-
         const marks = [cx.elt('FrontMatterMark', block.from, block.from + 3)]
         let to = block.from + 3
-
         while (cx.nextLine()) {
           if (cx.lineStart === block.close) {
             marks.push(cx.elt('FrontMatterMark', cx.lineStart, cx.lineStart + 3))
@@ -365,14 +326,12 @@ const FrontMatter: MarkdownConfig = {
           }
           to = cx.lineStart + line.text.length
         }
-
         cx.addElement(cx.elt('FrontMatter', 0, to, marks))
         return true
       },
     },
   ],
 }
-
 const DefinitionList: MarkdownConfig = {
   defineNodes: [
     { name: 'DefinitionDetail', block: true },
@@ -388,10 +347,8 @@ const DefinitionList: MarkdownConfig = {
       parse(cx: BlockContext, line: Line) {
         const match = /^:[ \t]+\S/.exec(line.text.slice(line.pos))
         if (!match) return false
-
         const from = cx.lineStart + line.pos
         const to = cx.lineStart + line.text.length
-
         cx.addElement(
           cx.elt('DefinitionDetail', from, to, [
             cx.elt('DefinitionMark', from, from + 1),
@@ -404,7 +361,6 @@ const DefinitionList: MarkdownConfig = {
     },
   ],
 }
-
 const Abbreviation: MarkdownConfig = {
   defineNodes: [
     { name: 'AbbrevDef', block: true },
@@ -421,11 +377,9 @@ const Abbreviation: MarkdownConfig = {
       parse(cx: BlockContext, line: Line) {
         const match = /^\*\[([^\]\n]+)\]:/.exec(line.text.slice(line.pos))
         if (!match) return false
-
         const [whole, label = ''] = match
         const from = cx.lineStart + line.pos
         const to = cx.lineStart + line.text.length
-
         cx.addElement(
           cx.elt('AbbrevDef', from, to, [
             cx.elt('AbbrevMark', from, from + 2),
@@ -439,7 +393,6 @@ const Abbreviation: MarkdownConfig = {
     },
   ],
 }
-
 export {
   Abbreviation,
   BlockMath,

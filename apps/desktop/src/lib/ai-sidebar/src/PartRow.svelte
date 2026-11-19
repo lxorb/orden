@@ -13,15 +13,11 @@
   const { part, live = false }: { part: Row; live?: boolean } = $props()
   let opened = $state(false)
   const open = $derived(opened || chat.unfolded)
-
   const verb = $derived(part.kind === 'thinking' ? 'Thought' : (verbOf(part.verb) ?? bareName(part.verb)))
-
   const object = $derived(part.kind === 'thinking' ? (part.ms ? seconds(part.ms, region()) : '') : objectOf(part.args))
-
   const going = $derived(live && (part.kind === 'thinking' ? !part.ms : part.state === 'running'))
   const helper = $derived(part.kind === 'tool' ? helperOf(part) : null)
   const command = $derived(part.kind === 'tool' && verbOf(part.verb) === 'Ran')
-
   const detail = $derived.by(() => {
     if (part.kind === 'thinking') return part.text.trim()
     const said = part.result?.text.trim() ?? ''
@@ -29,7 +25,6 @@
     const args = JSON.stringify(part.args ?? {}, null, 2)
     return said ? `${args}\n\n${said}` : args
   })
-
   async function press() {
     const change = part.kind === 'tool' ? part.change : undefined
     const root = chat.root
@@ -66,7 +61,6 @@
     flex-direction: column;
     min-width: 0;
   }
-
   .detail {
     margin: 4px 0 2px 13px;
     padding: var(--space-2);
@@ -81,7 +75,6 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-
   .detail.said {
     border: 1px solid var(--line);
     background: var(--surface);

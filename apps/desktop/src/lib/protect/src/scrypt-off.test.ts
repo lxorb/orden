@@ -2,7 +2,6 @@ import { expect, test, vi } from 'vitest'
 import { scrypt } from './scrypt'
 
 const asked: unknown[] = []
-
 class Away {
   onmessage: ((event: MessageEvent) => void) | null = null
   onerror: (() => void) | null = null
@@ -23,11 +22,8 @@ class Away {
     asked.push('ended')
   }
 }
-
 vi.stubGlobal('Worker', Away)
-
 const { scryptOffThread } = await import('./scrypt-off')
-
 test('the password is stretched off the window’s thread, to the same key', async () => {
   const password = new TextEncoder().encode('tulip')
   const salt = new Uint8Array([1, 2, 3, 4])
@@ -36,7 +32,6 @@ test('the password is stretched off the window’s thread, to the same key', asy
   expect(asked).toEqual([1])
   expect([...away]).toEqual([...(await scrypt(password, salt, cost, 32))])
 })
-
 test('a cost read from the app’s own state, a proxy, is sent as plain numbers', async () => {
   const password = new TextEncoder().encode('tulip')
   const salt = new Uint8Array([1, 2, 3, 4])

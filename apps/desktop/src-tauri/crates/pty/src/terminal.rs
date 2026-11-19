@@ -27,31 +27,26 @@ struct Terminals {
     loads: Mutex<HashMap<String, u64>>,
     tick: AtomicU64,
 }
-
 struct Held {
     owner: String,
     session: Arc<Session>,
     remote: bool,
 }
-
 #[derive(Serialize)]
 pub struct Spawned {
     pid: Option<u32>,
     fresh: bool,
 }
-
 impl Terminals {
     fn lock(&self) -> MutexGuard<'_, HashMap<String, Held>> {
         self.sessions.held()
     }
-
     fn held(&self, owner: &str, id: &str) -> Result<(Arc<Session>, bool), String> {
         match self.lock().get(id) {
             Some(held) if held.owner == owner => Ok((Arc::clone(&held.session), held.remote)),
             _ => Err(format!("no terminal {id}")),
         }
     }
-
     fn with<T>(
         &self,
         owner: &str,
@@ -61,18 +56,15 @@ impl Terminals {
         let (session, _) = self.held(owner, id)?;
         Ok(with(&session))
     }
-
     fn stamp(&self) -> u64 {
         self.tick.load(Ordering::SeqCst)
     }
-
     fn ended_since(&self, owner: &str, stamp: u64) -> bool {
         self.loads
             .held()
             .get(owner)
             .is_some_and(|ended| *ended > stamp)
     }
-
     fn end_where(&self, owner: Option<&str>, kill: bool) {
         if let Some(owner) = owner {
             let ended = self.tick.fetch_add(1, Ordering::SeqCst) + 1;
@@ -90,7 +82,6 @@ impl Terminals {
         if ending.is_empty() {
             return;
         }
-
         std::thread::spawn(move || {
             for held in ending {
                 if kill {
@@ -102,23 +93,19 @@ impl Terminals {
         });
     }
 }
-
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     builder.manage(Terminals::default())
 }
-
 pub fn page_started(webview: &Webview) {
     if let Some(terminals) = webview.try_state::<Terminals>() {
         terminals.end_where(Some(webview.label()), false);
     }
 }
-
 pub fn window_gone(app: &AppHandle, label: &str, kill: bool) {
     if let Some(terminals) = app.try_state::<Terminals>() {
         terminals.end_where(Some(label), kill);
     }
 }
-
 pub fn end_all(app: &AppHandle) {
     let Some(terminals) = app.try_state::<Terminals>() else {
         return;
@@ -132,7 +119,6 @@ pub fn end_all(app: &AppHandle) {
         held.session.detach();
     }
 }
-
 fn place(webview: &Webview) -> Result<Place, String> {
     let data = orden_base::paths::data_dir(webview.app_handle())?;
     let program = std::env::current_exe().map_err(|error| error.to_string())?;
@@ -144,11 +130,9 @@ fn place(webview: &Webview) -> Result<Place, String> {
         },
     })
 }
-
 fn owner(webview: &Webview) -> Result<String, String> {
     orden_base::labels::own_window(webview)
 }
-
 fn usable(id: &str) -> Result<(), String> {
     let fits = !id.is_empty()
         && id.len() <= 80
@@ -161,7 +145,6 @@ fn usable(id: &str) -> Result<(), String> {
         Err("not a terminal name".to_owned())
     }
 }
-
 #[tauri::command]
 pub async fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Vec<shells::Offered>, String> {
@@ -173,7 +156,6 @@ pub async fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, S
     })
     .await
 }
-
 #[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn pty_spawn(
@@ -199,7 +181,6 @@ pub async fn pty_spawn(
         if terminals.lock().contains_key(&id) {
             return Err(format!("terminal {id} is already running"));
         }
-
         let host = remote::host_id(&shell);
         let remote = host.is_some();
         let place = place(&webview)?;
@@ -233,7 +214,6 @@ pub async fn pty_spawn(
             started.run(Box::new(|_| {}), |_| {});
             return Err(format!("terminal {id} is already running"));
         }
-
         let app = webview.app_handle().clone();
         started.run(
             Box::new(move |out| {
@@ -271,12 +251,10 @@ pub async fn pty_spawn(
                 drop(gone);
             },
         );
-
         Ok(Spawned { pid, fresh })
     })
     .await
 }
-
 #[derive(Serialize)]
 pub struct Shown {
     #[serde(flatten)]
@@ -284,7 +262,6 @@ pub struct Shown {
     program: Option<String>,
     open: bool,
 }
-
 #[tauri::command]
 pub async fn terminal_sessions(webview: Webview) -> Result<Vec<Shown>, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Vec<Shown>, String> {
@@ -316,7 +293,6 @@ pub async fn terminal_sessions(webview: Webview) -> Result<Vec<Shown>, String> {
     })
     .await
 }
-
 #[tauri::command]
 pub async fn terminal_tmux(webview: Webview) -> Result<Vec<tmux::Found>, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Vec<tmux::Found>, String> {
@@ -325,7 +301,6 @@ pub async fn terminal_tmux(webview: Webview) -> Result<Vec<tmux::Found>, String>
     })
     .await
 }
-
 #[tauri::command]
 pub async fn pty_name(webview: Webview, key: String, name: String) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
@@ -335,7 +310,6 @@ pub async fn pty_name(webview: Webview, key: String, name: String) -> Result<(),
     })
     .await
 }
-
 #[tauri::command]
 pub async fn pty_end(webview: Webview, key: String) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
@@ -345,7 +319,6 @@ pub async fn pty_end(webview: Webview, key: String) -> Result<(), String> {
     })
     .await
 }
-
 #[tauri::command]
 pub async fn pty_held(webview: Webview, key: String) -> Result<bool, String> {
     orden_base::lane::off_the_runtime(move || -> Result<bool, String> {
@@ -355,7 +328,6 @@ pub async fn pty_held(webview: Webview, key: String) -> Result<bool, String> {
     })
     .await
 }
-
 fn kept_alone(
     terminals: &Terminals,
     id: &str,
@@ -381,7 +353,6 @@ fn kept_alone(
     );
     true
 }
-
 #[tauri::command]
 pub fn pty_write(webview: Webview, id: String, data: String, binary: bool) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -396,7 +367,6 @@ pub fn pty_write(webview: Webview, id: String, data: String, binary: bool) -> Re
         .state::<Terminals>()
         .with(&owner, &id, |session| session.write(bytes))
 }
-
 #[tauri::command(async)]
 pub fn pty_resize(webview: Webview, id: String, cols: u16, rows: u16) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -404,7 +374,6 @@ pub fn pty_resize(webview: Webview, id: String, cols: u16, rows: u16) -> Result<
         .state::<Terminals>()
         .with(&owner, &id, |session| session.resize(cols, rows))
 }
-
 #[tauri::command]
 pub fn pty_seen(webview: Webview, id: String, bytes: usize) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -412,14 +381,12 @@ pub fn pty_seen(webview: Webview, id: String, bytes: usize) -> Result<(), String
         .state::<Terminals>()
         .with(&owner, &id, |session| session.seen(bytes))
 }
-
 #[tauri::command(async)]
 pub fn pty_busy(webview: Webview, id: String) -> Result<bool, String> {
     let owner = owner(&webview)?;
     let (session, remote) = webview.state::<Terminals>().held(&owner, &id)?;
     Ok(remote || session.busy())
 }
-
 #[tauri::command(async)]
 pub fn pty_program(webview: Webview, id: String) -> Result<Option<String>, String> {
     let owner = owner(&webview)?;
@@ -427,13 +394,11 @@ pub fn pty_program(webview: Webview, id: String) -> Result<Option<String>, Strin
         .state::<Terminals>()
         .with(&owner, &id, Session::program)
 }
-
 #[tauri::command(async)]
 pub fn pty_ssh(webview: Webview, id: String) -> Result<Option<remote::Destination>, String> {
     let owner = owner(&webview)?;
     webview.state::<Terminals>().with(&owner, &id, Session::ssh)
 }
-
 #[tauri::command(async)]
 pub fn pty_folder(webview: Webview, id: String) -> Result<Option<String>, String> {
     let owner = owner(&webview)?;
@@ -441,7 +406,6 @@ pub fn pty_folder(webview: Webview, id: String) -> Result<Option<String>, String
         .state::<Terminals>()
         .with(&owner, &id, Session::folder)
 }
-
 #[tauri::command(async)]
 pub fn pty_usage(webview: Webview, id: String) -> Result<Option<orden_base::usage::Usage>, String> {
     let owner = owner(&webview)?;
@@ -452,7 +416,6 @@ pub fn pty_usage(webview: Webview, id: String) -> Result<Option<orden_base::usag
         orden_base::usage::sample(&format!("pty:{id}"), orden_base::usage::Whose::Tree(pid))
     }))
 }
-
 fn let_go(webview: &Webview, id: &str) -> Result<Option<Held>, String> {
     let owner = owner(webview)?;
     let terminals = webview.state::<Terminals>();
@@ -462,7 +425,6 @@ fn let_go(webview: &Webview, id: &str) -> Result<Option<Held>, String> {
         _ => None,
     })
 }
-
 #[tauri::command]
 pub fn pty_kill(webview: Webview, id: String) -> Result<(), String> {
     if let Some(held) = let_go(&webview, &id)? {
@@ -470,7 +432,6 @@ pub fn pty_kill(webview: Webview, id: String) -> Result<(), String> {
     }
     Ok(())
 }
-
 #[tauri::command]
 pub fn pty_detach(webview: Webview, id: String) -> Result<(), String> {
     if let Some(held) = let_go(&webview, &id)? {
@@ -478,7 +439,6 @@ pub fn pty_detach(webview: Webview, id: String) -> Result<(), String> {
     }
     Ok(())
 }
-
 #[tauri::command]
 pub fn pty_take(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -486,7 +446,6 @@ pub fn pty_take(webview: Webview, id: String) -> Result<(), String> {
         .state::<Terminals>()
         .with(&owner, &id, Session::take)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -498,7 +457,6 @@ mod tests {
             assert!(usable(bad).is_err(), "{bad:?} was taken");
         }
     }
-
     fn idle_shell() -> Session {
         static FOLDER: std::sync::OnceLock<tempfile::TempDir> = std::sync::OnceLock::new();
         static NEXT: AtomicU64 = AtomicU64::new(0);
@@ -536,7 +494,6 @@ mod tests {
         started.run(Box::new(|_| {}), |_| {});
         session
     }
-
     #[test]
     fn a_second_shell_under_a_name_in_use_never_takes_the_first_ones_place() {
         let terminals = Terminals::default();
@@ -572,7 +529,6 @@ mod tests {
         first.end();
         second.end();
     }
-
     #[test]
     fn a_shell_started_for_a_page_since_reloaded_is_never_kept() {
         let terminals = Terminals::default();
@@ -610,7 +566,6 @@ mod tests {
         other.end();
         fresh.end();
     }
-
     #[test]
     fn a_session_is_used_with_the_list_of_terminals_let_go() {
         let terminals = Terminals::default();
@@ -622,7 +577,6 @@ mod tests {
                 remote: true,
             },
         );
-
         let free = terminals.with("main", "t1", |_| terminals.sessions.try_lock().is_ok());
         assert_eq!(free, Ok(true));
         let (session, remote) = terminals.held("main", "t1").expect("held");

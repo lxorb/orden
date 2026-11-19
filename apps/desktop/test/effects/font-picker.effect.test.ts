@@ -2,7 +2,6 @@ import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const installed = vi.hoisted(() => new Set(['DejaVu Sans', 'DejaVu Sans Mono', 'Inter']))
-
 vi.mock('../../src/lib/settings/src/font-families', async (original) => ({
   ...(await original<typeof import('../../src/lib/settings/src/font-families')>()),
   installedFamilies: () =>
@@ -13,16 +12,12 @@ vi.mock('../../src/lib/settings/src/font-families', async (original) => ({
     ]),
   isInstalled: (name: string) => !name || installed.has(name),
 }))
-
 Element.prototype.scrollIntoView = () => undefined
-
 const FontPicker = (await import('../../src/lib/settings/src/FontPicker.svelte')).default
-
 let target: HTMLElement
 let app: ReturnType<typeof mount>
 let chosen: string[] = []
 let value = ''
-
 function picker(mono: boolean, start = '') {
   value = start
   app = mount(FontPicker, {
@@ -42,10 +37,8 @@ function picker(mono: boolean, start = '') {
   })
   flushSync()
 }
-
 const field = () => target.querySelector('input')!
 const rows = () => [...document.querySelectorAll('[role=option]')].map((one) => one.textContent.trim())
-
 async function opened() {
   field().focus()
   field().dispatchEvent(new FocusEvent('focus'))
@@ -53,18 +46,15 @@ async function opened() {
   await Promise.resolve()
   flushSync()
 }
-
 beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
   chosen = []
 })
-
 afterEach(() => {
   void unmount(app)
   target.remove()
 })
-
 test('lists the families installed, each set in its own face', async () => {
   picker(false)
   await opened()
@@ -73,13 +63,11 @@ test('lists the families installed, each set in its own face', async () => {
   const first = document.querySelector<HTMLElement>('[role=option]')!
   expect(first.style.fontFamily).toContain('DejaVu Sans')
 })
-
 test('lists the monospaced ones first for code', async () => {
   picker(true)
   await opened()
   expect(rows()[0]).toBe('DejaVu Sans Mono')
 })
-
 test('narrows as it is typed, and takes a row with the arrows and Enter', async () => {
   picker(false)
   await opened()
@@ -93,7 +81,6 @@ test('narrows as it is typed, and takes a row with the arrows and Enter', async 
   expect(chosen).toEqual(['Inter'])
   expect(rows()).toEqual([])
 })
-
 test('takes a name typed that is in no list', async () => {
   picker(false)
   await opened()
@@ -103,13 +90,11 @@ test('takes a name typed that is in no list', async () => {
   flushSync()
   expect(chosen).toEqual(['Comic Neue'])
 })
-
 test('says a face is not installed where this machine does not draw it', () => {
   picker(false, 'Comic Neue')
   expect(target.textContent).toContain('Not installed on this device')
   expect(field().getAttribute('aria-invalid')).toBe('true')
 })
-
 test('says nothing under a face that is installed, or under the app’s own', () => {
   picker(false, 'Inter')
   expect(target.textContent).not.toContain('Not installed')

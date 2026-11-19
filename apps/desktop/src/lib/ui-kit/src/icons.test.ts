@@ -33,7 +33,6 @@ const NAMES = [
   'Sparkles',
   'GraduationCap',
 ]
-
 describe('turning a name into words', () => {
   test.each([
     ['BookOpen', 'book open'],
@@ -44,7 +43,6 @@ describe('turning a name into words', () => {
     expect(words(name)).toBe(said)
   })
 })
-
 describe('searching the library', () => {
   test('puts the exact name first, a whole word above a fragment, in any case', () => {
     expect(search(NAMES, 'book')[0]).toBe('Book')
@@ -55,7 +53,6 @@ describe('searching the library', () => {
     const found = search(NAMES, 'book')
     expect(found.indexOf('BookOpen')).toBeLessThan(found.indexOf('BookmarkMinus'))
   })
-
   test('understands words that are not icon names, their plurals, inside a longer query', () => {
     for (const [query, name] of [
       ['work', 'Briefcase'],
@@ -71,7 +68,6 @@ describe('searching the library', () => {
     expect(search(NAMES, 'maths')).toEqual(search(NAMES, 'math'))
     expect(search(NAMES, 'calndar')[0]).toBe('Calendar')
   })
-
   test('never puts a near miss ahead of a name that matches', () => {
     const entries = [
       { name: 'Building2', words: 'building2' },
@@ -79,18 +75,15 @@ describe('searching the library', () => {
     ]
     expect(rankIcons(entries, 'bug')).toEqual(['Bug', 'Building2'])
   })
-
   test('gives back the whole set for an empty query, nothing for no match, and honours the limit', () => {
     expect(search(NAMES, '  ').length).toBe(NAMES.length)
     expect(search(NAMES, 'zzzzz')).toEqual([])
     expect(search(NAMES, '', 3).length).toBe(3)
   })
 })
-
 describe('the mark a space wears', () => {
   const CAP: IconNode = [['path', { d: 'M21 10l-9-4-9 4 9 4z' }]]
   const library: Record<string, IconNode> = { GraduationCap: CAP }
-
   test('is the shape it chose, its initial where it chose none, and never nothing', () => {
     expect(shapeFor(library, 'GraduationCap')).toBe(CAP)
     expect(shapeFor(library, null)).toBeNull()
@@ -106,7 +99,6 @@ describe('the mark a space wears', () => {
     }
   })
 })
-
 describe('the icon a note names', () => {
   const shapes: Record<string, IconNode> = {
     FileText: [['path', { d: 'M4 2h9l5 5v15H4z' }]],
@@ -117,7 +109,6 @@ describe('the icon a note names', () => {
     List: [['path', { d: 'M8 6h13' }]],
     Smile: [['circle', { cx: '12', cy: '12', r: '10' }]],
   }
-
   test.each([
     ['file-text', 'FileText'],
     ['FileText', 'FileText'],
@@ -136,7 +127,6 @@ describe('the icon a note names', () => {
   ])('reads %j, however Lucide or Iconize spell it, as %s', (written, key) => {
     expect(keyNamed(shapes, written)).toBe(key)
   })
-
   test.each([
     ['🚀', { kind: 'emoji', text: '🚀' }],
     ['👍🏽', { kind: 'emoji', text: '👍🏽' }],
@@ -155,7 +145,6 @@ describe('the icon a note names', () => {
   ])('reads %j as an emoji, a name or a set', (written, read) => {
     expect(readIcon(written)).toEqual(read)
   })
-
   test('a note is written with the name in the spelling Lucide uses, and reads back as it', () => {
     expect(iconValue('FileText')).toBe('file-text')
     expect(iconValue('Gamepad2')).toBe('gamepad-2')
@@ -166,21 +155,18 @@ describe('the icon a note names', () => {
     }
   })
 })
-
 const LIBRARY: Record<string, IconNode> = {
   FileText: [['path', { d: 'M4 2h9l5 5v15H4z' }]],
   Rocket: [['path', { d: 'M4 20l6-6' }]],
   Link: [['path', { d: 'M9 15l6-6' }]],
   List: [['path', { d: 'M8 6h13' }]],
 }
-
 describe('what each kind of icon is written as', () => {
   test('an emoji is the character, a line icon Lucide s plain name, anything else names its set', () => {
     expect(writtenIcon(EMOJI_SET, '🚀')).toBe('🚀')
     expect(writtenIcon(LUCIDE, 'FileText')).toBe('file-text')
     expect(writtenIcon('flat-color-icons', 'calendar')).toBe('flat-color-icons:calendar')
   })
-
   test('every value reads back as the icon it was written for', () => {
     for (const [set, name] of [
       [LUCIDE, 'FileText'],
@@ -196,7 +182,6 @@ describe('what each kind of icon is written as', () => {
     }
   })
 })
-
 describe('a name a vault brought in from Iconize', () => {
   test('finds the same icon whichever pack it came from, and a word with a pack s letters is itself', () => {
     for (const name of ['LiRocket', 'FaRocket', 'RiRocket', 'BxRocket']) {
@@ -206,7 +191,6 @@ describe('a name a vault brought in from Iconize', () => {
     expect(keyNamed(LIBRARY, 'List')).toBe('List')
   })
 })
-
 describe('telling two written values apart', () => {
   test.each([
     ['FileText', 'file-text', true],
@@ -223,7 +207,6 @@ describe('telling two written values apart', () => {
     expect(sameIcon(one, other)).toBe(same)
   })
 })
-
 describe('the colour an icon is drawn in', () => {
   test('is one of the accents, however it was capitalised, and nothing else is one', () => {
     expect(readTint('violet')).toBe('violet')
@@ -233,14 +216,12 @@ describe('the colour an icon is drawn in', () => {
     expect(isIconTint('chartreuse')).toBe(false)
   })
 })
-
 describe('searching a set whose names are already words', () => {
   const emoji = [
     { name: '🚀', words: 'rocket rocket' },
     { name: '💰', words: 'money bag money bag' },
     { name: '📅', words: 'calendar calendar' },
   ]
-
   test.each([
     ['money', ['💰']],
     ['rocket', ['🚀']],
@@ -251,7 +232,6 @@ describe('searching a set whose names are already words', () => {
     expect(rankIcons(emoji, query)).toEqual(found)
   })
 })
-
 describe('searching by what an icon is for rather than what it is called', () => {
   const entries = [
     { name: 'Angle', words: 'angle', terms: 'degree corner geometry measure math' },
@@ -260,7 +240,6 @@ describe('searching by what an icon is for rather than what it is called', () =>
     { name: 'Calendar', words: 'calendar', terms: 'date month year event' },
     { name: 'Update', words: 'update' },
   ]
-
   test('finds one by its keywords, the name first, a whole keyword ahead of a fragment, not letters', () => {
     expect(rankIcons(entries, 'math')).toContain('Angle')
     expect(rankIcons(entries, 'geometry')).toEqual(['Angle'])

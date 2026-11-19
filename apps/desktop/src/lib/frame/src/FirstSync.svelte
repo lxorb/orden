@@ -5,7 +5,6 @@
   import { workspace } from '../../workspace/src/api'
 
   const initial = $derived((account.name ?? '?').trim().charAt(0).toUpperCase())
-
   const holding = $derived(workspace.nothingToShow)
 </script>
 
@@ -39,7 +38,6 @@
     gap: var(--space-4);
     background: var(--bg);
   }
-
   .mark {
     display: grid;
     place-items: center;
@@ -53,13 +51,11 @@
     font-weight: var(--weight-strong);
     animation: settle var(--dur-slow) var(--ease-spring) backwards;
   }
-
   .line {
     width: 8rem;
     border-radius: 1px;
     background: var(--surface-3);
   }
-
   .said {
     margin: 0;
     color: var(--muted);
@@ -67,7 +63,6 @@
     font-size: var(--text-sm);
     font-variant-numeric: tabular-nums;
   }
-
   button {
     padding: 7px 13px;
     border: 1px solid var(--line-strong);
@@ -81,24 +76,20 @@
       background var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-spring);
   }
-
   button:hover {
     background: var(--surface-2);
     transform: translateY(-1px);
   }
-
   button:active {
     background: var(--surface-3);
     transform: translateY(0);
   }
-
   @keyframes settle {
     from {
       opacity: 0;
       transform: scale(0.92);
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .mark {
       animation: none;

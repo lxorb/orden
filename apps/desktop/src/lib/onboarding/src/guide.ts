@@ -1,13 +1,11 @@
 import type { Coding } from './flow'
 
 export type Target = 'sidebar' | 'note' | 'tasks' | 'list' | 'tabs'
-
 export interface Card {
   at: Target
   title: string
   text: string
 }
-
 export interface Came {
   notes: { id: string; name: string } | null
   browser: string | null
@@ -15,11 +13,8 @@ export interface Came {
   code: Coding
   terminals: boolean
 }
-
 const MARKDOWN_LIKE: ReadonlySet<string> = new Set(['obsidian', 'markdown', 'logseq', 'bear', 'roam', 'notion'])
-
 const MOST = 5
-
 function brought(app: { id: string; name: string }): Card {
   if (app.id === 'notion') {
     return {
@@ -36,7 +31,6 @@ function brought(app: { id: string; name: string }): Card {
       : 'Every note is a file you own.',
   }
 }
-
 export function guideCards(came: Came): Card[] {
   const cards: Card[] = [
     {
@@ -87,7 +81,6 @@ export function guideCards(came: Came): Card[] {
   }
   return cards.slice(0, MOST)
 }
-
 export function targetOf(at: Target): Element | null {
   const list = document.querySelector('[data-region="list"]')
   switch (at) {
@@ -108,14 +101,12 @@ export function targetOf(at: Target): Element | null {
     }
   }
 }
-
 export interface Box {
   x: number
   y: number
   width: number
   height: number
 }
-
 export function shownBox(found: Element | null, room: { width: number; height: number }) {
   if (!found) return null
   const box = found.getBoundingClientRect()
@@ -123,11 +114,9 @@ export function shownBox(found: Element | null, room: { width: number; height: n
   if (box.right <= 0 || box.bottom <= 0 || box.left >= room.width || box.top >= room.height) return null
   return { x: box.left, y: box.top, width: box.width, height: box.height }
 }
-
 const PAD = 8
 const GAP = 14
 const EDGE = 16
-
 export function placeCard(
   target: Box | null,
   card: { width: number; height: number },

@@ -5,7 +5,6 @@ import { settle } from './settle'
 const world = vi.hoisted((): { provider: object | null } => ({
   provider: { id: 'p', kind: 'openai', name: 'OpenAI', model: '' },
 }))
-
 vi.mock('../../src/lib/ai-providers/src/api', () => ({ transcriberNow: () => world.provider }))
 vi.mock('../../src/lib/ai-chat/src/api', () => ({
   sidebarParts: () =>
@@ -26,19 +25,15 @@ vi.mock('../../src/lib/ai-chat/src/api', () => ({
       },
     }),
 }))
-
 const { engines, voice } = await import('../../src/lib/dictation/src/api')
 const QuickAdd = (await import('../../src/lib/quick-add/src/QuickAdd.svelte')).default
 const QuickQuestion = (await import('../../src/lib/ai-sidebar/src/QuickQuestion.svelte')).default
-
 let target: HTMLElement
 let drawn: ReturnType<typeof mount> | undefined
-
 function drawQuestion() {
   drawn = mount(QuickQuestion, { target, props: {} })
   flushSync()
 }
-
 function draw(props: Record<string, unknown> = {}) {
   drawn = mount(QuickAdd, {
     target,
@@ -52,38 +47,32 @@ function draw(props: Record<string, unknown> = {}) {
   })
   flushSync()
 }
-
 beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
   world.provider = { id: 'p', kind: 'openai', name: 'OpenAI', model: '' }
   engines.choose(null)
 })
-
 afterEach(() => {
   voice.asking = null
   if (drawn) void unmount(drawn)
   drawn = undefined
   target.remove()
 })
-
 describe('quick add', () => {
   test('draws the microphone where there is a road to take, once dictation has come', async () => {
     draw()
     await vi.waitFor(() => expect(target.querySelector('button.mic')).not.toBeNull())
   })
-
   test('and none where there is none', () => {
     world.provider = null
     draw()
     expect(target.querySelector('button.mic')).toBeNull()
   })
-
   test('and none in the window over other apps', () => {
     draw({ dictates: false })
     expect(target.querySelector('button.mic')).toBeNull()
   })
-
   test('reads the dictation key in its line, for its line', async () => {
     draw()
     await vi.waitFor(() => expect(target.querySelector('button.mic')).not.toBeNull())
@@ -102,7 +91,6 @@ describe('quick add', () => {
     expect(voice.asking?.field()).toBe(line)
     expect(voice.asking?.words?.()).toEqual(expect.arrayContaining(['errand']))
   })
-
   test('and in its description, once that is where the typing is', async () => {
     draw({ prefill: { description: '' } })
     await vi.waitFor(() => expect(target.querySelector('button.mic')).not.toBeNull())
@@ -122,7 +110,6 @@ describe('quick add', () => {
     expect(voice.asking?.field()).toBe(words)
   })
 })
-
 describe('the quick question', () => {
   test('draws the microphone beside its round button, for its field', async () => {
     drawQuestion()

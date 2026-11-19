@@ -1,8 +1,6 @@
 import json
 import time
-
 from playwright.sync_api import Page
-
 import harness
 from harness import Drive
 
@@ -14,17 +12,13 @@ EMAIL = "tree-live@example.com"
 SPACE = "Live"
 ROOT = f"/{SPACE}"
 NOTES = [f"Note {index:02d}.md" for index in range(1, 61)]
-
 wrong: list[str] = []
-
 def failed(words: str) -> None:
     wrong.append(words)
     print(f"  WRONG: {words}", flush=True)
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
 def wait_for(page: Page, script: str, what: str, arg: object = None, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -33,20 +27,16 @@ def wait_for(page: Page, script: str, what: str, arg: object = None, patience: i
             return answer
         page.wait_for_timeout(100)
     raise SystemExit(f"gave up waiting for {what}")
-
 LISTED = """(path) => {
   const walk = (e) => (e ? [e.path, ...(e.children ?? []).flatMap(walk)] : [])
   return walk(window.ordenApp.workspace.tree).includes(path)
 }"""
-
 ROW = """(path) => document.querySelector(`.row[data-path="${CSS.escape(path)}"]`)"""
-
 BOX = """() => {
   let at = document.querySelector('[role=tree]')
   while (at && !(at.scrollHeight > at.clientHeight && /auto|scroll/.test(getComputedStyle(at).overflowY))) at = at.parentElement
   return at
 }"""
-
 WATCH = (
     """(paths) => {
   const row = """
@@ -70,9 +60,7 @@ WATCH = (
   return held.every(Boolean)
 }"""
 )
-
 FRAMES = "() => { cancelAnimationFrame(window.__raf); return window.__frames }"
-
 def window_for(context, label: str, paths: list[str] | None = None) -> Page:
     page = context.new_page()
     page.set_default_timeout(30000)
@@ -103,7 +91,6 @@ def window_for(context, label: str, paths: list[str] | None = None) -> Page:
     page.evaluate("() => { const ws = window.ordenApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }")
     wait_for(page, "() => !!document.querySelector('[role=tree] .row')", f"[{label}] the file list")
     return page
-
 def scroll_to(page: Page, path: str) -> None:
     page.evaluate(
         f"""async (path) => {{
@@ -122,7 +109,6 @@ def scroll_to(page: Page, path: str) -> None:
         path,
     )
     page.wait_for_timeout(300)
-
 def state(page: Page) -> dict:
     return page.evaluate(
         """() => ({
@@ -131,13 +117,11 @@ def state(page: Page) -> dict:
           open: window.ordenApp.workspace.active?.path ?? null,
         })"""
     )
-
 def heard(a: Page, path: str, what: str, started: float) -> float:
     wait_for(a, LISTED, what, path)
     took = time.monotonic() - started
     a.wait_for_timeout(500)
     return took
-
 def jumps(frames: list[dict], index: int, height: float) -> list[str]:
     out = []
     last = None
@@ -150,10 +134,8 @@ def jumps(frames: list[dict], index: int, height: float) -> list[str]:
             out.append(f"{one['path']} jumped {one['top'] - last:+.1f}px in one frame")
         last = one["top"]
     return out
-
 def tops(frames: list[dict], index: int) -> list[float]:
     return [frame["rows"][index]["top"] for frame in frames if frame["rows"][index] is not None]
-
 def main() -> int:
     worker = Worker()
     with DRIVE.session() as browser:
@@ -167,16 +149,13 @@ def main() -> int:
                 token=token,
                 body={"path": name, "content": f"# {name}\n"},
             )
-
         def device(motion: str = "no-preference"):
             context = browser.new_context(viewport={"width": 1100, "height": 560}, reduced_motion=motion)
             context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
             return context
-
         a = window_for(device(), "A")
         b = window_for(device(), "B")
         a.bring_to_front()
-
         scroll_to(a, f"{ROOT}/Note 30.md")
         reading = f"{ROOT}/Note 35.md"
         a.evaluate("(p) => window.ordenApp.workspace.select(p)", reading)
@@ -186,7 +165,6 @@ def main() -> int:
         say(f"A reads Note 35, scrolled to Note 30; rows are {height}px: {before}")
         if before["picked"] != [reading] or before["focused"] != reading:
             failed(f"A did not start on Note 35: {before}")
-
         watched = [reading, f"{ROOT}/Note 31.md", f"{ROOT}/Note 38.md"]
         if not a.evaluate(WATCH, watched):
             failed("the rows to watch are not drawn")
@@ -201,7 +179,6 @@ def main() -> int:
         now = state(a)
         if now != before:
             failed(f"a rename elsewhere changed what A had: {before} -> {now}")
-
         if not a.evaluate(WATCH, watched):
             failed("the rows to watch are not drawn")
         started = time.monotonic()
@@ -227,7 +204,6 @@ def main() -> int:
         now = state(a)
         if now != before:
             failed(f"a move elsewhere changed what A had: {before} -> {now}")
-
         renamed = f"{ROOT}/Note 35b.md"
         if not a.evaluate(WATCH, watched):
             failed("the rows to watch are not drawn")
@@ -243,7 +219,6 @@ def main() -> int:
             failed("the row A reads was drawn again as another element")
         for one in jumps(frames, 0, height):
             failed(one)
-
         for page in (a, b):
             page.evaluate("() => window.ordenApp.workspace.setSort('manual')")
         wait_for(b, "() => !!window.ordenApp.sync.engine?.engine?.core", "[B] the engine")
@@ -284,7 +259,6 @@ def main() -> int:
         now = state(a)
         if now != {"picked": [renamed], "focused": renamed, "open": before["open"]}:
             failed(f"B's drag changed what A had: {now}")
-
         listed = a.evaluate(
             "() => window.ordenApp.workspace.tree.children.filter((one) => !one.is_dir).map((one) => one.path)"
         )
@@ -306,5 +280,4 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 raise SystemExit(main())

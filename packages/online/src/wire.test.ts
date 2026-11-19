@@ -21,7 +21,6 @@ import {
 } from './wire'
 
 const bytes = (...values: number[]) => new Uint8Array(values)
-
 describe('the app socket', () => {
   const clients: ClientFrame[] = [
     { t: 'hello', cols: 120, rows: 40 },
@@ -41,11 +40,9 @@ describe('the app socket', () => {
     { t: 'image', id: '0123456789abcdef0123', kind: 'png', part: 'iVBORw0KGgo=', last: false },
     { t: 'image', id: '0123456789abcdef0123', kind: 'webp', part: '', last: true },
   ]
-
   it.each(clients)('reads back what the app sent: %j', (one) => {
     expect(clientFrameOf(text(one))).toEqual(one)
   })
-
   const servers: ServerFrame[] = [
     { t: 'screen', seq: 0, cols: 80, rows: 24, data: '' },
     { t: 'screen', seq: 512, cols: 120, rows: 40, data: '\u001b[31mred\u001b[0m\r\n$ ' },
@@ -95,11 +92,9 @@ describe('the app socket', () => {
     { t: 'held', by: '', since: 1, taken: true },
     { t: 'hold' },
   ]
-
   it.each(servers)('reads back what the Machine sent: %j', (one) => {
     expect(serverFrameOf(text(one))).toEqual(one)
   })
-
   it.each([
     '',
     'not json',
@@ -128,7 +123,6 @@ describe('the app socket', () => {
   ])('drops a client frame that does not check: %s', (raw) => {
     expect(clientFrameOf(raw)).toBeNull()
   })
-
   it('reads a hello that does not say it holds as one from an Orden before the lock', () => {
     expect(clientFrameOf('{"t":"hello","cols":80,"rows":24,"hold":"yes"}')).toEqual({
       t: 'hello',
@@ -136,19 +130,16 @@ describe('the app socket', () => {
       rows: 24,
     })
   })
-
   it('drops input larger than a frame may be', () => {
     expect(clientFrameOf(text({ t: 'in', data: 'x'.repeat(MOST_INPUT) }))).not.toBeNull()
     expect(clientFrameOf(text({ t: 'in', data: 'x'.repeat(MOST_INPUT + 1) }))).toBeNull()
   })
-
   it('takes a part of a picture no larger than an input frame', () => {
     const image = (part: string) => text({ t: 'image', id: '0123456789abcdef0123', kind: 'png', part, last: false })
     expect(clientFrameOf(image('A'.repeat(MOST_INPUT)))).not.toBeNull()
     expect(clientFrameOf(image('A'.repeat(MOST_INPUT + 4)))).toBeNull()
     expect((IMAGE_PART / 3) * 4).toBe(MOST_INPUT)
   })
-
   it('names a picture with letters and digits only, so the name is never a path', () => {
     expect(isImageId('0123456789abcdef')).toBe(true)
     expect(isImageId('0123456789abcdef/')).toBe(false)
@@ -156,7 +147,6 @@ describe('the app socket', () => {
     expect(isImageId('..')).toBe(false)
     expect(isImageId(7)).toBe(false)
   })
-
   it.each([
     '{"t":"screen","seq":0,"cols":80,"rows":24}',
     '{"t":"screen","seq":0,"cols":80,"rows":24,"data":"","restored":{"at":"x","program":null}}',
@@ -184,7 +174,6 @@ describe('the app socket', () => {
   ])('drops a server frame that does not check: %s', (raw) => {
     expect(serverFrameOf(raw)).toBeNull()
   })
-
   it('drops a people list longer than a session has sockets', () => {
     const people = Array.from({ length: 26 }, (_, at) => ({
       who: `u_${String(at)}`,
@@ -194,7 +183,6 @@ describe('the app socket', () => {
     expect(serverFrameOf(text({ t: 'people', people }))).toBeNull()
     expect(serverFrameOf(text({ t: 'people', people: people.slice(1) }))).not.toBeNull()
   })
-
   it('carries output as an offset and raw bytes', () => {
     const data = bytes(0, 27, 91, 255, 10)
     const read = outOf(outFrame(4096, data))
@@ -202,7 +190,6 @@ describe('the app socket', () => {
     expect([...(read?.data ?? [])]).toEqual([...data])
     expect(outOf(outFrame(2 ** 50, bytes()))).toEqual({ seq: 2 ** 50, data: bytes() })
   })
-
   it('reads output inside a larger buffer, as a socket may hand it', () => {
     const framed = outFrame(7, bytes(1, 2, 3))
     const padded = new Uint8Array(framed.length + 6)
@@ -211,7 +198,6 @@ describe('the app socket', () => {
     expect(read?.seq).toBe(7)
     expect([...(read?.data ?? [])]).toEqual([1, 2, 3])
   })
-
   it('drops output too short to hold an offset, or with no offset in it', () => {
     expect(outOf(bytes(1, 2, 3))).toBeNull()
     const bad = new Uint8Array(8)
@@ -222,13 +208,11 @@ describe('the app socket', () => {
     new DataView(bad.buffer).setFloat64(0, Number.NaN)
     expect(outOf(bad)).toBeNull()
   })
-
   it('names the socket by the file id, escaped', () => {
     expect(socketPath('f_1')).toBe('/v2/online/f_1/socket')
     expect(socketPath('a/b')).toBe('/v2/online/a%2Fb/socket')
   })
 })
-
 describe('the link', () => {
   const machines: MachineFrame[] = [
     { t: 'open', session: 's_1', cols: 80, rows: 24 },
@@ -253,11 +237,9 @@ describe('the link', () => {
       last: true,
     },
   ]
-
   it.each(machines)('ordend reads back what the Machine sent: %j', (one) => {
     expect(machineFrameOf(linkFrame(one))).toEqual(one)
   })
-
   const ordends: OrdendFrame[] = [
     { t: 'out', session: 's_1', seq: 0, data: bytes(104, 105) },
     { t: 'out', session: 's_1', seq: 2 ** 33, data: bytes(0, 255) },
@@ -307,16 +289,13 @@ describe('the link', () => {
     },
     { t: 'sessions', sessions: [] },
   ]
-
   it.each(ordends)('the Machine reads back what ordend sent: %j', (one) => {
     expect(ordendFrameOf(linkFrame(one))).toEqual(one)
   })
-
   it('carries bytes on the link as bytes, not escaped', () => {
     const data = new Uint8Array(4096).fill(0x1b)
     expect(linkFrame({ t: 'in', session: 's', data }).length).toBeLessThan(4096 + 100)
   })
-
   it.each<[string, unknown]>([
     ['no session', { t: 'open', cols: 80, rows: 24 }],
     ['an empty session', { t: 'close', session: '' }],
@@ -328,12 +307,10 @@ describe('the link', () => {
   ])('ordend drops a frame with %s', (_, value) => {
     expect(machineFrameOf(frame(value as object))).toBeNull()
   })
-
   it('ordend drops input larger than a frame may be', () => {
     const data = new Uint8Array(MOST_INPUT + 1)
     expect(machineFrameOf(linkFrame({ t: 'in', session: 's', data }))).toBeNull()
   })
-
   it('ordend drops a part of a picture larger than a frame may carry', () => {
     const part = (size: number) =>
       linkFrame({
@@ -347,7 +324,6 @@ describe('the link', () => {
     expect(machineFrameOf(part(IMAGE_PART))).not.toBeNull()
     expect(machineFrameOf(part(IMAGE_PART + 1))).toBeNull()
   })
-
   it.each<[string, unknown]>([
     ['text for output', { t: 'out', session: 's', seq: 0, data: 'hi' }],
     ['a screen with no size', { t: 'screen', session: 's', seq: 0, data: '' }],
@@ -369,21 +345,17 @@ describe('the link', () => {
   ])('the Machine drops a frame with %s', (_, value) => {
     expect(ordendFrameOf(frame(value as object))).toBeNull()
   })
-
   it('drops bytes that are not an envelope at all', () => {
     expect(machineFrameOf(bytes(9, 9, 9))).toBeNull()
     expect(ordendFrameOf(bytes())).toBeNull()
   })
 })
-
 describe('input in frames', () => {
   const bytesOf = (value: string) => new TextEncoder().encode(value).length
-
   it('keeps short input whole, the empty string included', () => {
     expect(inputChunks('ls\r')).toEqual(['ls\r'])
     expect(inputChunks('')).toEqual([''])
   })
-
   it('cuts a long paste into frames that each fit, and nothing lost', () => {
     const paste = `\u001b[200~${'line of a log\n'.repeat(20_000)}\u001b[201~`
     const chunks = inputChunks(paste)
@@ -394,7 +366,6 @@ describe('input in frames', () => {
       expect(clientFrameOf(text({ t: 'in', data: chunk }))).not.toBeNull()
     }
   })
-
   it('never cuts inside a character', () => {
     const paste = 'ü😀€a'.repeat(5)
     const chunks = inputChunks(paste, 7)

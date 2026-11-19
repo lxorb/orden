@@ -8,7 +8,6 @@ import { get, put } from './store'
 async function names(): Promise<string[]> {
   return (await indexedDB.databases()).flatMap((one) => (one.name ? [one.name] : []))
 }
-
 describe('what an older version kept in this browser under nib', () => {
   test('keeps a sync store, its device and its rows', async () => {
     const first = await openWeb('former')
@@ -17,7 +16,6 @@ describe('what an older version kept in this browser under nib', () => {
     await first.close()
     await carryDatabase('orden-sync:former', 'nib-sync:former')
     expect(await names()).toContain('nib-sync:former')
-
     expect(await deviceWeb('former')).toBe(device)
     const again = await openWeb('former')
     expect(again.opened.device).toBe(device)
@@ -26,7 +24,6 @@ describe('what an older version kept in this browser under nib', () => {
     })
     await again.close()
     expect(await names()).not.toContain('nib-sync:former')
-
     await carryDatabase('orden-sync:former', 'nib-sync:former')
     await forgetWeb('former')
     expect(await names()).not.toContain('nib-sync:former')

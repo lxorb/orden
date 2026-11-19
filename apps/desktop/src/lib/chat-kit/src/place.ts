@@ -4,10 +4,8 @@ export interface Box {
   right: number
   bottom: number
 }
-
 const GAP = 6
 const ROOM = 8
-
 export function placeNear(
   at: Box,
   size: { width: number; height: number },

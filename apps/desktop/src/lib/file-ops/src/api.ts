@@ -2,37 +2,29 @@ import type { SyncFileKind, SyncFileOp } from '@orden/contracts'
 import { log, movedTo, relativeTo, samePath, within } from '../../platform/src/api'
 
 export { inFlight, landing, onLanded } from './landing'
-
 export type Kind = SyncFileKind
 export type FileOp = SyncFileOp
 export type Follower = (op: FileOp) => unknown
-
 export type Doer = (op: FileOp, run: () => Promise<unknown>) => Promise<void>
-
 export class FileOps {
   private readonly followers = new Set<Follower>()
   private doer: Doer | null = null
-
   doneBy(doer: Doer): () => void {
     this.doer = doer
     return () => {
       if (this.doer === doer) this.doer = null
     }
   }
-
   async doing(op: FileOp, run: () => Promise<unknown>): Promise<void> {
     if (this.doer) await this.doer(op, run)
     else await run()
   }
-
   follow(follower: Follower): () => void {
     this.followers.add(follower)
     return () => this.followers.delete(follower)
   }
-
   async tell(op: FileOp): Promise<void> {
     const waiting: Promise<unknown>[] = []
-
     for (const follower of this.followers) {
       try {
         const left = follower(op)
@@ -41,15 +33,12 @@ export class FileOps {
         failed(op, error)
       }
     }
-
     await Promise.all(waiting)
   }
 }
-
 function failed(op: FileOp, error: unknown) {
   log('error', `a store did not follow ${op.op} ${op.op === 'moved' ? op.from : op.path}: ${String(error)}`)
 }
-
 export interface KeptByPath {
   moved?(from: string, to: string, root: string | null, into?: string | null): void
   gone?(path: string, root: string | null, back?: string): unknown
@@ -57,7 +46,6 @@ export interface KeptByPath {
   spaceMoved?(from: string, to: string): void
   forget?(root: string, back?: string): unknown
 }
-
 export const keeping =
   (store: KeptByPath): Follower =>
   (op): unknown => {
@@ -72,12 +60,10 @@ export const keeping =
     }
     return undefined
   }
-
 export function keepingShared(store: KeptByPath): Follower {
   const kept = keeping(store)
   return (op) => (op.heard && !op.watched ? undefined : kept(op))
 }
-
 export interface Moving {
   root: string
   was: string
@@ -85,7 +71,6 @@ export interface Moving {
   now: string | null
   across: boolean
 }
-
 export function moving(from: string, to: string, root: string, into?: string | null): Moving {
   const there = into ?? root
   const now = within(there, to, there)
@@ -97,7 +82,6 @@ export function moving(from: string, to: string, root: string, into?: string | n
     across: now === null || !samePath(there, root),
   }
 }
-
 export function carried<T>(
   held: Iterable<T>,
   move: Moving,

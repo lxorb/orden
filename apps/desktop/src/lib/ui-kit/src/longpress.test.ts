@@ -7,10 +7,8 @@ interface Node {
   addEventListener(kind: string, run: (event: never) => void): void
   removeEventListener(kind: string): void
 }
-
 function node(): Node {
   const listeners = new Map<string, (event: never) => void>()
-
   return {
     listeners,
     dispatchEvent: () => true,
@@ -22,7 +20,6 @@ function node(): Node {
     },
   }
 }
-
 function at(x: number, y: number): unknown {
   return {
     touches: [{ clientX: x, clientY: y }],
@@ -30,18 +27,15 @@ function at(x: number, y: number): unknown {
     preventDefault: () => undefined,
   }
 }
-
 class Event_ {
   constructor(
     readonly type: string,
     readonly detail: unknown = null,
   ) {}
 }
-
 let host: Node
 let shown: number
 let stop: () => void
-
 beforeEach(() => {
   vi.stubGlobal('MouseEvent', Event_)
   vi.stubGlobal('CustomEvent', Event_)
@@ -53,17 +47,14 @@ beforeEach(() => {
   })
   stop = () => action.destroy()
 })
-
 afterEach(() => {
   stop()
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
-
 function touch(kind: 'touchstart' | 'touchmove' | 'touchend', event: unknown) {
   host.listeners.get(kind)?.(event as never)
 }
-
 describe('a finger held still', () => {
   test('asks for the menu, once the hold is long enough', () => {
     touch('touchstart', at(100, 100))
@@ -72,7 +63,6 @@ describe('a finger held still', () => {
     vi.advanceTimersByTime(1)
     expect(shown).toBe(1)
   })
-
   test('and lifting before that asks for nothing', () => {
     touch('touchstart', at(100, 100))
     vi.advanceTimersByTime(300)
@@ -81,7 +71,6 @@ describe('a finger held still', () => {
     expect(shown).toBe(0)
   })
 })
-
 describe('a finger that moves first', () => {
   test('never opens the menu, however long it is then held', () => {
     touch('touchstart', at(100, 100))
@@ -90,7 +79,6 @@ describe('a finger that moves first', () => {
     vi.advanceTimersByTime(5000)
     expect(shown).toBe(0)
   })
-
   test('and a wobble inside the slop is still a press', () => {
     touch('touchstart', at(100, 100))
     vi.advanceTimersByTime(200)
@@ -98,7 +86,6 @@ describe('a finger that moves first', () => {
     vi.advanceTimersByTime(500)
     expect(shown).toBe(1)
   })
-
   test('sideways counts the same as up and down', () => {
     touch('touchstart', at(100, 100))
     touch('touchmove', at(130, 100))
@@ -106,7 +93,6 @@ describe('a finger that moves first', () => {
     expect(shown).toBe(0)
   })
 })
-
 describe('two fingers', () => {
   test('are a pinch or a scroll, and ask for nothing', () => {
     touch('touchstart', {

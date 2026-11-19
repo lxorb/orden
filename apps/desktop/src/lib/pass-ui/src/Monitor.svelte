@@ -15,17 +15,14 @@
   import Glyph from './Glyph.svelte'
 
   const { ui }: { ui: PassUi } = $props()
-
   const found = $derived(report(pass.items, ui.compromised))
   let checking = $state(false)
   let checked = $state(false)
   let wrong = $state('')
-
   let key = $state('')
   let typedKey = $state('')
   let keyRead = $state(false)
   let breaches = $state.raw<Record<string, Breach[] | string>>({})
-
   const emails = $derived([
     ...new Set(
       activeLogins(pass.items)
@@ -33,7 +30,6 @@
         .filter((one) => one.includes('@')),
     ),
   ])
-
   $effect(() => {
     let current = true
     void pass.hibpKey().then((kept) => {
@@ -45,11 +41,9 @@
       current = false
     }
   })
-
   $effect(() => {
     if (pass.settings.checkBreaches && !checked && !checking) void check()
   })
-
   async function check() {
     checking = true
     wrong = ''
@@ -63,24 +57,20 @@
       checking = false
     }
   }
-
   function turnOn() {
     pass.setSetting('checkBreaches', true)
   }
-
   async function keptKey(event: SubmitEvent) {
     event.preventDefault()
     await pass.setHibpKey(typedKey)
     key = typedKey.trim()
     typedKey = ''
   }
-
   async function forgetKey() {
     await pass.setHibpKey('')
     key = ''
     breaches = {}
   }
-
   async function lookUp() {
     const next: Record<string, Breach[] | string> = {}
     for (const email of emails) {
@@ -92,14 +82,12 @@
       breaches = { ...next }
     }
   }
-
   const cards = $derived<[Flag, IconNode, string[], string][]>([
     ['weak', ShieldAlert, found.weak, 'Easy to guess. Change them to generated ones.'],
     ['reused', Repeat, [...found.reused.keys()], 'Used for more than one login.'],
     ['inactive2fa', Smartphone, found.inactive2fa, 'These sites offer two-factor authentication.'],
     ['excluded', EyeOff, found.excluded, 'Left out of Monitor.'],
   ])
-
   function opened(flag: Flag, ids: string[]) {
     if (!ids.length) return
     ui.flagged = ids
@@ -230,17 +218,14 @@
     overflow-y: auto;
     padding: var(--space-4) var(--space-5) var(--space-6);
   }
-
   .head {
     margin-bottom: var(--space-4);
   }
-
   .cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
     gap: var(--space-3);
   }
-
   .press {
     flex: 1;
     display: flex;
@@ -250,7 +235,6 @@
     border-radius: 0;
     color: var(--text);
   }
-
   .mark {
     flex: none;
     display: grid;
@@ -261,17 +245,14 @@
     background: var(--surface-3);
     color: var(--muted-strong);
   }
-
   .is-bad .mark {
     background: color-mix(in srgb, var(--callout-warning) 20%, transparent);
     color: var(--callout-warning);
   }
-
   .is-first.is-bad .mark {
     background: color-mix(in srgb, var(--danger) 18%, transparent);
     color: var(--danger);
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -279,67 +260,54 @@
     flex-direction: column;
     gap: 2px;
   }
-
   .name {
     font-size: var(--text-row);
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .line {
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   .count {
     font-size: var(--text-head);
     font-weight: var(--weight-strong);
     color: var(--text-strong);
     font-variant-numeric: tabular-nums;
   }
-
   .clear {
     color: var(--success);
   }
-
   .press :global(.chevron) {
     color: var(--muted);
   }
-
   .check {
     margin: 0 var(--space-4) var(--space-3);
     align-self: flex-start;
   }
-
   .orden-section {
     margin: var(--space-5) 0 var(--space-2);
   }
-
   .dark {
     max-width: 40rem;
   }
-
   .key {
     display: flex;
     gap: var(--space-2);
     padding: 0 var(--space-4) var(--space-3);
   }
-
   .emails {
     display: flex;
     flex-direction: column;
     padding: 0 var(--space-4) var(--space-3);
   }
-
   .email .name {
     font-weight: var(--weight-row);
   }
-
   .bad {
     color: var(--danger);
     font-size: var(--text-sm);
   }
-
   .buttons {
     margin-top: var(--space-2);
   }

@@ -16,7 +16,6 @@ export interface NewNote {
   template?: string | null
   open?: boolean
 }
-
 function idFor(base: Base, space: { name: string }): Record<string, string> {
   const id = base.orden.id
   if (!id) return {}
@@ -25,7 +24,6 @@ function idFor(base: Base, space: { name: string }): Record<string, string> {
   const own = rowsInBase(base, mine, context)
   return own.partial ? {} : { [id.property]: nextId(own.rows, id.property, id.prefix) }
 }
-
 function frontValue(value: Value): unknown {
   if (Array.isArray(value)) return value.map(frontValue)
   if (value === null || typeof value !== 'object' || !('kind' in value) || value.kind !== 'link')
@@ -34,10 +32,8 @@ function frontValue(value: Value): unknown {
   if (typeof target !== 'string') return plainValue(value)
   return typeof display === 'string' && display ? `[[${target}|${display}]]` : `[[${target}]]`
 }
-
 export const askedProperties = (asked: Record<string, Value> = {}): Record<string, unknown> =>
   Object.fromEntries(Object.entries(asked).map(([name, value]) => [name, frontValue(value)]))
-
 export function groupProperties(group?: { property: string; key: Value }): Record<string, unknown> {
   if (!group || !isNoteProperty(group.property)) return {}
   const key = group.key
@@ -48,14 +44,11 @@ export function groupProperties(group?: { property: string; key: Value }): Recor
     (key !== null && typeof key === 'object' && 'kind' in key && (key.kind === 'date' || key.kind === 'link'))
   return kept ? { [bare(group.property)]: frontValue(key) } : {}
 }
-
 const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
-
 function listed(value: unknown): unknown[] {
   if (Array.isArray(value)) return value as unknown[]
   return value === undefined || value === null ? [] : [value]
 }
-
 export function joinedProperties(...layers: readonly Record<string, unknown>[]): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const layer of layers) {
@@ -71,7 +64,6 @@ export function joinedProperties(...layers: readonly Record<string, unknown>[]):
   }
   return out
 }
-
 export function withTemplate(words: string, props: Record<string, unknown>): Record<string, unknown> {
   if (!words.startsWith('---')) return props
   const own = noteValues(words)
@@ -83,7 +75,6 @@ export function withTemplate(words: string, props: Record<string, unknown>): Rec
   )
   return joinedProperties(lists, props)
 }
-
 export async function addNote(
   base: Base,
   at: number,
@@ -99,7 +90,6 @@ export async function addNote(
   if (folder === null) return null
   const dir = folder !== undefined ? insideSpace(space.root, folder) : file ? folderOf(file) : space.root
   if (!canWriteAt(dir)) return null
-
   const title = noteName(made.title ?? 'Untitled')
   const name = await workspace.freeNameOnDisk(dir, `${title}.md`)
   const link = made.template === undefined ? (view?.orden.template ?? base.orden.template) : made.template

@@ -1,7 +1,6 @@
 import type { Field } from './fields'
 
 type Value = boolean | number | string
-
 export interface SettingSchema {
   type: 'boolean' | 'number' | 'string' | 'list'
   enum?: string[]
@@ -10,9 +9,7 @@ export interface SettingSchema {
   default?: Value | string[]
   description: string
 }
-
 export type Schema = Record<string, SettingSchema>
-
 function settingOf(field: Field): SettingSchema | null {
   if (!field.key) return null
   const about = { description: field.hint }
@@ -49,7 +46,6 @@ function settingOf(field: Field): SettingSchema | null {
       return null
   }
 }
-
 function gathered(one: SettingSchema, other: SettingSchema, key: string): SettingSchema {
   if (one.type !== 'list' || other.type !== 'list') throw new Error(`settings key ${key} is used twice`)
   const defaults = [
@@ -62,7 +58,6 @@ function gathered(one: SettingSchema, other: SettingSchema, key: string): Settin
     ...(defaults.length ? { default: defaults } : {}),
   }
 }
-
 export function schemaOf(fields: Field[]): Schema {
   const found = new Map<string, SettingSchema>()
   for (const field of fields) {
@@ -73,11 +68,9 @@ export function schemaOf(fields: Field[]): Schema {
   }
   return sorted(found)
 }
-
 function sorted(found: Map<string, SettingSchema>): Schema {
   return Object.fromEntries([...found].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
 }
-
 export function refusal(setting: SettingSchema, value: unknown): string | null {
   if (setting.type === 'list') {
     if (!Array.isArray(value) || value.some((one) => typeof one !== 'string')) {
@@ -100,7 +93,6 @@ export function refusal(setting: SettingSchema, value: unknown): string | null {
   }
   return null
 }
-
 function listed(values: string[]): string {
   return values.map((one) => JSON.stringify(one)).join(', ')
 }

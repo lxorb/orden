@@ -10,16 +10,12 @@ export interface Repeat {
   first?: string
   time?: string
 }
-
 const MOST_WORDS = 9
-
 const ORDINAL_EN = /^(\d{1,2})(?:st|nd|rd|th)$/
 const DAY_EN = /^(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(day)?s?$/
 const UNIT_EN = /^(day|week|month|year)$/
-
 const figures = (count: number): string =>
   `${count}${count % 10 === 1 && count !== 11 ? 'st' : count % 10 === 2 && count !== 12 ? 'nd' : count % 10 === 3 && count !== 13 ? 'rd' : 'th'}`
-
 function pluginWords(words: readonly string[]): string {
   const [every = '', second = '', third = ''] = words
   const rest = words.slice(2).join(' ')
@@ -39,7 +35,6 @@ function pluginWords(words: readonly string[]): string {
   if (second === 'other' && DAY_EN.test(third)) return `${every} 2 weeks on ${rest}`
   return words.join(' ')
 }
-
 function englishRule(words: readonly Word[], at: number, g: Grammar): Repeat | null {
   const key = bare(words[at])
   const whole = g.rules[key]
@@ -48,7 +43,6 @@ function englishRule(words: readonly Word[], at: number, g: Grammar): Repeat | n
     return rule ? { end: at + 1, rule } : null
   }
   if (!g.every.has(key) && !g.everyDone.has(key)) return null
-
   const most = Math.min(words.length - at, MOST_WORDS)
   for (let count = most; count >= 2 || (count === 1 && g.everyDone.has(key)); count--) {
     const said = words.slice(at, at + count).map((word) => bare(word))
@@ -61,7 +55,6 @@ function englishRule(words: readonly Word[], at: number, g: Grammar): Repeat | n
   }
   return null
 }
-
 const emptyRule = (): Rule => ({
   every: 1,
   unit: 'day',
@@ -70,7 +63,6 @@ const emptyRule = (): Rule => ({
   months: [],
   whenDone: false,
 })
-
 function daysFrom(words: readonly Word[], at: number, g: Grammar): { end: number; days: number[] } {
   const days: number[] = []
   let index = at
@@ -83,7 +75,6 @@ function daysFrom(words: readonly Word[], at: number, g: Grammar): { end: number
   }
   return { end: index, days }
 }
-
 function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | null {
   const key = bare(words[at])
   const whole = g.rules[key]
@@ -93,11 +84,9 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
   }
   const done = g.everyDone.has(words[at]?.key ?? '')
   if (!g.every.has(key) && !done) return null
-
   const rule = { ...emptyRule(), whenDone: done }
   let index = at + 1
   const word = () => bare(words[index])
-
   const written = g.ordinal.exec(words[index]?.key ?? '')?.[1]
   const nth = written === undefined ? g.ordinals[word()] : Number(written)
   const counted = g.numbers[word()]
@@ -112,7 +101,6 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
     rule.every = counted ?? nth ?? 1
     index++
   }
-
   const last = g.last.has(word())
   if ((nth !== undefined || last) && rule.every === 1) {
     index++
@@ -139,7 +127,6 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
     }
     return { end: index, rule }
   }
-
   const unit = g.units[word()]
   if (g.workdays.has(word())) {
     rule.unit = 'week'
@@ -161,17 +148,14 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
   }
   return { end: index, rule }
 }
-
 export function repeatAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Repeat | null {
   const part = g.every.has(bare(words[at])) ? g.partsOfDay[bare(words[at + 1])] : undefined
   if (part) {
     const later = timeInPart(words, at + 2, g, part)
     return { end: later?.end ?? at + 2, rule: emptyRule(), time: later?.time ?? part }
   }
-
   const read = g.lang === 'de' ? germanRule(words, at, g) : englishRule(words, at, g)
   if (!read) return null
-
   const rule = { ...read.rule }
   let end = read.end + (rule.unit === 'month' ? longestAt(words, read.end, g.ofTheMonth) : 0)
   let first: string | undefined

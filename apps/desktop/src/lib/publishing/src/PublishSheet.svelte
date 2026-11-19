@@ -17,7 +17,6 @@
   const records = $derived(publish.dns.length ? publish.dns : (blog?.dns ?? []))
   const notice = $derived(publish.status ? domainNotice(publish.status) : null)
   const showing = $derived(publish.space?.id === workspace.activeSpaceId)
-
   const noteChoices = $derived([
     { value: '', label: 'The whole space' },
     ...(showing
@@ -34,31 +33,25 @@
           ]
         : []),
   ])
-
   const SHOWN = 6
   const SHOWN_ANSWERS = 20
   const when = (stamp: number) => localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
-
   async function saveAnswers() {
     const csv = await publish.answersCsv()
     if (!csv) return
-
     const name = `${publish.space?.name ?? 'answers'} answers`
     if (isDesktop) {
       const target = await chooseTarget(name, 'csv', 'Spreadsheet')
       if (target) await writeFile(target, csv)
       return
     }
-
     download(`${name}.csv`, { text: csv, mime: 'text/csv' })
   }
-
   const ruled = $derived.by(() => {
     const tops: string[] = []
     const seen = (folder: string) => {
       if (folder && !tops.includes(folder)) tops.push(folder)
     }
-
     if (showing) {
       for (const note of workspace.notes) {
         const relative = publish.relativeTo(note.path)
@@ -66,42 +59,32 @@
         if (folder !== relative) seen(folder)
       }
     }
-
     for (const folder of [...publish.rules.include, ...publish.rules.exclude]) seen(folder)
-
     return tops.sort((one, other) => one.localeCompare(other))
   })
-
   function ruleFor(folder: string): string {
     if (publish.rules.include.includes(folder)) return 'in'
     if (publish.rules.exclude.includes(folder)) return 'out'
     return ''
   }
-
   function setRule(folder: string, value: string) {
     publish.rule('include', folder, value === 'in')
     publish.rule('exclude', folder, value === 'out')
   }
-
   const changes = $derived(publish.changes)
-
   const everything = $derived(
     publish.rules.otherwise === 'all' && !publish.rules.exclude.length && !publish.rules.include.length,
   )
-
   let markBox = $state<HTMLElement | null>(null)
-
   $effect(() => {
     if (!publish.open) return
     publish.refill()
   })
-
   $effect(() => {
     if (!publish.open || !publish.spaceId) return
     publish.ask()
     void publish.readAnswers()
   })
-
   $effect(() => {
     if (!publish.open || !blog?.domain) return
     void publish.watchDomain()
@@ -475,7 +458,6 @@
     border: none;
     transition: opacity var(--dur-base) var(--ease-out);
   }
-
   .danger-check {
     display: flex;
     gap: var(--space-3);
@@ -487,19 +469,16 @@
     line-height: 1.55;
     color: var(--muted-strong);
   }
-
   .danger-check strong {
     display: block;
     color: var(--text-strong);
   }
-
   .danger-check input {
     flex: none;
     align-self: start;
     margin-top: 3px;
     accent-color: var(--accent);
   }
-
   .changed {
     display: flex;
     flex-direction: column;
@@ -511,32 +490,26 @@
     font-size: var(--text-sm);
     color: var(--muted-strong);
   }
-
   .changed li::before {
     display: inline-block;
     width: 1.1em;
     color: var(--muted);
     font-family: var(--font-mono);
   }
-
   .changed .added::before {
     content: '+';
     color: var(--success);
   }
-
   .changed .gone::before {
     content: '−';
     color: var(--danger);
   }
-
   .changed .rest {
     color: var(--muted);
   }
-
   .changed .rest::before {
     content: '';
   }
-
   .answer {
     display: flex;
     flex-wrap: wrap;
@@ -546,65 +519,53 @@
     padding: var(--space-2) 0;
     font-size: var(--text-sm);
   }
-
   .answer + .answer {
     border-top: 1px solid var(--line);
   }
-
   .answer .name {
     flex: 1;
     min-width: 0;
     color: var(--text-strong);
   }
-
   .answer .name small {
     margin-inline-start: var(--space-2);
     color: var(--muted);
   }
-
   .answer .said {
     flex: 1 0 100%;
     color: var(--muted-strong);
   }
-
   .mark {
     flex: none;
   }
-
   .field.wide {
     flex: 1;
     min-width: 0;
     text-align: start;
   }
-
   .pick {
     flex: none;
     width: 13rem;
   }
-
   .suffix {
     flex: none;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   .orden-segmented {
     width: 100%;
   }
-
   .scrolls {
     width: 100%;
     overflow-x: auto;
   }
-
   .dns {
     width: 100%;
     border-collapse: collapse;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
   }
-
   .dns th,
   .dns td {
     border: 1px solid var(--line);
@@ -612,38 +573,31 @@
     text-align: start;
     white-space: nowrap;
   }
-
   .dns th {
     background: var(--surface-2);
     color: var(--muted);
     font-weight: var(--weight-strong);
   }
-
   .go {
     margin-inline-start: auto;
   }
-
   :global([data-touch]) .danger-check {
     padding: var(--touch-pad);
     border-radius: var(--radius-lg);
     font-size: var(--text-base);
   }
-
   :global([data-touch]) .danger-check input {
     width: 20px;
     height: 20px;
     margin-top: 1px;
   }
-
   :global([data-touch]) .pick {
     width: auto;
     max-width: 60%;
   }
-
   :global([data-touch]) .suffix {
     font-size: var(--text-base);
   }
-
   :global([data-touch]) .go {
     flex: 1;
     justify-content: center;

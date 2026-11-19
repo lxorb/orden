@@ -58,20 +58,17 @@ async function pickBlock(note: string, label: string): Promise<string | null> {
   }
   return sectionOf(source, { heading: null, block: picked.id })
 }
-
 describe('picking a list item from the block completion', () => {
   test('the first item of a list right under a line of words links to that item', async () => {
     const shown = await pickBlock('Shopping:\n- milk\n- eggs\n', 'milk')
     expect(shown).toContain('milk')
     expect(shown).not.toContain('Shopping')
   })
-
   test('the item after a wrapped item links to that item, not the wrapped one', async () => {
     const shown = await pickBlock('- milk from the\n  corner shop\n- eggs\n- bread\n', 'eggs')
     expect(shown).toContain('eggs')
     expect(shown).not.toContain('milk')
   })
-
   test('the item after a named wrapped item does not take its name', async () => {
     const shown = await pickBlock('- milk from the\n  corner shop ^milk\n- eggs\n', 'eggs')
     expect(shown).toContain('eggs')

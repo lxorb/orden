@@ -2,10 +2,8 @@
   if (globalThis.__ordenBridge) return
   globalThis.__ordenBridge = true
   globalThis.__ordenBackground = true
-
   const native = globalThis.chrome
   const PORT = '__orden'
-
   const INSIDE = {
     storage: ['local', 'sync', 'session', 'managed'],
     privacy: ['network', 'services', 'websites'],
@@ -40,13 +38,11 @@
     'storage.session.QUOTA_BYTES': 10485760,
     'alarms.MINIMUM_PERIOD_IN_MINUTES': 0.5,
   }
-
   let port = null
   let next = 0
   const waiting = new Map()
   const listening = new Map()
   const ports = new Map()
-
   function connect() {
     port = native.runtime.connect({ name: PORT })
     port.onMessage.addListener((said) => {
@@ -80,12 +76,10 @@
       }, 0)
     })
   }
-
   function send(message) {
     if (!port) connect()
     port.postMessage(message)
   }
-
   function ask(path, args) {
     while (args.length && args[args.length - 1] === undefined) args.pop()
     return new Promise((answer, refuse) => {
@@ -99,7 +93,6 @@
       }
     })
   }
-
   function call(path, answer = (value) => value) {
     return function (...args) {
       const callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
@@ -119,7 +112,6 @@
       return undefined
     }
   }
-
   function event(path) {
     const name = path.join('.')
     return {
@@ -150,7 +142,6 @@
       },
     }
   }
-
   function local() {
     const listeners = new Set()
     return {
@@ -163,7 +154,6 @@
       },
     }
   }
-
   function closed(key, error) {
     const one = ports.get(key)
     if (!one) return
@@ -171,7 +161,6 @@
     if (error) one.error = { message: error }
     one.onDisconnect.fire(one)
   }
-
   function connecting(path) {
     return function (...args) {
       const key = `port#${++next}`
@@ -193,7 +182,6 @@
       return one
     }
   }
-
   let items = 0
   const pressed = new Map()
   let hearing = false
@@ -222,7 +210,6 @@
       return id
     }
   }
-
   const FILED = new Set(['tabs.executeScript', 'tabs.insertCSS', 'tabs.removeCSS'])
   function filed(path) {
     const made = call(path)
@@ -239,12 +226,10 @@
       return made(...args)
     }
   }
-
   const registered = (one) => ({
     unregister: (...args) =>
       call(['scripting', 'unregisterContentScripts'], () => undefined)({ ids: [one?.id] }, ...args),
   })
-
   function namespace(path) {
     const made = {}
     const dotted = path.join('.')
@@ -272,7 +257,6 @@
       },
     })
   }
-
   function read(path) {
     try {
       const asked = new XMLHttpRequest()
@@ -283,7 +267,6 @@
       return null
     }
   }
-
   const nativeRuntime = native.runtime
   const manifest = read('/manifest.json') ?? {}
   const own = {
@@ -316,7 +299,6 @@
       },
     },
   )
-
   const words = (() => {
     const wanted = navigator.language.replace('-', '_')
     const found = {}
@@ -327,7 +309,6 @@
     }
     return found
   })()
-
   function message(name, substitutions) {
     if (name === '@@extension_id') return nativeRuntime.id
     if (name === '@@ui_locale') return navigator.language.replace('-', '_')
@@ -346,14 +327,12 @@
     }
     return text.replace(/\$(\$|\d)/g, (_, at) => (at === '$' ? '$' : (given[Number(at) - 1] ?? '')))
   }
-
   const i18n = native.i18n ?? {
     getMessage: message,
     getUILanguage: () => navigator.language,
     getAcceptLanguages: call(['i18n', 'getAcceptLanguages']),
     detectLanguage: call(['i18n', 'detectLanguage']),
   }
-
   const extension = {
     getURL: (path) => runtime.getURL(path),
     getBackgroundPage: () => window,
@@ -363,7 +342,6 @@
     isAllowedIncognitoAccess: call(['extension', 'isAllowedIncognitoAccess']),
     isAllowedFileSchemeAccess: call(['extension', 'isAllowedFileSchemeAccess']),
   }
-
   const root = namespace([])
   const chrome = new Proxy(
     { runtime, i18n, extension },

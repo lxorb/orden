@@ -6,9 +6,7 @@ interface Made {
   changes: ChangeSpec
   range: SelectionRange
 }
-
 type Edit = (state: EditorState, range: SelectionRange) => Made
-
 function oneByOne(state: EditorState, edit: Edit) {
   const results = state.selection.ranges.map((range) => edit(state, range))
   const [first, ...rest] = results
@@ -24,7 +22,6 @@ function oneByOne(state: EditorState, edit: Edit) {
   }
   return { changes, selection: EditorSelection.create(ranges, state.selection.mainIndex) }
 }
-
 function random(seed: number) {
   let value = seed
   return (below: number) => {
@@ -32,7 +29,6 @@ function random(seed: number) {
     return value % below
   }
 }
-
 const EDITS: Record<string, Edit> = {
   typed: (_state, range) => ({
     changes: { from: range.from, to: range.to, insert: 'x' },
@@ -74,7 +70,6 @@ const EDITS: Record<string, Edit> = {
     range: EditorSelection.cursor(Math.max(0, range.from - 3)),
   }),
 }
-
 function stateWith(seed: number, count: number): EditorState {
   const pick = random(seed)
   const doc = Array.from({ length: 40 + pick(80) }, () =>
@@ -90,7 +85,6 @@ function stateWith(seed: number, count: number): EditorState {
     extensions: EditorState.allowMultipleSelections.of(true),
   })
 }
-
 describe('a change at many carets at once', () => {
   for (const [name, edit] of Object.entries(EDITS)) {
     test(`${name}: lands as it would, change by change`, () => {
@@ -99,7 +93,6 @@ describe('a change at many carets at once', () => {
         const expected = oneByOne(state, edit)
         const made = state.changeByRange((range) => edit(state, range))
         const changes = state.changes(made.changes)
-
         expect(changes.apply(state.doc).toString()).toBe(expected.changes.apply(state.doc).toString())
         expect(made.selection.eq(expected.selection, true)).toBe(true)
         for (let pos = 0; pos <= state.doc.length; pos++) {
@@ -109,7 +102,6 @@ describe('a change at many carets at once', () => {
       }
     })
   }
-
   test('typed at thousands of carets takes time that grows with their number', () => {
     const states = new Map<number, EditorState>()
     const typed = (count: number) => {
@@ -127,7 +119,6 @@ describe('a change at many carets at once', () => {
       const now = state
       return now.changeByRange((range) => EDITS.typed!(now, range))
     }
-
     expect(growth(typed, 1000)).toBeLessThan(GROWS_AT_MOST)
   })
 })

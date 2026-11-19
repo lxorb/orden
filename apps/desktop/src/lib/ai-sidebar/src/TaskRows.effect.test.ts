@@ -2,7 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { expect, test } from 'vitest'
 
 const TaskRows = (await import('./TaskRows.svelte')).default
-
 test('two tasks at one place in two spaces are two rows', () => {
   const said = JSON.stringify({
     total: 2,

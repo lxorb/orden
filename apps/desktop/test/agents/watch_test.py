@@ -4,41 +4,31 @@ import unittest
 from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[4] / "scripts"))
-
 import probe_app  # noqa: E402 - the path above is what finds it
 from probe_app import Look, Seen, descendants, in_view, on_a_screen  # noqa: E402
-
 APP = 100
 ENGINE = 200
 RENDERER = 300
 SOMEBODY = 900
-
 LAPTOP = (0, 0, 2944, 1840)
 LEFT = (-2560, 0, 0, 1440)
 ABOVE = (0, -2160, 3840, 0)
-
 def window(hwnd: int, pid: int, box: tuple[int, int, int, int], kind: str = "Chrome_WidgetWin_1", visible: bool = True) -> Seen:
     return Seen(hwnd=hwnd, pid=pid, kind=kind, visible=visible, box=box)
-
 def desk(*windows: Seen, front: int = 0, screens: tuple[tuple[int, int, int, int], ...] = (LAPTOP,)) -> Look:
     return Look(windows=windows, front=front, screens=screens)
-
 FAMILY = {APP, ENGINE, RENDERER}
-
 class WhatIsInView(unittest.TestCase):
     def test_a_window_on_a_screen_is(self) -> None:
         seen = in_view(desk(window(1, ENGINE, (200, 300, 680, 820))), FAMILY)
         self.assertEqual(len(seen), 1)
         self.assertIn("on a screen at 200,300 480x520", seen[0])
-
     def test_one_off_every_screen_is_not(self) -> None:
         self.assertEqual(in_view(desk(window(1, APP, (-32000, -32000, -29640, -30400))), FAMILY), [])
-
     def test_the_window_in_front_is_wherever_it_is(self) -> None:
         seen = in_view(desk(window(7, APP, (-32000, -32000, -31000, -31000)), front=7), FAMILY)
         self.assertEqual(len(seen), 1)
         self.assertIn("window in front", seen[0])
-
     def test_the_three_at_once_are_two(self) -> None:
         look = desk(
             window(1, ENGINE, (100, 100, 400, 400)),
@@ -50,47 +40,37 @@ class WhatIsInView(unittest.TestCase):
         self.assertEqual(len(seen), 2)
         self.assertTrue(any("0x1 " in one for one in seen))
         self.assertTrue(any("0x3 " in one for one in seen))
-
     def test_somebody_elses_window_is_theirs(self) -> None:
         look = desk(window(1, SOMEBODY, (0, 0, 800, 600)), front=1)
         self.assertEqual(in_view(look, FAMILY), [])
-
     def test_a_hidden_window_on_a_screen_is_not(self) -> None:
         look = desk(window(1, ENGINE, (0, 0, 800, 600), visible=False))
         self.assertEqual(in_view(look, FAMILY), [])
-
     def test_a_window_with_no_area_is_not(self) -> None:
         look = desk(window(1, ENGINE, (10, 10, 10, 400)), window(2, ENGINE, (10, 10, 400, 10)))
         self.assertEqual(in_view(look, FAMILY), [])
-
     def test_the_windows_kept_for_messages_are_not(self) -> None:
         look = desk(
             window(1, APP, (0, 0, 13, 13), kind="Tao Thread Event Target"),
             window(2, APP, (0, 0, 13, 13), kind="so.orden.Orden.probe.x-sic"),
         )
         self.assertEqual(in_view(look, FAMILY), [])
-
     def test_but_even_one_of_those_in_front_is(self) -> None:
         look = desk(window(1, APP, (0, 0, 13, 13), kind="Tao Thread Event Target"), front=1)
         self.assertEqual(len(in_view(look, FAMILY)), 1)
-
     def test_a_screen_left_of_the_primary_one_counts(self) -> None:
         popup = window(1, ENGINE, (-1500, 200, -1100, 500))
         self.assertEqual(in_view(desk(popup), FAMILY), [])
         self.assertEqual(len(in_view(desk(popup, screens=(LAPTOP, LEFT)), FAMILY)), 1)
-
     def test_and_one_above_it(self) -> None:
         popup = window(1, ENGINE, (300, -900, 700, -400))
         self.assertEqual(len(in_view(desk(popup, screens=(LAPTOP, ABOVE)), FAMILY)), 1)
-
     def test_one_pixel_over_an_edge_is_on_it(self) -> None:
         self.assertTrue(on_a_screen((-400, 0, 1, 20), [LAPTOP]))
         self.assertFalse(on_a_screen((-400, 0, 0, 20), [LAPTOP]))
         self.assertTrue(on_a_screen((2943, 1839, 3000, 1900), [LAPTOP]))
         self.assertFalse(on_a_screen((2944, 0, 3000, 20), [LAPTOP]))
-
 class TheAgentPageAtEveryScale(unittest.TestCase):
-
     DESKS = {
         "one laptop": (LAPTOP,),
         "a screen to the left": (LAPTOP, LEFT),
@@ -98,7 +78,6 @@ class TheAgentPageAtEveryScale(unittest.TestCase):
         "a screen above and one to the left": (LAPTOP, LEFT, ABOVE),
         "four screens stacked above": tuple((0, -2160 * n, 3840, -2160 * (n - 1)) for n in range(1, 5)),
     }
-
     def test_no_desk_reaches_it(self) -> None:
         for scale in (1.0, 1.5, 2.0):
             for corner in ((0, 0), (120, 80), (-2400, 200), (-32000 * scale, -32000 * scale)):
@@ -108,44 +87,34 @@ class TheAgentPageAtEveryScale(unittest.TestCase):
                 for name, screens in self.DESKS.items():
                     with self.subTest(scale=scale, corner=corner, desk=name):
                         self.assertFalse(on_a_screen(page, screens))
-
     def test_while_a_page_at_the_windows_own_corner_would_be(self) -> None:
         for scale in (1.0, 1.5, 2.0):
             page = (120, 80, 120 + round(1280 * scale), 80 + round(800 * scale))
             self.assertTrue(on_a_screen(page, (LAPTOP,)))
-
 class TheFamily(unittest.TestCase):
     def test_every_process_under_the_app(self) -> None:
         parents = {APP: 1, ENGINE: APP, RENDERER: ENGINE, SOMEBODY: 4}
         born = {APP: 10, ENGINE: 11, RENDERER: 12, SOMEBODY: 1}.get
         self.assertEqual(descendants(APP, parents, born), FAMILY)
-
     def test_not_one_whose_dead_parent_had_the_apps_number(self) -> None:
         parents = {APP: 1, ENGINE: APP, SOMEBODY: APP}
         born = {APP: 10, ENGINE: 11, SOMEBODY: 2}.get
         self.assertEqual(descendants(APP, parents, born), {APP, ENGINE})
-
     def test_nor_one_that_cannot_say_when_it_started(self) -> None:
         parents = {APP: 1, ENGINE: APP}
         self.assertEqual(descendants(APP, parents, {APP: 10}.get), {APP})
-
     def test_a_loop_in_the_table_ends(self) -> None:
         parents = {APP: RENDERER, ENGINE: APP, RENDERER: ENGINE}
         born = {APP: 10, ENGINE: 11, RENDERER: 12}.get
         self.assertEqual(descendants(APP, parents, born), FAMILY)
-
 class FakeApp:
-
     def __init__(self, lives: int) -> None:
         self.pid = APP
         self.lives = lives
-
     def poll(self) -> int | None:
         self.lives -= 1
         return None if self.lives >= 0 else 0
-
 class TheLoop(unittest.TestCase):
-
     def run_watch(self, looks: list[Look], lives: int, living: dict[int, int]) -> tuple[list[list[int]], BaseException | None]:
         ended: list[list[int]] = []
         stream = iter(looks)
@@ -166,7 +135,6 @@ class TheLoop(unittest.TestCase):
             except SystemExit as leaving:
                 return ended, leaving
         return ended, None
-
     def test_a_renderers_window_on_a_screen_ends_the_whole_family_with_3(self) -> None:
         quiet = desk(window(1, APP, (-32000, -32000, -31000, -31000)))
         popup = desk(window(1, APP, (-32000, -32000, -31000, -31000)), window(2, RENDERER, (0, 0, 300, 200)))
@@ -176,13 +144,11 @@ class TheLoop(unittest.TestCase):
         self.assertIsNotNone(leaving)
         assert leaving is not None
         self.assertEqual(getattr(leaving, "code", None), 3)
-
     def test_a_quiet_run_ends_when_the_app_does(self) -> None:
         quiet = desk(window(1, APP, (-32000, -32000, -31000, -31000)))
         ended, leaving = self.run_watch([quiet], lives=5, living={})
         self.assertEqual(ended, [])
         self.assertIsNone(leaving)
-
     def test_an_engine_that_outlives_the_app_is_still_watched(self) -> None:
         quiet = desk()
         late = desk(window(2, ENGINE, (40, 40, 400, 300)))
@@ -192,16 +158,13 @@ class TheLoop(unittest.TestCase):
             ended, leaving = self.run_watch(looks, lives=3, living=living)
         self.assertEqual(ended, [[APP, ENGINE]])
         self.assertIsNotNone(leaving)
-
 @unittest.skipUnless(sys.platform == "win32", "the error mode is Windows'")
 class TheSystemsBoxes(unittest.TestCase):
-
     def test_the_drive_hands_its_probes_an_error_mode_without_them(self) -> None:
         assert probe_app.kernel32 is not None
         probe_app.without_error_boxes()
         now = probe_app.kernel32.GetErrorMode()
         self.assertEqual(now & probe_app.NO_ERROR_BOXES, probe_app.NO_ERROR_BOXES)
-
     def test_before_the_probe_is_started(self) -> None:
         said: list[str] = []
         with (
@@ -212,6 +175,5 @@ class TheSystemsBoxes(unittest.TestCase):
         ):
             probe_app.run_probe(pathlib.Path("orden.exe"), env={"ORDEN_SPACES_DIR": "x"})
         self.assertEqual(said, ["mode", "start"])
-
 if __name__ == "__main__":
     unittest.main()

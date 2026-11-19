@@ -35,7 +35,6 @@ export function places(): Place[] {
     { section: 'shortcuts', label: 'Vim keys', text: ['vim'] },
     { section: 'markdown', label: 'Reset to defaults', text: [] },
   ]
-
   if (isDesktop) {
     all.push({
       section: 'appearance',
@@ -44,14 +43,12 @@ export function places(): Place[] {
     })
     all.push({ section: 'general', label: 'Default browser', text: ['Make default'] })
   }
-
   for (const part of settingsPartsIn()) {
     if (!part.shown()) continue
     for (const place of part.places?.() ?? []) {
       all.push({ section: part.section, label: place.label, text: [...place.text] })
     }
   }
-
   if (account.user) {
     all.push({
       section: 'ai',
@@ -59,7 +56,6 @@ export function places(): Place[] {
       text: ['MCP', 'Claude', 'ChatGPT', 'token', 'Connect', 'Create a token'],
     })
   }
-
   const shown = new Set(sectionGroups().flatMap((group) => group.map((one) => one.id)))
   return all.filter((place) => shown.has(place.section))
 }

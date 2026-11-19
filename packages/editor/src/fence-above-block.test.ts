@@ -16,10 +16,8 @@ function enterAt(doc: string, at: number): { took: boolean; doc: string } {
   const took = closeFence({ state, dispatch: (one: Transaction) => (state = one.state) })
   return { took, doc: state.doc.toString() }
 }
-
 describe('Enter after a new fence typed above a code block further down', () => {
   const below = '\nMore words.\n\n```js\nlet x = 1\n```\n'
-
   test('a fence with a language is closed, though the later block closes it for now', () => {
     const doc = `Intro\n\`\`\`py${below}`
     const at = doc.indexOf('```py') + 5
@@ -28,7 +26,6 @@ describe('Enter after a new fence typed above a code block further down', () => 
       doc: `Intro\n\`\`\`py\n\n\`\`\`${below}`,
     })
   })
-
   test('a bare fence is closed too, since the next fence opens a block of its own', () => {
     const doc = `Intro\n\`\`\`${below}`
     const at = doc.indexOf('```') + 3

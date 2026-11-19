@@ -4,7 +4,6 @@ const ALT: u8 = 1;
 const CONTROL: u8 = 2;
 const META: u8 = 4;
 const SHIFT: u8 = 8;
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Key {
     pub name: String,
@@ -13,7 +12,6 @@ pub struct Key {
     pub text: Option<String>,
     pub modifiers: u8,
 }
-
 impl Key {
     pub fn events(&self) -> [Value; 2] {
         let down = json!({
@@ -36,36 +34,29 @@ impl Key {
         });
         [down, up]
     }
-
     pub fn opens_a_picker(&self) -> bool {
         matches!(self.name.as_str(), " " | "Enter" | "F4")
             || (matches!(self.name.as_str(), "ArrowDown" | "ArrowUp") && self.modifiers & ALT != 0)
     }
-
     pub fn changes_words(&self) -> bool {
         self.text.is_some()
             || matches!(self.name.as_str(), "Backspace" | "Delete")
             || (self.modifiers & (CONTROL | META) != 0
                 && matches!(self.name.to_ascii_lowercase().as_str(), "v" | "x"))
     }
-
     pub fn submits(&self) -> bool {
         self.name == "Enter" && self.modifiers & (CONTROL | ALT | META) == 0
     }
-
     pub fn judged_by_the_page(&self) -> bool {
         self.changes_words() || self.sends() || self.submits() || self.presses()
     }
-
     pub fn presses(&self) -> bool {
         matches!(self.name.as_str(), " " | "Enter")
     }
-
     pub fn sends(&self) -> bool {
         self.name == "Enter" && self.modifiers & (ALT | SHIFT) == 0
     }
 }
-
 pub fn chord(said: &str) -> Result<Key, String> {
     let said = said.trim();
     if said.is_empty() {
@@ -104,7 +95,6 @@ pub fn chord(said: &str) -> Result<Key, String> {
     }
     Ok(key)
 }
-
 fn named(name: &str) -> Option<Key> {
     let plain = |name: &str, code: &str, windows_code: u32, text: Option<&str>| Key {
         name: name.to_string(),
@@ -133,7 +123,6 @@ fn named(name: &str) -> Option<Key> {
         _ => return function_key(&lower).or_else(|| character(name)),
     })
 }
-
 fn function_key(lower: &str) -> Option<Key> {
     let number: u32 = lower.strip_prefix('f')?.parse().ok()?;
     (1..=12).contains(&number).then(|| Key {
@@ -144,7 +133,6 @@ fn function_key(lower: &str) -> Option<Key> {
         modifiers: 0,
     })
 }
-
 fn character(name: &str) -> Option<Key> {
     let mut chars = name.chars();
     let one = chars.next()?.to_ascii_lowercase();
@@ -180,7 +168,6 @@ fn character(name: &str) -> Option<Key> {
         modifiers: 0,
     })
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -209,7 +196,6 @@ mod tests {
             assert!(!chord(moving).expect(moving).changes_words(), "{moving}");
         }
     }
-
     #[test]
     fn enter_types_a_return_and_submits() {
         let key = chord("Enter").expect("key");
@@ -220,7 +206,6 @@ mod tests {
         assert_eq!(down["type"], "keyDown");
         assert_eq!(up["type"], "keyUp");
     }
-
     #[test]
     fn a_chord_holds_its_modifiers_and_types_nothing() {
         let key = chord("Control+A").expect("key");
@@ -230,7 +215,6 @@ mod tests {
         assert_eq!(key.modifiers, CONTROL);
         assert_eq!(key.text, None);
         assert_eq!(key.events()[0]["type"], "rawKeyDown");
-
         let shifted = chord("Shift+Tab").expect("key");
         assert_eq!(shifted.modifiers, SHIFT);
         assert_eq!(chord("Shift+a").expect("key").text.as_deref(), Some("A"));
@@ -240,7 +224,6 @@ mod tests {
             CONTROL | SHIFT
         );
     }
-
     #[test]
     fn a_name_that_is_not_a_key_is_refused() {
         assert!(chord("").is_err());
@@ -249,7 +232,6 @@ mod tests {
         assert_eq!(chord("F5").expect("key").windows_code, 116);
         assert!(chord("F13").is_err());
     }
-
     #[test]
     fn the_presses_that_open_a_picker_are_known() {
         assert!(chord("Space").expect("key").opens_a_picker());
@@ -257,7 +239,6 @@ mod tests {
         assert!(!chord("ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("Control+Enter").expect("key").submits());
     }
-
     #[test]
     fn a_key_that_presses_is_asked_of_the_page_whatever_is_held() {
         for said in [
@@ -274,7 +255,6 @@ mod tests {
             assert!(!chord(said).expect("key").judged_by_the_page(), "{said}");
         }
     }
-
     #[test]
     fn space_and_enter_press_what_has_the_keyboard() {
         for said in [
@@ -290,7 +270,6 @@ mod tests {
             assert!(!chord(said).expect("key").presses(), "{said}");
         }
     }
-
     #[test]
     fn enter_and_control_enter_send_and_shift_enter_is_a_new_line() {
         assert!(chord("Enter").expect("key").sends());

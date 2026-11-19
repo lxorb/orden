@@ -1,7 +1,5 @@
 const BAR: f64 = 38.0;
-
 const LEFT: f64 = 12.0;
-
 fn spot(
     button: (f64, f64),
     holder_width: f64,
@@ -20,7 +18,6 @@ fn spot(
     let top = ((BAR - height) / 2.0).round() - holder_top;
     (x, top)
 }
-
 #[cfg(target_os = "macos")]
 pub fn hold(window: &tauri::WebviewWindow) {
     use tauri::Manager as _;
@@ -29,14 +26,12 @@ pub fn hold(window: &tauri::WebviewWindow) {
     };
     let pointer = pointer as usize;
     let placing = move || native::hold(pointer as *mut std::ffi::c_void);
-
     if objc2::MainThreadMarker::new().is_some() {
         placing();
     } else {
         let _ = window.run_on_main_thread(placing);
     }
 }
-
 #[cfg(target_os = "macos")]
 pub fn refresh(window: &tauri::Window) {
     use tauri::Manager as _;
@@ -46,7 +41,6 @@ pub fn refresh(window: &tauri::Window) {
     let pointer = pointer as usize;
     let _ = window.run_on_main_thread(move || native::refresh(pointer as *mut std::ffi::c_void));
 }
-
 #[cfg(target_os = "macos")]
 mod native {
     use std::cell::Cell;
@@ -68,18 +62,14 @@ mod native {
     use super::spot;
 
     const PREFIX: &str = "OrdenLights_";
-
     thread_local! {
         static PLACING: Cell<bool> = const { Cell::new(false) };
     }
-
     static KEPT: u8 = 0;
-
     struct Held {
         observers: Vec<Retained<ProtocolObject<dyn NSObjectProtocol>>>,
         own: [(f64, f64); 3],
     }
-
     impl Drop for Held {
         #[allow(unsafe_code)]
         fn drop(&mut self) {
@@ -89,14 +79,12 @@ mod native {
             }
         }
     }
-
     define_class!(
         #[unsafe(super(NSObject))]
         #[name = "OrdenLightsWatch"]
         #[ivars = Held]
         struct Watch;
     );
-
     #[allow(unsafe_code)]
     fn watch_on(window: &NSWindow) -> Option<Retained<Watch>> {
         unsafe {
@@ -107,7 +95,6 @@ mod native {
             Retained::retain(found.cast::<Watch>().cast_mut())
         }
     }
-
     fn edges(light: &NSView, holder: &NSView) -> (f64, f64) {
         let frame = light.frame();
         let top = if holder.isFlipped() {
@@ -117,12 +104,10 @@ mod native {
         };
         (frame.origin.x, top)
     }
-
     #[allow(unsafe_code)]
     fn parent(view: &NSView) -> Option<Retained<NSView>> {
         unsafe { view.superview() }
     }
-
     fn buttons(window: &NSWindow) -> Option<[Retained<NSView>; 3]> {
         let one = |kind| {
             window
@@ -135,14 +120,12 @@ mod native {
             one(NSWindowButton::ZoomButton)?,
         ])
     }
-
     fn ordens_frame(window: &NSWindow) -> bool {
         window.titlebarAppearsTransparent()
             && window
                 .styleMask()
                 .contains(NSWindowStyleMask::FullSizeContentView)
     }
-
     fn centred(
         window: &NSWindow,
         lights: &[Retained<NSView>; 3],
@@ -154,7 +137,6 @@ mod native {
         let (first, last) = (lights[0].frame().origin.x, lights[2].frame().origin.x);
         let pitch = (lights[1].frame().origin.x - first).abs();
         let leftward = first > last;
-
         let mut index = 0u8;
         lights.each_ref().map(|light| {
             let size = light.frame().size;
@@ -170,7 +152,6 @@ mod native {
             at
         })
     }
-
     fn place(window: &NSWindow) {
         if window.styleMask().contains(NSWindowStyleMask::FullScreen) {
             return;
@@ -190,9 +171,7 @@ mod native {
         if !in_this_window || !together {
             return;
         }
-
         adopt(&holder);
-
         let spots = if ordens_frame(window) {
             centred(window, &lights, &holder)
         } else if let Some(watch) = watch_on(window) {
@@ -200,7 +179,6 @@ mod native {
         } else {
             return;
         };
-
         let height = holder.bounds().size.height;
         PLACING.set(true);
         for (light, (x, top)) in lights.iter().zip(spots) {
@@ -217,7 +195,6 @@ mod native {
         }
         PLACING.set(false);
     }
-
     fn original_of(view: &NSView) -> Option<&'static AnyClass> {
         let mut class = view.class();
         loop {
@@ -227,7 +204,6 @@ mod native {
             class = class.superclass()?;
         }
     }
-
     #[allow(unsafe_code)]
     extern "C-unwind" fn laid_out(this: &NSView, _: Sel) {
         if let Some(original) = original_of(this) {
@@ -239,7 +215,6 @@ mod native {
             place(&window);
         }
     }
-
     #[allow(unsafe_code)]
     fn adopt(holder: &NSView) {
         if original_of(holder).is_some() {
@@ -269,7 +244,6 @@ mod native {
             );
         }
     }
-
     #[allow(unsafe_code)]
     pub fn refresh(pointer: *mut c_void) {
         if pointer.is_null() {
@@ -280,7 +254,6 @@ mod native {
         };
         place(&window);
     }
-
     #[allow(unsafe_code)]
     pub fn hold(pointer: *mut c_void) {
         if pointer.is_null() {
@@ -289,7 +262,6 @@ mod native {
         let Some(window) = (unsafe { Retained::retain(pointer.cast::<NSWindow>()) }) else {
             return;
         };
-
         let Some(lights) = buttons(&window) else {
             return;
         };
@@ -297,7 +269,6 @@ mod native {
             return;
         };
         let own = lights.each_ref().map(|light| edges(light, &holder));
-
         let weak = Weak::from_retained(&window);
         let waiting = Rc::new(Cell::new(false));
         let again = RcBlock::new(move |_: NonNull<NSNotification>| {
@@ -314,7 +285,6 @@ mod native {
             });
             unsafe { NSOperationQueue::mainQueue().addOperationWithBlock(&later) };
         });
-
         let centre = NSNotificationCenter::defaultCenter();
         let mut observers = Vec::new();
         for light in &lights {
@@ -329,10 +299,8 @@ mod native {
             };
             observers.push(observer);
         }
-
         let watch = Watch::alloc().set_ivars(Held { observers, own });
         let watch: Retained<Watch> = unsafe { msg_send![super(watch), init] };
-
         unsafe {
             objc2::ffi::objc_setAssociatedObject(
                 Retained::as_ptr(&window).cast::<AnyObject>().cast_mut(),
@@ -341,18 +309,15 @@ mod native {
                 objc2::ffi::OBJC_ASSOCIATION_RETAIN_NONATOMIC,
             );
         }
-
         place(&window);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{spot, BAR, LEFT};
 
     const WIDEST_PITCH: f64 = 23.0;
     const LIGHT: f64 = 14.0;
-
     fn pixels(css: &str, token: &str) -> f64 {
         let start = css
             .find(&format!("{token}:"))
@@ -368,11 +333,9 @@ mod tests {
             .parse()
             .unwrap()
     }
-
     fn at(point: (f64, f64), x: f64, y: f64) -> bool {
         (point.0 - x).abs() < f64::EPSILON && (point.1 - y).abs() < f64::EPSILON
     }
-
     #[test]
     fn a_light_is_centred_in_the_bar() {
         assert!(at(
@@ -386,7 +349,6 @@ mod tests {
             11.0
         ));
     }
-
     #[test]
     fn a_holder_lower_in_the_window_is_allowed_for() {
         assert!(at(
@@ -395,7 +357,6 @@ mod tests {
             10.0
         ));
     }
-
     #[test]
     fn the_lights_keep_the_systems_own_pitch() {
         assert!(at(
@@ -409,7 +370,6 @@ mod tests {
             11.0
         ));
     }
-
     #[test]
     fn a_titlebar_laid_out_right_to_left_is_mirrored() {
         let right = 300.0 - LEFT - 14.0;
@@ -424,13 +384,11 @@ mod tests {
             12.0
         ));
     }
-
     #[test]
     fn the_bar_is_as_tall_as_the_themes_say() {
         let tokens = include_str!("../../../../../../packages/themes/src/tokens.css");
         assert!((pixels(tokens, "--titlebar-height") - BAR).abs() < f64::EPSILON);
     }
-
     #[test]
     fn the_bar_leaves_room_for_all_three_lights() {
         let tokens = include_str!("../../../../../../packages/themes/src/tokens.css");
@@ -440,7 +398,6 @@ mod tests {
             "--traffic-lights must clear the zoom button, which ends at {last_light_ends}"
         );
     }
-
     #[test]
     fn tao_is_not_asked_to_place_them_too() {
         let config = include_str!("../../../tauri.macos.conf.json");

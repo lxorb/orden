@@ -2,19 +2,16 @@ import type { DomainStatus } from '../../accounts/src/api'
 import { isRecord, isString } from '../../platform/src/api'
 
 const STATES: DomainStatus['state'][] = ['none', 'unproved', 'pending', 'active', 'error', 'unconfigured']
-
 export const isDomainStatus = (value: unknown): value is DomainStatus =>
   isRecord(value) &&
   STATES.some((one) => one === value.state) &&
   Array.isArray(value.dns) &&
   (value.detail === null || isString(value.detail))
-
 export interface Notice {
   tone: 'muted' | 'ok' | 'bad'
   text: string
   detail: string | null
 }
-
 export function domainNotice(status: DomainStatus): Notice | null {
   switch (status.state) {
     case 'none':
@@ -39,6 +36,5 @@ export function domainNotice(status: DomainStatus): Notice | null {
       }
   }
 }
-
 export const keepAsking = (status: DomainStatus | null): boolean =>
   status?.state === 'pending' || status?.state === 'error'

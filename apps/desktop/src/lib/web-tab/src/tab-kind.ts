@@ -8,7 +8,6 @@ import { pages } from './pages.svelte'
 function menu(id: string): TabMenuEntry[] {
   const tab = workspace.tabs.find((one) => one.id === id)
   if (tab?.kind !== 'web') return []
-
   const url = pages.addressOf(tab.id) ?? tab.address ?? null
   return [
     {
@@ -31,5 +30,4 @@ function menu(id: string): TabMenuEntry[] {
     },
   ]
 }
-
 export const webTabKind: TabKindParts = { menu }

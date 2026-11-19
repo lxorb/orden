@@ -7,7 +7,6 @@ interface Kept {
   files: Map<string, FileRow>
   assets: Map<string, AssetRow>
 }
-
 function kept(): Kept {
   const held = new Map<string, FileRow>()
   const pictures = new Map<string, AssetRow>()
@@ -55,7 +54,6 @@ function kept(): Kept {
   }
   return { rows, files: held, assets: pictures }
 }
-
 describe('rows mounted at a folder', () => {
   test('keep what is at or under it, and nothing else', async () => {
     const mounted = kept()
@@ -63,36 +61,30 @@ describe('rows mounted at a folder', () => {
     await files.write('/Kept/Plan.md', 'ship it', 1)
     await files.write('/Notes/Other.md', 'elsewhere', 1)
     await assets.put({ path: '/Kept/cat.png', type: 'image/png', data: 'data:', modified: 1 })
-
     expect(mounted.files.get('/Kept/Plan.md')?.content).toBe('ship it')
     expect(mounted.files.has('/Notes/Other.md')).toBe(false)
     expect(mounted.assets.has('/Kept/cat.png')).toBe(true)
     await files.write('/Kept two/Not.md', 'not kept', 1)
     expect(mounted.files.has('/Kept two/Not.md')).toBe(false)
-
     expect(await files.paths()).toEqual(['/Kept two/Not.md', '/Kept/Plan.md', '/Notes/Other.md'])
     expect((await stats.all()).map((row) => row.path)).toContain('/Kept/cat.png')
-
     away()
     expect(await files.get('/Kept/Plan.md')).toBeUndefined()
     expect(await files.get('/Notes/Other.md')).toBeDefined()
     await files.remove('/Notes/Other.md')
     await files.remove('/Kept two/Not.md')
   })
-
   test('hold a folder above them, and a move between two stores lands in each', async () => {
     const mounted = kept()
     const away = mountRows('/Spaces/Kept', mounted.rows)
     await files.write('/Spaces/Kept/Plan.md', 'ship it', 1)
     expect(await stats.holds('/Spaces')).toBe(true)
     expect(await stats.holds('/Elsewhere')).toBe(false)
-
     const row = await files.get('/Spaces/Kept/Plan.md')
     if (!row) throw new Error('no row')
     await files.move([{ ...row, path: '/Notes/Plan.md' }], ['/Spaces/Kept/Plan.md'])
     expect(mounted.files.size).toBe(0)
     expect((await files.get('/Notes/Plan.md'))?.content).toBe('ship it')
-
     away()
     await files.remove('/Notes/Plan.md')
   })

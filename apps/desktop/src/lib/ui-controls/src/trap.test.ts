@@ -18,9 +18,7 @@ interface Fake {
   addEventListener(): void
   removeEventListener(): void
 }
-
 let active: Fake | null = null
-
 function fake(tagName: string, children: Fake[] = []): Fake {
   const one: Fake = {
     tagName,
@@ -42,10 +40,8 @@ function fake(tagName: string, children: Fake[] = []): Fake {
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
   }
-
   return one
 }
-
 function page(rootSays?: string) {
   const body = fake('BODY')
   const root = fake('HTML')
@@ -62,10 +58,8 @@ function page(rootSays?: string) {
   })
   return body
 }
-
 const layer = (children: Fake[] = []) => fake('DIV', children)
 const open = (node: Fake) => trap(node as unknown as HTMLElement)
-
 function openedFrom(rootSays?: string) {
   const body = page(rootSays)
   const opener = fake('BUTTON')
@@ -73,12 +67,10 @@ function openedFrom(rootSays?: string) {
   const row = fake('BUTTON')
   return { body, opener, row, held: open(layer([row])) }
 }
-
 afterEach(() => {
   vi.unstubAllGlobals()
   active = null
 })
-
 describe('the keyboard while a layer is open', () => {
   test('the first thing in the layer takes it, or the layer itself with nothing to stand on', () => {
     page()
@@ -89,7 +81,6 @@ describe('the keyboard while a layer is open', () => {
     open(node)
     expect(node.focused).toBe(1)
   })
-
   test('under a thumb a menu keeps it itself, and a sheet still hands it on', () => {
     page('data-touch')
     const row = fake('BUTTON')
@@ -103,7 +94,6 @@ describe('the keyboard while a layer is open', () => {
     expect(answer.focused).toBe(1)
   })
 })
-
 describe('the keyboard once the layer has gone', () => {
   test('goes back to what opened it', () => {
     const { opener, row, held } = openedFrom()
@@ -111,14 +101,12 @@ describe('the keyboard once the layer has gone', () => {
     held.destroy()
     expect(opener.focused).toBe(2)
   })
-
   test('goes back when the keyboard has fallen to the page', () => {
     const { body, opener, held } = openedFrom()
     active = body
     held.destroy()
     expect(opener.focused).toBe(2)
   })
-
   test('stays where something else has taken it', () => {
     const { opener, held } = openedFrom()
     const field = fake('INPUT')
@@ -128,7 +116,6 @@ describe('the keyboard once the layer has gone', () => {
     expect(opener.focused).toBe(1)
     expect(active).toBe(field)
   })
-
   test("nothing of the app's own takes it back from a site that had it, nor to a row the layer deleted", () => {
     for (const [rootSays, gone] of [
       ['data-keyboard-in-page', false],

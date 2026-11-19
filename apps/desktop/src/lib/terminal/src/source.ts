@@ -6,7 +6,6 @@ import type { Destination } from './remote/hosts'
 import { hostIdOf } from './spec'
 
 export type Machine = 'awake' | 'starting' | 'asleep' | 'stopping' | 'down' | 'near'
-
 export type Said =
   | { out: Uint8Array }
   | { exit: number | null }
@@ -26,7 +25,6 @@ export type Said =
   | { note: string }
   | { held: { by: string; since: number; taken: boolean } | null }
   | { writer: boolean }
-
 export interface Source {
   readonly remote: boolean
   start(cols: number, rows: number, said: (what: Said) => void): Promise<void>
@@ -40,9 +38,7 @@ export interface Source {
   image?(bytes: Uint8Array, kind: ImageKind): Promise<string>
   usage?(): Promise<Usage | null>
 }
-
 const remoteShells = new Map<string, Promise<string | null>>()
-
 export function remoteShell(host: string): Promise<string | null> {
   let asked = remoteShells.get(host)
   if (!asked) {
@@ -54,12 +50,10 @@ export function remoteShell(host: string): Promise<string | null> {
   }
   return asked
 }
-
 export class PtySource implements Source {
   readonly remote: boolean
   reached: string | null = null
   fresh = true
-
   constructor(
     readonly id: string,
     private readonly shell: string,
@@ -71,11 +65,9 @@ export class PtySource implements Source {
   ) {
     this.remote = remote
   }
-
   async usage(): Promise<Usage | null> {
     return usageOf(await invoke<unknown>('pty_usage', { id: this.id }).catch(() => null))
   }
-
   async start(cols: number, rows: number, said: (what: Said) => void): Promise<void> {
     const output = new Channel<unknown>()
     output.onmessage = (message) => {
@@ -99,43 +91,34 @@ export class PtySource implements Source {
     })
     this.fresh = !isRecord(spawned) || spawned.fresh !== false
   }
-
   async write(data: string, binary: boolean): Promise<void> {
     await invoke('pty_write', { id: this.id, data, binary }).catch(() => undefined)
   }
-
   resize(cols: number, rows: number): void {
     void invoke('pty_resize', { id: this.id, cols, rows }).catch(() => undefined)
   }
-
   seen(bytes: number): void {
     void invoke('pty_seen', { id: this.id, bytes }).catch(() => undefined)
   }
-
   end(): void {
     void invoke('pty_kill', { id: this.id }).catch(() => undefined)
   }
-
   detach(): void {
     void invoke('pty_detach', { id: this.id }).catch(() => undefined)
   }
-
   take(): void {
     void invoke('pty_take', { id: this.id }).catch(() => undefined)
   }
-
   async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {
     const host = this.reached ?? hostIdOf(this.shell)
     if (host === null) return invoke<string>('local_image', { kind, bytes })
     return invoke<string>('remote_image', { host, kind, bytes })
   }
-
   async program(): Promise<string | null | undefined> {
     const found = await invoke<unknown>('pty_program', { id: this.id }).catch(() => undefined)
     if (found === undefined) return undefined
     return typeof found === 'string' && found ? found : null
   }
-
   async ssh(): Promise<Destination | null> {
     const found = await invoke<unknown>('pty_ssh', { id: this.id }).catch(() => null)
     if (!isRecord(found) || typeof found.hostname !== 'string' || !found.hostname) return null
@@ -145,11 +128,9 @@ export class PtySource implements Source {
       port: isNumber(found.port) ? found.port : null,
     }
   }
-
   async busy(): Promise<boolean> {
     return (await invoke<unknown>('pty_busy', { id: this.id }).catch(() => true)) !== false
   }
-
   async where(): Promise<string | null> {
     const folder = await invoke<unknown>('pty_folder', { id: this.id }).catch(() => null)
     return typeof folder === 'string' && folder ? folder : null

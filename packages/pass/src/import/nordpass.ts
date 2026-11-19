@@ -26,7 +26,6 @@ function jsonList(text: string): unknown[] {
     return []
   }
 }
-
 function customFieldsOf(row: CsvRecord): Extra[] {
   return jsonList(pick(row, 'custom_fields')).map((one) => {
     const field = recordOf(one)
@@ -37,7 +36,6 @@ function customFieldsOf(row: CsvRecord): Extra[] {
     }
   })
 }
-
 export function parseNordPass(text: string): Imported {
   const into = new Collector('NordPass')
   for (const row of csvRecords(text)) {

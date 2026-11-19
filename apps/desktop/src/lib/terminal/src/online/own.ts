@@ -6,7 +6,6 @@ export interface OwnFile {
   write(text: string): Promise<void>
   make(): Promise<Term>
 }
-
 export async function ownSession(file: OwnFile): Promise<string> {
   const said = termOf((await file.read()) ?? '')
   if (said) return said.session
@@ -14,11 +13,9 @@ export async function ownSession(file: OwnFile): Promise<string> {
   await file.write(termText(made))
   return made.session
 }
-
 export function namedSession(words: string | null): string | undefined {
   return termOf(words ?? '')?.session
 }
-
 export function wordsFor(words: string | null, term: Term): string | null {
   if (words === null || namedSession(words) === term.session) return null
   const said = termOf(words)

@@ -2,7 +2,6 @@ import { keepJson, stored } from '../../platform/src/api'
 import type { TabKind } from '@orden/contracts'
 
 const STORE = 'orden:kept-scroll'
-
 export const SCROLL_KEPT: ReadonlySet<TabKind> = new Set<TabKind>([
   'settings',
   'pass',
@@ -11,13 +10,11 @@ export const SCROLL_KEPT: ReadonlySet<TabKind> = new Set<TabKind>([
   'view',
   'channel',
 ])
-
 interface Showing {
   readonly kind: TabKind
   readonly path: string | null
   readonly reading: boolean
 }
-
 export function scrollKeyOf(tab: Showing | null | undefined, slot: number): string | null {
   if (!tab || tab.reading || !SCROLL_KEPT.has(tab.kind)) return null
   return `${slot}:${tab.kind}:${tab.path ?? ''}`
@@ -25,10 +22,8 @@ export function scrollKeyOf(tab: Showing | null | undefined, slot: number): stri
 const MOST = 400
 const PATIENCE = 90
 const HANDS = ['wheel', 'pointerdown', 'keydown', 'touchstart'] as const
-
 let kept: Map<string, number> | null = null
 let writing: ReturnType<typeof setTimeout> | undefined
-
 function all(): Map<string, number> {
   if (kept) return kept
   const read = new Map<string, number>()
@@ -45,7 +40,6 @@ function all(): Map<string, number> {
   kept = read
   return read
 }
-
 function written() {
   clearTimeout(writing)
   writing = setTimeout(() => {
@@ -53,11 +47,9 @@ function written() {
     keepJson(STORE, [...all()])
   }, 300)
 }
-
 export function keptScroll(place: string): number | undefined {
   return all().get(place)
 }
-
 function keepScroll(place: string, top: number) {
   const map = all()
   const was = map.get(place)
@@ -72,21 +64,17 @@ function keepScroll(place: string, top: number) {
   }
   written()
 }
-
 export function forgetKeptScrolls() {
   clearTimeout(writing)
   writing = undefined
   kept = null
 }
-
 function named(element: Element): string | undefined {
   return element instanceof HTMLElement ? element.dataset.scrollKey : undefined
 }
-
 function sort(element: Element): string {
   return `${element.tagName.toLowerCase()}.${element.classList[0] ?? ''}`
 }
-
 function step(element: Element): string {
   const own = named(element)
   if (own !== undefined) return `${sort(element)}[${own}]`
@@ -96,7 +84,6 @@ function step(element: Element): string {
   }
   return `${sort(element)}:${at}`
 }
-
 function placeOf(root: Element, element: Element): string | null {
   const steps: string[] = []
   let one: Element | null = element
@@ -106,7 +93,6 @@ function placeOf(root: Element, element: Element): string | null {
   }
   return one === root && steps.length ? steps.reverse().join('/') : null
 }
-
 function foundAt(root: Element, place: string): HTMLElement | null {
   let one: Element = root
   for (const wanted of place.split('/')) {
@@ -116,33 +102,26 @@ function foundAt(root: Element, place: string): HTMLElement | null {
   }
   return one instanceof HTMLElement ? one : null
 }
-
 const held = new WeakSet<Element>()
-
 export function holdScroll(element: Element) {
   held.add(element)
 }
-
 function own(element: Element): boolean {
   return element.closest('[data-own-scroll]') !== null
 }
-
 export function keepsScroll(root: HTMLElement, key: string | null) {
   let at = key
   const placed = new Map<string, Element>()
   const restoring = new Map<Element, number>()
   let looking = 0
-
   const stop = (element: Element) => {
     const frame = restoring.get(element)
     if (frame) cancelAnimationFrame(frame)
     restoring.delete(element)
   }
-
   const stopAll = () => {
     for (const element of [...restoring.keys()]) stop(element)
   }
-
   const restore = (element: HTMLElement, want: number) => {
     stop(element)
     let frames = 0
@@ -162,7 +141,6 @@ export function keepsScroll(root: HTMLElement, key: string | null) {
     restoring.set(element, 0)
     tried()
   }
-
   const look = () => {
     looking = 0
     if (at === null) return
@@ -183,12 +161,10 @@ export function keepsScroll(root: HTMLElement, key: string | null) {
       restore(element, top)
     }
   }
-
   const soon = () => {
     if (looking || at === null) return
     looking = requestAnimationFrame(look)
   }
-
   const scrolled = (event: Event) => {
     const target = event.target
     if (at === null || !(target instanceof HTMLElement) || restoring.has(target) || own(target)) return
@@ -198,7 +174,6 @@ export function keepsScroll(root: HTMLElement, key: string | null) {
     placed.set(place, target)
     keepScroll(`${at}|${place}`, target.scrollTop)
   }
-
   const watching = new MutationObserver(soon)
   const watch = () => {
     watching.disconnect()
@@ -211,11 +186,9 @@ export function keepsScroll(root: HTMLElement, key: string | null) {
     })
     soon()
   }
-
   root.addEventListener('scroll', scrolled, { capture: true, passive: true })
   for (const hand of HANDS) root.addEventListener(hand, stopAll, { capture: true, passive: true })
   watch()
-
   return {
     update(next: string | null) {
       if (next === at) return

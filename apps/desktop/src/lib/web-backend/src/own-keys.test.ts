@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { ownKeysTaken, withOwnKeys } from './own-keys'
 
 const NOTE = '# Plan\n\nWords.\n'
-
 describe("Orden's own keys in a note's text", () => {
   test('come out of the front matter whole, and the rest of it stays as written', () => {
     const text = `---\ntitle: Plan\nicon: rocket\nicon-color: red\ncover: "[[pics/sea.png]]"\ncover-position: 30\n---\n\n${NOTE}`
@@ -11,20 +10,17 @@ describe("Orden's own keys in a note's text", () => {
       text: `---\ntitle: Plan\n---\n\n${NOTE}`,
     })
   })
-
   test('take the front matter away where nothing else was in it', () => {
     expect(ownKeysTaken(`---\nicon: rocket\n---\n\n${NOTE}`)).toEqual({
       meta: { icon: 'rocket' },
       text: NOTE,
     })
   })
-
   test('leave a note with none alone, and a colour with no icon is no colour', () => {
     expect(ownKeysTaken(NOTE)).toBeNull()
     expect(ownKeysTaken(`---\ntags: [a]\n---\n${NOTE}`)).toBeNull()
     expect(ownKeysTaken(`---\nicon-color: red\n---\n\n${NOTE}`)).toEqual({ meta: {}, text: NOTE })
   })
-
   test('go back into an export, and an export brought back in gives the same metadata', () => {
     const meta = {
       icon: 'rocket',

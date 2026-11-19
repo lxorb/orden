@@ -30,7 +30,6 @@
     align-items: center;
     animation: pill-in var(--dur-base) var(--ease-spring);
   }
-
   .open {
     display: flex;
     align-items: center;
@@ -44,19 +43,16 @@
     color: var(--text);
     cursor: default;
   }
-
   :global([data-touch]) .pending {
     grid-column: 1;
     justify-self: center;
   }
-
   @keyframes pill-in {
     from {
       opacity: 0;
       transform: translateY(var(--space-3));
     }
   }
-
   .pulse {
     width: 7px;
     height: 7px;
@@ -65,7 +61,6 @@
     background: var(--accent);
     animation: breathe 1.8s var(--ease-out) infinite;
   }
-
   @keyframes breathe {
     0%,
     100% {
@@ -75,7 +70,6 @@
       opacity: 1;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .pending,
     .pulse {

@@ -9,7 +9,6 @@ window.matchMedia = ((query: string) => ({
   removeEventListener: () => undefined,
 })) as unknown as typeof window.matchMedia
 Element.prototype.scrollIntoView = () => undefined
-
 const { default: Overview } = await import('../../src/lib/overview/src/Overview.svelte')
 const { tabOverview } = await import('../../src/lib/workspace/src/api')
 const { appCommands } = await import('../../src/lib/commands/src/api')
@@ -17,9 +16,7 @@ const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { runTap } = await (await import('../../src/lib/shortcuts/src/api')).doubleTaps()
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
-
 let close: () => void
-
 beforeEach(() => {
   workspace.panes.collapse()
   workspace.tabs = []
@@ -28,24 +25,20 @@ beforeEach(() => {
   const made = mount(Overview, { target: document.body })
   close = () => void unmount(made, { outro: false })
 })
-
 afterEach(() => {
   tabOverview.open = false
   flushSync()
   close()
   vi.restoreAllMocks()
 })
-
 const windows = () => [...document.querySelectorAll<HTMLButtonElement>('.window')]
 const layer = () => document.querySelector('.canvas')
-
 function press(key: string): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
   document.activeElement?.dispatchEvent(event)
   flushSync()
   return event
 }
-
 async function opened() {
   appCommands()
     .find((one) => one.id === 'tab-overview')
@@ -53,14 +46,12 @@ async function opened() {
   flushSync()
   await tick()
 }
-
 test('the palette’s row shows one window per tab, the strip leaves them out, the keyboard on the one in front', async () => {
   await opened()
   expect(windows().map((one) => one.getAttribute('aria-label'))).toEqual(['One', 'Two', 'Three', 'Three'])
   expect(tabOverview.out).toHaveLength(4)
   expect(document.activeElement).toBe(document.querySelector('.window[aria-current="page"]'))
 })
-
 test('a press on a window opens its tab, and every window goes home', async () => {
   await opened()
   windows()[0]?.click()
@@ -72,7 +63,6 @@ test('a press on a window opens its tab, and every window goes home', async () =
   expect(tabOverview.out).toEqual([])
   expect(overlays.depth).toBe(0)
 })
-
 test('the arrows walk to another window, which opens as a press on it does', async () => {
   await opened()
   windows()[0]?.focus()
@@ -86,7 +76,6 @@ test('the arrows walk to another window, which opens as a press on it does', asy
   expect(workspace.active?.shown).toBe(walked?.getAttribute('aria-label'))
   expect(id).toBeTruthy()
 })
-
 test('Escape sends them home and goes nowhere', async () => {
   await opened()
   const before = workspace.activeTabId
@@ -97,20 +86,17 @@ test('Escape sends them home and goes nowhere', async () => {
   expect(layer()).toBe(null)
   expect(workspace.activeTabId).toBe(before)
 })
-
 test('Alt tapped twice opens it, and again puts it away', async () => {
   const context = { palette: () => undefined, fullscreen: () => undefined }
   expect(runTap('Alt', context)).toBe(true)
   flushSync()
   await tick()
   expect(windows()).toHaveLength(4)
-
   expect(runTap('Alt', context)).toBe(true)
   flushSync()
   await tick()
   expect(layer()).toBe(null)
 })
-
 test('a web tab’s window shows its page as it was left, and only a draft’s window is dashed', async () => {
   const page = workspace.openPage('https://example.com/') ?? ''
   pages.of(page).shot = 'data:image/png;base64,AA=='
@@ -122,7 +108,6 @@ test('a web tab’s window shows its page as it was left, and only a draft’s w
   expect(drafts.length).toBeGreaterThan(0)
   expect(drafts.every((one) => one.classList.contains('unsaved'))).toBe(true)
 })
-
 test('nothing in it is chosen as text, and a drag is never the browser’s own', async () => {
   await opened()
   for (const at of [layer(), windows()[0], document.querySelector('.caption')]) {
@@ -133,7 +118,6 @@ test('nothing in it is chosen as text, and a drag is never the browser’s own',
     }
   }
 })
-
 test('it comes back where the camera was left', async () => {
   await opened()
   const world = () => document.querySelector<HTMLElement>('.world')?.style.transform
@@ -147,7 +131,6 @@ test('it comes back where the camera was left', async () => {
   await opened()
   expect(world()).toBe(moved)
 })
-
 test('Tidy up puts every window back where its panes put it', async () => {
   const { places } = await import('../../src/lib/overview/src/places.svelte')
   const id = workspace.tabs[0]?.id ?? ''
@@ -159,7 +142,6 @@ test('Tidy up puts every window back where its panes put it', async () => {
   await tick()
   expect(places.windows).toEqual({})
 })
-
 test('a window put by hand is found again by the next run, whose tabs have new ids', async () => {
   const { places } = await import('../../src/lib/overview/src/places.svelte')
   const [first] = workspace.tabs
@@ -173,7 +155,6 @@ test('a window put by hand is found again by the next run, whose tabs have new i
   places.recall(again)
   expect(places.windows[`${first?.id}-again`]).toEqual({ x: 3000, y: 10, w: 300, h: 200 })
 })
-
 test('windows kept where they were put on each other open apart, with nothing to drag', async () => {
   const { places } = await import('../../src/lib/overview/src/places.svelte')
   const kept = Object.fromEntries(
@@ -205,7 +186,6 @@ test('windows kept where they were put on each other open apart, with nothing to
             other.y < one.y + one.h - 0.5,
         ).toBe(false)
 })
-
 test('a window’s cross closes its tab the strip’s way, which asks where that asks, and the view stays', async () => {
   await opened()
   const closing = vi.spyOn(workspace, 'closeAsking')
@@ -221,7 +201,6 @@ test('a window’s cross closes its tab the strip’s way, which asks where that
   expect(tabOverview.open).toBe(true)
   expect(layer()).not.toBe(null)
 })
-
 test('each pane is its own window, moved where it is and never copied, and every tab is out of its strip', async () => {
   const panes = workspace.panes.all.map((one) => one.id)
   const shown = panes.map((id, index) => {
@@ -250,7 +229,6 @@ test('each pane is its own window, moved where it is and never copied, and every
   for (const pane of shown) expect(pane.getAttribute('style') ?? '').toBe('')
   expect(tabOverview.out).toEqual([])
 })
-
 test('a pane holding a web page moves as its window, its picture in its hole and no copy of it', async () => {
   const page = workspace.openPage('https://example.com/') ?? ''
   pages.of(page).shot = 'data:image/png;base64,AA=='
@@ -273,7 +251,6 @@ test('a pane holding a web page moves as its window, its picture in its hole and
   await tick()
   expect(pages.still).toBe(false)
 })
-
 test('the canvas is the window’s own ground, its sidebars sliding away, and the app never blurred', async () => {
   const bar = document.createElement('header')
   bar.dataset.chrome = 'top'
@@ -300,7 +277,6 @@ test('the canvas is the window’s own ground, its sidebars sliding away, and th
   expect(button?.style.getPropertyValue('--overview-open')).toBe('')
   expect(document.querySelector('.is-blurred')).toBe(null)
 })
-
 test('every page stands still from before the first frame to after the last, and the canvas is no layer a page has to find', async () => {
   const { layersOver } = await import('../../src/lib/web-tab/src/covers')
   const hole = document.createElement('div')
@@ -319,7 +295,6 @@ test('every page stands still from before the first frame to after the last, and
   await tick()
   expect(pages.still).toBe(false)
 })
-
 test('a window’s cross sits on its corner, red, and answers the pointer', async () => {
   await opened()
   const window = windows()[0]
@@ -350,7 +325,6 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
     ),
   ).toBe(true)
 })
-
 test('every window’s name, and the bubbles, are drawn under the panes and every window, so none lies on another window', async () => {
   await opened()
   const under = document.querySelector<HTMLElement>('.under')
@@ -364,7 +338,6 @@ test('every window’s name, and the bubbles, are drawn under the panes and ever
   await tick()
   expect(document.querySelector('.under')).toBe(null)
 })
-
 test('every scroll zooms about the pointer, Ctrl or not, and none moves the canvas', async () => {
   await opened()
   const world = () => document.querySelector<HTMLElement>('.world')
@@ -405,7 +378,6 @@ test('every scroll zooms about the pointer, Ctrl or not, and none moves the canv
     expect(pointUnder().y).toBeCloseTo(under.y)
   }
 })
-
 test('a zoom only moves the camera: where the windows lie, and how big, is the same at every zoom', async () => {
   await opened()
   const laidOut = () => {
@@ -440,7 +412,6 @@ test('a zoom only moves the camera: where the windows lie, and how big, is the s
   flushSync()
   expect(laidOut()).toEqual(before)
 })
-
 test('Ctrl+Click chooses windows, and again lets one go; a plain click opens its tab', async () => {
   await opened()
   const [first, second] = windows()
@@ -458,7 +429,6 @@ test('Ctrl+Click chooses windows, and again lets one go; a plain click opens its
   expect(tabOverview.open).toBe(false)
   expect(workspace.active?.shown).toBe(first?.getAttribute('aria-label'))
 })
-
 test('the sides are not opened or shut while it is up, by their buttons, keys or menu', async () => {
   const panel = workspace.panel
   const right = workspace.rightShows
@@ -473,7 +443,6 @@ test('the sides are not opened or shut while it is up, by their buttons, keys or
   expect(workspace.panel).not.toBe(panel)
   workspace.toggleSidebar()
 })
-
 test('a launcher or top button that comes while the overview is open is under it from the start (#1493)', async () => {
   const pane = (await import('../../src/lib/pane-tree/src/Pane.svelte?raw')).default
   const overview = (await import('../../src/lib/overview/src/Overview.svelte?raw')).default
@@ -482,7 +451,6 @@ test('a launcher or top button that comes while the overview is open is under it
   )
   expect(overview).toMatch(/\[data-box\] \*\s+\)\s+\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/)
 })
-
 test('a hand on the ground when it is put away is let go, so the next one does not follow a pointer nobody presses', async () => {
   Element.prototype.setPointerCapture = () => undefined
   const world = () => document.querySelector<HTMLElement>('.world')?.style.transform
@@ -498,7 +466,6 @@ test('a hand on the ground when it is put away is let go, so the next one does n
   flushSync()
   await tick()
   expect(layer()).toBe(null)
-
   await opened()
   const before = world()
   point('pointermove', 700, 0)

@@ -6,7 +6,6 @@ import { Across, type Desk } from './across'
 import type { FileOp } from '../../file-ops/src/api'
 
 vi.mock('../../platform/src/log', () => ({ log: vi.fn() }))
-
 function fakeLocks(): LockManager {
   const tails = new Map<string, Promise<unknown>>()
   return {
@@ -23,10 +22,8 @@ function fakeLocks(): LockManager {
     },
   } as unknown as LockManager
 }
-
 beforeEach(() => vi.stubGlobal('navigator', { locks: fakeLocks() }))
 afterEach(() => vi.unstubAllGlobals())
-
 function channel() {
   const ends: { onmessage: ((event: MessageEvent<unknown>) => void) | null }[] = []
   const flight: (() => void)[] = []
@@ -55,9 +52,7 @@ function channel() {
     },
   }
 }
-
 const PATH = '/Notes/Both.md'
-
 function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<string, string>) {
   let failing = false
   let reachable = true
@@ -148,9 +143,7 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     renamedSoon,
   }
 }
-
 const BASE = '# Both\n\nbase line\n'
-
 function twoWindows(text = BASE) {
   const wires = channel()
   const disk = new Map([[PATH, text]])
@@ -164,7 +157,6 @@ function twoWindows(text = BASE) {
   }
   return { wires: { deliver }, disk, a, b }
 }
-
 describe('one note in two windows', () => {
   test('what one writes reaches the other, which stays clean', async () => {
     const { wires, disk, a, b } = twoWindows()
@@ -178,7 +170,6 @@ describe('one note in two windows', () => {
     expect(inB.dirty).toBe(false)
     expect(b.owed).toEqual([])
   })
-
   test('a note that edits live with the writer leaves its words to the live document', async () => {
     const { wires, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -192,7 +183,6 @@ describe('one note in two windows', () => {
     expect(inB.latest).toBe(`${BASE}FROM-A MORE `)
     expect(inB.onDisk).toBe(`${BASE}FROM-A `)
   })
-
   test('a window that starts hearing late takes in what was written before it listened', async () => {
     const wires = channel()
     const disk = new Map([[PATH, BASE]])
@@ -208,7 +198,6 @@ describe('one note in two windows', () => {
     expect(inB.dirty).toBe(false)
     expect(b.owed).toEqual([])
   })
-
   test('a write that has not heard the last one keeps both, and no word goes', async () => {
     const { wires, disk, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -224,7 +213,6 @@ describe('one note in two windows', () => {
     expect(inA.latest).toBe(disk.get(PATH))
     expect(inB.latest).toBe(disk.get(PATH))
   })
-
   test('words typed here are merged with what arrives, and owed to the file', async () => {
     const { wires, disk, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -242,7 +230,6 @@ describe('one note in two windows', () => {
     expect(disk.get(PATH)).toBe(`TOP ${BASE}FROM-A `)
     expect(inA.latest).toBe(disk.get(PATH))
   })
-
   test('a key pressed while a merge is on its way stays', async () => {
     const { disk, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -258,7 +245,6 @@ describe('one note in two windows', () => {
     expect(inB.latest).toContain('FROM-A')
     expect(inB.latest).toContain('FROM-B')
   })
-
   test('both at one place in one moment come to the same words in both', async () => {
     const { wires, disk, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -277,7 +263,6 @@ describe('one note in two windows', () => {
     expect(inA.latest).toBe(disk.get(PATH))
     expect(inB.latest).toBe(disk.get(PATH))
   })
-
   test('a note deleted in one does not come back when the other types, and keeps its words', async () => {
     const { wires, disk, a, b } = twoWindows()
     a.open(BASE)
@@ -294,7 +279,6 @@ describe('one note in two windows', () => {
     expect(await b.save(inB)).toBeNull()
     expect(disk.has(PATH)).toBe(false)
   })
-
   test('a file gone from under a write it has not heard of is not written back', async () => {
     const { disk, b } = twoWindows()
     const inB = b.open(BASE)
@@ -305,7 +289,6 @@ describe('one note in two windows', () => {
     expect(inB.path).toBeNull()
     expect(inB.latest).toContain('typed')
   })
-
   test('a version of what a write replaces is the file as it stood, its line endings too', async () => {
     const { disk, b } = twoWindows()
     const inB = b.open('{"nodes":[]}', 'canvas')
@@ -314,7 +297,6 @@ describe('one note in two windows', () => {
     await b.save(inB)
     expect(b.versions).toEqual(['{\r\n"nodes":[1]\r\n}'])
   })
-
   test('a plane does not merge as text: the words a write replaces are kept as a version', async () => {
     const before = '{"nodes":[]}'
     const { wires, disk, a, b } = twoWindows(before)
@@ -331,7 +313,6 @@ describe('one note in two windows', () => {
     expect(inA.dirty).toBe(false)
   })
 })
-
 function random(seed: number) {
   let state = seed * 2654435761 + 1
   return (below: number) => {
@@ -339,9 +320,7 @@ function random(seed: number) {
     return state % below
   }
 }
-
 const count = (text: string, token: string) => text.split(token).length - 1
-
 describe('a whole file written by the app in this window', () => {
   test('reaches the note open on it, which stays clean', async () => {
     const disk = new Map([[PATH, BASE]])
@@ -353,7 +332,6 @@ describe('a whole file written by the app in this window', () => {
     expect(note.latest).toBe(`${BASE}- [ ] added by the app\n`)
     expect(note.dirty).toBe(false)
   })
-
   test('merges with words typed there and not yet written, and owes them to the file', async () => {
     const disk = new Map([[PATH, BASE]])
     const one = aWindow(channel().end(), disk)
@@ -367,7 +345,6 @@ describe('a whole file written by the app in this window', () => {
     await one.save(note)
     expect(disk.get(PATH)).toBe(`top\n${BASE}typed `)
   })
-
   test('leaves a note on another path alone', async () => {
     const disk = new Map([[PATH, BASE]])
     const one = aWindow(channel().end(), disk)
@@ -378,7 +355,6 @@ describe('a whole file written by the app in this window', () => {
     expect(note.latest).toBe(BASE)
   })
 })
-
 describe('whatever order the news arrives in', () => {
   test('a write that met the disk and then hears of it does not bring it in twice', async () => {
     const { wires, disk, a, b } = twoWindows()
@@ -397,7 +373,6 @@ describe('whatever order the news arrives in', () => {
       expect(count(inB.latest, token)).toBe(1)
     }
   })
-
   test.each(Array.from({ length: 80 }, (_, seed) => seed))(
     'three windows, seed %i: no word lost and none twice',
     async (seed) => {
@@ -410,7 +385,6 @@ describe('whatever order the news arrives in', () => {
       const tokens: string[] = []
       const running: Promise<unknown>[] = []
       const tick = () => new Promise((resolve) => setTimeout(resolve, 0))
-
       for (let step = 0; step < 30; step += 1) {
         const at = pick(3)
         const window = windows[at]
@@ -434,7 +408,6 @@ describe('whatever order the news arrives in', () => {
         if (pick(2)) await tick()
       }
       await Promise.all(running)
-
       for (let round = 0; round < 12; round += 1) {
         while (wires.flight.length) {
           const [one] = wires.flight.splice(pick(wires.flight.length), 1)
@@ -447,14 +420,12 @@ describe('whatever order the news arrives in', () => {
         await tick()
         await Promise.all(windows.map((one) => one.across.heardSoFar()))
       }
-
       const final = disk.get(PATH) ?? ''
       for (const token of tokens) expect([token, count(final, token)]).toEqual([token, 1])
       for (const note of notes) expect(note.latest).toBe(final)
     },
   )
 })
-
 describe('around one write', () => {
   test('words that arrive while the disk is being read go down with it', async () => {
     const { wires, disk, a, b } = twoWindows()
@@ -477,7 +448,6 @@ describe('around one write', () => {
     expect(inA.latest).toBe(disk.get(PATH))
     expect(inB.latest).toBe(disk.get(PATH))
   })
-
   test('a file that will not read is not an empty file: nothing doubles, and the write is refused', async () => {
     const { disk, b } = twoWindows()
     const inB = b.open(BASE)
@@ -490,7 +460,6 @@ describe('around one write', () => {
     expect(await b.save(inB)).toBeTruthy()
     expect(disk.get(PATH)).toBe(`${BASE}typed`)
   })
-
   test('a write racing a rename follows the note, and it does not go draft', async () => {
     const { disk, b } = twoWindows()
     const inB = b.open(BASE)
@@ -504,7 +473,6 @@ describe('around one write', () => {
     expect(disk.has(PATH)).toBe(false)
   })
 })
-
 function savingLikeTheCrate(window: ReturnType<typeof aWindow>, disk: Map<string, string>) {
   return async (note: NoteDoc) => {
     const path = note.path
@@ -517,10 +485,8 @@ function savingLikeTheCrate(window: ReturnType<typeof aWindow>, disk: Map<string
     return written
   }
 }
-
 const CRLF = '# Title\r\n\r\nFirst paragraph here.\r\n\r\nSecond paragraph here.\r\n\r\nThird one.\r\n'
 const LF = CRLF.replace(/\r\n/g, '\n')
-
 describe('a file with CRLF endings', () => {
   test('holds one line ending, whatever way the words came in', () => {
     const doc = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: CRLF, dirty: false }, () => undefined)
@@ -540,12 +506,10 @@ describe('a file with CRLF endings', () => {
     expect(doc.dirty).toBe(false)
     expect(doc.onDisk).toBe('p\nq')
   })
-
   test('the first write still keeps the file as it was', () => {
     const doc = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: CRLF, dirty: false }, () => undefined)
     expect(doc.firstVersion()).toBe(CRLF)
   })
-
   test('a clean window hears the other, and what it types afterwards is still owed', async () => {
     const { wires, disk, a, b } = twoWindows(CRLF)
     const inA = a.open(CRLF)
@@ -565,7 +529,6 @@ describe('a file with CRLF endings', () => {
     expect(inB.latest).toBe(words)
     expect(disk.get(PATH)).toBe(words.replace(/\n/g, '\r\n'))
   })
-
   test('words typed before the news arrives merge with it, in both orders', async () => {
     const { wires, disk, a, b } = twoWindows(CRLF)
     const inA = a.open(CRLF)
@@ -584,7 +547,6 @@ describe('a file with CRLF endings', () => {
     expect(inB.latest).toBe(inA.latest)
     expect(count(inB.latest, 'Third one.')).toBe(1)
   })
-
   test.each([
     ['at the end', (end: number) => ({ from: end, to: end, insert: 'TYPED' })],
     ['in a word', () => ({ from: 15, to: 15, insert: 'TYPED' })],
@@ -597,13 +559,11 @@ describe('a file with CRLF endings', () => {
     inA.live.edit([edit(inA.live.text.length)])
     const wanted = inA.live.text.toString()
     await savingLikeTheCrate(a, disk)(inA)
-
     expect(disk.get(PATH)?.replace(/\r\n/g, '\n')).toBe(wanted)
     expect(inA.latest).toBe(wanted)
     expect(inA.dirty).toBe(false)
     expect(a.versions).toEqual([])
   })
-
   test('a file another program turned to CRLF is no news, and no merge', async () => {
     const { wires, disk, a, b } = twoWindows(LF)
     const inA = a.open(LF)
@@ -615,7 +575,6 @@ describe('a file with CRLF endings', () => {
     expect(disk.get(PATH)).toBe(`${LF}TYPED`.replace(/\n/g, '\r\n'))
     expect(count(inA.latest, 'First paragraph')).toBe(1)
   })
-
   test.each(Array.from({ length: 20 }, (_, seed) => seed))(
     'three windows on it, seed %i: no word lost and none twice',
     async (seed) => {
@@ -628,7 +587,6 @@ describe('a file with CRLF endings', () => {
       const tokens: string[] = []
       const running: Promise<unknown>[] = []
       const tick = () => new Promise((resolve) => setTimeout(resolve, 0))
-
       for (let step = 0; step < 24; step += 1) {
         const at = pick(3)
         const note = notes[at]
@@ -651,7 +609,6 @@ describe('a file with CRLF endings', () => {
         if (pick(2)) await tick()
       }
       await Promise.all(running)
-
       for (let round = 0; round < 12; round += 1) {
         while (wires.flight.length) {
           const [one] = wires.flight.splice(pick(wires.flight.length), 1)
@@ -664,14 +621,12 @@ describe('a file with CRLF endings', () => {
         await tick()
         await Promise.all(windows.map((one) => one.across.heardSoFar()))
       }
-
       const final = (disk.get(PATH) ?? '').replace(/\r\n/g, '\n')
       for (const token of tokens) expect([token, count(final, token)]).toEqual([token, 1])
       for (const note of notes) expect(note.latest).toBe(final)
     },
   )
 })
-
 describe('a merge that throws does not stop the saving', () => {
   const refusing = (note: NoteDoc) => {
     const arrived = vi.spyOn(note.live, 'arrived').mockImplementation(() => {
@@ -679,7 +634,6 @@ describe('a merge that throws does not stop the saving', () => {
     })
     return () => arrived.mockRestore()
   }
-
   test.each([
     ['replace', (note: NoteDoc) => vi.spyOn(note.live, 'replace')],
     ['edit', (note: NoteDoc) => vi.spyOn(note.live, 'edit')],
@@ -699,12 +653,10 @@ describe('a merge that throws does not stop the saving', () => {
     }
     expect(act[name]).toThrow()
     stub.mockRestore()
-
     note.live.edit([{ from: 0, to: 0, insert: 'typed' }])
     expect(note.dirty).toBe(true)
     expect(edited).toEqual([note])
   })
-
   test('took: the rope refuses, and typing afterwards is still owed', () => {
     const edited: NoteDoc[] = []
     const note = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false }, (one) =>
@@ -717,7 +669,6 @@ describe('a merge that throws does not stop the saving', () => {
     expect(note.dirty).toBe(true)
     expect(edited).toEqual([note])
   })
-
   test('heard: the words still come in, and the note stays clean', async () => {
     const { wires, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -732,7 +683,6 @@ describe('a merge that throws does not stop the saving', () => {
     inA.live.edit([{ from: 0, to: 0, insert: 'typed' }])
     expect(inA.dirty).toBe(true)
   })
-
   test('heard with words of its own: both stay, and they are owed', async () => {
     const { wires, disk, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -749,7 +699,6 @@ describe('a merge that throws does not stop the saving', () => {
     await a.save(inA)
     expect(disk.get(PATH)).toBe(`TOP ${BASE}FROM-B `)
   })
-
   test('at a write: the write goes down with both', async () => {
     const { disk, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -763,7 +712,6 @@ describe('a merge that throws does not stop the saving', () => {
     expect(disk.get(PATH)).toBe(`TOP ${BASE}FROM-B `)
     expect(inA.dirty).toBe(false)
   })
-
   test('the fallback leaves the version the first write keeps as it was', () => {
     const note = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false }, () => undefined)
     const { disk, a } = twoWindows()
@@ -776,7 +724,6 @@ describe('a merge that throws does not stop the saving', () => {
       expect(note.firstVersion()).toBe(BASE)
     })
   })
-
   test('where nothing will take them, the write says so rather than saying nothing', async () => {
     const { wires, disk, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -799,7 +746,6 @@ describe('a merge that throws does not stop the saving', () => {
     expect(disk.get(PATH)).toBe(`TOP ${BASE}FROM-B `)
   })
 })
-
 describe('while an input method is composing', () => {
   const composing = (note: NoteDoc) => {
     const view = {
@@ -810,7 +756,6 @@ describe('while an input method is composing', () => {
     note.live.join(view)
     return view
   }
-
   test('two writes heard are taken in once it ends, with none lost and none twice', async () => {
     const { wires, disk, a, b } = twoWindows()
     const inA = a.open(BASE)
@@ -834,7 +779,6 @@ describe('while an input method is composing', () => {
     expect(inA.latest).toBe(disk.get(PATH))
   })
 })
-
 describe('a file operation in another window', () => {
   test('a delete waits for a write in the air, and the file stays gone', async () => {
     const { disk, a } = twoWindows()
@@ -845,7 +789,6 @@ describe('a file operation in another window', () => {
     await Promise.all([saving, deleting])
     expect(disk.has(PATH)).toBe(false)
   })
-
   test('a delete ahead of the write: the write finds it gone', async () => {
     const { disk, a } = twoWindows()
     const inA = a.open(BASE)
@@ -857,7 +800,6 @@ describe('a file operation in another window', () => {
     expect(inA.path).toBeNull()
     expect(inA.latest).toContain('WORDS')
   })
-
   test('a rename heard during the read: the write follows the note', async () => {
     const { disk, a } = twoWindows()
     const inA = a.open(BASE)
@@ -872,7 +814,6 @@ describe('a file operation in another window', () => {
     expect(a.owed).toContain(inA)
   })
 })
-
 describe('a share gone offline', () => {
   test('is not a file gone: the note keeps its path, and the write says it was refused', async () => {
     const { disk, a } = twoWindows()
@@ -888,7 +829,6 @@ describe('a share gone offline', () => {
     expect(await a.save(inA)).toBeTruthy()
     expect(disk.get(PATH)).toBe(`${BASE}WORDS `)
   })
-
   test('a file gone from a share that answers is still gone', async () => {
     const { disk, a } = twoWindows()
     const inA = a.open(BASE)
@@ -898,7 +838,6 @@ describe('a share gone offline', () => {
     expect(inA.path).toBeNull()
   })
 })
-
 describe('a space made in another window', () => {
   test('the list of spaces is read again', async () => {
     const said = new Map<string, (what: Record<string, unknown>) => void>()

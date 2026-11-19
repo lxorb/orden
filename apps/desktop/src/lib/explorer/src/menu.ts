@@ -21,7 +21,6 @@ function otherFolder(view: ExplorerView): string | null {
   }
   return null
 }
-
 export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
   if (!view.picked.names.has(entry.name)) view.pick(entry.name, 'one')
   const paths = view.chosen
@@ -114,7 +113,6 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
       : []),
   ]
 }
-
 export function roomMenu(view: ExplorerView): MenuEntry[] {
   const folder = view.listing?.path
   const writes = changeable(view)
@@ -154,7 +152,6 @@ export function roomMenu(view: ExplorerView): MenuEntry[] {
       : []),
   ]
 }
-
 function sortKeysOf(view: ExplorerView): { key: SortKey; label: string }[] {
   return [
     { key: 'name', label: 'Name' },
@@ -165,7 +162,6 @@ function sortKeysOf(view: ExplorerView): { key: SortKey; label: string }[] {
     ...(view.search ? [{ key: 'folder' as const, label: 'Folder' }] : []),
   ]
 }
-
 export function sortMenu(view: ExplorerView): MenuEntry[] {
   const { key, down } = view.sort
   return [

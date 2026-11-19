@@ -18,12 +18,10 @@ function press(key: string, held: { ctrl?: boolean; meta?: boolean }) {
   }
   return event as unknown as KeyboardEvent
 }
-
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.resetModules()
 })
-
 test.each([
   ['Macintosh; Intel Mac OS X 10_15_7', { meta: true }],
   ['Windows NT 10.0; Win64; x64', { ctrl: true }],
@@ -33,7 +31,6 @@ test.each([
   const reload = vi.fn()
   vi.stubGlobal('location', { reload })
   const { shortcuts } = await import('./shortcuts.svelte')
-
   const event = press('r', held)
   expect(shortcuts.handle(event, {} as never)).toBe(true)
   expect(event.defaultPrevented).toBe(true)

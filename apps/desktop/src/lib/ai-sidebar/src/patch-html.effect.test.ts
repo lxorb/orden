@@ -6,7 +6,6 @@ function host(html: string): HTMLElement {
   patchHtml(one, html)
   return one
 }
-
 describe('drawing an answer over the one drawn before', () => {
   test('ends with exactly what was asked for', () => {
     const steps = [
@@ -23,7 +22,6 @@ describe('drawing an answer over the one drawn before', () => {
       expect(one.innerHTML).toBe(html)
     }
   })
-
   test('keeps every node that did not change, and the groups of code before the last', () => {
     const group = (text: string) => `<span class="code-lines">${text}\n</span>`
     const one = host(`<p>Look</p><div class="code"><pre><code>${group('a')}${group('b')}</code></pre></div>`)
@@ -40,7 +38,6 @@ describe('drawing an answer over the one drawn before', () => {
     expect(now[1]?.textContent).toBe('b c\n')
     expect(now).toHaveLength(3)
   })
-
   test('draws an element again whose attributes changed', () => {
     const one = host('<a href="#a">x</a>')
     const before = one.firstChild

@@ -13,13 +13,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string) {
   const state = parsed(
     EditorState.create({
@@ -32,7 +29,6 @@ function viewOf(doc: string) {
   open.push(view)
   return view
 }
-
 function type(view: EditorView, text: string) {
   for (const key of text) {
     const at = view.state.selection.main.head
@@ -43,7 +39,6 @@ function type(view: EditorView, text: string) {
     })
   }
 }
-
 function hidden(view: EditorView, words: string): boolean {
   const at = view.state.doc.toString().indexOf(words)
   let covered = false
@@ -52,21 +47,17 @@ function hidden(view: EditorView, words: string): boolean {
   })
   return covered
 }
-
 describe('typing a list marker in front of a maths block', () => {
   test('leaves the heading and words below it shown', () => {
     const view = viewOf('$$\nx^2\n$$\n\n# Plans\n\nThe rest of the note.')
     type(view, '- ')
-
     expect(view.state.doc.toString()).toBe('- $$\nx^2\n$$\n\n# Plans\n\nThe rest of the note.')
     expect(hidden(view, '# Plans')).toBe(false)
     expect(hidden(view, 'The rest of the note.')).toBe(false)
   })
-
   test('leaves them shown for a numbered item too', () => {
     const view = viewOf('$$\nx^2\n$$\n\n# Plans\n\nThe rest of the note.')
     type(view, '1. ')
-
     expect(hidden(view, '# Plans')).toBe(false)
   })
 })

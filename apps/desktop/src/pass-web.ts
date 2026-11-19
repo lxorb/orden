@@ -8,10 +8,7 @@ import { mount } from 'svelte'
 import { loadPassWeb } from './lib/pass-ui/src/api'
 
 serveAssets()
-
 const target = document.getElementById('app')
 if (!target) throw new Error('pass.html has no #app to mount into')
-
 const { default: PassWeb } = await loadPassWeb()
-
 export default mount(PassWeb, { target })

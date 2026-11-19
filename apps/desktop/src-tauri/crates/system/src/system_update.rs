@@ -8,7 +8,6 @@ pub struct NotUpdated {
     command: Option<String>,
     reason: String,
 }
-
 #[tauri::command]
 pub async fn system_update(
     webview: Webview,
@@ -17,7 +16,6 @@ pub async fn system_update(
 ) -> Result<(), NotUpdated> {
     through_the_system(webview, &channel, &version).await
 }
-
 #[cfg(target_os = "linux")]
 use linux::update as through_the_system;
 
@@ -29,7 +27,6 @@ fn through_the_system(_: Webview, _: &str, _: &str) -> std::future::Ready<Result
         reason: "only a Linux package is updated through the system".into(),
     }))
 }
-
 #[cfg(target_os = "linux")]
 mod linux {
     use std::path::{Path, PathBuf};
@@ -42,16 +39,13 @@ mod linux {
     use crate::packagekit::{Failure, Format, PackageKit};
 
     const PACKAGE: &str = "orden";
-
     const OURS: [&str; 2] = ["apt.orden.so", "rpm.orden.so"];
-
     const SOURCES: [&str; 4] = [
         "/etc/apt/sources.list.d",
         "/etc/yum.repos.d",
         "/etc/zypp/repos.d",
         "/etc/apt",
     ];
-
     pub async fn update(webview: Webview, channel: &str, version: &str) -> Result<(), NotUpdated> {
         let format = match tauri::utils::platform::bundle_type() {
             Some(BundleType::Deb) => Format::Deb,
@@ -81,7 +75,6 @@ mod linux {
             Failure::Refused => not("the password was not given".into(), true),
             Failure::Failed(reason) => not(reason, false),
         };
-
         let wanted = version.to_owned();
         let from_repository = blocking(move || {
             PackageKit::system()?.update_from_repository(PACKAGE, &wanted, format)
@@ -97,7 +90,6 @@ mod linux {
                 false,
             ));
         }
-
         let (file, bytes) = fetched(&webview, channel, format)
             .await
             .map_err(|reason| not(reason, false))?;
@@ -116,7 +108,6 @@ mod linux {
         let _ = std::fs::remove_file(&path);
         installed.map_err(failed)
     }
-
     async fn blocking<T: Send + 'static>(
         work: impl FnOnce() -> Result<T, Failure> + Send + 'static,
     ) -> Result<T, Failure> {
@@ -124,7 +115,6 @@ mod linux {
             .await
             .map_err(|error| Failure::Failed(error.to_string()))?
     }
-
     async fn fetched(
         webview: &Webview,
         channel: &str,
@@ -153,18 +143,15 @@ mod linux {
         let file = format!("{PACKAGE}-{}.{}", update.version, extension(format));
         Ok((PathBuf::from(file), bytes))
     }
-
     pub(super) fn target(arch: &str, format: Format) -> String {
         format!("linux-{arch}-{}", extension(format))
     }
-
     fn extension(format: Format) -> &'static str {
         match format {
             Format::Deb => "deb",
             Format::Rpm => "rpm",
         }
     }
-
     pub(super) fn release_url(version: &str, arch: &str, format: Format) -> String {
         let tag = if version.contains('-') {
             "edge".to_owned()
@@ -177,7 +164,6 @@ mod linux {
             extension(format)
         )
     }
-
     pub(super) fn command(format: Format, zypper: bool, repository: bool, url: &str) -> String {
         match (format, zypper, repository) {
             (Format::Rpm, true, true) => "sudo zypper refresh && sudo zypper update orden".into(),
@@ -192,7 +178,6 @@ mod linux {
             }
         }
     }
-
     pub(super) fn names_ours(folder: &Path) -> bool {
         let read = |path: &Path| {
             std::fs::read_to_string(path)
@@ -208,7 +193,6 @@ mod linux {
         })
     }
 }
-
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
     use super::linux::{command, names_ours, release_url, target};
@@ -219,7 +203,6 @@ mod tests {
         assert_eq!(target("x86_64", Format::Rpm), "linux-x86_64-rpm");
         assert_eq!(target("aarch64", Format::Deb), "linux-aarch64-deb");
     }
-
     #[test]
     fn the_package_is_on_its_release_page_or_edges() {
         assert_eq!(
@@ -231,7 +214,6 @@ mod tests {
             "https://github.com/lxorb/orden/releases/download/edge/Orden-0.20.1-1200-linux-arm64.deb"
         );
     }
-
     #[test]
     fn a_terminal_is_told_the_repositorys_update_or_the_package() {
         let url = "https://example.invalid/Orden-0.20.0-linux-x64.rpm";
@@ -259,7 +241,6 @@ mod tests {
             command(Format::Deb, false, false, url).ends_with("&& sudo apt install /tmp/orden.deb")
         );
     }
-
     #[test]
     fn a_repository_is_ours_by_its_address() {
         let folder = tempfile::tempdir().expect("a folder");

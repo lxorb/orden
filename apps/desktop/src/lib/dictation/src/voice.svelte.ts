@@ -5,32 +5,26 @@ import type { Hooks, Listening } from './listening'
 import type { Field } from './spot'
 
 type Hearing = 'idle' | 'opening' | 'listening' | 'finishing'
-
 export interface Dictates {
   field: () => Field | undefined
   words?: () => readonly string[]
   trouble?: (said: string) => void
 }
-
 class Voice {
   state = $state<Hearing>('idle')
   level = $state(0)
   owner = $state.raw<Dictates | null>(null)
   asking = $state.raw<Dictates | null>(null)
-
   private running: Listening | null = null
   private session: object | null = null
   private settling: Promise<void> | null = null
   private finishWhenOpen = false
-
   of(owner: Dictates): Hearing {
     return this.owner === owner ? this.state : 'idle'
   }
-
   async start(owner: Dictates): Promise<void> {
     if (this.owner === owner && this.state !== 'idle') return
     if (this.state !== 'idle') await this.finish()
-
     const engine = engines.now()
     if (!engine) {
       this.asking = owner
@@ -38,7 +32,6 @@ class Voice {
     }
     const field = owner.field()
     if (!field) return
-
     const session = {}
     this.asking = null
     this.owner = owner
@@ -74,14 +67,12 @@ class Voice {
       this.say(owner, message(error, 'That microphone could not be opened.'))
     }
   }
-
   finish(): Promise<void> {
     if (this.state === 'opening') {
       this.finishWhenOpen = true
       return Promise.resolve()
     }
     if (this.state !== 'listening' || !this.running) return this.settling ?? Promise.resolve()
-
     this.state = 'finishing'
     this.level = 0
     const session = this.session
@@ -90,24 +81,19 @@ class Voice {
     })
     return this.settling
   }
-
   cancel(): void {
     this.running?.cancel()
     this.reset()
   }
-
   toggle(owner: Dictates): Promise<void> {
     return this.of(owner) === 'idle' ? this.start(owner) : this.finish()
   }
-
   private stillOpening(session: object): boolean {
     return this.session === session && this.state === 'opening'
   }
-
   private finishAsked(): boolean {
     return this.finishWhenOpen
   }
-
   private reset(): void {
     this.state = 'idle'
     this.level = 0
@@ -116,11 +102,9 @@ class Voice {
     this.session = null
     this.settling = null
   }
-
   private say(owner: Dictates, said: string): void {
     if (owner.trouble) owner.trouble(said)
     else sayNotice(said)
   }
 }
-
 export const voice = new Voice()

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import subprocess
 import sys
@@ -10,14 +9,11 @@ from linux_desk import DESK, OUT, failures, tell, xdo, window, move, shoot, rati
 SIZE = "(() => { const c = document.querySelector('.cm-content'); return c ? parseFloat(getComputedStyle(c).fontSize) : null })()"
 SLIDER = "input[type=range][min='0.8']"
 SETTINGS = "[role=region][aria-label=Settings]"
-
 def text_box():
     return run("(() => { const c = document.querySelector('.cm-content'); if (!c) return null; const r = c.getBoundingClientRect();"
                " return { x: r.x, y: r.y, width: Math.min(r.width, 500), height: Math.min(r.height, 220) } })()")
-
 def ink(name):
     from PIL import Image
-
     shoot(name)
     box = text_box()
     if not isinstance(box, dict):
@@ -38,7 +34,6 @@ def ink(name):
             int(x + (box["x"] + box["width"]) * scale * k), int(y + (box["y"] + box["height"]) * scale * k))
     crop = image.crop(area)
     return sum(1 for value in crop.getdata() if value < 110)
-
 until("!!document.querySelector('.cm-content')", 30)
 time.sleep(2)
 before = run(SIZE)

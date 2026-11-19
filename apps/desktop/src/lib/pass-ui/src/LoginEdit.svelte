@@ -10,7 +10,6 @@
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { ui, content = $bindable(), oninput }: { ui: PassUi; content: Login; oninput: () => void } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   const withUsername = $derived(pass.settings.showUsernameField || content.username !== '')
   const totpWrong = $derived(
     content.totp.trim() !== '' && totpIn(content.totp) === null ? 'This is not a 2FA secret or setup address.' : null,

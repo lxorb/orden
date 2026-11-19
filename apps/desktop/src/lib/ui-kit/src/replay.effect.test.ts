@@ -2,7 +2,6 @@ import { afterEach, expect, test } from 'vitest'
 import { fromPage, replay } from './keys'
 
 const listening: [string, EventListener, boolean][] = []
-
 function hear(phase: string, capture: boolean, into: string[]) {
   const one: EventListener = (event) => {
     if (fromPage(event)) into.push(`${phase} ${event.eventPhase}`)
@@ -10,11 +9,9 @@ function hear(phase: string, capture: boolean, into: string[]) {
   listening.push(['keydown', one, capture])
   window.addEventListener('keydown', one, capture)
 }
-
 afterEach(() => {
   for (const [type, one, capture] of listening.splice(0)) window.removeEventListener(type, one, capture)
 })
-
 test('a key out of a page reaches the window’s capture listeners before its bubble ones, whichever came first', () => {
   const heard: string[] = []
   hear('bubble', false, heard)
@@ -30,7 +27,6 @@ test('a key out of a page reaches the window’s capture listeners before its bu
   })
   expect(heard).toEqual([`capture ${Event.CAPTURING_PHASE}`, `bubble ${Event.BUBBLING_PHASE}`])
 })
-
 test('so a web tab’s own key, heard in capture, is taken before the app’s, heard after', () => {
   const steps: string[] = []
   const app: EventListener = (event) => {

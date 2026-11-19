@@ -1,9 +1,7 @@
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-
   --orden-dim: 10%;
-
   --wallpaper-scrim: #151a21;
   --wallpaper-layer: rgb(255 255 255 / 0.04);
   --wallpaper-base-1: #1d2131;
@@ -12,16 +10,13 @@
   --wallpaper-ground: var(--wallpaper-ground-dark, #171d29);
   --content-alpha: var(--wallpaper-paper-dark, 100%);
   --terminal-alpha: var(--wallpaper-terminal-dark, 100%);
-
   --muted: #b6bec9;
   --muted-strong: #d2d8e1;
   --text: #e8edf4;
   --text-strong: #ffffff;
 }
-
 [data-theme='light'] {
   color-scheme: light;
-
   --wallpaper-scrim: #f3f5f8;
   --wallpaper-layer: rgb(255 255 255 / 0.4);
   --wallpaper-base-1: #e6eaf4;
@@ -30,19 +25,16 @@
   --wallpaper-ground: var(--wallpaper-ground-light, #ebedf3);
   --content-alpha: var(--wallpaper-paper-light, 100%);
   --terminal-alpha: var(--wallpaper-terminal-light, 100%);
-
   --muted: #454e5c;
   --muted-strong: #363f4d;
   --text: #13161b;
   --text-strong: #05070a;
 }
-
 :root {
   --wallpaper-field:
     radial-gradient(110% 90% at 0% 0%, color-mix(in srgb, var(--accent) 40%, transparent), transparent 62%),
     radial-gradient(90% 100% at 100% 100%, color-mix(in srgb, var(--canvas-5) 25%, transparent), transparent 60%),
     linear-gradient(160deg, var(--wallpaper-base-1), var(--wallpaper-base-2));
-
   --window-ground: var(--wallpaper-ground);
   --shell-ground:
     linear-gradient(
@@ -59,34 +51,28 @@
     var(--wallpaper-picture, var(--wallpaper-field)) var(--wallpaper-position, center) / var(--wallpaper-size, cover)
       var(--wallpaper-repeat, no-repeat),
     var(--wallpaper-mean, var(--wallpaper-ground));
-
   --content-ground: color-mix(in srgb, var(--bg) var(--content-alpha), transparent);
   --terminal-ground: color-mix(in srgb, var(--bg) var(--terminal-alpha), transparent);
   --content-link: color-mix(in srgb, var(--accent) 70%, var(--text-strong));
   --paper: var(--content-ground);
-
   --tab-frame: transparent;
   --side-bar-bg-color: var(--wallpaper-layer);
   --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, var(--wallpaper-scrim) 40%);
   --empty-ground: transparent;
   --active-file-bg-color: color-mix(in srgb, var(--accent) 16%, var(--wallpaper-scrim));
 }
-
 @media (prefers-reduced-transparency: reduce) {
   :root[data-theme] {
     --wallpaper-floor: max(85%, var(--wallpaper-floor-dark, 53%));
   }
-
   :root[data-theme='light'] {
     --wallpaper-floor: max(85%, var(--wallpaper-floor-light, 51%));
   }
-
   :root[data-theme] {
     --content-ground: var(--bg);
     --terminal-ground: var(--bg);
   }
 }
-
 @media (forced-colors: active) {
   :root {
     --shell-ground: var(--bg);

@@ -10,7 +10,6 @@ import { parsed } from '../test/parsed'
 beforeAll(async () => {
   await loadCompletion()
 })
-
 function type(doc: string, selection: { anchor: number; head: number }, character: string): EditorState {
   let state = parsed(
     EditorState.create({
@@ -23,7 +22,6 @@ function type(doc: string, selection: { anchor: number; head: number }, characte
       ],
     }),
   )
-
   const view = {
     get state() {
       return state
@@ -33,17 +31,14 @@ function type(doc: string, selection: { anchor: number; head: number }, characte
       state = state.update(spec).state
     },
   } as unknown as EditorView
-
   const { from, to } = state.selection.main
   for (const handler of state.facet(EditorView.inputHandler))
     if (handler(view, from, to, character, () => state.update({}))) return state
-
   return state.update({
     changes: { from, to, insert: character },
     selection: EditorSelection.cursor(from + character.length),
   }).state
 }
-
 function shown(state: EditorState): string {
   const { from, to } = state.selection.main
   const text = state.doc.toString()
@@ -51,78 +46,64 @@ function shown(state: EditorState): string {
     ? `${text.slice(0, from)}|${text.slice(from)}`
     : `${text.slice(0, from)}«${text.slice(from, to)}»${text.slice(to)}`
 }
-
 function typeOver(doc: string, word: string, character: string): string {
   const at = doc.indexOf(word)
   return shown(type(doc, { anchor: at, head: at + word.length }, character))
 }
-
 const MARKS = ['`', '*', '_', '~', '=']
-
 const DOUBLING = [
   ['*', 'strong'],
   ['_', 'strong'],
   ['~', 'a strikethrough'],
   ['=', 'a highlight'],
 ] as const
-
 describe('a mark typed over a selection', () => {
   for (const mark of MARKS) {
     test(`${mark} wraps the selection and keeps it`, () => {
       expect(typeOver('one two three', 'two', mark)).toBe(`one ${mark}«two»${mark} three`)
     })
-
     test(`${mark} with nothing selected types as itself`, () => {
       expect(shown(type('one two', { anchor: 3, head: 3 }, mark))).toBe(`one${mark}| two`)
     })
   }
-
   for (const [mark, meaning] of DOUBLING) {
     test(`${mark} typed again doubles into ${meaning}`, () => {
       const once = `a ${mark}word${mark} b`
       expect(typeOver(once, 'word', mark)).toBe(`a ${mark}${mark}«word»${mark}${mark} b`)
     })
   }
-
   test('the selection keeps the way it points', () => {
     const after = type('one two', { anchor: 7, head: 4 }, '*')
     expect(after.doc.toString()).toBe('one *two*')
     expect(after.selection.main.anchor).toBe(8)
     expect(after.selection.main.head).toBe(5)
   })
-
   test('a bracket still wraps, which is where the idea comes from', () => {
     expect(typeOver('one two three', 'two', '(')).toBe('one («two») three')
   })
-
   test('a character that is not a mark replaces the selection', () => {
     expect(typeOver('one two three', 'two', 'x')).toBe('one x| three')
   })
 })
-
 describe('a mark typed over words that start or end with inline code', () => {
   test('words ending in a code span are wrapped, not replaced by the mark', () => {
     expect(typeOver('Then run `npm i` again', 'run `npm i`', '*')).toBe('Then *«run `npm i`»* again')
   })
-
   test('words starting with a code span are wrapped, not replaced by the mark', () => {
     expect(typeOver('Then `npm i` runs', '`npm i` runs', '_')).toBe('Then _«`npm i` runs»_')
   })
 })
-
 describe('in code a mark is a character', () => {
   test.each([
     ['run `one two` now', 'run `*| two` now', 'one', '*'],
     ['a `word` b', 'a ``|` b', 'word', '`'],
   ])('%j', (input, wanted, extra, last) => expect(typeOver(input, extra, last)).toEqual(wanted))
-
   for (const mark of MARKS) {
     test(`${mark} inside a fence`, () => {
       const doc = ['```', 'one two', '```'].join('\n')
       expect(typeOver(doc, 'two', mark)).toBe(['```', `one ${mark}|`, '```'].join('\n'))
     })
   }
-
   test('a selection that starts in prose and ends in a fence types plainly', () => {
     const doc = ['text', '', '```', 'code', '```'].join('\n')
     const at = doc.indexOf('code')

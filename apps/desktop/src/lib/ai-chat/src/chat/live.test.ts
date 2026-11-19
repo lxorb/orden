@@ -1,19 +1,15 @@
 import { describe, expect, test, vi } from 'vitest'
 
 const KEY = process.env.ORDEN_OPENAI_LIVE_KEY ?? ''
-
 vi.mock('../../../ai-providers/src/keys', async (original) => ({
   ...(await original<typeof import('../../../ai-providers/src/keys')>()),
   readKey: () => Promise.resolve(process.env.ORDEN_OPENAI_LIVE_KEY ?? ''),
 }))
-
 const { createApiEngine } = await import('./engine')
 const { newThread } = await import('./threads')
-
 import type { Provider } from '../../../ai-providers/src/providers'
 import type { EngineEvent, Thread } from '../../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
-
 const PROVIDERS: Provider[] = [
   { id: 'openai', kind: 'openai', name: 'OpenAI', model: '' },
   {
@@ -24,7 +20,6 @@ const PROVIDERS: Provider[] = [
     baseUrl: 'https://api.openai.com',
   },
 ]
-
 const tools: Tools = {
   list: () =>
     Promise.resolve({
@@ -49,18 +44,15 @@ const tools: Tools = {
       error: false,
     }),
 }
-
 const engine = createApiEngine({
   provider: (id) => PROVIDERS.find((one) => one.id === id) ?? null,
   tools,
 })
-
 async function send(thread: Thread, text: string) {
   const heard: EngineEvent[] = []
   await engine.send(thread, { text, attachments: [] }, (event) => heard.push(event), new AbortController().signal)
   return heard.at(-1)
 }
-
 describe.skipIf(!KEY)('OpenAI, live', () => {
   test(
     'a call, its answer, a second message over the replayed turn, and an effort stepped',
@@ -77,13 +69,11 @@ describe.skipIf(!KEY)('OpenAI, live', () => {
       expect(model?.replay?.messages.length).toBeGreaterThan(1)
       expect(await send(thread, 'And in three words?')).toEqual({ type: 'done', stop: 'end' })
       expect(thread.usage.input).toBeGreaterThan(0)
-
       await engine.compact(thread)
       expect(thread.compaction?.kind).toBe('responses')
       expect(await send(thread, 'What did the note say?')).toEqual({ type: 'done', stop: 'end' })
     },
   )
-
   test('chat completions with tools, as a compatible server speaks them', { timeout: 120_000 }, async () => {
     const thread = newThread('space', 'compatible-live', 'gpt-4.1-mini', 'auto', 'full')
     expect(await send(thread, 'Read Birds.md and say what it says, briefly.')).toEqual({

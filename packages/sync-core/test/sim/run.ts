@@ -26,7 +26,6 @@ export type Step =
   | { t: 'launch'; device: number }
   | { t: 'answer'; device: number; choice: Answer }
   | { t: 'wait'; ticks: number }
-
 export interface Options {
   seed: number
   devices?: number
@@ -40,13 +39,10 @@ export interface Options {
   watch?: string
   mix?: 'words' | 'tree' | 'order'
 }
-
 export type Crowd = 'tree' | 'order'
-
 export function crowded(seed: number, mix: Crowd): Options {
   return { seed, mix, devices: 3 + (seed % 6), steps: 80 }
 }
-
 export interface Report {
   seed: number
   failures: string[]
@@ -55,23 +51,18 @@ export interface Report {
   classified: number
   held: number
 }
-
 export const ROUGH: Faults = { drop: 0.08, duplicate: 0.08, lostReply: 0.08, delay: [1, 25] }
-
 const NAMES = ['Untitled.md', 'untitled.md', 'Plan.md', 'Notes.md', 'Café.md', 'café.md']
 const FOLDERS = ['Work', 'work', 'Old']
 const DAY = '2026-09-30.md'
 const FILLER = ['the', 'plan', 'we', 'ship', 'on', 'monday', 'after', 'review', 'milk', 'eggs']
-
 export const SEEDED: readonly Seeded[] = [
   { id: 'n1', name: 'Plan.md', text: 'We ship on Monday after the review.\n\n- milk\n- eggs\n' },
   { id: 'n2', name: 'Ideas.md', text: '# Ideas\n\nA long paragraph about what comes next.\n' },
 ]
-
 async function drain() {
   for (let turn = 0; turn < 64; turn++) await Promise.resolve()
 }
-
 function asked(live: readonly EntryView[], pick: Pick): string[] {
   const target = live[Math.min(live.length - 1, Math.floor(pick * live.length))]
   if (!target) return []
@@ -86,7 +77,6 @@ function asked(live: readonly EntryView[], pick: Pick): string[] {
   }
   return live.filter((entry) => inside(entry.id)).map((entry) => entry.id)
 }
-
 class Run {
   readonly clock = new Clock()
   readonly random: Random
@@ -99,7 +89,6 @@ class Run {
   private readonly passes = new Set<Promise<void>>()
   private readonly beforeCrash = new Map<number, Set<string>>()
   private counter = 0
-
   constructor(private readonly options: Options) {
     this.random = new Random(options.seed)
     this.network = new Network(this.random, this.clock, options.faults ?? ROUGH)
@@ -117,11 +106,9 @@ class Run {
     this.book = ledger(seeded.map((note) => note.id))
     for (const note of seeded) for (const marker of markersIn(note.text)) this.book.typed.add(marker)
   }
-
   private link(device: DeviceAdapter): Link {
     return (route, body) => this.network.request(device.id, () => this.account.handle(device.id, route, body))
   }
-
   private words(): string {
     this.counter += 1
     const filler = Array.from({ length: this.random.between(0, 4) }, () => this.random.pick(FILLER) ?? 'the')
@@ -129,9 +116,7 @@ class Run {
     filler.splice(at, 0, `mk${String(this.counter)}z`)
     return filler.join(' ')
   }
-
   private readonly trash = new Map<number, string[]>()
-
   private kinds(): [Action['t'], number][] {
     if (this.options.mix === 'order') {
       return [
@@ -172,7 +157,6 @@ class Run {
       ['save', 10],
     ]
   }
-
   private action(device: number): Action {
     const r = this.random
     const pick = () => r.next()
@@ -224,7 +208,6 @@ class Run {
         return { t: 'save' }
     }
   }
-
   private drawn(): Step {
     const r = this.random
     const device = r.int(this.devices.length)
@@ -232,7 +215,6 @@ class Run {
     if (one && !one.running) return r.chance(0.5) ? { t: 'launch', device } : { t: 'wait', ticks: r.between(1, 10) }
     if (one?.held().length)
       return { t: 'answer', device, choice: r.pick(['mine', 'theirs', 'both'] as const) ?? 'mine' }
-
     return r.weighted<Step>([
       [{ t: 'act', device, action: this.action(device) }, 60],
       [{ t: 'pass', device }, 20],
@@ -242,26 +224,21 @@ class Run {
       [{ t: 'quit', device }, 2],
     ])
   }
-
   private async markersOf(device: DeviceAdapter): Promise<Set<string>> {
     const view = await device.view()
     const texts = [...Object.values(view.texts), ...device.held().map((held) => held.local)]
     return new Set(texts.flatMap(markersIn))
   }
-
   private async idsOf(device: DeviceAdapter): Promise<Set<string>> {
     return new Set((await device.view()).entries.map((entry) => entry.id))
   }
-
   private startPass(device: DeviceAdapter) {
     const pass = device.pass(this.link(device)).finally(() => this.passes.delete(pass))
     this.passes.add(pass)
   }
-
   private async step(step: Step) {
     const device = 'device' in step ? this.devices[step.device] : undefined
     this.trace.push(`${String(this.clock.now)} ${JSON.stringify(step)}`)
-
     switch (step.t) {
       case 'act': {
         if (!device?.running) break
@@ -320,11 +297,9 @@ class Run {
         for (let tick = 0; tick < step.ticks; tick++) await this.tick()
         break
     }
-
     for (const one of this.devices) this.classifications.push(...one.classified())
     await this.tick()
   }
-
   private noteTree(device: number, action: Action, before: readonly EntryView[], after: ReadonlySet<string>) {
     const at = this.trace.length
     if (action.t === 'delete') {
@@ -340,16 +315,13 @@ class Run {
       )
     }
   }
-
   private async tick() {
     this.clock.advance(1)
     await this.network.deliver()
     await drain()
     if (this.options.watch) await this.follow(this.options.watch)
   }
-
   private followed = ''
-
   private async follow(marker: string) {
     const where: string[] = []
     const account = await this.account.view()
@@ -372,14 +344,12 @@ class Run {
       this.followed = now
     }
   }
-
   private async quiet(): Promise<boolean> {
     this.network.faults = CALM
     for (const [index, device] of this.devices.entries()) {
       this.network.setOffline(device.id, false)
       if (!device.running) await this.step({ t: 'launch', device: index })
     }
-
     let still = 0
     let last = ''
     for (let round = 0; round < 60; round++) {
@@ -394,7 +364,6 @@ class Run {
         await this.tick()
       }
       for (const one of this.devices) this.classifications.push(...one.classified())
-
       const views = await Promise.all(this.devices.map((device) => device.view()))
       const now = JSON.stringify([await this.account.view(), views, this.devices.map((device) => device.held().length)])
       still = now === last ? still + 1 : 0
@@ -403,15 +372,12 @@ class Run {
     }
     return false
   }
-
   async run(): Promise<Report> {
     const script = this.options.script
     if (script) for (const step of script) await this.step(step)
     else for (let at = 0; at < (this.options.steps ?? 60); at++) await this.step(this.drawn())
-
     const failures: string[] = []
     if (!(await this.quiet())) failures.push('never went quiet')
-
     const account = await this.account.view()
     const devices: (View & { id: string })[] = []
     for (const device of this.devices) devices.push({ ...(await device.view()), id: device.id })
@@ -426,7 +392,6 @@ class Run {
     }
   }
 }
-
 export function simulate(options: Options): Promise<Report> {
   return new Run(options).run()
 }

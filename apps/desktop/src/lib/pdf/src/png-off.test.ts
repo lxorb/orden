@@ -1,7 +1,6 @@
 import { afterEach, expect, test, vi } from 'vitest'
 
 const sent: unknown[] = []
-
 class Away {
   static failing = false
   onmessage: ((event: MessageEvent) => void) | null = null
@@ -26,29 +25,23 @@ class Away {
     sent.push('ended')
   }
 }
-
 vi.stubGlobal('Worker', Away)
 vi.stubGlobal('OffscreenCanvas', Object)
 vi.stubGlobal('createImageBitmap', (canvas: { width: number }) => Promise.resolve({ width: canvas.width }))
-
 const { pngData } = await import('./png-off')
-
 function canvas(width: number) {
   return {
     width,
     toBlob: (done: (png: Blob) => void) => done(new Blob([new Uint8Array([1, 2])], { type: 'image/png' })),
   } as unknown as HTMLCanvasElement
 }
-
 afterEach(() => {
   sent.length = 0
 })
-
 test('the picture is handed to the worker and its PNG comes back', async () => {
   expect(await pngData(canvas(7))).toBe('data:image/png;base64,7')
   expect(sent).toEqual([{ id: 1, moved: 1 }])
 })
-
 test('a worker that fails leaves the picture to be encoded here, and later ones too', async () => {
   Away.failing = true
   expect(await pngData(canvas(3))).toBe('data:image/png;base64,AQI=')
@@ -56,7 +49,6 @@ test('a worker that fails leaves the picture to be encoded here, and later ones 
   expect(await pngData(canvas(4))).toBe('data:image/png;base64,AQI=')
   expect(sent).toHaveLength(2)
 })
-
 test('a picture drawn for its bytes is drawn off the page and encoded by the worker', async () => {
   Away.failing = false
   vi.resetModules()
@@ -75,9 +67,7 @@ test('a picture drawn for its bytes is drawn off the page and encoded by the wor
   }
   vi.stubGlobal('OffscreenCanvas', Sheet)
   const { pngDrawn } = await import('./png-off')
-
   const png = await pngDrawn(9, 4, async () => (drawing) => drawing.drawImage({} as ImageBitmap, 0, 0))
-
   expect(drawn).toEqual([9])
   expect(png).toEqual(new Uint8Array([9]))
   expect(sent.at(-1)).toEqual({ id: 1, moved: 1 })

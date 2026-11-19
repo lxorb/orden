@@ -11,7 +11,6 @@ pub struct Ticket {
     pub back: String,
     pub at: i64,
 }
-
 fn now() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -19,28 +18,22 @@ fn now() -> i64 {
             i64::try_from(since.as_secs()).unwrap_or(i64::MAX)
         })
 }
-
 static GIVEN: Mutex<Option<HashSet<Ticket>>> = Mutex::new(None);
-
 fn given() -> MutexGuard<'static, Option<HashSet<Ticket>>> {
     GIVEN.held()
 }
-
 fn hand_out(ticket: Ticket) -> Ticket {
     given()
         .get_or_insert_with(HashSet::new)
         .insert(ticket.clone());
     ticket
 }
-
 fn take_back(ticket: &Ticket) -> bool {
     given().as_mut().is_some_and(|all| all.remove(ticket))
 }
-
 pub fn trash(path: &Path) -> Result<Ticket, String> {
     trashed(path).map(hand_out)
 }
-
 pub fn untrash(ticket: &Ticket) -> Result<PathBuf, String> {
     if !take_back(ticket) {
         return Err(format!("{} was not put in the trash here", ticket.path));
@@ -49,7 +42,6 @@ pub fn untrash(ticket: &Ticket) -> Result<PathBuf, String> {
         hand_out(ticket.clone());
     })
 }
-
 #[cfg(target_os = "macos")]
 fn trashed(path: &Path) -> Result<Ticket, String> {
     use objc2_foundation::{NSFileManager, NSString, NSURL};
@@ -74,7 +66,6 @@ fn trashed(path: &Path) -> Result<Ticket, String> {
         at: now(),
     })
 }
-
 #[cfg(target_os = "macos")]
 fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     let back = Path::new(&ticket.back);
@@ -86,7 +77,6 @@ fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
         .map_err(|why| format!("{}: {why}", path.display()))?;
     Ok(path)
 }
-
 #[cfg(any(target_os = "linux", windows))]
 fn trashed(path: &Path) -> Result<Ticket, String> {
     let back = match (path.parent(), path.file_name()) {
@@ -102,7 +92,6 @@ fn trashed(path: &Path) -> Result<Ticket, String> {
         at,
     })
 }
-
 #[cfg(any(target_os = "linux", windows))]
 fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     let path = PathBuf::from(&ticket.path);
@@ -124,7 +113,6 @@ fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     trash::os_limited::restore_all([found]).map_err(|why| why.to_string())?;
     Ok(path)
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 fn trashed(path: &Path) -> Result<Ticket, String> {
     Err(format!(
@@ -132,7 +120,6 @@ fn trashed(path: &Path) -> Result<Ticket, String> {
         path.display()
     ))
 }
-
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     Err(format!(
@@ -140,7 +127,6 @@ fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
         ticket.path
     ))
 }
-
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 fn newest_from<T>(
     held: impl Iterator<Item = (T, PathBuf, i64)>,
@@ -155,7 +141,6 @@ fn newest_from<T>(
     .max_by_key(|(_, _, when)| *when)
     .map(|(item, _, _)| item)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{hand_out, newest_from, take_back, untrash, Ticket};
@@ -176,7 +161,6 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&kept).unwrap(), "grants");
         assert!(!dir.path().join("out.json").exists());
     }
-
     #[test]
     fn a_ticket_the_trash_gave_is_taken_back_once() {
         let ticket = Ticket {
@@ -188,7 +172,6 @@ mod tests {
         assert!(take_back(&ticket));
         assert!(!take_back(&ticket));
     }
-
     #[test]
     fn the_way_back_is_the_newest_from_that_place_since_it_went() {
         let held = || {

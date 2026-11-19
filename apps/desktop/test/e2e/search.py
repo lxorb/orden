@@ -1,12 +1,10 @@
 import sys
 from pathlib import Path
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -15,12 +13,10 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 DEVICES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
 ]
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -43,7 +39,6 @@ async () => {
   return ws.notes.length
 }
 """
-
 SEED_MANY = """
 async ({ count, root }) => {
   const open = indexedDB.open('orden')
@@ -108,7 +103,6 @@ async ({ count, root }) => {
   return { ms: Math.round(performance.now() - began), bytes }
 }
 """
-
 SEED_PAPERS = """
 async ({ root, papers }) => {
   const open = indexedDB.open('orden')
@@ -137,7 +131,6 @@ async ({ root, papers }) => {
   return window.ordenApp.workspace.files.filter((one) => one.name.endsWith('.pdf')).length
 }
 """
-
 TIMED = """
 async ({ source, wait }) => {
   const search = window.ordenApp.search
@@ -158,15 +151,12 @@ async ({ source, wait }) => {
   }
 }
 """
-
 def searching(page) -> None:
     page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
-
 def held_text(page) -> str:
     return str(
         page.evaluate("() => document.querySelector('.find')?.getAttribute('data-search')")
     )
-
 def opened(browser, width, height, agent, finger, scheme, name):
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -190,39 +180,32 @@ def opened(browser, width, height, agent, finger, scheme, name):
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     return context, page
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     context, page = opened(browser, width, height, agent, finger, scheme, name)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(shots / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
-
     def ask(source: str, pause: int = 900) -> None:
         field = page.locator("aside input.query")
         field.click()
         field.fill(source)
         page.wait_for_timeout(pause)
-
     say(f"[{name}] the space holds {page.evaluate(SEED)} notes")
     page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
     page.wait_for_timeout(500)
     shot("panel")
-
     ask("ta", 500)
     shot("operators")
     say(
         f"[{name}] typing 'ta' offers"
         f" {page.evaluate('() => [...document.querySelectorAll(String.raw`aside .suggest button`)].map((one) => one.textContent.trim())')}"
     )
-
     ask("task-todo:")
     shot("tasks")
     boxes = page.locator("aside .hit input[type=checkbox]")
     say(f"[{name}] {boxes.count()} rows have a box")
-
     if boxes.count():
         before = page.evaluate(
             "() => window.ordenApp.workspace.notes.length && window.ordenApp.search.hits.length"
@@ -234,17 +217,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             f" {page.evaluate('() => window.ordenApp.search.hits.length')}"
         )
         shot("ticked")
-
     ask("[pages:>200]")
     shot("pages")
     say(f"[{name}] [pages:>200] found {page.evaluate('() => window.ordenApp.search.hits.length')}")
-
     ask("[due:<2026-10-01]")
     say(
         f"[{name}] [due:<2026-10-01] found"
         f" {page.evaluate('() => window.ordenApp.search.hits.length')}"
     )
-
     ask("plan")
     tab = page.locator("aside .tools button[aria-label=Sort]")
     if tab.count():
@@ -253,7 +233,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("order")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -266,7 +245,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f" {page.evaluate('() => window.ordenApp.search.hits.map((one) => one.name)')}"
     )
     shot("excluded")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
     page.evaluate(
@@ -278,7 +256,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_timeout(600)
     shot("tree-dimmed")
-
     rows = page.locator("aside .row").filter(has_text="Archive")
     if rows.count():
         rows.first.click(button="right", force=True)
@@ -286,14 +263,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("row-menu")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
           ws.excluded.toggle(ws.activeSpace.root + '/Archive')
         }"""
     )
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -308,7 +283,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f"[{name}] the fence drew {page.evaluate('() => document.querySelectorAll(String.raw`.orden-query .orden-row`).length')} rows"
         f" under {page.evaluate('() => document.querySelectorAll(String.raw`.orden-query .orden-section`).length')} names"
     )
-
     page.evaluate(
         "() => window.ordenApp.workspace.toggleReading(window.ordenApp.workspace.active?.id)"
     )
@@ -318,7 +292,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         f"[{name}] and in the reading view"
         f" {page.evaluate('() => document.querySelectorAll(String.raw`.orden-query .orden-row`).length')} rows"
     )
-
     box = page.locator(".orden-query input[data-task]")
     if box.count():
         was = box.count()
@@ -331,15 +304,12 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("fence-ticked")
     else:
         say(f"[{name}] no box in the fence to press")
-
     context.close()
-
 def measure(browser, out: Path, count: int) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     name = "many"
     context, page = opened(browser, 1440, 900, DESKTOP_AGENT, False, "dark", name)
-
     root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     seeded = page.evaluate(SEED_MANY, {"count": count, "root": root})
     held = page.evaluate("() => window.ordenApp.workspace.notes.length")
@@ -347,10 +317,8 @@ def measure(browser, out: Path, count: int) -> None:
         f"[{name}] {held} notes, {round(seeded['bytes'] / 1_000_000, 1)} MB,"
         f" written in {seeded['ms']} ms"
     )
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('search')")
     page.wait_for_timeout(400)
-
     wait = 140
     asked = [
         "quarter",
@@ -364,9 +332,7 @@ def measure(browser, out: Path, count: int) -> None:
         "quater",
         "zzzqx",
     ]
-
     say(f"[{name}] holding {held_text(page)}")
-
     for source in asked:
         runs = [page.evaluate(TIMED, {"source": source, "wait": wait}) for _ in range(5)]
         best = min(runs, key=lambda one: one["ms"])
@@ -375,12 +341,9 @@ def measure(browser, out: Path, count: int) -> None:
             f"[{name}] {source!r}: {best['ms']} ms best, {first['ms']} ms first,"
             f" {best['hits']} rows"
         )
-
     say(f"[{name}] holding {held_text(page)}")
-
     page.screenshot(path=str(shots / f"{name}-searched.png"))
     say(f"shot {name}-searched.png")
-
     page.evaluate(
         """({ root }) => {
           const ws = window.ordenApp.workspace
@@ -393,12 +356,9 @@ def measure(browser, out: Path, count: int) -> None:
     held = [page.evaluate(TIMED, {"source": "quarter", "wait": wait}) for _ in range(5)]
     quickest = min(held, key=lambda one: one["ms"])
     say(f"[{name}] with {left} notes left out: {quickest['ms']} ms, {quickest['hits']} rows")
-
     context.close()
-
 def paper(words: str) -> str:
     import base64
-
     stream = f"BT /F1 18 Tf 20 100 Td ({words}) Tj ET"
     body = "\n".join(
         [
@@ -416,9 +376,7 @@ def paper(words: str) -> str:
             "%%EOF",
         ]
     )
-
     return base64.b64encode(body.encode("latin-1")).decode("ascii")
-
 def kept_papers(page) -> int:
     return page.evaluate(
         """async () => {
@@ -437,13 +395,11 @@ def kept_papers(page) -> int:
           return keys.filter((key) => String(key).startsWith('papers/')).length
         }"""
     )
-
 def papers(browser, out: Path) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
     name = "papers"
     context, page = opened(browser, 1440, 900, DESKTOP_AGENT, False, "dark", name)
-
     root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root")
     listed = page.evaluate(
         SEED_PAPERS,
@@ -456,7 +412,6 @@ def papers(browser, out: Path) -> None:
         },
     )
     say(f"[{name}] the space holds {listed} papers")
-
     page.evaluate(
         "(path) => window.ordenApp.workspace.openPdf(path, 1)",
         f"{root}/Kestrel study.pdf",
@@ -468,7 +423,6 @@ def papers(browser, out: Path) -> None:
     say(f"[{name}] holding {held_text(page)}")
     say(f"[{name}] the store keeps {kept_papers(page)} paper")
     page.screenshot(path=str(shots / f"{name}-read.png"))
-
     def ask(source: str, pause: int = 1200) -> list:
         field = page.locator("aside input.query")
         field.click()
@@ -477,26 +431,20 @@ def papers(browser, out: Path) -> None:
         return page.evaluate(
             "() => window.ordenApp.search.hits.map((one) => one.name + ' p' + (one.page ?? 0))"
         )
-
     say(f"[{name}] 'kestrel' finds {ask('kestrel')}")
-
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp", timeout=20000)
     page.wait_for_function("() => !!window.ordenApp.workspace.activeSpace", timeout=20000)
     searching(page)
     page.wait_for_timeout(1500)
-
     say(f"[{name}] after a restart: 'kestrel' finds {ask('kestrel')}")
     say(f"[{name}] holding {held_text(page)}")
     page.screenshot(path=str(shots / f"{name}-after-restart.png"))
-
     page.wait_for_timeout(4000)
     say(f"[{name}] the paper nobody opened: 'ink' finds {ask('ink')}")
     say(f"[{name}] the store keeps {kept_papers(page)} papers, holding {held_text(page)}")
     page.screenshot(path=str(shots / f"{name}-unopened.png"))
-
     context.close()
-
 def main() -> int:
     count = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
     out = DRIVE.shots
@@ -504,13 +452,9 @@ def main() -> int:
         for one in DEVICES:
             say(f"--- {one[0]} ---")
             drive(browser, out, *one)
-
         say("--- papers ---")
         papers(browser, out)
-
         say(f"--- {count} notes ---")
         measure(browser, out, count)
-
     return DRIVE.verdict(f"shots in {out}")
-
 raise SystemExit(main())

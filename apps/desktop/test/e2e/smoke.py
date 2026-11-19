@@ -1,7 +1,5 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -9,12 +7,9 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
-
 FILLER = "\n\n".join(f"Paragraph {n} of the body, here to make the note tall." for n in range(60))
 FIRST = f"# Smoke\n\nA line with **stout** in it, and *slanted* too.\n\n{FILLER}\n"
-
 SECOND = "# Second\n\nThe second note says quinine and nothing else.\n"
-
 SEED = """
 async ([first, second]) => {
   const ws = window.ordenApp.workspace
@@ -27,7 +22,6 @@ async ([first, second]) => {
   return ws.notes.length
 }
 """
-
 SHOW = """
 async (start) => {
   const ws = window.ordenApp.workspace
@@ -37,11 +31,9 @@ async (start) => {
   return tab.note.name
 }
 """
-
 def show(page: Page, start: str) -> None:
     if not page.evaluate(SHOW, start):
         raise SystemExit(f"there is no tab on a note called {start}")
-
     wait_for(
         page,
         f"window.ordenApp.workspace.active?.note?.name?.startsWith({json.dumps(start)})",
@@ -50,10 +42,8 @@ def show(page: Page, start: str) -> None:
     page.wait_for_timeout(120)
     page.evaluate("() => { const s = document.querySelector('.cm-scroller'); if (s) s.scrollTop = 0 }")
     page.wait_for_timeout(60)
-
 def rows_now(page: Page) -> int:
     return page.evaluate("() => document.querySelectorAll('.orden-row').length")
-
 def weight_of(page: Page, words: str) -> float:
     return page.evaluate(
         """
@@ -74,7 +64,6 @@ def weight_of(page: Page, words: str) -> float:
         """,
         words,
     )
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
     page = context.new_page()
@@ -85,10 +74,8 @@ def drive(browser: Browser) -> None:
     wait_for(page, "document.querySelector('.cm-content')", "the writing surface")
     stamp = page.evaluate("() => window.nibBuild || 'unstamped'")
     say(f"driving build {stamp}")
-
     show(page, "Smoke")
     shot(page, "01-smoke")
-
     stout = weight_of(page, "stout")
     plain = weight_of(page, "A line with")
     if stout < 600:
@@ -97,7 +84,6 @@ def drive(browser: Browser) -> None:
         wrong(f"**stout** at {stout} is no heavier than the line around it at {plain}")
     else:
         say(f"bold is {stout} against {plain} for the line it sits in")
-
     heading, body = page.evaluate(
         """
         () => {
@@ -114,7 +100,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the heading is {heading}px against {body}px of body text, so it is not a heading")
     else:
         say(f"the heading is {heading}px against {body}px")
-
     typed = page.evaluate(
         """
         () => {
@@ -142,7 +127,6 @@ def drive(browser: Browser) -> None:
         else:
             say(f"bold typed into the note came out at {weight}")
         shot(page, "01b-typed")
-
     room = page.evaluate(
         """
         () => {
@@ -170,7 +154,6 @@ def drive(browser: Browser) -> None:
             wrong(f"the scroller was asked for 400px and went to {moved}px")
         else:
             say(f"the note has {room['over']}px to scroll and went to {moved}px")
-
         page.evaluate("() => { document.querySelector('.cm-scroller').scrollTop = 0 }")
         page.wait_for_timeout(60)
         box = page.evaluate(
@@ -190,7 +173,6 @@ def drive(browser: Browser) -> None:
         else:
             say(f"a 600px wheel moved the note {wheeled}px")
         shot(page, "02-scrolled")
-
     for name, mine, theirs in [
         ("Second", "quinine", "stout"),
         ("Smoke", "stout", "quinine"),
@@ -209,7 +191,6 @@ def drive(browser: Browser) -> None:
             wrong(f"the {name} tab does not hold its own words")
         if theirs in held:
             wrong(f"the {name} tab holds words from the note before it")
-
     held = page.evaluate(
         """
         () => {
@@ -222,17 +203,14 @@ def drive(browser: Browser) -> None:
         wrong(f"the space has two notes under one name: {held}")
     say(f"the tabs kept their own words; the space holds {json.dumps(held)}")
     shot(page, "03-switched")
-
     page.evaluate("() => { window.ordenApp.workspace.showPanel('tree') }")
     page.wait_for_timeout(350)
     before_rows = rows_now(page)
-
     page.reload(wait_until="domcontentloaded")
     wait_for(page, "window.ordenApp", "the app after a reload")
     wait_for(page, "window.ordenApp.workspace.activeSpace", "the space after a reload")
     wait_for(page, "document.querySelector('.cm-content')", "the writing surface after a reload")
     page.wait_for_timeout(400)
-
     panel = page.evaluate("() => window.ordenApp.workspace.panel")
     if before_rows and panel != "tree":
         say(f"the app came back with panel {json.dumps(panel)}; not asking about rows")
@@ -242,7 +220,6 @@ def drive(browser: Browser) -> None:
         say(f"after a reload the file list still has {rows_now(page)} rows")
     else:
         say("no file list rows before the reload either; not asking about them")
-
     show(page, "Smoke")
     again = page.evaluate(
         """
@@ -259,19 +236,14 @@ def drive(browser: Browser) -> None:
         wrong(f"after a reload the long note has {again}px to scroll, so it does not scroll")
     else:
         say(f"after a reload the long note still has {again}px to scroll")
-
     shot(page, "04-reloaded")
     context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
-
     if failures:
         say(f"{len(failures)} of the floor's questions came back wrong")
         return 1
-
     say("the floor holds")
     return 0
-
 raise SystemExit(main())

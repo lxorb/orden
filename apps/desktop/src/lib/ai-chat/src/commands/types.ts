@@ -8,7 +8,6 @@ export interface Once {
   effort?: Effort
   signal?: AbortSignal
 }
-
 export interface Ended {
   stop: Stop
   error?: string
@@ -17,12 +16,10 @@ export interface Ended {
   limit?: Limit
   outside?: boolean
 }
-
 export interface Attached {
   label: string
   text: string
 }
-
 export interface Panel {
   send(text: string): void
   newThread(): void
@@ -41,7 +38,6 @@ export interface Panel {
   compact(focus?: string): void
   openContext(): void
   toggleFolded(): void
-
   text?: string
   readonly provider?: Provider | null
   ensure?(): Thread
@@ -52,14 +48,12 @@ export interface Panel {
   touched?(thread: Thread): void
   answered?(thread: Thread): void
 }
-
 export interface CommandContext {
   args: string
   typed?: string
   thread: Thread | null
   panel: Panel
 }
-
 export interface PanelCommand extends Command<CommandContext> {
   description?: string
   source?: string

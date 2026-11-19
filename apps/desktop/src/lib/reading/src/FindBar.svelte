@@ -10,7 +10,6 @@
   import { shortcuts } from '../../shortcuts/src/api'
 
   type FindFlags = Pick<FindSpec, 'caseSensitive' | 'regexp' | 'wholeWord'>
-
   const {
     query,
     count,
@@ -48,31 +47,25 @@
     onclose: () => void
     onquery: (typed: string) => void
   } = $props()
-
   let field = $state<HTMLInputElement>()
   let replaceField = $state<HTMLInputElement>()
   const writable = $derived(!!onreplace)
-
   $effect(() => {
     const landing = replacing && replaceField ? replaceField : field
     landing?.focus()
     landing?.select()
   })
-
   const tally = $derived.by(() => {
     if (!query) return ''
     if (slow) return 'Pattern too slow to search'
     if (!count) return 'No matches'
-
     const of = capped ? `${count}+` : `${count}`
     return `${current < 0 ? 1 : current + 1} of ${of}`
   })
-
   function flip(which: keyof FindFlags) {
     if (!flags || !onflags) return
     onflags({ ...flags, [which]: !flags[which] })
   }
-
   function onKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault()
@@ -80,7 +73,6 @@
       onclose()
       return
     }
-
     if (event.key !== 'Enter') return
     event.preventDefault()
     if (event.altKey && onselectall) onselectall()
@@ -252,18 +244,15 @@
     background: var(--surface);
     border-bottom: 1px solid var(--line);
   }
-
   .line {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: var(--space-1);
   }
-
   .box {
     flex: 1 1 14rem;
   }
-
   .acts {
     flex: none;
     margin-inline-start: auto;
@@ -271,20 +260,16 @@
     align-items: center;
     gap: var(--space-1);
   }
-
   .box {
     position: relative;
     min-width: 0;
   }
-
   .query {
     padding-inline-start: calc(var(--row-pad) + var(--icon-md) + var(--row-gap));
   }
-
   .query.flagged {
     padding-inline-end: calc((var(--row-height) - 6px) * 3 + var(--space-3));
   }
-
   .mag {
     position: absolute;
     inset-inline-start: var(--row-pad);
@@ -292,7 +277,6 @@
     transform: translateY(-50%);
     pointer-events: none;
   }
-
   .inside {
     position: absolute;
     top: 50%;
@@ -302,7 +286,6 @@
     align-items: center;
     gap: 1px;
   }
-
   .tally {
     flex: none;
     padding: 0 var(--space-1);
@@ -313,7 +296,6 @@
     white-space: nowrap;
     pointer-events: none;
   }
-
   .flag {
     flex: none;
     width: calc(var(--row-height) - 6px);
@@ -329,27 +311,22 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .flag:hover {
       background: var(--surface-hover);
       color: var(--text);
     }
   }
-
   .flag:active {
     background: var(--surface-press);
   }
-
   .flag.on {
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .flag:focus-visible {
     outline-offset: -1px;
   }
-
   .flag svg {
     width: var(--icon-md);
     height: var(--icon-md);
@@ -359,7 +336,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .act {
     border: 1px solid transparent;
     transition:
@@ -367,38 +343,31 @@
       border-color var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .act.on {
     border-color: var(--accent-line);
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .act:focus-visible {
     outline-offset: -1px;
   }
-
   .act svg {
     stroke-width: 1.6;
   }
-
   .act .chevron {
     width: var(--icon-sm);
     height: var(--icon-sm);
     stroke-width: 2.2;
     transition: transform var(--dur-fast) var(--ease-out);
   }
-
   .act.on .chevron {
     transform: rotate(180deg);
   }
-
   @media (hover: hover) {
     .shut:hover {
       color: var(--danger);
     }
   }
-
   .apply {
     flex: none;
     min-height: var(--row-height);
@@ -415,7 +384,6 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .apply:hover:not(:disabled) {
       background: var(--accent);
@@ -423,13 +391,11 @@
       color: var(--accent-ink);
     }
   }
-
   .apply:active:not(:disabled) {
     background: var(--accent-press);
     border-color: var(--accent-press);
     color: var(--accent-ink);
   }
-
   .apply:disabled {
     color: var(--muted);
   }

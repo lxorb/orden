@@ -7,7 +7,6 @@ describe('what sync takes off this disk', () => {
     expect(syncDeletes('/s/Notes/Board.canvas', 'file')).toBe(true)
     expect(syncDeletes('/s/Notes/Docs.url', 'file')).toBe(true)
   })
-
   test('goes to this device’s trash where the account does not keep it', () => {
     expect(syncDeletes('/s/Notes/Lecture.pages', 'file')).toBe(false)
     expect(syncDeletes('/s/Notes/photo.png', 'file')).toBe(false)

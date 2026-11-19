@@ -8,15 +8,12 @@ import type { Content, Item, Passkey } from './types'
 
 const STRONG = 'vH7#qL2!xR9$mW4&zT6^pK3'
 const TOTP = 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'
-
 function item(id: string, content: Content, extra: Partial<Item> = {}): Item {
   return { ...newEnvelope(content, 1), id, vault: 'v', rev: 1, ...extra }
 }
-
 function login(id: string, parts: LoginParts, extra: Partial<Item> = {}): Item {
   return item(id, loginOf({ title: id, ...parts }), extra)
 }
-
 const passkey: Passkey = {
   id: 'p',
   rpId: 'github.com',
@@ -31,7 +28,6 @@ const passkey: Passkey = {
   created: 1,
   note: '',
 }
-
 describe('the 2FA list', () => {
   it('knows the big sites and reads case-blind', () => {
     expect(TWO_FACTOR_SITES.size).toBeGreaterThan(1000)
@@ -40,13 +36,11 @@ describe('the 2FA list', () => {
     expect(offersTwoFactor('example.org')).toBe(false)
   })
 })
-
 describe('report', () => {
   it('starts from a strong password', () => {
     expect(strengthOf(STRONG).strength).toBe('strong')
     expect(strengthOf('password').strength).not.toBe('strong')
   })
-
   it('finds weak passwords but not empty ones', () => {
     const r = report([
       login('weak', { password: 'password' }),
@@ -55,7 +49,6 @@ describe('report', () => {
     ])
     expect(r.weak).toEqual(['weak'])
   })
-
   it('finds reused passwords case-sensitively and says where', () => {
     const r = report([
       login('a', { password: STRONG }),
@@ -69,7 +62,6 @@ describe('report', () => {
     expect(r.reused.get('a')).toEqual(['b'])
     expect(r.reused.get('b')).toEqual(['a'])
   })
-
   it('finds inactive 2FA only on sites that offer it', () => {
     const r = report([
       login('bare', { password: STRONG, urls: ['https://www.github.com/login'] }),
@@ -89,7 +81,6 @@ describe('report', () => {
     ])
     expect(r.inactive2fa.sort()).toEqual(['bare', 'emptyField'])
   })
-
   it('leaves excluded items out of everything but excluded', () => {
     const r = report(
       [
@@ -104,7 +95,6 @@ describe('report', () => {
     expect(r.inactive2fa).toEqual([])
     expect(r.compromised).toEqual(['y'])
   })
-
   it('reads only logins that are not in the trash', () => {
     const items = [
       login('trashed', { password: 'password' }, { trashed: 3 }),
@@ -120,7 +110,6 @@ describe('report', () => {
     expect(items.filter(isLoginItem).map((one) => one.id)).toEqual(['trashed', 'kept'])
   })
 })
-
 describe('flagsOf', () => {
   it('lists an item’s flags in FLAGS order', () => {
     const items = [

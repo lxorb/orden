@@ -8,7 +8,6 @@ export interface Item {
   id: SettingsSectionId
   label: string
 }
-
 export const ICONS: Record<string, string> = {
   general:
     'M2 4h2.4M7.6 4H14M2 8h4.4M9.6 8H14M2 12h6.4M11.6 12H14M4.4 4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.4 8a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M8.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0',
@@ -34,7 +33,6 @@ export const ICONS: Record<string, string> = {
   experimental: 'M6.5 2h3M7 2v4.2L3.2 12.6a1 1 0 0 0 .9 1.4h7.8a1 1 0 0 0 .9-1.4L9 6.2V2M4.6 10h6.8',
   online: 'M11.7 12.7H6a4.7 4.7 0 1 1 4.5-6h1.2a3 3 0 1 1 0 6zM5 7.7l1.3 1.2L5 10.1M8 10h2',
 }
-
 export function sectionGroups(): Item[][] {
   return [
     [

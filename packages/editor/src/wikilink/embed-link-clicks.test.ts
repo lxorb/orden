@@ -11,26 +11,19 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const PLAN = { path: 'Plan.md', name: 'Plan', headings: [], blocks: [], aliases: [] }
-
 const SPACE: NoteIndex = {
   notes: [PLAN],
   files: [],
   path: 'Today.md',
   read: () => Promise.resolve('Read [the docs](https://x.test) first.'),
 }
-
 const NOTE = 'Top\n\n![[Plan]]\n\nend\n'
-
 const settle = () => new Promise((done) => setTimeout(done, 20))
-
 async function embedLink(readOnly: boolean) {
   const links: string[] = []
   const view = new EditorView({
@@ -54,7 +47,6 @@ async function embedLink(readOnly: boolean) {
   if (!anchor) throw new Error('no link drawn in the embed')
   return { anchor, links }
 }
-
 function press(target: Element, modified: boolean): MouseEvent {
   const keys = { bubbles: true, cancelable: true, button: 0, ctrlKey: modified, metaKey: modified }
   target.dispatchEvent(new MouseEvent('mousedown', keys))
@@ -63,28 +55,22 @@ function press(target: Element, modified: boolean): MouseEvent {
   target.dispatchEvent(click)
   return click
 }
-
 describe('a web link inside a drawn note embed', () => {
   test('opens through the link opener on Ctrl or Cmd-click, as the same link in the note does', async () => {
     const { anchor, links } = await embedLink(false)
     const click = press(anchor, true)
-
     expect(links).toEqual(['https://x.test'])
     expect(click.defaultPrevented).toBe(true)
   })
-
   test('opens through the link opener on a click in Read-only mode', async () => {
     const { anchor, links } = await embedLink(true)
     const click = press(anchor, false)
-
     expect(links).toEqual(['https://x.test'])
     expect(click.defaultPrevented).toBe(true)
   })
-
   test('is not left for the browser to follow on a plain click', async () => {
     const { anchor } = await embedLink(false)
     const click = press(anchor, false)
-
     expect(click.defaultPrevented).toBe(true)
   })
 })

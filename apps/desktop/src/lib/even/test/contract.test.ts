@@ -7,13 +7,11 @@ describe('the pace the glasses redraw at', () => {
     expect(quietFor(700, 5)).toBe(700)
     expect(quietFor(80, 400)).toBe(400 * LOAD)
   })
-
   test('never puts a redraw off past the hold', () => {
     expect(waitFor(700, 1000, 1000)).toBe(700)
     expect(waitFor(700, 0, 700 * HOLD)).toBe(0)
   })
 })
-
 describe('a task said aloud', () => {
   test('loses the word that asked for it and the closing mark', () => {
     expect(spokenTask('Remember, buy milk.')).toBe('buy milk')

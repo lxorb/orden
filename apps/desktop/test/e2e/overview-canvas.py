@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -22,7 +20,6 @@ async () => {
   await new Promise((go) => setTimeout(go, 600))
 }
 """
-
 SAMPLE = """
 () => {
   const frames = []
@@ -51,7 +48,6 @@ SAMPLE = """
   window.__riders = { stop: () => { going = false; return frames } }
 }
 """
-
 BAR = """
 () => [...document.querySelectorAll('header[data-chrome="top"] button')]
   .filter((one) => !one.closest('[data-overview-keeps]') && !one.closest('[data-box]'))
@@ -63,7 +59,6 @@ BAR = """
   })
   .map((one) => one.getAttribute('aria-label') || one.className)
 """
-
 LAID = """
 () => ({
   windows: (() => {
@@ -76,13 +71,9 @@ LAID = """
   bubbles: [...document.querySelectorAll('.bubble')].map((one) => { const b = one.getBBox(); return [b.x, b.y, b.width, b.height] }),
 })
 """
-
 ZOOM = "() => Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under .world').style.transform)?.[1] ?? 1)"
-
 CELLS = "() => [...document.querySelectorAll('.bubble')].map((one) => { const b = one.getBoundingClientRect(); return [b.x, b.y, b.width, b.height] })"
-
 FRONTS = "() => { const ws = window.ordenApp.workspace; return [ws.activeTabId, ...ws.panes.all.map((one) => one.activeTabId)] }"
-
 CROSSED = """
 () => {
   const space = (label) => ['Work', 'Ideas', 'Lab'].find((one) => label.startsWith(one)) ?? 'Notes'
@@ -95,18 +86,14 @@ CROSSED = """
   return out
 }
 """
-
 def boxes_of(page: Page, label: str) -> list[float] | None:
     return page.evaluate(
         "(label) => { const one = [...document.querySelectorAll('.window')].find((w) => w.getAttribute('aria-label') === label);"
         " if (!one) return null; const b = one.getBoundingClientRect(); return [b.x, b.y, b.width, b.height] }",
         label,
     )
-
 def settle(page: Page) -> None:
     page.wait_for_timeout(1300)
-
-
 def still(page: Page) -> dict:
     laid = page.evaluate(LAID)
     for _ in range(20):
@@ -116,7 +103,6 @@ def still(page: Page) -> dict:
             return again
         laid = again
     return laid
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
@@ -128,7 +114,6 @@ def drive(browser: Browser) -> None:
     settle(page)
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.canvas')", "the overview gone")
-
     page.evaluate(SAMPLE)
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
@@ -151,12 +136,10 @@ def drive(browser: Browser) -> None:
         elif before and (abs(rider[0] - before[0]) > 40 or abs(rider[1] - before[1]) > 40):
             wrong(f"[ride] the tab riding its window did not start where the tab was: {rider} vs {before}")
     say(f"[ride] {len(seen)} of {len(frames)} frames show the tab in front somewhere")
-
     left = page.evaluate(BAR)
     if left:
         wrong(f"[bar] still there in the overview: {left}")
     shot(page, "out")
-
     page.keyboard.press("Shift")
     page.keyboard.press("Shift")
     wait_for(page, "!!document.querySelector('.palette')", "the palette")
@@ -171,7 +154,6 @@ def drive(browser: Browser) -> None:
         wrong("[palette] the palette is not drawn over the overview")
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
-
     before = still(page)
     page.mouse.move(700, 500)
     for _ in range(6):
@@ -197,7 +179,6 @@ def drive(browser: Browser) -> None:
     )
     if abs(ring[0] * ring[1] - 1.5) > 0.3 and abs(ring[0] * ring[1] - 2) > 0.3:
         wrong(f"[zoom] a window's ring is {ring[0] * ring[1]:.2f}px on the screen")
-
     page.click("button.tidy")
     settle(page)
     cells = page.evaluate(CELLS)
@@ -218,7 +199,6 @@ def drive(browser: Browser) -> None:
                     or other[1] + other[3] <= one[1] + 1
                 ):
                     wrong(f"[tidy] two spaces overlap: {one} {other}")
-
     one, two = "One", "Two"
     a = boxes_of(page, one)
     b = boxes_of(page, two)
@@ -253,7 +233,6 @@ def drive(browser: Browser) -> None:
         crossed = page.evaluate(CROSSED)
         if crossed:
             wrong(f"[choose] windows of two spaces lie on each other once let go: {crossed}")
-
     name = page.evaluate(
         "() => { const n = [...document.querySelectorAll('[data-space-name]')].find((one) => one.textContent.trim() === 'Work');"
         " if (!n) return null; const b = n.getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2] }"
@@ -280,5 +259,4 @@ def drive(browser: Browser) -> None:
         if crossed:
             wrong(f"[carry] windows of two spaces lie on each other once let go: {crossed}")
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "the overview's canvas: riding tabs, a quiet bar, zoom, tidy, choosing, carrying"))

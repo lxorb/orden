@@ -3,20 +3,15 @@ import { invoke, waited } from '../../platform/src/api'
 import { rowsHere, showRow } from './rows'
 
 const CHANNEL = 'orden:quitting'
-
 const WAITS = 800
-
 type Message =
   | { kind: 'ask'; asking: string; idle: boolean }
   | { kind: 'said'; asking: string; window: string; rows: Stopping[] }
   | { kind: 'show'; row: Stopping }
-
 let own = ''
-
 export async function rowsEverywhere(window: string, idle: boolean): Promise<Stopping[]> {
   const others = await invoke<string[]>('quit_others').catch(() => [])
   if (!others.length) return rowsHere(window, idle)
-
   const channel = new BroadcastChannel(CHANNEL)
   const asking = crypto.randomUUID()
   const heard = new Map<string, Stopping[]>()
@@ -28,18 +23,15 @@ export async function rowsEverywhere(window: string, idle: boolean): Promise<Sto
     }
   })
   channel.postMessage({ kind: 'ask', asking, idle } satisfies Message)
-
   const [here] = await Promise.all([rowsHere(window, idle), Promise.race([all, waited(WAITS)])])
   channel.close()
   return [...here, ...others.flatMap((one) => heard.get(one) ?? [])]
 }
-
 export function showElsewhere(row: Stopping) {
   const channel = new BroadcastChannel(CHANNEL)
   channel.postMessage({ kind: 'show', row } satisfies Message)
   channel.close()
 }
-
 export function answer(window: string) {
   own = window
   const channel = new BroadcastChannel(CHANNEL)

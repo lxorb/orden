@@ -33,17 +33,14 @@
     padding: 0 var(--space-2);
     font-size: var(--text-xs);
   }
-
   p,
   ul {
     margin: 0;
   }
-
   ul {
     padding-inline-start: var(--space-3);
     color: var(--muted-strong);
   }
-
   .choices {
     display: flex;
     gap: var(--space-2);

@@ -6,15 +6,11 @@ import type { Env, Variables } from '../types'
 import { configured, type TargetKind } from './send'
 
 const KINDS: readonly TargetKind[] = ['webpush', 'fcm', 'apns']
-
 const LONGEST_TOKEN = 2048
 const LONGEST_KEY = 200
 const LONGEST_ZONE = 64
-
 const MOST_TARGETS = 20
-
 const NOT_A_TARGET = 'not a push target'
-
 function isZone(zone: string): boolean {
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: zone })
@@ -23,11 +19,8 @@ function isZone(zone: string): boolean {
     return false
   }
 }
-
 export const push = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 push.get('/key', (context) => context.json(configured(context.env)))
-
 push.post('/targets', async (context) => {
   const user = context.get('user')
   const body = await readBody(context)
@@ -38,14 +31,12 @@ push.post('/targets', async (context) => {
   const zone = body.text('zone', LONGEST_ZONE)
   const device = body.text('device', 100)
   if (body.problem) return context.json({ error: body.problem }, 400)
-
   const known = KINDS.find((one) => one === kind)
   if (!known || !token) return context.json({ error: NOT_A_TARGET }, 400)
   if (known === 'webpush' && (!token.startsWith('https://') || !p256dh || !auth)) {
     return context.json({ error: NOT_A_TARGET }, 400)
   }
   if (zone !== undefined && !isZone(zone)) return context.json({ error: NOT_A_TARGET }, 400)
-
   const keys = known === 'webpush' ? JSON.stringify({ p256dh, auth }) : null
   const session = await sha256(tokenIn(context.req.header('authorization')) ?? '')
   const id = newId()
@@ -66,13 +57,11 @@ push.post('/targets', async (context) => {
   )
     .bind(user.id, MOST_TARGETS)
     .run()
-
   const row = await context.env.DB.prepare('select id from push_targets where user_id = ? and token = ?')
     .bind(user.id, token)
     .first<{ id: string }>()
   return context.json({ id: row?.id ?? id })
 })
-
 push.delete('/targets/:id', async (context) => {
   const user = context.get('user')
   await context.env.DB.prepare('delete from push_targets where id = ? and user_id = ?')

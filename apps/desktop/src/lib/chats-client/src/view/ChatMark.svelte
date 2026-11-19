@@ -5,7 +5,6 @@
   import { Glyph } from '../../../chat-kit/src/api'
 
   const { path }: { path: string | null | undefined } = $props()
-
   const chosen = $derived(path ? readIcon(chosenIcon(path)) : null)
   const tint = $derived(path ? chosenTint(path) : null)
 </script>

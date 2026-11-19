@@ -4,7 +4,6 @@ interface Dictionary {
   id: string
   name: string
 }
-
 export const DICTIONARIES: readonly Dictionary[] = [
   { id: 'da-DK', name: 'Dansk' },
   { id: 'de-DE', name: 'Deutsch' },
@@ -23,15 +22,12 @@ export const DICTIONARIES: readonly Dictionary[] = [
   { id: 'ru-RU', name: 'Русский' },
   { id: 'uk-UA', name: 'Українська' },
 ]
-
 const KNOWN = new Set(DICTIONARIES.map((one) => one.id))
 export const choosable = isDesktop && platform() === 'linux'
-
 export function dictionaryFor(tag: string, preferred: readonly string[] = []): string {
   const exact = (one: string) =>
     DICTIONARIES.find((dictionary) => dictionary.id.toLowerCase() === one.toLowerCase())?.id
   const language = (one: string) => one.split('-')[0]?.toLowerCase() ?? ''
-
   const asked = exact(tag)
   if (asked) return asked
   for (const one of preferred) {
@@ -40,12 +36,10 @@ export function dictionaryFor(tag: string, preferred: readonly string[] = []): s
   }
   return DICTIONARIES.find((one) => language(one.id) === language(tag))?.id ?? 'en-US'
 }
-
 export function inForce(chosen: readonly string[], language: string, preferred: readonly string[] = []): string[] {
   const kept = chosen.filter((one) => KNOWN.has(one))
   return kept.length ? kept : [dictionaryFor(language, preferred)]
 }
-
 export function inForceNow(chosen: readonly string[]): string[] {
   const preferred = machineLanguages()
   return inForce(
@@ -54,16 +48,13 @@ export function inForceNow(chosen: readonly string[]): string[] {
     preferred,
   )
 }
-
 export function toggled(chosen: readonly string[], id: string, on: boolean): string[] | null {
   const now = inForceNow(chosen)
   const next = on ? [...now, id] : now.filter((one) => one !== id)
   if (!next.length || (on && now.includes(id))) return null
   return DICTIONARIES.map((one) => one.id).filter((one) => next.includes(one))
 }
-
 export const machineLanguages = (): readonly string[] => (typeof navigator === 'undefined' ? [] : navigator.languages)
-
 export function tellEngine(languages: readonly string[]): void {
   if (!choosable) return
   void invoke('spell_languages', { languages }).catch(() => undefined)

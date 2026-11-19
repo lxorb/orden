@@ -3,12 +3,10 @@ import { memoryStorage } from '../../../../test/disk'
 import { DeviceView } from './device.svelte'
 
 let store: Storage
-
 beforeEach(() => {
   store = memoryStorage()
   vi.stubGlobal('localStorage', store)
 })
-
 describe('the icon a space wears', () => {
   test('is remembered, by folder rather than by id', () => {
     const view = new DeviceView()
@@ -16,11 +14,9 @@ describe('the icon a space wears', () => {
     expect(view.iconOf('/Notes')).toBe('GraduationCap')
     expect(new DeviceView().iconOf('/Notes')).toBe('GraduationCap')
   })
-
   test('and a space that chose none says so, which is what draws its letter', () => {
     expect(new DeviceView().iconOf('/Notes')).toBeNull()
   })
-
   test('follows the folder when it is renamed', () => {
     const view = new DeviceView()
     view.setIcon('/Uni', 'GraduationCap')
@@ -28,7 +24,6 @@ describe('the icon a space wears', () => {
     expect(view.iconOf('/Uni')).toBeNull()
     expect(view.iconOf('/University')).toBe('GraduationCap')
   })
-
   test('is taken away by choosing none', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book')
@@ -37,7 +32,6 @@ describe('the icon a space wears', () => {
     expect(new DeviceView().iconOf('/Notes')).toBeNull()
   })
 })
-
 describe('the colour a space is drawn in', () => {
   test('comes down with the icon, and the account is the one copy', () => {
     const view = new DeviceView()
@@ -46,7 +40,6 @@ describe('the colour a space is drawn in', () => {
     expect(view.tintOf('/Notes')).toBe('teal')
     expect(new DeviceView().tintOf('/Notes')).toBe('teal')
   })
-
   test('so a colour taken off on another machine is taken off here', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book', 'violet')
@@ -54,20 +47,17 @@ describe('the colour a space is drawn in', () => {
     expect(view.tintOf('/Notes')).toBeNull()
     expect(view.iconOf('/Notes')).toBe('Book')
   })
-
   test('stays when the account has no column for it, and asks to be sent up', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book', 'violet')
     expect(view.applyIcon('/Notes', 'Book')).toBe('violet')
     expect(view.tintOf('/Notes')).toBe('violet')
   })
-
   test('and a space with no colour here has nothing to send', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book')
     expect(view.applyIcon('/Notes', 'Book')).toBeNull()
   })
-
   test('goes with the icon it was drawing', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book', 'violet')
@@ -75,7 +65,6 @@ describe('the colour a space is drawn in', () => {
     expect(view.iconOf('/Notes')).toBeNull()
     expect(view.tintOf('/Notes')).toBeNull()
   })
-
   test('follows the folder when it is renamed, the way the icon does', () => {
     const view = new DeviceView()
     view.setIcon('/Uni', 'GraduationCap', 'teal')
@@ -84,7 +73,6 @@ describe('the colour a space is drawn in', () => {
     expect(view.tintOf('/University')).toBe('teal')
   })
 })
-
 describe('where the list of a space was scrolled to', () => {
   test('follows the space when it is renamed, also after a restart', () => {
     vi.useFakeTimers()
@@ -98,7 +86,6 @@ describe('where the list of a space was scrolled to', () => {
     expect(new DeviceView().listAt('/Uni')).toBe(0)
   })
 })
-
 describe('storage that arrives after the store was built', () => {
   test('is read on the second asking, which is the plugin', () => {
     const view = new DeviceView()
@@ -112,21 +99,18 @@ describe('storage that arrives after the store was built', () => {
     expect(view.recent).toEqual(['/Uni/Lecture.md'])
     expect(view.isExpanded('/Uni')).toBe(true)
   })
-
   test('and does not undo what was chosen while it was on its way', () => {
     const view = new DeviceView()
     view.setIcon('/Notes', 'Book')
     view.reread()
     expect(view.iconOf('/Notes')).toBe('Book')
   })
-
   test('reads nonsense as nothing written', () => {
     store.setItem('orden:icons', '{oh no')
     const view = new DeviceView()
     expect(view.icons).toEqual({})
   })
 })
-
 describe('folding the whole list', () => {
   test('shuts every row of the one space and leaves the others as they were', () => {
     const view = new DeviceView()
@@ -137,7 +121,6 @@ describe('folding the whole list', () => {
     expect(view.expanded).toEqual({ '/Other/C': true })
     expect(JSON.parse(store.getItem('orden:expanded') ?? '{}')).toEqual({ '/Other/C': true })
   })
-
   test('does not take a space whose name only starts the same way', () => {
     const view = new DeviceView()
     view.expand('/Notebook/A')
@@ -145,7 +128,6 @@ describe('folding the whole list', () => {
     expect(view.isExpanded('/Notebook/A')).toBe(true)
   })
 })
-
 describe('the folders remembered open', () => {
   test('forget a folder that was deleted, and everything open under it', () => {
     const view = new DeviceView()
@@ -154,21 +136,18 @@ describe('the folders remembered open', () => {
     expect(view.expanded).toEqual({ '/s/ab': true })
     expect(new DeviceView().expanded).toEqual({ '/s/ab': true })
   })
-
   test('and every one of a space that went', () => {
     const view = new DeviceView()
     view.expanded = { '/s/a': true, '/t/a': true }
     view.follow({ op: 'removed', path: '/s', kind: 'space', root: '/s' })
     expect(view.expanded).toEqual({ '/t/a': true })
   })
-
   test('follow a folder that was moved or renamed', () => {
     const view = new DeviceView()
     view.expanded = { '/s/a': true, '/s/a/b': true }
     view.follow({ op: 'moved', from: '/s/a', to: '/s/c', kind: 'folder', root: '/s' })
     expect(view.expanded).toEqual({ '/s/c': true, '/s/c/b': true })
   })
-
   test('are checked against a listing of one space, and the others left alone', () => {
     const view = new DeviceView()
     view.expanded = { '/s/a': true, '/s/gone': true, '/s/Case': true, '/t/x': true }

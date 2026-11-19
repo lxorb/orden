@@ -3,7 +3,6 @@ import type { Found } from '../../../search/src/api'
 
 const WORK = { id: 'work', name: 'Work', root: '/notes/Work' }
 const HOME = { id: 'home', name: 'Home', root: '/notes/Home' }
-
 const disk = vi.hoisted(
   () =>
     new Map<string, string>([
@@ -14,12 +13,10 @@ const disk = vi.hoisted(
 )
 const searched = vi.hoisted(() => [] as string[])
 const othersWrite = vi.hoisted(() => new Set<string>())
-
 vi.mock('../../../sharing/src/api', () => ({
   reachedByOthers: (path: string | null) => path !== null && othersWrite.has(path),
   reachedByOthersIn: (root: string) => [...othersWrite].some((path) => path.startsWith(`${root}/`)),
 }))
-
 vi.mock('../../../search/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../search/src/api')>()),
   searchSpace: (root: string, _query: unknown, _terms: unknown, _limit: unknown, onFound: (found: Found) => void) => {
@@ -34,7 +31,6 @@ vi.mock('../../../search/src/api', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 vi.mock('../../../workspace/src/api', () => ({
   workspace: {
     spaces: [WORK, HOME],
@@ -46,7 +42,6 @@ vi.mock('../../../workspace/src/api', () => ({
     noteText: (path: string) => Promise.resolve(disk.get(path) ?? null),
   },
 }))
-
 vi.mock('../../../link-index/src/api', () => ({ links: {} }))
 vi.mock('../../../scratchpad/src/api', () => ({
   pad: () => Promise.resolve({ where: () => Promise.resolve('') }),
@@ -120,22 +115,18 @@ vi.mock('../chat/threads', () => ({
             : null,
     ),
 }))
-
 const { draftOf } = await import('./gather')
 const { protection } = await import('../../../protect/src/api')
-
 describe('a message in a thread of another space than the one in front', () => {
   test('asks the thread’s space for its passages, not the one in front', async () => {
     searched.length = 0
     const draft = await draftOf('when is the budget due', [], 'approve', null, '', WORK)
-
     expect(searched).toEqual([WORK.root])
     const cited = draft.attachments.flatMap((one) => ('cite' in one ? [one] : []))
     expect(cited.length).toBeGreaterThan(0)
     for (const one of cited) expect(one.text ?? '').not.toContain('garden')
     expect(cited.some((one) => one.text?.includes('Friday'))).toBe(true)
   })
-
   test('reads a note chip in the thread’s space and labels it there', async () => {
     const draft = await draftOf(
       'who is this',
@@ -148,7 +139,6 @@ describe('a message in a thread of another space than the one in front', () => {
     expect(draft.attachments.map((one) => one.label)).toContain('Team/Ana.md')
   })
 })
-
 test('a chat of another space goes along from the space it is kept in', async () => {
   const draft = await draftOf(
     'what did I say there?',
@@ -160,7 +150,6 @@ test('a chat of another space goes along from the space it is kept in', async ()
   )
   expect(draft.attachments.map((one) => [one.label, one.text])).toEqual([['Garden', '> plant roses']])
 })
-
 test('a compacted chat goes along with its summary and what was said after it', async () => {
   const draft = await draftOf(
     'what was it?',
@@ -174,11 +163,9 @@ test('a compacted chat goes along with its summary and what was said after it', 
     ['Pond', 'Koi need shade.\n\n> and lilies?\n\nLilies too.'],
   ])
 })
-
 describe('words somebody else may have written', () => {
   const marked = (draft: { attachments: { label: string; untrusted?: boolean }[] }) =>
     draft.attachments.map((one) => [one.label, !!one.untrusted])
-
   test('a note chip, the note in front and a quote are marked, the reader’s own note not', async () => {
     othersWrite.add('/notes/Work/Team/Ana.md')
     try {
@@ -211,7 +198,6 @@ describe('words somebody else may have written', () => {
       othersWrite.clear()
     }
   })
-
   test('Approve’s passages are marked', async () => {
     othersWrite.add('/notes/Work/Plan.md')
     try {
@@ -223,7 +209,6 @@ describe('words somebody else may have written', () => {
       othersWrite.clear()
     }
   })
-
   test('the selection is marked where the space in front is reached by others', async () => {
     othersWrite.add('/notes/Home/Plan.md')
     try {
@@ -235,7 +220,6 @@ describe('words somebody else may have written', () => {
     }
   })
 })
-
 describe('words somebody else may have steered', () => {
   test('a selection is judged by the note it is in, not the space in front', async () => {
     othersWrite.add('/notes/Work/Team/Ana.md')
@@ -248,7 +232,6 @@ describe('words somebody else may have steered', () => {
       othersWrite.clear()
     }
   })
-
   test('a chat that read words from outside goes marked', async () => {
     const draft = await draftOf(
       'what did it say?',
@@ -261,7 +244,6 @@ describe('words somebody else may have steered', () => {
     expect(draft.attachments.map((one) => [one.label, !!one.untrusted])).toEqual([['Bob', true]])
   })
 })
-
 describe('words from a note shut to agents', () => {
   const PLAN = '/notes/Home/Plan.md'
   const selection = { kind: 'selection' as const, id: 'selection', label: 'selection' }
@@ -273,7 +255,6 @@ describe('words from a note shut to agents', () => {
       protection.set(HOME.root, PLAN, null)
     }
   }
-
   test('a quote of a shut note stays home', async () => {
     const quote = {
       kind: 'words' as const,
@@ -285,18 +266,15 @@ describe('words from a note shut to agents', () => {
     const draft = await shut(() => draftOf('q', [quote], 'auto', null, '', HOME))
     expect(JSON.stringify(draft)).not.toContain('The budget')
   })
-
   test('a selection made in a shut note stays home while no note is in front', async () => {
     const picked = { path: PLAN, shared: null }
     const draft = await shut(() => draftOf('q', [selection], 'auto', null, 'The budget', HOME, picked))
     expect(draft.attachments).toEqual([])
   })
-
   test('a selection of no known note stays home while its space holds a shut note', async () => {
     const draft = await shut(() => draftOf('q', [selection], 'auto', null, 'The budget', HOME))
     expect(draft.attachments).toEqual([])
   })
-
   test('a selection of an open note still goes', async () => {
     const picked = { path: '/notes/Work/Plan.md', shared: null }
     const draft = await shut(() => draftOf('q', [selection], 'auto', null, 'Friday', WORK, picked))

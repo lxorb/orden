@@ -16,7 +16,6 @@ interface Project {
   inbox: boolean
   about?: string[]
 }
-
 interface Section {
   id: string
   project: string
@@ -24,12 +23,10 @@ interface Section {
   order: number
   about?: string[]
 }
-
 interface Comment {
   text: string
   at?: string
 }
-
 interface Task {
   id: string
   project: string
@@ -51,13 +48,11 @@ interface Task {
   remind: Remind[]
   comments: Comment[]
 }
-
 export interface Account {
   projects: Project[]
   sections: Section[]
   tasks: Task[]
 }
-
 export function tagOf(label: string): string {
   return label
     .trim()
@@ -65,7 +60,6 @@ export function tagOf(label: string): string {
     .replace(/\s+/g, '-')
     .replace(/[^\p{L}\p{M}\p{N}\p{Extended_Pictographic}_/-]/gu, '')
 }
-
 export function clockOf(written: string): { time?: string; rest: string } {
   const found = /\s+(?:at|@)\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?(?=\s|$)/i.exec(written)
   if (!found) return { rest: written }
@@ -79,7 +73,6 @@ export function clockOf(written: string): { time?: string; rest: string } {
   const rest = `${written.slice(0, found.index)}${written.slice(found.index + found[0].length)}`
   return { time, rest }
 }
-
 export function ruleOf(written: string): string | null {
   const said = clockOf(written)
     .rest.trim()
@@ -91,7 +84,6 @@ export function ruleOf(written: string): string | null {
   const rule = parseRule(said)
   return rule ? ruleText(rule) : null
 }
-
 function linesOf(task: Task, children: ReadonlyMap<string, Task[]>, depth: number, kept: Kept): string[] {
   if (kept.written.has(task)) return []
   kept.written.add(task)
@@ -100,7 +92,6 @@ function linesOf(task: Task, children: ReadonlyMap<string, Task[]>, depth: numbe
   if (task.repeats && !rule) kept.words += 1
   const time = task.time ?? (rule && task.repeats ? clockOf(task.repeats).time : undefined)
   const { duration } = task
-
   const fields: TaskFields = {
     text: asWords(oneLine(task.text)).replace(/(^|\s)@([\p{L}\p{N}_/-]+)/gu, '$1#$2'),
     status: task.done ? 'x' : ' ',
@@ -132,11 +123,8 @@ function linesOf(task: Task, children: ReadonlyMap<string, Task[]>, depth: numbe
   for (const child of children.get(task.id) ?? []) lines.push(...linesOf(child, children, depth + 1, kept))
   return lines
 }
-
 const oneLine = (said: string) => said.replace(/\s*[\r\n]+\s*/g, ' ').trim()
-
 const inert = (line: string) => wordsOf(line).replace(/^(\s*(?:[-*+]|\d+[.)])\s+)\[(.)\]/, '$1\\[$2]')
-
 function wordsOf(line: string): string {
   let out = ''
   let at = 0
@@ -146,9 +134,7 @@ function wordsOf(line: string): string {
   }
   return out + asWords(line.slice(at))
 }
-
 const ANGLED_LINK = /\[((?:\\.|[^\\[\]\n])*)\]\(<([^<>\n]*)>\)/g
-
 function aboutLines(about: readonly string[] | undefined): string[] {
   const out: string[] = []
   for (const one of about ?? []) {
@@ -158,14 +144,11 @@ function aboutLines(about: readonly string[] | undefined): string[] {
   }
   return out.length ? out.join('\n').split('\n').map(inert) : []
 }
-
 interface Kept {
   words: number
   written: Set<Task>
 }
-
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order
-
 export function planOf(account: Account): ImportPlan & { inbox?: string } {
   const kept: Kept = { words: 0, written: new Set() }
   const projects = new Map(account.projects.map((one) => [one.id, one]))
@@ -183,7 +166,6 @@ export function planOf(account: Account): ImportPlan & { inbox?: string } {
     const folder = folderOf(project)
     return parents.has(project.id) ? `${folder}/${name}` : folder
   }
-
   const children = new Map<string, Task[]>()
   for (const task of account.tasks) {
     if (!task.parent) continue
@@ -204,12 +186,10 @@ export function planOf(account: Account): ImportPlan & { inbox?: string } {
     return false
   }
   const top = account.tasks.filter(atTop).sort(byOrder)
-
   const elsewhere = top.filter((one) => !projects.has(one.project))
   const all: Project[] = elsewhere.length
     ? [...account.projects, { id: ELSEWHERE, name: 'Todoist', inbox: false }]
     : account.projects
-
   const files: Planned[] = []
   let inbox: string | undefined
   for (const project of all) {
@@ -234,21 +214,17 @@ export function planOf(account: Account): ImportPlan & { inbox?: string } {
     if (project.inbox) inbox = path
     files.push({ kind: 'note', path, text: lines.length ? `${lines.join('\n')}\n` : '' })
   }
-
   const lost = kept.words ? [WORDS] : []
   return { format: 'todoist', files, lost, ...(inbox ? { inbox } : {}) }
 }
-
 const WORDS = 'Some repeating dates stay as words under their tasks'
 const ELSEWHERE = '\0elsewhere'
 const HEADER = ['TYPE', 'CONTENT', 'DESCRIPTION', 'PRIORITY', 'INDENT']
-
 export function isTodoistCsv(text: string): boolean {
   const first = text.replace(/^\uFEFF/, '').split(/\r?\n/, 1)[0] ?? ''
   const columns = first.split(',').map((one) => one.trim().replace(/^"|"$/g, '').toUpperCase())
   return HEADER.every((name, at) => columns[at] === name)
 }
-
 function csvDate(said: string): { due: string; time?: string } | null {
   const found = /^((\d{4})-(\d{2})-(\d{2}))(?:[ T](\d{1,2}):(\d{2}))?/.exec(said.trim())
   if (!found?.[1]) return null
@@ -260,7 +236,6 @@ function csvDate(said: string): { due: string; time?: string } | null {
     ? { due, time: `${hour.padStart(2, '0')}:${minute ?? '00'}` }
     : { due }
 }
-
 function attachmentsIn(said: string): string {
   return said.replace(/\[\[file\s+(\{.*?\})\]\]/gs, (whole, json: string) => {
     try {
@@ -271,7 +246,6 @@ function attachmentsIn(said: string): string {
     }
   })
 }
-
 function linkTo(file: Json): string {
   const url = text(file.file_url) || text(file.url)
   if (!url) return ''
@@ -279,10 +253,8 @@ function linkTo(file: Json): string {
   const target = /[\s()<>]/.test(url) ? `<${url.replace(/[<>]/g, encodeURIComponent)}>` : url
   return `[${name.replace(LITERAL, '\\$&')}](${target})`
 }
-
 const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
 const personOf = (said: string) => said.replace(/\s*\(\d+\)\s*$/, '').trim()
-
 export function csvProject(name: string, text: string, at: number): Account {
   const project: Project = { id: `csv-${at}`, name, inbox: /^inbox$/i.test(name), about: [] }
   const sections: Section[] = []
@@ -292,7 +264,6 @@ export function csvProject(name: string, text: string, at: number): Account {
   const column = (row: readonly string[], named: string) => row[header.indexOf(named)]?.trim() ?? ''
   const open: Task[] = []
   let section: Section | undefined
-
   rows.forEach((row, index) => {
     const type = column(row, 'TYPE').toLowerCase()
     if (type === 'section') {
@@ -316,7 +287,6 @@ export function csvProject(name: string, text: string, at: number): Account {
       return
     }
     if (type !== 'task') return
-
     const indent = Math.max(1, Number(column(row, 'INDENT')) || 1)
     open.length = Math.min(open.length, indent - 1)
     const parent = open.at(-1)
@@ -349,7 +319,6 @@ export function csvProject(name: string, text: string, at: number): Account {
   })
   return { projects: [project], sections, tasks }
 }
-
 export async function readTodoistFiles(sources: readonly Source[]): Promise<ImportPlan & { inbox?: string }> {
   const account: Account = { projects: [], sections: [], tasks: [] }
   let at = 0
@@ -365,9 +334,7 @@ export async function readTodoistFiles(sources: readonly Source[]): Promise<Impo
   }
   return planOf(account)
 }
-
 const API = 'https://api.todoist.com/api/v1'
-
 export type Fetch = (
   url: string,
   init: { headers: Record<string, string> },
@@ -376,12 +343,9 @@ export type Fetch = (
   status: number
   json(): Promise<unknown>
 }>
-
 type Json = Record<string, unknown>
-
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 const id = (value: unknown) => (typeof value === 'string' || typeof value === 'number' ? String(value) : '')
-
 async function pages(get: Fetch, token: string, path: string, list = 'results'): Promise<Json[]> {
   const out: Json[] = []
   let cursor: string | null = null
@@ -401,10 +365,8 @@ async function pages(get: Fetch, token: string, path: string, list = 'results'):
   }
   return out
 }
-
 const REFUSED = 'Todoist did not take that token.'
 const UNREACHABLE = 'Todoist could not be reached.'
-
 function dueOf(due: unknown): Pick<Task, 'due' | 'time' | 'zone' | 'repeats'> {
   if (!isRecord(due)) return {}
   const date = text(due.date)
@@ -413,7 +375,6 @@ function dueOf(due: unknown): Pick<Task, 'due' | 'time' | 'zone' | 'repeats'> {
   const repeats = due.is_recurring === true && text(due.string) ? { repeats: text(due.string) } : {}
   const clock = /T(\d{2}):(\d{2})/.exec(date)
   if (!clock) return { due: day, ...repeats }
-
   const zone = text(due.timezone)
   if (date.endsWith('Z') && zone) {
     const local = wallClock(new Date(date), zone)
@@ -421,7 +382,6 @@ function dueOf(due: unknown): Pick<Task, 'due' | 'time' | 'zone' | 'repeats'> {
   }
   return { due: day, time: `${clock[1]}:${clock[2]}`, ...repeats }
 }
-
 function taskOf(
   row: Json,
   people: ReadonlyMap<string, string>,
@@ -455,7 +415,6 @@ function taskOf(
     comments,
   }
 }
-
 function remindOf(row: Json): Remind | null {
   if (row.is_deleted === true) return null
   if (text(row.type) === 'relative' && typeof row.minute_offset === 'number') return { before: row.minute_offset }
@@ -466,19 +425,16 @@ function remindOf(row: Json): Remind | null {
   const local = /Z$/i.test(at) ? (wallClock(new Date(at), zone) ?? wallClock(new Date(at))) : null
   return local ? { at: local.day, time: local.time } : { at: found[1], time: found[2] }
 }
-
 function commentOf(row: Json): Comment {
   const file = isRecord(row.file_attachment) ? linkTo(row.file_attachment) : ''
   const link = file ? ` ${file}` : ''
   const at = dayOf(text(row.posted_at))
   return { text: `${text(row.content)}${link}`.trim(), ...(at ? { at } : {}) }
 }
-
 export interface ApiOptions {
   completed?: boolean
   now?: Date
 }
-
 export async function readTodoistAccount(get: Fetch, token: string, options: ApiOptions = {}): Promise<Account> {
   const [projects, sections, open, reminders] = await Promise.all([
     pages(get, token, '/projects'),
@@ -486,7 +442,6 @@ export async function readTodoistAccount(get: Fetch, token: string, options: Api
     pages(get, token, '/tasks'),
     pages(get, token, '/reminders').catch(() => [] as Json[]),
   ])
-
   let done: Json[] = []
   if (options.completed) {
     const until = options.now ?? new Date()
@@ -498,7 +453,6 @@ export async function readTodoistAccount(get: Fetch, token: string, options: Api
       'items',
     )
   }
-
   const people = new Map<string, string>()
   for (const project of projects.filter((one) => one.is_shared === true)) {
     for (const person of await pages(get, token, `/projects/${id(project.id)}/collaborators`).catch(
@@ -507,7 +461,6 @@ export async function readTodoistAccount(get: Fetch, token: string, options: Api
       people.set(id(person.id), text(person.name) || text(person.email))
     }
   }
-
   const remindOfTask = new Map<string, Remind[]>()
   for (const row of reminders) {
     const one = remindOf(row)
@@ -517,7 +470,6 @@ export async function readTodoistAccount(get: Fetch, token: string, options: Api
       else remindOfTask.set(id(row.item_id), [one])
     }
   }
-
   const tasks: Task[] = []
   for (const [at, row] of [...open, ...done].entries()) {
     const comments =
@@ -527,7 +479,6 @@ export async function readTodoistAccount(get: Fetch, token: string, options: Api
     const finished = at >= open.length
     tasks.push(taskOf(row, people, remindOfTask.get(id(row.id)) ?? [], comments, finished))
   }
-
   return {
     projects: projects
       .filter((one) => one.is_archived !== true && one.is_deleted !== true)

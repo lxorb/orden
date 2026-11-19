@@ -1,5 +1,4 @@
 export const MOST_COPY = 1024 * 1024
-
 export function clipboardWrite(data: string): string | null {
   const split = data.indexOf(';')
   if (split < 0) return null
@@ -16,21 +15,17 @@ export function clipboardWrite(data: string): string | null {
     return null
   }
 }
-
 export interface Notice {
   title: string | null
   body: string
 }
-
 const LONGEST = 256
 const cut = (words: string) => words.trim().slice(0, LONGEST)
-
 export function osc9Notice(data: string): Notice | null {
   if (/^\d+(;|$)/.test(data)) return null
   const body = cut(data)
   return body ? { title: null, body } : null
 }
-
 export function osc777Notice(data: string): Notice | null {
   const [kind, title = '', ...rest] = data.split(';')
   if (kind !== 'notify') return null

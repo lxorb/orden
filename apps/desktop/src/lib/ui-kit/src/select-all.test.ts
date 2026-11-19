@@ -24,24 +24,19 @@ function page() {
     listening: () => [...heard.values()].reduce((all, runs) => all + runs.size, 0),
   }
 }
-
 function field() {
   const focus = vi.fn()
   const select = vi.fn()
   return { node: { focus, select } as unknown as HTMLInputElement, focus, select }
 }
-
 describe('a name field as it arrives', () => {
   let around: ReturnType<typeof page>
-
   beforeEach(() => {
     around = page()
   })
-
   afterEach(() => {
     vi.unstubAllGlobals()
   })
-
   test('takes the focus at once and again a frame later, for a value filled in after', () => {
     const { node, focus, select } = field()
     selectAll(node)
@@ -50,7 +45,6 @@ describe('a name field as it arrives', () => {
     expect(focus).toHaveBeenCalledTimes(2)
     expect(select).toHaveBeenCalledTimes(2)
   })
-
   test.each(['keydown', 'pointerdown'])('leaves it alone after a %s inside the frame', (kind) => {
     const { node, focus } = field()
     selectAll(node)
@@ -58,7 +52,6 @@ describe('a name field as it arrives', () => {
     around.frame()
     expect(focus).toHaveBeenCalledTimes(1)
   })
-
   test('listens no longer once the frame is past, or the field has gone', () => {
     const passed = selectAll(field().node)
     expect(around.listening()).toBeGreaterThan(0)

@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from './disk'
 
 let frames = 0
-
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => {
   setTimeout(() => {
     frames += 1
@@ -10,22 +9,17 @@ vi.stubGlobal('requestAnimationFrame', (run: () => void) => {
   }, 0)
   return 0
 })
-
 vi.stubGlobal('requestIdleCallback', (run: () => void) => {
   setTimeout(run, 0)
   return 0
 })
-
 const NOTES = Array.from({ length: 40 }, (_, at) => `note-${String(at).padStart(2, '0')}.md`)
-
 interface Sent {
   command: string
   listed: boolean
   frames: number
 }
-
 const sent: Sent[] = []
-
 vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/platform/src/tauri')>()),
   isNative: true,
@@ -33,9 +27,7 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const { workspace } = await import('../src/lib/workspace/src/api')
     sent.push({ command, listed: !!workspace.tree, frames })
-
     const root = typeof args?.root === 'string' ? args.root : '/space'
-
     switch (command) {
       case 'list_spaces':
         return [
@@ -67,21 +59,16 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
     }
   },
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { workspace } = await import('../src/lib/workspace/src/api')
 const { links } = await import('../src/lib/link-index/src/api')
 const { startup } = await import('../src/lib/launch/src/api')
-
 async function settle() {
   for (let round = 0; round < 12; round++) await new Promise((done) => setTimeout(done, 0))
 }
-
 const started = await (async () => {
   await workspace.restore()
   await settle()
-
   return {
     sent: [...sent],
     root: links.rootOf(),
@@ -89,72 +76,55 @@ const started = await (async () => {
     listed: workspace.tree?.children.length ?? 0,
   }
 })()
-
 const launch = started.sent
-
 const at = (command: string) => launch.findIndex((one) => one.command === command)
-
 describe('the launch', () => {
   test('lists the spaces and the files, and nothing else, before the first frame', () => {
     const before = launch.filter((one) => one.frames === 0).map((one) => one.command)
-
     expect(before).toEqual(['list_spaces', 'read_tree'])
   })
-
   test('paints the file list before it reads a single body', () => {
     expect(at('read_tree')).toBeGreaterThanOrEqual(0)
     expect(at('read_note')).toBeGreaterThan(at('read_tree'))
-
     const first = launch[at('read_note')]
     expect(first?.listed).toBe(true)
     expect(first?.frames).toBe(2)
   })
-
   test('scans the space for its links after the list is up, not with it', () => {
     const scan = launch[at('scan_links')]
-
     expect(scan?.listed).toBe(true)
     expect(scan?.frames).toBeGreaterThanOrEqual(2)
     expect(at('scan_links')).toBeGreaterThan(at('read_note'))
   })
-
   test('reads one note, not the space, to open what it was left on', () => {
     expect(launch.filter((one) => one.command === 'read_note')).toHaveLength(1)
   })
-
   test('ends with the index built and the tree it was built for', () => {
     expect(started.root).toBe('/space')
     expect(started.rooms).toBe(true)
     expect(started.listed).toBe(NOTES.length)
   })
 })
-
 const switched = await (async () => {
   sent.length = 0
   const other = workspace.spaces.find((one) => one.root === '/other')
   if (!other) throw new Error('the second space was never listed')
-
   await workspace.selectSpace(other.id)
   await settle()
   return [...sent]
 })()
-
 describe('opening a second space, with the launch long over', () => {
   test('reads the listing first and scans the space after it', () => {
     const commands = switched.map((one) => one.command)
-
     expect(commands.indexOf('read_tree')).toBeGreaterThanOrEqual(0)
     expect(commands.indexOf('scan_links')).toBeGreaterThan(commands.indexOf('read_tree'))
   })
-
   test('paints the new listing before the scan starts', () => {
     const listing = switched.find((one) => one.command === 'read_tree')
     const scan = switched.find((one) => one.command === 'scan_links')
-
     expect(scan?.listed).toBe(true)
     expect(scan?.frames ?? 0).toBeGreaterThan(listing?.frames ?? 0)
   })
-
   test('scans the space that is open, and not the one that was', () => {
     expect(links.rootOf()).toBe('/other')
   })

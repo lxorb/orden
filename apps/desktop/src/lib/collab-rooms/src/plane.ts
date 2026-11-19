@@ -9,39 +9,30 @@ export interface Drawing extends Entering {
   surface: PlaneSurface
   holds: () => boolean
 }
-
 export class PlaneRoom extends JoinedRoom implements SharedPlane {
   private readonly binding: PlaneBinding
-
   constructor(private readonly joining: Drawing) {
     super(joining)
     this.binding = new PlaneBinding(this.door.doc, joining.surface, () => this.holds())
   }
-
   get settled(): boolean {
     return this.door.caughtUp
   }
-
   get words(): string {
     return writeCanvas(readPlane(this.door.doc))
   }
-
   push(before: Canvas, after: Canvas, how?: Pushed) {
     this.binding.push(before, after, how)
   }
-
   undo(): boolean {
     return this.binding.undo()
   }
-
   redo(): boolean {
     return this.binding.redo()
   }
-
   hand(at: Point | null, drawing: InkStroke | null) {
     this.door.announce(HAND, () => (at ? saidHand(at, drawing) : null))
   }
-
   leave() {
     this.left = true
     this.joining.surface.shared = null
@@ -50,17 +41,13 @@ export class PlaneRoom extends JoinedRoom implements SharedPlane {
     this.door.leave()
     this.joining.onPeers(0)
   }
-
   protected together() {
     if (!this.holds()) return
-
     this.binding.together()
     this.joining.surface.shared = this
   }
-
   protected showPresent() {
     const { present, hands, seen } = handsIn(this.door.awareness, this.door.doc, this.scheme)
-
     this.joining.surface.handsAre(hands)
     this.joining.onPeers(present, seen)
   }

@@ -45,9 +45,7 @@ import { fromOf, tellVault } from './tell'
 import { fieldsSent, jsonOf, optionalIn } from './trust-body'
 
 export const members = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 const LONGEST_ADDRESS = 320
-
 interface MemberDb {
   email: string
   user_id: string | null
@@ -55,7 +53,6 @@ interface MemberDb {
   state: 'pending' | 'confirm' | 'active' | 'removed'
   key: string | null
 }
-
 async function memberOf(env: Env, vault: string, email: string): Promise<MemberDb | null> {
   const row = await env.DB.prepare(
     `select email, user_id, role, state, key from pass_members
@@ -65,20 +62,16 @@ async function memberOf(env: Env, vault: string, email: string): Promise<MemberD
     .first<MemberDb>()
   return row && row.state !== 'removed' ? row : null
 }
-
 function emailOf(param: string): string {
   return normaliseEmail(param)
 }
-
 function invitedRole(value: string | undefined): Role | null {
   return isRole(value) && value !== 'owner' ? value : null
 }
-
 function vouchIn(value: unknown): string | null | undefined {
   if (value === undefined || value === null) return null
   return isSignature(value) ? value : undefined
 }
-
 members.get('/vaults/:id/members', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -103,7 +96,6 @@ members.get('/vaults/:id/members', async (context) => {
     members: results.map((one) => ({ ...one, name: one.name.slice(0, LONGEST_NAME) })),
   })
 })
-
 members.post('/vaults/:id/invites', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -123,7 +115,6 @@ members.post('/vaults/:id/invites', async (context) => {
   const vouch = vouchIn(sent.vouch)
   const pin = optionalIn(sent.pin, pinIn)
   if (vouch === undefined || pin === undefined) return context.json({ error: NOT_A_PROOF }, 400)
-
   const held = await activeIn(context.env, id, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
@@ -134,7 +125,6 @@ members.post('/vaults/:id/invites', async (context) => {
   if (key !== null && keyVersion !== held.key_version) {
     return context.json({ error: ROTATED, keyVersion: held.key_version }, 409)
   }
-
   const invitee = await context.env.DB.prepare(
     `select u.id, k.pub from users u left join pass_keyrings k on k.user_id = u.id
       where u.email = ?`,
@@ -142,7 +132,6 @@ members.post('/vaults/:id/invites', async (context) => {
     .bind(email)
     .first<{ id: string; pub: string | null }>()
   const state = key === null && invitee?.pub ? 'confirm' : 'pending'
-
   const db = context.env.DB
   const results = await db.batch([
     bump(db),
@@ -192,7 +181,6 @@ members.post('/vaults/:id/invites', async (context) => {
   await tellVault(context.env, id, [user.id], from)
   return context.json({ state })
 })
-
 members.put('/vaults/:id/members/:email/key', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -205,14 +193,12 @@ members.put('/vaults/:id/members/:email/key', async (context) => {
   if (!isSealed(key, MOST_KEY_BYTES) || !isCount(keyVersion)) {
     return context.json({ error: NOT_A_KEY }, 400)
   }
-
   const held = await activeIn(context.env, id, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
   if (keyVersion !== held.key_version) {
     return context.json({ error: ROTATED, keyVersion: held.key_version }, 409)
   }
-
   const db = context.env.DB
   const results = await db.batch([
     bump(db),
@@ -233,7 +219,6 @@ members.put('/vaults/:id/members/:email/key', async (context) => {
   await tellVault(context.env, id, [user.id], from)
   return context.json({ ok: true })
 })
-
 members.put('/vaults/:id/members/:email', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -245,14 +230,12 @@ members.put('/vaults/:id/members/:email', async (context) => {
   if (!role) return context.json({ error: NOT_A_ROLE }, 400)
   const vouch = vouchIn((await fieldsSent(context)).vouch)
   if (vouch === undefined) return context.json({ error: NOT_A_PROOF }, 400)
-
   const held = await activeIn(context.env, id, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
   const target = await memberOf(context.env, id, email)
   if (!target) return context.json({ error: NO_SUCH_MEMBER }, 404)
   if (target.role === 'owner') return context.json({ error: OWNER_STAYS }, 409)
-
   const db = context.env.DB
   const results = await db.batch([
     bump(db),
@@ -278,13 +261,11 @@ members.put('/vaults/:id/members/:email', async (context) => {
   await tellVault(context.env, id, [user.id], from)
   return context.json({ ok: true })
 })
-
 members.delete('/vaults/:id/members/:email', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
   const email = emailOf(context.req.param('email'))
   const from = fromOf(context.req.query('from'))
-
   const held = await activeIn(context.env, id, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   const leaving = email === user.email
@@ -292,7 +273,6 @@ members.delete('/vaults/:id/members/:email', async (context) => {
   const target = await memberOf(context.env, id, email)
   if (!target) return context.json({ error: NO_SUCH_MEMBER }, 404)
   if (target.role === 'owner') return context.json({ error: OWNER_STAYS }, 409)
-
   const db = context.env.DB
   const may = `(?2 = ?3 or ${holdsSql('?1', '?3', 'manager')})`
   const results = await db.batch([
@@ -326,7 +306,6 @@ members.delete('/vaults/:id/members/:email', async (context) => {
   await tellVault(context.env, id, [user.id, ...(target.user_id ? [target.user_id] : [])], from)
   return context.json({ ok: true })
 })
-
 members.put('/vaults/:id/owner', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -337,7 +316,6 @@ members.put('/vaults/:id/owner', async (context) => {
   if (!isEmail(email)) return context.json({ error: NOT_AN_EMAIL }, 400)
   const handover = vouchIn((await fieldsSent(context)).handover)
   if (handover === undefined) return context.json({ error: NOT_A_PROOF }, 400)
-
   const held = await activeIn(context.env, id, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (held.role !== 'owner') return context.json({ error: NOT_YOUR_ROLE }, 403)
@@ -353,7 +331,6 @@ members.put('/vaults/:id/owner', async (context) => {
     handover !== null && heir?.sign_pub
       ? [...before, { to: heir.sign_pub, sig: handover }].slice(-MOST_HANDOVERS)
       : before
-
   const db = context.env.DB
   const handed = `exists (select 1 from pass_vaults where id = ?1 and owner_id = ?3 and seq = ${SEQ})`
   const results = await db.batch([

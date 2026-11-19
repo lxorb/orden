@@ -1,17 +1,13 @@
 import json
 import sys
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__, fresh=False)
 say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
-
 PATIENCE = 40
-
 PREPARE = """
 window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   platform: 'android', family: 'unix', os_type: 'android',
@@ -22,7 +18,6 @@ window.__ORDEN_SYSTEM__ = {
   bars: () => {},
 };
 """
-
 AS_DEVICE = """
 ([device, portrait, narrow]) => {
   const app = window.ordenApp
@@ -38,7 +33,6 @@ AS_DEVICE = """
   if (window.__ordenInsets) window.__ordenInsets()
 }
 """
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -63,7 +57,6 @@ async () => {
   return ws.tree.children.map((one) => one.name)
 }
 """
-
 MEASURE = """(specs) => {
   const round = (n) => Math.round(n * 10) / 10
   return specs.map(([name, sel]) => {
@@ -84,14 +77,12 @@ MEASURE = """(specs) => {
     }]
   })
 }"""
-
 PROFILES = [
     ("phone", 390, 844, 3, "phone", True, True),
     ("tablet-portrait", 820, 1180, 2, "tablet", True, False),
     ("tablet-landscape", 1180, 820, 2, "tablet", False, False),
     ("desktop", 1440, 900, 1, "desktop", False, False),
 ]
-
 CHROME = [
     ["sidebar", "aside"],
     ["sidebar tabs strip", "aside .switch"],
@@ -112,7 +103,6 @@ CHROME = [
     ["status bar", "footer"],
     ["titlebar search", "header .search"],
 ]
-
 PANELS = {
     "outline": [["outline row", "aside .row.heading"]],
     "search": [
@@ -122,7 +112,6 @@ PANELS = {
     ],
     "links": [["links hit", "aside .hit"], ["links line", "aside .hit-line"]],
 }
-
 TAGS = [
     ["tag row", "aside .line .row"],
     ["tag twist", "aside .twist"],
@@ -132,24 +121,20 @@ TAGS = [
     ["find bar flag", ".findbar .flag"],
 ]
 MARKS = [["bookmark row", "aside .row"], ["bookmark icon", "aside .row svg"]]
-
 PALETTE = [
     ["palette", ".palette"],
     ["palette input", ".palette input"],
     ["palette row", ".palette ul li button"],
 ]
-
 BROWSE = [
     ["palette browse row", ".palette ul li button"],
     ["palette browse head", ".palette .orden-section"],
 ]
-
 CONTEXT = [
     ["context menu", ".menu"],
     ["context menu row", ".menu button"],
     ["context menu title", ".menu .title"],
 ]
-
 SETTINGS = [
     ["settings sheet", ".sheet"],
     ["settings bar", ".sheet .bar"],
@@ -159,7 +144,6 @@ SETTINGS = [
     ["settings nav glyph", ".sheet .item .glyph"],
     ["settings search field", ".sheet .search input"],
 ]
-
 PRESS = """
 (selector) => {
   const node = document.querySelector(selector)
@@ -178,23 +162,18 @@ PRESS = """
   return true
 }
 """
-
 def measure(page: Page, specs) -> dict:
     return dict(page.evaluate(MEASURE, specs))
-
 def open_drawer(page: Page) -> None:
     page.evaluate("() => { const ws = window.ordenApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
     page.wait_for_timeout(350)
-
 def shut_drawer(page: Page) -> None:
     page.evaluate(
         "() => { const ws = window.ordenApp.workspace; ws.closePanel(); ws.closePanel('right') }"
     )
     page.wait_for_timeout(400)
-
 def run(label: str) -> int:
     found: dict[str, dict] = {}
-
     with DRIVE.session() as browser:
         for name, width, height, scale, device, portrait, narrow in PROFILES:
             for scheme in ("dark", "light"):
@@ -213,12 +192,10 @@ def run(label: str) -> int:
                 )
                 if scheme == "dark":
                     found[name] = seen
-
     (SHOTS / f"{label}.json").write_text(json.dumps(found, indent=2), encoding="utf8")
     say(f"wrote {label}.json")
     report(label)
     return DRIVE.verdict()
-
 def one(
     browser: Browser, label, name, width, height, scale, device, portrait, narrow, scheme
 ) -> dict:
@@ -242,7 +219,6 @@ def one(
     open_drawer(page)
     wait_for(page, "() => document.querySelectorAll('aside .row').length >= 2", "the rows")
     page.wait_for_timeout(500)
-
     rows: dict = {
         "device": page.evaluate("() => document.documentElement.dataset.device"),
         "touch": page.evaluate("() => document.documentElement.hasAttribute('data-touch')"),
@@ -253,7 +229,6 @@ def one(
             "[k, getComputedStyle(document.documentElement).getPropertyValue(k).trim()]))"
         ),
     }
-
     open_drawer(page)
     rows.update(measure(page, CHROME))
     rows.update(measure(page, MARKS))
@@ -264,7 +239,6 @@ def one(
         " return deep.length ? at(deep[0]) - at(rows[0]) : null }"
     )
     shot(page, f"{label}-{name}-tree-{scheme}")
-
     for panel, specs in PANELS.items():
         page.evaluate("(p) => window.ordenApp.workspace.showPanel(p)", panel)
         page.wait_for_timeout(500)
@@ -278,7 +252,6 @@ def one(
             shot(page, f"{label}-{name}-search-{scheme}")
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(400)
-
     page.keyboard.press("Control+o")
     page.wait_for_timeout(400)
     page.keyboard.type(">")
@@ -287,7 +260,6 @@ def one(
     shot(page, f"{label}-{name}-palette-{scheme}")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     shut_drawer(page)
     if page.locator("header .search").count():
         page.click("header .search")
@@ -298,7 +270,6 @@ def one(
     shot(page, f"{label}-{name}-browse-{scheme}")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     open_drawer(page)
     page.wait_for_timeout(200)
     if touch:
@@ -313,7 +284,6 @@ def one(
     shot(page, f"{label}-{name}-context-{scheme}")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     page.evaluate("() => window.ordenApp.settings.show()")
     page.wait_for_selector('[role="region"][aria-label="Settings"]', timeout=15000)
     page.wait_for_timeout(900)
@@ -321,18 +291,14 @@ def one(
     shot(page, f"{label}-{name}-settings-{scheme}")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     context.close()
     return rows
-
 ASIDE = {"device", "touch", "tokens", "tree indent step"}
-
 def cell(seen) -> str:
     if not seen:
         return "-"
     icon = f" i{seen['icon']:g}" if seen.get("icon") is not None else ""
     return f"{seen['w']:g}x{seen['h']:g} f{seen['font']:g}{icon} g{seen['gap']:g} p{seen['pl']:g}"
-
 def report(label: str) -> None:
     runs = {label: json.loads((SHOTS / f"{label}.json").read_text(encoding="utf8"))}
     other = "after" if label == "before" else "before"
@@ -341,21 +307,18 @@ def report(label: str) -> None:
             name: json.loads((SHOTS / f"{name}.json").read_text(encoding="utf8"))
             for name in (("before", "after") if other == "before" else (label, other))
         }
-
     order: list[str] = []
     for one_run in runs.values():
         for profile in one_run.values():
             for key in profile:
                 if key not in ASIDE and key not in order:
                     order.append(key)
-
     for column in [name for name, *_ in PROFILES]:
         print(f"\n### {column}")
         print(f"{'surface':<24}" + "".join(f"{name:<30}" for name in runs))
         for key in order:
             cells = "".join(f"{cell(runs[n].get(column, {}).get(key)):<30}" for n in runs)
             print(f"{key:<24}{cells}")
-
     print("\n### the device, the step per level of the tree, and the scale")
     for column in [name for name, *_ in PROFILES]:
         for name, one_run in runs.items():
@@ -364,5 +327,4 @@ def report(label: str) -> None:
             print(f"{column:<18} {name:<8} {seen.get('device')} {kind}, indent {seen.get('tree indent step')}")
     for name, one_run in runs.items():
         print(name, json.dumps(one_run["phone"]["tokens"]))
-
 sys.exit(run(sys.argv[1] if len(sys.argv) > 1 else "before"))

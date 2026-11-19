@@ -5,32 +5,25 @@ import { request } from './request'
 import type { Effort, ModelInfo } from '../../../ai-providers/src/api'
 
 export const ANTHROPIC_COMPACT_BETA = 'compact-2026-09-04'
-
 type Json = Record<string, unknown>
-
 function record(value: unknown): Json | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Json) : null
 }
-
 function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
-
 function count(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null
 }
-
 function supported(tree: unknown, ...path: string[]): boolean {
   let at: unknown = tree
   for (const key of path) at = record(at)?.[key]
   return record(at)?.supported === true
 }
-
 function rows(body: unknown, key: 'data' | 'models'): Json[] {
   const list = record(body)?.[key]
   return Array.isArray(list) ? list.map(record).filter((one): one is Json => one !== null) : []
 }
-
 export function anthropicModels(body: unknown): ModelInfo[] {
   return rows(body, 'data').flatMap((row) => {
     const id = text(row.id)
@@ -55,7 +48,6 @@ export function anthropicModels(body: unknown): ModelInfo[] {
     ]
   })
 }
-
 export function openaiModels(body: unknown): ModelInfo[] {
   return rows(body, 'data').flatMap((row) => {
     const id = text(row.id)
@@ -63,7 +55,6 @@ export function openaiModels(body: unknown): ModelInfo[] {
     return [{ id, name: id, window: null, efforts: [...SCALE], images: true, fast: true }]
   })
 }
-
 function planEfforts(row: Json): Effort[] {
   const listed = row.supported_reasoning_levels ?? row.supported_reasoning_efforts ?? row.reasoning_efforts
   if (!Array.isArray(listed)) return [...SCALE]
@@ -74,7 +65,6 @@ function planEfforts(row: Json): Effort[] {
       .filter((word): word is Effort => (SCALE as readonly string[]).includes(word)),
   )
 }
-
 export function planModels(body: unknown): ModelInfo[] {
   return rows(body, 'models').flatMap((row) => {
     const id = text(row.slug) || text(row.id)
@@ -92,14 +82,11 @@ export function planModels(body: unknown): ModelInfo[] {
     ]
   })
 }
-
 const LEVELS: readonly Effort[] = ['minimal', 'low', 'medium', 'high']
-
 function geminiEfforts(id: string, thinks: boolean): Effort[] {
   const major = Number(/^gemini-(\d+)/.exec(id)?.[1] ?? 0)
   return thinks && major >= 3 ? ordered(LEVELS) : ['auto']
 }
-
 function geminiModels(body: unknown): ModelInfo[] {
   return rows(body, 'models').flatMap((row) => {
     const id = text(row.name).replace(/^models\//, '')
@@ -122,7 +109,6 @@ function geminiModels(body: unknown): ModelInfo[] {
     ]
   })
 }
-
 export function compatibleModels(body: unknown): ModelInfo[] {
   return rows(body, 'data').flatMap((row) => {
     const id = text(row.id)
@@ -147,14 +133,12 @@ export function compatibleModels(body: unknown): ModelInfo[] {
     ]
   })
 }
-
 export function withLearnt(provider: string, model: ModelInfo): ModelInfo {
   const known = learnt(provider, model.id)
   const refused = new Set(known.refused ?? [])
   const efforts = known.reasons === false ? ['auto' as const] : model.efforts.filter((one) => !refused.has(one))
   return { ...model, efforts: ordered(efforts), window: model.window ?? known.window ?? null }
 }
-
 async function anthropicList(provider: Provider, signal?: AbortSignal): Promise<ModelInfo[]> {
   const found: ModelInfo[] = []
   let after = ''
@@ -174,7 +158,6 @@ async function anthropicList(provider: Provider, signal?: AbortSignal): Promise<
   }
   return found
 }
-
 async function geminiList(provider: Provider, signal?: AbortSignal): Promise<ModelInfo[]> {
   const found: ModelInfo[] = []
   let token = ''
@@ -188,7 +171,6 @@ async function geminiList(provider: Provider, signal?: AbortSignal): Promise<Mod
   }
   return found
 }
-
 export async function catalogue(provider: Provider, signal?: AbortSignal): Promise<ModelInfo[]> {
   if (isLocal(provider.kind)) return []
   if (provider.kind === 'gemini') {
@@ -208,7 +190,6 @@ export async function catalogue(provider: Provider, signal?: AbortSignal): Promi
   const listed = provider.kind === 'chatgpt' ? read : read.sort((a, b) => a.id.localeCompare(b.id))
   return listed.map((one) => withLearnt(provider.id, one))
 }
-
 export function unlisted(provider: Provider, id: string): ModelInfo {
   const keyed = provider.kind === 'openai' || provider.kind === 'chatgpt'
   return withLearnt(provider.id, {
@@ -220,7 +201,6 @@ export function unlisted(provider: Provider, id: string): ModelInfo {
     fast: false,
   })
 }
-
 export function windowIn(said: string): number | null {
   const over = /(\d[\d,]*)\s*tokens?\s*>\s*(\d[\d,]*)/i.exec(said)
   const named = /context (?:length|window)[^\d]{0,40}(\d[\d,]*)/i.exec(said)

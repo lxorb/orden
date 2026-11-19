@@ -3,7 +3,6 @@ import { callerOf } from '../../automation/src/api'
 
 const spaceA = { id: 'a', root: '/s/A', name: 'A' }
 const spaceB = { id: 'b', root: '/s/B', name: 'B' }
-
 const note = (path: string | null, home: string) => ({
   path,
   home,
@@ -11,7 +10,6 @@ const note = (path: string | null, home: string) => ({
   live: { readerAt: null },
   kind: 'note',
 })
-
 const tabs = [
   {
     id: 'ta',
@@ -40,7 +38,6 @@ const tabs = [
   },
 ]
 const moved: string[] = []
-
 vi.mock('../../workspace/src/api', () => ({
   agentMarks: { opened: {}, on: {} },
   openAgentSession: () => undefined,
@@ -59,13 +56,11 @@ vi.mock('../../workspace/src/api', () => ({
     split: () => undefined,
   },
 }))
-
 vi.mock('@orden/contracts', async (original) => ({
   ...(await original<typeof import('@orden/contracts')>()),
   webPages: () => ({ addressOf: () => null }),
   agentTabKindParts: () => ({}),
 }))
-
 vi.mock('../../panes/src/api', () => ({
   views: { of: () => undefined },
   panesIn: () => [{ id: 'p1' }],
@@ -73,9 +68,7 @@ vi.mock('../../panes/src/api', () => ({
 }))
 vi.mock('./docs', () => ({ notes: {} }))
 vi.mock('./tree', () => ({ entryIn: vi.fn(), moveFile: vi.fn() }))
-
 const { workspaceTabs } = await import('./tabs')
-
 const caller = () =>
   callerOf({
     id: 'claude',
@@ -84,22 +77,18 @@ const caller = () =>
     spaces: ['A'],
     mode: 'unsupervised',
   })
-
 const run = (args: Record<string, unknown>) => workspaceTabs({ verb: 'workspace_tabs', caller: caller(), args })
-
 describe('an agent given space A only', () => {
   test('list shows its own space’s tabs alone', async () => {
     const listed = (await run({ op: 'list' })) as { result: { id: string }[] }
     expect(listed.result.map((one) => one.id)).toEqual(['ta'])
   })
-
   test('move answers with its own space’s tabs alone', async () => {
     const answer = (await run({ op: 'move', tab: 'ta', pane: 'p1' })) as {
       result: { id: string }[]
     }
     expect(answer.result.map((one) => one.id)).toEqual(['ta'])
   })
-
   test('arrange single leaves the tabs set aside where they are, and names only its own', async () => {
     moved.length = 0
     const answer = (await run({ op: 'arrange', layout: 'single' })) as {

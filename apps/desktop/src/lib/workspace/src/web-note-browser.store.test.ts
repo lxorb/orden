@@ -3,9 +3,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const SITE = '/space/Site.url'
 const BLANK = '/space/Blank.url'
 const BINARY = '/space/Binary.webloc'
-
 const handed: string[] = []
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: false,
@@ -24,10 +22,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
               : undefined,
     ),
 }))
-
 const { workspace } = await import('./api')
 const { unread } = await import('./notices.svelte')
-
 beforeEach(() => {
   handed.length = 0
   unread.dismiss()
@@ -35,19 +31,16 @@ beforeEach(() => {
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
   workspace.activeSpaceId = 's'
 })
-
 test('a web note in a browser opens its address in a new tab, not in Orden', async () => {
   await workspace.openWeb(SITE)
   expect(handed).toEqual(['https://example.com/site'])
   expect(workspace.tabs).toEqual([])
 })
-
 test('a web note with no address yet opens in Orden, where its bar can take one', async () => {
   await workspace.openWeb(BLANK)
   expect(handed).toEqual([])
   expect(workspace.tabs.map((one) => [one.kind, one.path])).toEqual([['web', BLANK]])
 })
-
 test('a .webloc that says no address opens nothing, and says it could not be read', async () => {
   await workspace.openWeb(BINARY)
   expect(workspace.tabs).toEqual([])

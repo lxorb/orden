@@ -33,10 +33,8 @@ export function relockField(): Field {
     set: (value) => unlocks.setRelock(Number(value)),
   }
 }
-
 function gpuGroup(): Group {
   void gpu.ask()
-
   return {
     title: 'Hardware acceleration',
     ...(gpu.line ? { caption: { text: gpu.line } } : {}),
@@ -54,7 +52,6 @@ function gpuGroup(): Group {
     ],
   }
 }
-
 function privacyGroup(): Group {
   return {
     title: 'Privacy',
@@ -73,11 +70,9 @@ function privacyGroup(): Group {
     ],
   }
 }
-
 function remindersGroup(): Group {
   const exact = method('exactAlarms')
   const ask = method('askExactAlarms')
-
   return {
     title: 'Reminders',
     ...(isDesktop && platform() === 'linux' ? { caption: { text: 'Reminders ring while Orden is open' } } : {}),
@@ -124,7 +119,6 @@ function remindersGroup(): Group {
     ],
   }
 }
-
 function keptGroup(): Group {
   keptForGood.look()
   return {
@@ -142,7 +136,6 @@ function keptGroup(): Group {
     ],
   }
 }
-
 export function generalPane(): Pane {
   return {
     id: 'general',
@@ -340,17 +333,12 @@ export function generalPane(): Pane {
               ],
             },
           ]),
-
       ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
-
       ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
         ? [{ title: 'Terminal', fields: settingFieldsIn('general', 'Terminal') }]
         : []),
-
       ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform()) ? [gpuGroup()] : []),
-
       ...(!__EVEN_PLUGIN__ && isDesktop ? [privacyGroup()] : []),
-
       {
         title: 'Updates',
         fields: [

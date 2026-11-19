@@ -1,15 +1,12 @@
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 OFF = """() => {
   const strip = document.querySelector('[data-strip]')
   const marks = [...strip.querySelectorAll('.pick[data-tab]')].map((pick) => {
@@ -25,7 +22,6 @@ OFF = """() => {
     return mark ? Math.max(Math.abs(one.x - mark.right), Math.abs(one.y - mark.bottom)) : -1
   })
 }"""
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 800}, user_agent=DESKTOP_AGENT)
     DRIVE.open(page)
@@ -35,7 +31,6 @@ def drive(browser: Browser) -> None:
         DRIVE.open_note(page, name)
     page.mouse.move(700, 500)
     page.wait_for_timeout(800)
-
     page.keyboard.down("Alt")
     page.wait_for_timeout(300)
     for digit in ("2", "4", "1", "3"):
@@ -48,5 +43,4 @@ def drive(browser: Browser) -> None:
         elif max(off) > 1 or min(off) < 0:
             wrong(f"Alt+{digit}: the numbers stand off their tabs: {[round(one, 1) for one in off]}")
     page.keyboard.up("Alt")
-
 raise SystemExit(DRIVE.run(drive, "the numbers follow their tabs"))

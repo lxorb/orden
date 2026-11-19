@@ -23,14 +23,12 @@
     onask: (ask: AliasAsk | null) => void
   } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   let options = $state.raw<AliasOptions | null>(null)
   let looking = $state(false)
   let wrong = $state<string | null>(null)
   let prefix = $state('')
   let suffix = $state('')
   let mailbox = $state('')
-
   $effect(() => {
     if (!fresh) return
     let current = true
@@ -54,14 +52,12 @@
       current = false
     }
   })
-
   const cleanPrefix = $derived(
     prefix
       .trim()
       .toLowerCase()
       .replace(/[^a-z0-9._-]/g, ''),
   )
-
   $effect(() => {
     onask(
       options && cleanPrefix !== '' && suffix !== ''
@@ -75,7 +71,6 @@
         : null,
     )
   })
-
   const suffixes = $derived(
     (options?.suffixes ?? []).map((one) => ({
       value: one.value,
@@ -161,19 +156,16 @@
     gap: var(--space-3);
     padding: var(--space-2) var(--space-3);
   }
-
   .label {
     flex: 1;
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .choose > :global(:last-child) {
     flex: none;
     width: 14rem;
     max-width: 60%;
   }
-
   .preview {
     margin: 0;
     padding: var(--space-2) var(--space-3);
@@ -182,7 +174,6 @@
     color: var(--text-strong);
     overflow-wrap: anywhere;
   }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);

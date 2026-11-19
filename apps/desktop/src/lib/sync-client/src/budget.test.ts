@@ -5,7 +5,6 @@ afterEach(() => {
   vi.unstubAllGlobals()
   forgetWindow()
 })
-
 function locks(others: number) {
   const held: { name: string; mode: string }[] = Array.from({ length: others }, () => ({
     name: 'orden:window',
@@ -19,21 +18,17 @@ function locks(others: number) {
     query: () => Promise.resolve({ held, pending: [] }),
   }
 }
-
 describe('letting words go', () => {
   test('only while this is the only window, and never where the browser cannot say', async () => {
     vi.stubGlobal('navigator', { locks: locks(0) })
     expect(await aloneHere()).toBe(true)
-
     forgetWindow()
     vi.stubGlobal('navigator', { locks: locks(1) })
     expect(await aloneHere()).toBe(false)
-
     forgetWindow()
     vi.stubGlobal('navigator', { userAgent: '' })
     expect(await aloneHere()).toBe(false)
   })
-
   test('a window without the engine is counted the moment it opens', async () => {
     const shared = locks(0)
     vi.stubGlobal('navigator', { locks: shared })
@@ -41,7 +36,6 @@ describe('letting words go', () => {
     forgetWindow()
     expect(await aloneHere()).toBe(false)
   })
-
   test('within a share of what the site may keep, halved while the storage is nearly full', async () => {
     const estimate = (usage: number, quota: number) =>
       vi.stubGlobal('navigator', { storage: { estimate: () => Promise.resolve({ usage, quota }) } })

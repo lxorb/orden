@@ -12,48 +12,37 @@ export interface ScannedTask {
   description?: string
   comments?: number
 }
-
 export interface Stamp {
   size: number
   mtime: number
   ctime: number
 }
-
 export interface ScannedRows {
   front: string | null
   tasks: ScannedTask[]
 }
-
 const MOST_TASKS = 5000
-
 export const LONGEST_TASK = 2000
-
 export const LONGEST_DESCRIPTION = 300
-
 const LIST_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])(?:[ \t]+|$)/
-
 interface Open {
   indent: number
   task: ScannedTask | null
   told: boolean
 }
-
 export function scanRows(content: string): ScannedRows {
   const block = frontMatterBlock(content)
   const front = block ? content.slice(block.body.from, block.body.to).replace(/\r?\n$/, '') : null
   const wordsFrom = block ? lineOf(content, block.close) + 1 : 0
-
   const tasks: ScannedTask[] = []
   const section: { level: number; text: string }[] = []
   const open: Open[] = []
   const lines = content.split('\n')
   const code = new CodeBlocks()
   const heads = new Map(headingRows(content).map((one) => [one.line, one]))
-
   for (let index = 0; index < lines.length; index++) {
     const line = (lines[index] ?? '').replace(/\r$/, '')
     if (index < wordsFrom || code.line(line) !== WORDS) continue
-
     const heading = heads.get(index)
     if (heading) {
       while ((section.at(-1)?.level ?? 0) >= heading.level) section.pop()
@@ -61,7 +50,6 @@ export function scanRows(content: string): ScannedRows {
       open.length = 0
       continue
     }
-
     const task = taskAt(line)
     const scanned =
       task && tasks.length < MOST_TASKS
@@ -76,17 +64,14 @@ export function scanRows(content: string): ScannedRows {
     if (scanned) tasks.push(scanned)
     under(open, line, task !== null, scanned)
   }
-
   return { front, tasks }
 }
-
 function under(open: Open[], line: string, isTask: boolean, task: ScannedTask | null) {
   const words = line.trim()
   if (!words) return
   const indent = line.length - line.trimStart().length
   while ((open.at(-1)?.indent ?? -1) >= indent) open.pop()
   const owner = open.at(-1)
-
   if (isTask || LIST_ITEM.test(line)) {
     if (owner?.task) {
       owner.told = true
@@ -97,7 +82,6 @@ function under(open: Open[], line: string, isTask: boolean, task: ScannedTask | 
     owner.task.description = clipped(words, LONGEST_DESCRIPTION)
   }
 }
-
 function lineOf(content: string, at: number): number {
   let lines = 0
   for (let found = content.indexOf('\n'); found !== -1 && found < at; found = content.indexOf('\n', found + 1)) {
@@ -105,7 +89,6 @@ function lineOf(content: string, at: number): number {
   }
   return lines
 }
-
 function clipped(text: string, most: number): string {
   if (text.length <= most) return text
   return Array.from(text).slice(0, most).join('')

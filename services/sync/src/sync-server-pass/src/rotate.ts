@@ -27,17 +27,13 @@ import { fromOf, tellVault } from './tell'
 import { jsonOf, optionalIn } from './trust-body'
 
 export const rotations = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 const AT_ONCE = 1000
-
 const MINE = `exists (select 1 from pass_vaults where id = ?1 and seq = ${SEQ} and key_version = ?2)`
-
 interface Resealed {
   key: string
   body: string
   rev: number
 }
-
 function entriesIn<T>(
   value: unknown,
   most: number,
@@ -56,11 +52,9 @@ function entriesIn<T>(
   }
   return kept
 }
-
 function keyIn(value: unknown): string | null {
   return isSealed(value, MOST_KEY_BYTES) ? value : null
 }
-
 function resealedIn(value: unknown): Resealed | null {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return null
   const { key, body, rev } = value as Record<string, unknown>
@@ -69,12 +63,10 @@ function resealedIn(value: unknown): Resealed | null {
   }
   return rev < 1 ? null : { key, body, rev }
 }
-
 function emailIn(raw: string): string | null {
   const email = normaliseEmail(raw)
   return isEmail(email) ? email : null
 }
-
 rotations.post('/vaults/:id/rotate', async (context) => {
   const user = context.get('user')
   const id = context.req.param('id')
@@ -95,14 +87,12 @@ rotations.post('/vaults/:id/rotate', async (context) => {
     proof === undefined
   )
     return context.json({ error: NOT_A_KEY }, 400)
-
   const held = await activeIn(context.env, id, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'manager')) return context.json({ error: NOT_YOUR_ROLE }, 403)
   if (held.rev !== rev || held.key_version + 1 !== keyVersion) {
     return context.json({ error: STALE, current: vaultRowOf(held, user.id) }, 409)
   }
-
   const db = context.env.DB
   const [owner, { results: live }] = await Promise.all([
     db
@@ -119,7 +109,6 @@ rotations.post('/vaults/:id/rotate', async (context) => {
   }
   if (sealed.size !== live.length || !live.every((one) => sealed.get(one.id)?.rev === one.rev))
     return context.json({ error: NOT_EVERYONE }, 409)
-
   const peopleJson = JSON.stringify(Object.fromEntries(people))
   const revs = JSON.stringify(Object.fromEntries(live.map((one) => [one.id, one.rev])))
   const pieces = chunks(

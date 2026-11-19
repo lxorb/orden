@@ -8,7 +8,6 @@ const said = vi.hoisted(() => {
   return { word: '', spoken, speak: (word: string) => speak(word) }
 })
 const pushed: string[] = []
-
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
   frameWord: () => Promise.resolve(said.word),
@@ -34,15 +33,12 @@ vi.mock('../../tasks-model/src/api', async (original) => ({
   ...(await original<typeof import('../../tasks-model/src/api')>()),
   listed: () => ({ total: 0, tasks: [] }),
 }))
-
 const { watchWidgets } = await import('./widgets.svelte')
-
 test('rows handed over with no word are handed again once it is said', async () => {
   const stop = watchWidgets()
   flushSync()
   await idle(20)
   expect(pushed).toEqual([])
-
   said.word = 'word'
   said.speak('word')
   await vi.waitFor(() => expect(pushed).toEqual(['word']))

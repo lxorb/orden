@@ -9,9 +9,7 @@
   forget(OUTSIDE_FOLDER)
   const folder = isRecord(said) && isString(said.folder) ? said.folder : ''
   const left = isRecord(said) && Array.isArray(said.left) ? said.left.filter(isString) : []
-
   let showing = $state(folder !== '')
-
   const words = $derived(
     [
       `Orden no longer opens ${folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.`,
@@ -56,7 +54,6 @@
     background: var(--surface-3);
     box-shadow: var(--shadow-lg);
   }
-
   p {
     margin: 0;
     font-family: var(--font-ui);
@@ -64,12 +61,10 @@
     color: var(--text);
     overflow-wrap: anywhere;
   }
-
   .actions {
     display: flex;
     gap: var(--space-3);
   }
-
   button {
     padding: 0;
     border: none;
@@ -78,11 +73,9 @@
     font-size: var(--text-sm);
     cursor: default;
   }
-
   .quiet {
     color: var(--muted);
   }
-
   .link {
     color: var(--accent);
   }

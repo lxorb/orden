@@ -8,7 +8,6 @@ import { hubs } from './hub-fakes'
 
 const T0 = Date.UTC(2026, 9, 7, 12)
 const at = (ms: number) => vi.setSystemTime(T0 + ms)
-
 let env: TestEnv
 let owner: string
 let writer: string
@@ -18,7 +17,6 @@ let chat: string
 let logs: ReturnType<typeof chatLogs>
 let counter = 0
 const id = (prefix: string) => `${prefix}${String(++counter).padStart(8, '0')}`
-
 async function say(token: string, body: string, extra: Record<string, unknown> = {}) {
   const message = id('msg')
   const answer = await call(env, `/v2/chats/${chat}/events`, {
@@ -28,7 +26,6 @@ async function say(token: string, body: string, extra: Record<string, unknown> =
   expect(resultsOf(answer.json)?.results[0]).toHaveProperty('seq')
   return message
 }
-
 async function chatsTurned(token: string, on: boolean) {
   await call(env, '/v1/settings', {
     method: 'PATCH',
@@ -36,12 +33,10 @@ async function chatsTurned(token: string, on: boolean) {
     body: { hiddenKinds: on ? ['experimental', 'experimental-chats'] : null },
   })
 }
-
 async function connector(token: string, readOnly = false, chats = true): Promise<string> {
   await chatsTurned(token, chats)
   return (await call(env, '/v1/mcp/token', { token, body: { readOnly } })).json.token
 }
-
 async function tool(key: string, name: string, args: Record<string, unknown> = {}) {
   const response = await call<RpcView>(env, '/mcp', {
     token: key,
@@ -49,14 +44,12 @@ async function tool(key: string, name: string, args: Record<string, unknown> = {
   })
   return response.json.result.content[0]?.text ?? ''
 }
-
 async function state(token: string) {
   const { json } = await call<{
     messages: { id: string; body: string; via?: { agent: string } }[]
   }>(env, `/v2/chats/${chat}/state`, { token })
   return json.messages
 }
-
 beforeEach(async () => {
   vi.useFakeTimers({ toFake: ['Date'] })
   at(0)
@@ -64,7 +57,6 @@ beforeEach(async () => {
   logs = chatLogs(env)
   env.CHATS = logs.CHATS
   env.HUB = hubs(env).HUB
-
   owner = await signIn(env, 'owner@example.com')
   await call(env, '/v1/me', { method: 'PATCH', token: owner, body: { name: 'Emil' } })
   space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Thesis' } })).json.space.id
@@ -79,7 +71,6 @@ beforeEach(async () => {
   await call(env, '/v1/me', { method: 'PATCH', token: writer, body: { name: 'Lucile' } })
   reader = await signIn(env, 'mia@example.com')
   at(100_000)
-
   chat = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } })).json.chat
   await call(env, `/v1/spaces/${space}/notes`, {
     token: owner,
@@ -90,12 +81,10 @@ beforeEach(async () => {
   at(102_000)
   await fire(logs.of(chat))
 })
-
 afterEach(() => {
   vi.useRealTimers()
   env.close()
 })
-
 describe('chats through the connector', () => {
   test('a chat the reader shut to agents is neither listed, read, found nor posted in', async () => {
     const key = await connector(owner)
@@ -111,7 +100,6 @@ describe('chats through the connector', () => {
     expect(await tool(key, 'post_message', { chat, text: 'sneaked in' })).not.toMatch(/^Posted/)
     expect(await state(owner)).toEqual(before)
   })
-
   test('are neither listed nor run while chats are off, and come back when on', async () => {
     const key = await connector(owner, false, false)
     const names = async () => {
@@ -137,12 +125,10 @@ describe('chats through the connector', () => {
       expect(response.json.result.content[0]?.text).toContain('Chats are turned off')
     }
     expect(await state(owner)).toEqual(before)
-
     await chatsTurned(owner, true)
     expect(await names()).toEqual(expect.arrayContaining(chatTools))
     expect(await tool(key, 'list_chats')).toContain('#thesis')
   })
-
   test('stay off for an account that had chats on before they were experimental, or without the experimental switch', async () => {
     const key = await connector(owner, false, false)
     for (const hiddenKinds of [['shown-chats'], ['experimental-chats'], ['experimental']]) {
@@ -150,7 +136,6 @@ describe('chats through the connector', () => {
       expect(await tool(key, 'list_chats')).toContain('Chats are turned off')
     }
   })
-
   test('in a folder kept from agents are neither listed, read, searched nor posted in', async () => {
     chat = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } })).json.chat
     await call(env, `/v1/spaces/${space}/notes`, {
@@ -166,7 +151,6 @@ describe('chats through the connector', () => {
     })
     const key = await connector(owner)
     const before = await state(owner)
-
     expect(await tool(key, 'list_chats')).not.toContain('#secret')
     expect(await tool(key, 'list_chats')).toContain('#thesis')
     expect(await tool(key, 'read_chat', { chat: 'secret' })).not.toContain('the secret words')
@@ -175,7 +159,6 @@ describe('chats through the connector', () => {
     expect(await tool(key, 'post_message', { chat, text: 'sneaked in' })).not.toContain('Posted')
     expect(await state(owner)).toEqual(before)
   })
-
   test('are listed with the tools', async () => {
     const response = await call<RpcView>(env, '/mcp', {
       token: await connector(owner),
@@ -185,14 +168,12 @@ describe('chats through the connector', () => {
     expect(names).toEqual(expect.arrayContaining(['list_chats', 'read_chat', 'search_chats', 'post_message', 'react']))
     expect(names).not.toContain('draft_message')
   })
-
   test('are listed by their pointers’ names and their spaces', async () => {
     const said = await tool(await connector(owner), 'list_chats')
     expect(said).toMatch(new RegExp(`^#thesis · ${chat} · Thesis · 3 people`))
     expect(await tool(await connector(owner), 'list_chats', { unread: true })).toContain('· unread')
     expect(await tool(await connector(writer), 'list_chats', { unread: true })).toBe('No chats.')
   })
-
   test('read with somebody else’s words marked and the account’s own not', async () => {
     const said = await tool(await connector(owner), 'read_chat', { chat: '#thesis' })
     const lines = said.split('\n')
@@ -204,7 +185,6 @@ describe('chats through the connector', () => {
     expect(said.match(/<\/untrusted>/g)).toHaveLength(1)
     expect(said).toContain('&lt;/untrusted>')
   })
-
   test('read before a message, and a message’s replies', async () => {
     const key = await connector(owner)
     const first = (await state(owner)).at(-1)?.id ?? ''
@@ -217,7 +197,6 @@ describe('chats through the connector', () => {
     expect(replies).not.toContain('Draft of chapter')
     expect(await tool(key, 'read_chat', { chat: 'nowhere' })).toMatch(/^No chat called nowhere/)
   })
-
   test('a chat its reader protected is neither listed, read, searched nor written in', async () => {
     await call(env, `/v1/protected/spaces/${space}`, {
       method: 'PUT',
@@ -231,10 +210,8 @@ describe('chats through the connector', () => {
     expect(await tool(key, 'post_message', { chat, text: 'planted' })).toMatch(/^No chat called /)
     expect(await tool(key, 'react', { chat, message: 'x', emoji: '👍' })).toMatch(/^No chat called /)
     expect(JSON.stringify(await state(owner))).not.toContain('planted')
-
     expect(await tool(await connector(writer), 'list_chats')).toContain('#thesis')
   })
-
   test('searched with the search language', async () => {
     const said = await tool(await connector(owner), 'search_chats', { query: 'chapter from:me' })
     expect(said).toMatch(/^- #thesis · /)
@@ -244,7 +221,6 @@ describe('chats through the connector', () => {
       'A search is at most 1000 characters.',
     )
   })
-
   test('a null limit reads as left out, not as one', async () => {
     await say(writer, 'The chapter reads well')
     at(104_000)
@@ -257,7 +233,6 @@ describe('chats through the connector', () => {
     expect(found).toContain('Draft of chapter 3 is up')
     expect(found).toContain('The chapter reads well')
   })
-
   test('searched by day on the asker’s clock, as the app asks', async () => {
     at(8 * 3600_000)
     await say(owner, 'Late chapter notes')
@@ -276,7 +251,6 @@ describe('chats through the connector', () => {
     expect(await tool(key, 'search_chats', { query: 'late chapter on:today' })).toContain('Late chapter notes')
     expect(await tool(key, 'search_chats', { query: 'late chapter on:2026-10-07' })).not.toContain('Late chapter notes')
   })
-
   test('a post and a reaction land in the log as the connector’s', async () => {
     const key = await connector(owner)
     const said = await tool(key, 'post_message', { chat: 'thesis', text: 'Looks good @Lucile' })
@@ -284,11 +258,9 @@ describe('chats through the connector', () => {
     const posted = (await state(owner))[0]
     expect(posted).toMatchObject({ body: 'Looks good @Lucile', via: { agent: 'Orden connector' } })
     expect(posted).toHaveProperty('mentions', [expect.stringMatching(/^user:/)])
-
     expect(await tool(key, 'react', { chat, message: posted?.id ?? '', emoji: '👍' })).toMatch(/^Reacted 👍/)
     expect((await state(owner))[0]).toHaveProperty('reactions.👍', [expect.stringMatching(/^user:/)])
   })
-
   test('what the chat would not take is said plainly, and nothing of it lands', async () => {
     const key = await connector(owner)
     const before = await state(owner)
@@ -304,14 +276,12 @@ describe('chats through the connector', () => {
     }
     expect(await state(owner)).toEqual(before)
   })
-
   test('a token that may only read, and a reader of the space, say nothing', async () => {
     expect(await tool(await connector(owner, true), 'post_message', { chat, text: 'hi' })).toMatch(/may only read/)
     expect(await tool(await connector(reader), 'post_message', { chat, text: 'hi' })).toBe('You may only read #thesis.')
     expect(await tool(await connector(reader), 'read_chat', { chat })).toContain('#thesis')
     expect((await state(owner)).map((one) => one.body)).not.toContain('hi')
   })
-
   test('a name two chats hold is asked about, and nothing lands in either', async () => {
     const other = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Private' } })).json.space.id
     const second = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space: other } })).json.chat
@@ -321,7 +291,6 @@ describe('chats through the connector', () => {
     })
     const message = (await state(owner))[0]?.id ?? ''
     const key = await connector(owner)
-
     for (const [name, args] of [
       ['post_message', { chat: 'thesis', text: 'meant for one of them' }],
       ['read_chat', { chat: '#Thesis' }],
@@ -338,13 +307,11 @@ describe('chats through the connector', () => {
     const mine = chat
     chat = second
     expect(await state(owner)).toEqual([])
-
     expect(await tool(key, 'post_message', { chat: second, text: 'for Private' })).toMatch(/^Posted in #thesis/)
     expect((await state(owner)).map((one) => one.body)).toEqual(['for Private'])
     chat = mine
     expect((await state(owner)).map((one) => one.body)).not.toContain('for Private')
   })
-
   test('two of one name in one space are asked about too', async () => {
     const twin = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } })).json.chat
     await call(env, `/v1/spaces/${space}/notes`, {
@@ -356,7 +323,6 @@ describe('chats through the connector', () => {
     expect(said).toContain(twin)
     expect(said).not.toContain('Draft of chapter 3')
   })
-
   test('a name is resolved over every chat, however far down the listing', async () => {
     const pointer = env.db.prepare(
       `insert into notes (id, space_id, path, seq, updated_at, size, hash)
@@ -370,14 +336,12 @@ describe('chats through the connector', () => {
     pointer.run('file-twin', space, 'old/thesis.chat')
     made.run('c_twin', space, 'file-twin', 1)
     const key = await connector(owner)
-
     const said = await tool(key, 'post_message', { chat: 'thesis', text: 'to which?' })
     expect(said).toContain('2 chats are called')
     expect(said).toContain('c_twin')
     expect((await state(owner)).map((one) => one.body)).not.toContain('to which?')
     expect(await tool(key, 'read_chat', { chat: 'c_twin' })).not.toContain('No chat called')
   })
-
   test('an account of more chats than one statement may bind reaches them all', async () => {
     for (let at = 0; at < 101; at++) {
       const made = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } })).json.chat
@@ -392,7 +356,6 @@ describe('chats through the connector', () => {
     expect(listed).toContain('#c0')
     expect(listed).toContain('#c100')
     expect(await tool(key, 'read_chat', { chat: 'thesis' })).toContain('Draft of chapter 3')
-
     const { count, sql } = env.widest()
     expect(count, sql.replace(/\s+/g, ' ').trim()).toBeLessThanOrEqual(MOST_BOUND)
   })

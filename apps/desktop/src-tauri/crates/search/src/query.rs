@@ -12,7 +12,6 @@ pub enum Unit {
     #[serde(rename = "task-done")]
     TaskDone,
 }
-
 #[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum Compare {
@@ -26,7 +25,6 @@ pub enum Compare {
     Gte,
     Range,
 }
-
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Query {

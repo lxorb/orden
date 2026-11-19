@@ -4,11 +4,9 @@ import { callbackKind, isFileUri, isOrdenUri, readUri, withOutcome } from './uri
 describe('reading a link', () => {
   test('takes the action and the arguments', () => {
     const link = readUri('orden://open?path=notes/Plan.md&heading=Later')
-
     expect(link?.action).toBe('open')
     expect(link?.args).toEqual({ path: 'notes/Plan.md', heading: 'Later' })
   })
-
   test.each([
     ['orden:open?path=A.md', 'open'],
     ['orden:///open?path=A.md', 'open'],
@@ -19,19 +17,15 @@ describe('reading a link', () => {
   ])('reads %s, in any spelling of the scheme, as %s', (uri, action) => {
     expect(readUri(uri)?.action).toBe(action)
   })
-
   test('reads no link under the name before the rename', () => {
     expect(readUri('nib://open?path=A.md')).toBeNull()
     expect(isOrdenUri('NIB://Open')).toBe(false)
   })
-
   test('undoes the encoding a path with a space in it needs', () => {
     expect(readUri('orden://open?path=day%20job%2FPlan.md')?.args.path).toBe('day job/Plan.md')
   })
-
   test('takes the callbacks out of the arguments', () => {
     const link = readUri('orden://new?name=Idea&x-success=https://example.com/done&x-error=orden://open')
-
     expect(link?.args).toEqual({ name: 'Idea' })
     expect(link?.callbacks).toEqual({
       success: 'https://example.com/done',
@@ -39,11 +33,9 @@ describe('reading a link', () => {
       cancel: null,
     })
   })
-
   test('keeps the first of two arguments that say the same thing', () => {
     expect(readUri('orden://open?path=A.md&path=B.md')?.args.path).toBe('A.md')
   })
-
   test.each([
     'https://example.com',
     'obsidian://open?vault=x',
@@ -55,14 +47,12 @@ describe('reading a link', () => {
   ])('is nothing for %s, not ours or not a word', (uri) => {
     expect(readUri(uri)).toBeNull()
   })
-
   test('says which strings are ours at all', () => {
     expect(isOrdenUri('orden://open')).toBe(true)
     expect(isOrdenUri(' web+orden://open ')).toBe(true)
     expect(isOrdenUri('file:///etc/passwd')).toBe(false)
   })
 })
-
 describe('where a link may go afterwards', () => {
   test.each([
     ['https://example.com/done', 'external'],
@@ -81,7 +71,6 @@ describe('where a link may go afterwards', () => {
     expect(callbackKind(url)).toBe(kind)
   })
 })
-
 describe('writing the outcome onto a callback', () => {
   test.each<[string, Record<string, string>, string]>([
     ['https://example.com/done', { path: 'A.md' }, 'https://example.com/done?path=A.md'],
@@ -96,7 +85,6 @@ describe('writing the outcome onto a callback', () => {
     expect(withOutcome(url, said)).toBe(written)
   })
 })
-
 describe('a file the Finder opened', () => {
   test('is a file, not a link', () => {
     expect(isFileUri('file:///Users/me/Notes/Idea.md')).toBe(true)

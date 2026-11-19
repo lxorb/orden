@@ -17,17 +17,14 @@
     onclose,
     onsaved,
   }: { tab: Tab; anchor: DOMRect | null; onclose: () => void; onsaved?: (() => void) | undefined } = $props()
-
   const MOST_SHOWN = 8
   const WIDTH = 288
   const GAP = 6
   const EDGE = 8
-
   // svelte-ignore state_referenced_locally
   const title = tab.kind === 'web' ? webPages().of(tab.id).title : undefined
   // svelte-ignore state_referenced_locally
   let name = $state(offeredName(tab.note, title))
-
   const places = placesFor(workspace.tree, workspace.shownSpaces, workspace.activeSpace?.root ?? null, canWriteAt)
   const home = workspace.spaces.find((one) => one.id === workspace.spaceOf(tab.note))?.root
   let place = $state(startingPlace(places, home ?? null))
@@ -36,7 +33,6 @@
   let query = $state('')
   let cursor = $state(0)
   const matches = $derived(choosing ? rank(query.trim(), places, (one) => one.label).slice(0, MOST_SHOWN) : [])
-
   const at = $derived.by(() => {
     const left = anchor ? anchor.left : (innerWidth - WIDTH) / 2
     return {
@@ -44,20 +40,16 @@
       left: Math.max(EDGE, Math.min(left, innerWidth - WIDTH - EDGE)),
     }
   })
-
   let bubble = $state<HTMLElement>()
   onMount(() => overlays.show(onclose, () => [bubble]))
-
   function pick(index = cursor) {
     const chosen = matches[index]
     if (!chosen) return
-
     place = chosen
     choosing = false
     query = ''
     void tick().then(() => named?.focus())
   }
-
   function onListKey(event: KeyboardEvent) {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
@@ -68,7 +60,6 @@
       pick()
     }
   }
-
   function save(event: SubmitEvent) {
     event.preventDefault()
     const folder = place?.id
@@ -155,24 +146,20 @@
   .scrim {
     --scrim-z: var(--z-menu);
   }
-
   .bubble {
     position: fixed;
     z-index: var(--z-menu);
     padding: var(--space-3);
     transform-origin: top left;
   }
-
   form {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .where {
     gap: var(--row-gap);
   }
-
   .chevron {
     width: 12px;
     height: 12px;
@@ -184,13 +171,11 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .found {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-
   .space {
     display: grid;
     place-items: center;
@@ -201,7 +186,6 @@
     font-weight: var(--weight-strong);
     color: var(--muted);
   }
-
   .row {
     display: flex;
     justify-content: flex-end;

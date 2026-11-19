@@ -14,7 +14,6 @@ const entry = (patch: Record<string, unknown> = {}) => ({
   palettes: { light: { '--bg': '#faf6ee' }, dark: {} },
   ...patch,
 })
-
 describe('reading the catalogue', () => {
   test('takes an entry that says everything it has to', () => {
     const [theme] = readIndex({ themes: [entry()] })
@@ -22,7 +21,6 @@ describe('reading the catalogue', () => {
     expect(theme?.variants).toEqual(['light'])
     expect(theme?.palettes.light).toEqual({ '--bg': '#faf6ee' })
   })
-
   test('carries the syntax colours a theme states, so a card shows the fence it will get', () => {
     const [theme] = readIndex({
       themes: [
@@ -37,7 +35,6 @@ describe('reading the catalogue', () => {
     expect(theme?.palettes.light['--syntax-number']).toBe('#8a4b00')
     expect(theme?.palettes.dark['--syntax-number']).toBe('#ffc861')
   })
-
   test('drops an entry with nothing to show', () => {
     for (const patch of [
       { id: 'Warm Paper' },
@@ -54,26 +51,22 @@ describe('reading the catalogue', () => {
       expect(readIndex({ themes: [entry(patch)] }), JSON.stringify(patch)).toEqual([])
     }
   })
-
   test('keeps the entries around a bad one', () => {
     const themes = readIndex({
       themes: [entry({ id: 'a' }), null, 'nonsense', entry({ id: 'b' }), { id: 'c' }],
     })
     expect(themes.map((one) => one.id)).toEqual(['a', 'b'])
   })
-
   test('keeps the first of two entries sharing an id', () => {
     const themes = readIndex({ themes: [entry({ name: 'First' }), entry({ name: 'Second' })] })
     expect(themes).toHaveLength(1)
     expect(themes[0]?.name).toBe('First')
   })
-
   test('a body that is not a catalogue reads as an empty one', () => {
     for (const body of [null, 42, 'themes', [], {}, { themes: {} }, { themes: null }]) {
       expect(readIndex(body), JSON.stringify(body)).toEqual([])
     }
   })
-
   test('fills in what an entry may leave out', () => {
     const [theme] = readIndex({
       themes: [{ id: 'a', name: 'A', author: 'B', version: '1.0.0', variants: ['dark'] }],
@@ -84,7 +77,6 @@ describe('reading the catalogue', () => {
     expect(theme?.updated).toBe('')
     expect(theme?.palettes).toEqual({ light: {}, dark: {} })
   })
-
   test('drops a tag or a palette entry that is not one', () => {
     const [theme] = readIndex({
       themes: [
@@ -101,7 +93,6 @@ describe('reading the catalogue', () => {
     expect(theme?.palettes.light).toEqual({ '--bg': '#fff' })
     expect(theme?.palettes.dark).toEqual({})
   })
-
   test('drops a palette value that would write a rule of its own', () => {
     const [theme] = readIndex({
       themes: [
@@ -126,7 +117,6 @@ describe('reading the catalogue', () => {
       '--danger': '#f2555a',
     })
   })
-
   test('drops a palette value that would swallow the cards after it', () => {
     const [theme] = readIndex({
       themes: [
@@ -144,7 +134,6 @@ describe('reading the catalogue', () => {
     })
     expect(theme?.palettes.light).toEqual({ '--font-content': `'Half (', serif` })
   })
-
   test('keeps a font stack, which is the one token that is a sentence', () => {
     const stack = `'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif`
     const [theme] = readIndex({
@@ -152,20 +141,17 @@ describe('reading the catalogue', () => {
     })
     expect(theme?.palettes.light['--font-content']).toBe(stack)
   })
-
   test('drops a version that is not three numbers', () => {
     for (const version of ['1.0', 'next', '1.0.0-beta', '1.0.0 */ x', '']) {
       expect(readIndex({ themes: [entry({ version })] }), version).toEqual([])
     }
     expect(readIndex({ themes: [entry({ version: '10.2.30' })] })).toHaveLength(1)
   })
-
   test('drops a date that is not one, so newest stays newest', () => {
     expect(readIndex({ themes: [entry({ updated: 'yesterday' })] })[0]?.updated).toBe('')
     expect(readIndex({ themes: [entry({ updated: '2026-9-7' })] })[0]?.updated).toBe('')
   })
 })
-
 describe('which version is newer', () => {
   test('compares the parts as numbers', () => {
     expect(isNewer('1.10.0', '1.9.0')).toBe(true)
@@ -173,11 +159,9 @@ describe('which version is newer', () => {
     expect(isNewer('2.0.0', '1.99.99')).toBe(true)
     expect(isNewer('1.0.1', '1.0.0')).toBe(true)
   })
-
   test('the same version is not newer', () => {
     expect(isNewer('1.2.3', '1.2.3')).toBe(false)
   })
-
   test('a version nobody can read is behind one anybody can', () => {
     expect(isNewer('next', '1.0.0')).toBe(false)
     expect(isNewer('1.0.0', 'next')).toBe(true)

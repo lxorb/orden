@@ -5,7 +5,6 @@ const world = vi.hoisted(() => ({
   trusts: true,
   asked: 0,
 }))
-
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     wordsNow: () => {
@@ -42,47 +41,34 @@ vi.mock('../../platform/src/api', async (original) => ({
   imagePath: () => null,
 }))
 vi.mock('../../platform/src/tauri', () => ({ invoke: () => Promise.resolve(''), isNative: false }))
-
 const { openTarget, renderOptions } = await import('./context')
-
 const open = (path: string | null) => ({ doc: '# Plan', name: 'Plan.md', path, note: {} })
-
 test('the open note is read after everything holding words of its own has handed them over', () => {
   world.active = open('Notes/plan.canvas')
   const before = world.asked
-
   openTarget()
-
   expect(world.asked).toBe(before + 1)
 })
-
 describe('the render options for the open note', () => {
   test('show its HTML as characters when it is somebody else’s', async () => {
     world.active = open('Shared/plan.md')
     world.trusts = false
-
     expect((await renderOptions(openTarget())).escapeHtml).toBe(true)
   })
-
   test('find a picture where the note shows it, and leave one nowhere as written', async () => {
     world.active = open('/space/Notes/Day/plan.md')
     const { resolveImage } = await renderOptions(openTarget())
-
     expect(resolveImage?.('attachments/cat.png')).toBe('/space/attachments/cat.png')
     expect(resolveImage?.('gone.png')).toBe('gone.png')
   })
-
   test('leave it markup when it is the reader’s own', async () => {
     world.active = open('Notes/plan.md')
     world.trusts = true
-
     expect((await renderOptions(openTarget())).escapeHtml).toBe(false)
   })
-
   test('look a picture up by the name it has, not as the page writes it', async () => {
     world.active = open('Notes/plan.md')
     world.trusts = true
-
     expect((await renderOptions(openTarget())).resolveImage?.('R&amp;D.png')).toBe('/space/Notes/R&D.png')
   })
 })

@@ -5,7 +5,6 @@
   import { RELEASES_URL } from './links'
 
   const { version, notes, onclose }: { version: string; notes: string; onclose: () => void } = $props()
-
   const shown = $derived(renderMarkdown(notes, { escapeHtml: true }))
 </script>
 
@@ -28,22 +27,18 @@
     color: var(--text);
     overflow-wrap: anywhere;
   }
-
   .notes :global(h3) {
     margin: var(--space-3) 0 var(--space-1);
     font-size: var(--text-sm);
     color: var(--muted-strong);
   }
-
   .notes :global(p) {
     margin: 0 0 var(--space-2);
   }
-
   .notes :global(ul) {
     margin: 0;
     padding-inline-start: 1.2em;
   }
-
   .notes :global(li) {
     margin-bottom: var(--space-1);
   }

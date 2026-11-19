@@ -9,7 +9,6 @@ pub const NOT_A_REQUEST: i64 = -32600;
 pub const NO_SUCH_METHOD: i64 = -32601;
 pub const BAD_PARAMS: i64 = -32602;
 pub const BUSY: i64 = -32000;
-
 #[derive(Debug, PartialEq)]
 pub enum Message {
     Request {
@@ -23,14 +22,12 @@ pub enum Message {
     },
     Answer,
 }
-
 #[derive(Debug, PartialEq)]
 pub struct Unreadable {
     pub id: Value,
     pub code: i64,
     pub message: &'static str,
 }
-
 pub fn read(line: &str) -> Result<Message, Unreadable> {
     let refused = |id: Value, code, message| Unreadable { id, code, message };
     let value: Value =
@@ -72,7 +69,6 @@ pub fn read(line: &str) -> Result<Message, Unreadable> {
         )),
     }
 }
-
 pub fn next_line(input: &mut impl BufRead) -> Option<String> {
     let mut bytes = Vec::new();
     loop {
@@ -88,26 +84,20 @@ pub fn next_line(input: &mut impl BufRead) -> Option<String> {
         }
     }
 }
-
 pub fn answer(id: &Value, result: Value) -> Value {
     json!({ "jsonrpc": "2.0", "id": id, "result": result })
 }
-
 pub fn failure(id: &Value, code: i64, message: &str) -> Value {
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } })
 }
-
 pub fn notification(method: &str, params: Value) -> Value {
     json!({ "jsonrpc": "2.0", "method": method, "params": params })
 }
-
 pub struct Out<W: Write + Send>(Mutex<W>);
-
 impl<W: Write + Send> Out<W> {
     pub fn new(to: W) -> Self {
         Out(Mutex::new(to))
     }
-
     pub fn send(&self, message: &Value) {
         let mut line = message.to_string();
         line.push('\n');
@@ -115,7 +105,6 @@ impl<W: Write + Send> Out<W> {
         let _ = to.write_all(line.as_bytes()).and_then(|()| to.flush());
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -142,7 +131,6 @@ mod tests {
             Ok(Message::Answer)
         );
     }
-
     #[test]
     fn what_is_not_a_request_is_said_and_odd_params_or_blank_lines_pass() {
         assert_eq!(read("hello").map_err(|one| one.code), Err(NOT_JSON));
@@ -161,7 +149,6 @@ mod tests {
         assert_eq!(next_line(&mut input).as_deref(), Some("{\"b\":2}"));
         assert_eq!(next_line(&mut input), None);
     }
-
     #[test]
     fn a_message_is_exactly_one_line() {
         let out = Out::new(Vec::new());

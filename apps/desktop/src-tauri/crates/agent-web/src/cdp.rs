@@ -10,17 +10,12 @@ use crate::engines::View;
 use orden_agents::verbs::{ConsoleLine, Request};
 
 pub const PATIENCE: Duration = Duration::from_secs(30);
-
 const RING: usize = 500;
-
 const AWAKE: Duration = Duration::from_secs(60);
-
 const LONGEST_LINE: usize = 4_000;
-
 pub fn call(view: &View, method: &str, params: &Value) -> Result<Value, String> {
     call_in(view, None, method, params, PATIENCE)
 }
-
 pub fn call_in(
     view: &View,
     session: Option<&str>,
@@ -32,7 +27,6 @@ pub fn call_in(
         .recv_timeout(patience)
         .map_err(|_| format!("{method}: the page did not answer"))?
 }
-
 pub fn call_until(
     view: &View,
     session: Option<&str>,
@@ -59,9 +53,7 @@ pub fn call_until(
         }
     }
 }
-
 pub type Answering = Receiver<Result<Value, String>>;
-
 fn asked(
     view: &View,
     session: Option<&str>,
@@ -92,7 +84,6 @@ fn asked(
         View::Windowless(page) => page.ask(session, method, params),
     }
 }
-
 #[derive(Clone, Debug)]
 pub struct Frame {
     pub session: String,
@@ -100,19 +91,16 @@ pub struct Frame {
     pub url: String,
     pub parent: String,
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Whence {
     Orden,
     Frame(Vec<String>),
 }
-
 #[derive(Clone, Debug, Default)]
 struct Placed {
     origin: String,
     parent: Option<String>,
 }
-
 #[derive(Default)]
 pub struct Heard {
     nested: HashSet<String>,
@@ -138,7 +126,6 @@ pub struct Heard {
     console_on: bool,
     followed: bool,
 }
-
 impl Heard {
     pub fn console(
         &self,
@@ -154,7 +141,6 @@ impl Heard {
             .collect();
         (lines, self.console_next)
     }
-
     pub fn requests(
         &self,
         since: Option<u64>,
@@ -169,18 +155,15 @@ impl Heard {
             .collect();
         (rows, self.requests_next)
     }
-
     pub fn request_id(&self, seq: u64) -> Option<(String, String)> {
         self.started
             .iter()
             .find(|(_, (one, _))| *one == seq)
             .map(|(key, _)| key.clone())
     }
-
     pub fn idle_for(&self, quiet: Duration) -> bool {
         self.in_flight.is_empty() && self.network_moved.is_none_or(|at| at.elapsed() >= quiet)
     }
-
     pub fn in_flight(&self) -> Vec<(Request, Whence)> {
         let seqs: Vec<u64> = self
             .in_flight
@@ -193,7 +176,6 @@ impl Heard {
             .cloned()
             .collect()
     }
-
     pub fn frames(&self) -> Vec<(usize, Frame)> {
         self.frames
             .iter()
@@ -201,15 +183,12 @@ impl Heard {
             .filter_map(|(at, one)| one.clone().map(|frame| (at + 1, frame)))
             .collect()
     }
-
     pub fn frame(&self, number: usize) -> Option<Frame> {
         self.frames.get(number.checked_sub(1)?).cloned().flatten()
     }
-
     pub fn say(&mut self, level: &str, text: String) {
         self.line(level, text, Some("orden".to_string()), Whence::Orden);
     }
-
     fn line(&mut self, level: &str, text: String, source: Option<String>, whence: Whence) {
         self.console_next += 1;
         self.console.push_back((
@@ -225,7 +204,6 @@ impl Heard {
             self.console.pop_front();
         }
     }
-
     fn request_started(&mut self, session: &str, event: &Value) {
         let Some(id) = event.get("requestId").and_then(Value::as_str) else {
             return;
@@ -270,7 +248,6 @@ impl Heard {
             }
         }
     }
-
     fn responded(&mut self, session: &str, event: &Value) {
         let Some(seq) = self.seq_of(session, event) else {
             return;
@@ -283,7 +260,6 @@ impl Heard {
             row.status = status;
         }
     }
-
     fn request_ended(&mut self, session: &str, event: &Value, failed: Option<String>) {
         let Some(id) = event.get("requestId").and_then(Value::as_str) else {
             return;
@@ -299,7 +275,6 @@ impl Heard {
             row.failed = failed;
         }
     }
-
     fn session_address(&self, session: &str) -> Option<String> {
         if session.is_empty() {
             return None;
@@ -310,7 +285,6 @@ impl Heard {
             .find(|frame| frame.session == session)
             .map(|frame| frame.url.clone())
     }
-
     fn frame_place(&self, session: &str, frame: &str) -> Option<String> {
         let key = |id: &str| (session.to_string(), id.to_string());
         if !self.origins.contains_key(&key(frame)) {
@@ -331,7 +305,6 @@ impl Heard {
         }
         None
     }
-
     fn session_place(&self, session: &str) -> Option<String> {
         let shared = self
             .origins
@@ -345,7 +318,6 @@ impl Heard {
             self.session_address(session)
         }
     }
-
     fn sent_from(&self, session: &str, request: &str) -> Option<Whence> {
         let (seq, _) = self
             .started
@@ -355,7 +327,6 @@ impl Heard {
             .find(|(one, _)| one.seq == *seq)
             .map(|(_, from)| from.clone())
     }
-
     fn navigated(&mut self, session: &str, frame: &Value) {
         let Some(id) = frame.get("id").and_then(Value::as_str) else {
             return;
@@ -387,7 +358,6 @@ impl Heard {
             Placed { origin, parent },
         );
     }
-
     fn frame_attached(&mut self, session: &str, event: &Value) {
         let (Some(id), Some(parent)) = (
             event.get("frameId").and_then(Value::as_str),
@@ -402,7 +372,6 @@ impl Heard {
                 parent: Some(parent.to_string()),
             });
     }
-
     fn logged(&mut self, session: &str, event: &Value) {
         let entry = event.get("entry").cloned().unwrap_or_default();
         let level = match entry.get("level").and_then(Value::as_str) {
@@ -420,7 +389,6 @@ impl Heard {
         };
         self.line(level, text_at(&entry, "text"), source, whence);
     }
-
     fn target_changed(&mut self, event: &Value) {
         let (Some(id), Some(url)) = (
             event
@@ -434,7 +402,6 @@ impl Heard {
             frame.url = url.to_string();
         }
     }
-
     pub fn frame_tree(&mut self, session: &str, tree: &Value) {
         if let Some(frame) = tree.get("frame") {
             self.navigated(session, frame);
@@ -448,7 +415,6 @@ impl Heard {
             self.frame_tree(session, child);
         }
     }
-
     fn printed_in(&self, session: &str, context: Option<i64>) -> Whence {
         let mut at: Vec<String> = context
             .and_then(|id| self.contexts.get(&(session.to_string(), id)))
@@ -458,7 +424,6 @@ impl Heard {
         at.extend(self.session_address(session));
         Whence::Frame(at)
     }
-
     fn context_created(&mut self, session: &str, event: &Value) {
         let Some(context) = event.get("context") else {
             return;
@@ -468,14 +433,12 @@ impl Heard {
                 .insert((session.to_string(), id), text_at(context, "origin"));
         }
     }
-
     fn seq_of(&self, session: &str, event: &Value) -> Option<u64> {
         let id = event.get("requestId")?.as_str()?;
         self.started
             .get(&(session.to_string(), id.to_string()))
             .map(|(seq, _)| *seq)
     }
-
     fn attached(&mut self, parent: &str, event: &Value) {
         if event.pointer("/targetInfo/type").and_then(Value::as_str) != Some("iframe") {
             return;
@@ -506,7 +469,6 @@ impl Heard {
             parent: parent.to_string(),
         }));
     }
-
     fn detached(&mut self, event: &Value) {
         let Some(session) = event.get("sessionId").and_then(Value::as_str) else {
             return;
@@ -521,7 +483,6 @@ impl Heard {
         self.origins.retain(|(owner, _), _| owner != session);
         self.nested.remove(session);
     }
-
     fn not_nested(&self) -> Vec<String> {
         self.frames()
             .into_iter()
@@ -530,9 +491,7 @@ impl Heard {
             .collect()
     }
 }
-
 static HEARD: Mutex<Option<HashMap<String, Arc<Mutex<Heard>>>>> = Mutex::new(None);
-
 pub fn heard(label: &str) -> Arc<Mutex<Heard>> {
     let mut all = HEARD.held();
     Arc::clone(
@@ -541,14 +500,12 @@ pub fn heard(label: &str) -> Arc<Mutex<Heard>> {
             .or_default(),
     )
 }
-
 pub fn forget(label: &str) {
     let mut all = HEARD.held();
     if let Some(all) = all.as_mut() {
         all.remove(label);
     }
 }
-
 pub fn labels() -> Vec<String> {
     HEARD
         .held()
@@ -556,7 +513,6 @@ pub fn labels() -> Vec<String> {
         .map(|all| all.keys().cloned().collect())
         .unwrap_or_default()
 }
-
 const EVENTS: &str = concat!(
     "Network.requestWillBeSent|Network.responseReceived|Network.loadingFinished",
     "|Network.loadingFailed|Runtime.consoleAPICalled|Runtime.exceptionThrown",
@@ -566,7 +522,6 @@ const EVENTS: &str = concat!(
     "|Page.frameDetached|Page.frameStartedNavigating|Page.loadEventFired",
     "|Input.dragIntercepted|Target.detachedFromTarget",
 );
-
 pub fn follow_view(view: &View, label: &str) {
     {
         let page = heard(label);
@@ -592,7 +547,6 @@ pub fn follow_view(view: &View, label: &str) {
         }
     }
 }
-
 fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
     match method {
         "Network.requestWillBeSent" => held.request_started(session, &event),
@@ -688,7 +642,6 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
         _ => {}
     }
 }
-
 fn placed(at: impl Iterator<Item = String>) -> Whence {
     let mut kept: Vec<String> = Vec::new();
     for one in at {
@@ -698,7 +651,6 @@ fn placed(at: impl Iterator<Item = String>) -> Whence {
     }
     Whence::Frame(kept)
 }
-
 fn spoken(event: &Value) -> String {
     event
         .get("args")
@@ -720,7 +672,6 @@ fn spoken(event: &Value) -> String {
         })
         .unwrap_or_default()
 }
-
 fn frame_source(event: &Value) -> Option<String> {
     let top = event.pointer("/stackTrace/callFrames/0")?;
     Some(format!(
@@ -729,7 +680,6 @@ fn frame_source(event: &Value) -> Option<String> {
         top.get("lineNumber")?.as_u64()? + 1
     ))
 }
-
 fn text_at(value: &Value, key: &str) -> String {
     value
         .get(key)
@@ -737,7 +687,6 @@ fn text_at(value: &Value, key: &str) -> String {
         .unwrap_or_default()
         .to_string()
 }
-
 pub use crate::engines::cut;
 
 pub fn awake(view: &View, label: &str, own: bool) {
@@ -788,13 +737,10 @@ pub fn awake(view: &View, label: &str, own: bool) {
         }
     }
 }
-
 fn auto_attach() -> Value {
     json!({ "autoAttach": true, "waitForDebuggerOnStart": false, "flatten": true, "filter": [{ "type": "iframe" }] })
 }
-
 const DEEPEST_FRAMES: usize = 32;
-
 pub fn follow_nested(view: &View, label: &str, patience: Duration) -> Result<(), String> {
     let page = heard(label);
     for _ in 0..DEEPEST_FRAMES {
@@ -822,7 +768,6 @@ pub fn follow_nested(view: &View, label: &str, patience: Duration) -> Result<(),
     }
     Err("frames too deep to follow".to_string())
 }
-
 fn attach_existing(view: &View) {
     let Ok(tree) = call(view, "Page.getFrameTree", &json!({})) else {
         return;
@@ -862,7 +807,6 @@ fn attach_existing(view: &View) {
         }
     }
 }
-
 pub fn listen_to_console(view: &View, label: &str) {
     let page = heard(label);
     let first = !std::mem::replace(&mut page.held().console_on, true);
@@ -876,7 +820,6 @@ pub fn listen_to_console(view: &View, label: &str) {
         );
     }
 }
-
 pub fn sleep_idle(app: &tauri::AppHandle) {
     for label in labels() {
         let page = heard(&label);
@@ -907,7 +850,6 @@ pub fn sleep_idle(app: &tauri::AppHandle) {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -925,7 +867,6 @@ mod tests {
         });
         assert_eq!(spoken(&event), "saved 3 Object undefined");
     }
-
     #[test]
     fn the_ring_keeps_the_last_five_hundred_and_counts_on() {
         let mut heard = Heard::default();
@@ -939,7 +880,6 @@ mod tests {
         let (after, _) = heard.console(Some(next - 2), None);
         assert_eq!(after.len(), 2);
     }
-
     #[test]
     fn a_request_is_in_flight_until_it_ends_and_a_redirect_is_the_same_request() {
         let mut heard = Heard::default();
@@ -960,7 +900,6 @@ mod tests {
         assert_eq!(next, 1);
         assert!(!heard.idle_for(Duration::from_secs(60)));
     }
-
     #[test]
     fn a_line_and_a_request_carry_the_frame_they_came_from() {
         let mut heard = Heard::default();
@@ -1019,7 +958,6 @@ mod tests {
         );
         heard_event(&mut heard, "Runtime.consoleAPICalled", "", printed(7, ""));
         assert_eq!(heard.console(None, None).0[4].1, Whence::Frame(vec![]));
-
         heard.request_started(
             "s1",
             &json!({ "requestId": "1", "type": "Fetch", "documentURL": "https://bank.example/app", "request": { "method": "GET", "url": "https://api.backend.example/accounts" } }),
@@ -1038,7 +976,6 @@ mod tests {
             Whence::Frame(vec!["https://shop.example/".into()])
         );
     }
-
     fn went(heard: &mut Heard, session: &str, frame: Value) {
         heard_event(
             heard,
@@ -1047,18 +984,15 @@ mod tests {
             json!({ "frame": frame }),
         );
     }
-
     fn sent(heard: &mut Heard, session: &str, id: &str, frame: &str, document: &str, url: &str) {
         heard.request_started(
             session,
             &json!({ "requestId": id, "frameId": frame, "documentURL": document, "type": "Fetch", "request": { "method": "GET", "url": url } }),
         );
     }
-
     fn at(all: &[&str]) -> Whence {
         Whence::Frame(all.iter().map(|one| (*one).to_string()).collect())
     }
-
     #[test]
     fn a_request_and_a_log_line_are_placed_by_the_frame_they_came_from() {
         let mut heard = Heard::default();
@@ -1109,7 +1043,6 @@ mod tests {
         assert_eq!(lines[0].1, rows[2].1);
         assert_eq!(lines[1].1, at(&[]));
     }
-
     #[test]
     fn a_frame_with_no_origin_of_its_own_is_placed_by_the_frame_round_it() {
         let mut heard = Heard::default();
@@ -1156,7 +1089,6 @@ mod tests {
             at(&["https://www.example.com/", "https://www.example.com"])
         );
     }
-
     #[test]
     fn a_log_line_of_a_request_never_heard_is_placed_nowhere_and_a_removed_frame_is_forgotten() {
         let mut heard = Heard::default();
@@ -1200,7 +1132,6 @@ mod tests {
         );
         assert_eq!(heard.requests(None, None).0[0].1, at(&["about:blank"]));
     }
-
     #[test]
     fn a_frame_of_its_own_is_placed_where_it_went_since_it_was_attached() {
         let mut heard = Heard::default();
@@ -1248,7 +1179,6 @@ mod tests {
         );
         assert_eq!(heard.requests(None, None).0[1].1, at(&["about:blank"]));
     }
-
     #[test]
     fn a_frame_keeps_its_number_when_another_goes() {
         let mut heard = Heard::default();
@@ -1268,7 +1198,6 @@ mod tests {
         );
         assert_eq!(heard.frames().len(), 1);
     }
-
     #[test]
     fn a_frame_inside_a_frame_is_told_apart_and_asked_once() {
         let mut heard = Heard::default();
@@ -1289,7 +1218,6 @@ mod tests {
         heard.detached(&json!({ "sessionId": "s1" }));
         assert!(!heard.nested.contains("s1"));
     }
-
     #[test]
     fn text_is_cut_between_two_characters() {
         assert_eq!(cut("héllo".into(), 2), "hé");

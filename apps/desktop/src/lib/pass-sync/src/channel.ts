@@ -2,7 +2,6 @@ import { door } from '@orden/markdown/door'
 import { invoke, isDesktop } from '../../platform/src/api'
 
 export type FormKind = 'login' | 'username' | 'password' | 'totp' | 'signup' | 'change' | 'card' | 'identity'
-
 export type FieldRole =
   | 'username'
   | 'email'
@@ -29,7 +28,6 @@ export type FieldRole =
   | 'organization'
   | 'bday'
   | 'unknown'
-
 export interface PassFrame {
   tab: string
   frame: string
@@ -38,28 +36,23 @@ export interface PassFrame {
   secure: boolean
   top: boolean
 }
-
 interface PassField {
   field: string
   role: FieldRole
   visible: boolean
 }
-
 export interface PassForm {
   form: string
   kind: FormKind
   fields: PassField[]
 }
-
 export interface PassForms extends PassFrame {
   forms: PassForm[]
 }
-
 export interface PassMark extends PassFrame {
   form: string
   field: string
 }
-
 export interface PassSubmitted extends PassFrame {
   form: string
   kind: FormKind
@@ -67,36 +60,28 @@ export interface PassSubmitted extends PassFrame {
   password: string | null
   newPassword: string | null
 }
-
 export interface FillTarget {
   tab: string
   frame: string
   origin: string
   form: string
 }
-
 type Unlisten = () => void
-
 const ownWindow = door(() => import('../../windows/src/api'))
-
 async function heard(event: string, then: (said: unknown) => void): Promise<Unlisten> {
   if (!isDesktop) return () => undefined
   const { hearHere } = await ownWindow()
   return hearHere(event, (said) => then(said.payload))
 }
-
 export function onForms(then: (said: PassForms) => void): Promise<Unlisten> {
   return heard('orden://pass-forms', (said) => then(said as PassForms))
 }
-
 export function onMark(then: (said: PassMark) => void): Promise<Unlisten> {
   return heard('orden://pass-mark', (said) => then(said as PassMark))
 }
-
 export function onSubmitted(then: (said: PassSubmitted) => void): Promise<Unlisten> {
   return heard('orden://pass-submitted', (said) => then(said as PassSubmitted))
 }
-
 export function fill(target: FillTarget, values: Record<string, string>, submit: boolean): Promise<boolean> {
   return invoke<boolean>('web_pass_fill', { ...target, values, submit })
 }

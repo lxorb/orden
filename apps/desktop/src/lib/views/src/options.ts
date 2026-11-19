@@ -17,7 +17,6 @@ function wordsIn(value: Value | undefined): string[] {
   if (Array.isArray(value)) return value.flatMap(wordsIn)
   return []
 }
-
 export function valuesOf(rows: readonly Row[], property: string, most = 50): string[] {
   const key = bare(property)
   const seen: string[] = []
@@ -30,15 +29,11 @@ export function valuesOf(rows: readonly Row[], property: string, most = 50): str
   }
   return seen
 }
-
 const TONES = ['1', '2', '3', '4', '5', '6']
-
 export const optionsFor = (values: readonly string[]): SelectOption[] =>
   values.map((value, at) => ({ value, tone: TONES[at % TONES.length] ?? '1' }))
-
 export const optionsAt = (base: Base, property: string): SelectOption[] =>
   base.orden.properties[bare(property)]?.options ?? []
-
 export function renamedIn(row: Row, property: string, from: string, to: string): RowChange | null {
   const key = bare(property)
   const value = row.note[key]
@@ -49,7 +44,6 @@ export function renamedIn(row: Row, property: string, from: string, to: string):
   }
   return wordsIn(value).includes(from) ? { note: { [key]: to } } : null
 }
-
 export function renamedInBase(
   base: Base,
   rows: readonly Row[],
@@ -64,7 +58,6 @@ export function renamedInBase(
     return change ? [{ row, change }] : []
   })
 }
-
 export function reprefixed(
   rows: readonly Row[],
   property: string,
@@ -76,7 +69,6 @@ export function reprefixed(
     return number === null ? [] : [{ row, change: { note: { [property]: idText(to, number) } } }]
   })
 }
-
 function clearedIn(row: Row, property: string, value: string): RowChange | null {
   const key = bare(property)
   const now = row.note[key]
@@ -87,7 +79,6 @@ function clearedIn(row: Row, property: string, value: string): RowChange | null 
   }
   return wordsIn(now).includes(value) ? { note: { [key]: null } } : null
 }
-
 export function clearedInBase(
   base: Base,
   rows: readonly Row[],
@@ -101,7 +92,6 @@ export function clearedInBase(
     return change ? [{ row, change }] : []
   })
 }
-
 export function holdsLists(rows: readonly Row[], property: string): boolean {
   const key = bare(property)
   return rows.some((row) => Array.isArray(row.note[key]))

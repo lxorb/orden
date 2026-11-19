@@ -18,7 +18,6 @@ function state(doc: string, readOnly = false) {
     }),
   )
 }
-
 function after(doc: string, command: StateCommand, readOnly = false) {
   let current = state(doc, readOnly)
   const ran = command({
@@ -28,9 +27,7 @@ function after(doc: string, command: StateCommand, readOnly = false) {
   const { from, to } = current.selection.main
   return { ran, doc: current.doc.toString(), selected: current.doc.sliceString(from, to) }
 }
-
 const inside = (doc: string, words: string) => doc.indexOf(words) + 1
-
 describe('the link a press landed on', () => {
   test.each([
     ['see [the *docs*](https://x.dev "t") now', 'docs', 'https://x.dev', 'the *docs*'],
@@ -47,31 +44,26 @@ describe('the link a press landed on', () => {
     expect(parts && doc.slice(parts.target.from, parts.target.to)).toBe(target)
     expect(parts?.words).toBe(words)
   })
-
   test('is found from its address as well as from its words', () => {
     const doc = 'see [docs](https://x.dev) now'
     expect(linkPartsAt(state(doc), inside(doc, 'x.dev'))?.words).toBe('docs')
   })
-
   test('is no picture and no embed, which have menus of their own', () => {
     for (const doc of ['![shot](https://x.dev/a.png)', '![[shot.png]]', 'plain words'])
       expect(linkPartsAt(state(doc), 4), doc).toBeNull()
   })
 })
-
 describe('editing it', () => {
   test('selects where it points, so the next thing typed is the new address', () => {
     const doc = 'see [docs](https://x.dev) now'
     const done = after(doc, editLink(inside(doc, 'docs')))
     expect(done).toEqual({ ran: true, doc, selected: 'https://x.dev' })
   })
-
   test('selects the note of a link with words of its own, not the words', () => {
     const doc = 'see [[Plan|the plan]] now'
     expect(after(doc, editLink(inside(doc, 'the plan'))).selected).toBe('Plan')
   })
 })
-
 describe('editing a link by its label', () => {
   function typed(doc: string) {
     let current = state(doc)
@@ -88,7 +80,6 @@ describe('editing a link by its label', () => {
       )
       .state.doc.toString()
   }
-
   test.each([
     ['[words][ref]\n\n[ref]: https://r.dev', '[words][ref]\n\n[ref]: https://new.dev'],
     ['[words][REF]\n\n[ref]: https://r.dev', '[words][REF]\n\n[ref]: https://new.dev'],
@@ -98,7 +89,6 @@ describe('editing a link by its label', () => {
   ])('%s changes the address its definition holds', (doc, left) => {
     expect(typed(doc)).toBe(left)
   })
-
   test.each([
     ['[words][ref] now', '[words](https://new.dev) now'],
     ['[words][] now', '[words](https://new.dev) now'],
@@ -106,24 +96,20 @@ describe('editing a link by its label', () => {
   ])('%s with no definition becomes a link to what is typed', (doc, left) => {
     expect(typed(doc)).toBe(left)
   })
-
   test('selects a label nothing defines, written where an address goes', () => {
     const done = after('[words][ref] now', editLink(1))
     expect(done).toEqual({ ran: true, doc: '[words](ref) now', selected: 'ref' })
   })
-
   test('takes the first of two definitions, as a reader does', () => {
     expect(typed('[words][a]\n\n[a]: https://one.dev\n[a]: https://two.dev')).toBe(
       '[words][a]\n\n[a]: https://new.dev\n[a]: https://two.dev',
     )
   })
 })
-
 describe('editing a link by a label, in a long note', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
-
   const body = 'some words and a [link](https://x.dev) with *marks*\n\n'.repeat(2000)
   const long = `[words][ref]\n\n${body}[ref]: https://r.dev\n`
   const unparsed = () =>
@@ -134,7 +120,6 @@ describe('editing a link by a label, in a long note', () => {
       }),
       100,
     )
-
   test('finds a definition the parser had not reached, whatever the clock says', () => {
     let current = unparsed()
     expect(syntaxTree(current).length).toBeLessThan(long.length)
@@ -149,7 +134,6 @@ describe('editing a link by a label, in a long note', () => {
     expect(current.doc.toString()).toBe(long)
     expect(current.doc.sliceString(from, to)).toBe('https://r.dev')
   })
-
   test('building the menu parses nothing', () => {
     const current = unparsed()
     const clock = vi.spyOn(Date, 'now')
@@ -157,7 +141,6 @@ describe('editing a link by a label, in a long note', () => {
     expect(clock).not.toHaveBeenCalled()
   })
 })
-
 describe('what counts as a label being defined', () => {
   test.each([
     ['[words][STRASSE]\n\n[Straße]: https://r.dev', 'https://r.dev'],
@@ -167,19 +150,16 @@ describe('what counts as a label being defined', () => {
   ])('%s', (doc, selected) => {
     expect(after(doc, editLink(1))).toEqual({ ran: true, doc, selected })
   })
-
   test('a definition written in a code block defines nothing', () => {
     const doc = '[words][ref]\n\n```\n[ref]: https://r.dev\n```'
     expect(after(doc, editLink(1)).doc).toBe(doc.replace('[ref]', '(ref)'))
   })
 })
-
 describe('a label left behind by an edit nobody finished', () => {
   const linksOut = (doc: string) => {
     const parts = linkPartsAt(state(doc), 1)
     return parts?.to === doc.length && parts.label === undefined
   }
-
   test.each([
     ['[words][ref]', '[words](ref)', 'ref'],
     ['[words][Some  words]', '[words](<Some words>)', '<Some words>'],
@@ -194,7 +174,6 @@ describe('a label left behind by an edit nobody finished', () => {
     expect(linksOut(left), left).toBe(true)
   })
 })
-
 describe('undoing an edit of a label', () => {
   function editing(doc: string) {
     let current = parsed(
@@ -217,7 +196,6 @@ describe('undoing an edit of a label', () => {
       text: () => current.doc.toString(),
     }
   }
-
   test('takes the swap back as one step of its own', () => {
     const note = editing('[words][ref] now')
     note.edit()
@@ -225,7 +203,6 @@ describe('undoing an edit of a label', () => {
     note.undo()
     expect(note.text()).toBe('[words][ref] now')
   })
-
   test('takes what was typed first and the swap after it, however quickly it was typed', () => {
     const note = editing('[words][ref] now')
     note.edit()
@@ -237,7 +214,6 @@ describe('undoing an edit of a label', () => {
     expect(note.text()).toBe('[words][ref] now')
   })
 })
-
 describe('editing a reference to a definition', () => {
   test.each([
     ['see [words][ref] now\n\n[ref]: https://r.dev "t"', 'https://r.dev'],
@@ -251,7 +227,6 @@ describe('editing a reference to a definition', () => {
       selected: address,
     })
   })
-
   test.each(['see [words][] now', 'see [words] now'])(
     'with no definition, points nowhere yet and is typed between the brackets: %s',
     (doc) => {
@@ -263,7 +238,6 @@ describe('editing a reference to a definition', () => {
     },
   )
 })
-
 describe('taking it away', () => {
   test.each([
     ['see [the *docs*](https://x.dev) now', 'docs', 'see the *docs* now'],
@@ -272,12 +246,10 @@ describe('taking it away', () => {
   ])('%s keeps its words', (doc, at, left) => {
     expect(after(doc, removeLink(inside(doc, at)))).toMatchObject({ ran: true, doc: left })
   })
-
   test('is nothing for an address written out, which would still be the link', () => {
     const doc = 'see <https://x.dev> now'
     expect(after(doc, removeLink(inside(doc, 'x.dev')))).toMatchObject({ ran: false, doc })
   })
-
   test('and nothing in a note nobody can write in', () => {
     const doc = 'see [docs](https://x.dev) now'
     expect(after(doc, removeLink(inside(doc, 'docs')), true)).toMatchObject({ ran: false, doc })

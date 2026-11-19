@@ -6,7 +6,6 @@ export function readingFrom(doc: string, anchor: number | undefined, most: numbe
   const from = at === 0 ? 0 : doc.lastIndexOf('\n', at - 1) + 1
   return doc.slice(from, from + most)
 }
-
 export async function scrollbackOf(tab: Tab): Promise<ScreenPreview | null> {
   const port = portOf('terminal.previews')
   if (!port.ok) return null

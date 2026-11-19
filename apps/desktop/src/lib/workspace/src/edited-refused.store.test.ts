@@ -25,11 +25,9 @@ await startAcross()
 const { writeEdited } = await import('../../documents/src/api')
 const { newMirror, notePass } = await import('../../sync-mirror/src/api')
 const { push } = await notePass()
-
 const ROOT = '/spaces/One'
 const PATH = `${ROOT}/a.md`
 const NOBODY = new Set<string>()
-
 async function opened(words: string) {
   await workspace.writesSettled()
   d.reset()
@@ -42,13 +40,11 @@ async function opened(words: string) {
   await workspace.open(PATH)
   return workspace.tabs[0]!.note
 }
-
 function change(note: Awaited<ReturnType<typeof opened>>, words: string) {
   const knew = note.onDisk
   note.edited([{ from: 0, to: note.latest.length, insert: words }], words)
   return knew
 }
-
 function account() {
   const offers: string[] = []
   const told: string[] = []
@@ -63,7 +59,6 @@ function account() {
   const pass = () => push(mirror, 'token', NOBODY, { refused: (path) => told.push(path) })
   return { offers, told, pass }
 }
-
 test('a refused note changed in place is offered again, with the words that went down', async () => {
   const note = await opened('a [[old]]\n')
   const { offers, told, pass } = account()
@@ -79,7 +74,6 @@ test('a refused note changed in place is offered again, with the words that went
   await pass()
   expect(offers).toEqual(['a [[old]]\n', 'a [[new]]\nfrom a git pull\n'])
 })
-
 test('a write that did not go down asks the account nothing new until it has', async () => {
   const note = await opened('a [[old]]\n')
   const { offers, pass } = account()

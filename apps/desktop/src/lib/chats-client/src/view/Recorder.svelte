@@ -12,13 +12,11 @@
   import { put } from './attachments.svelte'
 
   const { onsend, ondone }: { onsend: (file: FileRef) => void; ondone: () => void } = $props()
-
   let recording: VoiceRecording | null = null
   let started = $state(0)
   let now = $state(0)
   let refused = $state<string | null>(null)
   let sending = $state(false)
-
   onMount(() => {
     let gone = false
     recordVoice()
@@ -50,7 +48,6 @@
       void recording?.stop()
     }
   })
-
   export async function send(): Promise<void> {
     const one = recording
     if (!one || sending) return
@@ -77,7 +74,6 @@
     }
     ondone()
   }
-
   export function cancel(): void {
     void recording?.stop()
     recording = null
@@ -108,7 +104,6 @@
     min-height: 40px;
     padding: 0 var(--space-1) 0 var(--space-3);
   }
-
   .dot {
     width: 10px;
     height: 10px;
@@ -116,34 +111,28 @@
     background: var(--danger);
     animation: breathe 1.4s var(--ease-in-out) infinite;
   }
-
   @keyframes breathe {
     50% {
       opacity: 0.35;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .dot {
       animation: none;
     }
   }
-
   .time {
     color: var(--text-strong);
     font-variant-numeric: tabular-nums;
   }
-
   .grow {
     flex: 1;
   }
-
   .refused {
     flex: 1;
     color: var(--danger);
     font-size: var(--text-sm);
   }
-
   .send {
     --glyph-size: 16px;
     display: grid;
@@ -157,7 +146,6 @@
     color: var(--accent-ink);
     transition: transform var(--dur-fast) var(--ease-spring);
   }
-
   .send:active:not(:disabled) {
     transform: scale(0.92);
   }

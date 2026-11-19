@@ -31,7 +31,6 @@
     stroke-linejoin: round;
     opacity: 0.8;
   }
-
   .large {
     width: var(--icon-md);
     height: var(--icon-md);

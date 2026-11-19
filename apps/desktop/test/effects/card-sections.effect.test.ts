@@ -4,11 +4,9 @@ import { scanNote } from '@orden/scan/note'
 import { idle } from './settle'
 
 const ROOT = '/space'
-
 const NOTES: Record<string, string> = {
   'Plan.md': '# Plan\n\nThe opening words.\n\n## Later\n\nThe later words. ^later\n\n## Last\n\nThe last words.\n',
 }
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   invoke: (command: string, args?: { path?: string }) =>
@@ -23,22 +21,17 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
           : undefined,
     ),
 }))
-
 const { links } = await import('../../src/lib/link-index/src/api')
 const { startup } = await import('../../src/lib/launch/src/api')
 void startup.shown()
 await links.build(ROOT)
-
 const CanvasNode = (await import('../../src/lib/canvas/src/CanvasNode.svelte')).default
-
 let shown: ReturnType<typeof mount> | null = null
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
   document.body.replaceChildren()
 })
-
 async function cardFor(subpath: string): Promise<string> {
   const target = document.createElement('div')
   document.body.append(target)
@@ -70,14 +63,12 @@ async function cardFor(subpath: string): Promise<string> {
   }
   return target.querySelector('.card')?.textContent ?? ''
 }
-
 test('a note card naming a heading shows that section of the note, not the whole note', async () => {
   const words = await cardFor('#Later')
   expect(words).toContain('The later words.')
   expect(words).not.toContain('The opening words.')
   expect(words).not.toContain('The last words.')
 })
-
 test('a note card naming a block shows only that block', async () => {
   const words = await cardFor('#^later')
   expect(words).toContain('The later words.')

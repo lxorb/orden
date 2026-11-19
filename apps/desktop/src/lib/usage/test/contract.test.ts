@@ -8,25 +8,21 @@ describe('the module stands on its own', () => {
     expect(typeof usageChoice.helping).toBe('boolean')
   })
 })
-
 describe('what is kept to be sent', () => {
   type UsageEvent = Parameters<typeof pruned>[0][number]
   const today = '2026-11-14'
   const daily = (day: string) => ({ kind: 'daily', day }) as unknown as UsageEvent
   const counts = (day: string) => ({ kind: 'usage', day }) as unknown as UsageEvent
-
   test('nothing older than the days kept, and nothing but the daily ping once help is off', () => {
     const old = '2026-10-01'
     expect(pruned([daily(old), daily(today)], today, true)).toEqual([daily(today)])
     expect(pruned([daily(today), counts(today)], today, false)).toEqual([daily(today)])
     expect(pruned([daily(today), counts(today)], today, true)).toHaveLength(2)
   })
-
   test('and never more than the queue holds', () => {
     const many = Array.from({ length: MOST_QUEUED + 3 }, () => daily(today))
     expect(pruned(many, today, true)).toHaveLength(MOST_QUEUED)
   })
-
   test('turning help off forgets the install and the days counted', () => {
     usageChoice.setHelping(true)
     const first = usageChoice.install()

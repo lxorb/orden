@@ -16,24 +16,19 @@ function labelsFor(doc: string): string[] {
   const result = snippetCompletions(new CompletionContext(state, doc.length, false))
   return result?.options.map((option) => option.label) ?? []
 }
-
 afterEach(() => setSnippets({}))
-
 test('a punctuation trigger typed just inside an opening bracket is offered', () => {
   setSnippets({ ';date': '18 November 2026' })
   expect(labelsFor('Due (;date')).toEqual([';date'])
 })
-
 test('a punctuation trigger typed just after an opening quote is offered', () => {
   setSnippets({ ';sig': 'Best wishes,\nAda' })
   expect(labelsFor('She wrote ";sig')).toEqual([';sig'])
 })
-
 test('a punctuation trigger typed inside bold is offered', () => {
   setSnippets({ ';sig': 'Best wishes,\nAda' })
   expect(labelsFor('**;sig')).toEqual([';sig'])
 })
-
 test('a trigger is not offered at the end of a longer word', () => {
   setSnippets({ ign: 'Ignored', ';sig': 'Best wishes' })
   expect(labelsFor('design')).toEqual([])

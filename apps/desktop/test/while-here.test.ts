@@ -6,7 +6,6 @@ const scriptOf = (name: string) => {
   const text = readFileSync(new URL(name, SOURCE), 'utf8')
   return text.slice(0, text.indexOf('</script>'))
 }
-
 test.each(['tab-strip/src/Tabs.svelte', 'pane-tree/src/Pane.svelte'])(
   '%s hears every part it fetches only while it is there',
   (name) => {

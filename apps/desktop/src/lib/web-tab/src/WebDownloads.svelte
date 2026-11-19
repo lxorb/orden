@@ -11,14 +11,11 @@
   import { downloads, type Download } from './downloads.svelte'
 
   const { onclose }: { onclose: () => void } = $props()
-
   const rows = $derived([...downloads.list].reverse())
   const showWords = $derived(showLabel())
-
   function fraction(one: Download): number | null {
     return one.total === null ? null : Math.min(1, one.received / one.total)
   }
-
   let bubble = $state<HTMLElement>()
   $effect(() => overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="downloads"]')]))
 </script>
@@ -90,7 +87,6 @@
     overflow-y: auto;
     padding: var(--space-1);
   }
-
   ul {
     margin: 0;
     padding: 0;
@@ -98,23 +94,19 @@
     display: flex;
     flex-direction: column;
   }
-
   li {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .file {
     flex: 1;
     min-width: 0;
     color: var(--text);
   }
-
   .file:disabled {
     opacity: 1;
   }
-
   .file > svg {
     flex: none;
     width: var(--icon-md);
@@ -126,12 +118,10 @@
     stroke-linejoin: round;
     color: var(--muted);
   }
-
   .failed .file > svg,
   .said {
     color: var(--danger);
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -139,21 +129,17 @@
     flex-direction: column;
     gap: 3px;
   }
-
   .name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .failed .name {
     color: var(--muted);
   }
-
   .said {
     font-size: var(--text-xs);
   }
-
   .line {
     position: relative;
     height: 2px;
@@ -161,7 +147,6 @@
     background: var(--line);
     overflow: hidden;
   }
-
   .done {
     position: absolute;
     inset: 0;
@@ -169,11 +154,9 @@
     transform-origin: left;
     transition: transform var(--dur-base) var(--ease-out);
   }
-
   .sweeping .done {
     animation: sweep 1.2s var(--ease-in-out) infinite;
   }
-
   @keyframes sweep {
     from {
       translate: -100% 0;
@@ -182,7 +165,6 @@
       translate: 340% 0;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .sweeping .done {
       animation: none;

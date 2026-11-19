@@ -21,7 +21,6 @@
     margin-inline-start: var(--space-1);
     color: var(--muted);
   }
-
   .shared svg {
     display: block;
     width: var(--icon-sm);

@@ -14,13 +14,10 @@ vi.mock('../commands/found', () => ({
   rootOfSpace: (space: string) => (space === 'space' ? '/space' : null),
   wordsOf: (note: NoteCommand | null) => Promise.resolve(note?.body ?? ''),
 }))
-
 const { commands, effortIn } = await import('./index')
 const { ROWS } = await import('./table')
 const { tasks } = await import('../commands/tasks.svelte')
-
 const ended: Ended = { stop: 'end', turn: null, usage: null }
-
 function fakePanel(thread: Thread) {
   const calls: string[] = []
   const log =
@@ -66,20 +63,16 @@ function fakePanel(thread: Thread) {
   } satisfies Panel
   return { panel, calls }
 }
-
 let thread: Thread
-
 beforeEach(() => {
   notes.length = 0
   thread = newThread('space', 'p', 'm')
 })
-
 async function run(rows: readonly PanelCommand[], name: string, args = '', panel?: Panel) {
   const row = rows.find((one) => one.name === name)
   if (!row || !panel) throw new Error(name)
   await row.run({ args, thread, panel })
 }
-
 describe('the menu', () => {
   test('lists every row of the table first, each with its words', () => {
     const { panel } = fakePanel(thread)
@@ -87,7 +80,6 @@ describe('the menu', () => {
     expect(rows.slice(0, ROWS.length).map((one) => one.name)).toEqual(ROWS.map((one) => one.name))
     for (const row of rows) expect(row.description, row.name).toBeTruthy()
   })
-
   test("runs the panel's own control for the plain rows", async () => {
     const { panel, calls } = fakePanel(thread)
     const rows = commands(panel)
@@ -118,7 +110,6 @@ describe('the menu', () => {
       'openContext()',
     ])
   })
-
   test('puts words in the field for /help and /mention', async () => {
     const { panel } = fakePanel(thread)
     const rows = commands(panel)
@@ -127,14 +118,12 @@ describe('the menu', () => {
     await run(rows, 'mention', '@Reading/', panel)
     expect(panel.text).toBe('@Reading/')
   })
-
   test('reads every spelling of an effort', () => {
     expect(effortIn('extra')).toBe('xhigh')
     expect(effortIn('none')).toBe('off')
     expect(effortIn('MAX')).toBe('max')
     expect(effortIn('')).toBe('next')
   })
-
   test('sets a goal, starts its first turn on the condition, and stops it with /stop', async () => {
     const { panel, calls } = fakePanel(thread)
     const rows = commands(panel)
@@ -146,7 +135,6 @@ describe('the menu', () => {
     expect(tasks.of(thread.id)).toEqual([])
     expect(thread.goal?.state).toBe('paused')
   })
-
   test("sends a note's command with its arguments and overrides, and never under a built-in's name", async () => {
     const base = { path: 'c.md', arguments: ['who'], tools: [] }
     notes.push(
@@ -171,7 +159,6 @@ describe('the menu', () => {
     await run(rows, 'plain', '', panel)
     expect(calls).toEqual(['turn(open,"Say hello to Ada.",{"effort":"low","mode":"full"})', 'send("Plain.")'])
   })
-
   test('chooses an agent profile and an output style for the thread', async () => {
     notes.push({
       kind: 'agent',
@@ -192,7 +179,6 @@ describe('the menu', () => {
     await run(rows, 'output-style', 'default', panel)
     expect(thread).not.toHaveProperty('style')
   })
-
   test("never lets a shared space's command ask for more than the thread's mode", async () => {
     const base = { path: 'team/c.md', arguments: [], tools: [] }
     notes.push(
@@ -224,7 +210,6 @@ describe('the menu', () => {
       'turn(open,"Look.",{"mode":"plan"})',
     ])
   })
-
   test("never lets a shared space's profile move the thread's mode", async () => {
     const base = { path: 'team/a.md', arguments: [], tools: [] }
     notes.push(
@@ -240,7 +225,6 @@ describe('the menu', () => {
     expect(thread).toMatchObject({ agent: 'reader' })
     expect(calls.filter((one) => one.startsWith('setMode('))).toEqual([])
   })
-
   test('chooses no profile in a thread whose space is not on this device', async () => {
     notes.push({
       kind: 'agent',
@@ -255,7 +239,6 @@ describe('the menu', () => {
     await run(commands(panel), 'agents', 'researcher', panel)
     expect(thread).not.toHaveProperty('agent')
   })
-
   test('says /goal and /jobs as lines in the thread', async () => {
     const { panel } = fakePanel(thread)
     const rows = commands(panel)

@@ -5,21 +5,15 @@ import { relativeTo, samePath, keepJson, stored } from '../../platform/src/api'
 import { type HoldsNotes, noteText, replaceInNotes } from './note-text'
 
 export const SETEXT_GONE = 'orden:setext-gone'
-
 export const SETEXT_KEY = 'setext'
-
 const REWRITTEN = 'gone'
-
 const AFTER_THE_LAUNCH = 30_000
-
 const UNDERLINED: Query = {
   kind: 'regex',
   source: '\\S[ \\t]*\\r?\\n[ \\t>]*(?:[-*+]|\\d+[.)])?[ \\t]*(?:=+|-+)[ \\t]*(?:\\r?\\n|$)',
   fold: false,
 }
-
 const MOST_UNDERLINED = 100_000
-
 export interface MarksNotes {
   readonly itemMeta: {
     describes(root: string): boolean
@@ -28,21 +22,17 @@ export interface MarksNotes {
     setMany(root: string, patches: Readonly<Record<string, MetaPatch>>): void
   }
 }
-
 function spacesDone(): string[] {
   const said = stored(SETEXT_GONE)
   return Array.isArray(said) ? said.filter((one): one is string => typeof one === 'string') : []
 }
-
 function markDone(root: string) {
   keepJson(SETEXT_GONE, [...spacesDone(), root])
 }
-
 function beingWritten(ws: HoldsNotes, path: string): boolean {
   const open = ws.documentAt(path)
   return open !== null && (open.dirty || open.revision > 0 || open.shared !== null)
 }
-
 async function readable(root: string): Promise<((path: string) => boolean) | null> {
   const { keptAway } = await import('../../away/src/api')
   if (!keptAway.under(root).length) return () => true
@@ -59,11 +49,9 @@ async function readable(root: string): Promise<((path: string) => boolean) | nul
     return away === null || underlined.has(away.id)
   }
 }
-
 function rewrittenBefore(ws: MarksNotes, root: string): boolean {
   return Object.values(ws.itemMeta.itemsOf(root)).some((meta) => SETEXT_KEY in meta)
 }
-
 export async function dropSetext(
   ws: HoldsNotes & MarksNotes,
   root: string,
@@ -71,10 +59,8 @@ export async function dropSetext(
   waits = AFTER_THE_LAUNCH,
 ): Promise<number> {
   if (spacesDone().some((one) => samePath(one, root))) return 0
-
   await new Promise((go) => setTimeout(go, waits))
   if (!samePath(ws.activeSpace?.root, root)) return 0
-
   if (signedIn()) {
     if (!ws.itemMeta.describes(root)) return 0
     await ws.itemMeta.fromEngine(root)
@@ -83,17 +69,13 @@ export async function dropSetext(
     markDone(root)
     return 0
   }
-
   const reads = await readable(root)
   if (!reads) return 0
-
   const { setextEdits } = await import('@orden/editor/setext')
   const changes: Change[] = []
   let first: string | null = null
-
   for (const note of ws.notes) {
     if (!samePath(ws.activeSpace?.root, root)) return 0
-
     if (beingWritten(ws, note.path)) continue
     if (!reads(note.path)) {
       first ??= note.path
@@ -102,11 +84,9 @@ export async function dropSetext(
     const before = await noteText(ws, note.path)
     if (before === null) continue
     first ??= note.path
-
     const edits = setextEdits(before)
     if (edits.length) changes.push(changeOf(note.path, before, edits))
   }
-
   if (rewrittenBefore(ws, root)) {
     markDone(root)
     return 0
@@ -123,7 +103,6 @@ export async function dropSetext(
   markDone(root)
   return written
 }
-
 export function keepSetextMarked(ws: HoldsNotes & MarksNotes, root: string): void {
   if (!spacesDone().some((one) => samePath(one, root))) return
   if (!samePath(ws.activeSpace?.root, root) || !ws.itemMeta.describes(root)) return

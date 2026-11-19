@@ -1,31 +1,24 @@
 import { near, type Rect } from './layout'
 
 const TOUCH_HOLD = 2000
-
 export class ClosingWidths {
   widths = $state<ReadonlyMap<string, number> | null>(null)
-
   private order: readonly string[] = []
   private letGoOfListeners: (() => void) | null = null
-
   hold(widths: ReadonlyMap<string, number>, order: readonly string[], by: 'mouse' | 'touch', rect: () => Rect | null) {
     if (this.widths) return
-
     this.widths = widths
     this.order = order
-
     if (by === 'touch') {
       const timer = setTimeout(() => this.letGo(), TOUCH_HOLD)
       this.letGoOfListeners = () => clearTimeout(timer)
       return
     }
-
     const moved = (event: PointerEvent) => {
       const box = rect()
       if (!box || !near(box, event.clientX, event.clientY)) this.letGo()
     }
     const left = () => this.letGo()
-
     window.addEventListener('pointermove', moved)
     document.documentElement.addEventListener('pointerleave', left)
     this.letGoOfListeners = () => {
@@ -33,10 +26,8 @@ export class ClosingWidths {
       document.documentElement.removeEventListener('pointerleave', left)
     }
   }
-
   still(order: readonly string[]): boolean {
     if (!this.widths) return false
-
     let at = 0
     for (const id of order) {
       const found = this.order.indexOf(id, at)
@@ -46,10 +37,8 @@ export class ClosingWidths {
       }
       at = found + 1
     }
-
     return true
   }
-
   letGo() {
     this.letGoOfListeners?.()
     this.letGoOfListeners = null

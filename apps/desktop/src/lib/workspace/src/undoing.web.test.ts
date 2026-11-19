@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const files = new Map<string, string>()
-
 vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -17,13 +16,9 @@ vi.mock('../../platform/src/tauri', () => ({
     return Promise.resolve(undefined)
   },
 }))
-
 vi.mock('../../link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
-
 const { putBack } = await import('./undoing')
-
 beforeEach(() => files.clear())
-
 describe('a delete undone in the browser after a note took its name', () => {
   test('puts the old note back beside the new one, which keeps its words', async () => {
     files.set('/s/Plan.md', '# Plan\nwritten today\n')

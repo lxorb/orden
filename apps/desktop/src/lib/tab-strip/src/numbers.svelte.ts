@@ -14,15 +14,12 @@ export interface Worn {
   x: number
   y: number
 }
-
 class Numbers {
   worn = $state<Worn[]>([])
-
   private readonly hold = new AltHold()
   private frame = 0
   private following = 0
   private pageTells = isDesktop && shortcuts.platform === 'win'
-
   constructor() {
     const options = { capture: true, passive: true }
     addEventListener('keydown', (event) => this.down(event), { capture: true })
@@ -71,7 +68,6 @@ class Numbers {
     }
     mount(TabNumbers, { target: document.body, props: { numbers: this } })
   }
-
   private down(event: KeyboardEvent) {
     const stroke = {
       key: event.key,
@@ -86,79 +82,63 @@ class Numbers {
     const letter = letterOf(stroke)
     const essential = letter === null ? null : essentialLetters.pathOf(letter)
     const place = this.hold.down(stroke, event.timeStamp, essential !== null)
-
     if (essential !== null) {
       event.preventDefault()
       event.stopPropagation()
       if (!event.repeat) void essentials().then((one) => one.openEssential(essential))
     }
-
     if (place) this.place()
     else if (!this.hold.holding) this.clear()
   }
-
   private up(event: KeyboardEvent) {
     if (event.key === 'Alt' || !event.altKey) this.released(event.timeStamp)
   }
-
   private sense(event: PointerEvent | WheelEvent) {
     if (this.hold.sense(event.altKey, event.getModifierState('AltGraph'))) this.place()
     else if (!this.hold.holding) this.clear()
   }
-
   private released(now?: number) {
     this.hold.released(now)
     this.clear()
   }
-
   private clear() {
     cancelAnimationFrame(this.frame)
     if (this.worn.length) this.worn = []
   }
-
   private place() {
     this.following = FOLLOW_FRAMES
     this.follow()
   }
-
   private follow() {
     cancelAnimationFrame(this.frame)
     this.frame = requestAnimationFrame(() => this.show())
   }
-
   private show() {
     if (!this.hold.holding || viewport.touch) return
     if (document.querySelector('[data-spaces-open]')) return
     if (tabOverview.open) return
-
     const worn = [...this.tabsWorn(), ...this.essentialsWorn()]
     const moved = !same(worn, this.worn)
     if (moved) this.worn = worn
     if ((moved || moving()) && --this.following > 0) this.follow()
   }
-
   private tabsWorn(): Worn[] {
     const paneId = workspace.panes.focusedId
     const strip = document.querySelector(`[data-strip="${CSS.escape(paneId)}"]`)
     if (!strip) return []
-
     const tabs = workspace.tabsIn(paneId)
     const labels = numerals(tabs.length, (id) => shortcuts.keyFor(id), shortcuts.platform)
     const seen = strip.getBoundingClientRect()
-
     return tabs.flatMap((tab, at) => {
       const label = labels[at]
       const pick = strip.querySelector(`.pick[data-tab="${CSS.escape(tab.id)}"]`)
       if (!label || !pick) return []
-
       const face = pick.querySelector('.face')
       const box = (face?.getClientRects().length ? face : pick).getBoundingClientRect()
       if (box.right < seen.left || box.left > seen.right) return []
-
       return [{ id: tab.id, label, x: box.right, y: box.bottom }]
     })
   }
-
   private essentialsWorn(): Worn[] {
     return [...document.querySelectorAll<HTMLElement>('[data-essential-letter]')].flatMap((tile) => {
       const label = tile.dataset.essentialLetter
@@ -170,15 +150,12 @@ class Numbers {
     })
   }
 }
-
 const FOLLOW_FRAMES = 60
-
 function moving(): boolean {
   return [...document.querySelectorAll('[data-strip]')].some(
     (strip) => typeof strip.getAnimations === 'function' && strip.getAnimations({ subtree: true }).length > 0,
   )
 }
-
 function same(one: readonly Worn[], other: readonly Worn[]): boolean {
   return (
     one.length === other.length &&
@@ -194,7 +171,5 @@ function same(one: readonly Worn[], other: readonly Worn[]): boolean {
     })
   )
 }
-
 const PAGE_TAKES = ['pane.focus-left', 'pane.focus-down', 'pane.focus-up', 'pane.focus-right']
-
 export const numbers = new Numbers()

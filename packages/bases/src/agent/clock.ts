@@ -15,14 +15,12 @@ const partsOf = (now: Date, zone?: string): Record<string, string> =>
       .formatToParts(now)
       .map((part) => [part.type, part.value]),
   )
-
 export function clockOf(now: Date, zone?: string): Pick<Context, 'today' | 'now' | 'zone'> {
   const parts = partsOf(now, zone)
   const today = `${parts.year}-${parts.month}-${parts.day}`
   const clock = { today, now: `${today}T${parts.hour}:${parts.minute}:${parts.second}` }
   return zone ? { ...clock, zone } : clock
 }
-
 export function wallClock(now: Date, zone?: string): Date {
   if (!zone) return now
   const parts = partsOf(now, zone)

@@ -8,7 +8,6 @@ interface Asked {
   prompt: string
   tries: number
 }
-
 let box: HTMLElement
 let field: HTMLTextAreaElement
 let asked: Asked[]
@@ -17,7 +16,6 @@ let stopped: boolean
 let feeding: ((samples: Float32Array) => void) | null
 let trouble: string[]
 let ended: number
-
 const opens = (heard: (samples: Float32Array) => void): Promise<Capture> => {
   let store: Float32Array = new Float32Array(0)
   feeding = (samples) => {
@@ -28,13 +26,11 @@ const opens = (heard: (samples: Float32Array) => void): Promise<Capture> => {
   }
   return Promise.resolve({ samples: () => store, stop: () => (stopped = true) })
 }
-
 const hears = async (samples: Float32Array, prompt: string, tries: number) => {
   const one = { seconds: samples.length / RATE, prompt, tries }
   asked.push(one)
   return answer(one)
 }
-
 function session(words: readonly string[] = [], every = 0): Session {
   return new Session(
     field,
@@ -50,9 +46,7 @@ function session(words: readonly string[] = [], every = 0): Session {
     opens,
   )
 }
-
 const settled = () => new Promise((resolve) => setTimeout(resolve, 0))
-
 async function hearing(sound: Float32Array, words: readonly string[] = [], every = 0) {
   const one = session(words, every)
   await one.open()
@@ -60,7 +54,6 @@ async function hearing(sound: Float32Array, words: readonly string[] = [], every
   await settled()
   return one
 }
-
 beforeEach(() => {
   box = document.createElement('div')
   field = document.createElement('textarea')
@@ -77,9 +70,7 @@ beforeEach(() => {
   trouble = []
   ended = 0
 })
-
 afterEach(() => box.remove())
-
 describe('a dictation', () => {
   test('shows live words as live while the voice goes on', async () => {
     await hearing(joined(room(0.5), voice(2)))
@@ -88,13 +79,11 @@ describe('a dictation', () => {
     expect(field.value).toBe('Notiz: live words')
     expect(box.querySelector('[data-heard] mark')?.textContent).toBe('live words')
   })
-
   test('writes the final words in place of the live ones, heard whole, as plain text', async () => {
     const one = await hearing(joined(room(0.5), voice(3), room(0.5)), ['Weißmüller'])
     answer = () => 'Frag Jürgen Weißmüller.'
     asked = []
     await one.finish()
-
     expect(stopped).toBe(true)
     expect(asked).toHaveLength(1)
     expect(asked[0]!.seconds).toBeGreaterThan(3)
@@ -104,51 +93,43 @@ describe('a dictation', () => {
     expect(field.value).toBe('Notiz: Frag Jürgen Weißmüller.')
     expect(box.querySelector('[data-heard]')).toBeNull()
   })
-
   test('cancelled while its words are written down, leaves the field as it was and writes nothing later', async () => {
     const one = await hearing(joined(room(0.5), voice(3), room(0.5)))
     let answered: (said: string) => void = () => undefined
     answer = () => new Promise<string>((done) => (answered = done))
     const finished = one.finish()
     await settled()
-
     one.cancel()
     expect(field.value).toBe('Notiz: ')
     answered('Too late.')
     await finished
-
     expect(field.value).toBe('Notiz: ')
     expect(trouble).toEqual([])
   })
-
   test('sends nothing for silence, and leaves the field as it was', async () => {
     const one = await hearing(room(4))
     await one.finish()
     expect(asked).toEqual([])
     expect(field.value).toBe('Notiz: ')
   })
-
   test('drops what silence comes back as', async () => {
     answer = () => 'Untertitel der Amara.org-Community'
     const one = await hearing(joined(room(0.5), voice(1.5)))
     await one.finish()
     expect(field.value).toBe('Notiz: ')
   })
-
   test('puts the field back on Escape, and closes the microphone', async () => {
     const one = await hearing(joined(room(0.5), voice(2)))
     one.cancel()
     expect(stopped).toBe(true)
     expect(field.value).toBe('Notiz: ')
   })
-
   test('ends a stretch at a pause and goes on after it', async () => {
     let count = 0
     answer = (pass) => (pass.seconds > 4 ? 'Erster Satz.' : `weiter ${++count}`)
     await hearing(joined(voice(4.5), room(1.2), voice(1.5)))
     expect(field.value).toMatch(/^Notiz: Erster Satz\. weiter \d+$/)
   })
-
   test('stops the live words when a live pass fails, and still writes the final ones', async () => {
     answer = () => Promise.reject(new Error('the network'))
     const one = await hearing(joined(room(0.5), voice(2)))
@@ -156,13 +137,11 @@ describe('a dictation', () => {
     feeding?.(joined(room(0.5), voice(4)))
     await settled()
     expect(asked.length).toBe(live)
-
     answer = () => 'Endlich.'
     await one.finish()
     expect(field.value).toBe('Notiz: Endlich.')
     expect(trouble).toEqual([])
   })
-
   test('keeps the live words as plain text when the final pass fails, and says why', async () => {
     const one = await hearing(joined(room(0.5), voice(2)))
     answer = () => Promise.reject(new Error('That key was refused.'))
@@ -171,14 +150,12 @@ describe('a dictation', () => {
     expect(box.querySelector('[data-heard]')).toBeNull()
     expect(trouble).toEqual(['That key was refused.'])
   })
-
   test('waits between live passes as long as its road asks', async () => {
     vi.spyOn(performance, 'now').mockReturnValue(1_000)
     await hearing(joined(room(0.5), voice(3)), [], 2_500)
     expect(asked).toHaveLength(1)
     vi.restoreAllMocks()
   })
-
   test('ends when the reader types into its words, leaving them as they are', async () => {
     await hearing(joined(room(0.5), voice(2)))
     field.value = 'Notiz: lively words'

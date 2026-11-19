@@ -4,7 +4,6 @@ import { heardElsewhere, isDesktop, stored, stringList } from '../../platform/sr
 import { viewport } from '../../ui-kit/src/api'
 
 export const KINDS_KEY = 'orden:hidden-kinds'
-
 export type KindName =
   | 'note'
   | 'canvas'
@@ -19,10 +18,8 @@ export type KindName =
   | 'pass'
   | 'web'
   | 'private'
-
 export function kindsHere(plugin = __EVEN_PLUGIN__): KindName[] {
   if (plugin) return ['note']
-
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken && chatsOn()) here.push('chat')
@@ -36,52 +33,38 @@ export function kindsHere(plugin = __EVEN_PLUGIN__): KindName[] {
   if (web && isDesktop) here.push('private')
   return here
 }
-
 const GATED: readonly KindName[] = ['chat', 'application', 'explorer', 'pass']
-
 export function gated(kind: KindName): boolean {
   return GATED.includes(kind)
 }
-
 export function chosenOn(kind: KindName, hidden: readonly string[]): boolean {
   return gated(kind) || !hidden.includes(kind)
 }
-
 export function shownOf(here: readonly KindName[], hidden: readonly string[]): KindName[] {
   const shown = here.filter((kind) => chosenOn(kind, hidden))
   return shown.length ? shown : here.slice(0, 1)
 }
-
 class HiddenKinds {
   hidden = $state<readonly string[]>([])
-
   get shown(): KindName[] {
     return shownOf(kindsHere(), this.hidden)
   }
-
   offers(kind: KindName): boolean {
     return this.shown.includes(kind)
   }
-
   restore() {
     this.hidden = stringList(stored(KINDS_KEY)) ?? []
   }
 }
-
 export const hiddenKinds = new HiddenKinds()
-
 heardElsewhere([KINDS_KEY], () => hiddenKinds.restore())
-
 export const EXPERIMENTAL_WORD = 'experimental'
-
 export function experimentalOn(): boolean {
   return hiddenKinds.hidden.includes(EXPERIMENTAL_WORD)
 }
-
 function tried(word: string): boolean {
   return experimentalOn() && hiddenKinds.hidden.includes(word)
 }
-
 export const CHATS_WORD = 'experimental-chats'
 export const APPS_WORD = 'experimental-apps'
 export const EXPLORER_WORD = 'experimental-explorer'
@@ -89,33 +72,25 @@ export const PASS_WORD = 'experimental-pass'
 export const TIME_WORD = 'experimental-time'
 export const BASES_WORD = 'experimental-bases'
 export const GLASSES_WORD = 'experimental-glasses'
-
 export function chatsOn(): boolean {
   return !__EVEN_PLUGIN__ && tried(CHATS_WORD)
 }
-
 export function appsOn(): boolean {
   return !__EVEN_PLUGIN__ && tried(APPS_WORD)
 }
-
 export function explorerOn(): boolean {
   return !__EVEN_PLUGIN__ && tried(EXPLORER_WORD)
 }
-
 const passOnly = typeof document !== 'undefined' && document.documentElement.dataset.only === 'pass'
-
 export function passOn(): boolean {
   return !__EVEN_PLUGIN__ && (passOnly || tried(PASS_WORD))
 }
-
 export function timeOn(): boolean {
   return !__EVEN_PLUGIN__ && tried(TIME_WORD)
 }
-
 export function basesOn(): boolean {
   return tried(BASES_WORD)
 }
-
 export function glassesOn(): boolean {
   return tried(GLASSES_WORD)
 }

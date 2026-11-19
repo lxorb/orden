@@ -19,7 +19,6 @@ import type { Imported } from './types'
 
 const NAME = 'LastPass'
 const NOTE_URL = 'http://sn'
-
 const IDENTITY: Record<string, IdentityKey> = {
   'First Name': 'firstName',
   'Middle Name': 'middleName',
@@ -36,18 +35,15 @@ const IDENTITY: Record<string, IdentityKey> = {
   Phone: 'phone',
   'Mobile Phone': 'secondPhone',
 }
-
 const KNOWN = ['Credit Card', 'Address', 'SSH Key', 'Wi-Fi Password', 'Generic']
 const STREET = ['Address 1', 'Address 2', 'Address 3']
 const SKIPPED_KEYS = new Set(['Language', 'NoteType', 'Notes'])
 const KEY = /^([A-Za-z][A-Za-z0-9 /'.#()&-]{0,48}):(.*)$/
-
 interface NoteFields {
   type: string
   values: Map<string, string>
   notes: string
 }
-
 export function parseLastPass(text: string): Imported {
   const rows = csvRecords(text)
   const first = rows[0]
@@ -65,12 +61,10 @@ export function parseLastPass(text: string): Imported {
   }
   return into.result()
 }
-
 function folderOf(grouping: string): string | null {
   const folder = grouping.trim().replace(/\\/g, '/')
   return folder === '' || folder === '(none)' ? null : folder
 }
-
 function noteFieldsOf(extra: string): NoteFields | null {
   const lines = extra.split(/\r?\n/)
   const head = KEY.exec(lines[0] ?? '')
@@ -94,7 +88,6 @@ function noteFieldsOf(extra: string): NoteFields | null {
   }
   return { type: (head[2] ?? '').trim(), values, notes: (notes ?? []).join('\n') }
 }
-
 function phoneOf(value: string): string {
   if (!value.trim().startsWith('{')) return value
   try {
@@ -104,7 +97,6 @@ function phoneOf(value: string): string {
     return value
   }
 }
-
 function birthdayOf(value: string): string {
   const parts = value.split(',').map((one) => one.trim())
   if (parts.length !== 3) return value
@@ -113,19 +105,16 @@ function birthdayOf(value: string): string {
   if (m === '' || !/^\d{1,2}$/.test(day ?? '') || !/^\d{4}$/.test(year ?? '')) return value
   return `${year ?? ''}-${m.padStart(2, '0')}-${(day ?? '').padStart(2, '0')}`
 }
-
 function lastPassExpiry(value: string): string {
   const [month, year] = value.split(',').map((one) => one.trim())
   const m = monthNumberOf(month ?? '')
   return m === '' || !year ? expiryOf(value) : expiryOf(m, year)
 }
-
 function rest(fields: NoteFields, used: readonly string[]): Field[] {
   return [...fields.values]
     .filter(([key, value]) => !used.includes(key) && !SKIPPED_KEYS.has(key) && value.trim() !== '')
     .map(([key, value]) => fieldOf(key, value, /password|passphrase|pin|security code/i.test(key) ? 'hidden' : 'text'))
 }
-
 function noteContent(title: string, fields: NoteFields): Content {
   const get = (key: string): string => fields.values.get(key)?.trim() ?? ''
   switch (fields.type) {
@@ -178,7 +167,6 @@ function noteContent(title: string, fields: NoteFields): Content {
       return noteOf(title, fields.notes, rest(fields, []))
   }
 }
-
 function plainContent(row: CsvRecord): Content {
   const extra = row.extra ?? ''
   const url = (row.url ?? '').trim()

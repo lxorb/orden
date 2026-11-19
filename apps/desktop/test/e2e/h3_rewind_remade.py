@@ -1,7 +1,6 @@
 from harness import Drive
 DRIVE = Drive(__file__, dev=True)
 say, wrong = DRIVE.say, DRIVE.wrong
-
 JS = r"""
 async () => {
   const ws = window.ordenApp.workspace
@@ -45,7 +44,6 @@ async () => {
   return { before, rewound, redone: await read('S4.md') }
 }
 """
-
 def drive(browser):
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -57,5 +55,4 @@ def drive(browser):
         wrong(f"rewound: {got['rewound']!r}")
     if got["redone"] != "# S4 new\n\nFRESH words\n":
         wrong(f"redone: {got['redone']!r}")
-
 raise SystemExit(DRIVE.run(drive))

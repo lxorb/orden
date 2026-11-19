@@ -1,13 +1,10 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 def row_input(page: Page, name: str):
     return page.locator('[role="region"][aria-label="Settings"] .orden-setting', has_text=name).locator("input")
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1280, "height": 860})
     context.grant_permissions(["local-fonts"])
@@ -18,7 +15,6 @@ def drive(browser: Browser) -> None:
     field.scroll_into_view_if_needed()
     picks_from_the_list(page, field)
     missing(page, field)
-
 def picks_from_the_list(page: Page, field) -> None:
     field.click()
     listed = wait_for(
@@ -31,11 +27,9 @@ def picks_from_the_list(page: Page, field) -> None:
     if not listed:
         wrong("no fonts were listed")
         return
-
     face = page.locator("[role=option]").first.evaluate("(one) => one.style.fontFamily")
     if listed[0] not in face:
         wrong(f"the first row is not set in its own face: {face!r}")
-
     picked = listed[0]
     field.fill(picked[:4])
     page.keyboard.press("ArrowDown")
@@ -48,7 +42,6 @@ def picks_from_the_list(page: Page, field) -> None:
     if page.locator("text=Not installed on this device").count():
         wrong("an installed face is said to be missing")
     DRIVE.shot(page, "picked")
-
 def missing(page: Page, field) -> None:
     field.click()
     field.fill("Nonexistent Face Of Nobody")
@@ -59,5 +52,4 @@ def missing(page: Page, field) -> None:
     else:
         say("a face nothing draws is said to be not installed")
     DRIVE.shot(page, "missing")
-
 raise SystemExit(DRIVE.run(drive, "a face for notes is picked from the fonts installed, and a missing one is said"))

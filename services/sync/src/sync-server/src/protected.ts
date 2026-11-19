@@ -6,7 +6,6 @@ import { LONGEST_PATH, lockable } from './paths'
 import type { Env, Variables, Whoever } from './types'
 
 type Way = 'password' | 'device'
-
 interface Password {
   n: number
   r: number
@@ -15,23 +14,18 @@ interface Password {
   hash: string
   at: number
 }
-
 interface Protected {
   password: Password | null
   spaces: Record<string, Record<string, Way>>
 }
-
 const MOST_PER_SPACE = 400
 const MOST_SPACES = 200
 const MOST_BYTES = 64 * 1024
 const SPACE_ID = /^[A-Za-z0-9_-]{1,64}$/
 const BASE64 = /^[A-Za-z0-9+/=]{4,128}$/
-
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
-
 const whole = (value: unknown, most: number): value is number =>
   Number.isInteger(value) && (value as number) > 0 && (value as number) <= most
-
 function passwordOf(value: unknown): Password | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
   const { n, r, p, salt, hash, at } = value as Record<string, unknown>
@@ -41,9 +35,7 @@ function passwordOf(value: unknown): Password | null {
   if (!whole(at, Number.MAX_SAFE_INTEGER)) return null
   return { n, r, p, salt, hash, at }
 }
-
 const fitted = (key: string) => (key.length > LONGEST_PATH ? key.slice(0, LONGEST_PATH).replace(/\/?[^/]*$/, '') : key)
-
 function waysOf(value: unknown): Record<string, Way> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
   const out: Record<string, Way> = {}
@@ -55,7 +47,6 @@ function waysOf(value: unknown): Record<string, Way> {
   }
   return out
 }
-
 function readProtected(raw: string | null | undefined): Protected {
   const held = objectIn(raw) ?? {}
   const spaces: Record<string, Record<string, Way>> = {}
@@ -68,18 +59,15 @@ function readProtected(raw: string | null | undefined): Protected {
   }
   return { password: passwordOf(held.password), spaces }
 }
-
 async function rawFor(env: Env, userId: string): Promise<string | null> {
   const row = await env.DB.prepare('select protected from users where id = ?')
     .bind(userId)
     .first<{ protected: string | null }>()
   return row?.protected ?? null
 }
-
 async function protectedFor(env: Env, userId: string): Promise<Protected> {
   return readProtected(await rawFor(env, userId))
 }
-
 function folded(path: string): string {
   let out = ''
   for (const one of path.normalize('NFC')) {
@@ -89,7 +77,6 @@ function folded(path: string): string {
   }
   return out
 }
-
 function covers(ways: Record<string, Way> | undefined, path: string): boolean {
   if (!ways) return false
   const asked = folded(path)
@@ -98,41 +85,29 @@ function covers(ways: Record<string, Way> | undefined, path: string): boolean {
     return held === '' || asked === held || asked.startsWith(`${held}/`)
   })
 }
-
 export type Shut = (spaceId: string, path: string) => boolean
-
 export const PROTECTED = (path: string) => `${path} is protected. The reader can open it in Orden; an agent cannot.`
-
 export async function shutFor(env: Env, userId: string): Promise<Shut> {
   const held = await protectedFor(env, userId)
   return (spaceId, path) => covers(held.spaces[spaceId], path)
 }
-
 export const KEPT_FROM_TOKENS = 'This space keeps notes from agents, so a token cannot reach it.'
-
 export async function programKeptFrom(env: Env, who: Whoever & { program?: true }, spaceId: string): Promise<boolean> {
   if (who.kind !== 'user' || !who.program) return false
   const { spaces } = await protectedFor(env, who.user.id)
   return Object.keys(spaces[spaceId] ?? {}).length > 0
 }
-
 export async function programShut(env: Env, who: Whoever & { program?: true }): Promise<Shut | null> {
   return who.kind === 'user' && who.program ? await shutFor(env, who.user.id) : null
 }
-
 const TOO_MUCH = 'that is more than an account protects'
-
 const TOO_MANY_SPACES = `at most ${MOST_SPACES} spaces hold something protected`
-
 const BUSY = 'what is protected changed meanwhile, try again'
-
 const TRIES = 8
-
 interface Refusal {
   error: string
   status: 413 | 503
 }
-
 async function rewrite(
   env: Env,
   userId: string,
@@ -151,7 +126,6 @@ async function rewrite(
   }
   return { error: BUSY, status: 503 }
 }
-
 export async function protectLikewise(
   env: Env,
   userId: string,
@@ -178,7 +152,6 @@ export async function protectLikewise(
   })
   return 'error' in next ? 0 : added
 }
-
 function mergedWays(
   held: Record<string, Way>,
   base: Record<string, Way>,
@@ -190,30 +163,24 @@ function mergedWays(
   }
   return waysOf(out)
 }
-
 export const protectedRoutes = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 protectedRoutes.get('/', async (context) => {
   return context.json(await protectedFor(context.env, context.get('user').id))
 })
-
 protectedRoutes.put('/password', async (context) => {
   const body = await objectBody(context)
   if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
   const sent = passwordOf(body.password)
   if (!sent) return context.json({ error: 'password must be a hash the app wrote' }, 400)
-
   const user = context.get('user').id
   const held = await protectedFor(context.env, user)
   if (held.password && held.password.at >= sent.at) return context.json(held)
-
   const next = await rewrite(context.env, user, (now) =>
     now.password && now.password.at >= sent.at ? now : { ...now, password: sent },
   )
   if ('error' in next) return context.json({ error: next.error }, next.status)
   return context.json(next)
 })
-
 protectedRoutes.put('/spaces/:id', async (context) => {
   const id = context.req.param('id')
   if (!SPACE_ID.test(id)) return context.json({ error: 'not a space' }, 400)
@@ -222,7 +189,6 @@ protectedRoutes.put('/spaces/:id', async (context) => {
   if (!body.protected || typeof body.protected !== 'object' || Array.isArray(body.protected)) {
     return context.json({ error: 'protected must be an object' }, 400)
   }
-
   const sent = waysOf(body.protected)
   const base = body.base === undefined ? null : waysOf(body.base)
   const next = await rewrite(context.env, context.get('user').id, (held) => {

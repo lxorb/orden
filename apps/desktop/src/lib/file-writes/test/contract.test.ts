@@ -4,7 +4,6 @@ import { describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => new Map<string, string>())
 const told = vi.hoisted(() => [] as string[])
-
 vi.mock('../../platform/src/api', () => ({
   onDisk: (path: string) => Promise.resolve(disk.has(path)),
   invoke: () => Promise.resolve(),
@@ -21,9 +20,7 @@ vi.mock('../../link-index/src/api', () => ({
 vi.mock('../../documents/src/api', () => ({
   wroteHere: (path: string) => told.push(`across ${path}`),
 }))
-
 const { hearWrites, writeFile, writeIfAbsent } = await import('../src/api')
-
 test('the module stands on its own reads the index, the documents and the platform through their apis only', () => {
   const text = readFileSync(join(import.meta.dirname, '../src/api.ts'), 'utf8')
   expect([...text.matchAll(/from '([^']*)'/g)].map((found) => found[1]).sort()).toEqual([
@@ -32,7 +29,6 @@ test('the module stands on its own reads the index, the documents and the platfo
     '../../platform/src/api',
   ])
 })
-
 describe('writing a file', () => {
   test('tells the index, the ear that listens and sync, a new file as made', async () => {
     const stop = hearWrites({
@@ -56,7 +52,6 @@ describe('writing a file', () => {
       'across /s/Plan.md',
     ])
   })
-
   test('only if nothing is there yet', async () => {
     disk.set('/s/Kept.md', 'kept')
     expect(await writeIfAbsent('/s/Kept.md', 'new')).toBe(false)

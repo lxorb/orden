@@ -6,7 +6,6 @@ const servers: { close: () => void }[] = []
 afterEach(() => {
   for (const server of servers.splice(0)) server.close()
 })
-
 async function started(heard = true, now: () => number = Date.now) {
   const opened: { url: string; session: string }[] = []
   const server = serveOpener(
@@ -28,7 +27,6 @@ async function started(heard = true, now: () => number = Date.now) {
     }).then((answer) => answer.status)
   return { opened, post }
 }
-
 test('opens a web address for the session that asked', async () => {
   const { opened, post } = await started()
   expect(await post({ url: 'https://github.com/login/device', session: 's_1' })).toBe(202)
@@ -38,7 +36,6 @@ test('opens a web address for the session that asked', async () => {
     { url: 'http://example.com/', session: '' },
   ])
 })
-
 test.each([
   { url: 'file:///etc/passwd' },
   { url: 'javascript:alert(1)' },
@@ -51,18 +48,15 @@ test.each([
   expect(await post(body)).toBe(400)
   expect(opened).toEqual([])
 })
-
 test('answers only its own path', async () => {
   const { opened, post } = await started()
   expect(await post({ url: 'https://a.b/' }, '/link')).toBe(404)
   expect(opened).toEqual([])
 })
-
 test('says so when no Orden hears it, so the program prints the address instead', async () => {
   const { post } = await started(false)
   expect(await post({ url: 'https://a.b/' })).toBe(503)
 })
-
 test('opens ten a minute, and then nothing until the next', async () => {
   let now = 0
   const { opened, post } = await started(true, () => now)
@@ -74,7 +68,6 @@ test('opens ten a minute, and then nothing until the next', async () => {
   expect(await post({ url: 'https://a.b/again' })).toBe(202)
   expect(opened).toHaveLength(11)
 })
-
 test('reads a request the way the script writes one', () => {
   expect(askedOf('{"url":"https://a.b/","session":"s_1"}')).toEqual({
     url: 'https://a.b/',

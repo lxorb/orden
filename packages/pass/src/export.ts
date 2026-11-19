@@ -6,33 +6,27 @@ import type { Envelope, VaultMeta } from './types'
 
 export const EXPORT_FORMAT = 'orden-pass'
 export const SEALED_FORMAT = 'orden-pass-sealed'
-
 export interface ExportedVault {
   meta: VaultMeta
   items: Envelope[]
 }
-
 export interface Exported {
   format: typeof EXPORT_FORMAT
   version: 1
   vaults: ExportedVault[]
 }
-
 export interface SealedExport {
   format: typeof SEALED_FORMAT
   version: 1
   kdf: { salt: string } & KdfParams
   sealed: string
 }
-
 const SALT = 16
 const EXPORT_INFO = 'orden pass export'
 export const CSV_COLUMNS = ['name', 'url', 'email', 'username', 'password', 'totp', 'note'] as const
-
 export function spreadsheetSafe(cell: string): string {
   return /^[=+\-@\t\r]/.test(cell) ? `'${cell}` : cell
 }
-
 export function exportJson(vaults: readonly ExportedVault[]): string {
   const exported: Exported = {
     format: EXPORT_FORMAT,
@@ -44,7 +38,6 @@ export function exportJson(vaults: readonly ExportedVault[]): string {
   }
   return JSON.stringify(exported, null, 2)
 }
-
 export function exportCsv(items: readonly Envelope[]): string {
   const rows: string[][] = [[...CSV_COLUMNS]]
   for (const { content, trashed } of items) {
@@ -61,7 +54,6 @@ export function exportCsv(items: readonly Envelope[]): string {
   }
   return csvText(rows)
 }
-
 async function exportKey(
   passphrase: string,
   salt: Uint8Array<ArrayBuffer>,
@@ -69,7 +61,6 @@ async function exportKey(
 ): Promise<Uint8Array<ArrayBuffer>> {
   return await subkey(await stretch(passphrase, salt, params), EXPORT_INFO)
 }
-
 export async function sealExport(text: string, passphrase: string, params: KdfParams = PASSWORD_KDF): Promise<string> {
   const salt = randomBytes(SALT)
   const key = await exportKey(passphrase, salt, params)
@@ -81,11 +72,9 @@ export async function sealExport(text: string, passphrase: string, params: KdfPa
   }
   return JSON.stringify(sealed)
 }
-
 export class NotSealedExport extends Error {
   override name = 'NotSealedExport'
 }
-
 function sealedIn(text: string): {
   salt: Uint8Array<ArrayBuffer>
   params: KdfParams
@@ -116,7 +105,6 @@ function sealedIn(text: string): {
   }
   return { salt: saltBytes, params, sealed }
 }
-
 export function isSealedExport(text: string): boolean {
   try {
     sealedIn(text)
@@ -125,7 +113,6 @@ export function isSealedExport(text: string): boolean {
     return false
   }
 }
-
 export async function openExport(text: string, passphrase: string): Promise<string> {
   const { salt, params, sealed } = sealedIn(text)
   let key: Uint8Array<ArrayBuffer>

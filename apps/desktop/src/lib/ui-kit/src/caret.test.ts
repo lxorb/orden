@@ -3,7 +3,6 @@ import { type Claims, type Showing, takesCaret } from './caret'
 
 const NOTE: Showing = { kind: 'note', reading: false }
 const CLEAR: Claims = { overlaid: false, renaming: false, touch: false }
-
 test.each([
   [NOTE, CLEAR, true],
   [null, CLEAR, false],

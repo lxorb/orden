@@ -32,13 +32,11 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .label {
     flex: none;
     width: 5.5rem;
     color: var(--muted);
   }
-
   .value {
     flex: 1;
     min-width: 0;
@@ -54,11 +52,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .value.off {
     color: var(--muted);
   }
-
   .value.plain {
     border-color: transparent;
     background: none;
@@ -66,12 +62,10 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   @media (max-width: 480px) {
     .copyable {
       flex-wrap: wrap;
     }
-
     .label {
       width: 100%;
     }

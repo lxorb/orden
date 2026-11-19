@@ -10,7 +10,6 @@ function movedId(id: string, from: string, to: string): string {
   if (id.startsWith(`${from}#`) || id.startsWith(`${from}/`)) return to + id.slice(from.length)
   return id
 }
-
 function movedOrder(base: Base, from: string, to: string): Base | null {
   let changed = false as boolean
   const views = base.views.map((view) => {
@@ -27,7 +26,6 @@ function movedOrder(base: Base, from: string, to: string): Base | null {
   })
   return changed ? { ...base, views } : null
 }
-
 function baseFiles(entry: Entry, found: string[] = []): string[] {
   for (const one of entry.children) {
     if (one.is_dir) baseFiles(one, found)
@@ -35,12 +33,10 @@ function baseFiles(entry: Entry, found: string[] = []): string[] {
   }
   return found
 }
-
 function movedPath(path: string, from: string, to: string): string {
   if (path === from) return to
   return path.startsWith(`${from}/`) ? to + path.slice(from.length) : path
 }
-
 export function movedWords(text: string, fenced: boolean, was: string, now: string): string | null {
   const rewrite = (words: string): string | null => {
     let base: Base
@@ -62,7 +58,6 @@ export function movedWords(text: string, fenced: boolean, was: string, now: stri
   }
   return after === text ? null : after
 }
-
 export async function orderMoved(tree: Entry, root: string, from: string, to: string): Promise<void> {
   const was = relativeTo(root, from)
   const now = relativeTo(root, to)

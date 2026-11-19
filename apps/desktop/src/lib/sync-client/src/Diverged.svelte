@@ -10,27 +10,22 @@
   import { runsOf } from './runs'
 
   const ARMING = 400
-
   let last: Held | null = null
   const shown = $derived.by(() => {
     const now = asking.asked
     if (now) last = now
     return now ?? last
   })
-
   const newer = $derived<HeldAnswer>(shown && shown.mine.at >= shown.theirs.at ? 'mine' : 'theirs')
-
   let since = 0
   $effect(() => {
     if (asking.asked) since = performance.now()
   })
-
   function keep(event: MouseEvent, answer: HeldAnswer) {
     if (!shown) return
     if (event.detail === 0 && performance.now() - since < ARMING) return
     void asking.answer(shown, answer)
   }
-
   function stepping(node: HTMLElement) {
     const step = (event: KeyboardEvent) => {
       const key = event.key
@@ -44,7 +39,6 @@
     node.addEventListener('keydown', step)
     return { destroy: () => node.removeEventListener('keydown', step) }
   }
-
   function planeOf(node: HTMLElement, text: string) {
     void (async () => {
       const port = portOf('canvas.pictures')
@@ -137,20 +131,17 @@
     grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
     gap: var(--space-3);
   }
-
   .sides > .side {
     gap: var(--space-3);
     min-width: 0;
     padding: var(--space-3);
   }
-
   header {
     display: flex;
     align-items: baseline;
     gap: var(--space-3);
     font-size: var(--text-sm);
   }
-
   .device {
     flex: 1;
     min-width: 0;
@@ -161,13 +152,11 @@
     color: var(--text-strong);
     unicode-bidi: isolate;
   }
-
   time {
     flex: none;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   .excerpt {
     flex: 1;
     min-height: 3lh;
@@ -181,7 +170,6 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
-
   mark {
     margin: 0 -0.18em;
     padding: 0.1em 0.18em;
@@ -191,7 +179,6 @@
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
   }
-
   .plane {
     flex: 1;
     display: grid;
@@ -201,13 +188,11 @@
     overflow: hidden;
     border-radius: var(--radius-row);
   }
-
   .plane :global(svg) {
     display: block;
     max-width: 100%;
     max-height: 14rem;
   }
-
   .file {
     flex: 1;
     display: flex;
@@ -217,47 +202,38 @@
     font-size: var(--text-sm);
     color: var(--text);
   }
-
   .file img {
     max-width: 100%;
     max-height: 10rem;
     object-fit: contain;
     border-radius: var(--radius-row);
   }
-
   .file .called {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .file .size {
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-
   .keep {
     align-self: flex-end;
   }
-
   .both {
     margin-inline: auto;
   }
-
   .keep.is-pressing {
     background: var(--accent-press);
     transform: none;
   }
-
   .both.is-pressing {
     background: var(--surface-press);
     color: var(--text-strong);
   }
-
   :global([data-touch]) .keep {
     align-self: stretch;
   }
-
   :global([data-touch]) header {
     font-size: var(--text-base);
   }

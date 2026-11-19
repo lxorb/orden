@@ -8,9 +8,7 @@
   import { type Dictates, voice } from './voice.svelte'
 
   const { owner, button, below }: { owner: Dictates; button: HTMLButtonElement; below: boolean } = $props()
-
   let layer = $state<HTMLElement>()
-
   const place = $derived.by(() => {
     const at = button.getBoundingClientRect()
     const gap = 6
@@ -22,7 +20,6 @@
       most: `${Math.max(160, at.right - edge)}px`,
     }
   })
-
   $effect(() =>
     overlays.show(
       () => {
@@ -31,7 +28,6 @@
       () => [layer, button],
     ),
   )
-
   function said(engine: Engine): { name: string; where: string } {
     if (engine === 'auto') {
       const fallback = engines.offered().find((one) => one === 'provider' || one === 'account')
@@ -62,15 +58,12 @@
       where: to.local ? 'Stays on this computer' : `Audio goes to ${to.host}`,
     }
   }
-
   function here(): string {
     return `Stays on this computer. Downloads a ${size()} speech model once`
   }
-
   function size(): string {
     return `${Math.round((local.machine?.model.bytes ?? 0) / 1e6)} MB`
   }
-
   function choose(engine: Engine) {
     engines.choose(engine)
     voice.asking = null
@@ -114,7 +107,6 @@
     max-width: min(20rem, var(--most));
     padding: 4px;
   }
-
   .head {
     margin: 0;
     padding: 4px var(--row-pad) 2px;
@@ -122,22 +114,18 @@
     font-family: var(--font-ui);
     font-size: var(--text-xs);
   }
-
   .road {
     height: auto;
     padding-block: 5px;
   }
-
   .words {
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
-
   .name {
     color: var(--text-strong);
   }
-
   .where {
     color: var(--muted);
     font-size: var(--text-xs);

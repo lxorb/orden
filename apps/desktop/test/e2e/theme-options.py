@@ -3,14 +3,11 @@ import json
 import os
 import shutil
 from typing import Any
-
 from PIL import Image
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = """# Under a picture
 
 Ordinary words, and *some* of them `marked up`, with a [link](https://example.com),
@@ -30,12 +27,10 @@ rather than glanced at.
 const code = 'keeps its own block'
 ```
 """
-
 LONG = "# A long note\n\n" + "\n\n".join(
     f"Paragraph {n}: ordinary words that run on long enough to wrap at least once in a pane "
     f"of ordinary width, so that scrolling has something to lay out and paint." for n in range(400)
 )
-
 PICTURES = {
     "bright": """
       const g = c.createLinearGradient(0, 0, 0, h)
@@ -60,7 +55,6 @@ PICTURES = {
       }
     """,
 }
-
 TAKE = """
 async ([paint, side]) => {
   const w = 2400, h = 1500
@@ -72,7 +66,6 @@ async ([paint, side]) => {
   return window.ordenApp.wallpaper.take(blob, side ?? 'light')
 }
 """
-
 FILTERS = """
 () => [...document.querySelectorAll('*')]
   .filter((one) => {
@@ -81,7 +74,6 @@ FILTERS = """
   })
   .map((one) => one.tagName.toLowerCase() + '.' + [...one.classList].join('.'))
 """
-
 BOXES = """
 () => {
   const bar = document.querySelector('[data-chrome="top"], .titlebar, header')?.getBoundingClientRect()
@@ -113,38 +105,30 @@ BOXES = """
   }
 }
 """
-
 def channels(said: str) -> tuple[int, int, int]:
     parts = [float(one) for one in said[said.index("(") + 1 : said.index(")")].replace(",", " ").split()[:3]]
     return (round(parts[0]), round(parts[1]), round(parts[2]))
-
 def luminance(rgb: tuple[int, int, int]) -> float:
     def linear(c: float) -> float:
         c = c / 255
         return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
-
     r, g, b = (linear(one) for one in rgb)
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
-
 def ratio(one: tuple[int, int, int], two: tuple[int, int, int]) -> float:
     light, dark = sorted((luminance(one), luminance(two)), reverse=True)
     return round((light + 0.05) / (dark + 0.05), 2)
-
 def worst(image: Image.Image, box: list[float], ink: tuple[int, int, int]) -> float:
     region = image.crop(tuple(round(one) for one in box)).convert("RGB")
     colours = {colour for _count, colour in region.getcolors(maxcolors=1 << 20) or []}
     return min(ratio(ink, colour) for colour in colours) if colours else 0.0
-
 def keep_shot(page: Any, name: str) -> None:
     path = shot(page, name)
     also = os.environ.get("ORDEN_SHOTS_TOO")
     if also:
         os.makedirs(also, exist_ok=True)
         shutil.copy(path, os.path.join(also, f"{name}.png"))
-
 def holds(what: str, found: float, floor: float) -> None:
     (say if found >= floor else wrong)(f"{what}: {found}:1 (at least {floor})")
-
 def measure(page: Any, name: str, frame: float = 4.5, opaque: bool = False) -> None:
     boxes = page.evaluate(BOXES)
     image = Image.open(io.BytesIO(page.screenshot()))
@@ -163,11 +147,9 @@ def measure(page: Any, name: str, frame: float = 4.5, opaque: bool = False) -> N
         colours = {colour for _count, colour in region.getcolors(maxcolors=1 << 16) or []}
         bg = channels(boxes["bg"])
         (say if colours == {bg} else wrong)(f"{name}: Opaque is the paper as it was {bg}: {sorted(colours)[:3]}")
-
 def dial(page: Any, id: str, value: Any) -> None:
     page.evaluate(f"() => window.ordenApp.theme.set({json.dumps(id)}, {json.dumps(value)})")
     page.wait_for_timeout(700)
-
 def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a picture") -> Any:
     page = DRIVE.page(browser, viewport={"width": 1240, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
     page.add_init_script("localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette']))")
@@ -177,13 +159,11 @@ def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a pict
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     return page
-
 def wallpaper(browser: Any, scheme: str) -> None:
     page = fresh(browser, scheme)
     wait_for(page, "window.ordenApp.wallpaper", "the wallpaper store on the handle")
     page.evaluate("() => window.ordenApp.theme.select('wallpaper')")
     wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "the wallpaper's dials")
-
     for picture, paint in PICTURES.items():
         if not page.evaluate(TAKE, [paint, "light"]):
             wrong(f"{scheme}: the {picture} picture was not taken")
@@ -193,7 +173,6 @@ def wallpaper(browser: Any, scheme: str) -> None:
             dial(page, "content", level)
             keep_shot(page, f"wallpaper-{scheme}-{picture}-{level}")
             measure(page, f"wallpaper {scheme} {picture} {level}", opaque=level == "opaque")
-
         if picture != "checks":
             continue
         for id, ends, start in (
@@ -210,13 +189,11 @@ def wallpaper(browser: Any, scheme: str) -> None:
                 sharp = id == "blur" and value == 0
                 measure(page, f"wallpaper {scheme} {id} {value}", frame=6 if sharp else 4.5)
             dial(page, id, start)
-
         for fit in ("fit", "tile", "centre"):
             dial(page, "fit", fit)
             keep_shot(page, f"wallpaper-{scheme}-fit-{fit}")
             measure(page, f"wallpaper {scheme} fit {fit}")
         dial(page, "fit", "fill")
-
     before = page.evaluate("() => localStorage.getItem('orden:theme-settings')")
     page.evaluate("() => window.ordenApp.theme.try('dim', 70)")
     page.wait_for_timeout(200)
@@ -226,13 +203,11 @@ def wallpaper(browser: Any, scheme: str) -> None:
         f"wallpaper {scheme}: a dial being dragged shows {shown} and keeps nothing ({before == after})"
     )
     page.evaluate("() => window.ordenApp.theme.set('dim', 10)")
-
     page.evaluate(TAKE, [PICTURES["dark"], "dark"])
     page.wait_for_timeout(600)
     sheet = page.evaluate("() => document.getElementById('orden-user-theme')?.textContent ?? ''")
     (say if ":root[data-theme='dark']" in sheet else wrong)(f"wallpaper {scheme}: the dark side has a picture of its own")
     keep_shot(page, f"wallpaper-{scheme}-own-dark")
-
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(600)
     page.evaluate("() => document.querySelector('.sheet .pictures')?.scrollIntoView({ block: 'start' })")
@@ -258,16 +233,13 @@ def wallpaper(browser: Any, scheme: str) -> None:
     keep_shot(page, f"wallpaper-{scheme}-settings")
     page.evaluate("() => { window.ordenApp.settings.open = false }")
     page.wait_for_timeout(300)
-
     filters = page.evaluate(FILTERS)
     (wrong if filters else say)(f"wallpaper {scheme}: filters on a frame: {filters[:5]}")
     page.context.close()
-
 def glass(browser: Any, scheme: str) -> None:
     page = fresh(browser, scheme)
     page.evaluate("() => window.ordenApp.theme.select('glass')")
     wait_for(page, "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')", "glass's sheet")
-
     page.wait_for_timeout(400)
     keep_shot(page, f"glass-{scheme}")
     measure(page, f"glass {scheme}")
@@ -277,16 +249,13 @@ def glass(browser: Any, scheme: str) -> None:
         measure(page, f"glass {scheme} {id} {value}")
     for id, value in (("tint", 100), ("follow", True), ("tab", True)):
         dial(page, id, value)
-
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(900)
     keep_shot(page, f"glass-{scheme}-settings")
     page.evaluate("() => { window.ordenApp.settings.open = false }")
-
     filters = page.evaluate(FILTERS)
     (wrong if filters else say)(f"glass {scheme}: filters on a frame: {filters[:5]}")
     page.context.close()
-
 SCROLL = """
 () => new Promise((done) => {
   const scroller = document.querySelector('.cm-scroller')
@@ -305,12 +274,10 @@ SCROLL = """
   requestAnimationFrame(step)
 })
 """
-
 def summary(frames: list[float]) -> str:
     ordered = sorted(frames)
     median = ordered[len(ordered) // 2]
     return f"{len(frames)} frames, median {median:.1f} ms, p95 {ordered[int(len(ordered) * 0.95)]:.1f} ms, worst {ordered[-1]:.1f} ms"
-
 def cost(browser: Any) -> None:
     results: dict[str, dict[str, str]] = {}
     for look in ("default", "glass", "wallpaper-clear"):
@@ -338,16 +305,13 @@ def cost(browser: Any) -> None:
         results[look] = {"scroll": summary(scrolled), "typing": summary(typed)}
         say(f"cost on {look}: scrolling {results[look]['scroll']}; typing {results[look]['typing']}")
         page.context.close()
-
     out = os.environ.get("ORDEN_SHOTS_TOO")
     if out:
         with open(os.path.join(out, "cost.json"), "w", encoding="utf-8") as file:
             json.dump(results, file, indent=2)
-
 def drive(browser: Any) -> None:
     for scheme in ("dark", "light"):
         wallpaper(browser, scheme)
         glass(browser, scheme)
     cost(browser)
-
 raise SystemExit(DRIVE.run(drive))

@@ -37,13 +37,9 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
     toggleReading: () => undefined,
   },
 }))
-
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
-
 const frames = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
-
 let shown: ReturnType<typeof mount> | null = null
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
@@ -52,7 +48,6 @@ afterEach(() => {
   world.embedded = 'first words'
   world.doc = 'Today\n\n![[Flow]]'
 })
-
 async function opened(doc: string) {
   world.doc = doc
   const tab = {
@@ -79,7 +74,6 @@ async function opened(doc: string) {
   flushSync()
   return target
 }
-
 function scrolledTo(box: HTMLElement, at: number) {
   let top = at
   Object.defineProperty(box, 'scrollTop', {
@@ -90,32 +84,26 @@ function scrolledTo(box: HTMLElement, at: number) {
     },
   })
 }
-
 test('another note saved in the space leaves a long note with a picture where it was read', async () => {
   const words = Array.from({ length: 200 }, (_, at) => `Line ${String(at)} of the trip.`).join('\n\n')
   const target = await opened(`${words}\n\n![[beach.png]]\n\n${words}`)
   const box = target.querySelector<HTMLElement>('.scroller')
   if (!box) throw new Error('no scroller')
   scrolledTo(box, 2400)
-
   world.version++
   flushSync()
   await idle(400)
   flushSync()
-
   expect(box.scrollTop).toBe(2400)
 })
-
 test('links drawn before the space index arrived are drawn again once it does', async () => {
   world.embedded = 'See Plan'
   const target = await opened('Trip\n\nSee [[Plan]]')
   expect(target.querySelector('article')?.textContent).toBe('TripSee Plan')
-
   world.embedded = 'See linked Plan'
   world.version++
   flushSync()
   await idle(400)
   flushSync()
-
   expect(target.querySelector('article')?.textContent).toBe('TripSee linked Plan')
 })

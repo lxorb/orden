@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import ctypes
 import http.server
@@ -16,7 +15,6 @@ import threading
 import time
 from ctypes import wintypes
 from typing import Any
-
 from PIL import Image, ImageChops, ImageGrab, ImageStat
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -27,20 +25,16 @@ spec.loader.exec_module(under)
 from probe_app import main_window, refuse_updating  # noqa: E402
 from fresh_app import ended, fresh  # noqa: E402
 from native_app import config_of, endpoint
-
 user32 = under.user32
 WIDTH, HEIGHT = 1280, 800
 CORNER = 14
-
 TEAL = (0, 160, 160)
 APART = 12
-
 QUIET = (
     "[data-panes] { background: #ff00ff !important }"
     " footer[data-region='status'], .fab { visibility: hidden !important }"
     " *, *::before, *::after { caret-color: transparent !important }"
 )
-
 CARDS = """
 const round = parseFloat(getComputedStyle(document.querySelector('main')).getPropertyValue('--card-radius')) || 0
 const all = [...document.querySelectorAll('[data-pane]')].filter((one) => one.getClientRects().length)
@@ -59,7 +53,6 @@ return all.map((pane, at) => {
   }
 })
 """
-
 def page(wide: bool) -> bytes:
     size = "width:300vw;height:300vh" if wide else "width:10px;height:10px"
     return (
@@ -71,11 +64,9 @@ def page(wide: bool) -> bytes:
         " runs: root.scrollWidth > innerWidth }) };"
         " addEventListener('load', said); addEventListener('resize', said); said()</script>"
     ).encode()
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
-
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
         body = (
             b"<!doctype html><title>teal</title><body style='margin:0;height:100vh;background:#00a0a0'>"
@@ -87,20 +78,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-
 def corners(shot: Image.Image, hole: tuple[int, int, int, int]) -> list[Image.Image]:
     left, top, right, bottom = hole
     return [
         shot.convert("RGB").crop((left, bottom - CORNER, left + CORNER, bottom)),
         shot.convert("RGB").crop((right - CORNER, bottom - CORNER, right, bottom)),
     ]
-
 def apart(one: Image.Image, other: Image.Image) -> float:
     return max(ImageStat.Stat(ImageChops.difference(one, other)).mean)
-
 def off(one: tuple[int, ...], other: tuple[int, ...]) -> int:
     return max(abs(a - b) for a, b in zip(one[:3], other[:3]))
-
 def rounded(app: Any, hwnd: int, label: str, out: pathlib.Path) -> list[str]:
     wrong: list[str] = []
     until = time.monotonic() + 30
@@ -147,7 +134,6 @@ def rounded(app: Any, hwnd: int, label: str, out: pathlib.Path) -> list[str]:
             if not round_ and by > APART:
                 wrong.append(f"{where} is cut round, where its card meets the window: {card}")
     return wrong
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -158,11 +144,9 @@ def main() -> int:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
     refuse_updating(args.exe)
     args.out.mkdir(parents=True, exist_ok=True)
-
     site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=site.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{site.server_address[1]}"
-
     config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
@@ -191,7 +175,6 @@ def main() -> int:
         under.forward(hwnd)
         time.sleep(3)
         user32.SetCursorPos(desk.right - 2, desk.bottom - 2)
-
         shots: dict[bool, tuple[Image.Image, tuple[int, int, int, int], dict]] = {}
         for wide in (False, True):
             if wide:
@@ -232,7 +215,6 @@ def main() -> int:
             shot.save(args.out / f"{'wide' if wide else 'narrow'}.png")
             print(f"{'wide' if wide else 'narrow'}: hole {hole}, page says {metrics}", flush=True)
             shots[wide] = (shot, hole, metrics)
-
         narrow, wide = shots[False], shots[True]
         if not wide[2].get("runs"):
             wrong.append(f"the wide page does not run wider than the pane: {wide[2]}")
@@ -245,7 +227,6 @@ def main() -> int:
             print(f"{name}: the corners differ by {by:.1f} on average", flush=True)
             if by > 6:
                 wrong.append(f"the {name} corner of a page that runs wide is not drawn like a page that does not: {by:.1f}")
-
         user32.SetWindowPos(hwnd, None, desk.left, desk.top, min(WIDTH, desk.right - desk.left), min(HEIGHT, desk.bottom - desk.top) - 80, 0x0004)
         app.eval(f"const style = document.createElement('style'); style.textContent = {json.dumps(QUIET)}; document.head.append(style); return true")
         app.eval(
@@ -275,12 +256,10 @@ def main() -> int:
         ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
-
     for one in wrong:
         print(f"::error::{one}", flush=True)
     (args.out / "wrong.json").write_text(json.dumps(wrong, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

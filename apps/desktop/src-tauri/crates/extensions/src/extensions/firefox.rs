@@ -8,52 +8,40 @@ use serde_json::{json, Map, Value};
 use sha2::{Digest as _, Sha256};
 
 const FOLDER: &str = "orden";
-
 const FIREFOX_JS: &str = include_str!("firefox/firefox.js");
 const POLYFILL_JS: &str = include_str!("firefox/browser-polyfill.js");
 const BRIDGE_JS: &str = include_str!("firefox/bridge.js");
 const HOST_JS: &str = include_str!("firefox/host.js");
-
 const ICON_PNG: &[u8] = include_bytes!("../../../../icons/128x128.png");
-
 const PAGE_SCRIPTS: &str = r#"<script src="/orden/firefox.js"></script><script src="/orden/browser-polyfill.js"></script>"#;
 const BACKGROUND_SCRIPTS: &str = r#"<script src="/orden/bridge.js"></script><script src="/orden/firefox.js"></script><script src="/orden/browser-polyfill.js"></script>"#;
-
 const BACKGROUND_PAGE: &str = "orden/background.html";
-
 const FIREFOX_VERSION: &str = "140.0";
-
 const MOST_READ: u64 = 64 * 1024 * 1024;
-
 const ED25519_SPKI: [u8; 12] = [
     0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00,
 ];
-
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Gaps {
     pub said: Vec<String>,
     pub apis: Vec<String>,
 }
-
 impl Gaps {
     pub fn is_empty(&self) -> bool {
         self.said.is_empty() && self.apis.is_empty()
     }
-
     fn say(&mut self, what: &str) {
         if !self.said.iter().any(|one| one == what) {
             self.said.push(what.to_owned());
         }
     }
-
     fn api(&mut self, what: &str) {
         if !self.apis.iter().any(|one| one == what) {
             self.apis.push(what.to_owned());
         }
     }
 }
-
 pub fn id_and_key(guid: &str) -> (String, String) {
     let seed = Sha256::digest(format!("orden firefox add-on\0{guid}"));
     let mut key = ED25519_SPKI.to_vec();
@@ -61,14 +49,12 @@ pub fn id_and_key(guid: &str) -> (String, String) {
     let id = super::link::id_of(&Sha256::digest(&key)[..16]);
     (id, base64::engine::general_purpose::STANDARD.encode(&key))
 }
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Background {
     Page(String),
     Scripts(Vec<String>, bool),
     Worker(String, bool),
 }
-
 #[derive(Debug)]
 pub struct Translated {
     pub manifest: Value,
@@ -76,7 +62,6 @@ pub struct Translated {
     pub gaps: Gaps,
     background: Option<Background>,
 }
-
 pub fn translate(firefox: &Value, key: &str) -> Translated {
     let empty = Map::new();
     let source = firefox.as_object().unwrap_or(&empty);
@@ -84,7 +69,6 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
     let mut gaps = Gaps::default();
     let mut layer = Map::new();
     layer.insert("firefox".into(), json!(FIREFOX_VERSION));
-
     for (field, value) in source {
         if !TAKEN.contains(&field.as_str()) && !DROPPED.contains(&field.as_str()) {
             out.insert(field.clone(), value.clone());
@@ -92,14 +76,12 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
     }
     out.insert("manifest_version".into(), json!(3));
     out.insert("key".into(), json!(key));
-
     let version = source.get("version").and_then(Value::as_str).unwrap_or("0");
     let chromium = chromium_version(version);
     if chromium != version && !source.contains_key("version_name") {
         out.insert("version_name".into(), json!(version));
     }
     out.insert("version".into(), json!(chromium));
-
     if let Some(icons) = source.get("icons").and_then(drawable) {
         if let Some(icon) = largest(&icons) {
             layer.insert("icon".into(), json!(icon));
@@ -107,7 +89,6 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
         out.insert("icons".into(), icons);
     }
     pages_of(source, &mut out, &mut layer, &mut gaps);
-
     let background = background_of(source.get("background"));
     permissions_of(source, background.as_ref(), &mut out, &mut gaps);
     match &background {
@@ -136,7 +117,6 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
         }
         None => {}
     }
-
     if let Some(scripts) = source.get("content_scripts").and_then(Value::as_array) {
         let scripts: Vec<Value> = scripts.iter().filter_map(content_script).collect();
         if !scripts.is_empty() {
@@ -170,7 +150,6 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
     if let Some(commands) = source.get("commands").and_then(Value::as_object) {
         out.insert("commands".into(), Value::Object(shortcuts(commands)));
     }
-
     Translated {
         manifest: Value::Object(out),
         layer: Value::Object(layer),
@@ -178,7 +157,6 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
         background,
     }
 }
-
 fn pages_of(
     source: &Map<String, Value>,
     out: &mut Map<String, Value>,
@@ -197,7 +175,6 @@ fn pages_of(
             gaps.api("pageAction");
         }
     }
-
     if let Some(options) = source.get("options_ui").and_then(Value::as_object) {
         let mut kept = Map::new();
         if let Some(page) = options.get("page").and_then(Value::as_str) {
@@ -208,7 +185,6 @@ fn pages_of(
         }
         out.insert("options_ui".into(), Value::Object(kept));
     }
-
     if let Some(sidebar) = source.get("sidebar_action").and_then(Value::as_object) {
         if let Some(panel) = sidebar.get("default_panel").and_then(Value::as_str) {
             layer.insert("sidebar".into(), json!(relative(panel)));
@@ -219,7 +195,6 @@ fn pages_of(
         gaps.say("sidebar");
     }
 }
-
 fn permissions_of(
     source: &Map<String, Value>,
     background: Option<&Background>,
@@ -260,7 +235,6 @@ fn permissions_of(
         );
     }
 }
-
 const TAKEN: [&str; 18] = [
     "manifest_version",
     "key",
@@ -281,7 +255,6 @@ const TAKEN: [&str; 18] = [
     "content_security_policy",
     "commands",
 ];
-
 const DROPPED: [&str; 12] = [
     "browser_specific_settings",
     "applications",
@@ -296,7 +269,6 @@ const DROPPED: [&str; 12] = [
     "hidden",
     "chrome_settings_overrides",
 ];
-
 const ONLY_FIREFOX: [&str; 19] = [
     "contextualIdentities",
     "menus.overrideContext",
@@ -318,7 +290,6 @@ const ONLY_FIREFOX: [&str; 19] = [
     "mozillaAddons",
     "trialML",
 ];
-
 const NEVER_OPTIONAL: [&str; 9] = [
     "debugger",
     "declarativeNetRequest",
@@ -330,7 +301,6 @@ const NEVER_OPTIONAL: [&str; 9] = [
     "ttsEngine",
     "wallpaper",
 ];
-
 fn split(list: Option<&Value>, gaps: &mut Gaps) -> (Vec<String>, Vec<String>) {
     let mut names = Vec::new();
     let mut hosts = Vec::new();
@@ -360,31 +330,26 @@ fn split(list: Option<&Value>, gaps: &mut Gaps) -> (Vec<String>, Vec<String>) {
     }
     (names, hosts)
 }
-
 fn strs(list: Option<&Value>) -> impl Iterator<Item = &str> {
     list.and_then(Value::as_array)
         .into_iter()
         .flatten()
         .filter_map(Value::as_str)
 }
-
 fn relatives(list: Option<&Value>) -> Vec<String> {
     strs(list).map(relative).collect()
 }
-
 fn patterns(list: Option<&Value>) -> Vec<String> {
     strs(list)
         .filter(|one| pattern(one))
         .map(str::to_owned)
         .collect()
 }
-
 fn unique(mut list: Vec<String>) -> Vec<String> {
     let mut seen = std::collections::HashSet::new();
     list.retain(|one| seen.insert(one.clone()));
     list
 }
-
 fn pattern(said: &str) -> bool {
     if said == "<all_urls>" {
         return true;
@@ -405,7 +370,6 @@ fn pattern(said: &str) -> bool {
     let name = host.strip_prefix("*.").unwrap_or(host);
     !host.is_empty() && (host == "*" || !name.contains('*'))
 }
-
 fn background_of(background: Option<&Value>) -> Option<Background> {
     let background = background?.as_object()?;
     let module = background.get("type").and_then(Value::as_str) == Some("module");
@@ -421,7 +385,6 @@ fn background_of(background: Option<&Value>) -> Option<Background> {
         .and_then(Value::as_str)
         .map(|worker| Background::Worker(relative(worker), module))
 }
-
 fn relative(path: &str) -> String {
     let mut path = path.trim();
     loop {
@@ -434,7 +397,6 @@ fn relative(path: &str) -> String {
         }
     }
 }
-
 fn draws(path: &str) -> bool {
     let file = path.split('#').next().unwrap_or_default();
     !file.is_empty()
@@ -442,7 +404,6 @@ fn draws(path: &str) -> bool {
             .extension()
             .is_some_and(|one| one.eq_ignore_ascii_case("svg"))
 }
-
 fn drawable(icons: &Value) -> Option<Value> {
     match icons {
         Value::String(path) => draws(path).then(|| json!(relative(path))),
@@ -460,7 +421,6 @@ fn drawable(icons: &Value) -> Option<Value> {
         _ => None,
     }
 }
-
 fn largest(icons: &Value) -> Option<String> {
     match icons {
         Value::String(path) => Some(path.clone()),
@@ -472,7 +432,6 @@ fn largest(icons: &Value) -> Option<String> {
         _ => None,
     }
 }
-
 fn button(action: &Value) -> Value {
     let mut out = Map::new();
     if let Some(popup) = action.get("default_popup").and_then(Value::as_str) {
@@ -486,7 +445,6 @@ fn button(action: &Value) -> Value {
     }
     Value::Object(out)
 }
-
 fn content_script(script: &Value) -> Option<Value> {
     let mut out = script.as_object()?.clone();
     out.remove("cookieStoreId");
@@ -521,7 +479,6 @@ fn content_script(script: &Value) -> Option<Value> {
     }
     Some(Value::Object(out))
 }
-
 fn accessible(resources: &[Value]) -> Vec<Value> {
     let plain: Vec<String> = resources
         .iter()
@@ -554,7 +511,6 @@ fn accessible(resources: &[Value]) -> Vec<Value> {
     }
     out
 }
-
 fn origin_of(pattern: &str) -> String {
     match pattern.split_once("://") {
         Some((scheme, rest)) => {
@@ -564,7 +520,6 @@ fn origin_of(pattern: &str) -> String {
         None => pattern.to_owned(),
     }
 }
-
 fn shortcuts(commands: &Map<String, Value>) -> Map<String, Value> {
     let mut out = Map::new();
     let mut bound = 0;
@@ -610,7 +565,6 @@ fn shortcuts(commands: &Map<String, Value>) -> Map<String, Value> {
     }
     out
 }
-
 fn shortcut(said: &str, mac: bool) -> bool {
     const MEDIA: [&str; 4] = [
         "MediaNextTrack",
@@ -648,7 +602,6 @@ fn shortcut(said: &str, mac: bool) -> bool {
         .any(|one| seen.contains(one));
     fine && main && !(seen.contains("Ctrl") && seen.contains("Alt"))
 }
-
 pub fn chromium_version(version: &str) -> String {
     let parts: Vec<&str> = version.split('.').collect();
     let number = |part: &str| -> Option<u32> {
@@ -684,7 +637,6 @@ pub fn chromium_version(version: &str) -> String {
         .collect::<Vec<_>>()
         .join(".")
 }
-
 pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     let path = folder.join("manifest.json");
     let text = fs::read_to_string(&path).map_err(|_| "that add-on has no manifest".to_string())?;
@@ -705,7 +657,6 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
             layer.insert("scripts".into(), json!(scripts));
         }
     }
-
     let layer_dir = folder.join(FOLDER);
     fs::create_dir_all(&layer_dir).map_err(|error| error.to_string())?;
     let told = format!("globalThis.__ordenLayer = {};\n", translated.layer);
@@ -717,7 +668,6 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     write("bridge.js", BRIDGE_JS)?;
     write("host.js", HOST_JS)?;
     fs::write(layer_dir.join("icon.png"), ICON_PNG).map_err(|error| error.to_string())?;
-
     let mut background_page = None;
     match &translated.background {
         Some(Background::Page(page)) => background_page = Some(folder.join(page)),
@@ -744,7 +694,6 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
         }
         None => {}
     }
-
     for page in pages(folder) {
         let Ok(html) = fs::read_to_string(&page) else {
             continue;
@@ -756,7 +705,6 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
         };
         fs::write(&page, headed(&html, first)).map_err(|error| error.to_string())?;
     }
-
     let mut gaps = translated.gaps;
     read_for_gaps(folder, &mut gaps);
     let written =
@@ -768,7 +716,6 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     )?;
     Ok(gaps)
 }
-
 fn uncommented(text: &str) -> String {
     text.trim_start_matches('\u{feff}')
         .lines()
@@ -776,7 +723,6 @@ fn uncommented(text: &str) -> String {
         .collect::<Vec<_>>()
         .join("\n")
 }
-
 pub fn message_name(name: &str) -> String {
     name.chars()
         .map(|one| {
@@ -788,7 +734,6 @@ pub fn message_name(name: &str) -> String {
         })
         .collect()
 }
-
 fn named_plainly(value: &mut Value) {
     match value {
         Value::String(text) if text.contains("__MSG_") => {
@@ -810,7 +755,6 @@ fn named_plainly(value: &mut Value) {
         _ => {}
     }
 }
-
 fn locales(folder: &Path) -> Result<(), String> {
     let Ok(languages) = fs::read_dir(folder.join("_locales")) else {
         return Ok(());
@@ -860,7 +804,6 @@ fn locales(folder: &Path) -> Result<(), String> {
     }
     Ok(())
 }
-
 fn undefined_left_out(message: &str, defined: &[String]) -> String {
     let mut out = String::new();
     let mut rest = message;
@@ -884,7 +827,6 @@ fn undefined_left_out(message: &str, defined: &[String]) -> String {
     out.push_str(rest);
     out
 }
-
 fn replace_ignoring_case(text: &str, from: &str, to: &str) -> String {
     let lower = text.to_ascii_lowercase();
     let from = from.to_ascii_lowercase();
@@ -898,7 +840,6 @@ fn replace_ignoring_case(text: &str, from: &str, to: &str) -> String {
     out.push_str(&text[at..]);
     out
 }
-
 pub fn gaps_in(folder: &Path) -> Option<Gaps> {
     #[derive(serde::Deserialize)]
     struct Said {
@@ -912,7 +853,6 @@ pub fn gaps_in(folder: &Path) -> Option<Gaps> {
         apis: said.apis,
     })
 }
-
 fn headed(html: &str, first: &str) -> String {
     let lower = html.to_ascii_lowercase();
     let after = |tag: &str| -> Option<usize> {
@@ -933,7 +873,6 @@ fn headed(html: &str, first: &str) -> String {
         .unwrap_or(0);
     format!("{}{first}{}", &html[..at], &html[at..])
 }
-
 fn page_scripts(folder: &Path, page: &str) -> Vec<String> {
     let Ok(html) = fs::read_to_string(folder.join(page)) else {
         return Vec::new();
@@ -974,7 +913,6 @@ fn page_scripts(folder: &Path, page: &str) -> Vec<String> {
     }
     out
 }
-
 fn attribute(tag: &str, name: &str) -> Option<String> {
     let lower = tag.to_ascii_lowercase();
     let mut from = 0;
@@ -1001,7 +939,6 @@ fn attribute(tag: &str, name: &str) -> Option<String> {
     }
     None
 }
-
 fn pages(folder: &Path) -> Vec<PathBuf> {
     files(folder)
         .into_iter()
@@ -1014,7 +951,6 @@ fn pages(folder: &Path) -> Vec<PathBuf> {
         })
         .collect()
 }
-
 fn files(folder: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut waiting = vec![folder.to_path_buf()];
@@ -1039,7 +975,6 @@ fn files(folder: &Path) -> Vec<PathBuf> {
     out.sort();
     out
 }
-
 const CALLS: [(&str, Gap); 14] = [
     (
         "filterResponseData",
@@ -1059,13 +994,11 @@ const CALLS: [(&str, Gap); 14] = [
     ("toggleReaderMode", Gap::Api("tabs.toggleReaderMode")),
     ("geckoProfiler", Gap::Api("geckoProfiler")),
 ];
-
 #[derive(Clone, Copy)]
 enum Gap {
     Said(&'static str),
     Api(&'static str),
 }
-
 fn read_for_gaps(folder: &Path, gaps: &mut Gaps) {
     let mut read = 0u64;
     for path in files(folder) {
@@ -1095,7 +1028,6 @@ fn read_for_gaps(folder: &Path, gaps: &mut Gaps) {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -1105,11 +1037,9 @@ mod tests {
     fn read(at: &std::path::Path, file: &str) -> String {
         std::fs::read_to_string(at.join(file)).expect("there")
     }
-
     fn read_json(at: &std::path::Path, file: &str) -> serde_json::Value {
         serde_json::from_str(&read(at, file)).expect("json")
     }
-
     #[test]
     fn a_manifest_v2_add_on_becomes_a_manifest_v3_extension() {
         let firefox = json!({
@@ -1195,7 +1125,6 @@ mod tests {
         assert_eq!(made.gaps.said, ["containers", "blocking"]);
         assert_eq!(made.gaps.apis, ["pageAction"]);
     }
-
     #[test]
     fn the_preinstalled_blocker_runs_with_no_gaps_and_its_rules_on() {
         let firefox = json!({
@@ -1223,7 +1152,6 @@ mod tests {
             .as_array()
             .is_some_and(|all| all.iter().any(|one| one == "declarativeNetRequest")));
     }
-
     #[test]
     fn a_firefox_manifest_v3_background_is_a_page_orden_writes() {
         let firefox = json!({
@@ -1255,7 +1183,6 @@ mod tests {
         );
         assert_eq!(made.gaps.said, ["sidebar"]);
     }
-
     #[test]
     fn a_version_with_letters_keeps_its_numbers_and_one_of_its_own() {
         assert_eq!(chromium_version("2026.10.2"), "2026.10.2");
@@ -1272,7 +1199,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn only_a_shortcut_chromium_takes_is_kept() {
         for (key, fine) in [
@@ -1292,7 +1218,6 @@ mod tests {
         }
         assert!(shortcut("Command+Shift+K", true));
     }
-
     #[test]
     fn only_a_pattern_chromium_reads_is_kept() {
         for (said, fine) in [
@@ -1308,7 +1233,6 @@ mod tests {
             assert_eq!(pattern(said), fine, "{said}");
         }
     }
-
     #[test]
     fn the_layer_runs_before_anything_a_page_has() {
         let first = "<script src=\"/orden/firefox.js\"></script>";
@@ -1325,7 +1249,6 @@ mod tests {
         );
         assert_eq!(headed("<p>hi</p>", first), format!("{first}<p>hi</p>"));
     }
-
     #[test]
     fn its_words_are_named_as_chromium_takes_them() {
         let folder = tempfile::tempdir().expect("a folder");
@@ -1358,7 +1281,6 @@ mod tests {
         let manifest = read_json(at, "manifest.json");
         assert_eq!(manifest["name"], "__MSG_onboarding_1_header__");
     }
-
     #[test]
     fn a_file_a_page_may_load_is_matched_by_its_origin() {
         let firefox = json!({
@@ -1377,7 +1299,6 @@ mod tests {
             }])
         );
     }
-
     #[test]
     fn a_shortcut_has_words_chromium_takes() {
         let firefox = json!({
@@ -1390,7 +1311,6 @@ mod tests {
             json!({ "open": { "description": "open" }, "close": { "description": "Close" } })
         );
     }
-
     #[test]
     fn a_notification_has_a_picture_that_is_there() {
         let folder = tempfile::tempdir().expect("a folder");
@@ -1411,7 +1331,6 @@ mod tests {
         assert!(!layer.contains(r#""icon":"#), "{layer}");
         assert!(at.join("orden/icon.png").is_file());
     }
-
     #[test]
     fn an_add_on_has_one_id_wherever_it_is_installed() {
         let (id, key) = id_and_key("@testpilot-containers");
@@ -1419,7 +1338,6 @@ mod tests {
         assert!(super::super::link::is_id(&id));
         assert_ne!(id, id_and_key("uBlock0@raymondhill.net").0);
     }
-
     #[test]
     fn a_folder_is_made_one_chromium_runs() {
         let folder = tempfile::tempdir().expect("a folder");
@@ -1447,12 +1365,10 @@ mod tests {
         )
         .expect("a popup");
         std::fs::write(at.join("lib.js"), "browser.dns.resolve('x')").expect("a script");
-
         let gaps = super::apply(at, "x@example.com").expect("applied");
         assert_eq!(gaps.said, ["hiddenTabs"]);
         assert_eq!(gaps.apis, ["dns"]);
         assert_eq!(super::gaps_in(at), Some(gaps));
-
         let popup = read(at, "popup.html");
         assert!(
             popup.starts_with(&format!("<html><head>{}", super::PAGE_SCRIPTS)),

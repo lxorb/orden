@@ -1,14 +1,10 @@
 const ROUNDS = 6
-
 const LEAST_MS = 4
-
 export const GROWS_AT_MOST = 12
-
 export function measuredGrowth(measure: (size: number) => number, size: number, times = 4): number {
   const first = looked(measure, size, times)
   return first < GROWS_AT_MOST ? first : Math.min(first, looked(measure, size, times))
 }
-
 function looked(measure: (size: number) => number, size: number, times: number): number {
   const small = () => {
     let spent = 0
@@ -25,19 +21,16 @@ function looked(measure: (size: number) => number, size: number, times: number):
   }
   return (times * most) / Math.max(least, 0.05)
 }
-
 function repeated(run: () => unknown, count: number): number {
   const start = performance.now()
   for (let one = 0; one < count; one++) run()
   return performance.now() - start
 }
-
 export function growth(run: (size: number) => unknown, size: number, times = 4): number {
   let count = 1
   while (count < 1024 && repeated(() => run(size), count) < LEAST_MS) count *= 2
   return measuredGrowth((one) => repeated(() => run(one), count), size, times)
 }
-
 export function linearly<T>(run: (size: number) => T, size: number): T {
   let result: T | undefined
   const ratio = growth((one) => (result = run(Math.ceil(one / 4))), size)

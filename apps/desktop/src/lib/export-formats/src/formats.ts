@@ -10,24 +10,18 @@ export const EXPORT_FORMATS = [
   { id: 'docx', label: 'Word', extension: 'docx' },
   { id: 'epub', label: 'ePub', extension: 'epub' },
 ] as const
-
 type ExportFormat = (typeof EXPORT_FORMATS)[number]['id']
-
 export const EXPORT_VARIANTS = [
   { id: 'md-assets', label: 'Markdown with the pictures', extension: 'md' },
   { id: 'html-bare', label: 'HTML without styles', extension: 'html' },
 ] as const
-
 type ExportVariant = (typeof EXPORT_VARIANTS)[number]['id']
 export type Exportable = ExportFormat | ExportVariant
-
 const EXTENSIONS = new Map<string, string>(
   [...EXPORT_FORMATS, ...EXPORT_VARIANTS].map((entry) => [entry.id, entry.extension]),
 )
-
 export const extensionFor = (id: Exportable): string => EXTENSIONS.get(id) ?? 'bin'
 export const TEXTPACK = 'textpack'
-
 export const PANDOC_FORMATS = [
   { id: 'odt', label: 'OpenOffice', extension: 'odt' },
   { id: 'latex', label: 'LaTeX', extension: 'tex' },
@@ -36,5 +30,4 @@ export const PANDOC_FORMATS = [
   { id: 'textile', label: 'Textile', extension: 'textile' },
   { id: 'opml', label: 'OPML', extension: 'opml' },
 ] as const
-
 export type PandocFormat = (typeof PANDOC_FORMATS)[number]['id']

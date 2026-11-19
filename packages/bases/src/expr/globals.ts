@@ -26,7 +26,6 @@ const ESCAPED: Record<string, string> = {
   '"': '&quot;',
   "'": '&#39;',
 }
-
 function linkTarget(value: Val): string {
   if (value instanceof FileRef || value instanceof ThisRef) return value.row.file.path
   if (isLink(value)) return value.target
@@ -34,7 +33,6 @@ function linkTarget(value: Val): string {
     .replace(/^!?\[\[|\]\]$/g, '')
     .replace(/\|.*$/, '')
 }
-
 export const GLOBALS = new Set([
   'if',
   'now',
@@ -53,7 +51,6 @@ export const GLOBALS = new Set([
   'min',
   'random',
 ])
-
 export function callGlobal(name: string, args: readonly Arg[], scope: Scope): Val {
   const first = () => {
     const value = args[0]?.() ?? null

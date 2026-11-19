@@ -2,7 +2,6 @@ import { isRecord } from '../../platform/src/api'
 import type { RootMoved } from './roots-moved'
 
 export const HOME_CARRIED = 'orden:home-carried'
-
 export interface Former {
   homes: RootMoved[]
   waiting: boolean
@@ -10,13 +9,11 @@ export interface Former {
   after: string | null
   carried?: boolean
 }
-
 export function formerSaid(): Former | null {
   const said = (globalThis as { __ORDEN_FORMER__?: unknown }).__ORDEN_FORMER__
   if (!isRecord(said) || !Array.isArray(said.homes)) return null
   return said as unknown as Former
 }
-
 function everything(storage: Storage): Record<string, string> {
   const out: Record<string, string> = {}
   for (let at = 0; at < storage.length; at++) {
@@ -26,13 +23,11 @@ function everything(storage: Storage): Record<string, string> {
   }
   return out
 }
-
 async function relaunched(): Promise<boolean> {
   const { relaunch } = await import('@tauri-apps/plugin-process')
   await relaunch()
   return true
 }
-
 export async function finishFormerHome(former: Former | null = formerSaid()): Promise<boolean> {
   if (former === null) return false
   const { invoke } = await import('../../platform/src/api')

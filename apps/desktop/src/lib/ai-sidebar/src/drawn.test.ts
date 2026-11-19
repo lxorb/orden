@@ -11,21 +11,17 @@ describe('withCodeBars', () => {
     expect(html).toContain('aria-label="Copy code"')
     expect(html).toMatch(/<pre><code class="language-ts">[\s\S]*let[\s\S]*<\/code><\/pre><\/div>/)
   })
-
   it('leaves the language out where the fence names none', () => {
     const html = answerHtml('```\nplain\n```', { copy: 'Copy code' })
     expect(html).toContain('<div class="code-bar"><span></span>')
     expect(html).toContain('<pre><code>plain\n</code></pre></div>')
   })
-
   it('touches nothing in an answer without code', () => {
     expect(withCodeBars('<p>words</p>', 'Copy code')).toBe('<p>words</p>')
   })
-
   it('escapes the label it is handed', () => {
     expect(withCodeBars('<pre><code>x</code></pre>', 'a"b')).toContain('title="a&#34;b"')
   })
-
   it('tells a finished block its lines, so it can be laid out only once it is in sight', () => {
     const lines = (n: number) => Array.from({ length: n }, (_, at) => `line ${String(at)}`).join('\n')
     const html = answerHtml(`\`\`\`\n${lines(3)}\n\`\`\`\n\n\`\`\`js\n${lines(40)}\n\`\`\``, {
@@ -37,22 +33,18 @@ describe('withCodeBars', () => {
     ])
     expect(withCodeBars('<pre><code>a\nb</code></pre>', 'Copy', true)).toContain('--lines: 2')
   })
-
   it('leaves a streaming block unsized, so each new line patches it in place', () => {
     const html = answerHtml('```\none\ntwo\n```', { copy: 'Copy code', live: true })
     expect(html).toContain('<div class="code"><div class="code-bar">')
   })
-
   it('draws no bar where no label is asked for', () => {
     expect(answerHtml('```\nx\n```')).toBe('<pre><code>x\n</code></pre>\n')
   })
 })
-
 describe('an answer, drawn as a note is', () => {
   beforeAll(async () => {
     await loadMaths()
   })
-
   const INLINE = /class="math-inline"[^>]*><span class="katex"/
   const BLOCK = /class="math-block"[^>]*><span class="katex-display"/
   const CONSTRUCTS: [string, string, RegExp][] = [
@@ -71,11 +63,9 @@ describe('an answer, drawn as a note is', () => {
     ['a footnote', 'Said[^1].\n\n[^1]: Where.', /class="footnotes"[\s\S]*id="fn-1"/],
     ['a callout', '> [!note]\n> Mind it.', /callout/],
   ]
-
   test.each(CONSTRUCTS)('%s', (_, markdown, drawn) => {
     expect(answerHtml(markdown)).toMatch(drawn)
   })
-
   test.each(CONSTRUCTS)('%s, while it arrives', (_, markdown, drawn) => {
     const spelling = new TexDelimiters()
     let arrived = ''
@@ -88,7 +78,6 @@ describe('an answer, drawn as a note is', () => {
     expect(answerHtml(arrived, { live: true })).toMatch(drawn)
     expect(answerHtml(arrived, { live: true })).toBe(answerHtml(markdown))
   })
-
   test('a code block is coloured as a note’s is, once its grammar has landed', async () => {
     const markdown = '```js\nconst a = "x"\n```'
     await vi.waitFor(() => expect(answerHtml(markdown)).toContain('class="hl-keyword"'), {
@@ -96,13 +85,11 @@ describe('an answer, drawn as a note is', () => {
     })
     expect(answerHtml(markdown, { copy: 'Copy code' })).toContain('<div class="code-bar">')
   })
-
   test('an unclosed fence is code to the end while it arrives', () => {
     const html = answerHtml('Look:\n\n```py\nprint(1)\n$x$', { live: true })
     expect(html).toContain('<code class="language-py">')
     expect(html).not.toContain('math-inline')
   })
-
   test('a picture of the reader’s own is drawn, one from elsewhere is held until asked', () => {
     expect(answerHtml('![a dot](data:image/png;base64,AAAA)')).toContain(
       '<img src="data:image/png;base64,AAAA" alt="a dot">',
@@ -116,7 +103,6 @@ describe('an answer, drawn as a note is', () => {
     })
     expect(shown).toContain('<img src="https://example.com/cat.png?q=1" alt="a cat">')
   })
-
   test.each([
     'https:/evil.example/p.png?d=secret',
     'https:evil.example/p.png?d=secret',
@@ -131,12 +117,10 @@ describe('an answer, drawn as a note is', () => {
     expect(held).toContain('class="picture-held"')
     expect(held).toContain('<span>x</span>')
   })
-
   test('a picture named from the note it answers about is still drawn', () => {
     expect(answerHtml('![a](pics/a.png)')).toContain('<img')
     expect(answerHtml('![a](/pics/a.png)')).toContain('<img')
   })
-
   test('a picture from elsewhere with an ampersand in its address is shown once asked', () => {
     const address = 'https://e.com/c.png?w=1&h=2'
     const held = answerHtml(`![a](${address})`)
@@ -144,35 +128,29 @@ describe('an answer, drawn as a note is', () => {
     const shown = answerHtml(`![a](${address})`, { shown: new Set([address]) })
     expect(shown).toContain('<img src="https://e.com/c.png?w=1&amp;h=2" alt="a">')
   })
-
   test('a picture of the reader’s own with an ampersand in its name is the file of that name', () => {
     const from = '/notes/Home/Plan.md'
     const html = answerHtml('![a](a&b.png)', { from })
     const src = /src="([^"]*)"/.exec(html)?.[1] ?? ''
     expect(src).toBe(notePicture('a&b.png', from, '').replace(/&/g, '&amp;'))
   })
-
   test('raw HTML the model wrote is its characters, and frames are taken out', () => {
     const html = answerHtml('<b>bold</b>\n\n<iframe src="https://example.com"></iframe>')
     expect(html).not.toContain('<b>')
     expect(html).not.toContain('<iframe')
   })
 })
-
 describe('a long block of code while it arrives', () => {
   const lines = (count: number) => Array.from({ length: count }, (_, at) => `line ${at} & more`).join('\n')
-
   test('is drawn in groups of lines, so a line more touches only the last group', () => {
     const html = answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}`, { live: true })
     expect(html.match(/<span class="code-lines">/g)).toHaveLength(3)
     expect(html.replace(/<\/?span[^>]*>/g, '')).toBe(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}\n\`\`\``))
   })
-
   test('is one piece while it is short, and once it has arrived', () => {
     expect(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP - 1)}`, { live: true })).not.toContain('code-lines')
     expect(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 3)}\n\`\`\``)).not.toContain('code-lines')
   })
-
   test('closes a token that runs across groups and opens it again after', () => {
     const comment = `<span class="hl-comment">/*${'\n'.repeat(LINES_A_GROUP + 4)}*/</span>`
     const code = `<pre><code>a\n${comment}\n</code></pre>`
@@ -183,7 +161,6 @@ describe('a long block of code while it arrives', () => {
     expect(grouped.replace(/<[^>]+>/g, '')).toBe(code.replace(/<[^>]+>/g, ''))
   })
 })
-
 describe('subscript and superscript in an answer (#2088)', () => {
   test('come out as sub and sup whichever way the model writes them', () => {
     const tagged = answerHtml('MAD ≈ P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)')

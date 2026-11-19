@@ -9,7 +9,6 @@
   import Tally from './Tally.svelte'
 
   const { sheet }: { sheet: { thread: Thread; panel: ReviewPanel | null; turn: string | null } } = $props()
-
   const thread = $derived(sheet.thread)
   const messages = $derived(checkpoints(thread.turns))
   let picked = $state<string | null>(null)
@@ -19,7 +18,6 @@
   let root = $state<HTMLElement>()
   const plan = $derived(picked ? review.plan(thread, picked) : null)
   const rows = $derived(plan ? plan.choices.length : messages.length)
-
   const LABELS: Record<Choice, () => string> = {
     both: () => 'Restore notes and conversation',
     conversation: () => 'Restore conversation',
@@ -27,7 +25,6 @@
     'summarize-from': () => 'Summarize from here',
     'summarize-to': () => 'Summarize up to here',
   }
-
   onMount(() => {
     const named = messages.findIndex((one) => one.id === sheet.turn)
     if (named >= 0) {
@@ -36,11 +33,9 @@
     } else lit = Math.max(0, messages.length - 1)
     root?.focus()
   })
-
   function wordsOf(index: number): string {
     return (messages[index]?.draft?.text ?? '').replace(/\s+/g, ' ').trim() || '…'
   }
-
   function pick(index: number) {
     const turn = messages[index]
     if (!turn) return
@@ -48,7 +43,6 @@
     lit = 0
     trouble = null
   }
-
   async function choose(choice: Choice | undefined) {
     if (!choice || !picked || busy) return
     busy = true
@@ -61,7 +55,6 @@
       busy = false
     }
   }
-
   function back() {
     if (picked && sheet.turn === null) {
       lit = Math.max(
@@ -71,7 +64,6 @@
       picked = null
     } else review.closeRewind()
   }
-
   function keys(event: KeyboardEvent) {
     const digit = Number(event.key)
     if (event.key === 'ArrowDown') lit = Math.min(rows - 1, lit + 1)
@@ -154,15 +146,12 @@
     background: var(--surface);
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .rewind.is-busy {
     opacity: 0.6;
   }
-
   .asked {
     color: var(--muted);
   }
-
   .back {
     flex: none;
     width: var(--icon-sm);
@@ -173,11 +162,9 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   kbd {
     font-family: var(--font-ui);
   }
-
   .lasting,
   .trouble {
     margin: 0;
@@ -185,7 +172,6 @@
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .trouble {
     color: var(--danger);
   }

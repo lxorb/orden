@@ -7,18 +7,15 @@ import { sidebarImport } from './sidebar-plan'
 import { readSnss } from './snss'
 
 const NOW = new Date('2026-10-18T08:00:00.000Z')
-
 function session() {
   const read = readSnss(fromBase64(SESSION))
   if (read === null || read === 'locked') throw new Error('the fixture is a session')
   return read
 }
-
 function space(bookmarks: unknown = BOOKMARKS, tabs: ReturnType<typeof session> | null = session()) {
   const sidebar = chromiumSidebar(tabs, bookmarks, 'Chrome')
   return sidebarImport(sidebar, NOW, 'none').spaces[0]
 }
-
 describe("Chrome's tabs and bookmarks as Orden's", () => {
   test('puts the pinned tab first as an Essential, then the tabs and groups in order', () => {
     const chrome = space()
@@ -34,7 +31,6 @@ describe("Chrome's tabs and bookmarks as Orden's", () => {
     expect(chrome?.order.Docs).toEqual(['docs.example.com guide.url', 'docs.example.com api.url'])
     expect(chrome?.order['Tab group']).toEqual(['later.example.com.url'])
   })
-
   test('makes the bookmarks a folder of roots, leaving the empty and the unpointable', () => {
     const chrome = space()
     expect(chrome?.order.Bookmarks).toEqual(['Bookmarks bar', 'Other bookmarks'])
@@ -42,14 +38,12 @@ describe("Chrome's tabs and bookmarks as Orden's", () => {
     expect(chrome?.order['Bookmarks/Bookmarks bar/Work']).toEqual(['Board.url'])
     expect(chrome?.order['Bookmarks/Other bookmarks']).toEqual(['Recipes.url'])
   })
-
   test('keeps a bookmark on the day Chromium says it was made', () => {
     const file = space()?.files.find((one) => one.path === 'Bookmarks/Other bookmarks/Recipes.url')
     const read = file?.kind === 'note' ? readShortcut(file.text) : null
     expect(read?.url).toBe('https://recipes.example.com/')
     expect(read?.added?.startsWith('2026-10-18T')).toBe(true)
   })
-
   test("puts a signed-in profile's account bookmarks in the same roots, first", () => {
     const account = {
       roots: {
@@ -75,13 +69,11 @@ describe("Chrome's tabs and bookmarks as Orden's", () => {
     expect(chrome?.order['Bookmarks/Bookmarks bar/Work 2']).toEqual(['Board.url'])
     expect(chrome?.order['Bookmarks/Mobile bookmarks']).toEqual(['Phone.url'])
   })
-
   test('reads the bookmarks alone where the session could not be', () => {
     expect(space(BOOKMARKS, null)?.order['']).toEqual(['Bookmarks'])
     expect(space(null, null)?.files).toEqual([])
   })
 })
-
 describe("Opera's bookmarks", () => {
   test("bring its own roots after Chromium's, by their names, and leave its trash", () => {
     const opera = {

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import json
 import time
 from collections.abc import Callable
@@ -7,7 +6,6 @@ from typing import Any
 
 NOTE = "Carried note.md"
 WORDS = "# Carried note\n\nWords the page should read back, äöü.\n"
-
 PAGE = b"""<!doctype html><title>carry</title>
 <style>
 html,body{margin:0;height:100%;background:#ff00ff;font:16px sans-serif}
@@ -34,9 +32,7 @@ const field = document.getElementById('field')
 field.addEventListener('input', () => { said.field = field.value; tell() })
 tell()
 </script>"""
-
 TITLES = "orden.pages.each().map(([, one]) => one.title).find((one) => (one || '').startsWith('carried ')) || ''"
-
 MIDWAY = (
     "return { dragging: orden.workspace.panes.dragging, landing: orden.workspace.panes.landing,"
     " pages: orden.pages.each().map(([id, one]) => [id, one.layering, one.live, one.sent && one.sent.visible,"
@@ -44,19 +40,15 @@ MIDWAY = (
     " zones: [...document.querySelectorAll('.zone')].map((one) => one.className + ':' + one.hasAttribute('data-covers')),"
     " sides: !!document.querySelector('.zones.sides') }"
 )
-
 def zone_of(pane: dict[str, float]) -> tuple[float, float]:
     return pane["x"] + pane["width"] / 2, pane["y"] + pane["height"] * 0.38
-
 def field_of(pane: dict[str, float]) -> tuple[float, float]:
     return pane["x"] + pane["width"] / 2, pane["y"] + pane["height"] * 0.58
-
 def heard(title: Any) -> dict[str, Any]:
     try:
         return json.loads(str(title)[len("carried ") :])
     except ValueError:
         return {}
-
 def row_box(path: str) -> str:
     return (
         "(() => { const row = document.querySelector('.row[data-path=\"' + CSS.escape(%s) + '\"]');"
@@ -71,19 +63,16 @@ def row_box(path: str) -> str:
         " return hit && row.contains(hit) ? { x: r.x, y: r.y, width: r.width, height: r.height } : null })()"
         % json.dumps(path)
     )
-
 PANE = (
     "(() => { const all = orden.pages.each().map(([, one]) => one.sent)"
     ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
 )
-
 def put_note(ask: Callable[[str], Any], root: str) -> Any:
     there = root.rstrip("/\\") + ("\\" if "\\" in root else "/") + NOTE
     return ask(
         f"return orden.workspace.entryAt({json.dumps(there)}) ? {json.dumps(there)}"
         f" : await orden.workspace.noteFrom({json.dumps(WORDS)}, {json.dumps(root)})"
     )
-
 def where(note: str, root: str) -> str:
     return (
         "const crate = window.__TAURI_INTERNALS__.invoke; const note = %s, root = %s;"
@@ -96,7 +85,6 @@ def where(note: str, root: str) -> str:
         " return { note: await asked(note), work, worked: await asked(work), payload: orden.workspace.dragPayload(note), carried }"
         % (json.dumps(note), json.dumps(root))
     )
-
 def wrong_drop(said: dict[str, Any]) -> list[str]:
     files = said.get("files")
     if not isinstance(files, list) or not files:
@@ -110,10 +98,8 @@ def wrong_drop(said: dict[str, Any]) -> list[str]:
     if "Files" not in (said.get("entered") or []):
         wrong.append(f"the page was not told of a file as the drag entered it: {said.get('entered')}")
     return wrong
-
 def into_field(said: dict[str, Any]) -> str:
     return "the note's words" if WORDS.strip() in str(said.get("field") or "") else repr(said.get("field"))
-
 def carried(
     ask: Callable[[str], Any],
     screen: Callable[[float, float], tuple[float, float]],
@@ -123,7 +109,6 @@ def carried(
 ) -> tuple[list[str], list[str]]:
     wrong: list[str] = []
     unverified: list[str] = []
-
     def until(code: str, seconds: float = 30) -> Any:
         end = time.monotonic() + seconds
         while time.monotonic() < end:
@@ -132,7 +117,6 @@ def carried(
                 return said
             time.sleep(0.25)
         return None
-
     root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
     if not isinstance(root, str):
         return [f"[carry {name}] no space is open: {root}"], unverified
@@ -153,10 +137,8 @@ def carried(
         return [f"[carry {name}] no page or no row to drag: page {pane}, row {row}, rows {rows}"], unverified
     print(f"[carry {name}] the row at {row}, the page at {pane}", flush=True)
     start = screen(row["x"] + row["width"] / 2, row["y"] + row["height"] / 2)
-
     def midway() -> None:
         print(f"[carry {name}] midway: {ask(MIDWAY)}", flush=True)
-
     dragged(start, screen(*zone_of(pane)), midway)
     said = heard(until(f"return {TITLES}", 10))
     print(f"[carry {name}] the page heard {said}", flush=True)
@@ -164,7 +146,6 @@ def carried(
     wrong += [f"[carry {name}] {one}" for one in missed]
     if missed:
         print(f"[carry {name}] where the note is: {ask(where(note, root))}", flush=True)
-
     dragged(start, screen(*field_of(pane)))
     said = heard(until(f"return {TITLES}", 10))
     print(f"[carry {name}] a field that takes words only got {into_field(said)}", flush=True)

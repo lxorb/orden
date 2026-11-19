@@ -15,19 +15,16 @@ export interface TodoServer {
   pull(since: number): Promise<InboxPage | null>
   push(changes: readonly InboxChange[]): Promise<boolean>
 }
-
 export interface Kept extends InboxHeld {
   id: string
   dirty: string[]
 }
-
 export interface TodoDisk {
   items(): Promise<Kept[]>
   put(items: readonly Kept[]): Promise<Kept[]>
   cursor(): Promise<number>
   keepCursor(cursor: number): Promise<void>
 }
-
 export function keptOver(was: Kept | undefined, item: Kept): Kept {
   if (!was) return item
   const merged = mergedInbox(was, item)
@@ -39,29 +36,24 @@ export function keptOver(was: Kept | undefined, item: Kept): Kept {
     dirty: [...new Set([...item.dirty, ...theirs])],
   }
 }
-
 const MOST_PAGES = 50
 const STAMP_TIME = 9
-
 function justAfter(stamp: string | undefined): number {
   if (stamp === undefined) return 0
   const at = parseInt(stamp.slice(0, STAMP_TIME), 36)
   return Number.isFinite(at) ? at + 1 : 0
 }
-
 export class TodoRecords {
   private held = new Map<string, Kept>()
   private last = 0
   private count = 0
   private cursor = 0
   private listeners = new Set<() => void>()
-
   constructor(
     private readonly disk: TodoDisk,
     private readonly device: string,
     private readonly now: () => number = Date.now,
   ) {}
-
   async load(): Promise<void> {
     const held = new Map<string, Kept>()
     for (const one of await this.disk.items()) held.set(one.id, one)
@@ -72,30 +64,24 @@ export class TodoRecords {
     this.cursor = Math.max(this.cursor, await this.disk.cursor())
     if (changed) this.told()
   }
-
   hear(listener: () => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   private told(): void {
     for (const listener of this.listeners) listener()
   }
-
   entries(): readonly { id: string; fields: InboxFields }[] {
     return [...this.held.values()].map(({ id, fields }) => ({ id, fields }))
   }
-
   fieldsOf(id: string): InboxFields | null {
     return this.held.get(id)?.fields ?? null
   }
-
   get pending(): number {
     let many = 0
     for (const one of this.held.values()) if (one.dirty.length) many += 1
     return many
   }
-
   private stamp(over: readonly (string | undefined)[] = []): string {
     const floor = over.reduce((most, one) => Math.max(most, justAfter(one)), 0)
     const at = this.now()
@@ -106,12 +92,10 @@ export class TodoRecords {
     } else this.count += 1
     return inboxStamp(this.last, this.count, this.device)
   }
-
   private async kept(touched: readonly Kept[]): Promise<void> {
     if (!touched.length) return
     for (const one of await this.disk.put(touched)) this.held.set(one.id, one)
   }
-
   async change(changes: readonly { id: string; fields: InboxFields }[]): Promise<void> {
     if (!changes.length) return
     const touched: Kept[] = []
@@ -128,13 +112,11 @@ export class TodoRecords {
     await this.kept(touched)
     this.told()
   }
-
   async adopt(items: readonly Kept[]): Promise<void> {
     if (!items.length) return
     await this.kept(items.map((one) => ({ ...one, dirty: Object.keys(one.fields) })))
     this.told()
   }
-
   private sending(): InboxChange[] {
     const out: InboxChange[] = []
     for (let one of [...this.held.values()]) {
@@ -163,7 +145,6 @@ export class TodoRecords {
     }
     return out
   }
-
   async exchange(server: TodoServer): Promise<boolean> {
     for (;;) {
       const sending = this.sending()
@@ -180,7 +161,6 @@ export class TodoRecords {
       }
       await this.kept(cleared)
     }
-
     let changed = false
     for (let page = 0; page < MOST_PAGES; page += 1) {
       const got = await server.pull(this.cursor)
@@ -209,16 +189,13 @@ export class TodoRecords {
     return true
   }
 }
-
 export class MemoryTodoDisk implements TodoDisk {
   private held = new Map<string, Kept>()
   private at = 0
   open = true
-
   items(): Promise<Kept[]> {
     return Promise.resolve([...this.held.values()].map((one) => structuredClone(one)))
   }
-
   put(items: readonly Kept[]): Promise<Kept[]> {
     const out: Kept[] = []
     for (const item of items) {
@@ -228,43 +205,35 @@ export class MemoryTodoDisk implements TodoDisk {
     }
     return Promise.resolve(out)
   }
-
   cursor(): Promise<number> {
     return Promise.resolve(this.at)
   }
-
   keepCursor(cursor: number): Promise<void> {
     this.at = cursor
     return Promise.resolve()
   }
-
   clear(): Promise<void> {
     this.held.clear()
     this.at = 0
     return Promise.resolve()
   }
-
   close(): void {
     this.open = false
   }
 }
-
 interface Row {
   fields: InboxFields
   stamps: InboxStamps
   seq: number
 }
-
 export class MemoryTodoServer {
   private users = new Map<string, { rows: Map<string, Row>; next: number }>()
   down = false
-
   private of(user: string) {
     const held = this.users.get(user) ?? { rows: new Map<string, Row>(), next: 1 }
     this.users.set(user, held)
     return held
   }
-
   forUser(user: string): TodoServer {
     return {
       pull: (since) => {

@@ -3,7 +3,6 @@ import { parseNordPass } from './nordpass'
 
 const HEAD =
   'name,url,additional_urls,username,password,note,cardholdername,cardnumber,cvc,pin,expirydate,zipcode,folder,full_name,phone_number,email,address1,address2,city,country,state,type,custom_fields\n'
-
 describe('parseNordPass', () => {
   it('reads every type', () => {
     const csv =

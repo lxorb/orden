@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 UNEXPLAINED = """
 () => {
   const pane = document.querySelector('[role="region"][aria-label="Settings"]')
@@ -23,7 +21,6 @@ UNEXPLAINED = """
   }
 }
 """
-
 def every_pane(page: Page) -> None:
     ids = ["general", "editor", "kinds", "shortcuts", "mobile", "spelling", "markdown", "appearance",
            "ai", "experimental", "export", "sync", "account", "trash", "import"]
@@ -39,7 +36,6 @@ def every_pane(page: Page) -> None:
         DRIVE.shot(page, f"pane-{section}")
     if counted < 60:
         wrong(f"only {counted} settings were found across the panes")
-
 def the_sentence(page: Page) -> None:
     page.evaluate("() => window.ordenApp.settings.show('markdown')")
     row = page.locator(".orden-setting", has_text="Strict CommonMark").first
@@ -48,12 +44,10 @@ def the_sentence(page: Page) -> None:
     say(f"the glyph's name: {label!r}")
     if not label or "standard markdown" not in label:
         wrong(f"the glyph is named {label!r}")
-
     drawn = glyph.evaluate("(one) => one.querySelector('svg').innerHTML")
     say(f"the glyph: {drawn}")
     if "M9.09 9a3 3 0 0 1 5.83 1" not in drawn:
         wrong("the glyph is not a question mark")
-
     glyph.hover()
     shown = wait_for(page, "() => document.querySelector('.orden-bubble.sentence')?.innerText ?? ''",
                      "the sentence on hover")
@@ -61,7 +55,6 @@ def the_sentence(page: Page) -> None:
     DRIVE.shot(page, "hover")
     page.mouse.move(5, 5)
     wait_for(page, "() => !document.querySelector('.orden-bubble.sentence')", "the sentence gone again")
-
     page.evaluate("() => window.ordenApp.settings.show('general')")
     smart = page.locator(".orden-setting", has_text="Smart dates").first
     before = smart.locator("[role=switch]").get_attribute("aria-checked")
@@ -76,7 +69,6 @@ def the_sentence(page: Page) -> None:
     if before != after:
         wrong("Enter on the ? turned the setting over")
     page.keyboard.press("Escape")
-
     page.evaluate("() => window.ordenApp.settings.show('ai')")
     vault = page.locator(".orden-setting", has_text="vault").first
     page.evaluate(
@@ -92,7 +84,6 @@ def the_sentence(page: Page) -> None:
     if taken:
         wrong(f"the row took {taken} from its ?, and turns its switch on them")
     page.keyboard.press("Escape")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -101,12 +92,10 @@ def drive(browser: Browser) -> None:
              "the settings")
     every_pane(page)
     the_sentence(page)
-
     page.evaluate(
         """() => {
           window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' }
         }"""
     )
     every_pane(page)
-
 raise SystemExit(DRIVE.run(drive, "every setting has a ? that explains it"))

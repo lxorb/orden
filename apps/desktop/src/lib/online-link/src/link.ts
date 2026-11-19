@@ -8,7 +8,6 @@ export interface LinkSocket {
   send(data: string | Uint8Array): void
   close(): void
 }
-
 export interface LinkWorld {
   base: string
   token(): string | null
@@ -27,21 +26,13 @@ export interface LinkWorld {
   hidden(): boolean
   watch(back: () => void): () => void
 }
-
 export type Opened = { t: 'open' } | { t: 'dropped' }
-
 export type Heard = { t: 'out'; data: Uint8Array } | ServerFrame | Opened
-
 const SILENT_BEATS = 3
-
 export const PROBE_WITHIN = 3_000
-
 export const OPEN_WITHIN = 10_000
-
 const SLEPT = BEAT_EVERY
-
 const FINAL: readonly Refusal[] = ['gone', 'list', 'allowance', 'budget', 'off', 'flag']
-
 export abstract class Channel<In extends { t: string }, Out extends { t: string }> {
   private socket: LinkSocket | null = null
   private retry: (() => void) | null = null
@@ -54,13 +45,11 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
   private opening: (() => void) | null = null
   private madeAt = 0
   private unwatch: (() => void) | null = null
-
   constructor(
     private readonly name: string,
     private readonly world: LinkWorld,
     protected readonly heard: (what: In | Opened) => void,
   ) {}
-
   protected abstract path(name: string): string
   protected abstract helloFrame(): Out
   protected abstract read(data: string | ArrayBuffer): In | null
@@ -68,11 +57,9 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
   protected typing(_frame: Out): boolean {
     return false
   }
-
   protected role(): string[] {
     return []
   }
-
   open(): void {
     this.closed = false
     this.stopped = false
@@ -83,7 +70,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     })
     this.connect()
   }
-
   private back(): void {
     if (this.closed || this.stopped) return
     const socket = this.socket
@@ -103,11 +89,9 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     this.retry = null
     this.connect()
   }
-
   private connect(): void {
     const token = this.world.token()
     if (this.closed || this.socket || !token) return
-
     void this.world.device().then(
       (device) => {
         if (this.closed || this.socket) return
@@ -155,7 +139,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
       },
     )
   }
-
   private beat(socket: LinkSocket): void {
     this.stopBeat?.()
     const set = this.world.now()
@@ -176,14 +159,12 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
       this.send(socket, BEAT)
     })
   }
-
   private probe(): void {
     const socket = this.socket
     if (!socket?.open || this.probing) return
     this.send(socket, BEAT)
     this.answer(socket)
   }
-
   private answer(socket: LinkSocket): void {
     this.probing = this.world.after(PROBE_WITHIN, () => {
       this.probing = null
@@ -192,13 +173,11 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
       else this.drop(socket)
     })
   }
-
   private drop(socket: LinkSocket, now = false): void {
     this.socket = null
     socket.close()
     this.again(now)
   }
-
   private again(now = false): void {
     this.stopBeat?.()
     this.stopBeat = null
@@ -218,7 +197,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
       this.connect()
     })
   }
-
   private send(socket: LinkSocket, data: string | Uint8Array): void {
     try {
       socket.send(data)
@@ -226,7 +204,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
       // Closing under us: its close brings the next one.
     }
   }
-
   private hear(data: string | ArrayBuffer): void {
     const frame = this.read(data)
     if (!frame) return
@@ -234,36 +211,30 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     if (this.final(frame)) this.stopped = true
     this.heard(frame)
   }
-
   say(frame: Out): boolean {
     if (!this.socket?.open) return false
     this.send(this.socket, JSON.stringify(frame))
     if (this.typing(frame)) this.probe()
     return true
   }
-
   protected sayRaw(bytes: Uint8Array): boolean {
     if (!this.socket?.open) return false
     this.send(this.socket, bytes)
     this.probe()
     return true
   }
-
   private hello(): void {
     if (!this.socket?.open) return
     this.send(this.socket, JSON.stringify(this.helloFrame()))
   }
-
   take(): boolean {
     if (!this.socket?.open) return false
     this.send(this.socket, JSON.stringify({ t: 'take' }))
     return true
   }
-
   get live(): boolean {
     return this.socket?.open === true
   }
-
   close(): void {
     this.closed = true
     this.stopBeat?.()
@@ -282,20 +253,16 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     socket?.close()
   }
 }
-
 export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
   private since: number | null = null
   private size: { cols: number; rows: number }
-
   constructor(term: string, world: LinkWorld, heard: (what: Heard) => void, cols: number, rows: number) {
     super(term, world, heard)
     this.size = { cols, rows }
   }
-
   protected path(term: string): string {
     return socketPath(term)
   }
-
   protected helloFrame(): ClientFrame {
     return {
       t: 'hello',
@@ -304,7 +271,6 @@ export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
       hold: true,
     }
   }
-
   protected read(data: string | ArrayBuffer): Exclude<Heard, Opened> | null {
     if (typeof data !== 'string') {
       const out = outOf(new Uint8Array(data))
@@ -319,26 +285,21 @@ export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
     if (frame?.t === 'screen') this.since = frame.seq
     return frame
   }
-
   protected final(frame: Exclude<Heard, Opened>): boolean {
     return frame.t === 'refused' && FINAL.includes(frame.error)
   }
-
   protected override typing(frame: ClientFrame): boolean {
     return frame.t === 'in'
   }
-
   sayBytes(bytes: Uint8Array): boolean {
     return this.sayRaw(bytes)
   }
-
   resize(cols: number, rows: number): void {
     if (cols === this.size.cols && rows === this.size.rows) return
     this.size = { cols, rows }
     this.say({ t: 'size', cols, rows })
   }
 }
-
 export function pageWorld(base: string, token: () => string | null, device: () => Promise<string>): LinkWorld {
   return {
     base,

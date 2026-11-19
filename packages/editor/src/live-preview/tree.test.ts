@@ -7,7 +7,6 @@ import { parsed } from '../../test/parsed'
 function dump(doc: string): string {
   const state = parsed(EditorState.create({ doc, extensions: [markdown({ base: markdownLanguage })] }))
   const out: string[] = []
-
   syntaxTree(state).iterate({
     enter: (node) => {
       let indent = 0
@@ -15,10 +14,8 @@ function dump(doc: string): string {
       out.push(`${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`)
     },
   })
-
   return out.join('\n')
 }
-
 test('task list', () => {
   expect(dump('- [x] done\n- [ ] open\n')).toMatchInlineSnapshot(`
     "Document "- [x] done\\n- [ ] open\\n"
@@ -33,7 +30,6 @@ test('task list', () => {
             TaskMarker "[ ]""
   `)
 })
-
 test('inline', () => {
   expect(dump('a **b** _c_ ~~d~~ `e` [f](g "h") ![i](j) H~2~O X^2^\n')).toMatchInlineSnapshot(`
     "Document "a **b** _c_ ~~d~~ \`e\` [f](g \\"h\\") ![i](j) H~2~O X^2^\\n"
@@ -71,7 +67,6 @@ test('inline', () => {
           SuperscriptMark "^""
   `)
 })
-
 test('html', () => {
   expect(dump('a\n\n<div style="page-break-after: always;"></div>\n\nb')).toMatchInlineSnapshot(`
     "Document "a\\n\\n<div style=\\"page-break-after: always;\\"></div>\\n\\nb"
@@ -80,7 +75,6 @@ test('html', () => {
       Paragraph "b""
   `)
 })
-
 test('blocks', () => {
   expect(dump('# H\n\n> q\n\n---\n\n```js\nx\n```\n\n| a | b |\n| - | - |\n| 1 | 2 |\n')).toMatchInlineSnapshot(`
     "Document "# H\\n\\n> q\\n\\n---\\n\\n\`\`\`js\\nx\\n\`\`\`\\n\\n| a | b |\\n| - | - |\\n| 1 | 2 |\\n"

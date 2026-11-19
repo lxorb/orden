@@ -20,14 +20,12 @@ function row(id: string, name: string, local: string, hash: string, deleted = fa
     deleted,
   }
 }
-
 function space(rows: EntryRow[]) {
   return new SpaceState({ space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null }, rows, [], 'd', {
     platform: 'linux',
     foldsCase: true,
   } as never)
 }
-
 describe('a file sync numbered beside itself (#1904)', () => {
   test('goes back to its own name when the entry it was made twice as is gone with the same bytes', () => {
     expect(
@@ -44,7 +42,6 @@ describe('a file sync numbered beside itself (#1904)', () => {
       { from: 'Photo 2.png', to: 'Photo.png' },
     ])
   })
-
   test('keeps a numbered name the reader chose, other bytes, or a name already taken', () => {
     expect(madeTwice(space([row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'h1')]))).toEqual([])
     expect(
@@ -60,7 +57,6 @@ describe('a file sync numbered beside itself (#1904)', () => {
       ),
     ).toEqual([])
   })
-
   test('looks over a folder of many numbered files in time that grows with it, not its square', () => {
     const many = linearly((size) => {
       const rows = [row('gone', 'Photo.png', '', 'h0', true)]

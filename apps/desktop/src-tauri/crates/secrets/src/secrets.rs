@@ -12,7 +12,6 @@ mod store {
     fn entry(service: &str, account: &str) -> Result<Entry, Error> {
         Entry::new(service, account)
     }
-
     fn read(service: &str, account: &str) -> Result<Option<String>, Error> {
         match entry(service, account)?.get_password() {
             Ok(secret) => Ok(Some(secret)),
@@ -20,14 +19,12 @@ mod store {
             Err(error) => Err(error),
         }
     }
-
     fn forget(service: &str, account: &str) -> Result<(), Error> {
         match entry(service, account)?.delete_credential() {
             Ok(()) | Err(Error::NoEntry) => Ok(()),
             Err(error) => Err(error),
         }
     }
-
     fn kept(account: &str) -> Result<Option<String>, Error> {
         if let Some(secret) = read(super::SERVICE, account)? {
             return Ok(Some(secret));
@@ -43,11 +40,9 @@ mod store {
         }
         Ok(Some(secret))
     }
-
     fn away(error: &Error) -> bool {
         matches!(error, Error::PlatformFailure(_) | Error::NoStorageAccess(_))
     }
-
     pub(super) fn either(
         kept: Result<Option<String>, Error>,
         filed: impl FnOnce() -> Result<Option<String>, String>,
@@ -59,7 +54,6 @@ mod store {
             Err(error) => Err(error.to_string()),
         }
     }
-
     pub(super) fn wrote(
         kept: Result<(), Error>,
         then: impl FnOnce() -> Result<(), String>,
@@ -71,7 +65,6 @@ mod store {
             Err(error) => Err(error.to_string()),
         }
     }
-
     pub fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
         let kept = kept(account);
         let reachable = matches!(kept, Ok(None));
@@ -86,14 +79,11 @@ mod store {
         }
         Ok(found)
     }
-
     pub fn in_file(app: &AppHandle) -> bool {
         let probed = entry(super::SERVICE, PROBE).and_then(|one| one.get_password());
         matches!(&probed, Err(error) if away(error)) || file::holds_any(app)
     }
-
     const PROBE: &str = "orden-keyring-probe";
-
     pub fn set(app: &AppHandle, account: &str, secret: &str) -> Result<(), String> {
         let written = entry(super::SERVICE, account).and_then(|one| one.set_password(secret));
         if written.is_ok() {
@@ -105,7 +95,6 @@ mod store {
             || file::set(app, account, secret),
         )
     }
-
     pub fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
         wrote(
             forget(super::SERVICE, account).and_then(|()| forget(super::FORMER_SERVICE, account)),
@@ -114,7 +103,6 @@ mod store {
         )
     }
 }
-
 #[cfg(target_os = "macos")]
 mod store {
     pub use super::file::{delete, get, set};
@@ -123,7 +111,6 @@ mod store {
         false
     }
 }
-
 mod file {
     use orden_base::Held as _;
     use std::sync::Mutex;
@@ -131,16 +118,13 @@ mod file {
     use tauri::AppHandle;
 
     static HELD: Mutex<()> = Mutex::new(());
-
     fn file(app: &AppHandle) -> Result<std::path::PathBuf, String> {
         Ok(orden_base::paths::data_dir(app)?.join(super::FILE))
     }
-
     pub fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
         let _held = HELD.held();
         Ok(super::read_file(&file(app)?)?.remove(account))
     }
-
     pub fn set(app: &AppHandle, account: &str, secret: &str) -> Result<(), String> {
         let _held = HELD.held();
         let path = file(app)?;
@@ -148,7 +132,6 @@ mod file {
         kept.insert(account.to_owned(), secret.to_owned());
         super::write_file(&path, &kept)
     }
-
     pub fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
         let _held = HELD.held();
         let path = file(app)?;
@@ -158,7 +141,6 @@ mod file {
         }
         Ok(())
     }
-
     #[cfg_attr(target_os = "macos", allow(dead_code))]
     pub fn holds_any(app: &AppHandle) -> bool {
         let _held = HELD.held();
@@ -167,9 +149,7 @@ mod file {
             .is_ok_and(|kept| !kept.is_empty())
     }
 }
-
 const FILE: &str = "secrets.json";
-
 fn read_file(path: &std::path::Path) -> Result<BTreeMap<String, String>, String> {
     #[cfg(unix)]
     if let Some(folder) = path.parent() {
@@ -183,7 +163,6 @@ fn read_file(path: &std::path::Path) -> Result<BTreeMap<String, String>, String>
         Err(error) => Err(format!("could not read the secrets file: {error}")),
     }
 }
-
 fn write_file(path: &std::path::Path, kept: &BTreeMap<String, String>) -> Result<(), String> {
     if let Some(folder) = path.parent() {
         orden_base::paths::made(folder)?;
@@ -193,7 +172,6 @@ fn write_file(path: &std::path::Path, kept: &BTreeMap<String, String>) -> Result
     let text = serde_json::to_vec(kept).map_err(|error| error.to_string())?;
     orden_base::paths::write_privately(path, &text)
 }
-
 #[cfg(unix)]
 fn private(path: &std::path::Path, mode: u32) {
     use std::os::unix::fs::PermissionsExt as _;
@@ -205,41 +183,32 @@ fn private(path: &std::path::Path, mode: u32) {
     }
     let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode));
 }
-
 pub(crate) fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
     store::get(app, account)
 }
-
 pub(crate) fn set(app: &AppHandle, account: &str, secret: &str) -> Result<(), String> {
     store::set(app, account, secret)
 }
-
 pub(crate) fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
     store::delete(app, account)
 }
-
 const SHIPPED: &str = "so.orden.Orden";
-
 #[cfg_attr(target_os = "macos", allow(dead_code))]
 pub(crate) const SERVICE: &str = "orden";
-
 #[cfg_attr(target_os = "macos", allow(dead_code))]
 const FORMER_SERVICE: &str = "nibeditor";
-
 fn named(name: &str) -> Result<String, String> {
     let ok = !name.is_empty()
         && name.len() <= 64
         && name
             .chars()
             .all(|one| one.is_ascii_alphanumeric() || one == '-' || one == '_');
-
     if ok {
         Ok(name.to_owned())
     } else {
         Err("that is not a key Orden keeps".to_owned())
     }
 }
-
 pub(crate) fn filed(name: &str, identifier: &str) -> Result<String, String> {
     let name = named(name)?;
     Ok(if identifier == SHIPPED {
@@ -248,27 +217,22 @@ pub(crate) fn filed(name: &str, identifier: &str) -> Result<String, String> {
         format!("{name}@{identifier}")
     })
 }
-
 #[tauri::command(async)]
 pub fn secret_read(app: AppHandle, name: String) -> Result<Option<String>, String> {
     get(&app, &filed(&name, &app.config().identifier)?)
 }
-
 #[tauri::command(async)]
 pub fn secret_write(app: AppHandle, name: String, secret: String) -> Result<(), String> {
     set(&app, &filed(&name, &app.config().identifier)?, &secret)
 }
-
 #[tauri::command(async)]
 pub fn secrets_in_file(app: AppHandle) -> bool {
     store::in_file(&app)
 }
-
 #[tauri::command(async)]
 pub fn secret_forget(app: AppHandle, name: String) -> Result<(), String> {
     delete(&app, &filed(&name, &app.config().identifier)?)
 }
-
 #[cfg(test)]
 mod tests {
     use super::{filed, named, read_file, write_file};
@@ -301,7 +265,6 @@ mod tests {
         assert!(read_file(&path).is_err());
         let _ = std::fs::remove_dir_all(folder);
     }
-
     #[cfg(not(target_os = "macos"))]
     #[test]
     fn a_keyring_that_is_not_there_keeps_keys_in_the_file() {
@@ -323,7 +286,6 @@ mod tests {
         assert_eq!(wrote(Ok(()), || Ok(()), || Err("filed".to_owned())), Ok(()));
         assert!(wrote(Err(Error::TooLong("name".into(), 1)), || Ok(()), || Ok(())).is_err());
     }
-
     #[test]
     fn a_build_other_than_the_shipped_one_files_its_secrets_apart() {
         assert_eq!(filed("openai", "so.orden.Orden").as_deref(), Ok("openai"));
@@ -333,21 +295,18 @@ mod tests {
         );
         assert!(filed("a b", "so.orden.Orden").is_err());
     }
-
     #[test]
     fn accepts_a_provider_id() {
         assert_eq!(named("openai").as_deref(), Ok("openai"));
         assert_eq!(named("compatible-1").as_deref(), Ok("compatible-1"));
         assert_eq!(named("a_b").as_deref(), Ok("a_b"));
     }
-
     #[test]
     fn refuses_anything_else() {
         for name in ["", "with space", "sl/ash", "Chrome Safe Storage", "ö"] {
             assert!(named(name).is_err(), "{name}");
         }
     }
-
     #[test]
     fn refuses_a_name_longer_than_any_of_ours() {
         assert!(named(&"a".repeat(65)).is_err());

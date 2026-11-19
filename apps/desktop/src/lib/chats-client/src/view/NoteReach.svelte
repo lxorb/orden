@@ -13,12 +13,9 @@
     members,
     space,
   }: { chat: string; path: string; members: readonly Member[]; space: string | null } = $props()
-
   const FACES = 5
-
   let reach = $state.raw<{ missing: ChatMember[]; share: boolean } | null>(null)
   let sharing = $state(false)
-
   $effect(() => {
     const asked = path
     let current = true
@@ -32,9 +29,7 @@
       current = false
     }
   })
-
   const names = $derived((reach?.missing ?? []).map((one) => one.name ?? nameOf(one.who, members, space)).join(', '))
-
   async function share() {
     sharing = true
     if (await store().shareNote(chat, path)) reach = null
@@ -64,15 +59,12 @@
     padding: 0 0 0 var(--space-3);
     border-inline-start: 2px solid var(--line-strong);
   }
-
   .faces {
     display: flex;
   }
-
   .face + .face {
     margin-inline-start: -6px;
   }
-
   .face {
     display: flex;
     border-radius: 50%;

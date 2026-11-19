@@ -3,7 +3,6 @@ import { defaultExclude, defineConfig } from 'vitest/config'
 import { emojiOutlines } from './emoji-outlines'
 
 const clocks = { hookTimeout: 30000, testTimeout: 30000 }
-
 export default defineConfig({
   plugins: [svelte(), emojiOutlines()],
   define: {

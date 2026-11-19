@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const file = { text: null as string | null, stamp: 0 }
 let heard: (() => void)[] = []
-
 vi.mock('./accounts-file', () => ({
   COPY: 'orden:ai-accounts',
   STALE: 'stale',
@@ -19,12 +18,10 @@ vi.mock('./accounts-file', () => ({
     return Promise.resolve()
   },
 }))
-
 const listModels = vi.fn((_provider: unknown) =>
   Promise.resolve(['babbage-002', 'gpt-4.1', 'gpt-5.4-mini', 'gpt-5.5', 'tts-1']),
 )
 vi.mock('./complete', () => ({ listModels: (provider: unknown) => listModels(provider) }))
-
 function storage(entries: Record<string, string> = {}): Storage {
   const held = new Map(Object.entries(entries))
   return {
@@ -38,7 +35,6 @@ function storage(entries: Record<string, string> = {}): Storage {
     setItem: (key, value) => held.set(key, value),
   }
 }
-
 async function windowOn(profile: Storage) {
   vi.stubGlobal('localStorage', profile)
   vi.resetModules()
@@ -48,12 +44,10 @@ async function windowOn(profile: Storage) {
   })
   return ai
 }
-
 async function settled() {
   for (let round = 0; round < 10; round++) await Promise.resolve()
   await new Promise((done) => setTimeout(done, 0))
 }
-
 const EARLIER = JSON.stringify({
   providers: [
     { id: 'claude-code', kind: 'claude-code', name: '', model: '' },
@@ -62,13 +56,11 @@ const EARLIER = JSON.stringify({
   defaultId: 'anthropic',
   uses: { rewrite: 'claude-code' },
 })
-
 beforeEach(() => {
   file.text = null
   file.stamp = 0
   heard = []
 })
-
 describe('moving the accounts out of one window', () => {
   test('a first window writes what it kept before, with the same ids', async () => {
     const profile = storage({ 'orden:ai': EARLIER })
@@ -81,7 +73,6 @@ describe('moving the accounts out of one window', () => {
     expect(profile.getItem('orden:ai-moved')).toBe('1')
     expect(profile.getItem('orden:ai')).toBe(EARLIER)
   })
-
   test('a window on another engine’s profile starts with the same accounts', async () => {
     await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
@@ -90,7 +81,6 @@ describe('moving the accounts out of one window', () => {
     expect(other.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic'])
     expect(other.provider('claude')?.id).toBe('anthropic')
   })
-
   test('a second profile with rows of its own brings the missing ones, once', async () => {
     await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
@@ -114,7 +104,6 @@ describe('moving the accounts out of one window', () => {
     expect(again.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic'])
   })
 })
-
 describe('two windows at once', () => {
   test('a switch in one is heard by the other', async () => {
     const first = await windowOn(storage({ 'orden:ai': EARLIER }))
@@ -125,7 +114,6 @@ describe('two windows at once', () => {
     await settled()
     expect(first.provider('claude')?.id).toBe('claude-code')
   })
-
   test('changes made over the same text both stay', async () => {
     const first = await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
@@ -140,7 +128,6 @@ describe('two windows at once', () => {
     expect(kept.accounts[1]?.name).toBe('Work')
   })
 })
-
 describe('an account kept on a model nobody can talk to', () => {
   const KEPT = (model: string) =>
     JSON.stringify({
@@ -148,7 +135,6 @@ describe('an account kept on a model nobody can talk to', () => {
       defaultId: 'openai',
       uses: {},
     })
-
   test('is moved to the one a key given now starts on, and written so', async () => {
     listModels.mockClear()
     const ai = await windowOn(storage({ 'orden:ai': KEPT('babbage-002') }))
@@ -159,7 +145,6 @@ describe('an account kept on a model nobody can talk to', () => {
     expect(JSON.parse(file.text ?? '{}').accounts[0].model).toBe('gpt-5.5')
     expect(listModels).toHaveBeenCalledTimes(1)
   })
-
   test('one that can talk is left as it was, and nothing is asked', async () => {
     listModels.mockClear()
     const ai = await windowOn(storage({ 'orden:ai': KEPT('gpt-4.1') }))
@@ -167,7 +152,6 @@ describe('an account kept on a model nobody can talk to', () => {
     expect(ai.accounts[0]?.model).toBe('gpt-4.1')
     expect(listModels).not.toHaveBeenCalled()
   })
-
   test('a list that cannot be read leaves it, to be tried again', async () => {
     listModels.mockClear()
     listModels.mockImplementationOnce(() => Promise.reject(new Error('offline')))

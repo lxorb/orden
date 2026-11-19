@@ -11,12 +11,10 @@ async function send(note: string, view: EditorView | undefined) {
     await sendSelection(note, view.state.doc.toString(), range.from, range.to)
   } else await sendToChat(note)
 }
-
 export function sendRows(view?: object): CommandExtension[] {
   const tab = workspace.active
   const note = tab?.kind === 'note' ? tab.path : null
   if (!note || !account.accountToken || !chatsOn()) return []
-
   return [
     {
       id: 'send-to-chat',

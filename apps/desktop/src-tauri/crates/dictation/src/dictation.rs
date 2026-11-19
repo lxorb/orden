@@ -19,7 +19,6 @@ use catalog::{Model, Pinned, Runtime, PARAKEET};
 use device::{Device, Fit};
 
 const IDLE: Duration = Duration::from_secs(5 * 60);
-
 #[derive(Serialize)]
 pub struct Local {
     device: Device,
@@ -27,38 +26,31 @@ pub struct Local {
     model: Offered,
     installed: bool,
 }
-
 #[derive(Serialize)]
 struct Offered {
     id: &'static str,
     name: &'static str,
     bytes: u64,
 }
-
 #[derive(Clone, Serialize)]
 pub struct Fetched {
     done: u64,
     total: u64,
 }
-
 #[derive(Default)]
 pub struct Loaded {
     engine: Mutex<Option<(sherpa::Engine, Instant, f32)>>,
 }
-
 static FETCHING: AtomicBool = AtomicBool::new(false);
-
 fn model() -> &'static Model {
     &PARAKEET
 }
-
 fn folder(app: &AppHandle) -> Result<PathBuf, String> {
     app.path()
         .app_local_data_dir()
         .map(|dir| dir.join("dictation"))
         .map_err(|error| error.to_string())
 }
-
 fn runtime_folder(root: &Path, runtime: &Runtime) -> PathBuf {
     root.join(format!(
         "runtime-{}-{}",
@@ -66,11 +58,9 @@ fn runtime_folder(root: &Path, runtime: &Runtime) -> PathBuf {
         catalog::RUNTIME_VERSION
     ))
 }
-
 fn present(path: &Path, pin: &Pinned) -> bool {
     fs::metadata(path).is_ok_and(|found| found.len() == pin.size)
 }
-
 fn sha256_of(path: &Path) -> Result<String, String> {
     let mut file = fs::File::open(path).map_err(|error| error.to_string())?;
     let mut hash = Sha256::new();
@@ -84,7 +74,6 @@ fn sha256_of(path: &Path) -> Result<String, String> {
     }
     Ok(hex(&hash.finalize()))
 }
-
 fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     bytes.iter().fold(String::new(), |mut out, b| {
@@ -92,7 +81,6 @@ fn hex(bytes: &[u8]) -> String {
         out
     })
 }
-
 fn installed(root: &Path) -> bool {
     let Some(runtime) = catalog::this_runtime() else {
         return false;
@@ -107,7 +95,6 @@ fn installed(root: &Path) -> bool {
             .iter()
             .all(|one| present(&root.join(model().id).join(one.name), one))
 }
-
 #[tauri::command]
 pub async fn dictation_local(app: AppHandle) -> Result<Local, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Local, String> {
@@ -126,7 +113,6 @@ pub async fn dictation_local(app: AppHandle) -> Result<Local, String> {
     })
     .await
 }
-
 #[tauri::command]
 pub async fn dictation_local_fetch(
     app: AppHandle,
@@ -143,7 +129,6 @@ pub async fn dictation_local_fetch(
     FETCHING.store(false, Ordering::SeqCst);
     result
 }
-
 async fn fetch_all(root: &Path, progress: &mut impl FnMut(Fetched)) -> Result<(), String> {
     let runtime = catalog::this_runtime().ok_or("This device has no speech runtime.")?;
     let model = model();
@@ -186,14 +171,12 @@ async fn fetch_all(root: &Path, progress: &mut impl FnMut(Fetched)) -> Result<()
     }
     Ok(())
 }
-
 fn client() -> Result<reqwest::Client, String> {
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
         .build()
         .map_err(|error| error.to_string())
 }
-
 async fn fetch_one(
     client: &reqwest::Client,
     url: &str,
@@ -254,7 +237,6 @@ async fn fetch_one(
         }
     }
 }
-
 fn unpack(zip: &Path, runtime: &Runtime, into: &Path) -> Result<(), String> {
     let file = fs::File::open(zip).map_err(|error| error.to_string())?;
     let mut archive = zip::ZipArchive::new(file).map_err(|error| error.to_string())?;
@@ -275,7 +257,6 @@ fn unpack(zip: &Path, runtime: &Runtime, into: &Path) -> Result<(), String> {
     }
     Ok(())
 }
-
 #[tauri::command]
 pub async fn dictation_local_remove(app: AppHandle) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
@@ -292,16 +273,13 @@ pub async fn dictation_local_remove(app: AppHandle) -> Result<(), String> {
     })
     .await
 }
-
 fn lock(loaded: &Loaded) -> std::sync::MutexGuard<'_, Option<(sherpa::Engine, Instant, f32)>> {
     loaded.engine.held()
 }
-
 #[derive(Serialize)]
 pub struct Opened {
     pace: f32,
 }
-
 #[tauri::command]
 pub async fn dictation_local_open(app: AppHandle) -> Result<Opened, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Opened, String> {
@@ -328,7 +306,6 @@ pub async fn dictation_local_open(app: AppHandle) -> Result<Opened, String> {
     })
     .await
 }
-
 fn opened<E>(
     held: &mut Option<(E, Instant, f32)>,
     open: impl FnOnce() -> Result<E, String>,
@@ -343,7 +320,6 @@ fn opened<E>(
     *held = Some((engine, Instant::now(), pace));
     Ok((pace, true))
 }
-
 fn open_engine(root: &Path) -> Result<sherpa::Engine, String> {
     let runtime = catalog::this_runtime().ok_or("This device has no speech runtime.")?;
     if !installed(root) {
@@ -373,7 +349,6 @@ fn open_engine(root: &Path) -> Result<sherpa::Engine, String> {
         },
     )
 }
-
 fn vocabulary(tokens: &str) -> String {
     use std::fmt::Write as _;
     let mut out = String::new();
@@ -387,7 +362,6 @@ fn vocabulary(tokens: &str) -> String {
     }
     out
 }
-
 fn watch_idle(loaded: Arc<Loaded>) {
     std::thread::spawn(move || loop {
         std::thread::sleep(Duration::from_secs(30));
@@ -402,7 +376,6 @@ fn watch_idle(loaded: Arc<Loaded>) {
         }
     });
 }
-
 #[tauri::command]
 pub async fn dictation_local_hear(app: AppHandle, request: Request<'_>) -> Result<String, String> {
     let InvokeBody::Raw(body) = request.body() else {
@@ -419,7 +392,6 @@ pub async fn dictation_local_hear(app: AppHandle, request: Request<'_>) -> Resul
     })
     .await
 }
-
 fn framed(body: &[u8]) -> Result<(String, Vec<f32>), String> {
     let wrong = || "dictation was sent a body it cannot read".to_owned();
     let head: [u8; 4] = body
@@ -441,7 +413,6 @@ fn framed(body: &[u8]) -> Result<(String, Vec<f32>), String> {
         .collect();
     Ok((context, samples))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -454,7 +425,6 @@ mod tests {
         }
         body
     }
-
     #[test]
     fn a_stretch_is_read_as_it_was_sent() {
         let (context, samples) = framed(&frame("Jürgen Weißmüller,Tauri", &[0.5, -0.25])).unwrap();
@@ -463,7 +433,6 @@ mod tests {
         let (context, samples) = framed(&frame("", &[])).unwrap();
         assert_eq!((context.as_str(), samples.len()), ("", 0));
     }
-
     #[test]
     fn a_body_cut_short_is_refused() {
         assert!(framed(&[]).is_err());
@@ -472,7 +441,6 @@ mod tests {
         body.pop();
         assert!(framed(&body).is_err());
     }
-
     #[test]
     fn the_vocabulary_is_the_tokens_in_their_order() {
         assert_eq!(
@@ -480,7 +448,6 @@ mod tests {
             "<unk>\t-0\n\u{2581}the\t-1\nü\t-2\n"
         );
     }
-
     #[test]
     fn a_model_is_timed_once_as_it_opens() {
         let mut held: Option<(u32, Instant, f32)> = None;
@@ -501,7 +468,6 @@ mod tests {
             assert_eq!(answer.map(|(pace, _)| pace), Ok(0.25));
         }
         assert_eq!((opens, timings), (1, 1));
-
         held = None;
         assert_eq!(opened(&mut held, || Ok(8), |_| Ok(0.5)), Ok((0.5, true)));
         assert_eq!(opened(&mut held, || Ok(9), |_| Ok(0.9)), Ok((0.5, false)));
@@ -512,13 +478,11 @@ mod tests {
         )
         .is_err());
     }
-
     #[test]
     fn nothing_is_installed_in_an_empty_folder() {
         let dir = tempfile::tempdir().unwrap();
         assert!(!installed(dir.path()));
     }
-
     #[test]
     fn a_file_is_present_only_at_its_size() {
         let dir = tempfile::tempdir().unwrap();
@@ -533,7 +497,6 @@ mod tests {
         assert_eq!(sha256_of(&path).unwrap(), pin.sha256);
         assert!(!present(&path, &Pinned { size: 4, ..pin }));
     }
-
     #[test]
     #[ignore = "downloads the speech model"]
     fn the_recordings_heard_here() {
@@ -607,7 +570,6 @@ mod tests {
             live[live.len() - 1]
         );
     }
-
     fn words_of(text: &str) -> Vec<String> {
         text.to_lowercase()
             .replace('-', " ")
@@ -624,7 +586,6 @@ mod tests {
             .map(str::to_owned)
             .collect()
     }
-
     fn edits(reference: &[String], heard: &[String]) -> usize {
         let mut row: Vec<usize> = (0..=heard.len()).collect();
         for (i, r) in reference.iter().enumerate() {

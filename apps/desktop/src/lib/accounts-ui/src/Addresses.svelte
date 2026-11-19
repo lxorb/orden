@@ -7,7 +7,6 @@
     email: string
     second: string | null
   }
-
   let second = $state<string | null>(null)
   let adding = $state<'primary' | 'second' | null>(null)
   let address = $state('')
@@ -17,22 +16,18 @@
   let fromApp = $state('')
   let busy = $state(false)
   let wrong = $state<string | null>(null)
-
   async function asked<T>(path: string, options: Parameters<typeof request>[1] = {}) {
     const token = account.accountToken
     if (!token) throw new Error('signed out')
     return await request<T>(`/v1/account/addresses${path}`, { token, ...options })
   }
-
   function took(held: Held) {
     second = held.second
     if (account.user && account.user.email !== held.email) void account.reread()
   }
-
   $effect(() => {
     if (account.user) void asked<Held>('').then(took, () => undefined)
   })
-
   function start(as: 'primary' | 'second') {
     adding = as
     address = ''
@@ -41,7 +36,6 @@
     fromApp = ''
     wrong = null
   }
-
   async function run(work: () => Promise<void>, fallback: string) {
     if (busy) return
     busy = true
@@ -54,14 +48,12 @@
       busy = false
     }
   }
-
   const mail = () =>
     run(async () => {
       const answer = await asked<{ second: boolean }>('/code', { body: { email: address } })
       asksApp = answer.second
       sent = true
     }, 'could not send the code')
-
   const confirm = () =>
     run(async () => {
       took(
@@ -71,10 +63,8 @@
       )
       adding = null
     }, 'that code is not right')
-
   const promote = () =>
     run(async () => took(await asked<Held>('/second/primary', { method: 'POST' })), 'that did not work')
-
   const remove = () => run(async () => took(await asked<Held>('/second', { method: 'DELETE' })), 'that did not work')
 </script>
 
@@ -172,25 +162,20 @@
     display: flex;
     flex-direction: column;
   }
-
   .setting .name {
     flex: 1;
   }
-
   .name strong {
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .setting > .code {
     flex: none;
     inline-size: 8rem;
   }
-
   .adding .setting:last-child {
     justify-content: flex-end;
   }
-
   .hint {
     margin: var(--space-1) 0;
     padding: 0 var(--space-3);
@@ -198,7 +183,6 @@
     color: var(--muted);
     line-height: 1.5;
   }
-
   .hint.bad {
     color: var(--danger);
   }

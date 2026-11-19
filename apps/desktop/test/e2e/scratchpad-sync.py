@@ -2,44 +2,32 @@ import hashlib
 import json
 import time
 import uuid
-
 from playwright.sync_api import Page
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 ORIGIN = harness.worker_origin()
-
 EMAIL = "scratchpad-sync@example.com"
-
 RIGHT = 'header [data-side-toggle="right"]'
 PAD_TAB = '[data-tab="scratchpad"]'
 CARD = "[data-scratchpad-card] .cm-content"
-
 WORDS = f"""() => {{
   const lines = [...document.querySelectorAll('{CARD} .cm-line')]
   return lines.length ? lines.map((one) => one.textContent).join('\\n') : null
 }}"""
-
 AGAIN = "() => document.dispatchEvent(new Event('visibilitychange'))"
-
 PATIENCE = 45
-
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
     def second(self, user: str) -> str:
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
         self.sql(harness.session_row(digest, user, now))
         return token
-
-
 def opened(browser, name: str, missing: bool = False) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 800})
     page = context.new_page()
@@ -60,8 +48,6 @@ def opened(browser, name: str, missing: bool = False) -> Page:
     page.goto(ORIGIN, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp?.workspace.activeSpace", timeout=60000)
     return page
-
-
 def show_pad(page: Page) -> None:
     if not page.locator(PAD_TAB).is_visible():
         page.locator(RIGHT).click()
@@ -69,27 +55,19 @@ def show_pad(page: Page) -> None:
     if page.locator(PAD_TAB).get_attribute("aria-selected") != "true":
         page.locator(PAD_TAB).click()
     page.wait_for_function(f"() => !!document.querySelector('{CARD}')", timeout=10000)
-
-
 def words(page: Page) -> str:
     return page.evaluate(WORDS) or ""
-
-
 def typed(page: Page, text: str, at_start: bool = False) -> None:
     show_pad(page)
     page.locator(CARD).click()
     page.keyboard.press("Control+Home" if at_start else "Control+End")
     page.keyboard.type(text)
     page.wait_for_timeout(1200)
-
-
 def signed_in(page: Page, token: str) -> None:
     page.evaluate(f"() => localStorage.setItem('orden:session', {json.dumps(token)})")
     page.reload(wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp?.account.user", timeout=60000)
     show_pad(page)
-
-
 def holds(page: Page, name: str, *parts: str) -> bool:
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
@@ -100,8 +78,6 @@ def holds(page: Page, name: str, *parts: str) -> bool:
         page.wait_for_timeout(1000)
     wrong(f"[{name}] the scratchpad never held {parts}: {words(page)!r}")
     return False
-
-
 def same(desk: Page, phone: Page, what: str) -> None:
     for _ in range(PATIENCE):
         if words(desk) == words(phone):
@@ -111,8 +87,6 @@ def same(desk: Page, phone: Page, what: str) -> None:
         phone.evaluate(AGAIN)
         desk.wait_for_timeout(1000)
     wrong(f"{what}: the two disagree: {words(desk)!r} / {words(phone)!r}")
-
-
 def main() -> int:
     worker = Worker()
     with DRIVE.session(playwright=True) as play:
@@ -121,13 +95,11 @@ def main() -> int:
         user = worker.query(f"select id from users where email = '{EMAIL}'")[0]["id"]
         other = worker.second(user)
         first, second = DRIVE.browser(play), DRIVE.browser(play)
-
         desk, phone = opened(first, "desk"), opened(second, "phone")
         typed(desk, "Desk before signing in")
         typed(phone, "Phone before signing in")
         if desk.asked or phone.asked:  # type: ignore[attr-defined]
             wrong("signed out, the scratchpad went to the account")
-
         signed_in(desk, token)
         holds(desk, "desk", "Desk before signing in")
         signed_in(phone, other)
@@ -136,14 +108,12 @@ def main() -> int:
         same(desk, phone, "after both joined")
         shot(desk, "01-desk-joined")
         shot(phone, "01-phone-joined")
-
         typed(desk, " desk-at-once")
         typed(phone, "phone-at-once ", at_start=True)
         holds(desk, "desk", "desk-at-once", "phone-at-once")
         holds(phone, "phone", "desk-at-once", "phone-at-once")
         same(desk, phone, "after writing at once")
         shot(desk, "02-desk-at-once")
-
         desk.context.set_offline(True)
         typed(desk, " written-offline")
         desk.evaluate(AGAIN)
@@ -157,7 +127,6 @@ def main() -> int:
         holds(desk, "desk", "written-offline", "written-online")
         same(desk, phone, "after the desk came back")
         shot(phone, "03-phone-after-offline")
-
         desk.reload(wait_until="domcontentloaded")
         desk.wait_for_function("() => !!window.ordenApp?.account.user", timeout=60000)
         show_pad(desk)
@@ -166,7 +135,6 @@ def main() -> int:
         for part in ["Desk before", "Phone before", "written-offline", "written-online"]:
             if words(desk).count(part) != 1:
                 wrong(f"after a reload {part!r} is there {words(desk).count(part)} times")
-
         old = opened(first, "old-server", missing=True)
         typed(old, "Only on this device")
         signed_in(old, token)
@@ -182,11 +150,7 @@ def main() -> int:
         show_pad(old)
         if "Only on this device still" not in words(old):
             wrong(f"against a Worker without the route a reload lost words: {words(old)!r}")
-
         held = worker.query(f"select count(*) as many from pad_updates where user_id = '{user}'")
         say(f"the account holds the scratchpad in {held[0]['many']} row(s)")
-
     return DRIVE.verdict("the scratchpad is one on every device of the account")
-
-
 raise SystemExit(main())

@@ -6,7 +6,6 @@ export interface Piece {
   chip?: ChipKind
   from: number
 }
-
 export function piecesOf(text: string, chips: readonly Chip[]): Piece[] {
   const out: Piece[] = []
   let at = 0
@@ -18,12 +17,10 @@ export function piecesOf(text: string, chips: readonly Chip[]): Piece[] {
   if (at < text.length) out.push({ text: text.slice(at), from: at })
   return out
 }
-
 export interface Span {
   from: number
   to: number
 }
-
 export function carried(spans: readonly Span[], before: string, after: string): Span[] {
   const edit = oneEdit(before, after)
   if (!edit) return [...spans]
@@ -35,13 +32,11 @@ export function carried(spans: readonly Span[], before: string, after: string): 
   }
   return out
 }
-
 export function without(text: string, span: Span): string {
   const before = text.slice(0, span.from).replace(/\s+$/u, '')
   const after = text.slice(span.to).replace(/^\s+/u, '')
   return before && after ? `${before} ${after}` : before + after
 }
-
 export function pastedLines(text: string): string[] {
   return text
     .split(/\r?\n/)
@@ -53,16 +48,13 @@ export function pastedLines(text: string): string[] {
     )
     .filter(Boolean)
 }
-
 export interface Token {
   sign: '#' | '@' | '%'
   query: string
   from: number
   to: number
 }
-
 const SIGNS = new Set(['#', '@', '%'])
-
 export function tokenAt(text: string, caret: number): Token | null {
   let from = caret
   while (from > 0 && !/\s/u.test(text.charAt(from - 1))) from--
@@ -72,7 +64,6 @@ export function tokenAt(text: string, caret: number): Token | null {
   if (!/\s/u.test(text.charAt(caret)) && caret < text.length) return null
   return { sign: sign as Token['sign'], query: word.slice(1), from, to: caret }
 }
-
 export function suggestions(query: string, among: readonly string[], most = 6): string[] {
   const said = query.toLowerCase()
   const starts: string[] = []
@@ -85,7 +76,6 @@ export function suggestions(query: string, among: readonly string[], most = 6): 
   }
   return [...starts, ...holds].slice(0, most)
 }
-
 export function chosen(text: string, token: Token, value: string): { text: string; caret: number } {
   const words = `${token.sign}${value} `
   const after = text.slice(token.to).replace(/^\s+/u, '')

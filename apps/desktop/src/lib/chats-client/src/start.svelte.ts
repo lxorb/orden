@@ -10,7 +10,6 @@ import type { FileOp } from '../../file-ops/src/api'
 import { chats } from './store.svelte'
 
 const isPointer = (path: string) => path.toLowerCase().endsWith(CHAT_EXTENSION)
-
 function followed(op: FileOp): void {
   if (op.op === 'created') {
     if (op.kind === 'file' && isPointer(op.path)) void chats.pointerMoved(null, op.path)
@@ -28,7 +27,6 @@ function followed(op: FileOp): void {
   chats.folderMoved(op.from, op.to)
   void chats.lookAgain()
 }
-
 function pointersIn(entry: Entry | null, out: string[] = []): string[] {
   for (const child of entry?.children ?? []) {
     if (child.is_dir) pointersIn(child, out)
@@ -36,7 +34,6 @@ function pointersIn(entry: Entry | null, out: string[] = []): string[] {
   }
   return out
 }
-
 $effect.root(() => {
   $effect(() => {
     if (!chatsOn()) return
@@ -49,7 +46,6 @@ $effect.root(() => {
     untrack(() => void chats.start(who))
   })
 })
-
 account.forgetWithSession(() => void chats.forget())
 hub.on('chat', (frame) => chats.poked(frame.said))
 hub.opened(() => void chats.reconnected())

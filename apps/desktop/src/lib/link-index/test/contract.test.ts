@@ -6,7 +6,6 @@ import { pressQueryRow, queryRowsHtml, readsWords, serveLinks, spaceLinks } from
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
@@ -14,14 +13,12 @@ function sources(folder: string): string[] {
     return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
   })
 }
-
 const reachedApis = () =>
   sources(SRC).flatMap((file) =>
     [...readFileSync(file, 'utf8').matchAll(/(?:from |import\()'\.\.\/\.\.\/([a-z-]+)\/src\/api'/g)].map(
       (found) => found[1],
     ),
   )
-
 test('the module stands on its own reads the workspace, the search, the reading view, the bases and the canvas through no file of theirs', () => {
   expect([...new Set(reachedApis())].sort()).toEqual([
     'graph',
@@ -36,12 +33,10 @@ test('the module stands on its own reads the workspace, the search, the reading 
     .join('\n')
   expect(text).not.toMatch(/(?:from |import\()'[^']*workspace/)
 })
-
 describe('the link index', () => {
   test('reads words out of notes, canvases, pages and web shortcuts only', () => {
     expect(['a.md', 'b.canvas', 'c.pages', 'd.url', 'e.png'].map(readsWords)).toEqual([true, true, true, true, false])
   })
-
   test('draws what a note shows through the services the app lends it', async () => {
     const asked: string[] = []
     serveLinks({
@@ -55,7 +50,6 @@ describe('the link index', () => {
     stop?.()
     expect(asked).toEqual(['base stopped'])
   })
-
   test('answers a query block from the search the app lends it, leaving out what the workspace leaves out', async () => {
     expect(pressQueryRow(null)).toBe(false)
     const asked: (readonly string[])[] = []
@@ -75,7 +69,6 @@ describe('the link index', () => {
     unbind()
     expect(asked).toEqual([['Archive']])
   })
-
   test('moves nothing when a note keeps its place, and leaves the notes it cannot find open', async () => {
     const opened: string[] = []
     const unbind = providePort('workspace.notes', {

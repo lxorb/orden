@@ -1,12 +1,9 @@
 from typing import Any
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 SLIVER = 24
-
 MEASURE = """
 () => {
   const box = (one) => {
@@ -49,18 +46,15 @@ MEASURE = """
   }
 }
 """
-
 def check(page: Any, state: str) -> None:
     DRIVE.settled(page)
     page.wait_for_timeout(500)
     seen: dict[str, Any] = page.evaluate(MEASURE)
     bar, strips, panes = seen["bar"], seen["strips"], seen["panes"]
     say(f"[{state}] strips {[one['id'] for one in strips]}, panes {[(one['id'], one['head']) for one in panes]}")
-
     top = min(one["box"]["top"] for one in panes)
     if abs(top - bar["bottom"]) > 0.5:
         wrong(f"[{state}] the panes start {top - bar['bottom']:.1f}px under the bar, not where it ends")
-
     stripped = {one["id"] for one in strips}
     for one in panes:
         along_top = abs(one["box"]["top"] - top) < 0.5
@@ -72,7 +66,6 @@ def check(page: Any, state: str) -> None:
             wrong(f"[{state}] pane {one['id']} under another one has no strip")
         if not along_top and one["id"] in stripped:
             wrong(f"[{state}] pane {one['id']} under another one has a strip in the bar")
-
     boxes = {one["id"]: one["box"] for one in panes}
     for one in strips:
         under = boxes.get(one["id"])
@@ -93,19 +86,15 @@ def check(page: Any, state: str) -> None:
             wrong(f"[{state}] strip {one['id']} runs under the window's buttons: {strip['right']:.1f} > {end['left']:.1f}")
         if one["sliver"] < SLIVER - 0.5:
             wrong(f"[{state}] strip {one['id']} has {one['sliver']:.1f}px to drag the window by")
-
     if not all(seen["between"]):
         wrong(f"[{state}] the room between two strips does not move the window: {seen['between']}")
-
     shot(page, state, clip={"x": 0, "y": 0, "width": page.viewport_size["width"], "height": 120})
-
 def drive(browser: Any) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 760})
     DRIVE.open(page)
     DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n", "# Kestrel\n\nA bird.\n")
     DRIVE.open_note(page, "Plan")
     ws = "window.ordenApp.workspace"
-
     check(page, "01-one")
     page.evaluate(f"() => {ws}.split('row')")
     check(page, "02-side-by-side")
@@ -126,5 +115,4 @@ def drive(browser: Any) -> None:
     check(page, "06-four")
     page.set_viewport_size({"width": 900, "height": 600})
     check(page, "07-narrow")
-
 raise SystemExit(DRIVE.run(drive))

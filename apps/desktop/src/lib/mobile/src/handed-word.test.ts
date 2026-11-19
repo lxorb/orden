@@ -13,11 +13,9 @@ const world = vi.hoisted(() => ({
   typed: [] as string[],
   tasks: [] as { root?: string; typed?: boolean }[],
 }))
-
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) => !world.readOnly.some((root) => path.startsWith(root)),
 }))
-
 const imported: { target: { root: string } }[] = []
 providePort('import.bring', {
   here: () => Promise.resolve(new Set()),
@@ -29,13 +27,11 @@ providePort('import.bring', {
     return Promise.resolve(null)
   },
 })
-
 const said = vi.hoisted(() => {
   let speak: (word: string) => void = () => undefined
   const spoken = new Promise<string>((done) => (speak = done))
   return { word: '', spoken, speak: (word: string) => speak(word), asked: [] as string[] }
 })
-
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
   onTheActivity: () => true,
@@ -94,18 +90,14 @@ vi.mock('../../workspace/src/api', () => ({
     openEntry: () => Promise.resolve(),
   },
 }))
-
 const { startHanded } = await import('./handed')
-
 const MINE = { id: 'mine', name: 'Mine', root: '/mine' }
-
 test('a share asked for with no word is asked for again once the word is said', async () => {
   world.readOnly = []
   world.spaces = [MINE]
   const stop = startHanded()
   await new Promise((done) => setTimeout(done, 20))
   expect(imported).toEqual([])
-
   said.word = 'word'
   said.speak('word')
   await vi.waitFor(() => expect(imported).toHaveLength(1))

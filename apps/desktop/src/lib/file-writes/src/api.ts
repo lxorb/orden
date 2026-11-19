@@ -7,16 +7,13 @@ export interface Hearing {
   made(path: string): Promise<void>
   wrote(path: string, content: string): void
 }
-
 let hearing: Hearing | null = null
-
 export function hearWrites(one: Hearing): () => void {
   hearing = one
   return () => {
     if (hearing === one) hearing = null
   }
 }
-
 export async function writeFile(path: string, content: string): Promise<void> {
   const ear = hearing
   const was = ear ? await ear.there(path) : true
@@ -28,7 +25,6 @@ export async function writeFile(path: string, content: string): Promise<void> {
   }
   wroteHere(path)
 }
-
 export async function writeIfAbsent(path: string, content: string): Promise<boolean> {
   const made = await oneWriteAt(path, async () => {
     if (await onDisk(path)) return false
@@ -41,7 +37,6 @@ export async function writeIfAbsent(path: string, content: string): Promise<bool
   wroteHere(path)
   return true
 }
-
 export async function writeBytes(path: string, bytes: Uint8Array): Promise<void> {
   const ear = hearing
   const was = ear ? await ear.there(path) : true
@@ -49,7 +44,6 @@ export async function writeBytes(path: string, bytes: Uint8Array): Promise<void>
   await links.cameBack(path, false)
   if (ear && !was) await ear.made(path)
 }
-
 export async function copyPath(from: string, to: string): Promise<void> {
   await invoke('copy_path', { from, to })
 }

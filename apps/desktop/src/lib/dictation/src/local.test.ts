@@ -6,7 +6,6 @@ const world = vi.hoisted(() => ({
   answers: new Map<string, (args: unknown) => unknown>(),
   stored: new Map<string, string>(),
 }))
-
 vi.mock('../../platform/src/tauri', () => ({
   get isDesktop() {
     return world.desktop
@@ -30,15 +29,12 @@ vi.mock('../../platform/src/stored', () => ({
   keep: (key: string, value: string) => world.stored.set(key, value),
   forget: (key: string) => world.stored.delete(key),
 }))
-
 const { local, KEEPS_UP } = await import('./local.svelte')
-
 const MACHINE = {
   fit: 'fits',
   model: { id: 'parakeet', name: 'Parakeet TDT 0.6B v3', bytes: 1000 },
   installed: false,
 }
-
 beforeEach(() => {
   world.calls.length = 0
   world.answers.clear()
@@ -49,7 +45,6 @@ beforeEach(() => {
   local.trouble = ''
   local.pace = null
 })
-
 describe('the download', () => {
   test('says how far it has come, and leaves the model installed', async () => {
     const seen: number[] = []
@@ -65,7 +60,6 @@ describe('the download', () => {
     expect(local.fetching).toBeNull()
     expect(local.ready).toBe(true)
   })
-
   test('is not started twice, nor for a model already here', async () => {
     world.answers.set('dictation_local_fetch', () => new Promise(() => undefined))
     void local.fetch()
@@ -78,7 +72,6 @@ describe('the download', () => {
     await local.fetch()
     expect(world.calls).toEqual([])
   })
-
   test('that fails says why, and leaves nothing half there', async () => {
     world.answers.set('dictation_local_fetch', () => {
       throw new Error('encoder.int8.onnx did not arrive as it should; nothing was kept')
@@ -89,7 +82,6 @@ describe('the download', () => {
     expect(local.fetching).toBeNull()
   })
 })
-
 describe('the model here', () => {
   test('keeps the pace it opened at, which decides whether it keeps up', async () => {
     world.answers.set('dictation_local_open', () => ({ pace: 0.07 }))
@@ -101,7 +93,6 @@ describe('the model here', () => {
     await local.open()
     expect(local.keepsUp).toBe(false)
   })
-
   test('once removed is gone, with its pace', async () => {
     local.machine = { ...MACHINE, fit: 'fits', installed: true }
     local.pace = 0.1

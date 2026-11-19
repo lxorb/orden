@@ -46,9 +46,7 @@ function formatName(format: string): string {
       return 'Phone'
   }
 }
-
 const keyOf = (column: string) => (column.startsWith('formula.') ? column.slice(8) : bare(column))
-
 function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
   const live = kit.live
   const base = live.base
@@ -59,7 +57,6 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
     .filter((one) => !columns.includes(one))
     .map((one) => ({ label: propertyName(one, displayName(base, one)), run: () => add(one) }))
   if (kinds !== 'notes') return others
-
   const shown = live.answer?.groups.flatMap((group) => group.rows) ?? []
   const reverse = reverseOffers(base, shown, live.rows, live.context).map((offer) => ({
     label: `← ${offer.name}`,
@@ -104,7 +101,6 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
     ...ids,
   ]
 }
-
 export const grouped = (event: MouseEvent | undefined, label: string, more: () => Promise<MenuEntry[]>): MenuEntry => ({
   label,
   more,
@@ -112,7 +108,6 @@ export const grouped = (event: MouseEvent | undefined, label: string, more: () =
     if (event) void more().then((rows) => menu.show(event, rows, { title: label }))
   },
 })
-
 export function columnMenu(kit: Kit, column: string, columns: readonly string[], event?: MouseEvent): MenuEntry[] {
   const live = kit.live
   const base = live.base
@@ -123,7 +118,6 @@ export function columnMenu(kit: Kit, column: string, columns: readonly string[],
   const formula = column.startsWith('formula.') ? base.formulas[column.slice(8)] : undefined
   const note = isNoteProperty(column)
   const format = formatOf(base, column)
-
   return [
     {
       label: 'Ascending',

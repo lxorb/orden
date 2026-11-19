@@ -30,11 +30,9 @@ function listSpaces(call: Call): AgentAnswer {
     })),
   )
 }
-
 function withBases(verb: Verb): Verb {
   return gatedBy(() => basesOn(), 'databases are', verb)
 }
-
 export const hostVerbs = verbsOf({
   get_context: getContext,
   list_spaces: listSpaces,

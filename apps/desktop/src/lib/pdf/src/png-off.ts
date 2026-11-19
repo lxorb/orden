@@ -1,31 +1,25 @@
 import { toBase64 } from '../../platform/src/api'
 
 type As = 'data' | 'bytes'
-
 interface Said {
   id: number
   png: string | ArrayBuffer | null
 }
-
 type Png = string | Uint8Array | null
 type Draw = (drawing: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => void
-
 interface Waiting {
   again: () => Promise<Png>
   done: (png: Png) => void
 }
-
 let worker: Worker | null = null
 let broken = false
 let asked = 0
 const waiting = new Map<number, Waiting>()
-
 async function blobHere(canvas: HTMLCanvasElement): Promise<Blob | null> {
   return new Promise<Blob | null>((done) => {
     canvas.toBlob(done, 'image/png')
   })
 }
-
 async function dataOf(png: Blob): Promise<string | null> {
   if (typeof FileReader === 'undefined') {
     return `data:image/png;base64,${toBase64(new Uint8Array(await png.arrayBuffer()))}`
@@ -37,13 +31,11 @@ async function dataOf(png: Blob): Promise<string | null> {
     reader.readAsDataURL(png)
   })
 }
-
 async function here(canvas: HTMLCanvasElement, as: As): Promise<Png> {
   const png = await blobHere(canvas)
   if (!png) return null
   return as === 'bytes' ? new Uint8Array(await png.arrayBuffer()) : dataOf(png)
 }
-
 function open(): Worker | null {
   if (worker) return worker
   if (
@@ -78,7 +70,6 @@ function open(): Worker | null {
   }
   return worker
 }
-
 function away(picture: ImageBitmap, as: As, again: () => Promise<Png>, worker: Worker): Promise<Png> {
   const id = ++asked
   return new Promise((done) => {
@@ -86,7 +77,6 @@ function away(picture: ImageBitmap, as: As, again: () => Promise<Png>, worker: W
     worker.postMessage({ id, picture, as }, [picture])
   })
 }
-
 async function encoded(canvas: HTMLCanvasElement, as: As): Promise<Png> {
   const worker = open()
   if (!worker) return here(canvas, as)
@@ -98,7 +88,6 @@ async function encoded(canvas: HTMLCanvasElement, as: As): Promise<Png> {
   }
   return away(picture, as, () => here(canvas, as), worker)
 }
-
 function drawnHere(width: number, height: number, draw: Draw): Promise<Png> {
   const canvas = document.createElement('canvas')
   canvas.width = width
@@ -108,12 +97,10 @@ function drawnHere(width: number, height: number, draw: Draw): Promise<Png> {
   draw(drawing)
   return here(canvas, 'bytes')
 }
-
 export async function pngData(canvas: HTMLCanvasElement): Promise<string | null> {
   const png = await encoded(canvas, 'data')
   return typeof png === 'string' ? png : null
 }
-
 export async function pngDrawn(width: number, height: number, paint: () => Promise<Draw>): Promise<Uint8Array | null> {
   const again = async () => drawnHere(width, height, await paint())
   const worker = open()

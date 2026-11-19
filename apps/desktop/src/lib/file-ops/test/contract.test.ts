@@ -5,14 +5,12 @@ import { describe, expect, test } from 'vitest'
 import { carried, FileOps, inFlight, keeping, landing, moving, onLanded } from '../src/api'
 
 const SRC = join(import.meta.dirname, '../src')
-
 test('the module stands on its own reaches no app module but the platform', () => {
   const reached = ['api.ts', 'landing.ts'].flatMap((name) =>
     [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map((found) => found[1]),
   )
   expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
 })
-
 describe('telling the stores what happened to a file', () => {
   test('every follower hears it, even after one of them fails', async () => {
     const ops = new FileOps()
@@ -27,7 +25,6 @@ describe('telling the stores what happened to a file', () => {
     await ops.tell({ op: 'removed', path: '/s/Idea.md', kind: 'file', root: '/s' })
     expect(heard).toEqual(['removed'])
   })
-
   test('a doer runs the change while it is set, and the change runs alone once it is gone', async () => {
     const ops = new FileOps()
     const done: string[] = []
@@ -42,7 +39,6 @@ describe('telling the stores what happened to a file', () => {
     expect(done).toEqual(['before created', 'ran', 'alone'])
   })
 })
-
 test('a move under way keeps its target landing until it is done, then says so', async () => {
   let heard = 0
   const stop = onLanded(() => (heard += 1))
@@ -52,7 +48,6 @@ test('a move under way keeps its target landing until it is done, then says so',
   expect(landing('/s/Done/Plan.md')).toBe(false)
   expect(heard).toBe(1)
 })
-
 describe('a store kept by path', () => {
   test('hears a move, a removal, a put back and what happened to a whole space', () => {
     const said: string[] = []
@@ -76,7 +71,6 @@ describe('a store kept by path', () => {
       'forget /t',
     ])
   })
-
   test('what sat under a moved folder goes with it, and the rest stays', () => {
     const move = moving('/s/Work', '/s/Done/Work', '/s')
     expect(move.across).toBe(false)

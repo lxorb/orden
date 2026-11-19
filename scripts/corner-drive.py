@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import ctypes
 import http.server
 import json
@@ -15,23 +14,18 @@ from linux_app import run
 DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
 PAGES = 8772
 MAGENTA = (255, 0, 255)
-
 class Pages(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
-
     def do_GET(self):
         self.send_response(200)
         self.send_header("content-type", "text/html")
         self.end_headers()
         self.wfile.write(b"<!doctype html><title>magenta</title><body style='margin:0;height:100vh;background:#ff00ff'>")
-
 class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
-
 if DESK == "sway":
-
     def picture():
         subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
         time.sleep(2)
@@ -40,9 +34,7 @@ if DESK == "sway":
         ).stdout
         parts = raw.split(maxsplit=4)
         return int(parts[1]), int(parts[2]), parts[4]
-
 else:
-
     class Image(ctypes.Structure):
         _fields_ = [("width", ctypes.c_int), ("height", ctypes.c_int), ("xoffset", ctypes.c_int),
                     ("format", ctypes.c_int), ("data", ctypes.POINTER(ctypes.c_ubyte)),
@@ -50,7 +42,6 @@ else:
                     ("bitmap_bit_order", ctypes.c_int), ("bitmap_pad", ctypes.c_int),
                     ("depth", ctypes.c_int), ("bytes_per_line", ctypes.c_int),
                     ("bits_per_pixel", ctypes.c_int)]
-
     X = ctypes.CDLL("libX11.so.6")
     X.XOpenDisplay.restype = ctypes.c_void_p
     X.XOpenDisplay.argtypes = [ctypes.c_char_p]
@@ -60,7 +51,6 @@ else:
     X.XGetImage.argtypes = [ctypes.c_void_p, ctypes.c_ulong, ctypes.c_int, ctypes.c_int,
                             ctypes.c_uint, ctypes.c_uint, ctypes.c_ulong, ctypes.c_int]
     SHOWN = X.XOpenDisplay(os.environ.get("DISPLAY", ":0").encode())
-
     def picture():
         image = X.XGetImage(SHOWN, X.XDefaultRootWindow(SHOWN), 0, 0, 1600, 1000, 0xFFFFFFFF, 2).contents
         line = image.bytes_per_line
@@ -71,10 +61,8 @@ else:
             for x in range(0, len(row), 4):
                 rgb += bytes((row[x + 2], row[x + 1], row[x]))
         return image.width, image.height, bytes(rgb)
-
 def near(colour, other, slack=40):
     return all(abs(one - two) <= slack for one, two in zip(colour, other))
-
 threading.Thread(target=Serving(("127.0.0.1", PAGES), Pages).serve_forever, daemon=True).start()
 for _ in range(60):
     if run("1 + 1") == 2:
@@ -85,7 +73,6 @@ time.sleep(0.5)
 tab = run("orden.workspace.activeTabId")
 run(f"(orden.pages.go({json.dumps(tab)}, 'http://127.0.0.1:{PAGES}/'), 'sent')")
 time.sleep(5)
-
 place = None
 for _ in range(40):
     place = run(f"(() => {{ const page = orden.pages.of({json.dumps(tab)}); return page && page.sent && page.sent.visible ? page.sent.pane : null }})()")
@@ -99,13 +86,10 @@ radii = run(
 )
 if not isinstance(place, dict) or not isinstance(radii, list):
     raise SystemExit(f"::error::no page placed in a card: {place!r}, radii {radii!r}")
-
 wide, tall, data = picture()
-
 def at(x, y):
     one = (y * wide + x) * 3
     return tuple(data[one : one + 3])
-
 MARK = bytes(MAGENTA)
 rows = []
 for y in range(tall):
@@ -133,7 +117,6 @@ points = {
 }
 seen = {name: at(*point) for name, point in points.items()}
 print(f"the card's bottom corners are {radii} px; the page is from {(x0, y0)} to {(x1, y1)}: {seen}")
-
 failures = []
 for name, radius in zip(("the bottom left corner", "the bottom right corner"), radii):
     if radius and near(seen[name], MAGENTA):

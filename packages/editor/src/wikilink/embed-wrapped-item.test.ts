@@ -12,11 +12,9 @@ import { embedWidget } from './embed'
 import { type NoteIndex, noteIndex } from './notes'
 
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function named(doc: string, on: string): { text: string; id: string } {
   const view = createEditor({ parent: document.body, doc })
   open.push(view)
@@ -24,7 +22,6 @@ function named(doc: string, on: string): { text: string; id: string } {
   const target = blockTarget(view, doc.indexOf(on)) ?? ''
   return { text: view.state.doc.toString(), id: target.slice(2) }
 }
-
 async function embedded(source: string, id: string): Promise<string> {
   const space: NoteIndex = {
     notes: [{ path: 'Plan.md', name: 'Plan', headings: [], blocks: [id], aliases: [] }],
@@ -47,7 +44,6 @@ async function embedded(source: string, id: string): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 0))
   return frame.querySelector('.orden-embed-body')?.innerHTML ?? ''
 }
-
 describe('an embed of a list item that runs over two lines, named with Copy link to block', () => {
   test('shows that item, not the whole list', async () => {
     const plan = '- buy milk\n- call the bank\n  about the fees\n- book the trip\n'

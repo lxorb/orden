@@ -8,7 +8,6 @@ providePort('quit.terminal', {
   rows: async (window, idle) => {
     const live = new Set(runningTabs())
     const tabs = workspace.tabs.filter((tab) => tab.kind === 'terminal' && live.has(tab.id))
-
     const rows = await Promise.all(
       tabs.map(async (tab): Promise<Stopping | null> => {
         const id = ptyOf(tab.id)
@@ -33,13 +32,11 @@ providePort('quit.terminal', {
     return Promise.resolve()
   },
 })
-
 providePort('quit.thread', {
   rows: async (window) => {
     const { answering } = await chatSends()
     const threads = answering()
     if (!threads.length) return []
-
     const { ai } = await import('./ai-providers/src/api')
     return threads.map((thread) => {
       const kind = ai.provider(thread.provider)?.kind
@@ -60,5 +57,4 @@ providePort('quit.thread', {
     await chat.openThread(row.id)
   },
 })
-
 export { answerQuitting, holdToQuit, mayStop, quitAsked } from './quitting/src/api'

@@ -2,28 +2,20 @@ import { type AgentAnswer, type AgentCaller as Caller, agentRefusal, type AgentS
 import { isRecord } from '../../platform/src/api'
 
 export type { AgentAnswer, Caller }
-
 export const refusal = agentRefusal
-
 let threadSpaces: (thread: string) => string | null = () => null
-
 export function answerThreadSpaces(lookup: (thread: string) => string | null): void {
   threadSpaces = lookup
 }
-
 export function threadSpaceOf(caller: Caller): string | null {
   return caller.agent && caller.thread ? threadSpaces(caller.thread) : null
 }
-
 export const READER: Caller = { agent: null }
-
 function texts(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
 }
-
 export function callerOf(told: unknown, thread?: unknown): Caller {
   if (told === undefined || told === null) return READER
-
   const grant = isRecord(told) ? told : {}
   const id = typeof grant.id === 'string' && grant.id ? grant.id : 'agent'
   const builtIn = grant.built_in === true
@@ -46,9 +38,7 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
     ...threadOf,
   }
 }
-
 export const fullPermissions = (grant: { mode?: string } | null | undefined): boolean => grant?.mode === 'autonomous'
-
 export function holds(caller: Caller, scope: Scope): boolean {
   return caller.agent === null || fullPermissions(caller.agent) || caller.agent.scopes.includes(scope)
 }

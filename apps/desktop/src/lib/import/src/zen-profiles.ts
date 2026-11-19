@@ -8,7 +8,6 @@ export interface ZenProfile {
   path: string
   files: string[]
 }
-
 export async function zenProfiles(): Promise<ZenProfile[]> {
   if (!isDesktop) return []
   try {
@@ -17,14 +16,11 @@ export async function zenProfiles(): Promise<ZenProfile[]> {
     return []
   }
 }
-
 export interface ZenRead {
   sidebar: ZenSession
   engine: BrowserEngine | null
 }
-
 const SEARCH = 'search.json.mozlz4'
-
 export async function zenSession(profile: ZenProfile): Promise<ZenRead> {
   const places = profile.files.includes('places.sqlite') ? await placesOf(profile) : null
   for (const file of profile.files.filter((one) => one.includes('session'))) {
@@ -38,15 +34,12 @@ export async function zenSession(profile: ZenProfile): Promise<ZenRead> {
       return { sidebar: withBookmarks(session, places), engine }
     }
   }
-
   throw new Error('Zen’s tabs could not be read.')
 }
-
 async function fileOf(profile: ZenProfile, file: string): Promise<unknown> {
   const said = await invoke<string>('read_zen_file', { profile: profile.path, file })
   return JSON.parse(new TextDecoder().decode(unmozLz4(fromBase64(said)))) as unknown
 }
-
 async function placesOf(profile: ZenProfile): Promise<ZenPlaces | null> {
   try {
     const said = JSON.parse(await invoke<string>('read_zen_places', { profile: profile.path })) as Partial<ZenPlaces>

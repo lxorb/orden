@@ -8,13 +8,10 @@ import { embedWidget } from './embed'
 import { type NoteIndex, noteIndex } from './notes'
 
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 const PLAN = '# Plan\n\n- buy milk\n- call the bank ^bank\n  - ask about fees\n- book the trip\n'
-
 const SPACE: NoteIndex = {
   notes: [{ path: 'Plan.md', name: 'Plan', headings: ['Plan'], blocks: ['bank'], aliases: [] }],
   files: [],
@@ -22,7 +19,6 @@ const SPACE: NoteIndex = {
   read: () => Promise.resolve(PLAN),
   render: (source) => Promise.resolve(source),
 }
-
 async function embedded(inner: string): Promise<string> {
   const parsed = parseWikilink(inner, true)
   if (!parsed) throw new Error(`${inner} is not a link`)
@@ -38,7 +34,6 @@ async function embedded(inner: string): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 0))
   return frame.querySelector('.orden-embed-body')?.innerHTML ?? ''
 }
-
 describe('an embed of a block named on a list item', () => {
   test('shows that item and its children, not the whole list', async () => {
     const shown = await embedded('Plan#^bank')

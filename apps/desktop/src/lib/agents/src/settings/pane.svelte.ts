@@ -14,15 +14,12 @@ export class AgentsPane {
   readonly last = new SvelteMap<string, number>()
   earlier = $state(false)
   minted = $state<Minted | null>(null)
-
   private unread: string[] = []
   private writing: Promise<unknown> = Promise.resolve()
   private pending = 0
   private stop: (() => void) | null = null
   private closed = false
-
   constructor(private readonly crate: AgentsCrate) {}
-
   async open(): Promise<void> {
     try {
       const [grants, days, program] = await Promise.all([this.crate.read(), this.crate.days(), this.crate.program()])
@@ -31,13 +28,11 @@ export class AgentsPane {
       this.unread = days
       this.earlier = days.length > 0
       this.ready = true
-
       const stop = await this.crate.hear((heard) => {
         this.heard(heard)
       })
       if (this.closed) stop()
       else this.stop = stop
-
       while (this.earlier && this.grants.some((one) => !this.last.has(one.id))) {
         await this.readEarlier()
       }
@@ -45,18 +40,15 @@ export class AgentsPane {
       this.error = message(error, 'that did not work')
     }
   }
-
   close(): void {
     this.closed = true
     this.stop?.()
     this.stop = null
   }
-
   async readEarlier(): Promise<void> {
     const day = this.unread.shift()
     this.earlier = this.unread.length > 0
     if (day === undefined) return
-
     try {
       const read = (await this.crate.day(day)).flatMap((one, seq) => readCall(one, seq) ?? [])
       this.calls = [...read, ...this.calls]
@@ -67,14 +59,12 @@ export class AgentsPane {
       this.error = message(error, 'that did not work')
     }
   }
-
   private heard(heard: Heard): void {
     if (heard.kind === 'acting' && heard.agent !== null) {
       this.last.set(heard.agent, Date.now())
     }
     if (heard.kind === 'answered' && this.pending === 0) void this.reload()
   }
-
   private async reload(): Promise<void> {
     try {
       this.grants = await this.crate.read()
@@ -82,19 +72,16 @@ export class AgentsPane {
       this.error = message(error, 'that did not work')
     }
   }
-
   change(id: string, edit: (grant: Grant) => Grant): Promise<void> {
     this.error = null
     this.grants = this.grants.map((one) => (one.id === id ? edit(one) : one))
     return this.write((grants) => grants.map((one) => (one.id === id ? edit(one) : one)))
   }
-
   remove(id: string): Promise<void> {
     this.error = null
     this.grants = this.grants.filter((one) => one.id !== id)
     return this.write((grants) => grants.filter((one) => one.id !== id))
   }
-
   private write(change: (grants: Grant[]) => Grant[]): Promise<void> {
     this.pending += 1
     const done = this.writing.then(async () => {
@@ -111,7 +98,6 @@ export class AgentsPane {
     this.writing = done
     return done
   }
-
   async mint(name: string): Promise<void> {
     this.error = null
     try {
@@ -122,7 +108,6 @@ export class AgentsPane {
       this.error = message(error, 'that did not work')
     }
   }
-
   async clearLog(id: string): Promise<void> {
     this.error = null
     try {

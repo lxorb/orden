@@ -34,7 +34,6 @@ const NOTE = [
   'Last words.',
   '',
 ].join('\n')
-
 function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
   let state = parsed(
     EditorState.create({
@@ -43,7 +42,6 @@ function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), ...extra],
     }),
   )
-
   const view = {
     get state() {
       return state
@@ -53,16 +51,13 @@ function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
     },
     focus: () => undefined,
   } as unknown as EditorView
-
   return { view, said: () => view.state.doc.toString() }
 }
-
 function overThree(doc = NOTE) {
   const from = doc.indexOf('First')
   const to = doc.indexOf('Third words.') + 'Third words.'.length
   return { ...viewOf(doc, from, to), at: doc.indexOf('Second') }
 }
-
 describe('a line as the words in it', () => {
   test('has whatever markdown put in front of them taken off', () => {
     expect(wordsOf('# A heading').words).toBe('A heading')
@@ -72,12 +67,10 @@ describe('a line as the words in it', () => {
     expect(wordsOf('> quoted').words).toBe('quoted')
     expect(wordsOf('> - [ ] a quoted task').words).toBe('a quoted task')
   })
-
   test('and keeps the indentation they sat behind', () => {
     expect(wordsOf('    - nested').indent).toBe('    ')
     expect(wordsOf('plain').indent).toBe('')
   })
-
   test('so one shape becomes another without reading what it was', () => {
     expect(shaped('# A heading', 'bullet')).toBe('- A heading')
     expect(shaped('  - [ ] a task', 'quote')).toBe('  > a task')
@@ -85,133 +78,103 @@ describe('a line as the words in it', () => {
     expect(shaped('- an item', 'paragraph')).toBe('an item')
     expect(shaped('an item', 'numbered', 4)).toBe('4. an item')
   })
-
   test.each([
     ['', '', 'bullet' as const],
     ['   ', '   ', 'bullet' as const],
   ])('%j', (input, wanted, extra) => expect(shaped(input, extra)).toEqual(wanted))
 })
-
 describe('turning several blocks into something else', () => {
   test('makes every one of them a bullet', () => {
     const { view, said, at } = overThree()
     expect(turnBlocksInto(view, at, 'bullet')).toBe(true)
-
     expect(said()).toContain('- First words.\n\n- Second words.\n\n- Third words.')
     expect(said()).toContain('Last words.')
   })
-
   test('numbers them from one, across the whole run', () => {
     const { view, said, at } = overThree()
     turnBlocksInto(view, at, 'numbered')
-
     expect(said().startsWith('1. First words.\n\n2. Second words.\n\n3. Third words.')).toBe(true)
   })
-
   test('gives each of them a box', () => {
     const { view, said, at } = overThree()
     turnBlocksInto(view, at, 'task')
-
     expect(said()).toContain('- [ ] First words.')
     expect(said()).toContain('- [ ] Third words.')
   })
-
   test('quotes them', () => {
     const { view, said, at } = overThree()
     turnBlocksInto(view, at, 'quote')
-
     expect(said()).toContain('> First words.')
   })
-
   test('and turns them back into plain words again', () => {
     const { view, said, at } = overThree()
     turnBlocksInto(view, at, 'bullet')
     turnBlocksInto(view, at, 'paragraph')
-
     expect(said().startsWith('First words.\n\nSecond words.\n\nThird words.')).toBe(true)
   })
-
   test('asked for twice, leaves them as they are', () => {
     const { view, said, at } = overThree()
     turnBlocksInto(view, at, 'bullet')
     const once = said()
     turnBlocksInto(view, at, 'bullet')
-
     expect(said()).toBe(once)
   })
-
   test('puts the hashes on a heading at the level asked for', () => {
     const { view, said, at } = overThree()
     turnBlocksInto(view, at, 'heading3')
-
     expect(said()).toContain('### First words.')
     expect(said()).toContain('### Third words.')
   })
-
   test('and a block of several lines keeps its first line as the heading', () => {
     const doc = 'One line\nand another\n'
     const { view, said } = viewOf(doc, 0, doc.length - 1)
     turnBlocksInto(view, 2, 'heading1')
-
     expect(said()).toBe('# One line\nand another\n')
   })
-
   test('leaves a code block alone, and the prose either side of it alone too', () => {
     const doc = NOTE
     const { view, said } = viewOf(doc, 0, doc.length)
     turnBlocksInto(view, doc.indexOf('Second'), 'bullet')
-
     expect(said()).toContain('```js\ncode()\n```')
     expect(said()).toContain('- First words.')
     expect(said()).toContain('- Last words.')
   })
 })
-
 describe('indenting several blocks', () => {
   test('takes every one of them a step in, and a step back out', () => {
     const { view, said, at } = overThree()
     expect(indentBlocks(view, at)).toBe(true)
-
     const indented = said()
     expect(indented).toMatch(/^ +First words\./)
     expect(indented).toMatch(/\n +Third words\./)
-
     expect(outdentBlocks(view, at)).toBe(true)
     expect(said().startsWith('First words.')).toBe(true)
   })
 })
-
 describe('moving several blocks', () => {
   test('steps the whole run over the block below it, in one piece', () => {
     const doc = 'a\n\nb\n\nc\n\nd\n'
     const { view, said } = viewOf(doc, doc.indexOf('a'), doc.indexOf('b') + 1)
-
     expect(moveBlocks(view, doc.indexOf('a'), 1)).toBe(true)
     expect(said()).toBe('c\n\na\n\nb\n\nd\n')
   })
-
   test('and over the block above it', () => {
     const doc = 'a\n\nb\n\nc\n\nd\n\ne\n'
     const { view, said } = viewOf(doc, doc.indexOf('c'), doc.indexOf('d') + 1)
-
     expect(moveBlocks(view, doc.indexOf('c'), -1)).toBe(true)
     expect(said()).toBe('a\n\nc\n\nd\n\nb\n\ne\n')
   })
-
   test('and does nothing at all at the end it is already at', () => {
     const doc = 'a\n\nb\n'
     const { view, said } = viewOf(doc, 0, doc.indexOf('b') + 1)
-
     expect(moveBlocks(view, 0, -1)).toBe(false)
     expect(said()).toBe(doc)
   })
 })
-
 describe('a link to several blocks', () => {
   test('is one target each, in document order, every block gaining a name', () => {
     const { view, said, at } = overThree()
     const targets = blockTargets(view, at)
-
     expect(targets.length).toBe(3)
     for (const target of targets) expect(target).toMatch(/^#\^[a-z0-9]+$/)
     for (const target of targets) expect(said()).toContain(` ${target.slice(1)}`)
@@ -219,23 +182,19 @@ describe('a link to several blocks', () => {
     expect(said()).toContain('First words. ')
     expect(said()).toContain('Third words. ')
   })
-
   test('on code nested in a list item names the item, and keeps the list whole', () => {
     const doc = '1. Install:\n   ```bash\n   npm i\n   ```\n2. Run it\n'
     const at = doc.indexOf('   ```bash')
     const { view, said } = viewOf(doc, at, at)
-
     const [target] = blockTargets(view, at)
     expect(said()).toBe(doc.replace('1. Install:', `1. Install: ${target?.slice(1) ?? ''}`))
   })
-
   test('on maths or a table nested in a list item keeps the list whole', () => {
     const maths = '- Formula:\n  $$\n  x^2\n  $$\n- Next\n'
     const on = maths.indexOf('  $$')
     const first = viewOf(maths, on, on)
     const [target] = blockTargets(first.view, on)
     expect(first.said()).toBe(maths.replace('- Formula:', `- Formula: ${target?.slice(1) ?? ''}`))
-
     const table = '- Data:\n\n  | a | b |\n  | - | - |\n  | 1 | 2 |\n- Next\n'
     const at = table.indexOf('  | a')
     const second = viewOf(table, at, at)
@@ -243,58 +202,45 @@ describe('a link to several blocks', () => {
     expect(second.said()).toBe(table.replace('2 |\n- Next', `2 |\n\n  ^${named?.slice(2) ?? ''}\n\n- Next`))
     expect(named).toMatch(/^#\^\w+$/)
   })
-
   test('on indented code takes no name from a fence after it', () => {
     const doc = '    a\n\n```\nb\n``` ^abc\n'
     const { view } = viewOf(doc, 0, 0)
     expect(blockTargets(view, 0)).not.toContain('#^abc')
   })
-
   test('names a heading by its words rather than writing one in', () => {
     const doc = '# One\n\nwords\n'
     const { view, said } = viewOf(doc, 0, 0)
-
     expect(blockTargets(view, 0)).toEqual(['#One'])
     expect(said()).toBe(doc)
   })
 })
-
 describe('turning a heading', () => {
   const SECTION =
     '# Head\n\npara\n\n- item a\n- [ ] task b\n\n> quoted\n\n```py\n# comment\n- dash\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\n## Sub\n\nunder\n'
-
   test('into another level changes its own line and none of its section', () => {
     const { view, said } = viewOf(SECTION, 0)
-
     expect(turnBlocksInto(view, 0, 'heading2')).toBe(true)
     expect(said()).toBe(SECTION.replace('# Head', '## Head'))
   })
-
   test('into a list makes an item of the heading, not of its section', () => {
     const { view, said } = viewOf(SECTION, 0)
-
     expect(turnBlocksInto(view, 0, 'bullet')).toBe(true)
     expect(said()).toBe(SECTION.replace('# Head', '- Head'))
   })
-
   test('over a selection leaves the code and the table it crosses', () => {
     const { view, said } = viewOf(SECTION, 0, SECTION.indexOf('| 1 | 2 |'))
-
     expect(turnBlocksInto(view, 0, 'paragraph')).toBe(true)
     expect(said()).toContain('```py\n# comment\n- dash\n```')
     expect(said()).toContain('| a | b |\n| --- | --- |')
     expect(said()).toContain('\nitem a\n')
   })
-
   test('a list item with a fence in it keeps the code', () => {
     const doc = '- one\n\n  ```\n  - code\n  ```\n'
     const { view, said } = viewOf(doc, 0)
-
     expect(turnBlocksInto(view, 0, 'task')).toBe(true)
     expect(said()).toBe('- [ ] one\n\n  ```\n  - code\n  ```\n')
   })
 })
-
 describe('a link to a block', () => {
   const named = (doc: string, at: string) => {
     const pos = doc.indexOf(at)
@@ -302,7 +248,6 @@ describe('a link to a block', () => {
     const [target] = blockTargets(view, pos)
     return { target, said: said() }
   }
-
   test.each([
     ['a fence', 'a\n\n```py\ncode\n```\n\nb\n', 'code', 'a\n\n```py\ncode\n```\n\n^ID\n\nb\n'],
     ['a table', '| a |\n| - |\n| 1 |\n\nb\n', '| 1 |', '| a |\n| - |\n| 1 |\n\n^ID\n\nb\n'],
@@ -312,18 +257,15 @@ describe('a link to a block', () => {
     ['a fence in a quote', '> ```\n> x\n> ```\n', '> ```', '> ```\n> x\n> ```\n\n^ID\n'],
   ])('%s takes its name on a line of its own', (_kind, doc, at, wanted) => {
     const { target, said } = named(doc, at)
-
     expect(target).toMatch(/^#\^[a-z0-9]+$/u)
     expect(said).toBe(wanted.replace('^ID', target?.slice(1) ?? ''))
     expect(blockIds(said).map((one) => one.id)).toEqual([target?.slice(2)])
   })
-
   test('a fence in a list item takes it inside the item, so the list stays one list', () => {
     const doc = '1. a\n\n   ```js\n   x()\n   ```\n2. b\n'
     const pos = doc.indexOf('```js')
     const { view, said } = viewOf(doc, pos)
     const [target] = blockTargets(view, pos)
-
     const top: string[] = []
     for (let node = syntaxTree(view.state).topNode.firstChild; node; node = node.nextSibling) {
       top.push(node.name)
@@ -331,13 +273,11 @@ describe('a link to a block', () => {
     expect(top).toEqual(['OrderedList'])
     expect(said()).toBe(doc.replace('1. a', `1. a ${target?.slice(1) ?? ''}`))
   })
-
   test('a fence written on the item line itself takes it inside the item too', () => {
     const doc = '- ```js\n  x()\n  ```\n- b\n'
     const pos = doc.indexOf('js')
     const { view, said } = viewOf(doc, pos)
     const [target] = blockTargets(view, pos)
-
     const top: string[] = []
     for (let node = syntaxTree(view.state).topNode.firstChild; node; node = node.nextSibling) {
       top.push(node.name)
@@ -345,7 +285,6 @@ describe('a link to a block', () => {
     expect(top).toEqual(['BulletList'])
     expect(said()).toBe(`- \`\`\`js\n  x()\n  \`\`\`\n\n  ${target?.slice(1) ?? ''}\n\n- b\n`)
   })
-
   test.each([
     [
       'a\n\n```\ncode\n```\n\n^abc123\n\nb\n',
@@ -354,13 +293,11 @@ describe('a link to a block', () => {
     ],
     ['---\ntitle: x\n---\n\nb\n', { target: undefined, said: '---\ntitle: x\n---\n\nb\n' }, 'title'],
   ])('%j', (input, wanted, extra) => expect(named(input, extra)).toEqual(wanted))
-
   test('an item with children takes it on its own line', () => {
     const { target, said } = named('- a\n  more\n  - nested\n- b\n', '- a')
     expect(said).toBe(`- a\n  more ${target?.slice(1) ?? ''}\n  - nested\n- b\n`)
   })
 })
-
 describe('naming a block in old notes and open ones', () => {
   const named = (doc: string, at: string) => {
     const pos = doc.indexOf(at)
@@ -368,19 +305,16 @@ describe('naming a block in old notes and open ones', () => {
     const [target] = blockTargets(view, pos)
     return { target, said: said() }
   }
-
   test.each([
     ['a\n\n```\nx\n', { target: undefined, said: 'a\n\n```\nx\n' }, 'x'],
     ['a\n\n```\nx\n``` ^abc123\n\nb\n', { target: '#^abc123', said: 'a\n\n```\nx\n``` ^abc123\n\nb\n' }, 'x'],
     ['para\n\n^have\n\nb\n', { target: '#^have', said: 'para\n\n^have\n\nb\n' }, 'para'],
   ])('%j', (input, wanted, extra) => expect(named(input, extra)).toEqual(wanted))
-
   test('maths with a blank line in it takes it under the whole of it', () => {
     const { target, said } = named('$$\na\n\nb\n$$\n', 'a')
     expect(said).toBe(`$$\na\n\nb\n$$\n\n${target?.slice(1) ?? ''}\n`)
   })
 })
-
 describe('a line with a rule under it', () => {
   test.each([
     ['heading2', '## Title\n---\n\nb\n'],
@@ -391,27 +325,23 @@ describe('a line with a rule under it', () => {
     expect(said()).toBe(wanted)
   })
 })
-
 describe('turning a block of several lines into a list', () => {
   test('a paragraph of two lines becomes one item, its second line inside it', () => {
     const { view, said } = viewOf('One line\nand another\n', 0)
     turnBlocksInto(view, 0, 'bullet')
     expect(said()).toBe('- One line\n  and another\n')
   })
-
   test('the second line of an item stays part of it, not a child item', () => {
     const { view, said } = viewOf('- a\n  more words\n', 0)
     turnBlocksInto(view, 0, 'task')
     expect(said()).toBe('- [ ] a\n  more words\n')
   })
-
   test('the second paragraph of an item moves in with the wider number', () => {
     const { view, said } = viewOf('- a\n\n  second paragraph\n', 0)
     turnBlocksInto(view, 0, 'numbered')
     expect(said()).toBe('1. a\n\n   second paragraph\n')
   })
 })
-
 describe('turning a nested list into numbers', () => {
   test('each level counts for itself and stays nested', () => {
     const { view, said } = viewOf('- a\n  - b\n    - c\n  - d\n- e\n', 0, 28)
@@ -419,20 +349,17 @@ describe('turning a nested list into numbers', () => {
     expect(said()).toBe('1. a\n   1. b\n      1. c\n   2. d\n2. e\n')
   })
 })
-
 describe('the two that were already there', () => {
   test('still duplicate and still delete every block the selection covers', () => {
     const duplicated = overThree()
     expect(duplicateBlocks(duplicated.view, duplicated.at)).toBe(true)
     expect(duplicated.said().match(/Second words\./g)?.length).toBe(2)
-
     const deleted = overThree()
     expect(deleteBlocks(deleted.view, deleted.at)).toBe(true)
     expect(deleted.said()).not.toContain('Second words.')
     expect(deleted.said()).toContain('Last words.')
   })
 })
-
 describe('duplicating a selection over blocks that hold other blocks', () => {
   test('copies a heading with its section once', () => {
     const doc = '# H\n\npara'
@@ -440,7 +367,6 @@ describe('duplicating a selection over blocks that hold other blocks', () => {
     expect(duplicateBlocks(view, 1)).toBe(true)
     expect(said()).toBe('# H\n\npara\n\n# H\n\npara')
   })
-
   test('copies a nested list once', () => {
     const doc = '- a\n  - b\n'
     const { view, said } = viewOf(doc, 0, doc.length - 1)
@@ -448,7 +374,6 @@ describe('duplicating a selection over blocks that hold other blocks', () => {
     expect(said().match(/- b/g)?.length).toBe(2)
     expect(said().match(/- a/g)?.length).toBe(2)
   })
-
   test('leaves the caret at the copy of the last block', () => {
     const doc = 'a\n\nb\n'
     const { view, said } = viewOf(doc, 0, doc.indexOf('b') + 1)
@@ -458,39 +383,31 @@ describe('duplicating a selection over blocks that hold other blocks', () => {
     expect(said().indexOf('b')).toBeLessThan(caret)
   })
 })
-
 describe('from a key', () => {
   test('duplicates the block the caret is in', () => {
     const doc = 'a\n\nb\n\nc\n'
     const { view, said } = viewOf(doc, doc.indexOf('b'))
-
     expect(duplicateBlock(view)).toBe(true)
     expect(said()).toBe('a\n\nb\n\nb\n\nc\n')
   })
-
   test('moves it a step up and a step down', () => {
     const doc = 'a\n\nb\n\nc\n\nd\n'
     const up = viewOf(doc, doc.indexOf('b'))
     expect(moveBlockUp(up.view)).toBe(true)
     expect(up.said()).toBe('b\n\na\n\nc\n\nd\n')
-
     const down = viewOf(doc, doc.indexOf('b'))
     expect(moveBlockDown(down.view)).toBe(true)
     expect(down.said()).toBe('a\n\nc\n\nb\n\nd\n')
   })
-
   test('and every block a selection lies across, as one run', () => {
     const doc = 'a\n\nb\n\nc\n\nd\n'
     const { view, said } = viewOf(doc, doc.indexOf('a'), doc.indexOf('b') + 1)
-
     expect(moveBlockDown(view)).toBe(true)
     expect(said()).toBe('c\n\na\n\nb\n\nd\n')
   })
-
   test('leaves a note nobody may write in alone', () => {
     const doc = 'a\n\nb\n'
     const { view, said } = viewOf(doc, 0, 0, [EditorState.readOnly.of(true)])
-
     expect(duplicateBlock(view)).toBe(false)
     expect(moveBlockDown(view)).toBe(false)
     expect(said()).toBe(doc)

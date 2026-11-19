@@ -5,11 +5,9 @@
   import { dur, fly } from '../../platform/src/api'
 
   const { text }: { text: string } = $props()
-
   let open = $state(false)
   let host = $state<HTMLElement>()
   let pressing = false
-
   function outside(event: PointerEvent) {
     if (open && host && !host.contains(event.target as Node)) open = false
   }
@@ -70,16 +68,13 @@
   .explain {
     position: relative;
   }
-
   :global(:has(> .orden-hint)) {
     --mark-gap: 5px;
     --mark-size: 16px;
   }
-
   :global([data-touch] :has(> .orden-hint)) {
     --mark-size: var(--touch-icon);
   }
-
   button {
     display: inline-flex;
     align-items: center;
@@ -92,15 +87,12 @@
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   button:hover {
     color: var(--text-strong);
   }
-
   button:focus-visible {
     outline-offset: 1px;
   }
-
   svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -110,18 +102,15 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .sentence {
     position: fixed;
     z-index: var(--z-bubble);
   }
-
   :global([data-touch]) button::after {
     content: '';
     position: absolute;
     inset: calc((var(--touch-icon) - var(--touch-target)) / 2);
   }
-
   :global([data-touch]) svg {
     width: var(--touch-mark);
     height: var(--touch-mark);

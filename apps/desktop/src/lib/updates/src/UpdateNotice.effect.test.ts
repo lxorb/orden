@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { elapse } from '../../../../test/effects/settle'
 
 const system = vi.hoisted(() => ({ asked: [] as unknown[][], answer: null as string | null }))
-
 vi.mock('./updater', () => ({ restartToUpdate: () => Promise.resolve() }))
 vi.mock('./system-update', () => ({
   updateBySystem: (...args: unknown[]) => {
@@ -15,7 +14,6 @@ vi.mock('./app-place', () => ({
   stuck: () => Promise.resolve(false),
   moveToApplications: () => Promise.resolve(),
 }))
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -25,13 +23,10 @@ Element.prototype.animate = () =>
       queueMicrotask(() => then?.())
     },
   }) as unknown as Animation
-
 const UpdateNotice = (await import('./UpdateNotice.svelte')).default
-
 let target: HTMLElement
 let app: ReturnType<typeof mount> | null = null
 let dismissed = 0
-
 function show(managed: boolean, bySystem = false) {
   app = mount(UpdateNotice, {
     target,
@@ -45,10 +40,8 @@ function show(managed: boolean, bySystem = false) {
   })
   flushSync()
 }
-
 const buttons = () => [...target.querySelectorAll('button')]
 const words = () => target.querySelector('p')?.textContent
-
 beforeEach(() => {
   vi.useFakeTimers()
   dismissed = 0
@@ -57,98 +50,74 @@ beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   if (app) void unmount(app)
   app = null
   target.remove()
   vi.useRealTimers()
 })
-
 describe('where a package manager keeps the install', () => {
   test('says the version is out, with nothing to press but the cross', () => {
     show(true)
-
     expect(words()).toBe('Orden 1.4.0 is available.')
     expect(buttons().map((button) => button.getAttribute('aria-label'))).toEqual(['Dismiss'])
   })
-
   test('goes when the cross is pressed', () => {
     show(true)
-
     buttons()[0]?.click()
-
     expect(dismissed).toBe(1)
   })
-
   test('goes on its own after a few seconds', () => {
     show(true)
-
     vi.advanceTimersByTime(5999)
     expect(dismissed).toBe(0)
-
     vi.advanceTimersByTime(1)
     expect(dismissed).toBe(1)
   })
-
   test('stays while the pointer is on it', () => {
     show(true)
     const card = target.querySelector('.notice')
-
     card?.dispatchEvent(new PointerEvent('pointerenter'))
     flushSync()
     vi.advanceTimersByTime(20_000)
     expect(dismissed).toBe(0)
-
     card?.dispatchEvent(new PointerEvent('pointerleave'))
     flushSync()
     vi.advanceTimersByTime(6000)
     expect(dismissed).toBe(1)
   })
 })
-
 describe('where the app updates itself', () => {
   test('offers the restart, and waits for an answer', () => {
     show(false)
-
     expect(words()).toBe('Orden 1.4.0 is ready to install.')
     expect(buttons().map((button) => button.textContent)).toEqual(['Later', 'Restart now'])
-
     vi.advanceTimersByTime(60_000)
     expect(dismissed).toBe(0)
   })
 })
-
 describe('where the system updates the install', () => {
   test('offers the update, and waits for an answer', () => {
     show(true, true)
-
     expect(words()).toBe('Orden 1.4.0 is available.')
     expect(buttons().map((button) => button.textContent)).toEqual(['Later', 'Update'])
-
     vi.advanceTimersByTime(60_000)
     expect(dismissed).toBe(0)
   })
-
   test('updates the version on the channel followed', async () => {
     show(true, true)
-
     buttons()[1]?.click()
     await elapse(0)
     await vi.dynamicImportSettled()
-
     expect(system.asked).toEqual([['1.4.0', 'unstable']])
   })
-
   test('says the command where it could not', async () => {
     system.answer = 'sudo dnf upgrade --refresh orden'
     show(true, true)
-
     buttons()[1]?.click()
     await elapse(0)
     await vi.dynamicImportSettled()
     flushSync()
-
     expect(words()).toBe('To update, run this in a terminal:')
     expect(target.querySelector('code')?.textContent).toBe('sudo dnf upgrade --refresh orden')
     expect(buttons().map((button) => button.textContent.trim())).toEqual(['Copy', 'Later'])

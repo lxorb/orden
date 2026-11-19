@@ -12,19 +12,12 @@ import { Slid } from './slid'
 import SwipeArrow from './SwipeArrow.svelte'
 
 const SIDE = 24
-
 export const PLAYS = 210
-
 export const HOLD = 4_000
-
 export const MOMENT = 500
-
 export const WATCH = 250
-
 const KEPT: Record<Side, boolean> = { left: true, right: true }
-
 const NEITHER: Record<Side, boolean> = { left: false, right: false }
-
 export interface Heard {
   tab: Tab
   source: Source
@@ -33,7 +26,6 @@ export interface Heard {
   at: number
   scrolls: Record<Side, boolean>
 }
-
 interface Live {
   swipe: Swipe
   tab: Tab
@@ -49,20 +41,16 @@ interface Live {
   scrolls: Record<Side, boolean>
   room: Room | null
 }
-
 let live: Live | null = null
 let quiet: ReturnType<typeof setTimeout> | undefined
 let clearing: ReturnType<typeof setTimeout> | undefined
 let watching: ReturnType<typeof setInterval> | undefined
 let outBy = 0
 let settling = 0
-
 const pad = { known: false, down: false }
-
 function wayOf(side: Side): 'back' | 'forward' {
   return side === 'left' ? 'back' : 'forward'
 }
-
 function goes(tab: Tab): Record<Side, boolean> {
   const can = (side: Side) => {
     const way = wayOf(side)
@@ -74,12 +62,10 @@ function goes(tab: Tab): Record<Side, boolean> {
   }
   return { left: can('left'), right: can('right') }
 }
-
 function paneOf(tab: Tab): HTMLElement | null {
   const all = document.querySelectorAll<HTMLElement>('[data-pane]')
   return Array.from(all).find((one) => one.dataset.pane === tab.paneId) ?? null
 }
-
 function roomOf(pane: HTMLElement): Room {
   const page = pane.querySelector('.hole')
   const box = (page ?? pane).getBoundingClientRect()
@@ -87,7 +73,6 @@ function roomOf(pane: HTMLElement): Room {
   const top = head ? Math.max(box.top, head.getBoundingClientRect().bottom) : box.top
   return { x: box.left, y: top, width: box.width, height: box.bottom - top }
 }
-
 function draw(one: Live) {
   const { phase, side, progress } = one.swipe.shown
   if (!one.room) {
@@ -104,32 +89,26 @@ function draw(one: Live) {
   swiping.travel = one.swipe.shown.travel
   swiping.turn++
 }
-
 function played() {
   clearTimeout(clearing)
   outBy = performance.now() + dur(PLAYS)
   clearing = setTimeout(gone, dur(PLAYS))
   watched()
 }
-
 function kept() {
   clearTimeout(clearing)
   clearing = undefined
 }
-
 function watched() {
   watching ??= setInterval(watch, WATCH)
 }
-
 function unwatched() {
   clearInterval(watching)
   watching = undefined
 }
-
 function onShow(tab: string | null, pane: string | null): boolean {
   return tab !== null && pane !== null && workspace.showing(pane)?.id === tab
 }
-
 function watch() {
   const now = performance.now()
   const one = live
@@ -144,7 +123,6 @@ function watch() {
   const tracking = live?.shown === true && !live.stepped
   if (!onShow(swiping.tab, swiping.pane) || (!tracking && now >= outBy + MOMENT)) gone()
 }
-
 function gone() {
   kept()
   if (!live) unwatched()
@@ -155,7 +133,6 @@ function gone() {
   swiping.travel = 0
   swiping.turn++
 }
-
 function decided(one: Live, phase: 'went' | 'stayed', side: Side) {
   if (one.stepped) return
   one.stepped = true
@@ -169,7 +146,6 @@ function decided(one: Live, phase: 'went' | 'stayed', side: Side) {
   if (wayOf(side) === 'back') workspace.goBack(one.tab.id)
   else workspace.goForward(one.tab.id)
 }
-
 export function heard(step: Heard): void {
   if (!swipeChoice.on) {
     end('dropped')
@@ -177,7 +153,6 @@ export function heard(step: Heard): void {
   }
   if (step.source === 'touchpad' && pad.known && !pad.down) return
   if (live && (live.tab.id !== step.tab.id || live.source !== step.source)) end('lifted')
-
   const now = performance.now()
   const told = step.source === 'touch' || pad.known
   live ??= {
@@ -203,7 +178,6 @@ export function heard(step: Heard): void {
   clearTimeout(quiet)
   quiet = one.told ? setTimeout(() => end('dropped'), HOLD) : setTimeout(() => end('lifted', step.at + QUIET), QUIET)
   if (one.swallowed) return
-
   const turn: Turn = {
     dx: step.dx,
     dy: step.dy,
@@ -212,7 +186,6 @@ export function heard(step: Heard): void {
     goes: goes(step.tab),
   }
   const shown = one.swipe.turn(turn)
-
   if (shown.phase === 'tracking' || (shown.phase === 'gathering' && shown.travel > 0)) {
     kept()
     one.shown = true
@@ -229,7 +202,6 @@ export function heard(step: Heard): void {
     decided(one, shown.phase, shown.side)
   }
 }
-
 function end(how: 'lifted' | 'dropped', at?: number): void {
   clearTimeout(quiet)
   const one = live
@@ -238,7 +210,6 @@ function end(how: 'lifted' | 'dropped', at?: number): void {
   if (swiping.tab === null) unwatched()
   else if (clearing === undefined) played()
 }
-
 function settle(one: Live, how: 'lifted' | 'dropped', at?: number) {
   if (how === 'lifted') {
     const when = at ?? one.at + (performance.now() - one.heardAt)
@@ -251,7 +222,6 @@ function settle(one: Live, how: 'lifted' | 'dropped', at?: number) {
   }
   if (one.shown && !one.stepped) decided(one, 'stayed', one.swipe.shown.side)
 }
-
 export function touchpad(fingers: number): void {
   pad.known = true
   if (fingers >= 3) {
@@ -265,7 +235,6 @@ export function touchpad(fingers: number): void {
   if (live?.source !== 'touchpad') return
   end(down ? 'dropped' : 'lifted')
 }
-
 function tabUnder(target: EventTarget | null): { tab: Tab; pane: HTMLElement; at: Element } | null {
   if (!(target instanceof Element) || overlays.depth > 0) return null
   const pane = target.closest<HTMLElement>('[data-pane]')
@@ -274,7 +243,6 @@ function tabUnder(target: EventTarget | null): { tab: Tab; pane: HTMLElement; at
   if (!tab || tab.kind === 'web') return null
   return { tab, pane, at: target }
 }
-
 function fromTouchpad(event: WheelEvent, streaming: boolean): boolean {
   if (event.deltaMode !== 0 || event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) {
     return false
@@ -282,15 +250,12 @@ function fromTouchpad(event: WheelEvent, streaming: boolean): boolean {
   const notch = 'wheelDeltaX' in event ? Number(event.wheelDeltaX) : 0
   return streaming || !(notch !== 0 && notch % 120 === 0)
 }
-
 const slid = new Slid()
-
 function scrolled(event: Event) {
   if (!(event.target instanceof Element)) return
   const pane = event.target.closest<HTMLElement>('[data-pane]')?.dataset.pane ?? null
   slid.heard(event.target, pane, event.timeStamp)
 }
-
 function scrollsUnder(event: WheelEvent, under: { tab: Tab; pane: HTMLElement; at: Element }) {
   if (event.defaultPrevented) return KEPT
   const ours = live?.tab.id === under.tab.id ? live : null
@@ -299,7 +264,6 @@ function scrollsUnder(event: WheelEvent, under: { tab: Tab; pane: HTMLElement; a
   if (event.deltaX === 0) return NEITHER
   return taken(chainOf(under.at, under.pane))
 }
-
 function pictured(target: EventTarget | null): Live | null {
   const one = live
   if (one?.tab.kind !== 'web' || one.source !== 'touchpad' || !one.shown) return null
@@ -308,7 +272,6 @@ function pictured(target: EventTarget | null): Live | null {
   }
   return target.closest<HTMLElement>('[data-pane]')?.dataset.pane === one.tab.paneId ? one : null
 }
-
 function wheeled(event: WheelEvent) {
   if (!swipeChoice.on || !fromTouchpad(event, live !== null)) return
   if (event.deltaX === 0 && event.deltaY === 0) return
@@ -335,9 +298,7 @@ function wheeled(event: WheelEvent) {
     scrolls: scrollsUnder(event, under),
   })
 }
-
 let finger: { tab: Tab; x: number; y: number; scrolls: Record<Side, boolean> } | null = null
-
 function touched(event: TouchEvent) {
   finger = null
   if (live?.source === 'touch') end('dropped')
@@ -355,7 +316,6 @@ function touched(event: TouchEvent) {
     scrolls: taken(chainOf(under.at, under.pane)),
   }
 }
-
 function moved(event: TouchEvent) {
   const touch = event.touches[0]
   if (!finger || !touch) return
@@ -374,12 +334,10 @@ function moved(event: TouchEvent) {
   finger.x = touch.clientX
   finger.y = touch.clientY
 }
-
 function released(event: TouchEvent) {
   finger = null
   if (live?.source === 'touch') end(event.type === 'touchcancel' ? 'dropped' : 'lifted', event.timeStamp)
 }
-
 export interface Said {
   tab: string
   kind: 'wheel' | 'touch' | 'lift'
@@ -389,7 +347,6 @@ export interface Said {
   left: boolean
   right: boolean
 }
-
 function readSaid(value: unknown): Said | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
@@ -398,13 +355,11 @@ function readSaid(value: unknown): Said | null {
   if (typeof dx !== 'number' || typeof dy !== 'number' || typeof at !== 'number') return null
   return { tab, kind, dx, dy, at, left: left === true, right: right === true }
 }
-
 export function readFingers(value: unknown): number | null {
   if (typeof value !== 'object' || value === null) return null
   const { fingers } = value as Record<string, unknown>
   return typeof fingers === 'number' && Number.isInteger(fingers) && fingers >= 0 ? fingers : null
 }
-
 export function pageSaid(said: Said): void {
   if (said.kind === 'lift') {
     if (live?.tab.id === said.tab) end('lifted', said.at)
@@ -422,28 +377,22 @@ export function pageSaid(said: Said): void {
     scrolls: { left: said.left, right: said.right },
   })
 }
-
 function away() {
   if (document.visibilityState === 'hidden') end('dropped')
   else watch()
 }
-
 function blurred() {
   end('dropped')
 }
-
 const STIRS = ['pointerdown', 'pointermove', 'keydown', 'focus'] as const
-
 function unseen() {
   end('dropped')
   gone()
 }
-
 export function listen(): () => void {
   const target = document.createElement('div')
   document.body.append(target)
   const arrow = mount(SwipeArrow, { target, props: { unseen } })
-
   window.addEventListener('wheel', wheeled, { passive: true })
   window.addEventListener('scroll', scrolled, { capture: true, passive: true })
   document.addEventListener('visibilitychange', away)
@@ -456,7 +405,6 @@ export function listen(): () => void {
     window.addEventListener('touchend', released, { capture: true, passive: true })
     window.addEventListener('touchcancel', released, { capture: true, passive: true })
   }
-
   let unlisten: (() => void) | null = null
   let stopped = false
   if (isDesktop) {
@@ -477,7 +425,6 @@ export function listen(): () => void {
       else unlisten = both
     })
   }
-
   return () => {
     stopped = true
     unlisten?.()

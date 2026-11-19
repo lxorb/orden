@@ -2,13 +2,11 @@
   const SIDE = 24
   const NOTCH = 120
   const SLACK = 0.5
-
   function say(said) {
     const words = JSON.stringify(said)
     const bound = globalThis.ordenSwiped
     if (typeof bound === 'function') bound(words)
   }
-
   function takes(from) {
     let left = false
     let right = false
@@ -36,17 +34,13 @@
     }
     return [left, right]
   }
-
   const QUIET = 120
   const START = 60
   const RATIO = 2.5
-
   let stream = null
-
   const LEAD = 50
   const lefts = new WeakMap()
   let slid = -Infinity
-
   addEventListener(
     'scroll',
     function (event) {
@@ -58,13 +52,11 @@
     },
     { capture: true, passive: true },
   )
-
   let heard = null
   const LATE = 50
   let waiting = false
   let frame = 0
   let late = 0
-
   function flush() {
     waiting = false
     cancelAnimationFrame(frame)
@@ -91,7 +83,6 @@
       r: one.kept || one.r,
     })
   }
-
   addEventListener(
     'wheel',
     function (event) {
@@ -131,9 +122,7 @@
     },
     { capture: true, passive: true },
   )
-
   let finger = null
-
   addEventListener(
     'touchstart',
     function (event) {
@@ -146,7 +135,6 @@
     },
     { capture: true, passive: true },
   )
-
   addEventListener(
     'touchmove',
     function (event) {
@@ -166,13 +154,11 @@
     },
     { capture: true, passive: true },
   )
-
   function lift(event) {
     if (!finger) return
     finger = null
     say({ k: 'e', t: event.timeStamp })
   }
-
   addEventListener('touchend', lift, { capture: true, passive: true })
   addEventListener('touchcancel', lift, { capture: true, passive: true })
 })()

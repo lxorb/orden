@@ -5,7 +5,6 @@ export function startTimer(): void {
   if (latest) time.start(latest.id)
   else void import('./open').then(({ openTime }) => openTime())
 }
-
 export function stopTimer(): void {
   time.stop()
 }

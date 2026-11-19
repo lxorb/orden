@@ -8,26 +8,21 @@ use crate::browser_profiles::{ini_profiles, known, newest, once, present, Profil
 use orden_base::paths::folder_named;
 
 pub(crate) const BROWSERS_DIR: &str = "ORDEN_BROWSERS_DIR";
-
 const SESSIONS: [&str; 3] = [
     "sessionstore-backups/recovery.jsonlz4",
     "sessionstore.jsonlz4",
     "sessionstore-backups/previous.jsonlz4",
 ];
-
 pub(crate) const PLACES: &str = "places.sqlite";
 pub(crate) const FAVICONS: &str = "favicons.sqlite";
 pub(crate) const SEARCH: &str = "search.json.mozlz4";
 const BACKUPS: &str = "bookmarkbackups";
 const BACKUP_PREFIX: &str = "bookmarks-";
 const BACKUP_SUFFIX: &str = ".jsonlz4";
-
 const TAGS: &str = "tags________";
-
 pub(crate) fn profiles() -> Vec<Profile> {
     once(homes().iter().flat_map(|home| ini_profiles(home, files_of)))
 }
-
 #[tauri::command(async)]
 pub fn read_firefox_places(profile: String) -> Result<String, String> {
     let db = opened(&known("Firefox", &profile, PLACES, &profiles())?, PLACES)?;
@@ -35,12 +30,10 @@ pub fn read_firefox_places(profile: String) -> Result<String, String> {
         tree_of(&db.connection).map_err(|error| format!("{PLACES} could not be read: {error}"))?;
     Ok(tree.to_string())
 }
-
 fn homes() -> Vec<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(BROWSERS_DIR).as_deref()) {
         return vec![named.join("firefox")];
     }
-
     let mut found = Vec::new();
     #[cfg(target_os = "linux")]
     {
@@ -61,19 +54,14 @@ fn homes() -> Vec<PathBuf> {
     if let Some(roaming) = dirs::config_dir() {
         found.push(roaming.join("Mozilla/Firefox"));
     }
-
     found
 }
-
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found = present(profile, &SESSIONS);
     found.extend(present(profile, &[PLACES, FAVICONS, SEARCH]));
-
     found.extend(newest(profile, BACKUPS, BACKUP_PREFIX, BACKUP_SUFFIX));
-
     found
 }
-
 struct Row {
     id: i64,
     parent: i64,
@@ -83,7 +71,6 @@ struct Row {
     guid: String,
     url: Option<String>,
 }
-
 pub(crate) fn tree_of(db: &Connection) -> rusqlite::Result<Value> {
     let mut statement = db.prepare(
         "SELECT b.id, b.parent, b.type, IFNULL(b.title, ''), IFNULL(b.dateAdded, 0), \
@@ -104,7 +91,6 @@ pub(crate) fn tree_of(db: &Connection) -> rusqlite::Result<Value> {
             })
         })?
         .collect::<rusqlite::Result<Vec<Row>>>()?;
-
     let mut children: HashMap<i64, Vec<&Row>> = HashMap::new();
     for row in &rows {
         children.entry(row.parent).or_default().push(row);
@@ -112,9 +98,7 @@ pub(crate) fn tree_of(db: &Connection) -> rusqlite::Result<Value> {
     let root = rows.iter().find(|row| row.parent == 0 && row.id != 0);
     Ok(root.map_or(Value::Null, |root| node(root, &children, 0)))
 }
-
 const DEEPEST: usize = 64;
-
 fn node(row: &Row, children: &HashMap<i64, Vec<&Row>>, depth: usize) -> Value {
     let mut out = Map::new();
     out.insert("guid".into(), json!(row.guid));
@@ -136,7 +120,6 @@ fn node(row: &Row, children: &HashMap<i64, Vec<&Row>>, depth: usize) -> Value {
     }
     Value::Object(out)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -144,12 +127,10 @@ mod tests {
     use std::fs;
 
     const INI: &str = "[Profile0]\nName=default-release\nIsRelative=1\nPath=Profiles/x1.default-release\nDefault=1\n\n[Profile1]\nName=Empty\nIsRelative=1\nPath=Profiles/y2.empty\n";
-
     fn touch(at: &Path) {
         fs::create_dir_all(at.parent().expect("a folder")).expect("the folder");
         fs::write(at, b"mozLz40\0").expect("a file");
     }
-
     #[test]
     fn a_profile_lists_its_sessions_its_bookmarks_and_their_newest_copy() {
         let here = tempfile::tempdir().expect("a folder");
@@ -166,7 +147,6 @@ mod tests {
             touch(&profile.join(file));
         }
         fs::create_dir_all(here.path().join("Profiles/y2.empty")).expect("an empty profile");
-
         let found = ini_profiles(here.path(), files_of);
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].name, "default-release");
@@ -180,7 +160,6 @@ mod tests {
             ]
         );
     }
-
     fn places(at: &Path) -> Connection {
         let db = Connection::open(at).expect("a database");
         db.execute_batch(
@@ -204,12 +183,10 @@ mod tests {
         .expect("the tables");
         db
     }
-
     #[test]
     fn the_bookmarks_come_out_nested_in_firefox_order_without_the_tags() {
         let here = tempfile::tempdir().expect("a folder");
         let db = places(&here.path().join(PLACES));
-
         let tree = tree_of(&db).expect("a tree");
         assert_eq!(tree["guid"], "root________");
         let roots: Vec<&str> = tree["children"]
@@ -229,20 +206,17 @@ mod tests {
         assert_eq!(toolbar[1]["dateAdded"], 1_700_000_000_000_000_i64);
         assert_eq!(tree["children"][0]["children"][0]["typeCode"], 3);
     }
-
     #[test]
     fn a_database_firefox_has_open_is_read_from_a_copy() {
         let here = tempfile::tempdir().expect("a folder");
         let db = places(&here.path().join(PLACES));
         db.pragma_update(None, "journal_mode", "wal")
             .expect("a log");
-
         let copy = copied(here.path(), PLACES).expect("a copy");
         let read = Connection::open(copy.path().join(PLACES)).expect("the copy");
         assert!(tree_of(&read).expect("a tree")["children"].is_array());
         drop(db);
     }
-
     #[test]
     fn only_the_places_of_a_listed_profile_are_read() {
         let listed = vec![Profile {

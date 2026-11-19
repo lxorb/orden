@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import json
 import pathlib
 import sys
@@ -9,11 +8,8 @@ import urllib.error
 import urllib.request
 
 TOLD = "orden:crash-reports-told"
-
 REPORTS = "orden:crash-reports"
-
 SETUP = "orden:setup"
-
 CODE = f"""(() => {{
   const kept = localStorage.getItem({json.dumps(SETUP)})
   if (kept === null || kept.startsWith('{{')) localStorage.setItem({json.dumps(SETUP)}, '"done"')
@@ -34,8 +30,6 @@ CODE = f"""(() => {{
   if (localStorage.getItem({json.dumps(REPORTS)}) === null) localStorage.setItem({json.dumps(REPORTS)}, 'false')
   return 'told'
 }})()"""
-
-
 def ask(port: int, secret: str, code: str, seconds: float = 10) -> object:
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
     asked = urllib.request.Request(
@@ -48,8 +42,6 @@ def ask(port: int, secret: str, code: str, seconds: float = 10) -> object:
             return json.loads(said.read().decode("utf-8", "replace")).get("value")
     except (urllib.error.URLError, TimeoutError, OSError, ValueError):
         return None
-
-
 def watched(port: int, secret: str, first: object, watch: float) -> None:
     began = time.monotonic()
     said = [str(first)]
@@ -59,16 +51,12 @@ def watched(port: int, secret: str, first: object, watch: float) -> None:
         if now == "answered":
             said.append(f"answered at {time.monotonic() - began:.1f} s")
     print(f"crash_told: {', '.join(said)}", flush=True)
-
-
 def tell(port: int, secret: str, watch: float = 20.0) -> bool:
     first = ask(port, secret, CODE)
     if first is None:
         return False
     watched(port, secret, first, watch)
     return True
-
-
 def told(port: int, secret: str, watch: float = 20.0) -> bool:
     for _ in range(40):
         first = ask(port, secret, CODE)
@@ -77,8 +65,6 @@ def told(port: int, secret: str, watch: float = 20.0) -> bool:
             return True
         time.sleep(0.5)
     return False
-
-
 def main() -> int:
     config = pathlib.Path(sys.argv[1])
     until = time.monotonic() + 60
@@ -92,7 +78,5 @@ def main() -> int:
         time.sleep(0.5)
     print("crash_told: the app never answered to be told", file=sys.stderr)
     return 0
-
-
 if __name__ == "__main__":
     raise SystemExit(main())

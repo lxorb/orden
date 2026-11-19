@@ -18,16 +18,13 @@ import {
 
 export const PER_MESSAGE_BETA = 'mid-conversation-output-config-2026-07-01'
 const FAST_BETA = 'fast-mode-2026-02-01'
-
 const MOST_TOKENS = 32_000
-
 type Block = Record<string, unknown>
 interface Message {
   role: string
   content: unknown
   output_config?: unknown
 }
-
 function userBlocks(step: Extract<Step, { role: 'user' }>): Block[] {
   return [
     ...step.images.map((one) => ({
@@ -37,7 +34,6 @@ function userBlocks(step: Extract<Step, { role: 'user' }>): Block[] {
     ...(step.text ? [{ type: 'text', text: step.text }] : []),
   ]
 }
-
 function resultBlock(id: string, output: ToolOutput): Block {
   return {
     type: 'tool_result',
@@ -52,7 +48,6 @@ function resultBlock(id: string, output: ToolOutput): Block {
     ],
   }
 }
-
 export function messagesOf(steps: readonly Step[]): Message[] {
   const out: Message[] = []
   for (const step of steps) {
@@ -95,13 +90,11 @@ export function messagesOf(steps: readonly Step[]): Message[] {
   }
   return out.filter((one) => !Array.isArray(one.content) || one.content.length || one.role === 'system')
 }
-
 function carriesCompaction(messages: readonly Message[]): boolean {
   return messages.some(
     (one) => Array.isArray(one.content) && one.content.some((block) => record(block).type === 'compaction'),
   )
 }
-
 export const anthropic: Wire = {
   request(ask: Ask) {
     const messages = [...messagesOf(ask.steps), ...(ask.added as Message[])]
@@ -110,7 +103,6 @@ export const anthropic: Wire = {
     if (messages.some((one) => one.role === 'system')) betas.push(PER_MESSAGE_BETA)
     const fast = ask.fast && ask.model.fast
     if (fast) betas.push(FAST_BETA)
-
     const effort = wireEffort('anthropic', ask.perMessage && ask.base ? ask.base : ask.effort)
     const tools = [
       ...ask.tools.map((one) => ({
@@ -138,23 +130,19 @@ export const anthropic: Wire = {
       headers: betas.length ? { 'anthropic-beta': betas.join(',') } : {},
     }
   },
-
   reader(window) {
     return new AnthropicReader(window)
   },
-
   results(results) {
     return [{ role: 'user', content: results.map((one) => resultBlock(one.call.id, one.output)) }]
   },
 }
-
 interface Open {
   block: Block
   part: number | null
   json: string
   started: number
 }
-
 class AnthropicReader extends PartsReader implements Reader {
   private readonly blocks: Block[] = []
   private readonly open = new Map<number, Open>()
@@ -163,7 +151,6 @@ class AnthropicReader extends PartsReader implements Reader {
   private stop = ''
   private over = false
   private category = ''
-
   heard(event: unknown): Heard {
     const said = record(event)
     switch (said.type) {
@@ -197,7 +184,6 @@ class AnthropicReader extends PartsReader implements Reader {
         return { changed: [] }
     }
   }
-
   private started(index: number, block: Block): Heard {
     const open: Open = { block: { ...block }, part: null, json: '', started: Date.now() }
     this.open.set(index, open)
@@ -210,7 +196,6 @@ class AnthropicReader extends PartsReader implements Reader {
     }
     return { changed: open.part === null ? [] : [open.part] }
   }
-
   private grew(index: number, delta: Block): Heard {
     const open = this.open.get(index)
     if (!open) return { changed: [] }
@@ -246,7 +231,6 @@ class AnthropicReader extends PartsReader implements Reader {
     if (part?.kind === 'thinking') part.text = text(block.thinking)
     return { changed: [open.part] }
   }
-
   private stopped(index: number): Heard {
     const open = this.open.get(index)
     if (!open) return { changed: [] }
@@ -263,11 +247,9 @@ class AnthropicReader extends PartsReader implements Reader {
     }
     return { changed: [open.part] }
   }
-
   finished(saidDone: boolean): boolean {
     return saidDone || this.over || this.stop !== ''
   }
-
   answer(): Answer {
     for (const open of this.open.values())
       if (open.block.type !== 'tool_use' && open.block.type !== 'server_tool_use') this.blocks.push(open.block)
@@ -284,7 +266,6 @@ class AnthropicReader extends PartsReader implements Reader {
     }
   }
 }
-
 function endingOf(stop: string, calls: boolean): Ending {
   if (stop === 'tool_use' && calls) return 'tool'
   if (stop === 'max_tokens' || stop === 'model_context_window_exceeded') return 'max_tokens'

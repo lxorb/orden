@@ -7,24 +7,20 @@ export interface GlobalKeys {
   refused: string[]
   run: string
 }
-
 const FLAGS: Readonly<Record<string, string>> = {
   'app.quick-add': '--quick-add',
   'agents.stop': '--stop-agents',
 }
-
 export interface Note {
   text: string
   change: boolean
 }
-
 const plain = (key: string) =>
   key
     .toLowerCase()
     .replace(/\s+/g, '')
     .replace(/control/g, 'ctrl')
     .replace(/logo|meta|win/g, 'super')
-
 export function noteFor(keys: GlobalKeys | null, id: string, shown: string | null, reachable = true): Note | null {
   const flag = FLAGS[id]
   if (!keys || !flag) return null
@@ -44,11 +40,9 @@ export function noteFor(keys: GlobalKeys | null, id: string, shown: string | nul
   if (given === undefined || (shown !== null && plain(given) === plain(shown))) return null
   return { text: `From other apps: ${given}`, change: keys.change }
 }
-
 class Global {
   keys = $state<GlobalKeys | null>(null)
   #asked = false
-
   follow() {
     if (this.#asked || !isDesktop) return
     this.#asked = true
@@ -59,10 +53,8 @@ class Global {
       listen<GlobalKeys>('orden://global-keys', (event) => (this.keys = event.payload)),
     )
   }
-
   change() {
     void invoke('global_keys_change').catch(() => undefined)
   }
 }
-
 export const globalKeys = new Global()

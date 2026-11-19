@@ -12,7 +12,6 @@ describe('the module stands on its own', () => {
     expect(gate.guiding).toBe(false)
   })
 })
-
 const reach = (here: ReadonlySet<Importer>): Reach => ({
   signedIn: true,
   importable: (id) => {
@@ -24,9 +23,7 @@ const reach = (here: ReadonlySet<Importer>): Reach => ({
   heard: true,
   connected: false,
 })
-
 const answers = { browser: 'chrome', notes: null, code: null }
-
 describe('what the setup asks of import', () => {
   test('finds and brings nothing while no module lends the import', async () => {
     expect([...(await bringing().here())]).toEqual([])
@@ -34,7 +31,6 @@ describe('what the setup asks of import', () => {
     expect(await bringing().notes('folder')).toEqual({ picked: false, trouble: null })
     expect(stepAfter('browser', answers, reach(await bringing().here()))).not.toBe('import')
   })
-
   test('offers to import a browser the port finds here, and tells what the port brought', async () => {
     const brought: string[] = []
     const unbind = providePort('import.bring', {

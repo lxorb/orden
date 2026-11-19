@@ -8,7 +8,6 @@ interface Listed {
   is_dir: boolean
   children?: Listed[]
 }
-
 async function filesOf(root: string): Promise<{ path: string; read: () => Promise<Uint8Array> }[]> {
   const kept = mountOf(root)
   if (kept) {
@@ -55,7 +54,6 @@ async function filesOf(root: string): Promise<{ path: string; read: () => Promis
   }
   return out
 }
-
 async function freeFolder(picked: string, name: string): Promise<string> {
   const taken = (path: string) => crate<boolean>('path_taken', { path }).catch(() => true)
   const first = joinPath(picked, name)
@@ -65,9 +63,7 @@ async function freeFolder(picked: string, name: string): Promise<string> {
     if (!(await taken(one))) return one
   }
 }
-
 type MetaOf = (path: string) => ItemMeta | null
-
 async function bytesOut(file: { path: string; read: () => Promise<Uint8Array> }, metaOf: MetaOf) {
   const bytes = await file.read()
   if (!/\.(md|markdown)$/i.test(file.path)) return bytes
@@ -78,7 +74,6 @@ async function bytesOut(file: { path: string; read: () => Promise<Uint8Array> },
   const written = withOwnKeys(text, meta)
   return written === text ? bytes : new TextEncoder().encode(written)
 }
-
 export async function exportSpaceTo(
   root: string,
   name: string,
@@ -93,7 +88,6 @@ export async function exportSpaceTo(
   }
   return into
 }
-
 export async function exportSpace(root: string, name: string, metaOf: MetaOf = () => null): Promise<string | null> {
   const given = dialogAnswer()
   const picked = given ? await given(true) : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })

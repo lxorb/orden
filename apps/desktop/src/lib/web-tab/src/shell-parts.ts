@@ -12,7 +12,6 @@ import { partView } from '../../ui-kit/src/api'
 import { pages } from './pages.svelte'
 
 providePort('web.scripts', { pages })
-
 if (!__EVEN_PLUGIN__) {
   registerPaletteKind('visits', () => import('./palette-visits').then((one) => one.visits))
   registerTabKind('web', () => import('./tab-kind').then((one) => one.webTabKind))

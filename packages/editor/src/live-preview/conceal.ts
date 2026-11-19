@@ -4,7 +4,6 @@ import { linkAddress } from '../nodes'
 
 export const hide = Decoration.replace({})
 export const meta = Decoration.mark({ class: 'md-meta' })
-
 const INLINE_MARKS = new Set([
   'EmphasisMark',
   'StrikethroughMark',
@@ -20,7 +19,6 @@ const INLINE_MARKS = new Set([
   'URL',
   'LinkTitle',
 ])
-
 export function concealable(node: SyntaxNode): boolean {
   if (node.name === 'URL') {
     const link = node.parent

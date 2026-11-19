@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const wrote = vi.hoisted(() => [] as string[])
 const readOnly = vi.hoisted(() => new Set<string>())
-
 vi.mock('../../../file-writes/src/api', async (original) => ({
   ...(await original<typeof import('../../../file-writes/src/api')>()),
   writeFile: (path: string) => {
@@ -32,10 +31,8 @@ vi.mock('./source.svelte', () => ({
   }),
 }))
 vi.stubGlobal('fetch', () => Promise.resolve(new Response(new ArrayBuffer(4))))
-
 const { saveAsNote } = await import('./keep')
 const { messageMenu } = await import('./message-menu')
-
 const page = {
   id: 'c1',
   me: 'me',
@@ -59,25 +56,19 @@ const labels = () =>
   messageMenu(page as never, message as never, 'write', gestures).flatMap((row) =>
     row && 'label' in row ? [row.label] : [],
   )
-
 beforeEach(() => {
   wrote.length = 0
   readOnly.clear()
 })
-
 describe('save as note', () => {
   test('writes the note and its files beside a chat in a space that may be written in', async () => {
     await saveAsNote(page as never, message as never, null)
-
     expect(wrote).toEqual(['/theirs/hello.md + photo.png', '/theirs/hello.md'])
     expect(labels()).toContain('Save as note')
   })
-
   test('writes nothing in a space shared to be read, and is not offered there', async () => {
     readOnly.add('/theirs')
-
     await saveAsNote(page as never, message as never, null)
-
     expect(wrote).toEqual([])
     expect(labels()).not.toContain('Save as note')
     expect(labels()).toContain('Add as task')

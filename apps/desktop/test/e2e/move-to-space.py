@@ -1,9 +1,7 @@
 import json
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -13,7 +11,6 @@ ORIGIN = harness.worker_origin()
 OWNER = "mover@example.com"
 V1 = "--v1" in sys.argv
 PATIENCE = 60
-
 BLANK_CANVAS = '{"nodes":[],"edges":[]}'
 BLANK_PAGES = '{"nodes":[{"id":"p1","type":"group","x":-397,"y":0,"width":794,"height":1123,"label":"Page 1"}],"edges":[],"orden":{"version":1,"pages":[{"id":"p1","paper":"a4","pattern":"blank"}]}}'
 FILES = {
@@ -24,7 +21,6 @@ FILES = {
     "Lecture.pages": BLANK_PAGES,
 }
 MOVED = ["Plan.md", "Trip", "Board.canvas", "Lecture.pages"]
-
 FILES_OF = """(name) => {
   const ws = window.ordenApp.workspace
   const space = ws.spaces.find((one) => one.name === name)
@@ -40,7 +36,6 @@ FILES_OF = """(name) => {
   if (ws.tree) walk(ws.tree)
   return out.sort()
 }"""
-
 def wait(page: Page, script: str, what: str, arg: object = None, patience: float = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -49,7 +44,6 @@ def wait(page: Page, script: str, what: str, arg: object = None, patience: float
             return answer
         page.wait_for_timeout(250)
     raise SystemExit(f"gave up waiting for {what}")
-
 def device(browser: Browser, label: str, token: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820})
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
@@ -58,7 +52,6 @@ def device(browser: Browser, label: str, token: str) -> Page:
     page.goto(ORIGIN, wait_until="domcontentloaded")
     wait(page, "() => !!window.ordenApp?.workspace?.activeSpace", f"[{label}] the app")
     return page
-
 def shown(page: Page, name: str) -> list[str]:
     page.evaluate(
         "async (name) => { const ws = window.ordenApp.workspace; const s = ws.spaces.find((o) => o.name === name);"
@@ -66,16 +59,13 @@ def shown(page: Page, name: str) -> list[str]:
         name,
     )
     return list(page.evaluate(FILES_OF, name) or [])
-
 def on_account(worker: harness.Worker, space: str) -> list[str]:
     rows = worker.query(
         f"select path from notes where space_id = '{space}' and deleted = 0 order by path"
     )
     return [str(row["path"]) for row in rows]
-
 def holds(listed: list[str], name: str) -> bool:
     return any(one == name or one.startswith(f"{name}/") for one in listed)
-
 def check(label: str, home: list[str], work: list[str]) -> None:
     for name in MOVED:
         if holds(home, name):
@@ -83,7 +73,6 @@ def check(label: str, home: list[str], work: list[str]) -> None:
         if not holds(work, name):
             wrong(f"[{label}] Work does not have {name}: {work}")
     say(f"[{label}] Home {home}, Work {work}")
-
 def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, str]) -> None:
     desk = device(browser, "desk", token)
     wait(desk, "() => window.ordenApp.workspace.spaces.length >= 2", "[desk] both spaces")
@@ -96,7 +85,6 @@ def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, s
     while len(shown(desk, "Home")) < len(FILES) + 1 and time.monotonic() < until:
         desk.wait_for_timeout(500)
     say(f"[desk] Home holds {shown(desk, 'Home')}")
-
     work_root = desk.evaluate("() => window.ordenApp.workspace.spaces.find((s) => s.name === 'Work').root")
     home_root = desk.evaluate("() => window.ordenApp.workspace.spaces.find((s) => s.name === 'Home').root")
     shown(desk, "Home")
@@ -114,25 +102,21 @@ def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, s
     tab = desk.evaluate("() => window.ordenApp.workspace.tabs.map((one) => one.path)")
     if f"{work_root}/Plan.md" not in tab:
         wrong(f"[desk] Plan's tab did not follow it into Work: {tab}")
-
     desk.evaluate("async (path) => { await window.ordenApp.workspace.open(path) }", f"{work_root}/Plan.md")
     wait(desk, "() => !!document.querySelector('.cm-content')", "[desk] Plan open in Work")
     desk.locator(".cm-content").first.click()
     desk.keyboard.press("Control+End")
     desk.keyboard.type(" Typed after the move.")
     desk.wait_for_timeout(3000)
-
     for _ in range(3):
         desk.evaluate("() => window.ordenApp.sync.nudge?.()")
         desk.wait_for_timeout(4000)
     check("desk, after sync", shown(desk, "Home"), shown(desk, "Work"))
     check("the account", on_account(worker, ids["Home"]), on_account(worker, ids["Work"]))
-
     desk.reload(wait_until="domcontentloaded")
     wait(desk, "() => !!window.ordenApp?.workspace?.activeSpace", "[desk] the app again")
     desk.wait_for_timeout(6000)
     check("desk, relaunched", shown(desk, "Home"), shown(desk, "Work"))
-
     other = device(browser, "other", token)
     wait(other, "() => window.ordenApp.workspace.spaces.length >= 2", "[other] both spaces")
     other.wait_for_timeout(10000)
@@ -146,7 +130,6 @@ def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, s
         if typed not in (words or ""):
             wrong(f"[another device] Work/Plan.md is missing {typed!r}")
     other.context.close()
-
     try:
         desk.evaluate(
             "async ([from, into]) => { await window.ordenApp.workspace.moveMany(from, into) }",
@@ -166,7 +149,6 @@ def drive(browser: Browser, worker: harness.Worker, token: str, ids: dict[str, s
         desk.wait_for_timeout(4000)
     check("desk, undone and synced", shown(desk, "Home"), shown(desk, "Work"))
     check("the account, undone", on_account(worker, ids["Home"]), on_account(worker, ids["Work"]))
-
 def main() -> int:
     worker = harness.Worker(DRIVE)
     with DRIVE.session() as browser:
@@ -182,5 +164,4 @@ def main() -> int:
         say(f"the account, on sync v{1 if V1 else 2}, holds Home {sorted(FILES)} and an empty Work")
         drive(browser, worker, token, ids)
     return DRIVE.verdict("a move to another space moves, on the disk, the account and every device")
-
 raise SystemExit(main())

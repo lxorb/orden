@@ -10,7 +10,6 @@ const draft = (path: string | null, dirty = false): Draft => ({
   cursor: 0,
   scroll: 0,
 })
-
 describe('a session written down', () => {
   test('reads back its spaces and panels and drops what it does not know', () => {
     const session = readSession({
@@ -24,18 +23,15 @@ describe('a session written down', () => {
     expect(session?.right).toEqual(['outline'])
     expect(readSession('not a session')).toBeNull()
   })
-
   test('names a built-in view by its own name', () => {
     const read = readDraft({ kind: 'view', path: null, name: 'Old', doc: '{"builtin":"todos"}' })
     expect(read?.name).toBe('Todos')
   })
-
   test('starts the right side with the panels about one note', () => {
     expect(panels.rightFrom(undefined)).toEqual([...panels.STARTS_RIGHT])
     expect(panels.mayLiveOn('tree', 'left')).toBe(true)
   })
 })
-
 describe('the tabs that were closed', () => {
   test('come back newest first and follow a file that moved', () => {
     const closed = new ClosedTabs()
@@ -46,7 +42,6 @@ describe('the tabs that were closed', () => {
     expect(closed.take().map((one) => one.draft.name)).toEqual(['/s/A.md'])
     expect(closed.any).toBe(false)
   })
-
   test('let go of a deleted file but keep its unsaved words', () => {
     const closed = new ClosedTabs()
     closed.record({ draft: draft('/s/A.md', true), paneId: 'p', at: 1 })

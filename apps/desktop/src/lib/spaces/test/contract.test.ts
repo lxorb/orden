@@ -3,7 +3,6 @@ import { providePort } from '@orden/contracts'
 import { publishSpace, spaceMenu } from '../src/api'
 
 const SPACE = { id: 's', name: 'Notes', root: '/s' }
-
 describe('the spaces', () => {
   test('offer to rename and delete a space of one’s own', () => {
     const labels = spaceMenu(SPACE).flatMap((one) => (one && 'label' in one ? [one.label] : []))
@@ -11,7 +10,6 @@ describe('the spaces', () => {
     expect(labels).toContain('Delete space')
     expect(labels).not.toContain('Leave space')
   })
-
   test('publish a space through the publishing port, and do nothing without one', async () => {
     await publishSpace(SPACE)
     const shown: string[] = []

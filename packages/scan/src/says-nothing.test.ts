@@ -7,7 +7,6 @@ describe('a note that says nothing yet', () => {
     expect(scanNote('Trips/Plan.md', '# Plan\nWords\n').bare).toBe(false)
   })
 })
-
 test.each<[unknown, ...Parameters<typeof saysNothing>]>([
   [true, '', 'Plan'],
   [true, '  \n\n\t\n', 'Plan'],

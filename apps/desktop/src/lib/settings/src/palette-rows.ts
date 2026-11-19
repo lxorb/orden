@@ -12,7 +12,6 @@ import type { Place } from './settings-search'
 function choices(field: Field): string[] {
   return field.kind === 'select' || field.kind === 'segmented' ? field.options.map((one) => one.label) : []
 }
-
 function fieldValue(field: Field): string | null {
   switch (field.kind) {
     case 'select':
@@ -31,13 +30,11 @@ function fieldValue(field: Field): string | null {
       return null
   }
 }
-
 function pressOf(field: Field): (() => void) | null {
   if (field.kind === 'switch') return () => field.set(!field.get())
   if (field.kind === 'value') return () => field.press()
   return null
 }
-
 function plain(
   section: SettingsSectionId,
   label: string,
@@ -58,7 +55,6 @@ function plain(
     press: null,
   }
 }
-
 export function settingRows(
   panes: readonly { id: SettingsSectionId; label: string }[],
   generated: readonly Pane[],
@@ -67,7 +63,6 @@ export function settingRows(
 ): PaletteSetting[] {
   const nameOf = (id: SettingsSectionId) => panes.find((one) => one.id === id)?.label ?? ''
   const rows = panes.map((one) => plain(one.id, one.label, settingsWord, [], false))
-
   for (const pane of generated) {
     for (const group of pane.groups) {
       for (const field of group.fields) {
@@ -81,14 +76,11 @@ export function settingRows(
       }
     }
   }
-
   for (const place of places) {
     rows.push(plain(place.section, place.label, nameOf(place.section), place.text.filter(Boolean), true))
   }
-
   return rows
 }
-
 export const paletteSettings: PaletteSettings = {
   rows: (view) =>
     settingRows(

@@ -36,11 +36,8 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
     toggleReading: () => undefined,
   },
 }))
-
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
-
 let shown: ReturnType<typeof mount> | null = null
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = null
@@ -48,7 +45,6 @@ afterEach(() => {
   world.embedded = 'first words'
   world.version = 0
 })
-
 async function opened() {
   const tab = {
     id: 't1',
@@ -73,16 +69,13 @@ async function opened() {
   flushSync()
   return target
 }
-
 test('an embedded note saved elsewhere shows its new words in the reading view', async () => {
   const target = await opened()
   expect(target.querySelector('article')?.textContent).toBe('Todayfirst words')
-
   world.embedded = 'second words'
   world.version++
   flushSync()
   await idle(400)
   flushSync()
-
   expect(target.querySelector('article')?.textContent).toBe('Todaysecond words')
 })

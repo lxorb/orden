@@ -6,20 +6,17 @@ use serde_json::Value;
 use orden_base::paths::{made, write_privately};
 
 const LONGEST_NAME: usize = 60;
-
 const KNOWN: [(&str, &str); 4] = [
     ("claude-code", "Claude Code"),
     ("claude-ai", "Claude Desktop"),
     ("codex-mcp-client", "Codex"),
     ("gemini-cli-mcp-client", "Gemini CLI"),
 ];
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Client {
     pub key: String,
     pub name: String,
 }
-
 impl Client {
     pub fn from_info(info: &Value) -> Self {
         let said = |key: &str| {
@@ -49,7 +46,6 @@ impl Client {
         }
     }
 }
-
 fn file_name(name: &str) -> String {
     let mut key = String::new();
     for one in name.chars().flat_map(char::to_lowercase) {
@@ -64,22 +60,18 @@ fn file_name(name: &str) -> String {
     }
     key.trim_end_matches('-').to_owned()
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Kept {
     pub agent: String,
     pub token: String,
 }
-
 fn file(dir: &Path, client: &Client) -> PathBuf {
     dir.join("agents").join("clients").join(&client.key)
 }
-
 pub fn kept(dir: &Path, client: &Client) -> Option<Kept> {
     let text = std::fs::read_to_string(file(dir, client)).ok()?;
     serde_json::from_str(&text).ok()
 }
-
 pub fn keep(dir: &Path, client: &Client, kept: &Kept) -> Result<(), String> {
     let path = file(dir, client);
     if let Some(folder) = path.parent() {
@@ -88,11 +80,9 @@ pub fn keep(dir: &Path, client: &Client, kept: &Kept) -> Result<(), String> {
     let text = serde_json::to_string(kept).map_err(|error| error.to_string())?;
     write_privately(&path, text.as_bytes())
 }
-
 pub fn forget(dir: &Path, client: &Client) {
     let _ = std::fs::remove_file(file(dir, client));
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -103,11 +93,9 @@ mod tests {
         let claude = Client::from_info(&json!({ "name": "claude-code", "title": "Claude Code" }));
         assert_eq!(claude.key, "claude-code");
         assert_eq!(claude.name, "Claude Code");
-
         let codex = Client::from_info(&json!({ "name": "codex-mcp-client", "version": "1" }));
         assert_eq!(codex.key, "codex-mcp-client");
         assert_eq!(codex.name, "Codex");
-
         let other = Client::from_info(&json!({ "name": "My Tool (beta)" }));
         assert_eq!(other.key, "my-tool-beta");
         assert_eq!(other.name, "My Tool (beta)");
@@ -126,14 +114,12 @@ mod tests {
         assert_eq!(long.name.chars().count(), LONGEST_NAME);
         assert_eq!(long.key.len(), 48);
     }
-
     #[test]
     fn a_token_is_kept_forgotten_and_nobody_elses() {
         let dir = tempfile::tempdir().expect("a folder");
         let claude = Client::from_info(&json!({ "name": "claude-code" }));
         let codex = Client::from_info(&json!({ "name": "codex-mcp-client" }));
         assert_eq!(kept(dir.path(), &claude), None);
-
         let token = Kept {
             agent: "claude-code".into(),
             token: "t".repeat(64),
@@ -147,7 +133,6 @@ mod tests {
             .join("clients")
             .join("claude-code")
             .is_file());
-
         forget(dir.path(), &claude);
         assert_eq!(kept(dir.path(), &claude), None);
     }

@@ -12,22 +12,15 @@ use tauri::{AppHandle, Emitter as _};
 use orden_base::paths::{config_dir, inside, made, spaces_dir, write_atomically, TRASH};
 
 const INBOX: &str = ".Inbox.md";
-
 const FRONT: &str = "inbox.txt";
-
 const ADDED: &str = "added";
-
 pub const ADDED_EVENT: &str = "orden://shortcuts-added";
-
 static APP: OnceLock<AppHandle> = OnceLock::new();
-
 static COUNT: AtomicU32 = AtomicU32::new(0);
-
 pub fn offered() -> bool {
     static OFFERED: OnceLock<bool> = OnceLock::new();
     *OFFERED.get_or_init(signed_by_a_team)
 }
-
 fn signed_by_a_team() -> bool {
     let Ok(requirement) = "anchor apple generic".parse::<SecRequirement>() else {
         return false;
@@ -36,7 +29,6 @@ fn signed_by_a_team() -> bool {
         .and_then(|code| code.check_validity(Flags::NONE, &requirement))
         .is_ok()
 }
-
 #[allow(unsafe_code)]
 #[no_mangle]
 pub extern "C" fn orden_add_to_inbox(text: *const c_char) -> i32 {
@@ -58,7 +50,6 @@ pub extern "C" fn orden_add_to_inbox(text: *const c_char) -> i32 {
         }
     }
 }
-
 fn told() {
     let Some(app) = APP.get() else {
         return;
@@ -67,7 +58,6 @@ fn told() {
         let _ = app.emit_to(window.label(), ADDED_EVENT, ());
     }
 }
-
 fn queued(folder: &Path, text: &str) -> Result<PathBuf, String> {
     let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
     if text.is_empty() {
@@ -82,18 +72,15 @@ fn queued(folder: &Path, text: &str) -> Result<PathBuf, String> {
     write_atomically(&file, text.as_bytes())?;
     Ok(file)
 }
-
 #[derive(serde::Serialize, Debug, PartialEq, Eq)]
 pub struct Added {
     id: String,
     text: String,
 }
-
 pub fn added(app: &AppHandle) -> Result<Vec<Added>, String> {
     let _ = APP.set(app.clone());
     Ok(waiting(&config_dir(app)?.join(ADDED)))
 }
-
 fn waiting(folder: &Path) -> Vec<Added> {
     let Ok(entries) = fs::read_dir(folder) else {
         return Vec::new();
@@ -112,7 +99,6 @@ fn waiting(folder: &Path) -> Vec<Added> {
     out.sort_by(|a, b| a.id.cmp(&b.id));
     out
 }
-
 fn one_of_ours(id: &str) -> bool {
     id.strip_suffix(".txt").is_some_and(|stem| {
         !stem.is_empty()
@@ -121,11 +107,9 @@ fn one_of_ours(id: &str) -> bool {
                 .all(|byte| byte.is_ascii_digit() || byte == b'-')
     })
 }
-
 pub fn taken(app: &AppHandle, id: &str) -> Result<(), String> {
     gone(&config_dir(app)?.join(ADDED), id)
 }
-
 fn gone(folder: &Path, id: &str) -> Result<(), String> {
     if !one_of_ours(id) {
         return Err(format!("{id} is not a task Shortcuts added"));
@@ -137,7 +121,6 @@ fn gone(folder: &Path, id: &str) -> Result<(), String> {
         _ => Ok(()),
     }
 }
-
 pub fn left_inbox(app: &AppHandle) -> Option<PathBuf> {
     let front = config_dir(app)
         .ok()
@@ -145,7 +128,6 @@ pub fn left_inbox(app: &AppHandle) -> Option<PathBuf> {
         .map(|said| PathBuf::from(said.trim()));
     inbox_in(&spaces_dir(app).ok()?, front.as_deref()).ok()
 }
-
 fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
     let named = front.filter(|path| {
         inside(spaces, path)
@@ -159,7 +141,6 @@ fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
         None => Ok(default_space(spaces)?.join(INBOX)),
     }
 }
-
 fn default_space(spaces: &Path) -> Result<PathBuf, String> {
     let entries = fs::read_dir(spaces)
         .map_err(|error| format!("could not read {}: {error}", spaces.display()))?;
@@ -171,7 +152,6 @@ fn default_space(spaces: &Path) -> Result<PathBuf, String> {
         .map(|entry| entry.path())
         .ok_or_else(|| format!("no space in {}", spaces.display()))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -182,10 +162,8 @@ mod tests {
         let spaces = dir.path().join("Orden");
         fs::create_dir_all(spaces.join("Notes")).unwrap();
         let folder = dir.path().join(ADDED);
-
         queued(&folder, "  buy\n milk ").unwrap();
         queued(&folder, "bread").unwrap();
-
         let waiting = waiting(&folder);
         assert_eq!(
             waiting
@@ -195,7 +173,6 @@ mod tests {
             ["buy milk", "bread"]
         );
         assert!(!spaces.join("Notes").join(INBOX).exists());
-
         gone(&folder, &waiting[0].id).unwrap();
         gone(&folder, &waiting[0].id).unwrap();
         assert_eq!(
@@ -206,7 +183,6 @@ mod tests {
             ["bread"]
         );
     }
-
     #[test]
     fn nothing_waits_without_words() {
         let dir = tempfile::tempdir().unwrap();
@@ -214,7 +190,6 @@ mod tests {
         assert!(queued(&folder, " \n ").is_err());
         assert!(waiting(&folder).is_empty());
     }
-
     #[test]
     fn only_a_waiting_task_is_let_go() {
         let dir = tempfile::tempdir().unwrap();
@@ -223,14 +198,12 @@ mod tests {
         let folder = dir.path().join(ADDED);
         fs::create_dir_all(&folder).unwrap();
         fs::write(folder.join("notes.md"), "kept").unwrap();
-
         for id in ["../keep.txt", "notes.md", "", ".txt"] {
             assert!(gone(&folder, id).is_err(), "{id}");
         }
         assert!(outside.exists());
         assert!(waiting(&folder).is_empty());
     }
-
     #[test]
     fn the_default_space_is_the_first_on_disk() {
         let dir = tempfile::tempdir().unwrap();
@@ -239,7 +212,6 @@ mod tests {
         }
         assert_eq!(default_space(dir.path()).unwrap(), dir.path().join("notes"));
     }
-
     #[test]
     fn the_inbox_an_older_build_wrote_to_is_the_one_in_front() {
         let dir = tempfile::tempdir().unwrap();
@@ -247,10 +219,8 @@ mod tests {
         fs::create_dir_all(&work).unwrap();
         fs::create_dir(dir.path().join("Notes")).unwrap();
         let front = work.join("Todo.md");
-
         assert_eq!(inbox_in(dir.path(), Some(&front)).unwrap(), front);
     }
-
     #[test]
     fn an_inbox_that_is_gone_falls_back_to_the_first_space() {
         let dir = tempfile::tempdir().unwrap();
@@ -258,7 +228,6 @@ mod tests {
         fs::create_dir(dir.path().join("Notes")).unwrap();
         let first = dir.path().join("Notes").join(INBOX);
         let outside = tempfile::tempdir().unwrap();
-
         for front in [
             outside.path().join("Work").join(INBOX),
             dir.path().join(TRASH).join("Old").join(INBOX),
@@ -268,7 +237,6 @@ mod tests {
             assert_eq!(inbox_in(dir.path(), Some(&front)).unwrap(), first);
         }
     }
-
     #[test]
     fn an_ad_hoc_build_is_not_offered_the_shortcuts() {
         assert!(!signed_by_a_team());

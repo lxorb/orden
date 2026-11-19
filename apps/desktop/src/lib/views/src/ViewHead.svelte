@@ -37,7 +37,6 @@
     title: string
     onadd: () => void
   } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const base = $derived(live.base)
@@ -50,18 +49,15 @@
         (one !== 'form' || (view?.orden.rows ?? 'notes') === 'notes'),
     ),
   )
-
   type Tool = 'filter' | 'sort' | 'group'
   const TOOLS = [
     { id: 'filter', mark: FILTER_MARK, label: 'Filter' },
     { id: 'sort', mark: ORDER_MARK, label: 'Sort' },
     { id: 'group', mark: GROUP_MARK, label: 'Group' },
   ] as const
-
   let open = $state<Tool | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
   const tabbed = $derived(kit.spec.builtin === undefined)
   const notes = $derived((view?.orden.rows ?? 'notes') === 'notes')
-
   const BUILDERS: Record<Builder['kind'], string> = {
     colour: 'Colour',
     automations: 'Automations',
@@ -71,18 +67,15 @@
     formula: 'Formula',
     name: 'Rename',
   }
-
   const HEIGHTS = [
     { lines: 1, label: 'Short' },
     { lines: 2, label: 'Medium' },
     { lines: 4, label: 'Tall' },
   ]
-
   function linkTo(path: string): string {
     const root = workspace.activeSpace?.root ?? ''
     return `[[${relativeTo(root, path).replace(/\.md$/i, '')}]]`
   }
-
   async function templateRows(chosen: string | undefined, pick: (link: string | null) => void): Promise<MenuEntry[]> {
     const found = await templates()
     return [
@@ -94,7 +87,6 @@
       })),
     ]
   }
-
   function plusMenu(event: MouseEvent) {
     if (!notes || !base) return
     event.preventDefault()
@@ -104,11 +96,9 @@
   }
   let renaming = $state(false)
   const toggle = (which: NonNullable<typeof open>) => (open = open === which ? null : which)
-
   function pick(next: Layout) {
     kit.change((one, at) => switched(one, at, next, live.rows))
   }
-
   function viewRows(base: Base): MenuEntry[] {
     const views = base.views
     return [
@@ -151,7 +141,6 @@
         : []),
     ]
   }
-
   function moreRows(event?: MouseEvent): MenuEntry[] {
     if (!base) return []
     if (!kit.writable) return csvRows()
@@ -210,19 +199,15 @@
         : []),
     ]
   }
-
   const csvRows = (): MenuEntry[] => [
     { label: 'Copy as CSV', run: () => void copyCsv(live) },
     { label: 'Save as CSV', run: () => void saveCsv(live, named) },
   ]
-
   function nameMenu(event: MouseEvent) {
     if (!base) return
     menu.show(event, [...viewRows(base), DIVIDER, ...moreRows(event)], { title: named })
   }
-
   let naming = $state<number | null>(null)
-
   function addTab(event: MouseEvent) {
     if (!base) return
     const last = base.views.length - 1
@@ -259,7 +244,6 @@
       { title: 'New view' },
     )
   }
-
   function tabMenu(event: MouseEvent, at: number) {
     if (!base) return
     event.preventDefault()
@@ -307,13 +291,11 @@
       { title: one?.name.trim() ? one.name : title },
     )
   }
-
   const sortWords = $derived(
     (view?.sort ?? [])
       .map((one) => propertyName(one.property, base ? displayName(base, one.property) : undefined))
       .join(', '),
   )
-
   const active = $derived({
     filter: view?.filters !== undefined,
     sort: (view?.sort.length ?? 0) > 0,
@@ -620,13 +602,11 @@
     border-bottom: 1px solid var(--line);
     font-family: var(--font-ui);
   }
-
   .head.compact {
     min-height: 0;
     padding: var(--space-1) var(--space-2);
     border-bottom: none;
   }
-
   .name {
     display: flex;
     align-items: center;
@@ -645,24 +625,20 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .compact .name {
     font-size: var(--text-row);
   }
-
   @media (hover: hover) {
     .name:hover {
       background: var(--surface-hover);
     }
   }
-
   .words {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .name svg,
   .head svg {
     flex: none;
@@ -674,35 +650,28 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .rename {
     max-width: 30%;
   }
-
   .named {
     min-width: 0;
     max-width: 30%;
   }
-
   .named .name {
     max-width: 100%;
   }
-
   .lock {
     color: var(--muted-strong);
   }
-
   .head.tabbed {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-1);
     padding-bottom: 0;
   }
-
   .head.tabbed.compact {
     padding-bottom: var(--space-1);
   }
-
   .title {
     margin: var(--space-2) var(--space-2) var(--space-1);
     color: var(--text-strong);
@@ -711,14 +680,12 @@
     line-height: 1.2;
     overflow-wrap: anywhere;
   }
-
   .bar {
     display: flex;
     align-items: center;
     gap: var(--space-1);
     min-width: 0;
   }
-
   .tabs {
     display: flex;
     align-items: center;
@@ -727,11 +694,9 @@
     overflow-x: auto;
     scrollbar-width: none;
   }
-
   .tabs::-webkit-scrollbar {
     display: none;
   }
-
   .tab {
     display: flex;
     flex: none;
@@ -752,44 +717,36 @@
       color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
   }
-
   .tab.on {
     box-shadow: inset 0 -2px 0 var(--text-strong);
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   @media (hover: hover) {
     .tab:hover {
       background: var(--surface-hover);
     }
   }
-
   .tabs .rename {
     max-width: 12rem;
   }
-
   .head svg.dots {
     fill: currentColor;
     stroke: none;
   }
-
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
     padding: var(--space-1) 0 var(--space-2);
   }
-
   .chips .orden-chip {
     max-width: 20rem;
   }
-
   .lock.shake {
     animation: shake var(--dur-base) var(--ease-out);
     color: var(--accent);
   }
-
   @keyframes shake {
     20%,
     60% {
@@ -800,56 +757,44 @@
       translate: 2px 0;
     }
   }
-
   .layouts button {
     display: grid;
     place-items: center;
     padding: 0 var(--space-2);
   }
-
   .spring {
     flex: 1;
   }
-
   .tool {
     position: relative;
   }
-
   .orden-glyph.set {
     color: var(--accent);
   }
-
   .orden-glyph.open {
     background: var(--surface-press);
   }
-
   .search {
     width: 168px;
     min-height: var(--row-height-sm);
   }
-
   :global([data-touch]) .search {
     display: none;
   }
-
   :global([data-touch]) .head {
     flex-wrap: wrap;
     row-gap: var(--space-1);
   }
-
   :global([data-touch]) .head.tabbed {
     flex-wrap: nowrap;
   }
-
   :global([data-touch]) .name {
     max-width: none;
     flex: 1;
   }
-
   :global([data-touch]) .spring {
     display: none;
   }
-
   :global([data-touch]) .layouts {
     order: 1;
     flex-basis: 100%;

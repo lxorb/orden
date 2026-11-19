@@ -2,7 +2,6 @@ import { complete, ai, type Message, type Thread, type Turn } from '../../../ai-
 
 const KEEP =
   'Summarize this part of a conversation so it can be continued from the summary alone. Keep every note path, page address, decision, change made and still to make, and the reader’s requests, in their own words where they matter. Reply with the summary only.'
-
 function transcriptOf(turns: readonly Turn[]): string {
   const lines: string[] = []
   for (const turn of turns) {
@@ -17,7 +16,6 @@ function transcriptOf(turns: readonly Turn[]): string {
   }
   return lines.join('\n\n')
 }
-
 export async function summarized(thread: Thread, turns: readonly Turn[]): Promise<string> {
   const provider = ai.provider(thread.provider)
   if (!provider) throw new Error('That provider is not set up yet.')

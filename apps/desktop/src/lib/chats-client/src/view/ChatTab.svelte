@@ -26,9 +26,7 @@
   import { boxOf } from './tips.svelte'
 
   const { tab }: { tab: Tab } = $props()
-
   const NARROWEST_BESIDE = 640
-
   let page = $state<ChatPage | null>(null)
   let missing = $state(false)
   let width = $state(0)
@@ -48,7 +46,6 @@
   let polling = $state<((poll: Poll) => void) | null>(null)
   let dropping = $state(false)
   let sheetFor = $state<string | null>(null)
-
   const space = $derived(page?.entry?.space ?? null)
   const lentName = $derived(tab.note.shared ? chatName(tab.note.name) : null)
   const phone = $derived(viewport.device === 'phone')
@@ -56,13 +53,11 @@
   const membersShown = $derived(
     !!page && (narrow ? sheetFor === page.id : membersOpen.shown(page.id)) && !(phone && page.replying),
   )
-
   function toggleMembers() {
     if (!page) return
     if (narrow) sheetFor = sheetFor === page.id ? null : page.id
     else membersOpen.toggle(page.id)
   }
-
   $effect(() => {
     const path = tab.path
     const lent = tab.note.shared ? (chatOf(tab.note.text)?.chat ?? null) : null
@@ -76,49 +71,39 @@
       })
     })
   })
-
   function jumpWaiting() {
     if (!page?.ready || !tab.path) return
     const message = takeJump(tab.path)
     if (message) void page.jump(message)
   }
-
   $effect(() => {
     if (page?.ready) untrack(jumpWaiting)
   })
-
   $effect(() =>
     hearJumps((path) => {
       if (tab.path && samePath(path, tab.path)) jumpWaiting()
     }),
   )
-
   $effect(() => {
     const id = page?.id
     if (id) return onScreen(id)
   })
-
   $effect(() =>
     store().offers((offer) => {
       if (page?.id === offer.chat && offer.parent) page.replying = offer.parent
     }),
   )
-
   onDestroy(() => page?.close())
-
   function reactPicker(message: Message, from: HTMLElement) {
     picking = { at: boxOf(from), pick: (emoji) => page?.react(message, emoji) }
   }
-
   function composePicker(from: HTMLElement, insert: (emoji: string) => void) {
     picking = { at: boxOf(from), pick: insert }
   }
-
   function openFiles(message: Message, index: number) {
     const shown = message.files.filter((one) => isPicture(one) || isVideo(one))
     looking = { files: shown, start: index }
   }
-
   function onKey(event: KeyboardEvent) {
     if (!page) return
     if (shortcuts.pressed('chat.jump-new', event)) {
@@ -135,13 +120,11 @@
       toggleMembers()
     }
   }
-
   function dragging(event: DragEvent) {
     if (!carriesFiles(event.dataTransfer) && !isTreeDrag(event.dataTransfer)) return
     event.preventDefault()
     dropping = true
   }
-
   function dropped(event: DragEvent) {
     dropping = false
     const notes = workspace.carriedNotes(event.dataTransfer)
@@ -286,11 +269,9 @@
     background: var(--bg);
     transition: box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .chat-tab.dropping {
     box-shadow: inset 0 0 0 2px var(--accent);
   }
-
   .main {
     flex: 1;
     min-width: 0;
@@ -298,26 +279,21 @@
     flex-direction: column;
     padding-bottom: var(--inset-bottom);
   }
-
   .main.hidden {
     display: none;
   }
-
   .chat-tab :global(.replies) {
     flex: none;
     width: min(420px, max(320px, 36%));
   }
-
   :global([data-touch]) .chat-tab :global(.replies) {
     flex: 1;
     width: auto;
     border: none;
   }
-
   .waiting {
     flex: 1;
   }
-
   .missing {
     --glyph-size: 32px;
     margin: auto;

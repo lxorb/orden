@@ -3,11 +3,9 @@ import lines from './fixtures/plain-lines.json'
 import { renderMarkdown } from './index'
 
 const ENTITIES: Record<string, string> = { '&lt;': '<', '&gt;': '>', '&amp;': '&', '&quot;': '"' }
-
 function said(html: string): string {
   return html.replace(/&(?:lt|gt|amp|quot);/g, (one) => ENTITIES[one] ?? one)
 }
-
 describe('a line of plain words, escaped', () => {
   test.each(lines)('$words', ({ words, markdown }) => {
     const html = renderMarkdown(markdown).trim()

@@ -5,16 +5,12 @@ import re
 import sys
 import time
 from typing import Any
-
 from urllib.parse import urlsplit
-
 from harness import BUILT_IN, LAUNCHED, Drive, harmless
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
-
 SHOTS_TOO = "--shots" in sys.argv
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
@@ -23,14 +19,11 @@ PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 DESKTOP_WIDTHS = (1280, 960, 720, 520)
 DESKTOP_HEIGHT = 800
 PHONE = {"width": 390, "height": 844}
 SCHEMES = ("light", "dark")
-
 PATIENCE = 30
-
 NOW = int(time.time() * 1000)
 USER = {
     "id": "sweep",
@@ -59,7 +52,6 @@ ACCOUNT: dict[str, Any] = {
     "/v1/trash": {"spaces": [], "notes": []},
     "/v1/shared": {"shared": []},
 }
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -73,7 +65,6 @@ async () => {
   return note.path
 }
 """
-
 CHECK = r"""
 (scope) => {
   const roots = scope ? [...document.querySelectorAll(scope)] : [document.body]
@@ -319,17 +310,13 @@ CHECK = r"""
   return said
 }
 """
-
 PANES = """
 () => [...document.querySelectorAll('[role="region"][aria-label="Settings"] nav .item')]
   .map((one) => one.textContent.trim()).filter(Boolean)
 """
-
 SETTINGS = '[role="region"][aria-label="Settings"]'
 PALETTE = '[role="dialog"]:has(input[role="combobox"])'
-
 class Browser:
-
     def __init__(self, kind: str, signed_in: bool) -> None:
         self.kind = kind
         self.signed_in = signed_in
@@ -338,7 +325,6 @@ class Browser:
         self.surfaces = 0
         self.errors: list[str] = []
         self.at = "the launch"
-
     async def open(self, browser: Any) -> Any:
         phone = self.kind == "phone"
         context = await browser.new_context(
@@ -376,14 +362,12 @@ class Browser:
         self.path = await page.evaluate(SEED)
         await settle(page)
         return page
-
     def threw(self, error: Any) -> None:
         if harmless(error):
             return
         self.errors.append(f"{error} (after {self.at})")
         if os.environ.get("SWEEP_TRACE"):
             say(f"  {self.label} threw after {self.at}: {(error.stack or '')[:2500]}")
-
     async def answer(self, route: Any) -> None:
         url = route.request.url
         path = re.sub(r"^https?://[^/]+", "", url).split("?", 1)[0]
@@ -393,7 +377,6 @@ class Browser:
             await route.fulfill(status=503, content_type="application/json", body='{"error":"not in a sweep"}')
         else:
             await route.abort()
-
     async def check(self, page: Any, surface: str, width: int, scheme: str, scope: str | None = None) -> None:
         await settle(page)
         self.surfaces += 1
@@ -406,7 +389,6 @@ class Browser:
             self.found.append(f"{where}: {one}")
         if SHOTS_TOO or said:
             await self.photograph(page, f"{width}-{scheme}-{surface}")
-
     async def through(self, page: Any, surface: str, width: int, scheme: str, scope: str, scroller: str) -> None:
         await self.check(page, surface, width, scheme, scope)
         for _ in range(12):
@@ -422,15 +404,12 @@ class Browser:
             if not moved:
                 return
             await self.check(page, surface, width, scheme, scope)
-
     async def photograph(self, page: Any, name: str) -> None:
         slug = re.sub(r"[^a-z0-9]+", "-", f"{self.kind}-{'in' if self.signed_in else 'out'}-{name}".lower())
         DRIVE.shots.mkdir(parents=True, exist_ok=True)
         await page.screenshot(path=str(DRIVE.shots / f"{slug.strip('-')}.png"))
-
 async def given_back(page: Any) -> None:
     await page.wait_for_timeout(150)
-
 async def settle(page: Any) -> None:
     await page.evaluate(
         """() => new Promise((go) => {
@@ -438,11 +417,9 @@ async def settle(page: Any) -> None:
           requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(go, 30)))
         })"""
     )
-
 async def scheme_of(page: Any, scheme: str) -> None:
     await page.evaluate("(scheme) => window.ordenApp.theme.setScheme(scheme)", scheme)
     await settle(page)
-
 async def settings(one: Browser, page: Any, width: int, scheme: str) -> None:
     phone = one.kind == "phone"
     await page.evaluate("() => window.ordenApp.settings.show('general')")
@@ -457,7 +434,6 @@ async def settings(one: Browser, page: Any, width: int, scheme: str) -> None:
         await one.through(page, f"settings/{pane}", width, scheme, SETTINGS, f"{SETTINGS} .body")
     await page.evaluate("() => { window.ordenApp.settings.open = false }")
     await page.wait_for_selector(SETTINGS, state="detached")
-
 async def layer(one: Browser, page: Any, surface: str, width: int, scheme: str, opened: str, selector: str, closed: str) -> None:
     try:
         await page.evaluate(opened)
@@ -470,7 +446,6 @@ async def layer(one: Browser, page: Any, surface: str, width: int, scheme: str, 
     await page.evaluate(closed)
     await page.wait_for_selector(selector, state="detached", timeout=8000)
     await given_back(page)
-
 async def palette(one: Browser, page: Any, width: int, scheme: str, typed: str = "") -> None:
     await page.keyboard.press("Control+Shift+P")
     await page.wait_for_selector(PALETTE)
@@ -478,7 +453,6 @@ async def palette(one: Browser, page: Any, width: int, scheme: str, typed: str =
         await page.keyboard.type(typed)
     await one.check(page, f"palette{' / ' + typed if typed else ''}", width, scheme, PALETTE)
     await shut(page, PALETTE)
-
 async def shut(page: Any, selector: str) -> None:
     for _ in range(3):
         await page.keyboard.press("Escape")
@@ -489,7 +463,6 @@ async def shut(page: Any, selector: str) -> None:
         except Exception:  # noqa: BLE001 - one more press
             continue
     raise RuntimeError(f"{selector} did not close")
-
 async def through_palette(one: Browser, page: Any, command: str, surface: str, selector: str, width: int, scheme: str) -> None:
     await page.keyboard.press("Control+Shift+P")
     await page.wait_for_selector(PALETTE)
@@ -504,9 +477,7 @@ async def through_palette(one: Browser, page: Any, command: str, surface: str, s
         return
     await one.check(page, surface, width, scheme, selector)
     await shut(page, selector)
-
 PANELS = ("tree", "outline", "search", "tasks", "chats", "links", "ask")
-
 async def panels(one: Browser, page: Any, width: int, scheme: str) -> None:
     for panel in PANELS:
         try:
@@ -516,7 +487,6 @@ async def panels(one: Browser, page: Any, width: int, scheme: str) -> None:
         await page.wait_for_timeout(60)
         await one.check(page, f"panel/{panel}", width, scheme)
     await page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
-
 MENU = """
 (selector) => {
   const row = [...document.querySelectorAll(selector)].find((one) => one.checkVisibility())
@@ -526,7 +496,6 @@ MENU = """
   return true
 }
 """
-
 async def menus(one: Browser, page: Any, width: int, scheme: str) -> None:
     for surface, selector in (("menu/file", ".orden-row:has(.orden-row-label)"), ("menu/tab", '[role="tab"]')):
         if not await page.evaluate(MENU, selector):
@@ -538,7 +507,6 @@ async def menus(one: Browser, page: Any, width: int, scheme: str) -> None:
         await one.check(page, surface, width, scheme, '[role="menu"]')
         await page.keyboard.press("Escape")
         await page.wait_for_timeout(80)
-
 HOLD = """
 (path) => {
   const now = Date.now()
@@ -550,9 +518,7 @@ HOLD = """
   }])
 }
 """
-
 STEP = 45
-
 async def step(one: Browser, page: Any, name: str, width: int, scheme: str, work: Any) -> None:
     try:
         await asyncio.wait_for(work, STEP)
@@ -567,7 +533,6 @@ async def step(one: Browser, page: Any, name: str, width: int, scheme: str, work
             " if (app.themeStore) app.themeStore.open = false; app.iconChoice.close?.() }"
         )
         await settle(page)
-
 async def new_tab(one: Browser, page: Any, width: int, scheme: str) -> None:
     before = await page.evaluate("() => { const ws = window.ordenApp.workspace; const was = ws.active?.id; ws.newTab(); return was }")
     await page.wait_for_timeout(120)
@@ -583,7 +548,6 @@ async def new_tab(one: Browser, page: Any, width: int, scheme: str) -> None:
         before,
     )
     await page.wait_for_timeout(60)
-
 async def sync_question(one: Browser, page: Any, width: int, scheme: str) -> None:
     if one.kind == "phone":
         await page.evaluate("() => window.ordenApp.workspace.closePanel('left')")
@@ -596,7 +560,6 @@ async def sync_question(one: Browser, page: Any, width: int, scheme: str) -> Non
         '[role="dialog"][aria-label="Plan.md"]',
         "() => { window.__held?.stop() }",
     )
-
 PROVIDER = """
 () => {
   const ai = window.ordenApp.ai
@@ -606,9 +569,7 @@ PROVIDER = """
   ai.setDefault(made.id)
 }
 """
-
 QUICK = '[role="dialog"][aria-label="Quick question"]'
-
 async def quick_question(one: Browser, page: Any, width: int, scheme: str) -> None:
     await page.evaluate(PROVIDER)
     await page.keyboard.press("Control+Shift+P")
@@ -624,14 +585,12 @@ async def quick_question(one: Browser, page: Any, width: int, scheme: str) -> No
         await page.wait_for_selector(f"{QUICK} .chips", state="detached", timeout=4000)
         await one.check(page, "quick question / alone", width, scheme, QUICK)
     await shut(page, QUICK)
-
 SIDES = """
 (want) => {
   const ws = window.ordenApp.workspace
   for (const side of ['left', 'right']) if (!!ws.openOn(side) !== want) ws.toggleSidebar(side)
 }
 """
-
 async def both_sides(one: Browser, page: Any, width: int, scheme: str) -> None:
     if one.kind == "phone":
         return
@@ -647,7 +606,6 @@ async def both_sides(one: Browser, page: Any, width: int, scheme: str) -> None:
             was,
         )
         await page.wait_for_timeout(400)
-
 async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
     walks = [
         ("the window", one.check(page, "the window", width, scheme)),
@@ -691,7 +649,6 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
         )))
     for name, work in walks:
         await step(one, page, name, width, scheme, work)
-
 async def empty(one: Browser, page: Any, width: int, scheme: str) -> None:
     made = await page.evaluate(
         """async () => {
@@ -705,7 +662,6 @@ async def empty(one: Browser, page: Any, width: int, scheme: str) -> None:
         return
     await page.wait_for_timeout(200)
     await one.check(page, "an empty space", width, scheme)
-
 async def sweep_one(one: Browser, browser: Any) -> None:
     page = await one.open(browser)
     widths = (PHONE["width"],) if one.kind == "phone" else DESKTOP_WIDTHS
@@ -721,10 +677,8 @@ async def sweep_one(one: Browser, browser: Any) -> None:
             await surfaces(one, page, width, scheme)
     await empty(one, page, widths[-1], SCHEMES[-1])
     await page.context.close()
-
 async def sweep() -> list[Browser]:
     from playwright.async_api import async_playwright
-
     kinds = [Browser(kind, signed_in) for kind in ("desktop", "phone") for signed_in in (False, True)]
     if "--only" in sys.argv:
         wanted = sys.argv[sys.argv.index("--only") + 1].split(",")
@@ -739,12 +693,10 @@ async def sweep() -> list[Browser]:
         if isinstance(result, BaseException):
             wrong(f"[{one.label}] the sweep stopped after {one.at}: {type(result).__name__}: {str(result).splitlines()[0]}")
     return kinds
-
 def main() -> int:
     started = time.monotonic()
     with DRIVE.session(browser=False):
         kinds = asyncio.run(sweep())
-
     for one in kinds:
         say(f"{one.label}: {one.surfaces} surfaces, {len(one.found)} faults")
         for error in dict.fromkeys(one.errors):
@@ -756,5 +708,4 @@ def main() -> int:
             wrong(fault)
     say(f"swept in {time.monotonic() - started:.0f}s")
     return DRIVE.verdict()
-
 raise SystemExit(main())

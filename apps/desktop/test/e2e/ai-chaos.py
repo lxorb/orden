@@ -1,29 +1,22 @@
 import http.server
 import json
 import time
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
-
 class Model(http.server.BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         return
-
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
         self._cors()
         self.end_headers()
-
     def do_GET(self) -> None:  # noqa: N802
         raw = json.dumps({"data": [{"id": "fake-small", "name": "Fake", "context_length": 32000}]}).encode()
         self.send_response(200)
@@ -32,7 +25,6 @@ class Model(http.server.BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(raw)
-
     def do_POST(self) -> None:  # noqa: N802
         self.rfile.read(int(self.headers.get("Content-Length") or 0))
         self.send_response(200)
@@ -52,10 +44,7 @@ class Model(http.server.BaseHTTPRequestHandler):
             self.wfile.flush()
         except OSError:
             return
-
-
 ORIGIN = DRIVE.side(Model)
-
 SETUP = """
 async (base) => {
   const ai = window.ordenApp.ai
@@ -65,21 +54,16 @@ async (base) => {
   ai.setDefault(made.id)
 }
 """
-
 STATE = """async () => {
   const chat = await window.ordenApp.aiChats()
   return { running: [...chat.running], open: chat.head?.id ?? null, ids: chat.every.map((one) => one.id),
     archived: chat.every.filter((one) => one.archived).map((one) => one.id),
     stop: !!document.querySelector('.ask .go[aria-label="Stop"]'), trouble: chat.trouble }
 }"""
-
-
 def send(page, words: str) -> None:
     page.locator(".ask textarea").click()
     page.keyboard.type(words)
     page.keyboard.press("Enter")
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     errors: list[str] = []
@@ -88,7 +72,6 @@ def drive(browser: Browser) -> None:
     page.evaluate(SETUP, ORIGIN)
     page.keyboard.press("Control+Shift+A")
     wait_for(page, "document.querySelector('.ask textarea')", "the composer")
-
     send(page, "first question")
     wait_for(page, "document.querySelector('.ask .go[aria-label=\"Stop\"]')", "the first answer")
     first = page.evaluate(STATE)["open"]
@@ -104,7 +87,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(200)
     third = page.evaluate(STATE)["open"]
     say(f"three chats answering: {page.evaluate(STATE)}")
-
     for at in range(30):
         target = [first, second, third][at % 3]
         page.evaluate("async (id) => { const chat = await window.ordenApp.aiChats(); void chat.openThread(id, false) }", target)
@@ -119,7 +101,6 @@ def drive(browser: Browser) -> None:
         page.evaluate("async () => { const chat = await window.ordenApp.aiChats(); chat.stop() }")
         send(page, f"once more {at}")
         page.wait_for_timeout(30)
-
     deadline = time.time() + 30
     state = page.evaluate(STATE)
     while time.time() < deadline and (state["running"] or state["stop"]):
@@ -142,6 +123,4 @@ def drive(browser: Browser) -> None:
         wrong(f"page errors: {errors[:5]}")
     DRIVE.shot(page, "after")
     page.context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "the AI panel through three chats answering at once, switched, archived, deleted and stopped"))

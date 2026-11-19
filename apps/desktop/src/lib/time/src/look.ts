@@ -8,14 +8,10 @@ export function tintOf(activity: string | null): string {
   if (!found) return 'var(--muted)'
   return found.tint ? accentColour(found.tint, theme.current) : accentFor(found.name, theme.current)
 }
-
 export const placeTint = (key: string): string => accentFor(key, theme.current)
-
 export const nameOf = (activity: string | null, none: string): string => time.activity(activity)?.name ?? none
-
 export const clock = (at: number): string => localDate(at, { hour: '2-digit', minute: '2-digit' })
 const units = new Map<string, [Intl.NumberFormat, Intl.NumberFormat]>()
-
 function unitsFor(language: string): [Intl.NumberFormat, Intl.NumberFormat] {
   const held = units.get(language)
   if (held) return held
@@ -26,7 +22,6 @@ function unitsFor(language: string): [Intl.NumberFormat, Intl.NumberFormat] {
   units.set(language, made)
   return made
 }
-
 export function length(ms: number): string {
   const minutes = Math.round(Math.max(0, ms) / MINUTE)
   const [hours, mins] = unitsFor(region())

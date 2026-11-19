@@ -3,7 +3,6 @@ import { expect, test } from 'vitest'
 import { plain } from './inline'
 
 const ALPHABET = ['a', 'b', ' ', '\\', '`']
-
 function lines(count: number): string[] {
   let seed = 7
   const next = () => (seed = (seed * 1103515245 + 12345) % 2147483648)
@@ -11,7 +10,6 @@ function lines(count: number): string[] {
     Array.from({ length: 4 + (next() % 12) }, () => ALPHABET[next() % ALPHABET.length]).join(''),
   ).filter((line) => !line.includes('``') && /^[ab]/.test(line) && /[ab]$/.test(line))
 }
-
 const said = (html: string) =>
   html
     .replace(/<[^>]*>/g, '')
@@ -22,7 +20,6 @@ const said = (html: string) =>
     .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim()
-
 test('a task line says what the renderer says, backticks and backslashes and all', () => {
   const tried = lines(4000)
   expect(tried.length).toBeGreaterThan(200)

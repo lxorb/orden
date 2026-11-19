@@ -4,16 +4,13 @@ import { accountById, presentUser, requireWhoever, sendCode, sessionFor, signing
 import { asksForSecond, base32, codeAt, matches, newSecret, recoveryCodes } from '../src/second'
 
 let env: TestEnv
-
 beforeEach(() => {
   env = testEnv()
 })
-
 afterEach(() => {
   env.close()
   vi.restoreAllMocks()
 })
-
 async function codeSentTo(address: string): Promise<string> {
   const logged: string[] = []
   const spy = vi.spyOn(console, 'log').mockImplementation((message) => {
@@ -26,26 +23,20 @@ async function codeSentTo(address: string): Promise<string> {
   if (!code) throw new Error(`no code was sent:\n${logged.join('\n')}`)
   return `${code[1]}${code[2]}`
 }
-
 describe('signing in with a code', () => {
   test('a mailed code opens the account once, and a wrong or spent code is refused', async () => {
     const code = await codeSentTo('a@b.dev')
-
     const wrong = await verifyCode(env, 'a@b.dev', code === '000000' ? '000001' : '000000')
     expect(wrong).toMatchObject({ status: 400 })
-
     const verified = await verifyCode(env, 'a@b.dev', code)
     if ('error' in verified) throw new Error(verified.error)
     expect(verified.user.email).toBe('a@b.dev')
     expect(await accountById(env, verified.user.id)).toMatchObject({ email: 'a@b.dev' })
-
     expect(await verifyCode(env, 'a@b.dev', code)).toMatchObject({ status: 400 })
   })
-
   test('an address that is not an email gets no code', async () => {
     expect(await sendCode(env, 'nobody')).toMatchObject({ status: 400 })
   })
-
   test('asking twice straight away sends nothing new and says when to ask again', async () => {
     await codeSentTo('again@b.dev')
     const again = await sendCode(env, 'again@b.dev')
@@ -54,7 +45,6 @@ describe('signing in with a code', () => {
     expect(again.resendIn).toBeGreaterThan(0)
   })
 })
-
 describe('sessions', () => {
   test('a session token names its user, and anything else is nobody', async () => {
     const signing = await signingIn(env, 'c@b.dev')
@@ -62,15 +52,12 @@ describe('sessions', () => {
     const session = await sessionFor(env, signing.user, 'laptop')
     expect(session.user).toMatchObject(presentUser(signing.user))
     expect(session.user).not.toHaveProperty('created_at')
-
     const who = await requireWhoever(env, `Bearer ${session.token}`)
     expect(who).toEqual({ kind: 'user', user: signing.user })
-
     expect(await requireWhoever(env, undefined)).toBeNull()
     expect(await requireWhoever(env, 'Bearer not-a-token')).toBeNull()
     expect(await requireWhoever(env, session.token)).toBeNull()
   })
-
   test('signing in with the same address twice is the same account', async () => {
     const first = await signingIn(env, 'd@b.dev')
     const second = await signingIn(env, 'd@b.dev')
@@ -79,7 +66,6 @@ describe('sessions', () => {
     expect(await asksForSecond(env, first.user.id)).toBe(false)
   })
 })
-
 describe('the second factor', () => {
   test('a secret gives six digit codes that match within a step', async () => {
     const secret = newSecret()
@@ -89,7 +75,6 @@ describe('the second factor', () => {
     expect(await matches(secret, code)).toBe(true)
     expect(await matches(secret, code === '000000' ? '000001' : '000000')).toBe(false)
   })
-
   test('recovery codes are ten distinct hex words, and secrets read as base32', () => {
     const codes = recoveryCodes()
     expect(codes).toHaveLength(10)

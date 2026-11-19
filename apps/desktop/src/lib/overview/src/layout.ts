@@ -6,46 +6,38 @@ export interface Box {
   w: number
   h: number
 }
-
 export interface Slot extends Box {
   id: string
   paneId: string
 }
-
 export interface Seam {
   id: string
   along: 'row' | 'column'
   from: { x: number; y: number }
   to: { x: number; y: number }
 }
-
 export interface Laid {
   slots: Slot[]
   seams: Seam[]
 }
-
 export interface Panes {
   tabsOf: (paneId: string) => readonly string[]
   shapeOf: (paneId: string) => number
   named?: number
 }
-
 const GAP = 28
 const ROW_GAP = 60
 const SEAM_GAP = 56
 export const WIDEST = 0.46
-
 function shareOf(first: number, second: number): number {
   const a = Math.sqrt(Math.max(first, 1))
   const b = Math.sqrt(Math.max(second, 1))
   return Math.min(0.7, Math.max(0.3, a / (a + b)))
 }
-
 function countIn(frame: Frame, panes: Panes): number {
   if (frame.kind === 'pane') return panes.tabsOf(frame.id).length
   return countIn(frame.sides[0], panes) + countIn(frame.sides[1], panes)
 }
-
 export function gridFor(count: number, shape: number, room: Box, widest: number, rowGap = ROW_GAP) {
   let best = { across: 1, w: 0 }
   for (let across = 1; across <= Math.max(count, 1); across++) {
@@ -57,7 +49,6 @@ export function gridFor(count: number, shape: number, room: Box, widest: number,
   }
   return best
 }
-
 function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
   const ids = panes.tabsOf(paneId)
   const shape = panes.shapeOf(paneId)
@@ -67,7 +58,6 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
   const down = Math.ceil(ids.length / across)
   const tall = down * h + (down - 1) * rowGap
   const top = room.y + (room.h - tall) / 2
-
   return ids.map((id, index) => {
     const row = Math.floor(index / across)
     const inRow = row === down - 1 ? ids.length - row * across : across
@@ -83,7 +73,6 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
     }
   })
 }
-
 export function around(slots: readonly Box[]): Box | null {
   if (!slots.length) return null
   const x = slots.map((one) => one.x).reduce((low, one) => Math.min(low, one), Infinity)
@@ -92,7 +81,6 @@ export function around(slots: readonly Box[]): Box | null {
   const bottom = slots.map((one) => one.y + one.h).reduce((high, one) => Math.max(high, one), -Infinity)
   return { x, y, w: right - x, h: bottom - y }
 }
-
 function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
   if (frame.kind === 'pane') {
     return {
@@ -100,7 +88,6 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
       seams: [],
     }
   }
-
   const [first, second] = frame.sides
   const share = shareOf(countIn(first, panes), countIn(second, panes))
   const across = frame.along === 'row'
@@ -110,12 +97,10 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
   const b: Box = across
     ? { ...room, x: room.x + one + SEAM_GAP, w: length - one }
     : { ...room, y: room.y + one + SEAM_GAP, h: length - one }
-
   const left = layIn(first, a, panes, widest)
   const right = layIn(second, b, panes, widest)
   const slots = [...left.slots, ...right.slots]
   const seams = [...left.seams, ...right.seams]
-
   const reach = around(slots)
   if (reach) {
     const middle = across ? room.x + one + SEAM_GAP / 2 : room.y + one + SEAM_GAP / 2
@@ -135,12 +120,9 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
           },
     )
   }
-
   return { slots, seams }
 }
-
 export const lay = (frame: Frame, room: Box, panes: Panes): Laid => layIn(frame, room, panes, room.w * WIDEST)
-
 export function seamsAmong(frame: Frame, slots: readonly Slot[]): Seam[] {
   if (frame.kind === 'pane') return []
   const [first, second] = frame.sides
@@ -176,7 +158,6 @@ export function seamsAmong(frame: Frame, slots: readonly Slot[]): Seam[] {
   )
   return seams
 }
-
 export function seamPath(seam: Seam): string {
   const { from, to } = seam
   const bow = Math.min(SEAM_GAP / 3, Math.hypot(to.x - from.x, to.y - from.y) / 10)

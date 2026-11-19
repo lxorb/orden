@@ -32,9 +32,7 @@ import { noteChatFiles, noteUnused, RIGHT_AFTER, NIGHTLY, sweepUnused } from './
 import { readSpaceFiles } from './spaces/files'
 
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
-
 export const AT_ONCE = 500
-
 export function freeName(taken: Set<string>, wanted: string): string {
   if (!taken.has(wanted)) return wanted
   for (let counter = 2; ; counter++) {
@@ -42,9 +40,7 @@ export function freeName(taken: Set<string>, wanted: string): string {
     if (!taken.has(candidate)) return candidate
   }
 }
-
 type DeletedNote = Note & { space_name: string }
-
 async function deletedSpaces(env: Env, userId: string): Promise<Space[]> {
   const { results } = await env.DB.prepare(
     `select * from spaces
@@ -55,7 +51,6 @@ async function deletedSpaces(env: Env, userId: string): Promise<Space[]> {
     .all<Space>()
   return results
 }
-
 async function deletedNotes(env: Env, userId: string): Promise<DeletedNote[]> {
   const { results } = await env.DB.prepare(
     `select n.*, s.name as space_name from notes n
@@ -68,7 +63,6 @@ async function deletedNotes(env: Env, userId: string): Promise<DeletedNote[]> {
     .all<DeletedNote>()
   return results
 }
-
 async function deletedSpace(env: Env, userId: string, id: string): Promise<Space | null> {
   return (
     (await env.DB.prepare(
@@ -78,7 +72,6 @@ async function deletedSpace(env: Env, userId: string, id: string): Promise<Space
       .first<Space>()) ?? null
   )
 }
-
 async function deletedNote(env: Env, userId: string, id: string): Promise<(Note & { space_deleted: number }) | null> {
   return (
     (await env.DB.prepare(
@@ -90,7 +83,6 @@ async function deletedNote(env: Env, userId: string, id: string): Promise<(Note 
       .first<Note & { space_deleted: number }>()) ?? null
   )
 }
-
 async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Set<string>> {
   const row = await env.DB.prepare('select kind, hash, paper, front_rev, size from notes where id = ?')
     .bind(note.id)
@@ -99,12 +91,10 @@ async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Se
   if (!row) return used
   if (row.kind === 'file' && row.hash) used.add(row.hash)
   if (row.paper) used.add(row.paper)
-
   const { results } = await env.DB.prepare('select hash from note_pictures where note_id = ?')
     .bind(note.id)
     .all<{ hash: string }>()
   for (const one of results) used.add(one.hash)
-
   if (row.kind !== 'file' && row.size > 0 && row.front_rev < FRONT_REV) {
     const object = await env.NOTES.get(noteKey(note.space_id, note.id))
     const live = await htmlIsLive(env, note.space_id)
@@ -112,18 +102,15 @@ async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Se
   }
   return used
 }
-
 async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>, who: string | null): Promise<boolean> {
   const used = await usedBy(env, note)
   const guests = await guestsOf(env, note.space_id, note.id)
-
   const at = now()
   const objects = [noteKey(note.space_id, note.id), snapshotKey(note.id)]
   const leftover = (what: string) =>
     env.DB.prepare('insert or ignore into leftovers (what, since) values (?, ?)').bind(what, at)
   const versions = forgetVersions(env, note.id)
   const terms = hooks().machines.endingTerm(env, note.id, at)
-
   const statements = [
     takeSeq(env, note.space_id),
     env.DB.prepare(
@@ -173,7 +160,6 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>, who: str
   if (!(answers as { success: boolean }[]).every((one) => one.success)) {
     throw new Error(`purge ${note.id} did not land`)
   }
-
   const later = (error: unknown) => {
     noted(`purge ${note.id}`, error, null)
   }
@@ -191,7 +177,6 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>, who: str
   ]).catch(later)
   return true
 }
-
 async function guestsOf(env: Env, spaceId: string, item: string | null): Promise<string[]> {
   const { results } = await env.DB.prepare(
     `select distinct guest_id from guest_members
@@ -201,17 +186,13 @@ async function guestsOf(env: Env, spaceId: string, item: string | null): Promise
     .all<{ guest_id: string }>()
   return results.map((one) => one.guest_id)
 }
-
 async function purgeSpace(env: Env, space: Pick<Space, 'id'>, who: string | null, budget = AT_ONCE): Promise<number> {
   const take = Math.max(0, Math.min(budget, AT_ONCE))
   if (!take) return 0
-
   const { results } = await env.DB.prepare('select id from notes where space_id = ? limit ?')
     .bind(space.id, take)
     .all<{ id: string }>()
-
   await Promise.all(results.map((note) => env.NOTES.delete([noteKey(space.id, note.id), snapshotKey(note.id)])))
-
   const at = now()
   for (const chunk of chunks(results.map((note) => note.id))) {
     await hooks().machines.endTerms(env, chunk, who)
@@ -247,7 +228,6 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, who: string | null
       env.DB.prepare(`delete from notes where id in (${list})`).bind(...chunk),
     ])
   }
-
   if (results.length < take) {
     const guests = await guestsOf(env, space.id, null)
     const marker = await env.DB.prepare('select files, site from spaces where id = ?')
@@ -270,13 +250,10 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, who: string | null
     ])
     for (const guest of guests) await forgetEmptyGuest(env, guest)
   }
-
   return results.length
 }
-
 export async function purgeExpired(env: Env, at: number): Promise<{ notes: number; spaces: number }> {
   const cutoff = at - KEEP_FOR
-
   const notes = await env.DB.prepare(
     `select id, space_id from notes
       where deleted = 1 and deleted_at is not null and deleted_at < ? limit ?`,
@@ -288,14 +265,12 @@ export async function purgeExpired(env: Env, at: number): Promise<{ notes: numbe
       noted(`purge ${note.id}`, error, null)
     })
   }
-
   const spaces = await env.DB.prepare(
     `select id from spaces
       where deleted = 1 and deleted_at is not null and deleted_at < ? limit ?`,
   )
     .bind(cutoff, AT_ONCE)
     .all<Pick<Space, 'id'>>()
-
   let budget = AT_ONCE - notes.results.length
   let emptied = 0
   for (const space of spaces.results) {
@@ -303,18 +278,13 @@ export async function purgeExpired(env: Env, at: number): Promise<{ notes: numbe
     budget -= await purgeSpace(env, space, null, budget)
     emptied++
   }
-
   await sweepUnused(env, NIGHTLY, at)
-
   return { notes: notes.results.length, spaces: emptied }
 }
-
 export const trash = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 trash.get('/', async (context) => {
   const user = context.get('user')
   const env = context.env
-
   const spaces = await deletedSpaces(env, user.id)
   const counted = await Promise.all(
     spaces.map(async (space) => {
@@ -330,7 +300,6 @@ trash.get('/', async (context) => {
       }
     }),
   )
-
   const notes = (await deletedNotes(env, user.id)).map((note) => ({
     id: note.id,
     spaceId: note.space_id,
@@ -339,25 +308,20 @@ trash.get('/', async (context) => {
     deletedAt: note.deleted_at,
     purgeAt: (note.deleted_at ?? 0) + KEEP_FOR,
   }))
-
   const more = counted.length === AT_ONCE || notes.length === AT_ONCE
   if (more) return context.json({ spaces: counted, notes, more })
-
   return context.json({ spaces: counted, notes })
 })
-
 trash.post('/spaces/:id/restore', async (context) => {
   const user = context.get('user')
   const env = context.env
   const space = await deletedSpace(env, user.id, context.req.param('id'))
   if (!space) return context.json({ error: 'nothing to restore' }, 404)
-
   const live = await env.DB.prepare('select name, position from spaces where user_id = ? and deleted = 0')
     .bind(user.id)
     .all<{ name: string; position: number }>()
   const name = freeName(new Set(live.results.map((one) => one.name)), space.name)
   const position = live.results.reduce((last, one) => Math.max(last, one.position), -1) + 1
-
   const at = now()
   const back = await env.DB.prepare(
     `update spaces set deleted = 0, deleted_at = null, name = ?1, position = ?2, updated_at = ?3
@@ -367,29 +331,24 @@ trash.post('/spaces/:id/restore', async (context) => {
     .bind(name, position, at, space.id, user.id, MOST_OWN_SPACES)
     .run()
   if (!back.meta.changes) return context.json({ error: TOO_MANY_SPACES }, 409)
-
   return context.json({
     space: presentSpace({ ...space, deleted: 0, deleted_at: null, name, position, updated_at: at }, env),
   })
 })
-
 trash.post('/notes/:id/restore', async (context) => {
   const user = context.get('user')
   const env = context.env
   const note = await deletedNote(env, user.id, context.req.param('id'))
   if (!note) return context.json({ error: 'nothing to restore' }, 404)
   if (note.space_deleted) return context.json({ error: 'restore its space first' }, 409)
-
   const back = await restoreNote(env, note, await deviceOf(context))
   if (back.deleted) return context.json({ error: 'nothing to restore' }, 404)
   return context.json({ note: presentNote(back) })
 })
-
 trash.delete('/notes/:id', async (context) => {
   const user = context.get('user')
   const note = await deletedNote(context.env, user.id, context.req.param('id'))
   if (!note) return context.json({ error: 'nothing to delete' }, 404)
-
   const started = now()
   if (!(await purgeNote(context.env, note, user.id))) {
     return context.json({ error: 'nothing to delete' }, 404)
@@ -399,36 +358,30 @@ trash.delete('/notes/:id', async (context) => {
   })
   return context.json({ ok: true })
 })
-
 trash.delete('/spaces/:id', async (context) => {
   const user = context.get('user')
   const space = await deletedSpace(context.env, user.id, context.req.param('id'))
   if (!space) return context.json({ error: 'nothing to delete' }, 404)
-
   const started = now()
   const purged = await purgeSpace(context.env, space, user.id)
   await sweepUnused(context.env, RIGHT_AFTER, now(), { user: user.id, since: started })
   return context.json({ ok: true, more: purged >= AT_ONCE })
 })
-
 trash.delete('/', async (context) => {
   const user = context.get('user')
   const env = context.env
-
   const started = now()
   const notes = await deletedNotes(env, user.id)
   const failures: unknown[] = []
   for (const note of notes) {
     await purgeNote(env, note, user.id).catch((error: unknown) => failures.push(error))
   }
-
   let budget = AT_ONCE - notes.length
   for (const space of await deletedSpaces(env, user.id)) {
     if (budget <= 0) break
     budget -= await purgeSpace(env, space, user.id, budget)
   }
   await sweepUnused(env, RIGHT_AFTER, now(), { user: user.id, since: started })
-
   if (failures.length) throw failures[0]
   return context.json({ ok: true, more: budget <= 0 })
 })

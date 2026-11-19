@@ -34,9 +34,7 @@ vi.mock('./docs', () => ({
       }),
   },
 }))
-
 const { readNote } = await import('./notes')
-
 test('a note read with its backlinks is marked when a line linking to it is someone else’s', async () => {
   const answer = await readNote({
     verb: 'read_note',

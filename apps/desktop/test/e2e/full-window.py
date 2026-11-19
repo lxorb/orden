@@ -1,15 +1,11 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 from settling import HIDE_CARET, quiet
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SIZE = {"width": 1280, "height": 800}
-
 ARRANGE = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -31,7 +27,6 @@ async () => {
   return left.id
 }
 """
-
 LOOK = """
 () => {
   const box = (one) => {
@@ -56,7 +51,6 @@ LOOK = """
   }
 }
 """
-
 LAYOUT = """
 () => JSON.stringify({
   frame: window.ordenApp.workspace.panes.frame,
@@ -70,7 +64,6 @@ LAYOUT = """
   strips: [...document.querySelectorAll('.tab .label')].map((one) => one.textContent.trim()),
 })
 """
-
 FLUSH = """
 () => {
   const pane = [...document.querySelectorAll('[data-pane]')].find((one) => one.getClientRects().length)
@@ -87,13 +80,10 @@ FLUSH = """
   }
 }
 """
-
 FILLED = "window.ordenApp.workspace.panes.fills !== null && !document.querySelector('aside')"
 BACK = "window.ordenApp.workspace.panes.fills === null && !!document.querySelector('aside')"
-
 def look(page: Page) -> dict:
     return page.evaluate(LOOK)
-
 def opened(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport=SIZE, color_scheme=scheme, reduced_motion="reduce")
     context.add_init_script(HIDE_CARET)
@@ -105,11 +95,9 @@ def opened(browser: Browser, scheme: str) -> Page:
     page.locator("[data-pane] .cm-content").first.click()
     quiet(page)
     return page
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.steady(page, name)
-
 def key_in(page: Page, scheme: str) -> str:
     before = page.evaluate(LAYOUT)
     said = look(page)
@@ -117,7 +105,6 @@ def key_in(page: Page, scheme: str) -> str:
     if not said["sidebar"] or len(said["panes"]) != 2 or said["strips"] != 2:
         wrong(f"the window did not open split with its list: {said}")
     shot(page, f"{scheme}-01-before")
-
     page.keyboard.press("Shift+F11")
     wait_for(page, FILLED, "Shift+F11 to fill the window")
     quiet(page)
@@ -135,7 +122,6 @@ def key_in(page: Page, scheme: str) -> str:
         wrong(f"the bar is not up out of sight and out of reach: {said['bar']}")
     shot(page, f"{scheme}-02-filled")
     return before
-
 def the_bar(page: Page, scheme: str) -> None:
     page.mouse.move(640, 300)
     page.mouse.move(640, 2)
@@ -148,12 +134,10 @@ def the_bar(page: Page, scheme: str) -> None:
     if said["bar"]["inert"]:
         wrong("the bar came down out of reach")
     shot(page, f"{scheme}-03-bar")
-
     page.mouse.move(640, 500)
     wait_for(page, "!document.querySelector('.bar')?.classList.contains('shown')", "the bar to go up again")
     if look(page)["fills"] is None:
         wrong("the pointer at the top edge gave the window back")
-
 def tabs_and_escape(page: Page, scheme: str) -> None:
     page.locator("[data-pane] .cm-content").first.click()
     page.keyboard.press("Control+Tab")
@@ -163,18 +147,15 @@ def tabs_and_escape(page: Page, scheme: str) -> None:
         wrong(f"Ctrl+Tab did not keep the window filled on the next tab: {said}")
     page.keyboard.press("Control+Tab")
     DRIVE.settled(page)
-
     page.locator("[data-pane] .cm-content").first.click()
     page.keyboard.press("Escape")
     DRIVE.settled(page)
     if look(page)["fills"] is None:
         wrong("Escape in the note gave the window back")
-
     page.evaluate("() => document.activeElement?.blur()")
     page.keyboard.press("Escape")
     wait_for(page, BACK, "Escape on nothing to give the window back")
     say(f"[{scheme}] Escape: the note's in the note, the fill's on nothing")
-
 def key_out(page: Page, scheme: str, before: str) -> None:
     page.locator("[data-pane] .cm-content").first.click()
     page.keyboard.press("Shift+F11")
@@ -188,7 +169,6 @@ def key_out(page: Page, scheme: str, before: str) -> None:
     else:
         say(f"[{scheme}] back exactly as it was")
     shot(page, f"{scheme}-04-back")
-
 def web_tab(page: Page, scheme: str) -> None:
     page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     wait_for(page, "document.querySelector('.web .webbar')", "the web tab's bar")
@@ -221,7 +201,6 @@ def web_tab(page: Page, scheme: str) -> None:
     shot(page, f"{scheme}-05-web")
     page.keyboard.press("Shift+F11")
     wait_for(page, BACK, "Shift+F11 out of the web tab")
-
 def flush(page: Page, scheme: str, mode: str) -> None:
     said = page.evaluate(FLUSH)
     say(f"[{scheme}] {mode}: {json.dumps(said)}")
@@ -238,7 +217,6 @@ def flush(page: Page, scheme: str, mode: str) -> None:
         wrong(f"[{mode}] the pane keeps an edge: {said['shadow']}")
     if said["corner"]:
         wrong(f"[{mode}] a web page here would be given a corner of {said['corner']}px")
-
 def every_full_mode(page: Page, scheme: str) -> None:
     for kind in ("note", "web tab"):
         if kind == "web tab":
@@ -251,14 +229,12 @@ def every_full_mode(page: Page, scheme: str) -> None:
         flush(page, scheme, f"{kind}, filling the window")
         page.evaluate("() => window.ordenApp.workspace.panes.fills = null")
         wait_for(page, BACK, f"the {kind} back")
-
         page.evaluate("() => window.ordenApp.fullscreen.enter(window.ordenApp.workspace.panes)")
         wait_for(page, "window.ordenApp.fullscreen.on", f"full screen over the {kind}")
         quiet(page)
         flush(page, scheme, f"{kind}, full screen")
         page.evaluate("() => window.ordenApp.fullscreen.leave()")
         wait_for(page, "!window.ordenApp.fullscreen.on && !!document.querySelector('aside')", "full screen left")
-
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = opened(browser, scheme)
@@ -269,5 +245,4 @@ def drive(browser: Browser) -> None:
         web_tab(page, scheme)
         every_full_mode(page, scheme)
         page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "the tab fills the window and gives it back"))

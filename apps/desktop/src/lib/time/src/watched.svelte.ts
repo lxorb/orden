@@ -2,7 +2,6 @@ import type { Minute } from './minutes'
 import { time } from './time.svelte'
 
 const AGAIN = 60_000
-
 export function watchedMinutes(range: () => readonly [number, number]): { list: Minute[] } {
   let list = $state.raw<Minute[]>([])
   $effect(() => {
@@ -25,7 +24,6 @@ export function watchedMinutes(range: () => readonly [number, number]): { list: 
     },
   }
 }
-
 export function ticking(): { now: number } {
   let now = $state(Date.now())
   $effect(() => {

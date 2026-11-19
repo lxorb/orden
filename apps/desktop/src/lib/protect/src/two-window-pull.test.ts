@@ -7,7 +7,6 @@ const server = vi.hoisted(() => ({
   holdGet: false,
   gets: [] as (() => void)[],
 }))
-
 vi.mock('../../accounts/src/api', () => ({
   account: { token: 'token', user: { id: 'u1' } },
   request: (_path: string, options: { method?: string; body?: unknown } = {}) => {
@@ -28,15 +27,12 @@ vi.mock('../../accounts/src/api', () => ({
     return Promise.resolve(snapshot)
   },
 }))
-
 vi.mock('@orden/contracts', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@orden/contracts')>()),
   syncStore: () => ({ remoteIdFor: () => 's1' }),
 }))
-
 const page = new EventTarget()
 vi.stubGlobal('window', page)
-
 const main = {
   ...(await import('./protection.svelte')),
   ...(await import('./synced')),
@@ -46,7 +42,6 @@ const second = {
   ...(await import('./protection.svelte')),
   ...(await import('./synced')),
 }
-
 const ROOT = '/space'
 const DIARY = `${ROOT}/Diary.md`
 const PAIRS = [{ root: ROOT, spaceId: 's1' }]
@@ -54,23 +49,19 @@ const settle = async () => {
   for (let i = 0; i < 20; i++) await new Promise((go) => setTimeout(go, 0))
 }
 const told = () => page.dispatchEvent(Object.assign(new Event('storage'), { key: main.STORAGE_KEY }))
-
 test('a pull another window’s push overtook keeps the lock that push landed', async () => {
   expect(main.protection).not.toBe(second.protection)
   await main.pulled('token', 'u1', PAIRS)
   await settle()
-
   server.holdGet = true
   const pulling = main.pulled('token', 'u1', PAIRS)
   await settle()
-
   second.protection.set(ROOT, DIARY, 'password')
   told()
   await settle()
   server.puts[0]?.land()
   await settle()
   told()
-
   server.gets[0]?.()
   await pulling
   await settle()

@@ -48,13 +48,11 @@ export type SurfaceId =
   | 'undo-toast'
   | 'view'
   | 'web'
-
 export interface FindFlags {
   caseSensitive: boolean
   regexp: boolean
   wholeWord: boolean
 }
-
 export interface FindBarProps {
   query: string
   count: number
@@ -74,9 +72,7 @@ export interface FindBarProps {
   onclose: () => void
   onquery: (typed: string) => void
 }
-
 export const OUTSIDE_FOLDER = 'orden:outside-folder'
-
 export type SheetId =
   | 'export'
   | 'host-picker'
@@ -90,11 +86,9 @@ export type SheetId =
   | 'space-sound'
   | 'sync-mark'
   | 'undo-toast'
-
 export interface SheetsPort {
   ask(id: SheetId): Promise<void>
 }
-
 export interface QuickAddPrefill {
   text?: string
   description?: string
@@ -102,23 +96,18 @@ export interface QuickAddPrefill {
   due?: string
   fields?: { priority?: 1 | 2 | 3 | 4 | 5 | 6 }
 }
-
 export interface QuickAddPort {
   show(prefill?: QuickAddPrefill): void
 }
-
 export interface NoticePort {
   say(words: string): void
 }
-
 export interface ShellFocusPort {
   editor(): boolean
 }
-
 export interface AppCommandsPort {
   rows(view: object | undefined): Promise<readonly CommandExtension[]>
 }
-
 export interface SurfacePorts {
   readonly 'commands.app': AppCommandsPort
   readonly search: SearchPort
@@ -127,16 +116,12 @@ export interface SurfacePorts {
   readonly 'shell.sheets': SheetsPort
   readonly 'quick-add.show': QuickAddPort
 }
-
 const loads = new Map<SurfaceId, () => Promise<unknown>>()
-
 let missing = (id: SurfaceId): Promise<unknown> =>
   Promise.reject(new Error(`no module has registered the surface '${id}'`))
-
 export function whenNoSurface(load: (id: SurfaceId) => Promise<unknown>) {
   missing = load
 }
-
 export function registerSurfaces(given: Partial<Record<SurfaceId, () => Promise<unknown>>>): () => void {
   const held = Object.entries(given) as [SurfaceId, () => Promise<unknown>][]
   for (const [id, load] of held) loads.set(id, load)
@@ -144,12 +129,10 @@ export function registerSurfaces(given: Partial<Record<SurfaceId, () => Promise<
     for (const [id, load] of held) if (loads.get(id) === load) loads.delete(id)
   }
 }
-
 export function surfaceLoad(id: SurfaceId): Promise<unknown> {
   const load = loads.get(id)
   return load ? load() : missing(id)
 }
-
 export interface SearchHit {
   path: string
   name: string
@@ -161,14 +144,11 @@ export interface SearchHit {
   bare?: true
   score?: number
 }
-
 export type SearchSort = 'relevance' | 'name' | 'modified' | 'created'
-
 export interface SearchOrdering {
   sort: SearchSort
   descending: boolean
 }
-
 export interface SearchPanel {
   readonly running: boolean
   readonly hits: readonly SearchHit[]
@@ -176,7 +156,6 @@ export interface SearchPanel {
   ask(text: string): void
   setSort(sort: SearchSort): void
 }
-
 export interface SearchPort {
   readonly panel: SearchPanel
   show(text: string): void

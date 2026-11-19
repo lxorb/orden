@@ -8,7 +8,6 @@ function refused(typed: string): boolean {
   const view = { state } as unknown as EditorView
   return state.facet(EditorView.inputHandler).some((handler) => handler(view, 0, 0, typed, () => state.update({})))
 }
-
 describe('a control character typed', () => {
   test.each([
     ['\u0011', true],
@@ -23,7 +22,6 @@ describe('a control character typed', () => {
     ['\u0011a', false],
     [' ', false],
   ])('%j', (input, wanted) => expect(refused(input)).toEqual(wanted))
-
   test('and nothing at all is not typing', () => {
     expect(unprintable('')).toBe(false)
   })

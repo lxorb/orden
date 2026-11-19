@@ -3,9 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 const { heightOf, indexAt, listHeight, windowDocuments, windowFor } = await import('../src/api')
-
 const SRC = join(import.meta.dirname, '../src')
-
 describe('the module stands on its own', () => {
   test('no file under src imports anything of the app', () => {
     const reaching = readdirSync(SRC)
@@ -19,16 +17,13 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 })
-
 describe('a window of rows', () => {
   const rows = { count: 100, height: 20, top: 400, room: 200, overscan: 2 }
-
   test('measures the list and finds the row under a point', () => {
     expect(listHeight(rows)).toBe(2000)
     expect(heightOf(3, rows)).toBe(20)
     expect(indexAt(45, rows)).toBe(2)
   })
-
   test('draws only the rows in view, with the overscan either side', () => {
     const shown = windowFor(rows)
     expect([shown.first, shown.last]).toEqual([18, 31])
@@ -36,7 +31,6 @@ describe('a window of rows', () => {
     expect(shown.below).toBe(2000 - 32 * 20)
   })
 })
-
 describe('the document a window shows', () => {
   test('is the app with nothing open, and the note with its path on a Mac', async () => {
     const { windowDocument } = await windowDocuments()

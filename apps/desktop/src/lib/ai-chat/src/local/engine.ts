@@ -44,15 +44,12 @@ const {
   startsItsOwnTurn,
   troubleOf,
 } = await localCli()
-
 export interface LocalSetup {
   provider(id: string): Provider | null
   answers?: Answers
   instructions?(thread: Thread): Promise<string>
 }
-
 const STOPPING = 10_000
-
 interface Live {
   session: Session
   mode: Mode
@@ -63,32 +60,27 @@ interface Live {
   hear: ((said: Heard) => void) | null
   early: Heard[]
 }
-
 interface Running {
   thread: Thread
   on: (event: EngineEvent) => void
   steered: (text: string) => void
 }
-
 interface Pursuit {
   said: Say
   state: GoalState | null
   after: Say | null
 }
-
 function levelOf(kind: LocalKind, effort: Effort): Level | null {
   if (effort === 'auto' || kind === 'gemini-cli') return null
   if (kind === 'claude-code' && (effort === 'off' || effort === 'minimal')) return null
   return effort
 }
-
 function wordsOf(turn: Turn): string {
   return turn.parts
     .map((part) => (part.kind === 'text' ? part.text : ''))
     .join('')
     .trim()
 }
-
 function seeded(thread: Thread, instructions: string, message: string): string {
   const said: Message[] = []
   if (instructions) said.push({ role: 'system', content: instructions })
@@ -102,26 +94,22 @@ function seeded(thread: Thread, instructions: string, message: string): string {
   said.push({ role: 'user', content: message })
   return promptFor(said)
 }
-
 export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   const sessions = new Map<string, Live>()
   const running = new Map<string, Running>()
   const answers = setup.answers ?? crateAnswers
   const windows = new Map<string, number>()
   let listed: ModelInfo[] = []
-
   function providerOf(thread: Thread): Provider {
     const provider = setup.provider(thread.provider)
     if (provider?.kind !== kind) throw new Error('That provider is not set up yet.')
     return provider
   }
-
   async function liveFor(thread: Thread, provider: Provider): Promise<[Live, boolean]> {
     const held = sessions.get(thread.id)
     const fits = held?.mode === thread.mode && held.account === provider.id
     if (held && !held.session.ended && fits) return [held, false]
     if (held) await held.session.close()
-
     let session: Session
     const early: Heard[] = []
     const box: { live?: Live } = {}
@@ -161,7 +149,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     sessions.set(thread.id, live)
     return [live, true]
   }
-
   async function retell(live: Live, thread: Thread): Promise<void> {
     if (thread.model && thread.model !== live.model) {
       await live.session.say({ kind: 'model', model: thread.model })
@@ -176,7 +163,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       live.fast = !!thread.fast
     }
   }
-
   async function run(
     thread: Thread,
     message: Draft,
@@ -195,7 +181,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       on({ type: 'turn', turn: made })
       return made
     }
-
     let turn = begin(modelTurn(thread))
     const say = (part: Part) => {
       turn.parts.push(part)
@@ -213,7 +198,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       on({ type: 'done', stop: 'error', error: words })
       return 'error'
     }
-
     let live: Live
     let opened: boolean
     let provider: Provider
@@ -224,7 +208,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     } catch (error) {
       return failed(error)
     }
-
     const read: (line: string) => Read = readerOf(kind)
     const heard: Read = {}
     let answered = ''
@@ -234,7 +217,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     let between = false
     let quiet: ReturnType<typeof setTimeout> | undefined
     let closing: ((stop: Stop) => void) | null = null
-
     const finished = new Promise<{ stop: Stop; error?: string }>((resolve) => {
       const close = (stop: Stop, error?: string) => {
         clearTimeout(quiet)
@@ -242,7 +224,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         resolve(error === undefined ? { stop } : { stop, error })
       }
       closing = close
-
       const ended = (how: NonNullable<Read['ended']>) => {
         if (stopping || how === 'stopped') {
           close('stopped')
@@ -273,7 +254,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           'The model did not answer.'
         close('error', words)
       }
-
       const line = (text: string) => {
         const said = read(text)
         if (said.goal && pursuit) {
@@ -341,7 +321,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         if (said.usage) counted(said.usage)
         if (said.ended) ended(said.ended)
       }
-
       const counted = (usage: NonNullable<Read['usage']>) => {
         if (usage.window) windows.set(thread.model, usage.window)
         const window =
@@ -357,7 +336,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         turn.usage = now
         on({ type: 'usage', usage: now })
       }
-
       const hear = (said: Heard) => {
         if (said.kind === 'line') line(said.line)
         else if (said.kind === 'reply' && said.error && said.to !== 'model') {
@@ -377,13 +355,11 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       const early = live.early.splice(0)
       if (opened) for (const said of early) hear(said)
     })
-
     const steered = (text: string) => {
       begin(youTurn(thread, { text, attachments: [] }, { steered: true }))
       turn = begin(modelTurn(thread))
     }
     running.set(thread.id, { thread, on, steered })
-
     const agents = agentsOf(provider.id)
     const unhear = await answers
       .asked((asked) => {
@@ -411,7 +387,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         })
       })
       .catch(() => () => undefined)
-
     const stop = () => {
       stopping = true
       if (pursuit) void live.session.say(goalHeld(kind)).catch(() => undefined)
@@ -425,7 +400,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       }, STOPPING)
     }
     signal.addEventListener('abort', stop, { once: true })
-
     try {
       const instructions = opened ? ((await setup.instructions?.(thread).catch(() => '')) ?? '') : ''
       const step = userStep(message)
@@ -464,7 +438,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       thread.updated = Date.now()
     }
   }
-
   return {
     async models(provider) {
       if (provider.kind !== kind) return []
@@ -523,11 +496,9 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     },
   }
 }
-
 function finished(heard: Read): boolean {
   return !!heard.compacted || !!heard.ended
 }
-
 function spend(thread: Thread, usage: Usage): void {
   const before = thread.spent ?? { input: 0, output: 0 }
   thread.spent = {

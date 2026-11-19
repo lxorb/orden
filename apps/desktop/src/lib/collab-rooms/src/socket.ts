@@ -4,21 +4,16 @@ import { BEAT_EVERY, roomDelay } from '../../platform/src/api'
 import { BASE } from '../../accounts/src/api'
 
 const SILENT_BEATS = 3
-
 const OPEN_WITHIN = 10_000
-
 const SILENT = 4000
-
 export interface Wire {
   opened: () => void
   heard: (message: Uint8Array) => void
   closed: (code: number, said: string) => void
 }
-
 function roomUrl(noteId: string): string {
   return `${BASE.replace(/^http/, 'ws')}/rooms/${encodeURIComponent(noteId)}`
 }
-
 export class RoomSocket {
   private socket: WebSocket | null = null
   private timer: ReturnType<typeof setTimeout> | null = null
@@ -28,31 +23,25 @@ export class RoomSocket {
   private opening: ReturnType<typeof setTimeout> | null = null
   private quiet = 0
   private answers = false
-
   constructor(
     private readonly noteId: string,
     private readonly token: string,
     private readonly wire: Wire,
     private readonly offers: readonly string[] = [],
   ) {}
-
   get open(): boolean {
     return this.socket?.readyState === WebSocket.OPEN
   }
-
   start() {
     this.stopped = false
     if (typeof window !== 'undefined') window.addEventListener('online', this.back)
     this.connect()
   }
-
   send(message: Uint8Array): boolean {
     if (!this.open) return false
-
     this.socket?.send(message.slice())
     return true
   }
-
   stop() {
     this.stopped = true
     if (typeof window !== 'undefined') window.removeEventListener('online', this.back)
@@ -60,7 +49,6 @@ export class RoomSocket {
     this.timer = null
     this.drop()
   }
-
   private readonly back = () => {
     if (!this.timer) return
     clearTimeout(this.timer)
@@ -68,13 +56,11 @@ export class RoomSocket {
     this.tries = 0
     this.connect()
   }
-
   private drop() {
     if (this.beat) clearInterval(this.beat)
     this.beat = null
     if (this.opening) clearTimeout(this.opening)
     this.opening = null
-
     const socket = this.socket
     this.socket = null
     if (socket) {
@@ -85,14 +71,12 @@ export class RoomSocket {
       socket.close()
     }
   }
-
   private lost(socket: WebSocket) {
     if (this.socket !== socket) return
     this.drop()
     this.wire.closed(SILENT, 'heard nothing')
     this.again()
   }
-
   private beating(socket: WebSocket) {
     this.quiet = 0
     this.answers = false
@@ -112,10 +96,8 @@ export class RoomSocket {
       }
     }, BEAT_EVERY)
   }
-
   private connect() {
     if (this.stopped) return
-
     let socket: WebSocket
     try {
       socket = new WebSocket(roomUrl(this.noteId), [subprotocol(this.token), ...this.offers])
@@ -123,42 +105,33 @@ export class RoomSocket {
       this.again()
       return
     }
-
     this.socket = socket
     socket.binaryType = 'arraybuffer'
-
     this.opening = setTimeout(() => {
       this.opening = null
       if (socket.readyState !== WebSocket.OPEN) this.lost(socket)
     }, OPEN_WITHIN)
-
     socket.onopen = () => {
       if (this.opening) clearTimeout(this.opening)
       this.opening = null
       this.beating(socket)
       this.wire.opened()
     }
-
     socket.onmessage = (event: MessageEvent<unknown>) => {
       this.quiet = 0
       if (event.data === BEAT_ANSWER) this.answers = true
       if (event.data instanceof ArrayBuffer) this.wire.heard(new Uint8Array(event.data))
     }
-
     socket.onclose = (event: CloseEvent) => {
       if (this.socket !== socket) return
-
       this.drop()
       this.wire.closed(event.code, event.reason)
       this.again()
     }
-
     socket.onerror = () => undefined
   }
-
   private again() {
     if (this.stopped || this.timer) return
-
     this.tries++
     this.timer = setTimeout(() => {
       this.timer = null

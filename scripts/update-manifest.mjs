@@ -2,7 +2,6 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const REPO = 'lxorb/nibeditor'
-
 const PLATFORMS = [
   { key: 'windows-x86_64', match: (path) => /windows-x64/.test(path) && path.endsWith('.exe.sig') },
   {
@@ -28,18 +27,15 @@ const PLATFORMS = [
     },
   ]),
 ]
-
 const MACS = [
   { key: 'darwin-aarch64', match: (path) => /macos-arm64/.test(path) },
   { key: 'darwin-x86_64', match: (path) => /macos-x64/.test(path) },
 ]
-
 const [, , tag, version, root] = process.argv
 if (!tag || !version || !root) {
   console.error('usage: update-manifest.mjs <tag> <version> <artifacts-dir>')
   process.exit(1)
 }
-
 function walk(dir) {
   const out = []
   for (const name of readdirSync(dir)) {
@@ -49,22 +45,17 @@ function walk(dir) {
   }
   return out
 }
-
 const files = walk(root).map((path) => path.split('\\').join('/'))
 const platforms = {}
-
 for (const { key, match } of PLATFORMS) {
   const signature = files.find(match)
   if (!signature) continue
-
   const bundle = signature.slice(0, -'.sig'.length)
-
   platforms[key] = {
     signature: readFileSync(signature, 'utf8').trim(),
     url: `https://github.com/${REPO}/releases/download/${tag}/${bundle.split('/').pop()}`,
   }
 }
-
 for (const { key, match } of MACS) {
   const signature = files.find((path) => match(path) && path.endsWith('.app.tar.gz.sig'))
   if (!signature) continue
@@ -74,12 +65,10 @@ for (const { key, match } of MACS) {
     url: `https://github.com/${REPO}/releases/download/${tag}/${bundle.split('/').pop()}`,
   }
 }
-
 if (!Object.keys(platforms).length) {
   console.error('no signed bundles found - is TAURI_SIGNING_PRIVATE_KEY set?')
   process.exit(1)
 }
-
 process.stdout.write(
   `${JSON.stringify(
     {

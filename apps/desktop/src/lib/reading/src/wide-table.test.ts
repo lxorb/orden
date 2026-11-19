@@ -8,16 +8,11 @@ vi.mock('../../link-index/src/api', () => ({
   picturesOf: () => () => null,
   queryRowsHtml: () => Promise.resolve(null),
 }))
-
 vi.mock('../../workspace/src/api', () => ({ keptCoverOf: () => null }))
-
 vi.stubGlobal('__EVEN_PLUGIN__', false)
-
 const { readingHtml } = await import('./render')
-
 const SHEET = join(import.meta.dirname, '../../../../../../packages/themes/src/base.css')
 const READING = join(import.meta.dirname, 'Reading.svelte')
-
 function outsideMedia(css: string): string {
   let out = ''
   let at = 0
@@ -34,7 +29,6 @@ function outsideMedia(css: string): string {
     at = end + 1
   }
 }
-
 const rules = [
   ...outsideMedia(readFileSync(SHEET, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')).matchAll(/([^{}]+)\{([^{}]*)\}/g),
 ].map(([, selectors = '', body = '']) => ({
@@ -44,20 +38,16 @@ const rules = [
     .filter(Boolean),
   body,
 }))
-
 const scrollsSideways = (body: string) => /overflow(-x)?\s*:\s*(auto|scroll)/.test(body)
-
 const wide = `| ${Array.from({ length: 12 }, (_, at) => `Column ${String(at)}`).join(' | ')} |
 | ${Array.from({ length: 12 }, () => '---').join(' | ')} |
 | ${Array.from({ length: 12 }, () => 'https://example.com/a/very/long/address/that/cannot/wrap').join(' | ')} |
 `
-
 test('the reading view clips its sides, so a page block wider than the measure must scroll itself', () => {
   expect(readFileSync(READING, 'utf8')).toMatch(/\.scroller\s*\{[^}]*overflow-x:\s*hidden/)
   const pre = rules.filter((rule) => rule.selectors.includes('#write pre'))
   expect(pre.some((rule) => scrollsSideways(rule.body))).toBe(true)
 })
-
 test('a table wider than the reading view can be scrolled sideways at any window width', async () => {
   const html = await readingHtml({ text: wide, path: '/space/Wide.md' }, 'light', true)
   expect(html).toContain('<table>')

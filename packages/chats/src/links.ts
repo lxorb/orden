@@ -1,14 +1,10 @@
 import { isChatId } from './pointer'
 
 const PREFIX = 'orden://chat/'
-
 const PREFIXES = [PREFIX, 'nib://chat/']
-
 const MESSAGE = /^[0-9A-Za-z_-]{1,64}$/
-
 export const chatLink = (chat: string, message?: string): string =>
   message === undefined ? `${PREFIX}${chat}` : `${PREFIX}${chat}/${message}`
-
 export function chatLinkOf(url: string): { chat: string; message?: string } | null {
   const prefix = PREFIXES.find((one) => url.startsWith(one))
   if (!prefix) return null

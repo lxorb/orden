@@ -211,9 +211,7 @@ xero.com xing.com xink.io xplenty.com yahoo.com yammer.com yclas.com yeah.net yn
 youinvest.co.uk youneedabudget.com youtube.com yoyogames.com zapier.com zapsplat.com zendesk.com
 zeplin.io zerodha.com zerotier.com zimbra.com zoho.com zondaglobal.com zoolz.com zoom.us
 `
-
 export const TWO_FACTOR_SITES: ReadonlySet<string> = new Set(LISTED.trim().split(/\s+/))
-
 export function offersTwoFactor(site: string): boolean {
   return TWO_FACTOR_SITES.has(site.trim().toLowerCase())
 }

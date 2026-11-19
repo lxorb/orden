@@ -14,12 +14,9 @@ const fake = vi.hoisted(() => ({
   },
   passSync: { invites: [] as Invite[], refresh: vi.fn() },
 }))
-
 vi.mock('../../pass-sync/src/store.svelte', () => ({ pass: fake.pass }))
 vi.mock('../../pass-sync/src/syncing.svelte', () => ({ passSync: fake.passSync }))
-
 const InvitesList = (await import('./InvitesList.svelte')).default
-
 const META: VaultMeta = {
   v: 1,
   name: 'Family',
@@ -29,7 +26,6 @@ const META: VaultMeta = {
   folders: [],
   hidePasswordsFromViewers: false,
 }
-
 const invite = (vault: string, more: Partial<Invite> = {}): Invite => ({
   vault,
   from: 'ada@example.com',
@@ -43,7 +39,6 @@ const invite = (vault: string, more: Partial<Invite> = {}): Invite => ({
   pin: null,
   ...more,
 })
-
 beforeEach(() => {
   for (const one of [
     fake.pass.inviteMeta,
@@ -58,26 +53,21 @@ beforeEach(() => {
   fake.passSync.refresh.mockResolvedValue(undefined)
   landed()
 })
-
 afterEach(closed)
-
 function shown(invites: Invite[]) {
   fake.passSync.invites = invites
   draw(InvitesList, {})
 }
-
 function row(vault: string): HTMLElement {
   const found = target.querySelector<HTMLElement>(`[data-invite="${vault}"]`)
   if (!found) throw new Error(`no invite ${vault}`)
   return found
 }
-
 describe('invitations to a vault', () => {
   test('show nothing when there are none', () => {
     shown([])
     expect(target.textContent.trim()).toBe('')
   })
-
   test('name the sender, the vault and the role', async () => {
     shown([invite('v1')])
     await vi.waitFor(() => expect(row('v1').textContent).toContain('Family'))
@@ -85,7 +75,6 @@ describe('invitations to a vault', () => {
     expect(fake.pass.inviteMeta).toHaveBeenCalledWith(fake.passSync.invites[0])
     await vi.waitFor(() => expect(row('v1').textContent).toContain('Their safety code: 1a2b 3c4d'))
   })
-
   test('are accepted, and the vault is read again', async () => {
     fake.pass.acceptInvite.mockResolvedValue(undefined)
     shown([invite('v1'), invite('v2', { role: 'viewer' })])
@@ -98,7 +87,6 @@ describe('invitations to a vault', () => {
     expect(fake.passSync.invites.map((one) => one.vault)).toEqual(['v2'])
     expect(fake.pass.declineInvite).not.toHaveBeenCalled()
   })
-
   test('are declined', async () => {
     fake.pass.declineInvite.mockResolvedValue(undefined)
     shown([invite('v1')])
@@ -106,7 +94,6 @@ describe('invitations to a vault', () => {
     await vi.waitFor(() => expect(fake.pass.declineInvite).toHaveBeenCalledWith('v1'))
     expect(fake.pass.acceptInvite).not.toHaveBeenCalled()
   })
-
   test('wait to be confirmed before they can be accepted when they carry no key', async () => {
     shown([invite('v1', { key: null, fromName: '' })])
     await vi.waitFor(() => expect(fake.pass.inviteMeta).toHaveBeenCalled())
@@ -117,7 +104,6 @@ describe('invitations to a vault', () => {
     expect(button('Accept', one).disabled).toBe(true)
     expect(button('Decline', one).disabled).toBe(false)
   })
-
   test('say what went wrong', async () => {
     fake.pass.acceptInvite.mockRejectedValue(new Error('pass: no such invitation'))
     shown([invite('v1')])

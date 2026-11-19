@@ -2,7 +2,6 @@ import { downloadStarted } from '../../downloads/src/api'
 import { invoke, isRecord, isString } from '../../platform/src/api'
 
 type DownloadState = 'going' | 'done' | 'failed' | 'cancelled'
-
 export interface Download {
   id: number
   tab: string
@@ -12,15 +11,12 @@ export interface Download {
   received: number
   total: number | null
 }
-
 const STATES: readonly DownloadState[] = ['going', 'done', 'failed', 'cancelled']
-
 export function readDownload(said: unknown): Download | null {
   if (!isRecord(said)) return null
   const { id, tab, url, name } = said
   const state = STATES.find((one) => one === said.state)
   if (typeof id !== 'number' || !isString(tab) || !isString(url) || !isString(name) || !state) return null
-
   return {
     id,
     tab,
@@ -31,35 +27,27 @@ export function readDownload(said: unknown): Download | null {
     total: typeof said.total === 'number' && said.total > 0 ? said.total : null,
   }
 }
-
 export function merged(list: readonly Download[], one: Download): Download[] {
   if (one.state === 'cancelled') return list.filter((each) => each.id !== one.id)
   if (!list.some((each) => each.id === one.id)) return [...list, one]
-
   return list.map((each) => {
     if (each.id !== one.id) return each
     if (each.state !== 'going' && one.state === 'going') return each
     return one
   })
 }
-
 export function progressOf(list: readonly Download[]): number | 'unknown' | null {
   const going = list.filter((one) => one.state === 'going')
   if (going.length === 0) return null
-
   const sized = going.filter((one) => one.total !== null)
   const total = sized.reduce((sum, one) => sum + (one.total ?? 0), 0)
   if (total === 0) return 'unknown'
-
   const received = sized.reduce((sum, one) => sum + Math.min(one.received, one.total ?? 0), 0)
   return received / total
 }
-
 class Downloads {
   list = $state<Download[]>([])
-
   private stopped: Record<number, true> = {}
-
   heard(one: Download): boolean {
     if (this.stopped[one.id]) return false
     if (one.state === 'cancelled') this.stopped[one.id] = true
@@ -68,21 +56,17 @@ class Downloads {
     if (fresh && one.state !== 'cancelled') downloadStarted(one.name, { tab: one.tab })
     return fresh
   }
-
   async open(id: number): Promise<void> {
     await invoke('web_download_open', { id }).catch(() => undefined)
   }
-
   async show(id: number): Promise<void> {
     const path = await invoke<string>('web_download_saved', { id }).catch(() => null)
     if (path === null) return
     const { reveal } = await import('../../files-out/src/api')
     await reveal(path)
   }
-
   async cancel(id: number): Promise<void> {
     await invoke('web_download_cancel', { id }).catch(() => undefined)
   }
 }
-
 export const downloads = new Downloads()

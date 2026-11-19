@@ -31,7 +31,6 @@ const NAMED: Readonly<Record<string, string>> = {
   '\\': 'Backslash',
   '`': 'Backquote',
 }
-
 export function accelerator(written: string | null, platform: Platform): string | null {
   const combination = parseCombination(written ?? '', platform)
   if (!combination) return null
@@ -39,7 +38,6 @@ export function accelerator(written: string | null, platform: Platform): string 
   const key = combination.key
   const chord = combination.ctrl || combination.meta || combination.alt
   if (!chord && !/^F\d{1,2}$/.test(key)) return null
-
   const named = /^[a-z]$/.test(key)
     ? key.toUpperCase()
     : /^[0-9]$/.test(key)
@@ -48,7 +46,6 @@ export function accelerator(written: string | null, platform: Platform): string 
         ? key
         : NAMED[key]
   if (named === undefined) return null
-
   return [
     combination.ctrl ? 'Control' : null,
     combination.meta ? 'Super' : null,

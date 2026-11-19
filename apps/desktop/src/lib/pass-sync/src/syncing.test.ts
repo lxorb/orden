@@ -5,9 +5,7 @@ import type { SyncWorld } from './sync-world'
 vi.mock('../../accounts/src/account.svelte', async () => ({
   account: (await import('../../accounts/test/fakes')).accountDouble(),
 }))
-
 const server = vi.hoisted(() => ({ held: null as Promise<void> | null, invites: [] as unknown[] }))
-
 vi.mock('../../accounts/src/client', () => ({ BASE: '', request: () => Promise.resolve({}) }))
 vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
 vi.mock('../../gates/src/api', () => ({ passOn: () => true }))
@@ -32,24 +30,20 @@ vi.mock('./exchange', () => ({
     return 'synced'
   },
 }))
-
 const { passSync } = await import('./syncing.svelte')
 const { pass } = await import('./store.svelte')
 const account = (await import('../../accounts/src/account.svelte')).account as unknown as AccountDouble
-
 function hold(): () => void {
   let free: () => void = () => undefined
   server.held = new Promise((resolve) => (free = resolve))
   return free
 }
-
 beforeEach(() => {
   server.held = null
   server.invites = [{ vault: 'v1' }]
   account.signInAs('a')
   passSync.signedOut()
 })
-
 describe('the passwords synced for an account', () => {
   test('say when they last synced and who invited them', async () => {
     await passSync.refresh()
@@ -57,25 +51,20 @@ describe('the passwords synced for an account', () => {
     expect(passSync.at).not.toBeNull()
     expect(passSync.invites).toEqual([{ vault: 'v1' }])
   })
-
   test('keep nothing of when or who once the account signs out', async () => {
     await passSync.refresh()
     account.signOut()
     passSync.signedOut()
-
     expect(passSync.at).toBeNull()
     expect(passSync.invites).toEqual([])
   })
-
   test('never show the next account what the last one’s sync came back with', async () => {
     const free = hold()
     const syncing = passSync.refresh()
-
     account.signInAs('b')
     passSync.signedOut()
     free()
     await syncing
-
     expect(passSync.invites).toEqual([])
     expect(passSync.at).toBeNull()
     expect(passSync.state).toBe('off')

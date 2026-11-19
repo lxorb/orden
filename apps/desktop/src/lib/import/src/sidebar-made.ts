@@ -13,23 +13,17 @@ export const WORDS = {
   favorites: 'Favorites',
   readingList: 'Reading List',
 }
-
 export type Said = Record<string, unknown>
-
 export const isObject = (value: unknown): value is Said =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
-
 export const list = (value: unknown): Said[] => (Array.isArray(value) ? value.filter(isObject) : [])
-
 export const text = (value: unknown): string | null => (typeof value === 'string' && value.trim() ? value.trim() : null)
-
 export function siteMark(value: unknown): string | null {
   const said = text(value)
   if (!said?.startsWith('moz-remote-image:')) return said
   const query = said.slice(said.indexOf('?') + 1)
   return said.includes('?') ? text(new URLSearchParams(query).get('url')) : null
 }
-
 function untitled(url: string): string {
   try {
     const { host, pathname, search } = new URL(url)
@@ -38,26 +32,20 @@ function untitled(url: string): string {
     return url
   }
 }
-
 const SPACE = 'browser'
-
 export interface Step {
   key: string
   name: string
 }
-
 export class Made {
   readonly folders: SidebarFolder[] = []
   readonly tabs: SidebarTab[] = []
   dropped = 0
-
   constructor(readonly space = SPACE) {}
-
   folder(id: string, name: string, parent: string | null, space = this.space) {
     if (this.folders.some((one) => one.id === id)) return
     this.folders.push({ id, name, icon: null, parent, space, split: false })
   }
-
   within(steps: readonly Step[], space = this.space): string | null {
     let parent: string | null = null
     for (const step of steps) {
@@ -67,7 +55,6 @@ export class Made {
     }
     return parent
   }
-
   tab(tab: Omit<SidebarTab, 'home' | 'space' | 'essential'> & { essential?: boolean; space?: string }) {
     if (!isWebAddress(tab.url)) {
       this.dropped++
@@ -82,7 +69,6 @@ export class Made {
       essential: tab.essential ?? false,
     })
   }
-
   kept(): SidebarFolder[] {
     const byId = new Map(this.folders.map((one) => [one.id, one]))
     const full = new Set<string>()
@@ -94,7 +80,6 @@ export class Made {
     }
     return this.folders.filter((one) => full.has(one.id))
   }
-
   sidebar(name: string): Sidebar {
     return {
       spaces: [{ id: this.space, name, icon: null, colour: null, container: 0 }],

@@ -1,8 +1,6 @@
 export const FRAME_MS = 16
-
 export const ECHO_MS = 50
 export const ECHO_SENDS = 2
-
 export class Coalescer {
   private pending: Uint8Array[] = []
   private timer: ReturnType<typeof setTimeout> | null = null
@@ -11,17 +9,14 @@ export class Coalescer {
   private echoes = 0
   private readonly send: (bytes: Uint8Array) => void
   private readonly now: () => number
-
   constructor(send: (bytes: Uint8Array) => void, now: () => number = () => performance.now()) {
     this.send = send
     this.now = now
   }
-
   typed(): void {
     this.echoUntil = this.now() + ECHO_MS
     this.echoes = ECHO_SENDS
   }
-
   push(bytes: Uint8Array): void {
     if (bytes.length === 0) return
     this.pending.push(bytes)
@@ -35,7 +30,6 @@ export class Coalescer {
     if (wait <= 0) this.flush()
     else this.timer = setTimeout(() => this.flush(), wait)
   }
-
   flush(count = Infinity): void {
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
@@ -49,7 +43,6 @@ export class Coalescer {
     this.send(bytes)
   }
 }
-
 function joined(parts: readonly Uint8Array[]): Uint8Array {
   if (parts.length === 1 && parts[0]) return parts[0]
   const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0))

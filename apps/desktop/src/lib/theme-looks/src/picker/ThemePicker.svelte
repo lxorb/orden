@@ -21,17 +21,12 @@
   import { picking } from './picking.svelte'
 
   const SIDES: Scheme[] = ['light', 'dark']
-
   let tokens = $state<string | null>(null)
   void import('@orden/themes/tokens.css?raw').then((one) => (tokens = one.default))
-
   const custom = $derived(picking.open ? (document.getElementById('orden-custom-css')?.textContent ?? '') : '')
-
   type Info = (typeof theme.all)[number]
-
   function looksOf(one: Info): Look[] {
     if (tokens === null) return []
-
     const sheets = [tokens, one.css ?? '', custom]
     return SIDES.filter((side) => one.variants.includes(side)).map((side) =>
       lookOf(sheets, side, {
@@ -40,25 +35,19 @@
       }),
     )
   }
-
   function dimOf(id: string): Record<string, string> {
     const dim = theme.keptFor(id, 'dim')
     return typeof dim === 'number' ? { '--orden-dim': `${dim}%` } : {}
   }
-
   const shown = $derived.by(() => {
     const term = picking.query.trim().toLowerCase()
     return term ? theme.all.filter((one) => one.name.toLowerCase().includes(term)) : theme.all
   })
-
   let browsing = $state(false)
-
   const cursor = $derived(
     browsing ? shown.length : shown.findIndex((one) => one.id === (picking.pointed.id ?? picking.kept.id)),
   )
-
   const COLUMNS = 3
-
   const seeing = $derived(
     picking.pointed.id !== null
       ? 'id'
@@ -68,13 +57,10 @@
           ? 'accent'
           : null,
   )
-
   const keptScheme = $derived<SchemeChoice>(theme.switchable ? picking.kept.scheme : theme.current)
-
   const place = $derived.by(() => {
     const at = picking.at
     if (viewport.touch || !at) return null
-
     const tall = window.innerHeight
     const above = at.top > tall / 2
     return {
@@ -84,9 +70,7 @@
       room: above ? at.top - 14 : tall - at.bottom - 14,
     }
   })
-
   let grid = $state<HTMLElement>()
-
   let panel = $state<HTMLElement>()
   $effect(() =>
     picking.open
@@ -97,40 +81,32 @@
       : undefined,
   )
   $effect(() => closeOnBack(picking.open, () => picking.close()))
-
   function arriving(node: Element) {
     return viewport.touch
       ? fly(node, { y: 48, duration: LAYER.rise, easing: cubicOut })
       : scale(node, { duration: LAYER.rise, start: LAYER.start, easing: cubicOut })
   }
-
   async function moveTo(index: number) {
     const last = shown.length
     const to = Math.max(0, Math.min(index, last))
     const one = shown[to]
-
     browsing = to === last
     picking.point('id', one ? one.id : null)
-
     await tick()
     grid?.querySelector('.card.is-on')?.scrollIntoView({ block: 'nearest' })
   }
-
   function typed(text: string) {
     picking.query = text
     browsing = false
-
     const first = shown[0]
     if (!text.trim()) picking.point('id', null)
     else if (first) picking.point('id', first.id)
     else void moveTo(shown.length)
   }
-
   function choose(id: string) {
     picking.keepTheme(id)
     if (!viewport.touch) picking.close()
   }
-
   function browse() {
     const term = picking.query.trim()
     picking.close()
@@ -138,12 +114,10 @@
     store.query = term
     store.show()
   }
-
   function spend(event: KeyboardEvent) {
     event.preventDefault()
     event.stopPropagation()
   }
-
   function onKeydown(event: KeyboardEvent) {
     const steps: Record<string, number> = {
       ArrowDown: COLUMNS,
@@ -152,19 +126,16 @@
       ArrowLeft: -1,
     }
     const step = steps[event.key]
-
     if (step !== undefined) {
       spend(event)
       void moveTo(cursor < 0 ? 0 : cursor + step)
       return
     }
-
     if ((event.key === 'Home' || event.key === 'End') && (event.ctrlKey || event.metaKey)) {
       spend(event)
       void moveTo(event.key === 'Home' ? 0 : shown.length)
       return
     }
-
     if (event.key !== 'Enter') return
     spend(event)
     if (browsing) browse()
@@ -335,11 +306,9 @@
   .scrim {
     --scrim-z: var(--z-menu);
   }
-
   .picker {
     --picker-width: var(--screen-list);
     --screen-width: var(--picker-width);
-
     position: fixed;
     z-index: var(--z-menu);
     width: min(var(--picker-width), calc(100vw - 16px));
@@ -353,23 +322,19 @@
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .picker[data-seeing] {
     border-color: transparent;
     background: transparent;
     box-shadow: none;
   }
-
   .head > *,
   .grid {
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .picker[data-seeing='id'] .head,
   .picker[data-seeing='accent'] .head {
     border-color: transparent;
   }
-
   .picker[data-seeing='id'] .head > :not(:focus-within),
   .picker[data-seeing='id'] .card:not(.is-on),
   .picker[data-seeing='id'] .foot,
@@ -379,20 +344,16 @@
   .picker[data-seeing='accent'] .grid {
     opacity: 0.08;
   }
-
   .picker[data-seeing='id'] .card.is-on {
     background: var(--surface);
     box-shadow: var(--shadow-lg);
   }
-
   .picker.orden-screen {
     transform-origin: top center;
   }
-
   .picker.above {
     transform-origin: bottom left;
   }
-
   .head {
     flex: none;
     display: flex;
@@ -402,20 +363,16 @@
     border-bottom: 1px solid var(--line);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
-
   .find {
     flex: 1;
     min-width: 0;
   }
-
   .modes {
     flex: none;
   }
-
   .modes button {
     padding: 0 var(--space-2);
   }
-
   .modes svg {
     width: var(--icon-md);
     height: var(--icon-md);
@@ -425,11 +382,9 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .modes .half {
     fill: currentColor;
   }
-
   .grid {
     flex: 1 1 auto;
     min-height: 0;
@@ -441,7 +396,6 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-
   .card {
     display: flex;
     flex-direction: column;
@@ -461,33 +415,27 @@
       opacity var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .card.is-on {
     background: var(--surface-hover);
     color: var(--text-strong);
   }
-
   .card :global(.mini) {
     transition:
       translate var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .card.is-on :global(.mini) {
     translate: 0 -1px;
   }
-
   .card.kept :global(.mini) {
     box-shadow:
       inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent),
       0 0 0 2px var(--surface),
       0 0 0 4px var(--accent);
   }
-
   .card:active {
     background: var(--surface-press);
   }
-
   .name {
     padding: 0 2px;
     font-size: var(--text-sm);
@@ -495,12 +443,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .card.kept .name {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .more {
     display: grid;
     place-items: center;
@@ -509,7 +455,6 @@
     border-radius: var(--radius-sm);
     color: var(--muted);
   }
-
   .more svg {
     width: var(--icon-lg);
     height: var(--icon-lg);
@@ -518,18 +463,15 @@
     stroke-width: 1.5;
     stroke-linecap: round;
   }
-
   .foot {
     flex: none;
     padding: var(--space-2) var(--space-3) var(--space-3);
     border-top: 1px solid var(--line);
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .foot.owned {
     opacity: 0.4;
   }
-
   .sheet {
     top: auto;
     left: 0;
@@ -543,7 +485,6 @@
     background: var(--surface);
     box-shadow: var(--shadow-lg);
   }
-
   .grip {
     flex: none;
     width: 36px;

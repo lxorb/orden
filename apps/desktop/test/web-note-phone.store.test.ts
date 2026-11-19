@@ -1,9 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const SITE = '/space/Site.url'
-
 const handed: string[] = []
-
 vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -20,24 +18,19 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
         : undefined,
     ),
 }))
-
 const { workspace } = await import('../src/lib/workspace/src/api')
 const { Tab } = await import('../src/lib/documents/src/api')
-
 beforeEach(() => {
   handed.length = 0
   workspace.tabs = []
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
   workspace.activeSpaceId = 's'
 })
-
 test('a web note on the phone opens in the browser, not in Orden', async () => {
   await workspace.openWeb(SITE)
-
   expect(handed).toEqual(['https://example.com/site'])
   expect(workspace.tabs).toEqual([])
 })
-
 test('and a tab an older sitting left of it goes, its page in the browser instead', async () => {
   const note = workspace.opened.make({
     kind: 'web',
@@ -47,9 +40,7 @@ test('and a tab an older sitting left of it goes, its page in the browser instea
     dirty: false,
   })
   workspace.tabs = [new Tab(note, workspace.panes.focusedId)]
-
   await workspace.openWeb(SITE)
-
   expect(handed).toEqual(['https://example.com/site'])
   expect(workspace.tabs).toEqual([])
 })

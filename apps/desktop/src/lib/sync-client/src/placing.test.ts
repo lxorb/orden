@@ -13,7 +13,6 @@ import type { World } from './world'
 
 const ROOT = '/device/space'
 const SPACE = 'sim'
-
 interface Device {
   account: ReferenceAccount
   disk: MemoryDisk
@@ -26,7 +25,6 @@ interface Device {
   engine: Engine
   launch(): Promise<Engine>
 }
-
 async function device(foldsCase = true): Promise<Device> {
   const account = new ReferenceAccount(new Clock(), SEEDED)
   const store = new MemoryStore('d0')
@@ -75,7 +73,6 @@ async function device(foldsCase = true): Promise<Device> {
   const seeding = store.open()
   await seeding.write(changes)
   await seeding.cleanExit(true)
-
   const made: Device = {
     account,
     disk,
@@ -123,30 +120,25 @@ async function device(foldsCase = true): Promise<Device> {
   await made.launch()
   return made
 }
-
 const positions = async (account: ReferenceAccount) =>
   Object.fromEntries((await account.view()).entries.map((entry) => [entry.name, entry.pos]))
-
 describe('places', () => {
   test('a drag is drawn at once, goes up, and is kept across a relaunch', async () => {
     const one = await device()
     await one.engine.pass(SPACE)
     expect(one.engine.keepsPlaces(ROOT)).toBe(true)
     expect(one.engine.placedIn(ROOT)).toBeNull()
-
     expect(await one.engine.arrange(ROOT, ['Ideas.md', 'Plan.md'], 2)).toBe(true)
     expect(one.engine.placedIn(ROOT)).toEqual(['Ideas.md', 'Plan.md'])
     await one.engine.pass(SPACE)
     const kept = await positions(one.account)
     expect(kept['Ideas.md'] !== undefined && kept['Plan.md'] !== undefined).toBe(true)
     expect((kept['Ideas.md'] ?? '') < (kept['Plan.md'] ?? '')).toBe(true)
-
     one.engine.stop()
     const again = await one.launch()
     expect(again.placedIn(ROOT)).toEqual(['Ideas.md', 'Plan.md'])
     expect(again.placedFolders(ROOT)).toEqual(new Map([['', ['Ideas.md', 'Plan.md']]]))
   })
-
   test('a drag the file list makes asks for a pass at once, and one that places nothing does not', async () => {
     const one = await device()
     await one.engine.pass(SPACE)
@@ -156,40 +148,33 @@ describe('places', () => {
       () => null,
       () => (asked += 1),
     )
-
     expect(await list.arrange(ROOT, '', ['Ideas.md', 'Plan.md'])?.done).toBe(true)
     expect(asked).toBe(1)
-
     one.keeps = false
     await one.engine.pass(SPACE)
     expect(list.arrange(ROOT, '', ['Plan.md', 'Ideas.md'])).toBeNull()
     expect(asked).toBe(1)
   })
-
   test('another spelling of the space is the space only on a disk where it is one folder', async () => {
     const folding = await device()
     await folding.engine.pass(SPACE)
     expect(folding.engine.keepsPlaces(ROOT.toUpperCase())).toBe(true)
-
     const apart = await device(false)
     await apart.engine.pass(SPACE)
     expect(apart.engine.keepsPlaces(ROOT)).toBe(true)
     expect(apart.engine.keepsPlaces(ROOT.toUpperCase())).toBe(false)
   })
-
   test('one row dragged sends one place', async () => {
     const one = await device()
     await one.engine.pass(SPACE)
     await one.engine.arrange(ROOT, ['Ideas.md', 'Plan.md'], 2)
     await one.engine.pass(SPACE)
     one.sent.length = 0
-
     await one.engine.arrange(ROOT, ['Plan.md', 'Ideas.md'], 2)
     await one.engine.pass(SPACE)
     expect(one.sent.filter((op) => op.t === 'place')).toHaveLength(1)
     expect(one.engine.placedIn(ROOT)).toEqual(['Plan.md', 'Ideas.md'])
   })
-
   test('an account that does not say it keeps places is sent none', async () => {
     const one = await device()
     one.keeps = false
@@ -198,7 +183,6 @@ describe('places', () => {
     expect(await one.engine.arrange(ROOT, ['Ideas.md', 'Plan.md'], 2)).toBe(false)
     expect(one.engine.placedIn(ROOT)).toBeNull()
   })
-
   test('places waiting when the account is put back to a build before them are dropped, and the pass goes on', async () => {
     const one = await device()
     await one.engine.pass(SPACE)
@@ -211,7 +195,6 @@ describe('places', () => {
     expect(one.engine.keepsPlaces(ROOT)).toBe(false)
     expect(one.engine.placedIn(ROOT)).toBeNull()
     expect((await one.account.view()).entries.map((entry) => entry.name)).toContain('New.md')
-
     one.sent.length = 0
     expect(await one.engine.arrange(ROOT, ['Plan.md', 'Ideas.md'], 2)).toBe(false)
     await one.engine.created(`${ROOT}/Other.md`, false, 'other')
@@ -219,16 +202,13 @@ describe('places', () => {
     expect(one.sent.some((op) => op.t === 'place' || op.pos !== undefined)).toBe(false)
   })
 })
-
 const described = async (account: ReferenceAccount) =>
   Object.fromEntries((await account.view()).entries.map((entry) => [entry.name, entry.meta]))
-
 describe("an item's metadata", () => {
   test('goes up by id, comes back by path, and is kept across a relaunch', async () => {
     const one = await device()
     await one.engine.pass(SPACE)
     expect(one.engine.describedIn(ROOT)).toEqual({})
-
     const left = await one.engine.describe(ROOT, {
       'Plan.md': { icon: 'rocket', 'icon-color': 'red' },
       'Nowhere.md': { icon: 'star' },
@@ -243,16 +223,13 @@ describe("an item's metadata", () => {
       icon: 'rocket',
       'icon-color': 'red',
     })
-
     await one.engine.describe(ROOT, { 'Plan.md': { 'icon-color': null } })
     await one.engine.pass(SPACE)
     expect((await described(one.account))['Plan.md']).toEqual({ icon: 'rocket' })
-
     one.engine.stop()
     const again = await one.launch()
     expect(again.describedIn(ROOT)?.['Plan.md']).toEqual({ icon: 'rocket' })
   })
-
   test("another device's metadata arrives with the feed, and follows a rename", async () => {
     const one = await device()
     await one.engine.pass(SPACE)
@@ -267,7 +244,6 @@ describe("an item's metadata", () => {
     await one.engine.pass(SPACE)
     expect(one.engine.describedIn(ROOT)).toEqual({ 'Renamed.md': { cover: 'sea.png' } })
   })
-
   test('an account that does not say it keeps metadata is sent none, and the place is null', async () => {
     const one = await device()
     one.describes = false
@@ -277,7 +253,6 @@ describe("an item's metadata", () => {
     await one.engine.pass(SPACE)
     expect(one.sent.some((op) => op.t === 'meta')).toBe(false)
   })
-
   test('metadata waiting when the account is put back to a build before it is dropped, and the pass goes on', async () => {
     const one = await device()
     await one.engine.pass(SPACE)
@@ -292,7 +267,6 @@ describe("an item's metadata", () => {
     expect((await one.account.view()).entries.map((entry) => entry.name)).toContain('New.md')
   })
 })
-
 describe('a name that grew a run of " 2" (#1630)', () => {
   test('is given back the name it grew from, on the account and on the disk', async () => {
     const one = await device()
@@ -301,10 +275,8 @@ describe('a name that grew a run of " 2" (#1630)', () => {
     const to = `${ROOT}/Plan 2 2 2.md`
     await one.disk.move(from, to)
     await one.engine.moved(from, to)
-
     await one.engine.pass(SPACE)
     await one.engine.pass(SPACE)
-
     const names = (await one.account.view()).entries.map((entry) => entry.name).sort()
     expect(names).toEqual(['Ideas.md', 'Plan.md'])
     expect(one.disk.files.has(from)).toBe(true)

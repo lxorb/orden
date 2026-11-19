@@ -7,7 +7,6 @@ interface World {
   refuse: Set<string>
   kept: Record<string, string>
 }
-
 const world = vi.hoisted((): World => ({
   files: {},
   sent: {},
@@ -15,7 +14,6 @@ const world = vi.hoisted((): World => ({
   refuse: new Set(),
   kept: {},
 }))
-
 vi.mock('../../accounts/src/client', () => ({
   api: {
     putBlob: (_token: string, hash: string, type: string, bytes: ArrayBuffer, headers: Record<string, string>) => {
@@ -26,7 +24,6 @@ vi.mock('../../accounts/src/client', () => ({
     },
   },
 }))
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'read_tree') {
@@ -47,17 +44,14 @@ vi.mock('../../platform/src/tauri', () => ({
         })),
       })
     }
-
     if (command === 'read_note') {
       const path = String(args.path).split('/').pop() ?? ''
       const held = world.files[path]
       return held === undefined ? Promise.reject(new Error('no such note')) : Promise.resolve(held)
     }
-
     return Promise.reject(new Error(`unexpected ${command}`))
   },
 }))
-
 vi.mock('../../platform/src/stored', () => ({
   stored: (key: string) => {
     const held = world.kept[key]
@@ -72,11 +66,9 @@ vi.mock('../../platform/src/stored', () => ({
     return true
   },
 }))
-
 vi.mock('../../fences/src/api', () => ({
   drawDiagram: (code: string, language: string, scheme: 'light' | 'dark') => {
     if (world.refuse.has(code)) return Promise.reject(new Error('mermaid said no'))
-
     return Promise.resolve(
       `<svg aria-roledescription="flowchart-v2" role="graphics-document document"` +
         ` viewBox="0 0 302.5 118" style="max-width: 302.5px;"` +
@@ -86,13 +78,10 @@ vi.mock('../../fences/src/api', () => ({
     )
   },
 }))
-
 const { asFile, diagramFences, drawnBoth, pushDiagrams } = await import('./site-diagrams')
 const { diagramKey } = await import('@orden/markdown/diagrams')
-
 const SPACE = '7d1f4e8c-0000-4000-8000-000000000001'
 const FENCE = '```mermaid\ngraph TD\n  A --> B\n```\n'
-
 beforeEach(() => {
   world.files = {}
   world.sent = {}
@@ -100,7 +89,6 @@ beforeEach(() => {
   world.refuse = new Set()
   world.kept = {}
 })
-
 describe('which fences a space has to draw', () => {
   test('is every diagram in it, once each', () => {
     const found = diagramFences([
@@ -108,13 +96,11 @@ describe('which fences a space has to draw', () => {
       `# Two\n\n${FENCE}`,
       '# Three\n\n```sequence\nAda->Grace: hello\n```\n',
     ])
-
     expect(found).toEqual([
       { language: 'mermaid', code: 'graph TD\n  A --> B' },
       { language: 'sequence', code: 'Ada->Grace: hello' },
     ])
   })
-
   test('is nothing in a note of prose, or of code, or of a chart', () => {
     expect(
       diagramFences([
@@ -124,36 +110,29 @@ describe('which fences a space has to draw', () => {
       ]),
     ).toEqual([])
   })
-
   test('reads a fence opened in any case', () => {
     expect(diagramFences(['```Mermaid\ngraph TD\n  A --> B\n```\n'])).toEqual([
       { language: 'mermaid', code: 'graph TD\n  A --> B' },
     ])
   })
 })
-
 describe('a drawing as a file of its own', () => {
   const drawn =
     `<svg viewBox="0 0 300 120" style="max-width: 300px;" width="100%"` +
     ` xmlns="http://www.w3.org/2000/svg" id="d"><g><text>hi</text></g></svg>`
-
   test('has a size, because an `<img>` with none is 300 by 150', () => {
     const file = asFile(drawn) ?? ''
-
     expect(file).toContain('width="300"')
     expect(file).toContain('height="120"')
     expect(file).not.toContain('width="100%"')
     expect(file).not.toContain('max-width')
   })
-
   test('says it is an SVG, and keeps the drawing itself', () => {
     const file = asFile(drawn) ?? ''
-
     expect(file.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<svg')).toBe(true)
     expect(file).toContain('xmlns="http://www.w3.org/2000/svg"')
     expect(file).toContain('<text>hi</text>')
   })
-
   test('carries no script, no handler and nothing pointing outward', () => {
     const nasty =
       `<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">` +
@@ -162,47 +141,37 @@ describe('a drawing as a file of its own', () => {
       `<image href="https://elsewhere.example/x.png"/>` +
       `<use xlink:href="https://elsewhere.example/y.svg#a"/>` +
       `<a href="#inside">in</a></g></svg>`
-
     const file = asFile(nasty) ?? ''
-
     expect(file).not.toContain('script')
     expect(file).not.toContain('onload')
     expect(file).not.toContain('onclick')
     expect(file).not.toContain('elsewhere.example')
     expect(file).toContain('href="#inside"')
   })
-
   test('is nothing at all where there is no drawing to make a file of', () => {
     expect(asFile('')).toBeNull()
     expect(asFile('Syntax error in graph')).toBeNull()
     expect(asFile('<svg xmlns="http://www.w3.org/2000/svg"><g/></svg>')).toBeNull()
   })
 })
-
 describe('one diagram, drawn both ways round', () => {
   test('is two pictures under two names', async () => {
     const both = await drawnBoth(SPACE, { language: 'mermaid', code: 'graph TD\n  A --> B' })
-
     expect(both).toHaveLength(2)
     expect(both[0]?.hash).toMatch(/^[a-f0-9]{64}$/)
     expect(both[0]?.hash).not.toBe(both[1]?.hash)
     expect(both[0]?.svg).toContain('#eee')
     expect(both[1]?.svg).toContain('#111')
   })
-
   test('is neither where one of the two would not draw', async () => {
     world.refuse.add('graph TD\n  A --> B')
-
     expect(await drawnBoth(SPACE, { language: 'mermaid', code: 'graph TD\n  A --> B' })).toEqual([])
   })
 })
-
 describe('what a publish sends', () => {
   test('is both pictures of every diagram in the space', async () => {
     world.files = { 'One.md': `# One\n\n${FENCE}`, 'Two.md': '# Two\n\nNo diagram.\n' }
-
     const done = await pushDiagrams('token', SPACE, '/vault/space')
-
     expect(done).toEqual({ sent: 2, refused: 0 })
     expect(Object.keys(world.sent)).toHaveLength(2)
     for (const svg of Object.values(world.sent)) {
@@ -210,11 +179,9 @@ describe('what a publish sends', () => {
       expect(svg).toContain('width="303"')
     }
   })
-
   test('says what each name was hashed from', async () => {
     world.files = { 'One.md': `# One\n\n${FENCE}` }
     await pushDiagrams('token', SPACE, '/vault/space')
-
     expect(Object.keys(world.said)).toHaveLength(2)
     for (const [hash, said] of Object.entries(world.said)) {
       const preimage = new URLSearchParams(said)
@@ -229,39 +196,30 @@ describe('what a publish sends', () => {
       ).toBe(hash)
     }
   })
-
   test('is nothing the second time, because an unchanged diagram is the same name', async () => {
     world.files = { 'One.md': `# One\n\n${FENCE}` }
-
     expect((await pushDiagrams('token', SPACE, '/vault/space')).sent).toBe(2)
     world.sent = {}
     expect((await pushDiagrams('token', SPACE, '/vault/space')).sent).toBe(0)
     expect(world.sent).toEqual({})
   })
-
   test('is something again once a character of the diagram changes', async () => {
     world.files = { 'One.md': `# One\n\n${FENCE}` }
     await pushDiagrams('token', SPACE, '/vault/space')
-
     world.files = { 'One.md': '# One\n\n```mermaid\ngraph TD\n  A --> C\n```\n' }
     world.sent = {}
-
     expect((await pushDiagrams('token', SPACE, '/vault/space')).sent).toBe(2)
   })
-
   test('is nothing at all for a space with no diagram in it', async () => {
     world.files = { 'One.md': '# One\n\nProse.\n' }
-
     expect(await pushDiagrams('token', SPACE, '/vault/space')).toEqual({ sent: 0, refused: 0 })
   })
-
   test('counts a diagram mermaid refused and sends the rest', async () => {
     world.refuse.add('graph TD\n  A --> B')
     world.files = {
       'One.md': `# One\n\n${FENCE}`,
       'Two.md': '# Two\n\n```mermaid\ngraph LR\n  C --> D\n```\n',
     }
-
     expect(await pushDiagrams('token', SPACE, '/vault/space')).toEqual({ sent: 2, refused: 1 })
   })
 })

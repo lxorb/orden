@@ -18,12 +18,10 @@ const PAGE = 8_000
 const SELECTION = 4_000
 const THREAD = 3_000
 const LISTED = 200
-
 export interface Picked {
   path: string | null
   shared: string | null
 }
-
 async function pickedFromOthers(picked: Picked | null): Promise<boolean> {
   const active = workspace.active
   const from = picked ?? (active ? { path: active.path, shared: active.note.shared } : null)
@@ -32,38 +30,31 @@ async function pickedFromOthers(picked: Picked | null): Promise<boolean> {
   const open = workspace.activeSpace?.root
   return !!open && (await fromOthersIn(open))
 }
-
 export interface Front {
   path: string
   name: string
   text: string
 }
-
 async function markedFrom(one: Attachment | null, paths: readonly string[]): Promise<Attachment | null> {
   if (!one) return null
   const theirs = await Promise.all(paths.map((path) => fromOthers(path)))
   return theirs.includes(true) ? { ...one, untrusted: true } : one
 }
-
 const agentsMay = (path: string) => protection.agentsMay(path)
-
 function agentsMayPicked(picked: Picked | null): boolean {
   if (picked) return protection.agentsMay(picked.path)
   const open = workspace.activeSpace?.root
   return open ? protection.agentsMayAll(open) : !protection.any
 }
-
 async function noteAttachment(root: string, path: string): Promise<Attachment | null> {
   if (!agentsMay(path)) return null
   const text = await workspace.noteText(path)
   if (text === null) return null
   return await markedFrom({ label: relativeTo(root, path), text: fitted(text, NOTE) }, [path])
 }
-
 function listed(root: string, paths: readonly string[]): string {
   return paths.map((one) => `- ${relativeTo(root, one)}`).join('\n')
 }
-
 async function tagged(root: string, tag: string): Promise<string[]> {
   const found = new Set<string>()
   await searchSpace(
@@ -78,7 +69,6 @@ async function tagged(root: string, tag: string): Promise<string[]> {
   ).catch(() => undefined)
   return [...found]
 }
-
 async function pageAttachment(tabId: string, label: string): Promise<Attachment | null> {
   const tab = workspace.tabs.find((one) => one.id === tabId)
   const behind = tab ? noteBehind(tab) : null
@@ -94,7 +84,6 @@ async function pageAttachment(tabId: string, label: string): Promise<Attachment 
     untrusted: true,
   }
 }
-
 async function threadAttachment(space: string, id: string, label: string): Promise<Attachment | null> {
   const thread = await readThread(space, id).catch(() => null)
   if (!thread) return null
@@ -114,7 +103,6 @@ async function threadAttachment(space: string, id: string, label: string): Promi
     ...(readOutside(thread.turns) ? { untrusted: true } : {}),
   }
 }
-
 async function attachmentOf(
   chip: Mention,
   space: { id: string; root: string },
@@ -163,7 +151,6 @@ async function attachmentOf(
       return null
   }
 }
-
 export async function draftOf(
   text: string,
   chips: readonly Mention[],
@@ -200,7 +187,6 @@ export async function draftOf(
   }
   return { text, attachments, ...(chips.some((one) => one.kind === 'web') ? { web: true } : {}) }
 }
-
 function frontPath(root: string): string[] {
   const tab = workspace.panelTab
   const path = tab?.kind === 'note' && tab.path ? withinSpace(root, tab.path) : null

@@ -23,9 +23,7 @@ const written: { root: string; files: Planned[] }[] = []
 const spaces: { id: string; name: string; root: string }[] = []
 const said: string[] = []
 const marks: { path: string }[] = []
-
 const packed = (value: unknown) => toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(value))))
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push(`${command} ${String(args.file ?? args.profile)}`)
@@ -56,7 +54,6 @@ vi.mock('../../platform/src/tauri', () => ({
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
   isDesktop: true,
 }))
-
 vi.mock('./apply', () => ({
   applyImport: (plan: { files: Planned[] }, target: { root: string }) => {
     written.push({ root: target.root, files: plan.files })
@@ -66,7 +63,6 @@ vi.mock('./apply', () => ({
     })
   },
 }))
-
 vi.mock('../../ui-kit/src/busy.svelte', () => ({
   busy: { failed: (line: string) => void said.push(line) },
 }))
@@ -84,7 +80,6 @@ providePort('web.pages', {
   },
 })
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
-
 vi.mock('../../workspace/src/api', () => {
   let active: string | null = null
   return {
@@ -115,15 +110,12 @@ vi.mock('../../workspace/src/api', () => {
     },
   }
 })
-
 const { landBrowser } = await import('./browser-landing')
-
 const ENGINES = {
   version: 14,
   engines: [{ id: 'ddg', _name: 'DuckDuckGo', _isConfigEngine: true, _metaData: {} }],
   metaData: { appDefaultEngineId: 'google', defaultEngineId: 'ddg' },
 }
-
 const FIREFOX: BrowserProfile = {
   browser: 'firefox',
   name: 'default-release',
@@ -135,7 +127,6 @@ const FIREFOX: BrowserProfile = {
     'bookmarkbackups/bookmarks-2026-10-17.jsonlz4',
   ],
 }
-
 beforeEach(() => {
   files.clear()
   places = BOOKMARKS
@@ -151,13 +142,10 @@ beforeEach(() => {
   said.length = 0
   marks.length = 0
 })
-
 describe('a Firefox profile brought into Orden', () => {
   test('is a space of its tabs, its pinned tab an Essential, its bookmarks a folder', async () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))
-
     const space = await landBrowser(FIREFOX, false)
-
     expect(space.name).toBe('Firefox')
     const paths = written[0]?.files.map((one) => one.path) ?? []
     expect(paths).toContain('Mail.url')
@@ -168,65 +156,50 @@ describe('a Firefox profile brought into Orden', () => {
     expect(said).toEqual(['Containers stay in Firefox 2 pages not on the web stay behind'])
     expect(asked[0]).toBe('read_browser_file sessionstore-backups/recovery.jsonlz4')
   })
-
   test("wears its sites' marks, folds its history in and takes its engine", async () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))
     files.set('search.json.mozlz4', packed(ENGINES))
     marksOf = { 'https://mail.example.com/': 'data:image/png;base64,iVBORw0KGgo=' }
     history = [{ url: 'https://mail.example.com/', title: 'Mail', visits: 3, typed: 1, last: 9 }]
-
     await landBrowser({ ...FIREFOX, files: [...FIREFOX.files, 'favicons.sqlite', 'search.json.mozlz4'] }, false)
-
     const mail = written[0]?.files.find((one) => one.path === 'Mail.url')
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe('data:image/png;base64,iVBORw0KGgo=')
     expect(brought).toEqual([{ rows: history }])
     expect(engine).toMatchObject({ id: 'duckduckgo', chosen: true })
   })
-
   test('leaves an engine chosen here as it is, and says which the browser had', async () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))
     files.set('search.json.mozlz4', packed(ENGINES))
     Object.assign(engine, { id: 'bing', chosen: true })
-
     await landBrowser({ ...FIREFOX, files: [...FIREFOX.files, 'search.json.mozlz4'] }, false)
-
     expect(engine.id).toBe('bing')
     expect(said[0]).toContain('Firefox searches with DuckDuckGo: choose it in Settings to search with it here')
   })
-
   test("takes the day's copy of the bookmarks where the database cannot be read", async () => {
     places = null
     files.set('bookmarkbackups/bookmarks-2026-10-17.jsonlz4', packed(BOOKMARKS))
-
     await landBrowser(FIREFOX, true)
-
     expect(spaces.map((one) => one.name)).toEqual(['Firefox (default-release)'])
     expect(written[0]?.files.map((one) => one.path)).toContain('Bookmarks/Bookmarks menu/Recipes.url')
   })
-
   test('says so when nothing of the profile can be read', async () => {
     places = null
     await expect(landBrowser(FIREFOX, false)).rejects.toThrow('Nothing could be read out of Firefox.')
     expect(spaces).toEqual([])
   })
 })
-
 const CHROME: BrowserProfile = {
   browser: 'chrome',
   name: 'Person 1',
   path: '/chrome/Default',
   files: ['Bookmarks', 'Sessions/Session_13436813666016900', 'Sessions_Encrypted/Session_2'],
 }
-
 const bookmarksFile = () => toBase64(new TextEncoder().encode(JSON.stringify(chromium.BOOKMARKS)))
-
 describe('a Chrome profile brought into Orden', () => {
   test('is a space of its tabs and groups, its pinned tab an Essential, its bookmarks a folder', async () => {
     files.set('Bookmarks', bookmarksFile())
     files.set('Sessions/Session_13436813666016900', chromium.SESSION)
-
     const space = await landBrowser(CHROME, false)
-
     expect(space.name).toBe('Chrome')
     const paths = written[0]?.files.map((one) => one.path) ?? []
     expect(paths).toContain('mail.example.com.url')
@@ -235,7 +208,6 @@ describe('a Chrome profile brought into Orden', () => {
     expect(marks).toEqual([{ kind: 'note', path: 'mail.example.com.url', text: '' }])
     expect(said).toEqual(['1 page not on the web stays behind Saved tab groups and the reading list stay in Chrome'])
   })
-
   test("brings the Google account's bookmarks a signed-in profile keeps apart", async () => {
     const account = {
       roots: {
@@ -245,19 +217,14 @@ describe('a Chrome profile brought into Orden', () => {
       },
     }
     files.set('AccountBookmarks', toBase64(new TextEncoder().encode(JSON.stringify(account))))
-
     await landBrowser({ ...CHROME, files: ['AccountBookmarks', ...CHROME.files] }, false)
-
     const paths = written[0]?.files.map((one) => one.path) ?? []
     expect(paths).toEqual(['Bookmarks/Bookmarks bar/Wiki.url'])
   })
-
   test('brings the bookmarks alone where the session is encrypted, and says so', async () => {
     files.set('Bookmarks', bookmarksFile())
     files.set('Sessions_Encrypted/Session_2', toBase64(chromium.LOCKED))
-
     await landBrowser(CHROME, false)
-
     const paths = written[0]?.files.map((one) => one.path) ?? []
     expect(paths.every((path) => path.startsWith('Bookmarks/'))).toBe(true)
     expect(said).toEqual([
@@ -267,7 +234,6 @@ describe('a Chrome profile brought into Orden', () => {
     ])
   })
 })
-
 describe('an Arc profile brought into Orden', () => {
   const ARC_PROFILE: BrowserProfile = {
     browser: 'arc',
@@ -275,40 +241,32 @@ describe('an Arc profile brought into Orden', () => {
     path: '/Users/me/Library/Application Support/Arc/User Data/Default',
     files: ['Sessions/Session_13436813666016900', 'History', 'Favicons'],
   }
-
   test('is a space for each of its spaces, its Favorites the Essentials', async () => {
     arc = ARC
     files.set('Sessions/Session_13436813666016900', chromium.SESSION)
-
     const space = await landBrowser(ARC_PROFILE, false)
-
     expect(space.name).toBe('Personal')
     expect(spaces.map((one) => one.name)).toEqual(['Personal', 'Work'])
     expect(marks.map((one) => one.path)).toEqual(['Inbox.url', 'Calendar.url'])
     expect(said).toEqual(['Easels and notes stay in Arc'])
     expect(asked).not.toContain('read_browser_file Sessions/Session_13436813666016900')
   })
-
   test('is read as any Chromium where Arc keeps no sidebar', async () => {
     files.set('Sessions/Session_13436813666016900', chromium.SESSION)
     const space = await landBrowser(ARC_PROFILE, false)
     expect(space.name).toBe('Arc')
   })
 })
-
 const SAFARI: BrowserProfile = {
   browser: 'safari',
   name: 'Safari',
   path: '/Users/me/Library/Safari',
   files: [],
 }
-
 describe('Safari brought into Orden', () => {
   test('is a space of its tab groups, its pinned tab, its bookmarks and its Reading List', async () => {
     safari = { bookmarks: safariFiles.BOOKMARKS, tabs: safariFiles.TABS, session: null }
-
     const space = await landBrowser(SAFARI, false)
-
     expect(space.name).toBe('Safari')
     const paths = written[0]?.files.map((one) => one.path) ?? []
     expect(paths).toContain('Cars/One.url')
@@ -317,10 +275,8 @@ describe('Safari brought into Orden', () => {
     expect(marks).toEqual([{ kind: 'note', path: 'Mail.url', text: '' }])
     expect(said).toEqual(['1 page not on the web stays behind'])
   })
-
   test('opens Full Disk Access and says why where macOS kept the files back', async () => {
     safari = 'no access'
-
     await expect(landBrowser(SAFARI, false)).rejects.toThrow(
       'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.',
     )

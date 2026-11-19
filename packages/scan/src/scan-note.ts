@@ -7,7 +7,6 @@ import { readWebFile } from './shortcut'
 
 export const ICON_KEY = 'icon'
 export const ICON_COLOUR_KEY = 'icon-color'
-
 interface ScannedLink {
   kind: LinkKind
   target: string
@@ -18,7 +17,6 @@ interface ScannedLink {
   line: number
   text: string
 }
-
 export interface ScannedNote {
   path: string
   name: string
@@ -39,18 +37,13 @@ export interface ScannedNote {
   tasks?: ScannedTask[]
   stamp?: Stamp | null
 }
-
 export interface SpaceLinks {
   notes: ScannedNote[]
   files: string[]
 }
-
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
-
 const BASE_FENCE = /^[ \t>]*(?:`{3,}|~{3,})[ \t]*base(?:\s|$)/m
-
 const CONTEXT = 200
-
 export function scanNote(path: string, content: string): ScannedNote {
   const name = (path.split('/').pop() ?? path).replace(MARKDOWN, '')
   return {
@@ -80,10 +73,8 @@ export function scanNote(path: string, content: string): ScannedNote {
     })),
   }
 }
-
 export function scanShortcut(path: string, content: string): ScannedNote {
   const said = readWebFile(path, content)
-
   return {
     path,
     name: path.split('/').pop() ?? path,
@@ -101,9 +92,7 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     links: [],
   }
 }
-
 const noteTags = (content: string): string[] => [...new Set(tagsIn(content).map((tag) => tag.slice(1).toLowerCase()))]
-
 function contextAt(text: string, at: number): string {
   const from = text.lastIndexOf('\n', at) + 1
   const end = text.indexOf('\n', at)
@@ -112,22 +101,18 @@ function contextAt(text: string, at: number): string {
     .trim()
     .slice(0, CONTEXT)
 }
-
 const BARE_HEADING = /^ {0,3}#{1,6}[ \t](.*)$/
-
 const loose = (words: string): string =>
   words
     .replace(/[<>:"/\\|?* -]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
-
 export function saysNothing(content: string, name: string): boolean {
   const lines = stripFrontMatter(content)
     .split(/\r?\n/)
     .filter((line) => line.trim() !== '')
   if (lines.length === 0) return true
   if (lines.length > 1) return false
-
   const heading = BARE_HEADING.exec(lines[0] ?? '')
   if (heading === null) return false
   const words = (heading[1] ?? '').trim().replace(/#+$/, '').trim()

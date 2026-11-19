@@ -17,7 +17,6 @@ describe('blank', () => {
     expect(blank('login')).toMatchObject({ websites: [], passkeys: [], totp: '' })
   })
 })
-
 describe('contentIn', () => {
   it("keeps a custom item's chosen icon", () => {
     const custom = contentIn({ kind: 'custom', title: 'Bike', template: 't', mark: 'bike' })
@@ -25,7 +24,6 @@ describe('contentIn', () => {
     expect(contentIn(JSON.parse(JSON.stringify(custom)))).toEqual(custom)
     expect(contentIn({ kind: 'custom', title: 'Bike' })).not.toHaveProperty('mark')
   })
-
   it('fills what is missing', () => {
     const login = contentIn({
       kind: 'login',
@@ -44,7 +42,6 @@ describe('contentIn', () => {
       fields: [{ id: 'f1', name: 'PIN', kind: 'text', value: '' }],
     })
   })
-
   it('refuses the wrong type anywhere', () => {
     for (const bad of [
       null,
@@ -67,13 +64,11 @@ describe('contentIn', () => {
     ])
       expect(contentIn(bad)).toBeNull()
   })
-
   it('refuses an empty or missing id', () => {
     expect(contentIn({ kind: 'note', fields: [{ id: '' }] })).toBeNull()
     expect(contentIn({ kind: 'note', fields: [{ name: 'x' }] })).toBeNull()
     expect(contentIn({ kind: 'custom', sections: [{ id: '' }] })).toBeNull()
   })
-
   it('reads a word it does not know as the default', () => {
     expect(contentIn({ kind: 'card', brand: 'unionpay' })).toMatchObject({ brand: 'other' })
     expect(contentIn({ kind: 'wifi', security: 'wpa4' })).toMatchObject({ security: 'wpa2' })
@@ -88,13 +83,11 @@ describe('contentIn', () => {
       title: 'Mine',
     })
   })
-
   it('reads a field of an unknown kind as hidden', () => {
     expect(contentIn({ kind: 'note', fields: [{ id: 'f', kind: 'secret-question', value: 'v' }] })).toMatchObject({
       fields: [{ kind: 'hidden', value: 'v' }],
     })
   })
-
   it('drops keys and identity values it does not know', () => {
     const identity = contentIn({
       kind: 'identity',
@@ -111,14 +104,12 @@ describe('contentIn', () => {
     })
   })
 })
-
 describe('envelopeIn', () => {
   it('round-trips a new envelope', () => {
     const envelope = newEnvelope(blank('login'), 1000)
     expect(envelope).toMatchObject({ created: 1000, modified: 1000, monitored: true, v: 1 })
     expect(envelopeIn(JSON.parse(JSON.stringify(envelope)))).toEqual(envelope)
   })
-
   it('fills what is missing', () => {
     expect(envelopeIn({ content: { kind: 'note' }, created: 5 })).toEqual({
       v: 1,
@@ -133,7 +124,6 @@ describe('envelopeIn', () => {
       used: null,
     })
   })
-
   it('refuses the wrong type, another version and missing content', () => {
     for (const bad of [
       {},
@@ -148,7 +138,6 @@ describe('envelopeIn', () => {
     ])
       expect(envelopeIn(bad)).toBeNull()
   })
-
   it('keeps a trash time and a folder', () => {
     expect(envelopeIn({ content: { kind: 'note' }, trashed: 9, folder: 'f1', used: 3 })).toMatchObject({
       trashed: 9,
@@ -157,7 +146,6 @@ describe('envelopeIn', () => {
     })
   })
 })
-
 describe('vaultMetaIn', () => {
   it('fills defaults and reads unknown words as the default', () => {
     expect(vaultMetaIn({ name: 'Home', color: 'gold', icon: 'rocket' })).toEqual({
@@ -174,7 +162,6 @@ describe('vaultMetaIn', () => {
       folders: [{ id: 'f', name: 'A', parent: null }],
     })
   })
-
   it('keeps a chosen library icon on the vault and its folders', () => {
     const meta = vaultMetaIn({
       name: 'Home',
@@ -190,7 +177,6 @@ describe('vaultMetaIn', () => {
     expect(vaultMetaIn({ name: 'Home' })).not.toHaveProperty('mark')
     expect(vaultMetaIn({ name: 'Home', mark: '' })).not.toHaveProperty('mark')
   })
-
   it('refuses the wrong type', () => {
     expect(vaultMetaIn({ name: 1 })).toBeNull()
     expect(vaultMetaIn({ folders: [{ id: 'f', parent: 2 }] })).toBeNull()

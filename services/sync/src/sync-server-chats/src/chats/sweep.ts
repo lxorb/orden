@@ -1,7 +1,6 @@
 import { AT_A_TIME, places, type Env } from '../../../sync-server/src/api'
 import { noteChatFiles } from '../../../sync-server-engine/src/api'
 const KEPT_FOR = 30 * 24 * 60 * 60 * 1000
-
 export async function sweepChats(env: Env, at: number): Promise<number> {
   await env.DB.prepare(
     `update chats set ended_at = ?1
@@ -13,12 +12,10 @@ export async function sweepChats(env: Env, at: number): Promise<number> {
   )
     .bind(at)
     .run()
-
   const { results } = await env.DB.prepare('select id from chats where ended_at is not null and ended_at < ? limit ?')
     .bind(at - KEPT_FOR, AT_A_TIME)
     .all<{ id: string }>()
   if (!results.length) return 0
-
   const ids = results.map((one) => one.id)
   const list = places(ids.length)
   await env.DB.batch([

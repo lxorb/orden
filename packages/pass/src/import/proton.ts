@@ -26,9 +26,7 @@ import { csvRecords, type CsvRecord } from './csv'
 import type { Imported } from './types'
 
 const NAME = 'Proton Pass'
-
 const ENCRYPTED = 'The export is encrypted with a passphrase: export it again from Proton Pass without one.'
-
 const MODES: Record<number, MatchRule> = {
   0: 'domain',
   1: 'exact',
@@ -36,9 +34,7 @@ const MODES: Record<number, MatchRule> = {
   3: 'prefix',
   6: 'exact',
 }
-
 const WIFI: Record<number, string> = { 0: 'none', 1: 'wpa', 2: 'wpa2', 3: 'wpa3', 4: 'wep' }
-
 const IDENTITY: Record<string, IdentityKey> = {
   fullName: 'fullName',
   email: 'email',
@@ -73,11 +69,8 @@ const IDENTITY: Record<string, IdentityKey> = {
   workPhoneNumber: 'workPhone',
   workEmail: 'workEmail',
 }
-
 const KNOWN = ['login', 'note', 'alias', 'creditCard', 'identity', 'sshKey', 'wifi', 'custom']
-
 const IDENTITY_EXTRA = ['extraPersonalDetails', 'extraAddressDetails', 'extraContactDetails', 'extraWorkDetails']
-
 export function parseProton(data: string | Files): Imported {
   if (typeof data !== 'string') return parseProtonZip(data)
   const text = data.charCodeAt(0) === 0xfeff ? data.slice(1) : data
@@ -86,7 +79,6 @@ export function parseProton(data: string | Files): Imported {
   if (head.startsWith('{')) return parseProtonJson(text)
   return parseProtonCsv(text)
 }
-
 function parseProtonZip(files: Files): Imported {
   const names = Object.keys(files)
   if (names.some((name) => name.endsWith('data.pgp'))) return skippedOnly(NAME, ENCRYPTED)
@@ -95,7 +87,6 @@ function parseProtonZip(files: Files): Imported {
   if (bytes === undefined) throw new ImportError('The archive has no Proton Pass data.json.')
   return parseProtonJson(textOf(bytes))
 }
-
 function timestampText(value: unknown): string {
   const seconds = recordOf(value).seconds
   if (seconds !== undefined) return dayOf(dateOf(Number(stringOf(seconds))))
@@ -103,7 +94,6 @@ function timestampText(value: unknown): string {
   if (raw === '') return ''
   return /^\d{4}-\d{2}-\d{2}/.test(raw) ? raw.slice(0, 10) : dayOf(dateOf(raw))
 }
-
 function extraFieldOf(raw: unknown): Field | null {
   const field = recordOf(raw)
   const name = stringOf(field.fieldName)
@@ -121,26 +111,22 @@ function extraFieldOf(raw: unknown): Field | null {
   }
   return value === '' && name === '' ? null : fieldOf(name, value, kind)
 }
-
 function extraFieldsOf(raw: unknown): Field[] {
   return listOf(raw)
     .map(extraFieldOf)
     .filter((one): one is Field => one !== null)
 }
-
 function sectionsOf(raw: unknown): Section[] {
   return listOf(raw).map((one) => {
     const section = recordOf(one)
     return sectionOf(stringOf(section.sectionName), extraFieldsOf(section.sectionFields))
   })
 }
-
 function websitesWithModes(content: Record<string, unknown>): Website[] {
   const autofill = listOf(content.autofillUrls)
   if (autofill.length === 0) return websitesOf(listOf(content.urls).map(stringOf))
   return websitesMatched(autofill, (entry) => [entry.url, MODES[Number(entry.mode ?? 0)]])
 }
-
 function passkeysOf(raw: unknown): Passkey[] {
   return listOf(raw).map((one) => {
     const key = recordOf(one)
@@ -157,7 +143,6 @@ function passkeysOf(raw: unknown): Passkey[] {
     })
   })
 }
-
 function contentOf(item: Record<string, unknown>, aliasEmail: string): Content {
   const data = recordOf(item.data)
   const meta = recordOf(data.metadata)
@@ -244,7 +229,6 @@ function contentOf(item: Record<string, unknown>, aliasEmail: string): Content {
       return noteOf(title, note, fields)
   }
 }
-
 function parseProtonJson(text: string): Imported {
   const root = recordOf(jsonOf(text))
   if (root.encrypted === true) return skippedOnly(NAME, ENCRYPTED)
@@ -286,7 +270,6 @@ function parseProtonJson(text: string): Imported {
   }
   return into.result()
 }
-
 function jsonIn(text: string): unknown {
   try {
     return JSON.parse(text) as unknown
@@ -294,13 +277,11 @@ function jsonIn(text: string): unknown {
     return null
   }
 }
-
 function csvWebsites(row: CsvRecord): Website[] {
   const autofill = listOf(jsonIn(row.autofillUrls ?? ''))
   if (autofill.length > 0) return websitesWithModes({ autofillUrls: autofill })
   return websitesOf((row.url ?? '').split(/,\s*|\r?\n/))
 }
-
 function csvContentOf(row: CsvRecord, hasEmail: boolean): Content | null {
   const title = row.name ?? ''
   const note = row.note ?? ''
@@ -344,7 +325,6 @@ function csvContentOf(row: CsvRecord, hasEmail: boolean): Content | null {
       return noteOf(title, note)
   }
 }
-
 function parseProtonCsv(text: string): Imported {
   const rows = csvRecords(text)
   const first = rows[0]

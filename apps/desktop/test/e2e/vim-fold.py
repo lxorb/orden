@@ -1,17 +1,13 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 NOTE = "# Chapter one\n\nThe first words.\n\n- a list item\n  - a child of it\n  - another child\n- the last item\n\n# Chapter two\n\nThe second chapter.\n"
-
 DOC = "() => window.orden.state.doc.toString()"
 MODE = "() => window.ordenApp.modes.vimModeOf(window.orden)"
 FOLDED = "() => document.querySelectorAll('.orden-folded').length"
 IN_NOTE = "() => !!document.activeElement?.closest('.cm-content')"
-
 CARET_TO = """
 (words) => {
   const view = window.orden
@@ -20,43 +16,31 @@ CARET_TO = """
   view.focus()
 }
 """
-
-
 def caret_to(page: Page, words: str) -> None:
     page.evaluate(CARET_TO, words)
     DRIVE.settled(page)
-
-
 def normal(page: Page) -> None:
     page.keyboard.press("Escape")
     wait_for(page, f"({MODE})() === 'normal'", "normal mode")
-
-
 def folds(page: Page, count: int, what: str) -> None:
     DRIVE.waited(page, f"({FOLDED})() === {count}", what, patience=10)
     if not page.evaluate(IN_NOTE):
         wrong(f"{what}: the keyboard left the note")
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
     DRIVE.seed(page, NOTE)
     DRIVE.open_note(page, "Chapter one")
-
     page.evaluate("() => window.ordenApp.modes.setVimKeys(true)")
     wait_for(page, "document.querySelector('.cm-editor.orden-vim')", "modal editing")
-
     caret_to(page, "Chapter one")
     normal(page)
     page.keyboard.press("Tab")
     folds(page, 1, "Tab on a heading folds it")
     DRIVE.shot(page, "01-heading")
-
     page.keyboard.press("Escape")
     page.keyboard.press("Tab")
     folds(page, 0, "Escape and then Tab opens it again")
-
     caret_to(page, "a list item")
     normal(page)
     page.keyboard.press("Tab")
@@ -66,13 +50,11 @@ def drive(browser: Browser) -> None:
     DRIVE.shot(page, "02-list")
     page.keyboard.press("Tab")
     folds(page, 0, "Tab again opens the list item")
-
     page.keyboard.press("Shift+Tab")
     folds(page, 2, "Shift+Tab folds every heading")
     DRIVE.shot(page, "03-all")
     page.keyboard.press("Shift+Tab")
     folds(page, 0, "Shift+Tab again opens everything")
-
     caret_to(page, "the last item")
     normal(page)
     page.keyboard.press("A")
@@ -82,6 +64,4 @@ def drive(browser: Browser) -> None:
     if "  - the last item" not in page.evaluate(DOC):
         wrong("Tab in insert mode did not indent the list item")
     normal(page)
-
-
 raise SystemExit(DRIVE.run(drive, "Tab in Vim's normal mode folds, as Org mode does"))

@@ -8,11 +8,9 @@
   import { type ExplorerView, watchHeard } from './view.svelte'
 
   const { view, folder, lit = null }: { view: ExplorerView; folder: string; lit?: string | null } = $props()
-
   let entries = $state.raw<Entry[]>([])
   let listed = $state<string | null>(null)
   const SETTLED_MS = 120
-
   $effect(() => {
     const at = folder
     let gone = false
@@ -47,15 +45,12 @@
       stopWatching?.()
     }
   })
-
   const rows = $derived(ordered(entries, sortShown(explorerPrefs.sort, false), explorerPrefs.hidden))
-
   const SPARE = 8
   let scrollTop = $state(0)
   let height = $state(0)
   let rowHeight = $state(28)
   let scroller = $state<HTMLElement>()
-
   const drawn = $derived.by(() => {
     const first = Math.max(0, Math.floor(scrollTop / rowHeight) - SPARE)
     const last = Math.min(rows.length, Math.ceil((scrollTop + height) / rowHeight) + SPARE)
@@ -63,11 +58,9 @@
     for (let one = first; one < last; one++) at.push(one)
     return at
   })
-
   function measure(node: HTMLElement) {
     if (node.offsetHeight > 0) rowHeight = node.offsetHeight
   }
-
   function press(entry: Entry) {
     const path = joinPath(listed ?? folder, entry.name)
     if (entry.folder) void view.go(path)
@@ -111,14 +104,12 @@
     overflow-y: auto;
     border-inline-end: 1px solid var(--line);
   }
-
   .room {
     position: relative;
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   .room > li {
     position: absolute;
     inset-inline: 0;

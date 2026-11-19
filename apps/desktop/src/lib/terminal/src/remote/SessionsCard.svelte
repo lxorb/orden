@@ -7,16 +7,11 @@
   $effect(() => {
     void held.refresh()
   })
-
   const when = (stamp: number) => (stamp > 0 ? localDate(stamp, { dateStyle: 'short', timeStyle: 'short' }) : null)
-
   const machine = (row: HeldRow) => (row.host === null ? 'This computer' : (remote.byId(row.host)?.name ?? row.host))
-
   const named = (row: HeldRow) => row.name ?? row.program ?? machine(row)
-
   const state = (row: HeldRow) =>
     row.ended ? 'Ended' : row.open ? 'Open here' : row.watched ? 'Open elsewhere' : 'Detached'
-
   const facts = (row: HeldRow) => [
     machine(row),
     row.name !== null ? row.program : null,
@@ -24,14 +19,11 @@
     state(row),
     when(row.last),
   ]
-
   async function rename(row: HeldRow) {
     const typed = await prompt.ask({ title: 'Rename', value: named(row), confirmLabel: 'Rename' })
     if (typed !== null) await held.rename(row, typed)
   }
-
   const idle = $derived(held.idle().length)
-
   const sure = (title: string, them: string) =>
     prompt.confirm({
       title,
@@ -39,12 +31,10 @@
       confirmLabel: 'End',
       danger: true,
     })
-
   async function endIdle() {
     const title = idle === 1 ? 'End the idle session?' : `End ${idle} idle sessions?`
     if (await sure(title, 'them')) await held.endIdle()
   }
-
   async function end(row: HeldRow) {
     if (await sure(`End ${named(row)}?`, 'it')) await held.end(row)
   }
@@ -100,14 +90,12 @@
   .session {
     gap: var(--space-3);
   }
-
   .idle {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
   }
-
   .chips {
     display: flex;
     flex-wrap: wrap;

@@ -5,52 +5,42 @@ import { toPlainText } from './text'
 
 const TEXT = toPlainText(documentOf(CORPUS, CORPUS_NAME))
 const lines = TEXT.split('\n')
-
 function lineWith(text: string): string {
   const found = lines.find((line) => line.includes(text))
   expect(found, text).toBeDefined()
   return found!
 }
-
 const plain = (source: string) => toPlainText(documentOf(source, 'Note.md'))
-
 describe('a note as plain text', () => {
   test('carries no markdown marks at all', () => {
     for (const mark of ['**', '~~', '==', '`', '#', '[[', '](']) {
       expect(TEXT, mark).not.toContain(mark)
     }
   })
-
   test('ends with exactly one newline', () => {
     expect(TEXT.endsWith('\n')).toBe(true)
     expect(TEXT.endsWith('\n\n')).toBe(false)
   })
-
   test('never leaves three newlines in a row', () => {
     expect(TEXT).not.toContain('\n\n\n')
   })
-
   test('never leaves trailing space on a line', () => {
     expect(lines.filter((line) => /\s$/.test(line))).toEqual([])
   })
 })
-
 describe('headings', () => {
   test('are their own line, with the marks gone', () => {
     expect(lines).toContain('Export corpus')
     expect(lines).toContain('A table')
   })
-
   test('the title is not repeated when the first heading already says it', () => {
     expect(lines.filter((line) => line === 'Export corpus')).toHaveLength(1)
   })
-
   test('a title the body does not say heads the file', () => {
     const text = plain('---\ntitle: Meta\n---\n\nJust words.\n')
     expect(text.split('\n')[0]).toBe('Meta')
   })
 })
-
 describe('prose', () => {
   test('names a link’s address once, whatever is marked inside its words', () => {
     expect(
@@ -62,115 +52,91 @@ describe('prose', () => {
       ),
     ).toBe('Read the docs page (https://orden.so/docs) and snake_case rules (https://x.org).\n')
   })
-
   test('names a link’s address once around a picture or footnote mark in it, and for a linked picture', () => {
     const plain = (source: string) => toPlainText(documentOf(source, 'Note.md'))
-
     expect(plain('[see ![pic](p.png) here](https://x.org)\n')).toBe('see [pic] here (https://x.org)\n')
     expect(plain('[![CI](badge.png)](https://ci.org)\n')).toBe('[CI] (https://ci.org)\n')
   })
-
   test('keeps the words and drops the emphasis', () => {
     expect(lineWith('Prose with')).toContain('Prose with bold, italic, struck, marked, inline code')
   })
-
   test('writes a link as its words and then its address', () => {
     expect(TEXT).toContain('a link (https://orden.so)')
   })
-
   test('writes a link whose words are its address only once', () => {
     expect(plain('<https://orden.dev>\n').trim()).toBe('https://orden.dev')
   })
-
   test('keeps inline maths as the TeX it was written as', () => {
     expect(TEXT).toContain('E = mc^2')
   })
-
   test('marks a footnote reference with its label', () => {
     expect(lineWith('a footnote')).toContain('a footnote[one]')
   })
-
   test('names a picture in brackets, and a nameless one as a picture', () => {
     expect(lines).toContain('[Pasted picture]')
     expect(plain('![](a.png)\n').trim()).toBe('[picture]')
   })
 })
-
 describe('a table', () => {
   test('is drawn with its columns lined up', () => {
     const head = lineWith('Left')
     const rule = lines[lines.indexOf(head) + 1] ?? ''
     const first = lines[lines.indexOf(head) + 2] ?? ''
-
     expect(rule).toMatch(/^-+ {2}-+ {2}-+$/)
     expect(head.length).toBe(rule.length)
     expect(first.length).toBe(head.length)
   })
-
   test('lines a right aligned column up on the right', () => {
     const text = plain('| a |\n| --: |\n| 1 |\n| 222 |\n')
     expect(text.split('\n').slice(0, 4)).toEqual(['  a', '---', '  1', '222'])
   })
 })
-
 describe('code', () => {
   test('is kept exactly as it was written, indentation and all', () => {
     expect(TEXT).toContain('const answer: number = 42\n  const indented = true')
   })
-
   test('a diagram is kept as its own source too', () => {
     expect(TEXT).toContain('graph TD; A-->B')
   })
 })
-
 describe('lists', () => {
   test('keep a bullet, because the shape is the meaning', () => {
     expect(lines).toContain('- plain bullet')
   })
-
   test('indent what is nested under an item', () => {
     expect(lines).toContain('  - nested bullet')
   })
-
   test('number an ordered list as it was numbered', () => {
     expect(lines).toContain('1. first')
     expect(lines).toContain('2. second')
   })
-
   test('write a task as a box, ticked or not', () => {
     expect(lines).toContain('- [x] done')
     expect(lines).toContain('- [ ] open')
   })
-
   test('carry on from the number the list started at', () => {
     expect(plain('7. seven\n8. eight\n').trim().split('\n')).toEqual(['7. seven', '8. eight'])
   })
 })
-
 describe('the rest of the constructs', () => {
   test('a quote is marked down its left', () => {
     expect(lines).toContain('> A blockquote, with bold inside it.')
   })
-
   test('a callout says what kind it is first', () => {
     expect(lines).toContain('> Note')
     expect(lines).toContain('> Careful with that.')
   })
-
   test('display maths is its own lines of TeX', () => {
     expect(TEXT).toContain('\\int_0^1 x^2\\,dx = \\frac{1}{3}')
   })
-
   test('a definition list indents each meaning under its term', () => {
     expect(lines).toContain('Markdown')
     expect(lines).toContain('  A way of writing formatted text.')
     expect(lines).toContain('  Also the format itself.')
   })
-
   test('a rule is a run of dashes', () => {
     expect(lines.filter((line) => /^-{32}$/.test(line)).length).toBeGreaterThan(0)
   })
-
   test('the footnotes follow at the bottom, under a rule', () => {
     const at = lines.findIndex((line) => line.startsWith('[one] '))
     expect(at).toBeGreaterThan(0)
@@ -178,34 +144,28 @@ describe('the rest of the constructs', () => {
     expect(at).toBe(lines.length - 2)
   })
 })
-
 describe('a note with almost nothing in it', () => {
   test('comes out as one line', () => {
     expect(plain('Just words.\n')).toBe('Just words.\n')
   })
-
   test('an empty note comes out empty', () => {
     expect(plain('')).toBe('\n')
   })
 })
-
 describe('a very long note', { timeout: 30_000 }, () => {
   const MANY = 200_000
   const last = (source: string) =>
     toPlainText(documentOf(source, 'Long.md'))
       .split('\n')
       .filter((line) => line.includes(String(MANY - 1)))
-
   test('of more code lines than a call can take as arguments is written whole', () => {
     const code = Array.from({ length: MANY }, (_, at) => `line ${at}`).join('\n')
     expect(last(`\`\`\`\n${code}\n\`\`\`\n`)).toEqual([`line ${MANY - 1}`])
   })
-
   test('of more list items than a call can take as arguments is written whole', () => {
     const items = Array.from({ length: MANY }, (_, at) => `- item ${at}`).join('\n')
     expect(last(`${items}\n`)).toEqual([`- item ${MANY - 1}`])
   })
-
   test('of more table rows than a call can take as arguments is written whole', () => {
     const rows = Array.from({ length: MANY }, (_, at) => `| ${at} |`).join('\n')
     expect(last(`| n |\n| - |\n${rows}\n`)).toHaveLength(1)

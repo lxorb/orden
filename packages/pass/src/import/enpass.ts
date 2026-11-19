@@ -24,7 +24,6 @@ interface EnpassField {
   value: string
   sensitive: boolean
 }
-
 const IDENTITY_LABELS: Record<string, IdentityKey> = {
   'full name': 'fullName',
   name: 'fullName',
@@ -49,7 +48,6 @@ const IDENTITY_LABELS: Record<string, IdentityKey> = {
   occupation: 'jobTitle',
   website: 'website',
 }
-
 function fieldsIn(item: Record<string, unknown>): EnpassField[] {
   return listOf(item.fields)
     .map(recordOf)
@@ -62,7 +60,6 @@ function fieldsIn(item: Record<string, unknown>): EnpassField[] {
     }))
     .filter((one) => one.value !== '')
 }
-
 function extraOf(field: EnpassField): Extra {
   const kind: FieldKind =
     field.type === 'totp'
@@ -74,12 +71,10 @@ function extraOf(field: EnpassField): Extra {
           : 'text'
   return { name: field.label || field.type, value: field.value, kind }
 }
-
 function takeFirst(fields: EnpassField[], ...types: string[]): string {
   const at = fields.findIndex((one) => types.includes(one.type))
   return at < 0 ? '' : (fields.splice(at, 1)[0]?.value ?? '')
 }
-
 export function parseEnpass(text: string): Imported {
   const root = recordOf(jsonOf(text))
   const into = new Collector('Enpass')

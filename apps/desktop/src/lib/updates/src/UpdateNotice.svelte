@@ -19,16 +19,11 @@
     channel?: Channel
     ondismiss: () => void
   } = $props()
-
   const news = $derived(managed && !system)
-
   let command = $state<string | null>(null)
-
   const STAYS = 6000
-
   let pointer = $state(false)
   let keys = $state(false)
-
   function heldBy(card: HTMLElement) {
     const on = {
       pointerenter: () => (pointer = true),
@@ -44,16 +39,13 @@
       for (const [type, run] of Object.entries(on)) card.removeEventListener(type, run)
     }
   }
-
   $effect(() => {
     if (!news || pointer || keys) return
     const timer = setTimeout(ondismiss, STAYS)
     return () => clearTimeout(timer)
   })
-
   let restarting = $state(false)
   let moving = $state(false)
-
   $effect(() => {
     if (managed) return
     return whenLoaded(
@@ -61,7 +53,6 @@
       ({ stuck }) => void stuck().then((answer) => (moving = answer)),
     )
   })
-
   async function restart() {
     restarting = true
     try {
@@ -129,38 +120,31 @@
     background: var(--surface-3);
     box-shadow: var(--shadow-lg);
   }
-
   p {
     margin: 0;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     color: var(--text);
   }
-
   .shut {
     margin-inline-end: calc(-1 * var(--space-2));
   }
-
   .notice.is-told {
     flex-direction: column;
     align-items: stretch;
   }
-
   .is-told .actions {
     justify-content: flex-end;
   }
-
   .actions {
     display: flex;
     gap: var(--space-2);
     flex: none;
   }
-
   .orden-button {
     padding: var(--space-1) var(--space-3);
     font-size: var(--text-sm);
   }
-
   :global([data-touch]) .notice {
     grid-column: 1;
     justify-self: stretch;
@@ -169,22 +153,18 @@
     align-items: stretch;
     gap: var(--space-3);
   }
-
   :global([data-touch]) .actions {
     justify-content: flex-end;
   }
-
   :global([data-touch]) .orden-button {
     min-height: var(--touch-target);
     padding: 0 var(--space-4);
   }
-
   :global([data-touch]) .notice.is-news {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
   }
-
   :global([data-touch]) .shut {
     width: var(--touch-target);
     height: var(--touch-target);

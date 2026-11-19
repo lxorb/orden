@@ -5,11 +5,9 @@ import { describe, expect, test } from 'vitest'
 import { SOURCE, svelte, walk } from './files'
 
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
-
 const uncommented = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '')
 const tokens = uncommented(readFileSync(join(THEMES, 'tokens.css'), 'utf8'))
 const base = uncommented(readFileSync(join(THEMES, 'base.css'), 'utf8'))
-
 const SCALE = {
   '--screen-ask': '24rem',
   '--screen-sheet': '28rem',
@@ -19,47 +17,39 @@ const SCALE = {
   '--screen-tall': '44rem',
   '--screen-gutter': 'var(--space-5)',
 }
-
 function rule(css: string, selector: string): string | null {
   for (const one of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     if ((one[1] ?? '').trim() === selector) return one[2] ?? ''
   }
   return null
 }
-
 const layers = walk(SOURCE, svelte).flatMap((path) => {
   const text = readFileSync(path, 'utf8')
   const css = uncommented([...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1]).join('\n'))
   const name = path.slice(SOURCE.length).replace(/\\/g, '/')
   const fixed = /class="orden-screen(?: is-[a-z]+)* ([a-z-]+)"/.exec(text)?.[1]
   if (fixed) return [{ name, css, selector: `.${fixed}` }]
-
   const sometimes = /class="([a-z-]+)[^"]*"[^>]*?class:orden-screen=/.exec(text)?.[1]
   return sometimes ? [{ name, css, selector: `.${sometimes}.orden-screen` }] : []
 })
-
 describe('the scale', () => {
   test.each(Object.entries(SCALE))('%s is %s', (token, value) => {
     expect(tokens).toMatch(new RegExp(`${token}:\\s*${value.replace(/[()]/g, '\\$&')};`))
   })
-
   test('is rem both ways, so the two sides follow the reader together', () => {
     for (const [token, value] of Object.entries(SCALE)) {
       if (token !== '--screen-gutter') expect(value, token).toMatch(/rem$/)
     }
   })
 })
-
 describe('the rule', () => {
   const screen = rule(base, '.orden-screen') ?? ''
-
   test('hangs a layer from one line, holds it inside the window, and takes a width of the scale', () => {
     expect(screen).toContain('top: var(--screen-top)')
     expect(screen).toContain(
       'width: min(var(--screen-width, var(--screen-ask)), calc(100vw - 2 * var(--screen-gutter)))',
     )
   })
-
   test('gives a desktop its heights, and leaves a phone to each sheet', () => {
     for (const selector of [
       ':root:not([data-touch]) .orden-screen',
@@ -73,7 +63,6 @@ describe('the rule', () => {
     }
   })
 })
-
 describe('every layer in the middle of the window', () => {
   test('is found', () => {
     expect(layers.map((one) => one.name).sort()).toEqual([
@@ -95,13 +84,11 @@ describe('every layer in the middle of the window', () => {
       'lib/ui-controls/src/Sheet.svelte',
     ])
   })
-
   test.each(layers)('$name says where and how tall in no number of its own', ({ css, selector }) => {
     const own = rule(css, selector)
     expect(own, selector).not.toBeNull()
     expect(own).not.toMatch(/(^|[\s;])(top|height|max-height|translate|position):/)
   })
-
   test.each(layers)('$name is a width of the scale', ({ css, selector }) => {
     const width = /--screen-width:\s*([^;]+);/.exec(rule(css, selector) ?? '')?.[1]
     if (width === undefined) return

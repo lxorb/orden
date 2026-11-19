@@ -4,21 +4,16 @@
   import { pass, type PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
-
   const open = $derived(ui.sheet?.kind === 'adopt' && pass.conflict)
-
   let password = $state('')
   let busy = $state(false)
   let wrong = $state('')
-
   $effect(() => {
     if (!open) return
     password = ''
     wrong = ''
   })
-
   const close = () => (ui.sheet = null)
-
   async function adopted(event: SubmitEvent) {
     event.preventDefault()
     if (password === '' || busy) return

@@ -10,37 +10,30 @@
 
   const LENGTH = 6
   const blank = () => Array.from({ length: LENGTH }, () => '')
-
   let digits = $state<string[]>(blank())
   const boxes = $state<HTMLInputElement[]>([])
   let field = $state<HTMLInputElement>()
   let submitted = $state('')
   let signed = $state(false)
-
   const entered = $derived(digits.join(''))
   const asking = $derived(account.step === 'code' || account.step === 'second')
   const typed = $derived(/.+@.+\..+/.test(account.email.trim()))
-
   $effect(() => {
     if (!asking) setTimeout(() => field?.focus({ preventScroll: true }), 300)
   })
-
   $effect(() => {
     if (!asking) return
     digits = blank()
     submitted = ''
     setTimeout(() => boxes[0]?.focus(), 60)
   })
-
   let moving: ReturnType<typeof setTimeout> | undefined
   $effect(() => () => clearTimeout(moving))
-
   function again() {
     digits = blank()
     submitted = ''
     setTimeout(() => boxes[0]?.focus(), 0)
   }
-
   $effect(() => {
     if (entered.length !== LENGTH || entered === submitted) return
     submitted = entered
@@ -59,7 +52,6 @@
       })
       .catch(again)
   })
-
   function onDigit(index: number, event: Event) {
     const input = event.target as HTMLInputElement
     const value = input.value.replace(/\D/g, '')
@@ -73,7 +65,6 @@
     input.value = digits[index] ?? ''
     boxes[Math.min(index + value.length, LENGTH - 1)]?.focus()
   }
-
   function onDigitKey(index: number, event: KeyboardEvent) {
     if (event.key === 'Backspace' && !digits[index] && index > 0) {
       event.preventDefault()
@@ -83,14 +74,11 @@
     if (event.key === 'ArrowLeft' && index > 0) boxes[index - 1]?.focus()
     if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
   }
-
   function changeEmail() {
     account.step = 'email'
     account.error = null
   }
-
   $effect(() => closeOnBack(asking && !signed, changeEmail))
-
   function send() {
     if (typed && !account.busy) void account.requestCode()
   }
@@ -189,7 +177,6 @@
       0 20px 50px -18px rgb(91 75 224 / 0.45),
       inset 0 0 0 1px rgb(255 255 255 / 0.5);
   }
-
   .stack {
     display: flex;
     flex-direction: column;
@@ -197,23 +184,19 @@
     gap: 14px;
     width: 100%;
   }
-
   .muted {
     margin: 0;
     color: var(--muted);
     font-size: 14px;
     text-align: center;
   }
-
   .muted strong {
     color: var(--text);
   }
-
   .digits {
     display: flex;
     gap: 8px;
   }
-
   .digits input {
     width: 46px;
     height: 56px;
@@ -227,7 +210,6 @@
     font-family: var(--font-ui);
     font-variant-numeric: tabular-nums;
   }
-
   .link {
     border: 0;
     background: none;
@@ -236,12 +218,10 @@
     font-size: 14px;
     cursor: pointer;
   }
-
   .link:disabled {
     color: var(--muted);
     cursor: default;
   }
-
   .tick {
     width: 40px;
     height: 40px;
@@ -251,7 +231,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   @media (max-width: 640px) {
     .digits input {
       width: 40px;

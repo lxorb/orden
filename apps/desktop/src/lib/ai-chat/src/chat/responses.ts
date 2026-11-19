@@ -18,9 +18,7 @@ import {
 } from './wire'
 
 const NAMESPACE = 'orden'
-
 type Item = Record<string, unknown>
-
 function userItem(step: Extract<Step, { role: 'user' }>): Item {
   return {
     role: 'user',
@@ -33,7 +31,6 @@ function userItem(step: Extract<Step, { role: 'user' }>): Item {
     ],
   }
 }
-
 function outputItem(id: string, output: ToolOutput): Item {
   const words = output.text || ' '
   return {
@@ -50,7 +47,6 @@ function outputItem(id: string, output: ToolOutput): Item {
       : words,
   }
 }
-
 function callItem(call: Call): Item {
   return {
     type: 'function_call',
@@ -59,7 +55,6 @@ function callItem(call: Call): Item {
     arguments: typeof call.args === 'string' ? call.args : JSON.stringify(call.args ?? {}),
   }
 }
-
 export function itemsOf(steps: readonly Step[]): unknown[] {
   const out: unknown[] = []
   for (const step of steps) {
@@ -91,7 +86,6 @@ export function itemsOf(steps: readonly Step[]): unknown[] {
   }
   return out
 }
-
 function toolsOf(tools: readonly ToolDef[], plan: boolean, web: boolean): unknown[] {
   const functions = tools.map((one) => ({
     type: 'function',
@@ -113,7 +107,6 @@ function toolsOf(tools: readonly ToolDef[], plan: boolean, web: boolean): unknow
     ...search,
   ]
 }
-
 export const responses: Wire = {
   request(ask: Ask) {
     const plan = ask.provider.kind === 'chatgpt'
@@ -137,16 +130,13 @@ export const responses: Wire = {
     }
     return { url: conversationUrl(ask.provider), body, headers: {} }
   },
-
   reader(window) {
     return new ResponsesReader(window)
   },
-
   results(results) {
     return results.map((one) => outputItem(one.call.id, one.output))
   },
 }
-
 class ResponsesReader extends PartsReader implements Reader {
   private readonly drawn = new Map<number, number>()
   private readonly started = new Map<number, number>()
@@ -154,7 +144,6 @@ class ResponsesReader extends PartsReader implements Reader {
   private usage: Usage | undefined
   private incomplete = ''
   private over = false
-
   heard(event: unknown): Heard {
     const said = record(event)
     const index = Number(said.output_index)
@@ -191,7 +180,6 @@ class ResponsesReader extends PartsReader implements Reader {
         return { changed: [] }
     }
   }
-
   private added(index: number, item: Item): Heard {
     this.started.set(index, Date.now())
     const [id = '', verb] =
@@ -205,7 +193,6 @@ class ResponsesReader extends PartsReader implements Reader {
     this.drawn.set(index, at)
     return { changed: [at] }
   }
-
   private grew(index: number, kind: 'text' | 'thinking', words: string): Heard {
     let at = this.drawn.get(index)
     if (at === undefined) {
@@ -217,7 +204,6 @@ class ResponsesReader extends PartsReader implements Reader {
     if (part?.kind === 'text' || part?.kind === 'thinking') part.text += words
     return { changed: [at] }
   }
-
   private done(index: number, item: Item): Heard {
     this.items.set(index, item)
     const at = this.drawn.get(index)
@@ -233,11 +219,9 @@ class ResponsesReader extends PartsReader implements Reader {
     }
     return { changed: [at] }
   }
-
   finished(saidDone: boolean): boolean {
     return saidDone || this.over
   }
-
   answer(): Answer {
     const items = [...this.items.entries()].sort(([a], [b]) => a - b).map(([, one]) => sentBack(one))
     const calls: Call[] = items
@@ -261,7 +245,6 @@ class ResponsesReader extends PartsReader implements Reader {
     return { messages: items, calls, ending }
   }
 }
-
 function sentBack(item: Item): Item {
   const kept = { ...item }
   delete kept.id

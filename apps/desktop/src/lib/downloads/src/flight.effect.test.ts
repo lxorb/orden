@@ -6,23 +6,18 @@ vi.mock('../../platform/src/motion', async (importOriginal) => ({
   stillness: () => still,
   dur: (ms: number) => (still ? 0 : ms),
 }))
-
 const { said } = await import('../../ui-kit/src/api')
 const { started, stopFlights } = await import('./flight')
-
 interface Played {
   node: Element
   frames: Keyframe[]
   options: KeyframeAnimationOptions
   animation: Animation
 }
-
 let played: Played[] = []
-
 function box(node: Element, x: number, y: number, width: number, height: number) {
   node.getBoundingClientRect = () => ({ x, y, width, height }) as DOMRect
 }
-
 beforeEach(() => {
   still = false
   played = []
@@ -52,7 +47,6 @@ beforeEach(() => {
     })
     return animation as unknown as Animation
   }
-
   document.body.innerHTML = `
     <div data-panes>
       <div data-pane="left"><div class="webbar"><button data-opens="downloads" data-tab="a"></button></div></div>
@@ -71,19 +65,15 @@ beforeEach(() => {
   box(glyph('b'), 960, 4, 28, 28)
   box(document.getElementById('export') as Element, 100, 300, 80, 24)
 })
-
 afterEach(() => {
   stopFlights()
   vi.unstubAllGlobals()
 })
-
 const glyph = (tab: string): Element => document.querySelector(`[data-tab="${tab}"]`)!
 const flights = () => played.filter((one) => one.node.parentElement === document.body)
 const answers = (node: Element) => played.filter((one) => one.node === node)
-
 test("a page's file flies from its page to its own bar's glyph, which answers", async () => {
   await started('slides.pdf', { tab: 'b' })
-
   const [flight] = flights()
   expect(flight).toBeDefined()
   const card = flight?.node as HTMLElement
@@ -93,59 +83,47 @@ test("a page's file flies from its page to its own bar's glyph, which answers", 
   expect(card.style.pointerEvents).toBe('none')
   const last = flight?.frames.at(-1)?.transform
   expect(last).toContain(`translate(${String(974 - 750)}px, ${String(18 - 36)}px)`)
-
   flight?.animation.finish()
   expect(card.isConnected).toBe(false)
   expect(answers(glyph('b'))).toHaveLength(1)
   expect(answers(glyph('a'))).toHaveLength(0)
 })
-
 test('is said, for whoever is listening', async () => {
   await started('slides.pdf', { tab: 'a' })
   expect(said.words).toBe('Downloading slides.pdf')
 })
-
 test('an export flies from the control it was asked for by', async () => {
   const button = document.getElementById('export')
   await started('Trip.pdf', { element: button })
-
   const card = flights()[0]?.node as HTMLElement
   expect(card.style.left).toBe(`${String(140 - 14)}px`)
   expect(card.style.top).toBe(`${String(312 - 14)}px`)
 })
-
 test('with no glyph on screen, it goes to the corner and fades there', async () => {
   for (const one of document.querySelectorAll('[data-opens="downloads"]')) one.remove()
   await started('Trip.pdf', {})
-
   const [flight] = flights()
   expect(flight).toBeDefined()
   expect(flight?.frames.at(-1)?.opacity).toBe('0')
 })
-
 test('a burst is a handful of flights, one after another, and the glyph answers each', async () => {
   await Promise.all(Array.from({ length: 8 }, (_, index) => started(`${String(index)}.pdf`, { tab: 'a' })))
-
   const going = flights()
   expect(going).toHaveLength(5)
   const delays = going.map((one) => one.options.delay)
   expect(new Set(delays).size).toBe(5)
   expect(answers(glyph('a'))).toHaveLength(3)
 })
-
 test('the window changing size ends every flight in the air', async () => {
   await started('one.pdf', { tab: 'a' })
   await started('two.pdf', { tab: 'b' })
   const cards = flights().map((one) => one.node)
-
   window.dispatchEvent(new Event('resize'))
   expect(cards.every((one) => !one.isConnected)).toBe(true)
 })
-
 test('a reader who asked for less movement sees no flight, only the glyph answering', async () => {
   still = true
   await started('slides.pdf', { tab: 'a' })
-
   expect(flights()).toHaveLength(0)
   const [answer] = answers(glyph('a'))
   expect(answer).toBeDefined()

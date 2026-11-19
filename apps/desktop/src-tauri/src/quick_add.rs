@@ -5,20 +5,14 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Manager as _, Webview, WebviewUrl, WebviewWindowBuilder};
 
 const LABEL: &str = "orden-quick-add";
-
 const WIDTH: f64 = 600.0;
 const HEIGHT: f64 = 150.0;
-
 const PROBE_KEY: &str = "ORDEN_QUICK_ADD_KEY";
-
 static HOST: Mutex<Option<String>> = Mutex::new(None);
-
 static ASKED_AT_LAUNCH: AtomicBool = AtomicBool::new(false);
-
 fn host() -> Option<String> {
     HOST.held().clone()
 }
-
 fn key_allowed(asked: Option<String>, probe: Option<String>, away: bool) -> Option<String> {
     let asked = asked.filter(|key| !key.trim().is_empty())?;
     if away {
@@ -27,7 +21,6 @@ fn key_allowed(asked: Option<String>, probe: Option<String>, away: bool) -> Opti
         Some(asked)
     }
 }
-
 #[tauri::command]
 pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> Option<String> {
     if !orden_base::labels::is_document_window(webview.label()) {
@@ -43,13 +36,11 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
     }
     held
 }
-
 pub fn asked_at_launch(argv: &[std::ffi::OsString]) {
     if crate::hotkeys::Which::asked_by(argv).contains(&crate::hotkeys::Which::QuickAdd) {
         ASKED_AT_LAUNCH.store(true, Ordering::Relaxed);
     }
 }
-
 pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
     let window = match app.get_webview_window(LABEL) {
         Some(window) => window,
@@ -71,7 +62,6 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
     orden_placement::placement::raised(&window.as_ref().window());
     orden_placement::placement::keyboard_to(window.as_ref());
 }
-
 fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<orden_base::Engine>> {
     let builder = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-add.html".into()))
         .initialization_script(orden_carry::old_home::script())
@@ -86,16 +76,12 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<orden_bas
         .visible(false);
     #[cfg(not(any(target_os = "macos", windows)))]
     let builder = builder.disable_drag_drop_handler();
-
     let builder = builder
         .min_inner_size(WIDTH, HEIGHT)
         .max_inner_size(WIDTH, HEIGHT);
-
     let builder = crate::engine::own_profile(builder);
-
     orden_placement::placement::built(builder)
 }
-
 fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<orden_base::Engine>) {
     let Ok(pointer) = app.cursor_position() else {
         let _ = window.center();
@@ -112,9 +98,7 @@ fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<orden_base::Engi
     let y = f64::from(area.position.y) + f64::from(area.size.height) / 4.0;
     let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
 }
-
 const TALL: f64 = 420.0;
-
 #[tauri::command]
 pub fn quick_add_tall(app: AppHandle, webview: Webview, tall: bool) {
     if webview.label() != LABEL {
@@ -125,7 +109,6 @@ pub fn quick_add_tall(app: AppHandle, webview: Webview, tall: bool) {
         let _ = window.set_size(tauri::LogicalSize::new(WIDTH, height));
     }
 }
-
 #[tauri::command]
 pub fn quick_add_hide(app: AppHandle, webview: Webview, raise: bool) {
     if webview.label() != LABEL {
@@ -140,7 +123,6 @@ pub fn quick_add_hide(app: AppHandle, webview: Webview, raise: bool) {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,7 +138,6 @@ mod tests {
         assert_eq!(key_allowed(asked, probe.clone(), true), probe);
         assert_eq!(key_allowed(None, probe, true), None);
     }
-
     #[test]
     fn the_probe_key_is_the_id_the_probe_presses() {
         use std::str::FromStr as _;

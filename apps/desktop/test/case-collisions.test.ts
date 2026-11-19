@@ -3,9 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { ROOT } from './files'
 
 const TRACKED = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean)
-
 const MODULE_SUFFIXES = ['.svelte.ts', '.svelte.js']
-
 function collisions(paths: readonly string[]): string[][] {
   const byFolded = new Map<string, string[]>()
   for (const path of paths) {
@@ -14,7 +12,6 @@ function collisions(paths: readonly string[]): string[][] {
   }
   return [...byFolded.values()].filter((same) => same.length > 1)
 }
-
 function shadowed(paths: readonly string[]): string[][] {
   const components = new Map<string, string>()
   for (const path of paths) {
@@ -29,16 +26,13 @@ function shadowed(paths: readonly string[]): string[][] {
   }
   return found
 }
-
 describe('files on a disk that ignores case', () => {
   test('no two tracked paths differ in case alone', () => {
     expect(collisions(TRACKED)).toEqual([])
   })
-
   test('a module never sits beside a component of the same name in another case', () => {
     expect(shadowed(TRACKED)).toEqual([])
   })
-
   test('the check knows the shape it refuses', () => {
     expect(collisions(['a/Setup.svelte', 'a/setup.svelte'])).toEqual([['a/Setup.svelte', 'a/setup.svelte']])
     expect(shadowed(['a/Setup.svelte', 'a/setup.svelte.ts'])).toEqual([['a/setup.svelte.ts', 'a/Setup.svelte']])

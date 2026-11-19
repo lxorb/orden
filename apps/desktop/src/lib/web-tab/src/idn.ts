@@ -2,12 +2,9 @@ import { hostsReadBy } from '@orden/scan/web-address'
 
 const WITH_MARKS = `Arabic Bengali Devanagari Ethiopic Georgian Gujarati Gurmukhi Hebrew Kannada
   Khmer Lao Malayalam Myanmar Oriya Sinhala Tamil Telugu Thai Tibetan`.split(/\s+/)
-
 const WITHOUT_MARKS = ['Armenian', 'Cyrillic', 'Greek']
-
 const LATIN = 'a-zà-öø-ÿāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįĵķĺļľłńņňŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷźżžșțơưẁẃẅ\\u1EA1-\\u1EF9'
 const CJK = '\\p{Script=Han}'
-
 const TOGETHER = [
   LATIN,
   ...WITHOUT_MARKS.map((one) => `\\p{Script=${one}}`),
@@ -16,14 +13,12 @@ const TOGETHER = [
   `${LATIN}${CJK}\\p{Script=Bopomofo}`,
   `${LATIN}${CJK}\\p{Script=Hangul}`,
 ]
-
 let allowed: RegExp[] | null = null
 function isAllowed(label: string): boolean {
   if (label.includes('ς')) return false
   allowed ??= TOGETHER.map((one) => new RegExp(`^[${one}0-9-]+$`, 'u'))
   return allowed.some((one) => one.test(label))
 }
-
 const KNOWN = new Set(
   (
     'adobe amazon apple bing binance chase chatgpt cloudflare coinbase commerzbank discord dhl' +
@@ -33,7 +28,6 @@ const KNOWN = new Set(
     ' yahoo youtube zoom'
   ).split(' '),
 )
-
 function plainLatin(label: string): string {
   return label
     .normalize('NFD')
@@ -48,7 +42,6 @@ function plainLatin(label: string): string {
     .replaceAll('ŧ', 't')
     .replaceAll('ŋ', 'n')
 }
-
 const LOOKALIKES: { letters: RegExp; endings: RegExp }[] = [
   {
     letters: /^[аысԁеԍһіюјкӏорԗԛѕԝхуъьҽпгѵѡ0-9-]+$/u,
@@ -57,7 +50,6 @@ const LOOKALIKES: { letters: RegExp; endings: RegExp }[] = [
   { letters: /^[αικνρυωηοτ0-9-]+$/u, endings: /^(?:gr|\p{Script=Greek}+)$/u },
   { letters: /^[ագզէլհյոսւօՙ0-9-]+$/u, endings: /^(?:am|\p{Script=Armenian}+)$/u },
 ]
-
 const BASE = 36
 const T_MIN = 1
 const T_MAX = 26
@@ -65,7 +57,6 @@ const SKEW = 38
 const DAMP = 700
 const INITIAL_N = 128
 const INITIAL_BIAS = 72
-
 function decoded(input: string): string | null {
   const dash = input.lastIndexOf('-')
   const out = dash > 0 ? Array.from(input.slice(0, dash), (one) => one.charCodeAt(0)) : []
@@ -83,7 +74,6 @@ function decoded(input: string): string | null {
       if (digit < t) break
       weight *= BASE - t
     }
-
     const length = out.length + 1
     let delta = before === 0 ? Math.floor((i - before) / DAMP) : (i - before) >> 1
     delta += Math.floor(delta / length)
@@ -93,7 +83,6 @@ function decoded(input: string): string | null {
       k += BASE
     }
     bias = k + Math.floor(((BASE - T_MIN + 1) * delta) / (delta + SKEW))
-
     n += Math.floor(i / length)
     if (n > 0x10ffff) return null
     i %= length
@@ -101,7 +90,6 @@ function decoded(input: string): string | null {
   }
   return String.fromCodePoint(...out)
 }
-
 function isSameLabel(shown: string, label: string): boolean {
   try {
     return new URL(`http://${shown}/`).hostname === label
@@ -109,7 +97,6 @@ function isSameLabel(shown: string, label: string): boolean {
     return false
   }
 }
-
 function labelAs(label: string, ending: string): string {
   if (!label.startsWith('xn--')) return label
   const shown = decoded(label.slice(4))
@@ -118,40 +105,32 @@ function labelAs(label: string, ending: string): string {
   const passes = LOOKALIKES.some((one) => one.letters.test(shown) && !one.endings.test(ending))
   return passes ? label : shown
 }
-
 function shownHost(host: string): string {
   if (!host.includes('xn--')) return host
-
   const port = /:\d+$/.exec(host)?.[0] ?? ''
   const labels = host.slice(0, host.length - port.length).split('.')
   const last = labels.at(-1) ?? ''
   const tld = last.startsWith('xn--') ? (decoded(last.slice(4)) ?? last) : last
   return labels.map((one) => labelAs(one, tld)).join('.') + port
 }
-
 export function shownSite(site: string): string {
   const scheme = /^(?:view-source:)?(?:http:\/\/)?/.exec(site)?.[0] ?? ''
   return scheme + shownHost(site.slice(scheme.length))
 }
-
 export function shownUrl(url: string): string {
   if (!url.includes('xn--')) return url
   const inner = /^view-source:/i.test(url) ? url.slice('view-source:'.length) : null
   if (inner !== null) return `view-source:${shownUrl(inner)}`
-
   let parsed: URL
   try {
     parsed = new URL(url)
   } catch {
     return url
   }
-
   if (parsed.username || parsed.password) return url
   return url.replace(parsed.host, () => shownHost(parsed.host))
 }
-
 export function meantBy(said: string, url: string | null): string {
   return url !== null && said === shownUrl(url) ? url : said
 }
-
 hostsReadBy(shownHost)

@@ -12,7 +12,6 @@ function deletedElsewhere(name: string): Promise<'gone' | 'stuck'> {
     new Promise<'stuck'>((resolve) => setTimeout(() => resolve('stuck'), 2000)),
   ])
 }
-
 describe('a store of the browser that another tab deletes', () => {
   test('lets it go at once and opens again for what is asked next', async () => {
     const held = heldDatabase('held-one', 1, (request) => request.result.createObjectStore('s'))

@@ -3,23 +3,19 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 
 const { SidebarToggle } = await import('../../src/lib/titlebar/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
-
 let shown: ReturnType<typeof mount>
 let toggle: HTMLButtonElement
-
 beforeEach(() => {
   workspace.closePanel()
   shown = mount(SidebarToggle, { target: document.body, props: { unseen: true } })
   flushSync()
   toggle = document.querySelector<HTMLButtonElement>('[data-side-toggle]')!
 })
-
 afterEach(() => {
   void unmount(shown)
   document.body.replaceChildren()
   workspace.closePanel()
 })
-
 test('is said and not shown, named for a screen reader, and still opens the list', () => {
   expect(toggle.classList.contains('orden-said')).toBe(true)
   expect(toggle.getAttribute('aria-label')).toBe('Show left sidebar')
@@ -28,7 +24,6 @@ test('is said and not shown, named for a screen reader, and still opens the list
   flushSync()
   expect(workspace.openOn('left')).toBeTruthy()
 })
-
 test('is seen while the keyboard is on it, and said again once it leaves', () => {
   toggle.matches = (selector: string) => selector === ':focus-visible'
   toggle.focus()
@@ -38,18 +33,15 @@ test('is seen while the keyboard is on it, and said again once it leaves', () =>
   flushSync()
   expect(toggle.classList.contains('orden-said')).toBe(true)
 })
-
 test('the drawer head on a phone says it and does not show it, and the bar shows a way back', async () => {
   Element.prototype.scrollIntoView = () => undefined
   globalThis.ResizeObserver = class {
     observe() {
       // Nothing to measure.
     }
-
     unobserve() {
       // Nothing to measure.
     }
-
     disconnect() {
       // Nothing to measure.
     }
@@ -73,18 +65,15 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
     expect(inHead.classList.contains('orden-said')).toBe(true)
     expect(inHead.getAttribute('aria-label')).toBe('Hide left sidebar')
     expect(host.querySelector('header [data-side-toggle="left"]')).toBeNull()
-
     inHead.click()
     flushSync()
     expect(workspace.openOn('left')).toBeFalsy()
-
     const back = host.querySelector<HTMLButtonElement>('header [data-phone-back]')!
     expect(back.classList.contains('orden-said')).toBe(false)
     expect(back.getAttribute('aria-label')).toBe('Back')
     back.click()
     flushSync()
     expect(workspace.openOn('left')).toBe('tree')
-
     fullscreen.on = true
     workspace.showPanel('tree')
     flushSync()

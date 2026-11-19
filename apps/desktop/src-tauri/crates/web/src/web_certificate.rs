@@ -14,7 +14,6 @@ pub struct Party {
     pub name: String,
     pub organization: Vec<String>,
 }
-
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Link {
@@ -26,7 +25,6 @@ pub struct Link {
     pub sha256: String,
     pub root: bool,
 }
-
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Certificate {
@@ -34,12 +32,10 @@ pub struct Certificate {
     pub separately: bool,
     pub chain: Vec<Link>,
 }
-
 pub struct Served {
     pub secure: bool,
     pub chain: Vec<Vec<u8>>,
 }
-
 #[tauri::command]
 pub async fn web_certificate(
     app: AppHandle,
@@ -61,9 +57,7 @@ pub async fn web_certificate(
     let chain = separately::read(address).await;
     Ok(Certificate::from_chain(true, true, &chain))
 }
-
 const PATIENCE: Duration = Duration::from_secs(5);
-
 async fn read(view: tauri::Webview) -> Option<Served> {
     use tauri::Manager as _;
 
@@ -82,7 +76,6 @@ async fn read(view: tauri::Webview) -> Option<Served> {
         .ok()
         .flatten()
 }
-
 impl Certificate {
     fn from_chain(secure: bool, separately: bool, chain: &[Vec<u8>]) -> Option<Self> {
         let chain: Vec<Link> = chain.iter().map_while(|der| Link::from_der(der)).collect();
@@ -93,7 +86,6 @@ impl Certificate {
         })
     }
 }
-
 impl Link {
     fn from_der(der: &[u8]) -> Option<Self> {
         let read = x509::fields(der)?;
@@ -108,7 +100,6 @@ impl Link {
         })
     }
 }
-
 fn hex(bytes: &[u8]) -> String {
     bytes
         .iter()
@@ -116,7 +107,6 @@ fn hex(bytes: &[u8]) -> String {
         .collect::<Vec<_>>()
         .join(":")
 }
-
 #[cfg(test)]
 mod tests {
     use super::x509::tests::{der, INTERMEDIATE, ROOT, SITE};
@@ -127,7 +117,6 @@ mod tests {
         assert_eq!(hex(&[0x0a, 0xff, 0x10]), "0A:FF:10");
         assert_eq!(hex(&[]), "");
     }
-
     #[test]
     fn the_whole_chain_is_told_site_first_up_to_the_root() {
         let said = Certificate::from_chain(true, false, &[der(SITE), der(INTERMEDIATE), der(ROOT)])
@@ -142,7 +131,6 @@ mod tests {
             "69:78:C9:7A:DE:D0:CA:09:18:2D:0E:ED:A7:D5:C4:48:8C:18:83:26:80:C8:D6:8C:D1:FA:66:60:9A:D8:9E:E8"
         );
     }
-
     #[test]
     fn a_chain_is_cut_where_a_certificate_cannot_be_read() {
         let said = Certificate::from_chain(false, true, &[der(SITE), vec![1, 2, 3], der(ROOT)])
@@ -155,7 +143,6 @@ mod tests {
         );
         assert_eq!(Certificate::from_chain(true, false, &[]), None);
     }
-
     #[test]
     fn the_popover_is_told_in_its_own_words() {
         let told = serde_json::to_value(

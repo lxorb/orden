@@ -15,30 +15,23 @@
   import { trap } from '../../ui-controls/src/api'
 
   let { open = $bindable(false) }: { open?: boolean } = $props()
-
   let versions = $state<Version[]>([])
   let selected = $state<Version | null>(null)
   let preview = $state('')
   let previewOf = $state<Tab | null>(null)
   let comparing = $state(true)
-
   const shut = $derived(protection.locked(workspace.active?.path))
-
   $effect(() => {
     if (open && shut) open = false
   })
-
   $effect(() => {
     if (!open) return
-
     const path = workspace.active?.path
     if (!path || shut) {
       versions = []
       return
     }
-
     let current = true
-
     void versionsOf(path)
       .then((found) => {
         if (!current) return
@@ -48,12 +41,10 @@
       .catch(() => {
         if (current) versions = []
       })
-
     return () => {
       current = false
     }
   })
-
   $effect(() => {
     const tab = workspace.active
     if (!selected || shut) {
@@ -61,9 +52,7 @@
       previewOf = null
       return
     }
-
     let current = true
-
     void versionText(selected, tab?.path ?? '')
       .then((body) => {
         if (!current) return
@@ -75,50 +64,38 @@
         preview = ''
         previewOf = null
       })
-
     return () => {
       current = false
     }
   })
-
   const difference = $derived(lineDiff(preview, workspace.active?.note.text ?? ''))
   const changes = $derived(trimmed(difference))
   const counted = $derived(diffCount(difference))
-
   interface Row {
     month?: string
     version?: Version
   }
-
   const rows = $derived.by((): Row[] => {
     if (modes.keepVersions < KEEP_YEAR) return versions.map((version) => ({ version }))
-
     const out: Row[] = []
     let said = ''
-
     for (const version of versions) {
       const month = localDate(version.at, { month: 'long', year: 'numeric' })
-
       if (month !== said) {
         out.push({ month })
         said = month
       }
-
       out.push({ version })
     }
-
     return out
   })
-
   async function restore() {
     const tab = previewOf
     if (!preview || !tab?.path || !canWriteIn(tab.note)) return
-
     await recovery.keep(tab.path, tab.note.text)
     await workspace.restoreVersion(preview, tab)
     open = false
   }
-
   $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
   $effect(() => closeOnBack(open, () => (open = false)))
 </script>
@@ -195,12 +172,10 @@
 <style>
   .sheet {
     --screen-width: var(--screen-pair);
-
     z-index: var(--z-sheet);
     display: flex;
     overflow: hidden;
   }
-
   .empty {
     margin: auto;
     padding: var(--space-5);
@@ -208,7 +183,6 @@
     font-size: var(--text-sm);
     text-align: center;
   }
-
   .versions {
     width: 15rem;
     flex: none;
@@ -218,15 +192,12 @@
     overflow-y: auto;
     border-inline-end: 1px solid var(--line);
   }
-
   .versions .month p {
     margin: var(--space-3) 0 var(--space-1);
   }
-
   .versions .month:first-child p {
     margin-top: 0;
   }
-
   .versions button {
     width: 100%;
     display: flex;
@@ -244,26 +215,21 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .versions button:hover {
     background: var(--item-hover-bg-color);
   }
-
   .versions button:active {
     background: var(--press);
   }
-
   .versions button.active {
     background: var(--accent-soft);
     color: var(--text-strong);
   }
-
   .versions kbd {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .versions em {
     flex: 1;
     min-width: 0;
@@ -275,7 +241,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .preview {
     flex: 1;
     min-width: 0;
@@ -284,7 +249,6 @@
     padding: var(--space-4);
     gap: var(--space-3);
   }
-
   pre {
     flex: 1;
     margin: 0;
@@ -299,13 +263,11 @@
     color: var(--muted-strong);
     white-space: pre-wrap;
   }
-
   .faces {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .faces button {
     padding: 4px 9px;
     border: none;
@@ -319,41 +281,33 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .faces button:hover {
     background: var(--item-hover-bg-color);
   }
-
   .faces button:active {
     background: var(--press);
   }
-
   .faces button.on {
     background: var(--accent-soft);
     color: var(--text-strong);
   }
-
   .tally {
     margin-inline-start: auto;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .tally ins,
   .tally del {
     text-decoration: none;
   }
-
   .tally ins {
     color: var(--success);
   }
-
   .tally del {
     margin-inline-start: var(--space-2);
     color: var(--danger);
   }
-
   .diff {
     flex: 1;
     overflow: auto;
@@ -365,11 +319,9 @@
     font-size: var(--text-xs);
     line-height: 1.6;
   }
-
   .diff.same {
     display: flex;
   }
-
   .row {
     display: flex;
     gap: var(--space-3);
@@ -377,7 +329,6 @@
     color: var(--muted-strong);
     white-space: pre-wrap;
   }
-
   .gutter {
     flex: none;
     width: 2.5em;
@@ -386,26 +337,21 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .text {
     min-width: 0;
     flex: 1;
   }
-
   .row.added {
     background: color-mix(in srgb, var(--success) 14%, transparent);
     color: var(--text-strong);
   }
-
   .row.removed {
     background: color-mix(in srgb, var(--danger) 14%, transparent);
     color: var(--text-strong);
   }
-
   .orden-button {
     align-self: flex-start;
   }
-
   :global([data-touch]) .sheet {
     top: auto;
     bottom: 0;
@@ -416,14 +362,12 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
   }
-
   :global([data-touch]) .versions button {
     min-height: var(--touch-row);
     gap: var(--touch-gap);
     padding: 0 var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   :global([data-touch]) .faces button {
     min-height: var(--touch-target);
     padding: 0 var(--space-3);

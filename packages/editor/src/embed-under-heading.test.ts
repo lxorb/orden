@@ -22,14 +22,12 @@ function blocks(doc: string): string[] {
   })
   return out
 }
-
 describe('a note embed on the line right under a heading', () => {
   test('is drawn as the note, as the reading view draws it', () => {
     const doc = '## Plan\n![[Plan]]'
     expect(renderMarkdown(doc, { resolveEmbed: () => 'words' })).toContain('class="embed"')
     expect(blocks(doc)).toEqual(['![[Plan]]'])
   })
-
   test('right after front matter is drawn as the note', () => {
     expect(blocks('---\ntags: a\n---\n![[Plan]]')).toEqual(['![[Plan]]'])
   })

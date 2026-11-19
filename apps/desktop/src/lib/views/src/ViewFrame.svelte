@@ -17,14 +17,12 @@
   import { layoutOf } from './words'
 
   const { kit, title }: { kit: Kit; title: string } = $props()
-
   const live = $derived(kit.live)
   const layout = $derived(layoutOf(live.view?.type ?? 'table'))
   let adding = $state(false)
   let asked = $state(0)
   const ghost = ghostOwner()
   onDestroy(ghost.release)
-
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     const target = event.target
     if (keyElsewhere(event, event.currentTarget)) return
@@ -45,9 +43,7 @@
       add()
     }
   }
-
   let boardAdding = $state(0)
-
   function add() {
     if (!kit.adds) return
     if (layout === 'kanban' && (live.view?.orden.rows ?? 'notes') === 'notes') {
@@ -105,39 +101,32 @@
     background: var(--bg);
     color: var(--text);
   }
-
   .frame.compact {
     height: auto;
     max-height: 560px;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
   }
-
   .adding {
     padding: var(--space-1) var(--space-2) 0;
   }
-
   .body {
     flex: 1;
     min-height: 0;
     overflow: auto;
   }
-
   .body.fills {
     overflow: hidden;
   }
-
   .compact .body.fills {
     height: 420px;
   }
-
   .partial {
     margin: 0;
     padding: var(--space-1) var(--space-3);
     color: var(--muted-strong);
     font-size: var(--text-xs);
   }
-
   .empty {
     margin: var(--space-4);
     color: var(--muted);

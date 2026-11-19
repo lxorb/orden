@@ -8,7 +8,6 @@ export function flushStart(paneId: string): boolean {
   const tabs = workspace.tabsIn(paneId)
   return !(workspace.showing(paneId) && tabs.some((one) => one.trail.length > 1))
 }
-
 export function flushFirst(paneId: string): boolean {
   const first = workspace.tabsIn(paneId)[0]
   return !!first && first.id === workspace.panes.at(paneId)?.activeTabId && flushStart(paneId)

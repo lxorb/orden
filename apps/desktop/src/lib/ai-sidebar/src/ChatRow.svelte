@@ -40,7 +40,6 @@
     onpoint?: () => void
     place?: Place
   } = $props()
-
   const brand = $derived(providerBrand(ai.provider(head.provider)?.kind, head.model))
   const logo = $derived(brand === null ? null : readIcon(brandIcon(brand)))
   const archived = $derived(state === 'archived')
@@ -118,13 +117,11 @@
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
   }
-
   .item.away {
     position: absolute;
     left: 0;
     right: 0;
   }
-
   .row {
     grid-column: 1 / -1;
     grid-row: 1;
@@ -144,7 +141,6 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .main {
     grid-column: 1;
     display: flex;
@@ -153,25 +149,20 @@
     min-width: 0;
     padding-inline-start: var(--row-pad);
   }
-
   .row.lit {
     background: var(--surface-hover);
   }
-
   .row.open {
     background: var(--surface-press);
     color: var(--text-strong);
   }
-
   .row.archived {
     color: var(--muted);
   }
-
   .row.is-unread .title {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .logo {
     flex: none;
     display: block;
@@ -179,7 +170,6 @@
     height: var(--icon-md);
     color: var(--muted-strong);
   }
-
   .title {
     flex: 1;
     min-width: 0;
@@ -187,7 +177,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .pinned,
   .act svg {
     flex: none;
@@ -199,11 +188,9 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .pinned {
     color: var(--muted);
   }
-
   .tail {
     grid-column: 2;
     grid-row: 1;
@@ -213,51 +200,42 @@
     padding-inline: var(--row-gap) var(--row-pad);
     pointer-events: none;
   }
-
   .slot {
     display: grid;
     align-items: center;
     justify-items: start;
   }
-
   .slot > * {
     grid-area: 1 / 1;
   }
-
   .when {
     color: var(--muted);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-
   .acts {
     display: flex;
     gap: 1px;
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .act {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
   }
-
   .act.on {
     color: var(--accent);
   }
-
   .dots {
     stroke-width: 2.2;
   }
-
   .item:hover .acts,
   .item:focus-within .acts,
   :global([data-touch]) .acts {
     opacity: 1;
     pointer-events: auto;
   }
-
   .item:hover .when,
   .item:focus-within .when,
   :global([data-touch]) .when {

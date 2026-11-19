@@ -4,7 +4,6 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 let front: string | null = null
 const asked: string[] = []
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -23,9 +22,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(null)
   },
 }))
-
 const channels: { onmessage: ((message: unknown) => void) | null }[] = []
-
 vi.mock('../../src/lib/crate/src/native', () => ({
   Channel: class {
     onmessage: ((message: unknown) => void) | null = null
@@ -35,10 +32,8 @@ vi.mock('../../src/lib/crate/src/native', () => ({
   },
   invoke: () => Promise.resolve(null),
 }))
-
 let typing: ((data: string) => void) | null = null
 let titling: ((title: string) => void) | null = null
-
 vi.mock('@xterm/xterm', () => ({
   Terminal: class {
     cols = 80
@@ -102,25 +97,19 @@ vi.mock('@xterm/addon-unicode11', () => ({
     activate = () => undefined
   },
 }))
-
 const STRIP = 900
-
 class Measured {
   constructor(private readonly told: ResizeObserverCallback) {}
-
   observe(target: Element) {
     queueMicrotask(() => this.told([{ target } as ResizeObserverEntry], this))
   }
-
   unobserve() {
     // Nothing is watched for long enough to need it.
   }
-
   disconnect() {
     // Said above.
   }
 }
-
 globalThis.ResizeObserver = Measured
 Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
   configurable: true,
@@ -145,7 +134,6 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 Element.prototype.getAnimations = () => []
 Element.prototype.scrollIntoView = () => undefined
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { readSpec, writeSpec } = await import('../../src/lib/terminal/src/spec')
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
@@ -157,10 +145,8 @@ await import('../../src/lib/terminal/src/TerminalMark.svelte')
 await import('../../src/lib/tab-strip/src/ops')
 await import('../../src/lib/features')
 await tabKindLoaded('terminal')
-
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
-
 beforeEach(() => {
   front = null
   asked.length = 0
@@ -171,7 +157,6 @@ beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   if (shown) void unmount(shown, { outro: false })
   shown = null
@@ -179,7 +164,6 @@ afterEach(() => {
   flushSync()
   target.remove()
 })
-
 function terminal() {
   const words = writeSpec({ shell: 'pwsh', folder: 'C:\\work', key: 'k', name: null })
   workspace.openUnsaved('terminal', words, 'PowerShell')
@@ -187,7 +171,6 @@ function terminal() {
   if (!tab) throw new Error('no terminal')
   return tab
 }
-
 async function strip() {
   const tab = terminal()
   shown = mount(Tabs, { target, props: { paneId: workspace.panes.focusedId } })
@@ -197,11 +180,9 @@ async function strip() {
   })
   return tab
 }
-
 const pick = () => target.querySelector<HTMLElement>('.pick')
 const label = () => target.querySelector('.label')?.textContent
 const field = () => target.querySelector<HTMLInputElement>('input.field')
-
 async function fieldUp(): Promise<HTMLInputElement> {
   await vi.waitFor(() => {
     flushSync()
@@ -211,101 +192,81 @@ async function fieldUp(): Promise<HTMLInputElement> {
   if (!up) throw new Error('no field')
   return up
 }
-
 function bytesOf(text: string): ArrayBuffer {
   const encoded = new TextEncoder().encode(text)
   const buffer = new ArrayBuffer(encoded.length)
   new Uint8Array(buffer).set(encoded)
   return buffer
 }
-
 function typeIn(input: HTMLInputElement, words: string, key = 'Enter') {
   input.value = words
   input.dispatchEvent(new Event('input', { bubbles: true }))
   input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
   flushSync()
 }
-
 test('a double click names a terminal in the strip, and an empty name gives it back', async () => {
   const tab = await strip()
   expect(label()).toBe('PowerShell')
-
   pick()?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
   const input = await fieldUp()
   expect(input.value).toBe('PowerShell')
-
   typeIn(input, 'api server')
   await vi.waitFor(() => expect(tab.shown).toBe('api server'))
   flushSync()
   expect(field()).toBeNull()
   expect(label()).toBe('api server')
   expect(readSpec(tab.doc)?.name).toBe('api server')
-
   pick()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', bubbles: true }))
   typeIn(await fieldUp(), '')
   await vi.waitFor(() => expect(tab.shown).toBe('PowerShell'))
   expect(readSpec(tab.doc)?.name).toBeNull()
 })
-
 test('Escape leaves the name as it was, and the menu offers the same field', async () => {
   const tab = await strip()
-
   const rename = tabMenu(tab, tab.paneId).find((row) => row !== null && 'label' in row && row.label === 'Rename') as
     { run: () => void } | undefined
   expect(rename).toBeDefined()
   rename?.run()
-
   typeIn(await fieldUp(), 'never', 'Escape')
   expect(field()).toBeNull()
   expect(tab.shown).toBe('PowerShell')
   expect(readSpec(tab.doc)?.name).toBeNull()
 })
-
 test('a name comes back with the tab', async () => {
   const tab = terminal()
   await renameTerminal(tab, 'builds')
-
   workspace.close(tab.id)
   expect(workspace.tabs).toHaveLength(0)
   await workspace.reopenClosed()
-
   const back = workspace.tabs.at(-1)
   expect(back?.shown).toBe('builds')
   expect(readSpec(back?.doc ?? '')?.name).toBe('builds')
 })
-
 test('the tab says what runs in it, the title its program set, and the shell again after', async () => {
   const tab = terminal()
   const place = document.createElement('div')
   document.body.append(place)
   await sessionOf(tab).attach(place, false)
   await vi.waitFor(() => expect(asked).toContain('pty_spawn'))
-
   await vi.waitFor(() => expect(tab.shown).toBe('PowerShell, work'))
-
   titling?.('C:\\Program Files\\PowerShell\\7\\pwsh.exe')
   flushSync()
   expect(tab.shown).toBe('PowerShell, work')
-
   front = 'claude'
   typing?.('claude\r')
   await vi.waitFor(() => expect(tab.shown).toBe('claude, work'))
   expect(tab.running?.program).toBe('claude')
-
   titling?.('⠐ Fix the parser')
   await vi.waitFor(() => expect(tab.shown).toBe('Fix the parser'))
-
   await renameTerminal(tab, 'mine')
   titling?.('✳ Fix the parser')
   await vi.waitFor(() => expect(tab.shown).toBe('mine'))
   await renameTerminal(tab, '')
   await vi.waitFor(() => expect(tab.shown).toBe('Fix the parser'))
-
   front = null
   channels.at(-1)?.onmessage?.(bytesOf('\x1b]133;A\x07PS C:\\work> '))
   await vi.waitFor(() => expect(tab.shown).toBe('PowerShell, work'))
   expect(tab.running?.program).toBeNull()
-
   expect(asked.filter((one) => one === 'pty_program').length).toBeLessThanOrEqual(2)
   place.remove()
 })

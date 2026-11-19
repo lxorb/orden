@@ -7,13 +7,10 @@ import { fileURLToPath } from 'node:url'
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const PASS = join(ROOT, 'packages/pass')
 const SOURCE = 'https://api.2fa.directory/v4/totp.json'
-
 const { getDomain } = createRequire(join(PASS, 'package.json'))('tldts')
-
 const response = await fetch(SOURCE)
 if (!response.ok) throw new Error(`${SOURCE} answered ${response.status}`)
 const listed = await response.json()
-
 const entries = Array.isArray(listed) ? listed : Object.entries(listed)
 const sites = new Set()
 for (const [key, entry] of entries) {
@@ -25,7 +22,6 @@ for (const [key, entry] of entries) {
   }
 }
 if (sites.size < 500) throw new Error(`${SOURCE} listed only ${sites.size} sites`)
-
 const words = [...sites].sort()
 const lines = []
 let line = ''
@@ -38,7 +34,6 @@ for (const word of words) {
   }
 }
 if (line !== '') lines.push(line)
-
 const out = `const LISTED = \`
 ${lines.join('\n')}
 \`

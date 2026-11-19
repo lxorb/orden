@@ -26,12 +26,9 @@ export interface World {
   now: number
   addressOf?: (path: string) => string | null
 }
-
 const LIFT = { bookmarked: 6, recent: 8, here: -24, unavailable: -30, about: 12 }
-
 const noteKey = (path: string) => `note:${path}`
 const pageKey = (url: string) => `page:${url}`
-
 function addressOf(url: string): string {
   try {
     return shownAddress(url)
@@ -39,11 +36,9 @@ function addressOf(url: string): string {
     return url
   }
 }
-
 function tabKey(tab: OpenTab): string {
   return tab.path ? noteKey(tab.path) : tab.url ? pageKey(tab.url) : `tab:${tab.id}`
 }
-
 export function rowKey(row: Row): string | null {
   switch (row.kind) {
     case 'note':
@@ -71,14 +66,12 @@ export function rowKey(row: Row): string | null {
       return null
   }
 }
-
 interface Readings {
   names?: readonly string[]
   also?: readonly string[]
   lift?: number
   more?: number
 }
-
 function candidate(
   kind: Kind,
   name: string,
@@ -88,7 +81,6 @@ function candidate(
 ): Candidate<Row> {
   const key = rowKey(item)
   const fold = (list: readonly string[]) => list.filter(Boolean).map(foldName)
-
   return {
     key,
     kind,
@@ -100,9 +92,7 @@ function candidate(
     item,
   }
 }
-
 const hostOf = (address: string) => address.split('/')[0] ?? address
-
 interface Reading {
   root: string
   key: string
@@ -111,13 +101,10 @@ interface Reading {
   name: string
   also: string[]
 }
-
 const readings = new WeakMap<Entry, Reading>()
-
 function readingOf(entry: Entry, root: string): Reading {
   const kept = readings.get(entry)
   if (kept?.root === root) return kept
-
   const shown = shownName(entry.name)
   const relative = relativeTo(root, entry.path)
   const reading: Reading = {
@@ -131,26 +118,21 @@ function readingOf(entry: Entry, root: string): Reading {
   readings.set(entry, reading)
   return reading
 }
-
 function sharing(files: readonly Entry[], root: string): (alike: string) => boolean {
   const named = new Map<string, number>()
   for (const one of files) {
     const { alike } = readingOf(one, root)
     named.set(alike, (named.get(alike) ?? 0) + 1)
   }
-
   return (alike) => (named.get(alike) ?? 0) > 1
 }
-
 function recentFirst(files: readonly Entry[], place: ReadonlyMap<string, number>): Entry[] {
   const lately: Entry[] = []
   const rest: Entry[] = []
   for (const entry of files) (place.has(entry.path) ? lately : rest).push(entry)
-
   lately.sort((a, b) => (place.get(a.path) ?? 0) - (place.get(b.path) ?? 0))
   return [...lately, ...rest]
 }
-
 export function candidates(world: World): Candidate<Row>[] {
   const out: Candidate<Row>[] = []
   const shared = sharing(world.files, world.root)
@@ -159,12 +141,10 @@ export function candidates(world: World): Candidate<Row>[] {
     const at = place.get(path)
     return at === undefined ? 0 : LIFT.recent * (1 - at / Math.max(world.recent.length, 1))
   }
-
   const marked = new Set(
     world.bookmarks.filter((one) => one.kind === 'note').map((one) => insideSpace(world.root, one.path)),
   )
   const lifted = (path: string) => recency(path) + (marked.has(path) ? LIFT.bookmarked : 0)
-
   const open = new Set<string>()
   const openPages = new Set<string>()
   for (const tab of world.tabs) {
@@ -172,7 +152,6 @@ export function candidates(world: World): Candidate<Row>[] {
     if (open.has(key)) continue
     open.add(key)
     if (tab.url) openPages.add(tab.url)
-
     const relative = tab.path ? withinSpace(world.root, tab.path) : null
     const folder = relative ? folderOf(relative) || null : null
     out.push(
@@ -189,14 +168,11 @@ export function candidates(world: World): Candidate<Row>[] {
       ),
     )
   }
-
   for (const entry of recentFirst(world.files, place)) {
     const reading = readingOf(entry, world.root)
     if (open.has(reading.key)) continue
-
     const url = world.addressOf?.(entry.path) ?? null
     const address = url ? foldName(addressOf(url)) : null
-
     out.push({
       key: reading.key,
       kind: 'note',
@@ -208,9 +184,7 @@ export function candidates(world: World): Candidate<Row>[] {
       item: { kind: 'note', entry, folder: reading.folder, shared: shared(reading.alike) },
     })
   }
-
   out.push(...bookmarkCandidates(world))
-
   for (const command of world.commands) {
     const lift =
       (command.disabled ? LIFT.unavailable : 0) +
@@ -222,10 +196,8 @@ export function candidates(world: World): Candidate<Row>[] {
       }),
     )
   }
-
   for (const visit of world.pages) {
     if (openPages.has(visit.url)) continue
-
     const address = addressOf(visit.url)
     out.push(
       candidate(
@@ -237,7 +209,6 @@ export function candidates(world: World): Candidate<Row>[] {
       ),
     )
   }
-
   for (const host of world.hosts) {
     out.push(
       candidate('host', host.name, { kind: 'host', host }, world, {
@@ -246,7 +217,6 @@ export function candidates(world: World): Candidate<Row>[] {
       }),
     )
   }
-
   const groups = __EVEN_PLUGIN__ ? [] : [...new Set(world.hosts.flatMap((host) => (host.group ? [host.group] : [])))]
   for (const group of groups) {
     const hosts = world.hosts.filter((host) => host.group === group)
@@ -256,11 +226,9 @@ export function candidates(world: World): Candidate<Row>[] {
       }),
     )
   }
-
   const commanded = new Set(world.commands.map((one) => foldName(one.label)))
   for (const setting of world.settings) {
     if (commanded.has(foldName(setting.label))) continue
-
     out.push(
       candidate('setting', setting.label, { kind: 'setting', setting }, world, {
         names: setting.names,
@@ -268,17 +236,13 @@ export function candidates(world: World): Candidate<Row>[] {
       }),
     )
   }
-
   return out
 }
-
 function bookmarkCandidates(world: World): Candidate<Row>[] {
   const out: Candidate<Row>[] = []
   const files = new Map(world.files.map((one) => [one.path, one]))
-
   for (const mark of world.bookmarks) {
     if (mark.kind === 'note' || mark.kind === 'group') continue
-
     if (mark.kind === 'search' || mark.kind === 'graph') {
       out.push(
         candidate(
@@ -290,13 +254,11 @@ function bookmarkCandidates(world: World): Candidate<Row>[] {
       )
       continue
     }
-
     const inside = mark.kind === 'block' ? (mark.path.split('#')[0] ?? '') : mark.path
     const path = insideSpace(world.root, inside)
     const folder = mark.kind === 'folder'
     const entry = files.get(path)
     if (!entry && !folder) continue
-
     const name = entry ? shownName(entry.name) : rowName(inside.split('/').at(-1) ?? inside, true)
     const label = folder ? name : mark.text
     out.push(
@@ -316,16 +278,13 @@ function bookmarkCandidates(world: World): Candidate<Row>[] {
       ),
     )
   }
-
   return out
 }
-
 export function headingCandidates(
   headings: readonly { line: number; text: string; level: number }[],
   nested: boolean,
 ): Candidate<Row>[] {
   const top = headings.reduce((least, one) => Math.min(least, one.level), Infinity)
-
   return headings.map((one) => ({
     key: null,
     kind: 'heading',
@@ -343,7 +302,6 @@ export function headingCandidates(
     },
   }))
 }
-
 export function resting(
   all: readonly Candidate<Row>[],
   world: Pick<World, 'recent' | 'active'>,
@@ -351,18 +309,15 @@ export function resting(
   most: number,
 ): Row[] {
   const here = (one: Candidate<Row>) => one.item.kind === 'tab' && one.item.tab.id === world.active
-
   const byKey = new Map<string, Candidate<Row>>()
   for (const one of all) {
     if (one.key && !here(one) && !byKey.has(one.key)) byKey.set(one.key, one)
   }
-
   const timed: { one: Candidate<Row>; at: number }[] = []
   for (const [key, one] of byKey) {
     const at = last(key)
     if (at !== null) timed.push({ one, at })
   }
-
   const out = new Set(timed.sort((a, b) => b.at - a.at).map(({ one }) => one))
   for (const path of world.recent) {
     const one = byKey.get(noteKey(path))
@@ -372,6 +327,5 @@ export function resting(
     if (out.size >= most) break
     if (one.item.kind === 'note') out.add(one)
   }
-
   return [...out].slice(0, most).map((one) => one.item)
 }

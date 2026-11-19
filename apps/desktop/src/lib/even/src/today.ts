@@ -6,21 +6,16 @@ interface Held {
   text: string
   done: boolean
 }
-
 export interface TodayHost {
   load: () => Promise<readonly { at: string; text: string }[]>
   tick: (id: string, done: boolean) => Promise<boolean>
   redraw: () => void
 }
-
 const OPEN = '□ '
 const DONE = '■ '
-
 export class Today {
   private held: Held[] = []
-
   constructor(private readonly host: TodayHost) {}
-
   rows(): Row[] {
     return this.held.map((one) => ({
       label: `${one.done ? DONE : OPEN}${shownWords(one.text)}`,
@@ -31,9 +26,7 @@ export class Today {
       id: one.id,
     }))
   }
-
   private asked = 0
-
   fresh(): void {
     const mine = ++this.asked
     void this.host
@@ -45,7 +38,6 @@ export class Today {
       })
       .catch(() => undefined)
   }
-
   tick(id: string): void {
     const one = this.held.find((row) => row.id === id)
     if (!one) return
@@ -61,7 +53,6 @@ export class Today {
       })
   }
 }
-
 export function spokenTask(said: string): string {
   return said
     .trim()

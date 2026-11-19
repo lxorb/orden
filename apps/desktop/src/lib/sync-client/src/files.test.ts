@@ -5,7 +5,6 @@ import { SpaceState } from './places'
 import type { Change, EntryRow } from './store'
 
 const ROOT = '/r'
-
 function row(id: string, name: string, local: string, key: string): EntryRow {
   return {
     id,
@@ -22,7 +21,6 @@ function row(id: string, name: string, local: string, key: string): EntryRow {
     deleted: false,
   }
 }
-
 function fixture(bytes: string, role = 'owner') {
   const disk = new MemoryDisk()
   disk.folders.add(ROOT)
@@ -80,14 +78,11 @@ function fixture(bytes: string, role = 'owner') {
   }
   return { disk, entry, space, core, downs, held, sent, answers, committed }
 }
-
 describe('a file at the place its own entry wants, with no entry holding it', () => {
   test('is that entry’s file, not a stranger the next scan names " 2" (#1630)', async () => {
     const { entry, space, core, downs, held } = fixture('{"v":1}')
     entry.file_key = 'hash:{"v":1}'
-
     expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
-
     expect(entry.local_path).toBe('App.application')
     expect(entry.written_hash).toBe('hash:{"v":1}')
     expect(space.at('App.application')).toBe(entry)
@@ -95,26 +90,20 @@ describe('a file at the place its own entry wants, with no entry holding it', ()
     expect(downs).toEqual([])
     expect(held.size).toBe(0)
   })
-
   test('with other bytes is left alone, to be kept beside it as a file of its own', async () => {
     const { entry, space, core, downs, held } = fixture('{"v":1, "host":"other"}')
     entry.file_key = 'hash:{"v":1}'
-
     expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
-
     expect(entry.local_path).toBe('')
     expect(held.size).toBe(0)
     expect(downs).toEqual([])
   })
-
   test('is awaited by its entry until then, so a scan makes no second one', () => {
     const { space } = fixture('{"v":1}')
-
     expect(space.awaitedAt('App.application')?.id).toBe('a')
     expect(space.awaitedAt('Other.application')).toBeNull()
   })
 })
-
 describe('a file changed on another device', () => {
   test('is not written over a change made here while its bytes come down', async () => {
     const { disk, entry, space, core, held } = fixture('old')
@@ -126,14 +115,11 @@ describe('a file changed on another device', () => {
       await disk.writeBytes(`${ROOT}/App.application`, new TextEncoder().encode('edited here'))
       return down(spaceId, id)
     }
-
     expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
-
     const kept = await disk.readBytes(`${ROOT}/App.application`)
     expect(new TextDecoder().decode(kept ?? new Uint8Array())).toBe('edited here')
     expect(held.has('a')).toBe(true)
   })
-
   test('nor over a file another program puts at its place while its bytes come down', async () => {
     const { disk, entry, space, core } = fixture('old')
     await disk.remove(`${ROOT}/App.application`)
@@ -142,15 +128,12 @@ describe('a file changed on another device', () => {
       await disk.writeBytes(`${ROOT}/App.application`, new TextEncoder().encode('made here'))
       return down(spaceId, id)
     }
-
     expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
-
     const kept = await disk.readBytes(`${ROOT}/App.application`)
     expect(new TextDecoder().decode(kept ?? new Uint8Array())).toBe('made here')
     expect(entry.written_hash).not.toBe('hash:from the account')
   })
 })
-
 describe('a file changed here in a space this account can only read', () => {
   function changed(role: string) {
     const made = fixture('old', role)
@@ -170,12 +153,9 @@ describe('a file changed here in a space this account can only read', () => {
     new TextDecoder().decode((await disk.readBytes(path)) ?? new Uint8Array())
   const said = (committed: Change[]) =>
     committed.flatMap((one) => (one.t === 'put' && one.table === 'log' ? [one.row.failed ?? ''] : []))
-
   test('sends nothing, goes to the trash, says so, and the account’s file comes back', async () => {
     const { disk, space, core, downs, sent, committed, trashed } = changed('read')
-
     expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
-
     expect(sent).toEqual([])
     expect(trashed).toEqual([`${ROOT}/App.application`])
     expect(await text(disk, `${ROOT}/App.application`)).toBe('from the account')
@@ -184,20 +164,16 @@ describe('a file changed here in a space this account can only read', () => {
       'you can only read this space, so your change to App.application went to Recently deleted',
     ])
   })
-
   test('and when the account refuses it before this device knew, it is said all the same', async () => {
     const { disk, space, core, sent, answers, committed, trashed } = changed('write')
     answers.replaced = { refused: 'role' }
-
     expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
-
     expect(sent).toEqual(['up hash:edited here', 'replace a hash:edited here'])
     expect(trashed).toEqual([`${ROOT}/App.application`])
     expect(await text(disk, `${ROOT}/App.application`)).toBe('from the account')
     expect(said(committed)).toHaveLength(1)
   })
 })
-
 describe('a file changed here whose bytes the account says it lacks', () => {
   test('is tried again, not dropped', async () => {
     const { disk, entry, space, core, answers } = fixture('old', 'write')
@@ -206,9 +182,7 @@ describe('a file changed here whose bytes the account says it lacks', () => {
     await disk.writeBytes(`${ROOT}/App.application`, new TextEncoder().encode('edited here'))
     answers.replaced = { lost: true }
     core.touched.add('a')
-
     expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
-
     expect(core.touched.has('a')).toBe(true)
   })
 })

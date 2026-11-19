@@ -6,9 +6,7 @@ export interface Scroller {
   rtl: boolean
   keeps: boolean
 }
-
 const SLACK = 0.5
-
 export function taken(chain: readonly Scroller[]): Record<Side, boolean> {
   const both = { left: false, right: false }
   for (const one of chain) {
@@ -20,7 +18,6 @@ export function taken(chain: readonly Scroller[]): Record<Side, boolean> {
   }
   return both
 }
-
 export function chainOf(from: Element | null, root: Element): Scroller[] {
   const chain: Scroller[] = []
   for (let at = from; at; at = at.parentElement) {

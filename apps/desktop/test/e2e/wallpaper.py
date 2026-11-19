@@ -2,14 +2,11 @@ import io
 import os
 import shutil
 from typing import Any
-
 from PIL import Image
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = """# Under a picture
 
 Ordinary words, and *some* of them `marked up`, with a [link](https://example.com),
@@ -17,7 +14,6 @@ on the note's own paper whatever is behind the frame.
 
 > A quote, in the muted colour.
 """
-
 PICTURES = {
     "bright": """
       const g = c.createLinearGradient(0, 0, 0, h)
@@ -38,7 +34,6 @@ PICTURES = {
       c.beginPath(); c.arc(0.15 * w, 0.2 * h, 0.07 * w, 0, 7); c.fill()
     """,
 }
-
 TAKE = """
 async ([paint]) => {
   const w = 2400, h = 1500
@@ -52,9 +47,7 @@ async ([paint]) => {
   return { taken, ms: Math.round(performance.now() - started), stored: localStorage.getItem('orden:wallpaper')?.length ?? 0 }
 }
 """
-
 SHEET = "document.getElementById('orden-user-theme')?.textContent ?? ''"
-
 FILTERS = """
 () => [...document.querySelectorAll('*')]
   .filter((one) => {
@@ -63,7 +56,6 @@ FILTERS = """
   })
   .map((one) => one.tagName.toLowerCase() + '.' + [...one.classList].join('.'))
 """
-
 EMPTY = """
 () => {
   const bar = document.querySelector('[data-chrome="top"], .titlebar, header')?.getBoundingClientRect()
@@ -88,28 +80,22 @@ EMPTY = """
   }
 }
 """
-
 def channels(said: str) -> tuple[int, int, int]:
     parts = [float(one) for one in said[said.index("(") + 1 : said.index(")")].replace(",", " ").split()[:3]]
     return (round(parts[0]), round(parts[1]), round(parts[2]))
-
 def luminance(rgb: tuple[int, int, int]) -> float:
     def linear(c: float) -> float:
         c = c / 255
         return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
-
     r, g, b = (linear(one) for one in rgb)
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
-
 def ratio(one: tuple[int, int, int], two: tuple[int, int, int]) -> float:
     light, dark = sorted((luminance(one), luminance(two)), reverse=True)
     return round((light + 0.05) / (dark + 0.05), 2)
-
 def worst(image: Image.Image, box: list[float], ink: tuple[int, int, int]) -> float:
     region = image.crop(tuple(round(one) for one in box)).convert("RGB")
     colours = {colour for _count, colour in region.getcolors(maxcolors=1 << 20) or []}
     return min(ratio(ink, colour) for colour in colours) if colours else 0.0
-
 HOVERED = """
 () => {
   const row = [...document.querySelectorAll('aside .orden-row')].find((one) => !one.classList.contains('is-on'))
@@ -118,7 +104,6 @@ HOVERED = """
   return { x: box.left + box.width / 2, y: box.top + box.height / 2, box: [box.right - 30, box.top + 3, box.right - 6, box.bottom - 3] }
 }
 """
-
 def measure(page: Any, name: str) -> None:
     boxes = page.evaluate(EMPTY)
     image = Image.open(io.BytesIO(page.screenshot()))
@@ -146,14 +131,12 @@ def measure(page: Any, name: str) -> None:
             wrong(f"{name}: the note's paper is not opaque {bg}: {sorted(colours)[:4]}")
         else:
             say(f"{name}: the note keeps its paper {bg}")
-
 def keep_shot(page: Any, name: str) -> None:
     path = shot(page, name)
     also = os.environ.get("ORDEN_SHOTS_TOO")
     if also:
         os.makedirs(also, exist_ok=True)
         shutil.copy(path, os.path.join(also, f"{name}.png"))
-
 def drive(browser: Any) -> None:
     for scheme in ("dark", "light"):
         page = DRIVE.page(browser, viewport={"width": 1240, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
@@ -163,7 +146,6 @@ def drive(browser: Any) -> None:
         page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         wait_for(page, "window.ordenApp.wallpaper", "the wallpaper store on the handle")
-
         page.evaluate("() => window.ordenApp.theme.select('wallpaper')")
         wait_for(page, f"{SHEET}.includes('--wallpaper-field')", "the wallpaper's sheet")
         wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "the theme's dials")
@@ -171,7 +153,6 @@ def drive(browser: Any) -> None:
         page.wait_for_timeout(300)
         keep_shot(page, f"field-{scheme}")
         measure(page, f"{scheme}, the accent field")
-
         for picture, paint in PICTURES.items():
             result = page.evaluate(TAKE, [paint])
             if not result["taken"]:
@@ -182,18 +163,15 @@ def drive(browser: Any) -> None:
             page.wait_for_timeout(300)
             keep_shot(page, f"{picture}-{scheme}")
             measure(page, f"{scheme}, {picture}")
-
         page.evaluate("() => window.ordenApp.workspace.closeMany(window.ordenApp.workspace.tabs.map((tab) => tab.id))")
         page.wait_for_timeout(500)
         keep_shot(page, f"empty-{scheme}")
         DRIVE.open_note(page, "Under a picture")
-
         filters = page.evaluate(FILTERS)
         if filters:
             wrong(f"{scheme}: something filters on every frame: {filters[:5]}")
         else:
             say(f"{scheme}: nothing filters anything on a frame")
-
         if scheme == "dark":
             before = page.evaluate("() => window.ordenApp.wallpaper.held.main.picture.length")
             page.evaluate("() => window.ordenApp.theme.set('blur', 56)")
@@ -207,7 +185,6 @@ def drive(browser: Any) -> None:
             say(f"blur 28 -> 56: the kept picture went from {before} to {after} characters")
             keep_shot(page, "dark-blur-56")
             measure(page, "dark, dark picture at blur 56")
-
             page.add_init_script(
                 """
                 (() => {
@@ -227,7 +204,5 @@ def drive(browser: Any) -> None:
                 say("the next launch's first frame wears the picture")
             else:
                 wrong("the next launch's first frame did not wear the picture")
-
         page.context.close()
-
 raise SystemExit(DRIVE.run(drive))

@@ -4,7 +4,6 @@ import { idle, settle } from './settle'
 
 const asked: string[] = []
 let pageTakesIt = false
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -14,18 +13,14 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(paged ? pageTakesIt : undefined)
   },
 }))
-
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
-
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 await import('../../src/lib/ui-controls/src/keyboard-home')
 const { adrift, pressedThrough } = await import('../../src/lib/ui-controls/src/api')
-
 let editor: EditorView
 let terminal: HTMLTextAreaElement
 let place: HTMLElement
-
 async function awayAndBack(lost: boolean, landed: Element) {
   window.dispatchEvent(new FocusEvent('blur'))
   if (lost) (document.activeElement as HTMLElement | null)?.blur()
@@ -34,7 +29,6 @@ async function awayAndBack(lost: boolean, landed: Element) {
   await vi.waitFor(() => expect(document.activeElement).toBe(landed))
   having.mockRestore()
 }
-
 function layer(): () => void {
   const box = document.createElement('div')
   box.className = 'orden-layer'
@@ -48,7 +42,6 @@ function layer(): () => void {
     box.remove()
   }
 }
-
 beforeEach(() => {
   place = document.createElement('div')
   place.dataset.region = 'editor'
@@ -62,39 +55,32 @@ beforeEach(() => {
   document.documentElement.removeAttribute('data-keyboard-in-page')
   asked.length = 0
 })
-
 afterEach(() => {
   editor.destroy()
   place.remove()
   ;(document.activeElement as HTMLElement | null)?.blur()
 })
-
 test('the window coming back puts the keyboard back in the note', async () => {
   editor.focus()
   await awayAndBack(true, editor.contentDOM)
 })
-
 test('and in the terminal', async () => {
   terminal.focus()
   await awayAndBack(true, terminal)
 })
-
 test('an element the engine kept is left alone', async () => {
   terminal.focus()
   await awayAndBack(false, terminal)
 })
-
 test('the crate hears once that the keyboard is in the page, and again after it left', async () => {
   terminal.focus()
   editor.focus()
   expect(asked.filter((one) => one === 'keyboard_here')).toHaveLength(1)
-
   window.dispatchEvent(new FocusEvent('blur'))
   expect(asked).toContain('keyboard_went')
   terminal.focus()
   expect(asked.filter((one) => one === 'keyboard_here')).toHaveLength(2)
 })
-
 test('a site taking the keyboard is known to the page, until a person takes it back', async () => {
   terminal.focus()
   pageTakesIt = true
@@ -102,11 +88,9 @@ test('a site taking the keyboard is known to the page, until a person takes it b
   await Promise.resolve()
   await Promise.resolve()
   expect(document.documentElement.hasAttribute('data-keyboard-in-page')).toBe(true)
-
   editor.focus()
   expect(document.documentElement.hasAttribute('data-keyboard-in-page')).toBe(false)
 })
-
 test('a layer closing gives the keyboard back to the note it was in', async () => {
   editor.focus()
   const close = layer()
@@ -117,7 +101,6 @@ test('a layer closing gives the keyboard back to the note it was in', async () =
     expect(document.activeElement).toBe(editor.contentDOM)
   })
 })
-
 test('or to the site that had it, which the crate hands it to', async () => {
   terminal.focus()
   pageTakesIt = true
@@ -127,7 +110,6 @@ test('or to the site that had it, which the crate hands it to', async () => {
   await settle()
   expect(document.activeElement).toBe(document.body)
 })
-
 test('a site never shown again leaves the keyboard with the page after a moment', async () => {
   terminal.focus()
   pageTakesIt = true
@@ -136,12 +118,10 @@ test('a site never shown again leaves the keyboard with the page after a moment'
   await vi.waitFor(() => expect(asked).toContain('keyboard_back'))
   await settle()
   expect(document.activeElement).toBe(document.body)
-
   const having = vi.spyOn(document, 'hasFocus').mockReturnValue(true)
   await vi.waitFor(() => expect(document.activeElement).toBe(terminal), { timeout: 5000 })
   having.mockRestore()
 })
-
 test('a layer that put the keyboard somewhere on its way out leaves it there', async () => {
   editor.focus()
   const close = layer()
@@ -154,7 +134,6 @@ test('a layer that put the keyboard somewhere on its way out leaves it there', a
   expect(document.activeElement).toBe(name)
   name.remove()
 })
-
 test('a button pressed on the way to a menu is not where the keyboard was', async () => {
   terminal.focus()
   const button = document.createElement('button')
@@ -166,7 +145,6 @@ test('a button pressed on the way to a menu is not where the keyboard was', asyn
   await vi.waitFor(() => expect(document.activeElement).toBe(terminal))
   button.remove()
 })
-
 test('what a press only passes through, and where the keyboard is nowhere', () => {
   for (const tag of ['button', 'a', 'summary', 'select']) {
     const one = document.createElement(tag)
@@ -178,7 +156,6 @@ test('what a press only passes through, and where the keyboard is nowhere', () =
   expect(pressedThrough(tab)).toBe(true)
   expect(pressedThrough(document.createElement('textarea'))).toBe(false)
   expect(pressedThrough(editor.contentDOM)).toBe(false)
-
   expect(adrift(null)).toBe(true)
   expect(adrift(document.body)).toBe(true)
   expect(adrift(document.createElement('input'))).toBe(true)

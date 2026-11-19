@@ -1,7 +1,6 @@
 import { afterAll, describe, expect, test, vi } from 'vitest'
 
 const { ran } = vi.hoisted(() => ({ ran: [] as string[] }))
-
 vi.mock('@orden/bases', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@orden/bases')>()),
   readBase: () => ({ orden: { id: 'tasks' } }),
@@ -33,7 +32,6 @@ vi.mock('../../sharing/src/api', () => ({
   canWriteAt: () => true,
   trustsHtmlAt: () => true,
 }))
-
 function sharedLocks(): LockManager {
   const holders = new Set<string>()
   const waiting = new Map<string, (() => void)[]>()
@@ -72,10 +70,8 @@ function sharedLocks(): LockManager {
     },
   } as unknown as LockManager
 }
-
 vi.stubGlobal('navigator', { locks: sharedLocks() })
 afterAll(() => vi.unstubAllGlobals())
-
 async function aWindow() {
   vi.resetModules()
   const running = await import('./running')
@@ -83,9 +79,7 @@ async function aWindow() {
   hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
   return running
 }
-
 const settle = () => new Promise((done) => setTimeout(done, 150))
-
 describe("a base's automations, while two windows hold the base", () => {
   test('run in one window, and in the other once the first lets the base go', async () => {
     const first = await aWindow()
@@ -94,12 +88,10 @@ describe("a base's automations, while two windows hold the base", () => {
     await settle()
     await second.readHeld('/s/Shared/Tasks.base')
     await settle()
-
     first.heard('Shared', 'Inbox/a.md', [])
     second.heard('Shared', 'Inbox/a.md', [])
     await settle()
     expect(ran).toEqual(['planned'])
-
     first.basesAre([])
     await settle()
     ran.length = 0

@@ -3,7 +3,6 @@ import { describe, expect, test } from 'vitest'
 import { ICON_SETS, LATER_SETS, PICKER_SETS, refreshSites, setNamed } from '../src/api'
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo='
-
 function sites(list: SiteIcon[]) {
   const held = {
     lacking: false,
@@ -17,7 +16,6 @@ function sites(list: SiteIcon[]) {
   }
   return held
 }
-
 describe('the sets', () => {
   test('each have their own id, and the picker offers only listed ones', () => {
     const ids = ICON_SETS.map((one) => one.id)
@@ -27,10 +25,8 @@ describe('the sets', () => {
     expect(setNamed('no-such-set')).toBeNull()
   })
 })
-
 describe('the web icons', () => {
   const web = () => ICON_SETS.find((one) => one.label === 'Web icons')
-
   test('come from the site icons port, named by their label or their site', async () => {
     const held = sites([
       { site: 'a.dev', label: 'Alpha', picture: PNG },
@@ -55,7 +51,6 @@ describe('the web icons', () => {
     expect(held.refreshed).toBe(2)
     stop()
   })
-
   test('are absent while no module provides the port', async () => {
     await expect(web()?.load()).rejects.toThrow()
     expect(() => refreshSites()).not.toThrow()

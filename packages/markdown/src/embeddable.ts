@@ -12,7 +12,6 @@
  * What every field means, and what is done to a capture before it reaches a
  * frame, is in providers.ts. Nothing here is a frame: a row is read only when a
  * note points at one of its hosts, and what it yields is an address. */
-
 import type { Listed } from './providers'
 
 export const EMBEDDABLE: readonly Listed[] = [

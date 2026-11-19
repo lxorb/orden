@@ -2,10 +2,8 @@ import type { Quad } from '../../pdf/src/api'
 import { Refused } from '../../agent-verbs/src/api'
 
 const MOST_RANGES = 100
-
 export function pagesAsked(said: string | null, count: number): number[] {
   if (said === null) return Array.from({ length: count }, (_, at) => at + 1)
-
   const parts = said.split(',')
   if (parts.length > MOST_RANGES) {
     throw new Refused('bad_arguments', `pages names at most ${MOST_RANGES} ranges`)
@@ -18,13 +16,10 @@ export function pagesAsked(said: string | null, count: number): number[] {
     }
     const last = to ?? from
     if (!Number.isInteger(last)) throw new Refused('bad_arguments', 'pages is like 1-3,7')
-
     for (let page = Math.max(1, from); page <= Math.min(last, count); page++) pages.add(page)
   }
-
   return [...pages].sort((one, other) => one - other)
 }
-
 export interface Run {
   str: string
   transform: number[]
@@ -32,7 +27,6 @@ export interface Run {
   height: number
   hasEOL?: boolean
 }
-
 export function runsOf(items: readonly unknown[]): Run[] {
   return items.flatMap((item) => {
     const run = item as Partial<Run>
@@ -49,13 +43,11 @@ export function runsOf(items: readonly unknown[]): Run[] {
       : []
   })
 }
-
 export function laidOut(runs: readonly Run[]): { text: string; starts: number[] } {
   const parts: string[] = []
   const starts: number[] = []
   let length = 0
   let baseline: number | null = null
-
   for (const run of runs) {
     const y = run.transform[5] ?? 0
     if (baseline !== null && Math.abs(y - baseline) > 0.5 && !/\s$/.test(parts.at(-1) ?? '')) {
@@ -71,15 +63,12 @@ export function laidOut(runs: readonly Run[]): { text: string; starts: number[] 
     }
     baseline = y
   }
-
   return { text: parts.join(''), starts }
 }
-
 function folded(text: string): { text: string; at: number[] } {
   let out = ''
   const at: number[] = []
   let space = false
-
   for (let index = 0; index < text.length; index++) {
     const character = text[index] ?? ''
     if (/\s/.test(character)) {
@@ -94,34 +83,27 @@ function folded(text: string): { text: string; at: number[] } {
     out += character
     at.push(index)
   }
-
   return { text: out, at }
 }
-
 export function quoteIn(runs: readonly Run[], quote: string): { from: number; to: number }[] {
   const whole = folded(laidOut(runs).text)
   const wanted = folded(quote).text
   if (!wanted) return []
-
   const found: { from: number; to: number }[] = []
   for (let at = whole.text.indexOf(wanted); at !== -1; at = whole.text.indexOf(wanted, at + 1)) {
     const from = whole.at[at] ?? 0
     const to = (whole.at[at + wanted.length - 1] ?? from) + 1
     found.push({ from, to })
   }
-
   return found
 }
-
 export function quadsOver(runs: readonly Run[], from: number, to: number): Quad[] {
   const lines = new Map<number, { left: number; right: number; top: number; bottom: number }>()
   const { starts } = laidOut(runs)
-
   for (const [index, run] of runs.entries()) {
     const start = starts[index] ?? 0
     const end = start + run.str.length
     if (end <= from || start >= to || !run.str.length) continue
-
     const [, , , , x = 0, y = 0] = run.transform
     const share = (at: number) => (at - start) / run.str.length
     const left = x + run.width * share(Math.max(from, start))
@@ -129,7 +111,6 @@ export function quadsOver(runs: readonly Run[], from: number, to: number): Quad[
     const size = run.height || Math.abs(run.transform[3] ?? 0)
     const key = Math.round(y)
     const line = lines.get(key)
-
     const top = y + size * 0.8
     const bottom = y - size * 0.2
     lines.set(
@@ -144,6 +125,5 @@ export function quadsOver(runs: readonly Run[], from: number, to: number): Quad[
         : { left, right, top, bottom },
     )
   }
-
   return [...lines.values()].map(({ left, right, top, bottom }) => [left, top, right, top, right, bottom, left, bottom])
 }

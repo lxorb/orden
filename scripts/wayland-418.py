@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import statistics
@@ -10,7 +9,6 @@ import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
-
 from PIL import Image
 import linux_app
 
@@ -19,10 +17,8 @@ APP = sys.argv[2]
 POINTER = OUT / "pointer.fifo"
 SITE = "http://127.0.0.1:8765"
 found = {}
-
 TAB, COMMA, BACKSPACE = 15, 51, 14
 LETTERS = {"f": 33, "o": 24, "n": 49, "t": 20, "h": 35, "e": 18, "m": 50}
-
 def run(code):
     answer = linux_app.said(code, 20)
     if answer is None:
@@ -31,23 +27,19 @@ def run(code):
         print(f"eval said: {answer}")
         return None
     return answer.get("value")
-
 def sway(*words):
     return json.loads(subprocess.check_output(["swaymsg", "-r", *words]))
-
 def window_node():
     def walk(node):
         if str(node.get("pid")) == APP:
             yield node
         for child in node.get("nodes", []) + node.get("floating_nodes", []):
             yield from walk(child)
-
     every = sorted(
         walk(sway("-t", "get_tree")),
         key=lambda node: node["rect"]["width"] * node["rect"]["height"],
     )
     return every[-1] if every else None
-
 def output_of_window():
     def walk(node, output):
         if node.get("type") == "output":
@@ -56,19 +48,15 @@ def output_of_window():
             yield output
         for child in node.get("nodes", []) + node.get("floating_nodes", []):
             yield from walk(child, output)
-
     name = next(walk(sway("-t", "get_tree"), None), None)
     return next(one for one in sway("-t", "get_outputs") if one["name"] == name)
-
 def tell(line):
     with open(POINTER, "w") as pointer:
         pointer.write(line + "\n")
-
 def click(x, y):
     at = window_node()["rect"]
     tell(f"move {at['x'] + x} {at['y'] + y}\nclick")
     time.sleep(0.3)
-
 def shoot(name):
     output = output_of_window()
     node = window_node()
@@ -80,7 +68,6 @@ def shoot(name):
         node["rect"]["y"] - output["rect"]["y"],
     )
     return path, scale, origin
-
 def tabs():
     return (
         run(
@@ -91,10 +78,8 @@ def tabs():
         )
         or []
     )
-
 def chosen():
     return next((one["id"] for one in tabs() if one["chosen"]), None)
-
 def choose(tab):
     click(tab["x"], tab["y"])
     for _ in range(20):
@@ -102,7 +87,6 @@ def choose(tab):
         if chosen() == tab["id"]:
             return True
     return False
-
 def hole():
     for _ in range(60):
         sent = run(
@@ -113,7 +97,6 @@ def hole():
             return sent
         time.sleep(0.5)
     return None
-
 def settled():
     seen, same = None, 0
     for _ in range(40):
@@ -123,11 +106,9 @@ def settled():
             return
         seen = now
         time.sleep(1)
-
 def is_page(rgb):
     red, green, blue = rgb[:3]
     return red > 230 and blue > 230 and green < 40
-
 def launch():
     path, _, _ = shoot("launch")
     found["launch"] = {
@@ -137,7 +118,6 @@ def launch():
         "agent": run("navigator.userAgent"),
     }
     print(f"launch: {found['launch']}")
-
 def ink_rows(image, box, scale):
     pixels = image.load()
     width, height = image.size
@@ -163,7 +143,6 @@ def ink_rows(image, box, scale):
     if not rows:
         return None
     return rows[0], rows[-1], top, bottom
-
 def buttons(where):
     listed = run(
         "[...document.querySelectorAll('button, [role=button], [role=tab]')].filter((b) => {"
@@ -215,7 +194,6 @@ def buttons(where):
         "each": measured,
     }
     print(f"buttons ({where}): median {found[f'buttons-{where}']['median_high_by_px']} px high, {len(measured)} buttons")
-
 def settings_open():
     if run("!!document.querySelector('.orden-field.search input')"):
         return True
@@ -233,7 +211,6 @@ def settings_open():
         if run("!!document.querySelector('.orden-field.search input')"):
             return True
     return False
-
 SEARCH_SETUP = """
 const input = document.querySelector('.orden-field.search input')
 input.focus()
@@ -253,7 +230,6 @@ new MutationObserver(() => {
 }).observe(watched, { subtree: true, childList: true, characterData: true, attributes: true })
 return document.activeElement === input
 """
-
 SEARCH_SET = """
 const input = document.querySelector('.orden-field.search input')
 const twoFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
@@ -267,21 +243,17 @@ for (const word of ['f', 'fo', 'fon', 'font', '', 't', 'th', 'the', 'them', 'the
 }
 return took
 """
-
 SEARCH_READ = """
 const m = window.__nib418
 m.on = false
 return { keys: m.keys, frames: m.frames }
 """
-
 def frame_stats(frames):
     frames = sorted(frames[2:])
     if not frames:
         return None
-
     def at(share):
         return round(frames[min(len(frames) - 1, int(share * len(frames)))], 1)
-
     return {
         "count": len(frames),
         "p50_ms": at(0.5),
@@ -291,7 +263,6 @@ def frame_stats(frames):
         "over_20ms": sum(1 for one in frames if one > 20),
         "over_50ms": sum(1 for one in frames if one > 50),
     }
-
 def search():
     if not settings_open():
         found["search"] = {"error": "Settings did not open"}
@@ -344,7 +315,6 @@ def search():
     print(f"search: keys {found['search']['key_to_drawn_ms']} set {found['search']['value_set_to_drawn_ms']} frames {found['search']['frames']}")
     tell("key 1")
     time.sleep(0.8)
-
 def ctrl_tab():
     result = {}
     every = tabs()
@@ -376,7 +346,6 @@ def ctrl_tab():
         result["from_a_web_page"] = {"before": before, "after": after, "moved": before != after}
     found["ctrl-tab"] = result
     print(f"ctrl-tab: {result}")
-
 def switch():
     every = tabs()
     web = next((one for one in every if one["web"]), None)
@@ -398,7 +367,6 @@ def switch():
     rect = node["rect"]
     frames = []
     stop = threading.Event()
-
     def shooting():
         n = 0
         while not stop.is_set():
@@ -407,7 +375,6 @@ def switch():
             subprocess.run(["grim", "-s", str(scale), "-g", geometry, str(path)], check=False)
             frames.append((time.monotonic(), path))
             n += 1
-
     began = time.monotonic()
     shooter = threading.Thread(target=shooting)
     shooter.start()
@@ -451,7 +418,6 @@ def switch():
         "since_start_ms": round((clicked - began) * 1000),
     }
     print(f"switch: {len(seen)} pictures, {len(misplaced)} misplaced")
-
 def video():
     command = os.environ.get("APP_COMMAND")
     if not command:
@@ -475,7 +441,6 @@ def video():
         said.append(dict(urllib.parse.parse_qsl(query)))
     found["video"] = {"reports": said}
     print(f"video: {said}")
-
 settled()
 for step in (launch, lambda: buttons("window"), search, ctrl_tab, switch, video):
     try:
@@ -490,6 +455,5 @@ if settings_open():
     except Exception as error:
         found.setdefault("broken", []).append(f"buttons settings: {error}")
     tell("key 1")
-
 (OUT / "418.json").write_text(json.dumps(found, indent=2))
 print(json.dumps({k: v for k, v in found.items() if k not in ("switch",)}, indent=2)[:6000])

@@ -10,7 +10,6 @@
   import { groupLabel, noteNames, propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const names = $derived(noteNames((live.answer?.groups ?? []).map((group) => group.key)))
@@ -24,7 +23,6 @@
       .filter((one) => one !== 'file.name' && one !== 'file.basename' && one !== 'task.text' && one !== image)
       .slice(0, 4),
   )
-
   function coverOf(row: Row): { src: string } | { host: string } | null {
     const base = live.base
     if (!base || image === null) return null
@@ -103,14 +101,12 @@
   .cards {
     padding: var(--space-3);
   }
-
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(var(--card), 100%), 1fr));
     gap: var(--space-3);
     margin-bottom: var(--space-4);
   }
-
   .card {
     display: flex;
     flex-direction: column;
@@ -130,22 +126,18 @@
       box-shadow var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .card:hover {
       border-color: var(--line-strong);
       box-shadow: var(--shadow-sm);
     }
   }
-
   .card:active {
     transform: scale(0.99);
   }
-
   .card:global(.is-carried) {
     opacity: 0.35;
   }
-
   .cover {
     display: grid;
     place-items: center;
@@ -153,17 +145,14 @@
     overflow: hidden;
     background: var(--surface-2);
   }
-
   .cover img {
     width: 100%;
     height: 100%;
   }
-
   .host {
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .title {
     display: flex;
     align-items: center;
@@ -172,26 +161,22 @@
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .title span {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .prop {
     display: flex;
     gap: var(--space-2);
     padding: 0 var(--space-3);
     font-size: var(--text-xs);
   }
-
   .key {
     flex: none;
     color: var(--muted);
   }
-
   .said {
     min-width: 0;
     overflow: hidden;
@@ -199,12 +184,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .grid:global(.is-taking) {
     border-radius: var(--radius-md);
     box-shadow: 0 0 0 1px var(--accent);
   }
-
   .toned {
     background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }

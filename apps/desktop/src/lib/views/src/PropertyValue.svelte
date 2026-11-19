@@ -22,25 +22,20 @@
     onsearch?: ((text: string) => void) | undefined
     autofocus?: boolean
   } = $props()
-
   const uid = $props.id()
   const offered = $derived(choices?.filter((one) => !property.items.includes(one)) ?? [])
-
   function commitOnEnter(event: KeyboardEvent) {
     if (event.key !== 'Enter' || event.isComposing) return
     event.preventDefault()
     if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur()
   }
-
   const dated = (field: HTMLInputElement): string =>
     field.type === 'datetime-local' ? field.value.replace('T', ' ') : field.value
-
   function fieldType(one: Property): string {
     if (one.kind === 'number') return 'number'
     if (one.kind !== 'date') return 'text'
     return one.value.length > 10 ? 'datetime-local' : 'date'
   }
-
   function addItem(field: HTMLInputElement) {
     const said = field.value
     field.value = ''
@@ -51,9 +46,7 @@
     const items = withItem(property, said)
     if (items) onitems(items)
   }
-
   const tagged = $derived(/^tags?$/i.test(property.key))
-
   function focusOnMount(node: HTMLElement) {
     if (autofocus) node.focus()
   }
@@ -148,7 +141,6 @@
     min-height: var(--row-height);
     color: var(--text);
   }
-
   .field {
     min-width: 0;
     width: 100%;
@@ -162,25 +154,21 @@
       border-color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
   }
-
   .field[type='number'],
   .field[type='date'],
   .field[type='datetime-local'] {
     font-variant-numeric: tabular-nums;
   }
-
   @media (hover: hover) {
     .field:hover:not([readonly]) {
       border-color: var(--line);
     }
   }
-
   .field.add {
     flex: 1 1 5em;
     width: auto;
     color: var(--muted);
   }
-
   .chip {
     display: inline-flex;
     align-items: center;
@@ -193,7 +181,6 @@
     font-size: var(--text-xs);
     overflow-wrap: anywhere;
   }
-
   .chip-word,
   .chip-off {
     padding: 0;
@@ -203,7 +190,6 @@
     font: inherit;
     cursor: default;
   }
-
   .chip-off {
     display: grid;
     place-items: center;
@@ -212,23 +198,19 @@
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .chip-off :global(svg) {
     width: 8px;
     height: 8px;
     stroke-width: 1.4;
   }
-
   @media (hover: hover) {
     .chip-word:hover {
       color: var(--accent);
     }
-
     .chip:hover .chip-off {
       opacity: 1;
     }
   }
-
   .chip-off:focus-visible,
   :global([data-touch]) .chip-off {
     opacity: 1;

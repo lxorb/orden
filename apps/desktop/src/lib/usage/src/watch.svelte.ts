@@ -12,7 +12,6 @@ import { saveTallies, started, spent, takeTallies, type Tally } from './tally'
 const A_MINUTE = 60 * 1000
 const AN_HOUR = 60 * A_MINUTE
 const FIRST_SEND = 30 * 1000
-
 function queuedEvents(): UsageEvent[] {
   const kept = stored(USAGE_QUEUE)
   return Array.isArray(kept)
@@ -22,16 +21,13 @@ function queuedEvents(): UsageEvent[] {
       })
     : []
 }
-
 function metered(): boolean {
   const connection = (navigator as { connection?: { saveData?: boolean; type?: string } }).connection
   return !navigator.onLine || connection?.saveData === true || connection?.type === 'cellular'
 }
-
 function keepQueue(events: UsageEvent[]): void {
   keepJson(USAGE_QUEUE, pruned(events, dayOf(Date.now()), usageChoice.helping))
 }
-
 function common() {
   const native = isNative
     ? ((window as { __TAURI_OS_PLUGIN_INTERNALS__?: Record<string, string> }).__TAURI_OS_PLUGIN_INTERNALS__ ?? {})
@@ -47,13 +43,11 @@ function common() {
     signedIn: account.signedIn,
   })
 }
-
 function notesIn(entry: Entry | null): number {
   if (!entry) return 0
   if (!entry.is_dir) return 1
   return entry.children.reduce((sum, one) => sum + notesIn(one), 0)
 }
-
 function dayEvent(day: string, tally: Tally): UsageDay {
   return {
     v: 1,
@@ -74,7 +68,6 @@ function dayEvent(day: string, tally: Tally): UsageDay {
     },
   }
 }
-
 function checked(event: UsageEvent): UsageEvent[] {
   const said = usageEventOf(event)
   if (typeof said === 'string') {
@@ -83,11 +76,9 @@ function checked(event: UsageEvent): UsageEvent[] {
   }
   return [said]
 }
-
 function roll(at = Date.now()): void {
   const today = dayOf(at)
   const added: UsageEvent[] = []
-
   if (stored(USAGE_PINGED) !== today) {
     added.push(...checked({ v: 1, kind: 'daily', day: today, ...common() }))
     keepJson(USAGE_PINGED, today)
@@ -99,9 +90,7 @@ function roll(at = Date.now()): void {
   }
   if (added.length) keepQueue([...queuedEvents(), ...added])
 }
-
 let going = false
-
 async function sendQueued(): Promise<void> {
   if (going) return
   going = true
@@ -118,7 +107,6 @@ async function sendQueued(): Promise<void> {
     going = false
   }
 }
-
 function tick(): void {
   if (document.visibilityState === 'visible' && document.hasFocus()) {
     const kind = workspace.active?.kind
@@ -127,23 +115,19 @@ function tick(): void {
   }
   roll()
 }
-
 function idle(work: () => void): void {
   if (typeof requestIdleCallback === 'function') requestIdleCallback(work, { timeout: A_MINUTE })
   else setTimeout(work, 0)
 }
-
 export function watchUsage(sending: boolean): () => void {
   if (usageChoice.helping) started(startupOfMs(performance.now()))
   roll()
-
   const minutes = setInterval(() => idle(tick), A_MINUTE)
   const hidden = () => {
     if (document.visibilityState === 'hidden') saveTallies()
   }
   document.addEventListener('visibilitychange', hidden)
   window.addEventListener('pagehide', saveTallies)
-
   const send = () =>
     idle(() => {
       roll()
@@ -158,7 +142,6 @@ export function watchUsage(sending: boolean): () => void {
   }
   usageChoice.changes.add(chose)
   const unheard = heardElsewhere([HELP_IMPROVE], () => usageChoice.heard())
-
   return () => {
     saveTallies()
     clearInterval(minutes)

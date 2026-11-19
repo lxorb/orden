@@ -4,7 +4,6 @@ const LONGEST_NAME = 80
 const LONGEST_NOTE = 1000
 const MOST_TAGS = 12
 const LONGEST_TAG = 40
-
 export interface Activity {
   id: string
   name: string
@@ -13,12 +12,10 @@ export interface Activity {
   archived: boolean
   order: number
 }
-
 export type Lane = 'app' | 'site' | 'space' | 'tab'
 export const LANES: readonly Lane[] = ['app', 'site', 'space', 'tab']
 type Source = 'manual' | 'timer' | Lane
 const SOURCES: readonly Source[] = ['manual', 'timer', ...LANES]
-
 export interface Span {
   id: string
   start: number
@@ -31,15 +28,11 @@ export interface Span {
   label: string | null
   device: string | null
 }
-
 const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
-
 const textOr = (value: unknown, longest: number, otherwise = ''): string =>
   typeof value === 'string' ? value.slice(0, longest) : otherwise
-
 const idOr = (value: unknown): string | null =>
   typeof value === 'string' && value.length > 0 && value.length <= 64 ? value : null
-
 function tagsOf(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   const out: string[] = []
@@ -50,9 +43,7 @@ function tagsOf(value: unknown): string[] {
   }
   return out
 }
-
 export const activityName = (name: string): string => name.trim().slice(0, LONGEST_NAME).trim()
-
 export function activityOf(id: string, value: Record<string, unknown>): Activity | null {
   const name = typeof value.name === 'string' ? activityName(value.name) : ''
   if (!name) return null
@@ -65,7 +56,6 @@ export function activityOf(id: string, value: Record<string, unknown>): Activity
     order: isTime(value.order) ? value.order : 0,
   }
 }
-
 export function spanOf(id: string, value: Record<string, unknown>): Span | null {
   if (!isTime(value.start)) return null
   const end = value.end ?? null
@@ -83,7 +73,6 @@ export function spanOf(id: string, value: Record<string, unknown>): Span | null 
     device: idOr(value.device),
   }
 }
-
 export const activityValue = (activity: Activity): Record<string, unknown> => ({
   name: activityName(activity.name),
   tint: activity.tint,
@@ -91,7 +80,6 @@ export const activityValue = (activity: Activity): Record<string, unknown> => ({
   archived: activity.archived,
   order: activity.order,
 })
-
 export const spanValue = (span: Span): Record<string, unknown> => ({
   start: span.start,
   end: span.end,
@@ -103,14 +91,12 @@ export const spanValue = (span: Span): Record<string, unknown> => ({
   label: span.label,
   device: span.device,
 })
-
 export interface Rule {
   id: string
   activity: string
   lane: Lane
   place: string
 }
-
 export function ruleOf(id: string, value: Record<string, unknown>): Rule | null {
   const activity = idOr(value.activity)
   const old = typeof value.space === 'string' ? 'space' : typeof value.site === 'string' ? 'site' : null
@@ -119,37 +105,30 @@ export function ruleOf(id: string, value: Record<string, unknown>): Rule | null 
   if (!activity || !lane || !place) return null
   return { id, activity, lane, place }
 }
-
 export const ruleValue = (rule: Rule): Record<string, unknown> => ({
   activity: rule.activity,
   lane: rule.lane,
   place: rule.place,
 })
-
 export function recordingOf(value: Record<string, unknown> | null | undefined): boolean {
   if (!value) return true
   if (typeof value.on === 'boolean') return value.on
   return value.spaces !== false || value.sites !== false
 }
-
 export type Per = 'day' | 'week'
-
 export interface Goal {
   id: string
   activity: string
   per: Per
   ms: number
 }
-
 export const goalId = (activity: string, per: Per): string => `${per}-${activity}`.slice(0, 64)
-
 export function goalOf(id: string, value: Record<string, unknown>): Goal | null {
   const activity = idOr(value.activity)
   const per = value.per === 'week' ? 'week' : value.per === 'day' ? 'day' : null
   if (!activity || !per || !isTime(value.ms) || value.ms <= 0) return null
   return { id, activity, per, ms: value.ms }
 }
-
 export const goalValue = (goal: Goal): Record<string, unknown> => ({
   activity: goal.activity,
   per: goal.per,

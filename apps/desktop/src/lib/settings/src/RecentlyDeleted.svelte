@@ -9,25 +9,19 @@
   import { dur, slide } from '../../platform/src/api'
 
   const DAY = 24 * 60 * 60 * 1000
-
   $effect(() => {
     if (settings.open && settings.section === 'trash') void trash.load()
   })
-
   const spaces = $derived(trash.items.filter((item) => item.kind === 'space'))
   const notes = $derived(trash.items.filter((item) => item.kind !== 'space'))
-
   const relative = $derived(new Intl.RelativeTimeFormat(region(), { numeric: 'auto' }))
-
   function ago(at: number): string {
     const step = relativeStep(Date.now() - at)
     return relative.format(step.value, step.unit)
   }
-
   function daysLeft(item: TrashItem): number {
     return Math.max(1, Math.ceil((item.purgeAt - Date.now()) / DAY))
   }
-
   function meta(item: TrashItem): string[] {
     return [
       item.detail,
@@ -86,34 +80,28 @@
     color: var(--muted);
     line-height: 1.5;
   }
-
   .hint.bad {
     color: var(--danger);
   }
-
   .hint.empty {
     margin-top: var(--space-3);
   }
-
   .top {
     display: flex;
     justify-content: flex-end;
     margin-top: var(--space-3);
   }
-
   h3 {
     margin: var(--space-4) 0 var(--space-2);
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
-
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .row {
     display: flex;
     align-items: center;
@@ -123,11 +111,9 @@
     font-size: var(--text-sm);
     color: var(--text);
   }
-
   .row + .row {
     border-top: 1px solid var(--line);
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -135,14 +121,12 @@
     flex-direction: column;
     gap: 1px;
   }
-
   .title,
   .name small {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .name small {
     font-size: var(--text-xs);
     color: var(--muted);
@@ -159,12 +143,10 @@
     color: var(--muted);
     cursor: default;
   }
-
   @media (hover: hover) {
     button.quiet:hover:not(:disabled) {
       color: var(--text);
     }
-
     button.quiet.danger:hover:not(:disabled) {
       color: var(--danger);
     }

@@ -6,22 +6,16 @@ import { closed, showing, target, typed, until } from '../test/drawn'
 import { PASSWORD, pass } from '../test/opened'
 
 const PassTab = (await import('./PassTab.svelte')).default
-
 const SECRET = 'Tr0ub4dor&3-hidden'
-
 function submitted(form: HTMLFormElement | null) {
   form?.dispatchEvent(new Event('submit', { cancelable: true }))
   flushSync()
 }
-
 function login(title: string, more: Partial<Content> = {}): Content {
   return { ...blank('login'), title, ...more } as Content
 }
-
 beforeAll(() => showing(PassTab, { tab: null, focused: true }))
-
 afterAll(closed)
-
 describe('the Pass tab', () => {
   test('sets up with a password, shows the recovery key once, then the three columns', async () => {
     await until(() => pass.state === 'new', 'the setup screen')
@@ -42,20 +36,17 @@ describe('the Pass tab', () => {
     expect(target.querySelector('section[aria-label="All items"]')).not.toBeNull()
     expect(pass.vaults.map((one) => one.name)).toEqual(['Personal'])
   })
-
   test('filters by kind and by what is typed', async () => {
     const vault = pass.vaults[0]?.id ?? ''
     await pass.create(vault, login('Bank', { username: 'ada' }))
     await pass.create(vault, login('Mail', { username: 'lovelace' }))
     await pass.create(vault, { ...blank('note'), title: 'Diary', note: 'first line' })
     await until(() => target.querySelectorAll('[data-item]').length === 3, 'three rows')
-
     const search = target.querySelector<HTMLInputElement>('input[type=search]')
     typed(search, 'love')
     await until(() => target.querySelectorAll('[data-item]').length === 1, 'one row found')
     expect(target.querySelector('[data-item]')?.textContent).toContain('Mail')
     typed(search, '')
-
     const { menu } = await import('../../ui-kit/src/api')
     const chosen = (label: string) => {
       target.querySelector<HTMLButtonElement>('.bar .orden-chip')?.click()
@@ -71,7 +62,6 @@ describe('the Pass tab', () => {
     chosen('All')
     await until(() => target.querySelectorAll('[data-item]').length === 3, 'all rows again')
   })
-
   test('shows an item with its password hidden, and copies through Pass', async () => {
     const vault = pass.vaults[0]?.id ?? ''
     const made = await pass.create(vault, login('Shop', { username: 'grace', password: SECRET }))
@@ -89,7 +79,6 @@ describe('the Pass tab', () => {
     expect(field?.textContent).toContain(SECRET)
     copied.mockRestore()
   })
-
   test('locks, refuses a wrong password and opens for the right one', async () => {
     pass.lock()
     await until(() => target.textContent.includes('Pass is locked'), 'the lock')

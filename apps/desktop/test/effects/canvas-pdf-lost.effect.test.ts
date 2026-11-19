@@ -3,7 +3,6 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { settle } from './settle'
 
 const world = vi.hoisted(() => ({ readable: false, asked: [] as number[] }))
-
 vi.mock('../../src/lib/pdf/src/api', async (actual) => {
   const real = await actual<typeof import('../../src/lib/pdf/src/api')>()
   return {
@@ -18,11 +17,8 @@ vi.mock('../../src/lib/pdf/src/api', async (actual) => {
     },
   }
 })
-
 const CanvasPdf = (await import('../../src/lib/canvas/src/CanvasPdf.svelte')).default
-
 let close: (() => void) | undefined
-
 afterEach(() => {
   close?.()
   close = undefined
@@ -31,7 +27,6 @@ afterEach(() => {
   world.asked = []
   vi.useRealTimers()
 })
-
 function shown(page?: number) {
   const target = document.body.appendChild(document.createElement('div'))
   const card = mount(CanvasPdf, {
@@ -46,27 +41,21 @@ function shown(page?: number) {
   close = () => void unmount(card, { outro: false })
   return target
 }
-
 test('a PDF card whose paper cannot be read says so, and shows the page once it can', async () => {
   vi.useFakeTimers()
   const target = shown()
   await settle()
-
   expect(target.querySelector('.missing')?.textContent).toBe('The paper could not be read')
-
   world.readable = true
   vi.advanceTimersByTime(5000)
   flushSync()
   await settle()
-
   expect(target.querySelector('.missing')).toBeNull()
 })
-
 test('a PDF card that names a page draws that page', async () => {
   world.readable = true
   shown(3)
   await settle()
-
   expect(world.asked).toContain(3)
   expect(world.asked).not.toContain(1)
 })

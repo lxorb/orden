@@ -20,7 +20,6 @@ function kindGroups(): Group[] {
     })),
   }))
 }
-
 export function kindsPane(): Pane {
   return {
     id: 'kinds',

@@ -1,7 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
 const sent = vi.hoisted(() => [] as { command: string; args: Record<string, unknown> }[])
-
 vi.mock('./tauri', () => ({
   isNative: true,
   isDesktop: true,
@@ -10,9 +9,7 @@ vi.mock('./tauri', () => ({
     return Promise.resolve()
   },
 }))
-
 const { log, recentLog } = await import('./log')
-
 test('a key said in a log line never reaches the log file or the kept lines', () => {
   log('error', 'ai: 401 for key sk-proj-abcdefghijklmnop1234 with Bearer abcdef123456')
   const written = JSON.stringify(sent)

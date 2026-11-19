@@ -8,12 +8,10 @@
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { sections = $bindable(), oninput }: { sections: Section[]; oninput: () => void } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   function addSection() {
     sections = [...sections, newSection('New section')]
     oninput()
   }
-
   function removeSection(id: string) {
     sections = sections.filter((one) => one.id !== id)
     oninput()
@@ -55,7 +53,6 @@
     flex-direction: column;
     gap: var(--space-1);
   }
-
   .head {
     display: flex;
     align-items: center;
@@ -63,7 +60,6 @@
     padding-block: 2px;
     padding-inline-start: var(--space-3);
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -78,21 +74,17 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
-
   .name:focus {
     color: var(--text-strong);
   }
-
   .pass-stack > :global(* + *) {
     border-top: 1px solid var(--line);
   }
-
   .orden-glyph :global(.orden-cross) {
     width: var(--icon-lg);
     height: var(--icon-lg);
     stroke-width: 1.5;
   }
-
   .add {
     align-self: flex-start;
     font-size: var(--text-sm);

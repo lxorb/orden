@@ -6,7 +6,6 @@ import { parseLastPass } from './lastpass'
 import { as, find } from './found'
 
 const SECRET = 'JBSWY3DPEHPK3PXP'
-
 const card = [
   'NoteType:Credit Card',
   'Language:en-US',
@@ -19,7 +18,6 @@ const card = [
   'Notes:first line',
   'second: line',
 ].join('\n')
-
 const address = [
   'NoteType:Address',
   'Language:en-US',
@@ -47,7 +45,6 @@ const address = [
   'Fax:',
   'Notes:',
 ].join('\n')
-
 const ssh = [
   'NoteType:SSH Key',
   'Language:en-US',
@@ -62,7 +59,6 @@ const ssh = [
   'Date:',
   'Notes:',
 ].join('\n')
-
 const wifi = [
   'NoteType:Wi-Fi Password',
   'Language:en-US',
@@ -74,7 +70,6 @@ const wifi = [
   'Encryption:AES',
   'Notes:',
 ].join('\n')
-
 const bank = [
   'NoteType:Bank Account',
   'Language:en-US',
@@ -83,7 +78,6 @@ const bank = [
   'PIN:9',
   'Notes:x',
 ].join('\n')
-
 const rows = [
   ['url', 'username', 'password', 'totp', 'extra', 'name', 'grouping', 'fav'],
   [
@@ -105,10 +99,8 @@ const rows = [
   ['http://sn', '', '', '', bank, 'Konto', '', '0'],
   ['', '', '', '', '', '', '', '0'],
 ]
-
 describe('parseLastPass', () => {
   const result = parseLastPass(csvText(rows))
-
   it('reads logins with folders, favourites, totp and several urls', () => {
     const example = find(result, 'Example')
     const login = as(example.content, 'login')
@@ -124,7 +116,6 @@ describe('parseLastPass', () => {
     expect(multi.folder).toBeNull()
     expect(result.vaults[0]?.items).toHaveLength(8)
   })
-
   it('reads secure notes, cards, addresses, ssh keys and wifi', () => {
     const plain = find(result, 'Plain note')
     expect(plain.content).toMatchObject({ kind: 'note', note: 'just a note, ünïcödé' })
@@ -166,7 +157,6 @@ describe('parseLastPass', () => {
       security: 'wpa2',
     })
   })
-
   it('keeps an unknown note type as a note and says so', () => {
     const konto = find(result, 'Konto').content
     expect(konto).toMatchObject({ kind: 'note', note: 'x' })
@@ -177,7 +167,6 @@ describe('parseLastPass', () => {
     ])
     expect(result.skipped).toEqual([{ reason: expect.stringContaining('Bank Account'), title: 'Konto' }])
   })
-
   it('refuses another CSV', () => {
     expect(() => parseLastPass('name,url,username,password\nx,y,z,w\n')).toThrow()
   })

@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 KEEP = """async () => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
@@ -12,12 +10,10 @@ KEEP = """async () => {
   ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: `${root}/Slack.md`, is_dir: false }))
   return ws.bookmarks.list.length
 }"""
-
 BOXES = """() => Object.fromEntries([...document.querySelectorAll('.tabs .tab')].map((one) => {
   const r = one.getBoundingClientRect()
   return [one.dataset.box, { x: r.x, width: r.width, name: one.querySelector('.label')?.textContent.trim() }]
 }))"""
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 800})
     page.add_init_script(
@@ -33,11 +29,9 @@ def drive(browser: Browser) -> None:
     say(f"kept: {page.evaluate(KEEP)}")
     wait_for(page, "document.querySelectorAll('.tiles .tile').length > 0", "the essential's tile")
     page.wait_for_timeout(800)
-
     before = page.evaluate(BOXES)
     start = min(one["x"] for one in before.values())
     first = min(before.values(), key=lambda one: one["x"])
-
     tile = page.locator(".tiles .tile").first.bounding_box()
     assert tile
     page.mouse.move(tile["x"] + tile["width"] / 2, tile["y"] + tile["height"] / 2)
@@ -52,7 +46,6 @@ def drive(browser: Browser) -> None:
     gap = min(one["x"] for one in during.values()) - start
     page.mouse.up()
     page.wait_for_timeout(1200)
-
     after = page.evaluate(BOXES)
     arrived = [one for key, one in after.items() if key not in before]
     say(f"the room made: {gap:.0f}; the tabs after: {[(one['name'], round(one['width'])) for one in after.values()]}")
@@ -67,5 +60,4 @@ def drive(browser: Browser) -> None:
         now = after.get(key)
         if now and abs(now["width"] - one["width"]) > 2:
             wrong(f"{one['name']} was {one['width']:.0f} wide under the carried tab and {now['width']:.0f} after")
-
 raise SystemExit(DRIVE.run(drive, "an essential carried into the strip is given its own room"))

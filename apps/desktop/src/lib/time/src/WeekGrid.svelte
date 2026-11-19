@@ -19,7 +19,6 @@
     now: number
     onpick: (day: number, span: string | null) => void
   } = $props()
-
   const PER_HOUR = 44
   const days = $derived(Array.from({ length: 7 }, (_, index) => daysAfter(from, index)))
   const bounds = $derived.by((): [number, number] => {
@@ -128,7 +127,6 @@
     column-gap: 4px;
     row-gap: var(--space-2);
   }
-
   .head {
     display: flex;
     flex-direction: column;
@@ -143,19 +141,16 @@
     font-size: var(--text-sm);
     cursor: pointer;
   }
-
   .head.today .name {
     color: var(--accent);
     font-weight: var(--weight-strong);
   }
-
   .total {
     min-height: 1.2em;
     color: var(--muted);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .hours {
     position: relative;
     color: var(--muted);
@@ -163,14 +158,12 @@
     font-variant-numeric: tabular-nums;
     text-align: end;
   }
-
   .hours span {
     position: absolute;
     right: var(--space-2);
     translate: 0 -50%;
     white-space: nowrap;
   }
-
   .column {
     position: relative;
     border-radius: var(--radius-sm);
@@ -181,7 +174,6 @@
     );
     cursor: pointer;
   }
-
   .busy {
     position: absolute;
     left: 0;
@@ -190,7 +182,6 @@
     background: var(--accent);
     pointer-events: none;
   }
-
   .block {
     position: absolute;
     left: calc(8px + (100% - 11px) * var(--row) / var(--rows));
@@ -210,19 +201,16 @@
     text-align: start;
     cursor: pointer;
   }
-
   .what {
     overflow: hidden;
     font-weight: var(--weight-strong);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .long {
     opacity: 0.85;
     font-variant-numeric: tabular-nums;
   }
-
   .now {
     position: absolute;
     left: 0;

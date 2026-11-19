@@ -12,16 +12,12 @@ export interface Remote {
   post(chat: string, events: readonly Event[]): Promise<Results | 'gone' | null>
   read(chat: string, seq: number, back: boolean): Promise<boolean>
 }
-
 export type Change =
   | { t: 'messages'; chat: string; kept: Kept[]; gone: string[]; arrived: Message[] }
   | { t: 'outbox'; chat: string }
   | { t: 'list' }
-
 const BATCH = 50
-
 const PAGES_A_TURN = 20
-
 export class ChatEngine {
   readonly chats = new Map<string, CachedChat>()
   private outbox: OutboxRow[] = []
@@ -32,34 +28,28 @@ export class ChatEngine {
   private readonly tries = new Map<string, number>()
   private readonly listeners = new Set<(change: Change) => void>()
   private stopped = false
-
   constructor(
     private readonly cache: ChatCache,
     private readonly remote: Remote,
     private readonly me: () => Who | null,
     private readonly now: () => number = Date.now,
   ) {}
-
   async load(): Promise<void> {
     for (const chat of await this.cache.chats()) this.chats.set(chat.id, chat)
     this.outbox = await this.cache.outbox()
   }
-
   listen(listener: (change: Change) => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   stop(): void {
     this.stopped = true
     for (const timer of this.retries.values()) clearTimeout(timer)
     this.retries.clear()
   }
-
   private say(change: Change): void {
     for (const listener of this.listeners) listener(change)
   }
-
   private line<T>(chat: string, work: () => Promise<T>): Promise<T> {
     const before = this.lines.get(chat) ?? Promise.resolve()
     const next = before.then(work, work)
@@ -69,7 +59,6 @@ export class ChatEngine {
     )
     return next
   }
-
   private chatOf(id: string, space = ''): CachedChat {
     let chat = this.chats.get(id)
     if (!chat) {
@@ -78,7 +67,6 @@ export class ChatEngine {
     }
     return chat
   }
-
   async refresh(): Promise<boolean> {
     const listed = await this.remote.list()
     if (!listed || this.stopped) return false
@@ -105,7 +93,6 @@ export class ChatEngine {
     void this.catchUpAll()
     return true
   }
-
   async catchUpAll(): Promise<void> {
     for (const chat of [...this.chats.values()]) {
       if (this.stopped) return
@@ -114,7 +101,6 @@ export class ChatEngine {
       }
     }
   }
-
   poked(poke: ChatPoke): void {
     const chat = this.chats.get(poke.chat)
     if (chat?.row && poke.seq > chat.row.lastSeq) {
@@ -132,7 +118,6 @@ export class ChatEngine {
     if (chat) void this.sync(poke.chat).catch(() => undefined)
     else void this.refresh()
   }
-
   sync(id: string): Promise<void> {
     return this.line(id, async () => {
       const chat = this.chatOf(id)
@@ -149,7 +134,6 @@ export class ChatEngine {
       void this.sync(id)
     })
   }
-
   heard(id: string, events: readonly Logged[]): Promise<void> {
     return this.line(id, async () => {
       const chat = this.chatOf(id)
@@ -162,13 +146,11 @@ export class ChatEngine {
       await this.folded(chat, events)
     })
   }
-
   behind(id: string, seq: number): void {
     const chat = this.chatOf(id)
     if (chat.row) chat.row = { ...chat.row, lastSeq: Math.max(chat.row.lastSeq, seq) }
     void this.sync(id)
   }
-
   private async firstCopy(chat: CachedChat): Promise<boolean> {
     const page = await this.remote.state(chat.id)
     if (!page) return false
@@ -186,7 +168,6 @@ export class ChatEngine {
     this.say({ t: 'messages', chat: chat.id, kept, gone: [], arrived: [] })
     return true
   }
-
   fill(id: string): Promise<boolean> {
     return this.line(id, async () => {
       const chat = this.chatOf(id)
@@ -207,7 +188,6 @@ export class ChatEngine {
       return true
     })
   }
-
   private async folded(chat: CachedChat, events: readonly Logged[]): Promise<void> {
     const id = chat.id
     const lookup: Lookup = {
@@ -222,7 +202,6 @@ export class ChatEngine {
     }
     const { kept, gone, seq } = await foldAll(events, lookup, chat.seq)
     if (seq === chat.seq) return
-
     const me = this.me()
     const fresh = events.filter((one) => one.seq > chat.seq)
     for (const event of fresh) {
@@ -241,7 +220,6 @@ export class ChatEngine {
         lastBy: last?.author ?? null,
       }
     }
-
     await this.cache.write([
       { t: 'chat', chat: { ...chat } },
       ...[...kept.values()].map((one): CacheChange => ({ t: 'message', chat: id, kept: one })),
@@ -256,12 +234,10 @@ export class ChatEngine {
     this.say({ t: 'messages', chat: id, kept: [...kept.values()], gone: [...gone], arrived })
     this.say({ t: 'list' })
   }
-
   pending(chat: string): readonly OutboxRow[] {
     const held = this.chats.get(chat)?.seq ?? 0
     return this.outbox.filter((row) => row.chat === chat && !((this.placed.get(row.id) ?? Infinity) <= held))
   }
-
   async queue(chat: string, event: Event): Promise<void> {
     const checked = eventOf(event)
     if (!checked) throw new Error(`a ${event.kind} the account would not read`)
@@ -278,7 +254,6 @@ export class ChatEngine {
     this.say({ t: 'outbox', chat })
     void this.flush(chat)
   }
-
   async drop(ids: readonly string[]): Promise<void> {
     const gone = new Set(ids)
     const chats = new Set(this.outbox.filter((row) => gone.has(row.id)).map((row) => row.chat))
@@ -286,7 +261,6 @@ export class ChatEngine {
     await this.cache.write(ids.map((id): CacheChange => ({ t: 'unqueue', id })))
     for (const chat of chats) this.say({ t: 'outbox', chat })
   }
-
   async retry(ids: readonly string[]): Promise<void> {
     const again = new Set(ids)
     const changes: CacheChange[] = []
@@ -304,15 +278,12 @@ export class ChatEngine {
       void this.flush(chat)
     }
   }
-
   async flushAll(): Promise<void> {
     await Promise.all([...new Set(this.outbox.map((row) => row.chat))].map((chat) => this.flush(chat)))
   }
-
   private halted(): boolean {
     return this.stopped
   }
-
   async flush(chat: string): Promise<void> {
     if (this.sending.has(chat) || this.stopped) return
     this.sending.add(chat)
@@ -376,7 +347,6 @@ export class ChatEngine {
     if (held) this.settle(held)
     await this.sync(chat)
   }
-
   private again(chat: string): void {
     if (this.stopped || this.retries.has(chat)) return
     const tries = (this.tries.get(chat) ?? 0) + 1
@@ -389,7 +359,6 @@ export class ChatEngine {
       }, roomDelay(tries)),
     )
   }
-
   private settle(chat: CachedChat): void {
     const done = this.outbox
       .filter((row) => row.chat === chat.id && (this.placed.get(row.id) ?? Infinity) <= chat.seq)
@@ -398,7 +367,6 @@ export class ChatEngine {
     for (const id of done) this.placed.delete(id)
     void this.drop(done)
   }
-
   readTo(id: string, seq: number, back = false): boolean {
     const chat = this.chats.get(id)
     const row = chat?.row
@@ -410,16 +378,13 @@ export class ChatEngine {
     this.say({ t: 'list' })
     return true
   }
-
   tellRead(chat: string, seq: number, back: boolean): Promise<boolean> {
     return this.remote.read(chat, seq, back)
   }
 }
-
 function keptOf(page: StatePage, messages: readonly Message[]): Kept[] {
   return messages.map((message) => ({ message, upto: page.seq, marks: marksOf(message, page.seq) }))
 }
-
 function metaWith(meta: Meta, event: Extract<Event, { kind: 'meta' }>): Meta {
   return {
     topic: event.topic ?? meta.topic,

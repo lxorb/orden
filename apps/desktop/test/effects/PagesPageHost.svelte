@@ -4,14 +4,11 @@
   import PagesPage from '../../src/lib/pages/src/PagesPage.svelte'
 
   const { first }: { first: PageNode } = $props()
-
   let page = $state.raw(untrack(() => first))
   let unit = $state(1)
-
   export function edit(next: PageNode) {
     page = next
   }
-
   export function zoom(next: number) {
     unit = next
   }

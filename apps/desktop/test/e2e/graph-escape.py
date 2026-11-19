@@ -1,13 +1,9 @@
 from typing import Any
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 GRAPHS = "() => window.ordenApp.workspace.tabs.filter((one) => one.kind === 'graph').length"
-
-
 def drive(browser: Any) -> None:
     page = DRIVE.page(browser, viewport={"width": 1300, "height": 800})
     DRIVE.open(page)
@@ -24,7 +20,6 @@ def drive(browser: Any) -> None:
     if shown != 1:
         wrong(f"the graph should be drawn in the other pane only, drawn {shown}")
         return
-
     page.evaluate("() => document.activeElement?.blur()")
     page.keyboard.press("Escape")
     page.wait_for_timeout(600)
@@ -33,7 +28,6 @@ def drive(browser: Any) -> None:
     if left != 1:
         wrong("Escape pressed in the note's pane closed the graph in the pane beside it")
         return
-
     page.locator("div.graph canvas").first.click(position={"x": 5, "y": 5})
     page.wait_for_timeout(300)
     page.keyboard.press("Escape")
@@ -42,6 +36,4 @@ def drive(browser: Any) -> None:
     say(f"after Escape in the graph's own pane: graphs drawn {gone}")
     if gone != 0:
         wrong("Escape in the graph's own pane no longer closes it")
-
-
 raise SystemExit(DRIVE.run(drive))

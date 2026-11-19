@@ -7,42 +7,33 @@ interface Space {
   name: string
   path: string
 }
-
 interface Listed {
   name: string
   path: string
   is_dir: boolean
   children?: Listed[]
 }
-
 const foldsCase = () => ['windows', 'macos', 'ios', ''].includes(platform())
-
 const same = (one: string, other: string) => (foldsCase() ? one.toLowerCase() === other.toLowerCase() : one === other)
-
 async function home(): Promise<string> {
   return joinPath(await crate<string>('spaces_root'), KEPT_HOME)
 }
-
 const rootIn = (folder: string, name: string) => joinPath(folder, name)
 let finding: Promise<Space[]> | null = null
-
 export function keptSpaces(): Promise<Space[]> {
   finding ??= find().finally(() => {
     finding = null
   })
   return finding
 }
-
 const fromOf = new Map<string, string>()
 const FROM = '.from'
 const RETIRED = '.retired'
 export const CONVERTING = '.converting'
-
 async function lines(name: string): Promise<string[]> {
   const said = await crate<string>('read_note', { path: joinPath(await home(), name) }).catch(() => '')
   return said.split('\n').filter(Boolean)
 }
-
 async function addLine(name: string, line: string): Promise<void> {
   const had = await lines(name)
   if (had.includes(line)) return
@@ -51,7 +42,6 @@ async function addLine(name: string, line: string): Promise<void> {
     content: `${[...had, line].join('\n')}\n`,
   })
 }
-
 async function find(): Promise<Space[]> {
   const at = await home()
   const tree = await crate<Listed>('read_tree', { root: at, options: { every: true } }).catch(() => null)
@@ -71,22 +61,18 @@ async function find(): Promise<Space[]> {
   }
   return out
 }
-
 export async function keptFrom(): Promise<string[]> {
   await keptSpaces()
   return [...fromOf.values(), ...(await lines(RETIRED))]
 }
-
 export async function keptCameFrom(): Promise<{ root: string; from: string }[]> {
   await keptSpaces()
   return [...fromOf].map(([root, from]) => ({ root, from }))
 }
-
 export function keptFolder(root: string): { name: string; readText(path: string): Promise<string | null> } | null {
   const found = mountOf(root)
   return found && !found.inside ? found.mount.folder : null
 }
-
 export async function listedWith(folders: readonly Space[]): Promise<Space[]> {
   const kept = await keptSpaces()
   const gone = new Set(await keptFrom())
@@ -94,31 +80,24 @@ export async function listedWith(folders: readonly Space[]): Promise<Space[]> {
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   )
 }
-
 const letGo = new Map<string, () => void>()
-
 function unmount(root: string) {
   letGo.get(root)?.()
   letGo.delete(root)
 }
-
 const work = () => import('./work')
-
 async function mounted(root: string, folder: string) {
   if (mountOf(root)?.mount.root === root) return
   const { mountInternal } = await import('./mount')
   letGo.set(root, await mountInternal(root, folder, { foldsCase: foldsCase() }))
 }
-
 export function freeName(wanted: string, taken: readonly string[]): string {
   return freeWhole(wanted, (one) => taken.some((name) => same(name, one)))
 }
-
 async function names(): Promise<string[]> {
   const folders = await crate<Space[]>('list_spaces').catch(() => [])
   return [...folders, ...(await keptSpaces())].map((one) => one.name)
 }
-
 export async function makeKept(name: string): Promise<Space> {
   const wanted = safeName(name)
   if (!wanted) throw new Error('that name cannot be used for a space')
@@ -127,7 +106,6 @@ export async function makeKept(name: string): Promise<Space> {
   await crate('create_folder', { path: folder })
   return { name: chosen, path: await mountKept(folder, chosen) }
 }
-
 export async function mountKept(folder: string, name: string, from?: string): Promise<string> {
   const root = rootIn(folder, name)
   await crate('write_note', { path: root, content: '' })
@@ -138,7 +116,6 @@ export async function mountKept(folder: string, name: string, from?: string): Pr
   await mounted(root, folder)
   return root
 }
-
 export async function renameKept(from: string, name: string): Promise<Space> {
   const found = mountOf(from)
   if (!found || found.inside) throw new Error(`${from} is not a space kept here`)
@@ -153,7 +130,6 @@ export async function renameKept(from: string, name: string): Promise<Space> {
   if (wanted === old) return { name: old, path: from }
   const others = (await names()).filter((one) => !same(one, old))
   if (others.some((one) => same(one, wanted))) throw new Error(`there is a space called ${wanted}`)
-
   const folder = joinPath(await home(), wanted)
   if (!__EVEN_PLUGIN__) await (await work()).letGoWorking(was)
   await found.mount.folder.retire()
@@ -174,7 +150,6 @@ export async function renameKept(from: string, name: string): Promise<Space> {
   if (madeOf) fromOf.set(root, madeOf)
   return { name: wanted, path: root }
 }
-
 export async function removeKept(root: string, forGood: boolean): Promise<unknown> {
   const found = mountOf(root)
   if (!found || found.inside) throw new Error(`${root} is not a space kept here`)

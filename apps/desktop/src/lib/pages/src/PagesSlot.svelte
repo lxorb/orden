@@ -12,7 +12,6 @@
     reach: number
     pulling: boolean
   } = $props()
-
   const BAND = 88
   const part = $derived(reach > 0 ? Math.min(1, rise / reach) : 0)
   const ready = $derived(rise >= reach && reach > 0)
@@ -50,14 +49,12 @@
       opacity var(--dur-fast) var(--ease-out),
       border-color var(--dur-base) var(--ease-out);
   }
-
   .slot.ready {
     border-style: solid;
     border-color: var(--accent);
     background: var(--surface);
     opacity: 1;
   }
-
   .mark {
     display: flex;
     flex-direction: column;
@@ -73,20 +70,16 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .slot.ready .mark {
     color: var(--accent);
   }
-
   .mark span {
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .slot.pulling .mark span {
     opacity: 1;
   }
-
   .mark svg {
     width: calc(20px * var(--unit));
     height: calc(20px * var(--unit));
@@ -97,7 +90,6 @@
     scale: calc(0.62 + 0.38 * var(--part));
     transition: scale var(--dur-fast) var(--ease-out);
   }
-
   .slot.ready .mark svg {
     scale: 1;
     transition: scale var(--dur-base) var(--ease-spring);

@@ -6,14 +6,11 @@ import { welcomeNote } from './welcome'
 const SPACE = 'Notes'
 const NOTE = 'Read me.md'
 const ICON = 'NotebookPen'
-
 export async function makeFirstSpace(env: Env, userId: string): Promise<void> {
   const held = await env.DB.prepare('select id from spaces where user_id = ? and deleted = 0')
     .bind(userId)
     .first<{ id: string }>()
-
   if (held) return
-
   const space = await addSpace(env, userId, SPACE, ICON)
   if (!space) return
   await addNote(env, space.id, NOTE, welcomeNote())

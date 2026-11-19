@@ -7,7 +7,6 @@ pub struct Family {
     name: String,
     mono: bool,
 }
-
 #[tauri::command]
 pub async fn font_families() -> Vec<Family> {
     tauri::async_runtime::spawn_blocking(|| {
@@ -25,7 +24,6 @@ pub async fn font_families() -> Vec<Family> {
     .await
     .unwrap_or_default()
 }
-
 fn families(faces: impl Iterator<Item = (String, bool)>) -> Vec<Family> {
     let mut found: BTreeMap<String, (String, bool)> = BTreeMap::new();
     for (name, mono) in faces {
@@ -41,7 +39,6 @@ fn families(faces: impl Iterator<Item = (String, bool)>) -> Vec<Family> {
         .map(|(name, mono)| Family { name, mono })
         .collect()
 }
-
 #[cfg(test)]
 mod tests {
     use super::{families, Family};
@@ -52,7 +49,6 @@ mod tests {
             mono,
         }
     }
-
     #[test]
     fn each_family_is_one_row_however_many_faces_it_has() {
         let faces = [
@@ -71,7 +67,6 @@ mod tests {
             vec![family("DejaVu Sans Mono", true), family("Noto Sans", false)]
         );
     }
-
     #[test]
     fn a_platform_s_hidden_faces_and_nameless_ones_are_not_offered() {
         let faces = [

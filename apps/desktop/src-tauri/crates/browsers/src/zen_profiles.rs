@@ -13,36 +13,29 @@ use crate::firefox_profiles::{tree_of, FAVICONS, PLACES, SEARCH};
 use orden_base::paths::folder_named;
 
 pub type ZenProfile = Profile;
-
 const ZEN_DIR: &str = "ORDEN_ZEN_DIR";
-
 const SESSIONS: [&str; 4] = [
     "zen-sessions.jsonlz4",
     "zen-sessions-backup/clean.jsonlz4",
     "sessionstore-backups/recovery.jsonlz4",
     "sessionstore.jsonlz4",
 ];
-
 const BACKUPS: &str = "zen-sessions-backup";
 const BACKUP_PREFIX: &str = "zen-sessions-";
 const BACKUP_SUFFIX: &str = ".jsonlz4";
-
 #[tauri::command(async)]
 pub fn zen_profiles() -> Vec<ZenProfile> {
     listed()
 }
-
 #[tauri::command(async)]
 pub fn read_zen_file(profile: String, file: String) -> Result<String, String> {
     read_listed("Zen", &profile, &file, &listed())
 }
-
 #[tauri::command(async)]
 pub fn read_zen_places(profile: String) -> Result<String, String> {
     let db = opened(&listed_file("Zen", &profile, PLACES, &listed())?, PLACES)?;
     Ok(places_of(&db.connection).to_string())
 }
-
 fn places_of(db: &Connection) -> Value {
     json!({
         "bookmarks": tree_of(db).unwrap_or(Value::Null),
@@ -51,7 +44,6 @@ fn places_of(db: &Connection) -> Value {
         "assigned": table_rows(db, "SELECT bookmark_guid, workspace_uuid FROM zen_bookmarks_workspaces"),
     })
 }
-
 fn table_rows(db: &Connection, query: &str) -> Vec<Value> {
     let Ok(mut statement) = db.prepare(query) else {
         return Vec::new();
@@ -78,40 +70,32 @@ fn table_rows(db: &Connection, query: &str) -> Vec<Value> {
     };
     rows.flatten().collect()
 }
-
 pub(crate) fn listed() -> Vec<ZenProfile> {
     once(homes().iter().flat_map(|home| profiles_in(home)))
 }
-
 fn homes() -> Vec<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(ZEN_DIR).as_deref()) {
         return vec![named];
     }
-
     let mut found = Vec::new();
     if let Some(config) = dirs::config_dir() {
         found.push(config.join("zen"));
     }
-
     #[cfg(target_os = "linux")]
     if let Some(home) = dirs::home_dir() {
         found.push(home.join(".zen"));
         found.push(home.join(".var/app/app.zen_browser.zen/.zen"));
     }
-
     found
 }
-
 fn profiles_in(home: &Path) -> Vec<ZenProfile> {
     ini_profiles(home, files_of)
 }
-
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found = present(profile, &SESSIONS);
     if found.is_empty() {
         return found;
     }
-
     if let Some(name) = newest(profile, BACKUPS, BACKUP_PREFIX, BACKUP_SUFFIX) {
         let at = found
             .iter()
@@ -120,22 +104,18 @@ fn files_of(profile: &Path) -> Vec<String> {
         found.insert(at, name);
     }
     found.extend(present(profile, &[PLACES, FAVICONS, SEARCH]));
-
     found
 }
-
 #[cfg(test)]
 fn known(profile: &str, file: &str, listed: &[ZenProfile]) -> Result<PathBuf, String> {
     crate::browser_profiles::known("Zen", profile, file, listed)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs;
 
     const INI: &str = "[Install6F193CCC56814779]\r\nDefault=Profiles/b2.Default (release)\r\nLocked=1\r\n\r\n[Profile1]\r\nName=Default Profile\r\nIsRelative=1\r\nPath=Profiles/a1.default\r\nDefault=1\r\n\r\n[Profile0]\r\nName=Default (release)\r\nIsRelative=1\r\nPath=Profiles/b2.Default (release)\r\n\r\n[Profile2]\r\nName=Work\r\nIsRelative=1\r\nPath=Profiles/c3.Work\r\n\r\n[General]\r\nStartWithLastProfile=1\r\nVersion=2\r\n";
-
     fn profile(home: &Path, path: &str, files: &[&str]) {
         for file in files {
             let at = home.join(path).join(file);
@@ -143,7 +123,6 @@ mod tests {
             fs::write(at, b"mozLz40\0").expect("a session");
         }
     }
-
     #[test]
     fn every_profile_of_the_file_is_read() {
         assert_eq!(
@@ -172,7 +151,6 @@ mod tests {
             vec!["Profiles/b2.Default (release)".to_owned()]
         );
     }
-
     #[test]
     fn the_profile_zen_opens_comes_first_and_one_without_a_session_not_at_all() {
         let here = tempfile::tempdir().expect("a folder");
@@ -188,13 +166,11 @@ mod tests {
             &["zen-sessions.jsonlz4"],
         );
         fs::create_dir_all(here.path().join("Profiles/c3.Work")).expect("an empty profile");
-
         let found = profiles_in(here.path());
         let names: Vec<&str> = found.iter().map(|one| one.name.as_str()).collect();
         assert_eq!(names, vec!["Default (release)", "Default Profile"]);
         assert_eq!(found[0].files, vec!["zen-sessions.jsonlz4".to_owned()]);
     }
-
     #[test]
     fn the_session_files_come_in_the_order_they_are_worth_reading() {
         let here = tempfile::tempdir().expect("a folder");
@@ -210,7 +186,6 @@ mod tests {
                 "zen-sessions-backup/recovery.baklz4",
             ],
         );
-
         assert_eq!(
             files_of(&here.path().join("p")),
             vec![
@@ -221,7 +196,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn only_a_listed_file_of_a_listed_profile_is_read() {
         let listed = vec![ZenProfile {
@@ -229,14 +203,12 @@ mod tests {
             path: "/home/me/.zen/p".into(),
             files: vec!["zen-sessions.jsonlz4".into()],
         }];
-
         assert!(known("/home/me/.zen/p", "zen-sessions.jsonlz4", &listed).is_ok());
         assert!(known("/home/me/.zen/p/../q", "zen-sessions.jsonlz4", &listed).is_err());
         assert!(known("/home/me/.zen/p", "../../.ssh/id_ed25519", &listed).is_err());
         assert!(known("/home/me/.zen/p", "places.sqlite", &listed).is_err());
         assert!(known("/home/me/.zen/other", "zen-sessions.jsonlz4", &listed).is_err());
     }
-
     #[test]
     fn the_databases_and_the_engines_come_after_the_sessions_and_only_with_one() {
         let here = tempfile::tempdir().expect("a folder");
@@ -246,14 +218,12 @@ mod tests {
             &["zen-sessions.jsonlz4", PLACES, FAVICONS, SEARCH],
         );
         profile(here.path(), "q", &[PLACES]);
-
         assert_eq!(
             files_of(&here.path().join("p")),
             vec!["zen-sessions.jsonlz4", PLACES, FAVICONS, SEARCH]
         );
         assert!(files_of(&here.path().join("q")).is_empty());
     }
-
     #[test]
     fn the_places_of_a_zen_before_its_sessions_file_come_as_rows() {
         let db = Connection::open_in_memory().expect("a database");
@@ -271,7 +241,6 @@ mod tests {
              INSERT INTO zen_pins VALUES (8, '{m}', 1, x'00');",
         )
         .expect("the tables");
-
         let places = places_of(&db);
         assert_eq!(places["bookmarks"]["guid"], "root________");
         assert_eq!(
@@ -283,7 +252,6 @@ mod tests {
         assert_eq!(places["pins"][0]["folder_icon"], Value::Null);
         assert_eq!(places["assigned"], json!([]));
     }
-
     #[test]
     fn a_missing_or_broken_list_is_no_profiles() {
         let here = tempfile::tempdir().expect("a folder");

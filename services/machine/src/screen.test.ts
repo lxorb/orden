@@ -5,7 +5,6 @@ import { Screen } from './screen'
 
 const COLS = 60
 const ROWS = 12
-
 function stream(): Uint8Array {
   const parts: string[] = ['\x1b]0;build\x07']
   for (let i = 0; i < 40; i++) {
@@ -23,26 +22,22 @@ function stream(): Uint8Array {
   parts.push('\x1b[2;5H')
   return new TextEncoder().encode(parts.join(''))
 }
-
 test('a joiner at any point between two sequences draws what a watcher saw', async () => {
   const all = stream()
   const watcher = terminal(COLS, ROWS)
   await written(watcher, all)
   const expected = cells(watcher)
-
   const scanner = new Scanner()
   const cuts = new Set<number>()
   for (let at = 0; at < all.length; at += 13) {
     scanner.feed(all.subarray(at, at + 13))
     cuts.add(scanner.safe)
   }
-
   for (const cut of cuts) {
     const screen = new Screen(COLS, ROWS)
     screen.write(all.subarray(0, cut))
     const serialized = await screen.serialized()
     screen.dispose()
-
     const joiner = terminal(COLS, ROWS)
     await written(joiner, serialized)
     await written(joiner, all.subarray(cut))
@@ -51,7 +46,6 @@ test('a joiner at any point between two sequences draws what a watcher saw', asy
   }
   watcher.dispose()
 })
-
 test('the screen is the one in front: the editor, with its modes', async () => {
   const screen = new Screen(COLS, ROWS)
   screen.write(stream())
@@ -63,7 +57,6 @@ test('the screen is the one in front: the editor, with its modes', async () => {
   expect(joiner.modes.mouseTrackingMode).toBe('vt200')
   expect(screen.title).toBe('build')
 })
-
 test("a saved screen is the shell's alone, with no modes left switched on", async () => {
   const screen = new Screen(COLS, ROWS)
   screen.write(stream())
@@ -73,14 +66,12 @@ test("a saved screen is the shell's alone, with no modes left switched on", asyn
   expect(back.modes.bracketedPasteMode).toBe(false)
   expect(back.modes.mouseTrackingMode).toBe('none')
 })
-
 test('a wrapped line stays wrapped for a joiner', async () => {
   const address = `https://claude.ai/oauth/authorize?scope=${'user%3Aprofile+'.repeat(12)}`
   const screen = new Screen(COLS, ROWS)
   screen.write(`$ ${address}\r\n$ `)
   const serialized = await screen.serialized()
   screen.dispose()
-
   const joiner = terminal(COLS, ROWS)
   await written(joiner, serialized)
   const rows = Math.ceil((address.length + 2) / COLS)

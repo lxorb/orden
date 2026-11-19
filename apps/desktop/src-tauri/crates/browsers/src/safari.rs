@@ -19,11 +19,8 @@ const SETTINGS: [&str; 2] = [
     "Library/Preferences/com.apple.Safari.plist",
 ];
 const ENGINE: &str = "SearchProviderShortName";
-
 const NO_ACCESS: &str = "no access";
-
 const MOST_BYTES: u64 = 64 * 1024 * 1024;
-
 pub(crate) fn profiles() -> Vec<Profile> {
     home()
         .map(|home| Profile {
@@ -34,7 +31,6 @@ pub(crate) fn profiles() -> Vec<Profile> {
         .into_iter()
         .collect()
 }
-
 fn home() -> Option<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(BROWSERS_DIR).as_deref()) {
         let home = named.join("safari");
@@ -46,19 +42,16 @@ fn home() -> Option<PathBuf> {
         None
     }
 }
-
 #[tauri::command(async)]
 pub fn read_safari() -> Result<String, String> {
     let home = home().ok_or("Safari is a Mac's")?;
     read_from(&home).map(|read| read.to_string())
 }
-
 enum Got<T> {
     Read(T),
     Missing,
     Refused,
 }
-
 fn read_from(home: &Path) -> Result<Value, String> {
     let bookmarks = plist_at(&home.join(BOOKMARKS));
     let session = plist_at(&home.join(SESSION));
@@ -67,7 +60,6 @@ fn read_from(home: &Path) -> Result<Value, String> {
         .map(|folder| tabs_in(&home.join(folder)))
         .find(|got| !matches!(got, Got::Missing))
         .unwrap_or(Got::Missing);
-
     let refused = [&bookmarks, &session]
         .into_iter()
         .any(|got| matches!(got, Got::Refused))
@@ -89,7 +81,6 @@ fn read_from(home: &Path) -> Result<Value, String> {
         "session": value(session),
         "engine": engine,
     });
-
     if ["bookmarks", "tabs", "session"]
         .iter()
         .all(|key| read[key].is_null())
@@ -102,7 +93,6 @@ fn read_from(home: &Path) -> Result<Value, String> {
     }
     Ok(read)
 }
-
 fn plist_at(path: &Path) -> Got<Value> {
     match fs::metadata(path) {
         Ok(found) if found.len() > MOST_BYTES => return Got::Missing,
@@ -115,7 +105,6 @@ fn plist_at(path: &Path) -> Got<Value> {
         Err(error) => refusal(&error),
     }
 }
-
 fn refusal<T>(error: &std::io::Error) -> Got<T> {
     if error.kind() == ErrorKind::PermissionDenied {
         Got::Refused
@@ -123,7 +112,6 @@ fn refusal<T>(error: &std::io::Error) -> Got<T> {
         Got::Missing
     }
 }
-
 fn json_of(value: &plist::Value) -> Value {
     match value {
         plist::Value::Array(all) => Value::Array(all.iter().map(json_of).collect()),
@@ -145,7 +133,6 @@ fn json_of(value: &plist::Value) -> Value {
         _ => Value::Null,
     }
 }
-
 fn tabs_in(folder: &Path) -> Got<Value> {
     if let Err(error) = fs::metadata(folder.join(TABS_DATABASE)) {
         return refusal(&error);
@@ -156,7 +143,6 @@ fn tabs_in(folder: &Path) -> Got<Value> {
     };
     rows_of(&copy.path().join(TABS_DATABASE)).map_or(Got::Missing, Got::Read)
 }
-
 fn rows_of(database: &Path) -> rusqlite::Result<Value> {
     let db = rusqlite::Connection::open(database)?;
     let columns: Vec<String> = db
@@ -187,7 +173,6 @@ fn rows_of(database: &Path) -> rusqlite::Result<Value> {
         .collect::<rusqlite::Result<Vec<Value>>>()?;
     Ok(Value::Array(rows))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -203,7 +188,6 @@ mod tests {
         out.insert("Children".into(), P::Array(children));
         P::Dictionary(out)
     }
-
     fn leaf(url: &str, title: &str) -> P {
         let mut uri = Dictionary::new();
         uri.insert("title".into(), P::String(title.into()));
@@ -217,7 +201,6 @@ mod tests {
         out.insert("WebBookmarkUUID".into(), P::String("6F1B".into()));
         P::Dictionary(out)
     }
-
     fn bookmarks(at: &Path) {
         let mut read = leaf("https://later.example.com/", "Later");
         if let P::Dictionary(entries) = &mut read {
@@ -244,7 +227,6 @@ mod tests {
         fs::create_dir_all(at.parent().expect("a folder")).expect("the folder");
         root.to_file_binary(at).expect("a property list");
     }
-
     fn tabs(folder: &Path) {
         fs::create_dir_all(folder).expect("the folder");
         let db = rusqlite::Connection::open(folder.join(TABS_DATABASE)).expect("a database");
@@ -262,13 +244,11 @@ mod tests {
         )
         .expect("the rows");
     }
-
     #[test]
     fn the_three_files_come_as_json_dates_as_days_and_bytes_as_nothing() {
         let home = tempfile::tempdir().expect("a folder");
         bookmarks(&home.path().join(BOOKMARKS));
         tabs(&home.path().join(TABS[0]));
-
         let read = read_from(home.path()).expect("something read");
         let bar = &read["bookmarks"]["Children"][0];
         assert_eq!(bar["Title"], "BookmarksBar");
@@ -276,20 +256,17 @@ mod tests {
         let later = &read["bookmarks"]["Children"][2]["Children"][0];
         assert_eq!(later["ReadingList"]["DateAdded"], "2026-10-01T08:00:00Z");
         assert!(later["imageURL"].is_null());
-
         let rows = read["tabs"].as_array().expect("rows");
         assert_eq!(rows.len(), 4);
         assert_eq!(rows[2]["title"], "One");
         assert_eq!(rows[3]["deleted"], true);
         assert!(read["session"].is_null());
     }
-
     #[test]
     fn the_search_engine_is_read_out_of_the_settings_in_the_container_first() {
         let home = tempfile::tempdir().expect("a folder");
         bookmarks(&home.path().join(BOOKMARKS));
         assert!(read_from(home.path()).expect("bookmarks")["engine"].is_null());
-
         for (path, engine) in [(SETTINGS[1], "Bing"), (SETTINGS[0], "DuckDuckGo")] {
             let mut settings = Dictionary::new();
             settings.insert(ENGINE.into(), P::String(engine.into()));
@@ -304,7 +281,6 @@ mod tests {
             "DuckDuckGo"
         );
     }
-
     #[test]
     fn the_tabs_of_an_older_safari_are_read_where_it_kept_them() {
         let home = tempfile::tempdir().expect("a folder");
@@ -314,7 +290,6 @@ mod tests {
             "https://one.example/"
         );
     }
-
     #[test]
     fn nothing_there_is_said_and_is_not_a_refusal() {
         let home = tempfile::tempdir().expect("a folder");
@@ -323,7 +298,6 @@ mod tests {
             "Safari holds no tabs or bookmarks here"
         );
     }
-
     #[cfg(unix)]
     #[test]
     fn a_folder_the_system_will_not_open_is_no_access() {

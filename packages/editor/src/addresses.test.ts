@@ -9,7 +9,6 @@ import { type Inline, parseInline } from './table/inline'
 import { parsed } from '../test/parsed'
 
 const PARK = '\n\nx'
-
 function linkMarks(doc: string) {
   const full = doc + PARK
   const state = parsed(
@@ -28,7 +27,6 @@ function linkMarks(doc: string) {
   })
   return out
 }
-
 function cell(source: string): string {
   const show = (nodes: Inline[]): string =>
     nodes
@@ -40,7 +38,6 @@ function cell(source: string): string {
       .join('')
   return show(parseInline(source))
 }
-
 describe('a www address with an at sign in its path', () => {
   test('in a table cell opens the page, not a mail', () => {
     expect(renderMarkdown('see www.youtube.com/@mkbhd now')).toContain('href="http://www.youtube.com/@mkbhd"')
@@ -48,7 +45,6 @@ describe('a www address with an at sign in its path', () => {
       'see <a href="https://www.youtube.com/@mkbhd">www.youtube.com/@mkbhd</a> now',
     )
   })
-
   test('in the note opens the page, not a mail', () => {
     const doc = 'get www.example.com/@scope/pkg.json here'
     expect(renderMarkdown(doc)).toContain('href="http://www.example.com/@scope/pkg.json"')
@@ -60,7 +56,6 @@ describe('a www address with an at sign in its path', () => {
     ])
   })
 })
-
 describe('a www address with a colon in its path', () => {
   test('in a table cell is still a link', () => {
     expect(linkMarks('read www.example.com/wiki/Help:Contents now')).toEqual([
@@ -74,7 +69,6 @@ describe('a www address with a colon in its path', () => {
     )
   })
 })
-
 describe('a link written with its address between angle brackets', () => {
   test('in a table cell can be followed, as in the note', () => {
     expect(linkMarks('see [a](<https://x.com/a b>) now')).toEqual([{ text: 'a', href: 'https://x.com/a b' }])

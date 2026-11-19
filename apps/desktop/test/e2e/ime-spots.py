@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, CDPSession, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 NOTE = """# Spots
 
 - item one
@@ -19,10 +17,8 @@ A [[Wiki]] link
 1. numbered
 end
 """
-
 DOC = "() => window.orden.state.doc.toString()"
 HEAD = "() => window.orden.state.selection.main.head"
-
 PLACE = """
 ([words, offset]) => {
   const view = window.orden
@@ -32,20 +28,17 @@ PLACE = """
   return at
 }
 """
-
 PUT_BACK = """
 (text) => {
   const view = window.orden
   view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } })
 }
 """
-
 LINE_WITH = """
 (words) => [...document.querySelectorAll('.cm-line')]
   .map((one) => one.innerText)
   .find((one) => one.includes(words))
 """
-
 SPOTS = [
     ("`code` span", len("`code`"), "right after inline code"),
     ("`code` span", len("`co"), "inside inline code"),
@@ -59,8 +52,6 @@ SPOTS = [
     ("> body here", len("> "), "at the start of a callout's body"),
     ("1. numbered", len("1. "), "at the start of a numbered item"),
 ]
-
-
 def compose(page: Page, cdp: CDPSession, words: str, offset: int, label: str) -> None:
     before = page.evaluate(DOC)
     at = page.evaluate(PLACE, [words, offset])
@@ -70,7 +61,6 @@ def compose(page: Page, cdp: CDPSession, words: str, offset: int, label: str) ->
         page.wait_for_timeout(60)
     cdp.send("Input.insertText", {"text": "日本"})
     page.wait_for_timeout(300)
-
     after = page.evaluate(DOC)
     expected = before[:at] + "日本" + before[at:]
     if after != expected:
@@ -80,17 +70,13 @@ def compose(page: Page, cdp: CDPSession, words: str, offset: int, label: str) ->
         wrong(f"[{label}] the caret is at {page.evaluate(HEAD)}, not after what was composed")
     else:
         say(f"[{label}] kept")
-
     if label == "right after inline code":
         page.wait_for_timeout(200)
         line = page.evaluate(LINE_WITH, "span")
         if "`" in line:
             wrong(f"[{label}] the backticks still show once the composition is over: {line!r}")
-
     page.evaluate(PUT_BACK, before)
     page.wait_for_timeout(100)
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
@@ -101,6 +87,4 @@ def drive(browser: Browser) -> None:
     for words, offset, label in SPOTS:
         compose(page, cdp, words, offset, label)
     cdp.detach()
-
-
 raise SystemExit(DRIVE.run(drive, "a composition keeps what is beside it, wherever it starts"))

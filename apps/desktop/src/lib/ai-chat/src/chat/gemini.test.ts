@@ -4,22 +4,18 @@ vi.mock('../../../ai-providers/src/keys', async (original) => ({
   ...(await original<typeof import('../../../ai-providers/src/keys')>()),
   readKey: () => Promise.resolve('AIza-test'),
 }))
-
 const { createApiEngine } = await import('./engine')
 const { forgetLearnt } = await import('./learned')
 const { newThread } = await import('./threads')
 const { catalogue } = await import('./catalogue')
 const { contentsOf, gemini, UNSIGNED } = await import('./gemini')
 const { complete } = await import('../../../ai-providers/src/complete')
-
 import type { Provider } from '../../../ai-providers/src/providers'
 import type { EngineEvent, ModelInfo, Thread, ToolOutput } from '../../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
 import type { Ask } from './wire'
-
 const ROOT = 'https://generativelanguage.googleapis.com/v1beta'
 const PROVIDER: Provider = { id: 'gemini', kind: 'gemini', name: '', model: 'gemini-3-flash' }
-
 interface Sent {
   url: string
   body: Record<string, unknown>
@@ -27,12 +23,10 @@ interface Sent {
 }
 let sent: Sent[] = []
 let answers: (() => Response)[] = []
-
 const sse =
   (...events: unknown[]) =>
   () =>
     new Response(events.map((one) => `data: ${JSON.stringify(one)}\r\n\r\n`).join(''))
-
 const PAGES: Record<string, unknown> = {
   '': {
     models: [
@@ -67,7 +61,6 @@ const PAGES: Record<string, unknown> = {
     ],
   },
 }
-
 vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
   const headers = init.headers as Record<string, string>
   if (url.startsWith(`${ROOT}/models?`)) {
@@ -84,7 +77,6 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
   if (!next) throw new Error(`nothing to answer ${url}`)
   return Promise.resolve(next())
 })
-
 const calls: { name: string; args: unknown }[] = []
 const tools: Tools = {
   list: () =>
@@ -104,18 +96,15 @@ const tools: Tools = {
     return Promise.resolve({ text: 'Herons stand still.', images: [], error: false })
   },
 }
-
 const engine = createApiEngine({
   provider: (id) => (id === PROVIDER.id ? PROVIDER : null),
   tools,
 })
-
 async function send(thread: Thread, text: string) {
   const heard: EngineEvent[] = []
   await engine.send(thread, { text, attachments: [] }, (event) => heard.push(event), new AbortController().signal)
   return heard
 }
-
 const CALLED = sse(
   {
     candidates: [
@@ -144,7 +133,6 @@ const CALLED = sse(
     usageMetadata: { promptTokenCount: 120, candidatesTokenCount: 9, thoughtsTokenCount: 30 },
   },
 )
-
 const ANSWERED = sse(
   { candidates: [{ content: { role: 'model', parts: [{ text: 'Herons ' }] } }] },
   {
@@ -164,14 +152,12 @@ const ANSWERED = sse(
     },
   },
 )
-
 beforeEach(() => {
   sent = []
   answers = []
   calls.length = 0
   forgetLearnt()
 })
-
 describe('the models', () => {
   test('are every page’s chat models, with their windows and Gemini 3’s thinking levels', async () => {
     const models = await catalogue(PROVIDER)
@@ -188,13 +174,11 @@ describe('the models', () => {
     expect(sent[0]?.headers.authorization).toBeUndefined()
   })
 })
-
 describe('a call made and answered', () => {
   test('runs the call and ends in the words, the thinking shown', async () => {
     answers = [CALLED, ANSWERED]
     const thread = newThread('space', 'gemini', 'gemini-3-flash', 'low', 'full')
     const heard = await send(thread, 'What is in Birds.md?')
-
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
     expect(calls).toEqual([{ name: 'read_note', args: { path: 'Birds.md' } }])
     const model = thread.turns[1]
@@ -203,7 +187,6 @@ describe('a call made and answered', () => {
     expect(model?.parts[2]).toMatchObject({ text: 'Herons stand still.' })
     expect(thread.usage).toMatchObject({ input: 180, cached: 100, output: 4, window: 1_048_576 })
   })
-
   test('calls without ids in two rounds each keep their own result', async () => {
     const bare = (path: string) =>
       sse({
@@ -220,7 +203,6 @@ describe('a call made and answered', () => {
     answers = [bare('One.md'), bare('Two.md'), ANSWERED]
     const thread = newThread('space', 'gemini', 'gemini-3-flash', 'low', 'full')
     await send(thread, 'Read both.')
-
     const tools = thread.turns[1]?.parts.filter((one) => one.kind === 'tool') ?? []
     expect(tools.map((one) => [one.args, one.state])).toEqual([
       [{ path: 'One.md' }, 'ok'],
@@ -228,12 +210,10 @@ describe('a call made and answered', () => {
     ])
     expect(new Set(tools.map((one) => one.id)).size).toBe(2)
   })
-
   test('asks the streaming address with the tools, the system and the thinking level', async () => {
     answers = [CALLED, ANSWERED]
     const thread = newThread('space', 'gemini', 'gemini-3-flash', 'low', 'full')
     await send(thread, 'What is in Birds.md?')
-
     const first = sent.find((one) => one.url.includes(':streamGenerateContent'))
     expect(first?.url).toBe(`${ROOT}/models/gemini-3-flash:streamGenerateContent?alt=sse`)
     expect(first?.headers['x-goog-api-key']).toBe('AIza-test')
@@ -257,12 +237,10 @@ describe('a call made and answered', () => {
       },
     })
   })
-
   test('the second request carries the model’s parts with their signature, then the answer', async () => {
     answers = [CALLED, ANSWERED]
     const thread = newThread('space', 'gemini', 'gemini-3-flash', 'auto', 'full')
     await send(thread, 'What is in Birds.md?')
-
     const asks = sent.filter((one) => one.url.includes(':streamGenerateContent'))
     const second = asks[1]?.body as { contents: unknown[]; generationConfig: unknown }
     expect(second.contents).toEqual([
@@ -295,20 +273,17 @@ describe('a call made and answered', () => {
       thinkingConfig: { includeThoughts: true },
     })
   })
-
   test('the next message replays the turn as Gemini sent it, the last signature kept', async () => {
     answers = [CALLED, ANSWERED, ANSWERED]
     const thread = newThread('space', 'gemini', 'gemini-3-flash', 'auto', 'full')
     await send(thread, 'What is in Birds.md?')
     await send(thread, 'Thanks.')
-
     const third = sent.filter((one) => one.url.includes(':streamGenerateContent'))[2]?.body as {
       contents: { role: string; parts: unknown[] }[]
     }
     expect(third.contents.map((one) => one.role)).toEqual(['user', 'model', 'user', 'model', 'user'])
     expect(third.contents[3]?.parts).toEqual([{ text: 'Herons stand still.', thoughtSignature: 'ZW5k' }])
   })
-
   test('a refusal says Gemini’s own words', async () => {
     answers = [
       () =>
@@ -324,7 +299,6 @@ describe('a call made and answered', () => {
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'error', error: 'API key not valid.' })
   })
 })
-
 describe('the wire', () => {
   const model: ModelInfo = {
     id: 'gemini-3-flash',
@@ -347,7 +321,6 @@ describe('the wire', () => {
     perMessage: false,
     ...change,
   })
-
   test('searches the web when asked, and thinks at most high', () => {
     const { body } = gemini.request(ask({ web: true })) as { body: Record<string, unknown> }
     expect(body.tools).toEqual([{ googleSearch: {} }])
@@ -356,14 +329,12 @@ describe('the wire', () => {
     })
     expect(body.systemInstruction).toBeUndefined()
   })
-
   test('a model that does not think is asked without thinking', () => {
     const { body } = gemini.request(ask({ model: { ...model, thinking: false } })) as {
       body: Record<string, unknown>
     }
     expect(body.generationConfig).toEqual({})
   })
-
   test('a call from another provider’s turn goes back unsigned, pictures inline', () => {
     const contents = contentsOf([
       { role: 'user', text: 'Look', images: [{ mime: 'image/png', data: 'iVBO' }] },
@@ -400,7 +371,6 @@ describe('the wire', () => {
       { functionResponse: { id: 'toolu_2', name: 'read_note', response: { output: ' ' } } },
     ])
   })
-
   test('a call without an id is given one, and sent back without it', () => {
     const reader = gemini.reader(null)
     reader.heard({
@@ -423,29 +393,24 @@ describe('the wire', () => {
       response: { output: 'ok' },
     })
   })
-
   test('a blocked prompt or a safety stop is a refusal, a full answer is cut off', () => {
     const blocked = gemini.reader(null)
     blocked.heard({ promptFeedback: { blockReason: 'PROHIBITED_CONTENT' } })
     expect(blocked.finished(false)).toBe(true)
     expect(blocked.answer()).toMatchObject({ ending: 'refusal', refusal: 'PROHIBITED_CONTENT' })
-
     const safety = gemini.reader(null)
     safety.heard({ candidates: [{ finishReason: 'SAFETY' }] })
     expect(safety.answer().ending).toBe('refusal')
-
     const long = gemini.reader(null)
     long.heard({
       candidates: [{ content: { parts: [{ text: 'and' }] }, finishReason: 'MAX_TOKENS' }],
     })
     expect(long.answer().ending).toBe('max_tokens')
-
     const cut = gemini.reader(null)
     cut.heard({ candidates: [{ content: { parts: [{ text: 'and' }] } }] })
     expect(cut.finished(false)).toBe(false)
   })
 })
-
 describe('a one-off question', () => {
   test('streams the words without the thoughts', async () => {
     answers = [

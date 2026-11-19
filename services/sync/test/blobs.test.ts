@@ -7,20 +7,15 @@ import { QUOTA } from '../src/sync-server/src/storage'
 let env: TestEnv
 let token: string
 let start: number
-
 const HASH = 'a'.repeat(64)
 const OTHER = 'b'.repeat(64)
-
 const sized = (size: number) => file(size, 7)
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
   start = (await call(env, '/v1/usage', { token })).json.used
 })
-
 afterEach(() => env.close())
-
 function upload(contents: { bytes: Uint8Array; hash: string }, options: { token?: string; type?: string } = {}) {
   return call(env, `/v1/blobs/${contents.hash}`, {
     method: 'PUT',
@@ -29,31 +24,24 @@ function upload(contents: { bytes: Uint8Array; hash: string }, options: { token?
     headers: { 'content-type': options.type ?? 'image/png' },
   })
 }
-
 describe('storing an image', () => {
   test('keeps it and says so', async () => {
     const response = await upload(sized(1024))
-
     expect(response.status).toBe(201)
     expect(response.json.stored).toBe(true)
   })
-
   test('the second time is free, because the hash is the same picture', async () => {
     await upload(sized(1024))
     const again = await upload(sized(1024))
-
     expect(again.status).toBe(200)
     expect(again.json.stored).toBe(false)
   })
-
   test('counts once however many times it is offered', async () => {
     await upload(sized(4096))
     await upload(sized(4096))
-
     const usage = await call(env, '/v1/usage', { token })
     expect(usage.json.used).toBe(start + 4096)
   })
-
   test('the same picture offered twice at once is one row', async () => {
     const owner = (env.db.prepare('select id from users limit 1').get() as { id: string }).id
     env.justBefore(/insert into blobs/, () => {
@@ -61,35 +49,28 @@ describe('storing an image', () => {
         .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
         .run(sized(4096).hash, owner, 4096, 'image/png', 1)
     })
-
     const response = await upload(sized(4096))
-
     expect(response.status).not.toBe(500)
     expect(env.db.prepare('select hash from blobs where hash = ?').all(sized(4096).hash)).toHaveLength(1)
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start + 4096)
   })
-
   test('refuses something that is not an image', async () => {
     const response = await upload(sized(32), { type: 'application/zip' })
     expect(response.status).toBe(415)
   })
-
   test('refuses a name that is not a hash', async () => {
     const response = await upload({ bytes: new Uint8Array(32), hash: 'not-a-hash' })
     expect(response.status).toBe(400)
   })
-
   test('needs a session', async () => {
     const response = await call(env, `/v1/blobs/${HASH}`, {
       method: 'PUT',
       raw: new Uint8Array(8),
       headers: { 'content-type': 'image/png' },
     })
-
     expect(response.status).toBe(401)
   })
 })
-
 describe('bytes under a hash that is not theirs', () => {
   test('are refused', async () => {
     const real = file(64, 1)
@@ -99,11 +80,9 @@ describe('bytes under a hash that is not theirs', () => {
       raw: file(64, 2).bytes,
       headers: { 'content-type': 'image/png' },
     })
-
     expect(response.status).toBe(400)
     expect(env.db.prepare('select hash from blobs where hash = ?').all(real.hash)).toHaveLength(0)
   })
-
   test('never replace the copy another account already keeps', async () => {
     const script = file(64, 1)
     await call(env, `/v1/blobs/${script.hash}`, {
@@ -112,7 +91,6 @@ describe('bytes under a hash that is not theirs', () => {
       raw: script.bytes,
       headers: { 'content-type': 'text/javascript' },
     })
-
     const stranger = await signIn(env, 'c@d.dev')
     await call(env, `/v1/blobs/${script.hash}`, {
       method: 'PUT',
@@ -126,7 +104,6 @@ describe('bytes under a hash that is not theirs', () => {
       raw: script.bytes,
       headers: { 'content-type': 'image/png' },
     })
-
     const stored = await env.NOTES.get(`blobs/${script.hash}`)
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(script.bytes)
     expect(stored!.httpMetadata?.contentType).toBe('text/javascript')
@@ -140,7 +117,6 @@ describe('bytes under a hash that is not theirs', () => {
     env.db
       .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
       .run(real.hash, owner, 64, 'image/svg+xml', 1)
-
     const stranger = await signIn(env, 'c@d.dev')
     const response = await call(env, `/v1/blobs/${real.hash}`, {
       method: 'PUT',
@@ -148,13 +124,11 @@ describe('bytes under a hash that is not theirs', () => {
       raw: real.bytes,
       headers: { 'content-type': 'image/png' },
     })
-
     expect(response.status).toBe(201)
     const stored = await env.NOTES.get(`blobs/${real.hash}`)
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(real.bytes)
     expect(stored!.httpMetadata?.contentType).toBe('image/png')
   })
-
   test('as a diagram, are kept under its name but never over one already drawn', async () => {
     const key = 'd'.repeat(64)
     const drawing = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"/>')
@@ -165,7 +139,6 @@ describe('bytes under a hash that is not theirs', () => {
       headers: { 'content-type': 'image/svg+xml' },
     })
     expect(first.status).toBe(201)
-
     const stranger = await signIn(env, 'c@d.dev')
     await call(env, `/v1/blobs/${key}`, {
       method: 'PUT',
@@ -173,12 +146,10 @@ describe('bytes under a hash that is not theirs', () => {
       raw: new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><text>no</text></svg>'),
       headers: { 'content-type': 'image/svg+xml' },
     })
-
     const stored = await env.NOTES.get(`blobs/${key}`)
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(drawing)
     expect(env.db.prepare('select hash from blobs where hash = ?').all(key)).toHaveLength(1)
   })
-
   test('as a diagram with its fence, are kept only under the name that fence makes', async () => {
     const space = (env.db.prepare('select id from spaces limit 1').get() as { id: string }).id
     const fence = { space, language: 'mermaid', scheme: 'light', code: 'graph TD\n  A --> B' }
@@ -194,15 +165,12 @@ describe('bytes under a hash that is not theirs', () => {
           'x-orden-diagram': new URLSearchParams(said).toString(),
         },
       })
-
     expect((await put('d'.repeat(64), fence)).status).toBe(400)
     expect((await put(key, { ...fence, code: 'graph TD\n  A --> C' })).status).toBe(400)
     expect((await put(key, fence, await signIn(env, 'c@d.dev'))).status).toBe(400)
     expect(env.db.prepare('select hash from blobs where type = ?').all('image/svg+xml')).toEqual([])
-
     expect((await put(key, fence)).status).toBe(201)
   })
-
   test('that spell out a diagram’s name are not the file that name holds', async () => {
     const space = (env.db.prepare('select id from spaces limit 1').get() as { id: string }).id
     const fence = { space, language: 'mermaid', scheme: 'light', code: 'graph TD\n  A --> B' }
@@ -218,7 +186,6 @@ describe('bytes under a hash that is not theirs', () => {
       },
     })
     expect(drawn.status).toBe(201)
-
     const stranger = await signIn(env, 'c@d.dev')
     const named = new TextEncoder().encode(`nib/diagram/v1\n${space}\nmermaid\nlight\n${fence.code}`)
     for (const [route, type] of [
@@ -240,33 +207,26 @@ describe('bytes under a hash that is not theirs', () => {
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(key)).toHaveLength(1)
   })
 })
-
 describe('serving an image', () => {
   test('hands it back to anyone with the hash, no session needed', async () => {
     await upload(sized(64))
     const response = await call(env, `/i/${sized(64).hash}.png`)
-
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toBe('image/png')
   })
-
   test('caches forever, since the name is the contents', async () => {
     await upload(sized(64))
     const response = await call(env, `/i/${sized(64).hash}.png`)
-
     expect(response.headers.get('cache-control')).toContain('immutable')
   })
-
   test('is a miss for something never stored', async () => {
     expect((await call(env, `/i/${OTHER}.png`)).status).toBe(404)
   })
 })
-
 describe('serving what a site is dressed in', () => {
   async function published(): Promise<string> {
     const created = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
     const space: string = created.json.space.id
-
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'Hello.md', content: '# Hello\n' },
@@ -276,10 +236,8 @@ describe('serving what a site is dressed in', () => {
       token,
       body: { subdomain: 'field' },
     })
-
     return space
   }
-
   test('only on the site that keeps it beside its notes', async () => {
     const space = await published()
     await upload(sized(64), { type: 'text/javascript' })
@@ -288,13 +246,11 @@ describe('serving what a site is dressed in', () => {
       token,
       body: { files: [{ path: 'publish.js', hash: sized(64).hash }] },
     })
-
     expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'field.nibeditor.com' })).status).toBe(200)
     expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'other.nibeditor.com' })).status).toBe(404)
     expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'nibeditor.com' })).status).toBe(404)
     expect((await call(env, `/i/${sized(64).hash}.js`)).status).toBe(404)
   })
-
   test('and a theme stylesheet on the site that installed it', async () => {
     const space = await published()
     await upload(sized(64), { type: 'text/css' })
@@ -303,28 +259,22 @@ describe('serving what a site is dressed in', () => {
       token,
       body: { theme: { name: 'Paper', hash: sized(64).hash } },
     })
-
     expect((await call(env, `/i/${sized(64).hash}.css`, { host: 'field.nibeditor.com' })).status).toBe(200)
     expect((await call(env, `/i/${sized(64).hash}.css`, { host: 'other.nibeditor.com' })).status).toBe(404)
   })
 })
-
 describe('giving an image back', () => {
   test('stops it counting', async () => {
     await upload(sized(2048))
     await call(env, `/v1/blobs/${sized(2048).hash}`, { method: 'DELETE', token })
-
     const usage = await call(env, '/v1/usage', { token })
     expect(usage.json.used).toBe(start)
   })
-
   test('leaves it served while another account still keeps it', async () => {
     const other = await signIn(env, 'other@b.dev')
     await upload(sized(2048))
     await upload(sized(2048), { token: other })
-
     await call(env, `/v1/blobs/${sized(2048).hash}`, { method: 'DELETE', token })
-
     expect((await call(env, `/i/${sized(2048).hash}.png`)).status).toBe(200)
   })
   for (const route of ['/v1/blobs', '/v2/blobs']) {
@@ -332,7 +282,6 @@ describe('giving an image back', () => {
       const other = await signIn(env, 'other@b.dev')
       const picture = sized(2048)
       await upload(picture, { token: other })
-
       const get = env.NOTES.get.bind(env.NOTES)
       let handedBack = false
       env.NOTES.get = async (...args: Parameters<typeof get>) => {
@@ -343,7 +292,6 @@ describe('giving an image back', () => {
         }
         return found
       }
-
       const stored = await call(env, `${route}/${picture.hash}`, {
         method: 'PUT',
         token,
@@ -351,20 +299,17 @@ describe('giving an image back', () => {
         headers: { 'content-type': 'image/png' },
       })
       env.NOTES.get = get
-
       expect(handedBack).toBe(true)
       expect(stored.status).toBe(201)
       expect(await env.NOTES.get(`blobs/${picture.hash}`)).not.toBeNull()
     })
   }
-
   for (const route of ['/v1/blobs', '/v2/blobs']) {
     test(`keeps the bytes an account puts on ${route} while the last other holder's give-back deletes them`, async () => {
       const other = await signIn(env, 'other@b.dev')
       const picture = sized(2048)
       await upload(picture, { token: other })
       env.db.prepare('delete from blobs where hash = ?').run(picture.hash)
-
       const put = env.NOTES.put.bind(env.NOTES)
       let deleted = false
       env.NOTES.put = (async (...args: Parameters<typeof put>) => {
@@ -375,7 +320,6 @@ describe('giving an image back', () => {
         }
         return done
       }) as typeof env.NOTES.put
-
       const stored = await call(env, `${route}/${picture.hash}`, {
         method: 'PUT',
         token,
@@ -383,13 +327,11 @@ describe('giving an image back', () => {
         headers: { 'content-type': 'image/png' },
       })
       env.NOTES.put = put
-
       expect(deleted).toBe(true)
       expect(stored.status).toBe(201)
       expect(await env.NOTES.get(`blobs/${picture.hash}`)).not.toBeNull()
     })
   }
-
   test('hands it to the owner of a space that still uses it, rather than deleting it', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const theirs = (
@@ -399,7 +341,6 @@ describe('giving an image back', () => {
       })
     ).json.space.id
     await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
-
     const picture = sized(2048)
     await upload(picture)
     await call(env, `/v1/spaces/${theirs}/notes`, {
@@ -420,11 +361,9 @@ describe('giving an image back', () => {
       method: 'DELETE',
       token: owner,
     })
-
     for (const hash of [picture.hash, paper]) {
       expect((await call(env, `/v1/blobs/${hash}`, { method: 'DELETE', token })).status).toBe(200)
     }
-
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: owner })).status).toBe(200)
     const ownerId = env.db.prepare("select id from users where email = 'owner@b.dev'").get() as {
@@ -435,7 +374,6 @@ describe('giving an image back', () => {
     }
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
-
   test('hands it over even while a stranger holds the same bytes as something else', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const stranger = await signIn(env, 'stranger@b.dev')
@@ -446,7 +384,6 @@ describe('giving an image back', () => {
       })
     ).json.space.id
     await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
-
     const picture = sized(2048)
     await upload(picture)
     await call(env, `/v1/spaces/${theirs}/notes`, {
@@ -454,13 +391,10 @@ describe('giving an image back', () => {
       body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
     })
     expect((await upload(picture, { token: stranger, type: 'application/pdf' })).status).toBe(201)
-
     await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
     await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token: stranger })
-
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
   })
-
   test('hands it over from a note the sweep has not read yet', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const theirs = (
@@ -470,7 +404,6 @@ describe('giving an image back', () => {
       })
     ).json.space.id
     await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
-
     const picture = sized(2048)
     await upload(picture)
     const note = (
@@ -481,13 +414,10 @@ describe('giving an image back', () => {
     ).json.note.id
     env.db.prepare('delete from note_pictures where note_id = ?').run(note)
     env.db.prepare('update notes set front_rev = 1 where id = ?').run(note)
-
     await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
-
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
-
   test('keeps it rather than guessing while a space it writes in is unread', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const theirs = (
@@ -506,16 +436,13 @@ describe('giving an image back', () => {
         .run(`old${String(at)}`, theirs, `old${String(at)}.md`, 1000 + at, 1)
     }
     const ownerBefore = (await call(env, '/v1/usage', { token: owner })).json.used
-
     const picture = sized(4096)
     await upload(picture)
     const given = await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
-
     expect(given.status).toBe(409)
     expect((await call(env, '/v1/usage', { token: owner })).json.used).toBe(ownerBefore)
     expect(env.db.prepare('select count(*) as n from blobs where hash = ?').get(picture.hash)).toEqual({ n: 1 })
   })
-
   test('and deletes it when only its own notes show it', async () => {
     const own = (await call<{ space: { id: string } }>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space
       .id
@@ -525,25 +452,20 @@ describe('giving an image back', () => {
       token,
       body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
     })
-
     await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
-
     expect(env.keys()).not.toContain(`blobs/${picture.hash}`)
   })
 })
-
 describe('a name that is not a hash', () => {
   test('cannot be given back either', async () => {
     const response = await call(env, '/v1/blobs/%2e%2e%2fspaces%2fsomebody-else', {
       method: 'DELETE',
       token,
     })
-
     expect(response.status).toBe(400)
     expect((await call(env, '/v1/blobs/not-a-hash', { method: 'DELETE', token })).status).toBe(400)
   })
 })
-
 describe('an upload that is too big', () => {
   test('is turned away on what it says, before its body is read', async () => {
     const response = await call(env, `/v1/blobs/${HASH}`, {
@@ -552,11 +474,9 @@ describe('an upload that is too big', () => {
       raw: new Uint8Array(8),
       headers: { 'content-type': 'image/png', 'content-length': String(64 * 1024 * 1024) },
     })
-
     expect(response.status).toBe(413)
   })
 })
-
 describe('the quota', () => {
   test('counts notes as well as images', async () => {
     const space = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
@@ -565,12 +485,10 @@ describe('the quota', () => {
       body: { path: 'a.md', content: 'x'.repeat(500) },
     })
     await upload(sized(1500))
-
     const usage = await call(env, '/v1/usage', { token })
     expect(usage.json.used).toBe(start + 2000)
     expect(usage.json.limit).toBe(QUOTA)
   })
-
   test('counts a note in Recently deleted, whose bytes are still kept', async () => {
     const space = await call(env, '/v1/spaces', { token, body: { name: 'Work' } })
     const note = await call(env, `/v1/spaces/${space.json.space.id}/notes`, {
@@ -578,23 +496,18 @@ describe('the quota', () => {
       body: { path: 'a.md', content: 'x'.repeat(5000) },
     })
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start + 5000)
-
     await call(env, `/v1/notes/${note.json.note.id}`, { method: 'DELETE', token })
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start + 5000)
-
     await call(env, `/v1/trash/notes/${note.json.note.id}`, { method: 'DELETE', token })
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
-
   test('is counted per account', async () => {
     const other = await signIn(env, 'other@b.dev')
     const before = (await call(env, '/v1/usage', { token: other })).json.used
     await upload(sized(4096))
-
     const theirs = await call(env, '/v1/usage', { token: other })
     expect(theirs.json.used).toBe(before)
   })
-
   test('lets one of two uploads through when only one fits, however they land', async () => {
     const owner = (env.db.prepare('select id from users limit 1').get() as { id: string }).id
     const size = 4096
@@ -603,31 +516,26 @@ describe('the quota', () => {
       .run(OTHER, owner, QUOTA - start - size - 1, 'image/png', 1)
     const first = file(size, 1)
     const second = file(size, 2)
-
     env.justBefore(/insert into blobs/, () => {
       env.db
         .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
         .run(second.hash, owner, size, 'image/png', 1)
     })
     const response = await upload(first)
-
     expect(response.status).toBe(507)
     expect(env.db.prepare('select hash from blobs where hash = ?').all(first.hash)).toEqual([])
     expect(env.keys()).not.toContain(`blobs/${first.hash}`)
     expect((await call(env, '/v1/usage', { token })).json.used).toBeLessThanOrEqual(QUOTA)
   })
-
   test('turns away an image that would not fit', async () => {
     const owner = env.db.prepare('select id from users limit 1').get() as { id: string }
     env.db
       .prepare('insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)')
       .run(OTHER, owner.id, QUOTA, 'image/png', 1)
-
     const response = await upload(sized(1))
     expect(response.status).toBe(507)
   })
 })
-
 describe('a writer who deletes their account', () => {
   test('leaves the paper they gave the owner’s page note, handed to the owner', async () => {
     const owner = await signIn(env, 'owner@b.dev')
@@ -649,7 +557,6 @@ describe('a writer who deletes their account', () => {
     expect((await upload({ bytes: pdf, hash: paper }, { type: 'application/pdf' })).status).toBe(201)
     await call(env, `/v1/notes/${lecture}/paper`, { method: 'PUT', token, body: { hash: paper } })
     expect((await call(env, `/v1/notes/${lecture}/paper`, { token: owner })).status).toBe(200)
-
     const writer = env.db.prepare("select id, email from users where email = 'a@b.dev'").get() as {
       id: string
       email: string
@@ -658,7 +565,6 @@ describe('a writer who deletes their account', () => {
     const { sweepLeftovers } = await import('../src/sync-server-engine/src/leftovers')
     await eraseAccount(env, { id: writer.id, email: writer.email, name: null, created_at: 1 })
     await sweepLeftovers(env)
-
     expect((await call(env, `/v1/notes/${lecture}/paper`, { token: owner })).status).toBe(200)
     const ownerId = env.db.prepare("select id from users where email = 'owner@b.dev'").get() as {
       id: string

@@ -1,17 +1,13 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 FAVICON = (
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E"
     "%3Crect width='16' height='16' rx='3' fill='%23ff3e00'/%3E%3C/svg%3E"
 )
-
 FILES = {
     "Plan.md": "# Plan\n\nWhat we are doing.\n\n## Later\n\nSomething for later.\n",
     "Rocket.md": "---\nicon: 🚀\n---\n# Rocket\n\nLaunch day.\n",
@@ -20,7 +16,6 @@ FILES = {
     "Svelte docs.url": f"[InternetShortcut]\nURL=https://svelte.dev/\nOrden-Icon={FAVICON}\n",
     "Loose.md": "# Loose\n\nNot bookmarked yet.\n",
 }
-
 SEED = """
 async (files) => {
   const ws = window.ordenApp.workspace
@@ -50,14 +45,12 @@ async (files) => {
   return ws.bookmarks.list.map((one) => `${one.kind}:${one.path}`)
 }
 """
-
 SHOW = """
 async () => {
   const ws = window.ordenApp.workspace
   if (ws.panel !== 'tree') ws.showPanel('tree')
 }
 """
-
 TILES = """
 () => [...document.querySelectorAll('.tiles .tile')].map((tile) => {
   const box = tile.getBoundingClientRect()
@@ -73,21 +66,16 @@ TILES = """
   }
 })
 """
-
 ROWS = """
 () => [...document.querySelectorAll('.bookmarks .row .orden-row-label')].map((one) => one.textContent)
 """
-
 ORDER = "() => window.ordenApp.workspace.bookmarks.list.map((one) => one.path || one.text)"
-
 RELOADING: set[Page] = set()
-
 def page_error(page: Page, error: Exception) -> None:
     if page in RELOADING and "Importing a module script failed" in str(error):
         say(f"(a reload cancelled an import: {error})")
         return
     wrong(f"page error: {error}")
-
 def reload(page: Page) -> None:
     RELOADING.add(page)
     try:
@@ -95,7 +83,6 @@ def reload(page: Page) -> None:
         DRIVE.ready(page)
     finally:
         RELOADING.discard(page)
-
 def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = False) -> Page:
     options = (
         {
@@ -131,22 +118,18 @@ def fresh(browser: Browser, label: str, scheme: str = "light", finger: bool = Fa
     )
     page.wait_for_timeout(500)
     return page
-
 def sidebar(page: Page, name: str) -> None:
     box = page.locator("aside").first.bounding_box()
     if box:
         shot(page, name, clip={"x": 0, "y": 0, "width": box["width"] + 1, "height": 320})
-
 def widen(page: Page, width: int) -> None:
     page.evaluate(
         "(width) => document.querySelector('.column').style.setProperty('--panel-width', `${width}px`)",
         width,
     )
     page.wait_for_timeout(450)
-
 def drive_look(browser: Browser) -> None:
     page = fresh(browser, "look")
-
     tiles = page.evaluate(TILES)
     say(f"[look] tiles: {json.dumps(tiles, ensure_ascii=False)}")
     names = [one["name"] for one in tiles]
@@ -165,7 +148,6 @@ def drive_look(browser: Browser) -> None:
         wrong("the web note does not wear its favicon")
     if page.evaluate(ROWS) != ["Later"]:
         wrong(f"what is only words is not a row under the grid: {page.evaluate(ROWS)}")
-
     for width in (200, 252, 360, 480):
         widen(page, width)
         laid = page.evaluate(TILES)
@@ -176,11 +158,9 @@ def drive_look(browser: Browser) -> None:
             wrong(f"at {width}px a tile is narrower than a row is tall: {laid[0]['width']}")
         sidebar(page, f"01-width-{width}")
     widen(page, 252)
-
     page.locator(".tiles .tile").nth(1).hover()
     page.wait_for_timeout(250)
     sidebar(page, "02-hover")
-
     for theme in ("default", "glass"):
         for scheme in ("light", "dark"):
             page.evaluate(f"() => window.ordenApp.theme.select('{theme}')")
@@ -191,7 +171,6 @@ def drive_look(browser: Browser) -> None:
     page.evaluate("() => window.ordenApp.theme.select('default')")
     page.evaluate("() => window.ordenApp.theme.setScheme('light')")
     page.wait_for_timeout(300)
-
     page.locator(".tiles .tile", has=page.locator(".orden-tile-letter", has_text="I")).click()
     page.wait_for_timeout(500)
     if page.evaluate("() => window.ordenApp.workspace.active?.name") != "Inbox.md":
@@ -200,7 +179,6 @@ def drive_look(browser: Browser) -> None:
     if lifted != ["Inbox"]:
         wrong(f"the lift did not follow the open note: {lifted}")
     sidebar(page, "04-opened")
-
     if page.locator(".tab", has_text="Inbox").count():
         wrong("pressing a tile put a tab in the strip")
     shown = page.evaluate("() => window.ordenApp.workspace.active?.id")
@@ -212,17 +190,13 @@ def drive_look(browser: Browser) -> None:
     if back != shown:
         wrong("pressing the tile again made a new view rather than coming back to its own")
     shot(page, "05-in-place")
-
     page.locator(".tiles .tile", has=page.locator(".orden-tile-letter", has_text="P")).click(modifiers=["Control"])
     page.wait_for_timeout(500)
     if not page.locator(".tab", has_text="Plan").count():
         wrong("Ctrl and a tile did not open a tab of its own")
-
     page.context.close()
-
 def drive_hands(browser: Browser) -> None:
     page = fresh(browser, "hands")
-
     third = page.locator(".tiles .tile").nth(2).bounding_box()
     assert third
     page.locator(".tiles .tile").first.drag_to(
@@ -234,7 +208,6 @@ def drive_hands(browser: Browser) -> None:
     say(f"[hands] after the drag: {order}")
     if order[:3] != ["Rocket.md", "Svelte docs.url", "Plan.md"]:
         wrong(f"the dragged tile did not land after the third: {order}")
-
     loose = page.locator(".body [data-path$='Loose.md']").first
     loose.drag_to(page.locator(".tiles .tile").first, target_position={"x": 4, "y": 10})
     page.wait_for_timeout(400)
@@ -243,7 +216,6 @@ def drive_hands(browser: Browser) -> None:
     if order[0] != "Loose.md":
         wrong(f"the note dragged from the file list was not kept where it landed: {order}")
     sidebar(page, "10-dragged-in")
-
     page.locator(".tiles .tile").first.focus()
     page.keyboard.press("ArrowRight")
     along = page.evaluate("() => document.activeElement?.getAttribute('aria-label')")
@@ -257,7 +229,6 @@ def drive_hands(browser: Browser) -> None:
     expected = tiles[1 + across]["name"] if 1 + across < len(tiles) else tiles[-1]["name"]
     if below != expected:
         wrong(f"ArrowDown did not walk down the grid: {below}, not {expected}")
-
     kept = page.evaluate(ORDER)
     page.evaluate("() => localStorage.setItem('orden:essentials-look', 'list')")
     reload(page)
@@ -271,7 +242,6 @@ def drive_hands(browser: Browser) -> None:
         wrong(f"the Essentials moved under a stored list look: {page.evaluate(ORDER)}, not {kept}")
     if page.locator("p.orden-section", has_text="Essentials").count() != 1:
         wrong("the rows under the tiles are not headed Essentials")
-
     page.evaluate("() => window.ordenApp.workspace.bookmarks.toggle(window.ordenApp.workspace.bookmarks.list[0])")
     page.locator(".body [data-path$='Loose.md']").first.dblclick()
     page.wait_for_timeout(500)
@@ -294,9 +264,7 @@ def drive_hands(browser: Browser) -> None:
         say(f"[hands] after the tab drag: {order}")
         if order[1:2] != ["Loose.md"]:
             wrong(f"the tab let go of over the grid was not bookmarked there: {order}")
-
     page.context.close()
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
     wait_for(page, "window.ordenApp.workspace.panel === null", "the drawer put away")
@@ -308,13 +276,11 @@ def drive_finger(browser: Browser) -> None:
         if one["height"] < 48 or one["width"] < 48:
             wrong(f"a tile is smaller than a thumb: {one['name']} {one['width']}x{one['height']}")
     shot(page, "20-phone")
-
     page.locator(".tiles .tile").nth(2).tap()
     page.wait_for_timeout(600)
     if page.evaluate("() => window.ordenApp.workspace.active?.name") != "Svelte docs.url":
         say("[phone] a tap on the web tile opened something else (a web build cannot open a site)")
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the look ---")
@@ -323,7 +289,5 @@ def main() -> int:
         drive_hands(browser)
         say("--- a finger ---")
         drive_finger(browser)
-
     return DRIVE.verdict("bookmarks are tiles, the open one lifted, and they move by hand")
-
 raise SystemExit(main())

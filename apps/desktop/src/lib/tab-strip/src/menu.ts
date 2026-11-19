@@ -19,12 +19,10 @@ import { chosen, duplicateMany, moveManyToOtherPane } from './picking.svelte'
 function movedToSpace(tabs: readonly Tab[]): MenuEntry[] {
   return viewport.touch ? spaceEntry(tabs) : []
 }
-
 function agentEntries(tab: Tab): MenuEntry[] {
   const worn = agentMarks.on[tab.id]
   const act = agentMarks.act
   if (!worn || !act) return []
-
   return [
     worn.stopped
       ? { label: 'Resume', run: () => act(tab.id, 'resume') }
@@ -32,23 +30,19 @@ function agentEntries(tab: Tab): MenuEntry[] {
     DIVIDER,
   ]
 }
-
 const keyed = (label: string, id: string, run: () => void, more = {}): MenuEntry => ({
   label,
   hint: shortcuts.hint(id),
   run,
   ...more,
 })
-
 const when = (yes: boolean, ...rows: MenuEntry[]): MenuEntry[] => (yes ? rows : [])
-
 function keepEntry(tab: Tab): MenuEntry[] {
   return when(tab.id === workspace.previewTabId, {
     label: 'Keep open',
     run: () => workspace.keep(tab.id),
   })
 }
-
 function paneEntries(tab: Tab): MenuEntry[] {
   const entries = [
     ...when(
@@ -74,7 +68,6 @@ function paneEntries(tab: Tab): MenuEntry[] {
   ]
   return entries.length ? [...entries, DIVIDER] : []
 }
-
 function readingEntry(tab: Tab): MenuEntry[] {
   return when(
     tab.kind === 'note',
@@ -82,7 +75,6 @@ function readingEntry(tab: Tab): MenuEntry[] {
     DIVIDER,
   )
 }
-
 function kindEntries(tab: Tab): MenuEntry[] {
   const own = [
     ...(tabKindParts(tab.kind).menu?.(tab.id) ?? []),
@@ -90,9 +82,7 @@ function kindEntries(tab: Tab): MenuEntry[] {
   ]
   return own.length ? [...own, DIVIDER] : []
 }
-
 const duplicable = (tab: Tab) => workspace.canDuplicateTab(tab) && tab.kind !== 'terminal'
-
 function tabEntries(tab: Tab): MenuEntry[] {
   return [
     ...when(
@@ -106,14 +96,12 @@ function tabEntries(tab: Tab): MenuEntry[] {
     ...bookmarkAll(tab.path === null ? [] : [tab.path]),
   ]
 }
-
 function inListEntry(tab: Tab): MenuEntry[] {
   const root = workspace.activeSpace?.root
   const path = tab.path
   if (path === null || root === undefined || withinSpace(root, path) === null) return []
   return [keyed('Show in the file list', 'app.reveal', () => workspace.revealNote(path))]
 }
-
 function closeEntries(tab: Tab, close: () => void, others: number, after: () => void): MenuEntry[] {
   const around = (label: string, id: string, how: 'right' | 'all') =>
     keyed(label, id, () => void workspace.closeAround(tab.id, how), {
@@ -130,17 +118,14 @@ function closeEntries(tab: Tab, close: () => void, others: number, after: () => 
     ),
   ]
 }
-
 function saveEntry(tab: Tab): MenuEntry[] {
   return when(isUnsaved(tab.note), { label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(tab.id) }, DIVIDER)
 }
-
 function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
   const ids = tabs.map((one) => one.id)
   const web = tabs.filter((one) => one.kind === 'web')
   const last = tabs.at(-1)
   const others = workspace.tabsIn(paneId).filter((one) => !ids.includes(one.id))
-
   return [
     ...when(
       web.length > 0,
@@ -174,17 +159,14 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
     ),
   ]
 }
-
 function pickOf(tab: Tab, paneId: string): Tab[] {
   const many = chosen.of(paneId)
   return many.some((one) => one.id === tab.id) ? many : []
 }
-
 export function tabMenuTitle(tab: Tab, paneId: string): string {
   const many = pickOf(tab, paneId).length
   return many ? (many === 1 ? '1 tab' : `${many} tabs`) : tab.shown
 }
-
 export function trailMenu(tab: Tab): MenuEntry[] {
   return tab.trail
     .slice(0, tab.at)
@@ -192,11 +174,9 @@ export function trailMenu(tab: Tab): MenuEntry[] {
     .reverse()
     .map((row) => ({ label: row.label, run: () => void workspace.walk(row.at, tab.id) }))
 }
-
 export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
   const many = pickOf(tab, paneId)
   if (many.length) return pickMenu(many, paneId)
-
   return [
     ...agentEntries(tab),
     ...saveEntry(tab),

@@ -12,15 +12,12 @@
   import { pass } from '../../pass-sync/src/api'
 
   const signedIn = $derived(account.user !== null)
-
   let rows = $state.raw<LinkRow[] | null>(null)
   let now = $state(Date.now())
   let busy = $state(false)
   let wrong = $state('')
-
   const expired = $derived((rows ?? []).filter((one) => isExpired(one, now)).length)
   const itemOf = (link: LinkRow) => pass.items.find((one) => one.id === link.item) ?? null
-
   async function reread() {
     wrong = ''
     try {
@@ -32,12 +29,10 @@
       wrong = message(error, 'The links could not be read.')
     }
   }
-
   $effect(() => {
     if (!signedIn) return
     void reread()
   })
-
   async function acted(run: () => Promise<void>) {
     if (busy) return
     busy = true
@@ -50,11 +45,9 @@
       busy = false
     }
   }
-
   function removed(link: LinkRow) {
     void acted(() => removeLink(link.id))
   }
-
   function sweep() {
     void acted(async () => {
       const gone = await removeExpired()
@@ -123,37 +116,31 @@
     flex-direction: column;
     gap: var(--space-3);
   }
-
   .head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
   }
-
   .row {
     gap: var(--space-3);
     padding: var(--space-2) var(--space-3);
   }
-
   .row + .row {
     border-top: 1px solid var(--line);
   }
-
   .what {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
   }
-
   .name {
     color: var(--text-strong);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .meta {
     display: flex;
     flex-wrap: wrap;
@@ -161,16 +148,13 @@
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .is-over .name {
     color: var(--muted);
   }
-
   @media (max-width: 520px) {
     .links {
       padding: var(--space-3);
     }
-
     .head {
       flex-wrap: wrap;
     }

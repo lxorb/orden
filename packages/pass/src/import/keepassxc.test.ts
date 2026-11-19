@@ -3,7 +3,6 @@ import { totpOf } from './build'
 import { parseKeePassXC } from './keepassxc'
 
 const OTP = 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&issuer=x'
-
 describe('parseKeePassXC', () => {
   it('reads groups, 2FA, notes, times and the recycle bin', () => {
     const csv = [

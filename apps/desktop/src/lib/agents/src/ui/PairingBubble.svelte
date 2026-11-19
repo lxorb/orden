@@ -11,18 +11,13 @@
   import type { Activity } from './activity.svelte'
 
   const { activity }: { activity: Activity } = $props()
-
   const asking = $derived(activity.seen.approvals.find((one) => one.category === 'pairing') ?? null)
   const client = $derived(asking?.summary ?? '')
-
   let card = $state<HTMLElement>()
-
   function answer(allow: boolean) {
     if (asking) void activity.answer(asking, allow).catch(() => undefined)
   }
-
   $effect(() => overlays.show(() => answer(false)))
-
   onMount(() => {
     card?.focus({ preventScroll: true })
     if (isDesktop && !document.hasFocus()) void takeKeyboard()
@@ -67,7 +62,6 @@
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .what {
     margin: 0;
     display: flex;
@@ -77,12 +71,10 @@
     color: var(--text-strong);
     font-size: var(--text-row);
   }
-
   .client {
     min-width: 0;
     overflow-wrap: anywhere;
   }
-
   .rows {
     display: flex;
     justify-content: flex-end;

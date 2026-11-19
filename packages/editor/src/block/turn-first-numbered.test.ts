@@ -9,7 +9,6 @@ import type { BlockShape } from './shape'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 
 const extensions = [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })]
-
 function turned(doc: string, words: string, shape: BlockShape): EditorState {
   const at = doc.indexOf(words) + 1
   let state = parsed(EditorState.create({ doc, selection: EditorSelection.cursor(at), extensions }))
@@ -25,7 +24,6 @@ function turned(doc: string, words: string, shape: BlockShape): EditorState {
   turnBlocksInto(view, at, shape)
   return state
 }
-
 function listedNumbered(state: EditorState, words: string): boolean {
   const text = state.doc.toString()
   const at = text.indexOf(`. ${words}`) + 2
@@ -35,16 +33,13 @@ function listedNumbered(state: EditorState, words: string): boolean {
   }
   return false
 }
-
 const LIST = 'Steps:\n\n1. Preheat\n2. Mix\n3. Bake\n'
-
 describe('Turn into from the block menu on the first item of a numbered list', () => {
   test('Text keeps the items after it a numbered list', () => {
     const state = turned(LIST, 'Preheat', 'paragraph')
     expect(listedNumbered(state, 'Mix')).toBe(true)
     expect(listedNumbered(state, 'Bake')).toBe(true)
   })
-
   test('Quote keeps the items after it a numbered list outside the quote', () => {
     const state = turned(LIST, 'Preheat', 'quote')
     expect(listedNumbered(state, 'Mix')).toBe(true)

@@ -1,13 +1,10 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 FIELD = ".ask textarea"
 TALK = ".ask .talk"
-
 SETUP = """
 async () => {
   const ai = window.ordenApp.ai
@@ -40,7 +37,6 @@ async () => {
   return { work, home, plan, garden }
 }
 """
-
 STATE = """
 () => {
   const talk = document.querySelector('.ask .talk')
@@ -53,18 +49,15 @@ STATE = """
   }
 }
 """
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 def drive(browser: Browser, scheme: str) -> None:
     page: Page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme=scheme)
     DRIVE.open(page)
     made = page.evaluate(SETUP)
-
     DRIVE.wait_for(page, "window.orden", "the note's editor")
     page.evaluate("() => window.orden.focus()")
     page.keyboard.press("Control+Shift+A")
@@ -77,7 +70,6 @@ def drive(browser: Browser, scheme: str) -> None:
     page.wait_for_timeout(300)
     before = page.evaluate(STATE)
     shot(page, f"{scheme}-1-work")
-
     page.evaluate("(id) => window.ordenApp.workspace.selectSpace(id)", made["home"])
     DRIVE.waited(page, "window.ordenApp.workspace.activeSpace?.name === 'Home'", "the other space")
     page.wait_for_timeout(600)
@@ -87,7 +79,6 @@ def drive(browser: Browser, scheme: str) -> None:
     check(f"[{scheme}] the same chat is open: {after['title']!r}", after["title"] == before["title"] == "Quarterly plan" and after["seen"])
     check(f"[{scheme}] the words in the field are still there", after["field"] == "and the budget for the second quarter")
     check(f"[{scheme}] at the same place: {before['scroll']} and {after['scroll']}", before["scroll"] and abs((after["scroll"] or 0) - before["scroll"]) <= 2)
-
     page.evaluate("() => import('/src/lib/ai-chat/src/store/chat.svelte.ts').then(({ chat }) => chat.showThreads())")
     DRIVE.waited(page, "document.querySelectorAll('.ask .threads .row, .ask .list .row').length >= 2", "the list")
     titles = page.evaluate("() => [...document.querySelectorAll('.ask .list .row .title')].map((one) => one.textContent.trim())")
@@ -95,24 +86,20 @@ def drive(browser: Browser, scheme: str) -> None:
     check(f"[{scheme}] the list is both spaces' chats: {titles}", "Quarterly plan" in titles and "Garden" in titles)
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
-
     page.evaluate("(id) => window.ordenApp.workspace.selectSpace(id)", made["work"])
     DRIVE.waited(page, "window.ordenApp.workspace.activeSpace?.name !== 'Home'", "back to the first space")
     page.wait_for_timeout(500)
     back = page.evaluate(STATE)
     check(f"[{scheme}] and back again, still the same: {back['title']!r}", back["title"] == "Quarterly plan" and back["field"] == "and the budget for the second quarter" and back["seen"])
-
     page.evaluate("(id) => window.ordenApp.workspace.selectSpace(id)", made["home"])
     DRIVE.waited(page, "window.ordenApp.workspace.activeSpace?.name === 'Home'", "the other space")
     space = page.evaluate("() => import('/src/lib/ai-chat/src/store/chat.svelte.ts').then(({ chat }) => { chat.newThread(); return chat.thread?.space })")
     check(f"[{scheme}] a new chat starts in the space in front", space == made["home"])
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
             say(f"--- {scheme} ---")
             drive(browser, scheme)
     return DRIVE.verdict("the AI panel's chats are one list, and the open one stays as the space changes")
-
 raise SystemExit(main())

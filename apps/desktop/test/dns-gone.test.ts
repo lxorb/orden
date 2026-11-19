@@ -4,7 +4,6 @@ import { describe, expect, test } from 'vitest'
 import { ROOT } from './files'
 
 const SKIP = /^(?:node_modules|target|dist|gen|\.[^.]+)$/
-
 function files(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
     if (SKIP.test(name)) continue
@@ -14,11 +13,8 @@ function files(dir: string, out: string[] = []): string[] {
   }
   return out
 }
-
 const read = (path: string) => readFileSync(path, 'utf8')
-
 const WORDS = /secure_dns|dns_chosen|dns_choose|dns_over_https|dns\.json|general\.dns|dns\.svelte/
-
 describe('the DNS setting, gone', () => {
   test('no module, command or stored key of it remains in the app', () => {
     const src = join(ROOT, 'apps/desktop/src-tauri/src')
@@ -31,7 +27,6 @@ describe('the DNS setting, gone', () => {
     const holding = all.filter((path) => WORDS.test(read(path).replace(kept, ''))).map((path) => relative(ROOT, path))
     expect(holding).toEqual([])
   })
-
   test('the settings offer no section, field or search words for it', () => {
     const settings = join(ROOT, 'apps/desktop/src/lib/settings')
     const named = files(settings)
@@ -43,7 +38,6 @@ describe('the DNS setting, gone', () => {
       .map((path) => relative(ROOT, path))
     expect(holding).toEqual([])
   })
-
   test('no workflow or script drives it', () => {
     const driven = [
       ...files(join(ROOT, '.github/workflows')),

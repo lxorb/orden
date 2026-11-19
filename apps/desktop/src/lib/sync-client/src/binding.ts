@@ -14,27 +14,21 @@ interface Meeting {
   readonly live: Pick<SharedDoc, 'arrived'>
   readonly latest: string
 }
-
 export interface Held extends Meeting {
   readonly live: SharedDoc
   onDisk?: string | null
 }
-
 function arrive(note: Meeting, from: string, to: string) {
   const change = fold(from, to)
   if (change) note.live.arrived([change])
 }
-
 type Met = { shared: string; asked?: never } | { asked: string; shared?: never }
-
 async function agree(engine: Engine, id: string, note: Meeting, doc: Doc, given?: string): Promise<Met> {
   if (note.latest === doc.text()) return { shared: doc.text() }
-
   const written = given ?? (await writtenOf(engine.core, id))
   const mine = note.latest
   const theirs = doc.text()
   if (mine === theirs) return { shared: theirs }
-
   const base = written ?? theirs
   if (theirs === base) {
     doc.write((live) => turn('words', live, theirs, mine, MINE))
@@ -44,7 +38,6 @@ async function agree(engine: Engine, id: string, note: Meeting, doc: Doc, given?
     arrive(note, mine, theirs)
     return { shared: theirs }
   }
-
   const merged = mergedOf(base, mine, theirs)
   const judged = judge('words', base, mine, theirs, { local: Date.now(), remote: doc.pendingAt }, merged)
   if (judged.resolution === null) {
@@ -58,17 +51,12 @@ async function agree(engine: Engine, id: string, note: Meeting, doc: Doc, given?
   await engine.keepLost(id, judged.lost, mine, theirs)
   return { shared }
 }
-
 const AGREEING = 8
-
 export type Attached = (() => void) & { bound: () => boolean }
-
 const ELSEWHERE = { arrived: () => undefined }
-
 export async function meetWords(engine: Engine, id: string, doc: Doc, mine: string) {
   return (await agree(engine, id, { live: ELSEWHERE, latest: mine }, doc)).asked === undefined
 }
-
 export async function attach(
   engine: Engine,
   id: string,
@@ -82,13 +70,11 @@ export async function attach(
     if (doc) await engine.letGo(id)
     return null
   }
-
   let text: Y.Text = doc.live.getText(TEXT)
   let unbind: (() => void) | null = null
   let waiting: (() => void) | null = null
   let parted = false
   const gone = () => parted || !holds()
-
   const join = () => {
     unbind = bind(note.live, text, holds)
   }
@@ -114,17 +100,14 @@ export async function attach(
       })()
     })
   }
-
   const met = await together()
   if (met.asked === undefined) join()
   else wait(met.asked)
-
   const unheard = engine.on('file', (event) => {
     if (event.id === id && unbind && !gone() && note.latest === event.text) {
       note.onDisk = event.text
     }
   })
-
   doc.replaced = (fresh) => {
     text = fresh.getText(TEXT)
     if (!unbind) return
@@ -134,7 +117,6 @@ export async function attach(
     join()
     again?.()
   }
-
   const part = () => {
     parted = true
     unheard()
@@ -145,12 +127,10 @@ export async function attach(
   }
   return Object.assign(part, { bound: () => unbind !== null && !gone() })
 }
-
 export interface PlaneJoin {
   part: () => void
   hand: ((at: Point | null, drawing: InkStroke | null) => void) | null
 }
-
 export async function attachPlane(
   engine: Engine,
   id: string,
@@ -163,7 +143,6 @@ export async function attachPlane(
     if (doc) await engine.letGo(id)
     return null
   }
-
   const join: PlaneJoin = { part: () => undefined, hand: null }
   const joined = (live: Y.Doc) => {
     const binding = new PlaneBinding(live, surface, holds, MINE)

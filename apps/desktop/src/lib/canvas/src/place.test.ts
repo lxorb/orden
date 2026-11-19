@@ -2,31 +2,25 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { viewOf, viewKept } = await import('./place')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas } = await import('@orden/markdown/canvas')
-
 beforeEach(() => {
   localStorage.clear()
 })
-
 test('a canvas that was never open has no view', () => {
   expect(viewOf('/space/Board.canvas')).toBeNull()
   expect(viewOf(null)).toBeNull()
 })
-
 test('keeps the pan and the zoom against the path', () => {
   viewKept('/space/Board.canvas', { x: 120, y: -40, scale: 1.5 })
   expect(viewOf('/space/Board.canvas')).toEqual({ x: 120, y: -40, scale: 1.5 })
 })
-
 test('and how far two fingers turned it, beside the place and never in the file (#351)', () => {
   viewKept('/space/Board.canvas', { x: 1, y: 2, scale: 1, turn: 0.5 })
   expect(viewOf('/space/Board.canvas')).toEqual({ x: 1, y: 2, scale: 1, turn: 0.5 })
 })
-
 test('a framed canvas stays turned the way it was turned (#351)', () => {
   const note = new NoteDoc(
     {
@@ -51,24 +45,20 @@ test('a framed canvas stays turned the way it was turned (#351)', () => {
   upright.fit(800, 600)
   expect(store.camera.scale).toBeLessThanOrEqual(upright.camera.scale)
 })
-
 test('a canvas written twice keeps what was written last', () => {
   viewKept('/a.canvas', { x: 0, y: 0, scale: 1 })
   viewKept('/a.canvas', { x: 10, y: 20, scale: 2 })
   expect(viewOf('/a.canvas')).toEqual({ x: 10, y: 20, scale: 2 })
 })
-
 test('keeps three hundred canvases and forgets the oldest', () => {
   for (let index = 0; index < 305; index += 1) {
     viewKept(`/plane-${index}.canvas`, { x: index, y: 0, scale: 1 })
   }
-
   expect(viewOf('/plane-0.canvas')).toBeNull()
   expect(viewOf('/plane-4.canvas')).toBeNull()
   expect(viewOf('/plane-5.canvas')?.x).toBe(5)
   expect(viewOf('/plane-304.canvas')?.x).toBe(304)
 })
-
 test('reads nothing out of nonsense', () => {
   localStorage.setItem(
     'orden:canvas-views',
@@ -79,13 +69,11 @@ test('reads nothing out of nonsense', () => {
       '/scale-of-text.canvas': { x: 1, y: 2, scale: 'big' },
     }),
   )
-
   expect(viewOf('/good.canvas')).toEqual({ x: 1, y: 2, scale: 3 })
   expect(viewOf('/no-scale.canvas')).toBeNull()
   expect(viewOf('/a-string.canvas')).toBeNull()
   expect(viewOf('/scale-of-text.canvas')).toBeNull()
 })
-
 function canvasDoc(path: string) {
   return new NoteDoc(
     {
@@ -98,29 +86,23 @@ function canvasDoc(path: string) {
     () => undefined,
   )
 }
-
 test('a switch away and back restores the exact pan and zoom', () => {
   const tab = new Tab(canvasDoc('/space/Board.canvas'), 'pane')
-
   const first = new CanvasStore(tab)
   first.camera = { x: 300, y: 200, scale: 2 }
   first.part()
-
   const again = new CanvasStore(tab)
   expect(again.camera).toEqual({ x: 300, y: 200, scale: 2 })
   expect(again.framed).toBe(true)
 })
-
 test('and opening the canvas again restores it from this device', () => {
   const first = new CanvasStore(new Tab(canvasDoc('/space/Board.canvas'), 'pane'))
   first.camera = { x: 88, y: 12, scale: 0.5 }
   first.part()
-
   const reopened = new CanvasStore(new Tab(canvasDoc('/space/Board.canvas'), 'pane'))
   expect(reopened.camera).toEqual({ x: 88, y: 12, scale: 0.5 })
   expect(reopened.framed).toBe(true)
 })
-
 test('an untouched plane keeps no view', () => {
   const store = new CanvasStore(new Tab(canvasDoc('/space/Empty.canvas'), 'pane'))
   store.part()

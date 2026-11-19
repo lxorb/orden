@@ -3,7 +3,6 @@ import { addingOnce, asking, heard, type Said } from './channel'
 
 describe('what the global window and the app say', () => {
   const task = { text: 'Call mum', fields: { tags: ['family'], remind: [{ before: 15 }] } }
-
   test('is heard when it is one of ours', () => {
     expect(heard({ kind: 'hello' })).toEqual({ kind: 'hello' })
     expect(heard({ kind: 'task', id: 'a3', entry: task, open: false })).toEqual({
@@ -19,7 +18,6 @@ describe('what the global window and the app say', () => {
     })
     expect(heard({ kind: 'world', lang: 'de', smart: true })?.kind).toBe('world')
   })
-
   test('and nothing else is', () => {
     expect(heard(null)).toBeNull()
     expect(heard('task')).toBeNull()
@@ -37,14 +35,11 @@ describe('what the global window and the app say', () => {
     expect(heard({ kind: 'world', lang: 5, smart: true })).toBeNull()
   })
 })
-
 describe('a task the app was slow to answer for', () => {
   const task = { text: 'Call mum', fields: { tags: [], remind: [] } }
-
   afterEach(() => {
     vi.useRealTimers()
   })
-
   test('is sent again under the same id, and only that task', async () => {
     vi.useFakeTimers()
     const sent: Said[] = []
@@ -65,7 +60,6 @@ describe('a task the app was slow to answer for', () => {
     expect(sent.at(-1)).toMatchObject({ kind: 'task' })
     expect((sent.at(-1) as { id: string }).id).not.toBe(one)
   })
-
   test('is added once by the app however often it is asked for', async () => {
     let finish: (ok: boolean) => void = () => undefined
     const add = vi.fn(() => new Promise<boolean>((resolve) => (finish = resolve)))
@@ -78,7 +72,6 @@ describe('a task the app was slow to answer for', () => {
     expect(await added('a', task, false)).toBe(true)
     expect(add).toHaveBeenCalledTimes(1)
   })
-
   test('is added again when the first try failed', async () => {
     const add = vi.fn().mockResolvedValueOnce(false).mockRejectedValueOnce(new Error('disk'))
     add.mockResolvedValue(true)

@@ -4,36 +4,29 @@ import { dayIn, isDateValue } from './values'
 
 const DEFAULT_SIZE: CardSize = 'medium'
 export const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
-
 export const sizeOf = (size: CardSize | undefined, notes: boolean): CardSize => size ?? (notes ? DEFAULT_SIZE : 'small')
-
 const LINES: Record<CardSize, { title: number; props: number }> = {
   small: { title: 1, props: 1 },
   medium: { title: 2, props: 2 },
   large: { title: 3, props: 3 },
 }
-
 const TITLE_LINE = 19
 const PROP_LINE = 20
 const PAD = 16
 const GAP = 6
-
 export function cardLines(size: CardSize, shown: number, extra: boolean): { title: number; props: number } {
   const room = LINES[size]
   return { title: room.title, props: Math.min(room.props, shown + (extra && !shown ? 1 : 0)) }
 }
-
 export function cardHeight(lines: { title: number; props: number }, touch: boolean): number {
   const props = lines.props ? 4 + lines.props * PROP_LINE : 0
   return PAD + lines.title * TITLE_LINE + props + 2 + GAP + (touch ? 12 : 0)
 }
-
 export const cardProperties = (
   columns: readonly string[],
   groupBy: string | undefined,
   sub: string | undefined,
 ): string[] => columns.filter((one) => one !== 'task.text' && one !== 'file.name' && one !== groupBy && one !== sub)
-
 export function checklists(rows: readonly Row[]): Map<string, { done: number; total: number }> {
   const out = new Map<string, { done: number; total: number }>()
   for (const row of rows) {
@@ -44,10 +37,8 @@ export function checklists(rows: readonly Row[]): Map<string, { done: number; to
   }
   return out
 }
-
 export const noteKey = (row: Pick<Row, 'space' | 'path'>): string => `${row.space}\n${row.path}`
 export const cardKey = (row: Row): string => `${row.space}:${rowId(row)}`
-
 export function isDoneGroup(base: Base | null, property: string | undefined, key: Value): boolean {
   if (property === 'task.status') return typeof key === 'string' && key.toLowerCase() === 'x'
   if (property === 'task.done') return key === true
@@ -55,7 +46,6 @@ export function isDoneGroup(base: Base | null, property: string | undefined, key
   const option = base.orden.properties[bare(property)]?.options?.find((one) => one.value === key)
   return option?.group === 'done'
 }
-
 export function droppableBy(property: string | undefined, rows: 'notes' | 'tasks' | 'both'): boolean {
   if (property === undefined) return false
   if (/^task\.(status|done|priority|due|date|scheduled|start|deadline|assignee|section|tags)$/.test(property))
@@ -64,7 +54,6 @@ export function droppableBy(property: string | undefined, rows: 'notes' | 'tasks
   if (property === 'file.path' || property === 'file.basename') return rows !== 'notes'
   return isNoteProperty(property)
 }
-
 export interface Pending {
   card: string
   row: Row
@@ -76,7 +65,6 @@ export interface Pending {
   index: number
   written?: boolean
 }
-
 export function withPending(groups: readonly Group[], pending: readonly Pending[]): Group[] {
   if (!pending.length) return [...groups]
   const moving = new Map(pending.map((one) => [one.card, one]))
@@ -126,7 +114,6 @@ export function withPending(groups: readonly Group[], pending: readonly Pending[
     return sub ? { ...group, rows, sub } : { ...group, rows }
   })
 }
-
 export function withOrder(
   groups: readonly Group[],
   column: string,
@@ -146,7 +133,6 @@ export function withOrder(
         },
   )
 }
-
 export function mergedOrder(column: readonly string[], lane: readonly string[]): string[] {
   const out = [...column]
   lane.forEach((id, at) => {
@@ -163,9 +149,7 @@ export function mergedOrder(column: readonly string[], lane: readonly string[]):
   const next = lane[Symbol.iterator]()
   return out.map((id) => (inLane.has(id) ? (next.next().value ?? id) : id))
 }
-
 type BoardKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End'
-
 export function nextCard(
   counts: readonly number[],
   at: { column: number; index: number },
@@ -182,7 +166,6 @@ export function nextCard(
   const there = counts[column] ?? 0
   return { column, index: Math.min(at.index, Math.max(0, there - 1)) }
 }
-
 export function nextLaned(
   counts: readonly (readonly number[])[],
   at: { lane: number; column: number; index: number },
@@ -198,26 +181,20 @@ export function nextLaned(
   }
   return null
 }
-
 export function orderAfter(ids: readonly string[], id: string, index: number): string[] {
   const order = ids.filter((one) => one !== id)
   order.splice(Math.min(index, order.length), 0, id)
   return order
 }
-
 export const indexWithout = (index: number, was: number): number => (was !== -1 && was < index ? index - 1 : index)
-
 const someOf = <T>(values: readonly T[], most: number): { shown: T[]; more: number } => ({
   shown: values.slice(0, most),
   more: Math.max(0, values.length - most),
 })
-
 export type CardLine =
   | { kind: 'pills'; pills: { text: string; tone: string | null }[]; more: number }
   | { kind: 'words'; text: string; late: boolean }
-
 const MOST_PILLS = 2
-
 export function cardLine(
   value: Value,
   options: (value: string) => string | null | undefined,

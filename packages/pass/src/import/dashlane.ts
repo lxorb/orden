@@ -17,7 +17,6 @@ import { csvHeader, csvRecords, type CsvRecord } from './csv'
 import type { Imported, ImportedItem } from './types'
 
 type Kind = 'credentials' | 'securenotes' | 'payments' | 'ids' | 'personalInfo'
-
 function kindOfHeader(header: readonly string[]): Kind | null {
   const has = (name: string): boolean => header.includes(name)
   if (has('username') && has('password') && has('url')) return 'credentials'
@@ -27,7 +26,6 @@ function kindOfHeader(header: readonly string[]): Kind | null {
   if (has('title') && has('note')) return 'securenotes'
   return null
 }
-
 function credential(row: CsvRecord): ImportedItem {
   const usernames = [pick(row, 'username'), pick(row, 'username2'), pick(row, 'username3')]
   const [first = '', ...others] = usernames.filter((one) => one !== '')
@@ -44,11 +42,9 @@ function credential(row: CsvRecord): ImportedItem {
     { folder: pick(row, 'category') },
   )
 }
-
 function secureNote(row: CsvRecord): ImportedItem {
   return itemOf(noteOf(pick(row, 'title'), pick(row, 'note')), { folder: pick(row, 'category') })
 }
-
 function payment(row: CsvRecord): ImportedItem {
   const title = pick(row, 'account_name')
   if (pick(row, 'cc_number') !== '' || pick(row, 'type') === 'payment_card') {
@@ -81,14 +77,12 @@ function payment(row: CsvRecord): ImportedItem {
     ),
   )
 }
-
 const ID_KEYS: Record<string, IdentityKey> = {
   passport: 'passport',
   license: 'license',
   driver_license: 'license',
   social_security: 'ssn',
 }
-
 function idDocument(row: CsvRecord): ImportedItem {
   const type = pick(row, 'type')
   const key = ID_KEYS[type]
@@ -108,7 +102,6 @@ function idDocument(row: CsvRecord): ImportedItem {
     }),
   )
 }
-
 function personal(row: CsvRecord): ImportedItem {
   const street = [pick(row, 'address'), pick(row, 'address_building'), pick(row, 'address_apartment')]
     .filter((one) => one !== '')
@@ -142,7 +135,6 @@ function personal(row: CsvRecord): ImportedItem {
     }),
   )
 }
-
 const READERS: Record<Kind, (row: CsvRecord) => ImportedItem> = {
   credentials: credential,
   securenotes: secureNote,
@@ -150,7 +142,6 @@ const READERS: Record<Kind, (row: CsvRecord) => ImportedItem> = {
   ids: idDocument,
   personalInfo: personal,
 }
-
 function readCsv(into: Collector, text: string, name: string): void {
   const kind = kindOfHeader(csvHeader(text))
   if (kind === null) {
@@ -159,7 +150,6 @@ function readCsv(into: Collector, text: string, name: string): void {
   }
   for (const row of csvRecords(text)) into.add(READERS[kind](row))
 }
-
 export function parseDashlane(data: string | Files): Imported {
   const into = new Collector('Dashlane')
   if (typeof data === 'string') {

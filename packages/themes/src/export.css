@@ -4,23 +4,19 @@ body {
   overflow: visible;
   overscroll-behavior: auto;
 }
-
 #write {
   padding: var(--space-7) var(--space-5) var(--space-7);
 }
-
 #write *,
 #write *::before,
 #write *::after {
   animation: none !important;
   transition: none !important;
 }
-
 .sheet {
   width: 100%;
   border-collapse: collapse;
 }
-
 .sheet > thead > tr > td,
 .sheet > tfoot > tr > td,
 .sheet > tbody > tr > td {
@@ -28,13 +24,11 @@ body {
   border: none;
   vertical-align: top;
 }
-
 .sheet > thead,
 .sheet > tfoot,
 .running-footer {
   display: none;
 }
-
 @media print {
   :root,
   [data-theme='dark'],
@@ -55,19 +49,16 @@ body {
     --selection: transparent;
     --accent-ink: #ffffff;
   }
-
   html,
   body {
     background: #fff;
   }
-
   #write {
     max-width: none;
     padding: 0;
     font-size: 11pt;
     line-height: 1.55;
   }
-
   #write pre,
   #write code,
   #write th,
@@ -78,24 +69,19 @@ body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-
   #write details.callout > *:not(summary) {
     display: block;
   }
-
   #write details.callout::details-content {
     content-visibility: visible;
     block-size: auto;
   }
-
   #write .callout-title .callout-fold {
     display: none;
   }
-
   #write h1 ~ h1 {
     break-before: page;
   }
-
   #write h1,
   #write h2,
   #write h3,
@@ -105,7 +91,6 @@ body {
     break-after: avoid;
     break-inside: avoid;
   }
-
   @supports (hanging-punctuation: first) {
     #write h1:not(:last-child)::after,
     #write h2:not(:last-child)::after,
@@ -119,7 +104,6 @@ body {
       margin-bottom: calc(11pt * 1.55 * -3);
     }
   }
-
   #write p,
   #write li,
   #write dd,
@@ -127,7 +111,6 @@ body {
     orphans: 3;
     widows: 3;
   }
-
   #write blockquote,
   #write .callout,
   #write figure,
@@ -137,54 +120,43 @@ body {
   #write tr {
     break-inside: avoid;
   }
-
   #write thead {
     display: table-header-group;
   }
-
   #write pre {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     overflow: visible;
     font-size: 9pt;
   }
-
   #write table {
     font-size: 0.92em;
   }
-
   #write img {
     max-height: 85vh;
     object-fit: contain;
   }
-
   #write a[href^='http']:not(.url):not(:has(img))::after {
     content: ' (' attr(href) ')';
     font-size: 0.8em;
     color: var(--muted);
     overflow-wrap: anywhere;
   }
-
   #write .toc a::after {
     content: none;
   }
-
   .sheet > thead {
     display: table-header-group;
   }
-
   .sheet > tfoot {
     display: table-footer-group;
   }
-
   .sheet > thead > tr > td {
     padding-bottom: 8mm;
   }
-
   .sheet > tfoot > tr > td {
     height: 8mm;
   }
-
   .running-header,
   .running-footer {
     display: block;
@@ -193,7 +165,6 @@ body {
     color: var(--muted);
     text-align: center;
   }
-
   .running-footer {
     position: fixed;
     bottom: 0;

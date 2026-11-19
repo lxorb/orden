@@ -5,7 +5,6 @@ import { type FoundLink } from '@orden/markdown/links'
 
 const ASSETS = 'assets'
 const TYPE = 'net.daringfireball.markdown'
-
 const info = (): string =>
   `${JSON.stringify(
     {
@@ -17,30 +16,24 @@ const info = (): string =>
     null,
     2,
   )}\n`
-
 export interface BundleOptions {
   link?: (link: FoundLink) => string | null
 }
-
 export function bundleFiles(source: string, pictures: readonly Picture[], options: BundleOptions = {}): Entry[] {
   const inside = new Map(pictures.map((picture) => [picture.src, `${ASSETS}/${addressOf(picture.name)}`]))
-
   const text = toMarkdown(source, {
     ...(options.link ? { link: options.link } : {}),
     picture: (src) => inside.get(src) ?? null,
   })
-
   return [
     { path: 'info.json', body: info() },
     { path: 'text.md', body: text },
     ...pictures.map((picture) => ({ path: `${ASSETS}/${picture.name}`, body: picture.bytes })),
   ]
 }
-
 function addressOf(name: string): string {
   return name.replace(/[%#?]/g, (one) => `%${one.charCodeAt(0).toString(16).toUpperCase()}`)
 }
-
 export function packEntries(bundle: string, files: readonly Entry[]): Entry[] {
   return files.map((file) => ({ ...file, path: `${bundle}/${file.path}` }))
 }

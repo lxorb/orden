@@ -125,13 +125,10 @@
         .then((say) => (say ? keysMovedNotice.ask() : undefined))
     }, 3000)
   }
-
   if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE_FOLDER) !== null) void outsideNotice.ask()
-
   if (isDesktop && !__EVEN_PLUGIN__ && crashAskDue()) {
     void startup.turn('rooms').then(() => crashAsk.ask())
   }
-
   $effect(() => {
     if (!isDesktop || __EVEN_PLUGIN__ || !modes.coder || !account.accountToken) return
     let stop: (() => void) | null = null
@@ -144,15 +141,10 @@
       stop?.()
     }
   })
-
   const view = $derived(views.of(workspace.panes.focusedId))
-
   const padOver = $derived(viewport.touch && pad.on)
-
   const writingIn = $derived(padOver ? (pad.view ?? view) : view)
-
   const fabLabel = $derived(hiddenKinds.offers('note') ? 'New note' : 'New tab')
-
   type SystemMenu = Awaited<ReturnType<typeof systemMenu>>
   let keepsSystemMenu: SystemMenu['keepsSystemMenu'] = () => false
   let macMenuKey: SystemMenu['macMenuKey'] = () => false
@@ -188,7 +180,6 @@
   let paletteScreen = $state<{ showCommands(): void; dismiss(): void }>()
   let formatBar = $state<{ follow(view: EditorView): void }>()
   let middle = $state<HTMLElement>()
-
   $effect(() => {
     if (settings.historyOpen) void historySheet.ask()
     if (share.open) void shareSheet.ask()
@@ -201,9 +192,7 @@
     if (palette) void paletteDoor.ask()
     if (prompt.open) void promptSheet.ask()
   })
-
   onDestroy(start())
-
   setVimCommands({
     write: saveFront,
     quit: () => void workspace.closeActive(),
@@ -211,9 +200,7 @@
       palette = true
     },
   })
-
   const onMac = platform() === 'macos'
-
   $effect(() => {
     const active = workspace.active
     const facts = active && { shown: active.shown, path: active.path, draft: isDraft(active.note) }
@@ -223,13 +210,11 @@
       if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
     })
   })
-
   $effect(() => {
     const token = account.accountToken
     if (token) {
       void modes.adopt(token).then((remote) => {
         if (!remote) return
-
         shortcuts.receive(remote)
         toolbar.receive(remote)
         whenLoaded(
@@ -246,13 +231,11 @@
       })
     }
   })
-
   async function followWhenLanded(current: EditorView) {
     await formatBarDoor.ask()
     await tick()
     formatBar?.follow(current)
   }
-
   $effect(() => {
     views.onSelection = (current: EditorView) => {
       if (formatBar) formatBar.follow(current)
@@ -262,7 +245,6 @@
       views.onSelection = null
     }
   })
-
   $effect(() => {
     if (__EVEN_PLUGIN__ || !workspace.restored || workspace.spaces.length) return
     const now = {
@@ -277,20 +259,15 @@
     }
     void firstSpaceDoor().then(({ firstSpace }) => firstSpace.start(now))
   })
-
   $effect(() => watchTextSize())
-
   $effect(() => workspace.onePane())
-
   $effect(() => {
     const who = account.user?.id
     if (!who) return
-
     for (const space of workspace.spaces) {
       const id = sync.remoteIdFor(space.root)
       const remote = id === null ? undefined : account.spaces.find((one) => one.id === id)
       if (!remote) continue
-
       workspace.folderIcons.adopt(space.root, remote.icons, remote.tints, who)
       void workspace.arranged.adopt(space.root, remote.arranged, who)
       workspace.graphSettings.adopt(space.root, remote.graph, who)
@@ -299,11 +276,9 @@
       void workspace.archive.adopt(space.root, remote.archived, who)
     }
   })
-
   $effect(() => {
     const [height, panned] = [viewport.height, viewport.panned]
     if (!viewport.typing || !height || panned < 0) return
-
     const field = document.activeElement
     if (field instanceof HTMLElement && field !== view?.contentDOM) {
       const scroller = view?.contentDOM.contains(field) ? view.scrollDOM : scrollerOf(field)
@@ -311,7 +286,6 @@
       return
     }
     if (!view) return
-
     view.dispatch({
       effects: EditorView.scrollIntoView(view.state.selection.main.head, {
         y: 'nearest',
@@ -319,9 +293,7 @@
       }),
     })
   })
-
   $effect(() => paintCodePalette(modes.codeTheme))
-
   $effect(() => {
     const panes = workspace.panes.all.filter((pane) => pane.linked)
     const stops = pairs(panes.map((pane) => pane.id))
@@ -331,19 +303,14 @@
         const second = views.of(other)
         return first && second ? [linkScroll(scrollEnd(first), scrollEnd(second))] : []
       })
-
     return () => {
       for (const stop of stops) stop()
     }
   })
-
   $effect(() => (viewport.drawer && workspace.panel ? overlays.show(() => workspace.closePanel()) : undefined))
-
   $effect(() => (viewport.drawer && rightOpen ? overlays.show(() => workspace.closeRight()) : undefined))
-
   const covered = $derived(!!workspace.panel)
   const coveredRight = $derived(rightOpen)
-
   $effect(() => closeOnBack(covered, () => workspace.closePanel()))
   $effect(() => closeOnBack(coveredRight, () => workspace.closeRight()))
   $effect(() =>
@@ -355,24 +322,18 @@
     if (paletteWords.words !== null) palette = true
   })
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
-
   $effect(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
-
   $effect(() => fullscreen.follow())
-
   $effect(() => {
     const host = middle
     if (!host || !swipeOpens()) return
-
     let stop: (() => void) | null = null
     const off = whenLoaded(drawerFollowing, (one) => (stop = one.followDrawers(host)))
-
     return () => {
       off()
       stop?.()
     }
   })
-
   const syncing = $derived(account.syncable ? `${account.user?.id ?? ''}:${account.user?.syncVersion === 2}` : null)
   $effect(() => {
     if (syncing !== null) {
@@ -387,18 +348,14 @@
       })
     }
   })
-
   $effect(() => rooms.rename(account.name ?? undefined, personFace()))
-
   $effect(() => {
     const open = account.syncable && startup.reached('rooms') ? workspace.openNotes : []
     rooms.follow(inRooms(open, sync.version === 1 ? (path) => sync.tracked(path) : null))
   })
-
   $effect(() => {
     rooms.repaint(theme.current)
   })
-
   if (__DRIVEABLE__) {
     Object.assign(window, {
       ordenApp: {
@@ -431,7 +388,6 @@
         terminals: () => import('./lib/terminal/src/api').then((one) => one.sessions()),
       },
     })
-
     void Promise.all([
       import('./lib/import/src/api').then((one) => one.importingStore()),
       import('./lib/publishing/src/api'),
@@ -490,25 +446,20 @@
       })
     })
   }
-
   const ownBar = (kind: TabKind | undefined) => kind !== undefined && TAB_KINDS[kind].ownBar
-
   $effect(() => {
     paneCorners.draw = corners
     return () => {
       paneCorners.draw = null
     }
   })
-
   function pairs(ids: string[]): [string, string][] {
     const out: [string, string][] = []
     for (const [at, one] of ids.entries()) {
       for (const other of ids.slice(at + 1)) out.push([one, other])
     }
-
     return out
   }
-
   function scrollEnd(current: EditorView): ScrollEnd {
     return {
       top: () => topLine(current),
@@ -519,11 +470,9 @@
       },
     }
   }
-
   function onFieldMenu(event: MouseEvent) {
     const field = viewport.touch ? null : textFieldOf(event.target)
     if (!field) return
-
     event.preventDefault()
     event.stopPropagation()
     if (!__EVEN_PLUGIN__) {
@@ -532,55 +481,42 @@
         .then((one) => one.showFieldMenu(event, field))
     }
   }
-
   function onMouse(event: MouseEvent) {
     if (event.button !== 3 && event.button !== 4) return
-
     event.preventDefault()
     if (event.button === 3) workspace.goBack()
     else workspace.goForward()
   }
-
   const shown = new WhenShown(
     (id) => workspace.tabs.find((tab) => tab.id === id),
     (paneId) => views.of(paneId),
   )
-
   let settling = $state(false)
-
   function onNote(tab: ShownTab, act: (on: EditorView) => void) {
     if (tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     if (!shown.run(tab, act)) settling = true
   }
-
   function goto(line: number) {
     const tab = workspace.active
     if (tab && view && !viewShowing(tab, () => view)) {
       onNote(tab, (on) => land(on, line))
       return
     }
-
     if (view) land(view, line)
   }
-
   function land(on: EditorView, line: number) {
     workspace.showNote()
-
     landOnLine(on, line)
     on.focus()
   }
-
   function moveSectionTo(from: number, to: number) {
     const tab = workspace.panelTab
     if (!tab) return
-
     onNote(tab, (on) => {
       if (on.state.readOnly) return
-
       const text = on.state.doc.toString()
       const made = moveSection(text, scanHeadings(text), from, to, on.state.selection.main.head)
       if (!made) return
-
       on.dispatch({
         changes: made.changes,
         selection: { anchor: made.caret },
@@ -589,42 +525,32 @@
       })
     })
   }
-
   $effect(() => {
     const asked = workspace.goto
     if (!asked || !view || workspace.active?.path !== asked.path || workspace.active.reading) return
-
     workspace.goto = null
     requestAnimationFrame(() => goto(asked.line))
   })
-
   $effect(() => {
     if (!settling) return
-
     settling = false
     requestAnimationFrame(() => shown.settle())
   })
-
   const showing = $derived(workspace.showing(workspace.panes.focusedId))
-
   $effect(() => {
     const current = view
     const reasons = [showing?.id, showing?.kind, showing?.reading, workspace.naming, palette]
     if (!current || !reasons.length) return
-
     const frame = requestAnimationFrame(() => {
       const may = takesCaret(showing ? { kind: showing.kind, reading: showing.reading } : null, {
         overlaid: overlays.depth > 0,
         renaming: workspace.naming !== null,
         touch: viewport.touch,
       })
-
       if (may && !keyboardStays()) current.focus()
     })
-
     return () => cancelAnimationFrame(frame)
   })
-
   function sidebarUndo(event: KeyboardEvent) {
     const own = sidebarKey(event, (id) => shortcuts.pressed(id, event))
     if (!own) return
@@ -632,12 +558,9 @@
     event.stopPropagation()
     void (own === 'undo' ? workspace.undoFileAction() : workspace.redoFileAction())
   }
-
   function onKeydown(event: KeyboardEvent) {
     if (macMenuKey(event)) return
-
     if (event.key === 'Escape' && overlays.escape(event)) return
-
     if (event.key === 'Escape' && fullscreen.on) {
       const holder = document.activeElement
       queueMicrotask(() => {
@@ -645,23 +568,19 @@
       })
       return
     }
-
     if (!shortcuts.handle(event, appContext())) shortcuts.writeKey(event)
   }
-
   const later = new Stops()
   void startup
     .turn('doors')
     .then(doubleTaps)
     .then(({ hear }) => later.keep(hear(appContext)))
   onDestroy(() => later.end())
-
   async function showCommands() {
     await paletteDoor.ask()
     await tick()
     paletteScreen?.showCommands()
   }
-
   function appContext(): AppContext {
     return {
       view: writingIn,
@@ -687,7 +606,6 @@
         })),
       )
   }
-
   $effect(() => {
     const status = sync.status
     if (status === 'syncing') said.say('Syncing')
@@ -1056,23 +974,19 @@
     background: var(--shell-ground);
     transition: background var(--dur-slow) var(--ease-out);
   }
-
   .middle {
     flex: 1;
     min-height: 0;
     display: flex;
     background: var(--chrome-ground);
   }
-
   .panels {
     display: flex;
     min-height: 0;
   }
-
   .scrim {
     display: none;
   }
-
   .document {
     position: relative;
     flex: 1;
@@ -1080,7 +994,6 @@
     display: flex;
     flex-direction: column;
   }
-
   .body {
     position: relative;
     flex: 1;
@@ -1088,7 +1001,6 @@
     min-height: 0;
     display: flex;
   }
-
   .panes {
     position: relative;
     flex: 1;
@@ -1098,21 +1010,17 @@
     padding: 0 var(--right-inset, var(--card-inset)) 0 var(--left-inset, var(--card-inset));
     transition: padding var(--dur-base) var(--ease-out);
   }
-
   .document.left-shut {
     --left-inset: 0px;
     --left-edge: 0px;
   }
-
   .document.right-shut {
     --right-inset: 0px;
     --right-edge: 0px;
   }
-
   .panes.under-pad {
     visibility: hidden;
   }
-
   .notices {
     position: absolute;
     inset-inline: 0;
@@ -1124,50 +1032,39 @@
     gap: var(--space-2);
     pointer-events: none;
   }
-
   .notices > :global(*) {
     pointer-events: auto;
   }
-
   :global([data-touch]) .notices {
     grid-template-columns: 1fr;
   }
-
   .reload {
     grid-column: 2;
     justify-self: center;
   }
-
   :global([data-touch]) .reload {
     grid-column: 1;
   }
-
   .notices.over {
     position: fixed;
   }
-
   .notices.above {
     position: fixed;
     z-index: var(--z-sheet);
   }
-
   .notices:has(> :global(*)) {
     padding: var(--space-2) max(var(--space-4), var(--inset-right)) calc(var(--space-3) + var(--inset-bottom))
       max(var(--space-4), var(--inset-left));
   }
-
   main.tabbed .notices:has(> :global(*)) {
     padding-bottom: calc(var(--space-3) + var(--inset-bottom) + var(--touch-row));
   }
-
   main:has(:global(.fab)) .notices:has(> :global(*)) {
     padding-inline-end: calc(max(var(--space-4), var(--inset-right)) + var(--touch-row) + var(--space-2));
   }
-
   main.full .panes {
     padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
   }
-
   main.flush,
   :global([data-touch]) main {
     --card-radius: 0px;
@@ -1177,11 +1074,9 @@
     --card-shadow: none;
     --chrome-seam: var(--line);
   }
-
   :global([data-touch]) main {
     --leave-size: var(--touch-target);
   }
-
   .fab {
     position: absolute;
     inset-inline-end: max(var(--space-4), var(--inset-right));
@@ -1199,11 +1094,9 @@
     cursor: default;
     transition: transform var(--dur-fast) var(--ease-spring);
   }
-
   .fab:active {
     transform: scale(0.92);
   }
-
   .fab svg {
     width: var(--touch-icon);
     height: var(--touch-icon);
@@ -1212,11 +1105,9 @@
     stroke-width: 2;
     stroke-linecap: round;
   }
-
   :global([data-touch]) .panels {
     padding-inline-start: var(--inset-left);
   }
-
   :global([data-drawer]) .panels {
     position: fixed;
     inset-block: 0 var(--keyboard, 0px);
@@ -1231,30 +1122,24 @@
       linear-gradient(var(--side-ground), var(--side-ground)),
       linear-gradient(var(--chrome-ground), var(--chrome-ground)), var(--bg);
   }
-
   :global([data-drawer]) .panels.open {
     transform: none;
   }
-
   :global([data-drawer]) .panels.held,
   :global([data-drawer]) .document.held {
     will-change: transform;
   }
-
   :global([data-drawer]) .scrim.held {
     will-change: opacity;
   }
-
   :global([data-drawer]) .panels.dragging,
   :global([data-drawer]) .scrim.dragging {
     transition: none;
     animation: none;
   }
-
   :global([data-drawer]) .panels.settling:not(.dragging) {
     transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
-
   :global([data-drawer]) .scrim {
     display: block;
     position: fixed;
@@ -1263,23 +1148,19 @@
     background: color-mix(in srgb, var(--bg) 62%, transparent);
     animation: scrim-in var(--dur-fast) var(--ease-out);
   }
-
   @keyframes scrim-in {
     from {
       opacity: 0;
     }
   }
-
   :global([data-drawer]) .panels.right {
     inset-block: 0;
     inset-inline: auto 0;
     transform: translateX(100%);
   }
-
   :global([data-drawer]) .panels.right.open {
     transform: none;
   }
-
   :global([data-drawer][data-narrow]) .panels.right {
     width: min(86%, 20rem);
     z-index: var(--z-drawer);
@@ -1289,25 +1170,20 @@
       box-shadow var(--dur-base) var(--ease-out);
     transform: translateX(100%);
   }
-
   :global([data-drawer]) .panels:not(.open, .dragging, .settling),
   :global([data-drawer][data-narrow]) .panels.right:not(.open, .dragging, .settling) {
     box-shadow: none;
   }
-
   :global([data-drawer][data-narrow]) .panels.right.open {
     transform: none;
   }
-
   :global([data-drawer]) .panels.right.dragging {
     transition: none;
     animation: none;
   }
-
   :global([data-drawer]) .panels.right.settling:not(.dragging) {
     transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
-
   :global([data-drawer][data-narrow]) .panels {
     width: 100%;
     z-index: var(--z-raised);
@@ -1315,7 +1191,6 @@
     box-shadow: none;
     transition: none;
   }
-
   :global([data-drawer][data-narrow]) .document {
     position: relative;
     z-index: var(--z-lifted);
@@ -1326,22 +1201,18 @@
       box-shadow var(--dur-base) var(--ease-out);
     --shade: 1;
   }
-
   :global([data-drawer][data-narrow]) .document.open {
     transform: translateX(100%);
     --shade: 0;
   }
-
   :global([data-drawer][data-narrow]) .document.dragging {
     transition: none;
   }
-
   :global([data-drawer][data-narrow]) .document.settling:not(.dragging) {
     transition:
       transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1),
       box-shadow var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
-
   :global([data-drawer][data-narrow]) .scrim:not(.over) {
     display: none;
   }

@@ -22,10 +22,8 @@ const { workspace } = await import('./workspace.svelte')
 const { startAcross } = await import('./across')
 await startAcross()
 const { writeEdited } = await import('../../documents/src/api')
-
 const ROOT = '/spaces/One'
 const PATH = `${ROOT}/a.md`
-
 async function opened(words: string) {
   await workspace.writesSettled()
   d.reset()
@@ -38,13 +36,11 @@ async function opened(words: string) {
   await workspace.open(PATH)
   return workspace.tabs[0]!.note
 }
-
 function change(note: Awaited<ReturnType<typeof opened>>, words: string) {
   const knew = note.onDisk
   note.edited([{ from: 0, to: note.latest.length, insert: words }], words)
   return knew
 }
-
 test('an outside edit it had not heard of is taken in, not replaced', async () => {
   const note = await opened('a [[old]]\n\nend\n')
   d.files.set(PATH, 'a [[old]]\n\nend\nfrom a git pull\n')
@@ -56,7 +52,6 @@ test('an outside edit it had not heard of is taken in, not replaced', async () =
   expect(note.latest).toBe('a [[new]]\n\nend\nfrom a git pull\n')
   expect(note.dirty).toBe(false)
 })
-
 test('a refused write stays owed and lands', async () => {
   const note = await opened('a [[old]]\n')
   const after = 'a [[new]]\n'

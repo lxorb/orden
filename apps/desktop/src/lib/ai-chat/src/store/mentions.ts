@@ -2,7 +2,6 @@ import { fit } from '@orden/scan/search/fuzzy'
 
 export type MentionKind =
   'note' | 'folder' | 'tag' | 'tab' | 'selection' | 'scratchpad' | 'thread' | 'web' | 'picture' | 'words'
-
 export interface Mention {
   kind: MentionKind
   id: string
@@ -14,7 +13,6 @@ export interface Mention {
   theirs?: boolean
   space?: string
 }
-
 export interface Row {
   key: string
   label: string
@@ -22,11 +20,8 @@ export interface Row {
   mark?: MentionKind
   dim?: string
 }
-
 const MOST = 8
-
 const LONGEST = 256
-
 function scoreOf(mention: Mention, query: string): number | null {
   const scores = [mention.label, mention.word ?? '']
     .filter(Boolean)
@@ -39,7 +34,6 @@ function scoreOf(mention: Mention, query: string): number | null {
     .filter((one): one is number => one !== null)
   return scores.length ? scores.reduce((high, one) => Math.max(high, one), -Infinity) : null
 }
-
 export function ranked(candidates: readonly Mention[], query: string, most = MOST): Mention[] {
   const typed = query.trim()
   if (!typed) return candidates.slice(0, most)
@@ -51,7 +45,6 @@ export function ranked(candidates: readonly Mention[], query: string, most = MOS
     .slice(0, most)
     .map((row) => row.one)
 }
-
 export function mentionAt(text: string, caret: number): { from: number; query: string } | null {
   const before = text.slice(0, caret)
   const found = /(?:^|\s)@([^\s@]*)$/.exec(before)
@@ -59,13 +52,11 @@ export function mentionAt(text: string, caret: number): { from: number; query: s
   const query = found[1] ?? ''
   return { from: caret - query.length - 1, query }
 }
-
 export function mentionOf(entry: { path: string; name: string; is_dir: boolean }): Mention {
   return entry.is_dir
     ? { kind: 'folder', id: entry.path, label: `${entry.name}/` }
     : { kind: 'note', id: entry.path, label: entry.name.replace(/\.(?:md|markdown)$/i, '') }
 }
-
 export function sameMention(one: Mention, other: Mention): boolean {
   return one.kind === other.kind && one.id === other.id
 }

@@ -14,9 +14,7 @@ const MOVED_PACKAGES: readonly string[] = execFileSync('git', ['ls-files', '*pac
   .map((path) => (JSON.parse(readFileSync(join(ROOT, path), 'utf8')) as { name?: unknown }).name)
   .filter((name): name is string => typeof name === 'string' && name.startsWith('@orden/'))
   .map((name) => name.slice('@orden/'.length))
-
 const SAYING = ['apps/desktop/test/internal-name.test.ts', 'scripts/old-name.ts']
-
 const MOST: Record<Kind, number> = {
   package: 0,
   identifier: 6,
@@ -26,13 +24,11 @@ const MOST: Record<Kind, number> = {
   dashed: 186,
   word: 970,
 }
-
 describe('the old name inside the repo', () => {
   test('is looked for in the whole repo, so a checkout without git never passes by finding nothing', () => {
     const listed = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
     expect(listed.split('\n').filter(Boolean).length).toBeGreaterThan(1000)
   })
-
   test('a package moved to @orden is never written under its old name again', () => {
     const written = oldNames(SAYING)
       .filter((one) => one.kind === 'package')
@@ -42,7 +38,6 @@ describe('the old name inside the repo', () => {
       })
     expect(written, written.join('\n')).toEqual([])
   })
-
   test('is written no more often than it was, so each kind only goes down', () => {
     const counts = new Map<Kind, number>()
     for (const { kind } of oldNames(SAYING)) counts.set(kind, (counts.get(kind) ?? 0) + 1)
@@ -52,7 +47,6 @@ describe('the old name inside the repo', () => {
     })
     expect(over, over.join('\n')).toEqual([])
   })
-
   test('is told apart by what is written around it', () => {
     const text = [
       "import { readTask } from '@nib/markdown/task-line'",

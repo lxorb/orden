@@ -19,26 +19,20 @@
     moved: 'Moved',
     deleted: 'Deleted',
   })
-
   undoToast.know(workspace.undone.stack)
-
   $effect(() => {
     const stack = workspace.undone.stack
     untrack(() => undoToast.heard(stack))
   })
-
   $effect(() => {
     if (undoToast.kind) untrack(() => failed.dismiss())
   })
-
   function toldUndo(kind: keyof typeof word) {
     return told(undoToast.batch.length ? `${word[kind]}. Undo` : '')
   }
-
   const turn = $derived(
     reservedName.root ? 'reserved' : failed.retry ? 'failed' : undoToast.kind ? 'undo' : unread.shown ? 'unread' : null,
   )
-
   const up = {
     reserved: () => turn === 'reserved',
     failed: () => turn === 'failed',
@@ -47,16 +41,13 @@
     gate: () => !!gateNote.said,
     unsynced: () => !!unsynced.said,
   }
-
   let holding: { card: HTMLElement; name: keyof typeof up; from: HTMLElement | null } | null = null
-
   function handBack() {
     const from = holding?.from
     holding = null
     if (from?.isConnected) from.focus({ preventScroll: true })
     if (!from || document.activeElement !== from) focusEditor()
   }
-
   $effect.pre(() => {
     for (const going of Object.values(up)) going()
     untrack(() => {
@@ -65,7 +56,6 @@
       else holding = null
     })
   })
-
   function kept(name: keyof typeof up, toast?: { hold(): void; linger(): void }) {
     return (card: HTMLElement) => {
       let pointer = false
@@ -110,7 +100,6 @@
       }
     }
   }
-
   $effect(() => () => {
     undoToast.dismiss()
     reservedName.dismiss()
@@ -209,14 +198,12 @@
     background: var(--surface-3);
     box-shadow: var(--shadow-lg);
   }
-
   p {
     margin: 0;
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     color: var(--text);
   }
-
   .undo {
     padding: 0;
     border: none;
@@ -228,11 +215,9 @@
     cursor: default;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .undo:active {
     opacity: 0.6;
   }
-
   :global([data-touch]) .undo {
     min-height: var(--touch-target);
   }

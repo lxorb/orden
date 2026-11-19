@@ -4,7 +4,6 @@ import { plans } from './local/status.svelte'
 
 export const USAGE = 'https://chatgpt.com/codex/settings/usage'
 const NAME = 'ChatGPT'
-
 export async function planToken(): Promise<string> {
   try {
     return await invoke<string>('chatgpt_token')
@@ -17,7 +16,6 @@ export async function planToken(): Promise<string> {
     throw new Error(said, { cause: error })
   }
 }
-
 function codeIn(body: unknown): string {
   if (typeof body !== 'object' || body === null) return ''
   const error = (body as { error?: unknown }).error
@@ -25,7 +23,6 @@ function codeIn(body: unknown): string {
   const code = (error as { code?: unknown }).code
   return typeof code === 'string' ? code : ''
 }
-
 export function planRefusal(status: number, body: unknown): string | null {
   const code = codeIn(body)
   if (code === 'subscription_sharing_usage_limit_exceeded' || status === 429) {

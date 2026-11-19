@@ -1,13 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const sent: { command: string; path: string; content: string }[] = []
-
 let holding: Promise<void> | null = null
-
 let holdingVersion: Promise<void> | null = null
-
 const refusing = new Map<string, number>()
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: async (command: string, args?: Record<string, unknown>) => {
     sent.push({
@@ -17,7 +13,6 @@ vi.mock('../../platform/src/tauri', () => ({
     })
     if (command === 'write_note' && holding) await holding
     if (command === 'snapshot_note' && holdingVersion) await holdingVersion
-
     const path = typeof args?.path === 'string' ? args.path : ''
     const left = refusing.get(path) ?? 0
     if (command === 'write_note' && left > 0) {
@@ -30,25 +25,19 @@ vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
 }))
-
 vi.mock('../../link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
-
 const light = { status: 'off', lastError: null as string | null }
 vi.mock('../../sync-store/src/api', () => ({
   sync: Object.assign(light, { nudge: () => undefined, wrote: () => undefined }),
 }))
-
 const { IN_THE_AIR_AT_MOST, Saving } = await import('./saving.svelte')
 const { owesAtTheEnd, settleUp } = await import('../../parting/src/api')
 const { NoteDoc, Tab, UNTITLED } = await import('../../documents/src/api')
 type Writes = import('./saving.svelte').Writes
 type Doc = import('../../documents/src/api').NoteDoc
 type Entry = import('./workspace.svelte').Entry
-
 const SPACE = '/space'
-
 const notStalled = () => Promise.reject(new Error('stalled'))
-
 function row(path: string): Entry {
   return {
     name: path.slice(path.lastIndexOf('/') + 1),
@@ -59,27 +48,20 @@ function row(path: string): Entry {
     children: [],
   }
 }
-
 function listing(paths: readonly string[]): Entry {
   return { ...row(SPACE), is_dir: true, children: paths.map(row) }
 }
-
 const written = (path?: string) =>
   sent.filter((one) => one.command === 'write_note' && (path === undefined || one.path === path))
-
 const versions = () => sent.filter((one) => one.command === 'snapshot_note')
-
 const stores: InstanceType<typeof Saving>[] = []
-
 interface Starting {
   text?: string
   kind?: 'note' | 'canvas'
 }
-
 function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {}) {
   let tree = listing(path?.startsWith(`${SPACE}/`) ? [path] : [])
   const came: { path: string; key: string | undefined }[] = []
-
   const ws: Writes & { persisted: number; lists: number } = {
     tabs: [],
     documents: [],
@@ -108,7 +90,6 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     keepPaper: () => Promise.resolve(),
     fileCame: async (path: string, _kind: 'file' | 'folder', key?: string) => void came.push({ path, key }),
   }
-
   const saving = new Saving(ws)
   stores.push(saving)
   const note: Doc = new NoteDoc(
@@ -116,24 +97,20 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     (one) => saving.edited(one),
   )
   const tab = new Tab(note, 'p1')
-
   ws.tabs.push(tab)
   ws.documents.push(note)
   Object.defineProperty(ws, 'active', { get: () => tab })
-
   const deleted = () => {
     tree = listing([])
     saving.follow({ op: 'removed', path: note.path ?? '', kind: 'file', root: SPACE })
     ws.tabs.length = 0
     ws.documents.length = 0
   }
-
   const closed = () => {
     ws.tabs.length = 0
     ws.documents.length = 0
     saving.closed(note)
   }
-
   const beside = (other: string, words = '# b') => {
     tree = listing([...(path ? [path] : []), other])
     const second: Doc = new NoteDoc(
@@ -150,14 +127,11 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     ws.documents.push(second)
     return second
   }
-
   const type = (words: string) => {
     note.live.replace(words, true)
   }
-
   return { saving, note, tab, ws, deleted, closed, beside, type, came }
 }
-
 beforeEach(() => {
   sent.length = 0
   holding = null
@@ -166,14 +140,12 @@ beforeEach(() => {
   light.lastError = null
   vi.useRealTimers()
 })
-
 afterEach(async () => {
   vi.useRealTimers()
   holding = null
   refusing.clear()
   await Promise.all(stores.map((one) => one.settled()))
 })
-
 describe('what the pause after the typing writes', () => {
   test('is every note typed in since the last one, once each, well inside a second', async () => {
     vi.useFakeTimers()
@@ -184,7 +156,6 @@ describe('what the pause after the typing writes', () => {
     await vi.advanceTimersByTimeAsync(400)
     expect(written()).toEqual([{ command: 'write_note', path: `${SPACE}/a.md`, content: '# a once more' }])
   })
-
   test('and never waits more than two seconds while the typing never stops', async () => {
     vi.useFakeTimers()
     const { note } = open(`${SPACE}/a.md`)
@@ -194,7 +165,6 @@ describe('what the pause after the typing writes', () => {
     }
     expect(written().length).toBeGreaterThanOrEqual(1)
   })
-
   test('and keeps no version of its own: only the words as the sitting began', async () => {
     vi.useFakeTimers()
     const { note } = open(`${SPACE}/a.md`, { text: '# this morning' })
@@ -206,7 +176,6 @@ describe('what the pause after the typing writes', () => {
     expect(written()).toHaveLength(2)
   })
 })
-
 describe('a draft', () => {
   test('stays a tab however much is written in it', async () => {
     vi.useFakeTimers()
@@ -217,7 +186,6 @@ describe('a draft', () => {
     expect(note.path).toBeNull()
     expect(written()).toEqual([])
   })
-
   test('given a place, is a file there at once, under the name it is given', async () => {
     const { note, type, saving, came } = open(null, { text: '' })
     type('# Plan')
@@ -228,33 +196,28 @@ describe('a draft', () => {
     expect(written()).toEqual([{ command: 'write_note', path: landed, content: '# Plan' }])
     expect(came).toEqual([{ path: landed, key: note.key }])
   })
-
   test('steps aside from a name the folder already has', async () => {
     const { note, saving, beside } = open(null, { text: 'x' })
     beside(`${SPACE}/Plan.md`)
     expect(await saving.place(note, SPACE, 'Plan.md')).toBe(`${SPACE}/Plan 2.md`)
   })
-
   test('a plane is written as it stands, drawn on or not', async () => {
     const { note, saving } = open(null, { text: '{"nodes":[]}', kind: 'canvas' })
     await saving.place(note, SPACE, 'Board.canvas')
     expect(written()).toEqual([{ command: 'write_note', path: `${SPACE}/Board.canvas`, content: '{"nodes":[]}' }])
   })
-
   test('given a place the disk refuses, says it is not there yet', async () => {
     const { note, saving } = open(null, { text: 'words' })
     refusing.set(`${SPACE}/Refused.md`, 1)
     expect(await saving.place(note, SPACE, 'Refused.md')).toBeNull()
     expect(note.dirty).toBe(true)
   })
-
   test('given a place twice is written once', async () => {
     const { note, saving } = open(null, { text: 'x' })
     await saving.place(note, SPACE, 'A.md')
     expect(await saving.place(note, SPACE, 'B.md')).toBeNull()
     expect(written()).toHaveLength(1)
   })
-
   test('says nothing of white space: a blank draft stays a tab', async () => {
     const { note, type, saving } = open(null, { text: '' })
     type('   \n\n')
@@ -262,7 +225,6 @@ describe('a draft', () => {
     expect(note.path).toBeNull()
     expect(written()).toEqual([])
   })
-
   test('closed leaves nothing behind on the disk', async () => {
     const { type, closed, saving } = open(null, { text: '' })
     type('words')
@@ -270,7 +232,6 @@ describe('a draft', () => {
     await saving.settled()
     expect(written()).toEqual([])
   })
-
   test('two given places together never land on one file', async () => {
     const { note, saving, ws } = open(null, { text: 'P' })
     const other = new NoteDoc({ kind: 'note', path: null, name: UNTITLED, text: 'P', dirty: false }, (one) =>
@@ -282,10 +243,8 @@ describe('a draft', () => {
     expect(new Set([note.path, other.path]).size).toBe(2)
   })
 })
-
 describe('the window going while the typing is still warm', () => {
   const PATH = `${SPACE}/parting.md`
-
   test('writes the note that was waiting for the typing to stop', async () => {
     vi.useFakeTimers()
     const { note } = open(PATH)
@@ -295,7 +254,6 @@ describe('the window going while the typing is still warm', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(written(PATH)).toEqual([{ command: 'write_note', path: PATH, content: '# a\n\nthe last sentence' }])
   })
-
   test('and puts the same words in the session, which storage takes at once', () => {
     const { note, ws } = open(PATH)
     note.replace('# a\n\nthe last sentence')
@@ -303,7 +261,6 @@ describe('the window going while the typing is still warm', () => {
     settleUp()
     expect(ws.persisted).toBe(was + 1)
   })
-
   test('and says it is writing until the write has landed', async () => {
     const { note, saving } = open(PATH)
     note.replace('# a\n\nthe last sentence')
@@ -312,7 +269,6 @@ describe('the window going while the typing is still warm', () => {
     expect(saving.writing).toBe(false)
   })
 })
-
 describe('Ctrl+S', () => {
   test('runs nothing that only the end of the session may', async () => {
     const { saving } = open(`${SPACE}/ended.md`)
@@ -323,7 +279,6 @@ describe('Ctrl+S', () => {
     settleUp()
     expect(ended).toHaveBeenCalledOnce()
   })
-
   test('writes what is waiting now, keeps the note in front as a version, and asks nothing', async () => {
     const PATH = `${SPACE}/pressed.md`
     const { note, saving } = open(PATH)
@@ -336,7 +291,6 @@ describe('Ctrl+S', () => {
       content: '# a\n\ntyped',
     })
   })
-
   test('and on a blank new tab does nothing at all', async () => {
     const { saving, note, ws } = open(null, { text: '' })
     await saving.writeNow()
@@ -344,7 +298,6 @@ describe('Ctrl+S', () => {
     expect(ws.lists).toBe(0)
   })
 })
-
 describe('a note deleted while the typing was still warm', () => {
   test('is not written back to the disk by the write that was waiting', async () => {
     vi.useFakeTimers()
@@ -354,7 +307,6 @@ describe('a note deleted while the typing was still warm', () => {
     await vi.advanceTimersByTimeAsync(5000)
     expect(written()).toEqual([])
   })
-
   test('while a tab closed on a note that is still there is written at once', async () => {
     const { note, closed, saving } = open(`${SPACE}/a.md`)
     note.replace('# a\n\nthe last thing typed')
@@ -365,7 +317,6 @@ describe('a note deleted while the typing was still warm', () => {
     ])
   })
 })
-
 describe('what is worth keeping a version of', () => {
   test('is every open note with a file, written or not', () => {
     const { saving, note } = open(`${SPACE}/a.md`)
@@ -373,17 +324,14 @@ describe('what is worth keeping a version of', () => {
       { key: note.key, path: `${SPACE}/a.md`, text: '# a', revision: note.revision },
     ])
   })
-
   test('and never a note that has no file yet', () => {
     const { saving } = open(null)
     expect(saving.worthKeeping).toEqual([])
   })
 })
-
 describe('a write the disk refuses', () => {
   const A = `${SPACE}/a.md`
   const B = `${SPACE}/b.md`
-
   test('told on the light, and the light goes back when the write lands', async () => {
     vi.useFakeTimers()
     const { note, saving } = open(A)
@@ -397,7 +345,6 @@ describe('a write the disk refuses', () => {
     expect(light.status).toBe('off')
     expect(light.lastError).toBe(null)
   })
-
   test('says why where the file has gone past reading: nothing in the tab mends that', async () => {
     vi.useFakeTimers()
     const { note, saving } = open(A)
@@ -410,7 +357,6 @@ describe('a write the disk refuses', () => {
     expect(light.lastError).toContain('64 MB')
     saving.across = null
   })
-
   test('is tried again a moment later without another keystroke', async () => {
     vi.useFakeTimers()
     const { note } = open(A)
@@ -423,7 +369,6 @@ describe('a write the disk refuses', () => {
     expect(written(A)).toHaveLength(2)
     expect(note.dirty).toBe(false)
   })
-
   test('and does not keep the notes waiting beside it from going down', async () => {
     vi.useFakeTimers()
     const { note, beside } = open(A)
@@ -435,7 +380,6 @@ describe('a write the disk refuses', () => {
     expect(written(B)).toEqual([{ command: 'write_note', path: B, content: '# b typed' }])
     expect(other.dirty).toBe(false)
   })
-
   test('and the third refusal in a row is on the light', async () => {
     vi.useFakeTimers()
     const { note } = open(A)
@@ -447,7 +391,6 @@ describe('a write the disk refuses', () => {
     expect(note.dirty).toBe(true)
   })
 })
-
 describe('a note renamed while its write was in the air', () => {
   test('is renamed only once the write has landed', async () => {
     const { saving, note } = open(`${SPACE}/a.md`)
@@ -472,7 +415,6 @@ describe('a note renamed while its write was in the air', () => {
     expect(written().map((one) => one.path)).toEqual([`${SPACE}/a.md`])
     expect(note.path).toBe(`${SPACE}/b.md`)
   })
-
   test('by sync waits for the write in the air, and the next write follows it', async () => {
     const { saving, note } = open(`${SPACE}/a.md`)
     const order: string[] = []
@@ -512,7 +454,6 @@ describe('a note renamed while its write was in the air', () => {
     await Promise.all([moving, next])
     expect(written().map((one) => one.path)).toEqual([`${SPACE}/a.md`, `${SPACE}/b.md`])
   })
-
   test('by sync does not wait for what is held waiting on the engine', async () => {
     const { saving, note } = open(`${SPACE}/a.md`)
     let passOver = () => {
@@ -534,7 +475,6 @@ describe('a note renamed while its write was in the air', () => {
     passOver()
     await renaming
   })
-
   test('by sync takes along a note whose tab closed on the way to its write', async () => {
     const { saving, note, closed, deleted } = open(`${SPACE}/a.md`)
     let letGo = () => {
@@ -571,7 +511,6 @@ describe('a note renamed while its write was in the air', () => {
     await saving.write(note)
     expect(written()).toHaveLength(2)
   })
-
   test('here waits for the write of a note whose tab has closed', async () => {
     const { saving, note, closed } = open(`${SPACE}/a.md`)
     const order: string[] = []
@@ -594,7 +533,6 @@ describe('a note renamed while its write was in the air', () => {
     await renaming
     expect(order).toEqual(['renamed'])
   })
-
   test('by sync waits for a write in the air only so long', async () => {
     vi.useFakeTimers()
     const { saving, note } = open(`${SPACE}/a.md`)
@@ -633,7 +571,6 @@ describe('a note renamed while its write was in the air', () => {
     expect(stalled).toBe(2)
     vi.useRealTimers()
   })
-
   test('by something that did not wait stays where it went, and is written there', async () => {
     const { saving, note } = open(`${SPACE}/a.md`)
     let letGo = () => {

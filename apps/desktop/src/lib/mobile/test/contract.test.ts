@@ -11,7 +11,6 @@ const world = vi.hoisted(() => ({
   asked: [] as string[][],
   done: [] as string[],
 }))
-
 vi.mock('../../platform/src/api', () => ({
   onTheActivity: () => world.phone,
   answer: (name: string, heard: unknown) => void world.heard.set(name, heard),
@@ -63,14 +62,11 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-
 const { startHanded } = await import('../src/api')
-
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
 const ROOT = join(HERE, '../../../../..')
 const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '/index.ts']
-
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
@@ -78,7 +74,6 @@ function sources(folder: string): string[] {
     return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
   })
 }
-
 function reached(): string[] {
   return sources(SRC).flatMap((file) =>
     [...readFileSync(file, 'utf8').matchAll(/(?:from |import\()'(\.[^']*)'/g)].flatMap((found) => {
@@ -89,9 +84,7 @@ function reached(): string[] {
     }),
   )
 }
-
 const SHARE = JSON.stringify({ items: [{ name: '', mime: 'text/plain', text: 'a link' }] })
-
 afterEach(() => {
   world.phone = false
   world.shared = ''
@@ -100,13 +93,11 @@ afterEach(() => {
   world.asked = []
   world.done = []
 })
-
 describe('the module stands on its own', () => {
   test('reaches the import only through its port', () => {
     expect(reached().filter((path) => path.includes('/import/'))).toEqual([])
   })
 })
-
 describe('the handover', () => {
   test('off the phone, listens for nothing', () => {
     world.shared = SHARE
@@ -115,7 +106,6 @@ describe('the handover', () => {
     stop()
     expect(world.done).toEqual([])
   })
-
   test('a share of words chosen as a new note lands through the import port and opens', async () => {
     const landed: { root: string; folder: string; words: string }[] = []
     const unbind = providePort('import.bring', {
@@ -146,7 +136,6 @@ describe('the handover', () => {
     world.shared = SHARE
     const stop = startHanded()
     expect(world.heard.has('__ordenHanded')).toBe(true)
-
     await vi.waitFor(() => expect(world.done).toEqual(['word']))
     expect(world.asked).toEqual([['new', 'task']])
     expect(landed).toEqual([{ root: '/mine', folder: 'assets', words: 'a link' }])

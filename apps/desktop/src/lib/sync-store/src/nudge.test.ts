@@ -9,17 +9,13 @@ vi.stubGlobal('localStorage', {
   length: 0,
   clear: () => held.clear(),
 })
-
 const { sync } = await import('./sync.svelte')
-
 const listening = { addEventListener: () => undefined, removeEventListener: () => undefined }
 vi.stubGlobal('document', { ...listening, hidden: false })
 vi.stubGlobal('window', listening)
-
 afterEach(() => {
   vi.useRealTimers()
 })
-
 function passes() {
   const seen = { started: 0, finish: () => undefined as unknown }
   let busy = false
@@ -36,7 +32,6 @@ function passes() {
   }
   return seen
 }
-
 describe('a nudge', () => {
   test('while a pass runs brings the next pass seconds after it, not at the next poll', async () => {
     vi.useFakeTimers()
@@ -44,12 +39,10 @@ describe('a nudge', () => {
     sync.start()
     await vi.advanceTimersByTimeAsync(0)
     expect(seen.started).toBe(1)
-
     sync.nudge()
     await vi.advanceTimersByTimeAsync(100)
     seen.finish()
     await vi.advanceTimersByTimeAsync(2_000)
-
     expect(seen.started).toBe(2)
     seen.finish()
   })

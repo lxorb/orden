@@ -1,5 +1,4 @@
 const made = new Map<string, Intl.NumberFormat>()
-
 function formatter(language: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
   const key = `${language} ${JSON.stringify(options)}`
   const held = made.get(key)
@@ -13,7 +12,6 @@ function formatter(language: string, options: Intl.NumberFormatOptions): Intl.Nu
   made.set(key, format)
   return format
 }
-
 export function tokens(count: number, language: string): string {
   const leading = count >= 1_000_000 ? count / 1_000_000 : count / 1_000
   return formatter(language, {
@@ -21,7 +19,6 @@ export function tokens(count: number, language: string): string {
     maximumFractionDigits: count >= 1_000 && leading < 10 ? 1 : 0,
   }).format(Math.max(0, Math.round(count)))
 }
-
 export function minutes(ms: number, language: string): string {
   return formatter(language, {
     style: 'unit',
@@ -29,7 +26,6 @@ export function minutes(ms: number, language: string): string {
     unitDisplay: 'narrow',
   }).format(Math.max(0, Math.floor(ms / 60_000)))
 }
-
 export function seconds(ms: number, language: string): string {
   return formatter(language, {
     style: 'unit',
@@ -37,7 +33,6 @@ export function seconds(ms: number, language: string): string {
     unitDisplay: 'narrow',
   }).format(Math.max(1, Math.round(ms / 1000)))
 }
-
 export function lasted(ms: number, language: string): string {
   const whole = Math.max(1, Math.round(ms / 1000))
   if (whole < 60) return seconds(whole * 1000, language)

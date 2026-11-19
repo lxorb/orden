@@ -1,14 +1,11 @@
 export type Align = 'left' | 'center' | 'right' | null
-
 export interface TableModel {
   header: string[]
   align: Align[]
   rows: string[][]
   names?: (string | null)[] | undefined
 }
-
 const ROW_NAME = /[ \t]\^([A-Za-z0-9-]+)[ \t]*$/
-
 export function displayWidth(text: string): number {
   let width = 0
   for (const char of text) {
@@ -26,12 +23,10 @@ export function displayWidth(text: string): number {
   }
   return width
 }
-
 function splitRow(line: string): string[] {
   const body = line.trim().replace(/^\|/, '')
   const cells: string[] = []
   let current = ''
-
   for (let i = 0; i < body.length; i++) {
     const character = body.charAt(i)
     if (character === '\\' && (body.charAt(i + 1) === '|' || body.charAt(i + 1) === '\\')) {
@@ -46,13 +41,10 @@ function splitRow(line: string): string[] {
     }
     current += character
   }
-
   if (!current && cells.length) return cells
-
   cells.push(current.trim())
   return cells
 }
-
 function readAlign(cell: string): Align {
   const text = cell.trim()
   const left = text.startsWith(':')
@@ -62,15 +54,12 @@ function readAlign(cell: string): Align {
   if (right) return 'right'
   return null
 }
-
 const isDelimiterRow = (line: string): boolean => /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/.test(line)
-
 export function parseTable(source: string): TableModel | null {
   const lines = source.split('\n').filter((line) => line.trim().length > 0)
   const [headerLine, delimiterLine, ...bodyLines] = lines
   if (headerLine === undefined || delimiterLine === undefined) return null
   if (!isDelimiterRow(delimiterLine)) return null
-
   const header = splitRow(headerLine)
   const align = splitRow(delimiterLine).map(readAlign)
   const named = bodyLines.map((line) => ROW_NAME.exec(line))
@@ -79,10 +68,8 @@ export function parseTable(source: string): TableModel | null {
     return splitRow(name ? line.slice(0, name.index) : line)
   })
   const names = named.map((name) => name?.[1] ?? null)
-
   const columns = rows.reduce((most, row) => Math.max(most, row.length), Math.max(header.length, align.length))
   const fit = (row: string[]) => Array.from({ length: columns }, (_, i) => row[i] ?? '')
-
   return {
     header: fit(header),
     align: Array.from({ length: columns }, (_, i) => align[i] ?? null),
@@ -90,16 +77,12 @@ export function parseTable(source: string): TableModel | null {
     ...(names.some(Boolean) ? { names } : {}),
   }
 }
-
 export function nameAfter(model: TableModel, row: number): string {
   const name = model.names?.[row]
   return name ? ` ^${name}` : ''
 }
-
 const MIN_CELL = 3
-
 const padCell = (text: string, width: number): string => text + ' '.repeat(Math.max(0, width - displayWidth(text)))
-
 function delimiterCell(align: Align, width: number): string {
   switch (align) {
     case 'left':
@@ -112,23 +95,19 @@ function delimiterCell(align: Align, width: number): string {
       return '-'.repeat(Math.max(MIN_CELL, width))
   }
 }
-
 export function columnWidth(model: TableModel, column: number): number {
   return model.rows.reduce(
     (most, row) => Math.max(most, displayWidth(row[column] ?? '')),
     Math.max(MIN_CELL, displayWidth(model.header[column] ?? '')),
   )
 }
-
 export function columnWidths(model: TableModel): number[] {
   const columns = Math.max(model.header.length, model.align.length)
   return Array.from({ length: columns }, (_, column) => columnWidth(model, column))
 }
-
 export function serializeRow(cells: readonly string[], widths: readonly number[]): string {
   return `| ${widths.map((width, i) => padCell(cells[i] ?? '', width)).join(' | ')} |`
 }
-
 export function serializeTable(model: TableModel, widths = columnWidths(model)): string {
   return [
     serializeRow(model.header, widths),
@@ -136,7 +115,6 @@ export function serializeTable(model: TableModel, widths = columnWidths(model)):
     ...model.rows.map((cells, row) => serializeRow(cells, widths) + nameAfter(model, row)),
   ].join('\n')
 }
-
 export function sameModel(one: TableModel, other: TableModel): boolean {
   const same = (a: readonly unknown[], b: readonly unknown[]) =>
     a.length === b.length && a.every((value, at) => value === b[at])
@@ -147,7 +125,6 @@ export function sameModel(one: TableModel, other: TableModel): boolean {
     one.rows.every((row, at) => same(row, other.rows[at] ?? []))
   )
 }
-
 export function insertColumn(model: TableModel, at: number): TableModel {
   return {
     header: withInserted(model.header, at, ''),
@@ -156,7 +133,6 @@ export function insertColumn(model: TableModel, at: number): TableModel {
     names: model.names,
   }
 }
-
 export function removeColumn(model: TableModel, at: number): TableModel {
   if (at < 0 || at >= model.header.length) return model
   if (model.header.length <= 1) return model
@@ -167,19 +143,16 @@ export function removeColumn(model: TableModel, at: number): TableModel {
     names: model.names,
   }
 }
-
 export function insertRow(model: TableModel, at: number): TableModel {
   const blank = model.header.map(() => '')
   const names = model.names && withInserted(model.names, at, null)
   return { ...model, rows: withInserted(model.rows, at, blank), names }
 }
-
 export function removeRow(model: TableModel, at: number): TableModel {
   if (at < 0 || at >= model.rows.length) return model
   const names = model.names && withRemoved(model.names, at)
   return { ...model, rows: withRemoved(model.rows, at), names }
 }
-
 export function moveRow(model: TableModel, from: number, to: number): TableModel {
   if (from < 0 || from >= model.rows.length) return model
   if (to < 0 || to >= model.rows.length) return model
@@ -192,7 +165,6 @@ export function moveRow(model: TableModel, from: number, to: number): TableModel
   names?.splice(to, 0, name ?? null)
   return { ...model, rows, names }
 }
-
 export function moveColumn(model: TableModel, from: number, to: number): TableModel {
   if (from < 0 || from >= model.header.length) return model
   if (to < 0 || to >= model.header.length) return model
@@ -210,92 +182,72 @@ export function moveColumn(model: TableModel, from: number, to: number): TableMo
     names: model.names,
   }
 }
-
 export type Order = 'up' | 'down'
-
 function numberIn(cell: string): number | null {
   const bare = cell
     .trim()
     .replace(/^[\p{Sc}\s]+/u, '')
     .replace(/,/g, '')
   if (!/^[+-]?\d+(\.\d+)?%?$/.test(bare)) return null
-
   return Number(bare.replace(/%$/, ''))
 }
-
 function dateIn(cell: string): number | null {
   const said = cell.trim()
   if (!/^\d{4}-\d{2}-\d{2}([T ]|$)/.test(said)) return null
-
   const at = Date.parse(said)
   return Number.isNaN(at) ? null : at
 }
-
 function compareCells(left: string, right: string): number {
   const empty = (one: string) => one.trim() === ''
   if (empty(left) || empty(right)) return empty(left) ? (empty(right) ? 0 : 1) : -1
-
   const oneNumber = numberIn(left)
   const otherNumber = numberIn(right)
   if (oneNumber !== null && otherNumber !== null) return oneNumber - otherNumber
   if (oneNumber !== null || otherNumber !== null) return oneNumber !== null ? -1 : 1
-
   const oneDate = dateIn(left)
   const otherDate = dateIn(right)
   if (oneDate !== null && otherDate !== null) return oneDate - otherDate
   if (oneDate !== null || otherDate !== null) return oneDate !== null ? -1 : 1
-
   return left.trim().localeCompare(right.trim(), undefined, { numeric: true, sensitivity: 'base' })
 }
-
 export function sortRows(model: TableModel, column: number, order: Order): TableModel {
   if (column < 0 || column >= model.header.length) return model
   if (model.rows.length < 2) return model
-
   const way = order === 'up' ? 1 : -1
   const kept = model.rows.map((row, at) => ({ row, at }))
-
   kept.sort((left, right) => {
     const said = compareCells(left.row[column] ?? '', right.row[column] ?? '')
     if (said === 0) return left.at - right.at
     const blank = (one: string) => one.trim() === ''
     if (blank(left.row[column] ?? '') || blank(right.row[column] ?? '')) return said
-
     return said * way
   })
-
   const rows = kept.map((one) => one.row)
   const names = model.names && kept.map((one) => model.names?.[one.at] ?? null)
   return rows.every((row, at) => row === model.rows[at]) ? model : { ...model, rows, names }
 }
-
 export function setAlign(model: TableModel, column: number, align: Align): TableModel {
   const next = [...model.align]
   next[column] = align
   return { ...model, align: next }
 }
-
 export function setCell(model: TableModel, row: number, column: number, value: string): TableModel {
   const clean = value.replace(/\r?\n/g, ' ').replace(/\\?\|/g, '\\|')
-
   if (row < 0) {
     const header = [...model.header]
     header[column] = clean
     return { ...model, header }
   }
-
   const rows = model.rows.map((existing, i) =>
     i === row ? existing.map((cell, j) => (j === column ? clean : cell)) : existing,
   )
   return { ...model, rows }
 }
-
 function withInserted<T>(list: T[], at: number, value: T): T[] {
   const next = [...list]
   next.splice(at, 0, value)
   return next
 }
-
 function withRemoved<T>(list: T[], at: number): T[] {
   const next = [...list]
   next.splice(at, 1)

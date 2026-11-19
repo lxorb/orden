@@ -1,12 +1,10 @@
 import json
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -19,7 +17,6 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 DEVICES = [
     ("phone", 390, 844, PHONE_AGENT, True),
     ("tablet", 834, 1194, TABLET_AGENT, True),
@@ -27,7 +24,6 @@ DEVICES = [
     ("desktop", 1440, 900, DESKTOP_AGENT, False),
     ("phone-desktop-site", 980, 1743, DESKTOP_AGENT, True),
 ]
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -39,7 +35,6 @@ async () => {
   return ws.files.map((one) => one.name)
 }
 """
-
 STATE = """
 () => {
   const app = window.ordenApp
@@ -57,7 +52,6 @@ STATE = """
   }
 }
 """
-
 def drive(browser, name: str, width: int, height: int, agent: str, finger: bool) -> dict:
     context = browser.new_context(
         viewport={"width": width, "height": height},
@@ -72,7 +66,6 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
     page.evaluate("() => { for (let i = 0; i < 8; i++) history.pushState({ spare: i }, '') }")
     say(f"[{name}] the space holds {page.evaluate(SEED)}")
     page.wait_for_timeout(400)
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -85,13 +78,11 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
     state = page.evaluate(STATE)
     say(f"[{name}] {json.dumps(state)}")
     shot(page, f"{name}-open")
-
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
     shot(page, f"{name}-list")
     page.evaluate("() => window.ordenApp.workspace.closePanel?.() ?? (window.ordenApp.workspace.panel = null)")
     page.wait_for_timeout(400)
-
     trigger = page.locator("header button[aria-label]").last if state["touch"] else None
     if trigger is not None:
         trigger.click()
@@ -99,7 +90,6 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
         shot(page, f"{name}-menu")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
-
     page.evaluate(
         "() => window.ordenApp.fullscreen.toggle(window.ordenApp.workspace.panes)"
     )
@@ -115,13 +105,11 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
         })"""
     )
     say(f"[{name}] full screen {json.dumps(full)}")
-
     page.wait_for_timeout(3000)
     shot(page, f"{name}-full-idle")
     page.evaluate("() => window.ordenApp.fullscreen.leave()")
     page.wait_for_timeout(400)
     shot(page, f"{name}-back")
-
     page.evaluate("() => window.ordenApp.workspace.createCanvas()")
     page.wait_for_timeout(900)
     shot(page, f"{name}-canvas")
@@ -136,18 +124,14 @@ def drive(browser, name: str, width: int, height: int, agent: str, finger: bool)
     )
     page.evaluate("() => window.ordenApp.fullscreen.leave()")
     page.wait_for_timeout(300)
-
     context.close()
     return {"state": state, "full": full}
-
 def main() -> int:
     found: dict = {}
     with DRIVE.session() as browser:
         for name, width, height, agent, finger in DEVICES:
             say(f"--- {name} ---")
             found[name] = drive(browser, name, width, height, agent, finger)
-
     (SHOTS / "found.json").write_text(json.dumps(found, indent=2), encoding="utf8")
     return DRIVE.verdict()
-
 raise SystemExit(main())

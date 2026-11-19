@@ -29,7 +29,6 @@
     padding: var(--space-5) var(--space-4);
     overflow-y: auto;
   }
-
   .card {
     width: min(100%, 22rem);
     display: flex;
@@ -38,7 +37,6 @@
     gap: var(--space-3);
     text-align: center;
   }
-
   .mark {
     align-self: center;
     display: grid;
@@ -50,40 +48,33 @@
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .mark :global(.glyph) {
     width: 26px;
     height: 26px;
   }
-
   .line {
     margin: 0 0 var(--space-2);
     font-size: var(--text-sm);
     line-height: 1.45;
     color: var(--muted-strong);
   }
-
   .card :global(form) {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
   }
-
   .card :global(.wrong) {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--danger);
   }
-
   .card :global(.orden-action) {
     width: auto;
     align-self: center;
   }
-
   .card :global(.shake) {
     animation: shake var(--dur-slow) var(--ease-out);
   }
-
   @keyframes shake {
     0%,
     100% {
@@ -98,7 +89,6 @@
       translate: 6px;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .card :global(.shake) {
       animation: none;

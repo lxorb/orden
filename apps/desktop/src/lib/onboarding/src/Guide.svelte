@@ -10,7 +10,6 @@
 
   const WAIT = 600
   const SWAP = 180
-
   const notesApp = NOTES_APPS.find((one) => one.id === setup.answers.notes) ?? null
   const cards = guideCards({
     notes: setup.brought.notes && notesApp ? { id: notesApp.id, name: notesApp.name } : null,
@@ -19,7 +18,6 @@
     code: setup.answers.code,
     terminals: isDesktop,
   })
-
   let at = $state(0)
   let ready = $state(false)
   let swapping = $state(false)
@@ -29,10 +27,8 @@
   let spot = $state<Box | null>(null)
   let left = $state(0)
   let top = $state(0)
-
   const card = $derived(cards[at] ?? cards[0])
   const last = $derived(at === cards.length - 1)
-
   function placing(size: { width: number; height: number }, shown: (typeof cards)[number]) {
     room = { width: innerWidth, height: innerHeight }
     const placed = placeCard(shownBox(targetOf(shown.at), room), size, room)
@@ -40,17 +36,14 @@
     left = placed.left
     top = placed.top
   }
-
   function place() {
     if (card) placing({ width, height }, card)
   }
-
   $effect(() => {
     const size = { width, height }
     const shown = card
     if (ready && shown) untrack(() => placing(size, shown))
   })
-
   function go(to: number) {
     swapping = true
     setTimeout(() => {
@@ -58,22 +51,18 @@
       swapping = false
     }, dur(SWAP))
   }
-
   function next() {
     if (last) end()
     else go(at + 1)
   }
-
   function end() {
     gate.guiding = false
   }
-
   function pressed(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
     event.preventDefault()
     end()
   }
-
   onMount(() => {
     const showing = setTimeout(() => (ready = true), WAIT)
     return () => clearTimeout(showing)
@@ -129,7 +118,6 @@
     inset: 0;
     z-index: var(--z-stage);
   }
-
   .spot {
     position: absolute;
     border-radius: 12px;
@@ -141,7 +129,6 @@
       width 0.55s var(--ease-out),
       height 0.55s var(--ease-out);
   }
-
   .card {
     position: absolute;
     width: min(320px, calc(100% - 32px));
@@ -157,43 +144,36 @@
       top 0.55s var(--ease-out),
       opacity 0.3s;
   }
-
   .card.swapping {
     opacity: 0;
   }
-
   .title {
     margin-bottom: 6px;
     font-size: 16px;
     font-weight: 600;
     color: var(--text-strong);
   }
-
   .text {
     font-size: 14px;
     line-height: 1.5;
     color: var(--muted);
   }
-
   .foot {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-top: 16px;
   }
-
   .small {
     min-height: 34px;
     padding: 0 16px;
     font-size: 14px;
   }
-
   .dots {
     display: flex;
     gap: 5px;
     margin-inline-end: auto;
   }
-
   .dots i {
     width: 6px;
     height: 6px;
@@ -203,13 +183,11 @@
       background 0.3s,
       width 0.3s;
   }
-
   .dots i.on {
     width: 16px;
     border-radius: 3px;
     background: var(--accent);
   }
-
   @media (prefers-reduced-motion: reduce) {
     .spot,
     .card,

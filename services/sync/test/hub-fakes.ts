@@ -12,43 +12,34 @@ class Pair {
   ) {}
 }
 Object.assign(globalThis, { WebSocketRequestResponsePair: Pair })
-
 export class HubSocket {
   readonly said: FromHub[] = []
   readyState = 1
   closedWith: { code: number | undefined; reason: string | undefined } | null = null
   private attachment: unknown = null
-
   constructor(readonly tags: string[] = []) {}
-
   send(data: string) {
     this.said.push(JSON.parse(data) as FromHub)
   }
-
   close(code?: number, reason?: string) {
     this.readyState = 3
     this.closedWith = { code, reason }
   }
-
   serializeAttachment(value: unknown) {
     this.attachment = structuredClone(value)
   }
-
   deserializeAttachment(): unknown {
     return structuredClone(this.attachment)
   }
-
   take(): FromHub[] {
     return this.said.splice(0, this.said.length)
   }
 }
-
 export class HubState {
   readonly kept = new Map<string, unknown>()
   private sockets: HubSocket[] = []
   alarm: number | null = null
   autoResponse: Pair | null = null
-
   readonly storage = {
     get: (key: string | string[]): Promise<unknown> =>
       Promise.resolve(
@@ -89,48 +80,38 @@ export class HubState {
       return Promise.resolve()
     },
   }
-
   private copy(key: string): unknown {
     const value = this.kept.get(key)
     return value === undefined ? undefined : structuredClone(value)
   }
-
   setWebSocketAutoResponse(pair: Pair) {
     this.autoResponse = pair
   }
-
   acceptWebSocket(socket: HubSocket, tags: string[] = []) {
     socket.tags.push(...tags)
     this.sockets.push(socket)
   }
-
   getWebSockets(tag?: string): HubSocket[] {
     return this.sockets.filter((one) => tag === undefined || one.tags.includes(tag))
   }
-
   getTags(socket: HubSocket): string[] {
     return socket.tags
   }
-
   drop(socket: HubSocket) {
     this.sockets = this.sockets.filter((one) => one !== socket)
   }
-
   blockConcurrencyWhile<T>(work: () => Promise<T>): Promise<T> {
     return work()
   }
-
   waitUntil(work: Promise<unknown>) {
     void work
   }
 }
-
 export function hub(env: Env): { hub: AccountHub; state: HubState } {
   const state = new HubState()
   const made = new AccountHub(state as unknown as DurableObjectState, env)
   return { hub: made, state }
 }
-
 export function hubs(env: Env): {
   HUB: DurableObjectNamespace
   of(id: string): { hub: AccountHub; state: HubState }
@@ -138,13 +119,11 @@ export function hubs(env: Env): {
 } {
   const made = new Map<string, { hub: AccountHub; state: HubState }>()
   const asked: { id: string; ask: string; headers: Headers }[] = []
-
   const of = (id: string) => {
     const held = made.get(id) ?? hub(env)
     made.set(id, held)
     return held
   }
-
   const namespace = {
     idFromName: (name: string) => name,
     get: (id: unknown) => ({
@@ -158,10 +137,8 @@ export function hubs(env: Env): {
       },
     }),
   }
-
   return { HUB: namespace as unknown as DurableObjectNamespace, of, asked }
 }
-
 export function connect(made: AccountHub, joining: Partial<Joining> & { device: string; who: string }): HubSocket {
   const socket = new HubSocket()
   made.enter(socket as unknown as WebSocket, {
@@ -171,19 +148,15 @@ export function connect(made: AccountHub, joining: Partial<Joining> & { device: 
   })
   return socket
 }
-
 export async function send(made: AccountHub, socket: HubSocket, frame: unknown): Promise<void> {
   await made.webSocketMessage(socket as unknown as WebSocket, typeof frame === 'string' ? frame : JSON.stringify(frame))
 }
-
 export async function hangUp(made: AccountHub, state: HubState, socket: HubSocket) {
   socket.readyState = 3
   await made.webSocketClose(socket as unknown as WebSocket)
   state.drop(socket)
 }
-
 export type Hubs = ReturnType<typeof hubs>
-
 export interface Computer {
   token: string
   id: string
@@ -191,7 +164,6 @@ export interface Computer {
   session: string
   socket: HubSocket
 }
-
 export async function computer(env: TestEnv, running: Hubs, email: string, name: string): Promise<Computer> {
   const token = await signIn(env, email)
   const user = (env.db.prepare('select id from users where email = ?').get(email) as { id: string }).id
@@ -200,12 +172,10 @@ export async function computer(env: TestEnv, running: Hubs, email: string, name:
       id: string
     }
   ).id
-
   const id = `device-${name.toLowerCase()}`
   const { hub: made } = running.of(user)
   const socket = connect(made, { device: id, who: user, session })
   await send(made, socket, { t: 'hello', device: id, name, platform: 'windows', app: '1.0.0' })
-
   vi.setSystemTime(Date.now() + 31_000)
   socket.take()
   return { token, id, user, session, socket }

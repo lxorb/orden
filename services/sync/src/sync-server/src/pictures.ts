@@ -7,13 +7,9 @@ import { now } from './crypto'
 import type { Env } from './types'
 
 export const RESTAMP = 'on conflict(user_id, hash) do update set since = max(since, excluded.since)'
-
 const FRONT_PICTURES = ['image'] as const
-
 const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
-
 const ANYWHERE = /\/i\/([a-f0-9]{64})(?![a-f0-9])/gi
-
 export function picturesOfMeta(meta: Readonly<Record<string, string>> | null | undefined): string[] {
   const out: string[] = []
   for (const said of Object.values(meta ?? {})) {
@@ -22,7 +18,6 @@ export function picturesOfMeta(meta: Readonly<Record<string, string>> | null | u
   }
   return out
 }
-
 export function picturesOf(source: string, liveHtml = false): Set<string> {
   const found = new Set<string>()
   const add = (address: string | null | undefined) => {
@@ -37,7 +32,6 @@ export function picturesOf(source: string, liveHtml = false): Set<string> {
     : (markup: string) => {
         for (const address of drawnByHtml(markup)) add(address)
       }
-
   const canvas = cardsOf(source)
   if (canvas) {
     for (const card of canvas) {
@@ -49,22 +43,18 @@ export function picturesOf(source: string, liveHtml = false): Set<string> {
     }
     return found
   }
-
   add(coverOf(source)?.src)
   for (const key of FRONT_PICTURES) add(frontMatterValue(source, key))
-
   const tokens = lexMarkdown(withoutComments(withoutBlockIds(stripFrontMatter(source))))
   visit(tokens, add, html)
   return found
 }
-
 function visit(value: unknown, add: (address: string | undefined) => void, html: (markup: string) => void): void {
   if (Array.isArray(value)) {
     for (const one of value) visit(one, add, html)
     return
   }
   if (!value || typeof value !== 'object') return
-
   const token = value as { type?: unknown; href?: unknown; text?: unknown; link?: unknown }
   if (token.type === 'code' || token.type === 'codespan') return
   if (token.type === 'image' && typeof token.href === 'string') add(token.href)
@@ -75,19 +65,16 @@ function visit(value: unknown, add: (address: string | undefined) => void, html:
     const link = token.link as { embed?: boolean; target?: string } | undefined
     if (link?.embed) add(link.target)
   }
-
   for (const inner of Object.values(token)) {
     if (inner && typeof inner === 'object') visit(inner, add, html)
   }
 }
-
 interface Card {
   type: unknown
   file: string | undefined
   background: string | undefined
   text: unknown
 }
-
 function cardsOf(source: string): Card[] | null {
   if (!source.trimStart().startsWith('{')) return null
   try {
@@ -105,7 +92,6 @@ function cardsOf(source: string): Card[] | null {
     return null
   }
 }
-
 export async function keepPictures(
   env: Env,
   note: { id: string; space_id: string },
@@ -148,7 +134,6 @@ export async function keepPictures(
     return false
   }
 }
-
 export async function htmlIsLive(env: Env, spaceId: string): Promise<boolean> {
   const shared = await env.DB.prepare(
     `select 1 as one from space_members where space_id = ?1
@@ -160,13 +145,10 @@ export async function htmlIsLive(env: Env, spaceId: string): Promise<boolean> {
     .first()
   return !shared
 }
-
 export function forgetPictures(env: Env, noteId: string): D1PreparedStatement {
   return env.DB.prepare('delete from note_pictures where note_id = ?').bind(noteId)
 }
-
 const DRAWN = new Set(['src', 'srcset', 'poster', 'style'])
-
 function drawnByHtml(html: string): string[] {
   const found: string[] = []
   let at = 0
@@ -177,7 +159,6 @@ function drawnByHtml(html: string): string[] {
       continue
     }
     at += name[0].length
-
     while (at < html.length && html[at] !== '>') {
       const attribute = /^[\s/]*([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/.exec(html.slice(at))
       if (!attribute?.[0]) {
@@ -199,7 +180,6 @@ function drawnByHtml(html: string): string[] {
   }
   return found
 }
-
 const NAMED: Record<string, string> = {
   amp: '&',
   sol: '/',
@@ -215,7 +195,6 @@ const NAMED: Record<string, string> = {
   newline: '\n',
   nbsp: '\u00a0',
 }
-
 function decoded(value: string): string {
   return value.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);?/gi, (whole, said: string) => {
     if (said.startsWith('#')) {

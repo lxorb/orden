@@ -19,7 +19,6 @@ import {
 } from './session.svelte'
 
 const server = vi.hoisted(() => ({ version: 1, asked: 0 }))
-
 vi.mock('../../accounts/src/client', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../accounts/src/client')>()
   const me = () => {
@@ -35,7 +34,6 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
     }),
   }
 })
-
 const FILE = JSON.stringify({
   v: 1,
   host: 'device-desktop',
@@ -43,7 +41,6 @@ const FILE = JSON.stringify({
 })
 const VIEW: View = { width: 800, height: 600, dpr: 1, hz: 60 }
 const tick = () => new Promise((settle) => setTimeout(settle, 0))
-
 function world(
   options: {
     token?: string | null
@@ -122,7 +119,6 @@ function world(
   const session = new AppSession(tab, made)
   return { session, state, links, pass }
 }
-
 describe('an application tab connecting', () => {
   test('reads what a look at the door answered', () => {
     expect(lookOf(426, 'an application is a websocket')).toBe('open')
@@ -133,7 +129,6 @@ describe('an application tab connecting', () => {
     expect(lookOf(503, null)).toBe('unreachable')
     expect(lookOf(null, null)).toBe('unreachable')
   })
-
   test('says an account that serves no applications at once, and makes no socket', async () => {
     const { session, links, pass, state } = world({ looks: ['unserved'] })
     await session.start(VIEW)
@@ -146,7 +141,6 @@ describe('an application tab connecting', () => {
     await tick()
     expect(links).toHaveLength(1)
   })
-
   test('signed out, it says so, and connects once signed in again', async () => {
     const { session, links, state } = world({ token: null })
     await session.start(VIEW)
@@ -157,7 +151,6 @@ describe('an application tab connecting', () => {
     expect(links).toHaveLength(1)
     expect(session.status).toEqual({ is: 'connecting' })
   })
-
   test('a tab opened before sync runs says so, and connects by itself once sync gives the id', async () => {
     const { session, links, state, pass } = world({ found: { none: 'not-running' } })
     await session.start(VIEW)
@@ -167,7 +160,6 @@ describe('an application tab connecting', () => {
     expect(links).toHaveLength(1)
     expect(session.status).toEqual({ is: 'connecting' })
   })
-
   test('a file sync has not taken in yet keeps its reason while it is looked for again', async () => {
     const { session, links, state, pass } = world({ found: { none: 'untaken' } })
     await session.start(VIEW)
@@ -177,7 +169,6 @@ describe('an application tab connecting', () => {
     expect(session.status).toEqual({ is: 'untaken' })
     expect(links).toEqual([])
   })
-
   test('a file in a space sync does not keep says so, and is looked for again', async () => {
     const { session, links, state, pass } = world({ found: { none: 'outside' } })
     await session.start(VIEW)
@@ -186,7 +177,6 @@ describe('an application tab connecting', () => {
     await pass(3_000)
     expect(links).toHaveLength(1)
   })
-
   test('an account still on the old sync says so, looks again by itself, and opens once it has moved', async () => {
     const { session, links, state, pass } = world({ found: { none: 'old-sync' } })
     await session.start(VIEW)
@@ -197,7 +187,6 @@ describe('an application tab connecting', () => {
     expect(state.finds).toBe(2)
     expect(links).toHaveLength(1)
   })
-
   test('a file in a space shared with the reader says it runs only from their own', async () => {
     const { session, links, state } = world({ found: { id: 'app-1', own: false } })
     await session.start(VIEW)
@@ -205,7 +194,6 @@ describe('an application tab connecting', () => {
     expect(state.looked).toBe(0)
     expect(links).toEqual([])
   })
-
   test('a file the account does not have yet is looked at again by itself until it does', async () => {
     const { session, links, pass } = world({ looks: ['unknown', 'unknown', 'open'] })
     await session.start(VIEW)
@@ -216,7 +204,6 @@ describe('an application tab connecting', () => {
     expect(links).toHaveLength(1)
     expect(session.status).toEqual({ is: 'connecting' })
   })
-
   test('a socket that does not open in time says so, looks again, and is let in once it opens', async () => {
     const { session, links, pass, state } = world()
     await session.start(VIEW)
@@ -231,7 +218,6 @@ describe('an application tab connecting', () => {
     links[0]?.heard({ t: 'hold' })
     expect(session.status).toMatchObject({ is: 'here', unanswered: false })
   })
-
   test('a socket the door stops letting in is closed, and the reason said', async () => {
     const { session, links, pass } = world({ looks: ['open', 'unserved'] })
     await session.start(VIEW)
@@ -239,7 +225,6 @@ describe('an application tab connecting', () => {
     expect(session.status).toEqual({ is: 'unserved' })
     expect(links[0]?.closed).toBe(true)
   })
-
   test('a host the account no longer lists is said to be gone, not waited for', async () => {
     const { session, links, state } = world()
     state.devices = [{ id: 'device-laptop', name: 'Laptop' }]
@@ -249,7 +234,6 @@ describe('an application tab connecting', () => {
     links[0]?.heard({ t: 'host', up: false })
     expect(session.status).toEqual({ is: 'gone' })
   })
-
   test('a Start the host does not answer is said, and an answer clears it', async () => {
     const { session, links, pass } = world()
     await session.start(VIEW)
@@ -265,7 +249,6 @@ describe('an application tab connecting', () => {
     expect(session.status).toMatchObject({ is: 'here', state: 'running', unanswered: false })
   })
 })
-
 describe('finding an application on an account that started on the old sync', () => {
   async function onOldSync(now: number) {
     const { account } = await import('../../accounts/src/account.svelte')
@@ -285,7 +268,6 @@ describe('finding an application on an account that started on the old sync', ()
       },
     }
   }
-
   test('asks the account again, and finds the file once the account has moved', async () => {
     const { account, done } = await onOldSync(2)
     try {
@@ -296,7 +278,6 @@ describe('finding an application on an account that started on the old sync', ()
       done()
     }
   })
-
   test('still says old sync while the account has not moved', async () => {
     const { done } = await onOldSync(1)
     try {
@@ -307,7 +288,6 @@ describe('finding an application on an account that started on the old sync', ()
     }
   })
 })
-
 describe('an application file read', () => {
   test('a file that cannot be read says why, never that it is damaged', async () => {
     for (const why of ['missing', 'denied', 'locked', 'unread'] as const) {
@@ -317,7 +297,6 @@ describe('an application file read', () => {
       expect(state.finds).toBe(0)
     }
   })
-
   test('a file not on this device yet is read again by itself, and opens once it is', async () => {
     const { session, state, pass } = world({ reads: [{ cannot: 'away' }, { text: FILE }] })
     await session.start(VIEW)
@@ -327,7 +306,6 @@ describe('an application file read', () => {
     expect(session.file?.host).toBe('device-desktop')
     expect(session.status.is).toBe('connecting')
   })
-
   test('Try again reads a file that could not be read once more', async () => {
     const { session, state } = world({ reads: [{ cannot: 'locked' }, { text: FILE }] })
     await session.start(VIEW)
@@ -339,7 +317,6 @@ describe('an application file read', () => {
     expect(session.file?.host).toBe('device-desktop')
     expect(session.status.is).toBe('connecting')
   })
-
   test('a file sync numbered beside its own name is followed, and the tab points at it (#1904)', async () => {
     const { session, state } = world({ reads: [{ cannot: 'missing' }, { text: FILE }] })
     await session.start(VIEW)
@@ -352,13 +329,11 @@ describe('an application file read', () => {
       'C:\\A\\GIMP 3.application',
     ])
   })
-
   test('only words that are no application are damaged', async () => {
     const { session } = world({ reads: [{ text: 'not json' }] })
     await session.start(VIEW)
     expect(session.status).toEqual({ is: 'damaged' })
   })
-
   test('names the reason in what the read was refused with', async () => {
     expect(unreadOf(new Error('that note is not on this device, and the account could not be reached'))).toBe('away')
     expect(unreadOf('could not read C:\\A\\GIMP.application: Access is denied. (os error 5)')).toBe('denied')

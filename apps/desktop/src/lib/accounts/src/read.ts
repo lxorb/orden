@@ -11,17 +11,13 @@ export interface Person {
   zone: string | null
   presence: Presence
 }
-
 const HASH = /^[a-f0-9]{64}$/
-
 const textOrNull = (value: unknown): string | null => (isString(value) ? value : null)
-
 function readAvatar(value: unknown): Avatar | null {
   if (!isRecord(value)) return null
   const { s, l } = value
   return isString(s) && isString(l) && HASH.test(s) && HASH.test(l) ? { s, l } : null
 }
-
 function readStatus(value: unknown): Status | null {
   if (!isRecord(value)) return null
   const { emoji, text, until, quiet } = value
@@ -33,11 +29,9 @@ function readStatus(value: unknown): Status | null {
     quiet: isBoolean(quiet) ? quiet : false,
   }
 }
-
 export function readPresence(value: unknown): Presence {
   return value === 'active' || value === 'away' ? value : 'offline'
 }
-
 export function readPerson(value: unknown): Person | null {
   if (!isRecord(value) || !isString(value.id) || !isString(value.name)) return null
   return {

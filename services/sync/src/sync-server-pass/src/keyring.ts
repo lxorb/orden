@@ -21,21 +21,17 @@ import { fromOf, tell } from './tell'
 
 const AN_HOUR = 60 * 60 * 1000
 const LOOKUPS_AN_HOUR = 300
-
 interface KeyringDb {
   rev: number
   keyring: string
   pub: string
 }
-
 export const keyrings = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 async function keyringOf(env: Env, user: string): Promise<KeyringDb | null> {
   return await env.DB.prepare('select rev, keyring, pub from pass_keyrings where user_id = ?')
     .bind(user)
     .first<KeyringDb>()
 }
-
 async function waitingOn(env: Env, email: string): Promise<string[]> {
   const { results } = await env.DB.prepare(
     `select distinct o.user_id from pass_members m
@@ -47,7 +43,6 @@ async function waitingOn(env: Env, email: string): Promise<string[]> {
     .all<{ user_id: string }>()
   return results.map((one) => one.user_id)
 }
-
 keyrings.put('/keyring', async (context) => {
   const user = context.get('user')
   const from = fromOf(context.req.query('from'))
@@ -59,7 +54,6 @@ keyrings.put('/keyring', async (context) => {
   if (keyring === null || !isCount(rev) || text.length > MOST_KEYRING_BYTES) {
     return context.json({ error: NOT_A_KEYRING }, 400)
   }
-
   const db = context.env.DB
   const held = await keyringOf(context.env, user.id)
   const stale = async () => {
@@ -67,7 +61,6 @@ keyrings.put('/keyring', async (context) => {
     return context.json({ error: STALE, current: current ? keyringRowOf(current) : null }, 409)
   }
   if ((held?.rev ?? 0) !== rev) return await stale()
-
   if (held === null) {
     const results = await db.batch([
       bump(db),
@@ -89,14 +82,12 @@ keyrings.put('/keyring', async (context) => {
     await tell(context.env, [user.id, ...(await waitingOn(context.env, user.email))], from)
     return context.json({ rev: 1 })
   }
-
   const before = keyringIn(objectIn(held.keyring))
   if (held.pub !== keyring.pub) return context.json({ error: KEEPS_ITS_PUB }, 400)
   if (before !== null && keyring.at <= before.at) return context.json({ error: AT_GOES_ON }, 400)
   if (before?.sign && keyring.sign?.pub !== before.sign.pub) {
     return context.json({ error: KEEPS_ITS_SIGN }, 400)
   }
-
   const results = await db.batch([
     bump(db),
     db
@@ -111,7 +102,6 @@ keyrings.put('/keyring', async (context) => {
   await tell(context.env, [user.id], from)
   return context.json({ rev: rev + 1 })
 })
-
 keyrings.get('/people/key', async (context) => {
   const user = context.get('user')
   const email = normaliseEmail(context.req.query('email') ?? '')

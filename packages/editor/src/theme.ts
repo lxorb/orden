@@ -41,7 +41,6 @@ export const ordenEditorTheme = EditorView.theme({
     color: 'var(--accent-ink)',
   },
 })
-
 export const ordenHighlightStyle = HighlightStyle.define([
   { tag: tags.heading1, fontWeight: '620' },
   { tag: tags.heading2, fontWeight: '620' },

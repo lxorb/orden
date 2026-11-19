@@ -24,29 +24,21 @@ use link::Store;
 use manifest::About;
 
 const CHANGED: &str = "orden://extensions";
-
 static WRITING: Mutex<()> = Mutex::new(());
-
 static PROBLEMS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
-
 static PENDING: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::default);
-
 const PREINSTALLED: &str = "ublock-origin-lite";
-
 const DECIDED: &str = ".preinstalled";
-
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = orden_base::paths::config_dir(app)?.join("extensions");
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
     Ok(dir)
 }
-
 pub fn kept(app: &AppHandle) -> Vec<Kept> {
     root(app)
         .map(|root| library::read(&root))
         .unwrap_or_default()
 }
-
 fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     let list: Vec<(Kept, PathBuf)> = {
         static TIDIED: std::sync::Once = std::sync::Once::new();
@@ -85,7 +77,6 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     orden_web::extension_ids::replace(list.iter().map(|(one, _)| one.id.clone()));
     list
 }
-
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Shown {
@@ -98,7 +89,6 @@ pub struct Shown {
     gaps: Option<Gaps>,
     pending: bool,
 }
-
 fn shown(kept: Kept, folder: &Path) -> Shown {
     let about = manifest::read(folder).unwrap_or_default();
     let picture = about.icon.as_deref().and_then(|icon| picture(folder, icon));
@@ -120,9 +110,7 @@ fn shown(kept: Kept, folder: &Path) -> Shown {
         pending,
     }
 }
-
 const LARGEST: u64 = 512 * 1024;
-
 fn picture(folder: &Path, path: &str) -> Option<String> {
     use base64::Engine as _;
 
@@ -149,7 +137,6 @@ fn picture(folder: &Path, path: &str) -> Option<String> {
             )
         })
 }
-
 pub fn preinstall(app: &AppHandle) {
     let Ok(decided) = root(app).map(|root| root.join(DECIDED)) else {
         return;
@@ -171,11 +158,9 @@ pub fn preinstall(app: &AppHandle) {
         let _ = std::fs::write(&decided, PREINSTALLED);
     });
 }
-
 fn changed(app: &AppHandle) {
     let _ = app.emit(CHANGED, ());
 }
-
 #[tauri::command]
 pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -187,7 +172,6 @@ pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
     .await
     .map_err(|error| error.to_string())
 }
-
 #[derive(Serialize)]
 #[serde(untagged)]
 pub enum Done {
@@ -195,7 +179,6 @@ pub enum Done {
     Store { store: String },
     Asks { name: String, asks: Gaps },
 }
-
 #[tauri::command]
 pub async fn extensions_install(
     app: AppHandle,
@@ -213,7 +196,6 @@ pub async fn extensions_install(
         })
     }
 }
-
 async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, String> {
     let listing = amo::listing(slug).await?;
     let bytes = amo::file(&listing).await?;
@@ -242,7 +224,6 @@ async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, Stri
     .await
     .map_err(|error| error.to_string())?
 }
-
 fn listed_as(
     app: &AppHandle,
     root: &Path,
@@ -281,7 +262,6 @@ fn listed_as(
     changed(app);
     Ok(shown(one, &folder))
 }
-
 #[tauri::command]
 pub async fn extensions_set(
     app: AppHandle,
@@ -326,7 +306,6 @@ pub async fn extensions_set(
     .await
     .map_err(|error| error.to_string())?
 }
-
 #[tauri::command]
 pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -353,7 +332,6 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
     .await
     .map_err(|error| error.to_string())?
 }
-
 #[tauri::command]
 pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
     let mut moved = 0;
@@ -369,7 +347,6 @@ pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
         Ok(moved)
     }
 }
-
 async fn amo_update(app: &AppHandle, one: &Kept) -> Result<bool, String> {
     let slug = one
         .addon
@@ -391,14 +368,12 @@ async fn amo_update(app: &AppHandle, one: &Kept) -> Result<bool, String> {
     .await
     .map_err(|error| error.to_string())?
 }
-
 #[tauri::command]
 pub async fn extensions_page(app: AppHandle, id: String, options: bool) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || page_of(&app, &id, options))
         .await
         .map_err(|error| error.to_string())?
 }
-
 fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
     let (_, folder) = listed(app)
         .into_iter()
@@ -409,14 +384,12 @@ fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
     page.map(|page| format!("chrome-extension://{id}/{page}"))
         .ok_or_else(|| "that extension has no such page".to_string())
 }
-
 #[tauri::command]
 pub fn extensions_named(link: String) -> Option<(Store, String)> {
     link::named(&link)
         .filter(|_| link.contains("://"))
         .filter(|(store, _)| *store == Store::Firefox)
 }
-
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -436,12 +409,10 @@ mod tests {
             addon: None,
         }
     }
-
     fn row(folder: &Path, manifest: &str) -> Value {
         fs::write(folder.join("manifest.json"), manifest).expect("a manifest");
         serde_json::to_value(shown(kept(), folder)).expect("a row")
     }
-
     #[test]
     fn any_manifest_at_all_makes_a_row() {
         let folder = tempfile::tempdir().expect("a folder");
@@ -497,13 +468,11 @@ mod tests {
             assert!(said["name"].is_string(), "{start}");
             assert!(said["permissions"].is_array(), "{start}");
         }
-
         fs::remove_file(folder.path().join("manifest.json")).expect("gone");
         let said = serde_json::to_value(shown(kept(), folder.path())).expect("a row");
         assert_eq!(said["version"], "1.0");
         assert_eq!(said["picture"], Value::Null);
     }
-
     #[test]
     fn only_a_small_picture_is_carried() {
         let folder = tempfile::tempdir().expect("a folder");
@@ -512,7 +481,6 @@ mod tests {
         fs::File::create(folder.path().join("large.png"))
             .and_then(|file| file.set_len(LARGEST + 1))
             .expect("a large picture");
-
         let picture = |path: &str| {
             row(
                 folder.path(),

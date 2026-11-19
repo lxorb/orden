@@ -4,7 +4,6 @@ import { isRecord } from '../../platform/src/api'
 import type { TimeServer } from './exchange'
 
 const missing = (error: unknown): boolean => error instanceof ApiError && (error.status === 404 || error.status === 405)
-
 export function accountServer(token: string): TimeServer {
   return {
     pull: async (since) => {

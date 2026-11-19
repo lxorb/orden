@@ -6,16 +6,13 @@ import { type Change, changeOf, replaceIn } from '@orden/scan/search/replace'
 
 function hitsPerNote(hits: readonly Hit[]): Map<string, Hit[]> {
   const out = new Map<string, Hit[]>()
-
   for (const hit of hits) {
     const held = out.get(hit.path)
     if (held) held.push(hit)
     else out.set(hit.path, [hit])
   }
-
   return out
 }
-
 function linesNow(body: string, hits: readonly Hit[]): Set<number> {
   const starts = lineStarts(body)
   const says = (line: number) => {
@@ -24,7 +21,6 @@ function linesNow(body: string, hits: readonly Hit[]): Set<number> {
     const next = starts[line + 1]
     return shownLine(body.slice(from, next === undefined ? body.length : next - 1))
   }
-
   const out = new Set<number>()
   for (const hit of hits) {
     for (let distance = 0; distance < starts.length; distance++) {
@@ -38,17 +34,13 @@ function linesNow(body: string, hits: readonly Hit[]): Set<number> {
       }
     }
   }
-
   return out
 }
-
 type Words = Extract<Query, { kind: 'text' | 'content' }>
-
 function phrased(query: Query): Query {
   if (query.kind === 'scope') return { ...query, of: phrased(query.of) }
   if (query.kind === 'any') return { ...query, of: query.of.map(phrased) }
   if (query.kind !== 'all') return query
-
   const out: Query[] = []
   for (let at = 0; at < query.of.length; at++) {
     const one = query.of[at]
@@ -67,12 +59,9 @@ function phrased(query: Query): Query {
   }
   return { ...query, of: out }
 }
-
 const followsAs = (next: Query | undefined, words: Words): next is Words =>
   (next?.kind === 'text' || next?.kind === 'content') && next.fold === words.fold
-
 const oneLine = (unit: Unit): boolean => unit === 'line' || aKindOfLine(unit)
-
 export async function changesFor(
   query: Query,
   hits: readonly Hit[],
@@ -82,21 +71,16 @@ export async function changesFor(
 ): Promise<Change[]> {
   const matcher = new Matcher(phrased(query))
   const out: Change[] = []
-
   for (const [path, held] of hitsPerNote(hits)) {
     if (!isMarkdownPath(path)) continue
-
     const before = await textOf(path)
     if (before === null) continue
-
     const relative = relativeTo(root, path)
     const name = relative.split('/').pop() ?? relative
     const spans = matcher.spans({ path, relative, name, body: before })
     if (!spans) continue
-
     const edits = replaceIn(before, spans, linesNow(before, held), replacement)
     if (edits) out.push(changeOf(path, before, edits))
   }
-
   return out
 }

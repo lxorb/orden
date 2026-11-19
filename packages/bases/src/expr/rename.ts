@@ -1,20 +1,15 @@
 import { isMap, isScalar, isSeq, parseDocument } from 'yaml'
-
 import { type Node, parseExpression } from './parse'
 
 const COMPARE = new Set(['==', '!=', '<', '>', '<=', '>='])
-
 const CONTAINS = new Set(['contains', 'containsAll', 'containsAny'])
-
 function reads(node: Node, name: string): boolean {
   if (node.type === 'name') return node.name === name
   if (node.type === 'member') return node.name === name && isNote(node.object)
   if (node.type === 'index') return node.index.type === 'literal' && node.index.value === name && isNote(node.object)
   return false
 }
-
 const isNote = (node: Node) => node.type === 'name' && node.name === 'note'
-
 export function renamedLiteral(source: string, property: string, from: string, to: string): string {
   const name = property.replace(/^note\./, '')
   let tree: Node
@@ -76,13 +71,9 @@ export function renamedLiteral(source: string, property: string, from: string, t
     .sort((one, other) => other[0] - one[0])
     .reduce((text, [at, end]) => text.slice(0, at) + JSON.stringify(to) + text.slice(end), source)
 }
-
 const PLACES = new Set(['folder', 'path'])
-
 const isFile = (node: Node) => node.type === 'name' && node.name === 'file'
-
 const isPlace = (node: Node) => node.type === 'member' && PLACES.has(node.name) && isFile(node.object)
-
 function children(node: Node): Node[] {
   switch (node.type) {
     case 'binary':
@@ -106,7 +97,6 @@ function children(node: Node): Node[] {
       return []
   }
 }
-
 function placeLiterals(node: Node): Node[] {
   const named: Node[] = []
   if (node.type === 'binary' && COMPARE.has(node.op)) {
@@ -120,11 +110,8 @@ function placeLiterals(node: Node): Node[] {
   }
   return [...named, ...children(node).flatMap(placeLiterals)]
 }
-
 type Stepping = (path: string) => string
-
 const unmoved: Stepping = (path) => path
-
 export function placedUnder(source: string, under: string, moved = unmoved): string {
   const folder = under.replace(/^\/+|\/+$/g, '')
   let tree: Node
@@ -144,7 +131,6 @@ export function placedUnder(source: string, under: string, moved = unmoved): str
     .sort((one, other) => other[0] - one[0])
     .reduce((text, [at, end, value]) => text.slice(0, at) + JSON.stringify(value) + text.slice(end), source)
 }
-
 export function baseUnder(yaml: string, under: string, moved = unmoved): string {
   const document = parseDocument(yaml)
   if (document.errors.length || !isMap(document.contents)) return yaml

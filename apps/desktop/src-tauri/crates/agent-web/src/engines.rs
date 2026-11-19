@@ -19,9 +19,7 @@ pub enum ReaderStore {
     Twin,
     Blocked,
 }
-
 pub const READER_STORE: ReaderStore = ReaderStore::Twin;
-
 pub fn reader_store() -> ReaderStore {
     match std::env::var("ORDEN_AGENT_READER_STORE").as_deref() {
         Ok("blocked") => ReaderStore::Blocked,
@@ -29,16 +27,13 @@ pub fn reader_store() -> ReaderStore {
         _ => READER_STORE,
     }
 }
-
 const TWIN: &str = "agent__twin";
-
 pub fn twin_of(reader: Option<&str>) -> String {
     match reader {
         None => TWIN.to_string(),
         Some(name) => format!("{TWIN}_{name}"),
     }
 }
-
 #[allow(clippy::option_option)]
 pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
     let rest = store?.strip_prefix(TWIN)?;
@@ -49,9 +44,7 @@ pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
         .filter(|one| !one.is_empty())
         .map(Some)
 }
-
 pub type Heard = Box<dyn Fn(&str, Option<&str>, &Value) + Send + Sync>;
-
 pub trait Windowless: Send + Sync {
     fn label(&self) -> &str;
     fn url(&self) -> String;
@@ -64,7 +57,6 @@ pub trait Windowless: Send + Sync {
     ) -> Result<crate::cdp::Answering, String>;
     fn hear(&self, heard: Heard);
 }
-
 pub type Build = fn(
     &AppHandle,
     &crate::quiet::Owner,
@@ -72,31 +64,25 @@ pub type Build = fn(
     (u32, u32),
     Option<&str>,
 ) -> Result<(), String>;
-
 pub struct Pages {
     pub page: fn(&str) -> Option<Arc<dyn Windowless>>,
     pub build: Build,
     pub answer_dialog: fn(&AppHandle, &str, crate::quiet::Said) -> Result<(), String>,
 }
-
 static PAGES: OnceLock<Pages> = OnceLock::new();
-
 pub fn hand(pages: Pages) {
     let _ = PAGES.set(pages);
 }
-
 pub fn pages() -> Result<&'static Pages, String> {
     PAGES
         .get()
         .ok_or_else(|| "the engine has not started".to_owned())
 }
-
 #[derive(Clone)]
 pub enum View {
     Webview(Webview),
     Windowless(Arc<dyn Windowless>),
 }
-
 impl View {
     pub fn label(&self) -> String {
         match self {
@@ -104,14 +90,12 @@ impl View {
             View::Windowless(page) => page.label().to_string(),
         }
     }
-
     pub fn url(&self) -> String {
         match self {
             View::Webview(view) => view.url().map(|one| one.to_string()).unwrap_or_default(),
             View::Windowless(page) => page.url(),
         }
     }
-
     pub fn close(&self) {
         match self {
             View::Webview(view) => {
@@ -121,29 +105,23 @@ impl View {
         }
     }
 }
-
 pub fn view(app: &AppHandle, label: &str) -> Option<View> {
     if let Some(page) = pages().ok().and_then(|pages| (pages.page)(label)) {
         return Some(View::Windowless(page));
     }
     app.get_webview(label).map(View::Webview)
 }
-
 pub fn opened(label: &str, tab: &str) {
     crate::cdp::heard(label).held().opened.push(tab.to_string());
 }
-
 pub const NAME: &str = "Chromium";
-
 const CANNOT: &[(&str, &str)] = &[];
-
 pub fn cannot(verb: &str) -> Option<&'static str> {
     CANNOT
         .iter()
         .find(|(name, _)| *name == verb)
         .map(|(_, why)| *why)
 }
-
 pub fn refused(verb: &str) -> Answer {
     Answer::error(
         Code::UnsupportedOnThisEngine,
@@ -153,14 +131,12 @@ pub fn refused(verb: &str) -> Answer {
         ),
     )
 }
-
 pub fn cut(text: String, most: usize) -> String {
     match text.char_indices().nth(most) {
         Some((at, _)) => text[..at].to_string(),
         None => text,
     }
 }
-
 pub const SETTLED: &str = r"(still, most) => new Promise((done) => {
   if (!document.body) return done(true)
   let quiet
@@ -170,18 +146,13 @@ pub const SETTLED: &str = r"(still, most) => new Promise((done) => {
   quiet = setTimeout(end, still)
   setTimeout(end, most)
 })";
-
 pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
-
 pub const UNREAD: u64 = 0;
-
 #[allow(clippy::implicit_hasher)]
 pub fn left_a_part_out(secret: &HashSet<(String, u64)>) -> bool {
     secret.iter().any(|(_, node)| *node == UNREAD)
 }
-
 pub type Gate<'g> = &'g dyn Fn(&Element) -> Result<(), Answer>;
-
 pub struct Page<'a> {
     pub view: &'a View,
     pub label: String,
@@ -193,21 +164,17 @@ pub struct Page<'a> {
     pub frame_lists: Mutex<HashMap<Option<String>, Vec<String>>>,
     pub worlds_renewed: AtomicBool,
 }
-
 impl Page<'_> {
     pub fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
         acts_in(self.limits.as_ref(), facts)
     }
-
     pub fn limits_sites(&self) -> bool {
         limits_sites(self.limits.as_ref())
     }
 }
-
 pub fn limits_sites(limits: Option<&(Grant, Store)>) -> bool {
     limits.is_some_and(|(grant, _)| !grant.sites.is_empty())
 }
-
 pub fn acts_in(limits: Option<&(Grant, Store)>, facts: &Facts) -> Result<(), Answer> {
     if facts.at.is_empty() && facts.opaque && limits_sites(limits) {
         return Err(Answer::error(
@@ -221,12 +188,10 @@ pub fn acts_in(limits: Option<&(Grant, Store)>, facts: &Facts) -> Result<(), Ans
         None => Ok(()),
     }
 }
-
 pub fn frame_readable(limits: Option<&(Grant, Store)>, at: &[String]) -> bool {
     limits
         .is_none_or(|(grant, store)| orden_agents::policy::frame_allowed(grant, at, *store).is_ok())
 }
-
 pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<(), String> {
     let Some((grant, store)) = limits else {
         return Ok(());
@@ -239,16 +204,13 @@ pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<()
     }
     orden_agents::policy::frame_allowed(grant, at, *store)
 }
-
 impl Page<'_> {
     pub fn may_touch_credentials(&self) -> bool {
         self.credentials.load(Ordering::Relaxed)
     }
-
     pub fn clear_credentials(&self) {
         self.credentials.store(true, Ordering::Relaxed);
     }
-
     pub fn refuse_secret(&self, facts: &Facts) -> Result<(), Answer> {
         if (facts.password() || facts.sign_in()) && !self.may_touch_credentials() {
             return Err(Answer::error(
@@ -258,7 +220,6 @@ impl Page<'_> {
         }
         Ok(())
     }
-
     pub fn may_press(&self, key: &Key) -> Result<(), Answer> {
         if let Some(facts) = self.active_facts()? {
             if facts.picker() && key.opens_a_picker() {
@@ -277,7 +238,6 @@ impl Page<'_> {
         Ok(())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{acts_in, frame_readable, from_allowed, reader_of, twin_of};
@@ -290,11 +250,9 @@ mod tests {
         grant.sites.insert("bank.example".into(), SiteRule::Deny);
         (grant, Store::Reader)
     }
-
     fn at(addresses: &[&str]) -> Vec<String> {
         addresses.iter().map(|one| (*one).to_string()).collect()
     }
-
     #[test]
     fn a_frame_of_a_denied_site_is_not_acted_in_and_one_that_says_nothing_is_not_either() {
         let limits = denying();
@@ -322,7 +280,6 @@ mod tests {
         assert!(acts_in(None, &facts(&["https://bank.example/"], false)).is_ok());
         assert!(acts_in(None, &facts(&[], true)).is_ok());
     }
-
     #[test]
     fn a_frame_of_a_denied_site_is_not_read() {
         let limits = denying();
@@ -340,7 +297,6 @@ mod tests {
         ));
         assert!(frame_readable(None, &at(&["https://bank.example/"])));
     }
-
     #[test]
     fn what_a_frame_raised_or_said_is_the_agent_s_only_where_the_engine_placed_it() {
         let limits = denying();
@@ -361,7 +317,6 @@ mod tests {
         assert!(from_allowed(Some(&open), &[]).is_ok());
         assert!(from_allowed(None, &[]).is_ok());
     }
-
     #[test]
     fn a_twin_names_the_store_it_carries_and_no_agent_s_store_is_one() {
         assert_eq!(reader_of(Some(&twin_of(None))), Some(None));

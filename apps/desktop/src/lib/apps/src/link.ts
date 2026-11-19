@@ -2,7 +2,6 @@ import { appSocketPath, type RelayToViewer, toViewerOf, type View, type ViewerFr
 import { Channel, type LinkWorld, type Opened } from '../../online-link/src/api'
 
 export type AppHeard = RelayToViewer | Opened
-
 export class AppLink extends Channel<RelayToViewer, ViewerFrame> {
   constructor(
     app: string,
@@ -12,23 +11,18 @@ export class AppLink extends Channel<RelayToViewer, ViewerFrame> {
   ) {
     super(app, world, heard)
   }
-
   protected path(app: string): string {
     return appSocketPath(app)
   }
-
   protected helloFrame(): ViewerFrame {
     return { t: 'hello', hold: true, view: this.view }
   }
-
   protected read(data: string | ArrayBuffer): RelayToViewer | null {
     return typeof data === 'string' ? toViewerOf(data) : null
   }
-
   protected final(frame: RelayToViewer): boolean {
     return frame.t === 'refused' && frame.error === 'gone'
   }
-
   resize(view: View): void {
     const was = this.view
     if ((['width', 'height', 'dpr', 'hz'] as const).every((one) => was[one] === view[one])) return

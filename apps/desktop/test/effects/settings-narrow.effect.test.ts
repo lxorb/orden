@@ -6,16 +6,13 @@ import { settings } from '../../src/lib/settings/src/api'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 
 providePort('settings.window', settings)
-
 Element.prototype.animate = () => ({ finished: Promise.resolve(), cancel: () => undefined }) as unknown as Animation
 let shown: ReturnType<typeof mount> | undefined
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = undefined
   viewport.narrow = false
 })
-
 function open(narrow: boolean) {
   viewport.narrow = narrow
   settings.section = 'appearance'
@@ -24,27 +21,23 @@ function open(narrow: boolean) {
   flushSync()
   return document.querySelector('[role="region"][aria-label="Settings"]')
 }
-
 test('a narrow window shows the list or a pane, one at a time, with a way back', () => {
   const sheet = open(true)
   expect(sheet?.classList.contains('phone')).toBe(true)
   expect(sheet?.querySelector('nav')).toBeNull()
   expect(sheet?.querySelector('.body')).not.toBeNull()
-
   sheet?.querySelector<HTMLButtonElement>('header .orden-glyph')?.click()
   flushSync()
   expect(settings.listing).toBe(true)
   expect(sheet?.querySelector('nav')).not.toBeNull()
   expect(sheet?.querySelector('.body')).toBeNull()
 })
-
 test('a wide window shows the list and the pane side by side', () => {
   const sheet = open(false)
   expect(sheet?.classList.contains('phone')).toBe(false)
   expect(sheet?.querySelector('nav')).not.toBeNull()
   expect(sheet?.querySelector('.body')).not.toBeNull()
 })
-
 test('a tab too narrow for both, in a wide window, shows them one at a time too', () => {
   const was = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth')
   Object.defineProperty(HTMLElement.prototype, 'clientWidth', {

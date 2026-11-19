@@ -11,36 +11,29 @@ import type { Scheme } from '../../theme/src/api'
 import type { LiveNote } from './ports'
 
 const LEADER = 'leader'
-
 const JOINED = 'joined'
-
 const MEETINGS = 8
-
 export interface Line {
   say(kind: string, what: Record<string, unknown>): void
   ask(what: string, args: Record<string, unknown>): Promise<unknown>
   who(): Who
   scheme(): Scheme
 }
-
 interface Down {
   gen?: number
   update?: Uint8Array
   aware?: Uint8Array
 }
-
 interface AwarenessChange {
   added: number[]
   updated: number[]
   removed: number[]
 }
-
 function metOf(value: unknown): { gen: number; whole: Uint8Array } | null {
   if (typeof value !== 'object' || value === null) return null
   const { gen, whole } = value as Record<string, unknown>
   return typeof gen === 'number' && whole instanceof Uint8Array ? { gen, whole } : null
 }
-
 function downOf(said: Record<string, unknown>): Down {
   return {
     ...(typeof said.gen === 'number' ? { gen: said.gen } : {}),
@@ -48,9 +41,7 @@ function downOf(said: Record<string, unknown>): Down {
     ...(said.aware instanceof Uint8Array ? { aware: said.aware } : {}),
   }
 }
-
 type Shown = { note: LiveNote; surface?: never } | { surface: PlaneSurface; note?: never }
-
 export class Mirror {
   readonly doc = new Y.Doc()
   readonly awareness = new Awareness(this.doc)
@@ -62,7 +53,6 @@ export class Mirror {
   private left = false
   private asking = false
   private scheme: Scheme
-
   constructor(
     readonly key: string,
     readonly id: string,
@@ -78,19 +68,15 @@ export class Mirror {
     this.awareness.on('update', this.sendAware)
     rooms.carried.set(key, { live: shown.note?.live ?? shown.surface, room: this })
   }
-
   holds(shown: Shown): boolean {
     return (shown.note ?? null) === this.note && (shown.surface ?? null) === this.surface
   }
-
   get joined(): boolean {
     return this.unbind !== null
   }
-
   get pending(): boolean {
     return this.asking && !this.joined
   }
-
   async meet(): Promise<void> {
     if (this.asking || this.joined) return
     this.asking = true
@@ -102,11 +88,9 @@ export class Mirror {
     }
     if (!this.gone()) this.settled()
   }
-
   private gone(): boolean {
     return this.left
   }
-
   private async meeting(): Promise<void> {
     if (this.surface) {
       await this.meetPlane(this.surface)
@@ -128,7 +112,6 @@ export class Mirror {
       return
     }
   }
-
   private async meetPlane(surface: PlaneSurface): Promise<void> {
     const met = metOf(await this.line.ask('live-meet', { id: this.id, plane: true }))
     if (this.gone() || !met) return
@@ -150,28 +133,23 @@ export class Mirror {
     }
     this.present()
   }
-
   private metWith(met: { gen: number; whole: Uint8Array }) {
     this.gen = met.gen
     Y.applyUpdate(this.doc, met.whole, LEADER)
     for (const one of this.waiting.splice(0)) this.take(one)
   }
-
   private present() {
     this.awareness.setLocalState(this.awareness.getLocalState())
     this.showPresent()
   }
-
   heard(said: Record<string, unknown>) {
     const down = downOf(said)
     if (this.gen !== null) this.take(down)
     else if (this.asking) this.waiting.push(down)
   }
-
   hello() {
     if (this.joined) this.awareness.setLocalState(this.awareness.getLocalState())
   }
-
   moved(anchor: number, head: number) {
     if (!this.joined || !this.note) return
     const text = this.doc.getText(TEXT)
@@ -180,17 +158,14 @@ export class Mirror {
       head: relative(text, head),
     })
   }
-
   repaint(scheme: Scheme) {
     if (scheme === this.scheme) return
     this.scheme = scheme
     this.showPresent()
   }
-
   rename(person: string | undefined) {
     this.awareness.setLocalStateField('who', { ...this.line.who(), person })
   }
-
   leave() {
     if (this.left) return
     this.left = true
@@ -204,18 +179,15 @@ export class Mirror {
     if (rooms.carried.get(this.key)?.room === this) rooms.carried.delete(this.key)
     rooms.heard(this.key, 0)
   }
-
   private take(down: Down) {
     if (down.gen !== undefined && down.gen !== this.gen) return
     if (down.update) Y.applyUpdate(this.doc, down.update, LEADER)
     if (down.aware) applyAwarenessUpdate(this.awareness, down.aware, LEADER)
   }
-
   private readonly sendUpdate = (update: Uint8Array, origin: unknown) => {
     if (origin === LEADER || this.gen === null) return
     this.line.say('live-up', { id: this.id, gen: this.gen, update })
   }
-
   private readonly sendAware = ({ added, updated, removed }: AwarenessChange, origin: unknown) => {
     if (origin !== 'local') {
       this.showPresent()
@@ -230,7 +202,6 @@ export class Mirror {
       aware: encodeAwarenessUpdate(this.awareness, changed),
     })
   }
-
   private showPresent() {
     if (this.left) return
     if (this.surface) {
@@ -244,13 +215,10 @@ export class Mirror {
     rooms.heard(this.key, present, seen)
   }
 }
-
 export class Mirrors {
   private readonly held = new Map<string, Mirror>()
   private said = ''
-
   constructor(private readonly line: Line) {}
-
   follow(
     open: readonly { key: string; path: string | null; note: LiveNote }[],
     idOf: (path: string) => string | null,
@@ -275,7 +243,6 @@ export class Mirrors {
     }
     this.tell()
   }
-
   again(id: string) {
     for (const [key, mirror] of this.held) {
       if (mirror.id !== id) continue
@@ -284,23 +251,18 @@ export class Mirrors {
     }
     this.tell()
   }
-
   unjoined() {
     for (const mirror of this.held.values()) void mirror.meet()
   }
-
   joins(key: string): boolean {
     return this.held.get(key)?.joined === true
   }
-
   heard(said: Record<string, unknown>) {
     for (const mirror of this.held.values()) if (mirror.id === said.id) mirror.heard(said)
   }
-
   hello(id: unknown) {
     for (const mirror of this.held.values()) if (mirror.id === id) mirror.hello()
   }
-
   restart() {
     for (const [key, mirror] of this.held) {
       mirror.leave()
@@ -309,19 +271,16 @@ export class Mirrors {
     this.said = ''
     this.tell()
   }
-
   clear() {
     for (const mirror of this.held.values()) mirror.leave()
     this.held.clear()
     this.said = ''
   }
-
   private join(key: string, id: string, shown: Shown) {
     const mirror = new Mirror(key, id, shown, this.line, () => this.tell(true))
     this.held.set(key, mirror)
     void mirror.meet()
   }
-
   private tell(always = false) {
     const all = [...this.held.values()]
     const ids = [...new Set(all.filter((one) => one.joined).map((one) => one.id))].sort()
@@ -332,7 +291,6 @@ export class Mirrors {
     this.line.say('live-want', { ids, meeting })
   }
 }
-
 function shownOf(note: LiveNote, surface: PlaneSurface | undefined): Shown | null {
   const kind = roomKindOf(note)
   if (kind === 'words') return { note }

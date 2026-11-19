@@ -29,7 +29,6 @@ const passkey = {
   created: 1,
   note: '',
 }
-
 describe('a secure link address', () => {
   test('carries an id the account accepts and the key after the #', () => {
     const key = newKey()
@@ -40,7 +39,6 @@ describe('a secure link address', () => {
     expect(linkIdOf(url.pathname)).toBe(id)
     expect(linkKeyIn(url.hash)).toEqual(key)
   })
-
   test('refuses a key that is not 32 bytes or not base64url', () => {
     expect(linkKeyIn(`#${base64url(new Uint8Array(16))}`)).toBe(null)
     expect(linkKeyIn('#not+base64/')).toBe(null)
@@ -48,19 +46,16 @@ describe('a secure link address', () => {
     expect(linkIdOf('/pass-link/short')).toBe(null)
     expect(linkIdOf('/elsewhere/AAAAAAAAAAAAAAAAAAAAAA')).toBe(null)
   })
-
   test('round-trips every byte', () => {
     const bytes = Uint8Array.from({ length: 256 }, (_, at) => at)
     expect(unbase64url(base64url(bytes))).toEqual(bytes)
   })
 })
-
 describe('what a secure link holds', () => {
   test('is the item without its passkeys’ private keys, sealed to the link and its id', async () => {
     const login: Login = { ...blank('login'), title: 'Bank', password: 'pw', passkeys: [passkey] }
     expect((sharedContent(login) as Login).passkeys[0]?.privateKey).toBe('')
     expect(login.passkeys[0]?.privateKey).toBe('SECRET')
-
     const key = newKey()
     const id = newLinkId()
     const body = await sealedLink(key, id, login)
@@ -72,14 +67,12 @@ describe('what a secure link holds', () => {
     expect(await openedLink(newKey(), id, body)).toBe(null)
   })
 })
-
 describe('what a role may do', () => {
   test('hides passwords only from a viewer of a vault that asks for it', () => {
     expect(hidesPasswords({ role: 'viewer', hidePasswordsFromViewers: true })).toBe(true)
     expect(hidesPasswords({ role: 'viewer', hidePasswordsFromViewers: false })).toBe(false)
     expect(hidesPasswords({ role: 'editor', hidePasswordsFromViewers: true })).toBe(false)
   })
-
   test('ranks viewer, editor, manager and owner', () => {
     expect(mayEdit({ role: 'viewer' })).toBe(false)
     expect(mayEdit({ role: 'editor' })).toBe(true)

@@ -1,12 +1,9 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 NOTE = """# Blocks that say what they are
 
 ```ts src/main.ts
@@ -23,7 +20,6 @@ run()
 print('nothing to say')
 ```
 """
-
 SEED = """
 async ([note]) => {
   const ws = window.ordenApp.workspace
@@ -32,7 +28,6 @@ async ([note]) => {
   return ws.notes.map((one) => one.path)
 }
 """
-
 CAPTIONS = """
 () => [...document.querySelectorAll('.cm-line.orden-code-open')].map((line) => {
   const box = line.getBoundingClientRect()
@@ -50,7 +45,6 @@ CAPTIONS = """
   }
 })
 """
-
 READ = """
 () => [...document.querySelectorAll('#write figure.code')].map((figure) => ({
   caption: figure.querySelector('figcaption')?.textContent ?? null,
@@ -58,7 +52,6 @@ READ = """
   first: figure.firstElementChild?.tagName ?? null,
 }))
 """
-
 def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     context = browser.new_context(
         viewport={"width": 1180, "height": 820} if not finger else {"width": 420, "height": 880},
@@ -84,7 +77,6 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     )
     DRIVE.open(page)
     say(f"[{label}] the space holds {page.evaluate(SEED, [NOTE])}")
-
     page.evaluate(
         """async () => {
           const ws = window.ordenApp.workspace
@@ -95,20 +87,15 @@ def fresh(browser: Browser, label: str, finger: bool = False) -> Page:
     wait_for(page, "window.orden && document.querySelector('.cm-content')", f"[{label}] the editor")
     page.wait_for_timeout(600)
     return page
-
 def source(page: Page) -> str:
     return page.evaluate("() => window.orden.state.doc.toString()")
-
 def drive_editor(browser: Browser) -> None:
     page = fresh(browser, "desktop")
-
     blocks = page.evaluate(CAPTIONS)
     say(f"[desktop] the blocks: {json.dumps(blocks, ensure_ascii=False)}")
     shot(page, "01-captions")
-
     if len(blocks) != 3:
         wrong(f"the note holds three fences, and the page drew {len(blocks)}")
-
     first, second, third = blocks
     if first["text"] != "src/main.ts":
         wrong(f"the block does not say what it is: {first['text']!r}")
@@ -120,13 +107,11 @@ def drive_editor(browser: Browser) -> None:
         wrong(f"the language is more than a language: {second['language']!r}")
     if third["text"] is not None:
         wrong(f"a fence that says only its language got a caption: {third['text']!r}")
-
     for one in blocks[:2]:
         if one["inset"] not in (0, 1, -1):
             wrong(f"a caption does not start where the code does: {one['inset']}px off")
         if one["into"] is None or not 0 <= one["into"] <= 40:
             wrong(f"a caption is not on the block's top row: {one['into']}px into it")
-
     page.evaluate(
         """() => {
           const at = window.orden.state.doc.toString().indexOf('const answer')
@@ -144,7 +129,6 @@ def drive_editor(browser: Browser) -> None:
         wrong("the caption was drawn over the fence's own words")
     if inside[1]["text"] != "setup.js":
         wrong("a caret in one block took the caption off another")
-
     page.evaluate(
         """() => {
           window.orden.dispatch({ selection: { anchor: 0 } })
@@ -156,7 +140,6 @@ def drive_editor(browser: Browser) -> None:
     if back[0]["text"] != "src/main.ts":
         wrong(f"the caption did not come back: {back[0]['text']!r}")
     shot(page, "03-caret-away-again")
-
     page.evaluate("() => window.ordenApp.modes.toggleLineNumbers(window.orden)")
     page.wait_for_timeout(500)
     numbered = page.evaluate(CAPTIONS)
@@ -167,7 +150,6 @@ def drive_editor(browser: Browser) -> None:
             wrong(f"a caption is not level with the numbered code: {one['inset']}px off")
     page.evaluate("() => window.ordenApp.modes.toggleLineNumbers(window.orden)")
     page.wait_for_timeout(300)
-
     page.locator(".orden-fence-language").first.click()
     page.wait_for_timeout(300)
     page.keyboard.type("tsx")
@@ -178,17 +160,13 @@ def drive_editor(browser: Browser) -> None:
     shot(page, "05-language-retyped")
     if "```tsx src/main.ts" not in text:
         wrong("retyping the language took the caption with it")
-
     page.context.close()
-
 def drive_reading(browser: Browser) -> None:
     page = fresh(browser, "reading")
     DRIVE.reading(page)
-
     read = page.evaluate(READ)
     say(f"[reading] the page: {json.dumps(read, ensure_ascii=False)}")
     shot(page, "10-reading")
-
     if len(read) != 2:
         wrong(f"the page framed {len(read)} blocks, not the two that say what they are")
     if read and read[0]["caption"] != "src/main.ts":
@@ -197,20 +175,15 @@ def drive_reading(browser: Browser) -> None:
         wrong("what the block is comes after the block rather than over it")
     if read and read[0]["language"] != "language-ts":
         wrong(f"the block is not coloured as its language: {read[0]['language']!r}")
-
     page.context.close()
-
 def drive_finger(browser: Browser) -> None:
     page = fresh(browser, "phone", finger=True)
     blocks = page.evaluate(CAPTIONS)
     say(f"[phone] the blocks: {json.dumps(blocks, ensure_ascii=False)}")
     shot(page, "20-phone")
-
     if blocks and blocks[0]["text"] != "src/main.ts":
         wrong("a phone does not say what the block is")
-
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the editor ---")
@@ -219,7 +192,5 @@ def main() -> int:
         drive_reading(browser)
         say("--- a finger ---")
         drive_finger(browser)
-
     return DRIVE.verdict("a code block says what it is, in the editor and on the page")
-
 raise SystemExit(main())

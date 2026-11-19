@@ -1,14 +1,10 @@
 import base64
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 NEEDS = ("chromium",)
-
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -28,7 +24,6 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 INK = """
 () => {
   const store = window.ordenApp.pages.current.store
@@ -44,9 +39,7 @@ INK = """
   store.camera = { x: 0, y: 360, scale: 1 }
 }
 """
-
 INKED = "() => { const ink = window.ordenApp.pages.current.store.canvas.ink; return [ink.length, ink.reduce((sum, one) => sum + one.points.length, 0)] }"
-
 AT = """
 () => {
   const store = window.ordenApp.pages.current.store
@@ -56,8 +49,6 @@ AT = """
   return [host.left + host.width / 2 + (page.x + 60 - c.x) * c.scale, host.top + host.height / 2 + (page.y + 240 - c.y) * c.scale]
 }
 """
-
-
 def paper() -> bytes:
     w, h = 595, 842
     objects: dict[int, bytes] = {3: b"<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>"}
@@ -80,15 +71,11 @@ def paper() -> bytes:
         out += (b"%010d 00000 n \n" % places[number]) if number in places else b"0000000000 65535 f \n"
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
-
-
 def touch(cdp, kind: str, points: list[tuple[float, float]]) -> None:
     cdp.send(
         "Input.dispatchTouchEvent",
         {"type": kind, "touchPoints": [{"x": x, "y": y, "id": i, "radiusX": 6, "radiusY": 6, "force": 0.5} for i, (x, y) in enumerate(points)]},
     )
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1100, "height": 820}, has_touch=True)
     page = context.new_page()
@@ -110,7 +97,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("e")
     before = page.evaluate(INKED)
     x, y = page.evaluate(AT)
-
     touch(cdp, "touchStart", [(x, y)])
     touch(cdp, "touchStart", [(x, y), (x + 220, y + 40)])
     for k in range(1, 10):
@@ -118,7 +104,6 @@ def drive(browser: Browser) -> None:
         page.wait_for_timeout(16)
     touch(cdp, "touchEnd", [])
     page.wait_for_timeout(500)
-
     after = page.evaluate(INKED)
     scale = page.evaluate("() => window.ordenApp.pages.current.store.camera.scale")
     if abs(scale - 1) < 0.05:
@@ -127,7 +112,6 @@ def drive(browser: Browser) -> None:
         wrong(f"two fingers that zoomed rubbed out ink under the first: {before} -> {after}")
     else:
         say(f"ok   the pinch zoomed to {scale:.2f} and left the ink as it was {after}")
-
     page.evaluate("() => { window.ordenApp.pages.current.store.camera = { x: 0, y: 360, scale: 1 } }")
     page.wait_for_timeout(300)
     x, y = page.evaluate(AT)
@@ -144,6 +128,4 @@ def drive(browser: Browser) -> None:
         say(f"ok   one finger rubs out: {before} -> {rubbed}")
     shot(page, "pinched")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "two fingers over the eraser zoom and leave the ink, one finger rubs out"))

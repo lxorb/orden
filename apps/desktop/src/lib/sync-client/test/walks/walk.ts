@@ -10,15 +10,12 @@ export function walked(from: number, count: number, mix?: Crowd): Promise<string
     }),
   )
 }
-
 const QUARTERS = 4
-
 function crowdOf(said: string | undefined): Crowd | undefined {
   if (said === undefined || said === '' || said === 'words') return undefined
   if (said === 'tree' || said === 'order') return said
   throw new Error(`SIM_MIX=${said}: words, tree or order`)
 }
-
 export function quarter(index: number) {
   const mix = crowdOf(process.env.SIM_MIX)
   const seeds = Number(process.env.SIM_SEEDS ?? 10_000)
@@ -26,7 +23,6 @@ export function quarter(index: number) {
   const size = Math.ceil(seeds / QUARTERS)
   const start = from + index * size
   const count = Math.max(0, Math.min(size, from + seeds - start))
-
   describe(`the engine walks${mix ? ` the ${mix}` : ''}`, () => {
     test(`seeds ${String(start)} to ${String(start + count - 1)}`, async () => {
       expect(await walked(start, count, mix)).toEqual([])

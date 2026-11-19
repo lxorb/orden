@@ -1,7 +1,6 @@
 import type { Account, RemoteSpace } from '../src/routes'
 
 type Clear = (kept: boolean) => void
-
 export interface AccountDouble {
   token: string | null
   user: Account | null
@@ -16,11 +15,9 @@ export interface AccountDouble {
   signOut(kept?: boolean): void
   signInAs(id: string): void
 }
-
 export function userCalled(id: string): Account {
   return { id, email: `${id}@example.com` } as Account
 }
-
 export function accountDouble(id: string | null = 'a'): AccountDouble {
   const clears = new Set<Clear>()
   const double: AccountDouble = {

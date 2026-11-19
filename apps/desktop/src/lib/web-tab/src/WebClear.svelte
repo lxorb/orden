@@ -11,14 +11,12 @@
     apart: readonly (string | null)[]
     onclose: () => void
   } = $props()
-
   let range = $state<Range>(DEFAULT_RANGE)
   let history = $state(true)
   let site = $state(isDesktop)
   let cache = $state(isDesktop)
   let busy = $state(false)
   let wrong = $state<string | null>(null)
-
   const RANGES: { value: Range; label: () => string }[] = [
     { value: 'quarter', label: () => 'Last 15 minutes' },
     { value: 'hour', label: () => 'Last hour' },
@@ -27,7 +25,6 @@
     { value: 'month', label: () => 'Last 4 weeks' },
     { value: 'all', label: () => 'All time' },
   ]
-
   const kinds = $derived([
     { label: 'Browsing history', on: history, set: (on: boolean) => (history = on) },
     ...(isDesktop
@@ -41,12 +38,10 @@
         ]
       : []),
   ])
-
   function portal(node: HTMLElement) {
     document.body.appendChild(node)
     return { destroy: () => node.remove() }
   }
-
   async function go() {
     busy = true
     wrong = null
@@ -116,29 +111,24 @@
   .holder {
     display: contents;
   }
-
   .pick {
     flex: none;
     width: 11rem;
   }
-
   .pressable {
     cursor: default;
     border-radius: var(--radius-row);
     padding-inline: var(--space-1);
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .pressable:hover {
       background: var(--surface-hover);
     }
   }
-
   .pressable:active {
     background: var(--surface-press);
   }
-
   .holder :global(.foot) {
     justify-content: flex-end;
   }

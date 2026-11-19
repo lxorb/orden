@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
-
 from PIL import Image
 import linux_app
 
@@ -16,15 +14,12 @@ COLD = len(sys.argv) > 3 and sys.argv[3] == "cold"
 POINTER = OUT / "pointer.fifo"
 SLACK = 3
 failures = []
-
 LAYERS = [
     ("the web tab's menu", '.webbar button[aria-haspopup="menu"]'),
 ]
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 def run(code):
     answer = linux_app.said(code)
     if answer is None:
@@ -33,26 +28,20 @@ def run(code):
         print(f"eval said: {answer}")
         return None
     return answer.get("value")
-
 def sway(*words):
     return json.loads(subprocess.check_output(["swaymsg", "-r", *words]))
-
 def window_node():
-
     def walk(node):
         if str(node.get("pid")) == APP:
             yield node
         for child in node.get("nodes", []) + node.get("floating_nodes", []):
             yield from walk(child)
-
     found = sorted(
         walk(sway("-t", "get_tree")),
         key=lambda node: node["rect"]["width"] * node["rect"]["height"],
     )
     return found[-1] if found else None
-
 RATIO = [1.0]
-
 def click(node, x, y):
     at = node["rect"]
     with open(POINTER, "w") as pointer:
@@ -60,14 +49,12 @@ def click(node, x, y):
     time.sleep(0.3)
     with open(POINTER, "w") as pointer:
         pointer.write(f"move {at['x'] + at['width'] * 0.6} {at['y'] + at['height'] * 0.6}\n")
-
 def box(selector):
     return run(
         "(() => { const one = document.querySelector(%s); if (!one) return null;"
         " const r = one.getBoundingClientRect();"
         " return { x: r.x, y: r.y, width: r.width, height: r.height } })()" % json.dumps(selector)
     )
-
 def tabs():
     return (
         run(
@@ -78,7 +65,6 @@ def tabs():
         )
         or []
     )
-
 def choose(node, tab):
     click(node, tab["x"], tab["y"])
     for _ in range(20):
@@ -86,7 +72,6 @@ def choose(node, tab):
         if any(one["id"] == tab["id"] and one["chosen"] for one in tabs()):
             return True
     return False
-
 def settled():
     seen, same = None, 0
     for _ in range(40):
@@ -96,10 +81,8 @@ def settled():
             return
         seen = now
         time.sleep(1)
-
 def web_tab():
     return next((one for one in tabs() if one["web"]), None)
-
 def hole():
     for _ in range(60):
         sent = run(
@@ -110,11 +93,9 @@ def hole():
             return sent
         time.sleep(0.5)
     return None
-
 def is_page(rgb):
     red, green, blue = rgb
     return red > 230 and blue > 230 and green < 40
-
 def bounding(shot):
     image = Image.open(shot).convert("RGB")
     pixels = image.load()
@@ -128,15 +109,12 @@ def bounding(shot):
     if not xs:
         return None
     return min(xs), min(ys), max(xs) + 1, max(ys) + 1
-
 def left_of(hole, layer):
     def size(one):
         return max(0, one[2] - one[0]) * max(0, one[3] - one[1])
-
     both = (max(hole[0], layer[0]), max(hole[1], layer[1]), min(hole[2], layer[2]), min(hole[3], layer[3]))
     whole = size(hole)
     return (whole - size(both)) / whole if whole else 0
-
 def share(shot, area):
     image = Image.open(shot).convert("RGB")
     pixels = image.load()
@@ -149,7 +127,6 @@ def share(shot, area):
             seen += 1
             hits += is_page(pixels[x, y])
     return hits / max(1, seen)
-
 def ink(shot, area):
     image = Image.open(shot).convert("RGB")
     pixels = image.load()
@@ -162,19 +139,15 @@ def ink(shot, area):
         for x in range(left, right)
         if sum(pixels[x, y]) < 300
     )
-
 def shoot(output, name, scale):
     path = OUT / f"{name}-{output}.png"
     subprocess.run(["grim", "-s", str(scale), "-o", output, str(path)], check=True)
     return path
-
 def near(got, want, scale):
     return got is not None and all(
         abs(a - b) <= SLACK * max(1, scale) for a, b in zip(got, want)
     )
-
 def where_now():
-
     def walk(node, output):
         if node.get("type") == "output":
             output = node["name"]
@@ -182,9 +155,7 @@ def where_now():
             yield output
         for child in node.get("nodes", []) + node.get("floating_nodes", []):
             yield from walk(child, output)
-
     return next(walk(sway("-t", "get_tree"), None), None) or sway("-t", "get_outputs")[0]["name"]
-
 def look(output, moved=True, tag=""):
     info = next(one for one in sway("-t", "get_outputs") if one["name"] == output)
     scale = info["scale"]
@@ -198,12 +169,10 @@ def look(output, moved=True, tag=""):
         fail(f"{output}: no window to look at")
         return
     origin = (node["rect"]["x"] - info["rect"]["x"], node["rect"]["y"] - info["rect"]["y"])
-
     ratio = run("devicePixelRatio") or 1
     RATIO[0] = ratio
     if os.environ.get("DPI") and abs(ratio - int(os.environ["DPI"]) / 96) > 0.02:
         fail(f"{output}: the window's page is drawn at {ratio}, not the desktop's {int(os.environ['DPI']) / 96:.3f}")
-
     def on_screen(rect, inset=0):
         return (
             (origin[0] + (rect["x"] + inset) * ratio) * scale,
@@ -211,7 +180,6 @@ def look(output, moved=True, tag=""):
             (origin[0] + (rect["x"] + rect["width"] - inset) * ratio) * scale,
             (origin[1] + (rect["y"] + rect["height"] - inset) * ratio) * scale,
         )
-
     web = web_tab()
     if web is None:
         fail(f"{output}: no web tab in the strip")
@@ -237,7 +205,6 @@ def look(output, moved=True, tag=""):
     strip = box(".strip")
     strip_area = on_screen(strip) if isinstance(strip, dict) else None
     inked = ink(first, strip_area) if strip_area else 0
-
     other = next((one for one in tabs() if not one["web"]), None)
     if other is None:
         fail(f"{output}: no other tab in the strip to choose")
@@ -256,7 +223,6 @@ def look(output, moved=True, tag=""):
             back = bounding(shoot(output, f"{tag}web-tab-again", scale))
             if not near(back, want, scale):
                 fail(f"{output}: the page did not come back to its hole ({back})")
-
     for name, trigger in LAYERS:
         button = box(trigger)
         if not isinstance(button, dict):
@@ -304,7 +270,6 @@ def look(output, moved=True, tag=""):
             fail(f"{output}: the page did not come back whole after {name} ({back})")
         if strip_area and inked and ink(after, strip_area) < inked * 0.3:
             fail(f"{output}: after {name} the window's own page is not drawn: no tab strip")
-
     run(
         "(async () => { const path = await orden.workspace.noteFrom('# A toast over a page\\n');"
         " if (path) await orden.workspace.remove(path, false); return path })()"
@@ -346,13 +311,11 @@ def look(output, moved=True, tag=""):
         back = bounding(shoot(output, f"{tag}after-toast", scale))
         if not near(back, want, scale):
             fail(f"{output}: the page did not come back whole after the Undo toast ({back})")
-
 def loads():
     try:
         return (OUT / "site.log").read_text().count('"GET / ')
     except OSError:
         return 0
-
 def reloads(output):
     if not (OUT / "pointer.log").read_text().count("and a keyboard"):
         print("no keyboard to press with: the reloads are not driven here")
@@ -379,7 +342,6 @@ def reloads(output):
             print(f"{output}: {name} in the page reloads it ({times})")
         else:
             fail(f"{output}: {name} pressed in the page did not reload it (press {times})")
-
 settled()
 if COLD:
     look(where_now(), moved=False)
@@ -388,11 +350,9 @@ else:
     for output in outputs:
         look(output)
     reloads(where_now())
-
     subprocess.run(["swaymsg", f"[pid={APP}] floating enable, resize set 900 650"], check=False)
     time.sleep(2.5)
     look(outputs[1], tag="smaller-")
-
 name = f"drive-cold-{os.environ.get('COLD_RUN', '1')}.json" if COLD else "drive.json"
 (OUT / name).write_text(json.dumps({"failures": failures}, indent=2))
 sys.exit(1 if failures else 0)

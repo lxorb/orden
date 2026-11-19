@@ -14,12 +14,10 @@ interface AppleNote {
   created: number
   modified: number
 }
-
 interface AppleMedia {
   path: string
   bytes: string
 }
-
 export interface AppleNotes {
   notes: readonly AppleNote[]
   media: readonly AppleMedia[]
@@ -29,28 +27,23 @@ export interface AppleNotes {
   tables: number
   missing: number
 }
-
 const NO_ACCESS = 'no access'
 const NO_DATABASE = 'no database'
-
 export function notesFault(error: unknown): { noAccess: boolean; said: string } {
   const answered = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
   if (answered === NO_ACCESS) return { noAccess: true, said: 'macOS keeps those notes behind Full Disk Access.' }
   if (answered === NO_DATABASE) return { noAccess: false, said: 'There are no notes in Apple Notes on this Mac.' }
   return { noAccess: false, said: message(error, 'Those notes could not be read.') }
 }
-
 export async function readMacNotes(): Promise<ImportPlan> {
   const { invoke } = await import('../../platform/src/api')
   return planFor(await invoke<AppleNotes>('read_apple_notes'))
 }
-
 export async function planFor(read: AppleNotes): Promise<ImportPlan> {
   const names = new Names()
   const notes = new Map<string, { title: string; meta: Meta }>()
   const sources: Source[] = []
   const encoder = new TextEncoder()
-
   for (const note of read.notes) {
     sources.push(sourceOf(note.path, encoder.encode(note.text)))
     notes.set(note.path, {
@@ -58,30 +51,23 @@ export async function planFor(read: AppleNotes): Promise<ImportPlan> {
       meta: { date: dayOf(note.created), updated: dayOf(note.modified) },
     })
   }
-
   for (const one of read.media) sources.push(sourceOf(one.path, fromBase64(one.bytes)))
-
   const plan = await folderPlan(sources, {
     format: 'apple-notes',
     place: (source) => {
       const said = notes.get(source.path)
       const to = names.free(safeParts(source.path))
       if (!said) return { to }
-
       return {
         to,
         read: (text) => ({ text: fromTheTop(text), title: said.title, meta: said.meta }),
       }
     },
   })
-
   plan.lost.push(...lost(read))
-
   return plan
 }
-
 const FROM_HERE = /^(?:[a-z][a-z0-9+.-]*:|[/#<]|\.\.?\/)/i
-
 function fromTheTop(text: string): string {
   let out = text
   for (const link of findLinks(text).reverse()) {
@@ -90,29 +76,22 @@ function fromTheTop(text: string): string {
   }
   return out
 }
-
 function lost(read: AppleNotes): ImportPlan['lost'] {
   const lines: ImportPlan['lost'] = []
-
   if (read.locked) {
     lines.push(`${read.locked} notes are behind a password, which nothing but Notes can open`)
   }
-
   if (read.binned) {
     lines.push(`${read.binned} notes are in Recently Deleted, and stay there`)
   }
-
   if (read.drawn) {
     lines.push(`${read.drawn} drawings and scans have no picture on this Mac`)
   }
-
   if (read.tables) {
     lines.push(`${read.tables} tables inside notes do not come over`)
   }
-
   if (read.missing) {
     lines.push(`${read.missing} attachments are in iCloud rather than on this Mac`)
   }
-
   return lines
 }

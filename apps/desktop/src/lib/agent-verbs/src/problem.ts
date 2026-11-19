@@ -24,7 +24,6 @@ export type Code =
   | 'unsupported_on_this_engine'
   | 'timeout'
   | 'failed'
-
 export class Refused extends Error {
   constructor(
     readonly code: Code,
@@ -34,11 +33,9 @@ export class Refused extends Error {
     this.name = 'Refused'
   }
 }
-
 export function answerOf(error: unknown): AgentAnswer {
   if (error instanceof Refused || error instanceof DocError) {
     return refusal(error.code, error.message)
   }
-
   return refusal('failed', error instanceof Error ? error.message : String(error))
 }

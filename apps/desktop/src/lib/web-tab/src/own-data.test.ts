@@ -4,7 +4,6 @@ const files = new Map<string, string>()
 const cleared: unknown[] = []
 const asked: string[] = []
 let rows: { label: string; run: () => void }[] = []
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
@@ -44,7 +43,6 @@ vi.mock('./web-data.svelte', () => ({
   ownStore: (own: string | null) => (own ? `note_${own}` : null),
   webData: { history: () => 'orden:web-visits' },
 }))
-
 const tabs: { kind: string; path: string | null; apart: string | null; id: string }[] = []
 const listed: { path: string; name: string }[] = []
 vi.mock('../../workspace/src/api', () => ({
@@ -58,18 +56,14 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-
 const { showWebData } = await import('./own-data')
-
 const SEPARATE = '[InternetShortcut]\r\nURL=https://mail.example/\r\nTitle=Mail\r\nOrden-Data=0123456789abcdef\r\n'
-
 async function setGlobal(path: string) {
   await showWebData(path)
   rows.find((one) => one.label === 'Global')!.run()
   await vi.waitFor(() => expect(files.get(path)).not.toContain('Orden-Data'))
   await new Promise((done) => setTimeout(done, 0))
 }
-
 beforeEach(() => {
   files.clear()
   cleared.length = 0
@@ -78,45 +72,33 @@ beforeEach(() => {
   listed.length = 0
   copying.clear()
 })
-
 test('a note set back to Global clears the store only it named', async () => {
   files.set('/s/A.url', SEPARATE)
   listed.push({ path: '/s/A.url', name: 'A.url' })
-
   await setGlobal('/s/A.url')
-
   expect(asked).toHaveLength(1)
   expect(cleared).toEqual([['note_0123456789abcdef']])
 })
-
 test('a note set back to Global leaves a store another listed note still names', async () => {
   files.set('/s/A.url', SEPARATE)
   files.set('/s/B.url', SEPARATE.replace('Mail', 'Mail 2'))
   listed.push({ path: '/s/A.url', name: 'A.url' }, { path: '/s/B.url', name: 'B.url' })
-
   await setGlobal('/s/B.url')
-
   expect(cleared).toEqual([])
   expect(asked).toEqual([])
 })
-
 test('a note set back to Global leaves a store a note open in a tab still names', async () => {
   files.set('/s/A.url', SEPARATE)
   files.set('/other/B.url', SEPARATE.replace('Mail', 'Mail 2'))
   tabs.push({ kind: 'web', path: '/other/B.url', apart: null, id: 't' })
   listed.push({ path: '/s/A.url', name: 'A.url' })
-
   await setGlobal('/s/A.url')
-
   expect(cleared).toEqual([])
 })
-
 test('a note set back to Global leaves a store a tab saved out of it is being copied from', async () => {
   files.set('/s/A.url', SEPARATE)
   listed.push({ path: '/s/A.url', name: 'A.url' })
   copying.add('0123456789abcdef')
-
   await setGlobal('/s/A.url')
-
   expect(cleared).toEqual([])
 })

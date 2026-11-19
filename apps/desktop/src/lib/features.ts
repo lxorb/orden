@@ -171,9 +171,7 @@ registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src
 registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
 registerCommandRows('transcribe', async () => (await import('./dictation/src/api')).transcribeRows)
 registerCommandRows('rewrite', async () => (await rewritingStore()).rewriteRows)
-
 if (__EVEN_PLUGIN__) whenNoSurface(() => new Promise<never>(() => undefined))
-
 if (!__EVEN_PLUGIN__) {
   registerSurfaces({
     canvas: () => import('./canvas/src/api').then((one) => one.loadCanvas()),
@@ -288,7 +286,6 @@ if (!__EVEN_PLUGIN__) {
     },
   })
 }
-
 export async function warmDoors(): Promise<void> {
   await startup.turn('doors')
   await knock([
@@ -334,7 +331,6 @@ export async function warmDoors(): Promise<void> {
     __EVEN_PLUGIN__ ? undefined : () => import('./back-swipe/src/api').then((one) => one.listenSwipes()),
   ])
 }
-
 async function knock(doors: readonly ((() => unknown) | undefined)[]): Promise<void> {
   const asked: Promise<unknown>[] = []
   for (const open of doors) {

@@ -1,9 +1,7 @@
 import json
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -11,40 +9,28 @@ DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
-
 EMAIL = "drawing@example.com"
 SPACE = "Drawings"
 CANVAS = "Board.canvas"
 PAGE = "Notes page.canvas"
 BIG = "Handwriting.canvas"
-
 BLANK = '{\n\t"nodes": [],\n\t"edges": []\n}\n'
-
 PATIENCE = 40
-
 CEILING = 1500
-
 JOIN_CEILING = 6000
-
 request = harness.request
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
     def account(self) -> str:  # type: ignore[override]
         return super().account(EMAIL)
-
     def kept(self) -> int:
         if self.state is None:
             return 0
         rooms = self.state / "v3" / "do"
         if not rooms.exists():
             return 0
-
         return sum(path.stat().st_size for path in rooms.rglob("*") if path.is_file())
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -52,25 +38,19 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
         if answer:
             return answer
         page.wait_for_timeout(50)
-
     raise SystemExit(f"gave up waiting for {what}")
-
 def note_console(label: str, message) -> None:
     if message.type in ("error", "warning"):
         say(f"[{label}] {message.type}: {message.text[:200]}")
-
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
-
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-
     wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
-
 def listed(path: str) -> str:
     return (
         "() => {"
@@ -78,7 +58,6 @@ def listed(path: str) -> str:
         f"  return walk(window.ordenApp.workspace.tree).includes('/{SPACE}/{path}')"
         "}"
     )
-
 def opened(page: Page, label: str, name: str, note_id: str) -> None:
     wait_for(
         page,
@@ -107,7 +86,6 @@ def opened(page: Page, label: str, name: str, note_id: str) -> None:
             )[:2000]
         )
         raise
-
     page.evaluate(f"async () => {{ await window.ordenApp.workspace.openCanvas('/{SPACE}/{name}') }}")
     wait_for(page, "() => !!document.querySelector('canvas.ink.settled')", f"[{label}] the plane")
     wait_for(
@@ -115,7 +93,6 @@ def opened(page: Page, label: str, name: str, note_id: str) -> None:
         f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the plane to join its room",
     )
-
 def plane(page: Page) -> dict:
     return page.evaluate(
         """() => {
@@ -124,7 +101,6 @@ def plane(page: Page) -> dict:
             return { x: box.left, y: box.top, width: box.width, height: box.height }
         }"""
     )
-
 def strokes(page: Page) -> int:
     return page.evaluate(
         """() => {
@@ -136,12 +112,9 @@ def strokes(page: Page) -> int:
             }
         }"""
     )
-
 def file_of(page: Page) -> str:
     return page.evaluate("() => window.ordenApp.workspace.active?.doc ?? ''")
-
 PHONE = {"width": 390, "height": 844}
-
 def held_at_edge(page: Page, failures: list[str], label: str) -> None:
     before = page.evaluate("() => window.ordenApp.workspace.active.camera ?? null")
     page.evaluate(
@@ -152,7 +125,6 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
         DRIVE.wait_for(page, "!!document.querySelector('svg.hands .held')", f"[{label}] the hand held at the edge", 10)
     except SystemExit:
         pass
-
     held = page.evaluate(
         """() => {
             const one = document.querySelector('svg.hands .held')
@@ -170,7 +142,6 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
     )
     say(f"[{label}] looking far to the right of the other hand: {json.dumps(held)}")
     page.locator("div.canvas").first.screenshot(path=str(SHOTS / f"held-at-edge-{label}.png"))
-
     if not held:
         failures.append(f"[{label}] a hand off the screen was not held at its edge")
     else:
@@ -182,7 +153,6 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
             failures.append(f"[{label}] a hand to the left was held {held['left']:.0f}px in, not at the left edge")
         if held["dot"]:
             failures.append(f"[{label}] a hand held at the edge was drawn where it is as well")
-
     if held:
         page.locator("svg.hands .held path").first.click(force=True)
         try:
@@ -195,13 +165,10 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
             say(f"[{label}] pressing the arrow went to the hand")
         except SystemExit as gave_up:
             failures.append(str(gave_up))
-
     page.evaluate("(camera) => { window.ordenApp.workspace.active.camera = camera ?? undefined }", before)
     page.wait_for_timeout(200)
-
 def pen(page: Page):
     session = page.context.new_cdp_session(page)
-
     def down(x: float, y: float) -> None:
         session.send(
             "Input.dispatchMouseEvent",
@@ -218,7 +185,6 @@ def pen(page: Page):
                 "tiltY": -3,
             },
         )
-
     def move(x: float, y: float) -> None:
         session.send(
             "Input.dispatchMouseEvent",
@@ -234,7 +200,6 @@ def pen(page: Page):
                 "tiltY": -3,
             },
         )
-
     def up(x: float, y: float) -> None:
         session.send(
             "Input.dispatchMouseEvent",
@@ -249,18 +214,14 @@ def pen(page: Page):
                 "force": 0,
             },
         )
-
     return down, move, up, session
-
 def wave(box: dict, count: int, offset: float) -> list[tuple[float, float]]:
     left = box["x"] + box["width"] / 2 - 150
     middle = box["y"] + box["height"] / 2 + offset
-
     return [
         (left + (index / max(count - 1, 1)) * 300, middle + (index % 5) * 2)
         for index in range(count)
     ]
-
 def watches(page: Page, at: tuple[float, float]) -> None:
     page.evaluate(
         """([sx, sy]) => {
@@ -291,12 +252,10 @@ def watches(page: Page, at: tuple[float, float]) -> None:
         }""",
         [at[0], at[1]],
     )
-
 def main() -> int:
     worker = Worker()
     failures: list[str] = []
     joins: list[tuple[str, int, str]] = []
-
     with DRIVE.session(
         args=[
             "--disable-background-timer-throttling",
@@ -308,19 +267,16 @@ def main() -> int:
     ) as browser:
         token = worker.account()
         worker.start()
-
         space = request("/v1/spaces", token, {"name": SPACE})["space"]
         board = request(
             f"/v1/spaces/{space['id']}/notes", token, {"path": CANVAS, "content": BLANK}
         )["note"]
         say(f"the account holds {SPACE}/{CANVAS} as {board['id']}")
-
         one = signed_in(browser, token, "one")
         opened(one, "one", CANVAS, board["id"])
         two = signed_in(browser, token, "two")
         opened(two, "two", CANVAS, board["id"])
         say("both browsers are on the plane")
-
         for page, label in ((one, "one"), (two, "two")):
             wait_for(
                 page,
@@ -328,30 +284,24 @@ def main() -> int:
                 f"[{label}] the other device to appear",
             )
         say("each browser can see that the other is there")
-
         box = plane(one)
         other = plane(two)
         if abs(box["x"] - other["x"]) > 1 or abs(box["y"] - other["y"]) > 1:
             failures.append("the two planes are not on screen in the same place")
-
         down, move, up, session = pen(one)
         one.click("div.canvas", position={"x": 40, "y": 40})
         one.keyboard.press("d")
         one.wait_for_timeout(150)
-
         crossings: list[float] = []
         for turn in range(5):
             path = wave(box, 300, -280 + turn * 70)
             middle = path[len(path) // 2]
             watches(two, middle)
-
             down(*path[0])
             for point in path[1:]:
                 move(*point)
-
             sent = one.evaluate("() => Date.now()")
             up(*path[-1])
-
             until = time.monotonic() + PATIENCE
             landed = None
             while time.monotonic() < until:
@@ -359,25 +309,20 @@ def main() -> int:
                 if landed:
                     break
                 two.wait_for_timeout(5)
-
             if not landed:
                 failures.append(f"stroke {turn + 1} never crossed")
                 break
-
             took = float(landed - sent)
             crossings.append(took)
             say(f"a 300 point stroke crossed in {took:.0f} ms")
             one.wait_for_timeout(120)
-
         crossing = sorted(crossings)[len(crossings) // 2] if crossings else 0.0
         if crossing > CEILING:
             failures.append(f"a stroke took {crossing:.0f} ms to cross, past {CEILING} ms")
-
         live = wave(box, 60, 40)
         down(*live[0])
         for point in live[1:]:
             move(*point)
-
         try:
             DRIVE.wait_for(two, "!!document.querySelector('svg.hands path')", "the stroke on the other device", 10)
         except SystemExit:
@@ -394,14 +339,12 @@ def main() -> int:
         )
         say(f"the other browser is showing {json.dumps(drawing)}")
         two.locator("div.canvas").first.screenshot(path=str(SHOTS / "remote-stroke.png"))
-
         if not drawing["stroke"]:
             failures.append("the stroke being drawn was not shown on the other device")
         if not drawing["hand"]:
             failures.append("the other device's hand was not shown")
         if not drawing["named"]:
             failures.append("the other device's hand carried no name")
-
         up(*live[-1])
         two.wait_for_timeout(1900)
         two.locator("div.canvas").first.screenshot(path=str(SHOTS / "remote-pointer.png"))
@@ -413,7 +356,6 @@ def main() -> int:
             failures.append("the other device's name went once its hand stopped")
         else:
             say(f"the hand that stopped is still named {still_named!r}")
-
         held_at_edge(two, failures, "desktop")
         two.set_viewport_size(PHONE)
         two.wait_for_timeout(300)
@@ -421,12 +363,10 @@ def main() -> int:
         two.set_viewport_size({"width": 1180, "height": 760})
         two.wait_for_timeout(300)
         say(f"the photographs are in {SHOTS}")
-
         second, moving, lifting, other_session = pen(two)
         two.click("div.canvas", position={"x": 40, "y": 40})
         two.keyboard.press("d")
         two.wait_for_timeout(150)
-
         mine = wave(box, 120, 80)
         yours = wave(other, 120, 120)
         down(*mine[0])
@@ -436,14 +376,12 @@ def main() -> int:
             moving(*yours[step])
         up(*mine[-1])
         lifting(*yours[-1])
-
         wanted = len(crossings) + 1 + 2
         until = time.monotonic() + PATIENCE
         while time.monotonic() < until:
             if strokes(one) == wanted and strokes(two) == wanted:
                 break
             one.wait_for_timeout(100)
-
         here, there = strokes(one), strokes(two)
         say(f"one holds {here} strokes and two holds {there}")
         if here != wanted or there != wanted:
@@ -452,7 +390,6 @@ def main() -> int:
             failures.append("the two hold the same count of strokes but not the same file")
         else:
             say("both browsers hold the same plane, byte for byte")
-
         settled = ""
         until = time.monotonic() + PATIENCE
         while time.monotonic() < until:
@@ -460,7 +397,6 @@ def main() -> int:
             if settled == file_of(one):
                 break
             time.sleep(0.3)
-
         if settled != file_of(one):
             failures.append(
                 f"the account holds something else: {len(settled)} bytes against "
@@ -468,11 +404,9 @@ def main() -> int:
             )
         else:
             say("the account holds what both browsers hold")
-
         say(f"the rooms are keeping {worker.kept() // 1024} KB on disk")
         session.detach()
         other_session.detach()
-
         for name, count, per in ((PAGE, 500, 20), (BIG, 5000, 8)):
             written = big_canvas(count, per)
             say(f"a {len(written) // 1024} KB plane of {count} strokes is going up")
@@ -482,7 +416,6 @@ def main() -> int:
                 {"path": name, "content": written},
             )["note"]
             joins.append((name, count, made["id"]))
-
         joining = signed_in(browser, token, "three")
         wait_for(
             joining,
@@ -497,7 +430,6 @@ def main() -> int:
         )
         for name, count, note_id in joins:
             wait_for(joining, listed(name), f"[three] {name} to arrive", 120)
-
             before = heap(joining)
             started = time.perf_counter()
             joining.evaluate(
@@ -513,7 +445,6 @@ def main() -> int:
             say(f"a plane of {count} strokes joined its room in {took:.0f} ms")
             if took > JOIN_CEILING:
                 failures.append(f"joining {name} took {took:.0f} ms, past {JOIN_CEILING} ms")
-
             joining.wait_for_timeout(1500)
             after = heap(joining)
             if before and after:
@@ -521,7 +452,6 @@ def main() -> int:
                     f"{count} strokes and their room cost the device "
                     f"{(after - before) // 1024} KB"
                 )
-
             held = joining.evaluate(
                 """() => {
                     const text = window.ordenApp.workspace.active?.doc ?? ''
@@ -530,20 +460,16 @@ def main() -> int:
             )
             if held != count:
                 failures.append(f"{name} came back with {held} strokes rather than {count}")
-
             joining.locator("div.canvas").first.screenshot(
                 path=str(SHOTS / f"plane-{count}.png")
             )
-
     if failures:
         print("\nFAILED", flush=True)
         for one_of_them in failures:
             print(f"  - {one_of_them}", flush=True)
         return 1
-
     print("\ntwo browsers drew on one plane and neither lost a stroke", flush=True)
     return 0
-
 def heap(page: Page) -> int:
     return page.evaluate(
         """() => {
@@ -551,7 +477,6 @@ def heap(page: Page) -> int:
             return performance.memory?.usedJSHeapSize ?? 0
         }"""
     )
-
 def big_canvas(strokes: int, per: int) -> str:
     ink = []
     for at in range(strokes):
@@ -559,7 +484,6 @@ def big_canvas(strokes: int, per: int) -> str:
         for step in range(per):
             points += [at * 3 + step * 2, (at % 40) * 12 + step, 0.5, 0, 0, step * 8]
         ink.append({"id": f"s{at}", "tool": "pen", "color": "1", "size": 6, "points": points})
-
     return (
         json.dumps(
             {
@@ -575,5 +499,4 @@ def big_canvas(strokes: int, per: int) -> str:
         )
         + "\n"
     )
-
 sys.exit(main())

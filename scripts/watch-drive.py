@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import json
 import sys
 import time
@@ -8,19 +7,15 @@ from linux_app import run
 
 OUT, PHASE, SPACE = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
 failures = []
-
 def fail(what):
     print(f"::error::{PHASE}: {what}")
     failures.append(what)
-
 ARM = """(() => { window.nibHeard = []; const internals = window.__TAURI_INTERNALS__;
   const id = internals.transformCallback((raw) => { if (raw && 'message' in raw) window.nibHeard.push(raw.message) });
   return internals.invoke('working_watch', { root: ROOT, news: '__CHANNEL__:' + id })
     .then(() => 'armed', (error) => 'refused: ' + error) })()"""
-
 def heard():
     return run("JSON.stringify(window.nibHeard ?? [])") or "[]"
-
 for _ in range(120):
     if run("performance.getEntriesByName('orden: launch order finished').length > 0"):
         break
@@ -53,7 +48,6 @@ time.sleep(3)
 said = json.loads(heard())
 scans = [one for one in said if one.get("scan")]
 print(f"{PHASE}: as it started, the watch said {[{k: one.get(k) for k in ('scan', 'unwatched')} for one in scans]}")
-
 places = [SPACE / "outside-top.md"]
 if PHASE == "folders":
     places.append(SPACE / "deep" / "inner" / "outside-deep.md")
@@ -67,10 +61,8 @@ for at, path in enumerate(places):
         time.sleep(0.5)
     else:
         fail(f"{path.relative_to(SPACE)} was written outside Orden and the watch never heard it")
-
 if PHASE == "limit" and not any(one.get("unwatched") == "limit" for one in scans):
     fail("the watch did not say the limit of watched folders was reached")
 if PHASE == "folders" and any(one.get("unwatched") == "limit" for one in scans):
     fail("the watch said the limit was reached where it was not")
-
 sys.exit(1 if failures else 0)

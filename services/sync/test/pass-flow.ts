@@ -9,7 +9,6 @@ import type { Person } from './pass-fakes'
 export const FAST = { m: 64, t: 1, p: 1 }
 export const PASSWORD = 'correct horse battery staple'
 export const ORIGIN = 'https://orden.so'
-
 interface VersionRow {
   vault: string
   id: string
@@ -17,25 +16,21 @@ interface VersionRow {
   key: string
   body: string
 }
-
 interface HeldVault {
   key: Uint8Array<ArrayBuffer>
   row: { keyVersion: number; role: Role }
 }
-
 interface Held {
   opened: { pair: { pub: string; priv: JsonWebKey }; signer: Signer | null }
   vaults: Map<string, HeldVault>
   items: Map<string, { key: Uint8Array<ArrayBuffer>; row: { vault: string } }>
 }
-
 export interface PersonShown {
   email: string
   key: { pub: string; signPub: string | null } | null
   code: string | null
   known: string
 }
-
 export interface Device {
   rows: { versionRows: VersionRow[]; itemRows: Map<string, { pending: boolean }> }
   held: Held | null
@@ -52,7 +47,6 @@ export interface Device {
   item(id: string): Item
   pending(): unknown[]
 }
-
 export interface Api {
   personKey(email: string): Promise<{ pub: string; signPub: string | null } | null>
   members(vault: string): Promise<Member[]>
@@ -71,7 +65,6 @@ export interface Api {
   removeLink(id: string): Promise<void>
   removeExpired(): Promise<number>
 }
-
 export interface Sharing {
   api: Api
   held: Held
@@ -79,7 +72,6 @@ export interface Sharing {
   email: string
   versions(vault: string, id: string): Promise<VersionRow[]>
 }
-
 export interface Kit {
   TestDevice: new (kdf: typeof FAST) => Device
   ShareApi: new (call: unknown, from?: () => string | null) => Api
@@ -143,12 +135,10 @@ export interface Kit {
   ): Promise<unknown>
   roleGiven(sharing: Sharing, vault: string, email: string, role: Role): Promise<void>
 }
-
 interface Signer {
   pub: string
   priv: JsonWebKey
 }
-
 export async function kit(): Promise<Kit> {
   const at = (file: string) => new URL(`../../../${file}`, import.meta.url).href
   const loaded = await Promise.all(
@@ -165,41 +155,31 @@ export async function kit(): Promise<Kit> {
   )
   return Object.assign({}, ...loaded) as Kit
 }
-
 export function login(title: string, more: Partial<Login> = {}): Login {
   return { ...blank('login'), title, ...more }
 }
-
 export const content = (device: Device, id: string) => device.item(id).content as Login
-
 export const names = (device: Device) => device.vaults.map((one) => one.name)
-
 export type Tamper = (request: Request, answer: Response) => Promise<Response>
-
 export class Flow {
   readonly seen: Request[] = []
   tamper: Tamper | null = null
-
   constructor(
     readonly env: TestEnv,
     readonly k: Kit,
     readonly owner: Person,
   ) {}
-
   readonly worker = async (request: Request): Promise<Response> => {
     this.seen.push(request.clone())
     const answer = await app.fetch(request, this.env)
     return this.tamper ? await this.tamper(request, answer) : answer
   }
-
   apiOf(who: Person): Api {
     return new this.k.ShareApi(this.k.fetchCall(this.worker, ORIGIN, who.token))
   }
-
   synced(device: Device, who: Person): Promise<string> {
     return this.k.syncOnce(device.world(this.apiOf(who), who.id, who.email))
   }
-
   sharing(device: Device, who: Person): Sharing {
     if (!device.held) throw new Error('locked')
     return {
@@ -211,14 +191,12 @@ export class Flow {
         Promise.resolve(device.rows.versionRows.filter((one) => one.vault === vault && one.id === id).reverse()),
     }
   }
-
   async deviceOf(who: Person): Promise<Device> {
     const device = new this.k.TestDevice(FAST)
     await device.setup(PASSWORD)
     expect(await this.synced(device, who)).toBe('synced')
     return device
   }
-
   async family(): Promise<{ a: Device; vault: string; id: string }> {
     const a = new this.k.TestDevice(FAST)
     await a.setup(PASSWORD)
@@ -227,17 +205,14 @@ export class Flow {
     expect(await this.synced(a, this.owner)).toBe('synced')
     return { a, vault, id }
   }
-
   async checked(device: Device, who: Person, email: string): Promise<PersonShown> {
     const found = await this.k.personFor(this.sharing(device, who), email)
     return found.key === null ? found : await this.k.confirmedPerson(device.rows, found)
   }
-
   async invited(a: Device, vault: string, email: string, role: Role, by: Person = this.owner): Promise<string> {
     const person = await this.checked(a, by, email)
     return await this.k.invitedState(this.sharing(a, by), vault, person, role)
   }
-
   async accepted(device: Device, who: Person, vault: string): Promise<void> {
     expect(await this.synced(device, who)).toBe('synced')
     const invite = (await this.k.invitesOf(device.rows)).find((one) => one.vault === vault)
@@ -245,7 +220,6 @@ export class Flow {
     await this.k.acceptedInvite(this.sharing(device, who), invite)
     expect(await this.synced(device, who)).toBe('synced')
   }
-
   async joined(a: Device, vault: string, who: Person, role: Role): Promise<Device> {
     const device = await this.deviceOf(who)
     expect(await this.invited(a, vault, who.email, role)).toBe('pending')

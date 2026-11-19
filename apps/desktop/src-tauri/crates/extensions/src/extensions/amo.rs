@@ -2,7 +2,6 @@ use serde_json::Value;
 use sha2::{Digest as _, Sha256};
 
 const API: &str = "https://addons.mozilla.org/api/v5/addons/addon";
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Listing {
     pub guid: String,
@@ -12,7 +11,6 @@ pub struct Listing {
     pub hash: String,
     pub size: u64,
 }
-
 pub fn address(slug: &str) -> String {
     let slug = slug
         .replace('{', "%7B")
@@ -20,7 +18,6 @@ pub fn address(slug: &str) -> String {
         .replace('@', "%40");
     format!("{API}/{slug}/?app=firefox&lang=en-US")
 }
-
 pub fn listing_of(said: &Value) -> Result<Listing, String> {
     match said["type"].as_str() {
         Some("extension") => {}
@@ -55,7 +52,6 @@ pub fn listing_of(said: &Value) -> Result<Listing, String> {
         size: file["size"].as_u64().unwrap_or(0),
     })
 }
-
 pub async fn listing(slug: &str) -> Result<Listing, String> {
     let response = super::fetch::client()?
         .get(address(slug))
@@ -75,13 +71,11 @@ pub async fn listing(slug: &str) -> Result<Listing, String> {
         .map_err(|_| "addons.mozilla.org's answer cannot be read".to_string())?;
     listing_of(&said)
 }
-
 pub async fn file(listing: &Listing) -> Result<Vec<u8>, String> {
     let bytes = super::fetch::download(&listing.url).await?;
     checked(&bytes, listing)?;
     Ok(bytes)
 }
-
 pub fn checked(bytes: &[u8], listing: &Listing) -> Result<(), String> {
     if listing.size != 0 && bytes.len() as u64 != listing.size {
         return Err("that add-on's file is not the one addons.mozilla.org lists".into());
@@ -98,7 +92,6 @@ pub fn checked(bytes: &[u8], listing: &Listing) -> Result<(), String> {
     }
     Ok(())
 }
-
 fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     bytes.iter().fold(String::new(), |mut out, byte| {
@@ -106,7 +99,6 @@ fn hex(bytes: &[u8]) -> String {
         out
     })
 }
-
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -130,9 +122,7 @@ mod tests {
             }
         })
     }
-
     const HASH: &str = "sha256:0D50E1632C6F15EE15A543E670E1C572974605A5C02622916E08E026803DF83F";
-
     #[test]
     fn amo_s_answer_says_the_add_on_and_its_file() {
         let listing = listing_of(&answer("extension", HASH)).expect("a listing");
@@ -144,7 +134,6 @@ mod tests {
             "0d50e1632c6f15ee15a543e670e1c572974605a5c02622916e08e026803df83f"
         );
     }
-
     #[test]
     fn what_is_not_an_add_on_with_a_file_is_refused() {
         assert!(listing_of(&answer("dictionary", HASH)).is_err());
@@ -158,7 +147,6 @@ mod tests {
         plain["current_version"]["file"]["url"] = json!("http://addons.mozilla.org/x.xpi");
         assert!(listing_of(&plain).is_err());
     }
-
     #[test]
     fn a_file_is_taken_only_as_amo_lists_it_and_signed() {
         let bytes = b"PK\x03\x04META-INF/cose.sig".to_vec();
@@ -172,7 +160,6 @@ mod tests {
             size: bytes.len() as u64,
         };
         assert_eq!(checked(&bytes, &listing), Ok(()));
-
         let mut changed = bytes.clone();
         changed[0] ^= 1;
         assert!(checked(&changed, &listing).is_err());
@@ -182,7 +169,6 @@ mod tests {
         listed.hash = hex(&Sha256::digest(&unsigned));
         assert!(checked(&unsigned, &listed).is_err());
     }
-
     #[test]
     fn the_question_names_the_add_on_on_amo_s_own_host() {
         assert_eq!(

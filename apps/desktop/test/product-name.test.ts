@@ -6,27 +6,21 @@ import { code, walk } from './files'
 
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')
-
 const OLD_NAME = /(?<![A-Za-z])(?:Nib|[Nn]ib[Ee]ditor)(?![A-Za-z])/g
-
 function identifier(text: string, at: number, length: number): boolean {
   const before = text[at - 1] ?? ''
   const after = text.slice(at + length)
   return /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon|Data|Chosen)\b)/.test(after)
 }
-
 const NAMED: Record<string, string[]> = {
   'lib/web-backend/src/web/commands.ts': ['Nib'],
 }
-
 const renaming = (text: string) => text.includes('Orden')
-
 function literals(code: string): string[] {
   const found: string[] = []
   const open: number[] = []
   let depth = 0
   let at = 0
-
   function quoted(quote: string): string {
     const start = ++at
     while (at < code.length && code[at] !== quote && code[at] !== '\n') {
@@ -34,7 +28,6 @@ function literals(code: string): string[] {
     }
     return code.slice(start, at++)
   }
-
   function run(): string {
     const start = at
     while (at < code.length) {
@@ -49,11 +42,9 @@ function literals(code: string): string[] {
     }
     return code.slice(start)
   }
-
   while (at < code.length) {
     const one = code[at]
     const next = code[at + 1]
-
     if (one === '/' && next === '/') {
       const end = code.indexOf('\n', at)
       at = end < 0 ? code.length : end
@@ -75,28 +66,22 @@ function literals(code: string): string[] {
       at++
     }
   }
-
   return found
 }
-
 function readable(path: string, source: string): string[] {
   if (!path.endsWith('.svelte')) return literals(source)
-
   const scripts = [...source.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((match) => match[1] ?? '')
   const markup = source
     .replace(/<script[\s\S]*?<\/script>/g, '')
     .replace(/<style[\s\S]*?<\/style>/g, '')
     .replace(/<!--[\s\S]*?-->/g, '')
-
   return [...scripts.flatMap(literals), markup]
 }
-
 function oldNames(text: string): number[] {
   return [...text.matchAll(OLD_NAME)]
     .filter((match) => !identifier(text, match.index, match[0].length))
     .map((match) => match.index)
 }
-
 describe('reading a script for its strings', () => {
   test('finds each kind of string and no comment', () => {
     const code = [
@@ -105,19 +90,15 @@ describe('reading a script for its strings', () => {
       "const c = `three ${d ? `four` : 'five'} six`",
       "const e = { f: 'se\\'ven' }",
     ].join('\n')
-
     expect(literals(code)).toEqual(['one', 'two', 'three ', 'four', 'five', ' six', "se\\'ven"])
   })
 })
-
 describe('the name a reader sees', () => {
   test('is Orden in every string of the app', () => {
     const offenders: string[] = []
-
     for (const path of walk(SOURCE, code)) {
       const where = relative(SOURCE, path).replace(/\\/g, '/')
       const named = NAMED[where] ?? []
-
       for (const text of readable(path, readFileSync(path, 'utf8'))) {
         if (named.includes(text) || renaming(text)) continue
         for (const at of oldNames(text)) {
@@ -125,10 +106,8 @@ describe('the name a reader sees', () => {
         }
       }
     }
-
     expect(offenders).toEqual([])
   })
-
   test('is Orden in the pages the app is served in and on its manifests', () => {
     for (const name of [
       'index.html',
@@ -145,7 +124,6 @@ describe('the name a reader sees', () => {
       expect(text, name).toContain('Orden')
     }
   })
-
   test('is Orden Pass wherever Pass on the web is named, in every language', () => {
     const page = readFileSync(join(APP, 'pass.html'), 'utf8')
     expect(/<title>([^<]*)<\/title>/.exec(page)?.[1]).toBe('Orden Pass')
@@ -160,7 +138,6 @@ describe('the name a reader sees', () => {
     const gate = readFileSync(join(SOURCE, 'lib/pass-ui/src/web/PassWeb.svelte'), 'utf8')
     expect(gate).toContain('title="Orden Pass"')
   })
-
   test('tells an identifier from the name', () => {
     expect(oldNames('Documents/Nib')).toEqual([])
     expect(oldNames('C:\\Users\\a\\AppData\\Local\\Nib\\nib.exe')).toEqual([])
@@ -171,7 +148,6 @@ describe('the name a reader sees', () => {
     expect(oldNames('https://nibeditor.com/handoff')).toEqual([])
     expect(oldNames('Notes from nibeditor.com')).toEqual([])
     expect(oldNames('github.com/lxorb/nibeditor')).toEqual([])
-
     expect(oldNames('Welcome to Nib')).toEqual([11])
     expect(oldNames('Nib-E-Mail')).toEqual([0])
     expect(oldNames('Nibનું')).toEqual([0])

@@ -4,7 +4,6 @@ import { hexOf, luminance, type Rgb } from '../../../ui-controls/src/legibility'
 import { ACCENT_PAIR, along, DAWN, isOwn, ownOf, PAIRS, shownOf, stopsOf, swatchOf } from './pairs'
 
 const SCRIM: Rgb = [25, 30, 38]
-
 describe("glass's pairs", () => {
   test('start on Dawn, and fall back to it for anything they cannot mean', () => {
     for (const held of [undefined, 'dawn', 'gone', 42, '#12345 #abcdef']) {
@@ -12,7 +11,6 @@ describe("glass's pairs", () => {
       expect(stopsOf(held, 'dark', 'violet', SCRIM).map(hexOf)).toEqual(DAWN.dark)
     }
   })
-
   test('each have a shade per scheme, two colours, and and a name', () => {
     const ids = new Set(PAIRS.map((one) => one.id))
     expect(ids.size).toBe(PAIRS.length)
@@ -23,7 +21,6 @@ describe("glass's pairs", () => {
       expect(swatchOf(pair, 'dark')).toBe(`linear-gradient(135deg, ${pair.dark[0]}, ${pair.dark[1]})`)
     }
   })
-
   test('the accent is one colour in both corners, its shade for the scheme', () => {
     for (const scheme of ['dark', 'light'] as const) {
       const shade = accentColour('teal', scheme)
@@ -31,7 +28,6 @@ describe("glass's pairs", () => {
       expect(shownOf(ACCENT_PAIR, scheme, 'teal')).toEqual([shade, shade])
     }
   })
-
   test('two of the reader’s own are kept as one value, and worn as picked by day', () => {
     const held = ownOf('#AABBCC', '#112233')
     expect(held).toBe('#aabbcc #112233')
@@ -40,14 +36,12 @@ describe("glass's pairs", () => {
     expect(stopsOf(held, 'light', 'violet', SCRIM).map(hexOf)).toEqual(['#aabbcc', '#112233'])
     expect(shownOf(held, 'dark', 'violet')).toEqual(['#aabbcc', '#112233'])
   })
-
   test('at night a light colour of one’s own is a deep version of itself, a dark one as picked', () => {
     const [deep, kept] = stopsOf(ownOf('#bfddfb', '#1d2a3d'), 'dark', 'violet', SCRIM)
     expect(luminance(deep)).toBeLessThan(0.05)
     expect(deep[2]).toBeGreaterThan(deep[0] + 8)
     expect(hexOf(kept)).toBe('#1d2a3d')
   })
-
   test('the blend is checked from one corner to the other', () => {
     const blend = along([
       [0, 0, 0],
@@ -57,7 +51,6 @@ describe("glass's pairs", () => {
     expect(blend.at(-1)).toEqual([200, 100, 0])
     expect(blend.length).toBeGreaterThan(4)
   })
-
   test('show as the two shades of the scheme they are picked in', () => {
     expect(shownOf('lagoon', 'light', 'violet')).toEqual(PAIRS[1]?.light)
     expect(shownOf(undefined, 'dark', 'violet')).toEqual(DAWN.dark)

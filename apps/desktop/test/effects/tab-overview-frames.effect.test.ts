@@ -11,22 +11,18 @@ window.matchMedia = ((query: string) => ({
   removeEventListener: () => undefined,
 })) as unknown as typeof window.matchMedia
 Element.prototype.scrollIntoView = () => undefined
-
 let drawn: (() => void)[] = []
 vi.mock('../../src/lib/reading/src/api', () => ({
   readingHtml: () => new Promise<string>((done) => drawn.push(() => done('<p>Some words of it.</p>'))),
   unreadableHtml: (text: string) => text,
 }))
-
 const { default: Overview } = await import('../../src/lib/overview/src/Overview.svelte')
 const { tabOverview } = await import('../../src/lib/workspace/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { faces } = await import('../../src/lib/overview/src/faces.svelte')
-
 let now = 0
 let waiting = new Map<number, FrameRequestCallback>()
 let next = 1
-
 function frame(ms = 1000 / 60) {
   now += ms
   const due = waiting
@@ -34,10 +30,8 @@ function frame(ms = 1000 / 60) {
   for (const run of due.values()) run(now)
   flushSync()
 }
-
 let close: () => void
 const app: HTMLElement[] = []
-
 beforeEach(() => {
   drawn = []
   now = 1000
@@ -65,7 +59,6 @@ beforeEach(() => {
   const made = mount(Overview, { target: document.body })
   close = () => void unmount(made, { outro: false })
 })
-
 afterEach(() => {
   tabOverview.open = false
   flushSync()
@@ -74,7 +67,6 @@ afterEach(() => {
   for (const one of app.splice(0)) one.remove()
   vi.restoreAllMocks()
 })
-
 async function drawnNow() {
   await faces.read()
   for (const done of drawn.splice(0)) done()
@@ -82,7 +74,6 @@ async function drawnNow() {
   await Promise.resolve()
   flushSync()
 }
-
 test('the windows set off only once what each of them shows is drawn', async () => {
   tabOverview.open = true
   flushSync()
@@ -93,14 +84,12 @@ test('the windows set off only once what each of them shows is drawn', async () 
   frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
 })
-
 test('a picture that takes too long to draw does not keep the windows waiting', () => {
   tabOverview.open = true
   flushSync()
   for (let i = 0; i < 20; i++) frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
 })
-
 test('the first frame that moves moves by one frame, however long the frame before it took', async () => {
   tabOverview.open = true
   flushSync()
@@ -111,9 +100,7 @@ test('the first frame that moves moves by one frame, however long the frame befo
   expect(open).toBeGreaterThan(0)
   expect(open).toBeLessThan(0.3)
 })
-
 const OWN = new Set(['--overview-slide', '--overview-lift', '--overview-bar'])
-
 test('no frame sets a value that the panes, the sidebars or the windows’ pictures inherit', async () => {
   tabOverview.open = true
   flushSync()
@@ -137,19 +124,16 @@ test('no frame sets a value that the panes, the sidebars or the windows’ pictu
     expect(one.querySelector('[data-pane], .face, [data-chrome]')).toBe(null)
   }
 })
-
 function front() {
   const pane = document.querySelector<HTMLElement>(`[data-pane="${workspace.panes.all[0]?.id}"]`)
   return pane?.style.zIndex ?? ''
 }
-
 function others() {
   const active = workspace.tabs.find((one) => one.id === workspace.activeTabId)?.shown
   return [...document.querySelectorAll<HTMLElement>('.window')]
     .filter((one) => one.getAttribute('aria-label') !== active)
     .map((one) => (one.classList.contains('is-front') ? 'in front' : 'behind'))
 }
-
 test('the tab worked in is over every other window on every frame, and nothing is stacked anew as they land', async () => {
   tabOverview.open = true
   flushSync()
@@ -177,7 +161,6 @@ test('the tab worked in is over every other window on every frame, and nothing i
   for (const one of document.querySelectorAll('.window, .rider, .closer'))
     expect(one.parentElement?.classList.contains('canvas')).toBe(true)
 })
-
 test('a picture that comes in while the windows fly is drawn once they are there, its mark till then', async () => {
   tabOverview.open = true
   flushSync()
@@ -196,7 +179,6 @@ test('a picture that comes in while the windows fly is drawn once they are there
   for (let i = 0; i < 200 && waiting.size; i++) frame()
   expect(faceOf()?.querySelector('.read')?.textContent).toContain('Some words of it.')
 })
-
 test('a window drawn before is drawn at once the next time, never waited on', async () => {
   tabOverview.open = true
   flushSync()
@@ -214,13 +196,11 @@ test('a window drawn before is drawn at once the next time, never waited on', as
   frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
 })
-
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]
     .filter((one) => one.style.willChange !== '' || one.classList.contains('is-moving'))
     .map((one) => one.className || one.tagName)
 }
-
 test('no frame of the way out, a zoom or the way home makes a layer of its own or lets one go', async () => {
   tabOverview.open = true
   flushSync()
@@ -261,16 +241,13 @@ test('no frame of the way out, a zoom or the way home makes a layer of its own o
   }
   expect(asked).toEqual([])
 })
-
 const TOKENS = readFileSync(resolve('../../packages/themes/src/tokens.css'), 'utf8')
 const SOURCE = await import('../../src/lib/overview/src/Overview.svelte?raw')
-
 function rung(value: string): number {
   const named = /var\((--z-[a-z]+)\)/.exec(value)?.[1] ?? ''
   const at = Number(new RegExp(`${named}:\\s*(-?\\d+);`).exec(TOKENS)?.[1] ?? NaN)
   return value.includes('- 1') ? at - 1 : at
 }
-
 test('the one bar is over every window on every frame, and a window under it shows through it whole', async () => {
   const bar = app[0]!
   bar.getBoundingClientRect = () => new DOMRect(0, 0, 900, 40)
@@ -292,7 +269,6 @@ test('the one bar is over every window on every frame, and a window under it sho
     '.rider.is-front',
   ])
     for (const value of zOf(one)) expect(rung(value), one).toBeLessThan(barZ)
-
   tabOverview.open = true
   flushSync()
   await drawnNow()

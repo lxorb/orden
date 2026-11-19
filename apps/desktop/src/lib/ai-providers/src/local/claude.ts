@@ -2,7 +2,6 @@ import { type Counted, eventIn, type Heard, type Limit, saysLimit, saysSignedOut
 import { type ToolHeard } from './heard'
 
 const OWN = /^mcp__orden__/
-
 export function claudeReader(): (line: string) => Heard {
   let streamed = false
   let counted: Counted = {}
@@ -77,16 +76,13 @@ export function claudeReader(): (line: string) => Heard {
     }
   }
 }
-
 function record(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
 }
-
 function named(model: unknown): Heard {
   if (typeof model !== 'string' || !model) return {}
   return { model: model.replace(/\[[^\]]*\]$/, '') }
 }
-
 function textOf(content: unknown): string {
   if (!Array.isArray(content)) return ''
   return content
@@ -96,7 +92,6 @@ function textOf(content: unknown): string {
     })
     .join('')
 }
-
 function toolUse(content: unknown): ToolHeard | null {
   if (!Array.isArray(content)) return null
   for (const block of content) {
@@ -106,7 +101,6 @@ function toolUse(content: unknown): ToolHeard | null {
   }
   return null
 }
-
 function toolResult(content: unknown): ToolHeard | null {
   if (!Array.isArray(content)) return null
   for (const block of content) {
@@ -117,7 +111,6 @@ function toolResult(content: unknown): ToolHeard | null {
   }
   return null
 }
-
 function countsIn(usage: Record<string, unknown> | null): Counted {
   if (!usage) return {}
   const number = (key: string) => (typeof usage[key] === 'number' ? usage[key] : 0)
@@ -125,7 +118,6 @@ function countsIn(usage: Record<string, unknown> | null): Counted {
   const input = number('input_tokens') + cached + number('cache_creation_input_tokens')
   return { input, cached, output: number('output_tokens') }
 }
-
 function windowIn(usage: Record<string, unknown> | null): number | null {
   if (!usage) return null
   for (const one of Object.values(usage)) {
@@ -134,7 +126,6 @@ function windowIn(usage: Record<string, unknown> | null): number | null {
   }
   return null
 }
-
 function limitIn(info: Record<string, unknown> | null): Limit | null {
   if (!info) return null
   const state = info.status === 'rejected' ? 'reached' : info.status === 'allowed_warning' ? 'near' : 'fine'

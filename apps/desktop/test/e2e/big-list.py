@@ -1,24 +1,18 @@
 import importlib.util
 from pathlib import Path
-
 from playwright.sync_api import Page
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
 APP = harness.APP
-
 _spec = importlib.util.spec_from_file_location("first_paint", Path(__file__).parent / "first-paint.py")
 assert _spec and _spec.loader
 first_paint = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(first_paint)
-
 NOTES = 3000
-
 LIST = 'aside [data-region="list"]'
-
 COUNT = """
 () => {
   const box = document.querySelector('aside [data-region="list"]')
@@ -34,7 +28,6 @@ COUNT = """
   }
 }
 """
-
 FOCUS = """
 () => {
   const on = document.activeElement
@@ -53,7 +46,6 @@ FOCUS = """
   }
 }
 """
-
 IN_VIEW = """
 () => {
   const row = document.querySelector('aside [data-region="list"] .row.is-on')
@@ -73,7 +65,6 @@ IN_VIEW = """
   }
 }
 """
-
 SLIDE = """
 async (twist) => {
   const ul = document.querySelector('aside [data-region="list"] ul')
@@ -89,13 +80,10 @@ async (twist) => {
   return seen
 }
 """
-
 SCROLL_TO = '(at) => { document.querySelector(\'aside [data-region="list"]\').scrollTop = at }'
-
 FIRST_FOLDER = """
 () => window.ordenApp.workspace.tree.children.find((one) => one.is_dir).path
 """
-
 ALL_OPEN = """
 () => {
   const ws = window.ordenApp.workspace
@@ -111,7 +99,6 @@ ALL_OPEN = """
   return ws.visibleTree().length
 }
 """
-
 FAR_NOTE = """
 () => {
   const ws = window.ordenApp.workspace
@@ -119,7 +106,6 @@ FAR_NOTE = """
   return notes[Math.min(600, notes.length - 1)].path
 }
 """
-
 def ready(page: Page, origin: str) -> None:
     page.goto(origin, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.ordenApp", timeout=60000)
@@ -127,7 +113,6 @@ def ready(page: Page, origin: str) -> None:
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .row", timeout=60000)
     page.wait_for_timeout(2500)
-
 def main() -> int:
     origin = DRIVE.origin
     with DRIVE.session() as browser:
@@ -137,43 +122,34 @@ def main() -> int:
         )
         page = context.new_page()
         page.on("pageerror", lambda error: say(f"page error: {error}"))
-
         page.goto(f"{origin}{harness.SEED_PATH}", wait_until="domcontentloaded")
         page.evaluate(first_paint.SEED, NOTES)
         say(f"{NOTES} notes seeded")
-
         ready(page, origin)
         say(f"at rest:        {page.evaluate(COUNT)}")
-
         page.evaluate(SCROLL_TO, 20000)
         page.wait_for_timeout(400)
         say(f"20,000px down:  {page.evaluate(COUNT)}")
-
         page.evaluate(SCROLL_TO, 0)
         page.wait_for_timeout(300)
         page.locator(f"{LIST} .row").first.focus()
         page.wait_for_timeout(300)
         say(f"the first row:  {page.evaluate(FOCUS)}")
-
         page.keyboard.press("End")
         page.wait_for_timeout(500)
         say(f"End:            {page.evaluate(FOCUS)}")
         say(f"                {page.evaluate(COUNT)}")
-
         page.keyboard.press("Home")
         page.wait_for_timeout(500)
         say(f"Home:           {page.evaluate(FOCUS)}")
-
         for letter in "note-19":
             page.keyboard.press("Minus" if letter == "-" else letter)
         page.wait_for_timeout(600)
         say(f"spelled a name: {page.evaluate(FOCUS)}")
-
         page.keyboard.press("ArrowDown")
         page.keyboard.press("ArrowDown")
         page.wait_for_timeout(400)
         say(f"two downs:      {page.evaluate(FOCUS)}")
-
         twist = page.evaluate(FIRST_FOLDER)
         say(f"a twist on:     {twist}")
         say(f"  opening:      {page.evaluate(SLIDE, twist)}")
@@ -182,7 +158,6 @@ def main() -> int:
         say(f"  shutting:     {page.evaluate(SLIDE, twist)}")
         page.wait_for_timeout(400)
         say(f"  shut:         {page.evaluate(COUNT)}")
-
         page.evaluate(
             """async () => {
                 const ws = window.ordenApp.workspace
@@ -192,7 +167,6 @@ def main() -> int:
         page.wait_for_timeout(800)
         say(f"the last note:  {page.evaluate(COUNT)}")
         say(f"  in view:      {page.evaluate(IN_VIEW)}")
-
         far = page.evaluate(FAR_NOTE)
         page.evaluate("(path) => window.ordenApp.workspace.startRenaming(path)", far)
         page.wait_for_timeout(700)
@@ -201,21 +175,17 @@ def main() -> int:
         say(f"                {page.evaluate(COUNT)}")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
-
         page.evaluate(SCROLL_TO, 12345)
         page.wait_for_timeout(900)
         ready(page, origin)
         page.wait_for_timeout(1500)
         say(f"after a reload: {page.evaluate(COUNT)}")
         say(f"                panel = {page.evaluate('() => window.ordenApp.workspace.panel')}")
-
         say(f"every note open: {page.evaluate(ALL_OPEN)} rows in the list")
         page.wait_for_timeout(1200)
         say(f"                {page.evaluate(COUNT)}")
         page.evaluate(SCROLL_TO, 40000)
         page.wait_for_timeout(400)
         say(f"  40,000px down: {page.evaluate(COUNT)}")
-
     return DRIVE.verdict()
-
 raise SystemExit(main())

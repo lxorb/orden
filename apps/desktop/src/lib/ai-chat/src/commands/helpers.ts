@@ -11,7 +11,6 @@ import { tasks, type TaskKind } from './tasks.svelte'
 import type { Ended } from './types'
 
 const AT_ONCE = 3
-
 function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode, own = false): Thread {
   const last = parent.turns.at(-1)
   const made =
@@ -26,7 +25,6 @@ function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode, own
   else made.parent = parent.id
   return made
 }
-
 async function run(
   host: Host,
   parent: Thread,
@@ -54,20 +52,17 @@ async function run(
     helpers.endedUnder(helper.id)
   }
 }
-
 function answered(task: string, ended: Ended | null): string {
   const words = ended ? answerOf(ended).trim() : ''
   const failed = !ended || ended.stop === 'error'
   return `↳ ${task}\n\n${failed ? (ended?.error ?? 'The model did not answer.') : words}`
 }
-
 export function fork(host: Host, parent: Thread, prompt: string): void {
   const copy = helperOf(parent, parent.title, true, undefined, true)
   host.touched(parent)
   if (prompt) void run(host, parent, copy, 'fork', prompt)
   else host.adopt(copy)
 }
-
 export async function subtask(host: Host, parent: Thread, task: string): Promise<void> {
   const copy = helperOf(parent, task.slice(0, 80), true)
   host.touched(parent)
@@ -75,9 +70,7 @@ export async function subtask(host: Host, parent: Thread, task: string): Promise
   if (ended?.stop === 'stopped') return
   host.line(parent, answered(task, ended), undefined, [copy.id])
 }
-
 const TAG_WORD = new RegExp(String.raw`^#${TAG_NAME}$`, 'u')
-
 export function batchTargets(instruction: string): { folders: string[]; tags: string[] } {
   const words = instruction.split(/\s+/).map((one) => one.replace(/^@/, '').replace(/[.,;:]+$/, ''))
   return {
@@ -85,11 +78,8 @@ export function batchTargets(instruction: string): { folders: string[]; tags: st
     tags: words.filter((one) => TAG_WORD.test(one)).map((one) => one.slice(1)),
   }
 }
-
 const MOST_NOTES = 1_000
-
 const EVERY_PATH = 1_000_000
-
 function inFolder(relative: string, folder: string): boolean {
   const wanted = folder
     .replace(/\\/g, '/')
@@ -97,7 +87,6 @@ function inFolder(relative: string, folder: string): boolean {
     .toLowerCase()
   return relative.replace(/\\/g, '/').toLowerCase().startsWith(wanted)
 }
-
 async function batchNotes(root: string, targets: { folders: string[]; tags: string[] }): Promise<string[]> {
   const { searchSpace } = await import('../../../search/src/api')
   const paths = new Set<string>()
@@ -131,12 +120,10 @@ async function batchNotes(root: string, targets: { folders: string[]; tags: stri
   )
   return [...paths].sort()
 }
-
 function linkOf(path: string, root: string): string {
   const relative = path.startsWith(root) ? path.slice(root.length).replace(/^[\\/]+/, '') : path
   return relative.replace(/\\/g, '/').replace(/\.md$/i, '')
 }
-
 export async function batch(host: Host, parent: Thread, instruction: string): Promise<void> {
   const root = workspace.spaces.find((one) => one.id === parent.space)?.root ?? workspace.activeSpace?.root
   const targets = batchTargets(instruction)
@@ -179,7 +166,6 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
   }
   host.line(parent, `↳ ${instruction}\n\n✓ ${done}/${notes.length}`, undefined, started)
 }
-
 export function researchPrompt(question: string): string {
   return [
     `Research this question: ${question}`,
@@ -189,7 +175,6 @@ export function researchPrompt(question: string): string {
     'Answer here with the note’s name and the short answer.',
   ].join(' ')
 }
-
 export async function research(host: Host, parent: Thread, question: string): Promise<void> {
   const helper = helperOf(parent, question.slice(0, 80), false, parent.mode)
   host.touched(parent)

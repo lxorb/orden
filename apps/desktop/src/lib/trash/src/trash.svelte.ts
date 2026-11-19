@@ -7,7 +7,6 @@ import { workspace } from '../../workspace/src/api'
 import { protection } from '../../protect/src/api'
 
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
-
 export interface TrashItem {
   id: string
   kind: 'note' | 'folder' | 'space'
@@ -21,7 +20,6 @@ export interface TrashItem {
   note?: { spaceId: string; path: string }
   arrived?: boolean
 }
-
 interface DeviceEntry {
   id: string
   kind: string
@@ -30,27 +28,21 @@ interface DeviceEntry {
   trashedAt: number
   arrived?: boolean
 }
-
 const ROUNDS = 40
-
 async function whileMore(purge: () => Promise<{ more?: boolean }>): Promise<void> {
   for (let round = 0; round < ROUNDS; round++) {
     if (!(await purge()).more) return
   }
 }
-
 function kindOf(kind: string): TrashItem['kind'] {
   return kind === 'space' || kind === 'folder' ? kind : 'note'
 }
-
 class Trash {
   items = $state<TrashItem[]>([])
   busy = $state(false)
   error = $state<string | null>(null)
   loaded = $state(false)
-
   private asked = 0
-
   async load() {
     const asked = ++this.asked
     this.error = null
@@ -66,16 +58,13 @@ class Trash {
     this.items = [...remote, ...device].sort((a, b) => b.deletedAt - a.deletedAt)
     this.loaded = true
   }
-
   forgetAccount(): void {
     this.asked++
     this.items = this.items.filter((one) => one.source === 'device')
     this.remoteNotes = []
     this.error = null
   }
-
   private remoteNotes: { spaceId: string; path: string; deletedAt: number }[] = []
-
   private async fromDevice(): Promise<TrashItem[]> {
     const entries = await invoke<DeviceEntry[]>('list_trash').catch(() => [] as DeviceEntry[])
     return entries.map((entry) => ({
@@ -91,7 +80,6 @@ class Trash {
       ...(entry.arrived === true ? { arrived: true } : {}),
     }))
   }
-
   private async fromAccount(token: string, asked: number): Promise<TrashItem[]> {
     let listing: Awaited<ReturnType<typeof api.trash>>
     try {
@@ -101,7 +89,6 @@ class Trash {
       return []
     }
     if (asked !== this.asked) return []
-
     const spaces = listing.spaces.map((space) => ({
       id: `space:${space.id}`,
       ref: space.id,
@@ -112,7 +99,6 @@ class Trash {
       purgeAt: space.purgeAt,
       source: 'account' as const,
     }))
-
     this.remoteNotes = listing.notes
     const notes = listing.notes.map((note) => ({
       id: `note:${note.id}`,
@@ -125,16 +111,13 @@ class Trash {
       source: 'account' as const,
       note: { spaceId: note.spaceId, path: note.path },
     }))
-
     return [...spaces, ...notes]
   }
-
   restorable(item: TrashItem): boolean {
     if (item.from === undefined) return true
     const at = whereFrom(item.from)
     return at === null || canWriteAt(at)
   }
-
   async restore(item: TrashItem) {
     if (!this.restorable(item)) return
     await this.act(async () => {
@@ -149,7 +132,6 @@ class Trash {
         }
         return
       }
-
       const token = account.accountToken
       if (!token) return
       const was = item.note?.path ?? ''
@@ -166,7 +148,6 @@ class Trash {
       sync.nudge()
     })
   }
-
   async purge(item: TrashItem) {
     const sure = await prompt.confirm({
       title: `Delete ${item.name}?`,
@@ -174,20 +155,17 @@ class Trash {
       danger: true,
     })
     if (!sure) return
-
     await this.act(async () => {
       if (item.source === 'device') {
         await invoke('purge_trash', { id: item.ref })
         return
       }
-
       const token = account.accountToken
       if (!token) return
       if (item.kind === 'space') await whileMore(() => api.purgeSpace(token, item.ref))
       else await api.purgeNote(token, item.ref)
     })
   }
-
   async empty() {
     const sure = await prompt.confirm({
       title: 'Empty Recently deleted?',
@@ -196,7 +174,6 @@ class Trash {
       danger: true,
     })
     if (!sure) return
-
     await this.act(async () => {
       for (const item of this.items.filter((one) => one.source === 'device')) {
         await invoke('purge_trash', { id: item.ref }).catch(() => undefined)
@@ -205,12 +182,10 @@ class Trash {
       if (token) await whileMore(() => api.emptyTrash(token))
     })
   }
-
   async sweep() {
     await invoke<number>('purge_trash_older_than', { age: KEEP_FOR }).catch(() => 0)
     if (this.loaded) await this.load()
   }
-
   private async act(work: () => Promise<void>) {
     this.busy = true
     this.error = null
@@ -220,17 +195,13 @@ class Trash {
     } catch (error) {
       failed = message(error, 'that did not work')
     }
-
     this.busy = false
     await this.load()
     if (failed !== null) this.error = failed
   }
 }
-
 export const trash = new Trash()
-
 account.forgetWithSession(() => trash.forgetAccount())
-
 function whereFrom(from: string): string | null {
   if (from.startsWith('/') || /^[A-Za-z]:[\\/]/.test(from)) return from
   for (const space of workspace.spaces) {

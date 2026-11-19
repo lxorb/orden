@@ -5,14 +5,12 @@ import { againAt, codexReader } from './codex'
 
 const said = (method: string, params: object) => JSON.stringify({ method, params })
 const turn = { threadId: 't', turnId: 'u' }
-
 const crateServer = /pub const SERVER: &str = "([^"]+)";/.exec(
   readFileSync(
     fileURLToPath(new URL('../../../../../src-tauri/crates/ai/src/ai_cli/args.rs', import.meta.url)),
     'utf8',
   ),
 )?.[1]
-
 describe('an answer', () => {
   test('streams as deltas and is not said again when its item completes', () => {
     const read = codexReader()
@@ -30,7 +28,6 @@ describe('an answer', () => {
     expect(heard.map((one) => one.text ?? '').join('')).toBe('Herons wait.')
     expect(heard.at(-1)?.ended).toBe('end')
   })
-
   test('is the whole message where no delta came, and a second one is a new paragraph', () => {
     const read = codexReader()
     const text = [
@@ -42,12 +39,10 @@ describe('an answer', () => {
       .join('')
     expect(text).toBe('One.\n\nTwo.')
   })
-
   test('thinks in its reasoning summary', () => {
     const read = codexReader()
     expect(read(said('item/reasoning/summaryTextDelta', { ...turn, itemId: 'r', delta: 'Hmm.' })).thinking).toBe('Hmm.')
   })
-
   test('knows its server by the name the crate gives it, and by the old one', () => {
     expect(crateServer).toBeTruthy()
     for (const server of [crateServer, 'orden']) {
@@ -55,7 +50,6 @@ describe('an answer', () => {
       expect(codexReader()(said('item/started', { ...turn, item })).tool?.name).toBe('move_file')
     }
   })
-
   test('calls Orden’s tools and hears their answers', () => {
     const read = codexReader()
     const item = {
@@ -84,7 +78,6 @@ describe('an answer', () => {
     const other = { ...item, server: 'somebody-else' }
     expect(read(said('item/started', { ...turn, item: other }))).toEqual({})
   })
-
   test('counts what the request took, and the model’s window', () => {
     const read = codexReader()
     const last = {
@@ -104,13 +97,11 @@ describe('an answer', () => {
       ).usage,
     ).toEqual({ input: 500, cached: 100, output: 30, reasoning: 10, window: 272000 })
   })
-
   test('a compaction is said', () => {
     const read = codexReader()
     expect(read(said('item/completed', { ...turn, item: { type: 'contextCompaction', id: 'x' } })).compacted).toBe(true)
   })
 })
-
 describe('the plan', () => {
   test('stands where its fuller window says', () => {
     const read = codexReader()
@@ -128,11 +119,9 @@ describe('the plan', () => {
     expect(limit(100, 20)?.state).toBe('reached')
   })
 })
-
 describe('a failure', () => {
   const LIMIT =
     "You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at 3:05 PM."
-
   test('the plan at its limit says when, as Codex wrote it', () => {
     const heard = codexReader()(
       said('turn/completed', {
@@ -148,25 +137,21 @@ describe('a failure', () => {
     expect(heard.trouble).toBe(LIMIT)
     expect(heard.limit).toEqual({ state: 'reached', until: null, untilWords: '3:05 PM' })
   })
-
   test('an error is read, one Codex will retry is not, and signed out is told apart', () => {
     const read = codexReader()
     const error = { message: 'Not logged in. Run codex login.', codexErrorInfo: null }
     expect(read(said('error', { ...turn, error, willRetry: true }))).toEqual({})
     expect(read(said('error', { ...turn, error, willRetry: false })).signedOut).toBe(true)
   })
-
   test('an interrupted turn stopped', () => {
     expect(
       codexReader()(said('turn/completed', { threadId: 't', turn: { id: 'u', status: 'interrupted' } })).ended,
     ).toBe('stopped')
   })
-
   test('when to try again, in either of its spellings', () => {
     expect(againAt('Try again in 2 days 3 hours.')).toBe('2 days 3 hours')
     expect(againAt("You've hit your usage limit. Try again later.")).toBeNull()
   })
-
   test('reads past a line that is not a notification', () => {
     expect(codexReader()('WARNING: proceeding')).toEqual({})
   })

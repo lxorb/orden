@@ -1,7 +1,5 @@
 const DIGITS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-
 export const MOST_POSITION = 128
-
 export function isPosition(value: unknown): value is string {
   return (
     typeof value === 'string' &&
@@ -11,7 +9,6 @@ export function isPosition(value: unknown): value is string {
     !value.endsWith('0')
   )
 }
-
 export function between(before: string | null, after: string | null): string {
   if (before !== null && after !== null && before >= after) {
     throw new Error(`no position between ${before} and ${after}`)
@@ -26,7 +23,6 @@ export function between(before: string | null, after: string | null): string {
     if (high - low === 1) upper = null
   }
 }
-
 export function byPosition(
   a: { id: string; pos?: string | undefined },
   b: { id: string; pos?: string | undefined },
@@ -38,14 +34,12 @@ export function byPosition(
   }
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
 }
-
 export function spread(before: string | null, after: string | null, count: number): string[] {
   if (count <= 0) return []
   const middle = between(before, after)
   const low = Math.floor((count - 1) / 2)
   return [...spread(before, middle, low), middle, ...spread(middle, after, count - 1 - low)]
 }
-
 export function repositioned(
   rows: readonly { id: string; pos?: string | undefined }[],
   placed: number,
@@ -55,7 +49,6 @@ export function repositioned(
     if (row.pos !== undefined) upTo = Math.max(upTo, at + 1)
   })
   const standing = rows.slice(0, upTo)
-
   const ends: number[] = []
   const back = new Array<number>(standing.length).fill(-1)
   standing.forEach((row, at) => {
@@ -74,7 +67,6 @@ export function repositioned(
   })
   const keeps = new Set<number>()
   for (let at = ends.at(-1) ?? -1; at >= 0; at = back[at] ?? -1) keeps.add(at)
-
   const out = new Map<string, string>()
   let before: string | null = null
   let gap: number[] = []

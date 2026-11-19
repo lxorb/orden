@@ -2,13 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { SOURCES, SOURCE_IDS, guessSource, importFile, needsZip } from './index'
 
 const utf8 = (text: string): Uint8Array => new TextEncoder().encode(text)
-
 describe('SOURCES', () => {
   it('lists every source once with what it takes', () => {
     expect(SOURCES.map((one) => one.id)).toEqual([...SOURCE_IDS])
     for (const one of SOURCES) expect(one.accept.length).toBeGreaterThan(0)
   })
-
   it('knows which files are archives', () => {
     expect(needsZip('proton', 'Proton Pass.zip')).toBe(true)
     expect(needsZip('proton', 'data.json')).toBe(false)
@@ -18,7 +16,6 @@ describe('SOURCES', () => {
     expect(needsZip('chrome', 'x.zip')).toBe(false)
   })
 })
-
 describe('guessSource', () => {
   it.each([
     ['Chrome Passwords.csv', 'name,url,username,password,note\n', 'chrome'],
@@ -62,28 +59,24 @@ describe('guessSource', () => {
   ])('%s is %s', (name, text, source) => {
     expect(guessSource(name, text)).toBe(source)
   })
-
   it('is null for what it cannot place', () => {
     expect(guessSource('x.csv', 'a,b\n')).toBeNull()
     expect(guessSource('x.xml', '<html/>')).toBeNull()
     expect(guessSource('x.json', '{"a":1}')).toBeNull()
   })
 })
-
 describe('importFile', () => {
   it('reads bytes as UTF-8 without the BOM', () => {
     const bytes = utf8('﻿name,url,username,password,note\nÄ,https://a.com,u,p,\n')
     const result = importFile('chrome', 'x.csv', bytes)
     expect(result.vaults[0]?.items[0]?.content.title).toBe('Ä')
   })
-
   it('hands an archive to the sources that take one', () => {
     const result = importFile('dashlane', 'x.zip', {
       'securenotes.csv': utf8('title,note\nT,body\n'),
     })
     expect(result.vaults[0]?.items[0]?.content).toMatchObject({ kind: 'note', title: 'T' })
   })
-
   it('refuses an archive for a source that takes none, and raw bytes of an archive', () => {
     expect(() => importFile('chrome', 'x.csv', { 'a.csv': utf8('') })).toThrow()
     expect(() => importFile('proton', 'x.zip', utf8('PK'))).toThrow()

@@ -9,7 +9,6 @@ import { ordenMarkdownExtensions } from './markdown/extensions'
 import { keptViews } from '../test/views'
 
 const open = keptViews()
-
 function viewOf(doc: string, rtl = false): EditorView {
   const view = new EditorView({
     state: EditorState.create({
@@ -28,10 +27,8 @@ function viewOf(doc: string, rtl = false): EditorView {
   open.push(view)
   return view
 }
-
 const directions = (view: EditorView): (string | null)[] =>
   [...view.contentDOM.querySelectorAll('.cm-line')].map((line) => line.getAttribute('dir'))
-
 describe('the way a line reads', () => {
   test('is its first strong letter, past the marks Markdown writes', () => {
     expect(firstStrong('- **مرحبا** world')).toBe(Direction.RTL)
@@ -39,17 +36,14 @@ describe('the way a line reads', () => {
     expect(firstStrong('> [!note] hello مرحبا')).toBe(Direction.LTR)
     expect(firstStrong('- 123 ...')).toBeNull()
   })
-
   test('is told to the editor wherever it differs from the note, so keys move the way the line reads', () => {
     const view = viewOf('# Title\n\nمرحبا بالعالم\n\n- عنصر\n\nplain\n\n42\n')
     expect(directions(view)).toEqual([null, null, 'rtl', null, 'rtl', null, null, null, null, null])
   })
-
   test('and in a right-to-left note, a line written left to right reads that way', () => {
     const view = viewOf('مرحبا\n\nhello\n\n42\n', true)
     expect(directions(view)).toEqual([null, null, 'ltr', null, null, null])
   })
-
   test('code, a table and front matter keep the note’s own way', () => {
     const view = viewOf('---\nعنوان: x\n---\n\n```\nمرحبا\n```\n\n| مرحبا |\n| --- |\n')
     expect(directions(view).every((one) => one === null)).toBe(true)

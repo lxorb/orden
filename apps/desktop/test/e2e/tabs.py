@@ -1,7 +1,5 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -9,14 +7,12 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
-
 NOTES = {
     "Daily": "# Daily\n\nThe note that stays open.\n",
     "First": "# First\n\nThe first stop.\n",
     "Second": "# Second\n\nThe second stop.\n",
     "Third": "# Third\n\nThe third stop.\n",
 }
-
 SEED = """
 async (notes) => {
   const ws = window.ordenApp.workspace
@@ -26,7 +22,6 @@ async (notes) => {
   return ws.notes.map((one) => one.name)
 }
 """
-
 STRIP = """
 () => ({
   tabs: [...document.querySelectorAll('.tab')].map((tab) => ({
@@ -38,7 +33,6 @@ STRIP = """
   at: window.ordenApp.workspace.active?.at ?? null,
 })
 """
-
 def fresh(browser: Browser, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme="light")
     page = context.new_page()
@@ -53,7 +47,6 @@ def fresh(browser: Browser, label: str) -> Page:
     say(f"[{label}] the space holds {page.evaluate(SEED, list(NOTES.values()))}")
     page.wait_for_timeout(300)
     return page
-
 def peek(page: Page, name: str) -> None:
     page.evaluate(
         """async (starts) => {
@@ -64,26 +57,20 @@ def peek(page: Page, name: str) -> None:
         name,
     )
     page.wait_for_timeout(500)
-
 def strip(page: Page) -> dict:
     return page.evaluate(STRIP)
-
 def drive_trail(browser: Browser) -> None:
     page = fresh(browser, "trail")
-
     peek(page, "First")
     peek(page, "Second")
     peek(page, "Third")
-
     walked = strip(page)
     say(f"[trail] where the tab has been: {json.dumps(walked['trail'])} at {walked['at']}")
     shot(page, "10-walked")
-
     if walked["trail"] != ["First.md", "Second.md", "Third.md"]:
         wrong(f"the tab did not write down where it has been: {walked['trail']}")
     if walked["steps"] != [False, True]:
         wrong(f"the arrows do not say where it can go: {walked['steps']}")
-
     page.locator(".step").first.click()
     page.wait_for_timeout(600)
     once = strip(page)
@@ -93,7 +80,6 @@ def drive_trail(browser: Browser) -> None:
         wrong(f"back did not go back: {once['showing']}")
     if once["steps"] != [False, False]:
         wrong(f"the arrows do not say both ways are open: {once['steps']}")
-
     page.locator(".step").first.click()
     page.wait_for_timeout(600)
     twice = strip(page)
@@ -102,7 +88,6 @@ def drive_trail(browser: Browser) -> None:
         wrong(f"the second step back did not go back: {twice['showing']}")
     if twice["steps"] != [True, False]:
         wrong(f"the far end of the trail is not the far end: {twice['steps']}")
-
     page.locator(".cm-content").click()
     page.keyboard.press("Alt+ArrowRight")
     page.wait_for_timeout(600)
@@ -111,7 +96,6 @@ def drive_trail(browser: Browser) -> None:
     shot(page, "12-forward")
     if on["showing"] != "Second.md":
         wrong(f"Alt and an arrow did not go forward: {on['showing']}")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -119,14 +103,12 @@ def drive_trail(browser: Browser) -> None:
         }"""
     )
     page.wait_for_timeout(250)
-
     peek(page, "Daily")
     turned = strip(page)
     say(f"[trail] after turning off it: {json.dumps(turned['trail'])} at {turned['at']}")
     shot(page, "13-turned-off")
     if turned["trail"] != ["First.md", "Second.md", "Daily.md"]:
         wrong(f"the road not taken was kept: {turned['trail']}")
-
     page.locator(".step").first.click(button="right")
     page.wait_for_timeout(400)
     rows = page.evaluate(
@@ -136,16 +118,12 @@ def drive_trail(browser: Browser) -> None:
     shot(page, "14-the-trail")
     if rows != ["Second", "First"]:
         wrong(f"the trail does not read newest first: {rows}")
-
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- a tab that remembers ---")
         drive_trail(browser)
-
     return DRIVE.verdict("a tab can go back where it came from")
-
 raise SystemExit(main())

@@ -1,9 +1,7 @@
 import json
 import sys
 import time
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -11,26 +9,18 @@ DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
-
 EMAIL = "together@example.com"
 SPACE = "Notes"
 NOTE = "together.md"
 OPENING = "# Together\n\nthe first line\n"
-
 PATIENCE = 40
-
 CEILING = 1500
-
 request = harness.request
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
     def account(self) -> str:  # type: ignore[override]
         return super().account(EMAIL)
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -38,23 +28,18 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
         if answer:
             return answer
         page.wait_for_timeout(50)
-
     raise SystemExit(f"gave up waiting for {what}")
-
 def long_note() -> str:
     paragraph = (
         "The room holds the note as one document, so two devices that both wrote "
         "end up with the same words and neither is asked to choose.\n\n"
     )
-
     words = "# A long note\n\n"
     at = 0
     while len(words) < 100 * 1024:
         words += f"## Part {at}\n\n{paragraph}"
         at += 1
-
     return words
-
 def fresh(browser: Browser, token: str, label: str) -> Page:
     page = signed_in(browser, token, label)
     wait_for(
@@ -63,30 +48,24 @@ def fresh(browser: Browser, token: str, label: str) -> Page:
         f"[{label}] the space to arrive",
     )
     return page
-
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1100, "height": 700})
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)})")
-
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-
     wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
-
 def note_console(label: str, message) -> None:
     if message.type in ("error", "warning"):
         say(f"[{label}] {message.type}: {message.text[:200]}")
-
 def opened(page: Page, label: str, note_id: str) -> None:
     wait_for(
         page,
         f"() => window.ordenApp.workspace.spaces.some((one) => one.name === {json.dumps(SPACE)})",
         f"[{label}] the space to arrive",
     )
-
     listed = (
         "() => {"
         "  const walk = (entry) => (entry ? [entry.path, ...(entry.children ?? []).flatMap(walk)] : []);"
@@ -95,7 +74,6 @@ def opened(page: Page, label: str, note_id: str) -> None:
         "}"
     )
     wait_for(page, listed, f"[{label}] the note to arrive")
-
     page.evaluate(f"() => window.ordenApp.workspace.open('/{SPACE}/{NOTE}')")
     wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
     wait_for(
@@ -103,14 +81,11 @@ def opened(page: Page, label: str, note_id: str) -> None:
         f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the note to join its room",
     )
-
 def words(page: Page) -> str:
     return page.evaluate(
         "() => { window.ordenApp.workspace.flush(); return window.ordenApp.workspace.active?.doc ?? '' }"
     )
-
 FRONT = "window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)"
-
 def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[str]) -> None:
     other.evaluate(
         f"() => {{ const view = {FRONT};"
@@ -130,7 +105,6 @@ def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[
     except SystemExit as gave_up:
         failures.append(str(gave_up))
         return
-
     held = page.evaluate(
         f"""() => {{
             const name = document.querySelector('.cm-orden-held.is-{side} .cm-orden-held-name')
@@ -148,7 +122,6 @@ def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[
         failures.append(f"[{label}] a caret held {side} the page was drawn past it")
     if held["top" if side == "above" else "bottom"] > 40:
         failures.append(f"[{label}] a caret held {side} the page is not at that edge: {held}")
-
     page.locator(f".cm-orden-held.is-{side} .cm-orden-held-name").first.click()
     try:
         wait_for(
@@ -166,7 +139,6 @@ def held_at_edge(page: Page, other: Page, side: str, label: str, failures: list[
         say(f"[{label}] pressing the name held {side} the page went to the caret")
     except SystemExit as gave_up:
         failures.append(str(gave_up))
-
 def place(page: Page, at: int) -> None:
     page.click(".cm-content")
     page.evaluate(
@@ -176,11 +148,9 @@ def place(page: Page, at: int) -> None:
         "}",
         at,
     )
-
 def type_at(page: Page, at: int, said: str) -> None:
     place(page, at)
     page.keyboard.type(said, delay=12)
-
 def echo(one: Page, two: Page, at: int, said: str, label: str) -> float:
     two.evaluate(
         "(wanted) => {"
@@ -197,11 +167,9 @@ def echo(one: Page, two: Page, at: int, said: str, label: str) -> float:
         "}",
         said,
     )
-
     place(one, at)
     sent = one.evaluate("() => Date.now()")
     one.keyboard.type(said)
-
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
         arrived = two.evaluate("() => window.__arrived")
@@ -210,19 +178,15 @@ def echo(one: Page, two: Page, at: int, said: str, label: str) -> float:
             say(f"{label}: {took} ms")
             return float(took)
         two.wait_for_timeout(10)
-
     raise SystemExit(f"{label} never arrived. one says {words(one)!r}, two says {words(two)!r}")
-
 def contrast(one: str, two: str) -> float:
     def light(said: str) -> float:
         parts = [float(part) for part in said[said.index("(") + 1 : said.index(")")].replace(",", " ").split()[:3]]
         lit = [part / 255 for part in parts]
         lit = [part / 12.92 if part <= 0.04045 else ((part + 0.055) / 1.055) ** 2.4 for part in lit]
         return 0.2126 * lit[0] + 0.7152 * lit[1] + 0.0722 * lit[2]
-
     lighter, darker = sorted((light(one), light(two)), reverse=True)
     return (lighter + 0.05) / (darker + 0.05)
-
 DRAWN = f"""(at) => {{
     const view = {FRONT}
     const caret = document.querySelector('.cm-orden-caret')
@@ -252,7 +216,6 @@ DRAWN = f"""(at) => {{
         name: name.textContent,
     }}
 }}"""
-
 def caret_drawn_well(page: Page, other: Page, at: int, label: str, failures: list[str]) -> None:
     other.evaluate(f"(at) => {{ const view = {FRONT}; view.dispatch({{ selection: {{ anchor: at }} }}); view.focus() }}", at)
     for scheme in ("light", "dark"):
@@ -284,11 +247,9 @@ def caret_drawn_well(page: Page, other: Page, at: int, label: str, failures: lis
         if contrast(drawn["ink"], drawn["paint"]) < 4.5:
             failures.append(f"[{label} {scheme}] the name is hard to read: {drawn['ink']} on {drawn['paint']}")
     page.emulate_media(color_scheme="light")
-
 def main() -> int:
     worker = Worker()
     failures: list[str] = []
-
     with DRIVE.session(
         args=[
             "--disable-background-timer-throttling",
@@ -297,7 +258,6 @@ def main() -> int:
         ],
     ) as browser:
         worker.start()
-
         token = worker.account()
         space = request("/v1/spaces", token, {"name": SPACE})["space"]
         note = request(
@@ -305,14 +265,11 @@ def main() -> int:
         )["note"]
         note_id = note["id"]
         say(f"the account holds {SPACE}/{NOTE} as {note_id}")
-
         one = signed_in(browser, token, "one")
         opened(one, "one", note_id)
         two = signed_in(browser, token, "two")
         opened(two, "two", note_id)
-
         say("both browsers are in the room")
-
         for page, label in ((one, "one"), (two, "two")):
             wait_for(
                 page,
@@ -320,7 +277,6 @@ def main() -> int:
                 f"[{label}] the other device to appear",
             )
         say("each browser can see that the other is there")
-
         crossings = [
             echo(one, two, len(OPENING) + turn, str(turn + 1), "one to two")
             for turn in range(5)
@@ -331,22 +287,18 @@ def main() -> int:
         there = sorted(crossings)[len(crossings) // 2]
         returning = sorted(coming_back)[len(coming_back) // 2]
         say(f"a letter crosses in {there:.0f} ms and comes back in {returning:.0f} ms")
-
         type_at(one, len(words(one)), "at the same time from one\n")
         type_at(two, 0, "at the same time from two\n")
-
         until = time.monotonic() + PATIENCE
         while time.monotonic() < until:
             if words(one) == words(two) and "from one" in words(one):
                 break
             one.wait_for_timeout(20)
-
         here, over_there = words(one), words(two)
         if here != over_there:
             failures.append(f"the two never agreed:\n{here!r}\n{over_there!r}")
         else:
             say("both browsers hold the same words")
-
         for expected in (
             "12345",
             "678910",
@@ -355,17 +307,14 @@ def main() -> int:
         ):
             if expected not in here:
                 failures.append(f"{expected!r} was lost")
-
         for took, way in ((there, "to cross"), (returning, "to come back")):
             if took > CEILING:
                 failures.append(f"a letter took {took:.0f} ms {way}, past {CEILING} ms")
-
         two.evaluate("() => { window.orden.dispatch({ selection: { anchor: 3 } }); window.orden.focus() }")
         one.wait_for_selector(".cm-orden-caret", timeout=10_000)
         one.wait_for_timeout(120)
         one.locator(".cm-editor").first.screenshot(path=str(SHOTS / "remote-caret.png"))
         say(f"the remote caret is in {SHOTS / 'remote-caret.png'}")
-
         one.wait_for_timeout(1800)
         one.locator(".cm-editor").first.screenshot(path=str(SHOTS / "remote-caret-settled.png"))
         named = one.evaluate(
@@ -376,21 +325,17 @@ def main() -> int:
             failures.append(f"the other caret's name went once it stopped ({named})")
         else:
             say("the other caret's name is still there once it stopped")
-
         caret_drawn_well(one, two, 3, "top", failures)
         last = len(here.rstrip("\n"))
         caret_drawn_well(one, two, last, "end", failures)
         caret_drawn_well(one, two, here.index("\n") + 3, "under", failures)
-
         one.locator(".strip").first.screenshot(path=str(SHOTS / "presence-dots.png"))
-
         long = request(
             f"/v1/spaces/{space['id']}/notes",
             token,
             {"path": "long.md", "content": long_note()},
         )["note"]
         say(f"a {len(long_note()) // 1024} KB note is on the account")
-
         joining = fresh(browser, token, "three")
         wait_for(
             joining,
@@ -400,7 +345,6 @@ def main() -> int:
             "}",
             "[three] the long note to arrive",
         )
-
         started = time.perf_counter()
         joining.evaluate(f"() => window.ordenApp.workspace.open('/{SPACE}/long.md')")
         wait_for(
@@ -412,7 +356,6 @@ def main() -> int:
         say(f"a long note joined its room in {took:.0f} ms")
         if took > CEILING * 4:
             failures.append(f"joining took {took:.0f} ms, past {CEILING * 4} ms")
-
         wait_for(
             one,
             "() => {"
@@ -432,7 +375,6 @@ def main() -> int:
         one.set_viewport_size({"width": 390, "height": 844})
         held_at_edge(one, joining, "below", "phone", failures)
         one.set_viewport_size({"width": 1100, "height": 700})
-
         until = time.monotonic() + PATIENCE
         settled = ""
         while time.monotonic() < until:
@@ -440,19 +382,15 @@ def main() -> int:
             if settled == here:
                 break
             time.sleep(0.2)
-
         if settled != here:
             failures.append(f"the account holds something else:\n{settled!r}")
         else:
             say("the account holds what both browsers hold")
-
     if failures:
         print("\nFAILED", flush=True)
         for one_of_them in failures:
             print(f"  - {one_of_them}", flush=True)
         return 1
-
     print("\nboth browsers wrote in one note and neither lost a word", flush=True)
     return 0
-
 sys.exit(main())

@@ -14,13 +14,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string, cursor: number, quiet = false) {
   const state = parsed(
     EditorState.create({
@@ -37,7 +34,6 @@ function viewOf(doc: string, cursor: number, quiet = false) {
   open.push(view)
   return view
 }
-
 describe('Home pressed again at the start of an item', () => {
   test('keeps the caret on the item line', () => {
     const doc = 'intro\n- first item\n- second item\n\nend'
@@ -48,7 +44,6 @@ describe('Home pressed again at the start of an item', () => {
     view.dispatch(view.state.replaceSelection('x'))
     expect(view.state.doc.line(3).text).toBe('- xsecond item')
   })
-
   test('a click on the bullet with the caret already at the words keeps the caret there', () => {
     const doc = 'intro\n- first item\n- second item\n\nend'
     const start = doc.indexOf('second item')
@@ -58,7 +53,6 @@ describe('Home pressed again at the start of an item', () => {
     view.dispatch(view.state.replaceSelection('x'))
     expect(view.state.doc.line(3).text).toBe('- xsecond item')
   })
-
   test('Home on a heading with quiet marks keeps the caret on the heading', () => {
     const doc = 'intro\n## Plan\n\nend'
     const start = doc.indexOf('Plan')
@@ -68,7 +62,6 @@ describe('Home pressed again at the start of an item', () => {
     expect(view.state.doc.line(2).text).toBe('## xPlan')
   })
 })
-
 describe('ArrowLeft from where the words of an item start', () => {
   test('goes to the end of the line above, not before the hidden bullet', () => {
     const doc = 'intro\n- first item\n- second item'

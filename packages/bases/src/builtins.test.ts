@@ -7,7 +7,6 @@ import type { Answer, Row } from './types'
 
 const context = contextAt()
 const keyed = (result: Answer) => result.groups.map((group) => [group.key, group.rows.map((row) => row.task?.text)])
-
 const rows: Row[] = [
   taskRow('Inbox.md', '- [ ] Call the bank [time:: 16:00] ⏫ 🛫 2026-10-04', 0),
   taskRow('Inbox.md', '- [ ] Renew passport [deadline:: 2026-09-26] 🛫 2026-09-20', 1),
@@ -31,7 +30,6 @@ const rows: Row[] = [
   }),
   noteRow('Projects/Thesis.md', {}, { tags: ['work'] }),
 ]
-
 describe('the built-in views', () => {
   test('Todos: a space’s started tasks by when they are due, the undated last, done ones out', () => {
     const due = [
@@ -56,14 +54,12 @@ describe('the built-in views', () => {
     const every = answer(builtinView('todos'), 0, due, context)
     expect(every.groups.flatMap((group) => group.rows.map((row) => row.task?.text))).toContain('Other space')
   })
-
   test('Today: overdue first, then today, by priority and time; not started and done ones out', () => {
     expect(keyed(answer(builtinView('today'), 0, rows, context))).toEqual([
       [true, ['Renew passport', 'Vault due']],
       [false, ['Gym', 'Call the bank', 'Old date', 'Draft talk']],
     ])
   })
-
   test('Upcoming: what is overdue, then by day from today, a start still to come on its day', () => {
     expect(keyed(answer(builtinView('upcoming'), 0, rows, context))).toEqual([
       ['overdue', ['Renew passport', 'Vault due']],
@@ -74,7 +70,6 @@ describe('the built-in views', () => {
       [{ kind: 'date', iso: '2026-10-10' }, ['Taxes']],
     ])
   })
-
   test('Upcoming: what is overdue is first even when its day is later than the rest', () => {
     const late = [
       taskRow('Late.md', '- [ ] Soon 🛫 2026-10-05', 0),
@@ -85,14 +80,12 @@ describe('the built-in views', () => {
       [{ kind: 'date', iso: '2026-10-05' }, ['Soon']],
     ])
   })
-
   test('Completed: done and cancelled, newest day first', () => {
     expect(keyed(answer(builtinView('logbook'), 0, rows, context))).toEqual([
       [{ kind: 'date', iso: '2026-10-03' }, ['Water']],
       [{ kind: 'date', iso: '2026-10-02' }, ['Gym old']],
     ])
   })
-
   test('Inbox: every space has its own, shown together', () => {
     const inbox = builtinView('inbox', {
       inboxes: [
@@ -105,7 +98,6 @@ describe('the built-in views', () => {
       ['Work', ['Elsewhere']],
     ])
   })
-
   test('a label: tasks and notes that carry the tag', () => {
     const label = builtinView('label', { tag: 'work' })
     const result = answer(label, 0, rows, context)
@@ -117,13 +109,11 @@ describe('the built-in views', () => {
       ['Work//Work.md', ['Ship it']],
     ])
   })
-
   test('assigned to me', () => {
     expect(answer(builtinView('assigned'), 0, rows, context).groups[0]?.rows.map((row) => row.task?.text)).toEqual([
       'Fix the bug',
     ])
   })
-
   test('each one copies to a base file that reads back the same', () => {
     for (const name of ['inbox', 'today', 'upcoming', 'logbook', 'label', 'assigned'] as const) {
       const base = builtinView(name, {
@@ -134,7 +124,6 @@ describe('the built-in views', () => {
     }
   })
 })
-
 describe('a list grouped by labels', () => {
   test('holds a task under each of its labels, and one with none under no value', () => {
     const tagged = [

@@ -3,33 +3,25 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 class Transfer {
   kept = new Map<string, string>()
   held: File[] = []
-
   ignored: string[] = []
-
   get dropEffect() {
     return 'none'
   }
-
   set dropEffect(value: string) {
     this.ignored.push(value)
   }
-
   get effectAllowed() {
     return 'uninitialized'
   }
-
   set effectAllowed(value: string) {
     this.ignored.push(value)
   }
-
   get types() {
     return [...this.kept.keys(), ...(this.held.length ? ['Files'] : [])]
   }
-
   get files() {
     return this.held
   }
-
   get items() {
     const all = [
       ...[...this.kept.keys()].map((type) => ({ kind: 'string', type })),
@@ -37,56 +29,44 @@ class Transfer {
     ]
     return Object.assign(all, { add: (file: File) => void this.held.push(file) })
   }
-
   setData(type: string, value: string) {
     this.kept.set(type, value)
   }
-
   getData(type: string) {
     return this.kept.get(type) ?? ''
   }
 }
-
 class Native extends Transfer {
   effect = 'none'
-
   override get dropEffect() {
     return this.effect
   }
-
   override set dropEffect(value: string) {
     this.effect = value
   }
 }
-
 class Drag extends MouseEvent {
   dataTransfer: Transfer | null
-
   constructor(type: string, init: MouseEventInit & { dataTransfer?: Transfer } = {}) {
     super(type, { ...init, view: null })
     this.dataTransfer = init.dataTransfer ?? null
   }
 }
-
 Object.assign(globalThis, { DataTransfer: Transfer, DragEvent: Drag })
-
 const { guardDrops } = await import('../src/lib/ui-kit/src/api')
 const { explorerDragged, isExplorerDrag, outsideDrops } = await import('../src/lib/ui-kit/src/api')
 const { filesAt, OutsideDrops } = await outsideDrops()
-
 let under: Element | null = null
 let opened: string[][] = []
 let read: string[] = []
 let heard: string[] = []
 let stop: () => void = () => undefined
-
 function place(id: string): HTMLElement {
   const one = document.createElement('div')
   one.id = id
   document.body.append(one)
   return one
 }
-
 function drops() {
   return new OutsideDrops({
     read: (path) => {
@@ -96,7 +76,6 @@ function drops() {
     ratio: () => 2,
   })
 }
-
 function hearing(on: HTMLElement) {
   for (const type of ['dragenter', 'dragover', 'dragleave', 'drop']) {
     on.addEventListener(type, (event) => {
@@ -106,7 +85,6 @@ function hearing(on: HTMLElement) {
     })
   }
 }
-
 beforeEach(() => {
   document.body.innerHTML = ''
   under = null
@@ -116,27 +94,21 @@ beforeEach(() => {
   document.elementFromPoint = () => under
   stop = guardDrops((paths) => void opened.push([...paths]))
 })
-
 afterEach(() => stop())
-
 const at = { x: 40, y: 60 }
-
 describe('a file dropped on Orden from another app, as Linux hands it over', () => {
   test('a PDF let go of where nothing takes files opens as a page note, its bytes unread', async () => {
     under = place('pane')
     hearing(under as HTMLElement)
     const outside = drops()
-
     outside.entered({ paths: ['/far/paper.pdf'], position: at })
     outside.moved({ position: at })
     await outside.dropped({ paths: ['/far/paper.pdf'], position: at })
     await vi.waitFor(() => expect(opened).toEqual([['/far/paper.pdf']]))
-
     expect(read).toEqual([])
     expect(heard[0]).toBe('dragenter pane 20,30 text/orden-explorer+Files')
     expect(heard.some((one) => one.startsWith('drop'))).toBe(false)
   })
-
   test('the file list takes it by its path and nothing is read or opened', async () => {
     const list = place('list')
     under = list
@@ -154,15 +126,12 @@ describe('a file dropped on Orden from another app, as Linux hands it over', () 
       landed.push(explorerDragged(transfer))
     })
     const outside = drops()
-
     outside.entered({ paths: ['/far/paper.pdf', '/far/notes'], position: at })
     await outside.dropped({ position: at })
-
     expect(landed).toEqual([['/far/paper.pdf', '/far/notes']])
     expect(read).toEqual([])
     expect(opened).toEqual([])
   })
-
   test('a place that takes files is handed them with their bytes', async () => {
     const editor = place('editor')
     under = editor
@@ -179,15 +148,12 @@ describe('a file dropped on Orden from another app, as Linux hands it over', () 
       for (const one of files) taken.push(`${one.name} ${one.type} ${one.size}`)
     })
     const outside = drops()
-
     outside.entered({ paths: ['/far/cat.png'], position: at })
     await outside.dropped({ position: at })
-
     expect(read).toEqual(['/far/cat.png'])
     expect(taken).toEqual([`cat.png image/png ${'bytes of /far/cat.png'.length}`])
     expect(opened).toEqual([])
   })
-
   test('a PDF on a note goes past the note, which takes pictures, and opens', async () => {
     const editor = place('editor')
     under = editor
@@ -197,40 +163,31 @@ describe('a file dropped on Orden from another app, as Linux hands it over', () 
         event.preventDefault()
     })
     const outside = drops()
-
     outside.entered({ paths: ['/far/paper.pdf'], position: at })
     await outside.dropped({ position: at })
-
     await vi.waitFor(() => expect(opened).toEqual([['/far/paper.pdf']]))
     expect(read).toEqual([])
   })
-
   test('another kind of file where nothing takes it is refused and left alone', async () => {
     under = place('pane')
     hearing(under as HTMLElement)
     const outside = drops()
-
     outside.entered({ paths: ['/far/song.mp3'], position: at })
     await outside.dropped({ position: at })
-
     expect(opened).toEqual([])
     expect(read).toEqual([])
     expect(heard.some((one) => one.startsWith('drop'))).toBe(false)
     expect(heard.at(-1)).toMatch(/^dragleave pane/)
   })
-
   test('a drag that leaves the window says so to what it was over', () => {
     under = place('pane')
     hearing(under as HTMLElement)
     const outside = drops()
-
     outside.entered({ paths: ['/far/paper.pdf'], position: at })
     outside.left()
-
     expect(heard.at(-1)).toMatch(/^dragleave pane/)
     expect(opened).toEqual([])
   })
-
   test('moving on says dragleave to the one left and dragenter to the one reached', () => {
     const one = place('one')
     const two = place('two')
@@ -238,11 +195,9 @@ describe('a file dropped on Orden from another app, as Linux hands it over', () 
     hearing(two)
     under = one
     const outside = drops()
-
     outside.entered({ paths: ['/far/paper.pdf'], position: at })
     under = two
     outside.moved({ position: { x: 80, y: 60 } })
-
     expect(heard.filter((said) => !said.startsWith('dragover'))).toEqual([
       'dragenter one 20,30 text/orden-explorer+Files',
       'dragenter two 40,30 text/orden-explorer+Files',
@@ -250,7 +205,6 @@ describe('a file dropped on Orden from another app, as Linux hands it over', () 
     ])
   })
 })
-
 describe('a file the page is handed by the engine itself, without its path', () => {
   function native(type: string, on: Element, files: File[]): Drag {
     const transfer = new Native()
@@ -260,18 +214,15 @@ describe('a file the page is handed by the engine itself, without its path', () 
     on.dispatchEvent(event)
     return event
   }
-
   test('a PDF nothing takes is refused, as only the host hands over where it lies', () => {
     const pane = place('pane')
     const paper = new File(['%PDF-'], 'paper.pdf', { type: 'application/pdf' })
-
     const over = native('dragover', pane, [paper])
     expect(over.defaultPrevented).toBe(true)
     expect(over.dataTransfer?.dropEffect).toBe('none')
     expect(native('drop', pane, [paper]).defaultPrevented).toBe(true)
     expect(opened).toEqual([])
   })
-
   test('a PDF a place takes for itself is left to it', () => {
     const canvas = place('canvas')
     const paper = new File(['%PDF-'], 'paper.pdf', { type: 'application/pdf' })
@@ -281,15 +232,12 @@ describe('a file the page is handed by the engine itself, without its path', () 
       event.preventDefault()
       dropped++
     })
-
     native('dragover', canvas, [paper])
     native('drop', canvas, [paper])
-
     expect(dropped).toBe(1)
     expect(opened).toEqual([])
   })
 })
-
 describe('files read for a place that takes them by their paths', () => {
   test('are named and typed by their paths, and one that cannot be read is left out', async () => {
     const read = (path: string) =>

@@ -10,21 +10,17 @@ function page(entry: string): string {
     '</head><body><div id="app"></div></body></html>',
   ].join('\n')
 }
-
 describe('the entry a page starts from', () => {
   test('is the module script with a source, whatever comes before it', () => {
     expect(entryOf(page('/assets/index-B2x9.js'))).toBe('/assets/index-B2x9.js')
   })
-
   test('is read in any attribute order and either quote', () => {
     expect(entryOf(`<script src='/assets/index-a.js' type='module'></script>`)).toBe('/assets/index-a.js')
   })
-
   test('is nothing on a page with no module script', () => {
     expect(entryOf('<p>Service unavailable</p>')).toBeNull()
   })
 })
-
 describe('what a missing piece calls for', () => {
   test.each([
     ['/assets/index-new.js', null, 'reload'],
@@ -34,10 +30,8 @@ describe('what a missing piece calls for', () => {
     expect(verdict('/assets/index-old.js', served, went)).toBe(said)
   })
 })
-
 const RUNNING = '/assets/index-old.js'
 const HANDS_OFF = 3000
-
 let events: EventTarget
 let doc: EventTarget & {
   hidden: boolean
@@ -47,28 +41,22 @@ let doc: EventTarget & {
 let reload: Mock<() => void>
 let serve: Mock<() => Promise<Response>>
 let storage: Map<string, string>
-
 beforeEach(() => {
   vi.useFakeTimers()
   vi.resetModules()
-
   events = new EventTarget()
   vi.stubGlobal('addEventListener', events.addEventListener.bind(events))
   vi.stubGlobal('removeEventListener', events.removeEventListener.bind(events))
-
   doc = Object.assign(new EventTarget(), {
     hidden: false,
     activeElement: null,
     querySelector: () => ({ getAttribute: () => RUNNING }),
   })
   vi.stubGlobal('document', doc)
-
   reload = vi.fn()
   vi.stubGlobal('location', { reload })
-
   serve = vi.fn(() => Promise.resolve(new Response(page('/assets/index-new.js'))))
   vi.stubGlobal('fetch', serve)
-
   storage = new Map()
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => storage.get(key) ?? null,
@@ -76,29 +64,24 @@ beforeEach(() => {
     removeItem: (key: string) => storage.delete(key),
   })
 })
-
 afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
-
 async function watching(settled: () => Promise<boolean> = () => Promise.resolve(true)) {
   const { reloading } = await import('./reloading.svelte')
   const { overlays } = await import('./overlays')
   const stop = reloading.watch(settled)
   return { reloading, overlays, stop }
 }
-
 function preloadError(payload: unknown): Event {
   const event = Object.assign(new Event('vite:preloadError', { cancelable: true }), { payload })
   events.dispatchEvent(event)
   return event
 }
-
 function failedImport() {
   preloadError(new TypeError('Failed to fetch dynamically imported module: /assets/Palette-9f.js'))
 }
-
 describe('a piece that did not arrive', () => {
   test('under a newer build, reloads once the hands are off', async () => {
     const { reloading } = await watching()
@@ -110,7 +93,6 @@ describe('a piece that did not arrive', () => {
     expect(reloading.offered).toBe(false)
     expect(storage.get('orden:reloaded-for')).toBe('/assets/index-new.js')
   })
-
   test('asks the site once however many pieces failed', async () => {
     await watching()
     failedImport()
@@ -120,7 +102,6 @@ describe('a piece that did not arrive', () => {
     expect(serve).toHaveBeenCalledOnce()
     expect(reload).toHaveBeenCalledOnce()
   })
-
   test('waits for a key, and for the pause after it', async () => {
     await watching()
     failedImport()
@@ -131,7 +112,6 @@ describe('a piece that did not arrive', () => {
     await vi.advanceTimersByTimeAsync(1)
     expect(reload).toHaveBeenCalledOnce()
   })
-
   test.each([
     [
       'while a button is held',
@@ -187,7 +167,6 @@ describe('a piece that did not arrive', () => {
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
     expect(reload).toHaveBeenCalledOnce()
   })
-
   test.each([
     ['the same build', () => serve.mockImplementation(() => Promise.resolve(new Response(page(RUNNING))))],
     ['a build a reload already went for', () => storage.set('orden:reloaded-for', '/assets/index-new.js')],
@@ -199,7 +178,6 @@ describe('a piece that did not arrive', () => {
     expect(reloading.offered).toBe(true)
     expect(reload).not.toHaveBeenCalled()
   })
-
   test('goes at once when the page is out of sight', async () => {
     await watching()
     doc.hidden = true
@@ -207,7 +185,6 @@ describe('a piece that did not arrive', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(reload).toHaveBeenCalledOnce()
   })
-
   test('waits for what is owed to the disk', async () => {
     const owed = [false, true]
     const settled = vi.fn(() => Promise.resolve(owed.shift() ?? true))
@@ -219,7 +196,6 @@ describe('a piece that did not arrive', () => {
     expect(settled).toHaveBeenCalledTimes(2)
     expect(reload).toHaveBeenCalledOnce()
   })
-
   test('with the site out of reach, offers nothing and asks again when the network is back', async () => {
     serve.mockImplementationOnce(() => Promise.reject(new TypeError('Failed to fetch')))
     const { reloading } = await watching()
@@ -232,7 +208,6 @@ describe('a piece that did not arrive', () => {
     expect(serve).toHaveBeenCalledTimes(2)
     expect(reload).toHaveBeenCalledOnce()
   })
-
   test('offers Reload when what answers did not arrive either', async () => {
     vi.doMock('./reload-when', () => {
       throw new TypeError('Failed to fetch dynamically imported module')
@@ -244,7 +219,6 @@ describe('a piece that did not arrive', () => {
     expect(serve).not.toHaveBeenCalled()
     vi.doUnmock('./reload-when')
   })
-
   test('the network coming back asks nothing when nothing went missing', async () => {
     await watching()
     events.dispatchEvent(new Event('online'))
@@ -252,7 +226,6 @@ describe('a piece that did not arrive', () => {
     expect(serve).not.toHaveBeenCalled()
   })
 })
-
 describe('an error thrown inside the first step after a piece arrived', () => {
   test.each([
     ['a refusal from the backend', new Error('no such note')],
@@ -270,7 +243,6 @@ describe('an error thrown inside the first step after a piece arrived', () => {
     expect(reloading.offered).toBe(false)
     expect(reload).not.toHaveBeenCalled()
   })
-
   test('does not stand in for a missing piece when the network comes back', async () => {
     await import('./reload-when')
     await watching()
@@ -280,7 +252,6 @@ describe('an error thrown inside the first step after a piece arrived', () => {
     expect(serve).not.toHaveBeenCalled()
   })
 })
-
 describe('a piece that did not arrive, as each engine says it', () => {
   test.each([
     ['Chromium', new TypeError('Failed to fetch dynamically imported module: /assets/Palette-9f.js')],

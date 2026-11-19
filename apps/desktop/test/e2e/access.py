@@ -1,23 +1,18 @@
 import json
 import os
-
 from playwright.sync_api import Browser
-
 import harness
 from harness import Drive
 from settling import HIDE_CARET, steady
 
 LABEL = os.environ.get("ORDEN_LABEL", "after")
-
 DRIVE = Drive(__file__, shots=f"access/{LABEL}")
 say, wrong = DRIVE.say, DRIVE.wrong
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 AXE = APP / "node_modules" / "axe-core" / "axe.min.js"
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
@@ -26,14 +21,12 @@ PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 WINDOWS = [
     ("desktop-light", 1440, 900, DESKTOP_AGENT, False, "light"),
     ("desktop-dark", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("phone-light", 390, 844, PHONE_AGENT, True, "light"),
     ("phone-dark", 390, 844, PHONE_AGENT, True, "dark"),
 ]
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -61,12 +54,10 @@ async () => {
   return ws.files.map((one) => one.name)
 }
 """
-
 FOCUSABLE = (
     "button, a[href], input, select, textarea, summary,"
     " [tabindex]:not([tabindex='-1']), [contenteditable='true']"
 )
-
 AXE_RUN = """
 async () => {
   const found = await window.axe.run(document, {
@@ -95,7 +86,6 @@ async () => {
   return { counts, named, quieter }
 }
 """
-
 RINGS = f"""
 () => {{
   const within = (node) => node.getClientRects().length > 0 && !node.closest('[inert]')
@@ -147,7 +137,6 @@ RINGS = f"""
   return out
 }}
 """
-
 UNNAMED = f"""
 () => {{
   const within = (node) => node.getClientRects().length > 0 && !node.closest('[inert]')
@@ -170,13 +159,11 @@ UNNAMED = f"""
     }})
 }}
 """
-
 HEADINGS = """
 () => [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
   .filter((one) => one.getClientRects().length > 0 || one.classList.contains('orden-said'))
   .map((one) => `${one.tagName.toLowerCase()} ${(one.textContent ?? '').trim().slice(0, 28)}`)
 """
-
 LANDMARKS = """
 () => [...document.querySelectorAll('main, header, footer, nav, aside, article, [role]')]
   .filter((one) => ['main', 'header', 'footer', 'nav', 'aside', 'article'].includes(one.tagName.toLowerCase()))
@@ -185,7 +172,6 @@ LANDMARKS = """
     return `${one.tagName.toLowerCase()}${name ? ` "${name.slice(0, 24)}"` : ' (unnamed)'}`
   })
 """
-
 WHERE = """
 () => {
   const at = document.activeElement
@@ -199,7 +185,6 @@ WHERE = """
   return `${region} | ${at.tagName.toLowerCase()}.${cls} | ${JSON.stringify(named)}`
 }
 """
-
 CLIPPED = """
 () => {
   const root = document.documentElement
@@ -219,7 +204,6 @@ CLIPPED = """
   return { sideways, over: [...new Set(over)].slice(0, 8) }
 }
 """
-
 TARGETS = """
 () => {
   const floor = parseFloat(
@@ -240,7 +224,6 @@ TARGETS = """
   return { floor, small: [...new Set(small)] }
 }
 """
-
 STILL = """
 () => {
   const style = getComputedStyle(document.documentElement)
@@ -249,18 +232,13 @@ STILL = """
   return { said, asked: window.matchMedia('(prefers-reduced-motion: reduce)').matches }
 }
 """
-
 TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR", "favicon")
-
 KNOWN = {
     "scrollable-region-focusable": "the note is reached by being written in",
     "color-contrast": "the ink on an accent fill is a palette decision",
 }
-
 axe_table: dict[str, dict] = {}
-
 class Window:
-
     def __init__(self, browser: Browser, name: str, width: int, height: int,
                  agent: str, finger: bool, scheme: str, **extra: object) -> None:
         self.name = name
@@ -293,7 +271,6 @@ class Window:
         self.page.wait_for_timeout(700)
         DRIVE.inject(self.page, AXE)
         self.page.wait_for_function("() => !!window.axe", timeout=20000)
-
     def listen(self) -> None:
         self.page.on("pageerror", lambda error: wrong(f"[{self.name}] page error: {error}"))
         self.page.on(
@@ -302,25 +279,20 @@ class Window:
             if message.type == "error" and not any(one in message.text for one in TOLERATED)
             else None,
         )
-
     def close(self) -> None:
         self.context.close()
-
     def shot(self, tag: str) -> None:
         SHOTS.mkdir(parents=True, exist_ok=True)
         picture = steady(self.page, self.page.screenshot, say, f"[{self.name}] {tag}")
         (SHOTS / f"{self.name}-{tag}.png").write_bytes(picture)
-
     def axe(self, surface: str) -> dict:
         found = self.page.evaluate(AXE_RUN)
         counts = found["counts"]
         key = f"{self.name}/{surface}"
         axe_table[key] = found
-
         line = " ".join(f"{kind[0]}{counts[kind]}" for kind in
                         ("critical", "serious", "moderate", "minor"))
         say(f"[{self.name}] {surface:<18} axe {line}")
-
         left = 0
         for one in found["named"]:
             excused = KNOWN.get(one["id"])
@@ -328,22 +300,17 @@ class Window:
             say(f"      {one['impact']:<8} {one['id']} x{one['nodes']} {one['where']}{mark}")
             if not excused:
                 left += one["nodes"]
-
         if left:
             wrong(f"[{self.name}] {surface}: {left} serious or critical")
-
         return found
-
     def rings(self, surface: str) -> None:
         self.page.keyboard.press("Tab")
         self.page.wait_for_timeout(60)
         found = self.page.evaluate(RINGS)
-
         def answers(one: dict) -> bool:
             if one["ring"] or one["turned"] or one["haloed"] or one["lit"]:
                 return True
             return bool(one["caret"])
-
         blind = [
             f"{one['tag']}.{one['cls']} {one['said']!r}"
             for one in found
@@ -351,11 +318,9 @@ class Window:
         ]
         if blind:
             wrong(f"[{self.name}] {surface}: nothing says the keyboard is here: {blind[:6]}")
-
         rings = sorted({one["ring"] for one in found if one["ring"]})
         if len(rings) > 1:
             wrong(f"[{self.name}] {surface}: more than one ring: {rings}")
-
         kinds = {
             "ring": sum(1 for one in found if one["ring"]),
             "border": sum(1 for one in found if one["turned"] and not one["ring"]),
@@ -367,57 +332,46 @@ class Window:
             ),
         }
         say(f"[{self.name}] {surface:<18} {len(found)} stops, {kinds}, ring {rings or ['-']}")
-
     def unnamed(self, surface: str) -> None:
         found = self.page.evaluate(UNNAMED)
         if found:
             wrong(f"[{self.name}] {surface}: controls with no name: {found[:8]}")
-
     def look(self, surface: str) -> None:
         self.axe(surface)
         self.unnamed(surface)
         self.rings(surface)
         self.shot(surface)
-
 def press(window: Window, key: str, wait: int = 300) -> str:
     window.page.keyboard.press(key)
     window.page.wait_for_timeout(wait)
     return window.page.evaluate(WHERE)
-
 def region(window: Window) -> str:
     return window.page.evaluate(
         "() => document.activeElement?.closest('[data-region]')?.dataset.region ?? '-'"
     )
-
 def open_panel(window: Window) -> None:
     if not window.page.evaluate("() => !!window.ordenApp.workspace.panel"):
         window.page.keyboard.press("Control+Shift+L")
         window.page.wait_for_timeout(450)
-
 def into_tree(window: Window) -> bool:
     page = window.page
     if region(window) != "list":
         page.keyboard.press("Control+Shift+E")
         page.wait_for_timeout(550)
-
     for _ in range(4):
         if page.evaluate("() => !!document.activeElement?.matches('.row[data-path]')"):
             return True
         page.keyboard.press("Tab")
         page.wait_for_timeout(220)
-
     return page.evaluate("() => !!document.activeElement?.matches('.row[data-path]')")
-
 def opens(window: Window, how: str, wait: int = 600) -> bool:
     try:
         window.page.evaluate(how)
     except Exception as error:  # noqa: BLE001 - a surface this build has not got
         say(f"[{window.name}] skipped: {str(error).splitlines()[0][:90]}")
         return False
-
     window.page.wait_for_timeout(wait)
     return True
-
 STILL_UP = """
 () => {
   const up = [...document.querySelectorAll(
@@ -427,23 +381,19 @@ STILL_UP = """
   return up.map((node) => (node.className ?? '').toString().split(' ')[0] || node.tagName)
 }
 """
-
 def shut(window: Window, times: int = 5) -> None:
     for _ in range(times):
         if not window.page.evaluate(STILL_UP):
             return
         window.page.keyboard.press("Escape")
         window.page.wait_for_timeout(320)
-
     left = window.page.evaluate(STILL_UP)
     if left:
         wrong(f"[{window.name}] {times} presses of Escape left these up: {left}")
     window.page.evaluate("() => { window.ordenApp.settings.open = false }")
-
 def layer(window: Window, surface: str, how: str, wait: int = 600) -> None:
     if not opens(window, how, wait):
         return
-
     try:
         window.page.wait_for_selector(
             "[role=dialog], [role=menu], .orden-screen, .sheet, .palette",
@@ -453,21 +403,17 @@ def layer(window: Window, surface: str, how: str, wait: int = 600) -> None:
     except Exception:  # noqa: BLE001 - said below rather than walked out on
         say(f"[{window.name}] {surface}: nothing came up to look at")
         return
-
     window.look(surface)
     shut(window)
-
 def drive(browser: Browser, name: str, width: int, height: int,
           agent: str, finger: bool, scheme: str) -> None:
     window = Window(browser, name, width, height, agent, finger, scheme)
     page = window.page
-
     try:
         say(f"[{name}] --- the shell ---")
         say(f"[{name}] landmarks: {page.evaluate(LANDMARKS)}")
         say(f"[{name}] headings:  {page.evaluate(HEADINGS)}")
         window.look("launch")
-
         for chord, panel in [
             ("Control+Shift+E", "files"),
             ("Control+Shift+O", "outline"),
@@ -484,10 +430,8 @@ def drive(browser: Browser, name: str, width: int, height: int,
                 say(f"[{name}] {panel}: the chord opened nothing")
                 continue
             window.look(f"panel-{panel}")
-
         say(f"[{name}] --- the layers ---")
         open_panel(window)
-
         page.keyboard.press("Control+O")
         page.wait_for_timeout(600)
         window.look("palette")
@@ -495,7 +439,6 @@ def drive(browser: Browser, name: str, width: int, height: int,
         page.wait_for_timeout(500)
         window.look("palette-commands")
         shut(window)
-
         if not into_tree(window):
             say(f"[{name}] row-menu: the keyboard never reached a row of the tree")
         page.keyboard.press("Shift+F10")
@@ -505,13 +448,11 @@ def drive(browser: Browser, name: str, width: int, height: int,
         else:
             say(f"[{name}] row-menu: Shift+F10 opened nothing")
         shut(window)
-
         page.keyboard.press("Control+Shift+Space")
         page.wait_for_timeout(650)
         if page.evaluate("() => !!document.querySelector('[role=menu]')"):
             window.look("spaces")
         shut(window)
-
         layer(window, "settings", "() => window.ordenApp.settings.show()")
         layer(window, "shortcuts", "() => window.ordenApp.settings.show('shortcuts')")
         layer(window, "appearance", "() => window.ordenApp.settings.show('appearance')")
@@ -540,14 +481,12 @@ def drive(browser: Browser, name: str, width: int, height: int,
             }""",
             900,
         )
-
         say(f"[{name}] --- what is read ---")
         if opens(window, "() => window.ordenApp.workspace.toggleReading()", 900):
             window.look("reading")
             say(f"[{name}] reading headings: {page.evaluate(HEADINGS)}")
             say(f"[{name}] reading landmarks: {page.evaluate(LANDMARKS)}")
             opens(window, "() => window.ordenApp.workspace.toggleReading()", 600)
-
         if opens(window, "() => void window.ordenApp.workspace.createCanvas()", 1400):
             page.keyboard.press("Escape")
             try:
@@ -564,23 +503,19 @@ def drive(browser: Browser, name: str, width: int, height: int,
                 say(f"[{name}] the plane says: {said!r}")
             else:
                 say(f"[{name}] canvas: the plane never came up")
-
         window.close()
     except Exception:
         window.close()
         raise
-
 def walk(browser: Browser) -> None:
     window = Window(browser, "walk", 1440, 900, DESKTOP_AGENT, False, "dark")
     page = window.page
-
     try:
         open_panel(window)
         page.evaluate(
             "() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()"
         )
         page.wait_for_timeout(250)
-
         say("--- F6 round the regions and back ---")
         forwards = []
         for _ in range(9):
@@ -591,7 +526,6 @@ def walk(browser: Browser) -> None:
             wrong(f"F6 walked {len(set(forwards))} regions: {forwards}")
         if forwards[0] not in forwards[1:]:
             wrong("F6 never came back round to where it started")
-
         backwards = []
         for _ in range(4):
             press(window, "Shift+F6")
@@ -599,7 +533,6 @@ def walk(browser: Browser) -> None:
         say(f"    backwards: {' -> '.join(backwards)}")
         if backwards == forwards[:4]:
             wrong("Shift+F6 walks the same way round as F6")
-
         say("--- Tab stops once per list, not once per row ---")
         page.keyboard.press("Control+Shift+E")
         page.wait_for_timeout(600)
@@ -609,25 +542,21 @@ def walk(browser: Browser) -> None:
         say(f"    the panel holds {stops} tab stops")
         if stops > 4:
             wrong(f"the open panel puts {stops} things in the tab sequence")
-
         say("--- the arrows, the ends and a spelled name ---")
         if not into_tree(window):
             wrong("the keyboard never reached a row of the file list")
-
         landed = []
         for key in ["ArrowDown", "ArrowDown", "ArrowUp", "End", "Home"]:
             landed.append(f"{key}={press(window, key).split(' | ')[-1]}")
         say(f"    {'  '.join(landed)}")
         if len({one.split('=')[1] for one in landed}) < 3:
             wrong(f"the arrows moved nowhere in the list: {landed}")
-
         page.keyboard.type("re", delay=70)
         page.wait_for_timeout(400)
         spelled = page.evaluate(WHERE)
         say(f"    typed 're' -> {spelled}")
         if "re" not in spelled.lower():
             wrong(f"spelling a name landed on {spelled}")
-
         say("--- every layer hands the keyboard back to what opened it ---")
         for chord, what in [
             ("Control+O", "the palette"),
@@ -638,12 +567,10 @@ def walk(browser: Browser) -> None:
         ]:
             into_tree(window)
             from_here = page.evaluate(WHERE)
-
             page.keyboard.press(chord)
             page.wait_for_timeout(700)
             inside = page.evaluate(WHERE)
             depth = page.evaluate("() => window.ordenApp.overlays?.depth ?? -1")
-
             page.keyboard.press("Tab")
             page.wait_for_timeout(250)
             held = page.evaluate(
@@ -652,24 +579,19 @@ def walk(browser: Browser) -> None:
             )
             if not held:
                 wrong(f"{what}: Tab walked out of it")
-
             page.keyboard.press("Escape")
             page.wait_for_timeout(800)
             back = page.evaluate(WHERE)
             say(f"    {chord:<20} {what}: depth {depth}, {inside.split(' | ')[1]}")
             say(f"        Escape -> {back.split(' | ')[1]} (opened from {from_here.split(' | ')[1]})")
-
             if page.evaluate("() => document.activeElement === document.body"):
                 wrong(f"{what}: Escape left the keyboard on nothing")
-
         window.close()
     except Exception:
         window.close()
         raise
-
 def extras(browser: Browser) -> None:
     walk(browser)
-
     say("--- 200% zoom, which is half the room ---")
     window = Window(browser, "zoom", 720, 450, DESKTOP_AGENT, False, "light")
     try:
@@ -685,7 +607,6 @@ def extras(browser: Browser) -> None:
         window.axe("zoom-200")
     finally:
         window.close()
-
     say("--- a system asking for more contrast ---")
     window = Window(
         browser, "contrast", 1440, 900, DESKTOP_AGENT, False, "dark", contrast="more"
@@ -696,7 +617,6 @@ def extras(browser: Browser) -> None:
         window.look("contrast-more")
     finally:
         window.close()
-
     say("--- a system asking for less movement ---")
     window = Window(
         browser, "still", 1440, 900, DESKTOP_AGENT, False, "light", reduced_motion="reduce"
@@ -712,7 +632,6 @@ def extras(browser: Browser) -> None:
         window.shot("reduced-motion")
     finally:
         window.close()
-
     say("--- every target a thumb has to hit ---")
     window = Window(browser, "thumb", 390, 844, PHONE_AGENT, True, "light")
     try:
@@ -721,17 +640,14 @@ def extras(browser: Browser) -> None:
         found = window.page.evaluate(TARGETS)
         say(f"    the floor is {found['floor']}px; under it: {found['small'] or 'nothing'}")
         window.shot("touch-targets")
-
         left = [one for one in found["small"] if "orden-fold-hinge" not in one]
         if left:
             wrong(f"under the touch floor: {left[:8]}")
     finally:
         window.close()
-
 def main() -> int:
     if not AXE.exists():
         raise SystemExit(f"axe-core is not here: {AXE}. Run pnpm install.")
-
     with DRIVE.session() as browser:
         for one in WINDOWS:
             say(f"=== {one[0]} ===")
@@ -739,16 +655,12 @@ def main() -> int:
                 drive(browser, *one)
             except Exception as error:  # noqa: BLE001
                 wrong(f"[{one[0]}] the walk stopped: {str(error).splitlines()[0][:120]}")
-
         say("=== the window itself ===")
         try:
             extras(browser)
         except Exception as error:  # noqa: BLE001
             wrong(f"[extras] stopped: {str(error).splitlines()[0][:120]}")
-
     (SHOTS / "axe.json").write_text(json.dumps(axe_table, indent=2), encoding="utf-8")
     say(f"axe counts in {SHOTS / 'axe.json'}")
-
     return DRIVE.verdict("every surface answers a keyboard, and axe finds nothing serious")
-
 raise SystemExit(main())

@@ -5,7 +5,6 @@ export interface SettingOption {
   label: string
   note?: string
 }
-
 export interface SettingCommon {
   label: string
   hint: string
@@ -15,7 +14,6 @@ export interface SettingCommon {
   check?: (value: string) => string | null
   shown?: () => boolean
 }
-
 export type SettingControl =
   | {
       kind: 'switch'
@@ -52,28 +50,22 @@ export type SettingControl =
       preview?(value: number): void
       set(value: number): void
     }
-
 export type SettingField = SettingCommon & SettingControl
-
 export interface SettingFields {
   readonly section: SettingsSectionId
   readonly group: string
   load(): Promise<() => readonly SettingField[]>
 }
-
 export interface SettingsPartHost {
   detail(open: boolean): void
 }
-
 export interface SettingsPartView {
   show(target: unknown, host: SettingsPartHost): () => void
 }
-
 export interface SettingPlace {
   readonly label: string
   readonly text: readonly string[]
 }
-
 export interface SettingsPart {
   readonly section: SettingsSectionId
   readonly title?: string
@@ -82,7 +74,6 @@ export interface SettingsPart {
   places?(): readonly SettingPlace[]
   load(): Promise<SettingsPartView>
 }
-
 export interface PaletteVisit {
   readonly url: string
   readonly title: string
@@ -90,13 +81,11 @@ export interface PaletteVisit {
   readonly typed: number
   readonly last: number
 }
-
 export interface PaletteVisits {
   list(): readonly PaletteVisit[]
   forget(url: string): void
   opened(tab: string, typed: string, url: string): void
 }
-
 export interface PaletteHost {
   readonly id: string
   readonly name: string
@@ -105,13 +94,11 @@ export interface PaletteHost {
   readonly group: string | null
   readonly colour: string | null
 }
-
 export interface PaletteDestination {
   readonly user: string | null
   readonly hostname: string
   readonly port: number | null
 }
-
 export interface PaletteHosts {
   list(): Promise<readonly PaletteHost[]>
   wanted(term: string): { readonly wanted: PaletteDestination; readonly said: string } | null
@@ -119,7 +106,6 @@ export interface PaletteHosts {
   openAll(ids: readonly string[]): void
   connect(wanted: PaletteDestination): void
 }
-
 export interface PaletteMessage {
   readonly chat: string
   readonly id: string
@@ -127,18 +113,15 @@ export interface PaletteMessage {
   readonly line: string
   readonly where: readonly string[]
 }
-
 export interface PaletteOpenHow {
   activate?: boolean
   preview?: boolean
   beside?: boolean
 }
-
 export interface PaletteMessages {
   hits(words: string): Promise<{ readonly rows: readonly PaletteMessage[]; readonly only: boolean }>
   open(path: string, message: string, how: PaletteOpenHow): void
 }
-
 export interface PaletteSetting {
   readonly section: SettingsSectionId
   readonly label: string
@@ -151,27 +134,22 @@ export interface PaletteSetting {
   value(): string | null
   readonly press: (() => void) | null
 }
-
 export interface PaletteSettings {
   rows(view?: object): readonly PaletteSetting[]
   show(section: SettingsSectionId, label: string | null): void
 }
-
 export interface PaletteKinds {
   readonly visits: PaletteVisits
   readonly hosts: PaletteHosts
   readonly messages: PaletteMessages
   readonly settings: PaletteSettings
 }
-
 export type PaletteKindId = keyof PaletteKinds
-
 export const NO_VISITS: PaletteVisits = {
   list: () => [],
   forget: () => undefined,
   opened: () => undefined,
 }
-
 export const NO_HOSTS: PaletteHosts = {
   list: () => Promise.resolve([]),
   wanted: () => null,
@@ -179,24 +157,20 @@ export const NO_HOSTS: PaletteHosts = {
   openAll: () => undefined,
   connect: () => undefined,
 }
-
 export const NO_MESSAGES: PaletteMessages = {
   hits: () => Promise.resolve({ rows: [], only: false }),
   open: () => undefined,
 }
-
 export const NO_SETTINGS: PaletteSettings = {
   rows: () => [],
   show: () => undefined,
 }
-
 const NONE: PaletteKinds = {
   visits: NO_VISITS,
   hosts: NO_HOSTS,
   messages: NO_MESSAGES,
   settings: NO_SETTINGS,
 }
-
 const kindLoads = new Map<PaletteKindId, () => Promise<PaletteKinds[PaletteKindId]>>()
 const kindsLoaded = new Map<PaletteKindId, PaletteKinds[PaletteKindId]>()
 const fieldSets = new Set<SettingFields>()
@@ -204,12 +178,10 @@ const fieldsLoaded = new Map<SettingFields, () => readonly SettingField[]>()
 const parts = new Set<SettingsPart>()
 const features = new Set<() => Promise<unknown>>()
 const featuresLoaded = new WeakSet<() => Promise<unknown>>()
-
 export function registerFeature(load: () => Promise<unknown>): () => void {
   features.add(load)
   return () => void features.delete(load)
 }
-
 export function registerPaletteKind<Id extends PaletteKindId>(
   id: Id,
   load: () => Promise<PaletteKinds[Id]>,
@@ -222,10 +194,8 @@ export function registerPaletteKind<Id extends PaletteKindId>(
     kindsLoaded.delete(id)
   }
 }
-
 export const paletteKind = <Id extends PaletteKindId>(id: Id): PaletteKinds[Id] =>
   (kindsLoaded.get(id) as PaletteKinds[Id] | undefined) ?? NONE[id]
-
 export function registerSettingFields(fields: SettingFields): () => void {
   fieldSets.add(fields)
   return () => {
@@ -233,20 +203,16 @@ export function registerSettingFields(fields: SettingFields): () => void {
     fieldsLoaded.delete(fields)
   }
 }
-
 export const settingFieldsIn = (section: SettingsSectionId, group: string): SettingField[] =>
   [...fieldSets]
     .filter((one) => one.section === section && one.group === group)
     .flatMap((one) => [...(fieldsLoaded.get(one)?.() ?? [])])
-
 export function registerSettingsPart(part: SettingsPart): () => void {
   parts.add(part)
   return () => void parts.delete(part)
 }
-
 export const settingsPartsIn = (section?: SettingsSectionId): SettingsPart[] =>
   [...parts].filter((one) => section === undefined || one.section === section)
-
 export async function registered(): Promise<void> {
   await Promise.all(
     [...features]

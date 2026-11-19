@@ -3,19 +3,15 @@ import { type DatabaseDump, dump, existing, finished, shaped } from '../../../ha
 export const FORMER_NAME = 'nib'
 const ANSWERED_WITHIN = 400
 const me = crypto.randomUUID()
-
 type Heard = 'nobody' | 'older' | 'staying'
-
 const alive = new Map<string, Promise<Heard>>()
 const staying = new Set<string>()
 let answering: BroadcastChannel | null = null
-
 function formerTabOpen(channel: string, from: string): Promise<Heard> {
   const asked = alive.get(from) ?? askedFormer(channel, from)
   alive.set(from, asked)
   return asked
 }
-
 function askedFormer(channel: string, from: string): Promise<Heard> {
   if (typeof BroadcastChannel !== 'function') return Promise.resolve('nobody')
   return new Promise((resolve) => {
@@ -37,7 +33,6 @@ function askedFormer(channel: string, from: string): Promise<Heard> {
     line.postMessage({ kind: 'hello', from: me })
   })
 }
-
 export async function databaseName(from: string, to: string, former = FORMER_NAME): Promise<string> {
   if (from === to || typeof indexedDB === 'undefined') return to
   if (!(await existing(from).then(closed))) return to
@@ -55,7 +50,6 @@ export async function databaseName(from: string, to: string, former = FORMER_NAM
   answerAs(channel, from)
   return from
 }
-
 function answerAs(channel: string, from: string): void {
   staying.add(from)
   if (answering || typeof BroadcastChannel !== 'function') return
@@ -68,12 +62,10 @@ function answerAs(channel: string, from: string): void {
     }
   }
 }
-
 function closed(db: IDBDatabase | null): boolean {
   db?.close()
   return db !== null
 }
-
 export async function carryDatabase(
   from: string,
   to: string,
@@ -90,7 +82,6 @@ export async function carryDatabase(
   await removed(from)
   return true
 }
-
 async function holdsAll(old: DatabaseDump, to: string): Promise<boolean> {
   const db = await existing(to)
   if (!db) return false
@@ -111,12 +102,10 @@ async function holdsAll(old: DatabaseDump, to: string): Promise<boolean> {
     db.close()
   }
 }
-
 async function merged(old: DatabaseDump, to: string): Promise<void> {
   const there = await existing(to)
   const version = Math.max(old.version, there?.version ?? 1)
   there?.close()
-
   const db = await new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(to, version)
     request.onupgradeneeded = () => shaped(request, old)
@@ -124,7 +113,6 @@ async function merged(old: DatabaseDump, to: string): Promise<void> {
     request.onerror = () => reject(request.error ?? new Error(`${to} would not open`))
     request.onblocked = () => reject(new Error(`another tab holds ${to} open`))
   })
-
   try {
     const names = old.stores.map((store) => store.name).filter((name) => db.objectStoreNames.contains(name))
     if (names.length === 0) return
@@ -153,7 +141,6 @@ async function merged(old: DatabaseDump, to: string): Promise<void> {
     db.close()
   }
 }
-
 function keptBeside(
   store: IDBObjectStore,
   indexes: readonly { name: string; keyPath: string | string[] }[],
@@ -166,39 +153,32 @@ function keptBeside(
     store.put(row)
     return
   }
-
   const asked = store.index(by.name).getAll(near as IDBValidKey)
   asked.onsuccess = () => {
     const already = (asked.result as unknown[]).some((one) => sameRow(withoutKey(one, keyPath), row))
     if (!already) store.put(row)
   }
 }
-
 function valueAt(row: unknown, key: string): unknown {
   return typeof row === 'object' && row !== null ? (row as Record<string, unknown>)[key] : undefined
 }
-
 function changedLater(value: unknown, than: unknown): boolean {
   const at = modifiedOf(value)
   const other = modifiedOf(than)
   return at !== null && other !== null && at > other
 }
-
 function modifiedOf(row: unknown): number | null {
   if (typeof row !== 'object' || row === null) return null
   const modified = (row as { modified?: unknown }).modified
   return typeof modified === 'number' ? modified : null
 }
-
 function sameRow(one: unknown, other: unknown): boolean {
   return JSON.stringify(one) === JSON.stringify(other)
 }
-
 function withoutKey(value: unknown, keyPath: string | string[] | null): unknown {
   if (typeof keyPath !== 'string' || typeof value !== 'object' || value === null) return value
   return Object.fromEntries(Object.entries(value).filter(([name]) => name !== keyPath))
 }
-
 function removed(name: string): Promise<void> {
   return new Promise((resolve) => {
     const request = indexedDB.deleteDatabase(name)

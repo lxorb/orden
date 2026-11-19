@@ -27,27 +27,22 @@ export function startDrag(event: DragEvent, paths: string[]) {
   )
   webPages().carryIn(paths)
 }
-
 export function endDrag() {
   webPages().carriedIn()
   carriedNothing()
 }
-
 const takes = (transfer: DataTransfer | null): boolean =>
   isExplorerDrag(transfer) || isTreeDrag(transfer) || isFileDrop(transfer)
-
 export function dropHow(event: DragEvent): 'copy' | 'move' {
   const copying = platform() === 'macos' ? event.altKey : event.ctrlKey
   return copying || isFileDrop(event.dataTransfer) ? 'copy' : 'move'
 }
-
 export function over(event: DragEvent): boolean {
   if (!takes(event.dataTransfer)) return false
   event.preventDefault()
   if (event.dataTransfer) event.dataTransfer.dropEffect = dropHow(event)
   return true
 }
-
 export function dropInto(view: ExplorerView, event: DragEvent, folder: string) {
   const transfer = event.dataTransfer
   if (!transfer || !takes(transfer)) return
@@ -64,9 +59,7 @@ export function dropInto(view: ExplorerView, event: DragEvent, folder: string) {
   carriedNothing()
   if (paths.length) void carry(view, paths, folder, how)
 }
-
 export const WRITTEN_AT_ONCE = 8 * 1024 * 1024
-
 async function* pieces(file: PickedFile): AsyncGenerator<Uint8Array> {
   if (!file.slice || file.size === undefined) {
     yield new Uint8Array(await file.arrayBuffer())
@@ -76,7 +69,6 @@ async function* pieces(file: PickedFile): AsyncGenerator<Uint8Array> {
     yield new Uint8Array(await file.slice(at, at + WRITTEN_AT_ONCE).arrayBuffer())
   }
 }
-
 export async function writeInto(view: ExplorerView, files: readonly PickedFile[], folder: string) {
   if (!files.length || !changeable(view)) return
   if (inASpace(folder)) {

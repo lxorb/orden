@@ -9,7 +9,6 @@ const read = (path: string) =>
   readFileSync(fileURLToPath(new URL(path, new URL('../../', import.meta.url))), {
     encoding: 'utf8',
   })
-
 const LIB = fileURLToPath(new URL('../../', import.meta.url))
 const sources = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((one) =>
@@ -19,30 +18,24 @@ const components = sources(LIB).map((path) => ({
   path: path.slice(LIB.length),
   text: readFileSync(path, { encoding: 'utf8' }),
 }))
-
 const rule = (css: string, selector: string) => {
   const at = css.lastIndexOf(`${selector} {`)
   expect(at, selector).toBeGreaterThan(-1)
   return css.slice(at, css.indexOf('}', at))
 }
-
 describe('the arrow', () => {
   const body = render(Outward).body
-
   test('is the shared mark, glued to the word before it', () => {
     expect(body).toContain('orden-mark')
     expect(body).toContain('⁠<svg')
   })
-
   test('points along the line', () => {
     expect(body).toContain('d="M6 3h7v7M13 3L5 11"')
   })
-
   test('is a drawing a screen reader passes over: the link says where it goes', () => {
     expect(body).toContain('aria-hidden="true"')
   })
 })
-
 describe('every link that leaves the app', () => {
   test('carries the one arrow, not a drawing or a character of its own', () => {
     for (const one of components) {
@@ -52,13 +45,11 @@ describe('every link that leaves the app', () => {
     }
     expect(components.filter((one) => one.text.includes('<Outward />')).length).toBeGreaterThan(2)
   })
-
   test('writes it straight after the last word: a space there would widen the gap', () => {
     for (const one of components) {
       expect(one.text, one.path).not.toMatch(/\s<Outward\b/)
     }
   })
-
   test('is a run of text that leaves the end of its line to the mark', () => {
     for (const one of [
       rule(read('./settings/src/SettingsPanel.svelte'), '.hint.caption .link'),
@@ -70,10 +61,8 @@ describe('every link that leaves the app', () => {
     }
   })
 })
-
 describe('the mark', () => {
   const base = read('../../../../packages/themes/src/base.css')
-
   test('sits on the middle of the letters, and takes no room on the line', () => {
     const glyph = rule(base, '.orden-mark > :first-child')
     expect(glyph).toContain('vertical-align: middle')
@@ -81,7 +70,6 @@ describe('the mark', () => {
     expect(rule(base, '.orden-mark')).toContain('white-space: nowrap')
     expect(rule(base, ':has(> .orden-mark)')).toContain('padding-inline-end')
   })
-
   test('is what the `?` and the arrow are, with no placing of their own', () => {
     for (const path of ['./ui-controls/src/Hint.svelte', './ui-controls/src/Outward.svelte']) {
       const text = read(path)

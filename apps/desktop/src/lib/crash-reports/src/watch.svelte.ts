@@ -7,13 +7,9 @@ import { crashReports } from './choice.svelte'
 import { nativeSending, sendWaiting } from './send'
 
 const ALIVE = 2000
-
 const SHAPED = 2000
-
 const AGAIN = 6 * 60 * 60 * 1000
-
 const TOLD = 'orden://crash-report'
-
 function kindsOf(tabs: readonly { kind: string }[]): Record<string, number> {
   const kinds: Record<string, number> = {}
   for (const tab of tabs) {
@@ -21,7 +17,6 @@ function kindsOf(tabs: readonly { kind: string }[]): Record<string, number> {
   }
   return kinds
 }
-
 export function watchForCrashes(sending: boolean): () => void {
   const alive = () => {
     void invoke('crash_alive', { visible: document.visibilityState === 'visible' }).catch(() => undefined)
@@ -30,7 +25,6 @@ export function watchForCrashes(sending: boolean): () => void {
   const beating = setInterval(alive, ALIVE)
   document.addEventListener('visibilitychange', alive)
   const unheard = heardElsewhere([CRASH_REPORTS], () => crashReports.heard())
-
   let shaping: ReturnType<typeof setTimeout> | undefined
   const stopShape = $effect.root(() => {
     $effect(() => {
@@ -41,7 +35,6 @@ export function watchForCrashes(sending: boolean): () => void {
       }, SHAPED)
     })
   })
-
   const stopWatching = () => {
     clearInterval(beating)
     clearTimeout(shaping)
@@ -50,7 +43,6 @@ export function watchForCrashes(sending: boolean): () => void {
     unheard()
   }
   if (!sending) return stopWatching
-
   const how = nativeSending(
     () => crashReports.on,
     () => updates.channel,
@@ -71,7 +63,6 @@ export function watchForCrashes(sending: boolean): () => void {
   const again = setInterval(send, AGAIN)
   let unlisten: (() => void) | null = null
   void listen(TOLD, send).then((stop) => (unlisten = stop))
-
   return () => {
     stopWatching()
     clearInterval(again)

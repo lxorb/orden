@@ -15,13 +15,11 @@
   import { groupLabel, noteNames, propertyName, summaryName } from './words'
 
   const { kit }: { kit: Kit } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const columns = $derived(live.columns)
   const property = $derived(view?.groupBy?.property)
   const summed = $derived(columns.some((column) => view?.summaries[column]))
-
   type Line =
     | { kind: 'head'; id: string; label: string; count: number }
     | { kind: 'row'; id: string; row: Row }
@@ -46,10 +44,8 @@
     }
     return out
   })
-
   const tall = $derived(view?.orden.lines ?? 1)
   const frozen = $derived(Math.min(view?.orden.freeze ?? 0, columns.length))
-
   const widths = $derived.by((): Record<string, number> => {
     const said = view?.options.columnSize
     if (!said || typeof said !== 'object' || Array.isArray(said)) return {}
@@ -66,7 +62,6 @@
     }
     return out
   })
-
   let body = $state<HTMLElement>()
   const win = new ListView()
   $effect(() => {
@@ -85,11 +80,9 @@
       overscan: 10,
     }),
   )
-
   let at = $state<{ line: number; column: number } | null>(null)
   let editing = $state(false)
   const cursor = $derived(at ?? { line: lines.findIndex((line) => line.kind === 'row'), column: 0 })
-
   function sortBy(column: string) {
     kit.change((base, index) => {
       const first = base.views[index]?.sort[0]
@@ -97,7 +90,6 @@
       return setSort(base, index, next === null ? [] : [{ property: column, direction: next }])
     })
   }
-
   function headMenu(event: MouseEvent, column: string) {
     const base = live.base
     if (!base) return
@@ -105,7 +97,6 @@
       title: propertyName(column, displayName(base, column)),
     })
   }
-
   function resize(event: PointerEvent, column: string) {
     event.preventDefault()
     event.stopPropagation()
@@ -131,7 +122,6 @@
     window.addEventListener('pointerup', up)
     window.addEventListener('pointercancel', up)
   }
-
   function reorder(event: PointerEvent, column: string) {
     if (event.button !== 0 || (event.target as HTMLElement).closest('.grip')) return
     const startX = event.clientX
@@ -165,7 +155,6 @@
     window.addEventListener('pointerup', up)
     window.addEventListener('pointercancel', up)
   }
-
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (editing || keyElsewhere(event, event.currentTarget)) return
     const rowsAt = lines.length
@@ -187,7 +176,6 @@
       editing = true
     }
   }
-
   const summaryOf = (column: string, group?: Group) => {
     const value = (group ?? live.answer)?.summaries[column]
     return value === undefined ? '' : valueText(value, live.today)
@@ -323,14 +311,12 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .heads,
   .line,
   .sums {
     display: grid;
     grid-template-columns: var(--columns);
   }
-
   .heads {
     position: sticky;
     top: 0;
@@ -338,7 +324,6 @@
     border-bottom: 1px solid var(--line);
     background: var(--bg);
   }
-
   .head {
     position: relative;
     display: flex;
@@ -347,7 +332,6 @@
     height: var(--row-height);
     border-inline-end: 1px solid var(--line);
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -364,23 +348,19 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   @media (hover: hover) {
     .name:hover {
       color: var(--text-strong);
     }
   }
-
   .name:disabled {
     opacity: 1;
     cursor: default;
   }
-
   .arrow {
     margin-inline-start: 0.3em;
     color: var(--accent);
   }
-
   .grip {
     position: absolute;
     inset-block: 0;
@@ -389,37 +369,30 @@
     cursor: col-resize;
     touch-action: none;
   }
-
   .line {
     height: var(--line-height, var(--row-height));
     border-bottom: 1px solid var(--line);
     background: var(--bg);
   }
-
   .line.toned {
     background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }
-
   .stuck {
     position: sticky;
     z-index: var(--z-raised);
     background: inherit;
   }
-
   .heads .stuck {
     background: var(--bg);
   }
-
   .edge {
     box-shadow: 1px 0 0 var(--line-strong);
   }
-
   .wraps .cell {
     align-items: flex-start;
     padding-block: var(--space-1);
     white-space: normal;
   }
-
   .wraps .cell :global(.shown),
   .wraps .cell :global(.words) {
     display: -webkit-box;
@@ -428,7 +401,6 @@
     line-clamp: var(--lines);
     white-space: normal;
   }
-
   .cell {
     display: flex;
     align-items: center;
@@ -438,16 +410,13 @@
     color: var(--text);
     outline-offset: -2px;
   }
-
   .cell.on {
     box-shadow: inset 0 0 0 1.5px var(--accent);
   }
-
   .group {
     height: var(--row-height);
     margin: 0;
   }
-
   .sums {
     background: var(--bg);
     border-top: 1px solid var(--line-strong);
@@ -455,16 +424,13 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .sum {
     padding: var(--space-1) var(--space-2);
     text-align: end;
   }
-
   .what {
     color: var(--muted);
   }
-
   .line:global(.is-carried) {
     opacity: 0.4;
   }

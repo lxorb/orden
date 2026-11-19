@@ -56,9 +56,7 @@ and webview profile at the start of every run, and refuses to wipe one whose nam
 does not say `probe`, so a run can never walk over the session of an installed app.
 Pass the same identifier here if you build it under another.
 """
-
 from __future__ import annotations
-
 import argparse
 import atexit
 import ctypes
@@ -76,29 +74,20 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
-
 from probe_app import run_probe, refuse_updating, sized
 
 PORT_FROM = 21500
 PORT_TO = 21599
-
 SPACES_DIR = "ORDEN_SPACES_DIR"
-
 SPACE = "Web freeze probe"
 NOTE = "A page in a tab"
-
 WM_NULL = 0x0000
 SMTO_BLOCK = 0x0001
 SMTO_ABORTIFHUNG = 0x0002
-
 WAIT_MS = 1000
-
 EVERY = 0.25
-
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
-
 def bind_names() -> None:
-
     assert user32 is not None
     user32.SendMessageTimeoutW.argtypes = [
         wintypes.HWND,
@@ -120,13 +109,10 @@ def bind_names() -> None:
     user32.GetWindowThreadProcessId.restype = wintypes.DWORD
     user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
     user32.GetWindowRect.restype = wintypes.BOOL
-
 def windows_of(pid: int) -> list[int]:
-
     assert user32 is not None
     found: list[tuple[int, int]] = []
     kind = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-
     def each(hwnd: int, _lparam: int) -> bool:
         owner = wintypes.DWORD()
         user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
@@ -134,7 +120,6 @@ def windows_of(pid: int) -> list[int]:
             return True
         if user32.GetWindowTextLengthW(hwnd) == 0:
             return True
-
         box = wintypes.RECT()
         user32.GetWindowRect(hwnd, ctypes.byref(box))
         wide = box.right - box.left
@@ -142,12 +127,9 @@ def windows_of(pid: int) -> list[int]:
         if wide > 200 and tall > 200:
             found.append((wide, hwnd))
         return True
-
     user32.EnumWindows(kind(each), 0)
     return [hwnd for _wide, hwnd in sorted(found, reverse=True)]
-
 def ask(hwnd: int) -> tuple[bool, float]:
-
     assert user32 is not None
     answer = ctypes.c_size_t()
     began = time.perf_counter()
@@ -155,25 +137,19 @@ def ask(hwnd: int) -> tuple[bool, float]:
         hwnd, WM_NULL, 0, 0, SMTO_BLOCK | SMTO_ABORTIFHUNG, WAIT_MS, ctypes.byref(answer)
     )
     return bool(got), (time.perf_counter() - began) * 1000
-
 class Sample:
-
     def __init__(self, at: float, answered: bool, cost: float, hung: bool) -> None:
         self.at = at
         self.answered = answered
         self.cost = cost
         self.hung = hung
-
     @property
     def dead(self) -> bool:
         return self.hung or not self.answered
-
     def line(self) -> str:
         state = "hung" if self.hung else ("answered" if self.answered else "no answer")
         return f"  {self.at:6.2f}s  {self.cost:8.2f} ms  {state}"
-
 def measure(hwnd: int, seconds: float, began: float, out: list[Sample]) -> None:
-
     assert user32 is not None
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -183,7 +159,6 @@ def measure(hwnd: int, seconds: float, began: float, out: list[Sample]) -> None:
         out.append(sample)
         print(sample.line(), flush=True)
         time.sleep(EVERY)
-
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         with socket.socket() as sock:
@@ -193,7 +168,6 @@ def free_port() -> int:
                 continue
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
-
 PAGE = b"""<!doctype html>
 <title>A page in a tab</title>
 <body style="font: 16px system-ui; padding: 3rem">
@@ -201,7 +175,6 @@ PAGE = b"""<!doctype html>
 <p>Served by scripts/web-freeze-probe.py, so the measurement is about the app.</p>
 </body>
 """
-
 class Quiet(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - the base class names it
         self.send_response(200)
@@ -209,22 +182,17 @@ class Quiet(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
     def log_message(self, *_args: object) -> None:
         pass
-
 def serve(port: int) -> http.server.ThreadingHTTPServer:
     httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), Quiet)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
-
 def spaces_root() -> pathlib.Path:
-
     made = pathlib.Path(tempfile.mkdtemp(prefix="orden-freeze-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made
-
 def space_with_a_website(url: str) -> pathlib.Path:
     space = spaces_root() / SPACE
     space.mkdir(parents=True, exist_ok=True)
@@ -234,25 +202,18 @@ def space_with_a_website(url: str) -> pathlib.Path:
         encoding="utf-8",
     )
     return space
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
-
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
-
 def wipe(identifier: str) -> None:
-
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
-
     for one in (config_dir(identifier), local_dir(identifier)):
         shutil.rmtree(one, ignore_errors=True)
-
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
-
     path = config_dir(identifier) / "automation.json"
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -264,11 +225,9 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
             pass
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
-
 def act(
     port: int, secret: str, verb: str, args: dict[str, object], seconds: float = 60
 ) -> str:
-
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
         f"http://127.0.0.1:{port}/",
@@ -282,9 +241,7 @@ def act(
         return f"the app answered {refused.code}: {refused.read().decode('utf-8', 'replace')}"
     except Exception as error:  # noqa: BLE001 - a frozen app fails in its own ways
         return f"no answer: {error}"
-
 class Heartbeat:
-
     def __init__(self, port: int, secret: str) -> None:
         self.port = port
         self.secret = secret
@@ -293,11 +250,9 @@ class Heartbeat:
         self.since = time.perf_counter()
         self.refused: list[str] = []
         self.thread = threading.Thread(target=self.run, daemon=True)
-
     def start(self, since: float) -> None:
         self.since = since
         self.thread.start()
-
     def run(self) -> None:
         while self.going:
             began = time.perf_counter()
@@ -308,29 +263,21 @@ class Heartbeat:
                 self.refused.append(said[:160])
             self.beats.append((began - self.since, answered, cost))
             time.sleep(1.0)
-
     def stop(self) -> None:
         self.going = False
-
     def missed(self, after: float) -> int:
         return sum(1 for at, ok, _ in self.beats if at >= after and not ok)
-
     def answered(self, after: float) -> int:
         return sum(1 for at, _, _ in self.beats if at >= after)
-
     def worst(self, after: float) -> float:
         return max((cost for at, ok, cost in self.beats if at >= after and ok), default=0.0)
-
 def log_lines(identifier: str) -> list[str]:
-
     logs = local_dir(identifier) / "logs"
     path = logs / "orden.log"
     if not path.is_file():
         return []
     return path.read_text(encoding="utf-8", errors="replace").splitlines()
-
 def picture(pid: int, out: pathlib.Path) -> None:
-
     here = pathlib.Path(__file__).resolve().parent / "capture-window.ps1"
     try:
         subprocess.run(
@@ -350,13 +297,10 @@ def picture(pid: int, out: pathlib.Path) -> None:
         )
     except (OSError, subprocess.SubprocessError):
         pass
-
 def worst(samples: list[Sample]) -> float:
     return max((one.cost for one in samples), default=0.0)
-
 def dead(samples: list[Sample]) -> int:
     return sum(1 for one in samples if one.dead)
-
 def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -365,7 +309,6 @@ def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
             return found[0]
         time.sleep(0.2)
     return 0
-
 def main() -> int:
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True, help="the built orden.exe")
@@ -379,32 +322,24 @@ def main() -> int:
     parsed.add_argument("--keep", action="store_true", help="leave the app and the space behind")
     parsed.add_argument("--shots", default="", help="where to put the two photographs")
     args = parsed.parse_args()
-
     if sys.platform != "win32":
         print("this probe is about Windows: the pump it measures is Windows' own")
         return 0
-
     bind_names()
-
     exe = pathlib.Path(args.exe).resolve()
     if not exe.is_file():
         raise SystemExit(f"no exe at {exe}")
-
     shots = pathlib.Path(args.shots) if args.shots else pathlib.Path.cwd()
     shots.mkdir(parents=True, exist_ok=True)
-
     refuse_updating(exe)
     wipe(args.identifier)
-
     port = free_port()
     httpd = serve(port)
     url = f"http://127.0.0.1:{port}/"
     space = space_with_a_website(url)
-
     print(f"exe    {exe}")
     print(f"space  {space}")
     print(f"page   {url}\n")
-
     app = run_probe(exe)
     began = time.perf_counter()
     hwnd = wait_for_window(app, 40)
@@ -412,28 +347,22 @@ def main() -> int:
         app.kill()
         httpd.shutdown()
         raise SystemExit("the window never appeared")
-
     print(f"window 0x{hwnd:X} after {time.perf_counter() - began:.2f}s\n")
-
     launch: list[Sample] = []
     opened: list[Sample] = []
     restored: list[Sample] = []
-
     print("launch: the app with nothing open")
     measure(hwnd, args.settle, began, launch)
-
     print("\nopen: the website, through the app's own endpoint")
     where, secret = endpoint(args.identifier, 20)
     said: list[str] = []
     beating = Heartbeat(where, secret)
     beating.start(began)
     from_here = time.perf_counter() - began
-
     def open_it() -> None:
         said.append(act(where, secret, "open", {"space": SPACE, "path": f"{NOTE}.md"}))
         time.sleep(4)
         said.append(act(where, secret, "open", {"path": f"{NOTE}.md"}))
-
     asking = threading.Thread(target=open_it)
     asking.start()
     measure(hwnd, args.watch, began, opened)
@@ -445,9 +374,7 @@ def main() -> int:
     sized(hwnd, 1280, 860)
     time.sleep(1.0)
     picture(app.pid, shots / "web-freeze-open.png")
-
     beating.stop()
-
     print("\nrestart: the app again, on the session it was left with")
     app.kill()
     app.wait(timeout=15)
@@ -469,12 +396,9 @@ def main() -> int:
         picture(app.pid, shots / "web-freeze-restored.png")
     else:
         print("  the window never appeared on the second launch")
-
     wrong = [one for one in log_lines(args.identifier) if " ERROR " in one]
-
     missed = beating.missed(from_here) + (beats.missed(since) if beats else 0)
     asked = beating.answered(from_here) + (beats.answered(since) if beats else 0)
-
     print("\nverdict")
     print("  the window's message pump")
     print(f"    launch   worst {worst(launch):8.2f} ms  dead {dead(launch)}/{len(launch)}")
@@ -496,13 +420,11 @@ def main() -> int:
     print(f"  the app's own log holds {len(wrong)} error lines")
     for one in wrong[-8:]:
         print(f"    {one}")
-
     if not args.keep:
         app.kill()
         app.wait(timeout=10)
         shutil.rmtree(space, ignore_errors=True)
     httpd.shutdown()
-
     if dead(launch):
         print("\nthe window's pump had stopped before a web tab was even opened")
         return 2
@@ -515,9 +437,7 @@ def main() -> int:
     if wrong:
         print("\nthe window went on answering and something in it threw: the lines above")
         return 1
-
     print("\nthe window answered every message and every ask, and nothing threw")
     return 0
-
 if __name__ == "__main__":
     sys.exit(main())

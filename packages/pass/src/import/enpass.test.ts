@@ -11,7 +11,6 @@ const field = (type: string, label: string, value: string, sensitive = 0, delete
   order: 0,
   uid: 0,
 })
-
 const EXPORT = JSON.stringify({
   folders: [
     { uuid: 'f1', title: 'Work', parent_uuid: '' },
@@ -67,7 +66,6 @@ const EXPORT = JSON.stringify({
     { category: 'travel', title: 'Trip', note: 'Rome', fields: [field('text', 'Booking', 'ABC')] },
   ],
 })
-
 describe('parseEnpass', () => {
   it('reads logins, cards, notes, identities and folders', () => {
     const { vaults, skipped } = parseEnpass(EXPORT)

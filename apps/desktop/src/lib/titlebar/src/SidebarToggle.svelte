@@ -11,9 +11,7 @@
     side?: PanelSide
     unseen?: boolean
   } = $props()
-
   let keyed = $state(false)
-
   const open = $derived(side === 'right' ? workspace.rightShows !== null : !!workspace.openOn(side))
   const label = $derived(
     side === 'left'
@@ -24,15 +22,12 @@
         ? 'Hide right sidebar'
         : 'Show right sidebar',
   )
-
   let opened = false
-
   function pressed(event: MouseEvent & { currentTarget: HTMLElement }) {
     workspace.toggleSidebar(side)
     opened = event.detail === 0 && open
     if (event.detail === 0) void handOn(event.currentTarget)
   }
-
   async function handOn(from: HTMLElement, left = 8) {
     await tick()
     const lost = !from.isConnected || from.closest('[inert]') !== null
@@ -43,14 +38,12 @@
     if (other) other.focus()
     else if (left > 0) requestAnimationFrame(() => void handOn(from, left - 1))
   }
-
   function onward(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (event.key !== 'Tab' || event.shiftKey || !opened) return
     const toggle = event.currentTarget
     const landed = intoSide(side)
     if (!landed) return
     event.preventDefault()
-
     const back = (press: KeyboardEvent) => {
       if (press.key !== 'Tab' || !press.shiftKey) return
       press.preventDefault()
@@ -90,11 +83,9 @@
   .toggle {
     align-self: center;
   }
-
   .toggle svg {
     stroke-width: 1.2;
   }
-
   .toggle.right svg {
     scale: -1 1;
   }

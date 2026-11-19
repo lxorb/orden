@@ -9,16 +9,13 @@ export interface Tools {
   call(provider: Provider, mode: Mode, name: string, args: unknown, thread?: string): Promise<ToolOutput>
   context(provider: Provider, thread?: string): Promise<string>
 }
-
 interface Listed {
   instructions: string
   tools: ToolDef[]
 }
-
 function agentOf(provider: Provider) {
   return { id: rightsKey(provider.id), name: provider.name, readerTabs: READER_TABS }
 }
-
 function toolIn(value: unknown): ToolDef | null {
   const row = record(value)
   const name = text(row.name)
@@ -30,7 +27,6 @@ function toolIn(value: unknown): ToolDef | null {
     ...(row.annotations ? { annotations: record(row.annotations) } : {}),
   }
 }
-
 export function outputIn(value: unknown): ToolOutput {
   const result = record(value)
   const content = Array.isArray(result.content) ? result.content.map(record) : []
@@ -51,7 +47,6 @@ export function outputIn(value: unknown): ToolOutput {
     ...(approval && text(meta.site) ? { site: text(meta.site) } : {}),
   }
 }
-
 export const crateTools: Tools = {
   async list(provider, mode) {
     if (!isDesktop) return { instructions: '', tools: [] }
@@ -62,7 +57,6 @@ export const crateTools: Tools = {
       tools: tools.map(toolIn).filter((one): one is ToolDef => one !== null),
     }
   },
-
   async context(provider, thread) {
     if (!isDesktop) return ''
     const said = await invoke<unknown>('ai_agent_context', {
@@ -77,7 +71,6 @@ export const crateTools: Tools = {
           .join('\n\n')
       : ''
   },
-
   async call(provider, mode, name, args, thread) {
     try {
       if (name === 'run_agent' || name === 'agent_result') {

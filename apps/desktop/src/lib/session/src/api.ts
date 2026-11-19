@@ -18,9 +18,6 @@ export {
 export { ClosedTabs } from './closed.svelte'
 export { Layouts } from './layouts.svelte'
 export { Positions } from './positions'
-
 export const loadSlots = () => import('./slot')
-
 export const loadSessionsLeft = () => import('./sessions-left')
-
 export const loadUnwritten = () => import('./unwritten')

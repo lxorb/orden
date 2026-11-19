@@ -4,17 +4,14 @@ const NOTES = [
   { path: 'Plan.md', name: 'Plan', headings: ['Why it works'], blocks: [], aliases: [] },
   { path: 'ideas/Later.md', name: 'Later', headings: [], blocks: [], aliases: [] },
 ]
-
 const bodies: Record<string, string> = {
   'Plan.md': '# Plan\n\nThe plan itself.\n\n## Why it works\n\nBecause.\n',
 }
-
 const asked: { embeds: string[]; from: (string | null)[]; pictures: string[] } = {
   embeds: [],
   from: [],
   pictures: [],
 }
-
 vi.mock('../../link-index/src/api', () => ({
   links: {
     spaceOf: () => null,
@@ -25,7 +22,6 @@ vi.mock('../../link-index/src/api', () => ({
         const path = note.path.toLowerCase().replace(/\.md$/, '')
         return path === wanted || path.endsWith(`/${wanted}`)
       })
-
       return found?.path ?? null
     },
     embedNote: (target: string) => {
@@ -42,204 +38,150 @@ vi.mock('../../link-index/src/api', () => ({
     (_path: string | null, _source: string, finish: (path: string) => string) => (src: string, wikilink: boolean) =>
       wikilink ? finish(`/space/att/${src}`) : null,
 }))
-
 const { readingHtml, unreadableHtml } = await import('./render')
-
 await import('../../export/src/render')
-
 const note = (text: string) => ({ text, path: '/space/Notes/Today.md' })
-
 describe('the space a note is read in', () => {
   test('is what a wikilink is resolved against', async () => {
     const html = await readingHtml(note('Read [[Plan]] first.\n'), 'light', true)
-
     expect(html).toContain('<a class="wikilink" href="Plan.md">Plan</a>')
     expect(asked.from).toContain('/space/Notes/Today.md')
   })
-
   test('carries the heading a link names, as the anchor on the page', async () => {
     const html = await readingHtml(note('See [[Plan#Why it works]].\n'), 'light', true)
-
     expect(html).toContain('href="Plan.md#why-it-works"')
   })
-
   test('finds a note by the last part of the name it was given', async () => {
     const html = await readingHtml(note('And [[ideas/Later|later]].\n'), 'light', true)
-
     expect(html).toContain('<a class="wikilink" href="ideas/Later.md">later</a>')
   })
-
   test('leaves a link nothing answers to as the words it showed', async () => {
     const html = await readingHtml(note('A [[Nowhere]] link.\n'), 'light', true)
-
     expect(html).toContain('A Nowhere link.')
     expect(html).not.toContain('<a class="wikilink"')
   })
-
   test('points a link into this very note at its own heading', async () => {
     const html = await readingHtml(note('# One\n\nBack to [[#One]].\n'), 'light', true)
-
     expect(html).toContain('<a class="wikilink" href="#one">#One</a>')
   })
-
   test('is what an embed reads the note it names out of', async () => {
     const html = await readingHtml(note('Before\n\n![[Plan]]\n\nAfter\n'), 'light', true)
-
     expect(asked.embeds).toContain('Plan')
     expect(html).toContain('<figure class="embed">')
     expect(html).toContain('The plan itself.')
     expect(html).toContain('<figcaption>Plan</figcaption>')
   })
-
   test('embeds one section when the link names one', async () => {
     const html = await readingHtml(note('![[Plan#Why it works]]\n'), 'light', true)
-
     expect(html).toContain('Because.')
     expect(html).not.toContain('The plan itself.')
   })
-
   test('leaves an embed of a note it has not got as a link', async () => {
     const html = await readingHtml(note('![[Missing]]\n'), 'light', true)
-
     expect(html).not.toContain('<figure class="embed">')
   })
 })
-
 describe('the page a note is read on', () => {
   test('gives every heading the id the export gives it', async () => {
     const html = await readingHtml(note('# One\n\n## Two words\n'), 'light', true)
-
     expect(html).toContain('<h1 id="one">One</h1>')
     expect(html).toContain('<h2 id="two-words">Two words</h2>')
   })
-
   test('turns a `[toc]` line into the contents', async () => {
     const html = await readingHtml(note('[toc]\n\n# One\n\n## Two\n'), 'light', true)
-
     expect(html).toContain('<nav class="toc">')
     expect(html).toContain('<a href="#one">One</a>')
   })
-
   test('gathers the footnotes at the end', async () => {
     const html = await readingHtml(note('Text[^1].\n\n[^1]: The note.\n'), 'light', true)
-
     expect(html).toContain('<sup class="footnote-ref" id="fnref-1">')
     expect(html).toContain('<section class="footnotes">')
   })
-
   test('shows a task box, and it is inert', async () => {
     const html = await readingHtml(note('- [ ] one\n- [x] two\n'), 'light', true)
-
     expect(html).toContain('class="task-list-item"')
     expect(html).toContain('class="task-list-item is-done"')
     expect(html.match(/<input/g)).toHaveLength(2)
     expect(html.match(/disabled/g)).toHaveLength(2)
   })
-
   test('sets its maths', async () => {
     const html = await readingHtml(note('Inline $a^2$ and\n\n$$\nb^2\n$$\n'), 'light', true)
-
     expect(html).toContain('<span class="math-inline"')
     expect(html).toContain('<div class="math-block"')
     expect(html).toContain('katex')
   })
-
   test('leaves no front matter and no block names on the page', async () => {
     const html = await readingHtml(note('---\ntitle: x\n---\n\nA line. ^abc123\n'), 'light', true)
-
     expect(html).not.toContain('title: x')
     expect(html).toContain('<span id="^abc123"></span>')
     expect(html.replaceAll('id="^abc123"', '')).not.toContain('^abc123')
     expect(html).toContain('A line.')
   })
-
   test('sends every picture through the resolver', async () => {
     const html = await readingHtml(note('![a](pictures/one.png)\n'), 'light', true)
-
     expect(html).toContain('src="asset://pictures/one.png"')
   })
-
   test('leaves a picture from the web where it is', async () => {
     const html = await readingHtml(note('![a](https://example.com/one.png)\n'), 'light', true)
-
     expect(html).toContain('asset://https://example.com/one.png')
   })
-
   test('renders a definition list, an abbreviation and a callout', async () => {
     const html = await readingHtml(
       note('Term\n: Meaning\n\n*[HTML]: HyperText\n\nHTML here.\n\n> [!note]\n> Mind this.\n'),
       'light',
       true,
     )
-
     expect(html).toContain('<dl>')
     expect(html).toContain('<abbr title="HyperText">HTML</abbr>')
     expect(html).toContain('<div class="callout callout-note" data-callout="note">')
   })
-
   test('says how long it took, under a name a profiler can read', async () => {
     performance.clearMeasures('orden:reading')
     await readingHtml(note('# One\n\nWords.\n'), 'light', true)
-
     expect(performance.getEntriesByName('orden:reading')).toHaveLength(1)
   })
 })
-
 describe('the HTML in a note', () => {
   const HOSTILE = '<img src=x onerror="alert(1)">\n\n<u>underlined</u>\n'
-
   test('runs, for a note the reader wrote', async () => {
     const html = await readingHtml(note(HOSTILE), 'light', true)
-
     expect(html).toContain('<img src=x onerror="alert(1)">')
     expect(html).toContain('<u>underlined</u>')
   })
-
   test('is the characters it is made of, for a note from anywhere else', async () => {
     const html = await readingHtml(note(HOSTILE), 'light', false)
-
     expect(html).not.toContain('<img src=x')
     expect(html).not.toContain('<u>underlined</u>')
     expect(html).toContain('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;')
     expect(html).toContain('&lt;u&gt;underlined&lt;/u&gt;')
   })
-
   test('is still markdown, whoever wrote it', async () => {
     const html = await readingHtml(note('# A heading\n\n- one\n- two\n'), 'light', false)
-
     expect(html).toContain('<h1')
     expect(html).toContain('<li>')
   })
-
   test('is escaped inside an embedded note as well', async () => {
     bodies['Plan.md'] = '# Plan\n\n<script>alert(1)</script>\n'
     const html = await readingHtml(note('![[Plan]]\n'), 'light', false)
     bodies['Plan.md'] = '# Plan\n\nThe plan itself.\n\n## Why it works\n\nBecause.\n'
-
     expect(html).not.toContain('<script>')
     expect(html).toContain('&lt;script&gt;')
   })
-
   test('is escaped inside an embedded note somebody else wrote, in a note that is not', async () => {
     bodies['Theirs.md'] = '<form action="https://evil.example">x</form>\n'
     const html = await readingHtml(note('<b>mine</b>\n\n![[Theirs]]\n'), 'light', true)
     delete bodies['Theirs.md']
-
     expect(html).toContain('<b>mine</b>')
     expect(html).not.toContain('<form')
     expect(html).toContain('&lt;form')
   })
 })
-
 test('a note the renderer cannot read is shown as the words it is, escaped, rather than a blank page', () => {
   const html = unreadableHtml('> [!note] <b>x</b> & y\n')
-
   expect(html).toBe('<pre class="unreadable">&gt; [!note] &lt;b&gt;x&lt;/b&gt; &amp; y\n</pre>')
 })
-
 test('a picture the first pass found is drawn once, not looked up again', async () => {
   const html = await readingHtml(note('![[x.png]]\n'), 'light', true)
-
   expect(html).toContain('src="/asset/space/att/x.png"')
   expect(html).not.toContain('asset:///asset')
 })

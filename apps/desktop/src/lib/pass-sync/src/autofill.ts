@@ -20,32 +20,26 @@ import { passOn } from '../../gates/src/api'
 const STEP_PAUSE = 700
 const SIGNING_SHOWN = 4000
 const TYPED_KEPT = FLOW_WINDOW
-
 const LOGIN_FORMS: ReadonlySet<FormKind> = new Set(['login', 'username', 'password', 'totp', 'signup', 'change'])
-
 interface Held {
   frame: PassFrame
   forms: PassForm[]
 }
-
 interface Offer {
   frame: PassFrame
   form: PassForm
 }
-
 interface PendingSave {
   origin: string
   username: string | null
   password: string
   update: string | null
 }
-
 interface Typed {
   origin: string
   username: string
   at: number
 }
-
 function originOf(url: string): string | null {
   try {
     return new URL(url).origin
@@ -53,41 +47,31 @@ function originOf(url: string): string | null {
     return null
   }
 }
-
 function placed(frame: PassFrame): boolean {
   return frame.secure && isSecurePage(frame.origin) && originOf(frame.url) === frame.origin
 }
-
 function namesOrigin(item: LoginItem, origin: string): boolean {
   return item.content.websites.some(
     (website) => website.match !== 'never' && originOf(normalizeUrl(website.url) ?? '') === origin,
   )
 }
-
 const HOST_RANK = 2
-
 function namesHost(item: LoginItem, url: string): boolean {
   return item.content.websites.some((website) => rank(website, url) >= HOST_RANK)
 }
-
 function choiceOf(item: Item): FillChoice {
   return { id: item.id, title: item.content.title, subtitle: subtitleOf(item) }
 }
-
 function shownName(login: Login): string {
   return login.username || login.email || login.title
 }
-
 function targetOf(frame: PassFrame, form: PassForm): FillTarget {
   return { tab: frame.tab, frame: frame.frame, origin: frame.origin, form: form.form }
 }
-
 function titleOf(origin: string): string {
   return (hostOf(origin) ?? origin).replace(/^www\./, '')
 }
-
 const NOTHING_PAUSED = Object.fromEntries(PAUSES.map((one) => [one, false])) as Paused
-
 export class Autofill {
   private readonly frames = new Map<string, Map<string, Held>>()
   private readonly offers = new Map<string, Offer>()
@@ -100,18 +84,15 @@ export class Autofill {
   private readonly store: PassStore
   private readonly now: () => number
   private readonly pause: number
-
   constructor(store: PassStore, now: () => number = Date.now, pause = STEP_PAUSE) {
     this.store = store
     this.now = now
     this.pause = pause
   }
-
   start(): Promise<void> {
     this.listening ??= this.listen()
     return this.listening
   }
-
   async choose(tab: string, id: string): Promise<void> {
     const offer = this.offers.get(tab)
     this.offers.delete(tab)
@@ -128,7 +109,6 @@ export class Autofill {
       if (now !== null) await this.store.copy(now)
     }
   }
-
   async generate(tab: string): Promise<void> {
     const offer = this.offers.get(tab)
     this.offers.delete(tab)
@@ -138,7 +118,6 @@ export class Autofill {
     if (Object.keys(values).length === 0) return
     await fill(targetOf(offer.frame, offer.form), values, false)
   }
-
   async alias(tab: string): Promise<void> {
     const offer = this.offers.get(tab)
     this.offers.delete(tab)
@@ -150,13 +129,11 @@ export class Autofill {
     if (Object.keys(values).length === 0) return
     await fill(targetOf(offer.frame, offer.form), values, false)
   }
-
   reoffer(tab: string): void {
     const offer = this.offers.get(tab)
     if (!offer || this.store.state !== 'open') return
     this.offer(offer.frame, offer.form)
   }
-
   async save(tab: string): Promise<void> {
     const pending = this.saves.get(tab)
     this.saves.delete(tab)
@@ -182,7 +159,6 @@ export class Autofill {
     }
     await this.store.create(vault, content)
   }
-
   never(tab: string): void {
     const pending = this.saves.get(tab)
     this.saves.delete(tab)
@@ -195,11 +171,9 @@ export class Autofill {
       [host]: { ...(paused[host] ?? NOTHING_PAUSED), save: true },
     })
   }
-
   stop(tab: string): void {
     this.ended(tab, this.flows.get(tab))
   }
-
   dismiss(tab: string): void {
     const shown = passBubbles.of(tab)
     if (shown?.kind === 'signing') {
@@ -210,7 +184,6 @@ export class Autofill {
     this.saves.delete(tab)
     passBubbles.clear(tab)
   }
-
   quiet(): void {
     const tabs = [
       ...this.frames.keys(),
@@ -221,7 +194,6 @@ export class Autofill {
     ]
     for (const tab of new Set(tabs)) this.forget(tab)
   }
-
   forget(tab: string): void {
     this.stop(tab)
     this.frames.delete(tab)
@@ -231,7 +203,6 @@ export class Autofill {
     this.typed.delete(tab)
     passBubbles.clear(tab)
   }
-
   async heardForms(said: PassForms): Promise<void> {
     if (!placed(said)) return
     const held = this.frames.get(said.tab) ?? new Map<string, Held>()
@@ -240,7 +211,6 @@ export class Autofill {
     else held.set(said.frame, { frame: said, forms: said.forms })
     await this.signIn(said)
   }
-
   async heardMark(said: PassMark): Promise<void> {
     if (!placed(said)) return
     const form = this.frames
@@ -256,7 +226,6 @@ export class Autofill {
     }
     this.offer(said, form)
   }
-
   async heardSubmitted(said: PassSubmitted): Promise<void> {
     if (!placed(said)) return
     const now = this.now()
@@ -282,7 +251,6 @@ export class Autofill {
       update: update !== null,
     })
   }
-
   private async listen(): Promise<void> {
     const on =
       <T>(run: (said: T) => Promise<void>) =>
@@ -294,13 +262,11 @@ export class Autofill {
       onSubmitted(on((said) => this.heardSubmitted(said))),
     ])
   }
-
   private ready(): Promise<void> {
     if (this.store.state !== 'loading') return Promise.resolve()
     this.opened ??= this.store.start()
     return this.opened
   }
-
   private paused(origin: string, pause: Pause): boolean {
     const all = this.store.settings.paused
     const host = hostOf(origin)
@@ -308,13 +274,11 @@ export class Autofill {
     const found = (host === null ? undefined : all[host]) ?? (site === null ? undefined : all[site])
     return found?.[pause] === true
   }
-
   private fillsOn(origin: string, kind: FormKind): boolean {
     const settings = this.store.settings
     if (!settings.autofill || this.paused(origin, 'autofill')) return false
     return kind !== 'totp' || (settings.autofillTotp && !this.paused(origin, 'totp'))
   }
-
   private typedOn(tab: string, origin: string, now: number): string | null {
     const typed = this.typed.get(tab)
     if (!typed || now - typed.at > TYPED_KEPT || siteOf(typed.origin) !== siteOf(origin)) {
@@ -322,16 +286,13 @@ export class Autofill {
     }
     return typed.username
   }
-
   private loginsFor(frame: PassFrame): LoginItem[] {
     const found = this.store.matching(frame.url).filter(isLoginItem)
     return frame.top ? found : found.filter((one) => namesOrigin(one, frame.origin))
   }
-
   private active(kind: 'card' | 'identity'): Item[] {
     return this.store.items.filter((one) => one.trashed === null && one.content.kind === kind)
   }
-
   private offer(frame: PassFrame, form: PassForm): void {
     const kind = form.kind
     const logins = LOGIN_FORMS.has(kind)
@@ -356,18 +317,15 @@ export class Autofill {
           : [],
     })
   }
-
   private vaultForSaving(): string | null {
     const writable = this.store.vaults.filter((one) => one.role !== 'viewer')
     const chosen = this.store.settings.defaultVault
     return (writable.find((one) => one.id === chosen) ?? writable[0])?.id ?? null
   }
-
   private async totpOf(login: Login): Promise<string | null> {
     const totp = login.totp === '' ? null : totpIn(login.totp)
     return totp ? (await code(totp, this.now())).code : null
   }
-
   private async valuesOf(form: PassForm, content: Content, origin: string): Promise<Record<string, string>> {
     switch (content.kind) {
       case 'login': {
@@ -387,7 +345,6 @@ export class Autofill {
         return {}
     }
   }
-
   private schedule(tab: string, after: number, then: () => void): void {
     this.unschedule(tab)
     this.timers.set(
@@ -398,23 +355,19 @@ export class Autofill {
       }, after),
     )
   }
-
   private unschedule(tab: string): void {
     const timer = this.timers.get(tab)
     if (timer !== undefined) clearTimeout(timer)
     this.timers.delete(tab)
   }
-
   private signInForm(frame: PassForms): PassForm | null {
     return frame.forms.find((one) => isSignInKind(one.kind) && one.fields.some((field) => field.visible)) ?? null
   }
-
   private ended(tab: string, flow: Flow | undefined): void {
     if (flow) this.flows.set(tab, { ...flow, ended: true })
     this.unschedule(tab)
     passBubbles.clear(tab, 'signing')
   }
-
   private async signIn(frame: PassForms): Promise<void> {
     const form = this.signInForm(frame)
     if (!form || !isSignInKind(form.kind)) return
@@ -455,7 +408,6 @@ export class Autofill {
     passBubbles.show({ kind: 'signing', tab, name: shownName(login.content) })
     this.schedule(tab, this.pause, () => void this.stepTaken(next, frame, form))
   }
-
   private async stepTaken(flow: Flow, frame: PassFrame, form: PassForm): Promise<void> {
     const tab = frame.tab
     if (this.flows.get(tab) !== flow) return
@@ -474,5 +426,4 @@ export class Autofill {
     this.schedule(tab, SIGNING_SHOWN, () => passBubbles.clear(tab, 'signing'))
   }
 }
-
 export const autofill = new Autofill(pass)

@@ -3,33 +3,27 @@ import type { Rect } from './pages.svelte'
 interface Hollow extends Rect {
   radius: number
 }
-
 export interface Cut {
   all: boolean
   hollows: Hollow[]
 }
-
 export interface Layer {
   box: Rect
   radius: number
   scrim: boolean
   node?: Element
 }
-
 const NOTICES = '[data-notices]'
 const CARDS = `${NOTICES} > *`
-
 export const COVERS = {
   floating: ['orden-layer', 'orden-bubble', 'orden-screen', 'orden-swipe', 'orden-flight'],
   whole: ['orden-scrim', 'orden-swipe-room'],
 } as const
-
 const FLOATING = [...COVERS.floating.map((one) => `.${one}`), '[data-covers]:not([data-covers="all"])', CARDS].join(
   ', ',
 )
 const SCRIMS = [...COVERS.whole.map((one) => `.${one}`), '[data-covers="all"]'].join(', ')
 const ANY = `${FLOATING}, ${SCRIMS}`
-
 function meets(one: Rect, other: Rect): boolean {
   return (
     one.x < other.x + other.width &&
@@ -38,11 +32,9 @@ function meets(one: Rect, other: Rect): boolean {
     other.y < one.y + one.height
   )
 }
-
 export function cutOf(hole: Rect, layers: readonly Layer[]): Cut | null {
   const over = layers.filter((one) => one.box.width > 0 && one.box.height > 0 && meets(one.box, hole))
   if (over.length === 0) return null
-
   return {
     all: over.some((one) => one.scrim),
     hollows: over
@@ -56,23 +48,18 @@ export function cutOf(hole: Rect, layers: readonly Layer[]): Cut | null {
       })),
   }
 }
-
 export const ALL: Cut = { all: true, hollows: [] }
-
 export function settled(cut: Cut | null, pictured: boolean, cuts: boolean): Cut | null {
   return cut?.all && (pictured || !cuts) ? ALL : cut
 }
-
 export function boxOf(node: Element): Rect {
   const box = node.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
 }
-
 function seen(node: Element): boolean {
   if (typeof node.checkVisibility !== 'function') return true
   return node.checkVisibility({ visibilityProperty: true })
 }
-
 export function layersOver(hole: HTMLElement): Layer[] {
   const found: Layer[] = []
   for (const node of document.querySelectorAll(ANY)) {
@@ -87,7 +74,6 @@ export function layersOver(hole: HTMLElement): Layer[] {
   }
   return found
 }
-
 export function moving(hole: HTMLElement): boolean {
   for (const node of document.querySelectorAll(ANY)) {
     if (hole.contains(node)) continue
@@ -95,7 +81,6 @@ export function moving(hole: HTMLElement): boolean {
   }
   return false
 }
-
 export function strangerOver(hole: HTMLElement): boolean {
   const box = hole.getBoundingClientRect()
   for (const x of [0.08, 0.5, 0.92]) {
@@ -108,11 +93,9 @@ export function strangerOver(hole: HTMLElement): boolean {
   }
   return false
 }
-
 export function noticeRows(): Element[] {
   return [...document.querySelectorAll(NOTICES)]
 }
-
 export function bringsLayer(
   record: Pick<MutationRecord, 'target' | 'addedNodes' | 'removedNodes'> & {
     type?: MutationRecordType
@@ -131,11 +114,9 @@ export function bringsLayer(
   }
   return false
 }
-
 const SHOWN_BY = ['class', 'style', 'hidden', 'data-covers']
 const told = new Set<() => void>()
 let arriving: MutationObserver | null = null
-
 export function watchArrivals(tell: () => void): () => void {
   if (typeof MutationObserver !== 'function') return () => undefined
   told.add(tell)

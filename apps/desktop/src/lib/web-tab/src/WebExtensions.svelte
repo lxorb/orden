@@ -20,12 +20,9 @@
     onpress: (one: Extension) => void
     onclose: () => void
   } = $props()
-
   let link = $state('')
   let bubble = $state<HTMLElement>()
-
   $effect(() => overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="extensions"]')]))
-
   async function add(event: SubmitEvent) {
     event.preventDefault()
     if (!link.trim()) return
@@ -121,7 +118,6 @@
     flex-direction: column;
     gap: var(--space-1);
   }
-
   ul {
     margin: 0;
     padding: 0;
@@ -129,24 +125,20 @@
     display: flex;
     flex-direction: column;
   }
-
   li {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .name,
   .manage {
     flex: 1;
     min-width: 0;
     color: var(--text);
   }
-
   .off .name {
     color: var(--muted);
   }
-
   .name img,
   .name svg,
   .manage svg {
@@ -155,7 +147,6 @@
     height: var(--icon-md);
     object-fit: contain;
   }
-
   .name svg,
   .manage svg {
     fill: none;
@@ -165,7 +156,6 @@
     stroke-linejoin: round;
     color: var(--muted);
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -173,24 +163,20 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   form {
     display: flex;
     padding: var(--space-1);
   }
-
   form input {
     flex: 1;
     min-width: 0;
   }
-
   .said {
     margin: 0;
     padding: 0 var(--space-2);
     color: var(--danger);
     font-size: var(--text-xs);
   }
-
   .line {
     position: relative;
     height: 2px;
@@ -199,7 +185,6 @@
     background: var(--line);
     overflow: hidden;
   }
-
   .done {
     position: absolute;
     inset: 0;
@@ -207,7 +192,6 @@
     background: var(--accent);
     animation: sweep 1.2s var(--ease-in-out) infinite;
   }
-
   @keyframes sweep {
     from {
       translate: -100% 0;
@@ -216,7 +200,6 @@
       translate: 340% 0;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .done {
       animation: none;

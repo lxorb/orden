@@ -5,7 +5,6 @@ interface Service {
   fails: Error | null
   sent: { path: string; body: unknown }[]
 }
-
 const api = vi.hoisted((): Service => ({ answer: null, fails: null, sent: [] }))
 vi.mock('../../accounts/src/api', () => ({
   account: { token: null },
@@ -14,18 +13,14 @@ vi.mock('../../accounts/src/api', () => ({
     return api.fails ? Promise.reject(api.fails) : Promise.resolve(api.answer)
   },
 }))
-
 vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
-
 const { feedback } = await import('./feedback.svelte')
 const { log } = await import('../../platform/src/api')
-
 beforeEach(() => {
   Object.assign(api, { answer: null, fails: null, sent: [] })
   localStorage.clear()
   feedback.show()
 })
-
 describe('a report', () => {
   test('is received once the service says it kept it, with its page', async () => {
     api.answer = { ok: true, id: 'r1', url: 'https://orden.so/v1/feedback/r1/key' }
@@ -38,7 +33,6 @@ describe('a report', () => {
       images: ['data:image/png;base64,AAAA'],
     })
   })
-
   test('sends the log without the reader’s paths, which is what the sheet says', async () => {
     api.answer = { ok: true, id: 'r1' }
     log('error', 'save: /home/anna/Notes/Divorce lawyer.md - disk full')
@@ -47,25 +41,21 @@ describe('a report', () => {
     expect(sent).toContain('error save: <path 1>.md - disk full')
     expect(sent).not.toMatch(/anna|Divorce/)
   })
-
   test('sends no pictures where there are none', async () => {
     api.answer = { ok: true, id: 'r1' }
     await feedback.send('It broke.')
     expect(api.sent[0]?.body).not.toHaveProperty('images')
     expect(feedback.received).toEqual({ url: null })
   })
-
   test('the service did not keep is never received', async () => {
     api.fails = new Error('try again in an hour')
     await expect(feedback.send('It broke.')).rejects.toThrow('try again in an hour')
     expect(feedback.received).toBeNull()
-
     api.fails = null
     api.answer = {}
     await expect(feedback.send('It broke.')).rejects.toThrow()
     expect(feedback.received).toBeNull()
   })
-
   test('opened again starts unreceived', async () => {
     api.answer = { ok: true, id: 'r1', url: 'https://orden.so/v1/feedback/r1/key' }
     await feedback.send('It broke.')
@@ -74,7 +64,6 @@ describe('a report', () => {
     expect(feedback.received).toBeNull()
   })
 })
-
 describe('the requests sent before (#2059)', () => {
   test('are none until one is received', async () => {
     expect(feedback.past).toEqual([])
@@ -85,13 +74,11 @@ describe('the requests sent before (#2059)', () => {
     await feedback.send('No page for this one.')
     expect(feedback.past).toEqual([])
   })
-
   test('are kept on the device, newest first, by their first line and their page', async () => {
     api.answer = { ok: true, id: 'r1', url: 'https://orden.so/v1/feedback/r1/a' }
     await feedback.send('It broke.\nWhen I pressed save.')
     api.answer = { ok: true, id: 'r2', url: 'https://orden.so/v1/feedback/r2/b' }
     await feedback.send('Again.')
-
     feedback.close()
     feedback.show()
     expect(feedback.past.map((one) => [one.title, one.url])).toEqual([

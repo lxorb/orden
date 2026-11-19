@@ -11,49 +11,39 @@ describe('a folder of markdown', () => {
       file('Lists/Kit.md', '# Kit\n\n![](../Pictures/tent.png)\n'),
       file('Pictures/tent.png', 'PNG'),
     ])
-
     expect(counts(plan)).toEqual({ notes: 2, files: 1, folders: 3, bytes: expect.any(Number) })
     expect(plan.files.map((one) => one.path)).toEqual(['Plans/Trip.md', 'Lists/Kit.md', 'Pictures/tent.png'])
   })
-
   test('a link to another note becomes a wikilink, however it was written', async () => {
     const plan = await readPlain([
       file('A.md', 'One [the kit](Lists/Kit.md), two [[Kit]], three [k](Lists%2FKit.md).'),
       file('Lists/Kit.md', '# Kit'),
     ])
-
     const text = noteAt(plan, 'A.md')
     expect(text).toContain('[[Kit|the kit]]')
     expect(text).toContain('two [[Kit]]')
     expect(text).toContain('three [[Kit|k]]')
   })
-
   test('a link to a picture stays a link, with a path that resolves', async () => {
     const plan = await readPlain([
       file('Plans/Trip.md', '![tent](../Pictures/a tent.png)'),
       file('Pictures/a tent.png', 'PNG'),
     ])
-
     expect(noteAt(plan, 'Plans/Trip.md')).toContain('![tent](../Pictures/a%20tent.png)')
   })
-
   test('a link to somewhere else entirely is left alone', async () => {
     const plan = await readPlain([
       file('A.md', '[web](https://example.com/a.md) [down](#heading) [mail](mailto:a@b.c)'),
     ])
-
     const text = noteAt(plan, 'A.md')
     expect(text).toContain('[web](https://example.com/a.md)')
     expect(text).toContain('[down](#heading)')
     expect(text).toContain('[mail](mailto:a@b.c)')
   })
-
   test('a link to a note that was not exported is left as it was', async () => {
     const plan = await readPlain([file('A.md', '[gone](Somewhere/Else.md)')])
-
     expect(noteAt(plan, 'A.md')).toContain('[gone](Somewhere/Else.md)')
   })
-
   test('leaves out what the two desktops leave in every folder', async () => {
     const plan = await readPlain([
       file('A.md', '# A'),
@@ -63,61 +53,45 @@ describe('a folder of markdown', () => {
       file('Icon\r', ''),
       file('Notes/Icon\r', ''),
     ])
-
     expect(plan.files).toHaveLength(1)
   })
-
   test('a name no file may have is argued with, one folder at a time', async () => {
     const plan = await readPlain([file('Plans: 2026/What? Why.md', '# x')])
-
     expect(plan.files[0]?.path).toBe('Plans 2026/What Why.md')
   })
-
   test('two notes that would land on one name are stepped apart', async () => {
     const plan = await readPlain([file('A: b.md', '# one'), file('A? b.md', '# two')])
-
     expect(plan.files.map((one) => one.path)).toEqual(['A b.md', 'A b 2.md'])
   })
-
   test("a note saved in Windows' own code page arrives with its accents", async () => {
     const bytes = Uint8Array.of(0x43, 0x61, 0x66, 0xe9)
     const plan = await readPlain([sourceOf('Old.txt', bytes)])
-
     expect(noteAt(plan, 'Old.md')).toBe('Café\n')
   })
-
   test('and one saved as UTF-16 does too', async () => {
     const said = 'Köln'
     const bytes = new Uint8Array(2 + said.length * 2)
     bytes.set([0xff, 0xfe])
     for (let at = 0; at < said.length; at += 1) bytes[2 + at * 2] = said.charCodeAt(at)
     const plan = await readPlain([sourceOf('Unicode.txt', bytes)])
-
     expect(noteAt(plan, 'Unicode.md')).toBe('Köln\n')
   })
-
   test('a text file is a note', async () => {
     const plan = await readPlain([file('Note.txt', 'Just words')])
-
     expect(plan.files[0]?.path).toBe('Note.md')
   })
-
   test("and a text file's words read back as themselves, not as markdown", async () => {
     const plan = await readPlain([file('Note.txt', 'Costs $5-$10\nFine <img src=x onerror=alert(1)>\nTitle\n---\n')])
-
     const text = noteAt(plan, 'Note.md')
     expect(text).toContain('\\$5-\\$10')
     expect(text).not.toMatch(/(?<!\\)<img/)
     expect(text).not.toMatch(/^---$/m)
   })
-
   test('but a text file written in markdown keeps its markdown', async () => {
     const draft = '# Chapter one\n\nIt was *quiet*. See [notes](Notes.txt) and [[Notes]].\n\n> A quote\n'
     const plan = await readPlain([file('Draft.txt', draft)])
-
     expect(noteAt(plan, 'Draft.md')).toBe(draft)
   })
-
   test.each([
     ['a checklist', 'Groceries\n\n- [ ] milk\n- [x] eggs\n'],
     ['a nested task', 'Todo\n  * [X] call #work\n'],
@@ -130,10 +104,8 @@ describe('a folder of markdown', () => {
     ['a strike in brackets', 'Go (~~Monday~~) Tuesday.\n'],
   ])('and so does a text file with only %s for markdown', async (_, draft) => {
     const plan = await readPlain([file('Draft.txt', draft)], { format: 'markdown' })
-
     expect(noteAt(plan, 'Draft.md')).toBe(draft)
   })
-
   test.each([
     ['snake case', 'Open file_name_here.txt for $5.\n'],
     ['a tilde', 'About ~5 min for $5, or ~~ 10.\n'],
@@ -143,62 +115,49 @@ describe('a folder of markdown', () => {
     ['snake case in quotes', 'Open "_init_x" or (some_var_) for $5\n'],
   ])('while one with only %s is still plain text', async (_, words) => {
     const plan = await readPlain([file('Note.txt', words)])
-
     expect(noteAt(plan, 'Note.md')).toContain('\\$5')
   })
-
   test('and an export that only ever writes plain text has its words escaped', async () => {
     const plan = await readPlain([file('Note.txt', '# not a heading\n\n*stars*\n')], {
       format: 'apple-notes',
     })
-
     expect(noteAt(plan, 'Note.md')).toBe('\\# not a heading\n\n\\*stars\\*\n')
   })
-
   test('while a markdown file keeps its markdown', async () => {
     const plan = await readPlain([file('Note.md', 'Costs $x$\n\n<u>under</u>\n')])
-
     expect(noteAt(plan, 'Note.md')).toBe('Costs $x$\n\n<u>under</u>\n')
   })
 })
-
 test('a TextBundle becomes the note it holds, named after the bundle, with its assets', async () => {
   const plan = await readPlain([
     file('Trips/Iceland.textbundle/info.json', '{"version":2}'),
     file('Trips/Iceland.textbundle/text.md', '# Iceland\n\n![](assets/shot.png)\n'),
     file('Trips/Iceland.textbundle/assets/shot.png', 'PNG'),
   ])
-
   expect(plan.files.map((one) => one.path)).toEqual(['Trips/Iceland.md', 'assets/shot.png'])
   expect(noteAt(plan, 'Trips/Iceland.md')).toContain('![](../assets/shot.png)')
 })
-
 describe('a folder of HTML', () => {
   test('becomes markdown, and says that it was HTML', async () => {
     const plan = await readPlain(
       [file('Page.html', '<h1>Page</h1><p>One <b>bold</b> word and a <ul><li>list</li></ul></p>')],
       { format: 'onenote' },
     )
-
     const text = noteAt(plan, 'Page.md')
     expect(text).toContain('# Page')
     expect(text).toContain('**bold**')
     expect(text).toContain('- list')
     expect(plan.lost[0]).toBe('1 pages came as HTML, so their words are kept and their look is not')
   })
-
   test('a link between two pages of an HTML export still finds its note', async () => {
     const plan = await readPlain([file('A.html', '<a href="B.html">to B</a>'), file('B.html', '<h1>B</h1>')])
-
     expect(noteAt(plan, 'A.md')).toContain('[[B|to B]]')
   })
-
   test('a video in a page is a link to the file that arrived beside it', async () => {
     const plan = await readPlain([
       file('Page.html', '<h1>Page</h1><video src="media/clip.mp4" controls></video>'),
       file('media/clip.mp4', 'MP4'),
     ])
-
     expect(noteAt(plan, 'Page.md')).toContain('[clip.mp4](media/clip.mp4)')
   })
 })

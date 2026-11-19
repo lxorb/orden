@@ -13,7 +13,6 @@
   .pass-stack > :global(* + *) {
     border-top: 1px solid var(--line);
   }
-
   .orden-section {
     margin: var(--space-2) 0 0;
   }

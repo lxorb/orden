@@ -1,21 +1,15 @@
 import base64
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 CANVAS_CAMERA = "() => { const c = window.ordenApp.workspace.active?.camera; return c ? { x: c.x, y: c.y } : null }"
 PAGES_CAMERA = "() => { const c = window.ordenApp.pages.current?.store.camera; return c ? { x: c.x, y: c.y } : null }"
 CARD = "() => { const box = document.querySelector('[data-id=\"c\"]')?.getBoundingClientRect(); return box ? { x: Math.round(box.x), y: Math.round(box.y) } : null }"
 MENU = "() => document.querySelectorAll('[role=menu] [role=menuitem]').length"
-
 TOOLS = ["v", "d", "e"]
-
-
 def right_drag(page: Page, x: float, y: float, dx: float, dy: float) -> None:
     page.mouse.move(x, y)
     page.mouse.down(button="right")
@@ -24,16 +18,12 @@ def right_drag(page: Page, x: float, y: float, dx: float, dy: float) -> None:
         page.wait_for_timeout(12)
     page.mouse.up(button="right")
     page.wait_for_timeout(300)
-
-
 def right_click(page: Page, x: float, y: float) -> None:
     page.mouse.move(x, y)
     page.mouse.down(button="right")
     page.mouse.move(x + 1, y + 1)
     page.mouse.up(button="right")
     page.wait_for_timeout(300)
-
-
 def checked(page: Page, where: str, camera: str, x: float, y: float) -> None:
     for turn, key in enumerate(TOOLS):
         way = 1 if turn % 2 else -1
@@ -52,7 +42,6 @@ def checked(page: Page, where: str, camera: str, x: float, y: float) -> None:
         if menus:
             wrong(f"[{where} {key}] a right drag left a menu open")
             page.keyboard.press("Escape")
-
         before = page.evaluate(camera)
         right_click(page, x, y)
         menus = page.evaluate(MENU)
@@ -63,15 +52,11 @@ def checked(page: Page, where: str, camera: str, x: float, y: float) -> None:
         page.keyboard.press("Escape")
         page.wait_for_timeout(200)
     shot(page, where)
-
-
 def lost(page: Page, where: str, camera: str, x: float, y: float, button: str) -> None:
     cdp = page.context.new_cdp_session(page)
     held = {"left": 1, "right": 2}[button]
-
     def mouse(kind: str, at_x: float, at_y: float, pressed: str, buttons: int) -> None:
         cdp.send("Input.dispatchMouseEvent", {"type": kind, "x": at_x, "y": at_y, "button": pressed, "buttons": buttons, "clickCount": 1})
-
     page.keyboard.press("Escape")
     page.mouse.move(x, y)
     page.wait_for_timeout(150)
@@ -93,8 +78,6 @@ def lost(page: Page, where: str, camera: str, x: float, y: float, button: str) -
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
     cdp.detach()
-
-
 def paper() -> bytes:
     stream = b"BT /F1 24 Tf 60 700 Td (Right) Tj ET"
     objects = {
@@ -115,8 +98,6 @@ def paper() -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size 6>>\nstartxref\n%d\n%%%%EOF\n" % table
     return bytes(out)
-
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -135,8 +116,6 @@ async ({ path, data }) => {
   await window.ordenApp.workspace.loadTree()
 }
 """
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -161,7 +140,6 @@ def drive(browser: Browser) -> None:
     held = page.locator('[data-id="c"]').first.bounding_box()
     assert held
     lost(page, "canvas card", CARD, held["x"] + 30, held["y"] + 30, "left")
-
     page.evaluate(SEED, {"path": f"{root}/Right.pdf", "data": base64.b64encode(paper()).decode("ascii")})
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", f"{root}/Right.pdf")
     wait_for(page, "window.ordenApp.pages.current?.store.count === 1", "the page note")
@@ -174,6 +152,4 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("h")
     lost(page, "page note pan tool", PAGES_CAMERA, box["x"] + box["width"] / 2, box["y"] + box["height"] / 3, "left")
     page.keyboard.press("v")
-
-
 raise SystemExit(DRIVE.run(drive, "holding the right mouse button and moving pans a canvas and a page note, with any tool"))

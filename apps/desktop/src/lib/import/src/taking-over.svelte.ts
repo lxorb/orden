@@ -5,16 +5,12 @@ import { firstVisiting } from '../../workspace/src/api'
 
 type FirstVisit = Awaited<ReturnType<typeof firstVisiting>>['firstVisit']
 const WATCH = 500
-
 class TakingOver {
   state = $state<'idle' | 'asking' | 'nothing'>('idle')
-
   private visit = $state.raw<FirstVisit | null>(null)
-
   constructor() {
     void firstVisiting().then((one) => (this.visit = one.firstVisit))
   }
-
   get offered(): boolean {
     return (
       !isNative &&
@@ -24,19 +20,15 @@ class TakingOver {
       !!this.visit?.fresh
     )
   }
-
   bring() {
     if (this.state === 'asking') return
-
     const popup = window.open(`${LEGACY_WEB}${HANDOFF_PATH}`, 'orden-handoff', 'popup,width=420,height=320')
     if (!popup) return
     this.state = 'asking'
-
     const stop = () => {
       window.removeEventListener('message', heard)
       clearInterval(watching)
     }
-
     const heard = (event: MessageEvent) => {
       if (event.origin !== LEGACY_WEB || event.source !== popup || !isHandoff(event.data)) return
       stop()
@@ -59,7 +51,6 @@ class TakingOver {
           this.state = 'idle'
         })
     }
-
     let closedOnce = false
     const watching = setInterval(() => {
       if (!popup.closed || this.state !== 'asking') return
@@ -70,9 +61,7 @@ class TakingOver {
       stop()
       this.state = 'idle'
     }, WATCH)
-
     window.addEventListener('message', heard)
   }
 }
-
 export const takingOver = new TakingOver()

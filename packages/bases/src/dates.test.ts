@@ -21,7 +21,6 @@ describe('dates on the floating clock', () => {
     expect(civil('2026-13-01')).toBeNull()
     expect(civil('6.10.2026')).toBeNull()
   })
-
   test('days and months added the way Moment adds them', () => {
     expect(addDays('2026-12-31', 1)).toBe('2027-01-01')
     expect(addDays('2024-03-01', -1)).toBe('2024-02-29')
@@ -30,14 +29,12 @@ describe('dates on the floating clock', () => {
     expect(addMonths('2026-03-31', -1)).toBe('2026-02-28')
     expect(addMonths('2026-11-15', 2)).toBe('2027-01-15')
   })
-
   test('weekdays, Sunday 0', () => {
     expect(weekday('2026-10-04')).toBe(0)
     expect(weekday('2026-10-05')).toBe(1)
     expect(weekday('1970-01-01')).toBe(4)
     expect(weekday('1969-12-31')).toBe(3)
   })
-
   test('a moment and back', () => {
     const value = readDate('2026-10-04 16:05:09')
     expect(value).toEqual({ kind: 'date', iso: '2026-10-04', time: '16:05:09' })
@@ -49,7 +46,6 @@ describe('dates on the floating clock', () => {
     })
     expect(readDate('tomorrow')).toBeNull()
   })
-
   test('an edit across a change of the clock here keeps the time that was typed', () => {
     const was = process.env.TZ
     process.env.TZ = 'America/Los_Angeles'
@@ -71,7 +67,6 @@ describe('dates on the floating clock', () => {
       else process.env.TZ = was
     }
   })
-
   test('a moment written in UTC is read on the clock here', () => {
     const was = process.env.TZ
     process.env.TZ = 'America/Los_Angeles'
@@ -128,7 +123,6 @@ describe('dates on the floating clock', () => {
       else process.env.TZ = was
     }
   })
-
   test.each([
     ['YYYY-MM-DD', '2026-10-04'],
     ['YY/M/D', '26/10/4'],
@@ -141,7 +135,6 @@ describe('dates on the floating clock', () => {
   ])('%s is %s', (format, expected) => {
     expect(formatDate({ kind: 'date', iso: '2026-10-04', time: '16:05:09' }, format)).toBe(expected)
   })
-
   test.each([
     [0, 'a few seconds ago'],
     [-30 * 60_000, '30 minutes ago'],
@@ -156,10 +149,8 @@ describe('dates on the floating clock', () => {
     expect(relative(1_000_000_000_000 + offset, 1_000_000_000_000)).toBe(expected)
   })
 })
-
 describe('a time with a fraction of a second', () => {
   const at = (time: string) => msOf({ kind: 'date', iso: '2026-01-01', time })
-
   test('counts the fraction once', () => {
     expect(at('10:00:05.750') - at('10:00:05')).toBe(750)
     expect(at('10:00:05.900')).toBeLessThan(at('10:00:06.100'))

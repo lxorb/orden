@@ -2,13 +2,10 @@ import { afterEach, describe, expect, test } from 'vitest'
 import { registerTabKind } from '@orden/contracts'
 
 const { tintOf, wear, wornBy } = await import('../src/icon-target')
-
 const gone: (() => void)[] = []
-
 afterEach(() => {
   for (const one of gone.splice(0)) one()
 })
-
 describe('the icon picker', () => {
   test('reads and wears a tab’s icon through the part its tab kind registers', async () => {
     const worn = new Map<string, [string | null, string | null]>([['t1', ['star', 'red']]])

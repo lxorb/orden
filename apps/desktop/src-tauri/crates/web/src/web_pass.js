@@ -1,6 +1,5 @@
 ;(function () {
   if (globalThis.__ordenPass) return
-
   const QUIET = 150
   const LONGEST_QUIET = 1000
   const LONGEST_SAID = 60000
@@ -13,7 +12,6 @@
   const MARK_NAME = 'orden-pass-mark'
   const LEAST_SIDE = 10
   const LEAST_SHOWN = 0.5
-
   const TEXTISH = new Set(['', 'text', 'email', 'password', 'tel', 'number', 'date', 'month'])
   const SENDS = new Set(['login', 'username', 'password', 'signup', 'change'])
   const IDENTITY = new Set([
@@ -32,7 +30,6 @@
     'bday',
   ])
   const CARD = new Set(['cc-name', 'cc-number', 'cc-exp', 'cc-exp-month', 'cc-exp-year', 'cc-csc'])
-
   const AUTOCOMPLETE = {
     username: 'username',
     email: 'email',
@@ -66,7 +63,6 @@
     organization: 'organization',
     bday: 'bday',
   }
-
   const CC_NUMBER =
     /\b(card ?(number|no|num)|cc ?(number|num|no)|ccnum|cardnum|credit ?card|debit ?card|kartennummer|num[ée]ro de (la )?carte|n[uú]mero de (la )?tarjeta|numero (della )?carta|n[uú]mero do cart[aã]o|kaartnummer)(?![a-z0-9])|номер карты|卡号|卡號|カード番号/
   const CC_CSC =
@@ -147,7 +143,6 @@
   const SIGN_UP =
     /\b(sign ?up|register|registration|create ?(an |your )?account|join|registrieren|registrierung|konto (erstellen|anlegen)|inscri(re|ption|bete|birse)|cr[ée]er (un )?compte|crear (una )?cuenta|reg[ií]strate|registrati|registrazione|crea (un )?account|criar conta|cadastr(o|ar)|registreren|account aanmaken)(?![a-z0-9])|регистрац|создать аккаунт|зарегистр|注册|註冊|登録|新規/
   const SUBMITS = 'button, input[type=submit], input[type=image], input[type=button], [role=button]'
-
   const doc = randomly()
   const named = new WeakMap()
   const byName = new Map()
@@ -164,7 +159,6 @@
   let retrying = null
   let tries = 0
   let placing = false
-
   function randomly() {
     const bytes = new Uint8Array(12)
     if (globalThis.crypto && typeof crypto.getRandomValues === 'function') {
@@ -174,7 +168,6 @@
     }
     return Array.from(bytes, (one) => one.toString(16).padStart(2, '0')).join('')
   }
-
   function nameOf(node, prefix) {
     let id = named.get(node)
     if (!id) {
@@ -183,7 +176,6 @@
     }
     return id
   }
-
   function channel() {
     const bound = globalThis.ordenPass
     if (typeof bound === 'function') return bound
@@ -194,7 +186,6 @@
     }
     return null
   }
-
   function say(said) {
     const words = JSON.stringify(Object.assign({ doc }, said))
     if (words.length > LONGEST_SAID) return
@@ -212,7 +203,6 @@
     if (waiting.length > 16) waiting.shift()
     retry()
   }
-
   function retry() {
     if (retrying !== null) return
     retrying = setTimeout(function again() {
@@ -231,29 +221,24 @@
       retrying = setTimeout(again, RETRY)
     }, RETRY)
   }
-
   function composedParent(node) {
     if (node.parentNode) return node.parentNode
     return node.host || null
   }
-
   function composedElementParent(el) {
     if (el.parentElement) return el.parentElement
     const up = el.parentNode
     return up && up.host ? up.host : null
   }
-
   function typeOf(el) {
     if (el instanceof HTMLSelectElement) return 'select'
     if (el instanceof HTMLTextAreaElement) return 'textarea'
     return String(el.getAttribute('type') || '').toLowerCase()
   }
-
   function fieldy(node) {
     if (node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement) return true
     return node instanceof HTMLInputElement && TEXTISH.has(typeOf(node))
   }
-
   function gather(root, fields, shadows) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT)
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -266,7 +251,6 @@
       }
     }
   }
-
   function normal(text, most) {
     return String(text)
       .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -276,7 +260,6 @@
       .toLowerCase()
       .slice(0, most || 120)
   }
-
   function partsOf(el) {
     const parts = []
     const attributes = (one) => {
@@ -298,7 +281,6 @@
     if (root.host) attributes(root.host)
     return parts.map((one) => normal(one)).filter(Boolean)
   }
-
   function autocompleted(el) {
     const tokens = String(el.getAttribute('autocomplete') || '')
       .toLowerCase()
@@ -309,7 +291,6 @@
     }
     return null
   }
-
   function roleOf(el, parts, type) {
     const auto = autocompleted(el)
     const said = (pattern) => parts.some((one) => pattern.test(one))
@@ -342,7 +323,6 @@
     }
     return 'unknown'
   }
-
   function visible(el) {
     if (el.hidden || typeOf(el) === 'hidden') return false
     if (typeof el.checkVisibility === 'function') {
@@ -359,7 +339,6 @@
     if (box.width < 4 || box.height < 4) return false
     return box.right + (globalThis.scrollX || 0) > 0 && box.bottom + (globalThis.scrollY || 0) > 0
   }
-
   function shownEnough(el) {
     let shown = 1
     for (let at = el; at; at = composedElementParent(at)) {
@@ -369,7 +348,6 @@
     }
     return true
   }
-
   function uncovered(el, box) {
     const root = el.getRootNode()
     const asked = root && typeof root.elementFromPoint === 'function' ? root : document
@@ -383,7 +361,6 @@
       (hit instanceof HTMLLabelElement && hit.control === el)
     )
   }
-
   function fillable(el) {
     if (!visible(el)) return false
     const box = el.getBoundingClientRect()
@@ -393,7 +370,6 @@
     if (box.right <= 0 || box.bottom <= 0 || box.left >= wide || box.top >= tall) return false
     return shownEnough(el) && uncovered(el, box)
   }
-
   function formOf(el) {
     if (el.form) return el.form
     for (let at = composedParent(el); at; at = composedParent(at)) {
@@ -401,7 +377,6 @@
     }
     return loose
   }
-
   function signalsOf(form) {
     const parts = [location.pathname]
     if (form === loose) {
@@ -418,7 +393,6 @@
     }
     return normal(parts.join(' '), 800)
   }
-
   function sixBoxes(fields) {
     let run = []
     const runs = []
@@ -438,11 +412,9 @@
       }
     }
   }
-
   function textish(one) {
     return one.type !== 'password' && one.type !== 'select' && one.type !== 'textarea'
   }
-
   function classify(form, fields) {
     sixBoxes(fields)
     const seen = fields.filter((one) => one.visible)
@@ -458,7 +430,6 @@
     const signsUp = SIGN_UP.test(signals)
     const signsIn = SIGN_IN.test(signals)
     const texts = seen.filter(textish)
-
     if (!passwords.length) {
       if (has('totp')) return 'totp'
       if (userish.length && texts.length <= 2) {
@@ -474,7 +445,6 @@
       if (identity.size >= 2) return 'identity'
       return null
     }
-
     const renew = (from) => {
       for (const one of passwords.slice(from)) one.role = 'new-password'
     }
@@ -508,18 +478,15 @@
         kind = 'password'
       }
     }
-
     if (kind === 'login' && !userish.length) {
       const one = before(seen, passwords[0])
       if (one) one.role = one.type === 'email' ? 'email' : 'username'
     }
     return kind
   }
-
   function saysCurrent(one) {
     return one.parts.some((part) => CURRENT.test(part))
   }
-
   function before(seen, password) {
     const at = seen.indexOf(password)
     for (let back = at - 1; back >= 0; back--) {
@@ -530,7 +497,6 @@
     }
     return null
   }
-
   function scan() {
     timer = null
     const fields = []
@@ -542,14 +508,12 @@
         observer.observe(root, WATCHED)
       }
     }
-
     const groups = new Map()
     for (const el of fields) {
       const form = formOf(el)
       if (!groups.has(form)) groups.set(form, [])
       groups.get(form).push(el)
     }
-
     const forms = []
     for (const [form, held] of groups) {
       if (forms.length >= MOST_FORMS) break
@@ -562,7 +526,6 @@
       if (!kind) continue
       forms.push({ id: nameOf(form, 'f'), form, kind, fields: read })
     }
-
     for (const old of current) {
       if (!forms.some((one) => one.form === old.form) || old.fields.some((one) => !one.el.isConnected)) {
         sent(old)
@@ -573,7 +536,6 @@
     for (const form of forms) {
       for (const one of form.fields) byName.set(nameOf(one.el, 'e'), { form, one })
     }
-
     const said = forms.map((form) => ({
       form: form.id,
       kind: form.kind,
@@ -590,21 +552,18 @@
     }
     placeMarks()
   }
-
   function soon() {
     const now = Date.now()
     if (timer === null) since = now
     else clearTimeout(timer)
     timer = setTimeout(scan, now - since >= LONGEST_QUIET ? 0 : QUIET)
   }
-
   function ours(record) {
     if (record.target && record.target.localName === MARK_NAME) return true
     if (record.type !== 'childList') return false
     const nodes = [...record.addedNodes, ...record.removedNodes]
     return nodes.length > 0 && nodes.every((node) => node.localName === MARK_NAME)
   }
-
   const WATCHED = {
     childList: true,
     subtree: true,
@@ -614,7 +573,6 @@
   const observer = new MutationObserver((records) => {
     if (records.some((record) => !ours(record))) soon()
   })
-
   function markable(form) {
     const chosen = []
     const seen = form.fields.filter((one) => one.visible)
@@ -627,11 +585,9 @@
     }
     return chosen
   }
-
   function important(style, values) {
     for (const key of Object.keys(values)) style.setProperty(key, values[key], 'important')
   }
-
   function madeMark(form, one) {
     const host = document.createElement(MARK_NAME)
     important(host.style, {
@@ -687,7 +643,6 @@
     })
     return { host, form: form.id, field: nameOf(one.el, 'e') }
   }
-
   function placeMarks() {
     const wanted = new Map()
     for (const form of current) for (const one of markable(form)) wanted.set(one.el, { form, one })
@@ -710,7 +665,6 @@
     }
     place()
   }
-
   function place() {
     for (const [el, mark] of marks) {
       const box = el.getBoundingClientRect()
@@ -722,7 +676,6 @@
       })
     }
   }
-
   function placeSoon() {
     if (placing || !marks.size) return
     placing = true
@@ -732,19 +685,16 @@
       place()
     })
   }
-
   function deepFocus() {
     let at = document.activeElement
     while (at && at.shadowRoot && at.shadowRoot.activeElement) at = at.shadowRoot.activeElement
     return at
   }
-
   function valueOf(form, roles) {
     const held = form.fields.filter((one) => roles.includes(one.role) && one.el.value)
     const chosen = held.find((one) => one.visible) || held[0]
     return chosen ? String(chosen.el.value) : null
   }
-
   function sent(form) {
     if (!SENDS.has(form.kind)) return
     const username = valueOf(form, ['username', 'email'])
@@ -763,14 +713,12 @@
       newPassword,
     })
   }
-
   function recordOf(el) {
     const held = byName.get(named.get(el))
     if (held) return held.form
     const form = formOf(el)
     return current.find((one) => one.form === form) || null
   }
-
   function pressedButton(event) {
     for (const node of event.composedPath()) {
       if (!(node instanceof Element)) continue
@@ -779,7 +727,6 @@
     }
     return null
   }
-
   function submits(button) {
     const type = String(button.getAttribute('type') || '').toLowerCase()
     if (button instanceof HTMLButtonElement && (type === '' || type === 'submit') && button.form) {
@@ -792,11 +739,9 @@
     )
     return SIGN_IN.test(words) || SIGN_UP.test(words) || /\b(submit|save|update|change)(?![a-z0-9])/.test(words)
   }
-
   function leaving() {
     for (const form of current) sent(form)
   }
-
   addEventListener(
     'submit',
     (event) => {
@@ -805,7 +750,6 @@
     },
     true,
   )
-
   addEventListener(
     'click',
     (event) => {
@@ -817,7 +761,6 @@
     },
     true,
   )
-
   addEventListener(
     'keydown',
     (event) => {
@@ -848,7 +791,6 @@
     },
     true,
   )
-
   addEventListener(
     'focusin',
     (event) => {
@@ -864,7 +806,6 @@
   if (globalThis.navigation && typeof globalThis.navigation.addEventListener === 'function') {
     globalThis.navigation.addEventListener('navigate', leaving)
   }
-
   function chosenOption(select, value) {
     const options = Array.from(select.options)
     const wanted = String(value).trim().toLowerCase()
@@ -883,7 +824,6 @@
       null
     )
   }
-
   function nativeValue(el, value) {
     for (let at = Object.getPrototypeOf(el); at; at = Object.getPrototypeOf(at)) {
       const own = Object.getOwnPropertyDescriptor(at, 'value')
@@ -893,7 +833,6 @@
       }
     }
   }
-
   function put(el, value) {
     el.focus()
     if (el instanceof HTMLSelectElement) {
@@ -920,7 +859,6 @@
     el.blur()
     return true
   }
-
   function spread(form, one, value) {
     const boxes = form.fields.filter((other) => other.role === 'totp' && other.visible)
     let at = boxes.indexOf(one)
@@ -932,7 +870,6 @@
     }
     return last
   }
-
   function submitter(form) {
     const scope = form.form === loose ? document : form.form
     const buttons = Array.from(scope.querySelectorAll(SUBMITS)).filter((one) => visible(one))
@@ -945,7 +882,6 @@
       null
     )
   }
-
   function enter(el) {
     el.focus()
     for (const type of ['keydown', 'keypress', 'keyup']) {
@@ -961,7 +897,6 @@
       )
     }
   }
-
   function send(form, last) {
     const button = submitter(form)
     if (form.form !== loose && typeof form.form.requestSubmit === 'function') {
@@ -980,7 +915,6 @@
     if (button) button.click()
     else if (last) enter(last)
   }
-
   function fill(asked) {
     if (!asked || typeof asked !== 'object') return false
     if (typeof asked.doc === 'string' && asked.doc !== doc) return false
@@ -1004,9 +938,7 @@
     if (last && asked.submit === true) send(form, last)
     return last !== null
   }
-
   globalThis.__ordenPass = Object.freeze({ fill })
-
   observer.observe(document, WATCHED)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', scan, { once: true })

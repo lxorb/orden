@@ -7,10 +7,8 @@ export function current(scope: object = globalThis): boolean {
       typeof Reflect.get(owner, member) === 'function'
     )
   }
-
   return has('Promise', 'try') && has('Uint8Array', 'fromBase64') && has('Math', 'sumPrecise')
 }
-
 export function decodesImages(agent: string = navigator.userAgent): boolean {
   const webkit = agent.includes('AppleWebKit/') && !/(Chrome|Chromium|CriOS|Edg)\//.test(agent)
   return !webkit

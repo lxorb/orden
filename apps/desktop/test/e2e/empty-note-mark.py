@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 WORN = """
 (name) => {
   const row = [...document.querySelectorAll('.row[data-path]')]
@@ -19,10 +17,8 @@ WORN = """
   return 'other'
 }
 """
-
 def worn(page: Page, name: str) -> str:
     return page.evaluate(WORN, name)
-
 def expect(page: Page, name: str, mark: str, what: str) -> None:
     try:
         wait_for(page, f"({WORN})({name!r}) === {mark!r}", what, patience=15)
@@ -30,18 +26,15 @@ def expect(page: Page, name: str, mark: str, what: str) -> None:
         wrong(f"{what}: the row of {name} wears {worn(page, name)}, not {mark}")
     else:
         say(f"{name} wears {mark}")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
     DRIVE.seed(page, "# Empty one\n\n", "# Full one\n\nSome words.\n")
     DRIVE.seed(page, "# Box\n", "# Inside\n\nWords inside.\n", folder="Box")
-
     expect(page, "Empty one", "file", "a note that is only its name")
     expect(page, "Full one", "note", "a note with words in it")
     expect(page, "Box", "folder", "a note that is only its name and holds a note")
     shot(page, "list")
-
     DRIVE.open_note(page, "Empty one")
     page.locator(".cm-content").first.click()
     page.keyboard.press("Control+End")
@@ -50,7 +43,6 @@ def drive(browser: Browser) -> None:
     for _ in range(len("A first sentence.")):
         page.keyboard.press("Backspace")
     expect(page, "Empty one", "file", "the note emptied again")
-
     tab = page.evaluate(
         """() => {
           const svg = document.querySelector('[data-tab][aria-current=page] svg')
@@ -60,7 +52,5 @@ def drive(browser: Browser) -> None:
     if tab is not True:
         wrong("the tab of the empty note does not wear the empty page")
     shot(page, "emptied")
-
     page.context.close()
-
 raise SystemExit(DRIVE.run(drive, "a note that says nothing wears the empty page, or the folder"))

@@ -49,9 +49,7 @@ select (select coalesce(user_id, guest_id) from me) as who,
        (select epoch from reached) as epoch,
        (select kind from reached) as kind,
        (select role from reached) as role`
-
 const TRY_AGAIN_IN = '1'
-
 async function reach(
   namespace: DurableObjectNamespace,
   noteId: string,
@@ -60,35 +58,27 @@ async function reach(
   ray: string | null,
 ): Promise<Response | null> {
   let last: unknown = null
-
   for (let asked = 0; asked < 2; asked++) {
     const room = namespace.get(namespace.idFromName(noteId))
-
     try {
       const answer = await room.fetch(new Request(address, { headers }))
       if (answer.status !== 101 || answer.webSocket) return answer
-
       last = new Error('the room answered a handshake with no socket on it')
     } catch (error) {
       last = error
     }
   }
-
   note(`room ${noteId}`, last, ray)
   return null
 }
-
 export const rooms = new Hono<{ Bindings: Env }>()
-
 rooms.get('/:noteId', async (context) => {
   if (context.req.header('upgrade')?.toLowerCase() !== 'websocket') {
     return context.json({ error: 'a room is a websocket' }, 426)
   }
-
   const offered = context.req.header('sec-websocket-protocol')
   const token = tokenOf(offered)
   const noteId = context.req.param('noteId')
-
   const hash = await sha256(token ?? '')
   const allowed = await context.env.DB.prepare(ALLOWED).bind(hash, now(), noteId).first<{
     who: string | null
@@ -100,14 +90,11 @@ rooms.get('/:noteId', async (context) => {
     kind: string | null
     role: string | null
   }>()
-
   if (!allowed?.who) return context.json({ error: SIGN_IN }, 401)
   if (!allowed.space_id) return context.json({ error: NO_SUCH_NOTE }, 404)
   if (isChatPointer(allowed.path ?? '')) return context.json({ error: NO_SUCH_NOTE }, 404)
-
   const namespace = context.env.ROOMS
   if (!namespace) return context.json({ error: 'rooms are not running here' }, 503)
-
   const answer = await reach(
     namespace,
     noteId,
@@ -130,16 +117,13 @@ rooms.get('/:noteId', async (context) => {
     },
     context.req.header('cf-ray') ?? null,
   )
-
   if (!answer) {
     return context.json({ error: ROOM_AWAY }, 503, {
       'retry-after': TRY_AGAIN_IN,
     })
   }
-
   const headers = new Headers(answer.headers)
   headers.set('sec-websocket-protocol', tokenProtocolOf(offered) ?? subprotocol(token ?? ''))
-
   return new Response(answer.body, {
     status: answer.status,
     statusText: answer.statusText,
@@ -147,13 +131,9 @@ rooms.get('/:noteId', async (context) => {
     webSocket: answer.webSocket,
   })
 })
-
 export type RoomAsk = 'push' | 'pull' | 'ingest'
-
 export const ROOM_PATIENCE = 15_000
-
 export const ROOM_LATE = Symbol('the room did not answer in time')
-
 async function inTime(answer: Promise<Response>, patience: number): Promise<Response | typeof ROOM_LATE> {
   let late: (value: typeof ROOM_LATE) => void = () => undefined
   const waited = new Promise<typeof ROOM_LATE>((settle) => {
@@ -166,7 +146,6 @@ async function inTime(answer: Promise<Response>, patience: number): Promise<Resp
     clearTimeout(timer)
   }
 }
-
 export async function askRoom(
   env: Env,
   target: { id: string; space_id: string; path: string; kind?: string; epoch?: number },
@@ -176,7 +155,6 @@ export async function askRoom(
 ): Promise<Response | typeof ROOM_LATE | null> {
   const namespace = env.ROOMS
   if (!namespace) return null
-
   for (let asked = 0; asked < 2; asked++) {
     try {
       const room = namespace.get(namespace.idFromName(target.id))
@@ -200,7 +178,6 @@ export async function askRoom(
   }
   return null
 }
-
 export async function ingestInto(
   env: Env,
   target: Note,
@@ -210,33 +187,25 @@ export async function ingestInto(
   const body = new TextEncoder().encode(JSON.stringify({ text, ...writer }))
   const answer = await askRoom(env, target, 'ingest', body)
   if (answer === ROOM_LATE || !answer?.ok) return null
-
   return await answer.json<Ingested>()
 }
-
 export async function writtenPastRoom(env: Env, noteId: string): Promise<void> {
   const namespace = env.ROOMS
   if (!namespace) return
-
   const open = await env.DB.prepare('select 1 from room_sockets where note_id = ? limit 1')
     .bind(noteId)
     .first()
     .catch(() => null)
   if (open) await tell(namespace, noteId, { [WRITTEN_HEADER]: 'yes' })
 }
-
 function protocolsIn(header: string | undefined): string[] {
   return (header ?? '').split(',').map((one) => one.trim())
 }
-
 function offers(header: string | undefined, names: readonly string[]): boolean {
   return protocolsIn(header).some((one) => names.includes(one))
 }
-
 const MOST_OPEN = 50
-
 const MOST_ROUNDS = 20
-
 export async function roomsRevoked(
   env: Env,
   spaceId: string,
@@ -246,10 +215,8 @@ export async function roomsRevoked(
 ): Promise<void> {
   await hooks().machines.machinesRevoked(env, spaceId, who, role, item)
   if (who) await hooks().chats.chatsRevoked(env, spaceId, who, role, item)
-
   const namespace = env.ROOMS
   if (!namespace || !who) return
-
   let after = ''
   for (let round = 0; round < MOST_ROUNDS; round++) {
     const { results } = item
@@ -267,20 +234,15 @@ export async function roomsRevoked(
         )
           .bind(spaceId, who, after, MOST_OPEN)
           .all<{ note_id: string }>()
-
     if (!results.length) return
-
     await Promise.all(
       results.map(({ note_id: noteId }) => tell(namespace, noteId, { 'x-orden-revoked': who, 'x-orden-role': role })),
     )
-
     if (results.length < MOST_OPEN) return
     after = results[results.length - 1]?.note_id ?? ''
   }
 }
-
 const MOST_IN_A_SPACE = 400
-
 export async function spaceEnded(env: Env, spaceId: string): Promise<void> {
   const { results } = await env.DB.prepare(
     `with terms as (
@@ -297,10 +259,8 @@ export async function spaceEnded(env: Env, spaceId: string): Promise<void> {
   )
     .bind(spaceId, MOST_IN_A_SPACE)
     .all<{ who: string }>()
-
   for (const { who } of results) await roomsRevoked(env, spaceId, who, 'none')
 }
-
 async function tell(
   namespace: DurableObjectNamespace,
   noteId: string,
@@ -314,43 +274,34 @@ async function tell(
     return false
   }
 }
-
 export async function closeRooms(env: Env, open: readonly { note_id: string; who: string }[]): Promise<void> {
   const namespace = env.ROOMS
   if (!namespace) return
-
   for (const round of chunks(open, MOST_OPEN)) {
     await Promise.all(
       round.map((one) => tell(namespace, one.note_id, { 'x-orden-revoked': one.who, 'x-orden-role': 'none' })),
     )
   }
 }
-
 export async function eraseRooms(env: Env, noteIds: readonly string[]): Promise<string[]> {
   const namespace = env.ROOMS
   if (!namespace) return [...noteIds]
-
   const emptied: string[] = []
   for (const round of chunks(noteIds, MOST_OPEN)) {
     const heard = await Promise.all(round.map((noteId) => tell(namespace, noteId, { 'x-orden-erase': 'yes' })))
     emptied.push(...round.filter((_, at) => heard[at]))
   }
-
   return emptied
 }
-
 const MOST_SPACES = 100
-
 export async function roomsSignedOut(env: Env, who: string): Promise<void> {
   if ((!env.ROOMS && !env.CHATS) || !who) return
-
   const { results } = await env.DB.prepare(
     `select space_id from room_sockets where who = ?1
      union select space_id from chat_sockets where who = ?1 limit ?2`,
   )
     .bind(who, MOST_SPACES)
     .all<{ space_id: string }>()
-
   for (const { space_id: spaceId } of results) {
     await roomsRevoked(env, spaceId, who, 'none')
   }

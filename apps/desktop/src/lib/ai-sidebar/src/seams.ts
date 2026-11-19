@@ -4,9 +4,7 @@ import type { Panel, PanelCommand } from './chat-parts'
 export async function commandsFor(panel: Panel): Promise<readonly PanelCommand[]> {
   return (await chatCommands()).commands(panel)
 }
-
 const bare = (word: string) => word.toLowerCase().replace(/-/g, '')
-
 export function matching(rows: readonly PanelCommand[], typed: string): PanelCommand[] {
   const want = bare(typed.trim())
   const byName = rows.filter((one) => bare(one.name).startsWith(want))
@@ -23,12 +21,10 @@ export function matching(rows: readonly PanelCommand[], typed: string): PanelCom
     : []
   return [...byName, ...bySynonym, ...byWords]
 }
-
 export function commandIn(text: string): { name: string; args: string } | null {
   const found = /^\/([\w-]+)(?:\s+([\s\S]*))?$/.exec(text.trim())
   return found ? { name: found[1] ?? '', args: (found[2] ?? '').trim() } : null
 }
-
 export function rowNamed(rows: readonly PanelCommand[], name: string): { row: PanelCommand; typed?: string } | null {
   const want = name.toLowerCase()
   const own = rows.find((one) => one.name === want)

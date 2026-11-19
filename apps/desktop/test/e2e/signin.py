@@ -4,9 +4,7 @@ import re
 import sys
 import time
 import uuid
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -14,34 +12,24 @@ DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 SHOTS = DRIVE.shots
 ORIGIN = harness.worker_origin()
-
 PERSON = "reader@example.com"
-
 SPACES = {"Journal": 9, "Uni": 12}
-
 PATIENCE = 60
-
 request = harness.request
-
 class Worker(harness.Worker):
-
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
     def account(self, email: str) -> str:
         token = uuid.uuid4().hex + uuid.uuid4().hex
         digest = hashlib.sha256(token.encode()).hexdigest()
         now = int(time.time() * 1000)
         user = str(uuid.uuid4())
-
         self.sql(
             f"insert into users (id, email, name, created_at)"
             f" values ('{user}', '{email}', 'Emil', {now});"
             + harness.session_row(digest, user, now)
         )
-
         return token
-
 def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -49,23 +37,18 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE):
         if answer:
             return answer
         page.wait_for_timeout(50)
-
     raise SystemExit(f"gave up waiting for {what}")
-
 def note_console(label: str, message) -> None:
     if message.type in ("error", "warning"):
         say(f"[{label}] {message.type}: {message.text[:200]}")
-
 def fresh(browser: Browser, label: str, theme: str = "light") -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 760}, color_scheme=theme)
     page = context.new_page()
     page.on("console", lambda message: note_console(label, message))
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
-
     wait_for(page, "() => !!window.ordenApp", f"[{label}] the app to start")
     return page
-
 def on_a_bad_line(page: Page) -> None:
     session = page.context.new_cdp_session(page)
     session.send("Network.enable")
@@ -78,7 +61,6 @@ def on_a_bad_line(page: Page) -> None:
             "uploadThroughput": 50 * 1024,
         },
     )
-
 def tree_paths(page: Page) -> list[str]:
     return page.evaluate(
         "() => {"
@@ -86,10 +68,8 @@ def tree_paths(page: Page) -> list[str]:
         "  return walk(window.ordenApp.workspace.tree)"
         "}"
     )
-
 def space_names(page: Page) -> list[str]:
     return page.evaluate("() => window.ordenApp.workspace.spaces.map((one) => one.name)")
-
 def surface(page: Page) -> str:
     return page.evaluate(
         "() => {"
@@ -106,7 +86,6 @@ def surface(page: Page) -> str:
         "  })"
         "}"
     )
-
 def state(page: Page) -> str:
     return page.evaluate(
         "() => {"
@@ -124,7 +103,6 @@ def state(page: Page) -> str:
         "  })"
         "}"
     )
-
 WATCH = """
 () => {
   window.__nib = []
@@ -144,9 +122,7 @@ WATCH = """
   tick()
 }
 """
-
 COUNT = re.compile(r"\d+\s*of\s*\d+")
-
 def counted_in(page: Page, patience: float = 30) -> str:
     until = time.monotonic() + patience
     while True:
@@ -155,16 +131,12 @@ def counted_in(page: Page, patience: float = 30) -> str:
         )
         if COUNT.search(live):
             return live
-
         seen = [row[6] for row in page.evaluate("() => window.__nib ?? []") if COUNT.search(row[6])]
         if seen:
             return f"{seen[0]} up to {seen[-1]}"
-
         if time.monotonic() >= until:
             return ""
-
         page.wait_for_timeout(200)
-
 def watched(page: Page) -> str:
     rows = page.evaluate("() => window.__nib ?? []")
     out: list[str] = []
@@ -177,22 +149,16 @@ def watched(page: Page) -> str:
                 f" settling={row[4]} sync={row[5]} foot={row[6]!r}"
             )
             last = shape
-
     return "\n    ".join(out) or "nothing recorded"
-
 def sign_in(page: Page, worker: Worker, label: str, address: str) -> None:
     page.locator("input[type=email]").fill(address)
-
     already = len(worker.written())
     page.get_by_role("button", name="Continue").click()
-
     code = worker.waits_for_mail(
         address, r"(\d{6}) is your (?:nibeditor|Orden) code", f"[{label}] the sign-in code", already
     ).group(1)
     say(f"[{label}] the code in the mail is {code}")
-
     page.locator(".digits input").first.fill(code)
-
 def keep_local_notes(page: Page, label: str) -> None:
     keep = page.get_by_role("button", name="Keep them")
     try:
@@ -201,15 +167,12 @@ def keep_local_notes(page: Page, label: str) -> None:
         say(f"[{label}] kept the notes already here")
     except Exception:
         say(f"[{label}] nothing here to ask about")
-
 def main() -> int:
     worker = Worker()
     failures: list[str] = []
-
     def wrong(what: str) -> None:
         say(f"FAILED: {what}")
         failures.append(what)
-
     with DRIVE.session(
         args=[
             "--disable-background-timer-throttling",
@@ -218,7 +181,6 @@ def main() -> int:
         ],
     ) as browser:
         worker.start()
-
         token = worker.account(PERSON)
         wanted: set[str] = set()
         for name, count in SPACES.items():
@@ -232,18 +194,14 @@ def main() -> int:
                 )
                 wanted.add(f"/{name}/{path}")
         say(f"the account holds {len(SPACES)} spaces and {len(wanted)} notes")
-
         page = fresh(browser, "reader")
         on_a_bad_line(page)
-
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_selector("aside .foot", timeout=10_000)
-
         page.evaluate(WATCH)
         page.evaluate("() => (window.ordenApp.account.open = true)")
         page.locator("input[type=email]").wait_for(timeout=10_000)
         sign_in(page, worker, "reader", PERSON)
-
         say("waiting for the state to go up")
         try:
             wait_for(page, "() => window.ordenApp.arriving.showing", "the state", 30)
@@ -254,16 +212,12 @@ def main() -> int:
             )
         say("it went up before the account had been asked anything")
         say(f"the surface is {surface(page)}")
-
         if page.evaluate("() => document.querySelector('main')?.inert === true"):
             wrong("the app was shut off while there was already a list to use")
-
         keep_local_notes(page, "reader")
-
         page.wait_for_timeout(300)
         page.screenshot(path=str(SHOTS / "signing-in-light.png"))
         say("photographed the state, light")
-
         counted = counted_in(page)
         if not counted:
             raise SystemExit(
@@ -272,7 +226,6 @@ def main() -> int:
             )
         say(f"the state counts: {counted!r}")
         page.screenshot(path=str(SHOTS / "signing-in-counting.png"))
-
         say("waiting for the state to go")
         wait_for(
             page,
@@ -281,26 +234,21 @@ def main() -> int:
             patience=90,
         )
         say("it went on its own, and the app is reachable again")
-
         if page.evaluate("() => document.querySelector('main')?.inert === true"):
             wrong("the app was left unreachable after the pass finished")
-
         names = space_names(page)
         for name in SPACES:
             if name not in names:
                 wrong(f"{name} never reached the rail: {names!r}")
         say(f"the rail holds {names!r}")
-
         page.wait_for_timeout(200)
         page.screenshot(path=str(SHOTS / "signed-in.png"))
         say("photographed the app once the state had lifted")
-
         counted = page.evaluate("() => window.ordenApp.arriving.done")
         if counted != len(wanted):
             wrong(f"the state counted {counted} of the {len(wanted)} notes")
         else:
             say(f"it counted all {counted} notes down")
-
         for name in SPACES:
             page.evaluate(
                 "(wanted) => {"
@@ -322,7 +270,6 @@ def main() -> int:
                 wrong(f"{name} arrived empty: missing {missing!r}")
             else:
                 say(f"{name} holds all {len(theirs)} of its notes, with no reload")
-
         page.evaluate("() => window.ordenApp.sync.nudge()")
         page.wait_for_timeout(1500)
         if page.locator(".arriving").count() or page.evaluate(
@@ -331,7 +278,6 @@ def main() -> int:
             wrong("a later pass put the state back up")
         else:
             say("a later pass says nothing: the sync light is the whole report")
-
         page.evaluate("() => window.ordenApp.account.signOut()")
         wait_for(page, "() => !window.ordenApp.account.signedIn", "the sign-out")
         page.wait_for_timeout(400)
@@ -339,14 +285,11 @@ def main() -> int:
             wrong("signing out left the state up")
         else:
             say("signing out cleared it")
-
     if failures:
         print("\nFAILED", flush=True)
         for one in failures:
             print(f"  - {one}", flush=True)
         return 1
-
     print("\nsigning in said so, counted, lifted on its own, and never trapped anybody", flush=True)
     return 0
-
 sys.exit(main())

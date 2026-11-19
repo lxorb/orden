@@ -1,30 +1,22 @@
 import json
-
 from playwright.sync_api import Browser
-
 import harness
 from harness import Drive
 
 DRIVE = Drive(__file__, served=False)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 ORIGIN = harness.worker_origin()
-
 OWNER = "studio-owner@example.com"
 MEMBER = "studio-member@example.com"
 SPACE = "Studio"
-
 ROW = """(name) => {
   const row = [...document.querySelectorAll('[role="menuitem"]')]
     .find((one) => one.querySelector('.orden-row-label')?.textContent.trim() === name)
   return row ? row.querySelectorAll('.faces .one').length : -1
 }"""
-
-
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
-
-
 def drive(browser: Browser) -> None:
     worker = Worker()
     worker.start()
@@ -35,7 +27,6 @@ def drive(browser: Browser) -> None:
     link = worker.waits_for_mail(MEMBER, r"/join/([a-f0-9]+)", "the invitation").group(1)
     worker.request(f"/v1/join/{link}", member, {})
     say(f"{MEMBER} is in {SPACE}")
-
     context = browser.new_context(viewport={"width": 1180, "height": 760}, reduced_motion="reduce")
     context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(member)})")
     page = context.new_page()
@@ -52,6 +43,4 @@ def drive(browser: Browser) -> None:
         if not faced:
             wrong(f"{visit}: {SPACE} lists no face of its owner")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a space shared with the reader shows its people as soon as it arrives"))

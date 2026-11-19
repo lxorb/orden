@@ -4,11 +4,9 @@ import type { SyntaxNode } from '@lezer/common'
 export const noReveal = Facet.define<boolean, boolean>({
   combine: (values) => values.some(Boolean),
 })
-
 export const quietMarks = Facet.define<boolean, boolean>({
   combine: (values) => values.some(Boolean),
 })
-
 const QUIET = new Set([
   'EmphasisMark',
   'StrikethroughMark',
@@ -19,21 +17,17 @@ const QUIET = new Set([
   'HeaderMark',
   'QuoteMark',
 ])
-
 function quiet(state: EditorState, node: SyntaxNode): boolean {
   if (!QUIET.has(node.name) || !state.facet(quietMarks)) return false
   return node.name !== 'CodeMark' || node.parent?.name === 'InlineCode'
 }
-
 export const blockMarkRevealed = (state: EditorState, node: SyntaxNode): boolean =>
   !quiet(state, node) && lineRevealed(state, node.from)
-
 export function revealed(state: EditorState, node: SyntaxNode): boolean {
   if (quiet(state, node)) return false
   const parent = node.parent ?? node
   return overlaps(state, parent.from, parent.to)
 }
-
 export const foundMatch = StateField.define<{ from: number; to: number } | null>({
   create: () => null,
   update(value, transaction) {
@@ -48,7 +42,6 @@ export const foundMatch = StateField.define<{ from: number; to: number } | null>
     return from < to ? { from, to } : null
   },
 })
-
 export function overlaps(state: EditorState, from: number, to: number): boolean {
   if (state.facet(noReveal)) {
     const found = state.field(foundMatch, false)
@@ -56,7 +49,6 @@ export function overlaps(state: EditorState, from: number, to: number): boolean 
   }
   return state.selection.ranges.some((range) => range.from <= to && range.to >= from)
 }
-
 export function lineRevealed(state: EditorState, pos: number): boolean {
   const line = state.doc.lineAt(pos)
   return overlaps(state, line.from, line.to)

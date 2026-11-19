@@ -9,19 +9,15 @@ vi.mock('../../platform/src/api', async (original) => ({
     return 0
   },
 }))
-
 const { Protection } = await import('./protection.svelte')
-
 const settled = async () => {
   await import('./buried')
   await new Promise((done) => setTimeout(done, 0))
 }
-
 beforeEach(() => {
   rehomed.length = 0
   localStorage.clear()
 })
-
 describe('the versions of a locked note that is deleted', () => {
   test('leave its place, so a note made there later finds none of them', async () => {
     const protection = new Protection()
@@ -30,7 +26,6 @@ describe('the versions of a locked note that is deleted', () => {
     await settled()
     expect(rehomed).toEqual([expect.stringMatching(/^\/s\/Diary\.md -> \/\.orden-locked-history\//)])
   })
-
   test('come back with it, where it is put back', async () => {
     const protection = new Protection()
     protection.set('/s', '/s/Private', 'password')
@@ -41,7 +36,6 @@ describe('the versions of a locked note that is deleted', () => {
     expect(rehomed[1]).toBe(`${away} -> /s/Private 2`)
     expect(protection.own('/s', '/s/Private 2')?.way).toBe('password')
   })
-
   test('come back when the account puts the note back', async () => {
     const protection = new Protection()
     protection.set('/s', '/s/Diary.md', 'device')
@@ -51,14 +45,12 @@ describe('the versions of a locked note that is deleted', () => {
     await protection.unbury(null, '/s', 'Diary.md')
     expect(rehomed[1]).toBe(`${away} -> /s/Diary.md`)
   })
-
   test('of a note nothing locks, stay where they are', async () => {
     const protection = new Protection()
     await protection.gone('/s/Plan.md', '/s', 'trash-3')
     await settled()
     expect(rehomed).toEqual([])
   })
-
   test('of a note put back by the account from a deleted locked folder, come back with the lock', async () => {
     const protection = new Protection()
     protection.set('/s', '/s/Private', 'password')
@@ -72,7 +64,6 @@ describe('the versions of a locked note that is deleted', () => {
     })
     expect(rehomed[1]).toBe(`${away}/Deep/Diary.md -> /s/Private/Deep/Diary.md`)
   })
-
   test('come back where something put back under another trash id lands at its place', async () => {
     const protection = new Protection()
     protection.set('/s', '/s/Private', 'password')
@@ -80,14 +71,12 @@ describe('the versions of a locked note that is deleted', () => {
     await protection.cameBack('/s/Private', '/s', 'an-id-it-was-never-told')
     expect(protection.own('/s', '/s/Private')?.way).toBe('password')
   })
-
   test('of a space that goes without a trash id, leave its place too', async () => {
     const protection = new Protection()
     protection.set('/s', '/s', 'password')
     await protection.forget('/s')
     expect(rehomed).toEqual([expect.stringMatching(/^\/s -> \/\.orden-locked-history\//)])
   })
-
   test('are away before the lock is gone', async () => {
     const protection = new Protection()
     protection.set('/s', '/s/Diary.md', 'password')
@@ -105,7 +94,6 @@ describe('the versions of a locked note that is deleted', () => {
     await protection.cameBack('/s/Private/Diary.md', '/s', 'trash-in')
     expect(protection.locked('/s/Private/Diary.md')).toBe(true)
   })
-
   test('come back where the account puts the note back under another name', async () => {
     const protection = new Protection()
     protection.set('/s', '/s/Diary.md', 'password')
@@ -115,7 +103,6 @@ describe('the versions of a locked note that is deleted', () => {
     expect(protection.own('/s', '/s/Diary 2.md')?.way).toBe('password')
     expect(rehomed[1]).toBe(`${away} -> /s/Diary 2.md`)
   })
-
   test('follow their space when it is renamed', async () => {
     const protection = new Protection()
     protection.set('/s', '/s/Diary.md', 'device')

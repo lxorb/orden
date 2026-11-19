@@ -8,25 +8,20 @@ import * as Y from 'yjs'
 import { MINE } from './docs'
 
 const RELAYED = 'relayed'
-
 type Say = (kind: string, what: Record<string, unknown>) => void
-
 interface Hooked<T> {
   on: T
   gen: number
   off: () => void
 }
-
 interface AwarenessChange {
   added: number[]
   updated: number[]
   removed: number[]
 }
-
 function isBytes(value: unknown): value is Uint8Array {
   return value instanceof Uint8Array
 }
-
 export class LiveRelay {
   private readonly wants = new Map<string, Set<string>>()
   private readonly joins = new Map<string, Set<string>>()
@@ -36,23 +31,18 @@ export class LiveRelay {
   private readonly rooms = new Map<string, Awareness>()
   private made = 0
   private readonly gens = new WeakMap<Y.Doc, number>()
-
   constructor(private readonly say: Say) {}
-
   ids(): Set<string> {
     const all = new Set<string>()
     for (const ids of this.wants.values()) for (const id of ids) all.add(id)
     return all
   }
-
   joined(from: string, id: string): boolean {
     return this.joins.get(from)?.has(id) === true
   }
-
   genOf(id: string): number | null {
     return this.lives.get(id)?.gen ?? null
   }
-
   want(from: string, ids: readonly string[], meeting: readonly string[] = []): boolean {
     const had = this.wants.get(from) ?? new Set<string>()
     const now = new Set([...ids, ...meeting])
@@ -63,14 +53,12 @@ export class LiveRelay {
     else this.joins.delete(from)
     return had.size !== now.size || [...now].some((id) => !had.has(id))
   }
-
   meeting(from: string, id: string): boolean {
     const had = this.wants.get(from) ?? new Set<string>()
     if (had.has(id)) return false
     this.wants.set(from, new Set([...had, id]))
     return true
   }
-
   gone(from: string): boolean {
     const had = this.wants.get(from)
     if (!had) return false
@@ -80,15 +68,12 @@ export class LiveRelay {
     this.clients.delete(from)
     return true
   }
-
   roomCame(id: string, awareness: Awareness) {
     this.rooms.set(id, awareness)
   }
-
   roomsHeld(ids: ReadonlySet<string>) {
     for (const id of this.rooms.keys()) if (!ids.has(id)) this.rooms.delete(id)
   }
-
   follow(liveOf: (id: string) => Y.Doc | null) {
     const ids = this.ids()
     const again: string[] = []
@@ -117,7 +102,6 @@ export class LiveRelay {
     for (const id of again) this.say('live-again', { id })
     for (const id of hello) this.say('live-hello', { id })
   }
-
   up(from: string, said: Record<string, unknown>) {
     const id = said.id
     if (typeof id !== 'string' || !this.wants.get(from)?.has(id)) return
@@ -131,7 +115,6 @@ export class LiveRelay {
     this.clients.set(from, clients)
     applyAwarenessUpdate(heard.on, said.aware, RELAYED)
   }
-
   stop() {
     for (const one of this.lives.values()) one.off()
     for (const one of this.heard.values()) one.off()
@@ -142,7 +125,6 @@ export class LiveRelay {
     this.joins.clear()
     this.clients.clear()
   }
-
   private forgetClient(from: string, id: string) {
     const client = this.clients.get(from)?.get(id)
     if (client === undefined) return
@@ -150,7 +132,6 @@ export class LiveRelay {
     const heard = this.heard.get(id)
     if (heard) removeAwarenessStates(heard.on, [client], RELAYED)
   }
-
   private hookLive(id: string, live: Y.Doc) {
     const gen = this.gens.get(live) ?? ++this.made
     this.gens.set(live, gen)
@@ -158,7 +139,6 @@ export class LiveRelay {
     live.on('update', said)
     this.lives.set(id, { on: live, gen, off: () => live.off('update', said) })
   }
-
   private hookAwareness(id: string, awareness: Awareness) {
     const said = ({ added, updated, removed }: AwarenessChange) => {
       const changed = [...added, ...updated, ...removed]

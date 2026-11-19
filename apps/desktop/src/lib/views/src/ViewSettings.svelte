@@ -16,7 +16,6 @@
     kit: Kit
     more: (event?: MouseEvent) => MenuEntry[]
   } = $props()
-
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const layout = $derived(layoutOf(view?.type ?? 'table'))
@@ -37,7 +36,6 @@
       : [],
   )
   const listed = $derived([...live.columns, ...properties.filter((one) => !live.columns.includes(one))])
-
   const SIZES: Record<CardSize, string> = {
     small: 'Small',
     medium: 'Medium',
@@ -48,16 +46,13 @@
     { kind: 'tasks', label: 'Tasks' },
     { kind: 'both', label: 'Both' },
   ]
-
   function pick(next: Layout) {
     kit.change((one, at) => switched(one, at, next, live.rows))
   }
-
   function shows(property: string, on: boolean) {
     const order = on ? [...live.columns, property] : live.columns.filter((one) => one !== property)
     kit.change((one, at) => setColumns(one, at, order))
   }
-
   function carry(event: PointerEvent, from: string) {
     event.preventDefault()
     const list = (event.currentTarget as HTMLElement).closest('.shown')
@@ -81,7 +76,6 @@
     window.addEventListener('pointerup', up)
     window.addEventListener('pointercancel', done)
   }
-
   const toggle = (on: boolean, run: () => void) => ({
     onclick: run,
     onkeydown: (event: KeyboardEvent) => {
@@ -206,29 +200,23 @@
     max-height: min(70vh, 640px);
     overflow-y: auto;
   }
-
   .orden-section {
     margin: var(--space-2) 0 0;
   }
-
   .orden-section:first-child {
     margin-top: 0;
   }
-
   .layouts {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
   }
-
   .orden-segmented {
     width: 100%;
   }
-
   .pressable {
     cursor: default;
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -238,24 +226,20 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .shown {
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
-
   .property {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .property .orden-setting {
     flex: 1;
     min-width: 0;
   }
-
   .grip {
     color: var(--muted);
     cursor: grab;
@@ -263,16 +247,13 @@
     -webkit-user-select: none;
     user-select: none;
   }
-
   .grip.off {
     visibility: hidden;
   }
-
   .tick {
     margin-inline-start: auto;
     color: var(--accent);
   }
-
   .danger .orden-row-label {
     color: var(--danger);
   }

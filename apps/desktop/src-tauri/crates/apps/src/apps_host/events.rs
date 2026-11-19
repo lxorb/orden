@@ -1,7 +1,6 @@
 use serde::{Deserialize, Deserializer};
 
 const MOST_CLICKS: i64 = 20;
-
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(tag = "t", rename_all = "lowercase")]
 pub enum InputEvent {
@@ -37,12 +36,10 @@ pub enum InputEvent {
         at: f64,
     },
 }
-
 fn clicks<'de, D: Deserializer<'de>>(said: D) -> Result<i32, D::Error> {
     let clicks = i64::deserialize(said)?.clamp(-MOST_CLICKS, MOST_CLICKS);
     Ok(i32::try_from(clicks).unwrap_or(0))
 }
-
 #[cfg(test)]
 mod tests {
     use super::InputEvent;

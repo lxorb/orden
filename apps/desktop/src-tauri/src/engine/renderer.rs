@@ -1,22 +1,16 @@
 #![allow(clippy::transmute_ptr_to_ptr)]
-
 use cef::*;
 
 const MESSAGE: &str = "tauri:ipc";
-
 const POST_MESSAGE: &str = "postMessage";
-
 const API_VERSION_SWITCH: &str = "tauri-cef-api-version";
-
 pub(crate) fn own_origin(address: &str) -> bool {
     tauri::Url::parse(address).is_ok_and(|url| {
         url.scheme() == "http" && url.host_str() == Some("tauri.localhost") && url.port().is_none()
     })
 }
-
 wrap_v8_handler! {
     struct PostMessage;
-
     impl V8Handler {
         fn execute(
             &self,
@@ -60,7 +54,6 @@ wrap_v8_handler! {
         }
     }
 }
-
 fn install(context: &mut V8Context) {
     let Some(window) = context.global() else {
         return;
@@ -86,10 +79,8 @@ fn install(context: &mut V8Context) {
     ipc.set_value_bykey(Some(&name), Some(&mut post), attributes);
     window.set_value_bykey(Some(&CefString::from("ipc")), Some(&mut ipc), attributes);
 }
-
 wrap_render_process_handler! {
     struct OwnOriginOnly;
-
     impl RenderProcessHandler {
         fn on_context_created(
             &self,
@@ -106,17 +97,14 @@ wrap_render_process_handler! {
         }
     }
 }
-
 wrap_app! {
     struct Helper;
-
     impl App {
         fn render_process_handler(&self) -> Option<RenderProcessHandler> {
             Some(OwnOriginOnly::new())
         }
     }
 }
-
 fn told_version(args: impl IntoIterator<Item = std::ffi::OsString>) -> Option<i32> {
     let prefix = format!("--{API_VERSION_SWITCH}=");
     args.into_iter()
@@ -127,7 +115,6 @@ fn told_version(args: impl IntoIterator<Item = std::ffi::OsString>) -> Option<i3
         })
         .last()
 }
-
 pub(crate) fn run() {
     let args = cef::args::Args::new();
     let version = told_version(std::env::args_os()).unwrap_or(sys::CEF_API_VERSION_LAST);
@@ -142,7 +129,6 @@ pub(crate) fn run() {
         std::ptr::null_mut(),
     );
 }
-
 #[cfg(test)]
 mod tests {
     use super::own_origin;
@@ -174,14 +160,12 @@ mod tests {
             assert!(!own_origin(other), "{other}");
         }
     }
-
     #[test]
     fn the_dev_server_is_no_address_of_the_app_s() {
         assert!(!tauri::is_dev());
         assert!(!own_origin("http://localhost:1420/"));
         assert!(!own_origin("tauri://localhost/"));
     }
-
     #[test]
     fn a_child_declares_the_version_it_was_told_the_last_time() {
         let args = |list: &[&str]| {

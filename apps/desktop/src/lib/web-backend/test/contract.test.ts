@@ -6,7 +6,6 @@ import { internalInvoke, keptMounts, webMeta } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
@@ -14,7 +13,6 @@ function sources(folder: string): string[] {
     return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
   })
 }
-
 describe('the module stands on its own', () => {
   test('reaches only the modules it names', () => {
     const reached = sources(SRC).flatMap((file) =>
@@ -31,7 +29,6 @@ describe('the module stands on its own', () => {
     ])
   })
 })
-
 describe('the backends for a browser and for spaces kept here', () => {
   test('the api names no backend file statically, so startup carries only its doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
@@ -40,7 +37,6 @@ describe('the backends for a browser and for spaces kept here', () => {
     expect(api).toMatch(/import\('\.\/web\/commands'\)/)
     expect(api).toMatch(/import\('\.\/internal\/route'\)/)
   })
-
   test('what the browser keeps beside the notes is read back, and gone once removed', async () => {
     const meta = await webMeta()
     await meta.put('contract:key', 'kept')
@@ -48,14 +44,12 @@ describe('the backends for a browser and for spaces kept here', () => {
     await meta.remove('contract:key')
     expect(await meta.get('contract:key')).toBeUndefined()
   })
-
   test('with nothing mounted, a folder is no kept space and has no listing here', async () => {
     const mounts = await keptMounts()
     expect(await mounts.mountedFor('/spaces/Plans')).toBe(false)
     expect(await mounts.listedUnder('/spaces/Plans')).toBeNull()
     expect(mounts.hearInternal('/spaces/Plans', () => undefined)).toBeNull()
   })
-
   test('a question about a PDF twice on disk has no answer inside a kept space', async () => {
     expect(await internalInvoke('same_pdf', { space: '/spaces/Plans' })).toBeNull()
   })

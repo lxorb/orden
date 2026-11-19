@@ -7,7 +7,6 @@ function turned(on: boolean): void {
   setWord(on ? NO_PROTECTION_WORD : PROTECTION_WORD, false)
   setWord(on ? PROTECTION_WORD : NO_PROTECTION_WORD, true)
 }
-
 export async function turnProtection(on: boolean): Promise<void> {
   if (on === protectionOn()) return
   const count = protection.count

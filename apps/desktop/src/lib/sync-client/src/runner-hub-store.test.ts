@@ -9,7 +9,6 @@ const crate = vi.hoisted(() => ({
   hang: false,
   tokens: [] as (() => string | null)[],
 }))
-
 vi.mock('./store', async (importOriginal) => {
   const original = await importOriginal<typeof import('./store')>()
   return {
@@ -62,7 +61,6 @@ vi.mock('./store', async (importOriginal) => {
     },
   }
 })
-
 vi.mock('./app-world', async () => {
   const { MemoryDisk } = await import('./memory-disk')
   return {
@@ -82,10 +80,8 @@ vi.mock('./app-world', async () => {
     },
   }
 })
-
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('BroadcastChannel', undefined)
-
 function locksOf() {
   const holders = new Set<string>()
   const waiting = new Map<string, (() => void)[]>()
@@ -124,9 +120,7 @@ function locksOf() {
     query: () => Promise.resolve({ held: [], pending: [] }),
   } as unknown as LockManager
 }
-
 const settle = (ms = 50) => new Promise((done) => setTimeout(done, ms))
-
 async function aWindow() {
   vi.resetModules()
   await import('../../sync-ports')
@@ -137,15 +131,12 @@ async function aWindow() {
   return { runner, account }
 }
 type Window = Awaited<ReturnType<typeof aWindow>>
-
 function signIn(one: Window) {
   Object.assign(one.account, { user: { id: 'u1', syncVersion: 2 } })
   void one.runner.dropLocal()
   void one.runner.start()
 }
-
 const wrong = () => crate.log.filter((line) => line.startsWith('WRONG'))
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -157,12 +148,10 @@ vi.mock('./watching', () => ({
     caughtUp: () => undefined,
   }),
 }))
-
 vi.mock('../../platform/src/backoff', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/backoff')>()),
   pollDelay: () => 400,
 }))
-
 async function storeHere(id: string) {
   const { MemoryStore } = await import('./memory-store')
   const mem = new MemoryStore(deviceOfStore(id))
@@ -172,14 +161,11 @@ async function storeHere(id: string) {
   await session.close()
   return mem
 }
-
 const opens = (id: string) => crate.log.filter((line) => line === `open ${id}`).length
-
 const deviceOfStore = (id: string) =>
   Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16))
     .join('')
     .padEnd(32, '0')
-
 beforeEach(() => {
   crate.held = null
   crate.mems.clear()
@@ -188,7 +174,6 @@ beforeEach(() => {
   crate.tokens.length = 0
   Object.defineProperty(navigator, 'locks', { value: locksOf(), configurable: true })
 })
-
 describe('the hub asking the device id', () => {
   test('as the account signs in, before the engine kept signed out let go, the ids carry (M3-1)', async () => {
     const { MemoryStore } = await import('./memory-store')
@@ -215,7 +200,6 @@ describe('the hub asking the device id', () => {
       }),
     ])
     await seed.close()
-
     await storeHere('u1')
     const a = await aWindow()
     await a.runner.startLocal()
@@ -224,14 +208,12 @@ describe('the hub asking the device id', () => {
     void b.runner.startLocal()
     await settle()
     expect(crate.held?.account).toBe('local')
-
     Object.assign(b.account, { user: { id: 'u1', syncVersion: 2 } })
     const device = bHub.deviceId()
     await settle(20)
     signIn(a)
     signIn(b)
     await settle(200)
-
     const engine = a.runner.engine ?? b.runner.engine
     expect(engine).not.toBeNull()
     expect(await device).toBe(engine?.core.store.opened.device)
@@ -240,7 +222,6 @@ describe('the hub asking the device id', () => {
     expect(JSON.parse(String(row?.value))).toEqual({ 'Plan.md': id })
     expect(wrong()).toEqual([])
   })
-
   test('with no engine anywhere, it is the one the store of the account keeps', async () => {
     await storeHere('u1')
     const one = await aWindow()
@@ -251,7 +232,6 @@ describe('the hub asking the device id', () => {
     expect(opens('u1')).toBe(0)
   })
 })
-
 describe('the way back to v1', () => {
   test('waits for the window keeping the engine signed out, and opens no store under it (M3-2)', async () => {
     const a = await aWindow()
@@ -259,13 +239,11 @@ describe('the way back to v1', () => {
     const b = await aWindow()
     void b.runner.startLocal()
     await settle()
-
     Object.assign(b.account, { user: { id: 'u1', syncVersion: 1 }, token: 't' })
     const walked = b.runner.walkBack(() => true)
     await settle(200)
     expect(crate.log).not.toContain('open u1')
     expect(crate.held?.account).toBe('local')
-
     Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 }, token: 't' })
     await a.runner.dropLocal()
     expect(await a.runner.walkBack(() => true)).toBe(true)
@@ -273,7 +251,6 @@ describe('the way back to v1', () => {
     expect(wrong()).toEqual([])
   })
 })
-
 describe('a drop left waiting from a v1 sign-in', () => {
   test('signed out again, the window that takes the store over keeps its engine (M3-3)', async () => {
     const a = await aWindow()
@@ -301,7 +278,6 @@ describe('a drop left waiting from a v1 sign-in', () => {
     expect(crate.log).not.toContain('forget local')
   })
 })
-
 describe('who holds the device store, and for how long', () => {
   test('a start in the wait of the way back keeps the store the way back lets go of (M3F-1)', async () => {
     vi.stubGlobal('fetch', () => new Promise(() => undefined))
@@ -317,7 +293,6 @@ describe('who holds the device store, and for how long', () => {
     await settle(300)
     expect(a.runner.engine).not.toBeNull()
     expect((a.runner as unknown as { storeLead: unknown }).storeLead).not.toBeNull()
-
     const b = await aWindow()
     const bHub = await import('./hub.svelte')
     Object.assign(b.account, { user: { id: 'u1', syncVersion: 2 }, token: 't' })
@@ -326,7 +301,6 @@ describe('who holds the device store, and for how long', () => {
     expect(crate.held?.account).toBe('u1')
     expect(wrong()).toEqual([])
   }, 20_000)
-
   test('a v1 session has the device id of the store at once, in the window that dropped the local engine and in another (M3F-2)', async () => {
     vi.useFakeTimers()
     try {
@@ -337,12 +311,10 @@ describe('who holds the device store, and for how long', () => {
       const dropped = a.runner.dropLocal()
       await vi.advanceTimersByTimeAsync(100)
       await dropped
-
       const asked: (string | undefined)[] = [undefined, undefined]
       void aHub.deviceId().then((id) => (asked[0] = id))
       await vi.advanceTimersByTimeAsync(100)
       expect(asked[0]).toBe(deviceOfStore('u1'))
-
       const b = await aWindow()
       const bHub = await import('./hub.svelte')
       Object.assign(b.account, { user: { id: 'u1', syncVersion: 1 } })
@@ -355,7 +327,6 @@ describe('who holds the device store, and for how long', () => {
     }
   })
 })
-
 describe('the device id read beside the store', () => {
   test('asked at launch, before the engine opens the store, leaves a clean quit clean (S-2)', async () => {
     vi.stubGlobal('fetch', () => new Promise(() => undefined))
@@ -371,7 +342,6 @@ describe('the device id read beside the store', () => {
     expect(a.runner.engine?.core.store.opened.wasClean).toBe(true)
     expect(opens('u1')).toBe(1)
   })
-
   test('answers at once in the window walking back while a try hangs, and in another (S-3)', async () => {
     vi.stubGlobal('fetch', () => new Promise(() => undefined))
     crate.hang = true
@@ -384,7 +354,6 @@ describe('the device id read beside the store', () => {
     ])
     await kept.cleanExit(true)
     await kept.close()
-
     const a = await aWindow()
     Object.assign(a.account, { user: { id: 'u1', syncVersion: 1 }, token: 't' })
     void a.runner.walkBack(() => true)
@@ -398,7 +367,6 @@ describe('the device id read beside the store', () => {
     expect(asked).toEqual([deviceOfStore('u1'), deviceOfStore('u1')])
   })
 })
-
 describe('a start that a stop and a start overtake', () => {
   for (const gap of [0, 1, 3, 6, 12, 30]) {
     test(`leaves one engine, and a stop lets go of everything (S-1, ${gap} ms)`, async () => {
@@ -424,7 +392,6 @@ describe('a start that a stop and a start overtake', () => {
     })
   }
 })
-
 describe('one id for a device and an account', () => {
   test('signed in with no store yet, the hub has the id the store then takes (DEV-1)', async () => {
     vi.stubGlobal('fetch', () => new Promise(() => undefined))
@@ -437,7 +404,6 @@ describe('one id for a device and an account', () => {
     expect(a.runner.engine?.core.store.opened.device).toBe(before)
     expect(await hub.deviceId()).toBe(before)
   })
-
   test('a store that has an id keeps it, and another account is another device', async () => {
     vi.stubGlobal('fetch', () => new Promise(() => undefined))
     await storeHere('u1')
@@ -454,7 +420,6 @@ describe('one id for a device and an account', () => {
     expect(await hub.deviceId()).not.toBe(other)
   })
 })
-
 describe('a stop and a start in one tick', () => {
   test('the start comes after the stop, and the window keeps an engine (DEV-2)', async () => {
     vi.stubGlobal('fetch', () => new Promise(() => undefined))
@@ -470,7 +435,6 @@ describe('a stop and a start in one tick', () => {
     expect(wrong()).toEqual([])
   })
 })
-
 describe('an engine kept while another account signs in', () => {
   test('never speaks with the token of the account that came after', async () => {
     vi.stubGlobal('fetch', () => new Promise(() => undefined))
@@ -481,7 +445,6 @@ describe('an engine kept while another account signs in', () => {
     expect(a.runner.engine).not.toBeNull()
     const token = crate.tokens.at(-1)
     expect(token?.()).toBe('first')
-
     Object.assign(a.account, { user: { id: 'u2', syncVersion: 2 }, token: 'second' })
     expect(token?.()).toBeNull()
   })

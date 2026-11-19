@@ -1,12 +1,10 @@
 import json
 from pathlib import Path
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
 ORIGIN = DRIVE.origin
-
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -15,30 +13,23 @@ DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 DEVICES = [
     ("desktop-light", 1440, 900, DESKTOP_AGENT, False, "light"),
     ("desktop-dark", 1440, 900, DESKTOP_AGENT, False, "dark"),
     ("phone", 390, 844, PHONE_AGENT, True, "light"),
     ("phone-dark", 390, 844, PHONE_AGENT, True, "dark"),
 ]
-
 OWNER = {"email": "emil@example.com", "name": "Emil"}
-
 LINK = {"url": "https://orden.so/join/8f2c1d5ab9", "role": "read", "mode": "open"}
-
 def member(email, role="write", pending=False, name=None, guest=None):
     return {"email": email, "guest": guest, "name": name, "role": role, "pending": pending}
-
 def request(email, name, role="write", guest=None):
     return {"email": email, "guest": guest, "name": name, "role": role, "at": 0}
-
 PEOPLE = [
     member("ada@example.com", "write", name="Ada Lovelace"),
     member("grace@example.com", "read"),
     member(None, "write", name="Windows wren", guest="g1"),
 ]
-
 STATES = [
     ("empty", {"owner": OWNER, "members": [], "requests": [], "link": None}),
     ("people", {"owner": OWNER, "members": PEOPLE, "requests": [], "link": None}),
@@ -66,7 +57,6 @@ STATES = [
         },
     ),
 ]
-
 SHOW = """
 (who) => {
   const app = window.ordenApp
@@ -80,10 +70,8 @@ SHOW = """
   app.share.open = true
 }
 """
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     out.mkdir(parents=True, exist_ok=True)
-
     context = browser.new_context(
         viewport={"width": width, "height": height},
         user_agent=agent,
@@ -98,7 +86,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     DRIVE.open(page)
     page.evaluate("() => { for (let i = 0; i < 12; i++) history.pushState({ spare: i }, '') }")
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
-
     page.evaluate(
         """() => {
           const ws = window.ordenApp.workspace
@@ -106,17 +93,14 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         }"""
     )
     page.wait_for_timeout(300)
-
     def shot(tag: str) -> None:
         page.screenshot(path=str(out / f"{name}-{tag}.png"))
         say(f"shot {name}-{tag}.png")
-
     def sheet(tag: str) -> None:
         box = page.locator(".sheet").first.bounding_box()
         if not box:
             shot(tag)
             return
-
         pad = 24
         page.screenshot(
             path=str(out / f"{name}-{tag}.png"),
@@ -128,7 +112,6 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
             },
         )
         say(f"shot {name}-{tag}.png")
-
     page.evaluate(
         """() => {
           const app = window.ordenApp
@@ -140,12 +123,10 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_timeout(500)
     sheet("loading")
-
     for tag, who in STATES:
         page.evaluate(SHOW, who)
         page.wait_for_timeout(450)
         sheet(tag)
-
     page.evaluate(SHOW, STATES[1][1])
     page.wait_for_timeout(300)
     field = page.locator(".compose input").first
@@ -153,13 +134,11 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     field.type("ada@example.com, bob@")
     page.wait_for_timeout(300)
     sheet("typing")
-
     field.fill("nonsense")
     page.wait_for_timeout(100)
     page.keyboard.press("Enter")
     page.wait_for_timeout(400)
     sheet("wrong")
-
     page.evaluate(SHOW, STATES[2][1])
     page.wait_for_timeout(400)
     picks = page.locator(".person .pick button")
@@ -169,24 +148,19 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         shot("rolemenu")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
-
         picks.last.click(force=True)
         page.wait_for_timeout(400)
         shot("invitedmenu")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
-
     page.evaluate("() => window.ordenApp.share.close()")
     context.close()
-
 def main() -> int:
     out = DRIVE.shots
     with DRIVE.session() as browser:
         for one in DEVICES:
             say(f"--- {one[0]} ---")
             drive(browser, out, *one)
-
     say(json.dumps(sorted(p.name for p in out.glob('*.png'))))
     return DRIVE.verdict(f"shots in {out}")
-
 raise SystemExit(main())

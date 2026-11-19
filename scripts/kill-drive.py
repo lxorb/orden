@@ -1,27 +1,22 @@
 #!/usr/bin/env python3
-
 import json
 import sys
 import time
 from pathlib import Path
-
 from drive_scheme import clicked, other
 from linux_app import run
 
 OUT, PHASE = Path(sys.argv[1]), sys.argv[2]
 WORDS = "Words written just before the kill"
 SAID = OUT / "kill-said.json"
-
 def scheme():
     return run("document.documentElement.dataset.theme")
-
 def drafts():
     return run(
         "orden.workspace.tabs.filter((tab) => (tab.doc ?? '').includes("
         + json.dumps(WORDS)
         + ")).length"
     )
-
 if PHASE == "write":
     for _ in range(40):
         if scheme() in ("light", "dark"):

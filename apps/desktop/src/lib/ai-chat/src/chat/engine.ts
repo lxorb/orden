@@ -41,25 +41,19 @@ function apiOf(kind: ProviderKind): Api | null {
   if (kind === 'gemini') return 'gemini'
   return null
 }
-
 const WIRES: Record<Api, Wire> = { anthropic, responses, completions, gemini }
-
 export const MOST_ROUNDS = 40
-
 const MOST_ASKS = 3
-
 let leaving = false
 if (typeof addEventListener === 'function') {
   for (const name of ['beforeunload', 'pagehide']) addEventListener(name, () => (leaving = true))
   for (const name of ['pageshow', 'pointerdown', 'keydown'])
     addEventListener(name, () => (leaving = false), { capture: true, passive: true })
 }
-
 const CITE = 'Name the note or page each claim comes from as a [[wikilink]] or its address.'
 const PARTLY = 'Change part of a note with edit_note rather than write_note: they may be typing in it.'
 const MATHS =
   'Write maths as $…$ inline and $$…$$ on lines of their own, and a subscript or superscript outside maths as H~2~O and x^2^.'
-
 const SYSTEM: Record<Thread['mode'], string> = {
   approve: [
     'You are the reader’s agent inside Orden, their notes app and web browser, in a panel beside what they are reading.',
@@ -94,14 +88,12 @@ const SYSTEM: Record<Thread['mode'], string> = {
     MATHS,
   ].join(' '),
 }
-
 export interface Setup {
   provider(id: string): Provider | null
   tools?: Tools
   answers?: Answers
   instructions?(thread: Thread): Promise<string>
 }
-
 function lastModel(thread: Thread): string {
   for (let at = thread.turns.length - 1; at >= 0; at--) {
     const turn = thread.turns[at]
@@ -111,20 +103,16 @@ function lastModel(thread: Thread): string {
   }
   return ''
 }
-
 function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
   const out = thread.without
   return out?.length ? { ...listing, tools: listing.tools.filter((one) => !out.includes(one.name)) } : listing
 }
-
 function failRunning(turn: Turn): void {
   for (const part of turn.parts) if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
 }
-
 function keptOut(name: string): ToolOutput {
   return { text: `${name} is not available in this chat.`, images: [], error: true }
 }
-
 export function createApiEngine(setup: Setup): Engine {
   const tools = setup.tools ?? crateTools
   const answers = setup.answers ?? crateAnswers
@@ -135,13 +123,11 @@ export function createApiEngine(setup: Setup): Engine {
     moves++
     for (const one of moved) listed.delete(one.from)
   })
-
   function providerOf(thread: Thread): Provider {
     const provider = setup.provider(thread.provider)
     if (!provider || !apiOf(provider.kind)) throw new Error('That provider is not set up yet.')
     return provider
   }
-
   async function modelOf(provider: Provider, id: string): Promise<ModelInfo> {
     let models = listed.get(provider.id)
     if (!models) {
@@ -151,12 +137,10 @@ export function createApiEngine(setup: Setup): Engine {
     }
     return models.find((one) => one.id === id) ?? unlisted(provider, id)
   }
-
   async function systemFor(thread: Thread, instructions: string): Promise<string> {
     const own = (await setup.instructions?.(thread).catch(() => '')) ?? ''
     return [SYSTEM[thread.mode], instructions, own].filter(Boolean).join('\n\n')
   }
-
   async function send(
     thread: Thread,
     message: Draft,
@@ -175,11 +159,9 @@ export function createApiEngine(setup: Setup): Engine {
     const wire = WIRES[api]
     let model = await modelOf(provider, thread.model)
     thread.effort = within(thread.effort, model.efforts)
-
     if (shouldCompact(thread.usage, estimate(message), thread.autocompact)) {
       await compact(thread).catch(() => undefined)
     }
-
     const switched = lastModel(thread)
     const context = await tools.context(provider, thread.id).catch(() => '')
     const begin = (made: Turn) => {
@@ -191,7 +173,6 @@ export function createApiEngine(setup: Setup): Engine {
     thread.turns.push(you)
     if (!thread.title) thread.title = message.text.trim().split('\n')[0]?.slice(0, 80) ?? ''
     on({ type: 'turn', turn: you })
-
     let turn = begin(modelTurn(thread))
     const say = (part: Part) => {
       turn.parts.push(part)
@@ -199,7 +180,6 @@ export function createApiEngine(setup: Setup): Engine {
     }
     if (switched && switched !== `${thread.provider}/${thread.model}`)
       say({ kind: 'notice', code: 'model', text: model.name })
-
     let listing = { instructions: '', tools: [] as ToolDef[] }
     if (learnt(provider.id, model.id).tools !== false) {
       listing = given(thread, await tools.list(provider, thread.mode).catch(() => listing))
@@ -220,9 +200,7 @@ export function createApiEngine(setup: Setup): Engine {
     let answered = ''
     let stop: Stop = 'end'
     steering.set(thread.id, [])
-
     let start = turn.parts.length
-
     const adjusted = (change: Adjusted) => {
       if (change.effort) {
         thread.effort = change.effort
@@ -242,13 +220,11 @@ export function createApiEngine(setup: Setup): Engine {
         start = turn.parts.length
       }
     }
-
     const close = (whole: boolean) => {
       turn.model = model.id
       if (used) turn.usage = used
       if (whole && addedNow.length) turn.replay = { api, model: model.id, messages: addedNow }
     }
-
     try {
       for (let rounds = 0; ; rounds++) {
         if (rounds >= MOST_ROUNDS) {
@@ -296,7 +272,6 @@ export function createApiEngine(setup: Setup): Engine {
           on({ type: 'usage', usage: thread.usage })
         }
         addedNow = [...addedNow, ...result.answer.messages]
-
         const { ending, calls } = result.answer
         if (ending === 'end' && !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')) {
           throw new Error('The model did not answer.')
@@ -312,7 +287,6 @@ export function createApiEngine(setup: Setup): Engine {
           say({ kind: 'notice', code: ending, text: result.answer.refusal ?? '' })
           break
         }
-
         const steered = steering.get(thread.id)?.splice(0) ?? []
         if (steered.length) {
           close(true)
@@ -350,7 +324,6 @@ export function createApiEngine(setup: Setup): Engine {
       thread.updated = Date.now()
     }
   }
-
   async function runCalls(
     thread: Thread,
     provider: Provider,
@@ -399,7 +372,6 @@ export function createApiEngine(setup: Setup): Engine {
       }),
     )
   }
-
   async function compact(thread: Thread, focus?: string): Promise<void> {
     const provider = providerOf(thread)
     const api = apiOf(provider.kind) ?? 'completions'
@@ -420,7 +392,6 @@ export function createApiEngine(setup: Setup): Engine {
       focus,
     })
   }
-
   return {
     async models(provider) {
       const models = await catalogue(provider)
@@ -436,7 +407,6 @@ export function createApiEngine(setup: Setup): Engine {
     compact,
   }
 }
-
 function spend(thread: Thread, usage: Usage): void {
   const before = thread.spent ?? { input: 0, output: 0 }
   const cost = (before.cost ?? 0) + (usage.cost ?? 0)
@@ -446,24 +416,18 @@ function spend(thread: Thread, usage: Usage): void {
     ...(before.cost !== undefined || usage.cost !== undefined ? { cost } : {}),
   }
 }
-
 const loadLocal = (kind: LocalKind) => async (setup: Setup) =>
   (await import('../local/engine')).createLocalEngine(kind, setup)
-
 const localEngines: Partial<Record<LocalKind, (setup: Setup) => Promise<Engine>>> = {
   'claude-code': loadLocal('claude-code'),
   codex: loadLocal('codex'),
 }
-
 export function registerLocalEngine(kind: LocalKind, load: (setup: Setup) => Promise<Engine>): void {
   localEngines[kind] = load
   localBuilt.delete(kind)
 }
-
 const localBuilt = new Map<LocalKind, WeakMap<Setup, Engine>>()
-
 const built = new WeakMap<Setup, Engine>()
-
 export async function engineFor(kind: ProviderKind, setup: Setup): Promise<Engine> {
   if (isLocal(kind)) {
     const load = localEngines[kind]

@@ -8,10 +8,8 @@
   import VaultMark from './VaultMark.svelte'
 
   const { ui }: { ui: PassUi } = $props()
-
   const asked = $derived(ui.sheet?.kind === 'vault' ? ui.sheet : null)
   const editing = $derived(asked?.vault ? (pass.vaults.find((one) => one.id === asked.vault) ?? null) : null)
-
   let name = $state('')
   let description = $state('')
   let color = $state<VaultColor>('purple')
@@ -19,7 +17,6 @@
   let picked = $state<string | undefined>(undefined)
   let busy = $state(false)
   let wrong = $state('')
-
   $effect(() => {
     if (!asked) return
     name = editing?.name ?? ''
@@ -29,9 +26,7 @@
     picked = editing?.mark
     wrong = ''
   })
-
   const close = () => (ui.sheet = null)
-
   async function kept(event: SubmitEvent) {
     event.preventDefault()
     const named = name.trim()
@@ -113,17 +108,14 @@
     gap: var(--space-3);
     padding: 0 var(--space-2) var(--space-2);
   }
-
   .orden-section {
     margin: var(--space-2) 0 0;
   }
-
   .dots {
     display: grid;
     grid-template-columns: repeat(10, minmax(0, 32px));
     gap: 2px;
   }
-
   .dot {
     display: grid;
     place-items: center;
@@ -132,7 +124,6 @@
     border: none;
     background: none;
   }
-
   .dot::after {
     content: '';
     width: 20px;
@@ -142,13 +133,11 @@
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
     transition: box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .dot.on::after {
     box-shadow:
       0 0 0 2px var(--surface),
       0 0 0 4px var(--accent);
   }
-
   .chooser {
     gap: var(--space-2);
   }

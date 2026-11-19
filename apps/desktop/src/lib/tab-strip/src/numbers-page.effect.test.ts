@@ -1,7 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
 const opened = vi.hoisted(() => [] as string[])
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: true,
@@ -34,31 +33,25 @@ vi.mock('./letters.svelte', () => ({
     pathOf: (letter: string) => (letter === 'N' ? '/space/Notes.md' : null),
   },
 }))
-
 vi.stubGlobal('CSS', { escape: (text: string) => text })
 vi.stubGlobal('requestAnimationFrame', (then: FrameRequestCallback) => {
   then(0)
   return 1
 })
-
 const { numbers } = await import('./numbers.svelte')
-
 const key = (init: KeyboardEventInit) =>
   dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init }))
-
 function tile(letter: string) {
   const button = document.createElement('button')
   button.dataset.essentialLetter = letter
   button.getBoundingClientRect = () => ({ left: 10, right: 40, top: 10, bottom: 40, width: 30 }) as DOMRect
   document.body.append(button)
 }
-
 test('stay as the keyboard goes into a page, and go as the window loses it', async () => {
   tile('N')
   key({ key: 'Alt', altKey: true })
   dispatchEvent(new FocusEvent('blur'))
   expect(numbers.worn).toHaveLength(1)
-
   await vi.waitFor(() => {
     focus.changed(false)
     expect(numbers.worn).toEqual([])

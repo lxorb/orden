@@ -10,11 +10,9 @@ import { record, text, type ToolDef, type Wire } from './wire'
 
 const KEEP =
   'Summarize this conversation so it can be continued from the summary alone. Keep every note path, page address, decision, change made and still to make, and the reader’s latest open request, in their own words where they matter. Do not call tools; reply with the summary only.'
-
 function summaryPrompt(focus?: string): string {
   return focus?.trim() ? `${KEEP}\nFocus on: ${focus.trim()}` : KEEP
 }
-
 interface Compacting {
   thread: Thread
   provider: Provider
@@ -25,12 +23,10 @@ interface Compacting {
   tools: ToolDef[]
   focus?: string | undefined
 }
-
 export async function compactThread(job: Compacting, signal?: AbortSignal): Promise<void> {
   const { thread } = job
   const last = thread.turns.at(-1)
   if (!last) return
-
   const { spent, ...made } = await compacted(job, signal)
   thread.compaction = { ...made, upTo: last.id }
   if (spent) {
@@ -50,9 +46,7 @@ export async function compactThread(job: Compacting, signal?: AbortSignal): Prom
   })
   thread.updated = Date.now()
 }
-
 type Made = Omit<Compaction, 'upTo'> & { spent?: { input: number; output: number } }
-
 async function compacted(job: Compacting, signal?: AbortSignal): Promise<Made> {
   if (job.api === 'anthropic' && job.model.compaction) {
     const own = await anthropicCompaction(job, signal).catch(() => null)
@@ -64,7 +58,6 @@ async function compacted(job: Compacting, signal?: AbortSignal): Promise<Made> {
   }
   return await ownSummary(job, signal)
 }
-
 async function anthropicCompaction(job: Compacting, signal?: AbortSignal): Promise<Made | null> {
   const steps = stepsOf(job.thread, 'anthropic', job.model.id)
   const { url, body, headers } = job.wire.request({
@@ -108,7 +101,6 @@ async function anthropicCompaction(job: Compacting, signal?: AbortSignal): Promi
     spent: compactionSpent(answer.usage),
   }
 }
-
 async function responsesCompaction(job: Compacting, signal?: AbortSignal): Promise<Omit<Compaction, 'upTo'> | null> {
   const input = itemsOf(stepsOf(job.thread, 'responses', job.model.id))
   const response = await request(
@@ -127,7 +119,6 @@ async function responsesCompaction(job: Compacting, signal?: AbortSignal): Promi
   if (!Array.isArray(output) || !output.length) return null
   return { kind: 'responses', model: job.model.id, summary: '', block: output }
 }
-
 async function ownSummary(job: Compacting, signal?: AbortSignal): Promise<Omit<Compaction, 'upTo'>> {
   const steps = [
     ...stepsOf(job.thread, job.api, job.model.id),

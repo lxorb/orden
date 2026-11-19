@@ -3,7 +3,6 @@ interface Asked {
   picture: ImageBitmap
   as?: 'data' | 'bytes'
 }
-
 async function encoded(picture: ImageBitmap, as: Asked['as']): Promise<string | ArrayBuffer | null> {
   const canvas = new OffscreenCanvas(picture.width, picture.height)
   const drawing = canvas.getContext('2d')
@@ -19,7 +18,6 @@ async function encoded(picture: ImageBitmap, as: Asked['as']): Promise<string | 
     reader.readAsDataURL(png)
   })
 }
-
 self.onmessage = (event: MessageEvent<Asked>) => {
   const { id, picture, as } = event.data
   encoded(picture, as).then(

@@ -19,12 +19,10 @@ const WHY: Record<Why, [Refused['code'], string]> = {
   sessions: ['failed', 'the machine has eight terminals already; the reader ends one in Settings'],
   other: ['failed', 'the machine could not be reached'],
 }
-
 function refusedOf(why: Why): Refused {
   const [code, words] = WHY[why]
   return new Refused(code, `${why}: ${words}`)
 }
-
 export async function newOnline(call: Call): Promise<string | null> {
   const front = asksFront(call, 'a new tab in front')
   const { madeOnline } = await import('../online/open')
@@ -32,13 +30,11 @@ export async function newOnline(call: Call): Promise<string | null> {
   if (typeof made === 'string') throw refusedOf(made)
   return openedBy(call, made, front)?.id ?? null
 }
-
 export async function listOnline(call: Call): Promise<AgentAnswer> {
   if (!account.accountToken) throw refusedOf('signed-out')
   const [{ machine }, { listed }] = await Promise.all([import('../online/machine.svelte'), import('../online/calls')])
   await machine.refresh()
   if (machine.refused) throw refusedOf(machine.refused)
-
   const known = machine.known
   const mine = known?.machine ?? null
   const sessions = known?.allowed && mine ? await listed().catch(() => null) : []
@@ -53,12 +49,10 @@ export async function listOnline(call: Call): Promise<AgentAnswer> {
     'tab titles and terminal output',
   )
 }
-
 function sessionOf(call: Call, one: Listed) {
   const file = one.term !== null && opens(one) ? runner.fileOf(one.term) : null
   const space = file === null ? null : spaceHolding(reachable(call), file)
   if (file !== null && !space) return []
-
   const tab = tabsInReach(call).find(
     (it) =>
       isOnlineTab(it) &&

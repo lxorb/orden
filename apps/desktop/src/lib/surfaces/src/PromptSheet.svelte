@@ -15,17 +15,13 @@
   import { isDesktop, platform } from '../../platform/src/api'
 
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))
-
   const MOST_SHOWN = 8
   const OVERSCAN = 6
   const LEAST = 32
-
   let cursor = $state(0)
-
   const matches = $derived(
     prompt.mode === 'find' ? rank(prompt.value.trim(), prompt.options, (option) => option.label) : [],
   )
-
   let list = $state<HTMLUListElement>()
   const where = new ListView()
   const rows = $derived<Rows>({
@@ -48,13 +44,11 @@
     for (const at of view.pinned) if (at > view.last) add(at, true)
     return out
   })
-
   $effect(() => {
     const ul = list
     if (!ul) return
     return where.follow(ul, (one) => measuredRow(one, LEAST))
   })
-
   function reach(index: number) {
     const box = where.box
     if (!box) return
@@ -64,9 +58,7 @@
     else if (top + height > box.scrollTop + box.clientHeight) box.scrollTop = top + height - box.clientHeight
     where.refresh()
   }
-
   const follows = (_value: unknown) => undefined
-
   $effect(() => {
     follows(matches)
     cursor = 0
@@ -74,9 +66,7 @@
       if (where.box) where.box.scrollTop = 0
     })
   })
-
   $effect(() => (prompt.open ? overlays.show(() => prompt.dismiss()) : undefined))
-
   function onFindKey(event: KeyboardEvent) {
     const count = Math.max(matches.length, 1)
     const page = Math.max(1, MOST_SHOWN - 1)
@@ -92,14 +82,12 @@
     cursor = to
     reach(to)
   }
-
   const mac = isDesktop && platform() === 'macos'
   const answers = $derived(
     mac
       ? [...prompt.options.filter((one) => !one.primary), ...prompt.options.filter((one) => one.primary)]
       : prompt.options,
   )
-
   function submitFind() {
     const chosen = matches[cursor]
     if (chosen) prompt.pick(chosen.id)
@@ -212,50 +200,42 @@
 <style>
   .sheet {
     --screen-width: var(--screen-ask);
-
     z-index: var(--z-sheet);
     padding: var(--space-5);
   }
-
   form {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
   }
-
   .title {
     margin: 0;
     font-size: var(--text-base);
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .detail {
     margin: 0;
     font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--muted-strong);
   }
-
   .found-box {
     margin: calc(var(--space-4) * -1 + var(--space-1)) 0 0;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-
   .found {
     position: relative;
     list-style: none;
     margin: 0;
     padding: 0;
   }
-
   .found .away {
     position: absolute;
     left: 0;
     right: 0;
   }
-
   .found-row {
     width: 100%;
     display: flex;
@@ -274,7 +254,6 @@
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
   }
-
   .space {
     display: grid;
     place-items: center;
@@ -285,25 +264,21 @@
     font-weight: var(--weight-strong);
     color: var(--muted);
   }
-
   .picture {
     width: var(--icon-md);
     height: var(--icon-md);
     flex: none;
     object-fit: contain;
   }
-
   .found-label {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .found-row.at {
     background: var(--accent-soft);
     color: var(--text-strong);
   }
-
   input:not([type='checkbox']) {
     width: 100%;
     padding: 10px 12px;
@@ -317,7 +292,6 @@
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .row {
     display: flex;
     flex-wrap: wrap;
@@ -325,7 +299,6 @@
     justify-content: flex-end;
     gap: var(--space-2);
   }
-
   :global([data-touch]) .sheet {
     top: auto;
     bottom: var(--keyboard);
@@ -337,22 +310,18 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
   }
-
   :global([data-touch]) input:not([type='checkbox']),
   :global([data-touch]) .title {
     font-size: var(--touch-text);
   }
-
   :global([data-touch]) input:not([type='checkbox']) {
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
   }
-
   :global([data-touch]) .found-row {
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
   }
-
   :global([data-touch]) .detail,
   :global([data-touch]) .label {
     font-size: var(--text-base);

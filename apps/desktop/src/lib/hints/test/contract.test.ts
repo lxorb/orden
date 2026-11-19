@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
-
   return {
     get length() {
       return held.size
@@ -14,7 +13,6 @@ function memoryStorage(): Storage {
     clear: () => held.clear(),
   }
 }
-
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('document', {
   documentElement: {
@@ -23,28 +21,22 @@ vi.stubGlobal('document', {
     toggleAttribute: () => false,
   },
 })
-
 const { hinting } = await import('../src/api')
-
 beforeEach(() => localStorage.clear())
-
 describe('the hints', () => {
   test('show one wanted hint once the session settles', async () => {
     const { hints } = await hinting()
     hints.restore()
     hints.want('drawer', true)
     expect(hints.current).toBeNull()
-
     hints.settle()
     expect(hints.current).toBe('drawer')
   })
-
   test('keep a dismissed hint dismissed in the next session', async () => {
     const { hints } = await hinting()
     hints.restore()
     hints.dismiss('graph')
     hints.restore()
-
     expect(hints.seen).toContain('graph')
     expect(hints.open('graph')).toBe(false)
   })

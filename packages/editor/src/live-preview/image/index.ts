@@ -3,7 +3,6 @@ import { imageSelection } from './frame'
 import { imageBindings } from './selection'
 
 export const imageExtension = [imageSelection, boundKeymap(imageBindings)]
-
 export { ImageWidget } from './widget'
 export {
   editSelectedImage,

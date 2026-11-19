@@ -1,11 +1,9 @@
 
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 def strokes(page: Page) -> list[list[float]]:
     return page.evaluate(
         """async () => {
@@ -14,7 +12,6 @@ def strokes(page: Page) -> list[list[float]]:
           return (JSON.parse(words).orden?.ink ?? []).map((one) => one.points)
         }"""
     )
-
 def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     say(f"a {kind} pass across the middle of a line, on a {maker}, cuts a hole in it")
     page.evaluate(
@@ -24,13 +21,11 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     page.wait_for_selector(".canvas, .pages")
     box = page.locator(".canvas, .pages").first.bounding_box()
     x, y = box["x"] + (300 if maker == "createCanvas" else box["width"] / 2 - 100), box["y"] + 200
-
     page.keyboard.press("d")
     page.mouse.move(x, y)
     page.mouse.down()
     page.mouse.move(x + 200, y + 60, steps=12)
     page.mouse.up()
-
     page.keyboard.press("e")
     middle_x, middle_y = x + 100, y + 30
     start, end = (middle_x - 60, middle_y - 90), (middle_x + 60, middle_y + 90)
@@ -39,7 +34,6 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     page.mouse.move(*end, steps=100 if kind == "slow" else 1)
     page.mouse.up()
     page.keyboard.press("v")
-
     left = strokes(page)
     say(f"  {[len(one) // 6 for one in left]} points in each stroke left")
     if len(left) != 2:
@@ -49,7 +43,6 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
     say(f"  a hole {gap:.0f} wide")
     if gap < 10:
         wrong(f"a {kind} pass left no hole: {left[0][-6]} to {left[1][0]}")
-
     page.keyboard.press("Control+z")
     DRIVE.wait_for(
         page,
@@ -59,20 +52,17 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
         }""",
         "the line whole again after one undo",
     )
-
 def scrolled_under(page: Page) -> None:
     say("a page scrolled under a held eraser cuts nothing it did not touch")
     page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createPages(ws.activeSpace.root, 'scrolled') }")
     page.wait_for_selector(".pages, .canvas")
     box = page.locator(".pages, .canvas").first.bounding_box()
     x, y = box["x"] + box["width"] / 2, box["y"] + 200
-
     page.keyboard.press("d")
     page.mouse.move(x - 100, y + 200)
     page.mouse.down()
     page.mouse.move(x + 100, y + 200, steps=8)
     page.mouse.up()
-
     page.keyboard.press("e")
     page.mouse.move(x, y - 60)
     page.mouse.down()
@@ -81,12 +71,10 @@ def scrolled_under(page: Page) -> None:
     page.mouse.move(x + 1, y - 60)
     page.mouse.up()
     page.keyboard.press("v")
-
     left = strokes(page)
     say(f"  {len(left)} strokes")
     if len(left) != 1:
         wrong(f"a held eraser cut {len(left)} pieces out of ink it never touched")
-
 def whole_stroke(page: Page, maker: str) -> None:
     say(f"the eraser held with Shift on a {maker} takes the whole stroke it touches")
     page.evaluate(
@@ -96,13 +84,11 @@ def whole_stroke(page: Page, maker: str) -> None:
     page.wait_for_selector(".canvas, .pages")
     box = page.locator(".canvas, .pages").first.bounding_box()
     x, y = box["x"] + (300 if maker == "createCanvas" else box["width"] / 2 - 100), box["y"] + 200
-
     page.keyboard.press("d")
     page.mouse.move(x, y)
     page.mouse.down()
     page.mouse.move(x + 200, y + 60, steps=12)
     page.mouse.up()
-
     page.keyboard.press("e")
     page.keyboard.down("Shift")
     page.mouse.move(x + 100, y + 30)
@@ -111,12 +97,10 @@ def whole_stroke(page: Page, maker: str) -> None:
     page.mouse.up()
     page.keyboard.up("Shift")
     page.keyboard.press("v")
-
     left = strokes(page)
     say(f"  {len(left)} strokes left")
     if left:
         wrong(f"the whole-stroke eraser on a {maker} left {len(left)} pieces of the stroke")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -127,5 +111,4 @@ def drive(browser: Browser) -> None:
     scrolled_under(page)
     whole_stroke(page, "createCanvas")
     whole_stroke(page, "createPages")
-
 raise SystemExit(DRIVE.run(drive))

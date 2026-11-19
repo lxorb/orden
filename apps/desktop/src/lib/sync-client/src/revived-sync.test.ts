@@ -7,19 +7,14 @@ vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
   invoke: async () => 0,
 }))
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { protection } = await import('../../protect/src/api')
 const { calledAlso, revived } = await import('./revived')
-
 const settle: Step = { t: 'wait', ticks: 40 }
-
 interface Seeing {
   entryAt(path: string): { id: string; seq: number | null } | null
   removing(path: string, run: () => Promise<unknown>): Promise<void>
 }
-
 test('a locked note deleted here and brought back by an edit elsewhere is locked again', async () => {
   const root = '/sim/d1'
   const note = `${root}/Plan.md`

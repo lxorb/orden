@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-
   import { account } from '../../accounts/src/api'
   import { fromServer, request } from '../../accounts/src/api'
   import { region } from '../../platform/src/api'
@@ -8,13 +7,11 @@
   import { dur, fade } from '../../platform/src/api'
 
   const { onend }: { onend: () => void } = $props()
-
   const shared = $derived(
     new Intl.ListFormat(region()).format(
       account.spaces.filter((one) => one.role === 'owner' && one.shared).map((one) => one.name),
     ),
   )
-
   let stage = $state<'codes' | 'sure'>('codes')
   let second = $state(false)
   let code = $state('')
@@ -23,16 +20,12 @@
   let wrong = $state<string | null>(null)
   let resendIn = $state(0)
   let field = $state<HTMLInputElement | null>(null)
-
   let ticket: string | null = null
-
   async function mail() {
     const token = account.accountToken
     if (!token || busy) return
-
     busy = true
     wrong = null
-
     try {
       const sent = await request<{ resendIn: number; second: boolean }>('/v1/account/delete/code', {
         token,
@@ -47,14 +40,11 @@
       busy = false
     }
   }
-
   async function prove() {
     const token = account.accountToken
     if (!token || busy) return
-
     busy = true
     wrong = null
-
     try {
       const proved = await request<{ ticket: string }>('/v1/account/delete/verify', {
         token,
@@ -68,14 +58,11 @@
       busy = false
     }
   }
-
   async function leave() {
     const token = account.accountToken
     if (!token || !ticket || busy) return
-
     busy = true
     wrong = null
-
     try {
       await request<{ ok: true }>('/v1/account', { method: 'DELETE', token, body: { ticket } })
     } catch (error) {
@@ -84,7 +71,6 @@
         busy = false
         return
       }
-
       const gone = await wentWith(ticket)
       if (gone !== true) {
         await account.recheck()
@@ -97,11 +83,9 @@
         return
       }
     }
-
     void account.signOut('kept')
     onend()
   }
-
   async function wentWith(held: string): Promise<boolean | null> {
     try {
       const asked = await request<{ gone?: unknown }>('/v1/account/left', {
@@ -112,19 +96,15 @@
       return null
     }
   }
-
   let timer: ReturnType<typeof setInterval> | undefined
-
   function countDown(seconds: number) {
     clearInterval(timer)
     resendIn = seconds
-
     timer = setInterval(() => {
       resendIn -= 1
       if (resendIn <= 0) clearInterval(timer)
     }, 1000)
   }
-
   onMount(() => {
     void mail()
     return () => clearInterval(timer)
@@ -200,43 +180,35 @@
     flex-direction: column;
     width: 100%;
   }
-
   .setting .name {
     flex: 1;
   }
-
   .name strong {
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .resend {
     margin-inline-end: auto;
   }
-
   .setting > .code {
     flex: none;
     inline-size: 8rem;
   }
-
   .hint {
     margin: var(--space-1) 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   .hint.bad {
     color: var(--danger);
   }
-
   :global(.sheet.phone) .setting {
     gap: var(--touch-gap);
     min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   :global(.sheet.phone) .hint {
     padding: 0 var(--touch-pad);
   }

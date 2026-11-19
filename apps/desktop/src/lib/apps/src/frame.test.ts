@@ -5,7 +5,6 @@ afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
-
 describe('a frame of an application picture', () => {
   test('a stream that sends no frame answers nothing in time, though its play never settles', async () => {
     vi.useFakeTimers()
@@ -20,7 +19,6 @@ describe('a frame of an application picture', () => {
     }
     vi.stubGlobal('HTMLMediaElement', { HAVE_CURRENT_DATA: 2 })
     vi.stubGlobal('document', { createElement: () => video })
-
     const going = frameOf({} as MediaStream)
     await vi.advanceTimersByTimeAsync(3000)
     await expect(going).resolves.toBeNull()

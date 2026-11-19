@@ -26,31 +26,22 @@ use super::schedule::System;
 use super::{Planned, Words};
 
 const CATEGORY: &str = "orden.reminder";
-
 const FORMER_CATEGORY: &str = "nib.reminder";
 const DONE: &str = "done";
 const LATER: &str = "snooze-15";
 const HOUR: &str = "snooze-60";
-
 const PATIENCE: Duration = Duration::from_secs(2);
-
 static APP: OnceLock<AppHandle> = OnceLock::new();
-
 static WORDS: Mutex<Said> = Mutex::new((None, None));
-
 type Said = (Option<Words>, Option<(String, String)>);
-
 pub fn bundled() -> bool {
     NSBundle::mainBundle().bundleIdentifier().is_some()
 }
-
 define_class!(
     #[unsafe(super(NSObject))]
     #[name = "OrdenReminders"]
     struct Delegate;
-
     unsafe impl NSObjectProtocol for Delegate {}
-
     unsafe impl UNUserNotificationCenterDelegate for Delegate {
         #[unsafe(method(userNotificationCenter:willPresentNotification:withCompletionHandler:))]
         fn will_present(
@@ -63,7 +54,6 @@ define_class!(
                 | UNNotificationPresentationOptions::List
                 | UNNotificationPresentationOptions::Sound,));
         }
-
         #[unsafe(method(userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:))]
         fn did_receive(
             &self,
@@ -76,13 +66,11 @@ define_class!(
         }
     }
 );
-
 #[allow(unsafe_code)]
 fn delegate() -> Retained<Delegate> {
     let made = Delegate::alloc();
     unsafe { msg_send![made, init] }
 }
-
 pub fn listen(app: &AppHandle) {
     if !bundled() || APP.set(app.clone()).is_err() {
         return;
@@ -92,7 +80,6 @@ pub fn listen(app: &AppHandle) {
     centre.setDelegate(Some(ProtocolObject::from_ref(&*kept)));
     std::mem::forget(kept);
 }
-
 fn answered(response: &UNNotificationResponse) {
     let Some(app) = APP.get() else {
         return;
@@ -104,7 +91,6 @@ fn answered(response: &UNNotificationResponse) {
     }
     let action = response.actionIdentifier().to_string();
     let id = id.split('-').next().unwrap_or(&id).to_string();
-
     match action.as_str() {
         LATER | HOUR => {
             let minutes = if action == HOUR { 60.0 } else { 15.0 };
@@ -125,7 +111,6 @@ fn answered(response: &UNNotificationResponse) {
         _ => super::pressed_by_id(app, Act::Open, &id),
     }
 }
-
 pub fn reply_words(placeholder: &str, send: &str) {
     let wanted = Some((placeholder.to_string(), send.to_string()));
     {
@@ -137,7 +122,6 @@ pub fn reply_words(placeholder: &str, send: &str) {
     }
     categorise(&UNUserNotificationCenter::currentNotificationCenter());
 }
-
 fn categorise(centre: &UNUserNotificationCenter) {
     let (reminders, reply) = WORDS.held().clone();
     let category = |id: &str, actions: &[Retained<UNNotificationAction>]| {
@@ -176,11 +160,9 @@ fn categorise(centre: &UNUserNotificationCenter) {
     }
     centre.setNotificationCategories(&NSSet::from_retained_slice(&categories));
 }
-
 pub struct Requests {
     centre: Retained<UNUserNotificationCenter>,
 }
-
 impl Requests {
     pub fn start(app: &AppHandle, words: &Words) -> Result<Self, String> {
         if !bundled() {
@@ -188,24 +170,19 @@ impl Requests {
         }
         listen(app);
         let centre = UNUserNotificationCenter::currentNotificationCenter();
-
         let asked = RcBlock::new(|_granted: Bool, _error: *mut NSError| {});
         centre.requestAuthorizationWithOptions_completionHandler(
             UNAuthorizationOptions::Alert | UNAuthorizationOptions::Sound,
             &asked,
         );
-
         WORDS.held().0 = Some(words.clone());
         categorise(&centre);
-
         if authorization(&centre) == Some(UNAuthorizationStatus::Denied) {
             return Err("notifications are turned off for Orden".into());
         }
-
         Ok(Self { centre })
     }
 }
-
 fn authorization(centre: &UNUserNotificationCenter) -> Option<UNAuthorizationStatus> {
     let (said, heard) = mpsc::channel();
     let answer = RcBlock::new(move |settings: std::ptr::NonNull<UNNotificationSettings>| {
@@ -214,7 +191,6 @@ fn authorization(centre: &UNUserNotificationCenter) -> Option<UNAuthorizationSta
     centre.getNotificationSettingsWithCompletionHandler(&answer);
     heard.recv_timeout(PATIENCE).ok()
 }
-
 impl System for Requests {
     fn scheduled(&self) -> Result<Vec<String>, String> {
         let (said, heard) = mpsc::channel();
@@ -231,7 +207,6 @@ impl System for Requests {
             .map_err(|_| "the notification centre did not say what it holds".to_string())?;
         Ok(ids.into_iter().filter(|id| !id.contains('-')).collect())
     }
-
     fn add(&self, one: &Planned, _nonce: &str, _words: &Words) -> Result<(), String> {
         let content = UNMutableNotificationContent::new();
         content.setTitle(&NSString::from_str(&one.title));
@@ -239,7 +214,6 @@ impl System for Requests {
         content.setCategoryIdentifier(&NSString::from_str(CATEGORY));
         let sound = UNNotificationSound::defaultSound();
         content.setSound(Some(&*sound));
-
         #[allow(clippy::cast_precision_loss)]
         let seconds = one.at as f64 / 1000.0;
         let date = NSDate::dateWithTimeIntervalSince1970(seconds);
@@ -252,7 +226,6 @@ impl System for Requests {
         let trigger =
             UNCalendarNotificationTrigger::triggerWithDateMatchingComponents_repeats(&parts, false);
         let trigger: &UNNotificationTrigger = &trigger;
-
         let request = UNNotificationRequest::requestWithIdentifier_content_trigger(
             &NSString::from_str(&one.id),
             &content,
@@ -262,7 +235,6 @@ impl System for Requests {
             .addNotificationRequest_withCompletionHandler(&request, None);
         Ok(())
     }
-
     fn remove(&self, id: &str) -> Result<(), String> {
         let ids = NSArray::from_retained_slice(&[NSString::from_str(id)]);
         self.centre
@@ -270,12 +242,10 @@ impl System for Requests {
         Ok(())
     }
 }
-
 #[allow(unsafe_code)]
 fn status_of(settings: std::ptr::NonNull<UNNotificationSettings>) -> UNAuthorizationStatus {
     unsafe { settings.as_ref() }.authorizationStatus()
 }
-
 #[allow(unsafe_code)]
 fn ids_of(requests: std::ptr::NonNull<NSArray<UNNotificationRequest>>) -> Vec<String> {
     let requests = unsafe { requests.as_ref() };

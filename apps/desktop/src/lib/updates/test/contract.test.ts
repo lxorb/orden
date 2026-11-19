@@ -6,7 +6,6 @@ import { asChannel, ready, restartToUpdate } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 describe('the module stands on its own', () => {
   test('the api leaves the update by the system and the move to Applications behind doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
@@ -15,14 +14,12 @@ describe('the module stands on its own', () => {
     expect(statics).not.toContain('app-place')
   })
 })
-
 describe('an update', () => {
   test('comes from the stable channel unless the unstable one was asked for', () => {
     expect(asChannel('unstable')).toBe('unstable')
     expect(asChannel('nightly')).toBe('stable')
     expect(asChannel(undefined)).toBe('stable')
   })
-
   test('is not restarted into when quitting is refused', async () => {
     const asked: string[] = []
     const unbind = providePort('quit.ask', {

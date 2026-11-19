@@ -1,26 +1,20 @@
 import type { ThemeId } from './ids'
 
 export type Scheme = 'dark' | 'light'
-
 export type SchemeChoice = Scheme | 'system'
-
 export type ThemeValue = string | number | boolean
-
 export type ChosenSettings = Readonly<Record<string, Readonly<Record<string, ThemeValue>>>>
-
 export interface ThemeSwatch {
   value: string
   name: string
   dark: string
   light: string
 }
-
 export interface OwnPair {
   accepts(held: string): boolean
   colours(held: string, scheme: Scheme): readonly [string, string]
   of(first: string, second: string): string
 }
-
 interface ThemeSettingCommon {
   id: string
   label: string
@@ -31,7 +25,6 @@ interface ThemeSettingCommon {
   reapplies?: boolean
   paint(value: ThemeValue, scheme: Scheme): Record<string, string>
 }
-
 export type ThemeSetting = ThemeSettingCommon &
   (
     | {
@@ -55,7 +48,6 @@ export type ThemeSetting = ThemeSettingCommon &
       }
     | { kind: 'switch'; initial: boolean }
   )
-
 export interface ThemeInfo {
   readonly id: ThemeId
   readonly name: string
@@ -65,7 +57,6 @@ export interface ThemeInfo {
   readonly load?: () => Promise<string>
   readonly own?: () => Promise<() => ThemeSetting[]>
 }
-
 export interface ThemeLooksPort {
   glassSettings(): Promise<() => ThemeSetting[]>
   wallpaperSheet(): Promise<string>
@@ -74,13 +65,9 @@ export interface ThemeLooksPort {
   follow(): Promise<void>
   landed(tab: string): Promise<void>
 }
-
 export interface ThemePorts {
   readonly 'theme.looks': ThemeLooksPort
 }
-
 export const SCHEMES: readonly Scheme[] = ['dark', 'light']
-
 export const isScheme = (value: unknown): value is Scheme => value === 'dark' || value === 'light'
-
 export const isSchemeChoice = (value: unknown): value is SchemeChoice => value === 'system' || isScheme(value)

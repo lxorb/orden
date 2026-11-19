@@ -6,7 +6,6 @@ const BODIES: Record<string, string> = {
   '/space/Plan.md': '# Plan',
   '/other/Later.md': '# Later',
 }
-
 vi.mock('../../platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../platform/src/tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
@@ -25,20 +24,15 @@ vi.mock('../../platform/src/tauri', async (original) => ({
     return undefined
   },
 }))
-
 const { spaceLinks } = await import('./api')
 const { startup } = await import('../../launch/src/api')
-
 void startup.shown()
-
 const wiki = (target: string) => ({ kind: 'wikilink' as const, target })
-
 test('a note moved out of the space leaves its links, and one moved in from another space joins them', async () => {
   const links = spaceLinks()
   await links.build('/space')
   expect(links.targetOf('/space/Start.md', wiki('Plan'))).toBe('Plan.md')
   expect(links.targetOf('/space/Start.md', wiki('Later'))).toBeNull()
-
   await links.follow({
     op: 'moved',
     kind: 'file',
@@ -48,7 +42,6 @@ test('a note moved out of the space leaves its links, and one moved in from anot
     into: '/other',
   })
   expect(links.targetOf('/space/Start.md', wiki('Plan'))).toBeNull()
-
   BODIES['/space/Later.md'] = BODIES['/other/Later.md'] ?? ''
   await links.follow({
     op: 'moved',

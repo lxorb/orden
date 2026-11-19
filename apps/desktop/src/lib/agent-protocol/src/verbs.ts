@@ -1,8 +1,6 @@
 import type { AgentScope as Scope } from '@orden/contracts'
 export const AGENT_EVENT = 'orden://agent'
-
 export const ACTIVE_FOR = 15_000
-
 export const BROWSER_VERBS = [
   'browser_tabs',
   'browser_open',
@@ -39,7 +37,6 @@ export const BROWSER_VERBS = [
   'agent_pair',
   'agent_bye',
 ] as const
-
 export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   get_context: 'context',
   list_spaces: null,
@@ -94,7 +91,6 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   run_agent: 'agents',
   agent_result: 'agents',
 }
-
 export const CRATE_ASKS = {
   readerTabs: 'agent.reader_tabs',
   lend: 'agent.lend',
@@ -103,9 +99,7 @@ export const CRATE_ASKS = {
   mayHand: 'agent.may_hand',
   programFree: 'agent.program_free',
 } as const
-
 export type { Scope }
-
 export type Category =
   | 'paying'
   | 'sending'
@@ -121,9 +115,7 @@ export type Category =
   | 'showing'
   | 'takeover'
   | 'pairing'
-
 export type SiteRule = 'allow' | 'deny' | 'agent-store'
-
 export interface Grant {
   id: string
   name: string
@@ -139,12 +131,10 @@ export interface Grant {
   limits: { tabs: number; calls: number; navigations: number; memory: number }
   created: number
 }
-
 export interface Minted {
   grant: Grant
   token: string
 }
-
 export type Code =
   | 'unsupported_on_this_engine'
   | 'bad_arguments'
@@ -159,7 +149,6 @@ export type Code =
   | 'failed'
   | 'no_dialog'
   | 'denied'
-
 export interface ReaderTab {
   id: string
   title: string
@@ -168,7 +157,6 @@ export interface ReaderTab {
   front: boolean
   on_screen: boolean
 }
-
 export interface AgentTab {
   id: string
   url: string
@@ -177,12 +165,10 @@ export interface AgentTab {
   store: 'reader' | 'agent' | 'space'
   parked: boolean
 }
-
 export interface StoreSaid {
   space: string
   store: string | null
 }
-
 export interface Approval {
   id: string
   agent: string
@@ -195,7 +181,6 @@ export interface Approval {
   asked: number
   answer: 'pending' | 'allowed' | 'denied' | 'expired' | 'done'
 }
-
 export const AGENT_COMMANDS = [
   'agents_read',
   'agents_write',
@@ -216,7 +201,6 @@ export const AGENT_COMMANDS = [
   'agents_shell',
   'agents_hold',
 ] as const
-
 export interface Overview {
   agents: Grant[]
   tabs: [string, AgentTab][]
@@ -225,7 +209,6 @@ export interface Overview {
   halted: string[]
   connected: string[]
 }
-
 export interface ShellWords {
   show: string
   stop: string
@@ -235,16 +218,13 @@ export interface ShellWords {
   hidden: string
   pairing: string
 }
-
 export const CAPTURE_AS = ['clip', 'screenshot', 'pdf'] as const
 export type CaptureAs = (typeof CAPTURE_AS)[number]
-
 export interface Picture {
   png: string
   width: number
   height: number
 }
-
 export interface Captured {
   url: string
   title: string
@@ -252,7 +232,6 @@ export interface Captured {
   png?: string
   pdf?: string
 }
-
 export type AgentEvent =
   | { kind: 'acting'; agent: string; tab: string; verb: string }
   | { kind: 'paused'; agent: string }

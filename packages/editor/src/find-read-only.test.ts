@@ -16,13 +16,10 @@ beforeAll(async () => {
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   await loadFind()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function drawnOver(view: EditorView, from: number, to: number): boolean {
   let covered = false
   view.state.field(blockDecorations).decorations.between(from, to, (start, end) => {
@@ -30,7 +27,6 @@ function drawnOver(view: EditorView, from: number, to: number): boolean {
   })
   return covered
 }
-
 describe('finding a word that sits in a table, in Read-only mode', () => {
   test('shows the match instead of leaving it inside the drawn table', async () => {
     const doc = 'Fruit list\n\n| name | price |\n| --- | --- |\n| apple | 3 |\n\nend'
@@ -49,10 +45,8 @@ describe('finding a word that sits in a table, in Read-only mode', () => {
     )
     const view = new EditorView({ state, parent: document.body })
     open.push(view)
-
     await setFind(view, { ...NO_FIND, query: 'apple' })
     findNext(view)
-
     const { from, to } = view.state.selection.main
     expect(view.state.sliceDoc(from, to)).toBe('apple')
     expect(drawnOver(view, from, to)).toBe(false)

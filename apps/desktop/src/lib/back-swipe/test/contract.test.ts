@@ -10,7 +10,6 @@ describe('the module stands on its own', () => {
     expect(typeof swipeChoice.on).toBe('boolean')
   })
 })
-
 describe('when a sideways swipe goes back or forward', () => {
   test('only once nothing under the finger can still scroll that way', () => {
     const scroller = { left: 0, range: 100, rtl: false, keeps: false }
@@ -19,7 +18,6 @@ describe('when a sideways swipe goes back or forward', () => {
     expect(taken([{ ...scroller, left: -100, rtl: true }])).toEqual({ left: false, right: true })
     expect(taken([{ ...scroller, left: 50, keeps: true }])).toEqual({ left: true, right: true })
   })
-
   test('after a distance that grows with the window and never past its cap', () => {
     expect(distance('touch', 400, 800)).toBeLessThan(distance('touch', 1600, 1000))
     expect(distance('touchpad', 100_000, 100)).toBe(MOST)

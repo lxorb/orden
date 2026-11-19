@@ -30,13 +30,10 @@ export {
 export { cssColour, paperPicture, paperUnder, svgToPng } from './raster'
 export { marksFromOutside, marksWritten, sheetArrived } from './sheets.svelte'
 export { editHighlights, loadHighlights } from './sidecar'
-
 export const papers = () => import('./papers')
 export const handed = () => import('./handed')
-
 export const readPapers: typeof import('./extract').readPapers = (...args) =>
   import('./extract').then((one) => one.readPapers(...args))
-
 export const paperText: typeof import('./text-cache').paperText = (...args) =>
   import('./text-cache').then((one) => one.paperText(...args))
 export { pngData } from './png-off'

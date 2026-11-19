@@ -23,7 +23,6 @@ const crate = {
   listFolder: vi.fn(() => Promise.reject(new Error('not a folder'))),
 }
 vi.mock('./commands', () => crate)
-
 const recorded: unknown[] = []
 const workspace = {
   spaces: [{ root: '/home/me/Orden/Work' }],
@@ -40,7 +39,6 @@ const workspace = {
 }
 const fileClipboard = { paths: [] as string[], cut: false, hold: vi.fn() }
 vi.mock('../../workspace/src/api', () => ({ workspace, fileClipboard }))
-
 const asked: string[] = []
 let answer: string | null = 'keep'
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({
@@ -52,9 +50,7 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({
     confirm: () => Promise.resolve(true),
   },
 }))
-
 const { carry, freeName, paste, renameMany, renamePath, removeForGood, takenNames, trash } = await import('./changes')
-
 function view(path = '/home/me/Downloads') {
   return {
     listing: { path, own: false, spaces: false, entries: [], parent: null, cut: false },
@@ -65,27 +61,23 @@ function view(path = '/home/me/Downloads') {
     tell: vi.fn(),
   }
 }
-
 beforeEach(() => {
   recorded.length = 0
   asked.length = 0
   answer = 'keep'
   vi.clearAllMocks()
 })
-
 describe("a file explorer's changes", () => {
   test('name a new thing after the first free number', () => {
     expect(freeName(takenNames(['a', 'New folder']), 'New folder')).toBe('New folder 2')
     expect(freeName(takenNames(['new folder', 'New folder 2']), 'New folder')).toBe('New folder 3')
     expect(freeName(takenNames([]), 'New folder')).toBe('New folder')
   })
-
   test('number a name taken before its extension, so the file still opens as what it is', () => {
     expect(freeName(takenNames(['photo.jpg']), 'photo.jpg')).toBe('photo 2.jpg')
     expect(freeName(takenNames(['Photo.JPG', 'photo 2.jpg']), 'photo.JPG')).toBe('photo 3.JPG')
     expect(freeName(takenNames(['.env']), '.env')).toBe('.env 2')
   })
-
   test('put what is outside the spaces in the system trash, one undo for it', async () => {
     await trash(view() as never, ['/home/me/Downloads/a.zip', '/home/me/Downloads/b.zip'])
     expect(crate.trashPaths).toHaveBeenCalledWith(['/home/me/Downloads/a.zip', '/home/me/Downloads/b.zip'])
@@ -104,7 +96,6 @@ describe("a file explorer's changes", () => {
       },
     ])
   })
-
   test('trash every picked file past ones that will not go, one undo for those that went, naming each that stayed', async () => {
     crate.trashPaths.mockRejectedValueOnce({
       went: [{ path: '/home/me/Downloads/b.zip', back: '/home/me/Downloads/b.zip', at: 1 }],
@@ -128,7 +119,6 @@ describe("a file explorer's changes", () => {
     ])
     expect(here.tell).toHaveBeenCalledWith('/home/me/Downloads/a.zip: in use; /home/me/Downloads/c.zip: denied')
   })
-
   test('delete for good every picked file past ones that will not go, naming each that stayed', async () => {
     crate.deleteForGood.mockRejectedValueOnce([
       { path: '/home/me/Downloads/a.zip', why: '/home/me/Downloads/a.zip: in use' },
@@ -148,7 +138,6 @@ describe("a file explorer's changes", () => {
     expect(here.tell).toHaveBeenCalledWith('/home/me/Downloads/a.zip: in use; /home/me/Downloads/c.zip: denied')
     expect(here.reload).toHaveBeenCalled()
   })
-
   test("hand what is in a space to the file list's own delete", async () => {
     const inside = view('/home/me/Orden/Work')
     inside.listing.spaces = true
@@ -156,7 +145,6 @@ describe("a file explorer's changes", () => {
     expect(workspace.removeMany).toHaveBeenCalledWith(['/home/me/Orden/Work/plan.md'])
     expect(crate.trashPaths).not.toHaveBeenCalled()
   })
-
   test('change nothing in a folder of Orden’s own', async () => {
     const own = view('/home/me/.config/orden')
     own.listing.own = true
@@ -165,7 +153,6 @@ describe("a file explorer's changes", () => {
     expect(crate.trashPaths).not.toHaveBeenCalled()
     expect(crate.deleteForGood).not.toHaveBeenCalled()
   })
-
   test('record a rename as where it went', async () => {
     await renamePath(view() as never, '/home/me/Downloads/a.txt', 'b.txt')
     expect(recorded).toEqual([
@@ -180,7 +167,6 @@ describe("a file explorer's changes", () => {
       },
     ])
   })
-
   test('a cut pasted into a folder below lands there and is not held to paste again', async () => {
     fileClipboard.paths = ['/home/me/Music/a.txt']
     fileClipboard.cut = true
@@ -194,7 +180,6 @@ describe("a file explorer's changes", () => {
       'move',
     ])
   })
-
   test('ask once about names already there, and do nothing when not answered', async () => {
     crate.clashesIn.mockResolvedValueOnce(['a.txt', 'b.txt'])
     answer = null
@@ -202,7 +187,6 @@ describe("a file explorer's changes", () => {
     expect(asked).toEqual(['2 names are already here'])
     expect(crate.transfer).not.toHaveBeenCalled()
   })
-
   test('copy out of a space, and move out of one as that copy and the file list’s delete', async () => {
     await carry(view() as never, ['/home/me/Orden/Work/plan.md'], '/home/me/Downloads', 'move')
     expect(crate.transfer).toHaveBeenCalledWith(
@@ -227,7 +211,6 @@ describe("a file explorer's changes", () => {
       },
     ])
   })
-
   test('carry what is in a space and what is not in one go, so neither replaces the other', async () => {
     answer = 'replace'
     crate.clashesIn.mockResolvedValueOnce(['plan.md'])
@@ -264,14 +247,12 @@ describe("a file explorer's changes", () => {
       },
     ])
   })
-
   test('bring a file from outside into a space as an import, and a move trashes the original', async () => {
     await carry(null, ['/home/me/Downloads/a.txt'], '/home/me/Orden/Work', 'move')
     expect(workspace.bringIn).toHaveBeenCalledWith([expect.objectContaining({ name: 'a.txt' })], '/home/me/Orden/Work')
     expect(crate.trashPaths).toHaveBeenCalledWith(['/home/me/Downloads/a.txt'])
     expect(crate.transfer).not.toHaveBeenCalled()
   })
-
   test('rename names that swap places through names of their own first, as one undo', async () => {
     await renameMany(view() as never, [
       { from: '/home/me/Downloads/a.txt', name: 'b.txt' },
@@ -298,7 +279,6 @@ describe("a file explorer's changes", () => {
       },
     ])
   })
-
   test('a swap of names that fails half way puts every name back as it was', async () => {
     const view_ = view()
     crate.renameTo.mockImplementation((path: string, name: string) =>
@@ -318,7 +298,6 @@ describe("a file explorer's changes", () => {
     expect(view_.tell).toHaveBeenCalledWith('a.txt is there already')
     expect(recorded).toEqual([])
   })
-
   test('a rename of many in a space that fails says why rather than throwing', async () => {
     const view_ = view('/home/me/Orden/Work')
     workspace.rename.mockImplementationOnce(() => Promise.reject(new Error('b.md is already there')))
@@ -326,7 +305,6 @@ describe("a file explorer's changes", () => {
     expect(view_.tell).toHaveBeenCalledWith('b.md is already there')
     expect(view_.reload).toHaveBeenCalled()
   })
-
   test('a rename of many in a space renames every other one past one that fails', async () => {
     const view_ = view('/home/me/Orden/Work')
     workspace.rename.mockImplementationOnce(() => Promise.reject(new Error('locked')))

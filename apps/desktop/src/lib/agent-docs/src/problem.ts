@@ -14,7 +14,6 @@ export type Problem =
   | 'not_a_note'
   | 'no_such_space'
   | 'protected'
-
 export class DocError extends Error {
   constructor(
     readonly code: Problem,

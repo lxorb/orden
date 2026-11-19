@@ -9,19 +9,16 @@
   import { LEAST_WIDTH, MOST_WIDTH, type Nib, nibFor, pens } from './pens.svelte'
 
   const { nib }: { nib: Nib } = $props()
-
   const WIDE = 288
   const TALL = 62
   const line = $derived(samplePath(nib, WIDE, TALL))
   const ink = $derived(shownInk(nib.colour))
   const multiply = $derived(INK_STYLES[nib.tool].multiply)
   const shown = $derived(nib.colour === 'ink' ? null : nib.colour)
-
   function setTool(tool: InkTool) {
     tick()
     pens.set(nibFor(tool, nib.colour))
   }
-
   function setColour(colour: string | null) {
     tick()
     pens.set({ colour: colour ?? DEFAULT_INK })
@@ -124,7 +121,6 @@
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .sample {
     height: 62px;
     border-radius: var(--radius-md);
@@ -132,19 +128,16 @@
     box-shadow: inset 0 0 0 1px var(--line);
     overflow: hidden;
   }
-
   .sample svg {
     display: block;
     width: 100%;
     height: 100%;
   }
-
   .kinds {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1px;
   }
-
   button {
     display: flex;
     align-items: center;
@@ -163,32 +156,26 @@
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
   }
-
   button span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   button:active:not(:disabled) {
     background: var(--press);
   }
-
   button.on {
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .rest {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
     gap: 1px;
   }
-
   :global([data-touch]) button {
     --mark: var(--touch-icon);
-
     min-height: var(--touch-target);
     font-size: var(--touch-text);
   }

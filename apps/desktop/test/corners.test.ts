@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { expect, test } from 'vitest'
 
 const read = (path: string) => readFileSync(join(import.meta.dirname, '../src/lib', path), 'utf8')
-
 const ROUNDED: Record<string, string> = {
   '--card-radius': '10px',
   '--card-inset': '6px',
@@ -15,18 +14,15 @@ const ROUNDED: Record<string, string> = {
   '--side-ground': 'transparent',
   '--strip-line': 'transparent',
 }
-
 test('the stylesheet is the rounded frame, the only one', () => {
   const sheet = read('../../../../packages/themes/src/tokens.css')
   for (const [token, value] of Object.entries(ROUNDED)) {
     expect(sheet, token).toContain(`${token}: ${value};`)
   }
 })
-
 test('nothing offers another frame: no setting, no file of its choices', () => {
   expect(read('./theme/src/theme.svelte.ts')).not.toMatch(/cornersSetting|'\.\/corners'/)
 })
-
 test('every surface on the frame reads its tokens rather than a corner of its own', () => {
   const readers: Record<string, string[]> = {
     'pane-tree/src/Pane.svelte': ['--card-radius', '--card-shadow', '--card-edge'],
@@ -45,14 +41,12 @@ test('every surface on the frame reads its tokens rather than a corner of its ow
     for (const token of tokens) expect(text, `${file} ${token}`).toContain(token)
   }
 })
-
 test('the sidebar draws its separators with the seam, never with a line of its own', () => {
   for (const file of ['sidebar/src/Sidebar.svelte', 'sidebar/src/SidebarFoot.svelte']) {
     const style = /<style[^>]*>([\s\S]*)<\/style>/.exec(read(`./${file}`))?.[1] ?? ''
     expect(style, file).not.toMatch(/border(?:-[a-z]+)*:\s*1px solid var\(--line\)/)
   }
 })
-
 test('every full mode makes the card flush through one condition', () => {
   const app = read('../App.svelte')
   expect(app).toMatch(/const flush = \$derived\(bare \|\| filled\)/)
@@ -63,7 +57,6 @@ test('every full mode makes the card flush through one condition', () => {
     expect(rule, token).toContain(token)
   }
 })
-
 test('every sidebar over the note stands on the paper, under the chrome and its own ground', () => {
   const over: [string, RegExp][] = [
     ['../App.svelte', /:global\(\[data-drawer\]\) \.panels \{([^}]*)\}/],
@@ -77,7 +70,6 @@ test('every sidebar over the note stands on the paper, under the chrome and its 
     )
   }
 })
-
 test('a pane is a rounded card, but square and flush where it meets the window with no sidebar between', () => {
   const pane = read('./pane-tree/src/Pane.svelte')
   expect(/\n {2}\.pane \{([^}]*)\}/.exec(pane)?.[1]).toContain('border-radius: var(--card-radius);')
@@ -89,7 +81,6 @@ test('a pane is a rounded card, but square and flush where it meets the window w
     /border-bottom-left-radius: 0;\s*border-bottom-right-radius: 0;/,
   )
   expect(pane).not.toMatch(/grounded|--card-foot|flushBottom/)
-
   const app = read('../App.svelte')
   expect(app).toMatch(/const leftShut = \$derived\(viewport\.drawer \|\| workspace\.openOn\('left'\) === null\)/)
   expect(app).toMatch(/const rightShut = \$derived\(viewport\.drawer \|\| !rightOpen\)/)

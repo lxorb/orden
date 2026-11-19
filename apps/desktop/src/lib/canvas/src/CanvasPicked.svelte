@@ -34,20 +34,17 @@
     ongroup: () => void
     onmore: (event: MouseEvent) => void
   } = $props()
-
   let colouring = $state(false)
   let run = freshId()
   let over = $state<HTMLElement>()
   let wide = $state(0)
   let room = $state(0)
   const MARGIN = 8
-
   const left = $derived.by(() => {
     if (!wide || !room) return at.x
     if (room < wide + 2 * MARGIN) return room / 2
     return Math.min(Math.max(at.x, wide / 2 + MARGIN), room - wide / 2 - MARGIN)
   })
-
   $effect(() => {
     const bar = over
     const plane = bar?.parentElement
@@ -63,12 +60,10 @@
     watcher.observe(plane)
     return () => watcher.disconnect()
   })
-
   function pick(next: string | null) {
     colouring = false
     oncolour(next)
   }
-
   $effect(() =>
     colouring
       ? overlays.show(
@@ -192,19 +187,16 @@
     translate: -50% calc(-100% - var(--space-2));
     animation: arrive var(--dur-fast) var(--ease-out);
   }
-
   .over.below {
     flex-direction: column-reverse;
     translate: -50% var(--space-2);
   }
-
   @keyframes arrive {
     from {
       opacity: 0;
       scale: 0.96;
     }
   }
-
   .bar {
     display: flex;
     align-items: stretch;
@@ -215,7 +207,6 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
   }
-
   .panel {
     display: flex;
     flex-direction: column;
@@ -228,7 +219,6 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
   }
-
   button {
     flex: none;
     display: grid;
@@ -245,24 +235,19 @@
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
   }
-
   button:active {
     background: var(--press);
   }
-
   button.on {
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .gone {
     color: var(--danger);
   }
-
   .gone:active {
     background: var(--danger-soft);
   }
-
   .swatch::after {
     content: '';
     display: block;
@@ -272,18 +257,14 @@
     background: var(--dot);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
   }
-
   .swatch.bare::after {
     box-shadow: inset 0 0 0 2px var(--muted);
   }
-
   :global([data-touch]) button {
     --mark: var(--touch-icon);
-
     min-width: var(--touch-target);
     min-height: var(--touch-target);
   }
-
   :global([data-touch]) .swatch::after {
     width: var(--touch-icon);
     height: var(--touch-icon);

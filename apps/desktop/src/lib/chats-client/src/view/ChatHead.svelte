@@ -27,12 +27,10 @@
     membersOn?: boolean
     onmembers: () => void
   } = $props()
-
   let writing = $state(false)
   let topic = $state('')
   let showing = $state<{ at: Box } | null>(null)
   let pinned = $state.raw<Message[]>([])
-
   const meta = $derived(page.view.meta)
   const canTopic = $derived(may(page.view.role, 'topic', meta.posting))
   const ids = $derived(
@@ -54,23 +52,19 @@
       )
     }),
   )
-
   $effect(() => {
     const list = ids
     return people.watch(() => list)
   })
-
   async function showPins(element: Element) {
     pinned = await page.pinned()
     showing = { at: boxOf(element) }
   }
-
   function startTopic() {
     if (!canTopic) return
     topic = meta.topic
     writing = true
   }
-
   function keepTopic() {
     writing = false
     if (topic.trim() !== meta.topic) page.topic(topic.trim())
@@ -177,11 +171,9 @@
     border-bottom: 1px solid var(--line);
     font-family: var(--font-ui);
   }
-
   .mark {
     color: var(--muted);
   }
-
   .name {
     margin: 0;
     color: var(--text-strong);
@@ -189,7 +181,6 @@
     font-weight: var(--weight-strong);
     white-space: nowrap;
   }
-
   .topic,
   .topic-field {
     min-width: 0;
@@ -207,7 +198,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .topic-field {
     flex: 1;
     max-width: none;
@@ -216,21 +206,17 @@
     color: var(--text);
     outline: none;
   }
-
   @media (hover: hover) {
     .topic:hover:not(:disabled) {
       border-color: var(--line);
     }
   }
-
   .topic.empty {
     opacity: 0.6;
   }
-
   .grow {
     flex: 1;
   }
-
   .people {
     display: inline-flex;
     align-items: center;
@@ -246,38 +232,31 @@
     font-variant-numeric: tabular-nums;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .people:hover,
     .pin:hover {
       background: var(--surface-hover);
     }
   }
-
   .people.on {
     background: var(--surface-selected);
     color: var(--text);
   }
-
   .faces {
     display: inline-flex;
   }
-
   .face {
     display: inline-flex;
     border-radius: 50%;
     box-shadow: 0 0 0 1.5px var(--bg);
   }
-
   .face + .face {
     margin-inline-start: -6px;
   }
-
   .list {
     overflow-y: auto;
     padding: var(--space-1);
   }
-
   .pin {
     display: flex;
     flex-direction: column;
@@ -292,14 +271,12 @@
     font-size: var(--text-sm);
     text-align: start;
   }
-
   .pin span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--muted-strong);
   }
-
   .none {
     --glyph-size: 20px;
     display: grid;

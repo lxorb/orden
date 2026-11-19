@@ -56,7 +56,6 @@ serveWorkspace({
   },
   webData: webDataStores,
 })
-
 if (!__EVEN_PLUGIN__) {
   serveWorkspace({
     undoOutside: async (action) => (await import('./explorer/src/api')).undoOutside(action),
@@ -83,5 +82,4 @@ if (!__EVEN_PLUGIN__) {
     }),
   )
 }
-
 providePort('spaces.archived', { listed: async () => (await spaceArchiving()).listed() })

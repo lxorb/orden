@@ -3,9 +3,7 @@ import { type Imported, importFile, needsZip, type SourceId } from '@orden/pass/
 
 const MIB = 1024 * 1024
 const ZIP_LIMITS = { total: 200 * MIB, entries: 10_000, file: 100 * MIB }
-
 export const ZIP_TOO_BIG = 'This archive is too big to import: at most 10,000 files, 100 MiB a file and 200 MiB in all.'
-
 interface Unpacking {
   on(event: 'data', run: (chunk: Uint8Array) => void): Unpacking
   on(event: 'end', run: () => void): Unpacking
@@ -13,11 +11,9 @@ interface Unpacking {
   pause(): Unpacking
   resume(): Unpacking
 }
-
 interface Streamable {
   internalStream(type: 'uint8array'): Unpacking
 }
-
 function unpacked(stream: Unpacking, room: number): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const chunks: Uint8Array[] = []
@@ -45,7 +41,6 @@ function unpacked(stream: Unpacking, room: number): Promise<Uint8Array> {
       .resume()
   })
 }
-
 export async function unzipped(bytes: Uint8Array, limits = ZIP_LIMITS): Promise<Record<string, Uint8Array>> {
   const { default: JSZip } = await import('jszip')
   const zip = await JSZip.loadAsync(bytes)
@@ -61,11 +56,9 @@ export async function unzipped(bytes: Uint8Array, limits = ZIP_LIMITS): Promise<
   }
   return files
 }
-
 export function isSealed(source: SourceId, bytes: Uint8Array): boolean {
   return source === 'orden' && isSealedExport(new TextDecoder().decode(bytes))
 }
-
 export async function importedFrom(
   source: SourceId,
   name: string,

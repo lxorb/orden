@@ -2,23 +2,18 @@ import type { LoginItem } from '@orden/pass/monitor'
 import type { Login } from '@orden/pass/types'
 
 export type Saving = { do: 'none' } | { do: 'save' } | { do: 'update'; id: string }
-
 const NONE: Saving = { do: 'none' }
 const SAVE: Saving = { do: 'save' }
-
 function folded(text: string): string {
   return text.trim().toLowerCase()
 }
-
 function namedBy(login: Login, username: string): boolean {
   const wanted = folded(username)
   return wanted !== '' && (folded(login.username) === wanted || folded(login.email) === wanted)
 }
-
 function updated(one: LoginItem | undefined): Saving {
   return one ? { do: 'update', id: one.id } : SAVE
 }
-
 export function savingOf(
   logins: readonly LoginItem[],
   username: string | null,

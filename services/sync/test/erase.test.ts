@@ -15,46 +15,35 @@ const HOLDS_NOTHING: Record<string, string> = {
   crash_reports: 'crash reports are kept without saying whose they are (#1226)',
   crash_groups: 'crash reports grouped by their stack, about no account (#1226)',
 }
-
 const WHOSE = ['user_id', 'email', 'space_id', 'note_id', 'who']
-
 function tables(database: DatabaseSync): string[] {
   const rows = database.prepare("select name, sql from sqlite_master where type = 'table'").all() as {
     name: string
     sql: string
   }[]
-
   const virtual = rows.filter((one) => /^create virtual table/i.test(one.sql)).map((one) => one.name)
-
   return rows
     .map((one) => one.name)
     .filter((name) => !name.startsWith('sqlite_'))
     .filter((name) => !virtual.some((one) => name.startsWith(`${one}_`)))
     .sort()
 }
-
 function columns(database: DatabaseSync, table: string): string[] {
   return (database.prepare(`select name from pragma_table_info(?)`).all(table) as { name: string }[]).map(
     (one) => one.name,
   )
 }
-
 describe('the list of what is erased', () => {
   let env: TestEnv
-
   beforeEach(() => {
     env = testEnv()
   })
-
   afterEach(() => env.close())
-
   test('names every table the schema has, or says why a table holds nothing', () => {
     const erasedTables = new Set(erased().map(([table]) => table))
     const unaccounted = tables(env.db).filter((table) => !erasedTables.has(table) && !(table in HOLDS_NOTHING))
-
     expect(unaccounted).toEqual([])
   })
-
   test('and names no table the schema does not have', () => {
     const there = new Set(tables(env.db))
     expect(
@@ -64,7 +53,6 @@ describe('the list of what is erased', () => {
     ).toEqual([])
     expect(Object.keys(HOLDS_NOTHING).filter((table) => !there.has(table))).toEqual([])
   })
-
   test('and waves through no table that says whose a row is', () => {
     for (const table of Object.keys(HOLDS_NOTHING)) {
       expect(
@@ -74,7 +62,6 @@ describe('the list of what is erased', () => {
     }
   })
 })
-
 const LEAVING = {
   id: 'user-leaving',
   email: 'leaving@example.com',
@@ -84,7 +71,6 @@ const LEAVING = {
   blob: 'a1'.repeat(32),
   version: 'a2'.repeat(32),
 }
-
 const STAYING = {
   id: 'user-staying',
   email: 'staying@example.com',
@@ -94,15 +80,11 @@ const STAYING = {
   blob: 'b1'.repeat(32),
   version: 'b2'.repeat(32),
 }
-
 const SHARED_BLOB = 'c1'.repeat(32)
 const SHARED_VERSION = 'c2'.repeat(32)
-
 type Person = typeof LEAVING
-
 function seed(database: DatabaseSync, who: Person): void {
   const run = (sql: string, ...values: (string | number | null)[]) => database.prepare(sql).run(...values)
-
   run(
     `insert into users (id, email, created_at, name, settings, totp_secret, totp_at)
      values (?, ?, 1, 'Name', '{"vim":true}', 'sealed', 1)`,
@@ -283,10 +265,8 @@ function seed(database: DatabaseSync, who: Person): void {
     who.space,
   )
 }
-
 function entangle(database: DatabaseSync, one: Person, other: Person): void {
   const run = (sql: string, ...values: string[]) => database.prepare(sql).run(...values)
-
   run(
     `insert into space_members (space_id, email, item, role, created_at, joined_at)
      values (?, ?, '', 'write', 1, 1)`,
@@ -320,7 +300,6 @@ function entangle(database: DatabaseSync, one: Person, other: Person): void {
     one.id,
   )
 }
-
 function everyRow(database: DatabaseSync): { table: string; row: string }[] {
   return tables(database).flatMap((table) =>
     database
@@ -329,20 +308,16 @@ function everyRow(database: DatabaseSync): { table: string; row: string }[] {
       .map((row) => ({ table, row: JSON.stringify(row) })),
   )
 }
-
 const naming = (who: Person) => (row: string) =>
   [who.id, who.email, who.space, who.note, who.blob, who.version].some((mark) => row.includes(mark))
-
 describe('deleting one of two accounts', () => {
   let env: TestEnv
-
   beforeEach(async () => {
     env = testEnv()
     seed(env.db, LEAVING)
     seed(env.db, STAYING)
     entangle(env.db, LEAVING, STAYING)
     entangle(env.db, STAYING, LEAVING)
-
     for (const who of [LEAVING, STAYING]) {
       await env.NOTES.put(`spaces/${who.space}/${who.note}`, 'abc')
       await env.NOTES.put(`versions/${who.version}`, 'abc')
@@ -353,39 +328,28 @@ describe('deleting one of two accounts', () => {
     await env.NOTES.put(`versions/${SHARED_VERSION}`, 'abc')
     await env.NOTES.put(`blobs/${SHARED_BLOB}`, new Uint8Array([1]))
   })
-
   afterEach(() => env.close())
-
   test('leaves no row anywhere that names it', async () => {
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-
     const left = everyRow(env.db).filter(({ row }) => naming(LEAVING)(row))
     expect(left).toEqual([])
   })
-
   test('and every row of the other account that did not name it is where it was', async () => {
     const theirs = () => everyRow(env.db).filter(({ row }) => naming(STAYING)(row) && !naming(LEAVING)(row))
     const before = theirs()
-
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-
     expect(theirs()).toEqual(before)
     expect(before.length).toBeGreaterThan(20)
   })
-
   test('leaves its words in the other’s chat, and the last word in it nobody’s', async () => {
     env.db.prepare("update chats set last_by = 'user:' || ? where id = 'chat-' || ?").run(LEAVING.id, STAYING.id)
-
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-
     expect(env.db.prepare("select last_by from chats where id = 'chat-' || ?").get(STAYING.id)).toEqual({
       last_by: null,
     })
   })
-
   test('empties the bucket of it, and of nothing somebody else still names', async () => {
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-
     expect(env.keys().sort()).toEqual(
       [
         `spaces/${STAYING.space}/${STAYING.note}`,
@@ -399,18 +363,14 @@ describe('deleting one of two accounts', () => {
     )
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
   })
-
   test('empties its hub, and not the hub of a guest that said it was at its address', async () => {
     const running = hubs(env)
     env.HUB = running.HUB
-
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-
     const erased = running.asked.filter((one) => one.ask === 'erase').map((one) => one.id)
     expect(erased).toEqual([LEAVING.id])
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
   })
-
   test('sends everybody in its chats away at once, though the chats are emptied later', async () => {
     const asked: { chat: string; ask: string; who: string | null }[] = []
     env.CHATS = {
@@ -423,9 +383,7 @@ describe('deleting one of two accounts', () => {
         },
       }),
     } as unknown as DurableObjectNamespace
-
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-
     const revoked = asked
       .filter((one) => one.ask === 'revoke')
       .map((one) => `${one.chat} ${one.who ?? ''}`)
@@ -438,45 +396,35 @@ describe('deleting one of two accounts', () => {
       ].sort(),
     )
   })
-
   test('keeps a hub that did not answer on the list for the next night', async () => {
     env.HUB = {
       idFromName: (name: string) => name,
       get: () => ({ fetch: () => Promise.reject(new Error('the hub is unwell')) }),
     } as unknown as DurableObjectNamespace
-
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-
     expect(env.db.prepare("select what from leftovers where what like 'hubs/%' order by what").all()).toEqual([
       { what: `hubs/${LEAVING.id}` },
     ])
   })
-
   test('one that fails part way touches nothing of the other, and is finished the next night', async () => {
     const theirs = () => everyRow(env.db).filter(({ row }) => naming(STAYING)(row) && !naming(LEAVING)(row))
     const before = theirs()
     env.db.exec("create trigger refuse before delete on users begin select raise(abort, 'no'); end")
-
     await expect(
       eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 }),
     ).rejects.toThrow()
-
     expect(theirs()).toEqual(before)
     expect(env.db.prepare('select count(*) as many from sessions where user_id = ?').get(LEAVING.id)).toEqual({
       many: 0,
     })
-
     await finishErasing(env)
     expect(env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id)).toEqual({ many: 1 })
-
     env.db.exec('drop trigger refuse')
     await finishErasing(env)
-
     expect(everyRow(env.db).filter(({ row }) => naming(LEAVING)(row))).toEqual([])
     expect(theirs()).toEqual(before)
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
   })
-
   test('of a very large account is written a bounded piece at a time', async () => {
     const notes = env.db.prepare(
       `insert into notes (id, space_id, path, seq, updated_at, size, hash)
@@ -492,7 +440,6 @@ describe('deleting one of two accounts', () => {
       versions.run(id, `v1-${String(n)}`, id, `v2-${String(n)}`)
     }
     env.db.exec('commit')
-
     const pieces: number[] = []
     const real = env.DB.batch.bind(env.DB)
     env.DB.batch = async <T>(statements: D1PreparedStatement[]) => {
@@ -500,45 +447,36 @@ describe('deleting one of two accounts', () => {
       pieces.push(answers.reduce((sum, one) => sum + one.meta.changes, 0))
       return answers
     }
-
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-
     expect(env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id)).toEqual({ many: 0 })
     expect(env.db.prepare("select count(*) as many from notes where id like 'big-%'").get()).toEqual({ many: 0 })
     expect(Math.max(...pieces)).toBeLessThanOrEqual(3000)
   })
-
   test('goes on to the next leftovers when the oldest cannot be cleared yet', async () => {
     const stuck = env.db.prepare('insert into leftovers (what, since) values (?, 0)')
     for (let n = 1; n <= 200; n++) stuck.run(`issues/${String(n)}`)
     env.db.prepare("insert into leftovers (what, since) values ('hubs/gone-user', 1)").run()
-
     const { sweepLeftovers } = await import('../src/sync-server-engine/src/leftovers')
     await sweepLeftovers(env)
     await sweepLeftovers(env)
-
     expect(env.db.prepare("select what from leftovers where what = 'hubs/gone-user'").all()).toEqual([])
     expect(env.db.prepare("select count(*) as many from leftovers where what like 'issues/%'").get()).toEqual({
       many: 200,
     })
   })
-
   test('picks up what a request did not get to, the next night', async () => {
     const bucket = env.NOTES as unknown as { delete: (keys: string | string[]) => Promise<void> }
     const real = bucket.delete.bind(bucket)
     bucket.delete = () => Promise.reject(new Error('the bucket is unwell'))
-
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
     expect(env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id)).toEqual({ many: 0 })
     const listed = env.db.prepare('select count(*) as many from leftovers').get() as {
       many: number
     }
     expect(listed.many).toBeGreaterThan(0)
-
     bucket.delete = real
     const { sweepLeftovers } = await import('../src/sync-server-engine/src/leftovers')
     await sweepLeftovers(env)
-
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
     expect(env.keys().filter((key) => naming(LEAVING)(key))).toEqual([])
   })

@@ -1,21 +1,15 @@
 export type BlockShape = 'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'bullet' | 'numbered' | 'task' | 'quote'
-
 const INDENT = /^[ \t]*/
 const QUOTED = /^(?:>[ \t]?)+/
-
 const QUOTE_LEAD = /^[ \t]*(?:>[ \t]?)+/
-
 const HASHES = /^#{1,6}[ \t]+/
 const MARKER = /^(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?/
-
 const TICKED = /^(?:[-*+]|\d+[.)])[ \t]+\[[xX]\][ \t]/
-
 export interface Words {
   lead: string
   indent: string
   words: string
 }
-
 export function wordsOf(text: string, listed = true, quoted = false): Words {
   const lead = quoted ? (QUOTE_LEAD.exec(text)?.[0] ?? '') : ''
   const rest = text.slice(lead.length)
@@ -23,10 +17,8 @@ export function wordsOf(text: string, listed = true, quoted = false): Words {
   const unquoted = rest.slice(indent.length).replace(QUOTED, '')
   const headed = HASHES.exec(unquoted)?.[0].length ?? 0
   const words = headed || !listed ? unquoted.slice(headed) : unquoted.replace(MARKER, '')
-
   return { lead, indent, words }
 }
-
 function markFor(shape: BlockShape, nth: number): string {
   switch (shape) {
     case 'heading1':
@@ -47,13 +39,10 @@ function markFor(shape: BlockShape, nth: number): string {
       return '> '
   }
 }
-
 export function shaped(text: string, shape: BlockShape, nth = 1, listed = true, quoted = false): string {
   const { lead, indent, words } = wordsOf(text, listed, quoted)
   if (!words.trim()) return text
-
   const unmarked = text.slice(lead.length + indent.length).replace(QUOTED, '')
   const ticked = shape === 'task' && listed && TICKED.test(unmarked)
-
   return lead + indent + (ticked ? '- [x] ' : markFor(shape, nth)) + words
 }

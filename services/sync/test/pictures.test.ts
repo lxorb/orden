@@ -4,14 +4,12 @@ import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 
 const HASH = 'ab'.repeat(32)
 const URL = `https://nibeditor.com/i/${HASH}.png`
-
 describe('the pictures a body shows', () => {
   test('are its picture embeds and its image tags', () => {
     expect([...picturesOf(`Before\n\n![a cat](${URL})\n`)]).toEqual([HASH])
     expect([...picturesOf(`![](<${URL}> "title")`)]).toEqual([HASH])
     expect([...picturesOf(`<img alt="x" src="${URL}">`)]).toEqual([HASH])
   })
-
   test.each([
     ['a picture in a list item', `- item\n\n    ![](${URL})\n`],
     ['a picture in a nested list', `- a\n    - b ![](${URL})\n`],
@@ -51,7 +49,6 @@ describe('the pictures a body shows', () => {
   ])('count %s', (_, body) => {
     expect([...picturesOf(body)]).toEqual([HASH])
   })
-
   test.each([
     ['prose', `see /i/${HASH} here`],
     ['a link that is not a picture', `[the file](${URL})`],
@@ -79,7 +76,6 @@ describe('the pictures a body shows', () => {
     expect([...picturesOf(body)]).toEqual([])
   })
 })
-
 describe('the pictures of a note whose HTML is live', () => {
   const split = `https://nibeditor.com/i/${HASH.slice(0, 32)}`
   test.each([
@@ -93,31 +89,26 @@ describe('the pictures of a note whose HTML is live', () => {
     expect([...picturesOf(body, true)]).toEqual([HASH])
     expect([...picturesOf(body)]).toEqual([])
   })
-
   test('and still not a hash in its prose or its code', () => {
     expect([...picturesOf(`see ${URL} and \`${URL}\``, true)]).toEqual([])
   })
 })
-
 describe('what a saved note writes down', () => {
   let env: TestEnv
   let token: string
   let space: string
   const body = `<svg><image href="${URL}"/></svg>`
   const kept = () => env.db.prepare('select hash from note_pictures').all()
-
   beforeEach(async () => {
     env = testEnv()
     token = await signIn(env, 'a@b.dev')
     space = (await call(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space.id
   })
   afterEach(() => env.close())
-
   test('reads live HTML in a space nobody else is in', async () => {
     await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'A.md', content: body } })
     expect(kept()).toEqual([{ hash: HASH }])
   })
-
   test('and HTML as words in a space somebody else is in', async () => {
     await mail(() =>
       call(env, `/v1/spaces/${space}/share/invite`, {

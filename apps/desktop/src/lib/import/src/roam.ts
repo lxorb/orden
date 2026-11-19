@@ -6,10 +6,8 @@ import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 const JOURNALS = 'Journals'
-
 const DAY =
   /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:st|nd|rd|th),\s+(\d{4})$/
-
 const MONTHS = [
   'january',
   'february',
@@ -24,63 +22,50 @@ const MONTHS = [
   'november',
   'december',
 ]
-
 const EMBED = String.raw`\{\{\s*(?:\[\[)?embed(?:-path)?(?:\]\])?\s*:\s*`
 const BLOCK_EMBED = new RegExp(`${EMBED}\\(\\(([^()\\s]+)\\)\\)\\s*\\}\\}`, 'g')
 const ALONE = new RegExp(`^\\s*${BLOCK_EMBED.source}\\s*$`)
 const PAGE_EMBED = new RegExp(`${EMBED}\\[\\[([^\\]\\n]+)\\]\\]\\s*\\}\\}`, 'g')
-
 interface RoamBlock {
   string?: unknown
   uid?: unknown
   children?: unknown
   heading?: unknown
 }
-
 interface RoamPage extends RoamBlock {
   title?: unknown
   'create-time'?: unknown
   'edit-time'?: unknown
 }
-
 interface Graph {
   known: ReadonlyMap<string, string>
   under: ReadonlyMap<string, unknown>
   counted: () => void
 }
-
 export async function readRoam(sources: readonly Source[]): Promise<ImportPlan> {
   const names = new Names()
   const written: Planned[] = []
   const lost: string[] = []
   let flattened = 0
-
   for (const source of sources) {
     if (!/\.json$/i.test(source.path)) continue
-
     const pages = asPages(await source.text())
     if (!pages) continue
-
     const graph: Graph = { ...blocksIn(pages), counted: () => (flattened += 1) }
-
     for (const page of pages) {
       const said = typeof page.title === 'string' ? page.title.trim() : ''
       if (!said) continue
-
       const day = dayName(said)
       const parts = said.split('/').filter((one) => one.trim())
       const path = day ? `${JOURNALS}/${day}` : (parts.length ? parts : ['']).map((one) => safeName(one)).join('/')
       const title = path.split('/').pop() ?? path
-
       const body = linesOf(page.children, 0, graph, new Set()).join('\n')
-
       const meta: Meta = {}
       const made = dayOf(asNumber(page['create-time']))
       const changed = dayOf(asNumber(page['edit-time']))
       if (made) meta.date = made
       if (changed) meta.updated = changed
       if (!day && foldName(said) !== foldName(path)) meta.extra = [['aliases', [said]]]
-
       written.push({
         kind: 'note',
         path: names.free(`${path}.md`),
@@ -88,34 +73,26 @@ export async function readRoam(sources: readonly Source[]): Promise<ImportPlan> 
       })
     }
   }
-
   if (flattened) {
     lost.push(`${flattened} block references were written out as the words they pointed at`)
   }
-
   return { format: 'roam', files: written, lost }
 }
-
 function asPages(text: string): RoamPage[] | null {
   try {
     const said: unknown = JSON.parse(text)
     if (!Array.isArray(said)) return null
-
     const pages = said.filter((one): one is RoamPage => !!one && typeof one === 'object' && 'title' in one)
-
     return pages.length ? pages : null
   } catch {
     return null
   }
 }
-
 function blocksIn(pages: readonly RoamPage[]): Pick<Graph, 'known' | 'under'> {
   const known = new Map<string, string>()
   const under = new Map<string, unknown>()
-
   const walk = (blocks: unknown) => {
     if (!Array.isArray(blocks)) return
-
     for (const one of blocks) {
       if (!one || typeof one !== 'object') continue
       const block = one as RoamBlock
@@ -126,29 +103,22 @@ function blocksIn(pages: readonly RoamPage[]): Pick<Graph, 'known' | 'under'> {
       walk(block.children)
     }
   }
-
   for (const page of pages) walk(page.children)
   return { known, under }
 }
-
 function linesOf(blocks: unknown, depth: number, graph: Graph, embedding: ReadonlySet<string>): string[] {
   if (!Array.isArray(blocks)) return []
-
   const out: string[] = []
-
   for (const one of blocks) {
     if (!one || typeof one !== 'object') continue
-
     const block = one as RoamBlock
     const said = typeof block.string === 'string' ? block.string : ''
     const uid = typeof block.uid === 'string' ? block.uid : ''
     const here = uid ? new Set([...embedding, uid]) : embedding
-
     const embedded = ALONE.exec(said)?.[1]
     const shown = embedded && graph.known.has(embedded) && !here.has(embedded) ? embedded : null
     const words = roamText(said, graph.known, graph.counted, new Set(uid ? [uid] : []), pageLink)
     const indent = '  '.repeat(depth)
-
     const heading = depth === 0 && typeof block.heading === 'number' ? block.heading : 0
     let next = depth
     if (words.trim()) {
@@ -160,7 +130,6 @@ function linesOf(blocks: unknown, depth: number, graph: Graph, embedding: Readon
         next = depth + 1
       }
     }
-
     if (shown) {
       for (const line of linesOf(graph.under.get(shown), next, graph, new Set([...here, shown]))) {
         out.push(line)
@@ -168,10 +137,8 @@ function linesOf(blocks: unknown, depth: number, graph: Graph, embedding: Readon
     }
     for (const line of linesOf(block.children, next, graph, here)) out.push(line)
   }
-
   return out
 }
-
 function itemText(words: string, indent: string): string {
   const fenced = words.replace(/^(\s*```[^\n]*\n[\s\S]*?[^\n])```\s*$/, '$1\n```')
   return fenced
@@ -179,10 +146,8 @@ function itemText(words: string, indent: string): string {
     .map((line, at) => (at && line.trim() ? `${indent}${line}` : line))
     .join('\n')
 }
-
 const asWritten = (name: string, shown: string | null = null, embed = false): string =>
   `${embed ? '!' : ''}[[${name}${shown === null ? '' : `|${shown}`}]]`
-
 export function roamText(
   said: string,
   known: ReadonlyMap<string, string> = new Map(),
@@ -197,7 +162,6 @@ export function roamText(
     return as ? as() : roamText(words, known, counted, new Set([...showing, uid]), link)
   }
   const page = (name: string) => dayName(name.trim()) ?? name
-
   return outsideCode(said, (text) =>
     asWords(text)
       .replace(/\{\{(?:\[\[)?TODO(?:\]\])?\}\}\s*/g, '[ ] ')
@@ -219,7 +183,6 @@ export function roamText(
       .replace(/\{\{\[\[([^\]]+)\]\]\}\}/g, '$1'),
   )
 }
-
 function outsideCode(text: string, change: (text: string) => string): string {
   let out = ''
   let at = 0
@@ -229,7 +192,6 @@ function outsideCode(text: string, change: (text: string) => string): string {
   }
   return out + change(text.slice(at))
 }
-
 function codeIn(text: string): [number, number][] {
   const found: [number, number][] = []
   let at = 0
@@ -242,7 +204,6 @@ function codeIn(text: string): [number, number][] {
       at += 1
       continue
     }
-
     const opens = runAt(text, at)
     let end = at + opens
     let closes = -1
@@ -254,7 +215,6 @@ function codeIn(text: string): [number, number][] {
       }
       end += run
     }
-
     if (closes < 0) {
       at += opens
       continue
@@ -264,19 +224,15 @@ function codeIn(text: string): [number, number][] {
   }
   return found
 }
-
 function runAt(text: string, at: number): number {
   let end = at
   while (text[end] === '`') end += 1
   return end - at
 }
-
 export function dayName(title: string): string | null {
   const found = DAY.exec(title)
   if (!found) return null
-
   const month = MONTHS.indexOf((found[1] ?? '').toLowerCase()) + 1
   return dayOf(`${found[3]}-${String(month).padStart(2, '0')}-${(found[2] ?? '').padStart(2, '0')}`)
 }
-
 const asNumber = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)

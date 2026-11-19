@@ -5,34 +5,26 @@ export interface Ground {
   colour: string
   scheme: Scheme
 }
-
 export interface Worn {
   scheme: Scheme
   tint: string
   second?: string
   wash: number
 }
-
 interface Kept extends Worn {
   app: Scheme
   tab: string | null
   bar: Ground | null
 }
-
 const KEY = 'orden:glass-chrome'
-
 const PAINTED = ['--glass-tint', '--glass-tint-2', '--glass-tinted'] as const
-
 function percent(fraction: number): string {
   return `${Math.round(fraction * 100)}%`
 }
-
 const HEX = /^#[0-9a-f]{6}$/i
-
 function isGround(value: unknown): value is Ground {
   return isRecord(value) && isString(value.colour) && isScheme(value.scheme)
 }
-
 function kept(): Kept | null {
   const said = stored(KEY)
   if (!isRecord(said) || !isScheme(said.app) || !isScheme(said.scheme)) return null
@@ -47,52 +39,42 @@ function kept(): Kept | null {
     bar: isGround(said.bar) ? said.bar : null,
   }
 }
-
 class Chrome {
   on = $state(false)
   app = $state<Scheme>('dark')
   frame = $state<Scheme | null>(null)
   bars = $state<Record<string, Ground>>({})
   terminal = $state<string | null>(null)
-
   readonly theme = $derived<Scheme | undefined>(
     this.on && this.frame !== null && this.frame !== this.app ? this.frame : undefined,
   )
-
   barOf(tab: string): Ground | undefined {
     return this.on ? this.bars[tab] : undefined
   }
-
   barTheme(tab: string): Scheme | undefined {
     const scheme = this.barOf(tab)?.scheme
     return scheme === this.app ? undefined : scheme
   }
-
   tabTheme(tab: string): Scheme | undefined {
     if (!this.on) return undefined
     const own = this.bars[tab]?.scheme ?? this.app
     return own === (this.theme ?? this.app) ? undefined : own
   }
-
   wake(app: Scheme): void {
     const was = this.on
     this.app = app
     if (was) return
-
     this.on = true
     const root = document.documentElement
     root.dataset.tinted = ''
     const last = kept()
     if (last?.app !== app) return
-
     this.paint(last)
     this.frame = last.scheme
     if (last.tab !== null && last.bar !== null) this.bars = { [last.tab]: last.bar }
   }
-
   sleep(): void {
     if (!this.on) return
-
     this.on = false
     this.frame = null
     this.bars = {}
@@ -101,14 +83,11 @@ class Chrome {
     delete root.dataset.paired
     for (const token of PAINTED) root.style.removeProperty(token)
   }
-
   wear(worn: Worn, bars: Record<string, Ground>, tab: string | null): void {
     if (!this.on) return
-
     this.paint(worn)
     if (this.frame !== worn.scheme) this.frame = worn.scheme
     if (JSON.stringify(bars) !== JSON.stringify(this.bars)) this.bars = bars
-
     const next: Kept = {
       ...worn,
       app: this.app,
@@ -120,14 +99,11 @@ class Chrome {
     this.written = text
     keepJson(KEY, next)
   }
-
   forget(): void {
     forget(KEY)
     this.written = ''
   }
-
   private written = ''
-
   private paint(worn: Worn): void {
     const style = document.documentElement.style
     document.documentElement.toggleAttribute('data-paired', worn.second !== undefined)
@@ -141,9 +117,7 @@ class Chrome {
     }
   }
 }
-
 export const chrome = new Chrome()
-
 export function landed(tab: string): void {
   if (!chrome.on) return
   const looks = portOf('theme.looks')

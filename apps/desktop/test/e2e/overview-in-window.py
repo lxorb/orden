@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -13,7 +11,6 @@ async () => {
   await new Promise((go) => setTimeout(go, 400))
 }
 """
-
 SAMPLE = """
 () => {
   const frames = []
@@ -56,9 +53,7 @@ SAMPLE = """
   window.__overviewFrames = { stop: () => { going = false; return frames } }
 }
 """
-
 SIDE = "() => { const box = document.querySelector('[data-chrome=\"start\"]')?.getBoundingClientRect(); return box ? [box.x, box.width] : null }"
-
 def apart(one: list[float], other: list[float]) -> bool:
     return (
         one[0] + one[2] <= other[0]
@@ -66,7 +61,6 @@ def apart(one: list[float], other: list[float]) -> bool:
         or one[1] + one[3] <= other[1]
         or other[1] + other[3] <= one[1]
     )
-
 def judged(frames: list[dict], label: str) -> None:
     say(f"[{label}] {len(frames)} frames")
     if len(frames) < 10:
@@ -80,7 +74,6 @@ def judged(frames: list[dict], label: str) -> None:
             if both and apart(tab["strip"], tab["window"]):
                 wrong(f"[{label}] frame {index}: {tab['name']} is in its strip and a window elsewhere at once: {tab}")
                 return
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
@@ -93,7 +86,6 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.canvas')", "the overview gone")
     before = page.evaluate(SIDE)
-
     page.evaluate(SAMPLE)
     page.keyboard.press("Alt")
     page.keyboard.press("Alt")
@@ -113,7 +105,6 @@ def drive(browser: Browser) -> None:
     )
     if not bar:
         wrong("[in] the bar is under something while the overview is up")
-
     page.evaluate(SAMPLE)
     page.keyboard.press("Escape")
     page.wait_for_timeout(1400)
@@ -126,5 +117,4 @@ def drive(browser: Browser) -> None:
     if page.evaluate(SIDE) != before:
         wrong("[home] the sidebar is not back where it was")
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "the overview happens in the window, nothing seen twice"))

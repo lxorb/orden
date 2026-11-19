@@ -20,10 +20,8 @@ describe('erasing an account', () => {
     }
   })
 })
-
 describe('vault access', () => {
   const held = (role: string) => ({ role, deleted_at: null }) as unknown as Parameters<typeof mayAct>[0]
-
   test('an owner may do anything, an editor may edit, a viewer may only view', () => {
     expect(mayAct(held('owner'), 'owner')).toBe(true)
     expect(mayAct(held('owner'), 'viewer')).toBe(true)
@@ -33,7 +31,6 @@ describe('vault access', () => {
     expect(mayAct(held('viewer'), 'editor')).toBe(false)
     expect(mayAct(held('viewer'), 'viewer')).toBe(true)
   })
-
   test('refusals are the words the client matches on', () => {
     expect([STALE, ROTATED, NO_SUCH_VAULT, NO_SUCH_ITEM]).toEqual([
       'stale',
@@ -43,7 +40,6 @@ describe('vault access', () => {
     ])
   })
 })
-
 describe('rows on the wire', () => {
   test('an item row carries its revision, key version and deletion', () => {
     const row = itemRowOf({
@@ -58,7 +54,6 @@ describe('rows on the wire', () => {
     })
     expect(row).toMatchObject({ id: 'i', rev: 3, keyVersion: 2 })
   })
-
   test('a keyring row needs a keyring to show', () => {
     expect(keyringRowOf({ keyring: '', rev: 1 })).toBeNull()
   })

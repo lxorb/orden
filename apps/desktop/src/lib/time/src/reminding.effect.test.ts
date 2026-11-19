@@ -13,7 +13,6 @@ const running = vi.hoisted(() => ({
   label: null,
   device: null,
 }))
-
 vi.mock('../../notify/src/api', () => ({
   notify: (_title: string, _body: string, tag: string) => shown.push(tag),
 }))
@@ -28,15 +27,12 @@ vi.mock('./time.svelte', () => ({
     activity: () => null,
   },
 }))
-
 const { remind } = await import('./reminding')
-
 test('a reminder another window has already given is not given again', async () => {
   localStorage.setItem('orden:time-told', JSON.stringify(['timer:long']))
   await remind()
   expect(shown).toEqual([])
 })
-
 test('a reminder is given once, and the next window to look knows it was', async () => {
   localStorage.removeItem('orden:time-told')
   await remind()

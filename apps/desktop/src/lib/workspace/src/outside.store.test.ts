@@ -21,7 +21,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   isNative: true,
   invoke: () => Promise.resolve(undefined),
 }))
-
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
@@ -29,11 +28,9 @@ const { account } = await import('../../accounts/src/account.svelte')
 const { sync } = await import('../../sync-store/src/api')
 const { onUnwatched, unwatchSpaces } = await import('../../crate/src/api')
 const { hearsUnwatched, TheWatch } = await import('./outside.svelte')
-
 const settle = async () => {
   for (let turn = 0; turn < 5; turn++) await new Promise((go) => setTimeout(go, 0))
 }
-
 describe('the watch of the spaces', () => {
   test('signed out it runs, once, and follows the spaces', async () => {
     const watch = new TheWatch()
@@ -49,7 +46,6 @@ describe('the watch of the spaces', () => {
     await settle()
     expect(watching.roots.length).toBe(2)
   })
-
   test('the engine has it signed in, and it comes back when the engine lets go', async () => {
     watching.roots.length = 0
     const watch = new TheWatch()
@@ -72,7 +68,6 @@ describe('the watch of the spaces', () => {
     ])
     stop()
   })
-
   test('the engine letting go in another window is heard here', async () => {
     watching.roots.length = 0
     const said: Record<string, () => void> = {}
@@ -93,7 +88,6 @@ describe('the watch of the spaces', () => {
     expect(watching.roots.length).toBe(first + 1)
     stop()
   })
-
   test('a space Orden keeps is not handed to the watcher, so the folders beside it are still watched', async () => {
     watching.roots.length = 0
     account.user = null

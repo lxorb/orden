@@ -11,7 +11,6 @@ const { written, template, moved, plan, before, writing, trusted, ran, shut } = 
   moved: [] as string[],
   plan: { folder: '' },
 }))
-
 vi.mock('@orden/bases', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@orden/bases')>()),
   repeatDue: (note: { made?: unknown }) => (note.made === '2026-10-24' ? null : { day: '2026-10-24', missed: [] }),
@@ -89,18 +88,15 @@ vi.mock('../../sharing/src/api', () => ({
   canWriteAt: () => true,
   trustsHtmlAt: () => trusted.yes,
 }))
-
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
 const { EXPERIMENTAL_WORD, BASES_WORD, hiddenKinds } = await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, BASES_WORD]
 const { inFlight: moving } = await import('../../file-ops/src/api')
-
 beforeEach(() => {
   before.length = 0
   written.clear()
   moved.length = 0
 })
-
 test('a base somebody else could have written runs under the guard any other reader of it runs under', async () => {
   plan.folder = ''
   trusted.yes = false
@@ -114,7 +110,6 @@ test('a base somebody else could have written runs under the guard any other rea
   }
   expect(ran.at(-1)?.map((one) => one.base.guarded)).toEqual([true])
 })
-
 test('a protected base while it is shut runs nothing, and runs again once it is unlocked', async () => {
   plan.folder = ''
   ran.length = 0
@@ -131,29 +126,23 @@ test('a protected base while it is shut runs nothing, and runs again once it is 
   await new Promise((done) => setTimeout(done, 150))
   expect(ran.at(-1)).toHaveLength(1)
 })
-
 describe("a base's automation that moves a note", () => {
   async function changed() {
     await readHeld('/s/Shared/Tasks.base')
     heard('Shared', 'Inbox/a.md', [])
     await new Promise((done) => setTimeout(done, 150))
   }
-
   test('moves it into the folder the base names', async () => {
     plan.folder = 'Done'
     await changed()
-
     expect(moved).toEqual(['/s/Shared/Inbox/a.md -> /s/Shared/Done'])
   })
-
   test('moves nothing where that folder climbs out of the space', async () => {
     plan.folder = '../Private'
     await changed()
-
     expect(moved).toEqual([])
   })
 })
-
 describe("a base's automation that writes a note", () => {
   async function changed(path: string) {
     await readHeld('/s/Shared/Tasks.base')
@@ -162,38 +151,30 @@ describe("a base's automation that writes a note", () => {
     await new Promise((done) => setTimeout(done, 150))
     writing.pairs = []
   }
-
   test('takes the next change for its own, when its write changed the note', async () => {
     plan.folder = ''
     writing.changed = true
     await changed('Inbox/one.md')
     expect(before).toHaveLength(1)
-
     await changed('Inbox/one.md')
     expect(before).toHaveLength(1)
-
     await changed('Inbox/one.md')
     expect(before).toHaveLength(2)
   })
-
   test('and not when its write changed nothing, since none is coming', async () => {
     plan.folder = ''
     writing.changed = false
     await changed('Inbox/two.md')
     await changed('Inbox/two.md')
-
     expect(before).toHaveLength(2)
   })
 })
-
 describe("a repeating template's note", () => {
   test('is made in the folder the template names', async () => {
     template.folder = 'Journal'
     await repeatTemplates()
-
     expect(written.has('/s/Shared/Journal/Daily 2026-10-24.md')).toBe(true)
   })
-
   test('is not made, nor the template written, while the template is behind a lock', async () => {
     template.folder = 'Journal'
     shut.add('/s/Shared/Templates/')
@@ -202,36 +183,29 @@ describe("a repeating template's note", () => {
     } finally {
       shut.clear()
     }
-
     expect([...written.keys()]).toEqual([])
   })
-
   test('is not made where that folder climbs out of the space', async () => {
     template.folder = '../Private'
     await repeatTemplates()
-
     expect([...written.keys()].filter((path) => !path.includes('/Templates/'))).toEqual([])
   })
-
   test('is made once, while two windows make them at once or one still holds the old rows', async () => {
     template.folder = 'Journal'
     await Promise.all([repeatTemplates(), repeatTemplates()])
     await repeatTemplates()
-
     expect([...written.keys()].filter((path) => !path.includes('/Templates/'))).toEqual([
       '/s/Shared/Journal/Daily 2026-10-24.md',
     ])
     expect(written.get('/s/Shared/Templates/Daily.md')).toContain('made: 2026-10-24')
   })
 })
-
 describe('a note renamed or moved', () => {
   const was = { kind: 'note', space: 'Shared', path: 'Inbox/old.md', note: { status: 'Doing' } }
   const now = { ...was, path: 'Inbox/a.md' }
   const settle = () => new Promise((done) => setTimeout(done, 150))
   const change = { root: '/s/Shared', space: 'Shared', path: 'Inbox/a.md' }
   const from = { space: 'Shared', path: 'Inbox/old.md', rows: [was] as never }
-
   test('is looked at with the rows it had where it was, not as a note just made', async () => {
     plan.folder = '../Private'
     await readHeld('/s/Shared/Tasks.base')
@@ -244,20 +218,16 @@ describe('a note renamed or moved', () => {
       from: { space: 'Shared', path: 'Inbox/old.md', rows: [was] as never },
     })
     await settle()
-
     expect(before).toEqual([[was]])
   })
-
   test('written where it goes before the move is told, is still a move (B498)', async () => {
     plan.folder = '../Private'
     await readHeld('/s/Shared/Tasks.base')
     heardChange({ ...change, removed: [], added: [now] as never })
     heardChange({ ...change, removed: [now] as never, added: [now] as never, from })
     await settle()
-
     expect(before).toEqual([[was]])
   })
-
   test('an edit at the old path still waiting is what it was before', async () => {
     plan.folder = '../Private'
     await readHeld('/s/Shared/Tasks.base')
@@ -275,10 +245,8 @@ describe('a note renamed or moved', () => {
       from: { ...from, rows: [edited] as never },
     })
     await settle()
-
     expect(before).toEqual([[was]])
   })
-
   test('however long the rewrite takes before the move is told, the move is not an add', async () => {
     plan.folder = '../Private'
     await readHeld('/s/Shared/Tasks.base')
@@ -289,10 +257,8 @@ describe('a note renamed or moved', () => {
       heardChange({ ...change, removed: [now] as never, added: [now] as never, from })
     })
     await settle()
-
     expect(before).toEqual([[was]])
   })
-
   test('a save at a path a move never reached is looked at once the move is over', async () => {
     plan.folder = '../Private'
     await readHeld('/s/Shared/Tasks.base')
@@ -301,11 +267,9 @@ describe('a note renamed or moved', () => {
       await settle()
     }).catch(() => undefined)
     await settle()
-
     expect(before).toEqual([[]])
   })
 })
-
 test('a note saved before its space is first read is not looked at as a note just made, since what it was is not known yet', async () => {
   await readHeld('/s/Shared/Tasks.base')
   const row = { kind: 'note', space: 'Shared', path: 'Bugs/Old.md', note: { status: 'Done' } }
@@ -318,10 +282,8 @@ test('a note saved before its space is first read is not looked at as a note jus
     firstRead: true,
   })
   await new Promise((done) => setTimeout(done, 150))
-
   expect(before).toEqual([])
 })
-
 test('notes that reach a numbered base at about the same time are looked at one after the other, so each sees the id the one before it was given', async () => {
   plan.folder = ''
   writing.changed = true
@@ -334,12 +296,10 @@ test('notes that reach a numbered base at about the same time are looked at one 
   heard('Shared', 'Bugs/B.md', [])
   await new Promise((done) => setTimeout(done, 150))
   expect(before).toHaveLength(1)
-
   release()
   await new Promise((done) => setTimeout(done, 20))
   writing.pairs = []
   writing.hold = Promise.resolve()
-
   expect(before).toHaveLength(2)
   expect(writing.most).toBe(1)
 })

@@ -47,7 +47,6 @@
     box-shadow: var(--shadow-sm);
     pointer-events: none;
   }
-
   svg {
     width: 20px;
     height: 20px;
@@ -57,11 +56,9 @@
     stroke-linejoin: round;
     rotate: 0deg;
   }
-
   .track {
     stroke: var(--line-strong);
   }
-
   .filling {
     stroke: var(--accent);
     stroke-dasharray: 66;
@@ -69,43 +66,34 @@
     rotate: -90deg;
     transform-origin: 50% 50%;
   }
-
   .arrow {
     stroke: var(--muted-strong);
   }
-
   .ready {
     background: var(--accent);
   }
-
   .ready .track,
   .ready .filling {
     stroke: transparent;
   }
-
   .ready .arrow {
     stroke: var(--accent-ink);
   }
-
   .turning .filling {
     stroke-dashoffset: 49;
     animation: turn 0.9s linear infinite;
   }
-
   .turning .arrow {
     stroke: transparent;
   }
-
   .failed .filling {
     stroke: var(--danger);
   }
-
   @media (prefers-reduced-motion: reduce) {
     .turning .filling {
       animation: none;
     }
   }
-
   @keyframes turn {
     to {
       rotate: 270deg;

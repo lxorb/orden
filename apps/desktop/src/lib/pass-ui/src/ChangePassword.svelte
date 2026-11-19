@@ -3,20 +3,16 @@
   import StrengthMeter from './StrengthMeter.svelte'
 
   const { ondone, oncancel }: { ondone: () => void; oncancel?: () => void } = $props()
-
   const LEAST = 8
-
   let old = $state('')
   let password = $state('')
   let again = $state('')
   let busy = $state(false)
   let wrong = $state(false)
-
   const asksOld = $derived(!pass.mustChangePassword)
   const short = $derived(password.length > 0 && password.length < LEAST)
   const differ = $derived(again.length > 0 && again !== password)
   const ready = $derived((!asksOld || old !== '') && password.length >= LEAST && again === password)
-
   async function changed(event: SubmitEvent) {
     event.preventDefault()
     if (busy || !ready) return

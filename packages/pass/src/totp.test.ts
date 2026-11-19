@@ -9,13 +9,11 @@ function base32(text: string): string {
   for (let at = 0; at < bits.length; at += 5) out += alphabet[parseInt(bits.slice(at, at + 5).padEnd(5, '0'), 2)] ?? ''
   return out
 }
-
 const SEEDS: Record<TotpAlgorithm, string> = {
   SHA1: '12345678901234567890',
   SHA256: '12345678901234567890123456789012',
   SHA512: '1234567890123456789012345678901234567890123456789012345678901234',
 }
-
 const VECTORS: [number, TotpAlgorithm, string][] = [
   [59, 'SHA1', '94287082'],
   [59, 'SHA256', '46119246'],
@@ -36,7 +34,6 @@ const VECTORS: [number, TotpAlgorithm, string][] = [
   [20000000000, 'SHA256', '77737706'],
   [20000000000, 'SHA512', '47863826'],
 ]
-
 describe('code', () => {
   it.each(VECTORS)('matches RFC 6238 at %i with %s', async (seconds, algorithm, expected) => {
     const totp: Totp = {
@@ -49,7 +46,6 @@ describe('code', () => {
     }
     expect((await code(totp, seconds * 1000)).code).toBe(expected)
   })
-
   it('counts the seconds left', async () => {
     const totp = totpIn('JBSWY3DPEHPK3PXP JBSW')
     if (totp === null) throw new Error('no totp')
@@ -58,7 +54,6 @@ describe('code', () => {
     expect((await code(totp, 75_500)).code).toMatch(/^\d{6}$/)
   })
 })
-
 describe('totpIn', () => {
   it('reads an otpauth address', () => {
     expect(
@@ -74,7 +69,6 @@ describe('totpIn', () => {
       label: 'john@example.com',
     })
   })
-
   it('takes the issuer from the label when the address has none, and fills defaults', () => {
     expect(totpIn('otpauth://totp/GitHub:me?secret=jbswy3dpehpk3pxp')).toEqual({
       secret: 'JBSWY3DPEHPK3PXP',
@@ -86,7 +80,6 @@ describe('totpIn', () => {
     })
     expect(totpIn('otpauth://totp/me?secret=JBSWY3DP')).toMatchObject({ issuer: '', label: 'me' })
   })
-
   it('reads a bare secret', () => {
     expect(totpIn(' jbsw y3dp ehpk 3pxp ')).toMatchObject({
       secret: 'JBSWY3DPEHPK3PXP',
@@ -94,7 +87,6 @@ describe('totpIn', () => {
       period: 30,
     })
   })
-
   it('refuses what it cannot use', () => {
     for (const bad of [
       'otpauth://hotp/x?secret=JBSWY3DPEHPK3PXP&counter=1',
@@ -111,7 +103,6 @@ describe('totpIn', () => {
     ])
       expect(totpIn(bad)).toBeNull()
   })
-
   it('round-trips through its address', () => {
     const totp: Totp = {
       secret: 'JBSWY3DPEHPK3PXP',

@@ -7,7 +7,6 @@ const Changes = (await import('./Changes.svelte')).default
 const ROOT = '/space'
 const NOTE = `${ROOT}/Diary.md`
 const LOCK = { root: ROOT, key: 'Diary.md', way: 'password' as const }
-
 const change = {
   id: 'one',
   agent: 'claude',
@@ -18,18 +17,15 @@ const change = {
   added: 1,
   removed: 0,
 }
-
 beforeEach(() => {
   workspace.spaces = [{ id: 'space', name: 'Space', root: ROOT }]
   workspace.protection.set(ROOT, NOTE, 'password')
   unlocks.lockAll()
 })
-
 afterEach(() => {
   unlocks.lockAll()
   workspace.protection.set(ROOT, NOTE, null)
 })
-
 describe('an agent change to a protected note', () => {
   test('shows none of its words while the note is shut', () => {
     const target = document.createElement('div')

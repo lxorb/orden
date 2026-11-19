@@ -2,19 +2,14 @@ import { account } from '../../accounts/src/api'
 import { keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden:chat-own-pointers'
-
 let current: string | null = null
-
 export function startedFor(id: string): void {
   current = id
 }
-
 function who(): string | null {
   return current ?? account.user?.id ?? account.guest?.id ?? null
 }
-
 const own = new Map<string, Map<string, string>>()
-
 function owned(id: string): Map<string, string> {
   const held = own.get(id)
   if (held) return held
@@ -28,17 +23,14 @@ function owned(id: string): Map<string, string> {
   own.set(id, map)
   return map
 }
-
 export function ownPointer(chat: string): string | null {
   const id = who()
   return id ? (owned(id).get(chat) ?? null) : null
 }
-
 export function ownPointers(): [string, string][] {
   const id = who()
   return id ? [...owned(id)] : []
 }
-
 export function keepOwnPointer(chat: string, path: string | null): void {
   const id = who()
   if (!id) return
@@ -48,17 +40,13 @@ export function keepOwnPointer(chat: string, path: string | null): void {
   else map.set(chat, path)
   keepJson(`${KEY}:${id}`, Object.fromEntries(map))
 }
-
 const moves = new Map<string, string>()
-
 export function movedHere(chat: string, space: string): void {
   moves.set(chat, space)
 }
-
 export function lastMoved(chat: string): string | null {
   return moves.get(chat) ?? null
 }
-
 export function forgetMoves(): void {
   moves.clear()
 }

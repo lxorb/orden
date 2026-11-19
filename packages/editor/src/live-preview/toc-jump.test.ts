@@ -13,13 +13,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string, cursor: number, quiet: boolean) {
   const state = parsed(
     EditorState.create({
@@ -36,7 +33,6 @@ function viewOf(doc: string, cursor: number, quiet: boolean) {
   open.push(view)
   return view
 }
-
 describe('a table of contents entry, with quiet marks on', () => {
   test('puts the caret where the heading words start, after the hidden #', () => {
     const doc = '[toc]\n\nintro\n\n## Plan\n\nwords\n'

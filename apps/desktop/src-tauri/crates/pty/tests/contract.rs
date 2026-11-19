@@ -1,12 +1,10 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
-
 use orden_pty::terminal::{hold, process};
 
 #[test]
 fn a_held_terminal_starts_the_app_in_its_own_mode() {
     assert_eq!(hold::MODE, "terminal-hold");
 }
-
 #[test]
 fn no_shell_is_never_busy_and_runs_nothing() {
     assert!(!process::busy(None));
@@ -14,7 +12,6 @@ fn no_shell_is_never_busy_and_runs_nothing() {
     assert_eq!(process::command(None), None);
     assert_eq!(process::folder(None), None);
 }
-
 #[test]
 fn the_program_in_front_is_the_first_busy_one_below_the_shell() {
     let one = |id, parent, name: &str| process::Process {

@@ -1,8 +1,6 @@
 import io
 import sys
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 
@@ -12,21 +10,16 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 PATIENCE = 40
-
 SLACK = 1.0
-
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 def check(fine: bool, what: str) -> None:
     if fine:
         say(f"ok   {what}")
     else:
         failures.append(what)
         say(f"WRONG {what}")
-
 def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -> Page:
     context = browser.new_context(viewport=viewport, color_scheme=scheme)
     page = context.new_page()
@@ -34,7 +27,6 @@ def fresh(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
     DRIVE.open(page)
     wait_for(page, "() => !!window.ordenApp.workspace.active", f"[{label}] the app's own note")
     return page
-
 SEED = """
 async () => {
   const app = window.ordenApp
@@ -52,7 +44,6 @@ async () => {
   return { root, spaces: ws.spaces.map((one) => one.name), icon: ws.iconFor(ws.activeSpaceId) }
 }
 """
-
 MORE_SPACES = """
 () => {
   const app = window.ordenApp
@@ -96,7 +87,6 @@ MORE_SPACES = """
   }
 }
 """
-
 BADGES = """
 () => {
   const centre = (box) => box.top + box.height / 2
@@ -131,7 +121,6 @@ BADGES = """
   return out
 }
 """
-
 BAR = """
 () => {
   const header = document.querySelector('header')
@@ -167,7 +156,6 @@ BAR = """
   }
 }
 """
-
 TOGGLE = """
 () => {
   const button = document.querySelector('.toggle')
@@ -192,7 +180,6 @@ TOGGLE = """
   return { pressed: button.getAttribute('aria-pressed'), shapes }
 }
 """
-
 HEAD = """
 () => {
   const head = document.querySelector('aside .head')
@@ -237,7 +224,6 @@ HEAD = """
   }
 }
 """
-
 FOOT = """
 () => {
   const foot = document.querySelector('aside .foot')
@@ -268,7 +254,6 @@ FOOT = """
   }
 }
 """
-
 FORMAT_BAR = """
 () => {
   const docked = document.querySelector('.orden-bar.docked')
@@ -290,7 +275,6 @@ FORMAT_BAR = """
   }
 }
 """
-
 KEYS = """
 (pixels) => {
   const seen = window.ordenApp.viewport
@@ -299,7 +283,6 @@ KEYS = """
   return { keyboard: seen.keyboard, typing: seen.typing }
 }
 """
-
 SELECT = """
 () => {
   const view = window.orden
@@ -311,7 +294,6 @@ SELECT = """
   return view.state.sliceDoc(2, to)
 }
 """
-
 SHARED = """
 () => {
   const seen = []
@@ -334,7 +316,6 @@ SHARED = """
   return seen
 }
 """
-
 AS_PHONE = """
 () => {
   const app = window.ordenApp
@@ -349,7 +330,6 @@ AS_PHONE = """
   root.toggleAttribute('data-narrow', true)
 }
 """
-
 WITH_SOMEBODY = """
 () => {
   const app = window.ordenApp
@@ -360,14 +340,12 @@ WITH_SOMEBODY = """
   return tab.path
 }
 """
-
 TREE_MARKS = """
 () => [...document.querySelectorAll('aside .row')].map((row) => ({
   row: row.textContent.trim(),
   shared: row.querySelectorAll('.shared').length,
 }))
 """
-
 SEGMENTED = """
 () => {
   const track = document.querySelector('.orden-segmented')
@@ -400,7 +378,6 @@ SEGMENTED = """
   }
 }
 """
-
 FORMAT_MARKS = """
 () => {
   const bar = document.querySelector('.orden-bar.docked') ?? document.querySelector('.orden-bar-at')
@@ -456,7 +433,6 @@ FORMAT_MARKS = """
   return { none: false, marks }
 }
 """
-
 FORMAT_BOXES = """
 () => {
   const bar = document.querySelector('.orden-bar.docked') ?? document.querySelector('.orden-bar-at')
@@ -468,10 +444,8 @@ FORMAT_BOXES = """
     : []
 }
 """
-
 def drawn_off(page: Page) -> dict[str, float]:
     from PIL import Image
-
     off: dict[str, float] = {}
     for box in page.evaluate(FORMAT_BOXES):
         if box["width"] < 4 or box["height"] < 4:
@@ -485,7 +459,6 @@ def drawn_off(page: Page) -> dict[str, float]:
         if rows:
             off[box["name"]] = round((rows[0] + rows[-1] + 1) / 2 - height / 2, 1)
     return off
-
 ASIDE_AT = """
 () => {
   const aside = document.querySelector('aside')
@@ -495,12 +468,10 @@ ASIDE_AT = """
   return { left: Math.round(box.left), width: Math.round(box.width) }
 }
 """
-
 def same_glyph(label: str, shut: dict | None, opened: dict | None) -> None:
     if not shut or not opened:
         check(False, f"[{label}] there is a sidebar button to measure")
         return
-
     check(
         [one["tag"] for one in shut["shapes"]] == [one["tag"] for one in opened["shapes"]],
         f"[{label}] the sidebar button is made of the same shapes in both states",
@@ -509,7 +480,6 @@ def same_glyph(label: str, shut: dict | None, opened: dict | None) -> None:
         shut["pressed"] != opened["pressed"],
         f"[{label}] and says which state it is in ({shut['pressed']} then {opened['pressed']})",
     )
-
     for one, other in zip(shut["shapes"], opened["shapes"]):
         moved = max(abs(one["x"] - other["x"]), abs(one["y"] - other["y"]))
         check(
@@ -517,14 +487,12 @@ def same_glyph(label: str, shut: dict | None, opened: dict | None) -> None:
             f"[{label}] the {one['tag']} is in the same place in both states"
             f" (moved {moved}px: {one} then {other})",
         )
-
     for state, seen in (("shut", shut), ("open", opened)):
         faint = [one for one in seen["shapes"] if float(one["opacity"]) < 0.95]
         check(
             not faint,
             f"[{label}] every part of the sidebar button is drawn while it is {state} ({faint})",
         )
-
 def panel_ends(page: Page, label: str, phone: bool = False) -> None:
     head = page.evaluate(HEAD)
     say(f"[{label}] the head: {head}")
@@ -541,19 +509,16 @@ def panel_ends(page: Page, label: str, phone: bool = False) -> None:
             head["grow"] != "0",
             f"[{label}] and takes the width rather than being given the word's ({head['grow']})",
         )
-
     if phone:
         tabs = page.evaluate("() => document.querySelectorAll('[data-phone-tabs] [data-tab]').length")
         say(f"[{label}] the tab bar in place of the foot: {tabs} tabs")
         check(tabs > 0, f"[{label}] a phone's panel ends in its tab bar, not the foot")
         return
-
     foot = page.evaluate(FOOT)
     say(f"[{label}] the foot: {foot}")
     if not foot:
         check(False, f"[{label}] the panel has a foot to measure")
         return
-
     kept = [one["name"] for one in foot["acts"] if one["name"] != "Download the app"]
     check(
         len(kept) == 3 and kept[0] == "Send feedback" and kept[2] == "Settings",
@@ -570,16 +535,13 @@ def panel_ends(page: Page, label: str, phone: bool = False) -> None:
             f"[{label}] and {one['name']!r} sits on the row's centre line"
             f" (off by {one['off']}px)",
         )
-
     sizes = {(one["width"], one["height"]) for one in foot["acts"]}
     check(len(sizes) == 1, f"[{label}] both switches are the same square ({sizes})")
-
     if foot["who"] is not None:
         check(
             abs(foot["who"]) <= SLACK,
             f"[{label}] and the account row is on that line too (off by {foot['who']}px)",
         )
-
 def on_phone(browser: Browser, scheme: str = "light") -> None:
     label = f"phone {scheme}"
     width = 420
@@ -591,14 +553,11 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
         say(f"[{label}] {page.evaluate(MORE_SPACES)}")
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
-
         page.locator("header").first.screenshot(path=str(SHOTS / f"bar-phone-{scheme}.png"))
         say(f"[{label}] wrote bar-phone-{scheme}.png")
-
         page.screenshot(path=str(SHOTS / f"screen-phone-{scheme}.png"))
         say(f"[{label}] wrote screen-phone-{scheme}.png")
         say(f"[{label}] the drawer sits at {page.evaluate(ASIDE_AT)}")
-
         opened_button = page.evaluate(TOGGLE)
         say(f"[{label}] the drawer's own button, open: {opened_button}")
         page.evaluate("() => window.ordenApp.workspace.showPanel(null)")
@@ -606,19 +565,15 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
         shut_button = page.evaluate(TOGGLE)
         say(f"[{label}] the drawer's own button, shut: {shut_button}")
         same_glyph(label, shut_button, opened_button)
-
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(600)
-
         panel_ends(page, label, phone=True)
         page.locator("aside .head").first.screenshot(path=str(SHOTS / f"head-phone-{scheme}.png"))
         page.locator("[data-phone-tabs]").first.screenshot(path=str(SHOTS / f"foot-phone-{scheme}.png"))
         say(f"[{label}] wrote head-phone-{scheme}.png and foot-phone-{scheme}.png")
-
         page.evaluate("() => window.ordenApp.workspace.showPanel(null)")
         page.wait_for_timeout(400)
         say(f"[{label}] holding {page.evaluate(SELECT)!r}")
-
         say(f"[{label}] the keys come up: {page.evaluate(KEYS, 320)}")
         page.wait_for_timeout(400)
         up = page.evaluate(FORMAT_BAR)
@@ -636,7 +591,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
                 if one["as"] == "letter" and one["name"] in inked:
                     one["metrics"], one["off"] = one["off"], inked[one["name"]]
                 say(f"[{label}]   {one}")
-
             letters = [one for one in found.get("marks", []) if one["as"] == "letter"]
             glyphs = [one for one in found.get("marks", []) if one["as"] == "glyph"]
             check(len(letters) >= 5, f"[{label}] the bar's marks were read ({len(letters)})")
@@ -644,7 +598,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
                 any(one["name"] == "Link" for one in glyphs),
                 f"[{label}] Link is a glyph rather than a character that means a tag",
             )
-
             if letters:
                 level = sorted(one["off"] for one in letters)[len(letters) // 2]
                 for one in letters + glyphs:
@@ -653,12 +606,10 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
                         f"[{label}] {one['name']} reads on the row's own line"
                         f" (ink {one['off']}px against {level}px)",
                     )
-
             check(
                 up["left"] <= SLACK and abs(up["right"] - width) <= SLACK,
                 f"[{label}] and spans the screen ({up['left']} to {up['right']} of {width})",
             )
-
         page.evaluate(KEYS, 180)
         page.wait_for_timeout(300)
         lower = page.evaluate(FORMAT_BAR)
@@ -667,7 +618,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
             not lower["none"] and abs(lower["bottom"] - (lower["page"] - 180)) <= SLACK,
             f"[{label}] the bar follows the keys rather than staying where it was put",
         )
-
         say(f"[{label}] the keys go down: {page.evaluate(KEYS, 0)}")
         page.wait_for_timeout(400)
         down = page.evaluate(FORMAT_BAR)
@@ -677,15 +627,12 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
             down["none"],
             f"[{label}] nothing of the bar is left once the keyboard goes ({down})",
         )
-
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(500)
-
         page.evaluate("() => document.querySelector('aside .name')?.click()")
         page.wait_for_timeout(600)
         page.locator(".spaces").first.screenshot(path=str(SHOTS / f"switcher-phone-{scheme}.png"))
         say(f"[{label}] wrote switcher-phone-{scheme}.png")
-
         for one in page.evaluate(BADGES):
             say(f"[{label}]   {one}")
             check(
@@ -693,7 +640,6 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
                 f"[{label}] the mark on {one['row']!r} is centred in its badge"
                 f" (off by {one['box_off']}px)",
             )
-
         shared = page.evaluate(SHARED)
         say(f"[{label}] what says shared: {[one['klass'] for one in shared]}")
         for one in shared:
@@ -703,26 +649,21 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
             )
     finally:
         page.context.close()
-
 def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -> None:
     page = fresh(browser, label, viewport, scheme)
     try:
         say(f"[{label}] {page.evaluate(SEED)}")
         say(f"[{label}] {page.evaluate(MORE_SPACES)}")
         page.wait_for_timeout(400)
-
         page.evaluate("() => window.ordenApp.workspace.showPanel(null)")
         page.wait_for_timeout(400)
-
         bar = page.evaluate(BAR)
         say(f"[{label}] the bar is {bar['height']}px, token {bar['token']}")
         for part in bar["parts"]:
             say(f"[{label}]   {part}")
-
         header = page.locator("header").first
         header.screenshot(path=str(SHOTS / f"bar-{label}.png"))
         say(f"[{label}] wrote bar-{label}.png")
-
         placed = [one for one in bar["parts"] if not one.get("missing")]
         check(
             len(placed) >= 3,
@@ -733,30 +674,24 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
                 abs(one["off"]) <= SLACK,
                 f"[{label}] {one['name']} is on the bar's centre line (off by {one['off']}px)",
             )
-
         shut = page.evaluate(TOGGLE)
         say(f"[{label}] the sidebar button shut: {shut}")
         page.locator(".toggle").first.screenshot(path=str(SHOTS / f"toggle-shut-{label}.png"))
-
         page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
         page.wait_for_timeout(500)
         opened = page.evaluate(TOGGLE)
         say(f"[{label}] the sidebar button open: {opened}")
         page.locator(".toggle").first.screenshot(path=str(SHOTS / f"toggle-open-{label}.png"))
         say(f"[{label}] wrote toggle-shut-{label}.png and toggle-open-{label}.png")
-
         same_glyph(label, shut, opened)
-
         panel_ends(page, label)
         page.locator("aside .head").first.screenshot(path=str(SHOTS / f"head-{label}.png"))
         page.locator("aside .foot").first.screenshot(path=str(SHOTS / f"foot-{label}.png"))
         say(f"[{label}] wrote head-{label}.png and foot-{label}.png")
-
         page.locator("aside .name").first.click()
         page.wait_for_timeout(500)
         page.locator(".spaces").first.screenshot(path=str(SHOTS / f"switcher-{label}.png"))
         say(f"[{label}] wrote switcher-{label}.png")
-
         for one in page.evaluate(BADGES):
             say(f"[{label}]   {one}")
             check(
@@ -764,19 +699,16 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
                 f"[{label}] the mark on {one['row']!r} is centred in its badge"
                 f" (off by {one['box_off']}px)",
             )
-
         shared = page.evaluate(SHARED)
         say(f"[{label}] what says shared: {shared}")
         check(len(shared) >= 2, f"[{label}] the shared spaces say so at all")
         page.evaluate("() => document.querySelector('.catch')?.click()")
         page.wait_for_timeout(400)
-
         say(f"[{label}] somebody else joined {page.evaluate(WITH_SOMEBODY)}")
         page.wait_for_timeout(400)
         rows = page.evaluate(TREE_MARKS)
         for one in rows:
             say(f"[{label}]   {one}")
-
         marked = [one["row"] for one in rows if one["shared"]]
         check(
             len(marked) == 1,
@@ -794,7 +726,6 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
                 bool(one["label"]),
                 f"[{label}] and says it in a word too ({one['label']!r})",
             )
-
         page.evaluate("() => window.ordenApp.settings.show()")
         page.wait_for_timeout(600)
         page.evaluate(
@@ -826,14 +757,11 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         page.wait_for_timeout(300)
     finally:
         page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser, "light", {"width": 1180, "height": 760}, "light")
         drive(browser, "dark", {"width": 1180, "height": 760}, "dark")
         on_phone(browser, "light")
         on_phone(browser, "dark")
-
     return DRIVE.verdict("the bar is one row and every mark is centred")
-
 sys.exit(main())

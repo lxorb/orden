@@ -27,11 +27,9 @@ import type { UsageVia } from '@orden/sync-core'
 import { ran } from '../../usage/src/api'
 
 let askAgain: (() => boolean) | null = null
-
 export function hearAgain(answer: (() => boolean) | null): void {
   askAgain = answer
 }
-
 export type Category =
   | 'file'
   | 'edit'
@@ -47,7 +45,6 @@ export type Category =
   | 'explorer'
   | 'pass'
   | 'fixed'
-
 export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'file', label: () => 'File' },
   { id: 'edit', label: () => 'Edit' },
@@ -63,7 +60,6 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'pass', label: () => 'Pass' },
   { id: 'fixed', label: () => 'Fixed keys' },
 ]
-
 export interface AppContext {
   view?: EditorView | undefined
   palette(mode?: 'commands', again?: boolean): void
@@ -71,7 +67,6 @@ export interface AppContext {
   tapped?: boolean
   held?: boolean
 }
-
 export interface Shortcut {
   id: string
   label: () => string
@@ -88,12 +83,9 @@ export interface Shortcut {
   desktop?: boolean
   shown?: () => boolean
 }
-
 type Extra = Partial<Omit<Shortcut, 'id' | 'label' | 'category' | 'scope' | 'key'>>
 type Label = string | (() => string)
-
 const said = (label: Label) => (typeof label === 'string' ? () => label : label)
-
 function app(
   category: Category,
   id: string,
@@ -104,11 +96,9 @@ function app(
 ): Shortcut {
   return { id, label: said(label), category, scope: 'app', key, run, ...extra }
 }
-
 function panel(category: Category, id: string, label: Label, key: string | null, extra: Extra = {}): Shortcut {
   return { id, label: said(label), category, scope: 'panel', key, contextual: true, ...extra }
 }
-
 function fixed(id: string, label: string, key: string | null, why: string, extra: Extra = {}): Shortcut {
   return {
     id,
@@ -120,7 +110,6 @@ function fixed(id: string, label: string, key: string | null, why: string, extra
     ...extra,
   }
 }
-
 const EDITOR_ENTRIES: Record<string, [Category, string]> = {
   'format.bold': ['format', 'Bold'],
   'format.italic': ['format', 'Italic'],
@@ -132,7 +121,6 @@ const EDITOR_ENTRIES: Record<string, [Category, string]> = {
   'format.image': ['format', 'Image'],
   'format.clear': ['format', 'Clear formatting'],
   'format.comment': ['format', 'Comment'],
-
   'paragraph.body': ['paragraph', 'Paragraph'],
   'paragraph.heading-1': ['paragraph', 'Heading 1'],
   'paragraph.heading-2': ['paragraph', 'Heading 2'],
@@ -155,13 +143,11 @@ const EDITOR_ENTRIES: Record<string, [Category, string]> = {
   'paragraph.callout': ['paragraph', 'Callout'],
   'paragraph.footnote': ['paragraph', 'Footnote'],
   'paragraph.toc': ['paragraph', 'Table of contents'],
-
   'view.fold': ['view', 'Fold'],
   'view.fold-all': ['view', 'Fold everything'],
   'view.fold-more': ['view', 'Fold more'],
   'view.fold-less': ['view', 'Fold less'],
   'view.unfold-all': ['view', 'Unfold everything'],
-
   'edit.indent': ['edit', 'Indent'],
   'edit.outdent': ['edit', 'Outdent'],
   'edit.run-fence': ['edit', 'Run this code block'],
@@ -201,21 +187,18 @@ const EDITOR_ENTRIES: Record<string, [Category, string]> = {
   'edit.move-block-up': ['edit', 'Move the block up'],
   'edit.move-block-down': ['edit', 'Move the block down'],
   'edit.follow-link': ['edit', 'Follow the link'],
-
   'table.below': ['table', 'Into the table below'],
   'table.above': ['table', 'Into the table above'],
   'table.ahead': ['table', 'Forward into the table'],
   'table.behind': ['table', 'Back into the table'],
   'table.delete': ['table', 'Forward into the table instead of deleting'],
   'table.backspace': ['table', 'Back into the table instead of deleting'],
-
   'image.select-behind': ['picture', 'Select the picture behind'],
   'image.select-ahead': ['picture', 'Select the picture ahead'],
   'image.edit': ['picture', 'Edit the picture’s markdown'],
   'image.leave': ['picture', 'Leave the selected picture'],
   'image.step-up': ['picture', 'Step off the picture upwards'],
   'image.step-down': ['picture', 'Step off the picture downwards'],
-
   'marks.heading-down': ['edit', 'Push the heading down a line'],
   'marks.backspace': ['edit', 'Delete the letter behind past hidden marks'],
   'marks.delete': ['edit', 'Delete the letter ahead past hidden marks'],
@@ -224,7 +207,6 @@ const EDITOR_ENTRIES: Record<string, [Category, string]> = {
   'marks.leave-left': ['edit', 'Leave the start of an item to the left'],
   'marks.leave-right': ['edit', 'Leave the start of an item to the right'],
 }
-
 const EDITOR_SPECS: BindingSpec[] = [
   ...ordenBindings,
   ...standardBindings,
@@ -232,10 +214,8 @@ const EDITOR_SPECS: BindingSpec[] = [
   ...imageBindings,
   ...itemStartBindings,
 ]
-
 function fromEditor(spec: BindingSpec): Shortcut {
   const named = EDITOR_ENTRIES[spec.id]
-
   return {
     id: spec.id,
     label: said(named ? named[1] : spec.id),
@@ -249,20 +229,17 @@ function fromEditor(spec: BindingSpec): Shortcut {
     ...(spec.alias === undefined ? {} : { alias: spec.alias }),
   }
 }
-
 async function runExport(id: ExportId) {
   await commandRowsLoaded()
   const command = commandRows('export').find((one) => one.id === `export-${id}`)
   if (command && command.disabled !== true) command.run()
 }
-
 const PANE_WAYS: readonly [Toward, string, string][] = [
   ['left', 'h', 'Pane to the left'],
   ['down', 'j', 'Pane below'],
   ['up', 'k', 'Pane above'],
   ['right', 'l', 'Pane to the right'],
 ]
-
 const APP_ENTRIES: Shortcut[] = [
   app('file', 'app.new', 'New note', 'Mod-Alt-n', () => {
     if (hiddenKinds.offers('note')) workspace.openBlank()
@@ -509,11 +486,8 @@ const APP_ENTRIES: Shortcut[] = [
   app('view', 'app.zoom-out', 'Zoom out', 'Mod--', () => workspace.zoomPage('out') || modes.stepZoom(-1)),
   app('view', 'app.zoom-reset', 'Actual size', 'Mod-0', () => workspace.zoomPage('reset') || modes.resetZoom()),
 ]
-
 const LAST = 8
-
 const noteAt = (index: number) => `Note ${index + 1}`
-
 const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) =>
   app(
     'view',
@@ -524,12 +498,10 @@ const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) =>
     { mac: `Mod-${index + 1}` },
   ),
 )
-
 const ALT_NUMBERED: Shortcut[] = Array.from({ length: 10 }, (_unused, index): Shortcut => {
   const digit = (index + 1) % 10
   const at = digit === 0 ? 'last' : index
   const ninth = at === LAST
-
   return app(
     'view',
     ninth ? 'app.note-ninth' : `app.note-${at === 'last' ? LAST + 1 : digit}.alt`,
@@ -539,13 +511,11 @@ const ALT_NUMBERED: Shortcut[] = Array.from({ length: 10 }, (_unused, index): Sh
     { mac: null, ...(ninth ? {} : { alias: true }) },
   )
 })
-
 export function showTab(at: number | 'last') {
   const tabs = workspace.tabsIn(workspace.panes.focusedId)
   const tab = at === 'last' ? tabs.at(-1) : tabs[at]
   if (tab) workspace.activate(tab.id)
 }
-
 const PANEL_ENTRIES: Shortcut[] = [
   panel('panel', 'tree.select-all', 'Select every file', 'Mod-a'),
   panel('panel', 'tree.deselect', 'Clear the selection', 'Escape'),
@@ -569,7 +539,6 @@ const PANEL_ENTRIES: Shortcut[] = [
   panel('panel', 'list.menu', 'Menu for this row', 'Shift-F10'),
   panel('panel', 'list.menu.alt', 'Menu for this row', 'ContextMenu', { alias: true }),
 ]
-
 const CANVAS_ENTRIES: Shortcut[] = (
   [
     ['canvas.tool.select', 'Select', 'v'],
@@ -612,7 +581,6 @@ const CANVAS_ENTRIES: Shortcut[] = (
     ['canvas.nudge.down', 'Nudge down', 'ArrowDown'],
   ] as const
 ).map(([id, label, key]) => panel('canvas', id, label, key))
-
 const PAGES_ENTRIES: Shortcut[] = (
   [
     ['pages.zoom.in', 'Zoom in', 'Mod-Alt-='],
@@ -622,7 +590,6 @@ const PAGES_ENTRIES: Shortcut[] = (
     ['pages.add', 'Add a page', null],
   ] as const
 ).map(([id, label, key]) => panel('pages', id, label, key))
-
 const MAC_CANVAS: Record<string, string> = {
   'canvas.frame': 'Mod-Alt-1',
   'canvas.front': 'Mod-Alt-]',
@@ -632,7 +599,6 @@ for (const entry of CANVAS_ENTRIES) {
   const mac = MAC_CANVAS[entry.id]
   if (mac) entry.mac = mac
 }
-
 const WEB_ENTRIES: Shortcut[] = (
   [
     ['web.address.alt', 'Address', 'Alt-d', null],
@@ -650,7 +616,6 @@ const WEB_ENTRIES: Shortcut[] = (
     ...(id.endsWith('.alt') ? { alias: true } : {}),
   }),
 )
-
 const AI_ENTRIES: Shortcut[] = (
   [
     ['ai.mode', 'Next mode', 'Shift-Tab'],
@@ -662,31 +627,24 @@ const AI_ENTRIES: Shortcut[] = (
     ['ai.new', 'New chat', 'Mod-n'],
   ] as const
 ).map(([id, label, key]) => panel('view', id, label, key))
-
 const FIELD_ENTRIES: Shortcut[] = [panel('edit', 'field.dictate', 'Dictate', 'Alt-v')]
-
 CANVAS_ENTRIES.push(panel('canvas', 'canvas.delete.alt', 'Delete what is picked', 'Backspace', { alias: true }))
-
 let cycling: typeof import('../../tab-cycle/src/api') | null = null
-
 function cycleTab(direction: number, mayUseOrder = false, held = false) {
   if (cycling) {
     cycling.cycleTab(direction, mayUseOrder, held)
     return
   }
-
   void import('../../tab-cycle/src/api').then((one) => {
     cycling = one
     one.cycleTab(direction, mayUseOrder, held)
   })
 }
-
 function closeAroundActive(which: Around) {
   const id = workspace.activeTabId
   if (which === 'all') void workspace.closeAllIn(workspace.panes.focusedId)
   else if (id) void workspace.closeAround(id, which)
 }
-
 function moveTab(direction: number) {
   const paneId = workspace.panes.focusedId
   const tabs = workspace.tabsIn(paneId)
@@ -694,10 +652,8 @@ function moveTab(direction: number) {
   const tab = tabs[at]
   const slot = at + direction
   if (!tab || slot < 0 || slot >= tabs.length) return
-
   workspace.moveTab(tab.id, paneId, slot)
 }
-
 export const FIXED_ENTRIES: Shortcut[] = [
   fixed('fixed.cut', 'Cut', 'Mod-x', 'The clipboard belongs to the system.'),
   fixed('fixed.copy', 'Copy', 'Mod-c', 'The clipboard belongs to the system.'),
@@ -722,7 +678,6 @@ export const FIXED_ENTRIES: Shortcut[] = [
     mac: 'Mod-q',
   }),
 ]
-
 const EXPLORER_ENTRIES: Shortcut[] = (
   [
     ['explorer.parent', 'Folder above', 'Backspace', 'Mod-ArrowUp'],
@@ -742,18 +697,15 @@ const EXPLORER_ENTRIES: Shortcut[] = (
 ).map(([id, label, key, mac]) =>
   panel('explorer', id, label, key, { mac, ...(id.endsWith('.alt') ? { alias: true } : {}) }),
 )
-
 const PASS_KEYS: readonly (readonly [string, string, string])[] = __EVEN_PLUGIN__
   ? []
   : [
       ['pass.search', 'Search Pass', 'Mod-f'],
       ['pass.new-login', 'New login', 'Mod-n'],
     ]
-
 const PASS_ENTRIES: Shortcut[] = PASS_KEYS.map(([id, label, key]) =>
   panel('pass', id, label, key, { shown: () => passOn() }),
 )
-
 export const SHORTCUTS: Shortcut[] = [
   ...APP_ENTRIES,
   ...NUMBERED,
@@ -769,49 +721,37 @@ export const SHORTCUTS: Shortcut[] = [
   ...FIELD_ENTRIES,
   ...FIXED_ENTRIES,
 ]
-
 export const BY_ID = new Map(SHORTCUTS.map((one) => [one.id, one]))
-
 const EDITOR_BY_ID = new Map(EDITOR_SPECS.map((one) => [one.id, one]))
-
 export function runEntry(id: string, context: AppContext, via?: UsageVia): boolean {
   const spec = EDITOR_BY_ID.get(id)
   if (spec) {
     const view = context.view
     if (!view) return false
-
     if (via) ran(id, via)
     spec.run(view)
     view.focus()
     return true
   }
-
   const entry = BY_ID.get(id)
   if (entry?.scope !== 'app' || !entry.run || entry.shown?.() === false) return false
-
   if (via) ran(id, via)
   entry.run(context)
   return true
 }
-
 export function known(id: string): boolean {
   if (EDITOR_BY_ID.has(id)) return true
-
   const entry = BY_ID.get(id)
   return !!entry && entry.scope === 'app' && !!entry.run
 }
-
 export function offeredHere(entry: Shortcut): boolean {
   return (isDesktop || !entry.desktop) && entry.shown?.() !== false
 }
-
 export function runnable(id: string): boolean {
   if (EDITOR_BY_ID.has(id)) return true
-
   const entry = BY_ID.get(id)
   return !!entry && known(id) && offeredHere(entry)
 }
-
 export const SYSTEM_KEYS: Record<Platform, string[]> = {
   mac: [
     'Mod-q',
@@ -843,9 +783,7 @@ export const SYSTEM_KEYS: Record<Platform, string[]> = {
   win: ['Alt-F4', 'Alt-Tab', 'Meta-l', 'Ctrl-Shift-Escape'],
   linux: ['Alt-F4', 'Alt-Tab'],
 }
-
 export const DICTATION_TAPS: Record<Platform, string[]> = { mac: ['Ctrl Ctrl'], win: [], linux: [] }
-
 export const BROWSER_KEYS = [
   'F12',
   'F5',

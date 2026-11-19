@@ -5,9 +5,7 @@ import type { Filter } from './types'
 export interface TodoistOptions extends DateWordOptions {
   isNote?: (name: string) => boolean
 }
-
 const quote = (text: string) => JSON.stringify(text)
-
 function wildcard(name: string): string | null {
   if (!name.includes('*')) return null
   const pattern = name
@@ -16,12 +14,10 @@ function wildcard(name: string): string | null {
     .join('.*')
   return `/^${pattern}$/i`
 }
-
 function named(value: string, name: string): string {
   const pattern = wildcard(name)
   return pattern ? `${pattern}.matches(${value})` : `${value}.lower() == ${quote(name.toLowerCase())}`
 }
-
 function onDate(field: string, op: '==' | '<' | '>', words: string, options: TodoistOptions, at: number): string {
   const date = dateWords(words, options)
   if (!date) throw new BasesError(`"${words.trim()}" is not a date`, at)
@@ -31,11 +27,9 @@ function onDate(field: string, op: '==' | '<' | '>', words: string, options: Tod
   }
   return `${field} ${op} ${date.expression}`
 }
-
 function term(raw: string, options: TodoistOptions, at: number): string {
   const text = raw.trim()
   const lower = text.toLowerCase()
-
   switch (lower) {
     case 'today':
     case 'heute':
@@ -98,10 +92,8 @@ function term(raw: string, options: TodoistOptions, at: number): string {
       return `task.date >= ${monday} && task.date < ${monday} + "7d"`
     }
   }
-
   const within = /^(?:next |nächsten? )?(\d+) (days?|tagen?|tage)$/.exec(lower)
   if (within) return `task.date >= today() && task.date < today() + "${within[1]}d"`
-
   const keyed = /^([a-zäö ]+?)\s*:\s*(.*)$/i.exec(text)
   if (keyed) {
     const key = (keyed[1] ?? '').toLowerCase().replace(/\s+/g, ' ')
@@ -130,7 +122,6 @@ function term(raw: string, options: TodoistOptions, at: number): string {
     }
     if (key === 'search' || key === 'suche') return `task.text.lower().contains(${quote(value.toLowerCase())})`
   }
-
   if (text.startsWith('##')) {
     const name = text.slice(2).trim()
     const pattern = wildcard(name)
@@ -152,14 +143,11 @@ function term(raw: string, options: TodoistOptions, at: number): string {
     if (name === '*') return 'task.section'
     return `task.section && ${named('task.section', name)}`
   }
-
   const date = dateWords(text, options)
   if (date) return `task.date == ${date.expression}`
   throw new BasesError(`"${text}" is not a filter`, at)
 }
-
 type Token = { kind: 'op'; text: string; at: number } | { kind: 'term'; text: string; at: number }
-
 function tokens(source: string): Token[] {
   const out: Token[] = []
   let term = ''
@@ -188,7 +176,6 @@ function tokens(source: string): Token[] {
   flush()
   return out
 }
-
 function parseList(list: Token[], options: TodoistOptions): Filter {
   let at = 0
   const peek = () => list[at]
@@ -196,7 +183,6 @@ function parseList(list: Token[], options: TodoistOptions): Filter {
     const token = peek()
     return token?.kind === 'op' && token.text === text
   }
-
   const or = (): Filter => {
     const members = [and()]
     while (isOp('|')) {
@@ -233,13 +219,11 @@ function parseList(list: Token[], options: TodoistOptions): Filter {
     }
     throw new BasesError(`Unexpected "${token.text}"`, token.at)
   }
-
   const filter = or()
   const rest = peek()
   if (rest) throw new BasesError(`Unexpected "${rest.text}"`, rest.at)
   return filter
 }
-
 export function fromTodoist(source: string, options: TodoistOptions = {}): Filter[] {
   const lists: Token[][] = [[]]
   let depth = 0

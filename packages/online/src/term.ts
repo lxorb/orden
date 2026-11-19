@@ -1,20 +1,14 @@
 import type { Term } from './types'
 
 export const TERM_EXTENSION = '.term'
-
 const LONGEST_ID = 200
-
 const LONGEST_ICON = 120
-
 const iconField = (value: unknown): string | null =>
   typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ICON ? value : null
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const isId = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID && !/\s/.test(value)
-
 export function termOf(text: string): Term | null {
   let value: unknown
   try {
@@ -23,7 +17,6 @@ export function termOf(text: string): Term | null {
     return null
   }
   if (!isRecord(value)) return null
-
   const { v, machine, session } = value
   if (v !== 1 || !isId(machine) || !isId(session)) return null
   const icon = iconField(value.icon)
@@ -36,7 +29,6 @@ export function termOf(text: string): Term | null {
     ...(iconColor === null ? {} : { iconColor }),
   }
 }
-
 export function termText(term: Term): string {
   const { v, machine, session, icon, iconColor } = term
   return `${JSON.stringify({

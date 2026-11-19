@@ -4,13 +4,11 @@ import { newThread } from '../chat/threads'
 import type { Cited, Source } from './citations'
 
 export const OLD_KEY = 'orden:ask'
-
 function sourceIn(value: unknown): Source | null {
   if (!isRecord(value)) return null
   const { path, name, line } = value
   return isString(path) && isString(name) && typeof line === 'number' ? { path, name, line } : null
 }
-
 export function threadFromAsk(turns: unknown, space: string, provider: string, model: string): Thread | null {
   if (!Array.isArray(turns)) return null
   const thread = newThread(space, provider, model)
@@ -56,7 +54,6 @@ export function threadFromAsk(turns: unknown, space: string, provider: string, m
   thread.updated = at
   return thread
 }
-
 export function oldSpaces(saved: unknown): Record<string, unknown> {
   return isRecord(saved) && isRecord(saved.spaces) ? saved.spaces : {}
 }

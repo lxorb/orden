@@ -6,7 +6,6 @@
   import type { Kit } from './kit'
 
   const { kit, column }: { kit: Kit; column?: string | undefined } = $props()
-
   const EXAMPLE = 'pages > 400'
   const live = $derived(kit.live)
   const base = $derived(live.base)
@@ -14,7 +13,6 @@
   const name = $derived(made ?? (column?.startsWith('formula.') ? column.slice(8) : undefined))
   let typed = $derived(name !== undefined ? (base?.formulas[name] ?? '') : '')
   let caret = $state(0)
-
   const reads = $derived.by(() => {
     if (!typed.trim()) return true
     try {
@@ -24,14 +22,12 @@
       return false
     }
   })
-
   const preview = $derived.by(() => {
     const first = live.answer?.groups.find((group) => group.rows.length)?.rows[0]
     if (!base || !first || !typed.trim() || !reads) return ''
     const trial = setFormula(base, '__preview__', typed)
     return valueText(cellValue(trial, 'formula.__preview__', first, live.context), live.today)
   })
-
   const word = $derived(/[\w.]*$/.exec(typed.slice(0, caret))?.[0] ?? '')
   const offers = $derived.by(() => {
     if (!base || word.length < 1) return []
@@ -42,9 +38,7 @@
     const lower = word.toLowerCase()
     return known.filter((one) => one.toLowerCase().includes(lower) && one !== word).slice(0, 8)
   })
-
   let field = $state<HTMLInputElement>()
-
   function take(offer: string) {
     const before = typed.slice(0, caret - word.length)
     const after = typed.slice(caret)
@@ -55,7 +49,6 @@
       field?.setSelectionRange(caret, caret)
     })
   }
-
   function write() {
     if (!base || !typed.trim() || !reads) return
     const source = typed.trim()
@@ -68,7 +61,6 @@
     const columns = [...live.columns, `formula.${fresh}`]
     kit.change((one, at) => setColumns(setFormula(one, fresh, source), at, columns))
   }
-
   function rename(words: string) {
     const next = words.trim()
     if (!base || name === undefined || !next || next === name) return
@@ -126,23 +118,19 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
   }
-
   .expression.wrong {
     border-color: var(--danger);
   }
-
   .offers {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
   }
-
   .offer {
     padding: 0 var(--space-2);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
   }
-
   .preview {
     margin: 0;
     overflow: hidden;

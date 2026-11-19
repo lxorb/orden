@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 OPEN = """async () => {
   const ws = window.ordenApp.workspace
   window.__opened = []
@@ -14,14 +12,12 @@ OPEN = """async () => {
   ws.showPanel(null)
   return ws.active?.kind
 }"""
-
 READY = """async () => {
   const { sessionOf } = await window.ordenApp.terminals()
   const tab = window.ordenApp.workspace.active
   const session = tab && sessionOf(tab)
   return !!session?.term.element?.getElementsByClassName('xterm-screen')[0]?.getBoundingClientRect().width
 }"""
-
 WRITE = """async (kind) => {
   const { sessionOf } = await window.ordenApp.terminals()
   const term = sessionOf(window.ordenApp.workspace.active).term
@@ -62,7 +58,6 @@ WRITE = """async (kind) => {
   await new Promise((done) => term.write('\\x1b[2J\\x1b[3J\\x1b[H' + data, done))
   return { url, rows, below, cols }
 }"""
-
 UNDER = """async () => {
   const { sessionOf } = await window.ordenApp.terminals()
   const session = sessionOf(window.ordenApp.workspace.active)
@@ -72,7 +67,6 @@ UNDER = """async () => {
     [...row.children].filter((one) => one.style.textDecoration.includes('underline')).map((one) => one.textContent).join(''),
   )
 }"""
-
 CELL = """async ([x, y]) => {
   const { sessionOf } = await window.ordenApp.terminals()
   const session = sessionOf(window.ordenApp.workspace.active)
@@ -82,10 +76,7 @@ CELL = """async ([x, y]) => {
   const height = box.height / session.term.rows
   return [box.left + (x + 0.5) * width, box.top + (y + 0.5) * height]
 }"""
-
 BORDERS = str.maketrans("", "", "│ ")
-
-
 def point(page: Page, x: int, y: int) -> tuple[float, float]:
     away = page.evaluate(CELL, [x, 20])
     page.mouse.move(away[0], away[1])
@@ -94,8 +85,6 @@ def point(page: Page, x: int, y: int) -> tuple[float, float]:
     page.mouse.move(at[0], at[1])
     page.wait_for_timeout(250)
     return at[0], at[1]
-
-
 def opens(page: Page, x: int, y: int) -> list[str]:
     page.evaluate("() => { window.__opened = [] }")
     at = point(page, x, y)
@@ -105,8 +94,6 @@ def opens(page: Page, x: int, y: int) -> list[str]:
     page.keyboard.up("Control")
     page.wait_for_timeout(150)
     return page.evaluate("() => window.__opened")
-
-
 def case(page: Page, kind: str) -> None:
     drawn = page.evaluate(WRITE, kind)
     url, rows, cols = drawn["url"], drawn["rows"], drawn["cols"]
@@ -132,8 +119,6 @@ def case(page: Page, kind: str) -> None:
         if got:
             wrong(f"[{kind}] a Ctrl+click on the sentence under the address opens {got!r}")
     DRIVE.shot(page, f"url-rows-{kind}")
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -143,6 +128,4 @@ def drive(browser: Browser) -> None:
     for kind in ("soft", "hard", "panel", "hyperlink", "plain"):
         case(page, kind)
     page.context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a terminal address over three rows is one whole link"))

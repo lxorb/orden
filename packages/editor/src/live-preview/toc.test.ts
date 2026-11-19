@@ -13,7 +13,6 @@ function state(doc: string) {
     }),
   )
 }
-
 describe('reading the headings of a document', () => {
   test('finds them in order, with their levels', () => {
     const found = headings(state('# One\n\ntext\n\n### Three\n\n## Two\n'))
@@ -23,36 +22,29 @@ describe('reading the headings of a document', () => {
       [2, 'Two'],
     ])
   })
-
   test('strips the marks a heading is written with', () => {
     expect(headings(state('##   Spaced   ##\n'))[0]?.text).toBe('Spaced')
   })
-
   test.each([
     [state('Title\n=====\n\nSub\n---\n\nItem\n- one\n'), []],
     [state('just text\n'), []],
   ])('%j', (input, wanted) => expect(headings(input)).toEqual(wanted))
-
   test('says where each one starts', () => {
     const doc = 'intro\n\n# One\n'
     expect(headings(state(doc))[0]?.from).toBe(doc.indexOf('# One'))
   })
 })
-
 describe('a table of contents', () => {
   test('is the same when nothing about the headings changed', () => {
     const entries = headings(state('# One\n\n## Two\n'))
     expect(new TocWidget(entries).eq(new TocWidget([...entries]))).toBe(true)
   })
-
   test('is different when a heading moved', () => {
     const before = headings(state('# One\n\n## Two\n'))
     const after = headings(state('a new line\n\n# One\n\n## Two\n'))
-
     expect(after.map((one) => one.text)).toEqual(before.map((one) => one.text))
     expect(new TocWidget(before).eq(new TocWidget(after))).toBe(false)
   })
-
   test('is different when a heading was renamed, added or promoted', () => {
     const one = headings(state('# One\n\n## Two\n'))
     expect(new TocWidget(one).eq(new TocWidget(headings(state('# One\n\n## Owt\n'))))).toBe(false)
@@ -60,17 +52,14 @@ describe('a table of contents', () => {
     expect(new TocWidget(one).eq(new TocWidget(headings(state('# One\n'))))).toBe(false)
   })
 })
-
 describe('the words of a heading in the table of contents', () => {
   test('leave out the quote marks of a callout the heading is in', () => {
     const found = headings(state('[toc]\n\n> [!note]\n> ## Inside\n> body\n'))
     expect(found.map((one) => one.text)).toEqual(['Inside'])
   })
-
   test('leave out the marker of a list item the heading is in', () => {
     expect(headings(state('- # Item heading\n')).map((one) => one.text)).toEqual(['Item heading'])
   })
-
   test('leave out the hidden block name', () => {
     expect(headings(state('# Plan ^plan\n')).map((one) => one.text)).toEqual(['Plan'])
   })

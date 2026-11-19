@@ -10,29 +10,24 @@
     chosen: string | null
     onchoose: (label: string | null) => void
   } = $props()
-
   let open = $state(false)
   let typed = $state('')
   let field = $state<HTMLInputElement | null>(null)
   let root = $state<HTMLElement | null>(null)
-
   const shown = $derived.by(() => {
     const needle = typed.trim().toLowerCase()
     return labels.filter((one) => needle === '' || one.toLowerCase().includes(needle))
   })
-
   async function show() {
     open = true
     typed = ''
     await tick()
     field?.focus()
   }
-
   function choose(label: string | null) {
     onchoose(label)
     open = false
   }
-
   function onkeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault()
@@ -44,7 +39,6 @@
       else if (typed.trim() === '') choose(null)
     }
   }
-
   function away(event: FocusEvent) {
     const next = event.relatedTarget
     if (next instanceof Node && root?.contains(next)) return
@@ -107,7 +101,6 @@
     position: relative;
     min-width: 0;
   }
-
   .pick {
     max-width: 100%;
     padding: var(--space-1) var(--space-2);
@@ -121,7 +114,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .list {
     position: absolute;
     inset-inline-start: 0;
@@ -140,7 +132,6 @@
     background: var(--surface);
     box-shadow: var(--shadow-md);
   }
-
   .search {
     margin-bottom: var(--space-1);
     padding: var(--space-1) var(--space-2);
@@ -151,7 +142,6 @@
     font: inherit;
     font-size: var(--text-sm);
   }
-
   .one {
     padding: var(--space-1) var(--space-2);
     border: none;
@@ -162,16 +152,13 @@
     font-size: var(--text-sm);
     text-align: start;
   }
-
   .one:hover,
   .one:focus-visible {
     background: var(--surface-hover);
   }
-
   .one.on {
     background: var(--surface-selected);
   }
-
   .none {
     margin: 0;
     padding: var(--space-1) var(--space-2);

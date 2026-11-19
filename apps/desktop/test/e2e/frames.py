@@ -2,9 +2,7 @@ import json
 import re
 import sys
 import time
-
 from playwright.sync_api import Browser, ConsoleMessage, Error, Frame, Page
-
 import harness
 from harness import Drive
 
@@ -14,9 +12,7 @@ failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 DIST = harness.DIST
-
 PAGE = "https://frames.example.test/plan?a=1&b=2"
-
 NOTE = f"""# Frames
 
 A page somewhere else, framed by hand:
@@ -47,7 +43,6 @@ console.log('the fence ran')
 6 * 7
 ```
 """
-
 SEED = """
 async ([note, name]) => {
   const ws = window.ordenApp.workspace
@@ -58,7 +53,6 @@ async ([note, name]) => {
   return found.name
 }
 """
-
 INSIDE = """
 () => {
   const dial = document.getElementById('dial')
@@ -70,7 +64,6 @@ INSIDE = """
   }
 }
 """
-
 COUNTS = """
 () => {
   const count = (selector) => document.querySelectorAll(selector).length
@@ -83,7 +76,6 @@ COUNTS = """
   }
 }
 """
-
 FRAME = """
 (selector) => {
   const found = document.querySelector(selector + ' iframe')
@@ -100,18 +92,13 @@ FRAME = """
   }
 }
 """
-
 violations: list[str] = []
-
 ENGINES = ("chrome", "webkit")
 engine = ENGINES[0]
-
 def wrong(what: str) -> None:
     DRIVE.wrong(f"[{engine}] {what}")
-
 def shot(page: Page, name: str) -> None:
     DRIVE.shot(page, f"{engine}/{name}", caret="initial")
-
 def policy() -> str:
     html = (DIST / "index.html").read_text(encoding="utf-8")
     found = re.search(
@@ -119,9 +106,7 @@ def policy() -> str:
     )
     if not found:
         raise SystemExit("the built index.html declares no policy to serve")
-
     return re.sub(r"\s+", " ", found.group(1)).strip()
-
 def scroll_to(page: Page, selector: str) -> None:
     page.evaluate(
         """(selector) => {
@@ -130,13 +115,11 @@ def scroll_to(page: Page, selector: str) -> None:
         selector,
     )
     page.wait_for_timeout(400)
-
 def noticed(message: ConsoleMessage) -> None:
     text = message.text
     if "Content Security Policy" in text or "Content-Security-Policy" in text:
         violations.append(f"[{engine}] {text}")
         say(f"violation: {text[:170]}")
-
 def asked_for(page: Page) -> list[str]:
     return page.evaluate(
         """() => performance
@@ -144,7 +127,6 @@ def asked_for(page: Page) -> list[str]:
           .map((one) => one.name)
           .filter((name) => !name.startsWith(location.origin))"""
     )
-
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 900}, color_scheme="light")
     page = context.new_page()
@@ -155,10 +137,8 @@ def fresh(browser: Browser) -> Page:
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
     return page
-
 def drive(browser: Browser) -> None:
     page = fresh(browser)
-
     try:
         wait_for(page, "document.querySelectorAll('.embed-web').length >= 3", "the cards", 15)
     except SystemExit:
@@ -176,11 +156,9 @@ def drive(browser: Browser) -> None:
         wrong(f"the editor loaded {counts['frames']} frames before anybody asked")
     if counts["tags"]:
         wrong("the tag itself reached the page")
-
     outside = asked_for(page)
     if outside:
         wrong(f"opening the note fetched from outside: {outside[:4]}")
-
     page.evaluate(
         """() => {
           const at = window.orden.state.doc.toString().indexOf("console.log('the fence ran')")
@@ -190,7 +168,6 @@ def drive(browser: Browser) -> None:
     )
     page.wait_for_timeout(300)
     page.keyboard.press("Control+Enter")
-
     lines: list[str] = []
     seen = False
     until = time.monotonic() + 30
@@ -205,7 +182,6 @@ def drive(browser: Browser) -> None:
         if len(lines) >= 2:
             break
         page.wait_for_timeout(200)
-
     say(f"[fence] {json.dumps(lines)}")
     if not seen:
         wrong("no runner frame was seen while the fence ran, so its going away proves nothing")
@@ -218,7 +194,6 @@ def drive(browser: Browser) -> None:
         wrong("the js fence printed nothing: the runner cannot run under this policy")
     if not any("42" in (line or "") for line in lines):
         wrong("the js fence gave back no value")
-
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     try:
         wait_for(page, "document.querySelectorAll('.embed-web').length >= 3", "the cards", 15)
@@ -235,7 +210,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the reading view loaded {read['frames']} frames before anybody asked")
     if read["tags"]:
         wrong("the tag itself reached the reading view")
-
     scroll_to(page, ".embed-page")
     page.click(".embed-page")
     page.wait_for_timeout(900)
@@ -253,7 +227,6 @@ def drive(browser: Browser) -> None:
             wrong(f"the frame is titled {framed['title']!r}")
         if abs(framed["height"] - 240) > 4:
             wrong(f"the frame is not the room the tag asked for: {framed['height']}")
-
     scroll_to(page, ".embed-html")
     page.click(".embed-html")
     ran_by_then(page, ".embed-html")
@@ -271,16 +244,13 @@ def drive(browser: Browser) -> None:
             wrong(f"the block asked for {ran['asked']!r}, so its script did not run")
         if ran["sandbox"] != "allow-scripts":
             wrong(f"the block's frame got the sandbox {ran['sandbox']!r}")
-
     inside = block_frame(page)
     said = inside.evaluate(INSIDE) if inside else None
     say(f"[inside] {json.dumps(said)}")
     expected = {"said": "it ran", "script": "SCRIPT", "module": "ran", "kept": "a template, never run"}
     if said != expected:
         wrong(f"the block's scripts did not run the way a page runs them: {said}")
-
     page.context.close()
-
 def ran_by_then(page: Page, card: str) -> None:
     until = time.monotonic() + 20
     while time.monotonic() < until:
@@ -292,7 +262,6 @@ def ran_by_then(page: Page, card: str) -> None:
             break
         page.wait_for_timeout(200)
     page.wait_for_timeout(300)
-
 def block_frame(page: Page) -> Frame | None:
     for frame in page.frames:
         if frame is page.main_frame:
@@ -302,17 +271,13 @@ def block_frame(page: Page) -> Frame | None:
                 return frame
         except Error:
             continue
-
     return None
-
 def main() -> int:
     global engine, ORIGIN
-
     asked = sys.argv[sys.argv.index("--engine") + 1] if "--engine" in sys.argv else None
     engines = [one for one in ENGINES if asked in (None, one)]
     if not engines:
         raise SystemExit(f"no engine called {asked}; the drive knows {', '.join(ENGINES)}")
-
     with DRIVE.session(playwright=True) as play:
         said = policy()
         say(f"the policy is {said[:90]}…")
@@ -326,23 +291,19 @@ def main() -> int:
                 drive(browser)
             finally:
                 browser.close()
-
     if violations:
         say(f"{len(violations)} complaint(s) about the policy")
         for one in violations:
             failures.append(f"policy violation: {one[:170]}")
-
     if failures:
         print("\nFAILED", flush=True)
         for one in failures:
             print(f"  - {one}", flush=True)
         return 1
-
     print(
         "\na tag is a card, a block runs in a sandbox, a fence still"
         f" runs, and the policy complained about nothing in {' or '.join(engines)}",
         flush=True,
     )
     return 0
-
 raise SystemExit(main())

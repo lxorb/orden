@@ -17,7 +17,6 @@ function pressed(doc: string, at: number): string {
   highlightSelection({ state, dispatch: (one: Transaction) => (state = one.state) })
   return state.doc.toString()
 }
-
 describe('highlight with the caret inside a highlighted word', () => {
   test('takes the highlight off, as bold does, rather than putting empty marks inside it', () => {
     const plain = HIGHLIGHT_COLOURS.find((colour) => colour.emoji === null)

@@ -19,7 +19,6 @@
   import type { ExplorerView } from './view.svelte'
 
   const { view }: { view: ExplorerView } = $props()
-
   let scroller = $state<HTMLElement>()
   let scrollTop = $state(0)
   let height = $state(0)
@@ -44,9 +43,7 @@
     if (cursorAt >= 0 && (cursorAt < first || cursorAt >= last)) at.push(cursorAt)
     return at.sort((one, other) => one - other)
   })
-
   const thumbs = new Thumbs()
-
   $effect(() => {
     if (!grid) {
       untrack(() => thumbs.clear())
@@ -61,23 +58,18 @@
     const folder = view.listing?.path ?? null
     untrack(() => thumbs.want(folder, wanted))
   })
-
   $effect(() => () => {
     thumbs.clear()
     clearTimeout(opening)
   })
-
   const entryAt = $derived(cursorAt >= 0 ? cursorAt : 0)
-
   export function focus() {
     const row = scroller?.querySelector<HTMLElement>('[data-entry]')
     ;(row ?? scroller)?.focus({ preventScroll: true })
   }
-
   function measure(node: HTMLElement) {
     if (!node.classList.contains('tile') && node.offsetHeight > 0) rowHeight = node.offsetHeight
   }
-
   function reach(index: number) {
     const box = scroller
     if (!box) return
@@ -88,29 +80,24 @@
       box.querySelector<HTMLElement>(`[data-index="${index}"]`)?.focus({ preventScroll: true })
     })
   }
-
   function landOn(index: number, how: How) {
     const name = view.names[index]
     if (name === undefined) return
     view.pick(name, how)
     reach(index)
   }
-
   function open(entry: Entry) {
     if (entry.folder) void view.go(view.pathOf(entry.name))
     else void openFile(view.pathOf(entry.name))
   }
-
   function page(): number {
     return Math.max(1, Math.floor((scroller?.clientHeight ?? lineHeight) / lineHeight) - 1)
   }
-
   function onkey(event: KeyboardEvent) {
     if (event.defaultPrevented) return
     const pressed = (id: string) => shortcuts.pressed(id, event)
     const count = rows.length
     const at = cursorAt >= 0 ? cursorAt : null
-
     if (pressed('tree.select-all')) {
       event.preventDefault()
       view.pickAll()
@@ -132,7 +119,6 @@
       view.pick(view.picked.cursor, 'toggle')
       return
     }
-
     const extend = pressed('tree.extend-down') ? 'ArrowDown' : pressed('tree.extend-up') ? 'ArrowUp' : null
     const plain = pressed('tree.down') ? 'ArrowDown' : pressed('tree.up') ? 'ArrowUp' : null
     const key = extend ?? plain ?? (event.altKey ? null : event.key)
@@ -157,7 +143,6 @@
       landOn(to, how)
       return
     }
-
     if (event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey && !event.altKey) {
       const spelt = spelled(spelling, event.key, event.timeStamp, view.names)
       spelling = { typed: spelt.typed, typedAt: spelt.typedAt }
@@ -167,17 +152,14 @@
       }
     }
   }
-
   function press(event: MouseEvent, entry: Entry) {
     const how: How = event.shiftKey ? 'range' : event.ctrlKey || event.metaKey ? 'toggle' : 'one'
     view.pick(entry.name, how)
   }
-
   function pressEmpty(event: MouseEvent) {
     if (banded) banded = false
     else if (event.target === event.currentTarget || event.target === room) view.pickNone()
   }
-
   let room = $state<HTMLElement>()
   let band = $state<{
     from: number
@@ -187,7 +169,6 @@
     kept: string[]
   } | null>(null)
   let banded = $state(false)
-
   function bandStart(event: PointerEvent) {
     if (event.button !== 0 || (event.target !== scroller && event.target !== room) || !room) return
     const box = room.getBoundingClientRect()
@@ -197,7 +178,6 @@
     band = { from: y, to: y, fromX: x, toX: x, kept }
     ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
   }
-
   function bandMove(event: PointerEvent) {
     if (!band || !room) return
     const box = room.getBoundingClientRect()
@@ -223,22 +203,18 @@
     }
     view.pickNames([...band.kept, ...names])
   }
-
   function bandEnd() {
     band = null
   }
-
   function rowMenuAt(event: MouseEvent, entry: Entry) {
     event.preventDefault()
     menu.show(event, rowMenu(view, entry))
   }
-
   function roomMenuAt(event: MouseEvent) {
     if (event.target !== scroller && event.target !== room) return
     event.preventDefault()
     menu.show(event, roomMenu(view))
   }
-
   export function menuHere() {
     const entry = rows[cursorAt]
     const row = scroller?.querySelector<HTMLElement>(`[data-index="${cursorAt}"]`)
@@ -246,7 +222,6 @@
     const box = row.getBoundingClientRect()
     menu.show(new MouseEvent('contextmenu', { clientX: box.left + 24, clientY: box.bottom }), rowMenu(view, entry))
   }
-
   function naming(field: HTMLInputElement) {
     void tick().then(() => {
       field.focus()
@@ -254,20 +229,16 @@
       field.setSelectionRange(0, dot > 0 ? dot : field.value.length)
     })
   }
-
   let taking = $state<string | null>(null)
   let opening: ReturnType<typeof setTimeout> | undefined
-
   function dragFrom(event: DragEvent, entry: Entry) {
     if (!view.picked.names.has(entry.name)) view.pick(entry.name, 'one')
     startDrag(event, view.chosen)
   }
-
   function carriesItself(entry: Entry): boolean {
     const path = view.pathOf(entry.name)
     return carried().some((one) => samePath(one, path))
   }
-
   function overRow(event: DragEvent, entry: Entry) {
     if (!entry.folder || carriesItself(entry)) return
     if (!over(event)) return
@@ -279,13 +250,11 @@
       if (taking === entry.name) void view.go(view.pathOf(entry.name))
     }, 800)
   }
-
   function leaveRow(entry: Entry) {
     if (taking !== entry.name) return
     taking = null
     clearTimeout(opening)
   }
-
   function dropOnRow(event: DragEvent, entry: Entry) {
     if (!entry.folder || carriesItself(entry)) return
     event.stopPropagation()
@@ -293,14 +262,11 @@
     clearTimeout(opening)
     dropInto(view, event, view.pathOf(entry.name))
   }
-
   function dropOnRoom(event: DragEvent) {
     const folder = view.listing?.path
     if (folder) dropInto(view, event, folder)
   }
-
   let committing = false
-
   async function commit(entry: Entry, name: string) {
     if (committing) return
     committing = true
@@ -312,7 +278,6 @@
       focus()
     }
   }
-
   function nameKey(event: KeyboardEvent, entry: Entry) {
     const field = event.currentTarget as HTMLInputElement
     if (event.key === 'Enter') {
@@ -325,13 +290,11 @@
     }
     event.stopPropagation()
   }
-
   function kindOf(entry: Entry): string {
     if (entry.folder) return 'Folder'
     const ending = endingOf(entry.name)
     return ending ? ending.toUpperCase() : 'File'
   }
-
   const columnsShown = $derived<{ key: SortKey; at: string; label: string }[]>([
     { key: 'name', at: 'name', label: 'Name' },
     { key: 'modified', at: 'modified', label: 'Modified' },
@@ -467,46 +430,38 @@
 <style>
   .list {
     --columns: minmax(0, 1fr) 9.5rem 5.5rem 5.5rem;
-
     display: flex;
     flex: 1;
     flex-direction: column;
     min-width: 0;
   }
-
   @container (max-width: 34rem) {
     .list {
       --columns: minmax(0, 1fr) 8.5rem 5rem;
     }
-
     .kind {
       display: none;
     }
   }
-
   @container (max-width: 22rem) {
     .list {
       --columns: minmax(0, 1fr) 5rem;
     }
-
     .modified {
       display: none;
     }
   }
-
   .head,
   .entry {
     display: grid;
     grid-template-columns: var(--columns);
     align-items: center;
   }
-
   .head {
     flex: none;
     padding: 0 var(--space-2);
     border-bottom: 1px solid var(--line);
   }
-
   .column {
     display: flex;
     gap: var(--space-1);
@@ -520,17 +475,14 @@
     font-size: var(--text-xs);
     text-align: start;
   }
-
   @media (hover: hover) {
     .column:hover {
       color: var(--text-strong);
     }
   }
-
   .column.size {
     justify-content: flex-end;
   }
-
   .rows {
     position: relative;
     flex: 1;
@@ -538,29 +490,23 @@
     padding: 0 var(--space-2);
     overflow-y: auto;
   }
-
   .room {
     position: relative;
   }
-
   .entry {
     position: absolute;
     inset-inline: 0;
   }
-
   .list.narrow {
     --columns: minmax(0, 1fr) 5rem;
   }
-
   .list.narrow .modified,
   .list.narrow .kind {
     display: none;
   }
-
   .list.searching {
     --columns: minmax(0, 1fr) 9.5rem 5.5rem minmax(0, 0.8fr);
   }
-
   .where {
     display: none;
     flex: none;
@@ -571,41 +517,33 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .list.searching.narrow {
     --columns: minmax(0, 1fr) 5rem;
   }
-
   .list.searching.narrow .where,
   .tile .where {
     display: block;
   }
-
   .list.searching .tile .name {
     flex-direction: column;
     gap: 0;
   }
-
   .tile .where {
     max-width: 100%;
   }
-
   @container (max-width: 34rem) {
     .list.searching {
       --columns: minmax(0, 1fr) 8.5rem 5rem;
     }
-
     .list.searching .where {
       display: block;
     }
   }
-
   @container (max-width: 22rem) {
     .list.searching {
       --columns: minmax(0, 1fr) 5rem;
     }
   }
-
   .entry.tile {
     display: flex;
     flex-direction: column;
@@ -615,50 +553,42 @@
     padding: var(--space-1);
     inset-inline-end: auto;
   }
-
   .face {
     display: grid;
     place-items: center;
     width: 64px;
     height: 64px;
   }
-
   .face img {
     max-width: 64px;
     max-height: 64px;
     border-radius: var(--radius-sm);
     object-fit: contain;
   }
-
   .face :global(.mark) {
     width: 40px;
     height: 40px;
   }
-
   .tile .name {
     justify-content: center;
     width: 100%;
     text-align: center;
   }
-
   .name {
     display: flex;
     gap: var(--row-gap);
     align-items: center;
     min-width: 0;
   }
-
   .size {
     text-align: end;
   }
-
   .rename {
     flex: 1;
     min-width: 0;
     min-height: 0;
     height: calc(var(--row-height) - var(--space-1));
   }
-
   .band {
     position: absolute;
     inset-inline: 0;
@@ -668,14 +598,12 @@
     background: var(--accent-soft);
     pointer-events: none;
   }
-
   .said {
     margin: var(--space-6) var(--space-4);
     color: var(--muted);
     font-size: var(--text-sm);
     text-align: center;
   }
-
   [dir='auto'] {
     text-align: -webkit-match-parent;
     text-align: match-parent;

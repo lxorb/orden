@@ -8,13 +8,10 @@ pub enum Store {
     Edge,
     Firefox,
 }
-
 const ID_LENGTH: usize = 32;
-
 pub fn is_id(word: &str) -> bool {
     word.len() == ID_LENGTH && word.bytes().all(|byte| (b'a'..=b'p').contains(&byte))
 }
-
 pub fn id_of(bytes: &[u8]) -> String {
     bytes
         .iter()
@@ -22,7 +19,6 @@ pub fn id_of(bytes: &[u8]) -> String {
         .map(|nibble| char::from(b'a' + nibble))
         .collect()
 }
-
 pub fn is_slug(word: &str) -> bool {
     !word.is_empty()
         && word.len() <= 200
@@ -34,7 +30,6 @@ pub fn is_slug(word: &str) -> bool {
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || b"-_.@{}%~".contains(&byte))
 }
-
 pub fn named(said: &str) -> Option<(Store, String)> {
     let said = said.trim();
     if is_id(said) {
@@ -43,7 +38,6 @@ pub fn named(said: &str) -> Option<(Store, String)> {
     if !said.contains(['/', ':']) && is_slug(said) && !said.contains('%') {
         return Some((Store::Firefox, said.to_owned()));
     }
-
     let url = Url::parse(said).ok()?;
     if url.scheme() != "https" && url.scheme() != "http" {
         return None;
@@ -59,7 +53,6 @@ pub fn named(said: &str) -> Option<(Store, String)> {
     let id = parts[detail + 1..].iter().rev().find(|one| is_id(one))?;
     Some((store, (*id).to_owned()))
 }
-
 fn store_of(url: &Url) -> Option<Store> {
     let host = url.host_str()?.to_ascii_lowercase();
     let first = url.path_segments()?.next().unwrap_or_default();
@@ -71,7 +64,6 @@ fn store_of(url: &Url) -> Option<Store> {
         _ => None,
     }
 }
-
 pub fn page_of(store: Store, id: &str) -> String {
     match store {
         Store::Chrome => format!("https://chromewebstore.google.com/detail/{id}"),
@@ -79,13 +71,11 @@ pub fn page_of(store: Store, id: &str) -> String {
         Store::Firefox => format!("https://addons.mozilla.org/firefox/addon/{id}/"),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{is_id, is_slug, named, page_of, Store};
 
     const UBLOCK: &str = "ddkjiahejlhfcafbddmgiahcphecmpfh";
-
     #[test]
     fn every_store_page_shape_names_its_extension() {
         for (link, store) in [
@@ -116,7 +106,6 @@ mod tests {
             assert_eq!(named(&link), Some((store, UBLOCK.to_owned())), "{link}");
         }
     }
-
     #[test]
     fn every_amo_page_shape_names_its_add_on() {
         for link in [
@@ -157,7 +146,6 @@ mod tests {
             Some(Store::Firefox)
         );
     }
-
     #[test]
     fn nothing_else_is_an_extension() {
         for link in [
@@ -171,14 +159,12 @@ mod tests {
             assert_eq!(named(link), None, "{link}");
         }
     }
-
     #[test]
     fn an_id_is_thirty_two_letters_a_to_p() {
         assert!(is_id(UBLOCK));
         assert!(!is_id(&UBLOCK.to_uppercase()));
         assert!(!is_id("../../../../../../../../../../../"));
     }
-
     #[test]
     fn the_store_page_round_trips() {
         for store in [Store::Chrome, Store::Edge, Store::Firefox] {

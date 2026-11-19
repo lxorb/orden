@@ -17,11 +17,9 @@
   const today = $derived(midnightOf(now))
   const tomorrow = $derived(daysAfter(today, 1))
   const minutes = watchedMinutes(() => [today, tomorrow])
-
   $effect(() => {
     void time.exchange()
   })
-
   const own = $derived(counted(time.spans, time.rules))
   const shown = $derived(
     hoursShown(
@@ -41,7 +39,6 @@
   const recent = $derived(time.latest().slice(0, 5))
   const empty = $derived(!time.activities.length && !time.spans.some(isOwn))
   const starters = $derived(['Work', 'Study', 'Reading', 'Break'])
-
   const inFront = $derived.by(() => {
     const fresh = near(time.spans, now - 2 * MINUTE, Infinity).filter(
       (one) => !isOwn(one) && one.end !== null && now - one.end < 2 * MINUTE,
@@ -49,9 +46,7 @@
     const of = (lane: string) => [...fresh].reverse().find((one) => one.source === lane)?.label ?? null
     return [of('app'), of('site') ?? of('tab')].filter((one) => one !== null)
   })
-
   const todayOf = (activity: string) => totals.find((one) => one.activity === activity)?.ms ?? 0
-
   function opened(event: MouseEvent) {
     const target = event.target as Element | null
     if (target?.closest('button, input, a, [role="option"]')) return
@@ -114,20 +109,17 @@
     gap: var(--space-2);
     padding-top: var(--space-1);
   }
-
   ul {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   .dot {
     flex: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
   }
-
   .front {
     display: flex;
     align-items: center;
@@ -139,13 +131,11 @@
     font-size: var(--text-xs);
     white-space: nowrap;
   }
-
   .front .name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .live {
     flex: none;
     width: 6px;
@@ -153,21 +143,18 @@
     border-radius: 50%;
     background: var(--success);
   }
-
   .hello {
     margin: var(--space-2) var(--space-2) 0;
     color: var(--muted-strong);
     font-size: var(--text-sm);
     line-height: 1.45;
   }
-
   .starters {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
     padding: 0 var(--space-2);
   }
-
   .play {
     flex: none;
     width: 10px;
@@ -175,17 +162,14 @@
     fill: currentColor;
     opacity: 0;
   }
-
   li:hover .play,
   li:focus-within .play,
   li.on .play {
     opacity: 0.7;
   }
-
   .today {
     padding: 0 var(--space-2);
   }
-
   .open {
     align-self: stretch;
     margin-top: var(--space-1);

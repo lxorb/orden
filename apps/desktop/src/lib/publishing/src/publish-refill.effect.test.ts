@@ -13,7 +13,6 @@ interface World {
   blobs: Record<string, string>
   refusePublish: string | null
 }
-
 const world = vi.hoisted((): World => ({
   mirrors: {},
   asked: [],
@@ -26,16 +25,13 @@ const world = vi.hoisted((): World => ({
   blobs: {},
   refusePublish: null,
 }))
-
 vi.mock('../../accounts/src/client', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../accounts/src/client')>()
-
   const answer = <T>(what: string, value: T): Promise<T> => {
     world.asked.push(what)
     if (world.refuse) return Promise.reject(new original.ApiError(403, world.refuse))
     return Promise.resolve(value)
   }
-
   return {
     ...original,
     api: {
@@ -80,13 +76,11 @@ vi.mock('../../workspace/src/api', () => ({
     fileOps: { follow: () => () => undefined },
   },
 }))
-
 import { flushSync, mount, unmount } from 'svelte'
 import { account } from '../../accounts/src/account.svelte'
 import { publish } from './publishing.svelte'
 import PublishSheet from './PublishSheet.svelte'
 import type { RemoteSpace } from '../../accounts/src/routes'
-
 const nothing = () => undefined
 vi.stubGlobal(
   'ResizeObserver',
@@ -107,7 +101,6 @@ Element.prototype.animate = () =>
     playState: 'finished',
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
-
 const remote = (): RemoteSpace =>
   ({
     id: 'space-1',
@@ -115,7 +108,6 @@ const remote = (): RemoteSpace =>
     role: 'owner',
     blog: { enabled: false, subdomain: null, domain: null, title: null, note: null, dns: [] },
   }) as unknown as RemoteSpace
-
 function open() {
   world.mirrors = { Notes: 'space-1' }
   account.token = 'session'
@@ -133,19 +125,16 @@ function open() {
   flushSync()
   return shown
 }
-
 const typed = () => ({
   confirmed: publish.confirmed,
   subdomain: publish.subdomain,
   description: publish.description,
   otherwise: publish.rules.otherwise,
 })
-
 afterEach(() => {
   publish.close()
   flushSync()
 })
-
 test('a space listing while the sheet is open keeps what was typed', () => {
   const shown = open()
   account.spaces = [remote()]
@@ -159,7 +148,6 @@ test('a space listing while the sheet is open keeps what was typed', () => {
     otherwise: 'none',
   })
 })
-
 function listed(blog: Record<string, unknown>, site: Record<string, unknown> | null = null) {
   const space = remote()
   space.blog = {
@@ -180,19 +168,16 @@ function listed(blog: Record<string, unknown>, site: Record<string, unknown> | n
   } as never
   return space
 }
-
 function serve(space: RemoteSpace) {
   vi.spyOn(account, 'loadSpaces').mockImplementation(() => {
     account.spaces = [space]
     return Promise.resolve()
   })
 }
-
 afterEach(() => {
   vi.restoreAllMocks()
   world.refusePublish = null
 })
-
 test('a change from elsewhere reaches the fields nobody touched and leaves the typed ones', () => {
   const shown = open()
   account.spaces = [
@@ -209,7 +194,6 @@ test('a change from elsewhere reaches the fields nobody touched and leaves the t
     counter: 'https://count.example',
   })
 })
-
 test('taking the password off keeps everything else that was typed', async () => {
   account.spaces = [listed({}, { password: true })]
   const shown = open()
@@ -226,7 +210,6 @@ test('taking the password off keeps everything else that was typed', async () =>
     hasPassword: false,
   })
 })
-
 test('a site saved under an address that was refused keeps the address and the tick', async () => {
   const shown = open()
   world.refusePublish = 'taken'
@@ -243,7 +226,6 @@ test('a site saved under an address that was refused keeps the address and the t
     otherwise: 'none',
   })
 })
-
 test('after a publish the form is what the account holds, and follows it from there', async () => {
   const shown = open()
   const site = { description: 'About me', rules: { include: [], exclude: [], otherwise: 'none' } }
@@ -261,7 +243,6 @@ test('after a publish the form is what the account holds, and follows it from th
     otherwise: 'none',
   })
 })
-
 test('the sheet opened again on the same space starts from what the account holds', () => {
   const shown = open()
   publish.close()
@@ -272,7 +253,6 @@ test('the sheet opened again on the same space starts from what the account hold
   void unmount(shown)
   expect(again).toEqual({ confirmed: false, subdomain: '', description: '', otherwise: 'all' })
 })
-
 test('the sheet asked for again while it is open starts from what the account holds', () => {
   const shown = open()
   publish.show({ id: 'Notes', name: 'Notes', root: 'Notes' })

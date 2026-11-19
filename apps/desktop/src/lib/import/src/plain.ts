@@ -9,7 +9,6 @@ import type { Source } from './sources'
 const HTML = /\.(html?|xhtml)$/i
 const TEXT = /\.txt$/i
 const PLAIN_TEXT: ReadonlySet<FormatId> = new Set(['apple-notes'])
-
 const MARKDOWN_SAYS = [
   /^#{1,6}[ \t]+\S/m,
   /^(`{3,}|~{3,})/m,
@@ -22,15 +21,12 @@ const MARKDOWN_SAYS = [
   /(^|[\s("'])~~\S(?:[^~\n]*\S)?~~(?=[\s.,;:!?)"'\]-]|$)/m,
   /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[[ xX]\](?=[ \t]|$)/m,
 ]
-
 function textWords(text: string, format: FormatId | undefined): string {
   const plain = format !== undefined && PLAIN_TEXT.has(format)
   if (!plain && MARKDOWN_SAYS.some((pattern) => pattern.test(text))) return text
   return plainWords(text)
 }
-
 const BUNDLE_TEXT = /\.textbundle\/text\.(md|markdown|txt)$/i
-
 export interface PlainOptions {
   format?: FormatId
   skip?: (path: string) => boolean
@@ -38,36 +34,28 @@ export interface PlainOptions {
   meta?: (source: Source) => Meta | undefined
   asTheyAre?: boolean
 }
-
 export async function readPlain(sources: readonly Source[], options: PlainOptions = {}): Promise<ImportPlan> {
   const names = new Names()
   let html = 0
-
   const note = (path: string) => (options.asTheyAre ? /\.(md|markdown)$/i.test(path) : isNoteFile(path))
-
   const target = (source: Source): string | null => {
     if (isJunk(source.path) || options.skip?.(source.path)) return null
-
     const path = options.asTheyAre
       ? (placedPath(source.path, undefined, keptName)?.trimStart() ?? null)
       : placedPath(source.path, withoutNotionId)
     if (path === null) return null
-
     if (HTML.test(path) && !options.asTheyAre) return path.replace(HTML, '.md')
     return note(path) ? path.replace(/\.txt$/i, '.md') : path
   }
-
   for (const source of sources) {
     if (target(source) === source.path) names.keep(source.path)
   }
-
   const plan = await folderPlan(sources, {
     format: options.format ?? 'markdown',
     place: (source) => {
       const path = target(source)
       if (path === null) return { to: null }
       const to = names.free(path, path === source.path)
-
       if (HTML.test(source.path) && !options.asTheyAre) {
         html += 1
         return {
@@ -83,9 +71,7 @@ export async function readPlain(sources: readonly Source[], options: PlainOption
           }),
         }
       }
-
       if (!note(path)) return { to }
-
       return {
         to,
         read: (text, at) => {
@@ -101,14 +87,11 @@ export async function readPlain(sources: readonly Source[], options: PlainOption
       }
     },
   })
-
   if (html) {
     plan.lost.push(`${html} pages came as HTML, so their words are kept and their look is not`)
   }
-
   return plan
 }
-
 function placedPath(
   path: string,
   each?: (part: string) => string,
@@ -118,13 +101,11 @@ function placedPath(
     const bundle = path.replace(/\/text\.(md|markdown|txt)$/i, '')
     return `${safeParts(bundle.replace(/\.textbundle$/i, ''), each, named)}.md`
   }
-
   const inside = /\.textbundle\/(.*)$/i.exec(path)
   if (inside) {
     const rest = inside[1] ?? ''
     if (/^info\.json$/i.test(rest)) return null
     return safeParts(rest, each, named)
   }
-
   return safeParts(path, each, named)
 }

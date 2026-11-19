@@ -10,7 +10,6 @@ function painted(said: string): Rgb | null {
   probe.remove()
   return resolved
 }
-
 function askable(): boolean {
   return (
     typeof document !== 'undefined' &&
@@ -18,7 +17,6 @@ function askable(): boolean {
     typeof getComputedStyle === 'function'
   )
 }
-
 export function schemeTokens(scheme: Scheme, names: string[]): Record<string, Rgb | null> {
   if (!askable()) return Object.fromEntries(names.map((name) => [name, null]))
   const probe = document.createElement('span')
@@ -35,5 +33,4 @@ export function schemeTokens(scheme: Scheme, names: string[]): Record<string, Rg
   probe.remove()
   return found
 }
-
 export const PAPER: Record<Scheme, Rgb> = { dark: [14, 16, 19], light: [251, 252, 253] }

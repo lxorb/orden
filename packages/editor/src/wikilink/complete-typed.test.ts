@@ -14,7 +14,6 @@ interface Asked {
   reads: string[]
   searches: string[]
 }
-
 function note(path: string, headings: string[] = [], blocks: string[] = []): NoteRef {
   return {
     path,
@@ -24,7 +23,6 @@ function note(path: string, headings: string[] = [], blocks: string[] = []): Not
     aliases: [],
   }
 }
-
 function space(
   notes: NoteRef[],
   options: { path?: string | null; bodies?: Record<string, string>; found?: SpaceBlock[] } = {},
@@ -34,7 +32,6 @@ function space(
     searches: [],
     index: { notes, files: [], path: null, read: () => Promise.resolve(null) },
   }
-
   asked.index = {
     notes,
     files: [],
@@ -48,10 +45,8 @@ function space(
       return Promise.resolve(options.found ?? [])
     },
   }
-
   return asked
 }
-
 function state(doc: string, index: NoteIndex, at = doc.length, write?: (target: LinkWrite) => string): EditorState {
   return parsed(
     EditorState.create({
@@ -66,9 +61,7 @@ function state(doc: string, index: NoteIndex, at = doc.length, write?: (target: 
     }),
   )
 }
-
 const SPACE = [note('Plan.md', ['Today', 'The plan for Monday'], ['a1b2c3']), note('ideas/Spark.md', ['Sparks'])]
-
 describe('a block named while its link is picked', () => {
   test('lands the link where the typing has gone, after the name went into this note', async () => {
     const doc = 'Alpha para\n\nSee [[Plan#^alp'
@@ -76,7 +69,6 @@ describe('a block named while its link is picked', () => {
     const found = await wikilinkCompletions(new CompletionContext(state(doc, asked.index), doc.length, false))
     const row = found?.options.find((one) => one.label === 'Alpha para')
     if (!found || !row || typeof row.apply !== 'function') throw new Error('no row')
-
     let built: EditorState
     const view = {
       get state() {
@@ -100,15 +92,12 @@ describe('a block named while its link is picked', () => {
         ],
       }),
     )
-
     row.apply(view, row, found.from, doc.length)
     await Promise.resolve()
     await Promise.resolve()
-
     expect(built.doc.toString()).toBe('Alpha para ^abc123\n\nSee [[Plan#^abc123]]')
   })
 })
-
 describe('a suggestion picked inside a link already written', () => {
   async function pickedAt(written: string, label: string): Promise<string> {
     const caret = written.indexOf('|')
@@ -118,7 +107,6 @@ describe('a suggestion picked inside a link already written', () => {
     const found = await wikilinkCompletions(new CompletionContext(built, caret, false))
     const row = found?.options.find((one) => one.label === label)
     if (!found || !row || typeof row.apply !== 'function') throw new Error(`no row for ${label}`)
-
     let now = built
     const view = {
       get state() {
@@ -131,18 +119,15 @@ describe('a suggestion picked inside a link already written', () => {
     row.apply(view, row, found.from, caret)
     return now.doc.toString()
   }
-
   test('takes the rest of the name it was typed in', async () => {
     expect(await pickedAt('see [[Proje|ct Plan]] now', 'Project Plan')).toBe('see [[Project Plan]] now')
   })
-
   test('and keeps a heading or a label written after the name', async () => {
     expect(await pickedAt('[[Proje|ct Plan#Heading one]]', 'Project Plan')).toBe('[[Project Plan#Heading one]]')
     expect(await pickedAt('[[Proje|ct Plan|the plan]]', 'Project Plan')).toBe('[[Project Plan|the plan]]')
     expect(await pickedAt('[[Proje|ct Plan\\|the plan]]', 'Project Plan')).toBe('[[Project Plan\\|the plan]]')
   })
 })
-
 describe('in code', () => {
   test('two brackets open no suggestions', async () => {
     const doc = '```py\ngrid = [[\n```\n'

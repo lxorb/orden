@@ -4,7 +4,6 @@ import { prompt } from './prompt.svelte'
 async function settle() {
   for (let round = 0; round < 5; round++) await Promise.resolve()
 }
-
 describe('asks that come while another is open', () => {
   test('wait their turn and are answered one by one, none dropped', async () => {
     const first = prompt.choose({ title: 'First.pdf', options: [{ id: 'all', label: 'All' }] })
@@ -25,7 +24,6 @@ describe('asks that come while another is open', () => {
     await settle()
     expect(prompt.open).toBe(false)
   })
-
   test('a ticking choice shows its own tick, not the one of the ask before it', async () => {
     const plain = prompt.choose({ title: 'Plain', options: [{ id: 'a', label: 'A' }] })
     const ticking = prompt.chooseTicking({
@@ -43,7 +41,6 @@ describe('asks that come while another is open', () => {
     expect(await ticking).toEqual({ id: 'b', ticked: true })
   })
 })
-
 describe('an ask held by a signal', () => {
   test('is taken away when the signal goes, open or still waiting, and the next one comes up', async () => {
     const lock = new AbortController()
@@ -59,7 +56,6 @@ describe('an ask held by a signal', () => {
     prompt.dismiss()
     expect(await other).toBe(false)
   })
-
   test('is never shown once its signal has gone', async () => {
     const lock = new AbortController()
     lock.abort()

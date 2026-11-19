@@ -5,9 +5,7 @@ export interface TasksQuery {
   base: Base
   unsupported: string[]
 }
-
 const quote = (text: string) => JSON.stringify(text)
-
 const DATE_FIELDS: Record<string, string> = {
   due: 'task.due',
   scheduled: 'task.scheduled',
@@ -17,7 +15,6 @@ const DATE_FIELDS: Record<string, string> = {
   created: 'task.created',
   cancelled: 'task.cancelledOn',
 }
-
 const PRIORITIES: Record<string, number> = {
   highest: 1,
   high: 2,
@@ -27,9 +24,7 @@ const PRIORITIES: Record<string, number> = {
   low: 5,
   lowest: 6,
 }
-
 const MONDAY = 'today() - duration((number(today().format("E")) - 1) + "d")'
-
 function span(words: string): [string, string] | null {
   const text = words.trim().toLowerCase()
   const weeks: Record<string, number> = { 'this week': 0, 'next week': 1, 'last week': -1 }
@@ -43,7 +38,6 @@ function span(words: string): [string, string] | null {
   const one = dateWords(text, {})
   return one && !one.clock ? [one.expression, one.expression] : null
 }
-
 function dateLine(field: string, op: string, words: string): string | null {
   const dates = span(words)
   if (!dates) return null
@@ -68,7 +62,6 @@ function dateLine(field: string, op: string, words: string): string | null {
   if (!value) return null
   return field === 'starts' || field === 'start' ? `!${value} || (${test(value)})` : test(value)
 }
-
 function textLine(value: string, op: string, words: string): string | null {
   const wanted = words.trim()
   switch (op) {
@@ -86,7 +79,6 @@ function textLine(value: string, op: string, words: string): string | null {
       return null
   }
 }
-
 const TEXT_FIELDS: Record<string, string> = {
   path: 'file.path',
   filename: 'file.name',
@@ -95,7 +87,6 @@ const TEXT_FIELDS: Record<string, string> = {
   heading: 'task.section',
   root: 'file.path',
 }
-
 function filterLine(line: string): string | null {
   const text = line.trim().toLowerCase()
   switch (text) {
@@ -114,7 +105,6 @@ function filterLine(line: string): string | null {
     case 'exclude sub-items':
       return '!task.subtask'
   }
-
   const presence = /^(no|has) (due|scheduled|start|created|done|cancelled|happens) date$/.exec(text)
   if (presence) {
     const field = presence[2] ?? ''
@@ -122,20 +112,17 @@ function filterLine(line: string): string | null {
       field === 'happens' ? '(task.due || task.scheduled || task.start)' : (DATE_FIELDS[field] ?? 'task.due')
     return presence[1] === 'no' ? `!${value}` : value
   }
-
   const date =
     /^(due|scheduled|starts|start|happens|done|created|cancelled)(?: (on or before|on or after|before|after|on|in))? (.+)$/.exec(
       text,
     )
   if (date) return dateLine(date[1] ?? '', date[2] ?? 'on', date[3] ?? '')
-
   const priority = /^priority is(?: (above|below|not))? (highest|high|medium|none|normal|low|lowest)$/.exec(text)
   if (priority) {
     const level = PRIORITIES[priority[2] ?? 'none'] ?? 4
     const op = priority[1] === 'above' ? '<' : priority[1] === 'below' ? '>' : priority[1] === 'not' ? '!=' : '=='
     return `task.priority ${op} ${level}`
   }
-
   const status = /^status\.type is( not)? (todo|done|in_progress|cancelled|non_task)$/.exec(text)
   if (status) {
     const is = {
@@ -147,7 +134,6 @@ function filterLine(line: string): string | null {
     }[status[2] as 'todo' | 'done' | 'in_progress' | 'cancelled' | 'non_task']
     return status[1] ? `!(${is})` : is
   }
-
   const tags =
     /^(tags?) (include|includes|do not include|does not include|regex matches|regex does not match) (.+)$/.exec(
       line.trim(),
@@ -162,7 +148,6 @@ function filterLine(line: string): string | null {
     const found = `task.tags.filter(value.lower().contains(${quote(wanted.toLowerCase())})).length > 0`
     return op.includes('not') ? `!(${found})` : found
   }
-
   const field =
     /^(path|filename|folder|description|heading|root) (includes|does not include|regex matches|regex does not match) (.+)$/.exec(
       line.trim(),
@@ -173,11 +158,9 @@ function filterLine(line: string): string | null {
   }
   return null
 }
-
 function booleanLine(line: string): Filter | null {
   const text = line.trim()
   if (!text.startsWith('(') && !/^not\s*\(/i.test(text)) return null
-
   let at = 0
   const skip = () => {
     while (/\s/.test(text.charAt(at))) at++
@@ -208,7 +191,6 @@ function booleanLine(line: string): Filter | null {
     at++
     return booleanLine(inside) ?? filterLine(inside)
   }
-
   const first = group()
   if (first === null) return null
   let result: Filter = first
@@ -224,7 +206,6 @@ function booleanLine(line: string): Filter | null {
     else result = { or: [{ and: [result, { not: [next] }] }, { and: [next, { not: [result] }] }] }
   }
 }
-
 const PROPERTIES: Record<string, string> = {
   due: 'task.due',
   scheduled: 'task.scheduled',
@@ -248,20 +229,16 @@ const PROPERTIES: Record<string, string> = {
   description: 'task.text',
   urgency: 'task.priority',
 }
-
 const DRAWING = /^(hide|show|short mode|full mode|short|full|explain|ignore global query|layout)\b/i
-
 export function readTasksQuery(source: string): TasksQuery {
   const filters: Filter[] = []
   const sort: Sort[] = []
   const groups: Sort[] = []
   const unsupported: string[] = []
   let limit: number | undefined
-
   for (const raw of source.split('\n')) {
     const line = raw.trim()
     if (line === '' || line.startsWith('#') || DRAWING.test(line)) continue
-
     const sorted = /^(sort|group) by ([\w.]+)( reverse)?$/i.exec(line)
     if (sorted) {
       const property = PROPERTIES[(sorted[2] ?? '').toLowerCase()]
@@ -274,18 +251,15 @@ export function readTasksQuery(source: string): TasksQuery {
       else groups.push(one)
       continue
     }
-
     const limited = /^limit(?: to)? (\d+)(?: tasks?)?$/i.exec(line)
     if (limited) {
       limit = Number(limited[1])
       continue
     }
-
     const filter = booleanLine(line) ?? filterLine(line)
     if (filter === null) unsupported.push(raw)
     else filters.push(filter)
   }
-
   const view: View = {
     type: 'list',
     name: 'Tasks',
@@ -300,7 +274,6 @@ export function readTasksQuery(source: string): TasksQuery {
   if (groups[0]) view.groupBy = groups[0]
   if (groups[1]) view.orden.subGroupBy = groups[1]
   if (limit) view.limit = limit
-
   return {
     base: {
       formulas: {},

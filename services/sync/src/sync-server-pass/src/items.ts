@@ -19,16 +19,13 @@ import { bump, SEQ } from './seq'
 import { fromOf, tellVault } from './tell'
 
 export const items = new Hono<{ Bindings: Env; Variables: Variables }>()
-
 const CURRENT_KEY = '(select key_version from pass_vaults where id = ?1 and deleted_at is null)'
 const LIVE = '(select count(*) from pass_items where vault_id = ?1 and deleted_at is null)'
-
 export async function itemOf(env: Env, vault: string, id: string): Promise<ItemDb | null> {
   return await env.DB.prepare(`select ${ITEM_COLUMNS} from pass_items where vault_id = ? and id = ?`)
     .bind(vault, id)
     .first<ItemDb>()
 }
-
 function writeOf(db: D1Database, vault: string, id: string, sent: Sealed, at: number, email: string) {
   if (sent.rev === 0) {
     return db
@@ -49,7 +46,6 @@ function writeOf(db: D1Database, vault: string, id: string, sent: Sealed, at: nu
     )
     .bind(vault, id, sent.rev, sent.key, sent.body, sent.keyVersion, at, MOST_ITEMS, email)
 }
-
 function keepOld(db: D1Database, vault: string, id: string, sent: Sealed) {
   return db
     .prepare(
@@ -61,7 +57,6 @@ function keepOld(db: D1Database, vault: string, id: string, sent: Sealed) {
     )
     .bind(vault, id, sent.rev, sent.keyVersion)
 }
-
 function holdLinks(db: D1Database, vault: string, id: string, sent: Sealed, trashed: boolean) {
   return db
     .prepare(
@@ -72,7 +67,6 @@ function holdLinks(db: D1Database, vault: string, id: string, sent: Sealed, tras
     )
     .bind(vault, id, sent.rev + 1, sent.body, trashed ? 1 : 0, now())
 }
-
 function trimOld(db: D1Database, vault: string, id: string) {
   return db
     .prepare(
@@ -82,7 +76,6 @@ function trimOld(db: D1Database, vault: string, id: string) {
     )
     .bind(vault, id, MOST_VERSIONS)
 }
-
 items.put('/items/:vault/:id', async (context) => {
   const user = context.get('user')
   const vault = context.req.param('vault')
@@ -93,7 +86,6 @@ items.put('/items/:vault/:id', async (context) => {
   const trashed = body.flag('trashed')
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (!sent || !isPassId(vault) || !isPassId(id)) return context.json({ error: NOT_AN_ITEM }, 400)
-
   const held = await activeIn(context.env, vault, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
@@ -106,7 +98,6 @@ items.put('/items/:vault/:id', async (context) => {
   if (!(await fits(context.env, held.owner_id, sent.body.length + sent.key.length))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
-
   const db = context.env.DB
   const at = now()
   const write = writeOf(db, vault, id, sent, at, user.email)
@@ -130,7 +121,6 @@ items.put('/items/:vault/:id', async (context) => {
   await tellVault(context.env, vault, [user.id], from)
   return context.json({ rev: sent.rev + 1, at })
 })
-
 items.delete('/items/:vault/:id', async (context) => {
   const user = context.get('user')
   const vault = context.req.param('vault')
@@ -143,7 +133,6 @@ items.delete('/items/:vault/:id', async (context) => {
   const held = await activeIn(context.env, vault, user.email)
   if (!held) return context.json({ error: NO_SUCH_VAULT }, 404)
   if (!mayAct(held, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
-
   const db = context.env.DB
   const gone = 'exists (select 1 from pass_items where vault_id = ?1 and id = ?2 and deleted_at is not null)'
   const results = await db.batch([
@@ -170,7 +159,6 @@ items.delete('/items/:vault/:id', async (context) => {
   await tellVault(context.env, vault, [user.id], from)
   return context.json({ rev: rev + 1 })
 })
-
 items.get('/items/:vault/:id/versions', async (context) => {
   const user = context.get('user')
   const vault = context.req.param('vault')

@@ -6,11 +6,9 @@ const MOST_SITES = 300
 const MOST_TEXT = 1024 * 1024
 const AGAIN_MS = 30_000
 const QUIET_MS = 10 * 60_000
-
 function unknownTo(error: unknown): boolean {
   return isRecord(error) && error.status === 404
 }
-
 export interface HeldSite {
   site: string
   label: string
@@ -18,7 +16,6 @@ export interface HeldSite {
   hash: string | null
   picture: string | null
 }
-
 function readSite(value: unknown): HeldSite | null {
   if (!isRecord(value) || !isString(value.site) || !isNumber(value.seen)) return null
   return {
@@ -29,11 +26,9 @@ function readSite(value: unknown): HeldSite | null {
     picture: isString(value.picture) && value.picture.startsWith('data:image/') ? value.picture : null,
   }
 }
-
 function readList(value: unknown): HeldSite[] {
   return Array.isArray(value) ? value.flatMap((one) => readSite(one) ?? []) : []
 }
-
 export function siteOf(url: string | null | undefined): string | null {
   if (!url) return null
   try {
@@ -46,7 +41,6 @@ export function siteOf(url: string | null | undefined): string | null {
     return null
   }
 }
-
 export function labelOf(url: string | null | undefined, title: string): string {
   try {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once and thrown away
@@ -55,7 +49,6 @@ export function labelOf(url: string | null | undefined, title: string): string {
     return ''
   }
 }
-
 export function bounded(list: readonly HeldSite[]): HeldSite[] {
   const sorted = [...list].sort((one, other) => other.seen - one.seen).slice(0, MOST_SITES)
   let text = 0
@@ -64,7 +57,6 @@ export function bounded(list: readonly HeldSite[]): HeldSite[] {
     return text > MOST_TEXT ? { ...one, picture: null } : one
   })
 }
-
 async function draws(picture: string): Promise<boolean> {
   if (typeof Image !== 'function') return true
   const image = new Image()
@@ -77,14 +69,11 @@ async function draws(picture: string): Promise<boolean> {
     return false
   }
 }
-
 class SiteIcons {
   list = $state<HeldSite[]>(readList(stored(KEY)))
-
   constructor() {
     void this.dropBroken()
   }
-
   private async dropBroken() {
     const broken: string[] = []
     for (const one of this.list) {
@@ -93,39 +82,31 @@ class SiteIcons {
     if (!broken.length) return
     this.write(this.list.map((one) => (broken.includes(one.site) ? { ...one, hash: null, picture: null } : one)))
   }
-
   private told = new Map<string, string>()
   private asked = 0
   private cleared = 0
   private asking: Promise<void> | null = null
   private quietUntil = 0
-
   lacking = $state(false)
-
   private failed(error: unknown) {
     this.quietUntil = Date.now() + QUIET_MS
     if (unknownTo(error)) this.lacking = true
   }
-
   private quiet(): boolean {
     return Date.now() < this.quietUntil
   }
-
   picture(site: string): string | null {
     return this.list.find((one) => one.site === site)?.picture ?? null
   }
-
   refresh(): Promise<void> {
     const token = account.accountToken
     if (!token || this.asking || this.quiet() || Date.now() - this.asked < AGAIN_MS) {
       return this.asking ?? Promise.resolve()
     }
-
     this.asked = Date.now()
     this.asking = this.fetch(token).finally(() => (this.asking = null))
     return this.asking
   }
-
   private async fetch(token: string) {
     const clearing = this.cleared
     let sites
@@ -137,7 +118,6 @@ class SiteIcons {
     }
     if (account.accountToken !== token) return
     this.lacking = false
-
     const held = new Map(this.list.map((one) => [one.site, one]))
     const next: HeldSite[] = []
     for (const one of sites) {
@@ -151,11 +131,9 @@ class SiteIcons {
       next.push({ site: one.site, label: one.label, seen: one.seen, hash: one.hash, picture })
     }
     if (account.accountToken !== token || this.cleared !== clearing) return
-
     this.write(next)
     await this.dropBroken()
   }
-
   async saw(url: string | null | undefined, title: string, icon: string | null) {
     const site = siteOf(url)
     const token = account.accountToken
@@ -165,11 +143,9 @@ class SiteIcons {
     if (this.told.get(site) === said) return
     this.told.set(site, said)
     const clearing = this.cleared
-
     try {
       const { site: row } = await api.sawSite(token, { site, label, icon, seen: Date.now() })
       if (!row || account.accountToken !== token) return
-
       const was = this.list.find((one) => one.site === row.site)
       const picture =
         was?.hash === row.hash && was.picture
@@ -188,7 +164,6 @@ class SiteIcons {
       this.failed(error)
     }
   }
-
   forgetAccount() {
     this.write([])
     this.told.clear()
@@ -197,7 +172,6 @@ class SiteIcons {
     this.quietUntil = 0
     this.lacking = false
   }
-
   async forgetSince(since: number) {
     this.cleared += 1
     this.write(this.list.filter((one) => one.seen < since))
@@ -205,13 +179,10 @@ class SiteIcons {
     const token = account.accountToken
     if (token) await api.forgetSites(token, { since }).catch(() => undefined)
   }
-
   private write(list: readonly HeldSite[]) {
     this.list = bounded(list)
     keepJson(KEY, this.list)
   }
 }
-
 export const siteIcons = new SiteIcons()
-
 account.forgetWithSession(() => siteIcons.forgetAccount())

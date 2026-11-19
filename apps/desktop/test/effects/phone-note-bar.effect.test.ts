@@ -8,19 +8,16 @@ providePort('commands.app', {
     return appCommands(view as Parameters<typeof appCommands>[0])
   },
 })
-
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { menu } = await import('../../src/lib/ui-kit/src/api')
 const { Titlebar } = await import('../../src/lib/titlebar/src/api')
 const { showNoteMore } = await (await import('../../src/lib/phone/src/api')).noteMore()
-
 afterEach(() => {
   viewport.device = 'desktop'
   menu.open = false
   document.body.replaceChildren()
 })
-
 function bar() {
   workspace.spaces = [{ id: 'work', name: 'Work', root: '/spaces/Work' }]
   workspace.activeSpaceId = 'work'
@@ -33,7 +30,6 @@ function bar() {
   flushSync()
   return { host, done: () => void unmount(shown, { outro: false }) }
 }
-
 test("a phone's note bar has one More button in place of the search and the side's toggle", () => {
   viewport.device = 'phone'
   const { host, done } = bar()
@@ -44,7 +40,6 @@ test("a phone's note bar has one More button in place of the search and the side
   } finally {
     done()
   }
-
   viewport.device = 'tablet'
   const tablet = bar()
   try {
@@ -54,7 +49,6 @@ test("a phone's note bar has one More button in place of the search and the side
     tablet.done()
   }
 })
-
 test('and its menu holds the outline, the links, the history and the tab, each once', async () => {
   viewport.device = 'phone'
   const { host, done } = bar()
@@ -62,12 +56,10 @@ test('and its menu holds the outline, the links, the history and the tab, each o
     await showNoteMore(host.querySelector<HTMLButtonElement>('header [data-phone-more]')!)
     expect(menu.open).toBe(true)
     const labels = menu.items.flatMap((one) => (one ? [one.label] : []))
-
     expect(labels.slice(0, 2)).toEqual(['Outline', 'Links'])
     expect(labels).toContain('Version history')
     expect(new Set(labels).size).toBe(labels.length)
     expect(menu.title).toBe('Kestrel')
-
     menu.items.find((one) => one?.label === 'Outline')?.run()
     expect(workspace.openOn('right')).toBe('outline')
   } finally {

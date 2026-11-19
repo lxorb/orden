@@ -12,7 +12,6 @@ beforeAll(async () => {
   await loadCompletion()
   await loadLineCommands()
 })
-
 function type(doc: string, selection: { anchor: number; head: number }, character: string): EditorState {
   let state = parsed(
     EditorState.create({
@@ -25,7 +24,6 @@ function type(doc: string, selection: { anchor: number; head: number }, characte
       ],
     }),
   )
-
   const view = {
     get state() {
       return state
@@ -35,29 +33,24 @@ function type(doc: string, selection: { anchor: number; head: number }, characte
       state = state.update(spec).state
     },
   } as unknown as EditorView
-
   const { from, to } = state.selection.main
   for (const handler of state.facet(EditorView.inputHandler)) {
     if (handler(view, from, to, character, () => state.update({}))) return state
   }
-
   return state.update({
     changes: { from, to, insert: character },
     selection: EditorSelection.cursor(from + character.length),
   }).state
 }
-
 describe('a mark typed over a whole picked line or several blocks', () => {
   test('a list item keeps its marker outside the emphasis', () => {
     const doc = '- item\n'
     expect(type(doc, { anchor: 0, head: 6 }, '*').doc.toString()).toBe('- *item*\n')
   })
-
   test('a heading keeps its hashes outside the emphasis', () => {
     const doc = '# Title\n'
     expect(type(doc, { anchor: 0, head: 7 }, '_').doc.toString()).toBe('# _Title_\n')
   })
-
   test('two paragraphs get a run each', () => {
     const doc = 'one\n\ntwo'
     expect(type(doc, { anchor: 0, head: doc.length }, '*').doc.toString()).toBe('*one*\n\n*two*')

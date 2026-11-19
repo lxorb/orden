@@ -6,7 +6,6 @@ export interface V1Pair {
   spaceId: string
   role: string
 }
-
 export function pairsFromV1(
   saved: unknown,
   accountId: string,

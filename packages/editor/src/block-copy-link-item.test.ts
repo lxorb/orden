@@ -12,13 +12,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function linked(doc: string, words: string): string | null {
   const view = new EditorView({ state: parsed(editorState({ doc })), parent: document.body })
   open.push(view)
@@ -27,12 +24,10 @@ function linked(doc: string, words: string): string | null {
   const target = blockTarget(view, pos) ?? ''
   return sectionOf(view.state.doc.toString(), { heading: null, block: target.slice(2) })
 }
-
 describe('Copy link on the last item of a list named by an id on its own line', () => {
   test('a bulleted item links to that item, not the whole list', () => {
     expect(linked('- a\n- b\n\n^lid\n\nnext', '- b')).toBe('- b')
   })
-
   test('a numbered item links to that item, not the whole list', () => {
     expect(linked('1. a\n2. b\n\n^lid\n\nnext', '2. b')).toBe('2. b')
   })

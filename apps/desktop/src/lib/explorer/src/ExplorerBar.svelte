@@ -35,11 +35,9 @@
     onleave: () => void
   } = $props()
   /* eslint-enable prefer-const */
-
   const crumbs = $derived(view.folder ? crumbsOf(view.folder) : [])
   let field = $state<HTMLInputElement>()
   let typed = $state('')
-
   $effect(() => {
     if (!typing) return
     typed = view.folder ?? ''
@@ -48,7 +46,6 @@
       field?.select()
     })
   })
-
   async function go() {
     const home = places.list.find((one) => one.kind === 'home')?.path ?? null
     const folder = typedFolder(typed, view.folder ?? '', home)
@@ -56,13 +53,10 @@
     onleave()
     if (folder) await view.go(folder)
   }
-
   let filterField = $state<HTMLInputElement>()
-
   $effect(() => {
     if (filtering) void tick().then(() => filterField?.focus())
   })
-
   function filterKey(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       event.preventDefault()
@@ -79,7 +73,6 @@
       onleave()
     }
   }
-
   function onkey(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       event.preventDefault()
@@ -242,18 +235,15 @@
     padding: var(--space-1) var(--space-2);
     border-bottom: 1px solid var(--line);
   }
-
   .crumbs,
   .path {
     flex: 1;
     min-width: 0;
   }
-
   .filter {
     flex: 0 1 12rem;
     min-width: 6rem;
   }
-
   .crumbs {
     display: flex;
     align-items: center;
@@ -261,7 +251,6 @@
     overflow: hidden;
     direction: ltr;
   }
-
   .crumb {
     flex: none;
     max-width: 16rem;
@@ -278,28 +267,23 @@
     white-space: nowrap;
     unicode-bidi: isolate;
   }
-
   @media (hover: hover) {
     .crumb:hover {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
-
   .crumb:active {
     background: var(--surface-press);
   }
-
   .crumb.is-here {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .step {
     flex: none;
     color: var(--faint);
   }
-
   .past {
     flex: 1;
     align-self: stretch;

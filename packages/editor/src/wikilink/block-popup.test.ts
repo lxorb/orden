@@ -9,22 +9,17 @@ import { wikilinkCompletions } from './complete'
 import { type NoteIndex, noteIndex } from './notes'
 
 const GROCERIES = '# Groceries\n\nBuy these on Friday.\n\n- milk\n- eggs\n'
-
 const index: NoteIndex = {
   notes: [{ path: 'Groceries.md', name: 'Groceries', headings: ['Groceries'], blocks: [], aliases: [] }],
   files: [],
   path: 'Today.md',
   read: () => Promise.resolve(GROCERIES),
 }
-
 const views: EditorView[] = []
-
 afterEach(() => {
   for (const view of views.splice(0)) view.destroy()
 })
-
 const settle = () => new Promise((done) => setTimeout(done, 200))
-
 async function shownAfterTyping(opening: string, typed: string): Promise<string[]> {
   const view = new EditorView({
     parent: document.body,
@@ -52,16 +47,13 @@ async function shownAfterTyping(opening: string, typed: string): Promise<string[
   }
   return currentCompletions(view.state).map((one) => one.label)
 }
-
 describe('the block popup of a named note in the editor', () => {
   test('lists the note blocks once [[Groceries#^ is typed', async () => {
     expect(await shownAfterTyping('[[Groceries#', '^')).toContain('Buy these on Friday.')
   })
-
   test('lists the block whose words are typed after the caret mark', async () => {
     expect(await shownAfterTyping('[[Groceries#^', 'milk')).toContain('milk')
   })
-
   test('the heading popup of the same note does list its headings', async () => {
     expect(await shownAfterTyping('[[Groceries#', 'Gro')).toContain('Groceries')
   })

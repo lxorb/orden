@@ -1,27 +1,20 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PANEL = ".cluster .panel"
 BOARD = {"nodes": [], "edges": []}
-
 def box(page: Page, selector: str) -> dict:
     found = page.locator(selector).first.bounding_box()
     if found is None:
         raise SystemExit(f"nothing on screen for {selector}")
     return found
-
 def shown(page: Page) -> bool:
     return bool(page.evaluate(f"() => !!document.querySelector('{PANEL}') && window.ordenApp.overlays.depth > 0"))
-
 def ink(page: Page, x: float, y: float) -> bytes:
     return page.screenshot(clip={"x": x - 4, "y": y - 12, "width": 64, "height": 28})
-
 def beside(page: Page, of: dict, along: str = "x") -> tuple[float, float]:
     plane = box(page, ".canvas")
     if along == "y":
@@ -32,7 +25,6 @@ def beside(page: Page, of: dict, along: str = "x") -> tuple[float, float]:
     right = of["x"] + of["width"] + 90
     x = right if right < plane["x"] + plane["width"] - 30 else of["x"] - 90
     return x, y
-
 def pen_panel(page: Page) -> None:
     pen = page.locator(".cluster button.pen").first
     pen.click()
@@ -40,11 +32,9 @@ def pen_panel(page: Page) -> None:
     if not shown(page):
         pen.click()
     page.wait_for_timeout(300)
-
 def colours(page: Page) -> None:
     page.locator(".cluster button.swatch").first.click()
     page.wait_for_timeout(300)
-
 def check(page: Page, label: str, along: str = "x") -> None:
     for name, opening in (("the pen's panel", pen_panel), ("the colours", colours)):
         opening(page)
@@ -66,7 +56,6 @@ def check(page: Page, label: str, along: str = "x") -> None:
             page.keyboard.press("Escape")
         else:
             say(f"ok   [{label}] a press beside {name} closes it")
-
     page.locator(".cluster button.pen").nth(1).click()
     page.wait_for_timeout(200)
     x, y = beside(page, box(page, ".cluster .bar"), along)
@@ -83,7 +72,6 @@ def check(page: Page, label: str, along: str = "x") -> None:
         say(f"ok   [{label}] a stroke beside the bar is drawn")
     page.locator('.cluster button[aria-label="Undo"]').first.click()
     page.wait_for_timeout(300)
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -99,7 +87,6 @@ def drive(browser: Browser) -> None:
     DRIVE.settled(page)
     page.wait_for_timeout(500)
     check(page, "bottom")
-
     page.evaluate(
         "() => { const held = JSON.parse(localStorage.getItem('orden:pens') ?? '{}');"
         " localStorage.setItem('orden:pens', JSON.stringify({ ...held, dock: 'left' })) }"
@@ -117,5 +104,4 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(500)
     check(page, "left", "y")
     page.close()
-
 raise SystemExit(DRIVE.run(drive, "a press beside the pens' panels closes them, and a stroke beside the bar is drawn"))

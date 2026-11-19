@@ -6,9 +6,7 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void held.set(key, value),
   removeItem: (key: string) => void held.delete(key),
 })
-
 const { clipboardSharing } = await import('../src/api')
-
 describe('sharing the clipboard with applications', () => {
   test('is on until turned off, and stays off', () => {
     expect(clipboardSharing.on).toBe(true)

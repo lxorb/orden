@@ -7,12 +7,10 @@
   import TodoRow from './TodoRow.svelte'
 
   startTodos()
-
   const shown = new Shown(shellWorld(() => todos.todos))
   let typed = $state('')
   let openId = $state<string | null>(null)
   const open = $derived(openId === null ? null : todos.todo(openId))
-
   async function add() {
     const title = typed.trim()
     if (title === '') return
@@ -78,7 +76,6 @@
     gap: var(--space-2);
     padding: var(--space-2);
   }
-
   .field {
     width: 100%;
     padding: var(--space-1) var(--space-2);
@@ -89,14 +86,12 @@
     font: inherit;
     font-size: var(--text-sm);
   }
-
   .empty {
     margin: 0;
     padding: var(--space-2);
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .list {
     display: flex;
     flex-direction: column;

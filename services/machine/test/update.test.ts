@@ -6,7 +6,6 @@ import { expect, test } from 'vitest'
 
 const HERE = join(import.meta.dirname, '..')
 const SCRIPT = join(HERE, readdirSync(HERE).find((name) => name.endsWith('-update')) ?? 'update')
-
 function asked(machine: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'orden-update-'))
   const file = join(dir, 'machine')
@@ -25,11 +24,9 @@ function asked(machine: string): string {
     return ''
   }
 }
-
 test.runIf(process.platform !== 'win32')('asks the origin its machine file names', () => {
   expect(asked('ORDEN_ORIGIN=https://orden.so\n')).toContain('https://orden.so/v2/online/machine/current')
 })
-
 test.runIf(process.platform !== 'win32')('a machine file written before the rename still names the origin', () => {
   expect(asked('NIB_ORIGIN=https://orden.so\n')).toContain('https://orden.so/v2/online/machine/current')
 })

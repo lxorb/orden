@@ -26,7 +26,6 @@
     onremove: () => void
     onclose: () => void
   } = $props()
-
   const inSpace = $derived(spaces.find((one) => isTodoSpace(one, todo.space)) ?? null)
   let title = $state('')
   let description = $state('')
@@ -36,7 +35,6 @@
   let seen = $state<string | null>(null)
   let titleFrom = ''
   let descriptionFrom = ''
-
   $effect(() => {
     const id = todo.id
     const nextTitle = todo.title
@@ -53,34 +51,27 @@
     titleFrom = nextTitle
     descriptionFrom = nextDescription
   })
-
   const suggestions = $derived(knownLabels.filter((one) => !todo.labels.includes(one)))
-
   async function change(patch: TodoPatch) {
     refused = await onchange(patch)
   }
-
   function saveTitle() {
     const next = title.trim()
     title = next === '' ? todo.title : next
     if (next !== '' && next !== todo.title) void change({ title: next })
   }
-
   function saveDescription() {
     if (description !== todo.description) void change({ description })
   }
-
   function addLabel() {
     const label = cleanLabel(newLabel)
     newLabel = ''
     if (label === '' || todo.labels.includes(label)) return
     void change({ labels: [...todo.labels, label] })
   }
-
   function dropLabel(label: string) {
     void change({ labels: todo.labels.filter((one) => one !== label) })
   }
-
   function addSubtask() {
     const text = newSubtask.trim()
     newSubtask = ''
@@ -88,15 +79,12 @@
     const id = `s${crypto.randomUUID().replace(/-/g, '').slice(0, 11)}`
     void change({ subtasks: [...todo.subtasks, { id, title: text, done: false }] })
   }
-
   function tickSubtask(id: string, done: boolean) {
     void change({ subtasks: todo.subtasks.map((one) => (one.id === id ? { ...one, done } : one)) })
   }
-
   function dropSubtask(id: string) {
     void change({ subtasks: todo.subtasks.filter((one) => one.id !== id) })
   }
-
   const dayOr = (value: string): string | null => (value === '' ? null : value)
 </script>
 
@@ -253,13 +241,11 @@
     border-radius: var(--radius-md);
     background: var(--surface);
   }
-
   .head {
     display: flex;
     gap: var(--space-2);
     align-items: center;
   }
-
   .title {
     flex: 1;
     min-width: 0;
@@ -271,7 +257,6 @@
     font: inherit;
     font-weight: var(--weight-strong);
   }
-
   .description,
   .new,
   input[type='date'] {
@@ -283,17 +268,14 @@
     font: inherit;
     font-size: var(--text-sm);
   }
-
   .description {
     resize: vertical;
   }
-
   .fields {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
     gap: var(--space-2);
   }
-
   .fields label,
   .labels,
   .subtasks {
@@ -301,20 +283,17 @@
     flex-direction: column;
     gap: var(--space-1);
   }
-
   .fields span,
   .name {
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
     align-items: center;
   }
-
   .chip {
     display: inline-flex;
     gap: var(--space-1);
@@ -324,7 +303,6 @@
     background: var(--surface-2);
     font-size: var(--text-sm);
   }
-
   .chip button,
   li button,
   .close {
@@ -335,13 +313,11 @@
     font: inherit;
     font-size: var(--text-xs);
   }
-
   .chip button:hover,
   li button:hover,
   .close:hover {
     color: var(--text-strong);
   }
-
   ul {
     display: flex;
     flex-direction: column;
@@ -350,35 +326,29 @@
     padding: 0;
     list-style: none;
   }
-
   li {
     display: flex;
     gap: var(--space-2);
     align-items: center;
   }
-
   li span {
     flex: 1;
     min-width: 0;
     overflow-wrap: anywhere;
   }
-
   li.done span {
     color: var(--muted);
     text-decoration: line-through;
   }
-
   .refused {
     margin: 0;
     color: var(--danger);
     font-size: var(--text-sm);
   }
-
   .foot {
     display: flex;
     justify-content: flex-end;
   }
-
   .danger {
     padding: var(--space-1) var(--space-2);
     border: 1px solid var(--line);

@@ -1,6 +1,5 @@
 import { BYTES_WITHIN, fetchInTime } from '../../platform/src/api'
 export type FileFetcher = (input: string, init: RequestInit) => Promise<Response>
-
 export class FileRefused extends Error {
   constructor(
     readonly status: number,
@@ -11,7 +10,6 @@ export class FileRefused extends Error {
     this.name = 'FileRefused'
   }
 }
-
 export interface FileApi {
   put(
     vault: string,
@@ -24,7 +22,6 @@ export interface FileApi {
   get(vault: string, item: string, file: string, part: number): Promise<Uint8Array<ArrayBuffer>>
   remove(vault: string, item: string, file: string): Promise<void>
 }
-
 async function refusal(response: Response): Promise<FileRefused> {
   let said = `request failed (${String(response.status)})`
   let told = false
@@ -42,7 +39,6 @@ async function refusal(response: Response): Promise<FileRefused> {
   }
   return new FileRefused(response.status, said, told)
 }
-
 export function fileApi(
   base: string,
   token: string,
@@ -61,7 +57,6 @@ export function fileApi(
       })
       if (!response.ok) throw await refusal(response)
     },
-
     async get(vault, item, file, part) {
       const response = await fetcher(`${at(vault, item, file)}?part=${String(part)}`, {
         method: 'GET',
@@ -70,7 +65,6 @@ export function fileApi(
       if (!response.ok) throw await refusal(response)
       return new Uint8Array(await response.arrayBuffer())
     },
-
     async remove(vault, item, file) {
       const response = await fetcher(at(vault, item, file), {
         method: 'DELETE',

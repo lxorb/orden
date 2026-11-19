@@ -18,7 +18,6 @@ pub(super) fn bad_name(name: &str) -> Option<String> {
     }
     None
 }
-
 #[tauri::command]
 pub async fn explorer_make(
     app: AppHandle,
@@ -41,7 +40,6 @@ pub async fn explorer_make(
     })
     .await
 }
-
 #[tauri::command]
 pub async fn explorer_write(
     app: AppHandle,
@@ -56,7 +54,6 @@ pub async fn explorer_write(
     })
     .await
 }
-
 #[derive(serde::Deserialize)]
 struct Written {
     folder: String,
@@ -66,7 +63,6 @@ struct Written {
     #[serde(default)]
     fresh: bool,
 }
-
 fn wrote(folder: &Path, said: &Written, bytes: &[u8]) -> Result<PathBuf, String> {
     let path = placed(folder, &said.under)?;
     if said.fresh {
@@ -88,7 +84,6 @@ fn wrote(folder: &Path, said: &Written, bytes: &[u8]) -> Result<PathBuf, String>
         .map_err(|why| format!("{}: {why}", path.display()))?;
     Ok(path)
 }
-
 pub(super) fn placed(folder: &Path, under: &str) -> Result<PathBuf, String> {
     let steps: Vec<&str> = under.split('/').collect();
     if steps.iter().any(|step| bad_name(step).is_some()) {
@@ -98,7 +93,6 @@ pub(super) fn placed(folder: &Path, under: &str) -> Result<PathBuf, String> {
         .iter()
         .fold(folder.to_path_buf(), |path, step| path.join(step)))
 }
-
 #[tauri::command]
 pub async fn explorer_rename(app: AppHandle, path: String, name: String) -> Result<String, String> {
     orden_base::lane::off_the_runtime(move || -> Result<String, String> {
@@ -115,7 +109,6 @@ pub async fn explorer_rename(app: AppHandle, path: String, name: String) -> Resu
     })
     .await
 }
-
 pub(super) fn renamed(from: &Path, to: &Path) -> Result<(), String> {
     let taken = fs::symlink_metadata(to).is_ok();
     if taken && !orden_base::paths::same_entry(from, to) {
@@ -128,7 +121,6 @@ pub(super) fn renamed(from: &Path, to: &Path) -> Result<(), String> {
     };
     moved.map_err(|why| format!("{}: {why}", from.display()))
 }
-
 #[tauri::command]
 pub async fn explorer_trash(app: AppHandle, paths: Vec<String>) -> Result<Vec<Ticket>, Trashing> {
     orden_base::lane::off_the_runtime(move || {
@@ -138,7 +130,6 @@ pub async fn explorer_trash(app: AppHandle, paths: Vec<String>) -> Result<Vec<Ti
     })
     .await
 }
-
 fn trashed_each(
     paths: &[String],
     trash: impl Fn(&str) -> Result<Ticket, String>,
@@ -160,13 +151,11 @@ fn trashed_each(
         Err(Trashing { went, failed })
     }
 }
-
 #[derive(serde::Serialize, Debug)]
 pub struct Trashing {
     pub went: Vec<Ticket>,
     pub failed: Vec<Failed>,
 }
-
 #[tauri::command]
 pub async fn explorer_untrash(app: AppHandle, tickets: Vec<Ticket>) -> Vec<String> {
     orden_base::lane::off_the_runtime(move || -> Vec<String> {
@@ -179,7 +168,6 @@ pub async fn explorer_untrash(app: AppHandle, tickets: Vec<Ticket>) -> Vec<Strin
     })
     .await
 }
-
 #[tauri::command]
 pub async fn explorer_delete(app: AppHandle, paths: Vec<String>) -> Result<(), Vec<Failed>> {
     orden_base::lane::off_the_runtime(move || -> Result<(), Vec<Failed>> {
@@ -203,7 +191,6 @@ pub async fn explorer_delete(app: AppHandle, paths: Vec<String>) -> Result<(), V
     })
     .await
 }
-
 fn gone_each(paths: &[PathBuf]) -> Vec<Failed> {
     paths
         .iter()
@@ -215,7 +202,6 @@ fn gone_each(paths: &[PathBuf]) -> Vec<Failed> {
         })
         .collect()
 }
-
 pub(super) fn gone(path: &Path) -> Result<(), String> {
     let meta = fs::symlink_metadata(path).map_err(|why| format!("{}: {why}", path.display()))?;
     let done = if meta.is_dir() {
@@ -225,7 +211,6 @@ pub(super) fn gone(path: &Path) -> Result<(), String> {
     };
     done.map_err(|why| format!("{}: {why}", path.display()))
 }
-
 #[cfg(test)]
 mod tests {
     use super::{bad_name, gone_each, renamed, trashed_each, wrote, Ticket, Written};
@@ -253,7 +238,6 @@ mod tests {
         assert_eq!(stopped.failed.len(), 1);
         assert_eq!(stopped.failed[0].path, "/a/locked.txt");
         assert_eq!(stopped.failed[0].why, "/a/locked.txt: in use");
-
         let all = trashed_each(&paths, |one| {
             Ok(Ticket {
                 path: one.to_owned(),
@@ -264,7 +248,6 @@ mod tests {
         .expect("all went");
         assert_eq!(all.len(), 3);
     }
-
     #[test]
     fn deleting_several_goes_past_one_that_will_not_go_and_names_it() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -274,9 +257,7 @@ mod tests {
         fs::write(&one, "1").expect("one");
         fs::create_dir(&folder).expect("a folder");
         fs::write(folder.join("inside.txt"), "in").expect("inside");
-
         let failed = gone_each(&[one.clone(), missing.clone(), folder.clone()]);
-
         assert!(fs::symlink_metadata(&one).is_err());
         assert!(fs::symlink_metadata(&folder).is_err());
         assert_eq!(failed.len(), 1);
@@ -284,7 +265,6 @@ mod tests {
         assert!(failed[0].why.starts_with(&missing.display().to_string()));
         assert!(gone_each(&[]).is_empty());
     }
-
     #[test]
     fn a_dropped_folder_is_made_new_and_never_written_into_one_already_there() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -297,12 +277,10 @@ mod tests {
             more: false,
             fresh,
         };
-
         assert!(wrote(dir.path(), &said("Photos/b.png", true), b"new").is_err());
         assert!(!mine.join("b.png").exists());
         assert!(wrote(dir.path(), &said("Photos.png", true), b"new").is_ok());
         assert!(wrote(dir.path(), &said("Photos.png", true), b"again").is_err());
-
         wrote(dir.path(), &said("Photos 2/b.png", true), b"new").expect("a new folder");
         wrote(dir.path(), &said("Photos 2/c.png", false), b"new").expect("into it");
         assert!(dir.path().join("Photos 2").join("c.png").is_file());
@@ -311,7 +289,6 @@ mod tests {
             "mine"
         );
     }
-
     #[test]
     fn a_dropped_file_lands_under_the_folder_and_nowhere_else() {
         let folder = std::path::Path::new("/a/b");
@@ -323,7 +300,6 @@ mod tests {
             assert!(super::placed(folder, bad).is_err(), "{bad}");
         }
     }
-
     #[test]
     fn a_name_is_one_name() {
         for bad in ["", "  ", ".", "..", "a/b", "a\0b"] {
@@ -333,7 +309,6 @@ mod tests {
             assert!(bad_name(good).is_none(), "{good:?}");
         }
     }
-
     #[test]
     fn a_rename_never_lands_on_another_file() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -346,7 +321,6 @@ mod tests {
         renamed(&one, &third).expect("renamed");
         assert!(third.is_file() && !one.exists());
     }
-
     #[cfg(unix)]
     #[test]
     fn a_link_goes_and_what_it_leads_to_stays() {

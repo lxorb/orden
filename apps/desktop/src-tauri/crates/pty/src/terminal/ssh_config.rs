@@ -4,11 +4,8 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 
 const MOST_DEPTH: usize = 16;
-
 const HEADING_MOST: usize = 40;
-
 const HEADING_WORDS: usize = 5;
-
 #[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
 pub struct ConfigHost {
     pub id: String,
@@ -22,12 +19,10 @@ pub struct ConfigHost {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub group: Option<String>,
 }
-
 pub trait Files {
     fn read(&self, path: &Path) -> Option<String>;
     fn list(&self, folder: &Path) -> Vec<String>;
 }
-
 pub fn hosts(config: &Path, home: &Path, files: &impl Files) -> Vec<ConfigHost> {
     let mut reading = Reading {
         home,
@@ -38,20 +33,17 @@ pub fn hosts(config: &Path, home: &Path, files: &impl Files) -> Vec<ConfigHost> 
     reading.file(config, None, 0);
     reading.found
 }
-
 struct Reading<'a, F: Files> {
     home: &'a Path,
     files: &'a F,
     seen: HashSet<PathBuf>,
     found: Vec<ConfigHost>,
 }
-
 enum Block {
     Top,
     Host(Option<usize>),
     Match,
 }
-
 impl<F: Files> Reading<'_, F> {
     fn file(&mut self, path: &Path, group: Option<String>, depth: usize) {
         if depth > MOST_DEPTH || !self.seen.insert(path.to_path_buf()) {
@@ -60,11 +52,9 @@ impl<F: Files> Reading<'_, F> {
         let Some(text) = self.files.read(path) else {
             return;
         };
-
         let mut group = group;
         let mut block = Block::Top;
         let lines: Vec<&str> = text.lines().collect();
-
         for (at, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
             if trimmed.is_empty() {
@@ -76,7 +66,6 @@ impl<F: Files> Reading<'_, F> {
                 }
                 continue;
             }
-
             let Some((keyword, args)) = split(trimmed) else {
                 continue;
             };
@@ -102,11 +91,9 @@ impl<F: Files> Reading<'_, F> {
             }
         }
     }
-
     fn host(&mut self, patterns: &[String], group: Option<String>) -> Option<usize> {
         let names: Vec<&String> = patterns.iter().filter(|one| is_name(one)).collect();
         let first = names.first()?;
-
         if let Some(index) = self.found.iter().position(|one| &one.id == *first) {
             return Some(index);
         }
@@ -118,7 +105,6 @@ impl<F: Files> Reading<'_, F> {
         });
         Some(self.found.len() - 1)
     }
-
     fn included(&self, pattern: &str) -> Vec<PathBuf> {
         let path = if let Some(rest) = pattern.strip_prefix("~/") {
             self.home.join(rest)
@@ -127,7 +113,6 @@ impl<F: Files> Reading<'_, F> {
         } else {
             self.home.join(".ssh").join(pattern)
         };
-
         let Some(name) = path
             .file_name()
             .map(|one| one.to_string_lossy().into_owned())
@@ -150,7 +135,6 @@ impl<F: Files> Reading<'_, F> {
         matched.into_iter().map(|one| folder.join(one)).collect()
     }
 }
-
 fn set(host: &mut ConfigHost, keyword: &str, value: &str) {
     match keyword.to_ascii_lowercase().as_str() {
         "hostname" if host.hostname.is_none() => host.hostname = Some(value.to_owned()),
@@ -159,17 +143,14 @@ fn set(host: &mut ConfigHost, keyword: &str, value: &str) {
         _ => {}
     }
 }
-
 fn is_name(pattern: &str) -> bool {
     !pattern.is_empty() && !pattern.contains(['*', '?', '!'])
 }
-
 fn split(line: &str) -> Option<(String, Vec<String>)> {
     let end = line.find(|one: char| one.is_whitespace() || one == '=')?;
     let keyword = line[..end].to_owned();
     let rest = line[end..].trim_start();
     let rest = rest.strip_prefix('=').unwrap_or(rest).trim_start();
-
     let mut args = Vec::new();
     let mut word = String::new();
     let mut quoted = false;
@@ -198,7 +179,6 @@ fn split(line: &str) -> Option<(String, Vec<String>)> {
     }
     Some((keyword, args))
 }
-
 const KEYWORDS: &[&str] = &[
     "host",
     "match",
@@ -229,7 +209,6 @@ const KEYWORDS: &[&str] = &[
     "compression",
     "loglevel",
 ];
-
 fn heading(lines: &[&str], at: usize) -> Option<String> {
     let line = lines.get(at)?;
     if line.starts_with([' ', '\t']) {
@@ -243,7 +222,6 @@ fn heading(lines: &[&str], at: usize) -> Option<String> {
     if after.is_some_and(|one| one.starts_with('#')) {
         return None;
     }
-
     let words = line
         .trim()
         .trim_matches(|one: char| matches!(one, '#' | '-' | '=' | '*') || one.is_whitespace());
@@ -253,12 +231,10 @@ fn heading(lines: &[&str], at: usize) -> Option<String> {
         && !KEYWORDS.contains(&first.trim_end_matches(['=', ':']));
     fits.then(|| words.to_owned())
 }
-
 fn file_group(path: &Path) -> Option<String> {
     let stem = path.file_stem()?.to_string_lossy().into_owned();
     (!stem.is_empty() && stem != "config").then_some(stem)
 }
-
 fn matches(pattern: &str, name: &str) -> bool {
     if name.starts_with('.') && !pattern.starts_with('.') {
         return false;
@@ -293,9 +269,7 @@ fn matches(pattern: &str, name: &str) -> bool {
     }
     pattern[p..].iter().all(|one| *one == '*')
 }
-
 pub struct Disk;
-
 impl Files for Disk {
     fn read(&self, path: &Path) -> Option<String> {
         let meta = std::fs::metadata(path).ok()?;
@@ -304,7 +278,6 @@ impl Files for Disk {
         }
         std::fs::read_to_string(path).ok()
     }
-
     fn list(&self, folder: &Path) -> Vec<String> {
         std::fs::read_dir(folder)
             .map(|entries| {
@@ -317,7 +290,6 @@ impl Files for Disk {
             .unwrap_or_default()
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -325,14 +297,12 @@ mod tests {
 
     #[derive(Default)]
     struct Fake(HashMap<PathBuf, String>);
-
     impl Fake {
         fn with(mut self, path: &str, text: &str) -> Self {
             self.0.insert(PathBuf::from(path), text.to_owned());
             self
         }
     }
-
     impl Files for Fake {
         fn read(&self, path: &Path) -> Option<String> {
             self.0.get(path).cloned()
@@ -346,15 +316,12 @@ mod tests {
                 .collect()
         }
     }
-
     fn read(fake: &Fake) -> Vec<ConfigHost> {
         hosts(&PathBuf::from("/h/.ssh/config"), &PathBuf::from("/h"), fake)
     }
-
     fn ids(found: &[ConfigHost]) -> Vec<&str> {
         found.iter().map(|one| one.id.as_str()).collect()
     }
-
     #[test]
     fn a_host_is_a_name_and_a_pattern_is_none() {
         let fake = Fake::default().with(
@@ -362,7 +329,6 @@ mod tests {
             "Host *\n  ServerAliveInterval 30\n\nHost pi raspberry\n  HostName 10.0.0.5\n  User emil\n  Port 2222\n\nHost *.eth.ch !bad.eth.ch\n  User vinu\n\nHost web? db\n  HostName db.example.com\n",
         );
         let found = read(&fake);
-
         assert_eq!(ids(&found), vec!["pi", "db"]);
         assert_eq!(found[0].also, vec!["raspberry"]);
         assert_eq!(found[0].hostname.as_deref(), Some("10.0.0.5"));
@@ -370,7 +336,6 @@ mod tests {
         assert_eq!(found[0].port, Some(2222));
         assert!(found[1].also.is_empty());
     }
-
     #[test]
     fn match_blocks_are_skipped_whole() {
         let fake = Fake::default().with(
@@ -378,12 +343,10 @@ mod tests {
             "Match host pi exec \"true\"\n  User root\n  HostName wrong\n\nHost pi\n  HostName right\n",
         );
         let found = read(&fake);
-
         assert_eq!(ids(&found), vec!["pi"]);
         assert_eq!(found[0].hostname.as_deref(), Some("right"));
         assert!(found[0].user.is_none());
     }
-
     #[test]
     fn the_first_value_wins_and_a_host_named_twice_is_one() {
         let fake = Fake::default().with(
@@ -391,12 +354,10 @@ mod tests {
             "Host pi\n  User first\nHost pi\n  User second\n  HostName pi.local\n",
         );
         let found = read(&fake);
-
         assert_eq!(ids(&found), vec!["pi"]);
         assert_eq!(found[0].user.as_deref(), Some("first"));
         assert_eq!(found[0].hostname.as_deref(), Some("pi.local"));
     }
-
     #[test]
     fn equals_signs_quotes_and_case_are_read_as_ssh_reads_them() {
         let fake = Fake::default().with(
@@ -404,12 +365,10 @@ mod tests {
             "HOST=box\n  hostname = \"box.example.com\"\n  USER=me # who\n",
         );
         let found = read(&fake);
-
         assert_eq!(ids(&found), vec!["box"]);
         assert_eq!(found[0].hostname.as_deref(), Some("box.example.com"));
         assert_eq!(found[0].user.as_deref(), Some("me"));
     }
-
     #[test]
     fn includes_are_followed_in_order_once_and_grouped_by_their_file() {
         let fake = Fake::default()
@@ -425,14 +384,12 @@ mod tests {
             .with("/h/.ssh/config.d/.hidden", "Host secret\n")
             .with("/h/.ssh/extra", "# Lab\nHost lab1\n");
         let found = read(&fake);
-
         assert_eq!(ids(&found), vec!["pi", "office", "lab1", "last"]);
         assert_eq!(found[0].group.as_deref(), Some("a-home"));
         assert_eq!(found[1].group.as_deref(), Some("b-work"));
         assert_eq!(found[2].group.as_deref(), Some("Lab"));
         assert!(found[3].group.is_none());
     }
-
     #[test]
     fn a_heading_comment_groups_the_hosts_under_it() {
         let fake = Fake::default().with(
@@ -440,7 +397,6 @@ mod tests {
             "# Added by somebody's installer, a sentence far too long to be a group name\n\nHost loose\n\n## Work ##\nHost office\n\nHost build\n\n# --- Home ---\n\nHost pi\n\n# Host old\n# HostName old.example\nHost nas\n  # User root\n",
         );
         let found = read(&fake);
-
         assert_eq!(ids(&found), vec!["loose", "office", "build", "pi", "nas"]);
         let groups: Vec<Option<&str>> = found.iter().map(|one| one.group.as_deref()).collect();
         assert_eq!(
@@ -448,7 +404,6 @@ mod tests {
             vec![None, Some("Work"), Some("Work"), Some("Home"), Some("Home")]
         );
     }
-
     #[test]
     fn an_included_file_is_its_own_group_under_any_heading() {
         let fake = Fake::default()
@@ -458,22 +413,18 @@ mod tests {
             )
             .with("/h/.ssh/lab.conf", "Host bench\n");
         let found = read(&fake);
-
         assert_eq!(ids(&found), vec!["office", "bench"]);
         assert_eq!(found[1].group.as_deref(), Some("lab"));
     }
-
     #[test]
     fn a_config_that_includes_itself_ends() {
         let fake = Fake::default().with("/h/.ssh/config", "Include config\nHost pi\n");
         assert_eq!(ids(&read(&fake)), vec!["pi"]);
     }
-
     #[test]
     fn no_config_is_no_hosts() {
         assert!(read(&Fake::default()).is_empty());
     }
-
     #[test]
     fn a_file_name_pattern_matches_as_glob_does() {
         assert!(matches("*", "work"));

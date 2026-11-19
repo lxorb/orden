@@ -4,14 +4,11 @@
   import { tick } from '../../ui-controls/src/api'
 
   const { onerase }: { onerase: () => void } = $props()
-
   const WAYS = [
     { whole: true, word: () => 'Stroke', title: () => 'A whole stroke at a touch' },
     { whole: false, word: () => 'Area', title: () => 'Only what is under the nib' },
   ] as const
-
   const wide = $derived(pens.whole ? pens.strokeRub : pens.rub)
-
   function way(whole: boolean) {
     tick()
     pens.rubbing({ whole })
@@ -68,18 +65,15 @@
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .wide {
     display: flex;
     align-items: center;
     gap: var(--space-3);
   }
-
   .wide :global(.dial) {
     flex: 1;
     min-width: 0;
   }
-
   .ring {
     flex: none;
     box-sizing: border-box;
@@ -92,7 +86,6 @@
       width var(--dur-fast) var(--ease-out),
       height var(--dur-fast) var(--ease-out);
   }
-
   .all {
     min-height: 34px;
     border: none;
@@ -103,11 +96,9 @@
     font-size: var(--text-sm);
     cursor: default;
   }
-
   .all:active {
     background: color-mix(in srgb, var(--danger) 20%, transparent);
   }
-
   :global([data-touch]) .all {
     min-height: var(--touch-target);
     font-size: var(--touch-text);

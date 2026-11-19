@@ -12,7 +12,6 @@ import {
 } from './hold-wire'
 
 const bytes = (text: string) => new TextEncoder().encode(text)
-
 const hello: Hello = {
   t: 'hello',
   v: HOLD_VERSION,
@@ -25,7 +24,6 @@ const hello: Hello = {
   rows: 30,
   exited: null,
 }
-
 function through(frame: FromHolder | ToHolder) {
   const raws = new Frames().push(frameOf(frame))
   expect(raws).toHaveLength(1)
@@ -33,7 +31,6 @@ function through(frame: FromHolder | ToHolder) {
   if (!raw) throw new Error('no frame')
   return { from: fromHolderOf(raw), to: toHolderOf(raw) }
 }
-
 test('every frame a holder says reads back as it was said, and as nothing it is told', () => {
   for (const frame of [
     hello,
@@ -47,7 +44,6 @@ test('every frame a holder says reads back as it was said, and as nothing it is 
     if (frame.t !== 'out') expect(to).toBeNull()
   }
 })
-
 test('every frame a holder is told reads back as it was told', () => {
   for (const frame of [
     { t: 'attach', since: 0 },
@@ -58,7 +54,6 @@ test('every frame a holder is told reads back as it was told', () => {
     expect(through(frame).to).toEqual(frame)
   }
 })
-
 test('frames come out whole however the socket cut them, and in order', () => {
   const stream = new Uint8Array([
     ...frameOf(hello),
@@ -75,13 +70,11 @@ test('frames come out whole however the socket cut them, and in order', () => {
     expect(read[2]).toEqual({ t: 'out', seq: 303, data: bytes('two') })
   }
 })
-
 test('a length no frame has breaks the stream, which is then dropped', () => {
   const frames = new Frames()
   expect(frames.push(new Uint8Array([0xff, 0xff, 0xff, 0xff, 1]))).toEqual([])
   expect(frames.broken).toBe(true)
 })
-
 test('a hello that says what no hello is, or a newer kind, is passed over', () => {
   const said = (value: unknown) => {
     const [raw] = new Frames().push(frameOf(hello))
@@ -96,7 +89,6 @@ test('a hello that says what no hello is, or a newer kind, is passed over', () =
   expect(fromHolderOf({ kind: 99, body: bytes('{}') })).toBeNull()
   expect(toHolderOf({ kind: 99, body: bytes('{}') })).toBeNull()
 })
-
 test('what a holder runs is read back whole, and anything else is no spec', () => {
   const spec = {
     socket: '/var/lib/ordend/holds/s_1.sock',

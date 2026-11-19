@@ -3,9 +3,7 @@ import { isEffort } from '../chat/effort'
 import { type Effort, type Mode, modeIn } from '../../../ai-providers/src/api'
 
 export type NoteKind = 'command' | 'agent' | 'output-style'
-
 export const NOTE_KEYS: readonly NoteKind[] = ['command', 'agent', 'output-style']
-
 export interface NoteCommand {
   kind: NoteKind
   name: string
@@ -18,11 +16,9 @@ export interface NoteCommand {
   arguments: string[]
   tools: string[]
 }
-
 function withMode(mode: Mode | null): { mode?: Mode } {
   return mode ? { mode } : {}
 }
-
 export function commandName(value: string): string {
   return value
     .trim()
@@ -31,7 +27,6 @@ export function commandName(value: string): string {
     .replace(/\s+/g, '-')
     .replace(/[^\p{L}\p{N}_-]/gu, '')
 }
-
 export function rolesOf(path: string, text: string): NoteCommand[] {
   const body = stripFrontMatter(text).trim()
   const value = (name: string) => frontMatterValue(text, name) ?? undefined
@@ -54,7 +49,6 @@ export function rolesOf(path: string, text: string): NoteCommand[] {
     return name ? [{ kind, name, ...shared }] : []
   })
 }
-
 export function splitArgs(args: string): string[] {
   const out: string[] = []
   for (const found of args.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)) {
@@ -62,7 +56,6 @@ export function splitArgs(args: string): string[] {
   }
   return out
 }
-
 export function expand(command: Pick<NoteCommand, 'body' | 'arguments'>, args: string): string {
   const words = splitArgs(args)
   const used = { any: false }

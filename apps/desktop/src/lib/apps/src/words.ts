@@ -31,17 +31,14 @@ export function programOf(line: string): { path: string; args: string[] } | null
   const [path, ...args] = words
   return path ? { path, args } : null
 }
-
 export const mayHost = (platform: string): boolean =>
   platform === 'linux' || platform === 'windows' || platform === 'macos'
-
 export interface Computer {
   id: string
   name: string
   platform: string
   current: boolean
 }
-
 export function hostChoices(
   computers: readonly Computer[],
   here: (device: string) => string,

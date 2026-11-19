@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import atexit
 import ctypes
@@ -17,39 +16,29 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
-
 from probe_app import run_probe, sized
 
 PORT_FROM = 22300
 PORT_TO = 22399
-
 SPACES_DIR = "ORDEN_SPACES_DIR"
-
 SPACE = "Web switch probe"
 NOTE = "Idea"
 WEB = "A page in a tab"
 OTHER = "Another page in a tab"
-
 DOWN = 1200
-
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
-
 def windows_of(pid: int) -> list[int]:
-
     assert user32 is not None
     found: list[int] = []
-
     def each(hwnd: int, _lparam: int) -> bool:
         owner = wintypes.DWORD()
         user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
         if owner.value == pid and user32.IsWindowVisible(hwnd):
             found.append(hwnd)
         return True
-
     kind = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
     user32.EnumWindows(kind(each), 0)
     return found
-
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         with socket.socket() as sock:
@@ -59,9 +48,7 @@ def free_port() -> int:
                 continue
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
-
 def page(name: str) -> bytes:
-
     return f"""<!doctype html>
 <title>{name}</title>
 <body style="margin:0;font:16px system-ui">
@@ -69,13 +56,10 @@ def page(name: str) -> bytes:
 <div style="height:9000px;background:linear-gradient(#fff,#048)"></div>
 </body>
 """.encode()
-
 class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
-
 def serve(port: int) -> Server:
     pages = {"/page": page(WEB), "/other": page(OTHER)}
-
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - the base class names it
             body = pages.get(self.path)
@@ -83,21 +67,16 @@ def serve(port: int) -> Server:
             self.send_header("content-type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write(body or b"no")
-
         def log_message(self, *_args: object) -> None:
             return
-
     made = Server(("127.0.0.1", port), Handler)
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
-
 def spaces_root() -> pathlib.Path:
-
     made = pathlib.Path(tempfile.mkdtemp(prefix="orden-switch-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made
-
 def shortcut(url: str, title: str) -> str:
     return (
         "[InternetShortcut]\r\n"
@@ -105,7 +84,6 @@ def shortcut(url: str, title: str) -> str:
         f"Title={title}\r\n"
         "Orden-Added=2026-09-13T08:00:00.000Z\r\n"
     )
-
 def space(port: int) -> pathlib.Path:
     made = spaces_root() / SPACE
     shutil.rmtree(made, ignore_errors=True)
@@ -125,21 +103,17 @@ def space(port: int) -> pathlib.Path:
             encoding="utf-8",
         )
     return made
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
-
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
-
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     for one in (config_dir(identifier), local_dir(identifier)):
         shutil.rmtree(one, ignore_errors=True)
-
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
     path = config_dir(identifier) / "automation.json"
     until = time.perf_counter() + seconds
@@ -152,14 +126,11 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
             pass
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
-
 def allow_eval(identifier: str) -> None:
-
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8"))
     said["eval"] = True
     path.write_text(json.dumps(said), encoding="utf-8")
-
 def act(port: int, secret: str, verb: str, args: dict[str, object], seconds: float = 90) -> object:
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
@@ -174,21 +145,16 @@ def act(port: int, secret: str, verb: str, args: dict[str, object], seconds: flo
         return {"ok": False, "error": f"{refused.code} {refused.read().decode('utf-8', 'replace')}"}
     except Exception as error:  # noqa: BLE001 - a frozen app fails in its own ways
         return {"ok": False, "error": f"no answer: {error}"}
-
 class App:
-
     def __init__(self, port: int, secret: str) -> None:
         self.port = port
         self.secret = secret
-
     def open(self, path: str, space: str | None = None) -> object:
         args: dict[str, object] = {"path": path}
         if space:
             args["space"] = space
         return act(self.port, self.secret, "open", args)
-
     def ask(self, code: str, seconds: float = 90) -> object:
-
         said = act(self.port, self.secret, "eval", {"code": code, "yes": True}, seconds)
         if not isinstance(said, dict) or not said.get("ok"):
             return {"error": said}
@@ -199,12 +165,10 @@ class App:
             except ValueError:
                 return value
         return value
-
 TABS = """JSON.stringify(orden.workspace.tabs.map((one) => ({
   id: one.id, kind: one.kind, name: one.name, path: one.path,
   showing: one.id === orden.workspace.activeTabId, address: one.address ?? null,
 })))"""
-
 def tab_of(app: App, name: str) -> str | None:
     said = app.ask(TABS)
     if not isinstance(said, list):
@@ -213,7 +177,6 @@ def tab_of(app: App, name: str) -> str | None:
         if isinstance(one, dict) and str(one.get("name", "")).startswith(name):
             return str(one.get("id"))
     return None
-
 LIVE = """(async () => {
   try {
     await window.__TAURI_INTERNALS__.invoke('web_place', {
@@ -224,11 +187,9 @@ LIVE = """(async () => {
     return JSON.stringify({ live: false, said: String(error) })
   }
 })()"""
-
 def live(app: App, tab: str) -> bool:
     said = app.ask(LIVE % tab)
     return isinstance(said, dict) and said.get("live") is True
-
 def until_live(app: App, tab: str, seconds: float) -> float | None:
     began = time.perf_counter()
     while time.perf_counter() - began < seconds:
@@ -236,7 +197,6 @@ def until_live(app: App, tab: str, seconds: float) -> float | None:
             return (time.perf_counter() - began) * 1000
         time.sleep(0.05)
     return None
-
 def place(app: App, tab: str) -> object:
     return app.ask(
         """(async () => {
@@ -248,9 +208,7 @@ def place(app: App, tab: str) -> object:
 })()"""
         % tab
     )
-
 def scroll(app: App, tab: str, down: int) -> object:
-
     return app.ask(
         """(async () => {
   try {
@@ -262,15 +220,11 @@ def scroll(app: App, tab: str, down: int) -> object:
 })()"""
         % (tab, down)
     )
-
 def lit(app: App) -> object:
-
     return app.ask(
         "JSON.stringify(!document.querySelector('.webbar button[aria-label=\"Back\"]').disabled)"
     )
-
 def memory(pid: int) -> int:
-
     script = (
         "$all = Get-CimInstance Win32_Process |"
         " Select-Object ProcessId,ParentProcessId,WorkingSetSize;"
@@ -294,13 +248,11 @@ def memory(pid: int) -> int:
         return int((out.stdout or "0").strip() or 0)
     except (OSError, ValueError, subprocess.SubprocessError):
         return 0
-
 def launch(
     exe: pathlib.Path, identifier: str, unlike: int = 0
 ) -> tuple[subprocess.Popen[bytes], App, int]:
     app = run_probe(exe, quiet=True)
     port, secret = endpoint(identifier, 90, unlike)
-
     hwnd = 0
     until = time.perf_counter() + 90
     while time.perf_counter() < until and not hwnd:
@@ -309,26 +261,21 @@ def launch(
         time.sleep(0.2)
     if not hwnd:
         raise SystemExit("the app never showed a window")
-
     sized(hwnd, 1280, 860)
     time.sleep(1.5)
     return app, App(port, secret), hwnd
-
 def main() -> int:
     if sys.platform != "win32":
         print("this probe drives a Windows build")
         return 0
-
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
     parsed.add_argument("--identifier", default="so.orden.Orden.probe")
     args = parsed.parse_args()
-
     wipe(args.identifier)
     port = free_port()
     server = serve(port)
     made = space(port)
-
     said: dict[str, object] = {}
     running = None
     try:
@@ -337,12 +284,9 @@ def main() -> int:
         running.wait(timeout=30)
         allow_eval(args.identifier)
         time.sleep(1)
-
         running, app, _ = launch(args.exe, args.identifier, unlike=app.port)
-
         app.open(f"{NOTE}.md", SPACE)
         time.sleep(3)
-
         began = time.perf_counter()
         app.open(f"{WEB}.url")
         web = None
@@ -353,22 +297,18 @@ def main() -> int:
             raise SystemExit("the app never opened the website")
         said["cold ms"] = until_live(app, web, 90)
         said["cold total ms"] = (time.perf_counter() - began) * 1000
-
         time.sleep(2)
         said["scrolled"] = scroll(app, web, DOWN)
         time.sleep(1)
         said["the place"] = place(app, web)
-
         app.open(f"{NOTE}.md")
         time.sleep(1.5)
         said["kept on a switch"] = live(app, web)
-
         began = time.perf_counter()
         app.open(f"{WEB}.url")
         said["note to web ms"] = until_live(app, web, 90)
         time.sleep(1.5)
         said["note to web kept the place"] = place(app, web)
-
         app.open(f"{OTHER}.url")
         other = tab_of(app, OTHER)
         said["web to web ms"] = until_live(app, other, 90) if other else None
@@ -377,7 +317,6 @@ def main() -> int:
         app.open(f"{WEB}.url")
         said["back to the first ms"] = until_live(app, web, 90)
         said["back to the first kept the place"] = place(app, web)
-
         app.ask(
             "window.__TAURI_INTERNALS__.invoke('web_navigate', { tab: '"
             + web
@@ -388,7 +327,6 @@ def main() -> int:
         time.sleep(4)
         said["the trail after following a link"] = place(app, web)
         said["back is lit"] = lit(app)
-
         for index in range(10):
             app.open(f"Site {index}.url")
             time.sleep(1.5)
@@ -397,9 +335,7 @@ def main() -> int:
         said["live with ten"] = app.ask(
             "JSON.stringify(orden.workspace.tabs.filter((one) => one.kind === 'web').length)"
         )
-
         said["the file"] = (made / f"{WEB}.url").read_text(encoding="utf-8").replace("\r\n", " | ")
-
         running.terminate()
         running.wait(timeout=30)
         time.sleep(2)
@@ -419,12 +355,9 @@ def main() -> int:
         if running is not None:
             running.terminate()
         server.shutdown()
-
     for name, value in said.items():
         shown = f"{value:.0f}" if isinstance(value, float) else json.dumps(value)
         print(f"{name}: {shown}")
-
     return 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -2,7 +2,6 @@ import type { Event, Posting, Role } from './types'
 
 export type Action =
   'read' | 'post' | 'edit-own' | 'delete-own' | 'delete-any' | 'pin' | 'topic' | 'posting' | 'slowmode'
-
 export function may(role: Role | null, action: Action, posting: Posting): boolean {
   if (role === null) return false
   switch (action) {
@@ -21,7 +20,6 @@ export function may(role: Role | null, action: Action, posting: Posting): boolea
       return role === 'owner'
   }
 }
-
 export function actionsOf(event: Event, mine: boolean): Action[] {
   switch (event.kind) {
     case 'post':
@@ -44,7 +42,6 @@ export function actionsOf(event: Event, mine: boolean): Action[] {
     }
   }
 }
-
 export function mayEvent(role: Role | null, event: Event, mine: boolean, posting: Posting): boolean {
   const actions = actionsOf(event, mine)
   return actions.length > 0 && actions.every((action) => may(role, action, posting))

@@ -2,47 +2,34 @@ import { needPort } from '@orden/contracts'
 import { assetRoute, assetStorePath } from './asset-route'
 
 const PHONES = new Set<string>(['android', 'ios'])
-
 export const isNative = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
 export function platform(): string {
   if (typeof window === 'undefined') return ''
-
   const os = (window as { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } }).__TAURI_OS_PLUGIN_INTERNALS__
   const found = os?.platform ?? ''
-
   if (!found && isNative) {
     console.error(
       'Orden cannot tell which operating system it is on: window.__TAURI_OS_PLUGIN_INTERNALS__.platform is not there, and the os plugin registered in src-tauri/src/lib.rs is what writes it.',
     )
   }
-
   return found
 }
-
 export const isMobile = isNative && PHONES.has(platform())
-
 export const isDesktop = isNative && !isMobile
-
 if (isNative) void import('../../crate/src/api')
-
 export const asking = new Map<number, { command: string; at: number }>()
 let calls = 0
-
 export const internal: {
   routed: ((command: string, args?: Record<string, unknown>) => boolean) | null
   file: ((path: string) => string | null) | null
   flush: (() => Promise<void>) | null
 } = { routed: null, file: null, flush: null }
-
 const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
-
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   if (!isNative) return needPort('backend.web').invoke<T>(command, args)
   if (internal.routed?.(command, args) || (isDesktop && SPACE_COMMANDS.has(command))) {
     return needPort('backend.internal').invoke<T>(command, args)
   }
-
   const call = ++calls
   asking.set(call, { command, at: performance.now() })
   try {
@@ -52,7 +39,6 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
     asking.delete(call)
   }
 }
-
 interface WindowLike {
   minimize(): Promise<void>
   toggleMaximize(): Promise<void>
@@ -69,7 +55,6 @@ interface WindowLike {
   onCloseRequested(handler: (event: { preventDefault(): void }) => void): Promise<() => void>
   onResized(handler: () => void): Promise<() => void>
 }
-
 const browserWindow: WindowLike = {
   minimize: () => Promise.resolve(),
   toggleMaximize: () => Promise.resolve(),
@@ -99,7 +84,6 @@ const browserWindow: WindowLike = {
       })
       if (asked.prevent) event.preventDefault()
     }
-
     window.addEventListener('beforeunload', listener)
     return Promise.resolve(() => window.removeEventListener('beforeunload', listener))
   },
@@ -108,68 +92,51 @@ const browserWindow: WindowLike = {
     return Promise.resolve(() => window.removeEventListener('resize', handler))
   },
 }
-
 export async function currentWindow(): Promise<WindowLike> {
   if (!isNative) return browserWindow
-
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
   return Object.assign(Object.create(getCurrentWindow()) as WindowLike, {
     setFullscreen: (on: boolean) => invoke<undefined>('window_fullscreen', { on }),
     isFullscreen: () => invoke<boolean>('window_is_fullscreen'),
   })
 }
-
 export async function closeWindow(): Promise<void> {
   if (isDesktop) await (await currentWindow()).close()
 }
-
 export function assetUrl(path: string): string {
   if (!isNative) return assetRoute(path)
-
   const internals = (window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } })
     .__TAURI_INTERNALS__
-
   const file = internal.file?.(path) ?? path
   return internals?.convertFileSrc?.(file) ?? file
 }
-
 const ASSET_PROTOCOL = /^(?:asset:\/\/localhost\/|https?:\/\/asset\.localhost\/)/i
-
 export function assetPath(url: string): string | null {
   if (!isNative) return assetStorePath(url)
   if (!ASSET_PROTOCOL.test(url)) return null
-
   try {
     return decodeURIComponent(url.replace(ASSET_PROTOCOL, '').split(/[?#]/)[0] ?? '') || null
   } catch {
     return null
   }
 }
-
 export function joinPath(dir: string, relative: string): string {
   const separator = dir.includes('\\') ? '\\' : '/'
   return `${dir}${separator}${relative.split('/').join(separator)}`
 }
-
 const OPENABLE = /^(?:https?|mailto|tel):/i
-
 export const isOpenable = (url: string): boolean => url.startsWith('//') || OPENABLE.test(url)
-
 export async function openExternal(url: string): Promise<void> {
   if (!isOpenable(url)) return
-
   if (!isNative) {
     window.open(url, '_blank', 'noopener')
     return
   }
-
   const { openUrl } = await import('@tauri-apps/plugin-opener')
   await openUrl(url)
 }
-
 export function whenScreenGivenBack(given: () => void): () => void {
   if (typeof document === 'undefined' || !document.fullscreenElement) return () => undefined
-
   const heard = () => {
     if (document.fullscreenElement) return
     stop()

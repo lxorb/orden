@@ -65,7 +65,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .tag {
     display: inline-flex;
     align-items: center;
@@ -77,26 +76,22 @@
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .tag.toned {
     background: color-mix(in srgb, var(--pill) 22%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
   }
-
   .tag.muted {
     background: none;
     box-shadow: inset 0 0 0 1px var(--line-strong);
     color: var(--muted-strong);
     font-weight: var(--weight-row);
   }
-
   .name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .circle {
     flex: none;
     box-sizing: border-box;
@@ -106,7 +101,6 @@
     border-radius: 50%;
     background: color-mix(in srgb, var(--pill, var(--muted)) 30%, transparent);
   }
-
   .plain {
     min-width: 0;
     overflow: hidden;
@@ -115,11 +109,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .head.circled {
     gap: var(--space-2);
   }
-
   .count.badge {
     height: 18px;
     padding: 0 6px;
@@ -128,7 +120,6 @@
     color: var(--muted-strong);
     font-size: var(--text-xs);
   }
-
   .about {
     margin: 0;
     padding: 0 var(--space-3) var(--space-1);
@@ -139,7 +130,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .count {
     flex: none;
     padding: 0 var(--space-1);
@@ -153,39 +143,32 @@
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .sum {
     margin-inline-start: var(--space-2);
     white-space: nowrap;
   }
-
   @media (hover: hover) {
     .count:hover {
       background: var(--surface-hover);
     }
   }
-
   .spring {
     flex: 1;
   }
-
   .tool {
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .head:hover .tool,
   .head:focus-within .tool,
   :global([data-touch]) .tool {
     opacity: 1;
   }
-
   .dots {
     width: var(--icon-md);
     height: var(--icon-md);
     fill: currentColor;
   }
-
   .plus {
     width: var(--icon-sm);
     height: var(--icon-sm);

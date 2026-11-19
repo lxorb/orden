@@ -7,14 +7,10 @@ interface Kept {
   who: string | null
   patch: AccountSettings
 }
-
 const said = (value: unknown) => JSON.stringify(value)
-
 export class AccountOwed {
   sends = 0
-
   session = 0
-
   constructor(private readonly key: string) {
     account.forgetWithSession(() => {
       this.session++
@@ -24,7 +20,6 @@ export class AccountOwed {
       if (this.kept?.who === null) forget(this.key)
     })
   }
-
   private get kept(): Kept | null {
     const kept = stored(this.key)
     if (!isRecord(kept)) return null
@@ -33,17 +28,14 @@ export class AccountOwed {
       patch: isRecord(kept.patch) ? kept.patch : {},
     }
   }
-
   private get mine(): Kept | null {
     const kept = this.kept
     const who = account.user?.id ?? null
     return kept && (kept.who === null || who === null || kept.who === who) ? kept : null
   }
-
   get standing(): boolean {
     return this.mine !== null
   }
-
   send(patch: AccountSettings): void {
     this.sends++
     if (account.noAccountForSure) return
@@ -52,19 +44,15 @@ export class AccountOwed {
       who: account.user?.id ?? mine?.who ?? null,
       patch: { ...mine?.patch, ...patch },
     })
-
     const token = account.accountToken
     if (token) void this.settle(token)
   }
-
   async settle(token: string): Promise<void> {
     const owed = this.mine?.patch ?? {}
     if (!Object.keys(owed).length) return
-
     const session = this.session
     if (!(await this.delivered(token, owed, session))) return
     if (this.session !== session) return
-
     const mine = this.mine
     const rest = Object.fromEntries(
       Object.entries(mine?.patch ?? {}).filter(
@@ -74,7 +62,6 @@ export class AccountOwed {
     if (Object.keys(rest).length) keepJson(this.key, { who: mine?.who ?? null, patch: rest })
     else forget(this.key)
   }
-
   private async delivered(token: string, patch: AccountSettings, session: number): Promise<boolean> {
     try {
       await api.saveSettings(token, patch)

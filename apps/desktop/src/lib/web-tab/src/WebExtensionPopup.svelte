@@ -5,12 +5,10 @@
   import { extensions, type Popped } from './extensions.svelte'
 
   const { popped, right, from }: { popped: Popped; right: number; from?: HTMLElement | null } = $props()
-
   let size = $state<{ width: number; height: number } | null>(null)
   let inside = $state<HTMLElement>()
   let bubble = $state<HTMLElement>()
   let label: string | null = null
-
   $effect(() =>
     overlays.show(
       () => extensions.close(popped),
@@ -19,7 +17,6 @@
       true,
     ),
   )
-
   function place() {
     const box = inside?.getBoundingClientRect()
     if (!box) return
@@ -27,11 +24,9 @@
       rect: { x: box.x, y: box.y, width: box.width, height: box.height },
     })
   }
-
   onMount(() => {
     let gone = false
     let unlisten: (() => void) | null = null
-
     void import('@tauri-apps/api/event')
       .then(({ listen }) =>
         listen<{ kind: string; width?: number; height?: number }>('orden://extension-popup', ({ payload }) => {
@@ -44,7 +39,6 @@
         else unlisten = stop
       })
       .catch(() => undefined)
-
     void extensions
       .build(popped, () => {
         const box = gone ? null : inside?.getBoundingClientRect()
@@ -52,7 +46,6 @@
       })
       .then((built) => (label = built))
     window.addEventListener('resize', place)
-
     return () => {
       gone = true
       unlisten?.()
@@ -60,7 +53,6 @@
       if (label) void invoke('extension_popup_close', { label }).catch(() => undefined)
     }
   })
-
   $effect(() => {
     if (size) requestAnimationFrame(place)
   })
@@ -93,11 +85,9 @@
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .popup.sized {
     opacity: 1;
   }
-
   .inside {
     max-width: 800px;
     max-height: 600px;

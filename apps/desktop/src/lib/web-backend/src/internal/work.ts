@@ -14,21 +14,17 @@ import { type Mounted, mountOf, mounts } from './roots'
 export const WORK = '.work'
 export const WORK_KEPT = '.work.json'
 const SAVE_AFTER = 1000
-
 export interface Was {
   size: number
   mtime: number
   modified: number
   dir?: true
 }
-
 export type Seen = Record<string, Was>
-
 export interface Stamp {
   size: number
   mtime: number
 }
-
 export interface WorkDisk {
   readonly root: string
   list(): Promise<Listed[]>
@@ -43,32 +39,25 @@ export interface WorkDisk {
   loadSeen(): Promise<string | null>
   saveSeen(text: string): Promise<void>
 }
-
 const JUNK = /^(~\$|thumbs\.db$|desktop\.ini$|Icon\r$)/i
-
 export function carried(rel: string): boolean {
   if (rel === '.Inbox.md') return true
   return rel.split('/').every((part) => !!part && !part.startsWith('.') && !JUNK.test(part))
 }
-
 const spelled = (path: string) => path.replace(/\\/g, '/').replace(/\/+$/, '')
-
 function relOf(root: string, path: string): string | null {
   const base = spelled(root)
   const at = spelled(path)
   if (at === base) return ''
   return at.startsWith(`${base}/`) ? at.slice(base.length + 1) : null
 }
-
 const encoder = new TextEncoder()
 const decoder = new TextDecoder('utf-8', { ignoreBOM: true })
-
 function same(one: Uint8Array | null, other: Uint8Array | null): boolean {
   if (one?.byteLength !== other?.byteLength || !one || !other) return one === other
   for (let at = 0; at < one.byteLength; at += 1) if (one[at] !== other[at]) return false
   return true
 }
-
 function seenOf(text: string | null): Seen {
   if (!text) return {}
   try {
@@ -92,7 +81,6 @@ function seenOf(text: string | null): Seen {
     return {}
   }
 }
-
 function parentsOf(rel: string): string[] {
   const out: string[] = []
   for (let at = rel.lastIndexOf('/'); at > 0; at = rel.lastIndexOf('/', at - 1)) {
@@ -100,19 +88,16 @@ function parentsOf(rel: string): string[] {
   }
   return out
 }
-
 export class Mirror {
   private seen: Seen = {}
   private turn: Promise<unknown> = Promise.resolve()
   private saving: ReturnType<typeof setTimeout> | undefined
   private stops: (() => void)[] = []
   private stopped = false
-
   constructor(
     private readonly folder: InternalFolder,
     private readonly disk: WorkDisk,
   ) {}
-
   private queue<T>(run: () => Promise<T>): Promise<T> {
     const mine = this.turn.then(run, run)
     this.turn = mine.catch((error: unknown) => {
@@ -120,7 +105,6 @@ export class Mirror {
     })
     return mine
   }
-
   async start(): Promise<void> {
     const there = await this.disk.isDir('')
     if (!there) await this.disk.mkdir('')
@@ -138,33 +122,27 @@ export class Mirror {
     if (this.halted()) unwatch()
     else this.stops.push(unwatch)
   }
-
   async stop(): Promise<void> {
     this.stopped = true
     for (const stop of this.stops.splice(0)) stop()
     await this.turn
     await this.save()
   }
-
   private halted(): boolean {
     return this.stopped
   }
-
   settled(): Promise<void> {
     return this.turn.then(() => undefined)
   }
-
   private keep() {
     clearTimeout(this.saving)
     this.saving = setTimeout(() => void this.save(), SAVE_AFTER)
   }
-
   private async save() {
     clearTimeout(this.saving)
     this.saving = undefined
     await this.disk.saveSeen(JSON.stringify(this.seen)).catch(() => undefined)
   }
-
   private async storeBytes(rel: string): Promise<Uint8Array | null> {
     if (readsAsText(rel)) {
       const text = await this.folder.readText(rel)
@@ -172,12 +150,10 @@ export class Mirror {
     }
     return this.folder.read(rel)
   }
-
   private async intoStore(rel: string, bytes: Uint8Array) {
     if (readsAsText(rel)) await this.folder.write(rel, decoder.decode(bytes))
     else await this.folder.write(rel, bytes)
   }
-
   private record(rel: string, stamp: Stamp | null, dir = false) {
     const entry = this.folder.atNow(rel)
     if (!stamp || !entry) {
@@ -189,7 +165,6 @@ export class Mirror {
     this.seen[rel] = { ...stamp, modified: entry.modified, ...(dir ? { dir: true } : {}) }
     this.keep()
   }
-
   private async settle(only: ReadonlySet<string> | null): Promise<void> {
     const store = new Map<string, { dir: boolean; modified: number }>()
     for (const { path, entry } of await this.folder.list()) {
@@ -209,7 +184,6 @@ export class Mirror {
     ])
     const files = [...paths].filter((rel) => !(store.get(rel)?.dir ?? work.get(rel)?.dir ?? this.seen[rel]?.dir))
     for (const rel of files.sort()) await this.file(rel, store.get(rel), work.get(rel))
-
     const left = new Set<string>()
     for (const { path, entry } of await this.folder.list()) if (entry.key) left.add(path)
     for (const rel of Object.keys(this.seen)) if (!this.seen[rel]?.dir) left.add(rel)
@@ -220,7 +194,6 @@ export class Mirror {
       await this.dir(rel, store.get(rel), work.get(rel), holding.has(rel))
     }
   }
-
   private async stamped(only: ReadonlySet<string>): Promise<Listed[]> {
     const out: Listed[] = []
     for (const rel of only) {
@@ -231,7 +204,6 @@ export class Mirror {
     }
     return out
   }
-
   private async file(rel: string, store: { modified: number } | undefined, work: Stamp | undefined): Promise<void> {
     const was = this.seen[rel]
     const workChanged = work?.size !== was?.size || work?.mtime !== was?.mtime || !was
@@ -265,7 +237,6 @@ export class Mirror {
     }
     this.record(rel, null)
   }
-
   private async dir(
     rel: string,
     store: { modified: number } | undefined,
@@ -286,14 +257,12 @@ export class Mirror {
     }
     this.record(rel, store || work ? { size: 0, mtime: 0 } : null, true)
   }
-
   private async toStore(rel: string) {
     const bytes = await this.disk.read(rel)
     if (!bytes) return
     if (!same(bytes, await this.storeBytes(rel))) await this.intoStore(rel, bytes)
     this.record(rel, await this.disk.stamp(rel))
   }
-
   private async toWork(rel: string) {
     const bytes = await this.storeBytes(rel)
     if (!bytes) return
@@ -302,7 +271,6 @@ export class Mirror {
       : await this.disk.write(rel, bytes)
     this.record(rel, stamp)
   }
-
   private async fromStore(changes: readonly InternalChange[]) {
     if (this.stopped) return
     const touched = new Set<string>()
@@ -322,12 +290,10 @@ export class Mirror {
     }
     if (touched.size) await this.settle(touched)
   }
-
   private touch(touched: Set<string>, rel: string) {
     touched.add(rel)
     for (const seen of Object.keys(this.seen)) if (seen.startsWith(`${rel}/`)) touched.add(seen)
   }
-
   private async renamedInStore(from: string, to: string, dir: boolean): Promise<boolean> {
     const was = this.seen[from]
     if (!was || !carried(from) || !carried(to) || this.seen[to]) return false
@@ -339,7 +305,6 @@ export class Mirror {
     if (!dir) this.record(to, moved)
     return true
   }
-
   private moveSeen(from: string, to: string) {
     for (const rel of Object.keys(this.seen)) {
       if (rel !== from && !rel.startsWith(`${from}/`)) continue
@@ -349,7 +314,6 @@ export class Mirror {
     }
     this.keep()
   }
-
   private async fromWork(news: SpaceNews) {
     if (this.stopped) return
     if (news.scan) return this.settle(null)
@@ -367,7 +331,6 @@ export class Mirror {
     }
     if (touched.size) await this.settle(touched)
   }
-
   private async renamedInWork(from: string, to: string, now: Listed): Promise<boolean> {
     const was = this.seen[from]
     if (!was || !carried(from) || !carried(to) || this.seen[to]) return false
@@ -379,16 +342,13 @@ export class Mirror {
     return true
   }
 }
-
 export function workFolderOf(folder: string): string {
   const cut = folder.replace(/[\\/]+$/, '')
   const at = Math.max(cut.lastIndexOf('/'), cut.lastIndexOf('\\'))
   const home = at < 0 ? '' : cut.slice(0, at)
   return joinPath(home ? joinPath(home, WORK) : WORK, spelled(cut).split('/').pop() ?? '')
 }
-
 const taken = (path: string) => crate<boolean>('path_taken', { path }).catch(() => false)
-
 function crateDisk(folder: string): WorkDisk {
   const root = workFolderOf(folder)
   const at = (rel: string) => (rel ? joinPath(root, rel) : root)
@@ -431,16 +391,13 @@ function crateDisk(folder: string): WorkDisk {
       }),
   }
 }
-
 interface Held {
   ready: Promise<void>
   done: Promise<void>
   stop: AbortController
 }
-
 const held = new Map<string, Held>()
 const lockOf = (folder: string) => `orden:working:${folder}`
-
 function keep(mount: Mounted, disk: (folder: string) => WorkDisk = crateDisk): Held {
   const key = mount.folder.name
   const had = held.get(key)
@@ -484,7 +441,6 @@ function keep(mount: Mounted, disk: (folder: string) => WorkDisk = crateDisk): H
   })()
   return one
 }
-
 export async function workingPath(path: string): Promise<string | null> {
   const found = mountOf(path)
   if (!found) return null
@@ -492,24 +448,20 @@ export async function workingPath(path: string): Promise<string | null> {
   const root = workFolderOf(found.mount.folder.name)
   return found.inside ? joinPath(root, found.inside) : root
 }
-
 export async function diskPathOf(path: string): Promise<string> {
   return mountOf(path) ? ((await workingPath(path).catch(() => null)) ?? path) : path
 }
-
 export async function workingFolder(path: string): Promise<string | null> {
   const found = mountOf(path)
   const entry = found?.inside ? await found.mount.folder.at(found.inside) : null
   return workingPath(entry && !entry.key ? path : (found?.mount.root ?? path))
 }
-
 export async function keepWorking(root?: string): Promise<void> {
   const found = root === undefined ? null : mountOf(root)
   for (const mount of found ? [found.mount] : root === undefined ? mounts() : []) {
     if (await taken(workFolderOf(mount.folder.name))) keep(mount)
   }
 }
-
 export async function letGoWorking(folder: string, then?: 'gone') {
   const one = held.get(folder)
   held.delete(folder)
@@ -521,7 +473,6 @@ export async function letGoWorking(folder: string, then?: 'gone') {
     await crate('delete_folder', { path: workFolderOf(folder) }).catch(() => undefined)
   }
 }
-
 export async function movedWorking(from: string, to: string, root: string) {
   const was = workFolderOf(from)
   if (!(await taken(was))) return

@@ -1,5 +1,4 @@
 pub const STORES: &str = "web-stores";
-
 pub fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
     match orden_web_engine::StoreName::parse(asked) {
         Ok(Some(_)) => Ok(asked.filter(|name| !name.is_empty())),
@@ -7,7 +6,6 @@ pub fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
         Err(refused) => Err(refused.message),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::named;
@@ -18,7 +16,6 @@ mod tests {
         assert_eq!(named(None), Ok(None));
         assert_eq!(named(Some("")), Ok(None));
     }
-
     #[test]
     fn a_note_a_space_and_a_site_are_names() {
         assert_eq!(
@@ -36,7 +33,6 @@ mod tests {
             Ok(Some("site_7-a_xn--mnchen-3ya.de"))
         );
     }
-
     #[test]
     fn a_name_is_one_plain_folder() {
         for bad in [
@@ -58,7 +54,6 @@ mod tests {
         ] {
             assert!(named(Some(bad)).is_err(), "{bad} was taken");
         }
-
         let long = format!("space_{}", "a".repeat(LONGEST - 6));
         assert!(named(Some(&long)).is_ok());
         assert!(named(Some(&format!("{long}a"))).is_err());

@@ -61,22 +61,18 @@ async function rowsStore() {
   }
   return rows
 }
-
 function refused(error: unknown): never {
   if (error instanceof AgentError) throw new Refused(error.code, error.message)
   throw error
 }
-
 async function contextOf(): Promise<Context> {
   const { account } = await import('../../accounts/src/api')
   return { ...clockOf(new Date()), ...(account.name ? { me: account.name } : {}) }
 }
-
 function sourceOf(places: readonly Place[]): string | null {
   const shared = places.filter((place) => reachedByOthersIn(place.space.root))
   return shared.length ? `shared space ${shared.map((one) => one.space.name).join(', ')}` : null
 }
-
 async function baseAt(
   call: Call,
   name = 'path',
@@ -95,14 +91,12 @@ async function baseAt(
     throw new Refused('bad_arguments', `${relative} does not read as a base${where}`)
   }
 }
-
 async function baseToAnswer(call: Call, name = 'path') {
   const found = await baseAt(call, name)
   const base = guardedAt(found.base, onDisk(found.place, found.relative))
   if (!base) throw new Refused('bad_arguments', `${found.relative} could take too long to answer`)
   return { ...found, base }
 }
-
 function todoOut(todo: Todo) {
   return {
     id: todo.id,
@@ -117,33 +111,27 @@ function todoOut(todo: Todo) {
     ...(todo.subtasks.length ? { subtasks: todo.subtasks } : {}),
   }
 }
-
 function namedSpace(call: Call): TodoSpace | null {
   const named = maybe(call, 'space')
   if (named === null) return null
   const kept = workspace.spaces.find((one) => todoSpaceOf(one).id === named)
   return todoSpaceOf(placeFor(call, kept?.id ?? named).space)
 }
-
 const unreached = () => new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
-
 function openSpace(call: Call): TodoSpace | null {
   const thread = threadSpaceOf(call.caller)
   const open = workspace.spaces.find((one) => one.id === thread) ?? workspace.activeSpace ?? null
   if (!reachesSpace(call, open?.id ?? null)) throw unreached()
   return open ? todoSpaceOf(open) : null
 }
-
 function reachesTodoSpace(call: Call, id: string | null): boolean {
   if (reachesSpace(call, id)) return true
   return id !== null && workspace.spaces.some((one) => isTodoSpace(todoSpaceOf(one), id) && reachesSpace(call, one.id))
 }
-
 function textsOf(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined
   return value.filter((one): one is string => typeof one === 'string')
 }
-
 function dayArg(call: Call, name: string): string | null | undefined {
   const value = call.args[name]
   if (value === undefined) return undefined
@@ -151,7 +139,6 @@ function dayArg(call: Call, name: string): string | null | undefined {
   if (typeof value !== 'string') throw new Refused('bad_arguments', `${name} is a day as YYYY-MM-DD`)
   return value
 }
-
 function priorityArg(call: Call): Priority | undefined {
   const sent = call.args.priority
   if (sent === undefined) return undefined
@@ -159,9 +146,7 @@ function priorityArg(call: Call): Priority | undefined {
   if (!isPriority(value)) throw new Refused('bad_arguments', 'priority is 0, 1, 2 or 3')
   return value
 }
-
 type Mutable<T> = { -readonly [K in keyof T]: T[K] }
-
 function patchOf(call: Call): TodoPatch {
   const patch: Mutable<TodoPatch> = {}
   const title = maybe(call, 'title') ?? maybe(call, 'text')
@@ -180,7 +165,6 @@ function patchOf(call: Call): TodoPatch {
   if (call.args.done !== undefined && call.args.done !== null) patch.done = flag(call, 'done')
   return patch
 }
-
 export async function listTasks(call: Call): Promise<AgentAnswer> {
   const { todos, sortedTodos } = await import('../../tasks-model/src/api')
   const space = namedSpace(call)
@@ -201,7 +185,6 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
   )
   return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
 }
-
 export async function addTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await import('../../tasks-model/src/api')
   const title = maybe(call, 'title') ?? need(call, 'text')
@@ -214,7 +197,6 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
 }
-
 export async function updateTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await import('../../tasks-model/src/api')
   const id = maybe(call, 'id') ?? need(call, 'at')
@@ -228,11 +210,9 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   if (!kept.ok) throw new Refused('bad_arguments', kept.error.message)
   return done(todoOut(kept.value))
 }
-
 function writableNote(call: Call, path: string) {
   return noteOf({ ...call, args: { ...call.args, tab: null, path } }, true)
 }
-
 async function rewritten<T>(
   call: Call,
   note: ReturnType<typeof noteOf>,
@@ -250,7 +230,6 @@ async function rewritten<T>(
     }
   }
 }
-
 export async function queryBase(call: Call): Promise<AgentAnswer> {
   const yaml = maybe(call, 'yaml')
   const { place, base } =
@@ -275,7 +254,6 @@ export async function queryBase(call: Call): Promise<AgentAnswer> {
     refused(error)
   }
 }
-
 async function freePath(place: Place, folder: string, name: string): Promise<string> {
   for (let counter = 1; counter < 100; counter++) {
     const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
@@ -285,7 +263,6 @@ async function freePath(place: Place, folder: string, name: string): Promise<str
   }
   throw new Refused('exists', `${name} is taken a hundred times over in ${folder || 'the space'}`)
 }
-
 async function templateOf(place: Place, link: string | undefined, rows: readonly Row[]): Promise<string> {
   if (!link) return ''
   const wanted = link.toLowerCase().replace(/\.md$/i, '')
@@ -298,7 +275,6 @@ async function templateOf(place: Place, link: string | undefined, rows: readonly
   readable(onDisk(place, found.path), found.path)
   return (await workspace.noteText(onDisk(place, found.path))) ?? ''
 }
-
 export async function addRow(call: Call): Promise<AgentAnswer> {
   const { place, relative, base } = await baseAt(call, 'base')
   const properties = call.args.properties ?? {}
@@ -314,10 +290,8 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   const path = await freePath(place, folder, name)
   readable(onDisk(place, path), path)
   writableAt(place, onDisk(place, path))
-
   const question = await asked(call, null, `Make ${path} in ${place.space.name}`)
   if (question) return question
-
   try {
     const words = rowWords(
       filledTemplate(template, nameOf(path).replace(/\.md$/i, ''), clockOf(new Date())),
@@ -329,7 +303,6 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
     refused(error)
   }
 }
-
 export async function editRows(call: Call): Promise<AgentAnswer> {
   const paths = call.args.paths
   const properties = call.args.properties
@@ -340,10 +313,8 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', 'properties is an object of property names and values')
   }
   const named = paths.map((path) => writableNote(call, path))
-
   const question = await asked(call, null, `Set properties on ${named.length} notes`)
   if (question) return question
-
   const going = await stopWatch(call)
   const changed: string[] = []
   for (const note of named) {
@@ -360,7 +331,6 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
   }
   return done({ changed })
 }
-
 function baseEdited(base: Base, ops: unknown): Base {
   try {
     return editedBase(base, ops)
@@ -368,16 +338,13 @@ function baseEdited(base: Base, ops: unknown): Base {
     refused(error)
   }
 }
-
 export async function editBase(call: Call): Promise<AgentAnswer> {
   const { place, relative, base } = await baseAt(call)
   const path = onDisk(place, relative)
   writableAt(place, path)
   baseEdited(base, call.args.ops)
-
   const question = await asked(call, null, `Edit ${nameOf(relative)} in ${place.space.name}`)
   if (question) return question
-
   const { written, next } = await inTurn(path, async () => {
     const { text, base: now } = await baseAt(call)
     const next = baseEdited(now, call.args.ops)

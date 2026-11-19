@@ -7,9 +7,7 @@ interface Asked {
   answer: (vaults: { name: string; items: unknown[] }[]) => void
   fail: (error: Error) => void
 }
-
 const asked: Asked[] = []
-
 vi.mock('../../src/lib/pass-sync/src/import-file', () => ({
   isSealed: () => false,
   importedFrom: (_source: string, name: string) =>
@@ -21,22 +19,17 @@ vi.mock('../../src/lib/pass-sync/src/import-file', () => ({
       })
     }),
 }))
-
 vi.mock('../../src/lib/pass-sync/src/store.svelte', () => ({
   pass: { vaults: [], importItems: async () => ({ added: 0 }) },
 }))
-
 const { default: SettingsImport } = await import('../../src/lib/pass-ui/src/SettingsImport.svelte')
-
 let shown: ReturnType<typeof mount> | undefined
-
 afterEach(() => {
   if (shown) void unmount(shown)
   shown = undefined
   asked.length = 0
   document.body.innerHTML = ''
 })
-
 async function choose(name: string) {
   const input = document.querySelector<HTMLInputElement>('input[type=file]')
   if (!input) throw new Error('no file input')
@@ -48,37 +41,29 @@ async function choose(name: string) {
   input.dispatchEvent(new Event('change', { bubbles: true }))
   await settle()
 }
-
 test('a file read after another was chosen does not stand in for the one chosen last', async () => {
   shown = mount(SettingsImport, { target: document.body })
   flushSync()
-
   await choose('old.csv')
   await choose('new.csv')
   expect(asked.map((one) => one.name)).toEqual(['old.csv', 'new.csv'])
-
   asked[1]?.answer([{ name: 'New', items: [{}] }])
   await settle()
   asked[0]?.answer([{ name: 'Old', items: [{}, {}, {}] }])
   await settle()
-
   expect(document.body.textContent).toContain('new.csv')
   expect(document.body.textContent).toContain('New')
   expect(document.body.textContent).not.toContain('Old')
 })
-
 test('a read that fails after another file was chosen says nothing over it, and leaves it pressable', async () => {
   shown = mount(SettingsImport, { target: document.body })
   flushSync()
-
   await choose('old.csv')
   document.querySelector<HTMLButtonElement>('button.source')?.click()
   flushSync()
   asked[0]?.fail(new Error('This file could not be read.'))
   await settle()
-
   expect(document.querySelector('[role=alert]')).toBeNull()
-
   await choose('new.csv')
   asked[1]?.answer([{ name: 'New', items: [{}] }])
   await settle()

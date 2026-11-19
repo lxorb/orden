@@ -11,16 +11,13 @@
   import { TAB_KINDS } from '../../tab-kinds/src/api'
 
   const { tab }: { tab: Tab } = $props()
-
   const traits = $derived(TAB_KINDS[tab.kind])
   const mark = $derived(traits.mark)
   const page = $derived<WebPageSeen | null>(mark === 'web' ? webPages().of(tab.id) : null)
   const file = $derived(page && tab.path !== null ? readWebFile(tab.path, tab.doc) : null)
-
   const found = $derived(
     page && !wearsChosen(tab.path) ? siteMark(page.icon, page.url ?? tab.address ?? file?.url, file?.icon) : null,
   )
-
   const worn = $derived(agentMarks.on[tab.id] ?? null)
   const opened = $derived(tab.id in agentMarks.opened)
   const front = $derived(workspace.showing(tab.paneId)?.id === tab.id)
@@ -28,9 +25,7 @@
     if (!opened || !front) return
     agentMarks.opened = Object.fromEntries(Object.entries(agentMarks.opened).filter(([id]) => id !== tab.id))
   })
-
   let broken = $state(false)
-
   $effect(() => {
     if (found) broken = false
   })
@@ -89,18 +84,15 @@
     height: var(--icon-md);
     flex: none;
   }
-
   img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-
   .quiet {
     opacity: 0.8;
   }
-
   svg {
     display: block;
     width: 100%;
@@ -110,12 +102,10 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .turning svg {
     stroke-width: 1.6;
     animation: turn 1s linear infinite;
   }
-
   .agent svg {
     fill: var(--agent);
     stroke: var(--agent);
@@ -124,23 +114,19 @@
       fill var(--dur-base) var(--ease-out),
       stroke var(--dur-base) var(--ease-out);
   }
-
   .agent.resting svg {
     fill: var(--muted);
     stroke: var(--muted);
   }
-
   .graph {
     stroke-width: calc(1.6 * 13 / 24);
   }
-
   @media (prefers-reduced-motion: reduce) {
     .turning svg {
       animation: none;
       opacity: 0.6;
     }
   }
-
   @keyframes turn {
     to {
       transform: rotate(1turn);

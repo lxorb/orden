@@ -6,22 +6,18 @@ export interface Boot {
   bundle: string
   sshKey: string | null
 }
-
 const TOKEN = /^[A-Za-z0-9+/=_.-]{16,4096}$/
 const ZONE = /^[A-Za-z0-9_+-]+(\/[A-Za-z0-9_+-]+)*$/
 const SHA = /^[0-9a-f]{64}$/
 const SSH_KEY =
   /^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(256|384|521)|sk-ssh-ed25519@openssh\.com|sk-ecdsa-sha2-nistp256@openssh\.com) [A-Za-z0-9+/=]+( [^\r\n]{0,200})?$/
-
 export function sshKeyOf(value: string): string | null {
   const key = value.trim()
   return SSH_KEY.test(key) ? key : null
 }
-
 function block(lines: readonly string[]): string {
   return lines.map((line) => `      ${line}`).join('\n')
 }
-
 export function cloudInit(boot: Boot): string {
   if (!TOKEN.test(boot.secret) || !TOKEN.test(boot.tunnel)) {
     throw new Error('a machine secret that does not read')
@@ -30,7 +26,6 @@ export function cloudInit(boot: Boot): string {
   const origin = new URL(boot.origin).origin
   const zone = ZONE.test(boot.zone) ? boot.zone : 'UTC'
   const key = boot.sshKey === null ? null : sshKeyOf(boot.sshKey)
-
   const files = [
     `  - path: /etc/ordend/env
     owner: root:root
@@ -55,7 +50,6 @@ ${block([`ORDEN_ORIGIN=${origin}`])}`,
     content: |
 ${block([key])}`)
   }
-
   const bundle = `${origin}/v2/online/machine/${boot.bundle}.bin`
   const setUp = [
     'set -euo pipefail',
@@ -68,7 +62,6 @@ ${block([key])}`)
     'rm -rf /root/machine /root/machine.bin',
     'rm -f /var/lib/cloud/instance/user-data.txt /var/lib/cloud/instance/user-data.txt.i',
   ].join('; ')
-
   return `#cloud-config
 # An Orden online terminal machine.
 hostname: orden

@@ -14,7 +14,6 @@ interface Worn {
   paper: boolean
   bare: boolean
 }
-
 const NOTHING: Worn = {
   icon: null,
   iconColor: null,
@@ -23,7 +22,6 @@ const NOTHING: Worn = {
   paper: false,
   bare: false,
 }
-
 const wears = (path: string): boolean =>
   isMarkdownPath(path) ||
   isCanvasTarget(path) ||
@@ -31,7 +29,6 @@ const wears = (path: string): boolean =>
   isWebTarget(path) ||
   isChatTarget(path) ||
   isTermTarget(path)
-
 async function wornBy(path: string, content: string): Promise<Worn> {
   if (isWebTarget(path)) {
     const said = readWebFile(path, content)
@@ -43,25 +40,21 @@ async function wornBy(path: string, content: string): Promise<Worn> {
       address: said?.url ?? null,
     }
   }
-
   if (isChatTarget(path)) {
     if (__EVEN_PLUGIN__) return NOTHING
     const pointer = (await import('@orden/chats/pointer')).chatOf(content)
     return { ...NOTHING, icon: pointer?.icon ?? null, iconColor: pointer?.iconColor ?? null }
   }
-
   if (isTermTarget(path)) {
     if (__EVEN_PLUGIN__) return NOTHING
     const term = (await import('@orden/online/term')).termOf(content)
     return { ...NOTHING, icon: term?.icon ?? null, iconColor: term?.iconColor ?? null }
   }
-
   if (isCanvasTarget(path) || isPagesTarget(path)) {
     const { planeMarks } = await import('@orden/scan/canvas')
     const { icon, iconColor } = planeMarks(content)
     return { ...NOTHING, icon, iconColor }
   }
-
   return {
     ...NOTHING,
     icon: frontMatterValue(content, ICON_KEY),
@@ -69,29 +62,23 @@ async function wornBy(path: string, content: string): Promise<Worn> {
     bare: saysNothing(content, noteName(path)),
   }
 }
-
 async function holdsItsPaper(path: string): Promise<boolean> {
   const { paperOf } = await import('@orden/markdown/pages')
   return onDisk(paperOf(path))
 }
-
 class Elsewhere {
   private readonly held = new SvelteMap<string, Worn>()
   private readonly asked = new Map<string, { path: string }>()
-
   of(path: string): Worn | null {
     if (!wears(path)) return null
-
     const key = pathKey(path)
     const known = this.held.get(key)
     if (known || this.asked.has(key)) return known ?? null
-
     const asked = { path }
     this.asked.set(key, asked)
     queueMicrotask(() => void this.read(asked, key))
     return null
   }
-
   private async read(asked: { path: string }, key: string) {
     const { path } = asked
     const [content, paper] = await Promise.all([
@@ -101,18 +88,15 @@ class Elsewhere {
     const worn = content === null ? NOTHING : await wornBy(path, content)
     if (this.asked.get(key) === asked) this.held.set(key, { ...worn, paper })
   }
-
   saved(path: string, content: string) {
     const key = pathKey(path)
     if (!this.held.has(key) || !wears(path)) return
-
     const asked = this.asked.get(key)
     const paper = this.held.get(key)?.paper ?? false
     void wornBy(path, content).then((worn) => {
       if (asked && this.asked.get(key) === asked) this.held.set(key, { ...worn, paper })
     })
   }
-
   forget(path: string) {
     for (const [key, asked] of [...this.asked]) {
       if (within(path, asked.path) === null) continue
@@ -120,11 +104,9 @@ class Elsewhere {
       this.asked.delete(key)
     }
   }
-
   clear() {
     this.held.clear()
     this.asked.clear()
   }
 }
-
 export const elsewhere = new Elsewhere()

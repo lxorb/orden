@@ -9,7 +9,6 @@ function minutesText(minutes: number): string {
   if (!hours) return `${localNumber(rest)}m`
   return rest ? `${localNumber(hours)}h ${localNumber(rest)}m` : `${localNumber(hours)}h`
 }
-
 export function valueText(value: Value, today: string): string {
   if (value === null) return ''
   if (typeof value === 'string') return value
@@ -30,7 +29,6 @@ export function valueText(value: Value, today: string): string {
   if ('kind' in value && 'src' in value && typeof value.src === 'string') return value.src
   return ''
 }
-
 export function toneColour(tone: string | undefined): string | null {
   switch (tone) {
     case undefined:

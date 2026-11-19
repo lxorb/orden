@@ -32,11 +32,9 @@
     onmenu: (event: MouseEvent, row: Row) => void
     onfocus: () => void
   } = $props()
-
   const live = $derived(kit.live)
   const title = $derived(row.file.basename)
   const tone = $derived(live.colourOf(row))
-
   const values = $derived.by((): (CardLine | null)[] => {
     const base = live.base
     if (!base) return []
@@ -55,10 +53,8 @@
       )
     })
   })
-
   const slots = $derived(Array.from({ length: lines.props }, (_, at) => values[at] ?? null))
   const ticked = $derived(checklist && checklist.total > 0 ? checklist : null)
-
   function keydown(event: KeyboardEvent) {
     if (event.target !== event.currentTarget) return
     if (event.key === 'Enter' || event.key === ' ') {
@@ -156,7 +152,6 @@
       box-shadow var(--dur-fast) var(--ease-out),
       opacity var(--dur-fast) var(--ease-out);
   }
-
   .face {
     box-sizing: border-box;
     display: flex;
@@ -170,22 +165,18 @@
     -webkit-user-select: none;
     user-select: none;
   }
-
   @media (hover: hover) {
     .card:hover {
       border-color: var(--line-strong);
       box-shadow: var(--shadow-sm);
     }
   }
-
   .card:has(:global(.is-carried)) {
     opacity: 0.35;
   }
-
   .pending {
     opacity: 0.7;
   }
-
   .title {
     display: flex;
     align-items: flex-start;
@@ -193,11 +184,9 @@
     min-width: 0;
     line-height: 19px;
   }
-
   .title :global(button) {
     margin-top: 2px;
   }
-
   .name {
     display: -webkit-box;
     min-width: 0;
@@ -209,11 +198,9 @@
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
-
   .done .name {
     color: var(--muted-strong);
   }
-
   .line {
     display: flex;
     align-items: center;
@@ -225,17 +212,14 @@
     font-size: var(--text-xs);
     white-space: nowrap;
   }
-
   .words {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .late {
     color: var(--danger);
   }
-
   .tag {
     flex: 0 1 auto;
     min-width: 0;
@@ -246,27 +230,22 @@
     color: var(--muted-strong);
     text-overflow: ellipsis;
   }
-
   .tag.toned {
     background: color-mix(in srgb, var(--pill) 16%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
   }
-
   .more-count,
   .checklist {
     flex: none;
     font-variant-numeric: tabular-nums;
   }
-
   .checklist {
     margin-inline-start: auto;
     padding-inline-start: var(--space-2);
   }
-
   .checklist.all {
     color: var(--success);
   }
-
   .menu {
     position: absolute;
     top: 3px;
@@ -274,31 +253,26 @@
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .card:hover .title,
   .card:focus-within .title,
   :global([data-touch]) .card .title {
     --under-menu: calc(var(--row-height-sm) + 3px);
     mask-image: linear-gradient(to left, transparent var(--under-menu), #000 calc(var(--under-menu) + var(--space-3)));
   }
-
   .menu svg {
     width: var(--icon-md);
     height: var(--icon-md);
     fill: currentColor;
   }
-
   .card:hover .menu,
   .card:focus-within .menu {
     opacity: 1;
   }
-
   :global([data-touch]) .menu {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
     opacity: 1;
   }
-
   .tinted {
     background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }

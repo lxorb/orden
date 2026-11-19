@@ -7,9 +7,7 @@ pub fn first_window(app: &tauri::AppHandle) {
         let_through(window.as_ref());
     }
 }
-
 pub fn let_through(_webview: &tauri::Webview) {}
-
 #[cfg(target_os = "linux")]
 pub use gestures::web_page;
 
@@ -23,26 +21,22 @@ pub fn web_page(
     _label: &str,
 ) {
 }
-
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 const SPEED: u32 = 4000;
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 const STILL: f64 = 1e-4;
 #[cfg(any(target_os = "linux", windows))]
 const PATIENCE: std::time::Duration = std::time::Duration::from_secs(2);
-
 #[cfg_attr(not(windows), allow(dead_code))]
 const MK_CONTROL: usize = 0x0008;
 #[cfg_attr(not(windows), allow(dead_code))]
 const NOTCH: f64 = 120.0;
 #[cfg_attr(not(windows), allow(dead_code))]
 const PER_NOTCH: f64 = 1.25;
-
 #[cfg_attr(not(windows), allow(dead_code))]
 fn half(word: usize) -> i16 {
     i16::from_ne_bytes(u16::try_from(word & 0xFFFF).unwrap_or(0).to_ne_bytes())
 }
-
 #[cfg_attr(not(windows), allow(dead_code))]
 fn pinched(wparam: usize, lparam: isize, ctrl_held: bool) -> Option<(f64, (i32, i32))> {
     if wparam & MK_CONTROL == 0 || ctrl_held {
@@ -53,7 +47,6 @@ fn pinched(wparam: usize, lparam: isize, ctrl_held: bool) -> Option<(f64, (i32, 
     let at = (i32::from(half(place)), i32::from(half(place >> 16)));
     (delta != 0).then(|| (PER_NOTCH.powf(f64::from(delta) / NOTCH), at))
 }
-
 #[cfg(any(target_os = "linux", windows))]
 fn page_ratio(view: &tauri::Webview) -> f64 {
     crate::engine::devtools::call(
@@ -68,14 +61,12 @@ fn page_ratio(view: &tauri::Webview) -> f64 {
     .filter(|ratio| *ratio > 0.0)
     .unwrap_or(1.0)
 }
-
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Asked {
     pub at: (f64, f64),
     pub scale: f64,
 }
-
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 impl Asked {
     pub fn params(self) -> Value {
@@ -88,7 +79,6 @@ impl Asked {
         })
     }
 }
-
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 #[derive(Debug)]
 pub struct Owed {
@@ -96,7 +86,6 @@ pub struct Owed {
     scale: f64,
     at: (f64, f64),
 }
-
 impl Default for Owed {
     fn default() -> Self {
         Self {
@@ -106,7 +95,6 @@ impl Default for Owed {
         }
     }
 }
-
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 impl Owed {
     pub fn gather(&mut self, by: f64, at: (f64, f64)) {
@@ -115,7 +103,6 @@ impl Owed {
             self.at = at;
         }
     }
-
     pub fn take(&mut self) -> Option<Asked> {
         if self.flying || (self.scale - 1.0).abs() < STILL {
             return None;
@@ -128,12 +115,10 @@ impl Owed {
         self.scale = 1.0;
         Some(asked)
     }
-
     pub fn landed(&mut self) {
         self.flying = false;
     }
 }
-
 #[cfg(target_os = "linux")]
 mod gestures {
     use orden_base::Held as _;
@@ -149,14 +134,11 @@ mod gestures {
     use super::{page_ratio, Owed, PATIENCE};
 
     const GESTURES: u32 = (1 << 27) | (1 << 28) | (1 << 29);
-
     struct Pinches {
         x: RustConnection,
         pages: Mutex<HashMap<u32, (AppHandle, String)>>,
     }
-
     static PINCHES: OnceLock<Option<Arc<Pinches>>> = OnceLock::new();
-
     fn pinches() -> Option<Arc<Pinches>> {
         PINCHES
             .get_or_init(|| {
@@ -178,7 +160,6 @@ mod gestures {
             })
             .clone()
     }
-
     pub fn web_page(platform: &tauri::webview::PlatformWebview, app: &AppHandle, label: &str) {
         let Some(page) = crate::host::x11_page(platform) else {
             return;
@@ -197,18 +178,15 @@ mod gestures {
         let _ = pinches.x.xinput_xi_select_events(page, &[mask]);
         let _ = pinches.x.flush();
     }
-
     fn fixed_point(value: Fp1616) -> f64 {
         f64::from(value) / 65536.0
     }
-
     struct Pinch {
         page: u32,
         last: f64,
         ratio: f64,
         owed: Owed,
     }
-
     impl Pinches {
         fn page_at(&self, window: u32) -> Option<tauri::Webview> {
             let pages = self.pages.held();
@@ -220,7 +198,6 @@ mod gestures {
             }
             found
         }
-
         fn hear_pinches(&self) {
             let mut pinch: Option<Pinch> = None;
             while let Ok(first) = self.x.wait_for_event() {
@@ -248,7 +225,6 @@ mod gestures {
                 }
             }
         }
-
         fn pinch_heard(&self, pinch: &mut Option<Pinch>, event: Event) {
             match event {
                 Event::XinputGesturePinchBegin(began) => {
@@ -281,7 +257,6 @@ mod gestures {
         }
     }
 }
-
 #[cfg(windows)]
 mod wheels {
     use orden_base::Held as _;
@@ -305,11 +280,8 @@ mod wheels {
         scale: f64,
         at: (i32, i32),
     }
-
     static PAGES: Mutex<Vec<(isize, AppHandle, String)>> = Mutex::new(Vec::new());
-
     static TURNS: OnceLock<Option<Sender<Turn>>> = OnceLock::new();
-
     pub fn web_page(platform: &tauri::webview::PlatformWebview, app: &AppHandle, label: &str) {
         let Some(page) = crate::host::page_id(platform).and_then(|one| isize::try_from(one.0).ok())
         else {
@@ -322,7 +294,6 @@ mod wheels {
         pages.retain(|(_, app, label)| app.get_webview(label).is_some());
         pages.push((page, app.clone(), label.to_string()));
     }
-
     #[allow(unsafe_code)]
     fn turns() -> Option<&'static Sender<Turn>> {
         TURNS
@@ -344,7 +315,6 @@ mod wheels {
             })
             .as_ref()
     }
-
     #[allow(unsafe_code)]
     unsafe extern "system" fn heard(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         if u32::try_from(code) == Ok(HC_ACTION) && usize::try_from(PM_REMOVE.0) == Ok(wparam.0) {
@@ -356,7 +326,6 @@ mod wheels {
         }
         unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
     }
-
     #[allow(unsafe_code)]
     fn took(message: &MSG) -> bool {
         let control = i32::from(VK_CONTROL.0);
@@ -379,7 +348,6 @@ mod wheels {
                 .is_ok()
         })
     }
-
     #[allow(unsafe_code)]
     fn page_under(under: HWND) -> Option<isize> {
         PAGES.held().iter().map(|(page, _, _)| *page).find(|page| {
@@ -387,13 +355,11 @@ mod wheels {
             page == under || unsafe { IsChild(page, under) }.as_bool()
         })
     }
-
     fn view_of(page: isize) -> Option<tauri::Webview> {
         let pages = PAGES.held();
         let (_, app, label) = pages.iter().find(|(one, _, _)| *one == page)?;
         app.get_webview(label)
     }
-
     fn hear(turns: &Receiver<Turn>) {
         let mut waiting: Option<Turn> = None;
         loop {
@@ -432,7 +398,6 @@ mod wheels {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{pinched, Asked, Owed};
@@ -440,9 +405,7 @@ mod tests {
     fn word(high: u16, low: u16) -> usize {
         usize::from(high) * 0x1_0000 + usize::from(low)
     }
-
     const CTRL: u16 = 0x0008;
-
     #[test]
     fn a_wheel_marked_with_ctrl_that_no_key_holds_is_a_touchpad_s_pinch() {
         let at = isize::from_ne_bytes(word(300, 200).to_ne_bytes());
@@ -457,14 +420,12 @@ mod tests {
             Some((-10, 20))
         );
     }
-
     #[test]
     fn ctrl_held_on_the_keyboard_or_no_ctrl_at_all_is_a_wheel() {
         assert_eq!(pinched(word(120, CTRL), 0, true), None);
         assert_eq!(pinched(word(120, 0), 0, false), None);
         assert_eq!(pinched(word(0, CTRL), 0, false), None);
     }
-
     #[test]
     fn one_pinch_is_in_flight_and_the_rest_wait_for_it_as_one() {
         let mut owed = Owed::default();
@@ -472,11 +433,9 @@ mod tests {
         let first = owed.take().expect("the first step goes at once");
         assert!((first.scale - 1.1).abs() < 1e-12);
         assert_eq!(first.at, (10.0, 20.0));
-
         owed.gather(1.2, (11.0, 21.0));
         owed.gather(1.5, (12.0, 22.0));
         assert_eq!(owed.take(), None, "nothing more until the first lands");
-
         owed.landed();
         let next = owed.take().expect("what waited goes as one");
         assert!((next.scale - 1.8).abs() < 1e-12);
@@ -484,7 +443,6 @@ mod tests {
         owed.landed();
         assert_eq!(owed.take(), None, "nothing is owed");
     }
-
     #[test]
     fn a_pinch_that_came_back_to_where_it_began_asks_nothing() {
         let mut owed = Owed::default();
@@ -495,7 +453,6 @@ mod tests {
         owed.gather(0.0, (0.0, 0.0));
         assert_eq!(owed.take(), None);
     }
-
     #[test]
     fn the_engine_is_asked_for_a_touchpad_s_pinch_at_the_fingers() {
         let params = Asked {

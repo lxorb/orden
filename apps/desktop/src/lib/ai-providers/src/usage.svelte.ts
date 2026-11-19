@@ -5,29 +5,24 @@ export interface Weekly {
   used: number
   resets: number | null
 }
-
 const WEEK_MINUTES = 7 * 24 * 60
 const AGAIN = 5 * 60_000
 const record = (value: unknown) => (isRecord(value) ? value : null)
-
 function percent(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null
   return Math.min(100, Math.max(0, value))
 }
-
 function moment(value: unknown, seconds: boolean): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return seconds ? value * 1000 : value
   if (typeof value !== 'string') return null
   const at = Date.parse(value)
   return Number.isNaN(at) ? null : at
 }
-
 function claudeWeek(said: Record<string, unknown> | null): Weekly | null {
   const week = record(record(said?.rate_limits)?.seven_day)
   const used = percent(week?.utilization)
   return used === null ? null : { used, resets: moment(week?.resets_at, true) }
 }
-
 function codexWeek(said: Record<string, unknown> | null): Weekly | null {
   const limits = record(said?.rateLimits)
   const windows = [record(limits?.primary), record(limits?.secondary)].filter(
@@ -39,22 +34,17 @@ function codexWeek(said: Record<string, unknown> | null): Weekly | null {
   if (!week) return null
   return { used: percent(week.usedPercent) ?? 0, resets: moment(week.resetsAt, true) }
 }
-
 export function weeklyIn(kind: ProviderKind, said: unknown): Weekly | null {
   if (kind === 'claude-code') return claudeWeek(record(said))
   if (kind === 'codex') return codexWeek(record(said))
   return null
 }
-
 class Usage {
   weeks = $state<Record<string, Weekly | null>>({})
-
   private asked = new Map<string, number>()
-
   of(id: string): Weekly | null {
     return this.weeks[id] ?? null
   }
-
   async look(account: Pick<Provider, 'id' | 'kind'>, force = false): Promise<void> {
     if (__EVEN_PLUGIN__ || (account.kind !== 'claude-code' && account.kind !== 'codex')) return
     const last = this.asked.get(account.id)
@@ -67,12 +57,10 @@ class Usage {
     if (said === undefined) return
     this.weeks = { ...this.weeks, [account.id]: weeklyIn(account.kind, said) }
   }
-
   forget(id: string): void {
     this.asked.delete(id)
     this.weeks = without(this.weeks, id)
   }
 }
-
 export const usage = /* @__PURE__ */ new Usage()
 export const USAGE_EVERY = AGAIN

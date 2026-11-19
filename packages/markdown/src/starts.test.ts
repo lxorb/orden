@@ -11,19 +11,16 @@ describe('looking for the fences of a note', () => {
     expect(codeBlocks('# Just words\n\nand a `span` of code.\n')).toEqual([])
   })
 })
-
 describe('how far a block start has to look', () => {
   test('to the end of the paragraph', () => {
     const src = 'one\ntwo\n\nthree'
     expect(paragraphWindow(src)).toBe(9)
     expect(src.slice(0, paragraphWindow(src))).toBe('one\ntwo\n\n')
   })
-
   test('a line of blanks ends one too', () => {
     const src = 'one\n   \nthree'
     expect(src.slice(0, paragraphWindow(src))).toBe('one\n   \n')
   })
-
   test('a carriage return counts as the empty line it is half of; all of it when there is no blank line; the last line, when the document ends in blanks', () => {
     const src = 'one\r\n\r\nthree'
     expect(paragraphWindow(src)).toBeLessThan(src.length)
@@ -33,10 +30,8 @@ describe('how far a block start has to look', () => {
     expect(paragraphWindow('one\n  ')).toBe(6)
   })
 })
-
 describe('the first place a construct could be', () => {
   const at = (src: string) => firstStart(src, ['xy'], (_src, found) => found)
-
   test('is where the literal is; is nothing when the literal is absent; is nothing when the literal is past the paragraph; takes the earliest of several literals', () => {
     expect(at('--xy--')).toBe(2)
     expect(at('nothing here')).toBeUndefined()
@@ -44,12 +39,10 @@ describe('the first place a construct could be', () => {
     const found = firstStart('..b..a..', ['a', 'b'], (_src, found) => found)
     expect(found).toBe(2)
   })
-
   test('skips a place the pattern turns down', () => {
     const found = firstStart('xy xy', ['xy'], (_src, found) => (found === 0 ? null : found))
     expect(found).toBe(3)
   })
-
   test('confirms against the whole document, not the paragraph', () => {
     const src = 'one\nxy tail\n\nrest'
     const found = firstStart(src, ['xy'], (whole, found) =>
@@ -58,7 +51,6 @@ describe('the first place a construct could be', () => {
     expect(found).toBe(4)
   })
 })
-
 test('the line a place sits on: is the newline before it; is nothing when words come first; allows the blanks it is told to; counts the start of the string only when asked', () => {
   expect(lineStart('one\ntwo', 4)).toBe(3)
   expect(lineStart('one two', 4)).toBeNull()
@@ -67,13 +59,11 @@ test('the line a place sits on: is the newline before it; is nothing when words 
   expect(lineStart('two', 0)).toBeNull()
   expect(lineStart('two', 0, { orString: true })).toBe(0)
 })
-
 test('matching at one place: holds the pattern to that place', () => {
   const pattern = /ab/y
   expect(matchesAt(pattern, 'xxabxx', 2)).toBe(true)
   expect(matchesAt(pattern, 'xxabxx', 1)).toBe(false)
 })
-
 describe('a mark in the middle of a sentence leaves the sentence alone', () => {
   test('a footnote reference', () => {
     const html = renderMarkdown('A sentence with a note[^1] in it.\n\n[^1]: The note.\n', {
@@ -82,18 +72,15 @@ describe('a mark in the middle of a sentence leaves the sentence alone', () => {
     expect(html).toContain('with a note<sup class="footnote-ref"')
     expect(html).toContain('</sup> in it.')
   })
-
   test('a pair of dollars', () => {
     const html = renderMarkdown('Costs $$5 and $$6 in total.\n')
     expect(html).toBe('<p>Costs $$5 and $$6 in total.</p>\n')
   })
-
   test('a bracket that opens no definition; a definition that is not on a line of its own', () => {
     const html = renderMarkdown('Text with *[a link](https://x)* in it.\n')
     expect(html).toBe('<p>Text with <em><a href="https://x">a link</a></em> in it.</p>\n')
     expect(renderMarkdown('Text with *[HTML]: in it.\n')).toBe('<p>Text with *[HTML]: in it.</p>\n')
   })
-
   test('an embed that is not on a line of its own', () => {
     const html = renderMarkdown('Text with ![[Note]] in it.\n', {
       resolveEmbed: () => '# Note\n\nwords\n',
@@ -101,42 +88,35 @@ describe('a mark in the middle of a sentence leaves the sentence alone', () => {
     expect(html).toBe('<p>Text with Note in it.</p>\n')
   })
 })
-
 describe('a construct on a line of its own still ends the paragraph above it', () => {
   test('a maths block', () => {
     const html = renderMarkdown('Text\n$$\na^2\n$$\n')
     expect(html).toContain('<p>Text</p>')
     expect(html).toContain('<div class="math-block"')
   })
-
   test('a footnote definition', () => {
     const html = renderMarkdown('Text[^1]\n[^1]: The note.\n', { footnotes: true })
     expect(html).toContain('<p>Text<sup class="footnote-ref"')
     expect(html).toContain('<section class="footnotes">')
   })
-
   test('an abbreviation definition', () => {
     const html = renderMarkdown('Text about HTML\n*[HTML]: HyperText Markup Language\n')
     expect(html).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
     expect(html).not.toContain('*[HTML]')
   })
-
   test('an embed', () => {
     const html = renderMarkdown('Text\n![[Note]]\n', { resolveEmbed: () => 'words\n' })
     expect(html).toContain('<p>Text</p>')
     expect(html).toContain('<figure class="embed">')
   })
-
   test('a table of contents', () => {
     const html = renderMarkdown('Text\n[TOC]\n\n# One\n', { toc: true })
     expect(html).toContain('<p>Text</p>')
     expect(html).toContain('<nav class="toc">')
   })
 })
-
 describe('a paragraph of many breaks', () => {
   const quick = (source: (size: number) => string, size: number) => linearly((one) => renderMarkdown(source(one)), size)
-
   test('renders in linear time', () => {
     quick((n) => '!a '.repeat(n), 66_000)
     quick((n) => '[[a '.repeat(n), 25_000)
@@ -145,7 +125,6 @@ describe('a paragraph of many breaks', () => {
     quick((n) => '[^a '.repeat(n), 25_000)
     expect(quick((n) => '!#a '.repeat(n), 25_000)).not.toContain('class="tag"')
   }, 60_000)
-
   test('finds what it found before at every break', () => {
     expect(renderMarkdown('!#a x#b (#c **#d**')).toBe(
       '<p>!#a x#b (<span class="tag" data-tag="c">#c</span> <strong><span class="tag" data-tag="d">#d</span></strong></p>\n',

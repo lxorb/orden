@@ -1,13 +1,11 @@
 import type { DateValue } from './types'
 
 const DAY = 86_400_000
-
 export interface Civil {
   year: number
   month: number
   day: number
 }
-
 export function civil(iso: string): Civil | null {
   const found = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
   if (!found) return null
@@ -16,13 +14,9 @@ export function civil(iso: string): Civil | null {
   if (parts.day > daysInMonth(parts.year, parts.month)) return null
   return parts
 }
-
 export const daysInMonth = (year: number, month: number): number => new Date(Date.UTC(year, month, 0)).getUTCDate()
-
 const pad = (value: number, width = 2) => String(value).padStart(width, '0')
-
 export const isoOf = (year: number, month: number, day: number): string => `${pad(year, 4)}-${pad(month)}-${pad(day)}`
-
 export function dayNumber(iso: string): number {
   const known = dayNumbers.get(iso)
   if (known !== undefined) return known
@@ -32,17 +26,13 @@ export function dayNumber(iso: string): number {
   dayNumbers.set(iso, days)
   return days
 }
-
 const dayNumbers = new Map<string, number>()
 const MOST_DAYS = 20_000
-
 export function fromDayNumber(days: number): string {
   const date = new Date(days * DAY)
   return isoOf(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate())
 }
-
 export const addDays = (iso: string, days: number): string => fromDayNumber(dayNumber(iso) + days)
-
 export function addMonths(iso: string, months: number): string {
   const parts = civil(iso)
   if (!parts) return iso
@@ -51,42 +41,34 @@ export function addMonths(iso: string, months: number): string {
   const month = index - year * 12 + 1
   return isoOf(year, month, Math.min(parts.day, daysInMonth(year, month)))
 }
-
 export const weekday = (iso: string): number => (((dayNumber(iso) + 4) % 7) + 7) % 7
-
 export function wallMs(value: DateValue): number {
   const day = dayNumber(value.iso) * DAY
   if (!value.time) return day
   const [hours = 0, minutes = 0, seconds = 0] = value.time.split(':').map(Number)
   return day + ((hours * 60 + minutes) * 60 + Math.floor(seconds)) * 1000 + millisOf(value.time)
 }
-
 export function msOf(value: DateValue, zone?: string): number {
   const wall = wallMs(value)
   const offset = value.zone && value.time ? offsetMinutes(value.zone) : null
   return offset === null ? wall : wallOf(wall - offset * 60_000, zone)
 }
-
 export const onClock = (value: DateValue, zone?: string): DateValue =>
   value.zone && value.time ? dateAt(msOf(value, zone)) : value
-
 export function rewritten(was: DateValue, edited: DateValue, zone?: string): DateValue {
   const offset = was.zone && was.time ? offsetMinutes(was.zone) : null
   if (offset === null || !was.zone || !edited.time || edited.zone) return edited
   return { ...dateAt(instantOf(wallMs(edited), zone) + offset * 60_000), zone: was.zone }
 }
-
 function instantOf(wall: number, zone?: string): number {
   let guess = wall
   for (let tries = 0; tries < 3; tries++) guess = wall - (wallOf(guess, zone) - guess)
   return guess
 }
-
 function millisOf(time: string): number {
   const found = /\.(\d{1,3})/.exec(time)
   return found?.[1] ? Number(found[1].padEnd(3, '0')) : 0
 }
-
 export function dateAt(ms: number, dateOnly = false): DateValue {
   const date = new Date(ms)
   const iso = isoOf(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate())
@@ -95,14 +77,11 @@ export function dateAt(ms: number, dateOnly = false): DateValue {
   const time = `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`
   return { kind: 'date', iso, time: millis ? `${time}.${pad(millis, 3)}` : time }
 }
-
 const clocks = new Map<string, Intl.DateTimeFormat | null>()
-
 function clockIn(zone: string): Intl.DateTimeFormat | null {
   if (!clocks.has(zone)) clocks.set(zone, madeClock(zone))
   return clocks.get(zone) ?? null
 }
-
 function madeClock(zone: string): Intl.DateTimeFormat | null {
   try {
     return new Intl.DateTimeFormat('en-US', {
@@ -119,7 +98,6 @@ function madeClock(zone: string): Intl.DateTimeFormat | null {
     return null
   }
 }
-
 export function wallOf(epochMs: number, zone?: string): number {
   const clock = zone ? clockIn(zone) : null
   if (!clock) {
@@ -139,9 +117,7 @@ export function wallOf(epochMs: number, zone?: string): number {
   const { year = 0, month = 1, day = 1, hour = 0, minute = 0, second = 0 } = parts
   return Date.UTC(year, month - 1, day, hour, minute, second, millis)
 }
-
 const OFFSET = /^([+-])(\d{2}):?(\d{2})$/
-
 function offsetMinutes(zone: string): number | null {
   if (zone === 'Z' || zone === 'UTC') return 0
   const found = OFFSET.exec(zone)
@@ -149,7 +125,6 @@ function offsetMinutes(zone: string): number | null {
   const minutes = Number(found[2]) * 60 + Number(found[3])
   return found[1] === '-' ? -minutes : minutes
 }
-
 export function readDate(text: string): DateValue | null {
   const found = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2})(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/.exec(
     text.trim(),
@@ -159,7 +134,6 @@ export function readDate(text: string): DateValue | null {
   const time = `${pad(Number(found[2]))}:${found[3] ?? '00'}:${found[4] ?? '00'}${found[5] ?? ''}`
   return found[6] ? { kind: 'date', iso: found[1], time, zone: found[6] } : { kind: 'date', iso: found[1], time }
 }
-
 const MONTHS = [
   'January',
   'February',
@@ -175,27 +149,21 @@ const MONTHS = [
   'December',
 ]
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
 export const monthName = (month: number): string => MONTHS[month - 1] ?? ''
-
 export const weekdayName = (day: number): string => WEEKDAYS[day] ?? ''
-
 function ordinal(value: number): string {
   const tens = value % 100
   if (tens >= 11 && tens <= 13) return `${value}th`
   return `${value}${['th', 'st', 'nd', 'rd'][value % 10] ?? 'th'}`
 }
-
 function isoWeek(iso: string): number {
   const day = dayNumber(iso)
   const thursday = day - ((weekday(iso) + 6) % 7) + 3
   const year = new Date(thursday * DAY).getUTCFullYear()
   return Math.floor((thursday - dayNumber(isoOf(year, 1, 1))) / 7) + 1
 }
-
 const TOKENS =
   /\[([^\]]*)\]|YYYY|YY|MMMM|MMM|MM|M|Do|DDDD|DD|D|dddd|ddd|dd|d|E|e|HH|H|hh|h|mm|m|ss|s|SSS|A|a|WW|W|ww|w|X|x|Q/g
-
 export function formatDate(value: DateValue, format: string): string {
   const ms = wallMs(value)
   const date = new Date(ms)
@@ -207,7 +175,6 @@ export function formatDate(value: DateValue, format: string): string {
   const seconds = date.getUTCSeconds()
   const day7 = date.getUTCDay()
   const hours12 = hours % 12 === 0 ? 12 : hours % 12
-
   return format.replace(TOKENS, (token, literal: string | undefined) => {
     if (literal !== undefined) return literal
     switch (token) {
@@ -281,7 +248,6 @@ export function formatDate(value: DateValue, format: string): string {
     }
   })
 }
-
 export function relative(ms: number, now: number): string {
   const seconds = Math.round(Math.abs(ms - now) / 1000)
   const minutes = Math.round(seconds / 60)
@@ -289,7 +255,6 @@ export function relative(ms: number, now: number): string {
   const days = Math.round(hours / 24)
   const months = Math.round(days / 30.4375)
   const years = Math.round(days / 365.25)
-
   let words: string
   if (seconds < 45) words = 'a few seconds'
   else if (seconds < 90) words = 'a minute'
@@ -302,8 +267,6 @@ export function relative(ms: number, now: number): string {
   else if (days < 320) words = `${months} months`
   else if (days < 548) words = 'a year'
   else words = `${years} years`
-
   return ms <= now ? `${words} ago` : `in ${words}`
 }
-
 export const todayOf = (now: Date = new Date()): string => isoOf(now.getFullYear(), now.getMonth() + 1, now.getDate())

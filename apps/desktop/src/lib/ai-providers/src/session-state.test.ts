@@ -7,14 +7,12 @@ describe('the state a chat moves to', () => {
   test('a send starts it, from wherever it was', () => {
     for (const state of SESSION_STATES) expect(next(state, { type: 'start' })).toBe('running')
   })
-
   test('a question stops it on the reader, and the answer sets it going again', () => {
     expect(next('running', { type: 'ask' })).toBe('needs-input')
     expect(next('needs-input', { type: 'answered' })).toBe('running')
     expect(next('done', { type: 'ask' })).toBe('done')
     expect(next('running', { type: 'answered' })).toBe('running')
   })
-
   test('how the answer ended settles it', () => {
     const end = (stop: Parameters<typeof next>[1] & { type: 'end' }) => next('running', stop)
     expect(end({ type: 'end', stop: 'end', busy: false })).toBe('done')
@@ -24,7 +22,6 @@ describe('the state a chat moves to', () => {
     expect(end({ type: 'end', stop: 'error', busy: false })).toBe('error')
     expect(end({ type: 'end', stop: 'refusal', busy: false })).toBe('error')
   })
-
   test('work left running out of sight keeps it waiting, until the last of it ends', () => {
     expect(next('running', { type: 'end', stop: 'end', busy: true })).toBe('waiting')
     expect(next('done', { type: 'wait' })).toBe('waiting')
@@ -32,7 +29,6 @@ describe('the state a chat moves to', () => {
     expect(next('needs-input', { type: 'wait' })).toBe('needs-input')
     expect(next('running', { type: 'wait' })).toBe('running')
   })
-
   test('a relaunch interrupts whatever was at work, and nothing else', () => {
     expect(next('running', { type: 'relaunch' })).toBe('interrupted')
     expect(next('waiting', { type: 'relaunch' })).toBe('interrupted')
@@ -40,19 +36,16 @@ describe('the state a chat moves to', () => {
     expect(next('done', { type: 'relaunch' })).toBe('done')
     expect(next('error', { type: 'relaunch' })).toBe('error')
   })
-
   test('archived until it is brought back, which finds it done', () => {
     expect(next('error', { type: 'archive' })).toBe('archived')
     expect(next('archived', { type: 'end', stop: 'end', busy: false })).toBe('archived')
     expect(next('archived', { type: 'unarchive' })).toBe('done')
   })
-
   test('each state has its own mark and a colour', () => {
     expect(new Set(SESSION_STATES.map((one) => STATE_MARKS[one])).size).toBe(SESSION_STATES.length)
     for (const one of SESSION_STATES) expect(STATE_COLOURS[one], one).toBeTruthy()
   })
 })
-
 const head = (id: string, more: Partial<ThreadHead> = {}): ThreadHead => ({
   id,
   title: id,
@@ -62,10 +55,8 @@ const head = (id: string, more: Partial<ThreadHead> = {}): ThreadHead => ({
   words: '',
   ...more,
 })
-
 describe('the order chats are listed in', () => {
   const states = (heads: ThreadHead[]) => statesOf(heads)
-
   test('puts what wants the reader first, and what is still at work last', () => {
     const heads = [
       head('running', { state: 'running', updated: 9 }),
@@ -84,7 +75,6 @@ describe('the order chats are listed in', () => {
       'running',
     ])
   })
-
   test('unread before read within a state, then the latest first', () => {
     const heads = [
       head('old', { state: 'done', updated: 1 }),
@@ -93,7 +83,6 @@ describe('the order chats are listed in', () => {
     ]
     expect(ordered(heads, states(heads), new Set(['unread'])).map((one) => one.id)).toEqual(['unread', 'new', 'old'])
   })
-
   test('pinned at the top, and archived out of the list', () => {
     const heads = [
       head('asks', { state: 'needs-input', updated: 9 }),
@@ -102,13 +91,11 @@ describe('the order chats are listed in', () => {
     ]
     expect(ordered(heads, states(heads), new Set()).map((one) => one.id)).toEqual(['pinned', 'asks'])
   })
-
   test('one with no state is done', () => {
     expect(stateOf(head('old'))).toBe('done')
     expect(stateOf(head('old', { archived: true }))).toBe('archived')
   })
 })
-
 describe('a helper', () => {
   test('waiting on the reader puts its chat on them', () => {
     const heads = [
@@ -119,22 +106,18 @@ describe('a helper', () => {
     const found = statesOf(heads)
     expect(found.get('chat')).toBe<SessionState>('needs-input')
   })
-
   test('and otherwise leaves its chat as it is', () => {
     const heads = [head('chat', { state: 'done' }), head('helper', { parent: 'chat', state: 'error' })]
     expect(statesOf(heads).get('chat')).toBe('done')
   })
 })
-
 describe('sliding to the chat beside', () => {
   const list = [head('a'), head('b'), head('c')]
-
   test('goes to the next and the one before, round from the last to the first', () => {
     expect(beside(list, 'a', 1)?.id).toBe('b')
     expect(beside(list, 'a', -1)?.id).toBe('c')
     expect(beside(list, 'c', 1)?.id).toBe('a')
   })
-
   test('and nowhere with one chat', () => {
     expect(beside([head('a')], 'a', 1)).toBeNull()
   })

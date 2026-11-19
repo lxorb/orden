@@ -15,26 +15,22 @@ export interface Placed {
   reaches: (written: string) => boolean
   shown?: string
 }
-
 export interface Move {
   from: string
   to: string
 }
-
 export const rewriteLinks = (
   text: string,
   source: string,
   move: Move,
   points: (link: FoundLink) => boolean,
 ): string | null => retargetLinks(text, source, (link) => (points(link) ? move.to : null))
-
 export function retargetLinks(
   text: string,
   source: string,
   to: (link: FoundLink) => string | Placed | null,
 ): string | null {
   const edits: Edit[] = []
-
   for (const link of findLinks(text)) {
     const there = to(link)
     if (there === null) continue
@@ -52,27 +48,22 @@ export function retargetLinks(
       edits.push({ from: at, to: at, insert: `${bar}${shown}` })
     }
   }
-
   if (!edits.length) return null
   edits.sort((one, other) => one.from - other.from)
   return applied(text, quotedInMatter(text, plainInMatter(text, edits)))
 }
-
 const OTHER_WIKILINKS = /\[\[[^\]\n]*\]\]/g
-
 function inTableRow(text: string, from: number, to: number): boolean {
   const start = text.lastIndexOf('\n', from - 1) + 1
   const end = text.indexOf('\n', to)
   const around = text.slice(start, from) + text.slice(to, end === -1 ? undefined : end)
   return around.replace(OTHER_WIKILINKS, '').includes('|')
 }
-
 interface Edit {
   from: number
   to: number
   insert: string
 }
-
 function applied(text: string, edits: readonly Edit[]): string {
   let out = ''
   let at = 0
@@ -82,17 +73,14 @@ function applied(text: string, edits: readonly Edit[]): string {
   }
   return out + text.slice(at)
 }
-
 interface Scalar {
   open: number
   close: number
   quote: "'" | '"'
 }
-
 function quotedInMatter(text: string, edits: readonly Edit[]): Edit[] {
   const matter = frontMatterBlock(text)
   if (!matter) return [...edits]
-
   const out: Edit[] = []
   let at = 0
   while (at < edits.length) {
@@ -111,11 +99,9 @@ function quotedInMatter(text: string, edits: readonly Edit[]): Edit[] {
   }
   return out
 }
-
 const VALUE_OPENS = /^(?:[ \t]*-[ \t]+|[ \t]*[^\s#-][^:]*?[ \t]*:[ \t]+)/
 const INDICATOR = /^(?:[-?:](?:\s|$)|[,[\]{}#&*!|>'"%@`])/
 const OPENS_VALUE = /^([ \t]*)(?:-[ \t]+|[^\s#:-][^:]*:[ \t]+)(\S.*)$/
-
 function plainLines(text: string, from: number, to: number): Set<number> {
   const lines: { start: number; indent: number; value: string | null }[] = []
   let at = from
@@ -128,7 +114,6 @@ function plainLines(text: string, from: number, to: number): Set<number> {
     }
     at += raw.length + 1
   }
-
   const out = new Set<number>()
   let inside: number | null = null
   for (const [index, line] of lines.entries()) {
@@ -142,7 +127,6 @@ function plainLines(text: string, from: number, to: number): Set<number> {
   }
   return out
 }
-
 function plainHolds(value: string): boolean {
   const link = /^\[\[([^\]]*)\]\]$/.exec(value)
   if (value.startsWith('[') && !link) return false
@@ -150,17 +134,14 @@ function plainHolds(value: string): boolean {
   if (inner === '' || INDICATOR.test(inner) || /:(?:\s|$)|\s#/.test(inner)) return false
   return !link || !/[,[\]{}]|:$/.test(inner)
 }
-
 function quotedValue(value: string): string {
   if (!/["\\]/.test(value)) return `"${value}"`
   return `'${value.replace(/'/g, "''")}'`
 }
-
 function plainInMatter(text: string, edits: readonly Edit[]): Edit[] {
   const matter = frontMatterBlock(text)
   if (!matter) return [...edits]
   const plain = plainLines(text, matter.body.from, matter.body.to)
-
   const out: Edit[] = []
   let at = 0
   while (at < edits.length) {
@@ -173,7 +154,6 @@ function plainInMatter(text: string, edits: readonly Edit[]): Edit[] {
     while ((edits[last + 1]?.to ?? Infinity) <= end) last++
     const line = edits.slice(at, last + 1)
     at = last + 1
-
     const opens = plain.has(start) ? VALUE_OPENS.exec(text.slice(start, end)) : null
     const from = start + (opens?.[0].length ?? 0)
     const to = start + text.slice(start, end).trimEnd().length
@@ -182,7 +162,6 @@ function plainInMatter(text: string, edits: readonly Edit[]): Edit[] {
       out.push(...line)
       continue
     }
-
     const before = text.slice(from, to)
     const after = applied(
       before,
@@ -196,16 +175,13 @@ function plainInMatter(text: string, edits: readonly Edit[]): Edit[] {
   }
   return out
 }
-
 const SCALAR_OPENS = /(?:^\s*(?:-\s+)?|[:[,]\s*)$/
-
 function scalarAround(text: string, offset: number): Scalar | null {
   const start = text.lastIndexOf('\n', offset - 1) + 1
   const lineEnd = text.indexOf('\n', offset)
   const end = lineEnd === -1 ? text.length : lineEnd
   let open = -1
   let quote: "'" | '"' | null = null
-
   for (let at = start; at < end; at++) {
     const character = text[at]
     if (quote === null) {
@@ -231,11 +207,9 @@ function scalarAround(text: string, offset: number): Scalar | null {
   }
   return null
 }
-
 function requoted(text: string, scalar: Scalar, edits: readonly Edit[]): Edit[] {
   const inserted = edits.map((edit) => edit.insert).join('')
   const kept = keptPieces(text, scalar, edits)
-
   if (scalar.quote === "'") {
     if (!inserted.includes("'")) return [...edits]
     const plain = kept.map((piece) => piece.replace(/''/g, "'"))
@@ -245,7 +219,6 @@ function requoted(text: string, scalar: Scalar, edits: readonly Edit[]): Edit[] 
     }
     return edits.map((edit) => ({ ...edit, insert: edit.insert.replace(/'/g, "''") }))
   }
-
   if (!/["\\]/.test(inserted)) return [...edits]
   const whole = kept.join('') + inserted
   if (!whole.includes("'") && !kept.join('').includes('\\')) {
@@ -256,7 +229,6 @@ function requoted(text: string, scalar: Scalar, edits: readonly Edit[]): Edit[] 
     insert: edit.insert.replace(/["\\]/g, (mark) => `\\${mark}`),
   }))
 }
-
 function keptPieces(text: string, scalar: Scalar, edits: readonly Edit[]): string[] {
   const pieces: string[] = []
   let at = scalar.open + 1
@@ -267,10 +239,8 @@ function keptPieces(text: string, scalar: Scalar, edits: readonly Edit[]): strin
   pieces.push(text.slice(at, scalar.close))
   return pieces
 }
-
 const interleaved = (pieces: readonly string[], edits: readonly Edit[]): string =>
   pieces.map((piece, index) => piece + (edits[index]?.insert ?? '')).join('')
-
 function asMarkdown(link: FoundLink, source: string, placed: string | Placed): string {
   const path = typeof placed === 'string' ? placed : placed.path
   const fragment = link.block === null ? link.heading : `^${link.block}`
@@ -289,21 +259,17 @@ function asMarkdown(link: FoundLink, source: string, placed: string | Placed): s
     'relative',
   )
 }
-
 function targetFor(link: FoundLink, source: string, placed: string | Placed): string {
   const to = typeof placed === 'string' ? placed : placed.path
   if (link.kind === 'markdown') {
     if (link.target.startsWith('/')) return encodeTarget(`/${to}`)
     return encodeTarget(relativePath(folderOf(source), to))
   }
-
   const spelled = (path: string) =>
     shownName(link.target) === link.target && !isTabFile(shownName(path)) ? shownName(path) : path
   const fromTop = spelled(`/${to}`)
   const reaches = (written: string) => typeof placed === 'string' || placed.reaches(written)
-
   if (link.target.startsWith('/')) return fromTop
-
   const parts = to.split('/')
   const first = link.target.includes('/') ? 0 : parts.length - 1
   for (let from = first; from >= 0; from--) {

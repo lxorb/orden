@@ -23,18 +23,14 @@ export interface Hands {
   connect(wanted: PaletteDestination): void
   openMessage(path: string, message: string, how: OpenHow): void
 }
-
 export type Chosen = 'close' | 'stay' | 'nothing'
-
 function openFile(path: string, press: Press | undefined, hands: Hands) {
   const ask = press ? linkAsk(press) : 'plain'
   if (ask === 'aside') hands.openAside(path)
   else hands.openEntry(path, howFor(ask))
 }
-
 export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen {
   const ask = press ? tabAsk(press) : 'plain'
-
   switch (row.kind) {
     case 'command':
       if (row.command.disabled) return 'nothing'
@@ -86,11 +82,9 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
       return 'close'
   }
 }
-
 function openBookmark(row: Extract<Row, { kind: 'bookmark' }>, ask: TabAsk, hands: Hands): Chosen {
   const mark = row.mark
   const how = howFor(ask)
-
   switch (mark.kind) {
     case 'folder':
       if (row.path) hands.revealFolder(row.path)
@@ -113,6 +107,5 @@ function openBookmark(row: Extract<Row, { kind: 'bookmark' }>, ask: TabAsk, hand
     case 'group':
       return 'nothing'
   }
-
   return 'close'
 }

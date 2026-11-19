@@ -170,9 +170,7 @@ export const SESSION = [
   'AAAAAAAJAAzTa/gnAAAAAAkAAtNr+CcDAAAAIQAZ02v4JwAAAAAmRwiTHTqi8p/vR84tlpupAQAAAAAAAAAJAAzUa/gnAAAA',
   'AAkAAtRr+CcEAAAAIQAZ1Gv4JwAAAABga5/YlOcba2BDfYep0l+8AQAAAAAAAAARABXUa/gnAAAAAKsqpfm1vC8A',
 ].join('')
-
 export const LOCKED = new Uint8Array([83, 78, 83, 83, 5, 0, 0, 0])
-
 export const BOOKMARKS = {
   checksum: '16e04c77b519dbf0c38f91e093b09343',
   roots: {

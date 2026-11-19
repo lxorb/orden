@@ -9,7 +9,6 @@ function quoted(text: string): string {
     .map((line) => (line ? `> ${line}` : '>'))
     .join('\n')
 }
-
 function answerOf(thread: Thread, at: number): string {
   const turn = thread.turns[at]
   const words = (turn?.parts ?? [])
@@ -18,7 +17,6 @@ function answerOf(thread: Thread, at: number): string {
     .trim()
   return linkedAnswer(words, sourcesFor(thread.turns, at))
 }
-
 export function threadMarkdown(thread: Thread, untitled: string): string {
   const blocks = [`# ${thread.title.trim() || untitled}`]
   thread.turns.forEach((turn, at) => {

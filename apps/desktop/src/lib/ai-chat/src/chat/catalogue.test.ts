@@ -11,7 +11,6 @@ import {
 import { forgetLearnt, learn } from './learned'
 
 beforeEach(() => forgetLearnt())
-
 describe('Claude’s list', () => {
   test('says the window, the efforts, thinking, pictures and compaction from its capabilities', () => {
     const [opus, haiku] = anthropicModels({
@@ -62,7 +61,6 @@ describe('Claude’s list', () => {
     })
   })
 })
-
 describe('OpenAI’s list', () => {
   test('is names, the ones for talking to, every level until one is refused', () => {
     const models = openaiModels({
@@ -72,7 +70,6 @@ describe('OpenAI’s list', () => {
     expect(models[0]?.efforts).toContain('max')
     expect(models[0]?.window).toBeNull()
   })
-
   test('what a refusal taught comes back with it', () => {
     learn('openai', 'gpt-5.4-mini', { refused: ['max', 'minimal'], window: 400_000 })
     const [model] = openaiModels({ data: [{ id: 'gpt-5.4-mini' }] })
@@ -87,7 +84,6 @@ describe('OpenAI’s list', () => {
     ])
   })
 })
-
 describe('a ChatGPT plan’s catalogue', () => {
   test('is the rows meant to be listed, in its own order, with what each row says', () => {
     const models = planModels({
@@ -114,7 +110,6 @@ describe('a ChatGPT plan’s catalogue', () => {
     })
   })
 })
-
 describe('a compatible server’s list', () => {
   test('reads whichever context field the server fills in, and offers effort only where advertised', () => {
     const [router, studio, bare] = compatibleModels({
@@ -136,7 +131,6 @@ describe('a compatible server’s list', () => {
     expect(bare).toMatchObject({ window: null, efforts: ['auto'], images: false })
   })
 })
-
 describe('a window a refusal names', () => {
   test('is read in the shapes the providers write it', () => {
     expect(

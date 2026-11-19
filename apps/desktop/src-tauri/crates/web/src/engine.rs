@@ -10,22 +10,14 @@ use orden_web_engine::NativeWindow;
 pub use orden_web_engine::internal;
 
 const ROOT: &str = orden_web_engine::ROOT;
-
 const STORE_PROFILE: &str = orden_web_engine::STORE_PROFILE;
-
 const APP_PROFILE: &str = orden_web_engine::APP_PROFILE;
-
 pub type Heard = Box<dyn Fn(&str, Option<&str>, &Value) + Send + Sync>;
-
 pub type Call =
     fn(&Webview, Option<&str>, &str, &Value, std::time::Duration) -> Result<Value, String>;
-
 pub type Tell = fn(&Webview, Option<&str>, Vec<(&'static str, Value)>);
-
 pub type Zooms = Box<dyn Fn(crate::web_page::Step) + Send + Sync>;
-
 pub type Page = WebviewBuilder<orden_base::Engine>;
-
 pub struct Engine {
     pub page_id: fn(&PlatformWebview) -> Option<NativeWindow>,
     pub call: Call,
@@ -37,26 +29,21 @@ pub struct Engine {
     pub served: fn(&PlatformWebview) -> Option<crate::web_certificate::Served>,
     pub zooms: fn(Page, Zooms) -> Page,
 }
-
 static ENGINE: std::sync::OnceLock<Engine> = std::sync::OnceLock::new();
-
 pub fn hand(engine: Engine) {
     let _ = ENGINE.set(engine);
 }
-
 pub fn engine() -> Result<&'static Engine, String> {
     ENGINE
         .get()
         .ok_or_else(|| "the engine has not started".to_owned())
 }
-
 pub fn zooms(page: Page, zooms: Zooms) -> Page {
     match engine() {
         Ok(engine) => (engine.zooms)(page, zooms),
         Err(_) => page,
     }
 }
-
 pub mod devtools {
     use std::time::Duration;
 
@@ -72,39 +59,33 @@ pub mod devtools {
     ) -> Result<Value, String> {
         (super::engine()?.call)(view, session, method, params, patience)
     }
-
     pub fn tell(view: &Webview, session: Option<&str>, said: Vec<(&'static str, Value)>) {
         if let Ok(engine) = super::engine() {
             (engine.tell)(view, session, said);
         }
     }
-
     pub fn hear(
         view: &Webview,
         heard: impl Fn(&str, Option<&str>, &Value) + Send + Sync + 'static,
     ) -> Result<(), String> {
         (super::engine()?.hear)(view, Box::new(heard))
     }
-
     pub fn let_go_of(label: &str) {
         if let Ok(engine) = super::engine() {
             (engine.let_go_of)(label);
         }
     }
 }
-
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = config_dir(app)?.join(ROOT);
     made(&dir)?;
     Ok(dir)
 }
-
 pub fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = root(app)?.join(APP_PROFILE);
     made(&dir)?;
     Ok(dir)
 }
-
 pub fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
     app: &AppHandle,
@@ -112,7 +93,6 @@ pub fn web_store<R: Runtime>(
 ) -> Result<WebviewBuilder<R>, String> {
     Ok(builder.data_directory(profile(app, store)?))
 }
-
 pub fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, String> {
     let root = root(app)?;
     Ok(match store {
@@ -124,7 +104,6 @@ pub fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, String> 
         }
     })
 }
-
 pub fn add_child<R: Runtime>(
     window: &tauri::Window<R>,
     builder: WebviewBuilder<R>,
@@ -133,11 +112,9 @@ pub fn add_child<R: Runtime>(
 ) -> tauri::Result<tauri::Webview<R>> {
     one_at_a_time(|| window.add_child(builder.position(position).size(size)))
 }
-
 pub fn one_at_a_time<T>(build: impl FnOnce() -> tauri::Result<T>) -> tauri::Result<T> {
     orden_web_engine::one_at_a_time(|| tauri::Error::FailedToReceiveMessage, build)
 }
-
 pub use orden_web_engine::{handed_out, once_built};
 
 macro_rules! with_platform {
@@ -172,7 +149,6 @@ mod tests {
         });
         assert_eq!(built.ok(), Some(7));
         assert_eq!(*order.borrow(), ["outer begins", "outer ends", "waited"]);
-
         let now = Rc::new(RefCell::new(false));
         let ran = Rc::clone(&now);
         super::once_built(move || *ran.borrow_mut() = true);

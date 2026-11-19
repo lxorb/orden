@@ -22,12 +22,10 @@ export interface Copies {
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
   pageNoteForPdf(path: string): Promise<string | null>
 }
-
 export interface Copying {
   from: string
   into: string
 }
-
 async function copyNameIn(
   ws: Pick<Copies, 'freeNameOnDisk'>,
   dir: string,
@@ -37,47 +35,35 @@ async function copyNameIn(
   if ((await ws.freeNameOnDisk(dir, name)) === name) return name
   return ws.freeNameOnDisk(dir, folder ? `${name} copy` : copyName(name))
 }
-
 function ownNoteRenamed(entry: Entry, to: string): { from: string; to: string } | null {
   const own = folderNote(entry)
   if (!own || !isFolderNote(own.path)) return null
-
   const ending = /\.[^.]+$/.exec(own.name)?.[0] ?? '.md'
   const renamed = `${nameOf(to)}${ending}`
   if (renamed === own.name) return null
-
   return { from: joinPath(to, own.name), to: joinPath(to, renamed) }
 }
-
 export async function copyRows(ws: Copies, rows: readonly Copying[]): Promise<string[]> {
   const made: Copied[] = []
-
   for (const { from, into } of rows) {
     const entry = ws.entryAt(from)
     if (!entry || !copiesInto([from], into)) continue
-
     const path = joinPath(into, await copyNameIn(ws, into, entry.name, entry.is_dir))
     if (await copyEntry(ws, entry, path)) made.push({ path, folder: entry.is_dir, from })
   }
-
   if (made.length) ws.undone.record({ kind: 'copy', made })
   return made.map((one) => one.path)
 }
-
 export async function copyAgain(ws: Copies, made: readonly Copied[]): Promise<void> {
   const again: Copied[] = []
-
   for (const one of made) {
     const entry = one.from === undefined ? null : ws.entryAt(one.from)
     if (entry && (await copyEntry(ws, entry, one.path))) again.push(one)
   }
-
   if (again.length) ws.undone.record({ kind: 'copy', made: again })
 }
-
 async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolean> {
   ws.showEntry(ws.freshEntry(path, entry.is_dir))
-
   const landed = await copyPath(entry.path, path)
     .then(() => true)
     .catch(() => false)
@@ -88,7 +74,6 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
   await idsLeftBehind(entry, path)
   ws.itemMeta.copied(entry.path, path)
   ws.protection.copied(entry.path, path, ws.rootHolding(entry.path), ws.rootHolding(path))
-
   const own = ownNoteRenamed(entry, path)
   const renamed =
     own !== null &&
@@ -101,15 +86,12 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
     ws.protection.moved(own.from, own.to, ws.rootHolding(own.to))
   }
   await ws.fileCame(path, entry.is_dir ? 'folder' : 'file')
-
   return true
 }
-
 function notesIn(entry: Entry): Entry[] {
   if (!entry.is_dir) return isMarkdownPath(entry.name) ? [entry] : []
   return entry.children.flatMap(notesIn)
 }
-
 async function idsLeftBehind(entry: Entry, path: string) {
   const { numbersAt, withoutIds } = await services().rowsCopied()
   if (!numbersAt(path)) return
@@ -120,20 +102,16 @@ async function idsLeftBehind(entry: Entry, path: string) {
     if (words !== null) await invoke('write_note', { path: at, content: words }).catch(() => undefined)
   }
 }
-
 function partsOf(file: PickedFile): string[] {
   const inside = (file.webkitRelativePath ?? '').trim()
   return (inside.length ? inside : file.name).split(/[\\/]/).filter((part) => part && part !== '.' && part !== '..')
 }
-
 export async function bringIn(ws: Copies, files: readonly PickedFile[], into: string): Promise<string[]> {
   const landed = new Map<string, Copied>()
-
   try {
     for (const file of files) {
       const [top, ...rest] = partsOf(file)
       if (top === undefined) continue
-
       let at = landed.get(top)
       if (!at) {
         const folder = rest.length > 0
@@ -141,12 +119,10 @@ export async function bringIn(ws: Copies, files: readonly PickedFile[], into: st
         landed.set(top, at)
         ws.showEntry(ws.freshEntry(at.path, folder))
       }
-
       const path = rest.length ? joinPath(at.path, rest.join('/')) : at.path
       const bytes = new Uint8Array(await file.arrayBuffer())
       if (readsWords(path)) await wordsIn(path, new TextDecoder().decode(bytes))
       else await writeBytes(path, bytes)
-
       if (!rest.length && isPdfTarget(path)) {
         at.path = (await ws.pageNoteForPdf(path)) ?? path
       }
@@ -154,10 +130,8 @@ export async function bringIn(ws: Copies, files: readonly PickedFile[], into: st
   } finally {
     if (landed.size) ws.undone.record({ kind: 'copy', made: [...landed.values()] })
   }
-
   return [...landed.values()].map((one) => one.path)
 }
-
 async function wordsIn(path: string, words: string): Promise<void> {
   await writeFile(path, words)
 }

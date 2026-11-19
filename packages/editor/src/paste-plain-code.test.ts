@@ -11,7 +11,6 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 async function pastedPlainly(marked: string, text: string): Promise<string> {
   const caret = marked.indexOf('|')
   Object.defineProperty(navigator, 'clipboard', {
@@ -34,14 +33,12 @@ async function pastedPlainly(marked: string, text: string): Promise<string> {
   view.destroy()
   return note
 }
-
 describe('paste as plain text into code held in a list item or quote', () => {
   test('keeps every pasted line inside the item, as a normal paste does', async () => {
     await expect(pastedPlainly('- step\n  ```js\n  |\n  ```\n- next', 'let a = 1\nlet b = 2')).resolves.toBe(
       '- step\n  ```js\n  let a = 1\n  let b = 2\n  ```\n- next',
     )
   })
-
   test('keeps every pasted line inside the quote', async () => {
     await expect(pastedPlainly('> ```js\n> |\n> ```', 'let a = 1\nlet b = 2')).resolves.toBe(
       '> ```js\n> let a = 1\n> let b = 2\n> ```',

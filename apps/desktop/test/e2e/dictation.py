@@ -3,17 +3,13 @@ import math
 import struct
 import tempfile
 from pathlib import Path
-
 from playwright.sync_api import Browser, Page, Route
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 LIVE = "Kannst du"
 WHOLE = "Kannst du bitte den Pull Request reviewen?"
-
 OWN_TRANSCRIBER = """
 async (base) => {
   const ai = window.ordenApp.ai
@@ -24,9 +20,7 @@ async (base) => {
   return { id: made.id, transcriber: ai.transcriber?.id ?? null }
 }
 """
-
 COMPOSER = ".foot textarea"
-
 def bursts(path: Path) -> Path:
     rate = 48_000
     frames = bytearray()
@@ -40,13 +34,10 @@ def bursts(path: Path) -> Path:
     head += b"data" + struct.pack("<I", len(frames))
     path.write_bytes(head + bytes(frames))
     return path
-
 class Transcriber:
-
     def __init__(self) -> None:
         self.asked: list[dict] = []
         self.final = False
-
     def listen(self, route: Route) -> None:
         body = route.request.post_data_buffer or b""
         said = body.decode("latin-1")
@@ -62,7 +53,6 @@ class Transcriber:
             content_type="application/json",
             body=json.dumps({"text": WHOLE if self.final or seconds > 3 else LIVE}),
         )
-
 FIELD = """
 (where) => {
   const field = document.querySelector(where)
@@ -79,10 +69,8 @@ FIELD = """
   }
 }
 """
-
 def field(page: Page, where: str = COMPOSER) -> dict:
     return page.evaluate(FIELD, where)
-
 def opened(browser: Browser, dark: bool = False) -> tuple[Page, Transcriber]:
     context = browser.new_context(
         viewport={"width": 1180, "height": 820},
@@ -101,17 +89,14 @@ def opened(browser: Browser, dark: bool = False) -> tuple[Page, Transcriber]:
     page.keyboard.press("Control+Shift+A")
     wait_for(page, f"document.activeElement === document.querySelector('{COMPOSER}')", "the composer")
     return page, heard
-
 def composer(browser: Browser) -> None:
     say("=== the composer ===")
     page, heard = opened(browser)
     page.keyboard.type("Frage: ")
-
     if not page.query_selector(".foot button.mic"):
         wrong("no microphone beside the round button")
         return
     shot(page, "01-composer")
-
     page.click(".foot button.mic")
     wait_for(page, "document.querySelector('.foot [role=dialog]')", "the chooser")
     rows = page.evaluate("() => [...document.querySelectorAll('.foot [role=dialog] button')].map((one) => one.textContent.trim())")
@@ -122,7 +107,6 @@ def composer(browser: Browser) -> None:
     if heard.asked:
         wrong(f"{len(heard.asked)} requests went before an engine was chosen")
     shot(page, "02-chooser")
-
     page.click(".foot [role=dialog] button >> nth=0")
     wait_for(page, f"document.querySelector('.foot button.mic.listening')", "the microphone to listen")
     wait_for(page, f"document.querySelector('{COMPOSER}').offsetParent?.querySelector('[data-heard] mark')", "live words")
@@ -133,7 +117,6 @@ def composer(browser: Browser) -> None:
     if not live["focused"]:
         wrong("pressing the microphone took the keyboard from the field")
     shot(page, "03-live")
-
     page.wait_for_timeout(3000)
     live = max((one["seconds"] for one in heard.asked), default=0)
     heard.final = True
@@ -155,7 +138,6 @@ def composer(browser: Browser) -> None:
     if final.get("model") != "whisper-1":
         wrong(f"a server on this machine was asked for {final.get('model')!r}")
     shot(page, "04-final")
-
     heard.final = False
     say("--- Escape ---")
     before = field(page)["value"]
@@ -165,7 +147,6 @@ def composer(browser: Browser) -> None:
     wait_for(page, "!document.querySelector('.foot button.mic.listening')", "the microphone to close")
     if field(page)["value"] != before:
         wrong(f"Escape did not put the field back: {field(page)['value']!r}")
-
     say("--- held ---")
     page.keyboard.down("Alt")
     page.keyboard.down("v")
@@ -178,7 +159,6 @@ def composer(browser: Browser) -> None:
     if not field(page)["value"].endswith(WHOLE):
         wrong(f"push-to-talk did not write its words: {field(page)['value']!r}")
     page.context.close()
-
 def dark(browser: Browser) -> None:
     say("=== the composer in the dark ===")
     page, _heard = opened(browser, dark=True)
@@ -193,7 +173,6 @@ def dark(browser: Browser) -> None:
     shot(page, "05-live-dark")
     page.keyboard.press("Escape")
     page.context.close()
-
 def quick_add(browser: Browser) -> None:
     say("=== quick add ===")
     page, heard = opened(browser)
@@ -220,7 +199,6 @@ def quick_add(browser: Browser) -> None:
     if heard.asked and "seconds" not in heard.asked[-1]:
         wrong("quick add's dictation never reached the transcriber")
     page.context.close()
-
 def main() -> int:
     with tempfile.TemporaryDirectory() as made:
         sound = bursts(Path(made) / "microphone.wav")
@@ -234,7 +212,5 @@ def main() -> int:
             composer(browser)
             dark(browser)
             quick_add(browser)
-
     return DRIVE.verdict("dictation into the composer and quick add, live words and final")
-
 raise SystemExit(main())

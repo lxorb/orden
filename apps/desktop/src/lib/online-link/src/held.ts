@@ -5,7 +5,6 @@ export interface Holder {
   since: number
   taken: boolean
 }
-
 export function heldLine(holder: Holder, now = Date.now()): string {
   const device = holder.by || 'another device'
   if (holder.taken) return `Taken over by ${device}`

@@ -8,10 +8,8 @@ import { computer, type Hubs, hubs } from './hub-fakes'
 const EMAIL = 'phone@example.com'
 const ZONE = 'Europe/Zurich'
 const AT = Date.UTC(2099, 0, 5, 8)
-
 let env: TestEnv
 let running: Hubs
-
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(Date.UTC(2026, 8, 30, 12))
@@ -20,12 +18,10 @@ beforeEach(() => {
   running = hubs(env)
   env.HUB = running.HUB
 })
-
 afterEach(() => {
   vi.useRealTimers()
   env.close()
 })
-
 async function serviceAccount(): Promise<string> {
   const pair = (await crypto.subtle.generateKey(
     {
@@ -41,7 +37,6 @@ async function serviceAccount(): Promise<string> {
   const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
   return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'orden-test' })
 }
-
 function fcm() {
   const tokens: string[] = []
   const send = ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -55,12 +50,10 @@ function fcm() {
   }) as typeof fetch
   return { send, tokens }
 }
-
 async function setUp() {
   env.FCM_SERVICE_ACCOUNT = await serviceAccount()
   const phone = await computer(env, running, EMAIL, 'Phone')
   const laptop = await computer(env, running, EMAIL, 'Laptop')
-
   for (const [one, name] of [
     [phone, 'lost-phone-token'],
     [laptop, 'laptop-token'],
@@ -71,7 +64,6 @@ async function setUp() {
     })
     expect(registered.status).toBe(200)
   }
-
   const made = await call(env, '/v1/spaces', { token: laptop.token, body: { name: 'Work' } })
   const space = (made.json as { space: { id: string } }).space.id
   env.db
@@ -83,13 +75,11 @@ async function setUp() {
     .run(`inbox:${laptop.user}`, laptop.user, space, AT)
   return { phone, laptop }
 }
-
 function targets(): string[] {
   return (env.db.prepare('select token from push_targets order by token').all() as { token: string }[]).map(
     (one) => one.token,
   )
 }
-
 describe('a device no longer signed in', () => {
   test('is pushed to while it is', async () => {
     await setUp()
@@ -97,48 +87,39 @@ describe('a device no longer signed in', () => {
     expect(await sendDue(env, AT, sent.send)).toBe(1)
     expect(sent.tokens.sort()).toEqual(['laptop-token', 'lost-phone-token'])
   })
-
   test('nor once its session is ended from the sessions list', async () => {
     const { phone, laptop } = await setUp()
     await call(env, `/v1/sessions/${phone.session}`, { method: 'DELETE', token: laptop.token })
     expect(targets()).toEqual(['laptop-token'])
-
     const sent = fcm()
     await sendDue(env, AT, sent.send)
     expect(sent.tokens).toEqual(['laptop-token'])
   })
-
   test('nor once every other session is ended', async () => {
     await setUp()
     const desk = await computer(env, running, EMAIL, 'Desk')
     await call(env, '/v1/sessions', { method: 'DELETE', token: desk.token })
     expect(targets()).toEqual([])
   })
-
   test('nor once it signs itself out', async () => {
     const { phone } = await setUp()
     await call(env, '/v1/auth/signout', { method: 'POST', token: phone.token })
     expect(targets()).toEqual(['laptop-token'])
-
     const sent = fcm()
     await sendDue(env, AT, sent.send)
     expect(sent.tokens).toEqual(['laptop-token'])
   })
-
   test('nor once its session has run out, whatever row is left', async () => {
     const { phone } = await setUp()
     env.db.prepare('update sessions set expires_at = 1 where token_hash = ?').run(await sha256(phone.token))
     expect(targets()).toContain('lost-phone-token')
-
     const sent = fcm()
     await sendDue(env, AT, sent.send)
     expect(sent.tokens).toEqual(['laptop-token'])
   })
-
   test('nor a target registered before targets named their session', async () => {
     await setUp()
     env.db.exec("update push_targets set session_hash = null where token = 'lost-phone-token'")
-
     const sent = fcm()
     await sendDue(env, AT, sent.send)
     expect(sent.tokens).toEqual(['laptop-token'])

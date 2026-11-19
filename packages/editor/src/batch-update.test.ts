@@ -12,7 +12,6 @@ const seeded =
     seed = (seed * 1103515245 + 12345) & 0x7fffffff
     return seed / 0x80000000
   }
-
 function edits(count: number, random: () => number): Transaction[] {
   let state = EditorState.create({ doc: 'abc\n'.repeat(400) })
   const out: Transaction[] = []
@@ -32,7 +31,6 @@ function edits(count: number, random: () => number): Transaction[] {
   }
   return out
 }
-
 function updateOf(transactions: Transaction[]): ViewUpdate {
   const first = transactions[0]
   if (!first) throw new Error('no transactions')
@@ -43,7 +41,6 @@ function updateOf(transactions: Transaction[]): ViewUpdate {
     transactions,
   )
 }
-
 describe('an update of many transactions at once', () => {
   test('holds the changes of them all, composed in order', () => {
     const random = seeded(5)
@@ -56,7 +53,6 @@ describe('an update of many transactions at once', () => {
       expect(updateOf(transactions).changes.toJSON()).toEqual(one.toJSON())
     }
   })
-
   test('composes them in time that grows with their number', () => {
     const timed = (count: number) => {
       let state = EditorState.create({ doc: 'line\n'.repeat(count) })
@@ -73,7 +69,6 @@ describe('an update of many transactions at once', () => {
     expect(measuredGrowth(timed, 4_000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
 })
-
 function typedOnEveryLine(state: EditorState, later: boolean): { state: EditorState; took: number } {
   const started = performance.now()
   for (let at = 1; at <= state.doc.lines; at++) {
@@ -85,7 +80,6 @@ function typedOnEveryLine(state: EditorState, later: boolean): { state: EditorSt
   }
   return { state, took: performance.now() - started }
 }
-
 describe('a run of edits joined into one undo step', () => {
   test('is undone whole, back to the note before it', () => {
     const doc = 'one\ntwo\nthree\n'.repeat(300)
@@ -94,14 +88,12 @@ describe('a run of edits joined into one undo step', () => {
     undo({ state, dispatch: (tr) => (after = tr.state) })
     expect(after.doc.toString()).toBe(doc)
   })
-
   test('is joined in time that grows with its length', () => {
     const timed = (lines: number) =>
       typedOnEveryLine(EditorState.create({ doc: 'line\n'.repeat(lines), extensions: [history()] }), false).took
     expect(measuredGrowth(timed, 4_000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
 })
-
 describe('edits that leave the parse for later', () => {
   test('end in the tree a parse of the note gives', () => {
     const extensions = [markdown({ base: markdownLanguage })]
@@ -120,7 +112,6 @@ describe('edits that leave the parse for later', () => {
     expect(shape(state).length).toBeGreaterThan(400)
     expect(shape(state)).toEqual(shape(fresh))
   })
-
   test('are taken in time that grows with their number', () => {
     const timed = (lines: number) =>
       typedOnEveryLine(

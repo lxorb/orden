@@ -3,7 +3,6 @@ export interface Cost {
   r: number
   p: number
 }
-
 async function pbkdf2(
   password: Uint8Array<ArrayBuffer>,
   salt: Uint8Array<ArrayBuffer>,
@@ -13,7 +12,6 @@ async function pbkdf2(
   const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 1 }, key, bytes * 8)
   return new Uint8Array(bits)
 }
-
 function salsa8(w: Uint32Array) {
   let x0 = w[0] ?? 0,
     x1 = w[1] ?? 0,
@@ -115,7 +113,6 @@ function salsa8(w: Uint32Array) {
   w[14] = ((w[14] ?? 0) + x14) | 0
   w[15] = ((w[15] ?? 0) + x15) | 0
 }
-
 function blockMix(b: Uint32Array, y: Uint32Array, r: number, x: Uint32Array) {
   const words = 32 * r
   x.set(b.subarray(words - 16, words))
@@ -125,7 +122,6 @@ function blockMix(b: Uint32Array, y: Uint32Array, r: number, x: Uint32Array) {
     y.set(x, (i % 2 === 0 ? i / 2 : r + (i - 1) / 2) * 16)
   }
 }
-
 function roMix(b: Uint32Array, { n, r }: Cost) {
   const words = 32 * r
   const v = new Uint32Array(words * n)
@@ -145,21 +141,18 @@ function roMix(b: Uint32Array, { n, r }: Cost) {
   }
   b.set(x)
 }
-
 function littleEndian(bytes: Uint8Array<ArrayBuffer>): Uint32Array {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const out = new Uint32Array(bytes.byteLength / 4)
   for (let i = 0; i < out.length; i++) out[i] = view.getUint32(i * 4, true)
   return out
 }
-
 function bytesOf(words: Uint32Array): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(words.length * 4)
   const view = new DataView(out.buffer)
   for (let i = 0; i < words.length; i++) view.setUint32(i * 4, words[i] ?? 0, true)
   return out
 }
-
 export async function scrypt(
   password: Uint8Array<ArrayBuffer>,
   salt: Uint8Array<ArrayBuffer>,

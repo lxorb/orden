@@ -9,23 +9,19 @@ import { drawnFences } from './drawn-fences'
 function spaceOf(path: string): { name: string; root: string } | null {
   return spaceHolding(workspace.spaces, path)
 }
-
 export function rowAt(path: string | null): Row | undefined {
   if (path === null) return undefined
   return rows.at(path).find((one) => one.kind === 'note')
 }
-
 async function fileText(path: string): Promise<string> {
   const text = await noteText(workspace, path)
   if (text === null) throw new Error('no such base')
   return text
 }
-
 const watchFile = (path: string) => (changed: () => void) =>
   links.hearSaves((saved) => {
     if (samePath(saved, path)) changed()
   })
-
 export function fileSource(path: string, view?: string, self?: () => Row | undefined): Source {
   let before = ''
   return {
@@ -47,19 +43,15 @@ export function fileSource(path: string, view?: string, self?: () => Row | undef
     watch: watchFile(path),
   }
 }
-
 const fenceWords = (words: string) => words.replace(/\r/g, '').trimEnd()
-
 export function fenceAt(text: string, code: string): { from: number; to: number } | null {
   const wanted = fenceWords(code)
   const same = drawnFences(text).filter((one) => fenceWords(one.words) === wanted)
   const [only] = same
   return only?.margin && same.length === 1 ? { from: only.from, to: only.to } : null
 }
-
 const fenceViews = new Map<string, Shown>()
 const KEPT_PLACES = 200
-
 function remember(key: string, place: Shown) {
   fenceViews.delete(key)
   fenceViews.set(key, place)
@@ -68,9 +60,7 @@ function remember(key: string, place: Shown) {
     fenceViews.delete(old)
   }
 }
-
 const fenceKey = (path: string, words: string) => `${path}\n${words.replace(/\s+$/, '')}`
-
 export function fenceSource(code: string, path: string | null, stranger = false): Source {
   let words = code
   let shown = path === null ? undefined : fenceViews.get(fenceKey(path, code))
@@ -107,7 +97,6 @@ export function fenceSource(code: string, path: string | null, stranger = false)
     },
   }
 }
-
 export function embeddedPath(target: string, from: string | null): string | null {
   const root = workspace.rootHolding(from)
   if (root === null) return null

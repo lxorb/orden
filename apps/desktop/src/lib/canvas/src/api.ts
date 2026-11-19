@@ -15,5 +15,4 @@ export { default as CanvasHands } from './CanvasHands.svelte'
 export { default as CanvasInk } from './CanvasInk.svelte'
 export { default as CanvasNode } from './CanvasNode.svelte'
 export { default as CanvasPicked } from './CanvasPicked.svelte'
-
 export const loadCanvas = () => import('./Canvas.svelte')

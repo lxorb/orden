@@ -1,17 +1,12 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 from settling import LANDED
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 PATIENCE = 40
-
 HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -24,9 +19,7 @@ async () => {
   return at('Work')
 }
 """
-
 ROW = "aside .row[data-path$='/Work']"
-
 BOXES = f"""
 () => {{
   const row = document.querySelector("{ROW}")
@@ -38,10 +31,8 @@ BOXES = f"""
   return {{ row: box(row), mark: box(mark), twist: box(twist), strip: parseFloat(strip.width) }}
 }}
 """
-
 OPEN = f"() => document.querySelector(\"{ROW}\")?.getAttribute('aria-expanded')"
 FRONT = "() => window.ordenApp.workspace.active?.path ?? null"
-
 def settled(page: Page, what: str) -> dict:
     wait_for(page, LANDED, "the sheets")
     seen = None
@@ -53,10 +44,8 @@ def settled(page: Page, what: str) -> dict:
         page.wait_for_timeout(150)
     wrong(f"{what}: the row never stood still")
     return seen or {}
-
 def landing_on(page: Page, at: tuple[float, float], what: str, said: str) -> None:
     wait_for(page, f"() => !!document.elementFromPoint({at[0]}, {at[1]})?.closest({what!r})", f"{said}: the press to land there")
-
 def turned(page: Page, at: tuple[float, float], what: str) -> None:
     was = page.evaluate(OPEN)
     front = page.evaluate(FRONT)
@@ -70,7 +59,6 @@ def turned(page: Page, at: tuple[float, float], what: str) -> None:
     if page.evaluate(FRONT) != front:
         wrong(f"{what}: it opened {page.evaluate(FRONT)} as well")
     say(f"{what}: {was} -> {page.evaluate(OPEN)}")
-
 def desk(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
@@ -83,7 +71,6 @@ def desk(browser: Browser) -> None:
         if page.evaluate(OPEN) == "true":
             page.locator(f"{ROW} .twist").click()
             wait_for(page, f"() => ({OPEN})() === 'false'", "the folder shut")
-
         boxes = settled(page, "the folder's row")
         say(f"row, twist and mark: {boxes}")
         row, mark = boxes["row"], boxes["mark"]
@@ -92,7 +79,6 @@ def desk(browser: Browser) -> None:
         turned(page, (mark["x"] + mark["w"] + 3, middle), "3px after the mark")
         turned(page, (mark["x"] + mark["w"] / 2, row["y"] + 2), "at the top of the row")
         turned(page, (mark["x"] + mark["w"] / 2, row["y"] + row["h"] - 2), "at the foot of the row")
-
         front = page.evaluate(FRONT)
         was = page.evaluate(OPEN)
         page.mouse.dblclick(mark["x"] - 2, middle)
@@ -101,11 +87,9 @@ def desk(browser: Browser) -> None:
             wrong(f"a double press on the twist opened {page.evaluate(FRONT)}")
         if page.evaluate(OPEN) != was:
             wrong("a double press on the twist did not turn the row there and back")
-
         after = page.evaluate(BOXES)
         if after["row"] != row or after["mark"] != mark:
             wrong(f"the row or its mark moved: {after}")
-
         page.locator(f"{ROW} .orden-row-label").click()
         try:
             wait_for(page, "() => (window.ordenApp.workspace.active?.path ?? '').includes('/Work')", "the folder opened", 10)
@@ -114,7 +98,6 @@ def desk(browser: Browser) -> None:
         DRIVE.shot(page, "tree-caret", clip={"x": row["x"], "y": row["y"] - 4, "width": row["w"], "height": row["h"] + 8})
     finally:
         context.close()
-
 def thumb(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 420, "height": 880},
@@ -143,7 +126,6 @@ def thumb(browser: Browser) -> None:
             wrong(f"the strip is {boxes['twist']['h']}px tall under a thumb, short of {target}")
     finally:
         context.close()
-
 TAGS = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -152,11 +134,9 @@ async () => {
   ws.showPanel('search')
 }
 """
-
 TAG = "aside .line:has(.twist) .twist"
 TAG_OPEN = f"() => document.querySelector(\"{TAG}\")?.getAttribute('aria-expanded')"
 SEARCHED = "() => window.ordenApp.search.text"
-
 def tags(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
@@ -195,10 +175,8 @@ def tags(browser: Browser) -> None:
             wrong(f"pressing the tag's name searched for {page.evaluate(SEARCHED)!r}")
     finally:
         context.close()
-
 def drive(browser: Browser) -> None:
     desk(browser)
     thumb(browser)
     tags(browser)
-
 raise SystemExit(DRIVE.run(drive, "a press a few pixels off the twist turns the row and opens nothing"))

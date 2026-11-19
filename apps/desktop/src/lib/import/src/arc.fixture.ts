@@ -1,6 +1,5 @@
 const FAVORITES = 'C-TOP-DEFAULT'
 const OTHER_FAVORITES = 'C-TOP-P1'
-
 const item = (id: string, parentID: string, data: Record<string, unknown>, said: Record<string, unknown> = {}) => ({
   id,
   parentID,
@@ -12,7 +11,6 @@ const item = (id: string, parentID: string, data: Record<string, unknown>, said:
   originatingDevice: 'D1',
   ...said,
 })
-
 const tab = (id: string, parentID: string, url: string, title: string) =>
   item(id, parentID, {
     tab: {
@@ -22,10 +20,8 @@ const tab = (id: string, parentID: string, url: string, title: string) =>
       timeLastActiveAt: 751_234_999.5,
     },
   })
-
 const container = (id: string, kind: Record<string, unknown>, children: string[]) =>
   item(id, '', { itemContainer: { containerType: kind } }, { childrenIds: children })
-
 const items = [
   container(FAVORITES, { topApps: { _0: { default: true } } }, ['F-MAIL', 'F-CAL']),
   tab('F-MAIL', FAVORITES, 'https://mail.example.com/', 'Inbox'),
@@ -48,7 +44,6 @@ const items = [
   container('C-SIDE-PINNED', { spaceItems: { _0: 'S-SIDE' } }, ['X-SIDE']),
   tab('X-SIDE', 'C-SIDE-PINNED', 'https://side.example.com/', 'Side'),
 ]
-
 const spaces = [
   {
     id: 'S-PERSONAL',
@@ -72,7 +67,6 @@ const spaces = [
     newContainerIDs: [{ pinned: {} }, 'C-SIDE-PINNED', { unpinned: {} }, 'C-SIDE-OPEN'],
   },
 ]
-
 export const SIDEBAR = {
   sidebarSyncState: { container: { version: 1 } },
   version: 1,

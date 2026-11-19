@@ -2,7 +2,6 @@ import { expect, test } from 'vitest'
 import { scrubbedLog } from './feedback-log'
 
 const TIME = '2026-11-04T08:27:36.000Z'
-
 test.each([
   [
     `${TIME} error save: /home/anna/Notes/Divorce lawyer.md - Error: disk full`,
@@ -50,7 +49,6 @@ test.each([
 ])('the reader’s paths, drafts, addresses and words go; what went wrong stays: %s', (line, want) => {
   expect(scrubbedLog(line)).toBe(want)
 })
-
 test.each([
   `${TIME} info page loaded`,
   '12:00 WARN  a request to https://api.orden.example/v1/sync/pull failed: 503',
@@ -63,7 +61,6 @@ test.each([
 ])('what is not the reader’s stays: %s', (line) => {
   expect(scrubbedLog(line)).toBe(line)
 })
-
 test('one path is one number all through a report, and two are two', () => {
   const said = scrubbedLog(
     [
@@ -76,7 +73,6 @@ test('one path is one number all through a report, and two are two', () => {
   const [one, two] = said.split('\n')
   expect(one?.slice(5)).toBe(two?.slice(5))
 })
-
 test('a name with spaces and no extension in a folder goes all the same', () => {
   const said = scrubbedLog('12:00 WARN  /home/anna/Notes/Ana and Bob/Divorce plan not sent')
   expect(said).not.toMatch(/anna|Ana|Bob|Divorce|plan/)

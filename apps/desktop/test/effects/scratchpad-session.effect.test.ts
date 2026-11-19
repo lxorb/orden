@@ -3,9 +3,7 @@ import { expect, test, vi } from 'vitest'
 
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -16,10 +14,8 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const PLAN = '/spaces/Work/Plan.md'
 const PAD = '/app/Scratchpad.md'
-
 const draft = (path: string, doc: string, dirty: boolean) => ({
   kind: 'note',
   path,
@@ -29,7 +25,6 @@ const draft = (path: string, doc: string, dirty: boolean) => ({
   cursor: 0,
   scroll: 0,
 })
-
 test('a session’s scratchpad tab comes back, and is the scratchpad while it is open', async () => {
   const { Disk } = await import('../disk')
   disk.current = new Disk()
@@ -59,19 +54,15 @@ test('a session’s scratchpad tab comes back, and is the scratchpad while it is
       closed: [{ draft: draft(PAD, 'Old words\n', false), paneId: 'p1', at: 1 }],
     }),
   )
-
   const { workspace } = await import('../../src/lib/workspace/src/api')
   await workspace.restore()
   flushSync()
-
   expect(workspace.tabs.map((one) => one.path)).toEqual([PLAN, PAD])
   expect(workspace.active?.path).toBe(PAD)
   expect(workspace.documentAt(PAD)?.text).toBe('Old words\nNot yet written\n')
-
   const { pad, shown } = await import('../../src/lib/scratchpad/src/api')
   const scratchpad = await pad()
   vi.spyOn(scratchpad, 'where').mockResolvedValue(PAD)
-
   workspace.activate(workspace.tabs[0]?.id ?? '')
   shown.show()
   expect(shown.on).toBe(false)
@@ -80,7 +71,6 @@ test('a session’s scratchpad tab comes back, and is the scratchpad while it is
   await workspace.open(PAD)
   expect(shown.on).toBe(false)
   expect(workspace.active?.path).toBe(PAD)
-
   await scratchpad.append('Added')
   expect(workspace.documentAt(PAD)?.text).toBe('Old words\nNot yet written\n\nAdded\n')
   expect(disk.current.files.get(PAD)).toBe('Old words\nNot yet written\n\nAdded\n')

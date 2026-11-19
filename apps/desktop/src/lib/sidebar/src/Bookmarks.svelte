@@ -37,7 +37,6 @@
   import { tabLetters, tabUnloading } from '../../tab-strip/src/api'
 
   const { onsearch }: { onsearch: (query: string) => void } = $props()
-
   interface Row {
     mark: Bookmark
     at: number
@@ -52,17 +51,14 @@
     front: boolean
     unloaded: boolean
   }
-
   function essentialOf(path: string | null) {
     return path === null
       ? undefined
       : workspace.tabs.find((one) => one.essential !== null && samePath(one.essential, path))
   }
-
   const byPath = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const found = new Map<string, Entry>()
-
     const walk = (entries: readonly Entry[]) => {
       for (const entry of entries) {
         if (workspace.instructionsAt(entry.path)) continue
@@ -70,14 +66,11 @@
         if (entry.children.length) walk(entry.children)
       }
     }
-
     if (workspace.tree) walk(workspace.tree.children)
     return found
   })
-
   function rowFor(mark: Bookmark, at: number, depth: number, root: string): Row | null {
     const shared = { mark, at, depth }
-
     if (mark.kind === 'group' || mark.kind === 'search' || mark.kind === 'graph') {
       return {
         ...shared,
@@ -92,11 +85,9 @@
         unloaded: false,
       }
     }
-
     const inside = mark.kind === 'block' ? (mark.path.split('#')[0] ?? '') : mark.path
     const entry = byPath.get(insideSpace(root, inside))
     if (!entry || (!basesOn() && isBaseTarget(entry.path))) return null
-
     const named = mark.kind === 'heading' || mark.kind === 'block'
     const own = entry.is_dir ? folderNote(entry) : null
     return {
@@ -120,45 +111,35 @@
       unloaded: mark.kind === 'note' && !!essentialOf(entry.path)?.unloaded,
     }
   }
-
   const drawn = $derived.by((): Row[] => {
     const root = workspace.activeSpace?.root
     if (root === undefined) return []
-
     const list = workspace.bookmarks.list
     const out: Row[] = []
-
     const walk = (parent: string | undefined, depth: number) => {
       for (const [at, mark] of list.entries()) {
         if ((mark.parent ?? undefined) !== parent) continue
-
         const row = rowFor(mark, at, depth, root)
         if (!row) continue
-
         out.push(row)
         if (mark.kind === 'group' && workspace.isGroupOpen(mark.path)) walk(mark.path, depth + 1)
       }
     }
-
     walk(undefined, 0)
     return out
   })
-
   const tiles = $derived(drawn.filter((row) => isTile(row.mark)))
   const rows = $derived(drawn.filter((row) => !isTile(row.mark)))
-
   const offered = $derived.by(() => {
     if (!workspace.panes.dragging) return false
     if (workspace.panes.dragging.tabId === null) {
       return carried().some((one) => workspace.entryAt(one)?.is_dir === false)
     }
-
     const id = workspace.panes.dragging.tabId
     const path = id ? workspace.tabs.find((one) => one.id === id)?.path : null
     const mark = path ? workspace.bookmarks.forEntry({ path, is_dir: false }) : null
     return mark !== null && !workspace.bookmarks.has(mark)
   })
-
   const reckoning = door(essentials)
   let hands = $state.raw<Awaited<ReturnType<typeof essentials>> | null>(null)
   const reach = () => {
@@ -168,13 +149,11 @@
     if (workspace.panes.dragging) reach()
   })
   const landing = $derived(hands?.landing ?? null)
-
   function early(event: DragEvent) {
     if (!isTreeDrag(event.dataTransfer)) return
     event.preventDefault()
     reach()
   }
-
   function late(event: DragEvent) {
     if (!isTreeDrag(event.dataTransfer)) return
     event.preventDefault()
@@ -182,12 +161,9 @@
     const at = workspace.bookmarks.list.length
     void reckoning().then((one) => one.keepRows(rows, at, (path) => byPath.get(path)))
   }
-
   let dragging = $state<number | null>(null)
-
   function open(row: Row, how: OpenHow) {
     const mark = row.mark
-
     switch (mark.kind) {
       case 'note':
         if (row.path) void workspace.openEntry(row.path, how)
@@ -213,83 +189,65 @@
         break
     }
   }
-
   function pressed(row: Row, ask: TabAsk) {
     if (row.mark.kind === 'note' && row.path) {
       const path = row.path
       void reckoning().then((one) => (ask === 'plain' ? one.openEssential(path) : one.openInStrip(path, howFor(ask))))
       return
     }
-
     open(row, howFor(ask, { preview: true }))
   }
-
   function keepAsTab(row: Row) {
     const path = row.path
     if (path) void reckoning().then((one) => one.keepAsTab(path))
   }
-
   let letters = $state.raw<Awaited<ReturnType<typeof tabLetters>> | null>(null)
   onMount(() => {
     void tabLetters().then((one) => (letters = one))
   })
-
   function letterOf(row: Row): { 'data-essential-letter'?: string; 'aria-keyshortcuts'?: string } {
     const given = letters?.essentialLetters.given
     const letter = given && row.path && isTile(row.mark) ? given[row.path] : undefined
     return letter ? { 'data-essential-letter': letter, 'aria-keyshortcuts': `Alt+${letter}` } : {}
   }
-
   function startDrag(event: DragEvent, row: Row) {
     reach()
     carryBookmark(event.dataTransfer, row.mark, row.at, isTile(row.mark))
     dragging = row.at
   }
-
   function endDrag() {
     landing?.clear()
     dragging = null
     carriedNothing()
   }
-
   function over(event: DragEvent, row: Row) {
     if (!hands?.takes(event)) return
-
     landing?.over(row.at, dragging !== null && dragging < row.at)
   }
-
   function drop(event: DragEvent, row: Row) {
     event.preventDefault()
-
     const after = landing?.after ?? false
     if (hands?.keepCarried(event, after ? row.at + 1 : row.at, (path) => byPath.get(path))) {
       endDrag()
       return
     }
-
     const from = workspace.bookmarks.indexOf(draggedBookmark(event.dataTransfer))
     endDrag()
     if (from === null) return
-
     const moving = workspace.bookmarks.list[from]
     if (!moving) return
-
     if (row.mark.kind === 'group' && !sameBookmark(moving, row.mark)) {
       workspace.bookmarks.moveInto(moving, row.mark.path)
       workspace.openGroup(row.mark.path)
       return
     }
-
     workspace.bookmarks.moveInto(moving, row.mark.parent ?? null)
     workspace.bookmarks.move(from, row.at)
   }
-
   const titleOf = (row: Row) => (row.mark.kind === 'search' ? 'Search' : row.label)
-
   function rowMenu(row: Row, unloading: MenuEntry[] = []): MenuEntry[] {
     const group = row.mark.kind === 'group'
     const icons = row.mark.kind === 'note' || row.mark.kind === 'folder' ? iconEntries(row.face, row.folder) : []
-
     return [
       ...(row.mark.kind === 'note' && row.path
         ? [{ label: 'Open in new tab', run: () => pressed(row, 'front') }, DIVIDER]
@@ -314,7 +272,6 @@
       { label: 'New group', run: () => void newGroup() },
     ]
   }
-
   function showMenu(event: MouseEvent, row: Row) {
     const own = row.mark.kind === 'note' ? essentialOf(row.path) : undefined
     if (!own) {
@@ -327,13 +284,11 @@
       menu.show(event, rowMenu(row, unloadEntries(own)), { title: titleOf(row) }),
     )
   }
-
   async function newGroup() {
     const { prompt } = await import('../../ui-kit/src/api')
     const name = await prompt.ask({ title: 'New group', confirmLabel: 'Make' })
     if (name) workspace.bookmarks.addGroup(name)
   }
-
   async function renameGroup(mark: Bookmark) {
     const { prompt } = await import('../../ui-kit/src/api')
     const name = await prompt.ask({
@@ -343,7 +298,6 @@
     })
     if (name) workspace.bookmarks.rename(mark, name)
   }
-
   const rowAt = (element: HTMLElement) => drawn.find((one) => one.at === Number(element.dataset.at))
 </script>
 
@@ -492,36 +446,30 @@
   .bookmarks {
     position: relative;
   }
-
   .tiles.is-floating {
     position: absolute;
     inset: 0 0 auto;
     margin-block: 0;
   }
-
   .tiles.is-floating .is-empty {
     height: calc(2 * var(--space-1) + 1lh);
     font-family: var(--font-ui);
     font-size: var(--text-xs);
   }
-
   .tiles.is-floating + .orden-section,
   .bookmarks:has(> .is-floating:only-child) + :global(.orden-section) {
     margin-top: 0;
     visibility: hidden;
   }
-
   .list {
     list-style: none;
     margin: 0 0 var(--space-2);
     padding: 0;
   }
-
   .line {
     display: flex;
     align-items: center;
   }
-
   .twist {
     flex: none;
     min-height: var(--row-height-sm);
@@ -534,31 +482,25 @@
     color: var(--muted);
     cursor: default;
   }
-
   .chevron {
     display: block;
     width: var(--icon-md);
     height: var(--icon-md);
     flex: none;
   }
-
   .row {
     --lead: 2px;
-
     position: relative;
     flex: 1;
     min-width: 0;
     padding-inline-start: calc(var(--level, 0) * var(--row-indent) + var(--lead));
   }
-
   .row.is-unloaded > :global(.mark) {
     opacity: 0.45;
   }
-
   .row.nested {
     --lead: calc(var(--icon-md) + var(--space-1));
   }
-
   .row.above::before,
   .row.below::after {
     content: '';
@@ -569,15 +511,12 @@
     border-radius: 1px;
     background: var(--accent);
   }
-
   .row.above::before {
     top: -1px;
   }
-
   .row.below::after {
     bottom: -1px;
   }
-
   svg {
     fill: none;
     stroke: currentColor;

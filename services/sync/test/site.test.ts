@@ -12,55 +12,42 @@ function broken(text: string): string[] {
       if (node.type.isError) found.push(`${node.from}: ${text.slice(node.from, node.from + 40)}`)
     },
   })
-
   return found
 }
-
 let env: TestEnv
 let token: string
 let space: string
-
 const HOST = 'field.nibeditor.com'
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
-
   const created = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
   space = created.json.space.id
 })
-
 afterEach(() => env.close())
-
 async function note(path: string, content: string) {
   const made = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   return made.json.note as { id: string; version: number }
 }
-
 async function publish(body: Record<string, unknown> = { subdomain: 'field' }) {
   return call(env, `/v1/spaces/${space}/blog`, { method: 'PUT', token, body })
 }
-
 async function setSite(body: Record<string, unknown>) {
   return call(env, `/v1/spaces/${space}/site`, { method: 'PUT', token, body })
 }
-
 function page(path: string, options: Record<string, unknown> = {}) {
   return call(env, path, { host: HOST, ...options })
 }
-
 describe('what a note says about its page', () => {
   test('a comment closed in a value goes no further than the note', () => {
     expect(frontOf('---\ntitle: Launch %% secret price 5 %%\n---\nWords\n')?.title).toBe('Launch')
     expect(frontOf('---\ntitle: Launch\n%%\ndescription: secret\n%%\n---\nWords\n')?.description).toBeUndefined()
   })
-
   test('a comment sign in a value leaves the block and the note under it', () => {
     const front = frontOf('---\nnote: 50%% off\ntitle: Plan\ndescription: <!-- x\n---\nWords\n')
     expect(front?.title).toBe('Plan')
     expect(frontOf('---\ntitle: Plan\n---\nWords %%to me\n# Not it\n')?.title).toBe('Plan')
   })
-
   test('reads the keys Obsidian Publish writes', () => {
     const front = frontOf(
       [
@@ -80,7 +67,6 @@ describe('what a note says about its page', () => {
         'We decided to ship it.',
       ].join('\n'),
     )
-
     expect(front).toEqual({
       publish: true,
       permalink: 'notes/the-plan',
@@ -92,61 +78,49 @@ describe('what a note says about its page', () => {
       summary: 'We decided to ship it.',
     })
   })
-
   test('takes `cover` for the same picture, since half the themes write that', () => {
     expect(frontOf('---\ncover: shot.png\n---\n')?.image).toBe('shot.png')
   })
-
   test('says nothing about a note that says nothing', () => {
     expect(frontOf('Just some words.\n')).toEqual({ summary: 'Just some words.' })
   })
-
   test('reads a word it does not understand as silence', () => {
     expect(frontOf('---\npublish: maybe\n---\n')?.publish).toBeUndefined()
   })
-
   test('takes the first prose for a summary, not the heading or the fence', () => {
     const front = frontOf('# Title\n\n```js\nconst a = 1\n```\n\nThe actual sentence.\n')
     expect(front?.summary).toBe('The actual sentence.')
     expect(front?.heading).toBe('Title')
   })
-
   test('and strips the marks out of it', () => {
     expect(frontOf('A **bold** [link](x) and [[a note|that note]].\n')?.summary).toBe('A bold link and that note.')
   })
 })
-
 describe('which notes a site publishes', () => {
   const rules = { include: [], exclude: [], otherwise: 'all' as const }
-
   test('publishes everything, as it always did', () => {
     expect(publishes(rules, 'Work/One.md', {})).toBe(true)
   })
-
   test('the note wins over every rule', () => {
     expect(publishes({ ...rules, exclude: ['Work'] }, 'Work/One.md', { publish: true })).toBe(true)
     expect(publishes({ ...rules, include: ['Work'] }, 'Work/One.md', { publish: false })).toBe(false)
   })
-
   test('an excluded folder takes everything under it', () => {
     const held = { ...rules, exclude: ['Work/Private'] }
     expect(publishes(held, 'Work/Private/One.md', {})).toBe(false)
     expect(publishes(held, 'Work/One.md', {})).toBe(true)
   })
-
   test('and the deeper rule is the one that counts', () => {
     const held = { include: ['Work/Notes'], exclude: ['Work'], otherwise: 'none' as const }
     expect(publishes(held, 'Work/Notes/One.md', {})).toBe(true)
     expect(publishes(held, 'Work/One.md', {})).toBe(false)
   })
-
   test('nothing is published where that is the default', () => {
     const held = { include: ['Public'], exclude: [], otherwise: 'none' as const }
     expect(publishes(held, 'Public/One.md', {})).toBe(true)
     expect(publishes(held, 'Drafts/One.md', {})).toBe(false)
   })
 })
-
 describe('a site in a space of many notes', () => {
   test('serves and counts the pages its rules publish, however many notes come before them', async () => {
     const insert = env.db.prepare(
@@ -159,7 +133,6 @@ describe('a site in a space of many notes', () => {
     await note('Zettel/Post.md', '# Post\n\nPublished.\n')
     await publish()
     await setSite({ rules: { include: ['Zettel'], otherwise: 'none' } })
-
     expect((await page('/zettel/post')).status).toBe(200)
     expect((await page('/')).text).toContain('Post')
     const asked = await call(env, `/v1/spaces/${space}/site/preview`, {
@@ -169,7 +142,6 @@ describe('a site in a space of many notes', () => {
     expect(asked.json.pages).toBe(1)
   })
 })
-
 describe('a site with rules', () => {
   beforeEach(async () => {
     await note('Public/One.md', '# One\n\nFirst.\n')
@@ -177,42 +149,33 @@ describe('a site with rules', () => {
     await note('Three.md', '---\npublish: false\n---\n\n# Three\n')
     await publish()
   })
-
   test('says what a publish would change before it changes it', async () => {
     const asked = await call(env, `/v1/spaces/${space}/site/preview`, {
       token,
       body: { rules: { exclude: ['Drafts'], otherwise: 'all' } },
     })
-
     expect(asked.json.before).toBe(2)
     expect(asked.json.pages).toBe(1)
     expect(asked.json.removes).toEqual(['Drafts/Two.md'])
     expect(asked.json.adds).toEqual([])
   })
-
   test('and counts everything as new while the space is private', async () => {
     await call(env, `/v1/spaces/${space}/blog`, { method: 'DELETE', token })
-
     const asked = await call(env, `/v1/spaces/${space}/site/preview`, {
       token,
       body: { rules: { otherwise: 'all' } },
     })
-
     expect(asked.json.before).toBe(0)
     expect(asked.json.adds).toEqual(['Drafts/Two.md', 'Public/One.md'])
   })
-
   test('leaves out the folders it is told to', async () => {
     await setSite({ rules: { exclude: ['Drafts'], otherwise: 'all' } })
-
     const index = await page('/')
     expect(index.text).toContain('One')
     expect(index.text).not.toContain('Two')
-
     expect((await page('/drafts/two')).status).toBe(404)
     expect((await page('/public/one')).status).toBe(200)
   })
-
   test('and the papers in them, which are asked for by their own path', async () => {
     const { hash, bytes } = file(64, 4)
     await call(env, `/v1/blobs/${hash}`, {
@@ -231,25 +194,19 @@ describe('a site with rules', () => {
         ],
       },
     })
-
     await setSite({ rules: { exclude: ['Drafts'], otherwise: 'all' } })
-
     expect((await page('/Public/paper.pdf')).status).toBe(302)
     expect((await page('/Drafts/salary.pdf')).status).toBe(404)
   })
-
   test('or publishes only what is named', async () => {
     await setSite({ rules: { include: ['Public'], otherwise: 'none' } })
-
     expect((await page('/public/one')).status).toBe(200)
     expect((await page('/drafts/two')).status).toBe(404)
   })
-
   test('and a note that says no is never on the site', async () => {
     await setSite({ rules: { otherwise: 'all' } })
     expect((await page('/three')).status).toBe(404)
   })
-
   test('the rules are the owner’s to set', async () => {
     const other = await signIn(env, 'c@d.dev')
     const refused = await call(env, `/v1/spaces/${space}/site`, {
@@ -257,75 +214,60 @@ describe('a site with rules', () => {
       token: other,
       body: { rules: { otherwise: 'none' } },
     })
-
     expect(refused.status).toBe(404)
   })
 })
-
 describe('where a page lives', () => {
   test('a permalink puts it there, and its path no longer answers', async () => {
     await note('Notes/First idea.md', '---\npermalink: ideas/first\n---\n\n# First idea\n')
     await publish()
-
     expect((await page('/ideas/first')).status).toBe(200)
     expect((await page('/notes/first-idea')).status).toBe(404)
   })
-
   test('an alias finds it too', async () => {
     await note('Plan.md', '---\naliases:\n  - the-plan\n---\n\n# Plan\n')
     await publish()
-
     expect((await page('/plan')).status).toBe(200)
     expect((await page('/the-plan')).status).toBe(200)
   })
-
   test('a name in another script is an address of its own, and a browser finds it', async () => {
     await note('Привет.md', '# Привет\n\nHi.\n')
     await note('日本語.md', '# 日本語\n\nKonnichiwa.\n')
     await note('Notes/中文.md', '# 中文\n\nNihao.\n')
     await note('Notes.md', '# Notes\n\nPlain.\n')
     await publish()
-
     const index = await page('/')
     expect(index.text).toContain('<a href="/привет">Привет</a>')
     expect(index.text).toContain('<a href="/日本語">日本語</a>')
     expect(index.text).toContain('<a href="/notes/中文">中文</a>')
     expect(index.text).toContain('<a href="/notes">Notes</a>')
-
     expect((await page(encodeURI('/привет'))).text).toContain('Hi.')
     expect((await page(encodeURI('/日本語'))).text).toContain('Konnichiwa.')
     expect((await page(encodeURI('/notes/中文'))).text).toContain('Nihao.')
   })
-
   test('a permalink or an alias in another script finds it too', async () => {
     await note('Plan.md', '---\npermalink: планы/март\naliases:\n  - план\n---\n\n# Plan\n')
     await publish()
-
     expect((await page(encodeURI('/планы/март'))).status).toBe(200)
     expect((await page(encodeURI('/план'))).status).toBe(200)
   })
-
   test('a rename leaves the old path redirecting', async () => {
     const made = await note('Plan.md', '# Plan\n\nWords.\n')
     await publish()
     expect((await page('/plan')).status).toBe(200)
-
     await call(env, `/v1/notes/${made.id}`, {
       method: 'PUT',
       token,
       body: { path: 'The plan.md', content: '# Plan\n\nWords.\n', baseVersion: made.version },
     })
-
     const moved = await page('/plan')
     expect(moved.status).toBe(301)
     expect(moved.headers.get('location')).toBe(`https://${HOST}/the-plan`)
     expect((await page('/the-plan')).status).toBe(200)
   })
-
   test('and so does a permalink that was reconsidered', async () => {
     const made = await note('Plan.md', '---\npermalink: plans/march\n---\n\n# Plan\n')
     await publish()
-
     await call(env, `/v1/notes/${made.id}`, {
       method: 'PUT',
       token,
@@ -335,12 +277,10 @@ describe('where a page lives', () => {
         baseVersion: made.version,
       },
     })
-
     const moved = await page('/plans/march')
     expect(moved.status).toBe(301)
     expect(moved.headers.get('location')).toBe(`https://${HOST}/plans/april`)
   })
-
   test('two notes with the same address each get one of their own', async () => {
     await note('Hello World.md', '# One\n\nFirst words.\n')
     await note('hello-world.md', '# Two\n\nSecond words.\n')
@@ -348,12 +288,10 @@ describe('where a page lives', () => {
     await note('Plan.md', '---\naliases:\n  - notes\n---\n\n# Plan\n\nPlan words.\n')
     await note('Notes.md', '# Notes\n\nNote words.\n')
     await publish()
-
     const index = await page('/')
     expect(index.text).toContain('href="/hello-world"')
     expect(index.text).toContain('href="/hello-world-2"')
     expect(index.text).toContain('href="/hello-world-3"')
-
     const read = async (path: string) => (await page(path)).text
     const shown = [await read('/hello-world'), await read('/hello-world-2'), await read('/hello-world-3')]
     expect(shown.filter((one) => one.includes('First words.'))).toHaveLength(1)
@@ -362,110 +300,85 @@ describe('where a page lives', () => {
     expect(await read('/notes')).toContain('Note words.')
     expect(await read('/plan')).toContain('Plan words.')
   })
-
   test('a path nothing ever answered on is still not found', async () => {
     await note('Plan.md', '# Plan\n')
     await publish()
-
     expect((await page('/nothing-here')).status).toBe(404)
   })
 })
-
 describe('what the head of a page says', () => {
   beforeEach(async () => {
     await note('Plan.md', '---\ndescription: What we decided.\ndate: 2026-03-04\n---\n\n# The plan\n\nWe shipped it.\n')
     await note('Bare.md', '# Bare\n\nThe first sentence of it.\n')
     await publish()
   })
-
   test('the title, the description and where the page lives', async () => {
     const said = (await page('/plan')).text
-
     expect(said).toContain('<title>The plan</title>')
     expect(said).toContain('<meta name="description" content="What we decided.">')
     expect(said).toContain(`<link rel="canonical" href="https://${HOST}/plan">`)
   })
-
   test('the card a shared link shows', async () => {
     const said = (await page('/plan')).text
-
     expect(said).toContain('<meta property="og:type" content="article">')
     expect(said).toContain('<meta property="og:title" content="The plan">')
     expect(said).toContain('<meta property="og:site_name" content="Field notes">')
     expect(said).toContain('<meta name="twitter:card" content="summary">')
     expect(said).toContain('<meta property="article:published_time" content="2026-03-04">')
   })
-
   test('a description nobody wrote is the first words of the note', async () => {
     const said = (await page('/bare')).text
     expect(said).toContain('<meta name="description" content="The first sentence of it.">')
   })
-
   test('the site’s own description stands in where a note has neither', async () => {
     await setSite({ description: 'Notes from the field.' })
     await note('Empty.md', '# Empty\n')
-
     const said = (await page('/empty')).text
     expect(said).toContain('<meta name="description" content="Notes from the field.">')
   })
-
   test('the feed and the icon are linked from every page', async () => {
     const said = (await page('/plan')).text
-
     expect(said).toContain('rel="alternate" type="application/atom+xml"')
     expect(said).toContain('<link rel="icon" type="image/svg+xml" href="/favicon.svg">')
   })
-
   test('a picture the note names becomes the card', async () => {
     await note('Shown.md', '---\nimage: /i/abc123.png\n---\n\n# Shown\n')
-
     const said = (await page('/shown')).text
     expect(said).toContain(`<meta property="og:image" content="https://${HOST}/i/abc123.png">`)
     expect(said).toContain('<meta name="twitter:card" content="summary_large_image">')
   })
-
   test('and the first picture in it does where it names none', async () => {
     await note('Pictured.md', '# Pictured\n\n![a shot](/i/def456.png)\n')
-
     const said = (await page('/pictured')).text
     expect(said).toContain(`<meta property="og:image" content="https://${HOST}/i/def456.png">`)
   })
 })
-
 describe('what the machines read', () => {
   beforeEach(async () => {
     await note('One.md', '---\ndate: 2026-01-02\ndescription: The first.\n---\n\n# One\n')
     await note('Two.md', '---\ndate: 2026-05-06\n---\n\n# Two\n\nThe second one.\n')
     await publish()
   })
-
   test('the sitemap lists every page and the site itself', async () => {
     const said = (await page('/sitemap.xml')).text
-
     expect(said).toContain(`<loc>https://${HOST}/</loc>`)
     expect(said).toContain(`<loc>https://${HOST}/one</loc>`)
     expect(said).toContain(`<loc>https://${HOST}/two</loc>`)
   })
-
   test('and the two feeds as well', async () => {
     const said = (await page('/sitemap.xml')).text
-
     expect(said).toContain(`<loc>https://${HOST}/feed.xml</loc>`)
     expect(said).toContain(`<loc>https://${HOST}/rss.xml</loc>`)
   })
-
   test('the feed is newest first, with what each page says of itself', async () => {
     const answer = await page('/feed.xml')
-
     expect(answer.headers.get('content-type')).toContain('application/atom+xml')
     expect(answer.text.indexOf('<title>Two</title>')).toBeLessThan(answer.text.indexOf('<title>One</title>'))
     expect(answer.text).toContain('<summary>The first.</summary>')
     expect(answer.text).toContain('<summary>The second one.</summary>')
   })
-
   test('and the RSS feed says the same thing in RSS', async () => {
     const answer = await page('/rss.xml')
-
     expect(answer.headers.get('content-type')).toContain('application/rss+xml')
     expect(answer.text.indexOf('<title>Two</title>')).toBeLessThan(answer.text.indexOf('<title>One</title>'))
     expect(answer.text).toContain('<description>The first.</description>')
@@ -475,152 +388,119 @@ describe('what the machines read', () => {
     expect(answer.text).toContain(`<guid isPermaLink="true">https://${HOST}/one</guid>`)
     expect(answer.text).toContain(`href="https://${HOST}/rss.xml"`)
   })
-
   test('and both of them are XML a parser can read', async () => {
     for (const path of ['/feed.xml', '/rss.xml', '/sitemap.xml']) {
       expect(broken((await page(path)).text), path).toEqual([])
     }
   })
-
   test('every page names both feeds, so a reader finds whichever it reads', async () => {
     const said = (await page('/one')).text
-
     expect(said).toContain('<link rel="alternate" type="application/atom+xml"')
     expect(said).toContain('href="/feed.xml"')
     expect(said).toContain('<link rel="alternate" type="application/rss+xml"')
     expect(said).toContain('href="/rss.xml"')
   })
-
   test('a note the rules leave out is in neither', async () => {
     await setSite({ rules: { exclude: ['One.md'], otherwise: 'all' } })
-
     expect((await page('/sitemap.xml')).text).not.toContain('/one<')
     expect((await page('/feed.xml')).text).not.toContain('<title>One</title>')
     expect((await page('/rss.xml')).text).not.toContain('<title>One</title>')
   })
-
   test('robots points at the sitemap', async () => {
     const said = (await page('/robots.txt')).text
-
     expect(said).toContain('Allow: /')
     expect(said).toContain(`Sitemap: https://${HOST}/sitemap.xml`)
   })
-
   test('and says no to everything on a site behind a password', async () => {
     await setSite({ password: 'open sesame' })
-
     expect((await page('/robots.txt')).text).toContain('Disallow: /')
   })
 })
-
 describe('the icon a tab shows', () => {
   test('is the letter of the site until one is chosen', async () => {
     await publish()
-
     const answer = await page('/favicon.svg')
     expect(answer.headers.get('content-type')).toContain('image/svg+xml')
     expect(answer.text).toContain('>F<')
   })
-
   test('and the drawing the app sent once there is one', async () => {
     await publish()
     await setSite({ icon: '<svg xmlns="http://www.w3.org/2000/svg"><circle r="8"/></svg>' })
-
     expect((await page('/favicon.svg')).text).toContain('<circle r="8"/>')
   })
-
   test('anything that is not a drawing is not kept', async () => {
     await publish()
     await setSite({ icon: 'javascript:alert(1)' })
-
     expect((await page('/favicon.svg')).text).toContain('>F<')
   })
-
   test('and is sandboxed, because a drawing opened on its own is a document', async () => {
     await publish()
     await setSite({ icon: '<svg xmlns="http://www.w3.org/2000/svg"><circle r="8"/></svg>' })
-
     const answer = await page('/favicon.svg')
     expect(answer.headers.get('content-security-policy')).toBe("default-src 'none'; style-src 'unsafe-inline'; sandbox")
     expect(answer.headers.get('x-content-type-options')).toBe('nosniff')
   })
 })
-
 describe('the analytics script a site loads', () => {
   const BROKEN = ['https:// plausible.io/js/script.js', 'https://plausible.io /js/script.js', 'https://']
-
   test('an address that does not parse is refused, and nothing is kept', async () => {
     await note('One.md', '# One\n')
     await publish()
-
     for (const url of BROKEN) {
       expect((await setSite({ analytics: { url } })).status).toBe(400)
     }
-
     const listed = await call(env, '/v1/spaces', { token })
     expect(JSON.stringify(listed.json.spaces)).not.toContain('plausible')
     expect((await page('/one')).status).toBe(200)
   })
-
   test('an address that parses is loaded by every page', async () => {
     await note('One.md', '# One\n')
     await publish()
     await setSite({
       analytics: { url: 'https://plausible.io/js/script.js', domain: 'field.nibeditor.com' },
     })
-
     const answer = await page('/one')
     expect(answer.text).toContain(
       '<script defer src="https://plausible.io/js/script.js" data-domain="field.nibeditor.com"></script>',
     )
     expect(answer.headers.get('content-security-policy')).toContain('https://plausible.io')
   })
-
   test('one stored before the check does not take the site down', async () => {
     await note('One.md', '# One\n')
     await publish()
     env.db
       .prepare('update spaces set site = ? where id = ?')
       .run(JSON.stringify({ analytics: { url: BROKEN[0] } }), space)
-
     const answer = await page('/one')
     expect(answer.status).toBe(200)
     expect(answer.text).not.toContain('plausible')
   })
 })
-
 describe('a site behind a password', () => {
   const PASSWORD = 'the quiet part'
-
   beforeEach(async () => {
     await note('Plan.md', '# Plan\n\nWords.\n')
     await publish()
     await setSite({ password: PASSWORD })
   })
-
   test('shows one form and none of the notes', async () => {
     const answer = await page('/plan')
-
     expect(answer.status).toBe(200)
     expect(answer.text).toContain('type="password"')
     expect(answer.text).not.toContain('Words.')
     expect(answer.text).toContain('name="robots" content="noindex, nofollow"')
     expect(answer.headers.get('cache-control')).toContain('no-store')
   })
-
   test('the form is the one thing on the page that may run or reach anywhere', async () => {
     const answer = await page('/plan')
     const policy = answer.headers.get('content-security-policy') ?? ''
-
     expect(policy).toContain("form-action 'self'")
     expect(policy).toContain("script-src 'none'")
     expect(policy).toContain("connect-src 'none'")
   })
-
   test('is hashed at a hundred thousand rounds wherever it is deployed', () => {
     expect(SITE_ROUNDS).toBe(100_000)
   })
-
   test('and a machine that keeps guessing stops being answered', async () => {
     const guess = (password: string) =>
       page('/plan', {
@@ -631,13 +511,10 @@ describe('a site behind a password', () => {
           'cf-connecting-ip': '198.51.100.7',
         },
       })
-
     for (let at = 0; at < 20; at++) expect((await guess('wrong')).status).toBe(401)
-
     const refused = await guess(PASSWORD)
     expect(refused.status).toBe(401)
     expect(refused.headers.get('set-cookie')).toBeNull()
-
     const other = await page('/plan', {
       method: 'POST',
       raw: `password=${encodeURIComponent(PASSWORD)}`,
@@ -648,23 +525,19 @@ describe('a site behind a password', () => {
     })
     expect(other.status).toBe(303)
   })
-
   test('a wrong password says so and lets nobody in', async () => {
     const answer = await page('/plan', {
       method: 'POST',
       raw: 'password=wrong',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
-
     expect(answer.status).toBe(401)
     expect(answer.text).toContain('not the password')
     expect(answer.headers.get('set-cookie')).toBeNull()
   })
-
   test('a path that begins with two slashes stays on this site', async () => {
     const gate = await page('//evil.example/')
     expect(gate.text).toContain('action="/evil.example/"')
-
     const answer = await page('//evil.example/', {
       method: 'POST',
       raw: `password=${encodeURIComponent(PASSWORD)}`,
@@ -673,28 +546,22 @@ describe('a site behind a password', () => {
     expect(answer.status).toBe(303)
     expect(answer.headers.get('location')).toBe('/evil.example/')
   })
-
   test('the right one hands over a ticket that opens the site', async () => {
     const answer = await page('/plan', {
       method: 'POST',
       raw: `password=${encodeURIComponent(PASSWORD)}`,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
-
     expect(answer.status).toBe(303)
     expect(answer.headers.get('location')).toBe('/plan')
-
     const cookie = answer.headers.get('set-cookie') ?? ''
     expect(cookie).toContain('HttpOnly')
-
     const ticket = cookie.split(';')[0] ?? ''
     const read = await page('/plan', { headers: { cookie: ticket } })
     expect(read.status).toBe(200)
     expect(read.text).toContain('Words.')
-
     expect(read.headers.get('cache-control')).toBe('private, no-store')
   })
-
   test('keeps its papers to those who know it, even by their own address', async () => {
     const { hash, bytes } = file(64, 9)
     await call(env, `/v1/blobs/${hash}`, {
@@ -708,9 +575,7 @@ describe('a site behind a password', () => {
       token,
       body: { files: [{ path: 'paper.pdf', hash }] },
     })
-
     expect((await page(`/i/${hash}.pdf`)).status).toBe(404)
-
     const answer = await page('/plan', {
       method: 'POST',
       raw: `password=${encodeURIComponent(PASSWORD)}`,
@@ -721,7 +586,6 @@ describe('a site behind a password', () => {
     expect(read.status).toBe(200)
     expect(read.headers.get('cache-control')).toContain('private')
   })
-
   test('a cookie another site set for the root keeps nobody out', async () => {
     const answer = await page('/plan', {
       method: 'POST',
@@ -729,11 +593,9 @@ describe('a site behind a password', () => {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
     const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-
     const read = await page('/plan', { headers: { cookie: `nib_site=0.0; ${ticket}` } })
     expect(read.text).toContain('Words.')
   })
-
   test('a ticket from before the cookie was renamed still lets its reader in', async () => {
     const answer = await page('/plan', {
       method: 'POST',
@@ -742,20 +604,15 @@ describe('a site behind a password', () => {
     })
     const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
     const old = ticket.replace('__Host-orden_site', 'nib_site')
-
     const read = await page('/plan', { headers: { cookie: old } })
     expect(read.text).toContain('Words.')
-
     const named = ticket.replace('__Host-orden_site', '__Host-nib_site')
     expect((await page('/plan', { headers: { cookie: named } })).text).toContain('Words.')
-
     const behind = await page('/plan', { headers: { cookie: `nib_site=0.0; ${old}` } })
     expect(behind.text).toContain('Words.')
-
     const forged = `nib_site=${String(Date.now() + 1000)}.${'0'.repeat(64)}`
     expect((await page('/plan', { headers: { cookie: forged } })).text).toContain('type="password"')
   })
-
   test('and nothing a site behind a password answers is a shared cache’s', async () => {
     const answer = await page('/plan', {
       method: 'POST',
@@ -763,21 +620,17 @@ describe('a site behind a password', () => {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
     const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-
     for (const path of ['/', '/plan', '/feed.xml', '/sitemap.xml', '/search?q=words']) {
       const read = await page(path, { headers: { cookie: ticket } })
       expect(read.headers.get('cache-control'), path).toBe('private, no-store')
     }
   })
-
   test('a ticket somebody made up opens nothing', async () => {
     const read = await page('/plan', {
       headers: { cookie: `__Host-nib_site=${Date.now() + 1000}.${'0'.repeat(64)}` },
     })
-
     expect(read.text).toContain('type="password"')
   })
-
   test('a new password ends every ticket the old one gave out', async () => {
     const answer = await page('/plan', {
       method: 'POST',
@@ -785,80 +638,62 @@ describe('a site behind a password', () => {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
     const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-
     await setSite({ password: 'something else' })
-
     const read = await page('/plan', { headers: { cookie: ticket } })
     expect(read.text).toContain('type="password"')
   })
-
   test('and taking it off opens the site again', async () => {
     await setSite({ password: null })
-
     const read = await page('/plan')
     expect(read.status).toBe(200)
     expect(read.text).toContain('Words.')
   })
-
   test('the account is never told what the password is', async () => {
     const listed = await call(env, '/v1/spaces', { token })
     const held = listed.json.spaces.find((one) => one.id === space)
-
     expect(held?.blog.site.password).toBe(true)
     expect(JSON.stringify(held)).not.toContain(PASSWORD)
   })
 })
-
 describe('the notes that came before', () => {
   async function unread(path: string, content: string) {
     const made = await note(path, content)
     env.db.prepare('update notes set front = null where id = ?').run(made.id)
     return made
   }
-
   test('are read before the space is published', async () => {
     await unread('Old.md', '---\npublish: false\n---\n\n# Old\n')
     await publish()
-
     expect((await page('/old')).status).toBe(404)
   })
-
   test('and before the rules that ask about them take effect', async () => {
     await publish()
     await unread('Later.md', '---\npublish: false\n---\n\n# Later\n')
-
     await setSite({ rules: { otherwise: 'all' } })
     expect((await page('/later')).status).toBe(404)
   })
-
   test('and before a preview says what will happen', async () => {
     await publish()
     await unread('Quiet.md', '---\npublish: false\n---\n\n# Quiet\n')
-
     const asked = await call(env, `/v1/spaces/${space}/site/preview`, {
       token,
       body: { rules: { otherwise: 'all' } },
     })
-
     expect(asked.json.pages).toBe(0)
   })
 })
-
 describe('what somebody who is not the owner is told about the site', () => {
   beforeEach(async () => {
     await note('One.md', '# One\n')
     await publish({ domain: 'notes.example.com' })
     await setSite({ password: 'the quiet part', description: 'Notes from the field.' })
   })
-
   test('the owner is told what to add at the registrar', async () => {
     const listed = await call(env, '/v1/spaces', { token })
     const held = listed.json.spaces.find((one) => one.id === space)
-
     expect(held?.blog.dns.some((one) => one.type === 'TXT')).toBe(true)
     expect(held?.blog.site.password).toBe(true)
   })
-
   test('a guest is told neither the proof nor the site', async () => {
     const made = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
       method: 'PUT',
@@ -867,24 +702,19 @@ describe('what somebody who is not the owner is told about the site', () => {
     })
     const link = /\/join\/([a-f0-9]+)/.exec(made.json.link?.url ?? '')?.[1] ?? ''
     const guest = (await call(env, `/v1/join/${link}`, { method: 'POST' })).json.token
-
     const listed = await call(env, '/v1/spaces', { token: guest })
     const held = listed.json.spaces.find((one) => one.id === space)
-
     expect(held?.id).toBe(space)
     expect(held?.blog.dns).toEqual([])
     expect(JSON.stringify(held)).not.toContain('_nib-verify')
     expect(held?.blog.site.password).toBe(false)
     expect(held?.blog.site.description).toBeUndefined()
   })
-
   test('and neither is a program acting for the owner', async () => {
     const minted = await call(env, '/v1/mcp/token', { token, body: {} })
     const program = minted.json.token
-
     const listed = await call(env, '/v1/spaces', { token: program })
     const held = listed.json.spaces.find((one) => one.id === space)
-
     expect(held?.blog.dns).toEqual([])
     expect(JSON.stringify(held)).not.toContain('_nib-verify')
   })

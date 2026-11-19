@@ -4,7 +4,6 @@ import type { Env } from '../../../sync-server/src/api'
 
 const USAGE = `awake_s as awakeS, cpu_s as cpuS, mem_gib_s as memGibS, disk_gb_s as diskGbS,
   egress_bytes as egressBytes`
-
 export async function meter(
   env: Env,
   userId: string,
@@ -31,7 +30,6 @@ export async function meter(
     )
     .run()
 }
-
 export async function usedOf(env: Env, userId: string, at: number): Promise<Allowance> {
   const usage = await env.DB.prepare(`select ${USAGE} from machine_usage where user_id = ? and month = ?`)
     .bind(userId, monthOf(at))
@@ -41,7 +39,6 @@ export async function usedOf(env: Env, userId: string, at: number): Promise<Allo
     .first<{ home_bytes: number }>()
   return asAllowance(usage ?? NONE, home?.home_bytes ?? 0)
 }
-
 export async function serviceMonth(env: Env, at: number): Promise<{ usage: Usage; storedBytes: number }> {
   const usage = await env.DB.prepare(
     `select coalesce(sum(awake_s), 0) as awakeS, coalesce(sum(cpu_s), 0) as cpuS,

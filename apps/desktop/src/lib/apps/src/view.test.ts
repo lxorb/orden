@@ -7,14 +7,12 @@ describe('the refresh rate', () => {
     expect(refreshRate(at60)).toBe(60)
     expect(refreshRate(Array.from({ length: 30 }, () => 1000 / 144))).toBe(144)
   })
-
   test('is not known from too few frames, or from a window whose frames are held back', () => {
     expect(refreshRate([16.7, 16.7])).toBeNull()
     expect(refreshRate(Array.from({ length: 30 }, () => 1000))).toBeNull()
     expect(refreshRate(Array.from({ length: 30 }, () => 0))).toBeNull()
   })
 })
-
 describe('a view', () => {
   test('is said once it has stayed the same a while: the last of a drag, once', () => {
     const said: number[] = []
@@ -38,7 +36,6 @@ describe('a view', () => {
     }
     due()
     expect(said).toEqual([3])
-
     settling.saw(4)
     settling.end()
     due()

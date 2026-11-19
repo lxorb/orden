@@ -5,21 +5,16 @@ export interface PdfHeading {
   page: number
   level: number
 }
-
 const MOST = 2000
-
 interface Item {
   title: string
   dest: string | unknown[] | null
   items: Item[]
 }
-
 type Reading = Pick<PDFDocumentProxy, 'getOutline' | 'getDestination' | 'getPageIndex'>
-
 export async function readOutline(doc: Reading): Promise<PdfHeading[]> {
   const top = ((await doc.getOutline().catch(() => null)) ?? []) as Item[]
   const out: PdfHeading[] = []
-
   const walk = async (items: readonly Item[], level: number) => {
     for (const item of items) {
       if (out.length >= MOST) return
@@ -29,11 +24,9 @@ export async function readOutline(doc: Reading): Promise<PdfHeading[]> {
       if (item.items.length) await walk(item.items, level + 1)
     }
   }
-
   await walk(top, 0)
   return out
 }
-
 async function pageOf(doc: Reading, dest: Item['dest']): Promise<number | null> {
   try {
     const explicit: unknown = typeof dest === 'string' ? await doc.getDestination(dest) : dest

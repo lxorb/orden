@@ -4,11 +4,9 @@ import { controlOf, imageKey, imageKeyTyped, type Keystroke, routeKey, shellRead
 function press(key: string, held: Partial<Omit<Keystroke, 'key'>> = {}): Keystroke {
   return { key, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, ...held }
 }
-
 const ctrl = { ctrlKey: true }
 const ctrlShift = { ctrlKey: true, shiftKey: true }
 const cmd = { metaKey: true }
-
 describe('on Windows and Linux', () => {
   test.each(['win', 'linux'] as const)('the tab and window keys are the app’s (%s)', (platform) => {
     for (const [key, held, command] of [
@@ -33,7 +31,6 @@ describe('on Windows and Linux', () => {
       expect(routeKey(press(key, held), platform, command, false), `${key} ${command}`).toBe('app')
     }
   })
-
   test('a key nothing of the app is on is the shell’s, and Ctrl+C always is', () => {
     for (const [key, command] of [
       ['r', null],
@@ -46,12 +43,10 @@ describe('on Windows and Linux', () => {
     expect(routeKey(press('a'), 'win', null, false)).toBe('shell')
     expect(routeKey(press('F5'), 'win', null, false)).toBe('shell')
   })
-
   test('Ctrl+R, which reloads Orden, stays the shell’s search in a terminal', () => {
     expect(routeKey(press('r', ctrl), 'win', 'app.reload', false)).toBe('shell')
     expect(routeKey(press('r', ctrl), 'linux', 'app.reload', false)).toBe('shell')
   })
-
   test('every app command on a key a shell reads is both, and asked about', () => {
     for (const [key, command] of [
       ['t', 'app.new-kind'],
@@ -71,7 +66,6 @@ describe('on Windows and Linux', () => {
     }
     expect(routeKey(press('T', ctrlShift), 'win', 'app.new-kind', false)).toBe('app')
   })
-
   test('a command on a function key or Alt and an arrow is both too', () => {
     expect(routeKey(press('F9'), 'win', 'app.scratchpad', false)).toBe('ask')
     expect(routeKey(press('F2'), 'linux', 'app.print', false)).toBe('ask')
@@ -80,7 +74,6 @@ describe('on Windows and Linux', () => {
     expect(routeKey(press('F11'), 'linux', 'app.fullscreen', false)).toBe('app')
     expect(routeKey(press('F9'), 'win', null, false)).toBe('shell')
   })
-
   test('a key answered for the shell is typed as xterm would have sent it', () => {
     expect(typedBy(press('F9'))).toBe('\x1b[20~')
     expect(typedBy(press('F2'))).toBe('\x1bOQ')
@@ -93,7 +86,6 @@ describe('on Windows and Linux', () => {
     expect(typedBy(press('b', { altKey: true }))).toBe('\x1bb')
     expect(typedBy(press('Shift'))).toBeNull()
   })
-
   test('a character a shell reads is Ctrl and a letter, Ctrl+Space, or another control key', () => {
     expect(shellReads(press('n', ctrl))).toBe(true)
     expect(shellReads(press(' ', ctrl))).toBe(true)
@@ -107,7 +99,6 @@ describe('on Windows and Linux', () => {
     expect(shellReads(press(',', ctrl))).toBe(false)
     expect(shellReads(press('n', cmd))).toBe(false)
   })
-
   test('the shell is given the character the key would have typed', () => {
     expect(controlOf('t')).toBe('\x14')
     expect(controlOf('n')).toBe('\x0e')
@@ -116,11 +107,9 @@ describe('on Windows and Linux', () => {
     expect(controlOf('[')).toBe('\x1b')
     expect(controlOf('/')).toBe('\x1f')
   })
-
   test('Ctrl+Shift+W is sent to nobody', () => {
     expect(routeKey(press('W', ctrlShift), 'win', 'app.close-window', false)).toBe('shell')
   })
-
   test('the terminal’s own copy, paste and find', () => {
     expect(routeKey(press('C', ctrlShift), 'linux', null, false)).toBe('copy')
     expect(routeKey(press('V', ctrlShift), 'linux', null, false)).toBe('paste')
@@ -129,19 +118,16 @@ describe('on Windows and Linux', () => {
     expect(routeKey(press('=', ctrl), 'win', 'app.zoom-in', false)).toBe('zoom-in')
     expect(routeKey(press('0', ctrl), 'win', 'app.zoom-reset', false)).toBe('zoom-reset')
   })
-
   test('Ctrl+V pastes on Windows only, and Ctrl+C is always the interrupt', () => {
     expect(routeKey(press('v', ctrl), 'win', null, false)).toBe('paste')
     expect(routeKey(press('v', ctrl), 'linux', null, false)).toBe('shell')
     expect(routeKey(press('c', ctrl), 'win', null, false)).toBe('shell')
   })
-
   test('AltGr typing a character is never a chord', () => {
     expect(routeKey(press('{', { ctrlKey: true, altKey: true }), 'win', 'app.note-7', false)).toBe('shell')
     expect(routeKey(press('@', { ctrlKey: true, altKey: true }), 'win', null, false)).toBe('shell')
   })
 })
-
 describe('on a Mac', () => {
   test('every app command on Cmd is the app’s', () => {
     expect(routeKey(press('w', cmd), 'mac', 'app.close', false)).toBe('app')
@@ -150,12 +136,10 @@ describe('on a Mac', () => {
     expect(routeKey(press('r', cmd), 'mac', 'app.reload', false)).toBe('app')
     expect(routeKey(press('Tab', ctrl), 'mac', 'app.next-note', false)).toBe('app')
   })
-
   test('Ctrl is the shell’s, all of it', () => {
     expect(routeKey(press('w', ctrl), 'mac', null, false)).toBe('shell')
     expect(routeKey(press('c', ctrl), 'mac', null, false)).toBe('shell')
   })
-
   test('and Terminal’s own copy, paste, select all and clear', () => {
     expect(routeKey(press('c', cmd), 'mac', null, false)).toBe('copy')
     expect(routeKey(press('v', cmd), 'mac', null, false)).toBe('paste')
@@ -163,10 +147,8 @@ describe('on a Mac', () => {
     expect(routeKey(press('k', cmd), 'mac', null, false)).toBe('clear')
   })
 })
-
 describe('the key an agent pastes a picture with', () => {
   const alt = { altKey: true }
-
   test('Alt and a letter no command is on is the shell’s in a local terminal, Alt+V included', () => {
     for (const platform of ['win', 'linux'] as const) {
       for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
@@ -185,7 +167,6 @@ describe('the key an agent pastes a picture with', () => {
       expect(routeKey(press('k', both), platform, 'app.ask-selection', false)).toBe('app')
     }
   })
-
   test('is Alt+V off a Mac, and Ctrl+V where Ctrl+V is the shell’s', () => {
     expect(imageKey(press('v', alt), 'win')).toBe(true)
     expect(imageKey(press('v', alt), 'linux')).toBe(true)
@@ -195,7 +176,6 @@ describe('the key an agent pastes a picture with', () => {
     expect(routeKey(press('v', ctrl), 'win', null, false)).toBe('paste')
     expect(imageKey(press('v', alt), 'mac')).toBe(false)
   })
-
   test('and nothing else', () => {
     expect(imageKey(press('v'), 'win')).toBe(false)
     expect(imageKey(press('V', { altKey: true, shiftKey: true }), 'win')).toBe(false)
@@ -203,7 +183,6 @@ describe('the key an agent pastes a picture with', () => {
     expect(imageKey(press('v', ctrlShift), 'linux')).toBe(false)
     expect(imageKey(press('b', alt), 'win')).toBe(false)
   })
-
   test('types what xterm.js would have where no picture is brought over', () => {
     expect(imageKeyTyped(press('v', alt))).toBe('\x1bv')
     expect(imageKeyTyped(press('v', ctrl))).toBe('\x16')

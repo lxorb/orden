@@ -8,7 +8,6 @@ describe('the module stands on its own', () => {
     expect(PIN_TRIES).toBeGreaterThan(0)
   })
 })
-
 describe('what a role may do', () => {
   test('a viewer reads, an editor edits, a manager manages, only the owner hands on', () => {
     expect(mayEdit({ role: 'viewer' })).toBe(false)
@@ -18,14 +17,12 @@ describe('what a role may do', () => {
     expect(mayHandOn({ role: 'manager' })).toBe(false)
     expect(mayHandOn({ role: 'owner' })).toBe(true)
   })
-
   test('passwords are hidden only from a viewer of a vault that asks for it', () => {
     expect(hidesPasswords({ role: 'viewer', hidePasswordsFromViewers: true })).toBe(true)
     expect(hidesPasswords({ role: 'viewer', hidePasswordsFromViewers: false })).toBe(false)
     expect(hidesPasswords({ role: 'owner', hidePasswordsFromViewers: true })).toBe(false)
   })
 })
-
 describe('the clipboard', () => {
   test('holds no Pass secret until one is copied', () => {
     expect(isPassSecret('')).toBe(false)

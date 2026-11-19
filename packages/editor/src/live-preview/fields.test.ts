@@ -9,9 +9,7 @@ import { livePreview } from '.'
 import { noRects } from '../../test/views'
 
 beforeAll(noRects)
-
 const leaveNow = StateEffect.define()
-
 const leavesMidUpdate = ViewPlugin.define(() => ({
   update(update) {
     if (!update.transactions.some((one) => one.effects.some((effect) => effect.is(leaveNow)))) return
@@ -19,18 +17,15 @@ const leavesMidUpdate = ViewPlugin.define(() => ({
     if (focused instanceof HTMLElement) focused.blur()
   },
 }))
-
 let views: EditorView[] = []
 const thrown: unknown[] = []
 const heard = (event: ErrorEvent) => thrown.push(event.error)
-
 afterEach(() => {
   for (const view of views) view.destroy()
   views = []
   thrown.length = 0
   window.removeEventListener('error', heard)
 })
-
 function viewOf(doc: string) {
   window.addEventListener('error', heard)
   const parent = document.createElement('div')
@@ -50,12 +45,10 @@ function viewOf(doc: string) {
   views.push(view)
   return view
 }
-
 async function settled() {
   await Promise.resolve()
   await Promise.resolve()
 }
-
 describe('a field in the page left while the editor is updating', () => {
   test("a code block's language is written, after the update", async () => {
     const view = viewOf('words\n\n```js\nconst a = 1\n```\n\nafter\n')
@@ -65,14 +58,11 @@ describe('a field in the page left while the editor is updating', () => {
     const field = view.dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
     if (!field) throw new Error('no field to type the language in')
     field.value = 'python'
-
     view.dispatch({ effects: leaveNow.of(null) })
     await settled()
-
     expect(thrown).toEqual([])
     expect(view.state.doc.toString()).toContain('```python\n')
   })
-
   test("a code block's language is not written over a fence that changed meanwhile", async () => {
     const view = viewOf('```js\nconst a = 1\n```\n')
     const label = view.dom.querySelector<HTMLElement>('.orden-fence-language')
@@ -80,15 +70,12 @@ describe('a field in the page left while the editor is updating', () => {
     const field = view.dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
     if (!field) throw new Error('no field to type the language in')
     field.value = 'python'
-
     view.dispatch({ changes: { from: 3, to: 5, insert: 'ts' }, effects: leaveNow.of(null) })
     await settled()
-
     expect(thrown).toEqual([])
     expect(view.state.doc.toString()).toBe('```ts\nconst a = 1\n```\n')
   })
 })
-
 describe('a language typed for a code block', () => {
   async function typedLanguage(doc: string, typed: string) {
     const view = viewOf(doc)
@@ -101,11 +88,9 @@ describe('a language typed for a code block', () => {
     await settled()
     return view.state.doc.toString()
   }
-
   test('never holds a backtick that would end a backtick fence', async () => {
     expect(await typedLanguage('```js\nconst a = 1\n```\n', 'py`thon')).toBe('```python\nconst a = 1\n```\n')
   })
-
   test('keeps a backtick in a tilde fence', async () => {
     expect(await typedLanguage('~~~js\nconst a = 1\n~~~\n', 'py`')).toBe('~~~py`\nconst a = 1\n~~~\n')
   })

@@ -6,49 +6,38 @@ import { call, file, signIn, testEnv, type TestEnv } from './harness'
 let env: TestEnv
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
-
   const created = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
   space = created.json.space.id
-
   await call(env, `/v1/spaces/${space}/notes`, {
     token,
     body: { path: 'Hello world.md', content: '# Hello world\n\nFirst **post**.\n' },
   })
 })
-
 afterEach(() => env.close())
-
 async function publish(body: Record<string, unknown>) {
   return call(env, `/v1/spaces/${space}/blog`, { method: 'PUT', token, body })
 }
-
 async function addNote(path: string, content: string) {
   return call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
 }
-
 async function publishDomain(domain: string) {
   const answer = await publish({ domain })
   env.db.prepare('update spaces set blog_domain_verified_at = ? where id = ?').run(Date.now(), space)
   return answer
 }
-
 describe('slugs', () => {
   test('lowercases and hyphenates', () => {
     expect(slugFor('Hello world.md')).toBe('hello-world')
   })
-
   test('keeps folders as path segments', () => {
     expect(slugFor('Notes/First Idea.md')).toBe('notes/first-idea')
   })
-
   test('drops punctuation', () => {
     expect(slugFor("What's new?.md")).toBe('what-s-new')
   })
-
   test('keeps the letters and marks of any script, composed and lower-cased', () => {
     expect(slugFor('Привет.md')).toBe('привет')
     expect(slugFor('Notes/中文.md')).toBe('notes/中文')
@@ -56,79 +45,63 @@ describe('slugs', () => {
     expect(slugFor('Café.md')).toBe('café')
   })
 })
-
 describe('while a space is private', () => {
   test('its subdomain sends the visitor to the app', async () => {
     const response = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toBe('https://orden.so')
   })
-
   test('a disabled blog stops serving', async () => {
     await publish({ subdomain: 'field' })
     await call(env, `/v1/spaces/${space}/blog`, { method: 'DELETE', token })
-
     expect((await call(env, '/', { host: 'field.nibeditor.com' })).status).toBe(302)
   })
 })
-
 describe('a name nobody has taken', () => {
   test('forwards to the app, whatever the path', async () => {
     const response = await call(env, '/some/note', { host: 'unused.nibeditor.com' })
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toBe('https://orden.so')
   })
-
   test('the root itself is not forwarded', async () => {
     const response = await call(env, '/', { host: 'nibeditor.com' })
     expect(response.status).not.toBe(302)
   })
-
   test('a domain of someone else is not forwarded', async () => {
     const response = await call(env, '/', { host: 'notes.example.com' })
     expect(response.status).not.toBe(302)
   })
 })
-
 describe('publishing', () => {
   test('a subdomain starts serving the index', async () => {
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(response.status).toBe(200)
     expect(response.text).toContain('Field notes')
     expect(response.text).toContain('/hello-world')
   })
-
   test('a note renders as HTML', async () => {
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('<h1 id="hello-world">Hello world</h1>')
     expect(response.text).toContain('<strong>post</strong>')
   })
-
   test('a note and its hover card are two answers to a cache', async () => {
     await publish({ subdomain: 'field' })
-
     for (const headers of [{}, { 'x-orden-preview': '1' }]) {
       const response = await call(env, '/hello-world', { host: 'field.nibeditor.com', headers })
       expect(response.headers.get('vary')).toContain('x-orden-preview')
     }
   })
-
   test('an unknown slug is handled', async () => {
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/nothing-here', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('Not found')
   })
-
   test('the address a page had before its letters were kept redirects to it', async () => {
     await addNote('Über mich.md', '# Über mich\n')
     await addNote('Team.md', '---\npermalink: Über uns\naliases:\n  - Für Presse\n---\n\n# Team\n')
     await publish({ subdomain: 'field' })
-
     for (const [old, now] of [
       ['/ber-mich', '/%C3%BCber-mich'],
       ['/ber-uns', '/%C3%BCber-uns'],
@@ -139,7 +112,6 @@ describe('publishing', () => {
       expect(response.headers.get('location')).toBe(`https://field.nibeditor.com${now}`)
     }
   })
-
   test('the address a page had before a rename or a move on sync v2 redirects to it', async () => {
     const one = (await addNote('Old name.md', '# Old\n')).json.note.id
     const two = (await addNote('Loose.md', '# Loose\n')).json.note.id
@@ -156,7 +128,6 @@ describe('publishing', () => {
       },
     })
     expect(changed.status, changed.text).toBe(200)
-
     for (const [old, now] of [
       ['/old-name', '/new-name'],
       ['/loose', '/kept/loose'],
@@ -166,106 +137,84 @@ describe('publishing', () => {
       expect(response.headers.get('location')).toBe(`https://field.nibeditor.com${now}`)
     }
   })
-
   test('the index shows the date a page is sorted by, and the sitemap when it last changed', async () => {
     await addNote('Old.md', '---\ndate: 2020-01-01\n---\n\n# Old\n')
     await addNote('New.md', '---\ndate: 2024-05-06\n---\n\n# New\n')
     await publish({ subdomain: 'field' })
-
     const index = (await call(env, '/', { host: 'field.nibeditor.com' })).text
     expect(index).toContain('<time datetime="2020-01-01">2020-01-01</time>')
     expect(index.indexOf('2024-05-06')).toBeLessThan(index.indexOf('2020-01-01'))
-
     const map = (await call(env, '/sitemap.xml', { host: 'field.nibeditor.com' })).text
     expect(map).not.toContain('<lastmod>2020-01-01')
   })
-
   test('front matter is not printed', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'meta.md', content: '---\ntitle: Hi\n---\n\nBody text.\n' },
     })
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/meta', { host: 'field.nibeditor.com' })
     expect(response.text).not.toContain('title: Hi')
     expect(response.text).toContain('Body text.')
   })
-
   test('a custom domain is served once it has been proved', async () => {
     await publishDomain('notes.example.com')
-
     const response = await call(env, '/', { host: 'notes.example.com' })
     expect(response.status).toBe(200)
     expect(response.text).toContain('Field notes')
   })
-
   test('a custom domain comes back with the records to add', async () => {
     const response = await publish({ domain: 'notes.example.com' })
-
     expect(response.json.dns).toHaveLength(2)
     expect(response.json.dns[0]!.type).toBe('CNAME')
     expect(response.json.dns[0]!.value).toMatch(/\.orden\.so$/)
     expect(response.json.dns[1]!.type).toBe('TXT')
   })
-
   test('an apex domain gets a CNAME too, never a placeholder address', async () => {
     const response = await publish({ domain: 'example.com' })
     expect(response.json.dns[0]!.type).toBe('CNAME')
     expect(response.json.dns[0]!.value).not.toMatch(/^192\.0\.2\./)
   })
-
   test('the listing carries the records too, for the next time the pane opens', async () => {
     await publish({ domain: 'notes.example.com' })
-
     const listed = await call(env, '/v1/spaces', { token })
     const mine = listed.json.spaces.find((one) => one.id === space)!
     expect(mine.blog.dns).toHaveLength(2)
     expect(mine.blog.dns[0]!.type).toBe('CNAME')
     expect(mine.blog.dns[1]!.type).toBe('TXT')
   })
-
   test('a custom title replaces the space name', async () => {
     await publish({ subdomain: 'field', title: 'Notes from the field' })
-
     const response = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('Notes from the field')
   })
 })
-
 describe('the hostname a blog answers on', () => {
   test('is the same host with a trailing dot', async () => {
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/', { host: 'field.nibeditor.com.' })
     expect(response.status).toBe(200)
     expect(response.text).toContain('Field notes')
   })
-
   test('is not read as a domain of someone else when it carries one', async () => {
     await publish({ subdomain: 'field' })
     env.db
       .prepare('update spaces set blog_subdomain = null, blog_domain = ? where id = ?')
       .run('field.nibeditor.com.', space)
-
     const response = await call(env, '/', { host: 'field.nibeditor.com.' })
     expect(response.status).toBe(302)
   })
-
   test('is the same host in any case', async () => {
     await publish({ subdomain: 'field' })
     expect((await call(env, '/', { host: 'FIELD.NIBEDITOR.COM' })).status).toBe(200)
   })
-
   test('is not the apex, however it is written', async () => {
     await publish({ subdomain: 'field' })
-
     for (const host of ['nibeditor.com', 'nibeditor.com.', 'NIBEDITOR.COM']) {
       expect((await call(env, '/', { host })).status, host).not.toBe(200)
     }
   })
 })
-
 describe('what publishing is sent', () => {
   test('has to be text', async () => {
     expect((await publish({ subdomain: 5 })).status).toBe(400)
@@ -273,35 +222,27 @@ describe('what publishing is sent', () => {
     expect((await publish({ subdomain: 'field', title: ['x'] })).status).toBe(400)
     expect((await publish({ subdomain: 'field', note: 7 })).status).toBe(400)
   })
-
   test('cannot carry a title larger than a title', async () => {
     const response = await publish({ subdomain: 'field', title: 'x'.repeat(201) })
-
     expect(response.status).toBe(400)
     expect(response.json.error).toContain('title')
   })
-
   test('takes a title of the length a title has', async () => {
     expect((await publish({ subdomain: 'field', title: 'x'.repeat(200) })).status).toBe(200)
   })
-
   test('refuses a note path that is not one, rather than publishing everything', async () => {
     const response = await publish({ subdomain: 'field', note: 'not-a-note' })
-
     expect(response.status).toBe(400)
     expect(response.json.error).toBe('that path is not usable')
   })
-
   test('still clears the published note with an empty path', async () => {
     await addNote('home.md', '# Hello\n')
     await publish({ subdomain: 'me', note: 'home.md' })
-
     const cleared = await publish({ note: '' })
     expect(cleared.status).toBe(200)
     expect(cleared.json.space.blog.note).toBeNull()
   })
 })
-
 describe('a published note cannot script the reader', () => {
   test('raw HTML in a note is shown, not run', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
@@ -309,18 +250,15 @@ describe('a published note cannot script the reader', () => {
       body: { path: 'nasty.md', content: '# Nasty\n\n<script>alert(1)</script>\n' },
     })
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/nasty', { host: 'field.nibeditor.com' })
     expect(response.text).not.toContain('<script>alert(1)</script>')
     expect(response.text).toContain('&lt;script&gt;')
   })
-
   test('nor is what follows an inline tag the parser reads as raw', async () => {
     const content =
       '# Nasty\n\nx <kbd> <img src=x onerror=alert(1) ""> <style x=y ""> <input ""> y\n\n---\n\nz <pre> <iframe src=x "">\n'
     await addNote('nasty.md', content)
     await publish({ subdomain: 'field' })
-
     for (const [path, headers] of [
       ['/nasty', {}],
       ['/nasty', { 'x-orden-preview': '1' }],
@@ -333,13 +271,10 @@ describe('a published note cannot script the reader', () => {
     const page = await call(env, '/nasty', { host: 'field.nibeditor.com' })
     expect(page.text).toContain('&lt;img src=x')
   })
-
   test('every page runs the script the site serves and nothing else', async () => {
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/', { host: 'field.nibeditor.com' })
     const policy = response.headers.get('content-security-policy') ?? ''
-
     expect(policy).toContain("script-src 'self' 'sha256-")
     expect(policy).not.toContain("script-src 'self' 'unsafe-inline'")
     expect(policy).toContain("connect-src 'self'")
@@ -347,7 +282,6 @@ describe('a published note cannot script the reader', () => {
     expect(policy).toContain("frame-ancestors 'none'")
     expect(response.headers.get('x-content-type-options')).toBe('nosniff')
   })
-
   test('a video a note embeds is a card that goes to the video, and loads nothing', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -357,9 +291,7 @@ describe('a published note cannot script the reader', () => {
       },
     })
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/watch', { host: 'field.nibeditor.com' })
-
     expect(response.text).toContain('class="embed-web embed-wide"')
     expect(response.text).toContain('href="https://youtu.be/dQw4w9WgXcQ"')
     expect(response.text).toContain('YouTube')
@@ -368,7 +300,6 @@ describe('a published note cannot script the reader', () => {
     expect(policy).toContain("default-src 'none'")
     expect(policy).not.toContain('frame-src')
   })
-
   test('a chart is drawn on a published page, which has no drawing library', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -378,96 +309,77 @@ describe('a published note cannot script the reader', () => {
       },
     })
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/counts', { host: 'field.nibeditor.com' })
-
     expect(response.text).toContain('<figure class="chart" data-kind="bar">')
     expect(response.text).toContain('<svg class="chart-svg"')
     expect(response.text).toContain('Two months')
     expect(response.text).not.toContain('series:')
   })
-
   test('a recording a note embeds is a player the policy allows', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'listen.md', content: '# Listen\n\n![[take.mp3]]\n' },
     })
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/listen', { host: 'field.nibeditor.com' })
-
     expect(response.text).toContain('<audio class="embed-media" controls preload="metadata"')
     expect(response.headers.get('content-security-policy') ?? '').toContain('media-src https: data:')
   })
-
   test('markdown still renders fully', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'rich.md', content: '# Rich\n\n==marked== and $E=mc^2$ and H~2~O\n' },
     })
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/rich', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('<mark>marked</mark>')
     expect(response.text).toContain('katex')
     expect(response.text).toContain('<sub>2</sub>')
   })
 })
-
 const ONE = '# One\n\nsee [the other](../Public/Two.md)\n'
 const TWO = '# Two\n\nthe other one\n'
 const DEEP = '# Deep idea\n\n## The middle\n\nText.\n'
-
 describe('links between notes on a published page', () => {
   test('point at where the other note is published', async () => {
     await addNote('Notes/Deep idea.md', '# Deep idea\n\nSomething.\n')
     await addNote('linking.md', '# Linking\n\nsee [[Deep idea]] and [[Hello world|the first]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('<a class="wikilink" href="/notes/deep-idea">Deep idea</a>')
     expect(response.text).toContain('<a class="wikilink" href="/hello-world">the first</a>')
   })
-
   test('a heading is reached by the id the renderer gave it', async () => {
     await addNote('parts.md', '# Parts\n\n## The middle\n\nText.\n')
     await addNote('linking.md', 'see [[parts#The middle]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('href="/parts#the-middle"')
   })
-
   test('a path-qualified link finds the note in its folder', async () => {
     await addNote('Notes/Deep idea.md', '# Deep idea\n')
     await addNote('linking.md', 'see [[Notes/Deep idea]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('href="/notes/deep-idea"')
   })
-
   test('a path from the top of the space finds the note there, and is linked from it', async () => {
     await addNote('Road.md', '# Road\n')
     await addNote('B/Road.md', '# Other road\n')
     await addNote('B/x.md', '# X\n\nsee [[/Road]] and [[/B/Road|the other]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/b/x', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('<a class="wikilink" href="/road">/Road</a>')
     expect(response.text).toContain('<a class="wikilink" href="/b/road">the other</a>')
-
     const road = await call(env, '/road', { host: 'field.nibeditor.com' })
     expect(road.text).toContain('Linked from')
     expect(road.text).toContain('href="/b/x"')
   })
-
   test('and the graph under the page draws it', async () => {
     await addNote('Road.md', '# Road\n')
     await addNote('B/Road.md', '# Other road\n')
     await addNote('B/x.md', '# X\n\nsee [[/Road]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/b/x', { host: 'field.nibeditor.com' })
     const island = /<script type="application\/json">(.*?)<\/script>/s.exec(response.text)?.[1]
     const graph = JSON.parse(island ?? '{}') as {
@@ -478,200 +390,158 @@ describe('links between notes on a published page', () => {
     expect(ids).toContain('road')
     expect(graph.edges.map((one) => [ids[one.a], ids[one.b]].sort())).toContainEqual(['b/x', 'road'])
   })
-
   test('and so does a plain markdown link that names one', async () => {
     await addNote('Public/One.md', ONE)
     await addNote('Public/Two.md', TWO)
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/public/one', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('<a href="/public/two">the other</a>')
     expect(response.text).not.toContain('../Public/Two.md')
   })
-
   test('a markdown link reaches a heading and a name with a space in it', async () => {
     await addNote('Notes/Deep idea.md', DEEP)
     await addNote('linking.md', 'see [there](Notes/Deep%20idea.md#the-middle)')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('href="/notes/deep-idea#the-middle"')
   })
-
   test('a markdown link to a note nobody published is words too', async () => {
     await addNote('Drafts/Three.md', '# Three')
     await addNote('linking.md', 'see [a draft](Drafts/Three.md) now')
     await publish({ subdomain: 'field', rules: { otherwise: 'all', exclude: ['Drafts'] } })
-
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('see a draft now')
     expect(response.text).not.toContain('Drafts/Three.md')
   })
-
   test('and a link out at the web is left exactly as it was written', async () => {
     await addNote('linking.md', 'see [out](https://example.org/a.md) and [up](/somewhere)')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('href="https://example.org/a.md"')
     expect(response.text).toContain('href="/somewhere"')
   })
-
   test('a note the space has not got is words, not a link to nowhere', async () => {
     await addNote('linking.md', 'see [[Nothing here]] now\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('see Nothing here now')
     expect(response.text).not.toContain('wikilink')
   })
-
   test('a wikilink cannot script the reader through its own words', async () => {
     await addNote('linking.md', 'see [[Hello world|<img src=x onerror=alert(1)>]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/linking', { host: 'field.nibeditor.com' })
     expect(response.text).not.toContain('<img src=x')
     expect(response.text).toContain('&lt;img')
   })
 })
-
 describe('an embed on a published page', () => {
   test('shows the note it names, with its name under it', async () => {
     await addNote('quote.md', '# Quote\n\nThe words themselves.\n')
     await addNote('holder.md', '# Holder\n\n![[quote]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('<figure class="embed">')
     expect(response.text).toContain('The words themselves.')
     expect(response.text).toContain('<figcaption>quote</figcaption>')
   })
-
   test('a path from the top of the space names that note', async () => {
     await addNote('quote.md', '# Quote\n\nThe words themselves.\n')
     await addNote('B/holder.md', '# Holder\n\n![[/quote]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/b/holder', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('The words themselves.')
   })
-
   test('a heading names the section, and only that one', async () => {
     await addNote('parts.md', '# Parts\n\n## One\n\nFirst.\n\n## Two\n\nSecond.\n')
     await addNote('holder.md', '![[parts#Two]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('Second.')
     expect(response.text).not.toContain('First.')
   })
-
   test('one level deep: an embed inside an embedded note is a link', async () => {
     await addNote('inner.md', 'The innermost words.\n')
     await addNote('outer.md', 'Outer says ![[inner]]\n')
     await addNote('holder.md', '![[outer]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('Outer says')
     expect(response.text).not.toContain('The innermost words.')
   })
-
   test('raw HTML inside an embedded note is shown, not run', async () => {
     await addNote('nasty.md', '<script>alert(1)</script>\n')
     await addNote('holder.md', '![[nasty]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
     expect(response.text).not.toContain('<script>alert(1)</script>')
     expect(response.text).toContain('&lt;script&gt;')
   })
-
   test('a note the space has not got leaves no empty frame', async () => {
     await addNote('holder.md', '![[Nothing here]]\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/holder', { host: 'field.nibeditor.com' })
     expect(response.text).not.toContain('<figure class="embed">')
     expect(response.text).toContain('Nothing here')
   })
 })
-
 describe('one address, not two', () => {
   test('a domain of your own gives the name up', async () => {
     await publish({ subdomain: 'field' })
     const response = await publish({ domain: 'notes.example.com' })
-
     expect(response.json.space.blog.subdomain).toBeNull()
     expect(response.json.space.blog.domain).toBe('notes.example.com')
     expect((await call(env, '/', { host: 'field.nibeditor.com' })).status).toBe(302)
   })
-
   test('the name given up is free for someone else', async () => {
     await publish({ subdomain: 'field' })
     await publish({ domain: 'notes.example.com' })
-
     expect((await call(env, '/v1/spaces/available/field', { token })).json.available).toBe(true)
   })
-
   test('choosing a name again lets the domain go', async () => {
     await publish({ domain: 'notes.example.com' })
     const response = await publish({ subdomain: 'field' })
-
     expect(response.json.space.blog.domain).toBeNull()
     expect(response.json.space.blog.subdomain).toBe('field')
     expect((await call(env, '/', { host: 'notes.example.com' })).status).not.toBe(200)
   })
-
   test('a domain and a name together keep only the domain', async () => {
     const response = await publish({ subdomain: 'field', domain: 'notes.example.com' })
-
     expect(response.json.space.blog.subdomain).toBeNull()
     expect(response.json.space.blog.domain).toBe('notes.example.com')
   })
-
   test('changing only the note keeps the address', async () => {
     await addNote('home.md', '# Hello\n')
     await publish({ subdomain: 'field' })
     const response = await publish({ note: 'home.md' })
-
     expect(response.status).toBe(200)
     expect(response.json.space.blog.subdomain).toBe('field')
     expect(response.json.space.blog.note).toBe('home.md')
   })
-
   test('refuses to publish with no address at all', async () => {
     const response = await publish({})
-
     expect(response.status).toBe(400)
     expect(response.json.error).toBe('choose an address')
   })
 })
-
 describe('choosing a subdomain', () => {
   test('reserved names are refused', async () => {
     expect((await publish({ subdomain: 'www' })).status).toBe(409)
     expect((await publish({ subdomain: 'mail' })).status).toBe(409)
   })
-
   test('and so is one that reads as ours', async () => {
     expect((await publish({ subdomain: 'blog' })).status).toBe(409)
     expect((await publish({ subdomain: 'login' })).status).toBe(409)
   })
-
   test('while a name of somebody’s own is taken', async () => {
     expect((await publish({ subdomain: 'hedgehogs' })).status).toBe(200)
   })
-
   test('malformed names are refused', async () => {
     expect((await publish({ subdomain: 'Not Valid' })).status).toBe(400)
     expect((await publish({ subdomain: '-leading' })).status).toBe(400)
   })
-
   test('a name in use is refused', async () => {
     await publish({ subdomain: 'field' })
-
     const other = await signIn(env, 'other@b.dev')
     const theirs = await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     const response = await call(env, `/v1/spaces/${theirs.json.space.id}/blog`, {
@@ -679,143 +549,111 @@ describe('choosing a subdomain', () => {
       token: other,
       body: { subdomain: 'field' },
     })
-
     expect(response.status).toBe(409)
   })
-
   test('a name the space already holds is free for that space', async () => {
     await publish({ subdomain: 'field' })
-
     const mine = await call(env, `/v1/spaces/available/field?space=${space}`, { token })
     expect(mine.json.available).toBe(true)
-
     const bare = await call(env, '/v1/spaces/available/field', { token })
     expect(bare.json.available).toBe(false)
   })
-
   test('a name held by one space is not free for another', async () => {
     await publish({ subdomain: 'field' })
     const second = await call(env, '/v1/spaces', { token, body: { name: 'Second' } })
-
     const response = await call(env, `/v1/spaces/available/field?space=${second.json.space.id}`, {
       token,
     })
     expect(response.json.available).toBe(false)
   })
-
   test('a name another space takes while publishing is refused, not a 500', async () => {
     const other = await signIn(env, 'other@b.dev')
     const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space.id
     env.justBefore(/update spaces set blog_enabled = 1/, () => {
       env.db.prepare('update spaces set blog_subdomain = ? where id = ?').run('field', theirs)
     })
-
     const response = await publish({ subdomain: 'field' })
     expect(response.status).toBe(409)
     expect(response.json.error).toBe('that name is taken')
   })
-
   test('naming a space that is not yours does not free its name', async () => {
     await publish({ subdomain: 'field' })
-
     const other = await signIn(env, 'other@b.dev')
     const response = await call(env, `/v1/spaces/available/field?space=${space}`, { token: other })
     expect(response.json.available).toBe(false)
   })
-
   test('availability can be checked before committing', async () => {
     expect((await call(env, '/v1/spaces/available/free-name', { token })).json.available).toBe(true)
-
     await publish({ subdomain: 'taken-name' })
     expect((await call(env, '/v1/spaces/available/taken-name', { token })).json.available).toBe(false)
     expect((await call(env, '/v1/spaces/available/www', { token })).json.available).toBe(false)
   })
 })
-
 describe('the author', () => {
   test('is named on the index and in the footer once they have a name', async () => {
     await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada Lovelace' } })
     await publish({ subdomain: 'field' })
-
     const index = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(index.text).toContain('by Ada Lovelace')
     expect(index.text).toContain('<meta name="author" content="Ada Lovelace">')
-
     const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     expect(note.text).toContain('Ada Lovelace')
   })
-
   test('is left out until there is a name', async () => {
     await publish({ subdomain: 'field' })
-
     const index = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(index.text).not.toContain('by ')
     expect(index.text).not.toContain('name="author"')
   })
-
   test('cannot smuggle markup through the name', async () => {
     await call(env, '/v1/me', { method: 'PATCH', token, body: { name: '<b>Ada</b>' } })
     await publish({ subdomain: 'field' })
-
     const index = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(index.text).not.toContain('<b>Ada</b>')
     expect(index.text).toContain('&lt;b&gt;Ada&lt;/b&gt;')
   })
-
   test('has a byline right under the title of a note', async () => {
     await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada Lovelace' } })
     await publish({ subdomain: 'field' })
-
     const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     const title = note.text.indexOf('<h1 id="hello-world">Hello world</h1>')
     const byline = note.text.indexOf('<p class="by">by Ada Lovelace</p>')
-
     expect(title).toBeGreaterThan(-1)
     expect(byline).toBeGreaterThan(title)
     expect(note.text.slice(title, byline)).toBe('<h1 id="hello-world">Hello world</h1>')
     expect(note.text).toContain('<meta name="author" content="Ada Lovelace">')
   })
-
   test('puts the byline first when a note does not start with a heading', async () => {
     await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
     await addNote('plain.md', 'Just a paragraph.\n\n# Later\n')
     await publish({ subdomain: 'field' })
-
     const note = await call(env, '/plain', { host: 'field.nibeditor.com' })
     const byline = note.text.indexOf('<p class="by">by Ada</p>')
-
     expect(byline).toBeGreaterThan(-1)
     expect(byline).toBeLessThan(note.text.indexOf('<p>Just a paragraph.'))
     expect(byline).toBeLessThan(note.text.indexOf('<h1 id="later">Later</h1>'))
   })
-
   test('is named under the title of a note published on its own', async () => {
     await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
     await addNote('home.md', '# Home\n\nMy page.\n')
     await publish({ subdomain: 'me', note: 'home.md' })
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(root.text.indexOf('<h1 id="home">Home</h1>')).toBeLessThan(root.text.indexOf('by Ada'))
   })
-
   test('leaves a note without a byline until there is a name', async () => {
     await publish({ subdomain: 'field' })
-
     const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     expect(note.text).not.toContain('class="by"')
     expect(note.text).not.toContain('name="author"')
   })
-
   test('is escaped in the byline of a note too', async () => {
     await call(env, '/v1/me', { method: 'PATCH', token, body: { name: '<b>Ada</b>' } })
     await publish({ subdomain: 'field' })
-
     const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     expect(note.text).not.toContain('<b>Ada</b>')
     expect(note.text).toContain('by &lt;b&gt;Ada&lt;/b&gt;')
   })
 })
-
 describe('nothing public carries the email address', () => {
   const EMAIL = 'a@b.dev'
   const PUBLIC = [
@@ -828,7 +666,6 @@ describe('nothing public carries the email address', () => {
     '/sitemap.xml',
     '/robots.txt',
   ]
-
   async function everywhere(host: string) {
     const seen: string[] = []
     for (const path of PUBLIC) {
@@ -836,34 +673,27 @@ describe('nothing public carries the email address', () => {
       seen.push(`${path}: ${[...response.headers.entries()].map(([k, v]) => `${k}=${v}`).join(' ')}`)
       seen.push(`${path}: ${response.text}`)
     }
-
     const text = seen.join('\n')
     expect(text).toContain('Published with')
     return text
   }
-
   test('not a published space, with a name or without', async () => {
     await publish({ subdomain: 'field' })
     expect(await everywhere('field.nibeditor.com')).not.toContain(EMAIL)
-
     await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
     expect(await everywhere('field.nibeditor.com')).not.toContain(EMAIL)
   })
-
   test('not a note published on its own', async () => {
     await addNote('home.md', '# Home\n')
     await publish({ subdomain: 'me', note: 'home.md' })
     expect(await everywhere('me.nibeditor.com')).not.toContain(EMAIL)
   })
-
   test('not a domain of their own', async () => {
     await publishDomain('notes.example.com')
     expect(await everywhere('notes.example.com')).not.toContain(EMAIL)
   })
-
   test('not the unauthenticated endpoints of the app itself', async () => {
     await publish({ subdomain: 'field' })
-
     for (const path of [
       '/health',
       '/.well-known/oauth-authorization-server',
@@ -879,94 +709,69 @@ describe('nothing public carries the email address', () => {
     }
   })
 })
-
 describe('the way back to the index', () => {
   test('sits above the title of a note', async () => {
     await publish({ subdomain: 'field' })
-
     const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     const back = note.text.indexOf('<a href="/">← Field notes</a>')
-
     expect(back).toBeGreaterThan(-1)
     expect(back).toBeLessThan(note.text.indexOf('<h1 id="hello-world">Hello world</h1>'))
   })
-
   test('comes before the byline as well', async () => {
     await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 'Ada' } })
     await publish({ subdomain: 'field' })
-
     const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     expect(note.text.indexOf('← Field notes')).toBeLessThan(note.text.indexOf('by Ada'))
   })
-
   test('names the blog, escaped', async () => {
     await publish({ subdomain: 'field', title: 'Notes <3' })
-
     const note = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     expect(note.text).toContain('← Notes &lt;3')
   })
-
   test('is not offered on a note published on its own, which has no index', async () => {
     await addNote('home.md', '# Home\n')
     await publish({ subdomain: 'me', note: 'home.md' })
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(root.text).not.toContain('<a href="/">')
   })
 })
-
 describe('publishing one note instead of the space', () => {
   test('serves that note at the root, with no index', async () => {
     await addNote('home.md', '# Hello\n\nMy personal page.\n')
     await addNote('secret.md', '# Secret\n\nNot for the web.\n')
-
     await publish({ subdomain: 'me', note: 'home.md' })
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
-
     expect(root.status).toBe(200)
     expect(root.text).toContain('My personal page.')
     expect(root.text).not.toContain('class="index"')
   })
-
   test('hides every other note in the space', async () => {
     await addNote('home.md', '# Hello\n')
     await addNote('secret.md', '# Secret\n\nNot for the web.\n')
-
     await publish({ subdomain: 'me', note: 'home.md' })
-
     const other = await call(env, '/secret', { host: 'me.nibeditor.com' })
     expect(other.text).not.toContain('Not for the web.')
   })
-
   test('refuses a note that is not in the space', async () => {
     const response = await publish({ subdomain: 'me', note: 'nowhere.md' })
-
     expect(response.status).toBe(404)
   })
-
   test('goes back to the whole space when the note is cleared', async () => {
     await addNote('home.md', '# Hello\n')
     await addNote('other.md', '# Other\n')
-
     await publish({ subdomain: 'me', note: 'home.md' })
     await publish({ subdomain: 'me', note: null })
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(root.text).toContain('class="index"')
   })
-
   test('reports which note is published', async () => {
     await addNote('home.md', '# Hello\n')
     const published = await publish({ subdomain: 'me', note: 'home.md' })
-
     expect(published.json.space.blog.note).toBe('home.md')
   })
-
   test('follows the note through a rename, and a new note at its old name stays private', async () => {
     const id = (await addNote('home.md', '# Home\n\nMine.\n')).json.note.id
     await publish({ subdomain: 'me', note: 'home.md' })
-
     const renamed = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
@@ -974,19 +779,16 @@ describe('publishing one note instead of the space', () => {
     })
     expect(renamed.status, renamed.text).toBe(200)
     await addNote('home.md', '# Draft\n\nPrivate.\n')
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(root.status).toBe(200)
     expect(root.text).toContain('Mine.')
     expect(root.text).not.toContain('Private.')
     expect((await publish({ subdomain: 'me', title: 'Me' })).json.space.blog.note).toBe('about.md')
   })
-
   test('follows the note through a rename and a move on sync v2', async () => {
     const id = (await addNote('home.md', '# Home\n\nMine.\n')).json.note.id
     await publish({ subdomain: 'me', note: 'home.md' })
     await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
-
     const changed = await call(env, `/v2/spaces/${space}/ops`, {
       token,
       body: {
@@ -999,23 +801,18 @@ describe('publishing one note instead of the space', () => {
     })
     expect(changed.status, changed.text).toBe(200)
     await addNote('home.md', '# Draft\n\nPrivate.\n')
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(root.text).toContain('Mine.')
     expect(root.text).not.toContain('Private.')
   })
-
   test('is not served once its note is deleted, even when another note takes its name', async () => {
     const id = (await addNote('home.md', '# Home\n\nMine.\n')).json.note.id
     await publish({ subdomain: 'me', note: 'home.md' })
-
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     await addNote('home.md', '# Draft\n\nPrivate.\n')
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(root.text).not.toContain('Private.')
   })
-
   test('is not served once the folder holding its note is deleted on sync v2', async () => {
     await addNote('Site/home.md', '# Home\n\nMine.\n')
     await publish({ subdomain: 'me', note: 'Site/home.md' })
@@ -1023,37 +820,30 @@ describe('publishing one note instead of the space', () => {
     const folder = env.db.prepare("select id from folders where space_id = ? and name = 'Site'").get(space) as {
       id: string
     }
-
     const deleted = await call(env, `/v2/spaces/${space}/ops`, {
       token,
       body: { ops: [{ op: 'd1', t: 'delete', id: folder.id, seen: 1e9 }] },
     })
     expect(deleted.status, deleted.text).toBe(200)
     await addNote('Site/home.md', '# Draft\n\nPrivate.\n')
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(root.text).not.toContain('Private.')
   })
-
   test('is not served once its note is deleted on sync v2', async () => {
     const id = (await addNote('home.md', '# Home\n\nMine.\n')).json.note.id
     await publish({ subdomain: 'me', note: 'home.md' })
     await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
-
     await call(env, `/v2/spaces/${space}/ops`, {
       token,
       body: { ops: [{ op: 'd1', t: 'delete', id, seen: 1e9 }] },
     })
     await addNote('home.md', '# Draft\n\nPrivate.\n')
-
     const root = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(root.text).not.toContain('Private.')
   })
 })
-
 describe('a site of one note', () => {
   const PRIVATE = file(2048, 7)
-
   async function keepPrivately(path = 'Private/salary.pdf') {
     await call(env, `/v1/blobs/${PRIVATE.hash}`, {
       method: 'PUT',
@@ -1068,52 +858,40 @@ describe('a site of one note', () => {
     })
     expect(kept.status).toBe(200)
   }
-
   test('serves no other file of the space by its path', async () => {
     await keepPrivately()
     await publish({ subdomain: 'me', note: 'Hello world.md' })
-
     for (const path of ['/Private/salary.pdf', '/private/salary.pdf', '/Private%2Fsalary.pdf']) {
       const response = await call(env, path, { host: 'me.nibeditor.com' })
       expect(response.status, path).toBe(404)
       expect(response.headers.get('location'), path).toBeNull()
     }
-
     expect((await call(env, `/i/${PRIVATE.hash}.pdf`)).status).toBe(404)
   })
-
   test('nor one its folder rules would have published as a site of the space', async () => {
     await keepPrivately('Blog/paper.pdf')
     await publish({ subdomain: 'me', note: 'Hello world.md', rules: { publish: ['Blog'] } })
-
     expect((await call(env, '/Blog/paper.pdf', { host: 'me.nibeditor.com' })).status).toBe(404)
   })
-
   test('still links a file its note links, at the address of its bytes', async () => {
     await keepPrivately('reading/paper.pdf')
     await addNote('home.md', '# Home\n\nSee [the paper](reading/paper.pdf).\n')
     await publish({ subdomain: 'me', note: 'home.md' })
-
     const page = await call(env, '/', { host: 'me.nibeditor.com' })
     expect(page.text).toContain(`href="/i/${PRIVATE.hash}.pdf"`)
     expect((await call(env, `/i/${PRIVATE.hash}.pdf`)).status).toBe(200)
-
     expect((await call(env, '/reading/paper.pdf', { host: 'me.nibeditor.com' })).status).toBe(302)
   })
-
   test('while a site of the space still serves a file by its path', async () => {
     await keepPrivately('reading/paper.pdf')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/reading/paper.pdf', { host: 'field.nibeditor.com' })
     expect(response.status).toBe(302)
   })
 })
-
 describe('a published note that links a PDF', () => {
   const PAPER_BYTES = file(2048, 3)
   const PAPER = PAPER_BYTES.hash
-
   async function keepPaper(path = 'reading/paper.pdf') {
     await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
@@ -1127,111 +905,87 @@ describe('a published note that links a PDF', () => {
       body: { files: [{ path, hash: PAPER }] },
     })
   }
-
   test('links it at the page the link named', async () => {
     await keepPaper()
     await addNote('cites.md', '# Cites\n\nSee [[paper.pdf#page=3]].\n')
     await publish({ subdomain: 'field' })
-
     const page = await call(env, '/cites', { host: 'field.nibeditor.com' })
     expect(page.text).toContain(`href="/i/${PAPER}.pdf#page=3"`)
   })
-
   test('and with no page when the link named none', async () => {
     await keepPaper()
     await addNote('cites.md', '# Cites\n\nSee [[reading/paper.pdf]].\n')
     await publish({ subdomain: 'field' })
-
     const page = await call(env, '/cites', { host: 'field.nibeditor.com' })
     expect(page.text).toContain(`href="/i/${PAPER}.pdf"`)
   })
-
   test('serves the paper itself under the path the note wrote', async () => {
     await keepPaper()
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/reading/paper.pdf', { host: 'field.nibeditor.com' })
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toContain(`/i/${PAPER}.pdf`)
   })
-
   test('under a path with a space in its name, as a browser asks for it', async () => {
     await keepPaper('reading/a long paper.pdf')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/reading/a%20long%20paper.pdf', {
       host: 'field.nibeditor.com',
     })
     expect(response.status).toBe(302)
   })
-
   test('and leaves a link to a paper the space does not keep as plain words', async () => {
     await addNote('cites.md', '# Cites\n\nSee [[missing.pdf#page=3]].\n')
     await publish({ subdomain: 'field' })
-
     const page = await call(env, '/cites', { host: 'field.nibeditor.com' })
     expect(page.text).toContain('See missing.pdf#page=3.')
     expect(page.text).not.toContain('/i/')
   })
-
   test('serves it from a space published as one note as well', async () => {
     await keepPaper()
     await addNote('home.md', '# Home\n\nSee [[paper.pdf#page=2]].\n')
     await publish({ subdomain: 'field', note: 'home.md' })
-
     const page = await call(env, '/', { host: 'field.nibeditor.com' })
     expect(page.text).toContain(`href="/i/${PAPER}.pdf#page=2"`)
-
     const paper = await call(env, '/reading/paper.pdf', { host: 'field.nibeditor.com' })
     expect(paper.status).toBe(302)
   })
-
   test('while a path that is nobody’s file is still not found', async () => {
     await keepPaper()
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/reading/other.pdf', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('Not found')
   })
 })
-
 describe('subdomain lengths', () => {
   test('takes the shortest the message promises', async () => {
     expect((await publish({ subdomain: 'me' })).status).toBe(200)
   })
-
   test('takes the longest', async () => {
     expect((await publish({ subdomain: 'x'.repeat(32) })).status).toBe(200)
   })
-
   test('refuses one character', async () => {
     expect((await publish({ subdomain: 'x' })).status).toBe(400)
   })
-
   test('refuses more than thirty-two', async () => {
     expect((await publish({ subdomain: 'x'.repeat(33) })).status).toBe(400)
   })
-
   test('refuses a leading or trailing hyphen', async () => {
     expect((await publish({ subdomain: '-me' })).status).toBe(400)
     expect((await publish({ subdomain: 'me-' })).status).toBe(400)
   })
 })
-
 describe('a drawing in a published space', () => {
   const DRAWING = '{"nodes":[{"id":"a","type":"text","text":"the private bit"}],"edges":[]}'
-
   test('is not a page, whichever of its two extensions it carries', async () => {
     await addNote('Board.canvas', DRAWING)
     await addNote('Lecture 4.pages', DRAWING)
     await publish({ subdomain: 'field' })
-
     for (const slug of ['/board', '/lecture-4']) {
       const response = await call(env, slug, { host: 'field.nibeditor.com' })
       expect(response.status, slug).toBe(404)
       expect(response.text, slug).not.toContain('the private bit')
     }
-
     for (const path of ['/', '/feed.xml', '/sitemap.xml']) {
       const listing = await call(env, path, { host: 'field.nibeditor.com' })
       expect(listing.text, path).not.toContain('lecture-4')
@@ -1248,7 +1002,6 @@ describe('a drawing in a published space', () => {
     })
     expect(renamed.status, renamed.text).toBe(200)
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/board', { host: 'field.nibeditor.com' })
     expect(response.status).toBe(404)
     expect(response.text).not.toContain('the private bit')
@@ -1258,18 +1011,14 @@ describe('a drawing in a published space', () => {
     }
   })
 })
-
 describe('searching a site', () => {
   test('marks what matched and says the rest as words', async () => {
     await addNote('found.md', '# Found\n\nA paragraph about hedgehogs.\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/search?q=hedgehogs', { host: 'field.nibeditor.com' })
-
     expect(response.text).toContain('<mark>hedgehogs</mark>')
     expect(response.text).toContain('href="/found"')
   })
-
   test('shows nothing of a purged note whose words are still in the index', async () => {
     const note = (await addNote('gone.md', '# Gone\n\nA paragraph about hedgehogs.\n')).json.note
     await addNote('kept.md', '# Kept\n\nAnother one about hedgehogs.\n')
@@ -1282,27 +1031,21 @@ describe('searching a site', () => {
          values (?, ?, 'gone.md', 'Gone', 'A paragraph about hedgehogs')`,
       )
       .run(note.id, space)
-
     const response = await call(env, '/search?q=hedgehogs', { host: 'field.nibeditor.com' })
-
     expect(response.text).toContain('href="/kept"')
     expect(response.text).not.toContain('href="/gone"')
     expect(response.text).not.toContain('A <mark>paragraph')
     expect(response.text).not.toContain('paragraph about')
   })
-
   test('and a tag a note only half wrote is still words', async () => {
     await addNote('sneaky.md', '# Sneaky\n\nhedgehogs <script src=/i/x.js\n')
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/search?q=hedgehogs', { host: 'field.nibeditor.com' })
-
     expect(response.text).toContain('&lt;script')
     expect(response.text).not.toContain('<script src')
     expect(response.text.match(/<script/g)).toHaveLength(2)
   })
 })
-
 describe('what a writer commented out', () => {
   const POST = [
     'Intro %%hidden-inline%% and <!-- html-inline --> more.',
@@ -1315,21 +1058,17 @@ describe('what a writer commented out', () => {
     '',
   ].join('\n')
   const HIDDEN = ['hidden-inline', 'html-inline', 'hiddenblock', 'quokka', 'secret-tag']
-
   test('is in nothing the site serves: page, head, feeds, sitemap, search', async () => {
     await addNote('Post.md', POST)
     await addNote('Hidden link.md', '# Hidden link\n\nOther.\n')
     await publish({ subdomain: 'field' })
-
     for (const path of ['/post', '/', '/feed.xml', '/rss.xml', '/sitemap.xml', '/hidden-link']) {
       const response = await call(env, path, { host: 'field.nibeditor.com' })
       expect(response.status, path).toBe(200)
       for (const word of HIDDEN) expect(response.text, `${path} ${word}`).not.toContain(word)
     }
-
     const page = await call(env, '/post', { host: 'field.nibeditor.com' })
     expect(page.text).toContain('content="Intro and more."')
-
     for (const query of ['quokka', 'hiddenblock', 'hidden-inline', '%23secret-tag']) {
       const found = await call(env, `/search?q=${query}`, { host: 'field.nibeditor.com' })
       expect(found.text, query).toContain('Nothing matches.')
@@ -1338,44 +1077,35 @@ describe('what a writer commented out', () => {
       }
     }
   })
-
   test('gives a page no title from a heading inside one', async () => {
     await addNote('Untitled.md', '%%\n# Secret plans\n%%\n\nWords.\n')
     await publish({ subdomain: 'field' })
-
     for (const path of ['/untitled', '/', '/feed.xml']) {
       const response = await call(env, path, { host: 'field.nibeditor.com' })
       expect(response.text, path).not.toContain('Secret plans')
     }
   })
-
   test('shows nothing of a note it embeds that was commented out there', async () => {
     await addNote('Inner.md', 'Shown %%inner-hidden%% words.\n')
     await addNote('Outer.md', '# Outer\n\n![[Inner]]\n')
     await publish({ subdomain: 'field' })
-
     const page = await call(env, '/outer', { host: 'field.nibeditor.com' })
     expect(page.text).toContain('Shown')
     expect(page.text).not.toContain('inner-hidden')
   })
-
   test('says nothing a row read before this said, and the sweep reads it again', async () => {
     await addNote('Post.md', POST)
     await publish({ subdomain: 'field' })
-
     env.db
       .prepare("update notes set front = ?, front_rev = 0 where path = 'Post.md'")
       .run(JSON.stringify({ summary: 'Intro %%hidden-inline%% more.', tags: ['secret-tag'] }))
     env.db.prepare("update note_search set body = 'Intro hiddenblock quokka End.' where path = 'Post.md'").run()
-
     const page = await call(env, '/post', { host: 'field.nibeditor.com' })
     expect(page.text).not.toContain('hidden-inline')
     const feed = await call(env, '/feed.xml', { host: 'field.nibeditor.com' })
     expect(feed.text).not.toContain('hidden-inline')
-
     const { fillFronts } = await import('../src/sync-server-engine/src/site/fill')
     await fillFronts(env, null)
-
     expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
       front_rev: FRONT_REV,
     })
@@ -1384,43 +1114,33 @@ describe('what a writer commented out', () => {
     const tagged = await call(env, '/search?q=%23secret-tag', { host: 'field.nibeditor.com' })
     expect(tagged.text).toContain('Nothing matches.')
   })
-
   test('writes down the pictures of a note read before they were', async () => {
     const hash = 'ab'.repeat(32)
     await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)
     env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
-
     const { fillFronts } = await import('../src/sync-server-engine/src/site/fill')
     await fillFronts(env, null)
-
     expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
   })
-
   test('and of a note in Recently deleted, which can still come back', async () => {
     const hash = 'ab'.repeat(32)
     const id = (await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)).json.note.id
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
-
     const { fillFronts } = await import('../src/sync-server-engine/src/site/fill')
     await fillFronts(env, null)
-
     expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
   })
-
   test('and reads a note again whose pictures it could not write down', async () => {
     await addNote('Post.md', POST)
     env.db.exec("update notes set front_rev = 1 where path = 'Post.md'; drop table note_pictures")
-
     const { fillFronts } = await import('../src/sync-server-engine/src/site/fill')
     await fillFronts(env, null)
-
     expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
       front_rev: 0,
     })
   })
 })
-
 describe('the graph the site draws', () => {
   test('writes a title that would close the island as JSON rather than as a tag', async () => {
     await addNote(
@@ -1428,14 +1148,11 @@ describe('the graph the site draws', () => {
       '---\ntitle: \'</script><script src="/i/x.js"></script>\'\n---\n\n# One\n\n[[Hello world]]\n',
     )
     await publish({ subdomain: 'field' })
-
     const response = await call(env, '/graph', { host: 'field.nibeditor.com' })
     const island = /<script type="application\/json">([\s\S]*?)<\/script>/.exec(response.text)
-
     expect(island?.[1]).toContain('\\u003c/script')
     expect(island?.[1]).not.toContain('</script')
   })
-
   test('and says the same data once it is read back', () => {
     const read: unknown = JSON.parse(asIsland(JSON.stringify({ name: '</script><b>' })))
     expect(read).toEqual({ name: '</script><b>' })

@@ -1,12 +1,10 @@
 
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 TABS = "()=>window.ordenApp.workspace.tabs.map(t=>t.note.latest)"
-
 def drive(browser: Browser) -> None:
     ctx = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = ctx.new_page()
@@ -16,7 +14,6 @@ def drive(browser: Browser) -> None:
     DRIVE.ready(b)
     if b.evaluate("()=>window.ordenApp.workspace.tabs.length"):
         wrong("a new window opened with copies of the first's tabs")
-
     a.bring_to_front()
     a.evaluate("()=>window.ordenApp.workspace.openBlank()")
     a.wait_for_selector(".cm-content")
@@ -30,13 +27,11 @@ def drive(browser: Browser) -> None:
     a.evaluate("()=>window.ordenApp.workspace.persist()")
     b.evaluate("()=>window.ordenApp.workspace.persist()")
     say("both drafts written down, B last")
-
     b.reload()
     DRIVE.ready(b)
     wait_for(b, "()=>window.ordenApp.workspace.tabs.some(t=>t.note.latest.includes('WINDOW B'))", "B back")
     if b.evaluate("()=>window.ordenApp.workspace.tabs.filter(t=>t.note.latest.includes('WINDOW B')).length") != 1:
         wrong("a reload brought a draft back twice")
-
     a.close(run_before_unload=True)
     b.close(run_before_unload=True)
     c = ctx.new_page()
@@ -61,5 +56,4 @@ def drive(browser: Browser) -> None:
     if many != 2:
         wrong(f"a reload left {many} tabs of the two drafts")
     c.close()
-
 raise SystemExit(DRIVE.run(drive))

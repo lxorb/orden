@@ -9,25 +9,19 @@ vi.mock('../../platform/src/api', async (original) => ({
       ? new Promise((done) => rehomes.push(() => done(0)))
       : Promise.reject(new Error('no backend')),
 }))
-
 const page = new EventTarget()
 vi.stubGlobal('window', page)
-
 const { Protection, STORAGE_KEY } = await import('./protection.svelte')
 const { keepingShared } = await import('../../file-ops/src/api')
-
 const ROOT = '/space'
 const DIARY = `${ROOT}/Diary.md`
 const PLANS = `${ROOT}/Plans.md`
 const OLD = `${ROOT}/Old/Diary.md`
-
 const told = () => page.dispatchEvent(Object.assign(new Event('storage'), { key: STORAGE_KEY }))
-
 beforeEach(() => {
   localStorage.clear()
   rehomes.length = 0
 })
-
 test('moves another window made and this one hears leave the locks where that window put them', () => {
   const second = new Protection()
   const main = new Protection()
@@ -52,7 +46,6 @@ test('moves another window made and this one hears leave the locks where that wi
   expect(main.agentsMay(DIARY)).toBe(false)
   expect(new Protection().ways(ROOT)).toEqual({ 'Old/Diary.md': 'password', 'Diary.md': 'device' })
 })
-
 test('a note renamed onto a deleted note’s name while its lock is still being buried keeps its lock', async () => {
   const protection = new Protection()
   protection.set(ROOT, DIARY, 'password')

@@ -10,11 +10,8 @@ export interface Prepared {
   seconds?: number
   wave?: number[]
 }
-
 const PREVIEW_SIDE = 480
-
 const AS_THEY_ARE = new Set(['image/gif', 'image/svg+xml'])
-
 export async function prepared(file: File): Promise<Prepared> {
   const plain: Prepared = {
     blob: file,
@@ -30,7 +27,6 @@ export async function prepared(file: File): Promise<Prepared> {
   }
   return plain
 }
-
 async function picture(file: File): Promise<Prepared> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
@@ -48,7 +44,6 @@ async function picture(file: File): Promise<Prepared> {
     bitmap.close()
   }
 }
-
 async function encoded(source: CanvasImageSource, width: number, height: number, quality: number): Promise<Blob> {
   const canvas = document.createElement('canvas')
   canvas.width = width
@@ -62,12 +57,10 @@ async function encoded(source: CanvasImageSource, width: number, height: number,
     ),
   )
 }
-
 function previewOf(source: CanvasImageSource, width: number, height: number): Promise<Blob> {
   const scale = Math.min(1, PREVIEW_SIDE / Math.max(width, height))
   return encoded(source, Math.round(width * scale), Math.round(height * scale), 0.8)
 }
-
 async function videoFrame(file: File): Promise<Partial<Prepared>> {
   const url = URL.createObjectURL(file)
   try {
@@ -90,7 +83,6 @@ async function videoFrame(file: File): Promise<Partial<Prepared>> {
     URL.revokeObjectURL(url)
   }
 }
-
 export async function sound(bytes: ArrayBuffer): Promise<Partial<Prepared>> {
   const context = new AudioContext()
   try {

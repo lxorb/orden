@@ -21,21 +21,18 @@ describe('a feedback report', () => {
     expect(mail.html).toContain('&lt;b&gt;bold&lt;/b&gt;')
     expect(mail.html).not.toContain('<b>bold</b>')
   })
-
   test('the issue title is the first sentence with mentions defused', () => {
     expect(issueTitle('It broke. Then it did not.')).toBe('Feedback: It broke.')
     expect(issueTitle('ping @someone please')).toBe('Feedback: ping @​someone please')
     expect(issueTitle('y'.repeat(100))).toBe(`Feedback: ${'y'.repeat(79)}…`)
     expect(markOf('r1')).toBe('<!-- orden-feedback:r1 -->')
   })
-
   test('platforms are labelled by system, the web as web, anything else not at all', () => {
     expect(platformLabel('macOS 15.1 arm64')).toBe('macos')
     expect(platformLabel('web (Chrome)')).toBe('web')
     expect(platformLabel('Android 14')).toBe('android')
     expect(platformLabel('BeOS')).toBeNull()
   })
-
   test('its standing is told from whether and how it was filed', () => {
     expect(standing({ filed: false, state: null })).toMatch(/waiting to be filed/)
     expect(standing({ filed: true, state: 'open' })).toMatch(/open/)
@@ -44,7 +41,6 @@ describe('a feedback report', () => {
     expect(standing({ filed: true, state: null })).toMatch(/filed for the team/)
   })
 })
-
 describe('pictures on a report', () => {
   const chunk = (type: string, body: number[]) => [
     0,
@@ -59,7 +55,6 @@ describe('pictures on a report', () => {
     0,
   ]
   const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
-
   test('only a PNG or a JPEG data url is a picture, and its text chunks are dropped', () => {
     const png = Uint8Array.from([...SIGNATURE, ...chunk('tEXt', [1]), ...chunk('IEND', [])])
     const jpeg = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0])
@@ -74,13 +69,11 @@ describe('pictures on a report', () => {
     expect(picture.bytes.length).toBe(SIGNATURE.length + chunk('IEND', []).length)
   })
 })
-
 describe('a crash report', () => {
   test('is refused unless it is an object the shape expects', () => {
     expect(typeof crashReportOf('nope')).toBe('string')
     expect(typeof crashReportOf({})).toBe('string')
   })
-
   test('script frames read V8 and WebKit stacks, three deep', () => {
     const v8 = [
       'Error: boom',
@@ -95,7 +88,6 @@ describe('a crash report', () => {
     const webkit = 'open@https://orden.so/assets/app-1234.js:10:5\n@https://orden.so/x.js:1:1'
     expect(scriptFrames(webkit)).toHaveLength(2)
   })
-
   test('a title names the kind and strips the numbers that would split one crash into many', () => {
     const report = crashReportOf({
       v: 1,

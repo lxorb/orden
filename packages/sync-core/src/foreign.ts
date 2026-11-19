@@ -1,10 +1,8 @@
 export type ForeignTool = 'Proton' | 'Dropbox' | 'OneDrive' | 'Syncthing' | 'Nextcloud' | 'ownCloud' | 'Seafile'
-
 export interface ForeignCopy {
   tool: ForeignTool
   original: string
 }
-
 const MARKS: readonly (readonly [ForeignTool, RegExp])[] = [
   [
     'Proton',
@@ -17,7 +15,6 @@ const MARKS: readonly (readonly [ForeignTool, RegExp])[] = [
   ['Seafile', / \(SFConflict [^()]+ \d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\)/],
   ['OneDrive', /-(?:DESKTOP-[A-Z0-9]{7}|LAPTOP-[A-Z0-9]{7,8})(?=\.[^.]*$|$)/],
 ]
-
 export function foreignCopy(name: string): ForeignCopy | null {
   for (const [tool, mark] of MARKS) {
     const found = mark.exec(name)
@@ -25,7 +22,6 @@ export function foreignCopy(name: string): ForeignCopy | null {
   }
   return null
 }
-
 export function inForeignCopy(path: string): boolean {
   return path.split(/[\\/]/).some((part) => foreignCopy(part) !== null)
 }

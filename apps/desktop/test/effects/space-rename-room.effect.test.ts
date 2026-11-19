@@ -8,7 +8,6 @@ const answer = vi.hoisted(() => {
   })
   return { held: () => given, release: () => release() }
 })
-
 vi.mock('../../src/lib/accounts/src/client', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../src/lib/accounts/src/client')>()
   return {
@@ -22,11 +21,9 @@ vi.mock('../../src/lib/accounts/src/client', async (importOriginal) => {
     },
   }
 })
-
 const OLD = '/Notes'
 const NEW = '/Renamed'
 const NOTE = 'together.md'
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -51,21 +48,17 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     }
   },
 }))
-
 await import('../../src/lib/sync-ports')
 const { account } = await import('../../src/lib/accounts/src/account.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sync } = await import('../../src/lib/sync-store/src/api')
 const { commitSpaceName } = await import('../../src/lib/spaces/src/api')
 const { root, watch } = await import('./runes.svelte')
-
 let stop: (() => void) | undefined
-
 beforeAll(async () => {
   workspace.spaces = [{ id: 'notes', name: 'Notes', root: OLD }]
   workspace.activeSpaceId = 'notes'
   await workspace.open(`${OLD}/${NOTE}`)
-
   localStorage.setItem(
     'orden:mirrors',
     JSON.stringify({
@@ -84,9 +77,7 @@ beforeAll(async () => {
   )
   sync.reread()
 })
-
 afterEach(() => stop?.())
-
 test('the note is the account’s note at every moment of a space rename', async () => {
   const answered: (string | null)[] = []
   stop = root(() => {
@@ -96,17 +87,14 @@ test('the note is the account’s note at every moment of a space rename', async
   })
   flushSync()
   expect(answered).toEqual(['note-1'])
-
   const space = workspace.spaces[0]
   if (!space) throw new Error('the space')
   await commitSpaceName(space, 'Renamed')
   flushSync()
-
   expect(workspace.documents[0]?.path).toBe(`${NEW}/${NOTE}`)
   expect(answered).not.toContain(null)
   expect(answered.at(-1)).toBe('note-1')
 })
-
 test('and at every moment of its own rename, while the account is being told', async () => {
   account.token = 'a session'
   const answered: (string | null)[] = []
@@ -116,16 +104,13 @@ test('and at every moment of its own rename, while the account is being told', a
     })
   })
   flushSync()
-
   const renaming = workspace.rename(`${NEW}/${NOTE}`, 'apart.md')
   await vi.waitFor(() => expect(workspace.documents[0]?.path).toBe(`${NEW}/apart.md`))
   flushSync()
   expect(answered).not.toContain(null)
-
   answer.release()
   await renaming
   flushSync()
-
   expect(answered).not.toContain(null)
   expect(sync.tracked(`${NEW}/apart.md`)?.version).toBe(2)
 })

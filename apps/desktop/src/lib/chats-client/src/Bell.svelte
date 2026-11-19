@@ -15,20 +15,16 @@
     members: number
     onchange: (notify: Notify | null, mutedUntil: number | null) => void
   } = $props()
-
   let now = $state(Date.now())
   $effect(() => {
     const ticking = setInterval(() => (now = Date.now()), 60_000)
     return () => clearInterval(ticking)
   })
-
   const ring = $derived(ringOf(notify, mutedUntil, members, now))
   const muted = $derived(mutedUntil !== null && mutedUntil > now)
-
   function length(hours: number): string {
     return hours < 24 ? `${hours} h` : hours / 24 === 1 ? '1 day' : `${hours / 24} days`
   }
-
   function open(event: MouseEvent) {
     askToShow()
     const level = ringOf(notify, null, members, now)

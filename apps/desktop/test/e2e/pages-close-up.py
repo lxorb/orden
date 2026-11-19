@@ -1,12 +1,9 @@
 import base64
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = """
 async ({ path, data }) => {
   const open = indexedDB.open('orden')
@@ -26,7 +23,6 @@ async ({ path, data }) => {
   return window.ordenApp.workspace.files.some((one) => one.path === path)
 }
 """
-
 SHOWN = """
 () => {
   const sheet = document.querySelector('.pages .sheet')
@@ -37,12 +33,8 @@ SHOWN = """
     : null
 }
 """
-
 ZOOM = "(scale) => { const store = window.ordenApp.pages.current.store; store.camera = { ...store.camera, scale } }"
-
 PAN = "(by) => { const store = window.ordenApp.pages.current.store; store.camera = { ...store.camera, x: store.camera.x + by, y: store.camera.y + by } }"
-
-
 def paper() -> bytes:
     w, h = 595, 842
     lines = [f"BT /F1 9 Tf 40 {h - 60 - row * 12} Td (Line {row + 1}: the kestrel hangs above the field.) Tj ET" for row in range(60)]
@@ -65,8 +57,6 @@ def paper() -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size 6>>\nstartxref\n%d\n%%%%EOF\n" % table
     return bytes(out)
-
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 412, "height": 860}, device_scale_factor=3)
     page = context.new_page()
@@ -80,7 +70,6 @@ def drive(browser: Browser) -> None:
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
     wait_for(page, "window.ordenApp.pages.current?.store.count === 1", "the page note")
     page.wait_for_timeout(1500)
-
     page.evaluate(ZOOM, 4)
     wait_for(page, f"({SHOWN.strip()})() !== null", "a close-up of the page at 400%", patience=15)
     page.wait_for_timeout(500)
@@ -92,18 +81,14 @@ def drive(browser: Browser) -> None:
     if seen["wide"] > 412 * 1.5 or seen["tall"] > 860 * 1.5:
         wrong(f"the close-up covers {seen['wide']:.0f}x{seen['tall']:.0f}, far more than the screen")
     shot(page, "close-up")
-
     page.evaluate(PAN, 60)
     page.wait_for_timeout(1500)
     moved = page.evaluate(SHOWN)
     if moved is None:
         wrong("after a pan, the close-up is gone")
-
     page.evaluate("() => window.ordenApp.pages.current.store.fitAgain()")
     page.wait_for_timeout(1500)
     if page.evaluate(SHOWN) is not None:
         wrong("fitted again, the page still holds a close-up it does not need")
     context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a page note zoomed in on a dense screen is drawn sharp where it is seen"))

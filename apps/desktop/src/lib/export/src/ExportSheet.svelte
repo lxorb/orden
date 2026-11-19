@@ -13,7 +13,6 @@
     tiles.find((one) => one.id === chosenId && !one.disabled) ?? tiles.find((one) => !one.disabled) ?? null,
   )
   let optioned = $derived(chosen ? (picker.last.optioned[chosen.id] ?? false) : false)
-
   function go(tile: Tile | null) {
     if (!tile || tile.disabled) return
     const id = commandFor(tile, optioned)
@@ -23,7 +22,6 @@
     picker.close()
     command.run()
   }
-
   function setUp() {
     picker.close()
     setup?.run()
@@ -81,14 +79,12 @@
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .tiles {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
     gap: var(--space-2);
     padding: 0 var(--space-2);
   }
-
   .tile {
     display: flex;
     flex-direction: column;
@@ -106,7 +102,6 @@
       background var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out);
   }
-
   .tile svg {
     width: var(--icon-lg);
     height: var(--icon-lg);
@@ -117,38 +112,31 @@
     stroke-linejoin: round;
     color: var(--muted-strong);
   }
-
   .tile .name {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .tile:hover:not(:disabled) {
     background: var(--surface-hover);
   }
-
   .tile.on {
     border-color: var(--accent);
     background: var(--accent-soft);
   }
-
   .tile.on svg {
     color: var(--accent);
   }
-
   .option {
     margin: 0 var(--space-2);
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   .go {
     margin-inline-start: auto;
   }
-
   :global([data-touch]) .go {
     flex: 1;
     justify-content: center;

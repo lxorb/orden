@@ -1,5 +1,4 @@
 type Group = 'conversation' | 'model' | 'modes' | 'context' | 'words' | 'app'
-
 export interface Row {
   name: string
   synonyms: readonly string[]
@@ -7,7 +6,6 @@ export interface Row {
   group: Group
   description: string
 }
-
 const row = (group: Group, name: string, synonyms: readonly string[], description: string, args?: string): Row => ({
   name,
   synonyms,
@@ -15,7 +13,6 @@ const row = (group: Group, name: string, synonyms: readonly string[], descriptio
   description,
   ...(args ? { args } : {}),
 })
-
 export const ROWS: readonly Row[] = [
   row('conversation', 'new', ['clear', 'reset'], 'New thread', '[name]'),
   row('conversation', 'resume', ['continue', 'history'], 'Open a past thread', '[name]'),
@@ -36,12 +33,10 @@ export const ROWS: readonly Row[] = [
   row('conversation', 'jobs', ['ps', 'bashes'], 'Background work'),
   row('conversation', 'focus', [], 'Fold tools and thinking'),
   row('conversation', 'help', [], 'Commands and keys'),
-
   row('model', 'model', ['models'], 'Choose the model', '[name]'),
   row('model', 'effort', ['reasoning', 'think'], 'How hard it thinks', '[level|auto]'),
   row('model', 'fast', [], 'The faster tier', '[on|off]'),
   row('model', 'output-style', ['personality', 'style'], 'How answers read', '[style]'),
-
   row('modes', 'approve', ['ask'], 'Approve mode', '[task]'),
   row('modes', 'plan', [], 'Plan mode', '[task]'),
   row('modes', 'auto', ['agent'], 'Auto mode', '[task]'),
@@ -54,14 +49,12 @@ export const ROWS: readonly Row[] = [
   row('modes', 'bg', ['background'], 'Send, and start another', '[prompt]'),
   row('modes', 'batch', [], 'One instruction over many notes', '<instruction>'),
   row('modes', 'deep-research', ['research'], 'A cited report', '<question>'),
-
   row('context', 'mention', ['add', 'attach'], 'Attach something', '<thing>'),
   row('context', 'add-space', ['add-dir'], 'Reach another space', '<space>'),
   row('context', 'memory', ['memories', 'instructions', 'rules'], 'Instructions and memory'),
   row('context', 'init', [], 'Write AGENTS.md'),
   row('context', 'skills', ['commands', 'prompts'], 'Your own commands', '[name]'),
   row('context', 'mcp', ['tools'], 'Tools'),
-
   row('words', 'shorter', [], 'Shorter'),
   row('words', 'longer', [], 'Longer'),
   row('words', 'fix', ['grammar'], 'Fix grammar'),
@@ -70,7 +63,6 @@ export const ROWS: readonly Row[] = [
   row('words', 'summarize', [], 'Summarize', '[note]'),
   row('words', 'review', ['code-review'], 'Review', '[note|changes]'),
   row('words', 'diff', ['changes'], 'What it changed'),
-
   row('app', 'tasks', [], 'To-dos', '[filter|words]'),
   row('app', 'today', ['plan-day'], 'Plan my day', '[wishes]'),
   row('app', 'catchup', [], 'What I missed in chats', '[chat]'),
@@ -86,9 +78,7 @@ export const ROWS: readonly Row[] = [
   row('app', 'vim', [], 'Vim keys'),
   row('app', 'voice', [], 'Dictate', '[on|off]'),
 ]
-
 export const GOAL_CLEAR: readonly string[] = ['clear', 'stop', 'off', 'reset', 'none', 'cancel']
-
 export function takenNames(): Set<string> {
   return new Set(ROWS.flatMap((one) => [one.name, ...one.synonyms]))
 }

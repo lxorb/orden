@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-
 import { readGrant } from './crate'
 import { FakeCrate, freeId, seeded, standIn } from './fake'
 import { ownGrant, thirdPartyGrant, withScope, withSite } from './grant'
@@ -11,13 +10,11 @@ async function opened(fake: FakeCrate): Promise<AgentsPane> {
   await pane.open()
   return pane
 }
-
 async function paired(...names: string[]) {
   const fake = new FakeCrate()
   for (const [at, name] of names.entries()) fake.pair(name, at + 1)
   return { fake, pane: await opened(fake) }
 }
-
 describe('the pane over the crate', () => {
   it('reads the agents, the program and when each last called', async () => {
     const now = Date.UTC(2026, 8, 30, 16)
@@ -30,13 +27,10 @@ describe('the pane over the crate', () => {
     expect(pane.last.has('nightly-backup')).toBe(false)
     expect(pane.earlier).toBe(false)
   })
-
   it('writes a switch through the crate and reads back what it kept', async () => {
     const { fake, pane } = await paired('Claude Code')
-
     await pane.change('claude-code', (grant) => withScope(grant, 'terminal', true))
     await pane.change('claude-code', (grant) => withSite(grant, 'bank.example', 'agent-store'))
-
     const kept = fake.grants[0]
     expect(kept?.scopes).toContain('terminal')
     expect(kept?.sites).toEqual({ 'bank.example': 'agent-store' })
@@ -45,20 +39,15 @@ describe('the pane over the crate', () => {
     expect(fake.grants[0]?.client).toBe('Claude Code')
     expect(fake.grants[0]?.created).toBe(1)
   })
-
   it('never drops an agent that paired while the pane was open', async () => {
     const { fake, pane } = await paired('Claude Code')
-
     fake.grants.push(ownGrant('codex', 'Codex', 2))
     await pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
-
     expect(fake.grants.map((one) => one.id)).toEqual(['claude-code', 'codex'])
     expect(pane.grants.map((one) => one.id)).toEqual(['claude-code', 'codex'])
   })
-
   it('shows every switch at once and ends on the crate’s answer', async () => {
     const { fake, pane } = await paired('Claude Code')
-
     const first = pane.change('claude-code', (grant) => withScope(grant, 'terminal', true))
     const second = pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
     expect(pane.grants[0]?.scopes).toEqual(expect.arrayContaining(['terminal', 'settings']))
@@ -68,23 +57,19 @@ describe('the pane over the crate', () => {
     expect(fake.grants[0]?.scopes).toEqual(expect.arrayContaining(['terminal', 'settings']))
     expect(fake.writes).toBe(2)
   })
-
   it('puts a switch back, with the reason, when the crate refuses it', async () => {
     const { fake, pane } = await paired('Claude Code')
-
     fake.failing = new Error('the agents cannot be read just now')
     await pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
     expect(pane.error).toBe('the agents cannot be read just now')
     expect(pane.grants[0]?.scopes).not.toContain('settings')
   })
-
   it('removes an agent, and only that one', async () => {
     const { fake, pane } = await paired('Claude Code', 'Codex')
     await pane.remove('claude-code')
     expect(fake.grants.map((one) => one.id)).toEqual(['codex'])
     expect(pane.grants.map((one) => one.id)).toEqual(['codex'])
   })
-
   it('makes an agent by hand with somebody else’s defaults, and says its token once', async () => {
     const { pane } = await paired()
     await pane.mint('Nightly backup')
@@ -96,23 +81,19 @@ describe('the pane over the crate', () => {
       },
     ])
   })
-
   it('hears a pairing and an agent at work', async () => {
     const { fake, pane } = await paired()
     fake.pair('Claude Code', 1)
     await Promise.resolve()
     await Promise.resolve()
     expect(pane.grants.map((one) => one.id)).toEqual(['claude-code'])
-
     fake.emit({ kind: 'acting', agent: 'claude-code' })
     expect(pane.last.get('claude-code')).toBeGreaterThan(0)
-
     pane.close()
     fake.pair('Codex', 2)
     await Promise.resolve()
     expect(pane.grants).toHaveLength(1)
   })
-
   it('clears one agent’s log and keeps the others', async () => {
     const now = Date.UTC(2026, 8, 30, 16)
     const fake = seeded(now)
@@ -125,7 +106,6 @@ describe('the pane over the crate', () => {
     expect(left.flat().every((line) => (line as { agent: string }).agent !== 'claude-code')).toBe(true)
   })
 })
-
 describe('the fake is the crate', () => {
   it('puts the pane in reach where there is no crate, which is how a drive sees it', () => {
     expect(reach.offered).toBe(false)
@@ -134,7 +114,6 @@ describe('the fake is the crate', () => {
     expect(reach.offered).toBe(true)
     reach.standIn = null
   })
-
   it('names agents the way free_id does', () => {
     expect(freeId('Claude Code', [])).toBe('claude-code')
     expect(freeId('Claude Code', ['claude-code'])).toBe('claude-code-2')
@@ -143,7 +122,6 @@ describe('the fake is the crate', () => {
     expect(freeId('Codex (CLI)', [])).toBe('codex-cli')
     expect(freeId('日本', [])).toBe('agent')
   })
-
   it('reads a grant in the crate’s own shape, and nothing else', () => {
     const grant = ownGrant('claude-code', 'Claude Code', 1)
     expect(readGrant(JSON.parse(JSON.stringify(grant)))).toEqual(grant)

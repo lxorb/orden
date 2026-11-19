@@ -22,13 +22,10 @@ beforeAll(async () => {
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   await loadFind()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function folds(view: EditorView) {
   const out: [number, number][] = []
   foldedRanges(view.state).between(0, view.state.doc.length, (from, to) => {
@@ -36,13 +33,11 @@ function folds(view: EditorView) {
   })
   return out
 }
-
 const doc = '# Intro\n\ntarget first\n\n# Plan\n\nsome target words here\n\n# Next\n\nend'
 const heading = doc.indexOf('# Plan') + '# Plan'.length
 const sectionEnd = doc.indexOf('words here') + 'words here'.length
 const first = doc.indexOf('target')
 const hidden = doc.indexOf('target', first + 1)
-
 function foldedView() {
   const state = parsed(
     EditorState.create({
@@ -64,16 +59,13 @@ function foldedView() {
   expect(folds(view)).toEqual([[heading, sectionEnd]])
   return view
 }
-
 function picked(view: EditorView) {
   return view.state.selection.ranges.map((range) => [range.from, range.to])
 }
-
 const both = [
   [first, first + 'target'.length],
   [hidden, hidden + 'target'.length],
 ]
-
 describe('adding a match inside a folded section to the selection', () => {
   test('Ctrl+D opens the fold the next occurrence lands in', () => {
     const view = foldedView()
@@ -81,14 +73,12 @@ describe('adding a match inside a folded section to the selection', () => {
     expect(picked(view)).toEqual(both)
     expect(folds(view)).toEqual([])
   })
-
   test('select every occurrence opens the folds its carets land in', () => {
     const view = foldedView()
     selectSelectionMatches(view)
     expect(picked(view)).toEqual(both)
     expect(folds(view)).toEqual([])
   })
-
   test('select every find match opens the folds its carets land in', async () => {
     const view = foldedView()
     await setFind(view, { ...NO_FIND, query: 'target' })

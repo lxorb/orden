@@ -10,7 +10,6 @@ describe('priorities', () => {
     expect(levelIn('unimportant')).toBe('unimportant')
     expect(levelIn('no idea')).toBeNull()
   })
-
   test('higher first, then whatever has waited longest, unsorted last', () => {
     const rows = [
       { id: 'a', level: 'important' as const, since: 30 },
@@ -21,7 +20,6 @@ describe('priorities', () => {
     ]
     expect(rows.sort(byPriority).map((one) => one.id)).toEqual(['b', 'd', 'a', 'e', 'c'])
   })
-
   test("the ask carries the reader's corrections and only the newest messages", () => {
     const said = Array.from({ length: 20 }, (_, at) => ({
       from: 'Lucile',
@@ -37,7 +35,6 @@ describe('priorities', () => {
     expect(user?.content).toContain('Me: message 19')
   })
 })
-
 describe('suggestions', () => {
   test('a reply and a task out of what the model answers, whatever is around them', () => {
     expect(
@@ -55,7 +52,6 @@ describe('suggestions', () => {
       todo: null,
     })
   })
-
   test("the ask carries the reader's own writing as the style", () => {
     const [system] = suggestionAsk(
       'Lunch',

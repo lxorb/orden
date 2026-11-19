@@ -9,18 +9,14 @@ function rawString(name: string): string {
   const from = page.indexOf('r"', start) + 2
   return page.slice(from, page.indexOf('\n";', from))
 }
-
 const FIELDS = rawString('FIELDS')
 const FACTS = `function (heard) {${FIELDS}${rawString('FACTS_BODY')}}`
-
 const SECRET = 'hunter2-hunter2'
-
 function window(html: string) {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://a.example/' })
   return dom.window as unknown as Window &
     typeof globalThis & { ordenAgent: { tree(most: number): { nodes: Record<string, unknown>[] } } }
 }
-
 test("an agent's facts never name a field after what was typed in it", () => {
   const inside = window('<input id="secret" type="password"><input id="card" name="x">')
   const facts = inside.eval(`(${FACTS})`) as (this: Element, heard: unknown[]) => { name: string }
@@ -30,14 +26,12 @@ test("an agent's facts never name a field after what was typed in it", () => {
     expect(JSON.stringify(facts.call(field, []))).not.toContain(SECRET)
   }
 })
-
 test("an agent's facts still name a button by the words on it", () => {
   const inside = window('<form><input id="go" type="reset" value="Start over"></form>')
   const facts = inside.eval(`(${FACTS})`) as (this: Element, heard: unknown[]) => { name: string }
   const button = inside.document.getElementById('go') as HTMLInputElement
   expect(facts.call(button, []).name).toBe('Start over')
 })
-
 test("an agent's snapshot of a password field says it is filled and not how long it is", () => {
   const inside = window('<label>Password <input type="password"></label><input type="password">')
   const [first, second] = inside.document.querySelectorAll('input')
@@ -49,7 +43,6 @@ test("an agent's snapshot of a password field says it is filled and not how long
   expect(said).not.toContain('•'.repeat(2))
   expect(said).toContain('"value":{"value":"•"}')
 })
-
 test("an agent's snapshot hides a card's number, its code and a one-time code as it hides a password", () => {
   const inside = window(`
     <input id="number" autocomplete="cc-number">
@@ -69,7 +62,6 @@ test("an agent's snapshot hides a card's number, its code and a one-time code as
   expect(said.split('"value":{"value":"•"}')).toHaveLength(5)
   expect(said).toContain('Zurich')
 })
-
 test("an agent's facts never name a text field acting as a button after what is in it", () => {
   const inside = window('<input id="field" role="button"><input id="go" type="submit" value="Send">')
   const facts = inside.eval(`(${FACTS})`) as (this: Element, heard: unknown[]) => { name: string }

@@ -3,20 +3,17 @@
   globalThis.__ordenFirefox = true
   const chrome = globalThis.chrome
   if (!chrome?.runtime?.id) return
-
   try {
     delete globalThis.browser
   } catch {
     globalThis.browser = undefined
   }
-
   const LAYER = globalThis.__ordenLayer ?? {}
   const worker = typeof ServiceWorkerGlobalScope === 'function' && globalThis instanceof ServiceWorkerGlobalScope
   const background = globalThis.__ordenBackground === true
   const page = !worker && !background && globalThis.location?.protocol === 'chrome-extension:'
   const content = !worker && !background && !page
   const full = worker || page
-
   const DEFAULT_STORE = 'firefox-default'
   const OURS = ['orden/firefox.js', 'orden/browser-polyfill.js']
   const withOurs = (files) => [...new Set([...OURS, ...files.map((one) => String(one).replace(/^\//, ''))])]
@@ -24,7 +21,6 @@
     page
       ? decodeURIComponent(new URL(String(file), globalThis.location.href).pathname).slice(1)
       : String(file).replace(/^\//, '')
-
   const matching = (patterns, url) => {
     let address
     try {
@@ -46,7 +42,6 @@
       return new RegExp(`^${glob}$`).test(address.pathname + address.search)
     })
   }
-
   if (!background) {
     try {
       const own = Object.getOwnPropertyDescriptor(chrome.runtime, 'lastError')
@@ -58,7 +53,6 @@
       // An engine that will not have it changed says only its own refusals.
     }
   }
-
   function promised(work) {
     return function (...args) {
       const callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
@@ -75,13 +69,11 @@
       return undefined
     }
   }
-
   function refused(name) {
     return promised(() => {
       throw new Error(`${name} is not supported in Orden.`)
     })
   }
-
   function event() {
     const listeners = new Set()
     return {
@@ -100,16 +92,13 @@
       },
     }
   }
-
   function put(on, name, value) {
     if (on && on[name] === undefined) on[name] = value
   }
-
   function wrapped(on, name, wrap) {
     const own = on?.[name]
     if (typeof own === 'function') on[name] = wrap(own.bind(on))
   }
-
   function filtered(on, wrap) {
     if (!on?.addListener) return
     const add = on.addListener.bind(on)
@@ -124,7 +113,6 @@
     on.removeListener = (listener) => remove(made.get(listener) ?? listener)
     on.hasListener = (listener) => has(made.get(listener) ?? listener)
   }
-
   const kept = (area) => ({
     async get(key, fallback) {
       const store = chrome.storage?.[area]
@@ -138,13 +126,11 @@
   })
   const local = kept('local')
   const session = kept('session')
-
   const plainName = (name) => String(name).replace(/[^A-Za-z0-9_@]/g, '_')
   if (chrome.i18n?.getMessage && !background) {
     const own = chrome.i18n.getMessage.bind(chrome.i18n)
     chrome.i18n.getMessage = (name, ...rest) => own(plainName(name), ...rest)
   }
-
   const worded = (value) => {
     if (typeof value === 'string')
       return value.replace(/__MSG_([A-Za-z0-9_@]+)__/g, (said, name) => chrome.i18n?.getMessage?.(name) || said)
@@ -154,7 +140,6 @@
     return value
   }
   if (LAYER.manifest) chrome.runtime.getManifest = () => worded(LAYER.manifest)
-
   put(
     chrome.runtime,
     'getBrowserInfo',
@@ -165,23 +150,19 @@
       buildID: '20250101000000',
     })),
   )
-
   if (chrome.extension) put(chrome.extension, 'getURL', (path) => chrome.runtime.getURL(path))
   else chrome.extension = { getURL: (path) => chrome.runtime.getURL(path) }
-
   if (page) {
     const backgroundPage = () => chrome.extension.getViews?.().find((view) => view.__ordenBackground === true) ?? null
     chrome.extension.getBackgroundPage = backgroundPage
     chrome.runtime.getBackgroundPage = promised(backgroundPage)
   }
-
   if (content) {
     let target = null
     document.addEventListener('contextmenu', (event) => (target = event.target), true)
     chrome.menus = { getTargetElement: () => target }
     return
   }
-
   let registered = 0
   put(chrome, 'contentScripts', {
     register: promised(async (options) => {
@@ -208,9 +189,7 @@
       }
     }),
   })
-
   if (!full) return
-
   if (chrome.permissions) {
     const FIREFOX_ONLY = new Set([
       'browserSettings',
@@ -247,7 +226,6 @@
     }
     wrapped(chrome.permissions, 'remove', (own) => promised(async (asked) => own(split(asked).rest)))
   }
-
   if (chrome.action) {
     const action = chrome.action
     wrapped(action, 'setIcon', (own) => (details, ...rest) => {
@@ -284,7 +262,6 @@
           }
     put(chrome, 'pageAction', pageAction)
   }
-
   if (chrome.contextMenus) {
     const menus = chrome.contextMenus
     const PLACES = { browser_action: 'action', page_action: 'action' }
@@ -332,7 +309,6 @@
     put(menus, 'getTargetElement', () => null)
     put(chrome, 'menus', menus)
   }
-
   const IDENTITIES = '__ordenContainers'
   const COLORS = {
     blue: '#37adff',
@@ -425,7 +401,6 @@
     }
   })
   put(chrome, 'contextualIdentities', containers)
-
   const HIDDEN = '__ordenHidden'
   if (chrome.tabs) {
     const tabs = chrome.tabs
@@ -523,7 +498,6 @@
         listener: (first, ...rest) => listener(name === 'onCreated' ? dressed(first, new Set()) : first, ...rest),
         extra: [],
       }))
-
     const into = async (tabId, details = {}) => {
       const id = tabId ?? (await tabs.query({ active: true, currentWindow: true }))[0]?.id
       const target = { tabId: id }
@@ -585,7 +559,6 @@
             ),
       )
     }
-
     const FOUND = 'orden-find'
     put(chrome, 'find', {
       find: promised(async (query, options = {}) => {
@@ -642,7 +615,6 @@
       }),
     })
   }
-
   if (chrome.sessions) {
     const VALUES = '__ordenSessionValues'
     const values = () => session.get(VALUES, {})
@@ -676,7 +648,6 @@
       )
     }
   }
-
   if (chrome.webRequest) {
     const EVENTS = [
       'onBeforeRequest',
@@ -716,7 +687,6 @@
       throw new Error('webRequest.filterResponseData is not supported in Orden.')
     })
   }
-
   if (chrome.notifications) {
     wrapped(chrome.notifications, 'create', (own) => (...args) => {
       const at = typeof args[0] === 'string' || args[0] === undefined ? 1 : 0
@@ -727,7 +697,6 @@
       return own(...args)
     })
   }
-
   if (chrome.cookies) {
     for (const name of ['get', 'getAll', 'set', 'remove']) {
       wrapped(chrome.cookies, name, (own) => (details, ...rest) => {
@@ -740,7 +709,6 @@
       })
     }
   }
-
   const SIDEBAR = {
     panel: LAYER.sidebar ? chrome.runtime.getURL(LAYER.sidebar) : '',
     title: LAYER.sidebarTitle ?? '',
@@ -762,14 +730,12 @@
     ),
     isOpen: promised(() => false),
   })
-
   put(chrome, 'theme', {
     getCurrent: promised(() => ({ colors: null, images: null, properties: null })),
     update: refused('theme.update'),
     reset: promised(() => undefined),
     onUpdated: event(),
   })
-
   put(
     chrome.commands,
     'update',
@@ -780,7 +746,6 @@
     'reset',
     promised(() => undefined),
   )
-
   if (chrome.search && !chrome.search.search) {
     chrome.search.search = promised((properties = {}) =>
       chrome.search.query({
@@ -795,7 +760,6 @@
       promised(() => []),
     )
   }
-
   put(chrome, 'dns', { resolve: refused('dns.resolve') })
   put(chrome, 'pkcs11', {
     isModuleInstalled: promised(() => false),

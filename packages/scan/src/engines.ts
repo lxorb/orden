@@ -6,7 +6,6 @@ export interface Engine {
   name: string
   url: string
 }
-
 const EVERYWHERE: readonly Engine[] = [
   { id: 'google', name: 'Google', url: SEARCH },
   { id: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=%s' },
@@ -17,7 +16,6 @@ const EVERYWHERE: readonly Engine[] = [
   { id: 'qwant', name: 'Qwant', url: 'https://www.qwant.com/?q=%s' },
   { id: 'yahoo', name: 'Yahoo!', url: 'https://search.yahoo.com/search?p=%s' },
 ]
-
 const REGIONAL: Readonly<Record<string, readonly Engine[]>> = {
   zh: [
     { id: 'baidu', name: '百度', url: 'https://www.baidu.com/s?wd=%s' },
@@ -31,18 +29,13 @@ const REGIONAL: Readonly<Record<string, readonly Engine[]>> = {
   ],
   ru: [{ id: 'yandex', name: 'Яндекс', url: 'https://yandex.ru/search/?text=%s' }],
 }
-
 export function enginesFor(language: string): readonly Engine[] {
   const base = language.toLowerCase().split('-')[0] ?? ''
   return [...EVERYWHERE, ...(REGIONAL[base] ?? [])]
 }
-
 const ALL: readonly Engine[] = [...EVERYWHERE, ...Object.values(REGIONAL).flat()]
-
 export const engineById = (id: string): Engine | null => ALL.find((one) => one.id === id) ?? null
-
 export const engineHome = (search: string): string => rootOf(search) ?? rootOf(SEARCH) ?? SEARCH
-
 function rootOf(search: string): string | null {
   let parsed: URL
   try {
@@ -50,25 +43,20 @@ function rootOf(search: string): string | null {
   } catch {
     return null
   }
-
   const root = `${parsed.origin}/`
   return isWebAddress(root) ? root : null
 }
-
 export function isEngineAddress(url: string): boolean {
   const said = url.trim()
   return said.includes(WORDS) && isWebAddress(said.replaceAll(WORDS, 'orden'))
 }
-
 export function engineFor(name: string | null, search: string | null): Engine | null {
   const called = name?.trim().toLowerCase()
   const named = called ? ALL.find((one) => one.name.toLowerCase() === called) : undefined
   if (named) return named
-
   const site = search ? siteOf(search) : null
   return site === null ? null : (ALL.find((one) => siteOf(one.url) === site) ?? null)
 }
-
 function siteOf(search: string): string | null {
   try {
     return new URL(search.replaceAll(WORDS, 'orden')).hostname.replace(/^www\./, '')

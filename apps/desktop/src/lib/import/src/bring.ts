@@ -20,7 +20,6 @@ async function picked(how: NotesFrom): Promise<boolean> {
       return true
   }
 }
-
 export async function notes(how: NotesFrom): Promise<NotesBrought> {
   try {
     return { picked: await picked(how), trouble: busy.trouble }
@@ -28,7 +27,6 @@ export async function notes(how: NotesFrom): Promise<NotesBrought> {
     return { picked: true, trouble: message(error, 'That import could not be written.') }
   }
 }
-
 export async function here(): Promise<ReadonlySet<Importer>> {
   if (!isDesktop) return new Set()
   const [found, zen] = await Promise.all([foundBrowsers(), zenProfiles()])
@@ -36,13 +34,11 @@ export async function here(): Promise<ReadonlySet<Importer>> {
   if (zen.length) ids.add('zen')
   return ids
 }
-
 export async function browser(importer: Importer): Promise<string[]> {
   const troubles: string[] = []
   const heard = () => {
     if (busy.trouble) troubles.push(busy.trouble)
   }
-
   if (importer === 'zen') {
     for (const profile of await zenProfiles()) {
       await migrating.zenProfile(profile)
@@ -50,7 +46,6 @@ export async function browser(importer: Importer): Promise<string[]> {
     }
     return troubles
   }
-
   const found = (await foundBrowsers()).find((one) => one.browser === importer)
   const profiles = found?.profiles ?? []
   for (const profile of profiles) {

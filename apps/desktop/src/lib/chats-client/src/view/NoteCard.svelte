@@ -7,17 +7,13 @@
   import { cardLines } from './note-card'
 
   const { target, from = null }: { target: string; from?: string | null } = $props()
-
   const relative = $derived(links.targetOf(from, { kind: 'wikilink', target }))
   const root = $derived(workspace.rootHolding(from))
   const path = $derived(relative && root ? insideSpace(root, relative) : null)
   const name = $derived(path ? withoutExtension(nameOf(path)) : '')
   const folder = $derived(relative ? folderOf(relative) : '')
-
   let lines = $state.raw<string[]>([])
-
   const follows = (_value: unknown) => undefined
-
   $effect(() => {
     follows(links.version)
     follows(links.locksSeen())
@@ -67,11 +63,9 @@
     cursor: pointer;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .card:hover {
     background: var(--surface-3);
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -79,14 +73,12 @@
     flex-direction: column;
     gap: 2px;
   }
-
   .head {
     display: flex;
     align-items: baseline;
     gap: var(--space-2);
     min-width: 0;
   }
-
   strong {
     overflow: hidden;
     color: var(--text-strong);
@@ -94,7 +86,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .folder {
     overflow: hidden;
     color: var(--muted);
@@ -102,7 +93,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .line {
     overflow: hidden;
     color: var(--muted-strong);

@@ -5,7 +5,6 @@
     disabled = false,
     onchange,
   }: { on: boolean; label: string; disabled?: boolean; onchange: (on: boolean) => void } = $props()
-
   function flip(event: Event) {
     event.stopPropagation()
     if (!disabled) onchange(!on)

@@ -1,7 +1,6 @@
 import type { QuickFields } from '@orden/bases/language'
 
 export { type Entry, linesOf, placeIn } from '@orden/bases/tasks'
-
 export interface Prefill {
   tags?: string[]
   due?: string

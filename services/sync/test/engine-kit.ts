@@ -9,7 +9,6 @@ export interface Core {
   addSpace(id: string, root: string, role: string): unknown[]
   commit(changes: unknown[]): Promise<void>
 }
-
 export interface Device {
   root: string
   store: { rows(table: 'log'): { failed: string | null }[]; open(): unknown }
@@ -44,7 +43,6 @@ export interface Device {
     }
   }
 }
-
 export interface Kit {
   testDevice(making: {
     fetch: (request: Request) => Promise<Response>
@@ -56,7 +54,6 @@ export interface Kit {
   mirrorsFrom(core: Core, listings: null): Promise<Record<string, { notes: Record<string, unknown> }>>
   Engine: { start(world: unknown, store: unknown): Promise<Device['engine']> }
 }
-
 export async function kit(): Promise<Kit> {
   const at = (file: string) => new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate, engine] = await Promise.all([
@@ -66,19 +63,15 @@ export async function kit(): Promise<Kit> {
   ])
   return { ...(device as object), ...(migrate as object), ...(engine as object) } as Kit
 }
-
 export function engineSpace() {
   const at = {} as { env: TestEnv; rooms: Live; token: string; space: string }
-
   beforeEach(async () => {
     at.env = testEnv()
     at.rooms = live(at.env)
     at.token = await signIn(at.env, 'pictures@example.com')
     at.space = (await call(at.env, '/v1/spaces', { token: at.token, body: { name: 'Pictures' } })).json.space.id
   })
-
   afterEach(() => at.env.close())
-
   async function device(
     name: string,
     files: Record<string, string | Uint8Array> = {},
@@ -98,7 +91,6 @@ export function engineSpace() {
     await at.rooms.settle()
     return made
   }
-
   async function passed(...devices: Device[]) {
     for (let round = 0; round < 2; round += 1) {
       for (const one of devices) {
@@ -107,6 +99,5 @@ export function engineSpace() {
       }
     }
   }
-
   return { at, device, passed }
 }

@@ -6,11 +6,9 @@ import { SharedDoc } from '../shared'
 import { FenceHeaderWidget } from './widgets'
 
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 test('a language typed for a code block reaches the note when the block is taken off the page first', async () => {
   const doc = '```js\nconst a = 1\n```\n'
   const view = new EditorView({ state: EditorState.create({ doc }), parent: document.body })
@@ -18,21 +16,17 @@ test('a language typed for a code block reaches the note when the block is taken
   const widget = new FenceHeaderWidget('js', '', 3, 5, 0)
   const dom = widget.toDOM(view)
   document.body.append(dom)
-
   dom
     .querySelector('.orden-fence-language')
     ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
   const field = dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
   if (!field) throw new Error('no field to type the language into')
   field.value = 'python'
-
   dom.remove()
   widget.destroy(dom)
   await Promise.resolve()
-
   expect(view.state.doc.toString()).toBe('```python\nconst a = 1\n```\n')
 })
-
 test('a language typed for a code block goes to its own note when the pane has moved to another', async () => {
   const doc = '```\ncode\n```\n'
   const mine = new SharedDoc(doc)
@@ -40,7 +34,6 @@ test('a language typed for a code block goes to its own note when the pane has m
   const view = new EditorView({ state: EditorState.create({ doc }), parent: document.body })
   open.push(view)
   mine.join(view)
-
   const widget = new FenceHeaderWidget('', '', 3, 3, 0)
   const dom = widget.toDOM(view)
   document.body.append(dom)
@@ -50,16 +43,13 @@ test('a language typed for a code block goes to its own note when the pane has m
   const field = dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
   if (!field) throw new Error('no field to type the language into')
   field.value = 'python'
-
   other.join(view)
   dom.remove()
   widget.destroy(dom)
   await Promise.resolve()
-
   expect(other.text.toString()).toBe('```\nmore\n```\n')
   expect(mine.text.toString()).toBe('```python\ncode\n```\n')
 })
-
 test('a language typed for a code block survives a switch to a shorter note', async () => {
   const doc = 'a long paragraph of words that runs on and on\n\n```js\nconst a = 1\n```\n'
   const mine = new SharedDoc(doc)
@@ -67,7 +57,6 @@ test('a language typed for a code block survives a switch to a shorter note', as
   const view = new EditorView({ state: EditorState.create({ doc }), parent: document.body })
   open.push(view)
   mine.join(view)
-
   const infoFrom = doc.indexOf('```js') + 3
   const widget = new FenceHeaderWidget('js', '', infoFrom, infoFrom + 2, infoFrom - 3)
   const dom = widget.toDOM(view)
@@ -78,12 +67,10 @@ test('a language typed for a code block survives a switch to a shorter note', as
   const field = dom.querySelector<HTMLInputElement>('.orden-fence-language-input')
   if (!field) throw new Error('no field to type the language into')
   field.value = 'python'
-
   other.join(view)
   dom.remove()
   expect(() => widget.destroy(dom)).not.toThrow()
   await Promise.resolve()
-
   expect(other.text.toString()).toBe('hi')
   expect(mine.text.toString()).toBe(doc.replace('```js', '```python'))
 })

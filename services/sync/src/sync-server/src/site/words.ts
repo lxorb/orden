@@ -3,7 +3,6 @@ import { stripFrontMatter } from '@orden/markdown/front-matter'
 import type { Env } from '../types'
 
 const MOST_WORDS = 16 * 1024
-
 export function plainWords(source: string): string {
   return withoutComments(stripFrontMatter(source))
     .replace(/^(```|~~~)[\s\S]*?^\1[^\n]*$/gm, ' ')
@@ -18,7 +17,6 @@ export function plainWords(source: string): string {
     .trim()
     .slice(0, MOST_WORDS)
 }
-
 export async function keepWords(
   env: Env,
   note: { id: string; space_id: string; path: string },
@@ -36,7 +34,6 @@ export async function keepWords(
     ),
   ])
 }
-
 export function forgetWords(env: Env, noteId: string): D1PreparedStatement {
   return env.DB.prepare('delete from note_search where note_id = ?').bind(noteId)
 }

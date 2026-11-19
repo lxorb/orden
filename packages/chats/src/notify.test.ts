@@ -18,9 +18,7 @@ import type { Mention, Notify } from './types'
 const ME = 'user:me'
 const LUCILE = 'user:lucile'
 const NOW = 1_790_000_000_000
-
 const TUESDAY_TWO = { now: NOW, day: 2, minute: 14 * 60 }
-
 function asked(change: {
   author?: Asked['message']['author']
   body?: string
@@ -59,9 +57,7 @@ function asked(change: {
     seen: change.seen ?? false,
   }
 }
-
 const WORKING: Hours = { days: [1, 2, 3, 4, 5], from: 9 * 60, to: 18 * 60 }
-
 describe('decide', () => {
   it.each<[string, Parameters<typeof asked>[0], Ping]>([
     ['a message in a small chat', {}, 'show'],
@@ -109,7 +105,6 @@ describe('decide', () => {
     expect(decide(asked(change))).toBe(ping)
   })
 })
-
 describe('levelOf', () => {
   it('defaults by the chat size and keeps a choice', () => {
     expect(levelOf(null, 1)).toBe('all')
@@ -119,7 +114,6 @@ describe('levelOf', () => {
     expect(levelOf('all', 200)).toBe('all')
   })
 })
-
 describe('callOf', () => {
   const heard = (mentions: Mention[], body = 'hi', repliesTo: string | null = null) => ({
     author: LUCILE as 'user:lucile',
@@ -127,7 +121,6 @@ describe('callOf', () => {
     mentions,
     repliesTo: repliesTo as 'user:me' | null,
   })
-
   it('names the strongest reason first', () => {
     expect(callOf(heard([ME, 'everyone']), ME, true, [])).toBe('name')
     expect(callOf(heard(['everyone', 'here']), ME, true, [])).toBe('everyone')
@@ -138,7 +131,6 @@ describe('callOf', () => {
     expect(callOf(heard(['user:mia']), ME, true, [])).toBeNull()
   })
 })
-
 describe('keywordIn', () => {
   it('finds whole words in any case, phrases too', () => {
     expect(keywordIn('Is the Deadline moved?', ['deadline'])).toBe('deadline')
@@ -150,10 +142,8 @@ describe('keywordIn', () => {
     expect(keywordIn('anything', ['', '  '])).toBeNull()
   })
 })
-
 describe('inHours', () => {
   const at = (day: number, hour: number) => ({ now: NOW, day, minute: hour * 60 })
-
   it('lets pings through on the listed days between the two times', () => {
     expect(inHours(null, at(0, 3))).toBe(true)
     expect(inHours(WORKING, at(1, 9))).toBe(true)
@@ -161,7 +151,6 @@ describe('inHours', () => {
     expect(inHours(WORKING, at(5, 18))).toBe(false)
     expect(inHours(WORKING, at(6, 12))).toBe(false)
   })
-
   it('carries a window past midnight into the next day', () => {
     const nights: Hours = { days: [5], from: 22 * 60, to: 2 * 60 }
     expect(inHours(nights, at(5, 23))).toBe(true)
@@ -171,14 +160,12 @@ describe('inHours', () => {
     const sunday: Hours = { days: [6], from: 22 * 60, to: 60 }
     expect(inHours(sunday, at(0, 0))).toBe(true)
   })
-
   it('reads a window that ends where it starts as the whole day', () => {
     const weekends: Hours = { days: [0, 6], from: 0, to: 0 }
     expect(inHours(weekends, at(6, 13))).toBe(true)
     expect(inHours(weekends, at(1, 13))).toBe(false)
   })
 })
-
 describe('owesPush', () => {
   it('pushes only what pings and only where no desktop was active', () => {
     expect(owesPush('show', false)).toBe(true)
@@ -186,7 +173,6 @@ describe('owesPush', () => {
     expect(owesPush('hours', false)).toBe(false)
   })
 })
-
 describe('checks', () => {
   it('keeps keyword lists of words', () => {
     expect(isKeywords(['thesis', 'final draft'])).toBe(true)
@@ -196,7 +182,6 @@ describe('checks', () => {
     expect(isKeywords(Array.from({ length: 51 }, (_, at) => `w${at}`))).toBe(false)
     expect(isKeywords('thesis')).toBe(false)
   })
-
   it('keeps hours inside a day and days of the week', () => {
     expect(isHours(WORKING)).toBe(true)
     expect(isHours({ days: [], from: 0, to: 0 })).toBe(true)

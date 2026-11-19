@@ -6,14 +6,12 @@ export interface Renaming {
   replace: string
   numbered: boolean
 }
-
 function split(name: string): { stem: string; ending: string } {
   const ending = endingOf(name)
   return ending
     ? { stem: name.slice(0, -(ending.length + 1)), ending: `.${name.slice(-ending.length)}` }
     : { stem: name, ending: '' }
 }
-
 export function renamedAll(names: readonly string[], how: Renaming): string[] {
   const digits = String(names.length).length
   return names.map((name, at) => {
@@ -23,16 +21,13 @@ export function renamedAll(names: readonly string[], how: Renaming): string[] {
     return `${next.trim() || stem}${ending}`
   })
 }
-
 export function isOneName(name: string): boolean {
   const clean = name.trim()
   return clean !== '' && clean !== '.' && clean !== '..' && !/[/\\\0]/.test(name)
 }
-
 function folderPart(relative: string): string {
   return relative.slice(0, relative.lastIndexOf('/') + 1)
 }
-
 export function clashing(
   names: readonly string[],
   next: readonly string[],
@@ -55,7 +50,6 @@ export function clashing(
   })
   return out
 }
-
 export function swapping(pairs: readonly { from: string; to: string }[], key: (path: string) => string): boolean {
   const leaving = new Map<string, number[]>()
   pairs.forEach(({ from }, at) => {
@@ -65,7 +59,6 @@ export function swapping(pairs: readonly { from: string; to: string }[], key: (p
   })
   return pairs.some(({ to }, at) => (leaving.get(key(to)) ?? []).some((there) => there !== at))
 }
-
 export const crossing = (moving: readonly { from: string; name: string }[]): boolean =>
   swapping(
     moving.map(({ from, name }) => ({

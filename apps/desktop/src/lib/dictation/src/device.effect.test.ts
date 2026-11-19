@@ -13,7 +13,6 @@ interface Fake {
   started: number
   stopped: number
 }
-
 let box: HTMLElement
 let field: HTMLTextAreaElement
 let made: Fake[]
@@ -21,24 +20,20 @@ let levels: number[]
 let ended: number
 let trouble: string[]
 let phone: { on: boolean[]; heard: ((json: string) => void) | null } | null
-
 const hooks = () => ({
   level: (level: number) => levels.push(level),
   full: () => undefined,
   ended: () => ended++,
   trouble: (said: string) => trouble.push(said),
 })
-
 async function opened() {
   const one = new DeviceSession(field, hooks())
   await one.open()
   return one
 }
-
 function result(...parts: [string, boolean][]) {
   return { results: parts.map(([transcript, isFinal]) => ({ isFinal, 0: { transcript } })) }
 }
-
 beforeEach(() => {
   box = document.createElement('div')
   field = document.createElement('textarea')
@@ -76,7 +71,6 @@ beforeEach(() => {
   }
   Object.assign(globalThis, { webkitSpeechRecognition: Recognition })
 })
-
 afterEach(() => {
   box.remove()
   delete (globalThis as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
@@ -84,7 +78,6 @@ afterEach(() => {
   delete (window as { __ordenHeard?: unknown }).__ordenHeard
   delete (window as { __ordenFrame?: unknown }).__ordenFrame
 })
-
 describe('the web’s recogniser', () => {
   test('listens on, with partial words, in the system’s language', async () => {
     await opened()
@@ -95,7 +88,6 @@ describe('the web’s recogniser', () => {
       started: 1,
     })
   })
-
   test('draws partial words as live and keeps the sentences it is sure of', async () => {
     await opened()
     made[0]!.onresult?.(result(['Hallo Welt.', true], [' wie geht', false]))
@@ -105,7 +97,6 @@ describe('the web’s recogniser', () => {
     expect(field.value).toBe('Hallo Welt. wie geht es?')
     expect(box.querySelector('[data-heard]')).toBeNull()
   })
-
   test('is started again when it ends itself, keeping what it heard', async () => {
     await opened()
     made[0]!.onresult?.(result(['Erster Satz.', true]))
@@ -114,7 +105,6 @@ describe('the web’s recogniser', () => {
     made[0]!.onresult?.(result(['Zweiter Satz.', true]))
     expect(field.value).toBe('Erster Satz. Zweiter Satz.')
   })
-
   test('finishes with its last words, as plain text', async () => {
     const one = await opened()
     made[0]!.onresult?.(result(['Fast fertig', false]))
@@ -123,7 +113,6 @@ describe('the web’s recogniser', () => {
     expect(field.value).toBe('Fast fertig')
     expect(box.querySelector('[data-heard]')).toBeNull()
   })
-
   test('puts the field back on Escape', async () => {
     field.value = 'Notiz'
     field.setSelectionRange(5, 5)
@@ -132,21 +121,18 @@ describe('the web’s recogniser', () => {
     one.cancel()
     expect(field.value).toBe('Notiz')
   })
-
   test('says a microphone refused, and stops', async () => {
     await opened()
     made[0]!.onerror?.({ error: 'not-allowed' })
     expect(trouble).toEqual(['That microphone could not be opened.'])
     expect(ended).toBe(1)
   })
-
   test('shows that it hears a voice', async () => {
     await opened()
     made[0]!.onspeechstart?.()
     expect(levels.at(-1)).toBeGreaterThan(0)
   })
 })
-
 describe('Android’s recogniser', () => {
   beforeEach(() => {
     const held = { on: [] as boolean[], heard: null as ((json: string) => void) | null }
@@ -162,16 +148,13 @@ describe('Android’s recogniser', () => {
       },
     })
   })
-
   const said = (json: object) =>
     (window as { __ordenHeard?: (text: string) => void }).__ordenHeard?.(JSON.stringify(json))
-
   test('is turned on through the activity, with the page’s word', async () => {
     await opened()
     expect(phone?.on).toEqual([true])
     expect(made).toEqual([])
   })
-
   test('draws its partial words as live, keeps its sentences, and feeds the meter', async () => {
     await opened()
     said({ state: 'listening', partial: 'Kannst du' })
@@ -182,7 +165,6 @@ describe('Android’s recogniser', () => {
     said({ level: 7 })
     expect(levels.at(-1)).toBeGreaterThan(0.5)
   })
-
   test('keeps what it heard when the phone stops listening by itself', async () => {
     await opened()
     said({ state: 'listening', partial: 'Hallo' })
@@ -190,7 +172,6 @@ describe('Android’s recogniser', () => {
     expect(field.value).toBe('Hallo')
     expect(ended).toBe(1)
   })
-
   test('is turned off when finished', async () => {
     const one = await opened()
     await one.finish()

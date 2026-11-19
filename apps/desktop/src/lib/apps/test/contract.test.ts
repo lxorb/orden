@@ -13,7 +13,6 @@ describe('what an application is', () => {
     expect(programOf('open "unclosed')).toBeNull()
     expect(programOf('   ')).toBeNull()
   })
-
   test('only the three desktops host applications, and this computer is named as here', () => {
     expect(['linux', 'windows', 'macos'].every(mayHost)).toBe(true)
     expect(mayHost('ios')).toBe(false)
@@ -27,7 +26,6 @@ describe('what an application is', () => {
     ])
   })
 })
-
 describe('the picture', () => {
   test('a screen refresh rate is read from the middle of the frame gaps once there are enough', () => {
     expect(refreshRate([16, 17, 16, 17, 16, 17, 16])).toBeNull()

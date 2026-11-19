@@ -7,7 +7,6 @@ import { file, noteAt } from './fixtures'
 const PICTURE = Uint8Array.from([1, 2, 3, 4])
 const BASE64 = 'AQIDBA=='
 const HASH = md5(PICTURE)
-
 function enex(notes: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export4.dtd">
@@ -15,7 +14,6 @@ function enex(notes: string): string {
 ${notes}
 </en-export>`
 }
-
 const NOTE = `  <note>
     <title>Trip to Iceland</title>
     <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
@@ -34,11 +32,9 @@ const NOTE = `  <note>
       </resource-attributes>
     </resource>
   </note>`
-
 describe('an Evernote export', () => {
   test('becomes a note with its words, its dates and its tags', async () => {
     const plan = await readEvernote([file('Travel.enex', enex(NOTE))])
-
     const text = noteAt(plan, 'Trip to Iceland.md')
     expect(text).toContain('date: 2026-01-02')
     expect(text).toContain('updated: 2026-03-04')
@@ -46,16 +42,13 @@ describe('an Evernote export', () => {
     expect(text).toContain('We flew on **Monday**.')
     expect(text).toContain('- Warm socks')
   })
-
   test('the picture in the note is the picture that was in the note', async () => {
     const plan = await readEvernote([file('Travel.enex', enex(NOTE))])
-
     const picture = plan.files.find((one) => one.kind === 'file')
     expect(picture?.path).toBe('assets/glacier.png')
     expect(picture?.kind === 'file' && [...picture.bytes]).toEqual([1, 2, 3, 4])
     expect(noteAt(plan, 'Trip to Iceland.md')).toContain('![](assets/glacier.png)')
   })
-
   test('a file that is not a picture becomes a link to the file', async () => {
     const paper = `  <note>
     <title>Paper</title>
@@ -66,93 +59,70 @@ describe('an Evernote export', () => {
       <resource-attributes><file-name>report.pdf</file-name></resource-attributes>
     </resource>
   </note>`
-
     const plan = await readEvernote([file('Work.enex', enex(paper))])
-
     expect(noteAt(plan, 'Paper.md')).toContain('[report.pdf](assets/report.pdf)')
   })
-
   test('a checkbox is a task', async () => {
     const list = `  <note>
     <title>Packing</title>
     <content><![CDATA[<en-note><div><en-todo checked="true"/>Passport</div><div><en-todo/>Socks</div></en-note>]]></content>
   </note>`
-
     const text = noteAt(await readEvernote([file('A.enex', enex(list))]), 'Packing.md')
-
     expect(text).toContain('- [x] Passport')
     expect(text).toContain('- [ ] Socks')
   })
-
   test('checkboxes one under another are one checklist', async () => {
     const list = `  <note>
     <title>Packing</title>
     <content><![CDATA[<en-note><div><en-todo checked="true"/>Passport</div>
 <div><en-todo/>Socks</div><div><en-todo/>Charger</div><div>After the list.</div></en-note>]]></content>
   </note>`
-
     const text = noteAt(await readEvernote([file('A.enex', enex(list))]), 'Packing.md')
-
     expect(text).toContain('- [x] Passport\n- [ ] Socks\n- [ ] Charger\n')
     expect(text).toContain('After the list.')
   })
-
   test('encrypted text is marked and counted rather than quietly dropped', async () => {
     const secret = `  <note>
     <title>Secret</title>
     <content><![CDATA[<en-note><div>Before</div><div><en-crypt cipher="AES">gibberish</en-crypt></div></en-note>]]></content>
   </note>`
-
     const plan = await readEvernote([file('A.enex', enex(secret))])
-
     expect(noteAt(plan, 'Secret.md')).toContain('…')
     expect(plan.lost[0]).toBe('1 passages are encrypted, and nothing can read them without Evernote')
   })
-
   test('an attachment with no name of its own is named after its bytes', async () => {
     const unnamed = `  <note>
     <title>Shot</title>
     <content><![CDATA[<en-note><en-media type="image/jpeg" hash="${HASH}"/></en-note>]]></content>
     <resource><data encoding="base64">${BASE64}</data><mime>image/jpeg</mime></resource>
   </note>`
-
     const plan = await readEvernote([file('A.enex', enex(unnamed))])
-
     expect(plan.files.find((one) => one.kind === 'file')?.path).toBe(`assets/${HASH.slice(0, 16)}.jpg`)
   })
-
   test('two notebooks become two folders, and one becomes none', async () => {
     const several = await readEvernote([file('Travel.enex', enex(NOTE)), file('Work.enex', enex(NOTE))])
-
     expect(several.files.filter((one) => one.kind === 'note').map((one) => one.path)).toEqual([
       'Travel/Trip to Iceland.md',
       'Work/Trip to Iceland.md',
     ])
     expect(noteAt(several, 'Travel/Trip to Iceland.md')).toContain('![](../assets/glacier.png)')
-
     const one = await readEvernote([file('Travel.enex', enex(NOTE))])
     expect(one.files.some((file_) => file_.path === 'Trip to Iceland.md')).toBe(true)
   })
-
   test('two notes with one title are stepped apart', async () => {
     const twice = `${NOTE}\n${NOTE}`
     const plan = await readEvernote([file('A.enex', enex(twice))])
-
     const notes = plan.files.filter((one) => one.kind === 'note').map((one) => one.path)
     expect(notes).toEqual(['Trip to Iceland.md', 'Trip to Iceland 2.md'])
   })
-
   test('a note with no title at all still gets a name', async () => {
     const bare = `  <note>
     <content><![CDATA[<en-note><div>Some words that will do</div></en-note>]]></content>
   </note>`
-
     const plan = await readEvernote([file('A.enex', enex(bare))])
-
     expect(plan.files[0]?.path).toBe('Some words that will do.md')
   })
 })
-
 function bodied(title: string, body: string, rest = ''): string {
   return `  <note>
     <title>${title}</title>
@@ -160,12 +130,10 @@ function bodied(title: string, body: string, rest = ''): string {
 ${rest}
   </note>`
 }
-
 function picture(data = BASE64, name = ''): string {
   const named = name ? `<resource-attributes><file-name>${name}</file-name></resource-attributes>` : ''
   return `<resource><data encoding="base64">${data}</data><mime>image/png</mime>${named}</resource>`
 }
-
 describe('an Evernote export that is not quite what the format says', () => {
   test('an attachment that is not base64 is that attachment lost, not the import', async () => {
     const damaged = bodied(
@@ -174,36 +142,28 @@ describe('an Evernote export that is not quite what the format says', () => {
       picture('!!not base64**'),
     )
     const plan = await readEvernote([file('A.enex', enex(`${damaged}\n${NOTE}`))])
-
     expect(noteAt(plan, 'Damaged.md')).toContain('Kept')
     expect(noteAt(plan, 'Trip to Iceland.md')).toContain('![](assets/glacier.png)')
     expect(plan.lost).toEqual(['1 attachment was missing from the export or could not be read'])
   })
-
   test('a picture whose attachment the export left out is counted', async () => {
     const plan = await readEvernote([
       file('A.enex', enex(bodied('Gone', `<en-media type="image/png" hash="0123456789abcdef0123456789abcdef"/>`))),
     ])
-
     expect(plan.lost).toEqual(['1 attachment was missing from the export or could not be read'])
   })
-
   test('an attachment named with a hash or a percent sign is still what its link reaches', async () => {
     const named = bodied('Named', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '100% done #3.png'))
     const plan = await readEvernote([file('A.enex', enex(named))])
-
     expect(plan.files.some((one) => one.path === 'assets/100% done #3.png')).toBe(true)
     expect(noteAt(plan, 'Named.md')).toContain('![](assets/100%25%20done%20%233.png)')
   })
-
   test('a hash in single quotes still finds its picture', async () => {
     const plan = await readEvernote([
       file('A.enex', enex(bodied('Quoted', `<en-media type='image/png' hash='${HASH}'/>`, picture()))),
     ])
-
     expect(noteAt(plan, 'Quoted.md')).toContain(`![](assets/${HASH.slice(0, 16)}.png)`)
   })
-
   test('the source is the note’s own, and its author comes too', async () => {
     const clipped = bodied(
       'Clipped',
@@ -212,13 +172,10 @@ describe('an Evernote export that is not quite what the format says', () => {
 <resource><data encoding="base64">${BASE64}</data><mime>image/png</mime>
 <resource-attributes><source-url>https://images.example.com/a.png</source-url></resource-attributes></resource>`,
     )
-
     const text = noteAt(await readEvernote([file('A.enex', enex(clipped))]), 'Clipped.md')
-
     expect(text).not.toContain('images.example.com')
     expect(text).toContain('author: Ann Smith')
   })
-
   test('a reminder order of nought is no reminder', async () => {
     const none = bodied('None', 'x', '<note-attributes><reminder-order>0</reminder-order></note-attributes>')
     const one = bodied(
@@ -226,22 +183,16 @@ describe('an Evernote export that is not quite what the format says', () => {
       'x',
       '<note-attributes><reminder-order>1424108700000</reminder-order><reminder-time>20150216T174500Z</reminder-time></note-attributes>',
     )
-
     const plan = await readEvernote([file('A.enex', enex(`${none}\n${one}`))])
-
     expect(plan.lost).toEqual(['1 notes had a reminder, which the export does not carry'])
   })
-
   test('one picture in two notes is one file', async () => {
     const twice = `${bodied('One', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, 'p.png'))}
 ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, 'p.png'))}`
-
     const plan = await readEvernote([file('A.enex', enex(twice))])
-
     expect(plan.files.filter((one) => one.kind === 'file').map((one) => one.path)).toEqual(['assets/p.png'])
     expect(noteAt(plan, 'Two.md')).toContain('![](assets/p.png)')
   })
-
   test('an attachment is given the extension its type has, and keeps a long one of its own', async () => {
     const kinds: [string, string][] = [
       ['image/svg+xml', ''],
@@ -266,7 +217,6 @@ ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '
         enex(bodied('Kinds', resources.map((one) => one.tag).join(''), resources.map((one) => one.xml).join(''))),
       ),
     ])
-
     const [svg, mov, m4a, sheet] = resources.map((one) => one.hash)
     expect(plan.files.filter((one) => one.kind === 'file').map((one) => one.path)).toEqual([
       `assets/${svg}.svg`,
@@ -277,7 +227,6 @@ ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '
       'assets/Version 1.2.pdf',
     ])
   })
-
   test('a file name that is a whole Windows path is named after the file', async () => {
     const plan = await readEvernote([
       file(
@@ -287,23 +236,19 @@ ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '
         ),
       ),
     ])
-
     expect(plan.files.find((one) => one.kind === 'file')?.path).toBe('assets/scan.png')
   })
-
   test('an attachment the body never places is linked at the end of its note', async () => {
     const loose = bodied(
       'Loose',
       '<div>Words</div>',
       `<resource><data encoding="base64">${BASE64}</data><mime>application/pdf</mime><resource-attributes><file-name>paper.pdf</file-name></resource-attributes></resource>`,
     )
-
     expect(noteAt(await readEvernote([file('A.enex', enex(loose))]), 'Loose.md')).toContain(
       'Words\n\n[paper.pdf](assets/paper.pdf)',
     )
   })
 })
-
 describe('the markup of an Evernote note', () => {
   async function body(enml: string): Promise<string> {
     const plan = await readEvernote([file('A.enex', enex(bodied('Note', enml)))])
@@ -311,71 +256,55 @@ describe('the markup of an Evernote note', () => {
       .replace(/^# Note\n\n/, '')
       .trimEnd()
   }
-
   test('an empty div written the XML way holds nothing', async () => {
     expect(await body('<div/>first<div/>second')).toBe('first\n\nsecond')
     expect(await body(`${'<div/>'.repeat(4000)}<div>end</div>`)).toBe('end')
   })
-
   test('a less-than sign in the words stays in the words', async () => {
     expect(await body('<div>if a &lt;b&gt; c</div>')).toContain('if a \\<b> c')
   })
-
   test('a checklist the current Evernote wrote keeps its boxes and its nesting', async () => {
     const list =
       '<ul style="--en-todo:true;"><li style="--en-checked:true;"><div>Pack</div></li>' +
       '<ul style="--en-todo:true;"><li style="--en-checked:false;"><div>Socks</div></li></ul>' +
       '<li style="--en-checked:false;"><div>Leave<br/></div></li></ul>'
-
     expect(await body(list)).toBe('- [x] Pack\n  - [ ] Socks\n- [ ] Leave')
   })
-
   test('a list inside a list is nested and numbered as drawn', async () => {
     const list = '<ol><li><div>One</div></li><ol><li><div>Inner</div></li></ol><li><div>Two</div></li></ol>'
-
     expect(await body(list)).toBe('1. One\n   1. Inner\n2. Two')
   })
-
   test('a checkbox at the start of a list item is that item’s box', async () => {
     const list = '<ul><li><b><en-todo checked="true"/></b>Done</li><li><en-todo></en-todo>Open</li></ul>'
-
     expect(await body(list)).toBe('- [x] Done\n- [ ] Open')
   })
-
   test('a break at the end of a checkbox line does not loosen the list', async () => {
     expect(await body('<div><en-todo/>One<br/></div><div><en-todo/>Two</div>')).toBe('- [ ] One\n- [ ] Two')
   })
-
   test('a code block is code, a line per div', async () => {
     const code =
       '<div style="box-sizing: border-box;-en-codeblock:true;"><div>if (a &lt; b) {</div>' +
       '<div>&nbsp;&nbsp;*x* = 1<br/></div><div><br/></div><div>}</div></div><div>After</div>'
-
     expect(await body(code)).toBe('```\nif (a < b) {\n  *x* = 1\n\n}\n```\n\nAfter')
   })
-
   test('an encrypted passage in a sentence leaves the sentence whole', async () => {
     expect(await body('<div>Before <en-crypt cipher="AES">abc</en-crypt> after</div>')).toBe('Before … after')
   })
 })
-
 test('an Evernote checkbox reads none of its words as a field of the task', async () => {
   const list = `  <note>
   <title>Chores</title>
   <content><![CDATA[<en-note><div><en-todo/>task 📅 2026-11-01 ⏫ 🔁 every week #tag</div></en-note>]]></content>
 </note>`
-
   const line = noteAt(await readEvernote([file('A.enex', enex(list))]), 'Chores.md')
     .split('\n')
     .find((one) => one.startsWith('- [ ]'))
   const task = readTask(line ?? '')
-
   expect(task).toMatchObject({ tags: [] })
   expect(task?.due).toBeUndefined()
   expect(task?.recurrence).toBeUndefined()
   expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
 })
-
 describe('an Evernote note written in the evening, west of Greenwich', () => {
   beforeAll(() => {
     vi.stubEnv('TZ', 'America/Los_Angeles')
@@ -383,7 +312,6 @@ describe('an Evernote note written in the evening, west of Greenwich', () => {
   afterAll(() => {
     vi.unstubAllEnvs()
   })
-
   test("is dated by that evening's day, not by the UTC day after it", async () => {
     const late = `  <note>
     <title>Late</title>
@@ -396,12 +324,10 @@ describe('an Evernote note written in the evening, west of Greenwich', () => {
     expect(text).toContain('updated: 2026-03-04')
   })
 })
-
 describe('an Evernote task', () => {
   function task(title: string, fields: string): string {
     return `<task><title>${title}</title><created>20260102T120000Z</created><updated>20260102T120000Z</updated>${fields}</task>`
   }
-
   function noteWith(title: string, html: string, tasks: string[]): string {
     return `  <note>
     <title>${title}</title>
@@ -410,7 +336,6 @@ describe('an Evernote task', () => {
     ${tasks.join('\n    ')}
   </note>`
   }
-
   test('is a task where its group stands in the note, in its order and with its day', async () => {
     const week = noteWith(
       'Week',
@@ -426,11 +351,9 @@ describe('an Evernote task', () => {
         ),
       ],
     )
-
     const text = noteAt(await readEvernote([file('Week.enex', enex(week))]), 'Week.md')
     expect(text).toContain('Plan\n\n- [ ] Call the plumber 🛫 2026-01-05\n- [x] Buy milk\n\nAfter')
   })
-
   test('keeps the time it is due at, in the zone it was set in', async () => {
     const day = noteWith('Day', '<div style="--en-task-group:true; --en-id:g-2;"></div>', [
       task(
@@ -438,11 +361,9 @@ describe('an Evernote task', () => {
         '<taskStatus>open</taskStatus><taskGroupNoteLevelID>g-2</taskGroupNoteLevelID><dueDate>20260105T080000Z</dueDate><dueDateUIOption>date_time</dueDateUIOption><timeZone>Europe/Zurich</timeZone>',
       ),
     ])
-
     const text = noteAt(await readEvernote([file('Day.enex', enex(day))]), 'Day.md')
     expect(text).toContain('- [ ] Dentist [time:: 09:00 Europe/Zurich] 🛫 2026-01-05')
   })
-
   test('keeps its reminder and the day it was done', async () => {
     const day = noteWith('Done', '<div style="--en-task-group:true; --en-id:g-3;"></div>', [
       task(
@@ -450,11 +371,9 @@ describe('an Evernote task', () => {
         '<taskStatus>completed</taskStatus><taskGroupNoteLevelID>g-3</taskGroupNoteLevelID><timeZone>Europe/Zurich</timeZone><statusUpdated>20260103T100000Z</statusUpdated><reminder><created>20260102T120000Z</created><reminderDate>20260103T070000Z</reminderDate><timeZone>Europe/Zurich</timeZone></reminder>',
       ),
     ])
-
     const text = noteAt(await readEvernote([file('Done.enex', enex(day))]), 'Done.md')
     expect(text).toContain('- [x] Pay rent [remind:: 2026-01-03 08:00] ✅ 2026-01-03')
   })
-
   test('whose group the note does not show is at the end of the note, its words kept as words', async () => {
     const loose = noteWith('Loose', '<div>Words</div>', [
       task(
@@ -462,7 +381,6 @@ describe('an Evernote task', () => {
         '<taskStatus>open</taskStatus><taskGroupNoteLevelID>g-9</taskGroupNoteLevelID>',
       ),
     ])
-
     const text = noteAt(await readEvernote([file('Loose.enex', enex(loose))]), 'Loose.md')
     const line = text.trimEnd().split('\n').at(-1) ?? ''
     expect(text).toContain('Words\n\n- [ ] Water the plants')

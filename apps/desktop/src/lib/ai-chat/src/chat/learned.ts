@@ -3,9 +3,7 @@ import { isEffort } from './effort'
 import { lastMove, movedKeys, movesAfter, type Effort } from '../../../ai-providers/src/api'
 
 const STORAGE_KEY = 'orden:ai-chat'
-
 const MOVED = 'moved'
-
 export interface Learnt {
   refused?: Effort[]
   window?: number
@@ -14,11 +12,9 @@ export interface Learnt {
   tools?: boolean
   picked?: Effort
 }
-
 function learntIn(value: unknown): value is Learnt {
   return isRecord(value)
 }
-
 function cleaned(value: Learnt): Learnt {
   const out: Learnt = {}
   if (Array.isArray(value.refused)) out.refused = value.refused.filter(isEffort)
@@ -29,11 +25,8 @@ function cleaned(value: Learnt): Learnt {
   if (isEffort(value.picked)) out.picked = value.picked
   return out
 }
-
 let held: Record<string, Learnt> | null = null
-
 let moved = 0
-
 function read(): Record<string, Learnt> {
   const kept = stored(STORAGE_KEY)
   const cursor = isRecord(kept) ? kept[MOVED] : undefined
@@ -41,7 +34,6 @@ function read(): Record<string, Learnt> {
   const read = recordOf(kept, learntIn)
   return Object.fromEntries(Object.entries(read).map(([key, one]) => [key, cleaned(one)]))
 }
-
 function all(): Record<string, Learnt> {
   held ??= read()
   const moves = movesAfter(moved)
@@ -51,15 +43,12 @@ function all(): Record<string, Learnt> {
   }
   return held
 }
-
 function keyOf(provider: string, model: string): string {
   return `${provider}/${model}`
 }
-
 export function learnt(provider: string, model: string): Learnt {
   return all()[keyOf(provider, model)] ?? {}
 }
-
 export function learn(provider: string, model: string, change: Learnt): void {
   const key = keyOf(provider, model)
   const before = all()[key] ?? {}
@@ -68,7 +57,6 @@ export function learn(provider: string, model: string, change: Learnt): void {
   held = { ...all(), [key]: next }
   keepJson(STORAGE_KEY, { ...held, [MOVED]: moved })
 }
-
 export function forgetLearnt(): void {
   held = null
 }

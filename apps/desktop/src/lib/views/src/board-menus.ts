@@ -17,11 +17,9 @@ const TONES: readonly { tone: string; label: () => string }[] = [
   { tone: '5', label: () => 'Teal' },
   { tone: '6', label: () => 'Violet' },
 ]
-
 function writeOptions(kit: Kit, property: string, next: SelectOption[]) {
   kit.change((base) => setProperty(base, bare(property), { options: next.length ? next : undefined }))
 }
-
 export function renameOption(kit: Kit, property: string, from: string, to: string): boolean {
   const base = kit.live.base
   const value = to.trim()
@@ -40,7 +38,6 @@ export function renameOption(kit: Kit, property: string, from: string, to: strin
   ])
   return true
 }
-
 function toneOption(kit: Kit, property: string, value: string, tone: string | null) {
   const base = kit.live.base
   if (!base) return
@@ -56,7 +53,6 @@ function toneOption(kit: Kit, property: string, value: string, tone: string | nu
     }),
   )
 }
-
 function addAsOption(kit: Kit, property: string, value: string) {
   const base = kit.live.base
   if (!base) return
@@ -64,14 +60,12 @@ function addAsOption(kit: Kit, property: string, value: string) {
   if (options.some((one) => one.value === value)) return
   writeOptions(kit, property, [...options, { value, tone: String((options.length % 6) + 1) }])
 }
-
 function mergeInto(kit: Kit, property: string, from: string, to: string) {
   const base = kit.live.base
   if (!base || from === to) return
   const notes = renamedInBase(base, kit.live.rows, kit.live.context, property, from, to)
   void asOneUndo([() => kit.changed((one) => renamedGroup(one, property, from, to, true)), () => writeEach(notes)])
 }
-
 function deleteOption(kit: Kit, property: string, value: string) {
   const base = kit.live.base
   if (!base) return
@@ -87,7 +81,6 @@ function deleteOption(kit: Kit, property: string, value: string) {
     () => writeEach(notes),
   ])
 }
-
 export interface ColumnAsk {
   kit: Kit
   event: MouseEvent
@@ -101,7 +94,6 @@ export interface ColumnAsk {
   move: (step: -1 | 1) => void
   extra?: MenuEntry[]
 }
-
 export function columnEntries(ask: ColumnAsk): MenuEntry[] {
   const { kit, event, property, group, option, unlisted, names } = ask
   const name = groupName(group.key)
@@ -170,7 +162,6 @@ export function columnEntries(ask: ColumnAsk): MenuEntry[] {
       : []),
   ]
 }
-
 export interface CardAsk {
   kit: Kit
   event: MouseEvent
@@ -178,11 +169,9 @@ export interface CardAsk {
   targets: readonly { key: Value; name: string; here: boolean }[]
   move: (key: Value) => void
 }
-
 function noteLink(row: Row): string {
   return `[[${row.path.replace(/\.md$/i, '')}]]`
 }
-
 export function cardEntries(ask: CardAsk): MenuEntry[] {
   const { kit, event, row, targets } = ask
   const path = notePath(row)
@@ -229,7 +218,6 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
     },
   ]
 }
-
 export function optionFor(base: Base | null, property: string, value: Value): SelectOption | undefined {
   if (!base || typeof value !== 'string') return undefined
   return optionsAt(base, property).find((one) => one.value === value)

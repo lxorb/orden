@@ -3,9 +3,7 @@ from shell import SEED
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
-
 SIZE = {"width": 1200, "height": 800}
-
 CANVASES = """
 () => [...document.querySelectorAll('canvas')]
   .filter((one) => one.clientWidth > 20)
@@ -15,7 +13,6 @@ CANVASES = """
     screen: devicePixelRatio,
   }))
 """
-
 TOLD = """
 () => {
   const asked = []
@@ -32,12 +29,10 @@ TOLD = """
   }
 }
 """
-
 SURFACES = [
     ("graph", "() => window.ordenApp.workspace.openGraph()"),
     ("canvas", "() => void window.ordenApp.workspace.createCanvas()"),
 ]
-
 def look(page, moment: str) -> None:
     found = page.evaluate(CANVASES)
     say(f"{moment}: {[(one['name'], round(one['drawn'], 2), one['screen']) for one in found]}")
@@ -50,7 +45,6 @@ def look(page, moment: str) -> None:
                 f"{moment}: the {one['name']} canvas draws {one['drawn']:.2f} pixels a point"
                 f" on a screen of {one['screen']}"
             )
-
 def main() -> int:
     with DRIVE.session() as browser:
         context = browser.new_context(viewport=SIZE, device_scale_factor=1)
@@ -60,7 +54,6 @@ def main() -> int:
         DRIVE.open(page)
         page.evaluate(SEED)
         page.wait_for_timeout(800)
-
         def scale(factor: float) -> None:
             screen.send(
                 "Emulation.setDeviceMetricsOverride",
@@ -69,7 +62,6 @@ def main() -> int:
             told = page.evaluate("() => window.screenMoved()")
             say(f"moved to a screen of {factor}, {told} listening")
             page.wait_for_timeout(1200)
-
         for name, opening in SURFACES:
             scale(1)
             page.evaluate(opening)
@@ -80,7 +72,5 @@ def main() -> int:
             scale(1.5)
             look(page, f"{name} moved to a screen of 1.5")
         context.close()
-
     return DRIVE.verdict("a canvas follows the screen it is moved to")
-
 raise SystemExit(main())

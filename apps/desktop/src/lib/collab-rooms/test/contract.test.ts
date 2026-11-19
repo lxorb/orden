@@ -6,7 +6,6 @@ import { HAND, saidHand } from '../src/hands'
 import { peersIn, relative } from '../src/peers'
 
 const NOTE = 'note'
-
 function pair(words: string) {
   const one = new Y.Doc()
   const two = new Y.Doc()
@@ -17,7 +16,6 @@ function pair(words: string) {
     two: { doc: two, text: two.getText(NOTE), awareness: new Awareness(two) },
   }
 }
-
 describe('edits between a shared text and a note', () => {
   test('a yjs delta becomes replacements, neighbours folded into one', () => {
     expect(replacements([{ retain: 2 }, { insert: 'ab' }, { delete: 1 }, { insert: 'c' }])).toEqual([
@@ -29,7 +27,6 @@ describe('edits between a shared text and a note', () => {
     ])
     expect(replacements([{ insert: { embed: true } }])).toEqual([])
   })
-
   test('a replacement applied to the text is what the delta said', () => {
     const { one } = pair('hello world')
     replace(one.text, { from: 6, to: 11, insert: 'there' })
@@ -38,7 +35,6 @@ describe('edits between a shared text and a note', () => {
     expect(one.text.toJSON()).toBe('oh hello there')
   })
 })
-
 describe('who else is in a note', () => {
   test('nobody until somebody says who they are, and never the device asking', () => {
     const { one, two } = pair('words\n')
@@ -50,7 +46,6 @@ describe('who else is in a note', () => {
     one.awareness.setLocalStateField('who', { name: 'Mac', accent: 'blue' })
     expect(peersIn(one.awareness, one.doc, 'dark').present).toBe(0)
   })
-
   test('a caret is kept as a relative position that survives edits before it', () => {
     const { one } = pair('abc')
     const at = relative(one.text, 2)
@@ -59,7 +54,6 @@ describe('who else is in a note', () => {
     expect(absolute?.index).toBe(4)
   })
 })
-
 describe('a hand on a canvas', () => {
   test('is a rounded point, with the stroke it is drawing when it draws', () => {
     expect(HAND).toBe('hand')

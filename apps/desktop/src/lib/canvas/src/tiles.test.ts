@@ -4,26 +4,20 @@ import { type Box, strokeBox } from '../../plane/src/api'
 
 class CountingPath {
   static traced = 0
-
   moveTo() {
     CountingPath.traced += 1
   }
-
   quadraticCurveTo() {
     return undefined
   }
-
   closePath() {
     return undefined
   }
-
   addPath() {
     return undefined
   }
 }
-
 const filling = vi.hoisted(() => ({ strokes: [] as InkStroke[] }))
-
 vi.mock('../../plane/src/api', async (original) => {
   const paint = await original<typeof import('../../plane/src/api')>()
   return {
@@ -35,27 +29,22 @@ vi.mock('../../plane/src/api', async (original) => {
     },
   }
 })
-
 beforeAll(() => {
   vi.stubGlobal('Path2D', CountingPath)
   vi.spyOn(performance, 'now').mockReturnValue(0)
 })
-
 const { FILE_WEIGHT, FILLED_A_FRAME, InkTiles, OUTLINE_WEIGHT, TILE } = await import('./tiles')
 const { InkGrid } = await import('./ink-grid')
 const { strokesFilled } = await import('../../plane/src/api')
-
 interface Rect {
   left: number
   top: number
   right: number
   bottom: number
 }
-
 type Mark =
   | { kind: 'clear'; rect: Rect }
   | { kind: 'fill'; rect: Rect; strokes: InkStroke[]; scale: number; x: number; y: number }
-
 function context() {
   const marks: Mark[] = []
   const colours: string[] = []
@@ -65,7 +54,6 @@ function context() {
   let clip: Rect | null = null
   const self = {} as unknown as HTMLCanvasElement
   const all = { left: -1e9, top: -1e9, right: 1e9, bottom: 1e9 }
-
   const ctx = {
     globalAlpha: 1,
     globalCompositeOperation: 'source-over',
@@ -111,10 +99,8 @@ function context() {
       copies.push({ image, x, y, scale: transform.a })
     },
   }
-
   return { ctx: ctx as unknown as CanvasRenderingContext2D, marks, colours, copies, self }
 }
-
 function surfaces() {
   const made: ReturnType<typeof context>[] = []
   const make = () => {
@@ -122,10 +108,8 @@ function surfaces() {
     made.push(one)
     return { image: one.self, context: one.ctx }
   }
-
   return { made, make }
 }
-
 function reaches(stroke: InkStroke, px: number, py: number, scale: number, x: number, y: number) {
   const box = strokeBox(stroke)
   const middle = { x: px + 0.5, y: py + 0.5 }
@@ -136,10 +120,8 @@ function reaches(stroke: InkStroke, px: number, py: number, scale: number, x: nu
     middle.y <= (box.y + box.height) * scale + y + 1
   )
 }
-
 const inside = (rect: Rect, px: number, py: number) =>
   px >= rect.left && px < rect.right && py >= rect.top && py < rect.bottom
-
 function shown(marks: readonly Mark[], px: number, py: number): string[] {
   const out = new Set<string>()
   for (let at = marks.length - 1; at >= 0; at--) {
@@ -150,10 +132,8 @@ function shown(marks: readonly Mark[], px: number, py: number): string[] {
       if (reaches(stroke, px, py, mark.scale, mark.x, mark.y)) out.add(stroke.id)
     }
   }
-
   return [...out].sort()
 }
-
 function check(
   made: ReturnType<typeof surfaces>['made'],
   strokes: readonly InkStroke[],
@@ -162,7 +142,6 @@ function check(
 ) {
   const scale = at.camera.scale * at.ratio
   const held = new Map<string, Mark[]>()
-
   for (const one of made) {
     let wiped = 0
     one.marks.forEach((mark, at) => {
@@ -171,13 +150,11 @@ function check(
         wiped = at
       }
     })
-
     const since = one.marks.slice(wiped)
     const last = since.filter((mark) => mark.kind === 'fill').at(-1)
     if (last?.kind !== 'fill') continue
     held.set(`${-last.x / TILE},${-last.y / TILE}`, since)
   }
-
   const middle = (stroke: InkStroke, across: number, down: number) => {
     const box = strokeBox(stroke)
     return [
@@ -185,21 +162,17 @@ function check(
       Math.floor((box.y + box.height / 2) * scale - down * TILE),
     ] as const
   }
-
   for (const tile of expected(strokes, at).keys()) {
     const marks = held.get(tile)
     expect(marks, `tile ${tile} has no pixels`).toBeDefined()
     if (!marks) continue
-
     const [across = 0, down = 0] = tile.split(',').map(Number)
     const x = -across * TILE
     const y = -down * TILE
     const near = strokes.filter((one) => reachesTile(one, scale, x, y))
-
     const samples: (readonly [number, number])[] = []
     for (let py = 0; py < TILE; py += 16) for (let px = 0; px < TILE; px += 16) samples.push([px, py])
     for (const one of [...near, ...gone]) samples.push(middle(one, across, down))
-
     for (const [px, py] of samples) {
       if (px < 0 || py < 0 || px >= TILE || py >= TILE) continue
       const truth = near
@@ -210,7 +183,6 @@ function check(
     }
   }
 }
-
 function reachesTile(stroke: InkStroke, scale: number, x: number, y: number) {
   const box = strokeBox(stroke)
   return (
@@ -220,10 +192,8 @@ function reachesTile(stroke: InkStroke, scale: number, x: number, y: number) {
     (box.y + box.height) * scale + y + 1 > 0
   )
 }
-
 function plane(count: number, across = 100, spacing = 120): InkStroke[] {
   const strokes: InkStroke[] = []
-
   for (let one = 0; one < count; one++) {
     const x = (one % across) * spacing
     const y = Math.floor(one / across) * spacing
@@ -238,13 +208,10 @@ function plane(count: number, across = 100, spacing = 120): InkStroke[] {
         t: step * 10,
       })
     }
-
     strokes.push({ id: `s${one}`, tool: 'pen', color: 'ink', size: 3, points })
   }
-
   return strokes
 }
-
 const drawn = (id: string, x: number, y: number, tool: InkStroke['tool'] = 'pen'): InkStroke => ({
   id,
   tool,
@@ -259,17 +226,14 @@ const drawn = (id: string, x: number, y: number, tool: InkStroke['tool'] = 'pen'
     t: step * 10,
   })),
 })
-
 const view = (x: number, y: number, scale = 1) => ({
   camera: { x, y, scale },
   width: 800,
   height: 600,
   ratio: 1,
 })
-
 const whole = view(6000, 6000, 0.05)
 const palette = {}
-
 function settle(paint: () => boolean, most = 400): number[] {
   const each: number[] = []
   for (let frame = 0; frame < most; frame++) {
@@ -278,12 +242,9 @@ function settle(paint: () => boolean, most = 400): number[] {
     each.push(strokesFilled() - before)
     if (!owed) return each
   }
-
   throw new Error('the ink never finished arriving')
 }
-
 const sum = (list: readonly number[]) => list.reduce((all, one) => all + one, 0)
-
 function expected(strokes: readonly InkStroke[], at: ReturnType<typeof view>): Map<string, number> {
   const scale = at.camera.scale * at.ratio
   const side = TILE / scale
@@ -294,13 +255,11 @@ function expected(strokes: readonly InkStroke[], at: ReturnType<typeof view>): M
     width: at.width / at.camera.scale,
     height: at.height / at.camera.scale,
   }
-
   const meets = (one: Box, other: Box) =>
     one.x < other.x + other.width &&
     other.x < one.x + one.width &&
     one.y < other.y + other.height &&
     other.y < one.y + one.height
-
   const out = new Map<string, number>()
   for (let across = Math.floor((seen.x * scale) / TILE); across * side < seen.x + seen.width; across++) {
     for (let down = Math.floor((seen.y * scale) / TILE); down * side < seen.y + seen.height; down++) {
@@ -314,16 +273,13 @@ function expected(strokes: readonly InkStroke[], at: ReturnType<typeof view>): M
       if (count) out.set(`${across},${down}`, count)
     }
   }
-
   return out
 }
-
 describe('a plane seen whole, arriving', () => {
   test('fills a frame of budget at a time, and every tile is filled once', () => {
     const strokes = plane(10_000)
     const tiles = new InkTiles(surfaces().make)
     const layer = context()
-
     const frames: number[] = []
     const outlines: number[] = []
     const filings: number[] = []
@@ -339,43 +295,35 @@ describe('a plane seen whole, arriving', () => {
       if (frames.length > 400) throw new Error('the ink never finished arriving')
     }
     filing.mockRestore()
-
     expect(frames.length).toBeGreaterThan(1)
     frames.forEach((filled, at) => {
       const outlined = (outlines[at] ?? 0) * OUTLINE_WEIGHT
       expect(filled + outlined + (filings[at] ?? 0) * FILE_WEIGHT).toBeLessThanOrEqual(FILLED_A_FRAME)
     })
-
     expect(sum(filings)).toBe(strokes.length)
     expect(sum(outlines)).toBe(strokes.length)
     expect(sum(frames)).toBe(sum([...expected(strokes, whole).values()]))
   })
-
   test('every tile of a plane seen whole shows what is on it, and nothing else', () => {
     const strokes = plane(3_000)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
     const layer = context()
-
     settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
     check(made, strokes, whole)
   })
-
   test('a plane that fits in a frame arrives in one', () => {
     const strokes = plane(200, 20)
     const tiles = new InkTiles(surfaces().make)
     const layer = context()
-
     expect(settle(() => tiles.paint(layer.ctx, strokes, view(1000, 1000), palette))).toHaveLength(1)
   })
-
   test('a machine too slow for a frame of budget stops filling when the frame is spent, and the rest follow', () => {
     const strokes = plane(200, 20)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
     const layer = context()
     const at = view(1000, 1000)
-
     let clock = 0
     const ticking = vi.spyOn(performance, 'now').mockImplementation(() => (clock += 4))
     try {
@@ -386,74 +334,59 @@ describe('a plane seen whole, arriving', () => {
     check(made, strokes, at)
   })
 })
-
 describe('moving over a plane already painted', () => {
   test('a pan back and forth over painted plane fills nothing', () => {
     const strokes = plane(10_000)
     const tiles = new InkTiles(surfaces().make)
     const layer = context()
-
     settle(() => tiles.paint(layer.ctx, strokes, view(3000, 3000), palette))
     settle(() => tiles.paint(layer.ctx, strokes, view(3300, 3100), palette))
-
     const before = strokesFilled()
     for (let frame = 0; frame < 40; frame++) {
       const at = frame % 2 ? view(3000, 3000) : view(3300, 3100)
       expect(tiles.paint(layer.ctx, strokes, at, palette)).toBe(false)
     }
-
     expect(strokesFilled() - before).toBe(0)
   })
-
   test('a pan onto new plane fills only the tiles it uncovered', () => {
     const strokes = plane(10_000)
     const tiles = new InkTiles(surfaces().make)
     const layer = context()
     const from = view(3000, 3000)
     const to = view(3600, 3000)
-
     settle(() => tiles.paint(layer.ctx, strokes, from, palette))
     const filled = sum(settle(() => tiles.paint(layer.ctx, strokes, to, palette)))
-
     const before = expected(strokes, from)
     const uncovered = sum([...expected(strokes, to)].filter(([tile]) => !before.has(tile)).map(([, count]) => count))
-
     expect(filled).toBeGreaterThan(0)
     expect(filled).toBe(uncovered)
   })
-
   test('shows the tiles it has, at whole pixels, where the camera puts them', () => {
     const strokes = plane(400, 20)
     const tiles = new InkTiles(surfaces().make)
     const layer = context()
-
     settle(() => tiles.paint(layer.ctx, strokes, view(1000.3, 1000.7), palette))
     layer.copies.length = 0
     tiles.paint(layer.ctx, strokes, view(1000.3, 1000.7), palette)
-
     expect(layer.copies.length).toBe(expected(strokes, view(1000.3, 1000.7)).size)
     for (const copy of layer.copies) {
       expect(Number.isInteger(copy.x)).toBe(true)
       expect(Number.isInteger(copy.y)).toBe(true)
     }
   })
-
   test('the same colours read off the theme again paint nothing again', () => {
     const strokes = plane(10_000)
     const tiles = new InkTiles(surfaces().make)
     const layer = context()
     const at = view(3000, 3000)
     settle(() => tiles.paint(layer.ctx, strokes, at, { ink: 'black', yellow: 'gold' }))
-
     const before = strokesFilled()
     for (let move = 0; move < 20; move++) {
       expect(tiles.paint(layer.ctx, strokes, at, { ink: 'black', yellow: 'gold' })).toBe(false)
     }
-
     expect(strokesFilled() - before).toBe(0)
   })
 })
-
 describe('writing on a plane already painted', () => {
   test('a stroke drawn on a plane seen whole fills the strokes around it, not its tiles', () => {
     const strokes = plane(3_000)
@@ -461,16 +394,13 @@ describe('writing on a plane already painted', () => {
     const tiles = new InkTiles(make)
     const layer = context()
     settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
-
     const grown = [...strokes, drawn('new', TILE / 0.05 - 20, 3000)]
     const before = strokesFilled()
     expect(tiles.paint(layer.ctx, grown, whole, palette)).toBe(false)
-
     expect(strokesFilled() - before).toBeGreaterThan(0)
     expect(strokesFilled() - before).toBeLessThan(40)
     check(made, grown, whole)
   })
-
   test('a highlighter drawn over the ink is repaired with it, so each tile is one fill of both', () => {
     const strokes = plane(2_000)
     const { made, make } = surfaces()
@@ -478,37 +408,30 @@ describe('writing on a plane already painted', () => {
     const layer = context()
     const at = view(2000, 1000, 0.25)
     settle(() => tiles.paint(layer.ctx, strokes, at, palette))
-
     const mark = { ...drawn('mark', 1000, 500, 'highlighter'), size: 18 }
     const grown = [...strokes, mark]
     settle(() => tiles.paint(layer.ctx, grown, at, palette))
-
     check(made, grown, at)
   })
-
   test('a stroke rubbed out on a plane seen whole leaves every other stroke where it was', () => {
     const strokes = plane(3_000)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
     const layer = context()
     settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
-
     const gone = strokes.filter((one) => one.id === 's1543')
     const left = strokes.filter((one) => one.id !== 's1543')
     const before = strokesFilled()
     expect(tiles.paint(layer.ctx, left, whole, palette)).toBe(false)
-
     expect(strokesFilled() - before).toBeLessThan(40)
     check(made, left, whole, gone)
   })
-
   test('a rub across a plane seen whole costs the strokes it crosses, move by move', () => {
     const strokes = plane(3_000)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
     const layer = context()
     settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
-
     let now = strokes
     const each: number[] = []
     for (let move = 0; move < 60; move++) {
@@ -518,19 +441,16 @@ describe('writing on a plane already painted', () => {
       each.push(strokesFilled() - before)
       now = row
     }
-
     for (const filled of each) expect(filled).toBeLessThan(40)
     settle(() => tiles.paint(layer.ctx, now, whole, palette))
     check(made, now, whole, strokes.slice(1500, 1560))
   })
-
   test('strokes rubbed out far apart in the stack weigh only themselves, not the stack between', () => {
     const strokes = plane(3_000)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
     const layer = context()
     settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
-
     const cut = new Set(['s3', 's1500', 's2996'])
     const left = strokes.filter((one) => !cut.has(one.id))
     const add = Object.getOwnPropertyDescriptor(Set.prototype, 'add')?.value as (
@@ -547,7 +467,6 @@ describe('writing on a plane already painted', () => {
     } finally {
       Set.prototype.add = add
     }
-
     expect(held).toBeLessThan(200)
     settle(() => tiles.paint(layer.ctx, left, whole, palette))
     check(
@@ -557,7 +476,6 @@ describe('writing on a plane already painted', () => {
       strokes.filter((one) => cut.has(one.id)),
     )
   })
-
   test('a lasso that moves many strokes repairs where they were and where they went', () => {
     const strokes = plane(3_000)
     const { made, make } = surfaces()
@@ -565,7 +483,6 @@ describe('writing on a plane already painted', () => {
     const layer = context()
     const at = view(3000, 1500, 0.25)
     settle(() => tiles.paint(layer.ctx, strokes, at, palette))
-
     const picked = new Set(strokes.slice(1000, 1400).map((one) => one.id))
     const moved = strokes.map((one) =>
       picked.has(one.id)
@@ -575,7 +492,6 @@ describe('writing on a plane already painted', () => {
           }
         : one,
     )
-
     const frames = settle(() => tiles.paint(layer.ctx, moved, at, palette))
     for (const filled of frames) expect(filled).toBeLessThanOrEqual(FILLED_A_FRAME)
     check(
@@ -585,7 +501,6 @@ describe('writing on a plane already painted', () => {
       strokes.filter((one) => picked.has(one.id)),
     )
   })
-
   test('the kinds are painted in the order the plane first has them, in every tile', () => {
     const strokes = [
       drawn('mark', 10, 10, 'highlighter'),
@@ -596,13 +511,10 @@ describe('writing on a plane already painted', () => {
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
     const layer = context()
-
     settle(() => tiles.paint(layer.ctx, strokes, view(200, 100), { yellow: 'Y', ink: 'I' }))
-
     expect(made.map((one) => one.colours.join(''))).toEqual(['YI', 'YI'])
   })
 })
-
 describe('a zoom, a theme, and what is kept', () => {
   test('a zoom paints the new scale a frame at a time over the old picture, drawn to size', () => {
     const strokes = plane(3_000)
@@ -610,55 +522,43 @@ describe('a zoom, a theme, and what is kept', () => {
     const tiles = new InkTiles(make)
     const layer = context()
     settle(() => tiles.paint(layer.ctx, strokes, whole, palette))
-
     layer.copies.length = 0
     const closer = view(6000, 6000, 0.08)
     const before = strokesFilled()
     const owed = tiles.paint(layer.ctx, strokes, closer, palette)
-
     expect(owed).toBe(true)
     expect(strokesFilled() - before).toBeLessThanOrEqual(FILLED_A_FRAME)
     const old = layer.copies.find((copy) => copy.image === layer.self)
     expect(old?.scale).toBeCloseTo(0.08 / 0.05)
-
     const frames = settle(() => tiles.paint(layer.ctx, strokes, closer, palette))
     for (const filled of frames) expect(filled).toBeLessThanOrEqual(FILLED_A_FRAME)
     check(made, strokes, closer)
   })
-
   test('a new theme paints every tile again, showing the old ones until it has', () => {
     const strokes = plane(10_000)
     const tiles = new InkTiles(surfaces().make)
     const layer = context()
     const at = view(3000, 3000)
     settle(() => tiles.paint(layer.ctx, strokes, at, palette))
-
     const filled = sum(settle(() => tiles.paint(layer.ctx, strokes, at, { ink: 'white' })))
-
     expect(filled).toBe(sum([...expected(strokes, at).values()]))
   })
-
   test('a tile with nothing on it has no pixels', () => {
     const strokes = plane(4, 2, 2000)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
     const layer = context()
-
     settle(() => tiles.paint(layer.ctx, strokes, view(1000, 1000, 0.25), palette))
-
     expect(made).toHaveLength(expected(strokes, view(1000, 1000, 0.25)).size)
   })
-
   test('keeps a couple of screens of tiles however far the plane is panned', () => {
     const strokes = plane(10_000)
     const { made, make } = surfaces()
     const tiles = new InkTiles(make)
     const layer = context()
-
     for (let step = 0; step < 30; step++) {
       settle(() => tiles.paint(layer.ctx, strokes, view(400 + step * 400, 3000), palette))
     }
-
     const screen = expected(strokes, view(3000, 3000)).size
     expect(made.length).toBeLessThanOrEqual(screen * 3 + 64)
   })

@@ -9,10 +9,8 @@ vi.mock('./add', () => ({
     return Promise.resolve(null)
   },
 }))
-
 const FormLayout = (await import('./FormLayout.svelte')).default
 const base = readBase('views:\n  - type: form\n')
-
 function shown(adds: boolean) {
   const target = document.createElement('div')
   document.body.append(target)
@@ -30,11 +28,9 @@ function shown(adds: boolean) {
   target.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
   return { title, done: () => void unmount(form) }
 }
-
 beforeEach(() => {
   made.titles.length = 0
 })
-
 describe('the form, when Send makes no note', () => {
   test('keeps the name that was typed', async () => {
     const { title, done } = shown(true)
@@ -44,7 +40,6 @@ describe('the form, when Send makes no note', () => {
     expect(title.value).toBe('Fix the sync')
     done()
   })
-
   test('sends nothing where the note would land in a space shared to be read', async () => {
     const { title, done } = shown(false)
     await new Promise((settled) => setTimeout(settled, 0))

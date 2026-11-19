@@ -5,9 +5,7 @@ export interface Frame {
   width: number
   height: number
 }
-
 const WITHIN = 3000
-
 export async function frameOf(stream: MediaStream): Promise<Frame | null> {
   const video = document.createElement('video')
   video.muted = true

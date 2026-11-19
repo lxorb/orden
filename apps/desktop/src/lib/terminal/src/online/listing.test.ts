@@ -17,7 +17,6 @@ function listed(over: Partial<Listed> = {}): Listed {
     ...over,
   }
 }
-
 describe('a session as a row', () => {
   test('is called by the title its program set, then the program, then its file', () => {
     expect(rowOf(listed({ program: 'claude', title: '✳ Fix the build' })).name).toBe('Fix the build')
@@ -25,7 +24,6 @@ describe('a session as a row', () => {
     expect(rowOf(listed({ title: 'nib@machine: ~' })).name).toBe('Terminal 2')
     expect(rowOf(listed({ term: null, path: null })).name).toBeNull()
   })
-
   test('says its file under a name that is not the file, and when it last printed', () => {
     expect(rowOf(listed({ program: 'vim', at: 500 }))).toMatchObject({
       file: 'Terminal 2',
@@ -33,7 +31,6 @@ describe('a session as a row', () => {
     })
     expect(rowOf(listed())).toMatchObject({ file: null, at: 100 })
   })
-
   test('the one that printed last comes first, then the newest made', () => {
     const rows = rowsOf([
       listed({ session: 's_old', createdAt: 1 }),
@@ -43,14 +40,12 @@ describe('a session as a row', () => {
     ])
     expect(rows.map((one) => one.key)).toEqual(['s_busy', 's_quiet', 's_new', 's_old'])
   })
-
   test('opens only where a file names it and the file is not in the trash', () => {
     expect(opens(listed())).toBe(true)
     expect(opens(listed({ trashed: true }))).toBe(false)
     expect(opens(listed({ term: null, path: null }))).toBe(false)
   })
 })
-
 test('the account’s list is read, and a row that does not read is left out', () => {
   expect(
     listOf({

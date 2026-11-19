@@ -13,10 +13,8 @@ vi.mock('./changes', () => ({
 vi.mock('../../workspace/src/api', () => ({
   workspace: { spaces: [{ root: '/home/me/Orden/Work' }], undone: { record: vi.fn() } },
 }))
-
 const { dragged, explorerDragged, isExplorerDrag, isTreeDrag, landing } = await import('../../ui-kit/src/api')
 const { dropHow, dropInto, startDrag } = await import('./drag')
-
 function transfer() {
   const data = new Map<string, string>()
   return {
@@ -32,7 +30,6 @@ function transfer() {
     files: [],
   } as unknown as DataTransfer
 }
-
 const dragEvent = (dataTransfer: DataTransfer, keys: Partial<DragEvent> = {}) =>
   ({
     dataTransfer,
@@ -42,7 +39,6 @@ const dragEvent = (dataTransfer: DataTransfer, keys: Partial<DragEvent> = {}) =>
     preventDefault: vi.fn(),
     ...keys,
   }) as unknown as DragEvent
-
 describe("a file explorer's drag", () => {
   test('carries its paths, and a file list drag too where all of them are in a space', () => {
     const outside = transfer()
@@ -51,19 +47,16 @@ describe("a file explorer's drag", () => {
     expect(isTreeDrag(outside)).toBe(false)
     expect(explorerDragged(outside)).toEqual(['/home/me/Downloads/a.zip'])
     expect(outside.getData('text/plain')).toBe('/home/me/Downloads/a.zip')
-
     const inside = transfer()
     startDrag(dragEvent(inside), ['/home/me/Orden/Work/plan.md'])
     expect(isTreeDrag(inside)).toBe(true)
     expect(dragged(inside)).toEqual(['/home/me/Orden/Work/plan.md'])
   })
-
   test('is copied into a space by the file list, as files from another app are', () => {
     const outside = transfer()
     startDrag(dragEvent(outside), ['/home/me/Downloads/a.zip'])
     expect(landing(dragEvent(outside), 'linux')).toBe('copy')
   })
-
   test('moves what it carries, a note of a space too, and copies only with Ctrl', () => {
     const outside = transfer()
     startDrag(dragEvent(outside), ['/home/me/Downloads/a.zip'])
@@ -74,7 +67,6 @@ describe("a file explorer's drag", () => {
     expect(dropHow(dragEvent(inside))).toBe('move')
     expect(dropHow(dragEvent(inside, { ctrlKey: true }))).toBe('copy')
   })
-
   test('lands in the folder it was let go over', () => {
     const outside = transfer()
     startDrag(dragEvent(outside), ['/home/me/Downloads/a.zip'])

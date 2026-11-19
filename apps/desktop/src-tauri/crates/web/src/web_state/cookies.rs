@@ -27,21 +27,18 @@ pub struct Cookie {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_port: Option<i64>,
 }
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SameSite {
     Strict,
     Lax,
     None,
 }
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Priority {
     Low,
     Medium,
     High,
 }
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Partition {
@@ -49,27 +46,21 @@ pub struct Partition {
     #[serde(default)]
     pub cross_site_ancestor: bool,
 }
-
 pub const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
-
 fn until(cookie: &Cookie, now: f64) -> f64 {
     cookie.expires.unwrap_or(now + KEPT_FOR)
 }
-
 pub fn now() -> f64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0.0, |since| since.as_secs_f64())
 }
-
 pub async fn every(view: &Webview) -> Result<Vec<Cookie>, String> {
     engine::all(view).await
 }
-
 pub async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), String> {
     engine::set(view, cookies, now()).await
 }
-
 pub mod engine {
     use serde_json::{json, Map, Value};
     use tauri::Webview;
@@ -81,7 +72,6 @@ pub mod engine {
         let answered = cdp::call(view, "Network.getAllCookies", &json!({})).await?;
         Ok(cookies_in(&answered))
     }
-
     pub(super) async fn set(view: &Webview, cookies: &[&Cookie], now: f64) -> Result<(), String> {
         if cookies.is_empty() {
             return Ok(());
@@ -91,21 +81,18 @@ pub mod engine {
             .await
             .map(|_| ())
     }
-
     pub fn cookies_in(answered: &Value) -> Vec<Cookie> {
         answered["cookies"]
             .as_array()
             .map(|list| list.iter().filter_map(from_devtools).collect())
             .unwrap_or_default()
     }
-
     fn partition_key(partition: &Partition) -> Value {
         json!({
             "topLevelSite": partition.top_level_site,
             "hasCrossSiteAncestor": partition.cross_site_ancestor,
         })
     }
-
     pub fn from_devtools(said: &Value) -> Option<Cookie> {
         let text = |key: &str| said[key].as_str().map(str::to_owned);
         let partition = match &said["partitionKey"] {
@@ -152,7 +139,6 @@ pub mod engine {
             source_port: said["sourcePort"].as_i64(),
         })
     }
-
     pub fn to_devtools(cookie: &Cookie, now: f64) -> Value {
         let mut out = Map::new();
         out.insert("name".into(), json!(cookie.name));
@@ -188,7 +174,6 @@ pub mod engine {
         Value::Object(out)
     }
 }
-
 #[cfg(all(test, windows))]
 mod tests {
     use serde_json::json;
@@ -220,7 +205,6 @@ mod tests {
         assert_eq!(back["partitionKey"]["hasCrossSiteAncestor"], true);
         assert_eq!(back["sourcePort"], 443);
     }
-
     #[test]
     fn a_session_cookie_is_written_to_last() {
         let said = json!({

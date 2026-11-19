@@ -13,9 +13,7 @@ test('a refused socket is accepted, says why and closes', () => {
     },
     close: (code: number, reason: string) => did.push(`close ${String(code)} ${reason}`),
   }
-
   refuse(server as unknown as WebSocket, 'gone')
-
   expect(did).toEqual(['accept', 'send', `close ${String(REFUSED_CLOSE)} gone`])
   expect(said.map((one) => serverFrameOf(one))).toEqual([{ t: 'refused', error: 'gone' }])
 })

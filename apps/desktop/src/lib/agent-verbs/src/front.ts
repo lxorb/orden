@@ -7,7 +7,6 @@ export function asksFront(call: Call, why: string): boolean {
   if (front) needScope(call, 'workspace.focus', why)
   return front
 }
-
 export function openedBy(call: Call, tab: Tab | null | undefined, front: boolean): Tab | null {
   if (!tab) return null
   const agent = call.caller.agent

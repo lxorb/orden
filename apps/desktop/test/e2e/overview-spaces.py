@@ -1,11 +1,9 @@
 
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 SEED = r"""
 async () => {
   const ws = window.ordenApp.workspace
@@ -30,16 +28,13 @@ async () => {
   return { home: home.id, bee: bee.id, homeRoot: home.root, beeRoot: bee.root }
 }
 """
-
 TAB = """(name) => {
   const ws = window.ordenApp.workspace
   const tab = ws.tabs.find((one) => one.shown === name)
   return tab ? { path: tab.path, here: !!ws.panes.at(tab.paneId) } : null
 }"""
-
 def tab(page: Page, name: str) -> dict:
     return page.evaluate(TAB, name)
-
 def open_overview(page: Page) -> None:
     page.evaluate(
         "async () => { const { toggleTabOverview } = await import('/src/lib/workspace/src/api.ts');"
@@ -47,14 +42,12 @@ def open_overview(page: Page) -> None:
     )
     page.wait_for_selector(".canvas .window", timeout=8000)
     page.wait_for_timeout(1200)
-
 def close_overview(page: Page) -> None:
     page.evaluate(
         "async () => { const { tabOverview } = await import('/src/lib/workspace/src/api.ts');"
         " tabOverview.open = false }"
     )
     wait_for(page, "!document.querySelector('.canvas .window')", "the overview away")
-
 def box(page: Page, name: str) -> dict | None:
     return page.evaluate(
         """(name) => {
@@ -66,12 +59,10 @@ def box(page: Page, name: str) -> dict | None:
         }""",
         name,
     )
-
 def keyboard(page: Page) -> str:
     return page.evaluate(
         "() => { const at = document.activeElement; return at.closest('.canvas') ? 'canvas ' + at.className : at.tagName + ' ' + at.className }"
     )
-
 def on_screen(page: Page) -> list[str]:
     return page.evaluate(
         """() => [...document.querySelectorAll('.canvas .window')].filter((one) => {
@@ -79,7 +70,6 @@ def on_screen(page: Page) -> list[str]:
           return r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight
         }).map((one) => one.getAttribute('aria-label'))"""
     )
-
 def drag(page: Page, start: dict, end: dict) -> None:
     page.mouse.move(start["x"], start["y"])
     page.mouse.down()
@@ -92,7 +82,6 @@ def drag(page: Page, start: dict, end: dict) -> None:
     page.wait_for_timeout(200)
     page.mouse.up()
     page.wait_for_timeout(1000)
-
 def asked(page: Page, answer: str) -> str:
     wait_for(page, "!!document.querySelector('.sheet form')", "the question before a note moves")
     said = page.evaluate("() => document.querySelector('.sheet form').innerText")
@@ -100,20 +89,16 @@ def asked(page: Page, answer: str) -> str:
     wait_for(page, "!document.querySelector('.sheet form')", "the question answered")
     page.wait_for_timeout(800)
     return said
-
 def carry(page: Page, start: dict, end: dict) -> None:
     drag(page, start, end)
     asked(page, "Move")
-
 def all_spaces(page: Page) -> None:
     page.get_by_role("button", name="Tidy up").click()
     page.wait_for_timeout(1200)
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 900})
     DRIVE.open(page)
     ids = page.evaluate(SEED)
-
     open_overview(page)
     page.get_by_role("combobox", name="Spaces").click()
     page.get_by_role("option", name="This space").click()
@@ -133,13 +118,11 @@ def drive(browser: Browser) -> None:
     close_overview(page)
     page.evaluate("async (id) => { await window.ordenApp.workspace.showSpace(id) }", ids["home"])
     page.wait_for_timeout(400)
-
     open_overview(page)
     all_spaces(page)
     carry(page, box(page, "A2"), box(page, "B2"))
     if tab(page, "A2")["here"] or not tab(page, "A2")["path"].startswith(ids["beeRoot"]):
         wrong(f"the drag did not move the tab and its file: {tab(page, 'A2')}")
-
     say(f"after a drop the keyboard is on {keyboard(page)}")
     if not keyboard(page).startswith("canvas"):
         wrong(f"a drop left the keyboard on {keyboard(page)}")
@@ -176,7 +159,6 @@ def drive(browser: Browser) -> None:
     if not moved["path"].startswith(ids["beeRoot"]) or moved["here"]:
         wrong(f"redone, the file and its tab did not go together: {moved}")
     page.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
-
     page.evaluate(
         """async (root) => {
           const { invoke } = await import('/src/lib/platform/src/api.ts')
@@ -213,7 +195,6 @@ def drive(browser: Browser) -> None:
         }""",
         ids["beeRoot"],
     )
-
     page.evaluate(
         """async ([id, home]) => {
           const ws = window.ordenApp.workspace
@@ -228,5 +209,4 @@ def drive(browser: Browser) -> None:
     say(f"reopened: {back} in {space}")
     if space != ids["bee"] or not back or not back["here"]:
         wrong(f"a tab closed in Bee did not come back in Bee: {back} in {space}")
-
 raise SystemExit(DRIVE.run(drive))

@@ -7,9 +7,7 @@ export interface FeedPage {
   date?: string | undefined
   summary?: string | undefined
 }
-
 const MOST_ENTRIES = 30
-
 function xml(body: string, kind: string): Response {
   return new Response(body, {
     headers: {
@@ -19,46 +17,38 @@ function xml(body: string, kind: string): Response {
     },
   })
 }
-
 export function moment(page: FeedPage): number {
   const said = page.date ? Date.parse(page.date) : Number.NaN
   return Number.isFinite(said) ? said : page.updated
 }
-
 export function newestFirst(pages: readonly FeedPage[]): FeedPage[] {
   return [...pages].sort((one, other) => moment(other) - moment(one))
 }
-
 export function sitemap(pages: readonly FeedPage[]): Response {
   const entries = pages
     .map(
       (page) => `<url><loc>${escape(page.url)}</loc><lastmod>${new Date(page.updated).toISOString()}</lastmod></url>`,
     )
     .join('')
-
   return xml(
     `<?xml version="1.0" encoding="utf-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries}</urlset>`,
     'application/xml',
   )
 }
-
 export interface FeedSite {
   title: string
   url: string
   author: string | null
   description?: string | undefined
 }
-
 function entriesOf(pages: readonly FeedPage[]): FeedPage[] {
   return newestFirst(pages).slice(0, MOST_ENTRIES)
 }
-
 export function feed(pages: readonly FeedPage[], site: FeedSite): Response {
   const ordered = entriesOf(pages)
   const newest = ordered[0]
   const updated = new Date(newest ? moment(newest) : Date.now()).toISOString()
-
   const entries = ordered
     .map(
       (page) => `<entry>
@@ -70,7 +60,6 @@ ${page.summary ? `<summary>${escape(page.summary)}</summary>` : ''}
 </entry>`,
     )
     .join('')
-
   return xml(
     `<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
@@ -84,12 +73,10 @@ ${site.author ? `<author><name>${escape(site.author)}</name></author>` : ''}${en
     'application/atom+xml',
   )
 }
-
 export function rss(pages: readonly FeedPage[], site: FeedSite): Response {
   const ordered = entriesOf(pages)
   const newest = ordered[0]
   const built = new Date(newest ? moment(newest) : Date.now()).toUTCString()
-
   const items = ordered
     .map(
       (page) => `<item>
@@ -101,7 +88,6 @@ ${page.summary ? `<description>${escape(page.summary)}</description>` : ''}
 </item>`,
     )
     .join('')
-
   return xml(
     `<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -117,10 +103,8 @@ ${site.author ? `<managingEditor>${escape(site.author)}</managingEditor>` : ''}$
     'application/rss+xml',
   )
 }
-
 export function robots(origin: string, locked: boolean): Response {
   const body = locked ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`
-
   return new Response(body, {
     headers: {
       'content-type': 'text/plain; charset=utf-8',

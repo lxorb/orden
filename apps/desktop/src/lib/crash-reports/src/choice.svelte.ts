@@ -3,22 +3,17 @@ import { CRASH_REPORTS, crashAskDue, CRASHES_ASKED } from '../../surfaces/src/ap
 
 class CrashReports {
   on = $state(stored(CRASH_REPORTS) !== false)
-
   asking = $state(false)
-
   set(on: boolean): void {
     this.on = on
     keepJson(CRASH_REPORTS, on)
   }
-
   heard(): void {
     this.on = stored(CRASH_REPORTS) !== false
   }
-
   ask(): void {
     if (crashAskDue()) this.asking = true
   }
-
   answer(on: boolean): void {
     if (!this.asking) return
     this.asking = false
@@ -26,5 +21,4 @@ class CrashReports {
     keepJson(CRASHES_ASKED, true)
   }
 }
-
 export const crashReports = new CrashReports()

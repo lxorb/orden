@@ -16,135 +16,100 @@ import {
 } from './carets'
 
 const stateOn = (doc: string): EditorState => EditorState.create({ doc, extensions: [remoteCarets()] })
-
 const withPeers = (doc: string, peers: readonly Peer[]): EditorState =>
   stateOn(doc).update({ effects: setPeers.of(peers) }).state
-
 const MAC: Peer = { id: 1, name: 'Mac', colour: '#3584e4', head: 4, anchor: 4 }
 const PHONE: Peer = { id: 2, name: 'iPhone', colour: '#33c7ba', head: 9, anchor: 5 }
-
 function kindOf(decoration: Decoration): string {
   const spec: unknown = decoration.spec
   if (typeof spec !== 'object' || spec === null) return ''
-
   const named = spec as { class?: unknown }
   return typeof named.class === 'string' ? named.class : ''
 }
-
 function marks(state: EditorState): { from: number; to: number; kind: string }[] {
   const found: { from: number; to: number; kind: string }[] = []
-
   for (const given of state.facet(EditorView.decorations)) {
     if (typeof given === 'function') continue
-
     const cursor = given.iter()
     while (cursor.value) {
       found.push({ from: cursor.from, to: cursor.to, kind: kindOf(cursor.value) })
       cursor.next()
     }
   }
-
   return found.sort((one, two) => one.from - two.from || one.kind.localeCompare(two.kind))
 }
-
 const carets = (state: EditorState): number[] => caretsAt(state).map((one) => one.head)
-
 function ranges(state: EditorState): { from: number; to: number }[] {
   return marks(state)
     .filter((one) => one.kind === 'cm-orden-caret-range')
     .map(({ from, to }) => ({ from, to }))
 }
-
 describe('the other people in a note', () => {
   test('are nobody until the app says otherwise', () => {
     const state = stateOn('one\ntwo\n')
-
     expect(peersOf(state)).toEqual([])
     expect(marks(state)).toEqual([])
   })
-
   test('are drawn as a bar where each caret is', () => {
     const state = withPeers('one\ntwo\n', [MAC])
-
     expect(carets(state)).toEqual([4])
     expect(ranges(state)).toEqual([])
   })
-
   test('wash over what one of them has selected', () => {
     const state = withPeers('one\ntwo\nthree\n', [PHONE])
-
     expect(ranges(state)).toEqual([{ from: 5, to: 9 }])
     expect(carets(state)).toEqual([9])
   })
-
   test('are drawn in position order, whatever order they arrive in', () => {
     const state = withPeers('one\ntwo\nthree\n', [PHONE, MAC])
-
     expect(carets(state)).toEqual([4, 9])
   })
-
   test('past the end of the note, are kept inside it, and typing still lands (#542)', () => {
     const far: Peer = { id: 3, name: 'iPad', colour: '#e66100', head: 40, anchor: 38 }
     const state = withPeers('one\n', [far])
-
     expect(peersOf(state)[0]).toMatchObject({ head: 4, anchor: 4 })
     const typed = state.update({ changes: { from: 4, to: 4, insert: 'XYZ' } }).state
     expect(typed.doc.toString()).toBe('one\nXYZ')
     expect(carets(typed)).toEqual([7])
   })
-
   test('move along when words are written above them', () => {
     const state = withPeers('one\ntwo\n', [MAC])
     const after = state.update({ changes: { from: 0, to: 0, insert: 'nought\n' } }).state
-
     expect(carets(after)).toEqual([11])
     expect(peersOf(after)[0]?.head).toBe(11)
   })
-
   test('stay where they are when words are written below them', () => {
     const state = withPeers('one\ntwo\n', [MAC])
     const after = state.update({ changes: { from: 8, to: 8, insert: 'three\n' } }).state
-
     expect(carets(after)).toEqual([4])
   })
-
   test('are never drawn outside the note', () => {
     const state = withPeers('short\n', [{ ...MAC, head: 400, anchor: 400 }])
-
     expect(carets(state)).toEqual([6])
   })
-
   test('go when the app says there is nobody left', () => {
     const state = withPeers('one\ntwo\n', [MAC, PHONE])
     const after = state.update({ effects: setPeers.of([]) }).state
-
     expect(peersOf(after)).toEqual([])
     expect(marks(after)).toEqual([])
   })
-
   test('are a set, so one leaving leaves the others', () => {
     const state = withPeers('one\ntwo\nthree\n', [MAC, PHONE])
     const after = state.update({ effects: setPeers.of([PHONE]) }).state
-
     expect(peersOf(after).map((peer) => peer.id)).toEqual([PHONE.id])
     expect(carets(after)).toEqual([9])
   })
-
   test('cost nothing at all while there are none', () => {
     const state = stateOn('one\ntwo\n')
     const after = state.update({ changes: { from: 0, to: 0, insert: 'x' } }).state
-
     expect(marks(after)).toEqual([])
     expect(peersOf(after)).toBe(peersOf(state))
   })
-
   test('are drawn beside the words, never as part of a line', () => {
     const state = withPeers('one\ntwo\n', [MAC])
-
     expect(marks(state)).toEqual([])
   })
 })
-
 describe('the name on a caret', () => {
   test.each([
     [true, 'above', false, false],
@@ -154,7 +119,6 @@ describe('the name on a caret', () => {
     [false, 'below', true, true],
     [true, 'above', true, true],
   ])('%j', (input, wanted, extra, last) => expect(sideFor(input, extra, last)).toEqual(wanted))
-
   test.each([
     ['#8aa0b8', '#0b0d10'],
     ['#e5b23c', '#0b0d10'],
@@ -165,65 +129,51 @@ describe('the name on a caret', () => {
     ['tomato', 'var(--accent-ink)'],
   ])('%j', (input, wanted) => expect(inkOn(input)).toEqual(wanted))
 })
-
 describe('an agent in the note', () => {
   const AGENT: Peer = { id: -1, name: 'Claude Code', colour: '#7c6bf5', head: 2, anchor: 2 }
-
   test('is drawn beside the people in a room, and neither list wipes out the other', () => {
     const state = withPeers('hello world', [MAC])
       .update({ effects: setAgents.of([AGENT]) })
       .state.update({ effects: setPeers.of([MAC, PHONE]) }).state
-
     expect(peersOf(state)).toEqual([MAC, PHONE])
     expect(agentsOf(state)).toEqual([AGENT])
     expect(carets(state)).toEqual([2, 4, 9])
   })
-
   test('moves with the words typed before it', () => {
     const state = stateOn('hello world')
       .update({ effects: setAgents.of([AGENT]) })
       .state.update({ changes: { from: 0, insert: '>> ' } }).state
-
     expect(agentsOf(state)[0]?.head).toBe(5)
     expect(carets(state)).toEqual([5])
   })
-
   test('and is gone when the app says so', () => {
     const state = stateOn('hello world')
       .update({ effects: setAgents.of([AGENT]) })
       .state.update({ effects: setAgents.of([]) }).state
-
     expect(carets(state)).toEqual([])
   })
 })
-
 const lineAt = (at: number) => {
   const top = Math.floor(at / 10) * 20
   return { top, bottom: top + 20 }
 }
 const seen = { top: 200, bottom: 400 }
 const at = (head: number, name = `at ${head}`) => ({ head, name })
-
 describe('a caret out of sight', () => {
   test('above the page is held at the top, and below it at the foot', () => {
     const held = outOfSight([at(5), at(250), at(105)], lineAt, seen)
-
     expect(held.above.map((one) => one.head)).toEqual([5])
     expect(held.below.map((one) => one.head)).toEqual([250])
   })
-
   test('on a line that only just shows is in sight, either way', () => {
     expect(outOfSight([at(90)], lineAt, seen).above).toHaveLength(1)
     expect(outOfSight([at(195)], lineAt, seen)).toEqual({ above: [], below: [] })
     expect(outOfSight([at(200)], lineAt, seen).below).toHaveLength(1)
   })
-
   test('keeps the order people came in, so a held row does not reshuffle', () => {
     const held = outOfSight([at(300, 'Ada'), at(400, 'Grace'), at(350, 'Lin')], lineAt, seen)
-
     expect(held.below.map((one) => one.name)).toEqual(['Ada', 'Grace', 'Lin'])
   })
-
   test('nobody in the note holds nobody', () => {
     expect(outOfSight([], lineAt, seen)).toEqual({ above: [], below: [] })
   })

@@ -1,18 +1,13 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 import harness
 from harness import Drive
 from settling import quiet
 
 NEEDS = ("tab-stops",)
-
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 AXE = harness.APP / "node_modules" / "axe-core" / "axe.min.js"
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -35,7 +30,6 @@ async () => {
   return held
 }
 """
-
 WHERE = """
 () => {
   const at = document.activeElement
@@ -45,9 +39,7 @@ WHERE = """
   return `${at.closest('[data-region]')?.dataset.region ?? '-'}|${at.tagName.toLowerCase()}.${cls}|${named}`
 }
 """
-
 SAID = "() => document.querySelector('p.orden-said[role=status]')?.textContent ?? ''"
-
 AXE_RULES = """
 async () => {
   const found = await window.axe.run(document, {
@@ -69,23 +61,19 @@ async () => {
   }))
 }
 """
-
 def where(page: Page) -> str:
     return page.evaluate(WHERE)
-
 def press(page: Page, *keys: str) -> str:
     for key in keys:
         page.keyboard.press(key)
     quiet(page)
     return where(page)
-
 def into_region(page: Page, region: str) -> None:
     for _ in range(12):
         if where(page).startswith(f"{region}|"):
             return
         page.keyboard.press("F6")
     wrong(f"F6 never reached {region}: stands on {where(page)}")
-
 def to_row(page: Page, starts: str) -> None:
     into_region(page, "list")
     page.keyboard.press("Home")
@@ -99,7 +87,6 @@ def to_row(page: Page, starts: str) -> None:
         page.keyboard.press("ArrowDown")
         page.evaluate("() => new Promise(requestAnimationFrame)")
     wrong(f"no row called {starts}: the arrows went {seen}")
-
 def choose(page: Page, label: str) -> None:
     wait_for(page, "document.querySelector('[role=menu]')", "the menu")
     for _ in range(40):
@@ -112,7 +99,6 @@ def choose(page: Page, label: str) -> None:
         page.keyboard.press("ArrowDown")
     wrong(f"the menu has no {label}: {page.evaluate('() => document.querySelector(`[role=menu]`)?.textContent')}")
     page.keyboard.press("Escape")
-
 def tree_roles(page: Page) -> None:
     seen = page.evaluate(
         """() => {
@@ -133,7 +119,6 @@ def tree_roles(page: Page) -> None:
         wrong(f"a row inside a folder is not a level down: {seen['inside']}")
     if seen["alone"]["selected"] is None:
         wrong("a row does not say whether it is selected")
-
 def tab_says(page: Page) -> None:
     seen = page.evaluate(
         "() => [...document.querySelectorAll('.tabs .pick')].map((one) => [one.getAttribute('aria-label'), one.getAttribute('aria-current')])"
@@ -142,7 +127,6 @@ def tab_says(page: Page) -> None:
     current = [name for name, said in seen if said]
     if len(current) != 1 or not page.evaluate("(name) => window.ordenApp.workspace.active?.shown === name", current[0]):
         wrong(f"the strip does not say which tab is in front: {seen}")
-
 def row_deleted(page: Page) -> None:
     to_row(page, "Damson")
     press(page, "Shift+F10")
@@ -155,7 +139,6 @@ def row_deleted(page: Page) -> None:
     say(f"[delete] after a row's Delete the keyboard is on {at}")
     if not at.startswith("list|button.orden-row"):
         wrong(f"the keyboard went with the deleted row: {at}")
-
 def open_row_deleted(page: Page) -> None:
     page.evaluate(
         "async () => { const ws = window.ordenApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Damson')).path, { activate: true }) }"
@@ -175,7 +158,6 @@ def open_row_deleted(page: Page) -> None:
     press(page, "Control+z")
     wait_for(page, "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
-
 def toast_keys(page: Page) -> None:
     said = page.evaluate(SAID)
     say(f"[toast] the region says {said!r}")
@@ -183,7 +165,6 @@ def toast_keys(page: Page) -> None:
         wrong(f"the region did not say what happened and the way back: {said!r}")
     if page.evaluate("() => document.querySelector('.toast')?.getAttribute('role') === 'status'"):
         wrong("the toast is a live region that arrived with its words")
-
     came_from = where(page)
     for count in range(1, 31):
         at = press(page, "Tab")
@@ -192,14 +173,12 @@ def toast_keys(page: Page) -> None:
     say(f"[toast] {count} Tabs from the row: {at}")
     if not at.endswith("|Undo"):
         wrong(f"Tab reached the note before Undo: {at}")
-
     at = press(page, "Enter")
     wait_for(page, "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
     say(f"[toast] Undo pressed: the keyboard is on {where(page)}, it came from {came_from}")
     if where(page) == "body":
         wrong("the keyboard went with the toast")
-
     to_row(page, "Damson")
     press(page, "Shift+F10")
     choose(page, "Delete")
@@ -234,7 +213,6 @@ def toast_keys(page: Page) -> None:
     say(f"[toast] Undo: the keyboard is on {at}")
     if not at.startswith("editor|"):
         wrong(f"Undo did not hand the keyboard back to the note it came from: {at}")
-
 def hand_back_hidden(page: Page) -> None:
     to_row(page, "Damson")
     press(page, "Shift+F10")
@@ -257,7 +235,6 @@ def hand_back_hidden(page: Page) -> None:
         wrong("the keyboard fell to the page: what it came from is hidden")
     page.evaluate("() => { const ws = window.ordenApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }")
     quiet(page)
-
 def enter_after_going(page: Page) -> None:
     page.evaluate(
         "async () => { const ws = window.ordenApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith('Damson')).path, { activate: true }) }"
@@ -277,7 +254,6 @@ def enter_after_going(page: Page) -> None:
     page.evaluate("async () => { await window.ordenApp.workspace.undoFileAction() }")
     wait_for(page, "window.ordenApp.workspace.notes.some((one) => one.name.startsWith('Damson'))", "the note back")
     quiet(page)
-
     for name in ("Alder", "Birch", "Cedar", "Read me"):
         page.evaluate(
             "async (name) => { const ws = window.ordenApp.workspace; await ws.openEntry(ws.notes.find((one) => one.name.startsWith(name)).path, { activate: true }); ws.keep(ws.activeTabId) }",
@@ -301,7 +277,6 @@ def enter_after_going(page: Page) -> None:
     say(f"[caret] an arrow and Enter after a close: {at}")
     if not at.startswith("editor|"):
         wrong(f"Enter on the next tab left the keyboard off the note: {at}")
-
 def tab_closed(page: Page) -> None:
     into_region(page, "tabs")
     before = page.evaluate("() => window.ordenApp.workspace.tabs.length")
@@ -312,14 +287,11 @@ def tab_closed(page: Page) -> None:
     say(f"[tab] after Delete on the strip the keyboard is on {at}")
     if not at.startswith("tabs|button.pick"):
         wrong(f"the keyboard went with the closed tab: {at}")
-
 ABOUT = "() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((one) => one.textContent.trim())"
-
 LINE = """() => {
   const at = getSelection().focusNode
   return (at.nodeType === 1 ? at : at.parentElement).closest('.cm-line')?.textContent ?? null
 }"""
-
 def note_menu(page: Page) -> None:
     said = "# Menu key\n\nfirst para here\n\n\n\nlast words go here now"
     page.evaluate(
@@ -333,7 +305,6 @@ def note_menu(page: Page) -> None:
     )
     wait_for(page, "[...document.querySelectorAll('.cm-line')].some((one) => one.textContent.includes('last words'))", "the note")
     quiet(page)
-
     def caret_on(words: str | None) -> dict:
         page.evaluate("() => document.querySelector('.cm-content').focus()")
         page.keyboard.press("Control+Home")
@@ -350,7 +321,6 @@ def note_menu(page: Page) -> None:
         return page.evaluate(
             """() => { const line = getSelection().focusNode; const one = (line.nodeType === 1 ? line : line.parentElement).closest('.cm-line'); const box = one.getBoundingClientRect(); return { x: box.x + 40, y: box.y + box.height / 2, text: one.textContent } }"""
         )
-
     empty = caret_on(None)
     say(f"[note menu] the empty line: {empty}")
     press(page, "Shift+F10")
@@ -365,7 +335,6 @@ def note_menu(page: Page) -> None:
         wrong("the note gave no menu on the key")
     if by_key != by_press:
         wrong(f"the key's menu on an empty line is about another block: {by_key} and not {by_press}")
-
     caret_on("first para")
     press(page, "Shift+F10")
     choose(page, "Duplicate")
@@ -373,7 +342,6 @@ def note_menu(page: Page) -> None:
     say(f"[note menu] after Duplicate: {words!r}")
     if words.count("first para here") != 2 or words.count("last words go here now") != 1:
         wrong(f"Duplicate from the key did not act on the caret's block: {words!r}")
-
 def named_sides(page: Page) -> None:
     page.evaluate("() => { const ws = window.ordenApp.workspace; ws.showPanel('search'); ws.movePanel('search', 'right'); ws.showPanel('tree') }")
     wait_for(page, "document.querySelectorAll('aside[data-sidebar]').length === 2", "both sidebars")
@@ -382,7 +350,6 @@ def named_sides(page: Page) -> None:
     say(f"[sides] {names}")
     if len(set(names)) != 2:
         wrong(f"the two sidebars share a name: {names}")
-
 def divider(page: Page) -> None:
     page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelector('.divider')", "the divider")
@@ -422,13 +389,11 @@ def divider(page: Page) -> None:
     axe_says(page, "two panes")
     page.evaluate("() => window.ordenApp.workspace.panes.collapse()")
     quiet(page)
-
 def axe_says(page: Page, surface: str) -> None:
     found = page.evaluate(AXE_RULES)
     say(f"[axe] {surface}: {json.dumps(found)}")
     if found:
         wrong(f"axe, {surface}: {json.dumps(found)}")
-
 def toggle_order(page: Page) -> None:
     for side, selector in (("left", ".panels:not(.right) aside"), ("right", ".panels.right aside")):
         toggle = f"[data-side-toggle={side}]"
@@ -454,13 +419,11 @@ def toggle_order(page: Page) -> None:
         say(f"[toggle] {side}: Tab again from the toggle: {at}")
         if inside:
             wrong(f"Tab from the {side} toggle went into the sidebar a second time: {at}")
-
 VERSION = (
     "[...document.querySelectorAll('.setting.pressable')]"
     ".find((row) => row.querySelector('.what')?.textContent.trim().startsWith('Version'))"
     "?.querySelector('.value.said')"
 )
-
 def version_row(page: Page) -> None:
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.evaluate("() => window.ordenApp.settings.show()")
@@ -483,7 +446,6 @@ def version_row(page: Page) -> None:
     wait_for(page, f"{VERSION}?.textContent === 'Copied'", "the row to say it copied")
     say(f"[version] Enter on it: Copied, the keyboard on {at}")
     press(page, "Escape")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 860})
     DRIVE.open(page)
@@ -493,7 +455,6 @@ def drive(browser: Browser) -> None:
     quiet(page)
     DRIVE.inject(page, AXE)
     page.wait_for_function("() => !!window.axe", timeout=20000)
-
     page.evaluate("() => document.activeElement?.blur?.()")
     for name, part in (
         ("tree", lambda: tree_roles(page)),
@@ -518,8 +479,6 @@ def drive(browser: Browser) -> None:
             wrong(f"{name}: {error}")
             page.keyboard.press("Escape")
     page.context.close()
-
 def main() -> int:
     return DRIVE.run(drive, "the keyboard stays somewhere, and a screen reader is told where")
-
 raise SystemExit(main())

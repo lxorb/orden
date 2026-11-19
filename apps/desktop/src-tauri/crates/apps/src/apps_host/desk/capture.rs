@@ -17,7 +17,6 @@ use super::{place_of, shown, Desk};
 
 const DRAW_EVERY: Duration = Duration::from_millis(33);
 const FIRST_WITHIN: Duration = Duration::from_secs(5);
-
 #[derive(Debug, PartialEq)]
 pub enum News {
     Drawn,
@@ -27,20 +26,17 @@ pub enum News {
     Whole,
     Gone,
 }
-
 #[derive(Default)]
 struct Shot {
     pixels: Vec<u8>,
     size: (u16, u16),
 }
-
 pub struct Capture {
     shot: Arc<(Mutex<Option<Shot>>, Condvar)>,
     stop: Arc<AtomicBool>,
     local: Vec<u8>,
     thread: Option<std::thread::JoinHandle<()>>,
 }
-
 impl Capture {
     pub fn open(display: &str, seen: Sender<News>) -> Result<Capture, String> {
         let desk = super::desk(display).ok_or("no such desktop")?;
@@ -55,7 +51,6 @@ impl Capture {
             thread: Some(thread),
         })
     }
-
     pub fn grab(&mut self) -> Result<(&[u8], (u16, u16)), String> {
         let (lock, came) = &*self.shot;
         let held = lock.held();
@@ -70,7 +65,6 @@ impl Capture {
         Ok((&self.local, size))
     }
 }
-
 impl Drop for Capture {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::SeqCst);
@@ -79,7 +73,6 @@ impl Drop for Capture {
         }
     }
 }
-
 fn draw(
     desk: &Desk,
     shot: &(Mutex<Option<Shot>>, Condvar),
@@ -127,7 +120,6 @@ fn draw(
         std::thread::sleep(DRAW_EVERY);
     }
 }
-
 struct Surface {
     dc: HDC,
     bitmap: HBITMAP,
@@ -135,7 +127,6 @@ struct Surface {
     bits: *mut u8,
     size: (i32, i32),
 }
-
 impl Surface {
     #[allow(unsafe_code)]
     fn new(width: i32, height: i32) -> Option<Surface> {
@@ -178,7 +169,6 @@ impl Surface {
             })
         }
     }
-
     #[allow(unsafe_code)]
     fn pixels(&self) -> &[u8] {
         let length = usize::try_from(self.size.0).unwrap_or(0)
@@ -190,7 +180,6 @@ impl Surface {
         }
     }
 }
-
 impl Drop for Surface {
     #[allow(unsafe_code)]
     fn drop(&mut self) {
@@ -201,13 +190,11 @@ impl Drop for Surface {
         }
     }
 }
-
 #[derive(Default)]
 struct Canvas {
     view: Option<Surface>,
     scratch: Option<Surface>,
 }
-
 impl Canvas {
     #[allow(unsafe_code)]
     fn draw(&mut self, size: (u16, u16)) -> Option<&[u8]> {
@@ -255,7 +242,6 @@ impl Canvas {
         Some(self.view.as_ref()?.pixels())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;

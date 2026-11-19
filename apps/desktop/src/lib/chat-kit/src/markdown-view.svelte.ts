@@ -8,7 +8,6 @@ import { type Scheme, theme } from '../../theme/src/api'
 
 let version = $state(0)
 let bumping = false
-
 function bump() {
   if (bumping) return
   bumping = true
@@ -17,9 +16,7 @@ function bump() {
     version++
   })
 }
-
 onEngines(bump)
-
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- told through `version`
 const parsers = new Map<string, Parser>()
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- told through `version`
@@ -27,32 +24,26 @@ const asked = new Set<string>()
 const diagrams: Record<Scheme, Map<string, string>> = { light: new Map(), dark: new Map() }
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- told through `version`
 const drawingNow = new Set<string>()
-
 function landing(): number {
   return version
 }
-
 export const drawing = {
   get version(): number {
     return landing()
   },
 }
-
 export function warmRenderer() {
   void loadMaths().catch(() => undefined)
   void fenceLanguages().catch(() => undefined)
 }
-
 export function mathsWaiting(html: string): boolean {
   void landing()
   return mathsEngine() === null && html.includes('class="math-')
 }
-
 export interface ViewOptions {
   live?: boolean
   draws?: (code: string, language: string) => boolean
 }
-
 export function viewHtml(markdown: string, options: RenderOptions = {}, how: ViewOptions = {}): string {
   void landing()
   const scheme = theme.current
@@ -60,7 +51,6 @@ export function viewHtml(markdown: string, options: RenderOptions = {}, how: Vie
   const source = how.live ? settled(spelled) : spelled
   const drawn = diagrams[scheme]
   const known = fenceFrom({ parsers, diagrams: drawn })
-
   const wanted: string[] = []
   const draws: { code: string; language: string; key: string }[] = []
   const fence = (code: string, language: string) => {
@@ -73,9 +63,7 @@ export function viewHtml(markdown: string, options: RenderOptions = {}, how: Vie
     }
     return known(code, language)
   }
-
   const html = renderMarkdown(source, { footnotes: true, ...options, code: fence })
-
   void loadFor(source).catch(() => undefined)
   if (wanted.length) {
     for (const language of wanted) asked.add(language)
@@ -97,6 +85,5 @@ export function viewHtml(markdown: string, options: RenderOptions = {}, how: Vie
         bump()
       })
   }
-
   return html
 }

@@ -1,12 +1,9 @@
 import { viewport } from '../../ui-kit/src/api'
 
 const TICK = 8
-
 export function tick(): void {
   if (!viewport.touch || typeof navigator === 'undefined') return
-
   if (typeof navigator.vibrate !== 'function') return
-
   try {
     navigator.vibrate(TICK)
   } catch {

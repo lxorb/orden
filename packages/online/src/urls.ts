@@ -1,7 +1,5 @@
 export const LONGEST_URL = 8192
-
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
-
 function parsed(url: string): URL | null {
   try {
     return new URL(url)
@@ -9,22 +7,18 @@ function parsed(url: string): URL | null {
     return null
   }
 }
-
 export function isWebUrl(url: unknown): url is string {
   if (typeof url !== 'string' || url.length > LONGEST_URL) return false
   const one = parsed(url)
   return one !== null && (one.protocol === 'http:' || one.protocol === 'https:')
 }
-
 export function loopbackOrigin(url: unknown): string | null {
   if (typeof url !== 'string' || url.length > LONGEST_URL) return null
   const one = parsed(url)
   if (one?.protocol !== 'http:' || !one.port) return null
   return LOOPBACK_HOSTS.has(one.hostname.toLowerCase()) ? one.origin : null
 }
-
 export const isLoopbackUrl = (url: unknown): url is string => loopbackOrigin(url) !== null
-
 export function callbacksIn(url: string): string[] {
   const one = parsed(url)
   if (!one) return []
@@ -35,10 +29,8 @@ export function callbacksIn(url: string): string[] {
   }
   return [...found]
 }
-
 export function isCallbackOf(opened: string, landed: string): boolean {
   const origin = loopbackOrigin(landed)
   return origin !== null && callbacksIn(opened).includes(origin)
 }
-
 export const hostOf = (url: string): string => parsed(url)?.host ?? url

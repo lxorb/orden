@@ -22,9 +22,7 @@ import { csvRecords, type CsvRecord } from './csv'
 import type { Imported } from './types'
 
 const NAME = 'Bitwarden'
-
 const ENCRYPTED = 'The export is encrypted: export it again from Bitwarden as "JSON" or "CSV", not "JSON (Encrypted)".'
-
 const MATCH: Record<number, MatchRule> = {
   0: 'domain',
   1: 'host',
@@ -33,14 +31,11 @@ const MATCH: Record<number, MatchRule> = {
   4: 'domain',
   5: 'never',
 }
-
 const FIELD_KINDS: Record<number, FieldKind> = { 0: 'text', 1: 'hidden', 2: 'text' }
-
 export function parseBitwarden(text: string): Imported {
   const body = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text
   return body.trimStart().startsWith('{') ? parseBitwardenJson(body) : parseBitwardenCsv(body)
 }
-
 function fieldsOf(raw: unknown): Field[] {
   const fields: Field[] = []
   for (const one of listOf(raw)) {
@@ -53,11 +48,9 @@ function fieldsOf(raw: unknown): Field[] {
   }
   return fields
 }
-
 function websitesWithMatch(raw: unknown): Website[] {
   return websitesMatched(listOf(raw), (entry) => [entry.uri, MATCH[Number(entry.match ?? 0)]])
 }
-
 function passkeysOf(raw: unknown): Passkey[] {
   return listOf(raw).map((one) => {
     const key = recordOf(one)
@@ -74,7 +67,6 @@ function passkeysOf(raw: unknown): Passkey[] {
     })
   })
 }
-
 function contentOf(item: Record<string, unknown>): Content {
   const title = stringOf(item.name)
   const note = stringOf(item.notes)
@@ -154,7 +146,6 @@ function contentOf(item: Record<string, unknown>): Content {
       return noteOf(title, note, fields)
   }
 }
-
 function parseBitwardenJson(text: string): Imported {
   const root = recordOf(jsonOf(text))
   if (root.encrypted === true) return skippedOnly(NAME, ENCRYPTED)
@@ -186,7 +177,6 @@ function parseBitwardenJson(text: string): Imported {
   }
   return into.result()
 }
-
 function csvFieldsOf(text: string): Field[] {
   return text
     .split(/\r?\n/)
@@ -196,7 +186,6 @@ function csvFieldsOf(text: string): Field[] {
       return at < 0 ? fieldOf('', line) : fieldOf(line.slice(0, at), line.slice(at + 2))
     })
 }
-
 function csvContentOf(row: CsvRecord): Content {
   const title = row.name ?? ''
   const note = row.notes ?? ''
@@ -212,7 +201,6 @@ function csvContentOf(row: CsvRecord): Content {
     urls: (row.login_uri ?? '').split(/,|\r?\n/),
   })
 }
-
 function parseBitwardenCsv(text: string): Imported {
   const rows = csvRecords(text)
   const first = rows[0]

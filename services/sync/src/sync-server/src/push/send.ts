@@ -4,9 +4,7 @@ import { sendFcm } from './fcm'
 import { sendWebPush, type SubscriptionKeys } from './webpush'
 
 export type Delivery = 'sent' | 'gone' | 'failed' | 'busy' | 'off'
-
 export type TargetKind = 'webpush' | 'fcm' | 'apns'
-
 export interface Target {
   id: string
   user_id: string
@@ -15,7 +13,6 @@ export interface Target {
   keys: string | null
   zone: string | null
 }
-
 export interface Message {
   kind: 'reminder' | 'chat'
   id: string
@@ -23,7 +20,6 @@ export interface Message {
   body: string
   fields: Record<string, string>
 }
-
 function keysOf(target: Target): SubscriptionKeys | null {
   try {
     const keys = JSON.parse(target.keys ?? '') as Partial<SubscriptionKeys>
@@ -34,7 +30,6 @@ function keysOf(target: Target): SubscriptionKeys | null {
     return null
   }
 }
-
 export function configured(env: Env) {
   return {
     webpush: env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY ? env.VAPID_PUBLIC_KEY : null,
@@ -42,7 +37,6 @@ export function configured(env: Env) {
     apns: !!(env.APNS_KEY && env.APNS_KEY_ID && env.APNS_TEAM_ID && env.APNS_TOPIC),
   }
 }
-
 export async function push(
   env: Env,
   target: Target,
@@ -95,7 +89,6 @@ export async function push(
   } catch {
     delivery = 'busy'
   }
-
   if (delivery === 'gone') {
     await env.DB.prepare('delete from push_targets where id = ?').bind(target.id).run()
   } else if (delivery === 'failed' || delivery === 'busy') {

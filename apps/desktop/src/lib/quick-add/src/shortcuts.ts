@@ -7,19 +7,15 @@ const TAKING = 'orden:shortcuts-added'
 const ADDED = 'orden://shortcuts-added'
 export const TAKEN = '.shortcuts'
 const OPEN_TASK = /^\s*[-*+]\s+\[ \]\s+(.+?)\s*$/
-
 interface Added {
   id: string
   text: string
 }
-
 type Add = (text: string) => Promise<boolean>
-
 async function addedHere(text: string): Promise<boolean> {
   const { addTask } = await import('../../tasks-model/src/api')
   return (await addTask(text, { typed: false })) !== null
 }
-
 function addedOf(said: unknown): Added[] {
   if (!Array.isArray(said)) return []
   return said.filter(
@@ -30,7 +26,6 @@ function addedOf(said: unknown): Added[] {
       typeof (one as Added).text === 'string',
   )
 }
-
 async function waiting(add: Add): Promise<number> {
   let count = 0
   for (const one of addedOf(await crate<unknown>('shortcuts_added').catch(() => []))) {
@@ -40,9 +35,7 @@ async function waiting(add: Add): Promise<number> {
   }
   return count
 }
-
 const textOf = (path: string) => crate<string>('read_note', { path }).catch(() => null)
-
 function lineCounts(text: string): Map<string, number> {
   const counts = new Map<string, number>()
   for (const line of text.split(/\r?\n/)) {
@@ -51,7 +44,6 @@ function lineCounts(text: string): Map<string, number> {
   }
   return counts
 }
-
 export function tasksSince(before: string, now: string): string[] {
   const had = lineCounts(before)
   const out: string[] = []
@@ -67,7 +59,6 @@ export function tasksSince(before: string, now: string): string[] {
   }
   return out
 }
-
 async function backupOf(from: string, rest: string): Promise<string | null> {
   const backups = joinPath(joinPath(await crate<string>('spaces_root'), KEPT_HOME), '.backups')
   const tree = await crate<{ children?: { name: string; path: string; is_dir: boolean }[] }>('read_tree', {
@@ -84,7 +75,6 @@ async function backupOf(from: string, rest: string): Promise<string | null> {
   }
   return null
 }
-
 async function leftBehind(add: Add): Promise<number> {
   const left = await crate<string | null>('shortcuts_left_inbox').catch(() => null)
   if (!left) return 0
@@ -107,13 +97,11 @@ async function leftBehind(add: Add): Promise<number> {
   }
   return 0
 }
-
 async function exclusive<T>(run: () => Promise<T>): Promise<T> {
   const locks = locksHere()
   if (!locks || !(await locksWork(locks))) return run()
   return locks.request(TAKING, run) as Promise<T>
 }
-
 export const takeAdded = (add: Add = addedHere): Promise<number> =>
   exclusive(async () => {
     const behind = await leftBehind(add).catch((error: unknown) => {
@@ -122,7 +110,6 @@ export const takeAdded = (add: Add = addedHere): Promise<number> =>
     })
     return behind + (await waiting(add))
   })
-
 export async function hearShortcuts(): Promise<void> {
   await takeAdded()
   await hearHere(ADDED, () => void takeAdded())

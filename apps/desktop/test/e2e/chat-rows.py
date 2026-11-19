@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser
-
 from harness import CHATS_ON, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 SEED = """async () => {
   const chat = await window.ordenApp.aiChats()
   const now = Date.now()
@@ -18,7 +16,6 @@ SEED = """async () => {
     head('stuck', 'Waiting on a reply', 'needs-input', 600),
   ]
 }"""
-
 MEASURE = """() => [...document.querySelectorAll('.threads .item')].map((item) => {
   const box = (selector) => item.querySelector(selector).getBoundingClientRect()
   const title = item.querySelector('.title')
@@ -31,12 +28,9 @@ MEASURE = """() => [...document.querySelectorAll('.threads .item')].map((item) =
     timed: getComputedStyle(item.querySelector('.when')).visibility !== 'hidden',
   }
 })"""
-
 NEAR = 1.0
-
 def near(one: float, other: float) -> bool:
     return abs(one - other) <= NEAR
-
 def drive(browser: Browser) -> None:
     for width in (240, 420):
         context = browser.new_context(viewport={"width": 1400, "height": 820})
@@ -53,7 +47,6 @@ def drive(browser: Browser) -> None:
         page.mouse.move(700, 400)
         page.wait_for_timeout(300)
         rest = page.evaluate(MEASURE)
-
         for at, still in enumerate(rest):
             name = f"{width}px, {still['id']!r}"
             if still["title"]["right"] > still["state"]["left"] - still["gap"] + NEAR:
@@ -62,7 +55,6 @@ def drive(browser: Browser) -> None:
                 wrong(f"{name}: the time is not at the row's gap after the state")
             if still["acting"] or not still["timed"]:
                 wrong(f"{name}: at rest the actions show or the time does not")
-
             page.locator(".threads .item").nth(at).hover()
             page.wait_for_timeout(250)
             pointed = page.evaluate(MEASURE)[at]
@@ -82,7 +74,6 @@ def drive(browser: Browser) -> None:
             wrong(f"{width}px: the long title is not cut short")
         say(f"{width}px: {len(rest)} rows, the end group tight at rest and pointed at")
         DRIVE.shot(page, f"pointed-{width}")
-
         page.evaluate("() => document.documentElement.setAttribute('data-touch', '')")
         page.mouse.move(700, 400)
         page.wait_for_timeout(250)
@@ -93,5 +84,4 @@ def drive(browser: Browser) -> None:
                 wrong(f"{width}px, {touched['id']!r}: on a touch screen the actions leave a gap")
         say(f"{width}px: on a touch screen the actions stand in the time's place")
         context.close()
-
 raise SystemExit(DRIVE.run(drive, "the chat rows keep their end group tight, at rest, pointed at and touched"))

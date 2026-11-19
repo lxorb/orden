@@ -14,7 +14,6 @@ const sync = new PadSync(scratchpad, padDisk(), (name, run) => inTurn(() => name
 let going: Promise<unknown> | null = null
 let again = false
 let signedInAs: string | null = null
-
 function exchange(): void {
   const owner = account.user?.id ?? null
   const token = account.accountToken
@@ -34,15 +33,12 @@ function exchange(): void {
       exchange()
     })
 }
-
 scratchpad.listen(afterQuiet(exchange, AFTER_WRITING))
-
 account.forgetWithSession(() => {
   const owner = signedInAs
   signedInAs = null
   if (owner) void sync.left(owner).catch(() => undefined)
 })
-
 $effect.root(() => {
   $effect(() => {
     if (account.user?.id && account.accountToken) untrack(exchange)
@@ -51,7 +47,6 @@ $effect.root(() => {
     if (shown.on) untrack(exchange)
   })
 })
-
 if (typeof window !== 'undefined') {
   const visible = () => document.visibilityState === 'visible'
   const soon = () => {

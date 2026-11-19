@@ -7,7 +7,6 @@
     --mark-gap: 4px;
     --mark-size: 12px;
   }
-
   svg {
     fill: none;
     stroke: currentColor;

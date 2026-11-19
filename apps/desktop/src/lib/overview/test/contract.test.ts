@@ -6,7 +6,6 @@ import { walk, wayOf } from '../src/walk'
 describe('moving among the windows', () => {
   const box = (x: number, y: number) => ({ x, y, w: 100, h: 60 })
   const boxes = [box(0, 0), box(120, 0), box(0, 80)]
-
   test('an arrow goes to the nearest window that way and stays when there is none', () => {
     expect(wayOf('ArrowRight')).toBe('right')
     expect(wayOf('Tab')).toBeNull()
@@ -14,13 +13,11 @@ describe('moving among the windows', () => {
     expect(walk(boxes, 0, 'down')).toBe(2)
     expect(walk(boxes, 0, 'left')).toBe(0)
   })
-
   test('the box around the windows holds every one of them', () => {
     expect(around([])).toBeNull()
     expect(around(boxes)).toEqual({ x: 0, y: 0, w: 220, h: 140 })
   })
 })
-
 test('the springs come to rest where they were sent and land at once when asked', () => {
   const one = spring(0)
   one.to = 100

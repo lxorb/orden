@@ -11,13 +11,11 @@ export interface Carrying {
   files: string[]
   addresses: string[]
 }
-
 export interface Looking {
   isFolder: (path: string) => boolean
   locked: (path: string) => boolean
   read: (path: string) => Promise<string | null>
 }
-
 export async function carryingOf(paths: readonly string[], look: Looking): Promise<Carrying> {
   const files: string[] = []
   const addresses: string[] = []
@@ -32,22 +30,18 @@ export async function carryingOf(paths: readonly string[], look: Looking): Promi
   }
   return { files, addresses }
 }
-
 const looking: Looking = {
   isFolder: (path) => workspace.entryAt(path)?.is_dir ?? false,
   locked: (path) => protection.locked(path),
   read: (path) => invoke<string>('read_note', { path }).catch(() => null),
 }
-
 let line: Promise<unknown> = Promise.resolve()
 let told = false
 let waiting: { tab: string; x: number; y: number } | null = null
 let overOn: string | null = null
-
 function next(step: () => Promise<unknown>): void {
   line = line.then(step).catch(() => undefined)
 }
-
 export function carryToPages(paths: readonly string[], look: Looking = looking): void {
   if (!isDesktop || __EVEN_PLUGIN__) return
   told = false
@@ -58,7 +52,6 @@ export function carryToPages(paths: readonly string[], look: Looking = looking):
     told = (await invoke<boolean | null>('page_carry', { ...carrying })) ?? false
   })
 }
-
 export function carriedToPages(): void {
   if (!isDesktop) return
   waiting = null
@@ -68,7 +61,6 @@ export function carriedToPages(): void {
     await invoke('page_carry_end')
   })
 }
-
 function tell(tab: string, phase: 'over' | 'leave' | 'drop', x: number, y: number): void {
   overOn = phase === 'over' ? tab : null
   if (phase === 'over') {
@@ -87,7 +79,6 @@ function tell(tab: string, phase: 'over' | 'leave' | 'drop', x: number, y: numbe
     if (told) await invoke('page_carry_over', { tab, phase, x, y })
   })
 }
-
 function inMiddle(hole: HTMLElement, event: DragEvent): boolean {
   const pane = hole.closest<HTMLElement>('[data-pane]')
   const id = pane?.dataset.pane
@@ -97,17 +88,14 @@ function inMiddle(hole: HTMLElement, event: DragEvent): boolean {
   )
   return zone === 'middle'
 }
-
 function pointOf(hole: HTMLElement, event: DragEvent, zoom: number) {
   const box = hole.getBoundingClientRect()
   const by = zoom > 0 ? zoom : 1
   return { x: (event.clientX - box.left) / by, y: (event.clientY - box.top) / by }
 }
-
 function carried(event: DragEvent): boolean {
   return isDesktop && (isTreeDrag(event.dataTransfer) || isExplorerDrag(event.dataTransfer))
 }
-
 export function overPage(tab: string, hole: HTMLElement, event: DragEvent, zoom: number): void {
   if (!carried(event)) return
   if (!told || !inMiddle(hole, event)) {
@@ -119,11 +107,9 @@ export function overPage(tab: string, hole: HTMLElement, event: DragEvent, zoom:
   const at = pointOf(hole, event, zoom)
   tell(tab, 'over', at.x, at.y)
 }
-
 export function leftPage(tab: string): void {
   if (overOn === tab) tell(tab, 'leave', 0, 0)
 }
-
 export function droppedOnPage(tab: string, hole: HTMLElement, event: DragEvent, zoom: number): void {
   if (!carried(event) || !told || !inMiddle(hole, event)) return
   event.preventDefault()

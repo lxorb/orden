@@ -1,35 +1,25 @@
 import type { Base, Filter, View } from './types'
 
 export type BuiltinName = 'todos' | 'inbox' | 'today' | 'upcoming' | 'logbook' | 'label' | 'assigned'
-
 export interface BuiltinParams {
   inboxes?: { space: string; path: string }[]
   tag?: string
   space?: string
 }
-
 const TODAY = 'task.date <= today() || task.deadline <= today()'
-
 const quote = (text: string) => JSON.stringify(text)
-
 const BY_DEADLINE =
   'if(task.deadline < today(), "overdue", if(task.deadline == today(), "today", if(task.deadline == today() + "1d", "tomorrow", "later")))'
-
 export const WHEN = `if(!task.deadline, null, ${BY_DEADLINE})`
-
 export const isWhen = (property: string | undefined): boolean =>
   property === 'formula.when' || property === 'formula.ordenWhen'
-
 export const WHEN_GROUPS = ['overdue', 'today', 'tomorrow', 'later']
-
 export const SMART_SORT: View['sort'] = [
   { property: 'task.priority', direction: 'ASC' },
   { property: 'task.deadline', direction: 'ASC' },
   { property: 'task.time', direction: 'ASC' },
 ]
-
 const inNote = (space: string, path: string) => `file.space == ${quote(space)} && file.path == ${quote(path)}`
-
 function base(
   view: Omit<View, 'orden' | 'options' | 'order' | 'summaries'> & Partial<View>,
   formulas: Record<string, string> = {},
@@ -43,7 +33,6 @@ function base(
     kept: {},
   }
 }
-
 export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base {
   switch (name) {
     case 'todos':

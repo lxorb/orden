@@ -9,7 +9,6 @@ const days: [number, string[]][] = [
   [6, ['saturday', 'sat']],
   [0, ['sunday', 'sun']],
 ]
-
 const months: [number, string[]][] = [
   [1, ['january', 'jan']],
   [2, ['february', 'feb']],
@@ -24,23 +23,18 @@ const months: [number, string[]][] = [
   [11, ['november', 'nov']],
   [12, ['december', 'dec']],
 ]
-
 const byName = (rows: [number, string[]][]) =>
   Object.fromEntries(rows.flatMap(([number, names]) => names.map((name) => [name, number])))
-
 export const EN: Grammar = {
   lang: 'en',
   today: ['today', 'tod'],
   tomorrow: ['tomorrow', 'tmr', 'tmrw'],
   dayAfter: [['day', 'after', 'tomorrow']],
   yesterday: ['yesterday'],
-
   weekdays: byName(days),
   shortDays: new Set(['sun', 'sat', 'wed']),
   context: new Set(['on', 'next', 'this', 'by', 'due', 'until', 'starting', 'from', 'every']),
-
   months: byName(months),
-
   next: new Set(['next']),
   coming: new Set(['this']),
   week: new Set(['week']),
@@ -48,7 +42,6 @@ export const EN: Grammar = {
   year: new Set(['year']),
   endOfMonth: [['end', 'of', 'month'], ['end', 'of', 'the', 'month'], ['eom']],
   weekend: [['this', 'weekend'], ['weekend']],
-
   within: new Set(['in']),
   units: {
     min: 'minute',
@@ -86,7 +79,6 @@ export const EN: Grammar = {
     nine: 9,
     ten: 10,
   },
-
   dayWords: new Set(['on', 'by', 'due']),
   deadlineWords: new Set(['by', 'due']),
   timeWords: new Set(['at', '@']),
@@ -102,7 +94,6 @@ export const EN: Grammar = {
     { words: ['tomorrow', 'night'], day: 'tomorrow', time: '19:00' },
   ],
   partsOfDay: { morning: '09:00', afternoon: '15:00', evening: '19:00', night: '22:00' },
-
   every: new Set(['every', 'each']),
   everyDone: new Set(['every!']),
   other: new Set(['other', 'second']),
@@ -124,14 +115,11 @@ export const EN: Grammar = {
   until: new Set(['until']),
   workdays: new Set(['weekday', 'weekdays', 'workday', 'workdays']),
   weekends: new Set(['weekend', 'weekends']),
-
   lasting: new Set(['for']),
   bareDuration: false,
-
   ordinal: /^(\d{1,2})(?:st|nd|rd|th)$/,
   ordinals: { first: 1, third: 3, fourth: 4, fifth: 5 },
   articles: new Set(['the']),
   monthFirst: false,
 }
-
 export const EN_US: Grammar = { ...EN, lang: 'en-US', monthFirst: true }

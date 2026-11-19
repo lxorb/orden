@@ -14,10 +14,8 @@ import {
 import type { Kept, Marks } from './fold'
 
 type Row = Record<string, unknown>
-
 const num = (value: unknown): number => (typeof value === 'number' ? value : 0)
 const str = (value: unknown): string => (typeof value === 'string' ? value : '')
-
 function parsed(text: unknown): unknown {
   if (typeof text !== 'string') return null
   try {
@@ -26,18 +24,15 @@ function parsed(text: unknown): unknown {
     return null
   }
 }
-
 function marksOf(value: unknown): Marks {
   if (!isRecord(value) || !Array.isArray(value.r) || !Array.isArray(value.v)) return { r: [], v: [] }
   return value as unknown as Marks
 }
-
 function keptOf(row: Row): Kept | null {
   const message = messageOf(parsed(row.json))
   if (!message) return null
   return { message, upto: num(row.upto), marks: marksOf(parsed(row.marks)) }
 }
-
 function chatOf(row: Row): CachedChat {
   const older = row.oldest
   return {
@@ -50,7 +45,6 @@ function chatOf(row: Row): CachedChat {
     row: chatRowOf(parsed(row.row)),
   }
 }
-
 function outboxOf(row: Row): OutboxRow | null {
   const event = eventOf(parsed(row.event))
   if (!event) return null
@@ -64,7 +58,6 @@ function outboxOf(row: Row): OutboxRow | null {
     refused,
   }
 }
-
 function wired(change: CacheChange): Row {
   switch (change.t) {
     case 'chat': {
@@ -101,7 +94,6 @@ function wired(change: CacheChange): Row {
       return change
   }
 }
-
 export function nativeCache(account: string): ChatCache {
   const read = async (ask: Row): Promise<unknown> => {
     const answers = await invoke<unknown[]>('chat_store_read', { account, asks: [ask] })
@@ -112,7 +104,6 @@ export function nativeCache(account: string): ChatCache {
     return Array.isArray(answer) ? answer.filter(isRecord) : []
   }
   const kept = (list: Row[]) => list.flatMap((row) => keptOf(row) ?? [])
-
   return {
     chats: async () => (await rows({ t: 'chats' })).map(chatOf),
     window: async (ask: WindowAsk) => kept(await rows({ t: 'window', ...ask })),

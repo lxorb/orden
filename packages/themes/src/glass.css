@@ -1,30 +1,24 @@
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-
   --glass-chrome: #191e26;
   --glass-wash: 92%;
   --glass-layer: rgb(255 255 255 / 0.04);
-
   --muted: #b6bec9;
   --muted-strong: #d2d8e1;
   --text: #e8edf4;
   --text-strong: #ffffff;
 }
-
 [data-theme='light'] {
   color-scheme: light;
-
   --glass-chrome: #f4f6f9;
   --glass-wash: 88%;
   --glass-layer: rgb(255 255 255 / 0.4);
-
   --muted: #454e5c;
   --muted-strong: #363f4d;
   --text: #13161b;
   --text-strong: #05070a;
 }
-
 :root[data-tinted] {
   --paper: var(--bg);
   --shell-ground: color-mix(
@@ -37,7 +31,6 @@
   --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, transparent);
   --glass-tab-hover: color-mix(in srgb, var(--text) 10%, transparent);
 }
-
 :root[data-tinted] [data-theme]:not([data-palette]) {
   --accent: inherit;
   --accent-hover: inherit;
@@ -46,7 +39,6 @@
   --accent-line: inherit;
   --accent-ink: inherit;
   --selection: inherit;
-
   --bg-color: var(--bg);
   --text-color: var(--text);
   --side-bar-bg-color: var(--glass-layer);
@@ -62,10 +54,8 @@
   --surface-picked: var(--surface-3);
   --tag: var(--accent-hover);
   --glass-tab-hover: color-mix(in srgb, var(--text) 10%, transparent);
-
   color: var(--text);
 }
-
 :root[data-tinted][data-paired] {
   --glass-from: color-mix(in srgb, var(--glass-tint) var(--glass-tinted, 100%), var(--bg));
   --glass-to: color-mix(in srgb, var(--glass-tint-2) var(--glass-tinted, 100%), var(--bg));
@@ -76,18 +66,15 @@
     linear-gradient(135deg, var(--glass-from), var(--glass-to));
   --shell-ground: var(--glass-blend);
 }
-
 @property --tab-ground {
   syntax: '<color>';
   inherits: true;
   initial-value: transparent;
 }
-
 @media (prefers-reduced-transparency: reduce) {
   :root[data-tinted][data-theme] {
     --shell-ground: var(--glass-tint, var(--glass-chrome));
   }
-
   :root[data-tinted][data-paired][data-theme] {
     --glass-from: var(--glass-tint);
     --glass-to: var(--glass-tint-2);

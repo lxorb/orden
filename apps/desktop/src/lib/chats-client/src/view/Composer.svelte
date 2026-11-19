@@ -46,9 +46,7 @@
     onpicker: (from: HTMLElement, insert: (emoji: string) => void) => void
     onpoll?: (send: (poll: Poll) => void) => void
   } = $props()
-
   const draftKey = $derived(parent ? `${page.id}/${parent}` : page.id)
-
   let host = $state<HTMLDivElement>()
   let editor = $state<EditorView | null>(null)
   let empty = $state(true)
@@ -58,28 +56,23 @@
   let mentionLit = $state(0)
   let before: string | null = null
   const attachments = new Attachments()
-
   let offered: string | null = null
   let dropped = $state<string | null>(null)
-
   function linkedNote(words: string): string | null {
     const target = /\[\[([^\]|#^]+)/.exec(words)?.[1]?.trim()
     const root = workspace.rootHolding(path)
     const found = target ? links.targetOf(path, { kind: 'wikilink', target }) : null
     return found && root ? insideSpace(root, found) : null
   }
-
   const keep = afterQuiet(() => {
     if (!editor) return
     const words = editor.state.doc.toString()
     dropped = linkedNote(words) ?? (words.trim() ? offered : null)
     if (!editingAside()) store().keepDraft(draftKey, words)
   }, 600)
-
   const aside = $derived(parent ? null : page.aside)
   const editingAside = () => aside?.kind === 'edit'
   const choices = $derived(mention ? mentionChoices(mention.query, page.members, page.me, mention.from === 0) : [])
-
   onMount(() => {
     if (!host) return
     const made = createEditor({
@@ -126,12 +119,10 @@
       attachments.clear()
     }
   })
-
   $effect(() => {
     const index = links.index(path)
     if (editor) setNoteIndex(editor, index)
   })
-
   let wasEditing: string | null = null
   $effect(() => {
     const now = aside?.kind === 'edit' ? aside.message : null
@@ -148,11 +139,9 @@
       if (aside) focus()
     })
   })
-
   function text(): string {
     return editor?.state.doc.toString() ?? ''
   }
-
   function setText(words: string) {
     if (!editor) return
     editor.dispatch({
@@ -160,28 +149,23 @@
       selection: { anchor: words.length },
     })
   }
-
   export function focus(): void {
     editor?.focus()
   }
-
   export function addFiles(files: readonly File[]): void {
     attachments.add(files)
     focus()
   }
-
   export function addNotes(paths: readonly string[]): void {
     void import('@orden/editor/note-links').then(({ noteLinks }) =>
       insert(`${noteLinks(links.index(path), paths, pickedLink)} `),
     )
   }
-
   export function insert(words: string) {
     if (!editor) return
     editor.dispatch(editor.state.replaceSelection(words))
     editor.focus()
   }
-
   async function send() {
     let words = text()
     if (!attachments.ready) return
@@ -225,11 +209,9 @@
     store().keepDraft(draftKey, '')
     alsoToChat = false
   }
-
   function sendFile(file: FileRef) {
     page.post('', { ...(parent ? { parent } : {}), files: [file] })
   }
-
   function pick(choice: Member | Special) {
     if (!editor || !mention) return
     const caret = editor.state.selection.main.head
@@ -241,7 +223,6 @@
     mention = null
     editor.focus()
   }
-
   function onKey(event: KeyboardEvent) {
     if (!editor || event.isComposing || recording) return
     const spend = () => {
@@ -250,7 +231,6 @@
     }
     const popup = !!editor.dom.querySelector('.cm-tooltip-autocomplete')
     const mod = event.ctrlKey || event.metaKey
-
     if (mention && choices.length && !popup) {
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         spend()
@@ -271,7 +251,6 @@
       }
     }
     if (popup) return
-
     const caret = editor.state.selection.main.head
     if (event.key === 'Enter') {
       const does = enterDoes(editor.state.sliceDoc(0, caret), { shift: event.shiftKey, mod })
@@ -312,7 +291,6 @@
       recording = true
     }
   }
-
   function onPaste(event: ClipboardEvent) {
     const files = [...(event.clipboardData?.files ?? [])]
     const long = files.length ? null : asFile(event.clipboardData?.getData('text/plain') ?? '', 'Text')
@@ -321,7 +299,6 @@
     event.stopPropagation()
     attachments.add(long ? [long] : files)
   }
-
   function attach(event: MouseEvent) {
     menu.show(event, [
       {
@@ -331,7 +308,6 @@
       ...(onpoll && !parent ? [DIVIDER, { label: 'Poll', run: () => onpoll((poll) => page.post('', { poll })) }] : []),
     ])
   }
-
   function later(event: MouseEvent) {
     const words = text()
     if (!words.trim()) return
@@ -350,18 +326,14 @@
       { title: 'Send later' },
     )
   }
-
   let waiting = $state.raw<Scheduled[]>([])
-
   async function lookWaiting() {
     if (!parent)
       waiting = await store()
         .scheduled(page.id)
         .catch(() => [])
   }
-
   onMount(() => void lookWaiting())
-
   function showWaiting(event: MouseEvent) {
     menu.show(
       event,
@@ -383,7 +355,6 @@
       { title: 'Scheduled' },
     )
   }
-
   const typing = $derived(page.view.presence.typing.filter((one) => one.who !== page.me && one.parent === parent))
 </script>
 
@@ -513,42 +484,35 @@
     flex: none;
     padding: 0 var(--space-4) 0;
   }
-
   .box {
     align-items: flex-end;
     gap: var(--space-1);
     min-height: 42px;
     padding: 4px;
   }
-
   .box.editing {
     border-color: var(--accent);
   }
-
   .field {
     position: relative;
     flex: 1;
     min-width: 0;
     align-self: center;
   }
-
   .editor :global(.cm-editor) {
     height: auto;
     max-height: 33vh;
     background: none;
     font-size: var(--text-row);
   }
-
   .editor :global(.cm-editor.cm-focused) {
     outline: none;
   }
-
   .editor :global(.cm-scroller) {
     overflow-y: auto;
     font-family: var(--font-ui);
     line-height: 1.45;
   }
-
   .editor :global(.cm-content:is(#write, .orden-write)) {
     max-width: none;
     margin: 0;
@@ -557,15 +521,12 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-
   .editor :global(.cm-line) {
     padding: 0 var(--space-1);
   }
-
   .editor :global(.cm-activeLine) {
     background: none;
   }
-
   .placeholder {
     position: absolute;
     top: 5px;
@@ -575,7 +536,6 @@
     font-size: var(--text-row);
     line-height: 1.45;
   }
-
   .tool,
   .later,
   .send {
@@ -587,7 +547,6 @@
     border: none;
     border-radius: var(--radius-md);
   }
-
   .tool,
   .later {
     --glyph-size: 18px;
@@ -599,7 +558,6 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .tool:hover,
     .later:hover {
@@ -607,12 +565,10 @@
       color: var(--text-strong);
     }
   }
-
   .send-group {
     display: flex;
     align-items: center;
   }
-
   .send {
     --glyph-size: 16px;
     background: var(--accent);
@@ -621,16 +577,13 @@
       background var(--dur-fast) var(--ease-out),
       transform var(--dur-fast) var(--ease-spring);
   }
-
   .send:active:not(:disabled) {
     transform: scale(0.92);
   }
-
   .later {
     --glyph-size: 14px;
     width: 20px;
   }
-
   .aside {
     --glyph-size: 14px;
     display: flex;
@@ -642,7 +595,6 @@
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .aside-words {
     flex: 1;
     min-width: 0;
@@ -650,18 +602,15 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .aside strong {
     color: var(--text-strong);
   }
-
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
     margin-bottom: var(--space-1);
   }
-
   .chip {
     --glyph-size: 16px;
     display: inline-flex;
@@ -675,29 +624,24 @@
     background: var(--surface-2);
     font-size: var(--text-sm);
   }
-
   .chip img {
     width: 32px;
     height: 32px;
     border-radius: var(--radius-sm);
     object-fit: cover;
   }
-
   .chip.busy {
     opacity: 0.6;
   }
-
   .chip.failed {
     border-color: var(--danger);
   }
-
   .chip-name {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .chip-off {
     --glyph-size: 12px;
     display: grid;
@@ -710,7 +654,6 @@
     background: none;
     color: var(--muted);
   }
-
   .foot {
     display: flex;
     align-items: center;
@@ -720,7 +663,6 @@
     color: var(--muted);
     font-size: var(--text-xs);
   }
-
   .waiting,
   .also {
     display: inline-flex;
@@ -732,13 +674,11 @@
     color: inherit;
     font: inherit;
   }
-
   .waiting {
     --glyph-size: 12px;
     gap: 4px;
     font-variant-numeric: tabular-nums;
   }
-
   .tick {
     width: 12px;
     height: 12px;
@@ -746,25 +686,21 @@
     border-radius: 3px;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   .tick.on {
     border-color: var(--accent);
     background: var(--accent);
   }
-
   .typing {
     display: inline-flex;
     align-items: center;
     gap: 2px;
     margin-inline-start: auto;
   }
-
   .dots {
     display: inline-flex;
     gap: 2px;
     margin-inline-start: 4px;
   }
-
   .dots i {
     width: 4px;
     height: 4px;
@@ -772,15 +708,12 @@
     background: var(--muted);
     animation: bounce 1.2s var(--ease-in-out) infinite;
   }
-
   .dots i:nth-child(2) {
     animation-delay: 0.15s;
   }
-
   .dots i:nth-child(3) {
     animation-delay: 0.3s;
   }
-
   @keyframes bounce {
     30% {
       transform: translateY(-3px);
@@ -792,7 +725,6 @@
       opacity: 0.4;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .dots i {
       animation: none;

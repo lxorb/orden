@@ -10,9 +10,7 @@ use crate::cdp;
 use orden_agents::verbs::{Dialog, Download, DownloadState};
 
 pub const DIALOG_PATIENCE: Duration = Duration::from_secs(30);
-
 pub const MOST_DOWNLOAD: i64 = 500 * 1024 * 1024;
-
 pub const STUBS: &str = r"(() => {
   const nothing = () => undefined
   try { Object.defineProperty(window, 'print', { value: nothing, writable: false, configurable: false }) } catch (_) {}
@@ -20,16 +18,12 @@ pub const STUBS: &str = r"(() => {
     try { if (kind && kind.prototype.showPicker) Object.defineProperty(kind.prototype, 'showPicker', { value: nothing, writable: false, configurable: false }) } catch (_) {}
   }
 })()";
-
 struct Held {
     dialog: Dialog,
     since: Instant,
 }
-
 static DIALOGS: Mutex<Option<HashMap<String, Held>>> = Mutex::new(None);
-
 static DOWNLOADS: Mutex<Vec<(String, Download)>> = Mutex::new(Vec::new());
-
 #[derive(Clone, Debug, Default)]
 pub struct Said {
     pub accept: bool,
@@ -37,7 +31,6 @@ pub struct Said {
     pub username: Option<String>,
     pub password: Option<String>,
 }
-
 impl Said {
     pub fn only(accept: bool) -> Self {
         Said {
@@ -45,7 +38,6 @@ impl Said {
             ..Said::default()
         }
     }
-
     pub fn chosen<'a>(&self, offered: impl IntoIterator<Item = &'a str>) -> Option<usize> {
         if !self.accept {
             return None;
@@ -73,30 +65,25 @@ impl Said {
         }
     }
 }
-
 pub static NUMBER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
-
 #[derive(Clone)]
 pub struct Owner {
     pub agent: String,
     pub tab: String,
     pub label: String,
 }
-
 pub fn dialog_of(label: &str) -> Option<Dialog> {
     DIALOGS.held().as_ref()?.get(label).map(|held| Dialog {
         open_ms: u64::try_from(held.since.elapsed().as_millis()).unwrap_or(u64::MAX),
         ..held.dialog.clone()
     })
 }
-
 pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), String> {
     if dialog_of(label).is_none() {
         return Err("the page is holding no dialog".into());
     }
     (crate::engines::pages()?.answer_dialog)(app, label, said)
 }
-
 pub fn hold(label: &str, dialog: Dialog) {
     DIALOGS.held().get_or_insert_with(HashMap::new).insert(
         label.to_string(),
@@ -106,13 +93,11 @@ pub fn hold(label: &str, dialog: Dialog) {
         },
     );
 }
-
 pub fn release(label: &str) {
     if let Some(all) = DIALOGS.held().as_mut() {
         all.remove(label);
     }
 }
-
 pub fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Option<PathBuf> {
     let name = std::path::Path::new(suggested)
         .file_name()
@@ -134,7 +119,6 @@ pub fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Option<Path
             || taken.iter().any(|one| std::path::Path::new(one) == path)
     }))
 }
-
 pub fn noted(agent: &str, download: Download) {
     let mut all = DOWNLOADS.held();
     all.push((agent.to_string(), download));
@@ -142,7 +126,6 @@ pub fn noted(agent: &str, download: Download) {
         all.remove(0);
     }
 }
-
 pub fn moved(agent: &str, path: &str, state: DownloadState) {
     let mut all = DOWNLOADS.held();
     if let Some((_, one)) = all
@@ -155,7 +138,6 @@ pub fn moved(agent: &str, path: &str, state: DownloadState) {
         }
     }
 }
-
 pub fn downloads_of(agent: &str, tab: Option<&str>) -> Vec<Download> {
     DOWNLOADS
         .held()
@@ -164,7 +146,6 @@ pub fn downloads_of(agent: &str, tab: Option<&str>) -> Vec<Download> {
         .map(|(_, one)| one.clone())
         .collect()
 }
-
 pub fn signing_in(realm: &str) -> String {
     let realm = realm.trim();
     if realm.is_empty() {
@@ -173,7 +154,6 @@ pub fn signing_in(realm: &str) -> String {
         format!("The site asks to sign in to {realm}: answer with username and password")
     }
 }
-
 pub fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> String {
     let all: Vec<&str> = offered.into_iter().collect();
     if all.is_empty() {
@@ -186,16 +166,13 @@ pub fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> String {
         )
     }
 }
-
 pub fn say(label: &str, level: &str, text: String) {
     cdp::heard(label).held().say(level, text);
 }
-
 pub fn forget(app: &AppHandle, label: &str) {
     release(label);
     let _ = app;
 }
-
 #[cfg(test)]
 mod tests {
     use super::{certificates, signing_in, Said, STUBS};
@@ -219,7 +196,6 @@ mod tests {
         assert_eq!(Said::only(false).chosen(offered), None);
         assert_eq!(yes.chosen(std::iter::empty()), None);
     }
-
     #[test]
     fn the_agent_is_told_how_to_answer_a_sign_in_and_a_certificate() {
         assert!(signing_in("Staff").contains("sign in to Staff"));
@@ -227,7 +203,6 @@ mod tests {
         assert!(certificates(["CN=A", "CN=B"]).ends_with("CN=A; CN=B"));
         assert!(certificates(std::iter::empty()).contains("go on without one"));
     }
-
     #[test]
     fn browser_dialog_takes_a_user_name_and_a_password() {
         let answer: AnswerDialog = serde_json::from_value(serde_json::json!({
@@ -247,7 +222,6 @@ mod tests {
         assert!(DialogKind::SignIn.signs_in() && DialogKind::Certificate.signs_in());
         assert!(!DialogKind::Prompt.signs_in());
     }
-
     #[test]
     fn the_stubs_touch_nothing_but_print_and_the_pickers() {
         assert!(STUBS.contains("'print'"));

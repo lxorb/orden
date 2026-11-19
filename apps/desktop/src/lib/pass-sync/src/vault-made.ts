@@ -4,7 +4,6 @@ import type { VaultMeta } from '@orden/pass/types'
 import type { VaultRow } from './local'
 
 export const FIRST_KEY_VERSION = 1
-
 export async function madeVaultRow(
   opened: Opened,
   id: string,

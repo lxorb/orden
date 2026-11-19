@@ -5,28 +5,22 @@ export interface Contents {
   keys: Record<string, string>
   seen: Record<string, string>
 }
-
 export type Base = Contents
-
 export interface Side {
   contents: Contents
   prints: Record<string, string>
 }
-
 export interface Merged {
   contents: Contents
   moved: Record<string, string>
 }
-
 const EMPTY: Contents = {
   accounts: { accounts: [], active: {}, defaultVendor: '', uses: {} },
   keys: {},
   seen: {},
 }
-
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 const isText = (one: [string, unknown]): one is [string, string] => typeof one[1] === 'string'
-
 function mergedMap<T, B>(
   base: Record<string, B> | null,
   local: Record<string, T>,
@@ -43,12 +37,10 @@ function mergedMap<T, B>(
   }
   return out
 }
-
 function mergedValue<T>(base: T | undefined, local: T, remote: T): T {
   if (base === undefined) return remote
   return same(local, base) ? remote : local
 }
-
 function mergedAccounts(base: Accounts | null, local: Accounts, remote: Accounts): Accounts {
   const byId = (list: readonly Account[]) => Object.fromEntries(list.map((one) => [one.id, one]))
   const baseById = base ? byId(base.accounts) : null
@@ -71,10 +63,8 @@ function mergedAccounts(base: Accounts | null, local: Accounts, remote: Accounts
     uses: records<Vendor>((one) => one.uses),
   })
 }
-
 const moved = <T>(record: Record<string, T>, from: string, to: string): Record<string, T> =>
   from in record ? Object.fromEntries(Object.entries(record).map(([id, one]) => [id === from ? to : id, one])) : record
-
 function alike(mine: Account, theirs: Account, myKey?: string, theirKey?: string): boolean {
   return (
     mine.kind === theirs.kind &&
@@ -82,7 +72,6 @@ function alike(mine: Account, theirs: Account, myKey?: string, theirKey?: string
     (myKey === undefined || theirKey === undefined || myKey === theirKey)
   )
 }
-
 function apart(base: Base | null, local: Side, remote: Side): { side: Side; moved: Record<string, string> } {
   const all = [base?.accounts, local.contents.accounts, remote.contents.accounts]
   const taken = new Set(all.flatMap((one) => one?.accounts.map((each) => each.id) ?? []))
@@ -108,7 +97,6 @@ function apart(base: Base | null, local: Side, remote: Side): { side: Side; move
   }
   return { side, moved: moves }
 }
-
 export function merged(base: Base | null, mine: Side, remote: Side): Merged {
   const { side: local, moved: moves } = apart(base, mine, remote)
   const accounts = mergedAccounts(base?.accounts ?? null, local.contents.accounts, remote.contents.accounts)
@@ -127,11 +115,9 @@ export function merged(base: Base | null, mine: Side, remote: Side): Merged {
     Object.fromEntries(Object.entries(record).filter(([id]) => ids.has(id)))
   return { contents: { accounts, keys: only(keys), seen: only(seen) }, moved: moves }
 }
-
 export function baseOf(contents: Contents, prints: Record<string, string>): Base {
   return { accounts: contents.accounts, keys: prints, seen: contents.seen }
 }
-
 export function contentsIn(value: unknown): Contents {
   if (typeof value !== 'object' || value === null) return EMPTY
   const { accounts, keys, seen } = value as Record<string, unknown>
@@ -139,7 +125,6 @@ export function contentsIn(value: unknown): Contents {
     typeof record === 'object' && record !== null ? Object.fromEntries(Object.entries(record).filter(isText)) : {}
   return { accounts: accountsIn(accounts), keys: texts(keys), seen: texts(seen) }
 }
-
 export function agrees(base: Base | null, contents: Contents, prints: Record<string, string>): boolean {
   return !!base && same(baseOf(contents, prints), base)
 }

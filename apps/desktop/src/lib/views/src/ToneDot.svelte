@@ -4,11 +4,9 @@
   import { toneColour } from './chips'
 
   const { tone, ontone }: { tone: string | undefined; ontone: (tone: string | null) => void } = $props()
-
   let open = $state(false)
   let host = $state<HTMLElement>()
   const colour = $derived(toneColour(tone))
-
   $effect(() =>
     open
       ? overlays.show(
@@ -50,7 +48,6 @@
     display: inline-grid;
     place-items: center;
   }
-
   .dot {
     width: 16px;
     height: 16px;
@@ -61,16 +58,13 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
     transition: scale var(--dur-fast) var(--ease-spring);
   }
-
   .dot.none {
     background: none;
     box-shadow: inset 0 0 0 1.5px var(--muted);
   }
-
   .dot:hover {
     scale: 1.12;
   }
-
   .pick {
     position: absolute;
     top: calc(100% + 4px);

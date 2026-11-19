@@ -5,7 +5,6 @@ export interface SidebarSpace {
   colour: [number, number, number] | null
   container: number
 }
-
 export interface SidebarFolder {
   id: string
   name: string
@@ -14,7 +13,6 @@ export interface SidebarFolder {
   space: string | null
   split: boolean
 }
-
 export interface SidebarTab {
   title: string
   url: string
@@ -27,7 +25,6 @@ export interface SidebarTab {
   container: number
   added?: Date
 }
-
 export interface Sidebar {
   spaces: SidebarSpace[]
   folders: SidebarFolder[]

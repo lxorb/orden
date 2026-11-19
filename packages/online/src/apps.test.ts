@@ -28,7 +28,6 @@ import {
 } from './apps'
 
 const view = { width: 1440, height: 900, dpr: 2, hz: 120 }
-
 describe('an application’s socket', () => {
   it.each<ViewerFrame>([
     { t: 'hello' },
@@ -41,7 +40,6 @@ describe('an application’s socket', () => {
   ])('reads back what a viewer sent: %j', (one) => {
     expect(viewerFrameOf(JSON.stringify(one))).toEqual(one)
   })
-
   it.each<RelayToViewer>([
     { t: 'held', by: 'Laptop', since: 1, taken: true },
     { t: 'hold' },
@@ -54,7 +52,6 @@ describe('an application’s socket', () => {
   ])('reads back what the relay told a viewer: %j', (one) => {
     expect(toViewerOf(JSON.stringify(one))).toEqual(one)
   })
-
   it.each<RelayToHost>([
     { t: 'viewer', device: 'd_1', name: 'Phone' },
     { t: 'viewer', device: null, name: '' },
@@ -63,7 +60,6 @@ describe('an application’s socket', () => {
   ])('reads back what the relay told the host: %j', (one) => {
     expect(toHostOf(JSON.stringify(one))).toEqual(one)
   })
-
   it('reads the host’s frames, and drops what does not check', () => {
     expect(hostFrameOf('{"t":"host"}')).toEqual({ t: 'host' })
     expect(hostFrameOf('{"t":"state","state":"melting"}')).toBeNull()
@@ -72,18 +68,15 @@ describe('an application’s socket', () => {
     expect(viewerFrameOf('{"t":"hello","view":{"width":0,"height":1,"dpr":1,"hz":60}}')).toBeNull()
     expect(viewerFrameOf('not json')).toBeNull()
   })
-
   it('bounds a view to what a screen can be', () => {
     expect(viewOf(view)).toEqual(view)
     expect(viewOf({ ...view, dpr: 9 })).toBeNull()
     expect(viewOf({ ...view, hz: Number.NaN })).toBeNull()
   })
-
   it('names the socket by the file id, escaped', () => {
     expect(appSocketPath('a/b')).toBe('/v2/apps/a%2Fb/socket')
   })
 })
-
 describe('an application’s file', () => {
   it('reads back what it wrote, both kinds of run', () => {
     const installed = {
@@ -99,7 +92,6 @@ describe('an application’s file', () => {
     expect(appFileOf(appFileText(installed))).toEqual(installed)
     expect(appFileOf(appFileText(path))).toEqual(path)
   })
-
   it('is read strictly: anything else is not an application', () => {
     expect(appFileOf('')).toBeNull()
     expect(appFileOf('{"v":2,"host":"d","run":{"kind":"path","path":"/x"}}')).toBeNull()
@@ -113,7 +105,6 @@ describe('an application’s file', () => {
     })
   })
 })
-
 describe('an application file from any version, made on any platform', () => {
   const made = [
     '{"v":1,"host":"d1","run":{"kind":"installed","id":"org.gimp.GIMP.desktop","name":"GIMP"}}\n',
@@ -126,12 +117,10 @@ describe('an application file from any version, made on any platform', () => {
     '{\r\n  "v": 1,\r\n  "host": "d1",\r\n  "run": { "kind": "path", "path": "notepad.exe" }\r\n}\r\n',
     '\uFEFF{"v":1,"host":"d1","run":{"kind":"installed","id":"x","name":"X"}}\r\n',
   ]
-
   it('opens', () => {
     for (const text of made) expect(appFileOf(text), text).not.toBeNull()
   })
 })
-
 describe('a reason a host did not start it', () => {
   it('is dropped, and the frame kept, when this side does not know it', () => {
     expect(toViewerOf('{"t":"state","state":"stopped","why":"later"}')).toEqual({
@@ -145,7 +134,6 @@ describe('a reason a host did not start it', () => {
     })
   })
 })
-
 describe('a host’s catalogue', () => {
   it('keeps what checks, the first of an id, and an icon only when it is a small picture', () => {
     const png = 'data:image/png;base64,iVBORw0KGgo='
@@ -165,7 +153,6 @@ describe('a host’s catalogue', () => {
     ])
     expect(catalogueOf({ apps: [] })).toBeNull()
   })
-
   it('fits the account by letting go of the last ones’ icons first, and of no application', () => {
     const icon = `data:image/png;base64,${'A'.repeat(1000)}`
     const apps = Array.from({ length: 10 }, (_, at) => ({ id: `${at}`, name: `${at}`, icon }))
@@ -176,7 +163,6 @@ describe('a host’s catalogue', () => {
     expect(fitted.map((one) => 'icon' in one)).toEqual([...Array(7).fill(true), false, false, false])
     expect(JSON.stringify({ apps: fitted }).length).toBeLessThanOrEqual(whole - 2500)
   })
-
   it('lists at most MOST_INSTALLED', () => {
     const many = Array.from({ length: MOST_INSTALLED + 5 }, (_, at) => ({
       id: `${at}`,
@@ -185,7 +171,6 @@ describe('a host’s catalogue', () => {
     expect(catalogueOf(many)).toHaveLength(MOST_INSTALLED)
   })
 })
-
 describe('the picture’s signalling', () => {
   it('says the viewer’s offer, candidates and goodbye as the host’s crate reads them', () => {
     expect(toHostText({ offer: 'v=0' })).toBe('{"offer":"v=0"}')
@@ -196,7 +181,6 @@ describe('the picture’s signalling', () => {
     ).toBe('{"candidate":{"candidate":"candidate:1 1 udp 1 1.2.3.4 5 typ host","sdpMid":"0"}}')
     expect(toHostText({ bye: true })).toBe('{"bye":true}')
   })
-
   it('reads the host’s answer and why it has no picture, a reason it does not know as none', () => {
     expect(fromHostOf('{"answer":"v=0"}')).toEqual({ answer: 'v=0' })
     expect(fromHostOf('{"cannot":"encoder"}')).toEqual({ cannot: 'encoder' })
@@ -205,7 +189,6 @@ describe('the picture’s signalling', () => {
     expect(fromHostOf('not json')).toBeNull()
   })
 })
-
 describe('the holder’s input', () => {
   it('goes as the JSON the host’s crate reads, tagged by what it is', () => {
     expect(inputText({ t: 'move', x: 10, y: 20 })).toBe('{"t":"move","x":10,"y":20}')
@@ -216,7 +199,6 @@ describe('the holder’s input', () => {
     expect(inputText({ t: 'share', clipboard: false })).toBe('{"t":"share","clipboard":false}')
   })
 })
-
 describe('what the host says on the picture’s channel', () => {
   it('reads the host’s pong, its encoder dropped where it is no name', () => {
     expect(fromPictureOf('{"t":"pong","at":5,"began":1000,"now":1250.5,"encoder":"libvpx","hardware":false}')).toEqual({
@@ -239,7 +221,6 @@ describe('what the host says on the picture’s channel', () => {
     })
     expect(fromPictureOf('{"t":"pong","at":"5","began":1000,"now":1}')).toBeNull()
   })
-
   it('reads what the application uses, a GPU it could not read left out', () => {
     expect(usageOf({ cpu: 12.5, memory: 1024, gpu: 3 })).toEqual({
       cpu: 12.5,
@@ -250,7 +231,6 @@ describe('what the host says on the picture’s channel', () => {
     expect(usageOf({ cpu: -1, memory: 1024 })).toBeNull()
     expect(usageOf(null)).toBeNull()
   })
-
   it('reads what the application copied, up to the most a message carries', () => {
     expect(fromPictureOf('{"t":"clipboard","text":"copied"}')).toEqual({
       t: 'clipboard',
@@ -259,7 +239,6 @@ describe('what the host says on the picture’s channel', () => {
     expect(fromPictureOf(JSON.stringify({ t: 'clipboard', text: 'x'.repeat(MOST_CLIPBOARD + 1) }))).toBeNull()
     expect(fromPictureOf('{"t":"clipboard","text":3}')).toBeNull()
   })
-
   it('reads the pointer’s shape with its hot spot, or that it is hidden', () => {
     const png = 'data:image/png;base64,iVBORw0KGgo='
     expect(fromPictureOf(JSON.stringify({ t: 'pointer', png, x: 3, y: 4 }))).toEqual({
@@ -270,7 +249,6 @@ describe('what the host says on the picture’s channel', () => {
     })
     expect(fromPictureOf('{"t":"pointer","hidden":true}')).toEqual({ t: 'pointer', hidden: true })
   })
-
   it('drops what does not check: another picture, a spot off it, too large, not text', () => {
     const png = 'data:image/png;base64,iVBORw0KGgo='
     expect(
@@ -285,7 +263,6 @@ describe('what the host says on the picture’s channel', () => {
     expect(fromPictureOf('nope')).toBeNull()
   })
 })
-
 describe('the servers a viewer is handed', () => {
   it('keeps STUN and TURN addresses, a list or one, with a TURN server’s credentials', () => {
     expect(

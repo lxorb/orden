@@ -29,18 +29,14 @@ import {
 } from '../../../sync-server/src/api'
 
 export const DOCUMENT_KINDS: ReadonlySet<string> = new Set(['note', 'canvas', 'pages', 'url', 'term', 'chat'])
-
 const DOCUMENTS_SQL = "('note', 'canvas', 'pages', 'url', 'term', 'chat')"
-
 export { kindOfName }
-
 function kindIn(value: string, name: string): EntryKind {
   if (value === 'folder' || value === 'file' || DOCUMENT_KINDS.has(value)) {
     return value as EntryKind
   }
   return kindOfName(name)
 }
-
 export interface Content {
   hash: string
   size: number
@@ -48,9 +44,7 @@ export interface Content {
   epoch: number
   epochBase: string | null
 }
-
 type Snapshot = Omit<TreeEntry, 'id' | 'kind'>
-
 function snapshotOf(entry: TreeEntry): Snapshot {
   const snapshot: Snapshot = {
     parent: entry.parent,
@@ -69,7 +63,6 @@ function snapshotOf(entry: TreeEntry): Snapshot {
   if (entry.changesBy !== undefined) snapshot.changesBy = entry.changesBy
   return snapshot
 }
-
 function sameAs(entry: TreeEntry, before: Snapshot): boolean {
   return (
     entry.parent === before.parent &&
@@ -87,7 +80,6 @@ function sameAs(entry: TreeEntry, before: Snapshot): boolean {
     entry.changesBy === before.changesBy
   )
 }
-
 interface FolderRow {
   id: string
   parent_id: string | null
@@ -100,7 +92,6 @@ interface FolderRow {
   meta: string | null
   changes_by: string | null
 }
-
 interface NoteRow {
   id: string
   kind: string
@@ -120,21 +111,17 @@ interface NoteRow {
   path: string
   epoch: number
 }
-
 interface Folders {
   live?: TreeEntry
   deleted?: TreeEntry
 }
-
 class Placing {
   private readonly folders = new Map<string, Folders>()
   private readonly taken = new Map<string | null, Set<string>>()
   private readonly askedFor = new Map<string, Folders>()
-
   constructor(entries: Iterable<TreeEntry>) {
     for (const entry of entries) this.add(entry)
   }
-
   add(entry: TreeEntry) {
     const key = nameKey(entry.name)
     if (!entry.deleted) this.namesIn(entry.parent).add(key)
@@ -143,17 +130,14 @@ class Placing {
     if (entry.deleted) slot.deleted ??= entry
     else slot.live ??= entry
   }
-
   folder(parent: string | null, name: string): Folders | undefined {
     const at = `${parent ?? ''}\u0000${nameKey(name)}`
     return this.askedFor.get(at) ?? this.folders.get(at)
   }
-
   asked(parent: string | null, name: string, folder: TreeEntry) {
     const at = `${parent ?? ''}\u0000${nameKey(name)}`
     this.askedFor.set(at, this.slot(folder.parent, nameKey(folder.name)))
   }
-
   free(parent: string | null, wanted: string, kind: EntryKind): string {
     const taken = this.namesIn(parent)
     let name = heldName(wanted)
@@ -163,7 +147,6 @@ class Placing {
       name = shortened(name, found.length - LONGEST_NAME, kind)
     }
   }
-
   private slot(parent: string | null, key: string): Folders {
     const at = `${parent ?? ''}\u0000${key}`
     let slot = this.folders.get(at)
@@ -173,7 +156,6 @@ class Placing {
     }
     return slot
   }
-
   private namesIn(parent: string | null): Set<string> {
     let names = this.taken.get(parent)
     if (!names) {
@@ -183,7 +165,6 @@ class Placing {
     return names
   }
 }
-
 export class Tree {
   readonly state: TreeState
   private readonly before = new Map<string, Snapshot>()
@@ -195,7 +176,6 @@ export class Tree {
   private unmarked = false
   moves: Moved[] = []
   gone: string[] = []
-
   constructor(
     readonly spaceId: string,
     readonly next: number,
@@ -218,17 +198,14 @@ export class Tree {
       }
       entries.push(noteEntry(row, row.name))
     }
-
     if (unmarked !== undefined) this.unmarked = unmarked
     this.state = treeState(entries, next - 1)
     for (const entry of this.state.entries.values()) this.before.set(entry.id, snapshotOf(entry))
     this.heal()
   }
-
   get healed(): boolean {
     return this.raw.length > 0
   }
-
   private heal() {
     if (!this.raw.length) return
     const rows = [...this.raw].sort((a, b) => a.seq - b.seq)
@@ -237,10 +214,8 @@ export class Tree {
       const parts = row.path.split('/')
       const name = parts.pop() ?? row.path
       const live = row.deleted === 0
-
       let parent: string | null = null
       for (const part of parts) parent = this.folderFor(placing, parent, part, live, row.seq)
-
       const placed = live ? placing.free(parent, name, 'note') : name
       const entry = noteEntry(row, placed)
       entry.parent = parent
@@ -250,11 +225,9 @@ export class Tree {
       this.before.set(entry.id, { ...snapshotOf(entry), name: '' })
     }
   }
-
   private folderFor(placing: Placing, parent: string | null, name: string, live: boolean, seq: number): string {
     const found = placing.folder(parent, name)
     if (found?.live) return found.live.id
-
     const deleted = found?.deleted
     if (deleted) {
       if (live) {
@@ -265,7 +238,6 @@ export class Tree {
       }
       return deleted.id
     }
-
     const folder: TreeEntry = {
       id: newId(),
       kind: 'folder',
@@ -281,35 +253,28 @@ export class Tree {
     placing.asked(parent, name, folder)
     return folder.id
   }
-
   private tick(): number {
     this.state.cursor += 1
     return this.state.cursor
   }
-
   apply(op: Op, context: OpContext): OpResult {
     const repeated = this.state.done.has(op.op)
     const result = applyOp(this.state, op, context)
     if (!repeated) this.answered.set(op.op, result)
     return result
   }
-
   answers(op: string): boolean {
     return this.state.done.has(op)
   }
-
   remember(done: ReadonlyMap<string, OpResult>) {
     for (const [op, result] of done) this.state.done.set(op, result)
   }
-
   touch(id: string, device?: string): number {
     return contentChanged(this.state, id, device)
   }
-
   entry(id: string): TreeEntry | undefined {
     return this.state.entries.get(id)
   }
-
   child(parent: string | null, name: string): TreeEntry | undefined {
     const key = nameKey(name)
     for (const entry of this.state.entries.values()) {
@@ -317,7 +282,6 @@ export class Tree {
     }
     return undefined
   }
-
   lookup(): (parent: string | null, name: string) => TreeEntry | undefined {
     const live = new Map<string, TreeEntry>()
     for (const entry of this.state.entries.values()) {
@@ -326,7 +290,6 @@ export class Tree {
     }
     return (parent, name) => live.get(`${parent ?? ''}\u0000${nameKey(name)}`)
   }
-
   pathOf(id: string): string {
     const names: string[] = []
     const seen = new Set<string>()
@@ -339,7 +302,6 @@ export class Tree {
     }
     return names.reverse().join('/')
   }
-
   private moved(): Map<string, string> {
     const out = new Map<string, string>()
     const moving: TreeEntry[] = []
@@ -360,7 +322,6 @@ export class Tree {
     }
     return out
   }
-
   placed(): Set<string> {
     const out = new Set<string>()
     for (const entry of this.state.entries.values()) {
@@ -371,7 +332,6 @@ export class Tree {
     }
     return out
   }
-
   statements(env: Env): D1PreparedStatement[] | null {
     const moved = this.moved()
     const at = now()
@@ -385,16 +345,13 @@ export class Tree {
       const wasLive = this.before.get(entry.id)?.deleted === false
       return entry.kind !== 'folder' && entry.deleted && wasLive && from !== undefined ? [from] : []
     })
-
     const folders: Record<string, unknown>[] = []
     const newFolders: Record<string, unknown>[] = []
     const notes: Record<string, unknown>[] = []
     const newNotes: Record<string, unknown>[] = []
-
     for (const entry of this.state.entries.values()) {
       const before = this.before.get(entry.id)
       if (before && sameAs(entry, before) && !moved.has(entry.id)) continue
-
       const gone = before && before.deleted !== entry.deleted ? (entry.deleted ? 1 : 0) : 2
       const row = {
         id: entry.id,
@@ -410,12 +367,10 @@ export class Tree {
         meta: metaText(entry.meta),
         changesBy: entry.changesBy ? JSON.stringify(entry.changesBy) : null,
       }
-
       if (entry.kind === 'folder') {
         ;(before ? folders : newFolders).push(row)
         continue
       }
-
       const path = moved.get(entry.id) ?? this.paths.get(entry.id) ?? this.pathOf(entry.id)
       const placed = {
         ...row,
@@ -431,7 +386,6 @@ export class Tree {
         notes.push(placed)
         continue
       }
-
       const content = this.content.get(entry.id) ?? emptyContent(entry.kind)
       newNotes.push({
         ...placed,
@@ -442,29 +396,23 @@ export class Tree {
         epochBase: content.epochBase,
       })
     }
-
     const described = [...this.state.entries.values()].flatMap((entry) => {
       if (entry.kind === 'folder') return []
       const before = this.before.get(entry.id)
       if (metaText(entry.meta) === metaText(before?.meta)) return []
       return picturesOfMeta(entry.meta).map((hash) => ({ id: entry.id, hash }))
     })
-
     const ops = [...this.answered].map(([op, result]) => ({
       id: `${this.spaceId}/${op}`,
       result: JSON.stringify(result),
     }))
-
     const changed = folders.length + newFolders.length + notes.length + newNotes.length > 0
     if (!changed && !ops.length && !this.unmarked) return null
-
     const db = env.DB
     const space = this.spaceId
     const out: D1PreparedStatement[] = []
-
     if (changed) {
       out.push(guard(db, space, this.next))
-
       for (const piece of chunks(
         folders.map((one) => one.id),
         500,
@@ -491,12 +439,10 @@ export class Tree {
             .bind(space, JSON.stringify(piece)),
         )
       }
-
       for (const piece of chunks(folders, 500)) out.push(updateFolders(db, space, at, piece))
       for (const piece of chunks(newFolders, 500)) out.push(insertFolders(db, space, at, piece))
       for (const piece of chunks(notes, 500)) out.push(updateNotes(db, space, at, piece))
       for (const piece of chunks(newNotes, 500)) out.push(insertNotes(db, space, at, piece))
-
       out.push(
         db
           .prepare(
@@ -506,9 +452,7 @@ export class Tree {
           .bind(space, this.state.cursor + 1),
       )
     }
-
     if (this.unmarked) out.push(markEpochs(db, space))
-
     for (const piece of chunks(described, 500)) {
       out.push(
         db
@@ -519,7 +463,6 @@ export class Tree {
           .bind(JSON.stringify(piece)),
       )
     }
-
     for (const piece of chunks(ops, 200)) {
       out.push(
         db
@@ -531,11 +474,9 @@ export class Tree {
           .bind(space, at, JSON.stringify(piece)),
       )
     }
-
     return out
   }
 }
-
 function markEpochs(db: D1Database, space: string): D1PreparedStatement {
   return db
     .prepare(
@@ -544,7 +485,6 @@ function markEpochs(db: D1Database, space: string): D1PreparedStatement {
     )
     .bind(space)
 }
-
 function emptyContent(kind: EntryKind): Content {
   const document = DOCUMENT_KINDS.has(kind)
   return {
@@ -555,9 +495,7 @@ function emptyContent(kind: EntryKind): Content {
     epochBase: document ? EMPTY_HASH : null,
   }
 }
-
 const EMPTY_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-
 function guard(db: D1Database, space: string, next: number): D1PreparedStatement {
   return db
     .prepare(
@@ -566,11 +504,9 @@ function guard(db: D1Database, space: string, next: number): D1PreparedStatement
     )
     .bind(space, next)
 }
-
 function field(name: string): string {
   return `json_extract(value, '$.${name}')`
 }
-
 function updateFolders(
   db: D1Database,
   space: string,
@@ -594,7 +530,6 @@ function updateFolders(
     )
     .bind(space, at, JSON.stringify(rows))
 }
-
 function insertFolders(
   db: D1Database,
   space: string,
@@ -614,7 +549,6 @@ function insertFolders(
     )
     .bind(space, at, JSON.stringify(rows))
 }
-
 function updateNotes(
   db: D1Database,
   space: string,
@@ -644,7 +578,6 @@ function updateNotes(
     )
     .bind(space, at, JSON.stringify(rows))
 }
-
 function insertNotes(
   db: D1Database,
   space: string,
@@ -668,7 +601,6 @@ function insertNotes(
     )
     .bind(space, at, JSON.stringify(rows))
 }
-
 function folderEntry(row: FolderRow): TreeEntry {
   const entry: TreeEntry = {
     id: row.id,
@@ -688,7 +620,6 @@ function folderEntry(row: FolderRow): TreeEntry {
   if (changes) entry.changesBy = changes
   return entry
 }
-
 function changesIn(value: string | null): Record<string, number> | undefined {
   if (value === null) return undefined
   let read: unknown
@@ -704,7 +635,6 @@ function changesIn(value: string | null): Record<string, number> | undefined {
   }
   return Object.keys(out).length ? out : undefined
 }
-
 function noteEntry(row: NoteRow, name: string): TreeEntry {
   const entry: TreeEntry = {
     id: row.id,
@@ -727,21 +657,16 @@ function noteEntry(row: NoteRow, name: string): TreeEntry {
   if (changes) entry.changesBy = changes
   return entry
 }
-
 const FOLDER_COLUMNS = 'id, parent_id, name, deleted, seq, updated_by, deleted_in, pos, meta, changes_by'
-
 const NOTE_COLUMNS = `id, kind, folder_id, name, deleted, seq, doc_seq, updated_by, doc_by, deleted_in,
             placed_seq, placed_by, pos, meta, changes_by, path, epoch`
-
 export const KEPT = 'not (deleted = 1 and deleted_at is null)'
-
 async function cursorOf(env: Env, spaceId: string): Promise<number> {
   const cursor = await env.DB.prepare('select next from space_cursor where space_id = ?')
     .bind(spaceId)
     .first<{ next: number }>()
   return cursor?.next ?? 1
 }
-
 export async function readTree(env: Env, spaceId: string, device?: string): Promise<Tree> {
   const next = await cursorOf(env, spaceId)
   const folders = await env.DB.prepare(`select ${FOLDER_COLUMNS} from folders where space_id = ? order by id`)
@@ -750,29 +675,24 @@ export async function readTree(env: Env, spaceId: string, device?: string): Prom
   const notes = await env.DB.prepare(`select ${NOTE_COLUMNS} from notes where space_id = ? and ${KEPT} order by id`)
     .bind(spaceId)
     .all<NoteRow>()
-
   return new Tree(spaceId, next, folders.results, notes.results, device)
 }
-
 interface Touched {
   id: string
   parent?: string | null
   name?: string
 }
-
 interface Walk {
   id?: string
   folders: readonly string[]
   name: string
 }
-
 export interface Reach {
   ids: readonly string[]
   touched: readonly Touched[]
   under: readonly string[]
   walks?: readonly Walk[]
 }
-
 export function reachOf(ops: readonly Op[]): Reach {
   const ids: string[] = []
   const touched: Touched[] = []
@@ -798,16 +718,13 @@ export function reachOf(ops: readonly Op[]): Reach {
   }
   return { ids, touched, under }
 }
-
 class Rows {
   readonly folders = new Map<string, FolderRow>()
   readonly notes = new Map<string, NoteRow>()
-
   constructor(
     private readonly env: Env,
     private readonly spaceId: string,
   ) {}
-
   async byIds(ids: readonly string[]) {
     const wanted = [...new Set(ids)].filter((id) => !this.has(id))
     for (const piece of chunks(wanted, 500)) {
@@ -816,7 +733,6 @@ class Rows {
       await this.noteRows(`id in (select value from json_each(?2))`, list)
     }
   }
-
   async above() {
     const starts = new Set<string>()
     for (const row of this.folders.values()) if (row.parent_id !== null) starts.add(row.parent_id)
@@ -833,7 +749,6 @@ class Rows {
       )
     }
   }
-
   async below(ids: readonly string[]) {
     const roots = [...new Set(ids)].filter((id) => this.folders.has(id))
     for (const piece of chunks(roots, 100)) {
@@ -847,7 +762,6 @@ class Rows {
       await this.noteRows(`folder_id in ${inside}`, list)
     }
   }
-
   async named(parent: string | null, name: string) {
     const prefix = keyPrefix(name)
     const where = (column: string) =>
@@ -855,29 +769,24 @@ class Rows {
     await this.folderRows(where('parent_id'), parent ?? '', prefix)
     await this.noteRows(where('folder_id'), parent ?? '', prefix)
   }
-
   foldersNamed(parent: string | null, name: string): string[] {
     const key = nameKey(name)
     return [...this.folders.values()]
       .filter((row) => (row.parent_id ?? '') === (parent ?? '') && row.deleted === 0 && nameKey(row.name) === key)
       .map((row) => row.id)
   }
-
   parentOf(id: string): string | null | undefined {
     const folder = this.folders.get(id)
     if (folder) return folder.parent_id
     const note = this.notes.get(id)
     return note ? note.folder_id : undefined
   }
-
   nameOf(id: string): string | null | undefined {
     return this.folders.get(id)?.name ?? this.notes.get(id)?.name
   }
-
   private has(id: string): boolean {
     return this.folders.has(id) || this.notes.has(id)
   }
-
   private async folderRows(where: string, ...values: unknown[]) {
     const { results } = await this.env.DB.prepare(
       `select ${FOLDER_COLUMNS} from folders where space_id = ?1 and ${where}`,
@@ -886,7 +795,6 @@ class Rows {
       .all<FolderRow>()
     for (const row of results) this.folders.set(row.id, row)
   }
-
   private async noteRows(where: string, ...values: unknown[]) {
     const { results } = await this.env.DB.prepare(
       `select ${NOTE_COLUMNS} from notes where space_id = ?1 and ${KEPT} and ${where}`,
@@ -896,9 +804,7 @@ class Rows {
     for (const row of results) this.notes.set(row.id, row)
   }
 }
-
 const NUMBERED = 16
-
 function keyPrefix(given: string): string {
   const name = heldName(given)
   if (name.length > LONGEST_NAME - NUMBERED) return ''
@@ -906,7 +812,6 @@ function keyPrefix(given: string): string {
   const key = nameKey(uncounted(dot > 0 ? name.slice(0, dot) : name))
   return /[σς]$/u.test(key) ? key.slice(0, -1) : key
 }
-
 async function unhealed(env: Env, spaceId: string): Promise<{ raw: boolean; unmarked: boolean }> {
   const row = await env.DB.prepare(
     `select exists(select 1 from notes where space_id = ?1 and name is null and ${KEPT}) as raw,
@@ -917,19 +822,16 @@ async function unhealed(env: Env, spaceId: string): Promise<{ raw: boolean; unma
     .first<{ raw: number; unmarked: number }>()
   return { raw: row?.raw === 1, unmarked: row?.unmarked === 1 }
 }
-
 export async function readReach(env: Env, spaceId: string, device: string | undefined, reach: Reach): Promise<Tree> {
   const next = await cursorOf(env, spaceId)
   const { raw, unmarked } = await unhealed(env, spaceId)
   if (raw) return await readTree(env, spaceId, device)
-
   const rows = new Rows(env, spaceId)
   await rows.byIds(reach.ids)
   await rows.above()
   const revived = [...rows.folders.values()].filter((row) => row.deleted === 1)
   await rows.below([...reach.under, ...revived.map((row) => row.id)])
   await rows.above()
-
   const named = new Map<string, { parent: string | null; name: string }>()
   const name = (parent: string | null, wanted: string) => {
     if (wanted) named.set(`${parent ?? ''}\u0000${wanted}`, { parent, name: wanted })
@@ -971,22 +873,18 @@ export async function readReach(env: Env, spaceId: string, device: string | unde
   }
   for (const row of rows.folders.values()) if (row.deleted === 1) name(row.parent_id, row.name)
   for (const one of named.values()) await rows.named(one.parent, one.name)
-
   const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
   const folders = [...rows.folders.values()].sort(byId)
   const notes = [...rows.notes.values()].sort(byId)
   return new Tree(spaceId, next, folders, notes, device, unmarked)
 }
-
 export interface Changed<T> {
   value: T
   cursor: number
   changed: boolean
   tree: Tree
 }
-
 const ATTEMPTS = 6
-
 export async function changeTree<T>(
   env: Env,
   spaceId: string,
@@ -1001,7 +899,6 @@ export async function changeTree<T>(
     const value = await work(tree)
     const batch = tree.statements(env)
     if (!batch) return { value, cursor: tree.state.cursor, changed: false, tree }
-
     try {
       await env.DB.batch(batch)
       await rememberMoves(env, spaceId, tree.moves).catch(() => undefined)
@@ -1017,16 +914,13 @@ export async function changeTree<T>(
     }
   }
 }
-
 async function cursorMoved(env: Env, spaceId: string, next: number): Promise<boolean> {
   const row = await env.DB.prepare('select next from space_cursor where space_id = ?')
     .bind(spaceId)
     .first<{ next: number }>()
   return (row?.next ?? 1) !== next
 }
-
 const OPS_KEPT_FOR = 30 * 24 * 60 * 60 * 1000
-
 async function answeredBefore(env: Env, spaceId: string, opIds: readonly string[]): Promise<Map<string, OpResult>> {
   const prefix = `${spaceId}/`
   const { results } = await env.DB.prepare(
@@ -1034,7 +928,6 @@ async function answeredBefore(env: Env, spaceId: string, opIds: readonly string[
   )
     .bind(JSON.stringify(opIds.map((op) => prefix + op)))
     .all<{ op_id: string; result: string }>()
-
   const out = new Map<string, OpResult>()
   for (const row of results) {
     if (!row.op_id.startsWith(prefix)) continue
@@ -1046,7 +939,6 @@ async function answeredBefore(env: Env, spaceId: string, opIds: readonly string[
   }
   return out
 }
-
 export async function sweepTreeOps(env: Env, at: number): Promise<void> {
   await env.DB.prepare('delete from tree_ops where at < ?')
     .bind(at - OPS_KEPT_FOR)

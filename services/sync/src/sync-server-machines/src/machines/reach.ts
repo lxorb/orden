@@ -14,7 +14,6 @@ export interface Reached {
   listed: boolean
   held: string | null
 }
-
 const reach = (pairs: string, machine: string) => `with ${pairs}
 select p.who as who, p.term as term, p.guest as guest,
        case when sp.user_id = p.who and p.guest = 0 then 'owner'
@@ -40,7 +39,6 @@ select p.who as who, p.term as term, p.guest as guest,
                             and gs.item = '' and gs.joined_at is not null
   left join guest_members gi on gi.space_id = sp.id and gi.guest_id = p.who and p.guest = 1
                             and gi.item = n.id and gi.joined_at is not null`
-
 export const DOOR = reach(
   `me as (
   select s.user_id as who, 0 as guest from sessions s where s.token_hash = ?1 and s.expires_at > ?2
@@ -51,11 +49,9 @@ export const DOOR = reach(
 pairs as (select who, ?3 as term, guest from me)`,
   '?4',
 )
-
 export const WHO = `select s.user_id as who from sessions s where s.token_hash = ?1 and s.expires_at > ?2
   union all
   select g.guest_id as who from guest_sessions g where g.token_hash = ?1 and g.expires_at > ?2`
-
 const AGAIN = reach(
   `pairs as (
   select json_extract(value, '$.who') as who, json_extract(value, '$.term') as term,
@@ -64,7 +60,6 @@ const AGAIN = reach(
 )`,
   '?2',
 )
-
 export interface Row {
   who: string
   term: string
@@ -79,12 +74,10 @@ export interface Row {
   listed: number | null
   held: string | null
 }
-
 export function reachedOf(row: Row): Reached | null {
   const owns = row.owns === 1
   const role = row.role === 'owner' || row.role === 'write' || row.role === 'read' ? row.role : null
   if (!owns && (role === null || row.deleted !== 0)) return null
-
   return {
     who: row.who,
     term: row.term,
@@ -99,7 +92,6 @@ export function reachedOf(row: Row): Reached | null {
     held: row.held,
   }
 }
-
 export async function reachAgain(
   env: Env,
   machine: string,

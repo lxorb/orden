@@ -16,9 +16,7 @@ const OCEAN = {
   updated: '2026-11-01',
   palettes: { light: { '--bg': '#fff' }, dark: {} },
 }
-
 let close: (() => void) | undefined
-
 afterEach(() => {
   close?.()
   store.close()
@@ -26,7 +24,6 @@ afterEach(() => {
   viewport.device = 'desktop'
   document.body.innerHTML = ''
 })
-
 function backPressed(): Promise<void> {
   const heard = new Promise<void>((resolve) => {
     window.addEventListener('popstate', () => resolve(), { once: true })
@@ -34,7 +31,6 @@ function backPressed(): Promise<void> {
   history.back()
   return heard
 }
-
 describe('a theme opened in the theme store on a phone', () => {
   test("goes back to the list on the phone's Back, like its own Back", async () => {
     viewport.device = 'phone'

@@ -12,22 +12,18 @@
     check: (typed: string) => Promise<boolean>
     onanswer: (typed: string | null) => void
   } = $props()
-
   let open = $state(true)
   let typed = $state('')
   let again = $state('')
   let wrong = $state(false)
   let busy = $state(false)
-
   const MIN = 4
   const ready = $derived(choosing ? typed.length >= MIN && typed === again : typed.length > 0)
-
   function close(answer: string | null) {
     if (!open) return
     open = false
     onanswer(answer)
   }
-
   async function submit(event: SubmitEvent) {
     event.preventDefault()
     if (!ready || busy) return

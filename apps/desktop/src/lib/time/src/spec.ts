@@ -2,12 +2,10 @@ import { isRecord } from '../../platform/src/api'
 
 export type View = 'day' | 'week' | 'reports'
 const VIEWS: readonly View[] = ['day', 'week', 'reports']
-
 export interface Spec {
   view: View
   day: number | null
 }
-
 export function readSpec(text: string): Spec {
   let value: unknown = null
   try {
@@ -21,5 +19,4 @@ export function readSpec(text: string): Spec {
     day: typeof value.day === 'number' && Number.isFinite(value.day) ? value.day : null,
   }
 }
-
 export const writeSpec = (spec: Spec): string => JSON.stringify(spec)

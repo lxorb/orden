@@ -11,7 +11,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   invoke: (command: string, args?: Record<string, unknown>) =>
     Promise.resolve(command === 'read_note' ? `# ${String(args?.path)}` : undefined),
 }))
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
@@ -26,7 +25,6 @@ Element.prototype.animate = () =>
       queueMicrotask(() => done?.())
     },
   }) as unknown as Animation
-
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { asking, QUIET } = await import('../../src/lib/sync-client/src/asking.svelte')
@@ -35,9 +33,7 @@ const { back } = await import('../../src/lib/sync-client/src/resurrected.svelte'
 const { UNDO_LINGER } = await import('../../src/lib/undo-toast/src/api')
 const HeldMark = (await import('../../src/lib/sync-client/src/HeldMark.svelte')).default
 const UndoToast = (await import('../../src/lib/workspace/src/UndoToast.svelte')).default
-
 const PATHS = ['/space/Plan.md', '/space/Trip.md', '/space/Other.md']
-
 function held(id: string, path: string, mineAt: number, theirsAt: number): Held {
   return {
     id,
@@ -61,32 +57,25 @@ function held(id: string, path: string, mineAt: number, theirsAt: number): Held 
     },
   }
 }
-
 const PLAN = held('Plan', '/space/Plan.md', 1_000, 2_000)
 const TRIP = held('Trip', '/space/Trip.md', 3_000, 1_000)
-
 let fake: ReturnType<typeof connectFake>
-
 function tabAt(path: string) {
   const tab = workspace.tabs.find((one) => one.path === path)
   if (!tab) throw new Error(`${path} is not open`)
   return tab
 }
-
 function inFront(path: string) {
   workspace.activeTabId = tabAt(path).id
   flushSync()
 }
-
 const page = document.body
 const dialog = () => page.querySelector<HTMLElement>('[role="dialog"]')
 const keeps = () => [...page.querySelectorAll<HTMLButtonElement>('.keep')]
 const both = () => page.querySelector<HTMLButtonElement>('.both')
-
 function press(button: HTMLButtonElement | null | undefined) {
   button?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }))
 }
-
 beforeEach(async () => {
   for (const path of PATHS) await workspace.open(path)
   inFront('/space/Other.md')
@@ -96,7 +85,6 @@ beforeEach(async () => {
   await Promise.resolve()
   flushSync()
 })
-
 afterEach(async () => {
   fake.stop()
   flushSync()
@@ -105,55 +93,44 @@ afterEach(async () => {
   vi.useRealTimers()
   vi.restoreAllMocks()
 })
-
 describe('when it asks', () => {
   test('only while a held note is the one in front', () => {
     expect(dialog()).toBeNull()
-
     inFront('/space/Plan.md')
     expect(dialog()?.getAttribute('aria-label')).toBe('Plan')
     expect(page.textContent).toContain('We meet at noon on Friday.')
     expect(page.textContent).toContain('We meet at one on Saturday.')
   })
-
   test('about one note at a time, the next when its own note is in front', async () => {
     inFront('/space/Plan.md')
     expect(page.querySelectorAll('[role="dialog"]')).toHaveLength(1)
     expect(dialog()?.getAttribute('aria-label')).toBe('Plan')
-
     press(keeps()[0])
     await vi.waitFor(() => expect(fake.engine.held.notes.map((one) => one.id)).toEqual(['Trip']))
     flushSync()
     expect(asking.asked).toBeNull()
-
     inFront('/space/Trip.md')
     expect(page.querySelectorAll('[role="dialog"]')).toHaveLength(1)
     expect(dialog()?.getAttribute('aria-label')).toBe('Trip')
   })
-
   test('not while the keys are still going, and once they have paused', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }))
-
     inFront('/space/Plan.md')
     expect(dialog()).toBeNull()
-
     vi.advanceTimersByTime(QUIET)
     flushSync()
     expect(dialog()?.getAttribute('aria-label')).toBe('Plan')
   })
-
   test('not under anything else that is over the note, and once it has gone', () => {
     const off = overlays.show(() => undefined)
     inFront('/space/Plan.md')
     expect(dialog()).toBeNull()
-
     off()
     flushSync()
     expect(dialog()?.getAttribute('aria-label')).toBe('Plan')
   })
 })
-
 describe('the answers', () => {
   test.each([
     [0, 'mine'],
@@ -161,17 +138,14 @@ describe('the answers', () => {
   ] as const)('the Keep on card %i keeps %s', async (card, answer) => {
     inFront('/space/Plan.md')
     press(keeps()[card])
-
     await vi.waitFor(() => expect(fake.engine.held.answered).toEqual([['Plan', answer]]))
     flushSync()
     expect(asking.asked).toBeNull()
   })
-
   test('Keep both keeps both, and opens the copy beside the note', async () => {
     const opened = vi.spyOn(workspace, 'openRow').mockResolvedValue(undefined)
     inFront('/space/Plan.md')
     press(both())
-
     await vi.waitFor(() => expect(opened).toHaveBeenCalled())
     expect(fake.engine.held.answered).toEqual([['Plan', 'both']])
     expect(opened).toHaveBeenCalledWith('/space/Plan (Laptop).md', {
@@ -179,65 +153,53 @@ describe('the answers', () => {
       beside: true,
     })
   })
-
   test('an answer that does not go through says so, and the question stays', async () => {
     fake.engine.held.failing = new Error('the account could not be reached')
     inFront('/space/Plan.md')
     press(keeps()[0])
-
     await vi.waitFor(() => expect(asking.wrong).toBe('the account could not be reached'))
     flushSync()
     expect(dialog()).not.toBeNull()
     expect(page.textContent).toContain('the account could not be reached')
     expect(fake.engine.held.notes.map((one) => one.id)).toEqual(['Plan', 'Trip'])
   })
-
   test('Escape changes nothing, and the note asks again when it is next in front', () => {
     inFront('/space/Plan.md')
     expect(overlays.escape()).toBe(true)
     flushSync()
-
     expect(asking.asked).toBeNull()
     expect(fake.engine.held.answered).toEqual([])
     expect(fake.engine.held.notes).toHaveLength(2)
-
     const off = overlays.show(() => undefined)
     off()
     flushSync()
     expect(asking.asked).toBeNull()
-
     inFront('/space/Other.md')
     inFront('/space/Plan.md')
     expect(asking.asked?.id).toBe('Plan')
   })
 })
-
 describe('the keyboard', () => {
   test('lands on the newer version, and Left and Right go between the two', () => {
     inFront('/space/Plan.md')
     expect(document.activeElement).toBe(keeps()[1])
-
     keeps()[1]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
     expect(document.activeElement).toBe(keeps()[0])
     keeps()[0]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
     expect(document.activeElement).toBe(keeps()[1])
   })
-
   test('keeps the one it is on, but not with a key that was already on its way', async () => {
     const now = vi.spyOn(performance, 'now').mockReturnValue(10_000)
     inFront('/space/Plan.md')
-
     const key = () => new MouseEvent('click', { bubbles: true, cancelable: true, detail: 0 })
     document.activeElement?.dispatchEvent(key())
     flushSync()
     expect(fake.engine.held.answered).toEqual([])
-
     now.mockReturnValue(10_500)
     document.activeElement?.dispatchEvent(key())
     await vi.waitFor(() => expect(fake.engine.held.answered).toEqual([['Plan', 'theirs']]))
   })
 })
-
 describe('what stands in for words', () => {
   test('a file that is not a note: its name, its size and, for a picture, the picture', () => {
     const picture = (device: string, at: number, size: number) => ({
@@ -256,14 +218,12 @@ describe('what stands in for words', () => {
       },
     ]
     flushSync()
-
     const cards = [...page.querySelectorAll('.side')]
     expect(cards.map((card) => card.querySelector('.size')?.textContent)).toEqual(['2.0 KB', '3.0 MB'])
     expect(cards.map((card) => card.querySelector('img')?.getAttribute('src'))).toEqual(['blob:Laptop', 'blob:iPhone'])
     expect(cards[0]?.querySelector('.called')?.textContent).toBe('Cover.png')
   })
 })
-
 describe('what a held note wears and says', () => {
   test('the mark, on the held note and nowhere else', () => {
     const marks = document.createElement('div')
@@ -271,36 +231,29 @@ describe('what a held note wears and says', () => {
     const plan = mount(HeldMark, { target: marks, props: { path: '/space/Plan.md' } })
     const other = mount(HeldMark, { target: marks, props: { path: '/space/Other.md' } })
     flushSync()
-
     const found = marks.querySelectorAll('[role="img"]')
     expect(found).toHaveLength(1)
     expect(found[0]?.getAttribute('aria-label')).toBe('Waiting for you')
-
     fake.engine.held.notes = []
     flushSync()
     expect(marks.querySelectorAll('[role="img"]')).toHaveLength(0)
-
     void unmount(plan)
     void unmount(other)
     marks.remove()
   })
-
   test('a note that came back says so, for as long as the undo toast stays', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const notices = document.createElement('div')
     document.body.append(notices)
     const toast = mount(UndoToast, { target: notices })
     flushSync()
-
     fake.engine.emit('resurrected', { id: 'Plan', name: 'Plan', device: 'iPhone' })
     await vi.waitFor(() => expect(back.said).not.toBeNull())
     flushSync()
     expect(notices.textContent).toContain('Plan is back: iPhone was writing in it')
-
     vi.advanceTimersByTime(UNDO_LINGER)
     flushSync()
     expect(back.said).toBeNull()
-
     void unmount(toast)
     notices.remove()
   })

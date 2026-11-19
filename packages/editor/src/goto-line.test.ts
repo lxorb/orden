@@ -10,13 +10,10 @@ beforeAll(() => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
 })
-
 const open: EditorView[] = []
-
 afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
-
 function viewOf(doc: string): EditorView {
   const view = new EditorView({
     state: parsed(editorState({ doc, selection: { anchor: 0 } })),
@@ -25,7 +22,6 @@ function viewOf(doc: string): EditorView {
   open.push(view)
   return view
 }
-
 async function goTo(view: EditorView, line: number) {
   await loadFind()
   gotoLine(view)
@@ -35,7 +31,6 @@ async function goTo(view: EditorView, line: number) {
   field.form?.requestSubmit()
   await new Promise((settle) => setTimeout(settle, 0))
 }
-
 describe('Go to line', () => {
   test('on a bullet item puts the caret after the hidden marker, so typing goes into the item', async () => {
     const view = viewOf('# Plan\n\n- first step\n- second step\n')
@@ -43,14 +38,12 @@ describe('Go to line', () => {
     view.dispatch(view.state.replaceSelection('x'))
     expect(view.state.doc.line(4).text).toBe('- xsecond step')
   })
-
   test('on a task puts the caret after the hidden box, so typing goes into the task', async () => {
     const view = viewOf('# Plan\n\n- [ ] first step\n- [ ] second step\n')
     await goTo(view, 4)
     view.dispatch(view.state.replaceSelection('x'))
     expect(view.state.doc.line(4).text).toBe('- [ ] xsecond step')
   })
-
   test('a caret set by a plain selection, as vim motions set it, stays where it was put', () => {
     const view = viewOf('# Plan\n\n- first step\n')
     const start = view.state.doc.line(3).from

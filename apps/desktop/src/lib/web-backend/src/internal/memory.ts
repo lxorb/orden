@@ -6,49 +6,40 @@ export class MemoryBytes implements InternalBytes {
   readonly slots: (string | null)[] = [null, null]
   writes = 0
   failSlots = false
-
   readText(key: string) {
     return Promise.resolve(this.texts.get(key) ?? null)
   }
-
   writeText(key: string, text: string) {
     this.writes += 1
     this.texts.set(key, text)
     return Promise.resolve()
   }
-
   read(key: string) {
     return Promise.resolve(this.blobs.get(key) ?? null)
   }
-
   write(key: string, bytes: Uint8Array) {
     this.writes += 1
     this.blobs.set(key, bytes)
     return Promise.resolve()
   }
-
   remove(key: string) {
     this.texts.delete(key)
     this.blobs.delete(key)
     return Promise.resolve()
   }
-
   slot(at: 0 | 1) {
     return Promise.resolve(this.slots[at] ?? null)
   }
-
   writeSlot(at: 0 | 1, text: string) {
     this.slots[at] = null
     if (this.failSlots) return Promise.reject(new Error('the disk is full'))
     this.slots[at] = text
     return Promise.resolve()
   }
-
   where(key: string) {
     return `/spaces/.orden/one/entries/${key}`
   }
 }
-
 export function sharedWindows(late = false) {
   let lock: Promise<unknown> = Promise.resolve()
   let newest = 0

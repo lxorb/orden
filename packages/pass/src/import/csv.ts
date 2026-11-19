@@ -42,9 +42,7 @@ export function csvRows(text: string): string[][] {
   }
   return rows.filter((r) => r.length > 1 || (r[0] ?? '') !== '')
 }
-
 export type CsvRecord = Record<string, string>
-
 export function csvRecords(text: string): CsvRecord[] {
   const [head, ...body] = csvRows(text)
   if (!head) return []
@@ -57,15 +55,12 @@ export function csvRecords(text: string): CsvRecord[] {
     return record
   })
 }
-
 export function csvHeader(text: string): string[] {
   return (csvRows(text)[0] ?? []).map((name) => name.trim())
 }
-
 export function csvCell(value: string): string {
   return /[",\r\n]/.test(value) || /^\s|\s$/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
 }
-
 export function csvText(rows: readonly (readonly string[])[]): string {
   return rows.map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n'
 }

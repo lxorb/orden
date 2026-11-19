@@ -15,7 +15,6 @@ pub fn preferred(accelerator: &str) -> Option<String> {
     said.push(key);
     Some(said.join("+"))
 }
-
 fn xkb(key: &str) -> Option<String> {
     if let Some(digit) = key.strip_prefix("Digit") {
         return (digit.len() == 1 && digit.bytes().all(|b| b.is_ascii_digit()))
@@ -61,7 +60,6 @@ fn xkb(key: &str) -> Option<String> {
     };
     Some(named.to_owned())
 }
-
 #[cfg(test)]
 mod tests {
     use super::preferred;
@@ -87,7 +85,6 @@ mod tests {
             Some("CTRL+apostrophe")
         );
     }
-
     #[test]
     fn the_keys_above_the_arrows_go_by_their_xkb_names() {
         assert_eq!(preferred("Control+Insert").as_deref(), Some("CTRL+Insert"));
@@ -101,7 +98,6 @@ mod tests {
             Some("CTRL+Print")
         );
     }
-
     #[test]
     fn a_key_it_has_no_name_for_is_no_preference() {
         assert_eq!(preferred("Control+Hyper+K"), None);

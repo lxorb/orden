@@ -5,7 +5,6 @@ import { parseBitwarden } from './bitwarden'
 import { as, find } from './found'
 
 const URI = 'otpauth://totp/GitHub:me?secret=JBSWY3DPEHPK3PXP&issuer=GitHub'
-
 const base = {
   id: 'x',
   organizationId: null,
@@ -18,7 +17,6 @@ const base = {
   revisionDate: '2024-02-03T04:05:06.000Z',
   deletedDate: null,
 }
-
 const EXPORT = {
   encrypted: false,
   folders: [
@@ -128,10 +126,8 @@ const EXPORT = {
     { ...base, type: 9, name: 'Unknown', notes: 'what is this' },
   ],
 }
-
 describe('parseBitwarden JSON', () => {
   const result = parseBitwarden(JSON.stringify(EXPORT, null, 2))
-
   it('reads a login with its uris, fields, totp and passkey', () => {
     const github = find(result, 'GitHub')
     const login = as(github.content, 'login')
@@ -170,7 +166,6 @@ describe('parseBitwarden JSON', () => {
       modified: Date.parse('2024-02-03T04:05:06.000Z'),
     })
   })
-
   it('reads the trash, notes, cards, identities and ssh keys', () => {
     const bank = find(result, 'Bank')
     expect(bank.trashed).toBe(true)
@@ -203,12 +198,10 @@ describe('parseBitwarden JSON', () => {
     expect(ssh.publicKey).toBe('ssh-ed25519 AAAAC3')
     expect(ssh.fields[0]?.value).toBe('SHA256:xyz')
   })
-
   it('keeps an unknown type as a note and says so', () => {
     expect(find(result, 'Unknown').content.kind).toBe('note')
     expect(result.skipped).toEqual([{ reason: expect.stringContaining('9'), title: 'Unknown' }])
   })
-
   it('puts an organization export into its collections', () => {
     const org = parseBitwarden(
       JSON.stringify({
@@ -219,7 +212,6 @@ describe('parseBitwarden JSON', () => {
     )
     expect(org.vaults.map((vault) => vault.name)).toEqual(['Team'])
   })
-
   it('asks for an unencrypted export', () => {
     const encrypted = parseBitwarden(
       JSON.stringify({ encrypted: true, passwordProtected: true, salt: 's', data: '2.abc' }),
@@ -229,7 +221,6 @@ describe('parseBitwarden JSON', () => {
     expect(() => parseBitwarden('{"hello": 1}')).toThrow()
   })
 })
-
 describe('parseBitwarden CSV', () => {
   const csv = [
     'folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp',
@@ -239,7 +230,6 @@ describe('parseBitwarden CSV', () => {
     'Ünï,,login,Café,,,0,https://café.example.com,barista,,',
   ].join('\n')
   const result = parseBitwarden(`\uFEFF${csv}`)
-
   it('reads logins and notes with folders and fields', () => {
     const mastodon = find(result, 'Mastodon')
     const login = as(mastodon.content, 'login')

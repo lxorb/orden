@@ -2,9 +2,7 @@
 import json
 import os
 import random
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -22,7 +20,6 @@ TYPE = """([word, where]) => {
   live.edit([{from: at, to: at, insert: where === 'end' ? word + '\\n' : '\\n' + word + '\\n'}], {userEvent: 'input'})
   return true
 }"""
-
 def drive(browser: Browser) -> None:
     rand = random.Random(SEED)
     ctx = DRIVE.context(browser, viewport={"width": 900, "height": 600})
@@ -31,19 +28,16 @@ def drive(browser: Browser) -> None:
     DRIVE.seed(first, "# Fz\n\nstart line\n")
     DRIVE.open_note(first, "Fz")
     url = first.url
-
     def holds_note(page: Page) -> None:
         wait_for(page, f"()=>{WS}.restored", "launched")
         if not page.evaluate(f"()=>{WS}.tabs.some(t=>t.path&&t.path.endsWith('Fz.md'))"):
             DRIVE.open_note(page, "Fz")
-
     def another() -> Page:
         page = ctx.new_page()
         page.goto(url)
         DRIVE.ready(page)
         holds_note(page)
         return page
-
     pages = [first, another()]
     typed: list[str] = []
     for step in range(OPS):
@@ -69,18 +63,15 @@ def drive(browser: Browser) -> None:
             page.reload()
             DRIVE.ready(page)
             holds_note(page)
-
     for page in pages:
         page.evaluate(f"()=>{WS}.writesSettled()")
     probe = pages[0]
     path = probe.evaluate(f"()=>{WS}.notes.find(one=>one.name.startsWith('Fz')).path")
-
     def settled() -> str | None:
         file = probe.evaluate(f"(path)=>{WS}.noteText(path)", path) or ""
         if any(word not in file for word in typed):
             return None
         return file
-
     for _ in range(40):
         file = settled()
         if file is not None:
@@ -93,5 +84,4 @@ def drive(browser: Browser) -> None:
     if missing or doubled:
         say("file " + json.dumps(file)[:1500])
         wrong(f"seed {SEED}: missing {missing}, doubled {doubled}")
-
 raise SystemExit(DRIVE.run(drive))

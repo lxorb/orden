@@ -11,7 +11,6 @@ export function chatsFields(): SettingField[] {
     label: localDate(new Date(2000, 0, 1, hour).getTime(), { timeStyle: 'short' }),
   }))
   const hours = hush.hours
-
   return [
     {
       kind: 'text',

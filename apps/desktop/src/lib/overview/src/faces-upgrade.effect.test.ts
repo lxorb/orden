@@ -3,7 +3,6 @@ import { expect, test, vi } from 'vitest'
 
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
-
 function writtenBefore(): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('orden-overview-faces', 1)
@@ -24,14 +23,12 @@ function writtenBefore(): Promise<void> {
     }
   })
 }
-
 test('an upgrade wipes every web page’s picture before anything asks for one', async () => {
   await writtenBefore()
   const { upgradeFaces, readFaces } = await import('./faces')
   await upgradeFaces()
   expect((await readFaces()).map(([name]) => name)).toEqual(['note:/notes/a.md'])
 })
-
 test('an upgrade wipes every name a private tab could have left among the windows', async () => {
   const box = { x: 1, y: 2, w: 3, h: 4 }
   localStorage.setItem(

@@ -34,11 +34,9 @@
     drawing?: (done: Promise<unknown>) => void
     flying?: boolean
   } = $props()
-
   const how = $derived(TAB_KINDS[tab.kind].preview)
   const locked = $derived(protection.locked(noteBehind(tab)))
   const START = 6000
-
   const reading = $derived.by(() => {
     if (how !== 'reading' || locked) return null
     const text = readingFrom(tab.doc, tab.anchor, START)
@@ -52,10 +50,8 @@
       key: `${locks}\u0000${scheme}\u0000${String(trusted)}\u0000${text}`,
     }
   })
-
   const readBefore = untrack(() => reading && drawnBefore.get(tab.id))
   let made = $state(readBefore && readBefore.key === untrack(() => reading?.key) ? readBefore.html : '')
-
   $effect(() => {
     const asked = reading
     if (!asked) return
@@ -76,13 +72,11 @@
       stale = true
     }
   })
-
   let html = $state(untrack(() => made))
   $effect.pre(() => {
     const now = made
     if (!flying) html = now
   })
-
   const latestShot = $derived(how === 'photograph' ? (webPages().of(tab.id).shot ?? face?.shot ?? null) : null)
   let shot = $state(untrack(() => latestShot))
   $effect.pre(() => {
@@ -95,7 +89,6 @@
     const now = face
     if (!flying) kept = now
   })
-
   let readScreen = $state<{ text: string; cols: number } | null>(null)
   $effect(() => {
     if (how !== 'scrollback' || locked) return
@@ -113,7 +106,6 @@
     const now = readScreen
     if (!flying) screen = now
   })
-
   function drawn(node: HTMLElement, kept: Face) {
     const draw = (one: Face) => {
       if (one.html) drawInto(node, one.html)
@@ -122,7 +114,6 @@
     draw(kept)
     return { update: draw }
   }
-
   function decoded(node: HTMLImageElement, shot: string) {
     const decode = (one: string) => {
       const done = typeof node.decode === 'function' ? node.decode().then(() => one) : Promise.resolve(one)
@@ -137,9 +128,7 @@
     decode(shot)
     return { update: decode }
   }
-
   const arrive = { duration: dur(160) }
-
   const whence = $derived.by(() => {
     if (tab.kind === 'web') {
       try {
@@ -195,13 +184,11 @@
     background: var(--bg);
     pointer-events: none;
   }
-
   .read {
     height: 100%;
     overflow: hidden;
     padding-top: var(--space-6);
   }
-
   .kept {
     position: absolute;
     top: 0;
@@ -209,14 +196,12 @@
     transform-origin: 0 0;
     overflow: hidden;
   }
-
   .kept > :global(*) {
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
   }
-
   .screen {
     display: flex;
     flex-direction: column;
@@ -231,7 +216,6 @@
     line-height: 1.35;
     white-space: pre;
   }
-
   .shot {
     position: absolute;
     inset: 0;
@@ -242,12 +226,10 @@
     object-fit: cover;
     object-position: top;
   }
-
   .shot.is-drawn {
     opacity: 1;
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .mark {
     display: flex;
     flex-direction: column;
@@ -258,13 +240,11 @@
     color: var(--muted);
     font-size: calc(2.4 * var(--text-base));
   }
-
   .big {
     display: flex;
     scale: 4;
     margin-bottom: var(--space-6);
   }
-
   .whence {
     max-width: 80%;
     overflow: hidden;
@@ -273,7 +253,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .name {
     max-width: 80%;
     overflow: hidden;

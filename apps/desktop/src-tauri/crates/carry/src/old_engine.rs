@@ -7,29 +7,17 @@ use std::sync::{Mutex, MutexGuard};
 mod databases;
 
 const CARRIED: &str = "old-engine-carried";
-
 const DATABASES_CARRIED: &str = "old-engine-databases-carried";
-
 const CHROMIUM_DATABASES: &str = "EBWebView/Default/IndexedDB";
-
 const WAITING_SCRIPT: &str = "window.ordenOldDatabases = true;";
-
 static WAITING: Mutex<Option<String>> = Mutex::new(None);
-
 const CHROMIUM_ORIGIN: &[u8] = b"_http://tauri.localhost\0";
-
 const CHROMIUM_STORAGE: &str = "EBWebView/Default/Local Storage/leveldb";
-
 const WEBKIT_LEGACY: &str = "tauri_localhost_0.localstorage";
-
 const WEBKIT_STORE: &str = "localstorage.sqlite3";
-
 const TABLE_MAGIC: u64 = 0xdb47_7524_8b80_fb57;
-
 const LOG_BLOCK: usize = 32768;
-
 type Values = BTreeMap<String, String>;
-
 pub fn carry_storage(identifier: &str) {
     let Some(config) = dirs::config_dir().map(|dir| dir.join(identifier)) else {
         return;
@@ -45,17 +33,14 @@ pub fn carry_storage(identifier: &str) {
     carry(&config, &homes);
     carry_databases(&config, &homes);
 }
-
 struct Home {
     chromium: Option<PathBuf>,
     databases: Option<PathBuf>,
     webkit: Option<PathBuf>,
 }
-
 fn waiting() -> MutexGuard<'static, Option<String>> {
     WAITING.held()
 }
-
 fn carry_databases(config: &Path, homes: &[Home]) {
     if config.join(DATABASES_CARRIED).exists() {
         return;
@@ -81,13 +66,11 @@ fn carry_databases(config: &Path, homes: &[Home]) {
         }
     }
 }
-
 fn databases_carried(config: &Path) {
     if orden_base::paths::made(config).is_ok() {
         let _ = orden_base::paths::write_atomically(&config.join(DATABASES_CARRIED), b"");
     }
 }
-
 pub fn script() -> &'static str {
     if waiting().is_some() {
         WAITING_SCRIPT
@@ -95,12 +78,10 @@ pub fn script() -> &'static str {
         ""
     }
 }
-
 #[tauri::command(async)]
 pub fn old_engine_databases() -> Option<String> {
     waiting().clone()
 }
-
 #[tauri::command(async)]
 pub fn old_engine_databases_carried(app: tauri::AppHandle) {
     if waiting().take().is_some() {
@@ -109,7 +90,6 @@ pub fn old_engine_databases_carried(app: tauri::AppHandle) {
         }
     }
 }
-
 fn carry(config: &Path, homes: &[Home]) {
     let done = config.join(CARRIED);
     if done.exists() {
@@ -127,7 +107,6 @@ fn carry(config: &Path, homes: &[Home]) {
         let _ = orden_base::paths::write_atomically(&done, b"");
     }
 }
-
 fn left_in(home: &Home) -> Option<Values> {
     if let Some(dir) = home.chromium.as_deref().filter(|dir| dir.is_dir()) {
         return Some(chromium(dir));
@@ -135,9 +114,7 @@ fn left_in(home: &Home) -> Option<Values> {
     let dir = home.webkit.as_deref().filter(|dir| dir.is_dir())?;
     Some(webkit(dir))
 }
-
 struct Latest(BTreeMap<Vec<u8>, (u64, Option<Vec<u8>>)>);
-
 impl Latest {
     fn heard(&mut self, key: &[u8], sequence: u64, value: Option<&[u8]>) {
         if !key.starts_with(CHROMIUM_ORIGIN) {
@@ -150,7 +127,6 @@ impl Latest {
             .insert(key.to_vec(), (sequence, value.map(<[u8]>::to_vec)));
     }
 }
-
 fn chromium(dir: &Path) -> Values {
     let mut latest = Latest(BTreeMap::new());
     for entry in fs::read_dir(dir).into_iter().flatten().flatten() {
@@ -179,7 +155,6 @@ fn chromium(dir: &Path) -> Values {
         })
         .collect()
 }
-
 fn chromium_text(bytes: &[u8]) -> Option<String> {
     let (kind, rest) = bytes.split_first()?;
     match kind {
@@ -188,7 +163,6 @@ fn chromium_text(bytes: &[u8]) -> Option<String> {
         _ => None,
     }
 }
-
 fn utf16(bytes: &[u8]) -> Option<String> {
     if !bytes.len().is_multiple_of(2) {
         return None;
@@ -201,7 +175,6 @@ fn utf16(bytes: &[u8]) -> Option<String> {
         .collect();
     String::from_utf16(&units).ok()
 }
-
 fn varint(bytes: &[u8], mut at: usize) -> Option<(usize, usize)> {
     let mut value: u64 = 0;
     for shift in (0..64).step_by(7) {
@@ -214,13 +187,11 @@ fn varint(bytes: &[u8], mut at: usize) -> Option<(usize, usize)> {
     }
     None
 }
-
 fn sized(bytes: &[u8], at: usize) -> Option<(&[u8], usize)> {
     let (size, at) = varint(bytes, at)?;
     let end = at.checked_add(size)?;
     Some((bytes.get(at..end)?, end))
 }
-
 fn log(bytes: &[u8], latest: &mut Latest) {
     let mut record = Vec::new();
     let mut at = 0;
@@ -251,7 +222,6 @@ fn log(bytes: &[u8], latest: &mut Latest) {
         }
     }
 }
-
 fn batch(data: &[u8], latest: &mut Latest) -> Option<()> {
     let sequence = u64::from_le_bytes(data.get(..8)?.try_into().ok()?);
     let count = u32::from_le_bytes(data.get(8..12)?.try_into().ok()?);
@@ -271,7 +241,6 @@ fn batch(data: &[u8], latest: &mut Latest) -> Option<()> {
     }
     Some(())
 }
-
 fn table(bytes: &[u8], latest: &mut Latest) -> Option<()> {
     let footer = bytes.get(bytes.len().checked_sub(48)?..)?;
     if footer[40..] != TABLE_MAGIC.to_le_bytes() {
@@ -296,7 +265,6 @@ fn table(bytes: &[u8], latest: &mut Latest) -> Option<()> {
     }
     Some(())
 }
-
 fn block(bytes: &[u8], offset: usize, size: usize) -> Option<Vec<u8>> {
     let end = offset.checked_add(size)?;
     let raw = bytes.get(offset..end)?;
@@ -306,7 +274,6 @@ fn block(bytes: &[u8], offset: usize, size: usize) -> Option<Vec<u8>> {
         _ => None,
     }
 }
-
 fn entries(block: &[u8]) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
     let count = u32::from_le_bytes(block.get(block.len().checked_sub(4)?..)?.try_into().ok()?);
     let end = block
@@ -334,7 +301,6 @@ fn entries(block: &[u8]) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
     }
     Some(out)
 }
-
 fn unsnappy(input: &[u8]) -> Option<Vec<u8>> {
     let (length, mut at) = varint(input, 0)?;
     let mut out: Vec<u8> = Vec::with_capacity(length.min(1 << 24));
@@ -384,7 +350,6 @@ fn unsnappy(input: &[u8]) -> Option<Vec<u8>> {
     }
     (out.len() == length).then_some(out)
 }
-
 fn webkit(dir: &Path) -> Values {
     let mut found = Vec::new();
     webkit_stores(dir, 0, &mut found);
@@ -394,7 +359,6 @@ fn webkit(dir: &Path) -> Values {
         .and_then(|path| webkit_values(path).ok())
         .unwrap_or_default()
 }
-
 fn webkit_stores(dir: &Path, depth: usize, found: &mut Vec<PathBuf>) {
     if depth > 8 {
         return;
@@ -417,7 +381,6 @@ fn webkit_stores(dir: &Path, depth: usize, found: &mut Vec<PathBuf>) {
         }
     }
 }
-
 fn webkit_app_origin(origin: &Path) -> bool {
     let first_party = origin.parent().and_then(Path::file_name) == origin.file_name();
     first_party
@@ -427,7 +390,6 @@ fn webkit_app_origin(origin: &Path) -> bool {
                 .all(|word| said.windows(word.len()).any(|one| one == *word))
         })
 }
-
 fn webkit_values(path: &Path) -> rusqlite::Result<Values> {
     let db = rusqlite::Connection::open_with_flags(
         path,
@@ -445,7 +407,6 @@ fn webkit_values(path: &Path) -> rusqlite::Result<Values> {
     })?;
     Ok(rows.flatten().flatten().collect())
 }
-
 #[cfg(test)]
 mod tests {
     use super::{carry, chromium, unsnappy, webkit, Home, CARRIED};
@@ -459,11 +420,9 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         dir
     }
-
     fn fixture() -> PathBuf {
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/old-engine/chromium")
     }
-
     fn webkit_store(path: &Path, rows: &[(&str, &str)]) {
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         let db = rusqlite::Connection::open(path).unwrap();
@@ -478,14 +437,12 @@ mod tests {
             .unwrap();
         }
     }
-
     #[test]
     fn where_the_app_keeps_its_storage_never_moves() {
         assert_eq!(orden_web_engine::ROOT, "chromium");
         assert_eq!(orden_web_engine::APP_PROFILE, "app");
         assert_eq!(crate::kept::FOLDER, "kept");
     }
-
     #[test]
     fn snappy_copies_back_what_it_points_at() {
         assert_eq!(
@@ -494,7 +451,6 @@ mod tests {
         );
         assert_eq!(unsnappy(&[12, 8, b'a', b'b', b'c', 0x15, 9]), None);
     }
-
     #[test]
     fn chromium_storage_is_read_as_the_page_last_left_it() {
         let values = chromium(&fixture());
@@ -514,7 +470,6 @@ mod tests {
         assert!(!values.contains_key("orden:filler-0"));
         assert!(values.values().all(|value| value != "someone-else"));
     }
-
     #[test]
     fn an_update_from_the_old_engine_keeps_the_session() {
         let config = scratch("update");
@@ -533,7 +488,6 @@ mod tests {
         assert!(config.join(CARRIED).is_file());
         let _ = fs::remove_dir_all(&config);
     }
-
     #[test]
     fn what_the_new_engine_already_said_wins_and_it_is_carried_once() {
         let config = scratch("once");
@@ -563,7 +517,6 @@ mod tests {
             .contains_key("orden:session"));
         let _ = fs::remove_dir_all(&config);
     }
-
     #[test]
     fn the_newer_home_is_read_and_the_former_one_only_without_it() {
         let config = scratch("homes");
@@ -594,7 +547,6 @@ mod tests {
         let _ = fs::remove_dir_all(&config);
         let _ = fs::remove_dir_all(&former);
     }
-
     #[test]
     fn webkit_storage_of_the_app_is_read_and_a_frame_inside_it_is_not() {
         let dir = scratch("webkit");

@@ -13,26 +13,21 @@ export interface TimeDisk {
   keepMinutes(minutes: readonly Minute[], before: number): Promise<void>
   close(): void
 }
-
 const ROWS = 'rows'
 const META = 'meta'
 const MINUTES = 'minutes'
-
 const nameFor = (owner: string | null): string => (owner === null ? 'orden-time' : `orden-time:${owner}`)
-
 const settled = <T>(request: IDBRequest<T>): Promise<T> =>
   new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the time store refused'))
   })
-
 const finished = (tx: IDBTransaction): Promise<void> =>
   new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error ?? new Error('the time store did not write'))
     tx.onabort = () => reject(tx.error ?? new Error('the time store did not write'))
   })
-
 const rowOf = (value: unknown): Row | null => {
   if (typeof value !== 'object' || value === null) return null
   const { kind, id, value: held, dirty, at } = value as Record<string, unknown>
@@ -45,7 +40,6 @@ const rowOf = (value: unknown): Row | null => {
     at: typeof at === 'number' ? at : 0,
   }
 }
-
 export async function openTimeDisk(owner: string | null): Promise<TimeDisk> {
   const held = heldDatabase(nameFor(owner), 2, (request) => {
     const db = request.result

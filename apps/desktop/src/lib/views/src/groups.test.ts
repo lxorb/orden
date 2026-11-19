@@ -15,7 +15,6 @@ const base = readBase(`views:
       hidden: [a]
       groups: [b, a, c]
 `)
-
 describe('a column renamed, merged or deleted', () => {
   test('a rename keeps its order, its hiding and its place', () => {
     const orden = renamedGroup(base, 'note.status', 'a', 'd').views[0]?.orden
@@ -23,14 +22,12 @@ describe('a column renamed, merged or deleted', () => {
     expect(orden?.hidden).toEqual(['d'])
     expect(orden?.groups).toEqual(['b', 'd', 'c'])
   })
-
   test('a merge keeps both orders, the target first, and does not hide the target', () => {
     const orden = renamedGroup(base, 'status', 'a', 'b', true).views[0]?.orden
     expect(orden?.order).toEqual({ b: ['x.md', 'y.md', 'z.md'] })
     expect(orden?.hidden).toEqual([])
     expect(orden?.groups).toEqual(['b', 'c'])
   })
-
   test('a deleted option leaves no key behind', () => {
     const orden = forgottenGroup(base, 'note.status', 'a').views[0]?.orden
     expect(orden?.order).toEqual({ b: ['x.md', 'y.md'] })

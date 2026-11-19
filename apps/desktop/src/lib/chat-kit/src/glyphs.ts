@@ -1,5 +1,4 @@
 const RING = 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0'
-
 export const GLYPHS = {
   reply: 'M20 18v-2a4 4 0 0 0-4-4H4m5 5-5-5 5-5',
   quote: 'M17 6H3M21 12H8M21 18H8M3 12v6',
@@ -35,5 +34,4 @@ export const GLYPHS = {
     'M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5zM15 5l4 4',
   link: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
 } as const
-
 export type GlyphName = keyof typeof GLYPHS

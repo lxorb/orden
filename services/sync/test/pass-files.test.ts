@@ -10,7 +10,6 @@ let ada: Person
 let api: ReturnType<typeof pass>
 let vault: string
 let item: string
-
 beforeEach(async () => {
   env = testEnv()
   ada = await person(env, 'ada@example.com')
@@ -20,19 +19,15 @@ beforeEach(async () => {
   await api.vault(ada, vault)
   await api.item(ada, vault, item)
 })
-
 afterEach(() => env.close())
-
 interface Listed {
   files: { id: string; parts: number; size: number; complete: boolean }[]
   error?: string
 }
-
 function lengthOf(raw: BodyInit): number {
   if (typeof raw === 'string') return new TextEncoder().encode(raw).length
   return raw instanceof Uint8Array ? raw.byteLength : 0
 }
-
 function put(who: Person, at: string, raw: BodyInit, query = '') {
   return call<{ stored?: boolean; size?: number; error?: string }>(env, `/v2/pass/files/${at}${query}`, {
     method: 'PUT',
@@ -44,13 +39,10 @@ function put(who: Person, at: string, raw: BodyInit, query = '') {
     },
   })
 }
-
 function get(who: Person, at: string, query = '') {
   return call(env, `/v2/pass/files/${at}${query}`, { token: who.token })
 }
-
 const objects = () => env.keys().filter((key) => key.startsWith('pass/files/'))
-
 describe('a file in an item', () => {
   test('is kept in parts and read back by its members', async () => {
     const file = anId()
@@ -68,14 +60,12 @@ describe('a file in an item', () => {
     expect(listed.json.files).toEqual([{ id: file, parts: 2, size: 17, complete: true }])
     expect(objects()).toHaveLength(2)
   })
-
   test('is listed as not complete until every part is there', async () => {
     const file = anId()
     await put(ada, `${vault}/${item}/${file}`, 'one', '?part=0&parts=3')
     const listed = await passCall<Listed>(env, ada, 'GET', `/files/${vault}/${item}`)
     expect(listed.json.files).toEqual([{ id: file, parts: 3, size: 3, complete: false }])
   })
-
   test('is written by editors and read by viewers, and nobody else', async () => {
     const bob = await person(env, 'bob@example.com')
     const eve = await person(env, 'eve@example.com')
@@ -90,7 +80,6 @@ describe('a file in an item', () => {
     expect((await get(eve, at)).status).toBe(404)
     expect((await put(eve, at, 'mine')).status).toBe(404)
   })
-
   test('refuses a part too big, out of range, or too many parts', async () => {
     const at = `${vault}/${item}/${anId()}`
     expect((await put(ada, at, new Uint8Array(MOST_SEALED_PART + 1))).status).toBe(413)
@@ -101,13 +90,11 @@ describe('a file in an item', () => {
     expect((await put(ada, `${vault}/${anId()}/${anId()}`, 'x')).status).toBe(404)
     expect((await put(ada, at, new Uint8Array(MOST_SEALED_PART))).status).toBe(201)
   })
-
   test('keeps its count of parts', async () => {
     const at = `${vault}/${item}/${anId()}`
     await put(ada, at, 'a', '?part=0&parts=2')
     expect((await put(ada, at, 'b', '?part=1&parts=3')).status).toBe(409)
   })
-
   test('counts against the account’s storage', async () => {
     const used = await usedBytes(env, ada.id)
     env.db
@@ -121,7 +108,6 @@ describe('a file in an item', () => {
     expect(full.json.error).toBe('out of space')
     expect(await usedBytes(env, ada.id)).toBe(QUOTA)
   })
-
   test('is not taken over from another vault under the same ids', async () => {
     const file = anId()
     await put(ada, `${vault}/${item}/${file}`, 'first')
@@ -133,7 +119,6 @@ describe('a file in an item', () => {
     expect(taken.json.error).toBe('that id is taken')
     expect((await get(ada, `${other}/${item}/${file}`)).status).toBe(404)
   })
-
   test('written from two vaults under the same ids at once, is kept by one and refused to the other', async () => {
     const file = anId()
     const other = anId()
@@ -147,7 +132,6 @@ describe('a file in an item', () => {
     const [kept, word] = first.status === 201 ? [vault, 'first'] : [other, 'second']
     expect((await get(ada, `${kept}/${item}/${file}`)).text).toBe(word)
   })
-
   test('is refused without its length', async () => {
     const answer = await call(env, `/v2/pass/files/${vault}/${item}/${anId()}`, {
       method: 'PUT',
@@ -157,7 +141,6 @@ describe('a file in an item', () => {
     })
     expect(answer.status).toBe(411)
   })
-
   test('is deleted with all its parts', async () => {
     const at = `${vault}/${item}/${anId()}`
     await put(ada, at, 'a', '?part=0&parts=2')
@@ -168,7 +151,6 @@ describe('a file in an item', () => {
     expect((await passCall(env, ada, 'DELETE', `/files/${at}`)).status).toBe(404)
   })
 })
-
 describe('the files of an item', () => {
   test('go with the item', async () => {
     const at = `${vault}/${item}/${anId()}`
@@ -178,7 +160,6 @@ describe('the files of an item', () => {
     await sweepLeftovers(env)
     expect(objects()).toEqual([])
   })
-
   test('go with the vault', async () => {
     const at = `${vault}/${item}/${anId()}`
     await put(ada, at, 'kept')
@@ -188,7 +169,6 @@ describe('the files of an item', () => {
     expect(objects()).toEqual([])
     expect(env.db.prepare('select count(*) as n from pass_file_parts').get()).toEqual({ n: 0 })
   })
-
   test('move with the item to its new vault', async () => {
     const file = anId()
     await put(ada, `${vault}/${item}/${file}`, 'moving')
@@ -207,7 +187,6 @@ describe('the files of an item', () => {
     await sweepLeftovers(env)
     expect(objects()).toHaveLength(1)
   })
-
   test('stay when a leftover of the same name was written before they came back', async () => {
     const file = anId()
     const at = `${vault}/${item}/${file}`
@@ -217,7 +196,6 @@ describe('the files of an item', () => {
     expect((await get(ada, at)).text).toBe('back')
   })
 })
-
 describe('a file part written while its item or its writer goes', () => {
   test.each([
     [

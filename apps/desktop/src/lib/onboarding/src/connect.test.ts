@@ -7,7 +7,6 @@ interface Held {
   name?: string
   baseUrl?: string
 }
-
 const held: {
   accounts: Held[]
   keys: Map<string, string>
@@ -15,13 +14,11 @@ const held: {
   standing: { state: string; program?: string }
   starts: boolean
 } = { accounts: [], keys: new Map(), refusing: false, standing: { state: 'missing' }, starts: true }
-
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   isDesktop: true,
   openExternal: () => Promise.resolve(),
 }))
-
 vi.mock('../../ai-providers/src/api', () => {
   let made = 0
   const ai = {
@@ -61,13 +58,10 @@ vi.mock('../../ai-providers/src/api', () => {
       }),
   }
 })
-
 const { connectCompatible, connectKey, signInWith } = await import('./connect')
 const { MORE_AI } = await import('./catalog')
-
 const openRouter = MORE_AI.find((one) => one.id === 'openrouter')
 if (!openRouter) throw new Error('OpenRouter is missing from the catalog')
-
 beforeEach(() => {
   held.accounts = []
   held.keys = new Map()
@@ -75,7 +69,6 @@ beforeEach(() => {
   held.standing = { state: 'missing' }
   held.starts = true
 })
-
 describe('connecting an AI during setup', () => {
   test('a refused key leaves no extra provider behind, however often it is tried', async () => {
     held.refusing = true
@@ -83,43 +76,36 @@ describe('connecting an AI during setup', () => {
     expect(await connectCompatible(openRouter, 'sk-or-wrong-key-654321')).toBe('That key was refused.')
     expect(held.accounts).toEqual([])
     expect([...held.keys.keys()]).toEqual([])
-
     held.refusing = false
     expect(await connectCompatible(openRouter, 'sk-or-right-key-123456')).toBeNull()
     expect(held.accounts.map((one) => one.name)).toEqual(['OpenRouter'])
   })
-
   test('a refused key for a new account takes the account and its key away again', async () => {
     held.refusing = true
     expect(await connectKey('anthropic', 'sk-ant-wrong-key-123456')).toBe('That key was refused.')
     expect(held.accounts).toEqual([])
     expect([...held.keys.keys()]).toEqual([])
   })
-
   test('a refused key for an account that was already there keeps that account', async () => {
     held.accounts = [{ id: 'mine', kind: 'anthropic', model: 'claude' }]
     held.refusing = true
     expect(await connectKey('anthropic', 'sk-ant-wrong-key-123456')).toBe('That key was refused.')
     expect(held.accounts.map((one) => one.id)).toEqual(['mine'])
   })
-
   test('a sign-in to a program that is not installed leaves no account behind', async () => {
     expect(await signInWith('gemini')).toEqual({ state: 'failed', said: 'Not installed' })
     expect(held.accounts).toEqual([])
   })
-
   test('a sign-in to a program not installed keeps an account that was already there', async () => {
     held.accounts = [{ id: 'mine', kind: 'gemini-cli', model: 'gemini' }]
     expect(await signInWith('gemini')).toEqual({ state: 'failed', said: 'Not installed' })
     expect(held.accounts.map((one) => one.id)).toEqual(['mine'])
   })
-
   test('a sign-in whose terminal never starts says so and leaves no account behind', async () => {
     held.standing = { state: 'out', program: '/usr/bin/gemini' }
     held.starts = false
     expect(await signInWith('gemini')).toEqual({ state: 'failed', said: 'Could not sign in.' })
     expect(held.accounts).toEqual([])
-
     held.starts = true
     expect(await signInWith('gemini')).toMatchObject({ state: 'waiting' })
     expect(held.accounts.map((one) => one.kind)).toEqual(['gemini-cli'])

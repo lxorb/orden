@@ -14,7 +14,6 @@ function drawn(set: DecorationSet, doc: string): string[] {
   })
   return out
 }
-
 function typed(doc: string, at: number, words: string): EditorState {
   let state = parsed(
     EditorState.create({
@@ -40,7 +39,6 @@ function typed(doc: string, at: number, words: string): EditorState {
   }
   return state
 }
-
 describe('a list typed on the line right under a note embed', () => {
   test('draws the embed again once the item has words, as opening the note draws it', () => {
     const doc = '## Standup\n![[Agenda]]\n\n\nend'
@@ -49,7 +47,6 @@ describe('a list typed on the line right under a note embed', () => {
     expect(drawn(buildBlockDecorations(state), now)).toEqual(['![[Agenda]]'])
     expect(drawn(state.field(blockDecorations).decorations, now)).toEqual(['![[Agenda]]'])
   })
-
   test('the same for a numbered list', () => {
     const doc = '![[Agenda]]\n\n\nend'
     const state = typed(doc, doc.indexOf('\n\n\nend') + 1, '1. first point')

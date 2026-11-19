@@ -1,16 +1,11 @@
 import type { DeviceId, ItemId, UserId } from './ids'
 
 export type EntryKind = 'note' | 'canvas' | 'pages' | 'url' | 'term' | 'chat' | 'file' | 'folder'
-
 export const ENTRY_KINDS: readonly EntryKind[] = ['note', 'canvas', 'pages', 'url', 'term', 'chat', 'file', 'folder']
-
 export const isEntryKind = (value: unknown): value is EntryKind =>
   typeof value === 'string' && (ENTRY_KINDS as readonly string[]).includes(value)
-
 export type ItemMeta = Readonly<Record<string, string>>
-
 export type MetaPatch = Readonly<Record<string, string | null>>
-
 export interface Item {
   readonly id: ItemId
   readonly kind: EntryKind
@@ -25,7 +20,6 @@ export interface Item {
   readonly pos?: string
   readonly meta?: ItemMeta
 }
-
 export interface Entry {
   readonly name: string
   readonly path: string

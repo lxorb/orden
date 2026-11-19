@@ -4,19 +4,16 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 const MINUTE: Duration = Duration::from_secs(60);
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Counted {
     Calls,
     Navigations,
 }
-
 #[derive(Default)]
 struct Counts {
     seen: HashMap<(String, Counted), VecDeque<Instant>>,
     said: HashMap<String, Instant>,
 }
-
 impl Counts {
     pub fn admit(
         &mut self,
@@ -41,7 +38,6 @@ impl Counts {
             .front()
             .map(|oldest| MINUTE.saturating_sub(now.duration_since(*oldest)))
     }
-
     pub fn first_of_burst(&mut self, agent: &str, now: Instant) -> bool {
         let fresh = self
             .said
@@ -53,9 +49,7 @@ impl Counts {
         fresh
     }
 }
-
 static COUNTS: Mutex<Option<Counts>> = Mutex::new(None);
-
 #[allow(clippy::result_unit_err)]
 pub fn wait_for_room(
     agent: &str,
@@ -84,7 +78,6 @@ pub fn wait_for_room(
         std::thread::sleep(wait.min(Duration::from_millis(250)));
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -106,7 +99,6 @@ mod tests {
         let minute = start + MINUTE;
         assert_eq!(counts.admit("a", Counted::Calls, 3, minute), None);
     }
-
     #[test]
     fn a_burst_is_said_once_a_minute() {
         let mut counts = Counts::default();
@@ -116,7 +108,6 @@ mod tests {
         assert!(counts.first_of_burst("b", start));
         assert!(counts.first_of_burst("a", start + MINUTE));
     }
-
     #[test]
     fn a_limit_of_nothing_still_lets_one_through() {
         let mut counts = Counts::default();

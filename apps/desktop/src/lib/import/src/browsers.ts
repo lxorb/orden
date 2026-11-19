@@ -13,7 +13,6 @@ export const BROWSER_NAMES: Record<BrowserId, string> = {
   'opera-gx': 'Opera GX',
   arc: 'Arc',
 }
-
 export const BROWSER_LOGOS: Record<BrowserId, string | null> = {
   safari: 'safari',
   firefox: 'firefox',
@@ -26,22 +25,18 @@ export const BROWSER_LOGOS: Record<BrowserId, string | null> = {
   'opera-gx': 'operagx',
   arc: 'arc',
 }
-
 export const ZEN_LOGO = 'zenbrowser'
-
 export interface BrowserProfile {
   browser: BrowserId
   name: string
   path: string
   files: string[]
 }
-
 export interface FoundBrowser {
   browser: BrowserId
   name: string
   profiles: BrowserProfile[]
 }
-
 export async function foundBrowsers(): Promise<FoundBrowser[]> {
   if (!isDesktop) return []
   try {
@@ -57,7 +52,6 @@ export async function foundBrowsers(): Promise<FoundBrowser[]> {
     return []
   }
 }
-
 export const browserFile = async (profile: BrowserProfile, file: string): Promise<Uint8Array | null> =>
   invoke<string>('read_browser_file', {
     browser: profile.browser,

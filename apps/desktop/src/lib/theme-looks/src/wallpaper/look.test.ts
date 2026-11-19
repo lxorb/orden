@@ -9,16 +9,13 @@ import { aimFor, type Colours, type Dials, floorsOf, grained, grainOf, placement
 
 const SIDES = ['dark', 'light'] as const
 type Side = (typeof SIDES)[number]
-
 function palette(side: Side): Palette {
   const found = paletteOf(wallpaperCss, side)
   if (!found) throw new Error(`wallpaper.css states no ${side} palette`)
   return found
 }
-
 const PAPER: Record<Side, Rgb> = { dark: [14, 16, 19], light: [251, 252, 253] }
 const STRONG: Record<Side, Rgb> = { dark: [255, 255, 255], light: [5, 7, 10] }
-
 function colours(side: Side): Colours {
   const one = palette(side)
   return {
@@ -32,7 +29,6 @@ function colours(side: Side): Colours {
     field: { least: PAPER[side], most: one.text },
   }
 }
-
 const PICTURES: Record<string, Span> = {
   white: { least: [255, 255, 255], most: [255, 255, 255] },
   black: { least: [0, 0, 0], most: [0, 0, 0] },
@@ -41,7 +37,6 @@ const PICTURES: Record<string, Span> = {
   'a night sky': { least: [2, 4, 12], most: [255, 255, 255] },
   'a red sunset': { least: [60, 10, 20], most: [255, 140, 60] },
 }
-
 function held(span: Span): Held {
   return {
     picture: 'data:image/png;base64,AAAA',
@@ -51,13 +46,11 @@ function held(span: Span): Held {
     focus: [0.5, 0.5],
   }
 }
-
 function stacks(one: Palette, ground: Rgb): Rgb[] {
   const hover = { colour: over(one.text, 8 / 48, one.scrim), alpha: 0.48 }
   const layered = over(one.layer.colour, one.layer.alpha, ground)
   return [ground, over(hover.colour, hover.alpha, ground), layered, over(hover.colour, hover.alpha, layered)]
 }
-
 describe('every end of every dial', () => {
   for (const side of SIDES) {
     for (const [name, span] of Object.entries(PICTURES)) {
@@ -93,7 +86,6 @@ describe('every end of every dial', () => {
       }
     }
   }
-
   test('a sharp picture aims higher than a soft one, and AA past a soft blur', () => {
     expect(aimFor(0)).toBe(SHARP)
     expect(aimFor(16)).toBe(AA)
@@ -105,7 +97,6 @@ describe('every end of every dial', () => {
     const soft = floorsOf(held(span), 'dark', { blur: 40, grain: 0 }, sides, 0.5)
     expect(sharp.chrome).toBeGreaterThan(soft.chrome)
   })
-
   test('grain widens what the picture holds, and only as far as its noise reaches', () => {
     const span = { least: [100, 100, 100], most: [150, 150, 150] } as Span
     expect(grained(span, 0)).toEqual(span)
@@ -115,7 +106,6 @@ describe('every end of every dial', () => {
     expect(grainOf(0)).toBe('none')
     expect(grainOf(50)).toMatch(/^url\("data:image\/svg\+xml,/)
   })
-
   test('a picture an older build made keeps its own floor and a careful paper', () => {
     const older: Held = {
       picture: 'data:image/png;base64,AAAA',
@@ -129,10 +119,8 @@ describe('every end of every dial', () => {
     expect(floors.paper).toBeGreaterThan(0.5)
   })
 })
-
 describe('where the picture is laid', () => {
   const one: Held = { ...held(PICTURES.white!), focus: [0.2, 0.75], size: [800, 600] }
-
   test('fills at its focal point, fits there, tiles at its own size and centres on it', () => {
     expect(placement(one, 'fill')).toEqual({
       size: 'cover',
@@ -155,17 +143,14 @@ describe('where the picture is laid', () => {
       repeat: 'no-repeat',
     })
   })
-
   test('fills where it does not know its own size', () => {
     expect(placement(held(PICTURES.white!), 'tile').size).toBe('cover')
   })
 })
-
 describe('the rule', () => {
   const dials: Dials = { blur: 28, dim: 10, grain: 0, fit: 'fill', empty: true, content: 'tinted' }
   const both = { dark: colours('dark'), light: colours('light') }
   const fields = { dark: 0.53, light: 0.51 }
-
   test('says the picture, each side’s floors and papers, and the dials', () => {
     const rule = wallpaperRule({ light: held(PICTURES.white!), dark: null }, dials, both, fields)
     expect(rule).toContain('--wallpaper-picture: url("data:image/png;base64,AAAA");')
@@ -179,7 +164,6 @@ describe('the rule', () => {
     expect(rule).toContain('--content-inner: transparent;')
     expect(rule).not.toContain(":root[data-theme='dark']")
   })
-
   test('at Opaque lays the whole paper, and what stands on it paints its own', () => {
     const rule = wallpaperRule(
       { light: held(PICTURES.white!), dark: null },
@@ -192,7 +176,6 @@ describe('the rule', () => {
     expect(rule).not.toContain('--content-inner')
     expect(rule).toContain('--empty-ground: var(--content-ground);')
   })
-
   test('gives the dark side its own picture where it has one', () => {
     const dark = { ...held(PICTURES.black!), picture: 'data:image/png;base64,BBBB' }
     const rule = wallpaperRule({ light: held(PICTURES.white!), dark }, dials, both, fields)

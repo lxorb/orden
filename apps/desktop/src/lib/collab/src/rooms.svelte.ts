@@ -19,7 +19,6 @@ interface Open {
   hash: string | null
   version: number
 }
-
 export function inRooms(
   open: readonly { key: string; path: string; note: NoteDoc }[],
   tracked: ((path: string) => { id: string; version: number; hash: string | null } | null) | null,
@@ -29,39 +28,31 @@ export function inRooms(
     return held ? [{ key, note, noteId: held.id, hash: held.hash, version: held.version }] : []
   })
 }
-
 type Joined = {
   noteId: string
   token: string
   note: NoteDoc
   hash: string | null
 } & ({ kind: 'words'; room: Room } | { kind: 'plane'; room: PlaneRoom })
-
 interface Engine {
   Room: typeof Room
   PlaneRoom: typeof PlaneRoom
 }
-
 const roomsCode = door(() => import('../../collab-rooms/src/api'))
-
 class Rooms {
   present = $state<Record<string, number>>({})
   seen = $state<Record<string, Seen>>({})
   surfaces = $state.raw<ReadonlyMap<string, PlaneSurface>>(new Map())
-
   heard(key: string, count: number, seen?: Seen) {
     this.present = count ? { ...this.present, [key]: count } : without(this.present, key)
     this.seen = count && seen ? { ...this.seen, [key]: seen } : without(this.seen, key)
   }
-
   private engine: Engine | null = null
-
   private readonly held = new Map<string, Joined>()
   private readonly shut = new Map<string, { noteId: string; token: string }>()
   readonly planes = new Map<string, PlaneSurface>()
   drawn: (() => void) | null = null
   private open: readonly Open[] = []
-
   readonly carried = new Map<
     string,
     {
@@ -70,23 +61,18 @@ class Rooms {
       shown?: () => void
     }
   >()
-
   carries(noteId: string): boolean {
     for (const one of this.held.values()) {
       if (one.noteId === noteId && one.room.settled) return true
     }
-
     return false
   }
-
   wordsOf(noteId: string): string | null {
     for (const one of this.held.values()) {
       if (one.noteId === noteId && one.room.settled) return one.room.words
     }
-
     return null
   }
-
   letGoUnreached(noteId: string): void {
     let left = false
     for (const [key, joined] of this.held) {
@@ -99,20 +85,16 @@ class Rooms {
     }
     if (left) this.follow(this.open)
   }
-
   follow(open: readonly Open[]) {
     const token = account.token
     untrack(() => this.followAs(open, token))
   }
-
   private followAs(open: readonly Open[], token: string | null) {
     this.open = open
     const wanted = new Map(token ? open.map((one) => [one.key, one]) : [])
-
     for (const [key, out] of this.shut) {
       if (wanted.get(key)?.noteId !== out.noteId || out.token !== token) this.shut.delete(key)
     }
-
     for (const [key, joined] of this.held) {
       const still = wanted.get(key)
       if (
@@ -124,24 +106,19 @@ class Rooms {
       ) {
         continue
       }
-
       joined.room.leave()
       this.held.delete(key)
       this.heard(key, 0)
     }
-
     if (!token) return
-
     if (!this.engine) {
       void this.reach().catch(() => undefined)
       return
     }
-
     for (const [key, one] of wanted) {
       if (!this.held.has(key) && !this.shut.has(key) && this.ready(one)) this.join(key, one, token)
     }
   }
-
   reach(): Promise<void> {
     return roomsCode().then(({ Room, PlaneRoom }) => {
       if (this.engine) return
@@ -149,31 +126,25 @@ class Rooms {
       this.follow(this.open)
     })
   }
-
   drawing(key: string, surface: PlaneSurface | null) {
     untrack(() => {
       if (surface) this.planes.set(key, surface)
       else this.planes.delete(key)
       this.surfaces = new Map(this.planes)
       this.drawn?.()
-
       this.follow(this.open)
     })
   }
-
   clear() {
     this.follow([])
     for (const one of this.carried.values()) one.room.leave()
     this.carried.clear()
   }
-
   moved(view: EditorView) {
     const shared = documentOf(view)
     if (!shared) return
-
     for (const joined of this.held.values()) {
       if (joined.note.live !== shared || joined.kind !== 'words') continue
-
       const at = view.state.selection.main
       joined.room.moved(at.anchor, at.head)
     }
@@ -182,52 +153,42 @@ class Rooms {
       if (one.live === shared) one.room.moved(at.anchor, at.head)
     }
   }
-
   repaint(scheme: Scheme) {
     untrack(() => {
       for (const joined of this.held.values()) joined.room.repaint(scheme)
       for (const one of this.carried.values()) one.room.repaint(scheme)
     })
   }
-
   rename(person: string | undefined, worn?: Worn) {
     untrack(() => {
       for (const joined of this.held.values()) joined.room.rename(person, worn)
       for (const one of this.carried.values()) one.room.rename(person, worn)
     })
   }
-
   private ready(open: Open): boolean {
     return roomKindOf(open.note) === 'words' || this.planes.has(open.key)
   }
-
   private answered(joined: Joined, still: Open): boolean {
     return joined.kind === 'words' && joined.room.waiting && still.hash !== joined.hash
   }
-
   private rebuild(key: string) {
     if (!this.letGo(key)) return
     this.follow(this.open)
   }
-
   private letGo(key: string): boolean {
     const joined = this.held.get(key)
     if (!joined) return false
-
     joined.room.leave()
     this.held.delete(key)
     this.heard(key, 0)
     return true
   }
-
   private join(key: string, open: Open, token: string) {
     const engine = this.engine
     if (!engine) return
-
     const onPeers = (count: number, seen?: Seen) => {
       this.heard(key, count, seen)
     }
-
     const who = {
       name: deviceName('Browser'),
       accent: ownAccent(),
@@ -235,19 +196,16 @@ class Rooms {
       ...personFace(),
     }
     const gone = () => this.rebuild(key)
-
     const refused = () => {
       this.letGo(key)
       this.shut.set(key, { noteId: open.noteId, token })
       busy.failed(TOO_LARGE_FOR_A_ROOM)
     }
-
     const shut = (signedOut: boolean) => {
       this.letGo(key)
       this.shut.set(key, { noteId: open.noteId, token })
       if (signedOut) void account.recheck()
     }
-
     const demoted = () => {
       void demotedFrom(
         open.note,
@@ -255,10 +213,8 @@ class Rooms {
         () => this.follow(this.open),
       )
     }
-
     const arrivals = open.note.arrivals
     const holds = () => open.note.arrivals === arrivals
-
     const shape = {
       noteId: open.noteId,
       token,
@@ -271,7 +227,6 @@ class Rooms {
       demoted,
       holds,
     }
-
     const kind = roomKindOf(open.note)
     const surface = this.planes.get(key)
     if (kind === 'plane' && surface) {
@@ -285,7 +240,6 @@ class Rooms {
       })
       return
     }
-
     const room = new engine.Room({
       ...shape,
       note: open.note.live,
@@ -296,7 +250,6 @@ class Rooms {
           import('../../collab-rooms/src/api'),
           import('../../modes/src/api'),
         ])
-
         return await apart(
           modes.conflicts,
           { path: open.note.path ?? '', id: open.noteId, version: open.version },
@@ -304,7 +257,6 @@ class Rooms {
         )
       },
     })
-
     this.held.set(key, {
       room,
       noteId: open.noteId,
@@ -315,5 +267,4 @@ class Rooms {
     })
   }
 }
-
 export const rooms = new Rooms()

@@ -13,12 +13,10 @@ const SAID = [
   '{"type":"error","timestamp":"t","severity":"warning","message":"Loop detected, carrying on"}',
   '{"type":"result","timestamp":"t","status":"success","stats":{"total_tokens":180,"input_tokens":170,"output_tokens":10,"cached":120,"input":50,"duration_ms":900,"tool_calls":1,"models":{}}}',
 ]
-
 function readAll(lines: readonly string[]): Heard[] {
   const read = geminiReader()
   return lines.map(read)
 }
-
 describe('a Gemini CLI turn', () => {
   test('names the model, streams the words once and ends with what it spent', () => {
     const heard = readAll(SAID)
@@ -27,7 +25,6 @@ describe('a Gemini CLI turn', () => {
     expect(heard.some((one) => one.trouble)).toBe(false)
     expect(heard.at(-1)).toEqual({ usage: { input: 170, cached: 120, output: 10 }, ended: 'end' })
   })
-
   test('shows Orden’s call by its bare name, then its answer', () => {
     const heard = readAll(SAID)
     expect(heard[2]?.tool).toEqual({ id: 'read-1', name: 'read_note', args: { path: 'Birds.md' } })
@@ -41,7 +38,6 @@ describe('a Gemini CLI turn', () => {
     )
     expect(failed.tool?.done).toEqual({ text: 'No such note', error: true })
   })
-
   test('is the whole message where a version printed no deltas', () => {
     const plain = SAID.filter((line) => !line.includes('"delta"'))
     expect(
@@ -50,7 +46,6 @@ describe('a Gemini CLI turn', () => {
         .join(''),
     ).toBe('It says herons.')
   })
-
   test('a failed turn says why, and whether it wants a sign-in or hit its quota', () => {
     const read = geminiReader()
     const out = read('{"type":"result","status":"error","error":{"type":"Error","message":"401 Unauthorized"}}')

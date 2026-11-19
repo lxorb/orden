@@ -8,7 +8,6 @@ function files(map: Record<string, string>): (file: string) => string {
     return text
   }
 }
-
 test("CPU is the cgroup's own count where there is one", () => {
   const read = files({
     '/sys/fs/cgroup/cpu.stat': 'usage_usec 1234567\nuser_usec 1000000\nsystem_usec 234567\n',
@@ -16,17 +15,14 @@ test("CPU is the cgroup's own count where there is one", () => {
   })
   expect(cpuMicros(read)).toBe(1234567)
 })
-
 test("and the kernel's ticks otherwise, idle and waiting left out", () => {
   const read = files({ '/proc/stat': 'cpu  100 20 30 5000 70 1 2 3 0 0\ncpu0 ...\n' })
   expect(cpuMicros(read)).toBe((100 + 20 + 30 + 1 + 2 + 3) * 10_000)
 })
-
 test('neither readable is no figure rather than a wrong one', () => {
   expect(cpuMicros(files({}))).toBeNull()
   expect(netBytes(files({}))).toBeNull()
 })
-
 test("the network is every interface's bytes in and out, loopback left out", () => {
   const read = files({
     '/proc/net/dev': [
@@ -40,7 +36,6 @@ test("the network is every interface's bytes in and out, loopback left out", () 
   })
   expect(netBytes(read)).toBe(1000 + 500 + 20 + 30)
 })
-
 test('the disk is its blocks less what the user may still write, and nothing where unread', () => {
   const stats = { blocks: 100, bavail: 30, bsize: 4096 }
   expect(diskOf('/home/nib', (() => stats) as never)).toEqual({

@@ -7,34 +7,27 @@ export class MemoryDisk implements Disk {
   readonly files = new Map<string, string>()
   readonly bytes = new Map<string, Uint8Array>()
   readonly folders = new Set<string>()
-
   readBytes(path: string): Promise<Uint8Array | null> {
     return Promise.resolve(this.bytes.get(path) ?? null)
   }
-
   writeBytes(path: string, bytes: Uint8Array): Promise<void> {
     this.mkdirNow(folderOf(path))
     this.bytes.set(path, bytes)
     return Promise.resolve()
   }
-
   read(path: string): Promise<string | null> {
     return Promise.resolve(this.files.get(path) ?? null)
   }
-
   write(path: string, text: string): Promise<void> {
     this.mkdirNow(folderOf(path))
     this.files.set(path, text)
     return Promise.resolve()
   }
-
   readonly kept: { path: string; text: string }[] = []
-
   keep(path: string, text: string): Promise<void> {
     this.kept.push({ path, text })
     return Promise.resolve()
   }
-
   move(from: string, to: string): Promise<void> {
     this.mkdirNow(folderOf(to))
     for (const held of [this.files, this.bytes] as Map<string, unknown>[]) {
@@ -51,7 +44,6 @@ export class MemoryDisk implements Disk {
     }
     return Promise.resolve()
   }
-
   remove(path: string): Promise<void> {
     for (const held of [this.files, this.bytes] as Map<string, unknown>[]) {
       for (const one of [...held.keys()]) {
@@ -63,26 +55,21 @@ export class MemoryDisk implements Disk {
     }
     return Promise.resolve()
   }
-
   holds(folder: string): Promise<readonly string[]> {
     const under = (one: string) => one.startsWith(`${folder}/`)
     return Promise.resolve([...this.files.keys(), ...this.bytes.keys(), ...this.folders].filter(under))
   }
-
   mkdir(path: string): Promise<void> {
     this.mkdirNow(path)
     return Promise.resolve()
   }
-
   private mkdirNow(path: string) {
     for (let at = path; at && at !== '/'; at = folderOf(at)) this.folders.add(at)
   }
-
   async evicted(path: string): Promise<boolean> {
     const { placeholderOf } = await iCloud()
     return this.exists(placeholderOf(path))
   }
-
   exists(path: string): Promise<boolean> {
     const key = nameKey(path)
     for (const one of [...this.files.keys(), ...this.bytes.keys(), ...this.folders]) {

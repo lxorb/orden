@@ -12,39 +12,31 @@ let env: TestEnv
 let rooms: Live
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   rooms = live(env)
   token = await signIn(env, 'rooms@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Rooms' } })).json.space.id
 })
-
 afterEach(() => env.close())
-
 async function made(path: string, content: string): Promise<string> {
   const answer = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   return answer.json.note.id
 }
-
 async function prepare() {
   await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
 }
-
 function row(id: string): { version: number; hash: string; path: string; deleted: number } {
   return env.db.prepare('select * from notes where id = ?').get(id) as never
 }
-
 async function body(id: string): Promise<string> {
   const object = await env.NOTES.get(`spaces/${space}/${id}`)
   return object ? await object.text() : ''
 }
-
 class Device {
   readonly doc = new Y.Doc()
   seq: number
   private pushes = 0
-
   constructor(
     readonly id: string,
     text: string,
@@ -53,86 +45,69 @@ class Device {
     Y.applyUpdateV2(this.doc, seedUpdate(id, 1, text))
     this.seq = text ? 1 : 0
   }
-
   get words(): string {
     return this.doc.getText(TEXT).toJSON()
   }
-
   type(at: number, words: string): { base: Uint8Array; update: Uint8Array } {
     const base = Y.encodeStateVector(this.doc)
     this.doc.getText(TEXT).insert(at, words)
     return { base, update: Y.encodeStateAsUpdateV2(this.doc, base) }
   }
-
   push(pending: { base: Uint8Array; update: Uint8Array }, push = `${this.name}-${String(++this.pushes)}`) {
     return framed<PushResponse>(env, '/v2/docs/push', token, {
       docs: [{ id: this.id, push, epoch: 1, seq: this.seq, ...pending, at: 1 }],
     })
   }
 }
-
 describe('a room holding a note on sync v2', () => {
   test('seeds its epoch byte for byte as a device seeds it', async () => {
     const text = '# Plan\n\nWe ship on Monday.\n'
     const id = await made('Plan.md', text)
     await prepare()
-
     await join(rooms.of(id).room, { id, spaceId: space })
     await rooms.settle()
-
     expect(await snapshotOf(id)).toEqual(seedUpdate(id, 1, text))
   })
-
   test('takes a push made on its version, written down before it answers', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const device = new Device(id, 'one\n', 'laptop')
-
     const { value } = await device.push(device.type(4, 'two\n'))
     const answer = value.docs[0]
     expect(answer).toMatchObject({ id, ok: true, seq: 2 })
-
     const { state } = rooms.of(id)
     expect(state.kept.get('version')).toMatchObject({ seq: 2 })
     expect(await body(id)).toBe('one\n')
-
     await rooms.settle()
     expect(await body(id)).toBe('one\ntwo\n')
     expect(row(id).version).toBeGreaterThan(1)
   })
-
   test('answers moved, with what the device is missing, once it has moved past the version', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const laptop = new Device(id, 'one\n', 'laptop')
     const phone = new Device(id, 'one\n', 'phone')
-
     expect(await laptop.push(laptop.type(0, 'laptop ')).then((one) => one.value.docs[0])).toMatchObject({ ok: true })
-
     const { value } = await phone.push(phone.type(4, 'phone\n'))
     const moved = value.docs[0]
     if (!moved || !('moved' in moved)) throw new Error(`not moved: ${JSON.stringify(moved)}`)
     expect(moved.seq).toBe(2)
-
     const remote = new Y.Doc()
     Y.applyUpdateV2(remote, seedUpdate(id, 1, 'one\n'))
     Y.applyUpdateV2(remote, moved.moved)
     expect(remote.getText(TEXT).toJSON()).toBe('laptop one\n')
   })
-
   test('answers a push sent again with the answer it gave the first time', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const device = new Device(id, 'one\n', 'laptop')
     const pending = device.type(0, 'x')
-
     const first = await device.push(pending, 'same')
     const again = await device.push(pending, 'same')
     expect(again.value.docs).toEqual(first.value.docs)
     await rooms.settle()
     expect(await body(id)).toBe('xone\n')
   })
-
   test('acknowledges at its settle to v2 sockets, and says nothing new to v1 ones', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
@@ -141,11 +116,9 @@ describe('a room holding a note on sync v2', () => {
     v2.serializeAttachment({ ...(v2.deserializeAttachment() as object), v2: true })
     v2.take()
     v1.take()
-
     const device = new Device(id, 'one\n', 'laptop')
     await device.push(device.type(0, 'x'))
     await rooms.settle()
-
     const acks = v2
       .take()
       .map((one) => roomNews(one))
@@ -153,42 +126,34 @@ describe('a room holding a note on sync v2', () => {
     expect(acks.at(-1)).toMatchObject({ t: 'ack', seq: 2 })
     expect(v1.take().some((one) => roomNews(one) !== null)).toBe(false)
   })
-
   test('brings a deleted note back when words land on it', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const phone = await signIn(env, 'rooms@example.com')
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token: phone })
     expect(row(id).deleted).toBe(1)
-
     const device = new Device(id, 'one\n', 'laptop')
     await device.push(device.type(4, 'kept\n'))
     await rooms.settle()
-
     expect(row(id).deleted).toBe(0)
     expect(await body(id)).toBe('one\nkept\n')
   })
-
   test('leaves a note deleted when the words are the deleting device’s own (#413)', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const device = new Device(id, 'one\n', 'laptop')
     const typed = device.type(4, 'kept\n')
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
-
     await device.push(typed)
     await rooms.settle()
-
     expect(row(id).deleted).toBe(1)
     expect(await body(id)).toBe('one\n')
   })
 })
-
 describe('whole texts', () => {
   test('a v1 save on the version it read lands as operations a v2 device pulls', async () => {
     const id = await made('Plan.md', 'one\ntwo\n')
     await prepare()
-
     const put = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
@@ -196,7 +161,6 @@ describe('whole texts', () => {
     })
     expect(put.status, put.text).toBe(200)
     expect(put.json.note.hash).toBe(row(id).hash)
-
     const device = new Device(id, 'one\ntwo\n', 'phone')
     const { value } = await framed<PullResponse>(env, '/v2/docs/pull', token, {
       docs: [{ id, epoch: 1, sv: Y.encodeStateVector(device.doc) }],
@@ -205,11 +169,9 @@ describe('whole texts', () => {
     if (!pulled || !('update' in pulled)) throw new Error('nothing pulled')
     Y.applyUpdateV2(device.doc, pulled.update)
     expect(device.words).toBe('one\n2\n')
-
     const clients = [...Y.decodeStateVector(Y.encodeStateVectorFromUpdateV2(pulled.update)).keys()]
     expect(clients).toEqual([hash32(id, 'account')])
   })
-
   test('a v1 save naming an older version is the 409 it always was', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
@@ -219,7 +181,6 @@ describe('whole texts', () => {
       token,
       body: { content: 'two\n', baseVersion: stale },
     })
-
     const late = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
@@ -228,13 +189,11 @@ describe('whole texts', () => {
     expect(late.status).toBe(409)
     expect(await body(id)).toBe('two\n')
   })
-
   test('the connector writes through the room too', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const device = new Device(id, 'one\n', 'laptop')
     await device.push(device.type(4, 'typed\n'))
-
     const mcp = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
     const written = await call<RpcView>(env, '/mcp', {
       token: mcp.json.token,
@@ -253,7 +212,6 @@ describe('whole texts', () => {
     expect(await body(id)).toBe('one\ntyped\nconnector\n')
   })
 })
-
 describe('the connector in a space whose tree is rows', () => {
   test('answers another spelling of a note that is there in words, and makes nothing', async () => {
     await made('Plan.md', 'one')
@@ -277,13 +235,11 @@ describe('the connector in a space whose tree is rows', () => {
     })
   })
 })
-
 describe('an epoch starting', () => {
   test('a v1 room with words it never settled takes them into the new document', async () => {
     const id = await made('Plan.md', 'one\n')
     const { room, state } = rooms.of(id)
     const socket = await join(room, { id, spaceId: space })
-
     const device = new Y.Doc()
     const awareness = new Awareness(device)
     await say(room, state, socket, syncStep1(device))
@@ -293,21 +249,17 @@ describe('an epoch starting', () => {
     device.getText(TEXT).insert(4, 'unsettled\n')
     await say(room, state, socket, syncUpdate(Y.encodeStateAsUpdate(device, before)))
     state.takeAlarm()
-
     await prepare()
     await room.alarm()
     await state.idle()
     await rooms.settle()
-
     expect(socket.closedWith?.code).toBe(1012)
     expect(await body(id)).toBe('one\nunsettled\n')
-
     const merged = new Y.Doc()
     Y.applyUpdateV2(merged, seedUpdate(id, 1, 'one\n'))
     Y.applyUpdateV2(merged, await snapshotOf(id))
     expect(merged.getText(TEXT).toJSON()).toBe('one\nunsettled\n')
   })
-
   async function startedOver(saved: string): Promise<{ words: string; paths: string[] }> {
     const id = await made('Plan.md', 'one\n')
     const { room, state } = rooms.of(id)
@@ -320,44 +272,37 @@ describe('an epoch starting', () => {
     device.getText(TEXT).insert(4, 'unsettled\n')
     await say(room, state, socket, syncUpdate(Y.encodeStateAsUpdate(device, before)))
     state.takeAlarm()
-
     const put = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
       body: { content: saved, baseVersion: row(id).version },
     })
     expect(put.status, put.text).toBe(200)
-
     await prepare()
     await room.alarm()
     await state.idle()
     await rooms.settle()
     expect(socket.closedWith?.code).toBe(1012)
-
     const paths = env.db
       .prepare('select path from notes where space_id = ? and deleted = 0 order by path')
       .all(space) as { path: string }[]
     return { words: await body(id), paths: paths.map((one) => one.path) }
   }
-
   test('keeps no copy of words the note already holds, which is Orden’s own echo', async () => {
     const after = await startedOver('one\nunsettled\nand more from the same hand\n')
     expect(after.paths).toEqual(['Plan.md'])
     expect(after.words).toBe('one\nunsettled\nand more from the same hand\n')
   })
-
   test('keeps no copy where the room holds every word the note does', async () => {
     const after = await startedOver('one\nunset')
     expect(after.paths).toEqual(['Plan.md'])
     expect(after.words).toBe('one\nunsettled\n')
   })
-
   test('keeps the room’s words beside the note where the two really parted', async () => {
     const after = await startedOver('two\n')
     expect(after.paths).toHaveLength(2)
     expect(after.words).toBe('two\n')
   })
-
   test('closes a v2 socket with the new epoch and 4001', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
@@ -365,48 +310,37 @@ describe('an epoch starting', () => {
     const socket = await join(room, { id, spaceId: space })
     socket.serializeAttachment({ ...(socket.deserializeAttachment() as object), v2: true })
     socket.take()
-
     env.db.prepare('update notes set epoch = 2, epoch_base = hash where id = ?').run(id)
     await room.alarm()
     await state.idle()
-
     const news = socket.take().map((one) => roomNews(one))
     expect(news).toContainEqual({ t: 'epoch', epoch: 2, epochBase: row(id).hash })
     expect(socket.closedWith?.code).toBe(4001)
   })
 })
-
 describe('a note written with Windows line endings on sync v2', () => {
   const crlf = '# Lines\r\none\r\ntwo\r\n'
   const lf = '# Lines\none\ntwo\n'
-
   test('seeds its document without a carriage return, byte for byte as a device seeds it', async () => {
     const id = await made('Lines.md', crlf)
     await prepare()
-
     await join(rooms.of(id).room, { id, spaceId: space })
     await rooms.settle()
-
     expect(await snapshotOf(id)).toEqual(seedUpdate(id, 1, crlf))
     expect(await body(id)).toBe(crlf)
   })
-
   test('writes a pushed change back with the line endings the file had', async () => {
     const id = await made('Lines.md', crlf)
     await prepare()
     const device = new Device(id, crlf, 'laptop')
     expect(device.words).toBe(lf)
-
     await device.push(device.type(lf.length, 'three\n'))
     await rooms.settle()
-
     expect(await body(id)).toBe('# Lines\r\none\r\ntwo\r\nthree\r\n')
   })
-
   test('takes a v1 save in Windows line endings as the words a device counts', async () => {
     const id = await made('Lines.md', crlf)
     await prepare()
-
     const put = await call(env, `/v1/notes/${id}`, {
       method: 'PUT',
       token,
@@ -414,7 +348,6 @@ describe('a note written with Windows line endings on sync v2', () => {
     })
     expect(put.status, put.text).toBe(200)
     expect(await body(id)).toBe('# Lines\r\none\r\n2\r\n')
-
     const device = new Device(id, crlf, 'phone')
     const { value } = await framed<PullResponse>(env, '/v2/docs/pull', token, {
       docs: [{ id, epoch: 1, sv: Y.encodeStateVector(device.doc) }],
@@ -425,13 +358,11 @@ describe('a note written with Windows line endings on sync v2', () => {
     expect(device.words).toBe('# Lines\none\n2\n')
   })
 })
-
 async function snapshotOf(id: string): Promise<Uint8Array> {
   const object = await env.NOTES.get(`crdt/${id}`)
   if (!object) throw new Error('no snapshot')
   return new Uint8Array(await object.arrayBuffer())
 }
-
 describe('a canvas on sync v2', () => {
   test('seeds as a device seeds it, and a v1 save of it lands as operations on its cards', async () => {
     const canvas: Canvas = {
@@ -446,7 +377,6 @@ describe('a canvas on sync v2', () => {
     await join(rooms.of(id).room, { id, spaceId: space, kind: 'plane' })
     await rooms.settle()
     expect(await snapshotOf(id)).toEqual(seedPlane(id, 1, readCanvas(writeCanvas(canvas))))
-
     const next: Canvas = {
       ...canvas,
       nodes: [{ ...canvas.nodes[0], text: 'One two' } as CanvasNode],
@@ -461,7 +391,6 @@ describe('a canvas on sync v2', () => {
     expect(await body(id)).toBe(writeCanvas(readCanvas(writeCanvas(next))))
   })
 })
-
 describe('the kept side', () => {
   test('the side a modal answer let go of is kept as a version, named after its device', async () => {
     const id = await made('Plan.md', 'one\n')
@@ -471,14 +400,12 @@ describe('the kept side', () => {
       body: { id, text: 'the words that lost\n', device: 'Laptop' },
     })
     expect(kept.status).toBe(200)
-
     const versions = await call(env, `/v1/notes/${id}/versions`, { token })
     const newest = (versions.json as unknown as { versions: { at: number; by: string }[] }).versions[0]
     expect(newest?.by).toBe('Laptop')
     const words = await call(env, `/v1/notes/${id}/versions/${String(newest?.at)}`, { token })
     expect(words.json.content).toBe('the words that lost\n')
   })
-
   test('a kept side counts against the pushes one person may make in a minute', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
@@ -486,7 +413,6 @@ describe('the kept side', () => {
     env.db
       .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
       .run('doc-push', user.id, 600, Date.now() + 60 * 1000)
-
     const over = await call(env, '/v2/docs/keep', {
       token,
       body: { id, text: 'one too many\n', device: 'Laptop' },
@@ -495,7 +421,6 @@ describe('the kept side', () => {
     const held = env.db.prepare('select count(*) as many from note_versions where note_id = ?')
     expect(held.get(id)).toEqual({ many: 1 })
   })
-
   test('kept sides are held to a number an hour of their own', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
@@ -503,7 +428,6 @@ describe('the kept side', () => {
     env.db
       .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
       .run('doc-keep', user.id, 200, Date.now() + 60 * 60 * 1000)
-
     const over = await call(env, '/v2/docs/keep', {
       token,
       body: { id, text: 'one too many this hour\n', device: 'Laptop' },
@@ -512,14 +436,12 @@ describe('the kept side', () => {
     const held = env.db.prepare('select count(*) as many from note_versions where note_id = ?')
     expect(held.get(id)).toEqual({ many: 1 })
   })
-
   test('a kept side past the account’s ceiling on versions is refused where it is written', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const { MOST_VERSION_BYTES } = await import('../src/sync-server/src/versions')
     env.db.prepare('update note_versions set size = 0').run()
     env.db.prepare('update note_versions set size = ? where note_id = ?').run(MOST_VERSION_BYTES - 4, id)
-
     const over = await call(env, '/v2/docs/keep', {
       token,
       body: { id, text: 'past the ceiling\n', device: 'Laptop' },
@@ -527,7 +449,6 @@ describe('the kept side', () => {
     expect(over.status).toBe(507)
     const held = env.db.prepare('select count(*) as many from note_versions where note_id = ?')
     expect(held.get(id)).toEqual({ many: 1 })
-
     const fits = await call(env, '/v2/docs/keep', {
       token,
       body: { id, text: 'ok\n', device: 'Laptop' },

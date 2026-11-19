@@ -25,9 +25,7 @@ export type EventKind =
   | 'host'
   | 'server'
   | 'resize'
-
 export type Named = string & { readonly named: unique symbol }
-
 export type Detail =
   | 'idle'
   | 'allowance'
@@ -53,13 +51,9 @@ export type Detail =
   | Failure
   | number
   | null
-
 export type Failure = string & { readonly failure: unique symbol }
-
 export type Step = 'start' | 'link' | 'restore' | 'backup' | 'snapshot' | 'stop' | 'resize'
-
 const SAID_LIMIT = 160
-
 export function failureOf(step: Step, error: unknown): Failure {
   const named = error instanceof Error ? error : null
   const coded = (error as { code?: unknown } | null)?.code
@@ -71,9 +65,7 @@ export function failureOf(step: Step, error: unknown): Failure {
     .slice(0, SAID_LIMIT)
   return [`${step}:`, named?.name ?? typeof error, code, said].filter(Boolean).join(' ') as Failure
 }
-
 const KEPT = 90 * 24 * 60 * 60 * 1000
-
 export async function audit(
   env: Env,
   machine: string,
@@ -92,7 +84,6 @@ export async function audit(
     )
     .run()
 }
-
 export async function sweepAudit(env: Env, at: number): Promise<void> {
   await env.DB.prepare('delete from machine_events where at < ?')
     .bind(at - KEPT)

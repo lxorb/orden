@@ -2,12 +2,9 @@ import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
 const { default: WebHistory } = await import('../../src/lib/web-tab/src/WebHistory.svelte')
-
 const BOOK = 'orden:web-visits:history-test'
-
 let target: HTMLElement
 let close: (() => void) | undefined
-
 beforeEach(() => {
   const now = Date.now()
   const rows = Array.from({ length: 2000 }, (_, at) => ({
@@ -26,15 +23,12 @@ beforeEach(() => {
   })
   close = () => void unmount(made)
 })
-
 afterEach(() => {
   close?.()
   target.remove()
   localStorage.removeItem(BOOK)
 })
-
 const labels = () => [...target.querySelectorAll('.history .page .orden-row-label')].map((one) => one.textContent)
-
 test('a search starts at the top of what it found', async () => {
   const list = target.querySelector<HTMLElement>('.history .list')
   if (!list) throw new Error('no list')
@@ -44,12 +38,10 @@ test('a search starts at the top of what it found', async () => {
     get: () => top,
     set: (value: number) => (top = value),
   })
-
   top = 40_000
   list.dispatchEvent(new Event('scroll'))
   flushSync()
   expect(labels()[0]).not.toBe('Alpha page 0')
-
   const field = target.querySelector<HTMLInputElement>('.history .find')
   if (!field) throw new Error('no field')
   field.value = 'zeta'
@@ -57,7 +49,6 @@ test('a search starts at the top of what it found', async () => {
   flushSync()
   await tick()
   flushSync()
-
   expect(top).toBe(0)
   expect(labels()[0]).toBe('Zeta page 1')
 })

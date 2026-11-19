@@ -10,7 +10,6 @@ const said = (source: string) =>
     value: one.value,
     items: one.items,
   }))
-
 describe('a note read as rows', () => {
   test('a quoted value is text, whatever it says', () => {
     const rows = readProperties(
@@ -25,7 +24,6 @@ describe('a note read as rows', () => {
     ])
     expect(rows?.[3]?.quotedItems).toEqual([true, false])
   })
-
   test('the shapes a note actually holds', () => {
     expect(
       said(
@@ -59,7 +57,6 @@ describe('a note read as rows', () => {
       { key: 'empty', kind: 'text', value: '', items: [] },
     ])
   })
-
   test('a date with a time is still a date; quotes come off, whichever kind they are; an empty list is a list', () => {
     expect(said('---\nwhen: 2025-09-08T14:30\n---\n')?.[0]?.kind).toBe('date')
     expect(said('---\nwhen: 2025-09-08 14:30:00\n---\n')?.[0]?.kind).toBe('date')
@@ -72,21 +69,18 @@ describe('a note read as rows', () => {
       items: [],
     })
   })
-
   test('yes and no are words, not a checkbox; a note with no block has no rows; and an empty block reads as no rows rather than as unreadable', () => {
     expect(said('---\nstatus: no\n---\n')?.[0]?.kind).toBe('text')
     expect(readProperties('# Just a note\n')).toBe(null)
     expect(readProperties('')).toBe(null)
     expect(readProperties('---\n---\n')).toEqual([])
   })
-
   test('a list at the key’s own margin, which is YAML too', () => {
     expect(said('---\naliases:\n- One\n- Two\n---\n\nWords.\n')).toEqual([
       { key: 'aliases', kind: 'list', value: '', items: ['One', 'Two'] },
     ])
   })
 })
-
 describe('a key', () => {
   const NAMES = [
     'priorität',
@@ -102,14 +96,12 @@ describe('a key', () => {
     '💰',
     '👍🏽 votes',
   ]
-
   test('is any name front matter reads back as itself', () => {
     const block = ['---', ...NAMES.map((name) => `${name}: v`), '---', ''].join('\n')
     expect(readProperties(block)?.map((one) => one.key)).toEqual(NAMES)
     expect(readProperties('---\nexport:\n  größe: A4\n---\n')?.[0]?.items).toEqual(['größe: A4'])
     for (const name of NAMES) expect(isPropertyName(name), name).toBe(true)
   })
-
   test('is not one it would read as something else, or not at all', () => {
     for (const name of [
       '',
@@ -138,7 +130,6 @@ describe('a key', () => {
       expect(isPropertyName(name), name).toBe(false)
   })
 })
-
 describe('a block this cannot draw', () => {
   test('is left as source, whole', () => {
     for (const block of [
@@ -152,7 +143,6 @@ describe('a block this cannot draw', () => {
       expect(readProperties(block), block).toBe(null)
     }
   })
-
   test('a block longer than any note’s metadata is source, whichever rows it holds', () => {
     const many = (line: (at: number) => string) =>
       ['---', ...Array.from({ length: 200 }, (_, at) => line(at)), '---', ''].join('\n')
@@ -160,7 +150,6 @@ describe('a block this cannot draw', () => {
     expect(readProperties(many((at) => `k${at}: [one, two]`))).toBe(null)
     expect(readProperties(many((at) => `k${at}:`))).toBe(null)
   })
-
   test('rather than a table with a row missing; but Orden’s own page setup is a shape it knows, so those notes keep rows', () => {
     expect(readProperties('---\ntitle: A plan\nweird:\n  ~ what\n---\n')).toBe(null)
     expect(said('---\ntitle: A plan\nexport:\n  paper: A4\n  margin: 15mm\n---\n')).toEqual([
@@ -169,7 +158,6 @@ describe('a block this cannot draw', () => {
     ])
   })
 })
-
 describe('where each row came from', () => {
   test('is the line the key is written on', () => {
     const source = '---\ntitle: A plan\ntags: [one]\n---\n'
@@ -177,17 +165,14 @@ describe('where each row came from', () => {
     expect(source.slice(rows[0]!.from, rows[0]!.to)).toBe('title: A plan')
     expect(source.slice(rows[1]!.from, rows[1]!.to)).toBe('tags: [one]')
   })
-
   test('and a list written under its key reaches to its last item', () => {
     const source = '---\naliases:\n  - One\n  - Two\n---\n'
     const rows = readProperties(source) ?? []
     expect(source.slice(rows[0]!.from, rows[0]!.to)).toBe('aliases:\n  - One\n  - Two')
   })
 })
-
 describe('the rows as markup', () => {
   const table = (source: string) => propertiesTable(readProperties(source) ?? [])
-
   test('one row per key, wearing the row every list in the app wears', () => {
     const html = table('---\ntitle: A plan\ntags: [one, two]\n---\n')
     expect(html.match(/class="property orden-row is-short"/g)).toHaveLength(2)
@@ -195,7 +180,6 @@ describe('the rows as markup', () => {
     expect(html).toContain('class="property-chip">one<')
     expect(html).toContain('class="property-chip">two<')
   })
-
   test('a checkbox says which way it is; every row carries the line it was drawn from; nothing a note wrote can end an attribute or open a tag', () => {
     expect(table('---\ndone: true\n---\n')).toContain('property-check is-on')
     expect(table('---\ndone: false\n---\n')).not.toContain('is-on')
@@ -204,15 +188,12 @@ describe('the rows as markup', () => {
     expect(html).not.toContain('<script')
     expect(html).toContain('&quot;&gt;&lt;script&gt;')
   })
-
   test('and a hostile key cannot either', () => {
     expect(table('---\ntags: ["<b>bold</b>"]\n---\n')).not.toContain('<b>')
   })
 })
-
 describe('the three answers', () => {
   const NOTE = '---\ntitle: A note\ntags: [one]\n---\n\n# Head\n'
-
   test('are the words every reader of the setting knows; read a saved or shared answer, and nothing on the page for anything else', () => {
     expect(PROPERTIES_MODES).toEqual(['properties', 'source', 'hidden'])
     expect(propertiesMode('source')).toBe('source')
@@ -221,7 +202,6 @@ describe('the three answers', () => {
       expect(propertiesMode(said), String(said)).toBe('hidden')
     }
   })
-
   test('draw the rows, the block as typed, or neither', () => {
     expect(renderMarkdown(NOTE, { properties: 'properties' })).toContain('class="property ')
     expect(renderMarkdown(NOTE, { properties: 'source' })).toContain('<pre class="properties-source">')
@@ -229,14 +209,12 @@ describe('the three answers', () => {
     expect(nothing).not.toContain('property')
     expect(nothing).not.toContain('properties-source')
   })
-
   test('draw nothing at all where the caller did not ask; fall back to the source for a block the rows cannot read', () => {
     expect(renderMarkdown(NOTE)).not.toContain('property')
     const query = '---\ntitle: A note\n# a comment\n---\n\n# Head\n'
     expect(readProperties(query)).toBeNull()
     expect(renderMarkdown(query, { properties: 'properties' })).toContain('<pre class="properties-source">')
   })
-
   test('escape the block, because a note may hold anything; leave the block out of the note either way', () => {
     const hostile = '---\ntitle: <script>bad()</script>\n---\n\n# Head\n'
     expect(renderMarkdown(hostile, { properties: 'source' })).not.toContain('<script>')

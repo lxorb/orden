@@ -13,9 +13,7 @@ const panel = vi.hoisted(() => ({
   openThread: vi.fn((_id: string) => Promise.resolve()),
 }))
 vi.mock('../../ai-chat/src/store/chat.svelte', () => ({ chat: panel }))
-
 const Spawned = (await import('./Spawned.svelte')).default
-
 function draw(threads: string[]) {
   const target = document.createElement('div')
   document.body.append(target)
@@ -23,7 +21,6 @@ function draw(threads: string[]) {
   flushSync()
   return { target, close: () => void unmount(shown) }
 }
-
 test('a helper’s row opens its thread', () => {
   const { target, close } = draw(['h1', 'gone'])
   const rows = target.querySelectorAll('button')
@@ -33,7 +30,6 @@ test('a helper’s row opens its thread', () => {
   expect(panel.openThread).toHaveBeenCalledWith('h1')
   close()
 })
-
 test('a batch’s helpers wait behind Show all', () => {
   const { target, close } = draw(['h1', 'h2', 'h3', 'h4'])
   expect(target.querySelectorAll('button')).toHaveLength(4)

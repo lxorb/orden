@@ -22,36 +22,29 @@ import type { TrustProblem } from './trust-problem'
 import { madeVaultRow } from './vault-made'
 
 const at = (vault: string, id: string) => `${vault}\n${id}`
-
 export class MemoryRows implements DeviceRows {
   keyringRow: KeyringRow | null = null
   readonly vaultRows = new Map<string, VaultRow>()
   readonly itemRows = new Map<string, ItemRow>()
   readonly versionRows: VersionRow[] = []
   readonly meta = new Map<string, unknown>()
-
   keyring(): Promise<KeyringRow | null> {
     return Promise.resolve(structuredClone(this.keyringRow))
   }
-
   writeKeyring(row: KeyringRow): Promise<void> {
     this.keyringRow = structuredClone(row)
     return Promise.resolve()
   }
-
   vaults(): Promise<VaultRow[]> {
     return Promise.resolve([...this.vaultRows.values()].map((one) => ({ ...one })))
   }
-
   items(): Promise<ItemRow[]> {
     return Promise.resolve([...this.itemRows.values()].map((one) => ({ ...one })))
   }
-
   item(vault: string, id: string): Promise<ItemRow | null> {
     const row = this.itemRows.get(at(vault, id))
     return Promise.resolve(row ? { ...row } : null)
   }
-
   versions(vault: string, id: string): Promise<VersionRow[]> {
     return Promise.resolve(
       this.versionRows
@@ -60,7 +53,6 @@ export class MemoryRows implements DeviceRows {
         .reverse(),
     )
   }
-
   write(change: Change): Promise<void> {
     for (const row of change.vaults ?? []) this.vaultRows.set(row.id, { ...row })
     for (const row of change.items ?? []) this.itemRows.set(at(row.vault, row.id), { ...row })
@@ -79,18 +71,15 @@ export class MemoryRows implements DeviceRows {
     }
     return Promise.resolve()
   }
-
   read(key: string): Promise<unknown> {
     return Promise.resolve(structuredClone(this.meta.get(key) ?? null))
   }
-
   keep(key: string, value: unknown): Promise<void> {
     if (value === null) this.meta.delete(key)
     else this.meta.set(key, structuredClone(value))
     return Promise.resolve()
   }
 }
-
 export class TestDevice {
   readonly rows = new MemoryRows()
   held: Held | null = null
@@ -99,9 +88,7 @@ export class TestDevice {
   conflict = false
   readonly problems: TrustProblem[] = []
   private queue: Promise<unknown> = Promise.resolve()
-
   constructor(private readonly kdf: KdfParams) {}
-
   world(api: PassApi, account: string, email: string): SyncWorld {
     return {
       api,
@@ -129,14 +116,12 @@ export class TestDevice {
       },
     }
   }
-
   async setup(password: string, name = 'Personal'): Promise<string> {
     const made = await newKeyring(password, this.kdf)
     await this.rows.writeKeyring({ keyring: made.keyring, rev: 1, pending: true })
     this.held = emptyHeld(made.opened)
     return await this.makeVault(name)
   }
-
   async makeVault(name: string): Promise<string> {
     const held = this.mustHold()
     const id = newId()
@@ -156,7 +141,6 @@ export class TestDevice {
     this.vaults = [...this.vaults, vaultOf(row, meta)]
     return id
   }
-
   async unlock(password: string): Promise<boolean> {
     const keyring = this.rows.keyringRow?.keyring
     if (!keyring) return false
@@ -191,24 +175,20 @@ export class TestDevice {
       return false
     }
   }
-
   lock(): void {
     this.held = null
     this.vaults = []
     this.items = []
   }
-
   async create(vault: string, content: Content): Promise<string> {
     const id = newId()
     await this.put(vault, id, newEnvelope(content, Date.now()), null)
     return id
   }
-
   async change(id: string, next: (envelope: Envelope) => Envelope): Promise<void> {
     const item = this.item(id)
     await this.put(item.vault, id, next(envelopeOf(item)), item)
   }
-
   async remove(id: string): Promise<void> {
     const held = this.mustHold()
     const one = held.items.get(id)
@@ -217,34 +197,28 @@ export class TestDevice {
     held.items.delete(id)
     this.items = this.items.filter((item) => item.id !== id)
   }
-
   async move(id: string, vault: string): Promise<void> {
     const item = this.item(id)
     await this.remove(id)
     await this.put(vault, id, envelopeOf(item), null)
   }
-
   item(id: string): Item {
     const item = this.items.find((one) => one.id === id)
     if (!item) throw new Error('no such item')
     return item
   }
-
   vaultNamed(name: string): Vault {
     const vault = this.vaults.find((one) => one.name === name)
     if (!vault) throw new Error(`no vault ${name}`)
     return vault
   }
-
   pending(): ItemRow[] {
     return [...this.rows.itemRows.values()].filter((one) => one.pending)
   }
-
   private mustHold(): Held {
     if (!this.held) throw new Error('locked')
     return this.held
   }
-
   private async put(vault: string, id: string, envelope: Envelope, was: Item | null) {
     const held = this.mustHold()
     const box = held.vaults.get(vault)

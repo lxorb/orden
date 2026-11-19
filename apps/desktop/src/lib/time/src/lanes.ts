@@ -8,16 +8,13 @@ export interface Picked {
   to: number
   span: string | null
 }
-
 export interface Band {
   key: string
   label: string
   from: number
   to: number
 }
-
 const JOINED = 2 * MINUTE
-
 export function bandsOf(spans: readonly Span[], lane: Lane, from: number, to: number, now: number): Band[] {
   const out: Band[] = []
   const lastOf = new Map<string, Band>()
@@ -35,7 +32,6 @@ export function bandsOf(spans: readonly Span[], lane: Lane, from: number, to: nu
   }
   return out.sort((one, other) => one.from - other.from)
 }
-
 export interface Within {
   said: Total[]
   saidMs: number
@@ -44,7 +40,6 @@ export interface Within {
   watched: number
   places: Record<Lane, Place[]>
 }
-
 export function within(
   spans: readonly Span[],
   minutes: readonly Minute[],
@@ -65,15 +60,12 @@ export function within(
     places,
   }
 }
-
 export interface Stretch {
   from: number
   to: number
   active: number
 }
-
 const LEAST_UNSAID = 15 * MINUTE
-
 export function unsaid(
   spans: readonly Span[],
   minutes: readonly Minute[],
@@ -99,7 +91,6 @@ export function unsaid(
   if (open) out.push(open)
   return out.filter((one) => one.to - one.from >= LEAST_UNSAID)
 }
-
 export function madeOf(
   spans: readonly Span[],
   activity: string | null,
@@ -113,7 +104,6 @@ export function madeOf(
   const pieces = said.flatMap((one) => piecesIn(spans, one.from, one.to, now, seen))
   return placesOf(pieces, lane)
 }
-
 export interface Bucket {
   from: number
   seen: number
@@ -124,10 +114,8 @@ export interface Bucket {
   battery: number | null
   charging: boolean
 }
-
 const mean = (values: number[]): number | null =>
   values.length ? values.reduce((sum, one) => sum + one, 0) / values.length : null
-
 export function bucketsOf(minutes: readonly Minute[], from: number, to: number, size: number): Bucket[] {
   const count = Math.max(1, Math.ceil((to - from) / size))
   const held: Minute[][] = Array.from({ length: count }, () => [])
@@ -154,7 +142,6 @@ export function bucketsOf(minutes: readonly Minute[], from: number, to: number, 
     }
   })
 }
-
 export function hoursShown(
   from: number,
   to: number,
@@ -168,13 +155,11 @@ export function hoursShown(
   const end = Math.min(to, from + Math.ceil((late - from) / HOUR) * HOUR)
   return [start, Math.max(end, start + HOUR)]
 }
-
 export interface Stacked<T> {
   item: T
   row: number
   rows: number
 }
-
 export function stacked<T extends { from: number; to: number }>(items: readonly T[]): Stacked<T>[] {
   const sorted = [...items].sort((one, other) => one.from - other.from || other.to - one.to)
   const out: Stacked<T>[] = []

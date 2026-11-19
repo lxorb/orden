@@ -49,7 +49,6 @@
     flex-direction: column;
     gap: var(--space-2);
   }
-
   .partly {
     min-height: 34px;
     padding: 0 var(--space-2);
@@ -65,16 +64,13 @@
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
   }
-
   .partly:active {
     background: var(--press);
   }
-
   .partly.on {
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   :global([data-touch]) .partly {
     min-height: var(--touch-target);
     font-size: var(--touch-text);

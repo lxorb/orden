@@ -10,13 +10,10 @@
   $effect(() => {
     void remote.refresh()
   })
-
   let chosen = $state<string | null>(null)
   const host = $derived(chosen === null ? null : (remote.byId(chosen) ?? null))
   $effect(() => closeOnBack(host !== null, () => (chosen = null)))
-
   let problem = $state('')
-
   async function add() {
     problem = ''
     const typed = await prompt.ask({
@@ -25,7 +22,6 @@
       confirmLabel: 'Add',
     })
     if (typed === null) return
-
     const wanted = destinationOf(typed)
     if (!wanted) {
       problem = 'Not an address'
@@ -34,26 +30,21 @@
     const made = await remote.make(wanted)
     if (made) chosen = made.id
   }
-
   const move = (from: number, to: number) => void remote.keep((kept) => moved(kept, remote.hosts, from, to))
-
   async function openConfig() {
     problem = ''
     await invoke('remote_config_open').catch((error: unknown) => {
       problem = String(error)
     })
   }
-
   let dragging = $state<number | null>(null)
   let dropAt = $state<number | null>(null)
-
   function over(event: DragEvent, at: number) {
     if (dragging === null || dragging === at) return
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
     dropAt = at
   }
-
   function dropped(event: DragEvent, at: number) {
     event.preventDefault()
     if (dragging !== null) move(dragging, at)
@@ -146,7 +137,6 @@
     gap: var(--space-4);
     width: 100%;
   }
-
   .remote :global(h3) {
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
@@ -154,36 +144,30 @@
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
-
   .remote :global(.card) {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .remote :global(.orden-setting .name) {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1px;
   }
-
   .remote :global(.orden-setting .name small) {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .remote :global(.hint) {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   .remote :global(.hint.bad) {
     color: var(--danger);
   }
-
   .open {
     flex: 1;
     min-width: 0;
@@ -198,14 +182,12 @@
     text-align: start;
     cursor: default;
   }
-
   @media (hover: hover) {
     .open:hover,
     .add:hover {
       color: var(--text-strong);
     }
   }
-
   .plus svg {
     width: 14px;
     height: 14px;
@@ -215,11 +197,9 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .row.landing {
     box-shadow: inset 0 2px 0 var(--accent);
   }
-
   .link {
     align-self: flex-start;
     padding: 0;
@@ -231,7 +211,6 @@
     cursor: default;
     transition: color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .link:hover {
       color: var(--accent-hover);

@@ -4,10 +4,8 @@ import { SOURCE } from './files'
 import { TAB_KINDS } from '../src/lib/tab-kinds/src/api'
 
 const read = (name: string) => readFileSync(`${SOURCE}${name}`, 'utf8')
-
 const app = read('App.svelte')
 const plus = /\{#if viewport\.touch[^}]*!ownBar\(workspace\.active\?\.kind\)[^}]*\}\s*<button class="fab"/
-
 function roomUnderThePlus(style: string, scroller: string): boolean {
   for (const rule of style.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const [selectors, body] = [rule[1] ?? '', rule[2] ?? '']
@@ -17,13 +15,11 @@ function roomUnderThePlus(style: string, scroller: string): boolean {
   }
   return false
 }
-
 describe('the phone’s + button over Settings', () => {
   test('is drawn over a Settings tab', () => {
     expect(app).toMatch(plus)
     expect(TAB_KINDS.settings.ownBar).toBe(false)
   })
-
   test.each(['nav', '.body'])(
     'leaves the end of the list and of a page, %s, scrollable out from under it',
     (scroller) => {

@@ -28,13 +28,11 @@ function turned(doc: string, words: string, shape: BlockShape): string {
   turnBlocksInto(view, at, shape)
   return state.doc.toString()
 }
-
 describe('Turn into from the block menu on a list item with children', () => {
   test('Turn into paragraph keeps a child item an item, as the list button does', () => {
     const doc = '- a\n  - b\n- c\n'
     expect(turned(doc, 'a', 'paragraph')).toMatch(/^[ \t]*- b$/m)
   })
-
   test('Turn into paragraph on a task keeps its subtask a task', () => {
     const doc = '- [ ] Pack\n  - [ ] socks\n'
     expect(turned(doc, 'Pack', 'paragraph')).toMatch(/^[ \t]*- \[ \] socks$/m)

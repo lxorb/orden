@@ -6,11 +6,8 @@ import { type Env, sha256 } from '../../../sync-server/src/api'
 import { noteKey } from '../notes'
 
 const MOST_READ = 8 * 1024 * 1024
-
 const SEARCH_PAGE = 200
-
 const AT_ONCE = 6
-
 interface Row {
   id: string
   path: string
@@ -20,7 +17,6 @@ interface Row {
   doc_seq: number | null
   updated_at: number
 }
-
 async function wordsOf(
   env: Env,
   spaceId: string,
@@ -48,11 +44,9 @@ async function wordsOf(
   }
   return { words, through }
 }
-
 function hidden(path: string): boolean {
   return path.split('/').some((part) => part.startsWith('.'))
 }
-
 export async function indexItems(env: Env, spaceId: string, ids: readonly string[]): Promise<IndexItem[]> {
   const { results } = await env.DB.prepare(
     `select id, path, kind, hash, seq, doc_seq, updated_at from notes
@@ -60,11 +54,9 @@ export async function indexItems(env: Env, spaceId: string, ids: readonly string
   )
     .bind(JSON.stringify([...new Set(ids)]), spaceId)
     .all<Row>()
-
   const items: IndexItem[] = []
   const found = new Set(results.map((row) => row.id))
   for (const id of new Set(ids)) if (!found.has(id)) items.push({ id, refused: 'gone' })
-
   const rows = results.filter((row) => row.kind !== 'file')
   for (const row of results) {
     if (row.kind === 'file') items.push({ id: row.id, docSeq: row.doc_seq ?? row.seq, scan: null })
@@ -75,7 +67,6 @@ export async function indexItems(env: Env, spaceId: string, ids: readonly string
   }
   return items
 }
-
 export async function searchPage(env: Env, spaceId: string, request: SearchRequest): Promise<SearchAnswer> {
   const { results } = await env.DB.prepare(
     `select id, path, kind, hash, seq, doc_seq, updated_at from notes
@@ -83,7 +74,6 @@ export async function searchPage(env: Env, spaceId: string, request: SearchReque
   )
     .bind(spaceId, request.after ?? '', SEARCH_PAGE)
     .all<Row>()
-
   const skipped = new Set(request.skip ?? [])
   const asked = results.filter(
     (row) => !skipped.has(row.id) && !hidden(row.path) && /\.(md|markdown|mdown|mkd)$/i.test(row.path),
@@ -95,7 +85,6 @@ export async function searchPage(env: Env, spaceId: string, request: SearchReque
       : results.length < SEARCH_PAGE
         ? null
         : (results.at(-1)?.id ?? null)
-
   const ids = new Map<SearchNote, string>()
   const notes = read.map(({ row, text }) => {
     const note: SearchNote = {
@@ -108,7 +97,6 @@ export async function searchPage(env: Env, spaceId: string, request: SearchReque
     return note
   })
   const byPath = new Map(notes.map((note) => [note.path, ids.get(note) ?? '']))
-
   const hits: FoundHit[] = []
   const loose: FoundLoose[] = []
   await walkSearch(

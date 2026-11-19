@@ -14,19 +14,16 @@ describe('a change to a time record', () => {
       value: null,
     })
   })
-
   test('refuses a kind or an id that is not a plain word', () => {
     expect(timeChangeOf({ kind: 'Span', id: 'a1', value: {} })).toBeNull()
     expect(timeChangeOf({ kind: 'span', id: '../x', value: {} })).toBeNull()
     expect(timeChangeOf({ kind: 'span', id: 'x'.repeat(65), value: {} })).toBeNull()
   })
-
   test('refuses a value that is not an object, or too large', () => {
     expect(timeChangeOf({ kind: 'span', id: 'a', value: [1] })).toBeNull()
     expect(timeChangeOf({ kind: 'span', id: 'a', value: 'x' })).toBeNull()
     expect(timeChangeOf({ kind: 'span', id: 'a', value: { note: 'x'.repeat(MOST_TIME_BYTES) } })).toBeNull()
   })
-
   test('comes in a list no longer than the limit, every one of them sound', () => {
     const one = { kind: 'span', id: 'a', value: {} }
     expect(timeChangesOf({ changes: [one] })).toHaveLength(1)
@@ -35,7 +32,6 @@ describe('a change to a time record', () => {
     expect(timeChangesOf({})).toBeNull()
   })
 })
-
 describe('a page of time records', () => {
   test('keeps the sound entries and the cursor', () => {
     expect(
@@ -53,7 +49,6 @@ describe('a page of time records', () => {
       more: true,
     })
   })
-
   test('is nothing without a cursor', () => {
     expect(timePageOf({ entries: [] })).toBeNull()
     expect(timePageOf({ error: 'not found' })).toBeNull()

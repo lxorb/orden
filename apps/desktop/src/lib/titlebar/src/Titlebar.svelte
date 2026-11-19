@@ -24,22 +24,15 @@
     onpalette: () => void
     panes?: number
   } = $props()
-
   const swiped = $derived(swipeOpens())
-
   const BACK_MARK = 'M8.2 2.2 3.9 6.5l4.3 4.3'
-
   const MORE_MARK = 'M3 6.5h.1M6.5 6.5h.1M10 6.5h.1'
-
   const phone = $derived(viewport.device === 'phone' && !__EVEN_PLUGIN__)
-
   const phoneDoor = () => (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('../../phone/src/api'))
-
   const touchTabs = $derived(viewport.touch && !__EVEN_PLUGIN__)
   const tabCount = $derived(workspace.tabsIn(workspace.panes.focusedId).length)
   let grid = $state(false)
   let pressed: { x: number; y: number } | null = null
-
   function turned(event: PointerEvent) {
     const from = pressed
     pressed = null
@@ -50,53 +43,40 @@
       .then((one) => one.tabSwipe())
       .then((one) => one.turnTab(dx, dy))
   }
-
   function showMore(event: MouseEvent) {
     const from = event.currentTarget as HTMLElement
     void phoneDoor()
       .then((one) => one.noteMore())
       .then((one) => one.showNoteMore(from))
   }
-
   $effect(() => {
     if (swiped && workspace.openOn('left')) {
       whenLoaded(hinting, ({ hints }) => hints.dismiss('drawer'))
     }
   })
-
   const shape = new WindowState()
   const maximized = $derived(shape.maximized)
-
   const mac = isDesktop && platform() === 'macos'
   const lights = $derived(mac && modes.frame === 'orden' && !shape.fullscreen)
-
   $effect(() => {
     if (lights) document.documentElement.dataset.lights = ''
     else delete document.documentElement.dataset.lights
   })
-
   const listless = $derived(workspace.restored && !workspace.spaces.length && !workspace.tabs.length)
-
   const cornered = $derived(lights && !(workspace.panel && !viewport.drawer))
   const bare = $derived(!(isDesktop && !mac && modes.frame === 'orden'))
-
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
-
   const only = $derived(workspace.panes.count === 1 || workspace.panes.fills ? workspace.panes.focused : null)
   const strips = $derived(only ?? topRow(workspace.panes.frame))
-
   let wide = $state(0)
   let leadWide = $state(0)
   let endWide = $state(0)
   const overPanes = $derived(endWide - wide + (panes || wide))
-
   const title = $derived(scratchpadOn() ? 'Scratchpad' : (workspace.active?.shown ?? 'Orden'))
   const showing = $derived(viewport.touch && scratchpadOn() ? null : workspace.active)
-
   async function minimize() {
     if (isDesktop) await (await currentWindow()).minimize()
   }
-
   async function toggleMaximize() {
     if (!isDesktop) return
     await shape.toggle(await currentWindow())
@@ -296,28 +276,23 @@
     background: color-mix(in srgb, var(--tab-frame) var(--overview-solid), transparent);
     box-shadow: inset 0 -1px color-mix(in srgb, var(--chrome-seam) var(--overview-solid), transparent);
   }
-
   header:has(:global([data-region='tabs'])) {
     box-shadow: none;
     overflow-x: clip;
   }
-
   header.lights {
     padding-left: var(--traffic-lights);
     --lights-start: var(--traffic-lights);
   }
-
   .lead,
   .end {
     flex: none;
     display: flex;
     align-items: stretch;
   }
-
   .end.bare {
     padding-inline-end: var(--space-1);
   }
-
   .heads {
     position: absolute;
     inset-block: 0;
@@ -326,27 +301,22 @@
     display: flex;
     pointer-events: none;
   }
-
   .heads > :global(*) {
     flex: 1;
   }
-
   .swipe-hint {
     position: relative;
     flex: none;
     width: 0;
   }
-
   .overview,
   .search {
     align-self: center;
   }
-
   .drag {
     flex: 1;
     min-width: var(--space-5);
   }
-
   .controls {
     position: relative;
     flex: none;
@@ -354,11 +324,9 @@
     opacity: 0.45;
     transition: opacity var(--dur-base) var(--ease-out);
   }
-
   header:hover .controls {
     opacity: 1;
   }
-
   .controls button {
     width: 44px;
     display: grid;
@@ -371,29 +339,24 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .controls button:hover {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
-
     .controls button.close:hover {
       background: var(--danger);
       color: #fff;
     }
   }
-
   .controls button:active {
     background: var(--surface-press);
     color: var(--text-strong);
   }
-
   .controls button.close:active {
     background: color-mix(in srgb, var(--danger) 82%, black);
     color: #fff;
   }
-
   .controls svg {
     width: 10px;
     height: 10px;
@@ -402,7 +365,6 @@
     stroke-width: 1.1;
     stroke-linecap: square;
   }
-
   .title {
     flex: 1;
     min-width: 0;
@@ -416,14 +378,12 @@
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .name {
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-
   :global([data-touch]) header {
     height: auto;
     background: none;
@@ -431,7 +391,6 @@
     padding-inline-end: var(--inset-right);
     padding-inline-start: calc(var(--inset-left) + (var(--row-height) - var(--icon-lg)) / 2);
   }
-
   .tabs .count {
     min-width: calc(var(--icon-lg) + 2px);
     height: calc(var(--icon-lg) + 2px);
@@ -445,20 +404,16 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
   }
-
   .more svg {
     stroke-width: 2;
     stroke-linecap: round;
   }
-
   .back svg {
     stroke-width: 1.4;
   }
-
   :global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.orden-said))) {
     padding-inline-start: var(--inset-left);
   }
-
   :global([data-touch]) header:has(> [data-phone-back]) {
     padding-inline-start: var(--inset-left);
   }

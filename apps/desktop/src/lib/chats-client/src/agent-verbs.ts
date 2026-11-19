@@ -26,7 +26,6 @@ import {
 
 const MOST_READ = 200
 const MOST_FOUND = 50
-
 async function chatsStore(): Promise<Chats> {
   if (!chatsOn()) {
     throw new Refused('not_found', 'chats are turned off; the reader turns them on in Settings, Experimental')
@@ -38,13 +37,11 @@ async function chatsStore(): Promise<Chats> {
   if (!chats.me) throw new Refused('not_found', 'chats need Orden’s account, and nobody is signed in')
   return chats
 }
-
 interface Seen {
   entry: ChatEntry
   name: string
   space: string
 }
-
 function seenBy(call: Call, store: Chats): Seen[] {
   const spaces = reachable(call)
   return store.list.flatMap((entry) => {
@@ -53,7 +50,6 @@ function seenBy(call: Call, store: Chats): Seen[] {
     return space && entry.name ? [{ entry, name: oneLine(entry.name), space: oneLine(space.name) }] : []
   })
 }
-
 function chatFor(call: Call, store: Chats): Seen {
   const named = need(call, 'chat')
   const folded = named.replace(/^#/, '').trim().toLowerCase()
@@ -74,7 +70,6 @@ function chatFor(call: Call, store: Chats): Seen {
   }
   return found
 }
-
 async function readingOf(store: Chats, chats: readonly string[]): Promise<Reading> {
   const names = new Map<Who, string>()
   for (const chat of chats) {
@@ -84,7 +79,6 @@ async function readingOf(store: Chats, chats: readonly string[]): Promise<Readin
   }
   return { me: store.me, nameOf: (who) => names.get(who) ?? who }
 }
-
 export async function listChats(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const space = maybe(call, 'space')
@@ -103,13 +97,11 @@ export async function listChats(call: Call): Promise<AgentAnswer> {
     }))
   return done(chatsText(listed))
 }
-
 async function seqOf(store: Chats, chat: Seen, message: string): Promise<number> {
   const [found] = await store.history(chat.entry.id, { around: message, limit: 1 })
   if (!found) throw new Refused('not_found', `#${chat.name} has no message ${message}`)
   return found.seq
 }
-
 export async function readChat(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const chat = chatFor(call, store)
@@ -119,7 +111,6 @@ export async function readChat(call: Call): Promise<AgentAnswer> {
   const before = maybe(call, 'before')
   const after = maybe(call, 'after')
   const id = chat.entry.id
-
   let messages: Message[]
   if (around !== null) {
     messages = await store.history(id, { around, limit })
@@ -134,7 +125,6 @@ export async function readChat(call: Call): Promise<AgentAnswer> {
   }
   return done(messagesText(chat.name, messages, await readingOf(store, [id])))
 }
-
 export async function searchChats(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const query = short('query', need(call, 'query'))
@@ -148,13 +138,11 @@ export async function searchChats(call: Call): Promise<AgentAnswer> {
   const reading = await readingOf(store, [...new Set(hits.map((one) => one.id))])
   return done(hitsText(hits, reading))
 }
-
 function mayPost(chat: Seen): void {
   if (!may(chat.entry.role, 'post', chat.entry.meta.posting)) {
     throw new Refused('read_only', `the reader may only read #${chat.name}`)
   }
 }
-
 async function writing(call: Call, most = Infinity) {
   const store = await chatsStore()
   const chat = chatFor(call, store)
@@ -166,17 +154,14 @@ async function writing(call: Call, most = Infinity) {
   mayPost(chat)
   return { store, chat, words }
 }
-
 function askFirst(call: Call, chat: Seen, summary: string): Promise<AgentAnswer | null> {
   if (chat.entry.members <= 1) return Promise.resolve(null)
   return asked(call, 'publishing', summary, `chat:${chat.entry.id}`)
 }
-
 function viaOf(call: Call): { via: { agent: string } } | Record<string, never> {
   const agent = call.caller.agent
   return agent ? { via: { agent: agent.name } } : {}
 }
-
 export async function draftMessage(call: Call): Promise<AgentAnswer> {
   const { store, chat, words } = await writing(call)
   const parent = maybe(call, 'reply_to') ?? undefined
@@ -187,15 +172,12 @@ export async function draftMessage(call: Call): Promise<AgentAnswer> {
   store.offer(chat.entry.id, words, parent ? { parent } : {})
   return done(`Drafted in #${chat.name}. The reader sends it.`)
 }
-
 export async function postMessage(call: Call): Promise<AgentAnswer> {
   const { store, chat, words } = await writing(call, MOST_BODY)
   const parent = maybe(call, 'reply_to')
   const quote = maybe(call, 'quote')
-
   const question = await askFirst(call, chat, `#${chat.name}: ${words}`)
   if (question) return question
-
   const id = await store.post(chat.entry.id, {
     body: words,
     ...(parent !== null ? { parent } : {}),
@@ -204,7 +186,6 @@ export async function postMessage(call: Call): Promise<AgentAnswer> {
   })
   return done(`Posted in #${chat.name} as ${id}.`)
 }
-
 export async function react(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const chat = chatFor(call, store)
@@ -213,14 +194,11 @@ export async function react(call: Call): Promise<AgentAnswer> {
   const on = call.args.on === undefined ? true : flag(call, 'on')
   mayPost(chat)
   await seqOf(store, chat, message)
-
   const question = await askFirst(call, chat, `#${chat.name}: ${emoji} ${on ? '+' : '-'}`)
   if (question) return question
-
   await store.react(chat.entry.id, message, emoji, on)
   return done(`${on ? 'Reacted' : 'Took back'} ${emoji} on ${message} in #${chat.name}.`)
 }
-
 export const chatVerbs = verbsOf({
   list_chats: listChats,
   read_chat: readChat,

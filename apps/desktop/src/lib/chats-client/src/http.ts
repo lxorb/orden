@@ -17,7 +17,6 @@ import { isRecord } from '../../platform/src/api'
 import type { ChatMember, Hit, Scheduled } from './shapes'
 
 const chatPath = (chat: string) => `/v2/chats/${encodeURIComponent(chat)}`
-
 async function ask(path: string, options: { method?: string; body?: unknown } = {}): Promise<unknown> {
   const token = account.token
   if (!token) return null
@@ -28,17 +27,12 @@ async function ask(path: string, options: { method?: string; body?: unknown } = 
     return null
   }
 }
-
 const answered = async (path: string, options?: { method?: string; body?: unknown }) =>
   (await ask(path, options)) !== null
-
 export const listChats = async (): Promise<ChatList | null> => chatListOf(await ask('/v2/chats'))
-
 export const makeChat = async (space: string): Promise<Pointer | null> =>
   chatOf(JSON.stringify(await ask('/v2/chats', { body: { space } })))
-
 export const moveChat = (chat: string, space: string) => answered(chatPath(chat), { method: 'PATCH', body: { space } })
-
 export async function eventsOf(
   chat: string,
   where: { after?: number; before?: number; around?: number },
@@ -48,12 +42,10 @@ export async function eventsOf(
   for (const [key, value] of Object.entries(where)) query.set(key, String(value))
   return eventsPageOf(await ask(`${chatPath(chat)}/events?${query.toString()}`))
 }
-
 export async function stateOf(chat: string, before?: number): Promise<StatePage | null> {
   const query = before === undefined ? '' : `?before=${String(before)}`
   return statePageOf(await ask(`${chatPath(chat)}/state${query}`))
 }
-
 export async function sendEvents(chat: string, events: readonly Event[]): Promise<Results | 'gone' | null> {
   try {
     return resultsOf(await ask(`${chatPath(chat)}/events`, { body: { events } }))
@@ -61,15 +53,11 @@ export async function sendEvents(chat: string, events: readonly Event[]): Promis
     return fromServer(error) && error.status !== 401 ? 'gone' : null
   }
 }
-
 export const postRead = (chat: string, seq: number, back = false) =>
   answered(`${chatPath(chat)}/read`, { body: { seq, back } })
-
 export const putMe = (chat: string, notify: Notify | null, mutedUntil: number | null) =>
   answered(`${chatPath(chat)}/me`, { method: 'PUT', body: { notify, mutedUntil } })
-
 const ROLES = ['read', 'write', 'owner'] as const
-
 export async function membersOf(chat: string): Promise<ChatMember[] | null> {
   const said = await ask(`${chatPath(chat)}/members`)
   if (!isRecord(said) || !Array.isArray(said.members)) return null
@@ -79,7 +67,6 @@ export async function membersOf(chat: string): Promise<ChatMember[] | null> {
     return [{ who: one.who, name: typeof one.name === 'string' ? one.name : null, role }]
   })
 }
-
 export async function noteReachOf(
   chat: string,
   space: string,
@@ -95,10 +82,8 @@ export async function noteReachOf(
   )
   return { missing, share: said.share === true }
 }
-
 export const shareNote = (chat: string, space: string, note: string) =>
   answered(`${chatPath(chat)}/note`, { body: { space, note } }).catch(() => false)
-
 export async function scheduledOf(chat: string): Promise<Scheduled[] | null> {
   const said = await ask(`${chatPath(chat)}/scheduled`)
   if (!isRecord(said) || !Array.isArray(said.scheduled)) return null
@@ -108,7 +93,6 @@ export async function scheduledOf(chat: string): Promise<Scheduled[] | null> {
     return post?.kind === 'post' ? [{ id: one.id, sendAt: one.sendAt, post }] : []
   })
 }
-
 export async function searchOnAccount(query: string, chat?: string): Promise<Hit[] | null> {
   const params = new URLSearchParams({
     q: query,
@@ -126,7 +110,6 @@ export async function searchOnAccount(query: string, chat?: string): Promise<Hit
     return message && isRecord(one) ? [{ chat: String(one.chat), message }] : []
   })
 }
-
 export async function putBlob(hash: string, bytes: Uint8Array): Promise<boolean> {
   const token = account.token
   if (!token) return false
@@ -141,7 +124,6 @@ export async function putBlob(hash: string, bytes: Uint8Array): Promise<boolean>
     return false
   }
 }
-
 export async function fileOf(chat: string, hash: string): Promise<Blob | null> {
   const token = account.token
   if (!token) return null

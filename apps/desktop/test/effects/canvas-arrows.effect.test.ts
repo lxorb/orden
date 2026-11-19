@@ -10,7 +10,6 @@ import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 function card(id: string): CanvasNode {
   return { id, type: 'text', x: 0, y: 0, width: 250, height: 60, text: id }
 }
-
 const SURFACES = [
   {
     surface: 'canvas',
@@ -27,17 +26,14 @@ const SURFACES = [
     Store: PagesStore,
   },
 ] as const
-
 describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
   let host: HTMLElement
   let shown: ReturnType<typeof mount>
   let store: CanvasStore
   let note: NoteDoc
-
   beforeEach(() => {
     note = new NoteDoc({ kind, path: `/space/${name}`, name, text: blank(), dirty: false }, () => undefined)
     store = new Store(new Tab(note, 'pane'))
-
     host = document.createElement('div')
     document.body.append(host)
     const held = store
@@ -60,62 +56,50 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     })
     flushSync()
   })
-
   afterEach(() => {
     void unmount(shown)
     host.remove()
   })
-
   function lit(label: 'Undo' | 'Redo'): boolean {
     const button = host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)
     if (!button) throw new Error(`no ${label} on the bar`)
     return !button.disabled
   }
-
   function put(id: string) {
     store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card(id)] })
   }
-
   test('nothing drawn is nothing to take back', () => {
     expect(lit('Undo')).toBe(false)
     expect(lit('Redo')).toBe(false)
   })
-
   test('an edit lights Undo', () => {
     put('a')
     flushSync()
-
     expect(lit('Undo')).toBe(true)
     expect(lit('Redo')).toBe(false)
   })
-
   test('taking it back lights Redo and puts Undo out, and putting it forward turns them round', () => {
     put('a')
     flushSync()
-
     store.undo()
     flushSync()
     expect(lit('Undo')).toBe(false)
     expect(lit('Redo')).toBe(true)
-
     store.redo()
     flushSync()
     expect(lit('Undo')).toBe(true)
     expect(lit('Redo')).toBe(false)
   })
-
   test('a new edit after an undo puts Redo out', () => {
     put('a')
     store.undo()
     flushSync()
     expect(lit('Redo')).toBe(true)
-
     put('b')
     flushSync()
     expect(lit('Undo')).toBe(true)
     expect(lit('Redo')).toBe(false)
   })
-
   test('words that changed under the plane leave both lit, taking back only this plane’s own steps', () => {
     put('a')
     put('b')
@@ -123,7 +107,6 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
     flushSync()
     expect(lit('Undo')).toBe(true)
     expect(lit('Redo')).toBe(true)
-
     const outside = readCanvas(blank())
     note.replace(writeCanvas({ ...outside, nodes: [...outside.nodes, card('z')] }))
     store.follow()

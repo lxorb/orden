@@ -18,7 +18,6 @@ const typescript = javascript.configure({ dialect: 'ts' })
 const jsx = javascript.configure({ dialect: 'jsx' })
 const tsx = javascript.configure({ dialect: 'jsx ts' })
 const indentedSass = sass.configure({ dialect: 'indented' })
-
 const GRAMMARS: Readonly<Record<string, Parser>> = {
   javascript,
   js: javascript,
@@ -33,7 +32,6 @@ const GRAMMARS: Readonly<Record<string, Parser>> = {
   cts: typescript,
   jsx,
   tsx,
-
   python,
   py: python,
   py3: python,
@@ -41,17 +39,14 @@ const GRAMMARS: Readonly<Record<string, Parser>> = {
   starlark: python,
   bzl: python,
   bazel: python,
-
   json,
   jsonc: json,
   jsonl: json,
   ndjson: json,
   geojson: json,
-
   css,
   scss: sass,
   sass: indentedSass,
-
   html,
   htm: html,
   handlebars: html,
@@ -60,25 +55,19 @@ const GRAMMARS: Readonly<Record<string, Parser>> = {
   erb: html,
   ejs: html,
   astro: html,
-
   xml,
   svg: xml,
   xsl: xml,
   xslt: xml,
   plist: xml,
   xaml: xml,
-
   yaml,
   yml: yaml,
-
   rust,
   rs: rust,
-
   go,
   golang: go,
-
   java,
-
   c: cpp,
   h: cpp,
   ino: cpp,
@@ -92,13 +81,10 @@ const GRAMMARS: Readonly<Record<string, Parser>> = {
   'h++': cpp,
   cuda: cpp,
   metal: cpp,
-
   php,
 }
-
 export function blogFence(code: string, language: string): string | null {
   const parser = GRAMMARS[language.toLowerCase()]
   return parser ? highlightedFence(code, language, parser) : null
 }
-
 export const COLOURED = Object.keys(GRAMMARS)

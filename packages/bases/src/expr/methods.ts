@@ -24,14 +24,11 @@ import {
 } from './runtime'
 
 export type Arg = (locals?: Record<string, Val>) => Val
-
 const evaluated = (args: readonly Arg[]) => args.map((arg) => arg())
-
 const number = (value: Val, method: string): number => {
   if (typeof value !== 'number') throw new BasesError(`${method}() takes a number`)
   return value
 }
-
 function anyMethod(receiver: Val, name: string, args: readonly Arg[]): { value: Val } | null {
   switch (name) {
     case 'isTruthy':
@@ -47,9 +44,7 @@ function anyMethod(receiver: Val, name: string, args: readonly Arg[]): { value: 
       return null
   }
 }
-
 const tagKey = (tag: string) => tag.replace(/^#/, '').toLowerCase()
-
 function hasTag(tags: readonly string[], wanted: readonly Val[]): boolean {
   const keys = tags.map(tagKey)
   return wanted.some((one) => {
@@ -57,7 +52,6 @@ function hasTag(tags: readonly string[], wanted: readonly Val[]): boolean {
     return keys.some((tag) => tag === key || tag.startsWith(`${key}/`))
   })
 }
-
 function linksTo(row: Row, other: Val, scope: Scope): boolean {
   const target = fileOf(other, scope)
   if (target) return row.file.links.some((link) => pointsAt(link, target.path, row, scope.context))
@@ -67,7 +61,6 @@ function linksTo(row: Row, other: Val, scope: Scope): boolean {
   }
   return false
 }
-
 function fileMethod(row: Row, name: string, args: readonly Arg[], scope: Scope): { value: Val } | null {
   switch (name) {
     case 'asLink': {
@@ -94,7 +87,6 @@ function fileMethod(row: Row, name: string, args: readonly Arg[], scope: Scope):
       return null
   }
 }
-
 function stringMethod(value: string, name: string, args: readonly Arg[]): { value: Val } | null {
   const all = () => evaluated(args).map(text)
   switch (name) {
@@ -156,7 +148,6 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
       return null
   }
 }
-
 function numberMethod(value: number, name: string, args: readonly Arg[]): { value: Val } | null {
   switch (name) {
     case 'abs':
@@ -178,16 +169,13 @@ function numberMethod(value: number, name: string, args: readonly Arg[]): { valu
       return null
   }
 }
-
 const numbersOf = (list: readonly Val[]) => list.filter((one): one is number => typeof one === 'number')
-
 function median(values: readonly number[]): number | null {
   if (!values.length) return null
   const sorted = [...values].sort((a, b) => a - b)
   const middle = Math.floor(sorted.length / 2)
   return sorted.length % 2 ? (sorted[middle] ?? null) : ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2
 }
-
 function listMethod(list: readonly Val[], name: string, args: readonly Arg[], scope: Scope): { value: Val } | null {
   const has = (wanted: Val) => list.some((one) => equal(one, wanted, scope))
   switch (name) {
@@ -272,7 +260,6 @@ function listMethod(list: readonly Val[], name: string, args: readonly Arg[], sc
       return null
   }
 }
-
 function dateMethod(written: DateValue, name: string, args: readonly Arg[], scope: Scope): { value: Val } | null {
   const date = onClock(written, scope.context.zone)
   switch (name) {
@@ -292,7 +279,6 @@ function dateMethod(written: DateValue, name: string, args: readonly Arg[], scop
       return null
   }
 }
-
 function objectMethod(object: Record<string, Value>, name: string): { value: Val } | null {
   switch (name) {
     case 'isEmpty':
@@ -305,12 +291,10 @@ function objectMethod(object: Record<string, Value>, name: string): { value: Val
       return null
   }
 }
-
 export function callMethod(receiver: Val, name: string, args: readonly Arg[], scope: Scope): Val {
   const any = anyMethod(receiver, name, args)
   if (any) return any.value
   if (receiver === null) return name === 'isEmpty' ? true : null
-
   let found: { value: Val } | null = null
   if (receiver instanceof FileRef || receiver instanceof ThisRef) {
     found = fileMethod(receiver.row, name, args, scope)
@@ -350,11 +334,9 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
   } else if (isObject(receiver)) {
     found = objectMethod(receiver, name)
   }
-
   if (!found) throw new BasesError(`${kindName(receiver)} has no ${name}()`)
   return found.value
 }
-
 function flattened(list: readonly Val[], out: Value[] = []): Value[] {
   spend(list.length)
   for (const one of list) {

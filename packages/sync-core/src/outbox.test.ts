@@ -36,13 +36,11 @@ const move = (op: string, id: string, parent: string | null): Op => ({
   seen: 0,
 })
 const remove = (op: string, id: string): Op => ({ op, t: 'delete', id, seen: 0 })
-
 describe('coalesce', () => {
   test('a title typed letter by letter is one rename, the last', () => {
     const ops = [rename('1', 'n', 'P'), rename('2', 'n', 'Pl'), rename('3', 'n', 'Plan')]
     expect(coalesce(ops)).toEqual([rename('3', 'n', 'Plan')])
   })
-
   test('drags of one row within its folder are one place, the last (#1068)', () => {
     const place = (op: string, id: string, pos: string): Op => ({
       op,
@@ -54,17 +52,14 @@ describe('coalesce', () => {
     const ops = [place('1', 'n', 'G'), place('2', 'm', 'H'), place('3', 'n', 'K')]
     expect(coalesce(ops).map((one) => one.op)).toEqual(['2', '3'])
   })
-
   test('renames of one id with something else done to it between stay apart', () => {
     const ops = [rename('1', 'n', 'A'), move('2', 'n', 'f'), rename('3', 'n', 'B')]
     expect(coalesce(ops)).toEqual(ops)
   })
-
   test('renames of other ids in between do not stop the fold', () => {
     const ops = [rename('1', 'n', 'A'), rename('2', 'm', 'X'), rename('3', 'n', 'B')]
     expect(coalesce(ops)).toEqual([rename('2', 'm', 'X'), rename('3', 'n', 'B')])
   })
-
   test("a day's note renamed or moved before it went is made as a note of its own (#436)", () => {
     const day = (op: string): Op => ({
       op,
@@ -76,16 +71,12 @@ describe('coalesce', () => {
       seen: 0,
       mergeable: { text: '' },
     })
-
     const renamed = coalesce([day('1'), rename('2', 'd', 'café.md')])
     expect(renamed).toEqual([{ ...create('1', 'd', 'café.md') }])
-
     const moved = coalesce([mkdir('0', 'f', 'Work'), day('1'), move('2', 'd', 'f')])
     expect(moved).toEqual([mkdir('0', 'f', 'Work'), { ...create('1', 'd', '2026-09-30.md', 'f') }])
-
     expect(coalesce([day('1'), rename('2', 'd', '2026-09-30.MD')])).toEqual([{ ...day('1'), name: '2026-09-30.MD' }])
   })
-
   test('a rename or move of a note whose create has not gone folds into the create', () => {
     const ops = [
       mkdir('0', 'f', 'Work'),
@@ -95,17 +86,14 @@ describe('coalesce', () => {
     ]
     expect(coalesce(ops)).toEqual([mkdir('0', 'f', 'Work'), create('1', 'n', 'Plan.md', 'f')])
   })
-
   test('a move into a folder made later waits for it', () => {
     const ops = [create('1', 'n', 'Plan.md'), mkdir('2', 'f', 'Work'), move('3', 'n', 'f')]
     expect(coalesce(ops)).toEqual(ops)
   })
-
   test('a create and a delete of one id cancel, with everything between', () => {
     const ops = [create('1', 'n', 'Untitled.md'), rename('2', 'n', 'Plan.md'), remove('3', 'n')]
     expect(coalesce(ops)).toEqual([])
   })
-
   test('a folder made and deleted takes what was made in it; what was moved in is deleted', () => {
     const ops = [
       mkdir('1', 'f', 'Tmp'),
@@ -116,7 +104,6 @@ describe('coalesce', () => {
     ]
     expect(coalesce(ops)).toEqual([create('4', 'kept', 'Kept.md'), remove('5.0', 'old')])
   })
-
   test('what a restore in the queue brings back is not folded away, before it or after it (#1068)', () => {
     const restore = (op: string, id: string): Op => ({ op, t: 'restore', id, seen: 0 })
     const inner = [
@@ -131,12 +118,10 @@ describe('coalesce', () => {
     const again = [mkdir('1', 'f', 'Old'), remove('2', 'f'), restore('3', 'f'), remove('4', 'f')]
     expect(coalesce(again)).toEqual(again)
   })
-
   test('a delete of something the account already has stays', () => {
     const ops = [rename('1', 'n', 'A'), remove('2', 'n')]
     expect(coalesce(ops)).toEqual(ops)
   })
-
   test('does not change what it was handed', () => {
     const ops = [create('1', 'n', 'A.md'), rename('2', 'n', 'B.md')]
     const copy = structuredClone(ops)
@@ -144,16 +129,13 @@ describe('coalesce', () => {
     expect(ops).toEqual(copy)
   })
 })
-
 type Choice =
   | { t: 'mkdir' | 'create'; parent: number; name: number }
   | { t: 'rename'; id: number; name: number }
   | { t: 'move'; id: number; parent: number }
   | { t: 'delete'; id: number }
   | { t: 'restore'; id: number }
-
 const NAMES = ['A.md', 'a.md', 'B.md', 'Work', 'Plan.md']
-
 const choice: fc.Arbitrary<Choice> = fc.oneof(
   fc.record({
     t: fc.constantFrom('mkdir' as const, 'create' as const),
@@ -165,20 +147,17 @@ const choice: fc.Arbitrary<Choice> = fc.oneof(
   fc.record({ t: fc.constant('delete' as const), id: fc.nat() }),
   fc.record({ t: fc.constant('restore' as const), id: fc.nat() }),
 )
-
 function made(start: TreeState, choices: readonly Choice[]): Op[] {
   const state = structuredClone(start)
   const ops: Op[] = []
   let fresh = 0
   const context = { role: 'owner' as const, device: 'me' }
-
   for (const [index, one] of choices.entries()) {
     const live = [...state.entries.values()].filter((entry) => !entry.deleted)
     const folders = [null, ...live.filter((entry) => entry.kind === 'folder').map((entry) => entry.id)]
     const pick = <T>(list: readonly T[], at: number): T | undefined => list[at % Math.max(1, list.length)]
     const op = `o${String(index)}`
     const name = NAMES[('name' in one ? one.name : 0) % NAMES.length] ?? 'A.md'
-
     let next: Op | null = null
     if (!('id' in one)) {
       fresh += 1
@@ -209,14 +188,12 @@ function made(start: TreeState, choices: readonly Choice[]): Op[] {
         }
       }
     }
-
     if (!next) continue
     const result = applyOp(state, next, context)
     if ('ok' in result) ops.push(next)
   }
   return ops
 }
-
 function shape(state: TreeState) {
   const alive = [...state.entries.values()]
     .filter((entry) => !entry.deleted)
@@ -228,13 +205,11 @@ function shape(state: TreeState) {
     .sort()
   return { alive, keys }
 }
-
 function replay(start: TreeState, ops: readonly Op[]): TreeState {
   const state = structuredClone(start)
   for (const op of ops) applyOp(state, op, { role: 'owner', device: 'me' })
   return state
 }
-
 describe('coalesce property', () => {
   test("property: coalesced or not, one device's ops leave the same tree, in fewer ops", () => {
     const start = treeState()
@@ -245,12 +220,10 @@ describe('coalesce property', () => {
       { role: 'owner' },
     )
     start.done.clear()
-
     fc.assert(
       fc.property(fc.array(choice, { maxLength: 30 }), (choices) => {
         const ops = made(start, choices)
         const folded = coalesce(ops)
-
         expect(folded.length).toBeLessThanOrEqual(ops.length)
         expect(shape(replay(start, folded))).toEqual(shape(replay(start, ops)))
       }),

@@ -15,7 +15,6 @@ describe('a note written with underlined headings', () => {
   ])('%j reads the same with hashes', (before, after) => {
     expect(withoutSetext(before)).toBe(after)
   })
-
   test.each([
     '# Already\n\nbody',
     'text\n\n---\n\nmore',

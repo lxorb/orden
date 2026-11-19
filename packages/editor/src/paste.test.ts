@@ -10,28 +10,23 @@ import { placed, plainly } from './paste-place'
 import { linkedPaste } from './paste-link'
 
 beforeAll(() => readyToCopy())
-
 describe('what a clipboard comes to', () => {
   test('a page arrives as markdown', async () => {
     await expect(pastedMarkdown('<h2>Title</h2>', 'Title')).resolves.toBe('## Title')
   })
-
   test('a spreadsheet arrives as a table, from the plain text beside the HTML', async () => {
     const html = '<table><tr><td>Name</td><td>Size</td></tr><tr><td>a</td><td>1</td></tr></table>'
     await expect(pastedMarkdown(html, 'Name\tSize\na\t1')).resolves.toBe(
       ['| Name | Size |', '| --- | --- |', '| a | 1 |'].join('\n'),
     )
   })
-
   test('plain text with no HTML beside it is nothing to convert', async () => {
     await expect(pastedMarkdown('', 'just words')).resolves.toBeNull()
   })
-
   test('HTML that comes to nothing is nothing to insert', async () => {
     await expect(pastedMarkdown('<style>p{}</style>', '')).resolves.toBeNull()
   })
 })
-
 describe('a clipboard this app filled itself', () => {
   function copied(note: string) {
     const state = EditorState.create({
@@ -39,70 +34,55 @@ describe('a clipboard this app filled itself', () => {
       selection: EditorSelection.range(0, note.length),
     })
     const flavours = copiedFlavours(state)
-
     return { html: flavours?.html ?? '', text: flavours?.text ?? '' }
   }
-
   test('is pasted as the markdown that was copied, character for character', async () => {
     const note = String.raw`$$B_r(x) := \left\{ y \in \mathbb{R}^n \;\middle|\; \|x - y\| < r \right\}$$`
     await loadFor(note)
     const { html, text } = copied(note)
-
     expect(html).toContain('katex')
     await expect(pastedMarkdown(html, text)).resolves.toBe(note)
   })
-
   test('and everything else a note says that a drawing of it does not', async () => {
     const note = '> [!note] Ball\n> see [[Metrik]] and ==this==\n'
     const { html, text } = copied(note)
-
     await expect(pastedMarkdown(html, text)).resolves.toBe(note)
   })
-
   test('while a page from anywhere else is still converted', async () => {
     await expect(pastedMarkdown('<h2>Title</h2>', '# Something else')).resolves.toBe('## Title')
   })
 })
-
 describe('pasting spreadsheet cells', () => {
   test('tab-separated rows become a table', () => {
     expect(delimitedToTable('Name\tSize\na\t1\nb\t2')).toBe(
       ['| Name | Size |', '| --- | --- |', '| a | 1 |', '| b | 2 |'].join('\n'),
     )
   })
-
   test('comma-separated rows work too', () => {
     expect(delimitedToTable('a,b,c\n1,2,3')).toContain('| a | b | c |')
   })
-
   test('two sentences that happen to have a comma each are not a table', () => {
     expect(delimitedToTable('Hello, world\nGoodbye, world')).toBeNull()
     expect(delimitedToTable('Yes, it is\nNo, it is not')).toBeNull()
     expect(delimitedToTable('a\tb\n1\t2')).toContain('| a | b |')
   })
-
   test('a pipe inside a cell is escaped', () => {
     expect(delimitedToTable('a\tb\nx|y\tz')).toContain('x\\|y')
   })
-
   test('ordinary prose is left alone', () => {
     expect(delimitedToTable('Just a sentence.')).toBeNull()
     expect(delimitedToTable('One line\nAnother line')).toBeNull()
   })
-
   test('ragged rows are not a table', () => {
     expect(delimitedToTable('a\tb\n1')).toBeNull()
   })
-
   test('a single column is not a table', () => {
     expect(delimitedToTable('a\nb\nc')).toBeNull()
   })
-
   test('code indented with tabs is not a table', () => {
     expect(delimitedToTable('\tx := 1\n\ty := 2\n\treturn x + y')).toBeNull()
   })
 })
-
 describe('an address pasted over a selection', () => {
   function pasted(marked: string, text: string): string | null {
     const from = marked.indexOf('«')
@@ -114,92 +94,73 @@ describe('an address pasted over a selection', () => {
         extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
       }),
     )
-
     const spec = linkedPaste(state, text)
     return spec ? state.update(spec).state.doc.toString() : null
   }
-
   const URL = 'https://example.com/a?b=c'
-
   test('links the words', () => {
     expect(pasted('Read «the docs» first.', URL)).toBe(`Read [the docs](${URL}) first.`)
   })
-
   test('reads the address past the whitespace a copy carries', () => {
     expect(pasted('«here»', ` ${URL}\n`)).toBe(`[here](${URL})`)
   })
-
   test('takes a mail address', () => {
     expect(pasted('«write»', 'mailto:a@b.ch')).toBe('[write](mailto:a@b.ch)')
   })
-
   test('keeps a balanced bracket in the address and fences an unbalanced one', () => {
     const wiki = 'https://en.wikipedia.org/wiki/Nib_(pen)'
     expect(pasted('«pen»', wiki)).toBe(`[pen](${wiki})`)
     expect(pasted('«pen»', 'https://a.ch/x)')).toBe('[pen](<https://a.ch/x)>)')
   })
-
   test('leaves anything but one address alone', () => {
     expect(pasted('«words»', 'not an address')).toBeNull()
     expect(pasted('«words»', `${URL} and more`)).toBeNull()
     expect(pasted('«words»', 'C:\\notes\\a.md')).toBeNull()
   })
-
   test('leaves a paste with nothing selected alone', () => {
     const state = EditorState.create({ doc: 'words', selection: EditorSelection.cursor(2) })
     expect(linkedPaste(state, URL)).toBeNull()
   })
-
   test('replaces a selected address rather than linking it', () => {
     expect(pasted('«https://old.ch»', URL)).toBeNull()
   })
-
   test('stays plain in inline code and in a code block', () => {
     expect(pasted('Run `«npm»` now.', URL)).toBeNull()
     expect(pasted('```\n«let x»\n```\n', URL)).toBeNull()
     expect(pasted('    «indented code»\n', URL)).toBeNull()
   })
-
   test('links words that start with a code span, or a whole code span', () => {
     expect(pasted('See «`fetch` docs» here', URL)).toBe(`See [\`fetch\` docs](${URL}) here`)
     expect(pasted('Call «`fetch`» now', URL)).toBe(`Call [\`fetch\`](${URL}) now`)
   })
-
   test('stays plain inside a link, a note link or a formula', () => {
     expect(pasted('[«te»xt](https://a.ch)', URL)).toBeNull()
     expect(pasted('[[«No»te]]', URL)).toBeNull()
     expect(pasted('$«x^2»$', URL)).toBeNull()
   })
-
   test('gives a bare www. the scheme a browser would', () => {
     expect(pasted('«site»', 'www.nib.ch')).toBe('[site](https://www.nib.ch)')
   })
-
   test('links words with markup in them, but not half of the markup', () => {
     expect(pasted('«some **bold** words»', URL)).toBe(`[some **bold** words](${URL})`)
     expect(pasted('«some **bo»ld** words', URL)).toBeNull()
     expect(pasted('- «one\n- two»', URL)).toBeNull()
   })
-
   test('escapes a plain bracket among the words, and leaves markup alone', () => {
     expect(pasted('see «a] b» now', URL)).toBe(`see [a\\] b](${URL}) now`)
     expect(pasted('«[x [y](https://a.ch) z»', URL)).toBe(`[\\[x [y](https://a.ch) z](${URL})`)
     expect(pasted('«a\\] `b]` [[c]] d»', URL)).toBe(`[a\\] \`b]\` [[c]] d](${URL})`)
   })
-
   test('over a whole line, keeps the item marker and the hashes outside the link', () => {
     expect(pasted('«- item»\n', URL)).toBe(`- [item](${URL})\n`)
     expect(pasted('«# Title»\n', URL)).toBe(`# [Title](${URL})\n`)
   })
-
   test('over a line picked with its line break, keeps the break and the next line', () => {
     expect(pasted('«# Title\n»next\n', URL)).toBe(`# [Title](${URL})\nnext\n`)
   })
-
   test('does not reach across paragraphs', () => {
     expect(pasted('«one\n\ntwo»', URL)).toBeNull()
   })
-
   test('links every selection when there are several', () => {
     const state = parsed(
       EditorState.create({
@@ -212,7 +173,6 @@ describe('an address pasted over a selection', () => {
     expect(spec && state.update(spec).state.doc.toString()).toBe(`[one](${URL}) [two](${URL})`)
   })
 })
-
 describe('where a paste lands', () => {
   const landed = (marked: string, text: string, how = placed) => {
     const at = marked.indexOf('|')
@@ -220,31 +180,25 @@ describe('where a paste lands', () => {
     const next = state.update(how(state, text)).state
     return { doc: next.doc.toString(), caret: next.selection.main.head }
   }
-
   const TABLE = '| a | b |\n| --- | --- |\n| c | d |'
-
   test('a block starting in a line starts on its own', () => {
     expect(landed('abc |', TABLE).doc).toBe(`abc\n\n${TABLE}`)
     expect(landed('abc |def', TABLE).doc).toBe(`abc\n\n${TABLE}\n\ndef`)
     expect(landed('abc def|', '## Head').doc).toBe('abc def\n\n## Head')
     expect(landed('abc |def', TABLE).caret).toBe(5 + TABLE.length)
   })
-
   test('inside a list item or a quote stays there', () => {
     expect(landed('- abc|', TABLE).doc).toBe(`- abc\n\n  ${TABLE.split('\n').join('\n  ')}`)
     expect(landed('> abc|', '## H\n\nx').doc).toBe('> abc\n>\n> ## H\n>\n> x')
   })
-
   test('words stay in the line', () => {
     expect(landed('abc |def', '**x** y').doc).toBe('abc **x** ydef')
     expect(landed('|', '## Head').doc).toBe('## Head')
     expect(landed('|def', '**x** y').doc).toBe('**x** ydef')
   })
-
   test('a heading does not take the words after it', () => {
     expect(landed('abc |def', 'x\n\n## Head').doc).toBe('abc x\n\n## Head\n\ndef')
   })
-
   test('a list on an empty item takes the item', () => {
     expect(landed('- |', '- x\n- y').doc).toBe('- x\n- y')
     expect(landed('- a\n- |', '- x\n- y').doc).toBe('- a\n- x\n- y')
@@ -254,19 +208,16 @@ describe('where a paste lands', () => {
     expect(landed('- [ ] |', '- x').doc).toBe('- x')
     expect(landed('- |', '- x\n- y').caret).toBe(7)
   })
-
   test('anything else on an empty item stays under it', () => {
     expect(landed('- |', TABLE).doc).toBe(`- ${TABLE.split('\n').join('\n  ')}`)
     expect(landed('- |', 'one\n\ntwo').doc).toBe('- one\n\n  two')
   })
-
   test('plain text is itself unless it is a list on an empty item', () => {
     expect(landed('abc |', '## Head', plainly).doc).toBe('abc ## Head')
     expect(landed('- |', '- x\n- y', plainly).doc).toBe('- x\n- y')
     expect(landed('- |', 'x\ny', plainly).doc).toBe('- x\ny')
   })
 })
-
 describe('a paste with several carets', () => {
   const pasted = (doc: string, carets: number[], text: string, how = placed) => {
     const state = EditorState.create({
@@ -277,7 +228,6 @@ describe('a paste with several carets', () => {
     const next = state.update(how(state, text)).state
     return { doc: next.doc.toString(), carets: next.selection.ranges.map((one) => one.head) }
   }
-
   test('lands at every caret, each placed as one alone would be', () => {
     expect(pasted('abc \ndef ', [4, 9], '**x**')).toEqual({
       doc: 'abc **x**\ndef **x**',
@@ -285,29 +235,24 @@ describe('a paste with several carets', () => {
     })
     expect(pasted('abc \n- ', [4, 7], '## H').doc).toBe('abc\n\n## H\n- ## H')
   })
-
   test('and plain text too, a list on each empty item', () => {
     expect(pasted('- \n\n- ', [2, 6], '- x\n- y', plainly).doc).toBe('- x\n- y\n\n- x\n- y')
     expect(pasted('a\nb', [1, 3], 'z', plainly)).toEqual({ doc: 'az\nbz', carets: [2, 5] })
   })
 })
-
 describe('commas that are not a table', () => {
   test('two lines of prose are two lines of prose', () => {
     expect(delimitedToTable('Hello, world, again\nGoodbye, moon, soon')).toBeNull()
   })
-
   test('two sentences with a year between commas in each stay prose', () => {
     const text = 'We met on May 5, 2024, at noon, and left.\nThen on June 1, 2024, it rained, again.'
     expect(delimitedToTable(text)).toBeNull()
   })
-
   test('data written with a space after its commas is still data', () => {
     expect(delimitedToTable('Name, Age, City\nBob, 3, Paris')).toContain('| Bob | 3 | Paris |')
     expect(delimitedToTable('a,b,c\nd,e,f')).toContain('| d | e | f |')
   })
 })
-
 describe('a table with a line under the caret', () => {
   const at = (marked: string, text: string) => {
     const caret = marked.indexOf('|')
@@ -315,30 +260,25 @@ describe('a table with a line under the caret', () => {
     return state.update(placed(state, text)).state.doc.toString()
   }
   const TABLE = '| a | b |\n| --- | --- |\n| c | d |'
-
   test('keeps a blank line between them', () => {
     expect(at('abc|\nnext', TABLE)).toBe(`abc\n\n${TABLE}\n\nnext`)
     expect(at('|\nnext', TABLE)).toBe(`${TABLE}\n\nnext`)
     expect(at('abc|\n\nnext', TABLE)).toBe(`abc\n\n${TABLE}\n\nnext`)
   })
-
   test('and over it, on an empty line under words', () => {
     expect(at('above\n|', TABLE)).toBe(`above\n\n${TABLE}`)
   })
 })
-
 describe('paragraphs pasted into a task', () => {
   const at = (marked: string, text: string) => {
     const caret = marked.indexOf('|')
     const state = EditorState.create({ doc: marked.replace('|', ''), selection: { anchor: caret } })
     return state.update(placed(state, text)).state.doc.toString()
   }
-
   test('line up under the words of the item, not under its box', () => {
     expect(at('- [ ] task |', 'one\n\ntwo')).toBe('- [ ] task one\n\n  two')
     expect(at('1. [ ] task |', 'one\n\ntwo')).toBe('1. [ ] task one\n\n   two')
   })
-
   test('stay inside a quote that is inside an item', () => {
     expect(at('- > quote in item|', 'one\n\ntwo')).toBe('- > quote in itemone\n  >\n  > two')
     expect(at('> - > deep|', 'one\n\ntwo')).toBe('> - > deepone\n>   >\n>   > two')

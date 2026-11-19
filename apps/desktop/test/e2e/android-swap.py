@@ -1,12 +1,10 @@
 
 import json
-
 from harness import Drive
 from playwright.sync_api import Browser
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -16,7 +14,6 @@ CONTEXT = """() => {
   return { text, selectionStart, selectionEnd }
 }"""
 WORDS = "() => window.ordenApp.workspace.active.note.latest"
-
 def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
     phone = browser.new_context(
         viewport={"width": 390, "height": 844}, user_agent=AGENT, has_touch=True, is_mobile=True
@@ -64,7 +61,6 @@ def pane(browser: Browser, label: str, steps: list[tuple[str, ...]]) -> None:
     if thrown:
         wrong(f"{label}: threw {thrown[:2]} ({len(thrown)} in all)")
     phone.close()
-
 def composing(browser: Browser) -> None:
     phone = browser.new_context(
         viewport={"width": 390, "height": 844}, user_agent=AGENT, has_touch=True, is_mobile=True
@@ -101,7 +97,6 @@ def composing(browser: Browser) -> None:
     if "wor" not in first or "word" in first:
         wrong(f"the composition did not stay in its own note: {first!r}")
     phone.close()
-
 def drive(browser: Browser) -> None:
     composing(browser)
     pane(browser, "note, then +", [("open", "Longer"), ("keys", "XAX"), ("blank",), ("keys", "one")])
@@ -112,5 +107,4 @@ def drive(browser: Browser) -> None:
         [("open", "Longer"), ("keys", "XAX"), ("open", "Bbb"), ("compose", "word"), ("open", "Longer"), ("keys", "ZZ")],
     )
     pane(browser, "draft to note", [("blank",), ("keys", "one"), ("open", "Bbb"), ("keys", "YBY")])
-
 raise SystemExit(DRIVE.run(drive))

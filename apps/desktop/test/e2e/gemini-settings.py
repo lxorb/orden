@@ -1,12 +1,10 @@
 import json
-
 from harness import Drive
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 ACCOUNTS = {
     "version": 1,
     "accounts": [
@@ -18,7 +16,6 @@ ACCOUNTS = {
     "defaultVendor": "claude",
     "uses": {},
 }
-
 MODELS = {
     "models": [
         {
@@ -37,20 +34,17 @@ MODELS = {
         {"name": "models/gemini-3.8-flash-tts", "supportedGenerationMethods": ["generateContent"]},
     ]
 }
-
 def check(what: str, held: bool) -> None:
     if held:
         say(f"ok   {what}")
     else:
         wrong(what)
-
 def drive(browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 860}, reduced_motion="reduce")
     page.context.add_init_script(
         f"localStorage.setItem('orden:ai-accounts', {json.dumps(json.dumps(ACCOUNTS))})"
     )
     asked: list[dict[str, str]] = []
-
     def models(route) -> None:
         asked.append({k.lower(): v for k, v in route.request.headers.items()})
         route.fulfill(
@@ -59,14 +53,12 @@ def drive(browser) -> None:
             body=json.dumps(MODELS),
             headers={"access-control-allow-origin": "*"},
         )
-
     page.route("https://generativelanguage.googleapis.com/v1beta/models?*", models)
     DRIVE.open(page)
     page.evaluate("window.ordenApp.settings.show('ai')")
     page.wait_for_selector("text=Accounts")
     quiet(page)
     shot(page, "01-accounts")
-
     sheet = page.locator(".sheet").first
     key_card = sheet.locator('.card[data-account="gemini"]')
     cli_card = sheet.locator('.card[data-account="gemini-cli"]')
@@ -82,7 +74,6 @@ def drive(browser) -> None:
     )
     check("the CLI's card is the Gemini CLI's", cli_card.get_by_text("Gemini CLI", exact=True).count() == 1)
     check("no card asks for a model", sheet.get_by_text("List models", exact=True).count() == 0)
-
     sheet.locator("[data-add-account]").click()
     page.locator('[data-maker="google"]').wait_for(timeout=5_000)
     page.locator('[data-maker="google"]').click()
@@ -90,7 +81,6 @@ def drive(browser) -> None:
     check("Gemini can be added again by key", page.locator('[data-step="connect"][data-road="gemini"]').count() == 1)
     page.keyboard.press("Escape")
     quiet(page)
-
     field = key_card.locator('input[type="password"]')
     check("the key field asks for a Google key", field.get_attribute("placeholder") == "AIza")
     field.fill("AIza-e2e-key")
@@ -111,7 +101,6 @@ def drive(browser) -> None:
     check("the newest Pro that talks is picked on its own", chosen == "gemini-3.1-pro-preview")
     check("Google is asked with the key in its own header", any(one.get("x-goog-api-key") == "AIza-e2e-key" for one in asked))
     check("no Bearer goes to Google", all("authorization" not in one for one in asked))
-
     used = sheet.get_by_text("Used for", exact=True)
     check("Used for is shown with two providers", used.count() == 1)
     first = sheet.locator('[role="combobox"]').filter(has_text="Default").first
@@ -121,7 +110,6 @@ def drive(browser) -> None:
     check("a feature can be given to Gemini", "Gemini" in names)
     page.keyboard.press("Escape")
     quiet(page)
-
     page.evaluate("() => window.ordenApp.settings.hide?.() ?? (window.ordenApp.settings.open = false)")
     page.wait_for_timeout(400)
     page.evaluate("async () => { window.agentsFake = await window.ordenApp.agents.standIn() }")
@@ -157,5 +145,4 @@ def drive(browser) -> None:
         tabs = page.locator('.agents [role="tablist"]')
         fits = tabs.evaluate("(one) => one.scrollWidth <= one.clientWidth + 1")
         check("the tabs fit their row", fits)
-
 raise SystemExit(DRIVE.run(drive, "settings > ai offers Gemini and Antigravity"))

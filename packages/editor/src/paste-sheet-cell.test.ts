@@ -21,15 +21,12 @@ const EXCEL_CELL = [
   '</body>',
   '</html>',
 ].join('\r\n')
-
 const LIBREOFFICE_CELL =
   '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head><meta name="generator" content="LibreOffice 7.6"/></head><body><table cellspacing="0" border="0"><colgroup width="85"></colgroup><tr><td height="17" align="left">Order 4471 shipped</td></tr></table></body></html>'
-
 describe('one cell copied from a spreadsheet and pasted into a note', () => {
   test('from Excel pastes its words, not a table of one cell', async () => {
     expect(await pastedMarkdown(EXCEL_CELL, 'Order 4471 shipped\r\n')).toBe('Order 4471 shipped')
   })
-
   test('from LibreOffice Calc pastes its words, not a table of one cell', async () => {
     expect(await pastedMarkdown(LIBREOFFICE_CELL, 'Order 4471 shipped')).toBe('Order 4471 shipped')
   })

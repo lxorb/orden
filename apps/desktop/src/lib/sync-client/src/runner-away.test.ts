@@ -21,27 +21,22 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   isNative: false,
   isDesktop: false,
 }))
-
 const { runner } = await import('./runner.svelte')
 const { keptAway } = await import('../../away/src/api')
 const { windows } = await import('../../platform/src/windows')
-
 const ROOT = '/browser/space'
 const SPACE = 'sim'
-
 interface Open {
   current: Engine | null
   telling: { moved(from: string, to: string, kind: string): Promise<void> }
   awayHeard(engine: Engine, told: boolean): Promise<void>
 }
-
 interface Window {
   leaderId: string | null
   asked: Map<string, (value: unknown) => void>
   answering(said: { what: string; args: unknown }): Promise<unknown>
   heardAway(files: unknown): void
 }
-
 async function device(account: ReferenceAccount, id: string, lazy: boolean) {
   const store = new MemoryStore(id)
   const seeding = store.open()
@@ -72,7 +67,6 @@ async function device(account: ReferenceAccount, id: string, lazy: boolean) {
   }
   return { disk, engine: await Engine.start(world, store.open(), { freshens: false }) }
 }
-
 describe('a browser moving a folder of notes it keeps no words of', () => {
   test('lists them at their new place only once the move is done, and says each moved', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -85,7 +79,6 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
       await other.engine.created(`${ROOT}/F/${name}`, false, `# ${name}\n`)
     }
     await other.engine.pass(SPACE)
-
     const browser = await device(account, 'b', true)
     await browser.engine.pass(SPACE)
     const open = runner as unknown as Open
@@ -97,13 +90,11 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     keptAway.clear()
     await open.awayHeard(browser.engine, false)
     expect(keptAway.under(`${ROOT}/F`)).toHaveLength(2)
-
     let during: number | null = null
     await runner.doer({ op: 'moved', from: `${ROOT}/F`, to: `${ROOT}/G`, kind: 'folder', root: ROOT }, async () => {
       await open.awayHeard(browser.engine, true)
       during = keptAway.under(`${ROOT}/G`).length
     })
-
     expect(during).toBe(0)
     expect(
       keptAway
@@ -117,7 +108,6 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     open.current = null
     keptAway.clear()
   })
-
   test('are listed in another window too, which brings one back through the window syncing', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const other = await device(account, 'o', false)
@@ -129,7 +119,6 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
       await other.engine.created(`${ROOT}/F/${name}`, false, `# ${name}\n`)
     }
     await other.engine.pass(SPACE)
-
     const browser = await device(account, 'b', true)
     await browser.engine.pass(SPACE)
     const open = runner as unknown as Open & Window
@@ -148,7 +137,6 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     const told = [...said].reverse().find((one) => one.kind === 'sync-away')
     const paths = (told?.files as { path: string }[] | undefined)?.map((one) => one.path) ?? []
     expect(paths).toEqual(expect.arrayContaining([`${ROOT}/F/a.md`, `${ROOT}/F/b.md`]))
-
     keptAway.clear()
     open.leaderId = 'the window syncing'
     open.heardAway(told?.files)
@@ -156,14 +144,12 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     expect(await keptAway.bringBack(`${ROOT}/F/a.md`)).toBe(true)
     expect(await browser.disk.read(`${ROOT}/F/a.md`)).toBe('# a.md\n')
     expect(keptAway.under(`${ROOT}/F`).map((one) => one.path)).toEqual([`${ROOT}/F/b.md`])
-
     saying.mockRestore()
     alone.mockRestore()
     open.leaderId = null
     open.current = null
     keptAway.clear()
   })
-
   test('a search in another window hears each page as it is found, even from an older window', async () => {
     const open = runner as unknown as Window & { parts: Map<string, (value: unknown) => void> }
     const page = (name: string) => ({ hits: [{ path: `${ROOT}/${name}` }], loose: [] })
@@ -178,23 +164,19 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     open.leaderId = 'the window syncing'
     open.heardAway([{ id: 'n1', path: `${ROOT}/a.md`, size: 1, modified: 1 }])
     const query = { text: 'a' } as never
-
     const heard: string[] = []
     const searching = keptAway.search(ROOT, query, [], 10, (found) => heard.push(...found.hits.map((one) => one.path)))
     expect(heard).toEqual([`${ROOT}/a.md`])
     await searching
     expect(heard).toEqual([`${ROOT}/a.md`, `${ROOT}/b.md`])
-
     finalIs = 'nothing streamed'
     heard.length = 0
     await keptAway.search(ROOT, query, [], 10, (found) => heard.push(...found.hits.map((one) => one.path)))
     expect(heard).toEqual([`${ROOT}/a.md`, `${ROOT}/b.md`])
-
     saying.mockRestore()
     open.leaderId = null
     keptAway.clear()
   })
-
   test('the window syncing answers a search at once, not after the writes waiting their turn', async () => {
     const open = runner as unknown as Window & {
       taking: Promise<unknown>
@@ -212,7 +194,6 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     })
     const before = open.taking
     open.taking = new Promise(() => undefined)
-
     open.heardAsk({
       kind: 'sync-ask',
       id: 'q1',
@@ -222,12 +203,10 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     })
     await vi.waitFor(() => expect(said.map((one) => one.kind)).toEqual(['sync-part', 'sync-said']))
     expect(said[1]?.value).toEqual([{ hits: [{ path: `${ROOT}/a.md` }], loose: [] }])
-
     open.taking = before
     saying.mockRestore()
     keptAway.clear()
   })
-
   test('another window waits for a long fetch for as long as the window syncing says it is still at it', async () => {
     vi.useFakeTimers()
     const open = runner as unknown as Window & {
@@ -252,7 +231,6 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     open.asked.get(asked)?.(true)
     await vi.advanceTimersByTimeAsync(0)
     expect(brought).toBe(true)
-
     saying.mockRestore()
     const beats: string[] = []
     const beating = vi.spyOn(windows, 'say').mockImplementation((kind) => void beats.push(kind))
@@ -264,7 +242,6 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     expect(beats).toEqual(['sync-alive', 'sync-alive', 'sync-said'])
     await vi.advanceTimersByTimeAsync(30_000)
     expect(beats).toHaveLength(3)
-
     slow.mockRestore()
     beating.mockRestore()
     open.leaderId = null
@@ -272,7 +249,6 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     vi.useRealTimers()
   })
 })
-
 describe('a browser keeping no words of a note the engine has just heard of', () => {
   test('finds it away and brings it back before the away list is retold', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -281,7 +257,6 @@ describe('a browser keeping no words of a note the engine has just heard of', ()
     await other.disk.write(`${ROOT}/Board.md`, '# Board\n')
     await other.engine.created(`${ROOT}/Board.md`, false, '# Board\n')
     await other.engine.pass(SPACE)
-
     const browser = await device(account, 'b', true)
     await browser.engine.pass(SPACE)
     keptAway.clear()
@@ -289,7 +264,6 @@ describe('a browser keeping no words of a note the engine has just heard of', ()
       (path) => browser.engine.awayAt(path),
       (path) => browser.engine.fetch(path),
     )
-
     expect(keptAway.all()).toEqual([])
     expect(keptAway.at(`${ROOT}/Board.md`)?.path).toBe(`${ROOT}/Board.md`)
     expect(await keptAway.bringBack(`${ROOT}/Board.md`)).toBe(true)

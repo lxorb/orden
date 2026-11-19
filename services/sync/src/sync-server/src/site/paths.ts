@@ -16,14 +16,11 @@ export function slugFor(path: string): string {
     .filter(Boolean)
     .join('/')
 }
-
 const MOST_REMEMBERED = 50
-
 export function pathsOf(path: string, front: NoteFront): string[] {
   const where = front.permalink ?? slugFor(path)
   return [...new Set([where, ...(front.aliases ?? [])])].filter(Boolean)
 }
-
 export function legacyPathsOf(path: string, front: NoteFront): string[] {
   const asAscii = (slug: string) =>
     slug
@@ -32,7 +29,6 @@ export function legacyPathsOf(path: string, front: NoteFront): string[] {
       .map((part) => part.replace(/^-+|-+$/g, ''))
       .filter(Boolean)
       .join('/')
-
   const where = front.permalink
     ? asAscii(front.permalink)
     : path
@@ -46,14 +42,11 @@ export function legacyPathsOf(path: string, front: NoteFront): string[] {
         )
         .filter(Boolean)
         .join('/')
-
   return [...new Set([where, ...(front.aliases ?? []).map(asAscii)])].filter(Boolean)
 }
-
 export function pageOf(path: string, front: NoteFront): string {
   return pathsOf(path, front)[0] ?? slugFor(path)
 }
-
 export async function rememberOldPaths(
   env: Env,
   was: Pick<Note, 'id' | 'space_id' | 'path' | 'front'>,
@@ -64,7 +57,6 @@ export async function rememberOldPaths(
   const after = new Set(pathsOf(path, front))
   const gone = before.filter((one) => !after.has(one)).slice(0, MOST_REMEMBERED)
   if (!gone.length) return
-
   const at = Date.now()
   const writes = gone.map((slug) =>
     env.DB.prepare(
@@ -72,7 +64,6 @@ export async function rememberOldPaths(
         on conflict (space_id, slug) do update set note_id = excluded.note_id, at = excluded.at`,
     ).bind(was.space_id, slug, was.id, at),
   )
-
   writes.push(
     env.DB.prepare(
       `delete from blog_paths where note_id = ? and slug not in (
@@ -80,10 +71,8 @@ export async function rememberOldPaths(
        )`,
     ).bind(was.id, was.id, MOST_REMEMBERED),
   )
-
   await env.DB.batch(writes)
 }
-
 export async function followOnlyNote(
   env: Env,
   spaceId: string,
@@ -96,34 +85,28 @@ export async function followOnlyNote(
     .first<{ blog_note: string | null }>()
   const pinned = space?.blog_note
   if (!pinned) return
-
   if (gone.includes(pinned)) {
     await env.DB.prepare('update spaces set blog_enabled = 0 where id = ? and blog_note = ?')
       .bind(spaceId, pinned)
       .run()
     return
   }
-
   const to = moves.find((one) => one.from === pinned)?.to
   if (to === undefined || to === pinned) return
   await env.DB.prepare('update spaces set blog_note = ? where id = ? and blog_note = ?').bind(to, spaceId, pinned).run()
 }
-
 const MOST_MOVES_REMEMBERED = 500
-
 export interface Moved {
   id: string
   from: string
   to: string
 }
-
 export async function rememberMoves(env: Env, spaceId: string, moves: readonly Moved[]): Promise<void> {
   if (!moves.length) return
   const space = await env.DB.prepare('select blog_enabled from spaces where id = ?')
     .bind(spaceId)
     .first<{ blog_enabled: number }>()
   if (!space?.blog_enabled) return
-
   for (const piece of chunks(moves.slice(0, MOST_MOVES_REMEMBERED))) {
     const { results } = await env.DB.prepare(
       `select id, front from notes where space_id = ? and id in (${places(piece.length)})`,
@@ -138,11 +121,9 @@ export async function rememberMoves(env: Env, spaceId: string, moves: readonly M
     }
   }
 }
-
 export async function rememberedNote(env: Env, spaceId: string, slug: string): Promise<string | null> {
   const found = await env.DB.prepare('select note_id from blog_paths where space_id = ? and slug = ?')
     .bind(spaceId, slug)
     .first<{ note_id: string }>()
-
   return found?.note_id ?? null
 }

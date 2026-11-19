@@ -8,17 +8,14 @@ const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const SettingsAliases = (await import('./SettingsAliases.svelte')).default
 const ItemEdit = (await import('./ItemEdit.svelte')).default
 const ItemView = (await import('./ItemView.svelte')).default
-
 interface Asked {
   method: string
   url: string
   body: unknown
 }
-
 let asked: Asked[] = []
 let answers: Record<string, [number, unknown]> = {}
 const SL = 'https://app.simplelogin.io'
-
 const OPTIONS: [number, unknown] = [
   200,
   {
@@ -27,16 +24,12 @@ const OPTIONS: [number, unknown] = [
     suffixes: [{ suffix: '.cat@slmail.me', signed_suffix: '.cat@slmail.me.SIG', is_premium: false }],
   },
 ]
-
 const MAILBOXES: [number, unknown] = [200, { mailboxes: [{ id: 1, email: 'me@example.com', default: true }] }]
-
 let vault = ''
-
 beforeAll(async () => {
   await opened()
   vault = pass.vaults[0]?.id ?? ''
 })
-
 beforeEach(async () => {
   asked = []
   answers = {
@@ -56,12 +49,10 @@ beforeEach(async () => {
   })
   await pass.setAliasProvider(null)
 })
-
 afterEach(() => {
   closed()
   vi.unstubAllGlobals()
 })
-
 describe('Settings > Aliases', () => {
   test('tests a key, connects it and keeps it sealed, then disconnects', async () => {
     showing(SettingsAliases, {})
@@ -74,17 +65,14 @@ describe('Settings > Aliases', () => {
     button('Test connection').click()
     await vi.waitFor(() => expect(target.textContent).toContain('Connected. 1 mailboxes.'))
     expect(await pass.aliasProvider()).toBeNull()
-
     target.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
     await vi.waitFor(() => expect(button('Disconnect')).toBeTruthy())
     expect(await pass.aliasProvider()).toMatchObject({ provider: 'simplelogin', key: 'sl-key' })
     await vi.waitFor(() => expect(target.textContent).toContain('me@example.com'))
-
     button('Disconnect').click()
     await vi.waitFor(() => expect(target.querySelector('input[type="password"]')).not.toBeNull())
     expect(await pass.aliasProvider()).toBeNull()
   })
-
   test('says what a wrong key is told', async () => {
     answers['GET /api/v2/mailboxes'] = [401, { error: 'Wrong api key' }]
     showing(SettingsAliases, {})
@@ -99,7 +87,6 @@ describe('Settings > Aliases', () => {
     expect(await pass.aliasProvider()).toBeNull()
   })
 })
-
 describe('a new alias', () => {
   test('is made at the alias service from a prefix and a suffix', async () => {
     await pass.setAliasProvider({ provider: 'simplelogin', key: 'k', mailbox: null, suffix: null })
@@ -143,7 +130,6 @@ describe('a new alias', () => {
       mailboxes: ['me@example.com'],
     })
   })
-
   test('without a service is written by hand', async () => {
     const ui = new PassUi(null)
     await ui.newItem(blank('alias'))
@@ -152,7 +138,6 @@ describe('a new alias', () => {
     expect(target.querySelector('input[inputmode="email"]')).not.toBeNull()
   })
 })
-
 describe('an alias from a service', () => {
   async function made(): Promise<Item> {
     await pass.setAliasProvider({ provider: 'simplelogin', key: 'k', mailbox: null, suffix: null })
@@ -167,7 +152,6 @@ describe('an alias from a service', () => {
     }
     return await pass.create(vault, content)
   }
-
   test('shows where it forwards and its last 14 days, and is turned off at the service', async () => {
     const now = Date.now() / 1000
     answers['GET /api/aliases/9/activities'] = [
@@ -198,7 +182,6 @@ describe('an alias from a service', () => {
     })
     expect(asked.filter((one) => one.url.endsWith('/toggle'))).toHaveLength(1)
   })
-
   test('copies its address', async () => {
     const item = await made()
     showing(ItemView, { ui: new PassUi(null), item })

@@ -11,7 +11,6 @@ function notUpdated(value: unknown): { refused: boolean; command: string | null;
     reason: isString(reason) ? reason : 'the crate gave no reason',
   }
 }
-
 export async function updateBySystem(version: string, channel: Channel): Promise<string | null> {
   if (__EVEN_PLUGIN__ || !(await mayStop('restart'))) return null
   try {

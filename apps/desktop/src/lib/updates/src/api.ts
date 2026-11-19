@@ -9,6 +9,5 @@ export {
   webChannel,
 } from './updater'
 export { updates } from './updates.svelte'
-
 export const loadWhatsNew = () => import('./WhatsNew.svelte')
 export { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'

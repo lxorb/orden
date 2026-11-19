@@ -5,7 +5,6 @@ const notes = new Map([['/s/Plan.md', '# Plan\n']])
 const renames: Record<string, unknown>[] = []
 const trashed: Record<string, unknown>[] = []
 const saved: unknown[][] = []
-
 vi.mock('../../platform/src/tauri', () => ({
   isNative: false,
   isDesktop: false,
@@ -60,37 +59,27 @@ vi.mock('../../crate/src/api', async (original) => ({
   ...(await original<typeof import('../../crate/src/api')>()),
   scanSpace: () => Promise.resolve([]),
 }))
-
 const { appWorld } = await import('./app-world')
-
 describe("the browser's disk, as the v2 engine sees it", () => {
   const telling = {} as Parameters<typeof appWorld>[1]
-
   test('says a listing it could not read, rather than an empty folder', async () => {
     const world = appWorld(() => null, telling)
-
     expect(await world.list?.('/s')).toBeNull()
   })
-
   test('has a note that is there, and not one that is not', async () => {
     const { disk } = appWorld(() => null, telling)
-
     expect(await disk.exists('/s/Plan.md')).toBe(true)
     expect(await disk.exists('/s/Gone.md')).toBe(false)
   })
 })
-
 describe('a note another device wrote', () => {
   test('is told to the app as heard, so no device but the one that wrote it dates its todos', async () => {
     const telling = { written: () => undefined } as unknown as Parameters<typeof appWorld>[1]
-
     await appWorld(() => null, telling).disk.write('/s/Errands.md', '- [x] Post the letter\n')
-
     expect(notes.get('/s/Errands.md')).toBe('- [x] Post the letter\n')
     expect(saved).toEqual([['/s/Errands.md', '- [x] Post the letter\n', true]])
   })
 })
-
 describe('a move the engine makes', () => {
   test('is refused, the file left alone, under a write that has stalled', async () => {
     notes.set('/s/Stuck.md', '# Stuck\n')
@@ -102,16 +91,13 @@ describe('a move the engine makes', () => {
         return Promise.resolve()
       },
     } as unknown as Parameters<typeof appWorld>[1]
-
     await expect(appWorld(() => null, telling).disk.move('/s/Stuck.md', '/s/Moved too.md', 'file')).rejects.toThrow(
       '/s/Stuck.md',
     )
-
     expect(notes.has('/s/Stuck.md')).toBe(true)
     expect(notes.has('/s/Moved too.md')).toBe(false)
     expect(told).toEqual([])
   })
-
   test('waits for the writes of what it moves, its telling included', async () => {
     notes.set('/s/Held.md', '# Held\n')
     const order: string[] = []
@@ -126,14 +112,11 @@ describe('a move the engine makes', () => {
         return Promise.resolve()
       },
     } as unknown as Parameters<typeof appWorld>[1]
-
     await appWorld(() => null, telling).disk.move('/s/Held.md', '/s/Moved.md', 'file')
-
     expect(order).toEqual(['held /s/Held.md, true', 'told', 'let go'])
     expect(notes.has('/s/Moved.md')).toBe(true)
   })
 })
-
 describe('a PDF another device turned into its page note', () => {
   test('moves to the paper of the page note beside it', async () => {
     notes.set('/s/X.pages', '{}')
@@ -142,9 +125,7 @@ describe('a PDF another device turned into its page note', () => {
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
-
     await disk.move('/s/X.pdf', '/s/X.pages.pdf', 'file')
-
     expect(renames.at(-1)).toEqual({
       arrived: true,
       from: '/s/X.pdf',
@@ -154,16 +135,13 @@ describe('a PDF another device turned into its page note', () => {
       raw: true,
     })
   })
-
   test('holds nothing for any other move', async () => {
     const telling = {
       holdingWrites: (_from: string, run: () => Promise<void>) => run(),
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
-
     await disk.move('/s/Plan.md', '/s/Done.md', 'file')
-
     expect(renames.at(-1)).toEqual({
       from: '/s/Plan.md',
       to: '/s/Done.md',
@@ -173,7 +151,6 @@ describe('a PDF another device turned into its page note', () => {
     })
   })
 })
-
 describe('a PDF another device renamed, with its highlights', () => {
   test('keeps the highlights that arrived ahead of the PDF', async () => {
     notes.set('/s/A.pdf', '%PDF')
@@ -183,10 +160,8 @@ describe('a PDF another device renamed, with its highlights', () => {
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
-
     await disk.move('/s/A.pdf.highlights.json', '/s/B.pdf.highlights.json', 'file')
     await disk.move('/s/A.pdf', '/s/B.pdf', 'file')
-
     expect(notes.get('/s/B.pdf.highlights.json')).toBe('{"version":1}')
     expect(renames.at(-1)).toEqual({
       from: '/s/A.pdf',
@@ -197,7 +172,6 @@ describe('a PDF another device renamed, with its highlights', () => {
     })
   })
 })
-
 describe('a page note another device renamed', () => {
   test('moves the note and its paper', async () => {
     notes.set('/s/X.pages', '{}')
@@ -207,15 +181,12 @@ describe('a page note another device renamed', () => {
       moved: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
-
     await disk.move('/s/X.pages', '/s/Y.pages', 'file')
-
     expect(notes.has('/s/Y.pages')).toBe(true)
     expect(notes.get('/s/Y.pages.pdf')).toBe('%PDF')
     expect(notes.has('/s/X.pages.pdf')).toBe(false)
   })
 })
-
 describe('a highlighted PDF another device turned into its page note', () => {
   test('keeps the highlights', async () => {
     notes.set('/s/T.pdf', '%PDF')
@@ -226,15 +197,12 @@ describe('a highlighted PDF another device turned into its page note', () => {
       gone: () => Promise.resolve(),
     } as unknown as Parameters<typeof appWorld>[1]
     const { disk } = appWorld(() => null, telling)
-
     await disk.remove('/s/T.pdf', 'file')
     await disk.move('/s/T.pdf.highlights.json', '/s/T.pages.pdf.highlights.json', 'file')
-
     expect(trashed.at(-1)).toEqual({ path: '/s/T.pdf', kind: 'note', alone: true, arrived: true })
     expect(notes.get('/s/T.pages.pdf.highlights.json')).toBe('{"version":1}')
   })
 })
-
 describe('a file another device deleted', () => {
   test('tells which trash entry holds it, so a lock it had can come back with it', async () => {
     notes.set('/s/Scan.pdf', '%PDF')

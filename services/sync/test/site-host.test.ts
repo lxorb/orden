@@ -3,9 +3,7 @@ import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
 let token: string
-
 const SITE = 'field.nibeditor.com'
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
@@ -17,14 +15,11 @@ beforeEach(async () => {
     body: { subdomain: 'field' },
   })
 })
-
 afterEach(() => env.close())
-
 describe("a published site's own address", () => {
   test('serves the site', async () => {
     expect((await call(env, '/', { host: SITE })).status).toBe(200)
   })
-
   test.each([
     ['GET', '/v1/me'],
     ['POST', '/v1/auth/code'],
@@ -46,7 +41,6 @@ describe("a published site's own address", () => {
     })
     expect(asked.status).toBe(404)
   })
-
   test('leaves the account answering on its own address', async () => {
     expect((await call(env, '/v1/me', { token })).status).toBe(200)
     expect((await call(env, '/.well-known/oauth-authorization-server')).status).toBe(200)

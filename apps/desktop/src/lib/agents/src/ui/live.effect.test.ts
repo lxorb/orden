@@ -6,40 +6,33 @@ const shown = vi.hoisted(() => ({
   taken: [] as string[],
   opened: [] as string[],
 }))
-
 vi.mock('../../../notify/src/api', () => ({
   notify: (title: string, body: string, tag?: string, opened?: () => void) => {
     shown.notices.push({ title, body, ...(tag ? { tag } : {}), ...(opened ? { opened } : {}) })
   },
   unshow: (tag: string) => shown.taken.push(tag),
 }))
-
 vi.mock('../../../workspace/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../workspace/src/api')>()),
   openAgentSession: (agent: string) => shown.opened.push(agent),
 }))
-
 const { FakeCrate } = await import('./fake')
 const { ended, start } = await import('./live.svelte')
-
 afterEach(() => {
   ended()
   shown.notices = []
   shown.taken = []
   shown.opened = []
 })
-
 describe("an agent's question", () => {
   test('is a notification, once, with the agent and what it asks', async () => {
     const fake = new FakeCrate()
     fake.listen(start(fake))
     fake.connect('claude-code', 'Claude Code')
     await Promise.resolve()
-
     const asked = fake.ask('claude-code', 'paying', 'Place order on shop.example')
     flushSync()
     flushSync()
-
     expect(shown.notices.map(({ title, body, tag }) => ({ title, body, tag }))).toEqual([
       {
         title: 'Claude Code',
@@ -48,30 +41,25 @@ describe("an agent's question", () => {
       },
     ])
   })
-
   test('opens the agent session in the Ask panel when pressed', () => {
     const fake = new FakeCrate()
     fake.listen(start(fake))
     fake.connect('claude-code', 'Claude Code')
     fake.ask('claude-code', 'paying', 'Place order')
     flushSync()
-
     shown.notices[0]?.opened?.()
     expect(shown.opened).toEqual(['claude-code'])
   })
-
   test('is taken back once it has been answered', async () => {
     const fake = new FakeCrate()
     fake.listen(start(fake))
     fake.connect('claude-code', 'Claude Code')
     const asked = fake.ask('claude-code', 'paying', 'Place order')
     flushSync()
-
     await fake.answer(asked.id, true, false)
     flushSync()
     expect(shown.taken).toEqual([`agent-question-${asked.id}`])
   })
-
   test('is no notification when it is a client asking to pair, which has a bubble', () => {
     const fake = new FakeCrate()
     fake.listen(start(fake))

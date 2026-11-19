@@ -12,20 +12,14 @@ pub struct History {
     pub at: u64,
     pub text: String,
 }
-
 const MOST_TEXT: usize = 2 << 20;
-
 const MOST_FILE: usize = 16 << 20;
-
 const MOST_PER_SPACE: usize = 32;
-
 const NO_SPACE: &str = "none";
-
 fn root(webview: &Webview) -> Result<PathBuf, String> {
     let data = orden_base::paths::data_dir(webview.app_handle())?;
     Ok(data.join("terminal"))
 }
-
 fn name(id: &str) -> Result<&str, String> {
     let fits = !id.is_empty()
         && id.len() <= 80
@@ -38,18 +32,15 @@ fn name(id: &str) -> Result<&str, String> {
         Err(format!("{id:?} is not a terminal's name"))
     }
 }
-
 fn folder(root: &Path, space: Option<&str>) -> Result<PathBuf, String> {
     Ok(root.join(match space {
         Some(space) => name(space)?,
         None => NO_SPACE,
     }))
 }
-
 fn file(root: &Path, space: Option<&str>, key: &str) -> Result<PathBuf, String> {
     Ok(folder(root, space)?.join(format!("{}.json", name(key)?)))
 }
-
 fn read(path: &Path) -> Option<History> {
     let bytes = fs::read(path).ok()?;
     if bytes.len() > MOST_FILE {
@@ -57,13 +48,11 @@ fn read(path: &Path) -> Option<History> {
     }
     serde_json::from_slice(&bytes).ok()
 }
-
 fn scratch(path: &Path) -> PathBuf {
     static NEXT: AtomicU64 = AtomicU64::new(0);
     let turn = NEXT.fetch_add(1, Ordering::Relaxed);
     path.with_extension(format!("{turn}.part"))
 }
-
 fn write(path: &Path, history: &History) -> Result<(), String> {
     if history.text.len() > MOST_TEXT {
         return Err("a terminal's history is kept to two megabytes".to_owned());
@@ -72,7 +61,6 @@ fn write(path: &Path, history: &History) -> Result<(), String> {
         .parent()
         .ok_or_else(|| "a history has a folder".to_owned())?;
     fs::create_dir_all(parent).map_err(|error| error.to_string())?;
-
     let bytes = serde_json::to_vec(history).map_err(|error| error.to_string())?;
     let part = scratch(path);
     fs::write(&part, bytes).map_err(|error| error.to_string())?;
@@ -81,7 +69,6 @@ fn write(path: &Path, history: &History) -> Result<(), String> {
         error.to_string()
     })
 }
-
 fn prune(folder: &Path) {
     let Ok(listed) = fs::read_dir(folder) else {
         return;
@@ -100,7 +87,6 @@ fn prune(folder: &Path) {
             _ => {}
         }
     }
-
     if kept.len() <= MOST_PER_SPACE {
         return;
     }
@@ -109,7 +95,6 @@ fn prune(folder: &Path) {
         let _ = fs::remove_file(path);
     }
 }
-
 fn is_stale(entry: &fs::DirEntry) -> bool {
     entry
         .metadata()
@@ -118,7 +103,6 @@ fn is_stale(entry: &fs::DirEntry) -> bool {
         .and_then(|when| when.elapsed().ok())
         .is_some_and(|age| age.as_secs() > 60)
 }
-
 #[tauri::command(async)]
 pub fn terminal_history_read(
     webview: Webview,
@@ -128,7 +112,6 @@ pub fn terminal_history_read(
     super::owner(&webview)?;
     Ok(read(&file(&root(&webview)?, space.as_deref(), &key)?))
 }
-
 #[tauri::command(async)]
 pub fn terminal_history_write(
     webview: Webview,
@@ -143,7 +126,6 @@ pub fn terminal_history_write(
     prune(&folder(&root, space.as_deref())?);
     Ok(())
 }
-
 #[tauri::command(async)]
 pub fn terminal_history_forget(
     webview: Webview,
@@ -161,7 +143,6 @@ pub fn terminal_history_forget(
         _ => Ok(()),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -174,7 +155,6 @@ mod tests {
             text: text.to_owned(),
         }
     }
-
     #[test]
     fn a_name_is_an_id_and_nothing_else() {
         let root = Path::new("data");
@@ -203,16 +183,13 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn a_history_comes_back_as_it_was_written() {
         let dir = tempfile::tempdir().unwrap();
         let path = file(dir.path(), Some("space"), "key").unwrap();
         let written = history("\u{1b}[31mfailed\u{1b}[0m\r\nC:\\>", 1_700_000_000_000);
-
         write(&path, &written).unwrap();
         assert_eq!(read(&path), Some(written));
-
         let again = history("C:\\>", 1_700_000_001_000);
         write(&path, &again).unwrap();
         assert_eq!(read(&path), Some(again));
@@ -223,20 +200,16 @@ mod tests {
             .collect();
         assert_eq!(left, vec![std::ffi::OsString::from("key.json")]);
     }
-
     #[test]
     fn what_does_not_read_as_a_history_is_none() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("k.json");
         assert_eq!(read(&path), None);
-
         fs::write(&path, b"{\"cols\": \"wide\"}").unwrap();
         assert_eq!(read(&path), None);
-
         fs::write(&path, b"not json").unwrap();
         assert_eq!(read(&path), None);
     }
-
     #[test]
     fn more_than_two_megabytes_is_refused() {
         let dir = tempfile::tempdir().unwrap();
@@ -245,13 +218,11 @@ mod tests {
         assert!(write(&path, &huge).is_err());
         assert!(!path.exists());
     }
-
     #[test]
     fn a_space_keeps_its_newest_histories() {
         let dir = tempfile::tempdir().unwrap();
         let space = dir.path().join("space");
         fs::create_dir_all(&space).unwrap();
-
         let old = std::time::SystemTime::now() - std::time::Duration::from_secs(3600);
         for turn in 0..MOST_PER_SPACE + 3 {
             let path = space.join(format!("t{turn}.json"));
@@ -273,9 +244,7 @@ mod tests {
             .unwrap()
             .set_modified(old)
             .unwrap();
-
         prune(&space);
-
         let left = fs::read_dir(&space).unwrap().count();
         assert_eq!(left, MOST_PER_SPACE);
         for gone in ["t0.json", "t1.json", "t2.json", "t0.7.part"] {

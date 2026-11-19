@@ -6,14 +6,12 @@ const LOOK = {
   scheme: 'dark',
   values: { '*': { accent: 'blue' }, glass: { blur: 12 } },
 }
-
 describe('a look kept with the account', () => {
   test('is a theme, a scheme and the values chosen for them', () => {
     expect(lookWrong(LOOK)).toBeNull()
     expect(lookIn(LOOK)).toEqual(LOOK)
     expect(lookWrong({ ...LOOK, theme: 'file:My Theme', css: ':root{}' })).toBeNull()
   })
-
   test('keeps the values of a file theme under its own name', () => {
     const named = `file:${'a'.repeat(60)} b`
     const look = {
@@ -24,7 +22,6 @@ describe('a look kept with the account', () => {
     expect(lookWrong(look)).toBeNull()
     expect(lookIn(look)).toEqual(look)
   })
-
   test('refuses what is not one', () => {
     expect(lookWrong(null)).not.toBeNull()
     expect(lookWrong({ ...LOOK, scheme: 'dim' })).not.toBeNull()
@@ -35,7 +32,6 @@ describe('a look kept with the account', () => {
     expect(lookWrong({ ...LOOK, more: true })).not.toBeNull()
     expect(lookWrong({ ...LOOK, values: { 'file:a/b': { warmth: 1 } } })).not.toBeNull()
   })
-
   test('read from an account keeps what it can and drops the rest', () => {
     expect(lookIn({ theme: 'glass' })).toBeNull()
     expect(

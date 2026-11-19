@@ -1,5 +1,4 @@
 const API = 'https://api.hetzner.cloud/v1'
-
 export class HetznerError extends Error {
   constructor(
     readonly status: number,
@@ -10,20 +9,17 @@ export class HetznerError extends Error {
     this.name = 'HetznerError'
   }
 }
-
 export interface Server {
   id: number
   status: string
   location: string
   type: string
 }
-
 interface Price {
   location: string
   monthly: number
   hourly: number
 }
-
 export interface ServerType {
   name: string
   cores: number
@@ -35,18 +31,15 @@ export interface ServerType {
   prices: Price[]
   available: string[]
 }
-
 export interface Location {
   name: string
   city: string
   country: string
 }
-
 export interface Pricing {
   currency: string
   ipv4: Map<string, { monthly: number; hourly: number }>
 }
-
 export interface NewServer {
   name: string
   serverType: string
@@ -55,13 +48,10 @@ export interface NewServer {
   labels: Record<string, string>
   firewall: number
 }
-
 type Fetch = typeof fetch
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
-
 function serverOf(value: unknown): Server | null {
   if (!isRecord(value) || typeof value.id !== 'number' || typeof value.status !== 'string') {
     return null
@@ -76,12 +66,10 @@ function serverOf(value: unknown): Server | null {
     type: typeof type === 'string' ? type : '',
   }
 }
-
 const listed = (value: unknown, key: string): unknown[] => {
   const list = isRecord(value) ? value[key] : null
   return Array.isArray(list) ? list : []
 }
-
 function typeOf(value: unknown): ServerType | null {
   if (!isRecord(value) || typeof value.name !== 'string') return null
   if (typeof value.cores !== 'number' || typeof value.memory !== 'number') return null
@@ -108,18 +96,15 @@ function typeOf(value: unknown): ServerType | null {
     available,
   }
 }
-
 function amount(value: unknown): number | null {
   const gross = isRecord(value) ? Number(value.gross) : Number.NaN
   return Number.isFinite(gross) && gross >= 0 ? gross : null
 }
-
 export class Hetzner {
   constructor(
     private readonly token: string,
     private readonly fetcher: Fetch = (input, init) => fetch(input, init),
   ) {}
-
   private async ask(method: string, path: string, body?: unknown): Promise<unknown> {
     const answer = await this.fetcher(`${API}${path}`, {
       method,
@@ -146,14 +131,12 @@ export class Hetzner {
     }
     return said
   }
-
   async serverLabelled(key: string, value: string): Promise<Server | null> {
     const selector = encodeURIComponent(`${key}==${value}`)
     const said = await this.ask('GET', `/servers?label_selector=${selector}`)
     const servers = isRecord(said) && Array.isArray(said.servers) ? said.servers : []
     return serverOf(servers[0])
   }
-
   async createServer(server: NewServer): Promise<Server> {
     const said = await this.ask('POST', '/servers', {
       name: server.name,
@@ -170,30 +153,24 @@ export class Hetzner {
     if (!made) throw new HetznerError(502, 'shape', 'the made server did not read')
     return made
   }
-
   async changeType(id: number, type: string): Promise<void> {
     await this.ask('POST', `/servers/${String(id)}/actions/change_type`, {
       server_type: type,
       upgrade_disk: true,
     })
   }
-
   async shutdown(id: number, hard: boolean): Promise<void> {
     await this.ask('POST', `/servers/${String(id)}/actions/${hard ? 'poweroff' : 'shutdown'}`)
   }
-
   async deleteServer(id: number): Promise<void> {
     await this.ask('DELETE', `/servers/${String(id)}`)
   }
-
   async reset(id: number): Promise<void> {
     await this.ask('POST', `/servers/${String(id)}/actions/reset`)
   }
-
   async powerOn(id: number): Promise<void> {
     await this.ask('POST', `/servers/${String(id)}/actions/poweron`)
   }
-
   async firewallLabelled(key: string, value: string): Promise<number | null> {
     const selector = encodeURIComponent(`${key}==${value}`)
     const said = await this.ask('GET', `/firewalls?label_selector=${selector}`)
@@ -201,7 +178,6 @@ export class Hetzner {
     const first: unknown = walls[0]
     return isRecord(first) && typeof first.id === 'number' ? first.id : null
   }
-
   async createFirewall(name: string, labels: Record<string, string>, rules: unknown[]) {
     const said = await this.ask('POST', '/firewalls', { name, labels, rules })
     const wall = isRecord(said) && isRecord(said.firewall) ? said.firewall : null
@@ -210,27 +186,22 @@ export class Hetzner {
     }
     return wall.id
   }
-
   async setFirewallRules(id: number, rules: unknown[]): Promise<void> {
     await this.ask('POST', `/firewalls/${String(id)}/actions/set_rules`, { rules })
   }
-
   async deleteFirewall(id: number): Promise<void> {
     await this.ask('DELETE', `/firewalls/${String(id)}`)
   }
-
   async serverType(name: string): Promise<ServerType> {
     const said = await this.ask('GET', `/server_types?name=${encodeURIComponent(name)}`)
     const type = typeOf(listed(said, 'server_types')[0])
     if (!type) throw new HetznerError(404, 'not_found', `no server type ${name}`)
     return { ...type, name }
   }
-
   async serverTypes(): Promise<ServerType[]> {
     const said = await this.ask('GET', '/server_types?per_page=50')
     return listed(said, 'server_types').flatMap((one) => typeOf(one) ?? [])
   }
-
   async locations(): Promise<Location[]> {
     const said = await this.ask('GET', '/locations?per_page=50')
     return listed(said, 'locations').flatMap((one) =>
@@ -245,7 +216,6 @@ export class Hetzner {
         : [],
     )
   }
-
   async pricing(): Promise<Pricing> {
     const said = await this.ask('GET', '/pricing')
     const pricing = isRecord(said) && isRecord(said.pricing) ? said.pricing : {}

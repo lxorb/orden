@@ -7,11 +7,9 @@ const DISK: Record<string, string[]> = {
   '/home/me/Music': [],
   '/home': ['me'],
 }
-
 const listed: string[] = []
 const watched: string[] = []
 const slow = new Map<string, Promise<void>>()
-
 function held(path: string): () => void {
   let free: () => void = () => undefined
   slow.set(
@@ -25,7 +23,6 @@ function held(path: string): () => void {
     free()
   }
 }
-
 vi.mock('./commands', () => ({
   CHANGED: 'explorer://changed',
   listFolder: (path: string): Promise<Listing> => {
@@ -57,13 +54,10 @@ vi.mock('./commands', () => ({
   unwatchFolder: () => Promise.resolve(),
   listPlaces: () => Promise.resolve([{ kind: 'home', path: '/home/me', name: null }]),
 }))
-
 const scheduleSession = vi.fn()
 vi.mock('../../workspace/src/api', () => ({ workspace: { scheduleSession, tabs: [] } }))
-
 const { LIST_WAIT, viewOf } = await import('./view.svelte')
 const { readSpec } = await import('./spec')
-
 function tabWith(doc: string) {
   const tab = {
     doc,
@@ -76,17 +70,14 @@ function tabWith(doc: string) {
   }
   return tab
 }
-
 beforeEach(() => {
   listed.length = 0
   watched.length = 0
 })
-
 afterEach(() => {
   vi.useRealTimers()
   slow.clear()
 })
-
 describe('a file explorer', () => {
   test('opens on the home folder, and is named and written down as it goes', async () => {
     const tab = tabWith('')
@@ -103,7 +94,6 @@ describe('a file explorer', () => {
     })
     expect(scheduleSession).toHaveBeenCalled()
   })
-
   test('goes back and forward, and up with the folder it left picked', async () => {
     const view = viewOf(tabWith('{"folder":"/home/me/Pictures","back":["/home/me"],"ahead":[]}') as never)
     await view.appear()
@@ -117,7 +107,6 @@ describe('a file explorer', () => {
     expect(view.picked.cursor).toBe('Pictures')
     expect(view.chosen).toEqual(['/home/me/Pictures'])
   })
-
   test('chooses only what is picked: a row let go of, or a click beside the rows, leaves nothing to delete', async () => {
     const view = viewOf(tabWith('{"folder":"/home/me","back":[],"ahead":[]}') as never)
     await view.appear()
@@ -130,7 +119,6 @@ describe('a file explorer', () => {
     view.pickNone()
     expect(view.chosen).toEqual([])
   })
-
   test('goes to a folder that will not list, saying why, with nothing left of the one it left', async () => {
     const tab = tabWith('')
     const view = viewOf(tab as never)
@@ -145,7 +133,6 @@ describe('a file explorer', () => {
     expect(view.wrong).toBeNull()
     expect(view.names).toEqual(['Music', 'Pictures', 'notes.txt'])
   })
-
   test('a folder that never answers is said so after a while, and every folder after it shows', async () => {
     vi.useFakeTimers()
     const view = viewOf(tabWith('') as never)
@@ -164,7 +151,6 @@ describe('a file explorer', () => {
     await view.go('/home/me')
     expect(view.names).toEqual(['Music', 'Pictures', 'notes.txt'])
   })
-
   test('a folder that answers late is shown when it does, if nothing was gone to since', async () => {
     vi.useFakeTimers()
     const view = viewOf(tabWith('') as never)
@@ -179,7 +165,6 @@ describe('a file explorer', () => {
     expect(view.wrong).toBeNull()
     expect(view.names).toEqual(['a.png'])
   })
-
   test('a rereading that never answers never stops the ones after it', async () => {
     vi.useFakeTimers()
     const view = viewOf(tabWith('') as never)
@@ -195,7 +180,6 @@ describe('a file explorer', () => {
     expect(view.wrong).toBeNull()
     expect(view.names).toEqual(['Music', 'Pictures', 'notes.txt'])
   })
-
   test('picks a file asked for once its folder shows, whoever lists it first', async () => {
     const tab = tabWith('{"folder":"/home/me/Pictures","back":[],"ahead":[]}')
     const view = viewOf(tab as never)
@@ -206,7 +190,6 @@ describe('a file explorer', () => {
     await view.reload()
     expect(view.chosen).toEqual(['/home/me/Pictures/a.png'])
   })
-
   test('lists again only for a change in the folder on screen', async () => {
     const view = viewOf(tabWith('') as never)
     await view.appear()
@@ -216,7 +199,6 @@ describe('a file explorer', () => {
     await Promise.resolve()
     expect(listed).toEqual(['/home/me'])
   })
-
   test('ends in the folder gone to last, however slowly the folders before it list', async () => {
     const view = viewOf(tabWith('') as never)
     await view.appear()
@@ -229,7 +211,6 @@ describe('a file explorer', () => {
     expect(view.folder).toBe('/home/me/Pictures')
     expect(view.names).toEqual(['a.png'])
   })
-
   test('shows the folder it went to, not a slow rereading of the one it left', async () => {
     const view = viewOf(tabWith('') as never)
     await view.appear()
@@ -241,7 +222,6 @@ describe('a file explorer', () => {
     expect(view.folder).toBe('/home/me/Pictures')
     expect(view.names).toEqual(['a.png'])
   })
-
   test('a folder that keeps changing is read once at a time, and once more after', async () => {
     const view = viewOf(tabWith('') as never)
     await view.appear()
@@ -254,7 +234,6 @@ describe('a file explorer', () => {
     await first
     expect(listed).toEqual(['/home/me', '/home/me'])
   })
-
   test('a folder that lists after its tab was put away is not watched', async () => {
     const view = viewOf(tabWith('') as never)
     await view.appear()

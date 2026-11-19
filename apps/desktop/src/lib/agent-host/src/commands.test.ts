@@ -11,7 +11,6 @@ const row = (id: string) => ({
     void dialog?.(true)
   },
 })
-
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
   answerNextDialog: (answer: typeof dialog) => {
@@ -22,12 +21,10 @@ vi.mock('../../platform/src/api', async (original) => ({
     result: { path: args.path },
   }),
 }))
-
 vi.mock('@orden/contracts', async (original) => ({
   ...(await original<typeof import('@orden/contracts')>()),
   commandRowsLoaded: async () => undefined,
 }))
-
 vi.mock('../../commands/src/api', () => ({
   appCommands: () => [
     row('export-space'),
@@ -37,14 +34,11 @@ vi.mock('../../commands/src/api', () => ({
     row('undo-file'),
   ],
 }))
-
 vi.mock('../../agent-verbs/src/api', async (original) => ({
   ...(await original<typeof import('../../agent-verbs/src/api')>()),
   placeFor: () => undefined,
 }))
-
 vi.mock('../../panes/src/api', () => ({ views: { of: () => undefined } }))
-
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     panes: { focusedId: 'p1' },
@@ -53,7 +47,6 @@ vi.mock('../../workspace/src/api', () => ({
     active: { path: '/s/Work/Plan.md' },
   },
 }))
-
 const shut = new Set<string>()
 let waiting = false
 vi.mock('../../protect/src/api', () => ({
@@ -66,9 +59,7 @@ vi.mock('../../protect/src/api', () => ({
     ways: (root: string) => (root === '/s/Home' ? { Journal: 'device' } : { 'Diary.md': 'password' }),
   },
 }))
-
 const { runCommand } = await import('./commands')
-
 function call(id: string, path: string | null = '/tmp/out') {
   return {
     verb: 'run_command',
@@ -82,13 +73,11 @@ function call(id: string, path: string | null = '/tmp/out') {
     }),
   }
 }
-
 beforeEach(() => {
   ran.length = 0
   shut.clear()
   waiting = false
 })
-
 describe('an agent running a command that writes the note in front', () => {
   test('cannot when that note is locked to agents', async () => {
     shut.add('/s/Work/Plan.md')
@@ -96,7 +85,6 @@ describe('an agent running a command that writes the note in front', () => {
     expect(ran).toEqual([])
   })
 })
-
 describe('an agent asking to open a lock to agents', () => {
   test('is refused, even with every permission', async () => {
     const all = {
@@ -107,45 +95,38 @@ describe('an agent asking to open a lock to agents', () => {
     expect(ran).toEqual([])
   })
 })
-
 describe('an agent exporting', () => {
   test('cannot carry a note locked to agents out of the space', async () => {
     shut.add('/s/Work/Diary.md')
     await expect(runCommand(call('export-space'))).rejects.toMatchObject({ code: 'protected' })
     expect(ran).toEqual([])
   })
-
   test('cannot export the note in front when it is locked to agents', async () => {
     shut.add('/s/Work/Plan.md')
     await expect(runCommand(call('export-pdf'))).rejects.toMatchObject({ code: 'protected' })
     expect(ran).toEqual([])
   })
-
   test('cannot export a note that could embed one locked to agents in another space', async () => {
     shut.add('/s/Home/Journal')
     await expect(runCommand(call('export-pdf'))).rejects.toMatchObject({ code: 'protected' })
     expect(ran).toEqual([])
   })
-
   test('exports what agents may read', async () => {
     await runCommand(call('export-space'))
     await runCommand(call('export-pdf'))
     expect(ran).toEqual(['export-space', 'export-pdf'])
   })
 })
-
 describe('an agent undoing a file change', () => {
   test('cannot while a lock waits to come back with what it would put back', async () => {
     waiting = true
     await expect(runCommand(call('undo-file', null))).rejects.toMatchObject({ code: 'protected' })
     expect(ran).toEqual([])
   })
-
   test('can when no lock waits', async () => {
     await runCommand(call('undo-file', null))
     expect(ran).toEqual(['undo-file'])
   })
-
   test('cannot when it reaches only some spaces, since the last change may be in another', async () => {
     const narrow = {
       ...call('undo-file', null),

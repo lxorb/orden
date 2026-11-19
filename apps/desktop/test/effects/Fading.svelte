@@ -2,9 +2,7 @@
   import { fade } from '../../src/lib/platform/src/motion'
 
   const { ended }: { ended: () => void } = $props()
-
   let shown = $state(true)
-
   export function hide() {
     shown = false
   }

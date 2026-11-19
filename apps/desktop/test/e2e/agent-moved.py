@@ -1,16 +1,13 @@
 
 import json
-
 from harness import Drive
 from playwright.sync_api import Browser
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 AGENT = "{ id: 'orden-moved', name: 'Fake' }"
 DOCS = "await import('/src/lib/agent-docs/src/index.ts')"
 TOUCHED = "await import('/src/lib/agent-docs/src/touched.ts')"
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
@@ -22,7 +19,6 @@ def drive(browser: Browser) -> None:
     )
     page.evaluate("async (root) => window.ordenApp.workspace.rename(root + '/Heron.md', 'Bird.md')", root)
     wait_for(page, "window.ordenApp.workspace.active?.path?.endsWith('Bird.md')", "the new name")
-
     tracked = page.evaluate(f"async () => [...({DOCS}).tracksOf('orden-moved').keys()]")
     who = page.evaluate(f"async (path) => ({TOUCHED}).touchedBy(path).map((one) => one.id)", f"{root}/Bird.md")
     say(f"tracks {json.dumps(tracked)}, touched {who}")
@@ -30,7 +26,6 @@ def drive(browser: Browser) -> None:
         wrong(f"the track did not follow the note: {tracked}")
     if who != ["orden-moved"]:
         wrong(f"the palette's row did not follow the note: {who}")
-
     undone = page.evaluate(
         f"async (path) => ({DOCS}).undoAgentIn({AGENT}, path)", f"{root}/Bird.md"
     )
@@ -38,5 +33,4 @@ def drive(browser: Browser) -> None:
     say(f"undone {undone}, words {json.dumps(words)}")
     if undone != {"undone": 1} or "strikes" not in words:
         wrong(f"the edit stayed: {undone}, {words!r}")
-
 raise SystemExit(DRIVE.run(drive))

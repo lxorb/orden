@@ -11,7 +11,6 @@ describe('a position', () => {
     expect([before, middle, first, after].every(isPosition)).toBe(true)
     expect(before < middle && middle < first && first < after).toBe(true)
   })
-
   test('always fits again, however many times one gap is filled', () => {
     fc.assert(
       fc.property(fc.array(fc.boolean(), { maxLength: 200 }), (sides) => {
@@ -28,7 +27,6 @@ describe('a position', () => {
       }),
     )
   })
-
   test('is refused where it is not one', () => {
     expect(isPosition('')).toBe(false)
     expect(isPosition('a0')).toBe(false)
@@ -36,13 +34,11 @@ describe('a position', () => {
     expect(isPosition('x'.repeat(129))).toBe(false)
     expect(() => between('b', 'a')).toThrow()
   })
-
   test('orders entries, the positioned first and the ids breaking ties', () => {
     const rows = [{ id: 'c' }, { id: 'b', pos: 'V' }, { id: 'a', pos: 'V' }, { id: 'd', pos: 'G' }]
     expect([...rows].sort(byPosition).map((one) => one.id)).toEqual(['d', 'a', 'b', 'c'])
   })
 })
-
 describe('positions for an order', () => {
   const drawn = (rows: { id: string; pos?: string }[], moved: Map<string, string>) => {
     const now = rows.map((row) => {
@@ -52,7 +48,6 @@ describe('positions for an order', () => {
     const placed = now.filter((row) => row.pos !== undefined).sort(byPosition)
     return [...placed, ...now.filter((row) => row.pos === undefined)].map((row) => row.id)
   }
-
   test('spread keeps a hundred in one gap short and rising', () => {
     const out = spread('V', 'W', 100)
     expect(out).toHaveLength(100)
@@ -61,14 +56,12 @@ describe('positions for an order', () => {
     ).toBe(true)
     expect(Math.max(...out.map((pos) => pos.length))).toBeLessThanOrEqual(4)
   })
-
   test('an order nobody placed yet gives each placed row a position', () => {
     const rows = [{ id: 'c' }, { id: 'a' }, { id: 'b' }]
     const moved = repositioned(rows, 2)
     expect([...moved.keys()]).toEqual(['c', 'a'])
     expect(drawn(rows, moved)).toEqual(['c', 'a', 'b'])
   })
-
   test('one row dragged is one position written', () => {
     const rows = [
       { id: 'a', pos: 'G' },
@@ -81,13 +74,11 @@ describe('positions for an order', () => {
     expect([...moved.keys()]).toEqual(['d'])
     expect(drawn(rows, moved)).toEqual(['d', 'a', 'b', 'c'])
   })
-
   test('a placed row trimmed off the end still stands where the order says', () => {
     const rows = [{ id: 'a', pos: 'V' }, { id: 'b' }, { id: 'c', pos: 'G' }]
     const moved = repositioned(rows, 1)
     expect(drawn(rows, moved)).toEqual(['a', 'b', 'c'])
   })
-
   test('any order of any rows comes out drawn as wanted', () => {
     fc.assert(
       fc.property(

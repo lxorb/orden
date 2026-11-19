@@ -23,30 +23,24 @@ const WAIT = 60_000
 const MOST_WAIT = 600_000
 const MOST_OUTPUT = 100_000
 const KEPT = MOST_OUTPUT * 4
-
 export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const agent = call.caller.agent
   if (agent === null) throw new Refused('by_hand', 'the command line does not reach a shell')
-
   const command = need(call, 'command')
   if (/[\r\n]/.test(command)) throw new Refused('bad_arguments', 'one command line at a time')
   if (command.length > MOST_LINE) {
     throw new Refused('bad_arguments', `a command line is at most ${MOST_LINE} characters`)
   }
-
   if (maybe(call, 'tab') !== null) {
     const { runInTab } = await import('./tab')
     return runInTab(call)
   }
-
   const place = placeOf(call)
   const cwd = maybe(call, 'cwd')
   const folder = cwd === null ? place.space.root : onDisk(place, judged(cwd))
-
   await shells.ask()
   const shell = shells.chosen
   if (!shell) throw new Refused('unsupported_on_this_engine', 'there is no shell on this machine')
-
   const os = osOf(platform())
   const allowed =
     startsOnlyOne(command) &&
@@ -54,14 +48,12 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
     (await shutNothingFor(programOf(command, os), folder, os))
   const question = await asked(call, allowed ? null : 'terminal', command)
   if (question) return question
-
   const patience = count(call, 'timeout_ms', WAIT, MOST_WAIT)
   const halting = await stopSignal(call)
   const ran = await session(shell.id, folder, command, patience, halting.signal).finally(halting.end)
   if (halting.signal.aborted) throw stopRefused(`${command} was ended`)
   const output = plainOf(ran.printed)
   const cut = ran.dropped || output.length > MOST_OUTPUT
-
   return done(
     {
       command,
@@ -73,7 +65,6 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
     'terminal output',
   )
 }
-
 function session(
   shell: string,
   folder: string,
@@ -88,7 +79,6 @@ function session(
     printed.push(decoder.decode())
     return { printed: printed.text, dropped: printed.dropped, exit }
   }
-
   return new Promise((settle, fail) => {
     let over: ReturnType<typeof setTimeout> | undefined
     const halt = () => {
@@ -97,7 +87,6 @@ function session(
       settle(ended(null))
     }
     signal.addEventListener('abort', halt, { once: true })
-
     const output = new Channel<unknown>()
     output.onmessage = (message) => {
       if (message instanceof ArrayBuffer) {
@@ -106,7 +95,6 @@ function session(
         void invoke('pty_seen', { id, bytes: bytes.length }).catch(() => undefined)
         return
       }
-
       const exit = (message as { exit?: unknown } | null)?.exit
       if (typeof exit === 'number') {
         clearTimeout(over)
@@ -114,7 +102,6 @@ function session(
         settle(ended(exit))
       }
     }
-
     invoke('pty_spawn', { id, shell, folder, cols: 160, rows: 48, output })
       .then(async () => {
         if (signal.aborted) {
@@ -122,7 +109,6 @@ function session(
           return
         }
         over = setTimeout(halt, patience)
-
         await invoke('pty_write', { id, data: `${command}\r`, binary: false })
         await invoke('pty_write', { id, data: 'exit\r', binary: false })
       })

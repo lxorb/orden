@@ -22,20 +22,16 @@ import {
 
 const FILE_KINDS = ['note', 'canvas', 'pages', 'web'] as const
 type FileKind = (typeof FILE_KINDS)[number]
-
 export function fileKindOf(call: Call): FileKind {
   const path = need(call, 'path')
   if (isCanvasTarget(path)) return 'canvas'
   if (isPagesTarget(path)) return 'pages'
   if (isWebTarget(path)) return 'web'
-
   const kind = maybe(call, 'kind') ?? 'note'
   const found = FILE_KINDS.find((one) => one === kind)
   if (!found) throw new Refused('bad_arguments', `kind is one of ${FILE_KINDS.join(', ')}`)
-
   return found
 }
-
 async function firstWords(call: Call, kind: Exclude<FileKind, 'note'>, name: string) {
   switch (kind) {
     case 'canvas': {
@@ -43,13 +39,11 @@ async function firstWords(call: Call, kind: Exclude<FileKind, 'note'>, name: str
       const sent = text(call, 'content')
       return sent?.trim() ? writeCanvas(readCanvas(sent)) : blankCanvas()
     }
-
     case 'pages': {
       const { blankPages } = await import('@orden/markdown/pages')
       const { modes } = await import('../../modes/src/api')
       return blankPages(modes.pagesPaper)
     }
-
     case 'web': {
       const url = maybe(call, 'url')
       if (url === null || !isWebAddress(url)) {
@@ -60,7 +54,6 @@ async function firstWords(call: Call, kind: Exclude<FileKind, 'note'>, name: str
     }
   }
 }
-
 export async function createFile(
   call: Call,
   place: Place,
@@ -79,11 +72,9 @@ export async function createFile(
   if (paper !== null && (await exists(paper))) {
     throw new Refused('exists', `${nameOf(paper)} is already there, and would be taken for its paper`)
   }
-
   const words = await firstWords(call, kind, nameOf(relative))
   const question = await asked(call, null, `Make ${relative} in ${place.space.name}`)
   if (question) return question
-
   return done({
     ...(await make(place, relative, words, flag(call, 'open') ? call : null)),
     space: place.space.id,

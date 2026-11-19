@@ -19,13 +19,10 @@ $effect.root(() => {
     })
   })
 })
-
 links.hearSaves((path) => {
   if (basesOn() && /\.base$/i.test(path)) void readHeld(path)
 })
-
 rows.watch(heardChange)
-
 const repeat = () => void repeatTemplates().catch(() => undefined)
 if (rows.ready) repeat()
 else {

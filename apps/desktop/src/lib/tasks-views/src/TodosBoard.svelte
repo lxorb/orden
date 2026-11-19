@@ -8,20 +8,17 @@
   import TodoRow from './TodoRow.svelte'
 
   startTodos()
-
   const shown = new Shown(shellWorld(() => todos.todos))
   let typed = $state('')
   let openId = $state<string | null>(null)
   let dragged = $state<string | null>(null)
   const open = $derived(openId === null ? null : todos.todo(openId))
-
   async function add() {
     const title = typed.trim()
     if (title === '') return
     typed = ''
     await addTodo(shown, title)
   }
-
   function dropped(column: readonly Todo[], at: number) {
     const id = dragged
     dragged = null
@@ -151,7 +148,6 @@
     height: 100%;
     min-height: 0;
   }
-
   .bar {
     display: flex;
     flex-wrap: wrap;
@@ -160,7 +156,6 @@
     padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--line);
   }
-
   .sort {
     display: inline-flex;
     gap: var(--space-1);
@@ -168,7 +163,6 @@
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .field {
     padding: var(--space-1) var(--space-2);
     border: 1px solid var(--line);
@@ -178,23 +172,19 @@
     font: inherit;
     font-size: var(--text-sm);
   }
-
   .adder {
     flex: 1;
     min-width: 12rem;
   }
-
   .field {
     width: 100%;
     color: var(--text-strong);
   }
-
   .body {
     display: flex;
     flex: 1;
     min-height: 0;
   }
-
   .columns {
     display: flex;
     flex: 1;
@@ -204,7 +194,6 @@
     overflow: auto;
     padding: var(--space-3);
   }
-
   .column {
     flex: none;
     width: 17rem;
@@ -214,7 +203,6 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
   }
-
   h2 {
     display: flex;
     gap: var(--space-2);
@@ -224,12 +212,10 @@
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
   }
-
   .count {
     color: var(--muted);
     font-weight: normal;
   }
-
   ul {
     display: flex;
     flex-direction: column;
@@ -238,26 +224,21 @@
     padding: 0;
     list-style: none;
   }
-
   li {
     border-radius: var(--radius-row);
     background: var(--surface);
   }
-
   li.dragging {
     opacity: 0.5;
   }
-
   .tail {
     min-height: var(--space-3);
     background: none;
   }
-
   .empty {
     margin: 0;
     color: var(--muted);
   }
-
   .side {
     flex: none;
     width: 22rem;
@@ -265,12 +246,10 @@
     padding: var(--space-3);
     border-inline-start: 1px solid var(--line);
   }
-
   @media (max-width: 48rem) {
     .body {
       flex-direction: column;
     }
-
     .side {
       width: auto;
       border-inline-start: none;

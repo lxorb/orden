@@ -1,7 +1,5 @@
 export const HOLD_VERSION = 1
-
 export const HOLD_SPEC = 'ORDEND_HOLD'
-
 export interface Spec {
   socket: string
   cgroup: string | null
@@ -12,7 +10,6 @@ export interface Spec {
   rows: number
   base: number
 }
-
 export function specOf(raw: string | undefined): Spec | null {
   let spec: Partial<Spec>
   try {
@@ -27,11 +24,9 @@ export function specOf(raw: string | undefined): Spec | null {
   if (!isSize(cols) || !isSize(rows) || !isCount(base)) return null
   return { socket, cgroup, file, args, cwd, cols, rows, base }
 }
-
 export interface Exit {
   code: number | null
 }
-
 export interface Hello {
   t: 'hello'
   v: number
@@ -44,24 +39,18 @@ export interface Hello {
   rows: number
   exited: Exit | null
 }
-
 export type FromHolder = Hello | { t: 'out'; seq: number; data: Uint8Array } | ({ t: 'exit' } & Exit)
-
 export type ToHolder =
   { t: 'attach'; since: number } | { t: 'in'; data: Uint8Array } | { t: 'size'; cols: number; rows: number }
-
 const HELLO = 1
 const OUT = 2
 const EXIT = 3
 const ATTACH = 10
 const IN = 11
 const SIZE = 12
-
 const MOST_FRAME = 16 * 1024 * 1024
-
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
-
 function framed(kind: number, body: Uint8Array): Uint8Array {
   const out = new Uint8Array(5 + body.length)
   const view = new DataView(out.buffer)
@@ -70,18 +59,15 @@ function framed(kind: number, body: Uint8Array): Uint8Array {
   out.set(body, 5)
   return out
 }
-
 function json(kind: number, value: unknown): Uint8Array {
   return framed(kind, encoder.encode(JSON.stringify(value)))
 }
-
 function offsetThen(seq: number, data: Uint8Array): Uint8Array {
   const body = new Uint8Array(8 + data.length)
   new DataView(body.buffer).setFloat64(0, seq)
   body.set(data, 8)
   return body
 }
-
 export function frameOf(frame: FromHolder | ToHolder): Uint8Array {
   switch (frame.t) {
     case 'hello':
@@ -98,16 +84,13 @@ export function frameOf(frame: FromHolder | ToHolder): Uint8Array {
       return json(SIZE, { cols: frame.cols, rows: frame.rows })
   }
 }
-
 export interface Raw {
   kind: number
   body: Uint8Array
 }
-
 export class Frames {
   private held = new Uint8Array(0)
   broken = false
-
   push(chunk: Uint8Array): Raw[] {
     const all = new Uint8Array(this.held.length + chunk.length)
     all.set(this.held)
@@ -130,7 +113,6 @@ export class Frames {
     return out
   }
 }
-
 function parsed(body: Uint8Array): Record<string, unknown> | null {
   try {
     const value: unknown = JSON.parse(decoder.decode(body))
@@ -139,19 +121,15 @@ function parsed(body: Uint8Array): Record<string, unknown> | null {
     return null
   }
 }
-
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-
 const isSize = (value: unknown): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= 1000
-
 function exitOf(value: unknown): Exit | null {
   if (typeof value !== 'object' || value === null) return null
   const code = (value as { code?: unknown }).code
   return code === null || (typeof code === 'number' && Number.isInteger(code)) ? { code } : null
 }
-
 export function fromHolderOf(raw: Raw): FromHolder | null {
   if (raw.kind === OUT) {
     if (raw.body.length < 8) return null
@@ -173,7 +151,6 @@ export function fromHolderOf(raw: Raw): FromHolder | null {
   if (exited === null && value.exited !== null) return null
   return { t: 'hello', v, holder, shell, base, from, end, cols, rows, exited }
 }
-
 export function toHolderOf(raw: Raw): ToHolder | null {
   if (raw.kind === IN) return { t: 'in', data: raw.body }
   const value = parsed(raw.body)

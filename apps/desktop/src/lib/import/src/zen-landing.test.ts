@@ -13,7 +13,6 @@ const marks: { kind: string; path: string; text: string }[] = []
 let sidebar: unknown = SIDEBAR
 let firefoxSession: unknown = null
 let places: unknown = null
-
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     const packed = (said: unknown) =>
@@ -35,7 +34,6 @@ vi.mock('../../platform/src/tauri', () => ({
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
   isDesktop: true,
 }))
-
 vi.mock('./apply', () => ({
   applyImport: (plan: { files: Planned[] }, target: { root: string }) => {
     written.push({ root: target.root, files: plan.files })
@@ -48,16 +46,13 @@ vi.mock('./apply', () => ({
     })
   },
 }))
-
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
-
 vi.mock('../../ui-kit/src/busy.svelte', () => ({
   busy: { failed: (said: string) => void done.push(`said ${said}`) },
 }))
-
 vi.mock('../../workspace/src/api', () => {
   let active: string | null = null
   return {
@@ -94,15 +89,12 @@ vi.mock('../../workspace/src/api', () => {
     },
   }
 })
-
 const { landZen } = await import('./zen-landing')
-
 const PROFILE = {
   name: 'Default (release)',
   path: '/zen/profile',
   files: ['zen-sessions-backup/clean.jsonlz4', 'zen-sessions.jsonlz4'],
 }
-
 beforeEach(() => {
   sidebar = SIDEBAR
   firefoxSession = null
@@ -114,11 +106,9 @@ beforeEach(() => {
   marks.length = 0
   readOnly.clear()
 })
-
 describe('Zen brought into Orden', () => {
   test('makes a space of every Zen space, in its order, with its icon and Essentials', async () => {
     const first = await landZen(PROFILE)
-
     expect(first.name).toBe('Home')
     expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work', 'Reading'])
     expect(written.map((one) => [one.root, one.files.length])).toEqual([
@@ -134,7 +124,6 @@ describe('Zen brought into Orden', () => {
     expect(done).toContain('said Containers stay in Zen')
     expect(marks).toEqual([{ kind: 'note', path: 'Mail.url', text: '' }])
   })
-
   test('brings only what is new the second time, into the spaces it made', async () => {
     await landZen(PROFILE)
     disk.set(
@@ -144,9 +133,7 @@ describe('Zen brought into Orden', () => {
     disk.set('/spaces/Work/b - Search.url', writeShortcut('https://other.example.com/', 'b', new Date()))
     written.length = 0
     done.length = 0
-
     await landZen(PROFILE)
-
     expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work', 'Reading'])
     expect(written.map((one) => [one.root, one.files.map((file) => file.path)])).toEqual([
       ['/spaces/Work', ['b - Search.url']],
@@ -154,7 +141,6 @@ describe('Zen brought into Orden', () => {
     expect(done.filter((one) => one.startsWith('order') || one.startsWith('icon'))).toEqual([])
     expect(marks).toHaveLength(1)
   })
-
   test('does not bring a tab again whose title changed, beside the shortcut it made of it', async () => {
     await landZen(PROFILE)
     const board = disk.get('/spaces/Work/Board.url') ?? ''
@@ -162,12 +148,9 @@ describe('Zen brought into Orden', () => {
     disk.set('/spaces/Work/Board (3).url', board)
     disk.set('/spaces/Work/Docs/Board.url', writeShortcut('https://elsewhere.example.com/', 'B', new Date()))
     written.length = 0
-
     await landZen(PROFILE)
-
     expect(written).toEqual([])
   })
-
   test('finds the space it made again where the name it asked for was not a folder name', async () => {
     sidebar = {
       ...SIDEBAR,
@@ -175,13 +158,10 @@ describe('Zen brought into Orden', () => {
     }
     await landZen(PROFILE)
     written.length = 0
-
     await landZen(PROFILE)
-
     expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work Client', 'Reading'])
     expect(written).toEqual([])
   })
-
   test("says so when none of the profile's files can be read", async () => {
     await expect(landZen({ ...PROFILE, files: ['sessionstore.jsonlz4'] })).rejects.toThrow(
       'Zen’s tabs could not be read.',
@@ -189,24 +169,18 @@ describe('Zen brought into Orden', () => {
     expect(spaces).toEqual([])
   })
 })
-
 test('a Zen up to 1.17 brought into Orden takes its spaces and its Essentials out of Places, which its session lacks', async () => {
   firefoxSession = ZEN_1_17
   places = ZEN_1_17_PLACES
-
   const first = await landZen({ ...PROFILE, files: ['sessionstore.jsonlz4', 'places.sqlite'] })
-
   expect(first.name).toBe('Home')
   expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work'])
   expect(marks.map((one) => one.path)).toEqual(['Mail.url', 'Calendar.url', 'Chat.url'])
 })
-
 test('a space of the same name shared to be read is passed over, while the rest still land', async () => {
   spaces.push({ id: 'Work', name: 'Work', root: '/spaces/Work' })
   readOnly.add('/spaces/Work')
-
   const first = await landZen(PROFILE)
-
   expect(first.name).toBe('Home')
   expect(written.map((one) => one.root)).toEqual(['/spaces/Home'])
   expect(done.filter((one) => one.includes('/spaces/Work') || one.includes('Work '))).toEqual([])

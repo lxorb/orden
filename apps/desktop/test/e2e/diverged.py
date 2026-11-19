@@ -1,9 +1,6 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from settling import HIDE_CARET, steady
-
 import harness
 from harness import Drive
 
@@ -12,21 +9,17 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 SHOTS = DRIVE.shots
 APP = harness.APP
-
 AXE = APP / "node_modules" / "axe-core" / "axe.min.js"
-
 DESKTOP = {"width": 1280, "height": 820}
 PHONE = {"width": 390, "height": 844}
 PHONE_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-
 KNOWN = {
     "scrollable-region-focusable": "the note is reached by being written in",
     "color-contrast": "the ink on an accent fill is a palette decision",
 }
-
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -39,7 +32,6 @@ async () => {
   return note.path
 }
 """
-
 CANVAS = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -47,7 +39,6 @@ async () => {
   return ws.active.path
 }
 """
-
 HOLD = """
 ([path, name, kind]) => {
   const hour = 60 * 60 * 1000
@@ -80,14 +71,11 @@ HOLD = """
   ])
 }
 """
-
 axe_table: dict[str, dict] = {}
-
 def shot(page: Page, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     (SHOTS / f"{name}.png").write_bytes(steady(page, page.screenshot, say, name))
     say(f"shot {name}.png")
-
 def axe(page: Page, name: str) -> None:
     DRIVE.inject(page, AXE)
     found = page.evaluate(
@@ -109,7 +97,6 @@ def axe(page: Page, name: str) -> None:
     for one in found["named"]:
         if one["impact"] in ("serious", "critical") and one["id"] not in KNOWN:
             wrong(f"axe on {name}: {one['impact']} {one['id']} x{one['nodes']} {one['where']}")
-
 def window(browser: Browser, scheme: str, size: dict, phone: bool = False) -> Page:
     context = browser.new_context(
         viewport=size,
@@ -133,11 +120,9 @@ def window(browser: Browser, scheme: str, size: dict, phone: bool = False) -> Pa
     wait_for(page, "window.ordenApp.sync2", "the fake engine")
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     return page
-
 def held_up(page: Page, path: str, name: str, kind: str = "note") -> None:
     page.evaluate(HOLD, [path, name, kind])
     wait_for(page, "document.querySelector('[role=dialog] .sides')", f"the question about {name}")
-
 def sheet(page: Page, name: str, phone: bool = False) -> None:
     path = page.evaluate(SEED)
     if phone:
@@ -145,7 +130,6 @@ def sheet(page: Page, name: str, phone: bool = False) -> None:
     held_up(page, path, "Plan")
     shot(page, name)
     axe(page, name)
-
 def desktop(browser: Browser) -> None:
     page = window(browser, "light", DESKTOP)
     path = page.evaluate(SEED)
@@ -153,7 +137,6 @@ def desktop(browser: Browser) -> None:
     held_up(page, path, "Plan")
     shot(page, "desktop-light")
     axe(page, "desktop-light")
-
     focused = page.evaluate(
         "() => [...document.querySelectorAll('.keep')].indexOf(document.activeElement)"
     )
@@ -166,7 +149,6 @@ def desktop(browser: Browser) -> None:
     if moved != 0:
         wrong(f"Left did not go to the other card: {moved}")
     shot(page, "desktop-light-keyboard")
-
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('[role=dialog] .sides')", "the question to close")
     answered = page.evaluate("() => window.__held.engine.held.answered")
@@ -182,22 +164,18 @@ def desktop(browser: Browser) -> None:
     if not marks["row"] or not marks["tab"]:
         wrong(f"the held note does not wear its mark on both its row and its tab: {marks}")
     shot(page, "desktop-light-marked")
-
     page.evaluate(
         "() => window.__held.engine.emit('resurrected', { id: 'held', name: 'Plan', device: 'iPhone' })"
     )
     wait_for(page, "[...document.querySelectorAll('.toast p')].some((one) => one.textContent.includes('is back'))", "the toast")
     page.locator(".toast", has_text="is back").hover()
     shot(page, "desktop-light-toast")
-
     page.evaluate("() => { window.__held.stop() }")
     page.context.close()
-
 def dark(browser: Browser) -> None:
     page = window(browser, "dark", DESKTOP)
     sheet(page, "desktop-dark")
     page.context.close()
-
 def phone(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         page = window(browser, scheme, PHONE, phone=True)
@@ -211,7 +189,6 @@ def phone(browser: Browser) -> None:
         if not stacked:
             wrong(f"phone-{scheme}: the two cards are not one over the other")
         page.context.close()
-
 def canvas(browser: Browser) -> None:
     page = window(browser, "light", DESKTOP)
     page.evaluate(SEED)
@@ -220,7 +197,6 @@ def canvas(browser: Browser) -> None:
     wait_for(page, "document.querySelectorAll('.side .plane svg').length === 2", "both cards drawn")
     shot(page, "desktop-canvas")
     page.context.close()
-
 def main() -> int:
     if not AXE.exists():
         raise SystemExit(f"axe-core is not here: {AXE}. Run pnpm install.")
@@ -229,9 +205,6 @@ def main() -> int:
         dark(browser)
         phone(browser)
         canvas(browser)
-
     (SHOTS / "axe.json").write_text(json.dumps(axe_table, indent=2), encoding="utf-8")
-
     return DRIVE.verdict("the question comes up over the held note and says nothing it need not")
-
 raise SystemExit(main())

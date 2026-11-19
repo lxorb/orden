@@ -41,20 +41,16 @@ Text[^1].
 
 [^1]: The note.
 `
-
 const BODIES: Record<string, string> = {
   'Notes/Today.md': FIXTURE,
   'Plan.md': '# Plan\n\nThe plan itself.\n\n## Why it works\n\nBecause.\n',
   'ideas/Later.md': '# Later\n\nSoon.\n',
 }
-
 const FILES = ['shot.png']
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
-
     switch (command) {
       case 'scan_links':
         return {
@@ -71,27 +67,21 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     }
   },
 }))
-
 vi.mock('../../link-index/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../link-index/src/api')>()),
   notePicture: (src: string) => `asset://${src}`,
   picturesOf: () => () => null,
 }))
-
 const { links } = await import('../../link-index/src/api')
 const { startup } = await import('../../launch/src/api')
 const { readingHtml } = await import('./render')
 await import('../../modes/src/api')
 const { EditorState, noteIndexExtension, renderNote } = await import('@orden/editor')
-
 await import('../../export/src/render')
-
 void startup.shown()
 await links.build(ROOT)
-
 const PATH = `${ROOT}/Notes/Today.md`
 const RELATIVE = 'Notes/Today.md'
-
 function shown(render = true) {
   return EditorState.create({
     extensions: [
@@ -110,19 +100,14 @@ function shown(render = true) {
     ],
   })
 }
-
 const reading = () => readingHtml({ text: FIXTURE, path: PATH }, 'light', true)
-
 describe('the note behind a hover preview', () => {
   test('is the reading view of that note, to the character', async () => {
     const [preview, read] = await Promise.all([renderNote(FIXTURE, RELATIVE, shown()), reading()])
-
     expect(preview).toBe(read)
   })
-
   test('has every kind of block the reading view has', async () => {
     const html = await renderNote(FIXTURE, RELATIVE, shown())
-
     expect(html).toContain('<figure class="code"')
     expect(html).toContain('pipeline.ts')
     expect(html).toContain('hl-keyword')
@@ -146,10 +131,8 @@ describe('the note behind a hover preview', () => {
     expect(html).toContain('<section class="footnotes">')
     expect(html).not.toContain('tags:')
   })
-
   test('is not the thin render the editor can do with no app around it', async () => {
     const thin = await renderNote(FIXTURE, RELATIVE, shown(false))
-
     expect(thin).not.toContain('hl-keyword')
     expect(thin).not.toContain('class="properties"')
     expect(thin).not.toContain('<figure class="embed">')

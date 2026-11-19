@@ -7,14 +7,12 @@
   import { propertyName, summaryName } from './words'
 
   const { kit, column }: { kit: Kit; column?: string | undefined } = $props()
-
   const live = $derived(kit.live)
   const base = $derived(live.base)
   let made = $state<string | undefined>(undefined)
   const target = $derived(made ?? column)
   const editing = $derived(target?.startsWith('formula.') && base ? (base.formulas[target.slice(8)] ?? null) : null)
   const was = $derived(editing === null ? null : readRollup(editing))
-
   const relations = $derived([
     ...Object.entries(base?.formulas ?? {})
       .filter(([, source]) => readReverse(source) !== null)
@@ -24,7 +22,6 @@
       label: propertyName(one),
     })),
   ])
-
   const keys = $derived.by(() => {
     const seen: Record<string, true> = {}
     for (const row of live.rows) {
@@ -34,7 +31,6 @@
     }
     return Object.keys(seen).sort()
   })
-
   const NAMES: Record<Rollup, string> = {
     count: 'Count',
     filled: summaryName('Filled'),
@@ -48,7 +44,6 @@
     checked: summaryName('Checked'),
     percent: 'Percent ticked',
   }
-
   let relation = $state('')
   let property = $state('')
   let calc = $state<Rollup>('count')
@@ -57,10 +52,8 @@
     property = was?.property ?? ''
     calc = was?.calc ?? 'count'
   })
-
   const autoName = (spec: { relation: string; property?: string | undefined; calc: Rollup }) =>
     [propertyName(spec.relation), spec.property, NAMES[spec.calc]].filter(Boolean).join(' ')
-
   function write() {
     if (!relation || !base) return
     const spec = property && calc !== 'count' ? { relation, property, calc } : { relation, calc: 'count' as const }

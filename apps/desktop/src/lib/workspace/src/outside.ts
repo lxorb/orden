@@ -8,7 +8,6 @@ interface TakenIn {
   moved: RootMoved[]
   left: string[]
 }
-
 export async function takeIn(): Promise<boolean> {
   const taken = await invoke<TakenIn | null>('take_in_outside').catch((error: unknown) => {
     log('error', `the spaces folder outside Orden's own: ${String(error)}`)

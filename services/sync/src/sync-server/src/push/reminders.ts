@@ -4,17 +4,11 @@ import { liveTarget } from './live'
 import { type Message, push, type Target } from './send'
 
 const AT_ONCE = 200
-
 const KEPT_FOR = 86_400_000
-
 export const REMIND_BEFORE: readonly number[] = [0, 5, 15, 30, 60, -1]
-
 export const TRY_AGAIN_AFTER = 300_000
-
 export const MOST_TRIES = 4
-
 const SHUT_TITLE = 'A protected note has a reminder'
-
 interface Due {
   note_id: string
   id: string
@@ -29,11 +23,9 @@ interface Due {
   line: number
   tries: number
 }
-
 export function forgetReminders(env: Env, noteId: string): D1PreparedStatement {
   return env.DB.prepare('delete from push_reminders where note_id = ?').bind(noteId)
 }
-
 export async function sendDue(
   env: Env,
   now: number,
@@ -42,7 +34,6 @@ export async function sendDue(
   await env.DB.prepare('delete from push_reminders where at < ?')
     .bind(now - KEPT_FOR)
     .run()
-
   const { results: due } = await env.DB.prepare(
     `select r.note_id, r.id, r.user_id, r.space_id, r.at, r.title, r.body, r.path, r.hash, r.line,
             r.tries, s.name as space
@@ -54,7 +45,6 @@ export async function sendDue(
   )
     .bind(now, AT_ONCE)
     .all<Due>()
-
   let sent = 0
   const targets = new Map<string, Target[]>()
   const shuts = new Map<string, Shut>()
@@ -65,7 +55,6 @@ export async function sendDue(
       .bind(now, one.note_id, one.id)
       .run()
     if (!claimed.meta.changes) continue
-
     let theirs = targets.get(one.user_id)
     if (!theirs) {
       theirs = (
@@ -78,14 +67,12 @@ export async function sendDue(
       ).results
       targets.set(one.user_id, theirs)
     }
-
     let shut = shuts.get(one.user_id)
     if (!shut) {
       shut = await shutFor(env, one.user_id)
       shuts.set(one.user_id, shut)
     }
     const hidden = shut(one.space_id, one.path)
-
     const message: Message = {
       kind: 'reminder',
       id: one.id,

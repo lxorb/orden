@@ -7,7 +7,6 @@ test('the module stands on its own the api loads with the sheet closed and every
     expect(typeof one).toBe('function')
   }
 })
-
 test('the exporters behind their door name every exporter the shell reaches', async () => {
   const kit = await exporters()
   for (const one of [kit.runExport, kit.exportPandoc]) {

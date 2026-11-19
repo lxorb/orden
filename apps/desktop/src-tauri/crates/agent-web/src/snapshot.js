@@ -2,7 +2,6 @@ globalThis.ordenAgentOf = (describe, base) => {
   const ids = new WeakMap()
   const nodes = new Map()
   let next = base
-
   const idOf = (node) => {
     let id = ids.get(node)
     if (!id) {
@@ -12,21 +11,17 @@ globalThis.ordenAgentOf = (describe, base) => {
     }
     return id
   }
-
   const byId = (id) => {
     const node = nodes.get(Number(id))
     return node && node.isConnected ? node : null
   }
-
   const prune = () => {
     for (const [id, node] of nodes) if (!node.isConnected) nodes.delete(id)
   }
-
   const flat = (words) =>
     String(words || '')
       .replace(/\s+/g, ' ')
       .trim()
-
   const hidden = (el) => {
     if (el.hidden || el.getAttribute('aria-hidden') === 'true') return true
     const tag = el.localName
@@ -41,7 +36,6 @@ globalThis.ordenAgentOf = (describe, base) => {
     }
     return false
   }
-
   const kinds = {
     button: 'button',
     submit: 'button',
@@ -60,7 +54,6 @@ globalThis.ordenAgentOf = (describe, base) => {
     week: 'dateTime',
     color: 'colorWell',
   }
-
   const roleOf = (el) => {
     const given = flat(el.getAttribute('role')).split(' ')[0].toLowerCase()
     if (given === 'none' || given === 'presentation') return 'none'
@@ -169,7 +162,6 @@ globalThis.ordenAgentOf = (describe, base) => {
         return 'generic'
     }
   }
-
   const fromContents = new Set([
     'button',
     'link',
@@ -196,7 +188,6 @@ globalThis.ordenAgentOf = (describe, base) => {
     'strong',
     'emphasis',
   ])
-
   const contents = (el, skip = null, depth = 0) => {
     if (depth > 20) return ''
     let words = ''
@@ -221,7 +212,6 @@ globalThis.ordenAgentOf = (describe, base) => {
     }
     return words
   }
-
   const byIds = (el, list) =>
     flat(
       list
@@ -231,7 +221,6 @@ globalThis.ordenAgentOf = (describe, base) => {
         .map((one) => one.getAttribute('aria-label') || contents(one))
         .join(' '),
     )
-
   const nameOf = (el, role) => {
     const by = el.getAttribute('aria-labelledby')
     if (by) {
@@ -271,11 +260,9 @@ globalThis.ordenAgentOf = (describe, base) => {
     }
     return flat(el.getAttribute('title'))
   }
-
   const SECRET_FILLS = /^(cc-.+|one-time-code|current-password|new-password)$/
   const SECRET_NAMES =
     /\b(card ?(number|no|num)|cc ?(number|num|no)|ccnum|cardnum|credit ?card|cvc2?|cvv2?|csc|cvn|security ?code|otp|totp|2fa|mfa|one ?time ?(code|password)|verification ?code|auth(entication|enticator)? ?code|passcode|pin)(?![a-z0-9])/
-
   const secretField = (el, type) => {
     if (type === 'password') return true
     const tokens = String(el.getAttribute('autocomplete') || '')
@@ -290,7 +277,6 @@ globalThis.ordenAgentOf = (describe, base) => {
       .replace(/[_.-]+/g, ' ')
     return SECRET_NAMES.test(words)
   }
-
   const fieldValue = (el, role) => {
     const tag = el.localName
     if (tag === 'select') return [...el.selectedOptions].map((one) => flat(one.label)).join(', ')
@@ -306,9 +292,7 @@ globalThis.ordenAgentOf = (describe, base) => {
     if (now !== null) return now
     return null
   }
-
   const property = (name, value) => ({ name, value: { value } })
-
   const propertiesOf = (el, role, doc) => {
     const out = []
     if (doc.activeElement === el) out.push(property('focused', true))
@@ -337,7 +321,6 @@ globalThis.ordenAgentOf = (describe, base) => {
     if (role === 'link' && el.href) out.push(property('url', String(el.href)))
     return out
   }
-
   const tree = (most) => {
     prune()
     const out = []
@@ -411,14 +394,12 @@ globalThis.ordenAgentOf = (describe, base) => {
     if (document.body) walk(document.body, root, document)
     return { nodes: out, fields }
   }
-
   const on = (id, body, args) => {
     const node = byId(id)
     if (!node) return { gone: true }
     const run = new Function(`return (${body})`)()
     return { value: run.apply(node, args || []) }
   }
-
   const box = (id, scroll) => {
     const node = byId(id)
     if (!node) return { gone: true }
@@ -442,7 +423,6 @@ globalThis.ordenAgentOf = (describe, base) => {
     }
     return { x, y, width: rect.width, height: rect.height }
   }
-
   const at = (x, y) => {
     let doc = document
     let el = doc.elementFromPoint(x, y)
@@ -462,7 +442,6 @@ globalThis.ordenAgentOf = (describe, base) => {
     }
     return el ? idOf(el) : null
   }
-
   const active = () => {
     let el = document.activeElement
     try {
@@ -472,6 +451,5 @@ globalThis.ordenAgentOf = (describe, base) => {
     }
     return el ? idOf(el) : null
   }
-
   return { idOf, byId, tree, on, box, at, active }
 }

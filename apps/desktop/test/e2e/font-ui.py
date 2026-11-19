@@ -1,20 +1,15 @@
 import io
-
 from PIL import Image
-
 from harness import Drive
 from settling import quiet
 
 DRIVE = Drive(__file__)
 say, wrong, shot, waited = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.waited
-
 SCALE = 2
-
 LABELS = [
     ("a segmented button", ".sheet .orden-segmented button"),
     ("a pane in Settings", ".sheet nav button"),
 ]
-
 def ink(png: bytes) -> tuple[int, int, int] | None:
     picture = Image.open(io.BytesIO(png)).convert("L")
     width, height = picture.size
@@ -23,7 +18,6 @@ def ink(png: bytes) -> tuple[int, int, int] | None:
     if not rows:
         return None
     return rows[0], rows[-1], height
-
 def drawn_with(page, selector: str) -> str:
     session = page.context.new_cdp_session(page)
     session.send("DOM.enable")
@@ -33,7 +27,6 @@ def drawn_with(page, selector: str) -> str:
     used = session.send("CSS.getPlatformFontsForNode", {"nodeId": node})["fonts"]
     session.detach()
     return max(used, key=lambda one: one["glyphCount"])["familyName"] if used else ""
-
 LINES = """
 ([selector, face]) => {
   const one = document.querySelector(selector)
@@ -48,7 +41,6 @@ LINES = """
   return { stack: line(`${size} ${style.fontFamily}`), own: line(`${size} "${face}"`) }
 }
 """
-
 def look(browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, device_scale_factor=SCALE)
     DRIVE.open(page)
@@ -57,7 +49,6 @@ def look(browser) -> None:
     quiet(page)
     page.wait_for_timeout(600)
     shot(page, "settings")
-
     for what, selector in LABELS:
         found = page.locator(selector)
         if not found.count():
@@ -76,10 +67,8 @@ def look(browser) -> None:
             say(f"  ink {top / SCALE:.1f} px from the top, {(height - 1 - bottom) / SCALE:.1f} from the bottom")
         shot(page, what.replace(" ", "-"), clip=found.first.bounding_box())
     page.context.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         look(browser)
     return DRIVE.verdict("a label in Latin stands on its own face's line")
-
 raise SystemExit(main())

@@ -1,14 +1,12 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 
 const KEYS = 340
-
 interface Kind {
   app?: boolean
   agent?: string
   mobile?: boolean | null
   finger?: boolean
 }
-
 const AGENTS = {
   desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
   phone: 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36',
@@ -16,10 +14,8 @@ const AGENTS = {
   asked: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
   ipad: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17 Safari/605',
 } as const
-
 function stubDocument(window: { layout: number }) {
   const attributes = new Set<string>()
-
   return {
     documentElement: {
       get clientHeight() {
@@ -32,11 +28,9 @@ function stubDocument(window: { layout: number }) {
     },
   }
 }
-
 function stubWindow(width = 390, height = 844, finger = false) {
   const resized: (() => void)[] = []
   const turned: (() => void)[] = []
-
   const seen = {
     width,
     height,
@@ -45,7 +39,6 @@ function stubWindow(width = 390, height = 844, finger = false) {
     addEventListener: (_kind: string, run: () => void) => void resized.push(run),
     removeEventListener: () => undefined,
   }
-
   return {
     innerWidth: width,
     innerHeight: height,
@@ -89,7 +82,6 @@ function stubWindow(width = 390, height = 844, finger = false) {
     },
   }
 }
-
 async function started(kind: Kind = {}, width = 390, height = 844) {
   const window = stubWindow(width, height, kind.finger ?? false)
   const document = stubDocument(window)
@@ -101,16 +93,12 @@ async function started(kind: Kind = {}, width = 390, height = 844) {
     userAgent: kind.agent ?? AGENTS.desktop,
     ...(kind.mobile === undefined || kind.mobile === null ? {} : { userAgentData: { mobile: kind.mobile } }),
   })
-
   const { pageHeight, viewport } = await import('./viewport.svelte')
   viewport.start()
-
   return { pageHeight, viewport, window, root: document.documentElement }
 }
-
 async function machine(kind: Kind = {}) {
   const { deviceFor } = await import('./viewport.svelte')
-
   return (width: number, height: number) =>
     deviceFor(width, height, {
       native: kind.app ?? false,
@@ -119,17 +107,14 @@ async function machine(kind: Kind = {}) {
       finger: kind.finger ?? false,
     })
 }
-
 beforeAll(async () => {
   await started()
   vi.unstubAllGlobals()
 })
-
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.doUnmock('./tauri')
 })
-
 describe('the keyboard', () => {
   test('in a browser it covers the page, and the page says by how much', async () => {
     const { viewport, window } = await started()
@@ -143,7 +128,6 @@ describe('the keyboard', () => {
     expect(viewport.keyboard).toBe(0)
     expect(viewport.typing).toBe(false)
   })
-
   test('in the app it takes the height instead, and nothing is covered', async () => {
     const { viewport, window } = await started({ app: true })
     window.keysBelow(KEYS)
@@ -153,7 +137,6 @@ describe('the keyboard', () => {
     window.keysBelow(0)
     expect(viewport.typing).toBe(false)
   })
-
   test('an iPhone sliding the page up to the caret is put back, and the keys measured whole', async () => {
     const { viewport, window } = await started({ app: true, finger: true })
     window.keysOverSliding(KEYS, KEYS)
@@ -161,7 +144,6 @@ describe('the keyboard', () => {
     expect(viewport.keyboard).toBe(KEYS)
     expect(viewport.typing).toBe(true)
   })
-
   test('an iPhone saying its window shrank as the page scrolled still has its keys', async () => {
     const { viewport, window } = await started({ app: true, finger: true })
     window.keysOver(KEYS)
@@ -169,7 +151,6 @@ describe('the keyboard', () => {
     expect(viewport.keyboard).toBe(KEYS)
     expect(viewport.typing).toBe(true)
   })
-
   test('a browser window made shorter by hand, or a few pixels of chrome sliding away, is not a keyboard', async () => {
     const { viewport, window } = await started()
     window.keysBelow(KEYS)
@@ -178,7 +159,6 @@ describe('the keyboard', () => {
     window.keysOver(60)
     expect(viewport.typing).toBe(false)
   })
-
   test('turning the phone is a new window, not a keyboard', async () => {
     const { viewport, window } = await started({ app: true })
     window.turned()
@@ -186,7 +166,6 @@ describe('the keyboard', () => {
     expect(viewport.height).toBe(390)
   })
 })
-
 describe('which device this is', () => {
   test.each([
     [{ app: true }, 390, 844, 'phone'],
@@ -213,7 +192,6 @@ describe('which device this is', () => {
     },
   )
 })
-
 describe('what the document is told', () => {
   test('the app on a tablet: touch, and the drawer while it is upright', async () => {
     const upright = await started({ app: true }, 800, 1280)
@@ -229,7 +207,6 @@ describe('what the document is told', () => {
     expect(upright.root.attributes.has('data-drawer')).toBe(false)
     expect(upright.root.attributes.has('data-touch')).toBe(true)
   })
-
   test('a desktop browser: no touch, and no drawer', async () => {
     const { viewport, root } = await started({}, 1280, 800)
     expect(viewport.device).toBe('desktop')
@@ -237,7 +214,6 @@ describe('what the document is told', () => {
     expect(viewport.installed).toBe(false)
     expect(root.attributes.has('data-touch')).toBe(false)
   })
-
   test('the width, whichever device it is', async () => {
     const phone = await started({ app: true }, 390, 844)
     expect(phone.viewport.narrow).toBe(true)
@@ -254,7 +230,6 @@ describe('what the document is told', () => {
     expect(window.root.attributes.has('data-drawer')).toBe(false)
   })
 })
-
 describe('a page that fills the screen', () => {
   test('is the viewport, and gives the keyboard its share back', async () => {
     const { pageHeight, window } = await started({ app: true })
@@ -262,7 +237,6 @@ describe('a page that fills the screen', () => {
     window.keysOver(KEYS)
     expect(pageHeight()).toBe(`${844 - KEYS}px`)
   })
-
   test('is the window everywhere else, which CSS can say on its own', async () => {
     const { pageHeight } = await started({}, 1280, 800)
     expect(pageHeight()).toBe(undefined)

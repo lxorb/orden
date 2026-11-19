@@ -13,7 +13,6 @@ function streamMode(spec: {
     load: async () => new LanguageSupport(StreamLanguage.define(await spec.parser())),
   })
 }
-
 const words = (list: string): Record<string, boolean> =>
   Object.fromEntries(
     list
@@ -21,7 +20,6 @@ const words = (list: string): Record<string, boolean> =>
       .filter(Boolean)
       .map((word) => [word, true]),
   )
-
 function cLike(spec: {
   name: string
   alias: string[]
@@ -49,14 +47,12 @@ function cLike(spec: {
     },
   })
 }
-
 const hashComment = {
   '#': (stream: { skipToEnd(): void }) => {
     stream.skipToEnd()
     return 'comment'
   },
 }
-
 const plainTextParser: StreamParser<unknown> = {
   name: 'plaintext',
   token: (stream) => {
@@ -64,7 +60,6 @@ const plainTextParser: StreamParser<unknown> = {
     return null
   },
 }
-
 export const plainTextDescription = LanguageDescription.of({
   name: 'Plain Text',
   alias: [
@@ -85,7 +80,6 @@ export const plainTextDescription = LanguageDescription.of({
   extensions: ['txt', 'text', 'rst', 'adoc', 'asciidoc'],
   load: () => Promise.resolve(new LanguageSupport(StreamLanguage.define(plainTextParser))),
 })
-
 export const ADDED: LanguageDescription[] = [
   streamMode({
     name: 'GLSL',
@@ -111,7 +105,6 @@ export const ADDED: LanguageDescription[] = [
     extensions: ['pegjs', 'peg'],
     parser: async () => (await import('@codemirror/legacy-modes/mode/pegjs')).pegjs,
   }),
-
   streamMode({
     name: 'Hive SQL',
     alias: ['hive', 'hiveql'],
@@ -123,7 +116,6 @@ export const ADDED: LanguageDescription[] = [
     alias: ['sparksql', 'spark-sql'],
     parser: async () => (await import('@codemirror/legacy-modes/mode/sql')).sparkSQL,
   }),
-
   LanguageDescription.of({
     name: 'Elixir',
     alias: ['elixir', 'ex', 'exs', 'iex'],
@@ -154,7 +146,6 @@ export const ADDED: LanguageDescription[] = [
     extensions: ['tf', 'tfvars', 'hcl'],
     load: async () => (await import('codemirror-lang-hcl')).hcl(),
   }),
-
   streamMode({
     name: 'Makefile',
     alias: ['makefile', 'make', 'mk', 'gnumakefile', 'bsdmake', 'just', 'justfile'],
@@ -173,7 +164,6 @@ export const ADDED: LanguageDescription[] = [
     extensions: ['prisma'],
     parser: async () => (await import('./prisma')).prismaParser,
   }),
-
   cLike({
     name: 'Zig',
     alias: ['zig'],

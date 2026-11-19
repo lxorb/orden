@@ -18,7 +18,6 @@
     color: var(--muted-strong);
     white-space: nowrap;
   }
-
   .tick input {
     flex: none;
     margin: 0;

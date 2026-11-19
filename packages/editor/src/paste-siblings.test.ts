@@ -14,20 +14,16 @@ function pasted(doc: string, text: string): string {
   )
   return state.update(placed(state, text)).state.doc.toString()
 }
-
 describe('lines copied from their words in Orden and pasted on a new empty line of the same kind', () => {
   test('two bullets stay siblings', () => {
     expect(pasted('- bread\n- ', 'milk\n- eggs')).toBe('- bread\n- milk\n- eggs')
   })
-
   test('two numbered items stay siblings', () => {
     expect(pasted('1. bread\n2. ', 'milk\n3. eggs')).toBe('1. bread\n2. milk\n3. eggs')
   })
-
   test('two tasks stay siblings', () => {
     expect(pasted('- [ ] bread\n- [ ] ', 'milk\n- [ ] eggs')).toBe('- [ ] bread\n- [ ] milk\n- [ ] eggs')
   })
-
   test('two quoted lines stay in the one quote', () => {
     expect(pasted('> first\n> ', 'second\n> third')).toBe('> first\n> second\n> third')
   })

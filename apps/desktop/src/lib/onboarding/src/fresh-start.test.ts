@@ -11,12 +11,10 @@ const FRESH: Moment = {
   invited: false,
   tabs: 0,
 }
-
 describe('a fresh start', () => {
   test('is a desktop or phone app with no space', () => {
     expect(startsFresh(FRESH)).toBe(true)
   })
-
   test.each<[string, Partial<Moment>]>([
     ['the browser build, which seeds its welcome note itself', { native: false }],
     ['the plugin, which never makes anything new', { plugin: true }],
@@ -29,7 +27,6 @@ describe('a fresh start', () => {
   ])('is not %s', (_, change) => {
     expect(startsFresh({ ...FRESH, ...change })).toBe(false)
   })
-
   test('comes back when the last space goes', () => {
     expect(startsFresh({ ...FRESH, spaces: 1 })).toBe(false)
     expect(startsFresh({ ...FRESH, spaces: 0 })).toBe(true)

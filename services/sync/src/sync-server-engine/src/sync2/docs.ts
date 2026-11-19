@@ -31,12 +31,10 @@ import { prepareSpace } from './prepare'
 import { DOCUMENT_KINDS } from './tree'
 
 type Asking = Whoever & { program?: true }
-
 interface Reached {
   note: Note
   role: Role
 }
-
 async function reachedNotes(env: Env, who: Asking, ids: readonly string[]): Promise<Map<string, Reached>> {
   const shut = await programShut(env, who)
   const { results } = await env.DB.prepare(
@@ -45,7 +43,6 @@ async function reachedNotes(env: Env, who: Asking, ids: readonly string[]): Prom
   )
     .bind(JSON.stringify([...new Set(ids)]))
     .all<Note>()
-
   const spaces = new Map<string, Role | null>()
   const out = new Map<string, Reached>()
   for (const note of results) {
@@ -64,14 +61,12 @@ async function reachedNotes(env: Env, who: Asking, ids: readonly string[]): Prom
   }
   return out
 }
-
 async function onEpochs(env: Env, found: Map<string, Reached>): Promise<void> {
   const spaces = new Set<string>()
   for (const { note } of found.values()) {
     if ((note.epoch ?? 0) === 0 && DOCUMENT_KINDS.has(note.kind ?? 'note')) spaces.add(note.space_id)
   }
   if (!spaces.size) return
-
   for (const space of spaces) await prepareSpace(env, space)
   const ids = [...found.values()].filter(({ note }) => spaces.has(note.space_id))
   for (const { note } of ids) {
@@ -80,7 +75,6 @@ async function onEpochs(env: Env, found: Map<string, Reached>): Promise<void> {
     if (fresh && held) held.note = fresh
   }
 }
-
 export async function documentOf(env: Env, note: Note): Promise<{ update: Uint8Array; seq: number } | null> {
   const epoch = note.epoch ?? 0
   const kept = await env.NOTES.get(snapshotKey(note.id))
@@ -90,19 +84,14 @@ export async function documentOf(env: Env, note: Note): Promise<{ update: Uint8A
       seq: Number(kept.customMetadata.seq ?? 0) || 0,
     }
   }
-
   const object = await env.NOTES.get(noteKey(note.space_id, note.id))
   const body = object ? await object.text() : ''
   if ((await sha256(body)) !== note.epoch_base) return null
-
   const update = seedOf(noteKind(note), note.id, epoch, body)
   return { update, seq: seedsAnything(update) ? 1 : 0 }
 }
-
 const AT_ONCE = 6
-
 const PULL_PATIENCE = 25_000
-
 export async function pullDocs(
   env: Env,
   who: Asking,
@@ -115,7 +104,6 @@ export async function pullDocs(
     docs.map((doc) => doc.id),
   )
   await onEpochs(env, found)
-
   const answers = new Array<PullAnswer | null>(docs.length).fill(null)
   const until = Date.now() + PULL_PATIENCE
   let bytes = 0
@@ -137,7 +125,6 @@ export async function pullDocs(
   }
   await Promise.all(Array.from({ length: Math.min(AT_ONCE, docs.length) }, worker))
   if (late.size && !part) return null
-
   const out: PullAnswer[] = []
   let sent = 0
   for (const one of answers) {
@@ -148,18 +135,14 @@ export async function pullDocs(
   }
   return out
 }
-
 async function pulled(env: Env, found: Reached | undefined, doc: PullDoc): Promise<PullAnswer | null> {
   const note = found?.note
   if (!note || !DOCUMENT_KINDS.has(note.kind ?? 'note')) return { id: doc.id, refused: 'gone' }
-
   const epoch = note.epoch ?? 0
   if (epoch !== doc.epoch) return { id: doc.id, epoch, epochBase: note.epoch_base ?? '' }
-
   try {
     const held = await documentOf(env, note)
     if (held) return { id: doc.id, update: diffUpdateV2(held.update, doc.sv), seq: held.seq }
-
     const answer = await askRoom(env, note, 'pull', frame({ sv: doc.sv }))
     if (answer === ROOM_LATE) return null
     if (!answer?.ok) return { id: doc.id, refused: 'gone' }
@@ -171,12 +154,10 @@ async function pulled(env: Env, found: Reached | undefined, doc: PullDoc): Promi
   }
   return { id: doc.id, refused: 'gone' }
 }
-
 function roomAnswer(bytes: Uint8Array): Record<string, unknown> {
   const value = unframe(bytes)
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 }
-
 export async function pushDocs(
   env: Env,
   who: Asking,
@@ -190,7 +171,6 @@ export async function pushDocs(
     docs.map((doc) => doc.id),
   )
   await onEpochs(env, found)
-
   const answers: PushAnswer[] = new Array<PushAnswer>(docs.length)
   let next = 0
   const worker = async () => {
@@ -202,11 +182,9 @@ export async function pushDocs(
   await Promise.all(Array.from({ length: Math.min(AT_ONCE, docs.length) }, worker))
   return answers
 }
-
 function refused(id: string, why: DocRefusal): PushAnswer {
   return { id, refused: why }
 }
-
 async function pushed(
   env: Env,
   found: Reached | undefined,
@@ -218,10 +196,8 @@ async function pushed(
   if (!note || !DOCUMENT_KINDS.has(note.kind ?? 'note')) return refused(doc.id, 'gone')
   if (!allows(found.role, 'write')) return refused(doc.id, 'role')
   if (doc.update.length > MOST_UPDATE_BYTES) return refused(doc.id, 'large')
-
   const epoch = note.epoch ?? 0
   if (epoch !== doc.epoch) return { id: doc.id, epoch }
-
   const answer = await askRoom(
     env,
     note,
@@ -238,7 +214,6 @@ async function pushed(
     }),
   )
   if (answer === ROOM_LATE || !answer?.ok) return refused(doc.id, 'gone')
-
   const said = roomAnswer(new Uint8Array(await answer.arrayBuffer()))
   const { ok, seq, sv, moved, at, epoch: newer } = said
   if (ok === true && typeof seq === 'number' && sv instanceof Uint8Array) {
@@ -251,13 +226,11 @@ async function pushed(
   const why = said.refused
   return refused(doc.id, why === 'large' || why === 'role' ? why : 'gone')
 }
-
 export async function keepDoc(env: Env, who: Asking, request: KeepRequest): Promise<'kept' | 'gone' | 'role' | 'full'> {
   const found = (await reachedNotes(env, who, [request.id])).get(request.id)
   if (!found || !DOCUMENT_KINDS.has(found.note.kind ?? 'note')) return 'gone'
   if (!allows(found.role, 'write')) return 'role'
   if (!(await versionsFit(env, found.note.id, byteLength(request.text)))) return 'full'
-
   await keepVersionNow(env, found.note.id, request.text, request.device)
   return 'kept'
 }

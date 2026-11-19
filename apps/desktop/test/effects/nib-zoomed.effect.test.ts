@@ -14,10 +14,8 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 Element.prototype.hasPointerCapture = () => false
 const WIDE = 20
-
 let host: HTMLElement
 let close: () => void
-
 beforeEach(() => {
   tools.choose('draw')
   pens.set({ size: WIDE })
@@ -40,22 +38,17 @@ beforeEach(() => {
   close = () => void unmount(shown)
   flushSync()
 })
-
 afterEach(() => {
   close()
   host.remove()
 })
-
 function dot(): number {
   const svg = decodeURIComponent(host.querySelector<HTMLElement>('.canvas')?.style.cursor ?? '')
   return Number(/r="([\d.]+)"/.exec(svg)?.[1]) * 2
 }
-
 test('zoomed in, the dot stays the width the pen writes on the screen', () => {
   expect(dot()).toBe(WIDE)
-
   host.querySelector('.canvas')?.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, ctrlKey: true, bubbles: true }))
   flushSync()
-
   expect(dot()).toBe(WIDE)
 })

@@ -7,7 +7,6 @@
 
   const queue = $derived(chat.queue)
   let dragging = $state<number | null>(null)
-
   function onDrop(event: DragEvent, to: number) {
     event.preventDefault()
     if (dragging !== null && dragging !== to) chat.moveQueued(dragging, to)
@@ -61,7 +60,6 @@
     padding: 0;
     list-style: none;
   }
-
   .queued {
     display: flex;
     align-items: center;
@@ -72,18 +70,15 @@
     background: var(--ink-wash);
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .when {
     margin: 0;
     padding-inline-start: 4px;
     color: var(--faint);
     font-size: var(--text-xs);
   }
-
   .queued.dragging {
     opacity: 0.4;
   }
-
   .grip {
     flex: none;
     width: 11px;
@@ -93,7 +88,6 @@
     stroke-width: 1.3;
     stroke-linecap: round;
   }
-
   .words {
     flex: 1;
     min-width: 0;
@@ -109,12 +103,10 @@
     white-space: nowrap;
     cursor: default;
   }
-
   .small {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
   }
-
   .small svg {
     stroke-width: 1.3;
   }

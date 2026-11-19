@@ -1,20 +1,14 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PANES = ("general", "editor", "markdown", "appearance", "ai", "spelling")
-
 SIGNED_IN = ("sync", "account", "ai")
-
 OFF_CENTRE = 0.75
 GAP_SPREAD = 0.5
 OUTSIDE = 0.5
-
 KINDS = {"orden-hint": "?", "orden-outward": "arrow"}
-
 MEASURE = """
 (kinds) => {
   const canvas = document.createElement('canvas').getContext('2d')
@@ -65,7 +59,6 @@ MEASURE = """
   return rows
 }
 """
-
 LOOKS = (
     (None, None),
     (11, None),
@@ -77,7 +70,6 @@ LOOKS = (
     (None, "Loma"),
     (22, "Loma"),
 )
-
 def styled(page: Page, size: int | None, face: str | None) -> None:
     page.evaluate(
         """([size, face]) => {
@@ -93,7 +85,6 @@ def styled(page: Page, size: int | None, face: str | None) -> None:
         }""",
         [size, face],
     )
-
 def check(page: Page, where: str, kinds: tuple[str, ...] = ("?",)) -> int:
     rows = page.evaluate(MEASURE, KINDS)
     for kind in kinds:
@@ -122,7 +113,6 @@ def check(page: Page, where: str, kinds: tuple[str, ...] = ("?",)) -> int:
         if max(gaps) - min(gaps) > GAP_SPREAD:
             wrong(f"{where}: the gap before the {kind} runs from {min(gaps):.2f} to {max(gaps):.2f}px")
     return len(rows)
-
 def panes(page: Page, tag: str, sections: tuple[str, ...], arrows: tuple[str, ...] = ()) -> None:
     counted = 0
     for section in sections:
@@ -138,9 +128,7 @@ def panes(page: Page, tag: str, sections: tuple[str, ...], arrows: tuple[str, ..
             shot(page, f"{tag}-{section}")
     if counted < 6 * len(sections):
         wrong(f"[{tag}] only {counted} marks were measured")
-
 WIDTHS = (60, 80, 110, 144, 177, 210, 250, 300)
-
 def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
     page.evaluate("(id) => window.ordenApp.settings.show(id)", section)
     page.wait_for_timeout(500)
@@ -163,7 +151,6 @@ def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
         check(page, f"[{tag}] {section} wrapped at {width}px", kinds)
         shot(page, f"{tag}-{section}-wrapped-{width}")
     page.evaluate("() => document.getElementById('help-mark-wrap')?.remove()")
-
 def look(browser: Browser, tag: str, scale: int = 1, touch: bool = False, scheme: str = "light") -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860}, device_scale_factor=scale)
     page.context.add_init_script("localStorage.setItem('orden:access-choice', 'claude')")
@@ -179,11 +166,9 @@ def look(browser: Browser, tag: str, scale: int = 1, touch: bool = False, scheme
     panes(page, tag, SIGNED_IN, ("ai",))
     wrapped(page, tag, "ai", ("?", "arrow"))
     page.context.close()
-
 def drive(browser: Browser) -> None:
     look(browser, "light")
     look(browser, "dark", scheme="dark")
     look(browser, "hidpi", scale=2)
     look(browser, "touch", touch=True)
-
 raise SystemExit(DRIVE.run(drive, "every mark sits on the middle of the letters of the words it follows"))

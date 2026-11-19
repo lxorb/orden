@@ -4,7 +4,6 @@
   const { threads }: { threads: readonly string[] } = $props()
   const MOST = 3
   let all = $state(false)
-
   const rows = $derived(
     threads.flatMap((id) => {
       const title = chat.threadOf(id)?.title ?? chat.every.find((one) => one.id === id)?.title
@@ -44,7 +43,6 @@
     padding: 0;
     list-style: none;
   }
-
   .dot {
     flex: none;
     width: 7px;

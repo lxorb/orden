@@ -24,14 +24,12 @@ const PLUGIN_RULES = [
   'every month',
   'every day when done',
 ]
-
 describe('a rule', () => {
   test.each(PLUGIN_RULES)('%s reads and writes back as written', (text) => {
     const rule = parseRule(text)
     expect(rule).not.toBeNull()
     if (rule) expect(ruleText(rule)).toBe(text)
   })
-
   test.each<[string, string]>([
     ['every Sunday', 'every week on Sunday'],
     ['every mon, fri', 'every week on Monday, Friday'],
@@ -53,14 +51,12 @@ describe('a rule', () => {
     expect(rule).not.toBeNull()
     if (rule) expect(ruleText(rule)).toBe(canonical)
   })
-
   test.each(['', 'daily', 'every', 'every blue moon', 'every 0 days', 'every day until someday', 'every month on the'])(
     '%j is not a rule',
     (text) => {
       expect(parseRule(text)).toBeNull()
     },
   )
-
   const YEARLY: Rule[] = [1, 2].flatMap((every) =>
     [[], [3], [4, 12]].flatMap((months) =>
       [
@@ -73,26 +69,22 @@ describe('a rule', () => {
       ].map((days) => ({ every, unit: 'year' as const, months, whenDone: false, ...days })),
     ),
   )
-
   test.each(YEARLY.map((rule) => [ruleText(rule), rule] as const))(
     '%s, a yearly rule as written, reads back as the same rule',
     (text, rule) => {
       expect(parseRule(text)).toEqual(rule)
     },
   )
-
   test('every 2 years on 3 March is written in words it reads back', () => {
     const rule = parseRule('every 2 years on 3 March')
     expect(rule && ruleText(rule)).toBe('every 2 years in March on the 3rd')
     expect(rule && parseRule(ruleText(rule))).toEqual(rule)
   })
-
   test('an until written for the plugin has no hyphen, which its reader would stop at', () => {
     const rule = parseRule('every week until 2027-01-01')
     expect(rule && ruleText(rule)).toMatch(/^[a-zA-Z0-9, !]+$/)
   })
 })
-
 const DATES: [string, string, string, string | null][] = [
   ['every Sunday', '2021-04-25', '2021-04-25', '2021-05-02'],
   ['every 2 weeks', '2021-10-30', '2021-10-30', '2021-11-13'],
@@ -140,7 +132,6 @@ const DATES: [string, string, string, string | null][] = [
   ['every day until 2026-10-05', '2026-10-05', '2026-10-05', null],
   ['every February on the 30th', '2026-01-01', '2026-01-01', null],
 ]
-
 describe('the next date', () => {
   test.each(DATES)('%s from %s after %s is %s', (text, start, after, next) => {
     const rule = parseRule(text)

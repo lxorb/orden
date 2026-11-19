@@ -11,15 +11,12 @@ import { readWebFile } from '@orden/scan/shortcut'
 import { freshOwn, isCopying, ownStore, webData } from './web-data.svelte'
 
 type Where = 'global' | 'separate'
-
 const WHERE: readonly Where[] = ['global', 'separate']
-
 async function textOf(path: string): Promise<string | null> {
   const open = workspace.documentAt(path)
   if (open) return open.text
   return invoke<string>('read_note', { path }).catch(() => null)
 }
-
 async function namedElsewhere(path: string, own: string): Promise<boolean> {
   if (isCopying(own)) return true
   const others = new Set<string>()
@@ -33,7 +30,6 @@ async function namedElsewhere(path: string, own: string): Promise<boolean> {
   }
   return false
 }
-
 export async function showWebData(path: string): Promise<void> {
   const text = await textOf(path)
   const now: Where = readWebFile(path, text)?.own ? 'separate' : 'global'
@@ -46,7 +42,6 @@ export async function showWebData(path: string): Promise<void> {
     })),
   )
 }
-
 async function choose(path: string, where: Where): Promise<void> {
   if (!canWriteAt(path)) return
   keepNow(path)
@@ -54,7 +49,6 @@ async function choose(path: string, where: Where): Promise<void> {
   if (text === null) return
   const was = readWebFile(path, text)?.own ?? null
   if ((was !== null) === (where === 'separate')) return
-
   const shared = was !== null && where === 'global' && (await namedElsewhere(path, was))
   if (where === 'global' && !shared) {
     const sure = await prompt.confirm({
@@ -65,14 +59,11 @@ async function choose(path: string, where: Where): Promise<void> {
     })
     if (!sure) return
   }
-
   const own = where === 'separate' ? freshOwn() : null
   const content = withOwn(path, text, own)
   if (content === null) return
-
   workspace.documentAt(path)?.replace(content, false)
   await writeFile(path, content)
-
   const said = own ? 'This note keeps its own web data now' : 'Back on the shared web data'
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web') continue
@@ -80,7 +71,6 @@ async function choose(path: string, where: Where): Promise<void> {
     if (copy) tab.apart = own
     if (copy || tab.path === path) await pages.rehouse(tab.id, own, said)
   }
-
   if (was !== null && own === null && !shared) {
     await invoke('web_clear', {
       stores: [ownStore(was)],

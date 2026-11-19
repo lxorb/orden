@@ -5,10 +5,8 @@
   import Glyph from './Glyph.svelte'
 
   const { secret, label = '2FA code' }: { secret: string; label?: string } = $props()
-
   const totp = $derived(totpIn(secret))
   let now = $state<TotpCode | null>(null)
-
   $effect(() => {
     const asked = totp
     if (!asked) {
@@ -27,7 +25,6 @@
       clearInterval(timer)
     }
   })
-
   const shown = $derived.by(() => {
     const digits = now?.code ?? ''
     const half = Math.ceil(digits.length / 2)
@@ -72,11 +69,9 @@
     gap: var(--space-2);
     padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
   }
-
   :global(.field) + .field {
     border-top: 1px solid var(--line);
   }
-
   .tap {
     flex: 1;
     min-width: 0;
@@ -91,12 +86,10 @@
     text-align: start;
     cursor: default;
   }
-
   .label {
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   .value {
     font-family: var(--font-mono);
     font-size: var(--text-base);
@@ -104,38 +97,31 @@
     letter-spacing: 0.08em;
     color: var(--text-strong);
   }
-
   .wrong {
     font-size: var(--text-sm);
     color: var(--danger);
   }
-
   .ring {
     flex: none;
     width: 26px;
     height: 26px;
     transform: rotate(-90deg);
   }
-
   .ring circle {
     fill: none;
     stroke-width: 2.25;
   }
-
   .track {
     stroke: var(--surface-3);
   }
-
   .left {
     stroke: var(--accent);
     stroke-linecap: round;
     transition: stroke-dashoffset var(--dur-slow) linear;
   }
-
   .ring.is-low .left {
     stroke: var(--danger);
   }
-
   .ring text {
     transform: rotate(90deg);
     transform-origin: 12px 12px;

@@ -1,7 +1,6 @@
 import type { Stop, ThreadHead } from './chat/types'
 
 export type SessionState = 'running' | 'waiting' | 'error' | 'needs-input' | 'done' | 'interrupted' | 'archived'
-
 export type SessionEvent =
   | { type: 'start' }
   | { type: 'ask' }
@@ -12,15 +11,12 @@ export type SessionEvent =
   | { type: 'relaunch' }
   | { type: 'archive' }
   | { type: 'unarchive' }
-
 export const FIRST_STATE: SessionState = 'done'
-
 function ended(stop: Stop, busy: boolean): SessionState {
   if (stop === 'end') return busy ? 'waiting' : 'done'
   if (stop === 'error' || stop === 'refusal') return 'error'
   return 'interrupted'
 }
-
 export function next(state: SessionState, event: SessionEvent): SessionState {
   switch (event.type) {
     case 'start':
@@ -43,7 +39,6 @@ export function next(state: SessionState, event: SessionEvent): SessionState {
       return state === 'archived' ? 'done' : state
   }
 }
-
 const PRIORITY: Record<SessionState, number> = {
   'needs-input': 0,
   error: 1,
@@ -53,13 +48,10 @@ const PRIORITY: Record<SessionState, number> = {
   running: 5,
   archived: 6,
 }
-
 export const SESSION_STATES = Object.keys(PRIORITY) as SessionState[]
-
 export function isSessionState(value: unknown): value is SessionState {
   return typeof value === 'string' && Object.hasOwn(PRIORITY, value)
 }
-
 export const STATE_COLOURS: Record<SessionState, string> = {
   running: 'slate',
   waiting: 'blue',
@@ -69,7 +61,6 @@ export const STATE_COLOURS: Record<SessionState, string> = {
   interrupted: 'yellow',
   archived: 'slate',
 }
-
 export function statesOf(heads: readonly ThreadHead[]): Map<string, SessionState> {
   const byId = new Map(heads.map((one) => [one.id, one]))
   const topOf = (head: ThreadHead): ThreadHead => {
@@ -91,11 +82,9 @@ export function statesOf(heads: readonly ThreadHead[]): Map<string, SessionState
   }
   return states
 }
-
 export function stateOf(head: Pick<ThreadHead, 'state' | 'archived'>): SessionState {
   return head.archived ? 'archived' : (head.state ?? FIRST_STATE)
 }
-
 export function ordered<T extends ThreadHead>(
   heads: readonly T[],
   states: ReadonlyMap<string, SessionState>,
@@ -112,14 +101,12 @@ export function ordered<T extends ThreadHead>(
         b.updated - a.updated,
     )
 }
-
 export function beside<T extends { id: string }>(list: readonly T[], id: string, step: 1 | -1): T | null {
   if (list.length < 2) return null
   const at = list.findIndex((one) => one.id === id)
   if (at < 0) return list[step === 1 ? 0 : list.length - 1] ?? null
   return list[(at + step + list.length) % list.length] ?? null
 }
-
 export const STATE_WORDS: Record<SessionState, string> = {
   running: 'Working',
   waiting: 'Waiting',
@@ -129,7 +116,6 @@ export const STATE_WORDS: Record<SessionState, string> = {
   interrupted: 'Interrupted',
   archived: 'Archived',
 }
-
 export const STATE_MARKS: Record<SessionState, string> = {
   running: 'M6.5 1.8a4.7 4.7 0 1 1-4.7 4.7',
   waiting: 'M6.5 1.8a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 1 0 0-9.4zM6.5 3.9v2.6l1.7 1.1',

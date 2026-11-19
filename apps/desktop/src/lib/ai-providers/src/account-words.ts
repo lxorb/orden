@@ -11,7 +11,6 @@ const ROADS: Record<ProviderKind, string> = {
   gemini: 'API key',
   compatible: KIND_NAMES.compatible,
 }
-
 export function vendorName(vendor: Vendor, accounts: readonly Account[]): string {
   if (vendor === CLAUDE) return KIND_NAMES.anthropic
   if (vendor === OPENAI) return KIND_NAMES.openai
@@ -20,7 +19,6 @@ export function vendorName(vendor: Vendor, accounts: readonly Account[]): string
   if (named) return named
   return KIND_NAMES.compatible
 }
-
 export function accountName(account: Account): string {
   return account.name || ROADS[account.kind]
 }

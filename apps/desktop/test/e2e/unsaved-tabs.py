@@ -1,15 +1,11 @@
 from playwright.sync_api import Browser, Page, Route
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 LAYER = "() => !!document.querySelector('[role=\"dialog\"] form input')"
-
 SHEET = '[role="dialog"][aria-label^="Save changes to"]'
 QUESTION = "() => !!document.querySelector('[role=\"dialog\"][aria-label^=\"Save changes to\"]')"
-
 STATE = """
 () => {
   const ws = window.ordenApp.workspace
@@ -22,33 +18,26 @@ STATE = """
   }
 }
 """
-
 def state(page: Page) -> dict:
     return page.evaluate(STATE)  # type: ignore[no-any-return]
-
 LATE = 400
-
 def late(page: Page) -> None:
     def held(route: Route) -> None:
         page.wait_for_timeout(LATE)
         route.continue_()
-
     page.context.route("**/assets/carrying-*.js", held)
-
 def typed(page: Page, words: str) -> None:
     page.evaluate("() => window.ordenApp.workspace.openBlank()")
     wait_for(page, "document.querySelector('.cm-content')", "the editor")
     page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.type(words)
     page.wait_for_timeout(900)
-
 def drive(browser: Browser, scheme: str) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
     late(page)
     DRIVE.open(page)
     DRIVE.seed(page, "# Trips\n\nWhere we went.\n")
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
-
     say(f"--- {scheme}: the dot ---")
     typed(page, "Groceries\nmilk, eggs, bread")
     now = state(page)
@@ -57,7 +46,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if not now["dotted"]:
         wrong("the new note wears no dot")
     say(f"typed into a new note -> no file, dot: {now['dotted']}")
-
     page.evaluate("() => window.ordenApp.workspace.openWebsite()")
     page.wait_for_timeout(400)
     if state(page)["dotted"]:
@@ -73,7 +61,6 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     DRIVE.settled(page)
     DRIVE.shot(page, f"{scheme}-01-dot")
-
     say(f"--- {scheme}: save ---")
     page.keyboard.press("Control+KeyS")
     wait_for(page, LAYER, "the layer under the tab")
@@ -81,7 +68,6 @@ def drive(browser: Browser, scheme: str) -> None:
     if offered != "Groceries":
         wrong(f"the name offered is {offered!r}")
     DRIVE.shot(page, f"{scheme}-02-save")
-
     page.locator('[role="dialog"] .where').click()
     page.keyboard.type("Trips")
     wait_for(page, "document.querySelector('[role=\"dialog\"] .orden-row')", "the places")
@@ -95,7 +81,6 @@ def drive(browser: Browser, scheme: str) -> None:
     say(f"Ctrl+S, Trips, Enter   -> {now['front']['path']}")
     DRIVE.settled(page)
     DRIVE.shot(page, f"{scheme}-04-saved")
-
     say(f"--- {scheme}: dropped on the list ---")
     typed(page, "Dropped here")
     tab = page.evaluate("() => window.ordenApp.workspace.active.id")
@@ -113,7 +98,6 @@ def drive(browser: Browser, scheme: str) -> None:
             say("a tab dropped below the rows -> saved at the root of the space")
     else:
         wrong("no tab or no stretch below the rows to drag between")
-
     say(f"--- {scheme}: close and reopen ---")
     typed(page, "Scratch thought")
     page.keyboard.press("Control+KeyW")
@@ -150,12 +134,10 @@ def drive(browser: Browser, scheme: str) -> None:
     DRIVE.shot(page, f"{scheme}-06-recently-deleted")
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
-
     page.evaluate("() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Shift+KeyT")
     wait_for(page, "window.ordenApp.workspace.active?.doc === 'Scratch thought'", "the tab back")
     say("Ctrl+Shift+T           -> back with its words")
-
     say(f"--- {scheme}: closed with Save ---")
     typed(page, "Kept thought")
     page.keyboard.press("Control+KeyW")
@@ -171,7 +153,6 @@ def drive(browser: Browser, scheme: str) -> None:
         "the note saved and its tab closed",
     )
     say("Ctrl+W, Save, Enter    -> Kept thought.md, and the tab closed")
-
     say(f"--- {scheme}: a restart ---")
     page.evaluate("() => window.ordenApp.workspace.persist()")
     page.reload(wait_until="domcontentloaded")
@@ -193,7 +174,6 @@ def drive(browser: Browser, scheme: str) -> None:
         wrong("the unsaved note came back without its dot")
     say("reloaded               -> the unsaved note back, words and dot")
     DRIVE.shot(page, f"{scheme}-07-restart")
-
     say(f"--- {scheme}: one tab per web note ---")
     page.evaluate(
         """async () => {
@@ -212,11 +192,9 @@ def drive(browser: Browser, scheme: str) -> None:
     else:
         say("split of a web note    -> the note once, an unsaved web tab beside it")
     page.close()
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
             drive(browser, scheme)
     return DRIVE.verdict("a tab with no file waits for a place, and a web note is open once")
-
 raise SystemExit(main())

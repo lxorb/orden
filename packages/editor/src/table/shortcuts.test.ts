@@ -10,7 +10,6 @@ describe('inline commands in a cell', () => {
       to: 8,
     })
   })
-
   test('unwrap what is already wrapped', () => {
     expect(runInCell(toggleWrap('**'), 'a **word** b', 4, 8)).toEqual({
       text: 'a word b',
@@ -18,7 +17,6 @@ describe('inline commands in a cell', () => {
       to: 6,
     })
   })
-
   test('leave the caret where the editor would', () => {
     expect(runInCell(insertLink, 'see here', 4, 8)).toEqual({
       text: 'see [here]()',

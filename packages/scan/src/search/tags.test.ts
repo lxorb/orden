@@ -8,11 +8,9 @@ describe('the tags in a note', () => {
     expect(tagsIn('> ```\n> #no\n\n#yes')).toEqual(['#yes'])
     expect(tagsIn('- item\n\n  ```\n  #no\n  ```\n#yes')).toEqual(['#yes'])
   })
-
   test('and a link to a heading is no tag, though a tag next to it is', () => {
     expect(tagsIn('## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n')).toEqual(['#setup'])
   })
-
   test('alike on the page and in the index, row by row', () => {
     const rows: [string, string[]][] = [
       ['see https://x.test/?q=#x', []],
@@ -30,57 +28,45 @@ describe('the tags in a note', () => {
     for (const [source, tags] of rows) expect(tagsIn(`${source}\n`), source).toEqual(tags)
   })
 })
-
 describe('the tags in the front matter', () => {
   const front = (lines: string) => tagsIn(`---\n${lines}\n---\n\nwords\n`)
-
   test('are read from a list on the key', () => {
     expect(front('tags: work/orden, other')).toEqual(['#work/orden', '#other'])
   })
-
   test('and from one in brackets, which is how Obsidian writes it', () => {
     expect(front('tags: [work/orden, other]')).toEqual(['#work/orden', '#other'])
   })
-
   test('and from items under the key', () => {
     expect(front('tags:\n  - work/orden\n  - other')).toEqual(['#work/orden', '#other'])
   })
-
   test('with the hash optional, since YAML reads one as a comment', () => {
     expect(front('tags: [#work/orden]')).toEqual(['#work/orden'])
   })
-
   test('under either spelling of the key', () => {
     expect(front('tag: work/orden')).toEqual(['#work/orden'])
   })
-
   test('and nothing under a key that is not the one', () => {
     expect(front('status: done\nproject: Orden')).toEqual([])
   })
-
   test('while the block itself is not read for hashes', () => {
     expect(front('status: done # not a tag')).toEqual([])
   })
-
   test('but not from a comment after the value', () => {
     expect(front('tags:\n  - project # active')).toEqual(['#project'])
     expect(front('tags: [a] # old')).toEqual(['#a'])
     expect(front('tags: a, b # c')).toEqual(['#a', '#b'])
     expect(tagsIn('---\r\ntags:\r\n  - project # active\r\n---\r\n')).toEqual(['#project'])
   })
-
   test('and from items past a blank line or a comment between them', () => {
     expect(front('tags:\n  - a\n\n  - b')).toEqual(['#a', '#b'])
     expect(front('tags:\n  - a\n  # c\n  - b\nother: x')).toEqual(['#a', '#b'])
     expect(tagsIn('---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n')).toEqual(['#a', '#b'])
   })
-
   test('and in the body a cut before the next tag leaves one space', () => {
     const note = 'Tags: #work, #home\n'
     const [cut] = tagCuts(note, 'work')
     expect(cut ? note.slice(0, cut.from) + note.slice(cut.to) : note).toBe('Tags: #home\n')
   })
-
   test('and a tag cut from before a comment keeps the comment a comment', () => {
     const note = '---\ntags: [a, # c\n  b]\n---\n'
     const [cut] = tagCuts(note, 'a')
@@ -88,24 +74,20 @@ describe('the tags in the front matter', () => {
     expect(after).toBe('---\ntags: [ # c\n  b]\n---\n')
   })
 })
-
 describe('where a tag sits', () => {
   test('is the span of its name, hash not included', () => {
     const [use] = tagUses('a #work here')
     expect(use).toEqual({ tag: 'work', from: 3, to: 7 })
   })
-
   test('and asking for a node answers the span of that node alone', () => {
     const body = 'a #work/orden/canvas here'
     expect(tagSpans(body, 'work/orden')).toEqual([{ from: 3, to: 13 }])
     expect(body.slice(3, 13)).toBe('work/orden')
   })
-
   test('so a rename keeps whatever hung off the node', () => {
     const body = '#work/orden and #work/orden/canvas'
     const spans = tagSpans(body, 'work/orden')
     expect(spans).toHaveLength(2)
-
     let out = ''
     let at = 0
     for (const span of spans) {
@@ -114,27 +96,22 @@ describe('where a tag sits', () => {
     }
     expect(out + body.slice(at)).toBe('#work/core and #work/core/canvas')
   })
-
   test('and a longer segment is not the node', () => {
     expect(tagSpans('#work/ordenly', 'work/orden')).toEqual([])
   })
-
   test('folded, because the operator is', () => {
     expect(tagSpans('#Work/Orden', 'work/orden')).toEqual([{ from: 1, to: 11 }])
   })
-
   test('and a slash nobody meant is read the way the tag tree reads it', () => {
     const body = '#a//b and #a//b/c'
     expect(tagSpans(body, 'a/b').map((span) => body.slice(span.from, span.to))).toEqual(['a//b', 'a//b'])
   })
-
   test('as long as the name is written, even where folding makes it longer', () => {
     const body = '#İstanbul trip and #İstanbul/old'
     const spans = tagSpans(body, 'İstanbul')
     expect(spans.map((span) => body.slice(span.from, span.to))).toEqual(['İstanbul', 'İstanbul'])
   })
 })
-
 describe('what taking a tag away has to cut', () => {
   const without = (body: string, path: string) => {
     let out = ''
@@ -145,62 +122,49 @@ describe('what taking a tag away has to cut', () => {
     }
     return out + body.slice(at)
   }
-
   test('the hash as well as the name', () => {
     expect(without('#work', 'work')).toBe('')
   })
-
   test('and the space that was holding it apart', () => {
     expect(without('words #work words', 'work')).toBe('words words')
   })
-
   test('and a space at the end of a line', () => {
     expect(without('words #work\nmore', 'work')).toBe('words\nmore')
   })
-
   test('and everything under the node', () => {
     expect(without('a #work/orden b #work/orden/canvas c', 'work/orden')).toBe('a b c')
   })
-
   test('but not a tag that only starts the same way', () => {
     expect(without('#work/ordenly', 'work/orden')).toBe('#work/ordenly')
   })
-
   test('and a list item that held nothing else goes with its line', () => {
     expect(without('---\ntags:\n  - work\n  - other\n---\n', 'work')).toBe('---\ntags:\n  - other\n---\n')
   })
-
   test('but never cuts into code', () => {
     const note = '> ```css\n> .button { color: #fff; }\n> ```\n'
     expect(without(note, 'fff')).toBe(note)
     expect(tagSpans('    #include <stdio.h>\n', 'include')).toEqual([])
   })
-
   test('and the quotes a tag was written in', () => {
     expect(without('---\ntags: ["a", "b"]\n---\n', 'a')).toBe('---\ntags: ["b"]\n---\n')
     expect(without("---\ntags: ['a']\n---\n", 'a')).toBe('---\ntags: []\n---\n')
     expect(without('---\ntags:\n  - "a"\n  - b\n---\n', 'a')).toBe('---\ntags:\n  - b\n---\n')
   })
-
   test('while one of several on a line leaves the line', () => {
     expect(without('---\ntags: [work, other]\n---\n', 'work')).toBe('---\ntags: [other]\n---\n')
   })
 })
-
 describe('a tag in a flow list across lines', () => {
   const note = '---\ntags: [\n  work, # mine\n  # a line of comment\n  "b",\n]\nz: 1\n---\nrest\n'
-
   test('is a tag, each at its own place', () => {
     expect(tagsIn(note).map((one) => one.replace(/^#/, ''))).toEqual(['work', 'b'])
     const [span] = tagSpans(note, 'work')
     expect(span && note.slice(span.from, span.to)).toBe('work')
   })
-
   test('a list nothing closes reads as it did', () => {
     expect(tagsIn('---\ntags: [a\nz: b\n---\n').map((one) => one.replace(/^#/, ''))).toEqual(['a'])
   })
 })
-
 describe('a tag after a comment in a flow list across lines', () => {
   test('is found where it is written', () => {
     for (const nl of ['\n', '\r\n']) {
@@ -215,7 +179,6 @@ describe('a tag after a comment in a flow list across lines', () => {
     }
   })
 })
-
 test.each<[unknown, ...Parameters<typeof tagsIn>]>([
   [['#work', '#work', '#other'], '#work and #work again, plus #other'],
   [[], '# Heading\n\n## Another'],

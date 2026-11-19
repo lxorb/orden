@@ -1,14 +1,10 @@
 import json
-
 from playwright.sync_api import Browser, Page
-
 from settling import HIDE_CARET, quiet
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
 NOTE = (
     "# Plan\n\n"
     "Some **bold** words, a little *emphasis* and a [link](https://example.com).\n\n"
@@ -16,7 +12,6 @@ NOTE = (
     "- [x] another\n\n"
     "> A quote to finish on.\n"
 )
-
 FACES = """
 () => {
   const ws = window.ordenApp.workspace
@@ -26,14 +21,11 @@ FACES = """
   })
 }
 """
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 def faces(page: Page) -> list[dict]:
     return page.evaluate(FACES)  # type: ignore[no-any-return]
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1400, "height": 820}, color_scheme="light")
     context.add_init_script(HIDE_CARET)
@@ -42,20 +34,17 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     DRIVE.seed(page, NOTE)
     DRIVE.open_note(page, "Plan")
-
     page.evaluate("() => window.ordenApp.workspace.split('row')")
     wait_for(page, "document.querySelectorAll('.pane .cm-content').length === 2", "two editors")
     right = page.evaluate("() => window.ordenApp.workspace.panes.focusedId")
     page.evaluate(f"() => document.querySelector('[data-pane=\"{right}\"] .cm-content').focus()")
     page.keyboard.press("Control+/")
     wait_for(page, f"({FACES})()[1]?.raw", "the right pane in source mode")
-
     seen = faces(page)
     say(f"[split] {json.dumps(seen)}")
     if seen != [{"raw": False, "source": False}, {"raw": True, "source": True}]:
         wrong(f"Ctrl+/ in the right pane did not turn that pane alone: {seen}")
     shot(page, "01-two-faces")
-
     page.reload()
     wait_for(
         page,
@@ -69,7 +58,6 @@ def drive(browser: Browser) -> None:
     if seen != [{"raw": False, "source": False}, {"raw": True, "source": True}]:
         wrong(f"the two faces did not survive a reload: {seen}")
     shot(page, "02-after-reload")
-
     page.evaluate("() => window.ordenApp.settings.show('markdown')")
     row = page.get_by_role("switch", name="Open notes in source mode")
     row.wait_for()
@@ -80,7 +68,6 @@ def drive(browser: Browser) -> None:
     shot(page, "03-settings")
     page.evaluate("() => { window.ordenApp.settings.open = false }")
     wait_for(page, "document.querySelectorAll('.pane .cm-content').length === 2", "both editors after Settings")
-
     seen = faces(page)
     if seen != [{"raw": False, "source": False}, {"raw": True, "source": True}]:
         wrong(f"Settings changed a tab that was already open: {seen}")
@@ -99,5 +86,4 @@ def drive(browser: Browser) -> None:
         wrong(f"a tab opened after the switch is not in source mode beside the two: {fresh}")
     shot(page, "04-new-tab")
     context.close()
-
 raise SystemExit(DRIVE.run(drive, "each pane keeps its own source mode"))

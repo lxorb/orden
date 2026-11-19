@@ -6,12 +6,10 @@ pub struct Input {
     pub idle_ms: u64,
     pub front: bool,
 }
-
 #[tauri::command(async)]
 pub fn input_idle() -> Option<Input> {
     platform::system_input()
 }
-
 #[tauri::command]
 pub async fn device_name() -> Option<String> {
     orden_base::lane::off_the_runtime(|| -> Option<String> {
@@ -19,9 +17,7 @@ pub async fn device_name() -> Option<String> {
     })
     .await
 }
-
 const LONGEST: usize = 60;
-
 fn shown(name: &str) -> Option<String> {
     let one_line: String = name
         .chars()
@@ -46,7 +42,6 @@ fn shown(name: &str) -> Option<String> {
             .to_owned(),
     )
 }
-
 #[cfg(windows)]
 mod platform {
     use windows::Win32::System::SystemInformation::GetTickCount;
@@ -61,7 +56,6 @@ mod platform {
             dwTime: 0,
         };
         let mut process = 0u32;
-
         #[allow(unsafe_code)]
         let (read, now) = unsafe {
             let read = GetLastInputInfo(&raw mut last).as_bool();
@@ -74,18 +68,15 @@ mod platform {
         if !read {
             return None;
         }
-
         Some(Input {
             idle_ms: u64::from(now.wrapping_sub(last.dwTime)),
             front: process != 0 && process == std::process::id(),
         })
     }
-
     pub fn computer_name() -> Option<String> {
         None
     }
 }
-
 #[cfg(target_os = "macos")]
 mod platform {
     use objc2_app_kit::NSRunningApplication;
@@ -94,13 +85,11 @@ mod platform {
 
     const COMBINED: i32 = 0;
     const ANY_INPUT: u32 = !0;
-
     #[allow(unsafe_code)]
     #[link(name = "CoreGraphics", kind = "framework")]
     unsafe extern "C" {
         fn CGEventSourceSecondsSinceLastEventType(state: i32, event: u32) -> f64;
     }
-
     pub fn system_input() -> Option<Input> {
         #[allow(unsafe_code)]
         let seconds = unsafe { CGEventSourceSecondsSinceLastEventType(COMBINED, ANY_INPUT) };
@@ -109,13 +98,11 @@ mod platform {
         }
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let idle_ms = (seconds * 1000.0) as u64;
-
         Some(Input {
             idle_ms,
             front: NSRunningApplication::currentApplication().isActive(),
         })
     }
-
     pub fn computer_name() -> Option<String> {
         let out = orden_base::printed::output(
             std::process::Command::new("scutil").args(["--get", "ComputerName"]),
@@ -127,7 +114,6 @@ mod platform {
             .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
     }
 }
-
 #[cfg(target_os = "linux")]
 mod platform {
     use super::Input;
@@ -138,12 +124,10 @@ mod platform {
             front: said.front,
         })
     }
-
     pub fn computer_name() -> Option<String> {
         None
     }
 }
-
 #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
 mod platform {
     use super::Input;
@@ -151,12 +135,10 @@ mod platform {
     pub fn system_input() -> Option<Input> {
         None
     }
-
     pub fn computer_name() -> Option<String> {
         None
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::shown;
@@ -168,7 +150,6 @@ mod tests {
         assert_eq!(shown("   "), None);
         assert_eq!(shown(&"x".repeat(200)).map(|one| one.len()), Some(60));
     }
-
     #[test]
     fn the_system_is_asked_without_trouble() {
         let _ = super::input_idle();

@@ -15,7 +15,6 @@
   const NOTION = 'Notion'
   const ZEN = 'Zen'
   const listed = $derived(migrating.browserProfiles?.[0]?.browser ?? null)
-
   $effect(() => untrack(() => void migrating.findBrowsers()))
 </script>
 
@@ -244,18 +243,15 @@
     font-weight: var(--weight-row);
     color: var(--text);
   }
-
   :global([data-touch]) .name {
     font-size: var(--touch-text);
   }
-
   .value {
     flex: none;
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
-
   .pair {
     display: flex;
     flex-wrap: wrap;

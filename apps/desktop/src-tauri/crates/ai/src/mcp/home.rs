@@ -6,43 +6,34 @@ pub struct Named {
     pub identifier: &'static str,
     pub version: &'static str,
 }
-
 static NAMED: OnceLock<Named> = OnceLock::new();
-
 pub fn name(named: Named) {
     let _ = NAMED.set(named);
 }
-
 pub fn version() -> &'static str {
     NAMED.get().map_or("", |named| named.version)
 }
-
 pub fn config_dir() -> Option<PathBuf> {
     let identifier = NAMED.get()?.identifier;
     base(|name| std::env::var_os(name)).map(|base| base.join(identifier))
 }
-
 fn absolute(value: Option<OsString>) -> Option<PathBuf> {
     value.map(PathBuf::from).filter(|path| path.is_absolute())
 }
-
 #[cfg(windows)]
 fn base(var: impl Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
     absolute(var("APPDATA"))
         .or_else(|| absolute(var("USERPROFILE")).map(|home| home.join("AppData").join("Roaming")))
 }
-
 #[cfg(target_os = "macos")]
 fn base(var: impl Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
     absolute(var("HOME")).map(|home| home.join("Library").join("Application Support"))
 }
-
 #[cfg(all(unix, not(target_os = "macos")))]
 fn base(var: impl Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
     absolute(var("XDG_CONFIG_HOME"))
         .or_else(|| absolute(var("HOME")).map(|home| home.join(".config")))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -58,14 +49,12 @@ mod tests {
             assert!(dir.ends_with("so.orden.Test"));
         }
     }
-
     #[test]
     fn a_relative_or_empty_variable_says_nothing() {
         assert_eq!(absolute(Some(OsString::from(""))), None);
         assert_eq!(absolute(Some(OsString::from("relative/folder"))), None);
         assert_eq!(absolute(None), None);
     }
-
     #[cfg(windows)]
     #[test]
     fn windows_reads_the_roaming_folder_first() {
@@ -84,7 +73,6 @@ mod tests {
             Some(PathBuf::from(r"C:\Users\b\AppData\Roaming"))
         );
     }
-
     #[cfg(all(unix, not(target_os = "macos")))]
     #[test]
     fn linux_reads_the_xdg_folder_first() {

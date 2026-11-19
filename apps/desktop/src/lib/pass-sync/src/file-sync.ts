@@ -9,17 +9,13 @@ export interface WorldFiles {
   parts(item: string, file: string): Promise<FilePartRow[]>
   drop(item: string): Promise<void>
 }
-
 export type FilesSent = 'sent' | 'again' | 'stuck'
-
 export async function worldFiles(base: string, token: string): Promise<WorldFiles> {
   const [{ fileApi }, { dropFileParts, readFileParts }] = await Promise.all([import('./file-api'), import('./local')])
   return { api: fileApi(base, token), parts: readFileParts, drop: (item) => dropFileParts(item) }
 }
-
 const LATER = new Set([404, 409])
 const NEVER = new Set([400, 403, 413])
-
 async function sentOne(world: SyncWorld, files: WorldFiles, one: FileWaiting): Promise<FilesSent> {
   if (one.gone !== null) {
     await files.api.remove(one.gone, one.item, one.file)
@@ -34,7 +30,6 @@ async function sentOne(world: SyncWorld, files: WorldFiles, one: FileWaiting): P
   }
   return 'sent'
 }
-
 export async function pushedFiles(world: SyncWorld): Promise<FilesSent> {
   const files = await world.files?.()
   if (!files) return 'sent'
@@ -53,7 +48,6 @@ export async function pushedFiles(world: SyncWorld): Promise<FilesSent> {
   }
   return all
 }
-
 export async function forgottenFiles(world: SyncWorld, rows: readonly WireItem[]): Promise<void> {
   const gone = rows.filter((one) => one.deleted).map((one) => one.id)
   const files = gone.length ? await world.files?.() : undefined

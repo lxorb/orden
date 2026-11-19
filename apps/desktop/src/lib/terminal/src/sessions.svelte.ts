@@ -76,7 +76,6 @@ const CONNECTED_AFTER = 10_000
 const FIRST_RETRY = 1000
 const LONGEST_RETRY = 15_000
 const MOST_RETRIES = 40
-
 function held(key: string): Promise<boolean> {
   if (!key) return Promise.resolve(false)
   return invoke<unknown>('pty_held', { key }).then(
@@ -84,37 +83,30 @@ function held(key: string): Promise<boolean> {
     () => false,
   )
 }
-
 function windowsPty(): { backend: 'conpty'; buildNumber: number } | undefined {
   if (platform() !== 'windows') return undefined
-
   const os = (window as { __TAURI_OS_PLUGIN_INTERNALS__?: { version?: string } }).__TAURI_OS_PLUGIN_INTERNALS__
   const build = Number(os?.version?.split('.')[2])
   return { backend: 'conpty', buildNumber: Number.isFinite(build) ? build : 22000 }
 }
-
 function commandOf(event: KeyboardEvent): string | null {
   const chord = event.ctrlKey || event.metaKey || event.altKey || /^F\d+$/.test(event.key)
   if (!chord) return null
-
   const found = SHORTCUTS.find((entry) => entry.scope === 'app' && entry.run && shortcuts.pressed(entry.id, event))
   return found?.id ?? null
 }
-
 async function typeReady(): Promise<void> {
   await Promise.race([
     document.fonts.load(`${shells.size}px ${monospace()}`).catch(() => undefined),
     new Promise((settle) => setTimeout(settle, 1000)),
   ])
 }
-
 class Session {
   readonly host = document.createElement('div')
   readonly term: Terminal
   private readonly fitting = new FitAddon()
   private readonly searching = new SearchAddon()
   private readonly serializing = new SerializeAddon()
-
   private pty: string | null = null
   private source: Source | null = null
   readonly online: boolean
@@ -131,7 +123,6 @@ class Session {
   private startedAt = 0
   private tries = 0
   private retrying: ReturnType<typeof setTimeout> | undefined
-
   live = $state(true)
   machine = $state<Machine | null>(null)
   readonly arrival = new Arrival()
@@ -163,18 +154,14 @@ class Session {
   private unmatched: string | null = null
   private readonly unwatch: () => void
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
-
   offline = $state(false)
   writer = $state(true)
-
   get status(): Status | null {
     return this.online && !this.live && !this.offline ? this.arrival.status : null
   }
-
   finding = $state(false)
   query = $state('')
   found = $state({ count: 0, at: -1 })
-
   constructor(readonly tab: Tab) {
     this.online = isOnlineTab(tab)
     this.live = !this.online
@@ -199,7 +186,6 @@ class Session {
       },
       ...(conpty ? { windowsPty: conpty } : {}),
     })
-
     this.echo = this.online
       ? new LocalEcho(
           this.term,
@@ -207,14 +193,12 @@ class Session {
             this.live && this.mayType && this.front.program === null && this.exited === null && this.resumable === null,
         )
       : null
-
     this.term.loadAddon(this.fitting)
     this.term.loadAddon(this.searching)
     this.term.loadAddon(this.serializing)
     this.term.loadAddon(new Unicode11Addon())
     this.term.unicode.activeVersion = '11'
     this.term.registerLinkProvider(new AddressLinks(this.term, (uri) => (this.pointed = uri)))
-
     this.term.onData((data) => this.typed(data, false))
     this.term.onBinary((data) => this.typed(data, true))
     this.term.onResize(({ cols, rows }) => this.sized(cols, rows))
@@ -230,7 +214,6 @@ class Session {
     this.searching.onDidChangeResults(({ resultIndex, resultCount }) => {
       this.found = { count: resultCount, at: resultIndex }
     })
-
     this.host.addEventListener('paste', (event) => this.pasting(event), true)
     this.host.addEventListener('mouseup', () => this.copyChosen())
     listenOver(this.host, (event) => {
@@ -260,7 +243,6 @@ class Session {
       true,
     )
     this.watching.observe(this.host)
-
     this.unwatch = $effect.root(() => {
       $effect(() => {
         const on = this.online && this.live
@@ -275,7 +257,6 @@ class Session {
       })
     })
   }
-
   private named(spec = this.spec(), shell = this.tab.name) {
     if (this.online) {
       const file = termName(shell)
@@ -292,14 +273,12 @@ class Session {
       marks.set(this.tab.id, this.machine)
       return
     }
-
     const host = hostIdOf(spec.shell)
     if (host !== null) {
       const about = remote.byId(host)
       this.running(spec.name ? null : (about?.name ?? shell), null, host, about?.colour ?? null)
       return
     }
-
     const program = this.front.program
     const name = spec.name
       ? null
@@ -312,55 +291,44 @@ class Session {
         })
     this.running(name, program, null, null)
   }
-
   private running(name: string | null, program: string | null, host: string | null, colour: string | null) {
     const now = this.tab.running
     const same = now?.name === name && now.program === program && now.host === host && now.colour === colour
     if (!same) this.tab.running = { name, program, host, colour }
   }
-
   private get remote(): boolean {
     return this.online || hostIdOf(this.spec().shell) !== null
   }
-
   private titled(title: string) {
     if (this.online) return
     if (this.front.titled(title)) this.askSoon()
     this.named()
   }
-
   private get reachedHere(): boolean {
     return this.remote && this.underneath === null
   }
-
   private askSoon(after = ASK_AFTER) {
     if (this.asking !== undefined || this.spec().shell.startsWith('wsl:') || this.reachedHere) return
-
     const wait = Math.max(after, this.asked + ASK_EVERY - Date.now())
     this.asking = setTimeout(() => {
       this.asking = undefined
       void this.askFront()
     }, wait)
   }
-
   private async askFront() {
     const pty = this.pty
     const source = this.source
     if (pty === null || !(source instanceof PtySource)) return
-
     this.asked = Date.now()
     const found = await source.program()
     if (pty !== this.pty || found === undefined) return
-
     this.front.looked(found)
     this.named()
-
     if (found !== 'ssh') {
       this.unmatched = null
       this.giveBack()
     } else if (this.underneath !== null || hostIdOf(this.spec().shell) === null) void this.adopt(pty, source)
   }
-
   private async adopt(pty: string, source: PtySource) {
     const reached = await source.ssh()
     if (pty !== this.pty) return
@@ -381,7 +349,6 @@ class Session {
       if (host?.id === source.reached) return
       this.giveBack()
     }
-
     const spec = this.spec()
     if (!host || hostIdOf(spec.shell) !== null) return
     this.underneath = spec.shell
@@ -389,7 +356,6 @@ class Session {
     remote.reached(host.id)
     this.respec({ ...spec, shell: hostShell(host.id), via: spec.shell })
   }
-
   private giveBack() {
     const shell = this.underneath
     if (shell === null) return
@@ -399,7 +365,6 @@ class Session {
     delete spec.via
     this.respec(spec)
   }
-
   private spec(): Spec {
     return (
       readSpec(this.tab.doc) ?? {
@@ -410,19 +375,15 @@ class Session {
       }
     )
   }
-
   private respec(spec: Spec) {
     this.tab.note.replace(writeSpec(spec), false)
     workspace.scheduleSession()
   }
-
   private place(): Place {
     return this.online ? { space: null, key: this.onlineKey } : placeOf(this.tab)
   }
-
   async attach(place: HTMLElement, focus: boolean): Promise<void> {
     place.append(this.host)
-
     if (!this.opened) {
       this.opened = true
       this.coming ??= this.lastScreen()
@@ -431,7 +392,6 @@ class Session {
         this.opened = false
         return
       }
-
       this.coming = null
       this.term.open(this.host)
       this.drawn = true
@@ -439,17 +399,14 @@ class Session {
     } else {
       this.fit()
     }
-
     if (focus) this.focus()
   }
-
   private async lastScreen(): Promise<History | null> {
     if (this.online) {
       const { cacheKey } = await import('./online/source')
       this.onlineKey = await cacheKey(this.tab.doc, this.tab.path)
       return this.onlineKey && shells.restoring ? historyOf(this.place()) : null
     }
-
     const spec = this.spec()
     const twin = [...sessions.values()].some((other) => other !== this && other.opened && other.spec().key === spec.key)
     if (twin || !spec.key) {
@@ -458,11 +415,9 @@ class Session {
       this.respec({ ...spec, key })
       return null
     }
-
     this.stillHeld = await held(spec.key)
     return shells.restoring && !this.stillHeld ? historyOf(this.place()) : null
   }
-
   private replay(history: History | null) {
     const fitted = () => {
       this.replaying = false
@@ -473,11 +428,9 @@ class Session {
       this.begin()
       return
     }
-
     this.replaying = true
     const { cols, rows } = history
     if (cols >= 2 && cols <= 1000 && rows >= 1 && rows <= 500) this.term.resize(cols, rows)
-
     if (this.online) {
       this.term.write(history.text, () => {
         fitted()
@@ -485,10 +438,8 @@ class Session {
       })
       return
     }
-
     const when = localDate(history.at, { dateStyle: 'medium', timeStyle: 'short' })
     const words = `Restored ${when}`
-
     this.term.write(history.text, () => {
       const off = tidied(this.left(), false)
       fitted()
@@ -496,17 +447,14 @@ class Session {
       this.term.write(off + under, () => this.begin())
     })
   }
-
   private begin() {
     if (!this.online && this.remote && !madeNow(this.spec().key) && !this.stillHeld) this.wait()
     else void this.start()
   }
-
   private wait() {
     this.exited = -1
     this.offline = true
   }
-
   reconnect() {
     if (this.online) {
       if (!this.drawn) return
@@ -519,16 +467,13 @@ class Session {
     if (this.pty !== null || !this.drawn) return
     const host = hostIdOf(this.spec().shell)
     if (host !== null) remote.connected(host)
-
     this.term.write(`${tidied(this.left(), false)}\r\n`)
     void this.start()
     this.focus()
   }
-
   async usage(): Promise<Usage | null> {
     return (await this.source?.usage?.()) ?? null
   }
-
   retry() {
     if (this.arrival.holder !== null) {
       this.source?.take?.()
@@ -543,11 +488,9 @@ class Session {
       if (await openOnline(true)) workspace.close(this.tab.id, false)
     })
   }
-
   private left(): Left {
     return { modes: this.term.modes, alternate: this.term.buffer.active.type === 'alternate' }
   }
-
   agentBlocked(): { why: string; lasting: boolean } | null {
     if (!this.online) {
       return this.pty === null ? { why: 'its shell is not running', lasting: false } : null
@@ -570,19 +513,15 @@ class Session {
     }
     return null
   }
-
   get current(): boolean {
     return this.online ? this.live : this.pty !== null
   }
-
   get agentHeld(): boolean {
     return this.arrival.holder !== null
   }
-
   get ended(): boolean {
     return this.exited !== null && !this.offline
   }
-
   agentTyped(data: string): string | null {
     const blocked = this.agentBlocked()
     if (blocked !== null) return blocked.why
@@ -596,7 +535,6 @@ class Session {
     void this.send()
     return null
   }
-
   startAgain(): void {
     if (this.exited === null || this.offline) return
     if (this.online) {
@@ -608,26 +546,21 @@ class Session {
     }
     this.typed('\r', false)
   }
-
   detach() {
     this.remember()
     this.host.remove()
   }
-
   focus() {
     if (this.drawn) this.term.focus()
   }
-
   fit() {
     if (!this.drawn || this.replaying || !this.host.isConnected) return
     this.fitting.fit()
   }
-
   size(pixels: number) {
     this.term.options.fontSize = pixels
     this.fit()
   }
-
   repaint(theme: ITheme, family: string, contrast: number) {
     this.term.options.theme = theme
     if (this.term.options.minimumContrastRatio !== contrast) {
@@ -638,24 +571,20 @@ class Session {
       this.fit()
     }
   }
-
   get detachable(): boolean {
     if (this.online || this.pty === null) return false
     return hostIdOf(this.spec().shell) === null || this.heldHost !== null
   }
-
   takeOver() {
     if (this.writer || this.online) return
     this.source?.take?.()
   }
-
   detachSession() {
     if (!this.detachable) return
     this.detached = true
     this.source?.detach?.()
     workspace.close(this.tab.id)
   }
-
   end() {
     clearTimeout(this.retrying)
     clearTimeout(this.relinkSlow)
@@ -672,7 +601,6 @@ class Session {
     } else {
       void (this.coming ?? historyOf(place)).then((last) => dropHistory(place, last))
     }
-
     if (this.online || this.pty !== null) {
       if (!this.detached) this.source?.end()
     } else this.endHeld()
@@ -689,26 +617,22 @@ class Session {
     this.term.dispose()
     this.host.remove()
   }
-
   private endHeld() {
     const spec = this.spec()
     const host = hostIdOf(spec.shell)
     if (host === null || !this.offline || isPlain(host) || spec.via || !spec.key) return
     void invoke('remote_end', { host, key: spec.key }).catch(() => undefined)
   }
-
   remember() {
     clearTimeout(this.resting)
     this.resting = undefined
     if (!this.changed || !shells.restoring) return
-
     const history = this.snapshot()
     if (!history) return
     this.changed = false
     this.since = 0
     keepHistory(this.place(), history)
   }
-
   screenNow(): { text: string; cols: number } | null {
     if (!this.drawn) return null
     const buffer = this.term.buffer.active
@@ -718,7 +642,6 @@ class Session {
     while (lines.length && !lines[lines.length - 1]?.trim()) lines.pop()
     return lines.length ? { text: lines.join('\n'), cols: this.term.cols } : null
   }
-
   private snapshot(): History | null {
     if (!this.drawn) return null
     const text = fitted((lines) =>
@@ -726,7 +649,6 @@ class Session {
     )
     return text ? { cols: this.term.cols, rows: this.term.rows, at: Date.now(), text } : null
   }
-
   private printed() {
     this.changed = true
     const now = Date.now()
@@ -734,7 +656,6 @@ class Session {
     clearTimeout(this.resting)
     this.resting = setTimeout(() => this.remember(), Math.min(QUIET, this.since + FLOOD - now))
   }
-
   private async start(): Promise<void> {
     this.underneath = null
     this.unmatched = null
@@ -756,7 +677,6 @@ class Session {
     if (!this.online) setPty(this.tab.id, id)
     this.front = new Front(spec.shell.startsWith('wsl:'))
     this.named()
-
     const source = this.online
       ? (await import('./online/source')).onlineSource(
           () => this.tab.path,
@@ -773,38 +693,31 @@ class Session {
       return
     }
     this.source = source
-
     const { cols, rows } = this.term
     this.spawning = source.start(cols, rows, (what) => this.heard(id, what))
-
     try {
       await this.spawning
     } catch {
       if (this.pty === id) await this.failed(spec)
       return
     }
-
     if (this.term.cols !== cols || this.term.rows !== rows) this.sized(this.term.cols, this.term.rows)
   }
-
   private ptySource(id: string, spec: Spec): PtySource {
     const host = hostIdOf(spec.shell)
     const plain = host !== null && isPlain(host)
     this.heldHost = host !== null && !plain ? host : null
     return new PtySource(id, spec.shell, spec.folder, this.remote, spec.key || id, plain, spec.name)
   }
-
   private async failed(spec: Spec) {
     this.pty = null
     this.source = null
     setPty(this.tab.id, null)
-
     if (this.remote) {
       this.say(`Could not connect to ${this.tab.shown}`)
       this.wait()
       return
     }
-
     await shells.ask()
     const instead = shells.chosen
     if (!this.fellBack && instead && instead.id !== spec.shell) {
@@ -814,15 +727,12 @@ class Session {
       void this.start()
       return
     }
-
     this.exited = -1
     this.say(`Could not start ${this.tab.shown}`)
   }
-
   private heard(id: string, what: Said) {
     if (id !== this.pty) return
     if (this.online) this.arrival.heard()
-
     if ('out' in what) {
       const bytes = what.out
       if (this.online && !this.live) this.landed()
@@ -872,7 +782,6 @@ class Session {
       this.wait()
     }
   }
-
   private linkDown(starting: boolean) {
     this.relinking = true
     if (!this.live) {
@@ -889,7 +798,6 @@ class Session {
       else this.arrival.relink(true)
     }, RELINK_GRACE)
   }
-
   private linkUp() {
     clearTimeout(this.relinkSlow)
     this.arrival.relink(false)
@@ -897,7 +805,6 @@ class Session {
     this.relinking = false
     void this.send()
   }
-
   private landed() {
     this.linkUp()
     this.screened = true
@@ -905,7 +812,6 @@ class Session {
     this.arrival.arrived()
     for (const note of this.notes.splice(0)) this.say(note)
   }
-
   private screen(screen: Extract<Said, { screen: string }>) {
     this.echo?.reset()
     this.term.reset()
@@ -917,7 +823,6 @@ class Session {
       if (screen.restored) this.resumable = resumeCommand(screen.restored.program)
     })
   }
-
   private applied(cols: number, rows: number) {
     if (cols === this.term.cols && rows === this.term.rows) return
     this.applying = true
@@ -927,7 +832,6 @@ class Session {
       this.applying = false
     }
   }
-
   resume() {
     const command = this.resumable
     this.resumable = null
@@ -936,19 +840,16 @@ class Session {
     void this.send()
     this.focus()
   }
-
   private through(bytes: Uint8Array, drawn: () => void) {
     if (this.behind) {
       this.behind.push([bytes, drawn])
       return
     }
-
     const end = promptEnd(bytes)
     if (end < 0) {
       this.term.write(bytes, drawn)
       return
     }
-
     this.marks = true
     this.front.prompted()
     this.named()
@@ -957,7 +858,6 @@ class Session {
     this.term.write(bytes.subarray(0, end), () => {
       const off = tidied(this.left(), pastesItself(this.underneath ?? this.spec().shell))
       if (off) this.term.write(off)
-
       const waiting = this.behind ?? []
       this.behind = null
       const rest = bytes.subarray(end)
@@ -966,20 +866,16 @@ class Session {
       for (const [one, done] of waiting) this.through(one, done)
     })
   }
-
   private async idle() {
     if (this.front.worthLooking) this.askSoon(0)
-
     const pty = this.pty
     const source = this.source
     if (this.marks || pty === null || this.spec().shell.startsWith('wsl:') || this.remote) return
     if (!(source instanceof PtySource) || !reporting(this.left())) return
-
     const busy = await source.busy()
     if (busy || pty !== this.pty || !reporting(this.left())) return
     this.term.write(tidied(this.left(), true, false))
   }
-
   private exitedWith(code: number) {
     if (this.online) {
       setEnded(this.tab.id, true)
@@ -989,18 +885,15 @@ class Session {
       this.say(`Exited with code ${code}`)
       return
     }
-
     this.pty = null
     setPty(this.tab.id, null)
     this.giveBack()
     this.front = new Front(false)
     this.named()
-
     if (code === 0 && workspace.tabs.some((one) => one.id === this.tab.id)) {
       workspace.close(this.tab.id)
       return
     }
-
     const host = this.heldHost
     if (host !== null) {
       const lasted = Date.now() - this.startedAt > CONNECTED_AFTER
@@ -1017,16 +910,13 @@ class Session {
         return
       }
     }
-
     if (this.remote) {
       this.wait()
       return
     }
-
     this.exited = code
     this.say(`Exited with code ${code}`)
   }
-
   private reconnectSoon(host: string) {
     this.tries += 1
     if (this.tries > MOST_RETRIES) {
@@ -1045,11 +935,9 @@ class Session {
       void this.start()
     }, after)
   }
-
   private say(words: string) {
     this.term.write(`\r\n\x1b[2m${words}\x1b[22m\r\n`)
   }
-
   private typed(data: string, binary: boolean) {
     if (this.online) {
       this.typedOnline(data, binary)
@@ -1064,16 +952,13 @@ class Session {
       }
       return
     }
-
     this.outgoing.push({ data, binary })
     void this.send()
-
     if (binary || !data.includes('\r') || this.reachedHere) return
     this.front.entered()
     this.askSoon()
     if (KERNEL_SAYS.includes(platform())) setTimeout(() => void this.lookWhere(), AFTER_ENTER)
   }
-
   private typedOnline(data: string, binary: boolean) {
     if (this.offline || this.arrival.failure !== null || this.arrival.holder !== null) {
       if (data === '\r') this.retry()
@@ -1092,18 +977,14 @@ class Session {
       return
     }
     if (!this.mayType) return
-
     this.echo?.typed(binary ? '' : data)
     this.outgoing.push({ data, binary })
     void this.send()
   }
-
   private async send() {
     if (this.sending) return
     this.sending = true
-
     await this.spawning.catch(() => undefined)
-
     while (this.outgoing.length && this.pty !== null && this.source && !this.relinking) {
       const binary = this.outgoing[0]?.binary ?? false
       let end = 1
@@ -1112,48 +993,38 @@ class Session {
         .splice(0, end)
         .map((one) => one.data)
         .join('')
-
       await this.source.write(data, binary)
     }
-
     if (!this.relinking) this.outgoing = []
     this.sending = false
   }
-
   private sized(cols: number, rows: number) {
     if (this.applying) return
     if (this.pty !== null) this.source?.resize(cols, rows)
   }
-
   private async lookWhere() {
     const source = this.source
     if (this.pty === null || !(source instanceof PtySource)) return
-
     const folder = await source.where()
     const spec = this.spec()
     if (folder && folder !== spec.folder) this.respec({ ...spec, folder })
   }
-
   private reported(code: 7 | 9, data: string): boolean {
     if (code === 9 && !data.startsWith('9;')) return false
     if (this.remote) return true
-
     const spec = this.spec()
     const folder = reportedFolder(code, data, platform() === 'windows', spec.shell.startsWith('wsl:'))
     if (folder && folder !== spec.folder) this.respec({ ...spec, folder })
     return true
   }
-
   private get inFront(): boolean {
     return this.drawn && this.host.isConnected && document.hasFocus()
   }
-
   private clipboard(data: string): boolean {
     const text = clipboardWrite(data)
     if (text !== null && this.inFront && (!this.online || this.mayType)) void copyText(text)
     return true
   }
-
   private noticed(notice: Notice | null): boolean {
     if (!notice) return false
     const now = Date.now()
@@ -1165,13 +1036,11 @@ class Session {
     })
     return true
   }
-
   private offer(url: string) {
     clearTimeout(this.offerGoes)
     this.offered = url
     this.offerGoes = setTimeout(() => (this.offered = null), OFFERED_FOR)
   }
-
   openOffered() {
     const url = this.offered
     clearTimeout(this.offerGoes)
@@ -1179,11 +1048,9 @@ class Session {
     if (url) window.open(url, '_blank', 'noopener')
     this.focus()
   }
-
   private pointed: string | null = null
   private pressing: string | null = null
   private spending = false
-
   private pressLink(event: MouseEvent) {
     this.spending = false
     const uri = this.pointed
@@ -1192,7 +1059,6 @@ class Session {
     event.stopPropagation()
     this.pressing = uri
   }
-
   private releaseLink(event: MouseEvent) {
     const uri = this.pressing
     if (uri === null) return
@@ -1202,20 +1068,16 @@ class Session {
     event.stopPropagation()
     if (this.pointed === uri) workspace.openPage(uri, tabAsk(event), this.tab.id)
   }
-
   private spentLink(event: MouseEvent) {
     if (!this.spending) return
     this.spending = false
     event.preventDefault()
     event.stopPropagation()
   }
-
   private pressed(event: KeyboardEvent): boolean {
     if (event.type !== 'keydown') return true
-
     const command = commandOf(event)
     let route = routeKey(event, shortcuts.platform, command, shortcuts.pressed('edit.find', event))
-
     if (route === 'ask') {
       const way = command === null ? 'shell' : shells.ways[command]
       if (way === undefined) {
@@ -1226,25 +1088,21 @@ class Session {
       }
       route = way
     }
-
     if (route === 'shell' && this.remote && imageKey(event, shortcuts.platform)) {
       event.preventDefault()
       event.stopPropagation()
       void this.pictureOrKey(imageKeyTyped(event))
       return false
     }
-
     if (route === 'shell') {
       event.stopPropagation()
       return true
     }
     if (route === 'app' || route === 'paste') return false
-
     event.preventDefault()
     this.act(route)
     return false
   }
-
   private async askWhich(command: string, event: KeyboardEvent) {
     const pressed = {
       key: event.key,
@@ -1270,7 +1128,6 @@ class Session {
       if (typed !== null) this.term.input(typed, true)
     }
   }
-
   private act(route: Exclude<Route, 'shell' | 'app' | 'paste' | 'ask'>) {
     const acts: Record<typeof route, () => unknown> = {
       copy: () => this.copyChosen(),
@@ -1283,12 +1140,10 @@ class Session {
     }
     acts[route]()
   }
-
   private copyChosen() {
     const chosen = chosenText(this.term)
     if (chosen) void copyText(chosen)
   }
-
   private pasting(event: ClipboardEvent) {
     event.preventDefault()
     event.stopImmediatePropagation()
@@ -1296,34 +1151,28 @@ class Session {
     if (image) void import('./images').then(({ pictureOf }) => this.carry([pictureOf(image)]))
     else void this.paste(event.clipboardData?.getData('text/plain') ?? '')
   }
-
   private async pasteFromMenu() {
     const text = await navigator.clipboard.readText().catch(() => '')
     if (text) await this.paste(text)
     else await this.pictureOrKey('')
   }
-
   private async pictureOrKey(key: string) {
     const { clipboardPicture } = await import('./images')
     const picture = await clipboardPicture()
     if (picture) await this.carry([picture])
     else if (key) this.term.input(key, true)
   }
-
   private async carry(pictures: (Picture | null)[]) {
     const source = this.source
     const some = pictures.filter((one) => one !== null)
     if (source === null || !some.length || (this.online && !this.mayType)) return
-
     const { carried } = await import('./images')
     const paths = await carried(source, some, this.online ? '/bin/sh' : await this.speaker())
     if (paths !== null && this.source === source) this.term.paste(paths)
     this.focus()
   }
-
   async paste(text: string) {
     if (!text || this.pty === null) return
-
     if (asksFirst(text, this.term.modes.bracketedPasteMode)) {
       const { prompt } = await import('../../ui-kit/src/api')
       const lines = linesIn(text)
@@ -1334,28 +1183,23 @@ class Session {
       this.focus()
       if (!sure) return
     }
-
     this.term.paste(pasted(text))
   }
-
   private dropped(event: DragEvent) {
     const transfer = event.dataTransfer
     if (this.pty === null || !takesDrop(transfer)) return
-
     event.preventDefault()
     const rows = isTreeDrag(transfer) ? dragged(transfer) : isExplorerDrag(transfer) ? outsideRows(transfer) : null
     if (rows !== null) {
       this.droppedRows(rows)
       return
     }
-
     const files = [...(transfer?.files ?? [])]
     const pictures = this.remote ? files.filter((file) => imageKindOf(file.type) !== null) : []
     if (pictures.length) {
       void import('./images').then(({ pictureOf }) => this.carry(pictures.map(pictureOf)))
     }
   }
-
   private droppedRows(paths: readonly string[]) {
     const pictures = this.remote ? paths.filter((path) => imageKindAt(path) !== null) : []
     if (pictures.length) {
@@ -1364,7 +1208,6 @@ class Session {
     }
     if (!this.online) void this.speak(paths)
   }
-
   private async speaker(): Promise<string> {
     const shell = this.spec().shell
     const host = hostIdOf(shell)
@@ -1373,11 +1216,9 @@ class Session {
     if (!(source instanceof PtySource) || (await source.program()) !== 'ssh') return this.underneath ?? shell
     return host === null ? 'ssh:' : ((await remoteShell(host)) ?? shell)
   }
-
   private async speak(paths: readonly string[]) {
     const pty = this.pty
     if (!paths.length || pty === null) return
-
     const shell = await this.speaker()
     if (pty !== this.pty) return
     const { said, left } = spokenPaths(paths, shell)
@@ -1385,11 +1226,9 @@ class Session {
     if (left) busy.failed('A name this shell would misread was left out')
     this.focus()
   }
-
   private showMenu(event: MouseEvent) {
     const mac = shortcuts.platform === 'mac'
     const hint = (win: string, macKey: string) => showCombination(mac ? macKey : win, shortcuts.platform)
-
     const rows: MenuEntry[] = [
       {
         label: 'Copy',
@@ -1408,10 +1247,8 @@ class Session {
       { label: 'Clear', run: () => this.term.clear() },
       ...(this.detachable ? [DIVIDER, { label: 'Detach', run: () => this.detachSession() }] : []),
     ]
-
     menu.show(event, rows)
   }
-
   look(query: string, back = false) {
     this.query = query
     if (!query) {
@@ -1419,17 +1256,14 @@ class Session {
       this.found = { count: 0, at: -1 }
       return
     }
-
     if (back) this.searching.findPrevious(query, searchOptions(false))
     else this.searching.findNext(query, searchOptions(true))
   }
-
   step(by: number) {
     if (!this.query) return
     if (by < 0) this.searching.findPrevious(this.query, searchOptions(false))
     else this.searching.findNext(this.query, searchOptions(false))
   }
-
   closeFind() {
     this.finding = false
     this.searching.clearDecorations()
@@ -1437,7 +1271,6 @@ class Session {
     this.focus()
   }
 }
-
 function searchOptions(incremental: boolean): ISearchOptions {
   const colours = findColours()
   return {
@@ -1450,31 +1283,24 @@ function searchOptions(incremental: boolean): ISearchOptions {
     },
   }
 }
-
 function placeOf(tab: Tab): Place {
   const home = (tab.note as { home?: string | null }).home ?? null
   return { space: home, key: readSpec(tab.doc)?.key ?? '' }
 }
-
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry of screens; nothing renders from it
 const sessions = new Map<string, Session>()
-
 export async function usageOfTab(tab: Tab): Promise<Usage | null> {
   return (await sessions.get(tab.id)?.usage()) ?? null
 }
-
 export function screenOf(tab: { readonly id: string }): { text: string; cols: number } | null {
   return sessions.get(tab.id)?.screenNow() ?? null
 }
-
 export function sessionOf(tab: Tab): Session {
   let one = sessions.get(tab.id)
   if (!one) sessions.set(tab.id, (one = new Session(tab)))
   return one
 }
-
 export type { Session }
-
 function watch() {
   $effect.root(() => {
     $effect(() => {
@@ -1487,7 +1313,6 @@ function watch() {
         }
       })
     })
-
     $effect(() => {
       const pixels = shells.size
       untrack(() => {
@@ -1495,7 +1320,6 @@ function watch() {
       })
     })
   })
-
   let frame = 0
   let painted = ''
   const repaint = (themed = shells.themed) => {
@@ -1525,21 +1349,16 @@ function watch() {
     attributeFilter: ['data-theme', 'style', 'class'],
   })
   page.observe(document.head, { childList: true, subtree: true, characterData: true })
-
   owes(() => {
     for (const one of sessions.values()) one.remember()
   })
-
   moveLegacy(workspace.tabs.filter((tab) => tab.kind === 'terminal' && !isOnlineTab(tab)).map(placeOf))
 }
-
 watch()
-
 function laid(theme: ITheme): ITheme {
   chrome.terminal = terminalGround(theme)
   return theme
 }
-
 function takesDrop(transfer: DataTransfer | null): boolean {
   return isTreeDrag(transfer) || isExplorerDrag(transfer) || isFileDrop(transfer)
 }

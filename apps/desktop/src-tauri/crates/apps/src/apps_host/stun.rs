@@ -3,12 +3,10 @@ use std::time::{Duration, Instant};
 
 pub const SERVER: &str = "stun.cloudflare.com:3478";
 const WAIT: Duration = Duration::from_millis(400);
-
 const MAGIC: u32 = 0x2112_a442;
 const BINDING_REQUEST: u16 = 0x0001;
 const BINDING_SUCCESS: u16 = 0x0101;
 const XOR_MAPPED_ADDRESS: u16 = 0x0020;
-
 pub fn request(id: [u8; 12]) -> [u8; 20] {
     let mut out = [0_u8; 20];
     out[..2].copy_from_slice(&BINDING_REQUEST.to_be_bytes());
@@ -16,7 +14,6 @@ pub fn request(id: [u8; 12]) -> [u8; 20] {
     out[8..].copy_from_slice(&id);
     out
 }
-
 pub fn mapped(answer: &[u8], id: [u8; 12]) -> Option<SocketAddr> {
     if answer.len() < 20
         || answer[..2] != BINDING_SUCCESS.to_be_bytes()
@@ -39,7 +36,6 @@ pub fn mapped(answer: &[u8], id: [u8; 12]) -> Option<SocketAddr> {
     }
     None
 }
-
 fn xor_address(value: &[u8], id: [u8; 12]) -> Option<SocketAddr> {
     let magic = MAGIC.to_be_bytes();
     let port = u16::from_be_bytes([value.get(2)? ^ magic[0], value.get(3)? ^ magic[1]]);
@@ -64,7 +60,6 @@ fn xor_address(value: &[u8], id: [u8; 12]) -> Option<SocketAddr> {
         _ => None,
     }
 }
-
 pub fn reflexive(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
     let local = socket.local_addr().ok()?;
     let server = server
@@ -89,13 +84,11 @@ pub fn reflexive(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
         return (found != local).then_some(found);
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     const ID: [u8; 12] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
     fn success(addr: SocketAddr, before: &[u8]) -> Vec<u8> {
         let magic = MAGIC.to_be_bytes();
         let mut value = vec![0_u8];
@@ -124,7 +117,6 @@ mod tests {
         out.extend_from_slice(&body);
         out
     }
-
     #[test]
     fn asks_for_a_binding_with_the_magic_cookie() {
         let asked = request(ID);
@@ -132,7 +124,6 @@ mod tests {
         assert_eq!(&asked[4..8], &[0x21, 0x12, 0xa4, 0x42]);
         assert_eq!(&asked[8..], &ID);
     }
-
     #[test]
     fn reads_the_mapped_address_past_another_attribute() {
         let v4: SocketAddr = "203.0.113.7:54321".parse().unwrap();
@@ -141,7 +132,6 @@ mod tests {
         let v6: SocketAddr = "[2001:db8::1]:3478".parse().unwrap();
         assert_eq!(mapped(&success(v6, &[]), ID), Some(v6));
     }
-
     #[test]
     fn takes_no_answer_to_another_question() {
         let v4: SocketAddr = "203.0.113.7:1".parse().unwrap();
@@ -152,7 +142,6 @@ mod tests {
         cut.truncate(answer.len() - 2);
         assert_eq!(mapped(&cut, ID), None);
     }
-
     #[test]
     fn learns_the_address_a_server_sees() {
         let server = UdpSocket::bind("127.0.0.1:0").unwrap();

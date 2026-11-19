@@ -4,26 +4,20 @@ import type { FileAction } from '../../file-undo/src/api'
 import type { workspace } from './workspace.svelte'
 
 type Workspace = typeof workspace
-
 type Outside = Extract<FileAction, { kind: 'outside' }>
-
 type Archiving = Extract<FileAction, { kind: 'archive' | 'unarchive' }>
-
 interface RowsCopied {
   readonly numbersAt: (path: string) => boolean
   readonly withoutIds: (path: string, text: string) => string | null
 }
-
 interface PaperFollowing {
   readonly paperMoved: (from: string, to: string) => void
   readonly paperGone: (path: string) => void
 }
-
 interface PaperSheets {
   readonly paperRewritten: (path: string) => void
   readonly sheetArrived: (path: string) => void
 }
-
 interface PdfPages {
   readonly heldBy: (path: string, root: string | null) => Promise<string | null>
   readonly asItself: (path: string) => Promise<string>
@@ -40,7 +34,6 @@ interface PdfPages {
   readonly draftPdf: (ws: Workspace, from: string) => Promise<Tab | null>
   readonly keepPaper: (ws: Workspace, note: NoteDoc, path: string) => Promise<void>
 }
-
 interface WebSites {
   readonly heldElsewhere: (path: string) => Promise<boolean>
   readonly showElsewhere: (path: string) => Promise<void>
@@ -51,13 +44,11 @@ interface WebSites {
   readonly aimed: (ws: Workspace, tab: Tab, url: string) => Promise<void>
   readonly zoomStep: (tab: string, step: 'in' | 'out' | 'reset') => Promise<void>
 }
-
 interface WebData {
   readonly ownStore: (own: string | null | undefined) => string | null
   readonly freshOwn: () => string
   readonly copyingOut: <T>(own: string, copy: () => Promise<T>) => Promise<T>
 }
-
 interface Scratchpad {
   readonly on: boolean
   readonly holds: (path: string) => boolean
@@ -65,7 +56,6 @@ interface Scratchpad {
   readonly show: (take?: boolean) => void
   readonly hide: () => void
 }
-
 export interface WorkspaceServices {
   readonly scratchpad: Scratchpad
   readonly askPlace: (tab: string, saved: () => void) => void
@@ -88,11 +78,8 @@ export interface WorkspaceServices {
   readonly sites: WebSites
   readonly webData: () => Promise<WebData>
 }
-
 const none = () => Promise.resolve()
-
 const missing = () => Promise.reject(new Error('not served'))
-
 let served: WorkspaceServices = {
   scratchpad: {
     on: false,
@@ -130,11 +117,8 @@ let served: WorkspaceServices = {
   },
   webData: missing,
 }
-
 export function serveWorkspace(part: Partial<WorkspaceServices>): void {
   served = { ...served, ...part }
 }
-
 export const services = (): WorkspaceServices => served
-
 export const scratchpadOn = (): boolean => served.scratchpad.on

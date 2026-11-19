@@ -1,7 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
 const asked: { command: string; id: unknown }[] = []
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown>) => {
@@ -11,7 +10,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     )
   },
 }))
-
 const revealed: string[] = []
 vi.mock('../../files-out/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../files-out/src/api')>()),
@@ -20,10 +18,8 @@ vi.mock('../../files-out/src/api', async (importOriginal) => ({
     return Promise.resolve()
   },
 }))
-
 const { downloads, merged, progressOf, readDownload } = await import('./downloads.svelte')
 type Download = NonNullable<ReturnType<typeof readDownload>>
-
 function one(id: number, change: Partial<Download> = {}): Download {
   return {
     id,
@@ -36,7 +32,6 @@ function one(id: number, change: Partial<Download> = {}): Download {
     ...change,
   }
 }
-
 test('what the crate sends is read, and nothing else is', () => {
   expect(
     readDownload({
@@ -57,36 +52,29 @@ test('what the crate sends is read, and nothing else is', () => {
     received: 10,
     total: 10,
   })
-
   expect(readDownload({ id: 1, tab: 't', url: 'u', name: 'n', state: 'going', total: null })?.total).toBeNull()
   expect(readDownload({ id: 1, tab: 't', url: 'u', name: 'n', state: 'lost' })).toBeNull()
   expect(readDownload({ id: '1', tab: 't', url: 'u', name: 'n', state: 'done' })).toBeNull()
   expect(readDownload(null)).toBeNull()
   expect(readDownload('done')).toBeNull()
 })
-
 test('a new download goes at the end and a known one stays where it is', () => {
   const list = merged(merged([], one(1)), one(2))
   expect(list.map((each) => each.id)).toEqual([1, 2])
-
   const moved = merged(list, one(1, { received: 5, total: 10 }))
   expect(moved.map((each) => each.id)).toEqual([1, 2])
   expect(moved[0]?.received).toBe(5)
 })
-
 test('the end of a download is the last word about it', () => {
   const done = merged([one(1)], one(1, { state: 'done', received: 10, total: 10 }))
   const late = merged(done, one(1, { received: 7, total: 10 }))
-
   expect(late[0]?.state).toBe('done')
   expect(late[0]?.received).toBe(10)
 })
-
 test('a download the reader stopped leaves the list', () => {
   const list = merged([one(1), one(2)], one(1, { state: 'cancelled' }))
   expect(list.map((each) => each.id)).toEqual([2])
 })
-
 test('the ring says how far everything still going has got', () => {
   expect(progressOf([])).toBeNull()
   expect(progressOf([one(1, { state: 'done', total: 5, received: 5 })])).toBeNull()
@@ -99,18 +87,15 @@ test('the ring says how far everything still going has got', () => {
     ]),
   ).toBe(0.5)
 })
-
 test('the store says which report is a download starting', () => {
   expect(downloads.heard(one(10))).toBe(true)
   expect(downloads.heard(one(10, { received: 4, total: 8 }))).toBe(false)
   expect(downloads.list.find((each) => each.id === 10)?.received).toBe(4)
 })
-
 test('a row goes back to the crate by id, never by a path', async () => {
   await downloads.open(4)
   await downloads.show(4)
   await downloads.cancel(4)
-
   expect(asked).toEqual([
     { command: 'web_download_open', id: 4 },
     { command: 'web_download_saved', id: 4 },
@@ -118,11 +103,9 @@ test('a row goes back to the crate by id, never by a path', async () => {
   ])
   expect(revealed).toEqual(['/home/me/Downloads/slides (4).pdf'])
 })
-
 test('a report on its way when the reader stopped a download does not bring it back', () => {
   downloads.heard(one(20))
   downloads.heard(one(20, { state: 'cancelled' }))
-
   expect(downloads.heard(one(20, { received: 5 }))).toBe(false)
   expect(downloads.list.some((each) => each.id === 20)).toBe(false)
 })

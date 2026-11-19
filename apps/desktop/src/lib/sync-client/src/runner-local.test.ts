@@ -31,7 +31,6 @@ vi.mock('./store', async (importOriginal) => {
     },
   }
 })
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -40,7 +39,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 vi.mock('./watching', () => ({
   watchFolders: () => ({ stop: () => undefined, follow: () => undefined }),
 }))
-
 const { MemoryDisk } = await import('./memory-disk')
 vi.mock('./app-world', () => {
   return {
@@ -57,34 +55,27 @@ vi.mock('./app-world', () => {
     }),
   }
 })
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { runner } = await import('./runner.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
-
 describe('the engine kept signed out', () => {
   test('is nobody’s to ask about, and lets go of its store before the account’s opens', async () => {
     await runner.startLocal()
     expect(said).toEqual(['open local'])
     expect(runner.engine).toBeNull()
-
     Object.assign(account, { user: { id: 'u1', syncVersion: 2 } })
     const starting = runner.start()
     const dropping = runner.dropLocal()
     await Promise.all([starting, dropping])
-
     expect(said.slice(0, 2)).toEqual(['open local', 'close local'])
     expect(said).toContain('open u1')
     expect(said.lastIndexOf('forget local')).toBeLessThan(said.indexOf('open u1'))
     expect(said).toContain('forget local')
     expect(said).not.toContain('close u1')
     expect(runner.engine).not.toBeNull()
-
     await runner.stop()
     Object.assign(account, { user: null })
   })
-
   test('does not start while somebody is signed in', async () => {
     said.length = 0
     Object.assign(account, { user: { id: 'u1', syncVersion: 2 } })
@@ -92,7 +83,6 @@ describe('the engine kept signed out', () => {
     expect(said).toEqual([])
     Object.assign(account, { user: null })
   })
-
   test('follows a space whose folder moved before the page ran, keeping its ids (#552)', async () => {
     said.length = 0
     const { MemoryStore } = await import('./memory-store')
@@ -127,11 +117,9 @@ describe('the engine kept signed out', () => {
     noteRootsMoved([{ from: '/Vault/Notes', to: '/Spaces/Notes' }])
     const { workspace } = await import('../../workspace/src/api')
     workspace.spaces = [{ id: 'w9', name: 'Notes', root: '/Spaces/Notes' }]
-
     try {
       await runner.startLocal()
       await new Promise((settle) => setTimeout(settle, 50))
-
       const [row] = await local.open().read([get('spaces', 'local-9')])
       expect(row).toMatchObject({ space_id: 'local-9', root: '/Spaces/Notes' })
       expect(rootsMoved()).toEqual([])
@@ -141,7 +129,6 @@ describe('the engine kept signed out', () => {
       stores.delete('local')
     }
   })
-
   test('carries the ids of what it kept into the account’s store, for each space’s first pass', async () => {
     said.length = 0
     const { MemoryStore } = await import('./memory-store')
@@ -166,10 +153,8 @@ describe('the engine kept signed out', () => {
         deleted: false,
       }),
     ])
-
     Object.assign(account, { user: { id: 'u2', syncVersion: 2 } })
     await Promise.all([runner.dropLocal(), runner.start()])
-
     expect(said).toContain('forget local')
     expect(stores.has('local')).toBe(false)
     const [row] = await runner.engine!.core.store.read([get('meta', 'carried:/Notes')])
@@ -177,7 +162,6 @@ describe('the engine kept signed out', () => {
     await runner.stop()
     Object.assign(account, { user: null })
   })
-
   test('is handed the ids of what the account kept, signing out, and which account they came from', async () => {
     said.length = 0
     const { MemoryStore } = await import('./memory-store')
@@ -204,11 +188,9 @@ describe('the engine kept signed out', () => {
     ])
     Object.assign(account, { user: { id: 'u3', syncVersion: 2 } })
     await runner.start()
-
     await runner.signedOut('u3')
     Object.assign(account, { user: null })
     await runner.startLocal()
-
     const local = stores.get('local') as InstanceType<typeof MemoryStore>
     const [ids, from] = await local.open().read([get('meta', 'carried:/Notes'), get('meta', 'from:/Notes')])
     expect(JSON.parse(String(ids?.value))).toEqual({ 'Plan.md': id })

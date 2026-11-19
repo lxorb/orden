@@ -1,14 +1,11 @@
 ;(function () {
   const H264 = 'video/mp4; codecs="avc1.42E01E"'
   if (document.createElement('video').canPlayType(H264) !== '') return
-
   const NO_DECODER = 'DEMUXER_ERROR_NO_SUPPORTED_STREAMS'
-
   function say() {
     const asked = globalThis.ordenAsked
     if (typeof asked === 'function') asked(JSON.stringify(['', 'orden-media-unplayable']))
   }
-
   window.addEventListener(
     'error',
     (event) => {

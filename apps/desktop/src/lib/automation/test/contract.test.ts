@@ -8,12 +8,9 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void held.set(key, value),
   removeItem: (key: string) => void held.delete(key),
 })
-
 const api = await import('../src/api')
-
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
@@ -21,7 +18,6 @@ function sources(folder: string): string[] {
     return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
   })
 }
-
 describe('the module stands on its own', () => {
   test('no file under src names a feature: pages, PDFs and chat links come through contracts', () => {
     const named = sources(SRC).filter((file) =>
@@ -29,7 +25,6 @@ describe('the module stands on its own', () => {
     )
     expect(named).toEqual([])
   })
-
   test('the api leaves the start and the acts behind doors', () => {
     const text = readFileSync(join(SRC, 'api.ts'), 'utf8')
     expect(text).not.toMatch(/from '\.\/(?:start|acts|verbs|moving)'/)
@@ -38,7 +33,6 @@ describe('the module stands on its own', () => {
     }
   })
 })
-
 describe('who asks', () => {
   test('nobody named is the reader, and an agent keeps only what it was granted', () => {
     expect(api.callerOf(undefined)).toBe(api.READER)
@@ -46,7 +40,6 @@ describe('who asks', () => {
     expect(caller.agent?.scopes).toEqual(['tree'])
     expect(api.threadSpaceOf(caller)).toBeNull()
   })
-
   test('a refusal carries its code and says why twice', () => {
     expect(api.refusal('no_such_command', 'gone')).toEqual({
       ok: false,
@@ -56,13 +49,11 @@ describe('who asks', () => {
       error: 'gone',
     })
   })
-
   test('the words of a call read as text or as yes', () => {
     expect(api.said({ path: ' Plan.md ' }, 'path')).toBe('Plan.md')
     expect(api.yes({ open: 'true' }, 'open')).toBe(true)
   })
 })
-
 describe('moving a note', () => {
   test('a markdown note keeps its extension where it goes', async () => {
     const { movedPath } = await api.automationMoving()

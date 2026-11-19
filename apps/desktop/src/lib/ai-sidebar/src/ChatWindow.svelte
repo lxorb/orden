@@ -14,7 +14,6 @@
   let list = $state<HTMLUListElement>()
   const where = new ListView()
   let standing = $state<number | null>(null)
-
   const rows = $derived<Rows>({
     count: heads.length,
     height: where.row || LEAST,
@@ -35,25 +34,20 @@
     for (const at of view.pinned) if (at > view.last) add(at, true)
     return out
   })
-
   function rowOf(ul: HTMLElement): number {
     const first = ul.querySelector(':scope > [data-at]:not(.away)')
     const tall = first instanceof HTMLElement ? first.getBoundingClientRect().height : 0
     return tall > 0 ? tall : LEAST
   }
-
   $effect(() => {
     const ul = list
     if (!ul) return
     return where.follow(ul, rowOf)
   })
-
   const some = $derived(heads.length > 0)
-
   $effect(() => {
     if (some && list) where.refresh()
   })
-
   export function reach(index: number): void {
     const box = where.box
     if (!box || index < 0 || index >= heads.length) return
@@ -64,7 +58,6 @@
     else if (top + height > box.scrollTop + box.clientHeight) box.scrollTop = top + height - box.clientHeight
     where.refresh()
   }
-
   function onFocus(event: FocusEvent) {
     const from = event.target
     const said = from instanceof HTMLElement ? from.closest<HTMLElement>('[data-at]') : null
@@ -86,14 +79,12 @@
   .window {
     display: block;
   }
-
   ul {
     position: relative;
     margin: 0;
     padding: 0;
     list-style: none;
   }
-
   .gap {
     pointer-events: none;
   }

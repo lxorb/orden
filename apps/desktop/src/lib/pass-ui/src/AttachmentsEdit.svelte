@@ -20,13 +20,10 @@
     oninput: () => void
   } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   let picker = $state<HTMLInputElement | null>(null)
   let over = $state(false)
   let wrong = $state<string | null>(null)
-
   const shown = $derived(kept.filter((one) => !removing.includes(one.id)))
-
   async function took(files: readonly File[]) {
     wrong = null
     const fitting = files.filter((one) => one.size <= MOST_FILE_BYTES)
@@ -42,20 +39,17 @@
     adding = [...adding, ...read]
     oninput()
   }
-
   function chosen(event: Event) {
     const input = event.currentTarget as HTMLInputElement
     const files = [...(input.files ?? [])]
     input.value = ''
     void took(files)
   }
-
   function dropped(event: DragEvent) {
     event.preventDefault()
     over = false
     void took([...(event.dataTransfer?.files ?? [])])
   }
-
   function hovered(event: DragEvent) {
     event.preventDefault()
     over = true
@@ -115,12 +109,10 @@
     gap: var(--space-2);
     border-radius: var(--radius-md);
   }
-
   .files.over {
     outline: 2px dashed var(--accent);
     outline-offset: 2px;
   }
-
   .line {
     display: flex;
     align-items: center;
@@ -129,11 +121,9 @@
     padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
     font-size: var(--text-row);
   }
-
   .line + .line {
     border-top: 1px solid var(--line);
   }
-
   .name {
     flex: 1;
     min-width: 0;
@@ -141,16 +131,13 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .meta {
     color: var(--muted);
     font-size: var(--text-sm);
   }
-
   .picker {
     display: none;
   }
-
   .attach {
     align-self: flex-start;
     display: inline-flex;

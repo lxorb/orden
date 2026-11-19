@@ -11,11 +11,9 @@ const DISK: Record<string, string[]> = {
   '/home': ['me'],
   '/': ['home'],
 }
-
 const opened: string[] = []
 const peeked: string[] = []
 const listedPaths: string[] = []
-
 vi.mock('./commands', () => ({
   CHANGED: 'explorer://changed',
   listFolder: (path: string): Promise<Listing> => {
@@ -92,16 +90,12 @@ vi.mock('./commands', () => ({
   PROGRESS: 'explorer://progress',
   cancelJob: () => Promise.resolve(),
 }))
-
 const changed: string[] = []
-
 const { workspace } = await import('../../workspace/src/api')
 const ExplorerTab = (await import('./ExplorerTab.svelte')).default
 const { viewOf } = await import('./view.svelte')
-
 let target: HTMLElement
 let close: (() => void) | undefined
-
 async function explorer() {
   const tab = workspace.openUnsaved('explorer', '', 'me')
   const made = mount(ExplorerTab, { target, props: { tab, focused: true } })
@@ -109,16 +103,13 @@ async function explorer() {
   await settle()
   return { tab, view: viewOf(tab) }
 }
-
 const rows = (): string[] => [...target.querySelectorAll('.entry .orden-row-label')].map((one) => one.textContent)
-
 function press(key: string, more: KeyboardEventInit = {}) {
   const focused = document.activeElement
   const on = focused && target.contains(focused) ? focused : target.querySelector('.rows')
   on?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...more }))
   flushSync()
 }
-
 beforeEach(() => {
   opened.length = 0
   peeked.length = 0
@@ -126,13 +117,11 @@ beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   close?.()
   close = undefined
   target.remove()
 })
-
 describe('a file explorer', () => {
   test('lists the home folder, folders first, with the places beside it', async () => {
     await explorer()
@@ -142,7 +131,6 @@ describe('a file explorer', () => {
     expect(target.querySelector('.place.is-on')?.textContent).toContain('Home')
     expect(target.querySelector('.foot')?.textContent).toContain('4 items')
   })
-
   test('walks with the arrows, opens a folder with Enter and goes up with Backspace', async () => {
     const { view } = await explorer()
     press('ArrowDown')
@@ -157,7 +145,6 @@ describe('a file explorer', () => {
     expect(view.folder).toBe('/home/me')
     expect(view.picked.cursor).toBe('Pictures')
   })
-
   test('jumps to a name as it is typed and picks a range with Shift', async () => {
     const { view } = await explorer()
     press('n')
@@ -167,7 +154,6 @@ describe('a file explorer', () => {
     expect(target.querySelectorAll('.entry.is-picked')).toHaveLength(2)
     expect(target.querySelector('.foot')?.textContent).toContain('2 selected')
   })
-
   test('opens a file outside the spaces in the app the system opens it with', async () => {
     await explorer()
     const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) => one.textContent.includes('plan.pdf'))
@@ -175,7 +161,6 @@ describe('a file explorer', () => {
     await settle()
     expect(opened).toEqual(['/home/me/plan.pdf'])
   })
-
   test('opens plain text in a space in Orden, as it does a note', async () => {
     const taken = vi.spyOn(workspace, 'openEntry').mockResolvedValue(undefined)
     workspace.spaces = [{ id: 'me', name: 'Me', root: '/home/me' }]
@@ -193,7 +178,6 @@ describe('a file explorer', () => {
       taken.mockRestore()
     }
   })
-
   test('hands a picture to the system app when it is opened, looking at nothing in Orden', async () => {
     const { view } = await explorer()
     await view.go('/home/me/Pictures')
@@ -204,7 +188,6 @@ describe('a file explorer', () => {
     expect(opened).toEqual(['/home/me/Pictures/a.png'])
     expect(target.querySelector('.look')).toBeNull()
   })
-
   test('goes where a path typed into the bar says', async () => {
     const { view } = await explorer()
     target.querySelector<HTMLElement>('.past')?.click()
@@ -219,7 +202,6 @@ describe('a file explorer', () => {
     expect(view.folder).toBe('/home/me/Music')
     expect(target.querySelector('.said')?.textContent).toContain('empty')
   })
-
   test('renames in place with F2, the ending left out of what is chosen', async () => {
     await explorer()
     press('n')
@@ -234,7 +216,6 @@ describe('a file explorer', () => {
     await settle()
     expect(changed).toEqual(['rename /home/me/notes.txt letters.txt'])
   })
-
   test('Escape leaves a name being typed unwritten, though the field blurs as it goes', async () => {
     await explorer()
     press('n')
@@ -248,7 +229,6 @@ describe('a file explorer', () => {
     expect(target.querySelector('input.rename')).toBeNull()
     expect(changed).toEqual([])
   })
-
   test('renames a file found below by its own name, and the found row takes it', async () => {
     const { view } = await explorer()
     view.searchBelow('bank')
@@ -278,7 +258,6 @@ describe('a file explorer', () => {
     await settle()
     expect(changed).toEqual(['rename /home/me/letters/bank.txt loan.txt'])
   })
-
   test('a found file names its folder beside its name too, for when the folder column is hidden', async () => {
     const { view } = await explorer()
     view.searchBelow('draft')
@@ -299,7 +278,6 @@ describe('a file explorer', () => {
     )
     expect(names).toEqual([['draft.txt'], ['draft.txt', 'letters'], ['draft.txt', 'old']])
   })
-
   test('renames several files found below at once, the same new name in two folders, and the found rows take the new names', async () => {
     const { view } = await explorer()
     view.searchBelow('draft')
@@ -331,7 +309,6 @@ describe('a file explorer', () => {
     expect(search.found.map((one) => one.name)).toEqual(['letters/final.txt', 'old/final.txt'])
     expect(rows()).toEqual(['final.txt', 'final.txt'])
   })
-
   test('keeps a name being typed when the folder is read again under it', async () => {
     const { view } = await explorer()
     press('n')
@@ -346,7 +323,6 @@ describe('a file explorer', () => {
     expect(document.activeElement).toBe(field)
     expect(changed).toEqual([])
   })
-
   test('puts what is picked in the trash with Delete, and makes a folder with its key', async () => {
     const { workspace: ws } = await import('../../workspace/src/api')
     await explorer()
@@ -368,7 +344,6 @@ describe('a file explorer', () => {
     await settle()
     expect(changed.at(-1)).toBe('make /home/me New folder')
   })
-
   test('narrows the folder as a filter is typed, and Escape brings the rest back', async () => {
     const { view } = await explorer()
     press('f', { ctrlKey: true })
@@ -385,7 +360,6 @@ describe('a file explorer', () => {
     expect(view.filter).toBe('')
     expect(rows()).toHaveLength(4)
   })
-
   test('reads a film or a sound to look at only once the cursor rests on it', async () => {
     const { view } = await explorer()
     await view.go('/home/me/Sounds')
@@ -398,7 +372,6 @@ describe('a file explorer', () => {
     }
     await vi.waitFor(() => expect(peeked).toEqual(['/home/me/Sounds/d.mp3']))
   })
-
   test('looks at a file with Space, its words and its facts, and puts it away again', async () => {
     await explorer()
     press('n')
@@ -412,7 +385,6 @@ describe('a file explorer', () => {
     await settle()
     expect(target.querySelector('.look')).toBeNull()
   })
-
   test('draws the folder as a grid of tiles with Ctrl+2, and as a list with Ctrl+1', async () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     await explorer()
@@ -424,7 +396,6 @@ describe('a file explorer', () => {
     expect(target.querySelectorAll('.entry.tile').length).toBe(0)
     expect(explorerPrefs.view).toBe('list')
   })
-
   test('the hidden files button wears an open eye while they are shown and a shut one while not', async () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     await explorer()
@@ -442,7 +413,6 @@ describe('a file explorer', () => {
     await settle()
     expect(shut()).toBe(true)
   })
-
   test('renames several at once with F2, one name each from what is found and replaced', async () => {
     await explorer()
     press('n')
@@ -464,7 +434,6 @@ describe('a file explorer', () => {
     await settle()
     expect(changed).toEqual(['rename /home/me/notes.txt Notes.txt', 'rename /home/me/plan.pdf plaN.pdf'])
   })
-
   test('a key pressed in a sheet over the list never acts on the files behind it', async () => {
     await explorer()
     press('n')
@@ -498,7 +467,6 @@ describe('a file explorer', () => {
     expect(changed).toEqual([])
     expect(target.querySelector('input.rename')).toBeNull()
   })
-
   test('a note dragged in from the tree onto a picked folder moves into that folder', async () => {
     await explorer()
     press('p')
@@ -521,7 +489,6 @@ describe('a file explorer', () => {
     await settle()
     expect(changed).toEqual(['move /home/me/Orden/Work/x.md /home/me/Pictures'])
   })
-
   test('draws only the rows of a long folder in columns that can be seen', async () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     const kept = DISK['/home/me/Pictures'] ?? []
@@ -542,7 +509,6 @@ describe('a file explorer', () => {
       explorerPrefs.show('list')
     }
   })
-
   test('walks into a folder and back out with the sideways arrows in columns', async () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     const { view } = await explorer()
@@ -559,7 +525,6 @@ describe('a file explorer', () => {
     expect(view.folder).toBe('/home/me')
     explorerPrefs.show('list')
   })
-
   test('in columns, a folder the keyboard only passes over is not read', async () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     await explorer()

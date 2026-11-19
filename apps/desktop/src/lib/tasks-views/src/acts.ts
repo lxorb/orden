@@ -9,12 +9,10 @@ export async function addTodo(shown: Shown, title: string): Promise<Todo | null>
   })
   return made.ok ? made.value : null
 }
-
 export async function patchTodo(id: string, patch: TodoPatch): Promise<string | null> {
   const kept = await todos.update(id, patch)
   return kept.ok ? null : kept.error.message
 }
-
 export async function removeTodo(id: string): Promise<void> {
   await todos.remove(id)
 }

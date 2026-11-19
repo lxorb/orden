@@ -5,7 +5,6 @@ import { ACCENT_PAIR, DAWN, isOwn, ownOf, PAIRS, shownOf, swatchOf } from './pai
 import { DIALS, type Dials } from './tint'
 
 const GLASS = 'glass'
-
 export function glassValues(): Record<string, ThemeValue> {
   const values: Record<string, ThemeValue> = {}
   for (const id of ['follow', 'tint', 'pair', 'tab']) {
@@ -14,7 +13,6 @@ export function glassValues(): Record<string, ThemeValue> {
   }
   return values
 }
-
 export function glassSettings(): ThemeSetting[] {
   return [
     {
@@ -61,7 +59,6 @@ export function glassSettings(): ThemeSetting[] {
     },
   ]
 }
-
 export function dialsOf(values: Record<string, ThemeValue>): Dials {
   const percent = (value: ThemeValue | undefined, initial: number) =>
     Math.min(1, Math.max(0, (typeof value === 'number' ? value : initial * 100) / 100))

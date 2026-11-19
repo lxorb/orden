@@ -4,15 +4,12 @@ import { call, type TestEnv, testEnv } from './harness'
 
 describe('a header an app from before the rename sends', () => {
   let env: TestEnv
-
   beforeEach(() => {
     env = testEnv()
   })
-
   afterEach(() => {
     env.close()
   })
-
   test('is read under its old name, and the new name wins', () => {
     const headers = (pairs: Record<string, string>) => {
       const all = new Headers(pairs)
@@ -22,7 +19,6 @@ describe('a header an app from before the rename sends', () => {
     expect(said(headers({ 'x-orden-device': 'new', 'x-nib-device': 'old' }), 'device')).toBe('new')
     expect(said(headers({}), 'device')).toBeUndefined()
   })
-
   test('may cross from an app on another origin under either name', async () => {
     const answer = await call(env, '/v1/notes', {
       method: 'OPTIONS',

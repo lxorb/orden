@@ -39,16 +39,12 @@ export interface Passed {
   finished: boolean
   full: boolean
 }
-
 const EMPTY_SV = Y.encodeStateVector(new Y.Doc())
-
 const ROUNDS = 4
-
 export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   const life = core.life
   const alive = () => core.life === life
   const passed: Passed = { pulled: 0, pushed: 0, finished: false, full: false }
-
   await core.commit(flushAll(core))
   await core.commit(unstackedNames(core, space))
   if (!alive()) return passed
@@ -77,16 +73,13 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   passed.finished = true
   return passed
 }
-
 export function flushAll(core: Core): Change[] {
   for (const doc of core.docs.values()) doc.flush()
   return core.dirtyChanges()
 }
-
 async function ask(core: Core, space: SpaceState, route: Parameters<Core['world']['account']['ask']>[0], body: object) {
   return await core.world.account.ask(route, body, space.id)
 }
-
 async function sendKeeps(
   core: Core,
   space: SpaceState,
@@ -111,7 +104,6 @@ async function sendKeeps(
   }
   return true
 }
-
 async function sendOps(
   core: Core,
   space: SpaceState,
@@ -121,7 +113,6 @@ async function sendOps(
   const going = (one: Outboxed) => one.record.t === 'op' && !(!one.record.sent && unsent.has(one.record.op.id))
   for (let round = 0; round < 1000; round += 1) {
     if (!space.outbox.some(going)) return true
-
     const waiting = space.outbox.filter((one) => one.record.t === 'op' && !one.record.sent)
     const folded = fitted(
       space,
@@ -163,7 +154,6 @@ async function sendOps(
     }
     space.outbox = queue
     changes.push(...unmade(core, space, waiting, folded))
-
     const batch = space.outbox.filter(going).slice(0, OPS_BATCH)
     for (const one of batch) {
       if (one.record.t !== 'op') continue
@@ -174,7 +164,6 @@ async function sendOps(
     space.changed()
     await core.commit(changes)
     if (!alive()) return false
-
     const sent = batch.flatMap((one) => (one.record.t === 'op' ? [one.record.op] : []))
     let reply: unknown
     try {
@@ -187,7 +176,6 @@ async function sendOps(
     if (!alive() || reply === null) return false
     const answer = opsResponseOf(reply)
     if (!answer) throw new Error('the account answered the ops with something else')
-
     const done: Change[] = []
     let byOp = opsOf(space)
     const answered = new Set<Outboxed>()
@@ -204,7 +192,6 @@ async function sendOps(
       answered.add(one)
       done.push(remove('outbox', one.row.op_id))
       if ('merged' in result || 'refused' in result) leave()
-
       if ('merged' in result && op.t === 'create') {
         const merge: Merging = { mine: op.id, into: result.merged, create: op }
         const { one: queued, change } = core.outgoing(space, { t: 'merge', merge }, space.row.cursor)
@@ -227,7 +214,6 @@ async function sendOps(
   }
   return true
 }
-
 function opsOf(space: SpaceState): Map<string, Outboxed> {
   const out = new Map<string, Outboxed>()
   for (const one of space.outbox) {
@@ -235,13 +221,11 @@ function opsOf(space: SpaceState): Map<string, Outboxed> {
   }
   return out
 }
-
 function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
   if (a.byteLength !== b.byteLength) return false
   for (let at = 0; at < a.byteLength; at++) if (a[at] !== b[at]) return false
   return true
 }
-
 function fitted(space: SpaceState, ops: Op[]): Op[] {
   const { on, describes } = space.ordering
   if (on && describes) return ops
@@ -257,7 +241,6 @@ function fitted(space: SpaceState, ops: Op[]): Op[] {
     return [op]
   })
 }
-
 function unplaced(space: SpaceState, batch: readonly Outboxed[], error: Refused) {
   if (error.status !== 400) return false
   const placing = (op: Op) =>
@@ -277,11 +260,9 @@ function unplaced(space: SpaceState, batch: readonly Outboxed[], error: Refused)
   space.changed()
   return true
 }
-
 function changesOf(core: Core, space: SpaceState, batch: readonly Outboxed[]): Change[] {
   return [...batch.map((one) => put('outbox', one.row)), ...core.orderChanges(space)]
 }
-
 function unmade(core: Core, space: SpaceState, waiting: readonly Outboxed[], folded: readonly Op[]): Change[] {
   const left = new Set(folded.map((op) => op.id))
   const ids = waiting.flatMap(({ record }) =>
@@ -291,7 +272,6 @@ function unmade(core: Core, space: SpaceState, waiting: readonly Outboxed[], fol
   )
   return dropUnmade(core, space, ids)
 }
-
 export async function refused(core: Core, space: SpaceState, op: Op, why: string): Promise<Change[]> {
   if (op.t === 'delete' && why === 'edited') {
     const entry = space.entries.get(op.id)
@@ -314,7 +294,6 @@ export async function refused(core: Core, space: SpaceState, op: Op, why: string
   }
   return []
 }
-
 export async function madeAnew(core: Core, space: SpaceState, id: string): Promise<Change[]> {
   const entry = space.entries.get(id)
   if (!entry?.local_path || entry.seq !== null) return []
@@ -333,7 +312,6 @@ export async function madeAnew(core: Core, space: SpaceState, id: string): Promi
   })
   return [...changes, ...again.changes]
 }
-
 async function remade(core: Core, space: SpaceState, id: string): Promise<Change[]> {
   const entry = space.entries.get(id)
   if (!entry?.local_path) return []
@@ -351,7 +329,6 @@ async function remade(core: Core, space: SpaceState, id: string): Promise<Change
   })
   return again.changes
 }
-
 export async function readFeed(
   core: Core,
   space: SpaceState,
@@ -364,7 +341,6 @@ export async function readFeed(
     const read = feedPageOf(reply)
     if (!read) throw new Error('the account answered the feed with something else')
     if (read.device !== undefined) core.mine.add(read.device)
-
     const changes: Change[] = []
     const wanted = core.wanted(space.id)
     for (const item of read.items) {
@@ -406,7 +382,6 @@ export async function readFeed(
       space.heardMeta(item.id, item.meta)
       space.entries.set(item.id, entry)
       changes.push(put('entries', { ...entry }))
-
       if (item.epoch !== undefined) core.epochs.set(item.id, item.epoch)
       if (shapeOf(item.kind) && item.docSeq !== undefined) {
         const pulled = core.numbers.get(item.id)?.pulled ?? -1
@@ -415,7 +390,6 @@ export async function readFeed(
         }
       }
     }
-
     if (space.ordering.on !== (read.order === true)) {
       space.ordering.on = read.order === true
       space.repositioned = true
@@ -439,7 +413,6 @@ export async function readFeed(
   }
   return true
 }
-
 export async function settleDisk(core: Core, space: SpaceState) {
   const forgets: Change[] = []
   const moved = await settle(space, {
@@ -452,7 +425,6 @@ export async function settleDisk(core: Core, space: SpaceState) {
   await core.commit([...core.entryChanges(moved), ...forgets])
   if (moved.length) core.events.placed?.({ moved: moved.length })
 }
-
 function pullable(core: Core, space: SpaceState, entry: EntryRow): boolean {
   if (!Core.isDocument(entry) || entry.seq === null || !space.isLive(entry.id)) return false
   if (space.foreign(entry.id)) return false
@@ -460,7 +432,6 @@ function pullable(core: Core, space: SpaceState, entry: EntryRow): boolean {
   if (!keptHere(core, space, entry)) return false
   return core.wanted(space.id).has(entry.id) || !core.hasDoc(entry.id)
 }
-
 export async function pullNow(
   core: Core,
   space: SpaceState,
@@ -474,7 +445,6 @@ export async function pullNow(
   }
   return true
 }
-
 async function pullDocs(
   core: Core,
   space: SpaceState,
@@ -486,7 +456,6 @@ async function pullDocs(
   )
   if (!due.length) return 0
   const wanted = core.wanted(space.id)
-
   let brought = 0
   for (let at = 0; at < due.length; at += PULL_BATCH) {
     const batch = due.slice(at, at + PULL_BATCH)
@@ -509,13 +478,11 @@ async function pullDocs(
     if (!alive() || reply === null) return null
     const answer = pullResponseOf(reply)
     if (!answer) throw new Error('the account answered the pull with something else')
-
     const changes: Change[] = []
     for (const one of answer.docs) {
       const entry = space.entries.get(one.id)
       if (!entry) continue
       if (core.hasPending(one.id) || core.isHeld(one.id) || core.carried.has(one.id)) continue
-
       if ('refused' in one) {
         wanted.delete(one.id)
         continue
@@ -523,14 +490,12 @@ async function pullDocs(
       const shape = shapeOf(entry.kind) ?? 'words'
       let doc = await core.doc(one.id)
       if (doc !== (asked.get(one.id) ?? null) || !space.isLive(one.id)) continue
-
       if ('epoch' in one) {
         const again = anew.get(one.id) === one.epoch
         wanted.set(one.id, { docSeq: wanted.get(one.id)?.docSeq ?? 0, epoch: one.epoch })
         if (!again) brought += 1
         continue
       }
-
       const epoch = anew.get(one.id)
       if (doc && epoch !== undefined) {
         doc.restart(one.update, one.seq, epoch, core.freshClient())
@@ -554,13 +519,11 @@ async function pullDocs(
   }
   return brought
 }
-
 async function foldedThenProjected(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
   const changes = entry.local_path ? await foldIn(core, space, entry) : []
   if (core.isHeld(entry.id)) return changes
   return [...changes, ...(await project(core, space, entry, doc))]
 }
-
 async function mergeDays(core: Core, space: SpaceState) {
   for (const one of [...space.outbox]) {
     if (one.record.t !== 'merge') continue
@@ -572,13 +535,11 @@ async function mergeDays(core: Core, space: SpaceState) {
       space.outbox = space.outbox.filter((other) => other !== one)
       changes.push(remove('outbox', one.row.op_id))
     }
-
     if (words === null) {
       done()
       await core.commit(changes)
       continue
     }
-
     const target = space.entries.get(into)
     if (target?.deleted) {
       const plain: Op = { ...create, op: core.nextId('o'), seen: space.row.cursor }
@@ -589,7 +550,6 @@ async function mergeDays(core: Core, space: SpaceState) {
       await core.commit([...changes, change, core.counterRow()])
       continue
     }
-
     const theirs = await core.doc(into)
     if (!theirs || !target || core.hasPending(into) || core.isHeld(into)) continue
     if (core.pinned.has(mine)) continue
@@ -615,7 +575,6 @@ async function mergeDays(core: Core, space: SpaceState) {
         held,
         ...(judged.merged === undefined ? {} : { merged: judged.merged }),
       })
-
       if (judged.resolution === null) {
         const against = { t: 'merge', base, local: words, from: mine } as const
         const holding: Holding = {
@@ -638,13 +597,11 @@ async function mergeDays(core: Core, space: SpaceState) {
         changes.push(...(await project(core, space, target, theirs)))
       }
     }
-
     done()
     space.changed()
     await core.commit(changes)
   }
 }
-
 async function handedOver(core: Core, space: SpaceState, mine: string): Promise<Change[]> {
   const path = space.entries.get(mine)?.local_path
   if (path) {
@@ -654,26 +611,21 @@ async function handedOver(core: Core, space: SpaceState, mine: string): Promise<
   space.entries.delete(mine)
   return [remove('entries', mine), ...core.forgetChanges(mine)]
 }
-
 function pushable(core: Core, entry: EntryRow): boolean {
   if (!Core.isDocument(entry) || entry.seq === null) return false
   if (core.isHeld(entry.id) || core.carried.has(entry.id) || resting(core, entry.id)) return false
   return core.hasPending(entry.id)
 }
-
 interface Refusal {
   why: DocRefusal
   times: number
   until: number
   said: boolean
 }
-
 const AGAIN = 2_000
 const LONGEST = 30 * 60_000
 const GONE_SAID = 3
-
 const refusals = new WeakMap<Core, Map<string, Refusal>>()
-
 function refusalsOf(core: Core): Map<string, Refusal> {
   let held = refusals.get(core)
   if (!held) {
@@ -682,12 +634,10 @@ function refusalsOf(core: Core): Map<string, Refusal> {
   }
   return held
 }
-
 export function resting(core: Core, id: string): boolean {
   const one = refusals.get(core)?.get(id)
   return one !== undefined && one.until > core.world.now()
 }
-
 function refusedAgain(core: Core, id: string, why: DocRefusal): boolean {
   const held = refusalsOf(core)
   const before = held.get(id)
@@ -699,13 +649,11 @@ function refusedAgain(core: Core, id: string, why: DocRefusal): boolean {
   one.said = true
   return true
 }
-
 const REFUSED: Record<DocRefusal, string> = {
   role: 'you can only read this space',
   large: 'that note is too large',
   gone: 'no such note',
 }
-
 function refusalRows(core: Core, space: SpaceState, said: Set<DocRefusal>): Change[] {
   return [...said].map((why) =>
     put('log', {
@@ -717,12 +665,10 @@ function refusalRows(core: Core, space: SpaceState, said: Set<DocRefusal>): Chan
     }),
   )
 }
-
 async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Promise<number | null> {
   const due = [...space.entries.values()].filter((entry) => pushable(core, entry))
   const said = new Set<DocRefusal>()
   let pushed = 0
-
   let at = 0
   while (at < due.length) {
     const going: PushDoc[] = []
@@ -771,12 +717,10 @@ async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
     }
     await core.commit([...before, core.counterRow()])
     if (!alive()) return null
-
     const reply = await ask(core, space, 'push', { docs: going })
     if (!alive() || reply === null) return null
     const answer = pushResponseOf(reply)
     if (!answer) throw new Error('the account answered the push with something else')
-
     const changes: Change[] = []
     for (const one of answer.docs) {
       const doc = docs.get(one.id)
@@ -818,7 +762,6 @@ async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
   }
   return pushed
 }
-
 async function readOnly(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
   const local = doc.text()
   if (entry.local_path && local.trim()) {
@@ -829,7 +772,6 @@ async function readOnly(core: Core, space: SpaceState, entry: EntryRow, doc: Doc
   doc.letPendingGo(core.freshClient())
   return [...core.docChanges(doc), ...(await project(core, space, entry, doc))]
 }
-
 async function newEpoch(core: Core, space: SpaceState, entry: EntryRow, doc: Doc, epoch: number): Promise<Change[]> {
   const reply = await ask(core, space, 'pull', {
     docs: [{ id: doc.id, epoch, sv: EMPTY_SV }],
@@ -838,13 +780,11 @@ async function newEpoch(core: Core, space: SpaceState, entry: EntryRow, doc: Doc
   const answer = reply === null ? null : pullResponseOf(reply)
   const whole = answer?.docs.find((one) => one.id === doc.id)
   if (!whole || !('update' in whole)) return []
-
   const base = doc.confirmedText()
   const local = doc.text()
   const remote = fileOfUpdates(doc.shape, whole.update)
   doc.restart(whole.update, whole.seq, epoch, core.freshClient())
   if (local === remote || local === base) return await project(core, space, entry, doc)
-
   const times = { local: doc.pendingAt, remote: core.world.now() }
   const judged = judge(doc.shape, base, local, remote, times)
   core.classified.push({

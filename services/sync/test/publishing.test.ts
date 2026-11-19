@@ -11,71 +11,53 @@ import { PAGE_CSS, PAGE_CSS_PATH } from '../src/sync-server-blog/src/style'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 const HERE = join(fileURLToPath(import.meta.url), '..')
-
 const EVERYTHING = readFileSync(fileURLToPath(new URL('everything.md', import.meta.url)), 'utf8')
-
 const OTHER = '# Another note\n\nThe other note itself.\n\n## Why it works\n\nBecause.\n'
-
 const HOST = 'field.nibeditor.com'
-
 const RED = '\u{1F534}'
-
 let env: TestEnv
 let token: string
 let space: string
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
-
   const created = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
   space = (created.json as { space: { id: string } }).space.id
-
   for (const [path, content] of [
     ['Everything.md', EVERYTHING],
     ['Another note.md', OTHER],
   ] as const) {
     await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   }
-
   await call(env, `/v1/spaces/${space}/blog`, {
     method: 'PUT',
     token,
     body: { subdomain: 'field' },
   })
 })
-
 afterEach(() => env.close())
-
 function published() {
   return call(env, '/everything', { host: HOST })
 }
-
 function body(html: string): string {
   const at = html.indexOf('<main id="write">')
   return html.slice(at, html.indexOf('</main>', at))
 }
-
 function classesIn(html: string): string[] {
   const found = new Set<string>()
   for (const [, list] of withoutMaths(html).matchAll(/class="([^"]*)"/g)) {
     for (const name of (list ?? '').trim().split(/\s+/)) if (name) found.add(name)
   }
-
   return [...found].sort()
 }
-
 function withoutMaths(html: string): string {
   let out = ''
   let at = 0
-
   while (at < html.length) {
     const found = /<span class="katex(?:-display)?"/.exec(html.slice(at))
     if (!found) return out + html.slice(at)
-
     const opens = at + found.index
     out += html.slice(at, opens)
-
     let depth = 0
     let scan = opens
     while (scan < html.length) {
@@ -85,53 +67,41 @@ function withoutMaths(html: string): string {
       depth += next[0] === '</span>' ? -1 : 1
       if (depth === 0) break
     }
-
     at = scan
   }
-
   return out
 }
-
 function elsewhere(url: string): boolean {
   return url.startsWith('//') || (/^[a-z][a-z\d+.-]*:/i.test(url) && !url.startsWith('data:'))
 }
-
 function urlsIn(css: string): string[] {
   return [...css.matchAll(/url\(\s*"?([^)"]+)"?\s*\)/g)].map(([, url = '']) => url)
 }
-
 function fetched(html: string, sheets: readonly string[]): string[] {
   const asked = (pattern: RegExp) => [...html.matchAll(pattern)].map(([, url = '']) => url)
-
   return [
     ...asked(/<link\b(?![^>]*\brel="(?:canonical|alternate)")[^>]*\bhref="([^"]*)"/g),
     ...asked(/<(?:script|img|audio|video|source|iframe|embed)\b[^>]*\bsrc="([^"]*)"/g),
     ...sheets.flatMap(urlsIn),
   ]
 }
-
 describe('the stylesheet a page is served with', () => {
   test('is the one the generator writes from the themes package', () => {
     const target = join(HERE, '../src/sync-server-blog/src/style.ts')
     expect(readFileSync(target, 'utf8')).toBe(blogStyle())
   })
-
   test('is served from the blog itself, at a path that is its own hash', async () => {
     const answer = await call(env, PAGE_CSS_PATH, { host: HOST })
-
     expect(answer.status).toBe(200)
     expect(answer.headers.get('content-type')).toContain('text/css')
     expect(answer.headers.get('cache-control')).toContain('immutable')
     expect(answer.text).toBe(PAGE_CSS)
   })
-
   test('is linked by the page rather than written into it', async () => {
     const answer = await published()
-
     expect(answer.text).toContain(`<link rel="stylesheet" href="${PAGE_CSS_PATH}">`)
     expect(answer.text).not.toContain('<style>')
   })
-
   test('is base.css and document.css themselves, scoped to #write as they are', () => {
     expect(PAGE_CSS).toContain('--callout-warning:')
     expect(PAGE_CSS).toContain('#write blockquote{')
@@ -139,13 +109,11 @@ describe('the stylesheet a page is served with', () => {
     expect(PAGE_CSS).toContain('#write .chart-svg{')
     expect(PAGE_CSS).toContain('.hl-keyword{')
   })
-
   test('reads light or dark from the reader', () => {
     expect(PAGE_CSS).toContain("@media (prefers-color-scheme:dark){:root:not([data-theme='light']){")
     expect(PAGE_CSS).toContain('@media print{:root,')
     expect(PAGE_CSS).toContain(':root{color-scheme:light;--bg:#fbfcfd')
   })
-
   test('and lets a reader who says which one have it', () => {
     expect(PAGE_CSS).toContain(":root[data-theme='dark']{color-scheme:dark")
     expect(PAGE_CSS).toContain(":root[data-theme='light']{color-scheme:light")
@@ -154,108 +122,83 @@ describe('the stylesheet a page is served with', () => {
     )
   })
 })
-
 describe("the sheet an equation is set with, and KaTeX's faces", () => {
   test('are the ones the generator writes from the katex package', () => {
     const target = join(HERE, '../src/sync-server-blog/src/math.ts')
     expect(readFileSync(target, 'utf8')).toBe(blogMath())
   })
-
   test('are served from the blog itself, at paths that are their own hashes', async () => {
     const answer = await call(env, MATH_CSS_PATH, { host: HOST })
-
     expect(answer.status).toBe(200)
     expect(answer.headers.get('content-type')).toContain('text/css')
     expect(answer.headers.get('cache-control')).toContain('immutable')
     expect(answer.text).toBe(MATH_CSS)
-
     expect(urlsIn(MATH_CSS).sort()).toEqual(Object.keys(MATH_FONTS).sort())
-
     for (const path of Object.keys(MATH_FONTS)) {
       const font = await call(env, path, { host: HOST })
-
       expect(font.status).toBe(200)
       expect(font.headers.get('content-type')).toBe('font/woff2')
       expect(font.headers.get('cache-control')).toContain('immutable')
       expect(font.text.startsWith('wOF2')).toBe(true)
     }
   })
-
   test('are linked by a page with an equation on it and by no other', async () => {
     const withMaths = await published()
     const without = await call(env, '/another-note', { host: HOST })
-
     expect(withMaths.text).toContain(`<link rel="stylesheet" href="${MATH_CSS_PATH}">`)
     expect(without.status).toBe(200)
     expect(without.text).not.toContain(MATH_CSS_PATH)
   })
-
   test('leave the reader of a page nothing to fetch from anybody else', async () => {
     const answer = await published()
-
     expect(fetched(answer.text, [PAGE_CSS, MATH_CSS]).filter(elsewhere)).toEqual([])
     expect(answer.text).not.toContain('cdn.jsdelivr')
     expect(MATH_CSS).not.toContain('cdn.jsdelivr')
-
     const policy = answer.headers.get('content-security-policy') ?? ''
     expect(policy).toContain("style-src 'self' 'unsafe-inline'")
     expect(policy).toContain("font-src 'self'")
     expect(policy).not.toContain('https://cdn')
   })
 })
-
 const UNDRESSED = /^(?:language-|chart-bar$|embed-name$|footnote-back$|url$|wikilink$)/
-
 describe('a published note', () => {
   test('is the note, in the element every sheet of the app is written for', async () => {
     const answer = await published()
-
     expect(answer.status).toBe(200)
     expect(answer.text).toContain('<main id="write">')
   })
-
   test('has something in the stylesheet for every class it uses', async () => {
     const answer = await published()
     const missing = classesIn(body(answer.text)).filter(
       (name) => !PAGE_CSS.includes(`.${name}`) && !UNDRESSED.test(name),
     )
-
     expect(missing).toEqual([])
   })
-
   test('colours every fence whose language the Worker carries', async () => {
     const answer = await published()
-
     expect(answer.text).toContain('<span class="hl-keyword">export')
     expect(answer.text).toContain('<span class="hl-keyword">def')
     expect(answer.text).toContain('<span class="hl-comment">')
     expect(answer.text).toContain('<pre><code class="language-css">')
   })
-
   test('leaves a fence it has no grammar for as plain code', async () => {
     const answer = await published()
     const fence = answer.text.slice(answer.text.indexOf('<code class="language-mermaid">'))
-
     expect(fence.slice(0, fence.indexOf('</code>'))).not.toContain('<span')
   })
-
   test('names the languages the editor spells the same way', () => {
     for (const word of ['ts', 'tsx', 'py', 'rs', 'golang', 'yml', 'scss', 'h++']) {
       expect(COLOURED).toContain(word)
     }
   })
-
   test('gathers a table of contents and gives every heading an id', async () => {
     const answer = await published()
-
     expect(answer.text).toContain('<nav class="toc">')
     expect(answer.text).toContain('<h2 id="a-table">')
     expect(answer.text).toContain('href="#a-table"')
   })
-
   test('renders maths, a chart and every callout without a script', async () => {
     const answer = await published()
-
     expect(answer.text).toContain('class="katex"')
     expect(answer.text).toContain('class="katex-display"')
     expect(answer.text).toContain('<figure class="chart" data-kind="bar">')
@@ -269,10 +212,8 @@ describe('a published note', () => {
     expect(answer.text).not.toContain('callout-important')
     expect(answer.headers.get('content-security-policy')).toContain("script-src 'self'")
   })
-
   test('shows what it embeds and says what it cannot show', async () => {
     const answer = await published()
-
     expect(answer.text).toContain('The other note itself.')
     expect(answer.text).toContain('<audio class="embed-media"')
     expect(answer.text).toContain('<video class="embed-media"')
@@ -280,52 +221,40 @@ describe('a published note', () => {
     expect(answer.text).toContain('data-kind="canvas"')
     expect(answer.text).toContain('<a class="embed-play"')
   })
-
   test('keeps the note to itself: no front matter, no comments', async () => {
     const answer = await published()
-
     expect(answer.text).not.toContain('Nobody reads this one')
     expect(answer.text).not.toContain('Nor this one')
     expect(answer.text).not.toContain('class="properties"')
     expect(answer.text).toContain('<title>Everything</title>')
   })
-
   test('colours a highlight the way the app does, and hides the emoji', async () => {
     const answer = await published()
-
     expect(answer.text).toContain('<mark class="tone-1">a red mark</mark>')
     expect(answer.text).toContain('<mark>marked</mark>')
     expect(body(answer.text)).not.toContain(RED)
     expect(PAGE_CSS).toContain('mark.tone-1')
   })
-
   describe('whether a single newline breaks the line', () => {
     const WRAPPED = 'A paragraph wrapped over'
-
     test('is CommonMark for an account that has never said', async () => {
       const answer = await published()
-
       expect(answer.text).toContain(`${WRAPPED}\nthree lines in the file`)
       expect(answer.text).not.toContain(`${WRAPPED}<br>`)
     })
-
     test('is the answer the author gave, once they have given one', async () => {
       await call(env, '/v1/settings', { method: 'PATCH', token, body: { hardBreaks: true } })
       const answer = await published()
-
       expect(answer.text).toContain(`${WRAPPED}<br>`)
     })
   })
 })
-
 describe('a diagram the app drew', () => {
   const fence = () => {
     const found = codeBlocks(EVERYTHING).find((one) => one.language === 'mermaid')
     if (!found) throw new Error('everything.md no longer has a mermaid fence in it')
-
     return found
   }
-
   async function draw(scheme: 'light' | 'dark'): Promise<string> {
     const { language, code } = fence()
     const hash = await diagramKey(space, language, code, scheme)
@@ -333,30 +262,24 @@ describe('a diagram the app drew', () => {
       `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" width="300" height="120">` +
       `<text>${scheme}</text></svg>`
-
     const put = await call(env, `/v1/blobs/${hash}`, {
       method: 'PUT',
       token,
       raw: svg,
       headers: { 'content-type': 'image/svg+xml' },
     })
-
     expect(put.status).toBe(201)
     return hash
   }
-
   test('stays a code block until something has drawn it', async () => {
     const answer = await published()
-
     expect(answer.text).toContain('<code class="language-mermaid">')
     expect(answer.text).not.toContain('<figure class="diagram"')
   })
-
   test('becomes a picture in the frame an export uses, one per scheme', async () => {
     const light = await draw('light')
     const dark = await draw('dark')
     const answer = await published()
-
     expect(answer.text).toContain(
       `<figure class="diagram" data-language="mermaid">` +
         `<img src="/i/${light}.svg" alt="Diagram" data-scheme="light">` +
@@ -365,19 +288,15 @@ describe('a diagram the app drew', () => {
     )
     expect(answer.text).not.toContain('<code class="language-mermaid">')
   })
-
   test('is one picture where only the light drawing arrived', async () => {
     const light = await draw('light')
     const answer = await published()
-
     expect(answer.text).toContain(`<img src="/i/${light}.svg" alt="Diagram">`)
     expect(answer.text).not.toContain('data-scheme=')
   })
-
   test('is served from the site itself, as an SVG that may do nothing', async () => {
     const light = await draw('light')
     const answer = await call(env, `/i/${light}.svg`, { host: HOST })
-
     expect(answer.status).toBe(200)
     expect(answer.headers.get('content-type')).toBe('image/svg+xml')
     expect(answer.headers.get('cache-control')).toContain('immutable')
@@ -387,15 +306,12 @@ describe('a diagram the app drew', () => {
     expect(policy).toContain('sandbox')
     expect(answer.text).toContain('<text>light</text>')
   })
-
   test('is a picture this page may show, and nobody else’s', async () => {
     await draw('light')
     const answer = await published()
-
     expect(answer.headers.get('content-security-policy')).toContain("img-src 'self' https: data:")
     expect(fetched(answer.text, [PAGE_CSS, MATH_CSS]).filter(elsewhere)).toEqual([])
   })
-
   test('is dressed by the sheet, in both schemes and on paper', () => {
     expect(PAGE_CSS).toContain('#write .diagram img{max-width:100%;height:auto}')
     expect(PAGE_CSS).toContain("#write .diagram img[data-scheme='dark']{display:none}")
@@ -404,34 +320,28 @@ describe('a diagram the app drew', () => {
       PAGE_CSS.indexOf('@media (prefers-color-scheme:dark)'),
     )
   })
-
   test('is another name in another space, so the page cannot be poisoned', async () => {
     const { language, code } = fence()
     const elsewhereKey = await diagramKey('some-other-space', language, code, 'light')
-
     await call(env, `/v1/blobs/${elsewhereKey}`, {
       method: 'PUT',
       token,
       raw: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>',
       headers: { 'content-type': 'image/svg+xml' },
     })
-
     const answer = await published()
     expect(answer.text).not.toContain('<figure class="diagram"')
   })
-
   test('is a picture only where the space’s own owner keeps the bytes', async () => {
     const { language, code } = fence()
     const hash = await diagramKey(space, language, code, 'light')
     const stranger = await signIn(env, 'stranger@b.dev')
-
     await call(env, `/v1/blobs/${hash}`, {
       method: 'PUT',
       token: stranger,
       raw: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>',
       headers: { 'content-type': 'image/svg+xml' },
     })
-
     const answer = await published()
     expect(answer.text).not.toContain('<figure class="diagram"')
   })

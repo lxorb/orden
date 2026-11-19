@@ -1,15 +1,12 @@
 use tauri::Webview;
 
 const WORLD: &str = "orden-state";
-
 pub async fn run(view: &Webview, source: &str, call: &str) -> Result<String, String> {
     engine::run(view, source, call).await
 }
-
 pub fn quoted(text: &str) -> Result<String, String> {
     serde_json::to_string(text).map_err(|error| error.to_string())
 }
-
 mod engine {
     use serde_json::json;
     use tauri::Webview;
@@ -22,7 +19,6 @@ mod engine {
         let frame = tree["frameTree"]["frame"]["id"]
             .as_str()
             .ok_or("the page has no frame to run in")?;
-
         let world = cdp::call(
             view,
             "Page.createIsolatedWorld",
@@ -32,7 +28,6 @@ mod engine {
         let context = world["executionContextId"]
             .as_i64()
             .ok_or("the page made no world to run in")?;
-
         let answered = cdp::call(
             view,
             "Runtime.evaluate",
@@ -44,7 +39,6 @@ mod engine {
             }),
         )
         .await?;
-
         if let Some(thrown) = answered.get("exceptionDetails") {
             let said = thrown["exception"]["description"]
                 .as_str()
@@ -58,7 +52,6 @@ mod engine {
             .ok_or_else(|| "the script answered nothing".to_owned())
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::quoted;

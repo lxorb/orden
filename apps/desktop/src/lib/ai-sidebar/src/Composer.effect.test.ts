@@ -26,7 +26,6 @@ const panel = vi.hoisted(() => ({
   focus: vi.fn(),
 }))
 vi.mock('../../ai-chat/src/store/chat.svelte', () => ({ chat: panel }))
-
 const ran = vi.hoisted(() => [] as string[])
 vi.mock('./seams', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./seams')>()),
@@ -40,7 +39,6 @@ vi.mock('./seams', async (importOriginal) => ({
       },
     ]),
 }))
-
 const drawn = vi.hoisted(() => [] as string[])
 vi.mock('./picture', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./picture')>()),
@@ -49,20 +47,16 @@ vi.mock('./picture', async (importOriginal) => ({
     return new Promise((resolve) => setTimeout(() => resolve({ mime: 'image/png', data: 'AAAA' }), 5))
   },
 }))
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,
     finished: Promise.resolve(),
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
-
 const { views } = await import('../../panes/src/api')
 const Composer = (await import('./Composer.svelte')).default
-
 let target: HTMLElement
 let close: (() => void) | undefined
-
 beforeEach(() => {
   ran.length = 0
   for (const one of [panel.taken, panel.submit, panel.steer]) one.mockClear()
@@ -71,13 +65,11 @@ beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
 })
-
 afterEach(() => {
   close?.()
   close = undefined
   target.remove()
 })
-
 function composer() {
   const shown = mount(Composer, { target })
   close = () => void unmount(shown)
@@ -86,10 +78,8 @@ function composer() {
   if (!field) throw new Error('no field')
   return field
 }
-
 const enter = (field: HTMLTextAreaElement, ctrlKey = false) =>
   field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey, bubbles: true }))
-
 test('a command typed out ends the change in the field', async () => {
   panel.text = '/export to the desk'
   const field = composer()
@@ -98,7 +88,6 @@ test('a command typed out ends the change in the field', async () => {
   expect(panel.taken).toHaveBeenCalled()
   expect(panel.submit).not.toHaveBeenCalled()
 })
-
 test('a command picked from the menu ends the change in the field', async () => {
   panel.text = '/exp'
   const field = composer()
@@ -110,7 +99,6 @@ test('a command picked from the menu ends the change in the field', async () => 
   await vi.waitFor(() => expect(ran).toEqual(['export:']))
   expect(panel.taken).toHaveBeenCalled()
 })
-
 test('two chips of one name are both drawn', () => {
   panel.chips = [
     { kind: 'words', id: '#Ana', label: '#Ana', text: 'one' },
@@ -119,7 +107,6 @@ test('two chips of one name are both drawn', () => {
   expect(() => composer()).not.toThrow()
   expect(target.querySelectorAll('.chip .name')).toHaveLength(2)
 })
-
 test('a chat of another space picked with @ keeps its space', async () => {
   panel.heads = [{ id: 'garden', title: 'Garden', space: 'home', updated: 1, archived: false }]
   panel.text = '@Gar'
@@ -133,7 +120,6 @@ test('a chat of another space picked with @ keeps its space', async () => {
   enter(field)
   expect(panel.chips).toEqual([{ kind: 'thread', id: 'garden', label: 'Garden', space: 'home' }])
 })
-
 test('Ctrl+Enter with nothing running sends as Enter does, the selection with it', async () => {
   const chosen = views.chosen
   views.chosen = 5
@@ -147,7 +133,6 @@ test('Ctrl+Enter with nothing running sends as Enter does, the selection with it
   expect(panel.steer).not.toHaveBeenCalled()
   expect((panel.chips as { kind: string }[]).map((one) => one.kind)).toEqual(['selection'])
 })
-
 test('Ctrl+Enter with nothing running runs a typed command', async () => {
   panel.text = '/export to the desk'
   const field = composer()
@@ -156,7 +141,6 @@ test('Ctrl+Enter with nothing running runs a typed command', async () => {
   expect(panel.steer).not.toHaveBeenCalled()
   expect(panel.submit).not.toHaveBeenCalled()
 })
-
 test('Ctrl+Enter into a running answer that cannot take words queues them as Enter does (#2046)', async () => {
   panel.busy = true
   panel.text = 'and shorter'
@@ -165,7 +149,6 @@ test('Ctrl+Enter into a running answer that cannot take words queues them as Ent
   await vi.waitFor(() => expect(panel.submit).toHaveBeenCalled())
   expect(panel.steer).not.toHaveBeenCalled()
 })
-
 test('Ctrl+Enter into a running answer that takes words steers it', () => {
   panel.busy = true
   panel.canSteer = true
@@ -175,7 +158,6 @@ test('Ctrl+Enter into a running answer that takes words steers it', () => {
   expect(panel.steer).toHaveBeenCalled()
   expect(panel.submit).not.toHaveBeenCalled()
 })
-
 test('a queued message says it waits for the reply, and offers steering only where it can go in', () => {
   panel.busy = true
   panel.queue = [{ id: 'q', text: 'and shorter' }]
@@ -187,7 +169,6 @@ test('a queued message says it waits for the reply, and offers steering only whe
   composer()
   expect(target.querySelector('[aria-label="Send into the running answer"]')).not.toBeNull()
 })
-
 function pasted(field: HTMLTextAreaElement, files: File[], text = '') {
   const event = new Event('paste', { bubbles: true, cancelable: true })
   Object.defineProperty(event, 'clipboardData', {
@@ -196,7 +177,6 @@ function pasted(field: HTMLTextAreaElement, files: File[], text = '') {
   field.dispatchEvent(event)
   return event
 }
-
 test('a very long paste comes in as text beside the field, not into it', () => {
   const field = composer()
   const long = 'The heron stands still. '.repeat(5_000)
@@ -208,7 +188,6 @@ test('a very long paste comes in as text beside the field, not into it', () => {
   expect(panel.chips).toHaveLength(2)
   expect(pasted(field, [], 'a short line').defaultPrevented).toBe(false)
 })
-
 test('a file too large or not text says why it was not added', async () => {
   const field = composer()
   pasted(field, [new File(['x'.repeat(2_000_001)], 'huge.log', { type: 'text/plain' })])
@@ -225,7 +204,6 @@ test('a file too large or not text says why it was not added', async () => {
   )
   expect(panel.trouble).toBeNull()
 })
-
 test('text files dropped all at once stop at as much text as a message takes, and say so', async () => {
   const field = composer()
   const big = (name: string) => new File(['x'.repeat(1_500_000)], name, { type: 'text/plain' })
@@ -237,7 +215,6 @@ test('text files dropped all at once stop at as much text as a message takes, an
   expect(panel.trouble).toContain('was not added')
   expect(panel.chips).toHaveLength(2)
 })
-
 test('two files of one name are both added, each with its own words', async () => {
   const field = composer()
   pasted(field, [new File(['first'], 'notes.txt', { type: 'text/plain' })])
@@ -246,7 +223,6 @@ test('two files of one name are both added, each with its own words', async () =
   await vi.waitFor(() => expect(panel.chips).toHaveLength(2))
   expect((panel.chips as { text?: string }[]).map((one) => one.text)).toEqual(['first', 'second'])
 })
-
 test('pictures pasted all at once stop at as many as a message takes, and say so', async () => {
   const field = composer()
   const shots = Array.from(

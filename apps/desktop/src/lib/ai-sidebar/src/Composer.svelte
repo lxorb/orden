@@ -32,7 +32,6 @@
   let hushed = $state('')
   let commands = $state<readonly PanelCommand[]>([])
   const here = hostHere()
-
   const voiceField: Dictates = {
     field: () => field,
     words: () => [
@@ -42,22 +41,18 @@
     ],
     trouble: (said) => (chat.trouble = said),
   }
-
   const head = $derived(chat.head)
   const busy = $derived(chat.busy)
   const root = $derived(chat.root)
   const home = $derived(root !== null && samePath(root, workspace.activeSpace?.root))
-
   const front = $derived.by((): (Front & { key: string }) | null => {
     const note = noteInFront(root)
     return note ? { ...note, key: `note:${note.path}` } : null
   })
-
   const selection = $derived(views.chosen > 0 ? views.selectedText() : '')
   const selectionKey = $derived(`selection:${selection.slice(0, 60)}`)
   const frontOn = $derived(!!front && !chat.dropped.includes(front.key))
   const selectionOn = $derived(!!selection.trim() && !chat.dropped.includes(selectionKey))
-
   function around() {
     const on = front && !chat.dropped.includes(front.key) ? front : null
     const picked = selectionHere()
@@ -69,14 +64,11 @@
     }
   }
   chat.around = around
-
   const FRONT_MOST = 12_000
-
   function sentChips(): Mention[] {
     const chips = chat.chips.filter((one) => one.kind !== 'picture' || chat.model?.images !== false)
     return selectionOn && !chips.some((one) => one.kind === 'selection') ? [...chips, SELECTION_CHIP] : chips
   }
-
   const attached = $derived.by(() => {
     let sum = 0
     if (frontOn && front && head?.mode !== 'approve')
@@ -88,11 +80,9 @@
     }
     return sum
   })
-
   const next = $derived(estimateText(chat.text) + attached)
   const mention = $derived(mentionAt(chat.text, caret))
   const slash = $derived(/^\/[\w-]*$/.test(chat.text) ? chat.text.slice(1) : null)
-
   function folders(): Entry[] {
     const out: Entry[] = []
     const walk = (entry: Entry) => {
@@ -105,7 +95,6 @@
     if (workspace.tree) walk(workspace.tree)
     return out
   }
-
   function candidates(): Mention[] {
     const out: Mention[] = []
     if (views.chosen > 0) out.push({ kind: 'selection', id: 'selection', label: 'Selection', word: 'selection' })
@@ -124,16 +113,12 @@
     }
     return out
   }
-
   const found = $derived(mention && hushed !== chat.text ? ranked(candidates(), mention.query) : [])
   const slashing = $derived(slash !== null)
-
   $effect(() => {
     if (slashing) void commandsFor(chat).then((rows) => (commands = rows))
   })
-
   const commandRows = $derived(slash !== null && hushed !== chat.text ? matching(commands, slash) : [])
-
   const rows = $derived.by((): Row[] => {
     if (commandRows.length) {
       const kind = chat.provider?.kind
@@ -154,22 +139,17 @@
       ...(one.kind === 'note' ? { hint: folderIn(one.id) } : {}),
     }))
   })
-
   const follows = (..._values: unknown[]) => undefined
-
   $effect(() => {
     follows(rows)
     lit = 0
   })
-
   function folderIn(path: string): string {
     const inside = root ? withinSpace(root, path) : null
     const at = inside?.lastIndexOf('/') ?? -1
     return inside && at > 0 ? inside.slice(0, at) : ''
   }
-
   let foot = $state<HTMLElement>()
-
   $effect(() =>
     chat.popover
       ? overlays.show(
@@ -178,7 +158,6 @@
         )
       : undefined,
   )
-
   function footKey(event: KeyboardEvent) {
     if (event.key !== 'Escape' || !chat.popover) return
     event.preventDefault()
@@ -186,11 +165,9 @@
     chat.popover = null
     chat.focus()
   }
-
   function addChip(chip: Mention) {
     if (!chat.chips.some((one) => sameMention(one, chip))) chat.chips = [...chat.chips, chip]
   }
-
   function pick(index: number, complete = false) {
     const command = commandRows[index]
     if (command) {
@@ -214,7 +191,6 @@
     chat.text = joined + after
     place(joined.length)
   }
-
   function place(at: number) {
     requestAnimationFrame(() => {
       field?.focus()
@@ -222,7 +198,6 @@
       caret = at
     })
   }
-
   async function runTyped(): Promise<boolean> {
     const typed = commandIn(chat.text)
     if (!typed) return false
@@ -238,13 +213,11 @@
     })
     return true
   }
-
   async function submit() {
     if (await runTyped()) return
     chat.chips = sentChips()
     chat.submit(around())
   }
-
   function onKey(event: KeyboardEvent) {
     if (event.isComposing) return
     if (rows.length) {
@@ -298,17 +271,13 @@
       return run(() => undefined)
     }
   }
-
   function onInput() {
     caret = field?.selectionStart ?? 0
   }
-
   let drawing = 0
   let reading = 0
-
   const notTaken = (name: string, why = 'a chat takes pictures, and text files up to 2 MB') =>
     (chat.trouble = `${name} was not added: ${why}.`)
-
   function tooMuch(name: string, size: number): boolean {
     if (size > 2_000_000) notTaken(name)
     else if (size > MOST_CHAT_TEXT - textHeld(chat.chips) - reading)
@@ -316,7 +285,6 @@
     else return false
     return true
   }
-
   function take(file: File) {
     const name = file.name || 'Picture'
     const unread = () => (chat.trouble = `${name} could not be read.`)
@@ -344,7 +312,6 @@
     reader.onloadend = () => (reading -= file.size)
     reader.readAsText(file)
   }
-
   function onPaste(event: ClipboardEvent) {
     const files = [...(event.clipboardData?.files ?? [])]
     if (files.length) {
@@ -356,14 +323,12 @@
     if (text !== null && !tooMuch('Text', text.length))
       addChip({ kind: 'words', id: crypto.randomUUID(), label: 'Text', text })
   }
-
   function onDrop(event: DragEvent) {
     const files = [...(event.dataTransfer?.files ?? [])]
     if (!files.length) return
     event.preventDefault()
     files.forEach(take)
   }
-
   function modeMenu(event: MouseEvent) {
     const row = (mode: Mode) => ({
       label: modeWord(mode),
@@ -374,15 +339,12 @@
       title: 'Permissions',
     })
   }
-
   const mode = $derived(head?.mode ?? FIRST_MODE)
   const searching = $derived(chat.chips.some((one) => one.kind === 'web'))
-
   function toggleWeb() {
     if (searching) chat.chips = chat.chips.filter((one) => one.kind !== 'web')
     else addChip({ kind: 'web', id: 'web', label: 'Web search', word: 'web' })
   }
-
   function plusMenu(event: MouseEvent) {
     menu.show(event, [
       { label: 'Add photos and files', asks: true, run: chooseAndTake },
@@ -393,7 +355,6 @@
       { label: 'Commands', disabled: !!chat.text.trim(), run: () => typeAt('/') },
     ])
   }
-
   function typeAt(mark: string) {
     const at = field?.selectionStart ?? chat.text.length
     const before = chat.text.slice(0, at)
@@ -401,16 +362,13 @@
     chat.text = before + typed + chat.text.slice(at)
     place(at + typed.length)
   }
-
   function chooseAndTake() {
     void chooseFiles({ multiple: true }).then((files) => {
       for (const file of files) take(file)
       chat.focus()
     })
   }
-
   const button = $derived.by((): 'stop' | 'send' => (busy && !chat.text.trim() ? 'stop' : 'send'))
-
   $effect(() => {
     if (chat.host !== here) return
     dictation.field = voiceField
@@ -418,26 +376,21 @@
       if (dictation.field === voiceField) dictation.field = null
     }
   })
-
   $effect(() => {
     if (chat.focusAsked && chat.host === here) requestAnimationFrame(() => field?.focus())
   })
-
   const thread = $derived(chat.head ? chat.thread : null)
   let escaped = 0
-
   const goal = $derived(
     head?.goal && (head.goal.state === 'pursuing' || head.goal.state === 'paused') ? head.goal : null,
   )
   let reasoning = $state(false)
   let now = $state(Date.now())
-
   $effect(() => {
     if (!goal) return
     const clock = setInterval(() => (now = Date.now()), 30_000)
     return () => clearInterval(clock)
   })
-
   async function clearGoal() {
     const named = rowNamed(await commandsFor(chat), 'goal')
     await named?.row.run({ args: 'clear', thread: chat.thread, panel: chat })
@@ -610,11 +563,9 @@
     margin-inline: auto;
     padding: var(--space-1) var(--space-1) var(--space-2);
   }
-
   :global(.ask.wide) .foot {
     padding-inline: var(--space-4);
   }
-
   .editing {
     display: flex;
     align-items: center;
@@ -624,7 +575,6 @@
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   .editing svg {
     width: 12px;
     height: 12px;
@@ -633,7 +583,6 @@
     stroke-width: 1.3;
     stroke-linejoin: round;
   }
-
   .goal {
     display: flex;
     align-items: center;
@@ -644,12 +593,10 @@
     border-radius: var(--radius-sm);
     background: var(--accent-soft);
   }
-
   .goal.paused {
     border-color: var(--line);
     background: var(--ink-wash);
   }
-
   .goal .what {
     flex: 1;
     display: flex;
@@ -665,16 +612,13 @@
     text-align: start;
     cursor: default;
   }
-
   .goal .mark {
     flex: none;
     color: var(--accent);
   }
-
   .goal.paused .mark {
     color: var(--muted);
   }
-
   .goal .meta {
     flex: none;
     margin-inline-start: auto;
@@ -682,7 +626,6 @@
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-
   .reason {
     margin: 0;
     padding: 0 6px;
@@ -690,11 +633,9 @@
     font-family: var(--font-ui);
     font-size: var(--text-xs);
   }
-
   .box-wrap {
     position: relative;
   }
-
   .composer {
     flex-direction: column;
     align-items: stretch;
@@ -704,7 +645,6 @@
     border-radius: var(--radius-lg);
     background: var(--surface);
   }
-
   .chips {
     display: flex;
     flex-wrap: wrap;
@@ -712,7 +652,6 @@
     min-width: 0;
     padding: 0 var(--space-1) 2px;
   }
-
   .chip {
     display: inline-flex;
     align-items: center;
@@ -730,21 +669,17 @@
       opacity var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out);
   }
-
   .chip.implicit {
     border-style: dashed;
     opacity: 0.7;
   }
-
   .chip.implicit:hover {
     opacity: 1;
   }
-
   .chip.refused {
     border-color: var(--danger);
     opacity: 0.6;
   }
-
   .name,
   .condition {
     min-width: 0;
@@ -752,28 +687,23 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .quoted::before {
     content: '\201C';
   }
-
   .quoted::after {
     content: '\201D';
   }
-
   .thumb {
     width: 14px;
     height: 14px;
     border-radius: 2px;
     object-fit: cover;
   }
-
   .drop :global(svg) {
     width: 8px;
     height: 8px;
     stroke-width: 1.4;
   }
-
   .drop {
     display: grid;
     place-items: center;
@@ -788,14 +718,12 @@
     line-height: 1;
     cursor: default;
   }
-
   @media (hover: hover) {
     .drop:hover {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
-
   .composer textarea {
     flex: none;
     width: 100%;
@@ -808,7 +736,6 @@
     resize: none;
     field-sizing: content;
   }
-
   .controls {
     container-type: inline-size;
     display: flex;
@@ -816,21 +743,17 @@
     gap: 2px;
     min-width: 0;
   }
-
   .gap {
     flex: 1;
   }
-
   .plus {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
     border-radius: 50%;
   }
-
   .plus svg {
     stroke-width: 1.4;
   }
-
   .mode {
     flex: none;
     display: inline-flex;
@@ -849,20 +772,17 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .mode:hover:not(:disabled) {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
-
   @container (max-width: 17rem) {
     .mode span {
       display: none;
     }
   }
-
   .mode .caret {
     width: 11px;
     height: 11px;
@@ -872,7 +792,6 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .go {
     flex: none;
     display: grid;
@@ -891,16 +810,13 @@
       color var(--dur-fast) var(--ease-out),
       scale var(--dur-fast) var(--ease-out);
   }
-
   .go:disabled {
     background: var(--surface-hover);
     color: var(--muted);
   }
-
   .go:active:not(:disabled) {
     scale: 0.92;
   }
-
   .go svg {
     width: 14px;
     height: 14px;
@@ -910,12 +826,10 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .go .square {
     fill: currentColor;
     stroke: none;
   }
-
   :global([data-touch]) .composer textarea {
     font-size: var(--text-base);
   }

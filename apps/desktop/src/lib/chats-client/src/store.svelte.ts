@@ -30,12 +30,9 @@ import { type Host, View } from './view.svelte'
 import { dayOf } from './view/when'
 
 const RECEIPTS = 'orden:chat-receipts'
-
 const WIKILINK = /\[\[([^\]|#^]+)/g
-
 const LOOK_FIRST = 2000
 const LOOK_AGAIN = 30_000
-
 function remoteFor(id: string): Remote {
   const other = () => {
     const now = account.user?.id ?? account.guest?.id ?? null
@@ -49,20 +46,16 @@ function remoteFor(id: string): Remote {
     read: (chat, seq, back) => (other() ? Promise.resolve(false) : http.postRead(chat, seq, back).catch(() => false)),
   }
 }
-
 function newId(): string {
   return ulid(Date.now(), Math.random)
 }
-
 function startOf(day: string): number {
   const [year, month, date] = day.split('-').map(Number)
   return new Date(year ?? 1970, (month ?? 1) - 1, date ?? 1).getTime()
 }
-
 class ChatsStore implements Chats {
   list = $state.raw<ChatEntry[]>([])
   ready = $state(false)
-
   private engine: ChatEngine | null = null
   private cache: ChatCache | null = null
   private account: string | null = null
@@ -78,20 +71,17 @@ class ChatsStore implements Chats {
   private looking: ReturnType<typeof setTimeout> | null = null
   private lookWait = LOOK_FIRST
   private stops: (() => void)[] = []
-
   get me(): Who | null {
     if (account.user) return `user:${account.user.id}`
     if (account.guest) return `guest:${account.guest.id}`
     return null
   }
-
   async start(id: string | null): Promise<void> {
     if (id === this.account) return
     this.stop()
     if (!id) return
     this.account = id
     startedFor(id)
-
     let cache: ChatCache = new MemoryCache()
     if (isNative && account.user) {
       const { nativeCache } = await import('./native-cache')
@@ -106,7 +96,6 @@ class ChatsStore implements Chats {
       if (isRetiredChat(one.chat)) void cache.write([{ t: 'undraft', chat: one.chat }]).catch(() => undefined)
       else this.drafts.set(one.chat, one.text)
     }
-
     this.stops.push(
       engine.listen((change) => {
         if (change.t === 'messages') {
@@ -122,14 +111,12 @@ class ChatsStore implements Chats {
     this.ready = true
     await this.lookForPointers()
   }
-
   async forget(): Promise<void> {
     const cache = this.cache
     this.stop()
     this.forgetFiles(true)
     await cache?.forget().catch(() => undefined)
   }
-
   private stop(): void {
     for (const stop of this.stops.splice(0)) stop()
     for (const held of [...this.views.values()]) {
@@ -155,47 +142,38 @@ class ChatsStore implements Chats {
     this.list = []
     this.ready = false
   }
-
   async reconnected(): Promise<void> {
     const engine = this.engine
     if (!engine) return
     await engine.flushAll()
     await engine.refresh()
   }
-
   lookAgain(): Promise<void> {
     return this.engine ? this.lookForPointers() : Promise.resolve()
   }
-
   poked(said: unknown): void {
     const poke = chatPokeOf(said)
     if (poke) this.engine?.poked(poke)
   }
-
   watch(listener: () => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   heard(listener: (chat: string, messages: readonly Message[]) => void): () => void {
     this.arrivals.add(listener)
     return () => this.arrivals.delete(listener)
   }
-
   entry(chat: string): ChatEntry | null {
     return this.list.find((one) => one.id === chat) ?? null
   }
-
   async message(chat: string, id: string): Promise<Message | null> {
     const kept = await this.cache?.messages(chat, [id]).catch(() => [])
     return kept?.[0]?.message ?? null
   }
-
   async markRead(chat: string, seq: number): Promise<void> {
     const engine = this.engine
     if (engine?.readTo(chat, seq)) await engine.tellRead(chat, seq, false).catch(() => false)
   }
-
   private drawList(): void {
     const engine = this.engine
     if (!engine) return
@@ -246,7 +224,6 @@ class ChatsStore implements Chats {
     if (entries.some((one) => !one.path)) this.awaitPointers()
     else this.lookWait = LOOK_FIRST
   }
-
   private awaitPointers(): void {
     if (this.looking) return
     sync.nudge()
@@ -256,26 +233,21 @@ class ChatsStore implements Chats {
       void this.lookForPointers()
     }, this.lookWait)
   }
-
   private rank(chat: string, place: Place): number {
     const space = this.engine?.chats.get(chat)?.row?.space ?? null
     const home = space !== null && this.remoteOf(place.root) === space ? 2 : 0
     const own = ownPointer(chat)
     return home + (own !== null && samePath(own, place.path) ? 1 : 0)
   }
-
   private remoteOf(root: string): string | null {
     return sync.remoteIdFor(root)
   }
-
   private counting = new Set<string>()
-
   private countLater(chat: string): void {
     if (this.counting.has(chat)) return
     this.counting.add(chat)
     queueMicrotask(() => void this.count(chat))
   }
-
   private async count(chat: string): Promise<void> {
     this.counting.delete(chat)
     const me = this.me
@@ -287,7 +259,6 @@ class ChatsStore implements Chats {
     this.unread.set(chat, count)
     this.drawList()
   }
-
   private async lookForPointers(): Promise<void> {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and read in this call
     const ranked = new Map<string, Map<string, number>>()
@@ -323,14 +294,12 @@ class ChatsStore implements Chats {
     if ([...found.keys()].some((chat) => !engine.chats.get(chat)?.row)) await engine.refresh()
     this.drawList()
   }
-
   folderMoved(from: string, to: string): void {
     for (const [chat, path] of ownPointers()) {
       const inside = within(from, path)
       if (inside !== null) keepOwnPointer(chat, inside ? joinPath(to, inside) : to)
     }
   }
-
   pointersSeen(root: string | null, paths: readonly string[]): void {
     if (!this.engine) return
     const placed = [...this.places.values()]
@@ -340,7 +309,6 @@ class ChatsStore implements Chats {
     const went = root !== null && placed.some((one) => samePath(one.root, root) && !held.has(one.path))
     if (came || went) void this.lookForPointers()
   }
-
   open(chat: string): ChatView {
     const held = this.views.get(chat)
     if (held) {
@@ -353,7 +321,6 @@ class ChatsStore implements Chats {
     for (const one of this.list) if (one.id === chat) this.countLater(chat)
     return view
   }
-
   private host(): Host {
     const engine = this.engine
     const cache = this.cache
@@ -383,13 +350,11 @@ class ChatsStore implements Chats {
       },
     }
   }
-
   async send(chat: string, event: Event): Promise<void> {
     const engine = this.engine
     if (!engine) throw new Error('chats have not started')
     await engine.queue(chat, event)
   }
-
   private async postOf(chat: string, draft: Draft): Promise<Post> {
     const members = await this.members(chat).catch(() => [])
     const mentions = mentionsIn(
@@ -407,25 +372,21 @@ class ChatsStore implements Chats {
     if (mentions.length) post.mentions = mentions
     return post
   }
-
   async post(chat: string, draft: Draft): Promise<string> {
     const post = await this.postOf(chat, draft)
     await this.send(chat, post)
     this.keepDraft(chat, '')
     return post.message
   }
-
   async schedule(chat: string, draft: Draft, sendAt: number): Promise<string> {
     const post = await this.postOf(chat, draft)
     await this.send(chat, { kind: 'schedule', id: newId(), sendAt, post })
     this.keepDraft(chat, '')
     return post.message
   }
-
   async scheduled(chat: string): Promise<Scheduled[]> {
     return (await http.scheduledOf(chat)) ?? []
   }
-
   edit(chat: string, message: string, body: string, files?: FileRef[]): Promise<void> {
     return this.send(chat, {
       kind: 'edit',
@@ -435,7 +396,6 @@ class ChatsStore implements Chats {
       ...(files ? { files } : {}),
     })
   }
-
   async remove(chat: string, message: string): Promise<void> {
     const waiting = this.rowsAbout(chat, message)
     if (this.engine && waiting.some((row) => row.event.kind === 'post')) {
@@ -444,23 +404,18 @@ class ChatsStore implements Chats {
     }
     await this.send(chat, { kind: 'delete', id: newId(), target: message })
   }
-
   react(chat: string, message: string, emoji: string, on: boolean): Promise<void> {
     return this.send(chat, { kind: 'react', id: newId(), target: message, emoji, on })
   }
-
   pin(chat: string, message: string, on: boolean): Promise<void> {
     return this.send(chat, { kind: 'pin', id: newId(), target: message, on })
   }
-
   vote(chat: string, message: string, answers: number[]): Promise<void> {
     return this.send(chat, { kind: 'vote', id: newId(), target: message, answers })
   }
-
   setMeta(chat: string, meta: Partial<Meta>): Promise<void> {
     return this.send(chat, { kind: 'meta', id: newId(), ...meta })
   }
-
   async unsend(chat: string): Promise<string | null> {
     const engine = this.engine
     const me = this.me
@@ -484,23 +439,19 @@ class ChatsStore implements Chats {
     await this.remove(chat, last.id)
     return last.body
   }
-
   private rowsAbout(chat: string, message: string) {
     return (this.engine?.pending(chat) ?? []).filter((row) => {
       const event = row.event
       return event.kind === 'post' ? event.message === message : 'target' in event && event.target === message
     })
   }
-
   async retry(chat: string, message: string): Promise<void> {
     await this.engine?.retry(this.rowsAbout(chat, message).map((row) => row.id))
   }
-
   async discard(chat: string, message: string): Promise<void> {
     const rows = this.rowsAbout(chat, message).filter((row) => row.refused)
     await this.engine?.drop(rows.map((row) => row.id))
   }
-
   async notifyFor(chat: string, notify: Notify | null, mutedUntil: number | null): Promise<void> {
     await http.putMe(chat, notify, mutedUntil)
     const held = this.engine?.chats.get(chat)
@@ -509,7 +460,6 @@ class ChatsStore implements Chats {
       this.drawList()
     }
   }
-
   members(chat: string): Promise<ChatMember[]> {
     let asked = this.people.get(chat)
     if (!asked) {
@@ -521,17 +471,14 @@ class ChatsStore implements Chats {
     }
     return asked
   }
-
   parse(query: string): SearchQuery {
     return parseSearch(query, dayOf(Date.now()))
   }
-
   async search(query: string, chat?: string): Promise<Hit[]> {
     const cache = this.cache
     const me = this.me
     if (!cache || !me) return []
     if (!isNative) return (await http.searchOnAccount(query, chat)) ?? []
-
     const asked = this.parse(query)
     const names = new Map(this.list.map((one) => [one.id, one.name ?? '']))
     const inChats = asked.in.length
@@ -541,7 +488,6 @@ class ChatsStore implements Chats {
       : []
     if (asked.in.length && !inChats.length) return []
     const chats = chat ? [chat] : inChats
-
     const candidates = await cache.search({
       chats,
       words: asked.words,
@@ -573,7 +519,6 @@ class ChatsStore implements Chats {
       .slice(0, 100)
       .map(({ chat: id, kept }) => ({ chat: id, message: kept.message }))
   }
-
   async linking(names: readonly string[]): Promise<Hit[]> {
     const cache = this.cache
     if (!cache) return []
@@ -593,7 +538,6 @@ class ChatsStore implements Chats {
     }
     return hits.sort((a, b) => b.message.at - a.message.at)
   }
-
   async history(chat: string, ask: HistoryAsk): Promise<Message[]> {
     const engine = this.engine
     const cache = this.cache
@@ -618,14 +562,11 @@ class ChatsStore implements Chats {
     })
     return kept.map((one) => one.message)
   }
-
   draft(chat: string): string {
     return this.drafts.get(chat) ?? ''
   }
-
   private readonly offered = new Set<(offer: Offer) => void>()
   private readonly waitingOffers = new Map<string, Offer>()
-
   offer(chat: string, text: string, more: { parent?: string; note?: string } = {}): void {
     const key = more.parent ? `${chat}/${more.parent}` : chat
     this.keepDraft(key, text)
@@ -633,36 +574,30 @@ class ChatsStore implements Chats {
     this.waitingOffers.set(key, offer)
     for (const hear of this.offered) hear(offer)
   }
-
   offers(listener: (offer: Offer) => void): () => void {
     this.offered.add(listener)
     return () => this.offered.delete(listener)
   }
-
   takeOffer(chat: string, parent?: string): Offer | null {
     const key = parent ? `${chat}/${parent}` : chat
     const offer = this.waitingOffers.get(key) ?? null
     this.waitingOffers.delete(key)
     return offer
   }
-
   private remoteNote(path: string): { space: string; note: string } | null {
     const root = spaceHolding(workspace.spaces, path)?.root
     const space = root ? this.remoteOf(root) : null
     const note = sync.tracked(path)?.id
     return space && note ? { space, note } : null
   }
-
   async noteReach(chat: string, path: string) {
     const at = this.remoteNote(path)
     return at ? await http.noteReachOf(chat, at.space, at.note) : null
   }
-
   async shareNote(chat: string, path: string): Promise<boolean> {
     const at = this.remoteNote(path)
     return at ? await http.shareNote(chat, at.space, at.note) : false
   }
-
   keepDraft(chat: string, text: string): void {
     if ((this.drafts.get(chat) ?? '') === text) return
     if (text) this.drafts.set(chat, text)
@@ -671,16 +606,13 @@ class ChatsStore implements Chats {
       ?.write([text ? { t: 'draft', draft: { chat, text, at: Date.now() } } : { t: 'undraft', chat }])
       .catch(() => undefined)
   }
-
   async upload(bytes: Uint8Array): Promise<string | null> {
     const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes))
     const hash = [...new Uint8Array(digest)].map((one) => one.toString(16).padStart(2, '0')).join('')
     return (await http.putBlob(hash, bytes)) ? hash : null
   }
-
   private readonly urls = new Map<string, Promise<string | null>>()
   fileEpoch = $state(0)
-
   fileUrl(chat: string, hash: string): Promise<string | null> {
     const key = `${this.me}/${chat}/${hash}`
     let url = this.urls.get(key)
@@ -694,7 +626,6 @@ class ChatsStore implements Chats {
     }
     return url
   }
-
   private forgetFiles(all: boolean): void {
     const mine = `${this.me}/`
     this.fileEpoch++
@@ -704,12 +635,10 @@ class ChatsStore implements Chats {
       void url.then((one) => one && URL.revokeObjectURL(one))
     }
   }
-
   async preview(url: string): Promise<Preview | null> {
     const { previewOf } = await import('./preview')
     return previewOf(url, (bytes) => this.upload(bytes))
   }
-
   async make(folder: string, name: string): Promise<string | null> {
     const place = await makePointer(folder, name)
     if (!place) return null
@@ -720,23 +649,18 @@ class ChatsStore implements Chats {
     await this.engine?.refresh()
     return place.path
   }
-
   placedAt(chat: string): string | null {
     return this.places.get(chat)?.path ?? null
   }
-
   chatAt(path: string): Promise<string | null> {
     return readPointer(path)
   }
-
   get receipts(): boolean {
     return storedText(RECEIPTS) !== 'off'
   }
-
   set receipts(on: boolean) {
     keep(RECEIPTS, on ? 'on' : 'off')
   }
-
   async pointerMoved(from: string | null, to: string | null): Promise<void> {
     const before = [...this.places].find(([, place]) => from !== null && place.path === from)
     const chat = to ? await readPointer(to) : null
@@ -764,5 +688,4 @@ class ChatsStore implements Chats {
     this.drawList()
   }
 }
-
 export const chats = new ChatsStore()

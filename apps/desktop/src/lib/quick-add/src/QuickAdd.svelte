@@ -48,7 +48,6 @@
     provider?: Provider | null
     dictates?: boolean
   } = $props()
-
   let text = $state(untrack(() => prefill.text ?? ''))
   let description = $state<string | null>(untrack(() => prefill.description ?? null))
   let keep = $state<Span[]>(untrack(() => [...(prefill.keep ?? [])]))
@@ -62,7 +61,6 @@
     deadline?: string | null
     tags?: string[]
   }>({})
-
   let input = $state<HTMLInputElement>()
   let mirror = $state<HTMLElement>()
   let words = $state<HTMLTextAreaElement>()
@@ -76,7 +74,6 @@
       : { text: text.trim(), fields: { tags: [], remind: [] }, chips: [] },
   )
   const pieces = $derived(piecesOf(text, read.chips))
-
   const fields = $derived.by((): QuickFields => {
     const given = prefill.fields ?? {}
     const out: QuickFields = {
@@ -105,15 +102,12 @@
     out.tags = [...new Set(out.tags)]
     return out
   })
-
   const dictation = () => import('../../dictation/src/api')
   let speech = $state.raw<Awaited<ReturnType<typeof dictation>> | null>(null)
-
   onMount(() => {
     input?.focus()
     if (dictates) void dictation().then((one) => (speech = one))
   })
-
   function dictated(field: HTMLInputElement | HTMLTextAreaElement, owner: Dictates) {
     let held: { destroy(): void } | null = null
     let gone = !dictates
@@ -128,14 +122,11 @@
       },
     }
   }
-
   let spoken = $state<HTMLInputElement | HTMLTextAreaElement>()
-
   const voiceField: Dictates = {
     field: () => spoken ?? input,
     words: () => tags.slice(0, 12),
   }
-
   $effect(() => {
     const now = text
     if (now === seen) return
@@ -143,12 +134,10 @@
     escaped = carried(escaped, seen, now)
     seen = now
   })
-
   function follow() {
     if (input && mirror) mirror.scrollLeft = input.scrollLeft
     caret = input && input.selectionStart === input.selectionEnd ? (input.selectionStart ?? -1) : -1
   }
-
   let caret = $state(-1)
   let dismissed = $state(-1)
   let active = $state(0)
@@ -160,7 +149,6 @@
   $effect.pre(() => {
     if (offered.length >= 0) active = 0
   })
-
   function take(value: string) {
     const field = input
     if (!token || !field) return
@@ -171,7 +159,6 @@
       follow()
     })
   }
-
   function suggestKey(event: KeyboardEvent): boolean {
     if (!offered.length || event.isComposing) return false
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -195,7 +182,6 @@
     }
     return false
   }
-
   function pressed(event: PointerEvent) {
     if (!mirror) return
     for (const chip of mirror.querySelectorAll<HTMLElement>('[data-chip]')) {
@@ -212,23 +198,18 @@
       }
     }
   }
-
   function dropChip(kind: string) {
     const chip = read.chips.find((one) => one.kind === kind)
     if (!chip) return
     text = without(text, chip)
   }
-
   function ask(event: MouseEvent, rows: MenuEntry[]) {
     const target = event.currentTarget
     if (!(target instanceof HTMLElement)) return
     asking = { rows, at: target.getBoundingClientRect() }
   }
-
   $effect(() => onpicking?.(asking !== null))
-
   const anchor = () => asking?.at ?? input?.getBoundingClientRect() ?? new DOMRect()
-
   function askDay(event: MouseEvent) {
     ask(
       event,
@@ -248,7 +229,6 @@
       ),
     )
   }
-
   function askDeadline(event: MouseEvent) {
     ask(
       event,
@@ -265,7 +245,6 @@
       ),
     )
   }
-
   function askPriority(event: MouseEvent) {
     ask(
       event,
@@ -276,7 +255,6 @@
       }),
     )
   }
-
   function askTags(event: MouseEvent) {
     ask(
       event,
@@ -290,7 +268,6 @@
       }),
     )
   }
-
   function askRemind(event: MouseEvent) {
     ask(
       event,
@@ -300,7 +277,6 @@
       }),
     )
   }
-
   function askDuration(event: MouseEvent) {
     ask(
       event,
@@ -311,14 +287,12 @@
       }),
     )
   }
-
   function entryOf(said: string, own: QuickFields): Entry | null {
     if (!said) return null
     const entry: Entry = { text: said, fields: own }
     if (description?.trim()) entry.description = description
     return entry
   }
-
   function clear() {
     text = ''
     seen = ''
@@ -328,10 +302,8 @@
     description = null
     input?.focus()
   }
-
   let thinking = $state(false)
   let sending = false
-
   async function handOver(entry: Entry, open: boolean, typed: string) {
     sending = true
     try {
@@ -340,13 +312,11 @@
       sending = false
     }
   }
-
   async function submit(open: boolean) {
     const entry = entryOf(read.text, fields)
     if (!entry || thinking || sending) return
     await handOver(entry, open, text)
   }
-
   async function submitAi(asked: Provider) {
     if (thinking || sending) return
     const typed = text
@@ -361,7 +331,6 @@
     if (!entry) return
     await handOver(entry, false, typed)
   }
-
   async function submitEach() {
     if (sending) return
     const lines = pasted ?? []
@@ -384,9 +353,7 @@
     }
     clear()
   }
-
   const LONG_TITLE = 10_000
-
   function onpaste(event: ClipboardEvent) {
     if (mode === 'add') {
       const lines = pastedLines(event.clipboardData?.getData('text/plain') ?? '')
@@ -400,12 +367,10 @@
     if (long === null) return
     description = description ? `${description}\n\n${long}` : long
   }
-
   function openDescription() {
     description ??= ''
     void tick().then(() => words?.focus())
   }
-
   function onkeydown(event: KeyboardEvent) {
     if (event.currentTarget === input && suggestKey(event)) return
     if (event.key === 'Escape') {
@@ -431,7 +396,6 @@
     event.preventDefault()
     void submit(event.ctrlKey || event.metaKey)
   }
-
   function wordsKey(event: KeyboardEvent) {
     if (event.key === 'Backspace' && description === '') {
       event.preventDefault()
@@ -618,11 +582,9 @@
     gap: var(--space-2);
     padding: var(--space-3);
   }
-
   .line {
     position: relative;
   }
-
   .suggest {
     position: absolute;
     top: calc(100% + var(--space-1));
@@ -636,7 +598,6 @@
     background: var(--surface-3);
     box-shadow: var(--shadow-md);
   }
-
   .letters,
   .field {
     box-sizing: border-box;
@@ -649,7 +610,6 @@
     letter-spacing: normal;
     white-space: pre;
   }
-
   .letters {
     position: absolute;
     inset: 0;
@@ -657,7 +617,6 @@
     color: var(--text-strong);
     pointer-events: none;
   }
-
   .field {
     position: relative;
     background: none;
@@ -665,30 +624,24 @@
     caret-color: var(--text-strong);
     outline: none;
   }
-
   .line {
     border-bottom: 1px solid var(--line);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
-
   .line:focus-within {
     border-bottom-color: var(--accent);
   }
-
   input.field:focus,
   textarea.words:focus {
     box-shadow: none;
   }
-
   .field::placeholder {
     color: var(--muted);
   }
-
   .field::selection {
     background: var(--accent-soft);
     color: transparent;
   }
-
   .chip {
     border-radius: var(--radius-sm);
     background: var(--accent-soft);
@@ -698,7 +651,6 @@
       background var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out);
   }
-
   .words {
     box-sizing: border-box;
     width: 100%;
@@ -713,22 +665,18 @@
     resize: none;
     outline: none;
   }
-
   .words::placeholder {
     color: var(--muted);
   }
-
   .controls,
   .pasted {
     display: flex;
     align-items: center;
     gap: var(--space-1);
   }
-
   .gap {
     flex: 1;
   }
-
   .control {
     display: inline-flex;
     align-items: center;
@@ -746,25 +694,20 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .control:hover {
     background: var(--surface-hover);
     color: var(--text);
   }
-
   .control:active {
     background: var(--surface-press);
   }
-
   .control.set {
     color: var(--accent);
   }
-
   .cancel {
     margin-inline-start: var(--space-2);
     color: var(--text);
   }
-
   .add {
     min-height: var(--row-height-sm);
     margin-inline-start: var(--space-2);
@@ -778,7 +721,6 @@
     font-weight: var(--weight-strong);
     transition: opacity var(--dur-fast) var(--ease-out);
   }
-
   .cancel + .add {
     margin-inline-start: 0;
   }

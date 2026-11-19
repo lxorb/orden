@@ -7,13 +7,11 @@
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { fields = $bindable(), oninput }: { fields: Field[]; oninput: () => void } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
-
   function wrong(field: Field): string | null {
     return field.kind === 'totp' && field.value.trim() !== '' && totpIn(field.value) === null
       ? 'This is not a 2FA secret or setup address.'
       : null
   }
-
   function remove(id: string) {
     fields = fields.filter((one) => one.id !== id)
     oninput()

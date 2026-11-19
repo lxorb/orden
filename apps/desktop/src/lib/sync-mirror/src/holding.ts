@@ -10,7 +10,6 @@ export async function mirrorHolds(mirror: Mirror, relative: string, path: string
     if (words === null || !spend(how, words.length)) return false
     return sameWords(words, note.hash)
   }
-
   const file = mirror.files[relative]
   if (!file) return false
   if (how.modified !== undefined && how.modified === file.modified) return true
@@ -18,7 +17,6 @@ export async function mirrorHolds(mirror: Mirror, relative: string, path: string
   const bytes = await invoke<ArrayBuffer>('read_file', { path }).catch(() => null)
   return bytes !== null && (await sha256(bytes)) === file.hash
 }
-
 async function sameWords(words: string, hash: string): Promise<boolean> {
   if (!hash) return false
   if ((await sha256(words)) === hash) return true

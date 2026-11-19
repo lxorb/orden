@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return --
    the extension API is called here as an add-on calls it: untyped, whatever the engine is. */
-
 import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
 import { JSDOM } from 'jsdom'
@@ -15,7 +14,6 @@ const FIREFOX = read('firefox.js')
 const POLYFILL = read('browser-polyfill.js')
 const BRIDGE = read('bridge.js')
 const HOST = read('host.js')
-
 const LAYER = {
   firefox: '140.0',
   manifest: { manifest_version: 2, name: 'Test', browser_action: { default_title: 'Test' } },
@@ -23,9 +21,7 @@ const LAYER = {
   background: 'orden/background.html',
 }
 const TOLD = `globalThis.__ordenLayer = ${JSON.stringify(LAYER)};\n`
-
 type Listener = (...args: any[]) => unknown
-
 function event() {
   const listeners = new Set<Listener>()
   return {
@@ -36,7 +32,6 @@ function event() {
     fire: (...args: unknown[]) => [...listeners].map((one) => one(...args)),
   }
 }
-
 function api<T>(work: (...args: any[]) => T | Promise<T>) {
   return (...args: any[]) => {
     const callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
@@ -45,7 +40,6 @@ function api<T>(work: (...args: any[]) => T | Promise<T>) {
     return answered
   }
 }
-
 function engine() {
   const held = { local: new Map<string, unknown>(), session: new Map<string, unknown>() }
   const changed = event()
@@ -155,7 +149,6 @@ function engine() {
     },
   }
 }
-
 function page(path = 'popup.html', layer: object = LAYER) {
   const made = engine()
   const dom = new JSDOM('<p>popup</p>', {
@@ -169,7 +162,6 @@ function page(path = 'popup.html', layer: object = LAYER) {
   inside.eval(POLYFILL)
   return { ...made, browser: inside.browser, window: inside }
 }
-
 describe('a page of the add-on', () => {
   test('has `browser` made of the layer, with promises', async () => {
     const { browser } = page()
@@ -184,7 +176,6 @@ describe('a page of the add-on', () => {
       { id: 2, windowId: 1, cookieStoreId: 'firefox-default', hidden: false },
     ])
   })
-
   test('has containers of its own, and tabs only in the one store', async () => {
     const { browser } = page()
     const all = await browser.contextualIdentities.query({})
@@ -201,7 +192,6 @@ describe('a page of the add-on', () => {
     expect(await browser.tabs.query({ cookieStoreId: 'firefox-container-1' })).toEqual([])
     expect(await browser.tabs.query({ openerTabId: 9 })).toHaveLength(1)
   })
-
   test('hides tabs for itself, and keeps what Firefox keeps beside a tab', async () => {
     const { browser } = page()
     expect(await browser.tabs.hide([2])).toEqual([2])
@@ -209,7 +199,6 @@ describe('a page of the add-on', () => {
     await browser.tabs.show(2)
     expect(await browser.tabs.query({ hidden: true })).toEqual([])
   })
-
   test('makes a menu Chromium takes, and says a Firefox-only permission is not held', async () => {
     const { browser, created } = page()
     browser.menus.create({ id: 'a', contexts: ['tab', 'browser_action'], icons: { 16: 'a.svg' } })
@@ -231,7 +220,6 @@ describe('a page of the add-on', () => {
     expect(await browser.permissions.contains({ permissions: ['tabHide'] })).toBe(false)
     expect(await browser.permissions.contains({ permissions: ['tabs'] })).toBe(true)
   })
-
   test('opens its sidebar as a tab, and puts a Manifest V2 script in a tab with `browser`', async () => {
     const { browser, created, executed } = page()
     await browser.sidebarAction.open()
@@ -244,7 +232,6 @@ describe('a page of the add-on', () => {
     await expect(browser.tabs.executeScript(1, { code: '1' })).rejects.toThrow('not supported')
     await expect(browser.dns.resolve('example.com')).rejects.toThrow('not supported')
   })
-
   test('hears a tab change only at the addresses it asked for', () => {
     const made = page()
     const heard: number[] = []
@@ -258,7 +245,6 @@ describe('a page of the add-on', () => {
     fire.fire(4, { status: 'complete' }, { id: 4, windowId: 1 })
     expect(heard).toEqual([2, 3])
   })
-
   test('listens to requests of a kind only Firefox names', () => {
     const { browser, filters } = page()
     expect(() =>
@@ -270,7 +256,6 @@ describe('a page of the add-on', () => {
     ).not.toThrow()
     expect(filters).toEqual([{ urls: ['<all_urls>'], types: ['main_frame', 'image', 'ping', 'object'] }])
   })
-
   test('puts a file in a tab by a path from its own page, as Firefox does', async () => {
     const { browser, executed } = page('popup/popup.html')
     await browser.tabs.executeScript(1, { file: 'content.js' })
@@ -280,7 +265,6 @@ describe('a page of the add-on', () => {
       { files: ['orden/firefox.js', 'orden/browser-polyfill.js', 'top.js'] },
     ])
   })
-
   test('reads its own manifest in its own words, as Firefox answers it', () => {
     const manifest = {
       name: '__MSG_name__',
@@ -294,13 +278,11 @@ describe('a page of the add-on', () => {
       permissions: ['tabs'],
     })
   })
-
   test('reads a message by the name Firefox takes', () => {
     const { browser } = page()
     expect(browser.i18n.getMessage('onboarding-1-header')).toBe('[onboarding_1_header]')
   })
 })
-
 describe('a content script', () => {
   test('has `browser`, and the element a menu was opened on', () => {
     const made = engine()
@@ -321,7 +303,6 @@ describe('a content script', () => {
     expect(inside.browser.menus.getTargetElement(1)).toBe(here)
   })
 })
-
 function ports() {
   const one = { onMessage: event(), onDisconnect: event(), sent: [] as any[] }
   const two = { onMessage: event(), onDisconnect: event(), sent: [] as any[] }
@@ -337,12 +318,10 @@ function ports() {
   })
   return { page: end(one, two, '__orden'), worker: end(two, one, '__orden') }
 }
-
 describe('the background page and the service worker it calls through', () => {
   function both(path = 'orden/background.html') {
     const made = engine()
     const { page: pageEnd, worker: workerEnd } = ports()
-
     const worker: Record<string, any> = {
       chrome: made.chrome,
       console,
@@ -360,7 +339,6 @@ describe('the background page and the service worker it calls through', () => {
     }
     vm.runInContext(HOST.replace('LAYER.background && chrome.offscreen', 'false'), worker)
     made.chrome.runtime.onConnect.fire(workerEnd)
-
     const dom = new JSDOM('', {
       url: `chrome-extension://abcdefghijklmnopabcdefghijklmnop/${path}`,
       runScripts: 'outside-only',
@@ -401,7 +379,6 @@ describe('the background page and the service worker it calls through', () => {
     inside.eval(POLYFILL)
     return { ...made, engine: made.chrome, browser: inside.browser, chrome: inside.chrome, worker }
   }
-
   test('makes every call in the service worker, with the layer there', async () => {
     const { browser } = both()
     expect(await browser.tabs.query({})).toHaveLength(2)
@@ -410,7 +387,6 @@ describe('the background page and the service worker it calls through', () => {
     expect(browser.runtime.getManifest()).toEqual(LAYER.manifest)
     expect(await browser.runtime.getBackgroundPage()).toBeTruthy()
   })
-
   test('answers a refusal as a rejection, and a callback with `lastError`', async () => {
     const { browser, chrome } = both()
     await expect(browser.dns.resolve('example.com')).rejects.toThrow('not supported')
@@ -419,7 +395,6 @@ describe('the background page and the service worker it calls through', () => {
     )
     expect(said).toContain('not supported')
   })
-
   test('hears an event the service worker hears, and its install', async () => {
     const { browser, engine: own } = both()
     own.runtime.onInstalled.fire({ reason: 'install' })
@@ -434,7 +409,6 @@ describe('the background page and the service worker it calls through', () => {
       { id: 5, windowId: 1, cookieStoreId: 'firefox-default', hidden: false },
     ])
   })
-
   test('has a menu item’s id at once, and runs what pressing it runs', async () => {
     const { chrome, created } = both()
     const id = chrome.contextMenus.create({ title: 'Do', onclick: () => undefined })
@@ -442,20 +416,17 @@ describe('the background page and the service worker it calls through', () => {
     await new Promise((done) => setTimeout(done, 10))
     expect(created).toEqual([{ title: 'Do', id: 'orden-menu-1' }])
   })
-
   test('reads its own words at once', () => {
     const { browser } = both()
     expect(browser.i18n.getMessage('greeting', 'you')).toBe('Hello you')
     expect(browser.i18n.getMessage('price', 'two')).toBe('costs $5 for two')
   })
-
   test('is not taken for a popup or a tab of its own', () => {
     const { browser } = both()
     expect(browser.extension.getViews().length).toBe(1)
     expect(browser.extension.getViews({ type: 'popup' }).length).toBe(0)
     expect(browser.extension.getViews({ windowId: 1 }).length).toBe(0)
   })
-
   test('talks to a tab over a port of its own', async () => {
     const { browser, opened } = both()
     const port = browser.tabs.connect(1, { name: 'talk' })
@@ -477,7 +448,6 @@ describe('the background page and the service worker it calls through', () => {
     await new Promise((done) => setTimeout(done, 10))
     expect(opened[1].closed).toBe(true)
   })
-
   test('registers a content script it can take away again', async () => {
     const { browser, registered, unregistered } = both()
     const one = await browser.contentScripts.register({
@@ -488,7 +458,6 @@ describe('the background page and the service worker it calls through', () => {
     await one.unregister()
     expect(unregistered).toEqual([{ ids: [registered[0].id] }])
   })
-
   test('puts a file in a tab by a path from its own page', async () => {
     const own = both('js/background/index.html')
     await own.browser.tabs.executeScript(1, { file: 'content.js' })

@@ -8,7 +8,6 @@ describe('a path a link may be joined to a space by', () => {
     expect(insideOnly('  notes//./Plan.md  ')).toBe('notes/Plan.md')
     expect(insideOnly('/notes/Plan.md')).toBeNull()
   })
-
   test('never leaves the space', () => {
     for (const said of [
       '../outside.md',
@@ -21,7 +20,6 @@ describe('a path a link may be joined to a space by', () => {
       expect(insideOnly(said), said).toBeNull()
     }
   })
-
   test('is never a path of its own', () => {
     for (const said of [
       '/etc/passwd',
@@ -33,7 +31,6 @@ describe('a path a link may be joined to a space by', () => {
       expect(insideOnly(said), said).toBeNull()
     }
   })
-
   test('on Windows, holds no name Windows would open as another, without its last dots or spaces', () => {
     vi.stubGlobal('window', { __TAURI_OS_PLUGIN_INTERNALS__: { platform: 'windows' } })
     try {
@@ -46,13 +43,11 @@ describe('a path a link may be joined to a space by', () => {
     }
     expect(insideOnly('Diary./secret.md')).toBe('Diary./secret.md')
   })
-
   test('holds nothing a file name cannot hold', () => {
     expect(insideOnly(`notes/${String.fromCharCode(0)}.md`)).toBeNull()
     expect(insideOnly('notes/two\nlines.md')).toBeNull()
     expect(insideOnly(`notes/${String.fromCharCode(0x7f)}.md`)).toBeNull()
   })
-
   test('is never a name Windows keeps for a device', () => {
     expect(insideOnly('NUL')).toBeNull()
     expect(insideOnly('nul.md')).toBeNull()
@@ -63,7 +58,6 @@ describe('a path a link may be joined to a space by', () => {
     expect(insideOnly('console.md')).toBe('console.md')
     expect(insideOnly('notes/COM10.md')).toBe('notes/COM10.md')
   })
-
   test('is nothing at all for nothing at all', () => {
     expect(insideOnly('')).toBeNull()
     expect(insideOnly('   ')).toBeNull()
@@ -71,7 +65,6 @@ describe('a path a link may be joined to a space by', () => {
     expect(insideOnly('./')).toBeNull()
   })
 })
-
 test.each<[unknown, ...Parameters<typeof namesByShortName>]>([
   [true, 'PRIVAT~1/Diary.md'],
   [true, 'THERAP~1.MD'],

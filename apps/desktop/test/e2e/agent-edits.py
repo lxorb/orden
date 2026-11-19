@@ -1,32 +1,24 @@
 import json
 import re
 import time
-
 from playwright.sync_api import Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 ORIGIN = DRIVE.origin
-
 AROUND = 20
 MINE = 30
 TYPED = " the quick brown fox jumps over the lazy dog" * 5
-
 def tokens(prefix: str, count: int) -> str:
     return " ".join(f"{prefix}{at:02d}" for at in range(count))
-
 NOTE = f"# Drive\n\n{tokens('a', AROUND)}\n\n{tokens('w', MINE)}\n\n{tokens('b', AROUND)}\n"
-
 EDITS: list[str] = []
 for at in range(AROUND):
     EDITS += [f"a{at:02d}", f"w{at:02d}"] + ([f"b{at:02d}"] if at < 9 else [])
 EDITS.append(f"w{MINE - 1:02d}")
 assert len(EDITS) == 50
-
 AGENT = {"id": "drive-agent", "name": "Drive agent"}
-
 START_AGENT = """
 async ([edits, agent]) => {
   const docs = await import('/src/lib/agent-docs/src/index.ts')
@@ -45,9 +37,7 @@ async ([edits, agent]) => {
   void run()
 }
 """
-
 VIEW = "window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)"
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 60) -> None:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -55,30 +45,22 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 60) -> No
             return
         page.wait_for_timeout(50)
     raise SystemExit(f"gave up waiting for {what}")
-
 def text(page: Page) -> str:
     return page.evaluate(f"() => {VIEW}.state.doc.toString()")
-
 def caret(page: Page) -> int:
     return page.evaluate(f"() => {VIEW}.state.selection.main.head")
-
 def expected(upper: set[str]) -> str:
-
     def paragraph(prefix: str, count: int) -> str:
         words = [f"{prefix}{at:02d}" for at in range(count)]
         return " ".join(word.upper() if word in upper else word for word in words)
-
     return (
         f"# Drive\n\n{paragraph('a', AROUND)}\n\n{paragraph('w', MINE)}{TYPED}"
         f"\n\n{paragraph('b', AROUND)}\n"
     )
-
 def capitals(words: str) -> set[str]:
     return set(re.findall(r"\b[AWB]\d\d\b", words))
-
 def lowered(words: str) -> str:
     return re.sub(r"\b([AWB])(\d\d)\b", lambda found: found.group(0).lower(), words)
-
 def one_step(before: str, after: str) -> tuple[str, list[str]]:
     agent = sorted(word.lower() for word in capitals(before) - capitals(after))
     reader = lowered(before) != lowered(after)
@@ -87,11 +69,9 @@ def one_step(before: str, after: str) -> tuple[str, list[str]]:
     if not agent and reader:
         return "reader", agent
     return f"mixed ({len(agent)} agent edits, reader {reader})", agent
-
 def drive(page: Page) -> None:
     page.goto(ORIGIN, wait_until="domcontentloaded")
     wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 120)
-
     page.evaluate(
         """async (note) => {
           const ws = window.ordenApp.workspace
@@ -103,7 +83,6 @@ def drive(page: Page) -> None:
         NOTE,
     )
     wait_for(page, f"{VIEW} && {VIEW}.state.doc.toString().startsWith('# Drive')", "the note")
-
     end_of_mine = NOTE.index(f"w{MINE - 1:02d}") + 3
     page.evaluate(
         f"""(at) => {{
@@ -114,13 +93,11 @@ def drive(page: Page) -> None:
         end_of_mine,
     )
     page.wait_for_timeout(300)
-
     page.evaluate(START_AGENT, [EDITS, AGENT])
     page.wait_for_timeout(200)
     shot(page, "01-agent-writing")
     page.keyboard.type(TYPED, delay=35)
     say(f"typed {len(TYPED)} characters")
-
     wait_for(page, "window.__agent.done.length + window.__agent.failed.length === 50", "the edits", 60)
     agent = page.evaluate("() => window.__agent")
     say(f"edits landed: {len(agent['done'])}, refused: {len(agent['failed'])}, caret seen {agent['carets']} times")
@@ -130,7 +107,6 @@ def drive(page: Page) -> None:
         wrong(f"the agent's caret was seen only {agent['carets']} times")
     if agent["done"][-1] != EDITS[-1]:
         wrong(f"the edit beside the caret did not wait for the typing: {agent['done'][-5:]}")
-
     after = text(page)
     if TYPED not in after:
         wrong("a keystroke was lost or landed apart from the rest")
@@ -139,7 +115,6 @@ def drive(page: Page) -> None:
     if caret(page) != after.index(TYPED) + len(TYPED):
         wrong(f"the caret is at {caret(page)}, not after the last keystroke")
     shot(page, "02-all-landed")
-
     page.evaluate(
         """async (agent) => {
           await window.__agent.docs.notes.editNote(agent, { path: 'Drive.md' }, [
@@ -153,7 +128,6 @@ def drive(page: Page) -> None:
     page.wait_for_timeout(100)
     if text(page) != after:
         wrong("the first Ctrl+Z did not take back exactly the agent's last edit")
-
     steps: list[str] = []
     undone: list[str] = []
     before = text(page)
@@ -168,13 +142,11 @@ def drive(page: Page) -> None:
             wrong(f"one Ctrl+Z took the agent's and the reader's words at once: {kind}")
         undone += words
         before = now
-
     say(f"Ctrl+Z took {steps.count('agent')} agent edits and {steps.count('reader')} typing steps")
     if before != NOTE:
         wrong(f"Ctrl+Z all the way down did not reach the note as it was:\n{before!r}")
     if undone != list(reversed(agent["done"])):
         wrong("Ctrl+Z took the agent's edits back in some other order than newest first")
-
     for _ in range(400):
         page.keyboard.press("Control+y")
         now = text(page)
@@ -183,7 +155,6 @@ def drive(page: Page) -> None:
         before = now
     if before != full:
         wrong("Ctrl+Y did not bring everything back")
-
     undone_all = page.evaluate(
         """async (agent) => window.__agent.docs.notes.undoAgent(agent, { path: 'Drive.md' })""",
         AGENT,
@@ -192,12 +163,9 @@ def drive(page: Page) -> None:
     if text(page) != expected(set()):
         wrong(f"undoing the agent did not leave exactly the note and the typing:\n{text(page)!r}")
     shot(page, "03-agent-undone")
-
 def main() -> int:
     with DRIVE.session() as browser:
         page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
         drive(page)
-
     return DRIVE.verdict("all good")
-
 raise SystemExit(main())

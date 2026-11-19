@@ -23,13 +23,11 @@
   let recovery = $state<string | null>(null)
   let wrong = $state('')
   let busy = $state(false)
-
   const ways = $derived<{ value: LockWay; label: string }[]>([
     ...(pass.canPin ? [{ value: 'pin' as const, label: 'PIN' }] : []),
     ...(pass.canDevice ? [{ value: 'device' as const, label: deviceName() }] : []),
     { value: 'password', label: 'Pass password' },
   ])
-
   async function chooseWay(way: LockWay) {
     wrong = ''
     if (way === 'pin') {
@@ -39,7 +37,6 @@
     choosingPin = false
     if (!(await pass.useLock(way))) wrong = 'This device could not keep the key.'
   }
-
   async function keptPin(event: SubmitEvent) {
     event.preventDefault()
     const chosen = pinIn(pin)
@@ -56,7 +53,6 @@
       pin = ''
     }
   }
-
   async function madeRecovery(event: SubmitEvent) {
     event.preventDefault()
     busy = true
@@ -71,7 +67,6 @@
     askingRecovery = false
     recovery = made
   }
-
   function downloaded(code: string) {
     const text = `Orden Pass recovery key\n\n${code}\n`
     void deliver('Orden Pass recovery key', 'txt', 'Text', { text, mime: 'text/plain' })
@@ -180,26 +175,21 @@
   .pass-stack.padded {
     padding: var(--space-2) var(--space-3);
   }
-
   .row {
     padding: var(--space-1) var(--space-3);
   }
-
   .row + .row {
     border-top: 1px solid var(--line);
   }
-
   .hint {
     margin: 0;
     padding: 0 var(--space-3) var(--space-2);
     font-size: var(--text-sm);
     color: var(--muted);
   }
-
   .orden-section {
     margin: var(--space-3) 0 0;
   }
-
   .code {
     display: block;
     padding: var(--space-3);
@@ -211,7 +201,6 @@
     -webkit-user-select: all;
     user-select: all;
   }
-
   .buttons {
     padding-top: var(--space-2);
   }

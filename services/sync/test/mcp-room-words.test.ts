@@ -10,7 +10,6 @@ let rooms: Live
 let token: string
 let space: string
 let nib: string
-
 beforeEach(async () => {
   devices.clear()
   env = testEnv()
@@ -19,17 +18,13 @@ beforeEach(async () => {
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Rooms' } })).json.space.id
   nib = (await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token
 })
-
 afterEach(() => env.close())
-
 async function made(path: string, content: string): Promise<string> {
   const answer = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   const id: string = answer.json.note.id
   return id
 }
-
 const prepare = () => call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
-
 async function tool(name: string, args: Record<string, unknown>): Promise<string> {
   const answer = await call<RpcView>(env, '/mcp', {
     token: nib,
@@ -42,9 +37,7 @@ async function tool(name: string, args: Record<string, unknown>): Promise<string
   })
   return answer.json.result.content[0]?.text ?? ''
 }
-
 const devices = new Map<string, { doc: Y.Doc; seq: number; pushes: number }>()
-
 async function typed(id: string, words: string, known: string): Promise<void> {
   let device = devices.get(id)
   if (!device) {
@@ -65,7 +58,6 @@ async function typed(id: string, words: string, known: string): Promise<void> {
   expect(answer).toMatchObject({ ok: true })
   device.seq = answer?.seq ?? device.seq
 }
-
 describe('a room whose settle is refused', () => {
   async function refusing() {
     const id = await made('Plan.md', 'one\n')
@@ -79,37 +71,30 @@ describe('a room whose settle is refused', () => {
     }
     return { id, version, room }
   }
-
   test('answers a v1 save 503, not a conflict, and keeps the words', async () => {
     const { id, version, room } = await refusing()
-
     const saved = await call(env, `/v1/notes/${id}`, {
       token,
       method: 'PUT',
       body: { content: 'one\nsaved\n', baseVersion: version },
     })
-
     expect(saved.status).toBe(503)
     const doc = (room as never as { state: { doc: Y.Doc } }).state.doc
     expect(doc.getText(TEXT).toJSON()).toBe('one\ntyped\n')
   })
-
   test('a real conflict is still one', async () => {
     const id = await made('Other.md', 'one\n')
     await prepare()
     await rooms.settle()
     await typed(id, 'typed\n', 'one\n')
-
     const saved = await call(env, `/v1/notes/${id}`, {
       token,
       method: 'PUT',
       body: { content: 'one\nsaved\n', baseVersion: 1 },
     })
-
     expect(saved.status).toBe(409)
   })
 })
-
 describe('write_note to a new path', () => {
   test.each(['board.canvas', 'book.pages'])('refuses prose for %s, as for one that is there', async (path) => {
     await prepare()
@@ -119,7 +104,6 @@ describe('write_note to a new path', () => {
       n: 0,
     })
   })
-
   test('takes a canvas as a canvas', async () => {
     await prepare()
     const answer = await tool('write_note', {
@@ -128,22 +112,18 @@ describe('write_note to a new path', () => {
     })
     expect(answer).toBe('Saved board.canvas.')
   })
-
   test('on a v1 space too', async () => {
     const answer = await tool('write_note', { path: 'board.canvas', content: 'prose' })
     expect(answer).toMatch(/is a canvas/)
   })
-
   test('says where the note landed, where the tree put it elsewhere', async () => {
     await made('plan.md', 'one\n')
     await made('Deep/keep.md', 'one\n')
     await prepare()
-
     expect(await tool('write_note', { path: 'plan.md/child.md', content: 'x' })).toBe('Saved plan.md 2/child.md.')
     expect(await tool('read_note', { path: 'plan.md 2/child.md' })).toBe('x')
   })
 })
-
 describe('a note the connector writes', () => {
   function hub(): { asked: number } {
     const heard = { asked: 0 }
@@ -158,7 +138,6 @@ describe('a note the connector writes', () => {
     } as never
     return heard
   }
-
   test('tells the devices when it is made, and when a note with no room moves', async () => {
     const heard = hub()
     expect(await tool('write_note', { path: 'New.md', content: 'x' })).toBe('Saved New.md.')

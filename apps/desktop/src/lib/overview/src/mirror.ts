@@ -2,9 +2,7 @@ export function marked(name: string, value: string): HTMLElement | null {
   const quoted = value.replace(/["\\]/g, '\\$&')
   return document.querySelector<HTMLElement>(`[data-${name}="${quoted}"]`)
 }
-
 const paneBody = (paneId: string): HTMLElement | null => marked('pane', paneId)
-
 export function shownBox(paneId: string): DOMRect | null {
   const pane = paneBody(paneId)
   if (!pane) return null
@@ -13,7 +11,6 @@ export function shownBox(paneId: string): DOMRect | null {
   const top = head ? head.bottom : box.top
   return new DOMRect(box.left, top, box.width, box.bottom - top)
 }
-
 function copyOf(pane: HTMLElement, box: DOMRect) {
   const copy = pane.cloneNode(true) as HTMLElement
   const from = [...pane.querySelectorAll('*')]
@@ -28,14 +25,12 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
     if (one instanceof HTMLVideoElement) frames.push([one, twin])
     if (one.scrollTop || one.scrollLeft) scrolls.push([twin, one.scrollTop, one.scrollLeft])
   })
-
   copy.querySelector(':scope > .head')?.remove()
   copy.removeAttribute('data-pane')
   copy.setAttribute('inert', '')
   copy.removeAttribute('style')
   copy.style.width = `${box.width}px`
   copy.style.height = `${box.height}px`
-
   for (const [video, twin] of frames) {
     const still = frameOf(video)
     if (still) twin.replaceWith(still)
@@ -49,7 +44,6 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   for (const [canvas, twin] of canvases) drawnOnto(canvas, twin)
   return { copy, scrolls }
 }
-
 export function tabCopyOf(id: string, inherited: Map<Element, string>): HTMLElement | null {
   const tab = marked('box', id)
   const box = tab?.getBoundingClientRect()
@@ -80,14 +74,12 @@ export function tabCopyOf(id: string, inherited: Map<Element, string>): HTMLElem
   copy.style.height = `${box.height}px`
   return copy
 }
-
 export function snapshotOf(paneId: string): (() => { html: string; w: number; h: number }) | null {
   const pane = paneBody(paneId)
   const box = shownBox(paneId)
   if (!pane || !box || box.width <= 0 || box.height <= 0) return null
   return snapshotFrom(pane, box)
 }
-
 export function snapshotFrom(pane: HTMLElement, box: DOMRect): () => { html: string; w: number; h: number } {
   const { copy, scrolls } = copyOf(pane, box)
   for (const [twin, top, left] of scrolls) twin.setAttribute(SCROLLED, `${top} ${left}`)
@@ -108,10 +100,8 @@ export function snapshotFrom(pane: HTMLElement, box: DOMRect): () => { html: str
     return { html: copy.outerHTML, w: box.width, h: box.height }
   }
 }
-
 const SCROLLED = 'data-overview-scrolled'
 const PICTURE = 512
-
 function pictureOf(canvas: HTMLCanvasElement): string {
   const by = PICTURE / Math.max(canvas.width, canvas.height, 1)
   if (by >= 1) return canvas.toDataURL('image/webp', 0.7)
@@ -121,7 +111,6 @@ function pictureOf(canvas: HTMLCanvasElement): string {
   small.getContext('2d')?.drawImage(canvas, 0, 0, small.width, small.height)
   return small.toDataURL('image/webp', 0.7)
 }
-
 export function scrolledBack(root: Element) {
   const places: [Element, number, number][] = []
   for (const one of root.querySelectorAll(`[${SCROLLED}]`)) {
@@ -130,14 +119,12 @@ export function scrolledBack(root: Element) {
   }
   scrolledTo(places)
 }
-
 function scrolledTo(places: readonly [Element, number, number][]) {
   for (const [twin, top, left] of places) {
     twin.scrollTop = top
     twin.scrollLeft = left
   }
 }
-
 function frameOf(video: HTMLVideoElement): HTMLCanvasElement | null {
   if (!video.videoWidth || !video.videoHeight) return null
   const canvas = document.createElement('canvas')
@@ -152,7 +139,6 @@ function frameOf(video: HTMLVideoElement): HTMLCanvasElement | null {
   }
   return canvas
 }
-
 function drawnOnto(canvas: HTMLCanvasElement, twin: HTMLCanvasElement) {
   const paint = twin.getContext('2d')
   if (!paint || !canvas.width || !canvas.height) return

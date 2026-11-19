@@ -19,7 +19,6 @@ export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
   applications: () => 'Applications',
   helpers: () => 'Helpers',
 }
-
 export const SCOPE_WORDS: Record<Scope, () => string> = {
   'notes.read': () => 'Read notes',
   'notes.write': () => 'Change notes',
@@ -45,7 +44,6 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   applications: () => 'Start, see and use your applications',
   agents: () => 'Start helpers on your AI accounts',
 }
-
 export const CATEGORY_WORDS: Record<Category, () => string> = {
   paying: () => 'Paying',
   sending: () => 'Sending messages',
@@ -62,20 +60,17 @@ export const CATEGORY_WORDS: Record<Category, () => string> = {
   takeover: () => 'Handing a tab to you',
   pairing: () => 'Connect',
 }
-
 export const RULE_WORDS: Record<SiteRule, () => string> = {
   allow: () => 'Allowed',
   deny: () => 'Blocked',
   'agent-store': () => 'Without your logins',
 }
-
 export const LIMIT_WORDS: Record<Limit, () => string> = {
   tabs: () => 'Tabs',
   calls: () => 'Calls a minute',
   navigations: () => 'Pages a minute',
   memory: () => 'Browser memory limit',
 }
-
 export function limitValue(limit: Limit, value: number): string {
   if (limit !== 'memory') return String(value)
   return value === 0 ? 'Off' : `${String(Math.round((value / 1024) * 10) / 10)} GB`

@@ -1,7 +1,5 @@
 const API = 'https://api.cloudflare.com/client/v4'
-
 const ORDEND = 'http://127.0.0.1:7680'
-
 class TunnelError extends Error {
   constructor(
     readonly status: number,
@@ -12,18 +10,14 @@ class TunnelError extends Error {
     this.name = 'TunnelError'
   }
 }
-
 export interface Access {
   team: string
   aud: string
 }
-
 type Fetch = typeof fetch
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
-
 export class Tunnels {
   constructor(
     private readonly token: string,
@@ -31,7 +25,6 @@ export class Tunnels {
     private readonly zone: string,
     private readonly fetcher: Fetch = (input, init) => fetch(input, init),
   ) {}
-
   private async ask(method: string, path: string, body?: unknown): Promise<unknown> {
     const answer = await this.fetcher(`${API}${path}`, {
       method,
@@ -60,7 +53,6 @@ export class Tunnels {
     }
     return (said as { result?: unknown }).result
   }
-
   async found(name: string): Promise<string | null> {
     const found = await this.ask(
       'GET',
@@ -69,7 +61,6 @@ export class Tunnels {
     const first: unknown = Array.isArray(found) ? found[0] : null
     return isRecord(first) && typeof first.id === 'string' ? first.id : null
   }
-
   async tunnel(name: string): Promise<string> {
     const found = await this.found(name)
     if (found) return found
@@ -82,13 +73,11 @@ export class Tunnels {
     }
     return made.id
   }
-
   async tokenOf(id: string): Promise<string> {
     const token = await this.ask('GET', `/accounts/${this.account}/cfd_tunnel/${id}/token`)
     if (typeof token !== 'string' || !token) throw new TunnelError(502, 0, 'no tunnel token')
     return token
   }
-
   async route(id: string, hostname: string, access: Access | null): Promise<void> {
     await this.ask('PUT', `/accounts/${this.account}/cfd_tunnel/${id}/configurations`, {
       config: {
@@ -103,7 +92,6 @@ export class Tunnels {
       },
     })
   }
-
   async hostname(hostname: string, tunnel: string): Promise<string> {
     const content = `${tunnel}.cfargotunnel.com`
     const found = await this.ask(
@@ -129,7 +117,6 @@ export class Tunnels {
     }
     return made.id
   }
-
   async remove(name: string, hostname: string): Promise<void> {
     const records = await this.ask(
       'GET',

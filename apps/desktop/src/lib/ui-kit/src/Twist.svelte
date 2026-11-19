@@ -16,7 +16,6 @@
     stroke-linejoin: round;
     transition: transform var(--dur-base) var(--ease-out);
   }
-
   .turn.open {
     transform: rotate(90deg);
   }

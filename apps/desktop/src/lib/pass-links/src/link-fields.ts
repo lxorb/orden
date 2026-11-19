@@ -2,20 +2,17 @@ import type { Content, Field, ItemKind, Section } from '@orden/pass/types'
 import { IDENTITY_FIELDS } from '@orden/pass/types'
 
 type LinkFieldKind = 'text' | 'hidden' | 'totp' | 'long'
-
 export interface LinkField {
   id: string
   name: string
   value: string
   kind: LinkFieldKind
 }
-
 export interface LinkGroup {
   id: string
   name: string
   fields: LinkField[]
 }
-
 const KINDS: Record<ItemKind, string> = {
   login: 'Login',
   alias: 'Alias',
@@ -26,34 +23,27 @@ const KINDS: Record<ItemKind, string> = {
   ssh: 'SSH key',
   wifi: 'WiFi',
 }
-
 const GROUPS: Record<keyof typeof IDENTITY_FIELDS, string> = {
   personal: 'Personal details',
   address: 'Address details',
   contact: 'Contact details',
   work: 'Work details',
 }
-
 const HIDDEN_IDENTITY = new Set(['ssn', 'passport', 'license'])
-
 export function kindName(kind: ItemKind): string {
   return KINDS[kind]
 }
-
 function spoken(key: string): string {
   const words = key.replace(/([A-Z])/g, ' $1').toLowerCase()
   return words.charAt(0).toUpperCase() + words.slice(1)
 }
-
 function field(id: string, name: string, value: string, kind: LinkFieldKind = 'text'): LinkField {
   return { id, name, value, kind }
 }
-
 function extra(one: Field): LinkField {
   const kind = one.kind === 'hidden' || one.kind === 'totp' ? one.kind : 'text'
   return field(one.id, one.name || 'Field', one.value, kind)
 }
-
 function mainOf(content: Content): LinkField[] {
   switch (content.kind) {
     case 'login':
@@ -86,7 +76,6 @@ function mainOf(content: Content): LinkField[] {
       return []
   }
 }
-
 function identityOf(content: Content): LinkGroup[] {
   if (content.kind !== 'identity') return []
   return Object.entries(IDENTITY_FIELDS).map(([group, keys]) => ({
@@ -97,7 +86,6 @@ function identityOf(content: Content): LinkGroup[] {
     ),
   }))
 }
-
 function sectionsOf(content: Content): Section[] {
   switch (content.kind) {
     case 'identity':
@@ -112,7 +100,6 @@ function sectionsOf(content: Content): Section[] {
       return []
   }
 }
-
 export function linkGroupsOf(content: Content): LinkGroup[] {
   const groups: LinkGroup[] = [
     { id: 'main', name: '', fields: mainOf(content) },
@@ -128,7 +115,6 @@ export function linkGroupsOf(content: Content): LinkGroup[] {
     .map((group) => ({ ...group, fields: group.fields.filter((one) => one.value.trim() !== '') }))
     .filter((group) => group.fields.length > 0)
 }
-
 export function websitesOf(content: Content): string[] {
   return content.kind === 'login' ? content.websites.map((one) => one.url).filter((url) => url.trim() !== '') : []
 }

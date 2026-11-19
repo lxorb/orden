@@ -10,7 +10,6 @@ import { ChatSocket } from './socket'
 const OPENING = 100
 const PAGE = 200
 const MOST_HELD = 1000
-
 export interface Host {
   engine: ChatEngine
   cache: ChatCache
@@ -23,39 +22,32 @@ export interface Host {
   profile(who: Who): void
   release(chat: string): boolean
 }
-
 class Listing implements MessageList {
   messages = $state.raw<Shown[]>([])
   pending = $state.raw<Shown[]>([])
   atStart = $state(false)
   atEnd = $state(true)
   loading = $state(false)
-
   protected window: Kept[] = []
   private readonly listeners = new Set<() => void>()
   private drawing = 0
   private loads = 0
   private held: Change[] = []
-
   constructor(
     readonly chat: string,
     protected readonly host: Host,
     private readonly scope: string | undefined,
   ) {}
-
   protected readonly filter: Filter = (message) =>
     this.scope === undefined ? isMain(message) : message.parent === this.scope
-
   watch(listener: () => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
-
   heard(change: Change): void {
     if (this.loads > 0) this.held.push(change)
     else this.take(change)
   }
-
   private take(change: Change): void {
     if (change.t === 'outbox') {
       void this.draw()
@@ -92,13 +84,11 @@ class Listing implements MessageList {
     this.keepNewest()
     void this.draw()
   }
-
   private keepNewest(): void {
     if (this.window.length <= MOST_HELD) return
     this.window = this.window.slice(-MOST_HELD)
     this.atStart = false
   }
-
   async older(): Promise<void> {
     if (this.atStart || this.loading) return
     const first = this.window[0]?.message.seq
@@ -113,7 +103,6 @@ class Listing implements MessageList {
       }
     })
   }
-
   async newer(): Promise<void> {
     if (this.atEnd || this.loading) return
     const last = this.window.at(-1)?.message.seq ?? 0
@@ -124,7 +113,6 @@ class Listing implements MessageList {
       this.keepNewest()
     })
   }
-
   async latest(): Promise<void> {
     await this.loadingWith(async () => {
       const rows = await this.filled({ limit: OPENING }, (some) => some.length >= OPENING)
@@ -133,7 +121,6 @@ class Listing implements MessageList {
       this.atStart = rows.length < OPENING && this.complete()
     })
   }
-
   protected async around(seq: number): Promise<void> {
     await this.loadingWith(async () => {
       const half = OPENING / 2
@@ -146,11 +133,9 @@ class Listing implements MessageList {
       this.atEnd = after < OPENING - half
     })
   }
-
   private complete(): boolean {
     return this.host.engine.chats.get(this.chat)?.complete === true
   }
-
   private async filled(
     where: { before?: number; around?: number; limit: number },
     enough: (rows: readonly Kept[]) => boolean,
@@ -159,7 +144,6 @@ class Listing implements MessageList {
     while (!enough(rows) && (await this.host.engine.fill(this.chat))) rows = await this.rows(where)
     return rows
   }
-
   private rows(where: { before?: number; after?: number; around?: number; limit: number }) {
     return this.host.cache.window({
       chat: this.chat,
@@ -167,7 +151,6 @@ class Listing implements MessageList {
       ...where,
     })
   }
-
   private async loadingWith(work: () => Promise<void>): Promise<void> {
     this.loads += 1
     this.loading = true
@@ -181,7 +164,6 @@ class Listing implements MessageList {
       await this.draw()
     }
   }
-
   protected async draw(): Promise<void> {
     const turn = ++this.drawing
     const outbox: readonly OutboxRow[] = this.host.engine.pending(this.chat)
@@ -192,10 +174,8 @@ class Listing implements MessageList {
     for (const listener of this.listeners) listener()
   }
 }
-
 class Replies extends Listing implements RepliesView {
   parent = $state.raw<Shown | null>(null)
-
   constructor(
     chat: string,
     host: Host,
@@ -204,17 +184,14 @@ class Replies extends Listing implements RepliesView {
   ) {
     super(chat, host, parentId)
   }
-
   async open(): Promise<void> {
     await this.latest()
     await this.drawParent()
   }
-
   override heard(change: Change): void {
     super.heard(change)
     if (change.t === 'messages' && change.kept.some((one) => one.message.id === this.parentId)) void this.drawParent()
   }
-
   private async drawParent(): Promise<void> {
     const [kept] = await this.host.cache.messages(this.chat, [this.parentId])
     const { messages } = await overlay(
@@ -225,18 +202,15 @@ class Replies extends Listing implements RepliesView {
     )
     this.parent = messages[0] ?? null
   }
-
   close(): void {
     this.done(this)
   }
 }
-
 export class View extends Listing implements ChatView {
   members = $state.raw<ChatMember[]>([])
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- replaced whole, never changed
   presence = $state.raw<Presence>({ here: [], typing: [], reads: new Map<Who, number>() })
   lineAt = $state(0)
-
   private socket: ChatSocket | null = null
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- who is told; nothing renders from it
   private readonly replying = new Set<Replies>()
@@ -249,7 +223,6 @@ export class View extends Listing implements ChatView {
   private relists = 0
   private stopListening: (() => void) | null = null
   private closed = false
-
   constructor(chat: string, host: Host) {
     super(chat, host, undefined)
     this.lineAt = host.entry(chat)?.readSeq ?? 0
@@ -259,19 +232,15 @@ export class View extends Listing implements ChatView {
       for (const one of this.replying) one.heard(change)
     })
   }
-
   get entry(): ChatEntry | null {
     return this.host.entry(this.chat)
   }
-
   get meta() {
     return this.entry?.meta ?? { topic: '', posting: 'writers' as const, slowmode: 0 }
   }
-
   get role() {
     return this.entry?.role ?? null
   }
-
   async open(): Promise<void> {
     const head = this.host.engine.chats.get(this.chat)?.seq ?? 0
     if (this.lineAt > 0 && this.lineAt < head) await this.around(this.lineAt + 1)
@@ -284,7 +253,6 @@ export class View extends Listing implements ChatView {
     await this.host.engine.sync(this.chat)
     if (this.window.length === 0) await this.latest()
   }
-
   relist(): void {
     const asked = ++this.relists
     void this.host.members(this.chat).then((members) => {
@@ -294,7 +262,6 @@ export class View extends Listing implements ChatView {
       }
     })
   }
-
   async jump(message: string): Promise<boolean> {
     const engine = this.host.engine
     let [kept] = await this.host.cache.messages(this.chat, [message])
@@ -310,31 +277,26 @@ export class View extends Listing implements ChatView {
     await this.around(seq)
     return true
   }
-
   replies(parent: string): RepliesView {
     const replies = new Replies(this.chat, this.host, parent, (one) => this.replying.delete(one))
     this.replying.add(replies)
     void replies.open()
     return replies
   }
-
   read(seq: number): void {
     if (!this.host.engine.readTo(this.chat, seq)) return
     if (!this.socket?.read(seq)) this.readLater(seq, false)
   }
-
   markUnread(seq: number): void {
     const place = Math.max(0, seq - 1)
     this.lineAt = place
     if (this.host.engine.readTo(this.chat, place, true)) this.readLater(place, true)
   }
-
   typed(parent?: string): void {
     const now = Date.now()
     if (now - this.typedAt < TYPING_EVERY) return
     if (this.socket?.typing(parent)) this.typedAt = now
   }
-
   close(): void {
     if (this.closed || !this.host.release(this.chat)) return
     this.closed = true
@@ -343,16 +305,13 @@ export class View extends Listing implements ChatView {
     this.stopListening?.()
     clearTimeout(this.typingTimer)
   }
-
   private readTimer: ReturnType<typeof setTimeout> | undefined
-
   private readLater(seq: number, back: boolean): void {
     clearTimeout(this.readTimer)
     this.readTimer = setTimeout(() => {
       void this.host.engine.tellRead(this.chat, seq, back)
     }, 500)
   }
-
   private async connect(): Promise<void> {
     const token = this.host.token()
     if (!token || this.socket || this.closed) return
@@ -387,11 +346,9 @@ export class View extends Listing implements ChatView {
       ended: () => void engine.refresh(),
     })
   }
-
   private alive(): boolean {
     return !this.closed
   }
-
   private typing(who: Who, parent: string | undefined): void {
     if (who === this.host.me()) return
     this.typists.set(`${who}\u0000${parent ?? ''}`, {
@@ -401,7 +358,6 @@ export class View extends Listing implements ChatView {
     })
     this.drawPresence()
   }
-
   private drawPresence(): void {
     const now = Date.now()
     for (const [key, one] of this.typists) if (one.until <= now) this.typists.delete(key)

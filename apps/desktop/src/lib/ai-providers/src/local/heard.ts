@@ -5,14 +5,12 @@ export interface Limit {
   until: number | null
   untilWords: string | null
 }
-
 export interface ToolHeard {
   id: string
   name: string
   args?: unknown
   done?: { text: string; error: boolean }
 }
-
 export interface Counted {
   input?: number
   cached?: number
@@ -20,9 +18,7 @@ export interface Counted {
   reasoning?: number
   window?: number
 }
-
 type TurnEnd = 'end' | 'stopped' | 'error'
-
 export interface Heard {
   text?: string
   thinking?: string
@@ -36,10 +32,8 @@ export interface Heard {
   signedOut?: boolean
   goal?: GoalState
 }
-
 export const record = (value: unknown): Record<string, unknown> | null =>
   typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
-
 export function eventIn(line: string): Record<string, unknown> | null {
   try {
     const value: unknown = JSON.parse(line)
@@ -50,13 +44,11 @@ export function eventIn(line: string): Record<string, unknown> | null {
     return null
   }
 }
-
 export function saysSignedOut(words: string): boolean {
   return /not logged in|please run \/login|not signed in|invalid api key|401|unauthori[sz]ed|oauth token (?:has )?expired/i.test(
     words,
   )
 }
-
 export function saysLimit(words: string): boolean {
   return /usage limit|hit your (?:usage )?limit|limit reached|rate limit/i.test(words)
 }

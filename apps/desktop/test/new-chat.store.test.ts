@@ -5,7 +5,6 @@ const files = new Map<string, string>()
 const folders = new Set<string>()
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 const CHAT = `c_${'0'.repeat(32)}`
-
 interface Entry {
   name: string
   path: string
@@ -14,7 +13,6 @@ interface Entry {
   created: number
   children: Entry[]
 }
-
 function listing(root: string): Entry {
   const node = (path: string, dir: boolean): Entry => ({
     name: path.split('/').pop() ?? path,
@@ -36,7 +34,6 @@ function listing(root: string): Entry {
   }
   return tree
 }
-
 vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -64,7 +61,6 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
     }
   },
 }))
-
 const asked = vi.hoisted(() => ({ spaces: [] as string[], refused: false }))
 vi.mock('../src/lib/chats-client/src/http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/chats-client/src/http')>()),
@@ -74,13 +70,11 @@ vi.mock('../src/lib/chats-client/src/http', async (importOriginal) => ({
     return Promise.resolve({ v: 1, chat: `c_${'0'.repeat(32)}` })
   },
 }))
-
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('../src/lib/sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/sharing/src/sharing.svelte')>()),
   canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
-
 vi.mock('../src/lib/chats-client/src/store.svelte', async () => {
   const { makePointer } = await import('../src/lib/chats-client/src/pointers')
   return {
@@ -90,9 +84,7 @@ vi.mock('../src/lib/chats-client/src/store.svelte', async () => {
     },
   }
 })
-
 vi.stubGlobal('localStorage', memoryStorage())
-
 const { registerTabKind } = await import('@orden/contracts')
 registerTabKind('chat', async () => (await import('../src/lib/chats-client/src/api')).chatTabKind)
 const { workspace } = await import('../src/lib/workspace/src/api')
@@ -102,9 +94,7 @@ const { newKinds, offeredKinds } = await import('../src/lib/new-here/src/api')
 const { busy } = await import('../src/lib/ui-kit/src/busy.svelte')
 const { makeChat, openChat } = await import('../src/lib/chats-client/src/view/open')
 const { EXPERIMENTAL_WORD, CHATS_WORD, hiddenKinds } = await import('../src/lib/gates/src/api')
-
 let opened: { path: string | null; name: string; pointer: boolean }[] = []
-
 beforeEach(async () => {
   vi.restoreAllMocks()
   files.clear()
@@ -116,7 +106,6 @@ beforeEach(async () => {
   readOnly.clear()
   opened = []
   hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
-
   Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
   vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote-space')
   vi.spyOn(sync, 'wrote').mockImplementation(() => undefined)
@@ -126,7 +115,6 @@ beforeEach(async () => {
     opened.push({ path, name: args[1], pointer: path !== null && files.has(path) })
     return openView(...args)
   })
-
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
   workspace.activeSpaceId = 's'
   workspace.tabs = []
@@ -134,11 +122,9 @@ beforeEach(async () => {
   workspace.panel = 'tree'
   await workspace.loadTree()
 })
-
 async function named(name: string) {
   await workspace.makeNamed(`${name}.chat`)
 }
-
 function pointerAt(path: string) {
   expect(JSON.parse(files.get(path) ?? '{}')).toEqual({ v: 1, chat: CHAT })
   expect(opened).toEqual([{ path, name: chatName(path), pointer: true }])
@@ -146,9 +132,7 @@ function pointerAt(path: string) {
   expect(workspace.active?.kind).toBe('channel')
   expect(workspace.active?.name).toBe(chatName(path))
 }
-
 const chatName = (path: string) => (path.split('/').pop() ?? '').replace(/\.chat$/, '')
-
 describe('a new chat', () => {
   test('is nowhere while Chats is off, and opening one says how to turn it on', async () => {
     hiddenKinds.hidden = []
@@ -161,104 +145,84 @@ describe('a new chat', () => {
     expect(asked.spaces).toEqual([])
     expect(workspace.tabs).toHaveLength(0)
     expect(said).toHaveBeenCalledWith('Chats are off. Turn them on in Settings.')
-
     hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
     expect(newKinds().map((one) => one.kind)).toContain('chat')
   })
-
   test("from Ctrl+T's M is a row in the list first, and the name places it", async () => {
     workspace.panel = null
     newKinds()
       .find((one) => one.kind === 'chat')
       ?.make()
     await vi.waitFor(() => expect(workspace.naming?.making).toBe('chat'))
-
     expect(workspace.panel).toBe('tree')
     expect(workspace.naming?.path).toBe('/space/Chat.chat')
     expect(asked.spaces).toEqual([])
     expect(files.has('/space/Chat.chat')).toBe(false)
     expect(workspace.tabs).toHaveLength(0)
-
     await named('Launch')
     expect(asked.spaces).toEqual(['remote-space'])
     pointerAt('/space/Launch.chat')
   })
-
   test("from the Chats panel's plus the same, the Chats panel giving way to the list", async () => {
     workspace.panel = 'chats'
     await makeChat()
-
     expect(workspace.panel).toBe('tree')
     expect(workspace.naming?.path).toBe('/space/Chat.chat')
     await named('Team')
     pointerAt('/space/Team.chat')
   })
-
   test("from the file list's New, in the space it was asked in", async () => {
     await makeChat()
     await named('Standup')
     pointerAt('/space/Standup.chat')
   })
-
   test('in a folder it was asked in, which opens for it', async () => {
     await makeChat('/space/Work')
-
     expect(workspace.naming?.path).toBe('/space/Work/Chat.chat')
     expect(workspace.isExpanded('/space/Work')).toBe(true)
     await named('Thesis')
     pointerAt('/space/Work/Thesis.chat')
   })
-
   test('and a name already there is stepped, never written over', async () => {
     files.set('/space/Team.chat', '{"v":1,"chat":"c_other"}\n')
     await workspace.loadTree()
-
     await makeChat()
     await named('Team')
     pointerAt('/space/Team 2.chat')
     expect(files.get('/space/Team.chat')).toBe('{"v":1,"chat":"c_other"}\n')
   })
-
   test('left unnamed makes nothing at all', async () => {
     await makeChat()
     workspace.cancelNaming()
-
     expect(asked.spaces).toEqual([])
     expect([...files.keys()].filter((one) => one.endsWith('.chat'))).toEqual([])
     expect(workspace.tabs).toHaveLength(0)
   })
-
   test('with no list to name it in, is made at once under a stepped name', async () => {
     workspace.tree = null
     await makeChat()
     pointerAt('/space/Chat.chat')
   })
-
   test('and a space the account does not hold makes no tab', async () => {
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue(null)
     await makeChat()
     await named('Nowhere')
-
     expect(files.has('/space/Nowhere.chat')).toBe(false)
     expect(opened).toEqual([])
   })
-
   test('in a space shared to be read is not offered, and asks for no name', async () => {
     readOnly.add('/space')
     expect(offeredKinds().map((one) => one.kind)).not.toContain('chat')
-
     await makeChat()
     expect(workspace.naming).toBeNull()
     expect(asked.spaces).toEqual([])
     expect(workspace.tabs).toHaveLength(0)
   })
-
   test('refused by the account, says so rather than going quietly', async () => {
     asked.refused = true
     const failed = vi.spyOn(busy, 'failed')
     await makeChat()
     await named('Refused')
-
     expect(failed).toHaveBeenCalled()
     expect(opened).toEqual([])
   })

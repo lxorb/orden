@@ -12,7 +12,6 @@ import { noRects } from '../../../test/views'
 
 const DOC = 'words\n\n![A cat](cat.png)\n\nend'
 const errors: unknown[] = []
-
 beforeAll(() => {
   noRects()
   window.addEventListener('error', (event) => errors.push(event.error))
@@ -23,11 +22,9 @@ beforeAll(() => {
     return child
   }
 })
-
 afterEach(() => {
   errors.length = 0
 })
-
 function typedAlt(text: string, doc = DOC): EditorView {
   const view = new EditorView({
     state: parsed(
@@ -44,7 +41,6 @@ function typedAlt(text: string, doc = DOC): EditorView {
   if (alt) alt.value = text
   return view
 }
-
 test('is written to the picture when the field is left', async () => {
   const view = typedAlt('A dog')
   view.focus()
@@ -52,7 +48,6 @@ test('is written to the picture when the field is left', async () => {
   expect(view.state.doc.toString()).toBe(DOC.replace('A cat', 'A dog'))
   view.destroy()
 })
-
 test('is let go of, and throws nothing, when its picture was taken away', async () => {
   const view = typedAlt('A dog')
   view.dispatch({ changes: { from: DOC.indexOf('!'), to: DOC.indexOf('\n\nend'), insert: '' } })
@@ -61,7 +56,6 @@ test('is let go of, and throws nothing, when its picture was taken away', async 
   expect(view.state.doc.toString()).toBe('words\n\n\n\nend')
   view.destroy()
 })
-
 test('in a picture wrapped in HTML, is written to its img tag and leaves the wrapper', async () => {
   const doc = 'words\n\n<p align="center"><img src="cat.png" alt="A cat"></p>\n\nend'
   const view = typedAlt('A dog', doc)
@@ -70,7 +64,6 @@ test('in a picture wrapped in HTML, is written to its img tag and leaves the wra
   expect(view.state.doc.toString()).toBe('words\n\n<p align="center"><img src="cat.png" alt="A dog"></p>\n\nend')
   view.destroy()
 })
-
 test('a corner pressed and let go without a drag leaves a sized picture as it was', () => {
   Object.defineProperty(HTMLImageElement.prototype, 'naturalWidth', {
     configurable: true,
@@ -94,7 +87,6 @@ test('a corner pressed and let go without a drag leaves a sized picture as it wa
   handle?.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true }))
   handle?.dispatchEvent(new MouseEvent('pointerup', { button: 0, bubbles: true }))
   expect(view.state.doc.toString()).toBe(doc)
-
   handle?.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true, clientX: 50 }))
   handle?.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 50, clientY: 9 }))
   handle?.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 51, clientY: 9 }))
@@ -102,7 +94,6 @@ test('a corner pressed and let go without a drag leaves a sized picture as it wa
   expect(view.state.doc.toString()).toBe(doc)
   view.destroy()
 })
-
 test('goes to its own note when the pane has moved to another note before it was left', async () => {
   const mine = new SharedDoc(DOC)
   const elsewhere = DOC.replace('words', 'wordz')
@@ -112,11 +103,9 @@ test('goes to its own note when the pane has moved to another note before it was
   const alt = view.contentDOM.querySelector('input')
   alt?.dispatchEvent(new FocusEvent('focus'))
   if (alt) alt.value = 'A dog'
-
   other.join(view)
   await Promise.resolve()
   await Promise.resolve()
-
   expect(view.state.doc.toString()).toBe(elsewhere)
   expect(mine.text.toString()).toBe(DOC.replace('A cat', 'A dog'))
   view.destroy()

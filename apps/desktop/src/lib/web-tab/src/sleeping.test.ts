@@ -5,12 +5,10 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   isDesktop: true,
   invoke: () => Promise.resolve(true),
 }))
-
 const { grants } = await import('./permissions.svelte')
 const { bound, rest } = await import('./sleeping')
 type Page = import('./pages.svelte').Page
 type Held = import('./sleeping').Held
-
 function held(count: number): Held {
   const now = Date.now()
   const pages = new Map<string, Page>()
@@ -38,35 +36,24 @@ function held(count: number): Held {
     park: () => Promise.resolve(),
   }
 }
-
 beforeEach(() => vi.useFakeTimers())
-
 afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()
 })
-
 test('resting every hidden tab asks about each tab once, not about every tab for each', () => {
   const asked = vi.spyOn(grants, 'said')
   const pages = held(40)
-
   for (const [id] of pages.each()) rest(pages, id)
-
   expect(asked.mock.calls.length).toBe(40 * 3)
 })
-
 test('a tab that is not held is left alone and nothing is asked', () => {
   const asked = vi.spyOn(grants, 'said')
-
   rest(held(5), 'gone')
-
   expect(asked).not.toHaveBeenCalled()
 })
-
 test('bounding the live tabs still looks at every tab once', () => {
   const asked = vi.spyOn(grants, 'said')
-
   bound(held(12))
-
   expect(asked.mock.calls.length).toBe(12 * 3)
 })

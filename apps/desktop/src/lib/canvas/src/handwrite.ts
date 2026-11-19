@@ -9,12 +9,10 @@ import { storeAttachment, workspace } from '../../workspace/src/api'
 import { tools } from './tools.svelte'
 
 const two = (value: number) => String(value).padStart(2, '0')
-
 export function handwritingName(at: Date): string {
   const clock = `${two(at.getHours())}${two(at.getMinutes())}${two(at.getSeconds())}`
   return `handwriting-${todayOf(at)}-${clock}.canvas`
 }
-
 export function placedAtCaret(view: EditorView, text: string) {
   const { doc, selection } = view.state
   const range = selection.main
@@ -32,20 +30,16 @@ export function placedAtCaret(view: EditorView, text: string) {
     userEvent: 'input',
   })
 }
-
 export async function handwrite(): Promise<void> {
   const tab = workspace.active
   if (tab?.kind !== 'note') return
   const view = views.of(tab.paneId)
   if (!view || view.state.readOnly) return
-
   const path = tab.path ?? (await workspace.save(tab))
   if (!path || !isMarkdownPath(path) || !canWriteAt(path)) return
-
   const file = new File([blankCanvas()], handwritingName(new Date()), { type: 'application/json' })
   const written = await storeAttachment(file, path)
   if (!written) return
-
   placedAtCaret(
     view,
     formatWikilink({

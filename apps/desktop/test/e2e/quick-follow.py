@@ -1,29 +1,22 @@
 import http.server
 import json
 import time
-
 from playwright.sync_api import Browser
-
 from harness import Drive
 
 DRIVE = Drive(__file__, dev=True, chats=True)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
-
-
 class Model(http.server.BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         return
-
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
         self._cors()
         self.end_headers()
-
     def do_GET(self) -> None:  # noqa: N802
         raw = json.dumps({"data": [{"id": "fake-small", "name": "Fake", "context_length": 32000}]}).encode()
         self.send_response(200)
@@ -32,7 +25,6 @@ class Model(http.server.BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(raw)
-
     def do_POST(self) -> None:  # noqa: N802
         self.rfile.read(int(self.headers.get("Content-Length") or 0))
         self.send_response(200)
@@ -52,10 +44,7 @@ class Model(http.server.BaseHTTPRequestHandler):
             self.wfile.flush()
         except OSError:
             return
-
-
 ORIGIN = DRIVE.side(Model)
-
 SETUP = """
 async (base) => {
   const ai = window.ordenApp.ai
@@ -65,15 +54,12 @@ async (base) => {
   ai.setDefault(made.id)
 }
 """
-
 STATE = """async () => {
   const chat = await window.ordenApp.aiChats()
   return { running: [...chat.running], open: chat.head?.id ?? null, ids: chat.every.map((one) => one.id),
     archived: chat.every.filter((one) => one.archived).map((one) => one.id),
     stop: !!document.querySelector('.ask .go[aria-label="Stop"]'), trouble: chat.trouble }
 }"""
-
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
@@ -97,6 +83,4 @@ def drive(browser: Browser) -> None:
     if end > 30:
         wrong("back at the end, the answer is not followed")
     page.context.close()
-
-
 raise SystemExit(DRIVE.run(drive, "a quick question's answer is followed only while the reader is at its end"))

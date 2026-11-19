@@ -10,7 +10,6 @@ export interface Rule {
   until?: string
   count?: number
 }
-
 const DAY_NAMES: Record<string, number> = {
   sunday: 0,
   sun: 0,
@@ -30,7 +29,6 @@ const DAY_NAMES: Record<string, number> = {
   saturday: 6,
   sat: 6,
 }
-
 const MONTH_NAMES: Record<string, number> = {}
 for (let month = 1; month <= 12; month++) {
   const name = monthName(month).toLowerCase()
@@ -38,7 +36,6 @@ for (let month = 1; month <= 12; month++) {
   MONTH_NAMES[name.slice(0, 3)] = month
 }
 MONTH_NAMES.sept = 9
-
 const WORDS: Record<string, number> = {
   one: 1,
   two: 2,
@@ -52,14 +49,12 @@ const WORDS: Record<string, number> = {
   ten: 10,
   other: 2,
 }
-
 function ordinal(word: string): number | null {
   const found = /^(\d+)(?:st|nd|rd|th)?$/.exec(word)
   if (found) return Number(found[1])
   const named = ['first', 'second', 'third', 'fourth', 'fifth'].indexOf(word)
   return named === -1 ? null : named + 1
 }
-
 function yearlyDate(words: readonly string[]): { month: number; day: number } | null {
   const [one = '', two = '', three = ''] = words
   const read = (month: number | undefined, day: number | null) =>
@@ -70,7 +65,6 @@ function yearlyDate(words: readonly string[]): { month: number; day: number } | 
   if (words.length === 3 && two === 'of') return read(MONTH_NAMES[three], ordinal(one))
   return null
 }
-
 function readUntil(words: string): string | null {
   const text = words.trim().replace(/,/g, ' ').replace(/\s+/g, ' ')
   if (civil(text)) return text
@@ -87,7 +81,6 @@ function readUntil(words: string): string | null {
   if (year === null || month === null || day === null || day > daysInMonth(year, month)) return null
   return isoOf(year, month, day)
 }
-
 export function parseRule(written: string): Rule | null {
   let text = written.trim().toLowerCase().replace(/\s+/g, ' ')
   const rule: Rule = {
@@ -98,7 +91,6 @@ export function parseRule(written: string): Rule | null {
     months: [],
     whenDone: false,
   }
-
   if (text.endsWith(' when done')) {
     rule.whenDone = true
     text = text.slice(0, -' when done'.length)
@@ -107,7 +99,6 @@ export function parseRule(written: string): Rule | null {
     rule.whenDone = true
     text = `every ${text.slice('every!'.length)}`
   }
-
   const count = / for (\d+) times?$/.exec(text)
   if (count) {
     rule.count = Number(count[1])
@@ -120,24 +111,19 @@ export function parseRule(written: string): Rule | null {
     rule.until = date
     text = text.slice(0, until.index)
   }
-
   const words = text.replace(/,/g, ' , ').split(' ').filter(Boolean)
   if (words.shift() !== 'every') return null
-
   const date = yearlyDate(words)
   if (date) return { ...rule, unit: 'year', months: [date.month], monthDays: [date.day] }
-
   let at = 0
   const peek = () => words[at] ?? ''
   const take = () => words[at++] ?? ''
-
   const amount = WORDS[peek()] ?? (/^\d+$/.test(peek()) ? Number(peek()) : null)
   if (amount !== null) {
     rule.every = amount
     at++
   }
   if (rule.every < 1) return null
-
   const unit = take()
   switch (unit.replace(/s$/, '')) {
     case 'day':
@@ -174,7 +160,6 @@ export function parseRule(written: string): Rule | null {
       }
     }
   }
-
   function readWeekdays(): { day: number; nth?: number }[] {
     const out: { day: number; nth?: number }[] = []
     while (at < words.length) {
@@ -186,7 +171,6 @@ export function parseRule(written: string): Rule | null {
     }
     return out
   }
-
   function readMonths(): number[] {
     const out: number[] = []
     while (MONTH_NAMES[peek()] !== undefined) {
@@ -195,12 +179,10 @@ export function parseRule(written: string): Rule | null {
     }
     return out
   }
-
   if (rule.unit === 'year' && peek() === 'in' && MONTH_NAMES[words[at + 1] ?? ''] !== undefined) {
     at++
     rule.months = readMonths()
   }
-
   if (peek() === 'on') {
     at++
     if (peek() === 'the') {
@@ -218,7 +200,6 @@ export function parseRule(written: string): Rule | null {
       return null
     }
   }
-
   function readOnThe(): boolean {
     if (at >= words.length) return false
     while (at < words.length) {
@@ -245,16 +226,12 @@ export function parseRule(written: string): Rule | null {
     }
     return true
   }
-
   if (at < words.length) return null
   return rule
 }
-
 const timesText = (count: number) => `${count} time${count === 1 ? '' : 's'}`
-
 export const fewerTimes = (written: string, count: number): string =>
   written.replace(/ for \d+ times?(?= when done$|$)/i, ` for ${timesText(count)}`)
-
 function nthText(nth: number): string {
   if (nth === -1) return 'last'
   if (nth < 0) return `${nthText(-nth)} last`
@@ -262,24 +239,18 @@ function nthText(nth: number): string {
   const suffix = tens >= 11 && tens <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][nth % 10] ?? 'th')
   return `${nth}${suffix}`
 }
-
 const sameDays = (a: readonly { day: number; nth?: number }[], days: readonly number[]) =>
   a.length === days.length && a.every((one) => one.nth === undefined && days.includes(one.day))
-
 const mondayFirst = (day: number) => (day + 6) % 7
-
 const joined = (parts: readonly string[], last = ' and '): string =>
   parts.length < 2 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')}${last}${parts.at(-1) ?? ''}`
-
 function untilText(iso: string): string {
   const parts = civil(iso)
   return parts ? `${monthName(parts.month)} ${parts.day}, ${parts.year}` : iso
 }
-
 export function ruleText(rule: Rule): string {
   const every = (unit: string) => (rule.every === 1 ? `every ${unit}` : `every ${rule.every} ${unit}s`)
   let text: string
-
   const onDays = () => {
     const parts = [
       ...rule.monthDays.map((day) => nthText(day)),
@@ -287,7 +258,6 @@ export function ruleText(rule: Rule): string {
     ]
     return parts.length ? ` on the ${joined(parts)}` : ''
   }
-
   if (rule.unit === 'week' && rule.every === 1 && sameDays(rule.weekdays, [1, 2, 3, 4, 5])) {
     text = 'every weekday'
   } else if (rule.unit === 'week') {
@@ -299,17 +269,14 @@ export function ruleText(rule: Rule): string {
   } else {
     text = every(rule.unit) + onDays()
   }
-
   if (rule.until) text += ` until ${untilText(rule.until)}`
   if (rule.count !== undefined) text += ` for ${timesText(rule.count)}`
   if (rule.whenDone) text += ' when done'
   return text
 }
-
 function daysIn(rule: Rule, year: number, month: number, fallback: number, clamp: boolean): number[] {
   const length = daysInMonth(year, month)
   const days = new Set<number>()
-
   for (const day of rule.monthDays) {
     const actual = day < 0 ? length + day + 1 : day
     if (actual >= 1 && actual <= length) days.add(actual)
@@ -331,12 +298,10 @@ function daysIn(rule: Rule, year: number, month: number, fallback: number, clamp
   }
   return [...days].sort((a, b) => a - b)
 }
-
 function candidates(rule: Rule, start: string, period: number): string[] {
   const parts = civil(start)
   if (!parts) return []
   const step = period * rule.every
-
   switch (rule.unit) {
     case 'day': {
       const date = addDays(start, step)
@@ -363,15 +328,12 @@ function candidates(rule: Rule, start: string, period: number): string[] {
     }
   }
 }
-
 function periodsBetween(rule: Rule, from: string, to: string): number {
   const days = dayNumber(to) - dayNumber(from)
   const size = { day: 1, week: 7, month: 31, year: 366 }[rule.unit] * rule.every
   return Math.max(0, Math.floor(days / size) - 1)
 }
-
 const MOST_PERIODS = 2000
-
 export function nextDate(rule: Rule, start: string, after: string): string | null {
   const first = after < start ? 0 : periodsBetween(rule, start, after)
   for (let period = first; period < first + MOST_PERIODS; period++) {

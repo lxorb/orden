@@ -2,14 +2,11 @@ import { expect, test, vi } from 'vitest'
 
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
 vi.stubGlobal('requestIdleCallback', (run: () => void) => setTimeout(run, 0))
-
 const disk = vi.hoisted(() => ({ current: null as import('../disk').Disk | null }))
-
 const SPACES = [
   { name: 'Work', path: '/spaces/Work' },
   { name: 'Home', path: '/spaces/Home' },
 ]
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: false,
@@ -20,16 +17,13 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return disk.current.invoke(command, args)
   },
 }))
-
 const PLAN = '/spaces/Work/Plan.md'
 const FOOD = '/spaces/Home/Food.md'
-
 async function run() {
   const { workspace } = await import('../../src/lib/workspace/src/api')
   const onScreen = () => workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
   return { workspace, onScreen }
 }
-
 test('a set comes back on the tab it was left on when one before it has gone', async () => {
   const IDEAS = '/spaces/Work/Ideas.md'
   const NOTES = '/spaces/Work/Notes.md'
@@ -37,7 +31,6 @@ test('a set comes back on the tab it was left on when one before it has gone', a
   disk.current = new Disk()
   for (const path of [PLAN, IDEAS, NOTES, FOOD]) disk.current.files.set(path, '# Words\n')
   localStorage.clear()
-
   {
     const { workspace } = await run()
     workspace.spaces = [
@@ -52,7 +45,6 @@ test('a set comes back on the tab it was left on when one before it has gone', a
     await workspace.openEntry(FOOD)
     workspace.persist()
   }
-
   disk.current.files.delete(IDEAS)
   await vi.dynamicImportSettled()
   vi.resetModules()
@@ -63,7 +55,6 @@ test('a set comes back on the tab it was left on when one before it has gone', a
   await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Notes.md'), {
     timeout: 15_000,
   })
-
   await workspace.showSpace('work')
   expect(onScreen()).toEqual(['Plan.md', 'Notes.md'])
   expect(workspace.active?.path).toBe(NOTES)

@@ -6,55 +6,42 @@ import { readSyncMessage, writeSyncStep1, writeUpdate } from 'y-protocols/sync'
 import type * as Y from 'yjs'
 
 export const TEXT = 'note'
-
 const SYNC = 0
 const AWARENESS = 1
-
 const STEP1 = 0
 const STEP2 = 1
 const UPDATE = 2
-
 const TOKEN = 'orden.token.'
-
 const TOKENS = [TOKEN, 'nib.token.']
-
 export const subprotocol = (token: string): string => `${TOKEN}${token}`
-
 export function tokenProtocolOf(header: string | undefined): string | null {
   const offered = (header ?? '').split(',').map((one) => one.trim())
   return offered.find((one) => TOKENS.some((prefix) => one.startsWith(prefix))) ?? null
 }
-
 export function tokenOf(header: string | undefined): string | null {
   const carrying = tokenProtocolOf(header)
   const prefix = TOKENS.find((one) => carrying?.startsWith(one))
   return carrying && prefix ? carrying.slice(prefix.length) : null
 }
-
 function framed(kind: number, write: (encoder: encoding.Encoder) => void): Uint8Array {
   const encoder = encoding.createEncoder()
   encoding.writeVarUint(encoder, kind)
   write(encoder)
   return encoding.toUint8Array(encoder)
 }
-
 export const syncStep1 = (doc: Y.Doc): Uint8Array => framed(SYNC, (encoder) => writeSyncStep1(encoder, doc))
-
 export const syncStep1Of = (sv: Uint8Array): Uint8Array =>
   framed(SYNC, (encoder) => {
     encoding.writeVarUint(encoder, STEP1)
     encoding.writeVarUint8Array(encoder, sv)
   })
-
 export const syncStep2Of = (update: Uint8Array): Uint8Array =>
   framed(SYNC, (encoder) => {
     encoding.writeVarUint(encoder, STEP2)
     encoding.writeVarUint8Array(encoder, update)
   })
-
 export type SyncMessage =
   { kind: 'step1'; sv: Uint8Array } | { kind: 'step2'; update: Uint8Array } | { kind: 'update'; update: Uint8Array }
-
 export function readSync(message: Uint8Array): SyncMessage | null {
   try {
     const decoder = decoding.createDecoder(message)
@@ -69,17 +56,13 @@ export function readSync(message: Uint8Array): SyncMessage | null {
     return null
   }
 }
-
 export const syncUpdate = (update: Uint8Array): Uint8Array => framed(SYNC, (encoder) => writeUpdate(encoder, update))
-
 export const awarenessUpdate = (awareness: Awareness, clients: readonly number[]): Uint8Array =>
   framed(AWARENESS, (encoder) => encoding.writeVarUint8Array(encoder, encodeAwarenessUpdate(awareness, [...clients])))
-
 export function awarenessState(awareness: Awareness): Uint8Array | null {
   const clients = [...awareness.getStates().keys()]
   return clients.length ? awarenessUpdate(awareness, clients) : null
 }
-
 export function receive(
   message: Uint8Array,
   doc: Y.Doc,
@@ -93,7 +76,6 @@ export function receive(
     return null
   }
 }
-
 function applied(
   message: Uint8Array,
   doc: Y.Doc,
@@ -103,22 +85,17 @@ function applied(
 ): Uint8Array | null {
   const decoder = decoding.createDecoder(message)
   const kind = decoding.readVarUint(decoder)
-
   if (kind === AWARENESS) {
     const update = decoding.readVarUint8Array(decoder)
     applyAwarenessUpdate(awareness, mayAnnounce ? only(update, mayAnnounce) : update, origin)
     return null
   }
-
   if (kind !== SYNC) return null
-
   const encoder = encoding.createEncoder()
   encoding.writeVarUint(encoder, SYNC)
   readSyncMessage(decoder, encoder, doc, origin)
-
   return encoding.length(encoder) > 1 ? encoding.toUint8Array(encoder) : null
 }
-
 function only(update: Uint8Array, kept: (client: number) => boolean): Uint8Array {
   const decoder = decoding.createDecoder(update)
   const entries: (readonly [number, number, string])[] = []
@@ -130,7 +107,6 @@ function only(update: Uint8Array, kept: (client: number) => boolean): Uint8Array
     ] as const
     if (kept(entry[0])) entries.push(entry)
   }
-
   const encoder = encoding.createEncoder()
   encoding.writeVarUint(encoder, entries.length)
   for (const [client, clock, state] of entries) {
@@ -140,7 +116,6 @@ function only(update: Uint8Array, kept: (client: number) => boolean): Uint8Array
   }
   return encoding.toUint8Array(encoder)
 }
-
 export function isCatchUp(message: Uint8Array): boolean {
   try {
     const decoder = decoding.createDecoder(message)
@@ -149,28 +124,22 @@ export function isCatchUp(message: Uint8Array): boolean {
     return false
   }
 }
-
 export function isEdit(message: Uint8Array): boolean {
   try {
     const decoder = decoding.createDecoder(message)
     if (decoding.readVarUint(decoder) !== SYNC) return false
-
     const kind = decoding.readVarUint(decoder)
     return kind === STEP2 || kind === UPDATE
   } catch {
     return true
   }
 }
-
 export function forget(awareness: Awareness, clients: readonly number[], origin: unknown) {
   if (clients.length) removeAwarenessStates(awareness, [...clients], origin)
-
   for (const client of clients) awareness.meta.delete(client)
 }
-
 export function unattended(awareness: Awareness) {
   awareness.setLocalState(null)
-
   const timer: unknown = awareness._checkInterval
   if (typeof timer === 'number') clearInterval(timer)
 }

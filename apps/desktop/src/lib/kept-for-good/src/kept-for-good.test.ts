@@ -3,7 +3,6 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 let kept: Map<string, string>
 let answer: boolean
 let asked: number
-
 beforeEach(() => {
   vi.resetModules()
   kept = new Map()
@@ -25,23 +24,19 @@ beforeEach(() => {
     },
   })
 })
-
 afterEach(() => {
   vi.unstubAllGlobals()
 })
-
 test('asks the browser to keep what is here once, and not again after it said no', async () => {
   const { keptForGood } = await import('./kept-for-good.svelte')
   await keptForGood.ask()
   await keptForGood.ask()
   expect(asked).toBe(1)
   expect(keptForGood.held).toBe(false)
-
   vi.resetModules()
   const later = await import('./kept-for-good.svelte')
   await later.keptForGood.ask()
   expect(asked).toBe(1)
-
   answer = true
   await later.keptForGood.again()
   expect(asked).toBe(2)

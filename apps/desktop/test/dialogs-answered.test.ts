@@ -5,7 +5,6 @@ import { describe, expect, test } from 'vitest'
 import { code, walk } from './files'
 
 const SOURCE = join(fileURLToPath(new URL('..', import.meta.url)), 'src')
-
 describe('a file dialog', () => {
   test('is answered by an agent’s path wherever one is opened', () => {
     const opening = walk(SOURCE, code).filter((path) =>

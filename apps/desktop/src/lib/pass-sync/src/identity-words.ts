@@ -8,7 +8,6 @@ export function identityGroupName(group: IdentityGroup): string {
     work: 'Work details',
   }[group]
 }
-
 const NAMES: Record<IdentityKey, () => string> = {
   fullName: () => 'Full name',
   email: () => 'Email',
@@ -43,9 +42,7 @@ const NAMES: Record<IdentityKey, () => string> = {
   workPhone: () => 'Work phone number',
   workEmail: () => 'Work email',
 }
-
 export function identityFieldName(key: IdentityKey): string {
   return NAMES[key]()
 }
-
 export const HIDDEN_IDENTITY: ReadonlySet<IdentityKey> = new Set(['ssn', 'passport', 'license'])

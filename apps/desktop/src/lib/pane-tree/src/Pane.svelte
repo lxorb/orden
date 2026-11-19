@@ -58,7 +58,6 @@
   import { isDesktop } from '../../platform/src/api'
   import Editor from './Editor.svelte'
   import { keptAway } from '../../away/src/api'
-
   import { chrome } from '../../theme/src/api'
   import { without } from '../../graph/src/api'
   import { links, notePicture } from '../../link-index/src/api'
@@ -95,20 +94,15 @@
   import { usage } from '../../accounts/src/api'
 
   const { pane }: { pane: Pane } = $props()
-
   const here = whileHere()
-
   const tab = $derived(workspace.showing(pane.id))
   const scrollKept = $derived(scrollKeyOf(tab, workspace.windowSlot))
   const behind = $derived(tab ? noteBehind(tab) : null)
   const locked = $derived(protection.locked(behind))
-
   const attachments = $derived(workspace.graphSettings.here.attachments)
-
   const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.leftOut))
   const archived = $derived(tab?.path ? workspace.archive.has(tab.path) : false)
   const held = $derived(workspace.heldIn(pane.id).filter((one) => !one.unloaded))
-
   $effect(() => {
     if (tab?.unloaded) tab.unloaded = false
   })
@@ -124,71 +118,53 @@
   const atFoot = $derived(!paneToward(workspace.panes.frame, pane.id, 'down'))
   const ownSurface = $derived(!!tab && (TAB_KINDS[tab.kind].takesDrops || (isDesktop && tab.kind === 'web')))
   const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading && !locked)
-
   const columns = $derived(
     pane.stacked && !viewport.touch
       ? workspace.tabsIn(pane.id).filter((one) => one.kind === 'note' && !one.reading && !protection.locked(one.path))
       : [],
   )
-
   const stacking = $derived(columns.length > 1 && columns.some((one) => one.id === tab?.id))
-
   let view = $state<EditorView>()
-
   const keepsMiddle = $derived(ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)))
-
   const edged = $derived(keepsMiddle ? '' : undefined)
-
   const columnViews = $state<Record<string, EditorView | undefined>>({})
-
   function takeColumn(id: string) {
     if (id === pane.activeTabId && workspace.panes.focusedId === pane.id) return
     workspace.focusPane(pane.id)
     workspace.activate(id)
   }
-
   $effect(() => {
     if (!stacking) return
-
     const current = columnViews[pane.activeTabId ?? '']
     if (current && current !== view) view = current
   })
-
   type FindFlags = Pick<FindSpec, 'caseSensitive' | 'regexp' | 'wholeWord'>
-
   let finding = $state(false)
   let replacing = $state(false)
   let spec = $state<FindSpec>(NO_FIND)
   let tally = $state<FindTally>(NO_TALLY)
-
   const canReplace = $derived(!!tab && !tab.reading && !modes.readOnly && canWriteIn(tab.note) && !!view)
-
   async function look(next: FindSpec) {
     spec = next
     const asked = view
     if (!asked) return
-
     await setFind(asked, next)
     if (asked === view) tally = findTally(asked.state)
   }
-
   function tallySlow(slowed: EditorView) {
     if (slowed === view) tally = findTally(slowed.state)
   }
-
   function openFinding(ask: FindAsk) {
     replacing = ask.replace
     void look(ask.seed ? { ...spec, query: spec.regexp ? ask.pattern : ask.seed } : spec)
     finding = true
   }
-
   function shutFinding() {
     finding = false
     replacing = false
     if (view) closeFind(view)
     view?.focus()
   }
-
   async function ready(): Promise<EditorView | null> {
     const asked = view
     if (!asked || !(await findReady(asked)) || asked !== view) {
@@ -197,85 +173,65 @@
     }
     return asked
   }
-
   async function stepFinding(by: number) {
     const asked = await ready()
     if (!asked) return
-
     if (by < 0) findPreviousMatch(asked)
     else findNextMatch(asked)
     tally = findTally(asked.state)
   }
-
   async function selectEvery() {
     const asked = await ready()
     if (asked && selectEveryMatch(asked)) shutFinding()
   }
-
   async function replaceOne() {
     const asked = await ready()
     if (!asked) return
-
     replaceHere(asked)
     tally = findTally(asked.state)
   }
-
   async function replaceEvery() {
     const asked = await ready()
     if (!asked) return
-
     replaceEverywhere(asked)
     tally = findTally(asked.state)
   }
-
   let searchedIn: string | null = null
-
   $effect(() => {
     const here = tab?.id ?? null
     if (here === searchedIn) return
-
     searchedIn = here
     if (untrack(() => finding)) shutFinding()
   })
-
   $effect(() => {
     const current = view
     if (!current) return
-
     return pull.follow(current.scrollDOM)
   })
-
   $effect(() => {
     const current = view
     if (!current) return
-
     views.put(pane.id, current)
     modes.apply(current)
     shortcuts.apply(current)
-
     return () => {
       views.forget(pane.id)
       modes.forget(current)
       shortcuts.forget(current)
     }
   })
-
   $effect(() => {
     const current = view
     const showing = tab
     if (!current || !showing) return
-
     return placement.follow(current, showing)
   })
-
   $effect(() => {
     const current = view
     const note = tab?.note
     if (!current) return
-
     setReadOnlyMode(current, modes.readOnly || !canWriteIn(note))
   })
-
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
     event.stopPropagation()
@@ -284,10 +240,8 @@
       showEditorMenu(event, on, path)
     })
   }
-
   async function saveImage(file: File, into: Tab): Promise<string | null> {
     if (!file.type.startsWith('image/')) return saveAttachment(file, into)
-
     try {
       const src = await busy.run('Storing the image', () => storeImage(file, into.path))
       void usage.refresh()
@@ -298,7 +252,6 @@
       return null
     }
   }
-
   async function saveAttachment(file: File, into: Tab): Promise<string | null> {
     try {
       return await busy.run('Storing the file', () => storeAttachment(file, into.path))
@@ -307,53 +260,40 @@
       return null
     }
   }
-
   function resolveImage(src: string, from: Tab, wikilink = false): string {
     return notePicture(src, from.path, from.doc, wikilink)
   }
-
   function nameBlock(path: string, line: number, from: Tab): Promise<string | null> {
     return links.nameBlock(path, line, from.path)
   }
-
   function zoneOf(event: DragEvent & { currentTarget: HTMLElement }): Zone {
     const box = event.currentTarget.getBoundingClientRect()
     const moving = workspace.panes.dragging?.tabId ?? null
-
     return zoneAt(box, event.clientX, event.clientY, (side) => workspace.canLand(side, pane.id, moving))
   }
-
   function answers(event: DragEvent, zone: Zone): boolean {
     return isTreeDrag(event.dataTransfer) && !(keepsMiddle && zone === 'middle')
   }
-
   function over(event: DragEvent & { currentTarget: HTMLElement }) {
     const where = zoneOf(event)
     if (!answers(event, where)) {
       if (workspace.panes.landing?.paneId === pane.id) workspace.panes.landing = null
       return
     }
-
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-
     workspace.panes.landing = { kind: 'pane', paneId: pane.id, zone: where }
   }
-
   function drop(event: DragEvent & { currentTarget: HTMLElement }) {
     const where = zoneOf(event)
     if (!answers(event, where)) return
-
     event.preventDefault()
     const landing: Landing = { kind: 'pane', paneId: pane.id, zone: where }
     const paths = dragged(event.dataTransfer)
-
     workspace.panes.landing = null
     workspace.panes.dropped()
-
     if (paths.length) void workspace.dropNotes(paths, landing)
   }
-
   const landing = $derived(workspace.panes.landing)
   const zone = $derived(landing?.kind === 'pane' && landing.paneId === pane.id ? landing.zone : undefined)
 </script>
@@ -615,26 +555,21 @@
       0 0 0 1px var(--card-edge);
     transition: border-radius var(--dur-base) var(--ease-out);
   }
-
   .pane.at-left {
     border-top-left-radius: var(--left-edge, var(--card-radius));
     border-bottom-left-radius: var(--left-edge, var(--card-radius));
   }
-
   .pane.at-right {
     border-top-right-radius: var(--right-edge, var(--card-radius));
     border-bottom-right-radius: var(--right-edge, var(--card-radius));
   }
-
   .pane.at-foot {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
-
   .pane.straight {
     border-start-start-radius: 0;
   }
-
   .card {
     position: relative;
     flex: 1;
@@ -644,18 +579,15 @@
     flex-direction: column;
     border-radius: inherit;
   }
-
   .pane:has(> .card > :global(.here)) {
     background: var(--empty-ground, var(--bg));
   }
-
   .pane.stripped,
   .pane.stripped:has(> .card > :global(.here)) {
     background: none;
     box-shadow: none;
     overflow: visible;
   }
-
   .pane.stripped > .card {
     overflow: clip;
     background: var(--content-ground, var(--bg));
@@ -663,48 +595,38 @@
       var(--card-shadow),
       0 0 0 1px var(--card-edge);
   }
-
   .pane.stripped > .head {
     border-top-left-radius: inherit;
     border-top-right-radius: inherit;
   }
-
   .pane.stripped.flush > .card {
     border-start-start-radius: 0;
   }
-
   .pane.stripped > .card:has(> :global(.here)) {
     background: var(--empty-ground, var(--bg));
   }
-
   .pane:global([data-underlay])::before {
     background: var(--content-ground, var(--bg));
   }
-
   .pane.stripped:global([data-underlay])::before {
     background: linear-gradient(transparent var(--titlebar-height), var(--content-ground, var(--bg)) 0);
   }
-
   .pane.stripped:global([data-underlay]) > .card {
     background: none;
   }
-
   .pane.lifted,
   .pane.lifted:has(> .card > :global(.here)),
   .pane.lifted > .card {
     background: none;
     box-shadow: none;
   }
-
   .pane.lifted > :global(:not(.head)) {
     opacity: 0;
   }
-
   :global(html[data-overview]) .pane:has(> .card > :global(.here)) {
     opacity: calc(1 - var(--overview-open, 1));
     pointer-events: none;
   }
-
   .head {
     position: relative;
     z-index: var(--z-tools);
@@ -715,14 +637,12 @@
     background: var(--tab-frame);
     overflow-x: clip;
   }
-
   .editor {
     position: relative;
     flex: 1;
     min-height: 0;
     display: flex;
   }
-
   .stack {
     position: relative;
     flex: 1;
@@ -732,11 +652,9 @@
     overscroll-behavior-x: contain;
     scrollbar-width: none;
   }
-
   .stack::-webkit-scrollbar {
     display: none;
   }
-
   .column {
     position: relative;
     flex: 1 0 var(--stack-column);
@@ -745,15 +663,12 @@
     border-inline-start: 1px solid var(--line);
     transition: flex-basis var(--dur-base) var(--ease-out);
   }
-
   .column:first-child {
     border-inline-start: 0;
   }
-
   .column.is-active {
     flex-basis: var(--stack-column-wide);
   }
-
   .spine {
     position: sticky;
     inset-inline-start: 0;
@@ -772,7 +687,6 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .spine .orden-row-label {
     display: block;
     max-height: 100%;
@@ -782,18 +696,15 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   @media (hover: hover) {
     .spine:hover {
       color: var(--text);
     }
   }
-
   .column.is-active .spine {
     background: var(--content-ground, var(--bg));
     color: var(--text-strong);
   }
-
   .sheet {
     position: relative;
     flex: 1;
@@ -801,7 +712,6 @@
     min-height: 0;
     display: flex;
   }
-
   .coming {
     flex: 1;
     display: grid;
@@ -813,7 +723,6 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
   .zones {
     position: absolute;
     inset: 0;
@@ -822,11 +731,9 @@
     border-radius: inherit;
     overflow: clip;
   }
-
   .zones.sides .zone.whole {
     pointer-events: none;
   }
-
   .zone {
     position: absolute;
     pointer-events: auto;
@@ -837,31 +744,25 @@
       opacity var(--dur-fast) var(--ease-out),
       inset var(--dur-base) var(--ease-out);
   }
-
   .zone.lit {
     opacity: 1;
     border-color: var(--accent-line);
   }
-
   .zone.whole {
     inset: 0;
   }
-
   .zone.left {
     inset: 0 auto 0 0;
     width: var(--band);
   }
-
   .zone.right {
     inset: 0 0 0 auto;
     width: var(--band);
   }
-
   .zone.up {
     inset: 0 0 auto 0;
     height: var(--band);
   }
-
   .zone.down {
     inset: auto 0 0 0;
     height: var(--band);

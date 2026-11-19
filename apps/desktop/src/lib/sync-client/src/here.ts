@@ -4,7 +4,6 @@ import { keepZone } from '../../accounts/src/api'
 import { invoke, isDesktop } from './ports'
 
 let made: Activity | null = null
-
 export function deviceActivity(): Activity {
   if (made) return made
   made = new Activity({
@@ -19,13 +18,10 @@ export function deviceActivity(): Activity {
   made.start()
   return made
 }
-
 let started = false
-
 export function startHere(): void {
   if (started) return
   started = true
-
   const activity = deviceActivity()
   const say = () => {
     if (hub.leads) hub.send({ t: activity.active ? 'active' : 'idle' })

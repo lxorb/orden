@@ -36,14 +36,12 @@ held.disk = d
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: '' })
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
-
 const ONE = '/spaces/One'
 const TWO = '/spaces/Two'
 const DRAFT = 'ONLY-IN-THE-SESSION\n'
 const TYPED = 'TYPED-ON-THE-NOTE'
 const IN_A_SET = 'WORDS-IN-A-SET-OUT-OF-SIGHT\n'
 const CLOSED = 'CLOSED-WORDS'
-
 const draft = (fields: object) => ({
   kind: 'note',
   name: 'a.md',
@@ -58,7 +56,6 @@ const one = (id: string, tabs: object[]) => ({
   focused: id,
   panel: null,
 })
-
 const SESSION = {
   version: 2,
   spaces: [
@@ -104,7 +101,6 @@ const SESSION = {
     },
   },
 }
-
 function freshDisk() {
   d.reset()
   d.folders.add(ONE)
@@ -114,13 +110,11 @@ function freshDisk() {
   d.files.set(`${ONE}/closed.md`, 'base\n')
   d.files.set(`${TWO}/c.md`, 'c\n')
 }
-
 function freshRound(session: object = SESSION) {
   freshDisk()
   localStorage.clear()
   localStorage.setItem('orden:workspace', JSON.stringify(session))
 }
-
 async function newWindow() {
   vi.resetModules()
   const { startup } = await import('../../launch/src/api')
@@ -129,22 +123,17 @@ async function newWindow() {
   const { workspace } = await import('./workspace.svelte')
   return workspace
 }
-
 type Workspace = Awaited<ReturnType<typeof newWindow>>
-
 const session = () => localStorage.getItem('orden:workspace') ?? ''
-
 function kept(words: string, path?: string) {
   return session().includes(words.trim()) || (path ? d.files.get(path)?.includes(words) : false)
 }
-
 async function allIn(workspace: Workspace) {
   const { sets } = await import('./sets.svelte')
   await sets.wake()
   await workspace.writesSettled()
   return workspace.tabs.map((tab) => tab.note.latest)
 }
-
 async function goodLaunch() {
   held.stopAt = -1
   const workspace = await newWindow()
@@ -157,7 +146,6 @@ async function goodLaunch() {
   expect(workspace.closed.stack.some((one) => one.draft.doc.includes(CLOSED))).toBe(true)
   return workspace
 }
-
 async function roundTrips() {
   freshRound()
   held.stopAt = -1
@@ -168,7 +156,6 @@ async function roundTrips() {
   await allIn(workspace)
   return held.count
 }
-
 describe('a persist while the session is coming back', () => {
   test('keeps everything, at every round trip of a launch, and a good launch after it brings it back', async () => {
     const trips = await roundTrips()
@@ -193,7 +180,6 @@ describe('a persist while the session is coming back', () => {
       await goodLaunch()
     }
   }, 240_000)
-
   test('a launch that fails keeps what it read for the next', async () => {
     freshRound()
     held.stopAt = -1
@@ -204,7 +190,6 @@ describe('a persist while the session is coming back', () => {
     expect(session()).toContain(DRAFT.trim())
     await goodLaunch()
   })
-
   test('a tab opened meanwhile is written with what is coming, and lands once', async () => {
     freshRound()
     d.files.set(`${ONE}/gap.md`, 'gap\n')
@@ -228,7 +213,6 @@ describe('a persist while the session is coming back', () => {
     expect(paths.filter((one) => one === `${ONE}/gap.md`)).toHaveLength(1)
     expect(workspace.tabs.map((tab) => tab.note.latest)).toContain(DRAFT)
   })
-
   test.each([
     [
       'a flat strip',
@@ -254,7 +238,6 @@ describe('a persist while the session is coming back', () => {
     await vi.waitFor(() => expect(held.reached).toBe(true), { timeout: 5000 })
     workspace.persist()
     expect(session()).toContain(words)
-
     open()
     held.stopAt = -1
     await restoring
@@ -262,7 +245,6 @@ describe('a persist while the session is coming back', () => {
     workspace.persist()
     expect(session()).toContain('"layout"')
   })
-
   test('a set whose build fails stays as it was read, and builds on the next asking', async () => {
     freshRound()
     held.stopAt = -1

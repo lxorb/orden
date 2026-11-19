@@ -20,11 +20,9 @@
     onclose: () => void
     children: Snippet
   } = $props()
-
   let layer = $state<HTMLElement>()
   let measuredWidth = $state(0)
   let measuredHeight = $state(0)
-
   const sheet = $derived(viewport.device === 'phone')
   const place = $derived(
     at
@@ -36,7 +34,6 @@
         )
       : { left: 0, top: 0 },
   )
-
   $effect(() => (at ? overlays.show(onclose, () => [layer]) : undefined))
   $effect(() => closeOnBack(!!at, onclose))
 </script>
@@ -74,7 +71,6 @@
     font-size: var(--text-row);
     color: var(--text);
   }
-
   .float.sheet {
     left: 0;
     right: 0;

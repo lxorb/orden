@@ -11,7 +11,6 @@ pub fn spell_languages(app: AppHandle, languages: Vec<String>) {
         let _ = page.with_webview(move |platform| engine::use_dictionaries(&platform, &languages));
     }
 }
-
 fn tag(said: &str) -> bool {
     let mut parts = said.split('-');
     let language = parts.next().unwrap_or_default();
@@ -21,7 +20,6 @@ fn tag(said: &str) -> bool {
         && region.is_none_or(|one| one.len() == 2 && one.chars().all(|c| c.is_ascii_uppercase()))
         && parts.next().is_none()
 }
-
 mod engine {
     use cef::{
         CefString, ImplBrowser as _, ImplBrowserHost as _, ImplListValue as _,
@@ -29,7 +27,6 @@ mod engine {
     };
 
     const DICTIONARIES: &str = "spellcheck.dictionaries";
-
     pub fn use_dictionaries(platform: &tauri::webview::PlatformWebview, languages: &[String]) {
         let Some(context) = platform
             .downcast_ref::<tauri_runtime_cef::Webview>()
@@ -63,7 +60,6 @@ mod engine {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::tag;

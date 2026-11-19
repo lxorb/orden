@@ -2,7 +2,6 @@ import { type Dictates, voice } from '../../../dictation/src/api'
 
 class Dictation {
   field: Dictates | null = null
-
   async toggle(on?: boolean): Promise<void> {
     const owner = this.field
     if (!owner) return
@@ -12,5 +11,4 @@ class Dictation {
     else if (!want && listening) await voice.finish()
   }
 }
-
 export const dictation = new Dictation()

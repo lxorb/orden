@@ -7,15 +7,12 @@ import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 
 const HITS = 'orden://search-hits'
-
 export interface Found {
   hits: Hit[]
   loose: FuzzyHit[]
 }
-
 const PAPERS = 20
 let asked = 0
-
 export async function searchSpace(
   root: string,
   query: Query,
@@ -36,7 +33,6 @@ export async function searchSpace(
   await papersFor(root)
   const papers = searchPapers(root, query, PAPERS, excluded)
   if (papers.length) onFound({ hits: papers, loose: [] })
-
   if (!isNative) {
     let found = 0
     const loose: FuzzyHit[] = []
@@ -51,11 +47,9 @@ export async function searchSpace(
     if (guesses.length) onFound({ hits: [], loose: guesses })
     return
   }
-
   if (internal.routed) {
     if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
   }
-
   const { searchBacktracksWildly } = await import('@orden/markdown/pattern-cost')
   const judged = judging(searchBacktracksWildly)
   const id = ++asked
@@ -63,17 +57,14 @@ export async function searchSpace(
   const stop = await hearHere<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
     const batch = event.payload
     if (batch.id !== id) return
-
     onFound({ hits: batch.hits ?? [], loose: batch.loose ?? [] })
   })
-
   try {
     await invoke('search_space', { root, query: judged(query), terms, limit, id, excluded })
   } finally {
     stop()
   }
 }
-
 function judging(wild: (source: string, fold: boolean) => boolean) {
   const judged = (query: Query): Query => {
     switch (query.kind) {

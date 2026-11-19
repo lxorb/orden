@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import argparse
 import json
 import os
@@ -13,19 +12,14 @@ import time
 import urllib.error
 import urllib.request
 from typing import Any
-
 import crash_told
 
 HOME = pathlib.Path(__file__).resolve().parent.parent / "apps/desktop/src-tauri/crates/carry/src/old_home.rs"
-
-
 def said_in_home(name: str) -> str:
     found = re.search(rf'const {name}: &str = "([^"]+)";', HOME.read_text(encoding="utf-8"))
     if not found:
         raise SystemExit(f"{HOME} names no {name}")
     return found.group(1)
-
-
 OLD = said_in_home("OLD")
 NEW = said_in_home("NEW")
 SPACE = "Work"
@@ -38,12 +32,9 @@ NOTES = {
     LATER: "# Later\n\nThe letter.\n",
     "Diary.md": "# Diary\n\n- [ ] a box that is only a box\n",
 }
-
-
 class App:
     def __init__(self, port: int, secret: str) -> None:
         self.port, self.secret = port, secret
-
     def ask(self, verb: str, args: dict[str, Any], seconds: float = 60) -> Any:
         body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
         asked = urllib.request.Request(
@@ -57,10 +48,8 @@ class App:
         except (urllib.error.URLError, TimeoutError, OSError) as error:
             return {"error": str(error)}
         return answer.get("value") if answer.get("ok", answer.get("status") == "ok") else answer
-
     def eval(self, code: str, seconds: float = 60) -> Any:
         return self.ask("eval", {"code": code, "yes": True}, seconds)
-
     def until(self, code: str, seconds: float = 60) -> Any:
         last: Any = None
         stop = time.monotonic() + seconds
@@ -70,16 +59,10 @@ class App:
                 return last
             time.sleep(0.5)
         return last
-
-
 def roaming(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
-
 def local(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
-
-
 def endpoint(config: pathlib.Path, pid: int, secret: str, seconds: float = 120) -> App:
     path = config / "automation.json"
     stop = time.monotonic() + seconds
@@ -93,8 +76,6 @@ def endpoint(config: pathlib.Path, pid: int, secret: str, seconds: float = 120) 
             pass
         time.sleep(0.25)
     raise RuntimeError(f"the app never wrote {path}")
-
-
 def allow(config: pathlib.Path) -> str:
     config.mkdir(parents=True, exist_ok=True)
     secret = secrets.token_hex(32)
@@ -102,22 +83,17 @@ def allow(config: pathlib.Path) -> str:
         json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8"
     )
     return secret
-
-
 def clean() -> None:
     for identifier in (OLD, NEW):
         for base in (roaming(identifier), local(identifier)):
             for one in [base, *base.parent.glob(f"{identifier}*")]:
                 shutil.rmtree(one, ignore_errors=True)
-
-
 SPACE_ROOT = """
 (async () => {
   const space = orden.workspace.spaces.find((one) => one.name === %(space)s)
   return space ? space.root : null
 })()
 """
-
 MARK = """
 (async () => {
   const ws = orden.workspace
@@ -127,7 +103,6 @@ MARK = """
   return space.root
 })()
 """
-
 META = """
 (() => {
   const ws = orden.workspace
@@ -136,8 +111,6 @@ META = """
   return ws.itemMeta.itemsOf(space.root)
 })()
 """
-
-
 DIAGNOSE = """
 (async () => {
   const keys = Object.keys(localStorage).sort()
@@ -154,8 +127,6 @@ DIAGNOSE = """
   }
 })()
 """
-
-
 def listing(name: str) -> None:
     for identifier in (OLD, NEW):
         for base in (roaming(identifier), local(identifier)):
@@ -166,13 +137,10 @@ def listing(name: str) -> None:
                 str(one.relative_to(base)) for one in base.rglob("*") if len(one.relative_to(base).parts) <= 4
             )
             print(f"{name}: {base} holds {found[:60]}", flush=True)
-
-
 class Run:
     def __init__(self, exe: pathlib.Path, identifier: str, out: pathlib.Path, name: str) -> None:
         self.exe, self.identifier, self.out, self.name = exe, identifier, out, name
         self.app: App | None = None
-
     def start(self) -> App:
         secret = allow(roaming(self.identifier))
         log = open(self.out / f"{self.name}.log", "ab")
@@ -195,7 +163,6 @@ class Run:
             " if (one.textContent.trim() === 'Keep running') one.click(); return true"
         )
         return self.app
-
     def started_again(self, pid: int) -> int | None:
         found = subprocess.run(
             ["powershell", "-NoProfile", "-Command",
@@ -206,26 +173,19 @@ class Run:
         if pid in ids or not ids:
             return None
         return ids[0]
-
     def stop(self) -> None:
         time.sleep(6)
         subprocess.run(["taskkill", "/IM", self.exe.name], capture_output=True)
         time.sleep(4)
         subprocess.run(["taskkill", "/F", "/IM", self.exe.name], capture_output=True)
         time.sleep(8)
-
-
 def tasks_text(app: App) -> str:
     return json.dumps(app.ask("tasks.list", {}))
-
-
 def added(app: App, words: list[str], name: str, wrong: list[str]) -> None:
     for one in words:
         said = app.ask("tasks.add", {"text": one})
         if not isinstance(said, dict) or said.get("title") != one:
             wrong.append(f"{name}: the todo '{one}' could not be added: {said}")
-
-
 def wait_for(app: App, words: list[str], seconds: float = 120) -> str:
     stop = time.monotonic() + seconds
     text = ""
@@ -235,8 +195,6 @@ def wait_for(app: App, words: list[str], seconds: float = 120) -> str:
             return text
         time.sleep(1)
     return text
-
-
 def old_profile(exe: pathlib.Path, out: pathlib.Path, wrong: list[str]) -> None:
     spaces = local(OLD) / "Spaces" / SPACE
     for path, text in NOTES.items():
@@ -256,8 +214,6 @@ def old_profile(exe: pathlib.Path, out: pathlib.Path, wrong: list[str]) -> None:
     print(f"old: the meta {json.dumps(app.eval(META % {'space': json.dumps(SPACE)}))}", flush=True)
     run.stop()
     listing("old stopped")
-
-
 def upgraded(exe: pathlib.Path, out: pathlib.Path, name: str, wrong: list[str], more: list[str]) -> App:
     run = Run(exe, NEW, out, name)
     app = run.start()
@@ -286,8 +242,6 @@ def upgraded(exe: pathlib.Path, out: pathlib.Path, name: str, wrong: list[str], 
     run.stop()
     shutil.copytree(local(NEW) / "logs", out / f"{name}-logs", dirs_exist_ok=True)
     return app
-
-
 def half_moved(old_exe: pathlib.Path, new_exe: pathlib.Path, out: pathlib.Path, wrong: list[str]) -> None:
     old_profile(old_exe, out, wrong)
     held = open(local(OLD) / "held-open", "w", encoding="utf-8")
@@ -309,8 +263,6 @@ def half_moved(old_exe: pathlib.Path, new_exe: pathlib.Path, out: pathlib.Path, 
     upgraded(new_exe, out, "half-again", wrong, later)
     aside = list(local(NEW).glob("EBWebView.after-move-*"))
     print(f"half: put aside {[one.name for one in aside]}", flush=True)
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--names", action="store_true", help="say the old and the new identifier")
@@ -354,7 +306,5 @@ def main() -> int:
     (args.out / "wrong.json").write_text(json.dumps(wrong, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
-
 if __name__ == "__main__":
     raise SystemExit(main())

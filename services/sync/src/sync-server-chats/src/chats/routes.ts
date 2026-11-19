@@ -27,19 +27,12 @@ interface App {
   Bindings: Env
   Variables: Variables
 }
-
 export const NO_SUCH_CHAT = 'no such chat'
-
 const NOT_THAT = 'that is not what this route reads'
-
 const MOST_SEARCHED = 50
-
 const MOST_HITS = 100
-
 const HASH = /^[a-f0-9]{64}$/
-
 export const chats = new Hono<App>()
-
 export function asking(reached: Reached, device?: string): Record<string, string> {
   return {
     'x-orden-space': reached.space,
@@ -49,11 +42,9 @@ export function asking(reached: Reached, device?: string): Record<string, string
     ...(device ? { 'x-orden-device': device.slice(0, 200) } : {}),
   }
 }
-
 function passed(answer: Response | null): Response {
   return answer ?? Response.json({ error: CHAT_AWAY }, { status: 503, headers: { 'retry-after': '1' } })
 }
-
 const LISTED = `with me as (select ?1 as user_id, ?2 as email, ?3 as guest_id),
 held as (
   select sp.id as space_id, '' as item, 'owner' as role
@@ -100,7 +91,6 @@ select ch.id as id, ch.space_id as space,
  group by ch.id
  order by coalesce(ch.last_at, ch.created_at) desc
  limit ?5`
-
 interface ListedRow {
   id: string
   space: string
@@ -117,9 +107,7 @@ interface ListedRow {
   notify: string | null
   muted_until: number | null
 }
-
 const ROLES = ['read', 'read', 'write', 'owner'] as const
-
 function rowOf(row: ListedRow) {
   return {
     id: row.id,
@@ -140,42 +128,35 @@ function rowOf(row: ListedRow) {
     },
   }
 }
-
 export async function listed(env: Env, who: Whoever, space: string | null, most: number | null = 2000) {
   const { results } = await env.DB.prepare(LISTED)
     .bind(...askingOf(who), space, most ?? -1)
     .all<ListedRow>()
   return results.map(rowOf)
 }
-
 chats.get('/', async (context) => {
   const space = context.req.query('space') ?? null
   return context.json({ chats: await listed(context.env, context.get('who'), space) })
 })
-
 chats.post('/', async (context) => {
   const env = context.env
   const asked = newChatOf(await context.req.json().catch(() => null))
   if (!asked) return context.json({ error: NOT_THAT }, 400)
-
   const space = await reachedSpace(env, context.get('who'), asked.space)
   if (!space) return context.json({ error: NO_SUCH_SPACE }, 404)
   if (!allows(space.role, 'write')) return context.json({ error: refusal('write') }, 403)
-
   const chat = `c_${newId().replaceAll('-', '')}`
   await env.DB.prepare('insert into chats (id, space_id, created_at) values (?, ?, ?)')
     .bind(chat, space.id, now())
     .run()
   return context.json({ v: 1, chat }, 201)
 })
-
 chats.patch('/:chat', async (context) => {
   const env = context.env
   const reached = await reachChat(env, context.get('who'), context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
   const sent = (await context.req.json().catch(() => null)) as Record<string, unknown> | null
   if (!sent) return context.json({ error: NOT_THAT }, 400)
-
   if (typeof sent.space === 'string') {
     const source = await reachedSpace(env, context.get('who'), reached.space)
     if (!source || !allows(source.role, 'write')) {
@@ -190,7 +171,6 @@ chats.patch('/:chat', async (context) => {
     await chatsMoved(env, reached.chat, target.id)
     return context.json({ space: target.id })
   }
-
   const meta: Event = { kind: 'meta', id: `m_${newId().replaceAll('-', '')}` }
   for (const key of ['topic', 'posting', 'slowmode'] as const) {
     if (sent[key] !== undefined) Object.assign(meta, { [key]: sent[key] })
@@ -205,28 +185,23 @@ chats.patch('/:chat', async (context) => {
   const refused = results[0]?.refused
   return refused ? context.json({ error: refused }, 403) : context.json({ ok: true })
 })
-
 function reachedOf(context: { env: Env; get: (key: 'who') => Variables['who'] }, chat: string) {
   return reachChat(context.env, context.get('who'), chat)
 }
-
 chats.get('/:chat/events', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
   return passed(await askChat(context.env, reached.chat, 'events', asking(reached), { url: context.req.url }))
 })
-
 chats.get('/:chat/state', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
   return passed(await askChat(context.env, reached.chat, 'state', asking(reached), { url: context.req.url }))
 })
-
 chats.post('/:chat/events', async (context) => {
   const env = context.env
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
-
   const sent = postEventsOf(await context.req.json().catch(() => null))
   if (!sent) return context.json({ error: INVALID }, 400)
   if (!(await within(env, 'chat-events', reached.id, EVENTS_A_MINUTE, 60_000))) {
@@ -238,7 +213,6 @@ chats.post('/:chat/events', async (context) => {
     }),
   )
 })
-
 chats.post('/:chat/read', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -256,15 +230,12 @@ chats.post('/:chat/read', async (context) => {
     }),
   )
 })
-
 chats.get('/:chat/scheduled', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
   return passed(await askChat(context.env, reached.chat, 'scheduled', asking(reached)))
 })
-
 const NOTIFY = new Set(['all', 'mentions', 'nothing'])
-
 chats.put('/:chat/me', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -274,7 +245,6 @@ chats.put('/:chat/me', async (context) => {
   const notifyOk = notify === undefined || notify === null || (typeof notify === 'string' && NOTIFY.has(notify))
   const untilOk = until === undefined || until === null || (typeof until === 'number' && Number.isSafeInteger(until))
   if (!sent || !notifyOk || !untilOk) return context.json({ error: NOT_THAT }, 400)
-
   const row = await context.env.DB.prepare(
     `insert into chat_reads (chat_id, who, notify, muted_until) values (?1, ?2, ?3, ?4)
      on conflict(chat_id, who) do update set
@@ -293,7 +263,6 @@ chats.put('/:chat/me', async (context) => {
     .first<{ notify: string | null; muted_until: number | null }>()
   return context.json({ notify: row?.notify ?? null, mutedUntil: row?.muted_until ?? null })
 })
-
 const MEMBERS = `with c as (
   select sp.id as space_id, sp.user_id as owner, f.id as file_id
     from chats ch join spaces sp on sp.id = ch.space_id
@@ -316,13 +285,11 @@ select p.id as id, p.guest as guest, max(p.rank) as rank,
             else (select name from users where id = p.id) end as name
   from people p group by p.id, p.guest order by rank desc, name
   limit 500`
-
 interface Member {
   who: Who
   name: string | null
   role: (typeof ROLES)[number]
 }
-
 export async function membersOf(env: Env, chat: string): Promise<Member[]> {
   const { results } = await env.DB.prepare(MEMBERS)
     .bind(chat)
@@ -333,13 +300,11 @@ export async function membersOf(env: Env, chat: string): Promise<Member[]> {
     role: ROLES[one.rank] ?? 'read',
   }))
 }
-
 chats.get('/:chat/members', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
   return context.json({ members: await membersOf(context.env, reached.chat) })
 })
-
 const MISSING = `with c as (
   select sp.id as space_id, sp.user_id as owner, f.id as file_id
     from chats ch join spaces sp on sp.id = ch.space_id
@@ -358,7 +323,6 @@ select u.id as id, u.email as email, u.name as name
    and not exists (select 1 from space_members m where m.space_id = ?2 and m.email = u.email
                      and (m.item = '' or m.item = ?3))
  order by u.name limit 200`
-
 async function droppedNote(
   env: Env,
   who: Whoever,
@@ -373,7 +337,6 @@ async function droppedNote(
     .first<{ id: string }>()
   return found ? { space, note, owner: reached.role === 'owner' } : null
 }
-
 chats.get('/:chat/note', async (context) => {
   const env = context.env
   const reached = await reachedOf(context, context.req.param('chat'))
@@ -388,7 +351,6 @@ chats.get('/:chat/note', async (context) => {
     share: dropped.owner,
   })
 })
-
 chats.post('/:chat/note', async (context) => {
   const env = context.env
   const reached = await reachedOf(context, context.req.param('chat'))
@@ -422,7 +384,6 @@ chats.post('/:chat/note', async (context) => {
   if (shared) await onceShared(env, dropped.space, dropped.note)
   return context.json({ shared })
 })
-
 function dayIn(zone: string | undefined): (at: number) => string {
   let format: Intl.DateTimeFormat
   try {
@@ -432,7 +393,6 @@ function dayIn(zone: string | undefined): (at: number) => string {
   }
   return (at) => format.format(new Date(at))
 }
-
 export async function searched(
   env: Env,
   who: Whoever,
@@ -445,7 +405,6 @@ export async function searched(
   const asked = parseSearch(said, query('today') ?? dayOf(Date.now()))
   const me: Who = who.kind === 'user' ? `user:${who.user.id}` : `guest:${who.guest.id}`
   const words = [...asked.words, ...asked.phrases]
-
   const found = await Promise.all(
     picked.map(async ({ id, reached }) => {
       const answer = await askChat(env, id, 'search', asking(reached), {
@@ -473,7 +432,6 @@ export async function searched(
     .sort((a, b) => b.message.at - a.message.at)
     .slice(0, MOST_HITS)
 }
-
 async function chatName(env: Env, chat: string): Promise<string> {
   const row = await env.DB.prepare(
     'select f.path as path from chats ch join notes f on f.id = ch.file_id where ch.id = ?',
@@ -482,7 +440,6 @@ async function chatName(env: Env, chat: string): Promise<string> {
     .first<{ path: string }>()
   return (row?.path.split('/').pop() ?? '').replace(/\.chat$/i, '')
 }
-
 chats.get('/search', async (context) => {
   const who = context.get('who')
   const all = await listed(context.env, who, null)
@@ -496,7 +453,6 @@ chats.get('/search', async (context) => {
   const hits = await searched(context.env, who, context.req.query.bind(context.req), picked)
   return context.json({ hits })
 })
-
 chats.get('/:chat/search', async (context) => {
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
@@ -505,13 +461,11 @@ chats.get('/:chat/search', async (context) => {
   ])
   return context.json({ hits: hits.map((one) => one.message) })
 })
-
 chats.get('/:chat/files/:hash', async (context) => {
   const env = context.env
   const hash = context.req.param('hash').toLowerCase()
   const reached = await reachedOf(context, context.req.param('chat'))
   if (!reached) return context.json({ error: NO_SUCH_CHAT }, 404)
-
   const named = HASH.test(hash)
     ? await env.DB.prepare('select 1 as yes from chat_files where chat_id = ? and hash = ?')
         .bind(reached.chat, hash)
@@ -519,7 +473,6 @@ chats.get('/:chat/files/:hash', async (context) => {
     : null
   const object = named ? await env.NOTES.get(blobKey(hash)) : null
   if (!object) return context.json({ error: NO_SUCH_FILE }, 404)
-
   return new Response(object.body, {
     headers: {
       'content-type': BYTES,

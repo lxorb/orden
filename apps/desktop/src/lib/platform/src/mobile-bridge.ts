@@ -19,32 +19,23 @@ export interface OrdenSystem {
   exactAlarms(): boolean
   askExactAlarms(): void
 }
-
 export function method<K extends keyof OrdenSystem>(name: K): OrdenSystem[K] | undefined {
   const found: unknown = (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__
   if (typeof found !== 'object' || found === null) return undefined
-
   const held = (found as Partial<OrdenSystem>)[name]
   return typeof held === 'function' ? (held.bind(found) as OrdenSystem[K]) : undefined
 }
-
 export const onTheActivity = (): boolean => !!method('insets')
-
 let word: Promise<string> | undefined
-
 let known: string | undefined
 let heard: (word: string) => void = () => undefined
 const spoken = new Promise<string>((said) => (heard = said))
-
 const PATIENCE = 2000
-
 export function frameWord(): Promise<string> {
   if (known) return Promise.resolve(known)
   if (word) return word
-
   const ask = method('askForTheFrame')
   if (!ask) return Promise.resolve('')
-
   const asking = new Promise<string>((said) => {
     const timer = setTimeout(() => said(''), PATIENCE)
     answer('__ordenFrame', (text: string) => {
@@ -67,14 +58,11 @@ export function frameWord(): Promise<string> {
   })
   return asking
 }
-
 export const wordSaid = (): Promise<string> => spoken
-
 export class NoWord extends Error {
   override readonly name = 'NoWord'
   override readonly message = 'the phone app is still starting; try again in a moment'
 }
-
 export function answer(name: string, fn: ((text: string) => void) | (() => void) | undefined): void {
   if (typeof window === 'undefined') return
   Object.assign(window, { [name]: fn })

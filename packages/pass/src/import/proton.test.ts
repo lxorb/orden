@@ -6,7 +6,6 @@ import { as, find } from './found'
 
 const SECRET = 'JBSWY3DPEHPK3PXP'
 const URI = `otpauth://totp/Example:ren%C3%A9?secret=${SECRET}&issuer=Example`
-
 const item = (data: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
   itemId: 'i',
   shareId: 's',
@@ -19,7 +18,6 @@ const item = (data: Record<string, unknown>, extra: Record<string, unknown> = {}
   ...extra,
   data: { platformSpecific: null, extraFields: [], ...data },
 })
-
 const EXPORT = {
   version: '1.30.0',
   userId: 'u1',
@@ -144,14 +142,11 @@ const EXPORT = {
     share2: { name: 'Work', description: '', display: {}, items: [] },
   },
 }
-
 describe('parseProton', () => {
   const result = parseProton(JSON.stringify(EXPORT))
-
   it('keeps the vaults and drops an empty one', () => {
     expect(result.vaults.map((vault) => vault.name)).toEqual(['Persönlich'])
   })
-
   it('reads a login with every part', () => {
     const bank = find(result, 'Bank')
     const login = as(bank.content, 'login')
@@ -187,7 +182,6 @@ describe('parseProton', () => {
       modified: 1700000500000,
     })
   })
-
   it('reads the trash, an alias, a card, an identity, wifi and ssh', () => {
     const note = find(result, 'Geheim')
     expect(note.trashed).toBe(true)
@@ -225,12 +219,10 @@ describe('parseProton', () => {
     })
     expect(as(find(result, 'Server key').content, 'ssh').publicKey).toBe('ssh-ed25519 AAAA')
   })
-
   it('keeps an unknown kind as a note and says so', () => {
     expect(as(find(result, 'Future').content, 'note').note).toBe('from the future')
     expect(result.skipped).toEqual([{ reason: expect.stringContaining('hologram'), title: 'Future' }])
   })
-
   it('reads the zip and refuses the encrypted export', () => {
     const zipped = parseProton({
       'Proton Pass/data.json': new TextEncoder().encode(JSON.stringify(EXPORT)),
@@ -243,7 +235,6 @@ describe('parseProton', () => {
     expect(parseProton(JSON.stringify({ encrypted: true, vaults: {} })).skipped).toHaveLength(1)
     expect(() => parseProton({ 'other.txt': new Uint8Array() })).toThrow()
   })
-
   it('migrates the old username to the email', () => {
     const old = {
       version: '1.10.0',
@@ -270,7 +261,6 @@ describe('parseProton', () => {
     expect(login.websites).toEqual([{ url: normalizeUrl('https://a.example.com'), match: 'domain' }])
   })
 })
-
 describe('parseProton CSV', () => {
   const card = JSON.stringify({
     cardholderName: 'Jo',
@@ -290,7 +280,6 @@ describe('parseProton CSV', () => {
     '',
   ].join('\r\n')
   const result = parseProton(csv)
-
   it('groups by vault and reads logins, cards and notes', () => {
     expect(result.vaults.map((vault) => [vault.name, vault.items.length])).toEqual([
       ['Privat', 1],
@@ -316,7 +305,6 @@ describe('parseProton CSV', () => {
     expect(find(result, 'Notiz').content.note).toBe('Grüße')
     expect(result.skipped).toEqual([{ reason: expect.stringContaining('sshKey'), title: 'Key' }])
   })
-
   it('reads the old CSV whose username is the email', () => {
     const old = parseProton('name,url,username,password,note,totp\nOld,https://x.example.com,old@example.com,pw,,\n')
     const login = as(find(old, 'Old').content, 'login')

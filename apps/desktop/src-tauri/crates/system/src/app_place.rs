@@ -11,12 +11,10 @@ fn bundle_of(exe: &Path) -> Option<PathBuf> {
         .is_some_and(|extension| extension == "app");
     (named(macos, "MacOS") && named(contents, "Contents") && app).then(|| bundle.to_path_buf())
 }
-
 #[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 fn stuck_at(bundle: &Path, read_only: bool) -> bool {
     read_only || bundle.to_string_lossy().contains("/AppTranslocation/")
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 fn read_only(path: &Path) -> bool {
@@ -32,25 +30,21 @@ fn read_only(path: &Path) -> bool {
     let flags = unsafe { said.assume_init() }.f_flags;
     flags & u32::try_from(libc::MNT_RDONLY).unwrap_or_default() != 0
 }
-
 #[cfg(target_os = "macos")]
 fn stuck_bundle() -> Option<PathBuf> {
     let bundle = bundle_of(&std::env::current_exe().ok()?)?;
     stuck_at(&bundle, read_only(&bundle)).then_some(bundle)
 }
-
 #[cfg(target_os = "macos")]
 #[tauri::command]
 pub fn app_stuck() -> bool {
     stuck_bundle().is_some()
 }
-
 #[cfg(not(target_os = "macos"))]
 #[tauri::command]
 pub fn app_stuck() -> bool {
     false
 }
-
 #[cfg(target_os = "macos")]
 fn applications() -> Option<PathBuf> {
     let shared = Path::new("/Applications");
@@ -61,7 +55,6 @@ fn applications() -> Option<PathBuf> {
     std::fs::create_dir_all(&own).ok()?;
     Some(own)
 }
-
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 fn writable(path: &Path) -> bool {
@@ -72,10 +65,8 @@ fn writable(path: &Path) -> bool {
     };
     unsafe { libc::access(name.as_ptr(), libc::W_OK) == 0 }
 }
-
 #[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 const RELAUNCH: &str = r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1; done; /bin/sleep 0.5; exec /usr/bin/open -n "$2""#;
-
 #[cfg(target_os = "macos")]
 #[tauri::command]
 pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
@@ -88,7 +79,6 @@ pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
         let to = applications()
             .ok_or("there is no Applications folder to move to")?
             .join(name);
-
         if !to.exists() {
             let copied = Command::new("/usr/bin/ditto")
                 .arg(&from)
@@ -104,7 +94,6 @@ pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
                 .arg(&to)
                 .status();
         }
-
         Command::new("/bin/sh")
             .args(["-c", RELAUNCH, "sh"])
             .arg(std::process::id().to_string())
@@ -122,7 +111,6 @@ pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
     })
     .await
 }
-
 #[cfg(not(target_os = "macos"))]
 #[tauri::command]
 pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
@@ -132,7 +120,6 @@ pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
     })
     .await
 }
-
 #[cfg(test)]
 mod tests {
     use super::{bundle_of, stuck_at, RELAUNCH};
@@ -153,7 +140,6 @@ mod tests {
             assert_eq!(bundle_of(Path::new(exe)), None, "{exe}");
         }
     }
-
     #[test]
     fn a_copy_on_the_disk_image_or_translocated_is_stuck() {
         let image = Path::new("/Volumes/Orden/Orden.app");
@@ -162,7 +148,6 @@ mod tests {
             Path::new("/private/var/folders/x1/abc/T/AppTranslocation/7E2F-11AA/d/Orden.app");
         assert!(stuck_at(moved, false));
     }
-
     #[test]
     fn a_copy_in_applications_is_not() {
         assert!(!stuck_at(Path::new("/Applications/Orden.app"), false));
@@ -171,7 +156,6 @@ mod tests {
             false
         ));
     }
-
     #[test]
     fn the_moved_copy_starts_as_a_new_instance_once_this_one_has_gone() {
         let (wait, start) = RELAUNCH.split_once("done;").expect("a wait, then a start");

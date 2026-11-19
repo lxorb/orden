@@ -4,7 +4,6 @@ import { mayType } from './typing'
 
 const ROLES: (SpaceRole | null)[] = [null, 'read', 'write', 'owner']
 const TYPINGS: Typing[] = ['owner', 'writers']
-
 describe('mayType, by the table of 4.6', () => {
   it.each<[string, SpaceRole | null, boolean, Typing, boolean]>([
     ['a reader, typing owner-only', 'read', false, 'owner', false],
@@ -22,14 +21,12 @@ describe('mayType, by the table of 4.6', () => {
   ])('%s', (_, role, owns, typing, may) => {
     expect(mayType(role, false, owns, typing)).toBe(may)
   })
-
   it.each(ROLES.flatMap((role) => TYPINGS.map((typing) => [role, typing] as const)))(
     'a link guest with role %s and typing %s only ever watches',
     (role, typing) => {
       expect(mayType(role, true, false, typing)).toBe(false)
     },
   )
-
   it('a guest never types even where the flags say they own the machine', () => {
     for (const role of ROLES) for (const typing of TYPINGS) expect(mayType(role, true, true, typing)).toBe(false)
   })

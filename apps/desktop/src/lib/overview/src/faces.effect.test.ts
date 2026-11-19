@@ -16,7 +16,6 @@ test('a picture drawn again brings nothing that runs, loads or restyles the app'
   expect(into.querySelector('img')?.getAttribute('src')).toBe('data:image/webp;base64,AA==')
   expect(into.querySelector('.cm-line')?.textContent).toBe('words')
 })
-
 test('pictures are kept in the store by name, read back, and let go', async () => {
   const one = { html: '<p>a</p>', shot: null, w: 10, h: 10, at: 1 }
   await writeFace('note:/a.md', one)

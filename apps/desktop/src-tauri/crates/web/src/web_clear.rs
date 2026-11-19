@@ -7,9 +7,7 @@ use tauri::{
 };
 
 const PATIENCE: Duration = Duration::from_secs(30);
-
 static NEXT: AtomicU64 = AtomicU64::new(0);
-
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Clearing {
@@ -17,17 +15,14 @@ pub struct Clearing {
     pub site: bool,
     pub cache: bool,
 }
-
 impl Clearing {
     const fn any(self) -> bool {
         self.site || self.cache
     }
-
     fn always(self) -> bool {
         self.since <= 0.0
     }
 }
-
 #[tauri::command]
 pub async fn web_clear(
     webview: Webview,
@@ -49,7 +44,6 @@ pub async fn web_clear(
     }
     Ok(())
 }
-
 async fn page_in_store(
     app: &AppHandle,
     window: &tauri::Window,
@@ -63,7 +57,6 @@ async fn page_in_store(
         .focused(false)
         .disable_drag_drop_handler();
     let builder = crate::engine::web_store(builder, app, store)?;
-
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
     let building = window.clone();
     app.run_on_main_thread(move || {
@@ -80,7 +73,6 @@ async fn page_in_store(
         let _ = sending.try_send(made);
     })
     .map_err(|error| format!("the data could not be reached: {error}"))?;
-
     waiting
         .recv()
         .await
@@ -88,7 +80,6 @@ async fn page_in_store(
     app.get_webview(&label)
         .ok_or_else(|| "the data could not be reached".to_string())
 }
-
 mod engine {
     use serde_json::{json, Value};
 
@@ -112,7 +103,6 @@ mod engine {
         }
         asks
     }
-
     pub async fn clear(
         page: &tauri::Webview,
         clearing: Clearing,
@@ -130,7 +120,6 @@ mod engine {
         .map_err(|error| format!("the data could not be deleted: {error}"))?
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::Clearing;
@@ -150,7 +139,6 @@ mod tests {
         );
         assert!(!said.always());
     }
-
     #[test]
     fn chromium_is_asked_site_by_site() {
         let sites = vec!["https://a.example".to_string()];
@@ -167,7 +155,6 @@ mod tests {
             methods,
             ["Storage.clearDataForOrigin", "Network.clearBrowserCache"]
         );
-
         let always = Clearing {
             since: 0.0,
             ..ranged

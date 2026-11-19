@@ -18,17 +18,14 @@ import { writeFile } from '../../file-writes/src/api'
 import { AGENTS_NAME, joinPath } from '../../platform/src/api'
 
 export const spaceArchiving = () => import('./space-archive')
-
 export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
     title: 'Name the space',
     placeholder: 'Journal',
     confirmLabel: 'Create',
   })
-
   return name ? madeSpace(name) : undefined
 }
-
 export async function madeSpace(name: string, made?: (space: Space) => void): Promise<Space | undefined> {
   const space = await workspace.addSpace(name)
   if (!space) return
@@ -38,52 +35,40 @@ export async function madeSpace(name: string, made?: (space: Space) => void): Pr
     await writeFile(joinPath(space.root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
     await workspace.loadTree()
   }
-
   const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
   return space
 }
-
 export function stepSpace(direction: number) {
   const spaces = workspace.shownSpaces
   if (spaces.length < 2) return
-
   const at = spaces.findIndex((one) => one.id === workspace.activeSpaceId)
   const next = spaces[(at < 0 ? 0 : at + direction + spaces.length) % spaces.length]
   if (next && next.id !== workspace.activeSpaceId) void workspace.showSpace(next.id)
 }
-
 async function moveSpace(id: string, beforeId: string | null) {
   if (!workspace.moveSpace(id, beforeId)) return
-
   const { sync } = await import('../../sync-store/src/api')
   void sync.pushSpaceOrder()
 }
-
 function canNudge(space: Space, by: -1 | 1): boolean {
   if (roleOf(space.root) !== 'owner') return false
-
   const shown = workspace.shownSpaces
   const at = shown.findIndex((one) => one.id === space.id)
   const to = at + by
   return at >= 0 && to >= 0 && to < shown.length
 }
-
 async function nudgeSpace(space: Space, by: -1 | 1) {
   const shown = workspace.shownSpaces
   const at = shown.findIndex((one) => one.id === space.id)
   if (at < 0) return
-
   const to = at + by
   if (to < 0 || to >= shown.length) return
-
   const before = by === -1 ? shown[to] : shown[to + 1]
   await moveSpace(space.id, before?.id ?? null)
 }
-
 export function spaceMenu(space: Space): MenuEntry[] {
   const theirs = roleOf(space.root) !== 'owner'
-
   return trim([
     ...(theirs ? [] : [{ label: 'Rename', run: () => void renameSpace(space) }]),
     ...(canWriteAt(space.root) ? [{ label: 'Choose an icon', run: () => iconChoice.space(space.id) }] : []),
@@ -121,25 +106,20 @@ export function spaceMenu(space: Space): MenuEntry[] {
     },
   ])
 }
-
 async function renameSpace(space: Space) {
   if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
   workspace.startRenaming(space.root)
 }
-
 export async function commitSpaceName(space: Space, name: string) {
   await workspace.renameSpace(space.id, name)
 }
-
 export async function shareSpace(space: Space) {
   await share.show(space)
 }
-
 export async function publishSpace(space: Space) {
   const publishing = portOf('publishing')
   if (publishing.ok) await publishing.value.show(space)
 }
-
 export async function deleteSpace(space: Space) {
   let role = roleOf(space.root)
   if (role === null) {
@@ -147,7 +127,6 @@ export async function deleteSpace(space: Space) {
     role = roleOf(space.root)
   }
   const theirs = role !== 'owner'
-
   const sure = await prompt.confirm({
     title: theirs ? `Leave ${space.name}?` : `Delete ${space.name}?`,
     detail: theirs
@@ -156,28 +135,19 @@ export async function deleteSpace(space: Space) {
     confirmLabel: theirs ? 'Leave' : 'Delete',
     danger: true,
   })
-
   if (!sure) return
   const { mayEndSpace } = await spaceChanges()
   if (!(await mayEndSpace(workspace, space.id))) return
-
   const root = space.root
   await workspace.deleteSpace(space.id)
-
   const { sync } = await import('../../sync-store/src/api')
   await sync.forget(root, role)
 }
-
 export { default as SpaceBadge } from './SpaceBadge.svelte'
-
 export const spaceSound = latched(() => import('./SpaceSound.svelte'))
-
 export const soundMark = held(() => import('./SoundMark.svelte'))
-
 export const loadSpaceMenu = () => import('./SpaceMenu.svelte')
-
 export const loadSpacePicker = () => import('./SpacePicker.svelte')
-
 export function toggleSpacePicker(): void {
   void import('./space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
 }

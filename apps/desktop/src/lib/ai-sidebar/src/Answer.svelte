@@ -17,7 +17,6 @@
   }
   const { html, live = false, onfollow, onpicture }: Props = $props()
   const waiting = $derived(mathsWaiting(html))
-
   function copied(event: MouseEvent): boolean {
     const button = (event.target as Element | null)?.closest<HTMLElement>('[data-copy]')
     const code = button?.closest('.code')?.querySelector('pre')?.textContent
@@ -27,7 +26,6 @@
     setTimeout(() => delete button.dataset.copied, SAID_FOR)
     return true
   }
-
   function picture(event: MouseEvent): boolean {
     const button = (event.target as Element | null)?.closest<HTMLElement>('[data-picture]')
     const src = button?.dataset.picture
@@ -35,7 +33,6 @@
     onpicture?.(src)
     return true
   }
-
   function footnote(event: MouseEvent): boolean {
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href') ?? ''
@@ -47,7 +44,6 @@
     there?.scrollIntoView({ block: 'nearest' })
     return true
   }
-
   function press(event: MouseEvent) {
     if (copied(event) || picture(event) || footnote(event)) return
     onfollow?.(event)
@@ -87,28 +83,22 @@
     line-height: 1.55;
     overflow-wrap: anywhere;
   }
-
   .words:global(:is(#write, .orden-write)) > :global(:last-child) {
     margin-bottom: 0;
   }
-
   .words:global(:is(#write, .orden-write)) :global(:is(h1, h2, h3, h4, h5, h6)) {
     margin: 1.2em 0 0.5em;
   }
-
   .words:global(:is(#write, .orden-write)) > :global(:is(h1, h2, h3, h4, h5, h6):first-child) {
     margin-top: 0;
   }
-
   .words:global(:is(#write, .orden-write)) :global(a) {
     cursor: default;
   }
-
   .words:global(:is(#write, .orden-write)) :global(.task-list-item input[type='checkbox']) {
     margin: 0;
     inset-inline-start: -1.6em;
   }
-
   .words:global(:is(#write, .orden-write)) :global(.code) {
     margin: 1em 0;
     border: 1px solid var(--line);
@@ -116,17 +106,14 @@
     background: var(--code-block-bg-color, var(--surface));
     overflow: hidden;
   }
-
   :global([data-skips-unseen]) .words :global(.code) {
     content-visibility: auto;
     contain-intrinsic-block-size: auto
       calc(var(--row-height-sm) + 1px + 2 * var(--space-2) + var(--lines, 6) * 0.86em * 1.6);
   }
-
   .words:global(:is(#write, .orden-write)) > :global(.code:first-child) {
     margin-top: 0;
   }
-
   .words:global(:is(#write, .orden-write)) :global(.code pre) {
     margin: 0;
     padding: var(--space-2) var(--space-3);
@@ -135,11 +122,9 @@
     background: none;
     white-space: pre;
   }
-
   .words :global(.code-lines) {
     display: block;
   }
-
   .words :global(.code-bar) {
     display: flex;
     align-items: center;
@@ -152,7 +137,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-xs);
   }
-
   .words :global(:is(.code-copy, .picture-held)) {
     display: grid;
     place-items: center;
@@ -168,7 +152,6 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
   }
-
   .words :global(:is(.code-copy, .picture-held) svg) {
     width: 13px;
     height: 13px;
@@ -179,11 +162,9 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-
   .words :global(.code-copy[data-copied]) {
     color: var(--success);
   }
-
   .words :global(.picture-held) {
     display: inline-flex;
     gap: var(--space-1);
@@ -197,28 +178,23 @@
     font-size: var(--text-sm);
     vertical-align: middle;
   }
-
   .words :global(.picture-held span) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   @media (hover: hover) {
     .words :global(:is(.code-copy, .picture-held):hover) {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
   }
-
   .waiting :global(:is(.math-inline, .math-block)) {
     visibility: hidden;
   }
-
   .live :global(.katex-error) {
     color: var(--muted) !important;
   }
-
   .live > :global(:last-child)::after {
     content: '';
     display: inline-block;
@@ -230,19 +206,16 @@
     vertical-align: 0.05em;
     animation: breathe calc(var(--dur-slow) * 3) var(--ease-in-out) infinite;
   }
-
   @keyframes breathe {
     50% {
       opacity: 0.3;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .live > :global(:last-child)::after {
       animation: none;
     }
   }
-
   .words:global(:is(#write, .orden-write)) :global(a[href^='#cite-']) {
     display: inline-block;
     min-width: 1.35em;
@@ -258,14 +231,12 @@
     vertical-align: 0.35em;
     transition: background var(--dur-fast) var(--ease-out);
   }
-
   @media (hover: hover) {
     .words:global(:is(#write, .orden-write)) :global(a[href^='#cite-']:hover) {
       text-decoration: none;
       background: var(--surface-press);
     }
   }
-
   :global([data-touch]) .words:global(:is(#write, .orden-write)) {
     font-size: var(--text-base);
   }

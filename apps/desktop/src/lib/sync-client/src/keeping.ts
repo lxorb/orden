@@ -5,28 +5,23 @@ import { keepingRow, Tracked, type Keeping } from './records'
 import { put, type Change, type EntryRow } from './store'
 
 const FEW: ReadonlySet<string> = new Set(['note', 'canvas', 'pages'])
-
 export function emptyKeeping(): Keeping {
   return { on: false, used: new Tracked(), going: new Set() }
 }
-
 function alwaysKept(space: SpaceState, entry: EntryRow): boolean {
   if (!FEW.has(entry.kind)) return true
   const path = space.paths().get(entry.id) ?? entry.local_path
   return path.split('/').some((part) => part.startsWith('.'))
 }
-
 export function keptHere(core: Core, space: SpaceState, entry: EntryRow): boolean {
   if (!space.keepsFew) return true
   return core.hasDoc(entry.id) || core.asked.has(entry.id) || alwaysKept(space, entry)
 }
-
 export function away(space: SpaceState, entry: EntryRow): boolean {
   if (!space.keepsFew || !holdsDocument(entry.kind) || entry.seq === null) return false
   if (entry.local_path || !space.isLive(entry.id)) return false
   return !space.foreign(entry.id)
 }
-
 export function awayUnder(space: SpaceState, path: string): EntryRow[] {
   if (!space.keepsFew) return []
   const key = space.key(path)
@@ -40,22 +35,18 @@ export function awayUnder(space: SpaceState, path: string): EntryRow[] {
   }
   return out
 }
-
 export function usedChanges(core: Core, space: SpaceState, id: string, size?: number): Change[] {
   return used(core, space, id, size) ? [keepingChange(space)] : []
 }
-
 export function used(core: Core, space: SpaceState, id: string, size?: number): boolean {
   if (!space.keepsFew) return false
   const was = space.keeping.used.get(id)
   space.keeping.used.set(id, { at: core.world.now(), size: size ?? was?.size ?? 0 })
   return true
 }
-
 export function keepingChange(space: SpaceState): Change {
   return put('meta', keepingRow(space.id, space.keeping))
 }
-
 function mayLetGo(core: Core, space: SpaceState, entry: EntryRow): boolean {
   if (!FEW.has(entry.kind) || entry.seq === null || !entry.local_path) return false
   if (!core.hasDoc(entry.id) || alwaysKept(space, entry)) return false
@@ -64,13 +55,11 @@ function mayLetGo(core: Core, space: SpaceState, entry: EntryRow): boolean {
   if (core.carried.has(id) || core.inHand.has(id) || core.asked.has(id)) return false
   return !space.outbox.some((one) => one.record.t === 'op' && one.record.op.id === id)
 }
-
 export interface LettingGo {
   drop(path: string): Promise<void>
   leaving?(one: Leaving): Promise<void>
   turn?(path: string, run: () => Promise<boolean>): Promise<boolean>
 }
-
 export interface Leaving {
   id: string
   space: string
@@ -79,7 +68,6 @@ export interface Leaving {
   docSeq: number
   at: number
 }
-
 export async function trim(core: Core, budget: number, how: LettingGo): Promise<number> {
   const kept: { space: SpaceState; entry: EntryRow; at: number; size: number }[] = []
   let total = 0
@@ -95,7 +83,6 @@ export async function trim(core: Core, budget: number, how: LettingGo): Promise<
     }
   }
   if (total <= budget) return 0
-
   let went = 0
   kept.sort((a, b) => a.at - b.at)
   for (const one of kept) {
@@ -107,13 +94,11 @@ export async function trim(core: Core, budget: number, how: LettingGo): Promise<
   }
   return went
 }
-
 async function letGo(core: Core, space: SpaceState, entry: EntryRow, how: LettingGo): Promise<boolean> {
   const full = core.world.join(space.row.root, entry.local_path)
   const run = () => lettingGo(core, space, entry, how, full)
   return how.turn ? await how.turn(full, run) : await run()
 }
-
 async function lettingGo(
   core: Core,
   space: SpaceState,
@@ -139,7 +124,6 @@ async function lettingGo(
     }
   }
   if (!mayLetGo(core, space, entry)) return false
-
   const numbers = core.numbers.get(entry.id)
   const changes = core.forgetChanges(entry.id)
   core.wanted(space.id).set(entry.id, { docSeq: numbers?.pulled ?? 0, epoch: core.epochs.get(entry.id) ?? 1 })
@@ -151,7 +135,6 @@ async function lettingGo(
   await finishGoing(core, space, how)
   return true
 }
-
 async function finishGoing(core: Core, space: SpaceState, how: LettingGo) {
   if (!space.keeping.going.size) return
   for (const path of [...space.keeping.going]) {

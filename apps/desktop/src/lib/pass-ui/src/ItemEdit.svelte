@@ -25,7 +25,6 @@
   import type { Editing, PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
-
   let source: Editing | null = null
   let draft = $state<Content>(blank('note'))
   let vault = $state('')
@@ -36,9 +35,7 @@
   let adding = $state.raw<Picked[]>([])
   let removing = $state.raw<string[]>([])
   let aliasAsk = $state.raw<AliasAsk | null>(null)
-
   const keyOf = () => JSON.stringify([draft, vault, folder, adding.map((one) => one.name), removing])
-
   $effect.pre(() => {
     const now = ui.editing
     if (!now || now === source) return
@@ -54,13 +51,10 @@
       error = null
     })
   })
-
   const changed = $derived(keyOf() !== baseline)
-
   $effect(() => {
     ui.dirty = changed
   })
-
   const vaults = $derived(pass.vaults.map((one) => ({ value: one.id, label: one.name })))
   const folders = $derived([
     { value: '', label: 'No folder' },
@@ -69,15 +63,12 @@
       label: `${' '.repeat(one.depth)}${one.name}`,
     })),
   ])
-
   const isNew = $derived(ui.editing?.id === null)
   const kept = $derived(pass.items.find((one) => one.id === ui.editing?.id)?.attachments ?? [])
   const canSave = $derived(draft.title.trim() !== '' && vault !== '' && !saving)
-
   function touched() {
     error = null
   }
-
   function cleaned(content: Content): Content {
     const title = content.title.trim()
     if (content.kind !== 'login') return { ...content, title }
@@ -86,7 +77,6 @@
       .filter((one) => one.url !== '')
     return { ...content, title, websites }
   }
-
   async function save() {
     const editing = ui.editing
     if (!editing || !canSave) return
@@ -116,13 +106,11 @@
       saving = false
     }
   }
-
   function cancel() {
     void ui.leave().then((left) => {
       if (left) ui.edited(null)
     })
   }
-
   function onkeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && !event.defaultPrevented) {
       event.preventDefault()
@@ -227,7 +215,6 @@
     min-height: 0;
     margin: 0;
   }
-
   .head {
     flex: none;
     display: flex;
@@ -235,7 +222,6 @@
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
   }
-
   .heading {
     flex: 1;
     min-width: 0;
@@ -247,23 +233,19 @@
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
-
   .place {
     flex: none;
     width: 10rem;
     max-width: 28%;
   }
-
   .save {
     flex: none;
   }
-
   .orden-glyph :global(.orden-cross) {
     width: var(--icon-lg);
     height: var(--icon-lg);
     stroke-width: 1.5;
   }
-
   .body {
     flex: 1;
     min-height: 0;

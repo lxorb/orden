@@ -9,16 +9,12 @@ export async function settleLocalNotes(): Promise<void> {
     const token = account.accountToken
     const user = account.user
     if (!token || !user) return
-
     const { apartName, asksOnReturn, baseFor } = await import('./returning')
-
     const base = baseFor(savedRecord(stored(MIRRORS_KEY)), user.id)
     if (base === 'mine') return
-
     const { meeting } = await import('./meeting')
     const met = await meeting(token, workspaceView().spaces, account.spaces)
     if (!asksOnReturn(base, met.length > 0)) return
-
     const answer = await prompt.choose({
       title: 'This device already has notes.',
       options: [
@@ -27,7 +23,6 @@ export async function settleLocalNotes(): Promise<void> {
       ],
     })
     if (answer === 'merge') return
-
     const taken = new Set([...workspaceView().spaces.map((one) => one.name), ...account.spaces.map((one) => one.name)])
     for (const space of met) {
       const id = rootedAt(workspaceView().spaces, space.root)?.id

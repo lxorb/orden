@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const disk = { refuse: false, written: [] as string[], slow: 0 }
-
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -21,11 +20,9 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-
 const { editHighlights, loadHighlights } = await import('./sidecar')
 const { readSheet } = await import('./highlights')
 import type { Highlight } from './highlights'
-
 const mark = (id: string): Highlight => ({
   id,
   page: 1,
@@ -34,38 +31,30 @@ const mark = (id: string): Highlight => ({
   colour: 0,
   created: 1,
 })
-
 beforeEach(() => {
   disk.refuse = false
   disk.written = []
   disk.slow = 0
 })
-
 describe('the marks on a PDF', () => {
   test('start empty and are written where there are none yet', async () => {
     const sheet = await loadHighlights('/space/paper.pdf')
-
     expect(sheet.highlights).toEqual([])
     expect(await editHighlights('/space/paper.pdf', (now) => now)).not.toBeNull()
     expect(disk.written).toHaveLength(1)
   })
-
   test('are left alone where the sidecar is there and will not read', async () => {
     disk.refuse = true
-
     expect(await editHighlights('/space/paper.pdf', (now) => now)).toBe('unreadable')
     expect(disk.written).toEqual([])
   })
-
   test('say why they were left alone: unread, damaged, or written by a newer Orden', async () => {
     disk.written = ['{ "version": 1, "highlights": [']
     expect(await editHighlights('/space/paper.pdf', (now) => now)).toBe('damaged')
-
     disk.written = [JSON.stringify({ version: 99, highlights: [] })]
     expect(await editHighlights('/space/paper.pdf', (now) => now)).toBe('newer')
     expect(disk.written).toHaveLength(1)
   })
-
   test('changed at once, by the viewer and by the calls of an agent, keep every change', async () => {
     disk.slow = 20
     const adding = (id: string) =>
@@ -78,7 +67,6 @@ describe('the marks on a PDF', () => {
       ...now,
       highlights: now.highlights.filter((one) => one.id !== 'b'),
     }))
-
     const kept = readSheet(disk.written.at(-1) ?? '')
     expect(kept.highlights.map((one) => one.id)).toEqual(['a', 'c'])
   })

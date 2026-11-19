@@ -6,13 +6,11 @@ describe('matching', () => {
     expect(fuzzyFolded('ord', 'orden')).not.toBeNull()
     expect(fuzzyFolded('dro', 'orden')).toBeNull()
   })
-
   test('marks the letters it matched, the whole name in pieces', () => {
     const parts = pieces('Orden', 'od')
     expect(parts.map((one) => one.text).join('')).toBe('Orden')
     expect(parts.some((one) => one.hit)).toBe(true)
   })
-
   test('ranks a name the term starts before one it is only inside', () => {
     const row = (name: string) => ({
       key: name,

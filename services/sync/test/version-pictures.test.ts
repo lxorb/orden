@@ -12,7 +12,6 @@ let owner: string
 const BYTES = new Uint8Array([137, 80, 78, 71, 1, 2, 3])
 const HASH = createHash('sha256').update(BYTES).digest('hex')
 const SHOWS = `![a](https://orden.so/i/${HASH}.png)\n`
-
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@example.com')
@@ -32,9 +31,7 @@ beforeEach(async () => {
   expect(up.status).toBe(201)
   env.db.prepare('insert into unused_blobs (user_id, hash, since) values (?, ?, 1)').run(owner, HASH)
 })
-
 afterEach(() => env.close())
-
 async function older(many: number, words: (at: number) => string): Promise<void> {
   const row = env.db.prepare('insert into note_versions (note_id, at, hash, size) values (?, ?, ?, 1)')
   for (let at = 0; at < many; at++) {
@@ -44,7 +41,6 @@ async function older(many: number, words: (at: number) => string): Promise<void>
     row.run(noteId, 1000 + at, hash)
   }
 }
-
 const holds = () =>
   (
     env.db.prepare('select count(*) as many from blobs where hash = ?').get(HASH) as {
@@ -58,47 +54,36 @@ const unread = () =>
       many: number
     }
   ).many
-
 describe('a picture let go of by an account with more versions than a sweep reads', () => {
   test('goes once they have all been read, and not before', async () => {
     await older(600, (at) => `version ${String(at)}\n`)
-
     expect(await sweepUnused(env)).toBe(0)
     expect(holds()).toBe(1)
     expect(listed()).toBe(1)
     const after = unread()
     expect(after).toBeGreaterThan(0)
     expect(after).toBeLessThan(600)
-
     expect(await sweepUnused(env)).toBe(0)
     expect(unread()).toBeLessThan(after)
     expect(holds()).toBe(1)
-
     expect(await sweepUnused(env)).toBe(1)
     expect(unread()).toBe(0)
     expect(holds()).toBe(0)
     expect(listed()).toBe(0)
   })
-
   test('stays where the last of them read shows it', async () => {
     await older(600, (at) => (at === 599 ? SHOWS : `version ${String(at)}\n`))
-
     for (let night = 0; night < 3; night++) await sweepUnused(env)
-
     expect(unread()).toBe(0)
     expect(holds()).toBe(1)
     expect(listed()).toBe(1)
   })
-
   test('stays, and the bytes are served, where a version says it in raw HTML', async () => {
     await older(3, (at) => (at === 1 ? `<img src="https://orden.so/i/${HASH}.png">\n` : 'x\n'))
-
     await sweepUnused(env)
-
     expect(holds()).toBe(1)
   })
 })
-
 describe('a version nobody has read yet', () => {
   test('that arrives after the rest were read keeps the picture for now', async () => {
     await older(2, () => 'x\n')
@@ -110,26 +95,20 @@ describe('a version nobody has read yet', () => {
           .run(noteId, 'unread')
       })
     })
-
     expect(await sweepUnused(env)).toBe(0)
-
     expect(holds()).toBe(1)
     expect(listed()).toBe(1)
   })
 })
-
 describe('a version kept now', () => {
   test('says what it shows, and no sweep reads its body', async () => {
     await keepVersionNow(env, noteId, SHOWS, 'one')
     env.db.prepare('update note_versions set pictures = ? where pictures is null').run('[]')
     await env.NOTES.delete(versionKey(createHash('sha256').update(SHOWS).digest('hex')))
-
     await sweepUnused(env)
-
     expect(holds()).toBe(1)
     expect(listed()).toBe(1)
   })
-
   test('that folds into the one before says what the words it took say', async () => {
     const say = async (content: string) => {
       const hash = createHash('sha256').update(content).digest('hex')
@@ -141,7 +120,6 @@ describe('a version kept now', () => {
     await say(SHOWS)
     await say('fifth\n')
     await say('sixth\n')
-
     const rows = env.db.prepare('select hash, pictures from note_versions where note_id = ?').all(noteId) as {
       hash: string
       pictures: string | null

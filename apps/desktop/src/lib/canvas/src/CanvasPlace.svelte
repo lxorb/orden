@@ -6,7 +6,6 @@
   import { tools } from './tools.svelte'
 
   const { onchoose }: { onchoose: (tool: Tool) => void } = $props()
-
   const firstShape = $derived(PLACING.findIndex((one) => isShape(one.id)))
 </script>
 
@@ -39,14 +38,12 @@
     grid-template-columns: 1fr 1fr;
     gap: 1px;
   }
-
   .split {
     grid-column: 1 / -1;
     height: 1px;
     margin: var(--space-1) 0;
     background: var(--line);
   }
-
   button {
     display: flex;
     align-items: center;
@@ -65,25 +62,20 @@
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
   }
-
   button span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   button:active {
     background: var(--press);
   }
-
   button.on {
     background: var(--accent-soft);
     color: var(--accent);
   }
-
   :global([data-touch]) button {
     --mark: var(--touch-icon);
-
     min-height: var(--touch-target);
     font-size: var(--touch-text);
   }

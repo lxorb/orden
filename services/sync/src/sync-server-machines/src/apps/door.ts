@@ -8,18 +8,14 @@ import { appsOn } from './catalogue'
 
 const DEVICE = /^[A-Za-z0-9_-]{8,64}$/
 const AWAY = 'the application is not answering - try again'
-
 export const appsDoor = new Hono<{ Bindings: Env }>()
-
 export const OWNED = `select 1 as yes from notes n join spaces s on s.id = n.space_id
   where n.id = ?1 and s.user_id = ?2 and coalesce(n.deleted, 0) = 0 and s.deleted = 0`
-
 appsDoor.get('/:app/socket', async (context) => {
   const env = context.env
   const namespace = env.APPS
   if (!namespace || !(await appsOn(env))) return context.json({ error: NOT_FOUND }, 404)
   const socket = context.req.header('upgrade')?.toLowerCase() === 'websocket'
-
   const offered = (context.req.header('sec-websocket-protocol') ?? '').split(',').map((one) => one.trim())
   const token = socket
     ? tokenOf(offered.join(', '))
@@ -29,25 +25,21 @@ appsDoor.get('/:app/socket', async (context) => {
   if (!signed) return context.json({ error: SIGN_IN }, 401)
   const who = signed.who
   const app = context.req.param('app')
-
   if (!socket) {
     const owned = await env.DB.prepare(OWNED).bind(app, who).first<{ yes: number }>()
     if (!owned) return context.json({ error: UNKNOWN_APP }, 404)
     return context.json({ error: 'an application is a websocket' }, 426)
   }
-
   const named = deviceOffered(offered.join(', '))
   const device = named?.device
   if (!named || !device || !DEVICE.test(device)) {
     return context.json({ error: 'an application socket names its device' }, 400)
   }
-
   const [owned, name] = await Promise.all([
     env.DB.prepare(OWNED).bind(app, who).first<{ yes: number }>(),
     deviceName(env, device, who),
   ])
   if (!owned) return context.json({ error: UNKNOWN_APP }, 404)
-
   const host = offered.some((one) => HOST_PROTOCOLS.includes(one))
   const answer = await namespace
     .get(namespace.idFromName(`${who}:${app}`))
@@ -68,7 +60,6 @@ appsDoor.get('/:app/socket', async (context) => {
       return null
     })
   if (!answer?.webSocket) return context.json({ error: AWAY }, 503, { 'retry-after': '1' })
-
   const headers = new Headers(answer.headers)
   headers.set('sec-websocket-protocol', named.protocol)
   return new Response(answer.body, { status: answer.status, headers, webSocket: answer.webSocket })

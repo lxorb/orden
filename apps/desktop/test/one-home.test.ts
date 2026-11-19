@@ -4,10 +4,8 @@ import { describe, expect, test } from 'vitest'
 import { walk } from './files'
 
 const ROOT = join(import.meta.dirname, '..', '..', '..')
-
 const sources = (dir: string) =>
   walk(dir, (path) => /\.(ts|svelte)$/.test(path) && !path.includes('.test.'), ['node_modules', 'dist', 'test'])
-
 const APP = sources(join(ROOT, 'apps', 'desktop', 'src'))
 const EVERYWHERE = [
   ...APP,
@@ -19,12 +17,10 @@ const EVERYWHERE = [
     }
   }),
 ]
-
 const holding = (files: readonly string[], pattern: RegExp) =>
   files
     .filter((file) => pattern.test(readFileSync(file, 'utf8')))
     .map((file) => relative(ROOT, file).replace(/\\/g, '/'))
-
 describe('a helper written once', () => {
   test.each([
     ['a record check', APP, /\b(?:function|const) isRecord\b/, ['apps/desktop/src/lib/platform/src/stored.ts']],

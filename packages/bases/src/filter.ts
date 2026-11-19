@@ -8,9 +8,7 @@ export interface CompiledFilter {
   local: boolean
   clock: boolean
 }
-
 const ALWAYS: CompiledFilter = { test: () => true, local: true, clock: false }
-
 function compileOne(filter: Filter): CompiledFilter {
   if (typeof filter === 'string') {
     const expression = compile(filter)
@@ -26,7 +24,6 @@ function compileOne(filter: Filter): CompiledFilter {
       },
     }
   }
-
   const [kind, members] =
     'and' in filter
       ? (['and', filter.and] as const)
@@ -45,19 +42,16 @@ function compileOne(filter: Filter): CompiledFilter {
       return { local, clock, test: (scope) => !tests.some((one) => one.test(scope)) }
   }
 }
-
 export function compileFilters(...filters: (Filter | undefined)[]): CompiledFilter {
   const present = filters.filter((one): one is Filter => one !== undefined)
   if (!present.length) return ALWAYS
   if (present.length === 1 && present[0] !== undefined) return compileOne(present[0])
   return compileOne({ and: present })
 }
-
 export function compileFilter(filter: Filter): (row: Row, context: Context) => boolean {
   const compiled = compileOne(filter)
   return (row, context) => compiled.test(scopeFor(row, context))
 }
-
 export function readFilter(raw: unknown): Filter | null {
   if (typeof raw === 'string') return raw
   if (typeof raw === 'number' || typeof raw === 'boolean') return String(raw)

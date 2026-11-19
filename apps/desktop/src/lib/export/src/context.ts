@@ -15,14 +15,11 @@ export interface Target {
   path: string | null
   trusted: boolean
 }
-
 export const frontShut = (): boolean => protection.locked(workspace.active?.path)
-
 export function openTarget(): Target {
   if (frontShut()) throw new Error('Protected')
   workspace.wordsNow()
   const note = workspace.active
-
   return {
     source: note?.doc ?? '',
     name: note?.name ?? 'Untitled.md',
@@ -30,7 +27,6 @@ export function openTarget(): Target {
     trusted: note ? trustsHtmlIn(note.note) : true,
   }
 }
-
 export function openOut() {
   const target = openTarget()
   return {
@@ -42,11 +38,9 @@ export function openOut() {
     trusted: target.trusted,
   }
 }
-
 async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>> {
   const chosen = { accent: theme.accent, codeTheme: modes.codeTheme }
   if (choices.exportAppearance !== 'app') return { ...chosen, scheme: choices.exportAppearance }
-
   const file = theme.active.path
   const sheets = await Promise.all([
     file
@@ -60,10 +54,8 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
           .catch(() => '')
       : '',
   ])
-
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
 }
-
 export async function renderOptions(target: Target): Promise<RunOptions> {
   await links.spaceRead(target.path)
   return {

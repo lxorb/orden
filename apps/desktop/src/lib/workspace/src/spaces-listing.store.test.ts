@@ -32,9 +32,7 @@ const { Disk, memoryStorage } = await import('../../../../test/disk')
 held.disk = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
-
 const ONE = { name: 'One', path: '/spaces/One' }
-
 beforeEach(async () => {
   held.refuse = false
   held.gate = null
@@ -47,14 +45,12 @@ beforeEach(async () => {
   workspace.activeSpaceId = 'one'
   await workspace.loadTree()
 })
-
 test('a listing that failed keeps the spaces there are, and the one that is open', async () => {
   held.refuse = true
   await workspace.loadSpaces()
   expect(workspace.spaces.map((one) => one.name)).toEqual(['One'])
   expect(workspace.activeSpaceId).toBe('one')
 })
-
 test('a listing read before a space was made here leaves it, and it stays the open one', async () => {
   let go: () => void = () => undefined
   held.gate = new Promise((open) => (go = open))
@@ -67,7 +63,6 @@ test('a listing read before a space was made here leaves it, and it stays the op
   expect(workspace.spaces.map((one) => one.name)).toEqual(['One', 'Second'])
   expect(workspace.activeSpaceId).toBe(made?.id)
 })
-
 test('a listing that sees a space being made first is the one space, with one id', async () => {
   let go: () => void = () => undefined
   held.making = new Promise((open) => (go = open))

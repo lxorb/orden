@@ -10,15 +10,12 @@
   let sessions = $state<RemoteSession[]>([])
   let busy = $state(false)
   let wrong = $state<string | null>(null)
-
   let secret = $state<{ holding: string; secret: string; uri: string } | null>(null)
   let code = $state('')
   let codes = $state<string[] | null>(null)
-
   async function look() {
     const token = account.accountToken
     if (!token) return
-
     try {
       factor = await api.second(token)
       sessions = (await api.sessions(token)).sessions
@@ -26,18 +23,14 @@
       factor = null
     }
   }
-
   $effect(() => {
     void look()
   })
-
   async function begin() {
     const token = account.accountToken
     if (!token || busy) return
-
     busy = true
     wrong = null
-
     try {
       secret = await api.beginSecond(token)
       codes = null
@@ -47,14 +40,11 @@
       busy = false
     }
   }
-
   async function confirm() {
     const token = account.accountToken
     if (!token || !secret || busy) return
-
     busy = true
     wrong = null
-
     try {
       codes = (await api.confirmSecond(token, secret.holding, code)).recovery
       secret = null
@@ -66,14 +56,11 @@
       busy = false
     }
   }
-
   async function turnOff() {
     const token = account.accountToken
     if (!token || busy) return
-
     busy = true
     wrong = null
-
     try {
       await api.endSecond(token, code)
       code = ''
@@ -85,14 +72,11 @@
       busy = false
     }
   }
-
   async function freshCodes() {
     const token = account.accountToken
     if (!token || busy) return
-
     busy = true
     wrong = null
-
     try {
       codes = (await api.freshRecovery(token, code)).recovery
       code = ''
@@ -103,23 +87,18 @@
       busy = false
     }
   }
-
   async function end(session: RemoteSession) {
     const token = account.accountToken
     if (!token) return
-
     await api.endSession(token, session.id).catch(() => undefined)
     await look()
   }
-
   async function endOthers() {
     const token = account.accountToken
     if (!token) return
-
     await api.endOtherSessions(token).catch(() => undefined)
     await look()
   }
-
   const when = (stamp: number | null) =>
     stamp === null ? 'Never' : localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
 </script>
@@ -232,29 +211,24 @@
     font-weight: var(--weight-strong);
     color: var(--muted-strong);
   }
-
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
   .setting .name {
     flex: 1;
   }
-
   .text {
     overflow: hidden;
     color: var(--muted-strong);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .square {
     align-self: flex-start;
     margin: var(--space-2) 0;
   }
-
   .codes {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
@@ -266,43 +240,36 @@
     font-size: var(--text-xs);
     color: var(--text-strong);
   }
-
   .setting > .narrow {
     flex: none;
     inline-size: 8rem;
   }
-
   .note {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted-strong);
     line-height: 1.6;
   }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     line-height: 1.5;
   }
-
   .hint.bad {
     color: var(--danger);
   }
-
   small {
     margin-inline-start: var(--space-2);
     font-size: var(--text-xs);
     color: var(--muted);
   }
-
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
   }
-
   :global(.sheet.phone) .setting {
     position: relative;
     gap: var(--touch-gap);
@@ -310,7 +277,6 @@
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
   }
-
   :global(.sheet.phone) .setting + .setting::before {
     content: '';
     position: absolute;

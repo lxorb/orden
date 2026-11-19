@@ -83,9 +83,7 @@ then drive that folder with Chrome's own profiler through `CDPSession`
 samples per call frame. Every cause named in this file's comments was found that
 way, and the folder is ignored so it can be left lying about.
 """
-
 from __future__ import annotations
-
 import argparse
 import http.server
 import json
@@ -94,10 +92,8 @@ import shutil
 import statistics
 import subprocess
 from pathlib import Path
-
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page
-
 import harness
 from harness import Drive
 
@@ -105,37 +101,26 @@ DRIVE = Drive(__file__, served=False)
 BUDGET = 1800
 say = DRIVE.say
 APP = harness.APP
-
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 NOTES = 5000
 LINES = 20000
 STROKES = 10000
 POINTS = 10
-
 GESTURE = 1500
-
 WARMING = 3
-
 SETTLING = 2000
-
 AS_WAS = False
-
 class AsWas(harness.Files):
-
     protocol_version = "HTTP/1.0"
-
     def send_header(self, keyword: str, value: str) -> None:
         if keyword == "Content-Length":
             self.tally()["bytes"] += int(value)
         http.server.SimpleHTTPRequestHandler.send_header(self, keyword, value)
-
     def end_headers(self) -> None:
         http.server.SimpleHTTPRequestHandler.end_headers(self)
-
 SEED = r"""
 async (plan) => {
   const { notes, lines, strokes, points, space } = plan
@@ -289,7 +274,6 @@ async (plan) => {
   return { rows: rows.length, stores }
 }
 """
-
 MARKS = r"""
 window.__marks = { paint: null, tree: null, editor: null, tasks: [], loaf: [] }
 const marks = window.__marks
@@ -366,15 +350,11 @@ window.__since = () => {
  *  screen. Everything below that says "to paint" waits for this. */
 window.__painted = () => new Promise((go) => requestAnimationFrame(() => requestAnimationFrame(() => go(performance.now()))))
 """
-
 SETTLED_WITHIN = 8000
 QUIET = 500
-
 LAUNCHED = "() => !!window.ordenApp && !!window.ordenApp.workspace.activeSpace"
-
 FIRST = "first.md"
 SECOND = "second.md"
-
 LAUNCH = r"""
 (quiet) => {
   const marks = window.__marks
@@ -402,7 +382,6 @@ LAUNCH = r"""
   }
 }
 """
-
 OPEN_NOTE = r"""
 async (path) => {
   const ws = window.ordenApp.workspace
@@ -416,7 +395,6 @@ async (path) => {
   return { ms: painted - started, loaf: window.__marks.loaf, tasks: window.__marks.tasks }
 }
 """
-
 SWITCH = r"""
 async (id) => {
   const ws = window.ordenApp.workspace
@@ -426,7 +404,6 @@ async (id) => {
   return { ms: painted - started, loaf: window.__marks.loaf }
 }
 """
-
 SHEET = r"""
 async () => {
   const started = window.__since()
@@ -439,9 +416,7 @@ async () => {
   return { ms: painted - started, loaf: window.__marks.loaf }
 }
 """
-
 SHUT_SHEET = "() => { window.ordenApp.settings.open = false }"
-
 QUERY = r"""
 async (plan) => {
   const { text, wait } = plan
@@ -462,7 +437,6 @@ async (plan) => {
   return { ms, hits: search.hits.length, read: readOf(held()) - Math.max(0, before), warmth: held() }
 }
 """
-
 WATCH_START = "() => { window.__t0 = window.__since(); window.__frames.on = true }"
 WATCH_STOP = r"""
 () => {
@@ -480,7 +454,6 @@ WATCH_STOP = r"""
   }
 }
 """
-
 def pick(rounds: list[dict[str, float]], key: str, unit: str) -> float:
     found = [one[key] for one in rounds if key in one]
     if not found:
@@ -490,15 +463,12 @@ def pick(rounds: list[dict[str, float]], key: str, unit: str) -> float:
     if unit == "fps":
         return max(found)
     return statistics.median(found)
-
 def floor(rounds: list[dict[str, float]], key: str, unit: str) -> float:
     found = [one[key] for one in rounds if key in one]
     if len(found) < 4:
         return 0.0
-
     half = len(found) // 2
     halves = abs(pick(rounds[:half], key, unit) - pick(rounds[half:], key, unit))
-
     ordered = sorted(found)
     if unit == "ms":
         nearly = ordered[1] - ordered[0]
@@ -506,9 +476,7 @@ def floor(rounds: list[dict[str, float]], key: str, unit: str) -> float:
         nearly = ordered[-1] - ordered[-2]
     else:
         nearly = 0.0
-
     return max(halves, nearly)
-
 def blame(entries: list[dict]) -> list[str]:
     worst: dict[str, dict[str, float]] = {}
     for frame in entries:
@@ -520,14 +488,11 @@ def blame(entries: list[dict]) -> list[str]:
             held["ms"] = max(held["ms"], script.get("ms", 0))
             held["layout"] = max(held["layout"], script.get("layout", 0))
             held["times"] += 1
-
     lines = []
     for name, held in sorted(worst.items(), key=lambda one: -one[1]["ms"])[:6]:
         layout = f" layout {held['layout']:.0f}ms" if held["layout"] else ""
         lines.append(f"{held['ms']:.0f}ms x{held['times']:.0f}{layout}  {name}")
-
     return lines
-
 def part_launch(lane: Lane, page: Page) -> dict[str, object]:
     page.goto(lane.origin, wait_until="commit")
     page.wait_for_function("() => window.__marks.editor !== null", timeout=120000)
@@ -537,20 +502,16 @@ def part_launch(lane: Lane, page: Page) -> dict[str, object]:
     found = page.evaluate(LAUNCH, QUIET)
     lane.profile("launch", found.pop("loaf"))
     return found
-
 def part_note(lane: Lane, page: Page) -> dict[str, object]:
     if lane.space == "empty":
         return {}
-
     ready(page, lane)
     settled(page)
     opened = page.evaluate(OPEN_NOTE, f"{lane.root}/long.md")
     lane.profile("big note opened", opened["loaf"])
-
     page.click(".cm-content")
     page.keyboard.press("Control+End")
     page.wait_for_timeout(400)
-
     page.evaluate(TYPING_READY)
     for at in range(12):
         page.keyboard.press("x")
@@ -560,21 +521,16 @@ def part_note(lane: Lane, page: Page) -> dict[str, object]:
             )
         except PlaywrightError:
             break
-
     latency = page.evaluate(TYPING)
     lane.profile("typing at the end of the big note", latency.pop("loaf"))
-
     if not latency.pop("keys"):
         lane.note("the keystrokes went nowhere; that round is not in the typing numbers")
         latency = {}
-
     reading = page.evaluate(READING)
     lane.profile("reading the big note", reading.pop("loaf"))
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(300)
-
     return {"note-open": opened["ms"], **latency, **reading}
-
 TYPING_READY = r"""
 () => {
   window.__keys = []
@@ -599,7 +555,6 @@ TYPING_READY = r"""
   return true
 }
 """
-
 TYPING = r"""
 () => {
   const keys = window.__keys ?? []
@@ -619,7 +574,6 @@ TYPING = r"""
   }
 }
 """
-
 READING = r"""
 async () => {
   const ws = window.ordenApp.workspace
@@ -641,10 +595,8 @@ async () => {
   }
 }
 """
-
 def part_shell(lane: Lane, page: Page) -> dict[str, object]:
     ready(page, lane)
-
     page.evaluate(OPEN_NOTE, f"{lane.root}/{FIRST}")
     page.evaluate(OPEN_NOTE, f"{lane.root}/{SECOND}")
     tabs = page.evaluate("() => window.ordenApp.workspace.tabs.map((one) => one.id)")
@@ -652,7 +604,6 @@ def part_shell(lane: Lane, page: Page) -> dict[str, object]:
     lane.profile("tab switch", switched["loaf"])
     back = page.evaluate(SWITCH, tabs[-1])
     del back
-
     page.evaluate(WATCH_START)
     page.keyboard.press("Control+o")
     page.wait_for_selector(".palette, .quick, [role=listbox]", timeout=20000)
@@ -660,14 +611,11 @@ def part_shell(lane: Lane, page: Page) -> dict[str, object]:
     lane.profile("palette", palette.pop("loaf"))
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
-
     sheet = page.evaluate(SHEET)
     lane.profile("settings", sheet["loaf"])
     page.evaluate(SHUT_SHEET)
     page.wait_for_timeout(200)
-
     return {"tab-switch": switched["ms"], **palette, "settings": sheet["ms"]}
-
 PALETTE = r"""
 async () => {
   const started = window.__t0 ?? performance.now()
@@ -677,11 +625,9 @@ async () => {
   return { palette: painted - started, 'palette-rows': rows, loaf: window.__marks.loaf }
 }
 """
-
 def part_search(lane: Lane, page: Page) -> dict[str, object]:
     if lane.space == "empty":
         return {}
-
     ready(page, lane)
     panel = page.evaluate(PANEL)
     lane.profile("search panel opened", panel.pop("loaf"))
@@ -694,7 +640,6 @@ def part_search(lane: Lane, page: Page) -> dict[str, object]:
         "() => /warm=1/.test(document.querySelector('[data-search]')?.dataset.search ?? '')",
         timeout=180000,
     )
-
     found: dict[str, object] = dict(panel)
     for name, text in QUERIES:
         one = page.evaluate(QUERY, {"text": text, "wait": 140})
@@ -703,9 +648,7 @@ def part_search(lane: Lane, page: Page) -> dict[str, object]:
         found[f"q-{name}"] = one["ms"]
         found[f"q-{name}-read"] = one["read"]
         lane.note(f"{name}: {one['hits']} hits, {one['read']} rows read  [{one['warmth']}]")
-
     return found
-
 SIDEBAR = r"""
 () => ({
   panel: window.ordenApp?.workspace?.panel ?? null,
@@ -717,7 +660,6 @@ SIDEBAR = r"""
   space: window.ordenApp?.workspace?.activeSpace?.root ?? null,
 })
 """
-
 PANEL = r"""
 async () => {
   const ws = window.ordenApp.workspace
@@ -744,27 +686,22 @@ async () => {
   }
 }
 """
-
 QUERIES = [
     ("hit", "marker-4242"),
     ("none", "zzqqxxnothing"),
     ("tag", "tag:kestrel"),
     ("task", "task:pressure"),
 ]
-
 def part_graph(lane: Lane, page: Page) -> dict[str, object]:
     if lane.space == "empty":
         return {}
-
     ready(page, lane)
     opened = page.evaluate(OPEN_GRAPH)
     lane.profile("graph opened", opened.pop("loaf"))
-
     page.wait_for_selector(".graph", state="visible", timeout=90000)
     box = page.locator(".graph").first.bounding_box()
     if not box:
         return opened
-
     panned = drag(lane, page, box, "graph panned", button="left")
     hovered = hover(lane, page, box)
     return {
@@ -774,7 +711,6 @@ def part_graph(lane: Lane, page: Page) -> dict[str, object]:
         "hover-fps": hovered["fps"],
         "hover-worst": hovered["worst"],
     }
-
 OPEN_GRAPH = r"""
 async () => {
   const ws = window.ordenApp.workspace
@@ -788,22 +724,18 @@ async () => {
   return { ms: painted - started, loaf: window.__marks.loaf.filter((one) => one.ms >= 50) }
 }
 """
-
 def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
     if lane.space == "empty":
         return {}
-
     ready(page, lane)
     opened = page.evaluate(OPEN_CANVAS, f"{lane.root}/plane.canvas")
     lane.profile("canvas opened", opened.pop("loaf"))
     if not opened.get("ms"):
         return {}
-
     page.wait_for_selector(".canvas", state="visible", timeout=90000)
     box = page.locator(".canvas").first.bounding_box()
     if not box:
         return {"canvas-open": opened["ms"]}
-
     filling = fill_in(lane, page)
     panned = drag(lane, page, box, "canvas panned")
     whole = draw(lane, page, box, "stroke drawn on the whole plane")
@@ -813,7 +745,6 @@ def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
     page.wait_for_timeout(300)
     zoomed = wheel(lane, page, box)
     drawn = draw(lane, page, box)
-
     return {
         "canvas-open": opened["ms"],
         "fill-worst": filling["worst"],
@@ -827,14 +758,12 @@ def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
         "draw-fps": drawn["fps"],
         "draw-worst": drawn["worst"],
     }
-
 def fill_in(lane: Lane, page: Page) -> dict:
     page.evaluate(WATCH_START)
     page.wait_for_timeout(3000)
     found = page.evaluate(WATCH_STOP)
     lane.profile("ink filling in", found["loaf"])
     return found
-
 def rub(lane: Lane, page: Page, box: dict) -> dict:
     page.keyboard.press("e")
     page.wait_for_timeout(300)
@@ -850,7 +779,6 @@ def rub(lane: Lane, page: Page, box: dict) -> dict:
     lane.profile("strokes rubbed out", found["loaf"])
     page.keyboard.press("Escape")
     return found
-
 OPEN_CANVAS = r"""
 async (path) => {
   const ws = window.ordenApp.workspace
@@ -864,7 +792,6 @@ async (path) => {
   return { ms: painted - started, loaf: window.__marks.loaf.filter((one) => one.ms >= 50) }
 }
 """
-
 def drag(lane: Lane, page: Page, box: dict, what: str, button: str = "middle") -> dict:
     middle = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     page.mouse.move(*middle)
@@ -877,7 +804,6 @@ def drag(lane: Lane, page: Page, box: dict, what: str, button: str = "middle") -
     found = page.evaluate(WATCH_STOP)
     lane.profile(what, found["loaf"])
     return found
-
 def hover(lane: Lane, page: Page, box: dict) -> dict:
     start = (box["x"] + 60, box["y"] + box["height"] / 2)
     page.mouse.move(*start)
@@ -888,7 +814,6 @@ def hover(lane: Lane, page: Page, box: dict) -> dict:
     found = page.evaluate(WATCH_STOP)
     lane.profile("graph hovered", found["loaf"])
     return found
-
 def wheel(lane: Lane, page: Page, box: dict) -> dict:
     page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     page.evaluate(WATCH_START)
@@ -900,7 +825,6 @@ def wheel(lane: Lane, page: Page, box: dict) -> dict:
     found = page.evaluate(WATCH_STOP)
     lane.profile("canvas zoomed", found["loaf"])
     return found
-
 def draw(lane: Lane, page: Page, box: dict, what: str = "stroke drawn") -> dict:
     page.keyboard.press("d")
     page.wait_for_timeout(300)
@@ -916,11 +840,9 @@ def draw(lane: Lane, page: Page, box: dict, what: str = "stroke drawn") -> dict:
     lane.profile(what, found["loaf"])
     page.keyboard.press("Escape")
     return found
-
 def part_scan(lane: Lane, page: Page) -> dict[str, object]:
     if lane.space == "empty":
         return {}
-
     page.goto(lane.origin, wait_until="commit")
     page.wait_for_function("() => window.__marks.tree !== null", timeout=120000)
     page.wait_for_function(
@@ -930,7 +852,6 @@ def part_scan(lane: Lane, page: Page) -> dict[str, object]:
     found = page.evaluate(SCAN)
     lane.profile("the space read for the index", found.pop("loaf"))
     return found
-
 SCAN = r"""
 () => {
   const marks = window.__marks
@@ -945,22 +866,17 @@ SCAN = r"""
   }
 }
 """
-
 def part_links(lane: Lane, page: Page) -> dict[str, object]:
     if lane.space == "empty":
         return {}
-
     ready(page, lane)
     settled(page)
-
     found = page.evaluate(LINKS, f"{lane.root}/hub.md")
     lane.profile("the links panel on a note a thousand notes point at", found.pop("loaf"))
     lane.note(f"hub: {found['links-rows']} rows over {found.pop('sections')} sections")
-
     page.evaluate("() => { const ws = window.ordenApp.workspace; ws.showPanel('tree') }")
     page.wait_for_timeout(200)
     return found
-
 LINKS = r"""
 async (path) => {
   const ws = window.ordenApp.workspace
@@ -989,7 +905,6 @@ async (path) => {
   }
 }
 """
-
 PARTS = {
     "launch": part_launch,
     "note": part_note,
@@ -1000,25 +915,20 @@ PARTS = {
     "graph": part_graph,
     "canvas": part_canvas,
 }
-
 def settled(page: Page) -> None:
     page.wait_for_function(
         "() => !!window.ordenApp && !window.ordenApp.links.scanning && !!window.ordenApp.links.rootOf()",
         timeout=180000,
     )
     page.wait_for_timeout(2500)
-
 def ready(page: Page, lane: Lane) -> None:
     if not page.evaluate("() => !!window.ordenApp"):
         page.goto(lane.origin, wait_until="domcontentloaded")
-
     page.wait_for_function(LAUNCHED, timeout=120000)
     page.wait_for_timeout(600)
     page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .row", timeout=60000)
-
 class Lane:
-
     def __init__(self, tag: str, folder: Path, space: str) -> None:
         self.tag = tag
         self.space = space
@@ -1033,7 +943,6 @@ class Lane:
         self.notes: list[str] = []
         self.page: Page | None = None
         self.cdp = None
-
     def start(self) -> None:
         if AS_WAS:
             self.server = harness.Served(handler=type("Lane", (AsWas,), {"folder": str(self.folder)}))
@@ -1041,19 +950,15 @@ class Lane:
             self.server = harness.Served(self.folder)
         self.origin = self.server.origin(f"{self.tag}-{self.space}.localhost")
         say(f"{self.name}: serving {self.folder.name} on {self.origin}")
-
     def stop(self) -> None:
         if self.server:
             self.server.close()
-
     def note(self, words: str) -> None:
         self.notes.append(f"{self.name}: {words}")
-
     def profile(self, what: str, entries: list[dict] | None) -> None:
         lines = blame(entries or [])
         if lines:
             self.profiles.setdefault(f"{self.name} - {what}", []).extend(lines)
-
     def ready(self, browser) -> None:
         context = browser.new_context(
             viewport={"width": 1440, "height": 900},
@@ -1064,7 +969,6 @@ class Lane:
         page.on("pageerror", lambda error: say(f"{self.name}: page error: {error}"))
         self.page = page
         self.cdp = context.new_cdp_session(page)
-
         page.goto(f"{self.origin}{harness.SEED_PATH}", wait_until="domcontentloaded")
         plan = {
             "notes": NOTES if self.space == "big" else 0,
@@ -1075,34 +979,27 @@ class Lane:
         }
         seeded = page.evaluate(SEED, plan)
         say(f"{self.name}: {seeded['rows']} rows seeded into {seeded['stores']}")
-
         for _ in range(WARMING):
             page.goto(self.origin, wait_until="domcontentloaded")
             page.wait_for_function(LAUNCHED, timeout=180000)
             page.evaluate("() => window.ordenApp.workspace.showPanel('tree')")
             page.wait_for_selector("aside .row", timeout=60000)
-
         page.evaluate(OPEN_NOTE, f"{self.root}/{FIRST}")
         page.wait_for_timeout(2500)
         say(f"{self.name}: session written")
-
     def quiet(self) -> None:
         if self.page:
             self.page.wait_for_timeout(SETTLING)
-
     def sweep(self) -> None:
         if self.cdp:
             self.cdp.send("HeapProfiler.collectGarbage")
-
     def park(self) -> None:
         if self.page:
             self.page.goto("about:blank", wait_until="domcontentloaded")
-
     def round(self, part: str) -> None:
         page = self.page
         if not page:
             return
-
         try:
             found = PARTS[part](self, page)
         except PlaywrightError as wrong:
@@ -1110,28 +1007,23 @@ class Lane:
             self.lost[part] += 1
             self.note(f"{part} could not be reached: {str(wrong).splitlines()[0]}")
             return
-
         if not found:
             return
-
         self.rounds.setdefault(part, []).append(found)
         said = "  ".join(f"{key} {value:.0f}" for key, value in found.items())
         say(f"{self.name} {part} {len(self.rounds[part])}: {said}")
-
     def numbers(self) -> dict[str, float]:
         out: dict[str, float] = {}
         for rounds in self.rounds.values():
             for key in rounds[0]:
                 out[key] = pick(rounds, key, UNIT.get(key, ""))
         return out
-
     def floors(self) -> dict[str, float]:
         out: dict[str, float] = {}
         for rounds in self.rounds.values():
             for key in rounds[0]:
                 out[key] = floor(rounds, key, UNIT.get(key, ""))
         return out
-
     def middles(self) -> dict[str, float]:
         out: dict[str, float] = {}
         for rounds in self.rounds.values():
@@ -1139,12 +1031,10 @@ class Lane:
                 found = [one[key] for one in rounds if key in one]
                 out[key] = statistics.median(found) if found else 0.0
         return out
-
     def served(self) -> dict[str, int]:
         if not self.server:
             return {"asked": 0, "sent": 0, "again": 0, "bytes": 0}
         return self.server.tally
-
 SAID = [
     ("paint", "launch: first paint", "ms"),
     ("tree", "launch: file list on screen", "ms"),
@@ -1195,9 +1085,7 @@ SAID = [
     ("draw-fps", "canvas: frames a second, drawing", "fps"),
     ("draw-worst", "canvas: worst drawing frame", "ms"),
 ]
-
 UNIT = {key: unit for key, _, unit in SAID}
-
 def waits(
     found: dict[str, dict[str, float]],
     middle: dict[str, dict[str, float]],
@@ -1208,24 +1096,19 @@ def waits(
     for key, words, unit in SAID:
         if unit != "ms":
             continue
-
         for name in names:
             if key not in found[name]:
                 continue
-
             best = found[name][key]
             mid = middle[name].get(key, best)
             if mid > best * 2 and mid - best > max(moved[name].get(key, 0.0), 20.0):
                 loud.append(f"{words:44} {name:>14} best {best:5.0f}ms  middle {mid:5.0f}ms")
-
     if not loud:
         return
-
     print("rows whose middle round is well above their best, which is a wait that comes and goes:")
     for line in loud:
         say(line)
     print()
-
 def prove(
     found: dict[str, dict[str, float]],
     moved: dict[str, dict[str, float]],
@@ -1233,17 +1116,14 @@ def prove(
 ) -> None:
     if len(names) < 2:
         return
-
     print()
     print("lane against lane, each gap read against what the row is worth to nobody:")
     print(f"  {'':44} {'gap':>9} {'floor':>9}")
-
     loud = []
     for key, words, unit in SAID:
         seen = [name for name in names if key in found[name]]
         if len(seen) < 2:
             continue
-
         values = [found[name][key] for name in seen]
         gap = max(values) - min(values)
         sill = max(moved[name].get(key, 0.0) for name in seen)
@@ -1251,7 +1131,6 @@ def prove(
         if how == "differs":
             loud.append(f"{words} ({gap:.0f}{unit} on a floor of {sill:.0f})")
         print(f"  {words:44} {gap:8.0f}{unit:>4} {sill:8.0f}{unit:>4}  {how}")
-
     print()
     if loud:
         say(f"{len(loud)} rows differ by more than they are worth to nobody:")
@@ -1259,17 +1138,14 @@ def prove(
             say(f"  {words}")
     else:
         say("every row agrees within what it is worth to nobody")
-
 CLOCKED = [
     "src/lib/search/fuzzy.perf.test.ts",
     "src/lib/search/match.perf.test.ts",
 ]
-
 def clocked() -> str:
     npx = shutil.which("npx")
     if not npx:
         return "no npx, so the clocked bounds were not asked"
-
     asked = subprocess.run(
         [npx, "vitest", "run", *CLOCKED],
         cwd=APP,
@@ -1280,17 +1156,14 @@ def clocked() -> str:
         errors="replace",
         check=False,
     )
-
     if asked.returncode == 0:
         return "the clocked bounds hold"
-
     said = [
         line.strip()
         for line in (asked.stdout + asked.stderr).splitlines()
         if "AssertionError" in line or line.strip().startswith("FAIL")
     ]
     return "; ".join(["the clocked bounds do not hold", *said[:6]])
-
 def main() -> int:
     ask = argparse.ArgumentParser(description=__doc__)
     ask.add_argument("parts", nargs="*", default=[], help=f"any of {', '.join(PARTS)}")
@@ -1308,18 +1181,15 @@ def main() -> int:
         help="serve as this file used to, to show what the lane bias was",
     )
     told = ask.parse_args()
-
     global AS_WAS  # noqa: PLW0603
     AS_WAS = told.as_was
     if AS_WAS:
         say("serving as this file used to: HTTP/1.0, no caching, the folders' own dates")
-
     parts = told.parts or list(PARTS)
     for part in parts:
         if part not in PARTS:
             say(f"no part called {part}")
             return 1
-
     spaces = [told.space] if told.space else ["big", "empty"]
     if harness.OWN_BUILD and told.build != "before":
         harness.build()
@@ -1333,24 +1203,18 @@ def main() -> int:
     if not lanes:
         say("nothing built")
         return 1
-
     rounds = told.rounds + (-told.rounds % len(lanes))
     if rounds != told.rounds:
         say(f"{told.rounds} rounds over {len(lanes)} lanes is not a whole turn; {rounds} rounds")
-
     clock = "" if told.no_clock else clocked()
     if clock:
         say(clock)
-
     for lane in lanes:
         lane.start()
-
     try:
         with DRIVE.session(args=["--enable-precise-memory-info"]) as browser:
-
             for lane in lanes:
                 lane.ready(browser)
-
             for part in parts:
                 for turn_at in range(rounds):
                     at = turn_at % len(lanes)
@@ -1364,11 +1228,9 @@ def main() -> int:
     finally:
         for lane in lanes:
             lane.stop()
-
     found = {lane.name: lane.numbers() for lane in lanes}
     moved = {lane.name: lane.floors() for lane in lanes}
     names = [lane.name for lane in lanes]
-
     print()
     print(
         f"{rounds} rounds, {NOTES} notes, {LINES} lines, {STROKES} strokes."
@@ -1383,19 +1245,15 @@ def main() -> int:
             for name in names
         )
         print(f"  {words:44} {row}")
-
     for lane in lanes:
         for words in lane.notes:
             say(words)
-
     print()
     waits(found, {lane.name: lane.middles() for lane in lanes}, moved, names)
-
     for lane in lanes:
         for part, times in lane.lost.items():
             if times * 2 >= rounds:
                 say(f"{lane.name}: {part} was reached {rounds - times} of {rounds} rounds")
-
     print("what each lane's server was asked for, over the whole run:")
     for lane in lanes:
         held = lane.served()
@@ -1406,9 +1264,7 @@ def main() -> int:
     counts = {(one["asked"], one["sent"]) for one in (lane.served() for lane in lanes)}
     if len(counts) > 1:
         say("the lanes were not served alike; the launch rows are not comparable")
-
     prove(found, moved, names)
-
     print()
     print("what the browser blamed for the long frames:")
     for lane in lanes:
@@ -1416,14 +1272,11 @@ def main() -> int:
             print(f"  {what}")
             for line in dict.fromkeys(lines):
                 print(f"    {line}")
-
     if clock:
         print()
         say(clock)
-
     print()
     print(json.dumps({name: {key: round(value, 1) for key, value in one.items()} for name, one in found.items()}))
     return 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

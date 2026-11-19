@@ -1,19 +1,14 @@
 import http.server
 import json
 import sys
-
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
-
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 MODEL = "fake-small"
 PLAN = "# Plan\n\nThe first line.\n\nThe heron line we ask about.\n\nThe last line.\n"
-
 SETUP = """
 async (base) => {
   const ai = window.ordenApp.ai
@@ -25,7 +20,6 @@ async (base) => {
   return ai.ready
 }
 """ % MODEL
-
 ACTIVE = "() => window.ordenApp.workspace.active?.path ?? ''"
 TEXT = "() => window.ordenApp.workspace.active?.note.latest ?? ''"
 PAD_TEXT = """
@@ -39,25 +33,19 @@ async () => {
 FOCUS_NOTE = "() => window.ordenApp.views.of(window.ordenApp.workspace.panes.focusedId)?.focus()"
 PAD_TAB = '[data-tab="scratchpad"]'
 CARD = "[data-scratchpad-card] .cm-content"
-
 class Model(http.server.BaseHTTPRequestHandler):
-
     words: list[str] = ["A ", "heron ", "waits."]
     seen: list[dict] = []
-
     def log_message(self, format: str, *args: object) -> None:  # noqa: A002
         return
-
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
         self._cors()
         self.end_headers()
-
     def do_GET(self) -> None:  # noqa: N802
         body = json.dumps({"object": "list", "data": [{"id": "heron", "object": "model"}]}).encode()
         self.send_response(200)
@@ -66,14 +54,12 @@ class Model(http.server.BaseHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(body)
-
     def do_POST(self) -> None:  # noqa: N802
         raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
         try:
             Model.seen.append(json.loads(raw))
         except json.JSONDecodeError:
             Model.seen.append({})
-
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self._cors()
@@ -87,23 +73,17 @@ class Model(http.server.BaseHTTPRequestHandler):
             self.wfile.flush()
         except OSError:
             return
-
 MODEL_ORIGIN = DRIVE.side(Model)
-
 def wait_for(page: Page, expression: str, what: str) -> bool:
     return DRIVE.waited(page, expression, what)
-
 def twice_ctrl(page: Page) -> None:
     page.keyboard.press("Control")
     page.keyboard.press("Control")
-
 CHATS = "() => window.ordenApp.aiChats()"
-
 def last_messages() -> str:
     if not Model.seen:
         return ""
     return json.dumps(Model.seen[-1].get("messages", []))
-
 def scratchpad(page: Page) -> None:
     DRIVE.open_note(page, "Plan")
     page.evaluate(FOCUS_NOTE)
@@ -114,25 +94,21 @@ def scratchpad(page: Page) -> None:
         wrong("the scratchpad is not a tab of the right side")
     elif tab.get_attribute("aria-selected") != "true":
         wrong("the scratchpad's tab is not the one chosen while the scratchpad is up")
-
     page.keyboard.type("call Anna about the heron count")
     wait_for(page, f"async () => (await ({PAD_TEXT})()).includes('heron count')", "it written down")
     shot(page, "01-scratchpad")
-
     page.reload(wait_until="domcontentloaded")
     DRIVE.ready(page)
     after = page.evaluate(PAD_TEXT)
     say(f"after a reload it says {after!r}")
     if "heron count" not in after:
         wrong(f"the scratchpad lost its words over a reload: {after!r}")
-
     wait_for(page, f"document.querySelector('{CARD}')", "its card put back")
     page.keyboard.press("Control+Shift+X")
     wait_for(page, "!!document.activeElement?.closest('[data-scratchpad-card]')", "the keyboard in the card")
     page.keyboard.press("Control+Shift+X")
     wait_for(page, f"!document.querySelector('{CARD}')", "the card put away")
     say(f"the key again put the card away over {page.evaluate(ACTIVE)}")
-
     page.keyboard.press("Control+Shift+F")
     wait_for(page, "document.querySelector('.find input')", "the search field")
     page.locator(".find input").fill("heron count")
@@ -146,14 +122,12 @@ def scratchpad(page: Page) -> None:
     if not found:
         wrong("the search does not find the scratchpad's words")
     page.keyboard.press("Escape")
-
     page.keyboard.press("Control+Shift+X")
     wait_for(page, f"document.querySelector('{PAD_TAB}')", "the scratchpad's tab")
     page.locator(PAD_TAB).click(button="right")
     if page.locator(".menu").count():
         wrong("the scratchpad's tab has a menu")
         page.keyboard.press("Escape")
-
 def nothing_set_up(page: Page) -> None:
     page.evaluate(SETUP, "")
     DRIVE.open_note(page, "Plan")
@@ -167,7 +141,6 @@ def nothing_set_up(page: Page) -> None:
     shot(page, "05-nothing-set-up")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.quick')", "it put away")
-
 def asked(page: Page) -> None:
     page.evaluate(SETUP, MODEL_ORIGIN)
     DRIVE.open_note(page, "Plan")
@@ -187,7 +160,6 @@ def asked(page: Page) -> None:
     chip = page.locator(".quick .chip")
     if chip.count() != 1 or "heron line" not in chip.inner_text():
         wrong(f"the selection is not the chip: {chip.all_inner_texts()}")
-
     open_before = page.evaluate(CHATS + ".then((chat) => chat.thread?.id ?? null)")
     page.keyboard.type("What is this?")
     page.keyboard.press("Enter")
@@ -211,7 +183,6 @@ def asked(page: Page) -> None:
     labelled = 'label=\\"selection\\"' in said or 'source=\\"selection\\"' in said
     if not labelled or "heron line" not in said:
         wrong(f"the request did not carry the selection: {said[-600:]}")
-
     Model.words = ["Then ", "it ", "strikes."]
     page.keyboard.type("And then?")
     page.keyboard.press("Enter")
@@ -219,14 +190,12 @@ def asked(page: Page) -> None:
     said = last_messages()
     if "What is this?" not in said or "A heron waits." not in said:
         wrong(f"the follow-up did not carry the turn before it: {said[:400]}")
-
     page.locator('.quick button[aria-label="Add to note"]').click()
     wait_for(page, "!document.querySelector('.quick')", "the field put away")
     text = page.evaluate(TEXT)
     say(f"the note now says {text!r}")
     if "The heron line we ask about.\n\nThen it strikes.\n\nThe last line." not in text:
         wrong(f"the answer is not under the selection's line: {text!r}")
-
     Model.words = ["Plain."]
     page.evaluate(FOCUS_NOTE)
     twice_ctrl(page)
@@ -239,7 +208,6 @@ def asked(page: Page) -> None:
         wrong("a chip taken off still sent the note")
     page.keyboard.press("Escape")
     wait_for(page, "!document.querySelector('.quick')", "Escape putting it away")
-
     page.evaluate(FOCUS_NOTE)
     page.keyboard.press("Control+D")
     wait_for(page, "!window.ordenApp.workspace.active", "nothing in front")
@@ -256,7 +224,6 @@ def asked(page: Page) -> None:
     pad = page.evaluate(PAD_TEXT)
     if "Jotted." not in pad:
         wrong(f"the answer did not go on the scratchpad's end: {pad!r}")
-
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme="light")
     DRIVE.open(page)
@@ -267,5 +234,4 @@ def drive(browser: Browser) -> None:
     nothing_set_up(page)
     say("--- asked ---")
     asked(page)
-
 raise SystemExit(DRIVE.run(drive, "the scratchpad keeps, finds and moves; the quick question answers in place"))

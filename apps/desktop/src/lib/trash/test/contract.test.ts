@@ -4,7 +4,6 @@ import { describe, expect, test } from 'vitest'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-
 describe('the module stands on its own', () => {
   test('the api names the one store and its item, and leaves finding doubles behind a door', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')

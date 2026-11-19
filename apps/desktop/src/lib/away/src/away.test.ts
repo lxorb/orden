@@ -8,7 +8,6 @@ test('a note just let go of is away at once, so a write brings it back first', a
     return Promise.resolve(true)
   })
   expect(keptAway.at('/space/Ideas.md')).toBeNull()
-
   keptAway.went('/space/Ideas.md')
   expect(keptAway.at('/space/Ideas.md')?.path).toBe('/space/Ideas.md')
   expect(await keptAway.bringBack('/space/Ideas.md')).toBe(true)
@@ -16,7 +15,6 @@ test('a note just let go of is away at once, so a write brings it back first', a
   expect(keptAway.at('/space/Ideas.md')).toBeNull()
   keptAway.clear()
 })
-
 test('a note the syncing engine already keeps away is away before its list is retold', async () => {
   const fetched: string[] = []
   keptAway.reach(
@@ -33,7 +31,6 @@ test('a note the syncing engine already keeps away is away before its list is re
   expect(await keptAway.bringBack('/space/Board.canvas')).toBe(true)
   expect(await keptAway.bringBack('/space/Other.md')).toBe(false)
   expect(fetched).toEqual(['/space/Board.canvas'])
-
   keptAway.clear()
   expect(keptAway.at('/space/Board.canvas')).toBeNull()
 })

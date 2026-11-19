@@ -4,7 +4,6 @@ interface IndexShape {
   unique: boolean
   multiEntry: boolean
 }
-
 interface StoreDump {
   name: string
   keyPath: string | string[] | null
@@ -13,20 +12,17 @@ interface StoreDump {
   keys: IDBValidKey[]
   values: unknown[]
 }
-
 export interface DatabaseDump {
   name: string
   version: number
   stores: StoreDump[]
 }
-
 function done<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the database refused'))
   })
 }
-
 export function finished(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     transaction.oncomplete = () => resolve()
@@ -34,7 +30,6 @@ export function finished(transaction: IDBTransaction): Promise<void> {
     transaction.onabort = () => reject(transaction.error ?? new Error('the write was abandoned'))
   })
 }
-
 export function existing(name: string): Promise<IDBDatabase | null> {
   return new Promise((resolve) => {
     const request = indexedDB.open(name)
@@ -43,15 +38,12 @@ export function existing(name: string): Promise<IDBDatabase | null> {
     request.onerror = () => resolve(null)
   })
 }
-
 export async function dump(name: string): Promise<DatabaseDump | null> {
   const db = await existing(name)
   if (!db) return null
-
   try {
     const names = [...db.objectStoreNames]
     if (names.length === 0) return { name, version: db.version, stores: [] }
-
     const reading = db.transaction(names, 'readonly')
     const stores = await Promise.all(
       names.map(async (storeName) => {
@@ -81,7 +73,6 @@ export async function dump(name: string): Promise<DatabaseDump | null> {
     db.close()
   }
 }
-
 export function shaped(request: IDBOpenDBRequest, database: DatabaseDump): void {
   const db = request.result
   const change = request.transaction

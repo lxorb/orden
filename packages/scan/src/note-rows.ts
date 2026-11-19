@@ -11,12 +11,10 @@ export const readOf = (note: ScannedNote): NoteRead => ({
   tags: note.tags,
   links: note.links,
 })
-
 export interface NoteHeld {
   stamp?: Stamp
   meta?: Readonly<Record<string, string>> | null | undefined
 }
-
 export function noteRowsOf(space: string, path: string, content: string, held: NoteHeld = {}): Row[] {
   const stamp = held.stamp ?? { size: content.length, mtime: 0, ctime: 0 }
   const read = readOf({ ...scanNote(path, content), ...scanRows(content), stamp })

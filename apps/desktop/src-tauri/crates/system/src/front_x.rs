@@ -13,9 +13,7 @@ struct X {
     class: u32,
     pid: u32,
 }
-
 static X: LazyLock<Mutex<Option<X>>> = LazyLock::new(|| Mutex::new(opened()));
-
 fn opened() -> Option<X> {
     std::env::var_os("DISPLAY")?;
     let (connection, screen) = x11rb::connect(None).ok()?;
@@ -31,7 +29,6 @@ fn opened() -> Option<X> {
         pid,
     })
 }
-
 fn asked<T>(ask: impl Fn(&X) -> Option<T>) -> Option<T> {
     let mut held = X.held();
     let found = held.as_ref().and_then(&ask);
@@ -40,7 +37,6 @@ fn asked<T>(ask: impl Fn(&X) -> Option<T>) -> Option<T> {
     }
     found
 }
-
 fn active(x: &X) -> Option<Window> {
     x.connection
         .get_property(false, x.root, x.active, AtomEnum::WINDOW, 0, 1)
@@ -51,7 +47,6 @@ fn active(x: &X) -> Option<Window> {
         .next()
         .filter(|one| *one != 0)
 }
-
 pub fn front_class() -> Option<String> {
     asked(|x| {
         let class = x
@@ -67,12 +62,10 @@ pub fn front_class() -> Option<String> {
         Some(String::from_utf8_lossy(named).into_owned())
     })
 }
-
 pub struct Input {
     pub idle_ms: u64,
     pub front: bool,
 }
-
 pub fn input() -> Option<Input> {
     asked(|x| {
         let idle_ms = x

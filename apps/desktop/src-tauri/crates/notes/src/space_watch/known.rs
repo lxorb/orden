@@ -18,7 +18,6 @@ pub enum Seen {
         to: Found,
     },
 }
-
 #[derive(Clone, Debug)]
 struct Known {
     dir: bool,
@@ -26,7 +25,6 @@ struct Known {
     stamp: u128,
     id: Option<String>,
 }
-
 impl From<&Found> for Known {
     fn from(one: &Found) -> Self {
         Self {
@@ -37,13 +35,11 @@ impl From<&Found> for Known {
         }
     }
 }
-
 #[derive(Default, Debug)]
 pub struct Space {
     paths: BTreeMap<PathBuf, Known>,
     ids: HashMap<String, PathBuf>,
 }
-
 impl Space {
     pub fn read(root: &Path) -> Result<Self, String> {
         let mut space = Self::default();
@@ -53,19 +49,16 @@ impl Space {
         })?;
         Ok(space)
     }
-
     #[cfg(test)]
     pub fn len(&self) -> usize {
         self.paths.len()
     }
-
     fn insert(&mut self, one: &Found) {
         if let Some(id) = &one.id {
             self.ids.insert(id.clone(), one.rel.clone());
         }
         self.paths.insert(one.rel.clone(), Known::from(one));
     }
-
     fn remove_tree(&mut self, rel: &Path) -> Option<Known> {
         let under: Vec<PathBuf> = self.under(rel).collect();
         let mut was = None;
@@ -83,7 +76,6 @@ impl Space {
         }
         was
     }
-
     fn move_tree(&mut self, from: &Path, to: &Path) {
         let under: Vec<PathBuf> = self.under(from).collect();
         for path in under {
@@ -102,7 +94,6 @@ impl Space {
             self.paths.insert(moved, known);
         }
     }
-
     fn under<'a>(&'a self, rel: &'a Path) -> impl Iterator<Item = PathBuf> + 'a {
         self.paths
             .range(rel.to_path_buf()..)
@@ -110,7 +101,6 @@ impl Space {
             .take_while(move |path| path.starts_with(rel))
             .cloned()
     }
-
     pub fn moves_into(&self, now: &Space, root: &Path) -> Vec<Seen> {
         let mut moves: Vec<(&PathBuf, &PathBuf)> = now
             .ids
@@ -125,7 +115,6 @@ impl Space {
             })
             .collect();
         moves.sort_by_key(|(from, _)| (from.components().count(), (*from).clone()));
-
         let mut taken: Vec<(&PathBuf, &PathBuf)> = Vec::new();
         let mut seen = Vec::new();
         for (from, to) in moves {
@@ -149,7 +138,6 @@ impl Space {
         }
         seen
     }
-
     pub fn settle(
         &mut self,
         root: &Path,
@@ -162,10 +150,8 @@ impl Space {
             .filter(|rel| !rel.as_os_str().is_empty() && !ignored_path(rel))
             .collect();
         order.sort_by_key(|rel| (rel.components().count(), (*rel).clone()));
-
         let mut seen = Vec::new();
         let mut waiting = Vec::new();
-
         for _ in 0..=order.len() {
             let before = seen.len();
             for rel in &order {
@@ -175,7 +161,6 @@ impl Space {
                 break;
             }
         }
-
         let mut hidden: Option<Vec<Found>> = None;
         for rel in &order {
             if !self.paths.contains_key(*rel) || present(root, rel) {
@@ -206,14 +191,11 @@ impl Space {
                 });
             }
         }
-
         for rel in &order {
             self.stayed(root, rel, &mut seen);
         }
-
         (seen, waiting)
     }
-
     fn arrived(&mut self, root: &Path, rel: &Path, seen: &mut Vec<Seen>) {
         if self.paths.contains_key(rel) {
             return;
@@ -221,7 +203,6 @@ impl Space {
         let Some(now) = found(root, rel) else {
             return;
         };
-
         let mut above = PathBuf::new();
         for part in rel.parent().into_iter().flat_map(Path::components) {
             above.push(part);
@@ -232,16 +213,13 @@ impl Space {
                 }
             }
         }
-
         self.arriving(root, now, seen);
     }
-
     fn arriving(&mut self, root: &Path, now: Found, seen: &mut Vec<Seen>) {
         let rel = now.rel.clone();
         if !self.placed(root, now, seen) {
             return;
         }
-
         let mut inside = Vec::new();
         let mut left = MAX_ENTRIES.saturating_sub(self.paths.len());
         let _ = walk(root, &rel, &mut left, &mut |one| inside.push(one));
@@ -251,7 +229,6 @@ impl Space {
             }
         }
     }
-
     fn placed(&mut self, root: &Path, now: Found, seen: &mut Vec<Seen>) -> bool {
         let from = now
             .id
@@ -261,7 +238,6 @@ impl Space {
                 old.as_path() != now.rel && found(root, old).and_then(|there| there.id) != now.id
             })
             .cloned();
-
         if let Some(from) = from {
             self.move_tree(&from, &now.rel);
             self.insert(&now);
@@ -274,7 +250,6 @@ impl Space {
             dir
         }
     }
-
     fn stayed(&mut self, root: &Path, rel: &Path, seen: &mut Vec<Seen>) {
         let Some(known) = self.paths.get(rel).cloned() else {
             return;
@@ -282,7 +257,6 @@ impl Space {
         let Some(now) = found(root, rel) else {
             return;
         };
-
         if now.dir != known.dir {
             self.remove_tree(rel);
             seen.push(Seen::Removed {
@@ -296,7 +270,6 @@ impl Space {
         if known.dir || (now.size == known.size && now.stamp == known.stamp && now.id == known.id) {
             return;
         }
-
         if let Some(old) = &known.id {
             if self.ids.get(old).is_some_and(|there| there == rel) {
                 self.ids.remove(old);
@@ -306,7 +279,6 @@ impl Space {
         seen.push(Seen::Modified(now));
     }
 }
-
 fn hidden_arrivals(root: &Path, touched: &BTreeSet<PathBuf>) -> Vec<Found> {
     touched
         .iter()
@@ -314,7 +286,6 @@ fn hidden_arrivals(root: &Path, touched: &BTreeSet<PathBuf>) -> Vec<Found> {
         .filter_map(|rel| found_hidden(root, rel))
         .collect()
 }
-
 #[cfg(test)]
 mod tests {
     use super::{Seen, Space};
@@ -326,7 +297,6 @@ mod tests {
         let touched: BTreeSet<PathBuf> = touched.iter().map(PathBuf::from).collect();
         space.settle(root, &touched, false, &BTreeSet::new()).0
     }
-
     fn said(seen: &[Seen]) -> Vec<String> {
         seen.iter()
             .map(|one| match one {
@@ -339,11 +309,9 @@ mod tests {
             })
             .collect()
     }
-
     fn slash(path: &Path) -> String {
         path.to_string_lossy().replace('\\', "/")
     }
-
     fn space_with(files: &[&str]) -> (tempfile::TempDir, Space) {
         let dir = tempfile::tempdir().expect("a folder");
         for file in files {
@@ -356,7 +324,6 @@ mod tests {
         let space = Space::read(dir.path()).expect("read");
         (dir, space)
     }
-
     #[test]
     fn a_new_file_and_a_new_folder_with_everything_in_it() {
         let (dir, mut space) = space_with(&["Plan.md"]);
@@ -364,7 +331,6 @@ mod tests {
         fs::write(root.join("Idea.md"), "new").expect("a note");
         fs::create_dir_all(root.join("Trip").join("Days")).expect("folders");
         fs::write(root.join("Trip").join("Days").join("One.md"), "").expect("a note inside");
-
         assert_eq!(
             said(&settle(&mut space, root, &["Idea.md", "Trip"])),
             [
@@ -375,13 +341,11 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn written_again_is_modified_and_touched_alone_is_nothing() {
         let (dir, mut space) = space_with(&["Plan.md", "Other.md"]);
         let root = dir.path();
         fs::write(root.join("Plan.md"), "words, and more of them").expect("edited");
-
         assert_eq!(
             said(&settle(&mut space, root, &["Plan.md", "Other.md"])),
             ["modified Plan.md"]
@@ -391,7 +355,6 @@ mod tests {
             "nothing moved since"
         );
     }
-
     #[test]
     fn a_chain_of_renames_in_one_batch_is_every_rename_and_nothing_removed() {
         let (dir, mut space) = space_with(&["a.md", "b.md", "c.md"]);
@@ -399,7 +362,6 @@ mod tests {
         for (from, to) in [("c.md", "d.md"), ("b.md", "c.md"), ("a.md", "b.md")] {
             fs::rename(root.join(from), root.join(to)).expect("renamed");
         }
-
         assert_eq!(
             said(&settle(&mut space, root, &["a.md", "b.md", "c.md", "d.md"])),
             [
@@ -409,7 +371,6 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_rename_and_a_move_into_a_folder_keep_their_identity() {
         let (dir, mut space) = space_with(&["Plan.md", "Idea.md", "Projects/Keep.md"]);
@@ -419,10 +380,8 @@ mod tests {
             .iter()
             .find(|(_, rel)| rel.as_path() == Path::new("Plan.md"));
         let plan = plan.map(|(id, _)| id.clone()).expect("an identity");
-
         fs::rename(root.join("Plan.md"), root.join("Roadmap.md")).expect("renamed");
         fs::rename(root.join("Idea.md"), root.join("Projects").join("Idea.md")).expect("moved");
-
         let seen = settle(
             &mut space,
             root,
@@ -440,20 +399,17 @@ mod tests {
         };
         assert_eq!(to.id.as_ref(), Some(&plan));
     }
-
     #[test]
     fn a_folder_renamed_is_one_answer_and_its_notes_follow_it() {
         let (dir, mut space) = space_with(&["Projects/One.md", "Projects/Deep/Two.md"]);
         let root = dir.path();
         fs::rename(root.join("Projects"), root.join("Archive")).expect("renamed");
-
         let seen = settle(
             &mut space,
             root,
             &["Projects", "Archive", "Projects/One.md", "Archive/One.md"],
         );
         assert_eq!(said(&seen), ["renamed Projects Archive"]);
-
         fs::write(
             root.join("Archive").join("Deep").join("Two.md"),
             "later, and longer",
@@ -465,13 +421,11 @@ mod tests {
             "what was in it is known at its new place"
         );
     }
-
     #[test]
     fn a_folder_removed_is_one_answer() {
         let (dir, mut space) = space_with(&["Old/One.md", "Old/Two.md", "Keep.md"]);
         let root = dir.path();
         fs::remove_dir_all(root.join("Old")).expect("removed");
-
         assert_eq!(
             said(&settle(
                 &mut space,
@@ -482,7 +436,6 @@ mod tests {
         );
         assert_eq!(space.len(), 1);
     }
-
     #[test]
     fn a_note_and_a_folder_moved_somewhere_hidden_are_renamed_there() {
         let (dir, mut space) = space_with(&["Diary.md", "Private/One.md", "Keep.md"]);
@@ -490,7 +443,6 @@ mod tests {
         fs::create_dir_all(root.join(".trash")).expect("a hidden folder");
         fs::rename(root.join("Diary.md"), root.join(".trash").join("Diary.md")).expect("moved");
         fs::rename(root.join("Private"), root.join(".trash").join("Private")).expect("moved");
-
         assert_eq!(
             said(&settle(
                 &mut space,
@@ -503,14 +455,12 @@ mod tests {
             ]
         );
         assert_eq!(space.len(), 1, "nothing hidden is known");
-
         fs::remove_file(root.join("Keep.md")).expect("removed");
         assert_eq!(
             said(&settle(&mut space, root, &["Keep.md", ".trash/Diary.md"])),
             ["removed Keep.md"]
         );
     }
-
     #[test]
     fn a_space_read_again_names_what_moved_since_and_not_what_moved_with_it() {
         let (dir, space) =
@@ -529,7 +479,6 @@ mod tests {
         .expect("renamed inside");
         fs::rename(root.join("Plan.md"), root.join("Roadmap.md")).expect("renamed");
         fs::remove_file(root.join("Old.md")).expect("removed");
-
         let now = Space::read(root).expect("read");
         assert_eq!(
             said(&space.moves_into(&now, root)),
@@ -541,20 +490,17 @@ mod tests {
             ]
         );
     }
-
     #[test]
     fn a_save_by_rename_is_modified() {
         let (dir, mut space) = space_with(&["Plan.md"]);
         let root = dir.path();
         fs::write(root.join("Plan.md.tmp"), "saved by another editor").expect("the temp file");
         fs::rename(root.join("Plan.md.tmp"), root.join("Plan.md")).expect("renamed over");
-
         assert_eq!(
             said(&settle(&mut space, root, &["Plan.md.tmp", "Plan.md"])),
             ["modified Plan.md"]
         );
     }
-
     #[test]
     fn a_rename_over_another_note_is_that_note_written_and_the_first_removed() {
         let (dir, mut space) = space_with(&["A.md", "B.md"]);
@@ -562,38 +508,32 @@ mod tests {
         fs::write(root.join("B.md"), "B's longer words").expect("B edited");
         let _ = settle(&mut space, root, &["B.md"]);
         fs::rename(root.join("B.md"), root.join("A.md")).expect("B over A");
-
         assert_eq!(
             said(&settle(&mut space, root, &["B.md", "A.md"])),
             ["removed B.md", "modified A.md"]
         );
     }
-
     #[test]
     fn a_note_renamed_away_and_made_again_is_both() {
         let (dir, mut space) = space_with(&["Plan.md"]);
         let root = dir.path();
         fs::rename(root.join("Plan.md"), root.join("Plan (old).md")).expect("renamed");
         fs::write(root.join("Plan.md"), "new").expect("made again");
-
         assert_eq!(
             said(&settle(&mut space, root, &["Plan.md", "Plan (old).md"])),
             ["renamed Plan.md Plan (old).md", "created Plan.md"]
         );
     }
-
     #[test]
     fn a_move_split_across_two_batches_is_still_a_move() {
         let (dir, mut space) = space_with(&["Plan.md"]);
         let root = dir.path();
         fs::create_dir_all(root.join("Later")).expect("a folder");
         fs::rename(root.join("Plan.md"), root.join("Later").join("Plan.md")).expect("moved");
-
         let first: BTreeSet<PathBuf> = [PathBuf::from("Plan.md")].into();
         let (seen, held) = space.settle(root, &first, true, &BTreeSet::new());
         assert!(seen.is_empty());
         assert_eq!(held, [PathBuf::from("Plan.md")]);
-
         let second: BTreeSet<PathBuf> =
             [PathBuf::from("Plan.md"), Path::new("Later").join("Plan.md")].into();
         let released: BTreeSet<PathBuf> = held.into_iter().collect();
@@ -604,14 +544,12 @@ mod tests {
             ["created Later", "renamed Plan.md Later/Plan.md"]
         );
     }
-
     #[test]
     fn what_sync_leaves_alone_is_never_an_answer() {
         let (dir, mut space) = space_with(&["Plan.md"]);
         let root = dir.path();
         fs::write(root.join(".Plan.md.1-0.orden.tmp"), "half").expect("a temp file");
         fs::create_dir_all(root.join(".git")).expect("a repository");
-
         assert!(settle(
             &mut space,
             root,

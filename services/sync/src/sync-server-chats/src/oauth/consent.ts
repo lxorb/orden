@@ -8,11 +8,9 @@ const ESCAPES: Record<string, string> = {
   '"': '&quot;',
   "'": '&#39;',
 }
-
 function escape(text: string): string {
   return text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 }
-
 const STYLE = `
 :root{--bg:#fbfcfd;--fg:#1a1d23;--strong:#0e1013;--muted:#6b7482;--line:#e1e6ed;--line-strong:#ccd4de;--surface:#f3f5f8;--accent:#5b4be0;--accent-hover:#4e3ed6;--danger:#d92b34}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1013;--fg:#c9cfd8;--strong:#eef1f5;--muted:#8a93a2;--line:#232830;--line-strong:#2f3641;--surface:#14171c;--accent:#7c6bf5;--accent-hover:#8d7ef7;--danger:#f2555a}}
@@ -38,7 +36,6 @@ button.quiet:hover{background:none;color:var(--fg)}
 .where{margin-top:2rem;font-size:.86em;color:var(--muted)}
 .error{color:var(--danger);font-size:.9em;margin:-.75rem 0 1rem}
 `
-
 export function page(env: Env, body: string, status: 200 | 400 | 409 = 200): Response {
   const html = `<!doctype html>
 <html lang="en">
@@ -52,7 +49,6 @@ export function page(env: Env, body: string, status: 200 | 400 | 409 = 200): Res
 ${body}
 </main>
 </html>`
-
   return new Response(html, {
     status,
     headers: {
@@ -63,27 +59,22 @@ ${body}
     },
   })
 }
-
 export function refusal(problem: string): string {
   return `<h1>That did not work</h1><p>${escape(problem)}</p>`
 }
-
 function sentence(text: string): string {
   return `<p class="error">${escape(text.charAt(0).toUpperCase() + text.slice(1))}.</p>`
 }
-
 function hidden(ask: Ask, extra: Record<string, string> = {}): string {
   return [...FIELDS.map((field) => [field, ask[field]] as const), ...Object.entries(extra)]
     .filter(([, value]) => value)
     .map(([name, value]) => `<input type="hidden" name="${name}" value="${escape(value)}">`)
     .join('')
 }
-
 const wants = (client: Client, ask: Ask) =>
   wantsWrite(ask)
     ? `${escape(client.name)} would like to read your notes, and to change them if you let it.`
     : `${escape(client.name)} would like to read your notes.`
-
 export function emailStep(client: Client, ask: Ask, given: { email?: string; error?: string }): string {
   return `<h1>Connect ${escape(client.name)}</h1>
 <p>${wants(client, ask)} Sign in to allow it.</p>
@@ -96,13 +87,11 @@ ${given.error ? sentence(given.error) : ''}
 </form>
 <p class="where">Afterwards you go back to ${escape(describeDestination(ask.redirect_uri))}.</p>`
 }
-
 export function codeStep(client: Client, ask: Ask, given: { email: string; error?: string }): string {
   const write = wantsWrite(ask)
     ? `<label class="check"><input type="checkbox" name="write" value="1">
 <span>Let ${escape(client.name)} change my notes as well<small>Without this it can only read them.</small></span></label>`
     : ''
-
   return `<h1>Check your email</h1>
 <p>We sent a six-digit code to <b>${escape(given.email)}</b>.</p>
 <form method="post" action="/oauth/authorize">
@@ -115,7 +104,6 @@ ${write}
 </form>
 <p class="where">Afterwards you go back to ${escape(describeDestination(ask.redirect_uri))}.</p>`
 }
-
 export function secondStep(ask: Ask, given: { holding: string; write: boolean; error?: string }): string {
   return `<h1>Enter the code from your app</h1>
 <p>Or one of your recovery codes.</p>

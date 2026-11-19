@@ -26,7 +26,6 @@ import { fuzzy } from '../src/fuzzy'
 import { words } from '../src/icons'
 
 const SRC = join(import.meta.dirname, '../src')
-
 describe('the module stands on its own', () => {
   test('nothing under src reaches past the platform and theme apis', () => {
     const reaching = readdirSync(SRC)
@@ -41,7 +40,6 @@ describe('the module stands on its own', () => {
     expect(reaching).toEqual([])
   })
 })
-
 describe('words for the reader', () => {
   test('an error speaks for itself unless it is a TypeError or has nothing to say', () => {
     expect(message(new Error('Disk full'), 'Could not save.')).toBe('Disk full')
@@ -49,7 +47,6 @@ describe('words for the reader', () => {
     expect(message(new Error(''), 'Could not save.')).toBe('Could not save.')
     expect(message('text', 'Could not save.')).toBe('Could not save.')
   })
-
   test('a name has an initial and its words', () => {
     expect(initial('notes')).toBe('N')
     expect(initial('')).toBe('·')
@@ -57,14 +54,12 @@ describe('words for the reader', () => {
     expect(words('PDFReader')).toBe('pdf reader')
   })
 })
-
 describe('keys', () => {
   test('a combination is read the same whichever way it is spelled', () => {
     expect(sameCombination('Mod-Shift-K', 'shift-mod-k', 'mac')).toBe(true)
     expect(parseCombination('', 'mac')).toBeNull()
     expect(showCombination('Mod-K', 'mac')).not.toBe(showCombination('Mod-K', 'win'))
   })
-
   test('a keystroke matches only its own combination, never while composing', () => {
     const press = {
       key: 'k',
@@ -79,7 +74,6 @@ describe('keys', () => {
     expect(matchesCombination('Mod-J', press, 'mac')).toBe(false)
     expect(matchesCombination('Mod-K', { ...press, isComposing: true }, 'mac')).toBe(false)
   })
-
   test('arrow keys walk a list and typed letters jump to a label', () => {
     const labels = ['Apple', 'Banana', 'Cherry']
     const down = walk('ArrowDown', 0, labels, opensAt(-1))
@@ -91,7 +85,6 @@ describe('keys', () => {
     expect(walk('x', 0, [], opensAt(0)).took).toBe(false)
   })
 })
-
 describe('menus and lists', () => {
   test('a menu is walked past its dividers and disabled rows', () => {
     const rows = [
@@ -104,7 +97,6 @@ describe('menus and lists', () => {
     expect(isSubmenu(rows[3] ?? DIVIDER)).toBe(true)
     expect(isSubmenu(rows[0] ?? DIVIDER)).toBe(false)
   })
-
   test('fuzzy ranking puts the closest name first and drops what does not match', () => {
     expect(fuzzy('', 'anything')).toBe(0)
     expect(fuzzy('zzz', 'notes')).toBeNull()
@@ -113,7 +105,6 @@ describe('menus and lists', () => {
     expect(ranked).not.toContain('Scratch')
   })
 })
-
 describe('icons', () => {
   test('an icon is read back as what was written, and compared by meaning', () => {
     expect(readIcon('🍎')).toEqual({ kind: 'emoji', text: '🍎' })
@@ -128,7 +119,6 @@ describe('icons', () => {
     expect(sameIcon(null, '🍎')).toBe(false)
   })
 })
-
 describe('the panel marks', () => {
   test('the archive marks are paths drawn in the 13 by 13 box the rows use', () => {
     for (const mark of [ARCHIVE_MARK, UNARCHIVE_MARK]) {
@@ -138,7 +128,6 @@ describe('the panel marks', () => {
     }
   })
 })
-
 describe('the viewport', () => {
   test('a device is a phone by its shorter side, a desktop by its machine', () => {
     const phone = { native: true, handheld: true, agent: 'iPhone', finger: true }
@@ -146,7 +135,6 @@ describe('the viewport', () => {
     expect(deviceFor(1024, 1366, phone)).toBe('tablet')
     expect(deviceFor(390, 844, { native: false, handheld: null, agent: 'X11', finger: false })).toBe('desktop')
   })
-
   test('busy work is counted and told, and a failure is shown', async () => {
     const ran = vi.fn(() => Promise.resolve(7))
     expect(await busy.run('Saving', ran)).toBe(7)

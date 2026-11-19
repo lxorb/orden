@@ -9,18 +9,15 @@ export interface Told {
   mutedUntil: number | null
   readSeq: number
 }
-
 export interface Chosen extends Hush {
   previews: boolean
   sound: boolean
 }
-
 export interface Words {
   hidden: string
   reply: string
   send: string
 }
-
 export interface NoticeWorld {
   me(): Who | null
   chat(chat: string): Promise<Told | null>
@@ -36,9 +33,7 @@ export interface NoticeWorld {
   reply(chat: string, body: string, parent?: string): Promise<void>
   read(chat: string, seq: number): void
 }
-
 const LONGEST_LINE = 200
-
 export function lineOf(message: Message): string {
   const first = message.body
     .split('\n')
@@ -53,24 +48,20 @@ export function lineOf(message: Message): string {
   const line = first ?? message.poll?.question ?? message.files[0]?.name ?? ''
   return line.length > LONGEST_LINE ? `${line.slice(0, LONGEST_LINE - 1)}…` : line
 }
-
 export class ChatNotices {
   private readonly told = new Map<string, number>()
   private readonly showing = new Map<string, number>()
   private readonly turns = new Map<string, Promise<void>>()
-
   constructor(
     private readonly world: NoticeWorld,
     private readonly words: () => Words,
   ) {}
-
   arrived(chat: string, messages: readonly Message[]): void {
     this.turn(chat, async () => {
       const told = await this.world.chat(chat)
       if (told) await this.tell(chat, told, messages)
     })
   }
-
   read(chat: string, seq: number): void {
     this.keep(chat, seq)
     const shown = this.showing.get(chat)
@@ -79,11 +70,9 @@ export class ChatNotices {
       this.world.unshow(chat)
     }
   }
-
   private keep(chat: string, seq: number): void {
     this.told.set(chat, Math.max(this.told.get(chat) ?? 0, seq))
   }
-
   private turn(chat: string, work: () => Promise<void>): void {
     const next = (this.turns.get(chat) ?? Promise.resolve()).then(work).catch(() => {
       // A message whose people could not be asked about is not told: the chat's count
@@ -94,7 +83,6 @@ export class ChatNotices {
       if (this.turns.get(chat) === next) this.turns.delete(chat)
     })
   }
-
   private async tell(id: string, chat: Told, messages: readonly Message[]): Promise<void> {
     const decided = this.told.get(id) ?? 0
     const fresh = messages
@@ -103,7 +91,6 @@ export class ChatNotices {
     const newest = fresh[0]
     if (!newest) return
     this.keep(id, newest.seq)
-
     const me = this.world.me()
     if (!me) return
     const chosen = this.world.chosen()
@@ -112,7 +99,6 @@ export class ChatNotices {
     const moment = { now, day: local.getDay(), minute: local.getHours() * 60 + local.getMinutes() }
     const seen = this.world.seen(id)
     const active = this.world.active()
-
     for (const message of fresh) {
       const repliesTo = message.parent ? await this.world.authorOf(id, message.parent) : null
       const ping = decide({
@@ -136,7 +122,6 @@ export class ChatNotices {
       if (ping !== 'level') return
     }
   }
-
   private async show(id: string, chat: Told, message: Message, chosen: Chosen): Promise<void> {
     const words = this.words()
     const name = chosen.previews ? await this.world.nameOf(id, message.author) : ''
@@ -155,7 +140,6 @@ export class ChatNotices {
       },
     })
   }
-
   private async answer(id: string, message: Message, text: string): Promise<void> {
     await this.world.reply(id, text.trim(), message.parent)
     this.world.read(id, message.seq)

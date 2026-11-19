@@ -4,7 +4,6 @@ import { mono, pieces, RATE, resampled, wavOf } from './wav'
 function header(file: Uint8Array) {
   const view = new DataView(file.buffer, file.byteOffset, file.byteLength)
   const text = (at: number, length: number) => String.fromCharCode(...file.subarray(at, at + length))
-
   return {
     riff: text(0, 4),
     size: view.getUint32(4, true),
@@ -20,11 +19,9 @@ function header(file: Uint8Array) {
     bytes: view.getUint32(40, true),
   }
 }
-
 describe('a WAV', () => {
   test('says what it is, field by field', () => {
     const file = wavOf(new Float32Array(16), 16_000)
-
     expect(header(file)).toEqual({
       riff: 'RIFF',
       size: 36 + 32,
@@ -40,71 +37,57 @@ describe('a WAV', () => {
       bytes: 32,
     })
   })
-
   test('is the header and two bytes a sample', () => {
     expect(wavOf(new Float32Array(100), 16_000).length).toBe(44 + 200)
     expect(wavOf(new Float32Array(0), 16_000).length).toBe(44)
   })
-
   test('clips rather than wraps', () => {
     const file = wavOf(new Float32Array([0, 1, -1, 4, -4]), 16_000)
     const view = new DataView(file.buffer)
     const at = (one: number) => view.getInt16(44 + one * 2, true)
-
     expect([at(0), at(1), at(2)]).toEqual([0, 32_767, -32_768])
     expect([at(3), at(4)]).toEqual([32_767, -32_768])
   })
 })
-
 describe('mixing down', () => {
   test('hands one channel straight back', () => {
     const one = new Float32Array([0.5, -0.5])
     expect(mono([one])).toBe(one)
   })
-
   test('averages the channels there are', () => {
     const heard = mono([new Float32Array([1, 0]), new Float32Array([0, 1])])
     expect([...heard]).toEqual([0.5, 0.5])
   })
-
   test('and answers nothing for no channels at all', () => {
     expect(mono([]).length).toBe(0)
   })
 })
-
 describe('resampling', () => {
   test('leaves sound that is already at the rate alone', () => {
     const same = new Float32Array([1, 2, 3])
     expect(resampled(same, 16_000, 16_000)).toBe(same)
   })
-
   test('brings the count down with the rate', () => {
     const third = resampled(new Float32Array(48_000), 48_000, 16_000)
     expect(third.length).toBe(16_000)
   })
-
   test('reads between the samples rather than dropping every other one', () => {
     const halved = resampled(new Float32Array([0, 1, 2, 3]), 4, 2)
     expect([...halved]).toEqual([0, 3])
-
     const stretched = resampled(new Float32Array([0, 1]), 2, 3)
     expect([...stretched].map((one) => Math.round(one * 100) / 100)).toEqual([0, 0.5, 1])
   })
 })
-
 describe('cutting a recording into pieces', () => {
   test('leaves something short as one piece', () => {
     const short = new Float32Array(RATE * 5)
     expect(pieces(short, RATE, 20)).toHaveLength(1)
   })
-
   test('and nothing at all as no pieces', () => {
     expect(pieces(new Float32Array(0), RATE, 20)).toEqual([])
   })
-
   test('cuts at the length asked for and keeps the tail', () => {
     const parts = pieces(new Float32Array(RATE * 50), RATE, 20)
-
     expect(parts.map((one) => one.length)).toEqual([RATE * 20, RATE * 20, RATE * 10])
     expect(parts.reduce((sum, one) => sum + one.length, 0)).toBe(RATE * 50)
   })

@@ -25,26 +25,20 @@ export interface Peer {
   head: number
   anchor: number
 }
-
 export const setPeers = StateEffect.define<readonly Peer[]>()
 export const setAgents = StateEffect.define<readonly Peer[]>()
-
 interface Present {
   peers: readonly Peer[]
   agents: readonly Peer[]
   marks: DecorationSet
 }
-
 const nobody: Present = { peers: [], agents: [], marks: Decoration.none }
-
 function marksFor(state: EditorState, peers: readonly Peer[], agents: readonly Peer[]): DecorationSet {
   const length = state.doc.length
   const marks: Range<Decoration>[] = []
-
   for (const peer of [...peers, ...agents]) {
     const head = Math.min(Math.max(0, peer.head), length)
     const anchor = Math.min(Math.max(0, peer.anchor), length)
-
     if (head !== anchor) {
       marks.push(
         Decoration.mark({
@@ -54,10 +48,8 @@ function marksFor(state: EditorState, peers: readonly Peer[], agents: readonly P
       )
     }
   }
-
   return Decoration.set(marks, true)
 }
-
 const present = StateField.define<Present>({
   create: () => nobody,
   update: (held, transaction) => {
@@ -78,7 +70,6 @@ const present = StateField.define<Present>({
         anchor: within(peer.anchor, length),
       }))
     }
-
     if (transaction.docChanged && (held.peers.length || held.agents.length)) {
       told = {
         peers: moved(held.peers),
@@ -86,26 +77,21 @@ const present = StateField.define<Present>({
         marks: held.marks.map(transaction.changes),
       }
     }
-
     for (const effect of transaction.effects) {
       if (effect.is(setPeers)) told = { ...told, peers: placed(effect.value) }
       else if (effect.is(setAgents)) told = { ...told, agents: placed(effect.value) }
       else continue
-
       told = { ...told, marks: marksFor(transaction.state, told.peers, told.agents) }
     }
-
     return told
   },
   provide: (field) => EditorView.decorations.from(field, (held) => held.marks),
 })
-
 export interface Shown {
   peer: Peer
   head: number
   passing: boolean
 }
-
 export function caretsAt(state: EditorState): Shown[] {
   const held = state.field(present, false)
   if (!held) return []
@@ -119,14 +105,11 @@ export function caretsAt(state: EditorState): Shown[] {
     }))
     .sort((one, two) => one.head - two.head)
 }
-
 export type Side = 'above' | 'below'
-
 export function sideFor(room: boolean, above: boolean, below: boolean): Side {
   if (!room) return 'below'
   return above && !below ? 'below' : 'above'
 }
-
 export function inkOn(colour: string): string {
   const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(colour.trim())?.[1]
   if (!hex) return 'var(--accent-ink)'
@@ -138,10 +121,8 @@ export function inkOn(colour: string): string {
   const light = 0.2126 * r + 0.7152 * g + 0.0722 * b
   return (light + 0.05) / 0.05 >= 1.05 / (light + 0.05) ? '#0b0d10' : '#ffffff'
 }
-
 const NAME_TALL = 16
 const NAME_GAP = 4
-
 class CaretMarker implements LayerMarker {
   constructor(
     readonly key: number,
@@ -156,7 +137,6 @@ class CaretMarker implements LayerMarker {
     readonly side: Side,
     readonly shift: number,
   ) {}
-
   eq(other: CaretMarker): boolean {
     return (
       other.key === this.key &&
@@ -172,12 +152,10 @@ class CaretMarker implements LayerMarker {
       other.shift === this.shift
     )
   }
-
   draw(): HTMLElement {
     const caret = document.createElement('div')
     caret.className = 'cm-orden-caret'
     if (this.passing) caret.classList.add('is-passing')
-
     const tag = caret.appendChild(document.createElement('span'))
     tag.className = 'cm-orden-caret-name'
     if (this.face) {
@@ -189,11 +167,9 @@ class CaretMarker implements LayerMarker {
       face.src = this.face
     }
     tag.append(this.name)
-
     this.place(caret)
     return caret
   }
-
   update(dom: HTMLElement, was: CaretMarker): boolean {
     if (
       !(was instanceof CaretMarker) ||
@@ -208,7 +184,6 @@ class CaretMarker implements LayerMarker {
     this.place(dom)
     return true
   }
-
   private place(caret: HTMLElement) {
     caret.style.left = `${this.left}px`
     caret.style.top = `${this.top}px`
@@ -221,9 +196,7 @@ class CaretMarker implements LayerMarker {
     if (tag) tag.style.left = `${this.shift}px`
   }
 }
-
 let ruler: CanvasRenderingContext2D | null | undefined
-
 function widthOf(view: EditorView, name: string, face: boolean): number {
   if (ruler === undefined) {
     try {
@@ -240,7 +213,6 @@ function widthOf(view: EditorView, name: string, face: boolean): number {
   }
   return Math.ceil(words + 10 + (face ? 15 : 0))
 }
-
 function lineTall(view: EditorView, head: number, text: number): number {
   const { node } = view.domAtPos(head)
   const element = node instanceof Element ? node : node.parentElement
@@ -248,7 +220,6 @@ function lineTall(view: EditorView, head: number, text: number): number {
   const said = line ? Number.parseFloat(getComputedStyle(line).lineHeight) : Number.NaN
   return Number.isFinite(said) && said > text ? said : text
 }
-
 function crowded(view: EditorView, from: number, to: number, y: number): boolean {
   const height = y - view.documentTop
   if (height < 0 || height > view.contentHeight) return false
@@ -260,11 +231,9 @@ function crowded(view: EditorView, from: number, to: number, y: number): boolean
   if (!start || !end || y < start.top - 1 || y > start.bottom + 1) return false
   return start.left < to && end.right > from
 }
-
 function caretMarkers(view: EditorView): CaretMarker[] {
   const shown = caretsAt(view.state)
   if (!shown.length) return []
-
   const scroller = view.scrollDOM.getBoundingClientRect()
   const base = {
     left: scroller.left - view.scrollDOM.scrollLeft * view.scaleX,
@@ -272,12 +241,10 @@ function caretMarkers(view: EditorView): CaretMarker[] {
   }
   const edge = scroller.left + view.scrollDOM.clientWidth * view.scaleX - NAME_GAP
   const markers: CaretMarker[] = []
-
   for (const { peer, head, passing } of shown) {
     if (head < view.viewport.from || head > view.viewport.to) continue
     const at = view.coordsAtPos(head, 1) ?? view.coordsAtPos(head, -1)
     if (!at) continue
-
     const tall = lineTall(view, head, at.bottom - at.top)
     const top = (at.top + at.bottom) / 2 - tall / 2
     const wide = widthOf(view, peer.name, !!peer.face)
@@ -289,7 +256,6 @@ function caretMarkers(view: EditorView): CaretMarker[] {
       crowded(view, from, to, top - NAME_TALL / 2),
       crowded(view, from, to, top + tall + NAME_TALL / 2),
     )
-
     markers.push(
       new CaretMarker(
         peer.id,
@@ -306,10 +272,8 @@ function caretMarkers(view: EditorView): CaretMarker[] {
       ),
     )
   }
-
   return markers
 }
-
 const caretLayer = layer({
   above: true,
   class: 'cm-orden-carets',
@@ -320,14 +284,11 @@ const caretLayer = layer({
     update.geometryChanged ||
     update.startState.field(present, false) !== update.state.field(present, false),
 })
-
 const AGENT_SHOWN = '3.4s'
-
 const style = EditorView.baseTheme({
   '.cm-orden-carets': {
     pointerEvents: 'none',
   },
-
   '.cm-orden-caret': {
     position: 'absolute',
     width: '2px',
@@ -336,12 +297,10 @@ const style = EditorView.baseTheme({
     background: 'var(--peer)',
     pointerEvents: 'none',
   },
-
   '.cm-orden-caret-range': {
     backgroundColor: 'color-mix(in srgb, var(--peer) 22%, transparent)',
     borderRadius: '2px',
   },
-
   '.cm-orden-caret-name': {
     position: 'absolute',
     bottom: '100%',
@@ -364,17 +323,14 @@ const style = EditorView.baseTheme({
     pointerEvents: 'none',
     animation: 'cm-orden-caret-name var(--dur-base) var(--ease-out)',
   },
-
   '.cm-orden-caret.is-below .cm-orden-caret-name': {
     top: '100%',
     bottom: 'auto',
     borderRadius: '0 4px 4px 4px',
   },
-
   '.cm-orden-caret.is-shifted .cm-orden-caret-name': {
     borderRadius: '4px',
   },
-
   '.cm-orden-caret-face': {
     flex: 'none',
     width: '12px',
@@ -383,30 +339,24 @@ const style = EditorView.baseTheme({
     borderRadius: '50%',
     objectFit: 'cover',
   },
-
   '.cm-orden-caret.is-passing': {
     animation: `cm-orden-caret-passing ${AGENT_SHOWN} var(--ease-out) forwards`,
   },
-
   '.cm-orden-caret.is-passing .cm-orden-caret-name': {
     animation: 'none',
   },
-
   '@keyframes cm-orden-caret-passing': {
     '0%, 88%': { opacity: 1 },
     to: { opacity: 0 },
   },
-
   '@keyframes cm-orden-caret-name': {
     from: { opacity: 0 },
   },
 })
-
 export interface OutOfSight<T> {
   above: T[]
   below: T[]
 }
-
 export function outOfSight<T extends { head: number }>(
   people: readonly T[],
   lineAt: (at: number) => { top: number; bottom: number },
@@ -420,21 +370,18 @@ export function outOfSight<T extends { head: number }>(
   }
   return out
 }
-
 interface Held {
   sides: OutOfSight<Peer>
   top: number
   bottom: number
   left: number
 }
-
 function heldRow(side: 'above' | 'below'): HTMLElement {
   const one = document.createElement('div')
   one.className = `cm-orden-held is-${side}`
   one.setAttribute('aria-hidden', 'true')
   return one
 }
-
 function pill(one: Peer): HTMLElement {
   const tag = document.createElement('span')
   tag.className = 'cm-orden-held-name'
@@ -444,7 +391,6 @@ function pill(one: Peer): HTMLElement {
   tag.append(one.name)
   return tag
 }
-
 function heldCarets(): Extension {
   return [
     ViewPlugin.fromClass(
@@ -453,13 +399,11 @@ function heldCarets(): Extension {
         private readonly below = heldRow('below')
         private drawn = ''
         private readonly look = () => this.view.requestMeasure(this.measure)
-
         private readonly measure = {
           key: this,
           read: (view: EditorView): Held | null => {
             const people = peersOf(view.state)
             if (!people.length) return null
-
             const box = view.scrollDOM.getBoundingClientRect()
             const dom = view.dom.getBoundingClientRect()
             const top = Math.max(box.top, 0)
@@ -485,7 +429,6 @@ function heldCarets(): Extension {
           },
           write: (held: Held | null) => this.draw(held),
         }
-
         private readonly go = (event: MouseEvent) => {
           const id = (event.target as Element | null)?.closest<HTMLElement>('.cm-orden-held-name')?.dataset.peer
           const one = peersOf(this.view.state).find((peer) => String(peer.id) === id)
@@ -494,9 +437,7 @@ function heldCarets(): Extension {
           const at = Math.min(Math.max(0, one.head), this.view.state.doc.length)
           this.view.dispatch({ effects: EditorView.scrollIntoView(at, { y: 'center' }) })
         }
-
         private readonly keep = (event: MouseEvent) => event.preventDefault()
-
         constructor(private readonly view: EditorView) {
           for (const side of [this.above, this.below]) {
             side.addEventListener('mousedown', this.keep)
@@ -507,7 +448,6 @@ function heldCarets(): Extension {
           window.addEventListener('resize', this.look)
           this.look()
         }
-
         update(update: ViewUpdate) {
           if (
             update.docChanged ||
@@ -518,7 +458,6 @@ function heldCarets(): Extension {
             this.look()
           }
         }
-
         private draw(held: Held | null) {
           const above = held?.sides.above ?? []
           const below = held?.sides.below ?? []
@@ -527,14 +466,12 @@ function heldCarets(): Extension {
             this.below.style.bottom = `${held.bottom}px`
             this.above.style.left = this.below.style.left = `${held.left}px`
           }
-
           const said = JSON.stringify([above, below].map((side) => side.map((one) => [one.id, one.name, one.colour])))
           if (said === this.drawn) return
           this.drawn = said
           this.above.replaceChildren(...above.map(pill))
           this.below.replaceChildren(...below.map(pill))
         }
-
         destroy() {
           window.removeEventListener('scroll', this.look, true)
           window.removeEventListener('resize', this.look)
@@ -546,7 +483,6 @@ function heldCarets(): Extension {
     heldStyle,
   ]
 }
-
 const heldStyle = EditorView.baseTheme({
   '.cm-orden-held': {
     position: 'absolute',
@@ -557,9 +493,7 @@ const heldStyle = EditorView.baseTheme({
     padding: '4px 0',
     pointerEvents: 'none',
   },
-
   '.cm-orden-held:empty': { display: 'none' },
-
   '.cm-orden-held-name': {
     display: 'inline-flex',
     alignItems: 'center',
@@ -575,19 +509,14 @@ const heldStyle = EditorView.baseTheme({
     pointerEvents: 'auto',
     cursor: 'pointer',
   },
-
   '.cm-orden-held-name::before': {
     content: '""',
     borderLeft: '4px solid transparent',
     borderRight: '4px solid transparent',
   },
-
   '.cm-orden-held.is-above .cm-orden-held-name::before': { borderBottom: '5px solid currentColor' },
   '.cm-orden-held.is-below .cm-orden-held-name::before': { borderTop: '5px solid currentColor' },
 })
-
 export const remoteCarets = (): Extension => [present, caretLayer, style, heldCarets()]
-
 export const peersOf = (state: EditorState): readonly Peer[] => state.field(present, false)?.peers ?? []
-
 export const agentsOf = (state: EditorState): readonly Peer[] => state.field(present, false)?.agents ?? []

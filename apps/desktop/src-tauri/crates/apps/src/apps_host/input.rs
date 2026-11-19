@@ -11,7 +11,6 @@ use x11rb::rust_connection::RustConnection;
 pub use super::events::InputEvent;
 
 const MOST_TEXT: usize = 1000;
-
 pub fn x_button(button: u8) -> Option<u8> {
     match button {
         0 => Some(1),
@@ -22,7 +21,6 @@ pub fn x_button(button: u8) -> Option<u8> {
         _ => None,
     }
 }
-
 pub fn keysym(key: &str) -> Option<Keysym> {
     let mut chars = key.chars();
     if let (Some(one), None) = (chars.next(), chars.next()) {
@@ -62,12 +60,10 @@ pub fn keysym(key: &str) -> Option<Keysym> {
     };
     Some(named)
 }
-
 fn function_key(key: &str) -> Option<Keysym> {
     let number: u32 = key.strip_prefix('F')?.parse().ok()?;
     (1..=24).contains(&number).then(|| 0xffbe + number - 1)
 }
-
 fn sided(keysym: Keysym, code: &str) -> Keysym {
     if !code.ends_with("Right") {
         return keysym;
@@ -80,7 +76,6 @@ fn sided(keysym: Keysym, code: &str) -> Keysym {
         other => other,
     }
 }
-
 #[derive(Debug, Default)]
 struct Keymap {
     keys: HashMap<(Keysym, bool), Keycode>,
@@ -88,7 +83,6 @@ struct Keymap {
     lent: HashMap<Keysym, Keycode>,
     next: usize,
 }
-
 impl Keymap {
     pub fn of(first: Keycode, per_key: u8, keysyms: &[Keysym]) -> Keymap {
         let mut keymap = Keymap::default();
@@ -112,7 +106,6 @@ impl Keymap {
         }
         keymap
     }
-
     pub fn key_for(&mut self, sym: Keysym, shifted: bool) -> Option<(Keycode, bool)> {
         let known = self.keys.get(&(sym, shifted)).copied();
         if let Some(keycode) = known.or_else(|| self.lent.get(&sym).copied()) {
@@ -128,7 +121,6 @@ impl Keymap {
         Some((keycode, true))
     }
 }
-
 pub struct Input {
     connection: RustConnection,
     root: Window,
@@ -137,7 +129,6 @@ pub struct Input {
     held_keys: HashMap<String, Keycode>,
     held_buttons: Vec<u8>,
 }
-
 impl Input {
     pub fn open(display: &str) -> Result<Input, String> {
         let connected = x11rb::connect(Some(display));
@@ -165,7 +156,6 @@ impl Input {
             held_buttons: Vec::new(),
         })
     }
-
     pub fn play(&mut self, event: InputEvent) {
         match event {
             InputEvent::Move { x, y } => {
@@ -201,7 +191,6 @@ impl Input {
         }
         let _ = self.connection.flush();
     }
-
     fn key(&mut self, key: &str, code: String, down: bool) {
         if !down {
             if let Some(keycode) = self.held_keys.remove(&code) {
@@ -222,7 +211,6 @@ impl Input {
         }
         self.fake(KEY_PRESS_EVENT, keycode, 0, 0);
     }
-
     fn key_giving(&mut self, sym: Keysym) -> Option<Keycode> {
         let shifted = self
             .held_keys
@@ -237,7 +225,6 @@ impl Input {
         }
         Some(keycode)
     }
-
     fn text(&mut self, text: &str) {
         for one in text.chars().take(MOST_TEXT) {
             let Some(sym) = keysym(one.encode_utf8(&mut [0; 4])) else {
@@ -250,7 +237,6 @@ impl Input {
             self.fake(KEY_RELEASE_EVENT, keycode, 0, 0);
         }
     }
-
     pub fn let_go(&mut self) {
         let keys: Vec<Keycode> = self.held_keys.drain().map(|(_, keycode)| keycode).collect();
         for keycode in keys {
@@ -261,20 +247,17 @@ impl Input {
         }
         let _ = self.connection.flush();
     }
-
     fn fake(&self, kind: u8, detail: u8, x: i16, y: i16) {
         let _ = self
             .connection
             .xtest_fake_input(kind, detail, 0, self.root, x, y, 0);
     }
 }
-
 impl Drop for Input {
     fn drop(&mut self) {
         self.let_go();
     }
 }
-
 #[allow(clippy::cast_possible_truncation)]
 fn coordinate(value: f64) -> i16 {
     if value.is_finite() {
@@ -283,7 +266,6 @@ fn coordinate(value: f64) -> i16 {
         0
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -321,7 +303,6 @@ mod tests {
         );
         assert_eq!(read(r#"{"t":"run","line":"rm -rf ~"}"#), None);
     }
-
     #[test]
     fn presses_the_button_the_pointer_pressed() {
         assert_eq!(x_button(0), Some(1));
@@ -329,7 +310,6 @@ mod tests {
         assert_eq!(x_button(2), Some(3));
         assert_eq!(x_button(7), None);
     }
-
     #[test]
     fn gives_each_key_its_keysym() {
         assert_eq!(keysym("a"), Some(0x61));
@@ -344,7 +324,6 @@ mod tests {
         assert_eq!(sided(0xffe1, "ShiftRight"), 0xffe2);
         assert_eq!(sided(0xffe1, "ShiftLeft"), 0xffe1);
     }
-
     #[test]
     fn finds_a_keysym_on_its_key_or_lends_it_a_spare_one() {
         let mut keymap = Keymap::of(8, 2, &[0x61, 0x41, 0xff0d, 0, 0, 0, 0, 0]);
@@ -358,7 +337,6 @@ mod tests {
         assert_eq!(keymap.key_for(0x41, false), Some((11, true)));
         assert_eq!(Keymap::of(8, 1, &[0x61]).key_for(0xe9, false), None);
     }
-
     #[test]
     fn puts_a_point_where_x_can_take_it() {
         assert_eq!(coordinate(12.6), 13);

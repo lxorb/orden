@@ -3,7 +3,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
-
 const sent = vi.hoisted(() => [] as [string, string][])
 const line = vi.hoisted(() => ({ up: true }))
 vi.mock('../../accounts/src/client', async (importOriginal) => {
@@ -22,19 +21,15 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
     }),
   }
 })
-
 const { runner } = await import('./runner.svelte')
 const { account } = await import('../../accounts/src/account.svelte')
 const { workspace } = await import('../../workspace/src/api')
 const { settleNames } = await import('../../space-owed/src/api')
-
 interface Open {
   current: unknown
   local: boolean
 }
-
 const open = runner as unknown as Open
-
 function engineWith(root: string) {
   const space = { id: 's1', row: { root, role: 'owner' } }
   return {
@@ -48,7 +43,6 @@ function engineWith(root: string) {
     },
   }
 }
-
 async function renamed(role: string, shown = true) {
   sent.length = 0
   vi.spyOn(account, 'loadSpaces').mockResolvedValue(undefined)
@@ -58,7 +52,6 @@ async function renamed(role: string, shown = true) {
   workspace.spaces = shown ? [{ id: 'local', name: 'Job', root: '/spaces/Job' }] : []
   open.local = false
   open.current = engineWith('/spaces/Work')
-
   await runner.follow({
     op: 'moved',
     kind: 'space',
@@ -70,35 +63,28 @@ async function renamed(role: string, shown = true) {
   for (let turn = 0; turn < 10; turn++) await Promise.resolve()
   return sent
 }
-
 afterEach(() => {
   line.up = true
   localStorage.clear()
   open.current = null
   vi.restoreAllMocks()
 })
-
 describe('a space renamed on this device', () => {
   test('takes its new name to the account', async () => {
     expect(await renamed('owner')).toEqual([['s1', 'Job']])
   })
-
   test('even where this window has not heard of the new folder yet', async () => {
     expect(await renamed('owner', false)).toEqual([['s1', 'Job']])
   })
-
   test('but not one somebody else owns', async () => {
     expect(await renamed('write')).toEqual([])
   })
 })
-
 test('a space renamed while the account is away sends its name once it answers', async () => {
   line.up = false
   expect(await renamed('owner')).toEqual([])
-
   line.up = true
   await settleNames('session', 'u1')
-
   expect(sent).toEqual([['s1', 'Job']])
   sent.length = 0
   await settleNames('session', 'u1')

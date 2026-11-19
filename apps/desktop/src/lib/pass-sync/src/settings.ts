@@ -2,17 +2,13 @@ import { isRecord, keepJson, stored } from '../../platform/src/api'
 
 const LOCK_WAYS = ['password', 'pin', 'device'] as const
 export type LockWay = (typeof LOCK_WAYS)[number]
-
 export const RELOCK_AFTER = [1, 2, 5, 10, 60, 0] as const
 export type RelockAfter = (typeof RELOCK_AFTER)[number]
-
 export const CLIPBOARD_CLEAR = [15, 60, 120, 0] as const
 export type ClipboardClear = (typeof CLIPBOARD_CLEAR)[number]
-
 export const PAUSES = ['autofill', 'totp', 'suggest', 'save', 'passkeys', 'autoLogin'] as const
 export type Pause = (typeof PAUSES)[number]
 export type Paused = Record<Pause, boolean>
-
 export interface PassSettings {
   lock: LockWay
   relockAfter: RelockAfter
@@ -28,9 +24,7 @@ export interface PassSettings {
   checkBreaches: boolean
   paused: Record<string, Paused>
 }
-
 export const SETTINGS_KEY = 'orden:pass-settings'
-
 const DEFAULT_SETTINGS: PassSettings = {
   lock: 'password',
   relockAfter: 10,
@@ -46,11 +40,9 @@ const DEFAULT_SETTINGS: PassSettings = {
   checkBreaches: false,
   paused: {},
 }
-
 type Flag = {
   [K in keyof PassSettings]: PassSettings[K] extends boolean ? K : never
 }[keyof PassSettings]
-
 const FLAGS: readonly Flag[] = [
   'autofill',
   'autofillTotp',
@@ -61,17 +53,14 @@ const FLAGS: readonly Flag[] = [
   'showUsernameField',
   'checkBreaches',
 ]
-
 function oneOf<T>(words: readonly T[], value: unknown, fallback: T): T {
   return words.includes(value as T) ? (value as T) : fallback
 }
-
 function pausedIn(value: unknown): Paused | null {
   if (!isRecord(value)) return null
   const paused = Object.fromEntries(PAUSES.map((one) => [one, value[one] === true])) as Paused
   return PAUSES.some((one) => paused[one]) ? paused : null
 }
-
 function pausedSitesIn(value: unknown): Record<string, Paused> {
   if (!isRecord(value)) return {}
   const sites: Record<string, Paused> = {}
@@ -81,7 +70,6 @@ function pausedSitesIn(value: unknown): Record<string, Paused> {
   }
   return sites
 }
-
 function settingsIn(value: unknown): PassSettings {
   if (!isRecord(value)) return { ...DEFAULT_SETTINGS, paused: {} }
   const settings: PassSettings = {
@@ -98,11 +86,9 @@ function settingsIn(value: unknown): PassSettings {
   }
   return settings
 }
-
 export function readSettings(): PassSettings {
   return settingsIn(stored(SETTINGS_KEY))
 }
-
 export function keepSettings(settings: PassSettings): void {
   keepJson(SETTINGS_KEY, settings)
 }

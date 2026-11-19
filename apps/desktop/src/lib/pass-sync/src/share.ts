@@ -40,16 +40,13 @@ export interface Sharing {
   email: string
   versions(vault: string, id: string): Promise<VersionRow[]>
 }
-
 export type InvitedRole = Exclude<Role, 'owner'>
-
 interface KeyAt {
   key: Uint8Array<ArrayBuffer>
   rev: number
   keyVersion: number
   meta: string
 }
-
 interface SealedRow {
   vault: string
   id: string
@@ -58,54 +55,43 @@ interface SealedRow {
   body: string
   keyVersion: number
 }
-
 interface Renewed {
   itemKey: Uint8Array<ArrayBuffer>
   sent: Resealed
 }
-
 interface Rotated extends KeyAt {
   wrapped: string
   proof: Rotation['proof']
   renewed: Map<string, Renewed>
 }
-
 const TRIES = 3
 const NOT_EVERYONE = 'a new key covers every member and every item'
-
 class NotTrusted extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'NotTrusted'
   }
 }
-
 export function emailOf(email: string): string {
   return email.trim().toLowerCase()
 }
-
 function signerOf(held: Held): Signer {
   if (!held.opened.signer) throw new NotTrusted('Pass has no signing key yet. Lock and unlock it.')
   return held.opened.signer
 }
-
 function keyOf(member: Member): PersonKey | null {
   return member.pub === null ? null : { pub: member.pub, signPub: member.signPub }
 }
-
 export async function personFor(sharing: Sharing, email: string): Promise<Person> {
   const to = emailOf(email)
   return await personOf(sharing.rows, to, await sharing.api.personKey(to))
 }
-
 export async function memberPerson(sharing: Sharing, member: Member): Promise<Person> {
   return await personOf(sharing.rows, member.email, keyOf(member))
 }
-
 async function ownersHeld(sharing: Sharing, vault: string): Promise<string[]> {
   return await ownersOf(signerOf(sharing.held).pub, vault, heldVault(sharing.held, vault).row)
 }
-
 async function vouchOf(
   sharing: Sharing,
   vault: string,
@@ -118,7 +104,6 @@ async function vouchOf(
   if (vouch !== null && (await isVouched(vault, me, vouch, owners))) return vouch
   throw new NotTrusted('Only the owner, or a manager the owner made, can do that.')
 }
-
 export async function invitedMeta(held: Held, invite: Invite): Promise<VaultMeta | null> {
   if (invite.key === null) return null
   try {
@@ -128,13 +113,11 @@ export async function invitedMeta(held: Held, invite: Invite): Promise<VaultMeta
     return null
   }
 }
-
 async function readyKey(sharing: Sharing, person: Person): Promise<PersonKey | null> {
   if (person.key === null) return null
   if (person.known === 'changed') throw new PersonChanged(person.email)
   return (await isConfirmed(sharing.rows, person.email, person.key)) ? person.key : null
 }
-
 export async function invitedState(
   sharing: Sharing,
   vault: string,
@@ -160,14 +143,12 @@ export async function invitedState(
     },
   })
 }
-
 async function voucherOf(vault: string, me: string, vouch: string | null, owners: readonly string[]): Promise<string> {
   for (const owner of owners) {
     if (await isVouched(vault, me, vouch, [owner])) return owner
   }
   throw new NotTrusted('Only the owner, or a manager the owner made, can do that.')
 }
-
 export async function confirmedMember(sharing: Sharing, vault: string, person: Person): Promise<void> {
   const box = heldVault(sharing.held, vault)
   const member = (await sharing.api.members(vault)).find((one) => one.email === person.email)
@@ -178,7 +159,6 @@ export async function confirmedMember(sharing: Sharing, vault: string, person: P
   const wrapped = await wrapVaultKey(box.key, key.pub, vault)
   await sharing.api.giveKey(vault, person.email, wrapped, box.row.keyVersion)
 }
-
 export async function roleGiven(sharing: Sharing, vault: string, email: string, role: InvitedRole): Promise<void> {
   const to = emailOf(email)
   const signer = signerOf(sharing.held)
@@ -194,7 +174,6 @@ export async function roleGiven(sharing: Sharing, vault: string, email: string, 
   }
   await sharing.api.setRole(vault, to, role, vouch)
 }
-
 export async function handedOn(sharing: Sharing, vault: string, email: string): Promise<void> {
   const to = emailOf(email)
   const signer = signerOf(sharing.held)
@@ -205,7 +184,6 @@ export async function handedOn(sharing: Sharing, vault: string, email: string): 
   const handover = await handoverTo(signer, vault, key.signPub)
   await sharing.api.setOwner(vault, to, handover.sig)
 }
-
 export async function acceptedInvite(sharing: Sharing, invite: Invite): Promise<void> {
   const signer = signerOf(sharing.held)
   const from = invite.fromKey
@@ -222,12 +200,10 @@ export async function acceptedInvite(sharing: Sharing, invite: Invite): Promise<
   }
   await sharing.api.accept(invite.vault, await acceptedOf(signer, invite.vault, owner))
 }
-
 function currentOf(body: unknown): WireVault | null {
   if (typeof body !== 'object' || body === null) return null
   return vaultRowIn((body as { current?: unknown }).current)
 }
-
 async function startOf(sharing: Sharing, vault: string): Promise<KeyAt> {
   const box = heldVault(sharing.held, vault)
   const base = await vaultBaseOf(sharing.rows, vault)
@@ -238,7 +214,6 @@ async function startOf(sharing: Sharing, vault: string): Promise<KeyAt> {
     meta: base?.meta ?? box.row.meta,
   }
 }
-
 async function startFrom(sharing: Sharing, current: WireVault): Promise<KeyAt> {
   if (current.key === null || current.deleted) throw new Error('pass: no such vault')
   return {
@@ -248,7 +223,6 @@ async function startFrom(sharing: Sharing, current: WireVault): Promise<KeyAt> {
     meta: current.meta,
   }
 }
-
 async function wrappedToEveryone(
   sharing: Sharing,
   vault: string,
@@ -279,7 +253,6 @@ async function wrappedToEveryone(
   }
   return keys
 }
-
 async function renewedItem(
   row: SealedRow,
   from: readonly Uint8Array<ArrayBuffer>[],
@@ -300,7 +273,6 @@ async function renewedItem(
   }
   throw new Error('pass: an item in the vault could not be opened')
 }
-
 async function rotationOf(
   sharing: Sharing,
   vault: string,
@@ -336,7 +308,6 @@ async function rotationOf(
     renewed,
   }
 }
-
 async function versionsRenewed(
   sharing: Sharing,
   one: ItemRow,
@@ -361,7 +332,6 @@ async function versionsRenewed(
   }
   return kept
 }
-
 async function itemRenewedLocally(
   sharing: Sharing,
   one: ItemRow,
@@ -383,7 +353,6 @@ async function itemRenewedLocally(
     return null
   }
 }
-
 async function rekeyedLocally(sharing: Sharing, vault: string, was: KeyAt, now: Rotated): Promise<void> {
   const { held, rows } = sharing
   const box = heldVault(held, vault)
@@ -416,7 +385,6 @@ async function rekeyedLocally(sharing: Sharing, vault: string, was: KeyAt, now: 
     if (kept?.row.vault === vault && key) held.items.set(one.id, { key, row: one })
   }
 }
-
 async function rotatedVault(sharing: Sharing, vault: string, gone: string | null = null): Promise<number> {
   let from = await startOf(sharing, vault)
   for (let tries = 0; tries < TRIES; tries++) {
@@ -446,7 +414,6 @@ async function rotatedVault(sharing: Sharing, vault: string, gone: string | null
   }
   throw new Error('pass: the vault kept changing while its key was renewed')
 }
-
 export async function removedMember(sharing: Sharing, vault: string, email: string): Promise<number> {
   const owners = await ownersHeld(sharing, vault)
   await vouchOf(sharing, vault, owners, await sharing.api.members(vault))
@@ -457,14 +424,12 @@ export async function removedMember(sharing: Sharing, vault: string, email: stri
   }
   return await rotatedVault(sharing, vault, emailOf(email))
 }
-
 async function ownerOfMembers(sharing: Sharing, vault: string): Promise<string | null> {
   const owner = (await sharing.api.members(vault)).find((one) => one.role === 'owner')
   const key = owner ? keyOf(owner) : null
   if (!owner || !key?.signPub) return null
   return (await seenPerson(sharing.rows, owner.email, key)) === 'changed' ? null : key.signPub
 }
-
 async function backfilledVault(sharing: Sharing, vault: string, box: HeldVault): Promise<boolean> {
   const signer = signerOf(sharing.held)
   const { row } = box
@@ -485,7 +450,6 @@ async function backfilledVault(sharing: Sharing, vault: string, box: HeldVault):
   })
   return true
 }
-
 export async function trustBackfilled(sharing: Sharing): Promise<number> {
   let done = 0
   for (const [vault, box] of sharing.held.vaults) {

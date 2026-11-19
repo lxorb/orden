@@ -3,7 +3,6 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 const asked: { command: string; args: Record<string, unknown> | undefined }[] = []
 let built = 0
-
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -23,28 +22,22 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { extensions } = await import('../../src/lib/web-tab/src/extensions.svelte')
 const ExtensionBar = (await import('./ExtensionBar.svelte')).default
-
 let target: HTMLElement
 let bar: ReturnType<typeof mount>
-
 const onDown = (event: Event) => overlays.pressed(event)
 const onClick = (event: Event) => overlays.clicked(event)
-
 function button(id: string): HTMLElement {
   const found = target.querySelector<HTMLElement>(`[data-extension="${id}"]`)
   if (!found) throw new Error(`no button for ${id}`)
   return found
 }
-
 const later = async () => {
   await new Promise((done) => setTimeout(done, 0))
   flushSync()
 }
-
 async function press(on: Element, pointer = true) {
   if (pointer) {
     on.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
@@ -54,10 +47,8 @@ async function press(on: Element, pointer = true) {
   on.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
   await later()
 }
-
 const popups = () => target.querySelectorAll('.popup').length
 const opened = () => asked.filter((one) => one.command === 'extension_popup_open')
-
 beforeEach(async () => {
   target = document.body.appendChild(document.createElement('div'))
   document.addEventListener('pointerdown', onDown, true)
@@ -67,7 +58,6 @@ beforeEach(async () => {
   flushSync()
   asked.length = 0
 })
-
 afterEach(() => {
   extensions.close()
   flushSync()
@@ -76,23 +66,19 @@ afterEach(() => {
   document.removeEventListener('click', onClick, true)
   target.remove()
 })
-
 test('a second press on the button closes its popup, and it does not open again', async () => {
   await press(button('a'))
   expect(extensions.popped?.id).toBe('a')
   expect(popups()).toBe(1)
-
   await press(button('a'))
   expect(extensions.popped).toBeNull()
   expect(popups()).toBe(0)
   expect(opened()).toHaveLength(1)
   expect(overlays.depth).toBe(0)
-
   await press(button('a'))
   expect(extensions.popped?.id).toBe('a')
   expect(opened()).toHaveLength(2)
 })
-
 test('so does Enter or Space on it', async () => {
   await press(button('a'), false)
   expect(extensions.popped?.id).toBe('a')
@@ -100,7 +86,6 @@ test('so does Enter or Space on it', async () => {
   expect(extensions.popped).toBeNull()
   expect(opened()).toHaveLength(1)
 })
-
 test.each([true, false])(
   "another extension's button closes the first and opens only its own (pointer: %s)",
   async (pointer) => {
@@ -120,25 +105,20 @@ test.each([true, false])(
     }
   },
 )
-
 test('Escape, a press elsewhere and the tab going close it, and the focus leaving does not', async () => {
   await press(button('a'))
   overlays.away()
   expect(extensions.popped?.id).toBe('a')
-
   const inside = target.querySelector('.popup .inside')
   if (!inside) throw new Error('no popup')
   await press(inside)
   expect(extensions.popped?.id).toBe('a')
-
   overlays.escape()
   flushSync()
   expect(extensions.popped).toBeNull()
-
   await press(button('a'))
   await press(document.body.appendChild(document.createElement('p')))
   expect(extensions.popped).toBeNull()
-
   await press(button('a'))
   extensions.close()
   flushSync()

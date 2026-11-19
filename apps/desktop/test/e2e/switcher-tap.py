@@ -1,10 +1,8 @@
 from playwright.sync_api import Browser, Page
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-
 PHONE = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
@@ -13,11 +11,9 @@ TABLET = (
     "Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-
 BUTTON = '[data-space-drop="switcher"]'
 EXPANDED = f"document.querySelector('{BUTTON}')?.getAttribute('aria-expanded') === 'true'"
 LIST = "!!document.querySelector('[data-spaces-open]')"
-
 ROW_BELOW = """() => {
   const list = document.querySelector('[data-spaces-open]')?.getBoundingClientRect()
   if (!list) return null
@@ -29,10 +25,8 @@ ROW_BELOW = """() => {
   }
   return null
 }"""
-
 def is_open(page: Page) -> bool:
     return bool(page.evaluate(f"() => {EXPANDED} && {LIST}"))
-
 def press(page: Page, x: float, y: float, touch: bool) -> None:
     if touch:
         page.touchscreen.tap(x, y)
@@ -40,7 +34,6 @@ def press(page: Page, x: float, y: float, touch: bool) -> None:
         page.mouse.click(x, y)
     DRIVE.settled(page)
     page.wait_for_timeout(300)
-
 def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     page = DRIVE.page(browser, **options)
     DRIVE.open(page)
@@ -55,7 +48,6 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     box = page.locator(BUTTON).first.bounding_box()
     assert box is not None
     x, y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
-
     press(page, x, y, touch)
     if not is_open(page):
         wrong(f"[{label}] the first press did not open the list")
@@ -63,13 +55,11 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     if rows < 2:
         wrong(f"[{label}] the list has {rows} spaces in it, not two")
     shot(page, f"{label}-open")
-
     press(page, x, y, touch)
     if is_open(page):
         wrong(f"[{label}] a second press on the button did not close the list")
     else:
         say(f"ok   [{label}] the button closes what it opened")
-
     press(page, x, y, touch)
     if not is_open(page):
         wrong(f"[{label}] a third press did not open it again")
@@ -88,7 +78,6 @@ def check(browser: Browser, label: str, touch: bool, **options: object) -> None:
     elif row:
         say(f"ok   [{label}] and the row of the file list under it was not opened")
     page.close()
-
 def drive(browser: Browser) -> None:
     check(
         browser,
@@ -109,5 +98,4 @@ def drive(browser: Browser) -> None:
         is_mobile=True,
     )
     check(browser, "desktop", False, viewport={"width": 1280, "height": 820})
-
 raise SystemExit(DRIVE.run(drive, "the switcher's button opens and closes it, by finger and by mouse"))

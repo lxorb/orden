@@ -2,7 +2,6 @@ export class Heights {
   private tree: Float64Array
   private own: Float64Array
   private sum = 0
-
   constructor(heights: ArrayLike<number>) {
     const count = heights.length
     this.own = Float64Array.from(heights)
@@ -16,19 +15,15 @@ export class Heights {
       this.sum += own
     }
   }
-
   get count(): number {
     return this.own.length
   }
-
   get total(): number {
     return this.sum
   }
-
   heightOf(index: number): number {
     return this.own[index] ?? 0
   }
-
   set(index: number, height: number): number {
     if (index < 0 || index >= this.own.length) return 0
     const delta = height - (this.own[index] ?? 0)
@@ -40,13 +35,11 @@ export class Heights {
     }
     return delta
   }
-
   top(index: number): number {
     let sum = 0
     for (let i = Math.min(index, this.own.length); i > 0; i -= i & -i) sum += this.tree[i] ?? 0
     return sum
   }
-
   at(y: number): number {
     const count = this.own.length
     if (count === 0) return 0
@@ -63,7 +56,6 @@ export class Heights {
     }
     return Math.min(index, count - 1)
   }
-
   span(top: number, room: number, overscan: number): { from: number; to: number } {
     const count = this.own.length
     if (count === 0) return { from: 0, to: 0 }
@@ -72,19 +64,16 @@ export class Heights {
     return { from, to }
   }
 }
-
 export interface Anchor {
   key: string
   offset: number
 }
-
 export function anchorAt(heights: Heights, keys: readonly string[], top: number): Anchor | null {
   if (heights.count === 0) return null
   const index = heights.at(top)
   const key = keys[index]
   return key === undefined ? null : { key, offset: heights.top(index) - top }
 }
-
 export function anchored(heights: Heights, keys: readonly string[], anchor: Anchor | null): number | null {
   if (!anchor) return null
   const index = keys.indexOf(anchor.key)

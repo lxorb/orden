@@ -8,7 +8,6 @@ const options = {
   today: '2026-10-04',
   isNote: (name: string) => ['work', 'thesis'].includes(name.toLowerCase()),
 }
-
 const TREES: [string, Filter[]][] = [
   ['today', ['task.date == today()']],
   ['overdue', ['task.deadline < today()']],
@@ -90,20 +89,16 @@ const TREES: [string, Filter[]][] = [
   ['fri', ['task.date == today() + duration(((5 - number(today().format("E")) + 7) % 7) + "d")']],
   ['6/10', ['task.date == date("2026-10-06")']],
 ]
-
 function TREES_OVERDUE(): string {
   return 'task.deadline < today()'
 }
-
 describe("Todoist's documented filters", () => {
   test.each(TREES)('%s', (source, expected) => {
     expect(fromTodoist(source, options)).toEqual(expected)
   })
-
   test('a US reader writes the month first', () => {
     expect(fromTodoist('6/10', { ...options, lang: 'en-US' })).toEqual(['task.date == date("2026-06-10")'])
   })
-
   test("a date with no year and no today given takes this machine's year, not UTC's", () => {
     const zone = process.env.TZ
     process.env.TZ = 'Pacific/Auckland'
@@ -118,7 +113,6 @@ describe("Todoist's documented filters", () => {
     }
   })
 })
-
 describe('what a filter it compiles to keeps', () => {
   const rows: Row[] = [
     taskRow('Work.md', '- [ ] Write report 🔺 📅 2026-10-04', 0, { section: ['Meetings'] }),
@@ -133,7 +127,6 @@ describe('what a filter it compiles to keeps', () => {
     rows
       .filter((row) => fromTodoist(source, options).some((filter) => compileFilter(filter)(row, context)))
       .map((row) => row.task?.text)
-
   test.each<[string, (string | undefined)[]]>([
     ['today', ['Write report', 'Call']],
     ['overdue', ['Pay rent']],
@@ -152,7 +145,6 @@ describe('what a filter it compiles to keeps', () => {
     expect(kept(source).sort()).toEqual([...expected].sort())
   })
 })
-
 describe('mistakes', () => {
   test.each([
     ['frobnicate', '"frobnicate" is not a filter'],
@@ -163,7 +155,6 @@ describe('mistakes', () => {
     expect(() => fromTodoist(source, options)).toThrow(message)
   })
 })
-
 describe('a keyed term written with capitals', () => {
   test('reads as it does in lower case', () => {
     for (const [typed, lower] of [
