@@ -21,6 +21,7 @@ export interface Copies {
   freeNameOnDisk(dir: string, wanted: string): Promise<string>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
   pageNoteForPdf(path: string): Promise<string | null>
+  savingSettled(): Promise<void>
 }
 export interface Copying {
   from: string
@@ -44,6 +45,7 @@ function ownNoteRenamed(entry: Entry, to: string): { from: string; to: string } 
   return { from: joinPath(to, own.name), to: joinPath(to, renamed) }
 }
 export async function copyRows(ws: Copies, rows: readonly Copying[]): Promise<string[]> {
+  await ws.savingSettled()
   const made: Copied[] = []
   for (const { from, into } of rows) {
     const entry = ws.entryAt(from)
@@ -55,6 +57,7 @@ export async function copyRows(ws: Copies, rows: readonly Copying[]): Promise<st
   return made.map((one) => one.path)
 }
 export async function copyAgain(ws: Copies, made: readonly Copied[]): Promise<void> {
+  await ws.savingSettled()
   const again: Copied[] = []
   for (const one of made) {
     const entry = one.from === undefined ? null : ws.entryAt(one.from)

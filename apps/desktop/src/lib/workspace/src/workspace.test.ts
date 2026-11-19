@@ -2256,6 +2256,23 @@ describe('a note writes itself, wherever it is', () => {
     expect(about.indexOf('write_note')).toBeGreaterThanOrEqual(0)
     expect(about.lastIndexOf('write_note')).toBeLessThan(about.lastIndexOf('read_note'))
   })
+  test('a copy made right after typing holds the typed words', async () => {
+    const tree = () => (workspace.tree = folder('/space', [note('/space/a.md'), folder('/space/f', [])]))
+    const wroteFirst = () => {
+      const commands = sent.map((one) => `${one.command} ${one.path}`)
+      const wrote = commands.indexOf('write_note /space/a.md')
+      return wrote >= 0 && wrote < commands.findIndex((one) => one.startsWith('copy_path'))
+    }
+    tree()
+    const tab = await typedIn('/space/a.md')
+    await workspace.duplicateMany(['/space/a.md'])
+    expect(wroteFirst()).toBe(true)
+    sent.length = 0
+    tree()
+    tab.note.live.replace('# a, typed again')
+    await workspace.copyMany(['/space/a.md'], '/space/f')
+    expect(wroteFirst()).toBe(true)
+  })
   test('a delete does not wait for ever on a write that never comes back', async () => {
     await typedIn('/space/a.md')
     const gate = { free: () => undefined as unknown }
