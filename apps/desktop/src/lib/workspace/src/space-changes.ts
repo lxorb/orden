@@ -2,7 +2,7 @@ import { account } from '../../accounts/src/api'
 import { identifier, samePath, invoke, windows, within } from '../../platform/src/api'
 import { forgetHome, homeOf, leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
 import type { Space } from './workspace.svelte'
-import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
+import { firstShown, type HoldsSpaces, selectSpace, tabSets } from './spaces'
 import { services } from './services'
 
 export async function adoptSpace(ws: HoldsSpaces, name: string, fresh = false, home?: string): Promise<string | null> {
@@ -101,10 +101,11 @@ async function spaceGone(ws: HoldsSpaces, space: Space, back?: string) {
   const id = space.id
   await ws.fileGone(space.root, 'space', back)
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
+  ws.archivedSpaces.set(space.root, false)
   const fetched =
     tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length ? (await import('./sets.svelte')).sets : null
   if (ws.activeSpaceId === id) {
-    ws.activeSpaceId = ws.spaces[0]?.id ?? null
+    ws.activeSpaceId = firstShown(ws)
     ws.tree = null
     if (ws.activeSpaceId) await selectSpace(ws, ws.activeSpaceId)
   }

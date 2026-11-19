@@ -14,6 +14,7 @@ export interface HoldsSpaces {
   readonly notes: Entry[]
   readonly tabs: Tab[]
   setsRead: unknown
+  readonly archivedSpaces: { has(root: string): boolean; set(root: string, archived: boolean): boolean }
   fileMoved(from: string, to: string, kind: 'space'): Promise<void>
   fileGone(path: string, kind: 'space', back?: string): Promise<void>
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
@@ -62,7 +63,7 @@ export async function loadSpaces(ws: HoldsSpaces) {
     .map(({ entry }) => byRoot.get(entry.path) ?? { id: identifier(), name: entry.name, root: entry.path })
   const gone = ws.activeSpaceId
   if (ws.spaces.some((space) => space.id === gone)) return
-  const next = ws.spaces[0]?.id ?? null
+  const next = firstShown(ws)
   if (gone === null || next === null || !tabSets.fetched) {
     ws.activeSpaceId = next
     return
@@ -71,6 +72,8 @@ export async function loadSpaces(ws: HoldsSpaces) {
   await sets.toSpace(next)
   await sets.gone(gone)
 }
+export const firstShown = (ws: HoldsSpaces): string | null =>
+  (ws.spaces.find((one) => !ws.archivedSpaces.has(one.root)) ?? ws.spaces[0])?.id ?? null
 export function moveSpace(ws: HoldsSpaces, id: string, beforeId: string | null): boolean {
   const moving = ws.spaces.find((space) => space.id === id)
   if (!moving || id === beforeId) return false

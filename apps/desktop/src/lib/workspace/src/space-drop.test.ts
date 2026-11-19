@@ -27,6 +27,7 @@ describe('a space dropped for good', () => {
       tabs: [],
       tree: null,
       setsRead: undefined,
+      archivedSpaces: { has: () => false, set: () => false },
       fileGone: () => Promise.resolve(),
       persist: () => undefined,
     }
