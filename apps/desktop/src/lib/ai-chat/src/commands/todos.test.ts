@@ -6,8 +6,8 @@ vi.mock('../../../tasks-model/src/api', () => ({
   listed: () => ({
     total: 2,
     tasks: [
-      { at: 't1', space: 'home', text: 'Pay rent', due: '2020-01-01', priority: 1 },
-      { at: 't2', space: '', text: 'Call mum' },
+      { at: 't1', text: 'Pay rent', due: '2020-01-01', priority: 1 },
+      { at: 't2', text: 'Call mum' },
     ],
   }),
 }))
