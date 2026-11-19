@@ -49,7 +49,7 @@ async function tool(key: string, name: string, args: Record<string, unknown> = {
 }
 async function json(key: string, name: string, args: Record<string, unknown> = {}) {
   return JSON.parse(await tool(key, name, args)) as Record<string, unknown> & {
-    todos: { id: string; title: string }[]
+    todos: { id: string; title: string; repeat?: string | null }[]
   }
 }
 async function basesTurned(on: boolean) {
@@ -129,6 +129,91 @@ describe('the todos, with Orden closed', () => {
     const listed = await json(key, 'list_tasks', { space: 'Elsewhere' })
     expect(listed.todos.map((one) => one.title)).toEqual(['Post the letter', 'Call the bank'])
     for (const one of listed.todos) expect(one).not.toHaveProperty('space')
+  })
+  describe('a repeating todo', () => {
+    async function onTheDay<T>(work: () => Promise<T>): Promise<T> {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(Date.UTC(2026, 10, 19, 22, 30))
+      try {
+        return await work()
+      } finally {
+        vi.useRealTimers()
+      }
+    }
+    const fields = (id: string) =>
+      JSON.parse(
+        (env.db.prepare('select fields from inbox_items where id = ?').get(id) as { fields: string }).fields,
+      ) as Record<string, unknown>
+    test('is added with its rule, and listed with it', async () => {
+      const key = await connector()
+      const added = await json(key, 'add_task', {
+        title: 'Pay rent',
+        deadline: '2026-11-01',
+        repeat: 'every month on the 1st',
+      })
+      expect(added.repeat).toBeTruthy()
+      expect(fields(added.id as string).repeat).toBe(added.repeat)
+      expect((await json(key, 'list_tasks', {})).todos).toMatchObject([{ id: added.id, repeat: added.repeat }])
+      const plain = await json(key, 'add_task', { title: 'Once' })
+      expect(plain.repeat).toBeNull()
+    })
+    test('moves to its next dates when done, its steps undone, and keeps a done copy', async () => {
+      const key = await connector()
+      env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
+      const added = await json(key, 'add_task', {
+        title: 'Pay rent',
+        deadline: '2026-11-01',
+        repeat: 'every month on the 1st',
+        labels: ['home'],
+      })
+      const id = added.id as string
+      const step = JSON.stringify({ id: 's1', title: 'Log in', done: true })
+      env.db
+        .prepare("update inbox_items set fields = json_set(fields, '$.subtasks', json_array(?)) where id = ?")
+        .run(step, id)
+      const moved = await onTheDay(() => json(key, 'update_task', { id, done: true, priority: 2 }))
+      expect(moved).toMatchObject({ id, done: false, deadline: '2026-12-01', repeat: added.repeat, priority: 2 })
+      expect(fields(id).subtasks).toEqual([JSON.stringify({ id: 's1', title: 'Log in', done: false })])
+      const all = await json(key, 'list_tasks', { done: true })
+      expect(all.total).toBe(2)
+      const copy = all.todos.find((one) => one.id !== id)
+      expect(copy).toMatchObject({
+        title: 'Pay rent',
+        done: true,
+        deadline: '2026-11-01',
+        repeat: null,
+        labels: ['home'],
+      })
+      expect((await json(key, 'list_tasks', {})).todos).toMatchObject([{ id, deadline: '2026-12-01' }])
+    })
+    test('counted from when it is done goes from the asker’s today', async () => {
+      const key = await connector()
+      env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
+      const added = await json(key, 'add_task', {
+        title: 'Water plants',
+        start: '2026-11-01',
+        repeat: 'every! 10 days',
+      })
+      const moved = await onTheDay(() => json(key, 'update_task', { id: added.id, done: true }))
+      expect(moved).toMatchObject({ done: false, start: '2026-11-30' })
+    })
+    test('a todo without a rule is simply done', async () => {
+      const key = await connector()
+      const added = await json(key, 'add_task', { title: 'Once', deadline: '2026-11-01' })
+      expect(await json(key, 'update_task', { id: added.id, done: true })).toMatchObject({
+        done: true,
+        deadline: '2026-11-01',
+      })
+      expect((await json(key, 'list_tasks', { done: true })).total).toBe(1)
+    })
+    test('a rule that does not read is refused, and an empty one stops it repeating', async () => {
+      const key = await connector()
+      const said = 'repeat is a rule like "every 3 days", or "every! 10 days" to count from when it is done.'
+      expect(await tool(key, 'add_task', { title: 'Odd', repeat: 'whenever' })).toBe(said)
+      const added = await json(key, 'add_task', { title: 'Pay rent', repeat: 'every week' })
+      expect(await tool(key, 'update_task', { id: added.id, repeat: 'now and then' })).toBe(said)
+      expect(await json(key, 'update_task', { id: added.id, repeat: '' })).toMatchObject({ repeat: null })
+    })
   })
   test('a change that would make a todo larger than a device reads is refused, the todo kept', async () => {
     const key = await connector()
