@@ -239,7 +239,7 @@ export function partOf(file: string): Part {
 }
 export const BUDGETS: Record<Part, number> = {
   code: 6_600_000,
-  styles: 302_800,
+  styles: 294_400,
   fonts: 260_000,
   pages: 44_000,
 }
