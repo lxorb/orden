@@ -7,6 +7,7 @@ export type {
   Invitation,
   Joined,
   Member,
+  MemberRole,
   RemoteNote,
   RemoteSession,
   RemoteSpace,

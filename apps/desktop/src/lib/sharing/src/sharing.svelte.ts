@@ -2,6 +2,7 @@ import {
   api,
   ApiError,
   type GivenRole,
+  type MemberRole,
   readSeats,
   type RemoteSpace,
   type Seats,
@@ -271,7 +272,7 @@ class Share {
   private sheet = 0
   error = $state<string | null>(null)
   email = $state('')
-  role = $state<GivenRole>('write')
+  role = $state<MemberRole>('write')
   wrongAddress = $state(false)
   get busy(): boolean {
     return this.working !== null
@@ -288,12 +289,15 @@ class Share {
   async show(space: WorkspaceSpace) {
     await this.about(space, null)
   }
+  async look(space: WorkspaceSpace) {
+    await this.about(space, null, false)
+  }
   async showItem(space: WorkspaceSpace, path: string) {
     const id = idOf(path)
     if (!id) return
     await this.about(space, { id, path })
   }
-  private async about(space: WorkspaceSpace, item: { id: string; path: string } | null) {
+  private async about(space: WorkspaceSpace, item: { id: string; path: string } | null, open = true) {
     const id = remoteIdFor(space.root)
     if (!id) return
     this.sheet += 1
@@ -306,7 +310,7 @@ class Share {
     this.wrongAddress = false
     this.role = 'write'
     this.working = null
-    this.open = true
+    this.open = open
     await this.run((asking) => api.sharing(asking.token, asking.id, asking.item), 'sheet')
   }
   close() {
@@ -321,7 +325,7 @@ class Share {
     const left = [...addresses]
     while (left.length && !isFull(this.seats)) {
       const address = left[0] ?? ''
-      const role = this.role
+      const role = this.item && this.role === 'admin' ? 'write' : this.role
       if (
         !(await this.change(
           (asking) => api.invite(asking.token, asking.id, address, role, asking.item),
@@ -335,16 +339,18 @@ class Share {
       this.email = left.join(', ')
     }
   }
-  resend(person: Someone & { role: GivenRole }) {
+  resend(person: Someone & { role: GivenRole; admin?: boolean }) {
+    const role = person.admin ? 'admin' : person.role
     return this.change(
-      (asking) => api.invite(asking.token, asking.id, person.email ?? '', person.role, asking.item),
+      (asking) => api.invite(asking.token, asking.id, person.email ?? '', role, asking.item),
       whoIs(person),
     )
   }
-  setRole(person: Someone, role: GivenRole) {
+  setRole(person: Someone, role: MemberRole) {
+    if (role === 'admin' && (person.guest || this.item)) return Promise.resolve(false)
     return this.change(
       ({ token, id, item }) =>
-        person.guest
+        person.guest && role !== 'admin'
           ? api.setGuestRole(token, id, person.guest, role, item)
           : api.setMemberRole(token, id, person.email ?? '', role, item),
       whoIs(person),
@@ -433,11 +439,15 @@ function gone(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404
 }
 export const share = new Share()
+export const members = new Share()
 function ownsRemotely(space: WorkspaceSpace): boolean {
   return !!account.user && !!remoteIdFor(space.root) && roleOf(space.root) === 'owner'
 }
+export function managesSpace(root: string): boolean {
+  return roleOf(root) === 'owner' || remoteOf(root)?.admin === true
+}
 export function canShare(space: WorkspaceSpace): boolean {
-  return ownsRemotely(space)
+  return !!account.user && !!remoteIdFor(space.root) && managesSpace(space.root)
 }
 export function canPublish(space: WorkspaceSpace): boolean {
   return ownsRemotely(space)
