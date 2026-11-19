@@ -51,7 +51,7 @@ impl Default for EngineSettings {
             switches: vec![(swipe_switch.to_owned(), Some(swipe_off.to_owned()))],
             disabled_features: vec![swipe_feature.to_owned()],
             enabled_features: overlay_scrollbars().map(str::to_owned).into_iter().collect(),
-            deep_link_schemes: vec!["orden".to_owned(), "nib".to_owned()],
+            deep_link_schemes: vec!["orden".to_owned()],
             root_cache: None,
             windowless: false,
             accelerated: true,

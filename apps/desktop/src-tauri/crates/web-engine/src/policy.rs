@@ -1,7 +1,6 @@
 use url::Url;
 
-pub const APP_HOSTS: [&str; 4] =
-    ["tauri.localhost", "ipc.localhost", "asset.localhost", "nib.localhost"];
+pub const APP_HOSTS: [&str; 3] = ["tauri.localhost", "ipc.localhost", "asset.localhost"];
 pub const INTERNAL_MARK: &str = "data-tauri-cef-internal";
 pub trait ExtensionUrls {
     fn is_extension(&self, url: &Url) -> bool;

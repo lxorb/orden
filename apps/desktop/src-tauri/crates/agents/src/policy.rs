@@ -1945,7 +1945,7 @@ mod tests {
             "http://tauri.localhost./",
             "https://IPC.localhost../x",
             "http://asset.localhost./",
-            "http://nib.localhost./",
+            "http://ipc.localhost./",
         ] {
             assert!(!on_the_web(address), "{address}");
         }
