@@ -988,3 +988,40 @@ describe('off a Mac', () => {
     expect(appCommands().find((one) => one.id === 'focus')?.hint).toBe('F8')
   })
 })
+describe('the palette scope key', () => {
+  test('is a contextual row in the table, on Alt+A everywhere', () => {
+    const entry = found('palette.scope')
+    expect(entry.scope).toBe('panel')
+    expect(entry.contextual).toBe(true)
+    expect(entry.category).toBe('view')
+    for (const platform of PLATFORMS) expect(onPlatform(platform).keyFor('palette.scope'), platform).toBe('Alt-a')
+  })
+  test('answers Alt+A, and the Option key on a Mac that types a letter', () => {
+    expect(shortcuts.pressed('palette.scope', press('a', { code: 'KeyA', alt: true }))).toBe(true)
+    expect(shortcuts.pressed('palette.scope', press('a', { code: 'KeyA' }))).toBe(false)
+    expect(shortcuts.pressed('palette.scope', press('a', { code: 'KeyA', ctrl: true, alt: true }))).toBe(false)
+    expect(onPlatform('mac').pressed('palette.scope', press('å', { code: 'KeyA', alt: true }))).toBe(true)
+  })
+  test('follows a rebind and leaves the old key', () => {
+    shortcuts.set('palette.scope', 'Mod-Alt-j')
+    expect(shortcuts.pressed('palette.scope', press('j', { code: 'KeyJ', ctrl: true, alt: true }))).toBe(true)
+    expect(shortcuts.pressed('palette.scope', press('a', { code: 'KeyA', alt: true }))).toBe(false)
+    shortcuts.reset('palette.scope')
+    expect(shortcuts.pressed('palette.scope', press('a', { code: 'KeyA', alt: true }))).toBe(true)
+  })
+  test('shares its key with no other row on any system', () => {
+    for (const platform of PLATFORMS) {
+      const one = onPlatform(platform)
+      const key = one.keyFor('palette.scope') ?? ''
+      const others = registry.SHORTCUTS.filter((row) => {
+        const held = row.id === 'palette.scope' ? null : one.keyFor(row.id)
+        return !!held && sameCombination(held, key, platform)
+      })
+      expect(
+        others.map((row) => row.id),
+        platform,
+      ).toEqual([])
+      expect(one.conflicts('palette.scope', key), platform).toEqual([])
+    }
+  })
+})
