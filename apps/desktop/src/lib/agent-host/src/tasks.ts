@@ -98,6 +98,7 @@ function todoOut(todo: Todo) {
     deadline: todo.deadline,
     priority: todo.priority,
     ...(todo.description ? { description: todo.description } : {}),
+    ...(todo.repeat ? { repeat: todo.repeat } : {}),
     ...(todo.subtasks.length ? { subtasks: todo.subtasks } : {}),
   }
 }
@@ -114,6 +115,18 @@ function dayArg(call: Call, name: string): string | null | undefined {
   if (value === undefined) return undefined
   if (value === null || value === '') return null
   if (typeof value !== 'string') throw new Refused('bad_arguments', `${name} is a day as YYYY-MM-DD`)
+  return value
+}
+function repeatArg(call: Call): string | null | undefined {
+  const value = call.args.repeat
+  if (value === undefined) return undefined
+  if (value === null || value === '') return null
+  if (typeof value !== 'string') {
+    throw new Refused(
+      'bad_arguments',
+      'repeat is a rule like "every 3 days", or "every! 10 days" to count from when it is done',
+    )
+  }
   return value
 }
 function priorityArg(call: Call): Priority | undefined {
@@ -138,6 +151,8 @@ function patchOf(call: Call): TodoPatch {
   if (deadline !== undefined) patch.deadline = deadline
   const priority = priorityArg(call)
   if (priority !== undefined) patch.priority = priority
+  const repeat = repeatArg(call)
+  if (repeat !== undefined) patch.repeat = repeat
   if (call.args.done !== undefined && call.args.done !== null) patch.done = flag(call, 'done')
   return patch
 }

@@ -1667,6 +1667,34 @@ describe('to-dos and bases', () => {
     })
     await todos.remove(id)
   })
+  test('a todo repeats by the rule it is given, a bad rule is refused, and done moves it on', async () => {
+    const { todos } = await import('../src/lib/tasks-model/src/api')
+    const had = new Set(todos.todos.map((one) => one.id))
+    const added = await onTodos('add_task', {
+      text: 'Pay rent',
+      deadline: '2099-01-01',
+      repeat: 'every month on the 1st',
+    })
+    const id = (added as { result: { id: string } }).result.id
+    const listed = await onTodos('list_tasks', {})
+    const before = todos.todos.length
+    const refused = [
+      await onTodos('add_task', { text: 'Water the fern', repeat: 'now and then' }),
+      await onTodos('add_task', { text: 'Water the fern', repeat: 3 }),
+      await onTodos('update_task', { id, repeat: 'now and then' }),
+    ]
+    const count = todos.todos.length
+    const moved = await onTodos('update_task', { id, done: true })
+    const cleared = await onTodos('update_task', { id, repeat: '' })
+    for (const one of todos.todos.filter((one) => !had.has(one.id))) await todos.remove(one.id)
+    expect(listed).toMatchObject({ result: { todos: [{ id, repeat: 'every month on the 1st' }] } })
+    for (const one of refused) {
+      expect(one).toMatchObject({ code: 'bad_arguments', message: expect.stringContaining('repeat') as string })
+    }
+    expect(count).toBe(before)
+    expect(moved).toMatchObject({ result: { done: false, deadline: '2099-02-01', repeat: 'every month on the 1st' } })
+    expect((cleared as { result: Record<string, unknown> }).result.repeat).toBeUndefined()
+  })
   test('a description is kept as written, and taken off when sent empty', async () => {
     const { todos } = await import('../src/lib/tasks-model/src/api')
     const steps = await onTodos('add_task', { text: 'Steps', description: '  - one\n  - two' })
