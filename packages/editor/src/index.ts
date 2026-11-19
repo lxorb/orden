@@ -3,6 +3,7 @@ export { HeldState, type StateView } from './held'
 export { parsedOnScreen } from './parse-ahead'
 export { agentsOf, type Peer, peersOf, remoteCarets, setAgents, setPeers } from './carets'
 export {
+  type Caret,
   type DocView,
   documentOf,
   type Heard,

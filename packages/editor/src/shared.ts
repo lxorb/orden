@@ -20,6 +20,12 @@ export interface DocView {
   readonly state: EditorState
   dispatch(spec: TransactionSpec): void
   readonly composing?: boolean
+  readonly hasFocus?: boolean
+}
+export interface Caret {
+  head: number
+  focused: boolean
+  typed: boolean
 }
 const onDocument = new WeakMap<DocView, SharedDoc>()
 export const documentOf = (view: DocView): SharedDoc | null => onDocument.get(view) ?? null
@@ -43,6 +49,7 @@ export function later(
     if (!spec) return false
     const made = asked.update(spec)
     note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent), asked.selection)
+    note.moved({ head: made.newSelection.main.head, focused: false, typed: true })
     return true
   }
 }
@@ -153,6 +160,7 @@ export class SharedDoc {
     return this.held !== null
   }
   private readonly listeners = new Set<(heard: Heard) => void>()
+  private readonly carets = new Set<(caret: Caret) => void>()
   get undoable(): number {
     return this.ownUndo
   }
@@ -234,8 +242,11 @@ export class SharedDoc {
     this.settle()
   }
   private drop(view: DocView) {
-    this.views.delete(view)
+    const shown = this.views.delete(view)
     if (onDocument.get(view) === this) onDocument.delete(view)
+    if (!shown) return
+    const head = Math.min(view.state.selection.main.head, this.state.doc.length)
+    this.moved({ head, focused: false, typed: false })
   }
   local(changes: ChangeSet, selection: EditorSelection, from: DocView, userEvent?: string, before?: EditorSelection) {
     if (before && !before.eq(this.state.selection)) this.selected(before)
@@ -345,6 +356,7 @@ export class SharedDoc {
     this.carry(done.changes, null, { view: asked, selection: done.state.selection })
     this.made(done.changes)
     this.took(done, 'reader')
+    this.moved({ head: done.state.selection.main.head, focused: asked.hasFocus ?? false, typed: true })
     return true
   }
   carried(edits: readonly Replacement[], before: string, guess = false): Replacement[] | null {
@@ -399,6 +411,13 @@ export class SharedDoc {
   listen(listener: (heard: Heard) => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
+  }
+  caret(listener: (caret: Caret) => void): () => void {
+    this.carets.add(listener)
+    return () => this.carets.delete(listener)
+  }
+  moved(caret: Caret) {
+    for (const listener of [...this.carets]) listener(caret)
   }
   private took(made: Transaction, by: Made) {
     this.recent.push({ before: made.startState.doc, changes: made.changes, by, at: Date.now() })
