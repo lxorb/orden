@@ -2,6 +2,7 @@ import { existsSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { awaitedOnly } from './even-awaited'
 import manifest from './even.app.json'
 
 const LEFT_OUT = new Set([
@@ -97,6 +98,13 @@ function withoutWhatTheGlassesCannotUse() {
     },
   }
 }
+function onlyWhatIsAwaited(): Plugin {
+  return {
+    name: 'orden-even-awaited',
+    enforce: 'pre',
+    transform: (code, id) => (id.endsWith('.svelte') ? awaitedOnly(code) : null),
+  }
+}
 function whatWentIn(file: string | undefined): Plugin {
   const repo = resolve(import.meta.dirname, '../..').replace(/\\/g, '/')
   return {
@@ -107,6 +115,7 @@ function whatWentIn(file: string | undefined): Plugin {
       for (const chunk of Object.values(bundle)) {
         if (chunk.type !== 'chunk') continue
         for (const [id, { renderedLength }] of Object.entries(chunk.modules)) {
+          if (!renderedLength) continue
           const path = id.replace(/\\/g, '/').replace(`${repo}/`, '')
           modules[path] = (modules[path] ?? 0) + renderedLength
         }
@@ -119,7 +128,12 @@ interface Resolver {
   resolve(source: string, importer: string | undefined, options: object): Promise<{ id: string } | null>
 }
 export default defineConfig({
-  plugins: [svelte(), withoutWhatTheGlassesCannotUse(), whatWentIn(process.env.ORDEN_EVEN_CONTENTS)],
+  plugins: [
+    onlyWhatIsAwaited(),
+    svelte(),
+    withoutWhatTheGlassesCannotUse(),
+    whatWentIn(process.env.ORDEN_EVEN_CONTENTS),
+  ],
   define: {
     __EVEN_BUILD__: JSON.stringify(`${manifest.version} even`),
     __EVEN_PLUGIN__: 'true',
@@ -136,6 +150,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: { even: resolve(import.meta.dirname, 'even.html') },
+      treeshake: { moduleSideEffects: (id) => !id.endsWith('.svelte') },
     },
   },
 })
