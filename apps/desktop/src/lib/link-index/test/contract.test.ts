@@ -83,4 +83,20 @@ describe('the link index', () => {
     unbind()
     expect(opened).toEqual([])
   })
+  test('a note copied into another folder resolves every link and picture its source resolved', () => {
+    const index = spaceLinks()
+    void index.build('/s')
+    for (const path of ['Work/Plan.md', 'Read me.md', 'Work/Sub/x.md', 'Work/Sub/y.md']) {
+      index.noteSaved(`/s/${path}`, `# ${path}`)
+    }
+    index.fileAdded('assets/a.png')
+    expect(index.rebased('![](../assets/a.png)\n[readme](../Read%20me.md)', '/s/Work/Plan.md', '/s/Plan.md')).toBe(
+      '![](assets/a.png)\n[readme](Read%20me.md)',
+    )
+    const inner = '[y](y.md)\n[plan](../Plan.md)\n![](../../assets/a.png)'
+    expect(index.rebased(inner, '/s/Work/Sub/x.md', '/s/Copied/Sub/x.md', '/s/Work/Sub')).toBe(
+      '[y](y.md)\n[plan](../../Work/Plan.md)\n![](../../assets/a.png)',
+    )
+    expect(index.rebased(inner, '/s/Work/Sub/x.md', '/s/Copied/Sub/x.md')).toContain('[y](../../Work/Sub/y.md)')
+  })
 })

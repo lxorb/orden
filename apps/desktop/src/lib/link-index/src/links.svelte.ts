@@ -774,15 +774,16 @@ class Links {
     return map
   })
   private readonly notesByPath = $derived.by(() => new Map(this.notes.map((one) => [one.path, one])))
-  rebased(text: string, from: string, to: string): string | null {
+  rebased(text: string, from: string, to: string, along?: string): string | null {
     const was = this.otherHolding(from) === null ? this.relative(from) : null
     const now = this.otherHolding(to) === null ? this.relative(to) : null
     if (!was || !now || folderOf(was) === folderOf(now)) return null
+    const kept = along === undefined ? null : this.relative(along)
     const read = (source: string, link: { kind: LinkKind; target: string }) =>
       this.resolveFrom(source, link, false) ?? fileNamed(this.files, source, link)
     return retargetLinks(text, now, (link) => {
       const there = read(was, link)
-      if (there === null) return null
+      if (there === null || (kept !== null && (there === kept || there.startsWith(`${kept}/`)))) return null
       if (link.kind === 'markdown') return stillReaches(now, link, there, false) ? null : there
       const reaches = (written: string) => read(now, { kind: link.kind, target: written }) === there
       return reaches(link.target) ? null : { path: there, reaches }
