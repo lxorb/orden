@@ -54,16 +54,10 @@ fn opens(body: &str, at: usize) -> bool {
     is_lower(before) && !letter_at(body, at).is_some_and(is_lower)
 }
 fn find_from(folded: &str, letter: char, at: usize) -> Option<usize> {
-    folded
-        .get(at..)
-        .and_then(|rest| rest.find(letter))
-        .map(|found| at + found)
+    folded.get(at..).and_then(|rest| rest.find(letter)).map(|found| at + found)
 }
 fn find_within(folded: &str, letter: char, at: usize, to: usize) -> Option<usize> {
-    folded
-        .get(at..to)
-        .and_then(|region| region.find(letter))
-        .map(|found| at + found)
+    folded.get(at..to).and_then(|region| region.find(letter)).map(|found| at + found)
 }
 fn cut(body: &str, from: usize, end: usize) -> usize {
     if end.saturating_sub(from) <= SCORED {
@@ -87,8 +81,7 @@ fn walk(word: &Word, folded: &str, at: usize, to: usize, out: &mut Vec<usize>) -
     true
 }
 fn missed(body: &str, from: usize, to: usize) -> usize {
-    body.get(from..to)
-        .map_or(0, |skipped| skipped.chars().take(WORST).count())
+    body.get(from..to).map_or(0, |skipped| skipped.chars().take(WORST).count())
 }
 fn gap(missing: usize) -> i32 {
     if missing == 0 {
@@ -307,14 +300,7 @@ impl Fuzzy {
             from = broke + 1;
             line += 1;
         }
-        done(
-            note,
-            best_line,
-            best_from,
-            best_end,
-            best_score,
-            &best_positions,
-        )
+        done(note, best_line, best_from, best_end, best_score, &best_positions)
     }
 }
 fn done(
@@ -354,19 +340,9 @@ fn row(
     }
     let ranges = moved
         .iter()
-        .map(|span| Range {
-            from: utf16_at(&text, span.from),
-            to: utf16_at(&text, span.to),
-        })
+        .map(|span| Range { from: utf16_at(&text, span.from), to: utf16_at(&text, span.to) })
         .collect();
-    FuzzyHit {
-        path: note.path.to_string(),
-        name: note.name.to_string(),
-        line,
-        text,
-        ranges,
-        score,
-    }
+    FuzzyHit { path: note.path.to_string(), name: note.name.to_string(), line, text, ranges, score }
 }
 #[cfg(test)]
 mod tests {
@@ -422,15 +398,8 @@ mod tests {
         let folded = super::fold(cropped);
         let first = folded.find(head)?;
         let mut kept = Vec::new();
-        let found = fit_at(
-            &word,
-            cropped,
-            &folded,
-            cropped.len(),
-            first,
-            &mut kept,
-            &mut Vec::new(),
-        )?;
+        let found =
+            fit_at(&word, cropped, &folded, cropped.len(), first, &mut kept, &mut Vec::new())?;
         Some((found.score, kept))
     }
     fn score(term: &str, line: &str) -> Option<i32> {
@@ -440,10 +409,7 @@ mod tests {
         let Some((_, at)) = fit(term, line) else {
             return String::new();
         };
-        ranges(line, &at)
-            .iter()
-            .filter_map(|span| line.get(span.from..span.to))
-            .collect()
+        ranges(line, &at).iter().filter_map(|span| line.get(span.from..span.to)).collect()
     }
     fn better<'a>(term: &str, one: &'a str, other: &'a str) -> &'a str {
         match (score(term, one), score(term, other)) {
@@ -494,14 +460,8 @@ mod tests {
     }
     #[test]
     fn letters_next_to_each_other_over_letters_apart() {
-        assert_eq!(
-            better("run", "a run of it", "rather unusual number"),
-            "a run of it"
-        );
-        assert_eq!(
-            better("quater", "The quarter plan", "q u a t e r"),
-            "The quarter plan"
-        );
+        assert_eq!(better("run", "a run of it", "rather unusual number"), "a run of it");
+        assert_eq!(better("quater", "The quarter plan", "q u a t e r"), "The quarter plan");
     }
     #[test]
     fn a_word_start_beats_the_middle_and_the_whole_word_beats_initials() {
@@ -521,10 +481,7 @@ mod tests {
     }
     #[test]
     fn bare_words_are_relaxed_folded() {
-        assert_eq!(
-            terms(&all(&[text("meting"), text("notes")])),
-            ["meting", "notes"]
-        );
+        assert_eq!(terms(&all(&[text("meting"), text("notes")])), ["meting", "notes"]);
         assert_eq!(terms(&text("MeTing")), ["meting"]);
         assert!(terms(&all(&[])).is_empty());
         assert!(terms(&path("Work")).is_empty());
@@ -535,12 +492,7 @@ mod tests {
     fn and_words_narrowed_by_an_operator_that_asks_about_the_note() {
         assert_eq!(terms(&all(&[text("meting"), path("Work")])), ["meting"]);
         assert_eq!(
-            terms(&all(&[
-                text("meting"),
-                tag("work"),
-                file("a"),
-                property("status")
-            ])),
+            terms(&all(&[text("meting"), tag("work"), file("a"), property("status")])),
             ["meting"]
         );
     }
@@ -560,12 +512,7 @@ mod tests {
         let left = without_words(&query(&all(&[text("meting"), path("Work")])));
         assert_eq!(
             left,
-            Query::All {
-                of: vec![Query::Path {
-                    text: "Work".to_string(),
-                    fold: true,
-                }],
-            }
+            Query::All { of: vec![Query::Path { text: "Work".to_string(), fold: true }] }
         );
     }
     #[test]
@@ -593,10 +540,8 @@ mod tests {
     }
     fn ranked(json: &str, bodies: &[(&str, &str)]) -> Vec<String> {
         let fuzzy = Fuzzy::new(&terms(json));
-        let mut found: Vec<FuzzyHit> = bodies
-            .iter()
-            .filter_map(|(one, body)| fuzzy.best(&note(one, body)))
-            .collect();
+        let mut found: Vec<FuzzyHit> =
+            bodies.iter().filter_map(|(one, body)| fuzzy.best(&note(one, body))).collect();
         found.sort_by_key(|hit| Reverse(hit.score()));
         found.into_iter().map(|hit| hit.path).collect()
     }
@@ -619,10 +564,7 @@ mod tests {
         assert_eq!(
             ranked(
                 &text("quater"),
-                &[
-                    ("/yes.md", "the quarter"),
-                    ("/no.md", "nothing of the kind here"),
-                ]
+                &[("/yes.md", "the quarter"), ("/no.md", "nothing of the kind here"),]
             ),
             ["/yes.md"]
         );

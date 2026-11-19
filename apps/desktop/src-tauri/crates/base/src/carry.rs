@@ -27,9 +27,7 @@ pub fn rename_new(from: &Path, to: &Path) -> io::Result<()> {
 }
 fn unsupported(error: &io::Error) -> bool {
     matches!(error.kind(), io::ErrorKind::Unsupported)
-        || error
-            .raw_os_error()
-            .is_some_and(|code| UNSUPPORTED.contains(&code))
+        || error.raw_os_error().is_some_and(|code| UNSUPPORTED.contains(&code))
 }
 #[cfg(target_os = "linux")]
 const UNSUPPORTED: [i32; 2] = [libc::EINVAL, libc::ENOSYS];
@@ -85,13 +83,8 @@ fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
 
     let wide = |path: &Path| -> Vec<u16> { path.as_os_str().encode_wide().chain([0]).collect() };
     let (from, to) = (wide(from), wide(to));
-    let done = unsafe {
-        MoveFileExW(
-            PCWSTR(from.as_ptr()),
-            PCWSTR(to.as_ptr()),
-            MOVE_FILE_FLAGS(0),
-        )
-    };
+    let done =
+        unsafe { MoveFileExW(PCWSTR(from.as_ptr()), PCWSTR(to.as_ptr()), MOVE_FILE_FLAGS(0)) };
     done.map_err(|error| {
         let code = error.code().0;
         if code.cast_unsigned() & 0xFFFF_0000 == 0x8007_0000 {
@@ -177,20 +170,13 @@ fn copy_all(source: &Path, target: &Path, links: Links, made: &mut bool) -> Resu
         let entries = fs::read_dir(source).map_err(|error| cannot("read", source, &error))?;
         for entry in entries {
             let entry = entry.map_err(|error| cannot("read", source, &error))?;
-            copy_all(
-                &entry.path(),
-                &target.join(entry.file_name()),
-                links,
-                &mut true,
-            )?;
+            copy_all(&entry.path(), &target.join(entry.file_name()), links, &mut true)?;
         }
         return Ok(());
     }
     let copied = fs::copy(source, target);
     *made = copied.is_ok() || fs::symlink_metadata(target).is_ok();
-    copied
-        .map(|_| ())
-        .map_err(|error| cannot("copy", source, &error))
+    copied.map(|_| ()).map_err(|error| cannot("copy", source, &error))
 }
 fn relinked(source: &Path, target: &Path, points: io::Result<PathBuf>) -> Result<(), String> {
     let points = points.map_err(|error| cannot("read", source, &error))?;
@@ -238,11 +224,7 @@ fn taken_away(path: &Path) -> io::Result<()> {
 pub fn unreadable(path: &Path) -> Option<Unreadable> {
     use std::os::windows::fs::OpenOptionsExt as _;
 
-    let handle = fs::OpenOptions::new()
-        .read(true)
-        .share_mode(0)
-        .open(path)
-        .ok()?;
+    let handle = fs::OpenOptions::new().read(true).share_mode(0).open(path).ok()?;
     Some(Unreadable { _handle: handle })
 }
 #[cfg(all(any(test, feature = "testing"), unix))]
@@ -250,9 +232,7 @@ pub fn unreadable(path: &Path) -> Option<Unreadable> {
     use std::os::unix::fs::PermissionsExt as _;
 
     fs::set_permissions(path, fs::Permissions::from_mode(0o000)).ok()?;
-    let held = Unreadable {
-        path: path.to_path_buf(),
-    };
+    let held = Unreadable { path: path.to_path_buf() };
     fs::File::open(path).is_err().then_some(held)
 }
 #[cfg(any(test, feature = "testing"))]
@@ -291,10 +271,7 @@ mod tests {
         trip
     }
     fn whole_trip(at: &Path) {
-        assert_eq!(
-            fs::read_to_string(at.join("Trip.md")).expect("the note"),
-            "# Trip"
-        );
+        assert_eq!(fs::read_to_string(at.join("Trip.md")).expect("the note"), "# Trip");
         assert_eq!(
             fs::read_to_string(at.join("assets").join("map.png")).expect("the picture"),
             "map"
@@ -391,10 +368,7 @@ mod tests {
             assert!(!target.exists());
             whole_trip(&source);
         }
-        assert_eq!(
-            fs::read_to_string(elsewhere.join("Other.md")).expect("untouched"),
-            "other"
-        );
+        assert_eq!(fs::read_to_string(elsewhere.join("Other.md")).expect("untouched"), "other");
     }
     #[test]
     fn a_copy_carries_a_link_to_a_folder_as_a_link() {
@@ -447,10 +421,7 @@ mod tests {
         let seen = dir.path().join("Seen");
         if link_to(&source, &seen) {
             assert!(goes_into_itself(&source, &seen.join("assets").join("Trip")));
-            assert!(!goes_into_itself(
-                &seen,
-                &source.join("assets").join("Link")
-            ));
+            assert!(!goes_into_itself(&seen, &source.join("assets").join("Link")));
         }
         assert!(!goes_into_itself(&source, &dir.path().join("Trip 2")));
     }
@@ -462,10 +433,7 @@ mod tests {
         fs::create_dir_all(&target).expect("something already there");
         fs::write(target.join("Mine.md"), "mine").expect("a note of its own");
         assert!(copy_whole(&source, &target).is_err());
-        assert_eq!(
-            fs::read_to_string(target.join("Mine.md")).expect("still there"),
-            "mine"
-        );
+        assert_eq!(fs::read_to_string(target.join("Mine.md")).expect("still there"), "mine");
         assert!(!target.join("Trip.md").exists());
     }
     #[test]
@@ -484,10 +452,7 @@ mod tests {
         fs::create_dir_all(&taken).expect("an empty folder already there");
         assert!(move_whole(&folder, &taken, "move").is_err());
         whole_trip(&folder);
-        assert!(fs::read_dir(&taken)
-            .expect("still a folder")
-            .next()
-            .is_none());
+        assert!(fs::read_dir(&taken).expect("still a folder").next().is_none());
     }
     #[test]
     fn a_move_never_writes_over_a_link_that_leads_nowhere() {

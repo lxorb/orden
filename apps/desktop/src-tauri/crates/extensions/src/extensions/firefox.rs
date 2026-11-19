@@ -18,9 +18,8 @@ const BACKGROUND_SCRIPTS: &str = r#"<script src="/orden/bridge.js"></script><scr
 const BACKGROUND_PAGE: &str = "orden/background.html";
 const FIREFOX_VERSION: &str = "140.0";
 const MOST_READ: u64 = 64 * 1024 * 1024;
-const ED25519_SPKI: [u8; 12] = [
-    0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00,
-];
+const ED25519_SPKI: [u8; 12] =
+    [0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00];
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Gaps {
@@ -94,18 +93,12 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
     match &background {
         Some(Background::Page(page)) => {
             layer.insert("background".into(), json!(page));
-            out.insert(
-                "background".into(),
-                json!({ "service_worker": "orden/host.js" }),
-            );
+            out.insert("background".into(), json!({ "service_worker": "orden/host.js" }));
         }
         Some(Background::Scripts(scripts, _)) => {
             layer.insert("background".into(), json!(BACKGROUND_PAGE));
             layer.insert("scripts".into(), json!(scripts));
-            out.insert(
-                "background".into(),
-                json!({ "service_worker": "orden/host.js" }),
-            );
+            out.insert("background".into(), json!({ "service_worker": "orden/host.js" }));
         }
         Some(Background::Worker(_, module)) => {
             let mut worker = Map::new();
@@ -123,10 +116,7 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
             out.insert("content_scripts".into(), Value::Array(scripts));
         }
     }
-    if let Some(resources) = source
-        .get("web_accessible_resources")
-        .and_then(Value::as_array)
-    {
+    if let Some(resources) = source.get("web_accessible_resources").and_then(Value::as_array) {
         let resources = accessible(resources);
         if !resources.is_empty() {
             out.insert("web_accessible_resources".into(), Value::Array(resources));
@@ -135,10 +125,7 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
     if let Some(policy) = source.get("content_security_policy") {
         let said = match policy {
             Value::String(one) => one.as_str(),
-            other => other
-                .get("extension_pages")
-                .and_then(Value::as_str)
-                .unwrap_or_default(),
+            other => other.get("extension_pages").and_then(Value::as_str).unwrap_or_default(),
         };
         if said.contains("'wasm-unsafe-eval'") {
             out.insert(
@@ -150,12 +137,7 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
     if let Some(commands) = source.get("commands").and_then(Value::as_object) {
         out.insert("commands".into(), Value::Object(shortcuts(commands)));
     }
-    Translated {
-        manifest: Value::Object(out),
-        layer: Value::Object(layer),
-        gaps,
-        background,
-    }
+    Translated { manifest: Value::Object(out), layer: Value::Object(layer), gaps, background }
 }
 fn pages_of(
     source: &Map<String, Value>,
@@ -163,9 +145,7 @@ fn pages_of(
     layer: &mut Map<String, Value>,
     gaps: &mut Gaps,
 ) {
-    let browser_action = source
-        .get("action")
-        .or_else(|| source.get("browser_action"));
+    let browser_action = source.get("action").or_else(|| source.get("browser_action"));
     let page_action = source.get("page_action");
     if let Some(action) = browser_action.or(page_action) {
         out.insert("action".into(), button(action));
@@ -206,10 +186,7 @@ fn permissions_of(
     hosts.extend(patterns(source.get("host_permissions")));
     optional_hosts.extend(patterns(source.get("optional_host_permissions")));
     let mut layered = vec!["scripting", "storage"];
-    if matches!(
-        background,
-        Some(Background::Page(_) | Background::Scripts(..))
-    ) {
+    if matches!(background, Some(Background::Page(_) | Background::Scripts(..))) {
         layered.push("offscreen");
     }
     for one in layered {
@@ -229,10 +206,7 @@ fn permissions_of(
         out.insert("optional_permissions".into(), json!(optional));
     }
     if !optional_hosts.is_empty() {
-        out.insert(
-            "optional_host_permissions".into(),
-            json!(unique(optional_hosts)),
-        );
+        out.insert("optional_host_permissions".into(), json!(unique(optional_hosts)));
     }
 }
 const TAKEN: [&str; 18] = [
@@ -331,19 +305,13 @@ fn split(list: Option<&Value>, gaps: &mut Gaps) -> (Vec<String>, Vec<String>) {
     (names, hosts)
 }
 fn strs(list: Option<&Value>) -> impl Iterator<Item = &str> {
-    list.and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(Value::as_str)
+    list.and_then(Value::as_array).into_iter().flatten().filter_map(Value::as_str)
 }
 fn relatives(list: Option<&Value>) -> Vec<String> {
     strs(list).map(relative).collect()
 }
 fn patterns(list: Option<&Value>) -> Vec<String> {
-    strs(list)
-        .filter(|one| pattern(one))
-        .map(str::to_owned)
-        .collect()
+    strs(list).filter(|one| pattern(one)).map(str::to_owned).collect()
 }
 fn unique(mut list: Vec<String>) -> Vec<String> {
     let mut seen = std::collections::HashSet::new();
@@ -400,9 +368,7 @@ fn relative(path: &str) -> String {
 fn draws(path: &str) -> bool {
     let file = path.split('#').next().unwrap_or_default();
     !file.is_empty()
-        && !Path::new(file)
-            .extension()
-            .is_some_and(|one| one.eq_ignore_ascii_case("svg"))
+        && !Path::new(file).extension().is_some_and(|one| one.eq_ignore_ascii_case("svg"))
 }
 fn drawable(icons: &Value) -> Option<Value> {
     match icons {
@@ -454,21 +420,12 @@ fn content_script(script: &Value) -> Option<Value> {
     }
     out.insert("matches".into(), json!(matches));
     if script.get("exclude_matches").is_some() {
-        out.insert(
-            "exclude_matches".into(),
-            json!(patterns(script.get("exclude_matches"))),
-        );
+        out.insert("exclude_matches".into(), json!(patterns(script.get("exclude_matches"))));
     }
     let files = |field: &str| -> Vec<String> { relatives(script.get(field)) };
     let mut js = files("js");
     if !js.is_empty() && script.get("world").and_then(Value::as_str) != Some("MAIN") {
-        js.splice(
-            0..0,
-            [
-                format!("{FOLDER}/firefox.js"),
-                format!("{FOLDER}/browser-polyfill.js"),
-            ],
-        );
+        js.splice(0..0, [format!("{FOLDER}/firefox.js"), format!("{FOLDER}/browser-polyfill.js")]);
     }
     if !js.is_empty() {
         out.insert("js".into(), json!(js));
@@ -480,22 +437,15 @@ fn content_script(script: &Value) -> Option<Value> {
     Some(Value::Object(out))
 }
 fn accessible(resources: &[Value]) -> Vec<Value> {
-    let plain: Vec<String> = resources
-        .iter()
-        .filter_map(Value::as_str)
-        .map(relative)
-        .collect();
+    let plain: Vec<String> = resources.iter().filter_map(Value::as_str).map(relative).collect();
     let mut out: Vec<Value> = resources
         .iter()
         .filter_map(Value::as_object)
         .filter_map(|one| {
             let mut one = one.clone();
             let listed: Vec<String> = relatives(one.get("resources"));
-            let matches: Vec<String> = patterns(one.get("matches"))
-                .iter()
-                .map(String::as_str)
-                .map(origin_of)
-                .collect();
+            let matches: Vec<String> =
+                patterns(one.get("matches")).iter().map(String::as_str).map(origin_of).collect();
             if listed.is_empty() || (matches.is_empty() && one.get("extension_ids").is_none()) {
                 return None;
             }
@@ -549,8 +499,7 @@ fn shortcuts(commands: &Map<String, Value>) -> Map<String, Value> {
             let keys: Map<String, Value> = keys
                 .iter()
                 .filter(|(platform, key)| {
-                    key.as_str()
-                        .is_some_and(|key| shortcut(key, platform.as_str() == "mac"))
+                    key.as_str().is_some_and(|key| shortcut(key, platform.as_str() == "mac"))
                         && ["default", "windows", "mac", "linux", "chromeos"]
                             .contains(&platform.as_str())
                 })
@@ -566,12 +515,7 @@ fn shortcuts(commands: &Map<String, Value>) -> Map<String, Value> {
     out
 }
 fn shortcut(said: &str, mac: bool) -> bool {
-    const MEDIA: [&str; 4] = [
-        "MediaNextTrack",
-        "MediaPlayPause",
-        "MediaPrevTrack",
-        "MediaStop",
-    ];
+    const MEDIA: [&str; 4] = ["MediaNextTrack", "MediaPlayPause", "MediaPrevTrack", "MediaStop"];
     const KEYS: [&str; 13] = [
         "Comma", "Period", "Home", "End", "PageUp", "PageDown", "Space", "Insert", "Delete", "Up",
         "Down", "Left", "Right",
@@ -597,9 +541,7 @@ fn shortcut(said: &str, mac: bool) -> bool {
                 _ => false,
             }
     });
-    let main = ["Ctrl", "Alt", "Command", "MacCtrl"]
-        .iter()
-        .any(|one| seen.contains(one));
+    let main = ["Ctrl", "Alt", "Command", "MacCtrl"].iter().any(|one| seen.contains(one));
     fine && main && !(seen.contains("Ctrl") && seen.contains("Alt"))
 }
 pub fn chromium_version(version: &str) -> String {
@@ -619,11 +561,7 @@ pub fn chromium_version(version: &str) -> String {
             .join(".");
     }
     let leading = |part: &str| -> u32 {
-        let digits: String = part
-            .chars()
-            .take_while(char::is_ascii_digit)
-            .take(5)
-            .collect();
+        let digits: String = part.chars().take_while(char::is_ascii_digit).take(5).collect();
         digits.parse::<u32>().unwrap_or(0).min(65_535)
     };
     let mut numbers: Vec<u32> = parts.iter().take(3).map(|part| leading(part)).collect();
@@ -631,11 +569,7 @@ pub fn chromium_version(version: &str) -> String {
     let hash = Sha256::digest(version.as_bytes());
     let own = 1 + u32::from_le_bytes([hash[0], hash[1], hash[2], hash[3]]) % 65_000;
     numbers.push(own);
-    numbers
-        .iter()
-        .map(u32::to_string)
-        .collect::<Vec<_>>()
-        .join(".")
+    numbers.iter().map(u32::to_string).collect::<Vec<_>>().join(".")
 }
 pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     let path = folder.join("manifest.json");
@@ -710,10 +644,7 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     let written =
         serde_json::to_string_pretty(&translated.manifest).map_err(|error| error.to_string())?;
     fs::write(&path, written).map_err(|error| error.to_string())?;
-    write(
-        "gaps.json",
-        &serde_json::to_string(&gaps).map_err(|error| error.to_string())?,
-    )?;
+    write("gaps.json", &serde_json::to_string(&gaps).map_err(|error| error.to_string())?)?;
     Ok(gaps)
 }
 fn uncommented(text: &str) -> String {
@@ -725,13 +656,7 @@ fn uncommented(text: &str) -> String {
 }
 pub fn message_name(name: &str) -> String {
     name.chars()
-        .map(|one| {
-            if one.is_ascii_alphanumeric() || one == '_' || one == '@' {
-                one
-            } else {
-                '_'
-            }
-        })
+        .map(|one| if one.is_ascii_alphanumeric() || one == '_' || one == '@' { one } else { '_' })
         .collect()
 }
 fn named_plainly(value: &mut Value) {
@@ -776,11 +701,7 @@ fn locales(folder: &Path) -> Result<(), String> {
             let mut message = message.to_owned();
             let mut entry = entry.clone();
             let mut defined = Vec::new();
-            if let Some(held) = entry
-                .get("placeholders")
-                .and_then(Value::as_object)
-                .cloned()
-            {
+            if let Some(held) = entry.get("placeholders").and_then(Value::as_object).cloned() {
                 let mut renamed = Map::new();
                 for (place, content) in held {
                     let plain = message_name(&place);
@@ -848,10 +769,7 @@ pub fn gaps_in(folder: &Path) -> Option<Gaps> {
     }
     let text = fs::read_to_string(folder.join(FOLDER).join("gaps.json")).ok()?;
     let said: Said = serde_json::from_str(&text).ok()?;
-    Some(Gaps {
-        said: said.said,
-        apis: said.apis,
-    })
+    Some(Gaps { said: said.said, apis: said.apis })
 }
 fn headed(html: &str, first: &str) -> String {
     let lower = html.to_ascii_lowercase();
@@ -867,10 +785,7 @@ fn headed(html: &str, first: &str) -> String {
         }
         None
     };
-    let at = after("<head")
-        .or_else(|| after("<html"))
-        .or_else(|| after("<!doctype"))
-        .unwrap_or(0);
+    let at = after("<head").or_else(|| after("<html")).or_else(|| after("<!doctype")).unwrap_or(0);
     format!("{}{first}{}", &html[..at], &html[at..])
 }
 fn page_scripts(folder: &Path, page: &str) -> Vec<String> {
@@ -895,11 +810,7 @@ fn page_scripts(folder: &Path, page: &str) -> Vec<String> {
         if src.contains(':') {
             continue;
         }
-        let mut parts: Vec<&str> = if src.starts_with('/') {
-            Vec::new()
-        } else {
-            base.to_vec()
-        };
+        let mut parts: Vec<&str> = if src.starts_with('/') { Vec::new() } else { base.to_vec() };
         for part in src.split('/') {
             match part {
                 "" | "." => {}
@@ -930,10 +841,7 @@ fn attribute(tag: &str, name: &str) -> Option<String> {
         let rest = rest.trim_start();
         let value = match rest.chars().next()? {
             quote @ ('"' | '\'') => rest[1..].split(quote).next()?.to_owned(),
-            _ => rest
-                .split(|one: char| one.is_whitespace() || one == '>')
-                .next()?
-                .to_owned(),
+            _ => rest.split(|one: char| one.is_whitespace() || one == '>').next()?.to_owned(),
         };
         return Some(value);
     }
@@ -943,11 +851,9 @@ fn pages(folder: &Path) -> Vec<PathBuf> {
     files(folder)
         .into_iter()
         .filter(|path| {
-            path.extension()
-                .and_then(|one| one.to_str())
-                .is_some_and(|one| {
-                    one.eq_ignore_ascii_case("html") || one.eq_ignore_ascii_case("htm")
-                })
+            path.extension().and_then(|one| one.to_str()).is_some_and(|one| {
+                one.eq_ignore_ascii_case("html") || one.eq_ignore_ascii_case("htm")
+            })
         })
         .collect()
 }
@@ -976,10 +882,7 @@ fn files(folder: &Path) -> Vec<PathBuf> {
     out
 }
 const CALLS: [(&str, Gap); 14] = [
-    (
-        "filterResponseData",
-        Gap::Api("webRequest.filterResponseData"),
-    ),
+    ("filterResponseData", Gap::Api("webRequest.filterResponseData")),
     ("contextualIdentities", Gap::Said("containers")),
     ("cookieStoreId", Gap::Said("containers")),
     ("sidebarAction", Gap::Said("sidebar")),
@@ -1081,19 +984,10 @@ mod tests {
         assert_eq!(manifest["icons"], json!({ "96": "img/icon-96.png" }));
         assert_eq!(manifest["action"], json!({ "default_popup": "popup.html" }));
         assert_eq!(manifest["options_ui"], json!({ "page": "options.html" }));
-        assert_eq!(
-            manifest["background"],
-            json!({ "service_worker": "orden/host.js" })
-        );
+        assert_eq!(manifest["background"], json!({ "service_worker": "orden/host.js" }));
         assert_eq!(
             manifest["permissions"],
-            json!([
-                "contextMenus",
-                "storage",
-                "webRequest",
-                "scripting",
-                "offscreen"
-            ])
+            json!(["contextMenus", "storage", "webRequest", "scripting", "offscreen"])
         );
         assert_eq!(manifest["host_permissions"], json!(["<all_urls>"]));
         assert_eq!(manifest["optional_permissions"], json!(["bookmarks"]));
@@ -1104,11 +998,7 @@ mod tests {
         );
         assert_eq!(
             manifest["content_scripts"][0]["js"],
-            json!([
-                "orden/firefox.js",
-                "orden/browser-polyfill.js",
-                "js/content.js"
-            ])
+            json!(["orden/firefox.js", "orden/browser-polyfill.js", "js/content.js"])
         );
         assert_eq!(
             manifest["content_security_policy"]["extension_pages"],
@@ -1144,10 +1034,7 @@ mod tests {
         });
         let made = translate(&firefox, "KEY");
         assert!(made.gaps.is_empty(), "{:?}", made.gaps);
-        assert_eq!(
-            made.manifest["declarative_net_request"],
-            firefox["declarative_net_request"]
-        );
+        assert_eq!(made.manifest["declarative_net_request"], firefox["declarative_net_request"]);
         assert!(made.manifest["permissions"]
             .as_array()
             .is_some_and(|all| all.iter().any(|one| one == "declarativeNetRequest")));
@@ -1165,18 +1052,12 @@ mod tests {
             "sidebar_action": { "default_panel": "/sidebar.html" },
         });
         let made = translate(&firefox, "KEY");
-        assert_eq!(
-            made.manifest["action"],
-            json!({ "default_icon": { "16": "a.png" } })
-        );
+        assert_eq!(made.manifest["action"], json!({ "default_icon": { "16": "a.png" } }));
         assert_eq!(made.layer["pageAction"], "action");
         assert_eq!(made.layer["background"], "orden/background.html");
         assert_eq!(made.layer["scripts"], json!(["js/background.js"]));
         assert_eq!(made.layer["sidebar"], "sidebar.html");
-        assert_eq!(
-            made.manifest["host_permissions"],
-            json!(["https://sponsor.ajay.app/*"])
-        );
+        assert_eq!(made.manifest["host_permissions"], json!(["https://sponsor.ajay.app/*"]));
         assert_eq!(
             made.manifest["web_accessible_resources"],
             json!([{ "resources": ["a.png"], "matches": ["*://*.youtube.com/*"] }])
@@ -1193,10 +1074,7 @@ mod tests {
         assert_eq!(chromium_version("1.2.3.4.5").split('.').count(), 4);
         assert_eq!(chromium_version("99999").split('.').count(), 4);
         for version in ["1.0b2", "3.0pre", "", "x", "1.2.3.4.5", "99999"] {
-            assert!(
-                super::super::library::plain_version(&chromium_version(version)),
-                "{version}"
-            );
+            assert!(super::super::library::plain_version(&chromium_version(version)), "{version}");
         }
     }
     #[test]
@@ -1237,10 +1115,7 @@ mod tests {
     fn the_layer_runs_before_anything_a_page_has() {
         let first = "<script src=\"/orden/firefox.js\"></script>";
         assert_eq!(
-            headed(
-                "<!DOCTYPE html><html><HEAD><script src=a.js></script></head></html>",
-                first
-            ),
+            headed("<!DOCTYPE html><html><HEAD><script src=a.js></script></head></html>", first),
             format!("<!DOCTYPE html><html><HEAD>{first}<script src=a.js></script></head></html>")
         );
         assert_eq!(
@@ -1359,32 +1234,20 @@ mod tests {
             "<html><head><script src=\"../lib.js\"></script><script src='main.js'></script></head></html>",
         )
         .expect("a page");
-        std::fs::write(
-            at.join("popup.html"),
-            "<html><head></head><body>hi</body></html>",
-        )
-        .expect("a popup");
+        std::fs::write(at.join("popup.html"), "<html><head></head><body>hi</body></html>")
+            .expect("a popup");
         std::fs::write(at.join("lib.js"), "browser.dns.resolve('x')").expect("a script");
         let gaps = super::apply(at, "x@example.com").expect("applied");
         assert_eq!(gaps.said, ["hiddenTabs"]);
         assert_eq!(gaps.apis, ["dns"]);
         assert_eq!(super::gaps_in(at), Some(gaps));
         let popup = read(at, "popup.html");
-        assert!(
-            popup.starts_with(&format!("<html><head>{}", super::PAGE_SCRIPTS)),
-            "{popup}"
-        );
+        assert!(popup.starts_with(&format!("<html><head>{}", super::PAGE_SCRIPTS)), "{popup}");
         let background = read(at, "bg/index.html");
-        assert!(
-            background.contains(super::BACKGROUND_SCRIPTS),
-            "{background}"
-        );
+        assert!(background.contains(super::BACKGROUND_SCRIPTS), "{background}");
         let layer = read(at, "orden/firefox.js");
         assert!(layer.starts_with("globalThis.__ordenLayer = "), "{layer}");
-        assert!(
-            layer.contains(r#""scripts":["lib.js","bg/main.js"]"#),
-            "{layer}"
-        );
+        assert!(layer.contains(r#""scripts":["lib.js","bg/main.js"]"#), "{layer}");
         assert!(at.join("orden/host.js").is_file());
         let manifest = read_json(at, "manifest.json");
         assert_eq!(manifest["manifest_version"], 3);

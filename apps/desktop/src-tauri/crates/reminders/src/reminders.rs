@@ -84,28 +84,19 @@ struct Arrived {
     id: String,
     nonce: Option<String>,
 }
-static STATE: Mutex<State> = Mutex::new(State {
-    kept: None,
-    pressed: Vec::new(),
-});
+static STATE: Mutex<State> = Mutex::new(State { kept: None, pressed: Vec::new() });
 fn in_state<T>(alter: impl FnOnce(&mut State) -> T) -> T {
     alter(&mut STATE.held())
 }
 fn file(app: &AppHandle) -> Option<PathBuf> {
-    orden_base::paths::config_dir(app)
-        .ok()
-        .map(|dir| dir.join(FILE))
+    orden_base::paths::config_dir(app).ok().map(|dir| dir.join(FILE))
 }
 fn kept<'a>(state: &'a mut State, app: &AppHandle) -> &'a mut HashMap<String, Kept> {
     state.kept.get_or_insert_with(|| {
         file(app)
             .and_then(|path| std::fs::read(path).ok())
             .and_then(|bytes| serde_json::from_slice::<Vec<Kept>>(&bytes).ok())
-            .map(|list| {
-                list.into_iter()
-                    .map(|one| (one.planned.id.clone(), one))
-                    .collect()
-            })
+            .map(|list| list.into_iter().map(|one| (one.planned.id.clone(), one)).collect())
             .unwrap_or_default()
     })
 }
@@ -127,10 +118,9 @@ fn merge(
     });
     plan.into_iter()
         .map(|one| {
-            let entry = kept.entry(one.id.clone()).or_insert_with(|| Kept {
-                planned: one.clone(),
-                nonce: nonce(),
-            });
+            let entry = kept
+                .entry(one.id.clone())
+                .or_insert_with(|| Kept { planned: one.clone(), nonce: nonce() });
             entry.planned = one.clone();
             (one, entry.nonce.clone())
         })
@@ -141,20 +131,16 @@ fn fresh_nonce() -> String {
     if getrandom::fill(&mut bytes).is_err() {
         bytes = now_ms().to_le_bytes();
     }
-    bytes
-        .iter()
-        .fold(String::with_capacity(16), |mut out, byte| {
-            use std::fmt::Write as _;
-            let _ = write!(out, "{byte:02x}");
-            out
-        })
+    bytes.iter().fold(String::with_capacity(16), |mut out, byte| {
+        use std::fmt::Write as _;
+        let _ = write!(out, "{byte:02x}");
+        out
+    })
 }
 fn now_ms() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |since| {
-            i64::try_from(since.as_millis()).unwrap_or(i64::MAX)
-        })
+        .map_or(0, |since| i64::try_from(since.as_millis()).unwrap_or(i64::MAX))
 }
 fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
     let Some(path) = file(app) else {
@@ -229,10 +215,7 @@ pub fn reminders_taken(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Pr
     Ok(in_state(|state| {
         let arrived = std::mem::take(&mut state.pressed);
         let kept = kept(state, &app);
-        arrived
-            .into_iter()
-            .filter_map(|one| answered(kept, &one))
-            .collect()
+        arrived.into_iter().filter_map(|one| answered(kept, &one)).collect()
     }))
 }
 fn answered(kept: &HashMap<String, Kept>, press: &Arrived) -> Option<Pressed> {
@@ -279,11 +262,7 @@ pub fn pressed_by_id(app: &AppHandle, act: Act, id: &str) {
 }
 fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
     in_state(|state| {
-        state.pressed.push(Arrived {
-            act,
-            id: id.to_string(),
-            nonce: nonce.map(str::to_string),
-        });
+        state.pressed.push(Arrived { act, id: id.to_string(), nonce: nonce.map(str::to_string) });
     });
     if act == Act::Open {
         if let Some(window) = orden_base::labels::host(app) {
@@ -325,10 +304,7 @@ pub fn came_up_quietly() {
     LAUNCHED_QUIETLY.store(true, Ordering::Relaxed);
 }
 pub fn quiet_launch(urls: &[String]) -> bool {
-    !urls.is_empty()
-        && urls
-            .iter()
-            .all(|url| matches!(link::parsed(url), Some((Act::Done, _, _))))
+    !urls.is_empty() && urls.iter().all(|url| matches!(link::parsed(url), Some((Act::Done, _, _))))
 }
 #[cfg(test)]
 mod tests {
@@ -350,31 +326,16 @@ mod tests {
             counter.set(counter.get() + 1);
             format!("n{}", counter.get())
         };
-        let first = merge(
-            &mut kept,
-            vec![planned("a", 2000), planned("b", 3000)],
-            1000,
-            nonce,
-        );
+        let first = merge(&mut kept, vec![planned("a", 2000), planned("b", 3000)], 1000, nonce);
         assert_eq!(first[0].1, "n1");
         assert_eq!(first[1].1, "n2");
-        let second = merge(
-            &mut kept,
-            vec![planned("a", 2000), planned("c", 4000)],
-            1500,
-            nonce,
-        );
+        let second = merge(&mut kept, vec![planned("a", 2000), planned("c", 4000)], 1500, nonce);
         assert_eq!(second[0].1, "n1");
         assert_eq!(second[1].1, "n3");
         assert!(!kept.contains_key("b"));
         merge(&mut kept, vec![planned("c", 4000)], 2500, nonce);
         assert!(kept.contains_key("a"));
-        merge(
-            &mut kept,
-            vec![planned("c", 4000)],
-            2000 + ANSWERED_FOR_MS,
-            nonce,
-        );
+        merge(&mut kept, vec![planned("c", 4000)], 2000 + ANSWERED_FOR_MS, nonce);
         assert!(!kept.contains_key("a"));
     }
     #[test]
@@ -391,41 +352,24 @@ mod tests {
             body: String::new(),
             ..planned("d", 5000)
         };
-        let plan = [
-            planned("a", 2000),
-            planned("b", 6600),
-            planned("c", 4000),
-            hidden,
-        ];
+        let plan = [planned("a", 2000), planned("b", 6600), planned("c", 4000), hidden];
         assert_eq!(moved(&kept, &plan), ["b", "d"]);
     }
     #[test]
     fn a_press_is_answered_only_with_its_own_nonce() {
         let mut kept = HashMap::new();
-        merge(&mut kept, vec![planned("a", 2000)], 1000, || {
-            "right".to_string()
-        });
+        merge(&mut kept, vec![planned("a", 2000)], 1000, || "right".to_string());
         let press = |nonce: Option<&str>| Arrived {
             act: Act::Done,
             id: "a".into(),
             nonce: nonce.map(str::to_string),
         };
         let answer = answered(&kept, &press(Some("right"))).expect("its own nonce");
-        assert_eq!(
-            (answer.act, answer.path.as_str(), answer.line),
-            (Act::Done, "Plan.md", 2)
-        );
+        assert_eq!((answer.act, answer.path.as_str(), answer.line), (Act::Done, "Plan.md", 2));
         assert_eq!(answered(&kept, &press(Some("wrong"))), None);
         assert!(answered(&kept, &press(None)).is_some());
         assert_eq!(
-            answered(
-                &kept,
-                &Arrived {
-                    act: Act::Open,
-                    id: "gone".into(),
-                    nonce: None
-                }
-            ),
+            answered(&kept, &Arrived { act: Act::Open, id: "gone".into(), nonce: None }),
             None
         );
     }

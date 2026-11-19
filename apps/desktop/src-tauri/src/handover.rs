@@ -35,9 +35,8 @@ pub fn handed_over(identifier: &str) -> bool {
 }
 #[cfg(target_os = "linux")]
 pub fn handed_over(identifier: &str) -> bool {
-    let mut launch: Vec<String> = std::env::args_os()
-        .map(|arg| arg.to_string_lossy().into_owned())
-        .collect();
+    let mut launch: Vec<String> =
+        std::env::args_os().map(|arg| arg.to_string_lossy().into_owned()).collect();
     if let Some(token) = orden_base::linux::launched_with() {
         launch.push(format!("{}{token}", crate::launch::TOKEN_FLAG));
     }
@@ -61,10 +60,7 @@ fn on_the_bus(identifier: &str, launch: &[String]) -> zbus::Result<bool> {
     if !taken {
         return Ok(false);
     }
-    let cwd = std::env::current_dir()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .into_owned();
+    let cwd = std::env::current_dir().unwrap_or_default().to_string_lossy().into_owned();
     bus.call_method(
         Some(name.as_str()),
         path.as_str(),
@@ -102,10 +98,7 @@ struct Names {
 impl Names {
     fn of(identifier: &str) -> Self {
         let wide = |text: String| text.encode_utf16().chain(std::iter::once(0)).collect();
-        Self {
-            class: wide(format!("{identifier}-sic")),
-            window: wide(format!("{identifier}-siw")),
-        }
+        Self { class: wide(format!("{identifier}-sic")), window: wide(format!("{identifier}-siw")) }
     }
     #[allow(unsafe_code, reason = "a window is found through FindWindowW")]
     fn find(&self) -> Option<windows::Win32::Foundation::HWND> {
@@ -115,10 +108,7 @@ impl Names {
             .ok()
             .filter(|window| !window.is_invalid())
     }
-    #[allow(
-        unsafe_code,
-        reason = "a window's process is asked through GetWindowThreadProcessId"
-    )]
+    #[allow(unsafe_code, reason = "a window's process is asked through GetWindowThreadProcessId")]
     fn owner(&self) -> Option<u32> {
         use windows::Win32::UI::WindowsAndMessaging::GetWindowThreadProcessId;
         let window = self.find()?;
@@ -137,10 +127,7 @@ fn arguments() -> Vec<u8> {
     format!("{}|{args}\0", folder.to_str().unwrap_or_default()).into_bytes()
 }
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "the hand-over is a WM_COPYDATA message, which only Win32 sends"
-)]
+#[allow(unsafe_code, reason = "the hand-over is a WM_COPYDATA message, which only Win32 sends")]
 fn handed(names: &Names, launch: &[u8], within: std::time::Duration) -> Found {
     use windows::Win32::Foundation::{LPARAM, WPARAM};
     use windows::Win32::System::DataExchange::COPYDATASTRUCT;
@@ -193,10 +180,7 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
     let trying = {
         let (asking, answered, done) = (asking.clone(), answered.clone(), done.clone());
         let launch = launch.to_vec();
-        let names = Names {
-            class: names.class.clone(),
-            window: names.window.clone(),
-        };
+        let names = Names { class: names.class.clone(), window: names.window.clone() };
         std::thread::spawn(move || {
             while !done.load(Ordering::SeqCst) {
                 if handed(&names, &launch, std::time::Duration::from_millis(500)) != Found::Silent {
@@ -274,10 +258,7 @@ mod tests {
     #[test]
     fn nothing_running_is_nothing_to_hand_to() {
         let names = Names::of("so.orden.Orden.test.nobody-runs-this");
-        assert_eq!(
-            handed(&names, &arguments(), Duration::from_millis(50)),
-            Found::Nothing
-        );
+        assert_eq!(handed(&names, &arguments(), Duration::from_millis(50)), Found::Nothing);
         assert_eq!(names.owner(), None);
     }
     #[test]
@@ -286,16 +267,7 @@ mod tests {
         assert!(launch.ends_with('\0'));
         let mut parts = launch.trim_end_matches('\0').split('|');
         let folder = parts.next().expect("the folder");
-        assert_eq!(
-            folder,
-            std::env::current_dir()
-                .expect("a folder")
-                .to_str()
-                .expect("text")
-        );
-        assert!(
-            parts.next().is_some(),
-            "the program itself is the first argument"
-        );
+        assert_eq!(folder, std::env::current_dir().expect("a folder").to_str().expect("text"));
+        assert!(parts.next().is_some(), "the program itself is the first argument");
     }
 }

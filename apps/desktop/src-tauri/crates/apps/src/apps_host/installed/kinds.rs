@@ -37,11 +37,7 @@ fn drawn(ending: &str) -> Option<String> {
     use windows::Win32::UI::WindowsAndMessaging::DestroyIcon;
 
     let _com = super::windows::Com::start();
-    let named = if ending.is_empty() {
-        "file".to_owned()
-    } else {
-        format!("file.{ending}")
-    };
+    let named = if ending.is_empty() { "file".to_owned() } else { format!("file.{ending}") };
     let name = HSTRING::from(named.as_str());
     let size = u32::try_from(std::mem::size_of::<SHFILEINFOW>()).ok()?;
     let mut info = SHFILEINFOW::default();
@@ -99,24 +95,17 @@ fn icon_rgba(icon: windows::Win32::UI::WindowsAndMessaging::HICON) -> Option<(Ve
 
     let mut info = ICONINFO::default();
     unsafe { GetIconInfo(icon, &raw mut info) }.ok()?;
-    let color = (!info.hbmColor.is_invalid())
-        .then(|| super::windows::bitmap_rgba(info.hbmColor))
-        .flatten();
-    let mask = (!info.hbmMask.is_invalid())
-        .then(|| super::windows::bitmap_rgba(info.hbmMask))
-        .flatten();
+    let color =
+        (!info.hbmColor.is_invalid()).then(|| super::windows::bitmap_rgba(info.hbmColor)).flatten();
+    let mask =
+        (!info.hbmMask.is_invalid()).then(|| super::windows::bitmap_rgba(info.hbmMask)).flatten();
     unsafe {
         let _ = DeleteObject(info.hbmColor);
         let _ = DeleteObject(info.hbmMask);
     }
     let (mut rgba, width, height) = color?;
     if let Some((holes, mask_width, mask_height)) = mask {
-        masked(
-            &mut rgba,
-            (width, height),
-            &holes,
-            (mask_width, mask_height),
-        );
+        masked(&mut rgba, (width, height), &holes, (mask_width, mask_height));
     }
     Some((rgba, width, height))
 }
@@ -128,12 +117,7 @@ fn masked(rgba: &mut [u8], size: (u32, u32), holes: &[u8], hole_size: (u32, u32)
     if !rgba.as_chunks::<4>().0.iter().all(|one| one[3] == u8::MAX) {
         return;
     }
-    for (pixel, hole) in rgba
-        .as_chunks_mut::<4>()
-        .0
-        .iter_mut()
-        .zip(holes.as_chunks::<4>().0)
-    {
+    for (pixel, hole) in rgba.as_chunks_mut::<4>().0.iter_mut().zip(holes.as_chunks::<4>().0) {
         if hole[0] > 127 {
             *pixel = [0, 0, 0, 0];
         }
@@ -149,11 +133,7 @@ fn drawn(ending: &str) -> Option<String> {
     };
     use objc2_foundation::{NSDictionary, NSPoint, NSRect, NSSize, NSString};
 
-    let kind = NSString::from_str(if ending.is_empty() {
-        "public.data"
-    } else {
-        ending
-    });
+    let kind = NSString::from_str(if ending.is_empty() { "public.data" } else { ending });
     #[allow(deprecated)]
     let image = NSWorkspace::sharedWorkspace().iconForFileType(&kind);
     let pixels = isize::try_from(icons::KIND_SIDE).ok()?;
@@ -239,18 +219,13 @@ impl Mime {
                 if ending.contains(['*', '?', '[', '.']) || ending.is_empty() {
                     continue;
                 }
-                let exact = parts
-                    .next()
-                    .is_some_and(|flags| flags.split(',').any(|one| one == "cs"));
+                let exact =
+                    parts.next().is_some_and(|flags| flags.split(',').any(|one| one == "cs"));
                 if exact && ending.bytes().any(|one| one.is_ascii_uppercase()) {
                     continue;
                 }
                 let ending = ending.to_ascii_lowercase();
-                if mime
-                    .globs
-                    .get(&ending)
-                    .is_none_or(|(before, _)| weight > *before)
-                {
+                if mime.globs.get(&ending).is_none_or(|(before, _)| weight > *before) {
                     mime.globs.insert(ending, (weight, kind.to_owned()));
                 }
             }
@@ -259,8 +234,7 @@ impl Mime {
             let mut out = HashMap::new();
             for line in texts.iter().flat_map(|one| one.lines()) {
                 if let Some((kind, name)) = line.split_once(':') {
-                    out.entry(kind.to_owned())
-                        .or_insert_with(|| name.trim().to_owned());
+                    out.entry(kind.to_owned()).or_insert_with(|| name.trim().to_owned());
                 }
             }
             out
@@ -270,10 +244,8 @@ impl Mime {
         mime
     }
     fn names(&self, ending: &str) -> Vec<String> {
-        let kind = self
-            .globs
-            .get(ending)
-            .map_or("application/octet-stream", |(_, kind)| kind.as_str());
+        let kind =
+            self.globs.get(ending).map_or("application/octet-stream", |(_, kind)| kind.as_str());
         let mut names = Vec::new();
         if let Some(one) = self.icons.get(kind) {
             names.push(one.clone());
@@ -317,14 +289,8 @@ mod tests {
             &["text/x-python:my-python\n".to_owned()],
             &["text/x-python:text-x-script\n".to_owned()],
         );
-        assert_eq!(
-            mime.globs.get("py").map(|one| one.1.as_str()),
-            Some("text/x-mine")
-        );
-        assert_eq!(
-            mime.globs.get("c").map(|one| one.1.as_str()),
-            Some("text/x-csrc")
-        );
+        assert_eq!(mime.globs.get("py").map(|one| one.1.as_str()), Some("text/x-mine"));
+        assert_eq!(mime.globs.get("c").map(|one| one.1.as_str()), Some("text/x-csrc"));
         assert_eq!(
             mime.globs.get("xls").map(|one| one.1.as_str()),
             Some("application/vnd.ms-excel")
@@ -345,32 +311,16 @@ mod tests {
                 "application-x-generic"
             ]
         );
-        assert_eq!(
-            python.names("nothing"),
-            ["application-octet-stream", "application-x-generic"]
-        );
-        assert_eq!(
-            python.names(""),
-            ["application-octet-stream", "application-x-generic"]
-        );
+        assert_eq!(python.names("nothing"), ["application-octet-stream", "application-x-generic"]);
+        assert_eq!(python.names(""), ["application-octet-stream", "application-x-generic"]);
     }
     #[test]
     fn an_old_icon_without_alpha_is_cut_out_by_its_mask() {
         let mut solid = [10, 20, 30, 255, 40, 50, 60, 255].to_vec();
-        masked(
-            &mut solid,
-            (2, 1),
-            &[255, 255, 255, 255, 0, 0, 0, 255],
-            (2, 1),
-        );
+        masked(&mut solid, (2, 1), &[255, 255, 255, 255, 0, 0, 0, 255], (2, 1));
         assert_eq!(solid, [0, 0, 0, 0, 40, 50, 60, 255]);
         let mut soft = [10, 20, 30, 128, 40, 50, 60, 255].to_vec();
-        masked(
-            &mut soft,
-            (2, 1),
-            &[255, 255, 255, 255, 0, 0, 0, 255],
-            (2, 1),
-        );
+        masked(&mut soft, (2, 1), &[255, 255, 255, 255, 0, 0, 0, 255], (2, 1));
         assert_eq!(soft, [10, 20, 30, 128, 40, 50, 60, 255]);
     }
 }

@@ -37,19 +37,12 @@ pub const ALL: [Encoder; 9] = [
 ];
 pub const SOFTWARE: Encoder = one("libvpx", Made::Vp8, Hardware::None);
 const fn one(name: &'static str, made: Made, hardware: Hardware) -> Encoder {
-    Encoder {
-        name,
-        made,
-        hardware,
-    }
+    Encoder { name, made, hardware }
 }
 const RENDER_NODE: &str = "/dev/dri/renderD128";
 const TRY_FOR: Duration = Duration::from_secs(5);
 pub fn chosen(working: &[Encoder], decodes: &[Made]) -> Option<Encoder> {
-    working
-        .iter()
-        .copied()
-        .find(|one| decodes.contains(&one.made))
+    working.iter().copied().find(|one| decodes.contains(&one.made))
 }
 pub fn working() -> &'static [Encoder] {
     static FOUND: OnceLock<Vec<Encoder>> = OnceLock::new();
@@ -138,12 +131,9 @@ fn words(line: &str) -> Vec<String> {
 }
 fn device_args(hardware: Hardware) -> Vec<String> {
     let words: &[&str] = match hardware {
-        Hardware::Vaapi => &[
-            "-init_hw_device",
-            "vaapi=va:/dev/dri/renderD128",
-            "-filter_hw_device",
-            "va",
-        ],
+        Hardware::Vaapi => {
+            &["-init_hw_device", "vaapi=va:/dev/dri/renderD128", "-filter_hw_device", "va"]
+        }
         Hardware::Qsv => &["-init_hw_device", "qsv=hw", "-filter_hw_device", "hw"],
         Hardware::Nvenc | Hardware::Amf | Hardware::VideoToolbox | Hardware::None => &[],
     };
@@ -188,24 +178,10 @@ fn tuning_args(encoder: Encoder, threads: usize) -> Vec<String> {
             "-profile:v",
             "baseline",
         ],
-        "h264_vaapi" => &[
-            "-bf",
-            "0",
-            "-async_depth",
-            "1",
-            "-profile:v",
-            "constrained_baseline",
-        ],
-        "h264_qsv" => &[
-            "-bf",
-            "0",
-            "-async_depth",
-            "1",
-            "-look_ahead",
-            "0",
-            "-profile:v",
-            "baseline",
-        ],
+        "h264_vaapi" => &["-bf", "0", "-async_depth", "1", "-profile:v", "constrained_baseline"],
+        "h264_qsv" => {
+            &["-bf", "0", "-async_depth", "1", "-look_ahead", "0", "-profile:v", "baseline"]
+        }
         "h264_amf" => &[
             "-usage",
             "ultralowlatency",
@@ -254,12 +230,10 @@ pub fn bit_rate(width: u32, height: u32, fps: u32) -> u64 {
 }
 pub fn encoder_args(encoder: Encoder, width: u16, height: u16, fps: u32) -> Vec<String> {
     let rate = bit_rate(u32::from(width), u32::from(height), fps);
-    let threads = std::thread::available_parallelism()
-        .map_or(2, std::num::NonZeroUsize::get)
-        .clamp(1, 8);
-    let mut args: Vec<String> = ["-hide_banner", "-loglevel", "error", "-nostdin"]
-        .map(str::to_owned)
-        .to_vec();
+    let threads =
+        std::thread::available_parallelism().map_or(2, std::num::NonZeroUsize::get).clamp(1, 8);
+    let mut args: Vec<String> =
+        ["-hide_banner", "-loglevel", "error", "-nostdin"].map(str::to_owned).to_vec();
     args.extend(device_args(encoder.hardware));
     args.extend(words(&format!(
         "-f rawvideo -pix_fmt bgr0 -video_size {width}x{height} -framerate {fps} \
@@ -307,11 +281,7 @@ fn next_delimiter(bytes: &[u8], from: usize) -> Option<usize> {
     let mut at = from;
     while at + 3 < bytes.len() {
         if bytes[at..at + 3] == [0, 0, 1] && (bytes[at + 3] & 0x1f) == 9 {
-            return Some(if at > 0 && bytes[at - 1] == 0 {
-                at - 1
-            } else {
-                at
-            });
+            return Some(if at > 0 && bytes[at - 1] == 0 { at - 1 } else { at });
         }
         at += 1;
     }
@@ -326,18 +296,9 @@ mod tests {
         let named = |name: &str| *ALL.iter().find(|one| one.name == name).unwrap();
         let nvenc = named("h264_nvenc");
         let vp9 = named("vp9_vaapi");
-        assert_eq!(
-            chosen(&[nvenc, vp9, SOFTWARE], &[Made::Vp8, Made::H264]),
-            Some(nvenc)
-        );
-        assert_eq!(
-            chosen(&[nvenc, vp9, SOFTWARE], &[Made::Vp8, Made::Vp9]),
-            Some(vp9)
-        );
-        assert_eq!(
-            chosen(&[nvenc, SOFTWARE], &[Made::Vp8, Made::Vp9]),
-            Some(SOFTWARE)
-        );
+        assert_eq!(chosen(&[nvenc, vp9, SOFTWARE], &[Made::Vp8, Made::H264]), Some(nvenc));
+        assert_eq!(chosen(&[nvenc, vp9, SOFTWARE], &[Made::Vp8, Made::Vp9]), Some(vp9));
+        assert_eq!(chosen(&[nvenc, SOFTWARE], &[Made::Vp8, Made::Vp9]), Some(SOFTWARE));
         assert_eq!(chosen(&[SOFTWARE], &[Made::H264]), None);
     }
     #[test]
@@ -379,9 +340,7 @@ mod tests {
     }
     #[test]
     fn cuts_h264_into_frames_at_each_delimiter_however_the_bytes_come() {
-        let first = [
-            0, 0, 0, 1, 9, 0xf0, 0, 0, 0, 1, 0x67, 1, 2, 0, 0, 1, 0x65, 3,
-        ];
+        let first = [0, 0, 0, 1, 9, 0xf0, 0, 0, 0, 1, 0x67, 1, 2, 0, 0, 1, 0x65, 3];
         let second = [0, 0, 0, 1, 9, 0xf0, 0, 0, 1, 0x41, 4];
         let third = [0, 0, 0, 1, 9, 0xf0];
         let stream: Vec<u8> = [&first[..], &second[..], &third[..]].concat();
@@ -389,11 +348,7 @@ mod tests {
             let mut units = AccessUnits::default();
             let mut frames = units.take(&stream[..cut]);
             frames.extend(units.take(&stream[cut..]));
-            assert_eq!(
-                frames,
-                vec![first.to_vec(), second.to_vec()],
-                "cut at {cut}"
-            );
+            assert_eq!(frames, vec![first.to_vec(), second.to_vec()], "cut at {cut}");
         }
     }
     #[test]

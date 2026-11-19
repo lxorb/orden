@@ -34,16 +34,9 @@ fn along(
     let (start, end) = area;
     let width = end - start;
     let grown = (now - extent).max(start - end);
-    let scale = if width > 0.0 {
-        (width + grown) / width
-    } else {
-        1.0
-    };
+    let scale = if width > 0.0 { (width + grown) / width } else { 1.0 };
     let at = |edge: f64| start + (edge - start) * scale;
-    (
-        at(pane.0) + (hole.0 - pane.0),
-        at(pane.1) + (hole.1 - pane.1),
-    )
+    (at(pane.0) + (hole.0 - pane.0), at(pane.1) + (hole.1 - pane.1))
 }
 #[must_use]
 pub fn fitted(hole: Bounds, frame: &Frame, now: Extent) -> Bounds {
@@ -66,12 +59,7 @@ pub fn fitted(hole: Bounds, frame: &Frame, now: Extent) -> Bounds {
         frame.window.height,
         now.height,
     );
-    Bounds {
-        x: left,
-        y: top,
-        width: (right - left).max(1.0),
-        height: (bottom - top).max(1.0),
-    }
+    Bounds { x: left, y: top, width: (right - left).max(1.0), height: (bottom - top).max(1.0) }
 }
 #[derive(Clone, Copy)]
 struct Followed {
@@ -88,10 +76,7 @@ fn extent(width: u32, height: u32, scale: f64) -> Option<Extent> {
     if width == 0 || height == 0 || scale <= 0.0 {
         return None;
     }
-    Some(Extent {
-        width: f64::from(width) / scale,
-        height: f64::from(height) / scale,
-    })
+    Some(Extent { width: f64::from(width) / scale, height: f64::from(height) / scale })
 }
 pub fn extent_of(window: &Window) -> Option<Extent> {
     let scale = crate::page_scale::of(window).ok()?;
@@ -110,10 +95,7 @@ pub fn placed(
         return hole;
     };
     following(|all| {
-        all.insert(
-            label.to_string(),
-            (window.label().to_string(), Followed { hole, frame }),
-        )
+        all.insert(label.to_string(), (window.label().to_string(), Followed { hole, frame }))
     });
     extent_of(window).map_or(hole, |now| fitted(hole, &frame, now))
 }
@@ -151,16 +133,9 @@ pub fn heard(window: &Window, event: &WindowEvent) {
             };
             (extent_of(window), scale)
         }
-        WindowEvent::ScaleFactorChanged {
-            scale_factor,
-            new_inner_size,
-            ..
-        } => {
+        WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size, .. } => {
             let scale = crate::page_scale::of(window).unwrap_or(*scale_factor);
-            (
-                extent(new_inner_size.width, new_inner_size.height, scale),
-                scale,
-            )
+            (extent(new_inner_size.width, new_inner_size.height, scale), scale)
         }
         _ => return,
     };
@@ -193,29 +168,17 @@ mod tests {
             found.width - wanted.width,
             found.height - wanted.height,
         ];
-        assert!(
-            off.iter().all(|one| one.abs() < 0.01),
-            "{found:?} is not {wanted:?}"
-        );
+        assert!(off.iter().all(|one| one.abs() < 0.01), "{found:?} is not {wanted:?}");
     }
     fn at(x: f64, y: f64, width: f64, height: f64) -> Bounds {
-        Bounds {
-            x,
-            y,
-            width,
-            height,
-        }
+        Bounds { x, y, width, height }
     }
     fn size(width: f64, height: f64) -> Extent {
         Extent { width, height }
     }
     fn one_pane() -> (Bounds, Frame) {
         let area = at(240.0, 36.0, 960.0, 724.0);
-        let frame = Frame {
-            window: size(1200.0, 800.0),
-            area,
-            pane: area,
-        };
+        let frame = Frame { window: size(1200.0, 800.0), area, pane: area };
         (at(240.0, 76.0, 960.0, 684.0), frame)
     }
     #[test]
@@ -238,11 +201,8 @@ mod tests {
     #[test]
     fn a_pane_of_two_keeps_its_share() {
         let area = at(240.0, 36.0, 960.0, 724.0);
-        let frame = Frame {
-            window: size(1200.0, 800.0),
-            area,
-            pane: at(720.0, 36.0, 480.0, 724.0),
-        };
+        let frame =
+            Frame { window: size(1200.0, 800.0), area, pane: at(720.0, 36.0, 480.0, 724.0) };
         let hole = at(720.0, 76.0, 480.0, 684.0);
         let now = fitted(hole, &frame, size(1440.0, 800.0));
         near(now, at(840.0, 76.0, 600.0, 684.0));
@@ -256,11 +216,7 @@ mod tests {
     #[test]
     fn a_page_filling_the_window_fills_it_at_every_size() {
         let whole = at(0.0, 0.0, 1200.0, 800.0);
-        let frame = Frame {
-            window: size(1200.0, 800.0),
-            area: whole,
-            pane: whole,
-        };
+        let frame = Frame { window: size(1200.0, 800.0), area: whole, pane: whole };
         let now = fitted(whole, &frame, size(1920.0, 1080.0));
         near(now, at(0.0, 0.0, 1920.0, 1080.0));
     }
@@ -278,14 +234,8 @@ mod tests {
     }
     #[test]
     fn a_page_s_edges_are_rounded_where_the_hole_s_are() {
-        assert_eq!(
-            edges(at(100.3, 40.2, 200.3, 560.2), 1.5),
-            (150, 60, 301, 841)
-        );
-        assert_eq!(
-            edges(at(240.0, 76.0, 960.0, 684.0), 1.0),
-            (240, 76, 960, 684)
-        );
+        assert_eq!(edges(at(100.3, 40.2, 200.3, 560.2), 1.5), (150, 60, 301, 841));
+        assert_eq!(edges(at(240.0, 76.0, 960.0, 684.0), 1.0), (240, 76, 960, 684));
         assert_eq!(edges(at(-10.0, -10.0, 0.1, 0.1), 2.0), (-20, -20, 1, 1));
     }
 }

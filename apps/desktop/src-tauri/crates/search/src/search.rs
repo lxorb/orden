@@ -56,20 +56,14 @@ pub struct Warmth {
 }
 impl Warm {
     fn keep(&mut self, path: &Path, stamp: Stamp, body: &Arc<str>) {
-        if let Some(was) = self.notes.insert(
-            path.to_path_buf(),
-            Kept {
-                stamp,
-                body: Arc::clone(body),
-            },
-        ) {
+        if let Some(was) =
+            self.notes.insert(path.to_path_buf(), Kept { stamp, body: Arc::clone(body) })
+        {
             self.characters = self.characters.saturating_sub(was.body.len());
-            self.by_size
-                .remove(&(Reverse(was.body.len()), path.to_path_buf()));
+            self.by_size.remove(&(Reverse(was.body.len()), path.to_path_buf()));
         }
         self.characters += body.len();
-        self.by_size
-            .insert((Reverse(body.len()), path.to_path_buf()));
+        self.by_size.insert((Reverse(body.len()), path.to_path_buf()));
         self.hold();
     }
     fn hold(&mut self) {
@@ -180,9 +174,8 @@ pub fn search_space(
             continue;
         };
         let shown = path.to_string_lossy();
-        let name = path
-            .file_name()
-            .map_or_else(String::new, |one| one.to_string_lossy().to_string());
+        let name =
+            path.file_name().map_or_else(String::new, |one| one.to_string_lossy().to_string());
         let note = Note::new(&shown, &relative, &name, &body);
         let mut hits = matcher.hits(&note, limit.saturating_sub(found));
         if !hits.is_empty() {
@@ -221,11 +214,7 @@ fn send(window: &tauri::Window, id: u32, pending: &mut Vec<Hit>, loose: Vec<Fuzz
     let _ = window.app_handle().emit_to(
         window.label(),
         HITS,
-        Batch {
-            id,
-            hits: std::mem::take(pending),
-            loose,
-        },
+        Batch { id, hits: std::mem::take(pending), loose },
     );
 }
 #[tauri::command(async)]
@@ -240,10 +229,7 @@ pub fn space_tags(app: AppHandle, root: String) -> Result<Vec<Tag>, String> {
             *counts.entry(tag).or_default() += 1;
         }
     }
-    let mut tags: Vec<Tag> = counts
-        .into_iter()
-        .map(|(tag, count)| Tag { tag, count })
-        .collect();
+    let mut tags: Vec<Tag> = counts.into_iter().map(|(tag, count)| Tag { tag, count }).collect();
     tags.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.tag.cmp(&b.tag)));
     Ok(tags)
 }
@@ -300,10 +286,7 @@ mod tests {
     }
     #[test]
     fn the_cap_lets_the_largest_notes_go_first() {
-        let mut warm = Warm {
-            cap: 100,
-            ..Warm::default()
-        };
+        let mut warm = Warm { cap: 100, ..Warm::default() };
         warm.keep(Path::new("Plan.md"), stamp(20), &words(5));
         warm.keep(Path::new("Ink.md"), stamp(20), &words(5));
         assert_eq!(warm.notes.len(), 2);
@@ -316,10 +299,7 @@ mod tests {
     }
     #[test]
     fn a_note_rewritten_is_held_at_its_new_size() {
-        let mut warm = Warm {
-            cap: 100,
-            ..Warm::default()
-        };
+        let mut warm = Warm { cap: 100, ..Warm::default() };
         warm.keep(Path::new("Draft.md"), stamp(80), &words(20));
         warm.keep(Path::new("Draft.md"), stamp(8), &words(2));
         warm.keep(Path::new("Plan.md"), stamp(60), &words(15));
@@ -342,10 +322,7 @@ mod tests {
         assert_eq!(&*body_of(&note).expect("the words"), "the quarter plan");
         assert_eq!(held().read, read);
         fs::write(&note, "the quarter plan, rewritten").expect("the rewrite");
-        assert_eq!(
-            &*body_of(&note).expect("the words"),
-            "the quarter plan, rewritten"
-        );
+        assert_eq!(&*body_of(&note).expect("the words"), "the quarter plan, rewritten");
         assert_eq!(held().read, read + 1);
         fs::remove_file(&note).expect("the note removed");
         assert!(body_of(&note).is_none());

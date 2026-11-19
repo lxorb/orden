@@ -30,16 +30,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, session: &str, verb: Verb, args:
     let name = verb.name();
     let tab = args.get("tab").and_then(Value::as_str).map(str::to_string);
     let answered = run(app, caller, session, verb);
-    logged(
-        app,
-        caller,
-        session,
-        name,
-        tab.as_deref(),
-        args,
-        &answered,
-        started,
-    );
+    logged(app, caller, session, name, tab.as_deref(), args, &answered, started);
     answered
 }
 fn run(app: &AppHandle, caller: &Caller, session: &str, verb: Verb) -> Answer {

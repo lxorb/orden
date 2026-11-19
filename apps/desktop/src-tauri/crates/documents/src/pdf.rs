@@ -76,13 +76,15 @@ pub async fn print_pdf(app: AppHandle, request: tauri::ipc::Request<'_>) -> Resu
         printer::print(webview, &output, &page, done)
     })
     .await
-    .map_err(|error| {
-        if error == TOO_LONG {
-            "the PDF took too long to write".into()
-        } else {
-            error
-        }
-    })
+    .map_err(
+        |error| {
+            if error == TOO_LONG {
+                "the PDF took too long to write".into()
+            } else {
+                error
+            }
+        },
+    )
 }
 const TOO_LONG: &str = "the print took too long";
 #[tauri::command]
@@ -259,24 +261,10 @@ mod printer {
         page: &PdfPage,
         done: Sender<Result<(), String>>,
     ) -> Result<(), String> {
-        let call = ENGINE
-            .get()
-            .ok_or("the engine that prints was never handed over")?
-            .call;
-        let printed = call(
-            window.as_ref(),
-            None,
-            "Page.printToPDF",
-            &printing(page),
-            PATIENCE,
-        )?;
+        let call = ENGINE.get().ok_or("the engine that prints was never handed over")?.call;
+        let printed = call(window.as_ref(), None, "Page.printToPDF", &printing(page), PATIENCE)?;
         let bytes = base64::engine::general_purpose::STANDARD
-            .decode(
-                printed
-                    .get("data")
-                    .and_then(Value::as_str)
-                    .unwrap_or_default(),
-            )
+            .decode(printed.get("data").and_then(Value::as_str).unwrap_or_default())
             .map_err(|error| format!("the engine printed something unreadable: {error}"))?;
         if bytes.is_empty() {
             return Err("the engine printed nothing".into());
@@ -292,31 +280,19 @@ mod tests {
     fn the_policy_goes_to_the_real_head() {
         let meta = "<meta http-equiv=\"Content-Security-Policy\"";
         let page = "<!-- a <head> in words --><!doctype html><head><script>1</script>";
-        assert!(
-            super::fenced(page).contains(&format!("<!doctype html><head>{meta}")),
-            "{page}"
-        );
+        assert!(super::fenced(page).contains(&format!("<!doctype html><head>{meta}")), "{page}");
         let page = "<!doctype html><header><script>1</script></header><head>";
-        assert!(
-            super::fenced(page).starts_with(&format!("<!doctype html>{meta}")),
-            "{page}"
-        );
+        assert!(super::fenced(page).starts_with(&format!("<!doctype html>{meta}")), "{page}");
         let page = "<script>1</script><head>";
         assert!(super::fenced(page).starts_with(meta), "{page}");
         let page = "<title><head></title><script>1</script>";
         assert!(super::fenced(page).starts_with(meta), "{page}");
         let page = "<html data-a=\"x>y\"><head data-b='p>q'><p>";
-        assert!(
-            super::fenced(page).contains(&format!("data-b='p>q'>{meta}")),
-            "{page}"
-        );
+        assert!(super::fenced(page).contains(&format!("data-b='p>q'>{meta}")), "{page}");
         let page = "<!--><script>1</script><!-- --><head>";
         assert!(super::fenced(page).starts_with(meta), "{page}");
         let page = "\u{feff}\n <!DOCTYPE html>\n<HTML>\n<HEAD\nlang=en>\n<title>t</title>";
-        assert!(
-            super::fenced(page).contains(&format!("lang=en>{meta}")),
-            "{page}"
-        );
+        assert!(super::fenced(page).contains(&format!("lang=en>{meta}")), "{page}");
     }
     #[test]
     fn the_policy_is_first_in_the_page() {
@@ -339,10 +315,7 @@ mod tests {
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt as _;
-            let mode = std::fs::metadata(&path)
-                .expect("its mode")
-                .permissions()
-                .mode();
+            let mode = std::fs::metadata(&path).expect("its mode").permissions().mode();
             assert_eq!(mode & 0o777, 0o600);
         }
         assert!(super::written_alone(&path, "again").is_err());

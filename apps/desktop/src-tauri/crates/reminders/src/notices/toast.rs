@@ -5,17 +5,10 @@ use super::Notice;
 pub const REPLY_INPUT: &str = "reply";
 pub const REPLY_ARGUMENT: &str = "reply";
 pub fn xml(notice: &Notice) -> String {
-    let mut texts = format!(
-        "<text>{}</text><text>{}</text>",
-        escaped(&notice.title),
-        escaped(&notice.body)
-    );
+    let mut texts =
+        format!("<text>{}</text><text>{}</text>", escaped(&notice.title), escaped(&notice.body));
     if !notice.from.is_empty() {
-        let _ = write!(
-            texts,
-            "<text placement=\"attribution\">{}</text>",
-            escaped(&notice.from)
-        );
+        let _ = write!(texts, "<text placement=\"attribution\">{}</text>", escaped(&notice.from));
     }
     let actions = notice.reply.as_ref().map_or_else(String::new, |reply| {
         format!(
@@ -73,10 +66,7 @@ mod tests {
     #[test]
     fn a_reply_is_a_field_and_send() {
         let mut one = notice();
-        one.reply = Some(Reply {
-            placeholder: "Reply".into(),
-            send: "Send".into(),
-        });
+        one.reply = Some(Reply { placeholder: "Reply".into(), send: "Send".into() });
         one.silent = false;
         one.from = String::new();
         let made = xml(&one);

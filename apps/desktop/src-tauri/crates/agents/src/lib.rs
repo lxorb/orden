@@ -100,10 +100,7 @@ pub fn session_of(asked: &Value) -> String {
         .get("session")
         .and_then(Value::as_str)
         .filter(|one| {
-            one.len() <= 64
-                && one
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+            one.len() <= 64 && one.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
         })
         .unwrap_or_default()
         .to_owned()
@@ -172,10 +169,7 @@ pub fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answ
     loop {
         if approvals::allowed(PAIRING, &key) {
             return match state(app).grants.mint(app, &client, Grant::own) {
-                Ok((grant, token)) => Answer::ok(Paired {
-                    agent: grant.id,
-                    token,
-                }),
+                Ok((grant, token)) => Answer::ok(Paired { agent: grant.id, token }),
                 Err(why) => Answer::error(Code::Failed, why),
             };
         }
@@ -205,10 +199,7 @@ pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
     if stop::stopped_for(caller.id()) {
         return Err("the reader pressed the stop: nothing runs until they resume".into());
     }
-    let Some((_, needs)) = verbs::window::AGENT_VERBS
-        .iter()
-        .find(|(name, _)| *name == verb)
-    else {
+    let Some((_, needs)) = verbs::window::AGENT_VERBS.iter().find(|(name, _)| *name == verb) else {
         return Err(format!("{verb} is not a verb an agent may call"));
     };
     match needs {
@@ -245,8 +236,7 @@ mod tests {
     fn a_client_connected_over_mcp_is_asked_nothing() {
         let mut kept = Grant::third_party("codex".into(), "Codex");
         kept.asks.insert(Category::Deleting, true);
-        kept.sites
-            .insert("bank.example".into(), grants::SiteRule::Deny);
+        kept.sites.insert("bank.example".into(), grants::SiteRule::Deny);
         kept.spaces = grants::Spaces::Named(vec!["Work".into()]);
         let grant = connected(kept);
         for category in [
@@ -267,10 +257,7 @@ mod tests {
         assert!(grant.asks_nothing());
         for scope in Scope::ALL {
             assert!(grant.holds(scope), "{scope:?}");
-            assert!(
-                grant.scopes.contains(&scope),
-                "{scope:?} is held and not told"
-            );
+            assert!(grant.scopes.contains(&scope), "{scope:?} is held and not told");
         }
         let agent = Caller::Agent(Box::new(grant.clone()));
         assert!(may_ask_the_window(&agent, "write_setting").is_ok());

@@ -4,12 +4,7 @@ use orden_documents::pdf::{printing, PdfPage};
 
 #[test]
 fn a_page_prints_on_its_own_sheet_with_its_backgrounds() {
-    let asked = printing(&PdfPage {
-        width: 8.5,
-        height: 11.0,
-        margin: -1.0,
-        landscape: true,
-    });
+    let asked = printing(&PdfPage { width: 8.5, height: 11.0, margin: -1.0, landscape: true });
     assert_eq!(asked["paperWidth"], 8.5);
     assert_eq!(asked["landscape"], true);
     assert_eq!(asked["marginTop"], 0.0);

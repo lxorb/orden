@@ -20,11 +20,7 @@ pub async fn web_pause(app: AppHandle, tab: String, paused: bool) -> Result<bool
     Ok(answered(&mut heard, PATIENCE).await)
 }
 async fn answered(heard: &mut tauri::async_runtime::Receiver<bool>, patience: Duration) -> bool {
-    tokio::time::timeout(patience, heard.recv())
-        .await
-        .ok()
-        .flatten()
-        .unwrap_or(false)
+    tokio::time::timeout(patience, heard.recv()).await.ok().flatten().unwrap_or(false)
 }
 mod engine {
     use serde_json::json;

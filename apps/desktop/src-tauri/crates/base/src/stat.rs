@@ -56,30 +56,18 @@ mod tests {
         let text = "4242 (my (odd) prog) S 1 4242 77 0 4300 4194560 100 0 0 0 250 50 0 0 20 0";
         let stat = of(text).expect("a stat");
         assert_eq!(
-            (
-                stat.parent,
-                stat.group,
-                stat.session,
-                stat.front,
-                stat.ticks
-            ),
+            (stat.parent, stat.group, stat.session, stat.front, stat.ticks),
             (1, 4242, 77, 4300, 300)
         );
         assert!(!stat.gone());
-        assert!(of(text.replacen(") S", ") Z", 1).as_str())
-            .expect("a stat")
-            .gone());
+        assert!(of(text.replacen(") S", ") Z", 1).as_str()).expect("a stat").gone());
         assert_eq!(of("garbage"), None);
     }
     #[test]
     fn this_process_runs_and_one_that_ended_does_not() {
         assert!(running(std::process::id()));
         let mut ended = std::process::Command::new(if cfg!(windows) { "cmd" } else { "true" })
-            .args(if cfg!(windows) {
-                &["/C", "exit"][..]
-            } else {
-                &[][..]
-            })
+            .args(if cfg!(windows) { &["/C", "exit"][..] } else { &[][..] })
             .spawn()
             .expect("a process");
         let pid = ended.id();

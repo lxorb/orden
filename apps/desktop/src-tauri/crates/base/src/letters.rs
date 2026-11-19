@@ -1,13 +1,7 @@
 pub fn seen(said: &str) -> String {
     said.chars()
         .filter(|one| !hidden(*one))
-        .map(|one| {
-            if one.is_control() || is_blank(one) {
-                ' '
-            } else {
-                look_alike(one)
-            }
-        })
+        .map(|one| if one.is_control() || is_blank(one) { ' ' } else { look_alike(one) })
         .collect()
 }
 pub fn hidden(one: char) -> bool {
@@ -26,11 +20,7 @@ pub fn look_alike(one: char) -> char {
         0xFF01..=0xFF5E => latin(at - 0xFEE0),
         0x1D400..=0x1D6A3 => {
             let letter = (at - 0x1D400) % 52;
-            latin(if letter < 26 {
-                0x41 + letter
-            } else {
-                0x61 + letter - 26
-            })
+            latin(if letter < 26 { 0x41 + letter } else { 0x61 + letter - 26 })
         }
         0x1D7CE..=0x1D7FF => latin(0x30 + (at - 0x1D7CE) % 10),
         _ => {
@@ -113,13 +103,7 @@ pub fn is_blank(one: char) -> bool {
 pub fn plain_name(said: &str) -> String {
     said.chars()
         .filter(|one| !is_format(*one))
-        .map(|one| {
-            if one.is_control() || is_blank(one) {
-                ' '
-            } else {
-                one
-            }
-        })
+        .map(|one| if one.is_control() || is_blank(one) { ' ' } else { one })
         .collect::<String>()
         .split_whitespace()
         .collect::<Vec<_>>()

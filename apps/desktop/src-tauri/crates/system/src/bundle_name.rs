@@ -61,20 +61,13 @@ mod tests {
     #[test]
     fn the_program_inside_either_old_folder_is_moved_to_the_new_one() {
         for old in OLD {
-            let (from, to) = renamed(
-                &Path::new("/Applications")
-                    .join(old)
-                    .join("Contents/MacOS/nib"),
-            )
-            .expect("renamed");
+            let (from, to) =
+                renamed(&Path::new("/Applications").join(old).join("Contents/MacOS/nib"))
+                    .expect("renamed");
             assert_eq!(from, Path::new("/Applications").join(old));
             assert_eq!(to, PathBuf::from("/Applications/Orden.app"));
-            let (_, to) = renamed(
-                &Path::new("/Users/a/Apps")
-                    .join(old)
-                    .join("Contents/MacOS/nib"),
-            )
-            .expect("anywhere a folder is");
+            let (_, to) = renamed(&Path::new("/Users/a/Apps").join(old).join("Contents/MacOS/nib"))
+                .expect("anywhere a folder is");
             assert_eq!(to, PathBuf::from("/Users/a/Apps/Orden.app"));
         }
     }

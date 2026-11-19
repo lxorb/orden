@@ -82,9 +82,7 @@ impl Tinted {
     }
 }
 fn read(answer: &str) -> Tinted {
-    serde_json::from_str::<Tinted>(answer)
-        .map(Tinted::kept)
-        .unwrap_or_default()
+    serde_json::from_str::<Tinted>(answer).map(Tinted::kept).unwrap_or_default()
 }
 #[tauri::command]
 pub async fn web_tint(app: AppHandle, tab: String) -> Result<Tinted, String> {
@@ -94,10 +92,7 @@ pub async fn web_tint(app: AppHandle, tab: String) -> Result<Tinted, String> {
         let _ = sending.try_send(answer);
     })
     .map_err(|error| format!("that page could not be read: {error}"))?;
-    let answer = waiting
-        .recv()
-        .await
-        .ok_or_else(|| "that page said nothing".to_string())?;
+    let answer = waiting.recv().await.ok_or_else(|| "that page said nothing".to_string())?;
     Ok(read(&answer))
 }
 #[cfg(test)]

@@ -6,18 +6,13 @@ use crate::browser_profiles::{once, present, Profile};
 use crate::firefox_profiles::BROWSERS_DIR;
 use orden_base::paths::folder_named;
 
-pub(crate) const BROWSERS: [&str; 8] = [
-    "chrome", "edge", "brave", "chromium", "vivaldi", "opera", "opera-gx", "arc",
-];
+pub(crate) const BROWSERS: [&str; 8] =
+    ["chrome", "edge", "brave", "chromium", "vivaldi", "opera", "opera-gx", "arc"];
 const ARC_SIDEBAR: &str = "StorableSidebar.json";
 const MOST_SIDEBAR_BYTES: u64 = 64 * 1024 * 1024;
 const SESSIONS_KEPT: usize = 3;
 pub(crate) fn profiles(browser: &str) -> Vec<Profile> {
-    once(
-        user_data_folders(browser)
-            .iter()
-            .flat_map(|home| profiles_in(home)),
-    )
+    once(user_data_folders(browser).iter().flat_map(|home| profiles_in(home)))
 }
 fn user_data_folders(browser: &str) -> Vec<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(BROWSERS_DIR).as_deref()) {
@@ -42,15 +37,13 @@ fn user_data_folders(browser: &str) -> Vec<PathBuf> {
                 "snap/brave/current/.config/BraveSoftware/Brave-Browser",
                 ".var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser",
             ],
-            "chromium" => &[
-                "snap/chromium/common/chromium",
-                ".var/app/org.chromium.Chromium/config/chromium",
-            ],
+            "chromium" => {
+                &["snap/chromium/common/chromium", ".var/app/org.chromium.Chromium/config/chromium"]
+            }
             "vivaldi" => &[".var/app/com.vivaldi.Vivaldi/config/vivaldi"],
-            "opera" => &[
-                "snap/opera/current/.config/opera",
-                ".var/app/com.opera.Opera/config/opera",
-            ],
+            "opera" => {
+                &["snap/opera/current/.config/opera", ".var/app/com.opera.Opera/config/opera"]
+            }
             _ => &[],
         };
         if let Some(base) = dirs::config_dir() {
@@ -124,9 +117,7 @@ pub fn read_arc_sidebar(profile: String) -> Result<String, String> {
         .find(|one| orden_base::paths::folded(Path::new(&one.path)) == asked)
         .ok_or_else(|| format!("{profile} is not a profile Arc lists"))?;
     let path = sidebar_of(Path::new(&one.path)).ok_or("Arc keeps no sidebar here")?;
-    let size = fs::metadata(&path)
-        .map_err(|error| format!("{ARC_SIDEBAR}: {error}"))?
-        .len();
+    let size = fs::metadata(&path).map_err(|error| format!("{ARC_SIDEBAR}: {error}"))?.len();
     if size > MOST_SIDEBAR_BYTES {
         return Err(format!("{ARC_SIDEBAR} is larger than any sidebar"));
     }
@@ -140,10 +131,8 @@ fn profiles_in(home: &Path) -> Vec<Profile> {
     let state = fs::read_to_string(home.join("Local State"))
         .ok()
         .and_then(|text| serde_json::from_str::<Value>(&text).ok());
-    let named = state.as_ref().map_or_else(
-        || vec![("Default".to_owned(), "Default".to_owned())],
-        names_in,
-    );
+    let named =
+        state.as_ref().map_or_else(|| vec![("Default".to_owned(), "Default".to_owned())], names_in);
     let listed: Vec<Profile> = named
         .into_iter()
         .filter(|(folder, _)| is_profile_folder(folder))
@@ -182,11 +171,8 @@ fn names_in(state: &Value) -> Vec<(String, String)> {
         .filter_map(Value::as_str)
         .filter(|folder| cache.contains_key(*folder))
         .collect();
-    let mut rest: Vec<&str> = cache
-        .keys()
-        .map(String::as_str)
-        .filter(|folder| !folders.contains(folder))
-        .collect();
+    let mut rest: Vec<&str> =
+        cache.keys().map(String::as_str).filter(|folder| !folders.contains(folder)).collect();
     rest.sort_unstable();
     folders.extend(rest);
     folders
@@ -226,11 +212,7 @@ fn newest(profile: &Path, folder: &str, most: usize) -> Vec<String> {
         })
         .collect();
     names.sort_unstable_by(|a, b| b.cmp(a));
-    names
-        .into_iter()
-        .take(most)
-        .map(|name| format!("{folder}/{name}"))
-        .collect()
+    names.into_iter().take(most).map(|name| format!("{folder}/{name}")).collect()
 }
 #[cfg(test)]
 mod tests {
@@ -252,11 +234,7 @@ mod tests {
         let home = tempfile::tempdir().expect("a folder");
         fs::write(home.path().join("Local State"), STATE).expect("the state");
         touch(&home.path().join("Default/Bookmarks"));
-        touch(
-            &home
-                .path()
-                .join("Profile 2/Sessions/Session_13436813666016900"),
-        );
+        touch(&home.path().join("Profile 2/Sessions/Session_13436813666016900"));
         touch(&home.path().join("Profile 3/Bookmarks"));
         touch(&home.path().join("Profile 4/Bookmarks"));
         let found = profiles_in(home.path());
@@ -272,11 +250,7 @@ mod tests {
             .collect();
         assert_eq!(
             names,
-            vec![
-                ("Profile 2", "Work"),
-                ("Default", "Person 1"),
-                ("Profile 3", "Profile 3")
-            ]
+            vec![("Profile 2", "Work"), ("Default", "Person 1"), ("Profile 3", "Profile 3")]
         );
     }
     #[test]
@@ -315,19 +289,10 @@ mod tests {
     fn the_engine_and_the_databases_come_last() {
         let home = tempfile::tempdir().expect("a folder");
         let profile = home.path().join("Default");
-        for file in [
-            "Favicons",
-            "History",
-            "Preferences",
-            "Bookmarks",
-            "Login Data",
-        ] {
+        for file in ["Favicons", "History", "Preferences", "Bookmarks", "Login Data"] {
             touch(&profile.join(file));
         }
-        assert_eq!(
-            files_of(&profile),
-            vec!["Bookmarks", "Preferences", "History", "Favicons"]
-        );
+        assert_eq!(files_of(&profile), vec!["Bookmarks", "Preferences", "History", "Favicons"]);
     }
     #[test]
     fn operas_first_profile_is_its_user_data_folder() {

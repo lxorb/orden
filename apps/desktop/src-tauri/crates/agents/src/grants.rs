@@ -130,12 +130,7 @@ pub struct Limits {
 }
 impl Default for Limits {
     fn default() -> Self {
-        Limits {
-            tabs: 4,
-            calls: 600,
-            navigations: 60,
-            memory: 0,
-        }
+        Limits { tabs: 4, calls: 600, navigations: 60, memory: 0 }
     }
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -173,10 +168,7 @@ impl Grant {
             scopes: Scope::ALL
                 .into_iter()
                 .filter(|one| {
-                    !matches!(
-                        one,
-                        Scope::BrowserScript | Scope::BrowserStorage | Scope::Settings
-                    )
+                    !matches!(one, Scope::BrowserScript | Scope::BrowserStorage | Scope::Settings)
                 })
                 .collect(),
             spaces: Spaces::All(Every::All),
@@ -231,9 +223,7 @@ impl Grant {
         self.mode == Mode::Autonomous
     }
     pub fn always(&self, site: &str, category: Category) -> bool {
-        self.always
-            .get(site)
-            .is_some_and(|categories| categories.contains(&category))
+        self.always.get(site).is_some_and(|categories| categories.contains(&category))
     }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -291,10 +281,9 @@ fn with_chats(grant: &mut Grant) {
     if !grant.holds(Scope::Context) {
         return;
     }
-    for (notes, chats) in [
-        (Scope::NotesRead, Scope::ChatsRead),
-        (Scope::NotesWrite, Scope::ChatsWrite),
-    ] {
+    for (notes, chats) in
+        [(Scope::NotesRead, Scope::ChatsRead), (Scope::NotesWrite, Scope::ChatsWrite)]
+    {
         if grant.holds(notes) && !grant.holds(chats) {
             grant.scopes.push(chats);
         }
@@ -310,11 +299,7 @@ impl Grants {
         with: impl FnOnce(&mut Vec<Kept>) -> T,
     ) -> Result<T, String> {
         let loaded = self.0.lock().map_err(|_| BUSY.to_string())?.is_some();
-        let fresh = if loaded {
-            None
-        } else {
-            Some(read(&file(app)?))
-        };
+        let fresh = if loaded { None } else { Some(read(&file(app)?)) };
         let mut held = self.0.lock().map_err(|_| BUSY.to_string())?;
         if held.is_none() {
             *held = fresh;
@@ -351,17 +336,13 @@ impl Grants {
     }
     pub fn by_id(&self, app: &AppHandle, id: &str) -> Option<Grant> {
         self.with(app, |kept| {
-            kept.iter()
-                .find(|one| one.grant.id == id)
-                .map(|one| one.grant.clone())
+            kept.iter().find(|one| one.grant.id == id).map(|one| one.grant.clone())
         })
         .ok()
         .flatten()
     }
     pub fn all(&self, app: &AppHandle) -> Result<Vec<Grant>, String> {
-        self.with(app, |kept| {
-            kept.iter().map(|one| one.grant.clone()).collect()
-        })
+        self.with(app, |kept| kept.iter().map(|one| one.grant.clone()).collect())
     }
     pub fn mint(
         &self,
@@ -373,10 +354,7 @@ impl Grants {
         self.changed(app, |kept| {
             let ids: Vec<&str> = kept.iter().map(|one| one.grant.id.as_str()).collect();
             let grant = make(free_id(client, &ids), client);
-            kept.push(Kept {
-                grant: grant.clone(),
-                token: hashed(&token),
-            });
+            kept.push(Kept { grant: grant.clone(), token: hashed(&token) });
             Ok((grant, token))
         })
     }
@@ -499,11 +477,7 @@ fn free_id(client: &str, taken: &[&str]) -> String {
     let stem = if stem.is_empty() { "agent" } else { stem };
     let kept = format!("agent-{stem}");
     let built_in = |prefix: &str| stem == prefix.trim_end_matches('-') || stem.starts_with(prefix);
-    let stem = if built_in(BUILT_IN) || built_in(BUILT_IN_BEFORE) {
-        kept.as_str()
-    } else {
-        stem
-    };
+    let stem = if built_in(BUILT_IN) || built_in(BUILT_IN_BEFORE) { kept.as_str() } else { stem };
     if !taken.contains(&stem) {
         return stem.to_string();
     }
@@ -564,9 +538,7 @@ pub fn agents_mint(
     if name.is_empty() {
         return Err("an agent needs a name".into());
     }
-    let (grant, token) = crate::state(&app)
-        .grants
-        .mint(&app, name, Grant::third_party)?;
+    let (grant, token) = crate::state(&app).grants.mint(&app, name, Grant::third_party)?;
     Ok(Minted { grant, token })
 }
 #[derive(Serialize)]
@@ -585,10 +557,7 @@ mod tests {
     use super::*;
 
     fn kept(id: &str, token: &str) -> Kept {
-        Kept {
-            grant: Grant::own(id.into(), id),
-            token: hashed(token),
-        }
+        Kept { grant: Grant::own(id.into(), id), token: hashed(token) }
     }
     fn written(text: &str) -> (tempfile::TempDir, PathBuf) {
         let dir = tempfile::tempdir().expect("dir");
@@ -599,20 +568,13 @@ mod tests {
     #[test]
     fn a_grant_round_trips_through_the_file_shape() {
         let mut grant = Grant::own("claude-code".into(), "Claude Code");
-        grant
-            .sites
-            .insert("bank.example".into(), SiteRule::AgentStore);
+        grant.sites.insert("bank.example".into(), SiteRule::AgentStore);
         grant.sites.insert("evil.example".into(), SiteRule::Deny);
         grant.asks.insert(Category::Sending, false);
-        grant
-            .always
-            .insert("shop.example".into(), vec![Category::Paying]);
+        grant.always.insert("shop.example".into(), vec![Category::Paying]);
         grant.spaces = Spaces::Named(vec!["Research".into()]);
         let text = serde_json::to_string(&File {
-            agents: vec![Kept {
-                grant: grant.clone(),
-                token: hashed("t"),
-            }],
+            agents: vec![Kept { grant: grant.clone(), token: hashed("t") }],
             chats: true,
             helpers: true,
             orden: true,
@@ -627,20 +589,14 @@ mod tests {
         assert_eq!(one["spaces"][0], "Research");
         assert_eq!(one["mode"], "unsupervised");
         assert_eq!(one["asks"]["sending"], false);
-        assert!(one["scopes"]
-            .as_array()
-            .expect("scopes")
-            .contains(&"browser.reader".into()));
+        assert!(one["scopes"].as_array().expect("scopes").contains(&"browser.reader".into()));
     }
     #[test]
     fn a_sidebar_grant_from_before_the_rename_is_called_orden_once() {
         let kept = |id: &str, client: &str, name: &str| {
             let mut grant = Grant::own(id.into(), client);
             grant.name = name.into();
-            Kept {
-                grant,
-                token: hashed("t"),
-            }
+            Kept { grant, token: hashed("t") }
         };
         let text = serde_json::json!({
             "agents": [
@@ -655,10 +611,8 @@ mod tests {
         .to_string();
         let (_dir, path) = written(&text);
         let read = read(&path);
-        let labels: Vec<(&str, &str)> = read
-            .iter()
-            .map(|one| (one.grant.client.as_str(), one.grant.name.as_str()))
-            .collect();
+        let labels: Vec<(&str, &str)> =
+            read.iter().map(|one| (one.grant.client.as_str(), one.grant.name.as_str())).collect();
         assert_eq!(
             labels,
             [
@@ -682,10 +636,7 @@ mod tests {
             let mut grant = Grant::own(id.into(), client);
             grant.name = name.into();
             grant.built_in = id.starts_with(BUILT_IN);
-            Kept {
-                grant,
-                token: hashed("t"),
-            }
+            Kept { grant, token: hashed("t") }
         };
         let text = serde_json::json!({
             "agents": [
@@ -702,13 +653,7 @@ mod tests {
         let read = read(&path);
         let labels: Vec<(&str, &str, &str)> = read
             .iter()
-            .map(|one| {
-                (
-                    one.grant.id.as_str(),
-                    one.grant.client.as_str(),
-                    one.grant.name.as_str(),
-                )
-            })
+            .map(|one| (one.grant.id.as_str(), one.grant.client.as_str(), one.grant.name.as_str()))
             .collect();
         assert_eq!(
             labels,
@@ -723,20 +668,13 @@ mod tests {
     #[test]
     fn a_grant_from_before_chats_reads_and_posts_where_it_reads_and_writes_notes() {
         let mut own = Grant::own("a".into(), "A");
-        own.scopes.retain(|one| {
-            !matches!(
-                one,
-                Scope::ChatsRead | Scope::ChatsWrite | Scope::NotesWrite
-            )
-        });
+        own.scopes
+            .retain(|one| !matches!(one, Scope::ChatsRead | Scope::ChatsWrite | Scope::NotesWrite));
         let mut other = Grant::own("b".into(), "B");
         other
             .scopes
             .retain(|one| !matches!(one, Scope::Context | Scope::ChatsRead | Scope::ChatsWrite));
-        let kept = |grant: &Grant| Kept {
-            grant: grant.clone(),
-            token: hashed("t"),
-        };
+        let kept = |grant: &Grant| Kept { grant: grant.clone(), token: hashed("t") };
         let text = serde_json::json!({ "agents": [kept(&own), kept(&other)] }).to_string();
         let (_dir, path) = written(&text);
         let read = read(&path);
@@ -780,15 +718,7 @@ mod tests {
         assert!(own.asks(Category::Terminal));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
-        assert_eq!(
-            own.limits,
-            Limits {
-                tabs: 4,
-                calls: 600,
-                navigations: 60,
-                memory: 0
-            }
-        );
+        assert_eq!(own.limits, Limits { tabs: 4, calls: 600, navigations: 60, memory: 0 });
         let other = Grant::third_party("b".into(), "B");
         assert!(!other.holds(Scope::Context));
         assert!(!other.holds(Scope::BrowserReader));
@@ -846,14 +776,8 @@ mod tests {
             grant
         };
         let none: Vec<String> = Vec::new();
-        assert_eq!(
-            built_in_id(&built("nib-anthropic"), &none).as_deref(),
-            Some("orden-anthropic")
-        );
-        assert_eq!(
-            built_in_id(&built("nib-anthropic"), &["orden-anthropic".to_string()]),
-            None
-        );
+        assert_eq!(built_in_id(&built("nib-anthropic"), &none).as_deref(), Some("orden-anthropic"));
+        assert_eq!(built_in_id(&built("nib-anthropic"), &["orden-anthropic".to_string()]), None);
         assert_eq!(built_in_id(&built("orden-anthropic"), &none), None);
         let mut mine = built("nib-anthropic");
         mine.built_in = false;
@@ -871,10 +795,7 @@ mod tests {
     fn an_id_comes_from_the_name_and_is_free() {
         assert_eq!(free_id("Claude Code", &[]), "claude-code");
         assert_eq!(free_id("Claude Code", &["claude-code"]), "claude-code-2");
-        assert_eq!(
-            free_id("Claude Code", &["claude-code", "claude-code-2"]),
-            "claude-code-3"
-        );
+        assert_eq!(free_id("Claude Code", &["claude-code", "claude-code-2"]), "claude-code-3");
         assert_eq!(free_id("  ", &[]), "agent");
         assert_eq!(free_id("nib-anthropic", &[]), "agent-nib-anthropic");
         assert_eq!(free_id("nib", &[]), "agent-nib");

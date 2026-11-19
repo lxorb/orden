@@ -109,10 +109,7 @@ pub fn crumb(what: &str) {
     if held.len() >= MOST_CRUMBS {
         held.pop_front();
     }
-    held.push_back(Crumb {
-        at: orden_base::clock::now(),
-        what: what.chars().take(80).collect(),
-    });
+    held.push_back(Crumb { at: orden_base::clock::now(), what: what.chars().take(80).collect() });
 }
 pub fn crumbs() -> Vec<Crumb> {
     CRUMBS.held().iter().cloned().collect()
@@ -127,15 +124,12 @@ pub fn windows(count: usize) {
     *WINDOWS.held() = count;
 }
 fn open() -> Open {
-    Open {
-        windows: *WINDOWS.held(),
-        kinds: KINDS.held().clone(),
-    }
+    Open { windows: *WINDOWS.held(), kinds: KINDS.held().clone() }
 }
 pub fn uptime() -> u64 {
-    STARTED.get().map_or(0, |started| {
-        u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)
-    })
+    STARTED
+        .get()
+        .map_or(0, |started| u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX))
 }
 pub fn fresh_id() -> String {
     let mut bytes = [0u8; 16];
@@ -144,18 +138,15 @@ pub fn fresh_id() -> String {
         bytes[..8].copy_from_slice(&now);
         bytes[8..12].copy_from_slice(&std::process::id().to_le_bytes());
     }
-    bytes
-        .iter()
-        .fold(String::with_capacity(32), |mut out, byte| {
-            use std::fmt::Write as _;
-            let _ = write!(out, "{byte:02x}");
-            out
-        })
+    bytes.iter().fold(String::with_capacity(32), |mut out, byte| {
+        use std::fmt::Write as _;
+        let _ = write!(out, "{byte:02x}");
+        out
+    })
 }
 pub fn fresh(kind: &str, summary: &str) -> Report {
-    let (app, system) = facts().map_or_else(Default::default, |facts| {
-        (facts.app.clone(), facts.system.clone())
-    });
+    let (app, system) =
+        facts().map_or_else(Default::default, |facts| (facts.app.clone(), facts.system.clone()));
     Report {
         v: 1,
         id: fresh_id(),
@@ -165,9 +156,7 @@ pub fn fresh(kind: &str, summary: &str) -> Report {
         system,
         summary: summary.chars().take(300).collect(),
         breadcrumbs: crumbs(),
-        log: facts()
-            .map(|facts| log_tail(&facts.log, None))
-            .unwrap_or_default(),
+        log: facts().map(|facts| log_tail(&facts.log, None)).unwrap_or_default(),
         open: Some(open()),
         resources: Some(super::load::resources(uptime())),
         ..Report::default()

@@ -43,8 +43,7 @@ fn folded(path: &str) -> String {
     path.replace('\\', "/").to_lowercase()
 }
 fn under(path: &str, root: &str) -> bool {
-    path.strip_prefix(root.trim_end_matches('/'))
-        .is_some_and(|rest| rest.starts_with('/'))
+    path.strip_prefix(root.trim_end_matches('/')).is_some_and(|rest| rest.starts_with('/'))
 }
 fn kept_by(at: &Install) -> Option<Manager> {
     match at.os {
@@ -76,12 +75,7 @@ fn windows(at: &Install) -> Option<Manager> {
     let scoop = ["SCOOP", "SCOOP_GLOBAL"]
         .iter()
         .filter_map(|name| (at.env)(name))
-        .any(|root| {
-            under(
-                &exe,
-                &format!("{}/apps", folded(&root).trim_end_matches('/')),
-            )
-        });
+        .any(|root| under(&exe, &format!("{}/apps", folded(&root).trim_end_matches('/'))));
     if scoop || exe.contains("/scoop/apps/") {
         return Some(Manager::Scoop);
     }
@@ -89,10 +83,7 @@ fn windows(at: &Install) -> Option<Manager> {
         let root = (at.env)("ChocolateyInstall")
             .or_else(|| (at.env)("ProgramData").map(|data| format!(r"{data}\chocolatey")))?;
         let root = root.trim_end_matches('\\');
-        if PACKAGES
-            .iter()
-            .any(|id| (at.exists)(&format!(r"{root}\lib\{id}")))
-        {
+        if PACKAGES.iter().any(|id| (at.exists)(&format!(r"{root}\lib\{id}"))) {
             return Some(Manager::Choco);
         }
     }
@@ -101,11 +92,7 @@ fn windows(at: &Install) -> Option<Manager> {
 fn mac(at: &Install) -> Option<Manager> {
     CASKROOMS
         .iter()
-        .any(|room| {
-            PACKAGES
-                .iter()
-                .any(|cask| (at.exists)(&format!("{room}/{cask}")))
-        })
+        .any(|room| PACKAGES.iter().any(|cask| (at.exists)(&format!("{room}/{cask}"))))
         .then_some(Manager::Brew)
 }
 #[tauri::command(async)]
@@ -134,52 +121,29 @@ mod tests {
         paths: &[&str],
     ) -> Option<Manager> {
         let env = |name: &str| {
-            vars.iter()
-                .find(|(key, _)| *key == name)
-                .map(|(_, value)| (*value).to_owned())
+            vars.iter().find(|(key, _)| *key == name).map(|(_, value)| (*value).to_owned())
         };
         let exists = |path: &str| paths.contains(&path);
-        kept_by(&Install {
-            os,
-            exe,
-            bundle,
-            env: &env,
-            exists: &exists,
-        })
+        kept_by(&Install { os, exe, bundle, env: &env, exists: &exists })
     }
     const DEB_EXE: &str = "/usr/bin/orden";
     #[test]
     fn an_appimage_updates_itself() {
         let exe = "/tmp/.mount_OrdenX/usr/bin/orden";
         let vars = [("APPIMAGE", "/home/a/Orden.AppImage")];
-        assert_eq!(
-            on("linux", exe, Some(BundleType::AppImage), &vars, &[]),
-            None
-        );
+        assert_eq!(on("linux", exe, Some(BundleType::AppImage), &vars, &[]), None);
     }
     #[test]
     fn a_deb_is_apts_and_on_arch_the_aurs() {
+        assert_eq!(on("linux", DEB_EXE, Some(BundleType::Deb), &[], &[]), Some(Manager::Apt));
         assert_eq!(
-            on("linux", DEB_EXE, Some(BundleType::Deb), &[], &[]),
-            Some(Manager::Apt)
-        );
-        assert_eq!(
-            on(
-                "linux",
-                DEB_EXE,
-                Some(BundleType::Deb),
-                &[],
-                &["/var/lib/pacman"]
-            ),
+            on("linux", DEB_EXE, Some(BundleType::Deb), &[], &["/var/lib/pacman"]),
             Some(Manager::Aur)
         );
     }
     #[test]
     fn an_rpm_is_dnfs() {
-        assert_eq!(
-            on("linux", DEB_EXE, Some(BundleType::Rpm), &[], &[]),
-            Some(Manager::Dnf)
-        );
+        assert_eq!(on("linux", DEB_EXE, Some(BundleType::Rpm), &[], &[]), Some(Manager::Dnf));
     }
     #[test]
     fn a_flatpak_is_known_by_its_sandbox_whatever_the_bundle() {
@@ -192,24 +156,12 @@ mod tests {
     fn a_snap_is_known_by_its_own_folder() {
         let vars = [("SNAP", "/snap/orden/12")];
         assert_eq!(
-            on(
-                "linux",
-                "/snap/orden/12/usr/bin/orden",
-                Some(BundleType::Deb),
-                &vars,
-                &[]
-            ),
+            on("linux", "/snap/orden/12/usr/bin/orden", Some(BundleType::Deb), &vars, &[]),
             Some(Manager::Snap)
         );
         let vars = [("SNAP", "/snap/code/200")];
         assert_eq!(
-            on(
-                "linux",
-                "/tmp/.mount_x/usr/bin/orden",
-                Some(BundleType::AppImage),
-                &vars,
-                &[]
-            ),
+            on("linux", "/tmp/.mount_x/usr/bin/orden", Some(BundleType::AppImage), &vars, &[]),
             None
         );
     }
@@ -217,64 +169,37 @@ mod tests {
     fn the_nix_store_is_nixs_even_for_the_appimage_it_wraps() {
         let exe = "/nix/store/abc-orden-0.15.0-extracted/usr/bin/orden";
         let vars = [("APPIMAGE", "/nix/store/abc-orden.AppImage")];
-        assert_eq!(
-            on("linux", exe, Some(BundleType::AppImage), &vars, &[]),
-            Some(Manager::Nix)
-        );
+        assert_eq!(on("linux", exe, Some(BundleType::AppImage), &vars, &[]), Some(Manager::Nix));
         assert_eq!(on("linux", "/nix/storefront/nib", None, &[], &[]), None);
     }
     #[test]
     fn a_build_of_nobodys_updates_itself() {
-        assert_eq!(
-            on("linux", "/home/a/orden/target/debug/orden", None, &[], &[]),
-            None
-        );
+        assert_eq!(on("linux", "/home/a/orden/target/debug/orden", None, &[], &[]), None);
     }
     #[test]
     fn scoop_is_known_by_where_it_unpacks() {
         let exe = r"C:\Users\A\scoop\apps\nib\current\nib.exe";
-        assert_eq!(
-            on("windows", exe, Some(BundleType::Nsis), &[], &[]),
-            Some(Manager::Scoop)
-        );
+        assert_eq!(on("windows", exe, Some(BundleType::Nsis), &[], &[]), Some(Manager::Scoop));
         let exe = r"\\?\D:\Tools\Apps\nib\0.15.0\nib.exe";
         let vars = [("SCOOP", r"D:\Tools\")];
-        assert_eq!(
-            on("windows", exe, Some(BundleType::Nsis), &vars, &[]),
-            Some(Manager::Scoop)
-        );
+        assert_eq!(on("windows", exe, Some(BundleType::Nsis), &vars, &[]), Some(Manager::Scoop));
     }
     #[test]
     fn chocolatey_is_known_by_its_record_of_the_msi() {
         let exe = r"C:\Program Files\Orden\orden.exe";
         let vars = [("ChocolateyInstall", r"C:\ProgramData\chocolatey")];
         let record = [r"C:\ProgramData\chocolatey\lib\nib"];
-        assert_eq!(
-            on("windows", exe, Some(BundleType::Msi), &vars, &record),
-            Some(Manager::Choco)
-        );
+        assert_eq!(on("windows", exe, Some(BundleType::Msi), &vars, &record), Some(Manager::Choco));
         let vars = [("ProgramData", r"C:\ProgramData")];
-        assert_eq!(
-            on("windows", exe, Some(BundleType::Msi), &vars, &record),
-            Some(Manager::Choco)
-        );
+        assert_eq!(on("windows", exe, Some(BundleType::Msi), &vars, &record), Some(Manager::Choco));
         let exe = r"C:\Users\A\AppData\Local\Orden\orden.exe";
-        assert_eq!(
-            on("windows", exe, Some(BundleType::Nsis), &vars, &record),
-            None
-        );
+        assert_eq!(on("windows", exe, Some(BundleType::Nsis), &vars, &record), None);
     }
     #[test]
     fn a_downloaded_installer_updates_itself() {
         let vars = [("ChocolateyInstall", r"C:\ProgramData\chocolatey")];
         assert_eq!(
-            on(
-                "windows",
-                r"C:\Program Files\Orden\orden.exe",
-                Some(BundleType::Msi),
-                &vars,
-                &[]
-            ),
+            on("windows", r"C:\Program Files\Orden\orden.exe", Some(BundleType::Msi), &vars, &[]),
             None
         );
         assert_eq!(

@@ -46,13 +46,7 @@ pub struct Note<'a> {
 impl<'a> Note<'a> {
     #[must_use]
     pub fn new(path: &'a str, relative: &'a str, name: &'a str, body: &'a str) -> Self {
-        Self {
-            path,
-            relative,
-            name,
-            body,
-            lowered: OnceCell::new(),
-        }
+        Self { path, relative, name, body, lowered: OnceCell::new() }
     }
     pub(crate) fn folded(&self) -> &str {
         self.lowered.get_or_init(|| fold(self.body))
@@ -62,32 +56,13 @@ enum Term {
     All(Vec<Term>),
     Any(Vec<Term>),
     Not(Box<Term>),
-    Text {
-        needle: String,
-        folded: bool,
-        body: bool,
-    },
+    Text { needle: String, folded: bool, body: bool },
     Regex(Option<Pattern>),
-    Path {
-        needle: String,
-        folded: bool,
-    },
-    File {
-        needle: String,
-        folded: bool,
-    },
+    Path { needle: String, folded: bool },
+    File { needle: String, folded: bool },
     Tag(String),
-    Property {
-        name: String,
-        value: Option<String>,
-        compare: Compare,
-        upto: Option<String>,
-    },
-    Scope {
-        unit: Unit,
-        of: Box<Term>,
-        bare: bool,
-    },
+    Property { name: String, value: Option<String>, compare: Compare, upto: Option<String> },
+    Scope { unit: Unit, of: Box<Term>, bare: bool },
 }
 #[derive(Default)]
 struct Needs {
@@ -109,22 +84,14 @@ impl Facts<'_> {
     }
     fn units_of(&self, unit: Unit) -> Units<'_> {
         if matches!(unit, Unit::Line) {
-            Units::Lines {
-                body: self.body,
-                starts: self.starts(),
-                at: 0,
-            }
+            Units::Lines { body: self.body, starts: self.starts(), at: 0 }
         } else {
             Units::Held(self.units[slot(unit)].iter())
         }
     }
 }
 enum Units<'a> {
-    Lines {
-        body: &'a str,
-        starts: &'a [usize],
-        at: usize,
-    },
+    Lines { body: &'a str, starts: &'a [usize], at: usize },
     Held(std::slice::Iter<'a, Region>),
 }
 impl Iterator for Units<'_> {
@@ -188,11 +155,7 @@ pub(crate) fn fold(text: &str) -> String {
     }
     let mut out = String::with_capacity(text.len());
     for one in text.chars() {
-        out.push(if one.is_ascii() {
-            one.to_ascii_lowercase()
-        } else {
-            fold_char(one)
-        });
+        out.push(if one.is_ascii() { one.to_ascii_lowercase() } else { fold_char(one) });
     }
     out
 }
@@ -253,10 +216,7 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
             if !state.takes(task.done) {
                 continue;
             }
-            found.push(Region {
-                from: start + task.marker,
-                to: end,
-            });
+            found.push(Region { from: start + task.marker, to: end });
         }
         return found;
     }
@@ -283,10 +243,7 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
         }
     }
     if let Some(from) = open {
-        out.push(Region {
-            from,
-            to: body.len(),
-        });
+        out.push(Region { from, to: body.len() });
     }
     out
 }
@@ -343,10 +300,7 @@ fn patterned(
                 .map_or(1, char::len_utf8);
             found.from + letter
         } else {
-            out.push(Span {
-                from: region.from + found.from,
-                to: region.from + found.to,
-            });
+            out.push(Span { from: region.from + found.from, to: region.from + found.to });
             found.to
         };
         if at > slice.len() {
@@ -365,11 +319,7 @@ fn clip(one: Region, other: Region) -> Option<Region> {
     (from <= to).then_some(Region { from, to })
 }
 pub(crate) fn utf16_at(text: &str, byte: usize) -> usize {
-    text.get(..byte)
-        .unwrap_or_default()
-        .chars()
-        .map(char::len_utf16)
-        .sum()
+    text.get(..byte).unwrap_or_default().chars().map(char::len_utf16).sum()
 }
 pub struct Matcher {
     root: Term,
@@ -388,21 +338,14 @@ impl Matcher {
             return Vec::new();
         }
         let facts = self.facts(note.body);
-        let whole = Region {
-            from: 0,
-            to: note.body.len(),
-        };
+        let whole = Region { from: 0, to: note.body.len() };
         let Some(mut spans) = walk(&self.root, note, &facts, whole) else {
             return Vec::new();
         };
         if spans.is_empty() {
             let past = past_front_matter(note.body, facts.starts());
             let line = (past..facts.starts().len())
-                .find(|&index| {
-                    !line_text(note.body, facts.starts(), index)
-                        .trim()
-                        .is_empty()
-                })
+                .find(|&index| !line_text(note.body, facts.starts(), index).trim().is_empty())
                 .unwrap_or(0);
             return vec![row(note, facts.starts(), line, &[])];
         }
@@ -432,11 +375,7 @@ impl Matcher {
     }
     fn facts<'a>(&self, body: &'a str) -> Facts<'a> {
         let wanted = self.needs.units.iter().any(|one| *one);
-        let starts = if wanted {
-            OnceCell::from(line_starts(body))
-        } else {
-            OnceCell::new()
-        };
+        let starts = if wanted { OnceCell::from(line_starts(body)) } else { OnceCell::new() };
         let unit_of = |unit: Unit| {
             if self.needs.units[slot(unit)] && !matches!(unit, Unit::Line) {
                 units_in(body, starts.get().map_or(&[][..], Vec::as_slice), unit)
@@ -462,11 +401,7 @@ impl Matcher {
             } else {
                 Vec::new()
             },
-            front: if self.needs.front {
-                front_matter(body)
-            } else {
-                HashMap::new()
-            },
+            front: if self.needs.front { front_matter(body) } else { HashMap::new() },
             units,
             starts,
             budget: Cell::new(budget_for(body.len())),
@@ -506,42 +441,21 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             let undecided = facts.budget.get() == 0 && patterned_in(of);
             (found.is_none() && !undecided).then(Vec::new)
         }
-        Term::Text {
-            needle,
-            folded,
-            body,
-        } => {
+        Term::Text { needle, folded, body } => {
             let within = if *body {
-                clip(
-                    Region {
-                        from: words_in(note.body),
-                        to: note.body.len(),
-                    },
-                    region,
-                )?
+                clip(Region { from: words_in(note.body), to: note.body.len() }, region)?
             } else {
                 region
             };
-            literals(
-                if *folded { note.folded() } else { note.body },
-                needle,
-                within,
-            )
+            literals(if *folded { note.folded() } else { note.body }, needle, within)
         }
         Term::Regex(pattern) => patterned(pattern.as_ref()?, note.body, region, &facts.budget),
         Term::Path { needle, folded } => holds(note.relative, needle, *folded).then(Vec::new),
         Term::File { needle, folded } => holds(note.name, needle, *folded).then(Vec::new),
-        Term::Tag(wanted) => facts
-            .tags
-            .iter()
-            .any(|tag| tag == wanted || under(tag, wanted))
-            .then(Vec::new),
-        Term::Property {
-            name,
-            value,
-            compare,
-            upto,
-        } => {
+        Term::Tag(wanted) => {
+            facts.tags.iter().any(|tag| tag == wanted || under(tag, wanted)).then(Vec::new)
+        }
+        Term::Property { name, value, compare, upto } => {
             let held = facts.front.get(name);
             if matches!(compare, Compare::Null) {
                 return held
@@ -570,10 +484,7 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
                 if let Some(mut found) = walk(of, note, facts, within) {
                     answered = true;
                     if *bare {
-                        out.push(Span {
-                            from: within.from,
-                            to: within.from,
-                        });
+                        out.push(Span { from: within.from, to: within.from });
                     } else {
                         out.append(&mut found);
                     }
@@ -600,10 +511,7 @@ fn past_front_matter(body: &str, starts: &[usize]) -> usize {
     let Some(block) = front_matter_block(body) else {
         return 0;
     };
-    starts
-        .iter()
-        .position(|&start| start > block.close)
-        .unwrap_or(starts.len())
+    starts.iter().position(|&start| start > block.close).unwrap_or(starts.len())
 }
 fn a_number(said: &str) -> bool {
     let bytes = said.as_bytes();
@@ -744,10 +652,7 @@ fn row(note: &Note, starts: &[usize], line: usize, spans: &[Span]) -> Hit {
         let start = span.from.saturating_sub(from + lead);
         let end = span.to.saturating_sub(from + lead).min(text.len());
         if start < end {
-            ranges.push(Range {
-                from: utf16_at(&text, start),
-                to: utf16_at(&text, end),
-            });
+            ranges.push(Range { from: utf16_at(&text, start), to: utf16_at(&text, end) });
         }
     }
     Hit {
@@ -764,59 +669,33 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
         Query::All { of } => Term::All(of.into_iter().map(|one| compile(one, needs)).collect()),
         Query::Any { of } => Term::Any(of.into_iter().map(|one| compile(one, needs)).collect()),
         Query::Not { of } => Term::Not(Box::new(compile(*of, needs))),
-        Query::Text { text, fold: folded } => Term::Text {
-            needle: if folded { fold(&text) } else { text },
-            folded,
-            body: false,
-        },
-        Query::Content { text, fold: folded } => Term::Text {
-            needle: if folded { fold(&text) } else { text },
-            folded,
-            body: true,
-        },
-        Query::Regex {
-            source,
-            fold,
-            refused,
-        } => Term::Regex(if refused {
-            None
-        } else {
-            Pattern::compile(&source, fold)
-        }),
-        Query::Path { text, fold: folded } => Term::Path {
-            needle: if folded { text.to_lowercase() } else { text },
-            folded,
-        },
-        Query::File { text, fold: folded } => Term::File {
-            needle: if folded { text.to_lowercase() } else { text },
-            folded,
-        },
+        Query::Text { text, fold: folded } => {
+            Term::Text { needle: if folded { fold(&text) } else { text }, folded, body: false }
+        }
+        Query::Content { text, fold: folded } => {
+            Term::Text { needle: if folded { fold(&text) } else { text }, folded, body: true }
+        }
+        Query::Regex { source, fold, refused } => {
+            Term::Regex(if refused { None } else { Pattern::compile(&source, fold) })
+        }
+        Query::Path { text, fold: folded } => {
+            Term::Path { needle: if folded { text.to_lowercase() } else { text }, folded }
+        }
+        Query::File { text, fold: folded } => {
+            Term::File { needle: if folded { text.to_lowercase() } else { text }, folded }
+        }
         Query::Tag { tag } => {
             needs.tags = true;
             Term::Tag(tag_path(&tag))
         }
-        Query::Property {
-            name,
-            value,
-            compare,
-            upto,
-        } => {
+        Query::Property { name, value, compare, upto } => {
             needs.front = true;
-            Term::Property {
-                name: name.to_lowercase(),
-                value,
-                compare,
-                upto,
-            }
+            Term::Property { name: name.to_lowercase(), value, compare, upto }
         }
         Query::Scope { unit, of } => {
             needs.units[slot(unit)] = true;
             let bare = matches!(&*of, Query::All { of } if of.is_empty());
-            Term::Scope {
-                unit,
-                of: Box::new(compile(*of, needs)),
-                bare,
-            }
+            Term::Scope { unit, of: Box::new(compile(*of, needs)), bare }
         }
     }
 }
@@ -832,12 +711,7 @@ mod tests {
         Matcher::new(query)
     }
     fn note(body: &str) -> Note<'_> {
-        Note::new(
-            "/space/Work/Meeting.md",
-            "Work/Meeting.md",
-            "Meeting.md",
-            body,
-        )
+        Note::new("/space/Work/Meeting.md", "Work/Meeting.md", "Meeting.md", body)
     }
     #[test]
     fn a_note_folds_itself_once() {
@@ -849,11 +723,7 @@ mod tests {
         !matcher(json).hits(&note(body), 50).is_empty()
     }
     fn lines(json: &str, body: &str) -> Vec<String> {
-        matcher(json)
-            .hits(&note(body), 50)
-            .into_iter()
-            .map(|hit| hit.text)
-            .collect()
+        matcher(json).hits(&note(body), 50).into_iter().map(|hit| hit.text).collect()
     }
     fn marked(json: &str, body: &str) -> Vec<String> {
         matcher(json)
@@ -900,37 +770,22 @@ mod tests {
     fn a_pattern_the_page_refused_finds_nothing() {
         let refused = r#"{"kind":"regex","source":"(\\d+\\.?)+","fold":false,"refused":true}"#;
         assert!(!answers(refused, "Version 1.2.3 shipped"));
-        assert!(answers(
-            &pattern(r"(\\d+\\.?)+", false),
-            "Version 1.2.3 shipped"
-        ));
+        assert!(answers(&pattern(r"(\\d+\\.?)+", false), "Version 1.2.3 shipped"));
         let not = format!(r#"{{"kind":"not","of":{refused}}}"#);
         assert!(answers(&not, "Version 1.2.3 shipped"));
     }
     #[test]
     fn a_section_and_a_task_stop_at_nothing_inside_a_code_fence() {
         let body = "# One\nalpha\n```sh\n# comment\n```\nbeta\n";
-        assert!(answers(
-            &scope("section", &all(&[text("alpha"), text("beta")])),
-            body
-        ));
-        assert!(!answers(
-            &scope("section", &all(&[text("alpha"), text("gamma")])),
-            body
-        ));
+        assert!(answers(&scope("section", &all(&[text("alpha"), text("beta")])), body));
+        assert!(!answers(&scope("section", &all(&[text("alpha"), text("gamma")])), body));
         let body = "```\n- [ ] not a task\n```\n- [ ] a task\n";
         assert_eq!(lines(&scope("task", &text("task")), body), ["- [ ] a task"]);
     }
     #[test]
     fn a_line_is_shown_without_the_marks_the_web_trims_off_it() {
-        assert_eq!(
-            lines(&text("alpha"), "\u{feff}alpha one\n"),
-            vec!["alpha one"]
-        );
-        assert_eq!(
-            lines(&text("alpha"), "\u{85}alpha\u{a0}\n"),
-            vec!["\u{85}alpha"]
-        );
+        assert_eq!(lines(&text("alpha"), "\u{feff}alpha one\n"), vec!["alpha one"]);
+        assert_eq!(lines(&text("alpha"), "\u{85}alpha\u{a0}\n"), vec!["\u{85}alpha"]);
     }
     #[test]
     fn words_match_anywhere_folded_in_any_order_one_row_per_line() {
@@ -958,14 +813,8 @@ mod tests {
     }
     #[test]
     fn excluding_turns_a_match_into_a_miss() {
-        assert!(!answers(
-            &all(&[text("alpha"), without(&text("gamma"))]),
-            NOTE
-        ));
-        assert!(answers(
-            &all(&[text("alpha"), without(&text("zeta"))]),
-            NOTE
-        ));
+        assert!(!answers(&all(&[text("alpha"), without(&text("gamma"))]), NOTE));
+        assert!(answers(&all(&[text("alpha"), without(&text("zeta"))]), NOTE));
         assert!(answers(&without(&text("zeta")), NOTE));
         assert!(!answers(&without(&text("alpha")), NOTE));
     }
@@ -973,25 +822,16 @@ mod tests {
     fn or_takes_either_side() {
         assert!(answers(&any(&[text("zeta"), text("gamma")]), NOTE));
         assert!(!answers(&any(&[text("zeta"), text("omega")]), NOTE));
-        assert_eq!(
-            lines(&any(&[text("gamma"), text("zeta")]), NOTE),
-            ["Gamma was away."]
-        );
+        assert_eq!(lines(&any(&[text("gamma"), text("zeta")]), NOTE), ["Gamma was away."]);
     }
     #[test]
     fn file_reads_the_note_name_and_shows_a_line_it_never_says() {
         let file = |one: &str| format!(r#"{{"kind":"file","text":"{one}","fold":true}}"#);
         assert!(answers(&file("Meeting"), NOTE));
         assert!(!answers(&file("Agenda"), NOTE));
-        assert_eq!(
-            lines(&file("Meeting"), NOTE),
-            ["# Meeting notes #work/2026"]
-        );
+        assert_eq!(lines(&file("Meeting"), NOTE), ["# Meeting notes #work/2026"]);
         assert!(marked(&file("Meeting"), NOTE).is_empty());
-        assert_eq!(
-            lines(&file("Meeting"), "\nthe first words\n"),
-            ["the first words"]
-        );
+        assert_eq!(lines(&file("Meeting"), "\nthe first words\n"), ["the first words"]);
         assert_eq!(lines(&file("Meeting"), "---\nstatus: done\n"), ["---"]);
     }
     #[test]
@@ -1008,14 +848,8 @@ mod tests {
     fn content_brings_back_the_line_folded_like_any_other_word() {
         assert_eq!(lines(&content("GAMMA"), NOTE), ["Gamma was away."]);
         assert_eq!(marked(&content("gamma"), NOTE), ["Gamma"]);
-        assert!(answers(
-            r#"{"kind":"content","text":"Alpha","fold":false}"#,
-            NOTE
-        ));
-        assert!(!answers(
-            r#"{"kind":"content","text":"alpha","fold":false}"#,
-            NOTE
-        ));
+        assert!(answers(r#"{"kind":"content","text":"Alpha","fold":false}"#, NOTE));
+        assert!(!answers(r#"{"kind":"content","text":"alpha","fold":false}"#, NOTE));
     }
     #[test]
     fn a_tag_matches_itself_and_its_children() {
@@ -1096,32 +930,14 @@ mod tests {
             format!(r#"{{"kind":"property","name":"due","value":"{said}","compare":"{compare}"}}"#)
         };
         let due = |said: &str| format!("---\ndue: {said}\n---\n\nWords.\n");
-        assert!(answers(
-            &pair("2026-11-15", "lte"),
-            &due("2026-11-15 10:00")
-        ));
+        assert!(answers(&pair("2026-11-15", "lte"), &due("2026-11-15 10:00")));
         assert!(answers(&pair("2026-11-15", "is"), &due("2026-11-15 10:00")));
-        assert!(!answers(
-            &pair("2026-11-15", "gt"),
-            &due("2026-11-15 10:00")
-        ));
+        assert!(!answers(&pair("2026-11-15", "gt"), &due("2026-11-15 10:00")));
         assert!(answers(&pair("2026-11-16", "lt"), &due("2026-11-15T23:59")));
-        assert!(answers(
-            &pair("2026-11-15 10:00", "gte"),
-            &due("2026-11-15")
-        ));
-        assert!(answers(
-            &pair("2026-11-15 10:00", "lt"),
-            &due("2026-11-15T09:00:00Z")
-        ));
-        assert!(answers(
-            &pair("2026-11-15 10:00", "gt"),
-            &due("2026-11-15t11:30:00.250+02:00")
-        ));
-        assert!(!answers(
-            &pair("2026-11-15 10:00", "lt"),
-            &due("2026-11-15 10:30")
-        ));
+        assert!(answers(&pair("2026-11-15 10:00", "gte"), &due("2026-11-15")));
+        assert!(answers(&pair("2026-11-15 10:00", "lt"), &due("2026-11-15T09:00:00Z")));
+        assert!(answers(&pair("2026-11-15 10:00", "gt"), &due("2026-11-15t11:30:00.250+02:00")));
+        assert!(!answers(&pair("2026-11-15 10:00", "lt"), &due("2026-11-15 10:30")));
         assert!(answers(&pair("5", "is"), "---\nn: 5.0\ndue: 5.0\n---\n"));
         assert!(!answers(&pair("5", "is"), "---\ndue: 50\n---\n"));
     }
@@ -1135,10 +951,7 @@ mod tests {
         let past = r#"{"kind":"property","name":"n","value":"2026-01-01","compare":"gt"}"#;
         assert!(!answers(past, "---\nn: null\n---\n"));
         let listed = r#"{"kind":"property","name":"tags","value":"b","compare":"has"}"#;
-        assert!(answers(
-            listed,
-            "---\ntags:\n  - a\n  # later\n  - b\n---\n"
-        ));
+        assert!(answers(listed, "---\ntags:\n  - a\n  # later\n  - b\n---\n"));
     }
     #[test]
     fn a_block_nobody_closed_holds_no_keys() {
@@ -1200,10 +1013,7 @@ mod tests {
         );
         assert_eq!(
             lines(&scope("task-todo", &text("the")), TASKS),
-            vec![
-                "- [ ] write the plan".to_string(),
-                "- [ ] send the ledger".to_string(),
-            ]
+            vec!["- [ ] write the plan".to_string(), "- [ ] send the ledger".to_string(),]
         );
         assert_eq!(
             lines(&scope("task-done", &text("the")), TASKS),
@@ -1212,10 +1022,7 @@ mod tests {
         let bare = all(&[]);
         assert_eq!(
             lines(&scope("task-todo", &bare), TASKS),
-            vec![
-                "- [ ] write the plan".to_string(),
-                "- [ ] send the ledger".to_string(),
-            ]
+            vec!["- [ ] write the plan".to_string(), "- [ ] send the ledger".to_string(),]
         );
         assert_eq!(lines(&scope("task", &bare), TASKS).len(), 4);
         assert_eq!(
@@ -1228,10 +1035,7 @@ mod tests {
             lines(&scope("task", &all(&[text("write"), text("plan")])), TASKS),
             vec!["- [ ] write the plan".to_string()]
         );
-        assert!(!answers(
-            &scope("task", &all(&[text("write"), text("ledger")])),
-            TASKS
-        ));
+        assert!(!answers(&scope("task", &all(&[text("write"), text("ledger")])), TASKS));
         assert!(!answers(&scope("task-todo", &bare), NOTE));
     }
     #[test]
@@ -1257,25 +1061,16 @@ mod tests {
         );
         let query = pattern("the.*zebra", false);
         assert_eq!(lines(&query, &body), ["the zebra"]);
-        assert!(!answers(
-            &format!(r#"{{"kind":"not","of":{query}}}"#),
-            &body
-        ));
+        assert!(!answers(&format!(r#"{{"kind":"not","of":{query}}}"#), &body));
     }
     #[test]
     fn a_pattern_that_runs_out_never_counts_as_missing() {
         let body = format!("{}\n", "a".repeat(30)).repeat(2000);
         let hopeless = pattern("(a+)+b", false);
         assert!(!answers(&hopeless, &body));
-        assert!(!answers(
-            &format!(r#"{{"kind":"not","of":{hopeless}}}"#),
-            &body
-        ));
+        assert!(!answers(&format!(r#"{{"kind":"not","of":{hopeless}}}"#), &body));
         let absent = format!(r#"{{"kind":"not","of":{}}}"#, text("zzz"));
-        assert!(answers(
-            &format!(r#"{{"kind":"any","of":[{hopeless},{absent}]}}"#),
-            &body
-        ));
+        assert!(answers(&format!(r#"{{"kind":"any","of":[{hopeless},{absent}]}}"#), &body));
     }
     #[test]
     fn a_pattern_that_cannot_finish_costs_one_note_one_budget() {
@@ -1292,18 +1087,9 @@ mod tests {
         let line = scope("line", &all(&[text("alpha"), text("beta")]));
         assert!(answers(&line, CLOSE));
         assert_eq!(lines(&line, CLOSE), ["alpha and beta"]);
-        assert!(!answers(
-            &scope("line", &all(&[text("alpha"), text("there")])),
-            CLOSE
-        ));
-        assert!(answers(
-            &scope("block", &all(&[text("alpha"), text("there")])),
-            CLOSE
-        ));
-        assert!(!answers(
-            &scope("block", &all(&[text("there"), text("and")])),
-            CLOSE
-        ));
+        assert!(!answers(&scope("line", &all(&[text("alpha"), text("there")])), CLOSE));
+        assert!(answers(&scope("block", &all(&[text("alpha"), text("there")])), CLOSE));
+        assert!(!answers(&scope("block", &all(&[text("there"), text("and")])), CLOSE));
     }
     #[test]
     fn nearness_holds_terms_to_one_section() {
@@ -1324,10 +1110,7 @@ mod tests {
     }
     #[test]
     fn a_row_trims_the_line_and_moves_the_mark_with_it() {
-        assert_eq!(
-            lines(&text("beta"), "   indented Beta here\n"),
-            ["indented Beta here"]
-        );
+        assert_eq!(lines(&text("beta"), "   indented Beta here\n"), ["indented Beta here"]);
         assert_eq!(marked(&text("beta"), "   indented Beta here\n"), ["Beta"]);
     }
     #[test]

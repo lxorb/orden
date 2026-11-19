@@ -49,9 +49,7 @@ impl Shared {
         }
     }
     fn gone(&self) -> bool {
-        self.child()
-            .as_mut()
-            .is_none_or(|child| matches!(child.try_wait(), Ok(Some(_))))
+        self.child().as_mut().is_none_or(|child| matches!(child.try_wait(), Ok(Some(_))))
     }
     fn touch(&self) {
         let now = u64::try_from(self.born.elapsed().as_millis()).unwrap_or(u64::MAX);
@@ -114,10 +112,7 @@ fn launch(
     limit: Limit,
     heard: impl Fn(Heard) + Send + 'static,
 ) -> io::Result<Running> {
-    command
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    command.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     let (mut child, family) = family::spawn(&mut command)?;
     let stdin = child.stdin.take();
     let stdout = child.stdout.take();
@@ -197,12 +192,7 @@ pub fn run_to_end(command: Command, timeout: Duration) -> io::Result<Said> {
     for one in heard {
         match one {
             Heard::Line(line) => out.push(line),
-            Heard::End(ended) => {
-                return Ok(Said {
-                    out: out.join("\n"),
-                    ended,
-                })
-            }
+            Heard::End(ended) => return Ok(Said { out: out.join("\n"), ended }),
         }
     }
     Err(io::Error::other("the run ended without saying so"))
@@ -234,10 +224,7 @@ fn lines(out: impl Read, heard: &impl Fn(Heard)) {
     let mut line = Vec::new();
     loop {
         line.clear();
-        match (&mut reader)
-            .take(LONGEST_LINE)
-            .read_until(b'\n', &mut line)
-        {
+        match (&mut reader).take(LONGEST_LINE).read_until(b'\n', &mut line) {
             Ok(0) | Err(_) => return,
             Ok(_) => {}
         }

@@ -53,10 +53,7 @@ struct Ask {
     key: Passed,
 }
 fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
-    let ask = Ask {
-        tab: tab.to_string(),
-        key,
-    };
+    let ask = Ask { tab: tab.to_string(), key };
     told(app, window, PASSED, ask);
 }
 fn played(app: &tauri::AppHandle, window: &str, key: Pressed) {
@@ -447,9 +444,7 @@ fn without_store_button(script: &str) -> String {
     let Some(start) = script.find(STORE_PART) else {
         return script.to_owned();
     };
-    let end = script[start..]
-        .find(STORE_END)
-        .map_or(start, |at| start + at + STORE_END.len());
+    let end = script[start..].find(STORE_END).map_or(start, |at| start + at + STORE_END.len());
     format!("{}{}", &script[..start], &script[end..])
 }
 pub fn chord(name: &str) -> Option<Pressed> {
@@ -490,11 +485,7 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
         return None;
     }
     if held.ctrl {
-        return Some(if held.shift {
-            Asked::Front
-        } else {
-            Asked::Behind
-        });
+        return Some(if held.shift { Asked::Front } else { Asked::Behind });
     }
     if held.shift {
         return Some(Asked::Front);
@@ -555,29 +546,13 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
 mod tests {
     use super::{actual, chord, placed, sought, Ask, Asked, Held, Passed, SCRIPT};
 
-    const NONE: Held = Held {
-        ctrl: false,
-        shift: false,
-        alt: false,
-    };
+    const NONE: Held = Held { ctrl: false, shift: false, alt: false };
     const CTRL: Held = Held { ctrl: true, ..NONE };
-    const SHIFT: Held = Held {
-        shift: true,
-        ..NONE
-    };
-    const BOTH: Held = Held {
-        ctrl: true,
-        shift: true,
-        alt: false,
-    };
+    const SHIFT: Held = Held { shift: true, ..NONE };
+    const BOTH: Held = Held { ctrl: true, shift: true, alt: false };
     #[test]
     fn the_script_opens_its_windows_through_the_line_chromium_swaps() {
-        assert_eq!(
-            SCRIPT
-                .matches("var open = window.open.bind(window)")
-                .count(),
-            1
-        );
+        assert_eq!(SCRIPT.matches("var open = window.open.bind(window)").count(), 1);
     }
     #[test]
     fn on_chromium_the_script_asks_through_the_binding_where_there_is_one() {
@@ -608,11 +583,7 @@ mod tests {
             ("", false, NONE, true, None),
             ("orden-behind", false, NONE, false, Some(Asked::Behind)),
         ] {
-            assert_eq!(
-                placed(name, pressed, held, menu),
-                asked,
-                "{name} {pressed} {menu}"
-            );
+            assert_eq!(placed(name, pressed, held, menu), asked, "{name} {pressed} {menu}");
         }
     }
     #[test]
@@ -623,10 +594,7 @@ mod tests {
         assert!(SCRIPT.contains("!event.altKey && !event.metaKey"));
         for name in ["'orden-behind'", "'orden-front'"] {
             assert!(SCRIPT.contains(name), "{name}");
-            assert!(
-                placed(name.trim_matches('\''), true, NONE, false).is_some(),
-                "{name}"
-            );
+            assert!(placed(name.trim_matches('\''), true, NONE, false).is_some(), "{name}");
         }
     }
     #[test]
@@ -665,14 +633,9 @@ mod tests {
         assert_eq!(key["code"], "KeyD");
         assert_eq!(key["ctrl"], true);
         assert_eq!(key["down"], true);
-        for name in [
-            "",
-            "orden-find",
-            "orden-address",
-            "ORDEN-CTRL-D",
-            "orden-ctrl-d ",
-            "orden-ctrl-f",
-        ] {
+        for name in
+            ["", "orden-find", "orden-address", "ORDEN-CTRL-D", "orden-ctrl-d ", "orden-ctrl-f"]
+        {
             assert!(chord(name).is_none(), "{name:?}");
         }
         assert_eq!(sought("orden-ctrl-d"), None);
@@ -712,10 +675,7 @@ mod tests {
     }
     #[test]
     fn ctrl_space_let_go_by_goes_back_as_the_space_switcher() {
-        for (name, shift) in [
-            ("orden-ctrl-space", false),
-            ("orden-ctrl-shift-space", true),
-        ] {
+        for (name, shift) in [("orden-ctrl-space", false), ("orden-ctrl-shift-space", true)] {
             let key = chord(name).map(|one| serde_json::to_value(one).expect("a key"));
             let key = key.expect(name);
             assert_eq!(key["key"], " ");
@@ -763,9 +723,7 @@ mod tests {
         assert_eq!(
             SCRIPT.len() - left.len(),
             SCRIPT.find(super::STORE_PART).map_or(0, |start| {
-                SCRIPT[start..]
-                    .find(super::STORE_END)
-                    .expect("the part ends")
+                SCRIPT[start..].find(super::STORE_END).expect("the part ends")
                     + super::STORE_END.len()
             })
         );
@@ -775,26 +733,14 @@ mod tests {
         assert!(actual("orden-actual-size"));
         assert_eq!(sought("orden-actual-size"), None);
         assert_eq!(placed("orden-actual-size", true, NONE, false), None);
-        for name in [
-            "",
-            "orden-find",
-            "orden-actual",
-            "ORDEN-ACTUAL-SIZE",
-            "_blank",
-        ] {
+        for name in ["", "orden-find", "orden-actual", "ORDEN-ACTUAL-SIZE", "_blank"] {
             assert!(!actual(name), "{name:?}");
         }
         assert!(SCRIPT.contains("ctrl && (code === 48 || code === 96) && !back"));
     }
     #[test]
     fn an_ask_reaches_the_window_as_one_of_eight_words_for_its_tab() {
-        let said = |key| {
-            serde_json::to_value(Ask {
-                tab: "t1".into(),
-                key,
-            })
-            .expect("an ask")
-        };
+        let said = |key| serde_json::to_value(Ask { tab: "t1".into(), key }).expect("an ask");
         for (passed, word) in [
             (Passed::Find, "find"),
             (Passed::Next, "next"),

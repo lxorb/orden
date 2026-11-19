@@ -35,9 +35,7 @@ pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 pub fn kept(app: &AppHandle) -> Vec<Kept> {
-    root(app)
-        .map(|root| library::read(&root))
-        .unwrap_or_default()
+    root(app).map(|root| library::read(&root)).unwrap_or_default()
 }
 fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     let list: Vec<(Kept, PathBuf)> = {
@@ -49,10 +47,7 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
         let mut list: Vec<(Kept, PathBuf)> = chromium::installed(app)
             .into_iter()
             .map(|(mut one, folder)| {
-                one.pinned = pins
-                    .iter()
-                    .find(|pin| pin.id == one.id)
-                    .is_none_or(|pin| pin.pinned);
+                one.pinned = pins.iter().find(|pin| pin.id == one.id).is_none_or(|pin| pin.pinned);
                 (one, folder)
             })
             .collect();
@@ -92,23 +87,9 @@ pub struct Shown {
 fn shown(kept: Kept, folder: &Path) -> Shown {
     let about = manifest::read(folder).unwrap_or_default();
     let picture = about.icon.as_deref().and_then(|icon| picture(folder, icon));
-    let problem = PROBLEMS
-        .held()
-        .iter()
-        .find(|(id, _)| *id == kept.id)
-        .map(|(_, why)| why.clone());
-    let pending = PENDING
-        .read()
-        .unwrap_or_else(PoisonError::into_inner)
-        .contains(&kept.id);
-    Shown {
-        kept,
-        about,
-        picture,
-        problem,
-        gaps: firefox::gaps_in(folder),
-        pending,
-    }
+    let problem = PROBLEMS.held().iter().find(|(id, _)| *id == kept.id).map(|(_, why)| why.clone());
+    let pending = PENDING.read().unwrap_or_else(PoisonError::into_inner).contains(&kept.id);
+    Shown { kept, about, picture, problem, gaps: firefox::gaps_in(folder), pending }
 }
 const LARGEST: u64 = 512 * 1024;
 fn picture(folder: &Path, path: &str) -> Option<String> {
@@ -128,14 +109,9 @@ fn picture(folder: &Path, path: &str) -> Option<String> {
         return None;
     }
     let bytes = std::fs::read(&file).ok()?;
-    u64::try_from(bytes.len())
-        .is_ok_and(|size| size <= LARGEST)
-        .then(|| {
-            format!(
-                "data:{kind};base64,{}",
-                base64::engine::general_purpose::STANDARD.encode(bytes)
-            )
-        })
+    u64::try_from(bytes.len()).is_ok_and(|size| size <= LARGEST).then(|| {
+        format!("data:{kind};base64,{}", base64::engine::general_purpose::STANDARD.encode(bytes))
+    })
 }
 pub fn preinstall(app: &AppHandle) {
     let Ok(decided) = root(app).map(|root| root.join(DECIDED)) else {
@@ -148,9 +124,7 @@ pub fn preinstall(app: &AppHandle) {
     tauri::async_runtime::spawn(async move {
         let listed = {
             let app = app.clone();
-            tauri::async_runtime::spawn_blocking(move || listed(&app).len())
-                .await
-                .unwrap_or(0)
+            tauri::async_runtime::spawn_blocking(move || listed(&app).len()).await.unwrap_or(0)
         };
         if listed == 0 && from_amo(app, PREINSTALLED, true).await.is_err() {
             return;
@@ -164,10 +138,7 @@ fn changed(app: &AppHandle) {
 #[tauri::command]
 pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        listed(&app)
-            .into_iter()
-            .map(|(one, folder)| shown(one, &folder))
-            .collect()
+        listed(&app).into_iter().map(|(one, folder)| shown(one, &folder)).collect()
     })
     .await
     .map_err(|error| error.to_string())
@@ -191,9 +162,7 @@ pub async fn extensions_install(
     }
     {
         let _ = app;
-        Ok(Done::Store {
-            store: link::page_of(store, &id),
-        })
+        Ok(Done::Store { store: link::page_of(store, &id) })
     }
 }
 async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, String> {
@@ -205,21 +174,12 @@ async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, Stri
         let (version, gaps) = library::unpack_firefox(&root, &id, &bytes, &listing.guid)?;
         let folder = library::folder_of(&root, &id, &version);
         if !anyway && !gaps.is_empty() && !kept(&app).iter().any(|one| one.id == id) {
-            let name = manifest::read(&folder)
-                .map(|about| about.name)
-                .unwrap_or_default();
+            let name = manifest::read(&folder).map(|about| about.name).unwrap_or_default();
             library::prune(&root, &id, "");
             return Ok(Done::Asks { name, asks: gaps });
         }
-        listed_as(
-            &app,
-            &root,
-            Store::Firefox,
-            &id,
-            version,
-            Some(listing.slug),
-        )
-        .map(|one| Done::Installed(Box::new(one)))
+        listed_as(&app, &root, Store::Firefox, &id, version, Some(listing.slug))
+            .map(|one| Done::Installed(Box::new(one)))
     })
     .await
     .map_err(|error| error.to_string())?
@@ -243,14 +203,8 @@ fn listed_as(
             }
             there.clone()
         } else {
-            let fresh = Kept {
-                id: id.to_owned(),
-                store,
-                version,
-                enabled: true,
-                pinned: true,
-                addon,
-            };
+            let fresh =
+                Kept { id: id.to_owned(), store, version, enabled: true, pinned: true, addon };
             list.push(fresh.clone());
             fresh
         };
@@ -272,9 +226,7 @@ pub async fn extensions_set(
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
         if let Some(on) = enabled {
-            let firefox = kept(&app)
-                .iter()
-                .any(|one| one.id == id && one.store == Store::Firefox);
+            let firefox = kept(&app).iter().any(|one| one.id == id && one.store == Store::Firefox);
             let done = chromium::enable(&app, &id, on);
             if !firefox {
                 done?;
@@ -311,9 +263,7 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
         {
-            let firefox = kept(&app)
-                .iter()
-                .any(|one| one.id == id && one.store == Store::Firefox);
+            let firefox = kept(&app).iter().any(|one| one.id == id && one.store == Store::Firefox);
             let done = chromium::remove(&app, &id);
             if !firefox {
                 done?;
@@ -335,10 +285,7 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
 #[tauri::command]
 pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
     let mut moved = 0;
-    for one in kept(&app)
-        .into_iter()
-        .filter(|one| one.store == Store::Firefox)
-    {
+    for one in kept(&app).into_iter().filter(|one| one.store == Store::Firefox) {
         if amo_update(&app, &one).await.unwrap_or(false) {
             moved += 1;
         }
@@ -348,10 +295,7 @@ pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
     }
 }
 async fn amo_update(app: &AppHandle, one: &Kept) -> Result<bool, String> {
-    let slug = one
-        .addon
-        .clone()
-        .ok_or("that add-on has no address on AMO")?;
+    let slug = one.addon.clone().ok_or("that add-on has no address on AMO")?;
     let listing = amo::listing(&slug).await?;
     if firefox::chromium_version(&listing.version) == one.version
         || firefox::id_and_key(&listing.guid).0 != one.id
@@ -418,11 +362,7 @@ mod tests {
         let folder = tempfile::tempdir().expect("a folder");
         let locale = folder.path().join("_locales/zh_CN");
         fs::create_dir_all(&locale).expect("a locale");
-        fs::write(
-            locale.join("messages.json"),
-            r#"{"extName": {"message": 5}}"#,
-        )
-        .expect("words");
+        fs::write(locale.join("messages.json"), r#"{"extName": {"message": 5}}"#).expect("words");
         let deep = format!("{}{}", "[".repeat(100_000), "]".repeat(100_000));
         let large = json!({
             "name": "x".repeat(4 << 20),
@@ -482,11 +422,7 @@ mod tests {
             .and_then(|file| file.set_len(LARGEST + 1))
             .expect("a large picture");
         let picture = |path: &str| {
-            row(
-                folder.path(),
-                &json!({ "icons": { "16": path } }).to_string(),
-            )["picture"]
-                .clone()
+            row(folder.path(), &json!({ "icons": { "16": path } }).to_string())["picture"].clone()
         };
         assert!(picture("small.png")
             .as_str()

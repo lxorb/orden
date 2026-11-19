@@ -88,11 +88,7 @@ pub struct Owed {
 }
 impl Default for Owed {
     fn default() -> Self {
-        Self {
-            flying: false,
-            scale: 1.0,
-            at: (0.0, 0.0),
-        }
+        Self { flying: false, scale: 1.0, at: (0.0, 0.0) }
     }
 }
 #[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
@@ -108,10 +104,7 @@ impl Owed {
             return None;
         }
         self.flying = true;
-        let asked = Asked {
-            at: self.at,
-            scale: self.scale,
-        };
+        let asked = Asked { at: self.at, scale: self.scale };
         self.scale = 1.0;
         Some(asked)
     }
@@ -147,10 +140,7 @@ mod gestures {
                 if (version.major_version, version.minor_version) < (2, 4) {
                     return None;
                 }
-                let pinches = Arc::new(Pinches {
-                    x,
-                    pages: Mutex::new(HashMap::new()),
-                });
+                let pinches = Arc::new(Pinches { x, pages: Mutex::new(HashMap::new()) });
                 let hearing = Arc::clone(&pinches);
                 std::thread::Builder::new()
                     .name("pinch".into())
@@ -167,10 +157,7 @@ mod gestures {
         let Some(pinches) = pinches() else {
             return;
         };
-        pinches
-            .pages
-            .held()
-            .insert(page, (app.clone(), label.to_string()));
+        pinches.pages.held().insert(page, (app.clone(), label.to_string()));
         let mask = xinput::EventMask {
             deviceid: Device::ALL_MASTER.into(),
             mask: vec![XIEventMask::from(GESTURES)],
@@ -228,9 +215,7 @@ mod gestures {
         fn pinch_heard(&self, pinch: &mut Option<Pinch>, event: Event) {
             match event {
                 Event::XinputGesturePinchBegin(began) => {
-                    let ratio = self
-                        .page_at(began.event)
-                        .map_or(1.0, |view| page_ratio(&view));
+                    let ratio = self.page_at(began.event).map_or(1.0, |view| page_ratio(&view));
                     *pinch = Some(Pinch {
                         page: began.event,
                         last: fixed_point(began.scale).max(f64::EPSILON),
@@ -338,15 +323,7 @@ mod wheels {
         };
         let mut at = POINT { x, y };
         let _ = unsafe { ScreenToClient(HWND(page as _), &raw mut at) };
-        turns().is_some_and(|turns| {
-            turns
-                .send(Turn {
-                    page,
-                    scale,
-                    at: (at.x, at.y),
-                })
-                .is_ok()
-        })
+        turns().is_some_and(|turns| turns.send(Turn { page, scale, at: (at.x, at.y) }).is_ok())
     }
     #[allow(unsafe_code)]
     fn page_under(under: HWND) -> Option<isize> {
@@ -415,10 +392,7 @@ mod tests {
         let (narrower, _) = pinched(word(0xFF88, CTRL), at, false).expect("a pinch together");
         assert!(narrower < 1.0 && (wider * narrower - 1.0).abs() < 1e-9);
         let left = isize::from_ne_bytes(word(20, 0xFFF6).to_ne_bytes());
-        assert_eq!(
-            pinched(word(120, CTRL), left, false).map(|one| one.1),
-            Some((-10, 20))
-        );
+        assert_eq!(pinched(word(120, CTRL), left, false).map(|one| one.1), Some((-10, 20)));
     }
     #[test]
     fn ctrl_held_on_the_keyboard_or_no_ctrl_at_all_is_a_wheel() {
@@ -455,17 +429,11 @@ mod tests {
     }
     #[test]
     fn the_engine_is_asked_for_a_touchpad_s_pinch_at_the_fingers() {
-        let params = Asked {
-            at: (100.5, 40.0),
-            scale: 1.25,
-        }
-        .params();
+        let params = Asked { at: (100.5, 40.0), scale: 1.25 }.params();
         assert_eq!(params["gestureSourceType"], "mouse");
         assert_eq!(params["x"], 100.5);
         assert_eq!(params["y"], 40.0);
         assert_eq!(params["scaleFactor"], 1.25);
-        assert!(params["relativeSpeed"]
-            .as_u64()
-            .is_some_and(|speed| speed >= 1000));
+        assert!(params["relativeSpeed"].as_u64().is_some_and(|speed| speed >= 1000));
     }
 }

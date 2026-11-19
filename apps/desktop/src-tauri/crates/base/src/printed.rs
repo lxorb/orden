@@ -8,16 +8,14 @@ const LOOK: Duration = Duration::from_millis(10);
 const LAPSE_LOOK: Duration = Duration::from_millis(50);
 pub fn chunks(mut from: impl Read + Send + 'static) -> Receiver<Vec<u8>> {
     let (sent, heard) = mpsc::channel();
-    let _ = std::thread::Builder::new()
-        .name("printed".to_owned())
-        .spawn(move || {
-            let mut chunk = [0_u8; 8192];
-            while let Ok(read) = from.read(&mut chunk) {
-                if read == 0 || sent.send(chunk[..read].to_vec()).is_err() {
-                    break;
-                }
+    let _ = std::thread::Builder::new().name("printed".to_owned()).spawn(move || {
+        let mut chunk = [0_u8; 8192];
+        while let Ok(read) = from.read(&mut chunk) {
+            if read == 0 || sent.send(chunk[..read].to_vec()).is_err() {
+                break;
             }
-        });
+        }
+    });
     heard
 }
 pub fn left_running(mut child: Child) {
@@ -26,11 +24,8 @@ pub fn left_running(mut child: Child) {
     });
 }
 pub fn output(command: &mut Command, patience: Duration) -> io::Result<Output> {
-    let child = command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
+    let child =
+        command.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn()?;
     wait_output(child, patience)
 }
 pub fn wait_output(mut child: Child, patience: Duration) -> io::Result<Output> {
@@ -54,11 +49,7 @@ pub fn wait_output(mut child: Child, patience: Duration) -> io::Result<Output> {
         }
         match ended {
             Some((status, at)) if (out.done() && err.done()) || at.elapsed() >= GRACE => {
-                return Ok(Output {
-                    status,
-                    stdout: out.printed,
-                    stderr: err.printed,
-                });
+                return Ok(Output { status, stdout: out.printed, stderr: err.printed });
             }
             None if started.elapsed() >= patience => {
                 let _ = child.kill();
@@ -78,10 +69,7 @@ struct Heard {
 }
 impl Heard {
     fn new(from: Option<impl Read + Send + 'static>) -> Self {
-        Heard {
-            from: from.map(chunks),
-            printed: Vec::new(),
-        }
+        Heard { from: from.map(chunks), printed: Vec::new() }
     }
     fn take(&mut self) {
         while let Some(from) = &self.from {
@@ -104,13 +92,7 @@ pub struct Lapsing<F> {
     since: Option<Instant>,
 }
 pub fn lapsing<F: FnMut() -> bool>(from: impl Read + Send + 'static, ended: F) -> Lapsing<F> {
-    Lapsing {
-        heard: Some(chunks(from)),
-        kept: Vec::new(),
-        at: 0,
-        ended,
-        since: None,
-    }
+    Lapsing { heard: Some(chunks(from)), kept: Vec::new(), at: 0, ended, since: None }
 }
 impl<F: FnMut() -> bool> Read for Lapsing<F> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
@@ -172,11 +154,8 @@ mod tests {
     }
     #[test]
     fn what_a_program_prints_is_read_when_it_ends() {
-        let said = output(
-            &mut sh("echo out; echo err >&2; exit 3"),
-            Duration::from_secs(10),
-        )
-        .expect("it ran");
+        let said = output(&mut sh("echo out; echo err >&2; exit 3"), Duration::from_secs(10))
+            .expect("it ran");
         assert_eq!(said.stdout, b"out\n");
         assert_eq!(said.stderr, b"err\n");
         assert_eq!(said.status.code(), Some(3));
@@ -192,14 +171,8 @@ mod tests {
     #[test]
     fn a_program_that_never_ends_is_stopped_when_its_time_is_up() {
         let started = Instant::now();
-        let said = output(
-            &mut sh("echo first; exec sleep 30"),
-            Duration::from_millis(400),
-        );
-        assert_eq!(
-            said.map_err(|error| error.kind()).err(),
-            Some(io::ErrorKind::TimedOut)
-        );
+        let said = output(&mut sh("echo first; exec sleep 30"), Duration::from_millis(400));
+        assert_eq!(said.map_err(|error| error.kind()).err(), Some(io::ErrorKind::TimedOut));
         assert!(started.elapsed() < Duration::from_secs(5));
     }
     #[test]
@@ -222,10 +195,8 @@ mod tests {
     }
     #[test]
     fn a_lapsing_read_ends_once_the_program_has_ended_though_its_pipe_is_held() {
-        let mut child = sh("echo one; sleep 30 & echo two")
-            .stdout(Stdio::piped())
-            .spawn()
-            .expect("it ran");
+        let mut child =
+            sh("echo one; sleep 30 & echo two").stdout(Stdio::piped()).spawn().expect("it ran");
         let out = child.stdout.take().expect("its output");
         let started = Instant::now();
         let mut read = String::new();

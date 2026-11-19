@@ -24,12 +24,7 @@ const CLAIM: Duration = Duration::from_secs(120);
 const MOST_JS: usize = 10;
 const ALIVE_EVERY: Duration = Duration::from_secs(30);
 const DRILL: &str = "ORDEN_CRASH_DRILL";
-const QUIET: [&str; 4] = [
-    "write_log",
-    "crash_alive",
-    "crash_context",
-    "crash_reports_waiting",
-];
+const QUIET: [&str; 4] = ["write_log", "crash_alive", "crash_context", "crash_reports_waiting"];
 static APP: OnceLock<AppHandle> = OnceLock::new();
 static CLAIMED: Mutex<Option<HashMap<String, Instant>>> = Mutex::new(None);
 static JS_SEEN: Mutex<Option<HashSet<String>>> = Mutex::new(None);
@@ -48,11 +43,7 @@ pub fn start(app: &AppHandle) {
     report::settle(Facts {
         dir: dir.clone(),
         log: logs.join(orden_base::logs::FILE),
-        app: App {
-            version: version.clone(),
-            channel: String::new(),
-            build: "desktop".to_owned(),
-        },
+        app: App { version: version.clone(), channel: String::new(), build: "desktop".to_owned() },
         system: System {
             os: std::env::consts::OS.to_owned(),
             os_version: tauri_plugin_os::version().to_string(),
@@ -64,11 +55,8 @@ pub fn start(app: &AppHandle) {
     stacks::mark_main();
     panics::install();
     native::install(&dir, &version);
-    let before = exit::Before {
-        last: exit::read(&dir),
-        booted: exit::booted(),
-        version: version.clone(),
-    };
+    let before =
+        exit::Before { last: exit::read(&dir), booted: exit::booted(), version: version.clone() };
     for report in exit::after_last_run(&dir, &before) {
         let _ = report::keep_in(&dir, &report, false);
     }
@@ -118,10 +106,7 @@ fn whose(label: &str) -> &'static str {
     }
 }
 enum Ended {
-    Gone {
-        whose: &'static str,
-        doing: Option<String>,
-    },
+    Gone { whose: &'static str, doing: Option<String> },
 }
 fn ends() -> &'static std::sync::mpsc::Sender<Ended> {
     static ENDS: OnceLock<std::sync::mpsc::Sender<Ended>> = OnceLock::new();
@@ -140,10 +125,7 @@ fn ended_report(ended: Ended) {
     report::keep_now(&report, false);
 }
 pub fn page_ended(label: &str) {
-    let _ = ends().send(Ended::Gone {
-        whose: whose(label),
-        doing: crate::stall::doing_now(),
-    });
+    let _ = ends().send(Ended::Gone { whose: whose(label), doing: crate::stall::doing_now() });
 }
 fn claimed(id: &str) -> bool {
     let mut held = CLAIMED.held();
@@ -165,10 +147,7 @@ pub fn crash_reports_waiting() -> Vec<Report> {
     let Some(dir) = dir() else {
         return Vec::new();
     };
-    report::waiting_in(&dir)
-        .into_iter()
-        .filter(|one| !claimed(&one.id))
-        .collect()
+    report::waiting_in(&dir).into_iter().filter(|one| !claimed(&one.id)).collect()
 }
 #[tauri::command(async)]
 pub fn crash_report_sent(id: String) -> Result<(), String> {
@@ -208,10 +187,7 @@ pub fn crash_report_js(message: String, stack: String) {
 #[tauri::command(async)]
 pub fn crash_alive(webview: Webview, visible: bool) {
     let label = webview.label().to_owned();
-    let fresh = PAGES_SEEN
-        .held()
-        .get_or_insert_with(HashSet::new)
-        .insert(label.clone());
+    let fresh = PAGES_SEEN.held().get_or_insert_with(HashSet::new).insert(label.clone());
     if fresh {
         report::windows(renderer_count());
     }
@@ -223,10 +199,7 @@ pub fn crash_context(kinds: BTreeMap<String, u32>) {
         kinds
             .into_iter()
             .filter(|(kind, _)| {
-                kind.len() <= 24
-                    && kind
-                        .chars()
-                        .all(|one| one.is_ascii_lowercase() || one == '-')
+                kind.len() <= 24 && kind.chars().all(|one| one.is_ascii_lowercase() || one == '-')
             })
             .take(32)
             .collect(),
@@ -247,9 +220,7 @@ pub fn crash_drill(app: AppHandle, webview: Webview, what: String) -> Result<(),
             drilled_crash();
             Ok(())
         }
-        "freeze" => app
-            .run_on_main_thread(drilled_freeze)
-            .map_err(|error| error.to_string()),
+        "freeze" => app.run_on_main_thread(drilled_freeze).map_err(|error| error.to_string()),
         "hang" => webview
             .eval("{const end = Date.now() + 20000; while (Date.now() < end) {}}")
             .map_err(|error| error.to_string()),

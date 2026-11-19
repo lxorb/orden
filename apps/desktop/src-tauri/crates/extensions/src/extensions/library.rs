@@ -32,10 +32,7 @@ pub fn read(root: &Path) -> Vec<Kept> {
         .collect()
 }
 pub fn write(root: &Path, list: &[Kept]) -> Result<(), String> {
-    written(
-        &root.join(LIST),
-        &serde_json::to_string_pretty(list).map_err(|e| e.to_string())?,
-    )
+    written(&root.join(LIST), &serde_json::to_string_pretty(list).map_err(|e| e.to_string())?)
 }
 fn written(path: &Path, text: &str) -> Result<(), String> {
     if let Some(parent) = path.parent() {
@@ -166,19 +163,14 @@ mod amo_tests {
         let bytes = zip(&[
             ("manifest.json", manifest.as_bytes()),
             ("popup.html", b"<html><head></head><body>hi</body></html>"),
-            (
-                "bg.js",
-                b"browser.runtime.onInstalled.addListener(() => {})",
-            ),
+            ("bg.js", b"browser.runtime.onInstalled.addListener(() => {})"),
             ("META-INF/cose.sig", b"signed"),
         ]);
-        let hash = Sha256::digest(&bytes)
-            .iter()
-            .fold(String::new(), |mut out, byte| {
-                use std::fmt::Write as _;
-                let _ = write!(out, "{byte:02x}");
-                out
-            });
+        let hash = Sha256::digest(&bytes).iter().fold(String::new(), |mut out, byte| {
+            use std::fmt::Write as _;
+            let _ = write!(out, "{byte:02x}");
+            out
+        });
         let listing = Listing {
             guid: "fixture@example.com".into(),
             slug: "fixture".into(),
@@ -228,14 +220,7 @@ mod amo_tests {
         let (bytes, listing) = xpi("1.0");
         let (newer, _) = unpack_firefox(root, &id, &bytes, &listing.guid).expect("unpacked");
         assert_eq!(newer, "1.0");
-        write(
-            root,
-            &[Kept {
-                version: newer.clone(),
-                ..kept
-            }],
-        )
-        .expect("written");
+        write(root, &[Kept { version: newer.clone(), ..kept }]).expect("written");
         tidy(root);
         assert!(folder_of(root, &id, &newer).is_dir());
         assert!(!folder.exists());

@@ -124,11 +124,7 @@ mod tests {
             Some("object") => Value::Object(
                 schema["properties"]
                     .as_object()
-                    .map(|all| {
-                        all.iter()
-                            .map(|(key, one)| (key.clone(), sample(one)))
-                            .collect()
-                    })
+                    .map(|all| all.iter().map(|(key, one)| (key.clone(), sample(one))).collect())
                     .unwrap_or_default(),
             ),
             _ => json!("e1"),
@@ -167,12 +163,7 @@ mod tests {
         let Some((_, after)) = why.split_once("expected") else {
             return BTreeSet::new();
         };
-        after
-            .split('`')
-            .skip(1)
-            .step_by(2)
-            .map(str::to_owned)
-            .collect()
+        after.split('`').skip(1).step_by(2).map(str::to_owned).collect()
     }
     fn keys(schema: &Value) -> BTreeSet<String> {
         schema["properties"]
@@ -183,12 +174,7 @@ mod tests {
     fn required(schema: &Value) -> BTreeSet<String> {
         schema["required"]
             .as_array()
-            .map(|all| {
-                all.iter()
-                    .filter_map(Value::as_str)
-                    .map(str::to_owned)
-                    .collect()
-            })
+            .map(|all| all.iter().filter_map(Value::as_str).map(str::to_owned).collect())
             .unwrap_or_default()
     }
     #[test]
@@ -215,10 +201,7 @@ mod tests {
                 let mut needs = BTreeSet::new();
                 for key in keys(&schema) {
                     let mut without = full.clone();
-                    at(&mut without, &place)
-                        .as_object_mut()
-                        .expect("an object")
-                        .remove(&key);
+                    at(&mut without, &place).as_object_mut().expect("an object").remove(&key);
                     match Verb::read(verb, without) {
                         Some(Ok(_)) => {}
                         Some(Err(why)) if why.contains(&format!("missing field `{key}`")) => {
@@ -266,11 +249,7 @@ mod tests {
                 for (key, one) in schema["properties"].as_object().into_iter().flatten() {
                     for shape in one["anyOf"].as_array().into_iter().flatten() {
                         let words = shape["enum"].as_array().cloned().unwrap_or_default();
-                        let values = if words.is_empty() {
-                            vec![sample(shape)]
-                        } else {
-                            words
-                        };
+                        let values = if words.is_empty() { vec![sample(shape)] } else { words };
                         for value in values {
                             let mut args = full.clone();
                             at(&mut args, &place)[key.as_str()] = value.clone();
@@ -291,17 +270,12 @@ mod tests {
         grant
     }
     fn listed_names(grant: &Grant, window: Option<&BTreeSet<String>>) -> BTreeSet<String> {
-        listed(grant, window)
-            .into_iter()
-            .map(|tool| tool.name.clone())
-            .collect()
+        listed(grant, window).into_iter().map(|tool| tool.name.clone()).collect()
     }
     #[test]
     fn an_agent_with_notes_and_no_browser_is_shown_no_browser() {
-        let every: BTreeSet<String> = AGENT_VERBS
-            .iter()
-            .map(|(one, _)| (*one).to_owned())
-            .collect();
+        let every: BTreeSet<String> =
+            AGENT_VERBS.iter().map(|(one, _)| (*one).to_owned()).collect();
         let shown = listed_names(&grant(&[Scope::NotesRead]), Some(&every));
         assert!(shown.contains("read_note"));
         assert!(shown.contains("list_spaces"));
@@ -337,19 +311,12 @@ mod tests {
     }
     #[test]
     fn emils_defaults_list_all_but_three_kinds() {
-        let every: BTreeSet<String> = AGENT_VERBS
-            .iter()
-            .map(|(one, _)| (*one).to_owned())
-            .collect();
+        let every: BTreeSet<String> =
+            AGENT_VERBS.iter().map(|(one, _)| (*one).to_owned()).collect();
         let shown = listed_names(&Grant::own("a".into(), "A"), Some(&every));
-        let hidden: BTreeSet<&str> = names()
-            .into_iter()
-            .filter(|one| !shown.contains(*one))
-            .collect();
-        assert_eq!(
-            hidden,
-            BTreeSet::from(["browser_evaluate", "write_setting"])
-        );
+        let hidden: BTreeSet<&str> =
+            names().into_iter().filter(|one| !shown.contains(*one)).collect();
+        assert_eq!(hidden, BTreeSet::from(["browser_evaluate", "write_setting"]));
     }
     #[test]
     fn the_table_stays_small() {
@@ -358,10 +325,7 @@ mod tests {
             sizes.insert(tool.name.clone(), tool.listed().to_string().len());
         }
         let total: usize = sizes.values().sum();
-        assert!(
-            total < 41_700,
-            "the tools are {total} characters: {sizes:?}"
-        );
+        assert!(total < 41_700, "the tools are {total} characters: {sizes:?}");
         for (name, size) in &sizes {
             assert!(*size < 1_700, "{name} is {size} characters");
         }

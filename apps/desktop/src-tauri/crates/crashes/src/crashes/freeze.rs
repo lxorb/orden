@@ -18,10 +18,8 @@ pub fn began(doing: &str, held: Duration) -> Freeze {
     report.doing = Some(doing.to_owned());
     report.held = Some(millis(held));
     report::keep(&report, true);
-    report.threads = stacks::every_thread(WALK)
-        .iter()
-        .map(|raw| stacks::resolved(raw, raw.main))
-        .collect();
+    report.threads =
+        stacks::every_thread(WALK).iter().map(|raw| stacks::resolved(raw, raw.main)).collect();
     report::keep(&report, true);
     Freeze {
         report,
@@ -103,10 +101,7 @@ mod tests {
             .find(|one| one.name.contains("orden frozen"))
             .expect("the frozen thread");
         assert!(thread.frames.len() >= 3);
-        assert!(thread
-            .frames
-            .iter()
-            .all(|frame| frame.offset.starts_with("0x")));
+        assert!(thread.frames.iter().all(|frame| frame.offset.starts_with("0x")));
     }
     #[test]
     fn a_freeze_says_how_long_what_ran_and_how_busy_it_was() {

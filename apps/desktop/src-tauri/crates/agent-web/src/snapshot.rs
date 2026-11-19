@@ -34,11 +34,7 @@ impl<'a> Node<'a> {
         self.raw.get("ignored").and_then(Value::as_bool) == Some(true)
     }
     fn role(&self) -> String {
-        let raw = self
-            .raw
-            .pointer("/role/value")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
+        let raw = self.raw.pointer("/role/value").and_then(Value::as_str).unwrap_or_default();
         spoken_role(raw)
     }
     fn name_points_at(&self) -> Vec<u64> {
@@ -60,10 +56,7 @@ impl<'a> Node<'a> {
             .collect()
     }
     fn name(&self) -> &'a str {
-        self.raw
-            .pointer("/name/value")
-            .and_then(Value::as_str)
-            .unwrap_or_default()
+        self.raw.pointer("/name/value").and_then(Value::as_str).unwrap_or_default()
     }
     fn value(&self) -> Option<String> {
         match self.raw.pointer("/value/value")? {
@@ -105,26 +98,20 @@ fn spoken_role(raw: &str) -> String {
         "" => "generic".into(),
         other => {
             let mut chars = other.chars();
-            chars.next().map_or_else(String::new, |first| {
-                first.to_lowercase().chain(chars).collect()
-            })
+            chars
+                .next()
+                .map_or_else(String::new, |first| first.to_lowercase().chain(chars).collect())
         }
     }
 }
 fn silent(role: &str, name: &str) -> bool {
-    matches!(
-        role,
-        "generic" | "none" | "presentation" | "genericContainer"
-    ) && name.is_empty()
+    matches!(role, "generic" | "none" | "presentation" | "genericContainer") && name.is_empty()
 }
 fn furniture(role: &str) -> bool {
     matches!(role, "inlineTextBox" | "lineBreak")
 }
 fn sealed(role: &str) -> bool {
-    matches!(
-        role,
-        "date" | "dateTime" | "inputTime" | "time" | "colorWell" | "month" | "week"
-    )
+    matches!(role, "date" | "dateTime" | "inputTime" | "time" | "colorWell" | "month" | "week")
 }
 fn pressable_role(role: &str) -> bool {
     [
@@ -150,10 +137,7 @@ fn has_value(role: &str) -> bool {
     .contains(&role)
 }
 fn quoted(name: &str) -> String {
-    let flat: String = name
-        .chars()
-        .map(|one| if one.is_control() { ' ' } else { one })
-        .collect();
+    let flat: String = name.chars().map(|one| if one.is_control() { ' ' } else { one }).collect();
     let flat = flat.split_whitespace().collect::<Vec<_>>().join(" ");
     let cut = match flat.char_indices().nth(LONGEST_NAME) {
         Some((at, _)) => format!("{}\u{2026}", &flat[..at]),
@@ -200,11 +184,7 @@ fn states(node: &Node<'_>, role: &str, origin: &str) -> String {
     if on("readonly") {
         out.push_str(" [readonly]");
     }
-    if node
-        .property("invalid")
-        .and_then(Value::as_str)
-        .is_some_and(|one| one != "false")
-    {
+    if node.property("invalid").and_then(Value::as_str).is_some_and(|one| one != "false") {
         out.push_str(" [invalid]");
     }
     if let Some(level) = node.property("level").and_then(Value::as_u64) {
@@ -235,9 +215,7 @@ fn value_of(node: &Node<'_>, role: &str, secret: bool) -> String {
 }
 fn masked(value: &str) -> bool {
     !value.is_empty()
-        && value
-            .chars()
-            .all(|one| matches!(one, '\u{2022}' | '\u{25cf}' | '*' | '\u{b7}'))
+        && value.chars().all(|one| matches!(one, '\u{2022}' | '\u{25cf}' | '*' | '\u{b7}'))
 }
 struct Forest<'a> {
     parts: &'a [Part],
@@ -276,10 +254,7 @@ impl<'a> Forest<'a> {
                 .nodes
                 .iter()
                 .flat_map(|raw| {
-                    let id = raw
-                        .get("nodeId")
-                        .and_then(Value::as_str)
-                        .unwrap_or_default();
+                    let id = raw.get("nodeId").and_then(Value::as_str).unwrap_or_default();
                     raw.get("childIds")
                         .and_then(Value::as_array)
                         .into_iter()
@@ -299,14 +274,9 @@ impl<'a> Forest<'a> {
                 };
                 let mut id = raw.get("nodeId").and_then(Value::as_str);
                 while let Some(one) = id {
-                    forest
-                        .echoes
-                        .entry((at, one))
-                        .or_default()
-                        .push(value.clone());
-                    if let Some(backend) = forest.by_id[at]
-                        .get(one)
-                        .and_then(|held| Node { raw: held }.backend())
+                    forest.echoes.entry((at, one)).or_default().push(value.clone());
+                    if let Some(backend) =
+                        forest.by_id[at].get(one).and_then(|held| Node { raw: held }.backend())
                     {
                         forest
                             .echoes_by_backend
@@ -331,18 +301,10 @@ impl<'a> Forest<'a> {
     fn said_of<'n>(&self, part: usize, node: &Node<'n>) -> Cow<'n, str> {
         let mut said = Cow::Borrowed(node.name());
         let id = node.raw.get("nodeId").and_then(Value::as_str);
-        let mut echoes: Vec<&String> = id
-            .and_then(|id| self.echoes.get(&(part, id)))
-            .into_iter()
-            .flatten()
-            .collect();
+        let mut echoes: Vec<&String> =
+            id.and_then(|id| self.echoes.get(&(part, id))).into_iter().flatten().collect();
         for backend in node.name_points_at() {
-            echoes.extend(
-                self.echoes_by_backend
-                    .get(&(part, backend))
-                    .into_iter()
-                    .flatten(),
-            );
+            echoes.extend(self.echoes_by_backend.get(&(part, backend)).into_iter().flatten());
         }
         echoes.sort_by_key(|one| std::cmp::Reverse(one.len()));
         for echo in echoes {
@@ -354,10 +316,7 @@ impl<'a> Forest<'a> {
     }
     fn root(&self, part: usize) -> Option<&'a Value> {
         let nodes = &self.parts.get(part)?.nodes;
-        nodes
-            .iter()
-            .find(|node| node.get("parentId").is_none())
-            .or_else(|| nodes.first())
+        nodes.iter().find(|node| node.get("parentId").is_none()).or_else(|| nodes.first())
     }
     fn child(&self, part: usize, id: &str) -> Option<&'a Value> {
         self.by_id.get(part)?.get(id).copied()
@@ -389,12 +348,7 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
             &forest,
             part,
             node,
-            &Around {
-                depth: 0,
-                skip: skip_root,
-                said: &[],
-                in_list: false,
-            },
+            &Around { depth: 0, skip: skip_root, said: &[], in_list: false },
         );
     }
     if writer.truncated {
@@ -404,10 +358,7 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
             asked.most
         );
     }
-    Written {
-        text: writer.text.trim_end().to_string(),
-        truncated: writer.truncated,
-    }
+    Written { text: writer.text.trim_end().to_string(), truncated: writer.truncated }
 }
 fn found_in<'a>(
     parts: &[Part],
@@ -491,16 +442,10 @@ impl Writer<'_> {
         if sealed(&role) || secret {
             return;
         }
-        let children: Vec<&Value> = node
-            .children()
-            .into_iter()
-            .filter_map(|id| forest.child(part, id))
-            .collect();
-        let mut said: Vec<String> = if quiet {
-            around.said.to_vec()
-        } else {
-            vec![name.trim().to_string()]
-        };
+        let children: Vec<&Value> =
+            node.children().into_iter().filter_map(|id| forest.child(part, id)).collect();
+        let mut said: Vec<String> =
+            if quiet { around.said.to_vec() } else { vec![name.trim().to_string()] };
         said.extend(children.iter().filter_map(|child| {
             let child = Node { raw: child };
             let named = forest.said_of(part, &child);
@@ -518,12 +463,7 @@ impl Writer<'_> {
         if let Some(backend) = node.backend() {
             if let Some(&under) = forest.hung.get(&(part, backend)) {
                 if let Some(root) = forest.root(under) {
-                    let framed = Around {
-                        depth: inner,
-                        skip: true,
-                        said: &[],
-                        in_list: false,
-                    };
+                    let framed = Around { depth: inner, skip: true, said: &[], in_list: false };
                     self.walk(forest, under, root, &framed);
                 }
             }
@@ -541,14 +481,7 @@ pub fn find(parts: &[Part], secret: &HashSet<(String, u64)>, wanted: &Wanted<'_>
     let mut found = Vec::new();
     let mut seen = HashSet::new();
     if let Some(root) = forest.root(0) {
-        search(
-            &forest,
-            0,
-            root,
-            None,
-            wanted,
-            &mut (&mut found, &mut seen, 0),
-        );
+        search(&forest, 0, root, None, wanted, &mut (&mut found, &mut seen, 0));
     }
     found
 }
@@ -672,31 +605,19 @@ mod tests {
         with(raw, "parentId", json!(parent))
     }
     fn alone(nodes: Vec<Value>) -> Vec<Part> {
-        vec![Part {
-            prefix: String::new(),
-            nodes,
-            owner: None,
-        }]
+        vec![Part { prefix: String::new(), nodes, owner: None }]
     }
     fn secrets(nodes: &[u64]) -> HashSet<(String, u64)> {
         nodes.iter().map(|node| (String::new(), *node)).collect()
     }
     fn shown(parts: &[Part], secret: &HashSet<(String, u64)>, origin: &str) -> String {
-        let asked = Asked {
-            under: None,
-            most: MOST,
-            secret,
-            origin,
-        };
+        let asked = Asked { under: None, most: MOST, secret, origin };
         render(parts, &asked).text
     }
     fn page() -> Vec<Value> {
         vec![
             node("1", "RootWebArea", "Shop", 1, &["2"]),
-            under(
-                "1",
-                node("2", "generic", "", 2, &["3", "5", "7", "9", "11", "13"]),
-            ),
+            under("1", node("2", "generic", "", 2, &["3", "5", "7", "9", "11", "13"])),
             under("2", node("3", "heading", "Basket", 3, &["4"])),
             under("3", node("4", "StaticText", "Basket", 4, &[])),
             with(
@@ -732,51 +653,24 @@ mod tests {
     }
     fn parts() -> Vec<Part> {
         vec![
-            Part {
-                prefix: String::new(),
-                nodes: page(),
-                owner: None,
-            },
-            Part {
-                prefix: "f1".into(),
-                nodes: frame(),
-                owner: Some((0, 13)),
-            },
+            Part { prefix: String::new(), nodes: page(), owner: None },
+            Part { prefix: "f1".into(), nodes: frame(), owner: Some((0, 13)) },
         ]
     }
     fn written(parts: &[Part], under: Option<(&str, u64)>, most: usize) -> Written {
         let secret = secrets(&[11]);
-        render(
-            parts,
-            &Asked {
-                under,
-                most,
-                secret: &secret,
-                origin: "https://shop.example",
-            },
-        )
+        render(parts, &Asked { under, most, secret: &secret, origin: "https://shop.example" })
     }
     #[test]
     fn an_element_of_a_frame_in_the_page_s_own_process_is_held_and_written() {
         let parts = vec![
-            Part {
-                prefix: String::new(),
-                nodes: page(),
-                owner: None,
-            },
-            Part {
-                prefix: String::new(),
-                nodes: frame(),
-                owner: Some((0, 13)),
-            },
+            Part { prefix: String::new(), nodes: page(), owner: None },
+            Part { prefix: String::new(), nodes: frame(), owner: Some((0, 13)) },
         ];
         assert!(holds(&parts, "", 20));
         assert!(holds(&parts, "", 5));
         assert!(!holds(&parts, "", 99));
-        assert_eq!(
-            written(&parts, Some(("", 20)), MOST).text,
-            "- button \"Pay now\" [ref=e20]"
-        );
+        assert_eq!(written(&parts, Some(("", 20)), MOST).text, "- button \"Pay now\" [ref=e20]");
     }
     #[test]
     fn a_page_is_one_element_a_line_with_its_ref() {
@@ -824,16 +718,7 @@ mod tests {
                 }),
             ),
             field("6", "PIN", "\u{2022}\u{2022}\u{2022}\u{2022}", 6, &["7"]),
-            under(
-                "6",
-                node(
-                    "7",
-                    "StaticText",
-                    "\u{2022}\u{2022}\u{2022}\u{2022}",
-                    7,
-                    &[],
-                ),
-            ),
+            under("6", node("7", "StaticText", "\u{2022}\u{2022}\u{2022}\u{2022}", 7, &[])),
             field("8", "Empty code", "", 8, &[]),
         ]
     }
@@ -852,25 +737,9 @@ mod tests {
             ]
             .join("\n")
         );
-        let found = find(
-            &parts,
-            &secret,
-            &Wanted {
-                text: Some("4242"),
-                role: None,
-                name: None,
-            },
-        );
+        let found = find(&parts, &secret, &Wanted { text: Some("4242"), role: None, name: None });
         assert!(found.is_empty(), "{found:?}");
-        let named = find(
-            &parts,
-            &secret,
-            &Wanted {
-                text: None,
-                role: Some("button"),
-                name: None,
-            },
-        );
+        let named = find(&parts, &secret, &Wanted { text: None, role: Some("button"), name: None });
         assert_eq!(named.len(), 1);
         assert_eq!(named[0].name, "Pay with [hidden]");
     }
@@ -890,12 +759,7 @@ mod tests {
                 "sources": [{ "nativeSourceValue": { "relatedNodes": [{ "backendDOMNodeId": 2 }] } }],
             }),
         );
-        let parts = alone(vec![
-            node("1", "RootWebArea", "", 1, &["2", "4"]),
-            label,
-            held,
-            named,
-        ]);
+        let parts = alone(vec![node("1", "RootWebArea", "", 1, &["2", "4"]), label, held, named]);
         let secret = secrets(&[3]);
         let text = shown(&parts, &secret, "https://a.example");
         assert!(!text.contains("123456"), "{text}");
@@ -1000,22 +864,12 @@ mod tests {
         let parts = recorded("/signin");
         let secret = secrets(&[]);
         let text = shown(&parts, &secret, "about:blank");
-        assert!(
-            text.contains("- textbox \"Password\" [filled] [ref=e137]"),
-            "{text}"
-        );
+        assert!(text.contains("- textbox \"Password\" [filled] [ref=e137]"), "{text}");
         assert!(!text.contains("hunter2"), "{text}");
         assert!(!text.contains("[value="), "{text}");
         assert!(!text.contains('\u{2022}'), "{text}");
-        let found = find(
-            &parts,
-            &secret,
-            &Wanted {
-                text: Some("\u{2022}"),
-                role: None,
-                name: None,
-            },
-        );
+        let found =
+            find(&parts, &secret, &Wanted { text: Some("\u{2022}"), role: None, name: None });
         assert!(found.is_empty(), "{found:?}");
     }
     #[test]

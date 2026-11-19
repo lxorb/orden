@@ -63,11 +63,7 @@ struct Looks<T: 'static> {
 impl<T: 'static> Kept<T> {
     const fn new() -> Self {
         Self {
-            state: Mutex::new(Looks {
-                found: None,
-                left: LOOKS,
-                looking: false,
-            }),
+            state: Mutex::new(Looks { found: None, left: LOOKS, looking: false }),
             looked: Condvar::new(),
         }
     }
@@ -104,11 +100,7 @@ pub fn detected() -> &'static [Shell] {
     static FOUND: Kept<Vec<Shell>> = Kept::new();
     FOUND.get(|| {
         let machine = ThisMachine;
-        let found = if cfg!(windows) {
-            windows(&machine)
-        } else {
-            unix(&machine)
-        };
+        let found = if cfg!(windows) { windows(&machine) } else { unix(&machine) };
         (found, !WSL_SILENT.swap(false, Ordering::SeqCst))
     })
 }
@@ -117,19 +109,10 @@ pub fn find(id: &str) -> Option<&'static Shell> {
 }
 impl Shell {
     pub fn offered(&self) -> Offered {
-        Offered {
-            id: self.id.clone(),
-            name: self.name.clone(),
-        }
+        Offered { id: self.id.clone(), name: self.name.clone() }
     }
     fn new(id: impl Into<String>, name: impl Into<String>, program: PathBuf, kind: Kind) -> Self {
-        Self {
-            id: id.into(),
-            name: name.into(),
-            program,
-            args: Vec::new(),
-            kind,
-        }
+        Self { id: id.into(), name: name.into(), program, args: Vec::new(), kind }
     }
     fn with_args(mut self, args: &[&str]) -> Self {
         self.args = args.iter().map(|one| (*one).to_owned()).collect();
@@ -142,12 +125,10 @@ impl Shell {
             ("COLORTERM".to_owned(), "truecolor".to_owned()),
             ("TERM_PROGRAM".to_owned(), "orden".to_owned()),
         ];
-        let home = machine
-            .var(if cfg!(windows) { "USERPROFILE" } else { "HOME" })
-            .map(PathBuf::from);
-        let mut start = folder
-            .map(PathBuf::from)
-            .filter(|one| one.is_absolute() && machine.is_folder(one));
+        let home =
+            machine.var(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from);
+        let mut start =
+            folder.map(PathBuf::from).filter(|one| one.is_absolute() && machine.is_folder(one));
         if self.kind == Kind::Wsl {
             if let Some(linux) = folder.filter(|one| one.starts_with('/')) {
                 args.extend(["--cd".to_owned(), linux.to_owned()]);
@@ -177,19 +158,12 @@ impl Shell {
             _ => {}
         }
         if !cfg!(windows) {
-            let unset = ["LANG", "LC_ALL", "LC_CTYPE"]
-                .iter()
-                .all(|one| machine.var(one).is_none());
+            let unset = ["LANG", "LC_ALL", "LC_CTYPE"].iter().all(|one| machine.var(one).is_none());
             if unset {
                 env.push(("LANG".to_owned(), "en_US.UTF-8".to_owned()));
             }
         }
-        Launch {
-            program: self.program.clone(),
-            args,
-            folder: start.or(home),
-            env,
-        }
+        Launch { program: self.program.clone(), args, folder: start.or(home), env }
     }
 }
 const CMD_MARK: &str = "$E]133;A$E\\";
@@ -209,9 +183,7 @@ fn powershell_args(first: Option<&str>) -> Vec<String> {
     vec!["-NoExit".to_owned(), "-Command".to_owned(), command]
 }
 pub fn windows(machine: &impl Machine) -> Vec<Shell> {
-    let root = machine
-        .var("SystemRoot")
-        .unwrap_or_else(|| r"C:\Windows".to_owned());
+    let root = machine.var("SystemRoot").unwrap_or_else(|| r"C:\Windows".to_owned());
     let system = Path::new(&root).join("System32");
     let mut found = Vec::new();
     if let Some(pwsh) = powershell_seven(machine) {
@@ -254,9 +226,7 @@ fn powershell_seven(machine: &impl Machine) -> Option<PathBuf> {
         .iter()
         .filter_map(|one| machine.var(one))
         .map(|folder| Path::new(&folder).join(r"PowerShell\7\pwsh.exe"));
-    installed
-        .chain(on_path(machine, "pwsh.exe"))
-        .find(|one| machine.exists(one))
+    installed.chain(on_path(machine, "pwsh.exe")).find(|one| machine.exists(one))
 }
 fn git_bash(machine: &impl Machine) -> Option<PathBuf> {
     let installed = ["ProgramFiles", "ProgramW6432", "ProgramFiles(x86)"]
@@ -276,9 +246,7 @@ fn git_bash(machine: &impl Machine) -> Option<PathBuf> {
 }
 fn on_path(machine: &impl Machine, program: &str) -> Vec<PathBuf> {
     let path = machine.var("PATH").unwrap_or_default();
-    std::env::split_paths(&path)
-        .map(|folder| folder.join(program))
-        .collect()
+    std::env::split_paths(&path).map(|folder| folder.join(program)).collect()
 }
 fn developer_shells(machine: &impl Machine, cmd: &Path, powershell: &Path) -> Vec<Shell> {
     let studios = machine.studios();
@@ -343,11 +311,7 @@ pub fn unix(machine: &impl Machine) -> Vec<Shell> {
     let listed = machine.etc_shells();
     let mut paths: Vec<String> = machine.var("SHELL").into_iter().collect();
     paths.extend(
-        listed
-            .lines()
-            .map(str::trim)
-            .filter(|line| line.starts_with('/'))
-            .map(str::to_owned),
+        listed.lines().map(str::trim).filter(|line| line.starts_with('/')).map(str::to_owned),
     );
     let mut seen = HashSet::new();
     let mut kept: Vec<PathBuf> = Vec::new();
@@ -369,11 +333,7 @@ pub fn unix(machine: &impl Machine) -> Vec<Shell> {
             let twice = kept.iter().filter(|one| name_of(one) == program).count() > 1;
             let id = path.to_string_lossy().into_owned();
             let name = if twice { id.clone() } else { program.clone() };
-            let kind = if program == "bash" {
-                Kind::Bash
-            } else {
-                Kind::Other
-            };
+            let kind = if program == "bash" { Kind::Bash } else { Kind::Other };
             let shell = Shell::new(id, name, path.clone(), kind);
             if login {
                 shell.with_args(&["-l"])
@@ -384,20 +344,14 @@ pub fn unix(machine: &impl Machine) -> Vec<Shell> {
         .collect()
 }
 fn name_of(path: &Path) -> String {
-    path.file_name()
-        .map(|one| one.to_string_lossy().into_owned())
-        .unwrap_or_default()
+    path.file_name().map(|one| one.to_string_lossy().into_owned()).unwrap_or_default()
 }
 #[cfg_attr(not(windows), allow(dead_code))]
 pub fn distributions(printed: &[u8]) -> Vec<String> {
     let wide = printed.len() >= 2 && printed.chunks(2).any(|pair| pair.get(1) == Some(&0));
     let text = if wide {
-        let units: Vec<u16> = printed
-            .as_chunks::<2>()
-            .0
-            .iter()
-            .map(|pair| u16::from_le_bytes(*pair))
-            .collect();
+        let units: Vec<u16> =
+            printed.as_chunks::<2>().0.iter().map(|pair| u16::from_le_bytes(*pair)).collect();
         String::from_utf16_lossy(&units)
     } else {
         String::from_utf8_lossy(printed).into_owned()
@@ -441,12 +395,7 @@ pub fn studio(instance: &str, json: &str) -> Option<Studio> {
         .and_then(|id| id.rsplit('.').next())
         .unwrap_or_default()
         .to_owned();
-    Some(Studio {
-        instance: instance.to_owned(),
-        path,
-        line,
-        edition,
-    })
+    Some(Studio { instance: instance.to_owned(), path, line, edition })
 }
 pub struct ThisMachine;
 impl Machine for ThisMachine {
@@ -515,12 +464,10 @@ fn wsl_list() -> Vec<String> {
         let _ = out.read_to_end(&mut printed);
         let _ = sent.send(printed);
     });
-    let printed = heard
-        .recv_timeout(Duration::from_secs(3))
-        .unwrap_or_else(|_| {
-            WSL_SILENT.store(true, Ordering::SeqCst);
-            Vec::new()
-        });
+    let printed = heard.recv_timeout(Duration::from_secs(3)).unwrap_or_else(|_| {
+        WSL_SILENT.store(true, Ordering::SeqCst);
+        Vec::new()
+    });
     let _ = child.kill();
     let _ = child.wait();
     distributions(&printed)
@@ -610,10 +557,7 @@ mod tests {
     fn a_look_that_was_not_sure_is_looked_at_again() {
         let kept = Kept::new();
         assert_eq!(*kept.get(|| (vec!["cmd"], false)), vec!["cmd"]);
-        assert_eq!(
-            *kept.get(|| (vec!["cmd", "wsl:Ubuntu"], true)),
-            vec!["cmd", "wsl:Ubuntu"]
-        );
+        assert_eq!(*kept.get(|| (vec!["cmd", "wsl:Ubuntu"], true)), vec!["cmd", "wsl:Ubuntu"]);
         assert_eq!(*kept.get(|| panic!("kept")), vec!["cmd", "wsl:Ubuntu"]);
     }
     #[test]
@@ -705,10 +649,7 @@ mod tests {
             .set("PATH", r"C:\Tools\Git\cmd;C:\Windows")
             .file(r"C:\Tools\Git\bin\bash.exe");
         let found = windows(&fake);
-        let bash = found
-            .iter()
-            .find(|one| one.id == "git-bash")
-            .expect("git bash");
+        let bash = found.iter().find(|one| one.id == "git-bash").expect("git bash");
         assert_eq!(bash.program, PathBuf::from(r"C:\Tools\Git\bin\bash.exe"));
         assert_eq!(bash.args, vec!["--login", "-i"]);
     }
@@ -784,23 +725,16 @@ mod tests {
                 "/usr/local/bin/fish"
             ]
         );
-        assert_eq!(
-            names(&found),
-            vec!["zsh", "/bin/bash", "sh", "/opt/homebrew/bin/bash", "fish"]
-        );
+        assert_eq!(names(&found), vec!["zsh", "/bin/bash", "sh", "/opt/homebrew/bin/bash", "fish"]);
     }
     #[test]
     fn command_prompt_says_its_folder_unless_the_reader_set_a_prompt() {
         let cmd = Shell::new("cmd", "Command Prompt", PathBuf::from("cmd.exe"), Kind::Cmd);
         let plain = cmd.launch(None, &Fake::default());
-        assert!(plain
-            .env
-            .contains(&("PROMPT".to_owned(), CMD_PROMPT.to_owned())));
+        assert!(plain.env.contains(&("PROMPT".to_owned(), CMD_PROMPT.to_owned())));
         assert!(CMD_PROMPT.starts_with(CMD_MARK));
         let own = cmd.launch(None, &Fake::default().set("PROMPT", "$G"));
-        assert!(own
-            .env
-            .contains(&("PROMPT".to_owned(), "$E]133;A$E\\$G".to_owned())));
+        assert!(own.env.contains(&("PROMPT".to_owned(), "$E]133;A$E\\$G".to_owned())));
     }
     #[test]
     fn every_prompt_orden_teaches_is_marked() {
@@ -810,17 +744,9 @@ mod tests {
     }
     #[test]
     fn powershell_wraps_the_prompt_it_already_has() {
-        let pwsh = Shell::new(
-            "pwsh",
-            "PowerShell",
-            PathBuf::from("pwsh.exe"),
-            Kind::PowerShell,
-        );
+        let pwsh = Shell::new("pwsh", "PowerShell", PathBuf::from("pwsh.exe"), Kind::PowerShell);
         let launch = pwsh.launch(None, &Fake::default());
-        assert_eq!(
-            launch.args[..2],
-            ["-NoExit".to_owned(), "-Command".to_owned()]
-        );
+        assert_eq!(launch.args[..2], ["-NoExit".to_owned(), "-Command".to_owned()]);
         assert!(launch.args[2].contains("]9;9;"));
         assert!(launch.args[2].contains("& $global:__ordenPrompt"));
         assert!(!launch.args[2].contains('"'));
@@ -829,50 +755,27 @@ mod tests {
     fn wsl_is_put_back_in_a_linux_folder_with_cd() {
         let wsl = Shell::new("wsl:Ubuntu", "Ubuntu", PathBuf::from("wsl.exe"), Kind::Wsl)
             .with_args(&["-d", "Ubuntu"]);
-        let home = Fake::default()
-            .set("USERPROFILE", r"C:\Users\me")
-            .set("HOME", "/home/me");
+        let home = Fake::default().set("USERPROFILE", r"C:\Users\me").set("HOME", "/home/me");
         let launch = wsl.launch(Some("/home/me/code"), &home);
         assert_eq!(launch.args, vec!["-d", "Ubuntu", "--cd", "/home/me/code"]);
-        assert!(launch
-            .env
-            .contains(&("WSLENV".to_owned(), "PROMPT_COMMAND/u".to_owned())));
+        assert!(launch.env.contains(&("WSLENV".to_owned(), "PROMPT_COMMAND/u".to_owned())));
         let carried = wsl.launch(None, &home.set("WSLENV", "USERPROFILE/p"));
-        assert!(carried.env.contains(&(
-            "WSLENV".to_owned(),
-            "USERPROFILE/p:PROMPT_COMMAND/u".to_owned()
-        )));
+        assert!(carried
+            .env
+            .contains(&("WSLENV".to_owned(), "USERPROFILE/p:PROMPT_COMMAND/u".to_owned())));
     }
     #[test]
     fn a_folder_that_is_not_there_is_home() {
-        let bash = Shell::new(
-            "git-bash",
-            "Git Bash",
-            PathBuf::from("bash.exe"),
-            Kind::Bash,
-        );
+        let bash = Shell::new("git-bash", "Git Bash", PathBuf::from("bash.exe"), Kind::Bash);
         let machine = Fake::default()
             .set("USERPROFILE", r"C:\Users\me")
             .set("HOME", "/home/me")
             .folder(if cfg!(windows) { r"C:\notes" } else { "/notes" });
         let there = if cfg!(windows) { r"C:\notes" } else { "/notes" };
         let gone = if cfg!(windows) { r"C:\gone" } else { "/gone" };
-        let home = if cfg!(windows) {
-            r"C:\Users\me"
-        } else {
-            "/home/me"
-        };
-        assert_eq!(
-            bash.launch(Some(there), &machine).folder,
-            Some(PathBuf::from(there))
-        );
-        assert_eq!(
-            bash.launch(Some(gone), &machine).folder,
-            Some(PathBuf::from(home))
-        );
-        assert_eq!(
-            bash.launch(None, &machine).folder,
-            Some(PathBuf::from(home))
-        );
+        let home = if cfg!(windows) { r"C:\Users\me" } else { "/home/me" };
+        assert_eq!(bash.launch(Some(there), &machine).folder, Some(PathBuf::from(there)));
+        assert_eq!(bash.launch(Some(gone), &machine).folder, Some(PathBuf::from(home)));
+        assert_eq!(bash.launch(None, &machine).folder, Some(PathBuf::from(home)));
     }
 }

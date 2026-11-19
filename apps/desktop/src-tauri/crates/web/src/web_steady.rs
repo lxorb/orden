@@ -15,9 +15,7 @@ pub struct Steady<T> {
 }
 impl<T> Default for Steady<T> {
     fn default() -> Self {
-        Self {
-            tabs: HashMap::new(),
-        }
+        Self { tabs: HashMap::new() }
     }
 }
 impl<T> Steady<T> {
@@ -40,15 +38,8 @@ impl<T> Steady<T> {
         over: impl FnOnce(T, T) -> T,
     ) -> (Vec<T>, Option<Duration>) {
         let Some(kept) = self.tabs.get_mut(tab) else {
-            self.tabs.insert(
-                tab.to_string(),
-                Kept {
-                    last: now,
-                    loading,
-                    held: None,
-                    waiting: false,
-                },
-            );
+            self.tabs
+                .insert(tab.to_string(), Kept { last: now, loading, held: None, waiting: false });
             return (vec![one], None);
         };
         if kept.loading != loading {
@@ -114,13 +105,7 @@ pub fn say(
     use tauri::Emitter;
 
     let (now, later) = told(|all| {
-        all.told_over(
-            tab,
-            loading,
-            (window.to_string(), payload),
-            Instant::now(),
-            said_over,
-        )
+        all.told_over(tab, loading, (window.to_string(), payload), Instant::now(), said_over)
     });
     for (window, one) in now {
         let _ = app.emit_to(window.as_str(), event, one);
@@ -177,18 +162,9 @@ mod tests {
         let mut steady = Steady::default();
         let at = Instant::now();
         steady.told("t", false, "titled", at);
-        assert_eq!(
-            steady.told("t", false, "retitled", at).0,
-            Vec::<&str>::new()
-        );
-        assert_eq!(
-            steady.told("t", true, "loading", at),
-            (vec!["retitled", "loading"], None)
-        );
-        assert_eq!(
-            steady.told("t", false, "loaded", at),
-            (vec!["loaded"], None)
-        );
+        assert_eq!(steady.told("t", false, "retitled", at).0, Vec::<&str>::new());
+        assert_eq!(steady.told("t", true, "loading", at), (vec!["retitled", "loading"], None));
+        assert_eq!(steady.told("t", false, "loaded", at), (vec!["loaded"], None));
         assert_eq!(steady.due("t", at + STEADY), None);
     }
     #[test]

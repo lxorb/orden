@@ -60,14 +60,7 @@ fn copying(mut command: Command, patience: Duration) -> Copying {
     }
     let child = command
         .current_dir(&inside)
-        .args([
-            "--from",
-            "markdown",
-            "--to",
-            "markdown",
-            "--extract-media",
-            ".",
-        ])
+        .args(["--from", "markdown", "--to", "markdown", "--extract-media", "."])
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -80,10 +73,9 @@ fn copying(mut command: Command, patience: Duration) -> Copying {
         let _ = sink.write_all(CLIMBING.as_bytes());
     }
     match waited(&mut child, patience) {
-        None => Copying::Unknown(format!(
-            "pandoc gave no answer within {} seconds",
-            patience.as_secs()
-        )),
+        None => {
+            Copying::Unknown(format!("pandoc gave no answer within {} seconds", patience.as_secs()))
+        }
         Some(false) => Copying::Unknown("pandoc failed on the pictures it was given".to_string()),
         Some(true) if wrote_outside(probe.path(), &inside) => Copying::Unsafe,
         Some(true) => Copying::Safe,
@@ -143,9 +135,7 @@ fn import_from(source: &Path) -> Result<Imported, String> {
         .map_err(|error| format!("there was no folder to read the pictures into: {error}"))?;
     let source = source.to_string_lossy().to_string();
     let result = orden_base::printed::output(
-        pandoc()
-            .current_dir(media.path())
-            .args(reading(&source, copying == Copying::Safe)),
+        pandoc().current_dir(media.path()).args(reading(&source, copying == Copying::Safe)),
         CONVERTING,
     )
     .map_err(|error| not_run(&error))?;
@@ -159,21 +149,12 @@ fn import_from(source: &Path) -> Result<Imported, String> {
     if copying == Copying::Safe {
         let mut too_large = false;
         let mut total = 0;
-        gathered(
-            media.path(),
-            media.path(),
-            &mut pictures,
-            (&mut total, &mut too_large),
-        );
+        gathered(media.path(), media.path(), &mut pictures, (&mut total, &mut too_large));
         if too_large {
             left_out = Some(PICTURES_TOO_LARGE.to_string());
         }
     }
-    Ok(Imported {
-        markdown,
-        left_out,
-        pictures,
-    })
+    Ok(Imported { markdown, left_out, pictures })
 }
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -230,10 +211,8 @@ fn gathered(
             .map(|part| part.as_os_str().to_string_lossy())
             .collect::<Vec<_>>()
             .join("/");
-        pictures.push(Picture {
-            link,
-            data: base64::engine::general_purpose::STANDARD.encode(bytes),
-        });
+        pictures
+            .push(Picture { link, data: base64::engine::general_purpose::STANDARD.encode(bytes) });
     }
 }
 fn left_out(copying: &Copying, markdown: &str) -> Option<String> {
@@ -286,16 +265,12 @@ pub async fn run_pandoc(
                 let note = in_spaces(&app, &note)?;
                 let space = space_root(&spaces_dir(&app)?, &note)
                     .ok_or_else(|| format!("{} is not in a space", note.display()))?;
-                let folder = note
-                    .parent()
-                    .map_or_else(|| space.clone(), Path::to_path_buf);
+                let folder = note.parent().map_or_else(|| space.clone(), Path::to_path_buf);
                 Some((folder, space))
             }
             None => None,
         };
-        let place = place
-            .as_ref()
-            .map(|(folder, space)| Place { folder, space });
+        let place = place.as_ref().map(|(folder, space)| Place { folder, space });
         convert(&source, &target, &format, place.as_ref())
     })
     .await
@@ -350,17 +325,11 @@ fn convert(
 }
 fn carries_pictures(format: &str) -> bool {
     let name = format.split(['+', '-']).next().unwrap_or(format);
-    matches!(
-        name,
-        "odt" | "docx" | "pptx" | "icml" | "html" | "html4" | "html5"
-    )
+    matches!(name, "odt" | "docx" | "pptx" | "icml" | "html" | "html4" | "html5")
 }
 fn not_run(error: &std::io::Error) -> String {
     if error.kind() == std::io::ErrorKind::TimedOut {
-        format!(
-            "pandoc gave no answer within {} minutes",
-            CONVERTING.as_secs() / 60
-        )
+        format!("pandoc gave no answer within {} minutes", CONVERTING.as_secs() / 60)
     } else {
         format!("pandoc could not start: {error}. Is it installed?")
     }
@@ -376,9 +345,7 @@ fn piped(mut command: Command, input: String) -> Result<std::process::Output, St
     let writer = std::thread::spawn(move || sink.write_all(input.as_bytes()));
     let result =
         orden_base::printed::wait_output(child, CONVERTING).map_err(|error| not_run(&error))?;
-    let written = writer
-        .join()
-        .map_err(|_| "the thread feeding pandoc stopped".to_string())?;
+    let written = writer.join().map_err(|_| "the thread feeding pandoc stopped".to_string())?;
     match written {
         Err(error) if result.status.success() => {
             Err(format!("could not send the note to pandoc: {error}"))
@@ -418,11 +385,7 @@ fn vet(
             }
         }
         Value::Object(fields) => {
-            let kind = fields
-                .get("t")
-                .and_then(Value::as_str)
-                .unwrap_or_default()
-                .to_string();
+            let kind = fields.get("t").and_then(Value::as_str).unwrap_or_default().to_string();
             if let ("Image", Some(content)) = (kind.as_str(), fields.get_mut("c")) {
                 let link = content
                     .get(2)
@@ -436,10 +399,7 @@ fn vet(
                     }
                 } else {
                     refused.push(link);
-                    let alt = content
-                        .get(1)
-                        .cloned()
-                        .unwrap_or_else(|| Value::Array(Vec::new()));
+                    let alt = content.get(1).cloned().unwrap_or_else(|| Value::Array(Vec::new()));
                     *node = serde_json::json!({ "t": "Span", "c": [["", [], []], alt] });
                 }
             }
@@ -467,9 +427,7 @@ fn admitted(link: &str, place: &Place) -> Option<PathBuf> {
         let path = place.folder.join(name);
         let real = fs::canonicalize(path).ok()?;
         let below = real.components().skip(space.components().count());
-        let hidden = below
-            .clone()
-            .any(|part| part.as_os_str().to_string_lossy().starts_with('.'));
+        let hidden = below.clone().any(|part| part.as_os_str().to_string_lossy().starts_with('.'));
         (real.is_file() && inside(&space, &real) && !hidden).then_some(real)
     })
 }
@@ -570,13 +528,7 @@ mod tests {
     fn names_in(folder: &Path) -> Vec<String> {
         let mut names: Vec<String> = fs::read_dir(folder)
             .expect("a folder")
-            .map(|entry| {
-                entry
-                    .expect("an entry")
-                    .file_name()
-                    .to_string_lossy()
-                    .to_string()
-            })
+            .map(|entry| entry.expect("an entry").file_name().to_string_lossy().to_string())
             .collect();
         names.sort();
         names
@@ -619,16 +571,10 @@ mod tests {
             ),
         )
         .expect("written");
-        fs::write(
-            beside.join("notes.rst"),
-            format!("Hi\n\n.. include:: {key}\n   :literal:\n"),
-        )
-        .expect("written");
-        fs::write(
-            beside.join("plan.org"),
-            format!("Hi\n\n#+INCLUDE: \"{key}\" src text\n"),
-        )
-        .expect("written");
+        fs::write(beside.join("notes.rst"), format!("Hi\n\n.. include:: {key}\n   :literal:\n"))
+            .expect("written");
+        fs::write(beside.join("plan.org"), format!("Hi\n\n#+INCLUDE: \"{key}\" src text\n"))
+            .expect("written");
         for name in ["paper.tex", "notes.rst", "plan.org"] {
             let read = imported(beside, name);
             assert!(!read.markdown.contains("PRIVATE KEY"), "{name}: {read:?}");
@@ -645,11 +591,7 @@ mod tests {
             .stdin(std::process::Stdio::piped())
             .spawn()
             .and_then(|mut child| {
-                child
-                    .stdin
-                    .take()
-                    .expect("stdin")
-                    .write_all(b"Text\n\n![a dot](dot.png)\n")?;
+                child.stdin.take().expect("stdin").write_all(b"Text\n\n![a dot](dot.png)\n")?;
                 child.wait()
             })
             .expect("pandoc writes a docx");
@@ -678,9 +620,8 @@ mod tests {
         let picture = &read.pictures[0];
         assert!(read.markdown.contains(&picture.link), "{read:?}");
         assert!(!picture.link.contains('\\'), "{}", picture.link);
-        let bytes = base64::engine::general_purpose::STANDARD
-            .decode(&picture.data)
-            .expect("base64");
+        let bytes =
+            base64::engine::general_purpose::STANDARD.decode(&picture.data).expect("base64");
         assert!(bytes.starts_with(&DOT[..8]), "not a png");
     }
     #[test]
@@ -723,8 +664,7 @@ mod tests {
                         .into_bytes();
                 }
             }
-            out.start_file(name, zip::write::SimpleFileOptions::default())
-                .expect("an entry");
+            out.start_file(name, zip::write::SimpleFileOptions::default()).expect("an entry");
             out.write_all(&bytes).expect("written");
         }
         out.finish().expect("a docx");
@@ -732,19 +672,13 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn a_pandoc_that_writes_outside_its_folder_is_not_trusted() {
-        assert_eq!(
-            copying(stand_in("cat >/dev/null; echo x > ../out"), PATIENCE),
-            Copying::Unsafe
-        );
+        assert_eq!(copying(stand_in("cat >/dev/null; echo x > ../out"), PATIENCE), Copying::Unsafe);
         assert_eq!(
             copying(stand_in("cat >/dev/null; echo x > ../../../out"), PATIENCE),
             Copying::Unsafe
         );
         assert_eq!(
-            copying(
-                stand_in("cat >/dev/null; ln -s /etc/passwd ../../link"),
-                PATIENCE
-            ),
+            copying(stand_in("cat >/dev/null; ln -s /etc/passwd ../../link"), PATIENCE),
             Copying::Unsafe
         );
     }
@@ -752,16 +686,10 @@ mod tests {
     #[test]
     fn a_pandoc_that_writes_only_inside_its_folder_is_trusted() {
         assert_eq!(
-            copying(
-                stand_in("cat >/dev/null; mkdir m; echo x > m/dot.png"),
-                PATIENCE
-            ),
+            copying(stand_in("cat >/dev/null; mkdir m; echo x > m/dot.png"), PATIENCE),
             Copying::Safe
         );
-        assert_eq!(
-            copying(stand_in("cat >/dev/null; mkdir ../folder"), PATIENCE),
-            Copying::Safe
-        );
+        assert_eq!(copying(stand_in("cat >/dev/null; mkdir ../folder"), PATIENCE), Copying::Safe);
     }
     #[cfg(unix)]
     #[test]
@@ -777,10 +705,9 @@ mod tests {
         };
         assert!(why.contains("could not start"), "{why}");
         let started = std::time::Instant::now();
-        let Copying::Unknown(why) = copying(
-            stand_in("exec sleep 30"),
-            std::time::Duration::from_millis(300),
-        ) else {
+        let Copying::Unknown(why) =
+            copying(stand_in("exec sleep 30"), std::time::Duration::from_millis(300))
+        else {
             panic!("a hung pandoc is not an answer");
         };
         assert!(why.contains("no answer"), "{why}");
@@ -802,10 +729,7 @@ mod tests {
     fn pictures_left_out_are_said() {
         let with = "Text\n\n![a dot](media/rId20.png)\n";
         assert_eq!(left_out(&Copying::Safe, with), None);
-        assert_eq!(
-            left_out(&Copying::Unsafe, with),
-            Some(PICTURES_LEFT_OUT.to_string())
-        );
+        assert_eq!(left_out(&Copying::Unsafe, with), Some(PICTURES_LEFT_OUT.to_string()));
         let unknown = left_out(&Copying::Unknown("pandoc failed".to_string()), with);
         assert!(
             unknown.is_some_and(|said| said.contains("pandoc failed") && !said.contains("3.1.6"))
@@ -818,10 +742,7 @@ mod tests {
         (note, tempfile::tempdir().expect("a folder"))
     }
     fn alone(folder: &Path) -> Place<'_> {
-        Place {
-            folder,
-            space: folder,
-        }
+        Place { folder, space: folder }
     }
     struct Shared {
         top: tempfile::TempDir,
@@ -838,25 +759,14 @@ mod tests {
         fs::write(folder.join("dot.png"), DOT).expect("written");
         let key = top.path().join("id_rsa.png");
         fs::write(&key, KEY).expect("written");
-        Shared {
-            top,
-            space,
-            folder,
-            key,
-        }
+        Shared { top, space, folder, key }
     }
     impl Shared {
         fn place(&self) -> Place<'_> {
-            Place {
-                folder: &self.folder,
-                space: &self.space,
-            }
+            Place { folder: &self.folder, space: &self.space }
         }
         fn links(&self) -> [String; 2] {
-            [
-                self.key.to_string_lossy().replace('\\', "/"),
-                "../../../id_rsa.png".to_string(),
-            ]
+            [self.key.to_string_lossy().replace('\\', "/"), "../../../id_rsa.png".to_string()]
         }
     }
     #[test]
@@ -864,13 +774,7 @@ mod tests {
         let shared = shared();
         let place = shared.place();
         let dot = fs::canonicalize(shared.folder.join("dot.png")).expect("there");
-        for inside in [
-            "dot.png",
-            "./dot.png",
-            "../notes/dot.png",
-            "d%6Ft.png",
-            "dot.png?v=2",
-        ] {
+        for inside in ["dot.png", "./dot.png", "../notes/dot.png", "d%6Ft.png", "dot.png?v=2"] {
             assert_eq!(admitted(inside, &place), Some(dot.clone()), "{inside}");
         }
         assert_eq!(
@@ -990,25 +894,14 @@ mod tests {
         let refused = vetted(&mut tree, Some(&shared.place()), into.path());
         assert!(refused.is_empty(), "{refused:?}");
         assert_eq!(targets(&tree), ["dot.png", "dot-2.png", "dot.png"]);
-        assert_eq!(
-            fs::read(into.path().join("dot-2.png")).expect("copied"),
-            b"second"
-        );
+        assert_eq!(fs::read(into.path().join("dot-2.png")).expect("copied"), b"second");
     }
     #[test]
     fn knows_which_formats_carry_pictures() {
         for format in ["odt", "docx", "html5", "odt+native_numbering"] {
             assert!(carries_pictures(format), "{format}");
         }
-        for format in [
-            "latex",
-            "mediawiki",
-            "rst",
-            "textile",
-            "opml",
-            "markdown",
-            "epub3",
-        ] {
+        for format in ["latex", "mediawiki", "rst", "textile", "opml", "markdown", "epub3"] {
             assert!(!carries_pictures(format), "{format}");
         }
     }
@@ -1037,15 +930,9 @@ mod tests {
         let note = format!("Text\n\n![a dot](dot.png)\n\n![k]({absolute})\n\n![k]({climbing})\n");
         let missing = convert(&note, &target, "odt", Some(&shared.place())).expect("converted");
         assert_eq!(missing.len(), 2, "{missing:?}");
-        assert!(
-            missing.iter().all(|one| one.contains("id_rsa")),
-            "{missing:?}"
-        );
+        assert!(missing.iter().all(|one| one.contains("id_rsa")), "{missing:?}");
         let contents = odt_contents(&target);
-        assert!(
-            contents.iter().all(|(_, bytes)| !holds(bytes, KEY)),
-            "the key is in the ODT"
-        );
+        assert!(contents.iter().all(|(_, bytes)| !holds(bytes, KEY)), "the key is in the ODT");
         let pictures = contents
             .iter()
             .filter(|(name, _)| name.starts_with("Pictures/") && !name.ends_with('/'))
@@ -1080,23 +967,15 @@ mod tests {
             convert(WITH_PICTURE, &target, "odt", Some(&alone(note.path()))).expect("converted");
         assert!(missing.is_empty(), "{missing:?}");
         let names = odt_entries(&target);
-        assert!(
-            names.iter().any(|one| one.starts_with("Pictures/")),
-            "{names:?}"
-        );
+        assert!(names.iter().any(|one| one.starts_with("Pictures/")), "{names:?}");
     }
     #[test]
     fn a_picture_that_is_not_there_is_said() {
         needs_pandoc!();
         let (note, elsewhere) = note_and_elsewhere();
         let target = elsewhere.path().join("Out.odt");
-        let missing = convert(
-            "![gone](gone.png)\n",
-            &target,
-            "odt",
-            Some(&alone(note.path())),
-        )
-        .expect("converted");
+        let missing = convert("![gone](gone.png)\n", &target, "odt", Some(&alone(note.path())))
+            .expect("converted");
         assert_eq!(missing, vec!["gone.png".to_string()]);
     }
     #[test]
@@ -1150,10 +1029,7 @@ mod tests {
     }
     #[test]
     fn repeats_what_pandoc_said_even_when_it_was_nothing_or_not_utf8() {
-        assert_eq!(
-            complaint(b"  no such format\n", "fallback"),
-            "no such format"
-        );
+        assert_eq!(complaint(b"  no such format\n", "fallback"), "no such format");
         assert_eq!(complaint(b"", "pandoc failed"), "pandoc failed");
         assert_eq!(complaint(b"   \n", "pandoc failed"), "pandoc failed");
         assert_eq!(complaint(&[0xff, b'a'], "pandoc failed"), "\u{fffd}a");

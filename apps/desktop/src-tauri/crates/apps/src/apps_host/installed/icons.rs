@@ -7,10 +7,7 @@ pub const MOST_FILE: u64 = 4 * 1024 * 1024;
 #[cfg(any(target_os = "linux", test))]
 pub const MOST_SVG: usize = 35 * 1024;
 pub fn data_url(kind: &str, bytes: &[u8]) -> String {
-    format!(
-        "data:{kind};base64,{}",
-        base64::engine::general_purpose::STANDARD.encode(bytes)
-    )
+    format!("data:{kind};base64,{}", base64::engine::general_purpose::STANDARD.encode(bytes))
 }
 #[cfg(any(target_os = "macos", test))]
 pub fn png_url(bytes: &[u8]) -> Option<String> {
@@ -23,10 +20,7 @@ pub fn png_url_within(bytes: &[u8], side: u32) -> Option<String> {
         return Some(data_url("image/png", bytes));
     }
     let (rgba, width, height) = read_png(bytes)?;
-    Some(data_url(
-        "image/png",
-        &rgba_png_within(&rgba, width, height, side)?,
-    ))
+    Some(data_url("image/png", &rgba_png_within(&rgba, width, height, side)?))
 }
 #[cfg(any(target_os = "linux", target_os = "macos", test))]
 pub fn png_size(bytes: &[u8]) -> Option<(u32, u32)> {
@@ -47,31 +41,18 @@ fn read_png(bytes: &[u8]) -> Option<(Vec<u8>, u32, u32)> {
     let (width, height) = (info.width, info.height);
     let count = usize::try_from(width).ok()? * usize::try_from(height).ok()?;
     let mut rgba = Vec::with_capacity(count * 4);
-    for row in pixels
-        .chunks(info.line_size)
-        .take(usize::try_from(height).ok()?)
-    {
+    for row in pixels.chunks(info.line_size).take(usize::try_from(height).ok()?) {
         match info.color_type {
             png::ColorType::Rgba => {
                 rgba.extend_from_slice(&row[..usize::try_from(width).ok()? * 4]);
             }
             png::ColorType::Rgb => {
-                for one in row
-                    .as_chunks::<3>()
-                    .0
-                    .iter()
-                    .take(usize::try_from(width).ok()?)
-                {
+                for one in row.as_chunks::<3>().0.iter().take(usize::try_from(width).ok()?) {
                     rgba.extend_from_slice(&[one[0], one[1], one[2], u8::MAX]);
                 }
             }
             png::ColorType::GrayscaleAlpha => {
-                for one in row
-                    .as_chunks::<2>()
-                    .0
-                    .iter()
-                    .take(usize::try_from(width).ok()?)
-                {
+                for one in row.as_chunks::<2>().0.iter().take(usize::try_from(width).ok()?) {
                     rgba.extend_from_slice(&[one[0], one[0], one[0], one[1]]);
                 }
             }
@@ -117,8 +98,7 @@ pub fn rgba_png_within(rgba: &[u8], width: u32, height: u32, side: u32) -> Optio
             }
             let alpha = sum[3];
             let channel = |one: u64| {
-                one.checked_div(alpha)
-                    .map_or(0, |mean| u8::try_from(mean).unwrap_or(u8::MAX))
+                one.checked_div(alpha).map_or(0, |mean| u8::try_from(mean).unwrap_or(u8::MAX))
             };
             out.extend_from_slice(&[
                 channel(sum[0]),
@@ -129,11 +109,8 @@ pub fn rgba_png_within(rgba: &[u8], width: u32, height: u32, side: u32) -> Optio
         }
     }
     let mut png = Vec::new();
-    let mut encoder = png::Encoder::new(
-        &mut png,
-        u32::try_from(out_w).ok()?,
-        u32::try_from(out_h).ok()?,
-    );
+    let mut encoder =
+        png::Encoder::new(&mut png, u32::try_from(out_w).ok()?, u32::try_from(out_h).ok()?);
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header().ok()?;

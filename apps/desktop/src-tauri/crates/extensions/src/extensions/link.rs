@@ -23,12 +23,8 @@ pub fn is_slug(word: &str) -> bool {
     !word.is_empty()
         && word.len() <= 200
         && !word.starts_with('.')
-        && !["%2f", "%5c", "%2e"]
-            .iter()
-            .any(|one| word.to_ascii_lowercase().contains(one))
-        && word
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || b"-_.@{}%~".contains(&byte))
+        && !["%2f", "%5c", "%2e"].iter().any(|one| word.to_ascii_lowercase().contains(one))
+        && word.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"-_.@{}%~".contains(&byte))
 }
 pub fn named(said: &str) -> Option<(Store, String)> {
     let said = said.trim();
@@ -83,14 +79,8 @@ mod tests {
                 format!("https://chromewebstore.google.com/detail/ublock-origin-lite/{UBLOCK}"),
                 Store::Chrome,
             ),
-            (
-                format!("https://chromewebstore.google.com/detail/{UBLOCK}?hl=de"),
-                Store::Chrome,
-            ),
-            (
-                format!("https://chrome.google.com/webstore/detail/ublock/{UBLOCK}"),
-                Store::Chrome,
-            ),
+            (format!("https://chromewebstore.google.com/detail/{UBLOCK}?hl=de"), Store::Chrome),
+            (format!("https://chrome.google.com/webstore/detail/ublock/{UBLOCK}"), Store::Chrome),
             (
                 format!(
                     "https://chromewebstore.google.com/detail/ublock-origin-lite/{UBLOCK}/reviews"
@@ -116,11 +106,7 @@ mod tests {
             "ublock-origin",
             " ublock-origin ",
         ] {
-            assert_eq!(
-                named(link),
-                Some((Store::Firefox, "ublock-origin".to_owned())),
-                "{link}"
-            );
+            assert_eq!(named(link), Some((Store::Firefox, "ublock-origin".to_owned())), "{link}");
         }
         assert_eq!(
             named("https://addons.mozilla.org/ja/firefox/addon/%E3%83%86%E3%82%B9%E3%83%88/"),
@@ -168,10 +154,7 @@ mod tests {
     #[test]
     fn the_store_page_round_trips() {
         for store in [Store::Chrome, Store::Edge, Store::Firefox] {
-            assert_eq!(
-                named(&page_of(store, UBLOCK)),
-                Some((store, UBLOCK.to_owned()))
-            );
+            assert_eq!(named(&page_of(store, UBLOCK)), Some((store, UBLOCK.to_owned())));
         }
     }
 }

@@ -18,16 +18,10 @@ mod tests {
     }
     #[test]
     fn a_note_a_space_and_a_site_are_names() {
-        assert_eq!(
-            named(Some("note_3f9a0c17e2b4d685")),
-            Ok(Some("note_3f9a0c17e2b4d685"))
-        );
+        assert_eq!(named(Some("note_3f9a0c17e2b4d685")), Ok(Some("note_3f9a0c17e2b4d685")));
         assert!(named(Some("note_")).is_err());
         assert_eq!(named(Some("space_0-k3j9x2")), Ok(Some("space_0-k3j9x2")));
-        assert_eq!(
-            named(Some("site_0-k3j9x2_ethz.ch")),
-            Ok(Some("site_0-k3j9x2_ethz.ch"))
-        );
+        assert_eq!(named(Some("site_0-k3j9x2_ethz.ch")), Ok(Some("site_0-k3j9x2_ethz.ch")));
         assert_eq!(
             named(Some("site_7-a_xn--mnchen-3ya.de")),
             Ok(Some("site_7-a_xn--mnchen-3ya.de"))

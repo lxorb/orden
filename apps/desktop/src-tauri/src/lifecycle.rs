@@ -43,10 +43,7 @@ impl Installer {
     fn closing(&self, label: &str, others: impl IntoIterator<Item = String>) -> usize {
         let mut closing = self.closing.held();
         closing.insert(label.to_owned());
-        others
-            .into_iter()
-            .filter(|other| !closing.contains(other))
-            .count()
+        others.into_iter().filter(|other| !closing.contains(other)).count()
     }
     fn expect(&self, labels: impl IntoIterator<Item = String>) {
         *self.lock() = labels.into_iter().collect();
@@ -72,9 +69,7 @@ impl Installer {
     }
 }
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
-    builder
-        .manage(Quitting::default())
-        .manage(Installer::default())
+    builder.manage(Quitting::default()).manage(Installer::default())
 }
 pub fn on_event(app: &AppHandle, event: RunEvent) {
     match event {
@@ -98,10 +93,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         #[cfg(target_os = "macos")]
         RunEvent::Ready => asked_to_quit::listen(app),
         #[cfg(target_os = "macos")]
-        RunEvent::Reopen {
-            has_visible_windows: false,
-            ..
-        } => launch::reopen(app),
+        RunEvent::Reopen { has_visible_windows: false, .. } => launch::reopen(app),
         RunEvent::ExitRequested { code, api, .. } => {
             #[cfg(target_os = "macos")]
             if code == Some(tauri::RESTART_EXIT_CODE) {
@@ -121,26 +113,17 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             event: WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }),
             ..
         } => orden_documents::dropped_paths::dropped(app, &paths),
-        RunEvent::WindowEvent {
-            label,
-            event: WindowEvent::Focused(true),
-            ..
-        } => {
+        RunEvent::WindowEvent { label, event: WindowEvent::Focused(true), .. } => {
             if let Some(window) = app.get_window(&label) {
                 orden_web::keyboard::no_hidden_menu(&window);
             }
             orden_web::keyboard::window_came_back(app, &label);
         }
-        RunEvent::WindowEvent {
-            label,
-            event: WindowEvent::Destroyed,
-            ..
-        } => {
+        RunEvent::WindowEvent { label, event: WindowEvent::Destroyed, .. } => {
             if let Some(pending) = app.try_state::<launch::Pending>() {
                 pending.forget(&label);
             }
-            app.state::<orden_agents::endpoint::Waiting>()
-                .forget(&label);
+            app.state::<orden_agents::endpoint::Waiting>().forget(&label);
             app.state::<Installer>().gone(&label);
             orden_crashes::crashes::window_gone(&label);
             orden_pty::terminal::window_gone(
@@ -172,11 +155,7 @@ pub fn update_may_install(webview: tauri::Webview, closing: bool) -> bool {
         .iter()
         .map(|window| window.label().to_owned())
         .collect::<Vec<_>>();
-    let others = if closing {
-        installer.closing(webview.label(), others)
-    } else {
-        others.len()
-    };
+    let others = if closing { installer.closing(webview.label(), others) } else { others.len() };
     installer_may_start(closing, state(app).now(), others) && installer.take()
 }
 #[tauri::command]
@@ -185,18 +164,13 @@ pub fn update_install_failed(app: AppHandle) {
 }
 #[tauri::command]
 pub fn update_settled(webview: tauri::Webview) {
-    webview
-        .app_handle()
-        .state::<Installer>()
-        .heard(webview.label());
+    webview.app_handle().state::<Installer>().heard(webview.label());
 }
 pub fn before_installer(app: &AppHandle, from: &str) {
     orden_placement::placement::note_every_window(app);
     let installer = app.state::<Installer>();
-    let others: Vec<String> = listening_windows(app, Some(from))
-        .iter()
-        .map(|window| window.label().to_owned())
-        .collect();
+    let others: Vec<String> =
+        listening_windows(app, Some(from)).iter().map(|window| window.label().to_owned()).collect();
     installer.expect(others.iter().cloned());
     for label in &others {
         let _ = app.emit_to(label.as_str(), UPDATE_SETTLE, ());
@@ -215,11 +189,7 @@ pub fn quit(app: &AppHandle) {
     let asker = windows
         .iter()
         .find(|window| window.is_focused().unwrap_or(false))
-        .or_else(|| {
-            windows
-                .iter()
-                .find(|window| window.is_visible().unwrap_or(false))
-        })
+        .or_else(|| windows.iter().find(|window| window.is_visible().unwrap_or(false)))
         .or_else(|| windows.first());
     let Some(asker) = asker else {
         quit_now(app);
@@ -234,9 +204,7 @@ fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window
         .into_iter()
         .filter(|window| Some(window.label()) != except)
         .filter(|window| {
-            pending
-                .as_ref()
-                .is_some_and(|pending| pending.is_listening(window.label()))
+            pending.as_ref().is_some_and(|pending| pending.is_listening(window.label()))
         })
         .collect()
 }
@@ -279,9 +247,7 @@ pub fn quit_now(app: &AppHandle) {
     let pending = app.try_state::<launch::Pending>();
     for window in windows {
         let label = window.label().to_owned();
-        let listening = pending
-            .as_ref()
-            .is_some_and(|pending| pending.is_listening(&label));
+        let listening = pending.as_ref().is_some_and(|pending| pending.is_listening(&label));
         let (app, going) = (app.clone(), window.clone());
         let ask = move || {
             if listening {
@@ -358,12 +324,7 @@ mod asked_to_quit {
         unsafe {
             let class = ffi::object_getClass(std::ptr::from_ref(object)).cast_mut();
             let imp = std::mem::transmute::<ShouldTerminate, Imp>(answer);
-            ffi::class_addMethod(
-                class,
-                sel!(applicationShouldTerminate:),
-                imp,
-                c"Q@:@".as_ptr(),
-            );
+            ffi::class_addMethod(class, sel!(applicationShouldTerminate:), imp, c"Q@:@".as_ptr());
         }
     }
     extern "C-unwind" fn should_terminate(_: &AnyObject, _: Sel, _: *mut AnyObject) -> usize {
@@ -393,9 +354,7 @@ mod asked_to_quit {
             return false;
         };
         if pressed.r#type() != NSEventType::KeyDown
-            || !pressed
-                .modifierFlags()
-                .contains(NSEventModifierFlags::Command)
+            || !pressed.modifierFlags().contains(NSEventModifierFlags::Command)
         {
             return false;
         }
@@ -411,9 +370,9 @@ mod asked_to_quit {
         ) {
             let still = match event.r#type() {
                 NSEventType::KeyDown => event.isARepeat() && event.keyCode() == key,
-                NSEventType::FlagsChanged => event
-                    .modifierFlags()
-                    .contains(NSEventModifierFlags::Command),
+                NSEventType::FlagsChanged => {
+                    event.modifierFlags().contains(NSEventModifierFlags::Command)
+                }
                 _ => false,
             };
             if !still {
@@ -474,8 +433,7 @@ fn state(app: &AppHandle) -> tauri::State<'_, Quitting> {
     app.state::<Quitting>()
 }
 pub fn leaving(app: &AppHandle) -> bool {
-    app.try_state::<Quitting>()
-        .is_some_and(|quitting| matches!(quitting.now(), ASKING | LEAVING))
+    app.try_state::<Quitting>().is_some_and(|quitting| matches!(quitting.now(), ASKING | LEAVING))
 }
 #[derive(Debug, PartialEq, Eq)]
 enum Exit {
@@ -603,9 +561,6 @@ mod tests {
     }
     #[test]
     fn a_restart_is_never_held() {
-        assert_eq!(
-            on_exit(Some(tauri::RESTART_EXIT_CODE), RUNNING, true),
-            Exit::Pass
-        );
+        assert_eq!(on_exit(Some(tauri::RESTART_EXIT_CODE), RUNNING, true), Exit::Pass);
     }
 }

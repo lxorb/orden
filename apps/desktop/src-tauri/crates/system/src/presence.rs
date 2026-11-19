@@ -21,26 +21,13 @@ const LONGEST: usize = 60;
 fn shown(name: &str) -> Option<String> {
     let one_line: String = name
         .chars()
-        .map(|character| {
-            if character.is_control() {
-                ' '
-            } else {
-                character
-            }
-        })
+        .map(|character| if character.is_control() { ' ' } else { character })
         .collect();
     let trimmed = one_line.trim();
     if trimmed.is_empty() {
         return None;
     }
-    Some(
-        trimmed
-            .chars()
-            .take(LONGEST)
-            .collect::<String>()
-            .trim_end()
-            .to_owned(),
-    )
+    Some(trimmed.chars().take(LONGEST).collect::<String>().trim_end().to_owned())
 }
 #[cfg(windows)]
 mod platform {
@@ -98,10 +85,7 @@ mod platform {
         }
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let idle_ms = (seconds * 1000.0) as u64;
-        Some(Input {
-            idle_ms,
-            front: NSRunningApplication::currentApplication().isActive(),
-        })
+        Some(Input { idle_ms, front: NSRunningApplication::currentApplication().isActive() })
     }
     pub fn computer_name() -> Option<String> {
         let out = orden_base::printed::output(
@@ -109,9 +93,7 @@ mod platform {
             std::time::Duration::from_secs(3),
         )
         .ok()?;
-        out.status
-            .success()
-            .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+        out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
     }
 }
 #[cfg(target_os = "linux")]
@@ -119,10 +101,7 @@ mod platform {
     use super::Input;
 
     pub fn system_input() -> Option<Input> {
-        crate::front_x::input().map(|said| Input {
-            idle_ms: said.idle_ms,
-            front: said.front,
-        })
+        crate::front_x::input().map(|said| Input { idle_ms: said.idle_ms, front: said.front })
     }
     pub fn computer_name() -> Option<String> {
         None

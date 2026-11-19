@@ -194,14 +194,12 @@ fn authorization(centre: &UNUserNotificationCenter) -> Option<UNAuthorizationSta
 impl System for Requests {
     fn scheduled(&self) -> Result<Vec<String>, String> {
         let (said, heard) = mpsc::channel();
-        let answer = RcBlock::new(
-            move |requests: std::ptr::NonNull<NSArray<UNNotificationRequest>>| {
+        let answer =
+            RcBlock::new(move |requests: std::ptr::NonNull<NSArray<UNNotificationRequest>>| {
                 let ids = ids_of(requests);
                 let _ = said.send(ids);
-            },
-        );
-        self.centre
-            .getPendingNotificationRequestsWithCompletionHandler(&answer);
+            });
+        self.centre.getPendingNotificationRequestsWithCompletionHandler(&answer);
         let ids = heard
             .recv_timeout(PATIENCE)
             .map_err(|_| "the notification centre did not say what it holds".to_string())?;
@@ -231,14 +229,12 @@ impl System for Requests {
             &content,
             Some(trigger),
         );
-        self.centre
-            .addNotificationRequest_withCompletionHandler(&request, None);
+        self.centre.addNotificationRequest_withCompletionHandler(&request, None);
         Ok(())
     }
     fn remove(&self, id: &str) -> Result<(), String> {
         let ids = NSArray::from_retained_slice(&[NSString::from_str(id)]);
-        self.centre
-            .removePendingNotificationRequestsWithIdentifiers(&ids);
+        self.centre.removePendingNotificationRequestsWithIdentifiers(&ids);
         Ok(())
     }
 }
@@ -249,8 +245,5 @@ fn status_of(settings: std::ptr::NonNull<UNNotificationSettings>) -> UNAuthoriza
 #[allow(unsafe_code)]
 fn ids_of(requests: std::ptr::NonNull<NSArray<UNNotificationRequest>>) -> Vec<String> {
     let requests = unsafe { requests.as_ref() };
-    requests
-        .iter()
-        .map(|request| request.identifier().to_string())
-        .collect()
+    requests.iter().map(|request| request.identifier().to_string()).collect()
 }

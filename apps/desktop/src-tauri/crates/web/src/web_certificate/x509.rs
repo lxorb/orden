@@ -53,9 +53,7 @@ fn element(input: &[u8]) -> Option<(u8, &[u8], &[u8])> {
             return None;
         }
         let (bytes, rest) = rest.split_at(count);
-        let length = bytes
-            .iter()
-            .fold(0_usize, |length, &byte| (length << 8) | usize::from(byte));
+        let length = bytes.iter().fold(0_usize, |length, &byte| (length << 8) | usize::from(byte));
         (length, rest)
     };
     if rest.len() < length {
@@ -101,12 +99,8 @@ fn text(tag: u8, bytes: &[u8]) -> Option<String> {
         0x0c | 0x12 | 0x13 | 0x16 | 0x1a => String::from_utf8(bytes.to_vec()).ok(),
         0x14 => Some(bytes.iter().copied().map(char::from).collect()),
         0x1e => {
-            let units: Vec<u16> = bytes
-                .as_chunks::<2>()
-                .0
-                .iter()
-                .map(|&pair| u16::from_be_bytes(pair))
-                .collect();
+            let units: Vec<u16> =
+                bytes.as_chunks::<2>().0.iter().map(|&pair| u16::from_be_bytes(pair)).collect();
             String::from_utf16(&units).ok()
         }
         0x1c => bytes
@@ -123,11 +117,7 @@ fn time(input: &[u8]) -> Option<(i64, &[u8])> {
     let written = std::str::from_utf8(content).ok()?;
     let number = |at: usize, wide: usize| -> Option<i64> {
         let digits = written.get(at..at + wide)?;
-        digits
-            .bytes()
-            .all(|byte| byte.is_ascii_digit())
-            .then(|| digits.parse().ok())
-            .flatten()
+        digits.bytes().all(|byte| byte.is_ascii_digit()).then(|| digits.parse().ok()).flatten()
     };
     let (year, at) = match tag {
         UTC_TIME => {
@@ -164,9 +154,7 @@ pub(super) mod tests {
     pub const INTERMEDIATE: &str = "MIIBODCB66ADAgECAgMAjxIwBQYDK2VwMEYxCzAJBgNVBAYTAkNIMR0wGwYDVQQKDBRPcmRlbiBUZXN0IEF1dGhvcml0eTEYMBYGA1UEAwwPT3JkZW4gVGVzdCBSb290MB4XDTI2MDIwMTAwMDAwMFoXDTMxMDIwMTAwMDAwMFowRDELMAkGA1UEBhMCQ0gxHTAbBgNVBAoMFE9yZGVuIFRlc3QgQXV0aG9yaXR5MRYwFAYDVQQDDA1PcmRlbiBUZXN0IFIxMCowBQYDK2VwAyEAgTl3Dqh9F19Wo1Rmw0x+zMuNipG07jeiXfYPW4/Js5QwBQYDK2VwA0EAgwrJqZ9T5PxjjJS9l64gNRauiV17mV/xdhCeaK3FYP2aTTwRZYrKDvLFlw4B/Hl0lSKqIiDwxWmY6Zz3oEyHBg==";
     pub const SITE: &str = "MIIBWTCCAQugAwIBAgIFAQIDBAUwBQYDK2VwMEQxCzAJBgNVBAYTAkNIMR0wGwYDVQQKDBRPcmRlbiBUZXN0IEF1dGhvcml0eTEWMBQGA1UEAwwNT3JkZW4gVGVzdCBSMTAeFw0yNjAzMDExMjMwMTVaFw0yNjA2MDEwMDAwMDBaMGQxCzAJBgNVBAYTAkNIMR8wHQYDVQQKHhYA3ABuAO8AYwBvAGQAZQAgAE8AcgBnMR0wGwYDVQQKHhQAUwBlAGMAbwBuAGQAIABPAHIAZzEVMBMGA1UEAwwMZXhhbXBsZS50ZXN0MCowBQYDK2VwAyEA7UkoxijRwsbq6QM4kFmVYSlZJzpcY/k2NsFGFKyHN9EwBQYDK2VwA0EAndGrQPG1ZoNtTyB1I72WP3njBfPhwZR6vbE2K0FNBn4/U6TpQnAzFBqxi6IihlJwpfT0jMWORrc3jDMmq5vKCg==";
     pub fn der(base64: &str) -> Vec<u8> {
-        base64::engine::general_purpose::STANDARD
-            .decode(base64)
-            .expect("base64")
+        base64::engine::general_purpose::STANDARD.decode(base64).expect("base64")
     }
     fn party(name: &str, organization: &[&str]) -> Party {
         Party {
@@ -177,10 +165,7 @@ pub(super) mod tests {
     #[test]
     fn a_site_s_certificate_says_whom_it_is_for_and_who_issued_it() {
         let site = fields(&der(SITE)).expect("a certificate");
-        assert_eq!(
-            site.to,
-            party("example.test", &["Ünïcode Org", "Second Org"])
-        );
+        assert_eq!(site.to, party("example.test", &["Ünïcode Org", "Second Org"]));
         assert_eq!(site.by, party("Orden Test R1", &["Orden Test Authority"]));
         assert_eq!(site.from, 1_772_368_215_000);
         assert_eq!(site.until, 1_780_272_000_000);

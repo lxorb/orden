@@ -1,11 +1,8 @@
 use std::path::Path;
 
 pub type Switch = (String, Option<String>);
-pub const ENGINE_SWIPE: (&str, &str, &str) = (
-    "TouchpadOverscrollHistoryNavigation",
-    "overscroll-history-navigation",
-    "0",
-);
+pub const ENGINE_SWIPE: (&str, &str, &str) =
+    ("TouchpadOverscrollHistoryNavigation", "overscroll-history-navigation", "0");
 pub const LOAD_EXTENSION_OFF: &str = "DisableLoadExtensionCommandLineSwitch";
 pub const LOAD_EXTENSION: &str = "load-extension";
 #[must_use]
@@ -31,13 +28,10 @@ pub fn switches(written: &str) -> Vec<Switch> {
         .collect()
 }
 pub fn with_extensions(asked: &mut Vec<Switch>, folders: &[impl AsRef<Path>]) -> bool {
-    let ours: Vec<String> = folders
-        .iter()
-        .map(|folder| folder.as_ref().to_string_lossy().into_owned())
-        .collect();
-    if let Some((_, value)) = asked
-        .iter_mut()
-        .find(|(key, _)| key.trim_start_matches('-') == LOAD_EXTENSION)
+    let ours: Vec<String> =
+        folders.iter().map(|folder| folder.as_ref().to_string_lossy().into_owned()).collect();
+    if let Some((_, value)) =
+        asked.iter_mut().find(|(key, _)| key.trim_start_matches('-') == LOAD_EXTENSION)
     {
         let mut all: Vec<String> = value.iter().cloned().collect();
         all.extend(ours);

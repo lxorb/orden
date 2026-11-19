@@ -81,28 +81,20 @@ pub fn has_own_home(root: &Path, id: &str, kind: &str) -> Result<bool, String> {
     };
     let kept: serde_json::Value =
         serde_json::from_str(&text).map_err(|_| "the accounts cannot be read".to_owned())?;
-    let account = kept
-        .get("accounts")
-        .and_then(serde_json::Value::as_array)
-        .and_then(|all| {
-            all.iter()
-                .find(|one| one.get("id").and_then(serde_json::Value::as_str) == Some(id))
-        });
+    let account = kept.get("accounts").and_then(serde_json::Value::as_array).and_then(|all| {
+        all.iter().find(|one| one.get("id").and_then(serde_json::Value::as_str) == Some(id))
+    });
     match account {
         None => Err(format!("{id} is not an account")),
-        Some(one) => Ok(
-            one.get("kind").and_then(serde_json::Value::as_str) == Some(kind)
-                && one.get("own").and_then(serde_json::Value::as_bool) == Some(true),
-        ),
+        Some(one) => Ok(one.get("kind").and_then(serde_json::Value::as_str) == Some(kind)
+            && one.get("own").and_then(serde_json::Value::as_bool) == Some(true)),
     }
 }
 #[cfg(desktop)]
 pub fn home_dir(root: &Path, id: &str) -> Result<PathBuf, String> {
     let fits = !id.is_empty()
         && id.len() <= 64
-        && id
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+        && id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
     if fits {
         Ok(root.join("homes").join(id))
     } else {
@@ -139,13 +131,7 @@ mod tests {
     #[test]
     fn nothing_kept_reads_as_no_text_and_the_empty_stamp() {
         let root = folder("none");
-        assert_eq!(
-            read(&root).expect("read"),
-            Kept {
-                text: None,
-                stamp: String::new()
-            }
-        );
+        assert_eq!(read(&root).expect("read"), Kept { text: None, stamp: String::new() });
     }
     #[test]
     fn a_write_reads_back_with_its_stamp() {
@@ -164,10 +150,7 @@ mod tests {
         write(&root, r#"{"a":2}"#, &first).expect("second");
         assert_eq!(write(&root, r#"{"a":3}"#, &first), Err("stale".to_owned()));
         assert_eq!(write(&root, r#"{"a":4}"#, ""), Err("stale".to_owned()));
-        assert_eq!(
-            read(&root).expect("read").text.as_deref(),
-            Some(r#"{"a":2}"#)
-        );
+        assert_eq!(read(&root).expect("read").text.as_deref(), Some(r#"{"a":2}"#));
         let _ = fs::remove_dir_all(&root);
     }
     #[cfg(desktop)]
@@ -181,10 +164,7 @@ mod tests {
         ]}"#;
         write(&root, text, "").expect("written");
         assert_eq!(has_own_home(&root, "claude-code", "claude-code"), Ok(false));
-        assert_eq!(
-            has_own_home(&root, "claude-code-2", "claude-code"),
-            Ok(true)
-        );
+        assert_eq!(has_own_home(&root, "claude-code-2", "claude-code"), Ok(true));
         assert_eq!(has_own_home(&root, "claude-code-2", "codex"), Ok(false));
         assert_eq!(has_own_home(&root, "anthropic", "anthropic"), Ok(false));
         assert!(has_own_home(&root, "nobody", "claude-code").is_err());
@@ -194,10 +174,7 @@ mod tests {
     #[test]
     fn a_home_is_always_a_folder_under_the_homes() {
         let root = PathBuf::from("ai");
-        assert_eq!(
-            home_dir(&root, "codex-2"),
-            Ok(root.join("homes").join("codex-2"))
-        );
+        assert_eq!(home_dir(&root, "codex-2"), Ok(root.join("homes").join("codex-2")));
         for bad in ["", "..", "../x", "a/b", "a\\b", "C:", &"x".repeat(65)] {
             assert!(home_dir(&root, bad).is_err(), "{bad:?}");
         }
@@ -208,12 +185,7 @@ mod tests {
         for text in ["[]", "nonsense", "\"x\"", ""] {
             assert!(write(&root, text, "").is_err(), "{text:?}");
         }
-        assert!(write(
-            &root,
-            &format!("{{\"a\":\"{}\"}}", "x".repeat(MOST_BYTES)),
-            ""
-        )
-        .is_err());
+        assert!(write(&root, &format!("{{\"a\":\"{}\"}}", "x".repeat(MOST_BYTES)), "").is_err());
         assert_eq!(read(&root).expect("read").text, None);
     }
 }

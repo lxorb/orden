@@ -60,9 +60,7 @@ fn plain(notice: &Notice) -> bool {
     let word = |text: &str, most: usize| {
         !text.is_empty()
             && text.len() <= most
-            && text
-                .bytes()
-                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
+            && text.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
     };
     word(&notice.id, 64) && word(&notice.tag, LONGEST_TAG)
 }
@@ -111,10 +109,7 @@ pub fn clear_all(app: &AppHandle) {
     #[cfg(not(any(windows, target_os = "macos")))]
     let _ = app;
 }
-#[cfg_attr(
-    not(any(windows, target_os = "macos")),
-    allow(clippy::unnecessary_wraps)
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(clippy::unnecessary_wraps))]
 fn shown(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     #[cfg(windows)]
     {
@@ -150,11 +145,7 @@ pub fn answered(app: &AppHandle, id: &str, act: Act, text: Option<String>) {
         let _ = window.show();
         orden_placement::placement::raised(&window);
     }
-    let answer = Answer {
-        id: id.to_string(),
-        act,
-        text,
-    };
+    let answer = Answer { id: id.to_string(), act, text };
     let _ = app.emit_to(window.label(), PRESSED, answer);
 }
 #[cfg(test)]
@@ -174,10 +165,7 @@ mod tests {
     }
     #[test]
     fn a_notice_is_named_by_plain_characters() {
-        assert!(plain(&notice(
-            "00ff00ff00ff00ff",
-            "c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"
-        )));
+        assert!(plain(&notice("00ff00ff00ff00ff", "c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e")));
         assert!(plain(&notice("ab", "terminal-12")));
         assert!(!plain(&notice("", "a")));
         assert!(!plain(&notice("ab", "")));
@@ -199,9 +187,6 @@ mod tests {
             text: Some("ok".into()),
         })
         .expect("an answer");
-        assert_eq!(
-            answer,
-            serde_json::json!({ "id": "00ff", "act": "reply", "text": "ok" })
-        );
+        assert_eq!(answer, serde_json::json!({ "id": "00ff", "act": "reply", "text": "ok" }));
     }
 }

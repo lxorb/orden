@@ -31,11 +31,8 @@ impl Out<'_> {
     }
     fn clean(&mut self, said: &[u8]) {
         for one in said {
-            let kept = if one.is_ascii_graphic() || *one == b' ' || *one >= 0x80 {
-                *one
-            } else {
-                b'?'
-            };
+            let kept =
+                if one.is_ascii_graphic() || *one == b' ' || *one >= 0x80 { *one } else { b'?' };
             self.push(&[kept]);
         }
     }
@@ -94,10 +91,7 @@ fn written(
     out.push(b"orden-crash 1\nat ");
     out.number(orden_base::clock::now());
     out.push(b"\n");
-    out.line(
-        b"version",
-        VERSION.get().map_or(&b""[..], |one| one.as_bytes()),
-    );
+    out.line(b"version", VERSION.get().map_or(&b""[..], |one| one.as_bytes()));
     out.line(b"what", what);
     out.push(b"code ");
     out.hex(code);
@@ -151,14 +145,8 @@ mod here {
 
     use super::{room_bytes, written, MOST_FRAMES};
 
-    const SIGNALS: [c_int; 6] = [
-        libc::SIGSEGV,
-        libc::SIGBUS,
-        libc::SIGILL,
-        libc::SIGFPE,
-        libc::SIGABRT,
-        libc::SIGTRAP,
-    ];
+    const SIGNALS: [c_int; 6] =
+        [libc::SIGSEGV, libc::SIGBUS, libc::SIGILL, libc::SIGFPE, libc::SIGABRT, libc::SIGTRAP];
     static PATH: OnceLock<CString> = OnceLock::new();
     static BEFORE: OnceLock<Vec<(c_int, libc::sigaction)>> = OnceLock::new();
     static OWN: OnceLock<usize> = OnceLock::new();
@@ -252,19 +240,11 @@ mod here {
         } else {
             Some(unsafe { (*info).si_addr() } as u64)
         };
-        let code = if info.is_null() {
-            0
-        } else {
-            u64::try_from(unsafe { (*info).si_code }).unwrap_or(0)
-        };
-        if let Some(len) = written(
-            name_of(signal),
-            code,
-            address,
-            &name[..named],
-            on_main(),
-            &ips[from..len],
-        ) {
+        let code =
+            if info.is_null() { 0 } else { u64::try_from(unsafe { (*info).si_code }).unwrap_or(0) };
+        if let Some(len) =
+            written(name_of(signal), code, address, &name[..named], on_main(), &ips[from..len])
+        {
             if let Some(path) = PATH.get() {
                 let bytes = room_bytes(len);
                 unsafe {
@@ -280,9 +260,8 @@ mod here {
                 }
             }
         }
-        if let Some((_, before)) = BEFORE
-            .get()
-            .and_then(|all| all.iter().find(|(one, _)| *one == signal))
+        if let Some((_, before)) =
+            BEFORE.get().and_then(|all| all.iter().find(|(one, _)| *one == signal))
         {
             unsafe {
                 libc::sigaction(signal, before, std::ptr::null_mut());
@@ -436,10 +415,7 @@ pub fn read_stub(text: &str) -> Option<Stub> {
             "doing" => doing.push(value.to_owned()),
             "crumb" => {
                 if let Some((when, said)) = value.split_once('\t') {
-                    crumbs.push(Crumb {
-                        at: when.parse().unwrap_or(0),
-                        what: said.to_owned(),
-                    });
+                    crumbs.push(Crumb { at: when.parse().unwrap_or(0), what: said.to_owned() });
                 }
             }
             _ => {}
@@ -451,11 +427,8 @@ pub fn read_stub(text: &str) -> Option<Stub> {
     } else {
         what.clone()
     };
-    let place = thread
-        .frames
-        .first()
-        .map(|frame| format!(" in {}", frame.module))
-        .unwrap_or_default();
+    let place =
+        thread.frames.first().map(|frame| format!(" in {}", frame.module)).unwrap_or_default();
     let summary = match address {
         Some(address) if what != "SIGABRT" => format!("{named} at {address:#x}{place}"),
         _ => format!("{named}{place}"),
@@ -471,11 +444,7 @@ pub fn read_stub(text: &str) -> Option<Stub> {
         breadcrumbs: crumbs,
         ..Report::default()
     };
-    Some(Stub {
-        at,
-        version,
-        report,
-    })
+    Some(Stub { at, version, report })
 }
 pub fn stub_path(dir: &Path) -> PathBuf {
     dir.join(STUB)
@@ -538,10 +507,7 @@ mod tests {
         assert!(
             stub.report.summary.starts_with("SIGSEGV")
                 || stub.report.summary.starts_with("SIGBUS")
-                || stub
-                    .report
-                    .summary
-                    .starts_with("EXCEPTION_ACCESS_VIOLATION"),
+                || stub.report.summary.starts_with("EXCEPTION_ACCESS_VIOLATION"),
             "{}",
             stub.report.summary
         );
@@ -569,19 +535,13 @@ mod tests {
         assert_eq!(thread.crashed, Some(true));
         assert_eq!(thread.main, Some(true));
         assert_eq!(thread.frames.len(), 2);
-        assert_eq!(
-            thread.frames[1].symbol.as_deref(),
-            Some("__libc_start_main")
-        );
+        assert_eq!(thread.frames[1].symbol.as_deref(), Some("__libc_start_main"));
         assert_eq!(stub.report.breadcrumbs[0].what, "web_open");
         assert!(read_stub("something else").is_none());
     }
     #[test]
     fn a_windows_exception_is_named() {
-        assert_eq!(
-            exception_name(0xC000_0005),
-            Some("EXCEPTION_ACCESS_VIOLATION")
-        );
+        assert_eq!(exception_name(0xC000_0005), Some("EXCEPTION_ACCESS_VIOLATION"));
         let stub = read_stub("orden-crash 1\nat 5\nwhat exception\ncode 0xc00000fd\nthread main\nmain 1\nframe orden.exe\t0x10\t\n")
             .expect("a stub");
         assert_eq!(stub.report.summary, "EXCEPTION_STACK_OVERFLOW in orden.exe");

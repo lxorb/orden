@@ -32,10 +32,7 @@ use say::{Message, Say};
 use session::Claude;
 
 fn claude_code_offered() -> bool {
-    !matches!(
-        option_env!("ORDEN_CLAUDE_CODE"),
-        Some("off" | "0" | "false")
-    )
+    !matches!(option_env!("ORDEN_CLAUDE_CODE"), Some("off" | "0" | "false"))
 }
 const ASKING: Duration = Duration::from_secs(300);
 const IDLE: Duration = Duration::from_secs(600);
@@ -124,11 +121,7 @@ impl Asks {
         }
         let hosts: Vec<Arc<Host>> = {
             let mut hosts = self.hosts.held();
-            let keys: Vec<HostKey> = hosts
-                .keys()
-                .filter(|key| mine(&key.owner))
-                .cloned()
-                .collect();
+            let keys: Vec<HostKey> = hosts.keys().filter(|key| mine(&key.owner)).cloned().collect();
             keys.iter().filter_map(|key| hosts.remove(key)).collect()
         };
         for host in hosts {
@@ -158,11 +151,8 @@ fn owner(webview: &Webview) -> Result<String, String> {
 fn usable(id: &str) -> Result<(), String> {
     let fits = !id.is_empty()
         && id.len() <= 80
-        && id
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
-    fits.then_some(())
-        .ok_or_else(|| "not a question's name".to_owned())
+        && id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+    fits.then_some(()).ok_or_else(|| "not a question's name".to_owned())
 }
 fn offered(tool: Tool) -> Result<(), String> {
     if tool == Tool::ClaudeCode && !claude_code_offered() {
@@ -177,10 +167,7 @@ fn command(
     home: Option<&Home>,
 ) -> Command {
     let mut command = Command::new(&program.exe);
-    command
-        .args(args)
-        .current_dir(folder)
-        .env("PATH", &program.path);
+    command.args(args).current_dir(folder).env("PATH", &program.path);
     if let Some(home) = home {
         home.apply(&mut command);
     }
@@ -193,11 +180,7 @@ fn home_for(app: &AppHandle, tool: Tool, account: Option<&str>) -> Result<Option
     home::of(app, tool, account)
 }
 fn workroom(app: &AppHandle) -> Result<PathBuf, String> {
-    let folder = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| error.to_string())?
-        .join("ai");
+    let folder = app.path().app_local_data_dir().map_err(|error| error.to_string())?.join("ai");
     std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
     Ok(folder)
 }
@@ -236,11 +219,9 @@ pub async fn ai_cli_status(
         };
         let home = home_for(webview.app_handle(), tool, account.as_deref())?;
         let folder = workroom(webview.app_handle())?;
-        let mut said = run::run_to_end(
-            command(&program, args::status(tool), &folder, home.as_ref()),
-            TELLING,
-        )
-        .map_err(|error| error.to_string())?;
+        let mut said =
+            run::run_to_end(command(&program, args::status(tool), &folder, home.as_ref()), TELLING)
+                .map_err(|error| error.to_string())?;
         if tool == Tool::Gemini && !said.ended.timed_out {
             said.out = gemini::standing(home.as_ref()).to_string();
         }
@@ -323,15 +304,7 @@ pub async fn ai_cli_ask(
             if running.contains_key(&id) {
                 return Err(format!("{id} is already being asked"));
             }
-            running.insert(
-                id.clone(),
-                Held {
-                    owner,
-                    opening,
-                    running: None,
-                    stopped: false,
-                },
-            );
+            running.insert(id.clone(), Held { owner, opening, running: None, stopped: false });
         }
         let name = id.clone();
         let started = run::start(
@@ -449,10 +422,7 @@ pub async fn ai_cli_open(
         let program = tool.find().ok_or_else(|| "missing".to_owned())?;
         let app = webview.app_handle().clone();
         let folder = workroom(&app)?;
-        let model = opening
-            .model
-            .as_deref()
-            .filter(|one| !one.trim().is_empty());
+        let model = opening.model.as_deref().filter(|one| !one.trim().is_empty());
         let model = args::checked_model(model)?;
         let token = opening
             .mode
@@ -525,11 +495,7 @@ pub async fn ai_cli_open(
                 On::Gemini(Box::new(gemini))
             }
         };
-        let session = Session {
-            owner,
-            opening: number,
-            on: Arc::new(on),
-        };
+        let session = Session { owner, opening: number, on: Arc::new(on) };
         kept(&asks, id, session, load, &ended)
     })
     .await
@@ -573,18 +539,9 @@ fn claude_command(
         std::fs::write(&config, args::mcp_config(&orden).to_string())
             .map_err(|error| error.to_string())?;
     }
-    let shape = Shape {
-        mode: opening.mode,
-        model,
-        effort: opening.effort,
-        without: &opening.without,
-    };
-    let mut command = command(
-        program,
-        &args::claude_session(shape, &caps, &config)?,
-        folder,
-        home,
-    );
+    let shape =
+        Shape { mode: opening.mode, model, effort: opening.effort, without: &opening.without };
+    let mut command = command(program, &args::claude_session(shape, &caps, &config)?, folder, home);
     command.envs(args::CLAUDE_SESSION_ENV);
     if let Some(token) = token {
         command.env(args::TOKEN_VAR, token);
@@ -633,9 +590,7 @@ fn host_for(
 #[tauri::command(async)]
 pub fn ai_cli_say(webview: Webview, id: String, say: Value) -> Result<(), String> {
     let owner = owner(&webview)?;
-    let say = serde_json::from_value::<Say>(say)
-        .map_err(|error| error.to_string())?
-        .checked()?;
+    let say = serde_json::from_value::<Say>(say).map_err(|error| error.to_string())?.checked()?;
     let asks = webview.state::<Asks>();
     let on = asks
         .sessions
@@ -709,12 +664,7 @@ async fn ask_program(
             Tool::ClaudeCode => {
                 let caps = caps_of(&program, &folder);
                 let claude = Claude::start(
-                    command(
-                        &program,
-                        &args::claude_listing(&caps),
-                        &folder,
-                        home.as_ref(),
-                    ),
+                    command(&program, &args::claude_listing(&caps), &folder, home.as_ref()),
                     TELLING,
                     |_| {},
                 )
@@ -730,11 +680,7 @@ async fn ask_program(
             Tool::Codex => {
                 let asks = webview.state::<Asks>();
                 let load = asks.load_of(&owner);
-                let key = HostKey {
-                    owner,
-                    agent: None,
-                    home,
-                };
+                let key = HostKey { owner, agent: None, home };
                 let host = host_for(&asks, key, load, &program, &folder, None)?;
                 match asking {
                     Asking::Models => host.models(TELLING),
@@ -826,11 +772,7 @@ mod tests {
         asked.env("ANTHROPIC_API_KEY", "from-the-shell");
         home.apply(&mut asked);
         let said = run_to_end(asked, TELLING).expect("status");
-        assert!(
-            said.out.contains("reader+claude-code-2@example.com"),
-            "{}",
-            said.out
-        );
+        assert!(said.out.contains("reader+claude-code-2@example.com"), "{}", said.out);
         assert!(said.out.contains("\"claude.ai\""), "{}", said.out);
         let mut out = fake(Tool::ClaudeCode, "answer", args::logout(Tool::ClaudeCode));
         home.apply(&mut out);
@@ -867,10 +809,7 @@ exec node '{}' {name} \"$@\"
             std::fs::set_permissions(&exe, std::fs::Permissions::from_mode(0o755))
                 .expect("runnable");
         }
-        Program {
-            exe,
-            path: std::env::var_os("PATH").unwrap_or_default(),
-        }
+        Program { exe, path: std::env::var_os("PATH").unwrap_or_default() }
     }
     #[test]
     fn orden_connects_itself_to_an_agent_once_and_lets_go_only_of_its_own() {
@@ -956,12 +895,8 @@ exec node '{}' {name} \"$@\"
         assert_eq!(ended.code, Some(0), "{}", ended.err);
         assert!(!ended.stopped && !ended.timed_out);
         assert!(lines[0].contains("\"subtype\":\"init\""));
-        assert!(lines
-            .iter()
-            .any(|line| line.contains("content_block_delta")));
-        assert!(lines
-            .last()
-            .is_some_and(|line| line.contains("what is a heron")));
+        assert!(lines.iter().any(|line| line.contains("content_block_delta")));
+        assert!(lines.last().is_some_and(|line| line.contains("what is a heron")));
     }
     #[test]
     fn a_question_without_the_policy_flags_is_refused_by_the_stand_in() {
@@ -974,10 +909,8 @@ exec node '{}' {name} \"$@\"
         let started = Instant::now();
         while started.elapsed() < Duration::from_secs(20) {
             if let Ok(text) = std::fs::read_to_string(file) {
-                let pids: Vec<u32> = text
-                    .split_whitespace()
-                    .filter_map(|one| one.parse().ok())
-                    .collect();
+                let pids: Vec<u32> =
+                    text.split_whitespace().filter_map(|one| one.parse().ok()).collect();
                 if pids.len() == 2 {
                     return pids;
                 }
@@ -1042,18 +975,13 @@ exec node '{}' {name} \"$@\"
     #[test]
     fn the_status_question_is_answered_whole() {
         needs_node!();
-        let claude = run_to_end(
-            fake(Tool::ClaudeCode, "answer", args::status(Tool::ClaudeCode)),
-            TELLING,
-        )
-        .expect("status");
+        let claude =
+            run_to_end(fake(Tool::ClaudeCode, "answer", args::status(Tool::ClaudeCode)), TELLING)
+                .expect("status");
         assert_eq!(claude.ended.code, Some(0));
         assert!(claude.out.contains("\"loggedIn\": true"));
-        let codex = run_to_end(
-            fake(Tool::Codex, "signed-out", args::status(Tool::Codex)),
-            TELLING,
-        )
-        .expect("status");
+        let codex = run_to_end(fake(Tool::Codex, "signed-out", args::status(Tool::Codex)), TELLING)
+            .expect("status");
         assert_eq!(codex.ended.code, Some(1));
         assert!(codex.ended.err.contains("Not logged in"));
     }
@@ -1086,26 +1014,18 @@ exec node '{}' {name} \"$@\"
         messages
             .iter()
             .find_map(|one| match one {
-                Message::Reply {
-                    to: said, result, ..
-                } if said == to => Some(result),
+                Message::Reply { to: said, result, .. } if said == to => Some(result),
                 _ => None,
             })
             .unwrap_or_else(|| panic!("no reply to {to} in {messages:#?}"))
     }
     fn turn(text: &str) -> Say {
-        Say::Turn {
-            text: text.to_owned(),
-            images: Vec::new(),
-        }
+        Say::Turn { text: text.to_owned(), images: Vec::new() }
     }
     fn claude_session(mode: &str, shape: Shape, folder: &Path) -> (Claude, Receiver<Message>) {
         let config = folder.join("orden-mcp.json");
-        std::fs::write(
-            &config,
-            args::mcp_config(Path::new("orden.exe")).to_string(),
-        )
-        .expect("config");
+        std::fs::write(&config, args::mcp_config(Path::new("orden.exe")).to_string())
+            .expect("config");
         let args = args::claude_session(shape, &full_caps(), &config).expect("args");
         let mut command = fake(Tool::ClaudeCode, mode, &args);
         command.envs(args::CLAUDE_SESSION_ENV);
@@ -1132,10 +1052,7 @@ exec node '{}' {name} \"$@\"
         let (claude, heard) = claude_session("answer", shape, dir.path());
         claude.say(&turn("what is a heron")).expect("said");
         let first = until(&heard, TELLING, |one| line_has(one, "\"type\":\"result\""));
-        let init = first
-            .iter()
-            .find(|one| line_has(one, "\"subtype\":\"init\""))
-            .expect("init");
+        let init = first.iter().find(|one| line_has(one, "\"subtype\":\"init\"")).expect("init");
         for told in [
             "\"mcp_servers\":[{\"name\":\"orden\",\"status\":\"connected\"}]",
             "\"token\":true",
@@ -1146,36 +1063,20 @@ exec node '{}' {name} \"$@\"
             assert!(line_has(init, told), "{told} not in {init:?}");
         }
         assert!(!line_has(init, "mcp__orden__edit_note"));
-        assert!(first
-            .iter()
-            .any(|one| line_has(one, "You asked: what is a heron")));
+        assert!(first.iter().any(|one| line_has(one, "You asked: what is a heron")));
         claude.say(&Say::Context).expect("said");
         let context = until(&heard, TELLING, |one| reply_to(one, "context"));
         assert_eq!(result_of(&context, "context")["maxTokens"], 200_000);
-        claude
-            .say(&Say::Model {
-                model: "sonnet".into(),
-            })
-            .expect("said");
+        claude.say(&Say::Model { model: "sonnet".into() }).expect("said");
         until(&heard, TELLING, |one| reply_to(one, "model"));
-        claude
-            .say(&Say::Effort {
-                effort: Some(Effort::Max),
-            })
-            .expect("said");
-        claude
-            .say(&turn("/clear and then a second one"))
-            .expect("said");
+        claude.say(&Say::Effort { effort: Some(Effort::Max) }).expect("said");
+        claude.say(&turn("/clear and then a second one")).expect("said");
         let second = until(&heard, TELLING, |one| {
             line_has(one, "\"type\":\"result\"") && !line_has(one, "effort")
         });
         assert!(second.iter().any(|one| line_has(one, "effort set to max")));
-        assert!(second
-            .iter()
-            .any(|one| line_has(one, "You asked: /clear and then a second one")));
-        assert!(second
-            .iter()
-            .any(|one| line_has(one, "\"model\":\"sonnet\"")));
+        assert!(second.iter().any(|one| line_has(one, "You asked: /clear and then a second one")));
+        assert!(second.iter().any(|one| line_has(one, "\"model\":\"sonnet\"")));
         claude.stop();
         let end = until(&heard, TELLING, |one| matches!(one, Message::End(_)));
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.stopped));
@@ -1189,9 +1090,7 @@ exec node '{}' {name} \"$@\"
         until(&heard, TELLING, |one| line_has(one, "text_delta"));
         claude.say(&Say::Interrupt).expect("said");
         let rest = until(&heard, TELLING, |one| line_has(one, "\"type\":\"result\""));
-        assert!(rest
-            .iter()
-            .any(|one| line_has(one, "error_during_execution")));
+        assert!(rest.iter().any(|one| line_has(one, "error_during_execution")));
         claude.close_input();
         let end = until(&heard, TELLING, |one| matches!(one, Message::End(_)));
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.code == Some(0)));
@@ -1225,13 +1124,8 @@ exec node '{}' {name} \"$@\"
         if token {
             command.env(args::TOKEN_VAR, "abc123");
         }
-        Host::start(
-            command,
-            IDLE,
-            PathBuf::from("orden.exe"),
-            folder.to_path_buf(),
-        )
-        .expect("started")
+        Host::start(command, IDLE, PathBuf::from("orden.exe"), folder.to_path_buf())
+            .expect("started")
     }
     fn route() -> (codex_app::Output, Receiver<Message>) {
         let (sent, heard) = mpsc::channel();
@@ -1254,22 +1148,11 @@ exec node '{}' {name} \"$@\"
             Some(Mode::Plan),
             Some("gpt-fake"),
             Some(Effort::Xhigh),
-            codex_app::From {
-                fork_of: None,
-                thread: Some("orden-thread-1"),
-                without: &[],
-            },
+            codex_app::From { fork_of: None, thread: Some("orden-thread-1"), without: &[] },
         )
         .expect("opened");
-        host.open(
-            "two",
-            two,
-            Some(Mode::Full),
-            None,
-            None,
-            codex_app::From::default(),
-        )
-        .expect("opened");
+        host.open("two", two, Some(Mode::Full), None, None, codex_app::From::default())
+            .expect("opened");
         host.say("one", turn("what is a heron")).expect("said");
         let heard = until(&first, TELLING, |one| line_has(one, "turn/completed"));
         let told = &result_of(&heard, "thread")["told"];
@@ -1279,43 +1162,25 @@ exec node '{}' {name} \"$@\"
         let asked = &result_of(&heard, "turn")["told"];
         assert_eq!(asked["model"], "gpt-fake");
         assert_eq!(asked["effort"], "xhigh");
-        assert!(heard
-            .iter()
-            .any(|one| line_has(one, "item/agentMessage/delta")));
-        assert!(heard
-            .iter()
-            .any(|one| line_has(one, "thread/tokenUsage/updated")));
-        assert!(heard
-            .iter()
-            .any(|one| line_has(one, "You asked: what is a heron")));
+        assert!(heard.iter().any(|one| line_has(one, "item/agentMessage/delta")));
+        assert!(heard.iter().any(|one| line_has(one, "thread/tokenUsage/updated")));
+        assert!(heard.iter().any(|one| line_has(one, "You asked: what is a heron")));
         let others: Vec<Message> = second.try_iter().collect();
         assert!(others.iter().all(|one| !line_has(one, "agentMessage")));
         host.say(
             "one",
             Say::Goal {
-                goal: GoalSay::Set {
-                    objective: "file the inbox".into(),
-                    budget: Some(1000),
-                },
+                goal: GoalSay::Set { objective: "file the inbox".into(), budget: Some(1000) },
             },
         )
         .expect("said");
         until(&first, TELLING, |one| reply_to(one, "goal"));
-        host.say(
-            "one",
-            Say::Compact {
-                focus: String::new(),
-            },
-        )
-        .expect("said");
+        host.say("one", Say::Compact { focus: String::new() }).expect("said");
         until(&first, TELLING, |one| reply_to(one, "compact"));
         let models = host.models(TELLING).expect("models");
         assert!(models["data"][0]["supportedReasoningEfforts"].is_array());
         let limits = host.limits(TELLING).expect("limits");
-        assert_eq!(
-            limits["rateLimits"]["secondary"]["windowDurationMins"],
-            10080
-        );
+        assert_eq!(limits["rateLimits"]["secondary"]["windowDurationMins"], 10080);
         host.close("one");
         let end = until(&first, TELLING, |one| matches!(one, Message::End(_)));
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.stopped));
@@ -1330,19 +1195,10 @@ exec node '{}' {name} \"$@\"
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("slow", false, dir.path());
         let (output, heard) = route();
-        host.open("t", output, None, None, None, codex_app::From::default())
-            .expect("opened");
+        host.open("t", output, None, None, None, codex_app::From::default()).expect("opened");
         host.say("t", turn("a long answer")).expect("said");
-        until(&heard, TELLING, |one| {
-            line_has(one, "item/agentMessage/delta")
-        });
-        host.say(
-            "t",
-            Say::Steer {
-                text: "shorter".into(),
-            },
-        )
-        .expect("steered");
+        until(&heard, TELLING, |one| line_has(one, "item/agentMessage/delta"));
+        host.say("t", Say::Steer { text: "shorter".into() }).expect("steered");
         until(&heard, TELLING, |one| reply_to(one, "steer"));
         host.say("t", Say::Interrupt).expect("stopped");
         let rest = until(&heard, TELLING, |one| line_has(one, "turn/completed"));
@@ -1355,8 +1211,7 @@ exec node '{}' {name} \"$@\"
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("approval", false, dir.path());
         let (output, heard) = route();
-        host.open("t", output, None, None, None, codex_app::From::default())
-            .expect("opened");
+        host.open("t", output, None, None, None, codex_app::From::default()).expect("opened");
         host.say("t", turn("run something")).expect("said");
         let heard = until(&heard, TELLING, |one| line_has(one, "turn/completed"));
         assert!(heard.iter().any(|one| line_has(one, "requestApproval")));
@@ -1369,15 +1224,8 @@ exec node '{}' {name} \"$@\"
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("answer", false, dir.path());
         let (output, heard) = route();
-        host.open(
-            "t",
-            output,
-            Some(Mode::Full),
-            None,
-            None,
-            codex_app::From::default(),
-        )
-        .expect("opened");
+        host.open("t", output, Some(Mode::Full), None, None, codex_app::From::default())
+            .expect("opened");
         let end = until(&heard, TELLING, |one| matches!(one, Message::End(_)));
         assert!(matches!(end.last(), Some(Message::End(ended)) if ended.err.contains("token")));
         host.stop();
@@ -1395,11 +1243,7 @@ exec node '{}' {name} \"$@\"
             effort: Some(Effort::Low),
             without: &[],
         };
-        let two = Shape {
-            model: Some("sonnet[1m]"),
-            effort: Some(Effort::Max),
-            ..one
-        };
+        let two = Shape { model: Some("sonnet[1m]"), effort: Some(Effort::Max), ..one };
         let first = args::claude_session(one, &caps, &config).expect("one");
         let second = args::claude_session(two, &caps, &config).expect("two");
         assert_eq!(first.len(), second.len());
@@ -1421,35 +1265,21 @@ exec node '{}' {name} \"$@\"
         let dir = tempfile::tempdir().expect("a folder");
         let shim = |name: &str, tool: &str| {
             let shim = dir.path().join(name);
-            std::fs::write(
-                &shim,
-                format!("@node \"{}\" {tool} %*\r\n", fake_script().display()),
-            )
-            .expect("the shim");
-            Program {
-                exe: shim,
-                path: std::env::var_os("PATH").unwrap_or_default(),
-            }
+            std::fs::write(&shim, format!("@node \"{}\" {tool} %*\r\n", fake_script().display()))
+                .expect("the shim");
+            Program { exe: shim, path: std::env::var_os("PATH").unwrap_or_default() }
         };
         let program = shim("claude.cmd", "claude");
         let args = args::ask(Some("opus"), &args::Caps::default()).expect("args");
-        let (lines, ended) = heard_all(
-            command(&program, &args, dir.path(), None),
-            "through cmd",
-            TELLING,
-        );
+        let (lines, ended) =
+            heard_all(command(&program, &args, dir.path(), None), "through cmd", TELLING);
         assert_eq!(ended.code, Some(0), "{}", ended.err);
         assert!(lines[0].contains("opus[1m]"));
         let program = shim("codex.cmd", "codex");
         let mut command = command(&program, &args::codex_server(), dir.path(), None);
         command.env("FAKE_AI_CLI_MODE", "answer");
-        let host = Host::start(
-            command,
-            IDLE,
-            PathBuf::from("orden.exe"),
-            dir.path().to_path_buf(),
-        )
-        .expect("started");
+        let host = Host::start(command, IDLE, PathBuf::from("orden.exe"), dir.path().to_path_buf())
+            .expect("started");
         assert!(host.models(TELLING).is_ok());
         host.stop();
     }
@@ -1476,23 +1306,14 @@ exec node '{}' {name} \"$@\"
             heard_all(command(&program, &args, dir.path(), None), "say ok", ASKING);
         eprintln!("{} lines, ended {ended:?}", lines.len());
         assert_eq!(ended.code, Some(0), "{}", ended.err);
-        let result = lines
-            .iter()
-            .find(|line| line.contains("\"type\":\"result\""))
-            .expect("a result");
+        let result =
+            lines.iter().find(|line| line.contains("\"type\":\"result\"")).expect("a result");
         assert!(result.contains("\"is_error\":false"), "{result}");
         assert!(result.to_lowercase().contains("ok"), "{result}");
-        let init = lines
-            .iter()
-            .find(|line| line.contains("\"subtype\":\"init\""))
-            .expect("init");
+        let init = lines.iter().find(|line| line.contains("\"subtype\":\"init\"")).expect("init");
         assert!(init.contains("\"tools\":[]"), "{init}");
         assert!(init.contains("\"mcp_servers\":[]"), "{init}");
-        let shape = Shape {
-            model: Some("haiku"),
-            effort: Some(Effort::Low),
-            ..Shape::default()
-        };
+        let shape = Shape { model: Some("haiku"), effort: Some(Effort::Low), ..Shape::default() };
         let config = dir.path().join("orden-mcp.json");
         let args = args::claude_session(shape, &caps, &config).expect("args");
         let mut session = command(&program, &args, dir.path(), None);
@@ -1505,10 +1326,7 @@ exec node '{}' {name} \"$@\"
         for _ in 0..2 {
             claude.say(&turn("say ok")).expect("said");
             let said = until(&heard, ASKING, |one| line_has(one, "\"type\":\"result\""));
-            assert!(
-                said.iter().any(|one| line_has(one, "\"is_error\":false")),
-                "{said:#?}"
-            );
+            assert!(said.iter().any(|one| line_has(one, "\"is_error\":false")), "{said:#?}");
             assert!(said.iter().any(|one| line_has(one, "\"tools\":[]")));
         }
         claude.say(&Say::Context).expect("said");

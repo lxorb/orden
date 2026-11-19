@@ -42,10 +42,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Ans
         Err(refused) => return refused,
     };
     let Ok(url) = Url::parse(asked.url.trim()) else {
-        return Answer::error(
-            Code::BadArguments,
-            format!("{} is not an address", asked.url),
-        );
+        return Answer::error(Code::BadArguments, format!("{} is not an address", asked.url));
     };
     let grant = match caller {
         Caller::Agent(grant) => Some(grant.as_ref()),
@@ -66,12 +63,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Ans
 }
 fn request(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Result<Request, Answer> {
     let bad = |why: String| Answer::error(Code::BadArguments, why);
-    let method = asked
-        .method
-        .as_deref()
-        .unwrap_or("GET")
-        .trim()
-        .to_ascii_uppercase();
+    let method = asked.method.as_deref().unwrap_or("GET").trim().to_ascii_uppercase();
     let method = Method::from_bytes(method.as_bytes())
         .map_err(|_| bad(format!("{method} is not a method")))?;
     let mut headers = HeaderMap::new();
@@ -96,14 +88,7 @@ fn request(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Result
         None => None,
     };
     let patience = Duration::from_millis(asked.timeout_ms.unwrap_or(WAIT).min(MOST_WAIT));
-    Ok(Request {
-        method,
-        headers,
-        body,
-        save,
-        until: Instant::now() + patience,
-        since,
-    })
+    Ok(Request { method, headers, body, save, until: Instant::now() + patience, since })
 }
 async fn sent(
     start: Url,
@@ -155,10 +140,7 @@ async fn sent(
             Err(why) => why,
         };
     }
-    Answer::error(
-        Code::Failed,
-        format!("more than {MOST_HOPS} redirects: not followed further"),
-    )
+    Answer::error(Code::Failed, format!("more than {MOST_HOPS} redirects: not followed further"))
 }
 async fn once(
     url: &Url,
@@ -173,9 +155,8 @@ async fn once(
         .timeout(left)
         .build()
         .map_err(|why| Answer::error(Code::Failed, why.to_string()))?;
-    let mut sending = client
-        .request(request.method.clone(), url.clone())
-        .headers(request.headers.clone());
+    let mut sending =
+        client.request(request.method.clone(), url.clone()).headers(request.headers.clone());
     if let Some(body) = &request.body {
         sending = sending.body(body.clone());
     }
@@ -232,10 +213,7 @@ fn body_of(bytes: Vec<u8>, cut: bool) -> (String, bool) {
                 let whole = &bytes[..broken.valid_up_to()];
                 (String::from_utf8_lossy(whole).into_owned(), false)
             } else {
-                (
-                    base64::engine::general_purpose::STANDARD.encode(&bytes),
-                    true,
-                )
+                (base64::engine::general_purpose::STANDARD.encode(&bytes), true)
             }
         }
     }
@@ -247,8 +225,7 @@ async fn saved(response: &mut reqwest::Response, path: &Path, since: u64) -> Res
     }
     let part = path.with_file_name(format!(
         ".{}.orden-part",
-        path.file_name()
-            .map_or_else(String::new, |name| name.to_string_lossy().into_owned())
+        path.file_name().map_or_else(String::new, |name| name.to_string_lossy().into_owned())
     ));
     let mut file = std::fs::File::create(&part).map_err(|why| failing(why.to_string()))?;
     let mut size = 0_u64;
@@ -324,10 +301,7 @@ fn reachable(app: &AppHandle, grant: Option<&Grant>, url: &Url) -> Result<(), An
     let summary = format!("Send requests to {site}");
     Err(approvals::ask(
         app,
-        Asking {
-            site: Some(always),
-            ..Asking::of(grant, Category::Writing, summary, key)
-        },
+        Asking { site: Some(always), ..Asking::of(grant, Category::Writing, summary, key) },
     ))
 }
 fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
@@ -335,10 +309,7 @@ fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
     let site = policy::site_of(&host);
     let rule = policy::rule_for(grant, &host);
     if rule == Some(SiteRule::Deny) {
-        return Err(Answer::error(
-            Code::SiteDenied,
-            format!("{site} is denied to this agent"),
-        ));
+        return Err(Answer::error(Code::SiteDenied, format!("{site} is denied to this agent")));
     }
     if grant.mode != Mode::Confirm
         || !grant.asks(Category::Writing)
@@ -353,38 +324,23 @@ fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
     Ok(Reach::Ask { site, always })
 }
 fn reached(agent: &str, site: &str) -> bool {
-    REACHED
-        .held()
-        .as_ref()
-        .is_some_and(|all| all.contains(&(agent.to_owned(), site.to_owned())))
+    REACHED.held().as_ref().is_some_and(|all| all.contains(&(agent.to_owned(), site.to_owned())))
 }
 fn remember(agent: &str, site: &str) {
-    REACHED
-        .held()
-        .get_or_insert_with(HashSet::new)
-        .insert((agent.to_owned(), site.to_owned()));
+    REACHED.held().get_or_insert_with(HashSet::new).insert((agent.to_owned(), site.to_owned()));
 }
 async fn address(url: &Url) -> Result<SocketAddr, Answer> {
     let named = host(url);
     let Some(port) = url.port_or_known_default() else {
-        return Err(Answer::error(
-            Code::BadArguments,
-            format!("{url} has no port"),
-        ));
+        return Err(Answer::error(Code::BadArguments, format!("{url} has no port")));
     };
     let looked = named.clone();
     let found: Vec<SocketAddr> = tauri::async_runtime::spawn_blocking(move || {
-        (looked.as_str(), port)
-            .to_socket_addrs()
-            .map(Iterator::collect)
-            .unwrap_or_default()
+        (looked.as_str(), port).to_socket_addrs().map(Iterator::collect).unwrap_or_default()
     })
     .await
     .unwrap_or_default();
-    if found
-        .iter()
-        .any(|one| own_endpoint(*one, crate::endpoint::own_port()))
-    {
+    if found.iter().any(|one| own_endpoint(*one, crate::endpoint::own_port())) {
         return Err(Answer::error(
             Code::NotGranted,
             format!("{named}:{port} is Orden's own endpoint, which no agent's request reaches"),
@@ -415,10 +371,7 @@ fn redirected(
     method: &Method,
     body: Option<Vec<u8>>,
 ) -> (Method, Option<Vec<u8>>) {
-    let again = matches!(
-        status,
-        StatusCode::TEMPORARY_REDIRECT | StatusCode::PERMANENT_REDIRECT
-    );
+    let again = matches!(status, StatusCode::TEMPORARY_REDIRECT | StatusCode::PERMANENT_REDIRECT);
     if again
         || ((*method == Method::GET || *method == Method::HEAD) && status != StatusCode::SEE_OTHER)
     {
@@ -459,15 +412,8 @@ mod tests {
             let address: SocketAddr = address.parse().expect("an address");
             assert!(!own_endpoint(address, own), "{address}");
         }
-        assert!(!own_endpoint(
-            "127.0.0.1:4100".parse().expect("an address"),
-            None
-        ));
-        for named in [
-            "http://localhost:4100/",
-            "http://127.1:4100/",
-            "http://2130706433:4100/",
-        ] {
+        assert!(!own_endpoint("127.0.0.1:4100".parse().expect("an address"), None));
+        for named in ["http://localhost:4100/", "http://127.1:4100/", "http://2130706433:4100/"] {
             let url = Url::parse(named).expect("an address");
             let found: Vec<SocketAddr> = (host(&url).as_str(), 4100)
                 .to_socket_addrs()
@@ -518,10 +464,7 @@ mod tests {
     #[test]
     fn a_redirect_goes_on_as_a_browser_follows_it() {
         let body = Some(b"x".to_vec());
-        assert_eq!(
-            redirected(StatusCode::FOUND, &Method::POST, body.clone()),
-            (Method::GET, None)
-        );
+        assert_eq!(redirected(StatusCode::FOUND, &Method::POST, body.clone()), (Method::GET, None));
         assert_eq!(
             redirected(StatusCode::SEE_OTHER, &Method::PUT, body.clone()),
             (Method::GET, None)
@@ -560,10 +503,7 @@ mod tests {
         let refused = |grant: &Grant, said: &str| {
             matches!(
                 decided(grant, &url(said), false),
-                Err(Answer::Error {
-                    code: Code::SiteDenied,
-                    ..
-                })
+                Err(Answer::Error { code: Code::SiteDenied, .. })
             )
         };
         let goes = |grant: &Grant, said: &str| decided(grant, &url(said), false) == Ok(Reach::Go);
@@ -578,19 +518,11 @@ mod tests {
         assert!(refused(&confirm, "https://bank.example./"));
         assert_eq!(
             decided(&confirm, &url("https://api.docs.example/v1"), false),
-            Ok(Reach::Ask {
-                site: "docs.example".into(),
-                always: "http:docs.example".into(),
-            })
+            Ok(Reach::Ask { site: "docs.example".into(), always: "http:docs.example".into() })
         );
-        assert_eq!(
-            decided(&confirm, &url("https://api.docs.example/v1"), true),
-            Ok(Reach::Go)
-        );
+        assert_eq!(decided(&confirm, &url("https://api.docs.example/v1"), true), Ok(Reach::Go));
         let mut always = confirm.clone();
-        always
-            .always
-            .insert("http:docs.example".into(), vec![Category::Writing]);
+        always.always.insert("http:docs.example".into(), vec![Category::Writing]);
         assert!(goes(&always, "https://docs.example/"));
         let mut allowed = confirm.clone();
         allowed.sites.insert("docs.example".into(), SiteRule::Allow);
@@ -644,22 +576,10 @@ mod tests {
         let start = url(&format!("http://127.0.0.1:{first_port}/"));
         let answer = tauri::async_runtime::block_on(sent(start, request, &check));
         answering.join().expect("the first hop answered");
-        assert!(
-            matches!(
-                answer,
-                Answer::Error {
-                    code: Code::SiteDenied,
-                    ..
-                }
-            ),
-            "{answer:?}"
-        );
+        assert!(matches!(answer, Answer::Error { code: Code::SiteDenied, .. }), "{answer:?}");
         assert_eq!(
             *seen.held(),
-            [
-                format!("http://127.0.0.1:{first_port}/"),
-                format!("http://localhost:{there_port}/"),
-            ]
+            [format!("http://127.0.0.1:{first_port}/"), format!("http://localhost:{there_port}/"),]
         );
         assert!(there.accept().is_err(), "nothing reached the denied site");
     }

@@ -54,14 +54,8 @@ struct Page {
 }
 enum Answering {
     Script(JsdialogCallback),
-    SignIn {
-        session: Option<String>,
-        request: String,
-    },
-    Certificate(
-        SelectClientCertificateCallback,
-        Vec<(X509Certificate, String)>,
-    ),
+    SignIn { session: Option<String>, request: String },
+    Certificate(SelectClientCertificateCallback, Vec<(X509Certificate, String)>),
 }
 impl Page {
     fn host(&self) -> Option<BrowserHost> {
@@ -192,18 +186,13 @@ pub fn build(
         };
         let mut ready = Ready::new(Arc::new(Mutex::new(Some(Arc::clone(&making)))));
         if request_context_create_context(Some(&settings), Some(&mut ready)).is_none() {
-            finished(
-                &making,
-                Err("the page's profile could not be opened".into()),
-            );
+            finished(&making, Err("the page's profile could not be opened".into()));
         }
     });
     if !posted {
         return Err("the engine's thread could not be reached".into());
     }
-    waiting
-        .recv_timeout(tabs::BUILDING)
-        .map_err(|_| "the page was never built".to_string())?
+    waiting.recv_timeout(tabs::BUILDING).map_err(|_| "the page was never built".to_string())?
 }
 fn finished(page: &Page, outcome: Result<(), String>) {
     if let Some(built) = page.built.held().take() {
@@ -259,10 +248,7 @@ fn quietened(page: &Windowless) {
 fn quieting() -> [(&'static str, Value); 4] {
     [
         ("Page.enable", json!({})),
-        (
-            "Page.setInterceptFileChooserDialog",
-            json!({ "enabled": true }),
-        ),
+        ("Page.setInterceptFileChooserDialog", json!({ "enabled": true })),
         (
             "Page.addScriptToEvaluateOnNewDocument",
             json!({ "source": quiet::STUBS, "runImmediately": true }),
@@ -297,14 +283,8 @@ fn made(page: &Arc<Page>, browser: &Browser) {
     let observing = host.add_dev_tools_message_observer(Some(&mut observer));
     *page.observing.held() = observing;
     *page.host.held() = Some(host);
-    let handle = Windowless {
-        label: page.owner.label.clone(),
-        page: Arc::clone(page),
-    };
-    PAGES
-        .held()
-        .get_or_insert_with(HashMap::new)
-        .insert(handle.label.clone(), handle.clone());
+    let handle = Windowless { label: page.owner.label.clone(), page: Arc::clone(page) };
+    PAGES.held().get_or_insert_with(HashMap::new).insert(handle.label.clone(), handle.clone());
     cdp::follow_view(&View::Windowless(Arc::new(handle.clone())), &handle.label);
     quietened(&handle);
     let going = page.going.held().take();
@@ -315,9 +295,7 @@ fn made(page: &Arc<Page>, browser: &Browser) {
 }
 fn closed(page: &Page) {
     if let Some(all) = PAGES.held().as_mut() {
-        if all
-            .get(&page.owner.label)
-            .is_some_and(|one| std::ptr::eq(Arc::as_ptr(&one.page), page))
+        if all.get(&page.owner.label).is_some_and(|one| std::ptr::eq(Arc::as_ptr(&one.page), page))
         {
             all.remove(&page.owner.label);
         }
@@ -348,10 +326,8 @@ wrap_dev_tools_message_observer! {
     }
 }
 fn heard(page: &Arc<Page>, message: &Value) {
-    if let Some(id) = message
-        .get("id")
-        .and_then(Value::as_i64)
-        .and_then(|id| i32::try_from(id).ok())
+    if let Some(id) =
+        message.get("id").and_then(Value::as_i64).and_then(|id| i32::try_from(id).ok())
     {
         let waiting = page.waiting.held().remove(&id);
         if let Some(waiting) = waiting {
@@ -367,23 +343,13 @@ fn heard(page: &Arc<Page>, message: &Value) {
     let request = params.get("requestId").and_then(Value::as_str);
     match (method, request) {
         ("Fetch.requestPaused", Some(request)) => {
-            send(
-                page,
-                session,
-                "Fetch.continueRequest",
-                &json!({ "requestId": request }),
-            );
+            send(page, session, "Fetch.continueRequest", &json!({ "requestId": request }));
             return;
         }
         ("Fetch.authRequired", Some(request)) => {
-            let realm = params
-                .pointer("/authChallenge/realm")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
-            let url = params
-                .pointer("/request/url")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
+            let realm =
+                params.pointer("/authChallenge/realm").and_then(Value::as_str).unwrap_or_default();
+            let url = params.pointer("/request/url").and_then(Value::as_str).unwrap_or_default();
             hold(
                 page,
                 DialogKind::SignIn,
@@ -410,10 +376,7 @@ fn heard(page: &Arc<Page>, message: &Value) {
     }
 }
 fn send(page: &Arc<Page>, session: Option<&str>, method: &str, params: &Value) {
-    let found = Windowless {
-        label: page.owner.label.clone(),
-        page: Arc::clone(page),
-    };
+    let found = Windowless { label: page.owner.label.clone(), page: Arc::clone(page) };
     let _ = found.ask(session, method, params);
 }
 fn answer(message: &Value) -> Result<Value, String> {
@@ -434,10 +397,7 @@ pub fn answer_dialog(_app: &AppHandle, label: &str, said: Said) -> Result<(), St
 fn settle(page: &Arc<Page>, number: Option<u64>, said: Said) {
     let held = {
         let mut dialog = page.dialog.held();
-        if dialog
-            .as_ref()
-            .is_some_and(|(one, _)| number.is_none_or(|number| *one == number))
-        {
+        if dialog.as_ref().is_some_and(|(one, _)| number.is_none_or(|number| *one == number)) {
             dialog.take()
         } else {
             None
@@ -457,12 +417,9 @@ fn give(page: &Arc<Page>, answering: Answering, said: Said) {
                 callback.cont(i32::from(said.accept), words.as_ref());
             });
         }
-        Answering::SignIn { session, request } => send(
-            page,
-            session.as_deref(),
-            "Fetch.continueWithAuth",
-            &signed_in(&request, &said),
-        ),
+        Answering::SignIn { session, request } => {
+            send(page, session.as_deref(), "Fetch.continueWithAuth", &signed_in(&request, &said));
+        }
         Answering::Certificate(callback, offered) => {
             on_ui(move || {
                 let mut chosen = said

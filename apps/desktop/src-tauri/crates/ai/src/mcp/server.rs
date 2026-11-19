@@ -58,11 +58,9 @@ pub fn run() -> i32 {
 impl Session {
     fn hear(&self, line: &str) {
         match rpc::read(line) {
-            Err(unreadable) => self.out.send(&rpc::failure(
-                &unreadable.id,
-                unreadable.code,
-                unreadable.message,
-            )),
+            Err(unreadable) => {
+                self.out.send(&rpc::failure(&unreadable.id, unreadable.code, unreadable.message));
+            }
             Ok(Message::Answer) => {}
             Ok(Message::Notification { method, params }) => match method.as_str() {
                 "notifications/initialized" => self.initialized.store(true, Ordering::SeqCst),
@@ -88,8 +86,7 @@ impl Session {
     fn start(&self, id: Value, method: String, params: Value) {
         let key = id.to_string();
         if let Err(refused) = self.calls.begin(&key) {
-            self.out
-                .send(&rpc::failure(&id, refused.code(), refused.message()));
+            self.out.send(&rpc::failure(&id, refused.code(), refused.message()));
             return;
         }
         let Some(me) = self.me.upgrade() else {
@@ -98,28 +95,20 @@ impl Session {
         };
         let working = key.clone();
         let asked = id.clone();
-        let spawned = std::thread::Builder::new()
-            .name("mcp-call".to_owned())
-            .spawn(move || {
-                let answer = if method == "tools/list" {
-                    me.list(&id, &params)
-                } else {
-                    me.call(&id, &params)
-                };
-                if me.calls.end(&working) {
-                    me.out.send(&answer);
-                }
-            });
+        let spawned = std::thread::Builder::new().name("mcp-call".to_owned()).spawn(move || {
+            let answer =
+                if method == "tools/list" { me.list(&id, &params) } else { me.call(&id, &params) };
+            if me.calls.end(&working) {
+                me.out.send(&answer);
+            }
+        });
         if spawned.is_err() && self.calls.end(&key) {
-            self.out
-                .send(&rpc::failure(&asked, rpc::BUSY, Refused::Busy.message()));
+            self.out.send(&rpc::failure(&asked, rpc::BUSY, Refused::Busy.message()));
         }
     }
     fn initialize(&self, id: &Value, params: &Value) {
         let asked = params.get("protocolVersion").and_then(Value::as_str);
-        let version = asked
-            .filter(|one| VERSIONS.contains(one))
-            .unwrap_or(VERSIONS[0]);
+        let version = asked.filter(|one| VERSIONS.contains(one)).unwrap_or(VERSIONS[0]);
         self.link(&params["clientInfo"]);
         self.out.send(&rpc::answer(
             id,
@@ -154,10 +143,7 @@ impl Session {
         if listed.as_ref().is_some_and(|before| *before != now) {
             *listed = Some(now);
             drop(listed);
-            self.out.send(&rpc::notification(
-                "notifications/tools/list_changed",
-                json!({}),
-            ));
+            self.out.send(&rpc::notification("notifications/tools/list_changed", json!({})));
         }
     }
     fn list(&self, id: &Value, params: &Value) -> Value {
@@ -173,10 +159,7 @@ impl Session {
         )
     }
     fn call(&self, id: &Value, params: &Value) -> Value {
-        let name = params
-            .get("name")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
+        let name = params.get("name").and_then(Value::as_str).unwrap_or_default();
         if tools::find(name).is_none() {
             return rpc::failure(id, rpc::BAD_PARAMS, &format!("Unknown tool: {name}"));
         }
@@ -281,18 +264,11 @@ mod tests {
         assert!(INSTRUCTIONS.contains("account connector"));
         assert!(INSTRUCTIONS.contains("no_such_ref"));
         assert!(!INSTRUCTIONS.contains('\u{2014}'), "no em dashes");
-        assert!(
-            INSTRUCTIONS.len() < 2_200,
-            "{} characters",
-            INSTRUCTIONS.len()
-        );
+        assert!(INSTRUCTIONS.len() < 2_200, "{} characters", INSTRUCTIONS.len());
     }
     #[test]
     fn a_page_read_whole_is_cut_where_a_snapshot_is() {
-        assert_eq!(
-            defaults("browser_read", json!({ "tab": "a1" }))["max_chars"],
-            40_000
-        );
+        assert_eq!(defaults("browser_read", json!({ "tab": "a1" }))["max_chars"], 40_000);
         assert_eq!(
             defaults("browser_read", json!({ "tab": "a1", "max_chars": 5 }))["max_chars"],
             5
@@ -301,9 +277,7 @@ mod tests {
             defaults("browser_read", json!({ "tab": "a1", "max_chars": null }))["max_chars"],
             40_000
         );
-        assert!(defaults("browser_click", json!({}))
-            .get("max_chars")
-            .is_none());
+        assert!(defaults("browser_click", json!({})).get("max_chars").is_none());
     }
     #[test]
     fn calls_past_the_most_at_once_are_turned_away_until_one_ends() {
@@ -329,11 +303,7 @@ mod tests {
     }
     #[test]
     fn before_the_pairing_only_the_status_is_shown() {
-        let seen = Seen {
-            standing: Standing::Asked,
-            grant: None,
-            window: None,
-        };
+        let seen = Seen { standing: Standing::Asked, grant: None, window: None };
         assert_eq!(names(&seen), ["agent_status"]);
     }
 }

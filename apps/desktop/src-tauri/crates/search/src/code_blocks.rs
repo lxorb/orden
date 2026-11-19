@@ -121,11 +121,8 @@ impl CodeBlocks {
             self.leaf = Leaf::Fence(mark, length);
             return CodeLine::Opens;
         }
-        self.leaf = if heading(rest) || thematic_break(rest) {
-            Leaf::Nothing
-        } else {
-            Leaf::Paragraph
-        };
+        self.leaf =
+            if heading(rest) || thematic_break(rest) { Leaf::Nothing } else { Leaf::Paragraph };
         CodeLine::Words
     }
 }
@@ -160,11 +157,7 @@ fn marker(text: &str, interrupting: bool) -> Option<usize> {
     if interrupting && (!words || number.is_some_and(|number| number.parse() != Ok(1_u32))) {
         return None;
     }
-    Some(if !words || spaces > 4 {
-        mark + 1
-    } else {
-        mark + spaces
-    })
+    Some(if !words || spaces > 4 { mark + 1 } else { mark + spaces })
 }
 fn fence_mark(line: &str) -> Option<(u8, usize)> {
     let indent = spaces_at(line, 0);
@@ -192,21 +185,15 @@ fn closes_fence(line: &str, mark: u8, length: usize) -> bool {
         && (after.trim_start_matches([' ', '\t']).is_empty() || fence_name(line, mark).is_some())
 }
 fn fence_name(line: &str, mark: u8) -> Option<&str> {
-    let run = line[spaces_at(line, 0)..]
-        .bytes()
-        .take_while(|&one| one == mark)
-        .count();
+    let run = line[spaces_at(line, 0)..].bytes().take_while(|&one| one == mark).count();
     let after = &line[spaces_at(line, 0) + run..];
     let spaced = after.trim_start_matches([' ', '\t']);
     if spaced.len() == after.len() {
         return None;
     }
     let name = spaced.strip_prefix('^')?.trim_end_matches([' ', '\t']);
-    (!name.is_empty()
-        && name
-            .bytes()
-            .all(|one| one.is_ascii_alphanumeric() || one == b'-'))
-    .then_some(name)
+    (!name.is_empty() && name.bytes().all(|one| one.is_ascii_alphanumeric() || one == b'-'))
+        .then_some(name)
 }
 fn thematic_break(line: &str) -> bool {
     let indent = spaces_at(line, 0);
@@ -218,13 +205,8 @@ fn thematic_break(line: &str) -> bool {
         return false;
     };
     matches!(mark, b'-' | b'*' | b'_')
-        && rest
-            .iter()
-            .all(|&one| one == mark || one == b' ' || one == b'\t')
-        && rest
-            .iter()
-            .fold(0, |marks, &one| marks + usize::from(one == mark))
-            >= 3
+        && rest.iter().all(|&one| one == mark || one == b' ' || one == b'\t')
+        && rest.iter().fold(0, |marks, &one| marks + usize::from(one == mark)) >= 3
 }
 fn heading(line: &str) -> bool {
     let indent = spaces_at(line, 0);
@@ -232,14 +214,10 @@ fn heading(line: &str) -> bool {
     let hashes = rest.iter().take_while(|&&one| one == b'#').count();
     indent <= 3
         && (1..=6).contains(&hashes)
-        && rest
-            .get(hashes)
-            .is_none_or(|&one| one == b' ' || one == b'\t')
+        && rest.get(hashes).is_none_or(|&one| one == b' ' || one == b'\t')
 }
 fn spaces_at(line: &str, at: usize) -> usize {
-    line.as_bytes().get(at..).map_or(0, |rest| {
-        rest.iter().take_while(|&&one| one == b' ').count()
-    })
+    line.as_bytes().get(at..).map_or(0, |rest| rest.iter().take_while(|&&one| one == b' ').count())
 }
 fn expanded(line: &str) -> Cow<'_, str> {
     if !line.contains('\t') {

@@ -52,18 +52,11 @@ mod tests {
                 header("%7B%22path%22%3A%22C%3A%2FNotes%2F%C3%BCber%20uns.png%22%7D"),
                 tauri::ipc::InvokeBody::Raw(PNG.to_vec())
             ),
-            Ok((
-                Asked {
-                    path: "C:/Notes/über uns.png".to_owned()
-                },
-                PNG.to_vec()
-            ))
+            Ok((Asked { path: "C:/Notes/über uns.png".to_owned() }, PNG.to_vec()))
         );
-        assert!(read(
-            tauri::http::HeaderMap::new(),
-            tauri::ipc::InvokeBody::Raw(PNG.to_vec())
-        )
-        .is_err());
+        assert!(
+            read(tauri::http::HeaderMap::new(), tauri::ipc::InvokeBody::Raw(PNG.to_vec())).is_err()
+        );
         assert!(read(header("%FF"), tauri::ipc::InvokeBody::Raw(PNG.to_vec())).is_err());
         assert!(read(header("%7B%7D"), tauri::ipc::InvokeBody::Raw(PNG.to_vec())).is_err());
     }
@@ -73,10 +66,7 @@ mod tests {
         let raw = InvokeBody::Raw(PNG.to_vec());
         assert_eq!(super::bytes_sent(&raw).as_deref(), Some(PNG));
         let numbers = InvokeBody::Json(serde_json::json!([1, 2, 255]));
-        assert_eq!(
-            super::bytes_sent(&numbers).as_deref(),
-            Some(&[1_u8, 2, 255][..])
-        );
+        assert_eq!(super::bytes_sent(&numbers).as_deref(), Some(&[1_u8, 2, 255][..]));
         assert!(super::bytes_sent(&InvokeBody::Json(serde_json::json!([256]))).is_none());
         assert!(super::bytes_sent(&InvokeBody::Json(serde_json::json!({ "0": 1 }))).is_none());
     }

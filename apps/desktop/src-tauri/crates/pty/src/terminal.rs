@@ -60,10 +60,7 @@ impl Terminals {
         self.tick.load(Ordering::SeqCst)
     }
     fn ended_since(&self, owner: &str, stamp: u64) -> bool {
-        self.loads
-            .held()
-            .get(owner)
-            .is_some_and(|ended| *ended > stamp)
+        self.loads.held().get(owner).is_some_and(|ended| *ended > stamp)
     }
     fn end_where(&self, owner: Option<&str>, kill: bool) {
         if let Some(owner) = owner {
@@ -124,10 +121,7 @@ fn place(webview: &Webview) -> Result<Place, String> {
     let program = std::env::current_exe().map_err(|error| error.to_string())?;
     Ok(Place {
         folder: data.join("terminal-held"),
-        starter: hold::Starter {
-            program,
-            args: vec![hold::MODE.to_owned()],
-        },
+        starter: hold::Starter { program, args: vec![hold::MODE.to_owned()] },
     })
 }
 fn owner(webview: &Webview) -> Result<String, String> {
@@ -136,9 +130,7 @@ fn owner(webview: &Webview) -> Result<String, String> {
 fn usable(id: &str) -> Result<(), String> {
     let fits = !id.is_empty()
         && id.len() <= 80
-        && id
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+        && id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
     if fits {
         Ok(())
     } else {
@@ -149,10 +141,7 @@ fn usable(id: &str) -> Result<(), String> {
 pub async fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Vec<shells::Offered>, String> {
         owner(&webview)?;
-        Ok(shells::detected()
-            .iter()
-            .map(shells::Shell::offered)
-            .collect())
+        Ok(shells::detected().iter().map(shells::Shell::offered).collect())
     })
     .await
 }
@@ -174,9 +163,7 @@ pub async fn pty_spawn(
     orden_base::lane::off_the_runtime(move || -> Result<Spawned, String> {
         let owner = owner(&webview)?;
         usable(&id)?;
-        let key = key
-            .filter(|one| usable(one).is_ok())
-            .unwrap_or_else(|| id.clone());
+        let key = key.filter(|one| usable(one).is_ok()).unwrap_or_else(|| id.clone());
         let terminals = webview.state::<Terminals>();
         if terminals.lock().contains_key(&id) {
             return Err(format!("terminal {id} is already running"));
@@ -283,11 +270,7 @@ pub async fn terminal_sessions(webview: Webview) -> Result<Vec<Shown>, String> {
                     process::program(listed.shell)
                 };
                 let open = here.contains(&listed.key);
-                Shown {
-                    listed,
-                    program,
-                    open,
-                }
+                Shown { listed, program, open }
             })
             .collect())
     })
@@ -343,43 +326,28 @@ fn kept_alone(
     {
         return false;
     }
-    sessions.insert(
-        id.to_owned(),
-        Held {
-            owner,
-            session: Arc::clone(session),
-            remote,
-        },
-    );
+    sessions.insert(id.to_owned(), Held { owner, session: Arc::clone(session), remote });
     true
 }
 #[tauri::command]
 pub fn pty_write(webview: Webview, id: String, data: String, binary: bool) -> Result<(), String> {
     let owner = owner(&webview)?;
     let bytes = if binary {
-        data.chars()
-            .map(|one| u8::try_from(u32::from(one)).unwrap_or(b'?'))
-            .collect()
+        data.chars().map(|one| u8::try_from(u32::from(one)).unwrap_or(b'?')).collect()
     } else {
         data.into_bytes()
     };
-    webview
-        .state::<Terminals>()
-        .with(&owner, &id, |session| session.write(bytes))
+    webview.state::<Terminals>().with(&owner, &id, |session| session.write(bytes))
 }
 #[tauri::command(async)]
 pub fn pty_resize(webview: Webview, id: String, cols: u16, rows: u16) -> Result<(), String> {
     let owner = owner(&webview)?;
-    webview
-        .state::<Terminals>()
-        .with(&owner, &id, |session| session.resize(cols, rows))
+    webview.state::<Terminals>().with(&owner, &id, |session| session.resize(cols, rows))
 }
 #[tauri::command]
 pub fn pty_seen(webview: Webview, id: String, bytes: usize) -> Result<(), String> {
     let owner = owner(&webview)?;
-    webview
-        .state::<Terminals>()
-        .with(&owner, &id, |session| session.seen(bytes))
+    webview.state::<Terminals>().with(&owner, &id, |session| session.seen(bytes))
 }
 #[tauri::command(async)]
 pub fn pty_busy(webview: Webview, id: String) -> Result<bool, String> {
@@ -390,9 +358,7 @@ pub fn pty_busy(webview: Webview, id: String) -> Result<bool, String> {
 #[tauri::command(async)]
 pub fn pty_program(webview: Webview, id: String) -> Result<Option<String>, String> {
     let owner = owner(&webview)?;
-    webview
-        .state::<Terminals>()
-        .with(&owner, &id, Session::program)
+    webview.state::<Terminals>().with(&owner, &id, Session::program)
 }
 #[tauri::command(async)]
 pub fn pty_ssh(webview: Webview, id: String) -> Result<Option<remote::Destination>, String> {
@@ -402,16 +368,12 @@ pub fn pty_ssh(webview: Webview, id: String) -> Result<Option<remote::Destinatio
 #[tauri::command(async)]
 pub fn pty_folder(webview: Webview, id: String) -> Result<Option<String>, String> {
     let owner = owner(&webview)?;
-    webview
-        .state::<Terminals>()
-        .with(&owner, &id, Session::folder)
+    webview.state::<Terminals>().with(&owner, &id, Session::folder)
 }
 #[tauri::command(async)]
 pub fn pty_usage(webview: Webview, id: String) -> Result<Option<orden_base::usage::Usage>, String> {
     let owner = owner(&webview)?;
-    let pid = webview
-        .state::<Terminals>()
-        .with(&owner, &id, Session::shell)?;
+    let pid = webview.state::<Terminals>().with(&owner, &id, Session::shell)?;
     Ok(pid.and_then(|pid| {
         orden_base::usage::sample(&format!("pty:{id}"), orden_base::usage::Whose::Tree(pid))
     }))
@@ -442,9 +404,7 @@ pub fn pty_detach(webview: Webview, id: String) -> Result<(), String> {
 #[tauri::command]
 pub fn pty_take(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
-    webview
-        .state::<Terminals>()
-        .with(&owner, &id, Session::take)
+    webview.state::<Terminals>().with(&owner, &id, Session::take)
 }
 #[cfg(test)]
 mod tests {
@@ -462,19 +422,12 @@ mod tests {
         static NEXT: AtomicU64 = AtomicU64::new(0);
         let (program, args) = if cfg!(windows) {
             let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_owned());
-            (
-                std::path::PathBuf::from(root).join(r"System32\cmd.exe"),
-                vec!["/q".to_owned()],
-            )
+            (std::path::PathBuf::from(root).join(r"System32\cmd.exe"), vec!["/q".to_owned()])
         } else {
             (std::path::PathBuf::from("/bin/sh"), Vec::new())
         };
-        let launch = shells::Launch {
-            program,
-            args,
-            folder: Some(std::env::temp_dir()),
-            env: Vec::new(),
-        };
+        let launch =
+            shells::Launch { program, args, folder: Some(std::env::temp_dir()), env: Vec::new() };
         let place = Place {
             folder: FOLDER
                 .get_or_init(|| tempfile::tempdir().expect("a folder"))
@@ -484,11 +437,7 @@ mod tests {
         };
         let key = format!("idle{}", NEXT.fetch_add(1, Ordering::SeqCst));
         let (session, started) = Session::open(&place, &key, 80, 24, || {
-            Ok(Fresh {
-                launch,
-                farewell: Vec::new(),
-                label: hold::Label::default(),
-            })
+            Ok(Fresh { launch, farewell: Vec::new(), label: hold::Label::default() })
         })
         .expect("a shell");
         started.run(Box::new(|_| {}), |_| {});
@@ -499,33 +448,12 @@ mod tests {
         let terminals = Terminals::default();
         let first = Arc::new(idle_shell());
         let second = Arc::new(idle_shell());
-        assert!(kept_alone(
-            &terminals,
-            "t1",
-            "main".to_owned(),
-            0,
-            &first,
-            false
-        ));
-        assert!(!kept_alone(
-            &terminals,
-            "t1",
-            "main".to_owned(),
-            0,
-            &second,
-            false
-        ));
+        assert!(kept_alone(&terminals, "t1", "main".to_owned(), 0, &first, false));
+        assert!(!kept_alone(&terminals, "t1", "main".to_owned(), 0, &second, false));
         let (held, _) = terminals.held("main", "t1").expect("held");
         assert!(Arc::ptr_eq(&held, &first));
         terminals.closing.store(true, Ordering::SeqCst);
-        assert!(!kept_alone(
-            &terminals,
-            "t2",
-            "main".to_owned(),
-            0,
-            &second,
-            false
-        ));
+        assert!(!kept_alone(&terminals, "t2", "main".to_owned(), 0, &second, false));
         first.end();
         second.end();
     }
@@ -535,33 +463,12 @@ mod tests {
         let stamp = terminals.stamp();
         terminals.end_where(Some("main"), true);
         let late = Arc::new(idle_shell());
-        assert!(!kept_alone(
-            &terminals,
-            "t1",
-            "main".to_owned(),
-            stamp,
-            &late,
-            false
-        ));
+        assert!(!kept_alone(&terminals, "t1", "main".to_owned(), stamp, &late, false));
         assert!(terminals.held("main", "t1").is_err());
         let other = Arc::new(idle_shell());
-        assert!(kept_alone(
-            &terminals,
-            "t2",
-            "other".to_owned(),
-            stamp,
-            &other,
-            false
-        ));
+        assert!(kept_alone(&terminals, "t2", "other".to_owned(), stamp, &other, false));
         let fresh = Arc::new(idle_shell());
-        assert!(kept_alone(
-            &terminals,
-            "t1",
-            "main".to_owned(),
-            terminals.stamp(),
-            &fresh,
-            false
-        ));
+        assert!(kept_alone(&terminals, "t1", "main".to_owned(), terminals.stamp(), &fresh, false));
         late.end();
         other.end();
         fresh.end();
@@ -571,11 +478,7 @@ mod tests {
         let terminals = Terminals::default();
         terminals.lock().insert(
             "t1".to_owned(),
-            Held {
-                owner: "main".to_owned(),
-                session: Arc::new(idle_shell()),
-                remote: true,
-            },
+            Held { owner: "main".to_owned(), session: Arc::new(idle_shell()), remote: true },
         );
         let free = terminals.with("main", "t1", |_| terminals.sessions.try_lock().is_ok());
         assert_eq!(free, Ok(true));

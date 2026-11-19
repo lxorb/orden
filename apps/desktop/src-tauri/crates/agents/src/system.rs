@@ -8,15 +8,8 @@ use crate::verbs::{Answer, Category, Code, Display, System, SystemDone, SystemIn
 use crate::{files, policy, Caller};
 
 const SCHEMES: [&str; 4] = ["http", "https", "mailto", "tel"];
-const SECRET_WORDS: [&str; 7] = [
-    "TOKEN",
-    "SECRET",
-    "PASSWORD",
-    "PASSWD",
-    "CREDENTIAL",
-    "PRIVATE",
-    "COOKIE",
-];
+const SECRET_WORDS: [&str; 7] =
+    ["TOKEN", "SECRET", "PASSWORD", "PASSWD", "CREDENTIAL", "PRIVATE", "COOKIE"];
 const SECRET_ENDINGS: [&str; 4] = ["_KEY", "_PAT", "_AUTH", "APIKEY"];
 pub fn answer(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
     if !caller.holds(Scope::Processes) {
@@ -33,16 +26,9 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
                 Caller::Agent(grant) => grant.asks_nothing(),
             };
             let (env, withheld) = environment(std::env::vars(), full);
-            Answer::ok(SystemDone {
-                env,
-                withheld,
-                ..SystemDone::default()
-            })
+            Answer::ok(SystemDone { env, withheld, ..SystemDone::default() })
         }
-        SystemOp::Info => Answer::ok(SystemDone {
-            info: Some(info(app)),
-            ..SystemDone::default()
-        }),
+        SystemOp::Info => Answer::ok(SystemDone { info: Some(info(app)), ..SystemDone::default() }),
     }
 }
 fn handed(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
@@ -78,10 +64,7 @@ fn handed(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
         (Target::Path(path), _) => tauri_plugin_opener::open_path(path, None::<&str>),
     };
     match done {
-        Ok(()) => Answer::ok(SystemDone {
-            opened: Some(said),
-            ..SystemDone::default()
-        }),
+        Ok(()) => Answer::ok(SystemDone { opened: Some(said), ..SystemDone::default() }),
         Err(why) => Answer::error(Code::Failed, why.to_string()),
     }
 }
@@ -118,10 +101,7 @@ fn fenced(
     Ok(path)
 }
 fn address(url: &str) -> Result<String, String> {
-    let parsed: tauri::Url = url
-        .trim()
-        .parse()
-        .map_err(|_| format!("{url} is not an address"))?;
+    let parsed: tauri::Url = url.trim().parse().map_err(|_| format!("{url} is not an address"))?;
     if !SCHEMES.contains(&parsed.scheme()) {
         return Err(format!(
             "{} addresses are not opened: only {}; a file is opened by its path",
@@ -150,11 +130,7 @@ fn question(app: &AppHandle, grant: &Grant, op: SystemOp, target: &Target) -> Op
     if !grant.asks(Category::Terminal) {
         return None;
     }
-    let word = if op == SystemOp::Reveal {
-        "reveal"
-    } else {
-        "open"
-    };
+    let word = if op == SystemOp::Reveal { "reveal" } else { "open" };
     let key = approvals::key("system", None, Some(&format!("{word}:{target}")));
     let summary = if op == SystemOp::Reveal {
         format!("Show {target} in the file manager")
@@ -170,10 +146,7 @@ fn secret(name: &str) -> bool {
         || name == "KEY"
 }
 fn secret_value(value: &str) -> bool {
-    value
-        .trim()
-        .parse::<tauri::Url>()
-        .is_ok_and(|url| url.password().is_some())
+    value.trim().parse::<tauri::Url>().is_ok_and(|url| url.password().is_some())
 }
 fn environment(
     vars: impl Iterator<Item = (String, String)>,
@@ -194,10 +167,7 @@ fn environment(
 fn info(app: &AppHandle) -> SystemInfo {
     let mut screens = app.available_monitors().unwrap_or_default();
     if let Ok(Some(primary)) = app.primary_monitor() {
-        if let Some(at) = screens
-            .iter()
-            .position(|one| one.position() == primary.position())
-        {
+        if let Some(at) = screens.iter().position(|one| one.position() == primary.position()) {
             screens.swap(0, at);
         }
     }
@@ -252,12 +222,7 @@ mod tests {
     }
     #[test]
     fn only_the_webs_mails_and_telephones_addresses_are_opened() {
-        for fine in [
-            "https://a.example/x",
-            "http://a.example",
-            "mailto:me@a.example",
-            "tel:+41",
-        ] {
+        for fine in ["https://a.example/x", "http://a.example", "mailto:me@a.example", "tel:+41"] {
             assert!(address(fine).is_ok(), "{fine}");
         }
         for refused in [
@@ -275,23 +240,16 @@ mod tests {
     fn a_site_the_grant_keeps_from_the_reader_s_browser_is_not_opened_there() {
         let mut grant = Grant::own("system-sites".into(), "A");
         grant.sites.insert("bank.example".into(), SiteRule::Deny);
-        grant
-            .sites
-            .insert("mail.example".into(), SiteRule::AgentStore);
+        grant.sites.insert("mail.example".into(), SiteRule::AgentStore);
         grant.sites.insert("ok.example".into(), SiteRule::Allow);
         let url = |said: &str| Target::Url(said.to_owned());
-        for refused in [
-            "https://bank.example/",
-            "https://login.BANK.example./x",
-            "https://mail.example/inbox",
-        ] {
+        for refused in
+            ["https://bank.example/", "https://login.BANK.example./x", "https://mail.example/inbox"]
+        {
             assert!(
                 matches!(
                     site_refused(&grant, &url(refused)),
-                    Some(Answer::Error {
-                        code: Code::SiteDenied,
-                        ..
-                    })
+                    Some(Answer::Error { code: Code::SiteDenied, .. })
                 ),
                 "{refused}"
             );
@@ -299,12 +257,9 @@ mod tests {
         let mut full = grant.clone();
         full.mode = crate::grants::Mode::Autonomous;
         assert!(site_refused(&full, &url("https://bank.example/")).is_some());
-        for fine in [
-            "https://ok.example/",
-            "https://docs.example/",
-            "mailto:me@bank.example",
-            "tel:+41",
-        ] {
+        for fine in
+            ["https://ok.example/", "https://docs.example/", "mailto:me@bank.example", "tel:+41"]
+        {
             assert!(site_refused(&grant, &url(fine)).is_none(), "{fine}");
         }
         let path = Target::Path(std::path::PathBuf::from("/tmp/bank.example"));

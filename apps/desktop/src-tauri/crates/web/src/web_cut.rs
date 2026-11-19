@@ -161,10 +161,7 @@ pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64,
     }
 }
 pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
-    let kept = given(|all| {
-        all.get(view.label())
-            .map(|(cut, corner, _)| (cut.clone(), *corner))
-    });
+    let kept = given(|all| all.get(view.label()).map(|(cut, corner, _)| (cut.clone(), *corner)));
     if let Some((cut, corner)) = kept.filter(|(cut, corner)| {
         let (left, right) = corner.sides();
         cut.is_some() || left > 0.0 || right > 0.0
@@ -206,16 +203,14 @@ mod engine {
     fn give(x: &RustConnection, window: u32, shape: Option<&[Piece]>) -> Option<()> {
         match shape {
             None => {
-                x.shape_mask(SO::SET, SK::BOUNDING, window, 0, 0, x11rb::NONE)
-                    .ok()?;
+                x.shape_mask(SO::SET, SK::BOUNDING, window, 0, 0, x11rb::NONE).ok()?;
             }
             Some(pieces) => {
                 let (whole, hollows) = match pieces.split_first() {
                     None => (Vec::new(), &[][..]),
-                    Some((&(left, top, right, bottom, on_left, on_right), hollows)) => (
-                        rows(super::lower(left, top, right, bottom, (on_left, on_right))),
-                        hollows,
-                    ),
+                    Some((&(left, top, right, bottom, on_left, on_right), hollows)) => {
+                        (rows(super::lower(left, top, right, bottom, (on_left, on_right))), hollows)
+                    }
                 };
                 x.shape_rectangles(
                     SO::SET,
@@ -284,10 +279,7 @@ mod engine {
             give(HWND(page as _), shape.as_deref());
         });
     }
-    #[allow(
-        unsafe_code,
-        reason = "the page's window is given its region through GDI"
-    )]
+    #[allow(unsafe_code, reason = "the page's window is given its region through GDI")]
     fn give(window: HWND, shape: Option<&[Piece]>) {
         unsafe {
             let Some(pieces) = shape else {
@@ -381,18 +373,11 @@ mod engine {
             None => (None, None),
             Some([]) => (None, Some(vec![(bounds, 0.0)])),
             Some([(left, top, right, bottom, on_left, on_right), hollows @ ..]) => {
-                let by = if *right > 0 {
-                    bounds.size.width / f64::from(*right)
-                } else {
-                    1.0
-                };
+                let by = if *right > 0 { bounds.size.width / f64::from(*right) } else { 1.0 };
                 let at = |one: i32| f64::from(one) * by;
                 let rect = |left: i32, top: i32, right: i32, bottom: i32| {
-                    let y = if page.isFlipped() {
-                        at(top)
-                    } else {
-                        bounds.size.height - at(bottom)
-                    };
+                    let y =
+                        if page.isFlipped() { at(top) } else { bounds.size.height - at(bottom) };
                     NSRect::new(
                         NSPoint::new(at(left), y),
                         NSSize::new(at(right - left), at(bottom - top)),
@@ -526,9 +511,7 @@ mod engine {
         };
         unsafe {
             objc2::ffi::object_setClass(
-                std::ptr::from_ref::<NSView>(page)
-                    .cast::<AnyObject>()
-                    .cast_mut(),
+                std::ptr::from_ref::<NSView>(page).cast::<AnyObject>().cast_mut(),
                 std::ptr::from_ref::<AnyClass>(class),
             );
         }
@@ -549,13 +532,7 @@ mod tests {
     fn cut(all: bool, hollows: &[(f64, f64, f64, f64, f64)]) -> Cut {
         let hollows = hollows
             .iter()
-            .map(|&(x, y, width, height, radius)| Hollow {
-                x,
-                y,
-                width,
-                height,
-                radius,
-            })
+            .map(|&(x, y, width, height, radius)| Hollow { x, y, width, height, radius })
             .collect();
         Cut { all, hollows }
     }
@@ -563,24 +540,12 @@ mod tests {
     fn the_page_is_cut_round_its_corner_and_what_lies_over_it_in_screen_pixels() {
         let menu = cut(false, &[(10.0, 20.0, 200.0, 100.0, 0.0)]);
         for (over, (width, height), scale, corner, shape) in [
-            (
-                None,
-                (800, 600),
-                1.5,
-                10.0,
-                Some(vec![(0, 0, 800, 600, 30, 30)]),
-            ),
+            (None, (800, 600), 1.5, 10.0, Some(vec![(0, 0, 800, 600, 30, 30)])),
             (None, (800, 600), 1.5, 0.0, None),
             (None, (800, 600), 1.0, 0.0, None),
             (None, (8, 600), 1.0, 10.0, Some(vec![(0, 0, 8, 600, 8, 8)])),
             (Some(Cut::default()), (800, 600), 1.0, 0.0, None),
-            (
-                Some(cut(true, &[])),
-                (800, 600),
-                1.0,
-                10.0,
-                Some(Vec::new()),
-            ),
+            (Some(cut(true, &[])), (800, 600), 1.0, 10.0, Some(Vec::new())),
             (Some(cut(true, &[])), (800, 600), 1.0, 0.0, Some(Vec::new())),
             (
                 Some(menu),
@@ -610,20 +575,8 @@ mod tests {
                 0.0,
                 Some(vec![(0, 0, 1000, 700, 0, 0), (-248, 85, 80, 325, 24, 24)]),
             ),
-            (
-                Some(cut(false, &[(900.0, 10.0, 100.0, 50.0, 0.0)])),
-                (800, 600),
-                1.0,
-                0.0,
-                None,
-            ),
-            (
-                Some(cut(false, &[(-140.0, 10.0, 100.0, 50.0, 0.0)])),
-                (800, 600),
-                1.0,
-                0.0,
-                None,
-            ),
+            (Some(cut(false, &[(900.0, 10.0, 100.0, 50.0, 0.0)])), (800, 600), 1.0, 0.0, None),
+            (Some(cut(false, &[(-140.0, 10.0, 100.0, 50.0, 0.0)])), (800, 600), 1.0, 0.0, None),
         ] {
             assert_eq!(
                 shape_of(over.as_ref(), width, height, scale, Foot::Even(corner)),

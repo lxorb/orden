@@ -54,9 +54,7 @@ pub struct Profiles {
 impl Profiles {
     #[must_use]
     pub fn under(config: &Path) -> Self {
-        Self {
-            root: config.join(ROOT),
-        }
+        Self { root: config.join(ROOT) }
     }
     #[must_use]
     pub fn root(&self) -> &Path {

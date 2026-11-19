@@ -123,11 +123,7 @@ pub(crate) fn run() {
         "the loaded CEF library does not support CEF API version {version}"
     );
     let mut app = Helper::new();
-    let _ = cef::execute_process(
-        Some(args.as_main_args()),
-        Some(&mut app),
-        std::ptr::null_mut(),
-    );
+    let _ = cef::execute_process(Some(args.as_main_args()), Some(&mut app), std::ptr::null_mut());
 }
 #[cfg(test)]
 mod tests {
@@ -168,15 +164,8 @@ mod tests {
     }
     #[test]
     fn a_child_declares_the_version_it_was_told_the_last_time() {
-        let args = |list: &[&str]| {
-            list.iter()
-                .map(std::ffi::OsString::from)
-                .collect::<Vec<_>>()
-        };
-        assert_eq!(
-            super::told_version(args(&["orden", "--type=renderer"])),
-            None
-        );
+        let args = |list: &[&str]| list.iter().map(std::ffi::OsString::from).collect::<Vec<_>>();
+        assert_eq!(super::told_version(args(&["orden", "--type=renderer"])), None);
         assert_eq!(
             super::told_version(args(&[
                 "orden",

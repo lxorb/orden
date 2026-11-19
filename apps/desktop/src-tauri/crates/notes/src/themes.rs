@@ -18,9 +18,7 @@ fn is_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 39
         && id.starts_with(|first: char| first.is_ascii_lowercase() || first.is_ascii_digit())
-        && id
-            .chars()
-            .all(|one| one.is_ascii_lowercase() || one.is_ascii_digit() || one == '-')
+        && id.chars().all(|one| one.is_ascii_lowercase() || one.is_ascii_digit() || one == '-')
 }
 #[derive(Serialize)]
 pub struct ThemeFile {
@@ -42,11 +40,7 @@ pub fn list_themes(app: AppHandle) -> Result<Vec<ThemeFile>, String> {
         if !is_css(&path) {
             continue;
         }
-        let stem = path
-            .file_stem()
-            .and_then(OsStr::to_str)
-            .unwrap_or("theme")
-            .to_string();
+        let stem = path.file_stem().and_then(OsStr::to_str).unwrap_or("theme").to_string();
         themes.push(ThemeFile {
             id: format!("file:{stem}"),
             name: humanise(&stem),
@@ -65,9 +59,8 @@ pub fn read_theme(app: AppHandle, path: String) -> Result<String, String> {
     fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))
 }
 fn is_a_theme(dir: &Path, target: &Path) -> bool {
-    let directly_inside = target
-        .parent()
-        .is_some_and(|parent| inside(dir, parent) && inside(parent, dir));
+    let directly_inside =
+        target.parent().is_some_and(|parent| inside(dir, parent) && inside(parent, dir));
     directly_inside && is_css(target)
 }
 #[tauri::command(async)]
@@ -102,10 +95,7 @@ pub fn custom_css_path(app: AppHandle) -> Result<String, String> {
 }
 #[tauri::command(async)]
 pub fn read_custom_css(app: AppHandle) -> String {
-    custom_css_file(&app)
-        .ok()
-        .and_then(|path| fs::read_to_string(path).ok())
-        .unwrap_or_default()
+    custom_css_file(&app).ok().and_then(|path| fs::read_to_string(path).ok()).unwrap_or_default()
 }
 #[tauri::command(async)]
 pub fn snippets_path(app: AppHandle) -> Result<String, String> {
@@ -212,10 +202,7 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&path).expect("the file"), "");
         std::fs::write(&path, "a number to call").expect("a jot");
         seed(&path, SCRATCHPAD).expect("nothing to do");
-        assert_eq!(
-            std::fs::read_to_string(&path).expect("the file"),
-            "a number to call"
-        );
+        assert_eq!(std::fs::read_to_string(&path).expect("the file"), "a number to call");
     }
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
@@ -229,10 +216,7 @@ mod tests {
         assert!(!is_a_theme(&themes, &settings.join("custom.css")));
         assert!(!is_a_theme(
             &themes,
-            &settings
-                .join("history")
-                .join("0123456789abcdef")
-                .join("1.css")
+            &settings.join("history").join("0123456789abcdef").join("1.css")
         ));
         assert!(!is_a_theme(&themes, &themes.join("deep").join("a.css")));
         assert!(!is_a_theme(&themes, &themes.join("snippets.json")));

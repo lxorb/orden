@@ -50,10 +50,9 @@ impl WindowSystem for X11 {
                 .and_then(|cookie| cookie.reply().ok())
                 .map(|reply| reply.atom)
         };
-        if let (Some(kind), Some(utility)) = (
-            atom(b"_NET_WM_WINDOW_TYPE"),
-            atom(b"_NET_WM_WINDOW_TYPE_UTILITY"),
-        ) {
+        if let (Some(kind), Some(utility)) =
+            (atom(b"_NET_WM_WINDOW_TYPE"), atom(b"_NET_WM_WINDOW_TYPE_UTILITY"))
+        {
             let _ = x.change_property32(PropMode::REPLACE, xid, kind, AtomEnum::ATOM, &[utility]);
             let _ = x.flush();
             let _ = x.sync();
@@ -92,11 +91,7 @@ impl WindowSystem for X11 {
     fn desktop_scale(&self) -> Option<f64> {
         let (x, screen) = x11rb::connect(None).ok()?;
         let atom = |name: &str| {
-            x.intern_atom(false, name.as_bytes())
-                .ok()?
-                .reply()
-                .ok()
-                .map(|reply| reply.atom)
+            x.intern_atom(false, name.as_bytes()).ok()?.reply().ok().map(|reply| reply.atom)
         };
         let owner = x
             .get_selection_owner(atom(&format!("_XSETTINGS_S{screen}"))?)
@@ -125,9 +120,8 @@ pub fn frame(window: u32, scale: f64) -> Result<(), String> {
     if !framed(|all| all.insert(window)) {
         return Ok(());
     }
-    let started = x11rb::connect(None)
-        .map_err(|error| error.to_string())
-        .and_then(|(x, screen)| {
+    let started =
+        x11rb::connect(None).map_err(|error| error.to_string()).and_then(|(x, screen)| {
             std::thread::Builder::new()
                 .name("window edges".into())
                 .spawn(move || {
@@ -219,11 +213,7 @@ impl Frame<'_> {
         let mut edges = Vec::new();
         for direction in 0..8_u32 {
             let cursor = cursors.load_cursor(x, CURSORS[direction as usize])?;
-            let arms: &[bool] = if direction % 2 == 0 {
-                &[false, true]
-            } else {
-                &[false]
-            };
+            let arms: &[bool] = if direction % 2 == 0 { &[false, true] } else { &[false] };
             for &arm in arms {
                 let id = x.generate_id()?;
                 x.create_window(
@@ -237,9 +227,7 @@ impl Frame<'_> {
                     0,
                     WindowClass::INPUT_ONLY,
                     0,
-                    &CreateWindowAux::new()
-                        .event_mask(EventMask::BUTTON_PRESS)
-                        .cursor(cursor),
+                    &CreateWindowAux::new().event_mask(EventMask::BUTTON_PRESS).cursor(cursor),
                 )?;
                 edges.push((Border { id, direction }, arm));
             }
@@ -300,10 +288,8 @@ impl Frame<'_> {
         Ok(())
     }
     fn show(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let state = self
-            .x
-            .get_property(false, self.window, self.state, AtomEnum::ATOM, 0, 32)?
-            .reply()?;
+        let state =
+            self.x.get_property(false, self.window, self.state, AtomEnum::ATOM, 0, 32)?.reply()?;
         let held: Vec<u32> = state.value32().map(Iterator::collect).unwrap_or_default();
         let filling = held.contains(&self.filling[2])
             || (held.contains(&self.filling[0]) && held.contains(&self.filling[1]));
@@ -394,12 +380,8 @@ fn let_chromium_go(
     let fail = |error: &dyn std::fmt::Display| error.to_string();
     let mut under = window;
     for _ in 0..16 {
-        let child = x
-            .query_pointer(under)
-            .map_err(|e| fail(&e))?
-            .reply()
-            .map_err(|e| fail(&e))?
-            .child;
+        let child =
+            x.query_pointer(under).map_err(|e| fail(&e))?.reply().map_err(|e| fail(&e))?.child;
         if child == x11rb::NONE {
             break;
         }
@@ -428,8 +410,7 @@ fn let_chromium_go(
         state: pointer.mask,
         same_screen: true,
     };
-    x.send_event(false, under, EventMask::BUTTON_RELEASE, release)
-        .map_err(|e| fail(&e))?;
+    x.send_event(false, under, EventMask::BUTTON_RELEASE, release).map_err(|e| fail(&e))?;
     x.sync().map_err(|e| fail(&e))?;
     for _ in 0..50 {
         let status = x
@@ -469,14 +450,10 @@ pub fn move_resize(
         .reply()
         .map_err(|error| error.to_string())?;
     let held = u16::from(pointer.mask);
-    let button: u8 = [
-        (KeyButMask::BUTTON1, 1),
-        (KeyButMask::BUTTON2, 2),
-        (KeyButMask::BUTTON3, 3),
-    ]
-    .into_iter()
-    .find(|(mask, _)| held & u16::from(*mask) != 0)
-    .map_or(1, |(_, button)| button);
+    let button: u8 = [(KeyButMask::BUTTON1, 1), (KeyButMask::BUTTON2, 2), (KeyButMask::BUTTON3, 3)]
+        .into_iter()
+        .find(|(mask, _)| held & u16::from(*mask) != 0)
+        .map_or(1, |(_, button)| button);
     let atom = x
         .intern_atom(false, b"_NET_WM_MOVERESIZE")
         .map_err(|error| error.to_string())?

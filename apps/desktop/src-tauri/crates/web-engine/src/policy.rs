@@ -1,11 +1,7 @@
 use url::Url;
 
-pub const APP_HOSTS: [&str; 4] = [
-    "tauri.localhost",
-    "ipc.localhost",
-    "asset.localhost",
-    "nib.localhost",
-];
+pub const APP_HOSTS: [&str; 4] =
+    ["tauri.localhost", "ipc.localhost", "asset.localhost", "nib.localhost"];
 pub const INTERNAL_MARK: &str = "data-tauri-cef-internal";
 pub trait ExtensionUrls {
     fn is_extension(&self, url: &Url) -> bool;
@@ -108,9 +104,7 @@ const SIGNING_IN: &[&str] = &[
     "threeds",
     "challenge",
 ];
-const SIGNING_IN_HOSTS: &[&str] = &[
-    "accounts", "account", "auth", "login", "sso", "id", "secure",
-];
+const SIGNING_IN_HOSTS: &[&str] = &["accounts", "account", "auth", "login", "sso", "id", "secure"];
 #[must_use]
 pub fn signs_in(url: &Url) -> bool {
     let words = |text: &str| {
@@ -121,19 +115,12 @@ pub fn signs_in(url: &Url) -> bool {
             .collect::<Vec<_>>()
     };
     let host = url.host_str().unwrap_or_default();
-    let first = host
-        .split('.')
-        .next()
-        .unwrap_or_default()
-        .to_ascii_lowercase();
+    let first = host.split('.').next().unwrap_or_default().to_ascii_lowercase();
     let path = words(url.path());
     let said = |word: &str| SIGNING_IN.contains(&word) || word.starts_with("oauth");
     SIGNING_IN_HOSTS.contains(&first.as_str())
         || path.iter().any(|word| said(word))
         || path.windows(2).any(|pair| {
-            matches!(
-                (pair[0].as_str(), pair[1].as_str()),
-                ("sign" | "log", "in" | "on")
-            )
+            matches!((pair[0].as_str(), pair[1].as_str()), ("sign" | "log", "in" | "on"))
         })
 }

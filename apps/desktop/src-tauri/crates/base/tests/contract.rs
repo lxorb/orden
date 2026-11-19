@@ -11,10 +11,7 @@ fn a_lane_does_its_work_in_the_order_it_was_handed() {
     for one in 0..10 {
         send.send(one).expect("the lane");
     }
-    assert_eq!(
-        heard.iter().take(10).collect::<Vec<_>>(),
-        (0..10).collect::<Vec<_>>()
-    );
+    assert_eq!(heard.iter().take(10).collect::<Vec<_>>(), (0..10).collect::<Vec<_>>());
 }
 #[test]
 fn work_off_the_runtime_hands_back_what_it_made() {
@@ -24,14 +21,8 @@ fn work_off_the_runtime_hands_back_what_it_made() {
 #[test]
 fn a_folded_path_stays_inside_its_root_and_climbing_out_is_seen() {
     let root = Path::new("/spaces/Work");
-    assert!(paths::inside(
-        root,
-        &paths::folded(Path::new("/spaces/Work/a/../b.md"))
-    ));
-    assert!(!paths::inside(
-        root,
-        &paths::folded(Path::new("/spaces/Work/../Home/b.md"))
-    ));
+    assert!(paths::inside(root, &paths::folded(Path::new("/spaces/Work/a/../b.md"))));
+    assert!(!paths::inside(root, &paths::folded(Path::new("/spaces/Work/../Home/b.md"))));
     assert!(paths::is_markdown(Path::new("a/b.md")));
     assert!(!paths::is_markdown(Path::new("a/b.pdf")));
 }
@@ -53,10 +44,7 @@ fn a_whole_write_lands_whole() {
     let dir = tempfile::tempdir().expect("a folder");
     let target = dir.path().join("a.json");
     paths::write_atomically(&target, b"{}").expect("written");
-    assert_eq!(
-        paths::at_most(&target, 16).expect("read"),
-        Some(b"{}".to_vec())
-    );
+    assert_eq!(paths::at_most(&target, 16).expect("read"), Some(b"{}".to_vec()));
 }
 #[test]
 fn only_the_main_and_numbered_windows_hold_documents() {
@@ -69,10 +57,7 @@ fn bytes_come_raw_or_as_numbers() {
     let raw = InvokeBody::Raw(vec![1, 2]);
     assert_eq!(sent::bytes_sent(&raw).as_deref(), Some(&[1_u8, 2][..]));
     let numbers = InvokeBody::Json(serde_json::json!([3, 255]));
-    assert_eq!(
-        sent::bytes_sent(&numbers).as_deref(),
-        Some(&[3_u8, 255][..])
-    );
+    assert_eq!(sent::bytes_sent(&numbers).as_deref(), Some(&[3_u8, 255][..]));
     assert!(sent::bytes_sent(&InvokeBody::Json(serde_json::json!("x"))).is_none());
 }
 #[test]

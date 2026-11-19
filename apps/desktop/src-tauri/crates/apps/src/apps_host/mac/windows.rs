@@ -34,17 +34,15 @@ impl Placer {
     pub fn start(pid: i32, display: CGDirectDisplayID) -> Placer {
         let ended = Arc::new(AtomicBool::new(false));
         let ending = ended.clone();
-        let _ = std::thread::Builder::new()
-            .name("app windows".to_owned())
-            .spawn(move || {
-                let Some(app) = application(pid) else {
-                    return;
-                };
-                while !ending.load(Ordering::SeqCst) {
-                    place_all(&app, CGDisplayBounds(display));
-                    std::thread::sleep(EVERY);
-                }
-            });
+        let _ = std::thread::Builder::new().name("app windows".to_owned()).spawn(move || {
+            let Some(app) = application(pid) else {
+                return;
+            };
+            while !ending.load(Ordering::SeqCst) {
+                place_all(&app, CGDisplayBounds(display));
+                std::thread::sleep(EVERY);
+            }
+        });
         Placer { ended }
     }
 }
@@ -144,10 +142,9 @@ fn place_all(app: &CFType, screen: CGRect) {
 fn place(window: &CFType, screen: CGRect) {
     let position = CFString::from_static_str("AXPosition");
     let size = CFString::from_static_str("AXSize");
-    let (Some(at), Some(big)) = (
-        geometry::<CGPoint>(window, &position, POINT),
-        geometry::<CGSize>(window, &size, SIZE),
-    ) else {
+    let (Some(at), Some(big)) =
+        (geometry::<CGPoint>(window, &position, POINT), geometry::<CGSize>(window, &size, SIZE))
+    else {
         return;
     };
     let fills = attribute(window, &CFString::from_static_str("AXSubrole"))
@@ -160,10 +157,8 @@ fn place(window: &CFType, screen: CGRect) {
     set_geometry(window, &position, POINT, &goes.origin);
     if fills {
         let landed = geometry::<CGPoint>(window, &position, POINT).unwrap_or(goes.origin);
-        let left = CGSize::new(
-            goes.size.width,
-            (goes.origin.y + goes.size.height - landed.y).max(100.0),
-        );
+        let left =
+            CGSize::new(goes.size.width, (goes.origin.y + goes.size.height - landed.y).max(100.0));
         set_geometry(window, &size, SIZE, &left);
     }
 }

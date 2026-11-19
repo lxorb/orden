@@ -22,10 +22,8 @@ pub fn carry_home(identifier: &str) {
     if identifier != NEW {
         return;
     }
-    let moved: Vec<(PathBuf, PathBuf)> = places()
-        .into_iter()
-        .filter(|(old, new)| merged(old, new))
-        .collect();
+    let moved: Vec<(PathBuf, PathBuf)> =
+        places().into_iter().filter(|(old, new)| merged(old, new)).collect();
     let Some(config) = dirs::config_dir().map(|dir| dir.join(NEW)) else {
         return;
     };
@@ -43,11 +41,9 @@ pub fn carry_home(identifier: &str) {
 fn spaces_folders(config: &Path) -> Vec<PathBuf> {
     let mut out: Vec<PathBuf> = [
         orden_base::paths::folder_named(std::env::var_os(orden_base::paths::SPACES_DIR).as_deref()),
-        fs::read_to_string(config.join(orden_base::paths::SPACES_KEPT))
-            .ok()
-            .and_then(|said| {
-                orden_base::paths::folder_named(Some(std::ffi::OsStr::new(said.trim())))
-            }),
+        fs::read_to_string(config.join(orden_base::paths::SPACES_KEPT)).ok().and_then(|said| {
+            orden_base::paths::folder_named(Some(std::ffi::OsStr::new(said.trim())))
+        }),
         dirs::data_local_dir().map(|dir| dir.join(NEW).join(orden_base::paths::SPACES)),
     ]
     .into_iter()
@@ -60,11 +56,7 @@ fn spaces_folders(config: &Path) -> Vec<PathBuf> {
 fn line_moved(line: &str, pairs: &[(PathBuf, PathBuf)]) -> Option<String> {
     pairs.iter().find_map(|(old, new)| {
         let rest = Path::new(line).strip_prefix(old).ok()?;
-        let moved = if rest.as_os_str().is_empty() {
-            new.clone()
-        } else {
-            new.join(rest)
-        };
+        let moved = if rest.as_os_str().is_empty() { new.clone() } else { new.join(rest) };
         Some(moved.to_string_lossy().into_owned())
     })
 }
@@ -124,21 +116,11 @@ pub fn former_homes(app: tauri::AppHandle) -> Former {
 }
 fn former(identifier: &str) -> Former {
     if identifier != NEW {
-        return Former {
-            homes: Vec::new(),
-            waiting: false,
-            dumped: false,
-            after: None,
-        };
+        return Former { homes: Vec::new(), waiting: false, dumped: false, after: None };
     }
     let pairs = places();
     let said = after_move().and_then(|file| fs::read_to_string(file).ok());
-    Former {
-        homes: homes_of(pairs),
-        waiting: false,
-        dumped: said.is_some(),
-        after: said,
-    }
+    Former { homes: homes_of(pairs), waiting: false, dumped: said.is_some(), after: said }
 }
 #[tauri::command(async)]
 pub fn keep_after_move(text: String) -> Result<(), String> {
@@ -167,15 +149,11 @@ fn homes_of(pairs: Vec<(PathBuf, PathBuf)>) -> Vec<Home> {
 }
 fn places() -> Vec<(PathBuf, PathBuf)> {
     #[cfg_attr(not(target_os = "macos"), allow(unused_mut))]
-    let mut bases: Vec<PathBuf> = [
-        dirs::data_dir(),
-        dirs::config_dir(),
-        dirs::cache_dir(),
-        dirs::data_local_dir(),
-    ]
-    .into_iter()
-    .flatten()
-    .collect();
+    let mut bases: Vec<PathBuf> =
+        [dirs::data_dir(), dirs::config_dir(), dirs::cache_dir(), dirs::data_local_dir()]
+            .into_iter()
+            .flatten()
+            .collect();
     #[cfg(target_os = "macos")]
     if let Some(library) = dirs::home_dir().map(|home| home.join("Library")) {
         for one in ["WebKit", "HTTPStorages", "Logs"] {
@@ -185,16 +163,11 @@ fn places() -> Vec<(PathBuf, PathBuf)> {
     bases.sort();
     bases.dedup();
     #[cfg_attr(not(target_os = "macos"), allow(unused_mut))]
-    let mut pairs: Vec<(PathBuf, PathBuf)> = bases
-        .iter()
-        .map(|base| (base.join(OLD), base.join(NEW)))
-        .collect();
+    let mut pairs: Vec<(PathBuf, PathBuf)> =
+        bases.iter().map(|base| (base.join(OLD), base.join(NEW))).collect();
     #[cfg(target_os = "macos")]
     if let Some(prefs) = dirs::home_dir().map(|home| home.join("Library/Preferences")) {
-        pairs.push((
-            prefs.join(format!("{OLD}.plist")),
-            prefs.join(format!("{NEW}.plist")),
-        ));
+        pairs.push((prefs.join(format!("{OLD}.plist")), prefs.join(format!("{NEW}.plist"))));
     }
     pairs
 }
@@ -222,8 +195,7 @@ fn merged(old: &Path, new: &Path) -> bool {
     any
 }
 fn named(path: Option<&Path>, name: &str) -> bool {
-    path.and_then(Path::file_name)
-        .is_some_and(|one| one == name)
+    path.and_then(Path::file_name).is_some_and(|one| one == name)
 }
 fn profile(old: &Path) -> bool {
     let parent = old.parent();
@@ -244,10 +216,7 @@ fn rebased(text: &str, old: &Path, new: &Path) -> String {
     let (old, new) = (old.to_string_lossy(), new.to_string_lossy());
     let escaped = |path: &str| path.replace('\\', "\\\\");
     let mut text = text.to_owned();
-    for (from, to) in [
-        (old.to_string(), new.to_string()),
-        (escaped(&old), escaped(&new)),
-    ] {
+    for (from, to) in [(old.to_string(), new.to_string()), (escaped(&old), escaped(&new))] {
         for cut in ["/", "\\", "\""] {
             text = text.replace(&format!("{from}{cut}"), &format!("{to}{cut}"));
         }
@@ -280,10 +249,7 @@ mod tests {
         fs::create_dir_all(old.join("Spaces/Work")).unwrap();
         fs::write(old.join("Spaces/Work/Plan.md"), "# Plan").unwrap();
         assert!(merged(&old, &new));
-        assert_eq!(
-            fs::read_to_string(new.join("Spaces/Work/Plan.md")).unwrap(),
-            "# Plan"
-        );
+        assert_eq!(fs::read_to_string(new.join("Spaces/Work/Plan.md")).unwrap(), "# Plan");
         assert!(!old.exists());
         assert!(!merged(&old, &new));
     }
@@ -297,14 +263,8 @@ mod tests {
         fs::write(new.join("settings.json"), "new").unwrap();
         assert!(merged(&old, &new));
         assert!(new.join("Spaces").is_dir());
-        assert_eq!(
-            fs::read_to_string(new.join("settings.json")).unwrap(),
-            "new"
-        );
-        assert_eq!(
-            fs::read_to_string(old.join("settings.json")).unwrap(),
-            "old"
-        );
+        assert_eq!(fs::read_to_string(new.join("settings.json")).unwrap(), "new");
+        assert_eq!(fs::read_to_string(old.join("settings.json")).unwrap(), "old");
     }
     #[test]
     fn a_folder_made_new_by_an_early_start_takes_in_what_the_old_one_still_holds() {
@@ -320,14 +280,8 @@ mod tests {
             fs::read_to_string(new.join("Spaces/Work/Projects/Plan.md")).unwrap(),
             "- [ ] ship"
         );
-        assert_eq!(
-            fs::read_to_string(new.join("Spaces/Work/Same.md")).unwrap(),
-            "new"
-        );
-        assert_eq!(
-            fs::read_to_string(old.join("Spaces/Work/Same.md")).unwrap(),
-            "old"
-        );
+        assert_eq!(fs::read_to_string(new.join("Spaces/Work/Same.md")).unwrap(), "new");
+        assert_eq!(fs::read_to_string(old.join("Spaces/Work/Same.md")).unwrap(), "old");
     }
     #[test]
     fn a_browser_profile_is_left_where_it_is_until_the_app_has_kept_what_the_new_one_holds() {
@@ -338,14 +292,8 @@ mod tests {
             fs::write(dir.join("EBWebView/Default/state"), said).unwrap();
         }
         assert!(!merged(&old, &new));
-        assert_eq!(
-            fs::read_to_string(old.join("EBWebView/Default/state")).unwrap(),
-            "old"
-        );
-        assert_eq!(
-            fs::read_to_string(new.join("EBWebView/Default/state")).unwrap(),
-            "new"
-        );
+        assert_eq!(fs::read_to_string(old.join("EBWebView/Default/state")).unwrap(), "old");
+        assert_eq!(fs::read_to_string(new.join("EBWebView/Default/state")).unwrap(), "new");
     }
     #[test]
     fn a_folder_named_like_a_profile_inside_a_space_is_merged_not_swapped() {
@@ -375,11 +323,8 @@ mod tests {
             format!("{}\n{}\n", was.display(), backup.display()),
         )
         .unwrap();
-        fs::write(
-            home.join(".retired"),
-            format!("{}\n", old.join("Spaces/Gone").display()),
-        )
-        .unwrap();
+        fs::write(home.join(".retired"), format!("{}\n", old.join("Spaces/Gone").display()))
+            .unwrap();
         let pairs = vec![(old.clone(), new.clone())];
         rebase_spaces_home(&home, &pairs);
         rebase_spaces_home(&home, &pairs);
@@ -387,17 +332,10 @@ mod tests {
             fs::read_to_string(home.join("Work/.from")).unwrap(),
             new.join("Spaces/Work").to_string_lossy()
         );
-        assert_eq!(
-            fs::read_to_string(home.join("Else/.from")).unwrap(),
-            "/home/ada/Notes"
-        );
+        assert_eq!(fs::read_to_string(home.join("Else/.from")).unwrap(), "/home/ada/Notes");
         assert_eq!(
             fs::read_to_string(home.join("Work/.converting")).unwrap(),
-            format!(
-                "{}\n{}\n",
-                new.join("Spaces/Work").display(),
-                backup.display()
-            )
+            format!("{}\n{}\n", new.join("Spaces/Work").display(), backup.display())
         );
         assert_eq!(
             fs::read_to_string(home.join(".retired")).unwrap(),
@@ -417,14 +355,8 @@ mod tests {
     #[test]
     fn the_homes_named_are_those_whose_new_folder_is_there() {
         let root = tempfile::tempdir().unwrap();
-        let there = (
-            root.path().join("a").join(OLD),
-            root.path().join("a").join(NEW),
-        );
-        let missing = (
-            root.path().join("b").join(OLD),
-            root.path().join("b").join(NEW),
-        );
+        let there = (root.path().join("a").join(OLD), root.path().join("a").join(NEW));
+        let missing = (root.path().join("b").join(OLD), root.path().join("b").join(NEW));
         fs::create_dir_all(&there.1).unwrap();
         assert_eq!(
             homes_of(vec![there.clone(), missing]),
@@ -441,10 +373,7 @@ mod tests {
         let file = root.path().join("spaces-folder");
         fs::write(&file, old.join("Spaces").to_string_lossy().as_bytes()).unwrap();
         repoint(&file, &old, &new);
-        assert_eq!(
-            fs::read_to_string(&file).unwrap(),
-            new.join("Spaces").to_string_lossy()
-        );
+        assert_eq!(fs::read_to_string(&file).unwrap(), new.join("Spaces").to_string_lossy());
         fs::write(&file, "/home/ada/Notes").unwrap();
         repoint(&file, &old, &new);
         assert_eq!(fs::read_to_string(&file).unwrap(), "/home/ada/Notes");

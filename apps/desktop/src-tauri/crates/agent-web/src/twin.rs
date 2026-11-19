@@ -34,10 +34,9 @@ pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
         cdp::call(twin, "Network.setCookies", &json!({ "cookies": cookies })).map(|_| ())
     });
     if let Err(why) = written {
-        cdp::heard(&twin.label()).held().say(
-            "warning",
-            format!("Orden could not hand this page the reader's logins: {why}"),
-        );
+        cdp::heard(&twin.label())
+            .held()
+            .say("warning", format!("Orden could not hand this page the reader's logins: {why}"));
     }
 }
 fn settable(answer: &Value) -> Vec<Value> {
@@ -81,10 +80,7 @@ mod tests {
         let cookies = settable(&answer);
         assert_eq!(cookies.len(), 2, "a cookie with no name is no cookie");
         assert_eq!(cookies[0]["name"], "sid");
-        assert!(
-            cookies[0].get("expires").is_none(),
-            "a session cookie stays one"
-        );
+        assert!(cookies[0].get("expires").is_none(), "a session cookie stays one");
         assert!(cookies[0].get("size").is_none() && cookies[0].get("session").is_none());
         assert_eq!(cookies[0]["httpOnly"], true);
         assert_eq!(cookies[1]["expires"], 1_900_000_000.0);

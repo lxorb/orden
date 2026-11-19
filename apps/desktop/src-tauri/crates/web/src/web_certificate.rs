@@ -64,9 +64,7 @@ async fn read(view: tauri::Webview) -> Option<Served> {
     let (sending, said) = channel();
     crate::web_tabs::on_the_page(view.app_handle(), view.label(), move |view| {
         let _ = view.with_webview(move |platform| {
-            let read = crate::engine::engine()
-                .ok()
-                .and_then(|engine| (engine.served)(&platform));
+            let read = crate::engine::engine().ok().and_then(|engine| (engine.served)(&platform));
             let _ = sending.send(read);
         });
     })
@@ -79,11 +77,7 @@ async fn read(view: tauri::Webview) -> Option<Served> {
 impl Certificate {
     fn from_chain(secure: bool, separately: bool, chain: &[Vec<u8>]) -> Option<Self> {
         let chain: Vec<Link> = chain.iter().map_while(|der| Link::from_der(der)).collect();
-        (!chain.is_empty()).then_some(Self {
-            secure,
-            separately,
-            chain,
-        })
+        (!chain.is_empty()).then_some(Self { secure, separately, chain })
     }
 }
 impl Link {
@@ -101,11 +95,7 @@ impl Link {
     }
 }
 fn hex(bytes: &[u8]) -> String {
-    bytes
-        .iter()
-        .map(|byte| format!("{byte:02X}"))
-        .collect::<Vec<_>>()
-        .join(":")
+    bytes.iter().map(|byte| format!("{byte:02X}")).collect::<Vec<_>>().join(":")
 }
 #[cfg(test)]
 mod tests {
@@ -137,10 +127,7 @@ mod tests {
             .expect("a chain");
         assert_eq!(said.chain.len(), 1);
         assert!(said.separately);
-        assert_eq!(
-            Certificate::from_chain(true, false, &[vec![0x30, 0x00]]),
-            None
-        );
+        assert_eq!(Certificate::from_chain(true, false, &[vec![0x30, 0x00]]), None);
         assert_eq!(Certificate::from_chain(true, false, &[]), None);
     }
     #[test]
@@ -152,10 +139,7 @@ mod tests {
         assert_eq!(told["secure"], true);
         assert_eq!(told["separately"], false);
         assert_eq!(told["chain"][0]["to"]["name"], "example.test");
-        assert_eq!(
-            told["chain"][0]["by"]["organization"][0],
-            "Orden Test Authority"
-        );
+        assert_eq!(told["chain"][0]["by"]["organization"][0], "Orden Test Authority");
         assert_eq!(told["chain"][1]["root"], false);
         assert_eq!(told["chain"][0]["until"], 1_780_272_000_000_i64);
     }

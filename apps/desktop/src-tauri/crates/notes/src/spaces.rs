@@ -30,10 +30,7 @@ pub fn list_spaces(app: AppHandle) -> Result<Vec<Space>, String> {
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
         if path.is_dir() && !name.starts_with('.') {
-            spaces.push(Space {
-                name,
-                path: path.to_string_lossy().to_string(),
-            });
+            spaces.push(Space { name, path: path.to_string_lossy().to_string() });
         }
     }
     spaces.sort_by_key(|space| space.name.to_lowercase());
@@ -89,24 +86,22 @@ pub fn delete_space(app: AppHandle, path: String) -> Result<(), String> {
 }
 fn space_at(path: &Path) -> Space {
     Space {
-        name: path
-            .file_name()
-            .and_then(OsStr::to_str)
-            .unwrap_or_default()
-            .to_string(),
+        name: path.file_name().and_then(OsStr::to_str).unwrap_or_default().to_string(),
         path: path.to_string_lossy().to_string(),
     }
 }
 fn folder_name(input: &str) -> Option<String> {
     let cleaned: String = input
         .chars()
-        .map(|letter| {
-            if letter.is_control() || r#"<>:"/\|?*"#.contains(letter) {
-                ' '
-            } else {
-                letter
-            }
-        })
+        .map(
+            |letter| {
+                if letter.is_control() || r#"<>:"/\|?*"#.contains(letter) {
+                    ' '
+                } else {
+                    letter
+                }
+            },
+        )
         .collect();
     let collapsed = cleaned.split_whitespace().collect::<Vec<_>>().join(" ");
     let trimmed = collapsed.trim_matches(|letter: char| letter == '.' || letter.is_whitespace());
@@ -120,9 +115,8 @@ fn folder_name(input: &str) -> Option<String> {
         }
         capped.push(letter);
     }
-    let capped = capped
-        .trim_matches(|letter: char| letter == '.' || letter.is_whitespace())
-        .to_string();
+    let capped =
+        capped.trim_matches(|letter: char| letter == '.' || letter.is_whitespace()).to_string();
     if capped.is_empty() {
         return None;
     }
@@ -148,10 +142,7 @@ mod tests {
             .map(|one| one.expect("an entry").file_name())
             .collect();
         assert_eq!(names, vec!["Work"]);
-        assert_eq!(
-            fs::read_to_string(to.join("plan.md")).expect("the note"),
-            "plan"
-        );
+        assert_eq!(fs::read_to_string(to.join("plan.md")).expect("the note"), "plan");
     }
     #[test]
     fn refuses_a_name_another_space_has() {
@@ -173,10 +164,7 @@ mod tests {
     #[test]
     fn a_name_keeps_its_letters_and_loses_what_a_disk_refuses() {
         assert_eq!(folder_name("Journal"), Some("Journal".into()));
-        assert_eq!(
-            folder_name("Work notes 2026"),
-            Some("Work notes 2026".into())
-        );
+        assert_eq!(folder_name("Work notes 2026"), Some("Work notes 2026".into()));
         assert_eq!(folder_name("a/b\\c:d"), Some("a b c d".into()));
         assert_eq!(folder_name("what? yes!"), Some("what yes!".into()));
         assert_eq!(folder_name("a<b>c|d*e\"f"), Some("a b c d e f".into()));
@@ -196,24 +184,15 @@ mod tests {
         assert_eq!(folder_name("nul"), Some("nul space".into()));
         assert_eq!(folder_name("COM1"), Some("COM1 space".into()));
         assert_eq!(folder_name("Console"), Some("Console".into()));
-        assert_eq!(
-            folder_name("Notizen über Bücher"),
-            Some("Notizen über Bücher".into())
-        );
+        assert_eq!(folder_name("Notizen über Bücher"), Some("Notizen über Bücher".into()));
         assert_eq!(folder_name("日本語"), Some("日本語".into()));
     }
     #[test]
     fn a_name_is_capped_to_what_a_file_system_holds() {
         let long = "x".repeat(200);
-        assert_eq!(
-            folder_name(&long).map(|name| name.chars().count()),
-            Some(MAX_NAME)
-        );
+        assert_eq!(folder_name(&long).map(|name| name.chars().count()), Some(MAX_NAME));
         let named = folder_name(&"🌲".repeat(64)).expect("a name");
         assert!(named.len() <= 200, "{}", named.len());
-        assert_eq!(
-            folder_name(&"日".repeat(64)).map(|one| one.chars().count()),
-            Some(64)
-        );
+        assert_eq!(folder_name(&"日".repeat(64)).map(|one| one.chars().count()), Some(64));
     }
 }

@@ -34,9 +34,7 @@ pub fn hand(engine: Engine) {
     let _ = ENGINE.set(engine);
 }
 pub fn engine() -> Result<&'static Engine, String> {
-    ENGINE
-        .get()
-        .ok_or_else(|| "the engine has not started".to_owned())
+    ENGINE.get().ok_or_else(|| "the engine has not started".to_owned())
 }
 pub fn zooms(page: Page, zooms: Zooms) -> Page {
     match engine() {

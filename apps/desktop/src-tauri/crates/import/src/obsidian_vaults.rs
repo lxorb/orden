@@ -89,10 +89,7 @@ fn dated_in(text: &str) -> Vec<(i64, PathBuf)> {
         .values()
         .filter_map(|vault| {
             let path = vault.get("path")?.as_str()?;
-            let when = vault
-                .get("ts")
-                .and_then(serde_json::Value::as_i64)
-                .unwrap_or(0);
+            let when = vault.get("ts").and_then(serde_json::Value::as_i64).unwrap_or(0);
             Some((when, PathBuf::from(path)))
         })
         .collect();
@@ -109,9 +106,7 @@ fn known(vault: &str, listed: &[PathBuf]) -> Result<PathBuf, String> {
 }
 fn file_in(root: &Path, path: &str) -> Result<PathBuf, String> {
     let asked = Path::new(path);
-    let plain = asked
-        .components()
-        .all(|part| matches!(part, Component::Normal(_)));
+    let plain = asked.components().all(|part| matches!(part, Component::Normal(_)));
     if !plain {
         return Err(format!("{path} is not a file inside the vault"));
     }
@@ -151,10 +146,7 @@ fn walk(root: &Path, folder: &Path, depth: usize, found: &mut Vec<VaultFile>) {
             walk(root, &path, depth + 1, found);
         } else if kind.is_file() {
             let size = entry.metadata().map_or(0, |one| one.len());
-            found.push(VaultFile {
-                path: relative,
-                size,
-            });
+            found.push(VaultFile { path: relative, size });
             if found.len() >= MOST_FILES {
                 return;
             }
@@ -163,10 +155,8 @@ fn walk(root: &Path, folder: &Path, depth: usize, found: &mut Vec<VaultFile>) {
 }
 fn relative(root: &Path, path: &Path) -> Option<String> {
     let rest = path.strip_prefix(root).ok()?;
-    let parts: Option<Vec<&str>> = rest
-        .components()
-        .map(|part| part.as_os_str().to_str())
-        .collect();
+    let parts: Option<Vec<&str>> =
+        rest.components().map(|part| part.as_os_str().to_str()).collect();
     Some(parts?.join("/"))
 }
 fn left(relative: &str, is_dir: bool) -> bool {
@@ -177,9 +167,7 @@ fn left(relative: &str, is_dir: bool) -> bool {
         let top = rest.split('/').next().unwrap_or(rest);
         let panes = name.strip_suffix(".json").is_some_and(|stem| {
             stem.eq_ignore_ascii_case("workspace")
-                || stem
-                    .get(..10)
-                    .is_some_and(|start| start.eq_ignore_ascii_case("workspace-"))
+                || stem.get(..10).is_some_and(|start| start.eq_ignore_ascii_case("workspace-"))
         });
         return rubbish
             || matches!(top, "plugins" | "themes" | "cache")
@@ -275,12 +263,7 @@ mod tests {
 
         let here = tempfile::tempdir().expect("a folder");
         let vault = here.path();
-        if fs::write(
-            vault.join(std::ffi::OsStr::from_bytes(b"Caf\xe9.md")),
-            "# Cafe",
-        )
-        .is_err()
-        {
+        if fs::write(vault.join(std::ffi::OsStr::from_bytes(b"Caf\xe9.md")), "# Cafe").is_err() {
             return;
         }
         fs::write(vault.join("Read me.md"), "x").expect("a note");

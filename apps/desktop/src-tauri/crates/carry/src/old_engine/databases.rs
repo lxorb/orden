@@ -15,10 +15,7 @@ const EIGHT_BIT: u32 = 0x8000_0000;
 pub(super) fn carry_chromium(old: &Path, profile: &Path) -> Result<bool, String> {
     let to = profile.join("IndexedDB");
     let mut carried = false;
-    for entry in fs::read_dir(old)
-        .map_err(|error| error.to_string())?
-        .flatten()
-    {
+    for entry in fs::read_dir(old).map_err(|error| error.to_string())?.flatten() {
         let name = entry.file_name();
         if !name.to_string_lossy().starts_with(CHROMIUM_PREFIX) || !entry.path().is_dir() {
             continue;
@@ -80,10 +77,7 @@ fn webkit_databases(dir: &Path, depth: usize, found: &mut Vec<PathBuf>) {
 }
 fn of_the_app(database: &Path) -> bool {
     let folder = database.parent().and_then(Path::parent);
-    if folder
-        .and_then(Path::file_name)
-        .is_some_and(|name| name == WEBKIT_LEGACY_ORIGIN)
-    {
+    if folder.and_then(Path::file_name).is_some_and(|name| name == WEBKIT_LEGACY_ORIGIN) {
         return true;
     }
     folder
@@ -113,9 +107,7 @@ fn webkit_database(path: &Path) -> Option<Value> {
         .flatten()
         .collect();
     let said = |key: &str| {
-        info.iter()
-            .find(|(one, _)| one == key)
-            .and_then(|(_, value)| text_of(value.clone()))
+        info.iter().find(|(one, _)| one == key).and_then(|(_, value)| text_of(value.clone()))
     };
     let name = said("DatabaseName")?;
     let version: u64 = said("DatabaseVersion")?.parse().ok()?;
@@ -124,9 +116,7 @@ fn webkit_database(path: &Path) -> Option<Value> {
     let listed: Vec<(i64, Column, Vec<u8>, bool)> = db
         .prepare("SELECT id, name, keyPath, autoInc FROM ObjectStoreInfo ORDER BY id")
         .ok()?
-        .query_map([], |row| {
-            Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
-        })
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)))
         .ok()?
         .flatten()
         .collect();
@@ -175,11 +165,8 @@ fn webkit_database(path: &Path) -> Option<Value> {
                 _ => skipped += 1,
             }
         }
-        let indexes: Vec<&Value> = indexes
-            .iter()
-            .filter(|(one, _)| *one == id)
-            .map(|(_, index)| index)
-            .collect();
+        let indexes: Vec<&Value> =
+            indexes.iter().filter(|(one, _)| *one == id).map(|(_, index)| index).collect();
         stores.push(json!({
             "name": text_of(store)?,
             "keyPath": key_path(&path)?,
@@ -204,11 +191,7 @@ fn key_path(bytes: &[u8]) -> Option<Value> {
         0 => Some(Value::Null),
         1 => Some(Value::String(said.get("string")?.as_string()?.to_owned())),
         2 => Some(Value::Array(
-            said.get("array")?
-                .as_array()?
-                .iter()
-                .map(one)
-                .collect::<Option<Vec<_>>>()?,
+            said.get("array")?.as_array()?.iter().map(one).collect::<Option<Vec<_>>>()?,
         )),
         _ => None,
     }
@@ -234,9 +217,7 @@ fn key_of(bytes: &[u8]) -> Option<(Value, &[u8])> {
         }
         0x60 => {
             let (length, rest) = take::<4>(rest)?;
-            let size = usize::try_from(u32::from_le_bytes(length))
-                .ok()?
-                .checked_mul(2)?;
+            let size = usize::try_from(u32::from_le_bytes(length)).ok()?.checked_mul(2)?;
             let text = super::utf16(rest.get(..size)?)?;
             Some((Value::String(text), &rest[size..]))
         }
@@ -277,11 +258,7 @@ struct Script<'a> {
 }
 impl Script<'_> {
     fn read(bytes: &[u8]) -> Option<Value> {
-        let mut script = Script {
-            bytes,
-            at: 0,
-            pool: Vec::new(),
-        };
+        let mut script = Script { bytes, at: 0, pool: Vec::new() };
         script.u32()?;
         let value = script.value()?;
         (script.at == bytes.len()).then_some(value)
@@ -328,10 +305,7 @@ impl Script<'_> {
         let text = if length & EIGHT_BIT == 0 {
             super::utf16(self.slice(units.checked_mul(2)?)?)?
         } else {
-            self.slice(units)?
-                .iter()
-                .map(|one| char::from(*one))
-                .collect()
+            self.slice(units)?.iter().map(|one| char::from(*one)).collect()
         };
         self.pool.push(text.clone());
         Some(Text::Said(text))
@@ -431,12 +405,7 @@ mod tests {
         found.iter().find(|one| one["name"] == name).expect(name)
     }
     fn store<'a>(database: &'a serde_json::Value, name: &str) -> &'a serde_json::Value {
-        database["stores"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .find(|one| one["name"] == name)
-            .expect(name)
+        database["stores"].as_array().unwrap().iter().find(|one| one["name"] == name).expect(name)
     }
     #[test]
     fn what_the_last_release_kept_in_webkit_comes_back_as_it_was_written() {
@@ -446,22 +415,11 @@ mod tests {
         assert_eq!(ci["skipped"], 0);
         let kept = store(ci, "kept");
         assert_eq!(kept["keyPath"], json!(null));
-        let at = kept["keys"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .position(|key| key == "owner-1")
-            .unwrap();
+        let at = kept["keys"].as_array().unwrap().iter().position(|key| key == "owner-1").unwrap();
         let rich = &kept["values"][at];
-        assert_eq!(
-            rich["doc"],
-            json!({ "$orden": "bytes", "said": "AQID+gD/" })
-        );
+        assert_eq!(rich["doc"], json!({ "$orden": "bytes", "said": "AQID+gD/" }));
         assert_eq!(rich["server"], json!({ "$orden": "bytes", "said": "" }));
-        assert_eq!(
-            rich["wrote"],
-            json!([{ "$orden": "bytes", "said": "CQg=" }])
-        );
+        assert_eq!(rich["wrote"], json!([{ "$orden": "bytes", "said": "CQg=" }]));
         assert_eq!(rich["text"], "Grüße ✓ 😀");
         assert_eq!(rich["again"], "plain words");
         assert_eq!(rich["n"], 42);
@@ -473,18 +431,9 @@ mod tests {
         assert_eq!(rich["t"], true);
         assert_eq!(rich["no"], false);
         assert_eq!(rich["nil"], json!(null));
-        assert_eq!(
-            rich["nothing"],
-            json!({ "$orden": "undefined", "said": null })
-        );
-        assert_eq!(
-            rich["nested"],
-            json!({ "a": [1, "x", { "b": 2 }], "empty": {}, "list": [] })
-        );
-        assert!(kept["keys"]
-            .as_array()
-            .unwrap()
-            .contains(&json!(["arr", 1.0])));
+        assert_eq!(rich["nothing"], json!({ "$orden": "undefined", "said": null }));
+        assert_eq!(rich["nested"], json!({ "a": [1, "x", { "b": 2 }], "empty": {}, "list": [] }));
+        assert!(kept["keys"].as_array().unwrap().contains(&json!(["arr", 1.0])));
         assert!(kept["keys"].as_array().unwrap().contains(&json!(5.0)));
         assert!(kept["values"].as_array().unwrap().contains(&json!("")));
         let items = store(ci, "items");
@@ -504,10 +453,7 @@ mod tests {
         assert_eq!(pass["skipped"], 0);
         let keyring = store(pass, "keyring");
         assert_eq!(keyring["keys"], json!(["this"]));
-        assert_eq!(
-            keyring["values"][0]["keyring"]["password"]["sealed"],
-            "U0VBTEVE"
-        );
+        assert_eq!(keyring["values"][0]["keyring"]["password"]["sealed"], "U0VBTEVE");
         assert_eq!(keyring["values"][0]["pending"], true);
         let device = store(pass, "device");
         assert_eq!(device["values"][0]["seal"]["way"], "pin");
@@ -518,10 +464,7 @@ mod tests {
         let bytes =
             base64::Engine::decode(&base64::engine::general_purpose::STANDARD, bytes).unwrap();
         assert_eq!(bytes.len(), 70000);
-        assert!(bytes
-            .iter()
-            .enumerate()
-            .all(|(at, one)| usize::from(*one) == at % 251));
+        assert!(bytes.iter().enumerate().all(|(at, one)| usize::from(*one) == at % 251));
     }
     #[test]
     fn a_value_or_key_it_does_not_know_is_left_out_rather_than_guessed() {
@@ -529,10 +472,7 @@ mod tests {
         assert_eq!(Script::read(&[15, 0, 0, 0, 16, 3, 0, 0, 0x80, b'a']), None);
         assert_eq!(Script::read(&[15, 0, 0, 0, 9, 9]), None);
         assert_eq!(record_key(&[0, 0x80, 1]), None);
-        assert_eq!(
-            record_key(&[0, 0x60, 1, 0, 0, 0, b'a', 0]),
-            Some(json!("a"))
-        );
+        assert_eq!(record_key(&[0, 0x60, 1, 0, 0, 0, b'a', 0]), Some(json!("a")));
         assert_eq!(key_path(b"not a plist"), None);
     }
     #[test]
@@ -551,9 +491,7 @@ mod tests {
         assert_eq!(fs::read(carried.join("000003.log")).unwrap(), b"old");
         assert_eq!(fs::read(carried.join("deeper/blob")).unwrap(), b"part");
         assert!(!carried.join("LOCK").exists());
-        assert!(!profile
-            .join("IndexedDB/https_example.com_0.indexeddb.leveldb")
-            .exists());
+        assert!(!profile.join("IndexedDB/https_example.com_0.indexeddb.leveldb").exists());
         fs::write(carried.join("000003.log"), b"cef").unwrap();
         assert_eq!(carry_chromium(&old, &profile), Ok(false));
         assert_eq!(fs::read(carried.join("000003.log")).unwrap(), b"cef");

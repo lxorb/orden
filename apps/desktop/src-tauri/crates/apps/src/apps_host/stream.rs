@@ -75,8 +75,7 @@ pub fn cannot_text(why: &str) -> String {
 }
 fn provider() -> Arc<CryptoProvider> {
     static ONE: OnceLock<Arc<CryptoProvider>> = OnceLock::new();
-    ONE.get_or_init(|| Arc::new(str0m::crypto::from_feature_flags()))
-        .clone()
+    ONE.get_or_init(|| Arc::new(str0m::crypto::from_feature_flags())).clone()
 }
 struct Shared {
     rtc: Rtc,
@@ -140,12 +139,7 @@ pub struct Peer {
 }
 impl Peer {
     pub fn answer(source: Source, offer: &str) -> Result<(Peer, String), Cannot> {
-        let Source {
-            screen,
-            clipboard,
-            sound,
-            group,
-        } = source;
+        let Source { screen, clipboard, sound, group } = source;
         if encoder::ffmpeg().is_none() {
             return Err(Cannot::Encoder);
         }
@@ -162,19 +156,13 @@ impl Peer {
             .set_crypto_provider(provider())
             .build(now);
         let sockets = gather(&mut rtc)?;
-        let answer = rtc
-            .sdp_api()
-            .accept_offer(offer)
-            .map_err(|_| Cannot::Offer)?
-            .to_sdp_string();
+        let answer = rtc.sdp_api().accept_offer(offer).map_err(|_| Cannot::Offer)?.to_sdp_string();
         if !answers_video(&answer) {
             return Err(Cannot::Offer);
         }
         let display = screen.held().display.clone();
-        let listening: Vec<UdpSocket> = sockets
-            .iter()
-            .filter_map(|socket| socket.try_clone().ok())
-            .collect();
+        let listening: Vec<UdpSocket> =
+            sockets.iter().filter_map(|socket| socket.try_clone().ok()).collect();
         let inner = Arc::new(Inner {
             shared: Mutex::new(Shared {
                 rtc,
@@ -305,10 +293,7 @@ fn gather(rtc: &mut Rtc) -> Result<Vec<UdpSocket>, Cannot> {
                 scope.spawn(move || Some((stun::reflexive(socket, stun::SERVER)?, local)))
             })
             .collect();
-        asking
-            .into_iter()
-            .filter_map(|one| one.join().ok().flatten())
-            .collect()
+        asking.into_iter().filter_map(|one| one.join().ok().flatten()).collect()
     });
     for (outside, local) in seen {
         if let Ok(candidate) = Candidate::server_reflexive(outside, local, "udp") {
@@ -432,10 +417,7 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
             let decodes: Vec<Made> = offered.iter().map(|&(made, _)| made).collect();
             let chosen = encoder::chosen(shared.working, &decodes);
             let pt = chosen.and_then(|one| {
-                offered
-                    .iter()
-                    .find(|&&(made, _)| made == one.made)
-                    .map(|&(_, pt)| pt)
+                offered.iter().find(|&&(made, _)| made == one.made).map(|&(_, pt)| pt)
             });
             if let (Some(chosen), Some(pt)) = (chosen, pt) {
                 shared.video = Some((added.mid, pt, chosen));
@@ -474,13 +456,8 @@ fn heard(shared: &mut Shared, event: Event) -> bool {
                 InputEvent::Share { clipboard } => shared.sharing = clipboard,
                 InputEvent::Ping { at } => {
                     shared.pinged = Some(Instant::now());
-                    let pong = pong_text(
-                        at,
-                        shared.began_wall,
-                        wall_now(),
-                        shared.video,
-                        shared.usage,
-                    );
+                    let pong =
+                        pong_text(at, shared.began_wall, wall_now(), shared.video, shared.usage);
                     write_channel(shared, &pong);
                 }
                 InputEvent::Clipboard { text } => {
@@ -607,9 +584,7 @@ fn keep_time(inner: &Arc<Inner>) {
         let sampling = shared
             .group
             .filter(|_| {
-                shared
-                    .pinged
-                    .is_some_and(|at| now.duration_since(at) < SAMPLED_AFTER_A_PING)
+                shared.pinged.is_some_and(|at| now.duration_since(at) < SAMPLED_AFTER_A_PING)
             })
             .filter(|_| sampled.is_none_or(|at| now.duration_since(at) >= SAMPLE_EVERY));
         let mut goes_on = shared.rtc.is_alive();
@@ -698,10 +673,7 @@ fn pictures(inner: &Arc<Inner>) {
     };
     inner.lock().news = Some(tell);
     let mut encoding: Option<Encoding> = None;
-    let mut owed = Owed {
-        drawn: true,
-        whole: false,
-    };
+    let mut owed = Owed { drawn: true, whole: false };
     let mut last: Option<Instant> = None;
     'reading: while !inner.over() {
         let fps = encoder::frame_rate(inner.screen().hz);
@@ -731,10 +703,8 @@ fn pictures(inner: &Arc<Inner>) {
         let Ok((image, size)) = capture.grab() else {
             break;
         };
-        let whole_now = owed.whole
-            && encoding
-                .as_ref()
-                .is_none_or(|one| now >= one.began + WHOLE_AT_MOST);
+        let whole_now =
+            owed.whole && encoding.as_ref().is_none_or(|one| now >= one.began + WHOLE_AT_MOST);
         let fresh = whole_now || encoding.as_ref().is_none_or(|one| one.size != size);
         if fresh {
             let Some(started) = start_encoder(inner, chosen, size, fps) else {
@@ -780,13 +750,7 @@ fn start_encoder(
     let seen = Arc::new(Mutex::new(VecDeque::new()));
     let timing = seen.clone();
     std::thread::spawn(move || send_frames(&sending, made, chosen.made, generation, &timing));
-    Some(Encoding {
-        child,
-        frames,
-        size,
-        began: Instant::now(),
-        seen,
-    })
+    Some(Encoding { child, frames, size, began: Instant::now(), seen })
 }
 fn send_frames(
     inner: &Arc<Inner>,
@@ -861,10 +825,8 @@ fn send_frame(inner: &Arc<Inner>, frame: Vec<u8>, seen: Instant) {
     let now = Instant::now();
     let ticks = seen.saturating_duration_since(inner.began).as_micros() * 9 / 100;
     let time = MediaTime::from_90khz(u64::try_from(ticks).unwrap_or(u64::MAX));
-    let written = shared
-        .rtc
-        .writer(mid)
-        .is_some_and(|writer| writer.write(pt, now, time, frame).is_ok());
+    let written =
+        shared.rtc.writer(mid).is_some_and(|writer| writer.write(pt, now, time, frame).is_ok());
     if written {
         drive(&mut shared);
     }
@@ -881,10 +843,7 @@ fn ivf_header(from: &mut impl Read) -> io::Result<()> {
     }
     let length = usize::from(u16::from_le_bytes([header[6], header[7]]));
     if length > 32 {
-        io::copy(
-            &mut from.take(u64::try_from(length - 32).unwrap_or(0)),
-            &mut io::sink(),
-        )?;
+        io::copy(&mut from.take(u64::try_from(length - 32).unwrap_or(0)), &mut io::sink())?;
     }
     Ok(())
 }
@@ -894,10 +853,7 @@ fn ivf_frame(from: &mut impl Read) -> io::Result<Vec<u8>> {
     let length = u32::from_le_bytes([header[0], header[1], header[2], header[3]]);
     let length = usize::try_from(length).unwrap_or(usize::MAX);
     if length > LARGEST_FRAME {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "frame too large",
-        ));
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "frame too large"));
     }
     let mut frame = vec![0_u8; length];
     from.read_exact(&mut frame)?;
@@ -913,26 +869,11 @@ mod tests {
         let every = Duration::from_millis(33);
         let nothing = Owed::default();
         assert_eq!(nothing.due(now, None, every, None), None);
-        assert_eq!(
-            nothing.due(now, Some(now), every, Some(now)),
-            Some(now + STILL_EVERY)
-        );
-        let drawn = Owed {
-            drawn: true,
-            whole: false,
-        };
-        assert_eq!(
-            drawn.due(now, Some(now), every, Some(now)),
-            Some(now + every)
-        );
-        let whole = Owed {
-            drawn: false,
-            whole: true,
-        };
-        assert_eq!(
-            whole.due(now, Some(now), every, Some(now)),
-            Some(now + WHOLE_AT_MOST)
-        );
+        assert_eq!(nothing.due(now, Some(now), every, Some(now)), Some(now + STILL_EVERY));
+        let drawn = Owed { drawn: true, whole: false };
+        assert_eq!(drawn.due(now, Some(now), every, Some(now)), Some(now + every));
+        let whole = Owed { drawn: false, whole: true };
+        assert_eq!(whole.due(now, Some(now), every, Some(now)), Some(now + WHOLE_AT_MOST));
     }
     #[cfg(target_os = "linux")]
     use std::process::Command;
@@ -994,11 +935,7 @@ mod tests {
             1000.0,
             1250.5,
             None,
-            Some(orden_base::usage::Usage {
-                cpu: 12.5,
-                memory: 1024,
-                gpu: None,
-            }),
+            Some(orden_base::usage::Usage { cpu: 12.5, memory: 1024, gpu: None }),
         ))
         .unwrap();
         assert_eq!(said["t"], "pong");
@@ -1014,10 +951,7 @@ mod tests {
     #[test]
     fn says_its_answer_and_why_it_cannot() {
         assert_eq!(answer_text("v=0\r\n"), r#"{"answer":"v=0\r\n"}"#);
-        assert_eq!(
-            cannot_text(Cannot::Encoder.word()),
-            r#"{"cannot":"encoder"}"#
-        );
+        assert_eq!(cannot_text(Cannot::Encoder.word()), r#"{"cannot":"encoder"}"#);
     }
     #[test]
     fn names_no_address_a_candidate_cannot_carry() {
@@ -1033,21 +967,10 @@ mod tests {
         if encoder::ffmpeg().is_none() {
             return;
         }
-        let screen = Arc::new(Mutex::new(Screen {
-            display: ":1".to_owned(),
-            hz: 60.0,
-        }));
+        let screen = Arc::new(Mutex::new(Screen { display: ":1".to_owned(), hz: 60.0 }));
         assert_eq!(
-            Peer::answer(
-                Source {
-                    screen,
-                    clipboard: None,
-                    sound: None,
-                    group: None,
-                },
-                "not sdp"
-            )
-            .err(),
+            Peer::answer(Source { screen, clipboard: None, sound: None, group: None }, "not sdp")
+                .err(),
             Some(Cannot::Offer)
         );
     }
@@ -1067,10 +990,7 @@ mod tests {
         let answer = host.sdp_api().accept_offer(offer).unwrap();
         viewer
             .sdp_api()
-            .accept_answer(
-                pending,
-                SdpAnswer::from_sdp_string(&answer.to_sdp_string()).unwrap(),
-            )
+            .accept_answer(pending, SdpAnswer::from_sdp_string(&answer.to_sdp_string()).unwrap())
             .unwrap();
         host.add_remote_candidate(Candidate::host(viewer_at, "udp").unwrap());
         viewer.add_remote_candidate(Candidate::host(host_at, "udp").unwrap());
@@ -1078,11 +998,8 @@ mod tests {
         let until = Instant::now() + Duration::from_secs(10);
         while !(connected && video.is_some()) && Instant::now() < until {
             for (index, to) in [(0, viewer_at), (1, host_at)] {
-                let (one, other) = if index == 0 {
-                    (&mut host, &mut viewer)
-                } else {
-                    (&mut viewer, &mut host)
-                };
+                let (one, other) =
+                    if index == 0 { (&mut host, &mut viewer) } else { (&mut viewer, &mut host) };
                 loop {
                     match one.poll_output().unwrap() {
                         Output::Timeout(at) => {
@@ -1111,19 +1028,9 @@ mod tests {
             }
         }
         let writer = host.writer(mid).unwrap();
-        let pt = writer
-            .payload_params()
-            .find(|params| params.spec().codec == Codec::Vp8)
-            .unwrap()
-            .pt();
-        writer
-            .write(
-                pt,
-                Instant::now(),
-                MediaTime::from_90khz(0),
-                vec![0x10, 0, 0],
-            )
-            .unwrap();
+        let pt =
+            writer.payload_params().find(|params| params.spec().codec == Codec::Vp8).unwrap().pt();
+        writer.write(pt, Instant::now(), MediaTime::from_90khz(0), vec![0x10, 0, 0]).unwrap();
         let mut sent = 0;
         while let Output::Transmit(datagram) = next_output(&mut host).unwrap() {
             sent += 1;
@@ -1142,18 +1049,12 @@ mod tests {
     }
     fn rtc(vp8: bool) -> Rtc {
         let config = RtcConfig::new();
-        let config = if vp8 {
-            config.clear_codecs().enable_vp8(true)
-        } else {
-            config
-        };
+        let config = if vp8 { config.clear_codecs().enable_vp8(true) } else { config };
         config.set_crypto_provider(provider()).build(Instant::now())
     }
     fn hand_over(other: &mut Rtc, sent: &str0m::net::Transmit, to: SocketAddr) {
         let came = Receive::new(Protocol::Udp, sent.source, to, &sent.contents).unwrap();
-        other
-            .handle_input(Input::Receive(Instant::now(), came))
-            .unwrap();
+        other.handle_input(Input::Receive(Instant::now(), came)).unwrap();
     }
     #[test]
     fn reads_whether_the_answer_sends_a_video() {
@@ -1167,20 +1068,12 @@ mod tests {
             }
             change.add_channel("input".to_owned());
             let (offer, _) = change.apply().unwrap();
-            rtc(true)
-                .sdp_api()
-                .accept_offer(offer)
-                .unwrap()
-                .to_sdp_string()
+            rtc(true).sdp_api().accept_offer(offer).unwrap().to_sdp_string()
         };
         assert!(answers_video(&answer_to(true)));
         assert!(!answers_video(&answer_to(false)));
-        assert!(!answers_video(
-            "m=video 0 UDP/TLS/RTP/SAVPF 96\r\na=rtpmap:96 VP8/90000\r\n"
-        ));
-        assert!(!answers_video(
-            "m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=rtpmap:96 AV1/90000\r\n"
-        ));
+        assert!(!answers_video("m=video 0 UDP/TLS/RTP/SAVPF 96\r\na=rtpmap:96 VP8/90000\r\n"));
+        assert!(!answers_video("m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=rtpmap:96 AV1/90000\r\n"));
     }
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     fn vp8(frame: &[u8]) -> (bool, Option<(u16, u16)>) {
@@ -1221,12 +1114,7 @@ mod tests {
             change.add_channel("input".to_owned());
             let (offer, pending) = change.apply().unwrap();
             let (peer, answer) = Peer::answer(
-                Source {
-                    screen,
-                    clipboard,
-                    sound,
-                    group: None,
-                },
+                Source { screen, clipboard, sound, group: None },
                 &offer.to_sdp_string(),
             )
             .unwrap();
@@ -1235,9 +1123,7 @@ mod tests {
                 .accept_answer(pending, SdpAnswer::from_sdp_string(&answer).unwrap())
                 .unwrap();
             peer.candidate(&mine.to_sdp_string());
-            socket
-                .set_read_timeout(Some(Duration::from_millis(10)))
-                .unwrap();
+            socket.set_read_timeout(Some(Duration::from_millis(10))).unwrap();
             (peer, Viewer { rtc, socket, local }, mid, heard)
         }
         fn run(
@@ -1253,9 +1139,7 @@ mod tests {
                     match self.rtc.poll_output().unwrap() {
                         Output::Timeout(_) => break,
                         Output::Transmit(datagram) => {
-                            let _ = self
-                                .socket
-                                .send_to(&datagram.contents, datagram.destination);
+                            let _ = self.socket.send_to(&datagram.contents, datagram.destination);
                         }
                         Output::Event(event) => heard(&mut self.rtc, event),
                     }
@@ -1302,9 +1186,7 @@ mod tests {
             let heard = |rtc: &mut Rtc, event: Event, shape: &mut bool| match event {
                 Event::ChannelOpen(id, _) => {
                     if let Some(mut channel) = rtc.channel(id) {
-                        channel
-                            .write(false, br#"{"t":"move","x":100,"y":50}"#)
-                            .unwrap();
+                        channel.write(false, br#"{"t":"move","x":100,"y":50}"#).unwrap();
                     }
                 }
                 Event::ChannelData(data) => {
@@ -1330,30 +1212,16 @@ mod tests {
             );
             assert!(shape || shaped, "the pointer's shape came");
             frames.borrow_mut().clear();
-            viewer.run(
-                STILL_EVERY * 2,
-                |rtc, event| heard(rtc, event, &mut shaped),
-                || false,
-            );
+            viewer.run(STILL_EVERY * 2, |rtc, event| heard(rtc, event, &mut shaped), || false);
             assert!(
                 frames.borrow().len() <= 3,
                 "{} frames of a still screen, more than it is sent again",
                 frames.borrow().len()
             );
             let pen = x.generate_id().unwrap();
-            x.create_gc(pen, root, &CreateGCAux::new().foreground(0x00ff_0000))
+            x.create_gc(pen, root, &CreateGCAux::new().foreground(0x00ff_0000)).unwrap();
+            x.poly_fill_rectangle(root, pen, &[Rectangle { x: 0, y: 0, width: 40, height: 40 }])
                 .unwrap();
-            x.poly_fill_rectangle(
-                root,
-                pen,
-                &[Rectangle {
-                    x: 0,
-                    y: 0,
-                    width: 40,
-                    height: 40,
-                }],
-            )
-            .unwrap();
             x.flush().unwrap();
             let drawn = viewer.run(
                 Duration::from_secs(5),
@@ -1379,12 +1247,7 @@ mod tests {
             let resized = viewer.run(
                 Duration::from_secs(5),
                 |rtc, event| heard(rtc, event, &mut shaped),
-                || {
-                    frames
-                        .borrow()
-                        .iter()
-                        .any(|one| vp8(one).1 == Some((400, 300)))
-                },
+                || frames.borrow().iter().any(|one| vp8(one).1 == Some((400, 300))),
             );
             assert!(resized, "a key frame of the new size came");
             assert!(!peer.ended());
@@ -1414,10 +1277,7 @@ mod tests {
                 Viewer::connect(display.name(), display.clipboard(), None);
             let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
             let root = x.setup().roots[number].root;
-            let atoms = super::super::clipboard::Atoms::new(&x)
-                .unwrap()
-                .reply()
-                .unwrap();
+            let atoms = super::super::clipboard::Atoms::new(&x).unwrap().reply().unwrap();
             let window = x.generate_id().unwrap();
             x.create_window(
                 0,
@@ -1434,13 +1294,7 @@ mod tests {
             )
             .unwrap();
             x.flush().unwrap();
-            let owner = || {
-                x.get_selection_owner(atoms.CLIPBOARD)
-                    .unwrap()
-                    .reply()
-                    .unwrap()
-                    .owner
-            };
+            let owner = || x.get_selection_owner(atoms.CLIPBOARD).unwrap().reply().unwrap().owner;
             let channel = std::cell::Cell::new(None);
             let copied = std::cell::RefCell::new(Vec::<String>::new());
             let heard = |_: &mut Rtc, event: Event| match event {
@@ -1462,10 +1316,7 @@ mod tests {
             viewer.run(Duration::from_millis(500), heard, || false);
             assert_eq!(owner(), NONE);
             say(&mut viewer, br#"{"t":"share","clipboard":true}"#);
-            say(
-                &mut viewer,
-                br#"{"t":"clipboard","text":"from the holder"}"#,
-            );
+            say(&mut viewer, br#"{"t":"clipboard","text":"from the holder"}"#);
             assert!(viewer.run(Duration::from_secs(5), heard, || owner() != NONE));
             x.convert_selection(
                 window,
@@ -1490,8 +1341,7 @@ mod tests {
                 pasted.is_some()
             });
             assert_eq!(pasted.as_deref(), Some("from the holder"));
-            x.set_selection_owner(window, atoms.CLIPBOARD, x11rb::CURRENT_TIME)
-                .unwrap();
+            x.set_selection_owner(window, atoms.CLIPBOARD, x11rb::CURRENT_TIME).unwrap();
             x.flush().unwrap();
             let came = viewer.run(Duration::from_secs(5), heard, || {
                 if let Ok(Some(x11rb::protocol::Event::SelectionRequest(asked))) =
@@ -1523,10 +1373,7 @@ mod tests {
                 !copied.borrow().is_empty()
             });
             assert!(came, "what the application copied came");
-            assert_eq!(
-                copied.borrow()[0],
-                r#"{"t":"clipboard","text":"from the application"}"#
-            );
+            assert_eq!(copied.borrow()[0], r#"{"t":"clipboard","text":"from the application"}"#);
             drop(peer);
         });
     }
@@ -1574,10 +1421,7 @@ mod tests {
                 "-L",
                 "module-null-sink sink_name=orden_test_default",
             ])
-            .env(
-                "DBUS_SESSION_BUS_ADDRESS",
-                "unix:path=/nonexistent/orden-no-bus",
-            )
+            .env("DBUS_SESSION_BUS_ADDRESS", "unix:path=/nonexistent/orden-no-bus")
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());
@@ -1592,10 +1436,7 @@ mod tests {
                 Ok(())
             });
         }
-        let server = SoundServer {
-            server: command.spawn().ok()?,
-            folder,
-        };
+        let server = SoundServer { server: command.spawn().ok()?, folder };
         let until = Instant::now() + Duration::from_secs(10);
         while !up() && Instant::now() < until {
             std::thread::sleep(Duration::from_millis(50));
@@ -1693,17 +1534,11 @@ mod tests {
             let mut colour = 0_u32;
             let mut draw = || {
                 colour = colour.wrapping_add(0x0011_2233) & 0x00ff_ffff;
-                x.change_gc(pen, &ChangeGCAux::new().foreground(colour))
-                    .unwrap();
+                x.change_gc(pen, &ChangeGCAux::new().foreground(colour)).unwrap();
                 x.poly_fill_rectangle(
                     root,
                     pen,
-                    &[Rectangle {
-                        x: 0,
-                        y: 0,
-                        width: 640,
-                        height: 400,
-                    }],
+                    &[Rectangle { x: 0, y: 0, width: 640, height: 400 }],
                 )
                 .unwrap();
                 x.flush().unwrap();
@@ -1751,17 +1586,11 @@ mod tests {
             let times = arrived.borrow();
             let gaps: Vec<Duration> = times.windows(2).map(|two| two[1] - two[0]).collect();
             let longest = gaps.iter().max().copied().unwrap_or_default();
-            eprintln!(
-                "{drawn} drawn, {} arrived, longest gap {longest:?}",
-                times.len()
-            );
+            eprintln!("{drawn} drawn, {} arrived, longest gap {longest:?}", times.len());
             assert!(!times.is_empty(), "nothing arrived of {drawn} drawn");
             if measured {
                 assert!(times.len() * 10 >= drawn * 8, "{} of {drawn}", times.len());
-                assert!(
-                    longest < Duration::from_millis(250),
-                    "longest gap {longest:?}"
-                );
+                assert!(longest < Duration::from_millis(250), "longest gap {longest:?}");
             }
             drop(times);
             drop(peer);
@@ -1818,12 +1647,7 @@ mod tests {
                 r#"{"t":"button","button":0,"down":false}"#,
                 r#"{"t":"text","text":"hello from afar"}"#,
             ] {
-                viewer
-                    .rtc
-                    .channel(id)
-                    .unwrap()
-                    .write(false, said.as_bytes())
-                    .unwrap();
+                viewer.rtc.channel(id).unwrap().write(false, said.as_bytes()).unwrap();
                 viewer.run(Duration::from_millis(200), |_, _| {}, || false);
             }
             let desk = desk::desk(&desktop.name()).unwrap();
@@ -1831,9 +1655,7 @@ mod tests {
                 desk.enter().unwrap();
                 let until = Instant::now() + Duration::from_secs(10);
                 while Instant::now() < until {
-                    if desk::shown()
-                        .into_iter()
-                        .any(|one| text_in(one).contains("hello from afar"))
+                    if desk::shown().into_iter().any(|one| text_in(one).contains("hello from afar"))
                     {
                         return true;
                     }
@@ -1879,9 +1701,7 @@ mod tests {
                     2000,
                     Some(&raw mut length),
                 );
-                all.push_str(&String::from_utf16_lossy(
-                    &buffer[..length.min(buffer.len())],
-                ));
+                all.push_str(&String::from_utf16_lossy(&buffer[..length.min(buffer.len())]));
             }
         }
         all

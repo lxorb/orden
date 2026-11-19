@@ -8,29 +8,19 @@ use orden_agents::verbs::ReadAs;
 const PAINTED: [u8; 3] = [128, 128, 128];
 pub fn png_size(base64: &str) -> Option<(u32, u32)> {
     let head = base64.get(..44)?;
-    let bytes = base64::engine::general_purpose::STANDARD
-        .decode(head)
-        .ok()?;
+    let bytes = base64::engine::general_purpose::STANDARD.decode(head).ok()?;
     let width = u32::from_be_bytes(bytes.get(16..20)?.try_into().ok()?);
     let height = u32::from_be_bytes(bytes.get(20..24)?.try_into().ok()?);
     Some((width, height))
 }
 pub fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
-    let bytes = base64::engine::general_purpose::STANDARD
-        .decode(png)
-        .map_err(|why| why.to_string())?;
+    let bytes =
+        base64::engine::general_purpose::STANDARD.decode(png).map_err(|why| why.to_string())?;
     let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
     decoder.set_transformations(png::Transformations::EXPAND);
     let mut reader = decoder.read_info().map_err(|why| why.to_string())?;
-    let mut pixels = vec![
-        0;
-        reader
-            .output_buffer_size()
-            .ok_or("the picture is too big")?
-    ];
-    let info = reader
-        .next_frame(&mut pixels)
-        .map_err(|why| why.to_string())?;
+    let mut pixels = vec![0; reader.output_buffer_size().ok_or("the picture is too big")?];
+    let info = reader.next_frame(&mut pixels).map_err(|why| why.to_string())?;
     let channels = match (info.color_type, info.bit_depth) {
         (png::ColorType::Rgba, png::BitDepth::Eight) => 4,
         (png::ColorType::Rgb, png::BitDepth::Eight) => 3,
@@ -55,9 +45,7 @@ pub fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
     encoder.set_depth(info.bit_depth);
     encoder.set_compression(png::Compression::Fast);
     let mut writer = encoder.write_header().map_err(|why| why.to_string())?;
-    writer
-        .write_image_data(&pixels[..info.buffer_size()])
-        .map_err(|why| why.to_string())?;
+    writer.write_image_data(&pixels[..info.buffer_size()]).map_err(|why| why.to_string())?;
     writer.finish().map_err(|why| why.to_string())?;
     Ok(base64::engine::general_purpose::STANDARD.encode(out))
 }
@@ -79,11 +67,8 @@ fn strip_tags(html: &str) -> String {
         } else {
             None
         };
-        let past = closing.and_then(|end| {
-            rest.to_ascii_lowercase()
-                .find(end)
-                .map(|found| found + end.len())
-        });
+        let past = closing
+            .and_then(|end| rest.to_ascii_lowercase().find(end).map(|found| found + end.len()));
         if let Some(past) = past {
             rest = &rest[past..];
         } else {
@@ -98,12 +83,7 @@ fn strip_tags(html: &str) -> String {
 pub const CARET_ALL: &str = "function () { if (this.select) { this.select() } else { const range = document.createRange(); range.selectNodeContents(this); const now = getSelection(); now.removeAllRanges(); now.addRange(range) } }";
 pub const CARET_END: &str = "function () { try { if (this.setSelectionRange) { const end = String(this.value || '').length; this.setSelectionRange(end, end) } } catch (_) {} }";
 pub fn words(app: &tauri::AppHandle, shape: ReadAs, said: &Value) -> (String, String, String) {
-    let text_at = |key: &str| {
-        said.get(key)
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-            .to_string()
-    };
+    let text_at = |key: &str| said.get(key).and_then(Value::as_str).unwrap_or_default().to_string();
     let (url, title) = (text_at("url"), text_at("title"));
     if shape == ReadAs::Text {
         return (url, title, text_at("text"));
@@ -155,12 +135,8 @@ mod tests {
         let white = base64::engine::general_purpose::STANDARD.encode(raw);
         let painted = paint_over(&white, &[[1.2, -5.0, 2.5, 9.0]]).expect("painted");
         assert_eq!(png_size(&painted), Some((4, 2)));
-        let bytes = base64::engine::general_purpose::STANDARD
-            .decode(painted)
-            .expect("base64");
-        let mut reader = png::Decoder::new(std::io::Cursor::new(bytes))
-            .read_info()
-            .expect("a png");
+        let bytes = base64::engine::general_purpose::STANDARD.decode(painted).expect("base64");
+        let mut reader = png::Decoder::new(std::io::Cursor::new(bytes)).read_info().expect("a png");
         let mut pixels = vec![0; reader.output_buffer_size().expect("a size")];
         reader.next_frame(&mut pixels).expect("a frame");
         let grey = [128, 128, 128, 255];

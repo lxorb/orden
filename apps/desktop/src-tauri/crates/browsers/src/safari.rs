@@ -9,10 +9,8 @@ use orden_base::paths::folder_named;
 
 const BOOKMARKS: &str = "Library/Safari/Bookmarks.plist";
 const SESSION: &str = "Library/Safari/LastSession.plist";
-const TABS: [&str; 2] = [
-    "Library/Containers/com.apple.Safari/Data/Library/Safari",
-    "Library/Safari",
-];
+const TABS: [&str; 2] =
+    ["Library/Containers/com.apple.Safari/Data/Library/Safari", "Library/Safari"];
 const TABS_DATABASE: &str = "SafariTabs.db";
 const SETTINGS: [&str; 2] = [
     "Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari.plist",
@@ -60,9 +58,7 @@ fn read_from(home: &Path) -> Result<Value, String> {
         .map(|folder| tabs_in(&home.join(folder)))
         .find(|got| !matches!(got, Got::Missing))
         .unwrap_or(Got::Missing);
-    let refused = [&bookmarks, &session]
-        .into_iter()
-        .any(|got| matches!(got, Got::Refused))
+    let refused = [&bookmarks, &session].into_iter().any(|got| matches!(got, Got::Refused))
         || matches!(tabs, Got::Refused);
     let value = |got: Got<Value>| match got {
         Got::Read(value) => value,
@@ -81,10 +77,7 @@ fn read_from(home: &Path) -> Result<Value, String> {
         "session": value(session),
         "engine": engine,
     });
-    if ["bookmarks", "tabs", "session"]
-        .iter()
-        .all(|key| read[key].is_null())
-    {
+    if ["bookmarks", "tabs", "session"].iter().all(|key| read[key].is_null()) {
         return Err(if refused {
             NO_ACCESS.to_owned()
         } else {
@@ -149,11 +142,8 @@ fn rows_of(database: &Path) -> rusqlite::Result<Value> {
         .prepare("SELECT name FROM pragma_table_info('bookmarks')")?
         .query_map([], |row| row.get(0))?
         .collect::<rusqlite::Result<_>>()?;
-    let deleted = if columns.iter().any(|one| one == "deleted") {
-        "IFNULL(deleted, 0)"
-    } else {
-        "0"
-    };
+    let deleted =
+        if columns.iter().any(|one| one == "deleted") { "IFNULL(deleted, 0)" } else { "0" };
     let mut statement = db.prepare(&format!(
         "SELECT id, parent, type, title, url, order_index, {deleted} \
          FROM bookmarks ORDER BY parent, order_index, id"
@@ -181,10 +171,7 @@ mod tests {
     fn list(title: &str, children: Vec<P>) -> P {
         let mut out = Dictionary::new();
         out.insert("Title".into(), P::String(title.into()));
-        out.insert(
-            "WebBookmarkType".into(),
-            P::String("WebBookmarkTypeList".into()),
-        );
+        out.insert("WebBookmarkType".into(), P::String("WebBookmarkTypeList".into()));
         out.insert("Children".into(), P::Array(children));
         P::Dictionary(out)
     }
@@ -194,10 +181,7 @@ mod tests {
         let mut out = Dictionary::new();
         out.insert("URLString".into(), P::String(url.into()));
         out.insert("URIDictionary".into(), P::Dictionary(uri));
-        out.insert(
-            "WebBookmarkType".into(),
-            P::String("WebBookmarkTypeLeaf".into()),
-        );
+        out.insert("WebBookmarkType".into(), P::String("WebBookmarkTypeLeaf".into()));
         out.insert("WebBookmarkUUID".into(), P::String("6F1B".into()));
         P::Dictionary(out)
     }
@@ -216,10 +200,7 @@ mod tests {
         let root = list(
             "",
             vec![
-                list(
-                    "BookmarksBar",
-                    vec![leaf("https://news.example.com/", "News")],
-                ),
+                list("BookmarksBar", vec![leaf("https://news.example.com/", "News")]),
                 list("BookmarksMenu", vec![]),
                 list("com.apple.ReadingList", vec![read]),
             ],
@@ -272,31 +253,20 @@ mod tests {
             settings.insert(ENGINE.into(), P::String(engine.into()));
             let at = home.path().join(path);
             fs::create_dir_all(at.parent().expect("a folder")).expect("the folder");
-            P::Dictionary(settings)
-                .to_file_binary(&at)
-                .expect("the settings");
+            P::Dictionary(settings).to_file_binary(&at).expect("the settings");
         }
-        assert_eq!(
-            read_from(home.path()).expect("bookmarks")["engine"],
-            "DuckDuckGo"
-        );
+        assert_eq!(read_from(home.path()).expect("bookmarks")["engine"], "DuckDuckGo");
     }
     #[test]
     fn the_tabs_of_an_older_safari_are_read_where_it_kept_them() {
         let home = tempfile::tempdir().expect("a folder");
         tabs(&home.path().join(TABS[1]));
-        assert_eq!(
-            read_from(home.path()).expect("tabs")["tabs"][2]["url"],
-            "https://one.example/"
-        );
+        assert_eq!(read_from(home.path()).expect("tabs")["tabs"][2]["url"], "https://one.example/");
     }
     #[test]
     fn nothing_there_is_said_and_is_not_a_refusal() {
         let home = tempfile::tempdir().expect("a folder");
-        assert_eq!(
-            read_from(home.path()).unwrap_err(),
-            "Safari holds no tabs or bookmarks here"
-        );
+        assert_eq!(read_from(home.path()).unwrap_err(), "Safari holds no tabs or bookmarks here");
     }
     #[cfg(unix)]
     #[test]

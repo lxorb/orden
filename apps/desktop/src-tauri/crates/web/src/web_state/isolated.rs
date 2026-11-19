@@ -16,18 +16,16 @@ mod engine {
 
     pub(super) async fn run(view: &Webview, source: &str, call: &str) -> Result<String, String> {
         let tree = cdp::call(view, "Page.getFrameTree", &json!({})).await?;
-        let frame = tree["frameTree"]["frame"]["id"]
-            .as_str()
-            .ok_or("the page has no frame to run in")?;
+        let frame =
+            tree["frameTree"]["frame"]["id"].as_str().ok_or("the page has no frame to run in")?;
         let world = cdp::call(
             view,
             "Page.createIsolatedWorld",
             &json!({ "frameId": frame, "worldName": WORLD, "grantUniveralAccess": false }),
         )
         .await?;
-        let context = world["executionContextId"]
-            .as_i64()
-            .ok_or("the page made no world to run in")?;
+        let context =
+            world["executionContextId"].as_i64().ok_or("the page made no world to run in")?;
         let answered = cdp::call(
             view,
             "Runtime.evaluate",
@@ -58,9 +56,6 @@ mod tests {
 
     #[test]
     fn a_quoted_string_stays_a_string() {
-        assert_eq!(
-            quoted(r#"{"a":"b'c"}"#).as_deref(),
-            Ok(r#""{\"a\":\"b'c\"}""#)
-        );
+        assert_eq!(quoted(r#"{"a":"b'c"}"#).as_deref(), Ok(r#""{\"a\":\"b'c\"}""#));
     }
 }

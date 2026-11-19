@@ -31,8 +31,7 @@ pub fn ignored_path(rel: &Path) -> bool {
     if carried(rel) {
         return false;
     }
-    rel.components()
-        .any(|part| part.as_os_str().to_str().is_none_or(ignored))
+    rel.components().any(|part| part.as_os_str().to_str().is_none_or(ignored))
 }
 pub fn found(root: &Path, rel: &Path) -> Option<Found> {
     looked(root, rel).ok().flatten()
@@ -103,10 +102,7 @@ fn listed_in(root: &Path, rel: &Path) -> std::io::Result<Listing> {
         }
     }
     names.sort_unstable();
-    let mut listing = Listing {
-        found: Vec::with_capacity(names.len()),
-        whole: true,
-    };
+    let mut listing = Listing { found: Vec::with_capacity(names.len()), whole: true };
     for name in names {
         match looked(root, &rel.join(name)) {
             Ok(Some(one)) => listing.found.push(one),
@@ -128,10 +124,7 @@ pub fn walk(
     match listed_in(root, rel) {
         Ok(listing) => walk_listing(root, listing, left, visit),
         Err(error) if says_gone(&error) => Ok(()),
-        Err(error) => Err(format!(
-            "{} would not list: {error}",
-            root.join(rel).display()
-        )),
+        Err(error) => Err(format!("{} would not list: {error}", root.join(rel).display())),
     }
 }
 fn walk_listing(
@@ -177,11 +170,7 @@ mod tests {
     use std::path::{Path, PathBuf};
 
     fn rels(root: &Path) -> Vec<PathBuf> {
-        everything(root)
-            .expect("a walk")
-            .into_iter()
-            .map(|one| one.rel)
-            .collect()
+        everything(root).expect("a walk").into_iter().map(|one| one.rel).collect()
     }
     #[test]
     fn a_space_is_every_file_in_it_but_what_sync_leaves_alone() {
@@ -206,10 +195,7 @@ mod tests {
             ]
         );
         let all = everything(root).expect("a walk");
-        let picture = all
-            .iter()
-            .find(|one| one.rel == Path::new("shot.png"))
-            .expect("listed");
+        let picture = all.iter().find(|one| one.rel == Path::new("shot.png")).expect("listed");
         assert_eq!(picture.size, 3);
         assert!(picture.mtime > 0);
         assert!(picture.id.is_some());
@@ -250,11 +236,7 @@ mod tests {
         fs::write(root.join("Plan.md"), "").expect("a note");
         assert_eq!(
             rels(root),
-            [
-                PathBuf::from(".Inbox.md"),
-                PathBuf::from("Plan.md"),
-                PathBuf::from("Work"),
-            ]
+            [PathBuf::from(".Inbox.md"), PathBuf::from("Plan.md"), PathBuf::from("Work"),]
         );
         assert!(!super::ignored_path(Path::new(".Inbox.md")));
         assert!(super::ignored_path(Path::new(".other.md")));
@@ -262,13 +244,7 @@ mod tests {
     }
     #[test]
     fn clutter_is_named_as_such() {
-        for name in [
-            ".DS_Store",
-            "desktop.ini",
-            "Thumbs.db",
-            "~$Plan.docx",
-            "Icon\r",
-        ] {
+        for name in [".DS_Store", "desktop.ini", "Thumbs.db", "~$Plan.docx", "Icon\r"] {
             assert!(ignored(name), "{name:?}");
         }
         for name in ["Plan.md", "Icon.png", "thumbs.md", "a~$b"] {
@@ -308,17 +284,11 @@ mod tests {
             return;
         };
         let all = everything(root).expect("the rest of the space");
-        let shut = all
-            .iter()
-            .find(|one| one.rel == Path::new("Shut"))
-            .expect("the folder itself");
+        let shut = all.iter().find(|one| one.rel == Path::new("Shut")).expect("the folder itself");
         assert!(shut.unlisted, "it is not empty, it is unread");
         assert!(all.iter().any(|one| one.rel == Path::new("Open.md")));
         assert!(!all.iter().any(|one| one.rel.ends_with("Inside.md")));
-        assert!(
-            present(root, Path::new("Shut/Inside.md")),
-            "nobody could look: that is not gone"
-        );
+        assert!(present(root, Path::new("Shut/Inside.md")), "nobody could look: that is not gone");
         assert!(!present(root, Path::new("Open.md/Inside.md")));
         assert!(!present(root, Path::new("Never.md")));
     }
@@ -338,10 +308,8 @@ mod tests {
         }
         let all = everything(root).expect("a walk");
         fs::set_permissions(&half, fs::Permissions::from_mode(0o755)).expect("opened");
-        let folder = all
-            .iter()
-            .find(|one| one.rel == Path::new("Half"))
-            .expect("the folder itself");
+        let folder =
+            all.iter().find(|one| one.rel == Path::new("Half")).expect("the folder itself");
         assert!(folder.unlisted);
         assert!(!all.iter().any(|one| one.rel.ends_with("Inside.md")));
     }
@@ -364,12 +332,7 @@ mod tests {
         let deep = (0..orden_base::paths::MAX_DEPTH).fold(PathBuf::new(), |at, _| at.join("d"));
         fs::create_dir_all(root.join(&deep)).expect("deep folders");
         let all = everything(root).expect("a walk");
-        let of = |rel: &Path| {
-            all.iter()
-                .find(|one| one.rel == rel)
-                .expect("listed")
-                .unlisted
-        };
+        let of = |rel: &Path| all.iter().find(|one| one.rel == rel).expect("listed").unlisted;
         assert!(!of(Path::new("Empty")));
         assert!(of(&deep));
     }

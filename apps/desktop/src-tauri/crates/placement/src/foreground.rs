@@ -59,12 +59,7 @@ mod held {
     #[allow(unsafe_code)]
     pub fn on_this_thread() {
         let _ = unsafe {
-            SetWindowsHookExW(
-                WH_CBT,
-                Some(watching),
-                HINSTANCE::default(),
-                GetCurrentThreadId(),
-            )
+            SetWindowsHookExW(WH_CBT, Some(watching), HINSTANCE::default(), GetCurrentThreadId())
         };
     }
     #[allow(unsafe_code)]
@@ -192,11 +187,8 @@ mod held {
         if unsafe { GetWindowRect(window, &raw mut now) }.is_err() {
             return;
         }
-        let (left, top) = if going.flags.contains(SWP_NOMOVE) {
-            (now.left, now.top)
-        } else {
-            (going.x, going.y)
-        };
+        let (left, top) =
+            if going.flags.contains(SWP_NOMOVE) { (now.left, now.top) } else { (going.x, going.y) };
         let (width, height) = if going.flags.contains(SWP_NOSIZE) {
             (now.right - now.left, now.bottom - now.top)
         } else {
@@ -279,19 +271,9 @@ mod tests {
 
     #[test]
     fn a_window_is_held_back_whatever_style_it_asked_for() {
-        for asked in [
-            0,
-            APP_WINDOW,
-            NO_ACTIVATE,
-            APP_WINDOW | 0x0010_0000,
-            u32::MAX,
-        ] {
+        for asked in [0, APP_WINDOW, NO_ACTIVATE, APP_WINDOW | 0x0010_0000, u32::MAX] {
             let kept = kept_back(asked);
-            assert_eq!(
-                kept & NO_ACTIVATE,
-                NO_ACTIVATE,
-                "{asked:#x} can be activated"
-            );
+            assert_eq!(kept & NO_ACTIVATE, NO_ACTIVATE, "{asked:#x} can be activated");
             assert_eq!(kept & TOOL_WINDOW, TOOL_WINDOW, "{asked:#x} is in Alt+Tab");
             assert_eq!(kept & APP_WINDOW, 0, "{asked:#x} has a taskbar button");
         }
@@ -301,9 +283,7 @@ mod tests {
     fn the_app_holds_itself_back_before_it_makes_anything() {
         let lib = include_str!("../../../src/lib.rs");
         let start = lib.find("pub fn run_on(").expect("run_on");
-        let held = lib[start..]
-            .find("foreground::hold()")
-            .expect("run_on holds the process back");
+        let held = lib[start..].find("foreground::hold()").expect("run_on holds the process back");
         for later in ["generate_context!", ".plugin("] {
             let at = lib[start..].find(later).expect(later);
             assert!(held < at, "{later} comes before the process is held back");
@@ -320,10 +300,7 @@ mod tests {
         assert!(top_level(0x0000_0000, false));
         assert!(top_level(0x9000_0000, false), "a popup is top level");
         assert!(!top_level(CHILD, false));
-        assert!(
-            !top_level(0, true),
-            "a window for messages is on no desktop"
-        );
+        assert!(!top_level(0, true), "a window for messages is on no desktop");
     }
     #[cfg(windows)]
     #[test]
@@ -340,17 +317,10 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn a_real_window_is_held_back_and_never_activated() {
-        let plain = std::thread::spawn(|| made_and_asked(false))
-            .join()
-            .expect("the plain thread");
-        assert!(
-            plain.activated,
-            "the system refused by itself; the test proves nothing"
-        );
+        let plain = std::thread::spawn(|| made_and_asked(false)).join().expect("the plain thread");
+        assert!(plain.activated, "the system refused by itself; the test proves nothing");
         assert_eq!(plain.made & APP_WINDOW, APP_WINDOW);
-        let held = std::thread::spawn(|| made_and_asked(true))
-            .join()
-            .expect("the held thread");
+        let held = std::thread::spawn(|| made_and_asked(true)).join().expect("the held thread");
         for (when, style) in [("made", held.made), ("restyled", held.restyled)] {
             assert_eq!(
                 style & (NO_ACTIVATE | TOOL_WINDOW),
@@ -398,20 +368,12 @@ mod tests {
             .expect("a window");
             let style = || u32::from_ne_bytes(GetWindowLongW(window, GWL_EXSTYLE).to_ne_bytes());
             let made = style();
-            SetWindowLongW(
-                window,
-                GWL_EXSTYLE,
-                i32::from_ne_bytes(APP_WINDOW.to_ne_bytes()),
-            );
+            SetWindowLongW(window, GWL_EXSTYLE, i32::from_ne_bytes(APP_WINDOW.to_ne_bytes()));
             let restyled = style();
             let _ = SetActiveWindow(window);
             let activated = GetActiveWindow() == window;
             DestroyWindow(window).expect("destroyed");
-            Asked {
-                made,
-                restyled,
-                activated,
-            }
+            Asked { made, restyled, activated }
         }
     }
     #[cfg(windows)]
@@ -462,12 +424,7 @@ mod tests {
             told.send(unsafe { GetCurrentThreadId() }).expect("told");
             going.recv().expect("go");
             unsafe {
-                MessageBoxW(
-                    None,
-                    w!("An extension could not be loaded."),
-                    w!("Load error"),
-                    MB_OK,
-                );
+                MessageBoxW(None, w!("An extension could not be loaded."), w!("Load error"), MB_OK);
             }
         });
         let raising = thread.recv().expect("the maker's thread");
@@ -483,10 +440,7 @@ mod tests {
         });
         hearing.recv().expect("hooked");
         go.send(()).expect("go");
-        let mut watched = Watched {
-            seen: false,
-            on_a_screen: false,
-        };
+        let mut watched = Watched { seen: false, on_a_screen: false };
         let mut first: Option<Instant> = None;
         let until = Instant::now() + Duration::from_secs(10);
         while Instant::now() < until && !maker.is_finished() {
@@ -527,14 +481,11 @@ mod tests {
         use windows::Win32::System::StationsAndDesktops::{CreateDesktopW, DESKTOP_CONTROL_FLAGS};
 
         const EVERYTHING: u32 = 0x1000_0000;
-        let name: Vec<u16> = format!(
-            "orden-foreground-test-{}-{}",
-            std::process::id(),
-            u8::from(which)
-        )
-        .encode_utf16()
-        .chain([0])
-        .collect();
+        let name: Vec<u16> =
+            format!("orden-foreground-test-{}-{}", std::process::id(), u8::from(which))
+                .encode_utf16()
+                .chain([0])
+                .collect();
         let desktop = unsafe {
             CreateDesktopW(
                 PCWSTR(name.as_ptr()),
@@ -577,11 +528,7 @@ mod tests {
         }
         let mut found: Vec<isize> = Vec::new();
         let _ = unsafe {
-            EnumDesktopWindows(
-                HDESK(desktop as _),
-                Some(each),
-                LPARAM(&raw mut found as isize),
-            )
+            EnumDesktopWindows(HDESK(desktop as _), Some(each), LPARAM(&raw mut found as isize))
         };
         found
             .into_iter()

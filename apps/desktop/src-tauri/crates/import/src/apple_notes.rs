@@ -72,16 +72,11 @@ mod mac {
     const INTERNAL: &str = "com.apple.notes.inlinetextattachment.link";
     const CARD: &str = "public.url";
     const TABLE: &str = "com.apple.notes.table";
-    const DRAWINGS: [&str; 3] = [
-        "com.apple.paper",
-        "com.apple.drawing",
-        "com.apple.drawing.2",
-    ];
+    const DRAWINGS: [&str; 3] = ["com.apple.paper", "com.apple.drawing", "com.apple.drawing.2"];
     const SCAN: &str = "com.apple.notes.gallery";
     const MARKED_SCAN: &str = "com.apple.paper.doc.scan";
-    const PICTURES: [&str; 9] = [
-        "png", "jpg", "jpeg", "gif", "heic", "heif", "webp", "tiff", "bmp",
-    ];
+    const PICTURES: [&str; 9] =
+        ["png", "jpg", "jpeg", "gif", "heic", "heif", "webp", "tiff", "bmp"];
     pub fn read() -> Result<Read, String> {
         let home = std::env::var_os("HOME").ok_or_else(|| "there is no home folder".to_string())?;
         let base = PathBuf::from(home).join(CONTAINER);
@@ -114,10 +109,7 @@ mod mac {
                 read.locked += 1;
                 continue;
             }
-            if folders
-                .get(&row.folder)
-                .is_some_and(|one| one.kind == TRASH)
-            {
+            if folders.get(&row.folder).is_some_and(|one| one.kind == TRASH) {
                 read.binned += 1;
                 continue;
             }
@@ -179,9 +171,7 @@ mod mac {
             .prepare("SELECT z_name, z_ent FROM z_primarykey")
             .map_err(|error| format!("that database is not Notes': {error}"))?;
         let rows = statement
-            .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
-            })
+            .query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)))
             .map_err(|error| format!("that database is not Notes': {error}"))?;
         let mut found = HashMap::new();
         for row in rows {
@@ -259,16 +249,10 @@ mod mac {
         known: &HashSet<String>,
     ) -> Result<Vec<Row>, String> {
         let ent = keys.get("ICNote").copied().unwrap_or(0);
-        let created = first_of(
-            known,
-            &["zcreationdate3", "zcreationdate2", "zcreationdate1"],
-        );
+        let created = first_of(known, &["zcreationdate3", "zcreationdate2", "zcreationdate1"]);
         let modified = first_of(known, &["zmodificationdate1", "zmodificationdate"]);
-        let locked = if known.contains("zispasswordprotected") {
-            "note.zispasswordprotected"
-        } else {
-            "0"
-        };
+        let locked =
+            if known.contains("zispasswordprotected") { "note.zispasswordprotected" } else { "0" };
         let query = format!(
             "SELECT note.ztitle1, note.zfolder, note.zidentifier, {created}, {modified},
                     {locked}, data.zdata
@@ -338,11 +322,7 @@ mod mac {
         parts.reverse();
         let name = apple_text::title(&row.body).unwrap_or_else(|| row.title.clone());
         let name = name.replace('/', " ");
-        parts.push(if name.trim().is_empty() {
-            "Untitled".to_string()
-        } else {
-            name
-        });
+        parts.push(if name.trim().is_empty() { "Untitled".to_string() } else { name });
         Some(stepped(parts.join("/"), taken))
     }
     fn stepped(path: String, taken: &mut HashSet<String>) -> String {
@@ -420,14 +400,10 @@ mod mac {
             }
             let query =
                 format!("SELECT {name} FROM ziccloudsyncingobject WHERE zidentifier = ?1 LIMIT 1");
-            self.db
-                .query_row(&query, [id], |row| row.get::<_, Option<String>>(0))
-                .ok()
-                .flatten()
+            self.db.query_row(&query, [id], |row| row.get::<_, Option<String>>(0)).ok().flatten()
         }
         fn words(&self, id: &str) -> Option<String> {
-            self.column(id, "zalttext")
-                .map(|words| apple_text::as_words(&words))
+            self.column(id, "zalttext").map(|words| apple_text::as_words(&words))
         }
         fn link(&self, id: &str) -> Option<String> {
             let said = self.column(id, "ztokencontentidentifier")?;
@@ -440,11 +416,7 @@ mod mac {
         fn card(&self, id: &str) -> Option<String> {
             let url = self.column(id, "zurlstring")?;
             let title = self.column(id, "ztitle").unwrap_or_else(|| url.clone());
-            Some(format!(
-                "[{}]({})",
-                label(&title),
-                apple_text::destination(&url)
-            ))
+            Some(format!("[{}]({})", label(&title), apple_text::destination(&url)))
         }
         fn file(&mut self, id: &str) -> Option<String> {
             if let Some(path) = self.written.get(id) {
@@ -459,17 +431,12 @@ mod mac {
         }
         fn on_disk(&self, candidates: &[PathBuf]) -> Option<Vec<u8>> {
             self.roots.iter().find_map(|root| {
-                candidates
-                    .iter()
-                    .find_map(|one| std::fs::read(root.join(one)).ok())
+                candidates.iter().find_map(|one| std::fs::read(root.join(one)).ok())
             })
         }
         fn keep(&mut self, id: &str, name: &str, bytes: Vec<u8>) -> String {
             let path = format!("assets/{}", free(name, &mut self.taken));
-            self.media.push(Media {
-                path: path.clone(),
-                bytes: STANDARD.encode(bytes),
-            });
+            self.media.push(Media { path: path.clone(), bytes: STANDARD.encode(bytes) });
             self.written.insert(id.to_string(), path.clone());
             path
         }
@@ -523,10 +490,8 @@ mod mac {
         }
         fn scan(&mut self, id: &str) -> Option<String> {
             let pages = apple_text::gallery(&self.merged(id)?);
-            let shown: Vec<String> = pages
-                .iter()
-                .filter_map(|page| self.scanned_page(page))
-                .collect();
+            let shown: Vec<String> =
+                pages.iter().filter_map(|page| self.scanned_page(page)).collect();
             if shown.is_empty() {
                 return None;
             }
@@ -587,11 +552,8 @@ mod mac {
                 )
                 .ok()
                 .flatten()?;
-            let generation = if self.known.contains("zgeneration1") {
-                "zgeneration1"
-            } else {
-                "''"
-            };
+            let generation =
+                if self.known.contains("zgeneration1") { "zgeneration1" } else { "''" };
             let query = format!(
                 "SELECT zidentifier, zfilename, {generation}
                  FROM ziccloudsyncingobject WHERE z_pk = ?1"
@@ -705,13 +667,7 @@ mod mac {
         let last = name.rsplit(['/', '\\']).next().unwrap_or(name);
         let said: String = last
             .chars()
-            .map(|one| {
-                if FORBIDDEN.contains(&one) || one.is_control() {
-                    ' '
-                } else {
-                    one
-                }
-            })
+            .map(|one| if FORBIDDEN.contains(&one) || one.is_control() { ' ' } else { one })
             .collect();
         said.trim().trim_matches('.').trim().to_string()
     }
@@ -763,17 +719,11 @@ mod mac {
                  (zidentifier TEXT, zalttext TEXT, zurlstring TEXT, ztitle TEXT)",
             )
             .expect("a table");
-            db.execute(
-                "INSERT INTO ziccloudsyncingobject (zidentifier) VALUES ('A')",
-                [],
-            )
-            .expect("a row");
+            db.execute("INSERT INTO ziccloudsyncingobject (zidentifier) VALUES ('A')", [])
+                .expect("a row");
             for (name, value) in columns {
-                db.execute(
-                    &format!("UPDATE ziccloudsyncingobject SET {name} = ?1"),
-                    [value],
-                )
-                .expect("a column");
+                db.execute(&format!("UPDATE ziccloudsyncingobject SET {name} = ?1"), [value])
+                    .expect("a column");
             }
             db
         }
@@ -798,10 +748,7 @@ mod mac {
                 attachment(&db, super::CARD).as_deref(),
                 Some("[Fine \\<img src=x onerror=alert(1)>](https://x.test/a)")
             );
-            let db = store(&[
-                ("zurlstring", "https://x.test/a) <b>"),
-                ("ztitle", "\\<img src=x>"),
-            ]);
+            let db = store(&[("zurlstring", "https://x.test/a) <b>"), ("ztitle", "\\<img src=x>")]);
             assert_eq!(
                 attachment(&db, super::CARD).as_deref(),
                 Some("[\\\\\\<img src=x>](<https://x.test/a) %3Cb%3E>)")
@@ -829,11 +776,8 @@ mod mac {
         #[test]
         fn a_note_carries_its_words_its_title_and_its_day() {
             let read = read_from(&fixture()).expect("the fixture reads");
-            let note = read
-                .notes
-                .iter()
-                .find(|note| note.path == "Groceries.md")
-                .expect("the first note");
+            let note =
+                read.notes.iter().find(|note| note.path == "Groceries.md").expect("the first note");
             assert_eq!(note.title, "Groceries");
             assert!(note.text.starts_with("# Groceries"), "{}", note.text);
             assert!(note.text.contains("- [x] Milk"), "{}", note.text);
@@ -855,11 +799,7 @@ mod mac {
                 .find(|note| note.path == "Work/Ideas.md")
                 .expect("the second note");
             assert!(note.text.contains("![](assets/photo.png)"), "{}", note.text);
-            let photos = read
-                .media
-                .iter()
-                .filter(|one| one.path == "assets/photo.png")
-                .count();
+            let photos = read.media.iter().filter(|one| one.path == "assets/photo.png").count();
             assert_eq!(photos, 1);
         }
         #[test]
@@ -870,11 +810,7 @@ mod mac {
                 .iter()
                 .find(|note| note.path == "Work/Ideas.md")
                 .expect("the second note");
-            assert!(
-                note.text.contains("[Groceries](Groceries.md)"),
-                "{}",
-                note.text
-            );
+            assert!(note.text.contains("[Groceries](Groceries.md)"), "{}", note.text);
         }
         #[test]
         fn words_kept_on_an_attachment_come_over_as_words() {

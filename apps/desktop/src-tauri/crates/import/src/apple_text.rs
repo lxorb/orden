@@ -96,11 +96,8 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
             }
             counted = match levels.get_mut(depth) {
                 Some(level) if listed => {
-                    let next = if level.0 == NUMBERED && run.style == NUMBERED {
-                        level.1 + 1
-                    } else {
-                        1
-                    };
+                    let next =
+                        if level.0 == NUMBERED && run.style == NUMBERED { level.1 + 1 } else { 1 };
                     *level = (run.style, next);
                     next
                 }
@@ -117,11 +114,7 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
                 run.attachment.is_some() || !said.replace(OBJECT, "").trim().is_empty()
             });
             let worded = first.is_some_and(|(run, _)| run.attachment.is_none());
-            out.push_str(&if worded {
-                opened(said)
-            } else {
-                said.to_string()
-            });
+            out.push_str(&if worded { opened(said) } else { said.to_string() });
         }
         out.push('\n');
     }
@@ -165,10 +158,7 @@ impl<'a> Line<'a> {
     }
 }
 fn lines_of(body: &Body) -> Vec<Line<'_>> {
-    let mut lines = vec![Line {
-        pieces: Vec::new(),
-        soft: false,
-    }];
+    let mut lines = vec![Line { pieces: Vec::new(), soft: false }];
     let mut at = 0_usize;
     for run in &body.runs {
         let end = at.saturating_add(run.length).min(body.text.len());
@@ -178,10 +168,7 @@ fn lines_of(body: &Body) -> Vec<Line<'_>> {
         let mut soft = false;
         for part in said.split_inclusive(['\n', SOFT]) {
             if !first {
-                lines.push(Line {
-                    pieces: Vec::new(),
-                    soft,
-                });
+                lines.push(Line { pieces: Vec::new(), soft });
             }
             first = false;
             soft = part.ends_with(SOFT);
@@ -193,10 +180,7 @@ fn lines_of(body: &Body) -> Vec<Line<'_>> {
             }
         }
         if said.ends_with('\n') || said.ends_with(SOFT) {
-            lines.push(Line {
-                pieces: Vec::new(),
-                soft: said.ends_with(SOFT),
-            });
+            lines.push(Line { pieces: Vec::new(), soft: said.ends_with(SOFT) });
         }
     }
     if lines.last().is_some_and(|line| line.pieces.is_empty()) {
@@ -346,10 +330,7 @@ fn opened(words: &str) -> String {
     if (1..=6).contains(&hashes) && blank_or_end(&words[hashes..]) {
         return format!("\\{words}");
     }
-    let digits = words.len()
-        - words
-            .trim_start_matches(|one: char| one.is_ascii_digit())
-            .len();
+    let digits = words.len() - words.trim_start_matches(|one: char| one.is_ascii_digit()).len();
     if digits > 0 {
         let rest = &words[digits..];
         if let Some(after) = rest.strip_prefix(['.', ')']) {
@@ -430,11 +411,10 @@ fn tidy(markdown: &str) -> String {
 pub fn table(data: &[u8], parts: &mut dyn Parts) -> Option<String> {
     let bytes = inflate(data)?;
     let store = Store::of(&bytes)?;
-    let root = store.objects.iter().find_map(|one| {
-        one.map
-            .as_ref()
-            .filter(|map| store.type_is(map.kind, TABLE_TYPE))
-    })?;
+    let root = store
+        .objects
+        .iter()
+        .find_map(|one| one.map.as_ref().filter(|map| store.type_is(map.kind, TABLE_TYPE)))?;
     let (mut rows, mut columns, mut cells) = (None, None, None);
     for (key, value) in &root.entries {
         let object = value.object.and_then(|at| store.objects.get(at));
@@ -451,10 +431,7 @@ pub fn table(data: &[u8], parts: &mut dyn Parts) -> Option<String> {
     }
     let mut grid = vec![vec![String::new(); width]; height];
     for (column, held) in &cells?.dictionary {
-        let Some(across) = store
-            .target(column)
-            .and_then(|id| columns.get(&id).copied())
-        else {
+        let Some(across) = store.target(column).and_then(|id| columns.get(&id).copied()) else {
             continue;
         };
         let Some(column) = held.object.and_then(|at| store.objects.get(at)) else {
@@ -464,14 +441,11 @@ pub fn table(data: &[u8], parts: &mut dyn Parts) -> Option<String> {
             let Some(down) = store.target(row).and_then(|id| rows.get(&id).copied()) else {
                 continue;
             };
-            let body = cell
-                .object
-                .and_then(|at| store.objects.get(at))
-                .and_then(|one| one.note.as_ref());
-            if let (Some(body), Some(slot)) = (
-                body,
-                grid.get_mut(down).and_then(|line| line.get_mut(across)),
-            ) {
+            let body =
+                cell.object.and_then(|at| store.objects.get(at)).and_then(|one| one.note.as_ref());
+            if let (Some(body), Some(slot)) =
+                (body, grid.get_mut(down).and_then(|line| line.get_mut(across)))
+            {
                 *slot = cell_words(body, parts);
             }
         }
@@ -602,10 +576,7 @@ fn index(said: u64) -> usize {
     usize::try_from(said).unwrap_or(usize::MAX)
 }
 fn map_of(bytes: &[u8]) -> Map {
-    let mut map = Map {
-        kind: usize::MAX,
-        entries: Vec::new(),
-    };
+    let mut map = Map { kind: usize::MAX, entries: Vec::new() };
     for (number, value) in Fields::new(bytes) {
         match (number, value) {
             (1, Value::Number(said)) => map.kind = index(said),
@@ -726,10 +697,7 @@ impl<'a> Iterator for Fields<'a> {
     }
 }
 fn number_of(bytes: &[u8]) -> u64 {
-    bytes
-        .iter()
-        .rev()
-        .fold(0_u64, |value, byte| (value << 8) | u64::from(*byte))
+    bytes.iter().rev().fold(0_u64, |value, byte| (value << 8) | u64::from(*byte))
 }
 fn signed(value: u64) -> i32 {
     let low = u32::try_from(value & 0xffff_ffff).unwrap_or(0);
@@ -748,14 +716,9 @@ fn note_of(bytes: &[u8]) -> Body {
             _ => {}
         }
     }
-    let covered = runs
-        .iter()
-        .fold(0_usize, |sum, run| sum.saturating_add(run.length));
+    let covered = runs.iter().fold(0_usize, |sum, run| sum.saturating_add(run.length));
     if covered < text.len() {
-        runs.push(Run {
-            length: text.len() - covered,
-            ..Run::default()
-        });
+        runs.push(Run { length: text.len() - covered, ..Run::default() });
     }
     Body { text, runs }
 }
@@ -818,14 +781,8 @@ fn attachment_of(bytes: &[u8]) -> Option<(String, String)> {
 fn inflate(data: &[u8]) -> Option<Vec<u8>> {
     let mut out = Vec::new();
     let read = match data.first().copied() {
-        Some(0x1f) => GzDecoder::new(data)
-            .take(MOST_BYTES)
-            .read_to_end(&mut out)
-            .ok()?,
-        Some(0x78) => ZlibDecoder::new(data)
-            .take(MOST_BYTES)
-            .read_to_end(&mut out)
-            .ok()?,
+        Some(0x1f) => GzDecoder::new(data).take(MOST_BYTES).read_to_end(&mut out).ok()?,
+        Some(0x78) => ZlibDecoder::new(data).take(MOST_BYTES).read_to_end(&mut out).ok()?,
         _ => return None,
     };
     if u64::try_from(read).ok()? >= MOST_BYTES {
@@ -914,20 +871,15 @@ mod tests {
             let written = line["markdown"].as_str().expect("markdown");
             let text = format!("Note\n{words}\n");
             let rest = u64::try_from(words.encode_utf16().count() + 1).expect("a length");
-            let said = as_markdown(
-                &text,
-                &[run(5, &[bytes(2, &style(0, 0, None))]), run(rest, &[])],
-            );
+            let said =
+                as_markdown(&text, &[run(5, &[bytes(2, &style(0, 0, None))]), run(rest, &[])]);
             assert_eq!(said, format!("# Note\n{written}"), "{words}");
         }
     }
     #[test]
     fn a_title_and_a_paragraph() {
         let text = "Groceries\nMilk and eggs\n";
-        let said = as_markdown(
-            text,
-            &[run(10, &[bytes(2, &style(0, 0, None))]), run(14, &[])],
-        );
+        let said = as_markdown(text, &[run(10, &[bytes(2, &style(0, 0, None))]), run(14, &[])]);
         assert_eq!(said, "# Groceries\nMilk and eggs");
     }
     #[test]
@@ -993,10 +945,7 @@ mod tests {
     fn an_attachment_becomes_what_the_database_says_it_is() {
         let said = as_markdown(
             "Look \u{fffc}",
-            &[
-                run(5, &[]),
-                run(1, &[bytes(12, &attachment("abc", "public.jpeg"))]),
-            ],
+            &[run(5, &[]), run(1, &[bytes(12, &attachment("abc", "public.jpeg"))])],
         );
         assert_eq!(said, "Look ![](assets/abc.png)");
     }
@@ -1004,10 +953,7 @@ mod tests {
     fn an_attachment_with_nothing_behind_it_leaves_no_words() {
         let said = as_markdown(
             "\u{fffc}",
-            &[run(
-                1,
-                &[bytes(12, &attachment("t1", "com.apple.notes.table"))],
-            )],
+            &[run(1, &[bytes(12, &attachment("t1", "com.apple.notes.table"))])],
         );
         assert_eq!(said, "");
     }
@@ -1067,19 +1013,14 @@ mod tests {
     }
     #[test]
     fn a_depth_nobody_wrote_is_held_to_one_a_note_can_have() {
-        let said = as_markdown(
-            "deep\n",
-            &[run(5, &[bytes(2, &style(101, u64::from(u32::MAX), None))])],
-        );
+        let said =
+            as_markdown("deep\n", &[run(5, &[bytes(2, &style(101, u64::from(u32::MAX), None))])]);
         assert!(said.len() < 200, "{} characters of indent", said.len());
         assert!(said.trim_start().starts_with("- "), "{said}");
     }
     #[test]
     fn code_with_a_fence_in_it_is_fenced_with_a_longer_one() {
-        let said = as_markdown(
-            "```js\nx\n```\n",
-            &[run(12, &[bytes(2, &style(4, 0, None))])],
-        );
+        let said = as_markdown("```js\nx\n```\n", &[run(12, &[bytes(2, &style(4, 0, None))])]);
         assert_eq!(said, "````\n```js\nx\n```\n````");
     }
     #[test]
@@ -1120,10 +1061,7 @@ mod tests {
     }
     #[test]
     fn words_past_the_last_run_are_kept() {
-        let said = as_markdown(
-            "Title\nand the rest\n",
-            &[run(6, &[bytes(2, &style(0, 0, None))])],
-        );
+        let said = as_markdown("Title\nand the rest\n", &[run(6, &[bytes(2, &style(0, 0, None))])]);
         assert_eq!(said, "# Title\nand the rest");
         let bare = as_markdown("No runs at all", &[]);
         assert_eq!(bare, "No runs at all");
@@ -1137,10 +1075,7 @@ mod tests {
     fn dollars_tildes_carets_and_percent_signs_are_words() {
         let words = "Tickets $5-$10, ~5 or ~10, %%d, x^2, a $ b ~ c";
         let said = as_markdown(words, &[run(words.len() as u64, &[])]);
-        assert_eq!(
-            said,
-            "Tickets \\$5-\\$10, \\~5 or \\~10, %\\%d, x\\^2, a $ b ~ c"
-        );
+        assert_eq!(said, "Tickets \\$5-\\$10, \\~5 or \\~10, %\\%d, x\\^2, a $ b ~ c");
     }
     #[test]
     fn a_backslash_in_front_of_html_does_not_let_it_through() {
@@ -1157,10 +1092,8 @@ mod tests {
     }
     #[test]
     fn a_link_with_a_space_in_it_is_still_a_link() {
-        let said = as_markdown(
-            "Here",
-            &[run(4, &[bytes(9, b"file:///Users/me/My Notes (1).pdf")])],
-        );
+        let said =
+            as_markdown("Here", &[run(4, &[bytes(9, b"file:///Users/me/My Notes (1).pdf")])]);
         assert_eq!(said, "[Here](<file:///Users/me/My Notes (1).pdf>)");
     }
     fn object(at: u64) -> Vec<u8> {
@@ -1254,10 +1187,7 @@ mod tests {
     #[test]
     fn a_table_is_a_markdown_table_with_its_columns_where_they_are_drawn() {
         let said = super::table(&shopping(), &mut Named).expect("a table");
-        assert_eq!(
-            said,
-            "| How much | Item |\n| --- | --- |\n| 2 \\| two<br>litres | **Milk** |"
-        );
+        assert_eq!(said, "| How much | Item |\n| --- | --- |\n| 2 \\| two<br>litres | **Milk** |");
     }
     #[test]
     fn a_table_in_a_note_stands_apart_from_the_lines_around_it() {
@@ -1276,20 +1206,13 @@ mod tests {
             ],
         ))
         .expect("a note");
-        assert_eq!(
-            markdown(&body, &mut Tabled),
-            "Before\n\n| a |\n| --- |\n| b |\n\nAfter"
-        );
+        assert_eq!(markdown(&body, &mut Tabled), "Before\n\n| a |\n| --- |\n| b |\n\nAfter");
     }
     #[test]
     fn bytes_that_are_not_a_table_are_no_table() {
         assert!(super::table(b"not gzip", &mut Named).is_none());
-        let scan = merged(
-            &[map(0, &[(0, Vec::new())])],
-            &["self"],
-            &["com.apple.notes.gallery"],
-            &[],
-        );
+        let scan =
+            merged(&[map(0, &[(0, Vec::new())])], &["self"], &["com.apple.notes.gallery"], &[]);
         assert!(super::table(&scan, &mut Named).is_none());
     }
     #[test]
@@ -1299,12 +1222,7 @@ mod tests {
             said.extend(bytes(4, id.as_bytes()));
             map(0, &[(0, said)])
         };
-        let scan = merged(
-            &[page("PAGE-1"), page("PAGE-2")],
-            &["self"],
-            &["gallery"],
-            &[],
-        );
+        let scan = merged(&[page("PAGE-1"), page("PAGE-2")], &["self"], &["gallery"], &[]);
         assert_eq!(super::gallery(&scan), vec!["PAGE-1", "PAGE-2"]);
         assert!(super::gallery(b"nothing").is_empty());
     }

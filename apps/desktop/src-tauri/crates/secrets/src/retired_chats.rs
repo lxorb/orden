@@ -33,10 +33,7 @@ mod tests {
     fn the_downloaded_chat_programs_and_their_state_go() {
         let dir = tempfile::tempdir().expect("a folder");
         let sidecars = sidecars_under(dir.path());
-        let program = sidecars
-            .join("signal-cli")
-            .join("program")
-            .join("0.14.9-25.0.5");
+        let program = sidecars.join("signal-cli").join("program").join("0.14.9-25.0.5");
         std::fs::create_dir_all(&program).expect("program");
         std::fs::write(program.join("signal-cli.jar"), "PK").expect("jar");
         std::fs::write(sidecars.join("signal-cli").join("state.sealed"), "OSS1").expect("state");

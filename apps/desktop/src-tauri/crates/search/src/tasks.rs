@@ -53,12 +53,7 @@ pub fn task_at(line: &str) -> Option<TaskItem> {
     if end == after && bytes.get(end).is_some() {
         return None;
     }
-    Some(TaskItem {
-        done: mark != ' ',
-        mark,
-        indent,
-        marker: end,
-    })
+    Some(TaskItem { done: mark != ' ', mark, indent, marker: end })
 }
 #[cfg(test)]
 mod tests {
@@ -88,12 +83,8 @@ mod tests {
     }
     #[test]
     fn the_box_says_what_is_in_it_as_written() {
-        for (line, mark) in [
-            ("- [ ] a", ' '),
-            ("- [/] a", '/'),
-            ("- [-] a", '-'),
-            ("- [é] a", 'é'),
-        ] {
+        for (line, mark) in [("- [ ] a", ' '), ("- [/] a", '/'), ("- [-] a", '-'), ("- [é] a", 'é')]
+        {
             assert_eq!(task_at(line).expect(line).mark, mark, "{line}");
         }
         assert_eq!(task_at("\t- [x] a").expect("a task").indent, 1);

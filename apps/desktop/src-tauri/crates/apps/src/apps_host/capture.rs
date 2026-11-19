@@ -72,51 +72,27 @@ impl Capture {
     pub fn open(display: &str, seen: Sender<News>) -> Result<Capture, String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
         let (x, screen) = x11rb::connect(Some(display)).map_err(|e| said(&e))?;
-        let root = x
-            .setup()
-            .roots
-            .get(screen)
-            .ok_or("the display has no screen")?
-            .root;
-        let depth_ok = x
-            .setup()
-            .pixmap_formats
-            .iter()
-            .any(|one| one.depth == 24 && one.bits_per_pixel == 32);
+        let root = x.setup().roots.get(screen).ok_or("the display has no screen")?.root;
+        let depth_ok =
+            x.setup().pixmap_formats.iter().any(|one| one.depth == 24 && one.bits_per_pixel == 32);
         if !depth_ok {
             return Err("the display does not keep four bytes a pixel".to_owned());
         }
-        for name in [
-            shm::X11_EXTENSION_NAME,
-            damage::X11_EXTENSION_NAME,
-            xfixes::X11_EXTENSION_NAME,
-        ] {
-            if x.extension_information(name)
-                .map_err(|e| said(&e))?
-                .is_none()
-            {
+        for name in
+            [shm::X11_EXTENSION_NAME, damage::X11_EXTENSION_NAME, xfixes::X11_EXTENSION_NAME]
+        {
+            if x.extension_information(name).map_err(|e| said(&e))?.is_none() {
                 return Err(format!("the display has no {name}"));
             }
         }
-        let shm = x
-            .shm_query_version()
-            .map_err(|e| said(&e))?
-            .reply()
-            .map_err(|e| said(&e))?;
+        let shm = x.shm_query_version().map_err(|e| said(&e))?.reply().map_err(|e| said(&e))?;
         if (shm.major_version, shm.minor_version) < (1, 2) {
             return Err("the display's MIT-SHM cannot hand a segment over".to_owned());
         }
-        x.xfixes_query_version(5, 0)
-            .map_err(|e| said(&e))?
-            .reply()
-            .map_err(|e| said(&e))?;
-        x.damage_query_version(1, 1)
-            .map_err(|e| said(&e))?
-            .reply()
-            .map_err(|e| said(&e))?;
+        x.xfixes_query_version(5, 0).map_err(|e| said(&e))?.reply().map_err(|e| said(&e))?;
+        x.damage_query_version(1, 1).map_err(|e| said(&e))?.reply().map_err(|e| said(&e))?;
         let damage = x.generate_id().map_err(|e| said(&e))?;
-        x.damage_create(damage, root, damage::ReportLevel::NON_EMPTY)
-            .map_err(|e| said(&e))?;
+        x.damage_create(damage, root, damage::ReportLevel::NON_EMPTY).map_err(|e| said(&e))?;
         x.xfixes_select_cursor_input(root, xfixes::CursorNotifyMask::DISPLAY_CURSOR)
             .map_err(|e| said(&e))?;
         x.change_window_attributes(
@@ -146,24 +122,13 @@ impl Capture {
         }
         let watching = x.clone();
         std::thread::spawn(move || watch(&watching, root, waker, &seen));
-        Ok(Capture {
-            x,
-            root,
-            damage,
-            segment: None,
-            waker,
-        })
+        Ok(Capture { x, root, damage, segment: None, waker })
     }
     pub fn grab(&mut self) -> Result<(&[u8], (u16, u16)), String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
         let x = &self.x;
-        x.damage_subtract(self.damage, NONE, NONE)
-            .map_err(|e| said(&e))?;
-        let at = x
-            .get_geometry(self.root)
-            .map_err(|e| said(&e))?
-            .reply()
-            .map_err(|e| said(&e))?;
+        x.damage_subtract(self.damage, NONE, NONE).map_err(|e| said(&e))?;
+        let at = x.get_geometry(self.root).map_err(|e| said(&e))?.reply().map_err(|e| said(&e))?;
         let size = (at.width, at.height);
         let length = usize::from(size.0) * usize::from(size.1) * 4;
         if self.segment.as_ref().is_none_or(|one| one.size != size) {
@@ -236,12 +201,7 @@ fn watch(x: &RustConnection, root: Window, waker: Window, seen: &Sender<News>) {
 }
 fn pointer(x: &RustConnection) -> Option<String> {
     let image = x.xfixes_get_cursor_image().ok()?.reply().ok()?;
-    Some(pointer_text(
-        image.width,
-        image.height,
-        (image.xhot, image.yhot),
-        &image.cursor_image,
-    ))
+    Some(pointer_text(image.width, image.height, (image.xhot, image.yhot), &image.cursor_image))
 }
 pub fn pointer_text(width: u16, height: u16, hot: (u16, u16), argb: &[u32]) -> String {
     let count = usize::from(width) * usize::from(height);
@@ -301,18 +261,9 @@ mod tests {
         assert_eq!(said["t"], "pointer");
         assert_eq!(said["x"], 1);
         assert_eq!(said["y"], 0);
-        assert!(said["png"]
-            .as_str()
-            .unwrap()
-            .starts_with("data:image/png;base64,iVBOR"));
-        assert_eq!(
-            pointer_text(2, 1, (0, 0), &[0, 0]),
-            r#"{"hidden":true,"t":"pointer"}"#
-        );
-        assert_eq!(
-            pointer_text(0, 0, (0, 0), &[]),
-            r#"{"hidden":true,"t":"pointer"}"#
-        );
+        assert!(said["png"].as_str().unwrap().starts_with("data:image/png;base64,iVBOR"));
+        assert_eq!(pointer_text(2, 1, (0, 0), &[0, 0]), r#"{"hidden":true,"t":"pointer"}"#);
+        assert_eq!(pointer_text(0, 0, (0, 0), &[]), r#"{"hidden":true,"t":"pointer"}"#);
     }
     #[test]
     fn takes_the_alpha_back_out_of_the_colour() {
@@ -335,10 +286,7 @@ mod tests {
             let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
             let (sender, seen) = std::sync::mpsc::channel();
             let mut capture = Capture::open(&display.name(), sender).unwrap();
-            assert!(matches!(
-                seen.recv_timeout(Duration::from_secs(2)),
-                Ok(News::Pointer(_))
-            ));
+            assert!(matches!(seen.recv_timeout(Duration::from_secs(2)), Ok(News::Pointer(_))));
             while seen.recv_timeout(Duration::from_millis(100)).is_ok() {}
             let (bytes, size) = capture.grab().unwrap();
             assert_eq!(size, (320, 240));
@@ -354,17 +302,8 @@ mod tests {
                 &x11rb::protocol::xproto::CreateGCAux::new().foreground(0x00ff_0000),
             )
             .unwrap();
-            x.poly_fill_rectangle(
-                root,
-                pen,
-                &[Rectangle {
-                    x: 0,
-                    y: 0,
-                    width: 10,
-                    height: 10,
-                }],
-            )
-            .unwrap();
+            x.poly_fill_rectangle(root, pen, &[Rectangle { x: 0, y: 0, width: 10, height: 10 }])
+                .unwrap();
             x.flush().unwrap();
             let mut news = seen.recv_timeout(Duration::from_secs(2));
             while matches!(news, Ok(News::Pointer(_))) {

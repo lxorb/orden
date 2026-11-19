@@ -20,11 +20,7 @@ pub struct Pointed {
 pub fn read(tab: &str, payload: &str) -> Option<Pointed> {
     let Said { x, y } = serde_json::from_str(payload).ok()?;
     let inside = |one: f64| (0.0..=1.0).contains(&one);
-    (inside(x) && inside(y)).then(|| Pointed {
-        tab: tab.to_string(),
-        x,
-        y,
-    })
+    (inside(x) && inside(y)).then(|| Pointed { tab: tab.to_string(), x, y })
 }
 pub fn heard(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
     use tauri::Emitter;
@@ -41,11 +37,7 @@ mod tests {
     fn a_pointer_on_the_page_is_told_as_a_share_of_its_width_and_height() {
         assert_eq!(
             read("t1", r#"{"x":0.001,"y":0.5}"#),
-            Some(Pointed {
-                tab: "t1".into(),
-                x: 0.001,
-                y: 0.5
-            })
+            Some(Pointed { tab: "t1".into(), x: 0.001, y: 0.5 })
         );
         for said in [
             "",

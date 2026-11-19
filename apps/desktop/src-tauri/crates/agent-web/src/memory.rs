@@ -44,10 +44,7 @@ fn working_set(pid: u32) -> u64 {
         let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) else {
             return 0;
         };
-        let mut counters = PROCESS_MEMORY_COUNTERS {
-            cb: size,
-            ..Default::default()
-        };
+        let mut counters = PROCESS_MEMORY_COUNTERS { cb: size, ..Default::default() };
         let read = K32GetProcessMemoryInfo(handle, &raw mut counters, size).as_bool();
         let _ = CloseHandle(handle);
         if read {

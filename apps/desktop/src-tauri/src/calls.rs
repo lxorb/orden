@@ -28,13 +28,8 @@ const MAIN: [&str; 13] = [
 ];
 const GUARDS: [&str; 3] = ["MutexGuard", "RwLockReadGuard", "RwLockWriteGuard"];
 const TYPED_DEEPEST: usize = 16;
-const RELEASING: [&str; 5] = [
-    "wait",
-    "wait_timeout",
-    "wait_while",
-    "wait_timeout_while",
-    "wait_timeout_ms",
-];
+const RELEASING: [&str; 5] =
+    ["wait", "wait_timeout", "wait_while", "wait_timeout_while", "wait_timeout_ms"];
 const WIDEST: usize = 8;
 const DEREFS: [&str; 14] = [
     "Arc",
@@ -52,9 +47,8 @@ const DEREFS: [&str; 14] = [
     "ManuallyDrop",
     "AssertUnwindSafe",
 ];
-const WRAPS: [&str; 10] = [
-    "Arc", "Rc", "Box", "Mutex", "RwLock", "RefCell", "Cell", "OnceLock", "Pin", "LazyLock",
-];
+const WRAPS: [&str; 10] =
+    ["Arc", "Rc", "Box", "Mutex", "RwLock", "RefCell", "Cell", "OnceLock", "Pin", "LazyLock"];
 const SAME: [&str; 22] = [
     "clone",
     "to_owned",
@@ -79,9 +73,8 @@ const SAME: [&str; 22] = [
     "into_inner",
     "get_or_init",
 ];
-const SEQUENCES: [&str; 9] = [
-    "Vec", "VecDeque", "HashSet", "BTreeSet", "[]", "Iter", "Option", "IndexSet", "SmallVec",
-];
+const SEQUENCES: [&str; 9] =
+    ["Vec", "VecDeque", "HashSet", "BTreeSet", "[]", "Iter", "Option", "IndexSet", "SmallVec"];
 const MAPS: [&str; 3] = ["HashMap", "BTreeMap", "IndexMap"];
 const HANDLES: [&str; 12] = [
     "Weak",
@@ -233,31 +226,21 @@ impl Crate {
                 .iter()
                 .filter_map(|(path, function)| {
                     function.takes.iter().find_map(|lock| {
-                        held.iter()
-                            .find(|(_, one)| same_lock(lock, one))
-                            .map(|(holder, one)| {
-                                (
-                                    path.clone(),
-                                    format!("locks {lock}, held across a wait in {holder} ({one})"),
-                                )
-                            })
+                        held.iter().find(|(_, one)| same_lock(lock, one)).map(|(holder, one)| {
+                            (
+                                path.clone(),
+                                format!("locks {lock}, held across a wait in {holder} ({one})"),
+                            )
+                        })
                     })
                 })
                 .collect();
             let seeds: HashSet<String> = locks.keys().cloned().collect();
             let reached = self.reached(words, stops, &seeds);
             if reached.len() == waits.reached.len() {
-                return Waits {
-                    reached,
-                    locks,
-                    stops: stopped,
-                };
+                return Waits { reached, locks, stops: stopped };
             }
-            waits = Waits {
-                reached,
-                locks,
-                stops: stopped.clone(),
-            };
+            waits = Waits { reached, locks, stops: stopped.clone() };
         }
     }
     pub(crate) fn saying(&self, says: impl Fn(&str) -> bool) -> HashSet<String> {
@@ -294,10 +277,7 @@ impl Crate {
             .functions
             .iter()
             .filter(|(_, function)| {
-                function
-                    .takes
-                    .iter()
-                    .any(|lock| held.iter().any(|(_, one)| same_lock(lock, one)))
+                function.takes.iter().any(|lock| held.iter().any(|(_, one)| same_lock(lock, one)))
             })
             .map(|(path, _)| path.clone())
             .collect();
@@ -312,11 +292,8 @@ impl Crate {
                 let mut seen: HashSet<String> = HashSet::new();
                 while !takers.contains(&at) && seen.insert(at.clone()) {
                     let Some(next) = self.functions.get(&at).and_then(|function| {
-                        let mut next: Vec<&String> = function
-                            .called
-                            .iter()
-                            .filter(|one| reached.contains(*one))
-                            .collect();
+                        let mut next: Vec<&String> =
+                            function.called.iter().filter(|one| reached.contains(*one)).collect();
                         next.sort();
                         next.first().map(|one| (*one).clone())
                     }) else {
@@ -373,9 +350,7 @@ impl Crate {
             }
             for (back_from, back_to, back) in &edges {
                 if from < to && same_lock(back_from, to) && same_lock(back_to, from) {
-                    found.push(format!(
-                        "{why}, which takes {to}; {back}, which takes {from}"
-                    ));
+                    found.push(format!("{why}, which takes {to}; {back}, which takes {from}"));
                 }
             }
         }
@@ -466,33 +441,17 @@ impl Default for Target {
     }
 }
 impl Target {
-    pub(crate) const WINDOWS: Self = Self {
-        os: "windows",
-        cef: false,
-    };
-    pub(crate) const MACOS: Self = Self {
-        os: "macos",
-        cef: false,
-    };
-    pub(crate) const LINUX: Self = Self {
-        os: "linux",
-        cef: true,
-    };
+    pub(crate) const WINDOWS: Self = Self { os: "windows", cef: false };
+    pub(crate) const MACOS: Self = Self { os: "macos", cef: false };
+    pub(crate) const LINUX: Self = Self { os: "linux", cef: true };
     fn allows(self, attrs: &[syn::Attribute]) -> bool {
         attrs
             .iter()
             .filter(|attr| attr.path().is_ident("cfg"))
-            .all(|attr| {
-                attr.parse_args::<syn::Meta>()
-                    .is_ok_and(|one| self.holds(&one))
-            })
+            .all(|attr| attr.parse_args::<syn::Meta>().is_ok_and(|one| self.holds(&one)))
     }
     fn holds(self, said: &syn::Meta) -> bool {
-        let name = said
-            .path()
-            .get_ident()
-            .map(ToString::to_string)
-            .unwrap_or_default();
+        let name = said.path().get_ident().map(ToString::to_string).unwrap_or_default();
         match said {
             syn::Meta::Path(_) => match name.as_str() {
                 "windows" => self.os == "windows",
@@ -501,10 +460,7 @@ impl Target {
                 _ => true,
             },
             syn::Meta::NameValue(pair) => {
-                let syn::Expr::Lit(syn::ExprLit {
-                    lit: syn::Lit::Str(value),
-                    ..
-                }) = &pair.value
+                let syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(value), .. }) = &pair.value
                 else {
                     return true;
                 };
@@ -594,21 +550,10 @@ fn expr_attrs(expr: &syn::Expr) -> &[syn::Attribute] {
     }
 }
 pub(crate) fn read(lib: &Path, target: Target) -> Crate {
-    let mut gathered = Gathered {
-        target,
-        ..Gathered::default()
-    };
+    let mut gathered = Gathered { target, ..Gathered::default() };
     gathered.file("crate", lib, true);
-    let crates = lib
-        .parent()
-        .and_then(Path::parent)
-        .map(|app| app.join("crates"));
-    for one in crates
-        .and_then(|dir| fs::read_dir(dir).ok())
-        .into_iter()
-        .flatten()
-        .flatten()
-    {
+    let crates = lib.parent().and_then(Path::parent).map(|app| app.join("crates"));
+    for one in crates.and_then(|dir| fs::read_dir(dir).ok()).into_iter().flatten().flatten() {
         let source = one.path().join("src").join("lib.rs");
         if source.exists() {
             let name = one.file_name().to_string_lossy().replace('-', "_");
@@ -638,10 +583,7 @@ struct Scope {
 impl Scope {
     fn joined(&mut self, other: &Scope) {
         for (name, targets) in &other.named {
-            self.named
-                .entry(name.clone())
-                .or_default()
-                .extend(targets.iter().cloned());
+            self.named.entry(name.clone()).or_default().extend(targets.iter().cloned());
         }
         self.globs.extend(other.globs.iter().cloned());
     }
@@ -673,12 +615,7 @@ struct Found {
 }
 impl Found {
     fn place(&self) -> Place<'_> {
-        (
-            &self.module,
-            Some(&self.scope),
-            self.owner.as_deref(),
-            Some(&self.bounds),
-        )
+        (&self.module, Some(&self.scope), self.owner.as_deref(), Some(&self.bounds))
     }
 }
 type Bounds = HashMap<String, Vec<Vec<String>>>;
@@ -730,25 +667,10 @@ struct Shape {
     relay: bool,
 }
 fn locks_in(place: &str, module: &str, visit: impl FnOnce(&mut Taking, &mut Holding)) -> Locks {
-    let mut taking = Taking {
-        owner: place,
-        module,
-        takes: Vec::new(),
-        passes: Vec::new(),
-    };
-    let mut holding = Holding {
-        owner: place,
-        module,
-        held: Vec::new(),
-        handed: Vec::new(),
-    };
+    let mut taking = Taking { owner: place, module, takes: Vec::new(), passes: Vec::new() };
+    let mut holding = Holding { owner: place, module, held: Vec::new(), handed: Vec::new() };
     visit(&mut taking, &mut holding);
-    Locks {
-        takes: taking.takes,
-        passes: taking.passes,
-        held: holding.held,
-        handed: holding.handed,
-    }
+    Locks { takes: taking.takes, passes: taking.passes, held: holding.held, handed: holding.handed }
 }
 #[derive(Clone)]
 enum Key {
@@ -831,11 +753,8 @@ impl Gathered {
         let parsed = syn::parse_file(&source)
             .unwrap_or_else(|error| panic!("{} could not be parsed: {error}", file.display()));
         let here = file.parent().expect("a module's folder").to_path_buf();
-        let children = if owns {
-            here.clone()
-        } else {
-            here.join(file.file_stem().expect("a module's name"))
-        };
+        let children =
+            if owns { here.clone() } else { here.join(file.file_stem().expect("a module's name")) };
         self.items(
             module,
             &parsed.items,
@@ -852,10 +771,7 @@ impl Gathered {
     ) {
         self.modules.entry(module.to_owned()).or_default();
         self.owners.insert(module.to_owned());
-        let top = Enclosing {
-            scope: outer.clone(),
-            bounds: Bounds::new(),
-        };
+        let top = Enclosing { scope: outer.clone(), bounds: Bounds::new() };
         for item in items {
             if !item_allowed(self.target, item) {
                 continue;
@@ -878,13 +794,10 @@ impl Gathered {
                     let owner = format!("{module}::{owner}");
                     self.owners.insert(owner.clone());
                     if let Some((_, shape, _)) = &block.trait_ {
-                        self.impls
-                            .push((module.to_owned(), segments(shape), owner.clone()));
+                        self.impls.push((module.to_owned(), segments(shape), owner.clone()));
                     }
-                    let enclosing = Enclosing {
-                        scope: outer.clone(),
-                        bounds: bounds_of(&block.generics),
-                    };
+                    let enclosing =
+                        Enclosing { scope: outer.clone(), bounds: bounds_of(&block.generics) };
                     for inner in &block.items {
                         if let syn::ImplItem::Fn(function) = inner {
                             if !tested(&function.attrs) && self.target.allows(&function.attrs) {
@@ -904,10 +817,8 @@ impl Gathered {
                     let owner = format!("{module}::{}", shape.ident);
                     self.owners.insert(owner.clone());
                     self.traits.insert(owner.clone());
-                    let enclosing = Enclosing {
-                        scope: outer.clone(),
-                        bounds: bounds_of(&shape.generics),
-                    };
+                    let enclosing =
+                        Enclosing { scope: outer.clone(), bounds: bounds_of(&shape.generics) };
                     for inner in &shape.items {
                         if let syn::TraitItem::Fn(function) = inner {
                             if !self.target.allows(&function.attrs) {
@@ -944,10 +855,7 @@ impl Gathered {
     }
     fn shaped(&mut self, module: &str, item: &syn::Item) {
         let named = |at: usize, field: &syn::Field| {
-            field
-                .ident
-                .as_ref()
-                .map_or_else(|| at.to_string(), ToString::to_string)
+            field.ident.as_ref().map_or_else(|| at.to_string(), ToString::to_string)
         };
         let mut fields = HashMap::new();
         let (name, attrs, generics) = match item {
@@ -994,11 +902,7 @@ impl Gathered {
         if !tested(attrs) {
             self.defs.insert(
                 format!("{module}::{name}"),
-                Def {
-                    module: module.to_owned(),
-                    fields,
-                    bounds: bounds_of(generics),
-                },
+                Def { module: module.to_owned(), fields, bounds: bounds_of(generics) },
             );
         }
     }
@@ -1055,14 +959,7 @@ impl Gathered {
         let values = Values::of(|values| values.visit_block(block), &env);
         let mut mains = Mains::default();
         mains.visit_block(block);
-        let site = Site {
-            module,
-            owner,
-            path: &path,
-            scope: &scope,
-            env: &env,
-            bounds: &bounds,
-        };
+        let site = Site { module, owner, path: &path, scope: &scope, env: &env, bounds: &bounds };
         let closures = self.closures_of(&site, sig, block, &mains);
         let drops = Drops::of(sig, block);
         let params: Vec<String> = sig
@@ -1075,32 +972,16 @@ impl Gathered {
             .collect();
         let relay = mains.closures.iter().any(|body| {
             let said = said_of(body.to_token_stream());
-            params
-                .iter()
-                .any(|param| said.contains(&spaced(&format!("{param}("))))
+            params.iter().any(|param| said.contains(&spaced(&format!("{param}("))))
         }) || mains
             .named
             .iter()
             .any(|named| matches!(named.as_slice(), [one] if params.contains(one)));
         let output = sig.output.to_token_stream().to_string();
-        let inputs = format!(
-            "{} {}",
-            sig.inputs.to_token_stream(),
-            sig.generics.to_token_stream()
-        );
-        let inner = Enclosing {
-            scope: scope.clone(),
-            bounds: Bounds::new(),
-        };
+        let inputs = format!("{} {}", sig.inputs.to_token_stream(), sig.generics.to_token_stream());
+        let inner = Enclosing { scope: scope.clone(), bounds: Bounds::new() };
         for nested in &body.nested {
-            self.function(
-                module,
-                None,
-                &nested.attrs,
-                &nested.sig,
-                &nested.block,
-                &inner,
-            );
+            self.function(module, None, &nested.attrs, &nested.sig, &nested.block, &inner);
         }
         self.found.push(Found {
             path,
@@ -1116,9 +997,7 @@ impl Gathered {
             params,
             shape: Shape {
                 accessor: GUARDS.iter().any(|guard| output.contains(guard)),
-                helper: ["Fn (", "FnOnce (", "FnMut ("]
-                    .iter()
-                    .any(|one| inputs.contains(one)),
+                helper: ["Fn (", "FnOnce (", "FnMut ("].iter().any(|one| inputs.contains(one)),
                 relay,
             },
             mains: mains.named,
@@ -1159,10 +1038,7 @@ impl Gathered {
                 syn::FnArg::Receiver(_) => None,
             })
             .collect();
-        let mut closures = Closures {
-            invoked: slots.invoked,
-            ..Closures::default()
-        };
+        let mut closures = Closures { invoked: slots.invoked, ..Closures::default() };
         for (at, (slot, carried)) in slots.stored.into_iter().enumerate() {
             match carried {
                 Carried::Body(body) => {
@@ -1222,10 +1098,7 @@ impl Gathered {
             inputs: Vec::new(),
             generics: Vec::new(),
             bounds: site.bounds.clone(),
-            closures: Closures {
-                invoked: slots.invoked,
-                ..Closures::default()
-            },
+            closures: Closures { invoked: slots.invoked, ..Closures::default() },
             drops,
         });
     }
@@ -1243,17 +1116,11 @@ impl Gathered {
             else {
                 continue;
             };
-            self.implementors
-                .entry(shape.clone())
-                .or_default()
-                .push(owner.clone());
+            self.implementors.entry(shape.clone()).or_default().push(owner.clone());
             self.implemented.entry(owner).or_default().push(shape);
         }
         let slots = self.slots();
-        let mut own = Crate {
-            modules: self.modules.len(),
-            ..Crate::default()
-        };
+        let mut own = Crate { modules: self.modules.len(), ..Crate::default() };
         for (path, takes, held) in self.locked() {
             let function = own.functions.entry(path).or_default();
             function.takes.extend(takes);
@@ -1266,11 +1133,8 @@ impl Gathered {
             .map(|found| found.path.clone())
             .collect();
         for found in &self.found {
-            let called: Vec<String> = found
-                .calls
-                .iter()
-                .flat_map(|path| self.resolve(found, path))
-                .collect();
+            let called: Vec<String> =
+                found.calls.iter().flat_map(|path| self.resolve(found, path)).collect();
             let typed = self.typed(found, &found.methods);
             let dropped = self.implicit(found);
             let passed = self.passed(found);
@@ -1307,9 +1171,7 @@ impl Gathered {
                 }
             }
             let relayed = found.passed_to.as_ref().is_some_and(|to| {
-                self.resolve(found, to)
-                    .iter()
-                    .any(|one| relays_main.contains(one))
+                self.resolve(found, to).iter().any(|one| relays_main.contains(one))
             });
             if relayed && !own.mains.contains(&found.path) {
                 own.mains.push(found.path.clone());
@@ -1368,18 +1230,11 @@ impl Gathered {
         self.slot_in(found, slot, &mut Vec::new())
     }
     fn slot_in(&self, found: &Found, slot: &Chain, visiting: &mut Vec<String>) -> Option<String> {
-        if let Some(at) = slot
-            .steps
-            .iter()
-            .rposition(|step| matches!(step, Step::Field(_)))
-        {
+        if let Some(at) = slot.steps.iter().rposition(|step| matches!(step, Step::Field(_))) {
             let Step::Field(name) = &slot.steps[at] else {
                 return None;
             };
-            let base = Chain {
-                root: slot.root.clone(),
-                steps: slot.steps[..at].to_vec(),
-            };
+            let base = Chain { root: slot.root.clone(), steps: slot.steps[..at].to_vec() };
             return self.field_key(found, &base, name);
         }
         match &slot.root {
@@ -1451,16 +1306,12 @@ impl Gathered {
                     .filter_map(|&at| self.found[at].output.as_ref())
                     .collect();
                 outputs.is_empty()
-                    || outputs
-                        .iter()
-                        .any(|one| !matches!(one, syn::Type::Reference(_)))
+                    || outputs.iter().any(|one| !matches!(one, syn::Type::Reference(_)))
             }
             Root::Var(name) => match found.env.get(name) {
                 Some(chains) if !visiting.iter().any(|one| one == name) => {
                     visiting.push(name.clone());
-                    let owned = chains
-                        .iter()
-                        .any(|one| self.owns(found, one, visiting, depth + 1));
+                    let owned = chains.iter().any(|one| self.owns(found, one, visiting, depth + 1));
                     visiting.pop();
                     owned
                 }
@@ -1481,10 +1332,7 @@ impl Gathered {
             let Step::Method(method, _) = step else {
                 continue;
             };
-            let receiver = Chain {
-                root: chain.root.clone(),
-                steps: chain.steps[..at].to_vec(),
-            };
+            let receiver = Chain { root: chain.root.clone(), steps: chain.steps[..at].to_vec() };
             let outputs: Vec<&syn::Type> = self
                 .types(found, &receiver, &mut Vec::new(), 0)
                 .iter()
@@ -1493,9 +1341,7 @@ impl Gathered {
                 .filter_map(|at| self.found[at].output.as_ref())
                 .collect();
             owned = if !outputs.is_empty() {
-                outputs
-                    .iter()
-                    .any(|one| !matches!(one, syn::Type::Reference(_)))
+                outputs.iter().any(|one| !matches!(one, syn::Type::Reference(_)))
             } else if OWNING.contains(&method.as_str()) {
                 true
             } else {
@@ -1525,11 +1371,7 @@ impl Gathered {
         }
         for (found, keys) in self.found.iter().zip(takes.iter_mut()) {
             for (to, key) in &found.locks.passes {
-                if self
-                    .resolve(found, to)
-                    .iter()
-                    .any(|one| relays.contains(one))
-                {
+                if self.resolve(found, to).iter().any(|one| relays.contains(one)) {
                     keys.push(self.key(found, key));
                 }
             }
@@ -1541,16 +1383,10 @@ impl Gathered {
                 continue;
             }
             if found.shape.accessor {
-                accessors
-                    .entry(found.path.clone())
-                    .or_default()
-                    .extend(keys.iter().cloned());
+                accessors.entry(found.path.clone()).or_default().extend(keys.iter().cloned());
             }
             if found.shape.helper {
-                helpers
-                    .entry(found.path.clone())
-                    .or_default()
-                    .extend(keys.iter().cloned());
+                helpers.entry(found.path.clone()).or_default().extend(keys.iter().cloned());
             }
         }
         let guarding: HashSet<String> = self
@@ -1634,22 +1470,16 @@ impl Gathered {
         match guard {
             Guard::Lock(key, call) => match self.taken_as(found, call) {
                 Taken::Lock => (vec![self.key(found, key)], Vec::new()),
-                Taken::Own(receiver) => self.guarded(
-                    found,
-                    &Guard::Method("lock".to_owned(), receiver, true),
-                    known,
-                ),
+                Taken::Own(receiver) => {
+                    self.guarded(found, &Guard::Method("lock".to_owned(), receiver, true), known)
+                }
                 Taken::Not(method, receiver) => {
                     self.guarded(found, &Guard::Method(method, receiver, true), known)
                 }
             },
             Guard::Through(path, first, strict) => {
                 let called = self.resolve(found, path);
-                let relays = if *strict {
-                    known.guarding
-                } else {
-                    known.relays
-                };
+                let relays = if *strict { known.guarding } else { known.relays };
                 let locks = match first {
                     Some(first) if called.iter().any(|one| relays.contains(one)) => {
                         vec![self.key(found, first)]
@@ -1684,10 +1514,7 @@ impl Gathered {
                     .filter(|(path, _)| path.ends_with(&format!("::{name}")))
                     .collect();
                 (
-                    named
-                        .iter()
-                        .flat_map(|(_, keys)| keys.iter().cloned())
-                        .collect(),
+                    named.iter().flat_map(|(_, keys)| keys.iter().cloned()).collect(),
                     named.iter().map(|(path, _)| (*path).clone()).collect(),
                 )
             }
@@ -1697,10 +1524,7 @@ impl Gathered {
         let Some((Step::Method(method, _), steps)) = call.steps.split_last() else {
             return Taken::Lock;
         };
-        let receiver = Chain {
-            root: call.root.clone(),
-            steps: steps.to_vec(),
-        };
+        let receiver = Chain { root: call.root.clone(), steps: steps.to_vec() };
         let tys = self.types(found, &receiver, &mut Vec::new(), 0);
         if method == "lock" || method == "held" {
             if tys.iter().any(|one| !self.targets(one, "lock").is_empty()) {
@@ -1725,16 +1549,10 @@ impl Gathered {
         }
     }
     fn resolve(&self, found: &Found, path: &[String]) -> Vec<String> {
-        self.absolute_in(found, path)
-            .into_iter()
-            .flat_map(|one| self.landing(&one, 0))
-            .collect()
+        self.absolute_in(found, path).into_iter().flat_map(|one| self.landing(&one, 0)).collect()
     }
     fn resolve_all(&self, found: &Found, calls: &[Vec<String>]) -> HashSet<String> {
-        calls
-            .iter()
-            .flat_map(|path| self.resolve(found, path))
-            .collect()
+        calls.iter().flat_map(|path| self.resolve(found, path)).collect()
     }
     fn key(&self, found: &Found, key: &Key) -> String {
         match key {
@@ -1781,10 +1599,7 @@ impl Gathered {
             }
             match (&chain.root, steps.split_last()) {
                 (_, Some((Step::Field(field), rest))) => {
-                    let base = Chain {
-                        root: chain.root.clone(),
-                        steps: rest.to_vec(),
-                    };
+                    let base = Chain { root: chain.root.clone(), steps: rest.to_vec() };
                     self.field_key(found, &base, field)
                 }
                 (Root::Var(other), None) => self.var_key(found, other, visiting),
@@ -1798,11 +1613,7 @@ impl Gathered {
     fn field_owner(&self, ty: &Ty, name: &str) -> Option<String> {
         let mut at = Some(ty);
         while let Some(one) = at {
-            if self
-                .defs
-                .get(&one.name)
-                .is_some_and(|def| def.fields.contains_key(name))
-            {
+            if self.defs.get(&one.name).is_some_and(|def| def.fields.contains_key(name)) {
                 return Some(one.name.clone());
             }
             at = one.inside();
@@ -1846,10 +1657,8 @@ impl Gathered {
         if let Some(known) = self.drops.borrow().get(name) {
             return known.clone();
         }
-        let mut called: HashSet<String> = self
-            .landing(&format!("{name}::drop"), 0)
-            .into_iter()
-            .collect();
+        let mut called: HashSet<String> =
+            self.landing(&format!("{name}::drop"), 0).into_iter().collect();
         if let Some(def) = self.defs.get(name) {
             for raw in def.fields.values() {
                 if let Some(field) = self.def_ty(name, raw) {
@@ -1857,9 +1666,7 @@ impl Gathered {
                 }
             }
         }
-        self.drops
-            .borrow_mut()
-            .insert(name.to_owned(), called.clone());
+        self.drops.borrow_mut().insert(name.to_owned(), called.clone());
         called
     }
     fn targets(&self, ty: &Ty, method: &str) -> Vec<String> {
@@ -1893,19 +1700,16 @@ impl Gathered {
             return None;
         }
         let (module, scope, owner, bounds) = place;
-        let inner = |one: &syn::Type| {
-            self.ty_in(place, one, depth + 1)
-                .unwrap_or_else(|| Ty::plain("?"))
-        };
+        let inner =
+            |one: &syn::Type| self.ty_in(place, one, depth + 1).unwrap_or_else(|| Ty::plain("?"));
         match raw {
             syn::Type::Reference(one) => self.ty_in(place, &one.elem, depth + 1),
             syn::Type::Paren(one) => self.ty_in(place, &one.elem, depth + 1),
             syn::Type::Group(one) => self.ty_in(place, &one.elem, depth + 1),
             syn::Type::Ptr(one) => self.ty_in(place, &one.elem, depth + 1),
-            syn::Type::Tuple(tuple) => Some(Ty {
-                name: "()".to_owned(),
-                args: tuple.elems.iter().map(inner).collect(),
-            }),
+            syn::Type::Tuple(tuple) => {
+                Some(Ty { name: "()".to_owned(), args: tuple.elems.iter().map(inner).collect() })
+            }
             syn::Type::Array(array) => Some(Ty::wrapping("[]", inner(&array.elem))),
             syn::Type::Slice(slice) => Some(Ty::wrapping("[]", inner(&slice.elem))),
             syn::Type::TraitObject(shape) => self.bounded(place, shape.bounds.iter()),
@@ -1917,9 +1721,7 @@ impl Gathered {
                 }
                 if let ([one], Some(bounds)) = (said.as_slice(), bounds) {
                     if let Some(shapes) = bounds.get(one) {
-                        return self
-                            .own_trait(place, shapes)
-                            .or_else(|| Some(Ty::plain(one)));
+                        return self.own_trait(place, shapes).or_else(|| Some(Ty::plain(one)));
                     }
                 }
                 let resolved = self.absolute(module, scope, owner, &said, 0);
@@ -1961,12 +1763,8 @@ impl Gathered {
                 _ => None,
             })
             .collect();
-        self.own_trait(place, &shapes).or_else(|| {
-            shapes
-                .first()
-                .and_then(|one| one.last())
-                .map(|one| Ty::plain(one))
-        })
+        self.own_trait(place, &shapes)
+            .or_else(|| shapes.first().and_then(|one| one.last()).map(|one| Ty::plain(one)))
     }
     fn own_trait(&self, place: Place<'_>, shapes: &[Vec<String>]) -> Option<Ty> {
         shapes.iter().find_map(|shape| {
@@ -2097,10 +1895,7 @@ impl Gathered {
         for callee in self.resolve(found, path) {
             for &at in self.by_path.get(&callee).into_iter().flatten() {
                 let called = &self.found[at];
-                let Some(output) = called
-                    .output
-                    .as_ref()
-                    .and_then(|raw| self.ty_of(called, raw))
+                let Some(output) = called.output.as_ref().and_then(|raw| self.ty_of(called, raw))
                 else {
                     continue;
                 };
@@ -2171,11 +1966,9 @@ impl Gathered {
                 .map(|one| vec![one])
         };
         match step {
-            Step::Field(name) if kind == "()" => name
-                .parse::<usize>()
-                .ok()
-                .and_then(|at| ty.arg(at))
-                .map(|one| vec![one]),
+            Step::Field(name) if kind == "()" => {
+                name.parse::<usize>().ok().and_then(|at| ty.arg(at)).map(|one| vec![one])
+            }
             Step::Field(name) => field(name),
             Step::Named(variant, name) => {
                 field(name).or_else(|| field(&format!("{variant}.{name}")))
@@ -2186,10 +1979,9 @@ impl Gathered {
                 _ => field(&format!("{variant}.{at}"))
                     .or_else(|| (kind == variant).then(|| field(&at.to_string())).flatten()),
             },
-            Step::Item if MAPS.contains(&kind) && ty.args.len() == 2 => Some(vec![Ty {
-                name: "()".to_owned(),
-                args: ty.args.clone(),
-            }]),
+            Step::Item if MAPS.contains(&kind) && ty.args.len() == 2 => {
+                Some(vec![Ty { name: "()".to_owned(), args: ty.args.clone() }])
+            }
             Step::Item => SEQUENCES
                 .contains(&kind)
                 .then(|| ty.args.last().cloned())
@@ -2211,10 +2003,7 @@ impl Gathered {
                 .flat_map(|one| self.by_path.get(one).into_iter().flatten())
                 .filter_map(|&at| {
                     let called = &self.found[at];
-                    called
-                        .output
-                        .as_ref()
-                        .and_then(|raw| self.ty_of(called, raw))
+                    called.output.as_ref().and_then(|raw| self.ty_of(called, raw))
                 })
                 .collect();
             if !tys.is_empty() {
@@ -2224,13 +2013,7 @@ impl Gathered {
         std_method(ty, method).map(|one| vec![one])
     }
     fn absolute_in(&self, found: &Found, path: &[String]) -> Vec<String> {
-        self.absolute(
-            &found.module,
-            Some(&found.scope),
-            found.owner.as_deref(),
-            path,
-            0,
-        )
+        self.absolute(&found.module, Some(&found.scope), found.owner.as_deref(), path, 0)
     }
     fn absolute(
         &self,
@@ -2247,15 +2030,9 @@ impl Gathered {
             return Vec::new();
         }
         match first.as_str() {
-            "crate" => vec![joined(
-                module.split("::").next().unwrap_or(module),
-                &segments[1..],
-            )],
+            "crate" => vec![joined(module.split("::").next().unwrap_or(module), &segments[1..])],
             "self" => vec![joined(module, &segments[1..])],
-            "Self" => owner
-                .map(|owner| joined(owner, &segments[1..]))
-                .into_iter()
-                .collect(),
+            "Self" => owner.map(|owner| joined(owner, &segments[1..])).into_iter().collect(),
             "super" => {
                 let mut base = module;
                 let mut rest = segments;
@@ -2377,11 +2154,7 @@ fn named(tree: &syn::UseTree, mut prefix: Vec<String>, scope: &mut Scope) {
             if rename.ident != "self" {
                 prefix.push(rename.ident.to_string());
             }
-            scope
-                .named
-                .entry(rename.rename.to_string())
-                .or_default()
-                .push(prefix);
+            scope.named.entry(rename.rename.to_string()).or_default().push(prefix);
         }
         syn::UseTree::Glob(_) => scope.globs.push(prefix),
         syn::UseTree::Group(group) => {
@@ -2405,11 +2178,7 @@ fn placed(attrs: &[syn::Attribute], here: &Path) -> Option<PathBuf> {
         if !pair.path.is_ident("path") {
             return None;
         }
-        let syn::Expr::Lit(syn::ExprLit {
-            lit: syn::Lit::Str(place),
-            ..
-        }) = &pair.value
-        else {
+        let syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(place), .. }) = &pair.value else {
             return None;
         };
         Some(here.join(place.value()))
@@ -2424,11 +2193,7 @@ fn owner_of(shape: &syn::Type) -> Option<String> {
 fn worker(attrs: &[syn::Attribute], sig: &syn::Signature) -> bool {
     attrs.iter().any(|attr| {
         let path = attr.path();
-        let said: Vec<String> = path
-            .segments
-            .iter()
-            .map(|one| one.ident.to_string())
-            .collect();
+        let said: Vec<String> = path.segments.iter().map(|one| one.ident.to_string()).collect();
         said == ["tauri", "command"]
     }) && !command(attrs, sig)
 }
@@ -2436,11 +2201,7 @@ fn command(attrs: &[syn::Attribute], sig: &syn::Signature) -> bool {
     sig.asyncness.is_none()
         && attrs.iter().any(|attr| {
             let path = attr.path();
-            let said: Vec<String> = path
-                .segments
-                .iter()
-                .map(|one| one.ident.to_string())
-                .collect();
+            let said: Vec<String> = path.segments.iter().map(|one| one.ident.to_string()).collect();
             said == ["tauri", "command"]
                 && match &attr.meta {
                     syn::Meta::List(list) => !list
@@ -2654,10 +2415,7 @@ fn top(module: &str) -> &str {
     cut.nth(1).map_or(module, |at| &module[..at])
 }
 fn segments(path: &syn::Path) -> Vec<String> {
-    path.segments
-        .iter()
-        .map(|one| one.ident.to_string())
-        .collect()
+    path.segments.iter().map(|one| one.ident.to_string()).collect()
 }
 fn found_calls(tokens: TokenStream) -> Vec<Vec<String>> {
     let mut found = Vec::new();
@@ -2722,15 +2480,12 @@ fn guard_of(expr: &syn::Expr, owner: &str, module: &str) -> Option<Guard> {
         }
     }
     match at {
-        syn::Expr::MethodCall(call) if locked(call) => Some(Guard::Lock(
-            key_of(&call.receiver, owner, module),
-            taking(call),
-        )),
-        syn::Expr::MethodCall(call) => Some(Guard::Method(
-            call.method.to_string(),
-            chain_of(&call.receiver),
-            false,
-        )),
+        syn::Expr::MethodCall(call) if locked(call) => {
+            Some(Guard::Lock(key_of(&call.receiver, owner, module), taking(call)))
+        }
+        syn::Expr::MethodCall(call) => {
+            Some(Guard::Method(call.method.to_string(), chain_of(&call.receiver), false))
+        }
         syn::Expr::Call(call) => match &*call.func {
             syn::Expr::Path(path) => Some(Guard::Through(
                 segments(&path.path),
@@ -2765,10 +2520,7 @@ struct Taking<'o> {
 impl<'a> Visit<'a> for Taking<'_> {
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if locked(call) {
-            self.takes.push((
-                key_of(&call.receiver, self.owner, self.module),
-                taking(call),
-            ));
+            self.takes.push((key_of(&call.receiver, self.owner, self.module), taking(call)));
         }
         if AWAY.iter().any(|one| call.method == one) {
             self.visit_expr(&call.receiver);
@@ -2782,8 +2534,7 @@ impl<'a> Visit<'a> for Taking<'_> {
             return;
         }
         if let (syn::Expr::Path(path), Some(first)) = (&*call.func, call.args.first()) {
-            self.passes
-                .push((segments(&path.path), key_of(first, self.owner, self.module)));
+            self.passes.push((segments(&path.path), key_of(first, self.owner, self.module)));
         }
         syn::visit::visit_expr_call(self, call);
     }
@@ -2797,16 +2548,10 @@ struct Temporaries<'o> {
 impl<'a> Visit<'a> for Temporaries<'_> {
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if locked(call) {
-            self.found.push(Guard::Lock(
-                key_of(&call.receiver, self.owner, self.module),
-                taking(call),
-            ));
+            self.found
+                .push(Guard::Lock(key_of(&call.receiver, self.owner, self.module), taking(call)));
         } else if !AWAY.iter().any(|one| call.method == one) {
-            self.found.push(Guard::Method(
-                call.method.to_string(),
-                chain_of(&call.receiver),
-                true,
-            ));
+            self.found.push(Guard::Method(call.method.to_string(), chain_of(&call.receiver), true));
         }
         if RELEASING.iter().any(|one| call.method == one) {
             self.visit_expr(&call.receiver);
@@ -2821,9 +2566,7 @@ impl<'a> Visit<'a> for Temporaries<'_> {
         if let syn::Expr::Path(path) = &*call.func {
             self.found.push(Guard::Through(
                 segments(&path.path),
-                call.args
-                    .first()
-                    .map(|first| key_of(first, self.owner, self.module)),
+                call.args.first().map(|first| key_of(first, self.owner, self.module)),
                 true,
             ));
         }
@@ -2879,22 +2622,15 @@ impl Holding<'_> {
             }
             _ => {}
         }
-        let mut temporaries = Temporaries {
-            owner: self.owner,
-            module: self.module,
-            found: Vec::new(),
-        };
+        let mut temporaries =
+            Temporaries { owner: self.owner, module: self.module, found: Vec::new() };
         temporaries.visit_expr(expr);
         if temporaries.found.is_empty() {
             return;
         }
         let mut after = expr.clone();
         LockedFirst.visit_expr_mut(&mut after);
-        self.hold(
-            temporaries.found,
-            after.to_token_stream(),
-            Methods::of_expr(&after),
-        );
+        self.hold(temporaries.found, after.to_token_stream(), Methods::of_expr(&after));
     }
 }
 struct LockedFirst;
@@ -2978,20 +2714,14 @@ impl<'a> Visit<'a> for Mains {
         if let syn::Expr::Path(path) = &*call.func {
             for argument in &call.args {
                 if let syn::Expr::Closure(closure) = argument {
-                    self.passed
-                        .push((segments(&path.path), (*closure.body).clone()));
+                    self.passed.push((segments(&path.path), (*closure.body).clone()));
                 }
             }
         }
         syn::visit::visit_expr_call(self, call);
     }
     fn visit_macro(&mut self, called: &'a syn::Macro) {
-        if called
-            .path
-            .segments
-            .last()
-            .is_some_and(|one| one.ident == "with_platform")
-        {
+        if called.path.segments.last().is_some_and(|one| one.ident == "with_platform") {
             if let Ok(arguments) =
                 called.parse_body_with(Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated)
             {
@@ -3043,10 +2773,7 @@ struct Chain {
 }
 impl Chain {
     fn rooted(root: Root) -> Self {
-        Self {
-            root,
-            steps: Vec::new(),
-        }
+        Self { root, steps: Vec::new() }
     }
     fn then(mut self, step: Step) -> Self {
         self.steps.push(step);
@@ -3062,16 +2789,10 @@ struct Ty {
 }
 impl Ty {
     fn plain(name: &str) -> Self {
-        Self {
-            name: name.to_owned(),
-            args: Vec::new(),
-        }
+        Self { name: name.to_owned(), args: Vec::new() }
     }
     fn wrapping(name: &str, inner: Ty) -> Self {
-        Self {
-            name: name.to_owned(),
-            args: vec![inner],
-        }
+        Self { name: name.to_owned(), args: vec![inner] }
     }
     fn last(&self) -> &str {
         self.name.rsplit("::").next().unwrap_or(&self.name)
@@ -3080,10 +2801,7 @@ impl Ty {
         self.args.get(at).cloned()
     }
     fn inside(&self) -> Option<&Ty> {
-        DEREFS
-            .contains(&self.last())
-            .then(|| self.args.first())
-            .flatten()
+        DEREFS.contains(&self.last()).then(|| self.args.first()).flatten()
     }
 }
 struct Def {
@@ -3126,10 +2844,8 @@ fn chain_of(expr: &syn::Expr) -> Chain {
         syn::Expr::Field(field) => {
             chain_of(&field.base).then(Step::Field(member_name(&field.member)))
         }
-        syn::Expr::MethodCall(call) => chain_of(&call.receiver).then(Step::Method(
-            call.method.to_string(),
-            kinds_of(call.turbofish.as_ref()),
-        )),
+        syn::Expr::MethodCall(call) => chain_of(&call.receiver)
+            .then(Step::Method(call.method.to_string(), kinds_of(call.turbofish.as_ref()))),
         syn::Expr::Call(call) => match &*call.func {
             syn::Expr::Path(path) if path.qself.is_none() => Chain::rooted(Root::Call(
                 segments(&path.path),
@@ -3158,9 +2874,7 @@ fn chain_of(expr: &syn::Expr) -> Chain {
 fn bind(pattern: &syn::Pat, chain: &Chain, env: &mut Env) {
     match pattern {
         syn::Pat::Ident(name) => {
-            env.entry(name.ident.to_string())
-                .or_default()
-                .push(chain.clone());
+            env.entry(name.ident.to_string()).or_default().push(chain.clone());
             if let Some((_, inner)) = &name.subpat {
                 bind(inner, chain, env);
             }
@@ -3181,11 +2895,7 @@ fn bind(pattern: &syn::Pat, chain: &Chain, env: &mut Env) {
         syn::Pat::TupleStruct(tuple) => {
             let variant = segments(&tuple.path).pop().unwrap_or_default();
             for (at, one) in tuple.elems.iter().enumerate() {
-                bind(
-                    one,
-                    &chain.clone().then(Step::Variant(variant.clone(), at)),
-                    env,
-                );
+                bind(one, &chain.clone().then(Step::Variant(variant.clone(), at)), env);
             }
         }
         syn::Pat::Struct(shape) => {
@@ -3193,9 +2903,7 @@ fn bind(pattern: &syn::Pat, chain: &Chain, env: &mut Env) {
             for field in &shape.fields {
                 bind(
                     &field.pat,
-                    &chain
-                        .clone()
-                        .then(Step::Named(variant.clone(), member_name(&field.member))),
+                    &chain.clone().then(Step::Named(variant.clone(), member_name(&field.member))),
                     env,
                 );
             }
@@ -3241,10 +2949,8 @@ impl Bindings {
 }
 impl<'a> Visit<'a> for Bindings {
     fn visit_local(&mut self, local: &'a syn::Local) {
-        let chain = local
-            .init
-            .as_ref()
-            .map_or(Chain::rooted(Root::Unknown), |init| chain_of(&init.expr));
+        let chain =
+            local.init.as_ref().map_or(Chain::rooted(Root::Unknown), |init| chain_of(&init.expr));
         bind(&local.pat, &chain, &mut self.env);
         syn::visit::visit_local(self, local);
     }
@@ -3260,11 +2966,7 @@ impl<'a> Visit<'a> for Bindings {
         syn::visit::visit_expr_match(self, matched);
     }
     fn visit_expr_for_loop(&mut self, looped: &'a syn::ExprForLoop) {
-        bind(
-            &looped.pat,
-            &chain_of(&looped.expr).then(Step::Item),
-            &mut self.env,
-        );
+        bind(&looped.pat, &chain_of(&looped.expr).then(Step::Item), &mut self.env);
         syn::visit::visit_expr_for_loop(self, looped);
     }
     fn visit_expr_closure(&mut self, closure: &'a syn::ExprClosure) {
@@ -3306,8 +3008,7 @@ impl Methods {
 impl<'a> Visit<'a> for Methods {
     fn visit_expr_method_call(&mut self, call: &'a syn::ExprMethodCall) {
         if !matches!(&*call.receiver, syn::Expr::Path(path) if path.path.is_ident("self")) {
-            self.found
-                .push((chain_of(&call.receiver), call.method.to_string()));
+            self.found.push((chain_of(&call.receiver), call.method.to_string()));
         }
         if AWAY.iter().any(|one| call.method == one) {
             self.visit_expr(&call.receiver);
@@ -3353,10 +3054,7 @@ fn carried(expr: &syn::Expr) -> Option<Carried> {
         syn::Expr::Cast(cast) => carried(&cast.expr),
         syn::Expr::Paren(inner) => carried(&inner.expr),
         syn::Expr::Group(inner) => carried(&inner.expr),
-        syn::Expr::Path(path) => path
-            .path
-            .get_ident()
-            .map(|one| Carried::Named(one.to_string())),
+        syn::Expr::Path(path) => path.path.get_ident().map(|one| Carried::Named(one.to_string())),
         _ => None,
     }
 }
@@ -3386,8 +3084,7 @@ impl<'a> Visit<'a> for Slots {
             for field in &built.fields {
                 if let Some(one) = carried(&field.expr) {
                     let name = member_name(&field.member);
-                    self.stored
-                        .push((base.clone().then(Step::Field(name)), one));
+                    self.stored.push((base.clone().then(Step::Field(name)), one));
                 }
             }
         }
@@ -3472,11 +3169,7 @@ impl Values {
         for (at, argument) in arguments.iter().enumerate() {
             if let syn::Expr::Path(path) = argument {
                 if path.qself.is_none() {
-                    self.found.push(Passed {
-                        to: to.clone(),
-                        at,
-                        value: segments(&path.path),
-                    });
+                    self.found.push(Passed { to: to.clone(), at, value: segments(&path.path) });
                 }
             }
         }
@@ -3528,9 +3221,7 @@ impl Drops {
                 }
                 syn::FnArg::Receiver(me) if me.reference.is_none() => {
                     drops.me = true;
-                    drops
-                        .locals
-                        .push(("self".to_owned(), Chain::rooted(Root::Me)));
+                    drops.locals.push(("self".to_owned(), Chain::rooted(Root::Me)));
                 }
                 syn::FnArg::Receiver(_) => {}
             }
@@ -3571,12 +3262,9 @@ impl Drops {
 }
 fn flows_out(expr: &syn::Expr) -> Vec<String> {
     match expr {
-        syn::Expr::Path(path) => path
-            .path
-            .get_ident()
-            .map(ToString::to_string)
-            .into_iter()
-            .collect(),
+        syn::Expr::Path(path) => {
+            path.path.get_ident().map(ToString::to_string).into_iter().collect()
+        }
         syn::Expr::Paren(inner) => flows_out(&inner.expr),
         syn::Expr::Group(inner) => flows_out(&inner.expr),
         syn::Expr::Block(block) => match block.block.stmts.last() {
@@ -3593,11 +3281,9 @@ fn flows_out(expr: &syn::Expr) -> Vec<String> {
             }
             out
         }
-        syn::Expr::Match(matched) => matched
-            .arms
-            .iter()
-            .flat_map(|arm| flows_out(&arm.body))
-            .collect(),
+        syn::Expr::Match(matched) => {
+            matched.arms.iter().flat_map(|arm| flows_out(&arm.body)).collect()
+        }
         _ => Vec::new(),
     }
 }
@@ -3726,10 +3412,7 @@ fn bounds_of(generics: &syn::Generics) -> Bounds {
     let mut add = |name: String, said: &Punctuated<syn::TypeParamBound, syn::Token![+]>| {
         for one in said {
             if let syn::TypeParamBound::Trait(shape) = one {
-                bounds
-                    .entry(name.clone())
-                    .or_default()
-                    .push(segments(&shape.path));
+                bounds.entry(name.clone()).or_default().push(segments(&shape.path));
             }
         }
     };
@@ -3750,12 +3433,7 @@ fn bounds_of(generics: &syn::Generics) -> Bounds {
     }
     bounds
 }
-type Place<'a> = (
-    &'a str,
-    Option<&'a Scope>,
-    Option<&'a str>,
-    Option<&'a Bounds>,
-);
+type Place<'a> = (&'a str, Option<&'a Scope>, Option<&'a str>, Option<&'a Bounds>);
 fn unknown_key(name: &str, module: &str) -> String {
     if name.starts_with(|letter: char| letter.is_ascii_digit()) {
         "?".to_owned()
@@ -3765,9 +3443,7 @@ fn unknown_key(name: &str, module: &str) -> String {
 }
 fn unify(input: &Ty, given: &Ty, generics: &[String], bound: &mut HashMap<String, Ty>) {
     if input.args.is_empty() && generics.contains(&input.name) {
-        bound
-            .entry(input.name.clone())
-            .or_insert_with(|| given.clone());
+        bound.entry(input.name.clone()).or_insert_with(|| given.clone());
         return;
     }
     if input.last() == given.last() {
@@ -3784,10 +3460,7 @@ fn substituted(ty: &Ty, bound: &HashMap<String, Ty>) -> Ty {
             return one.clone();
         }
     }
-    Ty {
-        name: ty.name.clone(),
-        args: ty.args.iter().map(|one| substituted(one, bound)).collect(),
-    }
+    Ty { name: ty.name.clone(), args: ty.args.iter().map(|one| substituted(one, bound)).collect() }
 }
 fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
     let kind = ty.last();
@@ -3829,10 +3502,7 @@ fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
         ("Iter", "enumerate") => first.map(|inner| {
             Ty::wrapping(
                 "Iter",
-                Ty {
-                    name: "()".to_owned(),
-                    args: vec![Ty::plain("usize"), inner],
-                },
+                Ty { name: "()".to_owned(), args: vec![Ty::plain("usize"), inner] },
             )
         }),
         (_, "get" | "get_mut" | "remove") if mapped => element.map(optional),
@@ -3842,13 +3512,7 @@ fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
         (_, "keys" | "into_keys") if mapped => first.map(|inner| Ty::wrapping("Iter", inner)),
         (_, "entry") if mapped => element.map(|inner| Ty::wrapping("Entry", inner)),
         (_, "iter" | "iter_mut" | "into_iter" | "drain") if mapped && ty.args.len() == 2 => {
-            Some(Ty::wrapping(
-                "Iter",
-                Ty {
-                    name: "()".to_owned(),
-                    args: ty.args.clone(),
-                },
-            ))
+            Some(Ty::wrapping("Iter", Ty { name: "()".to_owned(), args: ty.args.clone() }))
         }
         (
             _,
@@ -3863,9 +3527,7 @@ fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
     }
 }
 fn locked(call: &syn::ExprMethodCall) -> bool {
-    ["lock", "held", "read", "write"]
-        .iter()
-        .any(|one| call.method == one)
+    ["lock", "held", "read", "write"].iter().any(|one| call.method == one)
         && call.args.is_empty()
         && !matches!(&*call.receiver, syn::Expr::Path(path) if path.path.is_ident("self"))
 }
@@ -3882,11 +3544,7 @@ struct Released<'a> {
 }
 impl VisitMut for Released<'_> {
     fn visit_block_mut(&mut self, block: &mut syn::Block) {
-        if let Some(at) = block
-            .stmts
-            .iter()
-            .position(|one| dropped(one, Some(self.name)))
-        {
+        if let Some(at) = block.stmts.iter().position(|one| dropped(one, Some(self.name))) {
             block.stmts.truncate(at);
         }
         syn::visit_mut::visit_block_mut(self, block);
@@ -3914,8 +3572,5 @@ fn output_of(sig: &syn::Signature) -> Option<syn::Type> {
     }
 }
 fn generics_of(sig: &syn::Signature) -> Vec<String> {
-    sig.generics
-        .type_params()
-        .map(|one| one.ident.to_string())
-        .collect()
+    sig.generics.type_params().map(|one| one.ident.to_string()).collect()
 }

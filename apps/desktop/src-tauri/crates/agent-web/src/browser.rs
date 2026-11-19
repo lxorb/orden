@@ -80,10 +80,7 @@ fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
 }
 fn open_tab(app: &AppHandle, caller: &Caller, open: &orden_agents::verbs::Open) -> Answer {
     if !caller.holds(Scope::Browser) {
-        return Answer::error(
-            Code::NotGranted,
-            "this agent was not granted tabs of its own",
-        );
+        return Answer::error(Code::NotGranted, "this agent was not granted tabs of its own");
     }
     if let Err(refused) = tabs::web_address(&open.url) {
         return refused;
@@ -127,19 +124,8 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &orden_agents::verbs::Open) 
         Caller::Agent(grant) => grant.limits.memory,
         Caller::Reader => 0,
     };
-    let size = (
-        open.width.unwrap_or(tabs::WIDTH),
-        open.height.unwrap_or(tabs::HEIGHT),
-    );
-    match tabs::open(
-        app,
-        caller.id(),
-        &open.url,
-        store,
-        store_name,
-        size,
-        (most, ceiling),
-    ) {
+    let size = (open.width.unwrap_or(tabs::WIDTH), open.height.unwrap_or(tabs::HEIGHT));
+    match tabs::open(app, caller.id(), &open.url, store, store_name, size, (most, ceiling)) {
         Ok(tab) => Answer::ok(Opened { tab: tab.id, store }),
         Err(refused) => refused,
     }
@@ -158,12 +144,7 @@ fn store_for(app: &AppHandle, space: Option<&str>, url: &str) -> Option<String> 
     .ok()
     .and_then(|value| serde_json::from_value::<orden_agents::verbs::window::StoreSaid>(value).ok())
     .and_then(|said| said.store)
-    .and_then(|store| {
-        orden_web::web_stores::named(Some(&store))
-            .ok()
-            .flatten()
-            .map(str::to_string)
-    })
+    .and_then(|store| orden_web::web_stores::named(Some(&store)).ok().flatten().map(str::to_string))
 }
 fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), Answer> {
     let shown = tabs::shown_as(tab);
@@ -184,10 +165,7 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
         return Err(not_found());
     }
     if let Caller::Agent(grant) = caller {
-        if !crate::reader::tabs(app, &grant.spaces)
-            .iter()
-            .any(|one| one.id == tab)
-        {
+        if !crate::reader::tabs(app, &grant.spaces).iter().any(|one| one.id == tab) {
             return Err(not_found());
         }
     }
@@ -254,23 +232,13 @@ fn page_on(
 }
 pub fn peek(app: &AppHandle, tab: &str) -> Result<Picture, String> {
     let held = tabs::held(tab).ok_or("there is no such agent tab")?;
-    let view = engines::view(app, &held.label())
-        .filter(|_| !held.parked)
-        .ok_or(tabs::PARKED)?;
-    let page = page_on(
-        &view,
-        view.label(),
-        true,
-        orden_agents::stop::generation(),
-        None,
-        true,
-    );
+    let view = engines::view(app, &held.label()).filter(|_| !held.parked).ok_or(tabs::PARKED)?;
+    let page = page_on(&view, view.label(), true, orden_agents::stop::generation(), None, true);
     page.wake();
-    page.screenshot(None, false, None)
-        .map_err(|refused| match refused {
-            Answer::Error { message, .. } => message,
-            _ => "the page could not be photographed".into(),
-        })
+    page.screenshot(None, false, None).map_err(|refused| match refused {
+        Answer::Error { message, .. } => message,
+        _ => "the page could not be photographed".into(),
+    })
 }
 fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     let name = verb.name();
@@ -281,15 +249,9 @@ fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer 
         verb,
         Verb::Dialog(_) | Verb::Console(_) | Verb::Network(_) | Verb::Takeover(_) | Verb::Show(_)
     );
-    on_tab(
-        app,
-        caller,
-        &tab,
-        name,
-        since,
-        lets_through,
-        |place, page| act(app, caller, place, page, verb),
-    )
+    on_tab(app, caller, &tab, name, since, lets_through, |place, page| {
+        act(app, caller, place, page, verb)
+    })
 }
 pub fn on_tab(
     app: &AppHandle,
@@ -317,10 +279,7 @@ pub fn on_tab(
         .with_dialog(seen(page.limits.as_ref(), held));
     }
     let answered = act(&place, &page);
-    answered.with_dialog(seen(
-        page.limits.as_ref(),
-        crate::quiet::dialog_of(&page.label),
-    ))
+    answered.with_dialog(seen(page.limits.as_ref(), crate::quiet::dialog_of(&page.label)))
 }
 fn seen(limits: Option<&(Grant, Store)>, held: Option<Dialog>) -> Option<Dialog> {
     held.map(|mut one| {
@@ -367,10 +326,7 @@ fn tab_of(verb: &Verb) -> Option<String> {
     )
 }
 fn acted(page: &Page<'_>) -> Answer {
-    Answer::ok(Acted {
-        url: page.url(),
-        opened: page.opened(),
-    })
+    Answer::ok(Acted { url: page.url(), opened: page.opened() })
 }
 fn judged(
     app: &AppHandle,
@@ -413,15 +369,7 @@ fn judged_times(
     if approvals::allowed(&grant.id, &key) {
         return cleared();
     }
-    Err(ask(
-        app,
-        grant,
-        question.category,
-        summary,
-        Some(&page.url()),
-        place.id(),
-        &key,
-    ))
+    Err(ask(app, grant, question.category, summary, Some(&page.url()), place.id(), &key))
 }
 fn said_times(summary: String, times: u8) -> String {
     if times > 1 {
@@ -431,25 +379,17 @@ fn said_times(summary: String, times: u8) -> String {
     }
 }
 fn question_key(question: &policy::Question, summary: &str, facts: &Facts) -> String {
-    steady(&format!(
-        "{} {:?} {} {summary}",
-        facts.name, question.category, facts.dialog
-    ))
+    steady(&format!("{} {:?} {} {summary}", facts.name, question.category, facts.dialog))
 }
 fn is_clock(word: &str) -> bool {
     let word = word.trim_matches(['(', ')', ',', '.', ';']).to_lowercase();
-    let word = word
-        .strip_suffix("am")
-        .or_else(|| word.strip_suffix("pm"))
-        .unwrap_or(&word);
+    let word = word.strip_suffix("am").or_else(|| word.strip_suffix("pm")).unwrap_or(&word);
     let parts: Vec<&str> = word.split(':').collect();
     let digits = |one: &str| one.chars().all(|digit| digit.is_ascii_digit());
     matches!(parts.len(), 2 | 3)
         && matches!(parts[0].len(), 1 | 2)
         && parts.iter().all(|one| digits(one))
-        && parts[1..]
-            .iter()
-            .all(|one| one.len() == 2 && one.as_bytes()[0] < b'6')
+        && parts[1..].iter().all(|one| one.len() == 2 && one.as_bytes()[0] < b'6')
 }
 fn steady(words: &str) -> String {
     const TICKING: &[&str] = &[
@@ -458,15 +398,12 @@ fn steady(words: &str) -> String {
         "minutos", "secondo", "secondi", "minuti",
     ];
     let unit = |word: &str| {
-        let word = word
-            .trim_matches(|one: char| !one.is_alphanumeric())
-            .to_lowercase();
+        let word = word.trim_matches(|one: char| !one.is_alphanumeric()).to_lowercase();
         TICKING.contains(&word.as_str())
     };
     let whole = |word: &str| !word.is_empty() && word.chars().all(|one| one.is_ascii_digit());
     let counting = |word: &str| {
-        word.find(|one: char| !one.is_ascii_digit())
-            .is_some_and(|at| at > 0 && unit(&word[at..]))
+        word.find(|one: char| !one.is_ascii_digit()).is_some_and(|at| at > 0 && unit(&word[at..]))
     };
     let mark = |word: &str| {
         word.chars().all(|one| {
@@ -589,9 +526,7 @@ fn ask(
     approvals::ask(
         app,
         Asking {
-            site: url
-                .and_then(policy::host_of)
-                .map(|host| policy::site_of(&host)),
+            site: url.and_then(policy::host_of).map(|host| policy::site_of(&host)),
             tab: Some(tab.to_string()),
             ..Asking::of(grant, category, summary, key.to_string())
         },
@@ -612,11 +547,9 @@ fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) 
 fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: Verb) -> Answer {
     let tab = place.id().to_string();
     let from_page = |result: Answer| match result {
-        Answer::Ok { result, dialog, .. } => Answer::Ok {
-            result,
-            untrusted: Some(page.url()),
-            dialog,
-        },
+        Answer::Ok { result, dialog, .. } => {
+            Answer::Ok { result, untrusted: Some(page.url()), dialog }
+        }
         other => other,
     };
     let run = || -> Result<Answer, Answer> {
@@ -642,15 +575,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Wait(wait) => {
-                let most = wait
-                    .timeout_ms
-                    .map_or(WAIT, Duration::from_millis)
-                    .min(LONGEST_WAIT);
+                let most = wait.timeout_ms.map_or(WAIT, Duration::from_millis).min(LONGEST_WAIT);
                 let ms = page.wait(&wait.until, most)?;
-                Answer::ok(Waited {
-                    ms,
-                    url: page.url(),
-                })
+                Answer::ok(Waited { ms, url: page.url() })
             }
             Verb::Snapshot(asked) => {
                 let (parts, secret) = page.parts()?;
@@ -677,9 +604,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let written = snapshot::render(
                     &parts,
                     &Asked {
-                        under: under
-                            .as_ref()
-                            .map(|(prefix, backend)| (prefix.as_str(), *backend)),
+                        under: under.as_ref().map(|(prefix, backend)| (prefix.as_str(), *backend)),
                         most: asked.max_chars.unwrap_or(snapshot::MOST).max(200),
                         secret: &secret,
                         origin: &origin,
@@ -716,12 +641,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let most = asked.max_chars.unwrap_or(100_000);
                 let truncated = text.chars().count() > most;
                 let text = engines::cut(text, most);
-                from_page(Answer::ok(PageText {
-                    url,
-                    title,
-                    text,
-                    truncated,
-                }))
+                from_page(Answer::ok(PageText { url, title, text, truncated }))
             }
             Verb::Click(click) => {
                 let button = match click.button {
@@ -792,11 +712,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         page.may_act_in(&facts)?;
                     }
                 }
-                let facts = if key.judged_by_the_page() {
-                    page.active_facts()?
-                } else {
-                    None
-                };
+                let facts = if key.judged_by_the_page() { page.active_facts()? } else { None };
                 if key.changes_words() {
                     if let Some(facts) = facts.as_ref().filter(|one| {
                         (one.editable || !key.presses()) && (one.password() || one.sign_in())
@@ -814,11 +730,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Scroll(scroll) => {
-                let target = scroll
-                    .element
-                    .as_deref()
-                    .map(|one| page.element(one))
-                    .transpose()?;
+                let target = scroll.element.as_deref().map(|one| page.element(one)).transpose()?;
                 if let Some(target) = &target {
                     page.may_act_in(&page.facts(target)?)?;
                 }
@@ -885,10 +797,8 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Drag(drag) => {
                 let (from, to) = (page.element(&drag.from)?, page.element(&drag.to)?);
                 let (picked, dropped) = (page.at_first_point(&from)?, page.at_first_point(&to)?);
-                let (mut from_facts, to_facts) = (
-                    page.facts_of_press(&picked)?,
-                    page.facts_of_press(&dropped)?,
-                );
+                let (mut from_facts, to_facts) =
+                    (page.facts_of_press(&picked)?, page.facts_of_press(&dropped)?);
                 page.may_act_in(&from_facts)?;
                 page.may_act_in(&to_facts)?;
                 let carried = drag.from != drag.to;
@@ -951,10 +861,8 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         && grant.asks(Category::Files)
                         && !approvals::is_allowed(&grant.id, &key)
                     {
-                        let named: Vec<String> = outside
-                            .iter()
-                            .map(|(path, _)| path.display().to_string())
-                            .collect();
+                        let named: Vec<String> =
+                            outside.iter().map(|(path, _)| path.display().to_string()).collect();
                         let summary = format!(
                             "Hand {} to {}",
                             named.join(", "),
@@ -975,10 +883,8 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         judged(app, caller, page, place, &facts, Act::Write, &key)?;
                     }
                 }
-                let paths: Vec<String> = files
-                    .iter()
-                    .map(|(path, _)| path.to_string_lossy().into_owned())
-                    .collect();
+                let paths: Vec<String> =
+                    files.iter().map(|(path, _)| path.to_string_lossy().into_owned()).collect();
                 let key = approvals::key("browser_upload_press", Some(&tab), Some(&upload.element));
                 let press = OnePress::new(app, caller, page, place, key);
                 page.upload(&target, &paths, &|on| press.landed(on))?;
@@ -999,23 +905,16 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Screenshot(shot) => {
-                let target = shot
-                    .element
-                    .as_deref()
-                    .map(|one| page.element(one))
-                    .transpose()?;
+                let target = shot.element.as_deref().map(|one| page.element(one)).transpose()?;
                 let picture = page.screenshot(target.as_ref(), shot.full_page, shot.scale)?;
                 from_page(Answer::ok(picture))
             }
-            Verb::Console(asked) => from_page(Answer::ok(
-                page.console(asked.since, asked.level.as_deref()),
-            )),
+            Verb::Console(asked) => {
+                from_page(Answer::ok(page.console(asked.since, asked.level.as_deref())))
+            }
             Verb::Network(asked) => {
                 if asked.bodies && !caller.holds(Scope::BrowserNetwork) {
-                    return Err(Answer::error(
-                        Code::NotGranted,
-                        "bodies need browser.network",
-                    ));
+                    return Err(Answer::error(Code::NotGranted, "bodies need browser.network"));
                 }
                 from_page(Answer::ok(page.network(
                     asked.since,
@@ -1041,10 +940,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             }
             Verb::Dialog(answer) => {
                 let Some(held) = crate::quiet::dialog_of(&page.label) else {
-                    return Err(Answer::error(
-                        Code::NoDialog,
-                        "the page is holding no dialog",
-                    ));
+                    return Err(Answer::error(Code::NoDialog, "the page is holding no dialog"));
                 };
                 if let Err(why) =
                     engines::from_allowed(page.limits.as_ref(), std::slice::from_ref(&held.url))
@@ -1097,10 +993,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     ));
                 }
                 match storage.op {
-                    StorageOp::Cookies => Answer::ok(Stored {
-                        cookies: Some(page.cookies()?),
-                        local: None,
-                    }),
+                    StorageOp::Cookies => {
+                        Answer::ok(Stored { cookies: Some(page.cookies()?), local: None })
+                    }
                     StorageOp::SetCookie => {
                         let cookie = storage.cookie.as_ref().ok_or_else(|| {
                             Answer::error(Code::BadArguments, "set_cookie needs the cookie")
@@ -1112,10 +1007,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         page.clear()?;
                         Answer::ok(Stored::default())
                     }
-                    StorageOp::Local => from_page(Answer::ok(Stored {
-                        cookies: None,
-                        local: Some(page.local()?),
-                    })),
+                    StorageOp::Local => {
+                        from_page(Answer::ok(Stored { cookies: None, local: Some(page.local()?) }))
+                    }
                 }
             }
             Verb::Show(_) => {
@@ -1136,11 +1030,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     return Ok(acted(page));
                 }
                 let key = approvals::key("browser_show", Some(&own.id), None);
-                let title = if own.title.is_empty() {
-                    own.url.clone()
-                } else {
-                    own.title.clone()
-                };
+                let title = if own.title.is_empty() { own.url.clone() } else { own.title.clone() };
                 if grant.asks_nothing() {
                     shown(app, grant, own, format!("Show {title}"), &key);
                     return Ok(acted(page));
@@ -1238,24 +1128,18 @@ fn files_of(
             let path = if given.is_absolute() {
                 given
             } else {
-                root.as_ref()
-                    .map_or(given.clone(), |root| root.join(&given))
+                root.as_ref().map_or(given.clone(), |root| root.join(&given))
             };
             let logical = orden_base::paths::folded(&path);
-            let twin = root
-                .as_deref()
-                .and_then(|root| orden_agents::working::kept_twin(root, &logical));
+            let twin =
+                root.as_deref().and_then(|root| orden_agents::working::kept_twin(root, &logical));
             let path = match &twin {
                 Some(twin) => orden_agents::working::on_disk(app, twin)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?,
                 None => logical.clone(),
             };
-            let absent = || {
-                Answer::error(
-                    Code::BadArguments,
-                    format!("{} is not a file", path.display()),
-                )
-            };
+            let absent =
+                || Answer::error(Code::BadArguments, format!("{} is not a file", path.display()));
             if !path.is_file() {
                 return Err(absent());
             }
@@ -1304,9 +1188,7 @@ fn plainly(path: &Path) -> String {
     spelled.strip_prefix(r"\\?\").unwrap_or(&spelled).to_owned()
 }
 fn may_hand(app: &AppHandle, path: &Path) -> bool {
-    let asked = orden_agents::verbs::window::HandAsk {
-        path: plainly(path),
-    };
+    let asked = orden_agents::verbs::window::HandAsk { path: plainly(path) };
     orden_agents::endpoint::ask(
         app,
         orden_agents::verbs::window::MAY_HAND,
@@ -1400,31 +1282,19 @@ mod tests {
                 "Complete your payment Time left 9:58 Card ending 4242",
                 "Complete your payment Time left 9:57 Card ending 4242",
             ),
-            (
-                "Delete 40 files Time left 10:00",
-                "Delete 40 files Time left 9:59",
-            ),
+            ("Delete 40 files Time left 10:00", "Delete 40 files Time left 9:59"),
             ("Pay now. 12:03 PM", "Pay now. 12:04 PM"),
             ("Pay now. 3:45pm", "Pay now. 3:46pm"),
             ("Pay now. 09:58:12", "Pay now. 09:58:13"),
-            (
-                "Pay now. Offer ends in 58 seconds",
-                "Pay now. Offer ends in 1 minute",
-            ),
+            ("Pay now. Offer ends in 58 seconds", "Pay now. Offer ends in 1 minute"),
             ("Pay now. Ends in 58s", "Pay now. Ends in 57s"),
             ("Delete draft |", "Delete draft /"),
         ] {
             assert_eq!(key_of("Yes", one), key_of("Yes", other), "{one}");
         }
         for (one, other) in [
-            (
-                "Delete this item? report-draft.txt",
-                "Delete this item? ALL PROJECTS",
-            ),
-            (
-                "Confirm purchase. Total: 20 EUR",
-                "Confirm purchase. Total: 20000 EUR",
-            ),
+            ("Delete this item? report-draft.txt", "Delete this item? ALL PROJECTS"),
+            ("Confirm purchase. Total: 20 EUR", "Confirm purchase. Total: 20000 EUR"),
             ("Pay $20", "Pay $20000"),
             ("Pay 5% of your balance", "Pay 50% of your balance"),
             ("Removing files 5 %", "Removing files 50 %"),
@@ -1446,26 +1316,10 @@ mod tests {
     fn a_file_is_in_reach_by_the_space_it_is_in() {
         let root = Path::new("/data/Spaces");
         let alpha = Spaces::Named(vec!["Alpha".into()]);
-        assert!(!beyond_the_grant(
-            root,
-            Path::new("/data/Spaces/Alpha/a.md"),
-            &alpha
-        ));
-        assert!(!beyond_the_grant(
-            root,
-            Path::new("/data/Spaces/Alpha/deep/a.md"),
-            &alpha
-        ));
-        assert!(beyond_the_grant(
-            root,
-            Path::new("/data/Spaces/Beta/secret.md"),
-            &alpha
-        ));
-        assert!(beyond_the_grant(
-            root,
-            Path::new("/data/Spaces/loose.md"),
-            &alpha
-        ));
+        assert!(!beyond_the_grant(root, Path::new("/data/Spaces/Alpha/a.md"), &alpha));
+        assert!(!beyond_the_grant(root, Path::new("/data/Spaces/Alpha/deep/a.md"), &alpha));
+        assert!(beyond_the_grant(root, Path::new("/data/Spaces/Beta/secret.md"), &alpha));
+        assert!(beyond_the_grant(root, Path::new("/data/Spaces/loose.md"), &alpha));
         assert!(!beyond_the_grant(
             root,
             Path::new("/data/Spaces/Beta/secret.md"),
@@ -1475,10 +1329,7 @@ mod tests {
     #[test]
     fn a_hidden_step_inside_the_spaces_is_kept_from_an_upload() {
         let root = Path::new("/data/Spaces");
-        assert!(hidden_within(
-            root,
-            Path::new("/data/Spaces/.orden/A/A/a.md")
-        ));
+        assert!(hidden_within(root, Path::new("/data/Spaces/.orden/A/A/a.md")));
         assert!(hidden_within(root, Path::new("/data/Spaces/A/.trash/a.md")));
         assert!(hidden_within(root, Path::new("/data/Spaces/A/.env")));
         assert!(hidden_within(root, Path::new("/elsewhere/a.md")));
@@ -1487,9 +1338,7 @@ mod tests {
     #[test]
     fn an_upload_hands_notes_only_with_notes_read_and_outside_files_only_with_files() {
         let mut grant = Grant::own("a".into(), "A");
-        grant
-            .scopes
-            .retain(|one| !matches!(one, Scope::NotesRead | Scope::Files));
+        grant.scopes.retain(|one| !matches!(one, Scope::NotesRead | Scope::Files));
         let narrow = Caller::Agent(Box::new(grant.clone()));
         assert!(handing_granted(&narrow, true).is_err());
         assert!(handing_granted(&narrow, false).is_err());
@@ -1521,10 +1370,7 @@ mod tests {
         };
         for (kind, url) in [
             (DialogKind::Confirm, "https://bank.example/transfer"),
-            (
-                DialogKind::Prompt,
-                "https://www.bank.example/transfer?iban=DE00",
-            ),
+            (DialogKind::Prompt, "https://www.bank.example/transfer?iban=DE00"),
             (DialogKind::SignIn, "https://bank.example/"),
             (DialogKind::Prompt, ""),
         ] {
@@ -1545,20 +1391,11 @@ mod tests {
         }
         let cut = seen(
             Some(&limits),
-            Some(dialog(
-                DialogKind::SignIn,
-                "https://bank.example/api/session?token=t",
-            )),
+            Some(dialog(DialogKind::SignIn, "https://bank.example/api/session?token=t")),
         );
-        assert_eq!(
-            cut.map(|one| one.url).as_deref(),
-            Some("https://bank.example")
-        );
+        assert_eq!(cut.map(|one| one.url).as_deref(), Some("https://bank.example"));
         let allowed = dialog(DialogKind::Prompt, "https://shop.example/");
-        assert_eq!(
-            seen(Some(&limits), Some(allowed.clone())),
-            Some(allowed.clone())
-        );
+        assert_eq!(seen(Some(&limits), Some(allowed.clone())), Some(allowed.clone()));
         assert!(
             crate::engines::from_allowed(Some(&limits), std::slice::from_ref(&allowed.url)).is_ok()
         );

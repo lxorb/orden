@@ -154,10 +154,7 @@ fn allowed(accelerator: &str, mac: bool) -> bool {
 }
 fn plugin_added(app: &AppHandle) -> bool {
     static READY: OnceLock<bool> = OnceLock::new();
-    *READY.get_or_init(|| {
-        app.plugin(tauri_plugin_global_shortcut::Builder::new().build())
-            .is_ok()
-    })
+    *READY.get_or_init(|| app.plugin(tauri_plugin_global_shortcut::Builder::new().build()).is_ok())
 }
 pub fn pressed(app: &AppHandle, which: Which, token: Option<String>) {
     match which {
@@ -208,25 +205,15 @@ fn told_page(app: &AppHandle) {
 }
 fn keys_now() -> Keys {
     with_state(|held| Keys {
-        reach: held.reach.unwrap_or(if wayland() {
-            Reach::Portal
-        } else {
-            Reach::System
-        }),
+        reach: held.reach.unwrap_or(if wayland() { Reach::Portal } else { Reach::System }),
         change: held.change,
-        held: held
-            .held
-            .iter()
-            .map(|(which, said)| (which.id(), said.clone()))
-            .collect(),
+        held: held.held.iter().map(|(which, said)| (which.id(), said.clone())).collect(),
         refused: held.refused.iter().map(|which| which.id()).collect(),
         run: started_by(
             std::env::var("FLATPAK_ID").ok(),
             std::env::var("APPIMAGE").ok(),
             std::env::var("SNAP_NAME").ok(),
-            std::env::args_os()
-                .next()
-                .map(|first| first.to_string_lossy().into_owned()),
+            std::env::args_os().next().map(|first| first.to_string_lossy().into_owned()),
         ),
     })
 }
@@ -258,10 +245,7 @@ fn started_by(
     first
         .as_deref()
         .and_then(|first| std::path::Path::new(first).file_name())
-        .map_or_else(
-            || "orden".to_owned(),
-            |name| name.to_string_lossy().into_owned(),
-        )
+        .map_or_else(|| "orden".to_owned(), |name| name.to_string_lossy().into_owned())
 }
 #[tauri::command]
 pub fn global_keys(app: AppHandle) -> Keys {
@@ -288,13 +272,8 @@ mod tests {
     fn a_command_line_presses_the_keys_it_names() {
         let argv: Vec<String> = ["orden", "--quick-add"].map(String::from).into();
         assert_eq!(Which::asked_by(&argv), vec![Which::QuickAdd]);
-        let argv: Vec<String> = ["orden", "--stop-agents", "--quick-add"]
-            .map(String::from)
-            .into();
-        assert_eq!(
-            Which::asked_by(&argv),
-            vec![Which::QuickAdd, Which::StopAgents]
-        );
+        let argv: Vec<String> = ["orden", "--stop-agents", "--quick-add"].map(String::from).into();
+        assert_eq!(Which::asked_by(&argv), vec![Which::QuickAdd, Which::StopAgents]);
         let argv: Vec<String> = ["--quick-add"].map(String::from).into();
         assert!(Which::asked_by(&argv).is_empty());
         assert!(Which::is_flag("--stop-agents"));
@@ -308,22 +287,11 @@ mod tests {
             "flatpak run so.orden.Orden"
         );
         assert_eq!(
-            started_by(
-                None,
-                some("/home/e/Orden.AppImage"),
-                None,
-                some("/tmp/.mount/orden")
-            ),
+            started_by(None, some("/home/e/Orden.AppImage"), None, some("/tmp/.mount/orden")),
             "/home/e/Orden.AppImage"
         );
-        assert_eq!(
-            started_by(None, None, some("orden"), some("/snap/x/orden")),
-            "orden"
-        );
-        assert_eq!(
-            started_by(None, None, None, some("/usr/bin/orden")),
-            "orden"
-        );
+        assert_eq!(started_by(None, None, some("orden"), some("/snap/x/orden")), "orden");
+        assert_eq!(started_by(None, None, None, some("/usr/bin/orden")), "orden");
         assert_eq!(started_by(None, None, None, some("orden")), "orden");
         assert_eq!(started_by(None, None, None, None), "orden");
     }
@@ -347,17 +315,9 @@ mod tests {
         settled(&mut state, Which::QuickAdd, true, None);
         assert!(state.refused.contains(&Which::QuickAdd));
         assert!(!state.held.contains_key(&Which::QuickAdd));
-        settled(
-            &mut state,
-            Which::QuickAdd,
-            true,
-            Some("Control+Alt+K".to_owned()),
-        );
+        settled(&mut state, Which::QuickAdd, true, Some("Control+Alt+K".to_owned()));
         assert!(state.refused.is_empty());
-        assert_eq!(
-            state.held.get(&Which::QuickAdd).map(String::as_str),
-            Some("Control+Alt+K")
-        );
+        assert_eq!(state.held.get(&Which::QuickAdd).map(String::as_str), Some("Control+Alt+K"));
         settled(&mut state, Which::QuickAdd, true, None);
         settled(&mut state, Which::QuickAdd, false, None);
         assert!(state.refused.is_empty());

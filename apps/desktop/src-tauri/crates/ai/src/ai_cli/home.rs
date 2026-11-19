@@ -5,11 +5,8 @@ use tauri::AppHandle;
 
 use super::Tool;
 
-const CLAUDE_OVERRIDES: [&str; 3] = [
-    "ANTHROPIC_API_KEY",
-    "ANTHROPIC_AUTH_TOKEN",
-    "CLAUDE_CODE_OAUTH_TOKEN",
-];
+const CLAUDE_OVERRIDES: [&str; 3] =
+    ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"];
 const CODEX_OVERRIDES: [&str; 2] = ["OPENAI_API_KEY", "CODEX_API_KEY"];
 const GEMINI_OVERRIDES: [&str; 2] = ["GEMINI_API_KEY", "GOOGLE_API_KEY"];
 #[cfg(not(target_os = "macos"))]
@@ -81,10 +78,7 @@ pub fn under(root: &Path, tool: Tool, account: Option<&str>) -> Result<Option<Ho
     if !orden_store::ai_accounts::has_own_home(root, id, kind_of(tool))? {
         return Ok(None);
     }
-    let home = Home {
-        tool,
-        dir: orden_store::ai_accounts::home_dir(root, id)?,
-    };
+    let home = Home { tool, dir: orden_store::ai_accounts::home_dir(root, id)? };
     home.made()?;
     Ok(Some(home))
 }
@@ -128,15 +122,12 @@ mod tests {
     #[test]
     fn a_second_one_is_a_folder_of_ordens_made_on_first_use() {
         let dir = root("second");
-        let home = under(&dir, Tool::ClaudeCode, Some("claude-code-2"))
-            .expect("read")
-            .expect("a home");
+        let home =
+            under(&dir, Tool::ClaudeCode, Some("claude-code-2")).expect("read").expect("a home");
         assert_eq!(home.dir(), dir.join("homes").join("claude-code-2"));
         assert!(home.dir().is_dir());
         assert_eq!(home.variable(), "CLAUDE_CONFIG_DIR");
-        let codex = under(&dir, Tool::Codex, Some("codex-2"))
-            .expect("read")
-            .expect("a home");
+        let codex = under(&dir, Tool::Codex, Some("codex-2")).expect("read").expect("a home");
         let config = std::fs::read_to_string(codex.dir().join("config.toml")).expect("config");
         assert_eq!(config, CODEX_CONFIG);
         removed(&codex).expect("removed");
@@ -147,32 +138,22 @@ mod tests {
     fn a_codex_home_keeps_its_login_out_of_a_macs_keychain() {
         assert_eq!(config_now(None, CODEX_CONFIG), Some(CODEX_CONFIG));
         let file = "cli_auth_credentials_store = \"file\"\n";
-        assert_eq!(
-            config_now(Some(CODEX_CONFIG_BEFORE), file),
-            Some(CODEX_CONFIG)
-        );
-        assert_eq!(
-            config_now(Some(CODEX_CONFIG_BEFORE), CODEX_CONFIG_BEFORE),
-            None
-        );
+        assert_eq!(config_now(Some(CODEX_CONFIG_BEFORE), file), Some(CODEX_CONFIG));
+        assert_eq!(config_now(Some(CODEX_CONFIG_BEFORE), CODEX_CONFIG_BEFORE), None);
         assert_eq!(config_now(Some("model = \"o3\"\n"), file), None);
         #[cfg(target_os = "macos")]
         assert_eq!(CODEX_CONFIG, file);
     }
     #[test]
     fn a_program_is_started_with_its_home_and_no_key_from_the_shell() {
-        let home = Home {
-            tool: Tool::ClaudeCode,
-            dir: PathBuf::from("homes").join("claude-code-2"),
-        };
+        let home =
+            Home { tool: Tool::ClaudeCode, dir: PathBuf::from("homes").join("claude-code-2") };
         let mut command = Command::new("claude");
         command.env("ANTHROPIC_API_KEY", "from-the-shell");
         home.apply(&mut command);
         let envs: Vec<_> = command.get_envs().collect();
-        assert!(envs.contains(&(
-            std::ffi::OsStr::new("CLAUDE_CONFIG_DIR"),
-            Some(home.dir().as_os_str())
-        )));
+        assert!(envs
+            .contains(&(std::ffi::OsStr::new("CLAUDE_CONFIG_DIR"), Some(home.dir().as_os_str()))));
         assert!(envs.contains(&(std::ffi::OsStr::new("ANTHROPIC_API_KEY"), None)));
         for name in CLAUDE_OVERRIDES {
             assert!(envs.contains(&(std::ffi::OsStr::new(name), None)), "{name}");

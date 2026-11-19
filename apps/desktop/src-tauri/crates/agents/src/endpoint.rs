@@ -60,9 +60,7 @@ impl Waiting {
         self.listens(label);
     }
     fn page_of(&self, label: &str) -> u64 {
-        self.4
-            .lock()
-            .map_or(0, |pages| pages.get(label).copied().unwrap_or_default())
+        self.4.lock().map_or(0, |pages| pages.get(label).copied().unwrap_or_default())
     }
     fn ask_of(&self, id: u64, label: &str) {
         if let Ok(mut asked) = self.3.lock() {
@@ -82,9 +80,7 @@ impl Waiting {
         false
     }
     fn gave_up(&self, id: u64) -> bool {
-        self.3
-            .lock()
-            .map_or(true, |mut asked| asked.remove(&id).is_none())
+        self.3.lock().map_or(true, |mut asked| asked.remove(&id).is_none())
     }
     fn taken_within(&self, id: u64, patience: Duration) -> bool {
         let deadline = Instant::now() + patience;
@@ -125,11 +121,7 @@ impl Waiting {
                 return Some(found);
             }
             let left = deadline.checked_duration_since(Instant::now())?;
-            heard = self
-                .2
-                .wait_timeout(heard, left.min(Duration::from_millis(250)))
-                .ok()?
-                .0;
+            heard = self.2.wait_timeout(heard, left.min(Duration::from_millis(250))).ok()?.0;
         }
     }
 }
@@ -157,12 +149,10 @@ pub fn start(app: &AppHandle) {
             let secret = kept.secret.clone();
             let port = kept.port;
             let eval = kept.eval;
-            let _ = std::thread::Builder::new()
-                .name("automation".to_owned())
-                .spawn(move || {
-                    let _admitted = admitted;
-                    let _ = answer(&app, stream, &secret, port, eval);
-                });
+            let _ = std::thread::Builder::new().name("automation".to_owned()).spawn(move || {
+                let _admitted = admitted;
+                let _ = answer(&app, stream, &secret, port, eval);
+            });
         }
     });
 }
@@ -180,11 +170,7 @@ impl Drop for Admitted {
 }
 fn turn_away(stream: &mut TcpStream) {
     if stream.set_nonblocking(true).is_ok() {
-        let _ = say(
-            stream,
-            503,
-            &refused("too many callers at once; ask again in a moment"),
-        );
+        let _ = say(stream, 503, &refused("too many callers at once; ask again in a moment"));
     }
 }
 #[tauri::command]
@@ -210,9 +196,8 @@ pub fn automation_result(waiting: tauri::State<'_, Waiting>, id: u64, result: se
 }
 fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
     let path = endpoint_file(app)?;
-    let held: Option<Kept> = fs::read_to_string(&path)
-        .ok()
-        .and_then(|text| serde_json::from_str(&text).ok());
+    let held: Option<Kept> =
+        fs::read_to_string(&path).ok().and_then(|text| serde_json::from_str(&text).ok());
     let kept = Kept {
         port,
         secret: match held.as_ref() {
@@ -248,31 +233,19 @@ fn answer(
     stream.set_read_timeout(Some(SLOWEST))?;
     stream.set_write_timeout(Some(SLOWEST))?;
     let Some(request) = read_request(&mut stream, SLOWEST)? else {
-        return say(
-            &mut stream,
-            400,
-            &refused("that is not a request this endpoint reads"),
-        );
+        return say(&mut stream, 400, &refused("that is not a request this endpoint reads"));
     };
     if request.method != "POST" {
         return say(&mut stream, 405, &refused("this endpoint reads a POST"));
     }
     if request.header("origin").is_some() {
-        return say(
-            &mut stream,
-            403,
-            &refused("a page in a browser is not a caller here"),
-        );
+        return say(&mut stream, 403, &refused("a page in a browser is not a caller here"));
     }
     if !is_json(request.header("content-type")) {
         return say(&mut stream, 415, &refused("send JSON"));
     }
     if !is_local(request.header("host"), port) {
-        return say(
-            &mut stream,
-            400,
-            &refused("that is not this endpoint's address"),
-        );
+        return say(&mut stream, 400, &refused("that is not this endpoint's address"));
     }
     let caller = if same_secret(request.header("authorization"), secret) {
         crate::Caller::Reader
@@ -302,10 +275,7 @@ pub fn dispatch(
     mut asked: serde_json::Value,
     eval: bool,
 ) -> (u16, String) {
-    let verb = asked
-        .get("verb")
-        .and_then(|one| one.as_str())
-        .map(str::to_owned);
+    let verb = asked.get("verb").and_then(|one| one.as_str()).map(str::to_owned);
     let Some(verb) = verb else {
         return (400, refused("say which verb"));
     };
@@ -340,16 +310,7 @@ pub fn dispatch(
             Err(reason) => crate::verbs::Answer::error(crate::verbs::Code::Failed, reason.clone()),
         };
         let tab = args.get("tab").and_then(serde_json::Value::as_str);
-        crate::logged(
-            app,
-            caller,
-            &session,
-            &verb,
-            tab,
-            args.clone(),
-            &answered,
-            started,
-        );
+        crate::logged(app, caller, &session, &verb, tab, args.clone(), &answered, started);
     }
     match outcome {
         Ok(answered) => (200, answered),
@@ -467,9 +428,7 @@ fn ask_the_window_within(
     )
     .and_then(|window| {
         let page = waiting.page_of(&window);
-        awaited(&answered, deadline, || {
-            waiting.hears(&window) && waiting.page_of(&window) == page
-        })
+        awaited(&answered, deadline, || waiting.hears(&window) && waiting.page_of(&window) == page)
     });
     if let Ok(mut held) = waiting.0.lock() {
         held.remove(&id);
@@ -519,7 +478,7 @@ fn awaited(
             Err(RecvTimeoutError::Timeout) if still_there() => {}
             Err(_) => {
                 return Err(
-                    "the window reloaded before it answered: look before asking again".to_owned(),
+                    "the window reloaded before it answered: look before asking again".to_owned()
                 );
             }
         }
@@ -556,10 +515,7 @@ struct Request {
 }
 impl Request {
     fn header(&self, name: &str) -> Option<&str> {
-        self.headers
-            .iter()
-            .find(|(held, _)| held == name)
-            .map(|(_, value)| value.as_str())
+        self.headers.iter().find(|(held, _)| held == name).map(|(_, value)| value.as_str())
     }
 }
 fn read_request(stream: &mut impl Read, within: Duration) -> std::io::Result<Option<Request>> {
@@ -610,11 +566,7 @@ fn read_request(stream: &mut impl Read, within: Duration) -> std::io::Result<Opt
     let Ok(body) = String::from_utf8(body) else {
         return Ok(None);
     };
-    Ok(Some(Request {
-        method,
-        headers,
-        body,
-    }))
+    Ok(Some(Request { method, headers, body }))
 }
 fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack.windows(needle.len()).position(|one| one == needle)
@@ -639,15 +591,11 @@ fn is_json(said: Option<&str>) -> bool {
 }
 fn is_local(said: Option<&str>, port: u16) -> bool {
     let Some(host) = said else { return false };
-    ["127.0.0.1", "localhost", "[::1]"]
-        .iter()
-        .any(|name| host == format!("{name}:{port}"))
+    ["127.0.0.1", "localhost", "[::1]"].iter().any(|name| host == format!("{name}:{port}"))
 }
 fn bearer(said: Option<&str>) -> Option<&str> {
     let header = said?;
-    header
-        .strip_prefix("Bearer ")
-        .or_else(|| header.strip_prefix("bearer "))
+    header.strip_prefix("Bearer ").or_else(|| header.strip_prefix("bearer "))
 }
 fn same_secret(said: Option<&str>, secret: &str) -> bool {
     bearer(said).is_some_and(|token| crate::grants::same(token, secret))
@@ -724,20 +672,16 @@ mod tests {
     #[test]
     fn a_caller_trickling_a_byte_at_a_time_is_let_go_when_its_time_is_up() {
         let started = Instant::now();
-        let read = read_request(
-            &mut Trickle(Duration::from_millis(2)),
-            Duration::from_millis(100),
-        )
-        .expect("a trickle cannot fail");
+        let read = read_request(&mut Trickle(Duration::from_millis(2)), Duration::from_millis(100))
+            .expect("a trickle cannot fail");
         assert!(read.is_none());
         assert!(started.elapsed() < Duration::from_secs(2));
     }
     #[test]
     fn no_more_callers_are_answered_at_once_than_the_endpoint_allows() {
         static OPEN: AtomicUsize = AtomicUsize::new(0);
-        let mut held: Vec<Admitted> = (0..MOST_AT_ONCE)
-            .map(|_| Admitted::into(&OPEN).expect("room for one more"))
-            .collect();
+        let mut held: Vec<Admitted> =
+            (0..MOST_AT_ONCE).map(|_| Admitted::into(&OPEN).expect("room for one more")).collect();
         assert!(Admitted::into(&OPEN).is_none());
         drop(held.pop());
         let again = Admitted::into(&OPEN);
@@ -768,10 +712,7 @@ mod tests {
     }
     #[test]
     fn a_body_longer_than_a_note_is_not_read_at_all() {
-        let said = format!(
-            "POST / HTTP/1.1\r\ncontent-length: {}\r\n\r\n",
-            MOST_BYTES + 1
-        );
+        let said = format!("POST / HTTP/1.1\r\ncontent-length: {}\r\n\r\n", MOST_BYTES + 1);
         assert!(read(said.as_bytes()).is_none());
     }
     #[test]
@@ -839,9 +780,7 @@ mod tests {
     fn a_request_before_the_window_listens_waits_for_it() {
         let open = || vec!["main".to_owned()];
         let waiting = std::sync::Arc::new(Waiting::default());
-        assert!(waiting
-            .listener_within(std::time::Duration::from_millis(10), open)
-            .is_none());
+        assert!(waiting.listener_within(std::time::Duration::from_millis(10), open).is_none());
         let asking = waiting.clone();
         let asked = std::thread::spawn(move || {
             asking.listener_within(std::time::Duration::from_secs(30), open)
@@ -849,9 +788,7 @@ mod tests {
         waiting.listens("main");
         assert_eq!(asked.join().expect("asked").as_deref(), Some("main"));
         assert_eq!(
-            waiting
-                .listener_within(std::time::Duration::ZERO, open)
-                .as_deref(),
+            waiting.listener_within(std::time::Duration::ZERO, open).as_deref(),
             Some("main")
         );
     }
@@ -961,11 +898,9 @@ mod tests {
         let tab = include_str!("../../../../src/lib/terminal/src/agent/tab.ts");
         assert!(tab.contains("const WAIT = 2000\nconst MOST_WAIT = 30_000\n"));
         assert!(tab.contains("const RUN_WAIT = 60_000\nconst MOST_RUN_WAIT = 120_000\n"));
-        for starting in [
-            "const STARTING = 5000",
-            "const PROMPT_WAIT = 20_000",
-            "const CONNECTING = 60_000",
-        ] {
+        for starting in
+            ["const STARTING = 5000", "const PROMPT_WAIT = 20_000", "const CONNECTING = 60_000"]
+        {
             assert!(tab.contains(starting), "{starting}");
         }
     }
@@ -974,9 +909,7 @@ mod tests {
         let later = Instant::now() + Duration::from_secs(30);
         let (send, answered) = sync_channel::<String>(1);
         let started = Instant::now();
-        assert!(awaited(&answered, later, || false)
-            .expect_err("no answer")
-            .contains("reloaded"));
+        assert!(awaited(&answered, later, || false).expect_err("no answer").contains("reloaded"));
         assert!(started.elapsed() < Duration::from_secs(5));
         send.send("said".to_owned()).expect("sent");
         assert_eq!(awaited(&answered, later, || false).as_deref(), Ok("said"));
@@ -1010,33 +943,16 @@ mod tests {
     }
     #[test]
     fn a_window_that_does_not_listen_is_passed_over_for_one_that_does() {
-        let open = || {
-            vec![
-                "main".to_owned(),
-                "orden-2".to_owned(),
-                "orden-3".to_owned(),
-            ]
-        };
+        let open = || vec!["main".to_owned(), "orden-2".to_owned(), "orden-3".to_owned()];
         let waiting = Waiting::default();
         let now = std::time::Duration::ZERO;
         waiting.listens("orden-2");
-        assert_eq!(
-            waiting.listener_within(now, open).as_deref(),
-            Some("orden-2")
-        );
+        assert_eq!(waiting.listener_within(now, open).as_deref(), Some("orden-2"));
         waiting.listens("main");
         assert_eq!(waiting.listener_within(now, open).as_deref(), Some("main"));
         waiting.forget("main");
         assert!(!waiting.hears("main"));
-        assert_eq!(
-            waiting.listener_within(now, open).as_deref(),
-            Some("orden-2")
-        );
-        assert_eq!(
-            waiting
-                .listener_within(now, || vec!["main".to_owned()])
-                .as_deref(),
-            None
-        );
+        assert_eq!(waiting.listener_within(now, open).as_deref(), Some("orden-2"));
+        assert_eq!(waiting.listener_within(now, || vec!["main".to_owned()]).as_deref(), None);
     }
 }

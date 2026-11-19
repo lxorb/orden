@@ -74,8 +74,7 @@ fn score(declared: &Declared) -> u64 {
     }
 }
 fn names(rel: &str, word: &str) -> bool {
-    rel.split_ascii_whitespace()
-        .any(|one| one.eq_ignore_ascii_case(word))
+    rel.split_ascii_whitespace().any(|one| one.eq_ignore_ascii_case(word))
 }
 pub fn best(declaring: &Declaring) -> Option<String> {
     let usable = |one: &&Declared| {
@@ -117,28 +116,17 @@ mod tests {
                 r#type: kind.into(),
             })
             .collect();
-        best(&Declaring {
-            page: "https://a.example/deep/page?x=1".into(),
-            links,
-        })
+        best(&Declaring { page: "https://a.example/deep/page?x=1".into(), links })
     }
     #[test]
     fn a_page_the_app_cannot_name_wears_nothing() {
-        let blank = Declaring {
-            page: "about:blank".into(),
-            links: vec![],
-        };
+        let blank = Declaring { page: "about:blank".into(), links: vec![] };
         assert_eq!(best(&blank), None);
     }
     #[test]
     fn the_best_picture_scales_or_fills_the_box_smallest_and_last_and_apple_s_only_alone() {
         let ico = "https://a.example/favicon.ico";
-        let touch = (
-            "apple-touch-icon",
-            "https://a.example/touch.png",
-            "180x180",
-            "",
-        );
+        let touch = ("apple-touch-icon", "https://a.example/touch.png", "180x180", "");
         for (links, wears) in [
             (&[][..], ico),
             (&[("stylesheet", "https://a.example/s.css", "", "")], ico),
@@ -175,12 +163,7 @@ mod tests {
             (
                 &[
                     ("shortcut icon", "https://static.example/a.webp", "", ""),
-                    (
-                        "apple-touch-icon",
-                        "https://static.example/192.webp",
-                        "192x192",
-                        "",
-                    ),
+                    ("apple-touch-icon", "https://static.example/192.webp", "192x192", ""),
                     ("icon", "https://a.example/favicon/1x/", "", ""),
                 ],
                 "https://a.example/favicon/1x/",
@@ -190,10 +173,7 @@ mod tests {
                 &[touch, ("icon", "https://a.example/16.png", "16x16", "")],
                 "https://a.example/16.png",
             ),
-            (
-                &[("icon", "data:image/png;base64,AAAA", "", "")],
-                "data:image/png;base64,AAAA",
-            ),
+            (&[("icon", "data:image/png;base64,AAAA", "", "")], "data:image/png;base64,AAAA"),
             (&[("icon", "blob:https://a.example/1", "", "")], ico),
         ] {
             assert_eq!(on(links).as_deref(), Some(wears), "{links:?}");

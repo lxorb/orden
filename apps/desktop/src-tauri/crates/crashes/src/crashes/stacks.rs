@@ -49,13 +49,7 @@ impl Default for Place {
 }
 impl Place {
     pub const fn new() -> Self {
-        Self {
-            module: [0; 128],
-            module_len: 0,
-            base: 0,
-            symbol: [0; 128],
-            symbol_len: 0,
-        }
+        Self { module: [0; 128], module_len: 0, base: 0, symbol: [0; 128], symbol_len: 0 }
     }
     pub fn module(&self) -> &[u8] {
         &self.module[..self.module_len]
@@ -64,10 +58,7 @@ impl Place {
         &self.symbol[..self.symbol_len]
     }
     pub fn name_module(&mut self, path: &[u8]) {
-        let name = path
-            .rsplit(|one| *one == b'/' || *one == b'\\')
-            .next()
-            .unwrap_or_default();
+        let name = path.rsplit(|one| *one == b'/' || *one == b'\\').next().unwrap_or_default();
         self.module_len = fill(&mut self.module, name);
     }
     #[cfg_attr(windows, allow(dead_code))]
@@ -117,15 +108,7 @@ pub fn frame_of(ip: usize) -> Frame {
     } else {
         format!("{:#x}", ip.wrapping_sub(place.base))
     };
-    Frame {
-        module: if module.is_empty() {
-            "?".to_owned()
-        } else {
-            module
-        },
-        offset,
-        symbol,
-    }
+    Frame { module: if module.is_empty() { "?".to_owned() } else { module }, offset, symbol }
 }
 pub fn resolved(raw: &Raw, crashed: bool) -> Thread {
     Thread {

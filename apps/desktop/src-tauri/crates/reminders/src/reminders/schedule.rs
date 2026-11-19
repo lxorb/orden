@@ -53,9 +53,7 @@ pub(super) mod tests {
             if self.refuse {
                 return Err("element not found".into());
             }
-            self.asked
-                .borrow_mut()
-                .push(format!("add {} {nonce}", one.id));
+            self.asked.borrow_mut().push(format!("add {} {nonce}", one.id));
             self.held.borrow_mut().push(one.id.clone());
             Ok(())
         }
@@ -79,30 +77,17 @@ pub(super) mod tests {
         }
     }
     fn wanted(ids: &[(&str, i64)]) -> Vec<(Planned, String)> {
-        ids.iter()
-            .map(|(id, at)| (planned(id, *at), format!("n-{id}")))
-            .collect()
+        ids.iter().map(|(id, at)| (planned(id, *at), format!("n-{id}"))).collect()
     }
     #[test]
     fn adds_what_is_new_and_takes_off_what_went() {
         let fake = Fake::default();
         fake.held.borrow_mut().push("old".into());
         fake.held.borrow_mut().push("kept".into());
-        let changes = make_so(
-            &fake,
-            &wanted(&[("kept", 2000), ("new", 3000)]),
-            &[],
-            &Words::default(),
-            1000,
-        )
-        .expect("the pass");
-        assert_eq!(
-            changes,
-            Changes {
-                added: vec!["new".into()],
-                removed: vec!["old".into()]
-            }
-        );
+        let changes =
+            make_so(&fake, &wanted(&[("kept", 2000), ("new", 3000)]), &[], &Words::default(), 1000)
+                .expect("the pass");
+        assert_eq!(changes, Changes { added: vec!["new".into()], removed: vec!["old".into()] });
         assert_eq!(*fake.held.borrow(), ["kept", "new"]);
         assert_eq!(*fake.asked.borrow(), ["remove old", "add new n-new"]);
     }
@@ -120,14 +105,9 @@ pub(super) mod tests {
     fn a_moment_gone_is_not_handed_over_and_one_held_is_let_go() {
         let fake = Fake::default();
         fake.held.borrow_mut().push("late".into());
-        let changes = make_so(
-            &fake,
-            &wanted(&[("late", 900), ("past", 500)]),
-            &[],
-            &Words::default(),
-            1000,
-        )
-        .expect("the pass");
+        let changes =
+            make_so(&fake, &wanted(&[("late", 900), ("past", 500)]), &[], &Words::default(), 1000)
+                .expect("the pass");
         assert_eq!(changes.added, Vec::<String>::new());
         assert_eq!(changes.removed, ["late"]);
     }
@@ -149,10 +129,7 @@ pub(super) mod tests {
     }
     #[test]
     fn a_refusal_is_answered_so_the_page_rings_instead() {
-        let fake = Fake {
-            refuse: true,
-            ..Fake::default()
-        };
+        let fake = Fake { refuse: true, ..Fake::default() };
         assert!(make_so(&fake, &wanted(&[("a", 2000)]), &[], &Words::default(), 1000).is_err());
     }
 }

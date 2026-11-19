@@ -37,9 +37,8 @@ pub struct Listing {
     pub cut: bool,
 }
 pub(super) fn millis(at: SystemTime) -> u64 {
-    at.duration_since(UNIX_EPOCH).map_or(0, |since| {
-        u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
-    })
+    at.duration_since(UNIX_EPOCH)
+        .map_or(0, |since| u64::try_from(since.as_millis()).unwrap_or(u64::MAX))
 }
 fn is_hidden(name: &str, meta: &fs::Metadata) -> bool {
     if name.starts_with('.') {
@@ -72,11 +71,7 @@ pub(super) fn listed(one: &fs::DirEntry) -> Option<Entry> {
 fn described(path: &Path, meta: &fs::Metadata) -> Option<Entry> {
     let name = path.file_name()?.to_string_lossy().into_owned();
     let link = meta.file_type().is_symlink();
-    let folder = if link {
-        fs::metadata(path).is_ok_and(|to| to.is_dir())
-    } else {
-        meta.is_dir()
-    };
+    let folder = if link { fs::metadata(path).is_ok_and(|to| to.is_dir()) } else { meta.is_dir() };
     let kind = if link {
         Kind::Link
     } else if folder {
@@ -97,9 +92,7 @@ fn described(path: &Path, meta: &fs::Metadata) -> Option<Entry> {
 }
 pub(super) fn entries(folder: &Path, most: usize) -> Result<(Vec<Entry>, bool), String> {
     let mut out = Vec::new();
-    for one in fs::read_dir(folder)
-        .map_err(|why| format!("{}: {why}", folder.display()))?
-        .flatten()
+    for one in fs::read_dir(folder).map_err(|why| format!("{}: {why}", folder.display()))?.flatten()
     {
         if out.len() >= most {
             return Ok((out, true));
@@ -112,13 +105,7 @@ pub(super) fn entries(folder: &Path, most: usize) -> Result<(Vec<Entry>, bool), 
 }
 pub(super) fn asked(app: &AppHandle, path: &str, using: Use) -> Result<PathBuf, String> {
     let explored = app.state::<Explored>();
-    judged(
-        &Fences::of(app),
-        &|one| explored.seen(one),
-        &orden_base::paths::real,
-        path,
-        using,
-    )
+    judged(&Fences::of(app), &|one| explored.seen(one), &orden_base::paths::real, path, using)
 }
 #[tauri::command]
 pub async fn explorer_list(app: AppHandle, path: String) -> Result<Listing, String> {
@@ -161,19 +148,11 @@ pub async fn explorer_places(app: AppHandle) -> Vec<Place> {
         .into_iter()
         .filter_map(|(kind, path)| {
             let path = path.filter(|one| one.is_dir())?;
-            Some(Place {
-                kind,
-                path: path.display().to_string(),
-                name: None,
-            })
+            Some(Place { kind, path: path.display().to_string(), name: None })
         })
         .collect();
         if cfg!(unix) {
-            out.push(Place {
-                kind: "root",
-                path: "/".to_owned(),
-                name: None,
-            });
+            out.push(Place { kind: "root", path: "/".to_owned(), name: None });
         }
         out.extend(disks().into_iter().map(|path| {
             Place {
@@ -336,10 +315,7 @@ mod tests {
         let names: Vec<&str> = found.iter().map(|one| one.name.as_str()).collect();
         assert_eq!(names, [".hidden", "a.txt", "sub"]);
         assert!(found[0].hidden);
-        assert_eq!(
-            (found[1].kind, found[1].size, found[1].folder),
-            (Kind::File, 4, false)
-        );
+        assert_eq!((found[1].kind, found[1].size, found[1].folder), (Kind::File, 4, false));
         assert_eq!((found[2].kind, found[2].folder), (Kind::Folder, true));
     }
     #[test]
@@ -387,16 +363,9 @@ mod tests {
             .expect("a link");
         let mut seen = 0;
         for one in fs::read_dir(dir.path()).expect("listed").flatten() {
-            let (by_listing, by_path) = (
-                listed(&one).expect("listed"),
-                entry(&one.path()).expect("looked at"),
-            );
-            assert_eq!(
-                format!("{by_listing:?}"),
-                format!("{by_path:?}"),
-                "{:?}",
-                one.path()
-            );
+            let (by_listing, by_path) =
+                (listed(&one).expect("listed"), entry(&one.path()).expect("looked at"));
+            assert_eq!(format!("{by_listing:?}"), format!("{by_path:?}"), "{:?}", one.path());
             seen += 1;
         }
         assert!(seen >= 3);
@@ -404,10 +373,7 @@ mod tests {
     #[test]
     fn the_disks_windows_says_it_has_are_named_without_being_touched() {
         let named = super::lettered(0b101 | (1 << 25));
-        assert_eq!(
-            named,
-            ["A:\\", "C:\\", "Z:\\"].map(std::path::PathBuf::from)
-        );
+        assert_eq!(named, ["A:\\", "C:\\", "Z:\\"].map(std::path::PathBuf::from));
         assert!(super::lettered(0).is_empty());
     }
 }

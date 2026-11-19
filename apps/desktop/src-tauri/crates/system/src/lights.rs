@@ -10,11 +10,7 @@ fn spot(
 ) -> (f64, f64) {
     let (width, height) = button;
     let along = LEFT + f64::from(index) * pitch;
-    let x = if leftward {
-        holder_width - along - width
-    } else {
-        along
-    };
+    let x = if leftward { holder_width - along - width } else { along };
     let top = ((BAR - height) / 2.0).round() - holder_top;
     (x, top)
 }
@@ -122,9 +118,7 @@ mod native {
     }
     fn ordens_frame(window: &NSWindow) -> bool {
         window.titlebarAppearsTransparent()
-            && window
-                .styleMask()
-                .contains(NSWindowStyleMask::FullSizeContentView)
+            && window.styleMask().contains(NSWindowStyleMask::FullSizeContentView)
     }
     fn centred(
         window: &NSWindow,
@@ -140,14 +134,7 @@ mod native {
         let mut index = 0u8;
         lights.each_ref().map(|light| {
             let size = light.frame().size;
-            let at = spot(
-                (size.width, size.height),
-                width,
-                holder_top,
-                pitch,
-                index,
-                leftward,
-            );
+            let at = spot((size.width, size.height), width, holder_top, pitch, index, leftward);
             index += 1;
             at
         })
@@ -165,9 +152,8 @@ mod native {
         let in_this_window = holder.window().is_some_and(|there| {
             std::ptr::eq(Retained::as_ptr(&there), std::ptr::from_ref(window))
         });
-        let together = lights
-            .iter()
-            .all(|light| parent(light).is_some_and(|there| there == holder));
+        let together =
+            lights.iter().all(|light| parent(light).is_some_and(|there| there == holder));
         if !in_this_window || !together {
             return;
         }
@@ -183,11 +169,7 @@ mod native {
         PLACING.set(true);
         for (light, (x, top)) in lights.iter().zip(spots) {
             let size = light.frame().size;
-            let y = if holder.isFlipped() {
-                top
-            } else {
-                height - top - size.height
-            };
+            let y = if holder.isFlipped() { top } else { height - top - size.height };
             let now = light.frame().origin;
             if (now.x - x).abs() > 0.1 || (now.y - y).abs() > 0.1 {
                 light.setFrameOrigin(NSPoint::new(x, y));
@@ -237,9 +219,7 @@ mod native {
         };
         unsafe {
             objc2::ffi::object_setClass(
-                std::ptr::from_ref::<NSView>(holder)
-                    .cast::<AnyObject>()
-                    .cast_mut(),
+                std::ptr::from_ref::<NSView>(holder).cast::<AnyObject>().cast_mut(),
                 std::ptr::from_ref::<AnyClass>(class),
             );
         }
@@ -322,11 +302,7 @@ mod tests {
         let start = css
             .find(&format!("{token}:"))
             .unwrap_or_else(|| panic!("{token} is not in tokens.css"));
-        let value = css[start + token.len() + 1..]
-            .split(';')
-            .next()
-            .unwrap()
-            .trim();
+        let value = css[start + token.len() + 1..].split(';').next().unwrap().trim();
         value
             .strip_suffix("px")
             .unwrap_or_else(|| panic!("{token} is not in pixels: {value}"))
@@ -338,51 +314,23 @@ mod tests {
     }
     #[test]
     fn a_light_is_centred_in_the_bar() {
-        assert!(at(
-            spot((14.0, 14.0), 300.0, 0.0, 23.0, 0, false),
-            LEFT,
-            12.0
-        ));
-        assert!(at(
-            spot((14.0, 16.0), 300.0, 0.0, 20.0, 0, false),
-            LEFT,
-            11.0
-        ));
+        assert!(at(spot((14.0, 14.0), 300.0, 0.0, 23.0, 0, false), LEFT, 12.0));
+        assert!(at(spot((14.0, 16.0), 300.0, 0.0, 20.0, 0, false), LEFT, 11.0));
     }
     #[test]
     fn a_holder_lower_in_the_window_is_allowed_for() {
-        assert!(at(
-            spot((14.0, 14.0), 300.0, 2.0, 23.0, 0, false),
-            LEFT,
-            10.0
-        ));
+        assert!(at(spot((14.0, 14.0), 300.0, 2.0, 23.0, 0, false), LEFT, 10.0));
     }
     #[test]
     fn the_lights_keep_the_systems_own_pitch() {
-        assert!(at(
-            spot((14.0, 14.0), 300.0, 0.0, 23.0, 2, false),
-            LEFT + 46.0,
-            12.0
-        ));
-        assert!(at(
-            spot((14.0, 16.0), 300.0, 0.0, 20.0, 1, false),
-            LEFT + 20.0,
-            11.0
-        ));
+        assert!(at(spot((14.0, 14.0), 300.0, 0.0, 23.0, 2, false), LEFT + 46.0, 12.0));
+        assert!(at(spot((14.0, 16.0), 300.0, 0.0, 20.0, 1, false), LEFT + 20.0, 11.0));
     }
     #[test]
     fn a_titlebar_laid_out_right_to_left_is_mirrored() {
         let right = 300.0 - LEFT - 14.0;
-        assert!(at(
-            spot((14.0, 14.0), 300.0, 0.0, 23.0, 0, true),
-            right,
-            12.0
-        ));
-        assert!(at(
-            spot((14.0, 14.0), 300.0, 0.0, 23.0, 2, true),
-            right - 46.0,
-            12.0
-        ));
+        assert!(at(spot((14.0, 14.0), 300.0, 0.0, 23.0, 0, true), right, 12.0));
+        assert!(at(spot((14.0, 14.0), 300.0, 0.0, 23.0, 2, true), right - 46.0, 12.0));
     }
     #[test]
     fn the_bar_is_as_tall_as_the_themes_say() {

@@ -106,59 +106,23 @@ pub fn key_lparam(scan: u32, extended: bool, down: bool) -> isize {
     isize::try_from(i32::from_ne_bytes(bits.to_ne_bytes())).unwrap_or(0)
 }
 pub fn point_lparam(x: i32, y: i32) -> isize {
-    let low = u32::from(u16::from_ne_bytes(
-        i16::try_from(x).unwrap_or(0).to_ne_bytes(),
-    ));
-    let high = u32::from(u16::from_ne_bytes(
-        i16::try_from(y).unwrap_or(0).to_ne_bytes(),
-    ));
+    let low = u32::from(u16::from_ne_bytes(i16::try_from(x).unwrap_or(0).to_ne_bytes()));
+    let high = u32::from(u16::from_ne_bytes(i16::try_from(y).unwrap_or(0).to_ne_bytes()));
     isize::try_from(i32::from_ne_bytes((low | (high << 16)).to_ne_bytes())).unwrap_or(0)
 }
 pub fn wheel_wparam(delta: i32, buttons: u32) -> usize {
     let turn = u32::from(u16::from_ne_bytes(
-        i16::try_from(delta.clamp(-32768, 32767))
-            .unwrap_or(0)
-            .to_ne_bytes(),
+        i16::try_from(delta.clamp(-32768, 32767)).unwrap_or(0).to_ne_bytes(),
     ));
     usize::try_from((turn << 16) | (buttons & 0xffff)).unwrap_or(0)
 }
 fn button_messages(button: u8) -> Option<(u32, u32, u32, u32, u32)> {
     Some(match button {
-        0 => (
-            WM_LBUTTONDOWN,
-            WM_LBUTTONUP,
-            WM_LBUTTONDBLCLK,
-            MK_LBUTTON,
-            0,
-        ),
-        1 => (
-            WM_MBUTTONDOWN,
-            WM_MBUTTONUP,
-            WM_MBUTTONDBLCLK,
-            MK_MBUTTON,
-            0,
-        ),
-        2 => (
-            WM_RBUTTONDOWN,
-            WM_RBUTTONUP,
-            WM_RBUTTONDBLCLK,
-            MK_RBUTTON,
-            0,
-        ),
-        3 => (
-            WM_XBUTTONDOWN,
-            WM_XBUTTONUP,
-            WM_XBUTTONDBLCLK,
-            MK_XBUTTON1,
-            1,
-        ),
-        4 => (
-            WM_XBUTTONDOWN,
-            WM_XBUTTONUP,
-            WM_XBUTTONDBLCLK,
-            MK_XBUTTON2,
-            2,
-        ),
+        0 => (WM_LBUTTONDOWN, WM_LBUTTONUP, WM_LBUTTONDBLCLK, MK_LBUTTON, 0),
+        1 => (WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MBUTTONDBLCLK, MK_MBUTTON, 0),
+        2 => (WM_RBUTTONDOWN, WM_RBUTTONUP, WM_RBUTTONDBLCLK, MK_RBUTTON, 0),
+        3 => (WM_XBUTTONDOWN, WM_XBUTTONUP, WM_XBUTTONDBLCLK, MK_XBUTTON1, 1),
+        4 => (WM_XBUTTONDOWN, WM_XBUTTONUP, WM_XBUTTONDBLCLK, MK_XBUTTON2, 2),
         _ => return None,
     })
 }
@@ -182,18 +146,10 @@ impl Player {
                     return;
                 }
                 self.at = (x.round() as i32, y.round() as i32);
-                let target = self
-                    .pressed
-                    .map(|one| HWND(one as _))
-                    .or_else(|| under(self.at));
+                let target = self.pressed.map(|one| HWND(one as _)).or_else(|| under(self.at));
                 if let Some(window) = target {
                     let (cx, cy) = client(window, self.at);
-                    post(
-                        window,
-                        WM_MOUSEMOVE,
-                        self.mouse_keys() as usize,
-                        point_lparam(cx, cy),
-                    );
+                    post(window, WM_MOUSEMOVE, self.mouse_keys() as usize, point_lparam(cx, cy));
                 }
             }
             InputEvent::Button { button, down } => self.button(button, down),
@@ -214,12 +170,7 @@ impl Player {
             InputEvent::Key { key, code, down } => self.key(&key, code, down),
             InputEvent::Text { text } => {
                 if let Some(window) = self.keyboard() {
-                    for unit in text
-                        .chars()
-                        .take(MOST_TEXT)
-                        .collect::<String>()
-                        .encode_utf16()
-                    {
+                    for unit in text.chars().take(MOST_TEXT).collect::<String>().encode_utf16() {
                         post(window, WM_CHAR, usize::from(unit), 1);
                     }
                 }
@@ -247,9 +198,7 @@ impl Player {
         let target = if down {
             under(self.at)
         } else {
-            self.pressed
-                .map(|one| HWND(one as _))
-                .or_else(|| under(self.at))
+            self.pressed.map(|one| HWND(one as _)).or_else(|| under(self.at))
         };
         let Some(window) = target else {
             return;
@@ -322,10 +271,8 @@ impl Player {
             self.keys.insert(code, (0, false, false));
             return;
         }
-        let pressed = single
-            .and_then(key_of_character)
-            .map(|vk| (vk, false))
-            .or_else(|| virtual_key(key));
+        let pressed =
+            single.and_then(key_of_character).map(|vk| (vk, false)).or_else(|| virtual_key(key));
         if let Some((vk, extended)) = pressed {
             self.set_state();
             self.press(vk, extended, true);
@@ -343,19 +290,11 @@ impl Player {
             (false, true) => WM_SYSKEYUP,
             (false, false) => WM_KEYUP,
         };
-        post(
-            window,
-            message,
-            usize::from(vk),
-            key_lparam(scan_of(vk), extended, down),
-        );
+        post(window, message, usize::from(vk), key_lparam(scan_of(vk), extended, down));
     }
     #[allow(unsafe_code)]
     fn keyboard(&mut self) -> Option<HWND> {
-        let front = self
-            .front
-            .map(|one| HWND(one as _))
-            .or_else(|| shown().into_iter().next())?;
+        let front = self.front.map(|one| HWND(one as _)).or_else(|| shown().into_iter().next())?;
         let thread = unsafe { GetWindowThreadProcessId(front, None) };
         let mut info = GUITHREADINFO {
             cbSize: u32::try_from(std::mem::size_of::<GUITHREADINFO>()).unwrap_or(0),
@@ -465,11 +404,7 @@ fn under(at: (i32, i32)) -> Option<HWND> {
     for _ in 0..32 {
         let (x, y) = client(window, at);
         let child = unsafe {
-            ChildWindowFromPointEx(
-                window,
-                POINT { x, y },
-                CWP_SKIPINVISIBLE | CWP_SKIPTRANSPARENT,
-            )
+            ChildWindowFromPointEx(window, POINT { x, y }, CWP_SKIPINVISIBLE | CWP_SKIPTRANSPARENT)
         };
         if child.is_invalid() || child == window {
             break;
@@ -508,9 +443,6 @@ mod tests {
         assert_eq!(wheel_wparam(-120, MK_LBUTTON), 0xff88_0001);
         assert_eq!(key_lparam(0x1c, false, true), 0x001c_0001);
         let released = i32::from_ne_bytes(0xc14b_0001_u32.to_ne_bytes());
-        assert_eq!(
-            key_lparam(0x4b, true, false),
-            isize::try_from(released).unwrap()
-        );
+        assert_eq!(key_lparam(0x4b, true, false), isize::try_from(released).unwrap());
     }
 }

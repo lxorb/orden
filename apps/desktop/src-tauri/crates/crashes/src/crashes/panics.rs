@@ -36,14 +36,9 @@ pub fn panicked(info: &PanicHookInfo<'_>) -> Report {
         ips: stacks::here(),
     };
     let mut report = report::fresh("panic", &message_of(info));
-    report.place = info.location().map(|at| {
-        format!(
-            "{}:{}:{}",
-            at.file().replace('\\', "/"),
-            at.line(),
-            at.column()
-        )
-    });
+    report.place = info
+        .location()
+        .map(|at| format!("{}:{}:{}", at.file().replace('\\', "/"), at.line(), at.column()));
     report.doing = crate::stall::doing_now();
     report.threads = vec![stacks::resolved(&raw, true)];
     report

@@ -14,11 +14,7 @@ pub async fn read(address: tauri::Url) -> Vec<Vec<u8>> {
         .unwrap_or_default()
 }
 fn chain_of(address: &tauri::Url) -> Option<Vec<Vec<u8>>> {
-    let host = address
-        .host_str()?
-        .trim_start_matches('[')
-        .trim_end_matches(']')
-        .to_owned();
+    let host = address.host_str()?.trim_start_matches('[').trim_end_matches(']').to_owned();
     let port = address.port_or_known_default()?;
     let name = ServerName::try_from(host.as_str()).ok()?.to_owned();
     let heard = Arc::new(Heard::default());
@@ -97,19 +93,14 @@ mod tests {
     const SITE_KEY: &str = "MC4CAQAwBQYDK2VwBCIEIAMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD";
     #[test]
     fn the_chain_a_site_sends_is_read_and_nothing_more() {
-        let key = base64::engine::general_purpose::STANDARD
-            .decode(SITE_KEY)
-            .expect("the test key");
+        let key = base64::engine::general_purpose::STANDARD.decode(SITE_KEY).expect("the test key");
         let config =
             ServerConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
                 .with_safe_default_protocol_versions()
                 .expect("versions")
                 .with_no_client_auth()
                 .with_single_cert(
-                    vec![
-                        CertificateDer::from(der(SITE)),
-                        CertificateDer::from(der(INTERMEDIATE)),
-                    ],
+                    vec![CertificateDer::from(der(SITE)), CertificateDer::from(der(INTERMEDIATE))],
                     PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(key)),
                 )
                 .expect("a server");

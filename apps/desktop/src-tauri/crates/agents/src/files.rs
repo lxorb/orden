@@ -28,12 +28,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer {
         Ok(path) => path,
         Err(why) => return Answer::error(Code::BadArguments, why),
     };
-    let to = match asked
-        .to
-        .as_deref()
-        .map(|one| absolute(app, one))
-        .transpose()
-    {
+    let to = match asked.to.as_deref().map(|one| absolute(app, one)).transpose() {
         Ok(to) => to,
         Err(why) => return Answer::error(Code::BadArguments, why),
     };
@@ -109,9 +104,7 @@ fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
     }
     match path.parent() {
         Some(folder)
-            if folder
-                .parent()
-                .is_some_and(|above| !above.as_os_str().is_empty())
+            if folder.parent().is_some_and(|above| !above.as_os_str().is_empty())
                 && refused(fenced, FilesOp::Copy, folder, None).is_none() =>
         {
             folder.to_path_buf()
@@ -120,11 +113,7 @@ fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
     }
 }
 pub fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
-    behind_but_spaces(
-        orden_base::paths::spaces_dir(app).ok().as_deref(),
-        &own_folders(app),
-        path,
-    )
+    behind_but_spaces(orden_base::paths::spaces_dir(app).ok().as_deref(), &own_folders(app), path)
 }
 pub fn behind_but_spaces(spaces: Option<&Path>, own: &[PathBuf], path: &Path) -> Option<Answer> {
     let in_spaces = spaces.is_some_and(|spaces| {
@@ -155,10 +144,7 @@ pub fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
         })
 }
 fn reads(op: FilesOp) -> bool {
-    matches!(
-        op,
-        FilesOp::Read | FilesOp::List | FilesOp::Search | FilesOp::Changes
-    )
+    matches!(op, FilesOp::Read | FilesOp::List | FilesOp::Search | FilesOp::Changes)
 }
 fn changes(op: FilesOp) -> bool {
     matches!(
@@ -181,9 +167,7 @@ pub fn under_home(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
         .or_else(|| asked.strip_prefix("~\\"))
         .or_else(|| (asked == "~").then_some(""));
     let given = match rest {
-        Some(rest) => home
-            .ok_or_else(|| "this account has no home folder".to_owned())?
-            .join(rest),
+        Some(rest) => home.ok_or_else(|| "this account has no home folder".to_owned())?.join(rest),
         None => PathBuf::from(asked),
     };
     if !given.is_absolute() {
@@ -194,11 +178,7 @@ pub fn under_home(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
     Ok(orden_base::paths::folded(&given))
 }
 fn fences(app: &AppHandle) -> Vec<PathBuf> {
-    orden_base::paths::spaces_dir(app)
-        .ok()
-        .into_iter()
-        .chain(own_folders(app))
-        .collect()
+    orden_base::paths::spaces_dir(app).ok().into_iter().chain(own_folders(app)).collect()
 }
 fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> Option<Answer> {
     let whole = matches!(op, FilesOp::Move | FilesOp::Copy | FilesOp::Delete);
@@ -216,21 +196,13 @@ fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> O
     } else {
         "holds Orden's own folder, with the agents' grants and the sites' cookies: no agent reaches it"
     };
-    Some(Answer::error(
-        Code::NotGranted,
-        format!("{} {why}", path.display()),
-    ))
+    Some(Answer::error(Code::NotGranted, format!("{} {why}", path.display())))
 }
 fn fenced_off(fenced: &[PathBuf], real_fenced: &[PathBuf], path: &Path) -> bool {
-    fenced
-        .iter()
-        .any(|fence| orden_base::paths::inside(fence, path))
-        || {
-            let real_path = real(path);
-            real_fenced
-                .iter()
-                .any(|fence| orden_base::paths::inside(fence, &real_path))
-        }
+    fenced.iter().any(|fence| orden_base::paths::inside(fence, path)) || {
+        let real_path = real(path);
+        real_fenced.iter().any(|fence| orden_base::paths::inside(fence, &real_path))
+    }
 }
 fn question(
     app: &AppHandle,
@@ -285,15 +257,13 @@ fn asked_about(grant: &Grant, op: FilesOp, path: &Path, to: Option<&Path>) -> Pa
     }
 }
 fn folder_of(path: &Path, op: FilesOp) -> PathBuf {
-    let about_a_folder = matches!(
-        op,
-        FilesOp::List | FilesOp::Search | FilesOp::Changes | FilesOp::Mkdir
-    ) || path.is_dir();
+    let about_a_folder =
+        matches!(op, FilesOp::List | FilesOp::Search | FilesOp::Changes | FilesOp::Mkdir)
+            || path.is_dir();
     if about_a_folder {
         path.to_path_buf()
     } else {
-        path.parent()
-            .map_or_else(|| path.to_path_buf(), Path::to_path_buf)
+        path.parent().map_or_else(|| path.to_path_buf(), Path::to_path_buf)
     }
 }
 fn ancestors(folder: &Path) -> impl Iterator<Item = &Path> {
@@ -331,9 +301,8 @@ fn summary(op: FilesOp, path: &Path, to: Option<&Path>) -> String {
     }
 }
 fn millis(at: SystemTime) -> u64 {
-    at.duration_since(UNIX_EPOCH).map_or(0, |since| {
-        u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
-    })
+    at.duration_since(UNIX_EPOCH)
+        .map_or(0, |since| u64::try_from(since.as_millis()).unwrap_or(u64::MAX))
 }
 fn entry(path: &Path) -> Result<FileEntry, String> {
     let meta = fs::symlink_metadata(path).map_err(|why| format!("{}: {why}", path.display()))?;
@@ -347,11 +316,7 @@ fn entry(path: &Path) -> Result<FileEntry, String> {
     Ok(FileEntry {
         path: path.display().to_string(),
         kind,
-        size: if kind == FileKind::File {
-            meta.len()
-        } else {
-            0
-        },
+        size: if kind == FileKind::File { meta.len() } else { 0 },
         modified: meta.modified().map_or(0, millis),
     })
 }
@@ -361,10 +326,7 @@ fn done(
     to: Option<&Path>,
     fenced: &[PathBuf],
 ) -> Result<FilesDone, String> {
-    let mut out = FilesDone {
-        path: path.display().to_string(),
-        ..FilesDone::default()
-    };
+    let mut out = FilesDone { path: path.display().to_string(), ..FilesDone::default() };
     match asked.op {
         FilesOp::Read => read(path, asked.base64, &mut out)?,
         FilesOp::Write => {
@@ -415,10 +377,8 @@ fn outside_of<'a>(from: &Path, to: &'a Path) -> Result<&'a Path, String> {
     Ok(to)
 }
 fn content(asked: &Files) -> Result<Vec<u8>, String> {
-    let words = asked
-        .content
-        .as_deref()
-        .ok_or_else(|| "say what goes in it, as content".to_owned())?;
+    let words =
+        asked.content.as_deref().ok_or_else(|| "say what goes in it, as content".to_owned())?;
     if asked.base64 {
         base64::engine::general_purpose::STANDARD
             .decode(words)
@@ -436,11 +396,7 @@ fn read(path: &Path, base64: bool, out: &mut FilesDone) -> Result<(), String> {
         bytes.truncate(MOST_READ);
         out.truncated = true;
     }
-    let text = if base64 {
-        None
-    } else {
-        String::from_utf8(bytes.clone()).ok()
-    };
+    let text = if base64 { None } else { String::from_utf8(bytes.clone()).ok() };
     if let Some(text) = text {
         out.content = Some(text);
     } else {
@@ -492,9 +448,7 @@ fn copied(from: &Path, to: &Path) -> Result<(), String> {
         if let Some(folder) = to.parent() {
             fs::create_dir_all(folder).map_err(|why| why.to_string())?;
         }
-        return fs::copy(from, to)
-            .map(|_| ())
-            .map_err(|why| why.to_string());
+        return fs::copy(from, to).map(|_| ()).map_err(|why| why.to_string());
     }
     fs::create_dir_all(to).map_err(|why| why.to_string())?;
     for one in fs::read_dir(from).map_err(|why| why.to_string())?.flatten() {
@@ -504,11 +458,7 @@ fn copied(from: &Path, to: &Path) -> Result<(), String> {
 }
 fn deleted(path: &Path) -> Result<(), String> {
     let meta = fs::symlink_metadata(path).map_err(|why| format!("{}: {why}", path.display()))?;
-    let gone = if meta.is_dir() {
-        fs::remove_dir_all(path)
-    } else {
-        fs::remove_file(path)
-    };
+    let gone = if meta.is_dir() { fs::remove_dir_all(path) } else { fs::remove_file(path) };
     gone.map_err(|why| why.to_string())
 }
 fn walk(
@@ -546,10 +496,9 @@ fn walk(
                 }
                 continue;
             }
-            let relative = path.strip_prefix(root).map_or_else(
-                |_| String::new(),
-                |one| one.to_string_lossy().replace('\\', "/"),
-            );
+            let relative = path
+                .strip_prefix(root)
+                .map_or_else(|_| String::new(), |one| one.to_string_lossy().replace('\\', "/"));
             if keep(&relative, &found) {
                 out.entries.push(found);
             }
@@ -594,18 +543,11 @@ fn matched(
     let found = match (glob.get(g), name.get(n)) {
         (None, None) => true,
         (Some('*'), _) if glob.get(g + 1) == Some(&'*') => {
-            let rest = if glob.get(g + 2) == Some(&'/') {
-                g + 3
-            } else {
-                g + 2
-            };
+            let rest = if glob.get(g + 2) == Some(&'/') { g + 3 } else { g + 2 };
             (n..=name.len()).any(|at| matched(glob, name, (rest, at), failed))
         }
         (Some('*'), _) => {
-            let run = name[n..]
-                .iter()
-                .position(|one| *one == '/')
-                .map_or(name.len(), |at| n + at);
+            let run = name[n..].iter().position(|one| *one == '/').map_or(name.len(), |at| n + at);
             (n..=run).any(|at| matched(glob, name, (g + 1, at), failed))
         }
         (Some('?'), Some(one)) if *one != '/' => matched(glob, name, (g + 1, n + 1), failed),
@@ -621,8 +563,7 @@ fn matched(
 }
 pub fn hidden_within(root: &Path, path: &Path) -> bool {
     path.strip_prefix(root).map_or(true, |rest| {
-        rest.components()
-            .any(|step| step.as_os_str().to_string_lossy().starts_with('.'))
+        rest.components().any(|step| step.as_os_str().to_string_lossy().starts_with('.'))
     })
 }
 #[cfg(test)]
@@ -655,18 +596,8 @@ mod tests {
         grant.always.insert("/a".into(), vec![Category::Files]);
         let from = Path::new("/a/x.txt");
         assert!(always_allowed(&grant, FilesOp::Read, from, None));
-        assert!(always_allowed(
-            &grant,
-            FilesOp::Copy,
-            from,
-            Some(Path::new("/a/y.txt"))
-        ));
-        assert!(!always_allowed(
-            &grant,
-            FilesOp::Copy,
-            from,
-            Some(Path::new("/b/x.txt"))
-        ));
+        assert!(always_allowed(&grant, FilesOp::Copy, from, Some(Path::new("/a/y.txt"))));
+        assert!(!always_allowed(&grant, FilesOp::Copy, from, Some(Path::new("/b/x.txt"))));
         assert!(!always_allowed(
             &grant,
             FilesOp::Move,
@@ -684,12 +615,7 @@ mod tests {
             Path::new("/b")
         );
         assert_eq!(
-            asked_about(
-                &grant,
-                FilesOp::Copy,
-                Path::new("/c/x.txt"),
-                Some(Path::new("/b/x.txt"))
-            ),
+            asked_about(&grant, FilesOp::Copy, Path::new("/c/x.txt"), Some(Path::new("/b/x.txt"))),
             Path::new("/c")
         );
     }
@@ -728,22 +654,10 @@ mod tests {
         assert!(!file.exists() && moved_to.exists());
         let copy = root.join("copy");
         let elsewhere = root.join("elsewhere");
-        done(
-            &files(FilesOp::Copy, &elsewhere),
-            &elsewhere,
-            Some(&copy),
-            &[],
-        )
-        .expect("copied");
+        done(&files(FilesOp::Copy, &elsewhere), &elsewhere, Some(&copy), &[]).expect("copied");
         assert!(copy.join("plan.txt").exists());
         let over = copy.join("plan.txt");
-        assert!(done(
-            &files(FilesOp::Copy, &moved_to),
-            &moved_to,
-            Some(&over),
-            &[]
-        )
-        .is_err());
+        assert!(done(&files(FilesOp::Copy, &moved_to), &moved_to, Some(&over), &[]).is_err());
         done(&files(FilesOp::Delete, &copy), &copy, None, &[]).expect("deleted");
         assert!(!copy.exists());
         let elsewhere = root.join("elsewhere");
@@ -788,10 +702,7 @@ mod tests {
         assert_eq!(watched.entries.len(), 2);
         let mut after = files(FilesOp::Changes, &root);
         after.since = since;
-        assert!(done(&after, &root, None, &[])
-            .expect("watched")
-            .entries
-            .is_empty());
+        assert!(done(&after, &root, None, &[]).expect("watched").entries.is_empty());
     }
     #[test]
     fn a_list_and_a_stat_say_what_is_there() {
@@ -799,11 +710,8 @@ mod tests {
         fs::create_dir_all(root.join("folder")).expect("folder");
         fs::write(root.join("file"), "12345").expect("file");
         let listed = done(&files(FilesOp::List, &root), &root, None, &[]).expect("listed");
-        let kinds: Vec<(FileKind, u64)> = listed
-            .entries
-            .iter()
-            .map(|one| (one.kind, one.size))
-            .collect();
+        let kinds: Vec<(FileKind, u64)> =
+            listed.entries.iter().map(|one| (one.kind, one.size)).collect();
         assert_eq!(kinds, [(FileKind::File, 5), (FileKind::Folder, 0)]);
         assert!(done(&files(FilesOp::Read, &root), &root, None, &[]).is_err());
     }
@@ -818,13 +726,7 @@ mod tests {
         let inside = fence.join("agents.json");
         assert!(refused(&fenced, FilesOp::Read, &inside, None).is_some());
         assert!(refused(&fenced, FilesOp::Delete, &root, None).is_some());
-        assert!(refused(
-            &fenced,
-            FilesOp::Copy,
-            &root.join("mine.txt"),
-            Some(&inside)
-        )
-        .is_some());
+        assert!(refused(&fenced, FilesOp::Copy, &root.join("mine.txt"), Some(&inside)).is_some());
         assert!(refused(&fenced, FilesOp::List, &root, None).is_none());
         let mut search = files(FilesOp::Search, &root);
         search.text = Some("plan".into());
@@ -898,10 +800,7 @@ mod tests {
         assert_eq!(reach_of(&fenced, &beside), beside);
         let through = root.join("alias").join("Plan.pdf");
         assert_eq!(reach_of(&fenced, &through), through);
-        assert_eq!(
-            reach_of(&fenced, Path::new("/Plan.pdf")),
-            Path::new("/Plan.pdf")
-        );
+        assert_eq!(reach_of(&fenced, Path::new("/Plan.pdf")), Path::new("/Plan.pdf"));
     }
     #[test]
     fn a_changed_call_and_a_reading_one_are_told_apart() {

@@ -4,9 +4,8 @@ pub fn now() -> u64 {
     at(SystemTime::now())
 }
 pub fn at(time: SystemTime) -> u64 {
-    time.duration_since(UNIX_EPOCH).map_or(0, |since| {
-        u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
-    })
+    time.duration_since(UNIX_EPOCH)
+        .map_or(0, |since| u64::try_from(since.as_millis()).unwrap_or(u64::MAX))
 }
 pub fn iso(millis: u64) -> String {
     let days = millis / 86_400_000;
@@ -20,11 +19,7 @@ pub fn iso(millis: u64) -> String {
     let of_year = of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
     let shifted_month = (5 * of_year + 2) / 153;
     let day = of_year - (153 * shifted_month + 2) / 5 + 1;
-    let month = if shifted_month < 10 {
-        shifted_month + 3
-    } else {
-        shifted_month - 9
-    };
+    let month = if shifted_month < 10 { shifted_month + 3 } else { shifted_month - 9 };
     let year = year_of_era + era * 400 + u64::from(month <= 2);
     format!("{year:04}-{month:02}-{day:02}T{hours:02}:{minutes:02}:{seconds:02}.{thousandths:03}Z")
 }

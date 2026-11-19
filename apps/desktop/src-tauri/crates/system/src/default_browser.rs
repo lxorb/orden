@@ -51,62 +51,22 @@ fn registration(app: &str, exe: &str) -> Vec<Value> {
     [
         (client.clone(), "", app.to_owned()),
         (format!(r"{client}\DefaultIcon"), "", icon.clone()),
-        (
-            format!(r"{client}\shell\open\command"),
-            "",
-            format!("\"{exe}\""),
-        ),
+        (format!(r"{client}\shell\open\command"), "", format!("\"{exe}\"")),
         (capabilities.clone(), "ApplicationName", app.to_owned()),
-        (
-            capabilities.clone(),
-            "ApplicationDescription",
-            DESCRIPTION.to_owned(),
-        ),
+        (capabilities.clone(), "ApplicationDescription", DESCRIPTION.to_owned()),
         (capabilities.clone(), "ApplicationIcon", icon.clone()),
-        (
-            format!(r"{capabilities}\Startmenu"),
-            "StartMenuInternet",
-            app.to_owned(),
-        ),
-        (
-            format!(r"{capabilities}\URLAssociations"),
-            "http",
-            PROG_ID.to_owned(),
-        ),
-        (
-            format!(r"{capabilities}\URLAssociations"),
-            "https",
-            PROG_ID.to_owned(),
-        ),
+        (format!(r"{capabilities}\Startmenu"), "StartMenuInternet", app.to_owned()),
+        (format!(r"{capabilities}\URLAssociations"), "http", PROG_ID.to_owned()),
+        (format!(r"{capabilities}\URLAssociations"), "https", PROG_ID.to_owned()),
         (class.clone(), "", format!("{app} URL")),
-        (
-            format!(r"{class}\Application"),
-            "ApplicationName",
-            app.to_owned(),
-        ),
-        (
-            format!(r"{class}\Application"),
-            "ApplicationIcon",
-            icon.clone(),
-        ),
+        (format!(r"{class}\Application"), "ApplicationName", app.to_owned()),
+        (format!(r"{class}\Application"), "ApplicationIcon", icon.clone()),
         (format!(r"{class}\DefaultIcon"), "", icon),
-        (
-            format!(r"{class}\shell\open\command"),
-            "",
-            format!("\"{exe}\" {link} \"%1\""),
-        ),
-        (
-            r"Software\RegisteredApplications".to_owned(),
-            app,
-            capabilities,
-        ),
+        (format!(r"{class}\shell\open\command"), "", format!("\"{exe}\" {link} \"%1\"")),
+        (r"Software\RegisteredApplications".to_owned(), app, capabilities),
     ]
     .into_iter()
-    .map(|(key, name, data)| Value {
-        key,
-        name: name.to_owned(),
-        data,
-    })
+    .map(|(key, name, data)| Value { key, name: name.to_owned(), data })
     .collect()
 }
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
@@ -133,25 +93,14 @@ fn kept(
     system: &str,
     there: impl Fn(&std::path::Path) -> bool,
 ) -> bool {
-    let system = if system.trim().is_empty() {
-        "/usr/local/share:/usr/share"
-    } else {
-        system
-    };
+    let system = if system.trim().is_empty() { "/usr/local/share:/usr/share" } else { system };
     own.into_iter()
-        .chain(
-            system
-                .split(':')
-                .filter(|dir| !dir.is_empty())
-                .map(std::path::PathBuf::from),
-        )
+        .chain(system.split(':').filter(|dir| !dir.is_empty()).map(std::path::PathBuf::from))
         .any(|dir| there(&dir.join("applications").join(entry.trim())))
 }
 #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn is_ours(entry: &str) -> bool {
-    ENTRIES
-        .iter()
-        .any(|one| one.eq_ignore_ascii_case(entry.trim()))
+    ENTRIES.iter().any(|one| one.eq_ignore_ascii_case(entry.trim()))
 }
 #[cfg(windows)]
 mod platform {
@@ -163,9 +112,7 @@ mod platform {
     use windows_registry::{Key, CURRENT_USER};
 
     pub fn is_default(_app: &AppHandle) -> bool {
-        ["http", "https"]
-            .into_iter()
-            .all(|scheme| handler_of(scheme).as_deref() == Some(PROG_ID))
+        ["http", "https"].into_iter().all(|scheme| handler_of(scheme).as_deref() == Some(PROG_ID))
     }
     pub fn make_default(app: &AppHandle) -> Result<(), String> {
         use tauri::Manager as _;
@@ -209,9 +156,8 @@ mod platform {
             return;
         }
         let _ = root.remove_tree(&client);
-        let _ = root
-            .create(r"Software\RegisteredApplications")
-            .and_then(|key| key.remove_value(old));
+        let _ =
+            root.create(r"Software\RegisteredApplications").and_then(|key| key.remove_value(old));
     }
     pub(super) fn whole(root: &Key, name: &str) -> bool {
         let Some(exe) = registered_exe(root) else {
@@ -299,18 +245,16 @@ mod platform {
                 None,
             );
         }
-        let _ = std::thread::Builder::new()
-            .name("browser question".into())
-            .spawn(|| {
-                std::thread::sleep(Duration::from_millis(300));
-                let askers = NSRunningApplication::runningApplicationsWithBundleIdentifier(
-                    &NSString::from_str(ASKER),
-                );
-                for asker in &askers {
-                    let _ = asker
-                        .activateWithOptions(NSApplicationActivationOptions::ActivateAllWindows);
-                }
-            });
+        let _ = std::thread::Builder::new().name("browser question".into()).spawn(|| {
+            std::thread::sleep(Duration::from_millis(300));
+            let askers = NSRunningApplication::runningApplicationsWithBundleIdentifier(
+                &NSString::from_str(ASKER),
+            );
+            for asker in &askers {
+                let _ =
+                    asker.activateWithOptions(NSApplicationActivationOptions::ActivateAllWindows);
+            }
+        });
         Ok(())
     }
 }
@@ -384,17 +328,11 @@ mod tests {
     #[test]
     fn orden_takes_the_two_web_schemes_and_nothing_else() {
         let table = registration("Orden", EXE);
-        let schemes: Vec<&str> = values_under(&table, r"\URLAssociations")
-            .iter()
-            .map(|one| one.name.as_str())
-            .collect();
+        let schemes: Vec<&str> =
+            values_under(&table, r"\URLAssociations").iter().map(|one| one.name.as_str()).collect();
         assert_eq!(schemes, ["http", "https"]);
-        assert!(values_under(&table, r"\URLAssociations")
-            .iter()
-            .all(|one| one.data == PROG_ID));
-        assert!(table
-            .iter()
-            .all(|one| !one.key.contains("FileAssociations")));
+        assert!(values_under(&table, r"\URLAssociations").iter().all(|one| one.data == PROG_ID));
+        assert!(table.iter().all(|one| !one.key.contains("FileAssociations")));
         assert!(table.iter().all(|one| !one.key.contains(".htm")));
     }
     #[test]
@@ -415,18 +353,12 @@ mod tests {
             .find(|one| one.key == r"Software\RegisteredApplications")
             .expect("an entry in RegisteredApplications");
         assert_eq!(listed.name, "Orden");
-        assert_eq!(
-            listed.data,
-            r"Software\Clients\StartMenuInternet\Orden\Capabilities"
-        );
+        assert_eq!(listed.data, r"Software\Clients\StartMenuInternet\Orden\Capabilities");
         assert!(table.iter().any(|one| one.key == listed.data));
     }
     #[test]
     fn a_command_names_its_program_at_the_front() {
-        assert_eq!(
-            exe_of(r#""C:\a b\nib.exe" --url "%1""#).as_deref(),
-            Some(r"C:\a b\nib.exe")
-        );
+        assert_eq!(exe_of(r#""C:\a b\nib.exe" --url "%1""#).as_deref(), Some(r"C:\a b\nib.exe"));
         assert_eq!(exe_of(r"C:\nib.exe %1"), None);
         assert_eq!(exe_of(r#""" --url"#), None);
         assert_eq!(exe_of(r#""C:\nib.exe"#), None);
@@ -458,17 +390,9 @@ mod tests {
         let there = |path: &Path| on_disk.iter().any(|one| Path::new(one) == path);
         let own = || Some(PathBuf::from("/home/a/.local/share"));
         assert!(kept("nib-handler.desktop\n", own(), "/usr/share", there));
-        assert!(
-            kept("Orden.desktop", own(), "", there),
-            "the default folders"
-        );
+        assert!(kept("Orden.desktop", own(), "", there), "the default folders");
         assert!(kept("Orden.desktop", None, "/opt/x:/usr/share", there));
-        assert!(!kept(
-            "nibeditor.desktop",
-            own(),
-            "/usr/local/share:/usr/share",
-            there
-        ));
+        assert!(!kept("nibeditor.desktop", own(), "/usr/local/share:/usr/share", there));
         assert!(!kept("Orden.desktop", own(), "/opt/x", there));
     }
     #[test]
@@ -480,9 +404,7 @@ mod tests {
         assert_eq!(linux["deb"]["conflicts"], both);
         assert_eq!(linux["deb"]["replaces"], both);
         assert_eq!(linux["rpm"]["obsoletes"], both);
-        let template = linux["deb"]["desktopTemplate"]
-            .as_str()
-            .expect("a template");
+        let template = linux["deb"]["desktopTemplate"].as_str().expect("a template");
         assert_eq!(linux["rpm"]["desktopTemplate"].as_str(), Some(template));
         let entry = source(template);
         assert!(entry.lines().any(|line| line == "Keywords=nib;nibeditor;"));
@@ -494,27 +416,21 @@ mod tests {
     }
     fn source(relative: &str) -> String {
         std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../..")
-                .join(relative),
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").join(relative),
         )
         .expect("a file beside the crate")
     }
     #[test]
     fn the_installer_writes_what_the_app_writes() {
         let script = source("installer.nsh");
-        let lines = in_words(
-            r"${PRODUCTNAME}",
-            r"$INSTDIR\${MAINBINARYNAME}.exe",
-            |one| {
-                let data = if one.data.contains('"') {
-                    format!("'{}'", one.data)
-                } else {
-                    format!("\"{}\"", one.data)
-                };
-                format!("WriteRegStr SHCTX \"{}\" \"{}\" {data}", one.key, one.name)
-            },
-        );
+        let lines = in_words(r"${PRODUCTNAME}", r"$INSTDIR\${MAINBINARYNAME}.exe", |one| {
+            let data = if one.data.contains('"') {
+                format!("'{}'", one.data)
+            } else {
+                format!("\"{}\"", one.data)
+            };
+            format!("WriteRegStr SHCTX \"{}\" \"{}\" {data}", one.key, one.name)
+        });
         for line in lines {
             assert!(script.contains(&line), "installer.nsh does not say: {line}");
         }
@@ -522,27 +438,19 @@ mod tests {
     #[test]
     fn and_its_uninstaller_takes_all_of_it_away() {
         let script = source("installer.nsh");
-        let uninstall = script
-            .split("!macro NSIS_HOOK_POSTUNINSTALL")
-            .nth(1)
-            .expect("an uninstall hook");
+        let uninstall =
+            script.split("!macro NSIS_HOOK_POSTUNINSTALL").nth(1).expect("an uninstall hook");
         for line in [
             r#"DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${PRODUCTNAME}""#,
             &format!(r#"DeleteRegKey SHCTX "Software\Classes\{PROG_ID}""#),
             r#"DeleteRegValue SHCTX "Software\RegisteredApplications" "${PRODUCTNAME}""#,
         ] {
-            assert!(
-                uninstall.contains(line),
-                "the uninstaller does not say: {line}"
-            );
+            assert!(uninstall.contains(line), "the uninstaller does not say: {line}");
         }
     }
     fn product_name(config: &str) -> String {
         let parsed: serde_json::Value = serde_json::from_str(config).expect("the config");
-        parsed["productName"]
-            .as_str()
-            .expect("a product name")
-            .to_owned()
+        parsed["productName"].as_str().expect("a product name").to_owned()
     }
     #[test]
     fn the_msi_writes_what_the_app_writes() {
@@ -550,11 +458,8 @@ mod tests {
         let config = source("tauri.conf.json");
         let product = product_name(&config);
         let lines = in_words(&product, "[!Path]", |one| {
-            let name = if one.name.is_empty() {
-                String::new()
-            } else {
-                format!(" Name=\"{}\"", one.name)
-            };
+            let name =
+                if one.name.is_empty() { String::new() } else { format!(" Name=\"{}\"", one.name) };
             format!(
                 "<RegistryValue Root=\"HKCU\" Key=\"{}\"{name} Type=\"string\" Value=\"{}\"",
                 one.key,
@@ -573,15 +478,9 @@ mod tests {
         let script = source("installer.nsh");
         for (at, old) in OLD_NAMES.iter().enumerate() {
             let define = format!(r#"!define ORDEN_OLD_NAME_{} "{old}""#, at + 1);
-            assert!(
-                script.contains(&define),
-                "installer.nsh does not say: {define}"
-            );
+            assert!(script.contains(&define), "installer.nsh does not say: {define}");
         }
-        assert!(
-            !script.contains("ORDEN_OLD_NAME_3"),
-            "a third old name the app does not know"
-        );
+        assert!(!script.contains("ORDEN_OLD_NAME_3"), "a third old name the app does not know");
         let product = product_name(&source("tauri.conf.json"));
         assert!(script.contains(&format!(r#"!define ORDEN_NAME "{product}""#)));
         for line in [
@@ -598,26 +497,17 @@ mod tests {
         ] {
             assert!(script.contains(line), "installer.nsh does not say: {line}");
         }
-        let (install, uninstall) = script
-            .split_once("!macro NSIS_HOOK_POSTUNINSTALL")
-            .expect("an uninstall hook");
-        let install = install
-            .split_once("!macro NSIS_HOOK_POSTINSTALL")
-            .expect("an install hook")
-            .1;
+        let (install, uninstall) =
+            script.split_once("!macro NSIS_HOOK_POSTUNINSTALL").expect("an uninstall hook");
+        let install =
+            install.split_once("!macro NSIS_HOOK_POSTINSTALL").expect("an install hook").1;
         for at in 1..=OLD_NAMES.len() {
             let forgotten =
                 format!(r#"!insertmacro ORDEN_FORGET_OLD_NAME "${{ORDEN_OLD_NAME_{at}}}""#);
-            assert!(
-                install.contains(&forgotten),
-                "the install does not say: {forgotten}"
-            );
+            assert!(install.contains(&forgotten), "the install does not say: {forgotten}");
             let browser =
                 format!(r#"!insertmacro ORDEN_FORGET_OLD_BROWSER "${{ORDEN_OLD_NAME_{at}}}""#);
-            assert!(
-                uninstall.contains(&browser),
-                "the uninstall does not say: {browser}"
-            );
+            assert!(uninstall.contains(&browser), "the uninstall does not say: {browser}");
         }
     }
     #[test]
@@ -630,22 +520,14 @@ mod tests {
         let mut last = 0;
         for old in OLD_NAMES {
             let key = format!(r#"Key="Software\{publisher}\{old}""#);
-            assert_eq!(
-                fragment.matches(&key).count(),
-                2,
-                "browser.wxs does not say: {key}"
-            );
+            assert_eq!(fragment.matches(&key).count(), 2, "browser.wxs does not say: {key}");
             let at = fragment.find(&key).expect("searched");
             assert!(at > last, "{old} is searched before an older name");
             last = at;
-            for shortcut in [
-                format!(r#"Name="{old}.lnk""#),
-                format!(r#"Name="Uninstall {old}.lnk""#),
-            ] {
-                assert!(
-                    fragment.contains(&shortcut),
-                    "browser.wxs does not remove {shortcut}"
-                );
+            for shortcut in
+                [format!(r#"Name="{old}.lnk""#), format!(r#"Name="Uninstall {old}.lnk""#)]
+            {
+                assert!(fragment.contains(&shortcut), "browser.wxs does not remove {shortcut}");
             }
         }
         assert!(fragment.contains(r#"<SetProperty Id="INSTALLDIR""#));
@@ -753,9 +635,8 @@ mod tests {
         let scheme = format!("orden-test-{}", std::process::id());
         let scratch = Scratch(scheme.clone());
         assert_eq!(handler_of(&scheme), None, "a scheme nothing registered");
-        let key = CURRENT_USER
-            .create(format!(r"Software\Classes\{scheme}"))
-            .expect("a test scheme");
+        let key =
+            CURRENT_USER.create(format!(r"Software\Classes\{scheme}")).expect("a test scheme");
         key.set_string("URL Protocol", "").expect("a protocol");
         key.create(r"shell\open\command")
             .and_then(|command| command.set_string("", r#""C:\nowhere\nib.exe" "%1""#))

@@ -67,11 +67,7 @@ impl WebPage for FakePage {
         Ok(())
     }
     fn capture(&self) -> Outcome<Picture> {
-        Ok(Picture {
-            width: 1,
-            height: 1,
-            png: Vec::new(),
-        })
+        Ok(Picture { width: 1, height: 1, png: Vec::new() })
     }
     fn close(&self) -> Outcome<()> {
         Ok(())
@@ -116,16 +112,11 @@ impl WebEngine for Fake {
         embed_allowed(&embed, &NoExtensions)?;
         let outbox = Arc::new(Mutex::new(Outbox::default()));
         let address = Arc::new(Mutex::new(embed.url.to_string()));
-        self.pages.lock().expect("pages").insert(
-            embed.label.clone(),
-            (Arc::clone(&outbox), Arc::clone(&address)),
-        );
-        Ok(Box::new(FakePage {
-            label: embed.label,
-            sent: Arc::clone(&self.sent),
-            outbox,
-            address,
-        }))
+        self.pages
+            .lock()
+            .expect("pages")
+            .insert(embed.label.clone(), (Arc::clone(&outbox), Arc::clone(&address)));
+        Ok(Box::new(FakePage { label: embed.label, sent: Arc::clone(&self.sent), outbox, address }))
     }
     fn page(&self, label: &str) -> Option<Box<dyn WebPage>> {
         let pages = self.pages.lock().expect("pages");
@@ -141,10 +132,7 @@ impl WebEngine for Fake {
         Ok(Vec::new())
     }
     fn clear(&self, store: Option<&StoreName>) -> Outcome<()> {
-        self.cleared
-            .lock()
-            .expect("cleared")
-            .push(store.map(|one| one.as_str().to_owned()));
+        self.cleared.lock().expect("cleared").push(store.map(|one| one.as_str().to_owned()));
         Ok(())
     }
     fn downloads(&self) -> Outcome<Vec<Download>> {
@@ -171,12 +159,8 @@ fn a_store_s_profile_is_a_direct_child_of_the_root_and_never_the_interface_s() {
     assert_eq!(profiles.root(), Path::new("/config").join(ROOT));
     assert_eq!(profiles.app(), profiles.root().join(APP_PROFILE));
     assert_eq!(profiles.of(None), profiles.root());
-    let space = StoreName::parse(Some("space_0-k3j9x2"))
-        .expect("a name")
-        .expect("named");
-    let site = StoreName::parse(Some("site_0-k3j9x2_ethz.ch"))
-        .expect("a name")
-        .expect("named");
+    let space = StoreName::parse(Some("space_0-k3j9x2")).expect("a name").expect("named");
+    let site = StoreName::parse(Some("site_0-k3j9x2_ethz.ch")).expect("a name").expect("named");
     let of_space = profiles.of(Some(&space));
     assert_eq!(of_space.parent(), Some(profiles.root()));
     assert_ne!(of_space, profiles.app());
@@ -192,18 +176,8 @@ fn a_store_s_profile_is_a_direct_child_of_the_root_and_never_the_interface_s() {
 fn a_store_name_is_one_plain_folder_with_a_known_prefix() {
     assert_eq!(StoreName::parse(None).expect("none"), None);
     assert_eq!(StoreName::parse(Some("")).expect("none"), None);
-    for good in [
-        "note_3f9a0c17e2b4d685",
-        "space_0-k3j9x2",
-        "site_7-a_xn--mnchen-3ya.de",
-    ] {
-        assert_eq!(
-            StoreName::parse(Some(good))
-                .expect("a name")
-                .expect("named")
-                .as_str(),
-            good
-        );
+    for good in ["note_3f9a0c17e2b4d685", "space_0-k3j9x2", "site_7-a_xn--mnchen-3ya.de"] {
+        assert_eq!(StoreName::parse(Some(good)).expect("a name").expect("named").as_str(), good);
     }
     for bad in [
         "..",
@@ -233,13 +207,9 @@ fn a_store_name_is_one_plain_folder_with_a_known_prefix() {
 }
 #[test]
 fn the_app_s_own_hosts_are_no_web_page() {
-    for host in [
-        "tauri.localhost",
-        "ipc.localhost",
-        "asset.localhost",
-        "nib.localhost",
-        "TAURI.localhost.",
-    ] {
+    for host in
+        ["tauri.localhost", "ipc.localhost", "asset.localhost", "nib.localhost", "TAURI.localhost."]
+    {
         assert!(app_host(host), "{host}");
     }
     assert!(!app_host("localhost"));
@@ -261,18 +231,9 @@ fn the_app_s_own_hosts_are_no_web_page() {
 #[test]
 fn an_extension_s_own_pages_open_as_tabs_and_frames_take_what_a_page_embeds() {
     let known = |one: &Url| one.scheme() == "chrome-extension" && one.host_str() == Some("abc");
-    assert!(tab_may_open(
-        &url("chrome-extension://abc/popup.html"),
-        &known
-    ));
-    assert!(!tab_may_open(
-        &url("chrome-extension://xyz/popup.html"),
-        &known
-    ));
-    assert!(!tab_may_open(
-        &url("chrome-extension://abc/popup.html"),
-        &NoExtensions
-    ));
+    assert!(tab_may_open(&url("chrome-extension://abc/popup.html"), &known));
+    assert!(!tab_may_open(&url("chrome-extension://xyz/popup.html"), &known));
+    assert!(!tab_may_open(&url("chrome-extension://abc/popup.html"), &NoExtensions));
     for (page, opens) in [
         ("about:blank", true),
         ("about:srcdoc", true),
@@ -290,27 +251,18 @@ fn an_extension_s_own_pages_open_as_tabs_and_frames_take_what_a_page_embeds() {
 #[test]
 fn a_new_window_becomes_a_tab_a_window_or_nothing() {
     let site = url("https://example.com/page");
-    assert_eq!(
-        becomes(&site, false, &NoExtensions),
-        Becomes::Tab(site.to_string())
-    );
+    assert_eq!(becomes(&site, false, &NoExtensions), Becomes::Tab(site.to_string()));
     assert_eq!(becomes(&site, true, &NoExtensions), Becomes::Window);
     assert_eq!(
         becomes(&url("https://accounts.example.com/x"), false, &NoExtensions),
         Becomes::Window
     );
-    assert_eq!(
-        becomes(&url("about:blank"), false, &NoExtensions),
-        Becomes::Window
-    );
+    assert_eq!(becomes(&url("about:blank"), false, &NoExtensions), Becomes::Window);
     let app = url("http://ipc.localhost/x");
     assert_eq!(becomes(&app, false, &NoExtensions), Becomes::Nothing);
     let known = |one: &Url| one.scheme() == "chrome-extension";
     let popup = url("chrome-extension://abc/popup.html");
-    assert_eq!(
-        becomes(&popup, true, &known),
-        Becomes::Tab(popup.to_string())
-    );
+    assert_eq!(becomes(&popup, true, &known), Becomes::Tab(popup.to_string()));
 }
 #[test]
 fn a_sign_in_page_is_known_by_its_host_or_its_path() {
@@ -352,18 +304,12 @@ fn the_command_line_reads_pairs_and_bare_keys() {
             ("v".to_owned(), Some("1".to_owned())),
         ]
     );
-    assert_eq!(
-        switches("--noerrdialogs"),
-        vec![("--noerrdialogs".to_owned(), None)]
-    );
+    assert_eq!(switches("--noerrdialogs"), vec![("--noerrdialogs".to_owned(), None)]);
     assert!(switches("").is_empty());
 }
 #[test]
 fn the_extension_folders_join_what_a_run_loads() {
-    let ours = [
-        PathBuf::from("/c/extensions/a/1"),
-        PathBuf::from("/c/extensions/b/2"),
-    ];
+    let ours = [PathBuf::from("/c/extensions/a/1"), PathBuf::from("/c/extensions/b/2")];
     let mut asked = switches("load-extension=/run/x,v=1");
     assert!(with_extensions(&mut asked, &ours));
     assert_eq!(
@@ -377,13 +323,7 @@ fn the_extension_folders_join_what_a_run_loads() {
     assert!(!with_extensions(&mut none, &[] as &[PathBuf]));
     assert_eq!(none.len(), 1);
     assert!(with_extensions(&mut none, &ours[..1]));
-    assert_eq!(
-        none[1],
-        (
-            "load-extension".to_owned(),
-            Some("/c/extensions/a/1".to_owned())
-        )
-    );
+    assert_eq!(none[1], ("load-extension".to_owned(), Some("/c/extensions/a/1".to_owned())));
 }
 #[test]
 fn the_settings_switch_the_engine_s_swipe_off_on_every_desktop() {
@@ -391,18 +331,13 @@ fn the_settings_switch_the_engine_s_swipe_off_on_every_desktop() {
     let (feature, switch, value) = ENGINE_SWIPE;
     assert_eq!(feature, "TouchpadOverscrollHistoryNavigation");
     assert!(settings.disabled_features.contains(&feature.to_owned()));
-    assert!(settings
-        .switches
-        .contains(&(switch.to_owned(), Some(value.to_owned()))));
+    assert!(settings.switches.contains(&(switch.to_owned(), Some(value.to_owned()))));
     assert_eq!(settings.sandbox, SandboxPolicy::Auto);
     assert_eq!(settings.remote_debugging, None);
     assert_eq!(settings.deep_link_schemes, ["orden", "nib"]);
     let bars = overlay_scrollbars();
     assert_eq!(bars.is_some(), cfg!(any(target_os = "linux", windows)));
-    assert_eq!(
-        settings.enabled_features,
-        bars.map(str::to_owned).into_iter().collect::<Vec<_>>()
-    );
+    assert_eq!(settings.enabled_features, bars.map(str::to_owned).into_iter().collect::<Vec<_>>());
     let more = settings.clone().disabling(feature).enabling("Probe");
     assert_eq!(more.disabled_features.len(), 1);
     assert!(more.enabled_features.contains(&"Probe".to_owned()));
@@ -428,37 +363,25 @@ fn a_build_that_ships_reads_nothing_from_its_environment() {
 #[test]
 fn an_engine_refuses_an_address_of_the_app_s_own_and_opens_the_web() {
     let engine = Fake::default();
-    let refused = engine
-        .embed(embed_of("web-1", "http://ipc.localhost/x"))
-        .err()
-        .expect("refused");
+    let refused = engine.embed(embed_of("web-1", "http://ipc.localhost/x")).err().expect("refused");
     assert_eq!(refused.kind, FailureKind::Refused);
     assert_eq!(refused.module, "web-engine");
     assert!(engine.page("web-1").is_none());
-    let unnamed = engine
-        .embed(embed_of("", "https://example.com/"))
-        .err()
-        .expect("refused");
+    let unnamed = engine.embed(embed_of("", "https://example.com/")).err().expect("refused");
     assert_eq!(unnamed.kind, FailureKind::Invalid);
-    let page = engine
-        .embed(embed_of("web-2", "https://example.com/"))
-        .expect("opened");
+    let page = engine.embed(embed_of("web-2", "https://example.com/")).expect("opened");
     assert_eq!(page.label(), "web-2");
     assert!(engine.page("web-2").is_some());
     assert!(engine.embed(embed_of("web-3", "about:blank")).is_ok());
-    let gone = page
-        .navigate(&Url::parse("file:///etc/passwd").expect("a url"))
-        .expect_err("refused");
+    let gone =
+        page.navigate(&Url::parse("file:///etc/passwd").expect("a url")).expect_err("refused");
     assert_eq!(gone.kind, FailureKind::Refused);
-    page.navigate(&Url::parse("https://example.org/").expect("a url"))
-        .expect("navigated");
+    page.navigate(&Url::parse("https://example.org/").expect("a url")).expect("navigated");
 }
 #[test]
 fn messages_to_a_page_arrive_once_it_is_ready_in_the_order_they_were_sent() {
     let engine = Fake::default();
-    let page = engine
-        .embed(embed_of("web-1", "https://example.com/"))
-        .expect("opened");
+    let page = engine.embed(embed_of("web-1", "https://example.com/")).expect("opened");
     page.send("one").expect("sent");
     page.send("two").expect("sent");
     assert!(engine.sent.lock().expect("sent").is_empty());
@@ -466,10 +389,7 @@ fn messages_to_a_page_arrive_once_it_is_ready_in_the_order_they_were_sent() {
     assert_eq!(flushed, vec![(1, "one".to_owned()), (2, "two".to_owned())]);
     assert_eq!(page.send("three").expect("sent"), 3);
     let sent = engine.sent.lock().expect("sent").clone();
-    assert_eq!(
-        sent.iter().map(|(id, _)| *id).collect::<Vec<_>>(),
-        vec![1, 2, 3]
-    );
+    assert_eq!(sent.iter().map(|(id, _)| *id).collect::<Vec<_>>(), vec![1, 2, 3]);
     assert_eq!(sent[2].1, "three");
 }
 #[test]
@@ -482,27 +402,16 @@ fn an_outbox_keeps_its_order_across_a_page_that_went_away() {
     assert_eq!(outbox.send("b"), Sending { id: 2, now: None });
     assert_eq!(outbox.ready(), vec![(2, "b")]);
     assert!(outbox.is_ready());
-    assert_eq!(
-        outbox.send("c"),
-        Sending {
-            id: 3,
-            now: Some("c")
-        }
-    );
+    assert_eq!(outbox.send("c"), Sending { id: 3, now: Some("c") });
     assert_eq!(outbox.waiting(), 0);
 }
 #[test]
 fn a_store_is_cleared_by_name_and_the_shared_one_by_none() {
     let engine = Fake::default();
-    let space = StoreName::parse(Some("space_1"))
-        .expect("a name")
-        .expect("named");
+    let space = StoreName::parse(Some("space_1")).expect("a name").expect("named");
     engine.clear(Some(&space)).expect("cleared");
     engine.clear(None).expect("cleared");
-    assert_eq!(
-        *engine.cleared.lock().expect("cleared"),
-        vec![Some("space_1".to_owned()), None]
-    );
+    assert_eq!(*engine.cleared.lock().expect("cleared"), vec![Some("space_1".to_owned()), None]);
     assert_eq!(
         engine.profiles().of(Some(&space)),
         Path::new("/config").join(ROOT).join("store-space_1")
@@ -560,10 +469,7 @@ fn a_page_handed_later_is_used_where_it_is_handed() {
     assert!(heard.try_recv().is_err(), "nothing ran yet");
     let later = kept.lock().expect("kept").take().expect("posted");
     later(2);
-    assert_eq!(
-        heard.try_recv().expect("handed"),
-        (2, std::thread::current().id())
-    );
+    assert_eq!(heard.try_recv().expect("handed"), (2, std::thread::current().id()));
 }
 #[test]
 fn a_page_asked_for_while_another_is_built_waits_for_it_and_never_builds_inside_it() {
@@ -616,9 +522,8 @@ fn the_edges_are_the_ewmh_s_and_a_missing_edge_is_a_move() {
 fn a_plain_window_system_leaves_moves_to_the_platform_and_refuses_nothing_else() {
     let system = Plain;
     assert_eq!(system.name(), "plain");
-    let refused = system
-        .move_resize(NativeWindow(1), Edge::Move, None)
-        .expect_err("left to the platform");
+    let refused =
+        system.move_resize(NativeWindow(1), Edge::Move, None).expect_err("left to the platform");
     assert_eq!(refused.kind, FailureKind::Unsupported);
     assert_eq!(refused.module, "web-engine");
     assert!(system.frame(NativeWindow(1), 2.0).is_ok());
@@ -631,12 +536,7 @@ fn a_plain_window_system_leaves_moves_to_the_platform_and_refuses_nothing_else()
 fn a_site_s_address_is_http_or_https_with_a_host() {
     assert!(orden_web_engine::from_a_site(&url("https://example.com/")));
     assert!(orden_web_engine::from_a_site(&url("http://[::1]:8/")));
-    for not in [
-        "file:///etc/passwd",
-        "about:blank",
-        "blob:https://a.example/x",
-        "data:,x",
-    ] {
+    for not in ["file:///etc/passwd", "about:blank", "blob:https://a.example/x", "data:,x"] {
         assert!(!orden_web_engine::from_a_site(&url(not)), "{not}");
     }
 }

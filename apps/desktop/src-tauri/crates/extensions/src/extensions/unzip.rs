@@ -42,11 +42,7 @@ pub fn unzip(zip: &[u8], into: &Path) -> Result<(), String> {
     Ok(())
 }
 fn place(name: &str) -> Result<Option<PathBuf>, String> {
-    let refused = || {
-        Err(format!(
-            "that extension has a file Orden will not write: {name}"
-        ))
-    };
+    let refused = || Err(format!("that extension has a file Orden will not write: {name}"));
     if name.is_empty()
         || name.starts_with('/')
         || name.contains('\\')
@@ -145,14 +141,10 @@ fn entries(zip: &[u8]) -> Result<Vec<Entry<'_>>, String> {
     Ok(entries)
 }
 fn u16_at(bytes: &[u8], at: usize) -> u16 {
-    bytes
-        .get(at..at + 2)
-        .map_or(0, |two| u16::from_le_bytes([two[0], two[1]]))
+    bytes.get(at..at + 2).map_or(0, |two| u16::from_le_bytes([two[0], two[1]]))
 }
 fn u32_at(bytes: &[u8], at: usize) -> u32 {
-    bytes.get(at..at + 4).map_or(0, |four| {
-        u32::from_le_bytes([four[0], four[1], four[2], four[3]])
-    })
+    bytes.get(at..at + 4).map_or(0, |four| u32::from_le_bytes([four[0], four[1], four[2], four[3]]))
 }
 #[cfg(test)]
 pub(super) mod tests {

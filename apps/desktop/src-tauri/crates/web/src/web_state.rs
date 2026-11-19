@@ -26,17 +26,10 @@ pub async fn web_merge(
         .into_iter()
         .filter(|one| one.starts_with("https://") || one.starts_with("http://"))
         .collect();
-    let used = crate::engine::root(webview.app_handle())
-        .ok()
-        .map(|global| {
-            let store = global
-                .parent()
-                .map(|config| config.join(crate::web_stores::STORES).join(from));
-            (
-                store.as_deref().and_then(merge::last_used),
-                merge::last_used(&global),
-            )
-        });
+    let used = crate::engine::root(webview.app_handle()).ok().map(|global| {
+        let store = global.parent().map(|config| config.join(crate::web_stores::STORES).join(from));
+        (store.as_deref().and_then(merge::last_used), merge::last_used(&global))
+    });
     let from_used_last = match used {
         Some((Some(store), Some(global))) => store >= global,
         _ => true,
@@ -59,10 +52,9 @@ pub async fn web_copy(
     merge::merge(&webview, from, Some(into), &origins, true).await
 }
 fn copy_stores<'a>(from: &'a str, into: &'a str) -> Result<(&'a str, &'a str), String> {
-    let (Some(from), Some(into)) = (
-        crate::web_stores::named(Some(from))?,
-        crate::web_stores::named(Some(into))?,
-    ) else {
+    let (Some(from), Some(into)) =
+        (crate::web_stores::named(Some(from))?, crate::web_stores::named(Some(into))?)
+    else {
         return Err("a copy is from one note's store into another's".to_owned());
     };
     if !into.starts_with("note_") || from == into {
@@ -80,18 +72,9 @@ mod tests {
             copy_stores("note_0123456789abcdef", "note_fedcba9876543210"),
             Ok(("note_0123456789abcdef", "note_fedcba9876543210"))
         );
-        assert!(
-            copy_stores("", "note_fedcba9876543210").is_err(),
-            "not the shared store"
-        );
-        assert!(
-            copy_stores("note_0123456789abcdef", "").is_err(),
-            "not into the shared store"
-        );
-        assert!(
-            copy_stores("note_0123456789abcdef", "space_w").is_err(),
-            "only into a note's own"
-        );
+        assert!(copy_stores("", "note_fedcba9876543210").is_err(), "not the shared store");
+        assert!(copy_stores("note_0123456789abcdef", "").is_err(), "not into the shared store");
+        assert!(copy_stores("note_0123456789abcdef", "space_w").is_err(), "only into a note's own");
         assert!(copy_stores("note_0123456789abcdef", "note_0123456789abcdef").is_err());
         assert!(copy_stores("note_0123456789abcdef", "note_../x").is_err());
     }

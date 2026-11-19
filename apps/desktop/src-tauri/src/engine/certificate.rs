@@ -7,9 +7,7 @@ use orden_web::web_certificate::Served;
 
 const WRONG: u32 = 1 | 2 | 4 | 64 | 128 | 256 | 1024 | 2048 | 8192 | 16384 | 32768 | 1_048_576;
 pub(crate) fn served(platform: &tauri::webview::PlatformWebview) -> Option<Served> {
-    platform
-        .downcast_ref::<tauri_runtime_cef::Webview>()
-        .and_then(|page| of(&page.browser()))
+    platform.downcast_ref::<tauri_runtime_cef::Webview>().and_then(|page| of(&page.browser()))
 }
 fn of(browser: &cef::Browser) -> Option<Served> {
     let status = browser.host()?.visible_navigation_entry()?.sslstatus()?;

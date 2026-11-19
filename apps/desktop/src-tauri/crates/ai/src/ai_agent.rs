@@ -93,19 +93,11 @@ fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
 pub fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {
     let grant = grant_for(app, builtin)?.id;
     let mut all = lent_now();
-    if let Some(one) = all
-        .iter()
-        .find(|one| one.grant == grant && one.mode == mode)
-    {
+    if let Some(one) = all.iter().find(|one| one.grant == grant && one.mode == mode) {
         return Ok(one.token.clone());
     }
     let token = fresh_token()?;
-    all.push(Lent {
-        grant,
-        mode,
-        hash: hashed(&token),
-        token: token.clone(),
-    });
+    all.push(Lent { grant, mode, hash: hashed(&token), token: token.clone() });
     Ok(token)
 }
 pub fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
@@ -120,10 +112,7 @@ pub fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
         }
         found?
     };
-    state(app)
-        .grants
-        .by_id(app, &grant)
-        .map(|grant| supervised(grant, mode))
+    state(app).grants.by_id(app, &grant).map(|grant| supervised(grant, mode))
 }
 pub fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
@@ -255,18 +244,11 @@ mod tests {
     #[test]
     fn a_call_says_the_thread_it_runs_for() {
         let args = json!({ "path": "a.md" });
-        assert_eq!(
-            asked_for("edit_note", &args, Some("thread-1"))["thread"],
-            "thread-1"
-        );
+        assert_eq!(asked_for("edit_note", &args, Some("thread-1"))["thread"], "thread-1");
         assert!(asked_for("edit_note", &args, None).get("thread").is_none());
     }
     fn builtin(reader_tabs: bool) -> Builtin {
-        Builtin {
-            id: "anthropic".into(),
-            name: "Claude".into(),
-            reader_tabs,
-        }
+        Builtin { id: "anthropic".into(), name: "Claude".into(), reader_tabs }
     }
     fn grant() -> Grant {
         made("orden-anthropic".into(), "Orden Claude", &builtin(true))
@@ -337,10 +319,7 @@ mod tests {
         }
         for scope in Scope::ALL {
             assert!(agent.holds(scope), "{scope:?}");
-            assert!(
-                agent.scopes.contains(&scope),
-                "{scope:?} is held and not told"
-            );
+            assert!(agent.scopes.contains(&scope), "{scope:?} is held and not told");
         }
     }
     #[test]
@@ -362,11 +341,7 @@ mod tests {
         assert_eq!(auto, stored);
         assert_eq!(auto.mode, GrantMode::Unsupervised);
         for category in ASKED {
-            assert_eq!(
-                auto.asks(category),
-                category != Category::Deleting,
-                "{category:?}"
-            );
+            assert_eq!(auto.asks(category), category != Category::Deleting, "{category:?}");
         }
     }
     #[test]
@@ -382,10 +357,7 @@ mod tests {
         assert!(count(Mode::Approve) >= count(Mode::Auto));
         assert!(count(Mode::Auto) > count(Mode::Full));
         assert_eq!(count(Mode::Full), 0);
-        assert_eq!(
-            supervised(stored.clone(), Mode::Approve).mode,
-            GrantMode::Confirm
-        );
+        assert_eq!(supervised(stored.clone(), Mode::Approve).mode, GrantMode::Confirm);
     }
     #[test]
     fn a_mode_is_laid_over_a_call_as_the_grant_says() {
@@ -401,14 +373,8 @@ mod tests {
     #[test]
     fn a_provider_id_that_is_not_one_makes_no_grant() {
         assert_eq!(grant_id("anthropic").as_deref(), Ok("orden-anthropic"));
-        assert_eq!(
-            grant_id("compatible-2").as_deref(),
-            Ok("orden-compatible-2")
-        );
-        assert_eq!(
-            grant_id_from(BUILT_IN_BEFORE, "anthropic").as_deref(),
-            Ok("nib-anthropic")
-        );
+        assert_eq!(grant_id("compatible-2").as_deref(), Ok("orden-compatible-2"));
+        assert_eq!(grant_id_from(BUILT_IN_BEFORE, "anthropic").as_deref(), Ok("nib-anthropic"));
         for bad in ["", "a b", "../x", &"x".repeat(49)] {
             assert!(grant_id(bad).is_err(), "{bad:?}");
         }
@@ -417,16 +383,7 @@ mod tests {
     fn modes_read_as_the_window_names_them() {
         let read: Vec<Mode> =
             serde_json::from_str(r#"["approve","auto","full","plan","agent"]"#).expect("modes");
-        assert_eq!(
-            read,
-            [
-                Mode::Approve,
-                Mode::Auto,
-                Mode::Full,
-                Mode::Plan,
-                Mode::Full
-            ]
-        );
+        assert_eq!(read, [Mode::Approve, Mode::Auto, Mode::Full, Mode::Plan, Mode::Full]);
         assert!(serde_json::from_str::<Mode>(r#""ask""#).is_err());
     }
 }

@@ -46,9 +46,8 @@ pub async fn pass_stretch(
     #[cfg(mobile)]
     let _ = webview;
     let secret = Zeroizing::new(secret);
-    let salt = STANDARD
-        .decode(salt.as_bytes())
-        .map_err(|_| "the salt is not base64".to_string())?;
+    let salt =
+        STANDARD.decode(salt.as_bytes()).map_err(|_| "the salt is not base64".to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
         let key = secret_stretched(secret.as_bytes(), &salt, m, t, p)?;
         Ok(STANDARD.encode(key.as_ref()))

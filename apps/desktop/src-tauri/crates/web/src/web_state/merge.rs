@@ -40,12 +40,9 @@ fn identity(cookie: &Cookie) -> (String, String, String, Option<(String, bool)>)
         cookie.name.clone(),
         cookie.domain.to_ascii_lowercase(),
         cookie.path.clone(),
-        cookie.partition.as_ref().map(
-            |Partition {
-                 top_level_site,
-                 cross_site_ancestor,
-             }| { (top_level_site.clone(), *cross_site_ancestor) },
-        ),
+        cookie.partition.as_ref().map(|Partition { top_level_site, cross_site_ancestor }| {
+            (top_level_site.clone(), *cross_site_ancestor)
+        }),
     )
 }
 pub fn chosen(
@@ -118,11 +115,7 @@ pub async fn merge(
     let (taken, kept) = chosen(&theirs, &ours, from_used_last, now());
     let writing: Vec<&Cookie> = taken.iter().collect();
     cookies::put(global.view(), &writing).await?;
-    let mut merged = Merged {
-        cookies: taken.len(),
-        kept,
-        ..Merged::default()
-    };
+    let mut merged = Merged { cookies: taken.len(), kept, ..Merged::default() };
     for origin in origins {
         match copied(&mut old, &mut global, origin, into.is_some()).await {
             Ok(true) => merged.origins += 1,
@@ -145,10 +138,7 @@ async fn copied(
     global.visit(origin).await?;
     let there: Listed = parsed(&isolated::run(global.view(), DUMP, &list).await?)?;
     if there.origin != origin {
-        return Err(format!(
-            "the page was on {} rather than {origin}",
-            there.origin
-        ));
+        return Err(format!("the page was on {} rather than {origin}", there.origin));
     }
     let has =
         there.local.as_ref().is_some_and(|items| !items.is_empty()) || !there.databases.is_empty();
@@ -164,12 +154,9 @@ async fn copied(
     let mut databases = Vec::new();
     for listing in &here.databases {
         let args = serde_json::json!({ "name": listing.name, "most": DATABASE_MOST }).to_string();
-        let text = isolated::run(
-            old.view(),
-            DUMP,
-            &format!("ordenDump('database', {})", quoted(&args)?),
-        )
-        .await?;
+        let text =
+            isolated::run(old.view(), DUMP, &format!("ordenDump('database', {})", quoted(&args)?))
+                .await?;
         let dumped: Dumped<'_> = parsed(&text)?;
         if let (None, Some(db)) = (dumped.skip, dumped.db) {
             databases.push(db.get().to_owned());
@@ -205,14 +192,8 @@ mod tests {
     #[test]
     fn the_shared_store_keeps_an_origin_s_storage_and_a_fresh_store_takes_the_copy() {
         assert!(takes_storage(false, false), "nothing there: copied");
-        assert!(
-            !takes_storage(true, false),
-            "the shared store's own storage stands"
-        );
-        assert!(
-            takes_storage(true, true),
-            "a store made for the copy holds nothing of its own"
-        );
+        assert!(!takes_storage(true, false), "the shared store's own storage stands");
+        assert!(takes_storage(true, true), "a store made for the copy holds nothing of its own");
         assert!(takes_storage(false, true));
     }
     fn cookie(name: &str, value: &str, expires: Option<f64>) -> Cookie {
@@ -257,9 +238,7 @@ mod tests {
     }
     #[test]
     fn an_ended_cookie_is_left_behind() {
-        assert!(chosen(&[cookie("old", "x", Some(5e8))], &[], true, 1e9)
-            .0
-            .is_empty());
+        assert!(chosen(&[cookie("old", "x", Some(5e8))], &[], true, 1e9).0.is_empty());
     }
     #[test]
     fn a_partitioned_cookie_is_its_own_cookie() {
@@ -270,10 +249,6 @@ mod tests {
         });
         let into = [cookie("sid", "global", Some(3e9))];
         let (taken, _) = chosen(&[parted], &into, false, 1e9);
-        assert_eq!(
-            taken.len(),
-            1,
-            "a partition is another cookie than the unpartitioned one"
-        );
+        assert_eq!(taken.len(), 1, "a partition is another cookie than the unpartitioned one");
     }
 }

@@ -81,36 +81,19 @@ pub fn armed(roots: Vec<Root>) -> Result<Armed, String> {
         .map_err(|error| format!("could not watch the spaces: {error}"))?;
     let unwatched: Vec<Option<Unwatched>> =
         roots.iter().map(|root| arm(&mut watcher, root)).collect();
-    Ok(Armed {
-        shared,
-        roots,
-        watcher,
-        unwatched,
-    })
+    Ok(Armed { shared, roots, watcher, unwatched })
 }
 impl Armed {
     pub fn start(self, sink: Sink) -> Result<Watch, String> {
-        let Self {
-            shared,
-            roots,
-            watcher,
-            unwatched,
-        } = self;
+        let Self { shared, roots, watcher, unwatched } = self;
         let watcher = Arc::new(Mutex::new(watcher));
-        let (working, settling, using) = (
-            Arc::clone(&shared),
-            Arc::clone(&roots),
-            Arc::clone(&watcher),
-        );
+        let (working, settling, using) =
+            (Arc::clone(&shared), Arc::clone(&roots), Arc::clone(&watcher));
         std::thread::Builder::new()
             .name("space watch".into())
             .spawn(move || work(&settling, &working, &using, sink, unwatched))
             .map_err(|error| format!("could not start watching the spaces: {error}"))?;
-        Ok(Watch {
-            shared,
-            roots,
-            watcher,
-        })
+        Ok(Watch { shared, roots, watcher })
     }
     pub fn replacing(mut self, old: &mut Option<Watch>) -> Self {
         if !self.unwatched.contains(&Some(Unwatched::Limit)) {
@@ -149,10 +132,7 @@ impl Armed {
 }
 fn arm(watcher: &mut RecommendedWatcher, root: &Root) -> Option<Unwatched> {
     let error = watch_tree(watcher, &root.real).err()?;
-    eprintln!(
-        "orden: could not watch all of {}: {error}",
-        root.given.display()
-    );
+    eprintln!("orden: could not watch all of {}: {error}", root.given.display());
     Some(if matches!(error.kind, ErrorKind::MaxFilesWatch) {
         Unwatched::Limit
     } else {
@@ -163,10 +143,7 @@ fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()
     let Err(error) = watcher.watch(dir, RecursiveMode::Recursive) else {
         return Ok(());
     };
-    let below = error
-        .paths
-        .iter()
-        .any(|path| path != dir && path.starts_with(dir));
+    let below = error.paths.iter().any(|path| path != dir && path.starts_with(dir));
     if !below || matches!(error.kind, ErrorKind::MaxFilesWatch) {
         return Err(error);
     }
@@ -175,10 +152,7 @@ fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()
         let path = entry.path();
         if path.is_dir() {
             let one = watch_tree(watcher, &path);
-            if one
-                .as_ref()
-                .is_err_and(|error| matches!(error.kind, ErrorKind::MaxFilesWatch))
-            {
+            if one.as_ref().is_err_and(|error| matches!(error.kind, ErrorKind::MaxFilesWatch)) {
                 return one;
             }
             outcome = outcome.and(one);
@@ -196,10 +170,7 @@ fn work(
     let mut spaces: Vec<Option<Space>> = Vec::with_capacity(roots.len());
     for (at, root) in roots.iter().enumerate() {
         spaces.push(Some(Space::read(&root.real).unwrap_or_default()));
-        let said = Heard {
-            unwatched: unwatched.get(at).copied().flatten(),
-            ..Heard::scan(at)
-        };
+        let said = Heard { unwatched: unwatched.get(at).copied().flatten(), ..Heard::scan(at) };
         if shared.stopped() || !sink(said) {
             shared.stop();
             return;
@@ -237,10 +208,7 @@ fn work(
                 released[at].clear();
                 let moves = was.moves_into(space, &root.real);
                 heard.extend(moves.chunks(MOST_CHANGES).map(|some| Heard::seen(at, some)));
-                heard.push(Heard {
-                    unwatched,
-                    ..Heard::scan(at)
-                });
+                heard.push(Heard { unwatched, ..Heard::scan(at) });
             } else {
                 let (seen, held) = space.settle(&root.real, touched, batch.cut, &released[at]);
                 shared.touch_again(at, &held);
@@ -264,10 +232,7 @@ fn moved_across(roots: &[Root], heard: &mut [Heard]) {
     let mut left: Vec<(usize, PathBuf, String)> = Vec::new();
     for one in heard.iter() {
         for seen in &one.seen {
-            if let Seen::Removed {
-                rel, id: Some(id), ..
-            } = seen
-            {
+            if let Seen::Removed { rel, id: Some(id), .. } = seen {
                 left.push((one.root, rel.clone(), id.clone()));
             }
         }
@@ -284,17 +249,12 @@ fn moved_across(roots: &[Root], heard: &mut [Heard]) {
             let Some((from_root, rel, _)) = left.iter().find(|(from_root, rel, id)| {
                 *from_root != one.root
                     && to.id.as_ref() == Some(id)
-                    && !carried
-                        .iter()
-                        .any(|(at, done)| at == from_root && done == rel)
+                    && !carried.iter().any(|(at, done)| at == from_root && done == rel)
             }) else {
                 continue;
             };
             carried.push((*from_root, rel.clone()));
-            *seen = Seen::Renamed {
-                from: roots[*from_root].given.join(rel),
-                to: to.clone(),
-            };
+            *seen = Seen::Renamed { from: roots[*from_root].given.join(rel), to: to.clone() };
         }
     }
     for one in heard.iter_mut() {
@@ -307,31 +267,13 @@ fn moved_across(roots: &[Root], heard: &mut [Heard]) {
 }
 impl Heard {
     fn seen(root: usize, seen: &[Seen]) -> Self {
-        Self {
-            root,
-            seen: seen.to_vec(),
-            scan: false,
-            gone: false,
-            unwatched: None,
-        }
+        Self { root, seen: seen.to_vec(), scan: false, gone: false, unwatched: None }
     }
     fn scan(root: usize) -> Self {
-        Self {
-            root,
-            seen: Vec::new(),
-            scan: true,
-            gone: false,
-            unwatched: None,
-        }
+        Self { root, seen: Vec::new(), scan: true, gone: false, unwatched: None }
     }
     fn gone(root: usize) -> Self {
-        Self {
-            root,
-            seen: Vec::new(),
-            scan: false,
-            gone: true,
-            unwatched: None,
-        }
+        Self { root, seen: Vec::new(), scan: false, gone: true, unwatched: None }
     }
 }
 fn named(roots: &[Root], paths: &[PathBuf]) -> Vec<usize> {
@@ -532,10 +474,8 @@ mod tests {
     }
     fn watching(dir: &Path) -> (super::Watch, Receiver<Heard>) {
         let (tell, heard) = channel();
-        let root = Root {
-            given: dir.to_path_buf(),
-            real: fs::canonicalize(dir).expect("a real path"),
-        };
+        let root =
+            Root { given: dir.to_path_buf(), real: fs::canonicalize(dir).expect("a real path") };
         let watch =
             watch(vec![root], Box::new(move |one| tell.send(one).is_ok())).expect("watching");
         (watch, heard)
@@ -549,8 +489,7 @@ mod tests {
             .flatten()
             .filter(|one| {
                 fs::read_to_string(one.path()).is_ok_and(|info| {
-                    info.lines()
-                        .any(|line| line.starts_with("inotify") && line.contains(&ino))
+                    info.lines().any(|line| line.starts_with("inotify") && line.contains(&ino))
                 })
             })
             .count()
@@ -563,18 +502,9 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         let root = fs::canonicalize(dir.path()).expect("a real path");
         fs::create_dir(root.join("Deep")).expect("a folder");
-        let spelled = || {
-            vec![Root {
-                given: root.clone(),
-                real: root.clone(),
-            }]
-        };
-        let mut old = Some(
-            armed(spelled())
-                .expect("armed")
-                .start(Box::new(|_| true))
-                .expect("started"),
-        );
+        let spelled = || vec![Root { given: root.clone(), real: root.clone() }];
+        let mut old =
+            Some(armed(spelled()).expect("armed").start(Box::new(|_| true)).expect("started"));
         let mut made = armed(spelled()).expect("armed");
         assert_eq!(holders(&root.join("Deep")), 2);
         made.unwatched[0] = Some(Unwatched::Limit);
@@ -598,12 +528,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("a folder");
         let root = fs::canonicalize(dir.path()).expect("a real path");
         fs::create_dir(root.join("Deep")).expect("a folder");
-        let spelled = || {
-            vec![Root {
-                given: root.clone(),
-                real: root.clone(),
-            }]
-        };
+        let spelled = || vec![Root { given: root.clone(), real: root.clone() }];
         let mut running = HashMap::new();
         armed(spelled())
             .expect("armed")
@@ -612,12 +537,8 @@ mod tests {
         let mut made = armed(spelled()).expect("armed");
         made.unwatched[0] = Some(Unwatched::Limit);
         let (tell, heard) = channel();
-        made.start_in(
-            &mut running,
-            root.clone(),
-            Box::new(move |one| tell.send(one).is_ok()),
-        )
-        .expect("started");
+        made.start_in(&mut running, root.clone(), Box::new(move |one| tell.send(one).is_ok()))
+            .expect("started");
         assert_eq!(running.len(), 1);
         assert_eq!(holders(&root.join("Deep")), 1, "the old one's are free");
         let first = until_quiet(&heard);
@@ -633,18 +554,9 @@ mod tests {
 
         let dir = tempfile::tempdir().expect("a folder");
         let root = fs::canonicalize(dir.path()).expect("a real path");
-        let spelled = || {
-            vec![Root {
-                given: root.clone(),
-                real: root.clone(),
-            }]
-        };
-        let mut old = Some(
-            armed(spelled())
-                .expect("armed")
-                .start(Box::new(|_| true))
-                .expect("started"),
-        );
+        let spelled = || vec![Root { given: root.clone(), real: root.clone() }];
+        let mut old =
+            Some(armed(spelled()).expect("armed").start(Box::new(|_| true)).expect("started"));
         let made = armed(spelled()).expect("armed").replacing(&mut old);
         assert!(old.is_some());
         assert_eq!(made.unwatched, vec![None]);
@@ -709,17 +621,9 @@ mod tests {
         }
         let burst = until_quiet(&heard);
         let most = started.elapsed().as_millis() / QUIET.as_millis() + 1;
-        assert!(
-            burst.len() as u128 <= most,
-            "{} messages, at most {most}",
-            burst.len()
-        );
+        assert!(burst.len() as u128 <= most, "{} messages, at most {most}", burst.len());
         for one in &burst {
-            assert!(
-                one.seen.len() <= MOST_CHANGES,
-                "{} in one message",
-                one.seen.len()
-            );
+            assert!(one.seen.len() <= MOST_CHANGES, "{} in one message", one.seen.len());
         }
         let named: Vec<PathBuf> = burst
             .iter()
@@ -730,11 +634,7 @@ mod tests {
             })
             .collect();
         let listed = burst.iter().any(|one| one.scan);
-        assert!(
-            listed || named.len() == 1000,
-            "{} named, no listing",
-            named.len()
-        );
+        assert!(listed || named.len() == 1000, "{} named, no listing", named.len());
     }
     #[test]
     fn a_root_that_goes_is_gone_and_nothing_else() {
@@ -785,9 +685,6 @@ mod tests {
         assert_eq!(until_quiet(&heard).iter().filter(|one| one.scan).count(), 2);
         fs::write(space.join("Box").join("Plan.md"), "new").expect("written");
         fs::write(other.join("Idea.md"), "new").expect("written");
-        assert_eq!(
-            said(&until_quiet(&heard)),
-            ["created Box/Plan.md", "created Idea.md"]
-        );
+        assert_eq!(said(&until_quiet(&heard)), ["created Box/Plan.md", "created Idea.md"]);
     }
 }

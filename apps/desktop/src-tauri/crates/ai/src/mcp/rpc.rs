@@ -11,15 +11,8 @@ pub const BAD_PARAMS: i64 = -32602;
 pub const BUSY: i64 = -32000;
 #[derive(Debug, PartialEq)]
 pub enum Message {
-    Request {
-        id: Value,
-        method: String,
-        params: Value,
-    },
-    Notification {
-        method: String,
-        params: Value,
-    },
+    Request { id: Value, method: String, params: Value },
+    Notification { method: String, params: Value },
     Answer,
 }
 #[derive(Debug, PartialEq)]
@@ -33,40 +26,24 @@ pub fn read(line: &str) -> Result<Message, Unreadable> {
     let value: Value =
         serde_json::from_str(line).map_err(|_| refused(Value::Null, NOT_JSON, "not JSON"))?;
     if value.is_array() {
-        return Err(refused(
-            Value::Null,
-            NOT_A_REQUEST,
-            "batches are not answered",
-        ));
+        return Err(refused(Value::Null, NOT_A_REQUEST, "batches are not answered"));
     }
     let Some(fields) = value.as_object() else {
         return Err(refused(Value::Null, NOT_A_REQUEST, "not a request"));
     };
     let id = fields.get("id").cloned();
-    let params = fields
-        .get("params")
-        .filter(|one| one.is_object())
-        .cloned()
-        .unwrap_or_else(|| json!({}));
+    let params =
+        fields.get("params").filter(|one| one.is_object()).cloned().unwrap_or_else(|| json!({}));
     match (fields.get("method").and_then(Value::as_str), id) {
-        (Some(method), Some(id)) if id.is_string() || id.is_number() => Ok(Message::Request {
-            id,
-            method: method.to_owned(),
-            params,
-        }),
+        (Some(method), Some(id)) if id.is_string() || id.is_number() => {
+            Ok(Message::Request { id, method: method.to_owned(), params })
+        }
         (Some(_), Some(id)) => Err(refused(id, NOT_A_REQUEST, "an id is a string or a number")),
-        (Some(method), None) => Ok(Message::Notification {
-            method: method.to_owned(),
-            params,
-        }),
+        (Some(method), None) => Ok(Message::Notification { method: method.to_owned(), params }),
         (None, Some(_)) if fields.contains_key("result") || fields.contains_key("error") => {
             Ok(Message::Answer)
         }
-        (None, id) => Err(refused(
-            id.unwrap_or(Value::Null),
-            NOT_A_REQUEST,
-            "say which method",
-        )),
+        (None, id) => Err(refused(id.unwrap_or(Value::Null), NOT_A_REQUEST, "say which method")),
     }
 }
 pub fn next_line(input: &mut impl BufRead) -> Option<String> {
@@ -113,11 +90,7 @@ mod tests {
     fn a_request_a_notification_and_an_answer_are_told_apart() {
         assert_eq!(
             read(r#"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#),
-            Ok(Message::Request {
-                id: json!(1),
-                method: "tools/list".into(),
-                params: json!({}),
-            })
+            Ok(Message::Request { id: json!(1), method: "tools/list".into(), params: json!({}) })
         );
         assert_eq!(
             read(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#),
@@ -126,10 +99,7 @@ mod tests {
                 params: json!({}),
             })
         );
-        assert_eq!(
-            read(r#"{"jsonrpc":"2.0","id":"a","result":{}}"#),
-            Ok(Message::Answer)
-        );
+        assert_eq!(read(r#"{"jsonrpc":"2.0","id":"a","result":{}}"#), Ok(Message::Answer));
     }
     #[test]
     fn what_is_not_a_request_is_said_and_odd_params_or_blank_lines_pass() {

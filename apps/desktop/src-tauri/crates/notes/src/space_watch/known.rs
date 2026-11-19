@@ -8,15 +8,8 @@ use crate::tree::MAX_ENTRIES;
 pub enum Seen {
     Created(Found),
     Modified(Found),
-    Removed {
-        rel: PathBuf,
-        dir: bool,
-        id: Option<String>,
-    },
-    Renamed {
-        from: PathBuf,
-        to: Found,
-    },
+    Removed { rel: PathBuf, dir: bool, id: Option<String> },
+    Renamed { from: PathBuf, to: Found },
 }
 #[derive(Clone, Debug)]
 struct Known {
@@ -27,12 +20,7 @@ struct Known {
 }
 impl From<&Found> for Known {
     fn from(one: &Found) -> Self {
-        Self {
-            dir: one.dir,
-            size: one.size,
-            stamp: one.stamp,
-            id: one.id.clone(),
-        }
+        Self { dir: one.dir, size: one.size, stamp: one.stamp, id: one.id.clone() }
     }
 }
 #[derive(Default, Debug)]
@@ -83,11 +71,7 @@ impl Space {
                 continue;
             };
             let rest = path.strip_prefix(from).unwrap_or(Path::new(""));
-            let moved = if rest.as_os_str().is_empty() {
-                to.to_path_buf()
-            } else {
-                to.join(rest)
-            };
+            let moved = if rest.as_os_str().is_empty() { to.to_path_buf() } else { to.join(rest) };
             if let Some(id) = &known.id {
                 self.ids.insert(id.clone(), moved.clone());
             }
@@ -107,10 +91,7 @@ impl Space {
             .iter()
             .filter_map(|(id, to)| {
                 let from = self.ids.get(id)?;
-                let left = now
-                    .paths
-                    .get(from)
-                    .is_none_or(|there| there.id.as_ref() != Some(id));
+                let left = now.paths.get(from).is_none_or(|there| there.id.as_ref() != Some(id));
                 (from != to && left).then_some((from, to))
             })
             .collect();
@@ -130,10 +111,7 @@ impl Space {
             }
             if let Some(found) = found(root, to) {
                 taken.push((from, to));
-                seen.push(Seen::Renamed {
-                    from: now_at,
-                    to: found,
-                });
+                seen.push(Seen::Renamed { from: now_at, to: found });
             }
         }
         seen
@@ -179,15 +157,8 @@ impl Space {
                         .cloned()
                 });
                 seen.push(match landed {
-                    Some(to) => Seen::Renamed {
-                        from: (*rel).clone(),
-                        to,
-                    },
-                    None => Seen::Removed {
-                        rel: (*rel).clone(),
-                        dir: was.dir,
-                        id: was.id,
-                    },
+                    Some(to) => Seen::Renamed { from: (*rel).clone(), to },
+                    None => Seen::Removed { rel: (*rel).clone(), dir: was.dir, id: was.id },
                 });
             }
         }
@@ -259,11 +230,7 @@ impl Space {
         };
         if now.dir != known.dir {
             self.remove_tree(rel);
-            seen.push(Seen::Removed {
-                rel: rel.to_path_buf(),
-                dir: known.dir,
-                id: known.id,
-            });
+            seen.push(Seen::Removed { rel: rel.to_path_buf(), dir: known.dir, id: known.id });
             self.arriving(root, now, seen);
             return;
         }
@@ -333,12 +300,7 @@ mod tests {
         fs::write(root.join("Trip").join("Days").join("One.md"), "").expect("a note inside");
         assert_eq!(
             said(&settle(&mut space, root, &["Idea.md", "Trip"])),
-            [
-                "created Idea.md",
-                "created Trip",
-                "created Trip/Days",
-                "created Trip/Days/One.md"
-            ]
+            ["created Idea.md", "created Trip", "created Trip/Days", "created Trip/Days/One.md"]
         );
     }
     #[test]
@@ -346,14 +308,8 @@ mod tests {
         let (dir, mut space) = space_with(&["Plan.md", "Other.md"]);
         let root = dir.path();
         fs::write(root.join("Plan.md"), "words, and more of them").expect("edited");
-        assert_eq!(
-            said(&settle(&mut space, root, &["Plan.md", "Other.md"])),
-            ["modified Plan.md"]
-        );
-        assert!(
-            settle(&mut space, root, &["Plan.md"]).is_empty(),
-            "nothing moved since"
-        );
+        assert_eq!(said(&settle(&mut space, root, &["Plan.md", "Other.md"])), ["modified Plan.md"]);
+        assert!(settle(&mut space, root, &["Plan.md"]).is_empty(), "nothing moved since");
     }
     #[test]
     fn a_chain_of_renames_in_one_batch_is_every_rename_and_nothing_removed() {
@@ -364,36 +320,20 @@ mod tests {
         }
         assert_eq!(
             said(&settle(&mut space, root, &["a.md", "b.md", "c.md", "d.md"])),
-            [
-                "renamed c.md d.md",
-                "renamed b.md c.md",
-                "renamed a.md b.md"
-            ]
+            ["renamed c.md d.md", "renamed b.md c.md", "renamed a.md b.md"]
         );
     }
     #[test]
     fn a_rename_and_a_move_into_a_folder_keep_their_identity() {
         let (dir, mut space) = space_with(&["Plan.md", "Idea.md", "Projects/Keep.md"]);
         let root = dir.path();
-        let plan = space
-            .ids
-            .iter()
-            .find(|(_, rel)| rel.as_path() == Path::new("Plan.md"));
+        let plan = space.ids.iter().find(|(_, rel)| rel.as_path() == Path::new("Plan.md"));
         let plan = plan.map(|(id, _)| id.clone()).expect("an identity");
         fs::rename(root.join("Plan.md"), root.join("Roadmap.md")).expect("renamed");
         fs::rename(root.join("Idea.md"), root.join("Projects").join("Idea.md")).expect("moved");
-        let seen = settle(
-            &mut space,
-            root,
-            &["Plan.md", "Roadmap.md", "Idea.md", "Projects/Idea.md"],
-        );
-        assert_eq!(
-            said(&seen),
-            [
-                "renamed Plan.md Roadmap.md",
-                "renamed Idea.md Projects/Idea.md"
-            ]
-        );
+        let seen =
+            settle(&mut space, root, &["Plan.md", "Roadmap.md", "Idea.md", "Projects/Idea.md"]);
+        assert_eq!(said(&seen), ["renamed Plan.md Roadmap.md", "renamed Idea.md Projects/Idea.md"]);
         let Seen::Renamed { to, .. } = &seen[0] else {
             panic!("not a rename");
         };
@@ -404,17 +344,11 @@ mod tests {
         let (dir, mut space) = space_with(&["Projects/One.md", "Projects/Deep/Two.md"]);
         let root = dir.path();
         fs::rename(root.join("Projects"), root.join("Archive")).expect("renamed");
-        let seen = settle(
-            &mut space,
-            root,
-            &["Projects", "Archive", "Projects/One.md", "Archive/One.md"],
-        );
+        let seen =
+            settle(&mut space, root, &["Projects", "Archive", "Projects/One.md", "Archive/One.md"]);
         assert_eq!(said(&seen), ["renamed Projects Archive"]);
-        fs::write(
-            root.join("Archive").join("Deep").join("Two.md"),
-            "later, and longer",
-        )
-        .expect("edited");
+        fs::write(root.join("Archive").join("Deep").join("Two.md"), "later, and longer")
+            .expect("edited");
         assert_eq!(
             said(&settle(&mut space, root, &["Archive/Deep/Two.md"])),
             ["modified Archive/Deep/Two.md"],
@@ -427,11 +361,7 @@ mod tests {
         let root = dir.path();
         fs::remove_dir_all(root.join("Old")).expect("removed");
         assert_eq!(
-            said(&settle(
-                &mut space,
-                root,
-                &["Old/One.md", "Old/Two.md", "Old"]
-            )),
+            said(&settle(&mut space, root, &["Old/One.md", "Old/Two.md", "Old"])),
             ["removed Old"]
         );
         assert_eq!(space.len(), 1);
@@ -449,10 +379,7 @@ mod tests {
                 root,
                 &["Diary.md", ".trash/Diary.md", "Private", ".trash/Private"]
             )),
-            [
-                "renamed Diary.md .trash/Diary.md",
-                "renamed Private .trash/Private"
-            ]
+            ["renamed Diary.md .trash/Diary.md", "renamed Private .trash/Private"]
         );
         assert_eq!(space.len(), 1, "nothing hidden is known");
         fs::remove_file(root.join("Keep.md")).expect("removed");
@@ -467,16 +394,10 @@ mod tests {
             space_with(&["Private/One.md", "Private/Deep/Two.md", "Plan.md", "Old.md"]);
         let root = dir.path();
         fs::rename(root.join("Private"), root.join("Archive")).expect("renamed");
-        fs::rename(
-            root.join("Archive").join("Deep").join("Two.md"),
-            root.join("Two.md"),
-        )
-        .expect("moved out");
-        fs::rename(
-            root.join("Archive").join("One.md"),
-            root.join("Archive").join("Uno.md"),
-        )
-        .expect("renamed inside");
+        fs::rename(root.join("Archive").join("Deep").join("Two.md"), root.join("Two.md"))
+            .expect("moved out");
+        fs::rename(root.join("Archive").join("One.md"), root.join("Archive").join("Uno.md"))
+            .expect("renamed inside");
         fs::rename(root.join("Plan.md"), root.join("Roadmap.md")).expect("renamed");
         fs::remove_file(root.join("Old.md")).expect("removed");
         let now = Space::read(root).expect("read");
@@ -539,10 +460,7 @@ mod tests {
         let released: BTreeSet<PathBuf> = held.into_iter().collect();
         let (seen, held) = space.settle(root, &second, true, &released);
         assert!(held.is_empty());
-        assert_eq!(
-            said(&seen),
-            ["created Later", "renamed Plan.md Later/Plan.md"]
-        );
+        assert_eq!(said(&seen), ["created Later", "renamed Plan.md Later/Plan.md"]);
     }
     #[test]
     fn what_sync_leaves_alone_is_never_an_answer() {
@@ -550,11 +468,8 @@ mod tests {
         let root = dir.path();
         fs::write(root.join(".Plan.md.1-0.orden.tmp"), "half").expect("a temp file");
         fs::create_dir_all(root.join(".git")).expect("a repository");
-        assert!(settle(
-            &mut space,
-            root,
-            &[".Plan.md.1-0.orden.tmp", ".git", ".git/HEAD"]
-        )
-        .is_empty());
+        assert!(
+            settle(&mut space, root, &[".Plan.md.1-0.orden.tmp", ".git", ".git/HEAD"]).is_empty()
+        );
     }
 }

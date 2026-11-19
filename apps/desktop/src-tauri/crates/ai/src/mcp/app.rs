@@ -36,9 +36,8 @@ pub fn post(
     stream.set_read_timeout(Some(patience))?;
     stream.set_write_timeout(Some(CONNECT))?;
     let body = body.to_string();
-    let credential = bearer
-        .map(|token| format!("authorization: Bearer {token}\r\n"))
-        .unwrap_or_default();
+    let credential =
+        bearer.map(|token| format!("authorization: Bearer {token}\r\n")).unwrap_or_default();
     let head = format!(
         "POST / HTTP/1.1\r\nhost: 127.0.0.1:{}\r\ncontent-type: application/json\r\n{credential}content-length: {}\r\nconnection: close\r\n\r\n",
         endpoint.port,
@@ -55,13 +54,7 @@ pub fn post(
 fn parse(bytes: &[u8]) -> Option<Said> {
     let text = String::from_utf8_lossy(bytes);
     let (head, body) = text.split_once("\r\n\r\n")?;
-    let status = head
-        .lines()
-        .next()?
-        .split(' ')
-        .nth(1)?
-        .parse::<u16>()
-        .ok()?;
+    let status = head.lines().next()?.split(' ').nth(1)?.parse::<u16>().ok()?;
     let body = serde_json::from_str(body).unwrap_or_else(|_| Value::String(body.to_owned()));
     Some(Said { status, body })
 }
@@ -115,9 +108,7 @@ fn launch() -> Result<(), String> {
 #[cfg(target_os = "macos")]
 fn launch() -> Result<(), String> {
     let program = super::program::program()?;
-    let bundle = program
-        .ancestors()
-        .find(|one| one.extension().is_some_and(|ext| ext == "app"));
+    let bundle = program.ancestors().find(|one| one.extension().is_some_and(|ext| ext == "app"));
     match bundle {
         Some(bundle) => quiet(
             Command::new("open")
@@ -139,21 +130,15 @@ fn launch() -> Result<(), String> {
 fn detached(program: &Path) -> Result<(), String> {
     use std::os::unix::process::CommandExt as _;
 
-    let mut child = quiet(
-        Command::new(program)
-            .arg(orden_base::handed::BACKGROUND_FLAG)
-            .process_group(0),
-    )
-    .spawn()
-    .map_err(|error| format!("Orden could not be started: {error}"))?;
+    let mut child =
+        quiet(Command::new(program).arg(orden_base::handed::BACKGROUND_FLAG).process_group(0))
+            .spawn()
+            .map_err(|error| format!("Orden could not be started: {error}"))?;
     std::thread::spawn(move || child.wait());
     Ok(())
 }
 fn quiet(command: &mut Command) -> &mut Command {
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+    command.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
 }
 #[cfg(test)]
 mod tests {
@@ -181,11 +166,7 @@ mod tests {
         .expect("written");
         assert_eq!(
             endpoint(dir.path()),
-            Some(Endpoint {
-                port: 4321,
-                secret: "ab".into(),
-                pid: 77
-            })
+            Some(Endpoint { port: 4321, secret: "ab".into(), pid: 77 })
         );
     }
     #[test]
@@ -196,16 +177,10 @@ mod tests {
             let (mut stream, _) = listener.accept().expect("a caller");
             let mut request = vec![0_u8; 4096];
             let read = stream.read(&mut request).expect("a request");
-            stream
-                .write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\n\r\nhi")
-                .expect("an answer");
+            stream.write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\n\r\nhi").expect("an answer");
             String::from_utf8_lossy(&request[..read]).to_lowercase()
         });
-        let stranger = Endpoint {
-            port,
-            secret: "s3cret".into(),
-            pid: 0,
-        };
+        let stranger = Endpoint { port, secret: "s3cret".into(), pid: 0 };
         assert!(!answers(&stranger));
         let request = heard.join().expect("the stranger");
         assert!(!request.contains("authorization"), "{request}");
@@ -217,10 +192,6 @@ mod tests {
             .and_then(|one| one.local_addr())
             .expect("a port")
             .port();
-        assert!(!answers(&Endpoint {
-            port,
-            secret: String::new(),
-            pid: 0
-        }));
+        assert!(!answers(&Endpoint { port, secret: String::new(), pid: 0 }));
     }
 }

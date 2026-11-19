@@ -48,19 +48,15 @@ pub struct Downloads {
 }
 impl Downloads {
     fn busy(&self, tab: &str) -> bool {
-        self.held.lock().is_ok_and(|held| {
-            held.iter()
-                .any(|one| one.tab == tab && one.state == State::Going)
-        })
+        self.held
+            .lock()
+            .is_ok_and(|held| held.iter().any(|one| one.tab == tab && one.state == State::Going))
     }
     fn start(&self, tab: &str, url: &str, suggested: &Path, folder: &Path) -> Option<Download> {
         let name = clean_name(suggested.file_name().unwrap_or_default());
         let mut held = self.held.lock().ok()?;
         let path = free_path(folder, &name, |one| {
-            on_disk(one)
-                || held
-                    .iter()
-                    .any(|other| other.writing() && same_path(&other.path, one))
+            on_disk(one) || held.iter().any(|other| other.writing() && same_path(&other.path, one))
         });
         let made = Download {
             id: held.last().map_or(1, |last| last.id + 1),
@@ -102,9 +98,8 @@ impl Downloads {
     }
     fn moved(&self, path: &Path, received: u64, total: Option<u64>) -> Option<Download> {
         let mut held = self.held.lock().ok()?;
-        let one = held
-            .iter_mut()
-            .find(|one| one.state == State::Going && same_path(&one.path, path))?;
+        let one =
+            held.iter_mut().find(|one| one.state == State::Going && same_path(&one.path, path))?;
         one.received = received;
         one.total = total.or(one.total);
         Some(one.clone())
@@ -125,9 +120,7 @@ impl Downloads {
     }
     fn cancelled(&self, id: u64) -> Option<Download> {
         let mut held = self.held.lock().ok()?;
-        let one = held
-            .iter_mut()
-            .find(|one| one.id == id && one.state == State::Going)?;
+        let one = held.iter_mut().find(|one| one.id == id && one.state == State::Going)?;
         one.state = State::Cancelled;
         Some(one.clone())
     }
@@ -150,9 +143,7 @@ fn held(app: &AppHandle) -> tauri::State<'_, Downloads> {
     app.state::<Downloads>()
 }
 fn same_path(one: &Path, other: &Path) -> bool {
-    one.as_os_str()
-        .to_string_lossy()
-        .eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
+    one.as_os_str().to_string_lossy().eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
 }
 pub fn clean_name(suggested: &OsStr) -> String {
     let replaced: String = suggested
@@ -179,26 +170,12 @@ pub fn clean_name(suggested: &OsStr) -> String {
             !again
         })
         .collect();
-    let trimmed = replaced
-        .trim()
-        .trim_start_matches(['.', ' '])
-        .trim_end_matches(['.', ' ']);
-    let name = if trimmed.is_empty() {
-        "download"
-    } else {
-        trimmed
-    };
+    let trimmed = replaced.trim().trim_start_matches(['.', ' ']).trim_end_matches(['.', ' ']);
+    let name = if trimmed.is_empty() { "download" } else { trimmed };
     let (stem, ext) = split_extension(name);
-    let stem = if is_reserved(stem) {
-        format!("_{stem}")
-    } else {
-        stem.to_string()
-    };
-    let (stem, ext) = if ext.len() > LONGEST_EXTENSION {
-        (format!("{stem}{ext}"), "")
-    } else {
-        (stem, ext)
-    };
+    let stem = if is_reserved(stem) { format!("_{stem}") } else { stem.to_string() };
+    let (stem, ext) =
+        if ext.len() > LONGEST_EXTENSION { (format!("{stem}{ext}"), "") } else { (stem, ext) };
     let room = LONGEST_NAME.saturating_sub(ext.len()).max(1);
     if stem.len() <= room {
         return format!("{stem}{ext}");
@@ -214,9 +191,8 @@ fn split_extension(name: &str) -> (&str, &str) {
         return (name, "");
     };
     let (stem, ext) = name.split_at(dot);
-    let compressed = [".gz", ".bz2", ".xz", ".z", ".zst"]
-        .iter()
-        .any(|one| ext.eq_ignore_ascii_case(one));
+    let compressed =
+        [".gz", ".bz2", ".xz", ".z", ".zst"].iter().any(|one| ext.eq_ignore_ascii_case(one));
     if compressed {
         if let Some(inner) = stem.rfind('.').filter(|&at| at > 0) {
             if stem[inner..].eq_ignore_ascii_case(".tar") {
@@ -300,10 +276,7 @@ pub fn linger(app: &AppHandle, tab: &str) -> bool {
     true
 }
 pub fn revive(app: &AppHandle, tab: &str) -> bool {
-    held(app)
-        .lingering
-        .lock()
-        .is_ok_and(|mut lingering| lingering.remove(tab))
+    held(app).lingering.lock().is_ok_and(|mut lingering| lingering.remove(tab))
 }
 fn settle(app: &AppHandle, tab: &str) -> bool {
     let downloads = held(app);
@@ -317,11 +290,7 @@ fn settle(app: &AppHandle, tab: &str) -> bool {
 }
 #[tauri::command]
 pub fn web_downloads(app: AppHandle) -> Vec<Download> {
-    held(&app)
-        .held
-        .lock()
-        .map(|held| held.clone())
-        .unwrap_or_default()
+    held(&app).held.lock().map(|held| held.clone()).unwrap_or_default()
 }
 #[tauri::command(async)]
 pub fn web_download_open(app: AppHandle, id: u64) -> Result<(), String> {
@@ -383,12 +352,7 @@ mod progress {
                     else {
                         return;
                     };
-                    BEGUN.held().push(Begun {
-                        guid,
-                        url,
-                        view: label.clone(),
-                        id: None,
-                    });
+                    BEGUN.held().push(Begun { guid, url, view: label.clone(), id: None });
                 }
                 "Page.downloadProgress" => moved(&app, &window, params),
                 _ => {}
@@ -400,11 +364,7 @@ mod progress {
     }
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn bytes(params: &Value, name: &str) -> Option<u64> {
-        params
-            .get(name)?
-            .as_f64()
-            .filter(|one| *one >= 0.0)
-            .map(|one| one as u64)
+        params.get(name)?.as_f64().filter(|one| *one >= 0.0).map(|one| one as u64)
     }
     fn moved(app: &AppHandle, window: &str, params: &Value) {
         let Some(guid) = text(params, "guid") else {
@@ -456,16 +416,13 @@ mod progress {
             return;
         };
         let mut begun = BEGUN.held();
-        let found = (0..begun.len())
-            .find(|&at| begun[at].id == Some(id))
-            .or_else(|| {
-                let url = held(app).held.lock().ok().and_then(|list| {
-                    list.iter()
-                        .find(|one| one.id == id)
-                        .map(|one| one.url.clone())
+        let found = (0..begun.len()).find(|&at| begun[at].id == Some(id)).or_else(|| {
+            let url =
+                held(app).held.lock().ok().and_then(|list| {
+                    list.iter().find(|one| one.id == id).map(|one| one.url.clone())
                 })?;
-                (0..begun.len()).find(|&at| begun[at].id.is_none() && begun[at].url == url)
-            });
+            (0..begun.len()).find(|&at| begun[at].id.is_none() && begun[at].url == url)
+        });
         let Some(at) = found else {
             return;
         };
@@ -544,19 +501,14 @@ mod tests {
             let said = format!("invoice.pdf{}.exe", blank.to_string().repeat(150));
             assert!(!name(&said).contains(blank), "{blank:?}");
         }
-        assert_eq!(
-            name(&format!("invoice.pdf{}.exe", " ".repeat(150))),
-            "invoice.pdf .exe"
-        );
+        assert_eq!(name(&format!("invoice.pdf{}.exe", " ".repeat(150))), "invoice.pdf .exe");
         assert_eq!(name("Lecture  3.pdf"), "Lecture 3.pdf");
     }
     #[test]
     fn a_long_name_keeps_its_extension() {
         let long = format!("{}.pdf", "a".repeat(400));
         let kept = name(&long);
-        assert!(Path::new(&kept)
-            .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("pdf")));
+        assert!(Path::new(&kept).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("pdf")));
         assert_eq!(kept.chars().count(), super::LONGEST_NAME);
     }
     #[test]
@@ -566,9 +518,7 @@ mod tests {
         assert!(wide.ends_with("日.pdf"));
         let faces = name(&format!("{}.png", "😀".repeat(100)));
         assert!(faces.len() <= super::LONGEST_NAME);
-        assert!(Path::new(&faces)
-            .extension()
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("png")));
+        assert!(Path::new(&faces).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("png")));
         let tail = name(&format!("a.{}", "x".repeat(300)));
         assert!(tail.len() <= super::LONGEST_NAME, "{}", tail.len());
         assert!(tail.starts_with("a."));
@@ -609,14 +559,8 @@ mod tests {
             .map(|one| folder().join(one))
             .collect();
         let taken = |one: &Path| there.contains(one);
-        assert_eq!(
-            free_path(&folder(), "slides.pdf", taken),
-            folder().join("slides.pdf")
-        );
-        assert_eq!(
-            free_path(&folder(), "report.pdf", taken),
-            folder().join("report (2).pdf")
-        );
+        assert_eq!(free_path(&folder(), "slides.pdf", taken), folder().join("slides.pdf"));
+        assert_eq!(free_path(&folder(), "report.pdf", taken), folder().join("report (2).pdf"));
         assert_eq!(
             free_path(&folder(), "backup.tar.gz", taken),
             folder().join("backup (1).tar.gz")
@@ -626,9 +570,7 @@ mod tests {
         std::env::temp_dir().join("orden-downloads-test-that-does-not-exist")
     }
     fn begun(downloads: &Downloads, url: &str, file: &str) -> super::Download {
-        downloads
-            .start("a", url, Path::new(file), &tmp())
-            .expect("started")
+        downloads.start("a", url, Path::new(file), &tmp()).expect("started")
     }
     #[test]
     fn two_downloads_of_one_name_at_once_get_two_files() {
@@ -648,9 +590,7 @@ mod tests {
         assert!(downloads.saved(made.id).is_err());
         let moved = downloads.moved(&made.path, 10, Some(40)).expect("moving");
         assert_eq!((moved.received, moved.total), (10, Some(40)));
-        let done = downloads
-            .finish("https://x.example/f", Some(&made.path), true)
-            .expect("done");
+        let done = downloads.finish("https://x.example/f", Some(&made.path), true).expect("done");
         assert_eq!(done.state, State::Done);
         assert_eq!(done.received, 40);
         assert_eq!(downloads.saved(made.id).expect("saved"), made.path);
@@ -662,9 +602,7 @@ mod tests {
         let downloads = Downloads::default();
         let one = begun(&downloads, "https://x.example/one", "one.pdf");
         let two = begun(&downloads, "https://x.example/two", "two.pdf");
-        let ended = downloads
-            .finish("https://x.example/two", None, false)
-            .expect("ended");
+        let ended = downloads.finish("https://x.example/two", None, false).expect("ended");
         assert_eq!(ended.id, two.id);
         assert_eq!(ended.state, State::Failed);
         assert!(downloads.saved(one.id).is_err());
@@ -682,17 +620,13 @@ mod tests {
             downloads.going_from("https://x.example/f", &[one.id]),
             Some((two.id, two.path.clone()))
         );
-        assert!(downloads
-            .going_from("https://x.example/f", &[one.id, two.id])
-            .is_none());
+        assert!(downloads.going_from("https://x.example/f", &[one.id, two.id]).is_none());
         assert!(downloads.going_from("https://x.example/g", &[]).is_none());
         assert_eq!(downloads.going_to(one.id), Some(one.path.clone()));
         downloads.cancelled(one.id);
         assert!(downloads.going_to(one.id).is_none());
         assert_eq!(
-            downloads
-                .going_from("https://x.example/f", &[])
-                .map(|(id, _)| id),
+            downloads.going_from("https://x.example/f", &[]).map(|(id, _)| id),
             Some(two.id)
         );
     }
@@ -703,9 +637,7 @@ mod tests {
         downloads.cancelled(first.id).expect("stopped");
         let second = begun(&downloads, "https://x.example/r", "report.pdf");
         assert_eq!(second.name, "report (1).pdf");
-        assert!(downloads
-            .finish("https://x.example/r", Some(&first.path), true)
-            .is_none());
+        assert!(downloads.finish("https://x.example/r", Some(&first.path), true).is_none());
         let done = downloads
             .finish("https://x.example/r", Some(&second.path), true)
             .expect("the second ended");

@@ -24,25 +24,17 @@ impl Counts {
     ) -> Option<Duration> {
         let most = usize::try_from(most.max(1)).unwrap_or(usize::MAX);
         let moments = self.seen.entry((agent.to_string(), what)).or_default();
-        while moments
-            .front()
-            .is_some_and(|at| now.duration_since(*at) >= MINUTE)
-        {
+        while moments.front().is_some_and(|at| now.duration_since(*at) >= MINUTE) {
             moments.pop_front();
         }
         if moments.len() < most {
             moments.push_back(now);
             return None;
         }
-        moments
-            .front()
-            .map(|oldest| MINUTE.saturating_sub(now.duration_since(*oldest)))
+        moments.front().map(|oldest| MINUTE.saturating_sub(now.duration_since(*oldest)))
     }
     pub fn first_of_burst(&mut self, agent: &str, now: Instant) -> bool {
-        let fresh = self
-            .said
-            .get(agent)
-            .is_none_or(|at| now.duration_since(*at) >= MINUTE);
+        let fresh = self.said.get(agent).is_none_or(|at| now.duration_since(*at) >= MINUTE);
         if fresh {
             self.said.insert(agent.to_string(), now);
         }
@@ -90,10 +82,7 @@ mod tests {
             assert_eq!(counts.admit("a", Counted::Calls, 3, start), None);
         }
         let later = start + Duration::from_secs(20);
-        assert_eq!(
-            counts.admit("a", Counted::Calls, 3, later),
-            Some(Duration::from_secs(40))
-        );
+        assert_eq!(counts.admit("a", Counted::Calls, 3, later), Some(Duration::from_secs(40)));
         assert_eq!(counts.admit("b", Counted::Calls, 3, later), None);
         assert_eq!(counts.admit("a", Counted::Navigations, 3, later), None);
         let minute = start + MINUTE;

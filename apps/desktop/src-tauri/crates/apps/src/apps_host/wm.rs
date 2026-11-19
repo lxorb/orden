@@ -42,16 +42,8 @@ impl Desk {
     pub fn open(display: &str, dpr: f64) -> Result<Desk, String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
         let (connection, screen) = x11rb::connect(Some(display)).map_err(|e| said(&e))?;
-        let root = connection
-            .setup()
-            .roots
-            .get(screen)
-            .ok_or("the display has no screen")?
-            .root;
-        let atoms = Atoms::new(&connection)
-            .map_err(|e| said(&e))?
-            .reply()
-            .map_err(|e| said(&e))?;
+        let root = connection.setup().roots.get(screen).ok_or("the display has no screen")?.root;
+        let atoms = Atoms::new(&connection).map_err(|e| said(&e))?.reply().map_err(|e| said(&e))?;
         connection
             .change_window_attributes(
                 root,
@@ -82,14 +74,7 @@ impl Desk {
             .map_err(|e| said(&e))?;
         let connection = Arc::new(connection);
         let clipboard = Arc::new(Clipboard::open(connection.clone(), root)?);
-        let desk = Desk {
-            connection,
-            root,
-            owner,
-            atoms,
-            serial: AtomicU32::new(0),
-            clipboard,
-        };
+        let desk = Desk { connection, root, owner, atoms, serial: AtomicU32::new(0), clipboard };
         desk.scale(dpr);
         let x = &desk.connection;
         let claimed = x
@@ -265,14 +250,7 @@ fn forget(x: &RustConnection, atoms: &Atoms, managed: &mut Vec<Managed>, window:
 }
 fn fills(x: &RustConnection, atoms: &Atoms, window: Window, screen: (u16, u16)) -> bool {
     let transient = x
-        .get_property(
-            false,
-            window,
-            atoms.WM_TRANSIENT_FOR,
-            AtomEnum::WINDOW,
-            0,
-            1,
-        )
+        .get_property(false, window, atoms.WM_TRANSIENT_FOR, AtomEnum::WINDOW, 0, 1)
         .ok()
         .and_then(|cookie| cookie.reply().ok())
         .and_then(|reply| reply.value32().and_then(|mut values| values.next()))
@@ -281,14 +259,7 @@ fn fills(x: &RustConnection, atoms: &Atoms, window: Window, screen: (u16, u16)) 
         return false;
     }
     let kind = x
-        .get_property(
-            false,
-            window,
-            atoms._NET_WM_WINDOW_TYPE,
-            AtomEnum::ATOM,
-            0,
-            1,
-        )
+        .get_property(false, window, atoms._NET_WM_WINDOW_TYPE, AtomEnum::ATOM, 0, 1)
         .ok()
         .and_then(|cookie| cookie.reply().ok())
         .and_then(|reply| reply.value32().and_then(|mut values| values.next()));
@@ -351,18 +322,13 @@ fn tell_where(x: &RustConnection, window: Window, screen: (u16, u16)) {
     let _ = x.send_event(false, window, EventMask::STRUCTURE_NOTIFY, event);
 }
 fn focus(x: &RustConnection, atoms: &Atoms, window: Window) {
-    let _ = x.configure_window(
-        window,
-        &ConfigureWindowAux::new().stack_mode(StackMode::ABOVE),
-    );
+    let _ = x.configure_window(window, &ConfigureWindowAux::new().stack_mode(StackMode::ABOVE));
     let takes = x
         .get_property(false, window, atoms.WM_PROTOCOLS, AtomEnum::ATOM, 0, 32)
         .ok()
         .and_then(|cookie| cookie.reply().ok())
         .and_then(|reply| {
-            reply
-                .value32()
-                .map(|mut all| all.any(|one: Atom| one == atoms.WM_TAKE_FOCUS))
+            reply.value32().map(|mut all| all.any(|one: Atom| one == atoms.WM_TAKE_FOCUS))
         })
         .unwrap_or(false);
     let input = WmHints::get(x, window)
@@ -481,8 +447,7 @@ mod tests {
             let main = open(300, 200, None);
             assert_eq!(settle(main, (0, 0, 800, 600)), (0, 0, 800, 600));
             assert_eq!(focused(), main);
-            x.configure_window(main, &ConfigureWindowAux::new().width(100).height(100))
-                .unwrap();
+            x.configure_window(main, &ConfigureWindowAux::new().width(100).height(100)).unwrap();
             x.flush().unwrap();
             std::thread::sleep(std::time::Duration::from_millis(100));
             assert_eq!(geometry(main), (0, 0, 800, 600));
@@ -499,12 +464,7 @@ mod tests {
                 std::thread::sleep(std::time::Duration::from_millis(10));
             }
             assert_eq!(focused(), main);
-            let owner = x
-                .get_selection_owner(atoms._XSETTINGS_S0)
-                .unwrap()
-                .reply()
-                .unwrap()
-                .owner;
+            let owner = x.get_selection_owner(atoms._XSETTINGS_S0).unwrap().reply().unwrap().owner;
             assert_ne!(owner, NONE);
             display.fit(1024, 768, 2.0).unwrap();
             let read = x
@@ -521,14 +481,7 @@ mod tests {
                 .unwrap();
             assert_eq!(read.value[44..48], 2_i32.to_ne_bytes());
             let resources = x
-                .get_property(
-                    false,
-                    root,
-                    atoms.RESOURCE_MANAGER,
-                    AtomEnum::STRING,
-                    0,
-                    1024,
-                )
+                .get_property(false, root, atoms.RESOURCE_MANAGER, AtomEnum::STRING, 0, 1024)
                 .unwrap()
                 .reply()
                 .unwrap();

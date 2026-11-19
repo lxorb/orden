@@ -2,17 +2,11 @@ use tauri::{Runtime, Webview, Window};
 
 #[tauri::command]
 pub async fn owner_can() -> bool {
-    tauri::async_runtime::spawn_blocking(platform::can)
-        .await
-        .unwrap_or(false)
+    tauri::async_runtime::spawn_blocking(platform::can).await.unwrap_or(false)
 }
 #[tauri::command]
 pub async fn owner_check<R: Runtime>(webview: Webview<R>, reason: String) -> Result<bool, String> {
-    let reason: String = reason
-        .chars()
-        .filter(|one| !one.is_control())
-        .take(200)
-        .collect();
+    let reason: String = reason.chars().filter(|one| !one.is_control()).take(200).collect();
     let window = handle_of(&webview.window());
     tauri::async_runtime::spawn_blocking(move || platform::check(&reason, window))
         .await
@@ -38,9 +32,7 @@ mod platform {
     #[allow(unsafe_code)]
     pub fn can() -> bool {
         unsafe {
-            LAContext::new()
-                .canEvaluatePolicy_error(LAPolicy::DeviceOwnerAuthentication)
-                .is_ok()
+            LAContext::new().canEvaluatePolicy_error(LAPolicy::DeviceOwnerAuthentication).is_ok()
         }
     }
     #[allow(unsafe_code)]
@@ -172,18 +164,14 @@ mod platform {
         Ok((yes, challenge))
     }
     fn action() -> Option<&'static str> {
-        ACTIONS
-            .into_iter()
-            .find(|one| asked(one, 0).is_ok_and(|(yes, challenge)| yes || challenge))
+        ACTIONS.into_iter().find(|one| asked(one, 0).is_ok_and(|(yes, challenge)| yes || challenge))
     }
     pub fn can() -> bool {
         action().is_some()
     }
     pub fn check(_reason: &str, _window: Option<isize>) -> Result<bool, String> {
         let action = action().ok_or("polkit cannot ask here")?;
-        asked(action, ALLOW_INTERACTION)
-            .map(|(yes, _)| yes)
-            .map_err(|error| error.to_string())
+        asked(action, ALLOW_INTERACTION).map(|(yes, _)| yes).map_err(|error| error.to_string())
     }
 }
 #[cfg(not(any(
@@ -206,10 +194,7 @@ mod tests {
     fn names_this_process_as_polkit_does() {
         let (kind, details) = super::platform::subject().expect("a subject");
         assert_eq!(kind, "unix-process");
-        assert_eq!(
-            details.get("pid"),
-            Some(&zbus::zvariant::Value::from(std::process::id()))
-        );
+        assert_eq!(details.get("pid"), Some(&zbus::zvariant::Value::from(std::process::id())));
         assert!(details.contains_key("start-time"));
     }
 }

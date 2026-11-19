@@ -76,9 +76,7 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<orden_bas
         .visible(false);
     #[cfg(not(any(target_os = "macos", windows)))]
     let builder = builder.disable_drag_drop_handler();
-    let builder = builder
-        .min_inner_size(WIDTH, HEIGHT)
-        .max_inner_size(WIDTH, HEIGHT);
+    let builder = builder.min_inner_size(WIDTH, HEIGHT).max_inner_size(WIDTH, HEIGHT);
     let builder = crate::engine::own_profile(builder);
     orden_placement::placement::built(builder)
 }

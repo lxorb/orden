@@ -29,7 +29,6 @@ pub trait Held<T: ?Sized> {
 }
 impl<T: ?Sized> Held<T> for std::sync::Mutex<T> {
     fn held(&self) -> std::sync::MutexGuard<'_, T> {
-        self.lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 }

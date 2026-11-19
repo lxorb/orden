@@ -31,11 +31,8 @@ mod tests {
                 if next.starts_with("pub async fn ") {
                     continue;
                 }
-                let name = next
-                    .trim_start_matches("pub fn ")
-                    .split(['(', '<'])
-                    .next()
-                    .unwrap_or_default();
+                let name =
+                    next.trim_start_matches("pub fn ").split(['(', '<']).next().unwrap_or_default();
                 assert!(
                     *line == "#[tauri::command]" && QUICK.contains(&name),
                     "{file}: {next}: a disk can take minutes to answer; make it an async fn that hands its work off_the_runtime"

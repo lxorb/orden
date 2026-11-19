@@ -89,9 +89,7 @@ pub(super) fn placed(folder: &Path, under: &str) -> Result<PathBuf, String> {
     if steps.iter().any(|step| bad_name(step).is_some()) {
         return Err(format!("{under} is not a place in a folder"));
     }
-    Ok(steps
-        .iter()
-        .fold(folder.to_path_buf(), |path, step| path.join(step)))
+    Ok(steps.iter().fold(folder.to_path_buf(), |path, step| path.join(step)))
 }
 #[tauri::command]
 pub async fn explorer_rename(app: AppHandle, path: String, name: String) -> Result<String, String> {
@@ -114,19 +112,13 @@ pub(super) fn renamed(from: &Path, to: &Path) -> Result<(), String> {
     if taken && !orden_base::paths::same_entry(from, to) {
         return Err(format!("{} is there already", to.display()));
     }
-    let moved = if taken {
-        fs::rename(from, to)
-    } else {
-        orden_base::carry::rename_new(from, to)
-    };
+    let moved = if taken { fs::rename(from, to) } else { orden_base::carry::rename_new(from, to) };
     moved.map_err(|why| format!("{}: {why}", from.display()))
 }
 #[tauri::command]
 pub async fn explorer_trash(app: AppHandle, paths: Vec<String>) -> Result<Vec<Ticket>, Trashing> {
     orden_base::lane::off_the_runtime(move || {
-        trashed_each(&paths, |one| {
-            asked(&app, one, Use::Change).and_then(|path| bin::trash(&path))
-        })
+        trashed_each(&paths, |one| asked(&app, one, Use::Change).and_then(|path| bin::trash(&path)))
     })
     .await
 }
@@ -139,10 +131,7 @@ fn trashed_each(
     for one in paths {
         match trash(one) {
             Ok(ticket) => went.push(ticket),
-            Err(why) => failed.push(Failed {
-                path: one.clone(),
-                why,
-            }),
+            Err(why) => failed.push(Failed { path: one.clone(), why }),
         }
     }
     if failed.is_empty() {
@@ -174,12 +163,7 @@ pub async fn explorer_delete(app: AppHandle, paths: Vec<String>) -> Result<(), V
         let judged: Vec<PathBuf> = paths
             .iter()
             .map(|one| {
-                asked(&app, one, Use::Change).map_err(|why| {
-                    vec![Failed {
-                        path: one.clone(),
-                        why,
-                    }]
-                })
+                asked(&app, one, Use::Change).map_err(|why| vec![Failed { path: one.clone(), why }])
             })
             .collect::<Result<_, _>>()?;
         let failed = gone_each(&judged);
@@ -195,20 +179,13 @@ fn gone_each(paths: &[PathBuf]) -> Vec<Failed> {
     paths
         .iter()
         .filter_map(|path| {
-            gone(path).err().map(|why| Failed {
-                path: path.display().to_string(),
-                why,
-            })
+            gone(path).err().map(|why| Failed { path: path.display().to_string(), why })
         })
         .collect()
 }
 pub(super) fn gone(path: &Path) -> Result<(), String> {
     let meta = fs::symlink_metadata(path).map_err(|why| format!("{}: {why}", path.display()))?;
-    let done = if meta.is_dir() {
-        fs::remove_dir_all(path)
-    } else {
-        fs::remove_file(path)
-    };
+    let done = if meta.is_dir() { fs::remove_dir_all(path) } else { fs::remove_file(path) };
     done.map_err(|why| format!("{}: {why}", path.display()))
 }
 #[cfg(test)]
@@ -218,18 +195,13 @@ mod tests {
 
     #[test]
     fn trashing_several_goes_past_one_that_will_not_go_and_names_it() {
-        let paths: Vec<String> = ["/a/one.txt", "/a/locked.txt", "/a/two.txt"]
-            .map(str::to_owned)
-            .to_vec();
+        let paths: Vec<String> =
+            ["/a/one.txt", "/a/locked.txt", "/a/two.txt"].map(str::to_owned).to_vec();
         let stopped = trashed_each(&paths, |one| {
             if one.ends_with("locked.txt") {
                 Err(format!("{one}: in use"))
             } else {
-                Ok(Ticket {
-                    path: one.to_owned(),
-                    back: one.to_owned(),
-                    at: 1,
-                })
+                Ok(Ticket { path: one.to_owned(), back: one.to_owned(), at: 1 })
             }
         })
         .expect_err("one stayed");
@@ -239,11 +211,7 @@ mod tests {
         assert_eq!(stopped.failed[0].path, "/a/locked.txt");
         assert_eq!(stopped.failed[0].why, "/a/locked.txt: in use");
         let all = trashed_each(&paths, |one| {
-            Ok(Ticket {
-                path: one.to_owned(),
-                back: one.to_owned(),
-                at: 1,
-            })
+            Ok(Ticket { path: one.to_owned(), back: one.to_owned(), at: 1 })
         })
         .expect("all went");
         assert_eq!(all.len(), 3);
@@ -284,10 +252,7 @@ mod tests {
         wrote(dir.path(), &said("Photos 2/b.png", true), b"new").expect("a new folder");
         wrote(dir.path(), &said("Photos 2/c.png", false), b"new").expect("into it");
         assert!(dir.path().join("Photos 2").join("c.png").is_file());
-        assert_eq!(
-            fs::read_to_string(mine.join("a.png")).expect("kept"),
-            "mine"
-        );
+        assert_eq!(fs::read_to_string(mine.join("a.png")).expect("kept"), "mine");
     }
     #[test]
     fn a_dropped_file_lands_under_the_folder_and_nowhere_else() {

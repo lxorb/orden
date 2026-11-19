@@ -39,10 +39,7 @@ impl Job {
         if let Ok(mut running) = RUNNING.lock() {
             running.insert(id.to_owned(), Arc::clone(&stop));
         }
-        Self {
-            id: id.to_owned(),
-            stop,
-        }
+        Self { id: id.to_owned(), stop }
     }
     fn stopped(&self) -> bool {
         self.stop.load(Ordering::Relaxed)
@@ -170,11 +167,8 @@ pub async fn explorer_transfer(
         let mut froms = Vec::new();
         for one in &sources {
             let item = how_of(one);
-            let using = if item == How::Move || fenced == Some(true) {
-                Use::Change
-            } else {
-                Use::Look
-            };
+            let using =
+                if item == How::Move || fenced == Some(true) { Use::Change } else { Use::Look };
             let from = asked(&app, one, using)?;
             hows.insert(from.clone(), item);
             froms.push(from);
@@ -227,10 +221,7 @@ pub async fn explorer_transfer(
     .await
 }
 fn failed(path: &Path, why: String) -> Failed {
-    Failed {
-        path: path.display().to_string(),
-        why,
-    }
+    Failed { path: path.display().to_string(), why }
 }
 #[cfg(test)]
 fn planned(
@@ -257,14 +248,11 @@ fn planned_by(
         };
         let is_file = !fs::symlink_metadata(from).is_ok_and(|meta| meta.is_dir());
         let free = |to: &Path| {
-            first_spot(to, is_file, |one| {
-                !taken(one, is_file) && !landing.contains(&path_key(one))
-            })
+            first_spot(to, is_file, |one| !taken(one, is_file) && !landing.contains(&path_key(one)))
         };
         let mut to = folder.join(name);
         if orden_base::carry::goes_into_itself(from, folder) {
-            out.failed
-                .push(failed(from, "a folder cannot go inside itself".to_owned()));
+            out.failed.push(failed(from, "a folder cannot go inside itself".to_owned()));
             continue;
         }
         if same(from, &to) {
@@ -418,21 +406,12 @@ fn copied(
             if running.stopped() {
                 return Err(Stop::Cancelled);
             }
-            copied(
-                &one.path(),
-                &to.join(one.file_name()),
-                running,
-                meter,
-                &mut true,
-            )?;
+            copied(&one.path(), &to.join(one.file_name()), running, meter, &mut true)?;
         }
         let _ = fs::set_permissions(to, meta.permissions());
         return Ok(());
     }
-    let name = from
-        .file_name()
-        .map(|one| one.to_string_lossy().into_owned())
-        .unwrap_or_default();
+    let name = from.file_name().map(|one| one.to_string_lossy().into_owned()).unwrap_or_default();
     let mut source = orden_base::paths::opened_file(from).map_err(fail)?;
     let mut target = fs::File::create_new(to).map_err(fail)?;
     *made = true;
@@ -467,19 +446,10 @@ pub async fn explorer_put(
     how: How,
 ) -> Result<Transferred, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Transferred, String> {
-        let using = if how == How::Move {
-            Use::Change
-        } else {
-            Use::Look
-        };
+        let using = if how == How::Move { Use::Change } else { Use::Look };
         let judged: Vec<(PathBuf, PathBuf)> = pairs
             .iter()
-            .map(|one| {
-                Ok((
-                    asked(&app, &one.from, using)?,
-                    asked(&app, &one.to, Use::Change)?,
-                ))
-            })
+            .map(|one| Ok((asked(&app, &one.from, using)?, asked(&app, &one.to, Use::Change)?)))
             .collect::<Result<_, String>>()?;
         let running = Job::begin(&job);
         let mut out = Transferred::default();
@@ -511,16 +481,11 @@ fn put_all(
             break;
         }
         if fs::symlink_metadata(&to).is_ok() {
-            out.failed
-                .push(failed(&from, format!("{} is there already", to.display())));
+            out.failed.push(failed(&from, format!("{} is there already", to.display())));
             continue;
         }
-        if to
-            .parent()
-            .is_some_and(|folder| orden_base::carry::goes_into_itself(&from, folder))
-        {
-            out.failed
-                .push(failed(&from, "a folder cannot go inside itself".to_owned()));
+        if to.parent().is_some_and(|folder| orden_base::carry::goes_into_itself(&from, folder)) {
+            out.failed.push(failed(&from, "a folder cannot go inside itself".to_owned()));
             continue;
         }
         match carried(&from, &to, how, running, meter) {
@@ -609,34 +574,18 @@ pub async fn explorer_search(
         let mut said = Instant::now();
         let send = |batch: &mut Vec<Found>| {
             if !batch.is_empty() {
-                let _ = app.emit(
-                    FOUND,
-                    Finding {
-                        job: &job,
-                        found: batch,
-                    },
-                );
+                let _ = app.emit(FOUND, Finding { job: &job, found: batch });
                 batch.clear();
             }
         };
-        walk_matching(
-            &root,
-            &query,
-            hidden,
-            &running,
-            &mut out,
-            |folder, found| {
-                explored.saw(folder);
-                batch.push(Found {
-                    within: folder.display().to_string(),
-                    entry: found,
-                });
-                if said.elapsed() >= EVERY {
-                    said = Instant::now();
-                    send(&mut batch);
-                }
-            },
-        );
+        walk_matching(&root, &query, hidden, &running, &mut out, |folder, found| {
+            explored.saw(folder);
+            batch.push(Found { within: folder.display().to_string(), entry: found });
+            if said.elapsed() >= EVERY {
+                said = Instant::now();
+                send(&mut batch);
+            }
+        });
         send(&mut batch);
         Ok(out)
     })
@@ -720,10 +669,7 @@ mod tests {
         let from = vec![dir.path().join("a.txt")];
         let mut out = Transferred::default();
         let plan = planned(&from, dir.path(), How::Copy, Clash::Skip, &mut out);
-        assert_eq!(
-            plan,
-            [(dir.path().join("a.txt"), dir.path().join("a 2.txt"))]
-        );
+        assert_eq!(plan, [(dir.path().join("a.txt"), dir.path().join("a 2.txt"))]);
         assert!(planned(&from, dir.path(), How::Move, Clash::Skip, &mut out).is_empty());
     }
     #[cfg(unix)]
@@ -753,13 +699,7 @@ mod tests {
         let into = dir.path().join("into");
         fs::create_dir(&into).expect("into");
         std::os::unix::fs::symlink(&docs, into.join("docs")).expect("a link where it goes");
-        let plan = planned(
-            std::slice::from_ref(&docs),
-            &into,
-            How::Move,
-            Clash::Replace,
-            &mut out,
-        );
+        let plan = planned(std::slice::from_ref(&docs), &into, How::Move, Clash::Replace, &mut out);
         assert_eq!(plan, [(docs.clone(), into.join("docs"))]);
     }
     #[test]
@@ -813,15 +753,7 @@ mod tests {
         assert!(outer.join("kept.txt").exists());
     }
     fn meter() -> Meter<'static> {
-        Meter {
-            app: None,
-            job: "test",
-            total: 0,
-            bytes: 0,
-            items: 0,
-            count: 0,
-            said: None,
-        }
+        Meter { app: None, job: "test", total: 0, bytes: 0, items: 0, count: 0, said: None }
     }
     #[test]
     fn a_put_back_never_copies_a_folder_into_itself() {
@@ -852,10 +784,7 @@ mod tests {
         let mut counted = meter();
         let copy = dir.path().join("copy");
         assert!(carried(&from, &copy, How::Copy, &running, &mut counted).is_ok());
-        assert_eq!(
-            fs::read_to_string(copy.join("inner/a.txt")).expect("copied"),
-            "four"
-        );
+        assert_eq!(fs::read_to_string(copy.join("inner/a.txt")).expect("copied"), "four");
         assert_eq!(counted.bytes, 10);
         let moved = dir.path().join("moved");
         assert!(carried(&copy, &moved, How::Move, &running, &mut counted).is_ok());
@@ -925,16 +854,9 @@ mod tests {
         let running = Job::begin("test-search");
         let mut found: Vec<PathBuf> = Vec::new();
         let mut out = Searched::default();
-        walk_matching(
-            dir.path(),
-            "PLAN",
-            false,
-            &running,
-            &mut out,
-            |folder, one| {
-                found.push(folder.join(one.name));
-            },
-        );
+        walk_matching(dir.path(), "PLAN", false, &running, &mut out, |folder, one| {
+            found.push(folder.join(one.name));
+        });
         assert_eq!(found, [dir.path().join("a/b/Plan.txt")]);
         let mut out = Searched::default();
         let mut all = 0;
@@ -968,11 +890,8 @@ mod tests {
     #[test]
     fn two_things_of_one_name_never_land_on_each_other() {
         let dir = tempfile::tempdir().expect("a folder");
-        let (one, other, into) = (
-            dir.path().join("one"),
-            dir.path().join("other"),
-            dir.path().join("into"),
-        );
+        let (one, other, into) =
+            (dir.path().join("one"), dir.path().join("other"), dir.path().join("into"));
         for folder in [&one, &other, &into] {
             fs::create_dir_all(folder).expect("a folder");
         }
@@ -1002,10 +921,7 @@ mod tests {
             let again = carried(&other.join("a.txt"), &to, how, &running, &mut counted);
             assert!(matches!(again, Err(Stop::Failed(_))));
             assert_eq!(fs::read_to_string(&to).expect("kept"), "one");
-            assert_eq!(
-                fs::read_to_string(other.join("a.txt")).expect("kept"),
-                "other"
-            );
+            assert_eq!(fs::read_to_string(other.join("a.txt")).expect("kept"), "other");
         }
     }
 }

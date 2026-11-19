@@ -62,20 +62,13 @@ pub fn owner(label: &str) -> Option<Owner> {
     })
 }
 pub fn of(agent: &str) -> Vec<Tab> {
-    tabs()
-        .iter()
-        .filter(|one| one.agent == agent)
-        .cloned()
-        .collect()
+    tabs().iter().filter(|one| one.agent == agent).cloned().collect()
 }
 pub fn held(id: &str) -> Option<Tab> {
     tabs().iter().find(|one| one.id == id).cloned()
 }
 pub fn find(agent: &str, id: &str) -> Option<Tab> {
-    tabs()
-        .iter()
-        .find(|one| one.agent == agent && one.id == id)
-        .cloned()
+    tabs().iter().find(|one| one.agent == agent && one.id == id).cloned()
 }
 pub fn may_open(owner: &Owner, url: &str) -> Result<(), String> {
     if !orden_agents::policy::on_the_web(url) {
@@ -84,10 +77,7 @@ pub fn may_open(owner: &Owner, url: &str) -> Result<(), String> {
     orden_agents::policy::site_allowed_for(&owner.agent, url, store_of(&owner.tab))
 }
 fn store_of(id: &str) -> Store {
-    tabs()
-        .iter()
-        .find(|one| one.id == id)
-        .map_or(Store::Reader, |one| one.store)
+    tabs().iter().find(|one| one.id == id).map_or(Store::Reader, |one| one.store)
 }
 pub fn open(
     app: &AppHandle,
@@ -157,19 +147,13 @@ pub fn set(id: &str, change: impl FnOnce(&mut Tab)) {
 }
 pub fn web_address(url: &str) -> Result<Url, Answer> {
     let address: Url = url.trim().parse().map_err(|error| {
-        Answer::error(
-            Code::BadArguments,
-            format!("that is not an address: {error}"),
-        )
+        Answer::error(Code::BadArguments, format!("that is not an address: {error}"))
     })?;
     let web = orden_web::web_tabs::allowed(&address) && address.scheme() != "view-source";
     if web || address.as_str() == "about:blank" {
         Ok(address)
     } else {
-        Err(Answer::error(
-            Code::BadArguments,
-            "an agent's tab opens http and https addresses",
-        ))
+        Err(Answer::error(Code::BadArguments, "an agent's tab opens http and https addresses"))
     }
 }
 fn make_room(app: &AppHandle, agent: &str, most: usize, keep: Option<&str>) {
@@ -209,13 +193,7 @@ pub fn close(app: &AppHandle, id: &str) {
     };
     if let Some(tab) = gone {
         let_go(app, &tab.label());
-        let _ = app.emit(
-            EVENT,
-            Event::Closed {
-                agent: tab.agent,
-                id: tab.id,
-            },
-        );
+        let _ = app.emit(EVENT, Event::Closed { agent: tab.agent, id: tab.id });
     }
 }
 pub fn close_all(app: &AppHandle, agent: Option<&str>) {
@@ -290,22 +268,14 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
     let twin = crate::engines::view(app, &label).ok_or("the page was never built")?;
     crate::twin::carry(app, reader, &twin);
     if let Some(address) = address {
-        cdp::call(
-            &twin,
-            "Page.navigate",
-            &serde_json::json!({ "url": address.as_str() }),
-        )?;
+        cdp::call(&twin, "Page.navigate", &serde_json::json!({ "url": address.as_str() }))?;
     }
     Ok(())
 }
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     (crate::engines::pages()?.build)(
         app,
-        &Owner {
-            agent: tab.agent.clone(),
-            tab: tab.id.clone(),
-            label: tab.label(),
-        },
+        &Owner { agent: tab.agent.clone(), tab: tab.id.clone(), label: tab.label() },
         tab.store_name.as_deref(),
         tab.size,
         address.map(Url::as_str),
@@ -336,11 +306,7 @@ pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
 }
 static SHOWN: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 pub fn shown_as(id: &str) -> Option<String> {
-    SHOWN
-        .held()
-        .iter()
-        .find(|(agent_tab, _)| agent_tab == id)
-        .map(|(_, reader)| reader.clone())
+    SHOWN.held().iter().find(|(agent_tab, _)| agent_tab == id).map(|(_, reader)| reader.clone())
 }
 pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     if held(id).is_none() {
@@ -405,10 +371,7 @@ mod tests {
         assert!(web_address("http://tauri.localhost./").is_err());
         assert!(web_address("about:blank").is_ok());
         assert_eq!(
-            web_address(" HTTP://Example.com/x")
-                .map(|one| one.to_string())
-                .ok()
-                .as_deref(),
+            web_address(" HTTP://Example.com/x").map(|one| one.to_string()).ok().as_deref(),
             Some("http://example.com/x")
         );
     }

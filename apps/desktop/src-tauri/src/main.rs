@@ -15,10 +15,7 @@ fn main() {
     #[cfg(desktop)]
     orden_carry::old_engine::carry_storage(env!("ORDEN_IDENTIFIER"));
     #[cfg(desktop)]
-    if std::env::args_os()
-        .nth(1)
-        .is_some_and(|first| first == "mcp")
-    {
+    if std::env::args_os().nth(1).is_some_and(|first| first == "mcp") {
         orden_ai::mcp::home::name(orden_ai::mcp::home::Named {
             identifier: env!("ORDEN_IDENTIFIER"),
             version: env!("ORDEN_VERSION"),

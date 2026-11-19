@@ -49,10 +49,7 @@ impl Homes {
         }
     }
     fn home(&self, window: &str) -> Option<&str> {
-        self.typing
-            .get(window)
-            .filter(|page| self.shown.contains(*page))
-            .map(String::as_str)
+        self.typing.get(window).filter(|page| self.shown.contains(*page)).map(String::as_str)
     }
     fn back(&mut self, window: &str, now: u64) -> Back {
         let Some(page) = self.typing.get(window) else {
@@ -194,8 +191,7 @@ mod native {
         pages.get(&found).cloned()
     }
     pub fn take(app: &AppHandle, label: &str) -> bool {
-        app.get_webview(label)
-            .is_some_and(|page| page.set_focus().is_ok())
+        app.get_webview(label).is_some_and(|page| page.set_focus().is_ok())
     }
     pub fn in_front(window: &Window) -> bool {
         window.is_focused().unwrap_or(false)
@@ -295,15 +291,12 @@ mod tests {
     #[test]
     fn chromium_on_linux_gives_the_keyboard_back_as_its_window_comes_back() {
         let life = include_str!("../../../src/lifecycle.rs");
-        let focused = &life[life
-            .find("event: WindowEvent::Focused(true)")
-            .expect("the window's focus")..];
+        let focused =
+            &life[life.find("event: WindowEvent::Focused(true)").expect("the window's focus")..];
         let focused = &focused[..focused.find("RunEvent::").expect("its end")];
         assert!(focused.contains("orden_web::keyboard::window_came_back(app, &label)"));
         let source = include_str!("keyboard.rs");
-        let back = &source[source
-            .find("pub fn window_came_back(")
-            .expect("window_came_back")..];
+        let back = &source[source.find("pub fn window_came_back(").expect("window_came_back")..];
         let back = &back[..back.find("\n}\n").expect("its end")];
         assert!(back.contains("all.home(window)") && back.contains("native::take(app, window)"));
     }
@@ -316,10 +309,7 @@ mod tests {
             &rest[..rest.find("\n}\n").expect("its end")]
         };
         let cef = module("\nmod native");
-        assert!(
-            cef.contains("super::page_took(app,"),
-            "the X server's FocusIn is not passed on"
-        );
+        assert!(cef.contains("super::page_took(app,"), "the X server's FocusIn is not passed on");
         let keys = include_str!("web_keys.rs");
         assert!(keys.contains("Event::FocusIn(") && keys.contains("crate::keyboard::x11_took("));
         assert!(keys.contains("EventMask::FOCUS_CHANGE"));

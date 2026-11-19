@@ -37,14 +37,8 @@ pub struct Clipboard {
 impl Clipboard {
     pub fn open(x: Arc<RustConnection>, root: Window) -> Result<Clipboard, String> {
         let said = |error: &dyn std::fmt::Display| error.to_string();
-        let atoms = Atoms::new(x.as_ref())
-            .map_err(|e| said(&e))?
-            .reply()
-            .map_err(|e| said(&e))?;
-        x.xfixes_query_version(5, 0)
-            .map_err(|e| said(&e))?
-            .reply()
-            .map_err(|e| said(&e))?;
+        let atoms = Atoms::new(x.as_ref()).map_err(|e| said(&e))?.reply().map_err(|e| said(&e))?;
+        x.xfixes_query_version(5, 0).map_err(|e| said(&e))?.reply().map_err(|e| said(&e))?;
         let window = x.generate_id().map_err(|e| said(&e))?;
         x.create_window(
             0,
@@ -67,13 +61,7 @@ impl Clipboard {
         )
         .map_err(|e| said(&e))?;
         x.flush().map_err(|e| said(&e))?;
-        Ok(Clipboard {
-            x,
-            window,
-            atoms,
-            given: Mutex::new(None),
-            listener: Mutex::new(None),
-        })
+        Ok(Clipboard { x, window, atoms, given: Mutex::new(None), listener: Mutex::new(None) })
     }
     pub fn listen(&self, listener: Option<Listener>) {
         *self.listener.held() = listener;
@@ -81,9 +69,7 @@ impl Clipboard {
     pub fn give(&self, text: &str) {
         let text: String = clipped(text).to_owned();
         *self.given.held() = Some(text);
-        let _ = self
-            .x
-            .set_selection_owner(self.window, self.atoms.CLIPBOARD, CURRENT_TIME);
+        let _ = self.x.set_selection_owner(self.window, self.atoms.CLIPBOARD, CURRENT_TIME);
         let _ = self.x.flush();
     }
     pub fn heard(&self, event: &Event) -> bool {
@@ -135,11 +121,7 @@ impl Clipboard {
         Some(String::from_utf8_lossy(&reply.value).into_owned())
     }
     fn serve(&self, asked: &SelectionRequestEvent) {
-        let property = if asked.property == NONE {
-            asked.target
-        } else {
-            asked.property
-        };
+        let property = if asked.property == NONE { asked.target } else { asked.property };
         let given = self.given.held().clone();
         let a = &self.atoms;
         let served = given.is_some_and(|text| {
@@ -184,16 +166,12 @@ impl Clipboard {
             target: asked.target,
             property: if served { property } else { NONE },
         };
-        let _ = self
-            .x
-            .send_event(false, asked.requestor, EventMask::NO_EVENT, answer);
+        let _ = self.x.send_event(false, asked.requestor, EventMask::NO_EVENT, answer);
         let _ = self.x.flush();
     }
 }
 pub fn latin1(text: &str) -> Vec<u8> {
-    text.chars()
-        .map(|one| u8::try_from(u32::from(one)).unwrap_or(b'?'))
-        .collect()
+    text.chars().map(|one| u8::try_from(u32::from(one)).unwrap_or(b'?')).collect()
 }
 #[cfg(test)]
 mod tests {
@@ -239,8 +217,7 @@ mod tests {
                 &CreateWindowAux::new(),
             )
             .unwrap();
-            x.set_selection_owner(window, atoms.CLIPBOARD, CURRENT_TIME)
-                .unwrap();
+            x.set_selection_owner(window, atoms.CLIPBOARD, CURRENT_TIME).unwrap();
             x.flush().unwrap();
             let until = Instant::now() + Duration::from_secs(5);
             let mut answered = false;
@@ -282,13 +259,7 @@ mod tests {
             );
             clipboard.give("vom Halter: 日本");
             let until = Instant::now() + Duration::from_secs(5);
-            while x
-                .get_selection_owner(atoms.CLIPBOARD)
-                .unwrap()
-                .reply()
-                .unwrap()
-                .owner
-                == window
+            while x.get_selection_owner(atoms.CLIPBOARD).unwrap().reply().unwrap().owner == window
                 && Instant::now() < until
             {
                 std::thread::sleep(Duration::from_millis(5));
@@ -322,19 +293,11 @@ mod tests {
                 }
                 None
             };
-            assert_eq!(
-                ask(atoms.UTF8_STRING),
-                Some("vom Halter: 日本".as_bytes().to_vec())
-            );
-            assert_eq!(
-                ask(AtomEnum::STRING.into()),
-                Some(b"vom Halter: ??".to_vec())
-            );
+            assert_eq!(ask(atoms.UTF8_STRING), Some("vom Halter: 日本".as_bytes().to_vec()));
+            assert_eq!(ask(AtomEnum::STRING.into()), Some(b"vom Halter: ??".to_vec()));
             let targets = ask(atoms.TARGETS).unwrap();
             assert_eq!(targets.len() % 4, 0);
-            assert!(targets
-                .chunks(4)
-                .any(|one| one == atoms.UTF8_STRING.to_ne_bytes()));
+            assert!(targets.chunks(4).any(|one| one == atoms.UTF8_STRING.to_ne_bytes()));
             assert_eq!(ask(atoms.INCR), None);
         });
     }

@@ -23,11 +23,7 @@ impl Gathered {
         first
     }
     fn take(&self) -> Vec<String> {
-        self.0
-            .held()
-            .take()
-            .map(|folders| folders.into_iter().collect())
-            .unwrap_or_default()
+        self.0.held().take().map(|folders| folders.into_iter().collect()).unwrap_or_default()
     }
 }
 fn heard(app: &AppHandle, folders: Vec<String>) {
@@ -86,14 +82,9 @@ impl Watching {
         folder: &Path,
         hear: &mut Option<H>,
     ) -> Result<(), String> {
-        let mut held = self
-            .0
-            .lock()
-            .map_err(|_| "the watcher is stuck".to_owned())?;
+        let mut held = self.0.lock().map_err(|_| "the watcher is stuck".to_owned())?;
         if held.is_none() {
-            let hear = hear
-                .take()
-                .ok_or_else(|| "the watcher could not be made".to_owned())?;
+            let hear = hear.take().ok_or_else(|| "the watcher could not be made".to_owned())?;
             let watcher =
                 notify::recommended_watcher(move |event: notify::Result<notify::Event>| {
                     if let Ok(event) = event {
@@ -108,15 +99,10 @@ impl Watching {
         };
         let count = counts.get(folder).copied().unwrap_or(0);
         if count == 0 {
-            watcher
-                .watch(folder, RecursiveMode::NonRecursive)
-                .map_err(|why| why.to_string())?;
+            watcher.watch(folder, RecursiveMode::NonRecursive).map_err(|why| why.to_string())?;
         }
         counts.insert(folder.to_path_buf(), count + 1);
-        self.owned()
-            .entry(owner.to_owned())
-            .or_default()
-            .push(folder.to_path_buf());
+        self.owned().entry(owner.to_owned()).or_default().push(folder.to_path_buf());
         Ok(())
     }
     fn remove(&self, owner: &str, folder: &Path) {
@@ -185,19 +171,16 @@ pub async fn explorer_watch(webview: Webview, folder: String) -> Result<(), Stri
         let app = webview.app_handle().clone();
         let folder = asked(&app, &folder, Use::Look)?;
         let hearing = app.clone();
-        app.state::<Watching>()
-            .add(webview.label(), folder, move |folders| {
-                heard(&hearing, folders);
-            })
+        app.state::<Watching>().add(webview.label(), folder, move |folders| {
+            heard(&hearing, folders);
+        })
     })
     .await
 }
 #[tauri::command]
 pub async fn explorer_unwatch(webview: Webview, folder: String) {
     orden_base::lane::off_the_runtime(move || {
-        webview
-            .state::<Watching>()
-            .remove(webview.label(), Path::new(&folder));
+        webview.state::<Watching>().remove(webview.label(), Path::new(&folder));
     })
     .await;
 }
@@ -278,9 +261,7 @@ mod tests {
         writing.store(false, Ordering::Relaxed);
         writer.join().expect("the writer");
         assert!(walker.is_finished(), "going between folders stuck");
-        let heard = walker
-            .join()
-            .unwrap_or_else(|why| std::panic::resume_unwind(why));
+        let heard = walker.join().unwrap_or_else(|why| std::panic::resume_unwind(why));
         assert!(heard, "the folder ended on is no longer heard");
     }
     #[test]

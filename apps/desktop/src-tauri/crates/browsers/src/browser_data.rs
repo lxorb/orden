@@ -81,10 +81,7 @@ pub(crate) fn opened(path: &Path, file: &str) -> Result<Opened, String> {
         copied(folder, file).map_err(|error| format!("{file} could not be copied: {error}"))?;
     let connection = Connection::open(copy.path().join(file))
         .map_err(|error| format!("{file} could not be opened: {error}"))?;
-    Ok(Opened {
-        connection,
-        _copy: copy,
-    })
+    Ok(Opened { connection, _copy: copy })
 }
 fn history_of(db: &Connection, kind: Kind) -> rusqlite::Result<Vec<Value>> {
     let query = match kind {
@@ -148,11 +145,7 @@ fn marks_of(db: &Connection, kind: Kind, pages: &[&str]) -> rusqlite::Result<Map
     let mut statement = db.prepare(listing)?;
     let candidates = statement
         .query_map([], |row| {
-            Ok(Candidate {
-                page: row.get(0)?,
-                id: row.get(1)?,
-                width: row.get(2)?,
-            })
+            Ok(Candidate { page: row.get(0)?, id: row.get(1)?, width: row.get(2)? })
         })?
         .collect::<rusqlite::Result<Vec<Candidate>>>()?;
     let chosen = chosen_marks(&candidates, pages);
@@ -181,10 +174,8 @@ fn chosen_marks<'a>(candidates: &[Candidate], pages: &[&'a str]) -> Vec<(&'a str
     let mut by_page: HashMap<&str, &Candidate> = HashMap::new();
     let mut by_site: HashMap<&str, &Candidate> = HashMap::new();
     for one in candidates {
-        for (key, map) in [
-            (one.page.as_str(), &mut by_page),
-            (site_part(&one.page), &mut by_site),
-        ] {
+        for (key, map) in [(one.page.as_str(), &mut by_page), (site_part(&one.page), &mut by_site)]
+        {
             let keep = map.get(key).is_none_or(|held| better(held, one));
             if keep {
                 map.insert(key, one);
@@ -194,18 +185,13 @@ fn chosen_marks<'a>(candidates: &[Candidate], pages: &[&'a str]) -> Vec<(&'a str
     pages
         .iter()
         .filter_map(|page| {
-            by_page
-                .get(page)
-                .or_else(|| by_site.get(site_part(page)))
-                .map(|one| (*page, one.id))
+            by_page.get(page).or_else(|| by_site.get(site_part(page))).map(|one| (*page, one.id))
         })
         .collect()
 }
 fn site_part(page: &str) -> &str {
     let after = page.find("://").map_or(0, |at| at + 3);
-    let end = page[after..]
-        .find(['/', '?', '#'])
-        .map_or(page.len(), |at| after + at);
+    let end = page[after..].find(['/', '?', '#']).map_or(page.len(), |at| after + at);
     &page[..end]
 }
 fn data_address(bytes: &[u8]) -> Option<String> {
@@ -252,22 +238,15 @@ mod tests {
              INSERT INTO moz_icons_to_pages VALUES (1, 1), (1, 2), (1, 3), (2, 4), (3, 5);",
         )
         .expect("the tables");
-        let mut add = db
-            .prepare("INSERT INTO moz_icons VALUES (?1, ?2, ?3, ?4)")
-            .expect("a row");
+        let mut add = db.prepare("INSERT INTO moz_icons VALUES (?1, ?2, ?3, ?4)").expect("a row");
         for (id, width, data) in [
             (1, 16, PNG.to_vec()),
             (2, 32, b"GIF89a".to_vec()),
             (3, 192, PNG.to_vec()),
-            (
-                4,
-                64,
-                b"<?xml?><svg xmlns='http://www.w3.org/2000/svg'/>".to_vec(),
-            ),
+            (4, 64, b"<?xml?><svg xmlns='http://www.w3.org/2000/svg'/>".to_vec()),
             (5, 16, b"not a picture".to_vec()),
         ] {
-            add.execute(params![id, "https://example.com/i", width, data])
-                .expect("an icon");
+            add.execute(params![id, "https://example.com/i", width, data]).expect("an icon");
         }
         drop(add);
         db
@@ -337,14 +316,8 @@ mod tests {
     }
     #[test]
     fn a_site_is_its_scheme_and_host() {
-        assert_eq!(
-            site_part("https://a.example.com/x?y"),
-            "https://a.example.com"
-        );
-        assert_eq!(
-            site_part("https://a.example.com?q"),
-            "https://a.example.com"
-        );
+        assert_eq!(site_part("https://a.example.com/x?y"), "https://a.example.com");
+        assert_eq!(site_part("https://a.example.com?q"), "https://a.example.com");
         assert_eq!(site_part("https://a.example.com"), "https://a.example.com");
     }
     #[test]

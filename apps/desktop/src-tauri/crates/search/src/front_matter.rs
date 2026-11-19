@@ -7,25 +7,16 @@ pub struct Block {
 }
 pub fn block(body: &str) -> Option<Block> {
     let first = body.find('\n')?;
-    let opening = body[..first]
-        .strip_prefix('\u{feff}')
-        .unwrap_or(&body[..first]);
+    let opening = body[..first].strip_prefix('\u{feff}').unwrap_or(&body[..first]);
     if !is_fence(opening.strip_suffix('\r').unwrap_or(opening)) {
         return None;
     }
     let close = closing_fence(body, first + 1)?;
-    let end = body[close..]
-        .find('\n')
-        .map_or(body.len(), |one| close + one);
-    Some(Block {
-        from: first + 1,
-        close,
-        end,
-    })
+    let end = body[close..].find('\n').map_or(body.len(), |one| close + one);
+    Some(Block { from: first + 1, close, end })
 }
 fn is_fence(line: &str) -> bool {
-    line.strip_prefix("---")
-        .is_some_and(|rest| rest.bytes().all(is_blank))
+    line.strip_prefix("---").is_some_and(|rest| rest.bytes().all(is_blank))
 }
 const fn is_blank(one: u8) -> bool {
     one == b' ' || one == b'\t'
@@ -69,10 +60,7 @@ fn is_tight_key(text: &str) -> bool {
     if bytes.get(word) != Some(&b':') || text[word + 1..].starts_with("//") {
         return false;
     }
-    text[word + 1..]
-        .chars()
-        .next()
-        .is_some_and(|one| !one.is_whitespace() && one != ':')
+    text[word + 1..].chars().next().is_some_and(|one| !one.is_whitespace() && one != ':')
 }
 fn is_key_line(text: &str) -> bool {
     let Some(past) = past_key(text.as_bytes(), 0) else {
@@ -190,10 +178,7 @@ fn stays_open(line: &[u8], open: &mut Open) -> bool {
 pub fn value_closes_at(body: &str, from: usize, limit: usize) -> Option<usize> {
     let bytes = body.as_bytes();
     let line_end = |at: usize| {
-        bytes[at..limit]
-            .iter()
-            .position(|&one| one == b'\n')
-            .map_or(limit, |one| at + one)
+        bytes[at..limit].iter().position(|&one| one == b'\n').map_or(limit, |one| at + one)
     };
     let without_return =
         |line: &'_ [u8]| -> usize { line.len() - usize::from(line.last() == Some(&b'\r')) };
@@ -234,10 +219,7 @@ fn is_block_scalar(said: &[u8]) -> bool {
 fn without_properties(said: &[u8]) -> &[u8] {
     let mut rest = said;
     while matches!(rest.first(), Some(b'&' | b'!')) {
-        let word = rest
-            .iter()
-            .position(|&one| is_blank(one))
-            .unwrap_or(rest.len());
+        let word = rest.iter().position(|&one| is_blank(one)).unwrap_or(rest.len());
         rest = &rest[word..];
         let blanks = rest.iter().take_while(|&&one| is_blank(one)).count();
         rest = &rest[blanks..];
@@ -311,11 +293,7 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                     let own = indent == mapping;
                     let complex = matches!(line.get(col), Some(b'?' | b':'))
                         && line.get(col + 1).is_none_or(|&next| is_blank(next));
-                    let past = if complex {
-                        Some(col + 1)
-                    } else {
-                        past_key(line, col)
-                    };
+                    let past = if complex { Some(col + 1) } else { past_key(line, col) };
                     let keyed = past.is_some() || is_tight_key(&text[col..]);
                     let continues = indent > mapping || (dash.is_some() && list);
                     if gap && !keyed && !continues {
@@ -335,11 +313,7 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
                     whole = first && start == b'{' && past.is_none();
                     let as_value = past.is_some() || dash.is_some() || indent > mapping || whole;
                     if is_block_scalar(said) {
-                        scalar = Some(if past.is_some() {
-                            col
-                        } else {
-                            dash.unwrap_or(indent)
-                        });
+                        scalar = Some(if past.is_some() { col } else { dash.unwrap_or(indent) });
                     } else if opens && as_value && matches!(start, b'"' | b'\'' | b'[' | b'{') {
                         let mut opening = Open::default();
                         if stays_open(said, &mut opening) {
@@ -378,10 +352,8 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
     let from = line.as_ptr() as usize - body.as_ptr() as usize;
     let past = said.as_ptr() as usize - line.as_ptr() as usize;
     if let Some(close) = value_closes_at(body, from + past, block.close) {
-        let joined: Vec<&str> = body[from + past..close]
-            .lines()
-            .map(|one| uncommented(one.trim()))
-            .collect();
+        let joined: Vec<&str> =
+            body[from + past..close].lines().map(|one| uncommented(one.trim())).collect();
         return flow_items(&joined.join(" "));
     }
     if uncommented(said).is_empty() {
@@ -391,9 +363,7 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
     }
 }
 fn lines_of<'a>(body: &'a str, block: &Block) -> std::str::Lines<'a> {
-    body.get(block.from..block.close)
-        .unwrap_or_default()
-        .lines()
+    body.get(block.from..block.close).unwrap_or_default().lines()
 }
 fn key_line(body: &str, block: &Block, key: &str) -> Option<usize> {
     let mut other = None;
@@ -414,17 +384,12 @@ pub fn key_of(line: &str) -> Option<(String, &str)> {
     let (name, rest) = match line.chars().next()? {
         quote @ ('"' | '\'') => {
             let close = closing_quote(line, quote)?;
-            (
-                unquoted(&line[..=close]).unwrap_or_default(),
-                &line[close + 1..],
-            )
+            (unquoted(&line[..=close]).unwrap_or_default(), &line[close + 1..])
         }
         first if first.is_whitespace() || first == '#' || first == '-' => return None,
         _ => {
-            let colon = line
-                .char_indices()
-                .find(|&(at, one)| one == ':' && said_after(&line[at + 1..]))?
-                .0;
+            let colon =
+                line.char_indices().find(|&(at, one)| one == ':' && said_after(&line[at + 1..]))?.0;
             return Some((
                 line[..colon].trim_end_matches([' ', '\t']).to_string(),
                 line[colon + 1..].trim(),
@@ -545,15 +510,8 @@ pub fn read_in_quotes(line: &str) -> Cow<'_, str> {
 }
 fn flow_items(value: &str) -> Vec<String> {
     let value = uncommented(value);
-    if let Some(list) = value
-        .trim()
-        .strip_prefix('[')
-        .and_then(|one| one.strip_suffix(']'))
-    {
-        return members(list)
-            .into_iter()
-            .filter_map(|one| unquoted(one.trim()))
-            .collect();
+    if let Some(list) = value.trim().strip_prefix('[').and_then(|one| one.strip_suffix(']')) {
+        return members(list).into_iter().filter_map(|one| unquoted(one.trim())).collect();
     }
     unquoted(value).into_iter().collect()
 }
@@ -620,9 +578,7 @@ fn unquoted(value: &str) -> Option<String> {
     }
 }
 fn within(value: &str, quote: char) -> Option<&str> {
-    value
-        .strip_prefix(quote)
-        .and_then(|one| one.strip_suffix(quote))
+    value.strip_prefix(quote).and_then(|one| one.strip_suffix(quote))
 }
 #[cfg(test)]
 mod tests {
@@ -638,15 +594,10 @@ mod tests {
     fn a_list_reads_past_a_comment_on_its_key_and_a_space_at_the_end_of_its_first_line() {
         let read = |text: &str, key: &str| {
             let block = super::block(text);
-            block
-                .map(|block| super::list(text, &block, key))
-                .unwrap_or_default()
+            block.map(|block| super::list(text, &block, key)).unwrap_or_default()
         };
         assert_eq!(
-            read(
-                "---\naliases: # other names\n  - a\n  - b\n---\n",
-                "aliases"
-            ),
+            read("---\naliases: # other names\n  - a\n  - b\n---\n", "aliases"),
             vec!["a", "b"]
         );
         assert_eq!(
@@ -657,10 +608,7 @@ mod tests {
             read("---\r\naliases: [Alpha, \r\n  Beta]\r\n---\r\n", "aliases"),
             vec!["Alpha", "Beta"]
         );
-        assert_eq!(
-            read("---\ntitle: \"one \n  two\"\n---\n", "title"),
-            vec!["one two"]
-        );
+        assert_eq!(read("---\ntitle: \"one \n  two\"\n---\n", "title"), vec!["one two"]);
     }
     #[test]
     fn the_block_is_the_lines_between_two_fences() {
@@ -690,10 +638,7 @@ mod tests {
     fn a_byte_order_mark_in_front_of_the_fence() {
         let note = "\u{feff}---\naliases: [Proj]\nicon: star\n---\nbody\n";
         let found = block(note).expect("a block");
-        assert_eq!(
-            &note[found.from..found.close],
-            "aliases: [Proj]\nicon: star\n"
-        );
+        assert_eq!(&note[found.from..found.close], "aliases: [Proj]\nicon: star\n");
         assert_eq!(&note[found.end..], "\nbody\n");
         assert_eq!(icon(note).as_deref(), Some("star"));
         assert_eq!(aliases(note), vec!["Proj"]);
@@ -703,30 +648,15 @@ mod tests {
         assert!(block("  ---\nicon: rocket\n---\n").is_none());
         assert!(block("\t---\nicon: rocket\n---\n").is_none());
         assert_eq!(icon("  ---\nicon: rocket\n---\n"), None);
-        assert_eq!(
-            icon("---  \nicon: rocket\n---\n").as_deref(),
-            Some("rocket")
-        );
+        assert_eq!(icon("---  \nicon: rocket\n---\n").as_deref(), Some("rocket"));
     }
     #[test]
     fn reads_a_key_from_the_front_matter() {
-        assert_eq!(
-            icon("---\nicon: rocket\n---\n\n# Plan").as_deref(),
-            Some("rocket")
-        );
-        assert_eq!(
-            icon("---\ntitle: Plan\nicon: file-text\n---\n").as_deref(),
-            Some("file-text")
-        );
+        assert_eq!(icon("---\nicon: rocket\n---\n\n# Plan").as_deref(), Some("rocket"));
+        assert_eq!(icon("---\ntitle: Plan\nicon: file-text\n---\n").as_deref(), Some("file-text"));
         assert_eq!(icon("---\nICON: rocket\n---\n").as_deref(), Some("rocket"));
-        assert_eq!(
-            icon("---\nicon: \"rocket\"\n---\n").as_deref(),
-            Some("rocket")
-        );
-        assert_eq!(
-            icon("---\nicon: 'rocket'\n---\n").as_deref(),
-            Some("rocket")
-        );
+        assert_eq!(icon("---\nicon: \"rocket\"\n---\n").as_deref(), Some("rocket"));
+        assert_eq!(icon("---\nicon: 'rocket'\n---\n").as_deref(), Some("rocket"));
         assert_eq!(icon("---\nicon: 🚀\n---\n").as_deref(), Some("🚀"));
         assert_eq!(icon("# Plan\n\nwords"), None);
         assert_eq!(icon("---\ntitle: Plan\n---\n"), None);
@@ -734,10 +664,7 @@ mod tests {
         assert_eq!(icon("---\nicon: rocket\n\n# Plan"), None);
         assert_eq!(icon("---\ntitle: Plan\n---\n\nicon: rocket\n"), None);
         assert_eq!(icon("---\nexport:\n  icon: rocket\n---\n"), None);
-        assert_eq!(
-            icon("---\r\nicon: rocket\r\n---\r\n").as_deref(),
-            Some("rocket")
-        );
+        assert_eq!(icon("---\r\nicon: rocket\r\n---\r\n").as_deref(), Some("rocket"));
     }
     #[test]
     fn reads_a_list_however_it_is_written() {
@@ -745,10 +672,7 @@ mod tests {
             aliases("---\naliases: [\n  One, # first\n  # a note\n  \"Two\",\n]\nz: 1\n---\n"),
             vec!["One", "Two"]
         );
-        assert_eq!(
-            aliases("---\r\naliases: [\r\n  One,\r\n]\r\nz: 1\r\n---\r\n"),
-            vec!["One"]
-        );
+        assert_eq!(aliases("---\r\naliases: [\r\n  One,\r\n]\r\nz: 1\r\n---\r\n"), vec!["One"]);
         assert_eq!(aliases("---\naliases: [One\nz: 1\n---\n"), vec!["[One"]);
         assert_eq!(
             aliases("---\naliases: [One, Two]\n---\n"),
@@ -758,19 +682,13 @@ mod tests {
             aliases("---\naliases:\n  - One\n  - Two\n---\n"),
             vec!["One".to_string(), "Two".to_string()]
         );
-        assert_eq!(
-            aliases("---\naliases:\n- One\n---\n"),
-            vec!["One".to_string()]
-        );
+        assert_eq!(aliases("---\naliases:\n- One\n---\n"), vec!["One".to_string()]);
         assert_eq!(aliases("---\naliases: One\n---\n"), vec!["One".to_string()]);
         assert_eq!(
             aliases("---\naliases: [\"One\", 'Two']\n---\n"),
             vec!["One".to_string(), "Two".to_string()]
         );
-        assert_eq!(
-            aliases("---\naliases:\n  - \"One two\"\n---\n"),
-            vec!["One two".to_string()]
-        );
+        assert_eq!(aliases("---\naliases:\n  - \"One two\"\n---\n"), vec!["One two".to_string()]);
         assert_eq!(
             aliases("---\naliases:\n  - One\ntitle: Not an alias\n---\n"),
             vec!["One".to_string()]
@@ -799,31 +717,16 @@ mod tests {
     }
     #[test]
     fn a_quoted_value_reads_as_the_words_its_quotes_spell() {
-        assert_eq!(
-            aliases("---\naliases: ['Rock ''n'' Roll']\n---\n"),
-            vec!["Rock 'n' Roll"]
-        );
-        assert_eq!(
-            aliases("---\naliases: \"Say \\\"hi\\\"\"\n---\n"),
-            vec!["Say \"hi\""]
-        );
+        assert_eq!(aliases("---\naliases: ['Rock ''n'' Roll']\n---\n"), vec!["Rock 'n' Roll"]);
+        assert_eq!(aliases("---\naliases: \"Say \\\"hi\\\"\"\n---\n"), vec!["Say \"hi\""]);
         assert_eq!(aliases("---\naliases:\n  - 'it''s'\n---\n"), vec!["it's"]);
-        assert_eq!(
-            icon("---\nicon: \"a\\\\b\"\n---\n").as_deref(),
-            Some("a\\b")
-        );
+        assert_eq!(icon("---\nicon: \"a\\\\b\"\n---\n").as_deref(), Some("a\\b"));
     }
     #[test]
     fn a_key_is_spelled_as_written_up_to_its_colon_and_comment() {
         assert_eq!(aliases("---\n\"aliases\": [A]\n---\n"), vec!["A"]);
-        assert_eq!(
-            icon("---\n'icon': rocket\n---\n").as_deref(),
-            Some("rocket")
-        );
-        assert_eq!(
-            icon("---\nicon: rocket # was star\n---\n").as_deref(),
-            Some("rocket")
-        );
+        assert_eq!(icon("---\n'icon': rocket\n---\n").as_deref(), Some("rocket"));
+        assert_eq!(icon("---\nicon: rocket # was star\n---\n").as_deref(), Some("rocket"));
         assert_eq!(icon("---\nicon: 'a # b'\n---\n").as_deref(), Some("a # b"));
         assert_eq!(icon("---\nicon:rocket\n---\n"), None);
         assert_eq!(icon("---\nicon:\n---\n"), None);

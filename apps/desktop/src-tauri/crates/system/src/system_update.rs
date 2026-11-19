@@ -40,12 +40,8 @@ mod linux {
 
     const PACKAGE: &str = "orden";
     const OURS: [&str; 2] = ["apt.orden.so", "rpm.orden.so"];
-    const SOURCES: [&str; 4] = [
-        "/etc/apt/sources.list.d",
-        "/etc/yum.repos.d",
-        "/etc/zypp/repos.d",
-        "/etc/apt",
-    ];
+    const SOURCES: [&str; 4] =
+        ["/etc/apt/sources.list.d", "/etc/yum.repos.d", "/etc/zypp/repos.d", "/etc/apt"];
     pub async fn update(webview: Webview, channel: &str, version: &str) -> Result<(), NotUpdated> {
         let format = match tauri::utils::platform::bundle_type() {
             Some(BundleType::Deb) => Format::Deb,
@@ -90,9 +86,8 @@ mod linux {
                 false,
             ));
         }
-        let (file, bytes) = fetched(&webview, channel, format)
-            .await
-            .map_err(|reason| not(reason, false))?;
+        let (file, bytes) =
+            fetched(&webview, channel, format).await.map_err(|reason| not(reason, false))?;
         let folder = webview
             .app_handle()
             .path()
@@ -120,13 +115,9 @@ mod linux {
         channel: &str,
         format: Format,
     ) -> Result<(PathBuf, Vec<u8>), String> {
-        let mut builder = webview
-            .updater_builder()
-            .target(target(std::env::consts::ARCH, format));
+        let mut builder = webview.updater_builder().target(target(std::env::consts::ARCH, format));
         if let Some(endpoints) = crate::updates::endpoints(channel) {
-            builder = builder
-                .endpoints(endpoints)
-                .map_err(|error| error.to_string())?;
+            builder = builder.endpoints(endpoints).map_err(|error| error.to_string())?;
         }
         let update = builder
             .build()
@@ -136,10 +127,7 @@ mod linux {
             .map_err(|error| error.to_string())?
             .ok_or("no newer version on the channel")?;
         crate::updates::offered(channel, &update.version, update.download_url.as_str())?;
-        let bytes = update
-            .download(|_, _| {}, || {})
-            .await
-            .map_err(|error| error.to_string())?;
+        let bytes = update.download(|_, _| {}, || {}).await.map_err(|error| error.to_string())?;
         let file = format!("{PACKAGE}-{}.{}", update.version, extension(format));
         Ok((PathBuf::from(file), bytes))
     }
@@ -153,11 +141,7 @@ mod linux {
         }
     }
     pub(super) fn release_url(version: &str, arch: &str, format: Format) -> String {
-        let tag = if version.contains('-') {
-            "edge".to_owned()
-        } else {
-            format!("v{version}")
-        };
+        let tag = if version.contains('-') { "edge".to_owned() } else { format!("v{version}") };
         let label = if arch == "aarch64" { "arm64" } else { "x64" };
         format!(
             "https://github.com/lxorb/orden/releases/download/{tag}/Orden-{version}-linux-{label}.{}",
@@ -217,22 +201,13 @@ mod tests {
     #[test]
     fn a_terminal_is_told_the_repositorys_update_or_the_package() {
         let url = "https://example.invalid/Orden-0.20.0-linux-x64.rpm";
-        assert_eq!(
-            command(Format::Rpm, false, true, url),
-            "sudo dnf upgrade --refresh orden"
-        );
+        assert_eq!(command(Format::Rpm, false, true, url), "sudo dnf upgrade --refresh orden");
         assert_eq!(
             command(Format::Rpm, true, true, url),
             "sudo zypper refresh && sudo zypper update orden"
         );
-        assert_eq!(
-            command(Format::Rpm, false, false, url),
-            format!("sudo dnf install {url}")
-        );
-        assert_eq!(
-            command(Format::Rpm, true, false, url),
-            format!("sudo zypper install {url}")
-        );
+        assert_eq!(command(Format::Rpm, false, false, url), format!("sudo dnf install {url}"));
+        assert_eq!(command(Format::Rpm, true, false, url), format!("sudo zypper install {url}"));
         assert_eq!(
             command(Format::Deb, false, true, url),
             "sudo apt update && sudo apt install --only-upgrade orden"
@@ -245,11 +220,8 @@ mod tests {
     fn a_repository_is_ours_by_its_address() {
         let folder = tempfile::tempdir().expect("a folder");
         assert!(!names_ours(folder.path()));
-        std::fs::write(
-            folder.path().join("fedora.repo"),
-            "baseurl=https://fedora.example/",
-        )
-        .expect("a file");
+        std::fs::write(folder.path().join("fedora.repo"), "baseurl=https://fedora.example/")
+            .expect("a file");
         assert!(!names_ours(folder.path()));
         std::fs::write(
             folder.path().join("orden.repo"),

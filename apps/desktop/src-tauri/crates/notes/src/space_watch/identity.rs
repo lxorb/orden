@@ -5,18 +5,13 @@ pub fn identity(path: &Path) -> Option<String> {
     use file_id::FileId;
 
     Some(match file_id::get_file_id(path).ok()? {
-        FileId::HighRes {
-            volume_serial_number,
-            file_id,
-        } => format!("{volume_serial_number:x}:{file_id:x}"),
-        FileId::LowRes {
-            volume_serial_number,
-            file_index,
-        } => format!("{volume_serial_number:x}:{file_index:x}"),
-        FileId::Inode {
-            device_id,
-            inode_number,
-        } => format!("{device_id:x}:{inode_number:x}"),
+        FileId::HighRes { volume_serial_number, file_id } => {
+            format!("{volume_serial_number:x}:{file_id:x}")
+        }
+        FileId::LowRes { volume_serial_number, file_index } => {
+            format!("{volume_serial_number:x}:{file_index:x}")
+        }
+        FileId::Inode { device_id, inode_number } => format!("{device_id:x}:{inode_number:x}"),
     })
 }
 #[cfg(unix)]

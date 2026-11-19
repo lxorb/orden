@@ -9,10 +9,7 @@ fn a_pass_stretches_to_the_key_every_side_derives() {
         let _ = write!(out, "{one:02x}");
         out
     });
-    assert_eq!(
-        hex,
-        "09316115d5cf24ed5a15a31a3ba326e5cf32edc24702987c02b6566f61913cf7"
-    );
+    assert_eq!(hex, "09316115d5cf24ed5a15a31a3ba326e5cf32edc24702987c02b6566f61913cf7");
 }
 #[test]
 fn a_short_salt_is_refused() {

@@ -23,9 +23,7 @@ fn root(webview: &Webview) -> Result<PathBuf, String> {
 fn name(id: &str) -> Result<&str, String> {
     let fits = !id.is_empty()
         && id.len() <= 80
-        && id
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+        && id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
     if fits {
         Ok(id)
     } else {
@@ -57,9 +55,7 @@ fn write(path: &Path, history: &History) -> Result<(), String> {
     if history.text.len() > MOST_TEXT {
         return Err("a terminal's history is kept to two megabytes".to_owned());
     }
-    let parent = path
-        .parent()
-        .ok_or_else(|| "a history has a folder".to_owned())?;
+    let parent = path.parent().ok_or_else(|| "a history has a folder".to_owned())?;
     fs::create_dir_all(parent).map_err(|error| error.to_string())?;
     let bytes = serde_json::to_vec(history).map_err(|error| error.to_string())?;
     let part = scratch(path);
@@ -148,12 +144,7 @@ mod tests {
     use super::*;
 
     fn history(text: &str, at: u64) -> History {
-        History {
-            cols: 120,
-            rows: 30,
-            at,
-            text: text.to_owned(),
-        }
+        History { cols: 120, rows: 30, at, text: text.to_owned() }
     }
     #[test]
     fn a_name_is_an_id_and_nothing_else() {
@@ -162,25 +153,10 @@ mod tests {
             file(root, Some("0-abc123"), "k-1").unwrap(),
             root.join("0-abc123").join("k-1.json")
         );
-        assert_eq!(
-            file(root, None, "k").unwrap(),
-            root.join("none").join("k.json")
-        );
-        for bad in [
-            "",
-            "..",
-            "../x",
-            "a/b",
-            "a\\b",
-            "c:",
-            "a b",
-            &"x".repeat(81),
-        ] {
+        assert_eq!(file(root, None, "k").unwrap(), root.join("none").join("k.json"));
+        for bad in ["", "..", "../x", "a/b", "a\\b", "c:", "a b", &"x".repeat(81)] {
             assert!(file(root, None, bad).is_err(), "key {bad:?} was taken");
-            assert!(
-                file(root, Some(bad), "k").is_err(),
-                "space {bad:?} was taken"
-            );
+            assert!(file(root, Some(bad), "k").is_err(), "space {bad:?} was taken");
         }
     }
     #[test]
@@ -228,22 +204,12 @@ mod tests {
             let path = space.join(format!("t{turn}.json"));
             write(&path, &history("screen", 0)).unwrap();
             if turn < 3 {
-                fs::File::options()
-                    .write(true)
-                    .open(&path)
-                    .unwrap()
-                    .set_modified(old)
-                    .unwrap();
+                fs::File::options().write(true).open(&path).unwrap().set_modified(old).unwrap();
             }
         }
         let part = space.join("t0.7.part");
         fs::write(&part, b"half").unwrap();
-        fs::File::options()
-            .write(true)
-            .open(&part)
-            .unwrap()
-            .set_modified(old)
-            .unwrap();
+        fs::File::options().write(true).open(&part).unwrap().set_modified(old).unwrap();
         prune(&space);
         let left = fs::read_dir(&space).unwrap().count();
         assert_eq!(left, MOST_PER_SPACE);

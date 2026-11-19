@@ -31,10 +31,8 @@ pub fn say(app: &AppHandle, level: &str, message: &str) {
     let Ok(dir) = app.path().app_log_dir() else {
         return;
     };
-    let _ = writer().send((
-        dir.join(FILE),
-        line(level, message, &crate::clock::iso(crate::clock::now())),
-    ));
+    let _ = writer()
+        .send((dir.join(FILE), line(level, message, &crate::clock::iso(crate::clock::now()))));
 }
 fn line(level: &str, message: &str, at: &str) -> String {
     format!(
@@ -66,8 +64,7 @@ fn append(path: &Path, line: &str) -> Result<(), String> {
         .append(true)
         .open(path)
         .map_err(|error| cannot("write", path, &error))?;
-    file.write_all(line.as_bytes())
-        .map_err(|error| cannot("write", path, &error))
+    file.write_all(line.as_bytes()).map_err(|error| cannot("write", path, &error))
 }
 fn carried(path: &Path) {
     let former = path.with_file_name(FORMER);
@@ -77,20 +74,13 @@ fn carried(path: &Path) {
 }
 #[tauri::command(async)]
 pub fn read_log(app: AppHandle) -> String {
-    log_file(&app)
-        .ok()
-        .and_then(|path| fs::read_to_string(path).ok())
-        .unwrap_or_default()
+    log_file(&app).ok().and_then(|path| fs::read_to_string(path).ok()).unwrap_or_default()
 }
 fn log_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(paths::log_dir(app)?.join(FILE))
 }
 fn one_line(message: &str, limit: usize) -> String {
-    message
-        .replace(['\r', '\n'], " ⏎ ")
-        .chars()
-        .take(limit)
-        .collect()
+    message.replace(['\r', '\n'], " ⏎ ").chars().take(limit).collect()
 }
 #[cfg(test)]
 mod tests {
@@ -103,10 +93,7 @@ mod tests {
     }
     #[test]
     fn caps_how_long_a_line_can_get() {
-        assert_eq!(
-            one_line(&"x".repeat(5000), MAX_MESSAGE).chars().count(),
-            MAX_MESSAGE
-        );
+        assert_eq!(one_line(&"x".repeat(5000), MAX_MESSAGE).chars().count(), MAX_MESSAGE);
     }
     #[test]
     fn a_timestamp_cannot_forge_a_second_entry() {
@@ -134,10 +121,8 @@ mod tests {
             std::thread::sleep(std::time::Duration::from_millis(5));
         }
         let text = std::fs::read_to_string(&path).expect("the log");
-        let numbers: Vec<usize> = text
-            .lines()
-            .filter_map(|one| one.rsplit(' ').next()?.parse().ok())
-            .collect();
+        let numbers: Vec<usize> =
+            text.lines().filter_map(|one| one.rsplit(' ').next()?.parse().ok()).collect();
         assert_eq!(numbers, (0..200).collect::<Vec<_>>());
     }
     #[test]
@@ -160,9 +145,7 @@ mod tests {
         append(&path, "fresh\n").expect("the line");
         assert_eq!(std::fs::read_to_string(&path).expect("the log"), "fresh\n");
         assert_eq!(
-            std::fs::metadata(path.with_extension("log.1"))
-                .expect("the rolled log")
-                .len(),
+            std::fs::metadata(path.with_extension("log.1")).expect("the rolled log").len(),
             MAX_BYTES + 1
         );
     }

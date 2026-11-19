@@ -12,17 +12,9 @@ impl Seen {
     fn said(&self) -> String {
         format!(
             "{} ({}; {})",
-            if self.hardware {
-                "hardware"
-            } else {
-                "software"
-            },
+            if self.hardware { "hardware" } else { "software" },
             self.renderer,
-            if self.gpu_process {
-                "a GPU process"
-            } else {
-                "no GPU process"
-            }
+            if self.gpu_process { "a GPU process" } else { "no GPU process" }
         )
     }
 }
@@ -55,16 +47,9 @@ pub fn gpu_line() -> Option<String> {
 }
 fn software(renderer: &str) -> bool {
     let renderer = renderer.to_lowercase();
-    [
-        "swiftshader",
-        "llvmpipe",
-        "softpipe",
-        "lavapipe",
-        "software",
-        "basic render driver",
-    ]
-    .iter()
-    .any(|one| renderer.contains(one))
+    ["swiftshader", "llvmpipe", "softpipe", "lavapipe", "software", "basic render driver"]
+        .iter()
+        .any(|one| renderer.contains(one))
 }
 fn gpu_process() -> bool {
     let own = std::process::id().to_string();
@@ -79,8 +64,7 @@ fn gpu_process() -> bool {
             .map(|stat| stat.parent.to_string());
         parent.as_deref() == Some(own.as_str())
             && std::fs::read(path.join("cmdline")).is_ok_and(|line| {
-                line.split(|byte| *byte == 0)
-                    .any(|arg| arg == b"--type=gpu-process")
+                line.split(|byte| *byte == 0).any(|arg| arg == b"--type=gpu-process")
             })
     })
 }
@@ -91,16 +75,10 @@ pub fn gpu_seen(app: tauri::AppHandle<orden_base::Engine>, renderer: Option<Stri
     }
     let gpu_process = gpu_process();
     let seen = match renderer {
-        Some(renderer) if !renderer.trim().is_empty() => Seen {
-            hardware: !software(&renderer),
-            renderer,
-            gpu_process,
-        },
-        _ => Seen {
-            hardware: false,
-            renderer: "no WebGL".to_owned(),
-            gpu_process,
-        },
+        Some(renderer) if !renderer.trim().is_empty() => {
+            Seen { hardware: !software(&renderer), renderer, gpu_process }
+        }
+        _ => Seen { hardware: false, renderer: "no WebGL".to_owned(), gpu_process },
     };
     let line = format!("gpu: {}", seen.said());
     if SEEN.set(seen).is_ok() {
@@ -113,11 +91,7 @@ mod tests {
 
     #[test]
     fn what_draws_is_said_as_the_log_says_it() {
-        let seen = Seen {
-            hardware: false,
-            renderer: "no WebGL".to_owned(),
-            gpu_process: false,
-        };
+        let seen = Seen { hardware: false, renderer: "no WebGL".to_owned(), gpu_process: false };
         assert_eq!(seen.said(), "software (no WebGL; no GPU process)");
     }
     #[test]
@@ -134,18 +108,14 @@ mod tests {
     #[test]
     fn a_software_renderer_is_told_from_a_card() {
         assert!(software("ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"));
-        assert!(software(
-            "ANGLE (Mesa, llvmpipe (LLVM 19.1.7, 256 bits), OpenGL 4.5)"
-        ));
+        assert!(software("ANGLE (Mesa, llvmpipe (LLVM 19.1.7, 256 bits), OpenGL 4.5)"));
         assert!(software(
             "ANGLE (Microsoft, Microsoft Basic Render Driver (0x0000008C) Direct3D11 vs_5_0 ps_5_0, D3D11)"
         ));
         assert!(!software(
             "ANGLE (Qualcomm, Qualcomm(R) Adreno(TM) X1-85 GPU Direct3D11 vs_5_0 ps_5_0, D3D11)"
         ));
-        assert!(!software(
-            "ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)"
-        ));
+        assert!(!software("ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)"));
         assert!(!software(
             "ANGLE (AMD, AMD Radeon RX 6600 (radeonsi, navi23, LLVM 19.1.7, DRM 3.59), OpenGL 4.6)"
         ));

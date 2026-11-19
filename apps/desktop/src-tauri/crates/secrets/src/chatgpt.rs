@@ -40,10 +40,7 @@ fn owner(webview: &Webview) -> Result<(), String> {
     orden_base::labels::own_window(webview).map(drop)
 }
 fn installation_file(app: &AppHandle) -> Result<PathBuf, String> {
-    let folder = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| error.to_string())?;
+    let folder = app.path().app_local_data_dir().map_err(|error| error.to_string())?;
     std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
     Ok(folder.join("chatgpt.json"))
 }
@@ -67,10 +64,7 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
     }
     let mut random = [0_u8; 16];
     getrandom::fill(&mut random).map_err(|error| error.to_string())?;
-    let made = Installation {
-        host: oauth::host_id(&random),
-        ..Installation::default()
-    };
+    let made = Installation { host: oauth::host_id(&random), ..Installation::default() };
     keep(app, &made)?;
     Ok(made)
 }
@@ -103,11 +97,7 @@ async fn tokens(form: &[(&str, &str)]) -> Result<Tokens, String> {
     let body = answer.bytes().await.map_err(|error| error.to_string())?;
     if !status.is_success() {
         let code = oauth::token_error(&body).unwrap_or_else(|| status.as_u16().to_string());
-        return Err(if oauth::grant_gone(&code) {
-            "signed out".to_owned()
-        } else {
-            code
-        });
+        return Err(if oauth::grant_gone(&code) { "signed out".to_owned() } else { code });
     }
     serde_json::from_slice(&body).map_err(|error| error.to_string())
 }
@@ -116,9 +106,7 @@ fn wait_for_callback(
     state: &str,
     stop: &AtomicBool,
 ) -> Result<(String, Option<String>), String> {
-    listener
-        .set_nonblocking(true)
-        .map_err(|error| error.to_string())?;
+    listener.set_nonblocking(true).map_err(|error| error.to_string())?;
     let started = Instant::now();
     while started.elapsed() < SIGNING_IN {
         if stop.load(Ordering::SeqCst) {
@@ -152,11 +140,7 @@ fn answer_callback(
             "Orden is signed in to ChatGPT. This tab can be closed.",
             Some(Ok((code, client))),
         ),
-        Callback::Refused(why) => (
-            "200 OK",
-            "Orden was not signed in to ChatGPT.",
-            Some(Err(why)),
-        ),
+        Callback::Refused(why) => ("200 OK", "Orden was not signed in to ChatGPT.", Some(Err(why))),
         Callback::Other => ("404 Not Found", "", None),
     };
     let page = format!(
@@ -188,10 +172,7 @@ pub async fn chatgpt_sign_in(webview: Webview) -> Result<Account, String> {
     let listener = TcpListener::bind(SocketAddr::from((Ipv4Addr::LOCALHOST, PORT)))
         .or_else(|_| TcpListener::bind(SocketAddr::from((Ipv4Addr::LOCALHOST, 0))))
         .map_err(|error| error.to_string())?;
-    let port = listener
-        .local_addr()
-        .map_err(|error| error.to_string())?
-        .port();
+    let port = listener.local_addr().map_err(|error| error.to_string())?.port();
     let url = oauth::authorize_url(&attempt, port, &found.host, found.client.as_deref());
     tauri_plugin_opener::open_url(url, None::<&str>).map_err(|error| error.to_string())?;
     let expected = attempt.state.clone();
@@ -214,10 +195,8 @@ pub async fn chatgpt_sign_in(webview: Webview) -> Result<Account, String> {
         ("resource", oauth::RESOURCE),
     ])
     .await?;
-    let refresh = got
-        .refresh_token
-        .clone()
-        .ok_or_else(|| "OpenAI sent no refresh token".to_owned())?;
+    let refresh =
+        got.refresh_token.clone().ok_or_else(|| "OpenAI sent no refresh token".to_owned())?;
     crate::secrets::set(&app, REFRESH, &refresh)?;
     found.client = Some(client_id);
     found.email = got.id_token.as_deref().and_then(oauth::email_in);

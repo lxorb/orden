@@ -62,10 +62,7 @@ fn xor_address(value: &[u8], id: [u8; 12]) -> Option<SocketAddr> {
 }
 pub fn reflexive(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
     let local = socket.local_addr().ok()?;
-    let server = server
-        .to_socket_addrs()
-        .ok()?
-        .find(|one| one.is_ipv4() == local.is_ipv4())?;
+    let server = server.to_socket_addrs().ok()?.find(|one| one.is_ipv4() == local.is_ipv4())?;
     let mut id = [0_u8; 12];
     getrandom::fill(&mut id).ok()?;
     socket.send_to(&request(id), server).ok()?;
@@ -73,9 +70,7 @@ pub fn reflexive(socket: &UdpSocket, server: &str) -> Option<SocketAddr> {
     let mut buffer = [0_u8; 1500];
     loop {
         let left = until.checked_duration_since(Instant::now())?;
-        socket
-            .set_read_timeout(Some(left.max(Duration::from_millis(1))))
-            .ok()?;
+        socket.set_read_timeout(Some(left.max(Duration::from_millis(1)))).ok()?;
         let (length, from) = socket.recv_from(&mut buffer).ok()?;
         if from != server {
             continue;

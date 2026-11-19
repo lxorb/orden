@@ -22,27 +22,11 @@ impl Pressed {
         self.code == "F11"
     }
     pub const fn with_ctrl(key: &'static str, code: &'static str, shift: bool) -> Self {
-        Self {
-            key,
-            code,
-            held: Held {
-                ctrl: true,
-                shift,
-                alt: false,
-            },
-            repeat: false,
-            down: true,
-        }
+        Self { key, code, held: Held { ctrl: true, shift, alt: false }, repeat: false, down: true }
     }
 }
 pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
-    let pressed = |key, code| Pressed {
-        key,
-        code,
-        held,
-        repeat,
-        down,
-    };
+    let pressed = |key, code| Pressed { key, code, held, repeat, down };
     if !down {
         return match vk {
             0x11 => Some(pressed("Control", "ControlLeft")),
@@ -82,13 +66,7 @@ pub fn told(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed> {
     if !down || repeat || held.ctrl {
         return None;
     }
-    let pressed = |key, code| Pressed {
-        key,
-        code,
-        held,
-        repeat,
-        down,
-    };
+    let pressed = |key, code| Pressed { key, code, held, repeat, down };
     if vk == 0x12 {
         return (!held.shift).then(|| pressed("Alt", "AltLeft"));
     }
@@ -140,10 +118,8 @@ fn named(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
         ("y", "Y", "KeyY"),
         ("z", "Z", "KeyZ"),
     ];
-    let letter = vk
-        .checked_sub(0x41)
-        .and_then(|at| usize::try_from(at).ok())
-        .and_then(|at| LETTERS.get(at));
+    let letter =
+        vk.checked_sub(0x41).and_then(|at| usize::try_from(at).ok()).and_then(|at| LETTERS.get(at));
     match letter {
         Some(&(small, capital, code)) => Some((if shift { capital } else { small }, code)),
         None => digit(vk),
@@ -180,21 +156,12 @@ impl Chord {
             return None;
         }
         let vk = u32::from(*one);
-        Some(Self {
-            vk,
-            held: Held {
-                ctrl: asked.ctrl,
-                shift: asked.shift,
-                alt: asked.alt,
-            },
-        })
+        Some(Self { vk, held: Held { ctrl: asked.ctrl, shift: asked.shift, alt: asked.alt } })
     }
 }
 static TAKEN: std::sync::RwLock<Vec<(String, Vec<Chord>)>> = std::sync::RwLock::new(Vec::new());
 fn take(window: &str, chords: Vec<Chord>) {
-    let mut taken = TAKEN
-        .write()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut taken = TAKEN.write().unwrap_or_else(std::sync::PoisonError::into_inner);
     taken.retain(|(one, _)| one != window);
     taken.push((window.to_owned(), chords));
 }
@@ -223,13 +190,7 @@ fn app_s(vk: u32, held: Held, down: bool, repeat: bool, taken: &[Chord]) -> Opti
         return None;
     }
     let (key, code) = named(vk, held.shift)?;
-    Some(Pressed {
-        key,
-        code,
-        held,
-        repeat,
-        down,
-    })
+    Some(Pressed { key, code, held, repeat, down })
 }
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn heard_raw(
@@ -245,11 +206,7 @@ fn heard_raw(
         let chord = meaning(vk, held, true, repeat).is_some()
             || reloading(vk, held).is_some()
             || app_s(vk, held, true, repeat, taken).is_some();
-        let said = if chord {
-            None
-        } else {
-            told(vk, held, true, repeat)
-        };
+        let said = if chord { None } else { told(vk, held, true, repeat) };
         return said.filter(|_| page());
     }
     let said = meaning(vk, held, false, repeat)?;
@@ -257,10 +214,7 @@ fn heard_raw(
 }
 #[tauri::command(async)]
 pub fn web_keys_take(app: tauri::AppHandle, window: tauri::Window, chords: Vec<Asked>) -> bool {
-    take(
-        window.label(),
-        chords.iter().filter_map(Chord::of).collect(),
-    );
+    take(window.label(), chords.iter().filter_map(Chord::of).collect());
     tells_alt(&app)
 }
 #[cfg(target_os = "linux")]
@@ -276,13 +230,7 @@ fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     if held.alt {
         return None;
     }
-    let pressed = |key, code| Pressed {
-        key,
-        code,
-        held,
-        repeat: false,
-        down: true,
-    };
+    let pressed = |key, code| Pressed { key, code, held, repeat: false, down: true };
     match (vk, held.ctrl, held.shift) {
         (0x74, _, false) => Some(pressed("F5", "F5")),
         (0x52, true, false) => Some(pressed("r", "KeyR")),
@@ -350,11 +298,7 @@ mod grabbed {
     ];
     const LOCKS: [u16; 4] = [0, 0x02, 0x10, 0x12];
     fn held_by(state: u16) -> Held {
-        Held {
-            shift: state & 0x01 != 0,
-            ctrl: state & 0x04 != 0,
-            alt: state & 0x08 != 0,
-        }
+        Held { shift: state & 0x01 != 0, ctrl: state & 0x04 != 0, alt: state & 0x08 != 0 }
     }
     fn mask_of(held: Held) -> u16 {
         u16::from(held.shift) | (u16::from(held.ctrl) << 2) | (u16::from(held.alt) << 3)
@@ -371,11 +315,7 @@ mod grabbed {
             }
         }
         for one in taken {
-            let key = if (0x41..=0x5A).contains(&one.vk) {
-                one.vk + 0x20
-            } else {
-                one.vk
-            };
+            let key = if (0x41..=0x5A).contains(&one.vk) { one.vk + 0x20 } else { one.vk };
             let chord = (key, mask_of(one.held));
             if !every.contains(&chord) {
                 every.push(chord);
@@ -421,11 +361,8 @@ mod grabbed {
                 .ok()
                 .and_then(|cookie| cookie.reply().ok());
             if let Some(read) = read {
-                *self.map.held() = Map {
-                    first,
-                    per: usize::from(read.keysyms_per_keycode),
-                    syms: read.keysyms,
-                };
+                *self.map.held() =
+                    Map { first, per: usize::from(read.keysyms_per_keycode), syms: read.keysyms };
             }
         }
         fn grab(&self, page: u32) {
@@ -480,11 +417,8 @@ mod grabbed {
             let Some(vk) = sym.and_then(vk_of) else {
                 return;
             };
-            let Some(state) = self
-                .x
-                .query_pointer(self.root)
-                .ok()
-                .and_then(|cookie| cookie.reply().ok())
+            let Some(state) =
+                self.x.query_pointer(self.root).ok().and_then(|cookie| cookie.reply().ok())
             else {
                 return;
             };
@@ -519,12 +453,7 @@ mod grabbed {
                         continue;
                     }
                     Event::XinputRawKeyRelease(key) => {
-                        self.heard(
-                            app,
-                            &key,
-                            false,
-                            grabbing.as_ref().map(|one| one.1.as_str()),
-                        );
+                        self.heard(app, &key, false, grabbing.as_ref().map(|one| one.1.as_str()));
                         continue;
                     }
                     Event::FocusIn(focus) => {
@@ -608,10 +537,7 @@ mod grabbed {
             .clone()
     }
     fn raw_keys(x: &RustConnection, root: Window) -> bool {
-        let version = x
-            .xinput_xi_query_version(2, 2)
-            .ok()
-            .and_then(|cookie| cookie.reply().ok());
+        let version = x.xinput_xi_query_version(2, 2).ok().and_then(|cookie| cookie.reply().ok());
         if version.is_none_or(|one| (one.major_version, one.minor_version) < (2, 2)) {
             return false;
         }
@@ -619,8 +545,7 @@ mod grabbed {
             deviceid: Device::ALL_MASTER.into(),
             mask: vec![XIEventMask::RAW_KEY_PRESS | XIEventMask::RAW_KEY_RELEASE],
         };
-        x.xinput_xi_select_events(root, &[keys])
-            .is_ok_and(|cookie| cookie.check().is_ok())
+        x.xinput_xi_select_events(root, &[keys]).is_ok_and(|cookie| cookie.check().is_ok())
     }
     pub(super) fn retake(app: &AppHandle) -> bool {
         let Some(grabs) = grabs(app) else {
@@ -652,13 +577,8 @@ mod grabbed {
         #[test]
         fn the_app_s_chords_are_grabbed_with_the_browser_s() {
             let asked = |code: &str| {
-                Chord::of(&Asked {
-                    code: code.into(),
-                    ctrl: false,
-                    shift: false,
-                    alt: true,
-                })
-                .expect("a chord")
+                Chord::of(&Asked { code: code.into(), ctrl: false, shift: false, alt: true })
+                    .expect("a chord")
             };
             let before = chords(&[]);
             assert!(!before.contains(&(0x65, 0x08)));
@@ -669,11 +589,7 @@ mod grabbed {
         }
         #[test]
         fn a_digit_under_shift_is_still_the_key_s() {
-            let map = Map {
-                first: 10,
-                per: 2,
-                syms: vec![0x26, 0x31, 0xE9, 0x32, 0x61, 0x41],
-            };
+            let map = Map { first: 10, per: 2, syms: vec![0x26, 0x31, 0xE9, 0x32, 0x61, 0x41] };
             assert_eq!(map.keycodes(0x31), vec![10]);
             assert_eq!(map.keysym(10), Some(0x31));
             assert_eq!(map.keycodes(0x61), vec![12]);
@@ -688,23 +604,10 @@ mod tests {
         Chord, Held,
     };
 
-    const ALT: Held = Held {
-        ctrl: false,
-        shift: false,
-        alt: true,
-    };
-    const SHIFT: Held = Held {
-        ctrl: false,
-        shift: true,
-        alt: false,
-    };
+    const ALT: Held = Held { ctrl: false, shift: false, alt: true };
+    const SHIFT: Held = Held { ctrl: false, shift: true, alt: false };
     fn asked(code: &str, ctrl: bool, shift: bool, alt: bool) -> Option<Chord> {
-        Chord::of(&Asked {
-            code: code.into(),
-            ctrl,
-            shift,
-            alt,
-        })
+        Chord::of(&Asked { code: code.into(), ctrl, shift, alt })
     }
     #[test]
     fn a_chord_the_window_asks_for_is_taken_and_said_as_itself() {
@@ -714,14 +617,8 @@ mod tests {
         assert!(said.held.alt && said.down && !said.keeps_page());
         assert!(app_s(0x45, ALT, true, true, &taken).is_some_and(|one| one.repeat));
         assert_eq!(app_s(0x46, ALT, true, false, &taken), None);
-        assert_eq!(
-            app_s(0x45, Held { shift: true, ..ALT }, true, false, &taken),
-            None
-        );
-        assert_eq!(
-            app_s(0x45, Held { ctrl: true, ..ALT }, true, false, &taken),
-            None
-        );
+        assert_eq!(app_s(0x45, Held { shift: true, ..ALT }, true, false, &taken), None);
+        assert_eq!(app_s(0x45, Held { ctrl: true, ..ALT }, true, false, &taken), None);
         assert_eq!(app_s(0x45, ALT, false, false, &taken), None);
         assert_eq!(app_s(0x45, ALT, true, false, &[]), None);
     }
@@ -753,11 +650,7 @@ mod tests {
         let digit = asked("Digit7", false, false, true).expect("Alt and 7");
         assert!(app_s(0x37, ALT, true, false, &[digit]).is_some_and(|one| one.key == "7"));
         let ctrl = asked("KeyJ", true, true, false).expect("Ctrl, Shift and J");
-        let held = Held {
-            ctrl: true,
-            shift: true,
-            alt: false,
-        };
+        let held = Held { ctrl: true, shift: true, alt: false };
         assert!(app_s(0x4A, held, true, false, &[ctrl]).is_some_and(|one| one.key == "J"));
     }
     #[test]
@@ -768,35 +661,20 @@ mod tests {
                 .map(|one| (one.key, one.down))
         };
         assert_eq!(raw(0x12, ALT, true, false, true), Some(("Alt", true)));
-        assert_eq!(
-            raw(0x12, Held::default(), false, false, true),
-            Some(("Alt", false))
-        );
-        assert_eq!(
-            raw(0x44, ALT, true, false, true),
-            Some(("Unidentified", true))
-        );
+        assert_eq!(raw(0x12, Held::default(), false, false, true), Some(("Alt", false)));
+        assert_eq!(raw(0x44, ALT, true, false, true), Some(("Unidentified", true)));
         assert_eq!(raw(0x12, ALT, true, false, false), None);
         assert_eq!(raw(0x12, Held::default(), false, false, false), None);
         assert_eq!(raw(0x31, ALT, true, false, true), None);
         assert_eq!(raw(0x54, CTRL, true, false, true), None);
         assert_eq!(raw(0x74, Held::default(), true, false, true), None);
         assert_eq!(raw(0x45, ALT, true, false, true), None);
-        assert_eq!(
-            raw(0x11, Held::default(), false, true, false),
-            Some(("Control", false))
-        );
+        assert_eq!(raw(0x11, Held::default(), false, true, false), Some(("Control", false)));
         assert_eq!(raw(0x45, Held::default(), false, true, true), None);
         let shift = Held { shift: true, ..ALT };
         assert_eq!(raw(0x12, shift, true, false, true), None);
-        assert_eq!(
-            heard_raw(0x12, ALT, true, true, &taken, false, || true),
-            None
-        );
-        assert_eq!(
-            raw(0x12, Held { ctrl: true, ..ALT }, true, false, true),
-            None
-        );
+        assert_eq!(heard_raw(0x12, ALT, true, true, &taken, false, || true), None);
+        assert_eq!(raw(0x12, Held { ctrl: true, ..ALT }, true, false, true), None);
     }
     #[test]
     fn a_raw_key_asks_where_the_keyboard_is_only_when_it_has_to() {
@@ -835,10 +713,7 @@ mod tests {
     fn a_page_takes_the_keyboard_on_a_real_focus_in_only() {
         for mode in [0, 3] {
             for detail in 0..=4 {
-                assert!(
-                    page_took_focus(mode, detail),
-                    "mode {mode}, detail {detail}"
-                );
+                assert!(page_took_focus(mode, detail), "mode {mode}, detail {detail}");
             }
         }
         assert!(!page_took_focus(1, 3));
@@ -847,11 +722,7 @@ mod tests {
             assert!(!page_took_focus(0, detail));
         }
     }
-    const CTRL: Held = Held {
-        ctrl: true,
-        shift: false,
-        alt: false,
-    };
+    const CTRL: Held = Held { ctrl: true, shift: false, alt: false };
     fn down(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
         meaning(vk, Held { shift, ..CTRL }, true, false).map(|one| (one.key, one.code))
     }
@@ -896,10 +767,7 @@ mod tests {
     #[test]
     fn finding_and_the_address_field_s_other_keys_are_the_page_s_first() {
         for shift in [false, true] {
-            let bare = Held {
-                shift,
-                ..Held::default()
-            };
+            let bare = Held { shift, ..Held::default() };
             assert_eq!(meaning(0x72, bare, true, false), None);
         }
         assert_eq!(meaning(0x44, ALT, true, false), None);
@@ -922,10 +790,7 @@ mod tests {
         let key = |vk, held| reloading(vk, held).map(|one| (one.key, one.code, one.held.shift));
         assert_eq!(key(0x74, Held::default()), Some(("F5", "F5", false)));
         assert_eq!(key(0x52, CTRL), Some(("r", "KeyR", false)));
-        let shifted = Held {
-            shift: true,
-            ..CTRL
-        };
+        let shifted = Held { shift: true, ..CTRL };
         assert_eq!(key(0x52, shifted), Some(("R", "KeyR", true)));
         assert_eq!(key(0x74, CTRL).map(|one| one.0), Some("F5"));
         assert_eq!(key(0x52, Held::default()), None);
@@ -964,15 +829,8 @@ mod tests {
         assert_eq!(told(0x12, Held { alt: true, ..CTRL }, true, false), None);
         assert_eq!(told(0x32, Held { alt: true, ..CTRL }, true, false), None);
         assert_eq!(told(0x12, SHIFT, true, false), None);
-        let held = Held {
-            alt: true,
-            shift: true,
-            ..Held::default()
-        };
-        assert_eq!(
-            told(0x10, held, true, false).map(|one| one.key),
-            Some("Unidentified")
-        );
+        let held = Held { alt: true, shift: true, ..Held::default() };
+        assert_eq!(told(0x10, held, true, false).map(|one| one.key), Some("Unidentified"));
     }
     #[test]
     fn a_chord_with_alt_is_a_character_on_altgr_keyboards() {
@@ -982,11 +840,7 @@ mod tests {
     }
     #[test]
     fn alt_and_a_digit_are_the_tabs_by_number_nought_included() {
-        let alt = |shift| Held {
-            ctrl: false,
-            shift,
-            alt: true,
-        };
+        let alt = |shift| Held { ctrl: false, shift, alt: true };
         let pressed = |vk, held| meaning(vk, held, true, false).map(|one| (one.key, one.code));
         assert_eq!(pressed(0x31, alt(false)), Some(("1", "Digit1")));
         assert_eq!(pressed(0x33, alt(false)), Some(("3", "Digit3")));
@@ -1009,11 +863,7 @@ mod tests {
         assert!(full
             .as_ref()
             .is_some_and(|one| one.code == "F11" && !one.held.shift && one.keeps_page()));
-        let with = |ctrl, alt| Held {
-            ctrl,
-            shift: true,
-            alt,
-        };
+        let with = |ctrl, alt| Held { ctrl, shift: true, alt };
         assert_eq!(meaning(0x7A, with(true, false), true, false), None);
         assert_eq!(meaning(0x7A, with(false, true), true, false), None);
         assert!(meaning(0x54, CTRL, true, false).is_some_and(|one| !one.keeps_page()));
