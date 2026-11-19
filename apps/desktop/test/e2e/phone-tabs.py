@@ -104,6 +104,9 @@ def phone(browser: Browser, dark: bool) -> None:
     wait_for(page, "document.querySelector('[data-panel=tasks]')?.innerText.includes('milk')", "the todo listed")
     page.locator("[data-panel=tasks] [data-todo] .tick").first.tap()
     wait_for(page, "document.querySelector('[data-panel=tasks] [data-todo].done')", "a todo ticked off")
+    page.locator("[data-panel=tasks] [data-todo] .body").first.tap()
+    page.locator("[data-panel=tasks] [data-todo-editor] button", has_text="Delete todo").tap()
+    wait_for(page, "!document.querySelector('[data-panel=tasks] [data-todo]')", "the todo deleted")
     page.wait_for_timeout(300)
     if page.evaluate(COVERED):
         wrong("[phone] a notice covers the tab bar")

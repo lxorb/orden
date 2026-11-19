@@ -58,8 +58,8 @@
             knownLabels={shown.labels}
             onchange={(patch: TodoPatch) => patchTodo(here.id, patch)}
             onremove={() => {
-              openId = null
               void removeTodo(here.id)
+              openId = null
             }}
             onclose={() => (openId = null)}
           />

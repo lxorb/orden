@@ -77,6 +77,22 @@ def label(page: Page, title: str, name: str) -> None:
     field.press("Enter")
     page.wait_for_function(f"() => [...document.querySelectorAll('[data-todos-panel] [data-todo-editor] .chip')].some((one) => one.textContent.includes({json.dumps(name)}))")
     page.locator("[data-todos-panel] [data-todo-editor] .close").click()
+def delete(page: Page, scope: str, title: str) -> None:
+    page.locator(f"{scope} [data-todo] .body", has_text=title).first.click()
+    page.locator(f"{scope} [data-todo-editor] button", has_text="Delete todo").click()
+    page.wait_for_function(f"() => !document.querySelector('{scope} [data-todo-editor]') && ![...document.querySelectorAll('{scope} [data-todo] .title')].some((one) => one.textContent.trim() === {json.dumps(title)})")
+    if title in [str(one[0]) for one in held(page)]:
+        wrong(f"Delete todo in {scope} kept {title}")
+def lacks(page: Page, name: str, title: str) -> None:
+    until = time.monotonic() + PATIENCE
+    now: list[str] = []
+    while time.monotonic() < until:
+        now = [str(one[0]) for one in held(page)]
+        if title not in now:
+            return
+        page.evaluate(AGAIN)
+        page.wait_for_timeout(1000)
+    wrong(f"[{name}] the todos still hold {title}: {now}")
 def pick_label(page: Page, scope: str, name: str) -> None:
     page.locator(f"{scope} [data-todos-label]").click()
     page.locator(f"{scope} .search").fill(name)
@@ -120,6 +136,9 @@ def main() -> int:
         desk.locator("[data-todos-panel] [data-todos-label]").click()
         desk.locator("[data-todos-panel] [role=option]", has_text="All labels").click()
         desk.wait_for_function("() => document.querySelectorAll('[data-todos-panel] [data-todo]').length === 3")
+        add(desk, "Throw this away")
+        delete(desk, "[data-todos-panel]", "Throw this away")
+        say("Delete todo in the panel deletes it")
         desk.evaluate("() => window.ordenApp.tasks().then(({ openTodos }) => openTodos())")
         desk.wait_for_selector("[data-todos-board] [data-todos-column]")
         board = desk.evaluate(BOARD)
@@ -131,6 +150,12 @@ def main() -> int:
         desk.locator("[data-todos-board] [data-todo] .tick").first.check()
         desk.wait_for_function("() => document.querySelector('[data-todos-board] [data-todo].done')")
         say("a todo ticked on the board is done")
+        field = desk.locator("[data-todos-board] [data-todos-add]")
+        field.fill("Throw this away too")
+        field.press("Enter")
+        desk.wait_for_function("() => [...document.querySelectorAll('[data-todos-board] [data-todo] .title')].some((one) => one.textContent.trim() === 'Throw this away too')")
+        delete(desk, "[data-todos-board]", "Throw this away too")
+        say("Delete todo on the board deletes it")
         signed_in(desk, token)
         holds(desk, "desk", "Call the bank", "Water the plants", "Read a book", "Starts next week")
         say("signed in, the local todos went into the account")
@@ -144,6 +169,9 @@ def main() -> int:
         panel(phone)
         add(phone, "From the phone")
         holds(desk, "desk", "From the phone")
+        delete(phone, "[data-todos-panel]", "From the phone")
+        lacks(desk, "desk", "From the phone")
+        say("a todo deleted on the phone is gone on the desk")
         shot(phone, "04-phone")
     return DRIVE.verdict("todos are per user, filtered by space and label, and a board in their own tab")
 raise SystemExit(main())
