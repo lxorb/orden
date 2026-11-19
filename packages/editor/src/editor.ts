@@ -174,15 +174,21 @@ export function editorState(options: StateOptions): EditorState {
       keymap.of(unclaimedKeymap),
       EditorView.updateListener.of((update) => {
         const pushed = update.transactions.some((one) => one.annotation(external))
-        if (!pushed && (update.docChanged || update.selectionSet)) {
+        if (!pushed && (update.docChanged || update.selectionSet || update.focusChanged)) {
           const document = documentOf(update.view)
           const userEvent = update.transactions
             .map((one) => one.annotation(Transaction.userEvent))
             .find((one) => one !== undefined)
-          if (!update.docChanged) document?.selected(update.state.selection, userEvent)
-          else if (document) {
+          if (!update.docChanged) {
+            if (update.selectionSet) document?.selected(update.state.selection, userEvent)
+          } else if (document) {
             document.local(update.changes, update.state.selection, update.view, userEvent, update.startState.selection)
           } else onChange?.(update.state.doc)
+          document?.moved({
+            head: update.state.selection.main.head,
+            focused: update.view.hasFocus,
+            typed: update.docChanged,
+          })
         }
         if (update.selectionSet || update.docChanged || update.focusChanged || foldsChanged(update)) {
           onSelection?.(update.view)
