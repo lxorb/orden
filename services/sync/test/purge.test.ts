@@ -778,13 +778,13 @@ describe('what a purge stops paying for', () => {
         token,
         body: {
           path: 'A.md',
-          content: `![](https://nibeditor.com/i/${gone}.png) ![](https://nibeditor.com/i/${kept}.png)`,
+          content: `![](https://orden.so/i/${gone}.png) ![](https://orden.so/i/${kept}.png)`,
         },
       })
     ).json.note.id
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
-      body: { path: 'B.md', content: `![](https://nibeditor.com/i/${kept}.png)` },
+      body: { path: 'B.md', content: `![](https://orden.so/i/${kept}.png)` },
     })
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
@@ -796,7 +796,7 @@ describe('what a purge stops paying for', () => {
     const id = (
       await call(env, `/v1/spaces/${space}/notes`, {
         token,
-        body: { path: 'A.md', content: `![](https://nibeditor.com/i/${hash}.png)` },
+        body: { path: 'A.md', content: `![](https://orden.so/i/${hash}.png)` },
       })
     ).json.note.id
     const old = (
@@ -843,7 +843,7 @@ describe('what a purge stops paying for', () => {
     const lines: string[] = []
     for (let at = 0; at < 25; at++) {
       const hash = await upload(`picture ${String(at)}`, 'image/png')
-      lines.push(`![](https://nibeditor.com/i/${hash}.png)`)
+      lines.push(`![](https://orden.so/i/${hash}.png)`)
     }
     const id = (
       await call(env, `/v1/spaces/${space}/notes`, {

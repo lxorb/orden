@@ -55,7 +55,7 @@ describe('requesting a code', () => {
 describe('a provider that will not take the message', () => {
   function refusing(send: EmailSender['send']): void {
     env.close()
-    env = testEnv({ MAIL_FROM: 'Nib <nib@nibeditor.com>', EMAIL: { send } })
+    env = testEnv({ MAIL_FROM: 'Orden <nib@nibeditor.com>', EMAIL: { send } })
   }
   async function quietly<T>(work: () => Promise<T>): Promise<T> {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)

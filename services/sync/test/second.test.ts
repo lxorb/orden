@@ -388,7 +388,7 @@ describe('a second factor is asked wherever an address alone would sign in', () 
       redirect_uri: redirect,
       state: 'xyz',
       code_challenge: 'c'.repeat(43),
-      resource: 'https://nibeditor.com/mcp',
+      resource: 'https://orden.so/mcp',
     }
   }
   async function emailed(work: () => Promise<unknown>): Promise<string> {

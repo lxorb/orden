@@ -232,7 +232,7 @@ export interface Answer<T> {
   headers: Headers
 }
 export async function call<T = Reply>(env: Env, path: string, options: CallOptions = {}): Promise<Answer<T>> {
-  const host = options.host ?? 'nibeditor.com'
+  const host = options.host ?? 'orden.so'
   const headers: Record<string, string> = {}
   if (options.body !== undefined) headers['content-type'] = 'application/json'
   if (options.token) headers.authorization = `Bearer ${options.token}`

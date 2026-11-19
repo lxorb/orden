@@ -721,7 +721,7 @@ describe('the door to a room', () => {
       const answer = await call(env, `/rooms/${noteId}`, {
         headers: {
           upgrade: 'websocket',
-          'sec-websocket-protocol': `${subprotocol(token)}, nib.device.${device}`,
+          'sec-websocket-protocol': `${subprotocol(token)}, orden.device.${device}`,
         },
       })
       expect(answer.status).toBe(200)

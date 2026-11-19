@@ -24,8 +24,8 @@ write_files:
     owner: root:root
     permissions: '0644'
     content: |
-      ORDEN_ORIGIN=https://nibeditor.com
+      ORDEN_ORIGIN=https://orden.so
 runcmd:
-  - [bash, -c, "set -euo pipefail; curl -fsSL --retry 10 --retry-delay 3 -o /root/machine.bin https://nibeditor.com/v2/online/machine/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bin; echo 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  /root/machine.bin' | sha256sum -c -; mkdir -p /root/machine /opt/ordend; tar -xzf /root/machine.bin -C /root/machine; echo bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb >/opt/ordend/bundle; bash /root/machine/install.sh --server; rm -rf /root/machine /root/machine.bin; rm -f /var/lib/cloud/instance/user-data.txt /var/lib/cloud/instance/user-data.txt.i"]
+  - [bash, -c, "set -euo pipefail; curl -fsSL --retry 10 --retry-delay 3 -o /root/machine.bin https://orden.so/v2/online/machine/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.bin; echo 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  /root/machine.bin' | sha256sum -c -; mkdir -p /root/machine /opt/ordend; tar -xzf /root/machine.bin -C /root/machine; echo bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb >/opt/ordend/bundle; bash /root/machine/install.sh --server; rm -rf /root/machine /root/machine.bin; rm -f /var/lib/cloud/instance/user-data.txt /var/lib/cloud/instance/user-data.txt.i"]
 "
 `;

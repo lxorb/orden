@@ -198,17 +198,17 @@ describe("a domain of one's own", () => {
     expect(reported.json.detail).toBe('The hostname is already on Cloudflare in another zone.')
   })
   test('cannot be the shared domain itself, which is the app', async () => {
-    const response = await publish({ domain: 'nibeditor.com' })
+    const response = await publish({ domain: 'orden.so' })
     expect(response.status).toBe(400)
     expect(response.json.error).toBe('use a domain of your own')
     expect(cloudflare.hostnames.size).toBe(0)
   })
   test('cannot be a name under the shared domain either', async () => {
-    expect((await publish({ domain: 'evil.nibeditor.com' })).status).toBe(400)
-    expect((await publish({ domain: 'www.nibeditor.com' })).status).toBe(400)
+    expect((await publish({ domain: 'evil.orden.so' })).status).toBe(400)
+    expect((await publish({ domain: 'www.orden.so' })).status).toBe(400)
   })
   test('cannot be the shared domain with a trailing dot', async () => {
-    expect((await publish({ domain: 'nibeditor.com.' })).status).toBe(400)
+    expect((await publish({ domain: 'orden.so.' })).status).toBe(400)
     expect((await publish({ domain: 'EVIL.NIBEDITOR.COM.' })).status).toBe(400)
     expect(cloudflare.hostnames.size).toBe(0)
   })
@@ -232,8 +232,8 @@ describe("a domain of one's own", () => {
   })
   test('is never served on the shared domain, whatever the row says', async () => {
     await publish({ subdomain: 'field' })
-    env.db.prepare('update spaces set blog_subdomain = null, blog_domain = ? where id = ?').run('nibeditor.com', space)
-    const response = await call(env, '/', { host: 'nibeditor.com' })
+    env.db.prepare('update spaces set blog_subdomain = null, blog_domain = ? where id = ?').run('orden.so', space)
+    const response = await call(env, '/', { host: 'orden.so' })
     expect(response.text).not.toContain('Field notes')
   })
   test('has nothing to report while the space has no domain', async () => {
@@ -438,12 +438,12 @@ describe('what to add at the registrar', () => {
   })
   test('the target itself publishes nothing', async () => {
     await publish({ domain: 'notes.example.com' })
-    const response = await call(env, '/', { host: 'cname.nibeditor.com' })
+    const response = await call(env, '/', { host: 'cname.orden.so' })
     expect(response.status).toBe(302)
   })
   test('a space id is not an address', async () => {
     await publish({ domain: 'notes.example.com' })
-    const response = await call(env, '/', { host: `${space}.nibeditor.com` })
+    const response = await call(env, '/', { host: `${space}.orden.so` })
     expect(response.status).toBe(302)
   })
 })

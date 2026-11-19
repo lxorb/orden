@@ -119,7 +119,7 @@ describe('the search', () => {
   test('leaves out what the browser reads itself, what the space leaves out, and its own', async () => {
     const mine = await made('Mine.md', 'garden\n')
     await made('Drafts/Old.md', 'garden\n')
-    await made('.nib/Own.md', 'garden\n')
+    await made('.orden/Own.md', 'garden\n')
     const kept = await made('Kept.md', 'garden\n')
     const answer = searchAnswerOf((await search({ q: 'garden', limit: 10, skip: [mine], excluded: ['Drafts'] })).json)
     expect(answer?.hits.map((one) => one.id)).toEqual([kept])

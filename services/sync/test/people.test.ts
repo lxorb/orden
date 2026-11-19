@@ -222,7 +222,7 @@ describe('the routes', () => {
     await call(env, '/v2/me/avatar', { method: 'PUT', token: owner, body: { s: small, l: large } })
     await call(env, `/v1/spaces/${space}/notes`, {
       token: owner,
-      body: { path: 'me.md', content: `![](https://nibeditor.com/i/${small}.webp)` },
+      body: { path: 'me.md', content: `![](https://orden.so/i/${small}.webp)` },
     })
     await call(env, '/v2/me/avatar', { method: 'DELETE', token: owner })
     expect((await call(env, `/i/${small}.webp`)).status).toBe(200)

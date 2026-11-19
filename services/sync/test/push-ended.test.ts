@@ -35,7 +35,7 @@ async function serviceAccount(): Promise<string> {
   )) as CryptoKeyPair
   const der = new Uint8Array((await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer)
   const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
-  return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'orden-test' })
+  return JSON.stringify({ client_email: 'orden@x.iam', private_key: pem, project_id: 'orden-test' })
 }
 function fcm() {
   const tokens: string[] = []

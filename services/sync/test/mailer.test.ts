@@ -33,7 +33,7 @@ describe('which way a message goes', () => {
     vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
       lines.push(String(line))
     })
-    const sent = await mailer(environment({ MAIL_FROM: 'Nib <nib@nibeditor.com>' })).send('a@b.dev', 'code', MESSAGE)
+    const sent = await mailer(environment({ MAIL_FROM: 'Orden <nib@nibeditor.com>' })).send('a@b.dev', 'code', MESSAGE)
     expect(sent).toBe(true)
     expect(lines.join('\n')).toContain('123 456')
   })
@@ -45,7 +45,7 @@ describe('which way a message goes', () => {
   })
   test('through the binding, as a name and an address apart', async () => {
     const { email, handed } = binding(() => Promise.resolve({ messageId: 'm' }))
-    const sent = await mailer(environment({ EMAIL: email, MAIL_FROM: 'Nib <nib@nibeditor.com>' })).send(
+    const sent = await mailer(environment({ EMAIL: email, MAIL_FROM: 'Orden <nib@nibeditor.com>' })).send(
       'someone@example.org',
       'code',
       MESSAGE,
@@ -53,7 +53,7 @@ describe('which way a message goes', () => {
     expect(sent).toBe(true)
     expect(handed).toEqual([
       {
-        from: { name: 'Nib', email: 'nib@nibeditor.com' },
+        from: { name: 'Orden', email: 'nib@nibeditor.com' },
         to: 'someone@example.org',
         subject: 'code',
         text: MESSAGE.text,
@@ -98,9 +98,9 @@ describe('a refusal', () => {
 })
 describe('the sender line', () => {
   test('parts a name from its address', () => {
-    expect(sender('Nib <nib@nibeditor.com>')).toEqual({ name: 'Nib', email: 'nib@nibeditor.com' })
-    expect(sender('"Nib Editor" <nib@nibeditor.com>')).toEqual({
-      name: 'Nib Editor',
+    expect(sender('Orden <nib@nibeditor.com>')).toEqual({ name: 'Orden', email: 'nib@nibeditor.com' })
+    expect(sender('"Orden Notes" <nib@nibeditor.com>')).toEqual({
+      name: 'Orden Notes',
       email: 'nib@nibeditor.com',
     })
   })

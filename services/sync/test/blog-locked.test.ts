@@ -30,10 +30,10 @@ describe('a published space with a locked folder', () => {
       token,
       body: { subdomain: 'field' },
     })
-    const index = await call(env, '/', { host: 'field.nibeditor.com' })
+    const index = await call(env, '/', { host: 'field.orden.so' })
     expect(index.text).toContain('/hello-world')
     expect(index.text).not.toContain('/diary/today')
-    const page = await call(env, '/diary/today', { host: 'field.nibeditor.com' })
+    const page = await call(env, '/diary/today', { host: 'field.orden.so' })
     expect(page.status).toBe(404)
     expect(page.text).not.toContain('the secret words')
   })
