@@ -215,7 +215,7 @@ SEARCH_SETUP = """
 const input = document.querySelector('.orden-field.search input')
 input.focus()
 const m = { frames: [], keys: [], on: true }
-window.__nib418 = m
+window.__orden418 = m
 let last = performance.now()
 const loop = (t) => { m.frames.push(t - last); last = t; if (m.on) requestAnimationFrame(loop) }
 requestAnimationFrame(loop)
@@ -244,7 +244,7 @@ for (const word of ['f', 'fo', 'fon', 'font', '', 't', 'th', 'the', 'them', 'the
 return took
 """
 SEARCH_READ = """
-const m = window.__nib418
+const m = window.__orden418
 m.on = false
 return { keys: m.keys, frames: m.frames }
 """

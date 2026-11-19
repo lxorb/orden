@@ -150,7 +150,7 @@ async function main() {
   const now = Date.now()
   sql("update online_service set value = 'on' where key = 'online'")
   sql(
-    `insert into users (id, email, created_at, online) values ('${USER}', 'e2e@nib.test', ${now}, 1);
+    `insert into users (id, email, created_at, online) values ('${USER}', 'e2e@orden.test', ${now}, 1);
      insert into sessions (token_hash, user_id, created_at, expires_at, id, name, last_used_at)
        values ('${hash}', '${USER}', ${now}, ${now + 86_400_000}, 'e2e-session', 'e2e', ${now});`,
   )

@@ -58,8 +58,6 @@ def heard(label: str, message) -> None:
     text = message.text[:400]
     if message.type in ("error", "warning"):
         say(f"[{label}] {message.type}: {text}")
-    elif text.startswith("nib/"):
-        say(f"[{label}] {text}")
 def settled(page: Page, what: str) -> None:
     wait_for(page, "() => window.ordenApp.sync.status !== 'syncing'", f"{what} to settle")
     page.wait_for_timeout(1200)

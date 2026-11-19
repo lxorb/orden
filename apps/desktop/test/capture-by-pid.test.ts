@@ -32,9 +32,9 @@ describe('the window capture', () => {
   })
   test('says it understands the display’s scaling before it measures a window', () => {
     expect(SCRIPT).toContain('SetProcessDpiAwarenessContext')
-    expect(SCRIPT).toContain('[NibDpi]::Ask()')
-    expect(SCRIPT.indexOf('[NibDpi]::Ask()')).toBeLessThan(SCRIPT.indexOf('Get-Process -Id'))
-    expect(SCRIPT.indexOf('[NibDpi]::Ask()')).toBeLessThan(SCRIPT.indexOf('GetWindowRect($handle'))
+    expect(SCRIPT).toContain('[OrdenDpi]::Ask()')
+    expect(SCRIPT.indexOf('[OrdenDpi]::Ask()')).toBeLessThan(SCRIPT.indexOf('Get-Process -Id'))
+    expect(SCRIPT.indexOf('[OrdenDpi]::Ask()')).toBeLessThan(SCRIPT.indexOf('GetWindowRect($handle'))
   })
   test.each(CALLERS)('%s passes a pid', (relative) => {
     const caller = read(relative)

@@ -162,7 +162,7 @@ def let_in(page: Page, label: str, keeps: bool = False) -> None:
     wait_for(page, "() => window.ordenApp.account.signedIn", f"[{label}] the session")
 def types_the_mailed_code(page: Page, worker, label: str, address: str, already: int) -> None:
     code = worker.waits_for_mail(
-        address, r"(\d{6}) is your (?:nibeditor|Orden) code", f"[{label}] the sign-in code", already
+        address, r"(\d{6}) is your Orden code", f"[{label}] the sign-in code", already
     ).group(1)
     boxes = page.locator(".digits input").first
     boxes.wait_for(timeout=15_000)
@@ -361,7 +361,7 @@ def main() -> int:
         sheet.screenshot(path=str(SHOTS / "share-sheet.png"))
         say(f"the sheet lists {WRITER} as invited")
         token = worker.waits_for_mail(
-            WRITER, r"https://(?:orden\.so|nibeditor\.com)/join/([a-f0-9]+)", "the invitation"
+            WRITER, r"https://orden\.so/join/([a-f0-9]+)", "the invitation"
         ).group(1)
         say("the invitation carries a link to the service")
         dismiss(owner)
@@ -552,7 +552,7 @@ def main() -> int:
         dismiss(owner)
         say(f"{ALONE} was given one note out of {SOLO}")
         token = worker.waits_for_mail(
-            ALONE, r"https://(?:orden\.so|nibeditor\.com)/join/([a-f0-9]+)", "the note's invitation"
+            ALONE, r"https://orden\.so/join/([a-f0-9]+)", "the note's invitation"
         ).group(1)
         said = worker.mail_to(ALONE)
         if "shared the note" not in said:
@@ -763,7 +763,7 @@ def main() -> int:
         already = len(worker.written())
         named.get_by_role("button", name="Continue").click()
         code = worker.waits_for_mail(
-            grace, r"(\d{6}) is your (?:nibeditor|Orden) code", "[named] the sign-in code", already
+            grace, r"(\d{6}) is your Orden code", "[named] the sign-in code", already
         ).group(1)
         named.locator(".digits input").first.fill(code)
         let_in(named, "named", keeps=True)

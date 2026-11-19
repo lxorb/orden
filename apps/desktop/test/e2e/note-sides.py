@@ -18,7 +18,7 @@ export:
 
 # One
 
-The first part, which mentions nib and Zug.[^1]
+The first part, which mentions Bern and Zug.[^1]
 
 ## Under one
 
@@ -118,7 +118,7 @@ def dictionary(page: Page) -> None:
     page.wait_for_timeout(400)
     place = page.evaluate(
         """() => {
-          const at = window.orden.state.doc.toString().indexOf('nib and Zug')
+          const at = window.orden.state.doc.toString().indexOf('Bern and Zug')
           const box = window.orden.coordsAtPos(at + 1)
           return box && { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 }
         }"""

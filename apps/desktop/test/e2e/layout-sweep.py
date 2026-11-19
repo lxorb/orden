@@ -373,7 +373,7 @@ class Browser:
         path = re.sub(r"^https?://[^/]+", "", url).split("?", 1)[0]
         if self.signed_in and path in ACCOUNT:
             await route.fulfill(status=200, content_type="application/json", body=json.dumps(ACCOUNT[path]))
-        elif "nibeditor.com" in url and path.startswith("/v1/"):
+        elif "orden.so" in url and path.startswith("/v1/"):
             await route.fulfill(status=503, content_type="application/json", body='{"error":"not in a sweep"}')
         else:
             await route.abort()

@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-public class NibDpi {
+public class OrdenDpi {
   // Per-monitor v2, which is what a webview window is: the numbers below come back
   // in real pixels from here on. The older call is the fallback for a Windows that
   // has never heard of the newer one; both are allowed to fail, because a process
@@ -39,7 +39,7 @@ public class NibDpi {
   }
 }
 
-public class NibCapture {
+public class OrdenCapture {
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
   public delegate bool EnumProc(IntPtr hWnd, IntPtr param);
 
@@ -77,11 +77,11 @@ public class NibCapture {
 }
 "@
 
-[NibDpi]::Ask()
+[OrdenDpi]::Ask()
 
 $process = Get-Process -Id $ProcessId -ErrorAction Stop
 
-$rows = [NibCapture]::Windows($process.Id) | ForEach-Object {
+$rows = [OrdenCapture]::Windows($process.Id) | ForEach-Object {
   $parts = $_ -split '\|'
   [pscustomobject]@{
     Handle    = [int64]$parts[0]
@@ -106,15 +106,15 @@ if (-not $target) { throw "no sizeable visible window for process $($process.Id)
 
 $handle = [IntPtr]$target.Handle
 
-$rect = New-Object NibCapture+RECT
-[void][NibCapture]::GetWindowRect($handle, [ref]$rect)
+$rect = New-Object OrdenCapture+RECT
+[void][OrdenCapture]::GetWindowRect($handle, [ref]$rect)
 $width = $rect.Right - $rect.Left
 $height = $rect.Bottom - $rect.Top
 
 $bitmap = New-Object System.Drawing.Bitmap $width, $height
 $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 $hdc = $graphics.GetHdc()
-$drew = [NibCapture]::PrintWindow($handle, $hdc, [NibCapture]::PW_RENDERFULLCONTENT)
+$drew = [OrdenCapture]::PrintWindow($handle, $hdc, [OrdenCapture]::PW_RENDERFULLCONTENT)
 $graphics.ReleaseHdc($hdc)
 
 if (-not $drew) {

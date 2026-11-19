@@ -15,7 +15,7 @@ NOTE = (
     "\n"
     "# Tags\n"
     "\n"
-    "Filed under #work/orden and #reading, with `#code` and [a #link](https://nib.dev)"
+    "Filed under #work/orden and #reading, with `#code` and [a #link](https://example.com)"
     " left alone.\n"
     "\n"
     "- #item in a list\n"

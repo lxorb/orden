@@ -49,7 +49,7 @@ class ReadingAnAnswer(unittest.TestCase):
             filled(step, names),
             {"args": {"url": "http://127.0.0.1:1/shop", "tab": "a3", "on": True, "left": "{unknown}"}},
         )
-class ReadingWhatNibSays(unittest.TestCase):
+class ReadingWhatOrdenSays(unittest.TestCase):
     def test_the_contracts_answer_is_kept(self) -> None:
         said = from_contract({"status": "error", "code": "site_denied", "message": "no"}, 3.14)
         self.assertEqual((said["status"], said["code"], said["ms"]), ("error", "site_denied", 3.1))

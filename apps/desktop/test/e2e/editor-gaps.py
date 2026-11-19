@@ -604,9 +604,9 @@ def drive_charts(page: Page, paths: dict[str, str]) -> None:
     if found["areas"] < 1 or found["webs"] < 1:
         wrong(f"the radar has no web and no shape: {found}")
     if "bar" in found["figures"]:
-        wrong("a kind nib does not draw came out as a bar chart")
+        wrong("a kind Orden does not draw came out as a bar chart")
     if found["fences"] == 0:
-        wrong("the fence asking for a kind nib does not draw shows nothing at all")
+        wrong("the fence asking for a kind Orden does not draw shows nothing at all")
 def drive(browser: Browser) -> None:
     page, paths = fresh(browser)
     say("--- the Links setting reaches the popup ---")
