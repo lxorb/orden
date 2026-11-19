@@ -4,7 +4,7 @@ import { expect, test, vi } from 'vitest'
 
 const home = { name: 'Home', root: '/s/Home' }
 const written = vi.hoisted(() => [] as { before: string; after: string }[])
-vi.mock('./workspace/src/api', () => ({
+vi.mock('../../workspace/src/api', () => ({
   followHref: () => undefined,
   workspace: {
     spaces: [home],
@@ -17,16 +17,16 @@ vi.mock('./workspace/src/api', () => ({
     },
   },
 }))
-vi.mock('./sharing/src/api', () => ({
+vi.mock('../../sharing/src/api', () => ({
   canWriteAt: () => true,
   trustsHtmlAt: () => false,
 }))
-vi.mock('./link-index/src/api', () => ({
+vi.mock('../../link-index/src/api', () => ({
   links: {
     index: (path: string) => ({ notes: [], files: [], path, read: () => Promise.resolve(null) }),
   },
 }))
-const { mountPreview } = await import('./pane-tree/src/preview-card')
+const { mountPreview } = await import('./preview-card')
 test('words typed in a glance are written over the note it opened on, so words written elsewhere meanwhile stay', async () => {
   const host = document.createElement('div')
   document.body.append(host)
