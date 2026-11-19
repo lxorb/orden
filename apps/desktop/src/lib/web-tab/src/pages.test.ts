@@ -870,7 +870,7 @@ describe('a page out of sight', () => {
     expect(page.shot).toBe('data:image/png;base64,new')
     expect(commands()).not.toContain('web_shot')
   })
-  test('a page left while it is being photographed is hidden once the picture is in', async () => {
+  test('a page left while it is being photographed is hidden at once, the picture finishing on its own', async () => {
     await built('t0')
     let landed = (): void => undefined
     photographing = new Promise<void>((go) => (landed = go))
@@ -879,13 +879,11 @@ describe('a page out of sight', () => {
     calls.length = 0
     pages.hide('t0', PANE)
     await settle()
-    const out = calls.filter((one) => one.command === 'web_place')
-    expect(out).toHaveLength(1)
-    expect(out[0]?.args).toMatchObject({ visible: true, pane: { x: -20_000, y: -20_000 } })
+    expect(calls.filter((one) => one.command === 'web_place').map((one) => one.args)).toEqual([
+      expect.objectContaining({ tab: 't0', pane: PANE, visible: false }),
+    ])
     landed()
     await shooting
-    await settle()
-    expect(last('web_place')).toMatchObject({ tab: 't0', pane: PANE, visible: false })
   })
   test('a picture the engine took longer over than the clock stands in once it lands', async () => {
     await built('t0')

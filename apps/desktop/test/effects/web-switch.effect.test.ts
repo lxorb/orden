@@ -597,7 +597,7 @@ async function opened(url: string) {
   expect(pages.of(tab.id).live).toBe(true)
   return { tab, app }
 }
-test('words typed beside a page take no picture of it, a chord still does', async () => {
+test('no press takes a picture of a page: words typed beside it, a chord, a switch of tabs or a click', async () => {
   const { app } = await opened('https://example.com/typed-beside')
   const field = document.createElement('textarea')
   document.body.append(field)
@@ -609,8 +609,10 @@ test('words typed beside a page take no picture of it, a chord still does', asyn
   }
   expect(asked.map((one) => one.command)).not.toContain('web_shot')
   field.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', ctrlKey: true, bubbles: true }))
+  window.dispatchEvent(new Event('pointerdown', { bubbles: true }))
   await frames()
-  expect(asked.map((one) => one.command)).toContain('web_shot')
+  expect(asked.map((one) => one.command)).not.toContain('web_shot')
   void unmount(app)
 })
 test('a refused address is not a page that has gone', async () => {

@@ -648,7 +648,7 @@ class Pages {
     page.onScreen = false
     page.heldAt = null
     page.looked = Date.now()
-    if (isDesktop && page.live && (page.shooting || page.lent)) void this.aside(tabId, page, pane)
+    if (isDesktop && page.live && page.lent) void this.aside(tabId, page, pane)
     else void this.place(tabId, pane, false)
     if (!isDesktop) return
     void this.look(tabId).then(() => this.rest(tabId))
