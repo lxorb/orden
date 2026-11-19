@@ -14,7 +14,7 @@ import { Cloud } from './hetzner-cloud'
 import { signIn, type TestEnv, testEnv } from './harness'
 
 const ID = 'm_0123456789abcdef0123456789abcdef'
-const HOSTNAME = 'm-0123456789abcdef0123456789abcdef.nibeditor.com'
+const HOSTNAME = 'm-0123456789abcdef0123456789abcdef.orden.so'
 const SECRET = 'a'.repeat(64)
 const BOOT = { ORDEND_SECRET: SECRET, TZ: 'Europe/Zurich' }
 let env: TestEnv
@@ -26,9 +26,9 @@ function setup(overrides: Partial<Setup> = {}): Setup {
     hetzner: new Hetzner('hetzner-token', cloud.fetch),
     tunnels: new Tunnels('tunnel-token', 'account', 'zone', cloud.fetch),
     service: { id: 'access-id', secret: 'access-secret' },
-    access: { team: 'nib', aud: 'aud-tag' },
-    domain: 'nibeditor.com',
-    origin: 'https://nibeditor.com',
+    access: { team: 'orden', aud: 'aud-tag' },
+    domain: 'orden.so',
+    origin: 'https://orden.so',
     mayCost: (monthly, currency) => {
       costs.push({ monthly, currency })
       return Promise.resolve(affordable)
@@ -71,7 +71,7 @@ describe('a Hetzner machine', () => {
         {
           hostname: HOSTNAME,
           service: 'http://127.0.0.1:7680',
-          originRequest: { access: { required: true, teamName: 'nib', audTag: ['aud-tag'] } },
+          originRequest: { access: { required: true, teamName: 'orden', audTag: ['aud-tag'] } },
         },
         { service: 'http_status:404' },
       ],
@@ -321,11 +321,11 @@ describe('a Hetzner machine', () => {
 })
 describe('its names', () => {
   test('are its id’s, and only those are machine hostnames', () => {
-    expect(namesOf(ID, 'nibeditor.com').hostname).toBe(HOSTNAME)
-    expect(isMachineHost(HOSTNAME, 'nibeditor.com')).toBe(true)
-    expect(isMachineHost('M-0123456789ABCDEF0123456789ABCDEF.nibeditor.com', 'nibeditor.com')).toBe(true)
-    expect(isMachineHost('m-blog.nibeditor.com', 'nibeditor.com')).toBe(false)
-    expect(isMachineHost(`${HOSTNAME}.evil.com`, 'nibeditor.com')).toBe(false)
-    expect(isMachineHost('nibeditor.com', 'nibeditor.com')).toBe(false)
+    expect(namesOf(ID, 'orden.so').hostname).toBe(HOSTNAME)
+    expect(isMachineHost(HOSTNAME, 'orden.so')).toBe(true)
+    expect(isMachineHost('M-0123456789ABCDEF0123456789ABCDEF.orden.so', 'orden.so')).toBe(true)
+    expect(isMachineHost('m-blog.orden.so', 'orden.so')).toBe(false)
+    expect(isMachineHost(`${HOSTNAME}.evil.com`, 'orden.so')).toBe(false)
+    expect(isMachineHost('orden.so', 'orden.so')).toBe(false)
   })
 })

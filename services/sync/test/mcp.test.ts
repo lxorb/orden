@@ -92,7 +92,7 @@ describe('the connector', () => {
     expect((await call(env, '/mcp', { body: { jsonrpc: '2.0', id: 1, method: 'ping' } })).status).toBe(401)
   })
   test('refuses a token that was never issued', async () => {
-    expect((await rpc('nib_madeup', 'ping')).status).toBe(401)
+    expect((await rpc('orden_madeup', 'ping')).status).toBe(401)
   })
   test('introduces itself', async () => {
     const response = await rpc(await connector(), 'initialize')

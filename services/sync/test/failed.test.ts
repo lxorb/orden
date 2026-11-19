@@ -65,7 +65,7 @@ describe('what is never written down', () => {
       send: () => Promise.reject(new Error('550 no mailbox for someone@example.com')),
     }
     env.close()
-    env = testEnv({ MAIL_FROM: 'Nib <nib@nibeditor.com>', EMAIL: refusing })
+    env = testEnv({ MAIL_FROM: 'Orden <nib@nibeditor.com>', EMAIL: refusing })
     const lines = await logged(() => call(env, '/v1/auth/code', { body: { email: 'someone@example.com' } }))
     expect(lines).toHaveLength(1)
     expect(lines[0]).not.toContain('someone@example.com')

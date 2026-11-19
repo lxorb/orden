@@ -162,14 +162,14 @@ describe('an application’s door', () => {
       } as unknown as DurableObjectNamespace,
     }
   }
-  const knock = (token: string, host = false) =>
+  const knock = (token: string, host = false, name = 'orden') =>
     call(env, '/v2/apps/app-1/socket', {
       headers: {
         upgrade: 'websocket',
         'sec-websocket-protocol': [
           subprotocol(token),
-          'nib.device.device-laptop',
-          ...(host ? ['nib.role.host'] : []),
+          `${name}.device.device-laptop`,
+          ...(host ? [`${name}.role.host`] : []),
         ].join(', '),
       },
     })
@@ -213,7 +213,8 @@ describe('an application’s door', () => {
     expect(asked).toHaveLength(0)
     await knock(owner)
     await knock(owner, true)
-    expect(asked.map((one) => one.get('x-orden-role'))).toEqual(['viewer', 'host'])
+    await knock(owner, true, 'nib')
+    expect(asked.map((one) => one.get('x-orden-role'))).toEqual(['viewer', 'host', 'host'])
     expect(asked[0]?.get('x-orden-app-id')).toBe('app-1')
     env.db.prepare("update notes set deleted = 1 where id = 'app-1'").run()
     expect((await knock(owner)).status).toBe(404)

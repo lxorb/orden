@@ -63,10 +63,10 @@ export class WorkerAccount implements AccountAdapter {
     if (route === 'feed') {
       const { unframe } = await import('@orden/sync-core')
       const since = (unframe(body) as { since?: number } | null)?.since ?? 0
-      request = new Request(`https://nibeditor.com/v2/spaces/${this.space}/feed?since=${String(since)}`, { headers })
+      request = new Request(`https://orden.so/v2/spaces/${this.space}/feed?since=${String(since)}`, { headers })
     } else {
       const path = route === 'ops' ? `/v2/spaces/${this.space}/ops` : `/v2/docs/${route}`
-      request = new Request(`https://nibeditor.com${path}`, {
+      request = new Request(`https://orden.so${path}`, {
         method: 'POST',
         headers: { ...headers, 'content-type': OCTETS },
         body,

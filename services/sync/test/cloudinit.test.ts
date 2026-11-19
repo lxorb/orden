@@ -9,7 +9,7 @@ const boot = {
   secret: SECRET,
   tunnel: TUNNEL,
   zone: 'Europe/Zurich',
-  origin: 'https://nibeditor.com/anything',
+  origin: 'https://orden.so/anything',
   bundle: BUNDLE,
   sshKey: null,
 }
@@ -29,7 +29,7 @@ describe('cloud-init', () => {
       expect(files).toContain(`- path: ${path}\n    owner: root:root\n    permissions: '0600'`)
     }
     expect(commands).toContain(`echo '${BUNDLE}  /root/machine.bin' | sha256sum -c -`)
-    expect(commands).toContain('https://nibeditor.com/v2/online/machine/' + BUNDLE + '.bin')
+    expect(commands).toContain('https://orden.so/v2/online/machine/' + BUNDLE + '.bin')
     expect(commands).toContain('rm -f /var/lib/cloud/instance/user-data.txt')
     expect(text.length).toBeLessThan(32 * 1024)
   })

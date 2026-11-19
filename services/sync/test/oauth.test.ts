@@ -11,7 +11,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
-const ORIGIN = 'https://nibeditor.com'
+const ORIGIN = 'https://orden.so'
 const CHATGPT = 'https://chatgpt.com/connector/oauth/abc123'
 async function pkce() {
   const verifier = 'v'.repeat(20) + Math.random().toString(36).slice(2).padEnd(30, 'x')
@@ -140,7 +140,7 @@ describe('what a client can find out on its own', () => {
     expect(response.headers.get('www-authenticate')).not.toContain('invalid_token')
   })
   test('a bad token is called that', async () => {
-    const response = await rpc('nib_nonsense', 'ping')
+    const response = await rpc('orden_nonsense', 'ping')
     expect(response.status).toBe(401)
     expect(response.headers.get('www-authenticate')).toContain('error="invalid_token"')
   })
@@ -586,7 +586,7 @@ describe('refreshing', () => {
   })
   test('says invalid_grant for a token it never issued', async () => {
     const { clientId } = await connect()
-    expect((await refresh(clientId, 'nibr_made_up')).json.error).toBe('invalid_grant')
+    expect((await refresh(clientId, 'ordenr_made_up')).json.error).toBe('invalid_grant')
   })
   test('treats a token another request rotated meanwhile as spent', async () => {
     const { tokens, clientId } = await connect()

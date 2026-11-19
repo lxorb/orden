@@ -9,14 +9,14 @@ let env: TestEnv
 let rooms: Live
 let token: string
 let space: string
-let nib: string
+let connector: string
 beforeEach(async () => {
   devices.clear()
   env = testEnv()
   rooms = live(env)
   token = await signIn(env, 'rooms@example.com')
   space = (await call(env, '/v1/spaces', { token, body: { name: 'Rooms' } })).json.space.id
-  nib = (await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token
+  connector = (await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token
 })
 afterEach(() => env.close())
 async function made(path: string, content: string): Promise<string> {
@@ -27,7 +27,7 @@ async function made(path: string, content: string): Promise<string> {
 const prepare = () => call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
 async function tool(name: string, args: Record<string, unknown>): Promise<string> {
   const answer = await call<RpcView>(env, '/mcp', {
-    token: nib,
+    token: connector,
     body: {
       jsonrpc: '2.0',
       id: 1,

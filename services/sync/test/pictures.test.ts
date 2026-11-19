@@ -3,7 +3,7 @@ import { picturesOf } from '../src/sync-server/src/pictures'
 import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 
 const HASH = 'ab'.repeat(32)
-const URL = `https://nibeditor.com/i/${HASH}.png`
+const URL = `https://orden.so/i/${HASH}.png`
 describe('the pictures a body shows', () => {
   test('are its picture embeds and its image tags', () => {
     expect([...picturesOf(`Before\n\n![a cat](${URL})\n`)]).toEqual([HASH])
@@ -30,7 +30,7 @@ describe('the pictures a body shows', () => {
     ['a picture by reference', `![a][r]\n\n[r]: ${URL}\n`],
     ['an image tag with a source set', `<img srcset="${URL} 2x">`],
     ['an image tag whose words hold a bracket', `<img alt="a>b" src="${URL}">`],
-    ['an image tag with an entity in its address', `<img src="https://nibeditor.com&#47;i/${HASH}.png">`],
+    ['an image tag with an entity in its address', `<img src="https://orden.so&#47;i/${HASH}.png">`],
     ['a picture element', `<picture><source srcset="${URL}"><img src="x.png"></picture>`],
     ['a film with a poster', `<video poster="${URL}"></video>`],
     ['a background in a style', `<div style="background-image:url(${URL})">x</div>`],
@@ -70,14 +70,14 @@ describe('the pictures a body shows', () => {
     ['a code span', `see \`![](${URL})\``],
     ['a fence', `\`\`\`\n![](${URL})\n\`\`\`\n`],
     ['a comment', `%% ![](${URL}) %%`],
-    ['another address', `![](https://nibeditor.com/x/${HASH}.png)`],
+    ['another address', `![](https://orden.so/x/${HASH}.png)`],
     ['a canvas text card', JSON.stringify({ nodes: [{ id: 'a', type: 'text', text: URL }] })],
   ])('and not a hash named in %s', (_, body) => {
     expect([...picturesOf(body)]).toEqual([])
   })
 })
 describe('the pictures of a note whose HTML is live', () => {
-  const split = `https://nibeditor.com/i/${HASH.slice(0, 32)}`
+  const split = `https://orden.so/i/${HASH.slice(0, 32)}`
   test.each([
     ['an image in an svg', `<svg><image href="${URL}" width="10" height="10"/></svg>`],
     ['a style element', `<style>.x{background:url(${URL})}</style><div class="x">a</div>`],

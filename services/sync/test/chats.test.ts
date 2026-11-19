@@ -1397,7 +1397,7 @@ describe('chats', () => {
         call(env, `/v2/chats/${chat}/socket`, {
           headers: {
             upgrade: 'websocket',
-            'sec-websocket-protocol': `${subprotocol(token)}, nib.device.device-one`,
+            'sec-websocket-protocol': `${subprotocol(token)}, orden.device.device-one`,
           },
         })
       for (const [who, role] of [

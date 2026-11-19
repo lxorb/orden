@@ -8,7 +8,7 @@ import { signIn, type TestEnv, testEnv } from './harness'
 const FAST = { m: 64, t: 1, p: 1 }
 const PASSWORD = 'correct horse battery staple'
 const EMAIL = 'ada@example.com'
-const BASE = 'https://nibeditor.com'
+const BASE = 'https://orden.so'
 interface Part {
   item: string
   file: string

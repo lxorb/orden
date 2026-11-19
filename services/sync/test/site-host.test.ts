@@ -3,7 +3,7 @@ import { call, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
 let token: string
-const SITE = 'field.nibeditor.com'
+const SITE = 'field.orden.so'
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')

@@ -10,7 +10,7 @@ date: 2026-09-11
 [toc]
 
 A paragraph with **bold**, _italic_, ~~struck~~, ==marked==, `inline code`,
-H~~2~~O, x^2^, a [link](https://nibeditor.com), a bare https://nibeditor.com,
+H~~2~~O, x^2^, a [link](https://orden.so), a bare https://orden.so,
 a wikilink to [[Another note]], an aliased one to [[Another note|the other]],
 a heading link to [[Another note#Why it works]], a footnote[^why], inline
 maths $e^{i\pi} + 1 = 0$, an abbreviation for HTML, and a #tag in prose.
@@ -65,7 +65,7 @@ and meant as one, holding ==🔴 a red mark== as well.
 ## Callouts
 
 > [!note] Every look there is
-> The thirteen Obsidian has, plus the two nib had first.
+> The thirteen Obsidian has, plus the two Orden had first.
 
 > [!abstract] The short of it
 > One sheet, three places.

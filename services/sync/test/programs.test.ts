@@ -207,7 +207,7 @@ describe('a token acting for somebody', () => {
     }
   })
   test('and a token nobody minted is nobody', async () => {
-    const said = await call<ProgramView>(env, '/v1/spaces', { token: 'nib_nonsense' })
+    const said = await call<ProgramView>(env, '/v1/spaces', { token: 'orden_nonsense' })
     expect(said.status).toBe(401)
     expect(said.json.error).toBe('sign in first')
   })

@@ -246,8 +246,8 @@ describe('serving what a site is dressed in', () => {
       token,
       body: { files: [{ path: 'publish.js', hash: sized(64).hash }] },
     })
-    expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'field.nibeditor.com' })).status).toBe(200)
-    expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'other.nibeditor.com' })).status).toBe(404)
+    expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'field.orden.so' })).status).toBe(200)
+    expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'other.orden.so' })).status).toBe(404)
     expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'nibeditor.com' })).status).toBe(404)
     expect((await call(env, `/i/${sized(64).hash}.js`)).status).toBe(404)
   })
@@ -259,8 +259,8 @@ describe('serving what a site is dressed in', () => {
       token,
       body: { theme: { name: 'Paper', hash: sized(64).hash } },
     })
-    expect((await call(env, `/i/${sized(64).hash}.css`, { host: 'field.nibeditor.com' })).status).toBe(200)
-    expect((await call(env, `/i/${sized(64).hash}.css`, { host: 'other.nibeditor.com' })).status).toBe(404)
+    expect((await call(env, `/i/${sized(64).hash}.css`, { host: 'field.orden.so' })).status).toBe(200)
+    expect((await call(env, `/i/${sized(64).hash}.css`, { host: 'other.orden.so' })).status).toBe(404)
   })
 })
 describe('giving an image back', () => {
@@ -345,7 +345,7 @@ describe('giving an image back', () => {
     await upload(picture)
     await call(env, `/v1/spaces/${theirs}/notes`, {
       token,
-      body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+      body: { path: 'N.md', content: `![](https://orden.so/i/${picture.hash}.png)` },
     })
     const pages = (
       await call<{ note: { id: string } }>(env, `/v1/spaces/${theirs}/notes`, {
@@ -388,7 +388,7 @@ describe('giving an image back', () => {
     await upload(picture)
     await call(env, `/v1/spaces/${theirs}/notes`, {
       token,
-      body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+      body: { path: 'N.md', content: `![](https://orden.so/i/${picture.hash}.png)` },
     })
     expect((await upload(picture, { token: stranger, type: 'application/pdf' })).status).toBe(201)
     await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
@@ -409,7 +409,7 @@ describe('giving an image back', () => {
     const note = (
       await call<{ note: { id: string } }>(env, `/v1/spaces/${theirs}/notes`, {
         token,
-        body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+        body: { path: 'N.md', content: `![](https://orden.so/i/${picture.hash}.png)` },
       })
     ).json.note.id
     env.db.prepare('delete from note_pictures where note_id = ?').run(note)
@@ -450,7 +450,7 @@ describe('giving an image back', () => {
     await upload(picture)
     await call(env, `/v1/spaces/${own}/notes`, {
       token,
-      body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+      body: { path: 'N.md', content: `![](https://orden.so/i/${picture.hash}.png)` },
     })
     await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
     expect(env.keys()).not.toContain(`blobs/${picture.hash}`)

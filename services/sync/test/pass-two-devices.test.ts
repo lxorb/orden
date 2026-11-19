@@ -91,7 +91,7 @@ function oldServer(request: Request): Promise<Response> {
   return worker(request)
 }
 function synced(device: Device, fetcher = worker): Promise<string> {
-  const api = new k.PassApi(k.fetchCall(fetcher, 'https://nibeditor.com', token))
+  const api = new k.PassApi(k.fetchCall(fetcher, 'https://orden.so', token))
   return k.syncOnce(device.world(api, account, EMAIL))
 }
 function login(title: string, more: Partial<Login> = {}): Login {
@@ -264,7 +264,7 @@ describe('Pass on two devices of one account', () => {
   test('does not hand one account’s Pass to another', async () => {
     const { a } = await twoDevices()
     const other = await signIn(env, 'bob@example.com')
-    const api = new k.PassApi(k.fetchCall(worker, 'https://nibeditor.com', other))
+    const api = new k.PassApi(k.fetchCall(worker, 'https://orden.so', other))
     expect(await k.syncOnce(a.world(api, 'someone-else', 'bob@example.com'))).toBe('other-account')
   })
 })

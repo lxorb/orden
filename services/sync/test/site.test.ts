@@ -17,7 +17,7 @@ function broken(text: string): string[] {
 let env: TestEnv
 let token: string
 let space: string
-const HOST = 'field.nibeditor.com'
+const HOST = 'field.orden.so'
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
@@ -457,11 +457,11 @@ describe('the analytics script a site loads', () => {
     await note('One.md', '# One\n')
     await publish()
     await setSite({
-      analytics: { url: 'https://plausible.io/js/script.js', domain: 'field.nibeditor.com' },
+      analytics: { url: 'https://plausible.io/js/script.js', domain: 'field.orden.so' },
     })
     const answer = await page('/one')
     expect(answer.text).toContain(
-      '<script defer src="https://plausible.io/js/script.js" data-domain="field.nibeditor.com"></script>',
+      '<script defer src="https://plausible.io/js/script.js" data-domain="field.orden.so"></script>',
     )
     expect(answer.headers.get('content-security-policy')).toContain('https://plausible.io')
   })

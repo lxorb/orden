@@ -344,7 +344,7 @@ describe('what is left', () => {
     }
     await call(env, `/v1/spaces/${theirs}/notes`, {
       token,
-      body: { path: 'with a picture.md', content: `![](https://nibeditor.com/i/${pasted}.png)` },
+      body: { path: 'with a picture.md', content: `![](https://orden.so/i/${pasted}.png)` },
     })
     expect((await leave()).status).toBe(200)
     expect((await call(env, `/i/${pasted}.png`)).status).toBe(200)
@@ -404,7 +404,7 @@ describe('what is left', () => {
       token,
       body: {
         path: 'with a picture.md',
-        content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+        content: `![](https://orden.so/i/${picture.hash}.png)`,
       },
     })
     const demoted = await call(env, `/v1/spaces/${theirs}/share/members/${encodeURIComponent(ME)}`, {
@@ -438,7 +438,7 @@ describe('what is left', () => {
       token,
       body: {
         path: 'with a picture.md',
-        content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+        content: `![](https://orden.so/i/${picture.hash}.png)`,
       },
     })
     const out =
@@ -474,7 +474,7 @@ describe('what is left', () => {
       token,
       body: {
         path: 'with a picture.md',
-        content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+        content: `![](https://orden.so/i/${picture.hash}.png)`,
       },
     })
     expect((await leave()).status).toBe(200)
@@ -501,7 +501,7 @@ describe('what is left', () => {
         token,
         body: {
           path: 'with a picture.md',
-          content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+          content: `![](https://orden.so/i/${picture.hash}.png)`,
         },
       })
     ).json.note
@@ -569,7 +569,7 @@ describe('what is left', () => {
         token,
         body: {
           path: 'with a picture.md',
-          content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+          content: `![](https://orden.so/i/${picture.hash}.png)`,
         },
       })
     ).json.note?.id
@@ -583,7 +583,7 @@ describe('what is left', () => {
   test.each([
     ['in a code span', (hash: string) => `see \`/i/${hash}\``],
     ['in prose', (hash: string) => `see /i/${hash} there`],
-    ['as a picture', (hash: string) => `![](https://nibeditor.com/i/${hash}.png)`],
+    ['as a picture', (hash: string) => `![](https://orden.so/i/${hash}.png)`],
   ])('a paper whose hash a stranger writes %s is not handed to them', async (_, body) => {
     const stranger = await signIn(env, OTHER)
     const mine = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space?.id
@@ -686,7 +686,7 @@ describe('what is left', () => {
       token,
       body: {
         path: 'with a picture.md',
-        content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+        content: `![](https://orden.so/i/${picture.hash}.png)`,
       },
     })
     expect((await leave()).status).toBe(200)
@@ -714,7 +714,7 @@ describe('what is left', () => {
     })
     const made = await call(env, `/v1/spaces/${theirs}/notes`, {
       token,
-      body: { path, content: body(`https://nibeditor.com/i/${picture.hash}.png`) },
+      body: { path, content: body(`https://orden.so/i/${picture.hash}.png`) },
     })
     expect(made.status).toBe(201)
     await call(env, `/v1/spaces/${theirs}/share/me`, { method: 'DELETE', token })
@@ -750,7 +750,7 @@ describe('what is left', () => {
     })
     await call(env, `/v1/spaces/${own}/notes`, {
       token,
-      body: { path: 'diary.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+      body: { path: 'diary.md', content: `![](https://orden.so/i/${picture.hash}.png)` },
     })
     expect((await leave()).status).toBe(200)
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([])
@@ -767,7 +767,7 @@ describe('what is left', () => {
       token,
       body: { subdomain: 'leaving' },
     })
-    const host = 'leaving.nibeditor.com'
+    const host = 'leaving.orden.so'
     expect((await call(env, '/', { host })).status).toBe(200)
     expect((await leave()).status).toBe(200)
     expect((await call(env, '/', { host })).status).toBe(302)

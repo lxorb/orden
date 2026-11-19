@@ -10,9 +10,9 @@ interface Placed {
 }
 const placed = (core: Core, id = at.space) => [...(core.spaces.get(id)?.entries.values() ?? [])] as unknown as Placed[]
 async function tool(args: Record<string, unknown>) {
-  const nib = (await call(at.env, '/v1/mcp/token', { token: at.token, body: { readOnly: false } })).json.token
+  const connector = (await call(at.env, '/v1/mcp/token', { token: at.token, body: { readOnly: false } })).json.token
   await call(at.env, '/mcp', {
-    token: nib,
+    token: connector,
     body: {
       jsonrpc: '2.0',
       id: 1,

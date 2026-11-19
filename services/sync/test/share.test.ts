@@ -610,7 +610,7 @@ describe('an invitation', () => {
     expect(json.mailed).toBeUndefined()
   })
   test('stands, and still says nothing, when the message cannot go', async () => {
-    env.MAIL_FROM = 'Nib <nib@nibeditor.com>'
+    env.MAIL_FROM = 'Orden <nib@nibeditor.com>'
     env.EMAIL = { send: () => Promise.reject(new Error('the sender is not answering')) }
     const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const response = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {

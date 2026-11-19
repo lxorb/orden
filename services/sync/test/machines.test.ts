@@ -92,7 +92,7 @@ const knock = (term: string, token: string) =>
   call(env, `/v2/online/${term}/socket`, {
     headers: {
       upgrade: 'websocket',
-      'sec-websocket-protocol': [subprotocol(token), `nib.device.${DEVICE}`].join(', '),
+      'sec-websocket-protocol': [subprotocol(token), `orden.device.${DEVICE}`].join(', '),
     },
   })
 beforeEach(() => {
@@ -305,7 +305,7 @@ describe('the door', () => {
     const stranger = await session('stranger@example.com')
     const refused = await knock('term-1', stranger)
     expect(refusal(refused)).toBe('gone')
-    expect(refused.headers.get('sec-websocket-protocol')).toBe(`nib.device.${DEVICE}`)
+    expect(refused.headers.get('sec-websocket-protocol')).toBe(`orden.device.${DEVICE}`)
   })
   test('a session ended, or never made, is gone, on a socket the app can read', async () => {
     const { owner } = await made()
@@ -1890,7 +1890,7 @@ describe('a machine on a server of its own', () => {
     expect((await admin(`/machines/${ID}/host`, { host: 'aws' })).status).toBe(400)
     const { Cloud } = await import('./hetzner-cloud')
     const cloud = new Cloud()
-    cloud.firewalls.push({ id: 5, name: 'nib-server', labels: { 'orden-machine': ID }, rules: [] })
+    cloud.firewalls.push({ id: 5, name: 'orden-server', labels: { 'orden-machine': ID }, rules: [] })
     vi.stubGlobal('fetch', cloud.fetch)
     try {
       expect((await admin(`/machines/${ID}/ssh`, { key: 'not a key' })).status).toBe(400)

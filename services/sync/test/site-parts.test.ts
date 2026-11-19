@@ -196,7 +196,7 @@ describe('a site with forms on it', () => {
   let token: string
   let space: string
   let note: string
-  const HOST = 'field.nibeditor.com'
+  const HOST = 'field.orden.so'
   const FENCE = ['```form', 'title: Say hello', 'fields:', '  - * Your name', '```'].join('\n')
   beforeEach(async () => {
     env = testEnv()
@@ -450,7 +450,7 @@ describe('a form on a site behind a password', () => {
   let token: string
   let space: string
   let note: string
-  const HOST = 'field.nibeditor.com'
+  const HOST = 'field.orden.so'
   const PASSWORD = 'the quiet part'
   const FENCE = ['```form', 'title: Say hello', 'fields:', '  - * Your name', '```'].join('\n')
   const sending = (headers: Record<string, string> = {}) =>

@@ -62,7 +62,7 @@ export async function framed<T = Record<string, unknown>>(
   }
   if (body !== undefined) headers['content-type'] = 'application/octet-stream'
   const response = await app.fetch(
-    new Request(`https://nibeditor.com${path}`, {
+    new Request(`https://orden.so${path}`, {
       method,
       headers,
       ...(body === undefined ? {} : { body: frame(body) }),

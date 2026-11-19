@@ -13,7 +13,7 @@ import { call, signIn, testEnv, type TestEnv } from './harness'
 const HERE = join(fileURLToPath(import.meta.url), '..')
 const EVERYTHING = readFileSync(fileURLToPath(new URL('everything.md', import.meta.url)), 'utf8')
 const OTHER = '# Another note\n\nThe other note itself.\n\n## Why it works\n\nBecause.\n'
-const HOST = 'field.nibeditor.com'
+const HOST = 'field.orden.so'
 const RED = '\u{1F534}'
 let env: TestEnv
 let token: string
