@@ -733,7 +733,6 @@ class Drive:
         inner = self.eval("[innerWidth, innerHeight, devicePixelRatio]") or [WIDTH, HEIGHT, 1]
         middle = inner[1] / 2
         path = [(inner[0] * 0.4 - step * inner[0] * 0.4 / 6, middle) for step in range(7)] if out else [(inner[0] * 0.5, middle)]
-        self.desk.forward()
         for x, y in path:
             self.desk.move(max(1.0, x), y, inner[2])
             time.sleep(0.04)
@@ -756,7 +755,6 @@ class Drive:
         self.eval(f"window.__parityDowns = []; window.__parityAim = {json.dumps(layer['box'])}; return true")
         before = Site.downs
         t_click = time.time()
-        self.desk.forward()
         self.desk.click(x, y, ratio)
         time.sleep(0.5)
         downs = self.eval("window.__parityDowns || []")
@@ -787,6 +785,7 @@ class Drive:
     def layered(self, layer: dict[str, Any], kind: str, turn: int = 0) -> dict[str, Any]:
         began = time.time()
         self.back_to(kind)
+        self.desk.forward()
         self.current = self.tab_of(kind) or ""
         time.sleep(0.6)
         base = self.eval(RECTS)
@@ -816,6 +815,7 @@ class Drive:
             for layer in group:
                 for kind in ("note",):
                     self.back_to(kind)
+                    self.desk.forward()
                     self.current = self.tab_of(kind) or ""
                     time.sleep(0.5)
                     self.opened(layer, False)
