@@ -4,6 +4,7 @@ import {
   clockWords,
   dateOf,
   dateWords,
+  dayWords,
   daysAfter,
   monthGrid,
   monthsAfter,
@@ -81,5 +82,15 @@ describe('a time of day', () => {
   test('steps wrap around midnight', () => {
     expect(clockAfter('23:55', 10)).toBe('00:05')
     expect(clockAfter('00:00', -5)).toBe('23:55')
+  })
+})
+describe('a day said the way a list says it', () => {
+  test('is a word near today, a weekday within the week, and a date further out', () => {
+    expect(dayWords('2026-11-19', '2026-11-19')).toBe('Today')
+    expect(dayWords('2026-11-20', '2026-11-19')).toBe('Tomorrow')
+    expect(dayWords('2026-11-18', '2026-11-19')).toBe('Yesterday')
+    expect(dayWords('2026-11-23', '2026-11-19')).not.toMatch(/\d/)
+    expect(dayWords('2026-12-24', '2026-11-19')).toMatch(/24/)
+    expect(dayWords('2027-01-05', '2026-11-19')).toMatch(/2027/)
   })
 })

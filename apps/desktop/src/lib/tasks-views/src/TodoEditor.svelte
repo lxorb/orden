@@ -10,6 +10,7 @@
     type TodoPatch,
   } from '../../tasks-model/src/api'
   import { DateField, Select } from '../../ui-controls/src/api'
+  import { Cross } from '../../ui-kit/src/api'
   import type { Space } from './shown.svelte'
 
   const {
@@ -52,7 +53,13 @@
     titleFrom = nextTitle
     descriptionFrom = nextDescription
   })
-  const suggestions = $derived(knownLabels.filter((one) => !todo.labels.includes(one)))
+  let labeling = $state(false)
+  const suggestions = $derived(
+    knownLabels
+      .filter((one) => !todo.labels.includes(one) && one.toLowerCase().includes(newLabel.trim().toLowerCase()))
+      .slice(0, 8),
+  )
+  const subtasksDone = $derived(todo.subtasks.filter((one) => one.done).length)
   async function change(patch: TodoPatch) {
     refused = await onchange(patch)
   }
@@ -64,8 +71,8 @@
   function saveDescription() {
     if (description !== todo.description) void change({ description })
   }
-  function addLabel() {
-    const label = cleanLabel(newLabel)
+  function addLabel(typed = newLabel) {
+    const label = cleanLabel(typed)
     newLabel = ''
     if (label === '' || todo.labels.includes(label)) return
     void change({ labels: [...todo.labels, label] })
@@ -87,6 +94,15 @@
     void change({ subtasks: todo.subtasks.filter((one) => one.id !== id) })
   }
   const dayOr = (value: string): string | null => (value === '' ? null : value)
+  function fitting(field: HTMLTextAreaElement, _words: string) {
+    const fit = () => {
+      field.style.height = 'auto'
+      field.style.height = `${String(field.scrollHeight + 2)}px`
+    }
+    fit()
+    field.addEventListener('input', fit)
+    return { update: fit, destroy: () => field.removeEventListener('input', fit) }
+  }
 </script>
 
 <div class="editor" data-todo-editor={todo.id}>
@@ -104,20 +120,23 @@
         }
       }}
     />
-    <button type="button" class="close" aria-label="Close" onclick={onclose}>Close</button>
+    <button type="button" class="close orden-glyph" aria-label="Close" title="Close" onclick={onclose}>
+      <Cross />
+    </button>
   </div>
 
   <textarea
-    class="description"
+    class="description orden-title-field is-body"
     aria-label="Description"
-    placeholder="Description"
-    rows="3"
+    placeholder="Add a description"
+    rows="2"
     bind:value={description}
+    use:fitting={description}
     onblur={saveDescription}></textarea>
 
   <div class="fields">
     <div class="field">
-      <span>Space</span>
+      <span class="name">Space</span>
       <Select
         label="Space"
         value={inSpace?.id ?? todo.space ?? ''}
@@ -130,23 +149,7 @@
       />
     </div>
     <div class="field">
-      <span>Start date</span>
-      <DateField
-        label="Start date"
-        value={todo.start ?? ''}
-        onchange={(next: string) => void change({ start: dayOr(next) })}
-      />
-    </div>
-    <div class="field">
-      <span>Deadline</span>
-      <DateField
-        label="Deadline"
-        value={todo.deadline ?? ''}
-        onchange={(next: string) => void change({ deadline: dayOr(next) })}
-      />
-    </div>
-    <div class="field">
-      <span>Priority</span>
+      <span class="name">Priority</span>
       <Select
         label="Priority"
         value={String(todo.priority)}
@@ -154,25 +157,52 @@
         onchange={(next: string) => void change({ priority: Number(next) as Priority })}
       />
     </div>
+    <div class="field">
+      <span class="name">Start date</span>
+      <DateField
+        label="Start date"
+        value={todo.start ?? ''}
+        onchange={(next: string) => void change({ start: dayOr(next) })}
+      />
+    </div>
+    <div class="field">
+      <span class="name">Deadline</span>
+      <DateField
+        label="Deadline"
+        value={todo.deadline ?? ''}
+        onchange={(next: string) => void change({ deadline: dayOr(next) })}
+      />
+    </div>
   </div>
 
-  <div class="labels">
-    <span class="name">Labels</span>
+  <div class="group">
+    <p class="orden-section">Labels</p>
     <div class="chips">
       {#each todo.labels as label (label)}
         <span class="chip">
-          {label}
-          <button type="button" aria-label="Remove label {label}" onclick={() => dropLabel(label)}> Remove </button>
+          <span class="word">{label}</span>
+          <button
+            type="button"
+            class="off"
+            aria-label="Remove label {label}"
+            title="Remove"
+            onclick={() => dropLabel(label)}
+          >
+            <Cross small />
+          </button>
         </span>
       {/each}
       <input
-        class="new"
+        class="new orden-title-field"
         type="text"
-        list="todo-labels-{todo.id}"
         placeholder="Add label"
         aria-label="Add label"
         bind:value={newLabel}
-        onblur={addLabel}
+        onfocus={() => (labeling = true)}
+        onblur={() => {
+          labeling = false
+          addLabel()
+        }}
         onkeydown={(event) => {
           if (event.key === 'Enter') {
             event.preventDefault()
@@ -180,43 +210,68 @@
           }
         }}
       />
-      <datalist id="todo-labels-{todo.id}">
-        {#each suggestions as label (label)}
-          <option value={label}></option>
-        {/each}
-      </datalist>
     </div>
+    {#if labeling && suggestions.length}
+      <div class="offered" role="group" aria-label="Known labels">
+        {#each suggestions as label (label)}
+          <button
+            type="button"
+            class="orden-chip is-quiet"
+            onmousedown={(event) => event.preventDefault()}
+            onclick={() => {
+              newLabel = ''
+              addLabel(label)
+            }}>{label}</button
+          >
+        {/each}
+      </div>
+    {/if}
   </div>
 
-  <div class="subtasks">
-    <span class="name">Subtasks</span>
-    <ul>
-      {#each todo.subtasks as subtask (subtask.id)}
-        <li class:done={subtask.done}>
-          <input
-            type="checkbox"
-            aria-label="Done"
-            checked={subtask.done}
-            onchange={(event) => tickSubtask(subtask.id, event.currentTarget.checked)}
-          />
-          <span>{subtask.title}</span>
-          <button type="button" aria-label="Remove subtask" onclick={() => dropSubtask(subtask.id)}> Remove </button>
-        </li>
-      {/each}
-    </ul>
-    <input
-      class="new"
-      type="text"
-      placeholder="Add subtask"
-      aria-label="Add subtask"
-      bind:value={newSubtask}
-      onkeydown={(event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault()
-          addSubtask()
-        }
-      }}
-    />
+  <div class="group">
+    <p class="orden-section">
+      Subtasks{#if todo.subtasks.length}<span>{subtasksDone}/{todo.subtasks.length}</span>{/if}
+    </p>
+    {#if todo.subtasks.length}
+      <ul>
+        {#each todo.subtasks as subtask (subtask.id)}
+          <li class="subtask orden-row is-short" class:done={subtask.done}>
+            <input
+              type="checkbox"
+              class="orden-checkbox"
+              aria-label="Done"
+              checked={subtask.done}
+              onchange={(event) => tickSubtask(subtask.id, event.currentTarget.checked)}
+            />
+            <span class="words">{subtask.title}</span>
+            <button
+              type="button"
+              class="off"
+              aria-label="Remove subtask"
+              title="Remove"
+              onclick={() => dropSubtask(subtask.id)}
+            >
+              <Cross small />
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+    <label class="adding orden-field">
+      <svg class="orden-field-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" /></svg>
+      <input
+        type="text"
+        placeholder="Add subtask"
+        aria-label="Add subtask"
+        bind:value={newSubtask}
+        onkeydown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            addSubtask()
+          }
+        }}
+      />
+    </label>
   </div>
 
   {#if refused}
@@ -224,7 +279,7 @@
   {/if}
 
   <div class="foot">
-    <button type="button" class="danger" onclick={onremove}>Delete todo</button>
+    <button type="button" class="danger orden-action is-danger" onclick={onremove}>Delete todo</button>
   </div>
 </div>
 
@@ -235,48 +290,60 @@
     gap: var(--space-3);
     padding: var(--space-3);
     border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--surface);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+    font-family: var(--font-ui);
   }
   .head {
     display: flex;
-    gap: var(--space-2);
+    gap: var(--space-1);
     align-items: center;
+    margin-inline-start: calc(-1px - var(--space-2));
   }
   .title {
     flex: 1;
+    font-size: var(--text-base);
   }
-  .description,
-  .new {
-    padding: var(--space-1) var(--space-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
-    color: var(--text);
-    font: inherit;
-    font-size: var(--text-sm);
+  .close {
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+  }
+  .close :global(.orden-cross) {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    stroke-width: 1.5;
   }
   .description {
-    resize: vertical;
+    margin-inline-start: calc(-1px - var(--space-2));
+    width: calc(100% + 2px + 2 * var(--space-2));
+    min-height: 2.6em;
+    overflow: hidden;
+    font-size: var(--text-sm);
   }
   .fields {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-    gap: var(--space-2);
+    gap: var(--space-3) var(--space-2);
   }
   .field,
-  .labels,
-  .subtasks {
+  .group {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+    min-width: 0;
   }
-  .field > span,
   .name {
-    color: var(--muted);
+    color: var(--muted-strong);
     font-size: var(--text-xs);
+    font-weight: var(--weight-strong);
   }
-  .chips {
+  .group > .orden-section {
+    margin: 0;
+    padding-inline: 0;
+  }
+  .chips,
+  .offered {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
@@ -284,49 +351,78 @@
   }
   .chip {
     display: inline-flex;
-    gap: var(--space-1);
+    gap: 2px;
     align-items: center;
-    padding: 0 var(--space-2);
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
+    padding: 2px 4px 2px var(--space-2);
+    border: 1px solid var(--line-strong);
+    border-radius: 99px;
+    color: var(--text);
     font-size: var(--text-sm);
+    animation: arrive var(--dur-base) var(--ease-spring);
   }
-  .chip button,
-  li button,
-  .close {
-    padding: 0 var(--space-1);
+  .off {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
     border: none;
+    border-radius: 99px;
     background: none;
     color: var(--muted);
-    font: inherit;
-    font-size: var(--text-xs);
+    cursor: default;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      opacity var(--dur-fast) var(--ease-out);
   }
-  .chip button:hover,
-  li button:hover,
-  .close:hover {
-    color: var(--text-strong);
+  .off :global(.orden-cross) {
+    width: 8px;
+    height: 8px;
+    stroke-width: 1.4;
+  }
+  @media (hover: hover) {
+    .off:hover {
+      color: var(--danger);
+    }
+  }
+  .new {
+    flex: 1 1 6rem;
+    width: auto;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-row);
   }
   ul {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
-    margin: 0;
+    margin: 0 calc(-1 * var(--row-pad));
     padding: 0;
     list-style: none;
   }
-  li {
-    display: flex;
+  .subtask {
     gap: var(--space-2);
-    align-items: center;
   }
-  li span {
+  .subtask .orden-checkbox {
+    margin: 0;
+  }
+  .words {
     flex: 1;
     min-width: 0;
+    color: var(--text);
     overflow-wrap: anywhere;
+    transition: color var(--dur-fast) var(--ease-out);
   }
-  li.done span {
+  .subtask.done .words {
     color: var(--muted);
     text-decoration: line-through;
+    text-decoration-color: var(--line-strong);
+  }
+  .subtask .off {
+    opacity: 0;
+  }
+  .subtask:hover .off,
+  .subtask .off:focus-visible,
+  :global([data-touch]) .subtask .off {
+    opacity: 1;
   }
   .refused {
     margin: 0;
@@ -336,14 +432,20 @@
   .foot {
     display: flex;
     justify-content: flex-end;
+    border-top: 1px solid var(--line);
   }
   .danger {
-    padding: var(--space-1) var(--space-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--danger);
-    font: inherit;
-    font-size: var(--text-sm);
+    width: auto;
+  }
+  @keyframes arrive {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chip {
+      animation: none;
+    }
   }
 </style>

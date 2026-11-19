@@ -1,5 +1,5 @@
 {
   "name": "tasks-views",
   "layer": "content",
-  "dependsOn": ["contracts", "tasks-model", "ui-controls"]
+  "dependsOn": ["contracts", "platform", "shortcuts", "tasks-model", "ui-controls", "ui-kit"]
 }

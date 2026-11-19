@@ -1260,6 +1260,16 @@ select:focus-visible,
   border-color: var(--accent);
   background: var(--bg);
 }
+.orden-title-field.is-body {
+  color: var(--text);
+  font-weight: var(--weight-row);
+  line-height: 1.5;
+  resize: none;
+}
+.orden-title-field::placeholder {
+  color: var(--muted);
+  font-weight: var(--weight-row);
+}
 .orden-field-mark {
   width: var(--icon-md);
   height: var(--icon-md);
