@@ -30,24 +30,22 @@ pub fn on_page(key: &str, url: &str, element: &str) -> String {
     let element = element.split_whitespace().collect::<Vec<_>>().join(" ");
     format!("{key}:{host}:{element}")
 }
-pub fn is_allowed(agent: &str, key: &str) -> bool {
-    held().iter().any(|one| {
-        one.approval.agent == agent
-            && one.key == key
-            && one.approval.answer == ApprovalAnswer::Allowed
-            && !one.spent
-            && one.at.elapsed() < SPEND_WITHIN
-    })
+impl Held {
+    fn for_call(&self, agent: &str, thread: Option<&str>, key: &str) -> bool {
+        self.approval.agent == agent && self.approval.thread.as_deref() == thread && self.key == key
+    }
+    fn spendable(&self) -> bool {
+        self.approval.answer == ApprovalAnswer::Allowed
+            && !self.spent
+            && self.at.elapsed() < SPEND_WITHIN
+    }
 }
-pub fn allowed(agent: &str, key: &str) -> bool {
+pub fn is_allowed(agent: &str, thread: Option<&str>, key: &str) -> bool {
+    held().iter().any(|one| one.for_call(agent, thread, key) && one.spendable())
+}
+pub fn allowed(agent: &str, thread: Option<&str>, key: &str) -> bool {
     let mut all = held();
-    let found = all.iter_mut().find(|one| {
-        one.approval.agent == agent
-            && one.key == key
-            && one.approval.answer == ApprovalAnswer::Allowed
-            && !one.spent
-            && one.at.elapsed() < SPEND_WITHIN
-    });
+    let found = all.iter_mut().find(|one| one.for_call(agent, thread, key) && one.spendable());
     match found {
         Some(one) => {
             one.spent = true;
@@ -64,6 +62,7 @@ pub struct Asking<'a> {
     pub site: Option<String>,
     pub tab: Option<String>,
     pub key: String,
+    pub thread: Option<String>,
 }
 impl<'a> Asking<'a> {
     pub fn of(grant: &'a Grant, category: Category, summary: String, key: String) -> Self {
@@ -75,6 +74,7 @@ impl<'a> Asking<'a> {
             site: None,
             tab: None,
             key,
+            thread: grant.thread.clone(),
         }
     }
 }
@@ -82,7 +82,8 @@ pub fn unless_allowed(app: &AppHandle, asking: Asking<'_>) -> Option<Answer> {
     unless_allowed_telling(asking, told(app))
 }
 pub fn unless_allowed_telling(asking: Asking<'_>, tell: impl FnOnce(Event)) -> Option<Answer> {
-    (!allowed(asking.agent, &asking.key)).then(|| ask_telling(asking, tell))
+    (!allowed(asking.agent, asking.thread.as_deref(), &asking.key))
+        .then(|| ask_telling(asking, tell))
 }
 fn told(app: &AppHandle) -> impl FnOnce(Event) + '_ {
     move |event| {
@@ -99,6 +100,7 @@ pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> A
         site: asking.site,
         tab: asking.tab,
         verb: verb_of(&asking.key).to_owned(),
+        thread: asking.thread.clone(),
         asked: orden_base::clock::now(),
         answer,
     };
@@ -116,8 +118,10 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
 }
 fn ask_telling(asking: Asking<'_>, tell: impl FnOnce(Event)) -> Answer {
     let mut all = held();
-    if let Some(one) =
-        all.iter().rev().find(|one| one.approval.agent == asking.agent && one.key == asking.key)
+    if let Some(one) = all
+        .iter()
+        .rev()
+        .find(|one| one.for_call(asking.agent, asking.thread.as_deref(), &asking.key))
     {
         match one.approval.answer {
             ApprovalAnswer::Pending => {
@@ -144,6 +148,7 @@ fn ask_telling(asking: Asking<'_>, tell: impl FnOnce(Event)) -> Answer {
         site: asking.site,
         tab: asking.tab,
         verb: verb_of(&asking.key).to_owned(),
+        thread: asking.thread.clone(),
         asked: orden_base::clock::now(),
         answer: ApprovalAnswer::Pending,
     };
@@ -239,6 +244,7 @@ mod tests {
                 site: Some("shop.example".into()),
                 tab: Some("a1".into()),
                 verb: verb_of(key).into(),
+                thread: None,
                 asked: 0,
                 answer,
             },
@@ -252,11 +258,12 @@ mod tests {
     fn an_allowed_question_lets_its_call_through_once() {
         let key = key("browser_click", Some("a1"), Some("e7"));
         pushed("allowing", &key, ApprovalAnswer::Allowed);
-        assert!(allowed("allowing", &key));
-        assert!(!allowed("allowing", &key));
+        assert!(allowed("allowing", None, &key));
+        assert!(!allowed("allowing", None, &key));
         pushed("allowing", &key, ApprovalAnswer::Allowed);
-        assert!(!allowed("somebody", &key));
-        assert!(!allowed("allowing", "browser_click:a1:e8"));
+        assert!(!allowed("somebody", None, &key));
+        assert!(!allowed("allowing", Some("thread-a"), &key));
+        assert!(!allowed("allowing", None, "browser_click:a1:e8"));
     }
     #[test]
     fn a_waiting_question_is_nobody_elses_to_read() {
@@ -287,7 +294,8 @@ mod tests {
     }
     #[test]
     fn a_tools_question_is_told_answered_and_spent_once() {
-        let grant = Grant::own("tools-agent".into(), "Tools");
+        let mut grant = Grant::own("tools-agent".into(), "Tools");
+        grant.thread = Some("thread-t".into());
         let asking = || {
             Asking::of(
                 &grant,
@@ -302,7 +310,7 @@ mod tests {
             panic!("asked nothing: {first:?}");
         };
         assert!(
-            matches!(&heard[..], [Event::Asked { approval: one }] if one.category == Category::Tools && one.verb == "mcp__f__echo")
+            matches!(&heard[..], [Event::Asked { approval: one }] if one.category == Category::Tools && one.verb == "mcp__f__echo" && one.thread.as_deref() == Some("thread-t"))
         );
         assert!(
             matches!(unless_allowed_telling(asking(), |_| {}), Some(Answer::NeedsApproval { approval: again, .. }) if again == approval)

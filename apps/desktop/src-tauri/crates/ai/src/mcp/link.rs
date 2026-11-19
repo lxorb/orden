@@ -345,10 +345,8 @@ impl Link {
         let Some((endpoint, kept)) = self.paired() else {
             return Outcome::failed("not_paired", self.sentence());
         };
-        let mut asked = json!({ "verb": verb, "args": args, "rest": [], "session": self.session });
-        if let (Some(thread), Some(_)) = (thread_handed(), handed()) {
-            asked["thread"] = json!(thread);
-        }
+        let asked =
+            asked_of(verb, args, &self.session, handed().and_then(|_| thread_handed()).as_deref());
         let patience = patience_for(verb, args);
         let said = match app::post(&endpoint, Some(&kept.token), &asked, patience) {
             Ok(said) => said,
@@ -414,12 +412,15 @@ fn handed() -> Option<String> {
         .ok()
         .filter(|token| !token.is_empty() && token.bytes().all(|one| one.is_ascii_alphanumeric()))
 }
+fn asked_of(verb: &str, args: &Value, session: &str, thread: Option<&str>) -> Value {
+    let mut asked = json!({ "verb": verb, "args": args, "rest": [], "session": session });
+    if let Some(thread) = thread {
+        asked["thread"] = json!(thread);
+    }
+    asked
+}
 fn thread_handed() -> Option<String> {
-    std::env::var(THREAD_VAR).ok().filter(|thread| {
-        !thread.is_empty()
-            && thread.len() <= 80
-            && thread.bytes().all(|one| one.is_ascii_alphanumeric() || one == b'-' || one == b'_')
-    })
+    std::env::var(THREAD_VAR).ok().filter(|thread| orden_agents::is_thread(thread))
 }
 const THREAD_VAR: &str = "ORDEN_MCP_THREAD";
 fn grant_of(endpoint: &Endpoint, token: &str, session: &str) -> Result<Grant, Refusal> {
@@ -449,6 +450,17 @@ fn modified(path: &Path) -> Option<SystemTime> {
 mod tests {
     use super::*;
 
+    #[test]
+    fn a_call_names_the_thread_it_was_handed_as_the_endpoint_reads_it() {
+        let args = json!({ "path": "a.md" });
+        for thread in ["thread-1", "t_2", &"x".repeat(80)] {
+            let asked = asked_of("edit_note", &args, "s-1", Some(thread));
+            assert_eq!(orden_agents::thread_of(&asked).as_deref(), Some(thread));
+            assert_eq!(orden_agents::session_of(&asked), "s-1");
+        }
+        assert!(asked_of("edit_note", &args, "s-1", None).get("thread").is_none());
+        assert!(orden_agents::thread_of(&asked_of("edit_note", &args, "s", Some("a b"))).is_none());
+    }
     #[test]
     fn each_session_is_told_apart_as_the_app_reads_it() {
         let one = fresh_session();

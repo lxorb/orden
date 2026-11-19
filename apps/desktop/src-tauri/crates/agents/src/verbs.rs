@@ -923,6 +923,8 @@ pub struct Approval {
     pub tab: Option<TabId>,
     #[serde(default)]
     pub verb: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub thread: Option<String>,
     pub asked: u64,
     pub answer: ApprovalAnswer,
 }

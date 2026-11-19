@@ -366,7 +366,7 @@ fn judged_times(
     };
     let summary = said_times(question.summary.clone(), times);
     let key = approvals::on_page(key, &page.url(), &question_key(&question, &summary, facts));
-    if approvals::allowed(&grant.id, &key) {
+    if approvals::allowed(&grant.id, grant.thread.as_deref(), &key) {
         return cleared();
     }
     Err(ask(app, grant, question.category, summary, Some(&page.url()), place.id(), &key))
@@ -859,7 +859,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     );
                     if !outside.is_empty()
                         && grant.asks(Category::Files)
-                        && !approvals::is_allowed(&grant.id, &key)
+                        && !approvals::is_allowed(&grant.id, grant.thread.as_deref(), &key)
                     {
                         let named: Vec<String> =
                             outside.iter().map(|(path, _)| path.display().to_string()).collect();
@@ -891,6 +891,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 if let Caller::Agent(grant) = caller {
                     let _ = approvals::allowed(
                         &grant.id,
+                        grant.thread.as_deref(),
                         &approvals::on_page(
                             &approvals::key(
                                 "browser_upload",
@@ -959,7 +960,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                             &held.url,
                             &held.message,
                         );
-                        if !approvals::allowed(&grant.id, &key) {
+                        if !approvals::allowed(&grant.id, grant.thread.as_deref(), &key) {
                             return Err(ask(
                                 app,
                                 grant,

@@ -294,7 +294,7 @@ fn reachable(app: &AppHandle, grant: Option<&Grant>, url: &Url) -> Result<(), An
         return Ok(());
     };
     let key = approvals::key("http", None, Some(&site));
-    if approvals::allowed(&grant.id, &key) {
+    if approvals::allowed(&grant.id, grant.thread.as_deref(), &key) {
         remember(&grant.id, &site);
         return Ok(());
     }

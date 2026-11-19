@@ -373,8 +373,9 @@ pub async fn ai_agent_call(
 ) -> Result<Value, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Value, String> {
         orden_base::labels::from_the_app(&webview)?;
-        let grant = grant_for(&app, &agent)?;
+        let mut grant = grant_for(&app, &agent)?;
         if tool.starts_with(OUTSIDE) {
+            grant.thread = thread.filter(|one| orden_agents::is_thread(one));
             let started = Instant::now();
             let args = if args.is_object() { args } else { json!({}) };
             let (rendered, answered) =
@@ -732,6 +733,28 @@ mod tests {
             outside_key("mcp__a__b", &json!({ "x": { "q": 1, "p": 2 } })),
             outside_key("mcp__a__b", &json!({ "x": { "p": 2, "q": 1 } }))
         );
+    }
+    #[test]
+    fn one_threads_answer_is_not_another_threads() {
+        let outside = fake(vec![("shout", false, Permission::Ask)]);
+        let mut one = agent("threads-outside");
+        one.thread = Some("thread-a".into());
+        let mut other = one.clone();
+        other.thread = Some("thread-b".into());
+        let call = |grant: &Grant| {
+            outside_call(&outside, grant, Mode::Auto, &exposed("shout"), json!({})).expect("a tool")
+        };
+        let (asked, _) = call(&one);
+        let approval = asked["_meta"][META]["approval"].as_str().expect("approval").to_owned();
+        assert!(
+            approvals::any(&approval).is_some_and(|one| one.thread.as_deref() == Some("thread-a"))
+        );
+        approvals::answer_telling(&approval, true, |_| {}).expect("answered");
+        let (elsewhere, _) = call(&other);
+        assert_eq!(status(&elsewhere), "needs_approval");
+        assert_ne!(elsewhere["_meta"][META]["approval"], approval.as_str());
+        assert!(outside.calls.borrow().is_empty());
+        assert_eq!(status(&call(&one).0), "ran");
     }
     #[test]
     fn a_denied_call_reaches_no_server() {

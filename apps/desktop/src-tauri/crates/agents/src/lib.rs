@@ -79,6 +79,16 @@ impl Caller {
             Caller::Agent(grant) => serde_json::to_value(grant).ok(),
         }
     }
+    #[must_use]
+    pub fn in_thread(self, thread: Option<String>) -> Self {
+        match self {
+            Caller::Agent(mut grant) => {
+                grant.thread = thread;
+                Caller::Agent(grant)
+            }
+            Caller::Reader => Caller::Reader,
+        }
+    }
     pub fn limits(&self) -> grants::Limits {
         match self {
             Caller::Reader => grants::Limits::default(),
@@ -104,6 +114,14 @@ pub fn session_of(asked: &Value) -> String {
         })
         .unwrap_or_default()
         .to_owned()
+}
+pub fn is_thread(thread: &str) -> bool {
+    !thread.is_empty()
+        && thread.len() <= 80
+        && thread.bytes().all(|one| one.is_ascii_alphanumeric() || one == b'-' || one == b'_')
+}
+pub fn thread_of(asked: &Value) -> Option<String> {
+    asked.get("thread").and_then(Value::as_str).filter(|one| is_thread(one)).map(str::to_owned)
 }
 #[allow(clippy::too_many_arguments)]
 pub fn logged(
@@ -167,7 +185,7 @@ pub fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answ
     let wait = Duration::from_millis(pair.wait_ms.unwrap_or(0)).min(LONGEST_PAIRING_WAIT);
     let started = Instant::now();
     loop {
-        if approvals::allowed(PAIRING, &key) {
+        if approvals::allowed(PAIRING, None, &key) {
             return match state(app).grants.mint(app, &client, Grant::own) {
                 Ok((grant, token)) => Answer::ok(Paired { agent: grant.id, token }),
                 Err(why) => Answer::error(Code::Failed, why),
@@ -183,6 +201,7 @@ pub fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answ
                 site: None,
                 tab: None,
                 key: key.clone(),
+                thread: None,
             },
         );
         if !matches!(asked, Answer::NeedsApproval { .. }) || started.elapsed() >= wait {
