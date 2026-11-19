@@ -572,7 +572,9 @@ describe('a guest becoming an account', () => {
       [SHARED, 'write'],
     ])
     const { json: who } = await shareView()
-    expect(who.members).toEqual([{ ...A_FACE, email: GUEST, guest: null, name: null, role: 'write', pending: false }])
+    expect(who.members).toEqual([
+      { ...A_FACE, email: GUEST, guest: null, name: null, role: 'write', admin: false, pending: false },
+    ])
   })
   test('leaves the guest session with nothing to reach afterwards', async () => {
     const { json } = await follow(await shareLink('read', 'open'))

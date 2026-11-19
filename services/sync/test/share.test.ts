@@ -64,6 +64,7 @@ afterEach(() => env.close())
 interface Route {
   what: string
   needs: 'read' | 'write' | 'owner'
+  accountsOnly?: true
   go: (token: string) => Promise<{ status: number }>
 }
 const ROUTES: Route[] = [
@@ -184,7 +185,8 @@ const ROUTES: Route[] = [
   },
   {
     what: 'reading who else is in it',
-    needs: 'owner',
+    needs: 'read',
+    accountsOnly: true,
     go: (token) => call(env, `/v1/spaces/${space}/share`, { token }),
   },
   {
@@ -311,12 +313,12 @@ ROUTES.push(
   },
 )
 const RANK = { read: 0, write: 1, owner: 2 }
-const HOLDERS: { as: string; role: 'read' | 'write' | 'owner'; token: () => string }[] = [
+const HOLDERS: { as: string; role: 'read' | 'write' | 'owner'; guest?: true; token: () => string }[] = [
   { as: 'the owner', role: 'owner', token: () => owner },
   { as: 'a writer', role: 'write', token: () => writer },
   { as: 'a reader', role: 'read', token: () => reader },
-  { as: 'a guest who may write', role: 'write', token: () => guestWriter },
-  { as: 'a guest who may read', role: 'read', token: () => guestReader },
+  { as: 'a guest who may write', role: 'write', guest: true, token: () => guestWriter },
+  { as: 'a guest who may read', role: 'read', guest: true, token: () => guestReader },
 ]
 describe("a shared space's icon", () => {
   test("a member with full access sets it for everyone in the space, and the name stays the owner's", async () => {
@@ -377,7 +379,7 @@ describe('every route that names a space', () => {
   })
   for (const route of ROUTES) {
     for (const holder of HOLDERS) {
-      const allowed = RANK[holder.role] >= RANK[route.needs]
+      const allowed = RANK[holder.role] >= RANK[route.needs] && !(route.accountsOnly && holder.guest)
       test(`${allowed ? 'lets' : 'refuses'} ${holder.as} through ${route.what}`, async () => {
         const { status } = await route.go(holder.token())
         if (allowed) expect(status).toBeLessThan(400)
@@ -536,7 +538,9 @@ describe('an invitation', () => {
     expect(sent).toContain(`shared the space ${SHARED} with you`)
     expect(sent).toMatch(/https:\/\/orden\.so\/join\/[a-f0-9]{64}/)
     const { json } = await shareView()
-    expect(json.members).toEqual([{ ...NO_FACE, email: READER, guest: null, name: null, role: 'read', pending: true }])
+    expect(json.members).toEqual([
+      { ...NO_FACE, email: READER, guest: null, name: null, role: 'read', admin: false, pending: true },
+    ])
   })
   test('waits for the address to be proved before anybody has been in', async () => {
     const link = await inviteLink(READER, 'read')
@@ -572,7 +576,7 @@ describe('an invitation', () => {
     expect(json.error).toBe('enter a valid email address')
   })
   test('refuses a role that is not one to give', async () => {
-    for (const role of ['owner', 'admin', '']) {
+    for (const role of ['owner', 'Admin', '']) {
       const { status } = await call(env, `/v1/spaces/${space}/share/invite`, {
         token: owner,
         body: { email: READER, role },
@@ -1075,7 +1079,7 @@ describe('a share link', () => {
     const { json } = await shareView()
     expect(json.requests).toEqual([])
     expect(json.members).toEqual([
-      { ...A_FACE, email: STRANGER, guest: null, name: null, role: 'write', pending: false },
+      { ...A_FACE, email: STRANGER, guest: null, name: null, role: 'write', admin: false, pending: false },
     ])
     const wrote = await call(env, `/v1/notes/${note}`, {
       method: 'PUT',
@@ -1111,7 +1115,7 @@ describe('a share link', () => {
     const { json } = await shareView()
     expect(json.requests).toEqual([])
     expect(json.members).toEqual([
-      { ...A_FACE, email: STRANGER, guest: null, name: null, role: 'write', pending: false },
+      { ...A_FACE, email: STRANGER, guest: null, name: null, role: 'write', admin: false, pending: false },
     ])
   })
   test('keeps what a request was promised when the link changes afterwards', async () => {

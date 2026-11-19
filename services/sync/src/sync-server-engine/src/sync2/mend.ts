@@ -260,7 +260,7 @@ async function mendSpace(env: Env, space: Reached, later: Later): Promise<Mendin
     await env.NOTES.put(`${backup}.done.json`, JSON.stringify(mender.done))
     return mender.done
   }
-  const owner = { ...space, role: 'owner' as const }
+  const owner = { ...space, role: 'owner' as const, manages: true }
   const done = await applyOps(env, owner, space.user_id, MENDER, mender.ops)
   if (done.changed) {
     await pokeSpace(env, later, space.id, done.cursor, MENDER)

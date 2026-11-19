@@ -1237,6 +1237,23 @@ describe('somebody who stops being in the space while the file is open', () => {
     })
     expect(socket.closed).toBe(true)
   })
+  test('has a socket open for more than a day made a reader when it was an admin', async () => {
+    await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+      method: 'PATCH',
+      token: owner,
+      body: { role: 'admin' },
+    })
+    const socket = await open(writerId)
+    await aDayLater(async () => {
+      await ownerOpensAnother()
+      await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {
+        method: 'PATCH',
+        token: owner,
+        body: { role: 'read' },
+      })
+    })
+    expect(socket.closedWith?.code).toBe(NOW_READS)
+  })
   test('has a socket open for more than a day made a reader', async () => {
     const socket = await open(writerId)
     await aDayLater(async () => {

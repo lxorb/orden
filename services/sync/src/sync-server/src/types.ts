@@ -131,6 +131,7 @@ export interface Note {
 export type Role = 'owner' | 'write' | 'read'
 export interface Reached extends Space {
   role: Role
+  manages: boolean
 }
 export interface Scope {
   id: string

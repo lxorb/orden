@@ -368,3 +368,20 @@ describe('0087, the blobs already waiting to be let go of', () => {
     database.close()
   })
 })
+describe('0091, the admins of a space', () => {
+  test('leaves everybody already in a space as what they were, an admin of none', () => {
+    const database = upTo(MIGRATIONS[MIGRATIONS.indexOf('0091_space_admins.sql') - 1] ?? '')
+    seed(database)
+    database.exec(
+      `insert into space_members (space_id, email, item, role, created_at)
+       values ('sp', 'w@b.c', '', 'write', 1), ('sp', 'r@b.c', '', 'read', 1)`,
+    )
+    database.exec(sql('0091_space_admins.sql'))
+    const rows = database.prepare('select email, role, admin from space_members order by email').all()
+    expect(rows).toEqual([
+      { email: 'r@b.c', role: 'read', admin: 0 },
+      { email: 'w@b.c', role: 'write', admin: 0 },
+    ])
+    database.close()
+  })
+})

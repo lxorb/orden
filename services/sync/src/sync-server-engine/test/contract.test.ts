@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { feedPage } from '../src/sync2/feed'
 import { applyOps } from '../src/sync2/ops'
 import { prepareSpace } from '../src/sync2/prepare'
+import { reachedSpace } from '../src/spaces/space'
 import { MOST_IN_A_SPACE, NO_SEAT_LEFT, roomForASeat, seatsUsed } from '../src/spaces/share'
 import { isIcon, readIcons } from '../src/spaces/icons'
 import { type TestEnv, testEnv } from '../../sync-server/test/fakes'
@@ -169,5 +170,32 @@ describe('the people a shared space holds', () => {
     for (let one = 0; one < 12; one++) member(`m${String(one)}@example.com`, '', 1, null)
     expect(await roomForASeat(env, SPACE, '')).toBe(false)
     expect(await roomForASeat(env, SPACE, 'n-1')).toBe(true)
+  })
+})
+describe('who manages a space', () => {
+  const member = (email: string, role: string, admin: number, item = '') =>
+    env.db
+      .prepare(
+        `insert into space_members (space_id, email, item, role, admin, joined_at, created_at)
+         values (?, ?, ?, ?, ?, 1, 1)`,
+      )
+      .run(SPACE, email, item, role, admin)
+  const user = (id: string, email: string) =>
+    env.db.prepare('insert into users (id, email, created_at) values (?, ?, 1)').run(id, email)
+  const reach = (id: string, email: string) =>
+    reachedSpace(env, { kind: 'user', user: { id, email } } as Parameters<typeof reachedSpace>[1], SPACE)
+  test('is the owner and an admin, an admin being a writer to everything else', async () => {
+    user('u-admin', 'admin@example.com')
+    user('u-writer', 'writer@example.com')
+    member('admin@example.com', 'write', 1)
+    member('writer@example.com', 'write', 0)
+    expect(await reach(USER, 'one@example.com')).toMatchObject({ role: 'owner', manages: true })
+    expect(await reach('u-admin', 'admin@example.com')).toMatchObject({ role: 'write', manages: true })
+    expect(await reach('u-writer', 'writer@example.com')).toMatchObject({ role: 'write', manages: false })
+  })
+  test('is never somebody a note was shared with on its own', async () => {
+    user('u-note', 'note@example.com')
+    member('note@example.com', 'write', 1, 'n-1')
+    expect(await reach('u-note', 'note@example.com')).toBeNull()
   })
 })
