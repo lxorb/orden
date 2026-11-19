@@ -55,7 +55,6 @@ export type Foot = readonly [left: number, right: number]
 export interface Over {
   cut: Cut | null
   frame: Frame | null
-  opacity?: number
   corner?: Foot
 }
 const WHOLE: Cut = { all: true, hollows: [] }
@@ -70,13 +69,12 @@ interface Placement {
   frame: Frame | null
   cut: Cut | null
   away?: boolean
-  opacity?: number
   corner?: Foot | undefined
 }
-export type Layering = 'under' | 'cut' | 'hollows' | 'hide'
+export type Layering = 'cut' | 'hollows' | 'hide'
 let layering = $state<Layering>('hide')
 function heard(page: Page, said: unknown): void {
-  layering = said === 'under' || said === 'hollows' ? said : said === true ? 'cut' : 'hide'
+  layering = said === 'hollows' ? said : said === true ? 'cut' : 'hide'
   page.layering = layering
 }
 const cutsOut = (layering: Layering, cut: Cut | null): boolean =>
@@ -351,7 +349,7 @@ class Pages {
       page.blank = true
       clearTimeout(page.blanking)
       page.blanking = undefined
-      const said = await invoke<boolean | 'under' | 'hollows' | undefined>('web_open', {
+      const said = await invoke<boolean | 'hollows' | undefined>('web_open', {
         tab: tabId,
         url: page.url,
         pane: awayFrom(pane).pane,
@@ -411,13 +409,7 @@ class Pages {
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
     else if (wanted.covering)
-      await this.place(
-        tabId,
-        wanted.pane,
-        false,
-        page.layering === 'under' || cutsOut(page.layering, wanted.over.cut),
-        wanted.over,
-      )
+      await this.place(tabId, wanted.pane, false, cutsOut(page.layering, wanted.over.cut), wanted.over)
     else this.hide(tabId, wanted.pane)
   }
   async place(tabId: string, pane: Rect, visible: boolean, covering = false, over: Over = NOTHING): Promise<void> {
@@ -433,19 +425,6 @@ class Pages {
     clearTimeout(page.stowing)
     if (page.blank && page.live) {
       page.afterBlank = { pane, visible, covering, over }
-      return
-    }
-    if (page.layering === 'under' && page.live) {
-      const shown = visible || covering
-      const cut = !shown ? null : covering ? (over.cut ?? WHOLE) : over.cut
-      await this.put(tabId, page, {
-        pane,
-        visible: shown,
-        frame: over.frame,
-        cut,
-        opacity: over.opacity ?? 1,
-        corner: over.corner,
-      })
       return
     }
     if (covering && page.live && cutsOut(page.layering, over.cut)) {
@@ -570,14 +549,13 @@ class Pages {
     if (__EVEN_PLUGIN__) return
     page.sent = one
     try {
-      const said = await invoke<boolean | 'under' | 'hollows' | undefined>('web_place', {
+      const said = await invoke<boolean | 'hollows' | undefined>('web_place', {
         tab: tabId,
         pane: one.pane,
         visible: one.visible,
         frame: one.frame,
         cut: one.cut,
         corner: one.corner ?? cardCorner(),
-        ...(one.opacity === undefined ? {} : { opacity: one.opacity }),
       })
       heard(page, said)
     } catch (error) {
@@ -600,9 +578,6 @@ class Pages {
   get cuts(): boolean {
     return layering !== 'hide'
   }
-  get under(): boolean {
-    return layering === 'under'
-  }
   still = $state(false)
   holdStill(): Promise<void> | null {
     this.still = true
@@ -622,15 +597,7 @@ class Pages {
       if (!this.still || !page.onScreen) return
       page.heldAt = at
     }
-    await this.put(
-      tabId,
-      page,
-      page.layering === 'under'
-        ? { ...at, cut: WHOLE }
-        : goesAway(page.layering)
-          ? awayFrom(at.pane)
-          : { ...at, visible: false },
-    )
+    await this.put(tabId, page, goesAway(page.layering) ? awayFrom(at.pane) : { ...at, visible: false })
   }
   async letGo(): Promise<void> {
     this.still = false
@@ -639,7 +606,7 @@ class Pages {
   private async letOneGo(tabId: string, page: Page): Promise<void> {
     const at = page.heldAt
     if (!at) return
-    if (page.layering !== 'under') await this.put(tabId, page, at)
+    await this.put(tabId, page, at)
     if (!this.still) page.heldAt = null
   }
   hide(tabId: string, pane: Rect) {

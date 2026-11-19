@@ -19,9 +19,9 @@ const heldLooks: (() => void)[] = []
 let refusing = false
 let photographing: Promise<void> | null = null
 let photo: string | null = null
-let cuts: boolean | 'under' | 'hollows' = false
+let cuts: boolean | 'hollows' = false
 let paints = true
-const cutsOf = new Map<string, boolean | 'under' | 'hollows'>()
+const cutsOf = new Map<string, boolean | 'hollows'>()
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
@@ -384,77 +384,6 @@ test('a covered page that drew is not pictured anew while the app moves', async 
     Reflect.deleteProperty(globalThis, 'getComputedStyle')
     photo = null
   }
-})
-describe('a page drawn under the app', () => {
-  const over = {
-    cut: { all: false, hollows: [{ x: 500, y: 520, width: 280, height: 60, radius: 8 }] },
-    frame: null,
-  }
-  test('arrives under a layer shown, with the layer taken out of its input', async () => {
-    cuts = 'under'
-    await built('a', SITE, PANE, false, over)
-    await settle()
-    expect(pages.under).toBe(true)
-    expect(pages.cuts).toBe(true)
-    expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true, cut: over.cut })
-    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(false)
-    expect(commands()).not.toContain('web_shot')
-  })
-  test('stays shown under a scrim, which takes all of its input, and is never photographed', async () => {
-    cuts = 'under'
-    await built()
-    await settle()
-    calls.length = 0
-    await pages.show('a', SITE, PANE, false, { cut: null, frame: null })
-    await settle()
-    expect(last('web_place')).toMatchObject({ visible: true, cut: { all: true, hollows: [] } })
-    expect(commands()).not.toContain('web_shot')
-  })
-  test('is told the opacity it is drawn at, and is hidden when its tab is', async () => {
-    cuts = 'under'
-    await built()
-    await settle()
-    await pages.show('a', SITE, PANE, true, { cut: null, frame: null, opacity: 0.5 })
-    await settle()
-    expect(last('web_place')).toMatchObject({ visible: true, cut: null, opacity: 0.5 })
-    pages.hide('a', PANE)
-    await settle()
-    expect(last('web_place')).toMatchObject({ visible: false, cut: null })
-  })
-  test('is said for each page on its own, beside a page that is cut', async () => {
-    cutsOf.set('a', 'under')
-    cutsOf.set('b', true)
-    for (const tab of ['a', 'b']) {
-      const shown = pages.show(tab, SITE, PANE)
-      const arrive = await asked()
-      building = null
-      arrive()
-      await shown
-      await settle()
-    }
-    expect(pages.of('a').layering).toBe('under')
-    expect(pages.of('b').layering).toBe('cut')
-    calls.length = 0
-    await pages.show('a', SITE, PANE, false, over)
-    await pages.show('b', SITE, PANE, false, over)
-    await settle()
-    const placed = (tab: string) =>
-      calls.filter((one) => one.command === 'web_place' && one.args.tab === tab).at(-1)?.args
-    expect(placed('a')).toMatchObject({ visible: true, cut: over.cut, opacity: 1 })
-    expect(placed('b')).toMatchObject({ visible: true, cut: over.cut })
-    expect(placed('b')).not.toHaveProperty('opacity')
-    pages.forget('b')
-  })
-  test('an engine that says nothing of it is told no opacity', async () => {
-    cuts = true
-    await built()
-    await settle()
-    await pages.show('a', SITE, MOVED)
-    await settle()
-    expect(pages.under).toBe(false)
-    expect(last('web_place')).toMatchObject({ pane: MOVED })
-    expect(last('web_place')).not.toHaveProperty('opacity')
-  })
 })
 test('a page that lands is photographed once, not once per report', async () => {
   await built()

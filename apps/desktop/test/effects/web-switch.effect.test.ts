@@ -7,7 +7,7 @@ const asked: { command: string; args: Record<string, unknown> }[] = []
 const hears = vi.hoisted(() => new Map<string, (event: { payload: unknown }) => void>())
 let holding: Promise<void> | null = null
 let refuses: string | null = null
-let cuts: boolean | 'under' = false
+let cuts = false
 let answersLooks: number | null = null
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
@@ -20,7 +20,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     if (command === 'web_open' && holding) return holding
     if (command === 'web_look' && answersLooks !== null && answersLooks-- <= 0) return new Promise(() => undefined)
     if (command === 'web_place') return Promise.resolve(cuts)
-    if (command === 'web_open' && cuts === 'under') return Promise.resolve(cuts)
     return Promise.resolve(undefined)
   },
 }))
@@ -683,8 +682,8 @@ test('a picture of the page goes when the page is shown at another size', async 
   void unmount(app)
 })
 describe('a page held still while its hole moves, and let go', () => {
-  for (const cutting of [true, false, 'under'] as const) {
-    test(cutting === 'under' ? 'drawn under the app' : cutting ? 'cut' : 'out of the way', async () => {
+  for (const cutting of [true, false] as const) {
+    test(cutting ? 'cut' : 'out of the way', async () => {
       cuts = cutting
       const { tab, app } = await opened(`https://example.com/still-${String(cutting)}`)
       const page = pages.of(tab.id)
@@ -705,14 +704,9 @@ describe('a page held still while its hole moves, and let go', () => {
       await settle()
       const held = asked.filter((one) => one.command === 'web_place')
       expect(held.at(-1)?.args).toMatchObject(
-        cutting === 'under'
-          ? { visible: true, cut: { all: true } }
-          : cutting
-            ? { visible: false }
-            : { visible: true, cut: { all: true }, pane: { x: -OUT_OF_THE_WAY } },
+        cutting ? { visible: false } : { visible: true, cut: { all: true }, pane: { x: -OUT_OF_THE_WAY } },
       )
       expect(hole.classList.contains('still')).toBe(true)
-      expect(hole.classList.contains('under')).toBe(false)
       asked.length = 0
       for (const [step, scale] of [0.9, 0.7, 0.5].entries()) {
         hole.setAttribute(
@@ -738,13 +732,12 @@ describe('a page held still while its hole moves, and let go', () => {
         pane: shown,
       })
       expect(page.heldAt).toBe(null)
-      expect(hole.classList.contains('under')).toBe(cutting === 'under')
     })
   }
 })
 describe('a page held still whose tab another takes the place of meanwhile is not put back when let go', () => {
-  for (const cutting of [true, false, 'under'] as const) {
-    test(cutting === 'under' ? 'drawn under the app' : cutting ? 'cut' : 'out of the way', async () => {
+  for (const cutting of [true, false] as const) {
+    test(cutting ? 'cut' : 'out of the way', async () => {
       cuts = cutting
       const { tab, app } = await opened(`https://example.com/taken-${String(cutting)}`)
       const page = pages.of(tab.id)
@@ -844,49 +837,6 @@ test('a tab turned Separate is built again once, in its own store, and stays', a
   expect(pages.of(tab.id).live).toBe(true)
   void unmount(app)
   pages.forget(tab.id)
-})
-describe('a page drawn under the app', () => {
-  test('is never hidden or photographed for a layer, which only takes its input', async () => {
-    cuts = 'under'
-    const { app } = await opened('https://example.com/under')
-    asked.length = 0
-    document.querySelector('.hole')?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
-    const menu = layer('orden-layer', { x: 100, y: 140, width: 240, height: 200 })
-    const off = overlays.show(() => undefined)
-    await frames()
-    const placed = asked.filter((one) => one.command === 'web_place')
-    expect(placed.length).toBeGreaterThan(0)
-    expect(placed.every((one) => one.args.visible === true)).toBe(true)
-    expect(placed.at(-1)?.args).toMatchObject({
-      cut: { all: false, hollows: [{ x: 100, y: 100, width: 240, height: 200, radius: 0 }] },
-      opacity: 1,
-    })
-    expect(asked.map((one) => one.command)).not.toContain('web_shot')
-    const scrim = layer('orden-scrim', { x: 0, y: 0, width: 800, height: 600 })
-    await frames()
-    expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
-      visible: true,
-      cut: { all: true },
-    })
-    off()
-    menu.remove()
-    scrim.remove()
-    void unmount(app)
-  })
-  test('shows through a hole in the grounds, which closes as its tab goes', async () => {
-    cuts = 'under'
-    const { app } = await opened('https://example.com/ground')
-    expect(document.querySelector('.hole')?.classList.contains('under')).toBe(true)
-    expect(document.body.hasAttribute('data-underlay')).toBe(true)
-    expect(document.documentElement.hasAttribute('data-underlay')).toBe(true)
-    expect(document.body.style.getPropertyValue('--underlay-clip')).toMatch(/^path\(evenodd, /)
-    void unmount(app)
-    flushSync()
-    await frames()
-    expect(document.body.hasAttribute('data-underlay')).toBe(false)
-    expect(document.documentElement.hasAttribute('data-underlay')).toBe(false)
-    expect(document.body.style.getPropertyValue('--underlay-clip')).toBe('')
-  })
 })
 test('a key pressed in a dialog over the page, or already taken, is not the page’s', async () => {
   const { app } = await opened('https://example.com/under-a-dialog')
