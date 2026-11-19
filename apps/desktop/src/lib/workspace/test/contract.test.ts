@@ -211,3 +211,27 @@ describe('a chat', () => {
     expect(workspace.revealing).not.toBe(TEAM)
   })
 })
+describe('another window', () => {
+  const MINE = { id: 'mine', name: 'Mine', root: '/notes/Mine' }
+  const STAYS = { id: 'stays', name: 'Stays', root: '/notes/Stays' }
+  const saved = (key: string): unknown => JSON.parse(localStorage.getItem(key) ?? 'null')
+  test('keeps what it wrote when this window writes, the icons and open folders it chose included', () => {
+    localStorage.setItem('orden:icons', JSON.stringify({ '/notes/Theirs': 'Book' }))
+    localStorage.setItem('orden:expanded', JSON.stringify({ '/notes/Theirs/A': true }))
+    workspace.device.setIcon('/notes/Mine', 'Star')
+    workspace.device.toggleFolder('/notes/Mine/B')
+    expect(saved('orden:icons')).toEqual({ '/notes/Theirs': 'Book', '/notes/Mine': 'Star' })
+    expect(saved('orden:expanded')).toEqual({ '/notes/Theirs/A': true, '/notes/Mine/B': true })
+    expect(workspace.device.iconOf('/notes/Theirs')).toBe('Book')
+    expect(workspace.device.isExpanded('/notes/Theirs/A')).toBe(true)
+  })
+  test('archiving the space open here moves this window off it', async () => {
+    workspace.spaces = [{ ...MINE }, { ...STAYS }]
+    await workspace.showSpace(MINE.id)
+    workspace.archivedSpaces.set(MINE.root, true)
+    await workspace.leaveArchived()
+    expect(workspace.activeSpaceId).toBe(STAYS.id)
+    expect(workspace.archivedSpaces.has(MINE.root)).toBe(true)
+    workspace.archivedSpaces.set(MINE.root, false)
+  })
+})

@@ -279,7 +279,7 @@ class Workspace {
   private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
-  readonly archivedSpaces = new ArchivedSpaces()
+  readonly archivedSpaces = new ArchivedSpaces(() => void this.leaveArchived())
   get shownSpaces(): Space[] {
     return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
   }
@@ -1781,6 +1781,13 @@ class Workspace {
   }
   async showSpace(id: string) {
     await spaces.selectSpace(this, id)
+  }
+  async leaveArchived(): Promise<void> {
+    const open = this.activeSpace
+    if (!open || !this.archivedSpaces.has(open.root)) return
+    const next = this.shownSpaces[0]
+    if (next) await this.showSpace(next.id)
+    else this.archivedSpaces.set(open.root, false)
   }
   async deleteSpace(id: string, keep = false) {
     await (await changes()).deleteSpace(this, id, keep)
