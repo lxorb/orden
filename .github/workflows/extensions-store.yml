@@ -1,0 +1,116 @@
+name: extensions-store
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - apps/desktop/src-tauri/crates/extensions/**
+      - apps/desktop/src-tauri/crates/web-engine/**
+      - apps/desktop/src-tauri/src/engine.rs
+      - apps/desktop/src/lib/web-tab/src/extensions.svelte.ts
+      - apps/desktop/src/lib/web-tab/src/Extension*.svelte
+      - apps/desktop/src/lib/web-tab/src/WebExtension*.svelte
+      - apps/desktop/src/lib/web-tab/src/WebTab.svelte
+      - scripts/extensions-store-drive.py
+      - scripts/devtools.py
+      - scripts/native_app.py
+      - scripts/fresh_app.py
+      - .github/workflows/extensions-store.yml
+  workflow_dispatch:
+  push:
+    branches: ['tmp/ci-*-store*']
+
+concurrency:
+  group: extensions-store-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  store:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: so.orden.Orden.probe.extensions-store
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+
+      - name: A debug probe, whose web tabs answer the DevTools protocol
+        run: |
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          built=apps/desktop/src-tauri/target/${{ matrix.target }}/debug
+          case "$RUNNER_OS" in
+            macOS)
+              bash scripts/linux-cef.sh tauri build --debug --target ${{ matrix.target }} --bundles app \
+                --ignore-version-mismatches --config "$config"
+              app=$(ls -d "$built"/bundle/macos/*.app | head -1)
+              echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+              ;;
+            *)
+              bash scripts/linux-cef.sh tauri build --debug --target ${{ matrix.target }} --no-bundle \
+                --ignore-version-mismatches --config "$config"
+              bash scripts/cef-beside.sh "$built"
+              [ "$RUNNER_OS" = Windows ] && exe=orden.exe || exe=orden
+              echo "EXE=$PWD/$built/$exe" >>"$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: A screen, on Linux
+        if: runner.os == 'Linux'
+        run: |
+          bash scripts/ci-apt.sh xvfb dbus-x11
+          sandbox="$(dirname "$EXE")/chrome-sandbox"
+          if [ -f "$sandbox" ]; then
+            sudo chown root:root "$sandbox"
+            sudo chmod 4755 "$sandbox"
+          fi
+
+      - name: Proton Pass, installed from its Web Store link through the extensions bubble, runs in a web tab
+        timeout-minutes: 20
+        run: |
+          drive=(scripts/extensions-store-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out extensions-store)
+          case "$RUNNER_OS" in
+            Linux)
+              python3 -m pip install --quiet --break-system-packages mss python-xlib
+              xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}"
+              ;;
+            Windows)
+              python -m pip install --quiet mss comtypes
+              python "${drive[@]}"
+              ;;
+            *)
+              python3 -m venv "$RUNNER_TEMP/store"
+              "$RUNNER_TEMP/store/bin/pip" install --quiet mss
+              "$RUNNER_TEMP/store/bin/python" "${drive[@]}"
+              ;;
+          esac
+
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: extensions-store-${{ matrix.target }}
+          path: extensions-store
+          if-no-files-found: ignore
