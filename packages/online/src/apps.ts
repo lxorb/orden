@@ -1,3 +1,5 @@
+import { type Usage, usageOf } from './load'
+
 export const appSocketPath = (app: string): string => `/v2/apps/${encodeURIComponent(app)}/socket`
 export const UNKNOWN_APP = 'no such application on this account'
 export const HOST_PROTOCOL = 'orden.role.host'
@@ -291,17 +293,7 @@ export interface Pong {
   hardware: boolean
   usage: Usage | null
 }
-export interface Usage {
-  cpu: number
-  memory: number
-  gpu?: number
-}
-export function usageOf(value: unknown): Usage | null {
-  if (!isRecord(value)) return null
-  const { cpu, memory, gpu } = value
-  if (!isTime(cpu) || !isTime(memory)) return null
-  return { cpu, memory, ...(isTime(gpu) ? { gpu } : {}) }
-}
+export { type Usage, usageOf } from './load'
 const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
 export type PointerShape = { t: 'pointer'; png: string; x: number; y: number } | { t: 'pointer'; hidden: true }
 const POINTER_PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/
