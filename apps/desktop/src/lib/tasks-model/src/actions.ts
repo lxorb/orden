@@ -5,7 +5,6 @@ import { fittedDescription, titledOf, type Priority, type Todo } from './todo'
 
 interface TaskOut {
   at: string
-  space: string
   text: string
   status?: string
   due?: string
@@ -19,7 +18,6 @@ export function priorityOf(quick: QuickPriority | undefined): Priority {
 }
 const taskOut = (todo: Todo): TaskOut => ({
   at: todo.id,
-  space: todo.space ?? '',
   text: todo.title,
   ...(todo.done ? { status: 'x' } : {}),
   ...(todo.deadline === null ? {} : { due: todo.deadline }),
@@ -70,9 +68,8 @@ export async function tickTask(id: string, done: boolean): Promise<boolean> {
 }
 export async function listed(): Promise<{ total: number; tasks: TaskOut[] }> {
   await openTodos()
-  const shown = sortedTodos(
-    shownTodos(todos.todos, { onlySpace: false, space: null, label: null, today: dayOf() }),
-    'deadline',
-  ).filter((one) => !one.done)
+  const shown = sortedTodos(shownTodos(todos.todos, { label: null, today: dayOf() }), 'deadline').filter(
+    (one) => !one.done,
+  )
   return { total: shown.length, tasks: shown.slice(0, 50).map(taskOut) }
 }

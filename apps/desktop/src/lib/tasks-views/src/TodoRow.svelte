@@ -35,7 +35,7 @@
     onmenu?: (event: MouseEvent) => void
     onaway?: () => void
     onai?: () => void
-    onnote?: (name: string, space: string | null) => unknown
+    onnote?: (name: string) => unknown
   } = $props()
   const late = $derived(!todo.done && todo.deadline !== null && todo.deadline < today)
   const subtasksDone = $derived(todo.subtasks.filter((one) => one.done).length)
@@ -103,7 +103,7 @@
   {#if notes.length || (onai && !todo.done)}
     <span class="acts">
       {#each notes as name (name)}
-        <button type="button" class="act note" title={`Open ${name}`} onclick={() => void onnote?.(name, todo.space)}>
+        <button type="button" class="act note" title={`Open ${name}`} onclick={() => void onnote?.(name)}>
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h5l3 3v8H4z" /><path d="M9 2.5v3h3" /></svg><span
             class="name">{name}</span
           >

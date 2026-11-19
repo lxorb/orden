@@ -1618,14 +1618,14 @@ describe('to-dos and bases', () => {
       result: { title: 'Call mum', deadline: '2026-10-06', priority: 3, done: false },
     })
     const id = (added as { result: { id: string } }).result.id
-    expect(todos.todo(id)?.space).toBeNull()
+    expect(Object.keys(todos.todo(id) ?? {})).not.toContain('space')
     const listed = await onTodos('list_tasks', { space: 'Secret' })
     expect(listed).toMatchObject({ result: { total: 1, todos: [{ id, title: 'Call mum' }] } })
     expect(JSON.stringify(listed)).not.toContain('space')
     expect(await onTodos('update_task', { id, done: true, labels: ['family'], space: 'Work' })).toMatchObject({
       result: { done: true, labels: ['family'] },
     })
-    expect(todos.todo(id)?.space).toBeNull()
+    expect(Object.keys(todos.todo(id) ?? {})).not.toContain('space')
     expect(await onTodos('update_task', { id: 'nothing', done: true })).toMatchObject({
       code: 'no_such_file',
     })
@@ -2216,10 +2216,10 @@ describe('a panel thread works in its own space', () => {
       await call('add_task', { text: 'Buy eggs' }, homeOnly),
     ]
     const id = (answers[0] as { result?: { id: string } }).result?.id
-    const space = id ? todos.todo(id)?.space : undefined
+    const keys = Object.keys((id ? todos.todo(id) : null) ?? {})
     if (id) await todos.remove(id)
     expect(answers).toMatchObject([{ result: { title: 'Buy bread' } }, { code: 'not_granted' }])
-    expect(space).toBeNull()
+    expect(keys).not.toContain('space')
   })
   test('a space it names still wins', async () => {
     await call('write_note', { space: 'Work', path: 'Broth', content: '# Broth\n' }, fromHome())

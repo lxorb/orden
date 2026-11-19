@@ -2,7 +2,6 @@
   import { untrack } from 'svelte'
   import {
     cleanLabel,
-    isTodoSpace,
     PRIORITIES,
     PRIORITY_NAMES,
     priorityTone,
@@ -12,11 +11,9 @@
   } from '../../tasks-model/src/api'
   import { DateField, Select } from '../../ui-controls/src/api'
   import { Cross } from '../../ui-kit/src/api'
-  import type { Space } from './shown.svelte'
 
   const {
     todo,
-    spaces,
     knownLabels,
     onchange,
     onremove,
@@ -24,14 +21,12 @@
     onai,
   }: {
     todo: Todo
-    spaces: readonly Space[]
     knownLabels: readonly string[]
     onchange: (patch: TodoPatch) => Promise<string | null>
     onremove: () => void
     onclose: () => void
     onai?: () => void
   } = $props()
-  const inSpace = $derived(spaces.find((one) => isTodoSpace(one, todo.space)) ?? null)
   let title = $state('')
   let description = $state('')
   let newLabel = $state('')
@@ -138,19 +133,6 @@
     onblur={saveDescription}></textarea>
 
   <div class="fields">
-    <div class="field">
-      <span class="name">Space</span>
-      <Select
-        label="Space"
-        value={inSpace?.id ?? todo.space ?? ''}
-        options={[
-          { value: '', label: 'No space' },
-          ...spaces.map((space) => ({ value: space.id, label: space.name })),
-          ...(todo.space !== null && inSpace === null ? [{ value: todo.space, label: todo.space }] : []),
-        ]}
-        onchange={(next: string) => void change({ space: next || null })}
-      />
-    </div>
     <div class="field">
       <span class="name">Priority <span class="tone" style:background={priorityTone(todo.priority)}></span></span>
       <Select

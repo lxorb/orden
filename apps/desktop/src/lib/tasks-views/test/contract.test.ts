@@ -31,7 +31,6 @@ interface Fake {
   title: string
   description: string
   labels: string[]
-  space: string | null
   start: string | null
   deadline: string | null
   priority: 0 | 1 | 2 | 3
@@ -46,7 +45,6 @@ const todo = (over: Partial<Fake>): Fake => ({
   title: 'a todo',
   description: '',
   labels: [],
-  space: null,
   start: null,
   deadline: null,
   priority: 0,
@@ -61,7 +59,7 @@ const plain = (): ReturnType<ShownWorld['board']> => ({
   grouping: 'label',
   done: false,
   anyStart: false,
-  columns: { label: [], deadline: [], priority: [], space: [] },
+  columns: { label: [], deadline: [], priority: [] },
 })
 function world(list: Fake[], active: string | null = 'home') {
   let kept: unknown = undefined
@@ -69,10 +67,6 @@ function world(list: Fake[], active: string | null = 'home') {
   const made: ShownWorld = {
     todos: () => list,
     activeSpace: () => (active === null ? null : { id: active, name: `Space ${active}` }),
-    spaces: () => [
-      { id: 'home', name: 'Space home' },
-      { id: 'work', name: 'Space work' },
-    ],
     today: () => TODAY,
     kept: () => kept,
     keep: (value) => (kept = value),
@@ -82,21 +76,23 @@ function world(list: Fake[], active: string | null = 'home') {
   return { world: made, read: () => kept, board: () => board }
 }
 describe('tasks-views contract', () => {
-  test("a note chip opens only a note that is there, found in the todo's own space, and after a rename the renamed one", async () => {
-    desk.notes.set('/s/home', { Plan: 'Work/Plan.md' })
+  test('a note chip opens only a note that is there, first in the space in sight, then in the other spaces, and after a rename the renamed one', async () => {
+    desk.notes.set('/s/home', { Plan: 'Work/Plan.md', Only: 'Only.md' })
     desk.notes.set('/s/work', { Plan: 'Plan.md' })
     desk.followed.length = 0
-    await openNote('Gone', 'home')
-    await openNote('Gone', null)
+    await openNote('Gone')
     expect(desk.followed).toEqual([])
-    await openNote('Plan', 'home')
+    await openNote('Plan')
+    await openNote('Only')
     expect(desk.followed).toEqual([
-      [{ path: 'Work/Plan.md', target: 'Plan', heading: null, block: null, page: null }, undefined, '/s/home'],
+      [{ path: 'Plan.md', target: 'Plan', heading: null, block: null, page: null }, undefined, '/s/work'],
+      [{ path: 'Only.md', target: 'Only', heading: null, block: null, page: null }, undefined, '/s/home'],
     ])
     desk.notes.set('/s/home', { Roadmap: 'Work/Roadmap.md' })
+    desk.notes.set('/s/work', {})
     desk.followed.length = 0
-    await openNote('Plan', 'home')
-    await openNote('Roadmap', 'home')
+    await openNote('Plan')
+    await openNote('Roadmap')
     expect(desk.followed).toEqual([
       [{ path: 'Work/Roadmap.md', target: 'Roadmap', heading: null, block: null, page: null }, undefined, '/s/home'],
     ])
@@ -138,29 +134,26 @@ describe('tasks-views contract', () => {
     expect(Object.keys(SORT_NAMES)).toEqual(['deadline', 'priority', 'manual'])
     expect(shown.sort).toBe('deadline')
   })
-  test('"only this space" and the sort are kept between openings, the label is not', () => {
-    const { world: w, read } = world([todo({ id: 'a', labels: ['x'] })])
+  test('the sort is kept between openings, the label is not, and an old kept "only this space" is left out', () => {
+    const { world: w, read } = world([todo({ id: 'a', labels: ['x'] }), todo({ id: 'b' })])
+    w.keep({ onlySpace: true, sort: 'deadline', done: false })
     const first = new Shown(w)
-    first.setOnlySpace(true)
+    expect(first.todos.map((t) => t.id)).toEqual(['a', 'b'])
     first.setSort('manual')
     first.setLabel('x')
-    expect(read()).toEqual({ onlySpace: true, sort: 'manual', done: false })
+    expect(read()).toEqual({ sort: 'manual', done: false })
     const second = new Shown(w)
-    expect(second.onlySpace).toBe(true)
     expect(second.sort).toBe('manual')
     expect(second.label).toBeNull()
   })
-  test('the label dropdown lists only labels carried by shown todos, within the space when asked', () => {
+  test('the label dropdown lists only labels carried by shown todos', () => {
     const { world: w } = world([
-      todo({ id: 'a', space: 'home', labels: ['errand'] }),
-      todo({ id: 'b', space: 'work', labels: ['meeting'] }),
-      todo({ id: 'c', space: 'home', labels: ['later'], start: '2026-12-01' }),
+      todo({ id: 'a', labels: ['errand'] }),
+      todo({ id: 'b', labels: ['meeting'] }),
+      todo({ id: 'c', labels: ['later'], start: '2026-12-01' }),
     ])
     const shown = new Shown(w)
     expect(shown.labels).toEqual(['errand', 'meeting'])
-    shown.setOnlySpace(true)
-    expect(shown.labels).toEqual(['errand'])
-    expect(shown.todos.map((t) => t.id)).toEqual(['a'])
   })
   test('a chosen label that no todo carries any more falls back to all labels', () => {
     const list = [todo({ id: 'a', labels: ['x'] }), todo({ id: 'b' })]
@@ -186,13 +179,12 @@ describe('tasks-views contract', () => {
     shown.setSort('manual')
     expect(shown.columns[0]?.todos.map((t) => t.id)).toEqual(['b', 'a'])
   })
-  test('with no open space the space filter cannot narrow anything', () => {
-    const { world: w } = world([todo({ id: 'a', space: 'home' }), todo({ id: 'b' })], null)
-    const shown = new Shown(w)
-    shown.setOnlySpace(true)
+  test('a todo has no space, and the board cannot group by one', () => {
+    const { world: w } = world([todo({ id: 'a' })], null)
+    const shown = new Shown(w, 'board')
+    expect(Object.keys(shown.todos[0] ?? {})).not.toContain('space')
     expect(shown.space).toBeNull()
-    expect(shown.spaceName('work')).toBe('Space work')
-    expect(shown.todos.map((t) => t.id).sort()).toEqual(['a', 'b'])
+    expect(shown.todos.map((t) => t.id)).toEqual(['a'])
   })
   test('done todos stay hidden until Show done is on, and one just ticked lingers a moment where it stood', () => {
     vi.useFakeTimers()
@@ -206,7 +198,7 @@ describe('tasks-views contract', () => {
     expect(shown.todos.map((t) => t.id)).toEqual(['b'])
     shown.setShowDone(true)
     expect(shown.todos.map((t) => t.id)).toEqual(['b', 'a'])
-    expect(read()).toEqual({ onlySpace: false, sort: 'deadline', done: true })
+    expect(read()).toEqual({ sort: 'deadline', done: true })
     vi.useRealTimers()
   })
   test('the board keeps its grouping, Show done, Ignore start date and column order in the synced board', () => {

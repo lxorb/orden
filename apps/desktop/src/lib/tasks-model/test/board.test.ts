@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { MemoryTodoDisk, MemoryTodoServer, type StoreWorld, type Todo, TodoStore } from '../src/api'
 import {
   boardOf,
+  GROUPINGS,
   columnPatch,
   columnsOf,
   dayAfter,
@@ -17,7 +18,6 @@ const todo = (over: Partial<Todo>): Todo => ({
   title: 'a todo',
   description: '',
   labels: [],
-  space: null,
   start: null,
   deadline: null,
   priority: 0,
@@ -28,7 +28,6 @@ const todo = (over: Partial<Todo>): Todo => ({
   created: 0,
   ...over,
 })
-const place = { today: TODAY, spaces: [{ id: 'home', name: 'Home' }] }
 const keys = (columns: ReturnType<typeof columnsOf>) => columns.map((one) => [one.key, one.todos.map((t) => t.id)])
 describe('the board', () => {
   test('counts days across a month and a year', () => {
@@ -41,18 +40,18 @@ describe('the board', () => {
     expect(dueOf('2026-11-27', TODAY)).toBe('later')
     expect(dueOf(null, TODAY)).toBe('none')
   })
-  test('groups by label, deadline, priority and space, with an empty column to drop or add into', () => {
+  test('groups by label, deadline and priority, never by space, with an empty column to drop or add into', () => {
     const all = [
-      todo({ id: 'a', labels: ['work'], deadline: '2026-11-10', priority: 3, space: 'home' }),
+      todo({ id: 'a', labels: ['work'], deadline: '2026-11-10', priority: 3 }),
       todo({ id: 'b', deadline: TODAY, priority: 1 }),
-      todo({ id: 'c', deadline: '2027-02-01', space: 'gone' }),
+      todo({ id: 'c', deadline: '2027-02-01' }),
     ]
-    expect(keys(columnsOf(all, 'label', place))).toEqual([
+    expect(keys(columnsOf(all, 'label', TODAY))).toEqual([
       ['work', ['a']],
       ['', ['b', 'c']],
     ])
-    expect(keys(columnsOf([], 'label', place))).toEqual([['', []]])
-    expect(keys(columnsOf(all, 'deadline', place))).toEqual([
+    expect(keys(columnsOf([], 'label', TODAY))).toEqual([['', []]])
+    expect(keys(columnsOf(all, 'deadline', TODAY))).toEqual([
       ['overdue', ['a']],
       ['today', ['b']],
       ['tomorrow', []],
@@ -60,27 +59,24 @@ describe('the board', () => {
       ['later', ['c']],
       ['none', []],
     ])
-    expect(columnsOf(all.slice(1, 2), 'deadline', place)[0]?.key).toBe('today')
-    expect(keys(columnsOf(all, 'priority', place))).toEqual([
+    expect(columnsOf(all.slice(1, 2), 'deadline', TODAY)[0]?.key).toBe('today')
+    expect(keys(columnsOf(all, 'priority', TODAY))).toEqual([
       ['3', ['a']],
       ['2', []],
       ['1', ['b']],
       ['0', ['c']],
     ])
-    const spaces = columnsOf(all, 'space', place)
-    expect(keys(spaces)).toEqual([
-      ['home', ['a']],
-      ['gone', ['c']],
-      ['', ['b']],
-    ])
-    expect(spaces.map((one) => one.takes)).toEqual([true, false, true])
+  })
+  test('a board kept grouped by space opens grouped by label, and its space order is left out', () => {
+    expect([...GROUPINGS]).toEqual(['label', 'deadline', 'priority'])
+    const old = boardOf({ kind: 'todo-board', grouping: 'space', space: ['home'], label: ['work'] })
+    expect(old.grouping).toBe('label')
+    expect(old.columns).toEqual({ label: ['work'], deadline: [], priority: [] })
   })
   test('a column + gives a new todo the value of its column', () => {
     expect(columnPatch('label', 'work', TODAY)).toEqual({ labels: ['work'] })
     expect(columnPatch('label', '', TODAY)).toEqual({ labels: [] })
     expect(columnPatch('priority', '2', TODAY)).toEqual({ priority: 2 })
-    expect(columnPatch('space', 'home', TODAY)).toEqual({ space: 'home' })
-    expect(columnPatch('space', '', TODAY)).toEqual({ space: null })
     expect(columnPatch('deadline', 'today', TODAY)).toEqual({ deadline: TODAY })
     expect(columnPatch('deadline', 'tomorrow', TODAY)).toEqual({ deadline: '2026-11-20' })
     expect(columnPatch('deadline', 'week', TODAY)).toEqual({ deadline: '2026-11-21' })
@@ -96,11 +92,9 @@ describe('the board', () => {
     expect(movedPatch(one, 'deadline', 'week', 'today', TODAY)).toEqual({ deadline: TODAY })
     expect(movedPatch(one, 'deadline', 'later', 'week', TODAY)).toBeNull()
     expect(movedPatch(one, 'priority', '0', '3', TODAY)).toEqual({ priority: 3 })
-    expect(movedPatch(one, 'space', '', 'home', TODAY)).toEqual({ space: 'home' })
-    expect(movedPatch(one, 'space', 'home', 'home', TODAY)).toBeNull()
   })
   test('columns follow a kept order, and new ones come after in their own order', () => {
-    const columns = columnsOf([todo({ id: 'a', labels: ['b'] }), todo({ id: 'c', labels: ['a', 'c'] })], 'label', place)
+    const columns = columnsOf([todo({ id: 'a', labels: ['b'] }), todo({ id: 'c', labels: ['a', 'c'] })], 'label', TODAY)
     expect(orderedColumns(columns, ['c', 'b']).map((one) => one.key)).toEqual(['c', 'b', 'a', ''])
     expect(movedColumns(['a', 'b', 'c'], 'c', 0)).toEqual(['c', 'a', 'b'])
     expect(movedColumns(['a', 'b', 'c'], 'a', 9)).toEqual(['b', 'c', 'a'])
