@@ -2,7 +2,7 @@ import { listenOver } from '../../ui-kit/src/api'
 import { type Space, workspace } from '../../workspace/src/api'
 import { spacesOf, spacesOfPaths, toSpace } from './to-space'
 
-export type Carried = { tab: string } | { paths: readonly string[] } | { to: (space: string) => void }
+export type Carried = { tab: string } | { paths: readonly string[] }
 const ATTRIBUTE = 'data-space-drop'
 const SWITCHER = 'switcher'
 const LIST = '[data-spaces-open]'
@@ -29,7 +29,6 @@ function nearList(point: { x: number; y: number }, button: HTMLElement): boolean
   })
 }
 function spacesFor(carried: Carried): Space[] {
-  if ('to' in carried) return workspace.spaces
   if ('paths' in carried) return spacesOfPaths(carried.paths)
   const tab = workspace.tabs.find((one) => one.id === carried.tab)
   return tab ? spacesOf([tab]) : []
@@ -48,10 +47,6 @@ export function droppedOnSpace(carried: Carried): boolean {
   light(null)
   close()
   if (space === null || space === SWITCHER) return false
-  if ('to' in carried) {
-    carried.to(space)
-    return true
-  }
   if ('tab' in carried) {
     void toSpace([carried.tab], space)
     return true
@@ -67,9 +62,7 @@ export function leftSpaces(): void {
 }
 let following: AbortController | null = null
 export function followTreeDrag(paths: readonly string[]): void {
-  followDrag({ paths })
-}
-export function followDrag(carried: Carried): void {
+  const carried = { paths }
   following?.abort()
   const done = new AbortController()
   following = done
