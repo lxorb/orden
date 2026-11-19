@@ -48,6 +48,11 @@ jobs:
         run: |
           "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive/under --under
 
+      - name: Driven with the page under the app asked for and its ground made to fail, falling back
+        if: always() && env.EXE != ''
+        run: |
+          "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive/fails --fail
+
       - name: Driven with the page under the app, its ground cleared by the engine's settings alone
         if: always() && env.EXE != ''
         env:

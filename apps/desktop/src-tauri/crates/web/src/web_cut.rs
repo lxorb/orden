@@ -182,12 +182,100 @@ fn holds(layer: &Hollow, x: f64, y: f64) -> bool {
         (x.clamp(layer.x + round, right - round), y.clamp(layer.y + round, bottom - round));
     (x - nearest_x).powi(2) + (y - nearest_y).powi(2) <= round * round
 }
+#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Verdict {
+    Asking,
+    Clear,
+    Opaque,
+}
+#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+static VERDICTS: LazyLock<Mutex<HashMap<String, Verdict>>> = LazyLock::new(Mutex::default);
 pub fn lay_page_under(window: &tauri::Window, view: &Webview) {
     #[cfg(any(target_os = "macos", windows))]
     if pages_under() {
-        under::lower(window, view);
+        let label = window.label().to_owned();
+        let was = VERDICTS.held().get(&label).copied();
+        match was {
+            Some(Verdict::Clear) => under::lower(window, view),
+            Some(Verdict::Asking | Verdict::Opaque) => {}
+            None => {
+                VERDICTS.held().insert(label.clone(), Verdict::Asking);
+                let window = window.clone();
+                std::thread::spawn(move || ask_ground(&window, &label));
+            }
+        }
     }
     let _ = (window, view);
+}
+#[cfg(any(target_os = "macos", windows))]
+fn ask_ground(window: &tauri::Window, label: &str) {
+    use tauri::Manager as _;
+    let Some(own) = window.app_handle().get_webview(label) else {
+        VERDICTS.held().insert(label.to_owned(), Verdict::Opaque);
+        return;
+    };
+    let said = ground_cleared(&own);
+    let verdict = if said.is_ok() { Verdict::Clear } else { Verdict::Opaque };
+    VERDICTS.held().insert(label.to_owned(), verdict);
+    if let Err(why) = said {
+        orden_base::trace::mark(&format!("pages under the app: {why}; pages stay cut out"));
+        eprintln!("pages under the app: {why}; pages stay cut out");
+        return;
+    }
+    let laying = window.clone();
+    let _ = window.run_on_main_thread(move || {
+        use tauri::Manager as _;
+        for (name, page) in laying.app_handle().webviews() {
+            if name.starts_with(crate::web_tabs::LABEL) && page.window().label() == laying.label() {
+                under::lower(&laying, &page);
+            }
+        }
+    });
+}
+#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+const GROUND_SAID: &str = "[document.documentElement, document.body].every((one) => !one || getComputedStyle(one).backgroundColor === 'rgba(0, 0, 0, 0)')";
+#[cfg(any(target_os = "macos", windows))]
+fn ground_cleared(own: &Webview) -> Result<(), String> {
+    let patience = std::time::Duration::from_secs(3);
+    let failing = std::env::var_os("ORDEN_PAGES_UNDER_FAIL").is_some_and(|said| said == "1");
+    let alone = std::env::var_os("ORDEN_PAGES_UNDER_GROUND").is_some_and(|said| said == "cef");
+    let cleared = if alone {
+        Ok(serde_json::Value::Null)
+    } else {
+        crate::engine::devtools::call(
+            own,
+            None,
+            "Emulation.setDefaultBackgroundColorOverride",
+            &serde_json::json!({ "color": { "r": 0, "g": 0, "b": 0, "a": 0 } }),
+            patience,
+        )
+    };
+    let looked = crate::engine::devtools::call(
+        own,
+        None,
+        "Runtime.evaluate",
+        &serde_json::json!({ "expression": GROUND_SAID, "returnByValue": true }),
+        patience,
+    );
+    judged(failing, cleared.map(|_| ()), looked)
+}
+#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+fn judged(
+    failing: bool,
+    cleared: Result<(), String>,
+    looked: Result<serde_json::Value, String>,
+) -> Result<(), String> {
+    if failing {
+        return Err("asked to fail by ORDEN_PAGES_UNDER_FAIL".to_owned());
+    }
+    cleared.map_err(|why| format!("the app's ground could not be cleared: {why}"))?;
+    let looked = looked.map_err(|why| format!("the app's ground could not be read: {why}"))?;
+    if looked.pointer("/result/value") == Some(&serde_json::Value::Bool(true)) {
+        Ok(())
+    } else {
+        Err(format!("the app paints a ground of its own under its pages: {looked}"))
+    }
 }
 pub fn opacity(view: &Webview, opacity: f64) {
     #[cfg(any(target_os = "macos", windows))]
@@ -680,6 +768,18 @@ mod tests {
         super::uncut("web-under-said");
         let said = serde_json::to_value(super::layering("web-under-said")).expect("said");
         assert_ne!(said, serde_json::json!("under"));
+    }
+    #[test]
+    fn pages_stay_cut_out_unless_the_app_s_ground_is_clear() {
+        use serde_json::json;
+        let clear = || Ok(json!({ "result": { "type": "boolean", "value": true } }));
+        assert_eq!(super::judged(false, Ok(()), clear()), Ok(()));
+        assert!(super::judged(true, Ok(()), clear()).is_err());
+        assert!(super::judged(false, Err("no agent".into()), clear()).is_err());
+        assert!(super::judged(false, Ok(()), Err("no answer".into())).is_err());
+        let painted = Ok(json!({ "result": { "type": "boolean", "value": false } }));
+        assert!(super::judged(false, Ok(()), painted).is_err());
+        assert!(super::GROUND_SAID.contains("rgba(0, 0, 0, 0)"));
     }
     #[test]
     fn a_page_under_the_app_takes_what_no_layer_is_over() {

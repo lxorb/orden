@@ -998,6 +998,7 @@ impl<T: UserEvent> WinitCefApp<T> {
           apply_user_agent_override(&host, user_agent);
         }
         if clear_ground && !ground_by_settings_alone() {
+          keep_ground_clear(browser_id, true);
           apply_clear_ground(&host);
         }
         load_initial_url_after_registering_initialization_scripts(
@@ -2413,6 +2414,32 @@ fn clear_ground_message(id: i32) -> String {
   .to_string()
 }
 
+static CLEAR_GROUNDS: Mutex<Vec<i32>> = Mutex::new(Vec::new());
+
+pub(crate) fn keep_ground_clear(browser_id: i32, keep: bool) {
+  let mut all = CLEAR_GROUNDS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+  all.retain(|one| *one != browser_id);
+  if keep {
+    all.push(browser_id);
+  }
+}
+
+pub(crate) fn regrounds(browser_id: i32, main_frame: bool) -> bool {
+  main_frame
+    && CLEAR_GROUNDS
+      .lock()
+      .unwrap_or_else(std::sync::PoisonError::into_inner)
+      .contains(&browser_id)
+}
+
+pub(crate) fn clear_ground_again(browser: &Browser, main_frame: bool) {
+  if regrounds(browser.identifier(), main_frame)
+    && let Some(host) = browser.host()
+  {
+    apply_clear_ground(&host);
+  }
+}
+
 fn apply_clear_ground(host: &BrowserHost) {
   let Ok(message_id) = crate::devtools::allocate_runtime_devtools_message_id() else {
     log::warn!("could not clear the window's ground: no DevTools message id was available");
@@ -2604,6 +2631,17 @@ mod tests {
     assert_eq!(said["method"], "Emulation.setDefaultBackgroundColorOverride");
     assert_eq!(said["params"]["color"]["a"], 0);
     assert!(CLEAR_FIRST_GROUND.contains("html, body { background: transparent !important }"));
+  }
+
+  #[test]
+  fn a_cleared_ground_is_cleared_again_on_each_main_frame_load_and_only_for_its_browser() {
+    keep_ground_clear(41, true);
+    assert!(regrounds(41, true));
+    assert!(!regrounds(41, false));
+    assert!(!regrounds(42, true));
+    keep_ground_clear(41, true);
+    keep_ground_clear(41, false);
+    assert!(!regrounds(41, true));
   }
 
   #[test]

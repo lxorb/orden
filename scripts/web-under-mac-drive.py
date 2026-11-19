@@ -420,12 +420,33 @@ def peek(app: App, pid: int, ratio: float, out: pathlib.Path, as_before: Any, un
     if app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible && !one.sent.away)") is not True:
         wrong.append("[peek] the page steps away for the left peek")
     return wrong, []
+def cleared_after_reload(app: App, hole: tuple[float, float, float, float], ratio: float, out: pathlib.Path) -> list[str]:
+    middle = ((hole[0] + hole[2]) / 2, (hole[1] + hole[3]) / 2)
+    app.eval("setTimeout(() => location.reload(), 50); return true")
+    time.sleep(3)
+    until = time.monotonic() + 60
+    while time.monotonic() < until and app.eval("!!(window.orden && orden.workspace)") is not True:
+        time.sleep(1)
+    until = time.monotonic() + 40
+    while time.monotonic() < until and app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is not True:
+        time.sleep(0.5)
+    time.sleep(2)
+    app.eval("document.documentElement.style.opacity = '0'; return true")
+    time.sleep(1)
+    image = shot()
+    image.save(out / "reloaded-bare.png")
+    app.eval("document.documentElement.style.opacity = ''; return true")
+    seen = colour_at(image, middle, ratio)
+    measure("the hole after the app reloaded, its HTML at no opacity", seen)
+    measure("the engine lays the page under the app after the reload", app.eval("orden.pages.under"))
+    return [] if near(seen, COLOUR) else [f"[reload] the app's ground is not clear after it reloaded: {seen}"]
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
     parser.add_argument("--identifier", required=True)
     parser.add_argument("--out", required=True, type=pathlib.Path)
     parser.add_argument("--under", action="store_true")
+    parser.add_argument("--fail", action="store_true")
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
@@ -442,7 +463,7 @@ def main() -> int:
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-under-spaces-"))
-    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), "ORDEN_PAGES_UNDER": "1" if args.under else "0"}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), "ORDEN_PAGES_UNDER": "1" if args.under or args.fail else "0", "ORDEN_PAGES_UNDER_FAIL": "1" if args.fail else "0"}
     as_before = moves_as_before(args.exe, args.identifier, secret, env)
     print(f"moves the app's page heard with no page under it: {as_before}", flush=True)
     carry_url = url.replace("/under", "/carry")
@@ -522,6 +543,8 @@ def main() -> int:
         measure("the engine lays the page under the app", laid)
         if args.under and not laid:
             wrong.append("the engine did not lay the page under the app")
+        if args.fail and laid:
+            wrong.append("the engine laid the page under the app though its ground was said not to clear")
         cuts = app.eval("orden.pages.cuts") is True
         still = app.eval("!!document.querySelector('.hole.still')") is True
         print(f"the engine cuts layers out of pages: {cuts}; the page is held as a still under the layer: {still}", flush=True)
@@ -632,6 +655,8 @@ def main() -> int:
         wrong += beside_wrong
         unverified += beside_unverified
         wrong += overview(app, hole, ratio, args.out)
+        if args.under:
+            wrong += cleared_after_reload(app, hole, ratio, args.out)
         peeked, unseen = peek(app, process.pid, ratio, args.out, as_before, args.under)
         wrong += peeked
         unverified += unseen
