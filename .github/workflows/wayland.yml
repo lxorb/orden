@@ -312,6 +312,15 @@ jobs:
           pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
+      - name: Auto-tidy closes saved tabs out of sight and keeps the rest, after a restart, under sway
+        if: always()
+        env:
+          OUT: wayland-out/auto-tidy
+          AUTOTIDY: '1'
+        run: |
+          pkill -f /usr/share/Orden/orden || true
+          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page has its worker answer it, opened and after a restart, under sway
         if: always()
         env:
