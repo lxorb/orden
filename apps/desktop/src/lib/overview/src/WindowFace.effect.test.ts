@@ -54,4 +54,24 @@ describe('a window of the overview', () => {
     expect(drawn.textContent).toContain('Diary')
     expect(drawn.textContent).not.toContain('secret words')
   })
+  test('of a long note draws only the lines it shows', async () => {
+    const text = Array.from({ length: 3000 }, (_, i) => `- item ${i} of the list`).join('\n')
+    const note = new NoteDoc(
+      { kind: 'note', path: `${ROOT}/Long.md`, name: 'Long.md', text, dirty: false },
+      () => undefined,
+    )
+    target = document.createElement('div')
+    document.body.append(target)
+    shown = mount(WindowFace, { target, props: { tab: new Tab(note, 'pane'), face: null, width: 900, height: 700 } })
+    const shownIn = target
+    await vi.waitFor(
+      () => {
+        flushSync()
+        expect(shownIn.textContent).toContain('item 0 of the list')
+      },
+      { timeout: 10_000, interval: 20 },
+    )
+    expect(shownIn.textContent).not.toContain('item 40 of the list')
+    expect(shownIn.querySelectorAll('*').length).toBeLessThan(200)
+  })
 })

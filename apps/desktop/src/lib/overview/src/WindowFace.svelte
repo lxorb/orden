@@ -36,10 +36,10 @@
   } = $props()
   const how = $derived(TAB_KINDS[tab.kind].preview)
   const locked = $derived(protection.locked(noteBehind(tab)))
-  const START = 6000
+  const LINE_HIGH = 26
   const reading = $derived.by(() => {
     if (how !== 'reading' || locked) return null
-    const text = readingFrom(tab.doc, tab.anchor, START)
+    const text = readingFrom(tab.doc, tab.anchor, Math.ceil(height / LINE_HIGH))
     const scheme = theme.current
     const trusted = trustsHtmlIn(tab.note)
     const locks = links.locksSeen()
