@@ -46,7 +46,7 @@
 <div
   class="todo orden-row"
   class:is-on={open}
-  class:is-picked={picked && !open}
+  class:is-picked={picked}
   class:is-taking={taking}
   class:is-lifted={lifted}
   class:done={todo.done}
@@ -150,6 +150,7 @@
   }
   .todo.is-picked {
     border-color: var(--accent);
+    background: var(--accent-soft);
   }
   .todo.is-taking {
     border-color: var(--accent);

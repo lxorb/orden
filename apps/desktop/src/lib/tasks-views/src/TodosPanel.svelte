@@ -2,7 +2,7 @@
   import { cubicOut } from 'svelte/easing'
   import { dur, slide } from '../../platform/src/api'
   import { startTodos, todos, type TodoPatch } from '../../tasks-model/src/api'
-  import { addTodo, doWithAi, patchTodo, removeTodo, tickTodo } from './acts'
+  import { addTodo, doWithAi, patchTodo, removeTodo } from './acts'
   import { Carrying } from './carrying.svelte'
   import { away, glider } from './glide'
   import Filters from './Filters.svelte'
@@ -18,8 +18,15 @@
   let typed = $state('')
   let openId = $state<string | null>(null)
   const LIST = 'panel:'
-  const carrying = new Carrying({ shown, list: () => shown.todos, grouping: () => null })
-  const rows = new TodoRows({
+  const carrying: Carrying = new Carrying({
+    shown,
+    list: () => shown.todos,
+    grouping: () => null,
+    group: (id) => rows.group(id),
+    columnOf: () => LIST,
+  })
+  const rows: TodoRows = new TodoRows({
+    shown,
     order: () => shown.todos,
     opened: () => openId,
     open: (id) => (openId = id),
@@ -71,9 +78,9 @@
             {todo}
             today={shown.filter.today}
             open={openId === todo.id}
-            lifted={carrying.drag.todo?.id === todo.id}
+            lifted={carrying.drag.carries(todo.id)}
             taking={carrying.taking === todo.id}
-            ontoggle={(done: boolean) => void tickTodo(shown, todo.id, done)}
+            ontoggle={(done: boolean) => void rows.tick(todo.id, done)}
             picked={rows.picking.has(todo.id)}
             onopen={() => (openId = openId === todo.id ? null : todo.id)}
             onpick={(event: MouseEvent) => rows.click(event, todo.id)}
