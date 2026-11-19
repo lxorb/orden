@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
+import { providePort } from '@orden/contracts'
 
 const held = new Map<string, string>()
 vi.stubGlobal('localStorage', {
@@ -145,5 +146,43 @@ describe('the tab here', () => {
     expect(workspace.tabHere((one) => one.id === away)).toBeNull()
     await workspace.showSpace(AWAY.id)
     expect(workspace.tabHere(either)?.id).toBe(away)
+  })
+})
+describe('opening a note another space holds', () => {
+  const ONE = { id: 'one', name: 'One', root: '/notes/One' }
+  const TWO = { id: 'two', name: 'Two', root: '/notes/Two' }
+  const PATH = '/notes/One/Plan.md'
+  const here = () => workspace.tabHere((one) => one.path === PATH)
+  test('opens it in the space in sight, and leaves the other its own tab, archived or not', async () => {
+    const gone = providePort('backend.web', {
+      invoke: <T>(command: string, args?: Record<string, unknown>) =>
+        command === 'read_note' && args?.path === PATH
+          ? Promise.resolve('# Plan\n' as T)
+          : Promise.reject(new Error(`${command} is not here`)),
+    })
+    try {
+      workspace.spaces = [{ ...ONE }, { ...TWO }]
+      await workspace.showSpace(ONE.id)
+      await workspace.open(PATH)
+      const first = here()
+      expect(first?.path).toBe(PATH)
+      await workspace.showSpace(TWO.id)
+      expect(here()).toBeNull()
+      await workspace.open(PATH)
+      const second = here()
+      expect([workspace.activeSpaceId, workspace.activeTabId]).toEqual([TWO.id, second?.id])
+      expect(second?.note).toBe(first?.note)
+      expect(second?.id).not.toBe(first?.id)
+      expect(workspace.tabs).toContain(first)
+      workspace.closeEach([second?.id ?? ''], false)
+      workspace.archivedSpaces.set(ONE.root, true)
+      await workspace.open(PATH)
+      expect(workspace.activeSpaceId).toBe(TWO.id)
+      expect(workspace.activeTabId).toBe(here()?.id)
+      expect(workspace.tabs).toContain(first)
+    } finally {
+      workspace.archivedSpaces.set(ONE.root, false)
+      gone()
+    }
   })
 })

@@ -1094,10 +1094,8 @@ class Workspace {
   }
   openShared(item: { id: string; name: string; path: string }, text: string) {
     const existing = this.documents.find((one) => one.shared === item.id)
-    const open = existing ? this.tabs.find((tab) => tab.note.key === existing.key) : undefined
-    if (open) {
-      this.panes.activate(open.paneId, open.id)
-      this.showNote()
+    if (existing) {
+      this.showTab(existing)
       return
     }
     const note = this.document({
@@ -1376,8 +1374,8 @@ class Workspace {
     this.showTab(await this.opened.opening(path, () => this.openPlane(path, how)), how)
   }
   private showTab(note: NoteDoc | null, how: OpenHow = {}): Tab | null {
-    const tab = note && this.tabOf(note)
-    if (!tab) return null
+    if (!note) return null
+    const tab = this.tabHere((one) => one.note === note) ?? this.viewHere(note, how)
     if (!how.preview) this.keep(tab.id)
     if (how.activate !== false) {
       this.activeTabId = tab.id
@@ -1385,9 +1383,12 @@ class Workspace {
     }
     return tab
   }
-  private tabOf(note: NoteDoc): Tab | undefined {
-    const all = this.tabs.filter((one) => one.note === note)
-    return all.find((one) => this.panes.at(one.paneId)) ?? all[0]
+  private viewHere(note: NoteDoc, how: OpenHow): Tab {
+    const tab = new Tab(note, this.panes.focusedId)
+    if (note.path) this.placeAt(tab, note.path)
+    this.arrive(tab, how)
+    this.persist()
+    return tab
   }
   private arrive(tab: Tab, how: OpenHow) {
     const activate = how.activate !== false
@@ -1912,14 +1913,7 @@ class Workspace {
       }
       return
     }
-    const note = await this.opened.opening(path, () => this.openNote(path, options))
-    const tab = note && this.tabOf(note)
-    if (!tab) return
-    if (!options.preview) this.keep(tab.id)
-    if (options.activate !== false) {
-      this.activeTabId = tab.id
-      this.showNote()
-    }
+    this.showTab(await this.opened.opening(path, () => this.openNote(path, options)), options)
   }
   private async openNote(path: string, options: OpenHow & { blank?: boolean }): Promise<NoteDoc | null> {
     const found = await invoke<string>('read_note', { path }).catch(() => null)

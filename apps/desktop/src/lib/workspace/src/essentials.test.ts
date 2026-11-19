@@ -132,8 +132,8 @@ describe('the tab an essential is', () => {
   test('is the one made for its file, on screen first', () => {
     expect(essentialTab(tabs, '/s/Plan.md', shown)?.id).toBe('here')
   })
-  test('is one out of sight where there is no other', () => {
-    expect(essentialTab([tabs[1] ?? tab('x', null)], '/s/Plan.md', shown)?.id).toBe('away')
+  test('is never one out of sight, which another space keeps for itself', () => {
+    expect(essentialTab([tabs[1] ?? tab('x', null)], '/s/Plan.md', shown)).toBeUndefined()
   })
   test('is never a tab of the strip showing the same file', () => {
     expect(essentialTab([tab('strip', null)], '/s/Plan.md', shown)).toBeUndefined()

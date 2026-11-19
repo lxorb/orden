@@ -184,8 +184,7 @@ export function essentialTab<T extends Held>(
   path: string,
   shown: (paneId: string) => boolean,
 ): T | undefined {
-  const all = tabs.filter((one) => one.essential !== null && samePath(one.essential, path))
-  return all.find((one) => shown(one.paneId)) ?? all[0]
+  return tabs.find((one) => one.essential !== null && samePath(one.essential, path) && shown(one.paneId))
 }
 export function released<T extends Held>(tabs: readonly T[], kept: readonly string[]): T[] {
   return tabs.filter((one) => one.essential !== null && !kept.some((path) => samePath(path, one.essential)))
@@ -206,7 +205,7 @@ async function showEssential(path: string) {
     return
   }
   const open = ws.opened.at(path)
-  const web = open?.kind === 'web' ? ws.tabs.find((one) => one.note === open) : undefined
+  const web = open?.kind === 'web' ? ws.tabHere((one) => one.note === open) : null
   if (web) {
     web.essential = path
     ws.front(web.id)
