@@ -117,7 +117,7 @@ describe('the panel tabs', () => {
     const { pill } = row('outline')
     agentMarks.waiting = 0
     agentMarks.heard = false
-    expect(pill).toMatch(/aria-label="Ask"[\s\S]*?class="waiting[^"]*"[^>]*>\s*2\s*</)
+    expect(pill).toMatch(/aria-label="Ask"[\s\S]*?class="count[^"]*corner[^"]*"[^>]*>\s*2\s*</)
     expect(pill).not.toContain('aria-label="Agents"')
   })
   test('and with nothing laid out yet, none is put behind More', () => {

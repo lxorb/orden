@@ -6,6 +6,7 @@
     carried,
     carrySection,
     CHATS_MARK,
+    CountBadge,
     DIVIDER,
     draggedSection,
     dropOver,
@@ -61,7 +62,7 @@
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
   import { SidebarWidth } from './sidebar-width.svelte'
-  import { dur, fade, fly } from '../../platform/src/api'
+  import { dur, fly } from '../../platform/src/api'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import Bookmarks from './Bookmarks.svelte'
@@ -514,10 +515,8 @@
               }}
             >
               <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
-              {#if item.id === 'ask' && agentMarks.waiting}
-                <span class="waiting" transition:fade={{ duration: dur(140) }}>
-                  {agentMarks.waiting}
-                </span>
+              {#if item.id === 'ask'}
+                <CountBadge count={agentMarks.waiting} corner />
               {/if}
               {#if item.id === 'ask' && unread}
                 <UnreadDot corner />
@@ -954,24 +953,6 @@
   }
   .switch .orden-segmented button svg {
     flex: none;
-  }
-  .waiting {
-    position: absolute;
-    top: 1px;
-    inset-inline-end: 1px;
-    min-width: 13px;
-    height: 13px;
-    padding: 0 3px;
-    border-radius: 99px;
-    background: var(--accent);
-    color: var(--accent-ink);
-    font-family: var(--font-ui);
-    font-size: 9px;
-    font-weight: var(--weight-strong);
-    line-height: 13px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-    pointer-events: none;
   }
   .tools {
     flex: none;

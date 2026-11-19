@@ -1,9 +1,11 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 import {
   ARCHIVE_MARK,
   busy,
+  CountBadge,
   DIVIDER,
   initial,
   inOneColour,
@@ -154,6 +156,24 @@ describe('icons', () => {
     for (const not of [null, '', 'star', '🍎', 'simple-icons:github', 'data:image/png;base64,AAAA']) {
       expect(siteOfIcon(not)).toBeNull()
     }
+  })
+})
+describe('the count badge (#2273)', () => {
+  const shown = (props: { count: number; most?: number; corner?: boolean }) =>
+    render(CountBadge, { props }).body.replace(/<!--[^>]*-->/g, '')
+  test('shows the count, and the most it counts with a plus past it', () => {
+    expect(shown({ count: 7 })).toMatch(/>7<\/span>/)
+    expect(shown({ count: 99 })).toMatch(/>99<\/span>/)
+    expect(shown({ count: 120 })).toMatch(/>99\+<\/span>/)
+    expect(shown({ count: 12, most: 9 })).toMatch(/>9\+<\/span>/)
+  })
+  test('is not there at all for nothing to count', () => {
+    expect(shown({ count: 0 })).not.toContain('<span')
+    expect(shown({ count: -3 })).not.toContain('<span')
+  })
+  test('sits at the corner of what it marks only when asked', () => {
+    expect(shown({ count: 3, corner: true })).toMatch(/class="[^"]*\bcorner\b/)
+    expect(shown({ count: 3 })).not.toContain('corner')
   })
 })
 describe('the panel marks', () => {
