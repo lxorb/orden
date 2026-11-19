@@ -36,6 +36,12 @@ export interface ImportBringPort {
     folder: string,
   ): Promise<string | null>
 }
+export interface McpImportPort {
+  scan(): Promise<readonly unknown[]>
+  importable(found: readonly unknown[]): boolean
+  picker(): Promise<{ default: unknown }>
+}
 export interface ImportPorts {
   readonly 'import.bring': ImportBringPort
+  readonly 'import.mcp': McpImportPort
 }

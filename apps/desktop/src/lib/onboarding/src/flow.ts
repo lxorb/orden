@@ -1,6 +1,17 @@
 import type { NotesFrom } from '@orden/contracts'
 
-export const STEPS = ['account', 'appearance', 'heard', 'browser', 'import', 'notes', 'code', 'ai', 'welcome'] as const
+export const STEPS = [
+  'account',
+  'appearance',
+  'heard',
+  'browser',
+  'import',
+  'notes',
+  'code',
+  'ai',
+  'mcp',
+  'welcome',
+] as const
 export type Step = (typeof STEPS)[number]
 export type Coding = 'yes' | 'no' | null
 export type MarkdownStyle = 'clean' | 'live'
@@ -16,6 +27,7 @@ export interface Reach {
   phone: boolean
   heard: boolean
   connected: boolean
+  mcpFound: boolean
 }
 export function offersApiKey(code: Coding): boolean {
   return code !== 'no'
@@ -34,6 +46,8 @@ export function shows(step: Step, answers: Answers, reach: Reach): boolean {
     case 'ai':
       if (reach.phone && reach.connected) return false
       return reach.signIns || offersApiKey(answers.code)
+    case 'mcp':
+      return !reach.phone && reach.mcpFound
     case 'appearance':
     case 'notes':
     case 'welcome':

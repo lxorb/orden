@@ -248,6 +248,7 @@ export type {
   ImportBringPort,
   Importer,
   ImportPorts,
+  McpImportPort,
   NotesBrought,
   NotesFrom,
   Shared,
