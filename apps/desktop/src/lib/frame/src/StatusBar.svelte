@@ -91,6 +91,7 @@
     min-width: var(--space-7);
     min-height: 1.4em;
     padding: 4px var(--space-4);
+    border-radius: var(--radius-sm);
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
