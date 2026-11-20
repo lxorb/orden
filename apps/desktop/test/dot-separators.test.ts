@@ -31,16 +31,6 @@ const ALLOWED: readonly { path: string; holds: string; why: string }[] = [
     why: 'pasted list markers are stripped',
   },
   {
-    path: 'packages/glasses/src/mark.ts',
-    holds: 'const BULLETS',
-    why: 'list markers the glasses read',
-  },
-  {
-    path: 'packages/glasses/src/firmware.ts',
-    holds: "': '",
-    why: 'glyphs the glasses font lacks, mapped to ones it has',
-  },
-  {
     path: 'apps/desktop/src/lib/export/src/document.ts',
     holds: "['bull'",
     why: 'the RTF bullet control word',

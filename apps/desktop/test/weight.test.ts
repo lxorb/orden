@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const ENTRY = join(import.meta.dirname, '../src/main.ts')
-const WORKSPACE = ['@orden/editor', '@orden/glasses', '@orden/markdown', '@orden/rooms', '@orden/themes']
+const WORKSPACE = ['@orden/editor', '@orden/markdown', '@orden/rooms', '@orden/themes']
 function workspaceFile(specifier: string): string | null {
   const name = WORKSPACE.find((one) => specifier === one || specifier.startsWith(`${one}/`))
   if (!name) return null
@@ -121,7 +121,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['katex/contrib/mhchem', 'the chemistry pack'],
     ['node-emoji', 'the emoji table'],
     ['@replit/codemirror-vim', 'the vim keymap'],
-    ['@evenrealities/pretext', 'the firmware font metrics'],
     ['mermaid', 'the diagram drawer'],
     ['flowchart.js', "Typora's flowcharts"],
     ['pdfjs-dist', 'the PDF viewer'],
@@ -174,7 +173,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/vim-mode.ts', "the vim mode's own module"],
     ['/markdown/src/maths.ts', 'the formula engine, dressed'],
     ['/markdown/src/eager.ts', "the Worker's pair of engines"],
-    ['/glasses/src/mark.ts', "the glasses' text engine"],
     ['/lib/history/src/History.svelte', 'the version list'],
     ['/lib/accounts-ui/src/ShareSheet.svelte', 'the share sheet'],
     ['/lib/publishing/src/PublishSheet.svelte', 'the publish sheet'],

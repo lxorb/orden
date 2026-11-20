@@ -1,7 +1,0 @@
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
-  },
-  "include": ["src/**/*.ts", "../editor/src/env.d.ts", "../markdown/src/lucide.d.ts"]
-}

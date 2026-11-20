@@ -403,28 +403,6 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(@types/node@24.13.3)(@vitest/coverage-v8@5.0.0)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.1))
 
-  packages/glasses:
-    dependencies:
-      '@evenrealities/pretext':
-        specifier: ^0.1.4
-        version: 0.1.4
-      '@orden/markdown':
-        specifier: workspace:*
-        version: link:../markdown
-      marked:
-        specifier: ^18.0.11
-        version: 18.0.11(patch_hash=48a2d471506ce0fc0ef1b8b08f4fb2eb809081132b96e114e93513511595b35e)
-      node-emoji:
-        specifier: ^2.2.0
-        version: 2.2.0
-    devDependencies:
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^5.0.0
-        version: 5.0.0(@types/node@26.4.1)(@vitest/coverage-v8@5.0.0)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.1))
-
   packages/lang-html:
     dependencies:
       '@codemirror/autocomplete':
@@ -1178,9 +1156,6 @@ packages:
   '@eslint/plugin-kit@0.7.3':
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
-
-  '@evenrealities/pretext@0.1.4':
-    resolution: {integrity: sha512-gSZk/uxIhZW3geOM5bP1IS0s1sg7cA7KLLpBDgH9T1+ZNHMIFTMcgQN1qw4+/Xi/rcxsDsWZ7UZndIS/s4fRcA==}
 
   '@exodus/bytes@1.15.1':
     resolution: {integrity: sha512-S6mL0yNB/Abt9Ei4tq8gDhcczc4S3+vQ4ra7vxnAf+YHC02srtqxKKZghx2Dq6p0e66THKwR6r8N6P95wEty7Q==}
@@ -4250,8 +4225,6 @@ snapshots:
     dependencies:
       '@eslint/core': 1.2.1
       levn: 0.4.1
-
-  '@evenrealities/pretext@0.1.4': {}
 
   '@exodus/bytes@1.15.1(@noble/hashes@2.4.0)':
     optionalDependencies:

@@ -142,7 +142,6 @@ A `.deb` or an `.rpm` install, from a repository or from one file, also updates 
 - Free **sync** across every device
 - Built-in **MCP** so your favorite LLM reads and writes your notes
 - **Themes** from a store, or your own CSS
-- A plugin for **Even Realities G2** glasses
 
 ## Motivation
 
