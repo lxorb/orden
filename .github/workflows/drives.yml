@@ -267,8 +267,67 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+  suites:
+    needs: which
+    if: ${{ needs.which.outputs.go == 'true' && (needs.which.outputs.nightly == 'true' || inputs.native) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONIOENCODING: utf-8
+      IDENTIFIER: so.orden.Orden.probe.suites
+    outputs:
+      failed: ${{ steps.failed.outputs.names }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ needs.which.outputs.ref }}
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+
+      - name: The probe
+        run: |
+          printf '{"identifier":"%s","version":"99.0.0","plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}' \
+            "$IDENTIFIER" > probe.json
+          bash scripts/linux-cef.sh tauri build --no-bundle --ignore-version-mismatches --config ../../probe.json
+          bash scripts/cef-beside.sh apps/desktop/src-tauri/target/release
+          echo "ORDEN_PROBE_EXE=$(cygpath -w "$PWD/apps/desktop/src-tauri/target/release/orden.exe")" >>"$GITHUB_ENV"
+
+      - name: The sway suites that need only the endpoint
+        id: suites
+        run: python scripts/windows-suite.py --exe "$ORDEN_PROBE_EXE" --identifier "$IDENTIFIER" --out suites
+
+      - name: The failed drives
+        id: failed
+        if: always()
+        env:
+          STEPS: ${{ toJSON(steps) }}
+        run: python scripts/failed-drives.py >>"$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: drives-suites-${{ matrix.runner }}
+          path: suites
+          retention-days: 14
+          if-no-files-found: ignore
+
   report:
-    needs: [which, drives, native, pair]
+    needs: [which, drives, native, pair, suites]
     if: ${{ failure() && needs.which.outputs.go == 'true' && (needs.which.outputs.nightly == 'true' || inputs.report) }}
     runs-on: ubuntu-latest
     permissions:
@@ -282,12 +341,15 @@ jobs:
       NATIVE_RESULT: ${{ needs.native.result }}
       PAIR: ${{ needs.pair.outputs.failed }}
       PAIR_RESULT: ${{ needs.pair.result }}
+      SUITES: ${{ needs.suites.outputs.failed }}
+      SUITES_RESULT: ${{ needs.suites.result }}
     steps:
       - name: Say so on the issue that collects failed nights
         run: |
-          body=$(printf '%s\n\n%s\n%s\n%s\n' \
+          body=$(printf '%s\n\n%s\n%s\n%s\n%s\n' \
             "Drives run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID (attempt $GITHUB_RUN_ATTEMPT) on $GITHUB_REF_NAME at $SHA failed." \
             "- Browser drives: ${WEB:-none failed}" \
             "- Probe drives ($NATIVE_RESULT): ${NATIVE:-none failed}" \
-            "- Sync and capture with two probes ($PAIR_RESULT): ${PAIR:-none failed}")
+            "- Sync and capture with two probes ($PAIR_RESULT): ${PAIR:-none failed}" \
+            "- The endpoint suites on Windows x64 and Arm ($SUITES_RESULT): ${SUITES:-none failed}")
           gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="$body" --jq .html_url
