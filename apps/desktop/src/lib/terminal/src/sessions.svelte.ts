@@ -155,6 +155,7 @@ class Session {
   private unmatched: string | null = null
   private readonly unwatch: () => void
   private boxed = ''
+  private retelling = 0
   private readonly whereabouts = new Whereabouts()
   private hidden = false
   private readonly watching = new ResizeObserver((seen) => {
@@ -830,7 +831,9 @@ class Session {
     this.echo?.reset()
     this.term.reset()
     this.applied(screen.cols, screen.rows)
+    this.retelling += 1
     this.term.write(screen.screen, () => {
+      this.retelling -= 1
       this.landed()
       this.printed()
       this.fit()
@@ -953,6 +956,7 @@ class Session {
     this.term.write(`\r\n\x1b[2m${words}\x1b[22m\r\n`)
   }
   private typed(data: string, binary: boolean) {
+    if (this.retelling > 0 && data.startsWith('\x1b')) return
     if (this.online) {
       this.typedOnline(data, binary)
       return
