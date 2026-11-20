@@ -132,6 +132,7 @@ describe('the people in a space', () => {
     draw({ store: asking(), manages: true, titled: false })
     expect(target.querySelector('h3')).toBeNull()
     expect(target.textContent).not.toContain('eve@example.com')
-    expect(rows().every((one) => one.classList.contains('orden-setting'))).toBe(true)
+    expect(rows()).toHaveLength(6)
+    for (const one of rows()) expect([...one.classList]).toEqual(expect.arrayContaining(['orden-setting', 'setting']))
   })
 })

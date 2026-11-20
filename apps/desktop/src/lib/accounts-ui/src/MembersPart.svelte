@@ -18,17 +18,17 @@
 </script>
 
 {#if members.error}
-  <p class="wrong">{members.error}</p>
+  <div class="orden-setting setting"><span class="name wrong">{members.error}</span></div>
 {/if}
 {#if members.seats}
-  <p class="seats">{members.seats.used} of {members.seats.most} places used</p>
+  <div class="orden-setting setting">
+    <span class="name seats">{members.seats.used} of {members.seats.most} places used</span>
+  </div>
 {/if}
 <MemberRows store={members} manages={root !== null && managesSpace(root)} titled={false} />
 
 <style>
-  p {
-    margin: 0;
-    font-size: var(--text-xs);
+  .seats {
     color: var(--muted);
   }
   .wrong {
