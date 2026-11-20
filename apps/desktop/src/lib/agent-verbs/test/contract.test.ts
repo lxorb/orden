@@ -1,3 +1,4 @@
+import { type AgentHeard, providePort } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import {
   answerOf,
@@ -12,6 +13,8 @@ import {
   needScope,
   Refused,
   short,
+  stopSignal,
+  stopWatch,
   verbsOf,
   writerOf,
 } from '../src/api'
@@ -94,5 +97,41 @@ describe('a table of verbs', () => {
     expect(await verbs.broken?.('broken', {}, READER)).toMatchObject({ code: 'no_such_file' })
     expect(await verbs.gated?.('gated', {}, READER)).toMatchObject({ code: 'not_granted' })
     expect(ran).toBe(0)
+  })
+})
+describe('a chat ending its thread', () => {
+  test('ends the calls of that thread, never those of another thread or of no thread', async () => {
+    const hearers: ((heard: AgentHeard) => void)[] = []
+    const unprovide = providePort('agents.reader', {
+      knows: () => Promise.resolve(false),
+      waiting: () => Promise.resolve(0),
+      ask: () => Promise.resolve(''),
+      answer: () => undefined,
+      heard: () => Promise.resolve(null),
+      hear: (on) => {
+        hearers.push(on)
+        return Promise.resolve(() => undefined)
+      },
+    })
+    const calls: Call[] = [
+      { verb: 'run_terminal', args: {}, caller: { ...agent([]), thread: 'thread-t' } },
+      { verb: 'run_terminal', args: {}, caller: { ...agent([]), thread: 'thread-u' } },
+      { verb: 'run_terminal', args: {}, caller: agent([]) },
+    ]
+    const halting = await Promise.all(calls.map(stopSignal))
+    const checks = await Promise.all(calls.map(stopWatch))
+    for (const hear of hearers) hear({ kind: 'ended', agent: 'claude', thread: 'thread-t' })
+    const refused = (check: (done: string) => void) => {
+      try {
+        check('the command ran')
+        return false
+      } catch {
+        return true
+      }
+    }
+    expect(halting.map((one) => one.signal.aborted)).toEqual([true, false, false])
+    expect(checks.map(refused)).toEqual([true, false, false])
+    for (const one of halting) one.end()
+    unprovide()
   })
 })

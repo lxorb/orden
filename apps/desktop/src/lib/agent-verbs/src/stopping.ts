@@ -4,7 +4,8 @@ import { Refused } from './problem'
 
 let stops = 0
 const halts = new Map<string, number>()
-const heeding = new Set<{ agent: string; halt: () => void }>()
+const ends = new Map<string, number>()
+const heeding = new Set<{ agent: string; thread: string | null; halt: () => void }>()
 let hearing: Promise<unknown> | null = null
 export function readerPort(): AgentReaderPort {
   const port = portOf('agents.reader')
@@ -22,6 +23,10 @@ function heedStops(): Promise<unknown> {
           const agent = heard.agent
           halts.set(agent, (halts.get(agent) ?? 0) + 1)
           for (const one of [...heeding]) if (one.agent === agent) one.halt()
+        } else if (heard.kind === 'ended' && typeof heard.thread === 'string') {
+          const thread = heard.thread
+          ends.set(thread, (ends.get(thread) ?? 0) + 1)
+          for (const one of [...heeding]) if (one.thread === thread) one.halt()
         }
       }),
     )
@@ -29,6 +34,10 @@ function heedStops(): Promise<unknown> {
       hearing = null
     })
   return hearing
+}
+function threadOf(call: Call): string | null {
+  const caller = call.caller
+  return caller.agent === null ? null : (caller.thread ?? null)
 }
 export function stopRefused(done: string): Refused {
   return new Refused('stopped', `the reader pressed the stop: ${done}`)
@@ -39,8 +48,11 @@ export async function stopWatch(call: Call): Promise<(done: string) => void> {
   await heedStops()
   const stopped = stops
   const halted = halts.get(agent) ?? 0
+  const thread = threadOf(call)
+  const ended = thread === null ? 0 : (ends.get(thread) ?? 0)
   return (done) => {
     if (stops !== stopped || (halts.get(agent) ?? 0) !== halted) throw stopRefused(done)
+    if (thread !== null && (ends.get(thread) ?? 0) !== ended) throw stopRefused(done)
   }
 }
 export interface Halting {
@@ -52,7 +64,7 @@ export async function stopSignal(call: Call): Promise<Halting> {
   const agent = call.caller.agent?.id
   if (agent === undefined) return { signal: halting.signal, end: () => undefined }
   await heedStops()
-  const one = { agent, halt: () => halting.abort() }
+  const one = { agent, thread: threadOf(call), halt: () => halting.abort() }
   heeding.add(one)
   return { signal: halting.signal, end: () => void heeding.delete(one) }
 }
