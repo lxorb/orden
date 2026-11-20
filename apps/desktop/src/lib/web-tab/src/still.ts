@@ -43,7 +43,7 @@ export function glance(pages: Held, tabId: string): void {
   if (!page?.live || !page.shown || page.watching) return
   if (page.shot && !page.stirred) return
   page.stirred = false
-  void pages.retake(tabId, page)
+  void pages.retake(tabId, page, true)
 }
 function hexOf(colour: string): string | null {
   const parts = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(colour)

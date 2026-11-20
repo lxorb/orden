@@ -540,7 +540,7 @@ class Pages {
       page.heldAt = at
     }
     await this.put(tabId, page, goesAway(page.layering) ? awayFrom(at.pane) : { ...at, cut: WHOLE })
-    if (fresh) void this.shoot(tabId)
+    if (fresh) void this.shoot(tabId, true)
   }
   async letGo(): Promise<void> {
     this.still = false
@@ -650,15 +650,15 @@ class Pages {
     const said = await this.whereIs(tabId)
     return said?.trail[said.at + by] ?? null
   }
-  async shoot(tabId: string): Promise<void> {
+  async shoot(tabId: string, quick = false): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || !page.shown) return
     if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
-    await this.retake(tabId, page)
+    await this.retake(tabId, page, quick)
   }
-  async retake(tabId: string, page: Page): Promise<void> {
+  async retake(tabId: string, page: Page, quick = false): Promise<void> {
     if (page.shooting) return page.shooting
-    const taking = this.photograph(page, tabId)
+    const taking = this.photograph(page, tabId, quick)
     page.shooting = taking
     try {
       await taking
@@ -672,10 +672,10 @@ class Pages {
     page.shot = null
     void this.shoot(tabId)
   }
-  private async photograph(page: Page, tabId: string): Promise<void> {
+  private async photograph(page: Page, tabId: string, quick: boolean): Promise<void> {
     const { url, pane, shotAt } = page
     const same = (now: Rect | null) => now?.width === pane?.width && now?.height === pane?.height
-    const asked = invoke<string | null>('web_shot', { tab: tabId })
+    const asked = invoke<string | null>('web_shot', quick ? { tab: tabId, quick } : { tab: tabId })
     const standing = page.shot !== null
     void asked.then(
       async (said) => {

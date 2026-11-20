@@ -293,6 +293,7 @@ describe('a page whose engine cuts only what floats over it', () => {
     await pages.show('a', SITE, PANE, false, over)
     await settle()
     expect(commands().filter((one) => one === 'web_place' || one === 'web_shot')).toEqual(['web_place', 'web_shot'])
+    expect(last('web_shot')).toEqual({ tab: 'a' })
   })
   test('arrives under such a layer cut round it', async () => {
     cuts = 'hollows'
@@ -1332,7 +1333,7 @@ test('pages held still are out of their place at once, and their pictures come a
   calls.length = 0
   await pages.holdStill()
   expect(last('web_place')).toMatchObject({ tab: 'a', visible: true, pane: { x: -OUT_OF_THE_WAY } })
-  expect(commands()).toContain('web_shot')
+  expect(last('web_shot')).toEqual({ tab: 'a', quick: true })
   expect(pages.of('a').heldAt).not.toBeNull()
   landed()
   await settle()
@@ -1340,4 +1341,15 @@ test('pages held still are out of their place at once, and their pictures come a
   await settle()
   expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
   photographing = null
+})
+test('a page glanced at before the overview opens is pictured quick, as small as the overview draws it', async () => {
+  await built()
+  await settle()
+  const page = pages.of('a')
+  page.shot = null
+  calls.length = 0
+  const { glance } = await import('./still')
+  glance(pages, 'a')
+  await settle()
+  expect(last('web_shot')).toEqual({ tab: 'a', quick: true })
 })
