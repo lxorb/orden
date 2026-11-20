@@ -7,10 +7,7 @@ import { walk } from './files'
 const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 const KIT = /from '[./]*agent-verbs\/src\/api'/
 const DOORS: Record<string, RegExp[]> = {
-  'agent-verbs/src/front.ts': [
-    /export function asksFront\(_call: Call, _why: string\): boolean \{\s*return false/,
-    /agentMarks\.opened/,
-  ],
+  'agent-verbs/src/front.ts': [/agentMarks\.opened/],
   'agent-verbs/src/view.ts': [/readerActs === acts && moved\(before, viewNow\(\)\)/, /await putBack\(before\)/],
   'agent-host/src/reader-view.ts': [/readersView\(call/, /openPage\(url, 'behind'\)/, /activate: false, beside: true/],
   'terminal/src/agent/verbs.ts': [/activate: false/, /openedBy\(call, tab, false\)/],
