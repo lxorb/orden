@@ -26,7 +26,7 @@
     ),
   )
   let plans = $state.raw<LocalPlans | null>(null)
-  const plansHeld = __EVEN_PLUGIN__ ? Promise.resolve(null) : localCli().then((one) => (plans = one.plans))
+  const plansHeld = localCli().then((one) => (plans = one.plans))
   onMount(() => {
     for (const account of ai.accounts) void ask(account)
     const lookFile = () => void keysInFile().then((found) => (inFile = found))
@@ -41,11 +41,10 @@
     }
   })
   async function ask(account: Provider) {
-    if (__EVEN_PLUGIN__) return
     const { kind } = account
     const held = await plansHeld
-    if (isLocal(kind)) await held?.check({ id: account.id, kind })
-    if (kind === 'chatgpt') await held?.checkChatgpt()
+    if (isLocal(kind)) await held.check({ id: account.id, kind })
+    if (kind === 'chatgpt') await held.checkChatgpt()
   }
   $effect(() => {
     for (const account of ai.accounts) {
@@ -54,7 +53,7 @@
   })
   $effect(() => {
     for (const account of ai.accounts) {
-      if (!__EVEN_PLUGIN__ && isLocal(account.kind) && plans?.of(account.id).state === 'in') {
+      if (isLocal(account.kind) && plans?.of(account.id).state === 'in') {
         void usage.look(account)
       }
     }
@@ -103,7 +102,7 @@
     trouble = { ...trouble, [provider.id]: text }
   }
   async function add({ kind, key, name, baseUrl }: Adding): Promise<string | null> {
-    const held = __EVEN_PLUGIN__ || kind !== 'chatgpt' ? null : await plansHeld
+    const held = kind !== 'chatgpt' ? null : await plansHeld
     if (held && !held.chatgpt) {
       try {
         await invoke('chatgpt_sign_in')
@@ -143,7 +142,7 @@
   function forget(provider: Account) {
     const { kind } = provider
     if (!isLocal(kind) && kind !== 'chatgpt') void drop(provider)
-    if (!__EVEN_PLUGIN__ && isLocal(kind) && provider.own) {
+    if (isLocal(kind) && provider.own) {
       void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch((error: unknown) =>
         said(provider)(message(error, 'Could not sign out.')),
       )
@@ -170,7 +169,7 @@
   }
   function labelOf(provider: Account): string {
     if (provider.name) return provider.name
-    const email = !__EVEN_PLUGIN__ && isLocal(provider.kind) ? (plans?.of(provider.id).account ?? null) : null
+    const email = isLocal(provider.kind) ? (plans?.of(provider.id).account ?? null) : null
     return email ?? vault.seen[provider.id] ?? accountName(provider)
   }
 </script>
@@ -299,7 +298,7 @@
           />
         </label>
       {/if}
-      {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex' || provider.kind === 'gemini-cli' || provider.kind === 'chatgpt')}
+      {#if provider.kind === 'claude-code' || provider.kind === 'codex' || provider.kind === 'gemini-cli' || provider.kind === 'chatgpt'}
         {#await loadPlanRows() then { default: PlanRows }}
           <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
         {/await}
@@ -349,7 +348,7 @@
           </div>
         </div>
       {/if}
-      {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans?.chatgpt}
+      {#if provider.kind === 'chatgpt' && plans?.chatgpt}
         <p class="hint">Using ChatGPT plan</p>
       {/if}
       {#if trouble[provider.id]}
@@ -434,11 +433,9 @@
   </div>
 {/if}
 
-{#if !__EVEN_PLUGIN__}
-  {#await import('./DoWithAiCard.svelte') then card}
-    <card.default />
-  {/await}
-{/if}
+{#await import('./DoWithAiCard.svelte') then card}
+  <card.default />
+{/await}
 
 {#if vault.standing !== 'open' && (!keysAreGuarded() || vault.standing === 'off')}
   <p class="hint caption">
