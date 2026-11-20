@@ -364,13 +364,11 @@
       {/snippet}
     </Door>
 
-    {#if !__EVEN_PLUGIN__}
-      <Door open={archived && !!tab?.path} load={() => archivedStrip()}>
-        {#snippet children(ArchivedStrip)}
-          <ArchivedStrip path={tab?.path ?? ''} />
-        {/snippet}
-      </Door>
-    {/if}
+    <Door open={archived && !!tab?.path} load={() => archivedStrip()}>
+      {#snippet children(ArchivedStrip)}
+        <ArchivedStrip path={tab?.path ?? ''} />
+      {/snippet}
+    </Door>
 
     {#if tab && behind && locked}
       {#key tab.id}
