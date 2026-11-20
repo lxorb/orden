@@ -64,6 +64,7 @@
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
   const tab = untrack(() => shown)
   const LEAVING = 300
+  const OVERVIEW = '[data-opens="overview"], .orden-glyph.overview'
   const page = $derived(pages.of(tab.id))
   const pictured = $derived(page.shot !== null)
   let hole = $state<HTMLElement>()
@@ -235,9 +236,21 @@
     else void startup.turn('rooms').then(asking)
     window.addEventListener('resize', follow)
     const unscale = watchScale(follow)
-    const pressed = () => follow()
+    let lone = false
+    const pressed = (event: Event) => {
+      if (event instanceof KeyboardEvent) {
+        lone = event.key === 'Alt' && !event.repeat
+        if (shortcuts.pressed('app.tab-overview', event)) pages.glance(tab.id)
+      } else if (event.target instanceof Element && event.target.closest(OVERVIEW)) pages.glance(tab.id)
+      follow()
+    }
+    const released = (event: KeyboardEvent) => {
+      if (event.key === 'Alt' && lone) pages.glance(tab.id)
+      lone = false
+    }
     window.addEventListener('pointerdown', pressed, true)
     window.addEventListener('keydown', pressed, true)
+    window.addEventListener('keyup', released, true)
     const unwatch = overlays.watch(follow)
     const unarrive = watchArrivals(now)
     return () => {
@@ -252,6 +265,7 @@
       unscale()
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
+      window.removeEventListener('keyup', released, true)
       const held = pages.peek(tab.id)
       pages.typing(tab.id, false)
       if (held?.filling) {

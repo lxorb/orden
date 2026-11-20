@@ -187,6 +187,7 @@ export class Page {
   shotAt = 0
   shooting: Promise<void> | null = null
   watching: object | null = null
+  stirred = true
   placings = 0
   stowed = false
   stowing: ReturnType<typeof setTimeout> | undefined
@@ -707,6 +708,13 @@ class Pages {
     const said = await this.whereIs(tabId)
     return said?.trail[said.at + by] ?? null
   }
+  glance(tabId: string): void {
+    const page = this.held.get(tabId)
+    if (!isDesktop || !page?.live || !page.shown || page.watching) return
+    if (page.shot && !page.stirred) return
+    page.stirred = false
+    void this.retake(tabId, page)
+  }
   async shoot(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || !page.shown) return
@@ -939,13 +947,16 @@ class Pages {
       await listen('orden://web-pointer', (event) => {
         pointerMoved(event.payload, (tab) => {
           const page = this.held.get(tab)
+          if (page) page.stirred = true
           return page?.shown ? page.pane : null
         })
       })
       const { readPressed } = await import('./keys')
       await listen('orden://web-key', (event) => {
         const one = readPressed(event.payload)
-        if (one) replay(one)
+        if (!one) return
+        for (const [, page] of this.held) if (page.shown) page.stirred = true
+        replay(one)
       })
       const { downloads, readDownload } = await import('./downloads.svelte')
       await listen('orden://web-download', (event) => {
@@ -984,6 +995,7 @@ class Pages {
         if (!said) return
         const page = this.held.get(said.tab)
         if (!page) return
+        page.stirred = true
         if (said.url && page.blank) {
           clearTimeout(page.blanking)
           page.blanking = setTimeout(() => this.painted(said.tab, page), AFTER_COMMIT)
