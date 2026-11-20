@@ -103,7 +103,6 @@ function looseIn(files: string[]): string[] {
       .map((one) => `${relative(ROOT, path).replace(/\\/g, '/')}: ${one.replace(/\s+/g, ' ')}`)
   })
 }
-const STILL_LOOSE = ['packages/themes/src/base.css: :has(> .orden-mark)']
 describe('a :has() rule', () => {
   test('is told apart when nothing but the :has() says which element it styles', () => {
     expect(loose(':has(> .orden-mark)')).toBe(true)
@@ -116,12 +115,11 @@ describe('a :has() rule', () => {
     expect(loose(':is(.a, .b):has(> .c)')).toBe(false)
     expect(loose('.a :is(.b, .c)')).toBe(false)
   })
-  test('in the app and its themes names the element it styles, and the few that do not yet only ever go away', () => {
+  test('in the app and its themes always names the element it styles, so a change anywhere never restyles every ancestor', () => {
     const found = looseIn([
       ...walk(THEMES, (path) => path.endsWith('.css')),
       ...walk(SOURCE, (path) => /\.(css|svelte)$/.test(path), ['node_modules']),
     ])
-    expect(found.filter((one) => !STILL_LOOSE.includes(one))).toEqual([])
-    expect(STILL_LOOSE.filter((one) => !found.includes(one))).toEqual([])
+    expect(found).toEqual([])
   })
 })

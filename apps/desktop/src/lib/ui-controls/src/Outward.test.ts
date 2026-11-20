@@ -68,7 +68,7 @@ describe('the mark', () => {
     expect(glyph).toContain('vertical-align: middle')
     expect(glyph).toContain('margin-inline-start: calc(-1 * var(--mark-size, 16px))')
     expect(rule(base, '.orden-mark')).toContain('white-space: nowrap')
-    expect(rule(base, ':has(> .orden-mark)')).toContain('padding-inline-end')
+    expect(rule(base, '.orden-marked')).toContain('padding-inline-end')
   })
   test('is what the `?` and the arrow are, with no placing of their own', () => {
     for (const path of ['./ui-controls/src/Hint.svelte', './ui-controls/src/Outward.svelte']) {

@@ -720,7 +720,7 @@ select option {
   margin: 0;
   margin-inline-start: calc(-1 * var(--mark-size, 16px));
 }
-:has(> .orden-mark) {
+.orden-marked {
   padding-inline-end: calc(var(--mark-gap, 5px) + var(--mark-size, 16px));
 }
 .orden-section {
