@@ -50,7 +50,8 @@ vi.mock('../../../platform/src/tauri', async (original) => ({
   invoke: fakeInvoke,
   isDesktop: true,
 }))
-const { createLocalEngine } = await import('./engine')
+const { createLocalEngine, SEED_WINDOW } = await import('./engine')
+const { estimateText } = await import('../chat/usage')
 const CLAUDE: Provider & { kind: 'claude-code' } = {
   id: 'cc',
   kind: 'claude-code',
@@ -818,5 +819,76 @@ describe('a question raised in one of two threads on one program', () => {
     const { given, states } = await twoAsked({ thread: 'thread-a' })
     expect(given).toEqual([{ id: 'q1', allow: true }])
     expect(states).toEqual(['running', 'running'])
+  })
+})
+describe('a long chat whose program session ended, seeded again', () => {
+  const geminiTurn = [
+    '{"type":"message","role":"assistant","content":"Herons wait.","delta":true}',
+    '{"type":"result","status":"success","stats":{"input_tokens":9,"output_tokens":2,"cached":0}}',
+  ]
+  const kinds = [
+    { provider: CLAUDE, reply: () => claudeTurn('Herons wait.') },
+    { provider: CODEX, reply: () => codexTurn('Herons wait.') },
+    { provider: GEMINI, reply: () => geminiTurn },
+  ]
+  const words = 'Herons stand still in the shallows for a long time. '.repeat(80)
+  function long(count: number): Thread['turns'] {
+    const turns: Thread['turns'] = []
+    for (let at = 0; at < count; at++) {
+      turns.push({ id: `u${at}`, role: 'you', at, parts: [], draft: { text: `question ${at}`, attachments: [] } })
+      turns.push({ id: `m${at}`, role: 'model', at, parts: [{ kind: 'text', text: `${words} answer ${at}` }] })
+    }
+    return turns
+  }
+  const usage = (window: number | null) => ({ input: 0, cached: 0, output: 0, reasoning: 0, window })
+  async function seedOf(provider: Provider, more: Partial<Thread>, reply: () => string[]) {
+    opened = []
+    answer = (_, said) => (said.kind === 'turn' ? reply() : [])
+    const on = thread(provider, more)
+    await send(provider, on, 'and now?', engine(provider))
+    const first = opened[0]?.said[0]?.text
+    return { seed: typeof first === 'string' ? first : '', on }
+  }
+  test.each(kinds)(
+    'keeps $provider.name’s seed inside half its window, newest first, and says what it left out',
+    async ({ provider, reply }) => {
+      const { seed, on } = await seedOf(provider, { turns: long(300), usage: usage(200_000) }, reply)
+      expect(estimateText(seed)).toBeLessThan(100_000)
+      expect(seed).toContain('answer 299')
+      expect(seed).not.toContain('answer 0\n')
+      expect(seed).toMatch(/\d+ earlier messages are left out to fit the model’s window/)
+      expect(seed.trimEnd().endsWith('and now?\n</user>')).toBe(true)
+      expect(on.turns.at(-1)?.parts[0]).toEqual({ kind: 'notice', code: 'compacted', text: '' })
+    },
+  )
+  test.each(kinds)(
+    'keeps $provider.name’s seed inside a careful window where none is known',
+    async ({ provider, reply }) => {
+      const { seed } = await seedOf(provider, { turns: long(300), usage: usage(null) }, reply)
+      expect(estimateText(seed)).toBeLessThan(SEED_WINDOW / 2)
+    },
+  )
+  test.each(kinds)(
+    'seeds $provider.name with the summary for what was compacted, never the turns before it',
+    async ({ provider, reply }) => {
+      const turns = long(10)
+      const compaction = {
+        upTo: 'm4',
+        kind: 'summary' as const,
+        model: 'm',
+        summary: 'They spoke of herons and egrets.',
+      }
+      const { seed, on } = await seedOf(provider, { turns, usage: usage(200_000), compaction }, reply)
+      expect(seed).toContain('They spoke of herons and egrets.')
+      expect(seed).not.toContain('question 4\n')
+      expect(seed).toContain('question 5')
+      expect(seed).not.toContain('left out')
+      expect(on.turns.at(-1)?.parts.some((one) => one.kind === 'notice')).toBe(false)
+    },
+  )
+  test('seeds a short chat whole, and says nothing was left out', async () => {
+    const { seed } = await seedOf(CLAUDE, { turns: long(2), usage: usage(200_000) }, () => claudeTurn('ok'))
+    expect(seed).toContain('question 0')
+    expect(seed).not.toContain('left out')
   })
 })

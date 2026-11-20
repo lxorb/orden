@@ -135,15 +135,15 @@ function compactionStep(compaction: Compaction, api: Api, model: string, outside
   if (compaction.kind === api && compaction.model === model && compaction.block !== undefined) {
     return { role: 'compacted', block: compaction.block }
   }
+  const text = summaryOf(compaction, outside)
+  return text === null ? null : { role: 'user', text, images: [] }
+}
+export function summaryOf(compaction: Compaction, outside: boolean): string | null {
   if (!compaction.summary) return null
   const said = outside
     ? untrusted('a summary of a conversation that read others’ words', compaction.summary)
     : defused(compaction.summary)
-  return {
-    role: 'user',
-    text: `<summary of="the conversation so far">\n${said}\n</summary>`,
-    images: [],
-  }
+  return `<summary of="the conversation so far">\n${said}\n</summary>`
 }
 export function stepsOf(
   thread: Pick<Thread, 'turns' | 'compaction'>,
