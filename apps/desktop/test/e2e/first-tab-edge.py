@@ -19,6 +19,8 @@ LOOK = """() => [...document.querySelectorAll('.tabs')].map((strip) => {
     ahead: foot('::before'),
     behind: foot('::after'),
     corner: style ? parseFloat(style.borderTopLeftRadius) : null,
+    round: parseFloat(getComputedStyle(document.querySelector('main')).getPropertyValue('--card-radius')),
+    edge: !!pane?.classList.contains('at-left'),
   }
 })"""
 def strips(page: Page) -> dict[str, dict]:
@@ -83,7 +85,8 @@ def drive(browser: Browser) -> None:
             f" === window.ordenApp.workspace.tabsIn('{right}')[1].id",
             "a second tab in front in the second pane",
         )
-        flared(f"{mode}, row, the second tab in front", strips(page)[right], card)
+        inner = strips(page)[right]
+        flared(f"{mode}, row, the second tab in front", inner, card if inner["edge"] else inner["round"])
         page.close()
         page = opened(browser, *scripts)
         _upper, lower = split(page, "column")
