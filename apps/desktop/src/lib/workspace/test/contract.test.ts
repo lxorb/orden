@@ -26,7 +26,7 @@ vi.mock('../src/services', async (original) => {
     }),
   }
 })
-const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spaceSets, spacesFor, workspace } =
+const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spaceSets, sameName, spacesFor, titleOf, workspace } =
   await import('../src/api')
 const HERE = join(import.meta.dirname, '..')
 const LIB = join(HERE, '..')
@@ -417,5 +417,22 @@ describe('an archived space opened to look at', () => {
       workspace.archivedSpaces.set(KEPT.root, false)
       workspace.archivedSpaces.set(AWAY.root, false)
     }
+  })
+})
+describe("a note's title and its file name", () => {
+  test('the title is a first # heading, after any front matter, and nothing else', () => {
+    expect(titleOf('# Plan\n\nWords')).toEqual({ from: 2, to: 6, words: 'Plan' })
+    expect(titleOf('---\na: 1\n---\n#  Road  \nmore')?.words).toBe('Road')
+    expect([titleOf('## Plan\n'), titleOf('Plan\n# Plan'), titleOf('#Plan'), titleOf('# \n')]).toEqual([
+      null,
+      null,
+      null,
+      null,
+    ])
+  })
+  test('is the same as a file name it would make', () => {
+    expect(sameName('What? Now', 'What Now')).toBe(true)
+    expect(sameName('Plan', 'Plan')).toBe(true)
+    expect(sameName('Plan', 'Road')).toBe(false)
   })
 })
