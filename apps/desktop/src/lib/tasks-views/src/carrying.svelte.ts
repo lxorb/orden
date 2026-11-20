@@ -2,6 +2,7 @@ import { type Grouping, keepsSort, movedPatch, type Todo } from '../../tasks-mod
 import { carryTodo, carryTodoColumn, dragged, isTodoColumnDrag, isTodoDrag, isTreeDrag } from '../../ui-kit/src/api'
 import { linkNotes, patchTodo, placeTodo, placeTodos } from './acts'
 import type { Shown } from './shown.svelte'
+import { shownName } from '../../platform/src/api'
 import { shifted } from './glide'
 import { slotOf, type Spot, TodoDrag } from './todo-drag.svelte'
 import { touchLift } from './touch-lift'
@@ -14,7 +15,7 @@ export interface CarryHost {
   group?(id: string): readonly Todo[]
   columnOf?(id: string): string | null
 }
-const nameOf = (path: string): string => (path.split('/').pop() ?? path).replace(/\.md$/i, '')
+const nameOf = (path: string): string => shownName(path.split(/[\\/]/).pop() ?? path)
 const shared = new TodoDrag()
 export class Carrying {
   readonly drag = shared
