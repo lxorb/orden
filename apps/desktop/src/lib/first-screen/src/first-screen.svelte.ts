@@ -108,7 +108,7 @@ class FirstScreen {
     const front = frontOf(state)
     if (!front) return
     const kept = keptOf(stored(KEY))
-    if (kept?.build !== __EVEN_BUILD__ || !sameNote(kept.path, front.path)) return
+    if (kept?.build !== __ORDEN_BUILD__ || !sameNote(kept.path, front.path)) return
     const text = front.dirty ? front.doc : await words(front)
     if (text === null || wordsHash(text) !== kept.words) return
     this.showing = kept

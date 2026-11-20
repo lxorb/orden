@@ -27,7 +27,7 @@ const lone = (tab: Draft, stacked = false): Session => ({
   },
 })
 const KEPT = {
-  build: __EVEN_BUILD__,
+  build: __ORDEN_BUILD__,
   path: PATH,
   words: wordsHash(WORDS),
   area: { width: 900, height: 700 },

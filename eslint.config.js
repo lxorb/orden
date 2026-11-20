@@ -345,8 +345,7 @@ export default tseslint.config(
       globals: {
         ...globals.browser,
         ...globals.node,
-        __EVEN_BUILD__: 'readonly',
-        __EVEN_PLUGIN__: 'readonly',
+        __ORDEN_BUILD__: 'readonly',
         __DRIVEABLE__: 'readonly',
         __APP_VERSION__: 'readonly',
         __APP_COMMIT__: 'readonly',

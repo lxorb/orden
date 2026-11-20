@@ -44,8 +44,7 @@ const everyPage = {
 export default defineConfig(({ command, mode }) => ({
   plugins: [svelte(), dirOnWords(), emojiOutlines()],
   define: {
-    __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
-    __EVEN_PLUGIN__: 'false',
+    __ORDEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
     __APP_VERSION__: JSON.stringify(appVersion()),
     __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
     __CLAUDE_CODE__: JSON.stringify(!['off', '0', 'false'].includes(process.env.ORDEN_CLAUDE_CODE ?? '')),

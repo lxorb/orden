@@ -1,6 +1,5 @@
 /// <reference types="vite/client" />
-declare const __EVEN_BUILD__: string
-declare const __EVEN_PLUGIN__: boolean
+declare const __ORDEN_BUILD__: string
 declare const __DRIVEABLE__: boolean
 declare const __APP_VERSION__: string
 declare const __APP_COMMIT__: string

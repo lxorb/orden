@@ -123,7 +123,7 @@ function screenOf(view: EditorView): Kept | null {
   const look: Look = Object.fromEntries(LOOKED_AT.map((name) => [name, style.getPropertyValue(name)]))
   look.left = `${String(Math.round(content.left - outer.left))}px`
   return {
-    build: __EVEN_BUILD__,
+    build: __ORDEN_BUILD__,
     path: tab.path,
     words: wordsHash(view.state.doc.toString()),
     area: { width: area.clientWidth, height: area.clientHeight },

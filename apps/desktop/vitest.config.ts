@@ -7,8 +7,7 @@ const clocks = { hookTimeout: 30000, testTimeout: 30000 }
 export default defineConfig({
   plugins: [svelte(), dirOnWords(), emojiOutlines()],
   define: {
-    __EVEN_BUILD__: JSON.stringify('under test'),
-    __EVEN_PLUGIN__: 'false',
+    __ORDEN_BUILD__: JSON.stringify('under test'),
     __DRIVEABLE__: 'true',
     __APP_VERSION__: JSON.stringify('under test'),
     __APP_COMMIT__: JSON.stringify('c0ffee1'),
