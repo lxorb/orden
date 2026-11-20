@@ -24,7 +24,8 @@ vi.mock('../../link-index/src/api', () => ({
 vi.mock('../../documents/src/api', () => ({
   wroteHere: (path: string) => told.push(`across ${path}`),
 }))
-const { hearWrites, saveAsset, writeBy, writeFile, writeIfAbsent } = await import('../src/api')
+const { hearWrites, saveAsset, writeBy, writeBytes, writeFile, writeHighlights, writeIfAbsent } =
+  await import('../src/api')
 const listening = () =>
   hearWrites({
     there: (path) => Promise.resolve(disk.has(path)),
@@ -33,6 +34,10 @@ const listening = () =>
       return Promise.resolve()
     },
     wrote: (path, content) => void told.push(`wrote ${path} ${content}`),
+    changed: (path) => {
+      told.push(`changed ${path}`)
+      return Promise.resolve()
+    },
   })
 test('the module stands on its own reads the index, the documents, the platform and the sidecar name through their apis only', () => {
   const text = readFileSync(join(import.meta.dirname, '../src/api.ts'), 'utf8')
@@ -86,6 +91,27 @@ describe('writing a file', () => {
     await writeBy('/s/paper.pdf.highlights.json', 'two', write('two'))
     stop()
     expect(told.splice(0)).toEqual(['made /s/paper.pdf.highlights.json', 'wrote /s/paper.pdf.highlights.json two'])
+  })
+})
+describe('every write tells sync', () => {
+  test('a picture written new is made and written again is changed', async () => {
+    const stop = listening()
+    disk.delete('/s/p.png')
+    await writeBytes('/s/p.png', new Uint8Array([1]))
+    disk.set('/s/p.png', '')
+    await writeBytes('/s/p.png', new Uint8Array([2]))
+    stop()
+    expect(told.splice(0).filter((one) => !one.startsWith('back '))).toEqual(['made /s/p.png', 'changed /s/p.png'])
+    expect(asked.splice(0).map((one) => one.command)).toEqual(['write_bytes', 'write_bytes'])
+  })
+  test('highlights written new are made and written again are written with their words', async () => {
+    const stop = listening()
+    await writeHighlights('/s/q.pdf', 'one')
+    disk.set('/s/q.pdf.highlights.json', 'one')
+    await writeHighlights('/s/q.pdf', 'two')
+    stop()
+    expect(told.splice(0)).toEqual(['made /s/q.pdf.highlights.json', 'wrote /s/q.pdf.highlights.json two'])
+    expect(asked.splice(0).map((one) => one.command)).toEqual(['write_highlights', 'write_highlights'])
   })
 })
 describe('saving a file beside a note', () => {
