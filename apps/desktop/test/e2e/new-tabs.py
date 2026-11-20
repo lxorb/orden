@@ -167,7 +167,7 @@ LINES = [
     ["New AI chat"],
     ["Online terminal"],
     ["New web note"],
-    ["New application", "Pass"],
+    ["Pass"],
 ]
 def chooser(page) -> None:
     say("--- Ctrl+T ---")
@@ -189,7 +189,7 @@ def chooser(page) -> None:
         wrong(f"the kinds are not in Emil's lines: {new['lines']}")
     else:
         say(f"the lines              -> {new['lines']}")
-    if new["letters"] != ["N", "C", "P", "Q", "O", "W", "A", "K"]:
+    if new["letters"] != ["N", "C", "P", "Q", "O", "W", "K"]:
         wrong(f"the cards do not wear their letters: {new['letters']}")
     settles(page, f"() => ({CALLED})().title === 'New tab'")
     called = page.evaluate(CALLED)
@@ -427,8 +427,8 @@ def grouped(page) -> None:
         return
     cards = page.evaluate(GROUPS)
     say(f"the cards              -> {[one['name'] for one in cards]}")
-    if [one["name"] for one in cards if one["group"]] != ["Notes", "Apps"]:
-        wrong(f"the groups are not Notes and Apps: {cards}")
+    if [one["name"] for one in cards if one["group"]] != ["Notes"]:
+        wrong(f"the only group is not Notes: {cards}")
     page.screenshot(path=str(SHOTS / "grouped.png"))
     page.click(".here[role=group] [data-group=notes]")
     if not settles(page, "() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].some((one) => one.textContent.includes('New canvas'))"):

@@ -1,23 +1,13 @@
-import functools
-import http.server
 import os
 import re
 import shutil
-import socket
-import socketserver
-import subprocess
-import sys
-import threading
 import time
 from pathlib import Path
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
+from harness import Drive
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parent.parent
-DIST = APP / "dist"
-SHOTS = HERE / "shots" / "tabs-hints"
-PORT = 23911
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wrong = DRIVE.say, DRIVE.wrong
 NAMES = ["Alpha", "Beta", "Gamma", "Delta"]
 SEED = """
 async (names) => {
@@ -48,7 +38,6 @@ STRIP = """
   }))
 }
 """
-failures: list[str] = []
 SHOWN = """
 () => {
   window.__numeral = null
@@ -68,55 +57,6 @@ SHOWN = """
 }
 """
 FRONT = "() => window.ordenApp.workspace.tabs.find((one) => one.id === window.ordenApp.workspace.activeTabId)?.shown"
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-def wrong(what: str) -> None:
-    say(f"FAILED: {what}")
-    failures.append(what)
-def build() -> None:
-    if os.environ.get("ORDEN_SKIP_BUILD") and (DIST / "index.html").exists():
-        say("reusing the build that is there")
-        return
-    say("building the web app")
-    shutil.rmtree(DIST, ignore_errors=True)
-    built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
-        cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
-    if built.returncode != 0:
-        raise SystemExit(f"the build failed:\n{built.stdout}\n{built.stderr}")
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format: str, *args: object) -> None:
-        return
-    def end_headers(self) -> None:
-        self.send_header("Cache-Control", "no-store, must-revalidate")
-        super().end_headers()
-class Strict(socketserver.ThreadingTCPServer):
-    allow_reuse_address = False
-    daemon_threads = True
-    request_queue_size = 128
-def serve() -> Strict:
-    say(f"serving {DIST.name} on {ORIGIN}")
-    handler = functools.partial(Quiet, directory=str(DIST))
-    try:
-        server = Strict(("127.0.0.1", PORT), handler)
-    except OSError as error:
-        raise SystemExit(f"something is already listening on {ORIGIN}: {error}") from error
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    until = time.monotonic() + 20
-    while time.monotonic() < until:
-        try:
-            with socket.create_connection(("127.0.0.1", PORT), timeout=1):
-                return server
-        except OSError:
-            time.sleep(0.2)
-    raise SystemExit("the file server never answered")
 def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
     until = time.monotonic() + patience
     while time.monotonic() < until:
@@ -126,9 +66,7 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bo
     wrong(f"gave up waiting for {what}")
     return False
 def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
+    DRIVE.shot(page, name)
 def title(page: Page, selector: str) -> str:
     found = page.locator(selector).first
     if found.count() == 0:
@@ -194,7 +132,7 @@ def tooltips(page: Page) -> None:
     page.evaluate("() => window.ordenApp.workspace.closeActive()")
     shot(page, "01-tooltips")
 def card_up(page: Page) -> bool:
-    return bool(page.evaluate("() => !!document.querySelector('.card')"))
+    return bool(page.evaluate("() => !!document.querySelector('.orden-bubble.card')"))
 def hover_cards(page: Page) -> None:
     say("the hover cards")
     page.mouse.move(640, 500)
@@ -207,17 +145,17 @@ def hover_cards(page: Page) -> None:
     page.wait_for_timeout(200)
     if card_up(page):
         wrong("the card came before Chrome's wait")
-    if not wait_for(page, "document.querySelector('.card')", "a card under Beta", 3):
+    if not wait_for(page, "document.querySelector('.orden-bubble.card')", "a card under Beta", 3):
         return
     say(f"the card came after {int((time.monotonic() - started) * 1000)} ms")
-    words = page.locator(".card").inner_text()
+    words = page.locator(".orden-bubble.card").inner_text()
     if "Beta" not in words:
         wrong(f"the card under Beta says {words!r}")
     shot(page, "02-card")
     x, y = centre(page, tab("Gamma"))
     page.mouse.move(x, y, steps=3)
     page.wait_for_timeout(120)
-    if "Gamma" not in (page.locator(".card").inner_text() if card_up(page) else ""):
+    if "Gamma" not in (page.locator(".orden-bubble.card").inner_text() if card_up(page) else ""):
         wrong("the card did not follow the pointer to the next tab at once")
     page.wait_for_timeout(300)
     shot(page, "03-card-slid")
@@ -227,7 +165,7 @@ def hover_cards(page: Page) -> None:
         wrong("the card stayed after the pointer left the strip")
     x, y = centre(page, tab("Delta"))
     page.mouse.move(x, y, steps=3)
-    wait_for(page, "document.querySelector('.card')", "a card under Delta", 3)
+    wait_for(page, "document.querySelector('.orden-bubble.card')", "a card under Delta", 3)
     page.mouse.down()
     page.mouse.up()
     page.wait_for_timeout(400)
@@ -340,11 +278,8 @@ FILLS = """
 """
 def ctrl_drag(browser, scheme: str) -> None:
     say(f"[{scheme}] a Ctrl press drags the pick")
-    context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
-    page = context.new_page()
-    page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-    page.goto(ORIGIN, wait_until="domcontentloaded")
-    wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 40)
+    page = DRIVE.page(browser, viewport={"width": 1280, "height": 820}, color_scheme=scheme)
+    DRIVE.open(page)
     page.evaluate(SEED, NAMES)
     page.wait_for_timeout(500)
     page.locator(tab("Beta")).click(modifiers=["Control"])
@@ -372,7 +307,7 @@ def ctrl_drag(browser, scheme: str) -> None:
         wrong(f"[{scheme}] the Ctrl press did not drag the pick together: {now['tabs']}")
     if sorted(now["picked"]) != ["Alpha", "Beta", "Delta"]:
         wrong(f"[{scheme}] the pick did not survive a Ctrl drag: {now['picked']}")
-    context.close()
+    page.context.close()
 def alt_numbers(page: Page, scheme: str) -> None:
     say(f"[{scheme}] the numbers while Alt is held")
     page.emulate_media(color_scheme=scheme)
@@ -399,7 +334,7 @@ def alt_numbers(page: Page, scheme: str) -> None:
     shot(page, f"09-numbers-{scheme}")
     SCRATCH = os.environ.get("ORDEN_SHOTS_TOO")
     if SCRATCH:
-        shutil.copy(SHOTS / f"09-numbers-{scheme}.png", Path(SCRATCH) / f"numbers-{scheme}.png")
+        shutil.copy(DRIVE.shots / f"09-numbers-{scheme}.png", Path(SCRATCH) / f"numbers-{scheme}.png")
     for digit in ("2", "3", "0"):
         page.keyboard.press(digit)
         page.wait_for_timeout(120)
@@ -429,35 +364,22 @@ def alt_numbers(page: Page, scheme: str) -> None:
     page.locator(tab(NAMES[0])).first.click()
     page.locator(".cm-content").first.click()
     page.wait_for_timeout(200)
-def main() -> int:
-    sys.stdout.reconfigure(encoding="utf-8")
-    build()
-    server = serve()
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            context = browser.new_context(viewport={"width": 1280, "height": 820})
-            page = context.new_page()
-            page.on("pageerror", lambda error: wrong(f"page error: {error}"))
-            page.on("console", lambda message: say(f"console {message.type}: {message.text[:200]}") if message.type in ("error", "warning") else None)
-            page.goto(ORIGIN, wait_until="domcontentloaded")
-            if not wait_for(page, "window.ordenApp && window.ordenApp.workspace.activeSpace", "a space", 40):
-                shot(page, "00-no-space")
-                say(page.evaluate("() => [location.href, document.readyState, document.body.innerText.slice(0, 300), !!window.ordenApp]"))
-                raise SystemExit(1)
-            say(f"seeded {page.evaluate(SEED, NAMES)}")
-            page.wait_for_timeout(500)
-            tooltips(page)
-            hover_cards(page)
-            several(page)
-            for scheme in ("light", "dark"):
-                alt_numbers(page, scheme)
-            for scheme in ("light", "dark"):
-                ctrl_drag(browser, scheme)
-            browser.close()
-    finally:
-        server.shutdown()
-        server.server_close()
-    print(f"\n{len(failures)} failed" if failures else "\nall held")
-    return 1 if failures else 0
-raise SystemExit(main())
+def drive(browser) -> None:
+    page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
+    page.on(
+        "console",
+        lambda message: say(f"console {message.type}: {message.text[:200]}")
+        if message.type in ("error", "warning")
+        else None,
+    )
+    DRIVE.open(page)
+    say(f"seeded {page.evaluate(SEED, NAMES)}")
+    page.wait_for_timeout(500)
+    tooltips(page)
+    hover_cards(page)
+    several(page)
+    for scheme in ("light", "dark"):
+        alt_numbers(page, scheme)
+    for scheme in ("light", "dark"):
+        ctrl_drag(browser, scheme)
+raise SystemExit(DRIVE.run(drive, "tooltips with keys, hover cards, a pick of tabs and the Alt numbers"))
