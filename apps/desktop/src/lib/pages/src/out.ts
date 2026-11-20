@@ -41,6 +41,7 @@ import { isDesktop } from '../../platform/src/api'
 import { chooseTarget, download, printInFrame, printsInFrame, writeFile, zipOf } from '../../files-out/src/api'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
 import { escapeAll } from '@orden/markdown/html'
+import { stemOf } from '@orden/markdown/shown'
 
 function saidLocked(): void {
   busy.failed('This PDF is locked by its owner')
@@ -95,9 +96,7 @@ export const pagesOutOf = (open: {
   name: open.name,
   trusted: open.trusted ?? false,
 })
-function stem(name: string): string {
-  return name.replace(/\.[^.]+$/, '') || 'Pages'
-}
+const stem = (name: string): string => stemOf(name) || 'Pages'
 const numbered = (at: number, of: number): string => String(at).padStart(String(of).length, '0')
 function inkOn(canvas: Canvas, page: PageNode): InkStroke[] {
   const box = { x: page.x, y: page.y, width: page.width, height: page.height }

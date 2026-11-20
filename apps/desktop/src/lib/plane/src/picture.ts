@@ -25,6 +25,7 @@ import { cardHtml, fileUrl, isPicture } from './render'
 import { type Faces, faceOf, NO_FACES, pdfFaces } from './faces'
 import { message } from '../../ui-kit/src/api'
 import { choices } from '../../modes/src/api'
+import { stemOf } from '@orden/markdown/shown'
 
 const PADDING = 32
 function colourOf(node: { color?: string }, palette: Palette, fallback: string): string {
@@ -286,9 +287,7 @@ async function svgToPng(svg: string, whole: string | Blob): Promise<Blob | null>
     URL.revokeObjectURL(url)
   }
 }
-function stem(name: string): string {
-  return name.replace(/\.[^.]+$/, '') || 'Canvas'
-}
+const stem = (name: string): string => stemOf(name) || 'Canvas'
 export interface Drawing {
   canvas: Canvas
   palette: Palette

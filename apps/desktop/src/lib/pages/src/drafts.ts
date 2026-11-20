@@ -7,6 +7,7 @@ import { pageSizes } from '../../pdf/src/api'
 import { type NoteDoc, type Tab, UNTITLED, isDraft } from '../../documents/src/api'
 import { notices } from '../../workspace/src/api'
 import { asDraft, paperNamed, paperOutside } from './from-pdf'
+import { stemOf } from '@orden/markdown/shown'
 
 export interface Drafts {
   readonly tabs: Tab[]
@@ -34,7 +35,7 @@ export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
     await unread.there(from)
     return null
   }
-  ws.openUnsaved('pages', text, nameFromTitle(nameOf(from).replace(/\.pdf$/i, '')) ?? UNTITLED)
+  ws.openUnsaved('pages', text, nameFromTitle(stemOf(nameOf(from))) ?? UNTITLED)
   return null
 }
 export async function keepPaper(ws: Drafts, note: NoteDoc, path: string): Promise<void> {
