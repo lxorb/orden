@@ -1625,7 +1625,7 @@ class Workspace {
     if (isDesktop) {
       const { sites } = services()
       if (await sites.heldElsewhere(path)) {
-        void sites.showElsewhere(path)
+        if (how.activate !== false) void sites.showElsewhere(path)
         return
       }
     }
@@ -1648,7 +1648,7 @@ class Workspace {
       return
     }
     this.remember(path)
-    if (!isDesktop || this.openPage(url) === null) await openExternal(url)
+    if (!isDesktop || this.openPage(url, how.activate === false ? 'behind' : 'plain') === null) await openExternal(url)
   }
   private async handedOut(path: string): Promise<boolean> {
     if (isDesktop) return false
@@ -2081,7 +2081,7 @@ class Workspace {
   }
   async open(asked: string, options: OpenHow & { blank?: boolean; asNote?: boolean } = {}) {
     const path = this.spelled(asked)
-    if (services().scratchpad.holds(path) && !options.asNote && !this.opened.at(path)) {
+    if (services().scratchpad.holds(path) && !options.asNote && options.activate !== false && !this.opened.at(path)) {
       await services().scratchpad.open()
       return
     }
@@ -2106,8 +2106,7 @@ class Workspace {
       })
       const tab = new Tab(waiting, this.panes.focusedId)
       tab.coming = true
-      this.add(tab, options.activate !== false, this.openedFrom(options, tab.paneId))
-      this.dropScaffolding(tab)
+      this.arrive(tab, options)
       this.persist()
       return waiting
     }
