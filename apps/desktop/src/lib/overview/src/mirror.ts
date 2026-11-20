@@ -20,7 +20,21 @@ function shownCopy(one: Element, pairs: [Element, Element][]): Element {
   }
   return twin
 }
-function copyOf(pane: HTMLElement, box: DOMRect) {
+type Offsets = (one: Element) => readonly [number, number]
+const exactly: Offsets = (one) => [one.scrollTop, one.scrollLeft]
+const scrolled = new WeakMap<Element, readonly [number, number]>()
+const lastScrolled: Offsets = (one) => scrolled.get(one) ?? [0, 0]
+if (typeof addEventListener === 'function') {
+  addEventListener(
+    'scroll',
+    (event) => {
+      const one = event.target
+      if (one instanceof Element) scrolled.set(one, [one.scrollTop, one.scrollLeft])
+    },
+    { capture: true, passive: true },
+  )
+}
+function copyOf(pane: HTMLElement, offsets: Offsets) {
   const pairs: [Element, Element][] = []
   const copy = shownCopy(pane, pairs) as HTMLElement
   const canvases: [HTMLCanvasElement, HTMLCanvasElement][] = []
@@ -29,14 +43,13 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   pairs.slice(1).forEach(([one, twin]) => {
     if (one instanceof HTMLCanvasElement && twin instanceof HTMLCanvasElement) canvases.push([one, twin])
     if (one instanceof HTMLVideoElement) frames.push([one, twin])
-    if (one.scrollTop || one.scrollLeft) scrolls.push([twin, one.scrollTop, one.scrollLeft])
+    const [top, left] = offsets(one)
+    if (top || left) scrolls.push([twin, top, left])
   })
   copy.querySelector(':scope > .head')?.remove()
   copy.removeAttribute('data-pane')
   copy.setAttribute('inert', '')
   copy.removeAttribute('style')
-  copy.style.width = `${box.width}px`
-  copy.style.height = `${box.height}px`
   for (const [video, twin] of frames) {
     const still = frameOf(video)
     if (still) twin.replaceWith(still)
@@ -80,31 +93,44 @@ export function tabCopyOf(id: string, inherited: Map<Element, string>): HTMLElem
   copy.style.height = `${box.height}px`
   return copy
 }
-export function snapshotOf(paneId: string, read?: DOMRect): (() => { html: string; w: number; h: number }) | null {
-  const pane = paneBody(paneId)
-  const box = read ?? shownBox(paneId)
-  if (!pane || !box || box.width <= 0 || box.height <= 0) return null
-  return snapshotFrom(pane, box)
+interface Snapshot {
+  html: string
+  w: number
+  h: number
 }
-export function snapshotFrom(pane: HTMLElement, box: DOMRect): () => { html: string; w: number; h: number } {
-  const { copy, scrolls } = copyOf(pane, box)
-  for (const [twin, top, left] of scrolls) twin.setAttribute(SCROLLED, `${top} ${left}`)
+const seen = (box: DOMRect | null): box is DOMRect => !!box && box.width > 0 && box.height > 0
+export function snapshotOf(paneId: string, read?: DOMRect): (() => Snapshot | null) | null {
+  const pane = paneBody(paneId)
+  if (!pane) return null
+  if (read) return seen(read) ? snapshotFrom(pane, read) : null
+  const { copy, scrolls } = copyOf(pane, lastScrolled)
   return () => {
-    for (const canvas of copy.querySelectorAll('canvas')) {
-      try {
-        const picture = document.createElement('img')
-        picture.src = pictureOf(canvas)
-        picture.className = canvas.className
-        picture.style.cssText = canvas.style.cssText
-        picture.setAttribute('width', String(canvas.width))
-        picture.setAttribute('height', String(canvas.height))
-        canvas.replaceWith(picture)
-      } catch {
-        // Another origin's picture cannot be read out; it stays a blank canvas.
-      }
-    }
-    return { html: copy.outerHTML, w: box.width, h: box.height }
+    const box = shownBox(paneId)
+    return seen(box) ? pictured(copy, scrolls, box) : null
   }
+}
+export function snapshotFrom(pane: HTMLElement, box: DOMRect): () => Snapshot {
+  const { copy, scrolls } = copyOf(pane, exactly)
+  return () => pictured(copy, scrolls, box)
+}
+function pictured(copy: HTMLElement, scrolls: readonly [Element, number, number][], box: DOMRect): Snapshot {
+  copy.style.width = `${box.width}px`
+  copy.style.height = `${box.height}px`
+  for (const [twin, top, left] of scrolls) twin.setAttribute(SCROLLED, `${top} ${left}`)
+  for (const canvas of copy.querySelectorAll('canvas')) {
+    try {
+      const picture = document.createElement('img')
+      picture.src = pictureOf(canvas)
+      picture.className = canvas.className
+      picture.style.cssText = canvas.style.cssText
+      picture.setAttribute('width', String(canvas.width))
+      picture.setAttribute('height', String(canvas.height))
+      canvas.replaceWith(picture)
+    } catch {
+      // Another origin's picture cannot be read out; it stays a blank canvas.
+    }
+  }
+  return { html: copy.outerHTML, w: box.width, h: box.height }
 }
 const SCROLLED = 'data-overview-scrolled'
 const PICTURE = 512
