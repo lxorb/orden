@@ -7,6 +7,7 @@ export type FileAction =
       from: string
       to: string
       rewrote?: boolean
+      wrote?: { path: string; before: string; after: string }[]
       retitled?: boolean
       follows?: boolean
       nests?: boolean

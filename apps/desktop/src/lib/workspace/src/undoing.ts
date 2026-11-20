@@ -1,6 +1,7 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { freePath } from '@orden/markdown/paths'
 import {
+  movedTo,
   sha256,
   onDisk,
   folderOf,
@@ -329,6 +330,13 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
       await ws.fileMoved(action.to, action.from, kind)
     }),
   )
+  for (const one of action.wrote ?? []) {
+    const path = movedTo(one.path, action.to, action.from) ?? one.path
+    if (await stillSays(ws, path, one.after)) {
+      await writeFile(path, one.before)
+      ws.reload(path, one.before)
+    }
+  }
   if (action.nests) {
     await invoke('remove_empty_folder', { path: folderOf(action.to) }).catch(() => undefined)
   }
