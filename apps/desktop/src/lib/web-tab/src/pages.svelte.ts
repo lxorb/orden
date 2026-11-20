@@ -534,12 +534,13 @@ class Pages {
   private async holdOne(tabId: string, page: Page): Promise<void> {
     const at = this.heldWhere(page)
     if (!at) return
-    if (!page.heldAt) {
-      await this.shoot(tabId)
+    const fresh = page.heldAt === null
+    if (fresh) {
       if (!this.still || !page.onScreen) return
       page.heldAt = at
     }
-    await this.put(tabId, page, goesAway(page.layering) ? awayFrom(at.pane) : { ...at, visible: false })
+    await this.put(tabId, page, goesAway(page.layering) ? awayFrom(at.pane) : { ...at, cut: WHOLE })
+    if (fresh) void this.shoot(tabId)
   }
   async letGo(): Promise<void> {
     this.still = false

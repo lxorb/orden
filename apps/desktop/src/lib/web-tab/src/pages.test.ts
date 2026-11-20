@@ -1322,3 +1322,22 @@ describe('a page something comes over', () => {
     },
   )
 })
+test('pages held still are out of their place at once, and their pictures come after', async () => {
+  cuts = 'hollows'
+  await built()
+  await settle()
+  let landed = (): void => undefined
+  photographing = new Promise<void>((go) => (landed = go))
+  pages.of('a').shot = null
+  calls.length = 0
+  await pages.holdStill()
+  expect(last('web_place')).toMatchObject({ tab: 'a', visible: true, pane: { x: -OUT_OF_THE_WAY } })
+  expect(commands()).toContain('web_shot')
+  expect(pages.of('a').heldAt).not.toBeNull()
+  landed()
+  await settle()
+  await pages.letGo()
+  await settle()
+  expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
+  photographing = null
+})

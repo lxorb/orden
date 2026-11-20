@@ -27,6 +27,7 @@
     settled,
     cutOf,
     layersOver,
+    hushArrivals,
     moving,
     noticeRows,
     strangerOver,
@@ -143,6 +144,7 @@
     }
   })
   $effect(() => heldOrLet(pages.still, page.heldAt))
+  $effect(() => hushArrivals(pages.still))
   function heldOrLet(..._now: unknown[]) {
     untrack(now)
   }

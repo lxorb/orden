@@ -5,6 +5,7 @@ import {
   bringsLayer,
   cutOf,
   HELD,
+  hushArrivals,
   HOLDS_AT_MOST,
   layersOver,
   moving,
@@ -363,5 +364,38 @@ describe('a layer on the move', () => {
     expect(layersOver(hole)[0]?.box).toEqual({ x: 160, y: 50, width: 40, height: 40 })
     now += TRAIL
     expect(moving(hole)).toBe(false)
+  })
+})
+describe('a window that moves every frame', () => {
+  test('a style change on what holds a layer is not searched for one', () => {
+    document.body.innerHTML = '<section class="board"><div class="orden-layer"></div></section>'
+    const board = document.querySelector('section')!
+    const looked = vi.spyOn(board, 'querySelector')
+    const styled = {
+      target: board,
+      addedNodes: [] as unknown as NodeList,
+      removedNodes: [] as unknown as NodeList,
+      type: 'attributes' as const,
+      attributeName: 'style',
+      oldValue: null,
+    }
+    expect(bringsLayer(styled)).toBe(false)
+    expect(looked).not.toHaveBeenCalled()
+    expect(bringsLayer({ ...styled, attributeName: 'class' })).toBe(true)
+    looked.mockRestore()
+  })
+  test('while pages are held still, nothing that arrives is told', async () => {
+    document.body.innerHTML = '<main></main>'
+    let heard = 0
+    const stop = watchArrivals(() => (heard += 1))
+    hushArrivals(true)
+    document.querySelector('main')!.append(Object.assign(document.createElement('div'), { className: 'orden-layer' }))
+    await Promise.resolve()
+    expect(heard).toBe(0)
+    hushArrivals(false)
+    document.querySelector('main')!.append(Object.assign(document.createElement('div'), { className: 'orden-bubble' }))
+    await Promise.resolve()
+    expect(heard).toBe(1)
+    stop()
   })
 })
