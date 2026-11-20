@@ -70,6 +70,14 @@ export function nextRepeat(todo: Repeating, today: string): Repeating | null {
   if (!next) return null
   return { repeat: next.recurrence ?? todo.repeat, start: next.start ?? null, deadline: next.deadline ?? null }
 }
+const COPY_ID_MOST = 64
+export function doneCopyId(
+  todo: { readonly id: string; readonly start: string | null; readonly deadline: string | null },
+  today: string,
+): string {
+  const day = todo.deadline ?? todo.start ?? today
+  return `${todo.id.slice(0, COPY_ID_MOST - day.length - 1)}-${day}`
+}
 function shiftedBy(task: TaskFields, days: number): TaskFields {
   const moved = { ...task }
   for (const field of ['due', 'scheduled', 'start', 'deadline'] as const) {

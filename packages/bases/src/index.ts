@@ -1,7 +1,16 @@
 export * from './types'
 export { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
 export { lineOfTask } from './task-hash'
-export { finish, nextOccurrence, nextRepeat, type OccurrenceOptions, type Repeating, skip, tick } from './occurrence'
+export {
+  doneCopyId,
+  finish,
+  nextOccurrence,
+  nextRepeat,
+  type OccurrenceOptions,
+  type Repeating,
+  skip,
+  tick,
+} from './occurrence'
 export { answer, cellValue, groupName, orderId, placeOfKey, rowId } from './answer'
 export { readBase, writeBase } from './base-file'
 export { refusedPattern } from './expr/pattern'
