@@ -18,6 +18,7 @@ const world = vi.hoisted(() => {
     guest: null as { id: string } | null,
     answer: 0,
     asked: [] as string[],
+    kept: undefined as { icon: string | null; tint?: string | null } | undefined,
   }
 })
 vi.mock('../../accounts/src/api', () => {
@@ -25,7 +26,7 @@ vi.mock('../../accounts/src/api', () => {
     world.asked.push(what)
     if (world.answer === 0) return Promise.reject(new Error('offline'))
     if (world.answer !== 200) return Promise.reject(new world.Said(world.answer))
-    return Promise.resolve()
+    return Promise.resolve(what === 'icon' && world.kept ? { space: world.kept } : undefined)
   }
   return {
     account: {
@@ -53,6 +54,7 @@ beforeEach(() => {
   world.guest = null
   world.answer = 0
   world.asked = []
+  world.kept = undefined
 })
 describe('who owes the server', () => {
   test('is the person signed in, else the guest, else nobody', () => {
@@ -86,6 +88,31 @@ describe('what the server did not hear', () => {
     expect(owed.iconOwed('u1', 's1')).toEqual({ icon: 'star', tint: null })
     world.answer = 200
     await owed.sendIcon('t', 'u1', 's1', { icon: 'star', tint: null })
+    expect(owed.iconOwed('u1', 's1')).toBeNull()
+  })
+  test('a chosen icon the server will not keep stays owed, so the server never takes it back (#2329)', async () => {
+    const picture = { icon: 'data:image/png;base64,iVBORw0KGgo=', tint: null }
+    world.answer = 400
+    await owed.sendIcon('t', 'u1', 's1', picture)
+    expect(owed.iconOwed('u1', 's1')).toEqual(picture)
+    world.answer = 200
+    world.kept = { icon: 'star', tint: null }
+    await owed.sendIcon('t', 'u1', 's1', picture)
+    expect(owed.iconOwed('u1', 's1')).toEqual(picture)
+    world.kept = { icon: picture.icon, tint: 'violet' }
+    await owed.sendIcon('t', 'u1', 's1', picture)
+    expect(owed.iconOwed('u1', 's1')).toEqual(picture)
+    world.kept = { icon: picture.icon, tint: null }
+    await owed.sendIcon('t', 'u1', 's1', picture)
+    expect(owed.iconOwed('u1', 's1')).toBeNull()
+  })
+  test('and one it kept is paid, its colour kept with it', async () => {
+    world.answer = 200
+    world.kept = { icon: 'star', tint: 'violet' }
+    await owed.sendIcon('t', 'u1', 's1', { icon: 'star', tint: 'violet' })
+    expect(owed.iconOwed('u1', 's1')).toBeNull()
+    world.kept = { icon: null, tint: null }
+    await owed.sendIcon('t', 'u1', 's1', { icon: null, tint: null })
     expect(owed.iconOwed('u1', 's1')).toBeNull()
   })
   test('names and the order of spaces are sent again once heard', async () => {

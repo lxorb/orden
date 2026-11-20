@@ -91,11 +91,18 @@ export async function settleEnds(token: string, accountId: string): Promise<void
 export function iconOwed(accountId: string, spaceId: string): Icon | null {
   return icons.of(accountId)[spaceId] ?? null
 }
+function keeps(said: unknown, icon: Icon): boolean {
+  const space = isRecord(said) && isRecord(said.space) ? said.space : null
+  if (!space || !Object.hasOwn(space, 'icon')) return true
+  return space.icon === icon.icon && (icon.icon === null || (space.tint ?? null) === icon.tint)
+}
 export async function sendIcon(token: string, accountId: string, spaceId: string, icon: Icon): Promise<void> {
   icons.put(accountId, spaceId, icon)
-  if (await settled(api.setSpaceIcon(token, spaceId, icon.icon, icon.tint))) {
-    icons.paid(accountId, spaceId, icon)
-  }
+  const kept = await api.setSpaceIcon(token, spaceId, icon.icon, icon.tint).then(
+    (said: unknown) => keeps(said, icon),
+    () => false,
+  )
+  if (kept) icons.paid(accountId, spaceId, icon)
 }
 export async function sendName(token: string, accountId: string, spaceId: string, name: string): Promise<void> {
   names.put(accountId, spaceId, name)
