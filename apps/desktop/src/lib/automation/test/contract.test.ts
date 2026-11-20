@@ -40,6 +40,13 @@ describe('who asks', () => {
     expect(caller.agent?.scopes).toEqual(['tree'])
     expect(api.threadSpaceOf(caller)).toBeNull()
   })
+  test("a built-in grant carries its chat's mode, any other grant or a mode no chat has carries none", () => {
+    const grant = { id: 'orden-anthropic', name: 'Claude', mode: 'unsupervised', built_in: true }
+    expect(api.callerOf({ ...grant, chat_mode: 'plan' })).toHaveProperty('chatMode', 'plan')
+    expect(api.callerOf({ ...grant, chat_mode: 'write everything' })).not.toHaveProperty('chatMode')
+    expect(api.callerOf(grant)).not.toHaveProperty('chatMode')
+    expect(api.callerOf({ id: 'claude-code', mode: 'unsupervised', chat_mode: 'plan' })).not.toHaveProperty('chatMode')
+  })
   test('a refusal carries its code and says why twice', () => {
     expect(api.refusal('no_such_command', 'gone')).toEqual({
       ok: false,
