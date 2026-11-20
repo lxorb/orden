@@ -12,7 +12,7 @@ PORT = DRIVE.server.port if DRIVE.server else 0
 OLD = f"http://rebrand-old.localhost:{PORT}"
 NEW = f"http://rebrand-new.localhost:{PORT}"
 ELSEWHERE = f"http://rebrand-elsewhere.localhost:{PORT}"
-ROW = '.orden-setting:has-text("Notes from nibeditor.com")'
+ROW = '.orden-setting:has-text("Notes from the old address")'
 UNANSWERED = (
     "try { if (!sessionStorage.getItem('drive-unanswered')) {"
     " sessionStorage.setItem('drive-unanswered', '1');"

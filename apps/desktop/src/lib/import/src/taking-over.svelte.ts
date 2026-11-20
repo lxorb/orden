@@ -1,6 +1,6 @@
 import { account } from '../../accounts/src/api'
 import { log, isNative } from '../../platform/src/api'
-import { HANDOFF_PATH, isEmpty, isHandoff, LEGACY_WEB, unpack, WEB } from '../../handoff/src/api'
+import { HANDOFF_PATH, isEmpty, isHandoff, LEGACY_WEBS, unpack, WEB } from '../../handoff/src/api'
 import { firstVisiting } from '../../workspace/src/api'
 
 type FirstVisit = Awaited<ReturnType<typeof firstVisiting>>['firstVisit']
@@ -22,18 +22,30 @@ class TakingOver {
   }
   bring() {
     if (this.state === 'asking') return
-    const popup = window.open(`${LEGACY_WEB}${HANDOFF_PATH}`, 'orden-handoff', 'popup,width=420,height=320')
+    const [first, ...later] = LEGACY_WEBS
+    if (first === undefined) return
+    const popup = window.open(`${first}${HANDOFF_PATH}`, 'orden-handoff', 'popup,width=420,height=320')
     if (!popup) return
     this.state = 'asking'
+    let asked = first
+    let closedOnce = false
     const stop = () => {
       window.removeEventListener('message', heard)
       clearInterval(watching)
     }
     const heard = (event: MessageEvent) => {
-      if (event.origin !== LEGACY_WEB || event.source !== popup || !isHandoff(event.data)) return
-      stop()
+      if (event.origin !== asked || event.source !== popup || !isHandoff(event.data)) return
       const handoff = event.data
+      const next = isEmpty(handoff) ? later.shift() : undefined
+      if (next !== undefined) {
+        asked = next
+        closedOnce = false
+        popup.location.replace(`${next}${HANDOFF_PATH}`)
+        return
+      }
+      stop()
       if (isEmpty(handoff)) {
+        popup.close()
         this.state = 'nothing'
         return
       }
@@ -51,7 +63,6 @@ class TakingOver {
           this.state = 'idle'
         })
     }
-    let closedOnce = false
     const watching = setInterval(() => {
       if (!popup.closed || this.state !== 'asking') return
       if (!closedOnce) {

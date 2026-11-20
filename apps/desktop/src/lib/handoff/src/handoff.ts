@@ -8,7 +8,6 @@ export const LEGACY_WEBS: readonly string[] = (
   .split(',')
   .map((one) => one.trim())
   .filter((one) => one !== '' && one !== WEB)
-export const LEGACY_WEB: string = LEGACY_WEBS[0] ?? ''
 export const HANDOFF_PATH = '/handoff'
 const KIND = 'orden-handoff'
 const FORMER_KIND = 'nib-handoff'
