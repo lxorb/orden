@@ -287,16 +287,19 @@ describe('a page whose engine cuts only what floats over it', () => {
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true, cut: over.cut })
     expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(false)
   })
-  test('is cut round the layer before its picture is asked for, so the layer waits on the cut alone', async () => {
-    cuts = 'hollows'
-    await built()
-    await settle()
-    calls.length = 0
-    await pages.show('a', SITE, PANE, false, over)
-    await settle()
-    expect(commands().filter((one) => one === 'web_place' || one === 'web_shot')).toEqual(['web_place', 'web_shot'])
-    expect(last('web_shot')).toEqual({ tab: 'a' })
-  })
+  test.each(['hollows', true] as const)(
+    'is cut round the layer and never pictured, since the page stays drawn round it, as on a switch of tabs under a hover card (cuts %s)',
+    async (engine) => {
+      cuts = engine
+      await built()
+      await settle()
+      pages.of('a').shot = null
+      calls.length = 0
+      await pages.show('a', SITE, PANE, false, over)
+      await settle()
+      expect(commands().filter((one) => one === 'web_place' || one === 'web_shot')).toEqual(['web_place'])
+    },
+  )
   test('arrives under such a layer cut round it', async () => {
     cuts = 'hollows'
     await built('a', SITE, PANE, false, over)
