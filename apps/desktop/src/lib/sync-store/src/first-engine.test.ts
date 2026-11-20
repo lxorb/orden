@@ -63,6 +63,22 @@ describe('the first sync engine', () => {
     await settleNames('session', 'u1')
     expect(asked).toEqual([sent, sent])
   })
+  test('sends a new space name for whoever manages the space, an admin too, and none for a writer (#2325)', async () => {
+    held.set('orden:mirrors', JSON.stringify(mirrorOf({})))
+    sync.start()
+    reachable = true
+    asked.length = 0
+    const listed = (role: string, admin?: boolean) =>
+      (account.spaces = [{ id: 's1', name: 'Work', role, ...(admin ? { admin } : {}) }] as never)
+    listed('write')
+    await sync.renamed('/spaces/Work', '/spaces/Plans', 'Plans')
+    expect(asked).toEqual([])
+    listed('write', true)
+    await sync.renamed('/spaces/Plans', '/spaces/Ideas', 'Ideas')
+    expect(asked).toEqual(['PATCH /v1/spaces/s1 {"name":"Ideas"}'])
+    account.spaces = []
+    reachable = false
+  })
   test('finds a note however a disk that folds case spells the space it is in', () => {
     const note = { id: 'n1', version: 2, hash: 'h' }
     held.set('orden:mirrors', JSON.stringify(mirrorOf({ 'Plan.md': note })))

@@ -247,6 +247,9 @@ class Sync {
     this.mirrors = { ...without(this.mirrors, key), [to]: mirror }
     this.save()
     const token = account.token
+    const listed = account.spaces.find((one) => one.id === mirror.spaceId)
+    const { manages } = await import('../../sync-client/src/api')
+    if (listed && !manages(listed)) return
     const { holder, sendName } = await import('../../space-owed/src/api')
     const accountId = holder()
     if (token && accountId) await sendName(token, accountId, mirror.spaceId, name)
