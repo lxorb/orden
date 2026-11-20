@@ -6,6 +6,7 @@ const { time } = await import('./time.svelte')
 const { length } = await import('./look')
 const { midnightOf } = await import('../../platform/src/api')
 const { undoToast } = await import('../../undo-toast/src/api')
+const { overlays } = await import('../../ui-kit/src/api')
 const TimeTab = (await import('./TimeTab.svelte')).default
 const TimePanel = (await import('./TimePanel.svelte')).default
 const H = 3_600_000
@@ -243,6 +244,39 @@ test('each place row shows its name between its icon and its time', () => {
     'Visual Studio Code',
     'Xterm',
   ])
+})
+test('a slice and its row light each other, and the pie’s centre tells that activity until the pointer leaves or a press lands elsewhere', () => {
+  const work = time.addActivity('Work')
+  const uni = time.addActivity('Uni')
+  time.schedule([
+    { kind: 'add', span: block('a', at(9), at(11), work.id) },
+    { kind: 'add', span: block('b', at(12), at(13), uni.id) },
+  ])
+  shown(TimeTab, { tab: tab() })
+  const centre = () => target.querySelector('[data-time-pie] figcaption')?.textContent.replace(/\s+/g, '')
+  const arc = (id: string) => target.querySelector(`[data-arc="${id}"]`)
+  const row = (id: string) => target.querySelector(`[data-slice="${id}"]`)
+  const fire = (element: Element | null, type: string) => {
+    element?.dispatchEvent(new MouseEvent(type, { bubbles: type === 'click' }))
+    flushSync()
+  }
+  expect(centre()).toBe(`${length(3 * H)}tracked`.replace(/\s+/g, ''))
+  fire(row(uni.id), 'mouseenter')
+  expect(centre()).toBe(`${length(H)}Uni`.replace(/\s+/g, ''))
+  expect(arc(uni.id)?.classList.contains('lit')).toBe(true)
+  expect(arc(work.id)?.classList.contains('dim')).toBe(true)
+  fire(row(uni.id), 'mouseleave')
+  expect(centre()).toBe(`${length(3 * H)}tracked`.replace(/\s+/g, ''))
+  expect(arc(work.id)?.classList.contains('dim')).toBe(false)
+  fire(arc(work.id), 'mouseenter')
+  expect(row(work.id)?.classList.contains('is-on')).toBe(true)
+  expect(row(uni.id)?.classList.contains('dim')).toBe(true)
+  fire(arc(work.id), 'mouseleave')
+  fire(arc(work.id), 'click')
+  expect(centre()).toBe(`${length(2 * H)}Work`.replace(/\s+/g, ''))
+  overlays.pressed({ target: document.body })
+  flushSync()
+  expect(centre()).toBe(`${length(3 * H)}tracked`.replace(/\s+/g, ''))
 })
 describe('the time tracker beside the notes', () => {
   test('shows the activity running and today’s tracked total, and nothing else', () => {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { segmented } from '../../ui-kit/src/api'
+  import { overlays, segmented } from '../../ui-kit/src/api'
   import { menu } from '../../ui-kit/src/api'
   import ActivityMark from './ActivityMark.svelte'
   import type { Place } from './counted'
@@ -36,6 +36,24 @@
   ]
   const TOP = 5
   let lane = $state<Lane>('app')
+  let lit = $state<string | null>(null)
+  let card = $state<HTMLElement | null>(null)
+  let pinned = $state(false)
+  function hover(key: string | null) {
+    if (!pinned) lit = key
+  }
+  function pin(key: string | null) {
+    lit = key
+    pinned = key !== null
+  }
+  $effect(() =>
+    pinned
+      ? overlays.show(
+          () => pin(null),
+          () => [card],
+        )
+      : undefined,
+  )
   let all = $state<Lane | null>(null)
   const active = $derived(activeIn(minutes, from, to))
   const found = $derived(within(time.spans, minutes, from, to, now))
@@ -64,29 +82,50 @@
 </script>
 
 <div class="summary">
-  <section class="card totals" data-time-summary>
-    <Pie slices={totals.slices} ms={totals.ms} tracked={totals.untracked > 0 ? totals.ms - totals.untracked : null} />
+  <section class="card totals" data-time-summary bind:this={card}>
+    <Pie
+      slices={totals.slices}
+      ms={totals.ms}
+      tracked={totals.untracked > 0 ? totals.ms - totals.untracked : null}
+      {lit}
+      onlight={hover}
+      onpin={pin}
+    />
     {#if totals.slices.length}
       <ul class="legend">
         {#each totals.slices as slice (slice.activity)}
           {@const goal = goalOf(slice.activity)}
-          <li class="orden-row is-short" class:unset={slice.activity === null} data-slice={slice.activity ?? ''}>
-            {#if slice.activity === null}
-              <span class="hatch" aria-hidden="true"></span>
-            {:else}
-              <ActivityMark activity={slice.activity} />
-            {/if}
-            <span class="orden-row-label named">
-              <span class="name" dir="auto">{nameOf(slice.activity, 'Not set')}</span>
-              {#if goal}
-                <span class="goal"
-                  ><span style:width="{Math.min(1, slice.ms / goal.ms) * 100}%" style:--tint={tintOf(slice.activity)}
-                  ></span></span
-                >
+          <li>
+            <button
+              type="button"
+              class="orden-row is-short slice"
+              class:unset={slice.activity === null}
+              class:is-on={lit === (slice.activity ?? '')}
+              class:dim={lit !== null && lit !== (slice.activity ?? '')}
+              data-slice={slice.activity ?? ''}
+              onmouseenter={() => hover(slice.activity ?? '')}
+              onmouseleave={() => hover(null)}
+              onfocus={() => hover(slice.activity ?? '')}
+              onblur={() => hover(null)}
+              onclick={() => pin(pinned && lit === (slice.activity ?? '') ? null : (slice.activity ?? ''))}
+            >
+              {#if slice.activity === null}
+                <span class="hatch" aria-hidden="true"></span>
+              {:else}
+                <ActivityMark activity={slice.activity} />
               {/if}
-            </span>
-            <span class="orden-row-meta">{length(slice.ms)}{goal ? ` of ${length(goal.ms)}` : ''}</span>
-            <span class="orden-row-meta share">{share(slice.ms)}%</span>
+              <span class="orden-row-label named">
+                <span class="name" dir="auto">{nameOf(slice.activity, 'Not set')}</span>
+                {#if goal}
+                  <span class="goal"
+                    ><span style:width="{Math.min(1, slice.ms / goal.ms) * 100}%" style:--tint={tintOf(slice.activity)}
+                    ></span></span
+                  >
+                {/if}
+              </span>
+              <span class="orden-row-meta">{length(slice.ms)}{goal ? ` of ${length(goal.ms)}` : ''}</span>
+              <span class="orden-row-meta share">{share(slice.ms)}%</span>
+            </button>
           </li>
         {/each}
       </ul>
@@ -167,6 +206,14 @@
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+  .slice {
+    transition:
+      opacity var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .slice.dim {
+    opacity: 0.45;
   }
   .legend {
     margin-top: var(--space-4);
