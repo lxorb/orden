@@ -62,6 +62,7 @@ async function machineTo(on: boolean) {
 }
 export const terminalCommands = {
   'terminal.new': () => void openTerminal(),
+  'terminal.turn': () => void import('./turn').then((one) => one.turnActive()),
   'terminal.remote': () => void pickHost(),
   'terminal.online': () => void openOnline(),
   'terminal.machine-start': () => void machineTo(true),

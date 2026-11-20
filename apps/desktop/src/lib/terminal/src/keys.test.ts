@@ -27,6 +27,7 @@ describe('on Windows and Linux', () => {
       ['E', ctrlShift, 'app.files'],
       ['D', ctrlShift, 'app.deselect-all'],
       [' ', ctrlShift, 'space.switcher.alt'],
+      ['u', { ctrlKey: true, altKey: true }, 'tab.flip'],
     ] as const) {
       expect(routeKey(press(key, held), platform, command, false), `${key} ${command}`).toBe('app')
     }
@@ -186,5 +187,12 @@ describe('the key an agent pastes a picture with', () => {
   test('types what xterm.js would have where no picture is brought over', () => {
     expect(imageKeyTyped(press('v', alt))).toBe('\x1bv')
     expect(imageKeyTyped(press('v', ctrl))).toBe('\x16')
+  })
+})
+describe('the key that turns a terminal into its file explorer (#2274)', () => {
+  test('is the app’s with Ctrl+Alt+U, and Cmd+Option+U on a Mac', () => {
+    expect(routeKey(press('u', { ctrlKey: true, altKey: true }), 'win', 'tab.flip', false)).toBe('app')
+    expect(routeKey(press('u', { ctrlKey: true, altKey: true }), 'linux', 'tab.flip', false)).toBe('app')
+    expect(routeKey(press('u', { metaKey: true, altKey: true }), 'mac', 'tab.flip', false)).toBe('app')
   })
 })
