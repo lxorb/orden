@@ -1,6 +1,7 @@
 import { type Canvas, type CanvasNode, isPage, type PageNode, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { holderOf, pagesFromPdf, pagesOf, paperOf } from '@orden/markdown/pages'
 import { folderOf, nameOf, placesOf, samePath, joinPath } from '../../platform/src/api'
+import { shownName } from '@orden/markdown/note-name'
 
 type Sizes = (path: string) => Promise<{ width: number; height: number }[]>
 async function sized(pdf: string, sizes: Sizes): Promise<{ width: number; height: number }[]> {
@@ -95,7 +96,7 @@ function besideIts(text: string, note: string, pdf: string, root: string | null)
 const MOST_TRIED = 1000
 async function freeNote(wanted: string, how: Turning): Promise<string> {
   const folder = folderOf(wanted)
-  const stem = nameOf(wanted).replace(/\.pages$/i, '')
+  const stem = shownName(nameOf(wanted))
   for (let counter = 1; counter <= MOST_TRIED; counter += 1) {
     const name = counter === 1 ? `${stem}.pages` : `${stem} ${String(counter)}.pages`
     const path = folder ? joinPath(folder, name) : name

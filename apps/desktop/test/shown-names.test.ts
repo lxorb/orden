@@ -70,10 +70,6 @@ const TO_MOVE: Record<string, number> = {
   'apps/desktop/src/lib/import/src/rewrite.ts': 4,
   'apps/desktop/src/lib/import/src/shared.ts': 2,
   'apps/desktop/src/lib/import/src/tomboy.ts': 1,
-  'apps/desktop/src/lib/pages/src/from-pdf.ts': 1,
-  'apps/desktop/src/lib/pages/src/out.ts': 1,
-  'apps/desktop/src/lib/pdf/src/handed.ts': 1,
-  'apps/desktop/src/lib/plane/src/picture.ts': 1,
   'apps/desktop/src/lib/tasks-views/src/carrying.svelte.ts': 1,
 }
 const RAW_KEPT: Record<string, { most: number; why: string }> = {

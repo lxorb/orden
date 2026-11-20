@@ -3,6 +3,7 @@ import { log, invoke, isMarkdownPath, nameOf } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { workspace } from '../../workspace/src/api'
 import { arrivalOf } from './arrival'
+import { stemOf } from '@orden/markdown/shown'
 
 export async function hearPdfs(): Promise<() => void> {
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
@@ -49,5 +50,5 @@ async function showText(handed: string) {
     return
   }
   const text = new TextDecoder().decode(bytes)
-  workspace.openBlank(nameOf(handed).replace(/\.[^.]+$/, ''), markdown ? text : plainWords(text))
+  workspace.openBlank(stemOf(nameOf(handed)), markdown ? text : plainWords(text))
 }
