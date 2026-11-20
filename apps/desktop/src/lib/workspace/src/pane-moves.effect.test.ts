@@ -41,7 +41,7 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 vi.stubGlobal('CSS', { escape: (text: string) => text })
-const { followPointer, keyboardStays, movePane } = await import('./pane-moves')
+const { followPointer, keyboardInto, keyboardStays, movePane } = await import('./pane-moves')
 followPointer()
 function panes() {
   document.body.innerHTML =
@@ -90,6 +90,19 @@ describe('Alt and a way', () => {
     movePane('left')
     expect(state.focused).toBe('a')
     expect(document.activeElement).toBe(note('a'))
+  })
+})
+describe('the keyboard sent into a pane', () => {
+  test('lands in the surface it shows, past a terminal kept hidden, and a web tab takes it back by the crate', () => {
+    const box = document.querySelector('[data-pane="b"]')!
+    box.innerHTML =
+      '<div class="kept" hidden inert><div class="xterm"><textarea class="away"></textarea></div></div>' +
+      '<div class="xterm"><textarea class="here"></textarea></div>'
+    keyboardInto('b')
+    expect(document.activeElement).toBe(box.querySelector('.here'))
+    state.web = 'a'
+    keyboardInto('a')
+    expect(state.asked).toEqual([{ command: 'keyboard_back', args: { tab: 'tab-a' } }])
   })
 })
 describe('the pointer over another pane', () => {
