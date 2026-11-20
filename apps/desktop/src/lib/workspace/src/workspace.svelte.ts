@@ -148,7 +148,15 @@ import {
   madeFirst,
   type Side,
 } from '../../panes/src/api'
-import { FileOps, inFlight, keeping, keepingShared, type Kind } from '../../file-ops/src/api'
+import {
+  type FileOp,
+  FileOps,
+  inFlight,
+  keeping,
+  keepingShared,
+  type KeptByPath,
+  type Kind,
+} from '../../file-ops/src/api'
 import * as composing from './composing'
 import { type Filling, fills } from './panel-fills'
 import * as spaces from './spaces'
@@ -186,7 +194,6 @@ import {
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { agentMarks } from './agent-marks.svelte'
-import { ownerOf } from './sets'
 import { followTitle, settleTitle } from './title-follow'
 import { filesUnder, SpaceFiles } from './space-files.svelte'
 import { services } from './services'
@@ -543,10 +550,13 @@ class Workspace {
         if (!first && untrack(() => this.restored)) void untrack(() => this.loadSpaces())
       })
     })
+    this.fileOps.follow((op) => {
+      if (op.op === 'moved' && op.kind !== 'space') this.heardMove(op.from, op.to, true)
+    })
     this.fileOps.follow((op) => this.opened.follow(op, (id) => this.close(id)))
     this.fileOps.follow((op) => this.saving.follow(op))
     this.fileOps.follow((op) => this.positions.follow(op))
-    this.fileOps.follow((op) => this.device.follow(op))
+    this.fileOps.follow((op) => this.unshown(op) && this.device.follow(op))
     this.fileOps.follow((op) => this.closed.follow(op))
     this.fileOps.follow((op) => this.undone.follow(op))
     this.fileOps.follow((op) => {
@@ -573,7 +583,8 @@ class Workspace {
       this.protection,
       unlocks,
     ]) {
-      this.fileOps.follow(store === this.protection ? keepingShared(store) : keeping(store))
+      const kept = store === this.protection ? keepingShared(store) : keeping(store)
+      this.fileOps.follow(this.rowStores.has(store) ? (op) => this.unshown(op) && kept(op) : kept)
     }
     this.fileOps.follow((op) => links.follow(op))
     this.fileOps.follow((op) => {
@@ -584,6 +595,7 @@ class Workspace {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
       }
     })
+    this.fileOps.follow((op) => op.op === 'moved' && this.shown.delete(`${op.from}\n${op.to}`))
   }
   readonly activeSpace = $derived(this.spaces.find((space) => space.id === this.activeSpaceId) ?? null)
   readonly active = $derived(this.tabs.find((tab) => tab.id === this.activeTabId) ?? null)
@@ -857,26 +869,12 @@ class Workspace {
         )
         const taken = firstOnes(tabs, ones).filter((tab) => tab !== null)
         this.tabs = [...this.tabs, ...taken]
-        await this.fileAway(taken)
+        await (await sets()).fileAway(taken)
         if (!this.persist()) throw new Error('no room to write them down')
       })
       if (waiting) setTimeout(() => void this.takeWhatWasLeft(slot), LEAVING_GRACE)
     } catch (error) {
       log('warn', `session: what another window left stays where it is - ${String(error)}`)
-    }
-  }
-  private async fileAway(tabs: readonly Tab[]): Promise<void> {
-    const away = tabs.flatMap((tab) => {
-      const space = ownerOf(tab.path, tab.note.home, this.spaces)
-      return space !== null && space !== this.activeSpaceId ? [{ tab, space }] : []
-    })
-    if (!away.length) return
-    const { sets } = await import('./sets.svelte')
-    for (const space of new Set(away.map((one) => one.space))) {
-      await sets.adopt(
-        away.filter((one) => one.space === space).map((one) => one.tab),
-        space,
-      )
     }
   }
   private async tabsFrom(drafts: Draft[], paneId: string): Promise<Tab[]> {
@@ -2037,13 +2035,15 @@ class Workspace {
       back = await services().chatsCarried(from, intoFolder)
     }
     const kind = this.kindAt(from)
-    this.showMove(from, target)
+    this.showMove(from, target, kind)
     await this.undone.batch(async () => {
       await inFlight(target, () =>
         this.saving.holdingUnder(from, async () => {
           try {
             await this.renameOnDisk(from, target, kind)
           } catch (error) {
+            this.shown.delete(`${from}\n${target}`)
+            this.showMove(target, from, kind, false)
             await back()
             await this.loadTree()
             throw error
@@ -2675,15 +2675,24 @@ class Workspace {
   private hideEntry(path: string) {
     if (this.tree) this.tree = withoutEntry(this.tree, path)
   }
-  private showMove(from: string, to: string) {
+  private readonly shown = new Set<string>()
+  private readonly rowStores = new Set<KeptByPath>([this.arranged, this.sorting, this.excluded, this.archive])
+  private unshown(op: FileOp): boolean {
+    return op.op !== 'moved' || !this.shown.has(`${op.from}\n${op.to}`)
+  }
+  private showMove(from: string, to: string, kind: 'file' | 'folder' = this.kindAt(from), told = true) {
     rowIds.moved(from, to)
+    const op = { op: 'moved', from, to, kind, root: this.rootHolding(from), into: this.rootHolding(to) } as const
+    this.device.follow(op)
+    for (const store of this.rowStores) keeping(store)(op)
+    if (told) this.shown.add(`${from}\n${to}`)
     if (this.tree) this.tree = withMove(this.tree, from, to)
   }
-  heardMove(from: string, to: string) {
+  heardMove(from: string, to: string, told = false) {
     const tree = this.tree
     if (!tree || !entryAt(tree, from)) return
     if (!entryAt(tree, folderOf(to))?.is_dir) return
-    this.showMove(from, to)
+    this.showMove(from, to, undefined, told)
   }
   heardGone(path: string) {
     const tree = this.tree
@@ -2951,11 +2960,13 @@ class Workspace {
   }
   private async renamingFile(path: string, target: string, undoable: boolean, hold: boolean, words?: string) {
     const kind = this.kindAt(path)
-    this.showMove(path, target)
+    this.showMove(path, target, kind)
     if (undoable) this.naming = null
     try {
       await this.renameOnDisk(path, target, kind, hold ? { hold } : {})
     } catch (error) {
+      this.shown.delete(`${path}\n${target}`)
+      this.showMove(target, path, kind, false)
       await this.loadTree()
       throw error
     }
@@ -3038,63 +3049,8 @@ class Workspace {
     this.saving.wordsNow()
     await Promise.race([this.saving.settled(), waited(GIVE_UP)])
   }
-  async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
-    const { source, madeHere = false, settled = false } = how
-    if (!settled) await this.savingSettled()
-    const words = !isFolder && !isPdfTarget(path)
-    let content: string | null = null
-    if (words) {
-      content = await invoke<string>('read_note', { path }).catch(() => null)
-      if (content) await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
-    }
-    const unread = words && content === null && !keptAway.at(path)
-    const toAccount =
-      account.signedIn &&
-      !madeHere &&
-      !unread &&
-      !(!isFolder && isPagesTarget(path)) &&
-      (await this.accountHolds(path, isFolder))
-    const held = toAccount && isFolder ? await (await import('./undoing')).heldIn(path) : null
-    const gone = {
-      op: 'removed',
-      path,
-      kind: isFolder ? 'folder' : 'file',
-      root: this.rootHolding(path),
-    } as const
-    try {
-      if (toAccount) {
-        const { sync } = await import('../../sync-store/src/api')
-        const back = sync.tracked(path)?.id ?? crypto.randomUUID()
-        await this.fileOps.doing({ ...gone, back }, () =>
-          oneWriteAt(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path })),
-        )
-        if (isFolder) return held && { content: '', folder: true, ...held, back }
-        return words ? { content: content ?? '', back } : null
-      }
-      let trashId = ''
-      await this.fileOps.doing(gone, async () => {
-        const entry = await oneWriteAt(path, () =>
-          invoke<{ id: string }>('trash_item', { path, kind: isFolder ? 'folder' : 'note' }),
-        )
-        trashId = entry.id
-        return entry.id
-      })
-      return { content: content ?? '', trashId, ...(isFolder ? { folder: true } : {}) }
-    } catch (error) {
-      await this.loadTree()
-      throw error
-    }
-  }
-  private async accountHolds(path: string, isFolder: boolean): Promise<boolean> {
-    if (!isFolder && !isMarkdownPath(path)) return false
-    const root = this.rootHolding(path)
-    if (!root) return false
-    const { sync } = await import('../../sync-store/src/api')
-    const id = sync.remoteIdFor(root)
-    if (account.spaces.find((one) => one.id === id)?.role !== 'owner') return false
-    if (!isFolder) return sync.holds(path)
-    const { accountHoldsAll } = await import('./undoing')
-    return accountHoldsAll(path, (one, how) => sync.holds(one, how))
+  bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
+    return import('./binning').then((one) => one.bin(this, path, isFolder, how))
   }
   async undoFileAction(only?: FileAction) {
     await this.inTurn(async () => {

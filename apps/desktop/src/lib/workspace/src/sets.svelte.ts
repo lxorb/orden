@@ -6,7 +6,7 @@ import { IN_A_PAGE } from '../../ui-controls/src/api'
 import type { Tab } from '../../documents/src/api'
 import { archivedRefused, workspace } from './workspace.svelte'
 import { type Frame, pane, paneIn, panesIn } from '../../panes/src/api'
-import { focusIn, GLOBAL, readSets, type SetDraft, type SetsDraft, setKey, sharedGoesTo, tidied } from './sets'
+import { focusIn, GLOBAL, ownerOf, readSets, type SetDraft, type SetsDraft, setKey, sharedGoesTo, tidied } from './sets'
 import { TABS_KEY, tabSets } from './spaces'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 
@@ -175,6 +175,18 @@ class Sets {
     const ws = workspace
     for (const tab of tabs) tab.paneId = paneId
     ws.tabs = [...ws.tabs.filter((tab) => !tabs.includes(tab)), ...tabs]
+  }
+  async fileAway(tabs: readonly Tab[]): Promise<void> {
+    const away = tabs.flatMap((tab) => {
+      const space = ownerOf(tab.path, tab.note.home, workspace.spaces)
+      return space !== null && space !== workspace.activeSpaceId ? [{ tab, space }] : []
+    })
+    for (const space of new Set(away.map((one) => one.space))) {
+      await this.adopt(
+        away.filter((one) => one.space === space).map((one) => one.tab),
+        space,
+      )
+    }
   }
   async adopt(tabs: readonly Tab[], space: string): Promise<void> {
     const ws = workspace
