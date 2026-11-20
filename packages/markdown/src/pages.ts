@@ -293,4 +293,4 @@ function inkOwnerOf<T extends Box>(
   const height = ys.reduce((high, one) => Math.max(high, one)) - y
   return ownerOf({ x, y, width, height }, column)
 }
-export { holderOf, pairOf, paperOf } from './paper'
+export { holderOf, pairOf, paperOf } from './links'
