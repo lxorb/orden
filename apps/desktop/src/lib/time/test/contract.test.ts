@@ -321,6 +321,11 @@ describe('a block split or merged, and the time of any range with and without th
       active: 20 * 30_000,
     })
     expect(notSet(spans, used(12.5 * H, 12.75 * H), 0, 24 * H, 18 * H)).toEqual([])
+    const night = [...minutes, ...used(23 * H, 23 * H + 10 * M), ...used(31 * H, 31 * H + 10 * M)]
+    const twoDays = [...spans, block('d', 32 * H, 33 * H, 'work')]
+    expect(rangeTotals(twoDays, night, 0, 48 * H, 40 * H, { untracked: true }).untracked).toBe(
+      H + 2 * H + 8 * H + 10 * M + H,
+    )
     const filled = applied(spans, placeBlock(spans, 10 * H, 12 * H, 'read', 18 * H))
     expect(notSet(filled, minutes, 0, 24 * H, 18 * H).map((one) => [one.from, one.to])).toEqual([
       [8 * H, 9 * H],
