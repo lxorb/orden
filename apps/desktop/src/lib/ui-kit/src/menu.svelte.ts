@@ -58,14 +58,17 @@ function openerOf(event: MouseEvent): Element | null {
   if (typeof Element === 'undefined' || !(at instanceof Element)) return null
   return at.closest('button, [role="button"], a[href], [aria-haspopup]')
 }
-export function trim(items: MenuEntry[]): MenuEntry[] {
-  const out: MenuEntry[] = []
+export function trim<T>(items: readonly (T | typeof DIVIDER)[]): (T | typeof DIVIDER)[] {
+  const groups: T[][] = [[]]
   for (const item of items) {
-    if (item === DIVIDER && (!out.length || out[out.length - 1] === DIVIDER)) continue
-    out.push(item)
+    if (item !== DIVIDER) groups[groups.length - 1]?.push(item)
+    else if (groups[groups.length - 1]?.length) groups.push([])
   }
-  while (out.length && out[out.length - 1] === DIVIDER) out.pop()
-  return out
+  const kept = groups.filter((group) => group.length)
+  return kept.flatMap((group, at) => {
+    const before = kept[at - 1]
+    return before && before.length > 1 && group.length > 1 ? [DIVIDER, ...group] : group
+  })
 }
 export const menu = new ContextMenu()
 export type TextField = HTMLInputElement | HTMLTextAreaElement

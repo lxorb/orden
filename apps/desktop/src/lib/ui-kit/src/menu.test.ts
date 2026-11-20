@@ -6,7 +6,7 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void store.set(key, value),
   removeItem: (key: string) => void store.delete(key),
 })
-const { menu } = await import('./menu.svelte')
+const { menu, trim } = await import('./menu.svelte')
 function press(x = 10, y = 20): MouseEvent {
   return {
     clientX: x,
@@ -42,5 +42,24 @@ describe('a menu held by a signal', () => {
     lock.abort()
     menu.show(press(), [{ label: 'Delete', run: () => undefined }], { until: lock.signal })
     expect(menu.open).toBe(false)
+  })
+})
+describe('the lines between the rows of a menu (#2374)', () => {
+  const row = (label: string) => ({ label, run: () => undefined })
+  const [a, b, c, d] = ['A', 'B', 'C', 'D'].map(row)
+  const drawn = (items: Parameters<typeof trim>[0]) =>
+    trim(items).map((one) => (one === null ? '|' : (one as { label: string }).label))
+  test('part only two groups of two rows or more', () => {
+    expect(drawn([a, b, null, c, d])).toEqual(['A', 'B', '|', 'C', 'D'])
+  })
+  test('never set off a single row, so a menu of single rows has no lines at all', () => {
+    expect(drawn([a, null, b, null, c, null, d])).toEqual(['A', 'B', 'C', 'D'])
+    expect(drawn([a, b, null, c])).toEqual(['A', 'B', 'C'])
+    expect(drawn([a, null, b, c])).toEqual(['A', 'B', 'C'])
+    expect(drawn([a, b, null, c, null, d, row('E')])).toEqual(['A', 'B', 'C', 'D', 'E'])
+  })
+  test('and never stand first, last or twice', () => {
+    expect(drawn([null, a, b, null, null, c, d, null])).toEqual(['A', 'B', '|', 'C', 'D'])
+    expect(drawn([null, null])).toEqual([])
   })
 })
