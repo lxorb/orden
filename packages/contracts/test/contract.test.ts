@@ -54,6 +54,7 @@ import {
   portOf,
   portProvided,
   providePort,
+  chatsEnding,
   settingsWindow,
   sayNotice,
   runCommand,
@@ -198,6 +199,32 @@ describe('shell extension points', () => {
     dropSecond()
     expect(sidebarPart('ask')).toBe(null)
     expect(sidebarPart('time')).toBe(null)
+  })
+  it('ends the chats of what is deleted only through a chats port that knows how, and otherwise does nothing', async () => {
+    expect(typeof (await chatsEnding(['/s/Team.chat']))).toBe('function')
+    const ended: string[] = []
+    const asked: string[][] = []
+    const unbind = providePort('chats', {
+      list: () => Promise.resolve([]),
+      chatAt: () => Promise.resolve(null),
+      part: () => Promise.resolve(null),
+      offer: () => Promise.resolve(),
+      openLink: () => Promise.resolve(),
+      mayDelete: () => Promise.resolve(true),
+      ending: (paths) => {
+        asked.push([...paths])
+        return Promise.resolve(() => void ended.push(...paths))
+      },
+    })
+    const finish = await chatsEnding(['/s/Trip'])
+    expect(asked).toEqual([['/s/Trip']])
+    expect(ended).toEqual([])
+    finish()
+    expect(ended).toEqual(['/s/Trip'])
+    unbind()
+    ;(await chatsEnding(['/s/Trip']))()
+    expect(asked).toEqual([['/s/Trip']])
+    expect(ended).toEqual(['/s/Trip'])
   })
   it('says which space Settings is about, and none while nothing provides the window', () => {
     expect(settingsWindow().space).toBe(null)

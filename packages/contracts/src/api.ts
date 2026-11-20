@@ -237,7 +237,14 @@ export {
   runAgentVerb,
 } from './agents'
 export type { BackendPort, BackendPorts } from './backend'
-export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
+export {
+  type ChatListed,
+  type ChatPart,
+  type ChatPartWanted,
+  type ChatPorts,
+  type ChatsPort,
+  chatsEnding,
+} from './chats'
 export type { ArchivePort, ExplorerCarryPort, ExplorerShowPort, FilePorts, PandocPicture, PickedFile } from './files'
 export type {
   Arrived,
