@@ -1,4 +1,5 @@
 import { tabOverview, workspace } from './workspace.svelte'
+import { shownIn } from './focus'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { IN_A_PAGE } from '../../ui-controls/src/api'
 import type { Toward } from '../../panes/src/api'
@@ -15,8 +16,8 @@ function keyboardInto(paneId: string): void {
   }
   const box = document.querySelector<HTMLElement>(`[data-pane="${CSS.escape(paneId)}"]`)
   const into =
-    box?.querySelector<HTMLElement>('.cm-content, .xterm textarea, [data-entry]') ??
-    box?.querySelector<HTMLElement>('[tabindex="0"], button, input, textarea, [contenteditable="true"]')
+    shownIn(box, '.cm-content, .xterm textarea, [data-entry]') ??
+    shownIn(box, '[tabindex="0"], button, input, textarea, [contenteditable="true"]')
   into?.focus()
 }
 export function keyboardStays(leaving: string): boolean {
