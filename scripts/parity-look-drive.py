@@ -16,7 +16,7 @@ import time
 from typing import Any, Callable
 import mss
 import numpy
-from PIL import Image
+from PIL import Image, ImageDraw
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -43,6 +43,8 @@ LIMITS = {
     "edge apart": 16,
     "light cells": 0,
     "covered share": 0.05,
+    "first frame apart ms": 50,
+    "stale over note ms": 200,
 }
 Box = tuple[float, float, float, float]
 BEAT = "@keyframes parity-beat{0%{background:rgb(0,70,70)}50%{background:rgb(0,230,230)}100%{background:rgb(0,70,70)}}"
@@ -52,7 +54,10 @@ TEAL_PAGE = (
     + BEAT.replace("{", "{{").replace("}", "}}")
     + "</style><div id=beat></div>{script}"
 )
-HEAR = "<script>addEventListener('pointerdown', () => fetch('/heard', { method: 'POST', body: 'down' }).catch(() => {}), true)</script>"
+HEAR = (
+    "<select id=pick style='position:fixed;left:120px;top:30px;width:150px;height:40px;opacity:0'><option>one<option>two<option>three</select>"
+    "<script>addEventListener('pointerdown', () => fetch('/heard', { method: 'POST', body: 'down' }).catch(() => {}), true)</script>"
+)
 CRASH = "<script>setTimeout(() => { const keep = []; for (;;) keep.push(new Array(1e6).fill(Math.random())) }, 1200)</script>"
 NOTE_STYLE = (
     '[data-pane] div.editor[data-region="editor"] { background: rgb(0,160,160) !important; position: relative !important }'
@@ -143,12 +148,12 @@ if sys.platform == "win32":
             left, top, _, _ = self.box()
             user32.SetCursorPos(left + round(x * ratio), top + round(y * ratio))
 
-        def click(self, x: float, y: float, ratio: float) -> None:
+        def click(self, x: float, y: float, ratio: float, right: bool = False) -> None:
             self.move(x, y, ratio)
             time.sleep(0.12)
-            user32.mouse_event(0x2, 0, 0, 0, 0)
+            user32.mouse_event(0x8 if right else 0x2, 0, 0, 0, 0)
             time.sleep(0.05)
-            user32.mouse_event(0x4, 0, 0, 0, 0)
+            user32.mouse_event(0x10 if right else 0x4, 0, 0, 0, 0)
 
 elif sys.platform == "darwin":
     import Quartz
@@ -182,11 +187,13 @@ elif sys.platform == "darwin":
             left, top, _, _ = self.box()
             Quartz.CGEventPost(Quartz.kCGHIDEventTap, Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventMouseMoved, (left + x, top + y), Quartz.kCGMouseButtonLeft))
 
-        def click(self, x: float, y: float, ratio: float) -> None:
+        def click(self, x: float, y: float, ratio: float, right: bool = False) -> None:
             left, top, _, _ = self.box()
             at = (left + x, top + y)
-            for kind in (Quartz.kCGEventMouseMoved, Quartz.kCGEventLeftMouseDown, Quartz.kCGEventLeftMouseUp):
-                Quartz.CGEventPost(Quartz.kCGHIDEventTap, Quartz.CGEventCreateMouseEvent(None, kind, at, Quartz.kCGMouseButtonLeft))
+            button = Quartz.kCGMouseButtonRight if right else Quartz.kCGMouseButtonLeft
+            downs = (Quartz.kCGEventRightMouseDown, Quartz.kCGEventRightMouseUp) if right else (Quartz.kCGEventLeftMouseDown, Quartz.kCGEventLeftMouseUp)
+            for kind in (Quartz.kCGEventMouseMoved, *downs):
+                Quartz.CGEventPost(Quartz.kCGHIDEventTap, Quartz.CGEventCreateMouseEvent(None, kind, at, button))
                 time.sleep(0.1 if kind == Quartz.kCGEventMouseMoved else 0.05)
 
 else:
@@ -232,10 +239,10 @@ else:
             left, top, _, _ = self.box()
             xdo("mousemove", str(left + round(x)), str(top + round(y)))
 
-        def click(self, x: float, y: float, ratio: float) -> None:
+        def click(self, x: float, y: float, ratio: float, right: bool = False) -> None:
             self.move(x, y, ratio)
             time.sleep(0.12)
-            xdo("click", "1")
+            xdo("click", "3" if right else "1")
 
 
 class Film:
@@ -506,17 +513,61 @@ PALETTE = (
     " window.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', code: 'KeyO', ctrlKey: !mac, metaKey: mac, bubbles: true, cancelable: true }));"
     " return 'pressed' })()"
 )
+COMMANDS = PALETTE.replace("key: 'o', code: 'KeyO'", "key: 'P', code: 'KeyP', shiftKey: true")
+KINDS = ".orden-screen, .orden-layer, .orden-bubble, .orden-scrim"
+HAD = f"(() => {{ window.__parityHad = new Set(document.querySelectorAll({json.dumps(KINDS)})); return true }})()"
+CLASSES = f"""(() => {{
+  const had = window.__parityHad || new Set()
+  const fresh = [...document.querySelectorAll({json.dumps(KINDS)})].filter((one) => !had.has(one) && one.getClientRects().length)
+  const kinds = ['orden-screen', 'orden-layer', 'orden-bubble'].filter((kind) => fresh.some((one) => one.classList.contains(kind)))
+  return {{ kinds, scrim: fresh.some((one) => one.classList.contains('orden-scrim')) }}
+}})()"""
+PRESS_DELAY = 0.12
+SITE = "button.orden-glyph.site[aria-label='Site information']"
+UNREACHED = {
+    "Select": "the app's own Select list is only reached from Settings, the overview or a base form, none of which leaves the page under it",
+    "date calendar": "a DateField's calendar is only reached from a base form or a todo's sheet, none of which leaves the page under it",
+    "extension popup": "no extension is installed on the runners, so there is no popup to open",
+}
+
+
+def command(name: str) -> Callable[["Drive"], Any]:
+    return lambda drive: drive.app.answer("", verb="commands.run", args={"id": name})
+
+
+def in_page(x: float, y: float, right: bool = False) -> Callable[["Drive"], Any]:
+    def press(drive: "Drive") -> Any:
+        hole = (drive.eval(RECTS) or {}).get("hole")
+        if not hole:
+            return "no page shown"
+        ratio = drive.eval("devicePixelRatio") or 1
+        pressed = time.time() + PRESS_DELAY
+        drive.desk.click(hole[0] + x, hole[1] + y, ratio, right)
+        return ("pressed", pressed)
+    return press
 LAYERS: list[dict[str, Any]] = [
     {"name": "context menu", "open": at_middle("document.querySelector('.tab.active .pick[data-tab]')"), "up": "!!document.querySelector('[role=menu]')", "close": CLOSE, "down": "!document.querySelector('[role=menu]')"},
     {"name": "hover card", "open": f"(() => {{ const one = {TAB}; if (!one) return 'no other tab'; one.dispatchEvent(new PointerEvent('pointerenter', {{ pointerType: 'mouse' }})); return 'entered' }})()", "up": "!!document.querySelector('.orden-bubble.card')", "close": f"(() => {{ const one = {TAB}; one?.dispatchEvent(new PointerEvent('pointerleave', {{ pointerType: 'mouse' }})); return true }})()", "down": "!document.querySelector('.orden-bubble.card')"},
     {"name": "toast", "open": "(async () => { const ws = orden.workspace; const path = await ws.noteFrom('# Gone\\n\\nA note to delete.\\n'); if (!path) return 'no note made'; await ws.removeMany([path]); return 'deleted' })()", "up": TOAST_UP, "close": UNDO, "down": f"!({TOAST_UP})", "hold": 1.2, "wait": 8.0},
     {"name": "update notice", "open": NOTICE, "up": "!!document.getElementById('parity-notice')", "close": NOTICE_GONE, "down": "!document.getElementById('parity-notice')"},
-    {"name": "palette", "open": PALETTE, "up": "!!document.querySelector('.orden-screen.palette')", "close": CLOSE, "down": "!document.querySelector('.orden-screen.palette')"},
+    {"name": "palette", "hold": 1.6, "open": PALETTE, "up": "!!document.querySelector('.orden-screen.palette')", "close": CLOSE, "down": "!document.querySelector('.orden-screen.palette')"},
     {"name": "overview", "open": "(() => { document.querySelector('button.orden-glyph.overview')?.click(); return true })()", "up": PRESSED, "close": "(() => { document.querySelector('button.orden-glyph.overview')?.click(); return true })()", "down": f"!({PRESSED}) && !document.documentElement.hasAttribute('data-overview')", "whole": True, "hold": 2.0},
     {"name": "Settings", "open": "(orden.settings.show('general'), true)", "up": "orden.settings.open === true", "close": "(() => { orden.settings.open = false; if (TAB_ID) orden.workspace.activate(TAB_ID); return true })()", "down": "orden.settings.open === false", "away": True},
     {"name": "row menu", "open": at_middle(ROW), "up": "!!document.querySelector('[role=menu]')", "close": CLOSE, "down": "!document.querySelector('[role=menu]')", "sidebar": True},
     {"name": "popup", "open": THEMES, "up": f"!!document.querySelector({json.dumps(PICKER)})", "close": CLOSE, "down": f"!document.querySelector({json.dumps(PICKER)}) && !document.querySelector({json.dumps(MENU)})", "sidebar": True},
-    {"name": "dialog", "open": DELETE, "up": f"!!document.querySelector({json.dumps(SHEET)})", "close": CANCEL, "down": f"!document.querySelector({json.dumps(SHEET)})", "sidebar": True},
+    {"name": "dialog", "hold": 1.6, "open": DELETE, "up": f"!!document.querySelector({json.dumps(SHEET)})", "close": CANCEL, "down": f"!document.querySelector({json.dumps(SHEET)})", "sidebar": True},
+]
+
+
+LAYERS += [
+    {"name": "commands", "hold": 1.6, "open": COMMANDS, "up": "!!document.querySelector('.orden-screen.palette')", "close": CLOSE, "down": "!document.querySelector('.orden-screen.palette')", "box": ".orden-screen.palette"},
+    {"name": "spaces", "hold": 1.6, "open": command("spaces"), "up": "!!document.querySelector('.orden-screen.picker[aria-label=Spaces]')", "close": CLOSE, "down": "!document.querySelector('.orden-screen.picker[aria-label=Spaces]')", "box": ".orden-screen.picker[aria-label=Spaces]"},
+    {"name": "quick add", "hold": 1.6, "open": command("quick-add"), "up": "!!document.querySelector('[role=dialog][aria-label=\\'Add task\\']')", "close": CLOSE, "down": "!document.querySelector('[role=dialog][aria-label=\\'Add task\\']')", "box": "[role=dialog][aria-label='Add task']"},
+    {"name": "quick question", "hold": 1.6, "open": command("quick-question"), "up": "!!document.querySelector('.orden-screen.quick')", "close": CLOSE, "down": "!document.querySelector('.orden-screen.quick')", "box": ".orden-screen.quick"},
+    {"name": "history", "hold": 1.6, "open": "(orden.settings.historyOpen = true, true)", "up": "!!document.querySelector('[role=dialog][aria-label=\\'Version history\\']')", "close": "(orden.settings.historyOpen = false, true)", "down": "!document.querySelector('[role=dialog][aria-label=\\'Version history\\']')", "box": "[role=dialog][aria-label='Version history']"},
+    {"name": "page menu", "open": in_page(260, 200, True), "up": "!!document.querySelector('[role=menu]')", "close": CLOSE, "down": "!document.querySelector('[role=menu]')", "box": "[role=menu]", "kinds": ("web",), "like": "context menu"},
+    {"name": "page select", "open": in_page(195, 50), "up": "!!document.querySelector('.orden-layer.list[role=listbox]')", "close": CLOSE, "down": "!document.querySelector('.orden-layer.list[role=listbox]')", "box": ".orden-layer.list[role=listbox]", "kinds": ("web",), "like": "context menu"},
+    {"name": "site popup", "open": f"(() => {{ const one = document.querySelector({json.dumps(SITE)}); if (!one) return 'no site button'; one.click(); return 'pressed' }})()", "up": "!!document.querySelector('.site.orden-bubble')", "close": CLOSE, "down": "!document.querySelector('.site.orden-bubble')", "box": ".site.orden-bubble", "kinds": ("web",), "like": "hover card"},
 ]
 
 
@@ -563,6 +614,7 @@ class Drive:
         self.spaces: pathlib.Path | None = None
         self.current = ""
         self.dispatched = False
+        self.notes: dict[str, dict[str, Any]] = {}
 
     def row(self, item: int, check: str, web: Any, note: Any, ok: bool | None, detail: str = "") -> None:
         one = {"item": item, "check": check, "platform": PLATFORM, "web": web, "note": note, "ok": None if ok is None else bool(ok)}
@@ -697,14 +749,18 @@ class Drive:
 
     def opened(self, layer: dict[str, Any], click: bool = True) -> tuple[float, float | None, float, float | None, Any]:
         self.eval("window.__parityBoxes = []; return true")
+        self.eval(HAD)
         t_open = time.time()
-        said = self.peek(True) if layer["open"] == "peek in" else self.eval(layer["open"])
+        said = self.peek(True) if layer["open"] == "peek in" else layer["open"](self) if callable(layer["open"]) else self.eval(layer["open"])
+        if isinstance(said, tuple):
+            said, t_open = said
         early = self.eval(RECTS)
         t_up = self.until(layer["up"], layer.get("wait", 3.0))
         time.sleep(layer.get("hold", 0.7))
         rects = self.eval(RECTS)
         if not isinstance(rects, dict):
             rects = {"layers": []}
+        rects["classes"] = self.eval(CLASSES)
         if isinstance(early, dict):
             rects["layers"] = rects.get("layers", []) + [one for one in early.get("layers", []) if one not in rects.get("layers", [])]
         box = layer.get("box")
@@ -776,12 +832,13 @@ class Drive:
         turns = [one for one in turns if one["up"]] or turns
         out = dict(turns[0])
         out["rounds"] = turns
-        for key in ("white cells", "cut cells", "stale ms", "freeze ms", "stale limit", "covered share", "lag ms"):
+        for key in ("white cells", "cut cells", "stale ms", "freeze ms", "stale limit", "covered share", "lag ms", "shade", "first frame ms"):
             values = sorted(one[key] for one in turns if one[key] is not None)
             out[key] = values[(len(values) - 1) // 2] if values else None
         clicks = [one.get("clicked") for one in turns if one.get("clicked") != "gone"]
         out["clicked"] = max(set(clicks), key=clicks.count) if clicks else ("gone" if turns else None)
         out["up"] = any(one["up"] for one in turns)
+        out["classes"] = next((one["classes"] for one in turns if isinstance(one.get("classes"), dict) and (one["classes"].get("kinds") or one["classes"].get("scrim"))), out.get("classes"))
         return out
 
     def layered(self, layer: dict[str, Any], kind: str, turn: int = 0) -> dict[str, Any]:
@@ -801,7 +858,7 @@ class Drive:
         self.back_to(kind)
         filmed = time.time()
         sheet(frames, self.out / f"look-{layer['name'].replace(' ', '-')}-{kind}-{turn + 1}.jpg")
-        judged = judge_layer(layer, kind, base, rects, frames, gaps, t_open, t_up, t_close, t_down)
+        judged = judge_layer(layer, kind, base, rects, frames, gaps, t_open, t_up, t_close, t_down, self.out / f"look-{layer['name'].replace(' ', '-')}-{kind}-{turn + 1}-cut.png")
         print(f"[{layer['name']} {kind}] filmed in {filmed - began:.1f} s, judged in {time.time() - filmed:.1f} s", flush=True)
         return judged
 
@@ -815,7 +872,7 @@ class Drive:
                 continue
             self.sidebar(wants)
             for layer in group:
-                for kind in ("note",):
+                for kind in layer.get("kinds", ("note",))[:1]:
                     self.back_to(kind)
                     self.desk.forward()
                     self.current = self.tab_of(kind) or ""
@@ -823,14 +880,35 @@ class Drive:
                     self.opened(layer, False)
                     self.back_to(kind)
             for layer in group:
-                seen = {kind: self.middle([self.layered(layer, kind, turn) for turn in range(ROUNDS)]) for kind in ("note", "web")}
-                for check in ("white cells", "cut cells", "stale ms", "freeze ms"):
+                seen = {kind: self.middle([self.layered(layer, kind, turn) for turn in range(ROUNDS)]) for kind in layer.get("kinds", ("note", "web"))}
+                like = layer.get("like")
+                if "note" in seen:
+                    self.notes[layer["name"]] = seen["note"]
+                elif like in self.notes:
+                    seen["note"] = self.notes[like]
+                else:
+                    for check in ("white cells", "cut cells", "stale ms", "freeze ms", "first frame ms"):
+                        self.row(1, f"{layer['name']}: {check}", "-", "-", None, f"its note counterpart, the {like}, was not filmed")
+                    continue
+                start = len(self.rows)
+                for check in ("white cells", "cut cells", "stale ms", "freeze ms", "first frame ms"):
                     web, note = seen["web"][check], seen["note"][check]
+                    if check == "first frame ms":
+                        pace = max(seen["web"]["capture ms"], seen["note"]["capture ms"])
+                        if web is None or note is None:
+                            self.row(1, f"{layer['name']}: {check}", "-" if web is None else round(web), "-" if note is None else round(note), None, "the layer's box never changed on screen after it was asked for")
+                            continue
+                        ok = web <= note + max(LIMITS["first frame apart ms"], 2 * pace)
+                        rounds = {kind: [None if one[check] is None else round(one[check]) for one in seen[kind]["rounds"]] for kind in ("web", "note")}
+                        self.row(1, f"{layer['name']}: {check}", round(web), round(note), ok, f"asked to the layer's box first changing on screen, median round; limit {LIMITS['first frame apart ms']} ms or two captures over the note (rounds web {rounds['web']}, note {rounds['note']})")
+                        continue
                     if check == "freeze ms":
                         ok = note <= LIMITS["note freeze ms"] and web <= note + LIMITS["freeze over note ms"]
                     else:
                         limit = seen["note"]["stale limit"] if check == "stale ms" else LIMITS[check]
                         ok = note <= limit and web <= limit
+                        if check == "stale ms":
+                            ok = ok and web <= note + LIMITS["stale over note ms"]
                     came = seen["web"]["up"] and seen["note"]["up"]
                     detail = "" if came else f"came up: web {seen['web']['up']}, note {seen['note']['up']}"
                     if layer["open"] == "peek in" and self.dispatched:
@@ -843,8 +921,27 @@ class Drive:
                         detail = (detail + "; " if detail else "") + f"rounds web {rounds['web']}, note {rounds['note']}"
                     self.row(1, f"{layer['name']}: {check}", round(web), round(note), ok and came, detail)
                 self.extra_rows(layer, seen)
+                self.drawn_rows(layer, seen)
+                if like:
+                    for one in self.rows[start:]:
+                        one["detail"] = (one.get("detail", "") + "; " if one.get("detail") else "") + f"only a page has this layer, so its note column is the {like} over a note"
+        for name, why in UNREACHED.items():
+            if names is None or name in names:
+                self.row(1, f"{name}: opened over the page", "-", "-", None, why)
         self.style("parity-note", None)
         self.sidebar(False)
+
+    def drawn_rows(self, layer: dict[str, Any], seen: dict[str, dict[str, Any]]) -> None:
+        name = layer["name"]
+        web, note = seen["web"]["shade"], seen["note"]["shade"]
+        if web is None or note is None:
+            self.row(1, f"{name}: shadow on what is under", "-" if web is None else web, "-" if note is None else note, None, "no band beside the layer lies over the page or the note to look in")
+        else:
+            ok = abs(web - note) <= LIMITS["shadow apart"]
+            self.row(1, f"{name}: shadow on what is under", web, note, ok, f"how much darker a band beside the layer turns while it is up, median round; limit {LIMITS['shadow apart']} a channel apart")
+        said = {kind: drawn_as(seen[kind].get("classes")) for kind in ("web", "note")}
+        same = None if "-" in said.values() else said["web"] == said["note"]
+        self.row(1, f"{name}: drawn as", said["web"], said["note"], same, "the layer's own classes and whether a scrim came with it, for the layer contract")
 
     def extra_rows(self, layer: dict[str, Any], seen: dict[str, dict[str, Any]]) -> None:
         web, note = seen["web"], seen["note"]
@@ -1086,7 +1183,7 @@ def judged_load(frame: numpy.ndarray, area: Box) -> tuple[int, int]:
     return white_cells(frame, area), int((lows >= 150).sum()) if lows.size else 0
 
 
-def judge_layer(layer: dict[str, Any], kind: str, base: dict[str, Any], rects: dict[str, Any], frames: list[tuple[float, numpy.ndarray]], gaps: list[list[float]], t_open: float, t_up: float | None, t_close: float, t_down: float | None) -> dict[str, Any]:
+def judge_layer(layer: dict[str, Any], kind: str, base: dict[str, Any], rects: dict[str, Any], frames: list[tuple[float, numpy.ndarray]], gaps: list[list[float]], t_open: float, t_up: float | None, t_close: float, t_down: float | None, cut_shot: pathlib.Path | None = None) -> dict[str, Any]:
     STEADY.clear()
     inner = base["inner"]
     whole = (0, 0, inner[0], inner[1])
@@ -1108,11 +1205,14 @@ def judge_layer(layer: dict[str, Any], kind: str, base: dict[str, Any], rects: d
     during = (t_open, gone + 0.4)
     whites = 0 if layer.get("whole") else max((white_cells(frame, area, steady, layers if during[0] <= at < during[1] else None) for at, frame in frames), default=0)
     cut = 0
+    worst: tuple[float, numpy.ndarray, Box, list[Box]] | None = None
     stale = 0.0
     for start, stop, rect, over in windows:
         inside_window = [(at, frame) for at, frame in frames if start <= at < stop]
-        for _, frame in inside_window:
-            cut = max(cut, cut_cells(frame, rect, over))
+        for at, frame in inside_window:
+            here = cut_cells(frame, rect, over)
+            if here > cut:
+                cut, worst = here, (at, frame, rect, over)
             if layer.get("whole"):
                 whites = max(whites, white_cells(frame, rect))
         scale = (rect[2] - rect[0]) / max(1.0, content[2] - content[0])
@@ -1122,6 +1222,8 @@ def judge_layer(layer: dict[str, Any], kind: str, base: dict[str, Any], rects: d
         samples = [(at, colour(frame, beat)) for at, frame in inside_window]
         if len(samples) > 2:
             stale = max(stale, longest_still(samples))
+    if worst is not None and cut > LIMITS["cut cells"] and cut_shot is not None:
+        marked(worst, t_open).save(cut_shot)
     steps = [b[0] - a[0] for a, b in zip(frames, frames[1:])]
     pace = float(numpy.median(steps)) * 1000 if steps else 0.0
     freeze = max((gap for at, gap in gaps if at / 1000 >= t_open - 0.05), default=0.0)
@@ -1135,7 +1237,11 @@ def judge_layer(layer: dict[str, Any], kind: str, base: dict[str, Any], rects: d
         covered = max(held, default=None)
         lag = yield_lag(frames, shares, regions, t_open, t_click)
     rafs = [gap for _, gap in gaps if gap > 0]
+    own = [tuple(one) for one in (rects or {}).get("own", []) if one[2] - one[0] > 12 and one[3] - one[1] > 12]
     return {
+        "shade": shade_of(frames, own[0], content, t_open, t_up, t_click) if own and not layer.get("whole") and not layer.get("moves") else None,
+        "first frame ms": first_frame(frames, regions, content, t_open) if regions else None,
+        "classes": (rects or {}).get("classes"),
         "covered share": covered,
         "lag ms": lag,
         "frame ms": float(numpy.median(rafs)) if rafs else 16.7,
@@ -1148,6 +1254,71 @@ def judge_layer(layer: dict[str, Any], kind: str, base: dict[str, Any], rects: d
         "stale limit": max(LIMITS["stale ms"], 3 * pace),
         "up": t_up is not None,
     }
+
+
+def drawn_as(classes: Any) -> str:
+    if not isinstance(classes, dict):
+        return "-"
+    kinds = "+".join(one.removeprefix("orden-") for one in classes.get("kinds") or []) or "none"
+    return kinds + (" with scrim" if classes.get("scrim") else "")
+
+
+def marked(worst: tuple[float, numpy.ndarray, Box, list[Box]], t_open: float) -> Image.Image:
+    at, frame, rect, over = worst
+    picture = Image.fromarray(frame.astype(numpy.uint8)).convert("RGB")
+    draw = ImageDraw.Draw(picture)
+    shares = cells(teal(frame), rect)
+    kept = free(tuple(rect), CELL, frame.shape[:2], tuple(tuple(one) for one in over), 48.0)
+    left, top, _, _ = grid(rect, CELL, frame.shape[:2])
+    for y, x in zip(*numpy.nonzero((shares < 0.5) & kept)) if kept.shape == shares.shape else []:
+        draw.rectangle((left + x * CELL, top + y * CELL, left + (x + 1) * CELL - 1, top + (y + 1) * CELL - 1), outline=(255, 0, 0))
+    for one in over:
+        draw.rectangle(tuple(int(v) for v in one), outline=(255, 255, 0))
+    draw.rectangle((0, frame.shape[0] - 24, 220, frame.shape[0]), fill=(0, 0, 0))
+    draw.text((8, frame.shape[0] - 18), f"{(at - t_open) * 1000:.0f} ms after the ask", fill=(255, 255, 255))
+    return picture
+
+
+def first_frame(frames: list[tuple[float, numpy.ndarray]], regions: list[Box], content: Box, t_open: float) -> float | None:
+    before = [frame for at, frame in frames if at < t_open][-1:]
+    if not before:
+        return None
+    beat = grown(beat_of(content), 8)
+    def apart(frame: numpy.ndarray, box: Box) -> float:
+        left, top, right, bottom = (max(0, int(one)) for one in box)
+        part = numpy.abs(frame[top:bottom, left:right].astype(numpy.int16) - before[0][top:bottom, left:right].astype(numpy.int16)).mean(axis=2)
+        if not part.size:
+            return 0.0
+        keep = numpy.ones(part.shape, bool)
+        if overlaps(box, beat):
+            keep[max(0, int(beat[1]) - top) : max(0, int(beat[3]) - top), max(0, int(beat[0]) - left) : max(0, int(beat[2]) - left)] = False
+        return float(part[keep].mean()) if keep.any() else 0.0
+    for at, frame in frames:
+        if at >= t_open and any(apart(frame, box) > 12 for box in regions):
+            return (at - t_open) * 1000
+    return None
+
+
+def overlaps(one: Box, other: Box) -> bool:
+    return one[0] < other[2] and other[0] < one[2] and one[1] < other[3] and other[1] < one[3]
+
+
+def shade_of(frames: list[tuple[float, numpy.ndarray]], own: Box, content: Box, t_open: float, t_up: float | None, t_click: float) -> float | None:
+    left, top, right, bottom = own
+    beat = grown(beat_of(content), 8)
+    before = [frame for at, frame in frames if at < t_open][-1:]
+    during = [frame for at, frame in frames if (t_up or t_open) + 0.3 <= at < t_click]
+    if not before or not during:
+        return None
+    for band in ((left + 12, bottom + 4, right - 12, bottom + 16), (left + 12, top - 16, right - 12, top - 4), (right + 4, top + 12, right + 16, bottom - 12), (left - 16, top + 12, left - 4, bottom - 12)):
+        band = (max(band[0], content[0]), max(band[1], content[1]), min(band[2], content[2]), min(band[3], content[3]))
+        if band[2] - band[0] < 8 or band[3] - band[1] < 6 or overlaps(band, beat):
+            continue
+        def lit(frame: numpy.ndarray) -> float:
+            part = frame[int(band[1]) : int(band[3]), int(band[0]) : int(band[2])]
+            return float(part.mean()) if part.size else 0.0
+        return round(lit(before[0]) - float(numpy.median([lit(frame) for frame in during])), 1)
+    return None
 
 
 def region_of(layer: dict[str, Any], rects: dict[str, Any], content: Box) -> list[Box]:

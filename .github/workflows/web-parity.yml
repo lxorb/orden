@@ -94,7 +94,7 @@ jobs:
 
       - name: Look
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'look') && hashFiles('scripts/parity-look-drive.py') != '' }}
-        timeout-minutes: 20
+        timeout-minutes: 35
         run: bash scripts/parity-run.sh scripts/parity-look-drive.py
 
       - name: Motion
