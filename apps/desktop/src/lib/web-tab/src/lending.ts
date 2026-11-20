@@ -1,7 +1,12 @@
 import type { WebLent } from '@orden/contracts'
-import { inSight, OUT_OF_THE_WAY, pages, type Rect } from './pages.svelte'
+import { awayFrom, inSight, OUT_OF_THE_WAY, pages, type Page, type Rect } from './pages.svelte'
 
 const UNSEEN: Rect = { x: 0, y: 0, width: 1280, height: 800 }
+export async function aside(tabId: string, page: Page, pane: Rect): Promise<void> {
+  await pages.put(tabId, page, awayFrom(pane))
+  await page.shooting
+  if (!page.onScreen && !page.lent) await pages.place(tabId, pane, false)
+}
 export async function lend(tabId: string, as: WebLent): Promise<void> {
   const page = pages.of(tabId)
   page.url ??= as.url
@@ -14,7 +19,7 @@ export async function lend(tabId: string, as: WebLent): Promise<void> {
   const pane = page.pane ?? UNSEEN
   if (page.live) {
     await pages.thaw(tabId)
-    if (!inSight(page)) await pages.aside(tabId, page, pane)
+    if (!inSight(page)) await aside(tabId, page, pane)
     return
   }
   await pages.build(tabId, page, { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }, true)

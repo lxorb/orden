@@ -1,10 +1,31 @@
 import { invoke } from '../../platform/src/api'
-import type { Page, pages as Pages } from './pages.svelte'
+import type { Page, pages as Pages, Rect } from './pages.svelte'
 
 type Held = typeof Pages
 const COVER_HIDES = 5000
 const STILL_LOOKS = 100
 const PICTURE_EVERY = 200
+const ARRIVAL_WAITS = 100
+const overlaps = (one: Rect, other: Rect): boolean =>
+  one.x < other.x + other.width &&
+  other.x < one.x + one.width &&
+  one.y < other.y + other.height &&
+  other.y < one.y + one.height
+export async function letGo(pages: Held): Promise<void> {
+  await Promise.all(
+    pages.each().map(async ([tabId, page]) => {
+      const at = page.heldAt
+      if (!at) return
+      await pages.put(tabId, page, at)
+      if (!pages.still) page.heldAt = null
+    }),
+  )
+}
+export async function arrived(pages: Held, pane: Rect): Promise<void> {
+  const into = [...pages.arriving].filter((one) => overlaps(one.pane, pane)).map((one) => one.done)
+  if (into.length === 0) return
+  await Promise.race([Promise.all(into), new Promise((go) => setTimeout(go, ARRIVAL_WAITS))])
+}
 function stirring(): boolean {
   if (typeof document === 'undefined' || typeof document.getAnimations !== 'function') return false
   return document.getAnimations().some((one) => one.playState === 'running')

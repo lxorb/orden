@@ -1399,11 +1399,14 @@ describe('two web tabs switched in one pane', () => {
     pages.hide('u1', PANE)
     await settle()
     calls.length = 0
+    let arrived = (): void => undefined
+    const arriving = new Promise<void>((go) => (arrived = go))
+    const into = { pane: PANE, done: arriving }
+    pages.arriving.add(into)
     pages.hide('u0', beside)
-    void pages.show('u1', SITE, PANE)
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(places()).toEqual([['u0', false]])
     await settle()
+    expect(places()).toEqual([['u0', false]])
+    arrived()
+    pages.arriving.delete(into)
   })
 })
