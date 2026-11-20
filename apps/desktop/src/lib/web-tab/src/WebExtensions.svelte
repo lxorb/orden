@@ -9,7 +9,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { settingsWindow } from '@orden/contracts'
   import ExtensionGaps from './ExtensionGaps.svelte'
-  import { extensions, type Extension } from './extensions.svelte'
+  import { extensions, NOT_WORKING, runs, type Extension } from './extensions.svelte'
   import ExtensionRestart from './ExtensionRestart.svelte'
 
   const {
@@ -45,7 +45,7 @@
         <li class:off={!one.enabled}>
           <button
             class="orden-row name"
-            disabled={!one.enabled || one.pending || (!one.popup && !one.options)}
+            disabled={!one.enabled || !runs(one) || (!one.popup && !one.options)}
             title={one.problem ? `${one.name}: ${one.problem}` : one.name}
             onclick={() => onpress(one)}
           >
@@ -56,7 +56,7 @@
             {/if}
             <span class="words">{one.name}</span>
           </button>
-          {#if one.action && one.enabled}
+          {#if one.action && one.enabled && one.cannotRun === null}
             <button
               class="orden-glyph"
               class:is-on={one.pinned}
@@ -68,13 +68,16 @@
               <Glyph icon={one.pinned ? Pin : PinOff} />
             </button>
           {/if}
-          {#if one.problem && !one.pending}
+          {#if one.cannotRun !== null}
+            <p class="why"><strong>{NOT_WORKING}</strong> {one.cannotRun}</p>
+            <button class="orden-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}>Remove</button>
+          {:else if one.problem && !one.pending}
             <p class="why">{one.problem}</p>
           {/if}
         </li>
       {/each}
     </ul>
-    {#each extensions.list.filter((one) => one.pending) as one (one.id)}
+    {#each extensions.list.filter((one) => one.pending && one.cannotRun === null) as one (one.id)}
       <ExtensionRestart {one} />
     {/each}
   {/if}
@@ -139,6 +142,10 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-1);
+  }
+  .danger {
+    margin-inline-start: var(--space-2);
+    color: var(--danger);
   }
   .why {
     flex-basis: 100%;
