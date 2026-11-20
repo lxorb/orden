@@ -35,20 +35,20 @@ DEBUG_PORT = 9339
 FRAME = 16.7
 LIMITS = {
     "windows-arm64": {
-        "open: second Alt keyup to first screen change": 535.0,
+        "open: second Alt keyup to first screen change": 398.0,
         "open: frame gap p95": 70.0,
-        "hover: SendInput to screen change": 220.0,
-        "click on a card: to screen change": 350.0,
-        "keydown: event to next frame": 2 * FRAME,
-        "pointerover: event to next frame": 2 * FRAME,
+        "hover: SendInput to screen change": 213.0,
+        "click on a card: to screen change": 247.0,
+        "keydown: event to next frame": FRAME,
+        "pointerover: event to next frame": FRAME,
     },
     "windows-x64": {
-        "open: second Alt keyup to first screen change": 420.0,
-        "open: frame gap p95": 70.0,
-        "hover: SendInput to screen change": 150.0,
-        "click on a card: to screen change": 215.0,
-        "keydown: event to next frame": 2 * FRAME,
-        "pointerover: event to next frame": 2 * FRAME,
+        "open: second Alt keyup to first screen change": 304.0,
+        "open: frame gap p95": 47.0,
+        "hover: SendInput to screen change": 107.0,
+        "click on a card: to screen change": 144.0,
+        "keydown: event to next frame": FRAME,
+        "pointerover: event to next frame": FRAME,
     },
 }
 IDLE_CPU = 8.0
