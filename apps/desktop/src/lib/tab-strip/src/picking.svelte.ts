@@ -35,6 +35,15 @@ class Chosen {
       })
     })
   }
+  drop(ids: readonly string[]) {
+    const kept = this.ids.filter((one) => !ids.includes(one))
+    if (kept.length === this.ids.length) return
+    if (kept.length < 2) this.clear()
+    else {
+      this.ids = kept
+      if (this.anchor !== null && ids.includes(this.anchor)) this.anchor = null
+    }
+  }
   clear() {
     this.unwatch?.()
     this.unwatch = null

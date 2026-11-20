@@ -14,7 +14,7 @@ import { isUnsaved } from '../../documents/src/api'
 import { askPlace } from '../../save-place/src/api'
 import { duplicateTab, moveToOtherPane, renameFromTab, renamesFromTab } from './ops'
 import { spaceEntry } from './to-space'
-import { unloadEntries } from './unloading.svelte'
+import { pickedUnloadEntries, unloadEntries } from './unloading.svelte'
 import { chosen, duplicateMany, moveManyToOtherPane } from './picking.svelte'
 
 function movedToSpace(tabs: readonly Tab[]): MenuEntry[] {
@@ -146,6 +146,7 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
     ...bookmarkAll(tabs.flatMap((one) => (one.path === null ? [] : [one.path]))),
     ...movedToSpace(tabs),
     DIVIDER,
+    ...pickedUnloadEntries(tabs),
     ...(last
       ? closeEntries(
           last,

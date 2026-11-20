@@ -12,7 +12,8 @@ const { pages } = await import('../../web-tab/src/pages.svelte')
 const { agentMarks } = await import('../../workspace/src/api')
 const { prompt } = await import('../../ui-kit/src/prompt.svelte')
 const { tabMenu } = await import('./menu')
-const { mayUnload, unload, unloadEntries, unloadsAround } = await import('./unloading.svelte')
+const { mayUnload, unload, unloadEntries, unloadPicked, unloadsAround } = await import('./unloading.svelte')
+const { chosen } = await import('./picking.svelte')
 const { unloadTabs } = await import('./unload-choice.svelte')
 type Tab = import('../../workspace/src/api').Tab
 type TabKind = import('../../tab-kinds/src/api').TabKind
@@ -139,6 +140,17 @@ describe('a tab unloaded', () => {
     await unload(two, 'tab')
     expect(workspace.active).toBe(three_)
   })
+  test('in front with every other tab unloaded hands the pane to the neighbour closing would, not to nothing', async () => {
+    const one = add('note', 'One')
+    const two = add('note', 'Two')
+    one.unloaded = true
+    workspace.activate(two.id)
+    workspace.panes.used = []
+    await unload(two, 'tab')
+    expect(workspace.active).toBe(one)
+    expect(two.unloaded).toBe(true)
+    expect(strip()).toEqual(['One', 'Two'])
+  })
   test('alone in its pane leaves the pane showing nothing, and stays in the strip', async () => {
     const only = add('note', 'Only')
     workspace.activate(only.id)
@@ -197,5 +209,32 @@ describe('a page with something in it that would be lost', () => {
     await unload(one, 'tab')
     expect(asked).not.toHaveBeenCalled()
     expect(one.unloaded).toBe(true)
+  })
+})
+describe('tabs picked together', () => {
+  test('a picked tab unloaded on its own leaves the pick, the others staying picked', async () => {
+    const [one, two, three_] = three()
+    chosen.hold(workspace.panes.focusedId, [one.id, two.id, three_.id])
+    await unload(one, 'tab')
+    expect(one.unloaded).toBe(true)
+    expect(chosen.of(workspace.panes.focusedId)).toEqual([two, three_])
+  })
+  test('picked tabs unloaded as the others of one leave the pick, and one alone is no pick', async () => {
+    const [one, two, three_] = three()
+    chosen.hold(workspace.panes.focusedId, [one.id, two.id, three_.id])
+    await unload(three_, 'others')
+    expect([one.unloaded, two.unloaded]).toEqual([true, true])
+    expect(chosen.of(workspace.panes.focusedId)).toEqual([])
+    expect(workspace.active).toBe(three_)
+  })
+  test('offer Unload tabs, and unloaded, hand the pane to a tab not among them and are picked no more', async () => {
+    const [one, two, three_] = three()
+    chosen.hold(workspace.panes.focusedId, [two.id, three_.id])
+    expect(labels(three_)).toContain('Unload tabs')
+    await unloadPicked([two, three_])
+    expect(workspace.active).toBe(one)
+    expect([two.unloaded, three_.unloaded]).toEqual([true, true])
+    expect(strip()).toEqual(['One', 'Two', 'Three'])
+    expect(chosen.of(workspace.panes.focusedId)).toEqual([])
   })
 })
