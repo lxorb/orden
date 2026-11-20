@@ -975,6 +975,13 @@ class Chat implements Panel {
     const id = this.open?.id
     if (id) this.stopIn(id)
   }
+  closeSession(thread: Thread): void {
+    const provider = ai.provider(thread.provider)
+    if (!provider) return
+    void engineOf(provider.kind)
+      .then((engine) => engine.release?.(thread))
+      .catch(() => undefined)
+  }
   stopIn(id: string): void {
     this.end(id, 'stop')
   }
@@ -1362,6 +1369,9 @@ class Chat implements Panel {
   }
 }
 export const chat = new Chat()
+void import('../helpers/helpers.svelte').then(({ helpers }) => {
+  helpers.released = (thread) => chat.closeSession(thread)
+})
 owes(() => chat.keepAnswers())
 tasks.watch((id) => chat.worked(id))
 panelKeepsUnread()

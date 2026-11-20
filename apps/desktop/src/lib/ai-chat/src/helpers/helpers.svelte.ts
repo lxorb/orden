@@ -59,6 +59,7 @@ class Helpers {
   private stops = new Map<string, AbortController>()
   private under = new Map<string, { parent: string; above: Helped | null; child: Thread }>()
   private ends = new Map<string, Promise<void>>()
+  released: (thread: Thread) => void = () => undefined
   get(id: string): Helper | null {
     return this.all.find((one) => one.id === id) ?? null
   }
@@ -154,7 +155,7 @@ class Helpers {
           clearTimeout(late)
           this.stops.delete(helper.id)
           this.stopUnder(helper.id)
-          this.endedUnder(helper.id)
+          this.endedUnder(thread)
         }),
     )
     return helper
@@ -184,8 +185,9 @@ class Helpers {
       void keepThread(above).catch(() => undefined)
     }
   }
-  endedUnder(child: string): void {
-    this.under.delete(child)
+  endedUnder(child: Thread): void {
+    this.under.delete(child.id)
+    this.released(child)
   }
   forget(id: string): void {
     this.under.delete(id)

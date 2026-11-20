@@ -23,6 +23,18 @@ vi.mock('../../workspace/src/api', () => ({
   agentMarks: { open: null },
 }))
 vi.mock('../../gates/src/api', () => ({ chatsOn: () => true }))
+const programs = vi.hoisted(() => ({ released: [] as string[] }))
+vi.mock('../src/store/setup', async (original) => ({
+  ...(await original<Record<string, unknown>>()),
+  engineOf: () =>
+    Promise.resolve({
+      models: () => Promise.resolve([]),
+      send: () => Promise.resolve(),
+      steer: () => Promise.resolve(false),
+      compact: () => Promise.resolve(),
+      release: (thread: { id: string }) => void programs.released.push(thread.id),
+    }),
+}))
 const invoked = vi.hoisted(() => [] as { command: string; args: Record<string, unknown> }[])
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<Record<string, unknown>>()),
@@ -371,5 +383,34 @@ describe('a turn and the failures it survives', () => {
   })
   test('ends in an error, never asked again, when the answer is cut after it began', async () => {
     expect(await turn([() => streamed(words('Her')), finished])).toMatchObject({ stop: 'error', asked: 1 })
+  })
+})
+describe('a helper that ends', () => {
+  test('lets its program session go, whether it is done, failed or stopped', async () => {
+    await vi.importActual<typeof import('../src/store/chat.svelte')>('../src/store/chat.svelte')
+    const { helpers } = await import('../src/helpers/helpers.svelte')
+    const ends: ((stop: 'end' | 'error') => void)[] = []
+    const roads = {
+      offered: () => Promise.resolve([{ provider: LOCAL, models: [] }]),
+      run: (_thread: unknown, _text: string, signal: AbortSignal) =>
+        new Promise<{ stop: 'end' | 'error' | 'stopped'; turn: null; usage: null }>((done) => {
+          ends.push((stop) => done({ stop, turn: null, usage: null }))
+          signal.addEventListener('abort', () => done({ stop: 'stopped', turn: null, usage: null }))
+        }),
+    }
+    const ask = {
+      parent: null,
+      space: 'Notes',
+      prompt: 'Look',
+      description: 'look',
+      model: '',
+      mode: 'approve' as const,
+    }
+    const started = await Promise.all([helpers.start(ask, roads), helpers.start(ask, roads), helpers.start(ask, roads)])
+    const ids = started.map((one) => ('id' in one ? one.id : ''))
+    ends[0]?.('end')
+    ends[1]?.('error')
+    helpers.stop(ids[2] ?? '')
+    await vi.waitFor(() => expect(programs.released).toEqual(expect.arrayContaining(ids)))
   })
 })

@@ -121,7 +121,15 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   const running = new Map<string, Running>()
   const answers = setup.answers ?? crateAnswers
   const windows = new Map<string, number>()
+  const releasing = new Set<string>()
   let listed: ModelInfo[] = []
+  function letGo(id: string): void {
+    releasing.delete(id)
+    const live = sessions.get(id)
+    if (!live) return
+    sessions.delete(id)
+    void live.session.close()
+  }
   function windowOf(thread: Thread): number {
     return (
       thread.usage.window ??
@@ -470,6 +478,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       running.delete(thread.id)
       live.hear = null
       thread.updated = Date.now()
+      if (releasing.has(thread.id)) letGo(thread.id)
     }
   }
   return {
@@ -527,6 +536,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       if (!live || running.has(thread.id)) return
       sessions.delete(thread.id)
       void live.session.close()
+    },
+    release(thread) {
+      if (running.has(thread.id)) releasing.add(thread.id)
+      else letGo(thread.id)
     },
   }
 }
