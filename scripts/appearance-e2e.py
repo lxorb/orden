@@ -10,6 +10,8 @@ import subprocess
 import sys
 import time
 import urllib.request
+import crash_told
+from fresh_app import ended
 from probe_app import identifier_of, main_window, run_probe
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -79,6 +81,7 @@ def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
         try:
             held = json.loads(path.read_text(encoding="utf-8"))
             if held.get("port") and held.get("secret"):
+                crash_told.told(int(held["port"]), held["secret"])
                 return held
         except (OSError, ValueError):
             pass
@@ -206,8 +209,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         pressed(held, "theme:default")
         framed_as(held, "system")
     finally:
-        process.terminate()
-        process.wait(timeout=30)
+        ended(process, gentle=True)
     endpoint.unlink(missing_ok=True)
     allow_eval(endpoint)
     time.sleep(1.5)
@@ -223,8 +225,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         shot(process.pid, "04-remembered")
         framed_as(held, "orden")
     finally:
-        process.terminate()
-        process.wait(timeout=30)
+        ended(process, gentle=True)
 def main() -> int:
     if sys.platform != "win32":
         print("this drive reads the Windows compositor", flush=True)

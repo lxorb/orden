@@ -9,6 +9,8 @@ import subprocess
 import sys
 import time
 import urllib.request
+import crash_told
+from fresh_app import ended
 from probe_app import identifier_of, run_probe
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -53,6 +55,7 @@ def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
         try:
             held = json.loads(path.read_text(encoding="utf-8"))
             if held.get("port") and held.get("secret"):
+                crash_told.told(int(held["port"]), held["secret"])
                 return held
         except (OSError, ValueError):
             pass
@@ -203,7 +206,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
                 if one.suffix not in {".weba", ".m4a"}:
                     wrong(f"{one.name} is not a sound file")
     finally:
-        process.terminate()
+        ended(process, gentle=True)
         time.sleep(1.5)
 def main() -> int:
     if sys.platform != "win32":
