@@ -21,6 +21,22 @@ describe('eachDue', () => {
     expect(ran).toEqual(['a', 'b', 'c'])
     expect(due.size).toBe(0)
   })
+  test('a space the account no longer holds is handed back to be let go, not said as a failure (#2348)', async () => {
+    const ran: string[] = []
+    const gone: string[] = []
+    const due = new Set(['a', 'b'])
+    await eachDue(
+      due,
+      () => true,
+      (id) => {
+        ran.push(id)
+        return id === 'a' ? Promise.reject(new Refused(404, 'no such space')) : Promise.resolve()
+      },
+      (id) => gone.push(id),
+    )
+    expect(ran).toEqual(['a', 'b'])
+    expect(gone).toEqual(['a'])
+  })
   test('a session that ended stops at once', async () => {
     const ran: string[] = []
     const due = new Set(['a', 'b'])

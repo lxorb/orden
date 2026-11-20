@@ -13,6 +13,7 @@ export async function eachDue(
   due: Set<string>,
   alive: () => boolean,
   one: (id: string) => Promise<void>,
+  gone: (id: string) => void = () => undefined,
 ): Promise<void> {
   let failed: { error: unknown } | null = null
   while (due.size && alive()) {
@@ -23,7 +24,8 @@ export async function eachDue(
       await one(id)
     } catch (error) {
       if (statusOf(error) === 401) throw error
-      failed ??= { error }
+      if (id && outOfReach(error)) gone(id)
+      else failed ??= { error }
     }
   }
   if (failed) throw failed.error
