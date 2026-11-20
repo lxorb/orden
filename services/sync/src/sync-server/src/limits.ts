@@ -73,11 +73,7 @@ export function mayRegister(env: Env, machine: string | null): Promise<boolean> 
 export function mayTellTheOwner(env: Env, spaceId: string): Promise<boolean> {
   return within(env, 'waiting', spaceId, 1, AN_HOUR)
 }
-const QUESTIONS_AN_HOUR = 60
 const UTTERANCES_AN_HOUR = 600
-export function mayAsk(env: Env, userId: string): Promise<boolean> {
-  return within(env, 'ask', userId, QUESTIONS_AN_HOUR, AN_HOUR)
-}
 export function mayTranscribe(env: Env, userId: string): Promise<boolean> {
   return within(env, 'said', userId, UTTERANCES_AN_HOUR, AN_HOUR)
 }

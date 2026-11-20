@@ -215,95 +215,42 @@ describe('what an account lets ping about its chats', () => {
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })
 })
-describe('the glasses an account reads on', () => {
-  test('start a page at a heading level, or at none', async () => {
-    expect((await patch({ glassesBreak: 2 })).json.settings.glassesBreak).toBe(2)
-    expect((await patch({ glassesBreak: 0 })).json.settings.glassesBreak).toBe(0)
-    expect((await patch({ glassesBreak: 6 })).json.settings.glassesBreak).toBe(6)
-  })
-  test('refuse a heading level there is no such thing as', async () => {
-    expect((await patch({ glassesBreak: 7 })).status).toBe(400)
-    expect((await patch({ glassesBreak: -1 })).status).toBe(400)
-    expect((await patch({ glassesBreak: '2' })).status).toBe(400)
-  })
-  test('carry the three switches', async () => {
-    const set = await patch({
-      glassesLineNumbers: false,
-      glassesPageNumber: true,
-      glassesVoice: true,
-    })
-    expect(set.json.settings).toMatchObject({
-      glassesLineNumbers: false,
-      glassesPageNumber: true,
-      glassesVoice: true,
-    })
-  })
-  test('refuse a switch that is not one', async () => {
-    for (const name of ['glassesLineNumbers', 'glassesPageNumber', 'glassesVoice']) {
-      expect((await patch({ [name]: 'yes' })).status, name).toBe(400)
-    }
-  })
-  test('carry the model and the effort', async () => {
-    const set = await patch({ glassesModel: 'gpt-6-astra', glassesEffort: 'high' })
-    expect(set.json.settings).toMatchObject({
-      glassesModel: 'gpt-6-astra',
-      glassesEffort: 'high',
-    })
-  })
-  test('refuse an effort the model API does not take', async () => {
-    expect((await patch({ glassesEffort: 'max' })).status).toBe(200)
-    expect((await patch({ glassesEffort: 'banana' })).status).toBe(400)
-  })
-  test('carry how much white space reaches the panel, and who scrolls', async () => {
-    for (const level of ['none', 'collapse', 'aggressive']) {
-      expect((await patch({ glassesCompaction: level })).status, level).toBe(200)
-    }
-    for (const mode of ['paged', 'native']) {
-      expect((await patch({ glassesScroll: mode })).status, mode).toBe(200)
-    }
-    expect((await patch({ glassesCompaction: 'a bit' })).status).toBe(400)
-    expect((await patch({ glassesScroll: 'sideways' })).status).toBe(400)
-  })
-  test('carry the markers a reader turned on, and only the ones there are', async () => {
-    const set = await patch({ glassesMarks: { fence: true, bold: true } })
+describe('the glasses settings an older app still sends', () => {
+  const OLD = {
+    glassesBreak: 2,
+    glassesLineNumbers: false,
+    glassesPageNumber: true,
+    glassesVoice: true,
+    glassesCompaction: 'collapse',
+    glassesScroll: 'paged',
+    glassesMarks: { bold: true },
+    glassesWords: { next: 'vorwärts' },
+    glassesSeen: true,
+    glassesModel: 'gpt-6-astra',
+    glassesEffort: 'high',
+  }
+  test('are let go of quietly, so the rest of the same write still lands', async () => {
+    const set = await patch({ ...OLD, vim: true })
     expect(set.status).toBe(200)
-    expect(set.json.settings.glassesMarks).toEqual({ fence: true, bold: true })
-    expect((await patch({ glassesMarks: { subheading: true } })).status).toBe(400)
-    expect((await patch({ glassesMarks: { bold: 'yes' } })).status).toBe(400)
-    expect((await patch({ glassesMarks: [true] })).status).toBe(400)
+    expect(set.json.settings.vim).toBe(true)
+    for (const name of Object.keys(OLD)) expect(set.json.settings, name).not.toHaveProperty(name)
   })
-  test('carry the phrases a reader rebound', async () => {
-    const set = await patch({ glassesWords: { next: 'vorwärts', close: 'zu' } })
-    expect(set.status).toBe(200)
-    expect(set.json.settings.glassesWords).toEqual({ next: 'vorwärts', close: 'zu' })
-    expect((await patch({ glassesWords: { next: 'x'.repeat(61) } })).status).toBe(400)
-    expect((await patch({ glassesWords: { 'Not An Id': 'no' } })).status).toBe(400)
-    expect((await patch({ glassesWords: { next: 12 } })).status).toBe(400)
+  test('are let go of even when what was sent is not what the glasses took', async () => {
+    expect((await patch({ glassesBreak: 7, glassesWords: { next: 12 } })).status).toBe(200)
   })
-  test('remember that a phone or a tablet has been used', async () => {
+  test('are left where an older version stored them, and no longer read', async () => {
+    env.db.prepare('update users set settings = ?').run(JSON.stringify({ glassesModel: 'gpt-6-astra', vim: true }))
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ vim: true })
+    await patch({ vim: false })
+    const held = env.db.prepare('select settings from users').get() as { settings: string }
+    expect(JSON.parse(held.settings)).toEqual({ glassesModel: 'gpt-6-astra', vim: false })
+  })
+  test('leave remembering that a phone or a tablet has been used', async () => {
     expect((await patch({ mobileSeen: true })).status).toBe(200)
     expect((await call(env, '/v1/settings', { token })).json.settings.mobileSeen).toBe(true)
     expect((await patch({ mobileSeen: 'yes' })).status).toBe(400)
   })
-  test('remember that a pair of glasses has answered', async () => {
-    expect((await patch({ glassesSeen: true })).status).toBe(200)
-    expect((await call(env, '/v1/settings', { token })).json.settings.glassesSeen).toBe(true)
-    expect((await patch({ glassesSeen: 'yes' })).status).toBe(400)
-  })
-  test('and hand that to every other device on the account', async () => {
-    const phone = await signIn(env, 'a@b.dev')
-    const desktop = await signIn(env, 'a@b.dev')
-    const before = await call(env, '/v1/settings', { token: desktop })
-    expect(before.json.settings.glassesSeen).toBeUndefined()
-    expect((await patch({ glassesSeen: true }, phone)).status).toBe(200)
-    const after = await call(env, '/v1/settings', { token: desktop })
-    expect(after.json.settings.glassesSeen).toBe(true)
-  })
-  test('refuse a model long enough to be a novel', async () => {
-    expect((await patch({ glassesModel: 'x'.repeat(101) })).status).toBe(400)
-    expect((await patch({ glassesModel: 'gpt-6-astra' })).status).toBe(200)
-  })
-  test('do not carry the key at all, and say only whether there is one', async () => {
+  test('never carried the key, and the settings say only whether there is one', async () => {
     expect((await patch({ glassesKey: 'sk-proj-AbC123-_xyz' })).status).toBe(400)
     const read = await call(env, '/v1/settings', { token })
     expect(read.json.settings.glassesKey).toBeUndefined()

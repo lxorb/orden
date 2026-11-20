@@ -99,5 +99,3 @@ export async function forgetKey(env: Env, userId: string): Promise<KeyState> {
   await env.DB.prepare('update users set openai_key = null, openai_key_tail = null where id = ?').bind(userId).run()
   return { set: false, tail: '' }
 }
-export const EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const
-export type Effort = (typeof EFFORTS)[number]

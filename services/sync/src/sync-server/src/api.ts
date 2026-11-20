@@ -1,5 +1,5 @@
 export { accountAddress, movedAddress } from './addresses'
-export { type Effort, EFFORTS, forgetKey, keyFor, mayStore, opened, sealed, setKey } from './ai-key'
+export { forgetKey, keyFor, mayStore, opened, sealed, setKey } from './ai-key'
 export { type Body, bytesAtMost, listIn, MOST_BODY_BYTES, objectBody, objectIn, readBody, textAtMost } from './body'
 export { askInChunks, AT_A_TIME, chunks, places } from './bound'
 export { serveApp, servePage, servePass, switchChannel } from './channel'
@@ -53,7 +53,6 @@ export {
   machineOf,
   mailCeilings,
   mailNotSent,
-  mayAsk,
   mayChangeTree,
   mayGuess,
   mayInviteToPass,
