@@ -422,8 +422,8 @@
   .body :global(:is(p, ul, ol, pre, blockquote, table, h1, h2, h3, h4, h5, h6)) {
     margin: 0;
   }
-  .body :global(:is(p, ul, ol, pre, blockquote, table) + *) {
-    margin-top: var(--space-2);
+  .body :global(:is(p, ul, ol, pre, blockquote, table):not(:last-child, :has(+ .edited))) {
+    margin-bottom: var(--space-2);
   }
   .body :global(:is(h1, h2, h3)) {
     font-size: var(--text-head);
