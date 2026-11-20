@@ -105,6 +105,31 @@ def store_reachable() -> str:
             return f"{said.status} at {said.geturl()}"
     except (urllib.error.URLError, TimeoutError, OSError) as error:
         raise Stop(f"the Chrome Web Store is unreachable from this machine, so nothing can be installed from it: {error}") from error
+def fit_to_screen(pid: int) -> None:
+    if sys.platform != "win32":
+        return
+    import ctypes
+    from ctypes import wintypes
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    found: list[tuple[int, int]] = []
+    def each(hwnd: int, _: int) -> bool:
+        owner = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+        box = wintypes.RECT()
+        if owner.value == pid and user32.IsWindowVisible(hwnd) and user32.GetWindowRect(hwnd, ctypes.byref(box)):
+            found.append(((box.right - box.left) * (box.bottom - box.top), hwnd))
+        return True
+    user32.EnumWindows(ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)(each), 0)
+    area = wintypes.RECT()
+    user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(area), 0)
+    if found:
+        hwnd = max(found)[1]
+        user32.ShowWindow(hwnd, 9)
+        user32.SetWindowPos(hwnd, None, area.left, area.top, area.right - area.left, area.bottom - area.top, 0x0004 | 0x0010)
+        time.sleep(2)
+        box = wintypes.RECT()
+        user32.GetWindowRect(hwnd, ctypes.byref(box))
+        print(f"the window is fitted to the screen's work area {[area.left, area.top, area.right, area.bottom]}: now {[box.left, box.top, box.right, box.bottom]}", flush=True)
 class Drive:
     def __init__(self, exe: pathlib.Path, identifier: str, out: pathlib.Path) -> None:
         self.exe, self.out = exe, out
@@ -154,6 +179,7 @@ class Drive:
         self.process = subprocess.Popen([str(self.exe)], env=env, cwd=str(self.exe.parent))
         self.app = endpoint(self.config, self.process.pid, self.secret)
         self.waited("!!orden.workspace", 90, "the app never showed its workspace")
+        fit_to_screen(self.process.pid)
         forward(self.app, self.process.pid)
         time.sleep(2)
         return self.app
@@ -408,27 +434,99 @@ SHOWN_UI = """(() => {
   const drawn = [...document.querySelectorAll('body *')].filter((one) => { const box = one.getBoundingClientRect(); return box.width > 0 && box.height > 0 }).length
   return { href: location.href, title: document.title, words: words.slice(0, 160), drawn }
 })()"""
-def popup(drive: Drive, login: str) -> None:
-    drive.step("Proton Pass's button in the web bar is pressed and its popup opens")
+DARK_ID = "eimadpbcbfnmbkopoojfekhnkhdbieeh"
+DARK_NAME = "Dark Reader"
+DARK_LINK = f"https://chromewebstore.google.com/detail/dark-reader/{DARK_ID}"
+MAGENTA = (255, 0, 255)
+CYAN = (0, 255, 255)
+PAINT = "(() => { const one = document.createElement('div'); one.id = 'orden-drive-paint'; one.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgb(255,0,255)'; document.documentElement.appendChild(one); return 'painted' })()"
+CORNER = (
+    "(() => { const one = document.createElement('div'); one.id = 'orden-drive-corner';"
+    " one.style.cssText = 'position:fixed;left:0;bottom:0;width:12px;height:12px;z-index:2147483647;background:rgb(0,255,255);pointer-events:none';"
+    " document.body.appendChild(one);"
+    " const inside = [...document.querySelectorAll('.popup.orden-bubble .inside')].map((one) => one.getBoundingClientRect()).find((box) => box.width > 0 && box.height > 0);"
+    " const dialogs = [...document.querySelectorAll('[role=dialog]')].map((one) => { const box = one.getBoundingClientRect(); return one.className + ' ' + Math.round(box.x) + ',' + Math.round(box.y) + ' ' + Math.round(box.width) + 'x' + Math.round(box.height) + ' ' + one.innerHTML.slice(0, 120) });"
+    " return JSON.stringify({ inside: inside && { x: inside.x, y: inside.y, width: inside.width, height: inside.height }, height: innerHeight, ratio: devicePixelRatio, dialogs }) })()"
+)
+def boxed(shot: Any, colour: tuple[int, int, int]) -> tuple[int, int, int, int, int] | None:
+    width, height = shot.size
+    raw = shot.rgb
+    xs: list[int] = []
+    ys: list[int] = []
+    for y in range(0, height, 2):
+        row = y * width * 3
+        for x in range(0, width, 2):
+            at = row + x * 3
+            if abs(raw[at] - colour[0]) < 24 and abs(raw[at + 1] - colour[1]) < 24 and abs(raw[at + 2] - colour[2]) < 24:
+                xs.append(x)
+                ys.append(y)
+    if not xs:
+        return None
+    return min(xs), min(ys), max(xs), max(ys), len(xs)
+def placed(drive: Drive, page: Session, name: str) -> None:
+    drive.step(f"{name}'s popup is drawn inside its panel under the button")
+    page.value(PAINT)
+    said = drive.eval(CORNER)
+    try:
+        layout = json.loads(said)
+    except (TypeError, ValueError):
+        drive.fail(f"the app did not say where {name}'s panel is: {said!r}")
+    inside, ratio = layout.get("inside"), float(layout.get("ratio") or 1)
+    if not inside or inside["width"] < 30 or inside["height"] < 30:
+        drive.fail(f"{name}'s panel has no size: {layout}")
+    time.sleep(1.5)
+    import mss
+    with mss.mss() as screen:
+        shot = screen.grab(screen.monitors[0])
+    drive.shot(f"{name.lower().replace(' ', '-')}-placed")
+    drive.eval("document.getElementById('orden-drive-corner')?.remove(); return true")
+    paint, corner = boxed(shot, MAGENTA), boxed(shot, CYAN)
+    if not corner:
+        drive.fail("the drive's corner mark is not on the screen")
+    if not paint:
+        drive.fail(f"{name}'s popup is drawn nowhere on the screen")
+    assert paint is not None and corner is not None
+    left, bottom = corner[0], corner[3] + 1
+    top = bottom - layout["height"] * ratio
+    want = (left + inside["x"] * ratio, top + inside["y"] * ratio, left + (inside["x"] + inside["width"]) * ratio, top + (inside["y"] + inside["height"]) * ratio)
+    slack = 4 * ratio
+    print(f"{name}: panel at {[round(one) for one in want]}, popup drawn at {list(paint[:4])}, scale {ratio}", flush=True)
+    outside = paint[0] < want[0] - slack or paint[1] < want[1] - slack or paint[2] > want[2] + slack or paint[3] > want[3] + slack
+    if outside:
+        drive.fail(f"{name}'s popup is drawn outside its panel: panel {[round(one) for one in want]}, popup {list(paint[:4])}")
+    covered = (paint[2] - paint[0]) * (paint[3] - paint[1]) / max(1.0, (want[2] - want[0]) * (want[3] - want[1]))
+    if covered < 0.8:
+        drive.fail(f"{name}'s popup fills only {covered:.0%} of its panel: panel {[round(one) for one in want]}, popup {list(paint[:4])}")
+    print(f"{name}'s popup fills its panel ({covered:.0%}) under its button", flush=True)
+def popup(drive: Drive, login: str, ext: str = ID, name: str = NAME) -> None:
+    drive.step(f"{name}'s button in the web bar is pressed and its popup opens")
     drive.opened(login)
+    drive.eval("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return true")
     pressed = drive.waited(
-        f"(() => {{ const button = document.querySelector('button[data-extension=\"{ID}\"]');"
+        f"(() => {{ const button = [...document.querySelectorAll('button[data-extension=\"{ext}\"]')].find((one) => {{ const box = one.getBoundingClientRect(); return box.width > 0 && box.height > 0 }});"
         " if (!button) return null; button.click(); return 'pressed' })()",
         30,
-        "Proton Pass has no button in the web bar",
+        f"{name} has no button in the web bar",
     )
     print(f"its button: {pressed}", flush=True)
+    origin = f"chrome-extension://{ext}/"
+    listed = drive.eval(LISTED, 40)
+    try:
+        page_of = next((one.get("popup") for one in json.loads(listed) if one.get("id") == ext), None)
+    except (TypeError, ValueError):
+        page_of = None
+    wanted = origin + (page_of or "")
     target = None
     until = time.monotonic() + 30
     while time.monotonic() < until and not target:
         drive.alive()
-        target = next((each for each in drive.every() if str(each.get("url", "")).startswith(POPUP) or "chrome-error" in str(each.get("url", ""))), None)
+        target = next((each for each in drive.every() if (page_of and str(each.get("url", "")).startswith(wanted)) or "chrome-error" in str(each.get("url", ""))), None)
         if not target:
             time.sleep(0.5)
     if not target:
         problem = drive.eval(BUBBLE)
         drive.shot("no-popup")
-        drive.fail(f"pressing Proton Pass's button opened no popup: {[(each.get('type'), each.get('url')) for each in drive.every()]} (bubble: {problem!r})")
+        drive.fail(f"pressing {name}'s button opened no popup: {[(each.get('type'), each.get('url')) for each in drive.every()]} (bubble: {problem!r})")
     assert target is not None
     page = Session(target)
     said: Any = None
@@ -439,13 +537,27 @@ def popup(drive: Drive, login: str) -> None:
         if isinstance(said, dict) and (str(said.get("href", "")).startswith("chrome-error") or (said.get("drawn", 0) >= 5 and said.get("words"))):
             break
         time.sleep(1)
-    page.close()
-    drive.shot("popup")
-    if not isinstance(said, dict) or not str(said.get("href", "")).startswith(POPUP):
-        drive.fail(f"Proton Pass's popup did not load its page: {said}")
+    drive.shot(f"{name.lower().replace(' ', '-')}-popup")
+    if not isinstance(said, dict) or not str(said.get("href", "")).startswith(origin):
+        page.close()
+        drive.fail(f"{name}'s popup did not load its page: {said}")
     if "blocked" in str(said.get("words", "")).lower() or said.get("drawn", 0) < 5 or not said.get("words"):
-        drive.fail(f"Proton Pass's popup shows no UI: {said}")
+        page.close()
+        drive.fail(f"{name}'s popup shows no UI: {said}")
     print(f"the popup shows its UI: {said}", flush=True)
+    time.sleep(2)
+    placed(drive, page, name)
+    page.close()
+    drive.eval("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return true")
+def dark_reader(drive: Drive, login: str) -> None:
+    drive.step("Dark Reader, whose popup has a fixed size, is installed from its Web Store link")
+    said = drive.eval(f"return await window.__TAURI_INTERNALS__.invoke('extensions_install', {{ link: {json.dumps(DARK_LINK)} }}).then((one) => JSON.stringify(one), (error) => 'ERR ' + error)", 180)
+    print(f"Dark Reader: {str(said)[:200]}", flush=True)
+    if not isinstance(said, str) or said.startswith("ERR") or DARK_ID not in said:
+        drive.fail(f"Dark Reader did not install: {said!r}")
+    drive.eval("return await (async () => { await window.__TAURI_INTERNALS__.invoke('extensions_list'); return true })()", 40)
+    time.sleep(3)
+    popup(drive, login, DARK_ID, DARK_NAME)
 OLD_ID = "odfafepnkmbhccpbejgmiehpchacaeak"
 OLD_VERSION = "2026.1115.76.4"
 OLD_NAME = "uBlock Origin"
@@ -572,6 +684,7 @@ def main() -> int:
             restarted(drive)
         ran(drive, f"{base}/login")
         popup(drive, f"{base}/login")
+        dark_reader(drive, f"{base}/login")
     except Stop as stop:
         wrong = str(stop)
     except (OSError, ConnectionError) as error:
