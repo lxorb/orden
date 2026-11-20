@@ -159,7 +159,17 @@ pub struct Grant {
     #[serde(skip)]
     pub thread: Option<String>,
     #[serde(skip_deserializing, skip_serializing_if = "Option::is_none")]
-    pub chat_mode: Option<String>,
+    pub chat: Option<Chat>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct Chat {
+    pub mode: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub without: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub only: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub space: Option<String>,
 }
 impl Grant {
     pub fn own(id: String, client: &str) -> Self {
@@ -184,7 +194,7 @@ impl Grant {
             created: orden_base::clock::now(),
             built_in: false,
             thread: None,
-            chat_mode: None,
+            chat: None,
         }
     }
     pub fn third_party(id: String, client: &str) -> Self {

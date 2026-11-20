@@ -69,8 +69,24 @@ impl Mode {
         }
     }
 }
-fn supervised(mut grant: Grant, mode: Mode) -> Grant {
-    match mode {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Chat {
+    pub mode: Mode,
+    pub without: Vec<String>,
+    pub only: Option<Vec<String>>,
+    pub space: Option<String>,
+}
+impl Chat {
+    pub fn of(mode: Mode) -> Self {
+        Chat { mode, without: Vec::new(), only: None, space: None }
+    }
+    fn allows(&self, tool: &str) -> bool {
+        !self.without.iter().any(|one| one == tool)
+            && self.only.as_ref().is_none_or(|only| only.iter().any(|one| one == tool))
+    }
+}
+fn supervised(mut grant: Grant, chat: &Chat) -> Grant {
+    match chat.mode {
         Mode::Approve => {
             grant.mode = GrantMode::Confirm;
             grant.asks.clear();
@@ -78,7 +94,12 @@ fn supervised(mut grant: Grant, mode: Mode) -> Grant {
         Mode::Full => grant = grant.with_full_permissions(),
         Mode::Auto | Mode::Plan => {}
     }
-    grant.chat_mode = Some(mode.word().to_owned());
+    grant.chat = Some(orden_agents::grants::Chat {
+        mode: chat.mode.word().to_owned(),
+        without: chat.without.clone(),
+        only: chat.only.clone(),
+        space: chat.space.clone(),
+    });
     grant
 }
 pub fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
@@ -96,7 +117,7 @@ pub fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
 }
 struct Lent {
     grant: String,
-    mode: Mode,
+    chat: Chat,
     token: String,
     hash: String,
 }
@@ -104,29 +125,31 @@ static LENT: Mutex<Vec<Lent>> = Mutex::new(Vec::new());
 fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
     LENT.held()
 }
-pub fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {
+pub fn lend(app: &AppHandle, builtin: &Builtin, chat: Chat) -> Result<String, String> {
     let grant = grant_for(app, builtin)?.id;
-    let mut all = lent_now();
-    if let Some(one) = all.iter().find(|one| one.grant == grant && one.mode == mode) {
+    token_for(&mut lent_now(), grant, chat)
+}
+fn token_for(all: &mut Vec<Lent>, grant: String, chat: Chat) -> Result<String, String> {
+    if let Some(one) = all.iter().find(|one| one.grant == grant && one.chat == chat) {
         return Ok(one.token.clone());
     }
     let token = fresh_token()?;
-    all.push(Lent { grant, mode, hash: hashed(&token), token: token.clone() });
+    all.push(Lent { grant, chat, hash: hashed(&token), token: token.clone() });
     Ok(token)
 }
 pub fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
     let said = hashed(token);
-    let (grant, mode) = {
+    let (grant, chat) = {
         let all = lent_now();
         let mut found = None;
         for one in all.iter() {
             if same(&said, &one.hash) && found.is_none() {
-                found = Some((one.grant.clone(), one.mode));
+                found = Some((one.grant.clone(), one.chat.clone()));
             }
         }
         found?
     };
-    state(app).grants.by_id(app, &grant).map(|grant| supervised(grant, mode))
+    state(app).grants.by_id(app, &grant).map(|grant| supervised(grant, &chat))
 }
 pub fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
@@ -146,7 +169,7 @@ fn window_verbs(app: &AppHandle) -> Option<BTreeSet<String>> {
     )
 }
 fn listed(grant: &Grant, window: Option<&BTreeSet<String>>, mode: Mode) -> Vec<Value> {
-    host::listed(&supervised(grant.clone(), mode), window)
+    host::listed(&supervised(grant.clone(), &Chat::of(mode)), window)
         .into_iter()
         .filter(|tool| in_mode(mode, &tool.name, host::reads_only(tool)))
         .map(host::shown)
@@ -373,6 +396,7 @@ fn asked_for(tool: &str, args: &Value, thread: Option<&str>) -> Value {
     asked
 }
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn ai_agent_call(
     webview: tauri::Webview,
     app: AppHandle,
@@ -381,17 +405,24 @@ pub async fn ai_agent_call(
     tool: String,
     args: Value,
     thread: Option<String>,
+    without: Option<Vec<String>>,
+    only: Option<Vec<String>>,
+    space: Option<String>,
 ) -> Result<Value, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Value, String> {
         orden_base::labels::from_the_app(&webview)?;
         let mut grant = grant_for(&app, &agent)?;
+        let chat = Chat { mode, without: without.unwrap_or_default(), only, space };
+        if !chat.allows(&tool) {
+            return Err(format!("{tool} is not a tool in this chat"));
+        }
         if tool.starts_with(OUTSIDE) {
             grant.thread = thread.filter(|one| orden_agents::is_thread(one));
             let started = Instant::now();
             let args = if args.is_object() { args } else { json!({}) };
             let (rendered, answered) =
                 outside_call(&Live(&app), &grant, mode, &tool, args.clone())?;
-            let caller = Caller::Agent(Box::new(supervised(grant, mode)));
+            let caller = Caller::Agent(Box::new(supervised(grant, &chat)));
             orden_agents::logged(&app, &caller, "", &tool, None, args, &answered, started);
             return Ok(rendered);
         }
@@ -402,7 +433,7 @@ pub async fn ai_agent_call(
         }
         let args = host::with_defaults(&tool, if args.is_object() { args } else { json!({}) });
         let asked = asked_for(&tool, &args, thread.as_deref());
-        let caller = Caller::Agent(Box::new(supervised(grant, mode)));
+        let caller = Caller::Agent(Box::new(supervised(grant, &chat)));
         let (status, body) = orden_agents::endpoint::dispatch(&app, &caller, asked, false);
         let mut rendered = host::rendered(&tool, &args, status, &body);
         host::categorized(&mut rendered, orden_agents::question_category);
@@ -531,7 +562,7 @@ mod tests {
     fn full_permissions_never_ask_anything() {
         let mut stored = grant();
         stored.mode = GrantMode::Confirm;
-        let agent = supervised(stored, Mode::Full);
+        let agent = supervised(stored, &Chat::of(Mode::Full));
         assert_eq!(agent.mode, GrantMode::Autonomous);
         assert!(agent.asks_nothing());
         for category in ASKED {
@@ -547,7 +578,7 @@ mod tests {
         let mut stored = grant();
         stored.asks.insert(Category::Deleting, false);
         stored.asks.insert(Category::Terminal, false);
-        let approve = supervised(stored, Mode::Approve);
+        let approve = supervised(stored, &Chat::of(Mode::Approve));
         assert_eq!(approve.mode, GrantMode::Confirm);
         for category in ASKED {
             assert!(approve.asks(category), "{category:?}");
@@ -557,8 +588,8 @@ mod tests {
     fn auto_asks_where_the_readers_access_says_and_nowhere_else() {
         let mut stored = grant();
         stored.asks.insert(Category::Deleting, false);
-        let auto = supervised(stored.clone(), Mode::Auto);
-        assert_eq!(Grant { chat_mode: None, ..auto.clone() }, stored);
+        let auto = supervised(stored.clone(), &Chat::of(Mode::Auto));
+        assert_eq!(Grant { chat: None, ..auto.clone() }, stored);
         assert_eq!(auto.mode, GrantMode::Unsupervised);
         for category in ASKED {
             assert_eq!(auto.asks(category), category != Category::Deleting, "{category:?}");
@@ -568,23 +599,23 @@ mod tests {
     fn the_three_permission_modes_ask_less_and_less() {
         let stored = grant();
         let count = |mode| {
-            let laid = supervised(stored.clone(), mode);
+            let laid = supervised(stored.clone(), &Chat::of(mode));
             ASKED.iter().filter(|one| laid.asks(**one)).count()
         };
         let mut off = stored.clone();
         off.asks.insert(Category::Sending, false);
-        assert!(supervised(off, Mode::Approve).asks(Category::Sending));
+        assert!(supervised(off, &Chat::of(Mode::Approve)).asks(Category::Sending));
         assert!(count(Mode::Approve) >= count(Mode::Auto));
         assert!(count(Mode::Auto) > count(Mode::Full));
         assert_eq!(count(Mode::Full), 0);
-        assert_eq!(supervised(stored.clone(), Mode::Approve).mode, GrantMode::Confirm);
+        assert_eq!(supervised(stored.clone(), &Chat::of(Mode::Approve)).mode, GrantMode::Confirm);
     }
     #[test]
     fn a_mode_is_laid_over_a_call_as_the_grant_says() {
         let stored = grant();
-        let plan = supervised(stored.clone(), Mode::Plan);
-        assert_eq!(plan.chat_mode.as_deref(), Some("plan"));
-        assert_eq!(Grant { chat_mode: None, ..plan }, stored);
+        let plan = supervised(stored.clone(), &Chat::of(Mode::Plan));
+        assert_eq!(plan.chat.as_ref().map(|chat| chat.mode.as_str()), Some("plan"));
+        assert_eq!(Grant { chat: None, ..plan }, stored);
         let laid = grant();
         assert_eq!(laid.mode, GrantMode::Unsupervised);
         assert!(laid.asks.is_empty());
@@ -593,25 +624,74 @@ mod tests {
         assert!(!made("orden-a".into(), "Orden A", &builtin(false)).holds(Scope::BrowserReader));
     }
     #[test]
-    fn a_lent_caller_tells_the_window_the_mode_of_its_chat() {
+    fn a_lent_caller_tells_the_window_its_whole_chat() {
         for (mode, word) in [
             (Mode::Approve, "approve"),
             (Mode::Auto, "auto"),
             (Mode::Full, "full"),
             (Mode::Plan, "plan"),
         ] {
-            let told = Caller::Agent(Box::new(supervised(grant(), mode))).told().expect("told");
-            assert_eq!(told["chat_mode"], word, "{mode:?}");
-            let read: Mode = serde_json::from_value(told["chat_mode"].clone()).expect("a mode");
+            let chat = Chat {
+                mode,
+                without: vec!["browser_open".into()],
+                only: Some(vec!["read_note".into(), "edit_note".into()]),
+                space: Some("Work".into()),
+            };
+            let told = Caller::Agent(Box::new(supervised(grant(), &chat))).told().expect("told");
+            assert_eq!(
+                told["chat"],
+                json!({ "mode": word, "without": ["browser_open"], "only": ["read_note", "edit_note"], "space": "Work" }),
+                "{mode:?}"
+            );
+            assert!(told.get("chat_mode").is_none());
+            let read: Mode = serde_json::from_value(told["chat"]["mode"].clone()).expect("a mode");
             assert_eq!(read, mode);
-            let threaded = Caller::Agent(Box::new(supervised(grant(), mode)))
+            let threaded = Caller::Agent(Box::new(supervised(grant(), &chat)))
                 .in_thread(Some("thread-1".into()))
                 .told()
                 .expect("told");
-            assert_eq!(threaded["chat_mode"], word, "{mode:?}");
+            assert_eq!(threaded["chat"], told["chat"], "{mode:?}");
         }
+        let none = Chat { only: Some(Vec::new()), ..Chat::of(Mode::Auto) };
+        let told = Caller::Agent(Box::new(supervised(grant(), &none))).told().expect("told");
+        assert_eq!(told["chat"], json!({ "mode": "auto", "only": [] }));
         let plain = Caller::Agent(Box::new(grant())).told().expect("told");
-        assert!(plain.get("chat_mode").is_none());
+        assert!(plain.get("chat").is_none());
+    }
+    #[test]
+    fn a_chat_that_keeps_other_tools_out_is_lent_its_own_token() {
+        let mut all = Vec::new();
+        let plain = Chat::of(Mode::Auto);
+        let kept = Chat { without: vec!["edit_note".into()], ..Chat::of(Mode::Auto) };
+        let narrow = Chat { only: Some(vec!["read_note".into()]), ..Chat::of(Mode::Auto) };
+        let first = token_for(&mut all, "orden-a".into(), plain.clone()).expect("token");
+        assert_eq!(token_for(&mut all, "orden-a".into(), plain.clone()).expect("token"), first);
+        let other = token_for(&mut all, "orden-a".into(), kept.clone()).expect("token");
+        let third = token_for(&mut all, "orden-a".into(), narrow).expect("token");
+        let spaced =
+            token_for(&mut all, "orden-a".into(), Chat { space: Some("Work".into()), ..plain })
+                .expect("token");
+        assert!(first != other && other != third && third != spaced && first != spaced);
+        assert_eq!(token_for(&mut all, "orden-a".into(), kept).expect("token"), other);
+        assert_eq!(all.len(), 4);
+    }
+    #[test]
+    fn a_call_to_a_tool_its_chat_keeps_out_is_refused() {
+        let chat = Chat {
+            without: vec!["edit_note".into(), "mcp__fake__shout".into()],
+            only: Some(vec!["read_note".into(), "edit_note".into(), "mcp__fake__echo".into()]),
+            ..Chat::of(Mode::Auto)
+        };
+        assert!(chat.allows("read_note") && chat.allows("mcp__fake__echo"));
+        for out in ["edit_note", "write_note", "mcp__fake__shout", "mcp__fake__other"] {
+            assert!(!chat.allows(out), "{out}");
+        }
+        let open = Chat { without: vec!["edit_note".into()], ..Chat::of(Mode::Full) };
+        assert!(
+            open.allows("write_note") && open.allows("mcp__any__tool") && !open.allows("edit_note")
+        );
+        assert!(!Chat { only: Some(Vec::new()), ..Chat::of(Mode::Full) }.allows("read_note"));
+        assert!(Chat::of(Mode::Plan).allows("edit_note"));
     }
     #[test]
     fn a_provider_id_that_is_not_one_makes_no_grant() {
