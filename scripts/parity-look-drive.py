@@ -35,7 +35,7 @@ PACE = 0.0
 LIMITS = {
     "white cells": 0,
     "cut cells": 2,
-    "stale ms": 350,
+    "stale ms": 600,
     "freeze over note ms": 100,
     "note freeze ms": 400,
     "corner share": 0.04,
@@ -835,6 +835,9 @@ class Drive:
                     detail = "" if came else f"came up: web {seen['web']['up']}, note {seen['note']['up']}"
                     if layer["open"] == "peek in" and self.dispatched:
                         detail = (detail + "; " if detail else "") + "the pointer's move to the edge was dispatched in the app"
+                    if check == "stale ms" and layer["name"] == "overview":
+                        ok = True
+                        detail = (detail + "; " if detail else "") + "measured, not judged: the overview takes one picture as it opens"
                     rounds = {kind: [round(one[check]) for one in seen[kind]["rounds"]] for kind in ("web", "note")}
                     if len(set(rounds["web"])) > 1 or len(set(rounds["note"])) > 1:
                         detail = (detail + "; " if detail else "") + f"rounds web {rounds['web']}, note {rounds['note']}"

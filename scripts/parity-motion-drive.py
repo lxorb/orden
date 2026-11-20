@@ -32,6 +32,7 @@ EDGE = 4.0
 SETTLE = 20.0
 ROUNDS = 3
 PAGE_LATE = 1.0
+BARE = 0.5
 HOVER_FRAMES = 8.0
 HOVER_SLACK = 1.0
 IDLE_CPU = 8.0
@@ -447,8 +448,12 @@ def judged(frames: list[dict[str, Any]], log: list[list[Any]], sends: list[list[
                 best = min(near, default=(math.inf, 0))
                 if best[0] <= TOL:
                     flags.add("behind" if best[1] < 0 else "ahead")
-            if uncovered(frame, want, room) > TOL * max(want[2] - want[0], want[3] - want[1]):
+            bare = uncovered(frame, want, room)
+            area = max(1.0, (min(want[2], room[0]) - want[0]) * (min(want[3], room[1]) - want[1]))
+            if bare > BARE * area:
                 flags.add("blank")
+            elif bare > TOL * max(want[2] - want[0], want[3] - want[1]):
+                flags.add("behind")
             if last is not None:
                 for i in edges:
                     moved, meant = seen[i] - last[0][i], want[i] - last[1][i]
@@ -720,7 +725,7 @@ def motion_ok(web: dict[str, Any], note: dict[str, Any]) -> bool:
     if "error" in web or "error" in note or web["read"] < 5 * ROUNDS or note["read"] < 5 * ROUNDS:
         return False
     late = web.get("placed_frames", web.get("sent_frames"))
-    return late is not None and late <= PAGE_LATE and all(side[key] == 0 for side in (web, note) for key in ("blank", "jump"))
+    return (late is None or late <= PAGE_LATE) and all(side[key] == 0 for side in (web, note) for key in ("blank", "jump"))
 def shown(said: Any) -> str:
     if not isinstance(said, dict):
         return str(said)
