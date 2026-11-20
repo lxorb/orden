@@ -1331,15 +1331,41 @@ export function sessionOf(tab: Tab): Session {
   }
   return one
 }
-const RESTYLES = new Set(['STYLE'])
-const restyled = (records: readonly MutationRecord[]): boolean =>
-  records.some(
-    (one) =>
-      one.type === 'attributes' ||
-      RESTYLES.has(one.target.nodeName) ||
-      RESTYLES.has(one.target.parentNode?.nodeName ?? '') ||
-      [...one.addedNodes, ...one.removedNodes].some((node) => RESTYLES.has(node.nodeName)),
+const DECLARES = /--[\w-]+\s*:/
+const UNTHEMED = /^--(overview-|wallpaper-|glass-|flight-|keyboard$|zoom$)/
+const declares = (node: Node) => node.nodeName === 'STYLE' && DECLARES.test(node.textContent ?? '')
+function tokens(style: string | null): Record<string, string> {
+  return Object.fromEntries(
+    [...(style ?? '').matchAll(/(?:^|;)\s*(--[\w-]+)\s*:([^;]*)/g)].map(([, name = '', value = '']) => [
+      name,
+      value.trim(),
+    ]),
   )
+}
+function themeWritten(was: string | null, now: string | null): boolean {
+  const before = tokens(was)
+  const after = tokens(now)
+  return [...Object.keys(before), ...Object.keys(after)].some(
+    (name) => !UNTHEMED.test(name) && before[name] !== after[name],
+  )
+}
+const restyled = (records: readonly MutationRecord[]): boolean =>
+  records.some((one) => {
+    const target = one.target
+    if (one.type === 'attributes') {
+      const now = (target as Element).getAttribute(one.attributeName ?? '')
+      if (now === one.oldValue) return false
+      return one.attributeName !== 'style' || themeWritten(one.oldValue, now)
+    }
+    if (one.type === 'characterData')
+      return (
+        target.parentNode?.nodeName === 'STYLE' &&
+        (DECLARES.test(one.oldValue ?? '') || DECLARES.test(target.textContent ?? ''))
+      )
+    if (target.nodeName === 'STYLE')
+      return declares(target) || [...one.removedNodes].some((node) => DECLARES.test(node.textContent ?? ''))
+    return [...one.addedNodes, ...one.removedNodes].some(declares)
+  })
 export type { Session }
 function watch() {
   $effect.root(() => {
@@ -1392,9 +1418,10 @@ function watch() {
   })
   page.observe(document.documentElement, {
     attributes: true,
+    attributeOldValue: true,
     attributeFilter: ['data-theme', 'style', 'class'],
   })
-  page.observe(document.head, { childList: true, subtree: true, characterData: true })
+  page.observe(document.head, { childList: true, subtree: true, characterData: true, characterDataOldValue: true })
   owes(() => {
     for (const one of sessions.values()) one.remember()
   })
