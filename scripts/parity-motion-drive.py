@@ -31,7 +31,7 @@ KINDS = ("off", "blank", "stale", "jump")
 EDGE = 4.0
 SETTLE = 20.0
 ROUNDS = 3
-SLACK = 2
+PAGE_LATE = 1.0
 HOVER_FRAMES = 8.0
 HOVER_SLACK = 1.0
 IDLE_CPU = 8.0
@@ -719,7 +719,8 @@ def row(item: int, check: str, web: Any, note: Any, ok: bool) -> dict[str, Any]:
 def motion_ok(web: dict[str, Any], note: dict[str, Any]) -> bool:
     if "error" in web or "error" in note or web["read"] < 5 * ROUNDS or note["read"] < 5 * ROUNDS:
         return False
-    return all(note[key] <= SLACK and web[key] <= SLACK for key in KINDS)
+    late = web.get("placed_frames", web.get("sent_frames"))
+    return late is not None and late <= PAGE_LATE and all(side[key] == 0 for side in (web, note) for key in ("blank", "jump"))
 def shown(said: Any) -> str:
     if not isinstance(said, dict):
         return str(said)
