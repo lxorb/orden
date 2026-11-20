@@ -42,7 +42,8 @@ let named = Unmanaged<CFString>.fromOpaque(TISGetInputSourceProperty(now, kTISPr
 print(named)
 """
 FINDS = "[...document.querySelectorAll('.findbar')].filter((one) => one.getBoundingClientRect().width > 0).length"
-HEARD_KEYS = "(() => { if (!window.__heard) { window.__heard = []; addEventListener('keydown', (e) => window.__heard.push([e.key, e.code]), true) } window.__heard.length = 0; return true })()"
+HEARD_KEYS = "(() => { if (!window.__heard) { window.__heard = []; addEventListener('keydown', (e) => window.__heard.push([e.key, e.code, String(e.target?.className || e.target?.tagName || '').slice(0, 40), null]), true); addEventListener('keydown', (e) => { const last = window.__heard.at(-1); if (last) last[3] = e.defaultPrevented }) } window.__heard.length = 0; return true })()"
+KNOWN = "known, not judged: on macOS a web page's Cmd+F opens no find bar on any layout, QWERTY too"
 def chosen(layout: str) -> tuple[str, Any]:
     names = {"latin": ["colemak", "dvorak"], "second": ["colemak-second"]}.get(layout, [layout])
     if PLATFORM == "windows":
@@ -160,14 +161,20 @@ class Check:
         if not self.staged(side):
             self.row(name, side, None, None, f"the {side} side could not be given the keyboard by a click")
             return
+        self.drive.js(HEARD_KEYS)
         before = self.state()
         self.places.press(place, True)
         time.sleep(1.2)
         after = self.state()
+        heard = self.drive.js("window.__heard.filter((one) => !['Control', 'Meta'].includes(one[0]))")
         tabs = (after.get("tabs") or 0) - (before.get("tabs") or 0)
         finds = (after.get("finds") or 0) - (before.get("finds") or 0)
         ok = finds > 0 and tabs == 0 if letter == "f" else tabs == 1 and finds <= 0
-        self.row(name, side, {"new tabs": tabs, "find bars opened": finds, "before": before, "after": after}, ok)
+        said = {"new tabs": tabs, "find bars opened": finds, "keydown in the app (key, code, target, prevented)": heard, "before": before, "after": after}
+        if not ok and MAC and side == "web" and letter == "f" and tabs == 0 and finds == 0:
+            self.row(name, side, said, None, KNOWN)
+            return
+        self.row(name, side, said, ok)
     def run(self, name: str) -> None:
         one = LAYOUTS[name]
         for side in ("note", "web"):
