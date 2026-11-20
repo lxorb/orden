@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { spaceArchiving } from './lib/spaces/src/api'
   import { webDownloads } from './lib/web-tab/src/api'
   import { onDestroy, tick, untrack } from 'svelte'
   import { moveSection, isDraft, scanHeadings } from './lib/documents/src/api'
@@ -63,7 +62,6 @@
   import { invoke, isDesktop, isNative, platform, storedText } from './lib/platform/src/api'
   import { chrome, theme } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight/src/api'
-  import { recovery } from './lib/history/src/api'
   import { pages } from './lib/pages/src/api'
   import { inRooms, personFace, rooms } from './lib/collab/src/api'
   import { search } from './lib/search/src/api'
@@ -198,25 +196,18 @@
       if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
     })
   })
+  const support = () => import('./lib/app-support')
   $effect(() => {
-    const token = account.accountToken
-    if (token) {
-      void modes.adopt(token).then((remote) => {
-        if (!remote) return
-        shortcuts.receive(remote)
-        toolbar.receive(remote)
-        whenLoaded(
-          () => import('./lib/gates/src/api'),
-          (one) => one.receive(remote),
-        )
-        recovery.receive(remote)
-        whenLoaded(spaceArchiving, (one) => void one.receive(remote))
-        if (!__EVEN_PLUGIN__)
-          whenLoaded(
-            () => import('./lib/chats-client/src/api'),
-            ({ hush }) => hush.receive(remote),
-          )
-      })
+    if (!account.accountToken) return
+    return whenLoaded(support, (one) => one.accountSettings.take())
+  })
+  $effect(() => {
+    if (__EVEN_PLUGIN__) return
+    let stop: (() => void) | null = null
+    const off = whenLoaded(support, (one) => (stop = one.hearAccountSettings()))
+    return () => {
+      off()
+      stop?.()
     }
   })
   async function followWhenLanded(current: EditorView) {
