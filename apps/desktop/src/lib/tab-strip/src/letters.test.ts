@@ -1,5 +1,12 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { letterOf, lettersFor, PANE_LETTERS, takenUnderAlt, underAlt } from './letters'
+import { readLayout } from '../../ui-kit/src/api'
+
+async function laidOut(map: Record<string, string>) {
+  vi.stubGlobal('navigator', { keyboard: { getLayoutMap: () => Promise.resolve(new Map(Object.entries(map))) } })
+  await readLayout()
+  vi.unstubAllGlobals()
+}
 
 const essential = (name: string) => ({ path: `/space/${name}.md`, name })
 const NONE = new Set<string>()
@@ -41,14 +48,25 @@ describe('the letter a key is', () => {
   const stroke = { key: 'n', code: 'KeyN', altKey: true, ctrlKey: false, shiftKey: false }
   const more = { metaKey: false, altGraph: false }
   test('the one it typed, or the one at its place when Alt typed something else', () => {
-    expect(letterOf({ ...stroke, ...more })).toBe('N')
-    expect(letterOf({ ...stroke, ...more, key: 'Dead' })).toBe('N')
+    expect(letterOf({ ...stroke, ...more }, 'linux')).toBe('N')
+    expect(letterOf({ ...stroke, ...more, key: 'Dead' }, 'linux')).toBe('N')
   })
   test('none without Alt, or with anything more', () => {
-    expect(letterOf({ ...stroke, ...more, altKey: false })).toBeNull()
-    expect(letterOf({ ...stroke, ...more, ctrlKey: true })).toBeNull()
-    expect(letterOf({ ...stroke, ...more, altGraph: true })).toBeNull()
-    expect(letterOf({ ...stroke, ...more, key: '3', code: 'Digit3' })).toBeNull()
+    expect(letterOf({ ...stroke, ...more, altKey: false }, 'linux')).toBeNull()
+    expect(letterOf({ ...stroke, ...more, ctrlKey: true }, 'linux')).toBeNull()
+    expect(letterOf({ ...stroke, ...more, altGraph: true }, 'linux')).toBeNull()
+    expect(letterOf({ ...stroke, ...more, key: '3', code: 'Digit3' }, 'linux')).toBeNull()
+  })
+  test('on Colemak the letter its key writes, with Option on a Mac as well, not the letter of its place', async () => {
+    await laidOut({ KeyF: 't', KeyT: 'g', KeyN: 'k' })
+    expect(letterOf({ ...stroke, ...more, key: 't', code: 'KeyF' }, 'linux')).toBe('T')
+    expect(letterOf({ ...stroke, ...more, key: '†', code: 'KeyF' }, 'mac')).toBe('T')
+    await laidOut({})
+  })
+  test('where the layout writes no Latin letter, the letter of its place', async () => {
+    await laidOut({ KeyN: 'т', KeyF: 'а' })
+    expect(letterOf({ ...stroke, ...more, key: 'т', code: 'KeyN' }, 'linux')).toBe('N')
+    await laidOut({})
   })
   test('a key bound under Alt alone is its character', () => {
     expect(underAlt('Alt-k', 'linux')).toBe('K')
