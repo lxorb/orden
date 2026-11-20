@@ -56,3 +56,21 @@ describe('the caret after a tab switch', () => {
     expect(document.activeElement).toBe(strip)
   })
 })
+describe('a key pressed before the caret came, in a tab with no editor', () => {
+  test('goes the early way, and the caret after the paint is called off', async () => {
+    const terminal = document.createElement('textarea')
+    document.body.append(terminal)
+    let painted = 0
+    const stop = caretAfterPaint(
+      () => painted++,
+      () => terminal.focus(),
+    )
+    let landed: Element | null = null
+    document.body.addEventListener('keydown', () => (landed = document.activeElement))
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'q', bubbles: true }))
+    expect(landed).toBe(terminal)
+    await settle()
+    expect(painted).toBe(0)
+    stop()
+  })
+})

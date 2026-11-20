@@ -19,8 +19,6 @@
     viewport,
     escapeLeaves,
     fullscreen,
-    keyboardStays,
-    takesCaret,
     linkScroll,
     type ScrollEnd,
     systemMenu,
@@ -197,6 +195,8 @@
     })
   })
   const support = () => import('./lib/app-support')
+  let kit: Awaited<ReturnType<typeof support>> | null = null
+  $effect(() => whenLoaded(support, (one) => (kit = one)))
   $effect(() => {
     if (!account.accountToken) return
     return whenLoaded(support, (one) => one.accountSettings.take())
@@ -520,20 +520,15 @@
   $effect(() => {
     const current = view
     const reasons = [showing?.id, showing?.kind, showing?.reading, workspace.naming, palette]
-    if (!current || !reasons.length) return
+    if (!reasons.length) return
+    const pane = workspace.panes.focusedId
+    const tab = showing
     let stop: (() => void) | null = null
-    const off = whenLoaded(support, (one) => {
-      stop = one.caretAfterPaint(() => {
-        const may = takesCaret(showing ? { kind: showing.kind, reading: showing.reading } : null, {
-          overlaid: overlays.depth > 0,
-          renaming: workspace.naming !== null,
-          touch: viewport.touch,
-        })
-        if (may && !keyboardStays() && !current.hasFocus) current.focus()
-      })
-    })
+    const arm = (one: NonNullable<typeof kit>) => (stop = one.caretInto(current, tab, pane))
+    const off = kit ? undefined : whenLoaded(support, arm)
+    if (kit) arm(kit)
     return () => {
-      off()
+      off?.()
       stop?.()
     }
   })
