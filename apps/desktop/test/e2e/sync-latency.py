@@ -62,12 +62,12 @@ def act(page: Page, script: str) -> None:
         " await (new Function('ws', 'at', `return (async () => { ${script} })()`))(ws, at) }",
         script,
     )
-def record(version: int, what: str, seconds: float) -> None:
+def record(version: int | str, what: str, seconds: float) -> None:
     table.append((f"v{version}", what, seconds))
     say(f"v{version} {what}: {seconds:.2f} s")
-    if seconds > TARGET and version == 2:
+    if seconds > TARGET and str(version).startswith("2"):
         wrong.append(f"v{version} {what} took {seconds:.2f} s, more than {TARGET} s")
-def shows(version: int, away: Page, what: str, check: str, started: float) -> None:
+def shows(version: int | str, away: Page, what: str, check: str, started: float) -> None:
     try:
         wait_for(away, f"() => {{ const p = ({PATHS})(); return {check} }}", what)
         record(version, what, time.monotonic() - started)
@@ -92,7 +92,7 @@ def typed(page: Page, words: str) -> None:
     )
 def holds(page: Page, words: str) -> bool:
     return bool(page.evaluate("(w) => !!window.orden && window.orden.state.doc.toString().includes(w)", words))
-def live_after(version: int, writer: Page, reader: Page, what: str, started: float) -> None:
+def live_after(version: int | str, writer: Page, reader: Page, what: str, started: float) -> None:
     sent: list[tuple[str, float]] = []
     until = time.monotonic() + PATIENCE
     while time.monotonic() < until:
@@ -105,15 +105,21 @@ def live_after(version: int, writer: Page, reader: Page, what: str, started: flo
                 record(version, what, at - started)
                 return
     record(version, what, PATIENCE)
-def run(browser: Browser, worker: harness.Worker, version: int) -> None:
-    email = f"v{version}-{EMAIL}"
+def run(browser: Browser, worker: harness.Worker, version: int, shared: bool = False) -> None:
+    email = f"v{version}{'-shared' if shared else ''}-{EMAIL}"
+    label = f"{version} on one session" if shared else str(version)
     token = worker.account(email)
     if version == 2:
         worker.sql(f"update users set sync_version = 2 where email = '{email}'")
     frames: list = []
-    here = signed_in(browser, token, "here", frames)
-    away = signed_in(browser, second_token(worker, email), "away", frames)
-    space = f"Latency {version}"
+    if shared:
+        away = signed_in(browser, token, "away", frames)
+        away.wait_for_timeout(3000)
+        here = signed_in(browser, token, "here", frames)
+    else:
+        here = signed_in(browser, token, "here", frames)
+        away = signed_in(browser, second_token(worker, email), "away", frames)
+    space = f"Latency {label}"
     here.evaluate(
         "async (name) => { const ws = window.ordenApp.workspace; await ws.addSpace(name);"
         " await ws.selectSpace(ws.spaces.find((one) => one.name === name).id) }",
@@ -129,26 +135,26 @@ def run(browser: Browser, worker: harness.Worker, version: int) -> None:
     mark = len(frames)
     started = time.monotonic()
     act(here, "await ws.noteFrom('# Made\\n\\nmade here\\n', ws.activeSpace.root)")
-    shows(version, away, "create", "p.includes('Made.md')", started)
+    shows(label, away, "create", "p.includes('Made.md')", started)
     started = time.monotonic()
     act(here, "await ws.rename(at('Made.md'), 'Named.md')")
-    shows(version, away, "rename", "p.includes('Named.md') && !p.includes('Made.md')", started)
+    shows(label, away, "rename", "p.includes('Named.md') && !p.includes('Made.md')", started)
     act(here, "await ws.noteFrom('# keep\\n', at('F'))")
     wait_for(away, f"() => ({PATHS})().some((one) => one.startsWith('F/'))", "the folder")
     here.wait_for_timeout(3000)
     started = time.monotonic()
     act(here, "await ws.moveMany([at('Named.md')], at('F'))")
-    shows(version, away, "move", "p.includes('F/Named.md') && !p.includes('Named.md')", started)
+    shows(label, away, "move", "p.includes('F/Named.md') && !p.includes('Named.md')", started)
     started = time.monotonic()
     act(here, "await ws.remove(at('F/Named.md'), false)")
-    shows(version, away, "delete", "!p.includes('F/Named.md')", started)
+    shows(label, away, "delete", "!p.includes('F/Named.md')", started)
     here.wait_for_timeout(3000)
     open_note(here, "Seed.md")
     here.wait_for_timeout(1500)
     started = time.monotonic()
     open_note(away, "Seed.md")
-    live_after(version, away, here, "away typing reaches here", started)
-    live_after(version, here, away, "here typing reaches away", started)
+    live_after(label, away, here, "away typing reaches here", started)
+    live_after(label, here, away, "here typing reaches away", started)
     t0 = frames[mark][0] if len(frames) > mark else started
     for at, who, kind, said in frames[mark:]:
         if kind != "in" or "poke" in said or "room" in said or "hello" in said:
@@ -164,6 +170,10 @@ def main() -> int:
                 run(browser, worker, version)
             except SystemExit as gave_up:
                 wrong.append(f"v{version} gave up: {gave_up}")
+        try:
+            run(browser, worker, 2, shared=True)
+        except SystemExit as gave_up:
+            wrong.append(f"v2 on one session gave up: {gave_up}")
     print("\n| sync | what | seconds |\n|---|---|---|", flush=True)
     for version, what, seconds in table:
         print(f"| {version} | {what} | {seconds:.2f} |", flush=True)
