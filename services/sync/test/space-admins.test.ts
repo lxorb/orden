@@ -265,3 +265,74 @@ describe('a writer or a reader', () => {
     expect(answer.json.space).toMatchObject({ icon: 'Book', admin: false })
   })
 })
+describe('the contract of who manages a space', () => {
+  interface Asked {
+    method: string
+    path: () => string
+    body?: () => unknown
+  }
+  const ask = (token: string, one: Asked) =>
+    call<{ error?: string }>(env, one.path(), {
+      method: one.method,
+      token,
+      ...(one.body ? { body: one.body() } : {}),
+    })
+  const at = (path: string) => () => `/v1/spaces/${space}${path}`
+  const MANAGING: (Asked & { what: string })[] = [
+    { what: 'reading who is in it', method: 'GET', path: at('/share') },
+    { what: 'reading who a note is shared with', method: 'GET', path: () => `/v1/spaces/${space}/share?item=${note}` },
+    { what: 'inviting', method: 'POST', path: at('/share/invite'), body: () => ({ email: NEWCOMER, role: 'read' }) },
+    { what: 'changing a role', method: 'PATCH', path: at(`/share/members/${READER}`), body: () => ({ role: 'write' }) },
+    { what: 'taking somebody out', method: 'DELETE', path: at(`/share/members/${READER}`) },
+    { what: 'setting the link', method: 'PUT', path: at('/share/link'), body: () => ({ role: 'read', mode: 'open' }) },
+    { what: 'taking the link away', method: 'DELETE', path: at('/share/link') },
+    { what: 'letting a request in', method: 'POST', path: at(`/share/requests/${NEWCOMER}`) },
+    { what: 'turning a request away', method: 'DELETE', path: at(`/share/requests/${NEWCOMER}`) },
+    { what: 'letting a guest in', method: 'POST', path: at('/share/guests/nobody') },
+    {
+      what: "changing a guest's role",
+      method: 'PATCH',
+      path: at('/share/guests/nobody'),
+      body: () => ({ role: 'read' }),
+    },
+    { what: 'taking a guest out', method: 'DELETE', path: at('/share/guests/nobody') },
+    { what: 'renaming the space', method: 'PATCH', path: () => `/v1/spaces/${space}`, body: () => ({ name: 'Ours' }) },
+    { what: 'giving it an icon', method: 'PATCH', path: () => `/v1/spaces/${space}`, body: () => ({ icon: 'Book' }) },
+  ]
+  const OWNER_ONLY: (Asked & { what: string })[] = [
+    { what: 'deleting the space', method: 'DELETE', path: () => `/v1/spaces/${space}` },
+    { what: 'vouching for it', method: 'POST', path: at('/share/trust') },
+    { what: 'publishing it', method: 'PUT', path: at('/blog'), body: () => ({ subdomain: 'plans' }) },
+    { what: 'taking it off the web', method: 'DELETE', path: at('/blog') },
+    { what: 'reading its domain', method: 'GET', path: at('/blog/domain') },
+    { what: 'proving its domain', method: 'POST', path: at('/blog/domain/verify') },
+    { what: 'reading what its forms were answered', method: 'GET', path: at('/answers') },
+    { what: 'reading those answers as a sheet', method: 'GET', path: at('/answers.csv') },
+    { what: 'deleting an answer', method: 'DELETE', path: at('/answers/nothing') },
+    { what: 'previewing its site', method: 'POST', path: at('/site/preview'), body: () => ({}) },
+    { what: 'dressing its site', method: 'PUT', path: at('/site'), body: () => ({}) },
+  ]
+  for (const one of MANAGING) {
+    test(`lets an admin through ${one.what}`, async () => {
+      const answer = await ask(admin, one)
+      expect(answer.status, one.what).not.toBe(403)
+      expect(answer.json.error, one.what).not.toBe(ONLY)
+    })
+  }
+  for (const one of OWNER_ONLY) {
+    test(`keeps an admin out of ${one.what}`, async () => {
+      expect((await ask(admin, one)).status, one.what).toBe(403)
+      expect((await ask(owner, one)).status, one.what).not.toBe(403)
+    })
+  }
+  test('lets an admin share a note with the people of a chat, and not a writer', async () => {
+    const chat = (await call<{ chat: string }>(env, '/v2/chats', { token: admin, body: { space } })).json.chat
+    const drop = (token: string) => call(env, `/v2/chats/${chat}/note`, { token, body: { space, note } })
+    const asked = await call<{ share: boolean }>(env, `/v2/chats/${chat}/note?space=${space}&note=${note}`, {
+      token: admin,
+    })
+    expect(asked.json.share).toBe(true)
+    expect((await drop(writer)).status).toBe(403)
+    expect((await drop(admin)).status).toBe(200)
+  })
+})

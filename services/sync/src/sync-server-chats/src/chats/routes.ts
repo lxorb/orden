@@ -27,6 +27,7 @@ import {
   BYTES,
   NO_SUCH_FILE,
   deviceOf,
+  ONLY_THOSE_WHO_MANAGE,
 } from '../../../sync-server-engine/src/api'
 import { askChat, CHAT_AWAY, chatsMoved } from './ask'
 import { INVALID, RATE } from './placing'
@@ -375,14 +376,14 @@ async function droppedNote(
   who: Whoever,
   space: unknown,
   note: unknown,
-): Promise<{ space: string; note: string; owner: boolean } | null> {
+): Promise<{ space: string; note: string; manages: boolean } | null> {
   if (typeof space !== 'string' || typeof note !== 'string') return null
   const reached = await reachedSpace(env, who, space)
   if (!reached) return null
   const found = await env.DB.prepare('select id from notes where id = ? and space_id = ? and deleted = 0')
     .bind(note, space)
     .first<{ id: string }>()
-  return found ? { space, note, owner: reached.role === 'owner' } : null
+  return found ? { space, note, manages: reached.manages } : null
 }
 chats.get('/:chat/note', async (context) => {
   const env = context.env
@@ -395,7 +396,7 @@ chats.get('/:chat/note', async (context) => {
     .all<{ id: string; name: string | null }>()
   return context.json({
     missing: results.map((one) => ({ who: `user:${one.id}`, name: one.name })),
-    share: dropped.owner,
+    share: dropped.manages,
   })
 })
 chats.post('/:chat/note', async (context) => {
@@ -405,7 +406,7 @@ chats.post('/:chat/note', async (context) => {
   const sent = (await context.req.json().catch(() => null)) as Record<string, unknown> | null
   const dropped = await droppedNote(env, context.get('who'), sent?.space, sent?.note)
   if (!dropped) return context.json({ error: NO_SUCH_SPACE }, 404)
-  if (!dropped.owner) return context.json({ error: refusal('owner') }, 403)
+  if (!dropped.manages) return context.json({ error: ONLY_THOSE_WHO_MANAGE }, 403)
   if (!(await roomForAnItem(env, dropped.space, dropped.note))) {
     return context.json({ error: TOO_MANY_ITEMS }, 409)
   }
