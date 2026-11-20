@@ -1,4 +1,5 @@
 import type { PandocPicture } from '@orden/contracts'
+import { stemOf } from '@orden/markdown/shown'
 import { invoke, isDesktop, dialogAnswer } from '../../platform/src/api'
 import { busy } from '../../ui-kit/src/api'
 
@@ -27,10 +28,7 @@ export async function importDocument(): Promise<{
     pictures: PandocPicture[]
   }>('import_document', { path: picked })
   if (leftOut) busy.failed(leftOut)
-  const name =
-    picked
-      .split(/[\\/]/)
-      .pop()
-      ?.replace(/\.[^.]+$/, '') ?? 'Imported'
+  const last = picked.split(/[\\/]/).pop()
+  const name = last === undefined ? 'Imported' : stemOf(last)
   return { name: `${name}.md`, markdown, pictures }
 }

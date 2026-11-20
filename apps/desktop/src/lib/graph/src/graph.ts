@@ -1,4 +1,5 @@
 import { embedKind, foldName, type LinkKind } from '@orden/markdown/links'
+import { shownName } from '@orden/markdown/note-name'
 import type { ScannedNote } from '@orden/scan/note'
 
 export interface GraphNode {
@@ -43,12 +44,12 @@ function embedded(nodes: GraphNode[], at: Map<string, number>, target: string): 
   return nodes.length - 1
 }
 function missing(nodes: GraphNode[], at: Map<string, number>, target: string): number {
-  const name = (target.replace(/\\/g, '/').split('/').pop() ?? target).replace(MARKDOWN, '')
-  const id = MISSING + foldName(name)
+  const last = target.replace(/\\/g, '/').split('/').pop() ?? target
+  const id = MISSING + foldName(last.replace(MARKDOWN, ''))
   const held = at.get(id)
   if (held !== undefined) return held
   at.set(id, nodes.length)
-  nodes.push({ id, name, path: null, degree: 0, tags: [] })
+  nodes.push({ id, name: shownName(last), path: null, degree: 0, tags: [] })
   return nodes.length - 1
 }
 export interface GraphOptions {

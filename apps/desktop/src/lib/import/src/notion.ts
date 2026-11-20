@@ -1,4 +1,6 @@
 import { htmlToMarkdown } from '@orden/markdown/from-html'
+import { shownName } from '@orden/markdown/note-name'
+import { shownPath } from '@orden/markdown/shown'
 import { folderPlan, isJunk } from './folder'
 import { dayOf, freeKey, type Meta, noteText, propertyName, type Property } from './meta'
 import { hasNotionId, Names, pageLink, safeName, safeParts, withoutNotionId } from './names'
@@ -55,7 +57,7 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
         return {
           to: path,
           read: () => {
-            const name = (path.split('/').pop() ?? path).replace(MARKDOWN, '')
+            const name = shownName(path.split('/').pop() ?? path)
             if (!database) return { text: '', title: name }
             const keys = keysOf(database)
             return { text: baseBlock(database, (one) => keys.get(one) ?? ''), title: name }
@@ -137,7 +139,7 @@ function notionPaths(
   const folder = (path: string): string => {
     if (!path) return ''
     const owner = owners.get(path)
-    if (owner !== undefined) return place(owner).replace(MARKDOWN, '')
+    if (owner !== undefined) return shownPath(place(owner))
     return inside(folder(parentOf(path)), safeName(withoutNotionId(nameOf(path))))
   }
   const place = (path: string): string => {
@@ -192,7 +194,7 @@ async function missingRows(
     const said = new Map(propertiesOf(await one.text(), database.kinds)?.said ?? [])
     pages.push({ name: matchable(name), said })
   }
-  const into = note.replace(MARKDOWN, '')
+  const into = shownPath(note)
   const unmatched: Record<string, string>[] = []
   for (const row of database.rows) {
     const name = safeName((row[title] ?? '').split('\n')[0] ?? '')

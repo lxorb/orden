@@ -1,4 +1,5 @@
 import type { PickedFile } from '@orden/contracts'
+import { stemOf } from '@orden/markdown/shown'
 import { isDesktop, platform } from '../../platform/src/api'
 import { safeName } from './names'
 import type { FormatId } from './plan'
@@ -8,7 +9,7 @@ const MACHINE_MADE = /^(applejournalentries|export|takeout|backup|notion|graph|r
 export function folderNameFor(picked: readonly PickedFile[], format: FormatId): string {
   if (format === 'todoist') return ''
   const first = picked[0]
-  const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
+  const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first.name) : '')
   const stripped = (format === 'obsidian' ? named : named.replace(MACHINE_MADE, '')).trim()
   const wordy = /\p{L}{2,}/u.test(stripped) && !/^[0-9a-f-]+$/i.test(stripped)
   return wordy ? safeName(stripped) : nameOfFormat(format)
@@ -48,8 +49,5 @@ export function nameOfFormat(format: FormatId): string {
     case 'pandoc':
       return 'Imported'
   }
-}
-function stemOf(picked: PickedFile): string {
-  return picked.name.replace(/\.[^.]+$/, '')
 }
 export const onMac = (): boolean => isDesktop && platform() === 'macos'
