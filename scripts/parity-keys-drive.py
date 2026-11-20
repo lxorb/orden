@@ -421,6 +421,15 @@ IN_NOTE = """((word) => {
 })"""
 TABBABLE = "a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex=\"-1\"]), [contenteditable=\"true\"]"
 DESCRIBE = "((e) => e ? (e.tagName.toLowerCase() + String(e.className || '').split(' ').filter(Boolean).map((one) => '.' + one).join('') + (e.getAttribute('aria-label') ? '[' + e.getAttribute('aria-label') + ']' : '')).slice(0, 80) : 'none')"
+def anchored(box: dict[str, Any], click: tuple[float, float], room: tuple[float, float], reference: list[int]) -> bool:
+    for start, size, at, wide, near in ((box["x"], box["w"], click[0], room[0], reference[0]), (box["y"], box["h"], click[1], room[1], reference[1])):
+        opened = abs((start - at) - near) <= 40
+        flipped = abs((start + size) - at) <= 40
+        held = start <= 8 or start + size >= wide - 8
+        covers = start - 8 <= at <= start + size + 8
+        if not (opened or flipped or held or covers):
+            return False
+    return True
 class Drive:
     def __init__(self, app: App, pid: int, url: str, out: pathlib.Path) -> None:
         self.app, self.pid, self.url, self.out = app, pid, url, out
@@ -1107,8 +1116,8 @@ return true
                 self.fresh_page()
             reference, ref_ok = (menu_ref, menu_ok) if kind == "menu" else (sheet_ref, sheet_ok)
             same = got["drawn"] == "orden" and layer is not None and layer["ground"] == reference.get("ground")
-            if same and kind == "menu" and answer is None and reference.get("from the click"):
-                same = all(abs(a - b) <= 40 for a, b in zip(web.get("from the click", [999, 999]), reference["from the click"]))
+            if same and kind == "menu" and answer is None and reference.get("from the click") and box:
+                same = anchored(box, spot_css, (width, height), reference["from the click"])
             if same and kind == "dialog" and reference.get("from the middle"):
                 same = all(abs(a - b) <= 80 for a, b in zip(web.get("from the middle", [999, 999]), reference["from the middle"]))
             if answer == "camera" and got["drawn"] == "none" and isinstance(replied, list) and str(replied[0]).startswith("error NotFoundError"):
@@ -1458,8 +1467,8 @@ def main() -> int:
         drive.shortcuts()
         drive.focus_moves()
         drive.dead_keys()
-        drive.page_ui()
         drive.menu_regressions()
+        drive.page_ui()
         rows = drive.rows
         drive.screen.shot().save(args.out / "end.png")
     finally:
