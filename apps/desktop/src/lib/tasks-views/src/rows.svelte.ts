@@ -220,12 +220,20 @@ function holdFocus(node: HTMLElement) {
     node.removeEventListener('blur', left, true)
   }
 }
+const KEEPS = '[data-todo-editor], [data-covers], .orden-layer, [role="menu"], [role="listbox"], [role="dialog"]'
 export function rowKeys(node: HTMLElement, rows: TodoRows) {
   const unhold = holdFocus(node)
   const heard = (event: KeyboardEvent) => rows.key(event, node)
   const pressed = (event: MouseEvent) => {
     if (event.target instanceof Element && !event.target.closest('[data-todo], [data-todo-editor]'))
       rows.picking.clear()
+  }
+  const outside = (event: Event) => {
+    const at = event.target instanceof Element ? event.target : null
+    if (!rows.picking.paths.length || !at) return
+    const row = at.closest('[data-todo]')
+    if (row ? node.contains(row) : at.closest(KEEPS)) return
+    rows.letGo()
   }
   const away = (event: KeyboardEvent) => {
     const at = event.target instanceof Element ? event.target : null
@@ -234,12 +242,14 @@ export function rowKeys(node: HTMLElement, rows: TodoRows) {
   }
   node.addEventListener('keydown', heard)
   node.addEventListener('click', pressed)
+  window.addEventListener('pointerdown', outside, true)
   window.addEventListener('keydown', away)
   return {
     destroy: () => {
       unhold()
       node.removeEventListener('keydown', heard)
       node.removeEventListener('click', pressed)
+      window.removeEventListener('pointerdown', outside, true)
       window.removeEventListener('keydown', away)
     },
   }
