@@ -9,7 +9,8 @@
   import { overlays } from '../../ui-kit/src/api'
   import { settingsWindow } from '@orden/contracts'
   import ExtensionGaps from './ExtensionGaps.svelte'
-  import { extensions, PENDING_SAID, type Extension } from './extensions.svelte'
+  import { extensions, type Extension } from './extensions.svelte'
+  import ExtensionRestart from './ExtensionRestart.svelte'
 
   const {
     right,
@@ -54,9 +55,6 @@
               <Glyph icon={Puzzle} />
             {/if}
             <span class="words">{one.name}</span>
-            {#if one.pending}
-              <small class="later">{PENDING_SAID}</small>
-            {/if}
           </button>
           {#if one.action && one.enabled}
             <button
@@ -73,6 +71,9 @@
         </li>
       {/each}
     </ul>
+    {#each extensions.list.filter((one) => one.pending) as one (one.id)}
+      <ExtensionRestart {one} />
+    {/each}
   {/if}
 
   <form onsubmit={add}>
@@ -184,11 +185,6 @@
   }
   .said.told {
     color: var(--muted);
-  }
-  .later {
-    flex: none;
-    color: var(--muted);
-    font-size: var(--text-xs);
   }
   .line {
     position: relative;

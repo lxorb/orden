@@ -68,6 +68,7 @@ function readAsks(said: unknown): { name: string; gaps: Gaps } | null {
   return gaps ? { name: typeof said.name === 'string' ? said.name : '', gaps } : null
 }
 export const PENDING_SAID = 'Starts when Orden next opens'
+export const OFF_SAID = 'Turns off when Orden next opens'
 export const UNKNOWN_ANSWER = 'Orden could not install that extension: it got an answer it does not know'
 export function pinnedOf(list: readonly Extension[]): Extension[] {
   return list.filter((one) => one.enabled && one.action && one.pinned && !one.pending)
@@ -125,6 +126,13 @@ class Extensions {
     this.list = said.map(readExtension).filter((one): one is Extension => one !== null)
     this.problems.clear()
     this.read = true
+  }
+  async restart(): Promise<void> {
+    try {
+      await invoke('extensions_restart')
+    } catch (error) {
+      this.failed = `Orden could not restart: ${typeof error === 'string' ? error : error instanceof Error ? error.message : 'that did not work'}`
+    }
   }
   installFrom(tab: string, link: string): Promise<boolean> {
     this.shownIn = tab

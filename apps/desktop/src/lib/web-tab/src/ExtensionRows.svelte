@@ -6,7 +6,8 @@
   import { dur, slide } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'
   import ExtensionGaps from './ExtensionGaps.svelte'
-  import { extensions, PENDING_SAID } from './extensions.svelte'
+  import { extensions, OFF_SAID, PENDING_SAID } from './extensions.svelte'
+  import ExtensionRestart from './ExtensionRestart.svelte'
 
   let opened = $state<string | null>(null)
   let link = $state('')
@@ -36,7 +37,7 @@
         {#if one.problem}
           <small class="warn">Did not load</small>
         {:else if one.pending}
-          <small>{PENDING_SAID}</small>
+          <small>{one.enabled ? PENDING_SAID : OFF_SAID}</small>
         {:else}
           <small>{one.version}</small>
         {/if}
@@ -48,6 +49,9 @@
       onchange={(on: boolean) => void extensions.enable(one.id, on)}
     />
   </div>
+  {#if one.pending}
+    <ExtensionRestart {one} />
+  {/if}
   {#if opened === one.id}
     <div class="details" transition:slide={{ duration: dur(140) }}>
       {#if one.problem}
