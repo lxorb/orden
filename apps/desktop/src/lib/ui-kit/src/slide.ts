@@ -25,33 +25,44 @@ export function leave(_node: Element, { y = -STEP, ms = SWAP }: Slip = {}): Tran
 export function letGo(_node: Element, { ms = SWAP }: { ms?: number } = {}): TransitionConfig {
   return { duration: dur(ms), css: () => 'pointer-events: none' }
 }
+type Measure = () => () => void
+const placing = new Set<Measure>()
+let placingFrame = 0
+function placeSoon(measure: Measure) {
+  placing.add(measure)
+  placingFrame ||= requestAnimationFrame(() => {
+    placingFrame = 0
+    const now = [...placing]
+    placing.clear()
+    for (const paint of now.map((one) => one())) paint()
+  })
+}
 export function segmented(node: HTMLElement) {
   const thumb = document.createElement('span')
   thumb.className = 'orden-segmented-thumb'
   thumb.setAttribute('aria-hidden', 'true')
+  thumb.style.transition = 'none'
+  thumb.style.opacity = '0'
   node.prepend(thumb)
   node.classList.add('has-thumb')
-  function place() {
+  let settled = 0
+  let shown = false
+  const measure: Measure = () => {
     const on = node.querySelector<HTMLElement>('button.on')
-    if (!on) {
-      thumb.style.opacity = '0'
-      return
+    if (!on) return () => (thumb.style.opacity = '0')
+    const [width, height, left, top] = [on.offsetWidth, on.offsetHeight, on.offsetLeft, on.offsetTop]
+    return () => {
+      thumb.style.opacity = ''
+      thumb.style.width = `${width}px`
+      thumb.style.height = `${height}px`
+      thumb.style.transform = `translate(${left}px, ${top}px)`
+      if (shown) return
+      shown = true
+      settled = requestAnimationFrame(() => (thumb.style.transition = ''))
     }
-    thumb.style.opacity = ''
-    thumb.style.width = `${on.offsetWidth}px`
-    thumb.style.height = `${on.offsetHeight}px`
-    thumb.style.transform = `translate(${on.offsetLeft}px, ${on.offsetTop}px)`
   }
-  let frame = 0
-  const soon = () => {
-    frame ||= requestAnimationFrame(() => {
-      frame = 0
-      place()
-    })
-  }
-  thumb.style.transition = 'none'
-  place()
-  const settled = requestAnimationFrame(() => (thumb.style.transition = ''))
+  const soon = () => placeSoon(measure)
+  soon()
   const watched = new MutationObserver(soon)
   watched.observe(node, {
     attributes: true,
@@ -63,8 +74,8 @@ export function segmented(node: HTMLElement) {
   measured?.observe(node)
   return {
     destroy() {
+      placing.delete(measure)
       cancelAnimationFrame(settled)
-      cancelAnimationFrame(frame)
       watched.disconnect()
       measured?.disconnect()
       thumb.remove()
