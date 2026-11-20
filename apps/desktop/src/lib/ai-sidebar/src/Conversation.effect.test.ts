@@ -81,6 +81,22 @@ test('the note in front, also @-mentioned, is drawn', () => {
   expect(() => (drawn = draw())).not.toThrow()
   drawn?.close()
 })
+test('a file sent along is named without Orden’s own ending, and a real file keeps its own (#2310)', () => {
+  panel.turns = [
+    you('u3', 'look', [
+      { label: 'Plans/Board.canvas', text: 'a' },
+      { label: 'Plan.md', text: 'b' },
+      { label: 'Report.pdf', text: 'c' },
+    ]),
+  ]
+  const drawn = draw()
+  expect([...drawn.target.querySelectorAll('.went span')].map((one) => one.textContent)).toEqual([
+    'Plans/Board',
+    'Plan',
+    'Report.pdf',
+  ])
+  void drawn.close()
+})
 test('an unread chat open in the window in focus is read; with the window away, not', () => {
   panel.turns = []
   ;(panel as { head: unknown }).head = { id: 'c1', parent: null, kept: true }

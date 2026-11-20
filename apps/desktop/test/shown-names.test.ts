@@ -51,9 +51,6 @@ const KEPT: Record<string, { most: number; why: string }> = {
   },
 }
 const TO_MOVE: Record<string, number> = {
-  'apps/desktop/src/lib/ai-sidebar/src/Conversation.svelte': 1,
-  'apps/desktop/src/lib/ai-sidebar/src/review/words.ts': 1,
-  'apps/desktop/src/lib/ai-sidebar/src/verbs.ts': 1,
   'apps/desktop/src/lib/commands/src/insert-picture.ts': 1,
   'apps/desktop/src/lib/graph/src/graph.ts': 1,
   'apps/desktop/src/lib/import/src/apply.ts': 4,

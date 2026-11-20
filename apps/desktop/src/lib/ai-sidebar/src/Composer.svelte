@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Entry } from '@orden/contracts'
+  import { shownPath } from '@orden/markdown/shown'
   import { Facts, Cross, DIVIDER, menu, overlays } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import { region, dur, fly, samePath, withinSpace } from '../../platform/src/api'
@@ -453,7 +454,7 @@
       {#if frontOn || selectionOn || chat.chips.length > 0}
         <div class="chips">
           {#if front && frontOn}
-            <span class="chip implicit" title={front.path}>
+            <span class="chip implicit" title={shownPath(front.path)}>
               <MentionMark kind="note" />
               <span class="name" dir="auto">{front.name}</span>
               {@render remove(() => chat.drop(front.key))}
@@ -472,7 +473,7 @@
               class:refused={chip.kind === 'picture' && chat.model?.images === false}
               title={chip.kind === 'picture' && chat.model?.images === false
                 ? 'This model takes no pictures'
-                : chip.label}
+                : shownPath(chip.label)}
               transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
             >
               {#if chip.image}
@@ -480,7 +481,7 @@
               {:else}
                 <MentionMark kind={chip.kind} />
               {/if}
-              <span class="name" dir="auto">{chip.label}</span>
+              <span class="name" dir="auto">{shownPath(chip.label)}</span>
               {@render remove(() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip))))}
             </span>
           {/each}

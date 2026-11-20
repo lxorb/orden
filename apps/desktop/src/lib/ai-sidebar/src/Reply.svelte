@@ -3,6 +3,7 @@
   import { SvelteSet } from 'svelte/reactivity'
   import type { EditorView } from '@orden/editor'
   import { dollarMaths } from '@orden/markdown/streamed'
+  import { shownPath } from '@orden/markdown/shown'
   import { cubicOut } from 'svelte/easing'
   import Answer from './Answer.svelte'
   import LiveAnswer from './LiveAnswer.svelte'
@@ -246,7 +247,9 @@
   {#if cited.length}
     <div class="sources">
       {#each cited as one (one.path)}
-        <button class="source" title={one.path} onclick={(event) => void openAt(one, event)}>{one.name}</button>
+        <button class="source" title={shownPath(one.path)} onclick={(event) => void openAt(one, event)}
+          >{one.name}</button
+        >
       {/each}
     </div>
   {/if}

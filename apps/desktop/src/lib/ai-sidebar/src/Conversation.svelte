@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte'
+  import { shownPath } from '@orden/markdown/shown'
   import { cubicOut } from 'svelte/easing'
   import Thinking from './Thinking.svelte'
   import { Copied } from '../../ui-controls/src/api'
@@ -57,7 +58,7 @@
     const draft = turns[index]?.draft
     return (draft?.attachments ?? [])
       .filter((one) => !('cite' in one) && one.label !== 'selection')
-      .map((one) => one.label.replace(/\.(?:md|markdown)$/i, ''))
+      .map((one) => shownPath(one.label))
   }
   const copied = new Copied<string>()
   const COPY =

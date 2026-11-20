@@ -2,6 +2,7 @@
   import type { Part, Thread } from '../../../ai-providers/src/api'
   import { workspace } from '../../../workspace/src/api'
   import { diffCount } from '@orden/markdown/line-diff'
+  import { shownPath } from '@orden/markdown/shown'
   import { type Preview, previewOf } from './preview'
   import Tally from './Tally.svelte'
 
@@ -28,7 +29,7 @@
 {#if shown && counted}
   <div class="asked">
     <div class="head">
-      <span class="name">{shown.path}</span>
+      <span class="name">{shownPath(shown.path)}</span>
       <Tally added={counted.added} removed={counted.removed} />
     </div>
     <div class="diff">
