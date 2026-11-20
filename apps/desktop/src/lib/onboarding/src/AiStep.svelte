@@ -11,7 +11,7 @@
 
   type State = 'idle' | 'busy' | 'waiting' | 'in'
   let plans = $state.raw<LocalPlans | null>(null)
-  if (!__EVEN_PLUGIN__) void localCli().then((one) => (plans = one.plans))
+  void localCli().then((one) => (plans = one.plans))
   const FROM_KEY: Record<KeyedKind, Plan> = {
     anthropic: 'claude',
     openai: 'chatgpt',
