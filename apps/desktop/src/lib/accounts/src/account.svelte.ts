@@ -8,6 +8,10 @@ import { called } from './person'
 
 const STORAGE_KEY = 'orden:session'
 const SETTINGS_HEARD = 'orden:settings-heard'
+const UNSETTLED = 'orden:unsettled'
+const SETTLING = 'orden:settling'
+const locks = (): LockManager | null =>
+  typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
 export type Step = 'email' | 'code' | 'second'
 export type Leaving = 'asked' | 'told' | 'kept'
 export interface Vault {
@@ -90,7 +94,8 @@ class Session {
     try {
       const who = await api.me(stored).catch(() => null)
       if (storedText(STORAGE_KEY) !== stored || this.token === stored) return
-      if (who?.user || who?.guest) await this.arrive(stored, who)
+      if (who?.user || who?.guest) await this.arrive(stored, who, true)
+      if (who?.user && this.token === stored) await this.follow(stored, who.user.id)
     } finally {
       if (this.hearing === stored) this.hearing = null
     }
@@ -127,6 +132,10 @@ class Session {
       this.user = who.user ?? null
       this.guest = who.guest ?? null
       if (!this.user) this.heardNoAccount()
+      else if (!this.settling && storedText(UNSETTLED) === this.user.id) {
+        this.settling = true
+        void this.follow(token, this.user.id)
+      }
     } catch (error) {
       if (!rejected(error)) return false
       if (this.token === token) this.forget()
@@ -225,6 +234,7 @@ class Session {
   private async settleIn(token: string, user: Account): Promise<void> {
     await this.leaveFor(token, { user })
     this.guest = null
+    this.holdSettling(user.id)
     keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)
     this.stopResendTimer()
@@ -255,9 +265,10 @@ class Session {
     await this.settleIn(session.token, session.user)
     return true
   }
-  async arrive(token: string, who: { user?: Account; guest?: Guest }) {
+  async arrive(token: string, who: { user?: Account; guest?: Guest }, heard = false) {
     await this.leaveFor(token, who)
     this.stopResendTimer()
+    if (who.user && !heard) this.holdSettling(who.user.id)
     keep(STORAGE_KEY, token)
     void this.vault?.write(token).catch(() => undefined)
     if (who.user) this.settling = true
@@ -272,6 +283,38 @@ class Session {
   }
   settled() {
     this.settling = false
+    if (storedText(UNSETTLED) === this.user?.id) forget(UNSETTLED)
+    this.letGoOfSettling()
+  }
+  private settleBy: (() => Promise<void>) | null = null
+  settleWith(work: () => Promise<void>) {
+    this.settleBy = work
+  }
+  private letGo: (() => void) | null = null
+  private askingHere = false
+  private holdSettling(who: string) {
+    this.letGoOfSettling()
+    this.askingHere = true
+    keep(UNSETTLED, who)
+    void locks()?.request(SETTLING, () =>
+      this.askingHere ? new Promise<void>((done) => (this.letGo = done)) : Promise.resolve(),
+    )
+  }
+  private letGoOfSettling() {
+    this.askingHere = false
+    this.letGo?.()
+    this.letGo = null
+  }
+  private async follow(token: string, who: string) {
+    const unsettled = () => storedText(UNSETTLED) === who
+    const turn = async () => {
+      if (this.token !== token || !this.settling) return
+      if (!unsettled() || !this.settleBy) this.settled()
+      else await this.settleBy()
+    }
+    const held = locks()
+    if (held && unsettled()) await held.request(SETTLING, turn)
+    else await turn()
   }
   async signOut(how: Leaving = 'told') {
     if (how === 'asked' && this.user && !(await this.mayLeave())) return
@@ -322,6 +365,8 @@ class Session {
     usage.reset()
     forget(STORAGE_KEY)
     forget(SETTINGS_HEARD)
+    if (this.askingHere) forget(UNSETTLED)
+    this.letGoOfSettling()
     void this.vault?.clear().catch(() => undefined)
     this.stopResendTimer()
     this.token = null

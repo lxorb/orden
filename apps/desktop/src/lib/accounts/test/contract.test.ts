@@ -144,29 +144,98 @@ describe('what a module keeps for an account', () => {
   })
 })
 describe('the account across windows', () => {
-  test('a sign-in in another window signs this window in too, without a reload', async () => {
-    const kept = new Map<string, string>()
+  const shared = new EventTarget()
+  const kept = new Map<string, string>()
+  const user = { id: 'uw', email: 'win@example.org', name: 'Win' }
+  const queues = new Map<string, Promise<unknown>>()
+  const locks = {
+    request: (name: string, work: () => Promise<unknown>) => {
+      const turn = (queues.get(name) ?? Promise.resolve()).then(work)
+      queues.set(
+        name,
+        turn.catch(() => undefined),
+      )
+      return turn
+    },
+  }
+  let letGo: () => void = () => undefined
+  function asking() {
+    kept.set('orden:unsettled', user.id)
+    void locks.request('orden:settling', () => new Promise<void>((done) => (letGo = done)))
+  }
+  function signedInThere() {
+    kept.set('orden:session', 'from-elsewhere')
+    shared.dispatchEvent(Object.assign(new Event('storage'), { key: 'orden:session' }))
+  }
+  beforeEach(() => {
+    kept.clear()
+    queues.clear()
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => kept.get(key) ?? null,
       setItem: (key: string, value: string) => void kept.set(key, value),
       removeItem: (key: string) => void kept.delete(key),
     })
-    vi.stubGlobal('window', new EventTarget())
+    vi.stubGlobal('window', shared)
+    vi.stubGlobal('navigator', { locks })
     vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
       const token = (init.headers as Record<string, string> | undefined)?.authorization
-      const user = { id: 'uw', email: 'win@example.org', name: 'Win' }
       return url.endsWith('/v1/me') && token === 'Bearer from-elsewhere'
         ? Promise.resolve(new Response(JSON.stringify({ user })))
         : Promise.reject(new Error('offline'))
     })
+  })
+  afterEach(async () => {
+    letGo()
+    await account.signOut()
+    account.settleWith(() => Promise.resolve())
+    vi.unstubAllGlobals()
+  })
+  test('a sign-in in another window signs this window in too, without a reload', async () => {
     await account.restore()
     expect(account.signedIn).toBe(false)
-    kept.set('orden:session', 'from-elsewhere')
-    window.dispatchEvent(Object.assign(new Event('storage'), { key: 'orden:session' }))
+    signedInThere()
     await vi.waitFor(() => expect(account.user?.id).toBe('uw'))
     expect(account.signedIn).toBe(true)
-    await account.signOut()
-    vi.unstubAllGlobals()
+    await vi.waitFor(() => expect(account.syncable).toBe(true))
+  })
+  test('while the window that signed in still asks how to meet this device’s notes, this one does not sync', async () => {
+    await account.restore()
+    asking()
+    signedInThere()
+    await vi.waitFor(() => expect(account.signedIn).toBe(true))
+    await new Promise((done) => setTimeout(done, 20))
+    expect(account.syncable).toBe(false)
+    kept.delete('orden:unsettled')
+    letGo()
+    await vi.waitFor(() => expect(account.syncable).toBe(true))
+  })
+  test('if that window goes before it was answered, this one asks instead, and only it', async () => {
+    let asked = 0
+    account.settleWith(() => {
+      asked++
+      account.settled()
+      return Promise.resolve()
+    })
+    await account.restore()
+    asking()
+    signedInThere()
+    await vi.waitFor(() => expect(account.signedIn).toBe(true))
+    expect(asked).toBe(0)
+    letGo()
+    await vi.waitFor(() => expect(account.syncable).toBe(true))
+    expect(asked).toBe(1)
+    expect(kept.has('orden:unsettled')).toBe(false)
+  })
+  test('a window opened again while another still asks waits for that answer too', async () => {
+    asking()
+    kept.set('orden:session', 'from-elsewhere')
+    await account.restore()
+    await vi.waitFor(() => expect(account.signedIn).toBe(true))
+    await new Promise((done) => setTimeout(done, 20))
+    expect(account.syncable).toBe(false)
+    kept.delete('orden:unsettled')
+    letGo()
+    await vi.waitFor(() => expect(account.syncable).toBe(true))
   })
 })
 describe('a list or a map kept on the account', () => {
