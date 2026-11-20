@@ -67,6 +67,7 @@ export default {
         'src/quick-add.ts',
         'handoff.html',
         'src/handoff.ts',
+        'src/dir-auto.ts',
         'pass-link.html',
         'src/pass-link.ts',
         'pass.html',

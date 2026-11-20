@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { awaitedOnly } from './even-awaited'
+import { dirOnWords } from './svelte-dir'
 import manifest from './even.app.json'
 
 const LEFT_OUT = new Set([
@@ -131,6 +132,7 @@ export default defineConfig({
   plugins: [
     onlyWhatIsAwaited(),
     svelte(),
+    dirOnWords(),
     withoutWhatTheGlassesCannotUse(),
     whatWentIn(process.env.ORDEN_EVEN_CONTENTS),
   ],
