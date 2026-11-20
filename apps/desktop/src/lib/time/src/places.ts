@@ -1,4 +1,18 @@
 import { brandIcon, siteBrand } from '../../ui-kit/src/api'
+import { isTabKind, TAB_KINDS, type TabKind } from '../../tab-kinds/src/api'
+
+export const OWN_ICON = `${import.meta.env.BASE_URL}icon-256.png`
+export const ownApp = (key: string): boolean => key.trim().toLowerCase() === 'orden'
+export function tabKindOf(key: string): TabKind | null {
+  const named = /^([a-z-]+):/.exec(key)?.[1]
+  if (named && isTabKind(named)) return named
+  const lower = key.toLowerCase()
+  const found = (Object.keys(TAB_KINDS) as TabKind[]).find((kind) => {
+    const ending = TAB_KINDS[kind].extension
+    return ending !== null && lower.endsWith(ending)
+  })
+  return found ?? null
+}
 
 const APPS: Readonly<Record<string, string>> = {
   orden: 'orden',

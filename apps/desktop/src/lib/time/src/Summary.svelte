@@ -121,7 +121,7 @@
                 type="button"
                 class="orden-row is-short place"
                 style:--tint={placeTint(place.key)}
-                style:--share="{(place.ms / most) * 100}%"
+                style:--part={place.ms / most}
                 title="Count as"
                 onclick={(event) => countAs(event, group.lane, place)}
                 oncontextmenu={(event) => countAs(event, group.lane, place)}
@@ -206,12 +206,11 @@
   }
   .place {
     --spent: 4.25rem;
-    background: linear-gradient(
-        to right,
-        color-mix(in srgb, var(--tint) 14%, transparent) var(--share),
-        transparent var(--share)
-      )
-      no-repeat 0 0 / calc(100% - var(--spent) - var(--space-1)) 100%;
+    --lead: calc(var(--row-pad) + 16px + var(--row-gap));
+    --room: calc(100% - var(--lead) - var(--spent) - var(--space-1));
+    --bar: color-mix(in srgb, var(--tint) 14%, transparent);
+    background: linear-gradient(var(--bar), var(--bar)) no-repeat 0 0 / calc(var(--lead) + var(--room) * var(--part))
+      100%;
   }
   .spent {
     flex: 0 0 var(--spent);

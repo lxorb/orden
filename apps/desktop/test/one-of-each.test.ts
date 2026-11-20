@@ -307,6 +307,7 @@ describe('the badge in front of a name', () => {
       'lib/spaces/src/SpaceBadge.svelte',
       'lib/surfaces/src/PromptSheet.svelte',
       'lib/tab-strip/src/TabCard.svelte',
+      'lib/time/src/PlaceIcon.svelte',
     ])
   })
 })

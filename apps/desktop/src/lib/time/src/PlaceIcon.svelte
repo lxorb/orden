@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { webPages } from '@orden/contracts'
+  import { portOf, type SiteIconsHeld, webPages } from '@orden/contracts'
   import { Icon, iconLibrary } from '../../glyphs/src/api'
-  import { FileMark, fileMark } from '../../marks/src/api'
+  import { FileMark, fileMark, SpaceMark, TabMark } from '../../marks/src/api'
+  import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { initial, readIcon } from '../../ui-kit/src/api'
   import { sync } from '../../sync-store/src/api'
   import { workspace } from '../../workspace/src/api'
   import { appIcons } from './app-icons.svelte'
   import { placeTint } from './look'
-  import { appIcon, lightness, plateFor, siteIcon, UNSEEN } from './places'
+  import { appIcon, lightness, OWN_ICON, ownApp, plateFor, siteIcon, tabKindOf, UNSEEN } from './places'
+  import { siteOf, tabPlace } from './tracker'
   import { theme } from '../../theme/src/api'
   import { lightOf, measured } from './lights.svelte'
   import type { Lane } from './records'
@@ -17,14 +19,28 @@
     readIcon(lane === 'app' ? (appIcon(place) ?? appIcon(name)) : lane === 'site' ? siteIcon(place) : null),
   )
   const drawn = $derived(iconLibrary.drawing(brand) !== null)
+  let sites = $state<SiteIconsHeld | null>(null)
+  $effect(() => {
+    if (lane !== 'site') return
+    const port = portOf('web.siteIcons')
+    if (port.ok) void port.value.held().then((held) => (sites = held))
+  })
+  $effect(() => {
+    if (lane === 'app') appIcons.seen(place)
+  })
   const pictures = $derived.by(() => {
     if (lane === 'site') {
       const cached = webPages().faviconOf(`https://${place}`)
-      return [...(cached ? [cached] : []), `https://${place}/favicon.ico`]
+      const kept = sites?.picture(place) ?? null
+      const live = workspace.tabs
+        .filter((tab) => tab.kind === 'web' && !tab.inPrivate && siteOf(tab.address) === place)
+        .map((tab) => webPages().of(tab.id).icon)
+        .find((icon) => icon !== null)
+      return [cached, kept, live ?? null, `https://${place}/favicon.ico`].filter((one): one is string => !!one)
     }
     if (lane === 'app') {
       const held = appIcons.of(place) ?? appIcons.of(name)
-      return held ? [held] : []
+      return [held, ownApp(place) || ownApp(name) ? OWN_ICON : null].filter((one): one is string => !!one)
     }
     return []
   })
@@ -59,6 +75,13 @@
       : null,
   )
   const spaceIcon = $derived(space ? readIcon(workspace.iconFor(space.id)) : null)
+  $effect(() => {
+    const set = iconLibrary.setFor(spaceIcon)
+    if (set !== null) iconLibrary.load(set)
+  })
+  const liveTab = $derived(lane === 'tab' ? (workspace.tabs.find((tab) => tabPlace(tab)?.key === place) ?? null) : null)
+  const kind = $derived(lane === 'tab' ? tabKindOf(place) : null)
+  const kindMark = $derived(kind ? (TAB_KINDS[kind].mark ?? null) : null)
   const path = $derived(lane === 'tab' && /^([/\\]|[A-Za-z]:)/.test(place) ? place : null)
 </script>
 
@@ -85,10 +108,14 @@
     {/key}
   {:else if brand && drawn}
     <span class="glyph"><Icon icon={brand} /></span>
-  {:else if space && spaceIcon}
-    <span class="glyph"><Icon icon={spaceIcon} tint={workspace.tintFor(space.id)} /></span>
+  {:else if space}
+    <span class="space" data-time-space-mark><SpaceMark id={space.id} name={space.name} /></span>
+  {:else if liveTab}
+    <span class="file" data-time-tab-mark><TabMark tab={liveTab} /></span>
   {:else if lane === 'tab'}
-    <span class="file"><FileMark mark={fileMark(path ?? name)} path={path ?? undefined} /></span>
+    <span class="file" data-time-kind-mark={kind ?? ''}
+      ><FileMark mark={kindMark ?? fileMark(path ?? name)} path={path ?? undefined} /></span
+    >
   {:else}
     <span class="tile">{initial(name)}</span>
   {/if}
@@ -106,7 +133,8 @@
   }
   img,
   .glyph,
-  .file {
+  .file,
+  .space {
     display: grid;
     place-items: center;
     width: 16px;
@@ -135,6 +163,12 @@
   img:not([src]),
   img[src=''] {
     display: none;
+  }
+  .space {
+    font-size: 10px;
+    font-weight: var(--weight-strong);
+    color: var(--text-strong);
+    --icon-md: 16px;
   }
   .tile {
     display: grid;
