@@ -312,6 +312,7 @@ macro_rules! desktop_commands {
             orden_extensions::extensions::extensions_set,
             orden_extensions::extensions::extensions_remove,
             orden_extensions::extensions::extensions_update,
+            orden_extensions::extensions::extensions_restart,
             orden_extensions::extensions::extensions_page,
             orden_extensions::extensions::extensions_named,
             orden_extensions::extensions::popup::extension_popup_open,
