@@ -11,7 +11,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 }))
 const { asked: asks, readMenu, readSelect } = await import('./asked.svelte')
 const { pages } = await import('./pages.svelte')
-const { menu } = await import('../../ui-kit/src/api')
+const { menu, overlays } = await import('../../ui-kit/src/api')
 const WebAsks = (await import('./WebAsks.svelte')).default
 const { settle } = await import('../../../../test/effects/settle')
 Object.assign(Element.prototype, {
@@ -68,6 +68,37 @@ test('a page’s select closes cleanly, and the page’s menu after it opens as 
   await asks.showMenu(said)
   expect(menu.open).toBe(true)
   menu.hide()
+  void unmount(app)
+  target.remove()
+})
+test('a page’s list closes on a press in the page, as Orden’s do, and on Escape', async () => {
+  Object.assign(pages.of('t'), {
+    sent: { pane: { x: 0, y: 40, width: 800, height: 560 }, visible: true, frame: null, cut: null },
+  })
+  const target = document.createElement('div')
+  document.body.append(target)
+  const app = mount(WebAsks, { target, props: { tab: 't' } })
+  const options = [{ index: 0, label: 'Apple', disabled: false, group: null }]
+  for (const [id, close] of [
+    [3, () => overlays.away()],
+    [
+      4,
+      () =>
+        target
+          .querySelector('[role="listbox"]')
+          ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+    ],
+  ] as const) {
+    const select = readSelect({ tab: 't', id, x: 20, y: 20, width: 100, height: 30, zoom: 1, selected: 0, options })
+    if (!select) throw new Error('no select')
+    asks.heardSelect(select)
+    flushSync()
+    close()
+    flushSync()
+    await settle()
+    expect(asks.selectOf('t')).toBeNull()
+    expect(asked.at(-1)).toEqual({ command: 'web_select_pick', args: { tab: 't', id, index: null } })
+  }
   void unmount(app)
   target.remove()
 })

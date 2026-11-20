@@ -80,6 +80,11 @@
   })
   function selectKey(event: KeyboardEvent, one: SelectAsked) {
     if (chorded(event)) return
+    if (event.key === 'Escape' || event.key === 'Tab') {
+      event.preventDefault()
+      asked.pickSelect(one, null)
+      return
+    }
     const step = walk(
       event.key,
       event.timeStamp,

@@ -3,10 +3,12 @@ import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 const calls: { command: string; args: Record<string, unknown> }[] = []
+let took = 0
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string, args: Record<string, unknown> = {}) => {
-    calls.push({ command, args })
+    if (command === 'take_keyboard') took += 1
+    else calls.push({ command, args })
     return Promise.resolve(undefined)
   },
 }))
@@ -188,4 +190,23 @@ test('the window takes over what it shows of a page, and listens for each', asyn
     'orden://web-select',
   ])
   expect(calls.at(-1)).toEqual({ command: 'web_page_ui', args: { kinds: ['menu', 'dialog', 'permission', 'select'] } })
+})
+test('a page asking for a sheet, a list or a menu hands the keyboard to the app, so Escape and the arrows are Orden’s', () => {
+  took = 0
+  const dialog = readDialog({
+    tab: 't',
+    id: 40,
+    kind: 'alert',
+    message: 'Hi',
+    default: null,
+    origin: null,
+    reload: false,
+  })
+  const select = readSelect({ tab: 't', id: 41, x: 0, y: 0, width: 10, height: 10, zoom: 1, selected: 0, options: [] })
+  if (!dialog || !select) throw new Error('nothing asked')
+  asked.heardDialog(dialog)
+  asked.heardSelect(select)
+  expect(took).toBe(2)
+  asked.dialogGone('t', 40)
+  asked.pickSelect(asked.selectOf('t') ?? select, null)
 })
