@@ -228,7 +228,7 @@ export function candidates(world: World): Candidate<Row>[] {
       }),
     )
   }
-  const groups = __EVEN_PLUGIN__ ? [] : [...new Set(world.hosts.flatMap((host) => (host.group ? [host.group] : [])))]
+  const groups = [...new Set(world.hosts.flatMap((host) => (host.group ? [host.group] : [])))]
   for (const group of groups) {
     const hosts = world.hosts.filter((host) => host.group === group)
     out.push(
