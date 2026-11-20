@@ -314,7 +314,7 @@ function unframed(response: Response, url: URL, framer: string | null): Response
   if (!response.headers.get('content-type')?.includes('text/html')) return response
   const headers = new Headers(response.headers)
   if (framer && (url.searchParams.has('demo') || url.pathname.startsWith('/demo/'))) {
-    headers.set('content-security-policy', `frame-ancestors ${framer}`)
+    headers.set('content-security-policy', `frame-ancestors 'self' ${framer}`)
     headers.delete('x-frame-options')
   } else {
     headers.set('content-security-policy', "frame-ancestors 'none'")
