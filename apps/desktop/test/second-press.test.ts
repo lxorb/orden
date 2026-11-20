@@ -13,6 +13,7 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/downloads/src/api.ts': 'a press says where a download was asked for, to fly from',
   'lib/ui-kit/src/select-all.ts': 'a press inside a name field leaves its second take of the words alone',
   'lib/panes/src/panes.svelte.ts': 'a press ends a drag whose row went away, no layer up',
+  'lib/tasks-views/src/rows.svelte.ts': 'a press past the todos lets their picks go and still does what it pressed',
   'site/site.ts': 'a published page has no layer stack; a tap past a link card hides it',
 }
 const NOT_YET = new Set(['lib/web-tab/src/WebExtensionPopup.svelte'])

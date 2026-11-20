@@ -237,6 +237,17 @@ def no_ring(page: Page) -> None:
     left = page.evaluate("() => [document.activeElement?.closest('[data-todo]') ? 'in a row' : 'out', ...[...document.querySelectorAll('[data-todos-panel] [data-todo]')].flatMap((one) => [getComputedStyle(one).outlineStyle, getComputedStyle(one.querySelector('.body')).outlineStyle]).filter((one) => one !== 'none')]")
     if left != ["out"]:
         wrong(f"Escape after picking a todo left a ring or its focus: {left}")
+    for where, at in [("the page", (500, 600)), ("the panel's empty space", (1150, 760))]:
+        page.locator(f"{row} .body", has_text="Read a book").first.click()
+        if page.locator(f"{row}.is-picked").count() != 1:
+            wrong("a click on a todo did not pick it")
+        if where == "the page":
+            shot(page, "09-picked-before-outside")
+        page.mouse.click(*at)
+        page.wait_for_timeout(150)
+        if page.locator(f"{row}.is-picked").count():
+            wrong(f"a click on {where} left the todo picked")
+    shot(page, "09-outside-cleared")
     page.locator(f"{row} .body").first.focus()
     page.keyboard.press("ArrowDown")
     ring = page.evaluate("() => { const body = document.activeElement; return [body?.closest('[data-todo]') ? 'in a row' : 'out', getComputedStyle(body).outlineStyle, parseFloat(getComputedStyle(body).borderTopLeftRadius)] }")
