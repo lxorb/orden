@@ -1,6 +1,9 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, expectTypeOf, test, vi } from 'vitest'
-import { ai, firstModel, isLocal, KIND_NAMES, localCli, MODES, modeIn, modeOfGrant } from '../src/api'
+import { ai, complete, firstModel, isLocal, KIND_NAMES, localCli, MODES, modeIn, modeOfGrant } from '../src/api'
 import { noMoreThan, offeredKinds, signOut, sseJson, sseLines, talkable, type Thread, vault } from '../src/api'
+import { listModels, providerFetch, type Provider, wasStopped } from '../src/api'
 import type { Engine } from '../src/api'
 
 const kept = vi.hoisted(() => {
@@ -12,6 +15,33 @@ const kept = vi.hoisted(() => {
   }
   Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true })
   return held
+})
+const road = vi.hoisted(() => ({
+  desktop: false,
+  asked: [] as { command: string; args: Record<string, unknown> }[],
+  answer: (_args: Record<string, unknown>): Promise<unknown> => Promise.resolve(null),
+}))
+class FakeChannel {
+  onmessage: (value: unknown) => void = () => undefined
+}
+vi.mock('../../crate/src/native', async (original) => ({
+  ...(await original<object>()),
+  Channel: FakeChannel,
+}))
+vi.mock('../../platform/src/tauri', async (original) => {
+  const real = await original<{ invoke: (command: string, args?: Record<string, unknown>) => Promise<unknown> }>()
+  return {
+    ...real,
+    get isDesktop() {
+      return road.desktop
+    },
+    invoke: (command: string, args: Record<string, unknown> = {}) => {
+      if (command === 'secret_read') return Promise.resolve(null)
+      if (!command.startsWith('ai_fetch')) return real.invoke(command, args)
+      road.asked.push({ command, args })
+      return command === 'ai_fetch' ? road.answer(args) : Promise.resolve(null)
+    },
+  }
 })
 
 describe('the module stands on its own', () => {
@@ -81,5 +111,120 @@ describe('an Orden account leaving the device', () => {
     await vi.waitFor(() => expect(ai.accounts.map((one) => one.id)).toEqual([mine.id]))
     expect(vault.seen).toEqual({})
     expect(kept.has('orden:ai-vault-base:u1')).toBe(false)
+  })
+})
+describe('a request to a provider', () => {
+  const local: Provider = {
+    id: 'compatible-1',
+    kind: 'compatible',
+    name: 'Ollama',
+    model: 'llama',
+    baseUrl: 'http://localhost:11434/v1',
+  }
+  const said = (text: string) => ({ data: btoa(text) })
+  function answering(status: number, chunks: unknown[], after = true) {
+    road.asked.length = 0
+    road.answer = (args) => {
+      const output = args.output as FakeChannel
+      if (!after) for (const one of chunks) output.onmessage(one)
+      if (after) setTimeout(() => chunks.forEach((one) => output.onmessage(one)), 0)
+      return Promise.resolve({ status, headers: [['content-type', 'text/event-stream']] })
+    }
+  }
+  const fetchAsked = () => road.asked.filter((one) => one.command === 'ai_fetch')
+  const headersOf = (index = 0) => new Map(fetchAsked()[index]?.args.headers as [string, string][])
+  test('leaves a desktop from the app, not the page, so no server sees the page’s origin, and the answer streams piece by piece in order', async () => {
+    road.desktop = true
+    const page = vi.spyOn(globalThis, 'fetch')
+    const pieces = ['Hel', 'lo', ' there']
+    const lines = pieces.map((one) => said(`data: ${JSON.stringify({ choices: [{ delta: { content: one } }] })}\n\n`))
+    answering(200, [...lines, { end: true }], false)
+    const heard: string[] = []
+    await expect(
+      complete({
+        provider: local,
+        model: 'llama',
+        messages: [{ role: 'user', content: 'hi' }],
+        stream: (one) => heard.push(one),
+      }),
+    ).resolves.toBe('Hello there')
+    expect(heard).toEqual(pieces)
+    expect(fetchAsked()[0]?.args).toMatchObject({ url: 'http://localhost:11434/v1/chat/completions', method: 'POST' })
+    const id = fetchAsked()[0]?.args.id
+    expect(Number.isInteger(id) && (id as number) >= 0 && (id as number) < 2 ** 32).toBe(true)
+    expect(headersOf().has('origin')).toBe(false)
+    answering(200, [said(JSON.stringify({ data: [{ id: 'llama' }] })), { end: true }])
+    await expect(listModels(local)).resolves.toEqual(['llama'])
+    expect(fetchAsked()[0]?.args).toMatchObject({ url: 'http://localhost:11434/v1/models', method: 'GET', body: null })
+    expect(headersOf().has('origin')).toBe(false)
+    expect(page).not.toHaveBeenCalled()
+    page.mockRestore()
+    road.desktop = false
+  })
+  test('leaves anywhere else by the page’s own fetch, and never asks the app', async () => {
+    road.desktop = false
+    road.asked.length = 0
+    const page = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ data: [{ id: 'llama' }] }), { status: 200 }))
+    await expect(listModels(local)).resolves.toEqual(['llama'])
+    expect(page).toHaveBeenCalledOnce()
+    expect(road.asked).toEqual([])
+    page.mockRestore()
+  })
+  test('sends a form as multipart, with its boundary named', async () => {
+    road.desktop = true
+    answering(200, [{ end: true }])
+    const form = new FormData()
+    form.append('model', 'whisper-1')
+    await providerFetch('http://localhost:8000/v1/audio/transcriptions', { method: 'POST', body: form })
+    const type = headersOf().get('content-type') ?? ''
+    expect(type).toMatch(/^multipart\/form-data; boundary=/)
+    const body = atob(String(fetchAsked()[0]?.args.body))
+    expect(body).toContain(type.split('boundary=')[1])
+    expect(body).toContain('whisper-1')
+    road.desktop = false
+  })
+  test('stopped, says AbortError and stops the app’s request, before the answer starts and in the middle of it', async () => {
+    road.desktop = true
+    road.asked.length = 0
+    road.answer = () => new Promise(() => undefined)
+    const before = new AbortController()
+    const waiting = providerFetch('http://localhost:11434/v1/models', { signal: before.signal })
+    await vi.waitFor(() => expect(fetchAsked()).toHaveLength(1))
+    before.abort()
+    const early = await waiting.catch((error: unknown) => error)
+    expect(wasStopped(early)).toBe(true)
+    const id = fetchAsked()[0]?.args.id
+    expect(road.asked).toContainEqual({ command: 'ai_fetch_stop', args: { id } })
+    answering(200, [said('data: one\n\n')], false)
+    const during = new AbortController()
+    const response = await providerFetch('http://localhost:11434/v1/chat/completions', {
+      method: 'POST',
+      body: '{}',
+      signal: during.signal,
+    })
+    const reader = (response.body as ReadableStream<Uint8Array>).getReader()
+    expect(new TextDecoder().decode((await reader.read()).value)).toBe('data: one\n\n')
+    during.abort()
+    expect(wasStopped(await reader.read().catch((error: unknown) => error))).toBe(true)
+    expect(road.asked).toContainEqual({ command: 'ai_fetch_stop', args: { id: fetchAsked()[0]?.args.id } })
+    road.desktop = false
+  })
+  test('that cannot reach the server fails as fetch does, with a TypeError', async () => {
+    road.desktop = true
+    road.answer = () => Promise.reject(new Error('connection refused'))
+    await expect(providerFetch('http://localhost:1/v1/models')).rejects.toBeInstanceOf(TypeError)
+    road.desktop = false
+  })
+  test('is never the page’s own fetch anywhere in the module but the one road', () => {
+    const root = join(import.meta.dirname, '../src')
+    const files = (readdirSync(root, { recursive: true }) as string[]).filter(
+      (one) => /\.(ts|svelte)$/.test(one) && !one.endsWith('.test.ts') && one !== 'fetching.ts',
+    )
+    const bare = files.filter((one) =>
+      /(?<![.\w]|async\s|function\s)fetch\(/.test(readFileSync(join(root, one), 'utf8')),
+    )
+    expect(bare).toEqual([])
   })
 })

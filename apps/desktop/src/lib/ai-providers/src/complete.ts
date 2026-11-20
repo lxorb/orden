@@ -1,3 +1,4 @@
+import { providerFetch } from './fetching'
 import { readKey } from './keys'
 import { askUrl, bodyFor, deltaIn, headersFor, isLocal, type Message, modelsIn } from './providers'
 import { modelsUrl, type Provider, reachable, talkable, troubleIn, usable } from './providers'
@@ -21,7 +22,7 @@ export async function complete(ask: Ask): Promise<string> {
   const apiKey = await keyFor(provider)
   if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')
   const streaming = !!ask.stream || provider.kind === 'chatgpt' || provider.kind === 'gemini'
-  const response = await fetch(askUrl(provider), {
+  const response = await providerFetch(askUrl(provider), {
     method: 'POST',
     headers: headersFor(provider, apiKey),
     body: bodyFor(provider, ask.messages, streaming),
@@ -116,7 +117,7 @@ async function streamed(
 export async function listModels(provider: Provider, signal?: AbortSignal): Promise<string[]> {
   const apiKey = await keyFor(provider)
   if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')
-  const response = await fetch(modelsUrl(provider), {
+  const response = await providerFetch(modelsUrl(provider), {
     headers: headersFor(provider, apiKey),
     ...(signal ? { signal } : {}),
   }).catch((error: unknown) => {

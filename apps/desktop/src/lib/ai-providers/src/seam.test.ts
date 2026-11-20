@@ -12,6 +12,7 @@ class FakeChannel {
 async function fakeInvoke(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
   asked.push({ command, args })
   if (command === 'chatgpt_token') return 'plan-token'
+  if (command === 'ai_fetch') return await fakeFetch(args)
   if (command === 'ai_cli_stop') {
     held?.onmessage({ ...ending, stopped: true })
     return null
@@ -25,6 +26,24 @@ async function fakeInvoke(command: string, args: Record<string, unknown> = {}): 
     if (!hold) channel.onmessage(ending)
   }, 0)
   return null
+}
+async function fakeFetch(args: Record<string, unknown>): Promise<unknown> {
+  const sent = typeof args.body === 'string' ? Uint8Array.from(atob(args.body), (one) => one.charCodeAt(0)) : null
+  fetched.push({
+    url: String(args.url),
+    init: {
+      headers: Object.fromEntries(args.headers as [string, string][]),
+      ...(sent ? { body: new TextDecoder().decode(sent) } : {}),
+    },
+  })
+  const answer = reply()
+  const bytes = new Uint8Array(await answer.arrayBuffer())
+  const channel = args.output as FakeChannel
+  setTimeout(() => {
+    channel.onmessage({ data: btoa(String.fromCharCode(...bytes)) })
+    channel.onmessage({ end: true })
+  }, 0)
+  return { status: answer.status, headers: [...answer.headers] }
 }
 vi.mock('../../crate/src/native', () => ({ Channel: FakeChannel, invoke: fakeInvoke }))
 vi.mock('../../platform/src/tauri', async (original) => ({
