@@ -10,7 +10,6 @@ import {
 } from '@orden/editor'
 import type { EmbeddedNote } from '@orden/markdown'
 import { oneEdit } from '@orden/markdown/edits'
-import { paperOf } from '@orden/markdown/paper'
 import {
   blockIdOf,
   blockIds,
@@ -25,6 +24,7 @@ import {
   isTermTarget,
   isWebTarget,
   type LinkKind,
+  paperOf,
   withoutBlockIds,
   withoutCode,
 } from '@orden/markdown/links'
