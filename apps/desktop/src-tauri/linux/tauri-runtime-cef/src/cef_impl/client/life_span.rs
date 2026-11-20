@@ -87,6 +87,7 @@ wrap_with_args! {
     context: RuntimeContext<T>,
     new_window_handler: Option<Arc<tauri_runtime::webview::NewWindowHandler<T, CefRuntime<T>>>>,
     initial_url: Option<String>,
+    initial_bounds: Option<cef::Rect>,
     frame_navigation_state: crate::FrameNavigationState,
     popup_family: Weak<crate::popup::PopupFamily>,
     opener: Option<crate::popup::PopupRequest>,
@@ -95,6 +96,13 @@ wrap_with_args! {
 
   impl LifeSpanHandler {
     fn on_after_created(&self, browser: Option<&mut Browser>) {
+      #[cfg(windows)]
+      if let (Some(bounds), Some(host)) = (
+        self.initial_bounds.as_ref(),
+        browser.as_deref().filter(|one| one.is_popup() == 0).and_then(|one| one.host()),
+      ) {
+        crate::platform::put_where_asked(host.window_handle(), bounds);
+      }
       #[cfg(windows)]
       if let Some(host) = browser.as_deref().and_then(|browser| browser.host()) {
         crate::platform::let_go_of_drops_in_time(host.window_handle());

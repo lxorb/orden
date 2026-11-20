@@ -20,6 +20,8 @@ pub mod linux;
 #[cfg(windows)]
 pub(crate) use windows::put_out_of_sight;
 #[cfg(windows)]
+pub(crate) use windows::{SHOWN_STYLE, put_where_asked};
+#[cfg(windows)]
 pub(crate) use windows::key_pressed;
 #[cfg(windows)]
 pub(crate) use windows::keep_dead_key;

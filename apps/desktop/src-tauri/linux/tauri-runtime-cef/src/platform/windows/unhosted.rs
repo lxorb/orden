@@ -60,3 +60,23 @@ pub(crate) fn put_out_of_sight(browser: cef::sys::cef_window_handle_t) {
     );
   }
 }
+
+pub(crate) const SHOWN_STYLE: u32 = 0x1000_0000;
+
+pub(crate) fn put_where_asked(browser: cef::sys::cef_window_handle_t, bounds: &cef::Rect) {
+  let browser = HWND(browser.0 as _);
+  unsafe {
+    if browser.0.is_null() || !IsWindow(Some(browser)).as_bool() {
+      return;
+    }
+    let _ = SetWindowPos(
+      browser,
+      None,
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW,
+    );
+  }
+}

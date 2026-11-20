@@ -834,6 +834,24 @@ impl<T: UserEvent> WinitCefApp<T> {
       web_content_process_terminate_handler,
     };
 
+    // If the bounds are not specified, default to the parent window's size and position.
+    // aka full-window webview.
+    let bounds = pending.webview_attributes.bounds.unwrap_or_else(|| Rect {
+      position: PhysicalPosition::new(0, 0).into(),
+      size: parent_size.into(),
+    });
+    #[cfg(not(target_os = "macos"))]
+    let bounds = bounds.to_physical::<i32, i32>(scale);
+    #[cfg(target_os = "macos")]
+    let bounds = bounds.to_logical::<i32, i32>(scale);
+    let bounds = cef::Rect {
+      x: bounds.position.x,
+      y: bounds.position.y,
+      width: bounds.size.width,
+      height: bounds.size.height,
+    };
+
+    let asked_bounds = pending.webview_attributes.bounds.is_some() && offscreen.is_none();
     let mut client =
       browser_client::TauriCefBrowserClient::build(browser_client::TauriCefBrowserClientArgs {
         context: context.clone(),
@@ -841,6 +859,7 @@ impl<T: UserEvent> WinitCefApp<T> {
         webview_id,
         label: pending.label.clone(),
         initial_url: Some(pending.url.as_str().to_string()),
+        initial_bounds: asked_bounds.then(|| bounds.clone()),
         devtools_enabled,
         zoom_hotkeys_enabled,
         allowed_chrome_commands,
@@ -863,23 +882,6 @@ impl<T: UserEvent> WinitCefApp<T> {
         sender: context.sender.clone(),
       });
 
-    // If the bounds are not specified, default to the parent window's size and position.
-    // aka full-window webview.
-    let bounds = pending.webview_attributes.bounds.unwrap_or_else(|| Rect {
-      position: PhysicalPosition::new(0, 0).into(),
-      size: parent_size.into(),
-    });
-    #[cfg(not(target_os = "macos"))]
-    let bounds = bounds.to_physical::<i32, i32>(scale);
-    #[cfg(target_os = "macos")]
-    let bounds = bounds.to_logical::<i32, i32>(scale);
-    let bounds = cef::Rect {
-      x: bounds.position.x,
-      y: bounds.position.y,
-      width: bounds.size.width,
-      height: bounds.size.height,
-    };
-
     // Let CEF pick the runtime style unless overridden per-webview.
     let cef_runtime_style = match pending.runtime_specific_attributes.runtime_style {
       Some(RuntimeStyle::Alloy) => cef::RuntimeStyle::ALLOY,
@@ -892,6 +894,10 @@ impl<T: UserEvent> WinitCefApp<T> {
     } else {
       let mut info = cef::WindowInfo::default().set_as_child(parent, &bounds);
       info.runtime_style = cef_runtime_style;
+      #[cfg(windows)]
+      if asked_bounds {
+        info.style &= !crate::platform::SHOWN_STYLE;
+      }
       info
     };
     let mut settings =

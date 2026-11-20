@@ -14,5 +14,5 @@ mod window_menu;
 
 pub(crate) use dead_key::keep_dead_key;
 pub(crate) use drop_targets::let_go_of_drops_in_time;
-pub(crate) use unhosted::put_out_of_sight;
+pub(crate) use unhosted::{SHOWN_STYLE, put_out_of_sight, put_where_asked};
 pub(crate) use window_menu::key_pressed;
