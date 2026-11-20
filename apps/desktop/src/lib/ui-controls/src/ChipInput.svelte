@@ -145,24 +145,30 @@
   onfocusin={follow}
   onselect={follow}
 >
-  <div class="letters" bind:this={mirror} aria-hidden="true">
-    {#each pieces as piece (piece.from)}{#if piece.chip}<span class="chip" data-chip={piece.chip} data-from={piece.from}
-          >{piece.text}</span
-        >{:else}{piece.text}{/if}{/each}&#8203;
+  <div class="well">
+    <div class="letters" bind:this={mirror} aria-hidden="true">
+      <span class="line"
+        >{#each pieces as piece (piece.from)}{#if piece.chip}<span
+              class="chip"
+              data-chip={piece.chip}
+              data-from={piece.from}>{piece.text}</span
+            >{:else}{piece.text}{/if}{/each}&#8203;</span
+      >
+    </div>
+    <input
+      spellcheck="false"
+      autocomplete="off"
+      {...rest}
+      bind:this={input}
+      bind:value
+      class="field"
+      aria-autocomplete="list"
+      aria-expanded={offered.length > 0}
+      onkeydown={keyed}
+      oninput={typed}
+      onscroll={follow}
+    />
   </div>
-  <input
-    spellcheck="false"
-    autocomplete="off"
-    {...rest}
-    bind:this={input}
-    bind:value
-    class="field"
-    aria-autocomplete="list"
-    aria-expanded={offered.length > 0}
-    onkeydown={keyed}
-    oninput={typed}
-    onscroll={follow}
-  />
   {#if offered.length}
     <div class="orden-layer offers" data-covers role="listbox" aria-label={rest['aria-label'] ?? undefined}>
       {#each offered as one, index (one.value)}
@@ -190,6 +196,11 @@
     position: relative;
     min-width: 0;
   }
+  .well {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
   .letters,
   .field {
     box-sizing: border-box;
@@ -203,9 +214,14 @@
   .letters {
     position: absolute;
     inset: 0;
+    display: flex;
+    align-items: center;
     overflow: hidden;
     color: var(--text-strong);
     pointer-events: none;
+  }
+  .line {
+    flex: none;
   }
   .field {
     position: relative;

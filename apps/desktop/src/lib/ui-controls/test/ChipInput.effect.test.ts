@@ -2,6 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
 const ChipHost = (await import('./ChipHost.svelte')).default
+const ChipInput = (await import('../src/ChipInput.svelte')).default
 let close: (() => void) | undefined
 let target: HTMLElement
 const onkey = vi.fn()
@@ -79,4 +80,17 @@ test('a span kept as words moves with what is typed before it', () => {
   type('Now Call tomorrow', 3)
   expect(kept()).toEqual([{ from: 9, to: 17 }])
   expect(chips()).toEqual([])
+})
+test('the shown words lie over the field whatever frame the caller puts round it', () => {
+  target = document.createElement('div')
+  document.body.append(target)
+  const framed = mount(ChipInput, { target, props: { chips: [], class: 'orden-field', 'aria-label': 'Add' } })
+  close = () => void unmount(framed)
+  flushSync()
+  const input = target.querySelector('input')
+  const letters = target.querySelector('.letters')
+  const well = input?.parentElement
+  expect(well).toBe(letters?.parentElement)
+  expect(well?.classList.contains('orden-field')).toBe(false)
+  expect(well?.parentElement?.classList.contains('orden-field')).toBe(true)
 })
