@@ -25,6 +25,7 @@ export async function makePointer(folder: string, name: string): Promise<Place |
   await writeFile(path, text)
   await workspace.fileCame(path, 'file')
   sync.wrote(path, text)
+  void sync.pass().catch(() => false)
   return { root: space.root, path }
 }
 export async function readPointer(path: string): Promise<string | null> {

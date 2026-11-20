@@ -15,6 +15,7 @@ const store = vi.hoisted(() => ({
   remoteIdFor: () => 'remote-away',
   wrote: () => undefined,
   nudge: () => undefined,
+  pass: vi.fn(() => Promise.resolve(true)),
 }))
 vi.mock('../../sync-store/src/api', () => ({ sync: store }))
 serveSyncStore(store)
@@ -40,4 +41,11 @@ test("a chat made for a note of another space steps past that space's Chat.chat"
   const place = await makePointer('/away', 'Chat')
   expect(place?.path).toBe('/away/Chat 2.chat')
   expect(files.get('/away/Chat.chat')).toBe('the other chat\n')
+})
+test('a new chat’s pointer is sent at once, so another device names it even if this one closes soon after (#2269)', async () => {
+  store.pass.mockClear()
+  workspace.spaces = [{ id: 'away', name: 'Away', root: '/away' }]
+  const place = await makePointer('/away', 'Launch')
+  expect(place?.path).toBe('/away/Launch.chat')
+  expect(store.pass).toHaveBeenCalledTimes(1)
 })

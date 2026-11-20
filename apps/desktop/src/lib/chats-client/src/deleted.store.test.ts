@@ -4,7 +4,7 @@ const CHAT = `c_${'1'.repeat(32)}`
 const OTHER = `c_${'2'.repeat(32)}`
 const POINTER = '/space/Plans.chat'
 const account = vi.hoisted(() => ({ chats: [] as string[] }))
-const disk = vi.hoisted(() => ({ pointers: new Map<string, string>() }))
+const disk = vi.hoisted(() => ({ pointers: new Map<string, string>(), fails: 0 }))
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isNative: false,
@@ -24,8 +24,13 @@ vi.mock('./http', async (importOriginal) => ({
 }))
 vi.mock('./pointers', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./pointers')>()),
-  findPointers: () =>
-    Promise.resolve(new Map([...disk.pointers].map(([path, chat]) => [chat, { root: '/space', path }]))),
+  findPointers: () => {
+    if (disk.fails > 0) {
+      disk.fails -= 1
+      return Promise.reject(new Error('the disk did not answer'))
+    }
+    return Promise.resolve(new Map([...disk.pointers].map(([path, chat]) => [chat, { root: '/space', path }])))
+  },
   readPointer: (path: string) => Promise.resolve(disk.pointers.get(path) ?? null),
 }))
 const { chats } = await import('./store.svelte')
@@ -36,6 +41,7 @@ beforeEach(async () => {
   await chats.forget()
   account.chats = [CHAT]
   disk.pointers = new Map([[POINTER, CHAT]])
+  disk.fails = 0
   await chats.start('account-1')
 })
 test('a chat with its pointer is listed by the pointer’s name', () => {
@@ -71,4 +77,26 @@ test('its pointer deleted by the sync, which tells the file operations nothing, 
   disk.pointers.set(POINTER, CHAT)
   chats.pointersSeen('/space', [POINTER])
   await vi.waitFor(() => expect(listed()).toEqual([[CHAT, 'Plans']]))
+})
+test('a chat whose pointer comes late is named when it comes, though a look for it failed on the way (#2269)', async () => {
+  vi.useFakeTimers()
+  try {
+    await chats.forget()
+    account.chats = [CHAT, OTHER]
+    await chats.start('account-1')
+    expect(listed()).toEqual([
+      [CHAT, 'Plans'],
+      [OTHER, null],
+    ])
+    disk.fails = 1
+    await vi.advanceTimersByTimeAsync(3_000)
+    disk.pointers.set('/space/Launch.chat', OTHER)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(listed()).toEqual([
+      [CHAT, 'Plans'],
+      [OTHER, 'Launch'],
+    ])
+  } finally {
+    vi.useRealTimers()
+  }
 })
