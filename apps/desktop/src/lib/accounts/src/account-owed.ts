@@ -24,7 +24,7 @@ export class AccountOwed {
   constructor(
     readonly key: string,
     readonly landed?: (settings: AccountSettings) => void,
-    private readonly reset?: () => void,
+    private readonly reset?: (owed: AccountSettings) => void,
   ) {
     account.forgetWithSession(() => {
       this.session++
@@ -61,7 +61,7 @@ export class AccountOwed {
     if (!who) return
     const holder = storedText(`${this.key}:holder`)
     if (holder === who) return
-    if (holder !== null) this.reset?.()
+    if (holder !== null) this.reset?.(this.held()?.patch ?? {})
     keep(`${this.key}:holder`, who)
   }
   get mine(): Kept | null {
