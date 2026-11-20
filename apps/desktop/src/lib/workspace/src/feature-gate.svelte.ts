@@ -24,8 +24,14 @@ export function whenOn(gate: Gate, run: () => void = () => undefined, off: () =>
       was = now
       if (now) return
       const open = workspace.tabs.filter((one) => one.kind === gate.kind)
+      const behind = workspace.tabs.filter((one) => workspace.twinOf(one.id)?.kind === gate.kind)
       untrack(() => {
-        for (const tab of open) workspace.close(tab.id, false)
+        for (const tab of behind) workspace.untuck(tab.id)
+        for (const tab of open) {
+          const back = workspace.turn(tab.id)
+          if (back) workspace.untuck(back.id)
+          else workspace.close(tab.id, false)
+        }
         if (left) off()
         else if (open.length)
           whenLoaded(

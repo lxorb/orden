@@ -1,7 +1,15 @@
 import { flushSync } from 'svelte'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { setWord, CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD, TIME_WORD } from '../../gates/src/api'
-import { whenChatsOn, whenPassOn, whenTimeOn } from './feature-gate.svelte'
+import {
+  setWord,
+  CHATS_WORD,
+  EXPERIMENTAL_WORD,
+  EXPLORER_WORD,
+  hiddenKinds,
+  PASS_WORD,
+  TIME_WORD,
+} from '../../gates/src/api'
+import { whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn } from './feature-gate.svelte'
 import { openPass } from '../../pass-sync/src/open'
 import { workspace } from './api'
 
@@ -65,5 +73,26 @@ describe('a feature turned on and off while the app runs', () => {
     flushSync()
     expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(false)
     expect(said).toEqual(['run'])
+  })
+})
+describe('a feature turned off over a tab with a twin', () => {
+  test('turns the twin back into its place and keeps it, a running shell the same session', () => {
+    setWord(EXPLORER_WORD, true)
+    whenExplorerOn()
+    flushSync()
+    const shell = workspace.openUnsaved('terminal', '{"key":"k1"}', 'Shell')
+    const files = workspace.turn(shell.id, { kind: 'explorer', words: '', title: 'Files' })
+    if (!files) throw new Error('no twin')
+    const other = workspace.openUnsaved('terminal', '{"key":"k2"}', 'Other')
+    const more = workspace.turn(other.id, { kind: 'explorer', words: '', title: 'More files' })
+    workspace.turn(more?.id ?? '')
+    expect(workspace.twinOf(other.id)).toBe(more)
+    setWord(EXPLORER_WORD, false)
+    flushSync()
+    expect(workspace.tabs).toContain(shell)
+    expect(workspace.tabs).toContain(other)
+    expect(workspace.tabs.some((one) => one.kind === 'explorer')).toBe(false)
+    expect([workspace.twinOf(shell.id), workspace.twinOf(other.id)]).toEqual([null, null])
+    expect(workspace.tucked.some((one) => one.kind === 'explorer')).toBe(false)
   })
 })
