@@ -1,5 +1,9 @@
 use std::path::PathBuf;
 
+const NO_ERROR_DIALOGS: &str = "--noerrdialogs";
+fn chromium_quiet() -> Vec<(String, Option<String>)> {
+    vec![(NO_ERROR_DIALOGS.to_owned(), None)]
+}
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     use orden_web_engine::{debug_port, switches, with_extensions, LOAD_EXTENSION_OFF};
     use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy, SecretStorage};
@@ -23,6 +27,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     let loading = with_extensions(&mut asked, &loaded);
     let settings = orden_web_engine::EngineSettings::default()
         .with_switches(orden_web::page_scale::switches())
+        .with_switches(chromium_quiet())
         .with_switches(asked);
     let mut engine = Cef::default()
         .sandbox(sandbox)
@@ -386,6 +391,12 @@ mod tests {
             "{said}"
         );
         assert!(said.contains(r#"enabled_features: ["Probe"]"#), "{said}");
+    }
+    #[test]
+    fn chromium_shows_none_of_its_own_error_boxes() {
+        assert_eq!(super::chromium_quiet(), [("--noerrdialogs".to_owned(), None)]);
+        let source = include_str!("engine.rs");
+        assert!(source.contains(".with_switches(chromium_quiet())"));
     }
     #[test]
     fn the_drives_build_for_debug_and_the_release_does_not() {
