@@ -111,6 +111,12 @@ describe('tasks-views contract', () => {
     expect(row).toMatch(/\.body \{\s*border-radius: var\(--radius-sm\);/)
     expect(row).not.toMatch(/focus-visible/)
   })
+  test('the todo sheet draws no line above its foot of Do with AI and Delete todo', () => {
+    const editor = readFileSync(join(import.meta.dirname, '..', 'src', 'TodoEditor.svelte'), 'utf8')
+    const foot = /\.foot \{([^}]*)\}/.exec(editor)?.[1] ?? ''
+    expect(foot).toContain('display: flex')
+    expect(foot).not.toMatch(/border/)
+  })
   test('a priority takes its tone only from the model, no view keeps its own table of tones', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {

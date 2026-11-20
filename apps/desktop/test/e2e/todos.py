@@ -138,6 +138,11 @@ def sheet_controls(page: Page) -> None:
     if ring["shadow"] != "none" or ring["outline"] != "none" or len(set(ring["borders"])) != 1 or ring["pad"] < 4:
         wrong(f"the title field in focus draws {ring}")
     shot(page, "05-sheet-title")
+    line = page.evaluate(f"() => getComputedStyle(document.querySelector('{sheet} .foot')).borderTopStyle")
+    if line != "none":
+        wrong(f"the todo sheet draws a {line} line above Do with AI and Delete todo")
+    page.locator(f"{sheet} .foot").scroll_into_view_if_needed()
+    shot(page, "05-sheet-foot")
     if page.locator(f"{sheet} [aria-label='Space']").count():
         wrong("the todo sheet still offers a space")
     page.locator(f"{sheet} [role=combobox][aria-label='Priority']").click()

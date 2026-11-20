@@ -503,7 +503,6 @@
     gap: var(--space-2);
     align-items: center;
     justify-content: flex-end;
-    border-top: 1px solid var(--line);
   }
   .ai {
     margin-inline-end: auto;
