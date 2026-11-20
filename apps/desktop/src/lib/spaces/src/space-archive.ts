@@ -4,11 +4,18 @@ import { type Space, workspace } from '../../workspace/src/api'
 
 const OWED_KEY = 'orden:archived-spaces-owed'
 let heard: readonly string[] | null = null
-const owed = new AccountOwed(OWED_KEY, (settings) => {
-  if (!Array.isArray(settings.archivedSpaces)) return
-  heard = settings.archivedSpaces.filter((id): id is string => typeof id === 'string')
-  void reconcile()
-})
+const owed = new AccountOwed(
+  OWED_KEY,
+  (settings) => {
+    if (!Array.isArray(settings.archivedSpaces)) return
+    heard = settings.archivedSpaces.filter((id): id is string => typeof id === 'string')
+    void reconcile()
+  },
+  () => {
+    heard = null
+    for (const root of [...workspace.archivedSpaces.roots]) workspace.archivedSpaces.set(root, false)
+  },
+)
 const owing = () => owed.standing || stored(OWED_KEY) === true
 function canArchive(space: Space): boolean {
   const shown = workspace.shownSpaces
@@ -31,6 +38,7 @@ export function archivedSpaces(): Space[] {
   return workspace.spaces.filter((one) => workspace.archivedSpaces.has(one.root))
 }
 export async function receive(remote: AccountSettings): Promise<void> {
+  owed.follows()
   if (!Array.isArray(remote.archivedSpaces)) return
   heard = remote.archivedSpaces.filter((id): id is string => typeof id === 'string')
   await listed()
