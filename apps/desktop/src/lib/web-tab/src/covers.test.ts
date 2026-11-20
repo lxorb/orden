@@ -5,7 +5,6 @@ import {
   bringsLayer,
   cutOf,
   HELD,
-  heldUntil,
   HOLDS_AT_MOST,
   layersOver,
   moving,
@@ -279,7 +278,7 @@ describe('a layer arriving over a page', () => {
   test('is held unseen until the page has been cut round it, so no frame shows the page over it', async () => {
     document.body.innerHTML = '<main></main>'
     let placed: () => void = () => undefined
-    const stop = watchArrivals(() => heldUntil(new Promise<void>((go) => (placed = go))))
+    const stop = watchArrivals(() => new Promise<void>((go) => (placed = go)))
     const menu = Object.assign(document.createElement('div'), { className: 'orden-layer' })
     document.querySelector('main')!.append(menu)
     await Promise.resolve()
@@ -293,7 +292,7 @@ describe('a layer arriving over a page', () => {
   test('is held as it comes, and not again as it moves or changes while shown', async () => {
     document.body.innerHTML = '<main></main>'
     let placed: () => void = () => undefined
-    const stop = watchArrivals(() => heldUntil(new Promise<void>((go) => (placed = go))))
+    const stop = watchArrivals(() => new Promise<void>((go) => (placed = go)))
     const ghost = Object.assign(document.createElement('div'), { className: 'ghost' })
     ghost.dataset.covers = ''
     Object.assign(ghost, { checkVisibility: () => !ghost.hidden })
@@ -333,7 +332,7 @@ describe('a layer arriving over a page', () => {
   test('is never held longer than a page takes to answer at most', async () => {
     vi.useFakeTimers()
     document.body.innerHTML = '<main></main>'
-    const stop = watchArrivals(() => heldUntil(new Promise<void>(() => undefined)))
+    const stop = watchArrivals(() => new Promise<void>(() => undefined))
     const side = document.createElement('aside')
     document.querySelector('main')!.append(side)
     side.setAttribute('data-covers', '')
