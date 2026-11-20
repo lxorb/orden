@@ -10,7 +10,17 @@ const LOCAL = {
 } as const
 const world = vi.hoisted((): { parent: unknown; children: unknown[] } => ({ parent: null, children: [] }))
 vi.mock('../../workspace/src/api', () => ({
-  workspace: { active: null, spaces: [{ id: 'Notes', root: '/n' }], activeSpace: { id: 'Notes' } },
+  workspace: {
+    active: null,
+    spaces: [{ id: 'Notes', root: '/n' }],
+    activeSpace: { id: 'Notes' },
+    activeSpaceId: 'Notes',
+    notes: [],
+    documents: [],
+    leftOutOf: () => [],
+    noteText: () => Promise.resolve(null),
+  },
+  agentMarks: { open: null },
 }))
 vi.mock('../../gates/src/api', () => ({ chatsOn: () => true }))
 vi.mock('../../ai-providers/src/keys', async (original) => ({
@@ -19,8 +29,17 @@ vi.mock('../../ai-providers/src/keys', async (original) => ({
 }))
 vi.mock('../../ai-providers/src/api', async (original) => ({
   ...(await original<Record<string, unknown>>()),
-  ai: { providers: [{ id: 'compatible-1', kind: 'compatible', name: 'Ollama', model: 'llama', baseUrl: 'http://x' }] },
+  ai: (() => {
+    const local = { id: 'compatible-1', kind: 'compatible', name: 'Ollama', model: 'llama', baseUrl: 'http://x' }
+    return { providers: [local], provider: () => local, providerFor: () => local }
+  })(),
   usable: () => true,
+}))
+const rewinds = vi.hoisted(() => [] as unknown[])
+vi.mock('../src/review/index', () => ({
+  editMessage: () => Promise.resolve(),
+  lastMessage: () => null,
+  openRewind: (...args: unknown[]) => void rewinds.push(args),
 }))
 vi.mock('../src/commands/found', () => ({
   rootOfSpace: () => '/n',
@@ -149,5 +168,74 @@ describe('a helper', () => {
     )
     vi.unstubAllGlobals()
     expect(listed).toEqual([['read_note']])
+  })
+})
+describe('a chat that runs', () => {
+  const real = () => vi.importActual<typeof import('../src/store/chat.svelte')>('../src/store/chat.svelte')
+  async function opened() {
+    const { chat } = await real()
+    const { newThread } = await import('../src/chat/threads')
+    const thread = newThread('Notes', LOCAL.id, 'llama', 'auto', 'approve')
+    thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [], draft: { text: 'Herons?', attachments: [] } }]
+    chat.adopt(thread, true)
+    return { chat, thread }
+  }
+  test('refuses a rewind and a compaction while it answers', async () => {
+    const { chat, thread } = await opened()
+    rewinds.length = 0
+    chat.running = [thread.id]
+    expect(chat.answers(thread)).toBe(true)
+    const begun = vi.spyOn(chat as unknown as { begin: (thread: unknown) => AbortController }, 'begin')
+    chat.rewind('u1')
+    chat.compact()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(rewinds).toEqual([])
+    expect(begun).not.toHaveBeenCalled()
+    chat.running = []
+    chat.rewind('u1')
+    expect(rewinds).toHaveLength(1)
+  })
+  test.each(['stop', 'archive', 'delete'] as const)(
+    'ends on %s all it runs: its loop, its goal and its helpers, one started for it in another window too',
+    async (how) => {
+      const { chat, thread } = await opened()
+      const { tasks } = await import('../src/commands/tasks.svelte')
+      const { helpers } = await import('../src/helpers/helpers.svelte')
+      const stopped: string[] = []
+      for (const kind of ['loop', 'goal'] as const) {
+        tasks.add({ thread: thread.id, kind, label: kind, stop: () => void stopped.push(kind) })
+      }
+      const helped: AbortSignal[] = []
+      const started = await helpers.start(
+        {
+          parent: null,
+          asking: thread.id,
+          space: 'Notes',
+          prompt: 'Look',
+          description: 'look',
+          model: '',
+          mode: 'approve',
+        },
+        {
+          offered: () => Promise.resolve([{ provider: LOCAL, models: [] }]),
+          run: (_thread, _text, signal) => {
+            helped.push(signal)
+            return new Promise(() => undefined)
+          },
+        },
+      )
+      expect(started).toMatchObject({ parent: thread.id })
+      if (how === 'stop') chat.stop()
+      if (how === 'archive') chat.archive(thread.id)
+      if (how === 'delete') chat.heardDeleted(thread.id)
+      await vi.waitFor(() => expect(stopped.sort()).toEqual(['goal', 'loop']))
+      await vi.waitFor(() => expect(helped[0]?.aborted).toBe(true))
+    },
+  )
+  test('started outside the panel is an Approve chat, whatever mode the panel was last put in', async () => {
+    const { chat } = await opened()
+    chat.setMode('plan')
+    const { thread } = chat.startHere('What does this word mean?', [], { front: null, selection: '' })
+    expect(thread.mode).toBe('approve')
   })
 })
