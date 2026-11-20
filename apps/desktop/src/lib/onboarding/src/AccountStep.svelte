@@ -3,7 +3,7 @@
   import { account } from '../../accounts/src/api'
   import { joining } from '../../sharing/src/api'
   import { settling } from '../../sync-mirror/src/api'
-  import Mark from './Mark.svelte'
+  import LogoTile from './LogoTile.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
   import { closeOnBack } from '../../ui-kit/src/api'
@@ -85,7 +85,7 @@
 </script>
 
 {#snippet head()}
-  <span class="tile rise"><Mark size={52} assemble /></span>
+  <LogoTile size={88} assemble class="rise" />
 {/snippet}
 
 <Screen
@@ -166,17 +166,6 @@
 </Screen>
 
 <style>
-  .tile {
-    width: 88px;
-    height: 88px;
-    border-radius: 22px;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(135deg, #c8ddfa, #e8c9ef);
-    box-shadow:
-      0 20px 50px -18px rgb(91 75 224 / 0.45),
-      inset 0 0 0 1px rgb(255 255 255 / 0.5);
-  }
   .stack {
     display: flex;
     flex-direction: column;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { feedback } from '../../feedback/src/api'
-  import Mark from './Mark.svelte'
+  import LogoTile from './LogoTile.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
 
@@ -21,7 +21,7 @@
 </script>
 
 {#snippet head()}
-  <span class="tile rise"><Mark size={64} assemble /></span>
+  <LogoTile size={112} assemble class="rise" />
   <div class="welcome rise">{before}<em>{NAME}</em>{after}</div>
 {/snippet}
 
@@ -62,17 +62,6 @@
 </Screen>
 
 <style>
-  .tile {
-    width: 112px;
-    height: 112px;
-    border-radius: 26px;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(135deg, #c8ddfa, #e8c9ef);
-    box-shadow:
-      0 20px 50px -18px rgb(91 75 224 / 0.45),
-      inset 0 0 0 1px rgb(255 255 255 / 0.5);
-  }
   .welcome {
     font-size: clamp(40px, 7vw, 72px);
     font-weight: 600;
