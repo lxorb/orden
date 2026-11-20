@@ -12,6 +12,8 @@
     'orden:contrast-offered': 'yes',
     'orden:kept-for-good-asked': 'yes',
     'orden:usage-help': 'false',
+    'orden:theme': 'default',
+    'orden:theme-moved': 'yes',
   }
   const SERVER = /^\/(?:v\d+|themes|api)(?:\/|$)/
   const here = into.location.href
@@ -65,39 +67,19 @@
   function place(name, value) {
     Object.defineProperty(into, name, { configurable: true, enumerable: true, writable: true, value })
   }
-  const databases = into.indexedDB
-  const cleared = new Set()
-  function named(name) {
-    const full = PREFIX + name
-    if (!cleared.has(full)) {
-      cleared.add(full)
-      databases.deleteDatabase(full)
-    }
-    return full
-  }
   place('localStorage', held(KEPT))
   place('sessionStorage', held({}))
-  place('indexedDB', {
-    open(name, version) {
-      return version === undefined ? databases.open(named(name)) : databases.open(named(name), version)
-    },
-    deleteDatabase(name) {
-      return databases.deleteDatabase(named(name))
-    },
-    databases() {
-      return databases.databases().then(function (all) {
-        return all
-          .filter(function (one) {
-            return typeof one.name === 'string' && one.name.indexOf(PREFIX) === 0
-          })
-          .map(function (one) {
-            return { name: one.name.slice(PREFIX.length), version: one.version }
-          })
-      })
-    },
-    cmp(a, b) {
-      return databases.cmp(a, b)
-    },
+  function refused() {
+    throw new DOMException('The demo keeps nothing in this browser', 'SecurityError')
+  }
+  function none() {
+    return Promise.reject(new DOMException('The demo keeps nothing in this browser', 'SecurityError'))
+  }
+  place('indexedDB', { open: refused, deleteDatabase: refused, cmp: refused, databases: none })
+  if (into.caches) place('caches', { open: none, match: none, has: none, keys: none, delete: none })
+  Object.defineProperty(into.navigator, 'storage', {
+    configurable: true,
+    value: { getDirectory: none, persist: none, persisted: none, estimate: none },
   })
   const Channel = into.BroadcastChannel
   place(
