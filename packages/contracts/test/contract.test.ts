@@ -167,7 +167,6 @@ describe('shell extension points', () => {
   it('names every tab kind the workspace has', () => {
     expect([...TAB_KINDS].sort()).toEqual(
       [
-        'application',
         'canvas',
         'channel',
         'chat',
@@ -529,8 +528,8 @@ describe('registry', () => {
     expect(await tabKindLoaded('terminal')).toBe(parts)
     expect(loads).toBe(1)
     expect(tabKindParts('terminal').menu?.('t')[0]?.label).toBe('Open another')
-    const broken = registerTabKind('application', () => Promise.reject(new Error('gone')))
-    expect(await tabKindLoaded('application')).toBe(NO_TAB_KIND)
+    const broken = registerTabKind('pass', () => Promise.reject(new Error('gone')))
+    expect(await tabKindLoaded('pass')).toBe(NO_TAB_KIND)
     unregister()
     broken()
     expect(tabKindParts('terminal')).toBe(NO_TAB_KIND)
