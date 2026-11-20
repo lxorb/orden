@@ -16,8 +16,11 @@ function drain() {
     queue.shift()?.()
     flushSync()
   }
-  if (queue.length) ask()
-  else calmed()
+  if (!queue.length) calmed()
+  else {
+    asked = true
+    setTimeout(drain, 0)
+  }
 }
 function ask() {
   if (asked) return

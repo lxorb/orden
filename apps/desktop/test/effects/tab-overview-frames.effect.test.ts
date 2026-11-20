@@ -435,6 +435,9 @@ test('the windows’ pictures come in together, in the frame after the windows l
   const first = seen.findIndex((one) => one > 0)
   expect(first).toBeGreaterThan(landed)
   expect(seen[first]).toBe(Math.max(...seen))
+  const face = (await import('../../src/lib/overview/src/WindowFace.svelte?raw')).default
+  expect(face).not.toMatch(/\b(in|transition):/)
+  expect(face).not.toMatch(/\.shot\.is-drawn \{[^}]*transition/)
 })
 test('the windows’ crosses and names come in the frames after the first, which draws only the windows', async () => {
   tabOverview.open = true
@@ -445,16 +448,48 @@ test('the windows’ crosses and names come in the frames after the first, which
   expect(document.querySelectorAll('.closer').length).toBe(document.querySelectorAll('.canvas .window').length)
   expect(document.querySelectorAll('.caption').length).toBe(document.querySelectorAll('.canvas .window').length)
 })
-test('each window gets its cross and name in a step of its own, so no step outruns the frame budget', async () => {
+test('each window gets its cross and name in a task of its own, and the tasks go on between frames', () => {
   tabOverview.open = true
   flushSync()
   const all = document.querySelectorAll('.canvas .window').length
   expect(all).toBeGreaterThan(1)
   vi.spyOn(performance, 'now').mockImplementation(() => (now += 3))
-  const counts: number[] = []
-  await until(() => counts.push(document.querySelectorAll('.closer').length) > 0 && counts.at(-1) === all)
-  expect(counts.filter((count) => count > 0 && count < all).length).toBeGreaterThan(0)
+  const tasks: (() => void)[] = []
+  vi.spyOn(window, 'setTimeout').mockImplementation(((run: () => void) => tasks.push(run)) as never)
+  const closers = () => document.querySelectorAll('.closer').length
+  const counts = [closers()]
+  let frames = 0
+  while (closers() < all && frames < 50) {
+    const task = tasks.shift()
+    if (task) task()
+    else {
+      frame()
+      frames++
+    }
+    flushSync()
+    counts.push(closers())
+  }
+  expect(closers()).toBe(all)
+  expect(Math.max(...counts.slice(1).map((count, at) => count - (counts[at] ?? 0)))).toBe(1)
+  expect(frames).toBeLessThan(all)
   expect(document.querySelectorAll('.caption').length).toBe(all)
+  for (let left = 0; left < 1000 && tasks.length; left++) {
+    tasks.shift()?.()
+    flushSync()
+  }
+  expect(tasks).toEqual([])
+})
+test('the windows fly by the frames’ own times, however late each frame’s work begins', () => {
+  vi.spyOn(performance, 'now').mockImplementation(() => now + 40)
+  tabOverview.open = true
+  flushSync()
+  let frames = 0
+  while (waiting.size && frames < 400) {
+    frame()
+    frames++
+  }
+  expect(waiting.size).toBe(0)
+  expect(frames).toBeLessThan(150)
 })
 test('the web pages are asked to hold still before the overview measures or builds anything', async () => {
   const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')

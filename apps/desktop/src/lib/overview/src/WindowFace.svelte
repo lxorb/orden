@@ -4,7 +4,6 @@
 </script>
 
 <script lang="ts">
-  import { dur, fade } from '../../platform/src/api'
   import { links } from '../../link-index/src/api'
   import { readingHtml, unreadableHtml } from '../../reading/src/api'
   import { trustsHtmlIn } from '../../sharing/src/api'
@@ -124,7 +123,6 @@
     decode(shot)
     return { update: decode }
   }
-  const arrive = { duration: dur(160) }
   const whence = $derived.by(() => {
     if (tab.kind === 'web') {
       try {
@@ -150,12 +148,12 @@
   {#if locked || how === 'mark'}
     {@render mark()}
   {:else if how === 'reading' && html}
-    <div class="read" in:fade={arrive}>
+    <div class="read">
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the reading view uses, under the same trust -->
       <article class="page orden-write">{@html html}</article>
     </div>
   {:else if how === 'scrollback' && screen}
-    <pre class="screen" in:fade={arrive}>{screen.text}</pre>
+    <pre class="screen">{screen.text}</pre>
   {:else if how === 'photograph' && shot}
     {@render mark()}
     <img class="shot" class:is-drawn={decodedShot === shot} src={shot} alt="" draggable="false" use:decoded={shot} />
@@ -165,7 +163,6 @@
       style:width="{kept.w}px"
       style:height="{Math.max(kept.h, (kept.w * height) / Math.max(width, 1))}px"
       style:scale={width / Math.max(kept.w, 1)}
-      in:fade={arrive}
       use:drawn={kept}
     ></div>
   {:else}
@@ -224,7 +221,6 @@
   }
   .shot.is-drawn {
     opacity: 1;
-    transition: opacity var(--dur-fast) var(--ease-out);
   }
   .mark {
     display: flex;

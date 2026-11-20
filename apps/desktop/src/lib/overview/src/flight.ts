@@ -1,4 +1,4 @@
-import { type Feel, FLIGHT, land, resting, SHARE, type Spring, spring, step } from './spring'
+import { type Feel, FLIGHT, land, PIXELS, resting, SHARE, type Spring, spring, step } from './spring'
 
 export interface Pose {
   x: number
@@ -9,6 +9,7 @@ export interface Pose {
   alpha: number
 }
 const KEYS = ['x', 'y', 'w', 'h', 'tab', 'alpha'] as const
+const PLACES = ['x', 'y', 'w', 'h'] as const
 const TAB_RADIUS = 8
 export class Flight {
   private readonly springs: Record<keyof Pose, Spring>
@@ -22,8 +23,9 @@ export class Flight {
       alpha: spring(from.alpha, SHARE),
     }
   }
-  aim(to: Pose) {
+  aim(to: Pose, zoom = 1) {
     for (const key of KEYS) this.springs[key].to = to[key]
+    for (const key of PLACES) this.springs[key].rest = PIXELS / Math.max(zoom, 0.01)
   }
   hold(x: number, y: number, w: number, h: number) {
     for (const [key, value] of [
