@@ -24,3 +24,15 @@ describe('a generated pane', () => {
     expect(SOURCE.match(/\{#each [^}]*\(\w+\.(label|title)\)\}/g)).toBeNull()
   })
 })
+describe('a row on a phone', () => {
+  const rule = (selector: string) =>
+    new RegExp(`\\n  ${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`).exec(SOURCE)?.[1]
+  test('is a touch row whichever module draws it, a part of another module as the panel itself', () => {
+    expect(rule('.sheet.phone :global(.orden-setting)')).toMatch(/min-height:\s*var\(--touch-row\)/)
+    expect(rule('.sheet.phone :global(.orden-setting)')).toMatch(/padding:[^;]*var\(--touch-pad\)/)
+    expect(SOURCE).not.toMatch(/\.sheet\.phone \.setting \{/)
+  })
+  test('is parted from the row before it by a line, in a part as in the panel', () => {
+    expect(SOURCE).toContain('.sheet.phone :global(.orden-setting + .orden-setting::before),')
+  })
+})

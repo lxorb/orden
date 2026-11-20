@@ -1560,17 +1560,17 @@
   .sheet.phone .card > .stack {
     padding: var(--touch-pad);
   }
-  .sheet.phone .setting {
+  .sheet.phone :global(.orden-setting) {
     position: relative;
     gap: var(--touch-gap);
     min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
   }
-  .sheet.phone .setting > .name > small {
+  .sheet.phone :global(.orden-setting > .name > small) {
     font-size: var(--text-base);
   }
-  .sheet.phone .setting + .setting::before,
+  .sheet.phone :global(.orden-setting + .orden-setting::before),
   .sheet.phone :global(.orden-action + .setting::before),
   .sheet.phone :global(.orden-action + .orden-action::before) {
     content: '';
@@ -1581,10 +1581,10 @@
     height: 1px;
     background: var(--line);
   }
-  .sheet.phone button.setting:active {
+  .sheet.phone :global(button.orden-setting:active) {
     background: var(--surface-2);
   }
-  .sheet.phone button.setting:focus-visible {
+  .sheet.phone :global(button.orden-setting:focus-visible) {
     border-radius: 0;
   }
   .sheet.phone .setting.sliding {
