@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 import { Cadence, nextPassIn } from '../src/cadence'
+import { manages } from '../src/manages'
 import { hubDeviceOf, madeDeviceId } from '../src/made-device'
 import { accountOver } from '../src/transport'
 import { portProvided, providePort } from '@orden/contracts'
@@ -534,6 +535,14 @@ describe('two folders of one name made apart on two devices (#2254)', () => {
     expect(report.failures).toEqual([])
     expect(held(report)).toEqual(['Ideas.md', 'Plan.md', 'Plans', 'Plans/Later.md'])
     expect(markersIn(textOf(report, 'Later.md'))).toEqual(['mk975z'])
+  })
+})
+describe('who may rename a space (#2325)', () => {
+  test('its owner and its admins manage it, a writer or a reader does not', () => {
+    expect(manages({ role: 'owner' })).toBe(true)
+    expect(manages({ role: 'write', admin: true })).toBe(true)
+    expect(manages({ role: 'write' })).toBe(false)
+    expect(manages({ role: 'read' })).toBe(false)
   })
 })
 describe('ports', () => {
