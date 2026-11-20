@@ -23,7 +23,7 @@ WRAPPED = (
     "The next paragraph.\n"
 )
 PLAN = "# The plan\n\nWhat the plan says.\n"
-LONG = "# Long mark\n\nA long ==\U0001F7E2 " + "green words " * 40 + "== and the rest.\n"
+LONG = "# Long mark\n\nA long ==\U0001F7E2 " + "green words " * 39 + "green words== and the rest.\n"
 JOURNAL = "# Monday\n\nA passage worth lifting out into a note of its own.\n\nAnd the rest.\n"
 SEED = """
 async (notes) => {
