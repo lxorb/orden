@@ -67,6 +67,7 @@
   const { tab: given, focused, shown = true }: { tab: Tab; focused: boolean; shown?: boolean } = $props()
   const tab = untrack(() => given)
   const LEAVING = 300
+  const CALM_FRAMES = 3
   const OVERVIEW = '[data-opens="overview"], .orden-glyph.overview'
   const page = $derived(pages.of(tab.id))
   const pictured = $derived(page.shot !== null)
@@ -136,7 +137,7 @@
     const room = hole
     if (!room || !watching) return
     watching.observe(room)
-    const unshift = watchShifts(room, follow)
+    const unshift = watchShifts(room, chase)
     untrack(() => follow())
     return () => {
       watching.unobserve(room)
@@ -174,6 +175,23 @@
   }
   function now() {
     void lookNow()
+  }
+  let chasing = 0
+  function chase() {
+    now()
+    if (chasing) return
+    let was = JSON.stringify(rect())
+    let calm = 0
+    const step = () => {
+      const at = JSON.stringify(rect())
+      if (at !== was) {
+        was = at
+        calm = 0
+        void look()
+      } else calm++
+      chasing = calm < CALM_FRAMES ? requestAnimationFrame(step) : 0
+    }
+    chasing = requestAnimationFrame(step)
   }
   function lookNow(): Promise<void> | undefined {
     if (!isDesktop || !ready) return
@@ -283,6 +301,7 @@
       gone = true
       unheard?.()
       cancelAnimationFrame(scheduled)
+      cancelAnimationFrame(chasing)
       watching?.disconnect()
       unwatch()
       unarrive()
