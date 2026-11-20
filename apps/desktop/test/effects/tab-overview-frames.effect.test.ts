@@ -83,6 +83,15 @@ test('the windows set off on the first frame, their marks standing in for what i
   expect(tabOverview.out.length).toBeGreaterThan(0)
   expect(document.querySelector('.window .face .mark')).not.toBe(null)
 })
+test('a web page whose picture is still being taken keeps the windows waiting a few frames at most', async () => {
+  const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+  vi.spyOn(pages, 'holdStill').mockReturnValue(new Promise<void>(() => undefined))
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  for (let i = 0; i < 8; i++) frame()
+  expect(tabOverview.out.length).toBeGreaterThan(0)
+})
 test('the first frame that moves moves by one frame, however long the frame before it took', async () => {
   tabOverview.open = true
   flushSync()
