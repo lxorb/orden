@@ -728,8 +728,7 @@ class Workspace {
       this.rightPanel = state.rightPanel ?? null
     }
     this.lastRight ??= state.lastRight ?? null
-    const put = this.spaces.some((one) => one.id === state.activeSpace && this.archivedSpaces.has(one.root))
-    this.activeSpaceId = (put ? null : state.activeSpace) ?? this.shownSpaces[0]?.id ?? this.spaces[0]?.id ?? null
+    this.activeSpaceId = state.activeSpace ?? this.shownSpaces[0]?.id ?? this.spaces[0]?.id ?? null
     await this.loadSpaces()
     this.spacesHeard()
     if (this.activeSpaceId) await this.loadTree()
@@ -752,6 +751,7 @@ class Workspace {
     for (const tab of this.tabs) tab.reading = false
     if (state.sets !== undefined) void startup.turn('doors').then(sets)
     this.onePane()
+    await this.leaveArchived()
     void this.takeWhatWasLeft(slot)
     markPainted('active tab painted')
   }

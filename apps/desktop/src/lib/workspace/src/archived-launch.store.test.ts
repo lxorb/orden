@@ -18,6 +18,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 held.disk = new Disk()
 held.disk.folders.add('/spaces/One').add('/spaces/Two')
+held.disk.files.set('/spaces/One/Trip.md', '# Trip\n')
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: '' })
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => setTimeout(run, 0))
@@ -33,7 +34,25 @@ test('a launch never comes back on an archived space, though the window was left
       activeSpace: 'one',
       panel: null,
       layout: {
-        frame: { kind: 'pane', pane: { id: 'p1', active: 0, linked: false, tabs: [] } },
+        frame: {
+          kind: 'pane',
+          pane: {
+            id: 'p1',
+            active: 0,
+            linked: false,
+            tabs: [
+              {
+                kind: 'note',
+                path: '/spaces/One/Trip.md',
+                name: 'Trip.md',
+                doc: '',
+                dirty: false,
+                cursor: 0,
+                scroll: 0,
+              },
+            ],
+          },
+        },
         focused: 'p1',
         panel: null,
       },
@@ -48,4 +67,7 @@ test('a launch never comes back on an archived space, though the window was left
   await workspace.restore()
   expect(workspace.activeSpaceId).toBe('two')
   expect(workspace.openedArchived).toBeNull()
+  const here = workspace.tabs.filter((tab) => workspace.panes.at(tab.paneId)).map((tab) => tab.path)
+  expect(here).not.toContain('/spaces/One/Trip.md')
+  expect(workspace.tabs.map((tab) => tab.path)).toContain('/spaces/One/Trip.md')
 })
