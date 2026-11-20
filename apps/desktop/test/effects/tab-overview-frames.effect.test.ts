@@ -323,6 +323,38 @@ test('a frame of the way out writes no value that every element under it inherit
   }
   expect([...inherited]).toEqual([])
 })
+test('nothing is measured once the overview is in the page, until its first frame', () => {
+  let laidOut = 0
+  const strip = workspace.tabs.map((tab, index) => {
+    const one = document.createElement('div')
+    one.dataset.box = tab.id
+    one.getBoundingClientRect = () => {
+      if (document.querySelector('.canvas')) laidOut++
+      return new DOMRect(index * 120, 40, 110, 32)
+    }
+    document.body.append(one)
+    return one
+  })
+  onTestFinished(() => strip.forEach((one) => one.remove()))
+  const real = window.getComputedStyle.bind(window)
+  vi.spyOn(window, 'getComputedStyle').mockImplementation((one) => {
+    const style = real(one)
+    return Object.assign([], { getPropertyValue: (name: string) => style.getPropertyValue(name) }) as never
+  })
+  const counted = (name: 'getBoundingClientRect' | 'getClientRects') => {
+    const real = Object.getOwnPropertyDescriptor(Element.prototype, name)?.value as (this: Element) => unknown
+    vi.spyOn(Element.prototype, name).mockImplementation(function (this: Element) {
+      if (document.querySelector('.canvas')) laidOut++
+      return real.call(this)
+    } as never)
+  }
+  counted('getBoundingClientRect')
+  counted('getClientRects')
+  tabOverview.open = true
+  flushSync()
+  expect(document.querySelector('.canvas .window')).not.toBe(null)
+  expect(laidOut).toBe(0)
+})
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]
     .filter((one) => one.style.willChange !== '' || one.classList.contains('is-moving'))
