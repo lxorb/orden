@@ -47,3 +47,35 @@ Calm, quick, a little dry. Say it in fewer words.
 - [ ] Shop window
 `,
 }
+export const NEIGHBOURS: readonly { name: string; notes: Readonly<Record<string, string>> }[] = [
+  {
+    name: 'Harbor',
+    notes: {
+      'Opening week.md': `# Opening week
+
+- Tables on the quay from Friday
+- Bread from the bakery on Seestrasse
+- Two more hands for Saturday
+`,
+      'Menu.md': `# Menu
+
+Fish soup, rye bread, plum cake. Coffee all day.
+`,
+    },
+  },
+  {
+    name: 'Field notes',
+    notes: {
+      'Birds.md': `# Birds
+
+Grey heron at the reeds, 07:40. Two kingfishers by the bridge.
+`,
+      'Walks.md': `# Walks
+
+Lake path, 6 km. Forest loop, 9 km. Both before breakfast.
+`,
+    },
+  },
+]
+export const siteOf = (here: Pick<Location, 'hostname' | 'origin'>): string =>
+  here.hostname === 'app.orden.so' ? 'https://orden.so' : here.origin

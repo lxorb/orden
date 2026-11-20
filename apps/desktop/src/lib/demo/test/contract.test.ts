@@ -2,8 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { runInNewContext } from 'node:vm'
 import { describe, expect, test, vi } from 'vitest'
+import { holdDatabases } from '../src/held'
 import { drifted, frameAt, replacement, SCENES, writtenAt } from '../src/scenes'
-import { PLAN_TEXT, WRITTEN } from '../src/space'
+import { PLAN_TEXT, siteOf, WRITTEN } from '../src/space'
 
 const PREFIX = 'orden-demo:'
 const SCRIPT = readFileSync(join(import.meta.dirname, '../../../../public/demo.js'), 'utf8')
@@ -27,6 +28,7 @@ function visitor(search: string, light = false) {
   const into: Record<string, unknown> = {
     URL,
     URLSearchParams,
+    DOMException,
     EventTarget,
     Event,
     queueMicrotask,
@@ -34,6 +36,7 @@ function visitor(search: string, light = false) {
     navigator: { serviceWorker: { register: registered }, userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' },
     document: { documentElement: { dataset: {} as Record<string, string>, style: { background: '#fff' } } },
     localStorage: real,
+    caches: { keys: () => Promise.resolve(['visitor']) },
     indexedDB: {
       open: (name: string) => opened.push(name),
       deleteDatabase: (name: string) => deleted.push(name),
@@ -86,6 +89,7 @@ describe('a visit to the demo leaves the visitor’s own data alone', () => {
     for (const key of ['orden:seeded', 'orden:setup', 'orden:renamed', 'orden:first-visit', 'orden:hints'])
       expect(held.getItem(key)).not.toBe(null)
     expect(held.getItem('orden:theme-scheme')).toBe(null)
+    expect(held.getItem('orden:theme')).toBe('default')
     held.setItem('orden:theme-scheme', '"dark"')
     held.removeItem('orden:seeded')
     expect(held.getItem('orden:seeded')).toBe(null)
@@ -93,15 +97,36 @@ describe('a visit to the demo leaves the visitor’s own data alone', () => {
     expect(real.held.size).toBe(1)
     expect((into.sessionStorage as Storage).length).toBe(0)
   })
-  test('its databases carry their own prefix, start empty each visit, and hide the visitor’s', async () => {
+  test('it opens no database, cache or file of this browser, and keeps its own in memory', async () => {
     const { into, opened, deleted } = visitor('?demo')
     const databases = into.indexedDB as IDBFactory
-    databases.open('orden', 2)
-    databases.open('orden', 2)
-    databases.open('orden-pad')
-    expect(opened).toEqual([`${PREFIX}orden`, `${PREFIX}orden`, `${PREFIX}orden-pad`])
-    expect(deleted).toEqual([`${PREFIX}orden`, `${PREFIX}orden-pad`])
-    expect((await databases.databases()).map((one) => one.name)).toEqual(['orden'])
+    expect(() => databases.open('orden', 2)).toThrow()
+    expect(() => databases.deleteDatabase('orden')).toThrow()
+    await expect(databases.databases()).rejects.toThrow()
+    expect(opened).toEqual([])
+    expect(deleted).toEqual([])
+    const kept = (into.navigator as { storage: StorageManager }).storage
+    await expect(kept.getDirectory()).rejects.toThrow()
+    await expect(kept.persist()).rejects.toThrow()
+    await expect((into.caches as CacheStorage).keys()).rejects.toThrow()
+    holdDatabases(into)
+    const held = into.indexedDB as IDBFactory
+    const db = await new Promise<IDBDatabase>((done, failed) => {
+      const asked = held.open('orden', 1)
+      asked.onupgradeneeded = () => asked.result.createObjectStore('files', { keyPath: 'path' })
+      asked.onsuccess = () => done(asked.result)
+      asked.onerror = () => failed(asked.error ?? new Error('not opened'))
+    })
+    const read = await new Promise<unknown>((done) => {
+      const change = db.transaction('files', 'readwrite')
+      change.objectStore('files').put({ path: '/Kestrel/Plan.md', content: 'plan' })
+      change.oncomplete = () => {
+        const got = db.transaction('files').objectStore('files').get('/Kestrel/Plan.md')
+        got.onsuccess = () => done(got.result)
+      }
+    })
+    expect(read).toEqual({ path: '/Kestrel/Plan.md', content: 'plan' })
+    expect(opened).toEqual([])
   })
   test('its channels never reach the visitor’s other windows', () => {
     const Channel = visitor('?demo').into.BroadcastChannel as new (name: string) => { name: string }
@@ -124,7 +149,7 @@ describe('a visit to the demo leaves the visitor’s own data alone', () => {
     const Socket = into.WebSocket as new () => { readyState: number }
     expect(new Socket().readyState).toBe(3)
   })
-  test('its colours follow the system, never a stored choice', () => {
+  test('its colours follow the system in the plain default theme, never a stored choice', () => {
     expect(visitor('?demo', true).root.dataset.theme).toBe('light')
     const dark = visitor('?demo').root
     expect(dark.dataset.theme).toBe('dark')
@@ -198,6 +223,13 @@ describe('two teammates writing', () => {
     expect(change).not.toBe(null)
     if (change) expect(from.slice(0, change.from) + change.insert + from.slice(change.to)).toBe(to)
     expect(replacement(to, to)).toBe(null)
+  })
+})
+describe('the page around the demo', () => {
+  test('is the site on orden.so when the demo runs on app.orden.so, and the demo itself anywhere else', () => {
+    expect(siteOf({ hostname: 'app.orden.so', origin: 'https://app.orden.so' })).toBe('https://orden.so')
+    expect(siteOf({ hostname: 'localhost', origin: 'http://localhost:1420' })).toBe('http://localhost:1420')
+    expect(siteOf({ hostname: 'orden.so', origin: 'https://orden.so' })).toBe('https://orden.so')
   })
 })
 describe('the demo', () => {

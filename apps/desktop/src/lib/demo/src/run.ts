@@ -8,13 +8,34 @@ import { invoke, samePath } from '../../platform/src/api'
 import { isDemoCue, type DemoCue } from '../../showcase/src/api'
 import { undoToast } from '../../undo-toast/src/api'
 import { tabOverview, toggleTabOverview, type Tab, workspace } from '../../workspace/src/api'
+import { holdDatabases } from './held'
 import { drifted, type Frame, frameAt, type Point, replacement, type Scene, TEAM, writtenAt } from './scenes'
-import { CANVAS, LAUNCH, NOTES, PAGE, PAGE_TITLE, PICTURES, PLAN, PLAN_TEXT, PRESS, ROOT, SPACE } from './space'
+import {
+  CANVAS,
+  LAUNCH,
+  NEIGHBOURS,
+  siteOf,
+  NOTES,
+  PAGE,
+  PAGE_TITLE,
+  PICTURES,
+  PLAN,
+  PLAN_TEXT,
+  PRESS,
+  ROOT,
+  SPACE,
+} from './space'
 
 const at = (path: string) => `${ROOT}/${path}`
 const FOLDERS = ['Research', 'Design', LAUNCH]
 export async function seed(): Promise<void> {
+  holdDatabases(window)
   const origin = location.origin
+  for (const { name, notes } of NEIGHBOURS) {
+    await invoke('create_space', { name })
+    for (const [path, content] of Object.entries(notes))
+      await invoke('write_note', { path: `/${name}/${path}`, content })
+  }
   await invoke('create_space', { name: SPACE })
   for (const folder of FOLDERS) await invoke('create_folder', { path: at(folder) })
   for (const [path, content] of Object.entries(NOTES)) await invoke('write_note', { path: at(path), content })
@@ -44,6 +65,12 @@ interface Stage {
 }
 async function staged(): Promise<Stage> {
   await until(() => workspace.restored && workspace.spaces.some((one) => samePath(one.root, ROOT)))
+  for (const { name, notes } of NEIGHBOURS) {
+    const other = workspace.spaces.find((one) => samePath(one.root, `/${name}`))
+    if (!other) continue
+    if (workspace.activeSpaceId !== other.id) await workspace.showSpace(other.id)
+    for (const path of Object.keys(notes)) await workspace.open(`/${name}/${path}`)
+  }
   const space = workspace.spaces.find((one) => samePath(one.root, ROOT))
   if (space && workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
   const canvasPath = at(CANVAS)
@@ -59,7 +86,9 @@ async function staged(): Promise<Stage> {
   }
   workspace.activate(canvas.id)
   const ours = new Set([canvas.id, plan.id, page?.id])
-  workspace.closeEach(workspace.tabs.filter((one) => !ours.has(one.id)).map((one) => one.id))
+  workspace.closeEach(
+    workspace.tabs.filter((one) => one.path?.startsWith(`${ROOT}/`) && !ours.has(one.id)).map((one) => one.id),
+  )
   await until(() => CanvasStore.drawing(canvas.note, workspace.tabs))
   const scheme = () => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark')
   const people = (who: readonly number[]) => ({
@@ -77,6 +106,7 @@ async function staged(): Promise<Stage> {
   return { canvas, plan, page }
 }
 export async function play(): Promise<void> {
+  const site = siteOf(location)
   const stage = await staged()
   const origin = location.origin
   let cue: DemoCue = { orden: 'demo', scene: 'canvas', at: 0, still: false }
@@ -216,7 +246,7 @@ export async function play(): Promise<void> {
     }
   }
   addEventListener('message', (event: MessageEvent<unknown>) => {
-    if (event.origin !== location.origin || !isDemoCue(event.data)) return
+    if (event.origin !== site || event.source !== parent || !isDemoCue(event.data)) return
     const scene: Scene = event.data.scene
     if (scene !== cue.scene) began = performance.now()
     cue = event.data
@@ -227,5 +257,5 @@ export async function play(): Promise<void> {
   await nextFrame()
   await nextFrame()
   wake()
-  parent.postMessage({ orden: 'demo', ready: true }, location.origin)
+  parent.postMessage({ orden: 'demo', ready: true }, site)
 }
