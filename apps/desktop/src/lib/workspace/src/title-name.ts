@@ -7,10 +7,14 @@ export interface Title {
   words: string
 }
 const HEADING = /^# +(\S.*?)\s*$/
+export function titleLine(text: string): { from: number; to: number } {
+  const from = frontMatterBlock(text)?.to ?? 0
+  const end = text.indexOf('\n', from)
+  return { from, to: end === -1 ? text.length : end }
+}
 export function titleOf(text: string): Title | null {
-  const start = frontMatterBlock(text)?.to ?? 0
-  const end = text.indexOf('\n', start)
-  const line = text.slice(start, end === -1 ? text.length : end).replace(/\r$/, '')
+  const { from: start, to } = titleLine(text)
+  const line = text.slice(start, to).replace(/\r$/, '')
   const found = HEADING.exec(line)
   const words = found?.[1]
   if (words === undefined) return null
@@ -19,7 +23,3 @@ export function titleOf(text: string): Title | null {
 }
 export const sameName = (words: string, stem: string): boolean => nameFromTitle(words) === stem
 export const stemOf = (path: string): string | null => (isMarkdownPath(path) ? shownName(nameOf(path)) : null)
-export function lineOf(text: string, title: Title): { from: number; to: number } {
-  const end = text.indexOf('\n', title.to)
-  return { from: text.lastIndexOf('\n', title.from - 1) + 1, to: end === -1 ? text.length : end }
-}
