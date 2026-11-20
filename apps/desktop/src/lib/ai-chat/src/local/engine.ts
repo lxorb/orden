@@ -1,4 +1,5 @@
-import { errorText, modelTurn, userStep, youTurn } from '../chat/transcript'
+import { errorText, modelTurn, readOutside, sinceCompaction, summaryOf, userStep, youTurn } from '../chat/transcript'
+import { estimateText } from '../chat/usage'
 import {
   type Draft,
   type Effort,
@@ -81,18 +82,39 @@ function wordsOf(turn: Turn): string {
     .join('')
     .trim()
 }
-function seeded(thread: Thread, instructions: string, message: string): string {
+export const SEED_WINDOW = 128_000
+const PER_MESSAGE = 8
+const sizeOf = (one: Message) => estimateText(one.content) + PER_MESSAGE
+function seeded(thread: Thread, instructions: string, message: string, window: number): { text: string; left: number } {
+  const summary = thread.compaction ? summaryOf(thread.compaction, readOutside(thread.turns)) : null
+  const turns = summary ? sinceCompaction(thread.turns, thread.compaction) : thread.turns
   const said: Message[] = []
-  if (instructions) said.push({ role: 'system', content: instructions })
-  for (const turn of thread.turns) {
+  for (const turn of turns) {
     if (turn.role === 'you' && turn.draft) said.push({ role: 'user', content: userStep(turn.draft).text })
     else if (turn.role === 'model') {
       const words = wordsOf(turn)
       if (words) said.push({ role: 'assistant', content: words })
     }
   }
-  said.push({ role: 'user', content: message })
-  return promptFor(said)
+  const rules: Message[] = instructions ? [{ role: 'system', content: instructions }] : []
+  const head: Message[] = summary ? [{ role: 'user', content: summary }] : []
+  const asked: Message = { role: 'user', content: message }
+  const note = (left: number): Message => ({
+    role: 'user',
+    content: `(${String(left)} earlier messages are left out to fit the model’s window${summary ? '; the summary above stands for what came before them' : ''}.)`,
+  })
+  let room =
+    Math.floor(window / 2) - [...rules, ...head, asked, note(said.length)].reduce((sum, one) => sum + sizeOf(one), 0)
+  let from = said.length
+  while (from > 0) {
+    const one = said[from - 1]
+    const size = one ? sizeOf(one) : 0
+    if (size > room) break
+    room -= size
+    from--
+  }
+  const kept = said.slice(from)
+  return { text: promptFor([...rules, ...head, ...(from ? [note(from)] : []), ...kept, asked]), left: from }
 }
 export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   const sessions = new Map<string, Live>()
@@ -100,6 +122,14 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   const answers = setup.answers ?? crateAnswers
   const windows = new Map<string, number>()
   let listed: ModelInfo[] = []
+  function windowOf(thread: Thread): number {
+    return (
+      thread.usage.window ??
+      windows.get(thread.model) ??
+      listed.find((one) => one.id === thread.model)?.window ??
+      SEED_WINDOW
+    )
+  }
   function providerOf(thread: Thread): Provider {
     const provider = setup.provider(thread.provider)
     if (provider?.kind !== kind) throw new Error('That provider is not set up yet.')
@@ -406,7 +436,9 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       const instructions = opened ? ((await setup.instructions?.(thread).catch(() => '')) ?? '') : ''
       const step = userStep(message)
       const seeding = opened && !!(instructions || before.turns.length)
-      const text = seeding ? seeded(before, instructions, step.text) : step.text
+      const seed = seeding ? seeded(before, instructions, step.text, windowOf(before)) : null
+      if (seed?.left) say({ kind: 'notice', code: 'compacted', text: '' })
+      const text = seed ? seed.text : step.text
       const turnSaid: Say = { kind: 'turn', text, images: step.images }
       if (!pursuit) await live.session.say(turnSaid)
       else if (!startsItsOwnTurn(kind)) {
