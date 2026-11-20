@@ -86,7 +86,7 @@
     const was = page.keyboard
     page.keyboard = null
     if (focused && (was === 'address' || (blank && !page.seen))) take()
-    else if (focused && was === 'page' && isDesktop) void invoke('keyboard_back', { tab }).catch(() => undefined)
+    else if (focused && !blank && isDesktop) void invoke('keyboard_back', { tab }).catch(() => undefined)
     page.seen = true
   }
   function leave() {

@@ -661,7 +661,7 @@ test('a kept web tab gives its half-typed address back with the keyboard and the
   expect([field.value, field.selectionStart, field.selectionEnd]).toEqual(['exam', 2, 2])
   void unmount(app)
 })
-test('a loaded web tab gives the keyboard to its page when it is shown, and only a new empty one to its address', async () => {
+test('a loaded web tab gives the keyboard to its page when it is shown, even where the app never heard the page take it, and only a new empty one to its address', async () => {
   window.dispatchEvent(new Event('pointerup'))
   await launched()
   const { kept } = await import('./kept.svelte')
@@ -686,11 +686,16 @@ test('a loaded web tab gives the keyboard to its page when it is shown, and only
     })
     flushSync()
     await frames()
+    asked.length = 0
     kept.shown = true
     flushSync()
     await frames()
     const field = target.querySelector<HTMLInputElement>('.web input')
     expect(document.activeElement === field, address ?? 'a new tab').toBe(takes)
+    expect(
+      asked.filter((one) => one.command === 'keyboard_back').map((one) => one.args),
+      address ?? 'a new tab',
+    ).toEqual(takes ? [] : [{ tab: tab.id }])
     void unmount(app)
     workspace.close(tab.id)
   }
