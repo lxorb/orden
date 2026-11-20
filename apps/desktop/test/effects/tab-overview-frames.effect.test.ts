@@ -176,8 +176,8 @@ test('a window chosen from behind the pane goes home as that pane in one move, a
   const [px, py] = at(pane?.style.transform)
   expect(px).toBeCloseTo(x ?? NaN, 0)
   expect(py).toBeCloseTo((y ?? NaN) - 40, 0)
-  expect(windowOf(chosen?.id)?.querySelector('.face-box')?.classList.contains('is-live')).toBe(true)
-  expect(windowOf(was)?.querySelector('.face-box')?.classList.contains('is-live')).toBe(false)
+  expect(windowOf(chosen?.id)?.querySelector('.face')).toBe(null)
+  expect(windowOf(was)?.querySelector('.face')).not.toBe(null)
   let frames = 0
   for (let i = 0; i < 400 && tabOverview.out.length; i++) {
     frame()

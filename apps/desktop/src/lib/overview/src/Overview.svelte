@@ -1454,8 +1454,10 @@
         onpointercancel={cancelled}
         use:placed={tab.id}
       >
-        <span class="face-box" class:is-live={live} style:scale={slot.w / face.w}>
-          <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} flying={onTheWay} />
+        <span class="face-box" style:scale={slot.w / face.w}>
+          {#if !live}
+            <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} flying={onTheWay} />
+          {/if}
         </span>
         <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">
           {#if tabsAsDrawn[tab.id]}
@@ -1641,9 +1643,6 @@
     top: 0;
     left: 0;
     transform-origin: 0 0;
-  }
-  .face-box.is-live {
-    visibility: hidden;
   }
   .chip.is-copy {
     background: none;
