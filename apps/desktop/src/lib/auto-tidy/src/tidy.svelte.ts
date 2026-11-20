@@ -6,7 +6,7 @@ import { autoTidy } from './choice.svelte'
 import { seen } from './seen'
 
 const HOUR = 3_600_000
-const KEPT: ReadonlySet<TabKind> = new Set<TabKind>(['terminal', 'application', 'chat'])
+const KEPT: ReadonlySet<TabKind> = new Set<TabKind>(['terminal', 'chat'])
 const pathsOf = (tabs: readonly Tab[]): string[] => tabs.flatMap((tab) => (tab.path === null ? [] : [tab.path]))
 function inColumns(tab: Tab): boolean {
   const pane = workspace.panes.at(tab.paneId)
