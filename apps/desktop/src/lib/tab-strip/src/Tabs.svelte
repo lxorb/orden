@@ -817,6 +817,9 @@
               onMark = event.target instanceof Element && !!event.target.closest('.face')
               pressed(event, tab, at)
             }}
+            onmousedown={(event) => {
+              if (event.button === 0) event.preventDefault()
+            }}
             onpointermove={movedTo}
             onpointerup={released}
             onpointercancel={giveUp}
