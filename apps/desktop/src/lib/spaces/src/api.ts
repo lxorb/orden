@@ -63,11 +63,9 @@ export async function madeSpace(name: string, made?: (space: Space) => void): Pr
   const space = await workspace.addSpace(name)
   if (!space) return
   made?.(space)
-  if (!__EVEN_PLUGIN__) {
-    const { AGENTS_SEED } = await import('../../agents-seed/src/api')
-    await writeFile(joinPath(space.root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
-    await workspace.loadTree()
-  }
+  const { AGENTS_SEED } = await import('../../agents-seed/src/api')
+  await writeFile(joinPath(space.root, AGENTS_NAME), AGENTS_SEED).catch(() => undefined)
+  await workspace.loadTree()
   const { sync } = await import('../../sync-store/src/api')
   sync.nudge()
   return space
@@ -105,13 +103,11 @@ export function spaceMenu(space: Space): MenuEntry[] {
   return trim([
     ...(managesSpace(space.root) ? [{ label: 'Rename', run: () => void renameSpace(space) }] : []),
     ...(canWriteAt(space.root) ? [{ label: 'Choose an icon', run: () => iconChoice.space(space.id) }] : []),
-    ...(__EVEN_PLUGIN__ ? [] : [{ label: 'Settings', run: () => settingsWindow().show('space', space.root) }]),
+    { label: 'Settings', run: () => settingsWindow().show('space', space.root) },
     ...(canShare(space) ? [{ label: 'Share', run: () => void shareSpace(space) }] : []),
     ...(canPublish(space) ? [{ label: 'Publish', run: () => publishSpace(space) }] : []),
-    ...(!__EVEN_PLUGIN__ && canTrustAgain(space)
-      ? [{ label: 'Trust this space again', run: () => void trustAgain(space) }]
-      : []),
-    ...(!__EVEN_PLUGIN__ && (theirs || isShared(space.root))
+    ...(canTrustAgain(space) ? [{ label: 'Trust this space again', run: () => void trustAgain(space) }] : []),
+    ...(theirs || isShared(space.root)
       ? [
           {
             label: 'Nickname',

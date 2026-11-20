@@ -43,7 +43,7 @@
   {/if}
 
   <div class="acts">
-    {#if !isNative && !__EVEN_PLUGIN__ && !viewport.touch}
+    {#if !isNative && !viewport.touch}
       <button
         class="orden-glyph act"
         title="Download the app"
@@ -62,7 +62,7 @@
       >
     </button>
 
-    {#if scratch && pad && viewport.touch && !__EVEN_PLUGIN__}
+    {#if scratch && pad && viewport.touch}
       <button
         class="orden-glyph act"
         class:is-on={padOn}

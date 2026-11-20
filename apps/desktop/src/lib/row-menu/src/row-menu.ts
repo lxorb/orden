@@ -73,7 +73,7 @@ function readOnlyMenu(entry: Entry, marked: Entry): MenuEntry[] {
   ]
 }
 function wallpaperEntry(entry: Entry): MenuEntry[] {
-  if (__EVEN_PLUGIN__ || entry.is_dir || !isPicturePath(entry.name)) return []
+  if (entry.is_dir || !isPicturePath(entry.name)) return []
   return [
     {
       label: 'Use as wallpaper',

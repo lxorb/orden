@@ -107,13 +107,10 @@
   const pad = sidebarPart('scratchpad')
   const outlined = sidebarPart('outline')
   const unread = $derived(ask?.unread?.() ?? false)
-  const phoneTabs = $derived(side === 'left' && viewport.device === 'phone' && !__EVEN_PLUGIN__)
-  const padHere = $derived(side === 'right' && !viewport.touch && !__EVEN_PLUGIN__)
+  const phoneTabs = $derived(side === 'left' && viewport.device === 'phone')
+  const padHere = $derived(side === 'right' && !viewport.touch)
   const offered = (id: Panel) =>
-    workspace.fills(id) &&
-    (id !== 'chats' || (!!account.accountToken && chatsOn())) &&
-    (id !== 'time' || timeOn()) &&
-    (id !== 'ask' || !__EVEN_PLUGIN__)
+    workspace.fills(id) && (id !== 'chats' || (!!account.accountToken && chatsOn())) && (id !== 'time' || timeOn())
   const open = $derived(padHere ? workspace.rightShows !== null : workspace.openOn(side) !== null)
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
   const showing = $derived.by((): Panel | 'scratchpad' => {
@@ -217,13 +214,9 @@
   const PANELS: { id: Panel; label: string; path: string }[] = [
     { id: 'tree', label: 'Files', path: FILES_MARK },
     { id: 'outline', label: 'Outline', path: OUTLINE_MARK },
-    ...(__EVEN_PLUGIN__
-      ? []
-      : [
-          { id: 'tasks' as const, label: 'Todos', path: TASKS_MARK },
-          { id: 'chats' as const, label: 'Chats', path: CHATS_MARK },
-          { id: 'time' as const, label: 'Time tracker', path: TIME_MARK },
-        ]),
+    { id: 'tasks', label: 'Todos', path: TASKS_MARK },
+    { id: 'chats', label: 'Chats', path: CHATS_MARK },
+    { id: 'time', label: 'Time tracker', path: TIME_MARK },
     { id: 'links', label: 'Links', path: LINKS_MARK },
     { id: 'ask', label: 'Ask', path: ASK_MARK },
   ]
@@ -544,7 +537,7 @@
         </div>
       {/if}
 
-      {#if !__EVEN_PLUGIN__ && side === 'left' && startup.settled}
+      {#if side === 'left' && startup.settled}
         {#await loadHintCard() then card}
           <card.default
             hint="graph"
@@ -556,7 +549,7 @@
         {/await}
       {/if}
 
-      {#if !__EVEN_PLUGIN__ && side === 'left' && paletteKey && startup.settled}
+      {#if side === 'left' && paletteKey && startup.settled}
         {#await loadHintCard() then card}
           <card.default
             hint="palette"
@@ -682,7 +675,7 @@
                 <button class="empty" onclick={() => workspace.createNote()}>New note</button>
               {/if}
 
-              {#if !__EVEN_PLUGIN__ && workspace.archive.any}
+              {#if workspace.archive.any}
                 {#await archiveSection() then Archive}
                   <Archive />
                 {/await}

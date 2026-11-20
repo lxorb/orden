@@ -36,7 +36,7 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
 export function iconEntries(path: string | null | undefined, folder = false): MenuEntry[] {
   if (!path || !canWriteAt(path)) return []
   const web = isWebTarget(path) && !/\.webloc$/i.test(path.trim())
-  const term = !__EVEN_PLUGIN__ && isTermTarget(path)
+  const term = isTermTarget(path)
   const kept = web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
   const mapped = folder || !kept
   return [
