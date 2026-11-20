@@ -30,6 +30,14 @@ def waited(run, code, seconds):
             return True
         time.sleep(0.2)
     return False
+def settled(run, selector, seconds):
+    still = (
+        "(() => { let one = document.querySelector(%s); if (!one) return false;"
+        " for (; one; one = one.parentElement)"
+        " if (one.getAnimations().some((it) => it.playState === 'running')) return false;"
+        " return true })()" % json.dumps(selector)
+    )
+    return waited(run, still, seconds)
 def switch(run, box, press, want, seconds=4):
     if run(SCHEME) == want:
         return "kept"
@@ -40,6 +48,9 @@ def switch(run, box, press, want, seconds=4):
     if not waited(run, f"!!document.querySelector({json.dumps(MENU)})", seconds):
         return "the account button opened no menu"
     row = themes_row(run)
+    if row and not settled(run, row, seconds):
+        run(CLOSE)
+        return "the account menu never came to rest"
     button = box(row) if row else None
     if not isinstance(button, dict):
         run(CLOSE)
@@ -47,6 +58,9 @@ def switch(run, box, press, want, seconds=4):
     press(button)
     if not waited(run, f"!!document.querySelector({json.dumps(PICKER)})", seconds):
         return "Themes in the account menu opened no picker"
+    if not settled(run, mode(want), seconds):
+        run(CLOSE)
+        return "the picker never came to rest"
     choice = box(mode(want))
     if not isinstance(choice, dict):
         run(CLOSE)
