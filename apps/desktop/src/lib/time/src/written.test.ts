@@ -34,6 +34,18 @@ describe('the time as a spreadsheet', () => {
     const csv = csvOf([span({ note: '=HYPERLINK("x"),\nsecond' })], [UNI], 0)
     expect(csv).toContain(`"'=HYPERLINK(""x""),\nsecond"`)
   })
+  test('names a place as Orden shows it, without the file type kept in an older label or the whole path', () => {
+    const rows = csvOf(
+      [
+        span({ source: 'tab', place: '/s/Terminal.term', label: 'Terminal.term' }),
+        span({ source: 'tab', place: '/x/Board.canvas', label: null }),
+      ],
+      [UNI],
+      0,
+    ).split('\r\n')
+    expect(rows[1]?.endsWith(',tab,Terminal')).toBe(true)
+    expect(rows[2]?.endsWith(',tab,Board')).toBe(true)
+  })
 })
 describe('the time as a file of its own', () => {
   test('comes back as the records it was written from', () => {

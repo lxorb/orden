@@ -7,7 +7,7 @@ import { SAMPLE_EVERY } from './minutes'
 import { Sampler } from './sampler'
 import { type Sensed, sensedOf, withIdle } from './sensed'
 import { time } from './time.svelte'
-import { type Place, siteOf, Tracker } from './tracker'
+import { type Place, siteOf, tabPlace, Tracker } from './tracker'
 
 const AWAY = 5 * 60_000
 const tracker = new Tracker({
@@ -34,11 +34,6 @@ function spaceInFront(): Place | null {
   const space = workspace.activeSpace
   if (!space) return null
   return { key: sync.remoteIdFor(space.root) ?? `name:${space.name}`, name: space.name }
-}
-function tabInFront(): Place | null {
-  const tab = workspace.active
-  if (!tab || tab.inPrivate) return null
-  return { key: tab.path ?? `${tab.kind}:${tab.name}`, name: tab.name }
 }
 function siteInFront(): Place | null {
   const tab = workspace.active
@@ -70,7 +65,7 @@ const sampler = new Sampler({
         ? {
             app: leading && sensed.app ? { key: sensed.app, name: sensed.app } : null,
             space: front ? spaceInFront() : null,
-            tab: front ? tabInFront() : null,
+            tab: front ? tabPlace(workspace.active) : null,
             site: front ? siteInFront() : null,
           }
         : {},

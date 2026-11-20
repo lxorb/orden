@@ -66,3 +66,13 @@ describe('the spaces and sites time was spent in', () => {
     expect(totalsOf(pieces.filter((one) => one.span.source === 'timer'))).toEqual([{ activity: 'uni', ms: HOUR }])
   })
 })
+describe('a place recorded by an older version', () => {
+  test('shows the plain name, not the file type in it nor the whole path', () => {
+    const pieces = [
+      span('old', 0, HOUR, { source: 'tab', place: '/s/Terminal.term', label: 'Terminal.term' }),
+      span('bare', HOUR, 3 * HOUR, { source: 'tab', place: '/x/Board.canvas', label: null }),
+      span('paper', 3 * HOUR, 6 * HOUR, { source: 'tab', place: '/x/paper.pdf', label: null }),
+    ].map((one) => ({ span: one, from: one.start, to: one.end ?? one.start }))
+    expect(placesOf(pieces, 'tab').map((one) => one.name)).toEqual(['paper.pdf', 'Board', 'Terminal'])
+  })
+})

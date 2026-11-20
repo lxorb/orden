@@ -1,6 +1,6 @@
 import { TIME_ID, TIME_KIND } from '@orden/sync-core'
 import { isRecord } from '../../platform/src/api'
-import type { Activity, Span } from './records'
+import { type Activity, placeLabel, type Span } from './records'
 
 const HEAD = ['start', 'end', 'minutes', 'activity', 'tags', 'note', 'source', 'place']
 function cell(value: string): string {
@@ -19,7 +19,7 @@ export function csvOf(spans: readonly Span[], activities: readonly Activity[], n
       span.tags.join(', '),
       span.note,
       span.source,
-      span.label ?? span.place ?? '',
+      span.place === null ? (span.label ?? '') : placeLabel(span.label, span.place),
     ]
   })
   return [HEAD, ...rows].map((row) => row.map(cell).join(',')).join('\r\n') + '\r\n'

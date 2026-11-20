@@ -1,6 +1,6 @@
 import { piecesIn } from './days'
 import type { Minute } from './minutes'
-import type { Lane, Span } from './records'
+import { type Lane, placeLabel, type Span } from './records'
 
 const SLOT_PX = 4
 export interface Bar {
@@ -34,7 +34,7 @@ export function barsOf(
   const mine = (span: Span) => span.source === lane && span.place !== null
   for (const piece of piecesIn(spans, from, to, now, mine)) {
     const key = piece.span.place ?? ''
-    if (!labels.has(key)) labels.set(key, piece.span.label ?? key)
+    if (!labels.has(key)) labels.set(key, placeLabel(piece.span.label, key))
     const first = Math.max(0, Math.floor((piece.from - from) / size))
     const last = Math.min(slots - 1, Math.floor((Math.max(piece.from, piece.to - 1) - from) / size))
     for (let slot = first; slot <= last; slot += 1) {

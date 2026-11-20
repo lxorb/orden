@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Lane } from './records'
-import { GAP, type Place, siteOf, Tracker, WRITE_EVERY } from './tracker'
+import { GAP, type Place, siteOf, tabPlace, Tracker, WRITE_EVERY } from './tracker'
 
 interface Written {
   id: string
@@ -149,5 +149,19 @@ describe('the site of a web tab', () => {
     expect(siteOf('file:///etc/passwd')).toBeNull()
     expect(siteOf('nonsense')).toBeNull()
     expect(siteOf(undefined)).toBeNull()
+  })
+})
+describe('the tab in front', () => {
+  test('is named as the tab shows it, without the file type Orden keeps in the name', () => {
+    const tab = {
+      path: '/s/Terminal.term',
+      kind: 'terminal',
+      name: 'Terminal.term',
+      shown: 'Terminal',
+      inPrivate: false,
+    }
+    expect(tabPlace(tab)).toEqual({ key: '/s/Terminal.term', name: 'Terminal' })
+    expect(tabPlace({ ...tab, inPrivate: true })).toBeNull()
+    expect(tabPlace(null)).toBeNull()
   })
 })
