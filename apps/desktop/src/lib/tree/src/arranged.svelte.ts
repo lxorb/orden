@@ -71,6 +71,7 @@ const read = (saved: unknown): Record<string, Held> =>
 const sameNames = (one: readonly string[], other: readonly string[]): boolean =>
   one.length === other.length && one.every((name, at) => name === other[at])
 const SETTLING = 700
+const arranging = door(() => import('./arranging'))
 interface Showing {
   root: string
   folder: string
@@ -98,7 +99,6 @@ export class Arranged {
   private placings = $state(0)
   private placing = $state.raw<Record<string, readonly string[]>>({})
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
-  private readonly talking = door(() => import('./arranging'))
   constructor(private readonly root: () => string | null) {}
   reread(): void {
     this.keeping.reread()
@@ -285,7 +285,7 @@ export class Arranged {
     this.writeAll()
   }
   adopt(root: string, theirs: unknown, accountId: string): Promise<void> {
-    return this.reaching().then(({ fold }) => fold(this, root, theirs, accountId))
+    return arranging().then(({ fold }) => fold(this, root, theirs, accountId))
   }
   kept(root: string): { folders: Record<string, string[]>; account: string | null; sent: boolean } {
     const held = this.spaces[root]
@@ -318,12 +318,9 @@ export class Arranged {
     if (held !== undefined) clearTimeout(held)
     const waiting = setTimeout(() => {
       this.pushing = without(this.pushing, root)
-      void this.reaching().then(({ send }) => send(this, root))
+      void arranging().then(({ send }) => send(this, root))
     }, SETTLING)
     this.pushing = { ...this.pushing, [root]: waiting }
-  }
-  private reaching(): Promise<typeof import('./arranging')> {
-    return this.talking()
   }
   private writeAll() {
     this.keeping.write()
@@ -416,7 +413,8 @@ export class SpaceSorting {
       (api, token, spaceId) => api.saveSort(token, spaceId, mode),
       (landed) => {
         const kept = this.spaces[root]
-        if (kept && kept.sent !== landed) this.keepAs(root, kept.mode, kept.account, landed)
+        if (kept && kept.sent !== landed && (!landed || kept.mode === mode))
+          this.keepAs(root, mode, kept.account, landed)
       },
       (answer) => isRecord(answer) && answer.sort === mode,
     )

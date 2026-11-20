@@ -11,10 +11,6 @@ function same(one: Record<string, string[]>, other: Record<string, string[]>): b
     return mine.length === theirs.length && mine.every((name, at) => name === theirs[at])
   })
 }
-const holds = (answer: unknown, sent: Record<string, string[]>): boolean => {
-  const kept = arrangedMap(isRecord(answer) ? answer.arranged : null)
-  return Object.entries(sent).every(([key, names]) => same({ [key]: names }, { [key]: kept[key] ?? [] }))
-}
 const ORDERS: Folding<Record<string, string[]>> = {
   fold: (theirs, mine) => ({ ...theirs, ...mine }),
   same,
@@ -32,7 +28,9 @@ export async function send(store: Arranged, root: string): Promise<void> {
   await push(
     root,
     (api, token, spaceId) => api.saveArranged(token, spaceId, folders),
-    (landed) => store.said(root, landed),
-    (answer) => holds(answer, folders),
+    (landed) => {
+      if (!landed || same(store.of(root), folders)) store.said(root, landed)
+    },
+    (answer) => isRecord(answer) && same(folders, arrangedMap(answer.arranged)),
   )
 }

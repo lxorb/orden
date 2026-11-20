@@ -230,6 +230,29 @@ describe('what the account is told of how a space is ordered', () => {
     await told(() => arranged.set('/s/Work', ['a.md', 'b.md']))
     expect(arranged.kept('/s').sent).toBe(true)
   })
+  test('an answer to an older order or sort never marks a newer one sent', async () => {
+    const waiting: (() => void)[] = []
+    server.answer = (sent) => new Promise((go) => waiting.push(() => go(sent)))
+    const answer = async (at: number) => {
+      waiting[at]?.()
+      await vi.advanceTimersByTimeAsync(1)
+    }
+    const arranged = new Arranged(() => '/s')
+    await arranged.adopt('/s', {}, 'me')
+    await told(() => arranged.set('/s/Work', ['b.md', 'a.md']))
+    await told(() => arranged.set('/s/Work', ['a.md', 'b.md']))
+    await answer(0)
+    expect(arranged.kept('/s').sent).toBe(false)
+    await answer(1)
+    expect(arranged.kept('/s').sent).toBe(true)
+    const sorting = new SpaceSorting(() => '/s')
+    sorting.adopt('/s', 'name', 'me')
+    await told(() => sorting.set('manual'))
+    await told(() => sorting.set('modified-desc'))
+    await answer(2)
+    sorting.adopt('/s', 'name', 'me')
+    expect(sorting.of('/s')).toBe('modified-desc')
+  })
   test('a sort lands only when the answer keeps it', async () => {
     server.answer = () => Promise.resolve({ sort: 'name' })
     const sorting = new SpaceSorting(() => '/s')
