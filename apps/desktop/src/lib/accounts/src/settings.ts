@@ -1,7 +1,13 @@
-import { hearSettings as heard, heardSettings } from './account-owed'
+import { account } from './account.svelte'
+import { heardSettings, SETTINGS_HEARD } from './account-owed'
 import { request } from './client'
 import type { AccountSettings, KeyState } from './routes'
-import { isRecord, merged } from '../../platform/src/api'
+import { isRecord, keepJson, merged } from '../../platform/src/api'
+
+function heard(settings: AccountSettings): void {
+  const who = account.user?.id
+  if (who) keepJson(SETTINGS_HEARD, { who, settings })
+}
 
 type Name = keyof AccountSettings
 const said = (value: unknown) => JSON.stringify(value)
