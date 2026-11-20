@@ -1323,6 +1323,25 @@ describe('a page something comes over', () => {
     },
   )
 })
+test('a picture already being taken when the overview opens is not waited for: the page is put out of its place at once', async () => {
+  cuts = 'hollows'
+  await built()
+  await settle()
+  let landed = (): void => undefined
+  photographing = new Promise<void>((go) => (landed = go))
+  pages.of('a').shot = null
+  const taking = pages.retake('a', pages.of('a'))
+  calls.length = 0
+  let held = false
+  const holding = pages.holdStill()?.then(() => (held = true))
+  await vi.waitFor(() => expect(held).toBe(true))
+  expect(last('web_place')).toMatchObject({ tab: 'a', visible: true, pane: { x: -OUT_OF_THE_WAY } })
+  landed()
+  await Promise.all([taking, holding])
+  await pages.letGo()
+  await settle()
+  photographing = null
+})
 test('pages held still are out of their place at once, and their pictures come after', async () => {
   cuts = 'hollows'
   await built()
