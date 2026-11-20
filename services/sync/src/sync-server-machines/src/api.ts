@@ -1,4 +1,5 @@
 export { aiVault } from './ai/vault'
+export { AppRelay } from './apps/relay'
 export { ask } from './ask'
 export { onlineAdmin } from './machines/admin'
 export { eraseMachines } from './machines/ask'

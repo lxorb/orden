@@ -338,3 +338,4 @@ export default { fetch: serve, scheduled }
 export { NoteRoom } from './sync-server-engine/src/api'
 export { AccountHub } from './sync-server-engine/src/api'
 export { ChatLog } from './sync-server-chats/src/api'
+export { AppRelay } from './sync-server-machines/src/api'

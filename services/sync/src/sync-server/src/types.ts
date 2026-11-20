@@ -4,6 +4,7 @@ export interface Env {
   ROOMS?: DurableObjectNamespace
   HUB?: DurableObjectNamespace
   CHATS?: DurableObjectNamespace
+  APPS?: DurableObjectNamespace
   TURN_KEY_ID?: string
   TURN_KEY_TOKEN?: string
   MACHINES?: DurableObjectNamespace
