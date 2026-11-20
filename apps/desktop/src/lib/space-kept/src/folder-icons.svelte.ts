@@ -63,6 +63,7 @@ export class FolderIcons {
     this.keeping.value = value
   }
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
+  private offering: string[] = []
   constructor(private readonly root: () => string | null) {}
   reread(): void {
     this.keeping.reread()
@@ -167,9 +168,19 @@ export class FolderIcons {
     const colors = theirTints === undefined ? mine.colors : folderIconMap(theirTints, LONGEST_TINT)
     const met = meet(held, accountId, mine, { icons, colors }, MAPS)
     if (!met) return
-    this.spaces = { ...this.spaces, [root]: { ...met.value, account: accountId, sent: !met.tell } }
-    this.write()
-    if (met.tell) void this.push(root)
+    const sent = !met.tell
+    if (!held || !MAPS.same(held, met.value) || held.account !== accountId || held.sent !== sent) {
+      this.spaces = { ...this.spaces, [root]: { ...met.value, account: accountId, sent } }
+      this.write()
+    }
+    if (met.tell) this.offer(root)
+  }
+  private offer(root: string) {
+    if (this.offering.includes(root)) return
+    this.offering = [...this.offering, root]
+    void this.push(root).finally(() => {
+      this.offering = this.offering.filter((one) => one !== root)
+    })
   }
   private put(root: string, icons: Record<string, string>, colors: Record<string, string>) {
     this.spaces = {

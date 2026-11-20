@@ -241,24 +241,26 @@ describe('what another window keeps', () => {
   })
 })
 describe('a map the account is still to be told', () => {
-  test('is not taken for sent, so a second pairing before the push lands keeps it', () => {
+  test('is not taken for sent, so a second pairing before the push lands keeps it, and writes nothing', () => {
     const icons = new FolderIcons(() => '/s')
     icons.adopt('/s', {}, {}, 'me')
     icons.set('/s/Work', 'rocket')
-    icons.adopt('/s', {}, {}, 'me')
-    icons.adopt('/s', {}, {}, 'me')
-    expect(icons.iconOf('/s/Work')).toBe('rocket')
     const excluded = new Excluded(() => '/s')
     excluded.adopt('/s', [], 'me')
     excluded.toggle('/s/Drafts')
-    excluded.adopt('/s', [], 'me')
-    excluded.adopt('/s', [], 'me')
-    expect(excluded.of('/s')).toEqual(['Drafts'])
     const graph = new SpaceGraphSettings(() => '/s')
     graph.adopt('/s', {}, 'me')
     graph.set({ filter: 'mine' })
-    graph.adopt('/s', { filter: 'theirs' }, 'me')
-    graph.adopt('/s', { filter: 'theirs' }, 'me')
+    const writes = vi.spyOn(localStorage, 'setItem')
+    for (let again = 0; again < 2; again++) {
+      icons.adopt('/s', {}, {}, 'me')
+      excluded.adopt('/s', [], 'me')
+      graph.adopt('/s', { filter: 'theirs' }, 'me')
+    }
+    expect(writes).not.toHaveBeenCalled()
+    writes.mockRestore()
+    expect(icons.iconOf('/s/Work')).toBe('rocket')
+    expect(excluded.of('/s')).toEqual(['Drafts'])
     expect(graph.here.filter).toBe('mine')
   })
 })
@@ -287,6 +289,12 @@ describe('a push to the account', () => {
     expect(icons.iconOf('/s/Work')).toBe(picture)
     await vi.waitFor(() => expect(server.sent).toBe(offered + 1))
     await vi.advanceTimersByTimeAsync(1)
+    const before = server.sent
+    icons.adopt('/s', {}, {}, 'me')
+    icons.adopt('/s', {}, {}, 'me')
+    await vi.waitFor(() => expect(server.sent).toBe(before + 1))
+    await vi.advanceTimersByTimeAsync(1)
+    expect(server.sent).toBe(before + 1)
     server.keeps = () => true
     await pushed(icons, '/s/Plan', 'rocket')
     icons.adopt('/s', { Plan: 'rocket' }, {}, 'me')

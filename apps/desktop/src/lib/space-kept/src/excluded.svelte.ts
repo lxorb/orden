@@ -47,6 +47,7 @@ function under(path: string, excluded: string, root?: string): boolean {
 }
 export class Excluded {
   private keeping = new Kept(STORAGE_KEY, read)
+  private offering: string[] = []
   private get spaces(): Record<string, Held> {
     return this.keeping.value
   }
@@ -148,9 +149,19 @@ export class Excluded {
     const held = this.spaces[root]
     const met = meet(held, accountId, held?.paths ?? [], account, PATHS)
     if (!met) return
-    this.spaces = { ...this.spaces, [root]: { paths: met.value, account: accountId, sent: !met.tell } }
-    this.write()
-    if (met.tell) void this.push(root)
+    const sent = !met.tell
+    if (!held || !same(held.paths, met.value) || held.account !== accountId || held.sent !== sent) {
+      this.spaces = { ...this.spaces, [root]: { paths: met.value, account: accountId, sent } }
+      this.write()
+    }
+    if (met.tell) this.offer(root)
+  }
+  private offer(root: string) {
+    if (this.offering.includes(root)) return
+    this.offering = [...this.offering, root]
+    void this.push(root).finally(() => {
+      this.offering = this.offering.filter((one) => one !== root)
+    })
   }
   private put(root: string, paths: string[]) {
     this.spaces = {
