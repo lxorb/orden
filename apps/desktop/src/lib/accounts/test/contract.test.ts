@@ -376,7 +376,7 @@ describe('settings owed when the account signs out', () => {
     expect(reset).toBe(2)
   })
   test('a store put back for the account that signs in starts from what that account still owes', async () => {
-    const given: Record<string, unknown>[] = []
+    const given: unknown[] = []
     const owed = new AccountOwed('orden:test-owed-given', undefined, (patch) => given.push(patch))
     offline = true
     as('alice')
