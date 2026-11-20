@@ -1,4 +1,5 @@
 import { type TabKind, webPages } from '@orden/contracts'
+import { tick } from 'svelte'
 import { viewport } from '../../ui-kit/src/api'
 import { agentMarks, type Tab, workspace } from '../../workspace/src/api'
 import { autoTidy } from './choice.svelte'
@@ -53,6 +54,13 @@ function watch(now: () => number): () => void {
   let known: Set<string> | null = null
   let front: string[] = []
   return $effect.root(() => {
+    $effect(() => {
+      if (!autoTidy.on || !workspace.restored) return
+      const space = workspace.activeSpaceId
+      void tick().then(() => {
+        if (workspace.activeSpaceId === space) sweep(now())
+      })
+    })
     $effect(() => {
       if (!autoTidy.on || !workspace.restored) {
         known = null
