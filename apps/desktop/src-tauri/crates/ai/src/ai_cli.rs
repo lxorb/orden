@@ -407,6 +407,9 @@ pub struct Opening {
     #[serde(default)]
     space: Option<String>,
 }
+pub(crate) fn kept_out_of(chat: &Chat) -> std::collections::BTreeSet<String> {
+    args::refused_in(chat.mode, &chat.without, chat.only.as_deref())
+}
 impl Opening {
     fn chat(&self) -> Option<Chat> {
         self.mode.map(|mode| Chat {

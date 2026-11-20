@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::path::Path;
 
 use serde::Deserialize;
@@ -112,6 +113,12 @@ pub fn kept_out(without: &[String], only: Option<&[String]>) -> Vec<String> {
             }
         }
     }
+    out
+}
+pub fn refused_in(mode: Mode, without: &[String], only: Option<&[String]>) -> BTreeSet<String> {
+    let mut out: BTreeSet<String> =
+        tools_of(mode, &kept_out(without, only)).1.into_iter().collect();
+    out.extend(without.iter().cloned());
     out
 }
 pub fn left_out(mode: Option<Mode>, without: &[String]) -> String {
@@ -715,5 +722,23 @@ mod tests {
             gemini["mcpServers"]["orden"]["env"][KEPT_OUT_VAR],
             left_out(Some(Mode::Auto), &narrowed)
         );
+    }
+    #[test]
+    fn the_tools_a_chat_refuses_are_what_its_tool_server_is_told_to_keep_out() {
+        let only = ["read_note".to_owned(), "run_agent".to_owned(), "get_context".to_owned()];
+        let without = ["get_context".to_owned(), "mcp__fake__shout".to_owned()];
+        for mode in [Mode::Approve, Mode::Auto, Mode::Full, Mode::Plan] {
+            for (without, only) in
+                [(&without[..], Some(&only[..])), (&without[..], None), (&[][..], None)]
+            {
+                let refused = refused_in(mode, without, only);
+                let env = left_out(Some(mode), &kept_out(without, only));
+                let mut told: BTreeSet<String> =
+                    env.split(',').filter(|one| !one.is_empty()).map(str::to_owned).collect();
+                told.extend(without.iter().cloned());
+                assert_eq!(refused, told, "{mode:?}");
+            }
+        }
+        assert!(refused_in(Mode::Full, &[], None).is_empty());
     }
 }

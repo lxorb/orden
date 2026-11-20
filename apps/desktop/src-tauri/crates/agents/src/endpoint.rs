@@ -287,6 +287,9 @@ pub fn dispatch(
         }
         None => caller,
     };
+    if let Err(why) = crate::in_its_chat(caller, &verb) {
+        return (403, refused(&why));
+    }
     let args = asked.get("args").cloned().unwrap_or_default();
     let session = crate::session_of(&asked);
     if let Some(read) = crate::verbs::Verb::read(&verb, args.clone()) {

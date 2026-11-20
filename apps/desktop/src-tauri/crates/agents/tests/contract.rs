@@ -81,6 +81,7 @@ fn a_chat_is_told_to_the_window_whole_and_never_read_back_from_the_file() {
         without: vec!["browser_open".into()],
         only: Some(Vec::new()),
         space: Some("Work".into()),
+        kept_out: ["browser_open".to_owned()].into(),
     });
     let told = Caller::Agent(Box::new(grant.clone())).told().expect("told");
     assert_eq!(
@@ -89,7 +90,33 @@ fn a_chat_is_told_to_the_window_whole_and_never_read_back_from_the_file() {
     );
     let threaded = Caller::Agent(Box::new(grant.clone())).in_thread(Some("thread-1".into()));
     assert_eq!(threaded.told().expect("told")["chat"], told["chat"]);
-    grant.chat = Some(Chat { mode: "auto".into(), without: Vec::new(), only: None, space: None });
+    grant.chat = Some(Chat { mode: "auto".into(), ..Chat::default() });
     let told = Caller::Agent(Box::new(grant)).told().expect("told");
     assert_eq!(told["chat"], serde_json::json!({ "mode": "auto" }));
+}
+#[test]
+fn a_verb_its_chat_keeps_out_is_refused_before_it_runs_and_the_session_verbs_never_are() {
+    let mut grant = Grant::own("contract-kept".into(), "Kept");
+    grant.chat = Some(Chat {
+        mode: "auto".into(),
+        only: Some(vec!["read_note".into()]),
+        kept_out: ["edit_note", "browser_open", "agent_status", "agent_bye"]
+            .into_iter()
+            .map(str::to_owned)
+            .collect(),
+        ..Chat::default()
+    });
+    let caller = Caller::Agent(Box::new(grant.clone()));
+    for verb in ["edit_note", "browser_open"] {
+        let said = orden_agents::in_its_chat(&caller, verb).expect_err(verb);
+        assert_eq!(said, format!("{verb} is not a tool in this chat"));
+    }
+    for verb in ["read_note", "agent_status", "agent_pair", "agent_bye"] {
+        assert!(orden_agents::in_its_chat(&caller, verb).is_ok(), "{verb}");
+    }
+    let threaded = caller.in_thread(Some("thread-1".into()));
+    assert!(orden_agents::in_its_chat(&threaded, "edit_note").is_err());
+    grant.chat = None;
+    assert!(orden_agents::in_its_chat(&Caller::Agent(Box::new(grant)), "edit_note").is_ok());
+    assert!(orden_agents::in_its_chat(&Caller::Reader, "edit_note").is_ok());
 }

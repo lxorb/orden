@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
@@ -161,7 +161,7 @@ pub struct Grant {
     #[serde(skip_deserializing, skip_serializing_if = "Option::is_none")]
     pub chat: Option<Chat>,
 }
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Chat {
     pub mode: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -170,6 +170,8 @@ pub struct Chat {
     pub only: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub space: Option<String>,
+    #[serde(skip)]
+    pub kept_out: BTreeSet<String>,
 }
 impl Grant {
     pub fn own(id: String, client: &str) -> Self {

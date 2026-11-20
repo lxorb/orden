@@ -99,6 +99,7 @@ fn supervised(mut grant: Grant, chat: &Chat) -> Grant {
         without: chat.without.clone(),
         only: chat.only.clone(),
         space: chat.space.clone(),
+        kept_out: crate::ai_cli::kept_out_of(chat),
     });
     grant
 }
@@ -674,6 +675,31 @@ mod tests {
         assert!(first != other && other != third && third != spaced && first != spaced);
         assert_eq!(token_for(&mut all, "orden-a".into(), kept).expect("token"), other);
         assert_eq!(all.len(), 4);
+    }
+    #[test]
+    fn a_lent_grant_carries_the_tools_its_chat_keeps_out_to_the_endpoint() {
+        let refused = |chat: &Chat, verb: &str| {
+            let caller = Caller::Agent(Box::new(supervised(grant(), chat)));
+            orden_agents::in_its_chat(&caller, verb).is_err()
+        };
+        let narrow = Chat {
+            only: Some(vec!["read_note".into(), "run_agent".into(), "agent_result".into()]),
+            ..Chat::of(Mode::Auto)
+        };
+        assert!(refused(&narrow, "edit_note") && refused(&narrow, "browser_open"));
+        assert!(!refused(&narrow, "read_note") && !refused(&narrow, "agent_status"));
+        let plan = Chat::of(Mode::Plan);
+        for verb in ["edit_note", "write_note", "browser_click"] {
+            assert!(refused(&plan, verb), "{verb}");
+        }
+        for verb in ["create_note", "run_agent", "read_note", "agent_status"] {
+            assert!(!refused(&plan, verb), "{verb}");
+        }
+        let kept = Chat { without: vec!["mcp__fake__shout".into()], ..Chat::of(Mode::Full) };
+        assert!(refused(&kept, "mcp__fake__shout") && !refused(&kept, "edit_note"));
+        assert!(!refused(&Chat::of(Mode::Full), "edit_note"));
+        let told = Caller::Agent(Box::new(supervised(grant(), &narrow))).told().expect("told");
+        assert!(told["chat"].get("kept_out").is_none());
     }
     #[test]
     fn a_call_to_a_tool_its_chat_keeps_out_is_refused() {

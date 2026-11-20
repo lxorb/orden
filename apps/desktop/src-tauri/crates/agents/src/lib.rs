@@ -232,6 +232,17 @@ pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
         _ => Ok(()),
     }
 }
+const ALWAYS_IN_A_CHAT: [&str; 3] = ["agent_status", "agent_pair", "agent_bye"];
+pub fn in_its_chat(caller: &Caller, verb: &str) -> Result<(), String> {
+    let Caller::Agent(grant) = caller else {
+        return Ok(());
+    };
+    let kept_out = grant.chat.as_ref().is_some_and(|chat| chat.kept_out.contains(verb));
+    if kept_out && !ALWAYS_IN_A_CHAT.contains(&verb) {
+        return Err(format!("{verb} is not a tool in this chat"));
+    }
+    Ok(())
+}
 pub fn question_category(id: &str) -> Option<(verbs::Category, Option<String>)> {
     approvals::any(id).map(|one| (one.category, one.site))
 }
