@@ -21,21 +21,32 @@ interface Space {
   name: string
   root: string
 }
-const workspace = vi.hoisted(() => ({
-  spaces: [] as Space[],
-  activeSpaceId: null as string | null,
-  archivedSpaces: null as unknown as InstanceType<typeof ArchivedSpaces>,
-  get activeSpace(): Space | null {
-    return this.spaces.find((one) => one.id === this.activeSpaceId) ?? null
-  },
-  get shownSpaces(): Space[] {
-    return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
-  },
-  showSpace(id: string) {
-    this.activeSpaceId = id
-    return Promise.resolve()
-  },
-}))
+const workspace = vi.hoisted(() => {
+  const held = {
+    spaces: [] as Space[],
+    activeSpaceId: null as string | null,
+    archivedSpaces: null as unknown as InstanceType<typeof ArchivedSpaces>,
+    get activeSpace(): Space | null {
+      return this.spaces.find((one) => one.id === this.activeSpaceId) ?? null
+    },
+    get shownSpaces(): Space[] {
+      return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
+    },
+    showSpace(id: string) {
+      this.activeSpaceId = id
+      return Promise.resolve()
+    },
+    leaveArchived: vi.fn((): Promise<void> => leave()),
+  }
+  async function leave(): Promise<void> {
+    const open = held.activeSpace
+    if (!open || !held.archivedSpaces.has(open.root)) return
+    const next = held.shownSpaces[0]
+    if (next) await held.showSpace(next.id)
+    else held.archivedSpaces.set(open.root, false)
+  }
+  return held
+})
 const told = vi.hoisted(() => ({ sent: [] as unknown[], fails: false }))
 const session = vi.hoisted(() => ({ forgets: [] as (() => void)[] }))
 vi.mock('../../workspace/src/api', () => ({ workspace }))
@@ -73,6 +84,7 @@ beforeEach(() => {
   workspace.activeSpaceId = 'Notes'
   told.sent.length = 0
   told.fails = false
+  workspace.leaveArchived.mockClear()
 })
 describe('a space put away', () => {
   test('leaves every list of spaces, and comes back where it was', async () => {
@@ -110,6 +122,7 @@ describe('the account', () => {
     await archive.receive({ archivedSpaces: ['id-Notes', 'id-Work'] })
     expect(workspace.shownSpaces.map((one) => one.name)).toEqual(['Old', 'Local'])
     expect(workspace.activeSpaceId).toBe('Old')
+    expect(workspace.leaveArchived).toHaveBeenCalled()
     await archive.receive({ archivedSpaces: ['id-Work'] })
     expect(workspace.shownSpaces.map((one) => one.name)).toEqual(['Notes', 'Old', 'Local'])
   })
