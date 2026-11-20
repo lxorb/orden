@@ -56,7 +56,7 @@
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
   import Editor from './Editor.svelte'
-  import { Handoff, Parked } from './editor-states'
+  import { Parked } from './editor-states'
   import { keptAway } from '../../away/src/api'
   import { chrome } from '../../theme/src/api'
   import { without } from '../../graph/src/api'
@@ -125,8 +125,8 @@
   const KEPT = 6
   const inEditor = (one: Tab) =>
     one.kind === 'note' && !one.coming && !one.reading && !protection.locked(noteBehind(one))
-  const keepsAlive = (one: Tab) => inEditor(one) || one.kind === 'terminal'
-  const handoff = new Handoff()
+  const doors: Partial<Record<string, typeof webSurface>> = { terminal: terminalSurface, web: webSurface }
+  const keepsAlive = (one: Tab) => inEditor(one) || !!doors[one.kind]
   const parked = new Parked<Tab>((one) => untrack(() => one.paneId === pane.id && workspace.tabs.includes(one)))
   let recent: string[] = []
   let alive = $state<string[]>([])
@@ -137,7 +137,8 @@
     untrack(() => {
       recent = (front ? [front, ...recent.filter((id) => id !== front)] : recent).filter((id) => notes.includes(id))
       const keep = recent.slice(0, KEPT)
-      alive = [...alive.filter((id) => keep.includes(id)), ...keep.filter((id) => !alive.includes(id))]
+      const next = [...alive.filter((id) => keep.includes(id)), ...keep.filter((id) => !alive.includes(id))]
+      if (next.length !== alive.length || next.some((id, at) => id !== alive[at])) alive = next
     })
   })
   $effect(() => {
@@ -146,7 +147,7 @@
   $effect(() => () => parked.shut())
   const kept = $derived(alive.flatMap((id) => held.find((one) => one.id === id) ?? []))
   const keptNotes = $derived(kept.filter(inEditor))
-  const keptShells = $derived(kept.filter((one) => one.kind === 'terminal'))
+  const keptOwn = $derived(kept.filter((one) => doors[one.kind]))
   const shownKept = $derived(tab && alive.includes(tab.id) ? tab.id : null)
   const keptViews = $state<Record<string, EditorView | undefined>>({})
   const keepsMiddle = $derived(ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)))
@@ -397,7 +398,7 @@
     {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
       {@render surface(pagesSurface, tab)}
     {:else if tab?.kind === 'web'}
-      {@render surface(webSurface, tab)}
+
     {:else if tab?.kind === 'view' && tab.path === null}
       {#key tab.id}
         {#await todosBoard() then TodosBoard}
@@ -459,7 +460,25 @@
               <span class="orden-row-label" dir="auto">{one.shown}</span>
             </button>
             <div class="sheet" oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}>
-              {@render editor(one, columnViews, true, one.id === pane.activeTabId, held)}
+              <Editor
+                bind:view={columnViews[one.id]}
+                tab={one}
+                focused={workspace.panes.focusedId === pane.id && one.id === pane.activeTabId}
+                kept={held}
+                onimage={saveImage}
+                resolveimage={resolveImage}
+                openlink={followHref}
+                notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
+                opennote={followNote}
+                nameblock={nameBlock}
+                onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
+                onfindslow={tallySlow}
+                onselection={(current: EditorView) => {
+                  views.moved(current)
+                  placement.remember(current)
+                  rooms.moved(current)
+                }}
+              />
             </div>
           </section>
         {/each}
@@ -482,16 +501,36 @@
         data-region={here ? 'editor' : undefined}
         oncontextmenu={(event: MouseEvent) => showMenu(event, keptViews[one.id], one.path)}
       >
-        {@render editor(one, keptViews, here, here, [one])}
+        <Editor
+          bind:view={keptViews[one.id]}
+          tab={one}
+          shown={here}
+          focused={here && workspace.panes.focusedId === pane.id}
+          kept={[one]}
+          {parked}
+          onimage={saveImage}
+          resolveimage={resolveImage}
+          openlink={followHref}
+          notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
+          opennote={followNote}
+          nameblock={nameBlock}
+          onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
+          onfindslow={tallySlow}
+          onselection={(current: EditorView) => {
+            views.moved(current)
+            placement.remember(current)
+            rooms.moved(current)
+          }}
+        />
       </div>
     {/each}
 
-    {#each keptShells as one (one.id)}
+    {#each keptOwn as one (one.id)}
       {@const here = one.id === shownKept}
-      <div class:shell={here} class:kept={!here} hidden={!here} inert={!here}>
-        {#await terminalSurface() then Terminal}
-          {@const Shell = Terminal as Component<{ tab: Tab; focused: boolean; shown: boolean }>}
-          <Shell tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
+      <div class:front={here} class:kept={!here} hidden={!here} inert={!here}>
+        {#await doors[one.kind]?.() then Own}
+          {@const Kept = Own as Component<{ tab: Tab; focused: boolean; shown: boolean }>}
+          <Kept tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
         {:catch}
           {@render unreachable()}
         {/await}
@@ -522,31 +561,6 @@
       {@render unreachable()}
     {/await}
   {/key}
-{/snippet}
-
-{#snippet editor(one: Tab, into: Record<string, EditorView | undefined>, shown: boolean, front: boolean, kept: Tab[])}
-  <Editor
-    bind:view={into[one.id]}
-    tab={one}
-    {shown}
-    focused={front && workspace.panes.focusedId === pane.id}
-    {kept}
-    {parked}
-    {handoff}
-    onimage={saveImage}
-    resolveimage={resolveImage}
-    openlink={followHref}
-    notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
-    opennote={followNote}
-    nameblock={nameBlock}
-    onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
-    onfindslow={tallySlow}
-    onselection={(current: EditorView) => {
-      views.moved(current)
-      placement.remember(current)
-      rooms.moved(current)
-    }}
-  />
 {/snippet}
 
 {#snippet unreachable()}
@@ -653,7 +667,7 @@
   .kept {
     display: none;
   }
-  .shell {
+  .front {
     position: relative;
     flex: 1;
     min-height: 0;

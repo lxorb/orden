@@ -15,6 +15,7 @@ vi.mock('@orden/editor', async (importOriginal) => {
 vi.mock('../../surfaces/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../surfaces/src/api')>()),
   terminalSurface: () => import('../test/Counted.svelte').then((one) => one.default),
+  webSurface: () => import('../test/Counted.svelte').then((one) => one.default),
 }))
 Element.prototype.animate = () =>
   ({
@@ -162,46 +163,27 @@ test('a terminal shown again after a note is not mounted again, and only the sho
   expect(shellBox?.hidden).toBe(false)
   expect(counted.mounts).toBe(1)
 })
-test('a note switched to takes the keyboard from the note it hides, in the same turn', async () => {
-  const { one, two, paneId } = opened()
-  const first = await drawn(paneId)
-  first.focus()
-  expect(first.hasFocus).toBe(true)
-  workspace.activate(two)
-  flushSync()
-  const second = views.of(paneId)!
-  expect(second).not.toBe(first)
-  expect(second.hasFocus).toBe(true)
-  expect(document.activeElement).toBe(second.contentDOM)
+test('a web tab shown again after a note is not mounted again, and is told when it is behind', async () => {
+  const { one, paneId } = opened()
+  await drawn(paneId)
+  workspace.openPage('https://example.com/')
+  const page = workspace.active?.id ?? ''
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('.counted')).not.toBeNull()
+  })
+  expect(counted.shown[page]).toBe(true)
   workspace.activate(one)
   flushSync()
-  expect(first.hasFocus).toBe(true)
-})
-test('words being composed in a note stay in it when another note is switched to, and the next keys go there', async () => {
-  const { two, paneId } = opened()
-  const first = await drawn(paneId)
-  first.focus()
-  let ended = false
-  first.contentDOM.addEventListener('blur', () => (ended = true))
-  first.contentDOM.dispatchEvent(new CompositionEvent('compositionstart', { data: '' }))
-  first.dispatch({ changes: { from: 0, insert: 'wor' } })
-  workspace.activate(two)
+  expect(written()).toBe('The first note.')
+  expect(counted.shown[page]).toBe(false)
+  const pageBox = target.querySelector('.counted')?.parentElement
+  expect(pageBox?.inert).toBe(true)
+  expect(pageBox?.hidden).toBe(true)
+  workspace.activate(page)
   flushSync()
-  const second = views.of(paneId)!
-  expect(ended).toBe(true)
-  expect(second.hasFocus).toBe(true)
-  second.dispatch(second.state.replaceSelection('d'))
-  expect(first.state.doc.toString()).toBe('worThe first note.')
-  expect(second.state.doc.toString()).toBe('dThe second note.')
-})
-test('a note shown when the hidden one did not have the keyboard does not take it', async () => {
-  const { two, paneId } = opened()
-  await drawn(paneId)
-  const outside = document.createElement('button')
-  document.body.append(outside)
-  outside.focus()
-  workspace.activate(two)
-  flushSync()
-  expect(document.activeElement).toBe(outside)
-  outside.remove()
+  expect(counted.shown[page]).toBe(true)
+  expect(pageBox?.inert).toBe(false)
+  expect(written()).toBe('')
+  expect(counted.mounts).toBe(1)
 })
