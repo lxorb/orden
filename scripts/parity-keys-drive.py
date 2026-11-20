@@ -701,8 +701,30 @@ return true
                     kept += self.js(f"{IN_NOTE}('Keyline')") is True
             said[side] = ({"kept the keyboard a second after the click": f"{kept} of 5"}, kept == 5)
         self.judged(4, "a click on the slot gives it the keyboard and it keeps it", said["web"], said["note"])
+    def palette_and_back(self) -> None:
+        said: dict[str, Any] = {}
+        for side in ("note", "web"):
+            if not self.staged(side):
+                self.row(4, "after the command palette is put away with Escape, typing goes back where it was", None, None, None, f"the {side} side could not be given the keyboard by a click")
+                return
+            first, second = self.token(), self.token()
+            self.keys.typed(first)
+            time.sleep(0.4)
+            self.keys.chord("Mod-Shift-p")
+            time.sleep(1.0)
+            opened = self.js("!!document.querySelector('.orden-screen.palette')") is True
+            self.keys.chord("Escape")
+            time.sleep(0.8)
+            closed = self.js("!document.querySelector('.orden-screen.palette')") is True
+            focus = self.js(f"({{ focus: document.hasFocus(), active: {DESCRIBE}(document.activeElement) }})")
+            self.keys.typed(second)
+            time.sleep(0.6)
+            before, after = self.landed(side, first), self.landed(side, second)
+            said[side] = ({"typed before": before, "palette opened": opened, "palette closed": closed, "after Escape": focus, "typed after": after}, before and opened and closed and after)
+        self.judged(4, "after the command palette is put away with Escape, typing goes back where it was", said["web"], said["note"])
     def focus_moves(self) -> None:
         self.keeps_keyboard()
+        self.palette_and_back()
         said: dict[str, Any] = {}
         unsure = ""
         for side in ("note", "web"):
