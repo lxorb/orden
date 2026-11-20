@@ -50,6 +50,7 @@ fn every_answer_to_an_install_has_the_shape_the_desktop_reads() {
     assert_eq!(installed["store"], "chrome");
     assert_eq!(installed["name"], "Pass");
     assert!(installed["pending"].is_boolean());
+    assert_eq!(installed.get("problem"), Some(&Value::Null));
     assert!(installed["enabled"].is_boolean());
     assert!(installed["pinned"].is_boolean());
     assert!(installed.get("asks").is_none());
