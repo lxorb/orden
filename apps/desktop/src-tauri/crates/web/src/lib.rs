@@ -5,6 +5,7 @@ pub mod downloads;
 pub mod engine;
 pub mod extension_ids;
 pub mod host;
+pub mod inside;
 pub mod keyboard;
 pub mod page_carry;
 pub mod page_drag;
