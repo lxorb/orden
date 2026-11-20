@@ -46,7 +46,6 @@ export async function sourcesFrom(picked: readonly PickedFile[]): Promise<Source
 }
 async function expand(path: string, bytes: Uint8Array, depth: number): Promise<Source[]> {
   if (depth >= DEEPEST || !isZip(path, bytes)) return [sourceOf(path, bytes)]
-  if (__EVEN_PLUGIN__) throw new Error('no import in the Even Realities plugin')
   const { default: JSZip } = await import('jszip')
   const zip = await JSZip.loadAsync(bytes, { decodeFileName: zipName }).catch(() => null)
   if (!zip) return [sourceOf(path, bytes)]

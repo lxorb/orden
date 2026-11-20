@@ -105,7 +105,6 @@ async function looksLikeApple(sources: readonly Source[]): Promise<boolean> {
   return false
 }
 async function looksLikeTodoist(sources: readonly Source[]): Promise<boolean> {
-  if (__EVEN_PLUGIN__) return false
   const { isTodoistCsv } = await import('./todoist')
   const tables = sources.filter((one) => /\.csv$/i.test(one.path)).slice(0, PEEK)
   for (const table of tables) if (isTodoistCsv(await table.text())) return true
@@ -126,7 +125,6 @@ export async function readAs(
   sources: readonly Source[],
   options: ReadOptions = {},
 ): Promise<ImportPlan> {
-  if (__EVEN_PLUGIN__) throw new Error('no import in the Even Realities plugin')
   switch (format) {
     case 'notion': {
       const { readNotion } = await import('./notion')
