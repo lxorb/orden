@@ -322,10 +322,13 @@ class Runner {
     const back = () => {
       if (document.visibilityState !== 'hidden') this.kick()
     }
+    const online = () => this.push()
     window.addEventListener('focus', back)
+    window.addEventListener('online', online)
     document.addEventListener('visibilitychange', back)
     this.stops.push(() => {
       window.removeEventListener('focus', back)
+      window.removeEventListener('online', online)
       document.removeEventListener('visibilitychange', back)
     })
     this.stops.push(this.followOpen())
@@ -1314,9 +1317,11 @@ class Runner {
     if (typeof window !== 'undefined') {
       const back = () => this.lookedAt()
       window.addEventListener('focus', back)
+      window.addEventListener('online', back)
       document.addEventListener('visibilitychange', back)
       this.hearings.push(() => {
         window.removeEventListener('focus', back)
+        window.removeEventListener('online', back)
         document.removeEventListener('visibilitychange', back)
       })
     }

@@ -4,6 +4,10 @@ export const NUDGE = 2_000
 export const FALLBACK = 30_000
 const HIDDEN_FALLBACK = 5 * 60_000
 export const ONLINE_POLL = 5_000
+const RETRY_FIRST = 2_000
+const RETRY_MOST = 30_000
+const retryIn = (quiet: number, hidden: boolean): number =>
+  hidden ? pollDelay(quiet, true) : Math.min(RETRY_FIRST * 2 ** quiet, RETRY_MOST)
 export interface Moment {
   waiting: boolean
   local: boolean
@@ -15,9 +19,9 @@ export interface Moment {
 export function nextPassIn(at: Moment): number {
   if (at.waiting) return NUDGE
   if (at.local) return HIDDEN_FALLBACK
+  if (!at.online) return retryIn(at.quiet, at.hidden)
   if (at.hubOpen) return at.hidden ? HIDDEN_FALLBACK : FALLBACK
-  if (at.online && !at.hidden) return ONLINE_POLL
-  return pollDelay(at.quiet, at.hidden)
+  return at.hidden ? pollDelay(at.quiet, true) : ONLINE_POLL
 }
 export interface Passing {
   run(): Promise<void>
