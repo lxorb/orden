@@ -1,4 +1,4 @@
-import { type Grouping, movedPatch, type Todo } from '../../tasks-model/src/api'
+import { type Grouping, keepsSort, movedPatch, type Todo } from '../../tasks-model/src/api'
 import { carryTodo, carryTodoColumn, dragged, isTodoColumnDrag, isTodoDrag, isTreeDrag } from '../../ui-kit/src/api'
 import { linkNotes, patchTodo, placeTodo, placeTodos } from './acts'
 import type { Shown } from './shown.svelte'
@@ -69,8 +69,9 @@ export class Carrying {
       )
       if (shown.sort !== 'manual') return
     }
-    if (shown.sort !== 'manual') shown.setSort('manual')
-    await placeTodos([...without.slice(0, at), ...group, ...without.slice(at)], going)
+    const placed = [...without.slice(0, at), ...group, ...without.slice(at)]
+    this.keepSortOr(placed)
+    await placeTodos(placed, going)
   }
   private async put(todo: Todo, spot: Spot, from: string): Promise<void> {
     const shown = this.host.shown
@@ -84,8 +85,12 @@ export class Carrying {
       if (patch) await patchTodo(todo.id, patch)
       if (shown.sort !== 'manual') return
     } else if (list.findIndex((one) => one.id === todo.id) === at) return
-    if (shown.sort !== 'manual') shown.setSort('manual')
+    this.keepSortOr(placed)
     await placeTodo(placed, todo.id)
+  }
+  private keepSortOr(placed: readonly Todo[]): void {
+    const shown = this.host.shown
+    if (shown.sort !== 'manual' && !keepsSort(placed, shown.sort)) shown.setSort('manual')
   }
   async step(column: string, id: string, by: number): Promise<void> {
     const list = [...this.host.list(column)]
@@ -95,8 +100,7 @@ export class Carrying {
     if (at === -1 || to < 0 || to >= list.length || !moving) return
     list.splice(at, 1)
     list.splice(to, 0, moving)
-    const shown = this.host.shown
-    if (shown.sort !== 'manual') shown.setSort('manual')
+    this.keepSortOr(list)
     await placeTodo(list, id)
   }
   card = (node: HTMLElement, given: { todo: Todo; column: string }) => {

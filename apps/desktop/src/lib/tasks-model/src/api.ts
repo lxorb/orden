@@ -18,6 +18,7 @@ export {
   type Group,
   groupedByLabel,
   isSort,
+  keepsSort,
   labelsOf,
   placedBetween,
   shownTodos,

@@ -119,7 +119,7 @@ describe('a carried todo', () => {
     expect(carrying.drag.column).toBeNull()
     expect(keys()).toEqual(['work', 'home', ''])
   })
-  test('let go further down a list takes that place and the list is sorted by hand from then on', async () => {
+  test('let go further down among equals takes that place and keeps the sort', async () => {
     const mine = prefix()
     const a = await made(mine, 'a')
     await made(mine, 'b')
@@ -130,10 +130,42 @@ describe('a carried todo', () => {
     carrying.aim('', shown.todos[2]?.id ?? null, true)
     expect(carrying.drag.spot).toEqual({ column: '', at: 2 })
     await carrying.land()
-    expect(shown.sort).toBe('manual')
+    expect(shown.sort).toBe('deadline')
     expect(titles(shown.todos, mine)).toEqual(['b', 'c', 'a'])
     expect(carrying.drag.on).toBe(false)
   })
+  test.each(['panel', 'board'] as const)(
+    'in the %s, sorted by priority, a move among the same priority keeps the sort and one past a higher priority turns it manual',
+    async (where) => {
+      const mine = prefix()
+      const a = await made(mine, 'a', ['work'])
+      const b = await made(mine, 'b', ['work'])
+      const c = await made(mine, 'c', ['work'])
+      await patchTodo(a.id, { priority: 3 })
+      await patchTodo(b.id, { priority: 1 })
+      await patchTodo(c.id, { priority: 1 })
+      const { shown, carrying } = shownOf(mine, where)
+      shown.setSort('priority')
+      const column = where === 'panel' ? '' : 'work'
+      const list = () =>
+        where === 'panel' ? shown.todos : (shown.columns.find((one) => one.key === 'work')?.todos ?? [])
+      expect(titles(list(), mine)).toEqual(['a', 'b', 'c'])
+      const held = todos.todo(c.id)
+      if (!held) throw new Error('no c')
+      carrying.started(held, column)
+      carrying.aim(column, b.id, false)
+      await carrying.land()
+      expect(shown.sort).toBe('priority')
+      expect(titles(list(), mine)).toEqual(['a', 'c', 'b'])
+      const low = todos.todo(b.id)
+      if (!low) throw new Error('no b')
+      carrying.started(low, column)
+      carrying.aim(column, a.id, false)
+      await carrying.land()
+      expect(shown.sort).toBe('manual')
+      expect(titles(list(), mine)).toEqual(['b', 'a', 'c'])
+    },
+  )
   test('let go in another label column swaps its label and takes its place there', async () => {
     const mine = prefix()
     const a = await made(mine, 'a', ['home'])
