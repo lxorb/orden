@@ -209,7 +209,8 @@ def drive_blocks(page: Page, names: list[str]) -> None:
         wrong(f"the link does not point at a named block: {json.dumps(written[-50:])}")
         return
     id = link[0].split("#^")[1].rstrip("]")
-    body = note_text(page, page.evaluate("() => window.ordenApp.workspace.notes.map((o) => o.path)")[1])
+    every = page.evaluate("() => window.ordenApp.workspace.notes.map((o) => o.path)")
+    body = note_text(page, next((one for one in every if name_of(one) == names[1]), ""))
     say(f"[the other note] {json.dumps(body)}")
     if f"^{id}" not in (body or ""):
         wrong(f"the block was never given the name the link points at: ^{id}")
