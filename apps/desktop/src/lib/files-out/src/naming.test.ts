@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { EXPORT_FORMATS, EXPORT_VARIANTS, extensionFor, TEXTPACK } from '../../export-formats/src/formats'
-import { claimName, fileNameFor, freeName, stemOf } from './naming'
+import { stemOf } from '@orden/markdown/shown'
+import { claimName, fileNameFor, freeName } from './naming'
 
 describe('what an exported file is called', () => {
   test('is the note’s name with the format’s extension', () => {

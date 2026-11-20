@@ -12,7 +12,8 @@ import {
 } from '../../platform/src/api'
 import { writeBytes, writeFile as writeText } from '../../file-writes/src/api'
 import { numbered } from '@orden/markdown/paths'
-import { fileNameFor, freeName, stemOf } from './naming'
+import { stemOf } from '@orden/markdown/shown'
+import { fileNameFor, freeName } from './naming'
 import { reveal } from './reveal'
 
 export type Payload =

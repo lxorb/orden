@@ -2,7 +2,8 @@ export { chooseTarget, deliver, download, handOver, type Payload, writeFile } fr
 export { saveCopy } from './copy'
 export { remotePath, reveal, showLabel } from './reveal'
 export { printInFrame, printsInFrame } from './frame'
-export { claimName, fileNameFor, stemOf } from './naming'
+export { claimName, fileNameFor } from './naming'
+export { stemOf } from '@orden/markdown/shown'
 export {
   assetsOf,
   CONTENT_POLICY,
