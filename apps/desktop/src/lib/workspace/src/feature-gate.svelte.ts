@@ -51,7 +51,6 @@ export function whenPassOn(run: () => void, off: () => void): void {
 export function whenChatsOn(run: () => void): void {
   whenOn({ on: chatsOn, kind: 'channel', name: () => 'Chats' }, run)
 }
-export const whenAppsOn = (): void => undefined
 export function whenExplorerOn(): void {
   whenOn({ on: explorerOn, kind: 'explorer', name: () => 'File explorer' })
 }
