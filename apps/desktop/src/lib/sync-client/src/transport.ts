@@ -38,7 +38,12 @@ export interface Reaching {
   base: string
   token: () => string | null
   device: () => string
+  deviceId?: () => string | null
   fetch: (request: Request) => Promise<Response>
+}
+function whoAsks(reaching: Reaching): Record<string, string> {
+  const id = reaching.deviceId?.() ?? null
+  return { 'x-orden-device': reaching.device(), ...(id ? { 'x-orden-device-id': id } : {}) }
 }
 export function accountOver(reaching: Reaching): Account {
   return {
@@ -52,7 +57,7 @@ export function accountOver(reaching: Reaching): Account {
         headers: {
           authorization: `Bearer ${token}`,
           accept: OCTETS,
-          'x-orden-device': reaching.device(),
+          ...whoAsks(reaching),
           ...(reading ? {} : { 'content-type': OCTETS }),
         },
         ...(bytes ? { body: bytes, keepalive: leaving() && bytes.byteLength < OUTLIVES_PAGE } : {}),
@@ -79,7 +84,7 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
     if (!token) return null
     const headers = new Headers(init.headers)
     headers.set('authorization', `Bearer ${token}`)
-    headers.set('x-orden-device', reaching.device())
+    for (const [name, value] of Object.entries(whoAsks(reaching))) headers.set(name, value)
     try {
       const response = await reaching.fetch(new Request(`${reaching.base}${path}`, { ...init, headers }))
       if (full && response.status === FULL) return response
@@ -157,7 +162,7 @@ export function readingOver(reaching: Reaching): Reading {
           headers: {
             authorization: `Bearer ${token}`,
             'content-type': 'application/json',
-            'x-orden-device': reaching.device(),
+            ...whoAsks(reaching),
           },
           body: JSON.stringify(body),
         }),

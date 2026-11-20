@@ -159,21 +159,26 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
   return out
 }
 const BYTES = /^\/v2\/(blobs|files)\//
-function reachingOf(token: () => string | null) {
+function reachingOf(token: () => string | null, deviceId: () => string | null) {
   return {
     base: remote().base,
     token,
     device: deviceName,
+    deviceId,
     fetch: (request: Request) =>
       remote().fetchInTime(request, {}, BYTES.test(new URL(request.url).pathname) ? remote().bytesWithin : undefined),
   }
 }
-export function readingFor(token: () => string | null): Reading {
-  return readingOver(reachingOf(token))
+export function readingFor(token: () => string | null, deviceId: () => string | null = () => null): Reading {
+  return readingOver(reachingOf(token, deviceId))
 }
-export function appWorld(token: () => string | null, telling: Telling): World {
+export function appWorld(
+  token: () => string | null,
+  telling: Telling,
+  deviceId: () => string | null = () => null,
+): World {
   const os = platform()
-  const reaching = reachingOf(token)
+  const reaching = reachingOf(token, deviceId)
   return {
     disk: diskOf(telling),
     account: accountOver(reaching),

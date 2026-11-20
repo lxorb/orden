@@ -2,6 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { Cadence, nextPassIn } from '../src/cadence'
+import { hubDeviceOf, madeDeviceId } from '../src/made-device'
+import { accountOver } from '../src/transport'
 import { portProvided, providePort } from '@orden/contracts'
 import {
   act,
@@ -345,6 +347,36 @@ describe('how soon what changed here goes up (#2280)', () => {
     for (let quiet = 0; quiet <= 8; quiet += 1) {
       const at = nextPassIn({ waiting: false, local: false, hubOpen: false, hidden: false, online: true, quiet })
       expect(at).toBeLessThanOrEqual(5_000)
+    }
+  })
+})
+describe('the device a request names (#2280)', () => {
+  test('is the one the hub says hello with, so a push from one of two devices on one session is told apart', async () => {
+    const kept = 'f00dfeedcafe1234'
+    const asked: Request[] = []
+    await accountOver({
+      base: 'https://sync.test',
+      token: () => 'shared-session',
+      device: () => 'Laptop',
+      deviceId: () => hubDeviceOf(kept, 'u1'),
+      fetch: (request) => {
+        asked.push(request)
+        return Promise.resolve(new Response('', { status: 503 }))
+      },
+    }).ask('push', { docs: [] }, 's')
+    expect(asked[0]?.headers.get('x-orden-device-id')).toBe(kept)
+    const texts = new Map<string, string>()
+    const unbind = providePort('sync.storage', {
+      text: (key: string) => texts.get(key) ?? null,
+      keepText: (key: string, value: string) => texts.set(key, value).has(key),
+      json: () => null,
+      keepJson: () => false,
+      forget: (key: string) => void texts.delete(key),
+    })
+    try {
+      expect(hubDeviceOf('not ok!', 'u1')).toBe(madeDeviceId('u1'))
+    } finally {
+      unbind()
     }
   })
 })

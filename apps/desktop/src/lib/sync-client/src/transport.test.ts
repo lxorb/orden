@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { unframe } from '@orden/sync-core'
 import { testDevice } from '../test/test-device'
-import { readingOver, Refused, remoteFiles } from './transport'
+import { accountOver, readingOver, Refused, remoteFiles } from './transport'
 import { parseQuery } from '@orden/scan/search/query'
 
 const SPACE = 'space-1'
@@ -74,6 +74,42 @@ describe('a request made while the window goes (#2269)', () => {
       vi.unstubAllGlobals()
     }
     expect(asked[0]?.keepalive).toBe(kept)
+  })
+})
+describe('which device asks (#2280)', () => {
+  const HUB_DEVICE = 'a1b2c3d4e5f60718'
+  function reaching(asked: Request[], deviceId?: () => string | null) {
+    return {
+      base: 'https://sync.test',
+      token: () => 'token-1',
+      device: () => 'Laptop',
+      ...(deviceId ? { deviceId } : {}),
+      fetch: (request: Request) => {
+        asked.push(request)
+        return Promise.resolve(new Response('', { status: 503 }))
+      },
+    }
+  }
+  test('every v2 request names the device the hub knows, beside its name', async () => {
+    const asked: Request[] = []
+    const over = reaching(asked, () => HUB_DEVICE)
+    await accountOver(over).ask('push', { docs: [] }, 's')
+    await accountOver(over).ask('feed', { since: 0 }, 's')
+    await remoteFiles(over).replace('s', 'f', 'h', 'b')
+    await readingOver(over).index('s', ['f'])
+    expect(asked.map((one) => one.headers.get('x-orden-device-id'))).toEqual([
+      HUB_DEVICE,
+      HUB_DEVICE,
+      HUB_DEVICE,
+      HUB_DEVICE,
+    ])
+    expect(asked.map((one) => one.headers.get('x-orden-device'))).toEqual(['Laptop', 'Laptop', 'Laptop', 'Laptop'])
+  })
+  test('with no device id known yet, sends no such header', async () => {
+    const asked: Request[] = []
+    await accountOver(reaching(asked, () => null)).ask('push', { docs: [] }, 's')
+    await accountOver(reaching(asked)).ask('push', { docs: [] }, 's')
+    expect(asked.map((one) => one.headers.has('x-orden-device-id'))).toEqual([false, false])
   })
 })
 describe('a file’s bytes over the network', () => {
