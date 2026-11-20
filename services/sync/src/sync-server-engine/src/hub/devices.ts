@@ -17,13 +17,22 @@ export interface Hello {
   platform: string
   app: string
 }
-export async function deviceOfSession(env: Env, user: string, header: string | undefined): Promise<string | null> {
+export function boundDevice(session: string, user: string, asked: string): string {
+  return `(select d.id from devices d
+            where d.session_id = ${session} and d.user_id = ${user} and d.revoked_at is null
+            order by d.id = ${asked} desc limit 1)`
+}
+export async function deviceOfSession(
+  env: Env,
+  user: string,
+  header: string | undefined,
+  asked = '',
+): Promise<string | null> {
   const row = await env.DB.prepare(
-    `select d.id as id from devices d join sessions s on s.id = d.session_id
-      where s.token_hash = ? and d.user_id = ? and d.revoked_at is null`,
+    `select ${boundDevice('(select id from sessions where token_hash = ?1)', '?2', '?3')} as id`,
   )
-    .bind(await sha256(tokenIn(header) ?? ''), user)
-    .first<{ id: string }>()
+    .bind(await sha256(tokenIn(header) ?? ''), user, asked)
+    .first<{ id: string | null }>()
   return row?.id ?? null
 }
 export async function register(env: Env, user: string, session: string, hello: Hello): Promise<boolean> {

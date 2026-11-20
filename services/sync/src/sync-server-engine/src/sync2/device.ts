@@ -1,5 +1,5 @@
 import type { Context } from 'hono'
-import { type Env, sha256, tokenIn, type Variables, type Whoever } from '../../../sync-server/src/api'
+import { type Env, said, sha256, tokenIn, type Variables, type Whoever } from '../../../sync-server/src/api'
 import { deviceOfSession } from '../hub/devices'
 
 export async function deviceOf(context: Context<{ Bindings: Env; Variables: Variables }>): Promise<string> {
@@ -7,7 +7,8 @@ export async function deviceOf(context: Context<{ Bindings: Env; Variables: Vari
   if (who.kind === 'guest') return `guest:${who.guest.id}`
   const header = context.req.header('authorization')
   if (who.program) return await programDevice(tokenIn(header) ?? '')
-  const device = await deviceOfSession(context.env, who.user.id, header)
+  const asked = said((name) => context.req.header(name), 'device-id') ?? ''
+  const device = await deviceOfSession(context.env, who.user.id, header, asked)
   if (device) return device
   return `session:${(await sha256(tokenIn(header) ?? '')).slice(0, 16)}`
 }
