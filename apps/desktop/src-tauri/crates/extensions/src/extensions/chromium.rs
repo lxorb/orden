@@ -20,6 +20,14 @@ static BUILDING: Mutex<()> = Mutex::new(());
 static REMOVING: Mutex<()> = Mutex::new(());
 pub fn installed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     let Some(page) = control(app) else {
+        static SAID: std::sync::Once = std::sync::Once::new();
+        SAID.call_once(|| {
+            orden_base::logs::say(
+                app,
+                "warn",
+                "extensions: Chromium's extensions page cannot be opened here, so only Orden's own extensions are listed and they are turned on and off through the browser pipe",
+            );
+        });
         return Vec::new();
     };
     let Ok(profile) =

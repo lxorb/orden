@@ -1,5 +1,7 @@
+use orden_base::Held as _;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 
@@ -8,6 +10,7 @@ use super::link::Store;
 use super::{crx, manifest, unzip};
 
 const LIST: &str = "library.json";
+static RUNNING: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Kept {
@@ -145,14 +148,30 @@ pub fn ours(root: &Path, one: &Kept) -> bool {
         || folder_of(root, &one.id, &one.version).join("manifest.json").is_file()
 }
 pub fn loaded_folders(root: &Path) -> Vec<PathBuf> {
-    read(root)
+    let folders: Vec<PathBuf> = read(root)
         .into_iter()
         .filter(|one| one.enabled)
         .map(|one| folder_of(root, &one.id, &one.version))
         .filter(|folder| {
             folder.join("manifest.json").is_file() && !folder.to_string_lossy().contains(',')
         })
-        .collect()
+        .collect();
+    for folder in &folders {
+        ran(folder);
+    }
+    folders
+}
+pub fn ran(folder: &Path) {
+    let mut running = RUNNING.held();
+    if !running.iter().any(|one| one == folder) {
+        running.push(folder.to_path_buf());
+    }
+}
+pub fn stopped(folder: &Path) {
+    RUNNING.held().retain(|one| one != folder);
+}
+pub fn running(folder: &Path) -> bool {
+    RUNNING.held().iter().any(|one| one == folder)
 }
 #[cfg(test)]
 mod amo_tests {

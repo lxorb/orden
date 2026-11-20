@@ -47,7 +47,8 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
         let installed = chromium::installed(app);
         match root(app) {
             Ok(root) => {
-                let (list, pending) = merged(installed, &library::read(&root), &root);
+                let (list, pending) =
+                    merged(installed, &library::read(&root), &root, library::running);
                 *PENDING.write().unwrap_or_else(PoisonError::into_inner) = pending;
                 list
             }
@@ -61,6 +62,7 @@ fn merged(
     installed: Vec<(Kept, PathBuf)>,
     pins: &[Kept],
     root: &Path,
+    running: impl Fn(&Path) -> bool,
 ) -> (Vec<(Kept, PathBuf)>, HashSet<String>) {
     let mut list: Vec<(Kept, PathBuf)> = installed
         .into_iter()
@@ -73,8 +75,7 @@ fn merged(
     for one in pins.iter().filter(|one| library::ours(root, one)) {
         let folder = library::folder_of(root, &one.id, &one.version);
         let loaded = list.iter().position(|(there, _)| there.id == one.id);
-        let current = loaded.is_some_and(|at| list[at].0.version == one.version);
-        if one.enabled && !current {
+        if one.enabled != running(&folder) {
             pending.insert(one.id.clone());
         }
         match loaded {
@@ -252,10 +253,18 @@ pub async fn extensions_set(
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
         if let Some(on) = enabled {
-            let ours = kept(&app).iter().any(|one| one.id == id && library::ours(&root, one));
-            let done = chromium::enable(&app, &id, on);
-            if !ours {
-                done?;
+            let ours = kept(&app).into_iter().find(|one| one.id == id && library::ours(&root, one));
+            match (chromium::enable(&app, &id, on), ours) {
+                (Ok(()), Some(one)) => {
+                    let folder = library::folder_of(&root, &one.id, &one.version);
+                    if on {
+                        library::ran(&folder);
+                    } else {
+                        library::stopped(&folder);
+                    }
+                }
+                (Err(why), None) => return Err(why),
+                _ => {}
             }
         }
         {
@@ -473,7 +482,7 @@ mod tests {
         }
     }
     #[test]
-    fn one_kept_by_orden_and_by_the_profile_is_listed_once_and_pending_until_loaded() {
+    fn one_kept_by_orden_is_listed_once_and_pending_only_until_this_run_loads_it() {
         let root = tempfile::tempdir().expect("a folder");
         let root = root.path();
         let pass = Kept { version: "1.2.3".to_owned(), ..kept() };
@@ -484,20 +493,32 @@ mod tests {
         let unpinned = Kept { pinned: false, ..other.clone() };
         let profile = PathBuf::from("profile");
         let installed = vec![(kept(), profile.clone()), (other.clone(), profile)];
-        let (list, pending) = merged(installed, &[pass.clone(), unpinned], root);
+        let nothing = |_: &Path| false;
+        let this_run = |at: &Path| at == folder;
+        let (list, pending) = merged(installed, &[pass.clone(), unpinned], root, nothing);
         assert_eq!(list.len(), 2);
         assert_eq!(list[0], (pass.clone(), folder.clone()));
         assert_eq!(list[1].0, Kept { pinned: false, ..other });
         assert!(pending.contains(&pass.id) && pending.len() == 1);
-        let (list, pending) =
-            merged(vec![(pass.clone(), folder.clone())], std::slice::from_ref(&pass), root);
+        let (list, pending) = merged(Vec::new(), std::slice::from_ref(&pass), root, this_run);
+        assert_eq!(list, vec![(pass.clone(), folder.clone())]);
+        assert!(pending.is_empty());
+        let (_, pending) = merged(Vec::new(), std::slice::from_ref(&pass), root, nothing);
+        assert!(pending.contains(&pass.id));
+        let off = Kept { enabled: false, ..pass.clone() };
+        let (list, pending) = merged(Vec::new(), std::slice::from_ref(&off), root, nothing);
         assert_eq!(list.len(), 1);
         assert!(pending.is_empty());
-        let (list, pending) = merged(Vec::new(), std::slice::from_ref(&pass), root);
-        assert_eq!(list, vec![(pass.clone(), folder)]);
-        assert!(pending.contains(&pass.id));
+        let (_, pending) = merged(Vec::new(), std::slice::from_ref(&off), root, this_run);
+        assert!(pending.contains(&off.id));
+        let newer = Kept { version: "1.3.0".to_owned(), ..pass };
+        let newer_folder = root.join(&newer.id).join(&newer.version);
+        fs::create_dir_all(&newer_folder).expect("a folder");
+        fs::write(newer_folder.join("manifest.json"), "{}").expect("a manifest");
+        let (_, pending) = merged(Vec::new(), std::slice::from_ref(&newer), root, this_run);
+        assert!(pending.contains(&newer.id));
         let pin = Kept { id: "c".repeat(32), ..kept() };
-        let (list, pending) = merged(Vec::new(), &[pin], root);
+        let (list, pending) = merged(Vec::new(), &[pin], root, nothing);
         assert!(list.is_empty() && pending.is_empty());
     }
 }
