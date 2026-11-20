@@ -622,6 +622,45 @@ test('a page is pictured only when the overview is about to open, and again only
   expect(shots()).toBe(2)
   void unmount(app)
 })
+test('a kept web tab gives its half-typed address back with the keyboard and the caret where they were', async () => {
+  window.dispatchEvent(new Event('pointerup'))
+  await launched()
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no web tab was opened')
+  pages.of(tab.id).url = 'https://example.com/half'
+  const { kept } = await import('./kept.svelte')
+  kept.shown = true
+  const app = mount(WebTab, {
+    target,
+    props: {
+      tab,
+      focused: true,
+      get shown() {
+        return kept.shown
+      },
+    },
+  })
+  flushSync()
+  await frames()
+  const field = target.querySelector<HTMLInputElement>('.web input')
+  if (!field) throw new Error('no address field')
+  field.focus()
+  field.value = 'exam'
+  field.setSelectionRange(2, 2)
+  field.dispatchEvent(new Event('input', { bubbles: true }))
+  kept.shown = false
+  flushSync()
+  field.blur()
+  await frames()
+  expect(document.activeElement).not.toBe(field)
+  kept.shown = true
+  flushSync()
+  await frames()
+  expect(document.activeElement).toBe(field)
+  expect([field.value, field.selectionStart, field.selectionEnd]).toEqual(['exam', 2, 2])
+  void unmount(app)
+})
 test('a web tab kept while another of its pane is in front hides its page and comes back in place, mounted all along', async () => {
   await launched()
   workspace.openWebsite()

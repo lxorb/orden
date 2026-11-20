@@ -151,8 +151,17 @@
       if (!isDesktop || !ready) return
       cancelAnimationFrame(scheduled)
       told = ''
-      if (on) void look()
-      else if (last) pages.hide(tab.id, last)
+      if (on) {
+        void look()
+        return
+      }
+      pages.typing(tab.id, false)
+      if (extensions.popped?.tab === tab.id) extensions.close()
+      if (page.filling) {
+        page.filling = false
+        void invoke('web_unfill', { tab: tab.id }).catch(() => undefined)
+      }
+      if (last) pages.hide(tab.id, last)
     })
   })
   function heldOrLet(..._now: unknown[]) {
@@ -502,6 +511,7 @@
     <WebBar
       {page}
       tab={tab.id}
+      {shown}
       ground={chrome.barOf(tab.id)}
       theme={chrome.barTheme(tab.id)}
       {focused}
@@ -655,6 +665,7 @@
       <history.default
         {book}
         {focused}
+        {shown}
         onopen={(url: string, ask: TabAsk) => {
           if (ask === 'plain') void pages.go(tab.id, url)
           else workspace.openPage(url, ask, tab.id)
