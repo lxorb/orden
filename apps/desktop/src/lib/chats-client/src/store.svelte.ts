@@ -329,7 +329,7 @@ class ChatsStore implements Chats {
     }
     const view = new View(chat, this.host())
     this.views.set(chat, { view, holds: 1 })
-    void view.open()
+    void view.open().catch(() => undefined)
     for (const one of this.list) if (one.id === chat) this.countLater(chat)
     return view
   }
@@ -475,10 +475,16 @@ class ChatsStore implements Chats {
   members(chat: string): Promise<ChatMember[]> {
     let asked = this.people.get(chat)
     if (!asked) {
-      asked = http.membersOf(chat).then((members) => {
-        if (!members) this.people.delete(chat)
-        return members ?? []
-      })
+      asked = http.membersOf(chat).then(
+        (members) => {
+          if (!members) this.people.delete(chat)
+          return members ?? []
+        },
+        () => {
+          this.people.delete(chat)
+          return []
+        },
+      )
       this.people.set(chat, asked)
     }
     return asked

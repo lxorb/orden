@@ -3,7 +3,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 const CHAT = `c_${'1'.repeat(32)}`
 const OTHER = `c_${'2'.repeat(32)}`
 const POINTER = '/space/Plans.chat'
-const account = vi.hoisted(() => ({ chats: [] as string[], unheard: 0 }))
+const account = vi.hoisted(() => ({ chats: [] as string[], unheard: 0, ended: false }))
 const disk = vi.hoisted(() => ({ pointers: new Map<string, string>(), fails: 0 }))
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
@@ -23,8 +23,18 @@ vi.mock('./http', async (importOriginal) => ({
       chats: account.chats.map((id) => chatRow(id, { space: 'space-1', role: 'owner', members: 1 })),
     }
   },
-  eventsOf: () => Promise.resolve(null),
-  stateOf: () => Promise.resolve(null),
+  eventsOf: async () => {
+    const { ApiError } = await import('../../accounts/src/api')
+    return account.ended ? Promise.reject(new ApiError(404, 'no such chat')) : null
+  },
+  stateOf: async () => {
+    const { ApiError } = await import('../../accounts/src/api')
+    return account.ended ? Promise.reject(new ApiError(404, 'no such chat')) : null
+  },
+  membersOf: async () => {
+    const { ApiError } = await import('../../accounts/src/api')
+    return account.ended ? Promise.reject(new ApiError(404, 'no such chat')) : []
+  },
 }))
 vi.mock('./pointers', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./pointers')>()),
@@ -45,6 +55,7 @@ beforeEach(async () => {
   await chats.forget()
   account.chats = [CHAT]
   account.unheard = 0
+  account.ended = false
   disk.pointers = new Map([[POINTER, CHAT]])
   disk.fails = 0
   await chats.start('account-1')
@@ -140,4 +151,10 @@ test('a reconnect whose first listing does not get through asks again until it d
   } finally {
     vi.useRealTimers()
   }
+})
+test('a chat open here that the account has ended fails quietly, leaving no error unheard (#2321)', async () => {
+  account.ended = true
+  chats.open(CHAT)
+  await new Promise((settle) => setTimeout(settle, 50))
+  expect(await chats.members(CHAT)).toEqual([])
 })
