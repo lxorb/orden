@@ -295,8 +295,8 @@ export class Arranged {
       sent: held?.sent !== false,
     }
   }
-  took(root: string, folders: Record<string, string[]>, account: string) {
-    this.spaces = { ...this.spaces, [root]: { folders, account, sent: true } }
+  took(root: string, folders: Record<string, string[]>, account: string, sent: boolean) {
+    this.spaces = { ...this.spaces, [root]: { folders, account, sent } }
     this.writeAll()
   }
   said(root: string, landed: boolean) {
@@ -410,13 +410,15 @@ export class SpaceSorting {
     this.write()
   }
   private async push(root: string) {
+    const mode = this.of(root)
     await push(
       root,
-      (api, token, spaceId) => api.saveSort(token, spaceId, this.of(root)),
+      (api, token, spaceId) => api.saveSort(token, spaceId, mode),
       (landed) => {
         const kept = this.spaces[root]
         if (kept && kept.sent !== landed) this.keepAs(root, kept.mode, kept.account, landed)
       },
+      (answer) => isRecord(answer) && answer.sort === mode,
     )
   }
   private write() {
