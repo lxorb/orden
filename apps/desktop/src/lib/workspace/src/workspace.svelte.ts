@@ -858,7 +858,14 @@ class Workspace {
         }
         return note ? this.viewOf(note, paneId, draft) : null
       }
-      for (const written of drafts) made.push(await tabOf(written))
+      for (const written of drafts) {
+        const tab = await tabOf(written)
+        made.push(tab)
+        const kept = written.twin
+        const twin = tab && kept ? await tabOf(kept) : null
+        if (tab && twin) this.tuckedBy = { ...this.tuckedBy, [tab.id]: twin }
+        if (twin?.note.dirty) this.saving.owed(twin.note)
+      }
       for (const tab of made) if (tab?.note.dirty) this.saving.owed(tab.note)
       return made
     })
@@ -1054,7 +1061,9 @@ class Workspace {
   }
   private draftOf(tab: Tab): Draft {
     const copied = tab.path === null || (tab.dirty && tab.doc.length <= WORDS_KEPT)
+    const twin = this.tuckedBy[tab.id]
     return {
+      ...(twin ? { twin: this.draftOf(twin) } : {}),
       kind: tab.kind,
       path: tab.path,
       name: tab.name,
