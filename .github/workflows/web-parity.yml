@@ -113,9 +113,17 @@ jobs:
         run: bash scripts/parity-run.sh scripts/parity-keys-drive.py
 
       - name: Turn
-        if: ${{ !cancelled() && env.EXE != '' && runner.os != 'Windows' && contains(env.DRIVES, 'turn') && hashFiles('scripts/turn-drive.py') != '' }}
-        timeout-minutes: 15
-        run: bash scripts/parity-run.sh scripts/turn-drive.py
+        if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'turn') && hashFiles('scripts/turn-drive.py') != '' }}
+        timeout-minutes: 25
+        run: |
+          if [ "$RUNNER_OS" != Windows ]; then
+            exec bash scripts/parity-run.sh scripts/turn-drive.py
+          fi
+          failed=0
+          for shell in powershell cmd; do
+            bash scripts/parity-run.sh scripts/turn-drive.py --shell "$shell" --out "parity/turn-$shell" || failed=1
+          done
+          exit $failed
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
