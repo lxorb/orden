@@ -40,7 +40,15 @@ export {
   sharedWithMe,
   TOO_MANY_ITEMS,
 } from './spaces/share'
-export { allows, MOST_ITEMS, onceShared, reachedItem, reachedSpace, refusal } from './spaces/space'
+export {
+  allows,
+  MOST_ITEMS,
+  onceShared,
+  ONLY_THOSE_WHO_MANAGE,
+  reachedItem,
+  reachedSpace,
+  refusal,
+} from './spaces/space'
 export { deviceOf, programDevice } from './sync2/device'
 export {
   blobKey,
