@@ -6,7 +6,7 @@ use orden_extensions::extensions::library::{
     folder_of, loaded_folders, ran, running, stopped, unpack, write, Kept,
 };
 use orden_extensions::extensions::link::Store;
-use orden_extensions::extensions::{shown, Done, Gaps};
+use orden_extensions::extensions::{own_pages_open, shown, Done, Gaps};
 use serde_json::{json, Value};
 
 const PASS: &str = "ghmbeldphafepmbegfdlkpapadhbakde";
@@ -118,4 +118,8 @@ fn an_old_format_folder_on_disk_is_not_handed_to_chromium_and_says_why() {
     assert!(loaded_folders(root).is_empty());
     let row = serde_json::to_value(shown(old, &folder)).expect("a row");
     assert_eq!(row["cannotRun"], "It uses an old format this browser no longer runs");
+}
+#[test]
+fn no_page_orden_opens_for_itself_is_left_open_for_a_site_to_be_offered() {
+    assert!(own_pages_open().is_empty());
 }

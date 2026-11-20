@@ -1,5 +1,6 @@
 use orden_base::Held as _;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 
@@ -16,10 +17,41 @@ use super::link::Store;
 const CONTROL: &str = "web-extensions-control";
 const LEAVING: &str = "web-extension-leaving";
 const PATIENCE: Duration = Duration::from_secs(20);
-static BUILDING: Mutex<()> = Mutex::new(());
+static USING: Mutex<()> = Mutex::new(());
 static REMOVING: Mutex<()> = Mutex::new(());
+static UNREACHABLE: AtomicBool = AtomicBool::new(false);
+static NUMBERED: AtomicU64 = AtomicU64::new(0);
+static OPEN: Mutex<Vec<String>> = Mutex::new(Vec::new());
+pub fn own_pages_open() -> Vec<String> {
+    OPEN.held().clone()
+}
+struct Borrowed<T> {
+    label: String,
+    page: T,
+    shut: fn(&T),
+}
+impl<T> Borrowed<T> {
+    fn new(label: String, page: T, shut: fn(&T)) -> Self {
+        OPEN.held().push(label.clone());
+        Self { label, page, shut }
+    }
+}
+impl<T> Drop for Borrowed<T> {
+    fn drop(&mut self) {
+        (self.shut)(&self.page);
+        OPEN.held().retain(|one| *one != self.label);
+    }
+}
+fn shut(page: &Webview) {
+    devtools::let_go_of(page.label());
+    let _ = page.close();
+}
+fn borrowed(app: &AppHandle, name: &str, address: &str) -> Option<Borrowed<Webview>> {
+    let label = format!("{name}-{}", NUMBERED.fetch_add(1, Ordering::SeqCst));
+    hidden(app, &label, address).map(|page| Borrowed::new(label, page, shut))
+}
 pub fn installed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
-    let Some(page) = control(app) else {
+    let Some(all) = controlled(app, |page| asked(page, LIST)) else {
         static SAID: std::sync::Once = std::sync::Once::new();
         SAID.call_once(|| {
             orden_base::logs::say(
@@ -35,8 +67,7 @@ pub fn installed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     else {
         return Vec::new();
     };
-    let all = asked(&page, LIST).and_then(|all| all.as_array().cloned()).unwrap_or_default();
-    entries(&all, &profile)
+    entries(all.as_array().map(Vec::as_slice).unwrap_or_default(), &profile)
 }
 fn entries(all: &[Value], profile: &Path) -> Vec<(Kept, PathBuf)> {
     all.iter()
@@ -74,8 +105,11 @@ fn unpacked(home: &Path, version: &str) -> Option<PathBuf> {
         .max()
 }
 pub fn enable(app: &AppHandle, id: &str, on: bool) -> Result<(), String> {
-    let page = control(app).ok_or("the engine's extensions could not be reached")?;
-    asked(&page, &format!("chrome.management.setEnabled({}, {on}).then(() => true)", json!(id)))
+    controlled(app, |page| Some(set(page, id, on)))
+        .unwrap_or_else(|| Err("the engine's extensions could not be reached".to_string()))
+}
+fn set(page: &Webview, id: &str, on: bool) -> Result<(), String> {
+    asked(page, &format!("chrome.management.setEnabled({}, {on}).then(() => true)", json!(id)))
         .map(|_| ())
         .ok_or_else(|| "the engine did not change it".to_string())
 }
@@ -84,30 +118,26 @@ pub fn remove(app: &AppHandle, id: &str) -> Result<(), String> {
         return Err("that is not an extension".to_string());
     }
     let _removing = REMOVING.held();
-    let page = control(app).ok_or("the engine's extensions could not be reached")?;
-    let held = |expression: &str| asked(&page, &expression.replace("ID", &json!(id).to_string()));
+    controlled(app, |page| Some(removed(app, page, id)))
+        .unwrap_or_else(|| Err("the engine's extensions could not be reached".to_string()))
+}
+fn removed(app: &AppHandle, page: &Webview, id: &str) -> Result<(), String> {
+    let held = |expression: &str| asked(page, &expression.replace("ID", &json!(id).to_string()));
     let was_on = held("chrome.management.get(ID).then((one) => one.enabled)")
         .and_then(|on| on.as_bool())
         .ok_or("the engine does not have it")?;
     if !was_on {
-        enable(app, id, true)?;
+        set(page, id, true)?;
     }
-    if let Some(left) = app.get_webview(LEAVING) {
-        devtools::let_go_of(LEAVING);
-        let _ = left.close();
-    }
-    let address = format!("chrome-extension://{id}/manifest.json");
-    if let Some(own) = hidden(app, LEAVING, &address) {
+    if let Some(own) = borrowed(app, LEAVING, &format!("chrome-extension://{id}/manifest.json")) {
         for _ in 0..50 {
-            let ready = asked(&own, "typeof chrome.management?.uninstallSelf === 'function'");
+            let ready = asked(&own.page, "typeof chrome.management?.uninstallSelf === 'function'");
             if ready == Some(Value::Bool(true)) {
-                let _ = asked(&own, "(chrome.management.uninstallSelf(), true)");
+                let _ = asked(&own.page, "(chrome.management.uninstallSelf(), true)");
                 break;
             }
             std::thread::sleep(Duration::from_millis(100));
         }
-        devtools::let_go_of(LEAVING);
-        let _ = own.close();
     }
     for _ in 0..50 {
         if held("chrome.management.get(ID).then(() => true, () => false)")
@@ -118,23 +148,27 @@ pub fn remove(app: &AppHandle, id: &str) -> Result<(), String> {
         std::thread::sleep(Duration::from_millis(100));
     }
     if !was_on {
-        let _ = enable(app, id, false);
+        let _ = set(page, id, false);
     }
     Err("the engine did not remove it".to_string())
 }
-fn control(app: &AppHandle) -> Option<Webview> {
-    let _building = BUILDING.held();
-    if let Some(page) = app.get_webview(CONTROL) {
-        return Some(page);
+fn controlled<T>(app: &AppHandle, with: impl FnOnce(&Webview) -> Option<T>) -> Option<T> {
+    if UNREACHABLE.load(Ordering::SeqCst) {
+        return None;
     }
-    let page = hidden(app, CONTROL, "chrome://extensions/")?;
+    let _using = USING.held();
+    let page = borrowed(app, CONTROL, "chrome://extensions/")?;
+    let mut answered = false;
     for _ in 0..50 {
-        if asked(&page, "typeof chrome.management === 'object'").and_then(|said| said.as_bool())
-            == Some(true)
-        {
-            return Some(page);
+        match asked(&page.page, "typeof chrome.management === 'object'") {
+            Some(Value::Bool(true)) => return with(&page.page),
+            Some(_) => answered = true,
+            None => {}
         }
         std::thread::sleep(Duration::from_millis(100));
+    }
+    if answered {
+        UNREACHABLE.store(true, Ordering::SeqCst);
     }
     None
 }
@@ -178,6 +212,7 @@ fn asked(page: &Webview, expression: &str) -> Option<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::RefCell;
 
     fn folder(at: &Path) -> PathBuf {
         std::fs::create_dir_all(at).expect("a folder");
@@ -222,5 +257,43 @@ mod tests {
             json!({ "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "version": "1", "enabled": true, "path": r"C:\nowhere\at\all" }),
         ];
         assert!(entries(&all, profile.path()).is_empty());
+    }
+    #[test]
+    fn a_page_orden_opens_for_itself_is_closed_once_used_however_the_use_ends() {
+        struct Page(String);
+        thread_local! {
+            static CLOSED: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
+        }
+        fn closed(page: &Page) {
+            CLOSED.with(|all| all.borrow_mut().push(page.0.clone()));
+        }
+        let used = |which: &str, fails: bool| -> Option<()> {
+            let label = format!("web-extensions-control-{which}");
+            let page = Borrowed::new(label, Page(which.to_owned()), closed);
+            assert!(own_pages_open().contains(&page.label));
+            if fails {
+                return None;
+            }
+            Some(())
+        };
+        assert_eq!(used("t1", false), Some(()));
+        assert_eq!(used("t2", true), None);
+        assert!(std::panic::catch_unwind(|| {
+            let _page =
+                Borrowed::new("web-extension-leaving-t3".to_owned(), Page("t3".to_owned()), closed);
+            panic!("a use that breaks")
+        })
+        .is_err());
+        assert!(own_pages_open().iter().all(|one| !one.contains("-t")));
+        assert_eq!(CLOSED.with(|all| all.borrow().clone()), ["t1", "t2", "t3"]);
+    }
+    #[test]
+    fn every_page_orden_opens_for_itself_is_borrowed_and_so_closed() {
+        let source = include_str!("chromium.rs").replace('\r', "");
+        let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
+        assert_eq!(code.matches("hidden(app, ").count(), 1, "a page opened outside borrowed()");
+        assert!(code
+            .contains("hidden(app, &label, address).map(|page| Borrowed::new(label, page, shut))"));
+        assert!(!code.contains("get_webview("), "a page kept around to be found again");
     }
 }
