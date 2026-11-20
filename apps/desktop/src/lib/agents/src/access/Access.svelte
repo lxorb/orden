@@ -16,7 +16,7 @@
 
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
   const CHOICE_KEY = 'orden:access-choice'
-  const local = !__EVEN_PLUGIN__ && reach.offered
+  const local = reach.offered
   const pane = local ? new AgentsPane(reach.standIn ?? tauriCrate) : null
   $effect(() => {
     if (!pane) return
