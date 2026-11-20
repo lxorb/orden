@@ -92,4 +92,3 @@ export type SettingsSectionId =
   | 'export'
 export type SidebarPanelId = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
 export type PanelSide = 'left' | 'right'
-export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat' | 'database'
