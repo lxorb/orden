@@ -622,6 +622,47 @@ test('a page is pictured only when the overview is about to open, and again only
   expect(shots()).toBe(2)
   void unmount(app)
 })
+test('a web tab kept while another of its pane is in front hides its page and comes back in place, mounted all along', async () => {
+  await launched()
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no web tab was opened')
+  pages.of(tab.id).url = 'https://example.com/kept'
+  const { kept } = await import('./kept.svelte')
+  kept.shown = true
+  const app = mount(WebTab, {
+    target,
+    props: {
+      tab,
+      focused: true,
+      get shown() {
+        return kept.shown
+      },
+    },
+  })
+  flushSync()
+  await frames()
+  const hole = document.querySelector('.hole')
+  const pane = asked.filter((one) => one.command === 'web_place').at(-1)?.args.pane
+  asked.length = 0
+  kept.shown = false
+  flushSync()
+  await frames()
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({ visible: false })
+  asked.length = 0
+  window.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', ctrlKey: true, bubbles: true }))
+  await frames()
+  expect(
+    asked.filter((one) => (one.command === 'web_place' || one.command === 'web_shot') && one.args.tab === tab.id),
+  ).toEqual([])
+  kept.shown = true
+  flushSync()
+  await frames()
+  expect(document.querySelector('.hole')).toBe(hole)
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({ visible: true, pane })
+  void unmount(app)
+})
 test('no press takes a picture of a page: words typed beside it, a chord, a switch of tabs or a click', async () => {
   const { app } = await opened('https://example.com/typed-beside')
   const field = document.createElement('textarea')
