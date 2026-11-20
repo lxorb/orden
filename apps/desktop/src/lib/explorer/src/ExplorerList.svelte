@@ -67,6 +67,17 @@
     const row = scroller?.querySelector<HTMLElement>('[data-entry]')
     ;(row ?? scroller)?.focus({ preventScroll: true })
   }
+  let holding: readonly Entry[] | null = null
+  $effect.pre(() => {
+    const shown = rows
+    holding = scroller?.contains(document.activeElement) ? shown : null
+  })
+  $effect(() => {
+    const shown = rows
+    const now = document.activeElement
+    if (!holding || (now && now !== document.body)) return
+    untrack(() => (shown.length ? focus() : scroller?.focus({ preventScroll: true })))
+  })
   function measure(node: HTMLElement) {
     if (!node.classList.contains('tile') && node.offsetHeight > 0) rowHeight = node.offsetHeight
   }

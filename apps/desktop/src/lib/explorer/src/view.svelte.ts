@@ -239,8 +239,9 @@ export class ExplorerView {
   }
   private take(listing: Listing) {
     this.wrong = null
+    const before = this.names
     this.listing = listing
-    this.picked = stillThere(this.picked, this.names)
+    this.picked = stillThere(this.picked, this.names, before)
     this.#pickAsked()
   }
   pickOnArrival(name: string) {
