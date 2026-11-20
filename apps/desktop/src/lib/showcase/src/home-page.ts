@@ -59,7 +59,8 @@ function offerDownload(view: Window, origins: Origins) {
     const { label, href } = downloadFor(visitor, assets)
     for (const link of view.document.querySelectorAll<HTMLAnchorElement>('a[data-download]')) {
       link.href = href
-      link.textContent = label
+      const text = link.querySelector('[data-label]')
+      if (text) text.textContent = label
     }
   }
   paint()

@@ -26,4 +26,12 @@ describe('the home page styles', () => {
   test('set their words in the Geist they ship, before any fallback', () => {
     expect(HOME).toMatch(/html:root \{[^}]*--font-ui: 'Geist Variable', 'Geist',/)
   })
+  test('give Try it out a visible edge and light the window in the icon colours in both themes', () => {
+    expect(HOME).toMatch(/\.orden-button\.is-soft\.is-big \{[^}]*box-shadow: inset 0 0 0 1px/)
+    for (const theme of [/html:root \{[^}]*\}/, /html:root\[data-theme='light'\] \{[^}]*\}/]) {
+      const block = theme.exec(HOME)?.[0] ?? ''
+      for (const one of ['--glow-sky', '--glow-lilac', '--glow-rose']) expect(block, one).toContain(one)
+    }
+    expect(HOME).not.toMatch(/radial-gradient\([^)]*rgb\(\d/)
+  })
 })
