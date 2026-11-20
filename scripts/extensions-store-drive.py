@@ -148,6 +148,7 @@ class Drive:
     def start(self, again: bool = False) -> App:
         if not again:
             fresh(self.config)
+            old_extension(self.config / "extensions")
         (self.config / "automation.json").write_text(json.dumps({"port": 0, "secret": self.secret, "eval": True}), encoding="utf-8")
         env = {**os.environ, "ORDEN_SPACES_DIR": str(self.spaces), "ORDEN_CEF_DEBUG_PORT": str(self.debug)}
         self.process = subprocess.Popen([str(self.exe)], env=env, cwd=str(self.exe.parent))
@@ -442,6 +443,100 @@ def popup(drive: Drive, login: str) -> None:
     if "blocked" in str(said.get("words", "")).lower() or said.get("drawn", 0) < 5 or not said.get("words"):
         drive.fail(f"Proton Pass's popup shows no UI: {said}")
     print(f"the popup shows its UI: {said}", flush=True)
+OLD_ID = "odfafepnkmbhccpbejgmiehpchacaeak"
+OLD_VERSION = "2026.1115.76.4"
+OLD_NAME = "uBlock Origin"
+OLD_WORDS = "old format"
+def old_extension(root: pathlib.Path) -> None:
+    folder = root / OLD_ID / OLD_VERSION
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "manifest.json").write_text(json.dumps({"manifest_version": 2, "name": OLD_NAME, "version": OLD_VERSION, "background": {"scripts": ["bg.js"]}}), encoding="utf-8")
+    (folder / "bg.js").write_text("", encoding="utf-8")
+    (root / "library.json").write_text(json.dumps([{"id": OLD_ID, "store": "edge", "version": OLD_VERSION, "enabled": True, "pinned": True}]), encoding="utf-8")
+def native_load_error(drive: Drive) -> str | None:
+    if sys.platform == "win32":
+        import comtypes.client
+        comtypes.client.GetModule("UIAutomationCore.dll")
+        from comtypes.gen import UIAutomationClient as uia
+        client = comtypes.client.CreateObject(uia.CUIAutomation, interface=uia.IUIAutomation)
+        assert drive.process is not None
+        found = client.GetRootElement().FindAll(uia.TreeScope_Descendants, client.CreatePropertyCondition(uia.UIA_ProcessIdPropertyId, drive.process.pid))
+        for index in range(found.Length):
+            name = found.GetElement(index).CurrentName or ""
+            if "Error Loading Extension" in name or "manifest version" in name:
+                return name
+        return None
+    if sys.platform == "darwin":
+        return None
+    from Xlib import display
+    shown = display.Display()
+    net_name = shown.intern_atom("_NET_WM_NAME")
+    stack = [shown.screen().root]
+    while stack:
+        one = stack.pop()
+        try:
+            said = one.get_full_property(net_name, 0)
+            name = said.value.decode("utf-8", "replace") if said else (one.get_wm_name() or "")
+            if isinstance(name, bytes):
+                name = name.decode("utf-8", "replace")
+            if "Error Loading Extension" in name:
+                return name
+            stack.extend(one.query_tree().children)
+        except Exception:  # noqa: BLE001 - a window may go while it is read
+            pass
+    return None
+def load_errors(drive: Drive) -> list[str]:
+    said: list[str] = []
+    for log in [drive.config / "chromium" / "cef.log", *drive.config.glob("*.log")]:
+        if log.is_file():
+            said += [line.strip()[:240] for line in log.read_text(errors="replace").splitlines() if re.search(r"Failed to load extension|unsupported manifest version|Error Loading Extension", line)]
+    return said
+def old_one(drive: Drive) -> None:
+    drive.step("an old Manifest V2 extension left on disk by an older Orden is in the library at start")
+    until = time.monotonic() + 8
+    while time.monotonic() < until:
+        dialog = native_load_error(drive)
+        if dialog:
+            drive.shot("native-load-error")
+            drive.fail(f"Chromium showed its own extension error dialog: {dialog!r}")
+        time.sleep(1)
+    errors = load_errors(drive)
+    if errors:
+        drive.fail(f"Chromium was handed the old extension and refused it: {errors[:3]}")
+    said = drive.eval(LISTED, 40)
+    try:
+        row = next((one for one in json.loads(said) if one.get("id") == OLD_ID), None)
+    except (TypeError, ValueError):
+        row = None
+    print(f"the old extension's row: {json.dumps(row)[:300]}", flush=True)
+    if not row or OLD_WORDS not in str(row.get("cannotRun") or ""):
+        drive.fail(f"the old extension is not listed as unable to run with its reason: {row}")
+    drive.step("the extensions menu says it does not work, and offers Remove")
+    drive.waited("!!document.querySelector('[data-opens=\"extensions\"]')", 30, "the web bar has no Extensions button")
+    drive.eval("document.querySelector('[data-opens=\"extensions\"]').click(); return true")
+    bubble = drive.waited(BUBBLE, 15, "the Extensions bubble did not open")
+    drive.shot("old-extension")
+    if OLD_NAME not in str(bubble) or "Not working" not in str(bubble) or OLD_WORDS not in str(bubble):
+        drive.fail(f"the bubble does not say the old extension is not working and why: {bubble!r}")
+    if drive.eval(f"!!document.querySelector('button[data-extension=\"{OLD_ID}\"]')"):
+        drive.fail("the old extension has a button in the web bar")
+    pressed = drive.eval(
+        "(() => { const bubble = document.querySelector('[role=dialog][aria-label=\"Extensions\"]');"
+        " const button = [...(bubble?.querySelectorAll('button') ?? [])].find((one) => /^remove/i.test(one.innerText.trim()));"
+        " if (!button) return null; button.click(); return 'removed' })()"
+    )
+    if not pressed:
+        drive.fail(f"the bubble offers no Remove for the old extension: {bubble!r}")
+    until = time.monotonic() + 30
+    while time.monotonic() < until:
+        said = drive.eval(LISTED, 40)
+        if OLD_ID not in str(said):
+            break
+        time.sleep(1)
+    else:
+        drive.fail("Remove left the old extension listed")
+    drive.eval("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return true")
+    print("the old extension showed as not working, with no Chromium dialog, and Remove took it away", flush=True)
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -461,6 +556,7 @@ def main() -> int:
         drive.start()
         drive.step("a web tab is opened")
         drive.opened(f"{base}/start")
+        old_one(drive)
         if store_button(drive) is not None:
             removed(drive)
             drive.opened(f"{base}/start")
