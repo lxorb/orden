@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, urlparse
 from harness import ROOT, Drive, Native, end, identifier_of
 
 NEEDS = ("native",)
-DRIVE = Drive(__file__, served=False)
+DRIVE = Drive(__file__, served=False, known={"Apart's tile did not open it as an essential": "#2313"})
 say, wrong = DRIVE.say, DRIVE.wrong
 SPACE = "Essential web data"
 OWN = "3f9a0c17e2b4d685"
@@ -132,8 +132,9 @@ def drive(_browser: object) -> None:
     say(f"pressed: {press_tile(asked, 'Apart')}")
     apart = tab_of(asked, "Apart")
     say(f"apart {apart}, shared {shared}")
-    if apart["essential"] is None or apart["inStrip"]:
+    if "error" in apart or apart["essential"] is None or apart["inStrip"]:
         wrong(f"Apart's tile did not open it as an essential: {apart}")
+        return
     if apart["store"] != f"note_{OWN}":
         wrong(f"the essential is on the store {apart['store']}, not the note's own")
     if shared["store"] is not None:

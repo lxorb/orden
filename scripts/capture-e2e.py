@@ -146,7 +146,13 @@ def drive(apps: list[pathlib.Path], given: list[str]) -> None:
             say(f"[{label}] {identifier} is up on port {held['port']}, pid {held.get('pid')}")
             if held.get("pid") != process.pid:
                 wrong(f"[{label}] the endpoint says pid {held.get('pid')}, the process is {process.pid}")
-        time.sleep(2.5)
+        until = time.monotonic() + 45
+        first, second = [], []
+        while time.monotonic() < until and not (first and second):
+            time.sleep(0.5)
+            first = windows_of(running[0][1].pid)
+            second = windows_of(running[1][1].pid)
+        time.sleep(2)
         first = windows_of(running[0][1].pid)
         second = windows_of(running[1][1].pid)
         if not first or not second:
