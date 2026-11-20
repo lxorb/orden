@@ -5,6 +5,7 @@ export { sendRows } from './send-rows'
 export type { ChatEntry, Chats } from './shapes'
 export const chatStore = () => import('./store.svelte')
 export const chatOpening = () => import('./view/open')
+export const chatsDemo = () => import('./demo')
 export const chatDeleting = () => import('./deleting')
 export const chatContext = () => import('./context')
 export const wakeChats = () => import('./start.svelte')
