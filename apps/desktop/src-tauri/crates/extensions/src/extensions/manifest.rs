@@ -23,6 +23,57 @@ pub fn read(folder: &Path) -> Result<About, String> {
         .map_err(|_| "that extension's manifest cannot be read".to_string())?;
     Ok(about(&manifest, |key| message(folder, &manifest, key)))
 }
+pub const OLD: &str = "It uses an old format this browser no longer runs";
+pub fn fault(folder: &Path) -> Option<String> {
+    let Ok(text) = fs::read_to_string(folder.join("manifest.json")) else {
+        return Some("Its files are missing".to_owned());
+    };
+    let Ok(manifest) = serde_json::from_str::<Value>(text.trim_start_matches('\u{feff}')) else {
+        return Some("Its description of itself cannot be read".to_owned());
+    };
+    if manifest.get("manifest_version").and_then(Value::as_u64).is_none_or(|version| version < 3) {
+        return Some(OLD.to_owned());
+    }
+    let locales = folder.join("_locales");
+    match manifest.get("default_locale").and_then(Value::as_str) {
+        Some(language) if !locales.join(language).join("messages.json").is_file() => {
+            return Some(format!("Its files are incomplete: _locales/{language} is missing"));
+        }
+        None if locales.is_dir() => {
+            return Some("Its files are incomplete: it names no default language".to_owned());
+        }
+        _ => {}
+    }
+    needed(&manifest)
+        .into_iter()
+        .find(|path| !folder.join(path).is_file())
+        .map(|path| format!("Its files are incomplete: {path} is missing"))
+}
+fn needed(manifest: &Value) -> Vec<String> {
+    let listed = |value: Option<&Value>| -> Vec<String> {
+        value
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .filter_map(inside)
+            .collect()
+    };
+    let mut needed: Vec<String> = manifest
+        .pointer("/background/service_worker")
+        .and_then(Value::as_str)
+        .and_then(inside)
+        .into_iter()
+        .collect();
+    for script in manifest.get("content_scripts").and_then(Value::as_array).into_iter().flatten() {
+        needed.extend(listed(script.get("js")));
+        needed.extend(listed(script.get("css")));
+    }
+    if let Some(icons) = manifest.get("icons").and_then(Value::as_object) {
+        needed.extend(icons.values().filter_map(Value::as_str).filter_map(inside));
+    }
+    needed
+}
 pub fn keyed(folder: &Path, key: &[u8]) -> Result<(), String> {
     use base64::Engine as _;
 
@@ -129,7 +180,7 @@ fn message(folder: &Path, manifest: &Value, key: &str) -> Option<String> {
 mod tests {
     use serde_json::json;
 
-    use super::{about, inside};
+    use super::{about, fault, inside, OLD};
 
     #[test]
     fn a_manifest_v3_extension_says_its_button_options_and_permissions() {
@@ -172,5 +223,49 @@ mod tests {
         for bad in ["../x.html", "https://evil.example/", "a/../../b.html", "a\\b.html", ""] {
             assert_eq!(inside(bad), None, "{bad}");
         }
+    }
+    #[test]
+    fn what_chromium_would_refuse_to_load_is_named_before_it_is_handed_over() {
+        let folder = tempfile::tempdir().expect("a folder");
+        let at = folder.path();
+        let said = |manifest: serde_json::Value| {
+            std::fs::write(at.join("manifest.json"), manifest.to_string()).expect("a manifest");
+            fault(at)
+        };
+        assert_eq!(fault(at).as_deref(), Some("Its files are missing"));
+        std::fs::write(at.join("manifest.json"), "not json").expect("a manifest");
+        assert_eq!(fault(at).as_deref(), Some("Its description of itself cannot be read"));
+        for old in [json!({ "manifest_version": 2 }), json!({}), json!({ "manifest_version": "3" })]
+        {
+            assert_eq!(said(old).as_deref(), Some(OLD));
+        }
+        assert_eq!(said(json!({ "manifest_version": 3 })), None);
+        let full = json!({
+            "manifest_version": 3,
+            "background": { "service_worker": "/sw.js" },
+            "content_scripts": [{ "js": ["a.js"], "css": ["a.css"] }],
+            "icons": { "16": "icons/16.png" }
+        });
+        assert_eq!(
+            said(full.clone()).as_deref(),
+            Some("Its files are incomplete: sw.js is missing")
+        );
+        std::fs::create_dir_all(at.join("icons")).expect("a folder");
+        for file in ["sw.js", "a.js", "a.css", "icons/16.png"] {
+            std::fs::write(at.join(file), "").expect("a file");
+        }
+        assert_eq!(said(full), None);
+        let worded = json!({ "manifest_version": 3, "default_locale": "en" });
+        assert_eq!(
+            said(worded.clone()).as_deref(),
+            Some("Its files are incomplete: _locales/en is missing")
+        );
+        std::fs::create_dir_all(at.join("_locales/en")).expect("a folder");
+        assert_eq!(
+            said(json!({ "manifest_version": 3 })).as_deref(),
+            Some("Its files are incomplete: it names no default language")
+        );
+        std::fs::write(at.join("_locales/en/messages.json"), "{}").expect("words");
+        assert_eq!(said(worded), None);
     }
 }

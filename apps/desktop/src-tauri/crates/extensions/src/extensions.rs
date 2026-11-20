@@ -78,7 +78,7 @@ fn merged(
     for one in pins.iter().filter(|one| library::ours(root, one)) {
         let folder = library::folder_of(root, &one.id, &one.version);
         let loaded = list.iter().position(|(there, _)| there.id == one.id);
-        if one.enabled != running(&folder) {
+        if one.enabled != running(&folder) && manifest::fault(&folder).is_none() {
             pending.insert(one.id.clone());
         }
         match loaded {
@@ -99,13 +99,15 @@ pub struct Shown {
     problem: Option<String>,
     gaps: Option<Gaps>,
     pending: bool,
+    cannot_run: Option<String>,
 }
 pub fn shown(kept: Kept, folder: &Path) -> Shown {
     let about = manifest::read(folder).unwrap_or_default();
     let picture = about.icon.as_deref().and_then(|icon| picture(folder, icon));
     let problem = PROBLEMS.held().iter().find(|(id, _)| *id == kept.id).map(|(_, why)| why.clone());
     let pending = PENDING.read().unwrap_or_else(PoisonError::into_inner).contains(&kept.id);
-    Shown { kept, about, picture, problem, gaps: firefox::gaps_in(folder), pending }
+    let cannot_run = manifest::fault(folder);
+    Shown { kept, about, picture, problem, gaps: firefox::gaps_in(folder), pending, cannot_run }
 }
 const LARGEST: u64 = 512 * 1024;
 fn picture(folder: &Path, path: &str) -> Option<String> {
@@ -152,7 +154,8 @@ fn browser(method: &str, params: Value) -> Result<Value, String> {
     orden_web::engine::extensions_cdp(method, &params, PATIENCE)
 }
 fn land(cdp: &mut impl FnMut(&str, Value) -> Result<Value, String>, one: &Kept, folder: &Path) {
-    let problem = live::landed(cdp, one, folder);
+    let problem =
+        if manifest::fault(folder).is_some() { None } else { live::landed(cdp, one, folder) };
     if one.enabled && problem.is_none() {
         library::ran(folder);
     }
@@ -451,6 +454,7 @@ mod tests {
         land, library, merged, page_for, shown, turned, went, About, Kept, Store, LARGEST,
     };
 
+    const RUNS: &str = r#"{"manifest_version": 3, "name": "Pass", "version": "1.2.3"}"#;
     fn kept() -> Kept {
         Kept {
             id: "abcdefghijklmnopabcdefghijklmnop".to_owned(),
@@ -546,7 +550,7 @@ mod tests {
         let pass = Kept { version: "1.2.3".to_owned(), ..kept() };
         let folder = root.join(&pass.id).join(&pass.version);
         fs::create_dir_all(&folder).expect("a folder");
-        fs::write(folder.join("manifest.json"), "{}").expect("a manifest");
+        fs::write(folder.join("manifest.json"), RUNS).expect("a manifest");
         let other = Kept { id: "b".repeat(32), ..kept() };
         let unpinned = Kept { pinned: false, ..other.clone() };
         let profile = PathBuf::from("profile");
@@ -572,7 +576,7 @@ mod tests {
         let newer = Kept { version: "1.3.0".to_owned(), ..pass };
         let newer_folder = root.join(&newer.id).join(&newer.version);
         fs::create_dir_all(&newer_folder).expect("a folder");
-        fs::write(newer_folder.join("manifest.json"), "{}").expect("a manifest");
+        fs::write(newer_folder.join("manifest.json"), RUNS).expect("a manifest");
         let (_, pending) = merged(Vec::new(), std::slice::from_ref(&newer), root, this_run);
         assert!(pending.contains(&newer.id));
         let pin = Kept { id: "c".repeat(32), ..kept() };
@@ -600,7 +604,7 @@ mod tests {
             let one = Kept { id: id.to_owned(), version: "2.0".to_owned(), ..kept() };
             let folder = root.join(id).join("2.0");
             fs::create_dir_all(&folder).expect("a folder");
-            fs::write(folder.join("manifest.json"), "{}").expect("a manifest");
+            fs::write(folder.join("manifest.json"), RUNS).expect("a manifest");
             (one, folder)
         };
         let (fine, fine_folder) = made(&"h".repeat(32));
@@ -630,7 +634,7 @@ mod tests {
         let one = Kept { id: "j".repeat(32), version: "3.0".to_owned(), ..kept() };
         let folder = root.join(&one.id).join("3.0");
         fs::create_dir_all(&folder).expect("a folder");
-        fs::write(folder.join("manifest.json"), "{}").expect("a manifest");
+        fs::write(folder.join("manifest.json"), RUNS).expect("a manifest");
         let asked = std::cell::RefCell::new(Vec::new());
         let mut cdp = |method: &str, _: Value| {
             asked.borrow_mut().push(method.to_owned());
@@ -680,5 +684,33 @@ mod tests {
         }
         let bare = About::default();
         assert_eq!(page_for(&on, &bare, false, false), Err(format!("{} has no such page", on.id)));
+    }
+    #[test]
+    fn an_old_format_one_left_on_disk_cannot_run_is_never_handed_over_and_never_waits() {
+        let root = tempfile::tempdir().expect("a folder");
+        let root = root.path();
+        let old = Kept { id: "k".repeat(32), version: "2026.1115.76.4".to_owned(), ..kept() };
+        let folder = root.join(&old.id).join(&old.version);
+        fs::create_dir_all(&folder).expect("a folder");
+        fs::write(
+            folder.join("manifest.json"),
+            r#"{"manifest_version": 2, "name": "uBlock Origin"}"#,
+        )
+        .expect("a manifest");
+        let (list, pending) =
+            merged(Vec::new(), std::slice::from_ref(&old), root, |_: &Path| false);
+        assert_eq!(list.len(), 1);
+        assert!(pending.is_empty());
+        let mut asked = Vec::new();
+        let mut cdp = |method: &str, _: Value| {
+            asked.push(method.to_owned());
+            Ok(json!({}))
+        };
+        land(&mut cdp, &old, &folder);
+        assert!(asked.is_empty(), "{asked:?}");
+        let said = serde_json::to_value(shown(old, &folder)).expect("a row");
+        assert_eq!(said["cannotRun"], "It uses an old format this browser no longer runs");
+        assert_eq!(said["problem"], Value::Null);
+        assert_eq!(said["pending"], false);
     }
 }
