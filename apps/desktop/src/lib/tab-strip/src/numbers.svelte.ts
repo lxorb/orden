@@ -79,7 +79,7 @@ class Numbers {
       repeat: event.repeat,
       altGraph: event.getModifierState('AltGraph'),
     }
-    const letter = letterOf(stroke)
+    const letter = letterOf(stroke, shortcuts.platform)
     const essential = letter === null ? null : essentialLetters.pathOf(letter)
     const place = this.hold.down(stroke, event.timeStamp, essential !== null)
     if (essential !== null) {

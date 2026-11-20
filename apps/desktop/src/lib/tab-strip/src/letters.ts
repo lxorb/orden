@@ -1,4 +1,4 @@
-import { parseCombination, type Platform } from '../../ui-kit/src/api'
+import { keyOf, parseCombination, type Platform } from '../../ui-kit/src/api'
 
 export const PANE_LETTERS: readonly string[] = ['H', 'J', 'K', 'L']
 const ALPHABET = Array.from({ length: 26 }, (_, at) => String.fromCharCode(65 + at))
@@ -15,20 +15,23 @@ export function takenUnderAlt(keys: readonly (string | null)[], platform: Platfo
   }
   return taken
 }
-export function letterOf(stroke: {
-  key: string
-  code: string
-  altKey: boolean
-  ctrlKey: boolean
-  shiftKey: boolean
-  metaKey: boolean
-  altGraph: boolean
-}): string | null {
+export function letterOf(
+  stroke: {
+    key: string
+    code: string
+    altKey: boolean
+    ctrlKey: boolean
+    shiftKey: boolean
+    metaKey: boolean
+    altGraph: boolean
+  },
+  platform: Platform,
+): string | null {
   if (!stroke.altKey || stroke.ctrlKey || stroke.shiftKey || stroke.metaKey || stroke.altGraph) {
     return null
   }
-  if (/^[a-z]$/i.test(stroke.key)) return stroke.key.toUpperCase()
-  return /^Key[A-Z]$/.test(stroke.code) ? stroke.code.slice(3) : null
+  const key = keyOf(stroke, platform)
+  return /^[a-z]$/.test(key) ? key.toUpperCase() : null
 }
 export function lettersFor(
   essentials: readonly { path: string; name: string }[],
