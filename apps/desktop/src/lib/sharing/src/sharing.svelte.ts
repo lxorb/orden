@@ -127,7 +127,7 @@ export function isSharedItem(path: string): boolean {
 export function canShareItem(path: string | null | undefined): boolean {
   if (!path) return false
   const space = spaceHolding(workspaceView().spaces, path)
-  if (!space || !ownsRemotely(space)) return false
+  if (!space || !canShare(space)) return false
   return !!idOf(path)
 }
 export function othersIn(path: string): boolean {

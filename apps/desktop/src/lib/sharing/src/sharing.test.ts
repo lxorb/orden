@@ -1244,6 +1244,10 @@ describe('whether a file can be shared from here', () => {
   test('no, for a file the account has never been handed: a share names an id', () => {
     expect(canShareItem('Notes/fresh.md')).toBe(false)
   })
+  test('yes, for a file of a space the account is an admin of', () => {
+    account.spaces = [remote('space-1', 'owner'), { ...remote('space-2', 'write', true), admin: true }]
+    expect(canShareItem('Theirs/plan.md')).toBe(true)
+  })
   test('and no, for nothing at all', () => {
     expect(canShareItem(null)).toBe(false)
     expect(canShareItem('/elsewhere/loose.md')).toBe(false)
