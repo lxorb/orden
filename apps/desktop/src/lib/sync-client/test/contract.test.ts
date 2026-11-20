@@ -471,6 +471,71 @@ describe('every file the app writes in a space (#2301)', () => {
     expect(new TextDecoder().decode(arrived ?? new Uint8Array())).toBe('%PDF minutes')
   })
 })
+describe('two folders of one name made apart on two devices (#2254)', () => {
+  const mkdir = (device: number, name: string, folder: number | null = null): Step =>
+    act(device, { t: 'mkdir', folder, name })
+  const note = (device: number, name: string, words: string, folder = 0): Step =>
+    act(device, { t: 'create', folder, name, words })
+  const held = (report: Report) => {
+    const live = new Map(report.account.entries.map((one) => [one.id, one]))
+    const pathOf = (id: string | null): string => {
+      const one = id === null ? undefined : live.get(id)
+      return one ? (one.parent === null ? one.name : `${pathOf(one.parent)}/${one.name}`) : ''
+    }
+    return report.account.entries.map((one) => pathOf(one.id)).sort()
+  }
+  test('are one folder holding the notes of both, with no " 2"', async () => {
+    const report = await road(
+      apart(
+        [mkdir(0, 'Ideas'), note(0, 'Away idea.md', 'away mk971z')],
+        [mkdir(1, 'Ideas'), note(1, 'Here idea.md', 'here mk972z')],
+        pass(1),
+        settle,
+      ),
+    )
+    expect(report.failures).toEqual([])
+    expect(held(report)).toEqual(['Ideas', 'Ideas.md', 'Ideas/Away idea.md', 'Ideas/Here idea.md', 'Plan.md'])
+    expect(markersIn(textOf(report, 'Away idea.md'))).toEqual(['mk971z'])
+    expect(markersIn(textOf(report, 'Here idea.md'))).toEqual(['mk972z'])
+  })
+  test('nested, are one folder at each depth', async () => {
+    const report = await road(
+      apart([mkdir(0, 'Ideas'), mkdir(0, 'Sub', 0)], [mkdir(1, 'Ideas'), mkdir(1, 'Sub', 0)], pass(1), settle),
+    )
+    expect(report.failures).toEqual([])
+    expect(held(report)).toEqual(['Ideas', 'Ideas.md', 'Ideas/Sub', 'Plan.md'])
+  })
+  test('number only the notes inside whose names meet', async () => {
+    const report = await road(
+      apart(
+        [mkdir(0, 'Ideas'), note(0, 'Idea.md', 'away mk973z')],
+        [mkdir(1, 'Ideas'), note(1, 'Idea.md', 'here mk974z')],
+        pass(1),
+        settle,
+      ),
+    )
+    expect(report.failures).toEqual([])
+    expect(held(report)).toEqual(['Ideas', 'Ideas.md', 'Ideas/Idea 2.md', 'Ideas/Idea.md', 'Plan.md'])
+  })
+  test('a folder renamed on one device takes the note made in it on the other, as itself', async () => {
+    const report = await road([
+      mkdir(1, 'Ideas'),
+      pass(1),
+      settle,
+      pass(0),
+      settle,
+      ...apart(
+        [note(0, 'Later.md', 'later mk975z')],
+        [act(1, { t: 'rename', target: 0, name: 'Plans' })],
+        pass(1),
+        settle,
+      ),
+    ])
+    expect(report.failures).toEqual([])
+    expect(held(report)).toEqual(['Ideas.md', 'Plan.md', 'Plans', 'Plans/Later.md'])
+    expect(markersIn(textOf(report, 'Later.md'))).toEqual(['mk975z'])
+  })
+})
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })

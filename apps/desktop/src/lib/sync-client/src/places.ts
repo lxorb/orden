@@ -214,7 +214,7 @@ export class SpaceState {
   private showing(state: TreeState, one: Outboxed) {
     if (one.record.t !== 'op') return
     const op: Op = { ...one.record.op }
-    if (op.t === 'create') delete op.mergeable
+    if (op.t === 'create' || op.t === 'mkdir') delete op.mergeable
     applyOp(state, op, { role: 'owner', device: this.device })
   }
   paths(): Map<string, string> {

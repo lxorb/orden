@@ -41,6 +41,7 @@ function folderFor(core: Core, space: SpaceState, path: string, changes: Change[
       parent,
       name,
       seen: space.row.cursor,
+      mergeable: true,
     }),
   )
   return id
@@ -89,7 +90,15 @@ export async function made(core: Core, space: SpaceState, what: Made): Promise<{
   space.entries.set(id, entry)
   const seen = space.row.cursor
   const op: Op = what.folder
-    ? { op: core.nextId('o'), t: 'mkdir', id, parent, name, seen }
+    ? {
+        op: core.nextId('o'),
+        t: 'mkdir',
+        id,
+        parent,
+        name,
+        seen,
+        ...(what.id === undefined ? { mergeable: true } : {}),
+      }
     : {
         op: what.id === undefined ? `${id}.c` : core.nextId('o'),
         t: 'create',
@@ -297,6 +306,16 @@ function unsent(space: SpaceState, id: string, changes: Change[]): boolean {
   space.changed()
   return true
 }
+function itself(space: SpaceState, id: string, changes: Change[]): void {
+  for (const one of space.outbox) {
+    if (one.record.t !== 'op' || one.record.sent || one.record.op.t !== 'mkdir' || one.record.op.id !== id) continue
+    const op = { ...one.record.op }
+    delete op.mergeable
+    one.record = { t: 'op', op }
+    one.row = { ...one.row, op: outgoingBytes(one.record) }
+    changes.push(put('outbox', one.row))
+  }
+}
 export async function restored(core: Core, space: SpaceState, id: string, path: string): Promise<Change[] | null> {
   const top = space.entries.get(id)
   if (!top) return null
@@ -386,6 +405,7 @@ export async function restored(core: Core, space: SpaceState, id: string, path: 
     }
     if (making(space, entry.id, true)) {
       const folded = unsent(space, entry.id, changes)
+      if (folded) itself(space, entry.id, changes)
       const shape = shapeOf(entry.kind)
       if (shape && !core.hasDoc(entry.id)) {
         const text = (await core.world.disk.read(core.world.join(space.row.root, at))) ?? ''
