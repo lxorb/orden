@@ -70,9 +70,7 @@ fn now() -> u64 {
     static START: LazyLock<Instant> = LazyLock::new(Instant::now);
     u64::try_from(START.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 const IN_PAGE: &str = "orden://keyboard-in-page";
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn page_took(app: &AppHandle, window: &str, page: &str) {
     homes(|all| all.page_took(window, page));
     let _ = app.emit_to(window, IN_PAGE, ());
@@ -127,6 +125,16 @@ fn page_of(label: &str) -> Option<(AppHandle, String, String)> {
     let tab = crate::web_tabs::tab_of(label)?;
     let window = app.get_webview(label)?.window().label().to_string();
     Some((app.clone(), tab, window))
+}
+pub fn took(label: &str) {
+    if !cfg!(windows) {
+        return;
+    }
+    let Some((app, _, window)) = page_of(label) else {
+        return;
+    };
+    let (telling, page) = (app.clone(), label.to_string());
+    let _ = app.run_on_main_thread(move || page_took(&telling, &window, &page));
 }
 pub fn pressed(label: &str, press: crate::web_keys::Press) -> bool {
     let Some((app, _, window)) = page_of(label) else {
@@ -266,6 +274,22 @@ mod native {
     pub fn take(app: &AppHandle, label: &str) -> bool {
         app.get_webview(label).is_some_and(|page| page.set_focus().is_ok())
     }
+    #[cfg(windows)]
+    #[allow(unsafe_code, reason = "the system's foreground window is read through Win32")]
+    pub fn in_front(window: &Window) -> bool {
+        use windows::Win32::UI::WindowsAndMessaging::{GetAncestor, GetForegroundWindow, GA_ROOT};
+        let Ok(ours) = window.hwnd() else {
+            return false;
+        };
+        let front = unsafe { GetForegroundWindow() };
+        if front.0.is_null() {
+            return false;
+        }
+        let root = unsafe { GetAncestor(front, GA_ROOT) };
+        std::ptr::eq(front.0.cast_const(), ours.0.cast_const())
+            || std::ptr::eq(root.0.cast_const(), ours.0.cast_const())
+    }
+    #[cfg(not(windows))]
     pub fn in_front(window: &Window) -> bool {
         window.is_focused().unwrap_or(false)
     }

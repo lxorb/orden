@@ -26,7 +26,7 @@ pub use dialog::{
 pub use environment::DebugEnvironment;
 mod frame_navigation;
 mod keys;
-pub use keys::{FocusHook, KeyHook, hear_keys};
+pub use keys::{FocusHook, KeyHook, TookHook, hear_focus_taken, hear_keys};
 /// The languages the user asked their operating system for.
 mod locale;
 mod macros;

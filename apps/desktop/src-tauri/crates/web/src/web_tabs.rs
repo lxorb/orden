@@ -695,7 +695,11 @@ pub fn web_place(
     );
     let scale = crate::page_scale::of(&window)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
-    let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
+    let (left, top, width, height) = crate::web_follow::edges(bounds, scale);
+    let seen = window
+        .inner_size()
+        .ok()
+        .is_none_or(|inside| on_screen((left, top, width, height), (inside.width, inside.height)));
     if !visible {
         let _doing = orden_crashes::stall::doing("web_place: hidden");
         crate::page_hide::out_of_sight(&view);
@@ -724,11 +728,21 @@ pub fn web_place(
         view.show().map_err(|error| format!("that page could not be shown: {error}"))?;
     }
     let _doing = orden_crashes::stall::doing("web_place: keyboard");
-    if visible && cut.is_some() {
+    let covered = cut.is_some() || !seen;
+    if visible && covered {
         crate::keyboard::hold_for_layer(&app, window.label());
     }
-    crate::keyboard::placed(&app, &view, visible && cut.is_none());
+    crate::keyboard::placed(&app, &view, visible && !covered);
     Ok(crate::web_cut::layering(view.label()))
+}
+fn on_screen(page: (i32, i32, u32, u32), window: (u32, u32)) -> bool {
+    let (left, top, width, height) = page;
+    let right = i64::from(left) + i64::from(width);
+    let bottom = i64::from(top) + i64::from(height);
+    right > 0
+        && bottom > 0
+        && i64::from(left) < i64::from(window.0)
+        && i64::from(top) < i64::from(window.1)
 }
 impl From<&Pane> for crate::web_follow::Bounds {
     fn from(pane: &Pane) -> Self {
@@ -996,8 +1010,8 @@ pub fn on_the_page(
 #[cfg(test)]
 mod tests {
     use super::{
-        address, allowed, becomes, handed_over, opening, reader, steps_of, tab_of, Becomes, Place,
-        Profile, Steps, WebTabs, BLANK,
+        address, allowed, becomes, handed_over, on_screen, opening, reader, steps_of, tab_of,
+        Becomes, Place, Profile, Steps, WebTabs, BLANK,
     };
     use tauri::Url;
 
@@ -1328,6 +1342,16 @@ mod tests {
         assert!(!tabs.steps("b", None).back());
         tabs.forget("a");
         assert!(!tabs.steps("a", None).back());
+    }
+    #[test]
+    fn a_page_put_out_of_the_way_is_not_on_screen_and_one_in_the_window_is() {
+        let window = (1200, 800);
+        assert!(on_screen((100, 80, 600, 400), window));
+        assert!(on_screen((-500, 0, 600, 400), window));
+        assert!(!on_screen((-20_000, -20_000, 600, 400), window));
+        assert!(!on_screen((1200, 0, 600, 400), window));
+        assert!(!on_screen((0, 800, 600, 400), window));
+        assert!(!on_screen((-600, 0, 600, 400), window));
     }
     #[test]
     fn the_reader_says_whether_it_wants_the_selection() {
