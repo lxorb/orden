@@ -33,4 +33,14 @@ describe('the home page file', () => {
     const between = new RegExp(`[${String.fromCharCode(0xb7, 0x2022, 0x2014)}]`)
     expect(PAGE).not.toMatch(between)
   })
+  test('marks Download and Try it out with their glyphs, hidden from screen readers', () => {
+    const buttons = [...PAGE.matchAll(/<a\s+class="orden-button[^"]*"\s+data-(download|app)[^>]*>([\s\S]*?)<\/a\s*>/g)]
+    expect(buttons).toHaveLength(4)
+    for (const [, kind, inside] of buttons) {
+      expect(inside, kind).toMatch(/<svg\s+class="button-glyph"[^>]*aria-hidden="true"/)
+      expect(inside, kind).toMatch(
+        kind === 'download' ? /<span data-label>\s*Download\s*<\/span>/ : /<span>\s*Try it out\s*<\/span>/,
+      )
+    }
+  })
 })

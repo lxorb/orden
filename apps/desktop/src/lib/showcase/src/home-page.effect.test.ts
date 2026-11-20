@@ -70,7 +70,7 @@ describe('the home page', () => {
     const downloads = [...document.querySelectorAll<HTMLAnchorElement>('a[data-download]')]
     expect(downloads).toHaveLength(2)
     for (const link of downloads) {
-      expect(link.textContent).toBe('Download for Windows')
+      expect(link.querySelector('[data-label]')?.textContent).toBe('Download for Windows')
       expect(link.href).toBe('https://github.com/lxorb/orden/releases/latest')
     }
     expect(asked).not.toHaveBeenCalled()
