@@ -162,6 +162,7 @@ pub(crate) fn zooms(
 }
 pub(crate) fn hear_keys() {
     tauri_runtime_cef::hear_keys(pressed, orden_web::keyboard::left);
+    tauri_runtime_cef::hear_focus_taken(orden_web::keyboard::took);
 }
 fn pressed(label: &str, event: &cef::KeyEvent) -> bool {
     use cef::sys::{cef_event_flags_t as Flag, cef_key_event_type_t as Kind};
