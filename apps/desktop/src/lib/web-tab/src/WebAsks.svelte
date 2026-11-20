@@ -51,6 +51,7 @@
   const choices = $derived(select ? select.options.filter((one) => !one.disabled) : [])
   const lit = $derived(hovered ?? (walking.cursor === null ? null : (choices[walking.cursor]?.index ?? null)))
   const ROW = 32
+  const OPENING = 300
   const MOST = 280
   const placed = $derived.by(() => {
     if (!select) return null
@@ -69,10 +70,21 @@
     if (!one) return
     walking = opensAt(choices.findIndex((each) => each.index === one.selected))
     hovered = null
-    return overlays.show(
+    const opened = performance.now()
+    const blurred = () => {
+      if (performance.now() - opened > OPENING) asked.pickSelect(one, null)
+    }
+    addEventListener('blur', blurred)
+    const shut = overlays.show(
       () => asked.pickSelect(one, null),
       () => [list],
+      null,
+      true,
     )
+    return () => {
+      removeEventListener('blur', blurred)
+      shut()
+    }
   })
   function selectKey(event: KeyboardEvent, one: SelectAsked) {
     if (chorded(event)) return
