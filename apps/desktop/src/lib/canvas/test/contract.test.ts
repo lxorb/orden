@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { matches } from '../src/find'
@@ -11,6 +11,14 @@ test('the module stands on its own opens the canvas itself only through its door
   const loaded = [...api.matchAll(/from '([^']+)'/g)].map((one) => one[1])
   expect(loaded).not.toContain('./Canvas.svelte')
   expect(api).toMatch(/export const loadCanvas = \(\) =>[^;]*import\('\.\/Canvas\.svelte'\)/)
+})
+test('no drawing surface asks for a desynchronized backing, which drops its alpha and shows black on Chromium', () => {
+  const app = join(HERE, '../..')
+  const asking = readdirSync(app, { recursive: true, encoding: 'utf8' })
+    .map((path) => path.split('\\').join('/'))
+    .filter((path) => /\.(ts|svelte)$/.test(path) && !path.endsWith('.test.ts'))
+    .filter((path) => readFileSync(join(app, path), 'utf8').includes('desynchronized'))
+  expect(asking).toEqual([])
 })
 const plane = {
   nodes: [

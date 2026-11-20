@@ -2,7 +2,6 @@
   import { untrack } from 'svelte'
   import type { Camera } from '../../camera/src/api'
   import type { InkStroke } from '@orden/markdown/canvas'
-  import { type InkMode, inkLayer, wantedInkMode } from './backing'
   import { type Palette, paintLive, type View } from '../../plane/src/api'
   import { InkTiles } from './tiles'
   import { pixelRatio } from '../../ui-controls/src/api'
@@ -42,23 +41,20 @@
       k,
     }
   })
-  let mode = $state<InkMode>(wantedInkMode())
   const tiles = new InkTiles()
   const contexts = new WeakMap<HTMLCanvasElement, CanvasRenderingContext2D | null>()
-  function contextOf(element: HTMLCanvasElement, wanted: InkMode): CanvasRenderingContext2D | null {
+  function contextOf(element: HTMLCanvasElement): CanvasRenderingContext2D | null {
     const held = contexts.get(element)
     if (held !== undefined) return held
-    const layer = inkLayer(element, wanted)
-    const context = layer?.context ?? null
+    const context = element.getContext('2d')
     contexts.set(element, context)
-    if (wanted === 'latency' && layer?.mode !== 'latency') mode = 'plain'
     return context
   }
   function rasterise() {
     untrack(() => {
       const element = below
       if (!element || !width || !height) return
-      const context = contextOf(element, 'plain')
+      const context = contextOf(element)
       if (!context) return
       const view: View = { camera, width: wide, height: tall, ratio }
       const pending = tiles.paint(context, ink, view, palette, picked)
@@ -150,7 +146,7 @@
     const element = above
     const one = live
     if (!element || (!one && !inked)) return
-    const context = contextOf(element, mode)
+    const context = contextOf(element)
     if (!context) return
     paintLive(context, one, { camera, width, height, ratio }, palette)
     inked = one !== null
@@ -172,17 +168,15 @@
   aria-hidden="true"
 ></canvas>
 
-{#key mode}
-  <canvas
-    class="ink live"
-    bind:this={above}
-    width={Math.max(1, Math.round(width * ratio))}
-    height={Math.max(1, Math.round(height * ratio))}
-    style:width="{width}px"
-    style:height="{height}px"
-    aria-hidden="true"
-  ></canvas>
-{/key}
+<canvas
+  class="ink live"
+  bind:this={above}
+  width={Math.max(1, Math.round(width * ratio))}
+  height={Math.max(1, Math.round(height * ratio))}
+  style:width="{width}px"
+  style:height="{height}px"
+  aria-hidden="true"
+></canvas>
 
 <style>
   .ink {
