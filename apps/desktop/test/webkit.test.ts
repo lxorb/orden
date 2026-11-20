@@ -11,7 +11,6 @@ const SOURCES = [
   'packages/themes/src',
   'packages/bases/src',
   'packages/chats/src',
-  'packages/glasses/src',
 ]
 const files = SOURCES.flatMap((one) =>
   walk(join(ROOT, one), (path) => /\.(ts|svelte|css|js)$/.test(path) && !path.endsWith('.test.ts'), ['node_modules']),

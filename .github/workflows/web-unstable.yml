@@ -8,7 +8,6 @@ on:
       - '**/*.test.ts'
       - 'apps/desktop/test/**'
       - 'packages/editor/test/**'
-      - 'packages/glasses/test/**'
       - 'services/*/test/**'
   workflow_dispatch:
 
