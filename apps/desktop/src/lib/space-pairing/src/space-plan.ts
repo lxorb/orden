@@ -54,7 +54,18 @@ export function planSpaces(input: {
       ? untouched
       : null
   if (discarding !== null) plan.discard.push(discarding)
-  const removing = new Set(mirrors.filter((one) => roots.has(one.root) && gone.has(one.spaceId)).map((one) => one.root))
+  const homeless = local
+    .filter(
+      (space) =>
+        !mirrorByRoot.has(space.root) &&
+        space.root !== discarding &&
+        homes.some((one) => samePath(one.root, space.root) && gone.has(one.spaceId)),
+    )
+    .map((space) => space.root)
+  const removing = new Set([
+    ...mirrors.filter((one) => roots.has(one.root) && gone.has(one.spaceId)).map((one) => one.root),
+    ...homeless,
+  ])
   const spoken = new Set(
     mirrors.filter((one) => roots.has(one.root) && !removing.has(one.root)).map((one) => one.spaceId),
   )
@@ -98,6 +109,7 @@ export function planSpaces(input: {
     plan.adopt.push(space)
     spoken.add(space.id)
   }
+  plan.remove.push(...homeless)
   for (const mirror of mirrors) {
     if (!roots.has(mirror.root)) {
       plan.drop.push(mirror.root)

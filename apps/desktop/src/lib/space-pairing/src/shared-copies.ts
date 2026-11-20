@@ -106,8 +106,9 @@ async function mendCopy(
     if (await twinned(file, mine, shared, away, inside, twin)) twins.push(file)
   }
   if (twins.length === files.length) {
-    pairing.unpair(copy.root)
     await workspace.deleteSpace(space.id, true)
+    if (workspace.spaces.some((one) => samePath(one.root, copy.root))) return false
+    pairing.unpair(copy.root)
     await endSpace(token, who, copy.spaceId, 'delete')
     return true
   }

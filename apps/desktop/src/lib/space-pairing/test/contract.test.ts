@@ -12,6 +12,10 @@ const world = vi.hoisted(() => ({
   made: [] as string[],
   remembered: 0,
   order: [] as string[],
+  deleted: [] as string[],
+  homes: new Map<string, string>(),
+  stuck: false,
+  binned: [] as string[],
 }))
 vi.mock('../../accounts/src/api', () => ({
   account: {
@@ -19,7 +23,9 @@ vi.mock('../../accounts/src/api', () => ({
     get spaces() {
       return world.remote
     },
-    deletedSpaces: [],
+    get deletedSpaces() {
+      return world.deleted
+    },
     loadSpaces: () => Promise.resolve(),
   },
   api: {
@@ -32,8 +38,8 @@ vi.mock('../../accounts/src/api', () => ({
   },
 }))
 vi.mock('../../left-spaces/src/api', () => ({
-  forgetHome: () => undefined,
-  homeOf: () => null,
+  forgetHome: (root: string) => void world.homes.delete(root),
+  homeOf: (root: string) => world.homes.get(root) ?? null,
   keepHomes: () => undefined,
   leaveSpaces: () => undefined,
   leftByAnother: () => false,
@@ -71,7 +77,12 @@ vi.mock('../../workspace/src/api', () => ({
     },
     spacesKnown: () => Promise.resolve(),
     loadSpaces: () => Promise.resolve(),
-    deleteSpace: () => Promise.resolve(),
+    deleteSpace: (id: string, keep: boolean) => {
+      if (world.stuck || !keep) return Promise.resolve()
+      world.binned.push(id)
+      world.local = world.local.filter((one) => one.id !== id)
+      return Promise.resolve()
+    },
     adoptSpace: (name: string) => {
       world.local.push({ id: name, name, root: `/${name}` })
       return Promise.resolve(`/${name}`)
@@ -103,6 +114,10 @@ beforeEach(() => {
   world.made = []
   world.remembered = 0
   world.order = []
+  world.deleted = []
+  world.homes = new Map()
+  world.stuck = false
+  world.binned = []
 })
 describe('pairing the spaces on this device with the account s', () => {
   test('brings a space of the account onto the device and pairs it', async () => {
@@ -151,5 +166,77 @@ describe('two engines pairing at once', () => {
     await Promise.all([pairSpaces('t', one.pairing), pairSpaces('t', other.pairing)])
     expect(world.local.map((space) => space.root)).toEqual(['/Work'])
     expect(other.pairs.get('/Work')).toEqual({ spaceId: 'r1', shared: false })
+  })
+})
+describe('a space the account deleted while this device was open', () => {
+  const plans = () => [{ id: 'p', name: 'Plans', root: '/Plans' }]
+  test('leaves this device for its Recently deleted and is never made again', async () => {
+    world.local = plans()
+    world.deleted = ['r1']
+    const { pairing, pairs } = engine()
+    pairing.pair('/Plans', 'r1', false)
+    await pairSpaces('t', pairing)
+    expect(world.binned).toEqual(['p'])
+    expect([...pairs]).toEqual([])
+    expect(world.made).toEqual([])
+  })
+  test('keeps its pairing while it cannot be removed here, and is removed on a later pass, never made again', async () => {
+    world.local = plans()
+    world.deleted = ['r1']
+    world.homes.set('/Plans', 'r1')
+    world.stuck = true
+    const { pairing, pairs } = engine()
+    pairing.pair('/Plans', 'r1', false)
+    await pairSpaces('t', pairing)
+    await pairSpaces('t', pairing)
+    expect([...pairs]).toEqual([['/Plans', { spaceId: 'r1', shared: false }]])
+    expect(world.homes.get('/Plans')).toBe('r1')
+    expect(world.made).toEqual([])
+    world.stuck = false
+    await pairSpaces('t', pairing)
+    expect(world.binned).toEqual(['p'])
+    expect([...pairs]).toEqual([])
+    expect(world.made).toEqual([])
+  })
+  test('is removed, not made again, when only the folder it lived in is remembered', async () => {
+    world.local = plans()
+    world.deleted = ['r1']
+    world.homes.set('/Plans', 'r1')
+    world.stuck = true
+    const { pairing, pairs } = engine()
+    await pairSpaces('t', pairing)
+    expect(world.made).toEqual([])
+    expect([...pairs]).toEqual([])
+    world.stuck = false
+    await pairSpaces('t', pairing)
+    expect(world.binned).toEqual(['p'])
+    expect(world.homes.has('/Plans')).toBe(false)
+    expect(world.made).toEqual([])
+  })
+  test('shared with this account, leaves when the owner deletes it or this account leaves it elsewhere, and is never made again', async () => {
+    world.local = plans()
+    world.stuck = true
+    const { pairing, pairs } = engine()
+    pairing.pair('/Plans', 'r1', true)
+    await pairSpaces('t', pairing)
+    expect([...pairs]).toEqual([['/Plans', { spaceId: 'r1', shared: true }]])
+    expect(world.made).toEqual([])
+    world.stuck = false
+    await pairSpaces('t', pairing)
+    expect(world.binned).toEqual(['p'])
+    expect([...pairs]).toEqual([])
+    expect(world.made).toEqual([])
+  })
+})
+describe('a space renamed on the account while this device was open', () => {
+  test('stays paired by its id under its old folder, and no new space is made', async () => {
+    world.local = [{ id: 'p', name: 'Plans', root: '/Plans' }]
+    world.remote = [{ id: 'r1', name: 'Ideas', role: 'owner' }]
+    const { pairing, pairs } = engine()
+    pairing.pair('/Plans', 'r1', false)
+    await pairSpaces('t', pairing)
+    expect(world.made).toEqual([])
+    expect(world.local.map((one) => one.root)).toEqual(['/Plans'])
+    expect([...pairs]).toEqual([['/Plans', { spaceId: 'r1', shared: false }]])
   })
 })
