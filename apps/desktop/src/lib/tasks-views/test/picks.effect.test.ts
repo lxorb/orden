@@ -90,6 +90,16 @@ describe.each(VIEWS)('picking todos in the %s', (_, View) => {
     key(document.body, { key: 'Escape' })
     expect(picked()).toEqual([])
   })
+  test('Escape lets go of the picked todo and of its focus, so no ring is left on its text', async () => {
+    const [a = ''] = await made('Pick a')
+    const { press, key, body, picked, row } = shown(View)
+    body(a)?.focus()
+    press(a, { ctrlKey: true })
+    expect(picked()).toEqual([a])
+    key(body(a), { key: 'Escape' })
+    expect(picked()).toEqual([])
+    expect(row(a)?.contains(document.activeElement)).toBe(false)
+  })
   test('a click on empty space clears the picked todos', async () => {
     const [a = ''] = await made('Pick a')
     const { press, picked, list } = shown(View)

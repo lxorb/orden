@@ -211,7 +211,21 @@ def no_ring(page: Page) -> None:
     keyed = page.evaluate("() => [document.activeElement.tagName, getComputedStyle(document.activeElement).outlineStyle]")
     if keyed[1] != "solid":
         wrong(f"a control reached with Tab shows no ring: {keyed}")
-    say("a pointer press leaves no focus ring and Tab still shows one")
+    row = "[data-todos-panel] [data-todo]"
+    page.keyboard.press("Escape")
+    page.locator(f"{row} .body", has_text="Read a book").first.click(modifiers=["Control"])
+    if page.locator(f"{row}.is-picked").count() != 1:
+        wrong("a Ctrl click on a todo did not pick it")
+    page.keyboard.press("Escape")
+    left = page.evaluate("() => [document.activeElement?.closest('[data-todo]') ? 'in a row' : 'out', ...[...document.querySelectorAll('[data-todos-panel] [data-todo]')].flatMap((one) => [getComputedStyle(one).outlineStyle, getComputedStyle(one.querySelector('.body')).outlineStyle]).filter((one) => one !== 'none')]")
+    if left != ["out"]:
+        wrong(f"Escape after picking a todo left a ring or its focus: {left}")
+    page.locator(f"{row} .body").first.focus()
+    page.keyboard.press("ArrowDown")
+    ring = page.evaluate("() => { const body = document.activeElement; return [body?.closest('[data-todo]') ? 'in a row' : 'out', getComputedStyle(body).outlineStyle, parseFloat(getComputedStyle(body).borderTopLeftRadius)] }")
+    if ring[0] != "in a row" or ring[1] != "solid" or not ring[2] > 0:
+        wrong(f"a todo reached with the keyboard is not ringed with round corners: {ring}")
+    say("a pointer press leaves no focus ring and Tab still shows one; Escape after a pick leaves none, the arrows ring the row round")
 def main() -> int:
     worker = Worker()
     with DRIVE.session(playwright=True) as play:

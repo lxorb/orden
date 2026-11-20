@@ -106,6 +106,11 @@ describe('tasks-views contract', () => {
       expect(/\.replace\(\/[^/]*\\\.(md|canvas|base|pages|term|chat|url|webloc)/.test(text), name).toBe(false)
     }
   })
+  test('a todo row keeps the app ring on its body, rounded like the card, never a square box on its text', () => {
+    const row = readFileSync(join(import.meta.dirname, '..', 'src', 'TodoRow.svelte'), 'utf8')
+    expect(row).toMatch(/\.body \{\s*border-radius: var\(--radius-sm\);/)
+    expect(row).not.toMatch(/focus-visible/)
+  })
   test('a priority takes its tone only from the model, no view keeps its own table of tones', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {
