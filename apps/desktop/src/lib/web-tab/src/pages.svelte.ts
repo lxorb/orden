@@ -878,6 +878,8 @@ class Pages {
         if (tab !== null && page) this.painted(tab, page)
       })
       ;(await still()).watchGround()
+      const { hearAsks } = await import('./asked.svelte')
+      await hearAsks(listen)
       const { pointerMoved } = await import('./pointed')
       await listen('orden://web-pointer', (event) => {
         pointerMoved(event.payload, (tab) => {

@@ -7,7 +7,7 @@
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
   import { localDate, invoke, dur, fly } from '../../platform/src/api'
   import { shownSite } from './idn'
-  import { ASKS, grants, type Ask } from './permissions.svelte'
+  import { ASK_NAMES, ASKS, grants } from './permissions.svelte'
 
   const {
     url,
@@ -47,18 +47,6 @@
     root: () => 'Root',
   }
   const role = (link: Link, index: number): Role => (index === 0 ? 'site' : link.root ? 'root' : 'intermediate')
-  const NAMES: Record<Ask, () => string> = {
-    camera: () => 'Camera',
-    microphone: () => 'Microphone',
-    location: () => 'Location',
-    notifications: () => 'Notifications',
-    clipboard: () => 'Clipboard',
-    sensors: () => 'Motion sensors',
-    downloads: () => 'Automatic downloads',
-    fonts: () => 'Fonts',
-    midi: () => 'MIDI devices',
-    windows: () => 'Window management',
-  }
   const https = $derived(url?.startsWith('https:') === true)
   let certificate = $state<Certificate | null>(null)
   let asked = $state(false)
@@ -168,7 +156,7 @@
     <ul class="grants">
       {#each decided as ask (ask)}
         <li>
-          <span>{NAMES[ask]()}</span>
+          <span>{ASK_NAMES[ask]}</span>
           <button
             class="orden-button is-quiet"
             onclick={() => grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow', privately)}

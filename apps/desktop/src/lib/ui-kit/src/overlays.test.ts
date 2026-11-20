@@ -258,6 +258,7 @@ describe('what hides a web page', () => {
     'lib/views/src/Popover.svelte',
     'lib/views/src/ToneDot.svelte',
     'lib/web-tab/src/AddressField.svelte',
+    'lib/web-tab/src/WebAsks.svelte',
     'lib/web-tab/src/WebDownloads.svelte',
     'lib/web-tab/src/WebExtensionPopup.svelte',
     'lib/web-tab/src/WebExtensions.svelte',
