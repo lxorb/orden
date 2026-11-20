@@ -46,12 +46,7 @@ export async function reconcile(): Promise<void> {
     }
     workspace.archivedSpaces.set(space.root, away)
   }
-  const open = workspace.activeSpace
-  if (open && workspace.archivedSpaces.has(open.root)) {
-    const next = workspace.shownSpaces[0]
-    if (next) await workspace.showSpace(next.id)
-    else workspace.archivedSpaces.set(open.root, false)
-  }
+  await workspace.leaveArchived()
 }
 async function tell(): Promise<void> {
   const token = account.accountToken
