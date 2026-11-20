@@ -21,6 +21,7 @@ on:
       - scripts/pinch-drive.py
       - .github/workflows/web-tab.yml
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: web-tab-${{ github.ref }}
