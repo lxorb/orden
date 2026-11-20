@@ -65,7 +65,7 @@ class KeyboardHome {
     if (!event.isTrusted) return
     this.moves += 1
     if (['Alt', 'Control', 'Shift', 'Meta', 'AltGraph'].includes(event.key)) return
-    document.documentElement.removeAttribute(POINTING)
+    if (event.key !== 'Escape') document.documentElement.removeAttribute(POINTING)
     if (overlays.depth > 0) return
     this.say()
   }

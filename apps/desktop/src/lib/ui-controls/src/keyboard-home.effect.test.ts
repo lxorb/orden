@@ -232,6 +232,14 @@ describe('a focus ring', () => {
     key('a')
     expect(pointing()).toBe(false)
   })
+  test('stays away when Escape puts something away after a press', () => {
+    const button = control('<button>Todo</button>')
+    button.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    key('Escape')
+    expect(pointing()).toBe(true)
+    key('ArrowDown')
+    expect(pointing()).toBe(false)
+  })
   test('comes back on a key even with a menu open', () => {
     const menu = control('<div role="menu"><button>Reload</button></div>')
     const off = overlays.show(
