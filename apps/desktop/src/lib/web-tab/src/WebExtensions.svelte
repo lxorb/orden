@@ -45,8 +45,8 @@
         <li class:off={!one.enabled}>
           <button
             class="orden-row name"
-            disabled={!one.enabled || (!one.popup && !one.options)}
-            title={one.name}
+            disabled={!one.enabled || one.pending || (!one.popup && !one.options)}
+            title={one.problem ? `${one.name}: ${one.problem}` : one.name}
             onclick={() => onpress(one)}
           >
             {#if one.picture}
@@ -67,6 +67,9 @@
             >
               <Glyph icon={one.pinned ? Pin : PinOff} />
             </button>
+          {/if}
+          {#if one.problem && !one.pending}
+            <p class="why">{one.problem}</p>
           {/if}
         </li>
       {/each}
@@ -133,8 +136,17 @@
   }
   li {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-1);
+  }
+  .why {
+    flex-basis: 100%;
+    margin: 0;
+    padding: 0 var(--space-2);
+    color: var(--muted);
+    font-size: var(--text-xs);
+    overflow-wrap: anywhere;
   }
   .name,
   .manage {
