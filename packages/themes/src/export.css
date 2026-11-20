@@ -79,7 +79,7 @@ body {
   #write .callout-title .callout-fold {
     display: none;
   }
-  #write h1 ~ h1 {
+  #write h1:not(:first-of-type) {
     break-before: page;
   }
   #write h1,

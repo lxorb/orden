@@ -1447,8 +1447,8 @@
   pointer-events: none;
   transition: opacity var(--dur-fast) var(--ease-out);
 }
-.orden-image-badge > span + span,
-.orden-image-size > span + span {
+.orden-image-badge > span:not(:first-child),
+.orden-image-size > span:not(:first-child) {
   margin-inline-start: var(--space-2);
 }
 .orden-image-frame[data-corner$='w'] .orden-image-badge {

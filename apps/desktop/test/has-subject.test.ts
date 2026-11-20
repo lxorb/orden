@@ -83,6 +83,33 @@ function loose(selector: string, held = false): boolean {
     })
   })
 }
+function named(compound: string): boolean {
+  if (/[.#[]/.test(bare(compound))) return true
+  return pseudos(compound).some(
+    (one) =>
+      (one.name === 'is' || one.name === 'where') &&
+      one.args !== null &&
+      split(one.args, (char) => char === ',').every((alternative) => named(compoundsOf(alternative).at(-1) ?? '')),
+  )
+}
+function siblingsUnnamed(selector: string): boolean {
+  return split(selector, (char) => char === ',').some((one) => {
+    const flat = one.replace(/\s*([>+~])\s*/g, '$1')
+    const steps: [string, string][] = []
+    let depth = 0
+    let part = ''
+    for (const char of flat) {
+      if (char === '(' || char === '[') depth++
+      if (char === ')' || char === ']') depth--
+      if (depth === 0 && PARTED.has(char)) {
+        steps.push([part, char])
+        part = ''
+      } else part += char
+    }
+    const unnamed = steps.some(([compound, joint]) => (joint === '+' || joint === '~') && !named(compound))
+    return unnamed || pseudos(flat).some((pseudo) => pseudo.args !== null && siblingsUnnamed(pseudo.args))
+  })
+}
 function selectorsOf(css: string): string[] {
   const said = css
     .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -120,6 +147,25 @@ describe('a :has() rule', () => {
       ...walk(THEMES, (path) => path.endsWith('.css')),
       ...walk(SOURCE, (path) => /\.(css|svelte)$/.test(path), ['node_modules']),
     ])
+    expect(found).toEqual([])
+  })
+})
+describe('a sibling combinator', () => {
+  test('is told apart when what stands before it names no class, id or attribute', () => {
+    expect(siblingsUnnamed('.badge > span + span')).toBe(true)
+    expect(siblingsUnnamed('#write h1 ~ h1')).toBe(true)
+    expect(siblingsUnnamed('.a :is(p + p)')).toBe(true)
+    expect(siblingsUnnamed('.badge > span:not(:first-child)')).toBe(false)
+    expect(siblingsUnnamed('.cm-line + .cm-line')).toBe(false)
+    expect(siblingsUnnamed('[data-x] ~ .y')).toBe(false)
+    expect(siblingsUnnamed(':is(.a, .b) + p')).toBe(false)
+  })
+  test('in the themes always names what stands before it, so a change anywhere never restyles the siblings after it', () => {
+    const found = walk(THEMES, (path) => path.endsWith('.css')).flatMap((path) =>
+      selectorsOf(readFileSync(path, 'utf8'))
+        .filter((one) => siblingsUnnamed(one))
+        .map((one) => `${relative(ROOT, path).replace(/\\/g, '/')}: ${one.replace(/\s+/g, ' ')}`),
+    )
     expect(found).toEqual([])
   })
 })
