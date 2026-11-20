@@ -23,6 +23,8 @@ pub(crate) use windows::put_out_of_sight;
 pub(crate) use windows::key_pressed;
 #[cfg(windows)]
 pub(crate) use windows::keep_dead_key;
+#[cfg(windows)]
+pub(crate) use windows::let_go_of_drops_in_time;
 
 #[cfg(target_os = "macos")]
 pub(crate) use macos::put_out_of_sight;

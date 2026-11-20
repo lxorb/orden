@@ -95,6 +95,10 @@ wrap_with_args! {
 
   impl LifeSpanHandler {
     fn on_after_created(&self, browser: Option<&mut Browser>) {
+      #[cfg(windows)]
+      if let Some(host) = browser.as_deref().and_then(|browser| browser.host()) {
+        crate::platform::let_go_of_drops_in_time(host.window_handle());
+      }
       if let (Some(browser), Some(opener)) = (browser.as_deref(), self.opener.as_ref()) {
         if let Some(family) = self.popup_family.upgrade() {
           let _ = self.sender.send(Message::PopupCreated(opener.clone(), browser.identifier(), family.clone()));
