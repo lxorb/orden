@@ -1,6 +1,6 @@
 import { log, invoke } from '../../platform/src/api'
-import { writeBy } from '../../file-writes/src/api'
-import { frozen, type Held, leftAlone, readSheet, SIDECAR, type Sheet, writeSheet } from './highlights'
+import { writeHighlights } from '../../file-writes/src/api'
+import { frozen, type Held, leftAlone, readSheet, type Sheet, writeSheet } from './highlights'
 
 export async function loadHighlights(path: string): Promise<Sheet> {
   const text = await invoke<string>('read_highlights', { path }).catch((error: unknown) => {
@@ -18,8 +18,7 @@ export function editHighlights(path: string, change: (sheet: Sheet) => Sheet): P
       const held = frozen(sheet)
       if (held) return held
       const next = change(sheet)
-      const content = writeSheet(next)
-      await writeBy(`${path}${SIDECAR}`, content, () => invoke('write_highlights', { path, content }))
+      await writeHighlights(path, writeSheet(next))
       return next
     })
   turns.set(path, turn)

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -34,13 +34,24 @@ const listening = () =>
     },
     wrote: (path, content) => void told.push(`wrote ${path} ${content}`),
   })
-test('the module stands on its own reads the index, the documents and the platform through their apis only', () => {
+test('the module stands on its own reads the index, the documents, the platform and the sidecar name through their apis only', () => {
   const text = readFileSync(join(import.meta.dirname, '../src/api.ts'), 'utf8')
   expect([...text.matchAll(/from '([^']*)'/g)].map((found) => found[1]).sort()).toEqual([
     '../../documents/src/api',
     '../../link-index/src/api',
     '../../platform/src/api',
+    '@orden/markdown/links',
   ])
+})
+test('only this module writes a file by save_asset, write_bytes or write_highlights, so every such file reaches sync', () => {
+  const lib = join(import.meta.dirname, '../..')
+  const writers = ['file-writes/src/', 'web-backend/src/', 'sync-client/src/', 'crate/src/native.ts']
+  const found = readdirSync(lib, { recursive: true, encoding: 'utf8' })
+    .map((path) => path.split('\\').join('/'))
+    .filter((path) => /\.(ts|svelte)$/.test(path) && !path.endsWith('.test.ts') && !path.includes('/test/'))
+    .filter((path) => !writers.some((one) => path.startsWith(one)))
+    .filter((path) => /['"`](save_asset|write_bytes|write_highlights)['"`]/.test(readFileSync(join(lib, path), 'utf8')))
+  expect(found).toEqual([])
 })
 describe('writing a file', () => {
   test('tells the index, the ear that listens and sync, a new file as made', async () => {

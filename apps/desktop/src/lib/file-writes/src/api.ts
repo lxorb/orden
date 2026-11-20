@@ -1,6 +1,7 @@
 import { links } from '../../link-index/src/api'
 import { onDisk, invoke, oneWriteAt, writeInTurn, writeTaking } from '../../platform/src/api'
 import { wroteHere } from '../../documents/src/api'
+import { PDF_SIDECAR } from '@orden/markdown/links'
 
 export interface Hearing {
   there(path: string): Promise<boolean>
@@ -59,6 +60,9 @@ export async function saveAsset(notePath: string, folder: string, name: string, 
   const relative = await invoke<string>('save_asset', { notePath, folder, name, bytes })
   await hearing?.made(besideNote(notePath, relative))
   return relative
+}
+export async function writeHighlights(path: string, content: string): Promise<void> {
+  await writeBy(`${path}${PDF_SIDECAR}`, content, () => invoke('write_highlights', { path, content }))
 }
 export async function copyPath(from: string, to: string): Promise<void> {
   await invoke('copy_path', { from, to })
