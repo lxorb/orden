@@ -24,6 +24,14 @@ describe('a tool row', () => {
     expect(objectOf({ query: 'kestrel' })).toBe('“kestrel”')
     expect(objectOf(null)).toBe('')
   })
+  test('names a file without Orden’s own ending, and keeps a real file’s ending (#2310)', () => {
+    const named = ['Plan.canvas', 'Deck.pages', 'Site.url', 'Mac.webloc', 'Shell.term', 'Talk.chat', 'Books.base']
+    const shown = named.map((one) => objectOf({ path: `Work/${one}` }))
+    expect(shown).toEqual(['Plan', 'Deck', 'Site', 'Mac', 'Shell', 'Talk', 'Books'])
+    expect(objectOf({ path: 'Work/Notes.markdown' })).toBe('Notes')
+    expect(objectOf({ file: 'Papers/Report.pdf' })).toBe('Report.pdf')
+    expect(objectOf({ to: 'Pictures/Heron.png' })).toBe('Heron.png')
+  })
 })
 describe('a helper’s row (#1062)', () => {
   test('names the helper’s thread it opens, from the API loop or a session’s answer', () => {

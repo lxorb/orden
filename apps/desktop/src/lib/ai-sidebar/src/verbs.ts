@@ -1,4 +1,4 @@
-import { nameOf } from '../../platform/src/api'
+import { nameOf, shownName } from '../../platform/src/api'
 import { verbOf as ownName } from './chat-parts'
 
 const VERBS: Record<string, string> = Object.fromEntries(
@@ -37,14 +37,11 @@ function host(url: string): string {
     return url
   }
 }
-function noteName(path: string): string {
-  return nameOf(path).replace(/\.(?:md|markdown|canvas|pdf)$/i, '')
-}
 export function objectOf(args: unknown): string {
   const said = record(args)
   for (const field of ['path', 'to', 'from', 'note', 'file']) {
     const value = said[field]
-    if (typeof value === 'string' && value) return noteName(value)
+    if (typeof value === 'string' && value) return shownName(nameOf(value))
   }
   if (typeof said.url === 'string' && said.url) return host(said.url)
   if (typeof said.query === 'string' && said.query) return `“${said.query.slice(0, 60)}”`

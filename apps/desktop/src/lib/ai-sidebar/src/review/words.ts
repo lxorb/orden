@@ -1,14 +1,14 @@
 import { workspace } from '../../../workspace/src/api'
-import { nameOf } from '../../../platform/src/api'
+import { nameOf, shownName } from '../../../platform/src/api'
 import type { Edit } from '../chat-parts'
 
 const SHOWN = 60
 export function titleOf(path: string): string {
   if (path.startsWith('unsaved:')) {
     const key = path.slice('unsaved:'.length)
-    return workspace.documents.find((one) => one.key === key)?.name ?? ''
+    return shownName(workspace.documents.find((one) => one.key === key)?.name ?? '')
   }
-  return nameOf(path).replace(/\.md$/i, '')
+  return shownName(nameOf(path))
 }
 function firstLine(words: string): string {
   const line = words
