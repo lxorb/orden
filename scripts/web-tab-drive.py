@@ -165,13 +165,13 @@ def steps(app: App, pid: int, url: str) -> list[str]:
         for back, want, arrows in ((True, here, (True, True)), (False, there, (True, False))):
             if way == WAYS[0]:
                 arrow = app.eval(
-                    f"const b = document.querySelector('.webbar button[aria-label={'Back' if back else 'Forward'}]').getBoundingClientRect();"
+                    f"const b = [...document.querySelectorAll('.webbar button[aria-label={'Back' if back else 'Forward'}]')].find((one) => one.checkVisibility()).getBoundingClientRect();"
                     " return { x: b.x + b.width / 2, y: b.y + b.height / 2 }"
                 )
                 if hand:
                     hand.click(screen(app, arrow["x"], arrow["y"]))
                 else:
-                    app.eval(f"document.querySelector('.webbar button[aria-label={'Back' if back else 'Forward'}]').click(); return true")
+                    app.eval(f"[...document.querySelectorAll('.webbar button[aria-label={'Back' if back else 'Forward'}]')].find((one) => one.checkVisibility()).click(); return true")
             elif way == WAYS[1]:
                 hand.click(middle)
                 time.sleep(0.5)
