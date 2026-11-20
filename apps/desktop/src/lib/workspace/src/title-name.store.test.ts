@@ -5,13 +5,21 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
   isNative: true,
-  invoke: (command: string, args?: Record<string, unknown>) => disk.current!.invoke(command, args),
+  invoke: async (command: string, args?: Record<string, unknown>) => {
+    if (command !== 'scan_links') return disk.current!.invoke(command, args)
+    const { scanNote } = await import('@orden/scan/note')
+    const notes = [...disk.current!.files].filter(([path]) => path.startsWith('/s/') && path.endsWith('.md'))
+    return { notes: notes.map(([path, text]) => scanNote(path.slice('/s/'.length), text)), files: [] }
+  },
 }))
 const { Disk, memoryStorage } = await import('../../../../test/disk')
 const d = new Disk()
 disk.current = d
 vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
+const { links } = await import('../../link-index/src/api')
+const { startup } = await import('../../launch/src/api')
+void startup.shown()
 const { busy } = await import('../../ui-kit/src/api')
 const said = vi.spyOn(busy, 'failed').mockImplementation(() => undefined)
 async function fresh(files: Record<string, string>) {
@@ -229,5 +237,28 @@ describe('a file renamed', () => {
     await workspace.fileMoved('/s/Plan.md', '/s/Road.md', 'file')
     await settled()
     expect(d.files.get('/s/Road.md')).toBe('# Plan\n')
+  })
+})
+describe('the link index after a rename of a note not open', () => {
+  test('holds it once, the heading taken along or not, undone and done again', async () => {
+    await fresh({ '/s/Plan.md': '# Plan\n', '/s/Else.md': '# Something\n', '/s/Links.md': '[[Plan]] [[Else]]\n' })
+    await links.build('/s')
+    const held = (...paths: string[]) => paths.map((path) => links.held().filter((one) => one.path === path).length)
+    await workspace.rename('/s/Plan.md', 'Road.md')
+    await settled()
+    expect(held('Road.md', 'Plan.md')).toEqual([1, 0])
+    await workspace.rename('/s/Else.md', 'Other.md')
+    await settled()
+    expect(held('Other.md', 'Else.md')).toEqual([1, 0])
+    await workspace.undoFileAction()
+    await settled()
+    expect(held('Else.md', 'Other.md')).toEqual([1, 0])
+    await workspace.undoFileAction()
+    await settled()
+    expect(held('Plan.md', 'Road.md')).toEqual([1, 0])
+    await workspace.redoFileAction()
+    await settled()
+    expect(held('Road.md', 'Plan.md')).toEqual([1, 0])
+    expect(d.files.get('/s/Road.md')).toBe('# Road\n')
   })
 })
