@@ -150,7 +150,7 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
       workspace.bookmarks.said(root, landed, merged)
     }
   }
-  if (accountId !== null && !__EVEN_PLUGIN__) {
+  if (accountId !== null) {
     const pairs = paired()
     void import('../../protect/src/api').then(
       (one) => one.pulled(token, accountId, pairs),
