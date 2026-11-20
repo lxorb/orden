@@ -1,9 +1,15 @@
-import { account, type AccountSettings, api } from '../../accounts/src/api'
-import { forget, keepJson, stored } from '../../platform/src/api'
+import { account, AccountOwed, type AccountSettings } from '../../accounts/src/api'
+import { stored } from '../../platform/src/api'
 import { type Space, workspace } from '../../workspace/src/api'
 
 const OWED_KEY = 'orden:archived-spaces-owed'
 let heard: readonly string[] | null = null
+const owed = new AccountOwed(OWED_KEY, (settings) => {
+  if (!Array.isArray(settings.archivedSpaces)) return
+  heard = settings.archivedSpaces.filter((id): id is string => typeof id === 'string')
+  void reconcile()
+})
+const owing = () => owed.standing || stored(OWED_KEY) === true
 function canArchive(space: Space): boolean {
   const shown = workspace.shownSpaces
   return shown.length > 1 && shown.some((one) => one.id === space.id)
@@ -31,10 +37,15 @@ export async function receive(remote: AccountSettings): Promise<void> {
 }
 export async function listed(): Promise<void> {
   if (stored(OWED_KEY) === true) await tell()
+  else if (owed.standing) await settle()
   else await reconcile()
 }
+async function settle(): Promise<void> {
+  const token = account.accountToken
+  if (token) await owed.settle(token)
+}
 export async function reconcile(): Promise<void> {
-  if (heard === null || stored(OWED_KEY) === true) return
+  if (heard === null || owing()) return
   const { sync } = await import('../../sync-store/src/api')
   const said = new Set(heard)
   for (const space of workspace.spaces) {
@@ -49,9 +60,6 @@ export async function reconcile(): Promise<void> {
   await workspace.leaveArchived()
 }
 async function tell(): Promise<void> {
-  const token = account.accountToken
-  if (!token) return
-  keepJson(OWED_KEY, true)
   const { sync } = await import('../../sync-store/src/api')
   const idOf = (space: Space) => sync.remoteIdFor(space.root)
   const known = new Set(workspace.spaces.map(idOf))
@@ -62,15 +70,8 @@ async function tell(): Promise<void> {
       .map(idOf)
       .filter((id): id is string => id !== null),
   ]
-  try {
-    await api.saveSettings(token, { archivedSpaces: ids })
-    heard = ids
-    keepJson(OWED_KEY, false)
-  } catch {
-    // Still owed; the next start or listing sends it.
-  }
+  owed.send({ archivedSpaces: ids })
 }
 account.forgetWithSession(() => {
   heard = null
-  forget(OWED_KEY)
 })
