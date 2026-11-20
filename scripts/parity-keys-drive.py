@@ -44,6 +44,7 @@ html,body{margin:0;background:#ff00ff;height:100%;overflow:hidden;font:14px sans
 <button id=where class=go style="left:24px;top:308px">where</button>
 <button id=notify class=go style="left:190px;top:308px">notify</button>
 <a id=save class=go href="/saved.txt" download style="left:24px;top:364px">save</a>
+<a id=away class=go href="/elsewhere" style="left:190px;top:364px">away</a>
 <script>
 const field = document.getElementById('field')
 const said = { who: location.search.slice(1) || 'main', log: [], answers: {}, asked: {} }
@@ -371,6 +372,16 @@ class Windows:
                 if pick is not None:
                     print(f"pressed {titles[buttons.index(pick)]!r} on a window the keys did not close", flush=True)
                     AS.AXUIElementPerformAction(pick, "AXPress")
+MENU_NOW = """(() => {
+  const menu = [...document.querySelectorAll('[role=menu]')].find((one) => one.offsetParent !== null || one.getClientRects().length)
+  if (!menu) return { items: [], active: null }
+  const items = [...menu.querySelectorAll('[role=menuitem]')]
+  const focused = document.activeElement && menu.contains(document.activeElement) ? document.activeElement.closest('[role=menuitem]') : null
+  const marked = items.find((one) => one.matches('[aria-selected=true], [data-active], [data-highlighted], .active, .is-active, :focus-visible'))
+  const held = menu.getAttribute('aria-activedescendant')
+  const active = focused || marked || (held ? document.getElementById(held) : null)
+  return { items: items.map((one) => one.textContent.trim()), active: active ? active.textContent.trim() : null }
+})()"""
 LAYERS = """(() => [...document.querySelectorAll('.orden-layer, .orden-screen, [role=dialog], [role=menu], [role=alertdialog], [role=listbox]')]
   .map((e) => [e, e.getBoundingClientRect()])
   .filter(([e, r]) => r.width > 4 && r.height > 4 && getComputedStyle(e).visibility !== 'hidden' && !e.closest('[inert]'))
@@ -931,6 +942,78 @@ return true
             time.sleep(2)
             return ["the page's dialog"] + [one for one in seen["ids"] if one in self.windows.now()]
         return [one for one in seen["ids"] if one in self.windows.now()]
+    def menu_now(self) -> dict[str, Any]:
+        said = self.js(MENU_NOW)
+        return said if isinstance(said, dict) else {"items": [], "active": None}
+    def menu_keys(self, opening: Callable[[], None], away: tuple[float, float]) -> dict[str, Any]:
+        found: dict[str, Any] = {}
+        opening()
+        time.sleep(1.2)
+        found["opened"] = bool(self.menu_now()["items"])
+        self.keys.click(*away)
+        time.sleep(1.0)
+        found["closed by a left click"] = found["opened"] and not self.menu_now()["items"]
+        self.keys.chord("Escape")
+        time.sleep(0.4)
+        opening()
+        time.sleep(1.2)
+        self.keys.chord("Escape")
+        time.sleep(0.8)
+        found["closed by Escape"] = found["opened"] and not self.menu_now()["items"]
+        opening()
+        time.sleep(1.2)
+        first = self.menu_now()
+        self.keys.chord("ArrowDown")
+        time.sleep(0.4)
+        self.keys.chord("ArrowDown")
+        time.sleep(0.4)
+        second = self.menu_now()
+        found["arrows move"] = bool(second["items"]) and second["active"] is not None and second["active"] != first["active"]
+        found["active"] = [first["active"], second["active"]]
+        for _ in range(2):
+            self.keys.chord("Escape")
+            time.sleep(0.4)
+        return found
+    def menu_regressions(self) -> None:
+        self.reset()
+        self.show(self.ids["two"])
+        self.focus_note("Keyline")
+        at = self.word_at("Lodestar")
+        note = self.menu_keys(lambda: self.keys.click(*at, right=True), self.word_at("Firstline") or at) if at else None
+        self.reset()
+        self.show(self.ids["web"])
+        web = None
+        if self.focus_page():
+            web = self.menu_keys(lambda: self.keys.click(*self.in_page(300, 104), right=True), self.in_page(320, 460))
+        for check in ("closed by a left click", "closed by Escape", "arrows move"):
+            web_ok = bool(web and web.get(check))
+            note_ok = bool(note and note.get(check))
+            self.row(7, f"the page's own right-click menu is {check}, as the note's", {key: web.get(key) for key in ("opened", check, "active")} if web else None, {key: note.get(key) for key in ("opened", check, "active")} if note else None, web_ok and note_ok if web is not None else None, "" if web is not None else "the page could not be given the keyboard by a click")
+        self.reset()
+        self.show(self.ids["web"])
+        if not self.focus_page():
+            self.row(7, "after a pick in the page's <select>, a right click on a link gives the link's menu", None, None, None, "the page could not be given the keyboard by a click")
+            return
+        self.keys.click(*self.in_page(99, 272))
+        time.sleep(1.2)
+        listed = self.js("return [...document.querySelectorAll('[role=listbox] [role=option]')].map((one) => one.textContent.trim())") or []
+        self.keys.chord("ArrowDown")
+        time.sleep(0.3)
+        self.keys.chord("Return")
+        time.sleep(1.0)
+        menus = []
+        for spot in ((320, 460), (265, 384), (320, 460), (265, 384)):
+            self.keys.click(*self.in_page(*spot), right=True)
+            time.sleep(1.2)
+            menus.append(self.menu_now()["items"])
+            self.js("document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.body.click(); return true")
+            time.sleep(0.6)
+            for _ in range(2):
+                self.keys.chord("Escape")
+                time.sleep(0.3)
+        links = [one for at, one in enumerate(menus) if at % 2 == 1]
+        linked = all(any("link" in item.lower() for item in one) for one in links) and all(menus)
+        self.row(7, "after a pick in the page's <select>, a right click on a link gives the link's menu", {"select listed": listed, "menus": menus}, "no note counterpart: a note has no <select>", linked)
     def window_size(self) -> tuple[float, float]:
         size = self.js("[innerWidth, innerHeight]")
         return (float(size[0]), float(size[1])) if isinstance(size, list) else (0.0, 0.0)
@@ -1376,6 +1459,7 @@ def main() -> int:
         drive.focus_moves()
         drive.dead_keys()
         drive.page_ui()
+        drive.menu_regressions()
         rows = drive.rows
         drive.screen.shot().save(args.out / "end.png")
     finally:
