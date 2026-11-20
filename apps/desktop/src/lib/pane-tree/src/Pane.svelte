@@ -634,15 +634,6 @@
   .pane.stripped > .card:has(> :global(.here)) {
     background: var(--empty-ground, var(--bg));
   }
-  .pane:global([data-underlay])::before {
-    background: var(--content-ground, var(--bg));
-  }
-  .pane.stripped:global([data-underlay])::before {
-    background: linear-gradient(transparent var(--titlebar-height), var(--content-ground, var(--bg)) 0);
-  }
-  .pane.stripped:global([data-underlay]) > .card {
-    background: none;
-  }
   .pane.lifted,
   .pane.lifted:has(> .card > :global(.here)),
   .pane.lifted > .card {
