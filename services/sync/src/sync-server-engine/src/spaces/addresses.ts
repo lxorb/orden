@@ -55,7 +55,6 @@ const RESERVED = new Set([
   'download',
   'downloads',
   'edge',
-  'even',
   'files',
   'forum',
   'git',

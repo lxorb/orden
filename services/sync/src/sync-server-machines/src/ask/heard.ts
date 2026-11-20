@@ -1,9 +1,8 @@
 import type { Env } from '../../../sync-server/src/api'
-import { OPENAI } from './models'
+const OPENAI = 'https://api.openai.com'
 
 const TRANSCRIBERS = ['gpt-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'] as const
 const WHISPERS = ['@cf/openai/whisper-large-v3-turbo', '@cf/openai/whisper'] as const
-const LONGEST_SECONDS = 12
 export const PIECE_SECONDS = 120
 const BYTES_A_SECOND = 32_000
 function secondsIn(audio: ArrayBuffer): number {
@@ -17,7 +16,7 @@ function secondsIn(audio: ArrayBuffer): number {
   if (!rate) return bytes.length / BYTES_A_SECOND
   return (bytes.length - 44) / rate
 }
-export function shortEnough(audio: ArrayBuffer, longest = LONGEST_SECONDS): boolean {
+export function shortEnough(audio: ArrayBuffer, longest: number): boolean {
   return secondsIn(audio) <= longest
 }
 function base64(audio: ArrayBuffer): string {

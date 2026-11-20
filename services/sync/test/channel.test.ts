@@ -23,11 +23,9 @@ function assets(files: Record<string, string>): { fetch(request: Request): Promi
 const BOTH = {
   '/index.html': 'stable index',
   '/handoff.html': 'stable handoff',
-  '/even.html': 'stable even',
   '/sw.js': 'stable sw',
   '/_unstable/index.html': 'unstable index',
   '/_unstable/handoff.html': 'unstable handoff',
-  '/_unstable/even.html': 'unstable even',
   '/_unstable/sw.js': 'unstable sw',
 }
 const ON_EDGE = { cookie: 'theme=dark; orden-channel=unstable' }
@@ -39,7 +37,6 @@ describe('without the cookie', () => {
     expect((await call(env, '/')).text).toBe('stable index')
     expect((await call(env, '/handoff')).text).toBe('stable handoff')
     expect((await call(env, '/sw.js')).text).toBe('stable sw')
-    expect((await call(env, '/even/')).text).toBe('stable even')
     expect((await call(env, '/s/some/where')).text).toBe('stable index')
   })
   test('a cookie with any other value is the release too', async () => {
@@ -54,7 +51,6 @@ describe('with the cookie', () => {
     expect((await call(env, '/', { headers: ON_EDGE })).text).toBe('unstable index')
     expect((await call(env, '/handoff', { headers: ON_EDGE })).text).toBe('unstable handoff')
     expect((await call(env, '/sw.js', { headers: ON_EDGE })).text).toBe('unstable sw')
-    expect((await call(env, '/even/', { headers: ON_EDGE })).text).toBe('unstable even')
     expect((await call(env, '/s/some/where', { headers: ON_EDGE })).text).toBe('unstable index')
   })
   test('and is still no other site’s to frame, and says it depends on the cookie', async () => {
@@ -78,7 +74,6 @@ describe('with the cookie', () => {
     env = testEnv({ ASSETS: assets(stable) })
     expect((await call(env, '/', { headers: ON_EDGE })).text).toBe('stable index')
     expect((await call(env, '/s/where', { headers: ON_EDGE })).text).toBe('stable index')
-    expect((await call(env, '/even/', { headers: ON_EDGE })).text).toBe('stable even')
   })
 })
 describe('the folder itself', () => {

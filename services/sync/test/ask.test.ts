@@ -30,11 +30,6 @@ function stored(): { openai_key: string | null; openai_key_tail: string | null }
 function userId(): string {
   return (env.db.prepare('select id from users').get() as { id: string }).id
 }
-function asked(): number {
-  const row = env.db.prepare('select count from limits where scope = ? and key = ?').get('ask', userId()) as
-    { count: number } | undefined
-  return row?.count ?? 0
-}
 describe('a key at rest', () => {
   test('goes round trip', async () => {
     const box = await sealed(SECRET, 'u1', KEY)
@@ -160,92 +155,6 @@ describe('reading the key', () => {
     expect((await state()).json.settings).toEqual({})
   })
 })
-function fakeModels(): () => number {
-  let asked = 0
-  vi.stubGlobal('fetch', (url: string) => {
-    asked++
-    expect(url).toBe('https://api.openai.com/v1/models')
-    return Promise.resolve(
-      Response.json({
-        data: [
-          { id: 'gpt-6-astra' },
-          { id: 'gpt-6-astra-2026-09-01' },
-          { id: 'gpt-5.6-sol' },
-          { id: 'gpt-5.6-sol-preview' },
-          { id: 'text-embedding-4' },
-          { id: 'whisper-1' },
-        ],
-      }),
-    )
-  })
-  return () => asked
-}
-describe('the models on offer', () => {
-  test('are the families worth offering, in family order', async () => {
-    fakeModels()
-    await put(KEY)
-    const { json } = await call(env, '/v1/ask/models', { token })
-    expect(json.models).toEqual(['gpt-6-astra', 'gpt-5.6-sol'])
-  })
-  test('are asked for once a day rather than once a pane', async () => {
-    const asked = fakeModels()
-    await put(KEY)
-    await call(env, '/v1/ask/models', { token })
-    await call(env, '/v1/ask/models', { token })
-    await call(env, '/v1/ask/models', { token })
-    expect(asked()).toBe(1)
-  })
-  test('and are asked again once the day is up', async () => {
-    const asked = fakeModels()
-    await put(KEY)
-    await call(env, '/v1/ask/models', { token })
-    env.db.exec('update cached set until = 1')
-    await call(env, '/v1/ask/models', { token })
-    expect(asked()).toBe(2)
-  })
-  test('are forgotten when the key changes, because the list was the old key’s', async () => {
-    const asked = fakeModels()
-    await put(KEY)
-    await call(env, '/v1/ask/models', { token })
-    await put('sk-proj-another-key-entirely-1234')
-    await call(env, '/v1/ask/models', { token })
-    expect(asked()).toBe(2)
-  })
-  test('are empty with no key, and OpenAI is not asked at all', async () => {
-    const asked = fakeModels()
-    const { json } = await call(env, '/v1/ask/models', { token })
-    expect(json.models).toEqual([])
-    expect(asked()).toBe(0)
-  })
-})
-interface Sent {
-  model: string
-  input: { role?: string; type?: string; name?: string; output?: string; content?: unknown }[]
-  tools: { name: string }[]
-  reasoning: { effort: string }
-}
-function fakeAsking(rounds: unknown[]): Sent[] {
-  const sent: Sent[] = []
-  let round = 0
-  vi.stubGlobal('fetch', async (url: string, options: { body: string }) => {
-    expect(url).toBe('https://api.openai.com/v1/responses')
-    sent.push(JSON.parse(options.body) as Sent)
-    const answer = rounds[Math.min(round++, rounds.length - 1)]
-    return Promise.resolve(Response.json(answer))
-  })
-  return sent
-}
-function said(text: string) {
-  return { output: [{ type: 'message', content: [{ type: 'output_text', text }] }] }
-}
-function wants(name: string, args: Record<string, string>) {
-  return {
-    output: [{ type: 'function_call', call_id: 'c1', name, arguments: JSON.stringify(args) }],
-  }
-}
-function question(body: unknown, as = token) {
-  return call(env, '/v1/ask', { token: as, body })
-}
 async function noteIn(as: string, space: string, path: string, content: string): Promise<void> {
   await call(env, `/v1/spaces/${space}/notes`, { token: as, body: { path, content } })
 }
@@ -253,106 +162,6 @@ async function firstSpace(as: string): Promise<string> {
   const { json } = await call(env, '/v1/spaces', { token: as })
   return json.spaces[0]?.id ?? ''
 }
-describe('a question', () => {
-  beforeEach(async () => {
-    await put(KEY)
-  })
-  test('comes back as the answer, with the model the plugin named', async () => {
-    const sent = fakeAsking([said('You decided on the firmware font.')])
-    const { status, json } = await question({
-      question: 'what did i decide about the font',
-      model: 'gpt-6-astra',
-      effort: 'low',
-    })
-    expect(status).toBe(200)
-    expect(json.answer).toBe('You decided on the firmware font.')
-    expect(sent[0]?.model).toBe('gpt-6-astra')
-    expect(sent[0]?.reasoning.effort).toBe('low')
-  })
-  test('is asked with tools rather than with the notes', async () => {
-    const sent = fakeAsking([said('nothing to say')])
-    const space = await firstSpace(token)
-    await noteIn(token, space, 'fonts.md', 'The firmware font only, no bitmaps.\n')
-    await question({ question: 'fonts?', model: 'gpt-6-astra' })
-    expect(sent[0]?.tools.map((one) => one.name)).toEqual(['search_notes', 'read_note'])
-    expect(sent[0]?.input.map((one) => one.role)).toEqual(['developer', 'user'])
-    expect(JSON.stringify(sent[0]?.input)).not.toContain('bitmaps')
-  })
-  test('searches the account’s own notes when the model asks', async () => {
-    const sent = fakeAsking([wants('search_notes', { query: 'bitmaps' }), said('The firmware font.')])
-    const space = await firstSpace(token)
-    await noteIn(token, space, 'fonts.md', 'one\nThe firmware font only, no bitmaps.\n')
-    const { json } = await question({ question: 'fonts?', model: 'gpt-6-astra' })
-    expect(json.answer).toBe('The firmware font.')
-    const answered = sent[1]?.input.find((one) => one.type === 'function_call_output')
-    expect(answered?.output).toBe(
-      JSON.stringify([{ note: 'fonts', line: 2, text: 'The firmware font only, no bitmaps.' }]),
-    )
-  })
-  test('reads one whole note by the name a search gave', async () => {
-    const sent = fakeAsking([wants('read_note', { name: 'fonts' }), said('read it')])
-    const space = await firstSpace(token)
-    await noteIn(token, space, 'fonts.md', '# Fonts\n\nOne font.\n')
-    await question({ question: 'fonts?', model: 'gpt-6-astra' })
-    const answered = sent[1]?.input.find((one) => one.type === 'function_call_output')
-    expect(answered?.output).toBe('# Fonts\n\nOne font.\n')
-  })
-  test('never reaches a note belonging to somebody else', async () => {
-    const sent = fakeAsking([
-      wants('search_notes', { query: 'secret' }),
-      wants('read_note', { name: 'theirs' }),
-      said('nothing found'),
-    ])
-    const other = await signIn(env, 'z@z.dev')
-    await noteIn(other, await firstSpace(other), 'theirs.md', 'a secret of their own\n')
-    await question({ question: 'anything?', model: 'gpt-6-astra' })
-    const answers = (sent.at(-1)?.input ?? [])
-      .filter((one) => one.type === 'function_call_output')
-      .map((one) => one.output)
-    expect(answers).toEqual(['nothing found', 'no such note'])
-  })
-  test('does reach a space somebody shared with the account', async () => {
-    const sent = fakeAsking([wants('search_notes', { query: 'shared' }), said('found it')])
-    const other = await signIn(env, 'y@y.dev')
-    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space.id
-    await noteIn(other, theirs, 'plan.md', 'a shared line\n')
-    await call(env, `/v1/spaces/${theirs}/share/invite`, {
-      token: other,
-      body: { email: 'a@b.dev', role: 'read' },
-    })
-    await question({ question: 'anything?', model: 'gpt-6-astra' })
-    const answered = sent[1]?.input.find((one) => one.type === 'function_call_output')
-    expect(answered?.output).toContain('a shared line')
-  })
-  test('says what OpenAI refused with, because somebody is standing there', async () => {
-    fakeAsking([{ error: { message: 'that model is not available to this account' } }])
-    const { status, json } = await question({ question: 'anything?', model: 'gpt-6-astra' })
-    expect(status).toBe(502)
-    expect(json.error).toBe('that model is not available to this account')
-  })
-  test('needs a key, a question and a model', async () => {
-    fakeAsking([said('never asked')])
-    expect((await question({ model: 'gpt-6-astra' })).status).toBe(400)
-    expect((await question({ question: '  ', model: 'gpt-6-astra' })).status).toBe(400)
-    expect((await question({ question: 'hi' })).status).toBe(400)
-    expect((await question({ question: 'hi', model: 'm', effort: 'quite hard' })).status).toBe(400)
-    await call(env, '/v1/ask/key', { method: 'DELETE', token })
-    const none = await question({ question: 'hi', model: 'gpt-6-astra' })
-    expect(none.status).toBe(400)
-    expect(none.json.error).toContain('OpenAI key')
-  })
-  test('stops after sixty in an hour', async () => {
-    fakeAsking([said('yes')])
-    expect((await question({ question: 'again', model: 'gpt-6-astra' })).status).toBe(200)
-    expect(asked()).toBe(1)
-    env.db.prepare('update limits set count = ? where scope = ? and key = ?').run(59, 'ask', userId())
-    expect((await question({ question: 'again', model: 'gpt-6-astra' })).status).toBe(200)
-    expect(asked()).toBe(60)
-    const over = await question({ question: 'again', model: 'gpt-6-astra' })
-    expect(over.status).toBe(429)
-    expect(over.json.error).toContain('a lot of questions')
-  })
-})
 describe('what the microphone heard', () => {
   beforeEach(async () => {
     await put(KEY)
@@ -555,15 +364,15 @@ describe('what the microphone heard with no key', () => {
     expect(status).toBe(200)
     expect(json.said).toBeNull()
   })
-  test('refuses more audio than a spoken command, by its seconds', async () => {
+  test('refuses more audio than one piece holds, by its seconds', async () => {
     const { AI, asked } = workersAi({
       '@cf/openai/whisper-large-v3-turbo': { text: 'never asked' },
     })
     env.AI = AI
-    expect((await heard(wav(11.5))).status).toBe(200)
-    const long = await heard(wav(13))
+    expect((await heard(wav(110))).status).toBe(200)
+    const long = await heard(wav(121))
     expect(long.status).toBe(413)
-    expect(long.json.error).toContain('spoken command')
+    expect(long.json.error).toContain('too long')
     expect(asked).toHaveLength(1)
   })
   test('counts every utterance against the same ceiling, key or no key', async () => {
@@ -598,12 +407,9 @@ describe('a guest', () => {
     })
     return followed.json.token
   }
-  test('cannot ask, cannot set a key, cannot list models', async () => {
+  test('cannot set a key, nor take one away', async () => {
     const as = await guest()
-    fakeAsking([said('never asked')])
-    expect((await question({ question: 'hi', model: 'gpt-6-astra' }, as)).status).toBe(403)
     expect((await put(KEY, as)).status).toBe(403)
-    expect((await call(env, '/v1/ask/models', { token: as })).status).toBe(403)
     expect((await call(env, '/v1/ask/key', { method: 'DELETE', token: as })).status).toBe(403)
     expect((await state(as)).status).toBe(403)
   })
@@ -631,8 +437,8 @@ describe('a piece of a recording', () => {
     view.setUint32(40, bytes, true)
     return file
   }
-  function piece(body: BodyInit, of = '1') {
-    return call(env, `/v1/ask/heard?piece=${of}`, {
+  function piece(body: BodyInit) {
+    return call(env, '/v1/ask/heard?piece=1', {
       method: 'POST',
       token,
       raw: body,
@@ -650,12 +456,6 @@ describe('a piece of a recording', () => {
     const over = await piece(wav(130))
     expect(over.status).toBe(413)
     expect(over.json.error).toContain('too long')
-  })
-  test('and the glasses keep their own ceiling', async () => {
-    env.AI = { run: () => Promise.resolve({ text: 'never asked' }) }
-    const over = await piece(wav(30), '0')
-    expect(over.status).toBe(413)
-    expect(over.json.error).toContain('spoken command')
   })
   test('comes back with the language the model settled on', async () => {
     env.AI = {

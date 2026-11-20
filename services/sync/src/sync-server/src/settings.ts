@@ -2,7 +2,6 @@ import { Hono } from 'hono'
 import { NOT_AN_OBJECT } from './refused'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
-import { EFFORTS } from './ai-key'
 import { keyState } from './ai-key'
 import type { Env, Variables } from './types'
 import { KEEP_DAYS } from './versions'
@@ -15,46 +14,6 @@ type Check = (value: unknown) => string | null
 const ATTACHMENT_FOLDERS = ['space', 'note', 'named']
 const PRESETS = ['default', 'notion', 'obsidian', 'vscode', 'vim', 'custom']
 const LIGATURE_SCOPES = ['off', 'code', 'all']
-const GLASSES_BREAKS = [0, 1, 2, 3, 4, 5, 6]
-const GLASSES_EFFORTS: readonly string[] = EFFORTS
-const GLASSES_COMPACTIONS = ['none', 'collapse', 'aggressive']
-const GLASSES_SCROLLS = ['paged', 'native']
-const GLASSES_MARKS = ['heading', 'bold', 'italic', 'strike', 'highlight', 'code', 'fence', 'link']
-const MOST_WORDS = 40
-const LONGEST_WORD = 60
-function switchMap(name: string, allowed: readonly string[]): Check {
-  return (value) => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return `${name} must be an object`
-    }
-    for (const [key, on] of Object.entries(value as Record<string, unknown>)) {
-      if (!allowed.includes(key)) return `${name} has no ${key}`
-      if (typeof on !== 'boolean') return `${name}.${key} must be true or false`
-    }
-    return null
-  }
-}
-function phraseMap(value: unknown): string | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return 'glassesWords must be an object'
-  }
-  const entries = Object.entries(value as Record<string, unknown>)
-  if (entries.length > MOST_WORDS) return `glassesWords holds at most ${MOST_WORDS} phrases`
-  for (const [id, phrase] of entries) {
-    if (id.length > LONGEST_ID || !ID.test(id)) return `${id} is not a command`
-    if (typeof phrase !== 'string' || phrase.length > LONGEST_WORD) {
-      return `${id} must be a phrase of at most ${LONGEST_WORD} characters`
-    }
-  }
-  return null
-}
-const MOST_MODEL = 100
-function shortEnough(name: string, most: number): Check {
-  return (value) =>
-    typeof value === 'string' && value.length <= most
-      ? null
-      : `${name} must be a string of at most ${String(most)} characters`
-}
 function wordOf(name: string, allowed: readonly string[]): Check {
   return (value) =>
     typeof value === 'string' && allowed.includes(value) ? null : `${name} must be one of ${allowed.join(', ')}`
@@ -76,18 +35,7 @@ const KNOWN: Record<string, Check> = {
     typeof value === 'boolean' || (typeof value === 'string' && LIGATURE_SCOPES.includes(value))
       ? null
       : `ligatures must be true, false, or one of ${LIGATURE_SCOPES.join(', ')}`,
-  glassesBreak: oneOf('glassesBreak', GLASSES_BREAKS),
-  glassesLineNumbers: switched('glassesLineNumbers'),
-  glassesPageNumber: switched('glassesPageNumber'),
-  glassesVoice: switched('glassesVoice'),
-  glassesCompaction: wordOf('glassesCompaction', GLASSES_COMPACTIONS),
-  glassesScroll: wordOf('glassesScroll', GLASSES_SCROLLS),
-  glassesMarks: switchMap('glassesMarks', GLASSES_MARKS),
-  glassesWords: phraseMap,
-  glassesSeen: switched('glassesSeen'),
   mobileSeen: switched('mobileSeen'),
-  glassesModel: shortEnough('glassesModel', MOST_MODEL),
-  glassesEffort: wordOf('glassesEffort', GLASSES_EFFORTS),
   vim: (value) => (typeof value === 'boolean' ? null : 'vim must be true or false'),
   attachments: (value) =>
     typeof value === 'string' && ATTACHMENT_FOLDERS.includes(value)
@@ -126,7 +74,22 @@ const KNOWN: Record<string, Check> = {
   developer: switched('developer'),
   look: lookWrong,
 }
-const RETIRED: ReadonlySet<string> = new Set(['spellWords', 'pull', 'undatedInToday'])
+const RETIRED: ReadonlySet<string> = new Set([
+  'spellWords',
+  'pull',
+  'undatedInToday',
+  'glassesBreak',
+  'glassesLineNumbers',
+  'glassesPageNumber',
+  'glassesVoice',
+  'glassesCompaction',
+  'glassesScroll',
+  'glassesMarks',
+  'glassesWords',
+  'glassesSeen',
+  'glassesModel',
+  'glassesEffort',
+])
 const MOST_SHORTCUTS = 200
 const LONGEST_ID = 64
 const LONGEST_KEY = 40

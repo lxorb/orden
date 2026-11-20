@@ -11,7 +11,6 @@ import {
   isOwnOrigin,
   passHost,
   serveApp,
-  servePage,
   servePass,
   switchChannel,
   cleanPersonName,
@@ -102,7 +101,7 @@ import { chatDoor, chats, sweepChats, oauth, oauthMetadata, expireClients } from
 import { openLink, pass, sweepPassLinks, servePassLink } from './sync-server-pass/src/api'
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 app.onError(failed)
-const ACCOUNT_ONLY = /^\/(?:v1|v2|oauth|\.well-known|mcp|rooms|even)(?:\/|$)/
+const ACCOUNT_ONLY = /^\/(?:v1|v2|oauth|\.well-known|mcp|rooms)(?:\/|$)/
 app.use('*', async (context, next) => {
   if (
     ACCOUNT_ONLY.test(context.req.path) &&
@@ -265,12 +264,6 @@ app.get('/pass-link/:id', async (context, next) => {
   await next()
   return undefined
 })
-app.get('/even', (context) => servePlugin(context.env, context.req.raw))
-app.get('/even/', (context) => servePlugin(context.env, context.req.raw))
-function servePlugin(env: Env, request: Request): Promise<Response> | Response {
-  if (!env.ASSETS) return new Response('Not found', { status: 404 })
-  return servePage(env.ASSETS, request, '/even.html')
-}
 app.all('*', async (context) => {
   const url = new URL(context.req.url)
   if (hostnameOf(url.host) === passHost(context.env)) {
