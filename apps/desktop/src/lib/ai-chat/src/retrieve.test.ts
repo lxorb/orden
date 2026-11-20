@@ -238,6 +238,14 @@ describe('asking the space', () => {
     expect(found.map((one) => one.path)).toEqual(['Herons.md', 'Kestrels.md'])
     expect(found[1]?.name).toBe('Kestrels')
   })
+  test('names a passage of a file by the name it shows, and keeps its path for the model', async () => {
+    const { space } = spaceOf({ 'Wind.term': 'the wind log', 'Gusts.canvas': 'wind on a board' })
+    const found = await retrieve('wind', space, null)
+    expect(found.map((one) => [one.path, one.name]).sort()).toEqual([
+      ['Gusts.canvas', 'Gusts'],
+      ['Wind.term', 'Wind'],
+    ])
+  })
   test('hands the search what the space leaves out, which is how the archive stays out', async () => {
     const { space, asked } = spaceOf({ 'Old.md': 'a secret roost', 'New.md': 'a roost' }, { excluded: ['Old.md'] })
     const found = await retrieve('Where is the roost?', space, null)

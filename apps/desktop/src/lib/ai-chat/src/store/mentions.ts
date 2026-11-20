@@ -1,4 +1,5 @@
 import { fit } from '@orden/scan/search/fuzzy'
+import { shownName } from '../../../platform/src/api'
 
 export type MentionKind =
   'note' | 'folder' | 'tag' | 'tab' | 'selection' | 'scratchpad' | 'thread' | 'web' | 'picture' | 'words'
@@ -55,7 +56,7 @@ export function mentionAt(text: string, caret: number): { from: number; query: s
 export function mentionOf(entry: { path: string; name: string; is_dir: boolean }): Mention {
   return entry.is_dir
     ? { kind: 'folder', id: entry.path, label: `${entry.name}/` }
-    : { kind: 'note', id: entry.path, label: entry.name.replace(/\.(?:md|markdown)$/i, '') }
+    : { kind: 'note', id: entry.path, label: shownName(entry.name) }
 }
 export function sameMention(one: Mention, other: Mention): boolean {
   return one.kind === other.kind && one.id === other.id
