@@ -74,3 +74,30 @@ test('a terminal turned into its file explorer keeps its session, and one asked 
   const spec = (sessionOf(asked) as unknown as { spec(): { shell: string; folder: string | null } }).spec()
   expect(spec).toMatchObject({ shell: shells.chosen?.id ?? '', folder: '/notes/Lab' })
 })
+test('a screen shown again does not answer the questions in it to the shell, and keys typed after it reach the shell whole (#2274)', async () => {
+  const tab = workspace.openUnsaved('terminal', JSON.stringify({ shell: 'bash', folder: null, key: 'k3' }), 'Held')
+  const session = sessionOf(tab)
+  const place = document.createElement('div')
+  document.body.append(place)
+  await session.attach(place, false)
+  const written: string[] = []
+  const inside = session as unknown as {
+    pty: string | null
+    source: object
+    screen(said: { screen: string; cols: number; rows: number; restored: null }): void
+    term: { write(data: string, done: () => void): void; input(data: string): void }
+  }
+  inside.pty = 'p1'
+  inside.source = {
+    write: (data: string) => {
+      written.push(data)
+      return Promise.resolve()
+    },
+    resize: () => undefined,
+  }
+  inside.screen({ screen: 'PS C:\\> \x1b[6n\x1b[c', cols: 80, rows: 24, restored: null })
+  await new Promise((done) => inside.term.write('', () => done(null)))
+  inside.term.input('$env:TURNMARK\r')
+  await vi.waitFor(() => expect(written.join('')).toContain('TURNMARK'))
+  expect(written.join('')).toBe('$env:TURNMARK\r')
+})
