@@ -1023,6 +1023,10 @@ class Runner {
   private async fetchAway(engine: Engine, path: string): Promise<boolean> {
     if (this.current !== engine) return false
     const here = await engine.fetch(path)
+    if (here === 'gone') {
+      keptAway.letGoUnder(path)
+      return true
+    }
     await this.awayHeard(engine, false)
     this.trimSoon()
     return here
