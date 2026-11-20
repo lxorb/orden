@@ -161,10 +161,15 @@ class Shortcuts {
     this.choose({ id: 'default', keys: {} })
   }
   private settle() {
+    this.take(this.overrides, this.preset)
+    this.share()
+  }
+  private take(overrides: KeyOverrides, preset: PresetId) {
+    this.overrides = overrides
+    this.preset = preset
     this.unkept = !keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
-    this.share()
   }
   private readonly views = new Set<EditorView>()
   apply(view: EditorView) {
@@ -177,16 +182,14 @@ class Shortcuts {
   get forEditor(): KeyOverrides {
     return this.overrides
   }
-  private readonly owed = new AccountOwed(OWED_KEY)
+  private readonly owed = new AccountOwed(OWED_KEY, undefined, () => this.take({}, 'default'))
   receive(remote: AccountSettings) {
+    this.owed.follows()
     const theirs = remote.shortcuts
     if (this.owed.standing) {
       const owed = this.owed.mine?.patch
-      if (owed?.shortcuts) {
-        this.overrides = usable(owed.shortcuts)
-        this.preset = knownPreset(owed.preset) ?? this.preset
-        this.settle()
-      } else this.share()
+      if (owed?.shortcuts) this.take(usable(owed.shortcuts), knownPreset(owed.preset) ?? this.preset)
+      this.share()
       return
     }
     if (!theirs || typeof theirs !== 'object') {
@@ -198,11 +201,7 @@ class Shortcuts {
     if (JSON.stringify(usableOnes) === JSON.stringify(this.overrides) && named === this.preset) {
       return
     }
-    this.overrides = usableOnes
-    this.preset = named
-    this.unkept = !keepJson(STORAGE_KEY, this.overrides)
-    keep(PRESET_KEY, this.preset)
-    for (const view of this.views) setShortcutKeys(view, this.overrides)
+    this.take(usableOnes, named)
   }
   private share() {
     this.owed.send({ shortcuts: this.overrides, preset: this.preset })
