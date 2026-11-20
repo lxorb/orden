@@ -279,7 +279,8 @@ function daysIn(rule: Rule, year: number, month: number, fallback: number, clamp
   const days = new Set<number>()
   for (const day of rule.monthDays) {
     const actual = day < 0 ? length + day + 1 : day
-    if (actual >= 1 && actual <= length) days.add(actual)
+    if (actual > length) days.add(length)
+    else if (actual >= 1) days.add(actual)
   }
   for (const { day, nth } of rule.weekdays) {
     const first = weekday(isoOf(year, month, 1))

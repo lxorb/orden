@@ -1,8 +1,8 @@
 import type { TextEdit } from '@orden/markdown/edits'
 import { changedTask, type TaskChange, writeTask } from '@orden/markdown/task-edits'
 import { NO_PRIORITY, parseTask, readTask, type TaskFields } from '@orden/markdown/task-line'
-import { addDays, dayNumber, todayOf } from './dates'
-import { fewerTimes, nextDate, parseRule } from './recurrence'
+import { addDays, civil, dayNumber, todayOf } from './dates'
+import { fewerTimes, nextDate, parseRule, type Rule, ruleText } from './recurrence'
 
 export interface OccurrenceOptions {
   skipPast?: boolean
@@ -10,6 +10,14 @@ export interface OccurrenceOptions {
 }
 const referenceOf = (task: TaskFields): string | undefined => task.due ?? task.scheduled ?? task.start ?? task.deadline
 const later = (a: string, b: string) => (a > b ? a : b)
+function pinned(rule: Rule, reference: string): Rule | null {
+  if (rule.whenDone || (rule.unit !== 'month' && rule.unit !== 'year')) return null
+  if (rule.monthDays.length || rule.weekdays.length) return null
+  const parts = civil(reference)
+  if (!parts || parts.day <= 28) return null
+  if (rule.unit === 'month') return { ...rule, monthDays: [parts.day] }
+  return { ...rule, months: rule.months.length ? rule.months : [parts.month], monthDays: [parts.day] }
+}
 export function nextOccurrence(task: TaskFields, today: string, options: OccurrenceOptions = {}): TaskFields | null {
   if (!task.recurrence) return null
   const rule = parseRule(task.recurrence)
@@ -17,7 +25,12 @@ export function nextOccurrence(task: TaskFields, today: string, options: Occurre
   if (rule.count !== undefined && rule.count <= 1) return null
   const reference = referenceOf(task)
   const next: TaskFields = { ...task, status: ' ', done: false, cancelled: false }
-  if (rule.count !== undefined) next.recurrence = fewerTimes(task.recurrence, rule.count - 1)
+  const pin = reference ? pinned(rule, reference) : null
+  if (pin) {
+    next.recurrence = ruleText(rule.count === undefined ? pin : { ...pin, count: rule.count - 1 })
+  } else if (rule.count !== undefined) {
+    next.recurrence = fewerTimes(task.recurrence, rule.count - 1)
+  }
   delete next.completed
   delete next.cancelledOn
   if (options.created) next.created = today
@@ -28,7 +41,7 @@ export function nextOccurrence(task: TaskFields, today: string, options: Occurre
     return shiftedBy(next, dayNumber(date) - dayNumber(reference))
   }
   const after = options.skipPast === false ? reference : later(reference, today)
-  const date = nextDate(rule, reference, after)
+  const date = nextDate(pin ?? rule, reference, after)
   if (!date) return null
   return shiftedBy(next, dayNumber(date) - dayNumber(reference))
 }

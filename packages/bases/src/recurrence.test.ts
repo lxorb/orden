@@ -97,9 +97,10 @@ const DATES: [string, string, string, string | null][] = [
   ['every month', '2021-12-30', '2021-12-30', '2022-01-30'],
   ['every month', '2022-01-30', '2022-01-30', '2022-02-28'],
   ['every month', '2022-02-28', '2022-02-28', '2022-03-28'],
-  ['every month on the 31st', '2022-01-31', '2022-01-31', '2022-03-31'],
-  ['every month on the 31st', '2022-03-31', '2022-03-31', '2022-05-31'],
-  ['every month on the 31st', '2022-05-31', '2022-05-31', '2022-07-31'],
+  ['every month on the 31st', '2022-01-31', '2022-01-31', '2022-02-28'],
+  ['every month on the 31st', '2022-02-28', '2022-02-28', '2022-03-31'],
+  ['every month on the 31st', '2022-03-31', '2022-03-31', '2022-04-30'],
+  ['every February on the 29th', '2024-02-29', '2024-02-29', '2025-02-28'],
   ['every year', '2024-02-29', '2024-02-29', '2025-02-28'],
   ['every February on the last', '2023-02-28', '2023-02-28', '2024-02-29'],
   ['every 4 years', '2024-02-29', '2024-02-29', '2028-02-29'],
@@ -130,7 +131,7 @@ const DATES: [string, string, string, string | null][] = [
   ['every year', '1900-03-01', '2026-10-16', '2027-03-01'],
   ['every day until 2026-10-05', '2026-10-04', '2026-10-04', '2026-10-05'],
   ['every day until 2026-10-05', '2026-10-05', '2026-10-05', null],
-  ['every February on the 30th', '2026-01-01', '2026-01-01', null],
+  ['every February on the 30th', '2026-01-01', '2026-01-01', '2026-02-28'],
 ]
 describe('the next date', () => {
   test.each(DATES)('%s from %s after %s is %s', (text, start, after, next) => {
