@@ -56,7 +56,7 @@
   async function restart() {
     restarting = true
     try {
-      if (system && !__EVEN_PLUGIN__) command = await (await import('./system-update')).updateBySystem(version, channel)
+      if (system) command = await (await import('./system-update')).updateBySystem(version, channel)
       else await (moving ? (await import('./app-place')).moveToApplications() : restartToUpdate())
     } catch (error) {
       log('error', `update: ${String(error)}`)
