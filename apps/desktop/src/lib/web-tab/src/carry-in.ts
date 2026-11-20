@@ -43,7 +43,7 @@ function next(step: () => Promise<unknown>): void {
   line = line.then(step).catch(() => undefined)
 }
 export function carryToPages(paths: readonly string[], look: Looking = looking): void {
-  if (!isDesktop || __EVEN_PLUGIN__) return
+  if (!isDesktop) return
   told = false
   next(async () => {
     const carrying = await carryingOf(paths, look)

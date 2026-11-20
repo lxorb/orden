@@ -12,26 +12,24 @@ import { partView } from '../../ui-kit/src/api'
 import { pages } from './pages.svelte'
 
 providePort('web.scripts', { pages })
-if (!__EVEN_PLUGIN__) {
-  registerPaletteKind('visits', () => import('./palette-visits').then((one) => one.visits))
-  registerTabKind('web', () => import('./tab-kind').then((one) => one.webTabKind))
-  registerCommandRows('web', () => import('./command-rows').then((one) => one.webRows))
-  registerCommand('web.history', () => import('./history-open').then((one) => one.openHistory))
-  registerSettingFields({
-    section: 'general',
-    group: 'Browser',
-    load: () => import('./setting-fields.svelte').then((one) => one.browserFields),
-  })
-  registerSettingFields({
-    section: 'general',
-    group: 'Tabs',
-    load: () => import('./setting-fields.svelte').then((one) => one.tabFields),
-  })
-  registerSettingsPart({
-    section: 'general',
-    title: 'Extensions',
-    card: true,
-    shown: () => isDesktop,
-    load: async () => partView((await import('./ExtensionRows.svelte')).default, () => ({})),
-  })
-}
+registerPaletteKind('visits', () => import('./palette-visits').then((one) => one.visits))
+registerTabKind('web', () => import('./tab-kind').then((one) => one.webTabKind))
+registerCommandRows('web', () => import('./command-rows').then((one) => one.webRows))
+registerCommand('web.history', () => import('./history-open').then((one) => one.openHistory))
+registerSettingFields({
+  section: 'general',
+  group: 'Browser',
+  load: () => import('./setting-fields.svelte').then((one) => one.browserFields),
+})
+registerSettingFields({
+  section: 'general',
+  group: 'Tabs',
+  load: () => import('./setting-fields.svelte').then((one) => one.tabFields),
+})
+registerSettingsPart({
+  section: 'general',
+  title: 'Extensions',
+  card: true,
+  shown: () => isDesktop,
+  load: async () => partView((await import('./ExtensionRows.svelte')).default, () => ({})),
+})
