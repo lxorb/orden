@@ -22,6 +22,7 @@ export {
   type Slice,
   takesTime,
   type Stretch,
+  notSet,
   unset,
   type Write,
 } from './schedule'

@@ -10,6 +10,7 @@ import {
   setActivity,
   type Span,
   splitBlock,
+  notSet,
   takesTime,
   unset,
   type Write,
@@ -271,7 +272,7 @@ describe('a block split or merged, and the time of any range with and without th
       ['eat', 12 * H, null],
     ])
   })
-  test('the untracked time is the active time no block holds and the blocks without an activity', () => {
+  test('the untracked time is every gap the computer was used in, whole, and the blocks without an activity', () => {
     const minutes = Array.from({ length: 30 }, (_, index) => ({
       at: 15 * H + index * M,
       active: 30,
@@ -285,9 +286,45 @@ describe('a block split or merged, and the time of any range with and without th
     const on = rangeTotals(spans, minutes, 0, 24 * H, now, { untracked: true })
     expect(on.slices).toEqual([
       { activity: 'work', ms: 2 * H },
-      { activity: null, ms: H },
+      { activity: null, ms: 9 * H },
     ])
-    expect(on.ms).toBe(3 * H)
-    expect(on.untracked).toBe(H)
+    expect(on.ms).toBe(11 * H)
+    expect(on.untracked).toBe(9 * H)
+  })
+  test('a gap not set runs from the block before to the block after, idle time and all', () => {
+    const used = (from: number, to: number) =>
+      Array.from({ length: Math.round((to - from) / M) }, (_, index) => ({
+        at: from + index * M,
+        active: 30,
+        samples: 12,
+        lid: null,
+        locked: false,
+      }))
+    const spans = [
+      block('a', 9 * H, 10 * H, 'work'),
+      block('b', 12 * H, 13 * H, 'eat'),
+      block('c', 14 * H, 15 * H, 'work'),
+    ]
+    const minutes = [
+      ...used(8 * H, 8 * H + 20 * M),
+      ...used(10.5 * H, 10.5 * H + 20 * M),
+      ...used(16 * H, 16 * H + 20 * M),
+    ]
+    expect(notSet(spans, minutes, 0, 24 * H, 18 * H)).toEqual([
+      { from: 8 * H, to: 9 * H, active: 20 * 30_000 },
+      { from: 10 * H, to: 12 * H, active: 20 * 30_000 },
+      { from: 15 * H, to: 18 * H, active: 20 * 30_000 },
+    ])
+    expect(notSet(spans, minutes, 0, 24 * H, 30 * H).at(-1)).toEqual({
+      from: 15 * H,
+      to: 16 * H + 20 * M,
+      active: 20 * 30_000,
+    })
+    expect(notSet(spans, used(12.5 * H, 12.75 * H), 0, 24 * H, 18 * H)).toEqual([])
+    const filled = applied(spans, placeBlock(spans, 10 * H, 12 * H, 'read', 18 * H))
+    expect(notSet(filled, minutes, 0, 24 * H, 18 * H).map((one) => [one.from, one.to])).toEqual([
+      [8 * H, 9 * H],
+      [15 * H, 18 * H],
+    ])
   })
 })

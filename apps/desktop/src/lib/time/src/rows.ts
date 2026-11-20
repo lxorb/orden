@@ -2,7 +2,7 @@ import { isOwn } from './counted'
 import { daysAfter, MINUTE, piecesIn } from './days'
 import type { Minute } from './minutes'
 import type { Span } from './records'
-import { NOT_SET_LEAST, unset } from './schedule'
+import { notSet } from './schedule'
 
 export type Row =
   | { kind: 'block'; span: Span; from: number; to: number }
@@ -28,7 +28,7 @@ function dayRows(
       .filter((one) => one.to > one.from || one.span.end === null)
       .map((one): Row => ({ kind: 'block', span: one.span, from: one.from, to: one.to })),
     ...(untracked
-      ? unset(spans, minutes, day, next, now, NOT_SET_LEAST).map((one): Row => ({
+      ? notSet(spans, minutes, day, next, now).map((one): Row => ({
           kind: 'unset',
           from: one.from,
           to: Math.min(one.to, now),

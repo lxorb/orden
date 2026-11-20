@@ -132,7 +132,7 @@ describe('the time tracker as a tab', () => {
     expect(own()).toHaveLength(2)
     expect(undoToast.kind).toBe('deleted')
   })
-  test('active time nobody set is a Not set row one pick fills, and Untracked counts it or leaves it out', async () => {
+  test('a gap the computer was used in is a Not set row as long as the gap, one pick fills it, and Untracked counts it or leaves it out', async () => {
     const work = time.addActivity('Work')
     time.schedule([{ kind: 'add', span: block('a', at(9), at(10), work.id) }])
     time.keepMinutes(
@@ -151,7 +151,8 @@ describe('the time tracker as a tab', () => {
     })
     const bare = (text: string | undefined) => (text ?? '').replace(/\s+/g, '')
     const centre = () => bare(target.querySelector('[data-time-pie] figcaption')?.textContent)
-    expect(centre()).toBe(bare(`${length(1.5 * H)}${length(H)} tracked`))
+    expect(centre()).toBe(bare(`${length(6 * H)}${length(H)} tracked`))
+    expect(bare(target.querySelector('[data-time-unset] .long')?.textContent)).toBe(bare(length(5 * H)))
     expect(target.querySelector('[data-slice=""]')).not.toBeNull()
     pressed(target.querySelector('[data-time-untracked]'))
     expect(target.querySelector('[data-time-unset]')).toBeNull()
@@ -163,7 +164,7 @@ describe('the time tracker as a tab', () => {
     pressed(option('Work'))
     expect(own()).toEqual([
       ['Work', at(9), at(10)],
-      ['Work', at(12), at(12.5)],
+      ['Work', at(10), at(15)],
     ])
   })
   test('another range keeps the same page, and the pie follows it', () => {
