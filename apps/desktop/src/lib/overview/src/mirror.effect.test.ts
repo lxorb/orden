@@ -31,3 +31,14 @@ test('a canvas in a window is pictured no larger than the overview draws it', ()
   expect(said.html).toContain('height="3200"')
   pane.remove()
 })
+test('a pane is pictured as it shows, without the tabs it keeps hidden behind the one in front', () => {
+  const pane = document.createElement('div')
+  pane.innerHTML =
+    '<div class="card"><p>the words in front</p><div class="kept" hidden inert><pre>a terminal kept behind</pre></div></div>'
+  document.body.append(pane)
+  const said = snapshotFrom(pane, new DOMRect(0, 0, 800, 600))()
+  expect(said.html).toContain('the words in front')
+  expect(said.html).not.toContain('a terminal kept behind')
+  expect(said.html).not.toContain('kept')
+  pane.remove()
+})

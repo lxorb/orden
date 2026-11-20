@@ -11,16 +11,22 @@ export function shownBox(paneId: string): DOMRect | null {
   const top = head ? head.bottom : box.top
   return new DOMRect(box.left, top, box.width, box.bottom - top)
 }
+function shownCopy(one: Element, pairs: [Element, Element][]): Element {
+  const twin = one.cloneNode(false) as Element
+  pairs.push([one, twin])
+  for (const child of one.childNodes) {
+    if (!(child instanceof Element)) twin.append(child.cloneNode(true))
+    else if (!(child instanceof HTMLElement && child.hidden)) twin.append(shownCopy(child, pairs))
+  }
+  return twin
+}
 function copyOf(pane: HTMLElement, box: DOMRect) {
-  const copy = pane.cloneNode(true) as HTMLElement
-  const from = [...pane.querySelectorAll('*')]
-  const to = [...copy.querySelectorAll('*')]
+  const pairs: [Element, Element][] = []
+  const copy = shownCopy(pane, pairs) as HTMLElement
   const canvases: [HTMLCanvasElement, HTMLCanvasElement][] = []
   const frames: [HTMLVideoElement, Element][] = []
   const scrolls: [Element, number, number][] = []
-  from.forEach((one, index) => {
-    const twin = to[index]
-    if (!twin) return
+  pairs.slice(1).forEach(([one, twin]) => {
     if (one instanceof HTMLCanvasElement && twin instanceof HTMLCanvasElement) canvases.push([one, twin])
     if (one instanceof HTMLVideoElement) frames.push([one, twin])
     if (one.scrollTop || one.scrollLeft) scrolls.push([twin, one.scrollTop, one.scrollLeft])
