@@ -3,11 +3,17 @@ import { openTime } from './open'
 export { trackingMenu } from './menu'
 export { openTime }
 export { time } from './time.svelte'
+export { APP_ICONS } from './app-icons.svelte'
 export type { Activity, Span } from './records'
 export type { Step } from './store.svelte'
 export {
   dayTotals,
   type DayTotals,
+  mergeBlocks,
+  NOT_SET_LEAST,
+  rangeTotals,
+  type RangeTotals,
+  splitBlock,
   moveBlock,
   placeBlock,
   removeBlock,

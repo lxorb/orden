@@ -49,6 +49,24 @@ export function takesTime(spans: readonly Span[], writes: readonly Write[], now:
     return untilOf(one.span, now) - one.span.start < untilOf(was, now) - was.start
   })
 }
+export function splitBlock(spans: readonly Span[], id: string, at: number, now: number): Write[] {
+  const span = ownOf(spans, id)
+  if (!span || !(at > span.start && at < untilOf(span, now))) return []
+  return [
+    { kind: 'add', span: { ...span, id: crypto.randomUUID(), end: at } },
+    { kind: 'change', span: { ...span, start: at } },
+  ]
+}
+export function mergeBlocks(spans: readonly Span[], id: string, other: string, now: number): Write[] {
+  const span = ownOf(spans, id)
+  const next = ownOf(spans, other)
+  if (!span || !next || span.id === next.id) return []
+  const start = Math.min(span.start, next.start)
+  const running = span.end === null || next.end === null
+  const end = Math.max(untilOf(span, now), untilOf(next, now))
+  const kept = { ...span, start, end: running ? null : end }
+  return [...cleared(spans, start, end, now, id), { kind: 'change', span: kept }]
+}
 export function placeBlock(
   spans: readonly Span[],
   start: number,
@@ -123,9 +141,31 @@ export interface DayTotals {
   slices: Slice[]
   ms: number
 }
-export function dayTotals(spans: readonly Span[], day: number, now: number): DayTotals {
-  const next = daysAfter(day, 1)
-  const pieces = piecesIn(spans, day, next, now, isOwn).filter((one) => one.to > one.from)
+export const dayTotals = (spans: readonly Span[], day: number, now: number): DayTotals =>
+  scheduleTotals(spans, day, daysAfter(day, 1), now)
+export const NOT_SET_LEAST = 5 * MINUTE
+export interface RangeTotals extends DayTotals {
+  untracked: number
+}
+export function rangeTotals(
+  spans: readonly Span[],
+  minutes: readonly Minute[],
+  from: number,
+  to: number,
+  now: number,
+  { untracked }: { untracked: boolean },
+): RangeTotals {
+  const held = scheduleTotals(spans, from, to, now)
+  const named = held.slices.filter((one) => one.activity !== null)
+  const unnamed = held.slices.find((one) => one.activity === null)?.ms ?? 0
+  const loose = untracked
+    ? unnamed + unset(spans, minutes, from, to, now, NOT_SET_LEAST).reduce((sum, one) => sum + one.to - one.from, 0)
+    : 0
+  const slices = loose > 0 ? [...named, { activity: null, ms: loose }] : named
+  return { slices, ms: slices.reduce((sum, one) => sum + one.ms, 0), untracked: loose }
+}
+function scheduleTotals(spans: readonly Span[], start: number, end: number, now: number): DayTotals {
+  const pieces = piecesIn(spans, start, end, now, isOwn).filter((one) => one.to > one.from)
   const edges = [...new Set(pieces.flatMap((one) => [one.from, one.to]))].sort((one, other) => one - other)
   const by = new Map<string | null, number>()
   let ms = 0

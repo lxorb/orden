@@ -1,35 +1,15 @@
 <script lang="ts">
   import { localDate } from '../../platform/src/api'
-  import { HOUR } from './days'
-  import type { Picked } from './lanes'
-  import { clock, length, placeTint } from './look'
+  import ActivityMark from './ActivityMark.svelte'
+  import { isOwn } from './counted'
+  import { HOUR, piecesIn } from './days'
+  import { clock, length, nameOf, placeTint, tintOf } from './look'
   import type { Minute } from './minutes'
   import type { Lane } from './records'
-  import Schedule from './Schedule.svelte'
-  import { barsOf, levelsOf, slotsFor, snapFor } from './slots'
+  import { barsOf, levelsOf, slotsFor } from './slots'
   import { time } from './time.svelte'
 
-  const {
-    from,
-    to,
-    minutes,
-    now,
-    selected,
-    range,
-    onselect,
-    onrange,
-    onmanage,
-  }: {
-    from: number
-    to: number
-    minutes: readonly Minute[]
-    now: number
-    selected: string | null
-    range: Picked | null
-    onselect: (id: string | null) => void
-    onrange: (next: Picked | null) => void
-    onmanage: () => void
-  } = $props()
+  const { from, to, minutes, now }: { from: number; to: number; minutes: readonly Minute[]; now: number } = $props()
   const LANES: readonly [Lane, string][] = [
     ['app', 'Apps'],
     ['site', 'Websites'],
@@ -37,12 +17,12 @@
     ['tab', 'Tabs'],
   ]
   let width = $state(0)
-  const SNAP = $derived(snapFor(width, to - from))
   const whole = $derived(to - from)
   const slots = $derived(slotsFor(width))
   const at = (moment: number) => `${((moment - from) / whole) * 100}%`
   const wide = (ms: number) => `${(ms / whole) * 100}%`
   const pixels = (ms: number) => (ms / whole) * width
+  const blocks = $derived(piecesIn(time.spans, from, to, now, isOwn))
   const rows = $derived(
     LANES.map(([lane, label]) => ({ lane, label, bars: barsOf(time.spans, lane, from, to, slots, now) })),
   )
@@ -54,30 +34,6 @@
     for (let one = Math.ceil(from / step) * step; one <= to; one += step) out.push(one)
     return out
   })
-  let rowsBox = $state<HTMLElement | null>(null)
-  let pressed: { x: number; at: number } | null = null
-  let dragging = false
-  function timeAt(x: number): number {
-    const box = rowsBox?.getBoundingClientRect()
-    if (!box?.width) return from
-    return Math.round((from + Math.min(1, Math.max(0, (x - box.left) / box.width)) * whole) / SNAP) * SNAP
-  }
-  function down(event: PointerEvent) {
-    if (event.button !== 0) return
-    pressed = { x: event.clientX, at: timeAt(event.clientX) }
-    rowsBox?.setPointerCapture(event.pointerId)
-  }
-  function move(event: PointerEvent) {
-    if (!pressed || (!dragging && Math.abs(event.clientX - pressed.x) < 4)) return
-    dragging = true
-    const here = timeAt(event.clientX)
-    onrange({ from: Math.min(pressed.at, here), to: Math.max(pressed.at, here, Math.min(pressed.at, here) + SNAP) })
-  }
-  function up() {
-    if (!dragging && pressed) onrange(null)
-    pressed = null
-    dragging = false
-  }
 </script>
 
 <div class="frame">
@@ -97,19 +53,27 @@
             >{localDate(hour, { hour: 'numeric' })}</span
           >{/each}
       </div>
-      <Schedule {from} {to} {now} {minutes} {width} {selected} {onselect} {onmanage} />
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="rows"
-        bind:this={rowsBox}
-        onpointerdown={down}
-        onpointermove={move}
-        onpointerup={up}
-        onpointercancel={() => {
-          pressed = null
-          dragging = false
-        }}
-      >
+      <div class="schedule" data-time-schedule>
+        {#each blocks as piece (piece.span.id)}
+          <span
+            class="block"
+            style:left={at(piece.from)}
+            style:width={wide(piece.to - piece.from)}
+            style:--tint={tintOf(piece.span.activity)}
+            title="{nameOf(piece.span.activity, 'Not set')}, {clock(piece.from)}–{clock(piece.to)}, {length(
+              piece.to - piece.from,
+            )}"
+          >
+            {#if pixels(piece.to - piece.from) > 22}
+              <ActivityMark activity={piece.span.activity} size={12} />
+              {#if pixels(piece.to - piece.from) > 64}<span class="what" dir="auto"
+                  >{nameOf(piece.span.activity, 'Not set')}</span
+                >{/if}
+            {/if}
+          </span>
+        {/each}
+      </div>
+      <div class="rows">
         {#each rows as row (row.lane)}
           <span class="tag" aria-hidden="true">{row.label}</span>
           <div class="lane" data-lane={row.lane}>
@@ -138,13 +102,6 @@
             ></span>
           {/each}
         </div>
-        {#if range}
-          <span
-            class="range"
-            style:left={at(Math.max(from, range.from))}
-            style:width={wide(Math.min(to, range.to) - Math.max(from, range.from))}
-          ></span>
-        {/if}
       </div>
       {#each hours as hour (hour)}<span class="tick" style:left={at(hour)}></span>{/each}
       {#if nowShown}<span class="now" style:left={at(now)}></span>{/if}
@@ -234,8 +191,36 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    cursor: crosshair;
-    touch-action: pan-y;
+  }
+  .schedule {
+    position: relative;
+    height: var(--schedule);
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+  .block {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 2px;
+    padding-inline: 6px;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--tint) 26%, var(--surface));
+    box-shadow: inset 3px 0 0 var(--tint);
+    color: var(--text-strong);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-strong);
+  }
+  .what {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .lane {
     position: relative;
@@ -265,14 +250,6 @@
     bottom: 0;
     background: var(--accent);
     opacity: 0.75;
-  }
-  .range {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    border-inline: 1px solid var(--accent);
-    background: var(--accent-soft);
-    pointer-events: none;
   }
   .tick {
     position: absolute;

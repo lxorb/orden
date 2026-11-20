@@ -3,7 +3,7 @@ import { workspace } from '../../workspace/src/api'
 import { timeOn } from '../../gates/src/api'
 import { type Spec, writeSpec } from './spec'
 
-export function openTime(spec: Spec = { view: 'day' }): Tab | null {
+export function openTime(spec: Spec = { range: 'day', from: null, to: null, untracked: true }): Tab | null {
   if (!timeOn()) return null
   const open = workspace.singleHere('time')
   if (open) {

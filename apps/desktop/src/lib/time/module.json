@@ -19,6 +19,9 @@
     "glyphs",
     "icon-picker",
     "shortcuts",
-    "undo-toast"
+    "undo-toast",
+    "marks",
+    "tree",
+    "tasks-model"
   ]
 }

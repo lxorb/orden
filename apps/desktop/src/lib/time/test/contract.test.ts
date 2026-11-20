@@ -1,12 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import {
   dayTotals,
+  mergeBlocks,
   moveBlock,
   placeBlock,
   removeBlock,
   resizeBlock,
+  rangeTotals,
   setActivity,
   type Span,
+  splitBlock,
   takesTime,
   unset,
   type Write,
@@ -247,5 +250,44 @@ describe('an edit to the schedule that removes or cuts recorded time can be take
     expect(takesTime(store.spans, moveBlock(store.spans, 'a', 13 * H, 16 * H), 16 * H)).toBe(false)
     expect(takesTime(store.spans, placeBlock(store.spans, 14 * H, 15 * H, null, 16 * H), 16 * H)).toBe(false)
     expect(takesTime(store.spans, setActivity(store.spans, 'a', null), 16 * H)).toBe(false)
+  })
+})
+describe('a block split or merged, and the time of any range with and without the untracked time', () => {
+  const now = 20 * H
+  const day = [block('a', 9 * H, 11 * H, 'work'), block('b', 12 * H, 13 * H, 'eat'), block('c', 14 * H, null, 'work')]
+  test('a block splits where it is cut, the later half keeping its place; merged, it grows over the other and the gap', () => {
+    expect(laid(applied(day, splitBlock(day, 'a', 10 * H, now))).slice(0, 2)).toEqual([
+      ['work', 9 * H, 10 * H],
+      ['work', 10 * H, 11 * H],
+    ])
+    expect(applied(day, splitBlock(day, 'a', 10 * H, now)).find((one) => one.id === 'a')?.start).toBe(10 * H)
+    expect(splitBlock(day, 'a', 11 * H, now)).toEqual([])
+    expect(laid(applied(day, mergeBlocks(day, 'a', 'b', now)))).toEqual([
+      ['work', 9 * H, 13 * H],
+      ['work', 14 * H, null],
+    ])
+    expect(laid(applied(day, mergeBlocks(day, 'b', 'c', now)))).toEqual([
+      ['work', 9 * H, 11 * H],
+      ['eat', 12 * H, null],
+    ])
+  })
+  test('the untracked time is the active time no block holds and the blocks without an activity', () => {
+    const minutes = Array.from({ length: 30 }, (_, index) => ({
+      at: 15 * H + index * M,
+      active: 30,
+      samples: 12,
+      lid: null,
+      locked: false,
+    }))
+    const spans = [block('a', 9 * H, 11 * H, 'work'), block('n', 11 * H, 11.5 * H, null)]
+    const off = rangeTotals(spans, minutes, 0, 24 * H, now, { untracked: false })
+    expect(off).toEqual({ slices: [{ activity: 'work', ms: 2 * H }], ms: 2 * H, untracked: 0 })
+    const on = rangeTotals(spans, minutes, 0, 24 * H, now, { untracked: true })
+    expect(on.slices).toEqual([
+      { activity: 'work', ms: 2 * H },
+      { activity: null, ms: H },
+    ])
+    expect(on.ms).toBe(3 * H)
+    expect(on.untracked).toBe(H)
   })
 })

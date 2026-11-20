@@ -3,10 +3,6 @@ import { HOUR, MINUTE, piecesIn, type Total, totalsOf, wholeOf } from './days'
 import type { Minute } from './minutes'
 import { type Lane, LANES, type Span } from './records'
 
-export interface Picked {
-  from: number
-  to: number
-}
 export const activeIn = (minutes: readonly Minute[], from: number, to: number): number =>
   minutes.reduce((sum, one) => (one.at >= from && one.at < to ? sum + one.active * 1000 : sum), 0)
 export interface Within {

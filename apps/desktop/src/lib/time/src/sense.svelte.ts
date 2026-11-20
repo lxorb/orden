@@ -4,6 +4,7 @@ import { invoke, isDesktop } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { timeOn } from '../../gates/src/api'
 import { SAMPLE_EVERY } from './minutes'
+import { appIcons } from './app-icons.svelte'
 import { Sampler } from './sampler'
 import { type Sensed, sensedOf, withIdle } from './sensed'
 import { time } from './time.svelte'
@@ -57,6 +58,7 @@ const sampler = new Sampler({
   },
   near,
   seen: (sensed, at) => {
+    if (leading && sensed.app) appIcons.seen(sensed.app)
     const here = (sensed.idleMs ?? 0) < AWAY && sensed.locked !== true && sensed.lid !== false
     const front = here && (sensed.front ?? shown()) && document.hasFocus()
     tracker.seen({

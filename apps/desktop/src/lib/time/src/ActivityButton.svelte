@@ -24,6 +24,7 @@
   type="button"
   class="choose"
   class:strong
+  class:start={value === null}
   aria-haspopup="listbox"
   aria-expanded={open}
   data-time-pick
@@ -64,6 +65,14 @@
       border-color: var(--accent);
     }
   }
+  .start {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .start .none {
+    color: inherit;
+  }
   .strong {
     font-size: var(--text-base, 1rem);
   }
@@ -78,10 +87,10 @@
   }
   .chevron {
     flex: none;
-    width: 9px;
-    height: 9px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
     fill: none;
-    stroke: currentColor;
+    stroke: var(--muted);
     stroke-width: 1.4;
     stroke-linecap: round;
     stroke-linejoin: round;

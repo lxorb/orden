@@ -249,6 +249,8 @@ describe('what hides a web page', () => {
     'lib/quick-add/src/QuickAddSheet.svelte',
     'lib/tasks-views/src/ChipPick.svelte',
     'lib/time/src/ActivityLayer.svelte',
+    'lib/time/src/TimeTab.svelte',
+    'lib/time/src/Timeline.svelte',
     'lib/quitting/src/QuitSheet.svelte',
     'lib/terminal/src/remote/HostPicker.svelte',
     'lib/tab-strip/src/hover-card.svelte.ts',

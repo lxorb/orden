@@ -20,6 +20,7 @@
 <style>
   .mark {
     flex: none;
+    align-self: center;
     display: inline-grid;
     place-items: center;
     width: var(--size);
@@ -27,6 +28,7 @@
     color: var(--tint);
   }
   .icon {
+    display: grid;
     width: 100%;
     height: 100%;
     stroke: currentColor;
