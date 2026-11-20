@@ -42,6 +42,7 @@ const { shortcuts } = await import('../../src/lib/shortcuts/src/api')
 const { viewport } = await import('../../src/lib/ui-kit/src/viewport.svelte')
 const { STARTS_RIGHT } = (await import('../../src/lib/session/src/api')).panels
 const App = (await import('../../src/App.svelte')).default
+await import('../../src/lib/features')
 await import('../../src/lib/tab-fill/src/fill')
 await import('../../src/lib/tab-fill/src/FillBar.svelte')
 await warmWindow(
@@ -229,6 +230,7 @@ test('a phone does not fill: it shows one document already', async () => {
   shown = mount(App, { target })
   viewport.device = 'phone'
   await settle()
+  await vi.waitFor(() => expect(target.querySelector('[data-phone-tabs]')).not.toBeNull())
   await shiftF11()
   expect(workspace.panes.fills).toBeNull()
 })
