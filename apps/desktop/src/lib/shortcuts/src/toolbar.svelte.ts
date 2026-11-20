@@ -105,17 +105,22 @@ class Toolbar {
     this.settle()
   }
   private settle() {
-    if (this.chosen) keepJson(STORAGE_KEY, this.chosen)
-    else forget(STORAGE_KEY)
+    this.take(this.chosen)
     this.share()
   }
-  private readonly owed = new AccountOwed(OWED_KEY)
+  private take(chosen: string[] | null) {
+    this.chosen = chosen
+    if (chosen) keepJson(STORAGE_KEY, chosen)
+    else forget(STORAGE_KEY)
+  }
+  private readonly owed = new AccountOwed(OWED_KEY, undefined, () => this.take(null))
   receive(remote: AccountSettings) {
+    this.owed.follows()
     const theirs = remote.toolbar
     if (this.owed.standing) {
       const owed = this.owed.mine?.patch
-      if (owed && 'toolbar' in owed) this.chosen = usable(owed.toolbar)
-      this.settle()
+      if (owed && 'toolbar' in owed) this.take(usable(owed.toolbar))
+      this.share()
       return
     }
     if (theirs === undefined) {
@@ -124,9 +129,7 @@ class Toolbar {
     }
     const usableOnes = theirs === null ? null : usable(theirs)
     if (JSON.stringify(usableOnes) === JSON.stringify(this.chosen)) return
-    this.chosen = usableOnes
-    if (usableOnes) keepJson(STORAGE_KEY, usableOnes)
-    else forget(STORAGE_KEY)
+    this.take(usableOnes)
   }
   private share() {
     this.owed.send({ toolbar: this.chosen })

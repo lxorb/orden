@@ -258,3 +258,32 @@ describe('another account signing in on this device', () => {
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
   })
 })
+describe('another account signing in on this device, for the toolbar', () => {
+  test('gets its own toolbar or the default one, never the last account’s', async () => {
+    const { toolbar } = await relaunched()
+    toolbar.add('paragraph.task-list')
+    await settled()
+    signedOut()
+    world.saved = []
+    world.token = 'token'
+    world.user = { id: 'u2' }
+    toolbar.receive({})
+    await settled()
+    expect(toolbar.ids).not.toContain('paragraph.task-list')
+    expect(toolbar.changed).toBe(false)
+    expect(world.saved).toEqual([])
+    const again = await relaunched()
+    expect(again.toolbar.ids).not.toContain('paragraph.task-list')
+  })
+  test('leaves the toolbar as it was when the same account signs in again', async () => {
+    const { toolbar } = await relaunched()
+    toolbar.add('paragraph.task-list')
+    await settled()
+    signedOut()
+    world.token = 'token'
+    world.user = { id: 'u1' }
+    toolbar.receive({})
+    await settled()
+    expect(toolbar.ids).toContain('paragraph.task-list')
+  })
+})
