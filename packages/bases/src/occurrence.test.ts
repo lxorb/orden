@@ -30,14 +30,14 @@ describe("the Tasks plugin's documented recurring examples, with its own dates",
         '-   [x] Mow the lawn 🔁 every 2 weeks ⏳ 2021-10-28 📅 2021-10-30',
     )
   })
-  test('do stuff every month: the 31st comes back as the 30th', () => {
+  test('do stuff every month: the 31st keeps coming back as the month allows', () => {
     let note = '- [ ] do stuff 🔁 every month 📅 2021-10-31'
     const dues: string[] = []
-    for (const day of ['2021-10-31', '2021-11-30', '2021-12-30', '2022-01-30', '2022-02-28']) {
+    for (const day of ['2021-10-31', '2021-11-30', '2021-12-31', '2022-01-31', '2022-02-28']) {
       note = ticked(note, 0, day)
       dues.push(readTask(note.split('\n')[0] ?? '')?.due ?? '')
     }
-    expect(dues).toEqual(['2021-11-30', '2021-12-30', '2022-01-30', '2022-02-28', '2022-03-28'])
+    expect(dues).toEqual(['2021-11-30', '2021-12-31', '2022-01-31', '2022-02-28', '2022-03-31'])
   })
 })
 describe('ticking', () => {
@@ -57,7 +57,7 @@ describe('ticking', () => {
   })
   test('a task ticked early steps from its own date', () => {
     expect(ticked('- [ ] Rent 🔁 every month 📅 2026-10-31', 0, '2026-10-04')).toBe(
-      '- [ ] Rent 🔁 every month 📅 2026-11-30\n- [x] Rent 🔁 every month 📅 2026-10-31',
+      '- [ ] Rent 🔁 every month on the 31st 📅 2026-11-30\n- [x] Rent 🔁 every month 📅 2026-10-31',
     )
   })
   test('ticks the open sub-tasks with the parent, and leaves the done ones', () => {
@@ -254,5 +254,51 @@ describe('a repeating todo done', () => {
     expect(at('every day for 1 time', '2026-11-19', null, '2026-11-19')).toBeNull()
     expect(at('every day for 3 times', '2026-11-19', null, '2026-11-19')?.repeat).toBe('every day for 2 times')
     expect(at('now and then', '2026-11-19', null, '2026-11-19')).toBeNull()
+  })
+})
+describe('a monthly or yearly repeat keeps its day across short months', () => {
+  const done = (repeat: string, start: string, times: number) => {
+    let todo: { repeat: string; start: string | null; deadline: string | null } = { repeat, start, deadline: null }
+    const seen: (string | null)[] = []
+    for (let step = 0; step < times; step++) {
+      const next = nextRepeat(todo, todo.start ?? start)
+      if (!next) break
+      seen.push(next.start)
+      todo = next
+    }
+    return { seen, repeat: todo.repeat }
+  }
+  test('a todo every month from the 31st or the 30th', () => {
+    expect(done('every month', '2027-01-31', 3).seen).toEqual(['2027-02-28', '2027-03-31', '2027-04-30'])
+    expect(done('every month', '2027-01-30', 3).seen).toEqual(['2027-02-28', '2027-03-30', '2027-04-30'])
+    expect(done('every month on the 31st', '2027-01-31', 2).seen).toEqual(['2027-02-28', '2027-03-31'])
+  })
+  test('a todo every year from the 29th of February', () => {
+    expect(done('every year', '2028-02-29', 4).seen).toEqual(['2029-02-28', '2030-02-28', '2031-02-28', '2032-02-29'])
+  })
+  test('keeps its words when it needs no pinning', () => {
+    expect(done('every month when done', '2027-01-31', 1)).toEqual({
+      seen: ['2027-02-28'],
+      repeat: 'every month when done',
+    })
+    expect(done('every month', '2027-01-15', 1)).toEqual({ seen: ['2027-02-15'], repeat: 'every month' })
+    expect(done('every month for 3 times', '2027-01-31', 1)).toEqual({
+      seen: ['2027-02-28'],
+      repeat: 'every month on the 31st for 2 times',
+    })
+  })
+  test('a task in a note every month from the 31st', () => {
+    let note = '- [ ] Rent 🔁 every month 📅 2026-10-31'
+    const seen: string[] = []
+    for (let step = 0; step < 3; step++) {
+      const task = readTask(note.split('\n')[0] ?? '')
+      note = ticked(note, 0, task?.due ?? '')
+      seen.push(note.split('\n')[0] ?? '')
+    }
+    expect(seen).toEqual([
+      '- [ ] Rent 🔁 every month on the 31st 📅 2026-11-30',
+      '- [ ] Rent 🔁 every month on the 31st 📅 2026-12-31',
+      '- [ ] Rent 🔁 every month on the 31st 📅 2027-01-31',
+    ])
   })
 })
