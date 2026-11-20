@@ -3,7 +3,7 @@ import { api, ApiError, fromServer } from './client'
 import type { Account, Guest, RemoteSpace } from './routes'
 import { arriving } from './arriving.svelte'
 import { usage } from './usage.svelte'
-import { pollDelay, forget, keep, storedText, waited } from '../../platform/src/api'
+import { heardElsewhere, pollDelay, forget, keep, storedText, waited } from '../../platform/src/api'
 import { called } from './person'
 
 const STORAGE_KEY = 'orden:session'
@@ -75,7 +75,27 @@ class Session {
   askBeforeLeaving(ask: () => Promise<boolean>) {
     this.mayLeave = ask
   }
+  private following = false
+  private hearing: string | null = null
+  private followElsewhere() {
+    if (this.following) return
+    this.following = true
+    heardElsewhere([STORAGE_KEY], () => void this.heardSession())
+  }
+  private async heardSession() {
+    const stored = storedText(STORAGE_KEY)
+    if (!stored || stored === this.token || stored === this.hearing) return
+    this.hearing = stored
+    try {
+      const who = await api.me(stored).catch(() => null)
+      if (storedText(STORAGE_KEY) !== stored || this.token === stored) return
+      if (who?.user || who?.guest) await this.arrive(stored, who)
+    } finally {
+      if (this.hearing === stored) this.hearing = null
+    }
+  }
   async restore() {
+    this.followElsewhere()
     this.restoring = true
     try {
       await this.lookForSession()

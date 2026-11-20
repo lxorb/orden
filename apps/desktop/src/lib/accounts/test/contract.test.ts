@@ -130,3 +130,29 @@ describe('what a module keeps for an account', () => {
     vi.unstubAllGlobals()
   })
 })
+describe('the account across windows', () => {
+  test('a sign-in in another window signs this window in too, without a reload', async () => {
+    const kept = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => kept.get(key) ?? null,
+      setItem: (key: string, value: string) => void kept.set(key, value),
+      removeItem: (key: string) => void kept.delete(key),
+    })
+    vi.stubGlobal('window', new EventTarget())
+    vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
+      const token = (init.headers as Record<string, string> | undefined)?.authorization
+      const user = { id: 'uw', email: 'win@example.org', name: 'Win' }
+      return url.endsWith('/v1/me') && token === 'Bearer from-elsewhere'
+        ? Promise.resolve(new Response(JSON.stringify({ user })))
+        : Promise.reject(new Error('offline'))
+    })
+    await account.restore()
+    expect(account.signedIn).toBe(false)
+    kept.set('orden:session', 'from-elsewhere')
+    window.dispatchEvent(Object.assign(new Event('storage'), { key: 'orden:session' }))
+    await vi.waitFor(() => expect(account.user?.id).toBe('uw'))
+    expect(account.signedIn).toBe(true)
+    await account.signOut()
+    vi.unstubAllGlobals()
+  })
+})
