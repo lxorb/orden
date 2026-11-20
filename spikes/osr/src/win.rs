@@ -37,6 +37,7 @@ pub struct Config {
     pub warp: bool,
     pub software: bool,
     pub strip: bool,
+    pub sync: u32,
 }
 
 pub static CFG: OnceLock<Config> = OnceLock::new();
@@ -62,6 +63,7 @@ impl Config {
             warp: false,
             software: false,
             strip: true,
+            sync: 1,
         };
         let mut hole = None;
         for arg in std::env::args() {
@@ -97,6 +99,7 @@ impl Config {
                 "adapter" => cfg.warp = value == "warp",
                 "software" => cfg.software = true,
                 "no-strip" => cfg.strip = false,
+                "sync" => cfg.sync = value.parse().unwrap_or(1),
                 _ => {}
             }
         }
@@ -223,7 +226,7 @@ pub fn start() {
         let _ = ClientToScreen(hwnd, &mut origin);
     }
     log::line(format!(
-        r#"{{"ev":"start","t":{},"freq":{},"mode":"{}","client":[{},{},{},{}],"hole":[{},{},{},{}],"fps":{},"refresh":{},"software":{},"warp":{}}}"#,
+        r#"{{"ev":"start","t":{},"freq":{},"mode":"{}","client":[{},{},{},{}],"hole":[{},{},{},{}],"fps":{},"refresh":{},"software":{},"warp":{},"sync":{}}}"#,
         log::qpc(),
         log::freq(),
         if cfg.composed { "composed" } else { "native" },
@@ -238,7 +241,8 @@ pub fn start() {
         cfg.fps,
         refresh_rate(),
         cfg.software,
-        cfg.warp
+        cfg.warp,
+        cfg.sync
     ));
     unsafe {
         SetTimer(Some(hwnd), TIMER_FLUSH, 500, None);
@@ -299,7 +303,7 @@ unsafe fn make_window(cfg: &Config) -> HWND {
     };
     RegisterClassW(&wc);
     let style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CLIPCHILDREN;
-    let ex = if cfg.composed { WS_EX_NOREDIRECTIONBITMAP } else { WINDOW_EX_STYLE(0) };
+    let ex = if cfg.composed { WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOPMOST } else { WS_EX_TOPMOST };
     let mut rect = RECT { left: 0, top: 0, right: cfg.w, bottom: cfg.h };
     let _ = AdjustWindowRectEx(&mut rect, style, false, ex);
     let hwnd = CreateWindowExW(

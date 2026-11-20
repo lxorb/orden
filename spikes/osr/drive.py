@@ -97,6 +97,7 @@ u32.WindowFromPoint.argtypes = [W.POINT]
 u32.WindowFromPoint.restype = W.HWND
 u32.ScreenToClient.argtypes = [W.HWND, ctypes.POINTER(W.POINT)]
 u32.GetCursorPos.argtypes = [ctypes.POINTER(W.POINT)]
+u32.GetForegroundWindow.restype = W.HWND
 
 
 def send(flags: int, x: int = 0, y: int = 0, data: int = 0) -> int:
@@ -172,6 +173,32 @@ class Grab:
         g32.BitBlt(self.memory, 0, 0, self.wide, self.high, self.screen, self.x, self.y, 0x00CC0020)
         g32.GetDIBits(self.memory, self.bitmap, 0, self.high, self.pixels, ctypes.byref(self.header), 0)
         return self.pixels.raw
+
+
+def screenshot(path: pathlib.Path) -> None:
+    g = Grab(0, 0, WIDE, HIGH)
+    raw = g.take()
+    row = WIDE * 4
+    header = b"BM" + (54 + len(raw)).to_bytes(4, "little") + b"\0\0\0\0" + (54).to_bytes(4, "little")
+    info = (40).to_bytes(4, "little") + WIDE.to_bytes(4, "little") + (-HIGH & 0xFFFFFFFF).to_bytes(4, "little")
+    info += (1).to_bytes(2, "little") + (32).to_bytes(2, "little") + bytes(24)
+    path.write_bytes(header + info + raw[: row * HIGH])
+
+
+def class_at(x: int, y: int) -> dict:
+    hwnd = u32.WindowFromPoint(W.POINT(x, y))
+    name = ctypes.create_unicode_buffer(128)
+    u32.GetClassNameW(hwnd, name, 128)
+    owner = W.DWORD()
+    u32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+    fg = u32.GetForegroundWindow()
+    fname = ctypes.create_unicode_buffer(128)
+    u32.GetClassNameW(fg, fname, 128)
+    try:
+        exe = psutil.Process(owner.value).name()
+    except psutil.Error:
+        exe = "?"
+    return {"at_point": name.value, "owner": exe, "foreground": fname.value}
 
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
@@ -536,6 +563,10 @@ class Spike:
         grab = Grab(cx + 40, cy + 40)
         move(cx, cy)
         time.sleep(0.5)
+        tag = mode + "".join(a.replace("--spike-", "-") for a in flags if a.startswith("--spike-sync"))
+        screenshot(self.out / f"screen-{tag}.bmp")
+        where = class_at(cx, cy)
+        print("latency window at point", where, flush=True)
         times = []
         sent = []
         timeouts = 0
@@ -561,7 +592,7 @@ class Spike:
                     sent.append(t0)
             time.sleep(0.3 + random.random() * 0.2)
         self.close(proc)
-        result: dict = {"mode": mode, "trials": trials, "timeouts": timeouts, "refresh_hz": refresh, "first_pixels": first_pixels, "injection": "PostMessage" if POSTED else "SendInput"}
+        result: dict = {"mode": tag, "window_at_point": where, "trials": trials, "timeouts": timeouts, "refresh_hz": refresh, "first_pixels": first_pixels, "injection": "PostMessage" if POSTED else "SendInput"}
         if times:
             ordered = sorted(times)
             frame = 1000.0 / refresh
@@ -658,7 +689,11 @@ def main() -> None:
     for name in ("video", "scroll", "idle"):
         results["scenarios"].append(spike.scenario("native", name, flags))
         results["scenarios"].append(spike.scenario("composed", name, composed_extra))
-    results["latency"] = [spike.latency("native", flags), spike.latency("composed", composed_extra)]
+    results["latency"] = [
+        spike.latency("native", flags),
+        spike.latency("composed", composed_extra),
+        spike.latency("composed", [*composed_extra, "--spike-sync=0"]),
+    ]
     (out / "results.json").write_text(json.dumps(results, indent=2))
     print_table(results)
 

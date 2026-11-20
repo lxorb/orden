@@ -78,6 +78,7 @@ struct Comp {
     hole: (i32, i32, i32, i32),
     dirty_event: HANDLE,
     strip_due: bool,
+    sync: u32,
 }
 
 thread_local! {
@@ -293,6 +294,7 @@ unsafe fn make(hwnd: HWND, cfg: &Config) -> Result<Comp> {
         hole: cfg.hole,
         dirty_event,
         strip_due: cfg.strip,
+        sync: cfg.sync,
     })
 }
 
@@ -686,7 +688,7 @@ impl Comp {
             pScrollRect: std::ptr::null_mut(),
             pScrollOffset: std::ptr::null_mut(),
         };
-        let hr = self.swap.Present1(1, DXGI_PRESENT(0), &params);
+        let hr = self.swap.Present1(self.sync, DXGI_PRESENT(0), &params);
         ctx.PSSetShaderResources(0, Some(&[None, None]));
         ctx.VSSetShaderResources(0, Some(&[None, None]));
         self.first = false;
