@@ -2,7 +2,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use orden_extensions::extensions::library::{folder_of, loaded_folders, unpack, write, Kept};
+use orden_extensions::extensions::library::{
+    folder_of, loaded_folders, ran, running, stopped, unpack, write, Kept,
+};
 use orden_extensions::extensions::link::Store;
 use orden_extensions::extensions::{shown, Done, Gaps};
 use serde_json::{json, Value};
@@ -81,4 +83,21 @@ fn a_store_file_that_is_not_a_signed_crx3_is_refused_with_why() {
         assert!(refused.contains(why), "{refused}");
     }
     assert!(!root.path().join(PASS).exists());
+}
+#[test]
+fn what_chromium_was_handed_at_the_start_or_since_is_what_runs() {
+    let root = tempfile::tempdir().expect("a folder");
+    let root = root.path();
+    let on = kept(&"f".repeat(32), Store::Chrome, true);
+    let off = kept(&"g".repeat(32), Store::Firefox, false);
+    let (on_folder, off_folder) = (unpacked(root, &on), unpacked(root, &off));
+    write(root, &[on, off]).expect("written");
+    assert!(!running(&on_folder));
+    assert_eq!(loaded_folders(root), vec![on_folder.clone()]);
+    assert!(running(&on_folder));
+    assert!(!running(&off_folder));
+    ran(&off_folder);
+    assert!(running(&off_folder));
+    stopped(&on_folder);
+    assert!(!running(&on_folder));
 }
