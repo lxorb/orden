@@ -66,12 +66,12 @@ test('a note the disk refuses leaves its batch landed, and is written once it ca
     expect(outcome?.finished).toBe(true)
     await at.rooms.settle()
   }
-  expect(told).toEqual(['blocked.md'])
+  expect(told).toEqual(['blocked'])
   expect((await desk.engine.pass(at.space))?.pulled).toBe(0)
   const landed = placed(desk.engine.core).filter((one) => one.local_path)
   expect(landed.map((one) => one.name)).not.toContain('blocked.md')
   expect(landed).toHaveLength(30)
-  expect(desk.store.rows('log').some((row) => row.failed?.includes('blocked.md'))).toBe(true)
+  expect(desk.store.rows('log').some((row) => row.failed?.startsWith('blocked not written'))).toBe(true)
   refuses = false
   await desk.engine.pass(at.space)
   expect(desk.disk.files.get(`${desk.root}/blocked.md`)).toBe('pros and cons\n')

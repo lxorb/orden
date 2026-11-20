@@ -165,9 +165,7 @@ describe('a file changed here in a space this account can only read', () => {
     expect(trashed).toEqual([`${ROOT}/App.application`])
     expect(await text(disk, `${ROOT}/App.application`)).toBe('from the account')
     expect(downs).toEqual(['a'])
-    expect(said(committed)).toEqual([
-      'you can only read this space, so your change to App.application went to Recently deleted',
-    ])
+    expect(said(committed)).toEqual(['you can only read this space, so your change to App went to Recently deleted'])
   })
   test('and when the account refuses it before this device knew, it is said all the same', async () => {
     const { disk, space, core, sent, answers, committed, trashed } = changed('write')

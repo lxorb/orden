@@ -1,4 +1,5 @@
 import type { Core, Holding } from './core'
+import { shownName } from '../../platform/src/api'
 import { readFine, readOnlyLine, readRefused, saidUnsynced } from './project'
 import { againstBytes, outgoingBytes } from './records'
 import type { Outboxed, SpaceState } from './places'
@@ -277,7 +278,8 @@ async function taken(
   core.refusedBytes.set(entry.id, { at: core.world.now(), hash, full })
   if (full) room.full = true
   if (before?.hash !== hash || before.full !== full) {
-    const failed = full ? `no room on the account for ${entry.name}` : `the account would not take ${entry.name}`
+    const named = shownName(entry.name)
+    const failed = full ? `no room on the account for ${named}` : `the account would not take ${named}`
     const row = { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed }
     await core.commit([put('log', row)])
   }

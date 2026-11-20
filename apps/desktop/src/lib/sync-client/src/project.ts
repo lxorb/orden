@@ -1,3 +1,5 @@
+import { shownPath } from '@orden/markdown/shown'
+import { rowName, shownName } from '../../platform/src/api'
 import type { Core } from './core'
 import type { Doc } from './docs'
 import { unixLines } from './kinds'
@@ -13,7 +15,7 @@ const READS_TO_TELL = 3
 export function saidUnsynced(core: Core, entry: EntryRow): void {
   if (core.unsyncedTold.has(entry.id)) return
   core.unsyncedTold.add(entry.id)
-  core.events.unsynced?.({ id: entry.id, name: entry.name })
+  core.events.unsynced?.({ id: entry.id, name: rowName(entry.name, entry.kind === 'folder') })
 }
 export function readRefused(core: Core, entry: EntryRow): void {
   const times = (core.unreadFor.get(entry.id) ?? 0) + 1
@@ -30,7 +32,7 @@ export function notWritten(core: Core, space: SpaceState, entry: EntryRow, doc: 
   core.unwrittenFor.set(entry.id, times)
   if (times >= READS_TO_TELL) saidUnsynced(core, entry)
   if (times > 1) return []
-  const failed = `${entry.name} not written: ${error instanceof Error ? error.message : String(error)}`
+  const failed = `${shownName(entry.name)} not written: ${error instanceof Error ? error.message : String(error)}`
   return [put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed })]
 }
 export async function project(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
@@ -68,7 +70,7 @@ export async function project(core: Core, space: SpaceState, entry: EntryRow, do
   return await wrote(core, entry, text)
 }
 export function readOnlyLine(core: Core, space: SpaceState, path: string): Change {
-  const failed = `you can only read this space, so your change to ${path} went to Recently deleted`
+  const failed = `you can only read this space, so your change to ${shownPath(path)} went to Recently deleted`
   return put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed })
 }
 export async function setAside(
