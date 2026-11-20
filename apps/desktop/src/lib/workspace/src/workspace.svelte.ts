@@ -2880,8 +2880,9 @@ class Workspace {
       throw error
     }
     const rewrote = await this.retargetMoved(path, target)
-    const note = this.opened.at(path)
-    note?.flush()
+    this.opened.at(path)?.flush()
+    await this.fileMoved(path, target, kind)
+    const note = this.opened.at(target)
     const { replaced, retitle } = await retitling()
     const heading = undoable && kind === 'file' ? await retitle(note, path, target, words) : null
     if (note && heading) this.saving.owed(note)
@@ -2889,7 +2890,6 @@ class Workspace {
       this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
       if (heading) this.undone.record(replaced(target, heading.before, heading.after))
     }
-    await this.fileMoved(path, target, kind)
     await this.loadTree()
     this.persist()
   }
