@@ -969,3 +969,91 @@ describe('a step from wherever a slider left it', () => {
     modes.resetZoom()
   })
 })
+describe('another account in the same window (#2344)', () => {
+  async function accounts(server: Record<string, Record<string, unknown>>) {
+    const { account } = await import('../../accounts/src/account.svelte')
+    const line = { offline: false }
+    Object.assign(api, {
+      saveSettings: async (token: string, patch: Record<string, unknown>) => {
+        if (line.offline) throw new Error('offline')
+        server[token] = { ...server[token], ...patch }
+        return { settings: server[token] }
+      },
+      settings: async (token: string) => {
+        if (line.offline) throw new Error('offline')
+        return { settings: server[token] ?? {} }
+      },
+      signOut: async () => undefined,
+    })
+    const signedIn = async (who: string) => {
+      await account.signOut()
+      account.token = who
+      account.user = { id: who } as typeof account.user
+      return modes.adopt(who)
+    }
+    const done = () => {
+      account.token = null
+      account.user = null
+    }
+    return { line, signedIn, done }
+  }
+  test('shows its own settings or the defaults and none of the last account’s, and the same account again keeps its own', async () => {
+    const server: Record<string, Record<string, unknown>> = { alice: {}, bob: { silent: true } }
+    const { line, signedIn, done } = await accounts(server)
+    const saved = () => JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
+    modes.apply(surface())
+    await signedIn('alice')
+    modes.setVimKeys(true)
+    modes.setLigatures('code')
+    modes.setGlassesWord('next', 'onwards')
+    await modes.adopt('alice')
+    expect(server.alice).toMatchObject({ vim: true, ligatures: 'code', glassesWords: { next: 'onwards' } })
+    told.calls = []
+    await signedIn('bob')
+    expect(modes.vim).toBe(false)
+    expect(modes.ligatures).toBe('off')
+    expect(modes.glassesWords).toEqual({})
+    expect(modes.silent).toBe(true)
+    expect(told.calls).toContainEqual({ mode: 'vim', on: false })
+    expect(saved()).toMatchObject({ vim: false, ligatures: 'off', glassesWords: {}, silent: true })
+    modes.setVimKeys(true)
+    await modes.adopt('bob')
+    line.offline = true
+    await signedIn('bob')
+    expect(modes.vim).toBe(true)
+    expect(modes.silent).toBe(true)
+    line.offline = false
+    await signedIn('alice')
+    expect(modes.vim).toBe(true)
+    expect(modes.ligatures).toBe('code')
+    expect(modes.glassesWords).toEqual({ next: 'onwards' })
+    expect(modes.silent).toBe(false)
+    done()
+  })
+  test('what an account still owes from this device comes back with it and reaches it as it was, not as the next account left it', async () => {
+    const server: Record<string, Record<string, unknown>> = {}
+    const { line, signedIn, done } = await accounts(server)
+    await signedIn('alice')
+    line.offline = true
+    modes.toggleHardBreaks()
+    modes.setDeveloper(true)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    line.offline = false
+    await signedIn('bob')
+    expect(modes.hardBreaks).toBe(false)
+    expect(modes.developer).toBeNull()
+    modes.setDeveloper(false)
+    await modes.adopt('bob')
+    expect(server.bob).toMatchObject({ developer: false })
+    line.offline = true
+    await signedIn('alice')
+    expect(modes.hardBreaks).toBe(true)
+    expect(modes.developer).toBe(true)
+    line.offline = false
+    await modes.adopt('alice')
+    expect(server.alice).toEqual({ hardBreaks: true, developer: true })
+    expect(modes.hardBreaks).toBe(true)
+    expect(modes.developer).toBe(true)
+    done()
+  })
+})

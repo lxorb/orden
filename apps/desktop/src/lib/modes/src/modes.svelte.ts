@@ -242,6 +242,18 @@ function remindingOf(value: unknown): number | undefined {
 function toneOf(value: unknown): number | null | undefined {
   return isNumber(value) || value === null ? highlightTone(value).tone : undefined
 }
+function flag(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined
+}
+function fresh<T>(value: T): T {
+  return isRecord(value) ? { ...value } : value
+}
+interface Follow<T> {
+  read(value: unknown): T | undefined
+  start: T
+  then?(value: T): void
+}
+type Synced = { [K in keyof Modes]?: Follow<Modes[K]> }
 interface Shown {
   tab: { source: boolean }
   kept: () => void
@@ -654,28 +666,11 @@ class Modes {
     } catch {
       return null
     }
-    const unheard = this.owed.sends === asked && !this.owed.standing
-    if (unheard) {
-      const flag = (value: unknown) => (typeof value === 'boolean' ? value : undefined)
-      this.take('ligatures', ligatureScope(remote.ligatures) ?? undefined, false, (scope) =>
-        this.each(undefined, (one) => setLigatures(one, scope)),
-      )
-      this.take('vim', flag(remote.vim), false, (on) => this.each(undefined, (one) => setVim(one, on)))
-      this.take('attachments', isAttachmentFolder(remote.attachments) ? remote.attachments : undefined, false)
-      this.take('conflicts', conflictRule(remote.conflicts) ?? undefined, false)
-      this.take('keepVersions', keepingOf(remote.keepVersions), false)
-      this.take('remindBefore', remindingOf(remote.remindBefore), false)
-      this.take('canvasTurns', flag(remote.canvasTurns), false)
-      this.take('canvasTurnSnaps', flag(remote.canvasTurnSnaps), false)
-      this.take('highlightTone', toneOf(remote.highlightTone), false, () => setHighlightColour(this.highlight))
-      this.take('quietMarks', flag(remote.quietMarks), false, (on) =>
-        this.each(undefined, (one) => setQuietMarks(one, on)),
-      )
-      this.take('silent', flag(remote.silent), false)
-      this.take('developer', flag(remote.developer), false)
-      this.take('hardBreaks', flag(remote.hardBreaks), false, setHardBreaks)
-      this.take('linkFormat', isLinkFormat(remote.linkFormat) ? remote.linkFormat : undefined, false, setLinkWriting)
-      this.adoptGlasses(remote)
+    if (this.owed.sends === asked && !this.owed.standing) {
+      for (const key of Object.keys(this.synced) as (keyof Modes)[]) {
+        this.follow(key, this.synced[key], (remote as Record<string, unknown>)[key])
+      }
+      if (remote.glassesSeen === true) this.toldOfGlasses = true
     }
     this.tellOfMobile(token, remote)
     return remote
@@ -693,44 +688,69 @@ class Modes {
     this.persist()
     void api.saveSettings(token, { mobileSeen: true }).catch(() => undefined)
   }
-  private adoptGlasses(remote: AccountSettings): void {
-    let moved = false
-    const took = <T>(value: T | undefined, take: (one: T) => void) => {
-      if (value === undefined) return
-      take(value)
-      moved = true
-    }
-    const level = glassesBreak(remote.glassesBreak)
-    if (level !== null && level !== this.glassesBreak) {
-      this.glassesBreak = level
-      moved = true
-    }
-    if (typeof remote.glassesLineNumbers === 'boolean') {
-      took(remote.glassesLineNumbers, (on) => (this.glassesLineNumbers = on))
-    }
-    if (typeof remote.glassesVoice === 'boolean') {
-      took(remote.glassesVoice, (on) => (this.glassesVoice = on))
-    }
-    if (isCompaction(remote.glassesCompaction)) {
-      took(remote.glassesCompaction, (level) => (this.glassesCompaction = level))
-    }
-    if (remote.glassesMarks !== undefined) {
-      took(marksOf(remote.glassesMarks), (marks) => (this.glassesMarks = marks))
-    }
-    if (remote.glassesWords !== undefined) {
-      took(wordsOf(remote.glassesWords), (words) => (this.glassesWords = words))
-    }
-    if (remote.glassesSeen === true) {
-      took(true, (seen) => (this.glassesSeen = seen))
-      this.toldOfGlasses = true
-    }
-    if (moved) this.persist()
+  private readonly synced: Synced = {
+    ligatures: {
+      read: (value) => ligatureScope(value) ?? undefined,
+      start: DEFAULTS.ligatures,
+      then: (scope) => this.each(undefined, (one) => setLigatures(one, scope)),
+    },
+    vim: { read: flag, start: DEFAULTS.vim, then: (on) => this.each(undefined, (one) => setVim(one, on)) },
+    attachments: { read: (value) => (isAttachmentFolder(value) ? value : undefined), start: DEFAULTS.attachments },
+    conflicts: { read: (value) => conflictRule(value) ?? undefined, start: DEFAULTS.conflicts },
+    keepVersions: { read: keepingOf, start: DEFAULTS.keepVersions },
+    remindBefore: { read: remindingOf, start: DEFAULTS.remindBefore },
+    canvasTurns: { read: flag, start: DEFAULTS.canvasTurns },
+    canvasTurnSnaps: { read: flag, start: DEFAULTS.canvasTurnSnaps },
+    highlightTone: {
+      read: toneOf,
+      start: DEFAULTS.highlightTone,
+      then: () => setHighlightColour(this.highlight),
+    },
+    quietMarks: {
+      read: flag,
+      start: DEFAULTS.quietMarks,
+      then: (on) => this.each(undefined, (one) => setQuietMarks(one, on)),
+    },
+    silent: { read: flag, start: DEFAULTS.silent },
+    developer: { read: flag, start: null },
+    hardBreaks: { read: flag, start: DEFAULTS.hardBreaks, then: setHardBreaks },
+    linkFormat: {
+      read: (value) => (isLinkFormat(value) ? value : undefined),
+      start: DEFAULTS.linkFormat,
+      then: setLinkWriting,
+    },
+    glassesBreak: { read: (value) => glassesBreak(value) ?? undefined, start: DEFAULTS.glassesBreak },
+    glassesLineNumbers: { read: flag, start: DEFAULTS.glassesLineNumbers },
+    glassesVoice: { read: flag, start: DEFAULTS.glassesVoice },
+    glassesCompaction: {
+      read: (value) => (isCompaction(value) ? value : undefined),
+      start: DEFAULTS.glassesCompaction,
+    },
+    glassesMarks: { read: (value) => (value === undefined ? undefined : marksOf(value)), start: MARKS },
+    glassesWords: { read: (value) => (value === undefined ? undefined : wordsOf(value)), start: {} },
+    glassesSeen: { read: (value) => (value === true ? true : undefined), start: DEFAULTS.glassesSeen },
+    mobileSeen: { read: (value) => (value === true ? true : undefined), start: DEFAULTS.mobileSeen },
   }
-  private readonly owed = new AccountOwed(OWED_KEY)
+  private follow<K extends keyof Modes>(key: K, synced: Follow<Modes[K]> | undefined, value: unknown) {
+    if (synced) this.take(key, synced.read(value), false, (one) => synced.then?.(one))
+  }
+  private startOver<K extends keyof Modes>(key: K, synced: Follow<Modes[K]> | undefined, owed: unknown) {
+    if (!synced) return
+    const value = synced.read(owed) ?? fresh(synced.start)
+    Object.assign(this, { [key]: value })
+    synced.then?.(value)
+  }
+  private backToDefaults(owed: AccountSettings) {
+    const said = owed as Record<string, unknown>
+    for (const key of Object.keys(this.synced) as (keyof Modes)[]) this.startOver(key, this.synced[key], said[key])
+    this.toldOfGlasses = false
+    this.persist()
+  }
+  private readonly owed = new AccountOwed(OWED_KEY, undefined, (owed) => this.backToDefaults(owed))
   private share(patch: AccountSettings) {
     this.owed.send(patch)
   }
-  private take<K extends keyof typeof DEFAULTS | 'developer'>(
+  private take<K extends keyof Modes>(
     key: K,
     value: Modes[K] | undefined,
     shared = true,
