@@ -67,3 +67,18 @@ fn an_agent_path_on_another_computer_is_refused_by_its_words_alone() {
     }
     assert!(orden_agents::files::on_this_computer(r"\\?\C:\a.md").is_ok());
 }
+#[test]
+fn a_chat_mode_is_told_to_the_window_and_never_read_back_from_the_file() {
+    let mut grant = Grant::own("contract-mode".into(), "Mode");
+    let mut stored = serde_json::to_value(&grant).expect("json");
+    stored["chat_mode"] = "full".into();
+    let read: Grant = serde_json::from_value(stored).expect("read");
+    assert_eq!(read.chat_mode, None);
+    let told = Caller::Agent(Box::new(grant.clone())).told().expect("told");
+    assert!(told.get("chat_mode").is_none());
+    grant.chat_mode = Some("plan".into());
+    let told = Caller::Agent(Box::new(grant.clone())).told().expect("told");
+    assert_eq!(told["chat_mode"], "plan");
+    let threaded = Caller::Agent(Box::new(grant)).in_thread(Some("thread-1".into()));
+    assert_eq!(threaded.told().expect("told")["chat_mode"], "plan");
+}
