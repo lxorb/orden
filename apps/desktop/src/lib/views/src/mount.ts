@@ -1,5 +1,5 @@
 import { mount, unmount } from 'svelte'
-import { nameOf } from '../../platform/src/api'
+import { nameOf, shownName } from '../../platform/src/api'
 import BaseBlock from './BaseBlock.svelte'
 import { embeddedPath } from './source'
 
@@ -7,7 +7,7 @@ export type BaseAsk = { code: string } | { target: string; view: string | null }
 export function mountBase(host: HTMLElement, ask: BaseAsk, from: string | null, stranger = false): () => void {
   const file = 'target' in ask ? embeddedPath(ask.target, from) : null
   if ('target' in ask && file === null) return () => undefined
-  const title = file === null ? '' : nameOf(file).replace(/\.base$/i, '')
+  const title = file === null ? '' : shownName(nameOf(file))
   const props =
     'code' in ask
       ? { code: ask.code, from, stranger, title }

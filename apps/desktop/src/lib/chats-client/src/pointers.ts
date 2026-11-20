@@ -1,6 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { CHAT_EXTENSION, chatOf, chatText } from '@orden/chats'
-import { nameOf, spaceHolding, invoke, joinPath } from '../../platform/src/api'
+import { nameOf, shownName, spaceHolding, invoke, joinPath } from '../../platform/src/api'
 import { sync } from '../../sync-store/src/api'
 import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
@@ -11,8 +11,7 @@ export interface Place {
   path: string
 }
 export function chatName(path: string): string {
-  const name = nameOf(path)
-  return name.toLowerCase().endsWith(CHAT_EXTENSION) ? name.slice(0, -CHAT_EXTENSION.length) : name
+  return shownName(nameOf(path))
 }
 export async function makePointer(folder: string, name: string): Promise<Place | null> {
   const space = spaceHolding(workspace.spaces, folder)

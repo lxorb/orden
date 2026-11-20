@@ -4,10 +4,11 @@ import { account } from '../../../accounts/src/api'
 import { busy } from '../../../ui-kit/src/api'
 import { chatsOn } from '../../../gates/src/api'
 import { canWriteAt } from '../../../sharing/src/api'
-import { nameOf as fileName, samePath } from '../../../platform/src/api'
+import { samePath } from '../../../platform/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { chatsView } from './chats-view.svelte'
 import { store } from './source.svelte'
+import { chatName } from '../pointers'
 
 const jumps = new Map<string, string>()
 export function takeJump(path: string): string | undefined {
@@ -20,9 +21,7 @@ export function chatsAreOn(): boolean {
   busy.failed('Chats are off. Turn them on in Settings.')
   return false
 }
-export function chatName(path: string): string {
-  return fileName(path).replace(/\.chat$/i, '')
-}
+export { chatName }
 export function openChat(path: string, how: OpenHow = {}, message?: string): void {
   if (!chatsAreOn()) return
   if (message) jumps.set(path, message)

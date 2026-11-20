@@ -91,3 +91,13 @@ describe('what one account leaves behind (#2167)', () => {
     expect([hush.keywords, hush.hours, hush.previews, hush.sound]).toEqual([[], null, true, false])
   })
 })
+describe('a chat’s name (#2310)', () => {
+  test('is its pointer’s name shown as every name is, without its ending', async () => {
+    const { chatName } = await import('../src/pointers')
+    expect([chatName('/s/Team.chat'), chatName('/s/Plan.md.chat'), chatName('/s/Notes')]).toEqual([
+      'Team',
+      'Plan.md',
+      'Notes',
+    ])
+  })
+})
