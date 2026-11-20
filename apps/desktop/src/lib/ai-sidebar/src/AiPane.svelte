@@ -461,7 +461,7 @@
     color: var(--muted-strong);
   }
   h3:first-child,
-  :global(h2) + h3 {
+  :global(.orden-pane-head) + h3 {
     margin-top: 0;
   }
   .card {

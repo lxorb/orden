@@ -367,14 +367,14 @@
       {/if}
       {#if query && !stacked}
         <div class="pane">
-          <h2>Search settings</h2>
+          <h2 class="orden-pane-head">Search settings</h2>
           {@render results()}
         </div>
       {:else}
         {#key settings.section}
           <div class="pane" in:arrive>
             {#if !stacked}
-              <h2>{headOf(settings.section)}</h2>
+              <h2 class="orden-pane-head">{headOf(settings.section)}</h2>
             {/if}
             {@render pane()}
           </div>
@@ -1109,7 +1109,7 @@
     color: var(--muted-strong);
   }
   .pane h3:first-child,
-  .pane h2 + h3 {
+  .pane .orden-pane-head + h3 {
     margin-top: 0;
   }
   .part {
