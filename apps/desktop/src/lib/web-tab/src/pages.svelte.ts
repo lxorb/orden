@@ -486,7 +486,7 @@ class Pages {
       cut: over.cut,
       corner: over.corner,
     })
-    if (page.shot === null || over.cut.all) void this.shoot(tabId)
+    if (over.cut.all) void this.shoot(tabId)
     await placed
   }
   async put(tabId: string, page: Page, one: Placement): Promise<void> {
