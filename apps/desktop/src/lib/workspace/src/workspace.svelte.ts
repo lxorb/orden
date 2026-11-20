@@ -318,6 +318,14 @@ class Workspace {
     const was = spacesFrom(stored(GONE_KEY)).find((one) => samePath(one.root, root))
     return was && !this.spaces.some((one) => one.id === was.id) ? was.id : null
   }
+  async spaceCameBack(from: string, at: string): Promise<void> {
+    if (!samePath(from, at)) {
+      const gone = spacesFrom(stored(GONE_KEY))
+      const was = gone.find((one) => samePath(one.root, from) && !this.spaces.some((held) => held.id === one.id))
+      if (was) keepJson(GONE_KEY, [{ ...was, root: at }, ...gone.filter((one) => one !== was)])
+    }
+    await this.loadSpaces()
+  }
   private async spacesMoved(): Promise<void> {
     const open = this.activeSpace
     if (this.activeSpaceId === null) return

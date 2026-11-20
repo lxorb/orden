@@ -509,6 +509,26 @@ describe('the spaces every window shares', () => {
       gone()
     }
   })
+  test('a space put back beside a new one of its old name comes back under its old id, and the new one keeps its own', async () => {
+    const AGAIN = { id: 'w-again', name: 'Fresh', root: FRESH.root }
+    const BACK = { name: 'Fresh 2', root: '/w/Fresh 2' }
+    workspace.spaces = [{ ...NOTES }, { ...FRESH }]
+    let listed: { name: string; root: string }[] = [NOTES, FRESH]
+    const gone = listing(() => listed)
+    try {
+      workspace.spaces = [{ ...NOTES }]
+      workspace.spaces = [{ ...NOTES }, { ...AGAIN }]
+      listed = [NOTES, AGAIN, BACK]
+      await workspace.spaceCameBack(FRESH.root, BACK.root)
+      expect(workspace.spaces.map((one) => [one.id, one.root])).toEqual([
+        [NOTES.id, NOTES.root],
+        [AGAIN.id, AGAIN.root],
+        [FRESH.id, BACK.root],
+      ])
+    } finally {
+      gone()
+    }
+  })
   test('a space another window renamed keeps its id, its place and the window in it here', async () => {
     const JOB = { ...WORK, name: 'Job', root: '/w/Job' }
     workspace.spaces = [{ ...NOTES }, { ...WORK }]
