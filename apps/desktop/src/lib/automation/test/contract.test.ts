@@ -40,12 +40,26 @@ describe('who asks', () => {
     expect(caller.agent?.scopes).toEqual(['tree'])
     expect(api.threadSpaceOf(caller)).toBeNull()
   })
-  test("a built-in grant carries its chat's mode, any other grant or a mode no chat has carries none", () => {
+  test('a built-in grant carries its chat, any other grant or a mode no chat has carries none', () => {
     const grant = { id: 'orden-anthropic', name: 'Claude', mode: 'unsupervised', built_in: true }
-    expect(api.callerOf({ ...grant, chat_mode: 'plan' })).toHaveProperty('chatMode', 'plan')
-    expect(api.callerOf({ ...grant, chat_mode: 'write everything' })).not.toHaveProperty('chatMode')
-    expect(api.callerOf(grant)).not.toHaveProperty('chatMode')
-    expect(api.callerOf({ id: 'claude-code', mode: 'unsupervised', chat_mode: 'plan' })).not.toHaveProperty('chatMode')
+    const chat = { mode: 'plan', without: ['edit_note', 4], only: ['read_note'], space: 'Work' }
+    expect(api.callerOf({ ...grant, chat })).toHaveProperty('chat', {
+      mode: 'plan',
+      without: ['edit_note'],
+      only: ['read_note'],
+      space: 'Work',
+    })
+    expect(api.callerOf({ ...grant, chat: { mode: 'plan', without: [], only: [], space: '' } })).toHaveProperty(
+      'chat',
+      {
+        mode: 'plan',
+        only: [],
+      },
+    )
+    expect(api.callerOf({ ...grant, chat: { mode: 'write everything' } })).not.toHaveProperty('chat')
+    expect(api.callerOf({ ...grant, chat_mode: 'plan' })).not.toHaveProperty('chat')
+    expect(api.callerOf(grant)).not.toHaveProperty('chat')
+    expect(api.callerOf({ id: 'claude-code', mode: 'unsupervised', chat })).not.toHaveProperty('chat')
   })
   test('a refusal carries its code and says why twice', () => {
     expect(api.refusal('no_such_command', 'gone')).toEqual({

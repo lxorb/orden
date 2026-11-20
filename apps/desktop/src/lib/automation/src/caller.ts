@@ -17,13 +17,23 @@ function texts(value: unknown): string[] {
 const CHAT_MODES = ['approve', 'auto', 'full', 'plan'] as const
 type ChatMode = (typeof CHAT_MODES)[number]
 const isChatMode = (value: unknown): value is ChatMode => CHAT_MODES.some((one) => one === value)
+function chatOf(told: unknown) {
+  if (!isRecord(told) || !isChatMode(told.mode)) return null
+  const without = texts(told.without)
+  return {
+    mode: told.mode,
+    ...(without.length ? { without } : {}),
+    ...(Array.isArray(told.only) ? { only: texts(told.only) } : {}),
+    ...(typeof told.space === 'string' && told.space ? { space: told.space } : {}),
+  }
+}
 export function callerOf(told: unknown, thread?: unknown): Caller {
   if (told === undefined || told === null) return READER
   const grant = isRecord(told) ? told : {}
   const id = typeof grant.id === 'string' && grant.id ? grant.id : 'agent'
   const builtIn = grant.built_in === true
   const threadOf = builtIn && typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread) ? { thread } : {}
-  const chatModeOf = builtIn && isChatMode(grant.chat_mode) ? { chatMode: grant.chat_mode } : {}
+  const chat = builtIn ? chatOf(grant.chat) : null
   return {
     agent: {
       id,
@@ -40,7 +50,7 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
         : {},
     },
     ...threadOf,
-    ...chatModeOf,
+    ...(chat ? { chat } : {}),
   }
 }
 export const fullPermissions = (grant: { mode?: string } | null | undefined): boolean => grant?.mode === 'autonomous'
