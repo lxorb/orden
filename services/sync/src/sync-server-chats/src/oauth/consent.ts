@@ -1,4 +1,4 @@
-import { describeDestination, type Env } from '../../../sync-server/src/api'
+import { describeDestination, type Env, siteOrigin } from '../../../sync-server/src/api'
 import type { Client } from './clients'
 import { type Ask, FIELDS, wantsWrite } from './protocol'
 const ESCAPES: Record<string, string> = {
@@ -45,7 +45,7 @@ export function page(env: Env, body: string, status: 200 | 400 | 409 = 200): Res
 <title>Orden</title>
 <style>${STYLE}</style>
 <main>
-<div class="brand"><a href="${escape(env.APP_ORIGIN)}" style="color:inherit;text-decoration:none">Orden</a></div>
+<div class="brand"><a href="${escape(siteOrigin(env))}" style="color:inherit;text-decoration:none">Orden</a></div>
 ${body}
 </main>
 </html>`

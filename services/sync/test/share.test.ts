@@ -536,7 +536,7 @@ describe('an invitation', () => {
     )
     expect(sent).toContain(READER)
     expect(sent).toContain(`shared the space ${SHARED} with you`)
-    expect(sent).toMatch(/https:\/\/orden\.so\/join\/[a-f0-9]{64}/)
+    expect(sent).toMatch(/https:\/\/app\.orden\.so\/join\/[a-f0-9]{64}/)
     const { json } = await shareView()
     expect(json.members).toEqual([
       { ...NO_FACE, email: READER, guest: null, name: null, role: 'read', admin: false, pending: true },
