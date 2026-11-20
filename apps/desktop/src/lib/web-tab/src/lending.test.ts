@@ -35,8 +35,12 @@ const pages = {
     done.push(`thaw ${id}`)
     return Promise.resolve()
   }),
-  aside: vi.fn((id: string, _page: Held, pane: { x: number }) => {
-    done.push(`aside ${id} ${String(pane.x)}`)
+  put: vi.fn((id: string, _page: Held, at: { pane: { x: number } }) => {
+    done.push(`aside ${id} ${String(at.pane.x)}`)
+    return Promise.resolve()
+  }),
+  place: vi.fn((id: string) => {
+    done.push(`place ${id}`)
     return Promise.resolve()
   }),
   build: vi.fn((id: string, page: Held, pane: { x: number; width: number }) => {
@@ -51,6 +55,7 @@ const pages = {
 vi.mock('./pages.svelte', () => ({
   pages,
   OUT_OF_THE_WAY: 20_000,
+  awayFrom: (pane: { x: number }) => ({ pane }),
   inSight: (page: Held) => page.onScreen,
 }))
 const { lend, unlend } = await import('./lending')

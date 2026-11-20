@@ -40,12 +40,6 @@ const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
 const BLANK_WAITS = 3000
 const AFTER_COMMIT = 1200
-const ARRIVAL_WAITS = 100
-const overlaps = (one: Rect, other: Rect): boolean =>
-  one.x < other.x + other.width &&
-  other.x < one.x + one.width &&
-  one.y < other.y + other.height &&
-  other.y < one.y + one.height
 const ARRIVES = 3000
 export interface Rect {
   x: number
@@ -66,7 +60,7 @@ export interface Over {
 }
 const WHOLE: Cut = { all: true, hollows: [] }
 const NOTHING: Over = { cut: null, frame: null }
-function awayFrom(pane: Rect): Placement {
+export function awayFrom(pane: Rect): Placement {
   const away = { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }
   return { pane: away, visible: true, frame: null, cut: WHOLE, away: true }
 }
@@ -245,7 +239,7 @@ class Pages {
   private readonly goingTo = new WeakMap<Page, string>()
   private readonly movedWhileTyping = new WeakSet<Page>()
   private listening: Promise<void> | null = null
-  private readonly arriving = new Set<{ pane: Rect; done: Promise<void> }>()
+  readonly arriving = new Set<{ pane: Rect; done: Promise<void> }>()
   each(): [string, Page][] {
     return [...this.held.entries()]
   }
@@ -496,7 +490,7 @@ class Pages {
     if (page.shot === null || over.cut.all) void this.shoot(tabId)
     await placed
   }
-  private async put(tabId: string, page: Page, one: Placement): Promise<void> {
+  async put(tabId: string, page: Page, one: Placement): Promise<void> {
     page.placing ??= new Latest((sent) => this.send(tabId, page, sent))
     await page.placing.put(one).catch(() => undefined)
   }
@@ -556,13 +550,7 @@ class Pages {
   }
   async letGo(): Promise<void> {
     this.still = false
-    await Promise.all(this.each().map(([tabId, page]) => this.letOneGo(tabId, page)))
-  }
-  private async letOneGo(tabId: string, page: Page): Promise<void> {
-    const at = page.heldAt
-    if (!at) return
-    await this.put(tabId, page, at)
-    if (!this.still) page.heldAt = null
+    await (await still()).letGo(this)
   }
   hide(tabId: string, pane: Rect) {
     const page = this.held.get(tabId)
@@ -570,21 +558,13 @@ class Pages {
     page.onScreen = false
     page.heldAt = null
     page.looked = Date.now()
-    if (isDesktop && page.live && page.lent) void this.aside(tabId, page, pane)
-    else void this.afterArrivals(pane).then(() => (page.onScreen ? undefined : this.place(tabId, pane, false)))
+    if (isDesktop && page.live && page.lent) void import('./lending').then((one) => one.aside(tabId, page, pane))
+    else
+      void Promise.resolve()
+        .then(() => this.arriving.size && still().then((one) => one.arrived(this, pane)))
+        .then(() => (page.onScreen ? undefined : this.place(tabId, pane, false)))
     if (!isDesktop) return
     void this.look(tabId).then(() => this.rest(tabId))
-  }
-  private async afterArrivals(pane: Rect): Promise<void> {
-    await Promise.resolve()
-    const into = [...this.arriving].filter((one) => overlaps(one.pane, pane)).map((one) => one.done)
-    if (into.length === 0) return
-    await Promise.race([Promise.all(into), new Promise((go) => setTimeout(go, ARRIVAL_WAITS))])
-  }
-  async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
-    await this.put(tabId, page, awayFrom(pane))
-    await page.shooting
-    if (!page.onScreen && !page.lent) await this.place(tabId, pane, false)
   }
   private async rest(tabId: string): Promise<void> {
     ;(await sleeping()).rest(this, tabId)
