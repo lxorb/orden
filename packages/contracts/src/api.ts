@@ -242,6 +242,9 @@ export {
   type ChatPart,
   type ChatPartWanted,
   type ChatPorts,
+  type ChatsDemo,
+  type ChatsDemoPerson,
+  type ChatsDemoPort,
   type ChatsPort,
   chatsEnding,
 } from './chats'

@@ -25,6 +25,9 @@ providePort('chats', {
     return ending(paths)
   },
 })
+providePort('chats.demo', {
+  stage: (me) => import('./chats-client/src/api').then((one) => one.chatsDemo()).then(({ demoChats }) => demoChats(me)),
+})
 const agentsApi = () => import('./agents/src/api')
 providePort('agents.writes', {
   wrote: (agent, tabs) => {
