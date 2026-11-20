@@ -34,6 +34,7 @@ export interface AgentQuestion {
 export interface AgentHeard {
   readonly kind: string
   readonly agent?: string | null
+  readonly thread?: string | null
 }
 export interface AgentReaderPort {
   knows(agent: string, id: string): Promise<boolean>
