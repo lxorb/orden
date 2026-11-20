@@ -10,7 +10,7 @@ import {
 import { isTabFile, linkTarget, sectionLine, sectionOf } from '@orden/markdown/links'
 import { followAnchors, modifierHeld } from '../links'
 import { type LinkSpan, linkAt } from './at'
-import { noteIndex, resolveLink } from './notes'
+import { noteIndex, resolveLink, shownTarget } from './notes'
 import { renderNote } from './preview'
 
 const DELAY = 300
@@ -75,7 +75,7 @@ const cardFor =
     dom.className = 'orden-note-preview'
     const name = document.createElement('div')
     name.className = 'orden-note-preview-name'
-    name.textContent = linkTarget(link)
+    name.textContent = shownTarget(link, path)
     dom.append(name)
     const body = document.createElement('div')
     body.className = 'orden-note-preview-body orden-write'

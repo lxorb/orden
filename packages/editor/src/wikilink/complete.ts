@@ -17,6 +17,7 @@ import {
   resolveNote,
   resolveRelative,
   shortestReaching,
+  shownNote,
   type SpaceBlock,
 } from './notes'
 
@@ -102,8 +103,11 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
   const archived = note.archived === true
   const detail = archived ? 'Archived' : folder
   if (archived ? foldName(note.name) === needle : !needle || matches(note, needle)) {
+    const label = note.name.normalize('NFC')
+    const shown = shownNote(note)
     rows.push({
-      label: note.name.normalize('NFC'),
+      label,
+      ...(shown === label ? {} : { displayLabel: shown }),
       ...(detail === undefined ? {} : { detail }),
       apply: insert(about(index, note)),
       type: 'text',
@@ -114,7 +118,7 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
     if (archived ? foldName(alias) !== needle : needle && !foldName(alias).includes(needle)) continue
     rows.push({
       label: alias,
-      detail: note.name,
+      detail: shownNote(note),
       apply: insert(
         resolveNote(index, alias)?.path === note.path
           ? { ...about(index, note), name: alias, file: nameFor(index, note) }
@@ -232,7 +236,7 @@ function spaceHeadings(index: NoteIndex, typed: string): { rows: Completion[]; a
       if (!fuzzy(heading, needle)) continue
       rows.push({
         label: heading,
-        detail: note.name,
+        detail: shownNote(note),
         apply: insert({ ...about(index, note), fragment: heading }),
         type: 'keyword',
       })
@@ -249,7 +253,7 @@ function namedBlocks(index: NoteIndex, needle: string): Completion[] {
       if (!fuzzy(id, needle)) continue
       rows.push({
         label: `^${id}`,
-        detail: note.name,
+        detail: shownNote(note),
         apply: insert({ ...about(index, note), fragment: `^${id}` }),
         type: 'property',
         boost: 1,
@@ -273,7 +277,7 @@ function foundBlock(index: NoteIndex, block: SpaceBlock, heading: string | null)
     : { name: block.path.replace(MARKDOWN, ''), path: block.path, from: index.path }
   return {
     label: block.text,
-    ...(note ? { detail: note.name } : {}),
+    ...(note ? { detail: shownNote(note) } : {}),
     apply: linked(block.path, block.line, heading, block.id, target),
     type: 'property',
   }

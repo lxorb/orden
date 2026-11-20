@@ -9,6 +9,7 @@ import {
   pageFragment,
   type Wikilink,
 } from '@orden/markdown/links'
+import { shownName } from '@orden/markdown/note-name'
 import type { LinkPress } from '../links'
 
 export interface NoteRef {
@@ -303,6 +304,13 @@ export function jumpForHref(index: NoteIndex, href: string, wiki: boolean): Note
   return { path: found.path, target, heading: block === null ? said : null, block, page: null }
 }
 const MARKDOWN_NAME = /\.(md|markdown|mdown|mkd)$/i
+const shownFile = (path: string): string => shownName(path.slice(path.lastIndexOf('/') + 1))
+export const shownNote = (note: NoteRef): string => shownFile(note.path).normalize('NFC')
+export function shownTarget(link: Wikilink, path: string | null): string {
+  const name = link.target && path !== null ? shownFile(path) : link.target
+  if (link.block !== null) return `${name}#^${link.block}`
+  return link.heading === null ? name : `${name}#${link.heading}`
+}
 export function nameFor(index: NoteIndex, note: NoteRef): string {
   const own = MARKDOWN_NAME.exec(note.path)?.[0] ?? ''
   const spelled = (written: string) => (isTabFile(written) ? `${written}${own}` : written)
