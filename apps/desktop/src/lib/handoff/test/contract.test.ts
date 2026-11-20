@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { HANDOFF_PATH, isEmpty, isHandoff, LEGACY_WEB, LEGACY_WEBS, WEB } from '../src/api'
+import { HANDOFF_PATH, isEmpty, isHandoff, LEGACY_WEBS, WEB } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -33,14 +33,13 @@ describe('the notes handed over from the old address', () => {
   })
   test('the old address asks the new one over a path of its own', () => {
     expect(WEB).toMatch(/^https:\/\//)
-    expect(LEGACY_WEB).toMatch(/^https:\/\//)
-    expect(WEB).not.toBe(LEGACY_WEB)
+    for (const one of LEGACY_WEBS) expect(one).toMatch(/^https:\/\//)
+    expect(LEGACY_WEBS).not.toContain(WEB)
     expect(HANDOFF_PATH.startsWith('/')).toBe(true)
   })
   test('the app at app.orden.so takes notes over from orden.so first, then from nibeditor.com', () => {
     expect(WEB).toBe('https://app.orden.so')
     expect(LEGACY_WEBS).toEqual(['https://orden.so', 'https://nibeditor.com'])
-    expect(LEGACY_WEB).toBe('https://orden.so')
     for (const one of LEGACY_WEBS) expect(new URL(one).origin).toBe(one)
   })
 })

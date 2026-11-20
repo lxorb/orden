@@ -121,7 +121,7 @@
   {#if takingOver.offered}
     <div class="orden-setting">
       {@render mark(null, Globe)}
-      <span class="name">Notes from nibeditor.com</span>
+      <span class="name">Notes from the old address</span>
       {#if takingOver.state === 'nothing'}
         <span class="value">Nothing there</span>
       {:else}
