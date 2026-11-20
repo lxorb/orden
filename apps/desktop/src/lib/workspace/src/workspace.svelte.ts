@@ -371,6 +371,17 @@ class Workspace {
     })
     return new Tab(note, tab.paneId)
   }
+  untuck(id: string): void {
+    if (this.dropTwin(id)) this.persist()
+  }
+  private dropTwin(id: string): boolean {
+    const twin = this.tuckedBy[id]
+    if (!twin) return false
+    this.tuckedBy = Object.fromEntries(Object.entries(this.tuckedBy).filter(([key]) => key !== id))
+    webPages().forget(twin.id)
+    this.saving.closed(twin.note)
+    return true
+  }
   private withTwins(tabs: readonly Tab[]): Tab[] {
     return [...tabs, ...tabs.flatMap((one) => this.tuckedBy[one.id] ?? [])]
   }
@@ -2243,12 +2254,7 @@ class Workspace {
     webPages().forget(tab.id)
     this.tabs = this.tabs.filter((one) => one.id !== id)
     if (!this.tabs.some((one) => one.note === tab.note)) settleTitle(tab.note)
-    const twin = this.tuckedBy[id]
-    if (twin) {
-      this.tuckedBy = Object.fromEntries(Object.entries(this.tuckedBy).filter(([key]) => key !== id))
-      webPages().forget(twin.id)
-      this.saving.closed(twin.note)
-    }
+    this.dropTwin(id)
     if (this.previewTabId === id) this.previewTabId = null
     this.saving.closed(tab.note)
     if (!this.panes.at(paneId)) return true
