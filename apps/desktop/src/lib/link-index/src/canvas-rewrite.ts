@@ -1,6 +1,6 @@
 import type { Canvas } from '@orden/markdown/canvas'
 import { type FoundLink, isPagesTarget } from '@orden/markdown/links'
-import { paperOf } from '@orden/markdown/pages'
+import { paperOf } from '@orden/markdown/paper'
 import { folderOf } from '../../platform/src/api'
 import { skim, type Span } from '@orden/scan/json-skim'
 import { type Placed, retargetLinks } from './link-rewrite'
