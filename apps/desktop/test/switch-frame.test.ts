@@ -33,6 +33,9 @@ describe('the frame a tab switch draws', () => {
       expect(own).not.toMatch(/\.focus\(\)/)
     }
   })
+  test('takes a key pressed before the caret came, and gives the caret only after the frame is painted', () => {
+    expect(APP).toMatch(/stop = one\.caretAfterPaint\(\(\) => \{/)
+  })
   test('leaves the caret where it is when the editor has it already', () => {
     expect(APP).toMatch(/!current\.hasFocus\) current\.focus\(\)/)
   })
