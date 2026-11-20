@@ -35,7 +35,6 @@ import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from '../../link-format/src/api'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from '../../sync-mirror/src/api'
-import { type Compaction, DEFAULT_COMPACTION, isCompaction, MARKS, type Marks } from '@orden/glasses/choices'
 import {
   isNumber,
   isRecord,
@@ -57,6 +56,13 @@ const STALE = [
   'overviewBlur',
   'flushBottom',
   'glassesScroll',
+  'glassesBreak',
+  'glassesLineNumbers',
+  'glassesVoice',
+  'glassesCompaction',
+  'glassesMarks',
+  'glassesWords',
+  'glassesSeen',
   'translucent',
   'properties',
   'frontMatter',
@@ -81,12 +87,6 @@ export const LIGATURE_SCOPES: readonly LigatureScope[] = ['off', 'code', 'all']
 export function ligatureScope(value: unknown): LigatureScope | null {
   if (typeof value === 'boolean') return value ? 'all' : 'off'
   return LIGATURE_SCOPES.find((one) => one === value) ?? null
-}
-export const GLASSES_BREAKS = [0, 1, 2, 3, 4, 5, 6] as const
-export type GlassesBreak = (typeof GLASSES_BREAKS)[number]
-export function glassesBreak(value: unknown): GlassesBreak | null {
-  const wanted = typeof value === 'string' ? Number(value) : value
-  return GLASSES_BREAKS.find((one) => one === wanted) ?? null
 }
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 export const FRAMES = ['orden', 'system'] as const
@@ -121,13 +121,6 @@ interface Saved {
   fonts: Record<FontPlace, string>
   closeBrackets: boolean
   ligatures: LigatureScope
-  glassesBreak: GlassesBreak
-  glassesLineNumbers: boolean
-  glassesVoice: boolean
-  glassesCompaction: string
-  glassesMarks: Marks
-  glassesWords: Record<string, unknown>
-  glassesSeen: boolean
   mobileSeen: boolean
   vim: boolean
   attachments: string
@@ -169,24 +162,6 @@ function text(value: unknown, fallback: string): string {
 function measure(value: unknown, fallback: number): number {
   return isNumber(value) && value !== 0 ? value : fallback
 }
-function marksOf(value: unknown): Marks {
-  if (!isRecord(value)) return { ...MARKS }
-  const out = { ...MARKS }
-  for (const name of Object.keys(MARKS) as (keyof Marks)[]) {
-    const found = value[name]
-    if (typeof found === 'boolean') out[name] = found
-  }
-  return out
-}
-const LONGEST_PHRASE = 60
-function wordsOf(value: unknown): Record<string, string> {
-  if (!isRecord(value)) return {}
-  const out: Record<string, string> = {}
-  for (const [id, phrase] of Object.entries(value)) {
-    if (isString(phrase) && phrase.trim() && phrase.length <= LONGEST_PHRASE) out[id] = phrase.trim()
-  }
-  return out
-}
 export const DEFAULTS = {
   opensInSource: false,
   readOnly: false,
@@ -212,11 +187,6 @@ export const DEFAULTS = {
   fonts: { ui: '', content: '', mono: '' } as Record<FontPlace, string>,
   closeBrackets: true,
   ligatures: 'off' as LigatureScope,
-  glassesBreak: 2 as GlassesBreak,
-  glassesLineNumbers: true,
-  glassesVoice: false,
-  glassesCompaction: DEFAULT_COMPACTION,
-  glassesSeen: false,
   mobileSeen: false,
   vim: false,
   attachments: 'space' as AttachmentFolder,
@@ -244,9 +214,6 @@ function toneOf(value: unknown): number | null | undefined {
 }
 function flag(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined
-}
-function fresh<T>(value: T): T {
-  return isRecord(value) ? { ...value } : value
 }
 interface Follow<T> {
   read(value: unknown): T | undefined
@@ -285,13 +252,6 @@ class Modes {
   fonts = $state<Record<FontPlace, string>>({ ...DEFAULTS.fonts })
   closeBrackets = $state(DEFAULTS.closeBrackets)
   ligatures = $state<LigatureScope>(DEFAULTS.ligatures)
-  glassesBreak = $state<GlassesBreak>(DEFAULTS.glassesBreak)
-  glassesLineNumbers = $state(DEFAULTS.glassesLineNumbers)
-  glassesVoice = $state(DEFAULTS.glassesVoice)
-  glassesCompaction = $state<Compaction>(DEFAULTS.glassesCompaction)
-  glassesMarks = $state<Marks>({ ...MARKS })
-  glassesWords = $state<Record<string, string>>({})
-  glassesSeen = $state(DEFAULTS.glassesSeen)
   mobileSeen = $state(DEFAULTS.mobileSeen)
   vim = $state(DEFAULTS.vim)
   readonly vimModes = new SvelteMap<EditorView, VimMode>()
@@ -339,10 +299,6 @@ class Modes {
       this.conflicts = conflictRule(saved.conflicts) ?? DEFAULTS.conflicts
       this.keepVersions = keepingOf(saved.keepVersions) ?? DEFAULTS.keepVersions
       this.remindBefore = remindingOf(saved.remindBefore) ?? this.remindBefore
-      this.glassesBreak = glassesBreak(saved.glassesBreak) ?? DEFAULTS.glassesBreak
-      if (isCompaction(saved.glassesCompaction)) this.glassesCompaction = saved.glassesCompaction
-      this.glassesMarks = marksOf(saved.glassesMarks)
-      this.glassesWords = wordsOf(saved.glassesWords)
       this.frame = frameChoice(saved.frame) ?? DEFAULTS.frame
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
       if (isPaper(saved.pagesPaper)) this.pagesPaper = saved.pagesPaper
@@ -577,42 +533,6 @@ class Modes {
   setLinkFormat(format: string) {
     this.take('linkFormat', isLinkFormat(format) ? format : undefined, true, setLinkWriting)
   }
-  setGlassesBreak(level: string) {
-    this.take('glassesBreak', glassesBreak(level) ?? undefined)
-  }
-  setGlassesLineNumbers(on: boolean) {
-    this.take('glassesLineNumbers', on)
-  }
-  setGlassesVoice(on: boolean) {
-    this.take('glassesVoice', on)
-  }
-  setGlassesCompaction(level: string) {
-    this.take('glassesCompaction', isCompaction(level) ? level : undefined)
-  }
-  setGlassesMark(name: keyof Marks, on: boolean) {
-    if (this.glassesMarks[name] === on) return
-    this.glassesMarks = { ...this.glassesMarks, [name]: on }
-    this.persist()
-    this.share({ glassesMarks: { ...this.glassesMarks } })
-  }
-  setGlassesWord(id: string, phrase: string) {
-    const wanted = phrase.trim().toLowerCase().slice(0, LONGEST_PHRASE).trim()
-    const words = Object.fromEntries(Object.entries(this.glassesWords).filter(([one]) => one !== id))
-    if (wanted) words[id] = wanted
-    this.glassesWords = words
-    this.persist()
-    this.share({ glassesWords: words })
-  }
-  private toldOfGlasses = false
-  sawGlasses() {
-    if (this.toldOfGlasses) return
-    this.toldOfGlasses = true
-    if (!this.glassesSeen) {
-      this.glassesSeen = true
-      this.persist()
-    }
-    this.share({ glassesSeen: true })
-  }
   toggleVim(view?: EditorView) {
     this.setVimKeys(!this.vim, view)
   }
@@ -670,7 +590,6 @@ class Modes {
       for (const key of Object.keys(this.synced) as (keyof Modes)[]) {
         this.follow(key, this.synced[key], (remote as Record<string, unknown>)[key])
       }
-      if (remote.glassesSeen === true) this.toldOfGlasses = true
     }
     this.tellOfMobile(token, remote)
     return remote
@@ -719,16 +638,6 @@ class Modes {
       start: DEFAULTS.linkFormat,
       then: setLinkWriting,
     },
-    glassesBreak: { read: (value) => glassesBreak(value) ?? undefined, start: DEFAULTS.glassesBreak },
-    glassesLineNumbers: { read: flag, start: DEFAULTS.glassesLineNumbers },
-    glassesVoice: { read: flag, start: DEFAULTS.glassesVoice },
-    glassesCompaction: {
-      read: (value) => (isCompaction(value) ? value : undefined),
-      start: DEFAULTS.glassesCompaction,
-    },
-    glassesMarks: { read: (value) => (value === undefined ? undefined : marksOf(value)), start: MARKS },
-    glassesWords: { read: (value) => (value === undefined ? undefined : wordsOf(value)), start: {} },
-    glassesSeen: { read: (value) => (value === true ? true : undefined), start: DEFAULTS.glassesSeen },
     mobileSeen: { read: (value) => (value === true ? true : undefined), start: DEFAULTS.mobileSeen },
   }
   private follow<K extends keyof Modes>(key: K, synced: Follow<Modes[K]> | undefined, value: unknown) {
@@ -736,14 +645,13 @@ class Modes {
   }
   private startOver<K extends keyof Modes>(key: K, synced: Follow<Modes[K]> | undefined, owed: unknown) {
     if (!synced) return
-    const value = synced.read(owed) ?? fresh(synced.start)
+    const value = synced.read(owed) ?? synced.start
     Object.assign(this, { [key]: value })
     synced.then?.(value)
   }
   private backToDefaults(owed: AccountSettings) {
     const said = owed as Record<string, unknown>
     for (const key of Object.keys(this.synced) as (keyof Modes)[]) this.startOver(key, this.synced[key], said[key])
-    this.toldOfGlasses = false
     this.persist()
   }
   private readonly owed = new AccountOwed(OWED_KEY, undefined, (owed) => this.backToDefaults(owed))
@@ -880,13 +788,6 @@ class Modes {
       alwaysOnTop: this.alwaysOnTop,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
-      glassesBreak: this.glassesBreak,
-      glassesLineNumbers: this.glassesLineNumbers,
-      glassesVoice: this.glassesVoice,
-      glassesCompaction: this.glassesCompaction,
-      glassesMarks: this.glassesMarks,
-      glassesWords: this.glassesWords,
-      glassesSeen: this.glassesSeen,
       mobileSeen: this.mobileSeen,
       vim: this.vim,
       attachments: this.attachments,

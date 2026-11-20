@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { EditorView } from '@orden/editor'
-import { familyName, glassesBreak, KEEP_MONTH, KEEP_YEAR, rollbackSteps } from './modes.svelte'
+import { familyName, KEEP_MONTH, KEEP_YEAR, rollbackSteps } from './modes.svelte'
 import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
@@ -62,7 +62,6 @@ interface Held {
   ligatures?: boolean | string
   attachments?: string
   vim?: boolean
-  glassesSeen?: boolean
   mobileSeen?: boolean
   quietMarks?: boolean
   silent?: boolean
@@ -150,54 +149,43 @@ describe('read-only mode', () => {
     expect(told.calls).toContainEqual({ mode: 'read-only', on: false })
   })
 })
-describe('the glasses settings', () => {
-  const saved = () => JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
-  test('start a page at H2 and above, with the note’s own line numbers', () => {
-    expect(modes.glassesBreak).toBe(2)
-    expect(modes.glassesLineNumbers).toBe(true)
-  })
-  test('carry no scroll mode, and drop one an older version wrote down', async () => {
-    localStorage.setItem('orden:modes', JSON.stringify({ glassesScroll: 'native', glassesLineNumbers: false }))
+describe('the glasses, which are gone (#2358)', () => {
+  const GLASSES = [
+    'glassesScroll',
+    'glassesBreak',
+    'glassesLineNumbers',
+    'glassesVoice',
+    'glassesCompaction',
+    'glassesMarks',
+    'glassesWords',
+    'glassesSeen',
+  ]
+  const kept = () => Object.keys(JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>)
+  test('leave nothing behind, and what older builds wrote down for them is dropped quietly with the rest kept', async () => {
+    localStorage.setItem(
+      'orden:modes',
+      JSON.stringify({
+        glassesScroll: 'native',
+        glassesBreak: 3,
+        glassesLineNumbers: false,
+        glassesVoice: true,
+        glassesCompaction: 'collapse',
+        glassesMarks: { heading: false },
+        glassesWords: { next: 'onwards' },
+        glassesSeen: true,
+        vim: true,
+      }),
+    )
     const back = await restarted()
-    expect(back.glassesLineNumbers).toBe(false)
-    expect(saved()).not.toHaveProperty('glassesScroll')
-    expect(Object.keys(back as unknown as Record<string, unknown>)).not.toContain('glassesScroll')
+    expect(back.vim).toBe(true)
+    for (const key of GLASSES) expect(key in back, key).toBe(false)
+    expect(kept().filter((key) => GLASSES.includes(key))).toEqual([])
   })
-  test('start with the microphone off, which is the only defensible default', () => {
-    expect(modes.glassesVoice).toBe(false)
-  })
-  test('take a heading level and write it down', () => {
-    modes.setGlassesBreak('3')
-    expect(modes.glassesBreak).toBe(3)
-    expect(saved().glassesBreak).toBe(3)
-    modes.setGlassesBreak('0')
-    expect(modes.glassesBreak).toBe(0)
-  })
-  test('ignore a heading level there is no such thing as', () => {
-    modes.setGlassesBreak('2')
-    modes.setGlassesBreak('9')
-    modes.setGlassesBreak('nowhere')
-    expect(modes.glassesBreak).toBe(2)
-  })
-  test('read a level whether it arrives as a number or as a word', () => {
-    expect(glassesBreak(2)).toBe(2)
-    expect(glassesBreak('2')).toBe(2)
-    expect(glassesBreak(0)).toBe(0)
-    expect(glassesBreak(7)).toBeNull()
-    expect(glassesBreak(true)).toBeNull()
-    expect(glassesBreak(undefined)).toBeNull()
-  })
-  test('take the two switches and write them down', () => {
-    modes.setGlassesLineNumbers(false)
-    modes.setGlassesVoice(true)
-    expect(saved().glassesLineNumbers).toBe(false)
-    expect(saved().glassesVoice).toBe(true)
-  })
-  test('keep no model or effort of their own, since they ask the default AI account', () => {
-    modes.setGlassesVoice(false)
-    expect(saved()).not.toHaveProperty('glassesModel')
-    expect(saved()).not.toHaveProperty('glassesEffort')
-    expect(modes).not.toHaveProperty('glassesModel')
+  test('and are not taken from an account that still holds them', async () => {
+    Object.assign(api, { settings: async () => ({ settings: { glassesBreak: 5, glassesSeen: true, vim: true } }) })
+    await modes.adopt('token')
+    expect(modes.vim).toBe(true)
+    expect(kept().filter((key) => GLASSES.includes(key))).toEqual([])
   })
 })
 describe('smart punctuation', () => {
@@ -657,11 +645,11 @@ describe('taking over what the account holds', () => {
   test('carries up what was decided before the session came back', async () => {
     const patches = sending()
     api.settings = async () => ({ settings: {} })
-    modes.sawGlasses()
-    expect(modes.glassesSeen).toBe(true)
+    modes.toggleSilent()
+    expect(modes.silent).toBe(true)
     expect(patches).toEqual([])
     await modes.adopt('token')
-    expect(patches).toEqual([{ glassesSeen: true }])
+    expect(patches).toEqual([{ silent: true }])
   })
   test('and keeps owing it where the account could not be reached', async () => {
     const patches: Held[] = []
@@ -672,16 +660,16 @@ describe('taking over what the account holds', () => {
     api.settings = async () => {
       throw new Error('offline')
     }
-    modes.sawGlasses()
+    modes.toggleSilent()
     expect(await modes.adopt('token')).toBeNull()
-    expect(patches).toEqual([{ glassesSeen: true }])
+    expect(patches).toEqual([{ silent: true }])
     api.saveSettings = async (_token: string, patch: Held) => {
       patches.push(patch)
       return { settings: {} }
     }
     api.settings = async () => ({ settings: {} })
     await modes.adopt('token')
-    expect(patches).toEqual([{ glassesSeen: true }, { glassesSeen: true }])
+    expect(patches).toEqual([{ silent: true }, { silent: true }])
   })
   test('owes nothing to the next account once the session that could not be reached signs out', async () => {
     const patches: [string, Held][] = []
@@ -692,7 +680,7 @@ describe('taking over what the account holds', () => {
     api.settings = async () => {
       throw new Error('offline')
     }
-    modes.sawGlasses()
+    modes.toggleSilent()
     expect(await modes.adopt('first')).toBeNull()
     const { account } = await import('../../accounts/src/account.svelte')
     await account.signOut()
@@ -702,7 +690,7 @@ describe('taking over what the account holds', () => {
     }
     api.settings = async () => ({ settings: {} })
     await modes.adopt('second')
-    expect(patches).toEqual([['first', { glassesSeen: true }]])
+    expect(patches).toEqual([['first', { silent: true }]])
   })
   test('takes nothing from an account whose answer comes after it signed out', async () => {
     const { release, settingsCall } = heldAnswer({ vim: true, quietMarks: true })
@@ -715,37 +703,24 @@ describe('taking over what the account holds', () => {
     expect(modes.vim).toBe(false)
     expect(modes.quietMarks).toBe(false)
   })
-  test('takes it from the account, and then has nothing left to say', async () => {
-    const patches = sending()
-    api.settings = async () => ({ settings: { glassesSeen: true } })
-    expect(modes.glassesSeen).toBe(false)
-    await modes.adopt('token')
-    expect(modes.glassesSeen).toBe(true)
-    modes.sawGlasses()
-    expect(patches).toEqual([])
-  })
   test('a setting the account refuses stays on the device, and holds back none of the rest (#1800)', async () => {
     const { ApiError } = await import('../../accounts/src/api')
     const patches: Held[] = []
     api.saveSettings = async (_token: string, patch: Held) => {
       patches.push(patch)
-      if ('glassesWords' in patch) throw new ApiError(400, 'glassesWords is refused')
+      if ('hardBreaks' in patch) throw new ApiError(400, 'hardBreaks is refused')
       return { settings: {} }
     }
     api.settings = async () => ({ settings: {} })
-    modes.setGlassesWord('next', 'next page')
+    modes.toggleHardBreaks()
     modes.toggleSilent()
     await modes.adopt('token')
     expect(patches.at(-1)).toEqual({ silent: modes.silent })
-    expect(modes.glassesWords).toEqual({ next: 'next page' })
+    expect(modes.hardBreaks).toBe(true)
     patches.length = 0
     modes.setVimKeys(true)
     await modes.adopt('token')
     expect(patches).toEqual([{ vim: true }])
-  })
-  test('a glasses phrase is cut to the 60 characters the account keeps (#1800)', () => {
-    modes.setGlassesWord('next', 'a'.repeat(70))
-    expect(modes.glassesWords.next).toBe('a'.repeat(60))
   })
   describe('a phone or a tablet on the account', () => {
     async function adoptedOn(device: 'desktop' | 'phone', account: Held) {
@@ -1005,17 +980,17 @@ describe('another account in the same window (#2344)', () => {
     await signedIn('alice')
     modes.setVimKeys(true)
     modes.setLigatures('code')
-    modes.setGlassesWord('next', 'onwards')
+    modes.setAttachments('named')
     await modes.adopt('alice')
-    expect(server.alice).toMatchObject({ vim: true, ligatures: 'code', glassesWords: { next: 'onwards' } })
+    expect(server.alice).toMatchObject({ vim: true, ligatures: 'code', attachments: 'named' })
     told.calls = []
     await signedIn('bob')
     expect(modes.vim).toBe(false)
     expect(modes.ligatures).toBe('off')
-    expect(modes.glassesWords).toEqual({})
+    expect(modes.attachments).toBe('space')
     expect(modes.silent).toBe(true)
     expect(told.calls).toContainEqual({ mode: 'vim', on: false })
-    expect(saved()).toMatchObject({ vim: false, ligatures: 'off', glassesWords: {}, silent: true })
+    expect(saved()).toMatchObject({ vim: false, ligatures: 'off', attachments: 'space', silent: true })
     modes.setVimKeys(true)
     await modes.adopt('bob')
     line.offline = true
@@ -1026,7 +1001,7 @@ describe('another account in the same window (#2344)', () => {
     await signedIn('alice')
     expect(modes.vim).toBe(true)
     expect(modes.ligatures).toBe('code')
-    expect(modes.glassesWords).toEqual({ next: 'onwards' })
+    expect(modes.attachments).toBe('named')
     expect(modes.silent).toBe(false)
     done()
   })
