@@ -9,13 +9,14 @@ export interface Moving {
   path: string | null
   home: string | null
   shared: string | null
+  at?: string | null
 }
 export function carried(tab: Moving, spaces: readonly Placed[]): Carried {
   if (tab.path !== null) return ownerOf(tab.path, null, spaces) === null ? 'tab' : 'file'
   return tab.shared === null ? 'home' : 'tab'
 }
 export function spaceOfTab(tab: Moving, spaces: readonly Placed[], active: string | null): string | null {
-  return ownerOf(tab.path, tab.shared === null ? tab.home : null, spaces) ?? active
+  return tab.at ?? ownerOf(tab.path, tab.shared === null ? tab.home : null, spaces) ?? active
 }
 export function movingOf(tab: { path: string | null; note: { home: string | null; shared: string | null } }): Moving {
   return { path: tab.path, home: tab.note.home, shared: tab.note.shared }
