@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { appIcon, appName, lightness, plateFor, siteIcon, UNSEEN } from './places'
+import { appIcon, appName, lightness, ownApp, plateFor, siteIcon, tabKindOf, UNSEEN } from './places'
 
 describe('the icon and name a place is shown with', () => {
   test('a site wears its brand from the brand set, never a bare name the outline set does not have', () => {
@@ -27,5 +27,17 @@ describe('the icon and name a place is shown with', () => {
     expect(plateFor(null, 'dark')).toBeNull()
     expect(plateFor(UNSEEN, 'dark')).toBe('light')
     expect(plateFor(UNSEEN, 'light')).toBeNull()
+  })
+})
+describe('the kind a tab place was kept as', () => {
+  test('comes from its kind before the name, or from its file ending', () => {
+    expect(tabKindOf('time:Time tracker')).toBe('time')
+    expect(tabKindOf('terminal:Terminal')).toBe('terminal')
+    expect(tabKindOf('C:\\notes\\Plan.md')).toBe('note')
+    expect(tabKindOf('/spaces/orga/Plan')).toBeNull()
+  })
+  test('and Orden is its own app', () => {
+    expect(ownApp(' Orden ')).toBe(true)
+    expect(ownApp('ordenx')).toBe(false)
   })
 })
