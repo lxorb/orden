@@ -418,9 +418,7 @@ class Decorator {
     const checked = /x/i.test(this.state.doc.sliceString(node.from, node.to))
     const listMark = node.parent?.parent?.getChild('ListMark')
     if (listMark) this.conceal(listMark.from, this.eatSpace(listMark.to), false)
-    this.hidden.push(
-      Decoration.replace({ widget: new CheckboxWidget(checked, node.from, node.to) }).range(node.from, node.to),
-    )
+    this.hidden.push(Decoration.replace({ widget: new CheckboxWidget(checked) }).range(node.from, node.to))
     if (checked) this.addLineClass(this.state.doc.lineAt(node.from).from, 'orden-task-done')
     this.taskFields(this.state.doc.lineAt(node.from))
   }
