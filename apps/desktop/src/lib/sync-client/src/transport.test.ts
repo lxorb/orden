@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { unframe } from '@orden/sync-core'
 import { testDevice } from '../test/test-device'
 import { readingOver, Refused, remoteFiles } from './transport'
@@ -55,6 +55,25 @@ describe('the engine over the network', () => {
       ops: { t: string; name: string }[]
     }
     expect(body.ops).toEqual([expect.objectContaining({ t: 'create', name: 'Plan.md' })])
+  })
+})
+describe('a request made while the window goes (#2269)', () => {
+  test.each([
+    ['hidden', true],
+    ['visible', false],
+  ])('outlives the page only while it is %s', async (visibilityState, kept) => {
+    const asked: Request[] = []
+    const device = await made((request) => {
+      asked.push(request)
+      return Promise.resolve(new Response('', { status: 503 }))
+    })
+    vi.stubGlobal('document', { visibilityState })
+    try {
+      await device.engine.pass(SPACE)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(asked[0]?.keepalive).toBe(kept)
   })
 })
 describe('a file’s bytes over the network', () => {

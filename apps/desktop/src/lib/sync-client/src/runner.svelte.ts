@@ -485,6 +485,7 @@ class Runner {
       workspace()
         .writesSettled()
         .then(() => engine.flush())
+        .then(() => this.sentBeforeGoing(engine))
         .catch(() => undefined),
     )
   }
@@ -494,9 +495,17 @@ class Runner {
     writing(
       workspace()
         .writesSettled()
+        .then(() => engine.flush())
+        .then(() => this.sentBeforeGoing(engine))
         .then(() => engine.quit())
         .catch(() => undefined),
     )
+  }
+  private async sentBeforeGoing(engine: Engine): Promise<void> {
+    for (const id of [...engine.core.spaces.keys()]) {
+      if (this.current !== engine || !engine.waiting(id)) continue
+      await engine.pass(id).catch(() => null)
+    }
   }
   rollBack(): Promise<boolean> {
     return this.inLane(async () => {

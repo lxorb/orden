@@ -15,6 +15,8 @@ export class Refused extends Error {
   }
 }
 const OCTETS = 'application/octet-stream'
+const OUTLIVES_PAGE = 60_000
+const leaving = () => typeof document !== 'undefined' && document.visibilityState === 'hidden'
 export const FULL = 507
 function pathOf(route: Route, space: string, body: unknown): string {
   const at = encodeURIComponent(space)
@@ -44,6 +46,7 @@ export function accountOver(reaching: Reaching): Account {
       const token = reaching.token()
       if (!token) return null
       const reading = route === 'feed'
+      const bytes = reading ? null : new Uint8Array(frame(body))
       const request = new Request(`${reaching.base}${pathOf(route, space, body)}`, {
         method: reading ? 'GET' : 'POST',
         headers: {
@@ -52,7 +55,7 @@ export function accountOver(reaching: Reaching): Account {
           'x-orden-device': reaching.device(),
           ...(reading ? {} : { 'content-type': OCTETS }),
         },
-        ...(reading ? {} : { body: new Uint8Array(frame(body)) }),
+        ...(bytes ? { body: bytes, keepalive: leaving() && bytes.byteLength < OUTLIVES_PAGE } : {}),
       })
       let response: Response
       try {
