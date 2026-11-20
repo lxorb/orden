@@ -32,6 +32,14 @@ export function isAppHost(env: Env, url: string): boolean {
   const asked = originOf(url)
   return asked !== null && origins(env).some((one) => new URL(one).host === new URL(asked).host)
 }
+export function siteOrigin(env: Env): string {
+  return originOf(env.SITE_ORIGIN ?? '') ?? originOf(env.APP_ORIGIN) ?? ''
+}
+export function isSiteHost(env: Env, url: string): boolean {
+  const asked = originOf(url)
+  const site = originOf(env.SITE_ORIGIN ?? '')
+  return asked !== null && site !== null && new URL(asked).host === new URL(site).host
+}
 export function originAt(env: Env, url: string): string {
   const asked = originOf(url)
   return asked !== null && origins(env).includes(asked) ? asked : (originOf(env.APP_ORIGIN) ?? '')

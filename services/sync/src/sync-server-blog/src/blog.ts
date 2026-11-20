@@ -48,6 +48,7 @@ import {
   type Note,
   type Space,
   notesOfSite,
+  siteOrigin,
 } from '../../sync-server/src/api'
 import { noteKey, noteKind, keepAnswer, readSpaceFiles } from '../../sync-server-engine/src/api'
 import '@orden/markdown/eager'
@@ -296,7 +297,7 @@ ${shell.bar ?? ''}
 <div class="frame">
 ${shell.left ?? ''}
 <div class="middle"><main id="write">${body}
-<footer>${author ? `<span>${escape(author)}</span>` : ''}<span>Published with <a href="${env.APP_ORIGIN}">Orden</a></span></footer>
+<footer>${author ? `<span>${escape(author)}</span>` : ''}<span>Published with <a href="${siteOrigin(env)}">Orden</a></span></footer>
 </main>${shell.under ? `<div class="under">${shell.under}</div>` : ''}</div>
 ${shell.right ?? ''}
 </div></body></html>`

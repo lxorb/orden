@@ -34,7 +34,7 @@ describe('the names', () => {
   test('a request is answered in the name it used, or in the one links name', () => {
     expect(originAt(env, 'https://orden.so/.well-known/x')).toBe(NEW)
     expect(originAt(env, 'https://nibeditor.com/oauth/token')).toBe(OLD)
-    expect(originAt(env, 'https://notes.example.com/')).toBe(NEW)
+    expect(originAt(env, 'https://notes.example.com/')).toBe('https://app.orden.so')
   })
   test('every name is a blog root, and the longest one a host is under wins', () => {
     expect(blogRoots(env)).toEqual(['orden.so', 'nibeditor.com'])
@@ -77,7 +77,7 @@ describe('Pass under its own name', () => {
   })
   test('is not one of the names a connector finds the server under', () => {
     expect(origins(env)).not.toContain(PASS)
-    expect(originAt(env, `${PASS}/.well-known/x`)).toBe(NEW)
+    expect(originAt(env, `${PASS}/.well-known/x`)).toBe('https://app.orden.so')
   })
   test('cannot be taken as a site', async () => {
     const token = await signIn(env, 'a@b.dev')

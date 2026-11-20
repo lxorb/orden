@@ -46,7 +46,18 @@ export {
 } from './guests'
 export { type Ended, hooks, type Session, wire } from './hooks'
 export { claimDomain, DOMAIN, domainStatus, releaseDomain, releaseLeftDomains } from './hostnames'
-export { blogRootOf, blogRoots, isAppHost, isOwnOrigin, originAt, origins, passHost, sameOriginPath } from './hosts'
+export {
+  blogRootOf,
+  blogRoots,
+  isAppHost,
+  isOwnOrigin,
+  isSiteHost,
+  originAt,
+  origins,
+  passHost,
+  sameOriginPath,
+  siteOrigin,
+} from './hosts'
 export { laterOf, pokeNow, pokeSpace } from './hub/poke'
 export { askHub, eraseHubs, HUB_AWAY, tellHubs } from './hub/reach'
 export {

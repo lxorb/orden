@@ -9,7 +9,9 @@ import {
   blogRootOf,
   isAppHost,
   isOwnOrigin,
+  isSiteHost,
   passHost,
+  siteOrigin,
   serveApp,
   servePass,
   switchChannel,
@@ -258,7 +260,7 @@ app.route('/v2/online/admin', onlineAdmin)
 app.route('/v2/online', online)
 app.get('/health', (context) => context.json({ ok: true }))
 app.get('/pass-link/:id', async (context, next) => {
-  if (isAppHost(context.env, context.req.url)) {
+  if (isAppHost(context.env, context.req.url) && !isSiteHost(context.env, context.req.url)) {
     return await servePassLink(context.env, context.req.raw)
   }
   await next()
@@ -270,25 +272,54 @@ app.all('*', async (context) => {
     const switched = switchChannel(context.req.raw)
     if (switched) return switched
     const assets = context.env.ASSETS
-    if (assets) return unframed(await servePass(assets, context.req.raw))
+    if (assets) return unframed(await servePass(assets, context.req.raw), url, null)
     return context.text('Not found', 404)
   }
   const space = await spaceForHost(context.env, url.host)
   if (space) return serveBlog(context.env, space, url, context.req.raw)
+  const site = isSiteHost(context.env, context.req.url)
+  if (site) {
+    if (url.pathname === '/sw.js') return leftBehind()
+    if (!ACCOUNT_ONLY.test(url.pathname) && !STAYS_ON_THE_SITE.test(url.pathname)) {
+      const moved = context.req.method === 'GET' || context.req.method === 'HEAD' ? 301 : 308
+      return context.redirect(`${context.env.APP_ORIGIN.replace(/\/+$/, '')}${url.pathname}${url.search}`, moved)
+    }
+  }
   const hostname = hostnameOf(url.host)
   const root = blogRootOf(context.env, hostname)
-  if (root && hostname !== root) return context.redirect(context.env.APP_ORIGIN, 302)
-  const switched = switchChannel(context.req.raw)
+  if (!site && !isAppHost(context.env, context.req.url) && root && hostname !== root) {
+    return context.redirect(siteOrigin(context.env), 302)
+  }
+  const switched = site ? null : switchChannel(context.req.raw)
   if (switched) return switched
   const assets = context.env.ASSETS
-  if (assets) return unframed(await serveApp(assets, context.req.raw))
+  const framer = !site && isAppHost(context.env, context.req.url) ? siteOrigin(context.env) : null
+  if (assets) return unframed(await serveApp(assets, context.req.raw), url, framer)
   return context.text('Not found', 404)
 })
-function unframed(response: Response): Response {
+const STAYS_ON_THE_SITE = /^\/(?:handoff(?:\.html)?$|health$|assets\/|i\/|themes(?:\/|$)|[^/]+\.(?!html$)[a-z0-9]+$)/i
+function leftBehind(): Response {
+  return new Response(
+    `self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => event.waitUntil((async () => {
+  for (const key of await caches.keys()) await caches.delete(key)
+  await self.registration.unregister()
+  for (const one of await self.clients.matchAll({ type: 'window' })) one.navigate(one.url)
+})()))
+`,
+    { headers: { 'content-type': 'text/javascript', 'cache-control': 'no-store' } },
+  )
+}
+function unframed(response: Response, url: URL, framer: string | null): Response {
   if (!response.headers.get('content-type')?.includes('text/html')) return response
   const headers = new Headers(response.headers)
-  headers.set('content-security-policy', "frame-ancestors 'none'")
-  headers.set('x-frame-options', 'DENY')
+  if (framer && (url.searchParams.has('demo') || url.pathname.startsWith('/demo/'))) {
+    headers.set('content-security-policy', `frame-ancestors ${framer}`)
+    headers.delete('x-frame-options')
+  } else {
+    headers.set('content-security-policy', "frame-ancestors 'none'")
+    headers.set('x-frame-options', 'DENY')
+  }
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

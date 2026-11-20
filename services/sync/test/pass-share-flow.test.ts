@@ -373,7 +373,7 @@ describe('the page a secure link opens', () => {
           ),
       },
     })
-    const answer = await call(page, '/pass-link/AAAAAAAAAAAAAAAAAAAAAA')
+    const answer = await call(page, '/pass-link/AAAAAAAAAAAAAAAAAAAAAA', { host: 'app.orden.so' })
     expect(answer.text).toBe('/pass-link.html')
     const policy = answer.headers.get('content-security-policy') ?? ''
     expect(policy).toContain("default-src 'none'")
@@ -397,7 +397,10 @@ describe('the page a secure link opens', () => {
       },
     })
     const path = '/pass-link/AAAAAAAAAAAAAAAAAAAAAA'
-    expect((await call(page, path, { host: 'orden.so' })).text).toBe('/pass-link.html')
+    expect((await call(page, path, { host: 'app.orden.so' })).text).toBe('/pass-link.html')
+    expect((await call(page, path, { host: 'orden.so' })).headers.get('location')).toBe(
+      'https://app.orden.so/pass-link/AAAAAAAAAAAAAAAAAAAAAA',
+    )
     for (const host of ['ada.orden.so', 'blog.example.com']) {
       const elsewhere = await call(page, path, { host })
       expect(elsewhere.text, host).not.toBe('/pass-link.html')

@@ -69,7 +69,7 @@ describe('the answer to a report', () => {
     })
     expect(answer.status).toBe(200)
     const { id, url } = answer.json
-    expect(url).toMatch(new RegExp(`^https://orden\\.so/v1/feedback/${id}/[0-9a-f]{64}$`))
+    expect(url).toMatch(new RegExp(`^https://app\\.orden\\.so/v1/feedback/${id}/[0-9a-f]{64}$`))
     const page = await call(env, new URL(url).pathname)
     expect(page.status).toBe(200)
     expect(page.text).toContain('Received. It is waiting to be filed')
@@ -153,7 +153,7 @@ describe('the pictures of a report', () => {
     expect((await call(env, `/v1/feedback/images/${'a'.repeat(64)}`)).status).toBe(404)
     const page = await call(env, new URL(answer.json.url).pathname)
     for (const row of rows) {
-      expect(page.text).toContain(`https://orden.so/v1/feedback/images/${row.name}`)
+      expect(page.text).toContain(`https://app.orden.so/v1/feedback/images/${row.name}`)
     }
     const body = issueBody({
       id: answer.json.id,
@@ -161,10 +161,10 @@ describe('the pictures of a report', () => {
       log: '',
       createdAt: 0,
       account: null,
-      images: rows.map((one) => `https://orden.so/v1/feedback/images/${one.name}`),
+      images: rows.map((one) => `https://app.orden.so/v1/feedback/images/${one.name}`),
     })
-    expect(body).toContain(`![Image 1](https://orden.so/v1/feedback/images/${rows[0]?.name ?? ''})`)
-    expect(body).toContain(`![Image 2](https://orden.so/v1/feedback/images/${rows[1]?.name ?? ''})`)
+    expect(body).toContain(`![Image 1](https://app.orden.so/v1/feedback/images/${rows[0]?.name ?? ''})`)
+    expect(body).toContain(`![Image 2](https://app.orden.so/v1/feedback/images/${rows[1]?.name ?? ''})`)
   })
   test('are refused past the count, and the report with them', async () => {
     const images = Array.from({ length: MOST_IMAGES + 1 }, () => dataUrl('image/png', PNG))

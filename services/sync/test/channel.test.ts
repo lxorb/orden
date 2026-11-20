@@ -30,32 +30,34 @@ const BOTH = {
 }
 const ON_EDGE = { cookie: 'theme=dark; orden-channel=unstable' }
 let env: TestEnv
+const onApp = (path: string, options: Parameters<typeof call>[2] = {}) =>
+  call(env, path, { host: 'app.orden.so', ...options })
 afterEach(() => env.close())
 describe('without the cookie', () => {
   test('the release is served, as before', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    expect((await call(env, '/')).text).toBe('stable index')
-    expect((await call(env, '/handoff')).text).toBe('stable handoff')
-    expect((await call(env, '/sw.js')).text).toBe('stable sw')
-    expect((await call(env, '/s/some/where')).text).toBe('stable index')
+    expect((await onApp('/')).text).toBe('stable index')
+    expect((await onApp('/handoff')).text).toBe('stable handoff')
+    expect((await onApp('/sw.js')).text).toBe('stable sw')
+    expect((await onApp('/s/some/where')).text).toBe('stable index')
   })
   test('a cookie with any other value is the release too', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    const page = await call(env, '/', { headers: { cookie: 'orden-channel=stable' } })
+    const page = await onApp('/', { headers: { cookie: 'orden-channel=stable' } })
     expect(page.text).toBe('stable index')
   })
 })
 describe('with the cookie', () => {
   test('the edge is served for every page and every file of its own', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    expect((await call(env, '/', { headers: ON_EDGE })).text).toBe('unstable index')
-    expect((await call(env, '/handoff', { headers: ON_EDGE })).text).toBe('unstable handoff')
-    expect((await call(env, '/sw.js', { headers: ON_EDGE })).text).toBe('unstable sw')
-    expect((await call(env, '/s/some/where', { headers: ON_EDGE })).text).toBe('unstable index')
+    expect((await onApp('/', { headers: ON_EDGE })).text).toBe('unstable index')
+    expect((await onApp('/handoff', { headers: ON_EDGE })).text).toBe('unstable handoff')
+    expect((await onApp('/sw.js', { headers: ON_EDGE })).text).toBe('unstable sw')
+    expect((await onApp('/s/some/where', { headers: ON_EDGE })).text).toBe('unstable index')
   })
   test('and is still no other site’s to frame, and says it depends on the cookie', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    const page = await call(env, '/', { headers: ON_EDGE })
+    const page = await onApp('/', { headers: ON_EDGE })
     expect(page.headers.get('x-frame-options')).toBe('DENY')
     expect(page.headers.get('vary')).toContain('cookie')
   })
@@ -72,16 +74,16 @@ describe('with the cookie', () => {
   test('falls back to the release when the edge was not deployed', async () => {
     const stable = Object.fromEntries(Object.entries(BOTH).filter(([path]) => !path.startsWith('/_unstable/')))
     env = testEnv({ ASSETS: assets(stable) })
-    expect((await call(env, '/', { headers: ON_EDGE })).text).toBe('stable index')
-    expect((await call(env, '/s/where', { headers: ON_EDGE })).text).toBe('stable index')
+    expect((await onApp('/', { headers: ON_EDGE })).text).toBe('stable index')
+    expect((await onApp('/s/where', { headers: ON_EDGE })).text).toBe('stable index')
   })
 })
 describe('the folder itself', () => {
   test('is not served by its own address', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    expect((await call(env, '/_unstable/')).status).toBe(404)
-    expect((await call(env, '/_unstable/sw.js', { headers: ON_EDGE })).status).toBe(404)
-    expect((await call(env, '/_unstable')).status).toBe(404)
+    expect((await onApp('/_unstable/')).status).toBe(404)
+    expect((await onApp('/_unstable/sw.js', { headers: ON_EDGE })).status).toBe(404)
+    expect((await onApp('/_unstable')).status).toBe(404)
   })
 })
 describe('a cookie another site set for the root', () => {
@@ -91,20 +93,20 @@ describe('a cookie another site set for the root', () => {
       'orden-channel=unstable; __Host-orden-channel=stable',
       '__Host-orden-channel=stable; orden-channel=unstable',
     ]) {
-      expect((await call(env, '/', { headers: { cookie } })).text, cookie).toBe('stable index')
+      expect((await onApp('/', { headers: { cookie } })).text, cookie).toBe('stable index')
     }
     const chosen = { cookie: 'orden-channel=; __Host-orden-channel=unstable' }
-    expect((await call(env, '/', { headers: chosen })).text).toBe('unstable index')
+    expect((await onApp('/', { headers: chosen })).text).toBe('unstable index')
   })
   test('and a browser that chose before the rename stays where it is', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    expect((await call(env, '/', { headers: ON_EDGE })).text).toBe('unstable index')
+    expect((await onApp('/', { headers: ON_EDGE })).text).toBe('unstable index')
   })
 })
 describe('?channel=', () => {
   test('unstable sets the cookie and comes back to the same page without it', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    const answer = await call(env, '/s/x?a=1&channel=unstable')
+    const answer = await onApp('/s/x?a=1&channel=unstable')
     expect(answer.status).toBe(302)
     expect(answer.headers.get('location')).toBe('/s/x?a=1')
     const cookie = answer.headers.getSetCookie()[0] ?? ''
@@ -113,7 +115,7 @@ describe('?channel=', () => {
   })
   test('stable says so, and clears the one a browser chose before the rename', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    const answer = await call(env, '/?channel=stable', { headers: ON_EDGE })
+    const answer = await onApp('/?channel=stable', { headers: ON_EDGE })
     expect(answer.status).toBe(302)
     expect(answer.headers.get('location')).toBe('/')
     const cookies = answer.headers.getSetCookie()
@@ -132,20 +134,20 @@ describe('?channel=', () => {
   })
   test('anything else is just a parameter', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    const answer = await call(env, '/?channel=nightly')
+    const answer = await onApp('/?channel=nightly')
     expect(answer.status).toBe(200)
     expect(answer.headers.get('set-cookie')).toBe(null)
   })
   test('the API does not answer to it', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
-    const answer = await call(env, '/health?channel=unstable')
+    const answer = await onApp('/health?channel=unstable')
     expect(answer.json).toEqual({ ok: true })
     expect(answer.headers.get('set-cookie')).toBe(null)
   })
   test('a path that begins with two slashes stays on this site', async () => {
     env = testEnv({ ASSETS: assets(BOTH) })
     for (const path of ['//evil.example/x', '/\\evil.example/x']) {
-      const answer = await call(env, `${path}?channel=stable`)
+      const answer = await onApp(`${path}?channel=stable`)
       expect(answer.status).toBe(302)
       expect(answer.headers.get('location'), path).toBe('/evil.example/x')
     }
@@ -162,43 +164,43 @@ describe('Pass under its own name', () => {
   test('is Pass at every page, and the app nowhere', async () => {
     env = testEnv({ ASSETS: assets(PASS) })
     for (const path of ['/', '/index.html', '/s/some/where', '/handoff']) {
-      const page = await call(env, path, { host })
+      const page = await onApp(path, { host })
       expect(page.text, path).toBe('stable pass')
     }
-    expect((await call(env, '/', { host: 'Pass.Orden.so.' })).text).toBe('stable pass')
-    expect((await call(env, '/')).text).toBe('stable index')
-    expect((await call(env, '/', { host: 'orden.so' })).text).toBe('stable index')
+    expect((await onApp('/', { host: 'Pass.Orden.so.' })).text).toBe('stable pass')
+    expect((await onApp('/')).text).toBe('stable index')
+    expect((await onApp('/', { host: 'orden.so' })).headers.get('location')).toBe('https://app.orden.so/')
   })
   test('serves its own files as they are', async () => {
     env = testEnv({ ASSETS: assets(PASS) })
-    expect((await call(env, '/pass.webmanifest', { host })).text).toBe('stable pass manifest')
-    expect((await call(env, '/sw.js', { host })).text).toBe('stable sw')
+    expect((await onApp('/pass.webmanifest', { host })).text).toBe('stable pass manifest')
+    expect((await onApp('/sw.js', { host })).text).toBe('stable sw')
   })
   test('follows the channel the browser chose', async () => {
     env = testEnv({ ASSETS: assets(PASS) })
-    expect((await call(env, '/', { host, headers: ON_EDGE })).text).toBe('unstable pass')
-    const answer = await call(env, '/?channel=unstable', { host })
+    expect((await onApp('/', { host, headers: ON_EDGE })).text).toBe('unstable pass')
+    const answer = await onApp('/?channel=unstable', { host })
     expect(answer.status).toBe(302)
   })
   test('is no other site’s to frame', async () => {
     env = testEnv({ ASSETS: assets(PASS) })
-    const page = await call(env, '/', { host })
+    const page = await onApp('/', { host })
     expect(page.headers.get('x-frame-options')).toBe('DENY')
   })
   test('is not a site somebody published under the same name', async () => {
     env = testEnv({ ASSETS: assets(PASS) })
     const token = await signIn(env, 'a@b.dev')
-    const space = (await call(env, '/v1/spaces', { token, body: { name: 'Taken' } })).json.space.id
+    const space = (await onApp('/v1/spaces', { token, body: { name: 'Taken' } })).json.space.id
     env.db.prepare('update spaces set blog_subdomain = ?, blog_enabled = 1 where id = ?').run('pass', space)
-    expect((await call(env, '/', { host })).text).toBe('stable pass')
+    expect((await onApp('/', { host })).text).toBe('stable pass')
   })
   test('answers the API it calls', async () => {
     env = testEnv({ ASSETS: assets(PASS) })
-    expect((await call(env, '/health', { host })).json).toEqual({ ok: true })
+    expect((await onApp('/health', { host })).json).toEqual({ ok: true })
   })
   test('is only there when it has a name', async () => {
     env = testEnv({ ASSETS: assets(PASS), PASS_ORIGIN: '' })
-    const page = await call(env, '/', { host })
+    const page = await onApp('/', { host })
     expect(page.status).toBe(302)
   })
 })
