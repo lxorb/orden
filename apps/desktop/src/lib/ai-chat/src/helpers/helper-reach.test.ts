@@ -103,7 +103,7 @@ describe('a helper of an agent whose grant is narrowed', () => {
       scopes: ['notes.read', 'agents'],
       spaces: ['Work'],
       mode: 'unsupervised',
-      chat_mode: 'plan',
+      chat: { mode: 'plan' },
     })
     await runAgent({ verb: 'run_agent', caller, args: { prompt: 'x', model: 'astra' } })
     expect(asked[0]?.asker).toMatchObject({ reach: { spaces: ['Work'] } })

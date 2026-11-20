@@ -37,14 +37,22 @@ function modeOf(call: Call): Mode {
   const caller = call.caller
   if (!caller.agent) return 'auto'
   if (!caller.agent.builtIn) return modeOfGrant(caller.agent.mode)
-  if (caller.chatMode) return caller.chatMode
+  if (caller.chat) return caller.chat.mode
   throw new Refused('not_granted', 'the mode of the chat that asked is not known, so no helper was started')
 }
 function askerOf(call: Call) {
   const agent = call.caller.agent
   const mode = modeOf(call)
   const thread = 'thread' in call.caller ? (call.caller.thread ?? null) : null
-  return { thread, mode, ...(agent ? { reach: agent } : {}) }
+  const chat = 'chat' in call.caller ? call.caller.chat : undefined
+  return {
+    thread,
+    mode,
+    ...(chat?.without ? { without: chat.without } : {}),
+    ...(chat?.only ? { only: chat.only } : {}),
+    ...(chat?.space ? { space: chat.space } : {}),
+    ...(agent ? { reach: agent } : {}),
+  }
 }
 async function answered(
   ask: (helpers: Awaited<ReturnType<typeof helperRun>>) => Promise<unknown>,
