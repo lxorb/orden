@@ -335,6 +335,7 @@ describe('a page whose engine cuts only what floats over it', () => {
       expect(pages.of('a').shot).toBe('data:image/jpeg;base64,drawn')
       await pages.show('a', SITE, PANE, true)
       await vi.waitFor(() => expect(last('web_watch_drawing')).toEqual({ tab: 'a', on: false }))
+      await vi.waitFor(() => expect(pages.of('a').watching).toBeNull())
       pages.of('a').shotAt = 0
       drew({ payload: { tab: 'a', picture: 'data:image/jpeg;base64,late' } })
       await settle()
