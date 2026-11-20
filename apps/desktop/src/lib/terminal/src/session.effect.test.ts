@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
 type Seen = { contentRect: { width: number; height: number } }[]
@@ -28,6 +29,7 @@ const { FitAddon } = await import('@xterm/addon-fit')
 const fits = vi.spyOn(FitAddon.prototype, 'fit').mockImplementation(() => undefined)
 const { workspace } = await import('../../workspace/src/api')
 const { sessionOf } = await import('./sessions.svelte')
+const { shells } = await import('./shells.svelte')
 const frame = () => new Promise((done) => requestAnimationFrame(() => done(null)))
 test('a terminal brought back fits in a later frame, and only when its size changed (#2290)', async () => {
   const tab = workspace.openUnsaved('terminal', JSON.stringify({ shell: 'bash', folder: null, key: 'k1' }), 'Build')
@@ -55,4 +57,20 @@ test('a terminal brought back fits in a later frame, and only when its size chan
   sized([{ contentRect: { width: 900, height: 600 } }])
   await frame()
   expect(fits).toHaveBeenCalledTimes(1)
+})
+test('a terminal turned into its file explorer keeps its session, and one asked for in a folder starts there (#2274)', () => {
+  const words = JSON.stringify({ folder: '/notes/Lab', back: [], ahead: [] })
+  const tab = workspace.openUnsaved(
+    'terminal',
+    JSON.stringify({ shell: 'bash', folder: '/notes/Lab', key: 'k2' }),
+    'Lab',
+  )
+  const session = sessionOf(tab)
+  workspace.turn(tab.id, { kind: 'explorer', words, title: 'Lab' })
+  flushSync()
+  expect(workspace.tucked.map((one) => one.id)).toEqual([tab.id])
+  expect(sessionOf(tab)).toBe(session)
+  const asked = workspace.openUnsaved('terminal', JSON.stringify({ folder: '/notes/Lab' }), 'Lab')
+  const spec = (sessionOf(asked) as unknown as { spec(): { shell: string; folder: string | null } }).spec()
+  expect(spec).toMatchObject({ shell: shells.chosen?.id ?? '', folder: '/notes/Lab' })
 })

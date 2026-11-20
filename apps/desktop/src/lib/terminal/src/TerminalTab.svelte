@@ -8,6 +8,9 @@
   import OnlineStatus from './online/OnlineStatus.svelte'
   import type { Tab } from '../../documents/src/api'
   import { sessionOf } from './sessions.svelte'
+  import { TurnButton } from '../../workspace/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
+  import { turnable, turnLabel, turnTerminal } from './turn'
 
   const { tab: given, focused, shown = true }: { tab: Tab; focused: boolean; shown?: boolean } = $props()
   const tab = untrack(() => given)
@@ -40,7 +43,12 @@
     />
   {/if}
 
-  <div class="place" class:is-waiting={!session.live} bind:this={place}></div>
+  <div class="place" class:is-waiting={!session.live} class:turns={turnable(tab)} bind:this={place}></div>
+  {#if turnable(tab) && !session.finding}
+    <div class="turn">
+      <TurnButton title={shortcuts.tooltip(turnLabel(tab), 'tab.flip')} onclick={() => turnTerminal(tab)} />
+    </div>
+  {/if}
 
   {#if session.status}
     <OnlineStatus status={session.status} onretry={() => session.retry()} />
@@ -83,6 +91,14 @@
     flex: 1;
     min-height: 0;
     transition: opacity var(--dur-base) var(--ease-out);
+  }
+  .place.turns {
+    margin-inline-end: 32px;
+  }
+  .turn {
+    position: absolute;
+    top: var(--space-1);
+    inset-inline-end: var(--space-1);
   }
   .place.is-waiting {
     opacity: 0.55;

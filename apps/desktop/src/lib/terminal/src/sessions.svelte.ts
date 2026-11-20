@@ -59,7 +59,7 @@ import { setEnded, setLive, setPty } from './running'
 import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
 import { type Machine, PtySource, remoteShell, type Said, type Source } from './source'
-import { hostIdOf, hostShell, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
+import { folderAsked, hostIdOf, hostShell, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
 
 const SCROLLBACK = 5000
 const QUIET = 2000
@@ -378,7 +378,7 @@ class Session {
     return (
       readSpec(this.tab.doc) ?? {
         shell: shells.chosen?.id ?? '',
-        folder: null,
+        folder: folderAsked(this.tab.doc),
         key: '',
         name: null,
       }
@@ -1316,7 +1316,7 @@ export type { Session }
 function watch() {
   $effect.root(() => {
     $effect(() => {
-      const open = new Set(workspace.tabs.map((tab) => tab.id))
+      const open = new Set([...workspace.tabs, ...workspace.tucked].map((tab) => tab.id))
       untrack(() => {
         for (const [id, one] of sessions) {
           if (open.has(id)) continue

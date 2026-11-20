@@ -36,6 +36,14 @@ export function readSpec(text: string): Spec | null {
     ...(isString(value.via) && value.via && hostIdOf(value.shell) !== null ? { via: value.via } : {}),
   }
 }
+export function folderAsked(text: string): string | null {
+  try {
+    const value: unknown = JSON.parse(text)
+    return isRecord(value) && isString(value.folder) && value.folder ? value.folder : null
+  } catch {
+    return null
+  }
+}
 export function writeSpec(spec: Spec): string {
   const { shell, folder, key, name, icon, iconColor, via } = spec
   return JSON.stringify({
