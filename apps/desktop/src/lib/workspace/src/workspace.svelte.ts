@@ -185,6 +185,7 @@ import {
 import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { agentMarks } from './agent-marks.svelte'
+import { ownerOf } from './sets'
 import { followTitle, settleTitle } from './title-follow'
 import { filesUnder, SpaceFiles } from './space-files.svelte'
 import { services } from './services'
@@ -849,12 +850,28 @@ class Workspace {
         const ones = new Set(
           this.tabs.filter((tab) => TAB_KINDS[tab.kind].single && this.panes.at(tab.paneId)).map((tab) => tab.kind),
         )
-        this.tabs = [...this.tabs, ...firstOnes(tabs, ones).filter((tab) => tab !== null)]
+        const taken = firstOnes(tabs, ones).filter((tab) => tab !== null)
+        this.tabs = [...this.tabs, ...taken]
+        await this.fileAway(taken)
         if (!this.persist()) throw new Error('no room to write them down')
       })
       if (waiting) setTimeout(() => void this.takeWhatWasLeft(slot), LEAVING_GRACE)
     } catch (error) {
       log('warn', `session: what another window left stays where it is - ${String(error)}`)
+    }
+  }
+  private async fileAway(tabs: readonly Tab[]): Promise<void> {
+    const away = tabs.flatMap((tab) => {
+      const space = ownerOf(tab.path, tab.note.home, this.spaces)
+      return space !== null && space !== this.activeSpaceId ? [{ tab, space }] : []
+    })
+    if (!away.length) return
+    const { sets } = await import('./sets.svelte')
+    for (const space of new Set(away.map((one) => one.space))) {
+      await sets.adopt(
+        away.filter((one) => one.space === space).map((one) => one.tab),
+        space,
+      )
     }
   }
   private async tabsFrom(drafts: Draft[], paneId: string): Promise<Tab[]> {
