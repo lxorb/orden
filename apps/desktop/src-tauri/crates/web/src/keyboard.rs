@@ -66,6 +66,12 @@ static HOMES: LazyLock<Mutex<Homes>> = LazyLock::new(Mutex::default);
 fn homes<T>(look: impl FnOnce(&mut Homes) -> T) -> T {
     look(&mut HOMES.held())
 }
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+fn overlaps(page: [i32; 4], window: [i32; 4]) -> bool {
+    let [left, top, right, bottom] = page;
+    let [from_x, from_y, to_x, to_y] = window;
+    left < right && top < bottom && left < to_x && right > from_x && top < to_y && bottom > from_y
+}
 fn now() -> u64 {
     static START: LazyLock<Instant> = LazyLock::new(Instant::now);
     u64::try_from(START.elapsed().as_millis()).unwrap_or(u64::MAX)
@@ -133,6 +139,9 @@ pub fn took(label: &str) {
     let Some((app, _, window)) = page_of(label) else {
         return;
     };
+    if !native::seen(label) {
+        return;
+    }
     let (telling, page) = (app.clone(), label.to_string());
     let _ = app.run_on_main_thread(move || page_took(&telling, &window, &page));
 }
@@ -218,7 +227,7 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
         return false;
     }
     match homes(|all| all.back(window.label(), now())) {
-        Back::Page(page) => native::take(webview.app_handle(), &page),
+        Back::Page(page) => native::seen(&page) && native::take(webview.app_handle(), &page),
         Back::Later => true,
         Back::Own => false,
     }
@@ -232,8 +241,16 @@ mod native {
     use tauri::{AppHandle, Manager, Webview, Window};
 
     static PAGES: Mutex<Vec<(String, String, u32)>> = Mutex::new(Vec::new());
+    #[cfg(windows)]
+    static WINDOWS: Mutex<Vec<(String, u64)>> = Mutex::new(Vec::new());
     pub fn page(app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
         let _ = super::APP.set(app.clone());
+        #[cfg(windows)]
+        if let Some(id) = crate::host::page_id(platform) {
+            let mut windows = WINDOWS.held();
+            windows.retain(|(one, _)| one != label);
+            windows.push((label.to_string(), id.0));
+        }
         let Some(x11) = crate::host::x11_page(platform) else {
             return;
         };
@@ -243,6 +260,39 @@ mod native {
     }
     pub fn let_go_of(label: &str) {
         PAGES.held().retain(|(one, _, _)| one != label);
+        #[cfg(windows)]
+        WINDOWS.held().retain(|(one, _)| one != label);
+    }
+    #[cfg(windows)]
+    pub fn window_of(label: &str) -> Option<windows::Win32::Foundation::HWND> {
+        let id = WINDOWS.held().iter().find(|(one, _)| one == label).map(|(_, id)| *id)?;
+        let id = usize::try_from(id).ok()?;
+        Some(windows::Win32::Foundation::HWND(id as *mut _))
+    }
+    #[cfg(windows)]
+    #[allow(unsafe_code, reason = "a page's window is read through Win32")]
+    pub fn seen(label: &str) -> bool {
+        use windows::Win32::Foundation::RECT;
+        use windows::Win32::UI::WindowsAndMessaging::{
+            GetAncestor, GetWindowRect, IsWindowVisible, GA_ROOT,
+        };
+        let Some(page) = window_of(label) else {
+            return true;
+        };
+        let (mut at, mut whole) = (RECT::default(), RECT::default());
+        let read = unsafe {
+            IsWindowVisible(page).as_bool()
+                && GetWindowRect(page, &raw mut at).is_ok()
+                && GetWindowRect(GetAncestor(page, GA_ROOT), &raw mut whole).is_ok()
+        };
+        read && super::overlaps(
+            [at.left, at.top, at.right, at.bottom],
+            [whole.left, whole.top, whole.right, whole.bottom],
+        )
+    }
+    #[cfg(not(windows))]
+    pub fn seen(_label: &str) -> bool {
+        true
     }
     #[cfg(target_os = "linux")]
     pub fn x11_took(app: &AppHandle, x11: u32) {
@@ -308,6 +358,15 @@ mod tests {
         homes.placed(page, true, 0);
         homes.page_took(window, page);
         homes
+    }
+    #[test]
+    fn a_page_put_off_the_window_is_not_seen() {
+        let window = [0, 0, 1024, 768];
+        assert!(super::overlaps([0, 76, 1024, 721], window));
+        assert!(super::overlaps([-10, -10, 5, 5], window));
+        assert!(!super::overlaps([-20000, -19999, -18976, -19354], window));
+        assert!(!super::overlaps([1024, 0, 2048, 768], window));
+        assert!(!super::overlaps([10, 10, 10, 400], window));
     }
     #[test]
     fn a_window_nobody_typed_in_a_page_of_is_typing_in_its_own() {
