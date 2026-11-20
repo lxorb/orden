@@ -44,6 +44,7 @@
   import { inRows, meets, packed, pushedAside } from './pack'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot, WIDEST } from './layout'
   import { marked, shownBox, tabCopyOf } from './mirror'
+  import { forgetLater, later } from './later'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
 
@@ -795,18 +796,27 @@
         const head = node.querySelector(':scope > .head')?.getBoundingClientRect().height ?? 0
         panesAsWindows.set(tab.id, { pane: pane.id, node, box, head, corners: cornersOf(node) })
         asWindows[tab.id] = true
-        faces.take(pane.id, tab)
+        const seen = new DOMRect(box.x, box.y + head, box.width, box.height - head)
+        later(() => faces.take(pane.id, tab, seen))
       }
       asPanes = asWindows
       const inherited = new Map<Element, string>()
-      const tabCopies: Record<string, HTMLElement> = {}
       const riderCopies: Record<string, HTMLElement> = {}
-      for (const tab of workspace.tabs) {
-        const copy = tabCopyOf(tab.id, inherited)
-        if (copy) (asWindows[tab.id] ? riderCopies : tabCopies)[tab.id] = copy
+      for (const id of Object.keys(asWindows)) {
+        const copy = tabCopyOf(id, inherited)
+        if (copy) riderCopies[id] = copy
       }
-      tabsAsDrawn = tabCopies
       ridersDrawn = riderCopies
+      tabsAsDrawn = {}
+      for (const tab of workspace.tabs)
+        if (!asWindows[tab.id])
+          later(() => {
+            if (!shown) return
+            const copy = tabCopyOf(tab.id, inherited)
+            if (!copy) return
+            if (panesAsWindows.has(tab.id)) ridersDrawn = { ...ridersDrawn, [tab.id]: copy }
+            else tabsAsDrawn = { ...tabsAsDrawn, [tab.id]: copy }
+          })
       at = workspace.activeTabId
       homes.clear()
     }
@@ -847,6 +857,7 @@
     aimAll()
   }
   function gone() {
+    forgetLater()
     homes.clear()
     shown = false
     flights.clear()

@@ -34,10 +34,10 @@ class Faces {
     })
     return this.reading
   }
-  take(paneId: string, tab: Tab) {
+  take(paneId: string, tab: Tab, box?: DOMRect) {
     const how = TAB_KINDS[tab.kind].preview
     if (tab.inPrivate || how === 'reading' || how === 'photograph') return
-    const later = snapshotOf(paneId)
+    const later = snapshotOf(paneId, box)
     if (!later) return
     setTimeout(() => {
       if (!workspace.tabs.includes(tab)) return

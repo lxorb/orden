@@ -4,7 +4,6 @@
 </script>
 
 <script lang="ts">
-  import { untrack } from 'svelte'
   import { dur, fade } from '../../platform/src/api'
   import { links } from '../../link-index/src/api'
   import { readingHtml, unreadableHtml } from '../../reading/src/api'
@@ -18,6 +17,7 @@
   import { drawInto, type Face } from './faces'
   import { scrolledBack } from './mirror'
   import { readingFrom, scrollbackOf } from './previews'
+  import { later } from './later'
 
   const {
     tab,
@@ -48,11 +48,13 @@
       key: `${locks}\u0000${scheme}\u0000${String(trusted)}\u0000${text}`,
     }
   })
-  const readBefore = untrack(() => reading && drawnBefore.get(tab.id))
-  let made = $state(readBefore && readBefore.key === untrack(() => reading?.key) ? readBefore.html : '')
+  let awake = $state(false)
+  const landed = (): boolean => !flying
+  later(() => (awake = true))
+  let made = $state('')
   $effect(() => {
     const asked = reading
-    if (!asked) return
+    if (!asked || !awake) return
     const known = drawnBefore.get(tab.id)
     if (known?.key === asked.key) {
       made = known.html
@@ -69,26 +71,26 @@
       stale = true
     }
   })
-  let html = $state(untrack(() => made))
-  $effect.pre(() => {
+  let html = $state('')
+  $effect(() => {
     const now = made
-    if (!flying) html = now
+    if (!flying && awake && now !== html) later(() => (html = landed() ? made : html))
   })
   const latestShot = $derived(how === 'photograph' ? (webPages().of(tab.id).shot ?? face?.shot ?? null) : null)
-  let shot = $state(untrack(() => latestShot))
-  $effect.pre(() => {
+  let shot = $state<string | null>(null)
+  $effect(() => {
     const now = latestShot
-    if (!flying) shot = now
+    if (!flying && awake && now !== shot) later(() => (shot = landed() ? latestShot : shot))
   })
   let decodedShot = $state<string | null>(null)
-  let kept = $state(untrack(() => face))
-  $effect.pre(() => {
+  let kept = $state<Face | null>(null)
+  $effect(() => {
     const now = face
-    if (!flying) kept = now
+    if (!flying && awake && now !== kept) later(() => (kept = landed() ? face : kept))
   })
   let readScreen = $state<{ text: string; cols: number } | null>(null)
   $effect(() => {
-    if (how !== 'scrollback' || locked) return
+    if (how !== 'scrollback' || locked || !awake) return
     let stale = false
     void scrollbackOf(tab).then((one) => {
       if (!stale) readScreen = one
@@ -100,7 +102,7 @@
   let screen = $state<{ text: string; cols: number } | null>(null)
   $effect.pre(() => {
     const now = readScreen
-    if (!flying) screen = now
+    if (!flying && awake && now !== screen) later(() => (screen = landed() ? readScreen : screen))
   })
   function drawn(node: HTMLElement, kept: Face) {
     const draw = (one: Face) => {
