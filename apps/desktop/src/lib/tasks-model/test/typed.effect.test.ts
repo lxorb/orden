@@ -20,3 +20,8 @@ test('a todo added by text keeps the words it does not read, like a time, in its
   expect(made?.title).toContain('at 4pm')
   expect(made?.start).toBe(dayAfter(dayOf(), 1))
 })
+test('a todo added by text that says how it repeats keeps that rule and leaves it out of its title', async () => {
+  const added = await addTask('Pay rent every month on the 1st')
+  const made = todos.todos.find((one) => one.id === added?.id)
+  expect(made).toMatchObject({ title: 'Pay rent', repeat: 'every month on the 1st' })
+})

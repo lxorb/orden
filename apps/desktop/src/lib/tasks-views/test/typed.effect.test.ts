@@ -71,6 +71,14 @@ describe('a todo typed in Todoist style', () => {
     if (today() <= november()) expect(made?.deadline).toBe(november())
     expect(field?.value).toBe('')
   })
+  test('in the panel a rule typed after the title makes it repeat', async () => {
+    const target = shown(TodosPanel)
+    const field = target.querySelector<HTMLInputElement>('[data-todos-add]')
+    type(field, 'Cut nails every! 10 days')
+    send(field)
+    const made = await held('Cut nails')
+    expect(made).toMatchObject({ title: 'Cut nails', repeat: 'every 10 days when done' })
+  })
   test('a word given back with Backspace stays in the title', async () => {
     const target = shown(TodosPanel)
     const field = target.querySelector<HTMLInputElement>('[data-todos-add]')
