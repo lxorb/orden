@@ -29,7 +29,7 @@ import {
   withoutCode,
 } from '@orden/markdown/links'
 import { buildGraph, type NoteGraph } from '../../graph/src/api'
-import { type Placed, retargetLinks } from './link-rewrite'
+import { retargetLinks } from './link-rewrite'
 import {
   AGENTS_NAME,
   shownName,
@@ -45,9 +45,7 @@ import {
   within,
   invoke,
   isVault,
-  log,
   onDisk,
-  breathe,
   coveredBy,
   keepVersion,
   oneWriteAt,
@@ -80,11 +78,12 @@ const CACHED = 24
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 export const readsWords = (path: string): boolean =>
   isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
-function comparable(path: string): string {
+export function comparable(path: string): string {
   return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 }
-function namesOf(note: { path: string; aliases: readonly string[] }): ReadonlySet<string> {
+export function namesOf(note: { path: string; aliases: readonly string[] }): ReadonlySet<string> {
   const folded = note.aliases.map((alias) => comparable(alias.trim())).filter(Boolean)
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the call
   return new Set([comparable(nameOf(note.path)), ...folded])
 }
 interface Held {
@@ -92,7 +91,7 @@ interface Held {
   files: readonly string[]
 }
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
-const hearing = new Set<(path: string, content: string, arrived: boolean) => void>()
+export const hearing = new Set<(path: string, content: string, arrived: boolean) => void>()
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- listeners, never rendered
 const indexing = new Set<(root: string, scans: readonly ScannedNote[]) => void>()
 export interface Retargeting {
@@ -116,7 +115,7 @@ function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }):
   const found = link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
   return found?.path ?? null
 }
-function stillReaches(
+export function stillReaches(
   source: string,
   link: { kind: LinkKind; target: string },
   there: string,
@@ -145,7 +144,7 @@ function stillReaches(
   }
   return ends(at, written) || ends(shownName(at), written)
 }
-function carried(was: string, now: string): (path: string) => string | null {
+export function carried(was: string, now: string): (path: string) => string | null {
   const paper = isPagesTarget(was) && isPagesTarget(now) ? paperOf(was) : null
   return (path) => {
     if (path === was) return now
@@ -153,7 +152,7 @@ function carried(was: string, now: string): (path: string) => string | null {
     return path === paper ? paperOf(now) : null
   }
 }
-const BREATHE_EVERY = 500
+export const BREATHE_EVERY = 500
 interface FilesNamed {
   whole: ReadonlyMap<string, readonly string[]>
   last: ReadonlyMap<string, readonly string[]>
@@ -215,7 +214,7 @@ function fileNamed(
   if (!files) return null
   return resolveFile({ notes: [], files, path: source, read: nothing }, link.target, link.kind)
 }
-const refOf = (note: ScannedNote): NoteRef => ({
+export const refOf = (note: ScannedNote): NoteRef => ({
   path: note.path,
   name: note.name,
   headings: note.headings,
@@ -1018,12 +1017,13 @@ class Links {
     const was = within(root, from)
     const now = within(root, to)
     if (!was || !now || was === now) return 0
+    const { retargetIn } = await import('./retarget')
     const here = () => this.root !== null && samePath(root, this.root)
     if (here() && this.scanning && startup.reached('index')) await this.scanned()
     if (here() && !this.scanning && !this.readAfter(was, now)) {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's notes, thrown away after it
       const rescanned = new Map<string, { from: ScannedNote; after: string }>()
-      const touched = await this.retargetIn(
+      const touched = await retargetIn(
         this.notes,
         (source, link) => this.resolveFrom(source, link, false) ?? fileNamed(this.files, source, link),
         (note, after) => rescanned.set(note.path, { from: note, after }),
@@ -1064,7 +1064,7 @@ class Links {
       path: null,
       read: nothing,
     }
-    const touched = await this.retargetIn(
+    const touched = await retargetIn(
       notes,
       (source, link) => resolvedIn({ ...index, path: source }, link) ?? fileNamed(index.files, source, link),
       () => undefined,
@@ -1079,228 +1079,6 @@ class Links {
       return this.notes.some((one) => under(one.path)) || this.files.some(under)
     }
     return held(now) && !held(was)
-  }
-  private async retargetIn(
-    notes: readonly ScannedNote[],
-    resolve: (source: string, link: { kind: LinkKind; target: string }) => string | null,
-    rewritten: (note: ScannedNote, after: string) => void,
-    asked: {
-      was: string
-      now: string
-      root: string
-      open: (path: string) => OpenNote | null
-      how: Retargeting
-      files: readonly string[]
-      listed?: (path: string) => ScannedNote | undefined
-    },
-  ): Promise<number> {
-    const { was, now, root, open, how, files, listed } = asked
-    const { moved = false, only, touched: told } = how
-    const name = comparable(nameOf(was))
-    const moving = carried(was, now)
-    const movingNames = new Set(
-      [...notes.map((one) => one.path), ...files]
-        .filter((path) => moving(path) !== null)
-        .map((path) => comparable(nameOf(path))),
-    )
-    const arrivingNames = new Set(
-      [...notes.map((one) => one.path), ...files]
-        .map(moving)
-        .filter((path) => path !== null)
-        .map((path) => comparable(nameOf(path))),
-    )
-    const movingAliases = new Set(
-      notes
-        .filter((one) => moving(one.path) !== null)
-        .flatMap((one) => one.aliases.map((alias) => comparable(alias.trim()))),
-    )
-    let after: NoteIndex | null = null
-    const afterMove = (): NoteIndex =>
-      (after ??= {
-        notes: notes.map((one) => ({ ...refOf(one), path: moving(one.path) ?? one.path })),
-        files: files.map((path) => moving(path) ?? path),
-        path: null,
-        read: nothing,
-      })
-    const lastOf = (link: { target: string }) => comparable(link.target).split('/').at(-1) ?? ''
-    const named = (link: { target: string }) => {
-      if (!link.target) return false
-      const parts = comparable(link.target).split('/')
-      return (
-        parts.includes(name) ||
-        movingNames.has(lastOf(link)) ||
-        arrivingNames.has(lastOf(link)) ||
-        movingAliases.has(comparable(link.target))
-      )
-    }
-    let namedAfter: Map<string, NoteRef[]> | null = null
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
-    const unionsAfter = new Map<string, NoteRef[]>()
-    const calledAfterMove = (written: string): NoteRef[] => {
-      if (!namedAfter) {
-        // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
-        namedAfter = new Map<string, NoteRef[]>()
-        for (const ref of afterMove().notes) {
-          for (const key of namesOf(ref)) {
-            const held = namedAfter.get(key)
-            if (held) held.push(ref)
-            else namedAfter.set(key, [ref])
-          }
-        }
-      }
-      const whole = comparable(written)
-      const last = whole.split('/').at(-1) ?? ''
-      const byLast = namedAfter.get(last) ?? []
-      const byWhole = whole === last ? [] : (namedAfter.get(whole) ?? [])
-      if (!byWhole.length) return byLast
-      const held = unionsAfter.get(whole)
-      if (held) return held
-      const both = [...new Set([...byLast, ...byWhole])]
-      unionsAfter.set(whole, both)
-      return both
-    }
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
-    const filesAfter = new Map<string, string[]>()
-    const reaching =
-      (source: string, there: string, kind: LinkKind = 'wikilink') =>
-      (written: string): boolean => {
-        const key = comparable(nameOf(there))
-        let called = filesAfter.get(key)
-        if (!called) {
-          called = afterMove().files.filter((path) => comparable(nameOf(path)) === key)
-          filesAfter.set(key, called)
-        }
-        const index: NoteIndex = {
-          notes: calledAfterMove(written),
-          files: called,
-          path: source,
-          read: nothing,
-        }
-        const note = isTabFile(written)
-          ? null
-          : kind === 'markdown'
-            ? resolveRelative(index, written)
-            : resolveNote(index, written)
-        return (note?.path ?? resolveFile(index, written, kind)) === there
-      }
-    let touched = 0
-    let walked = 0
-    for (const note of [...notes]) {
-      if (++walked % BREATHE_EVERY === 0) await breathe()
-      if (only && !only.some((path) => samePath(path, insideSpace(root, note.path)))) continue
-      const went = moved ? moving(note.path) : null
-      const source = went ?? note.path
-      const shifted = went !== null && folderOf(went) !== folderOf(note.path)
-      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one note's answers, thrown away after it
-      const answered = new Map<string, string | Placed | null>()
-      const to = (link: { kind: LinkKind; target: string }): string | Placed | null => {
-        const key = `${link.kind}\0${link.target}`
-        const held = answered.get(key)
-        if (held !== undefined) return held
-        const there = whereNow(link)
-        answered.set(key, there)
-        return there
-      }
-      const whereNow = (link: { kind: LinkKind; target: string }): string | Placed | null => {
-        const found = resolve(note.path, link)
-        if (found === null) return null
-        const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
-        const there = moving(found) ?? found
-        if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) {
-          const arriving = arrivingNames.has(lastOf(link)) || movingAliases.has(comparable(link.target))
-          if (there === found && !shifted && !arriving) return null
-          const reaches = reaching(source, there)
-          if (reaches(link.target)) return null
-          return { path: there, reaches, shown: link.target }
-        }
-        if (there === found && !shifted) {
-          if (!arrivingNames.has(lastOf(link))) return null
-          const reaches = reaching(source, there, link.kind)
-          if (reaches(link.target)) return null
-          return link.kind === 'wikilink' ? { path: there, reaches } : there
-        }
-        if (link.kind === 'wikilink') {
-          const reaches = reaching(source, there)
-          return reaches(link.target) ? null : { path: there, reaches }
-        }
-        const kept = nameOf(there) === nameOf(found)
-        const reaches = shifted
-          ? stillReaches(source, link, there, kept)
-          : kept && reaching(source, there, 'markdown')(link.target)
-        if (reaches) return null
-        return there
-      }
-      const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
-      const rewrite = plane ? await import('./canvas-rewrite') : null
-      const card = rewrite?.cardsMoving(note.path, moving) ?? null
-      const worth = plane || note.links.some((link) => (named(link) || shifted) && to(link) !== null)
-      if (!worth) continue
-      const absolute = insideSpace(root, note.path)
-      const target = went === null ? absolute : insideSpace(root, went)
-      const doc = open(absolute)
-      const drawn = doc && rewrite && !isPagesTarget(note.path) ? await services().plane(doc) : null
-      let read = listed?.(note.path) ?? note
-      const drawing = { relinked: false, before: '' }
-      const file = card ?? moving
-      const fresh = async () => {
-        const before = await this.wordsOf(absolute, target, open)
-        if (before === null) return null
-        drawing.before = before
-        read = listed?.(note.path) ?? note
-        const words = rewrite ? rewrite.retargetCanvas(before, source, file, to) : retargetLinks(before, source, to)
-        return words === null || words === before ? null : { before, words }
-      }
-      const keepIt = (before: string) => keepVersion(target, before)
-      const refused = (error: unknown) => {
-        log('warn', `a link in ${target} could not be rewritten: ${String(error)}`)
-        return null
-      }
-      const after = doc
-        ? await (async () => {
-            const got = await fresh()
-            if (!got) return null
-            const { before } = got
-            let { words } = got
-            const knew = doc.onDisk
-            drawing.relinked =
-              drawn !== null &&
-              rewrite !== null &&
-              drawn.relinked((canvas) => rewrite.retargetPlane(canvas, source, file, to))
-            if (drawing.relinked) words = doc.text
-            else {
-              const edit = oneEdit(before, words)
-              if (edit) doc.edited([edit], words)
-            }
-            return doc.writeTo(target, words, knew, () => keepIt(before))
-          })().catch(refused)
-        : await oneWriteAt(target, async () => {
-            const got = await fresh()
-            if (!got) return null
-            const { before, words } = got
-            const late = open(absolute)
-            const edit = oneEdit(before, words)
-            if (late && edit) late.edited([edit], words)
-            await keepIt(before)
-            await writeInTurn(target, words, false)
-            return words
-          }).catch(refused)
-      if (after === null) continue
-      if (drawing.relinked) doc?.wroteAs(after)
-      for (const hear of hearing) hear(target, after, false)
-      told?.push(target)
-      how.wrote?.push({ path: target, before: drawing.before, after })
-      rewritten(read, after)
-      touched++
-    }
-    return touched
-  }
-  private async wordsOf(path: string, file: string, open: (path: string) => OpenNote | null): Promise<string | null> {
-    const doc = open(path)
-    if (doc) {
-      doc.flush()
-      return doc.text
-    }
-    return readText(file)
   }
   async searchBlocks(text: string, most: number, root = this.root): Promise<SpaceBlock[]> {
     const needle = text.trim()
@@ -1337,7 +1115,7 @@ class Links {
     const { namedBlock } = await import('@orden/markdown/block-names')
     const doc = open(absolute)
     const name = async (): Promise<string | null> => {
-      const before = await this.wordsOf(absolute, absolute, open)
+      const before = await wordsOf(absolute, absolute, open)
       if (before === null) return null
       const named = namedBlock(before, line, () => freeBlockId(new Set(blockIds(before).map((one) => one.id))))
       if (!named) return null
@@ -1451,7 +1229,7 @@ class Links {
     })
   }
 }
-const nothing = () => Promise.resolve(null)
+export const nothing = () => Promise.resolve(null)
 function heldAs(path: string): 'note' | 'plane' | 'web' | 'elsewhere' | 'file' {
   if (isMarkdownPath(path)) return 'note'
   if (isCanvasTarget(path) || isPagesTarget(path)) return 'plane'
@@ -1471,6 +1249,18 @@ function standsAlone(line: string, name: string): boolean {
     at = line.indexOf(name, at + 1)
   }
   return false
+}
+export async function wordsOf(
+  path: string,
+  file: string,
+  open: (path: string) => OpenNote | null,
+): Promise<string | null> {
+  const doc = open(path)
+  if (doc) {
+    doc.flush()
+    return doc.text
+  }
+  return readText(file)
 }
 export const links = new Links()
 export const spaceLinks = (): Links => new Links()
