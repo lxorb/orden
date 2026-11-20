@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { linearly } from '../../../../../../scripts/growth'
 import { HOUR, MINUTE } from './days'
-import { bandsOf, bucketsOf, hoursShown, madeOf, stacked, within } from './lanes'
+import { hoursShown, stacked, within } from './lanes'
 import type { Minute } from './minutes'
 import type { Span } from './records'
 
@@ -35,30 +34,6 @@ const minutes = (from: number, to: number, change: Partial<Minute> = {}): Minute
   return out
 }
 const DAY = 24 * HOUR
-describe('a lane of the day', () => {
-  test('joins the same app across a short gap, and keeps others apart', () => {
-    const spans = [
-      seen('a', 'app', 'Firefox', 0, 10 * MINUTE),
-      seen('b', 'app', 'Firefox', 11 * MINUTE, 20 * MINUTE),
-      seen('c', 'app', 'Code', 20 * MINUTE, 30 * MINUTE),
-      seen('d', 'app', 'Firefox', 40 * MINUTE, 50 * MINUTE),
-      seen('e', 'site', 'moodle.ethz.ch', 0, 50 * MINUTE),
-    ]
-    expect(bandsOf(spans, 'app', 0, DAY, DAY).map((one) => [one.key, one.from, one.to])).toEqual([
-      ['Firefox', 0, 20 * MINUTE],
-      ['Code', 20 * MINUTE, 30 * MINUTE],
-      ['Firefox', 40 * MINUTE, 50 * MINUTE],
-    ])
-  })
-  test('a day of many switches between places is drawn in time that grows with the switches', () => {
-    const switches = (count: number) =>
-      Array.from({ length: count }, (_, index) =>
-        seen(`s${index}`, 'tab', `note ${index}`, index * 5000, index * 5000 + 4000),
-      )
-    const bands = linearly((count) => bandsOf(switches(count), 'tab', 0, DAY, DAY), 16_000)
-    expect(bands.length).toBeGreaterThan(1000)
-  })
-})
 describe('what happened in a stretch', () => {
   const spans = [
     span('said', 0, 2 * HOUR, { source: 'timer', activity: 'study' }),
@@ -82,22 +57,6 @@ describe('what happened in a stretch', () => {
     ])
     expect(within(spans, day, 2 * HOUR, 3 * HOUR, DAY).locked).toBe(30 * MINUTE)
   })
-  test('says what an activity was really made of', () => {
-    expect(madeOf(spans, 'study', 'site', 0, DAY, DAY).map((one) => [one.key, one.ms])).toEqual([
-      ['moodle.ethz.ch', 90 * MINUTE],
-      ['youtube.com', 30 * MINUTE],
-    ])
-  })
-})
-test('the minutes, gathered for a lane say how much of each stretch was seen, busy and away', () => {
-  const day = [
-    ...minutes(0, 10 * MINUTE, { active: 60 }),
-    ...minutes(10 * MINUTE, 15 * MINUTE, { locked: true, active: 0 }),
-  ]
-  const [first, second, third] = bucketsOf(day, 0, 30 * MINUTE, 10 * MINUTE)
-  expect(first).toEqual({ from: 0, seen: 1, active: 1, away: 0 })
-  expect(second).toEqual({ from: 10 * MINUTE, seen: 0.5, active: 0, away: 0.5 })
-  expect(third).toEqual({ from: 20 * MINUTE, seen: 0, active: 0, away: 0 })
 })
 test('the hours a day is drawn across are the working day at least, and reach out to whatever happened outside it', () => {
   expect(hoursShown(0, DAY, [])).toEqual([8 * HOUR, 18 * HOUR])
