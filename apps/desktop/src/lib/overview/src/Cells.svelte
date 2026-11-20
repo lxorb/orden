@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { stillness } from '../../platform/src/api'
   import { apart, Bubble } from './bubble'
   import type { Box } from './layout'
 
@@ -57,20 +56,15 @@
     }
   }
   let frame = 0
-  let before = performance.now()
   let last = ''
-  function tick(now: number) {
-    const seconds = Math.max(0, (now - before) / 1000)
-    before = now
-    const still = stillness()
+  function tick() {
     const hand = pushed()
     const all = cells.map((cell) => ({
       cell,
       one: keptOf(cell.key),
       boxes: boxesOf(cell.key, hand),
     }))
-    let rests = true
-    for (const { one, boxes } of all) rests = one.bubble.step(seconds, boxes, still) && rests
+    for (const { one, boxes } of all) one.bubble.step(boxes)
     for (let i = 0; i < all.length; i++) {
       for (let j = i + 1; j < all.length; j++) {
         const a = all[i]
@@ -84,13 +78,12 @@
       if (one.name) one.name.style.translate = `${crown.x}px ${crown.y}px`
     }
     const seen = JSON.stringify(all.map(({ boxes }) => boxes))
-    const moving = !rests || hand !== null || seen !== last
+    const moving = hand !== null || seen !== last
     last = seen
     frame = moving ? requestAnimationFrame(tick) : 0
   }
   export function wake() {
     if (frame || (!cells.length && !holding)) return
-    before = performance.now()
     frame = requestAnimationFrame(tick)
   }
   $effect(() => {
