@@ -64,8 +64,8 @@
   import { handAppKeys } from './app-keys.svelte'
   import { cameFromAfter, focusBeside, readLeft } from './keys'
 
-  const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
-  const tab = untrack(() => shown)
+  const { tab: given, focused, shown = true }: { tab: Tab; focused: boolean; shown?: boolean } = $props()
+  const tab = untrack(() => given)
   const LEAVING = 300
   const OVERVIEW = '[data-opens="overview"], .orden-glyph.overview'
   const page = $derived(pages.of(tab.id))
@@ -145,6 +145,16 @@
   })
   $effect(() => heldOrLet(pages.still, page.heldAt))
   $effect(() => hushArrivals(pages.still))
+  $effect(() => {
+    const on = shown
+    untrack(() => {
+      if (!isDesktop || !ready) return
+      cancelAnimationFrame(scheduled)
+      told = ''
+      if (on) void look()
+      else if (last) pages.hide(tab.id, last)
+    })
+  })
   function heldOrLet(..._now: unknown[]) {
     untrack(now)
   }
@@ -162,7 +172,7 @@
     return look()
   }
   function look(): Promise<void> | undefined {
-    if (!isDesktop || !ready || own) return
+    if (!isDesktop || !ready || own || !shown) return
     if (page.heldAt || (pages.still && !page.shown)) {
       told = ''
       return
