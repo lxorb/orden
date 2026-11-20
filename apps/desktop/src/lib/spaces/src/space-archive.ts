@@ -11,11 +11,22 @@ const owed = new AccountOwed(
     heard = settings.archivedSpaces.filter((id): id is string => typeof id === 'string')
     void reconcile()
   },
-  () => {
+  (left) => {
     heard = null
     for (const root of [...workspace.archivedSpaces.roots]) workspace.archivedSpaces.set(root, false)
+    const ids = Array.isArray(left.archivedSpaces) ? left.archivedSpaces : []
+    if (ids.length) void archivedAgain(ids.filter((id): id is string => typeof id === 'string'))
   },
 )
+async function archivedAgain(ids: readonly string[]): Promise<void> {
+  const { sync } = await import('../../sync-store/src/api')
+  const said = new Set(ids)
+  for (const space of workspace.spaces) {
+    const id = sync.remoteIdFor(space.root)
+    if (id !== null && said.has(id)) workspace.archivedSpaces.set(space.root, true)
+  }
+  await workspace.leaveArchived()
+}
 const owing = () => owed.standing || stored(OWED_KEY) === true
 function canArchive(space: Space): boolean {
   const shown = workspace.shownSpaces
