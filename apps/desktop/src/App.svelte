@@ -956,8 +956,8 @@
     --leave-size: 30px;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
+    height: calc(100vh - var(--orden-band, 0px));
+    height: calc(100dvh - var(--orden-band, 0px));
     background: var(--shell-ground);
     transition: background var(--dur-slow) var(--ease-out);
   }
