@@ -231,6 +231,10 @@ class ChatsStore implements Chats {
       this.looking = null
       this.lookWait = Math.min(this.lookWait * 2, LOOK_AGAIN)
       void this.lookForPointers()
+        .catch(() => undefined)
+        .finally(() => {
+          if (this.engine && this.list.some((one) => !one.path)) this.awaitPointers()
+        })
     }, this.lookWait)
   }
   private rank(chat: string, place: Place): number {

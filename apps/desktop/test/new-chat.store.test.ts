@@ -110,6 +110,7 @@ beforeEach(async () => {
   Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
   vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote-space')
   vi.spyOn(sync, 'wrote').mockImplementation(() => undefined)
+  vi.spyOn(sync, 'pass').mockResolvedValue(true)
   const openView = workspace.openView.bind(workspace)
   vi.spyOn(workspace, 'openView').mockImplementation((...args) => {
     const path = args[2]
