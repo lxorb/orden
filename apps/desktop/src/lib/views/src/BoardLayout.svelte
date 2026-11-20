@@ -40,6 +40,7 @@
   import { reorderDrag } from './reorder-drag'
   import { ADD_MARK } from './marks'
   import { focusSoon } from './focus-soon'
+  import { cardPlace, keepFocus } from './keep-focus'
 
   const {
     kit,
@@ -628,7 +629,15 @@
 {/snippet}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="board" class:laned={lanes.length > 0} class:phone bind:this={board} onkeydown={keydown}>
+<div
+  class="board"
+  class:laned={lanes.length > 0}
+  class:phone
+  bind:this={board}
+  tabindex="-1"
+  use:keepFocus={(focused: HTMLElement) => (board ? cardPlace(board, focused) : null)}
+  onkeydown={keydown}
+>
   {#if phone && !lanes.length}
     <div class="strip" role="tablist" aria-label="Groups">
       {#each shownGroups as group (groupName(group.key))}
