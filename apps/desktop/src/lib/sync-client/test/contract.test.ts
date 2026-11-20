@@ -432,6 +432,45 @@ describe('a space signed out of (#2252)', () => {
       listed()
     }))
 })
+describe('every file the app writes in a space (#2301)', () => {
+  test('a new binary file in a folder the account has not seen goes up as the folder and the file, bytes and all', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const kept = new Map<string, Uint8Array>()
+    const hashes = new Map<string, string>()
+    const heard = (route: string, body: unknown) => {
+      if (route !== 'ops') return undefined
+      for (const op of (body as { ops: { t: string; id: string; hash?: string }[] }).ops) {
+        if (op.t === 'create' && op.hash) hashes.set(op.id, op.hash)
+      }
+      return undefined
+    }
+    const blobs = (disk: MemoryDisk) => ({
+      read: (path: string) => disk.readBytes(path),
+      write: (path: string, bytes: Uint8Array) => disk.writeBytes(path, bytes),
+      hash: (bytes: Uint8Array) => Promise.resolve(`h-${new TextDecoder().decode(bytes)}`),
+      up: (hash: string, bytes: Uint8Array) => Promise.resolve(void kept.set(hash, bytes)).then(() => true),
+      down: (_space: string, id: string) => Promise.resolve(kept.get(hashes.get(id) ?? '') ?? null),
+      replace: () => Promise.resolve(null),
+    })
+    const here = await freshDevice(account, 'here', {}, heard, blobs)
+    const there = await freshDevice(account, 'there', {}, heard, blobs)
+    for (const one of [here, there]) {
+      expect(await firstPass(one.engine.core, one.space(), null)).toBe(true)
+      await one.engine.pass('sim')
+    }
+    const made = `${here.space().row.root}/assets/minutes.pdf`
+    await here.disk.writeBytes(made, new TextEncoder().encode('%PDF minutes'))
+    await here.engine.created(made, false)
+    await here.engine.pass('sim')
+    await there.engine.pass('sim')
+    const entries = (await account.view()).entries
+    const folder = entries.find((one) => one.name === 'assets')
+    expect(folder?.kind).toBe('folder')
+    expect(entries.find((one) => one.name === 'minutes.pdf')).toMatchObject({ kind: 'file', parent: folder?.id })
+    const arrived = await there.disk.readBytes(`${there.space().row.root}/assets/minutes.pdf`)
+    expect(new TextDecoder().decode(arrived ?? new Uint8Array())).toBe('%PDF minutes')
+  })
+})
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })
