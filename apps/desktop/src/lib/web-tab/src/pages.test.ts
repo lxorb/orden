@@ -224,13 +224,15 @@ describe('a new page before it first paints', () => {
     await settle()
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
   })
-  test('takes its pane a moment after its first commit, when no paint is heard', async () => {
+  test('takes its pane a moment after its first commit, when no paint is heard, and not before a slow paint is told', async () => {
     paints = false
     await built()
     ;(await hearing('orden://web-tab'))({
       payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading: true },
     })
     await settle()
+    expect(placedIn()).toBe(false)
+    await new Promise((go) => setTimeout(go, 900))
     expect(placedIn()).toBe(false)
     await vi.waitFor(() => expect(placedIn()).toBe(true), { timeout: 2000 })
   })

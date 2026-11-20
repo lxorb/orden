@@ -39,7 +39,7 @@ const SHOT_WAITS = 300
 const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
 const BLANK_WAITS = 3000
-const AFTER_COMMIT = 400
+const AFTER_COMMIT = 1200
 const ARRIVES = 3000
 export interface Rect {
   x: number
