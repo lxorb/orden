@@ -596,6 +596,32 @@ async function opened(url: string) {
   expect(pages.of(tab.id).live).toBe(true)
   return { tab, app }
 }
+test('a page is pictured only when the overview is about to open, and again only once it may have changed', async () => {
+  const { tab, app } = await opened('https://example.com/glanced')
+  const page = pages.of(tab.id)
+  const button = Object.assign(document.createElement('button'), { className: 'orden-glyph overview' })
+  document.body.append(button)
+  onTestFinished(() => button.remove())
+  const shots = () => asked.filter((one) => one.command === 'web_shot').length
+  asked.length = 0
+  button.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+  expect(shots()).toBe(1)
+  await frames()
+  page.shot = 'data:image/png;base64,iVBORw0KGgo='
+  const key = (type: string, key: string) => window.dispatchEvent(new KeyboardEvent(type, { key, bubbles: true }))
+  key('keydown', 'Alt')
+  key('keyup', 'Alt')
+  expect(shots()).toBe(1)
+  page.stirred = true
+  key('keydown', 'Alt')
+  key('keydown', 'Tab')
+  key('keyup', 'Alt')
+  expect(shots()).toBe(1)
+  key('keydown', 'Alt')
+  key('keyup', 'Alt')
+  expect(shots()).toBe(2)
+  void unmount(app)
+})
 test('no press takes a picture of a page: words typed beside it, a chord, a switch of tabs or a click', async () => {
   const { app } = await opened('https://example.com/typed-beside')
   const field = document.createElement('textarea')
