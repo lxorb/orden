@@ -1,5 +1,5 @@
 import { shownHost } from '@orden/scan/web-address'
-import { isRecord, localDate, nameOf } from '../../../platform/src/api'
+import { isRecord, localDate, nameOf, shownName } from '../../../platform/src/api'
 import { wordFor } from './words'
 
 export interface Call {
@@ -47,7 +47,7 @@ export function today(now = Date.now()): string {
   return new Date(now).toISOString().slice(0, 10)
 }
 export function aboutOf(call: Call, titleOf: (tab: string) => string | null): string | null {
-  if (call.path !== null) return nameOf(call.path).replace(/\.md$/i, '')
+  if (call.path !== null) return shownName(nameOf(call.path))
   if (call.url !== null) return shownHost(call.url)
   return call.tab === null ? null : titleOf(call.tab)
 }

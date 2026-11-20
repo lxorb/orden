@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { readEvent } from './read'
-import { callsOf, readCall, sessionMarkdown, today } from './session'
+import { aboutOf, callsOf, readCall, sessionMarkdown, today, type Call } from './session'
 import { wordFor } from './words'
 
 describe('the crate news, read', () => {
@@ -109,5 +109,34 @@ describe('the session', () => {
     expect(wordFor('browser_click')).toBe('Pressing')
     expect(wordFor('edit_note')).toBe('Writing')
     expect(wordFor('agent_pair')).toBeNull()
+  })
+})
+describe('what a call is about', () => {
+  test('names a file as the app shows it, never with an ending of its own kinds', () => {
+    const call = (path: string): Call => ({
+      seq: 1,
+      at: 1,
+      agent: 'a',
+      verb: 'read_note',
+      tab: null,
+      url: null,
+      path,
+      status: 'ok',
+    })
+    const about = (path: string) => aboutOf(call(path), () => null)
+    const cases: [string, string][] = [
+      ['Work/Plan.md', 'Plan'],
+      ['Work/Board.canvas', 'Board'],
+      ['Work/Shell.term', 'Shell'],
+      ['Work/Talk.chat', 'Talk'],
+      ['Work/Site.url', 'Site'],
+      ['Work/Site.webloc', 'Site'],
+      ['Work/Book.pages', 'Book'],
+      ['Work/Tasks.base', 'Tasks'],
+      ['Work/report.pdf', 'report.pdf'],
+    ]
+    for (const [path, shown] of cases) {
+      expect(about(path), path).toBe(shown)
+    }
   })
 })
