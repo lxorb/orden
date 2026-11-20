@@ -41,6 +41,7 @@
   import { zoomTo as zoomPageTo } from './zoom'
   import { shownAddress } from '@orden/scan/visits'
   import { cardCorner, type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
+  import { glance } from './still'
   import { seek, shut, sought } from './seek'
   import { watchScale, watchShifts } from './shifts'
   import { siteOf } from './permissions.svelte'
@@ -147,14 +148,17 @@
   function follow(_cause?: unknown) {
     if (!isDesktop || !ready) return
     cancelAnimationFrame(scheduled)
-    scheduled = requestAnimationFrame(look)
+    scheduled = requestAnimationFrame(() => void look())
   }
   function now() {
+    void lookNow()
+  }
+  function lookNow(): Promise<void> | undefined {
     if (!isDesktop || !ready) return
     cancelAnimationFrame(scheduled)
-    look()
+    return look()
   }
-  function look() {
+  function look(): Promise<void> | undefined {
     if (!isDesktop || !ready || own) return
     if (page.heldAt || (pages.still && !page.shown)) {
       told = ''
@@ -186,7 +190,7 @@
     told = said
     page.space = space
     if (!page.live) page.own = apart
-    void pages.show(tab.id, address, at, visible, { cut, frame, corner })
+    return pages.show(tab.id, address, at, visible, { cut, frame, corner })
   }
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
   const own = $derived(isOwnPage(address))
@@ -230,7 +234,7 @@
     }
     const asking = () => {
       ready = true
-      look()
+      void look()
     }
     if (startup.reached('rooms')) asking()
     else void startup.turn('rooms').then(asking)
@@ -240,19 +244,19 @@
     const pressed = (event: Event) => {
       if (event instanceof KeyboardEvent) {
         lone = event.key === 'Alt' && !event.repeat
-        if (shortcuts.pressed('app.tab-overview', event)) pages.glance(tab.id)
-      } else if (event.target instanceof Element && event.target.closest(OVERVIEW)) pages.glance(tab.id)
+        if (shortcuts.pressed('app.tab-overview', event)) glance(pages, tab.id)
+      } else if (event.target instanceof Element && event.target.closest(OVERVIEW)) glance(pages, tab.id)
       follow()
     }
     const released = (event: KeyboardEvent) => {
-      if (event.key === 'Alt' && lone) pages.glance(tab.id)
+      if (event.key === 'Alt' && lone) glance(pages, tab.id)
       lone = false
     }
     window.addEventListener('pointerdown', pressed, true)
     window.addEventListener('keydown', pressed, true)
     window.addEventListener('keyup', released, true)
     const unwatch = overlays.watch(follow)
-    const unarrive = watchArrivals(now)
+    const unarrive = watchArrivals(lookNow)
     return () => {
       gone = true
       unheard?.()

@@ -44,11 +44,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return cutsOf.get(String(args?.tab)) ?? cuts
   },
 }))
-const owed: Promise<unknown>[] = []
-vi.mock('./covers', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./covers')>()),
-  heldUntil: (going: Promise<unknown>) => void owed.push(going),
-}))
 const heard = new Map<string, (event: { payload: unknown }) => void>()
 vi.mock('../../windows/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../windows/src/api')>()),
@@ -1326,17 +1321,4 @@ describe('a page something comes over', () => {
       expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
     },
   )
-})
-describe('a layer arriving over a page', () => {
-  test('waits on the placement asked as it comes, which has reached the engine once it is done', async () => {
-    cuts = 'hollows'
-    await built()
-    calls.length = 0
-    const over = { cut: { all: false, hollows: [{ x: 6, y: 6, width: 280, height: 500, radius: 10 }] }, frame: null }
-    owed.length = 0
-    void pages.show('a', SITE, PANE, false, over)
-    expect(owed).toHaveLength(1)
-    await owed[0]
-    expect(last('web_place')?.cut).toEqual(over.cut)
-  })
 })

@@ -210,10 +210,6 @@ function arrivals(records: readonly Change[]): Element[] {
 }
 export const HOLDS_AT_MOST = 150
 export const HELD = 'data-covers-held'
-let owing: Promise<unknown>[] | null = null
-export function heldUntil(going: Promise<unknown>): void {
-  owing?.push(going)
-}
 function holdRule(): void {
   if (document.getElementById(HELD)) return
   const rule = Object.assign(document.createElement('style'), { id: HELD })
@@ -234,21 +230,15 @@ function hold(nodes: readonly Element[], owed: readonly Promise<unknown>[]): voi
   })
 }
 const SHOWN_BY = ['class', 'style', 'hidden', 'data-covers']
-const told = new Set<() => void>()
+const told = new Set<() => unknown>()
 let arriving: MutationObserver | null = null
-export function watchArrivals(tell: () => void): () => void {
+export function watchArrivals(tell: () => unknown): () => void {
   if (typeof MutationObserver !== 'function') return () => undefined
   told.add(tell)
   arriving ??= new MutationObserver((records) => {
     if (!records.some(bringsLayer)) return
     const came = arrivals(records)
-    const owed: Promise<unknown>[] = []
-    owing = owed
-    try {
-      for (const one of told) one()
-    } finally {
-      owing = null
-    }
+    const owed = [...told].map((one) => one()).filter((one): one is Promise<unknown> => one instanceof Promise)
     if (owed.length > 0 && came.length > 0) hold(came, owed)
   })
   if (told.size === 1) {

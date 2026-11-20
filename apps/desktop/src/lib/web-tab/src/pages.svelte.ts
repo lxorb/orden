@@ -4,7 +4,7 @@ import { replay } from '../../ui-kit/src/api'
 import { isNumber, isRecord, isString, stored, storedText, invoke, isDesktop } from '../../platform/src/api'
 import { isExtensionPage, isWebAddress, keysOf } from '@orden/scan/web-address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
-import { heldUntil, type Cut } from './covers'
+import type { Cut } from './covers'
 import type { NotArrived } from './heard'
 import { Latest } from './latest'
 import { placeOf, placeKept } from './place'
@@ -26,6 +26,9 @@ function leftPrivate(privateLeft: boolean): void {
 function shut(tab: string, keep: boolean): Promise<unknown> {
   return invoke('web_close', { tab, keep }).catch(() => undefined)
 }
+function still(): Promise<typeof import('./still')> {
+  return import('./still')
+}
 function sleeping() {
   return import('./sleeping')
 }
@@ -35,8 +38,6 @@ const LOOK_WAITS = 500
 const SHOT_WAITS = 300
 const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
-const STILL_LOOKS = 100
-const PICTURE_EVERY = 200
 const BLANK_WAITS = 3000
 const AFTER_COMMIT = 400
 const ARRIVES = 3000
@@ -274,12 +275,7 @@ class Pages {
   typedInto(tabId: string): boolean {
     return (this.held.get(tabId)?.halfTyped ?? null) !== null
   }
-  show(tabId: string, url: string, pane: Rect, visible = true, over: Over = NOTHING): Promise<void> {
-    const going = this.showing(tabId, url, pane, visible, over)
-    heldUntil(going)
-    return going
-  }
-  private async showing(tabId: string, url: string, pane: Rect, visible: boolean, over: Over): Promise<void> {
+  async show(tabId: string, url: string, pane: Rect, visible = true, over: Over = NOTHING): Promise<void> {
     this.gone.delete(tabId)
     const page = this.of(tabId)
     this.wake(page)
@@ -354,7 +350,7 @@ class Pages {
         tab: tabId,
         url: page.url,
         pane: awayFrom(pane).pane,
-        ground: this.groundNow(),
+        ground: (await still()).groundNow(),
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
         profile: { store, private: page.inPrivate, pass },
       })
@@ -430,7 +426,7 @@ class Pages {
     }
     if (covering && page.live && cutsOut(page.layering, over.cut)) {
       await this.cover(tabId, page, pane, over)
-      if (over.cut?.all) void this.keepFresh(tabId, page, () => page.placings === turn)
+      if (over.cut?.all) void still().then((one) => one.keepFresh(this, tabId, page, () => page.placings === turn))
       return
     }
     if (covering) await this.shoot(tabId)
@@ -439,7 +435,7 @@ class Pages {
       if (!page.stowed) await this.put(tabId, page, awayFrom(pane))
       if (over.cut?.all) {
         page.stowing = setTimeout(() => void this.stow(tabId, page, pane, turn), COVER_HIDES)
-        void this.keepFresh(tabId, page, () => page.placings === turn && !page.stowed)
+        void still().then((one) => one.keepFresh(this, tabId, page, () => page.placings === turn && !page.stowed))
       }
       return
     }
@@ -457,37 +453,6 @@ class Pages {
       corner: over.corner,
     })
   }
-  private ground: string | null = null
-  groundNow(): string | null {
-    if (typeof document === 'undefined') return null
-    try {
-      const probe = document.createElement('i')
-      probe.style.background = 'var(--bg)'
-      document.body.append(probe)
-      const said = hexOf(getComputedStyle(probe).backgroundColor)
-      probe.remove()
-      this.ground = said ?? this.ground
-      return said
-    } catch {
-      return null
-    }
-  }
-  private watchGround(): void {
-    if (typeof MutationObserver !== 'function' || typeof document === 'undefined') return
-    let asked = false
-    const looked = () => {
-      asked = false
-      const was = this.ground
-      const now = this.groundNow()
-      if (now && now !== was) void invoke('web_ground', { ground: now }).catch(() => undefined)
-    }
-    const watching = new MutationObserver(() => {
-      if (asked) return
-      asked = true
-      requestAnimationFrame(looked)
-    })
-    for (const one of [document.documentElement, document.body]) watching.observe(one, { attributes: true })
-  }
   painted(tabId: string, page: Page): void {
     if (!page.blank) return
     page.blank = false
@@ -499,30 +464,6 @@ class Pages {
     if (after && this.held.get(tabId) === page) {
       void this.place(tabId, after.pane, after.visible, after.covering, after.over)
     }
-  }
-  private async keepFresh(tabId: string, page: Page, going: () => boolean): Promise<void> {
-    const watch = {}
-    page.watching = watch
-    const asked = { tab: tabId, on: true, picture: true }
-    await invoke('web_watch_drawing', asked).catch(() => undefined)
-    const until = Date.now() + COVER_HIDES
-    const watched = () => going() && page.live && this.held.get(tabId) === page && page.watching === watch
-    while (Date.now() < until && watched()) await new Promise<void>((go) => setTimeout(go, STILL_LOOKS))
-    if (page.watching !== watch) return
-    page.watching = null
-    await invoke('web_watch_drawing', { tab: tabId, on: false }).catch(() => undefined)
-  }
-  drew(tabId: string, picture: string | null): void {
-    const page = this.held.get(tabId)
-    const watch = page?.watching
-    if (!page || !watch || picture === null || stirring()) return
-    if (Date.now() - page.shotAt < PICTURE_EVERY) return
-    const { url, shotAt } = page
-    void decoded(picture).then(() => {
-      if (page.watching !== watch || page.url !== url || page.shotAt !== shotAt) return
-      page.shot = picture
-      page.shotAt = Date.now()
-    })
   }
   private async stow(tabId: string, page: Page, pane: Rect, turn: number): Promise<void> {
     if (page.placings !== turn) return
@@ -708,20 +649,13 @@ class Pages {
     const said = await this.whereIs(tabId)
     return said?.trail[said.at + by] ?? null
   }
-  glance(tabId: string): void {
-    const page = this.held.get(tabId)
-    if (!isDesktop || !page?.live || !page.shown || page.watching) return
-    if (page.shot && !page.stirred) return
-    page.stirred = false
-    void this.retake(tabId, page)
-  }
   async shoot(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || !page.shown) return
     if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
     await this.retake(tabId, page)
   }
-  private async retake(tabId: string, page: Page): Promise<void> {
+  async retake(tabId: string, page: Page): Promise<void> {
     if (page.shooting) return page.shooting
     const taking = this.photograph(page, tabId)
     page.shooting = taking
@@ -744,7 +678,7 @@ class Pages {
     const standing = page.shot !== null
     void asked.then(
       async (said) => {
-        if (said && standing) await decoded(said)
+        if (said && standing) await (await still()).decoded(said)
         if (said && page.shotAt === shotAt && page.url === url && same(page.pane)) {
           page.shot = said
           page.shotAt = Date.now()
@@ -935,14 +869,15 @@ class Pages {
       await listen('orden://web-drew', (event) => {
         const said = event.payload
         if (!isRecord(said) || !isString(said.tab)) return
-        this.drew(said.tab, isString(said.picture) ? said.picture : null)
+        const picture = isString(said.picture) ? said.picture : null
+        void still().then((one) => one.drew(this, said.tab as string, picture))
       })
       await listen('orden://web-painted', (event) => {
         const tab = isRecord(event.payload) && isString(event.payload.tab) ? event.payload.tab : null
         const page = tab === null ? undefined : this.held.get(tab)
         if (tab !== null && page) this.painted(tab, page)
       })
-      this.watchGround()
+      ;(await still()).watchGround()
       const { pointerMoved } = await import('./pointed')
       await listen('orden://web-pointer', (event) => {
         pointerMoved(event.payload, (tab) => {
@@ -1109,24 +1044,6 @@ providePort('web.pages', {
 export const MARKS = 'orden:favicons'
 export const MARK = 'orden:favicon:'
 const stillBlank = (page: Page): boolean => page.blank
-function stirring(): boolean {
-  if (typeof document === 'undefined' || typeof document.getAnimations !== 'function') return false
-  return document.getAnimations().some((one) => one.playState === 'running')
-}
-function hexOf(colour: string): string | null {
-  const parts = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(colour)
-  if (!parts) return null
-  return `#${parts
-    .slice(1, 4)
-    .map((one) => Number(one).toString(16).padStart(2, '0'))
-    .join('')}`
-}
-async function decoded(picture: string): Promise<void> {
-  if (typeof Image !== 'function') return
-  const one = new Image()
-  one.src = picture
-  await one.decode().catch(() => undefined)
-}
 export function drawable(picture: string): boolean {
   return picture.length <= 22 * 1024 && /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(picture)
 }
