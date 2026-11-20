@@ -79,6 +79,7 @@ export class Core {
   readonly touched = new Set<string>()
   readonly stampWaiting = new Map<string, { mtime: number; size: number }>()
   readonly unreadFor = new Map<string, number>()
+  readonly unfolded = new Set<string>()
   readonly refusedBytes = new Map<string, { at: number; hash: string; full: boolean }>()
   readonly events: Partial<CoreEvents> = {}
   readonly inHand = new Map<string, number>()

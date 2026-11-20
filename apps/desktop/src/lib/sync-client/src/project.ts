@@ -35,7 +35,13 @@ export function notWritten(core: Core, space: SpaceState, entry: EntryRow, doc: 
   const failed = `${shownName(entry.name)} not written: ${error instanceof Error ? error.message : String(error)}`
   return [put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed })]
 }
-export async function project(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
+export async function project(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  doc: Doc,
+  folded = false,
+): Promise<Change[]> {
   if (core.pinned.has(entry.id) || space.foreign(entry.id)) return []
   const path = entry.local_path || space.paths().get(entry.id)
   if (!path) return []
@@ -58,6 +64,12 @@ export async function project(core: Core, space: SpaceState, entry: EntryRow, do
     entry.local_path = path
     const digest = await core.world.digest(unixLines(text))
     return entry.written_hash === digest && !placed ? [] : await wrote(core, entry, text)
+  }
+  if (!folded && was !== null && entry.local_path && entry.written_hash !== null) {
+    if ((await core.world.digest(unixLines(was))) !== entry.written_hash) {
+      core.unfolded.add(entry.id)
+      return []
+    }
   }
   try {
     if (was?.trim()) await core.world.disk.keep(full, was)
