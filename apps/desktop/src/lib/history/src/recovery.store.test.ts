@@ -36,20 +36,31 @@ vi.mock('../../workspace/src/api', () => ({
     },
   },
 }))
-vi.mock('../../accounts/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
-  account: { token: null },
+const server = vi.hoisted(() => {
+  const settings: Record<string, Record<string, unknown>> = {}
+  return { settings, offline: false }
+})
+vi.mock('../../accounts/src/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/client')>()),
+  api: {
+    saveSettings: async (token: string, patch: Record<string, unknown>) => {
+      if (server.offline) throw new Error('offline')
+      server.settings[token] = { ...server.settings[token], ...patch }
+      return { settings: server.settings[token] }
+    },
+    signOut: async () => undefined,
+  },
 }))
 const { recovery } = await import('./recovery.svelte')
 const { DEFAULT_DAYS, DEFAULT_MINUTES } = await import('../../snapshots/src/api')
 const MINUTE = 60 * 1000
 beforeEach(() => {
   vi.useFakeTimers()
-  localStorage.clear()
   sent.calls = []
   open.notes = []
   recovery.setEvery(DEFAULT_MINUTES)
   recovery.setDays(DEFAULT_DAYS)
+  localStorage.clear()
   sent.calls = []
 })
 afterEach(() => {
@@ -166,5 +177,66 @@ describe('another window', () => {
     expect(recovery.days).toBe(30)
     expect(recovery.every).toBe(0)
     expect(sent.calls).toContainEqual({ command: 'purge_snapshots', args: { days: 30 } })
+  })
+})
+describe('another account in the same window (#2344)', () => {
+  test('starts from its own choices or the defaults and none of the last account’s, and the same account again keeps its own', async () => {
+    const { account } = await import('../../accounts/src/account.svelte')
+    const signedIn = async (who: string) => {
+      await account.signOut()
+      account.token = who
+      account.user = { id: who, email: `${who}@example.org`, name: who }
+    }
+    server.settings = {}
+    await signedIn('alice')
+    recovery.receive({ recoveryEvery: 1, recoveryDays: 30 })
+    expect(recovery.days).toBe(30)
+    await signedIn('bob')
+    recovery.receive({})
+    expect(recovery.every).toBe(DEFAULT_MINUTES)
+    expect(recovery.days).toBe(DEFAULT_DAYS)
+    expect(localStorage.getItem('orden:recovery')).toBe(JSON.stringify({ every: DEFAULT_MINUTES, days: DEFAULT_DAYS }))
+    recovery.setDays(1)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(server.settings.bob).toEqual({ recoveryDays: 1 })
+    await signedIn('bob')
+    recovery.receive({})
+    expect(recovery.days).toBe(1)
+    await signedIn('alice')
+    recovery.receive({ recoveryEvery: 1, recoveryDays: 30 })
+    expect(recovery.every).toBe(1)
+    expect(recovery.days).toBe(30)
+    await signedIn('bob')
+    recovery.receive({ recoveryDays: 1 })
+    expect(recovery.every).toBe(DEFAULT_MINUTES)
+    account.token = null
+    account.user = null
+  })
+  test('what an account still owes from this device comes back with it and reaches it as it was, not as the next account left it', async () => {
+    const { account } = await import('../../accounts/src/account.svelte')
+    const signedIn = async (who: string) => {
+      await account.signOut()
+      account.token = who
+      account.user = { id: who, email: `${who}@example.org`, name: who }
+    }
+    server.settings = {}
+    await signedIn('alice')
+    recovery.receive({})
+    server.offline = true
+    recovery.setDays(30)
+    await vi.advanceTimersByTimeAsync(0)
+    server.offline = false
+    await signedIn('bob')
+    recovery.receive({})
+    expect(recovery.days).toBe(DEFAULT_DAYS)
+    recovery.setDays(1)
+    await signedIn('alice')
+    recovery.receive({})
+    expect(recovery.days).toBe(30)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(server.settings.alice).toEqual({ recoveryDays: 30 })
+    expect(recovery.days).toBe(30)
+    account.token = null
+    account.user = null
   })
 })
