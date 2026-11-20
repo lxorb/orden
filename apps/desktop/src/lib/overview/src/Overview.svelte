@@ -43,7 +43,7 @@
   import { inRows, meets, packed, pushedAside } from './pack'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot, WIDEST } from './layout'
   import { marked, shownBox, tabCopyOf } from './mirror'
-  import { forgetLater, later, laterFirst } from './later'
+  import { forgetLater, holdLater, later, laterFirst, letLaterGo } from './later'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
 
@@ -608,6 +608,7 @@
     if (lifted.join(' ') !== tabOverview.lifted.join(' ')) tabOverview.lifted = lifted
   }
   function begin() {
+    letLaterGo()
     started = true
     onTheWay = true
     document.documentElement.dataset.overview = 'slide'
@@ -774,6 +775,7 @@
     const again = shown
     if (!again) {
       entered = performance.now()
+      holdLater()
       const holding = webPages().holdStill()
       stood = holding === null
       void holding?.finally(() => (stood = true))

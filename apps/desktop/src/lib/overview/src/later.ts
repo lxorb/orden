@@ -3,6 +3,7 @@ import { flushSync } from 'svelte'
 const BUDGET = 4
 const queue: (() => void)[] = []
 let asked = false
+let held = false
 let calm: (() => void)[] = []
 function calmed() {
   const waiting = calm
@@ -11,6 +12,7 @@ function calmed() {
 }
 function drain() {
   asked = false
+  if (held) return
   const until = performance.now() + BUDGET
   while (queue.length && performance.now() < until) {
     queue.shift()?.()
@@ -23,7 +25,7 @@ function drain() {
   }
 }
 function ask() {
-  if (asked) return
+  if (asked || held) return
   asked = true
   requestAnimationFrame(() => setTimeout(drain, 0))
 }
@@ -35,8 +37,16 @@ export function laterFirst(work: () => void) {
   queue.unshift(work)
   ask()
 }
+export function holdLater() {
+  held = true
+}
+export function letLaterGo() {
+  held = false
+  if (queue.length) ask()
+}
 export function forgetLater() {
   queue.length = 0
+  held = false
   calmed()
 }
 export function settled(): Promise<void> {
