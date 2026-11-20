@@ -7,6 +7,7 @@ import { heardElsewhere, pollDelay, forget, keep, storedText, waited } from '../
 import { called } from './person'
 
 const STORAGE_KEY = 'orden:session'
+const SETTINGS_HEARD = 'orden:settings-heard'
 export type Step = 'email' | 'code' | 'second'
 export type Leaving = 'asked' | 'told' | 'kept'
 export interface Vault {
@@ -320,6 +321,7 @@ class Session {
     arriving.reset()
     usage.reset()
     forget(STORAGE_KEY)
+    forget(SETTINGS_HEARD)
     void this.vault?.clear().catch(() => undefined)
     this.stopResendTimer()
     this.token = null

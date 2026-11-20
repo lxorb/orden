@@ -21,7 +21,7 @@ export type {
   SpaceRole,
 } from './routes'
 export { account, type Vault } from './account.svelte'
-export { AccountOwed } from './account-owed'
+export { AccountOwed, heardSettings } from './account-owed'
 export { readableSize, usage } from './usage.svelte'
 export { default as AccountBadge } from './AccountBadge.svelte'
 export { api, ApiError, BASE, faceUrl, fromServer, MCP_URL, request, turnedDown, warmCalls } from './client'

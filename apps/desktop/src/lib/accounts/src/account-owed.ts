@@ -6,12 +6,28 @@ import { forget, isRecord, keepJson, stored } from '../../platform/src/api'
 interface Kept {
   who: string | null
   patch: AccountSettings
+  base: AccountSettings
 }
+const SETTINGS_HEARD = 'orden:settings-heard'
 const said = (value: unknown) => JSON.stringify(value)
+export function heardSettings(): AccountSettings | undefined {
+  const kept = stored(SETTINGS_HEARD)
+  const who = account.user?.id
+  return isRecord(kept) && who && kept.who === who && isRecord(kept.settings) ? kept.settings : undefined
+}
+export function hearSettings(settings: AccountSettings): void {
+  const who = account.user?.id
+  if (who) keepJson(SETTINGS_HEARD, { who, settings })
+}
+const only = (settings: AccountSettings, names: string[]): AccountSettings =>
+  Object.fromEntries(Object.entries(settings).filter(([name]) => names.includes(name)))
 export class AccountOwed {
   sends = 0
   session = 0
-  constructor(private readonly key: string) {
+  constructor(
+    private readonly key: string,
+    private readonly landed?: (settings: AccountSettings) => void,
+  ) {
     account.forgetWithSession(() => {
       this.session++
       forget(this.key)
@@ -26,6 +42,7 @@ export class AccountOwed {
     return {
       who: typeof kept.who === 'string' ? kept.who : null,
       patch: isRecord(kept.patch) ? kept.patch : {},
+      base: isRecord(kept.base) ? kept.base : {},
     }
   }
   private get mine(): Kept | null {
@@ -40,41 +57,60 @@ export class AccountOwed {
     this.sends++
     if (account.noAccountForSure) return
     const mine = this.mine
+    const owed = mine?.patch ?? {}
+    const heard = heardSettings()
+    const fresh = Object.keys(patch).filter((name) => !(name in owed))
     keepJson(this.key, {
       who: account.user?.id ?? mine?.who ?? null,
-      patch: { ...mine?.patch, ...patch },
+      patch: { ...owed, ...patch },
+      base: { ...mine?.base, ...(heard ? only(heard, fresh) : {}) },
     })
     const token = account.accountToken
     if (token) void this.settle(token)
   }
   async settle(token: string): Promise<void> {
-    const owed = this.mine?.patch ?? {}
+    const kept = this.mine
+    const owed = kept?.patch ?? {}
     if (!Object.keys(owed).length) return
     const session = this.session
-    if (!(await this.delivered(token, owed, session))) return
+    const answer = await this.delivered(token, owed, kept?.base ?? {}, session)
+    if (!answer) return
     if (this.session !== session) return
     const mine = this.mine
-    const rest = Object.fromEntries(
-      Object.entries(mine?.patch ?? {}).filter(
-        ([name, value]) => said(value) !== said(owed[name as keyof AccountSettings]),
-      ),
+    const rest = Object.keys(mine?.patch ?? {}).filter(
+      (name) => said(mine?.patch[name as keyof AccountSettings]) !== said(owed[name as keyof AccountSettings]),
     )
-    if (Object.keys(rest).length) keepJson(this.key, { who: mine?.who ?? null, patch: rest })
-    else forget(this.key)
+    if (rest.length) {
+      keepJson(this.key, {
+        who: mine?.who ?? null,
+        patch: only(mine?.patch ?? {}, rest),
+        base: only(mine?.base ?? {}, rest),
+      })
+      return
+    }
+    forget(this.key)
+    if (answer !== true) this.landed?.(answer)
   }
-  private async delivered(token: string, patch: AccountSettings, session: number): Promise<boolean> {
+  private async delivered(
+    token: string,
+    patch: AccountSettings,
+    base: AccountSettings,
+    session: number,
+  ): Promise<AccountSettings | boolean> {
     try {
-      await api.saveSettings(token, patch)
-      return true
+      return (await api.saveSettings(token, patch, base)).settings
     } catch (error) {
       if (!turnedDown(error)) return false
-      const keys = Object.keys(patch) as (keyof AccountSettings)[]
-      if (keys.length < 2) return true
-      for (const key of keys) {
+      const names = Object.keys(patch) as (keyof AccountSettings)[]
+      if (names.length < 2) return true
+      let last: AccountSettings | boolean = true
+      for (const name of names) {
         if (this.session !== session) return true
-        if (!(await this.delivered(token, { [key]: patch[key] }, session))) return false
+        const one = await this.delivered(token, only(patch, [name]), base, session)
+        if (one === false) return false
+        if (one !== true) last = one
       }
-      return true
+      return last
     }
   }
 }

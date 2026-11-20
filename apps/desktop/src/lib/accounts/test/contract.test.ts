@@ -1,7 +1,20 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, test, vi } from 'vitest'
-import { account, ApiError, called, clearsAt, faceUrl, farApart, fromServer, readSeats, stands } from '../src/api'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+  account,
+  AccountOwed,
+  api,
+  ApiError,
+  called,
+  clearsAt,
+  faceUrl,
+  farApart,
+  fromServer,
+  heardSettings,
+  readSeats,
+  stands,
+} from '../src/api'
 import { clampOffset, sourceSquare, zoomed } from '../src/crop'
 import { withoutMetadata } from '../src/encode'
 import { readPerson } from '../src/read'
@@ -154,5 +167,74 @@ describe('the account across windows', () => {
     expect(account.signedIn).toBe(true)
     await account.signOut()
     vi.unstubAllGlobals()
+  })
+})
+describe('a list or a map kept on the account', () => {
+  const server = { settings: {} as Record<string, unknown>, offline: false }
+  const kept = new Map<string, string>()
+  beforeEach(() => {
+    kept.clear()
+    server.settings = {}
+    server.offline = false
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => kept.get(key) ?? null,
+      setItem: (key: string, value: string) => void kept.set(key, value),
+      removeItem: (key: string) => void kept.delete(key),
+    })
+    vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
+      if (server.offline || !url.endsWith('/v1/settings')) return Promise.reject(new Error('offline'))
+      if (init.method === 'PATCH' && typeof init.body === 'string')
+        Object.assign(server.settings, JSON.parse(init.body))
+      return Promise.resolve(new Response(JSON.stringify({ settings: structuredClone(server.settings) })))
+    })
+    account.token = 'token'
+    account.user = { id: 'u1', email: 'ada@example.org', name: 'Ada' }
+  })
+  afterEach(() => {
+    account.token = null
+    account.user = null
+    vi.unstubAllGlobals()
+  })
+  async function heard(settings: Record<string, unknown>) {
+    server.settings = structuredClone(settings)
+    await api.settings('token')
+  }
+  test('is never undone in one item by another device changing another', async () => {
+    await heard({ archivedSpaces: ['a'] })
+    server.settings.archivedSpaces = ['a', 'b']
+    await api.saveSettings('token', { archivedSpaces: ['a', 'c'] })
+    expect(server.settings.archivedSpaces).toEqual(['a', 'b', 'c'])
+  })
+  test('loses only what this device took out, never what the other added', async () => {
+    await heard({ archivedSpaces: ['a', 'b'] })
+    server.settings.archivedSpaces = ['a', 'b', 'd']
+    await api.saveSettings('token', { archivedSpaces: ['a'] })
+    expect(server.settings.archivedSpaces).toEqual(['a', 'd'])
+  })
+  test('in a map keeps the other device’s keys beside this one’s', async () => {
+    await heard({ glassesMarks: { bold: true, italic: false } })
+    server.settings.glassesMarks = { bold: true, italic: false, strike: true }
+    await api.saveSettings('token', { glassesMarks: { italic: true } })
+    expect(server.settings.glassesMarks).toEqual({ italic: true, strike: true })
+  })
+  test('changed offline and sent after a reload heard newer settings still keeps the other device’s change', async () => {
+    const owed = new AccountOwed('orden:test-owed-settings')
+    await heard({ archivedSpaces: ['a'] })
+    server.offline = true
+    owed.send({ archivedSpaces: ['a', 'c'] })
+    await owed.settle('token')
+    expect(owed.standing).toBe(true)
+    server.offline = false
+    await heard({ archivedSpaces: ['a', 'b'] })
+    expect(heardSettings()?.archivedSpaces).toEqual(['a', 'b'])
+    await owed.settle('token')
+    expect(server.settings.archivedSpaces).toEqual(['a', 'b', 'c'])
+    expect(owed.standing).toBe(false)
+  })
+  test('sent beside a change of this device’s own does not overwrite what it did not change', async () => {
+    await heard({ shortcuts: { save: 'Mod-s' }, preset: 'orden' })
+    server.settings.shortcuts = { save: 'Mod-s', find: 'Mod-f' }
+    await api.saveSettings('token', { shortcuts: { save: 'Mod-s' }, preset: 'vscode' })
+    expect(server.settings).toEqual({ shortcuts: { save: 'Mod-s', find: 'Mod-f' }, preset: 'vscode' })
   })
 })
