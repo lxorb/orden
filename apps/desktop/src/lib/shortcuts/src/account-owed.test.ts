@@ -229,3 +229,32 @@ describe('a toolbar owed to an account that signed out', () => {
     expect(toolbar.ids).toContain('paragraph.task-list')
   })
 })
+describe('another account signing in on this device', () => {
+  test('gets its own shortcuts or the defaults, never the last account’s', async () => {
+    const { shortcuts } = await relaunched()
+    shortcuts.set('format.bold', 'Mod-Alt-j')
+    await settled()
+    signedOut()
+    world.saved = []
+    world.token = 'token'
+    world.user = { id: 'u2' }
+    shortcuts.receive({})
+    await settled()
+    expect(shortcuts.keyFor('format.bold')).not.toBe('Mod-Alt-j')
+    expect(shortcuts.preset).toBe('default')
+    expect(world.saved).toEqual([])
+    const again = await relaunched()
+    expect(again.shortcuts.keyFor('format.bold')).not.toBe('Mod-Alt-j')
+  })
+  test('leaves the shortcuts as they were when the same account signs in again', async () => {
+    const { shortcuts } = await relaunched()
+    shortcuts.set('format.bold', 'Mod-Alt-j')
+    await settled()
+    signedOut()
+    world.token = 'token'
+    world.user = { id: 'u1' }
+    shortcuts.receive({})
+    await settled()
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
+  })
+})
