@@ -72,6 +72,7 @@ pub struct Rect {
 #[serde(tag = "kind", rename_all = "camelCase")]
 enum Said {
     Size { width: u32, height: u32 },
+    Failed { problem: String },
     Closed,
 }
 #[tauri::command]
@@ -82,28 +83,32 @@ pub async fn extension_popup_open(
     store: Option<String>,
     rect: Rect,
 ) -> Result<Option<String>, String> {
+    let _ = store;
     let label = fresh_label();
     want(Some(label.clone()));
     let app = webview.app_handle().clone();
-    let finding = app.clone();
+    let (finding, which) = (app.clone(), id.clone());
     let address: Url =
-        tauri::async_runtime::spawn_blocking(move || super::page_of(&finding, &id, false))
+        tauri::async_runtime::spawn_blocking(move || super::page_of(&finding, &which, false))
             .await
             .map_err(|error| error.to_string())??
             .parse()
             .map_err(|_| "that extension's popup has no address".to_string())?;
-    let store = orden_web::web_stores::named(store.as_deref())?.map(str::to_owned);
     let builder = WebviewBuilder::new(label.clone(), WebviewUrl::External(blank()?))
         .focused(orden_placement::placement::away().is_none())
         .disable_drag_drop_handler()
         .on_navigation(orden_web::web_tabs::tab_may_open);
-    let builder = orden_web::engine::web_store(builder, &app, store.as_deref())?;
+    let builder = orden_web::engine::web_store(builder, &app, None)?;
     let measuring = app.clone();
     let builder = builder.on_page_load(move |view, payload| {
-        if matches!(payload.event(), tauri::webview::PageLoadEvent::Finished)
-            && orden_web::extension_ids::ours(payload.url())
-        {
-            let (app, view) = (measuring.clone(), view.clone());
+        if !matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
+            return;
+        }
+        let (app, view) = (measuring.clone(), view.clone());
+        if refused(payload.url()) {
+            let id = id.clone();
+            std::thread::spawn(move || failed(&app, &view, &id));
+        } else if orden_web::extension_ids::ours(payload.url()) {
             std::thread::spawn(move || measure(&app, &view));
         }
     });
@@ -134,7 +139,6 @@ pub async fn extension_popup_open(
                 return;
             }
         }
-        let _ = &store;
         let scale = orden_web::page_scale::of(&window).unwrap_or(1.0);
         let made = orden_web::engine::add_child(
             &window,
@@ -197,6 +201,33 @@ fn went(app: &AppHandle, label: &str) {
         closed(app);
         let _ = app.emit(SAID, Said::Closed);
     }
+}
+fn refused(url: &Url) -> bool {
+    url.scheme() == "chrome-error"
+}
+fn why(code: Option<&str>) -> String {
+    match code.map(str::trim).filter(|code| !code.is_empty()) {
+        Some(code) => format!("Chromium would not open this extension's popup: {code}"),
+        None => "Chromium would not open this extension's popup".to_owned(),
+    }
+}
+const CODE: &str = "(() => { const one = document.querySelector('.error-code'); return one ? one.textContent : '' })()";
+fn failed(app: &AppHandle, view: &Webview, id: &str) {
+    let code = orden_web::engine::devtools::call(
+        view,
+        None,
+        "Runtime.evaluate",
+        &serde_json::json!({ "expression": CODE, "returnByValue": true }),
+        Duration::from_secs(2),
+    )
+    .ok()
+    .and_then(|said| said.get("result")?.get("value")?.as_str().map(str::to_owned));
+    let problem = why(code.as_deref());
+    super::went(id, Some(problem.clone()));
+    super::changed(app);
+    let _ = app.emit(SAID, Said::Failed { problem });
+    let (closing, label) = (app.clone(), view.label().to_owned());
+    let _ = app.run_on_main_thread(move || went(&closing, &label));
 }
 fn blank() -> Result<Url, String> {
     "about:blank".parse().map_err(|_| "no blank page to start from".to_string())
@@ -322,6 +353,34 @@ mod tests {
         assert!(!is_wanted(&first) && is_wanted(&second));
         want(None);
         assert!(!is_wanted(&second));
+    }
+    #[test]
+    fn a_popup_chromium_refused_closes_saying_why_and_any_other_page_stays() {
+        let address = |said: &str| said.parse::<Url>().expect("an address");
+        assert!(refused(&address("chrome-error://chromewebdata/")));
+        for fine in [
+            "chrome-extension://ghmbeldphafepmbegfdlkpapadhbakde/popup.html",
+            "about:blank",
+            "https://account.proton.me/login",
+        ] {
+            assert!(!refused(&address(fine)), "{fine}");
+        }
+        assert_eq!(
+            why(Some("ERR_BLOCKED_BY_CLIENT")),
+            "Chromium would not open this extension's popup: ERR_BLOCKED_BY_CLIENT"
+        );
+        assert_eq!(why(Some("  ")), "Chromium would not open this extension's popup");
+        assert_eq!(why(None), "Chromium would not open this extension's popup");
+        let said = serde_json::to_value(Said::Failed { problem: why(None) }).expect("said");
+        assert_eq!(said["kind"], "failed");
+        assert_eq!(said["problem"], "Chromium would not open this extension's popup");
+    }
+    #[test]
+    fn a_popup_opens_where_its_extension_runs_whatever_store_its_tab_is_in() {
+        let source = include_str!("popup.rs").replace('\r', "");
+        let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
+        assert!(code.contains("web_store(builder, &app, None)"));
+        assert!(!code.contains("store.as_deref()"));
     }
     #[test]
     fn a_newer_measuring_ends_the_older() {

@@ -416,14 +416,25 @@ pub async fn extensions_page(app: AppHandle, id: String, options: bool) -> Resul
         .map_err(|error| error.to_string())?
 }
 fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
-    let (_, folder) = listed(app)
+    let (one, folder) = listed(app)
         .into_iter()
         .find(|(one, _)| one.id == id)
         .ok_or("that extension is not installed")?;
-    let about = manifest::read(&folder)?;
-    let page = if options { about.options } else { about.popup };
-    page.map(|page| format!("chrome-extension://{id}/{page}"))
-        .ok_or_else(|| "that extension has no such page".to_string())
+    let pending = PENDING.read().unwrap_or_else(PoisonError::into_inner).contains(id);
+    page_for(&one, &manifest::read(&folder)?, pending, options)
+}
+fn page_for(one: &Kept, about: &About, pending: bool, options: bool) -> Result<String, String> {
+    let name = if about.name.is_empty() { one.id.as_str() } else { about.name.as_str() };
+    if !one.enabled {
+        return Err(format!("{name} is turned off"));
+    }
+    if pending {
+        return Err(format!("{name} is not running yet: restart Orden to finish installing it"));
+    }
+    let page = if options { &about.options } else { &about.popup };
+    page.as_ref()
+        .map(|page| format!("chrome-extension://{}/{page}", one.id))
+        .ok_or_else(|| format!("{name} has no such page"))
 }
 #[tauri::command]
 pub fn extensions_named(link: String) -> Option<(Store, String)> {
@@ -436,7 +447,9 @@ mod tests {
 
     use serde_json::{json, Value};
 
-    use super::{land, library, merged, shown, turned, went, Kept, Store, LARGEST};
+    use super::{
+        land, library, merged, page_for, shown, turned, went, About, Kept, Store, LARGEST,
+    };
 
     fn kept() -> Kept {
         Kept {
@@ -636,5 +649,36 @@ mod tests {
         turned(&mut cdp, one.clone(), &folder, true);
         assert_eq!(*asked.borrow(), ["Extensions.loadUnpacked"]);
         assert!(library::running(&folder));
+    }
+    #[test]
+    fn a_page_is_given_only_for_an_extension_that_runs() {
+        let about = About {
+            name: "Proton Pass".to_owned(),
+            popup: Some("popup.html".to_owned()),
+            options: Some("settings.html#general".to_owned()),
+            ..About::default()
+        };
+        let on = kept();
+        assert_eq!(
+            page_for(&on, &about, false, false),
+            Ok(format!("chrome-extension://{}/popup.html", on.id))
+        );
+        assert_eq!(
+            page_for(&on, &about, false, true),
+            Ok(format!("chrome-extension://{}/settings.html#general", on.id))
+        );
+        assert_eq!(
+            page_for(&on, &about, true, false),
+            Err("Proton Pass is not running yet: restart Orden to finish installing it".to_owned())
+        );
+        let off = Kept { enabled: false, ..kept() };
+        for pending in [false, true] {
+            assert_eq!(
+                page_for(&off, &about, pending, true),
+                Err("Proton Pass is turned off".to_owned())
+            );
+        }
+        let bare = About::default();
+        assert_eq!(page_for(&on, &bare, false, false), Err(format!("{} has no such page", on.id)));
     }
 }
