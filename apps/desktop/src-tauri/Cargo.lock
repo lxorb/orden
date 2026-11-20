@@ -3193,6 +3193,7 @@ dependencies = [
 name = "orden-ai"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "dirs",
  "getrandom 0.3.4",
  "orden-agents",
@@ -3201,10 +3202,13 @@ dependencies = [
  "orden-placement",
  "orden-store",
  "orden-system",
+ "reqwest",
+ "rustls",
  "serde",
  "serde_json",
  "tauri",
  "tempfile",
+ "tokio",
 ]
 
 [[package]]
