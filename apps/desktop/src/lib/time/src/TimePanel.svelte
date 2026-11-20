@@ -45,7 +45,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="time" ondblclick={opened}>
+<div class="time" data-time-panel ondblclick={opened}>
   <Picker {now} onmanage={manage} />
 
   {#if recent.length}
