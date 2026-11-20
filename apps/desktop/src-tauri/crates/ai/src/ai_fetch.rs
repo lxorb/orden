@@ -2,7 +2,7 @@ use orden_base::Held as _;
 use std::collections::HashMap;
 use std::future::Future;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 
 use base64::Engine as _;
@@ -61,6 +61,10 @@ fn same_origin(one: &Url, other: &Url) -> bool {
         && one.port_or_known_default() == other.port_or_known_default()
 }
 fn client() -> Result<Client, String> {
+    static ONE: OnceLock<Result<Client, String>> = OnceLock::new();
+    ONE.get_or_init(built).clone()
+}
+fn built() -> Result<Client, String> {
     let _ = rustls::crypto::ring::default_provider().install_default();
     Client::builder()
         .connect_timeout(CONNECT_WITHIN)
@@ -340,6 +344,51 @@ mod tests {
         std::thread::sleep(Duration::from_millis(300));
         assert!(said.try_recv().is_err());
         assert!(RUNNING.held().as_ref().is_none_or(|all| !all.contains_key(&key)));
+    }
+    #[test]
+    fn requests_to_one_server_share_one_connection() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        let port = listener.local_addr().expect("addr").port();
+        let accepted = Arc::new(AtomicU64::new(0));
+        let counted = Arc::clone(&accepted);
+        std::thread::spawn(move || {
+            for stream in listener.incoming().flatten() {
+                counted.fetch_add(1, Ordering::SeqCst);
+                std::thread::spawn(move || {
+                    let mut writer = stream.try_clone().expect("clone");
+                    let mut reader = BufReader::new(stream);
+                    loop {
+                        loop {
+                            let mut line = String::new();
+                            if reader.read_line(&mut line).unwrap_or(0) == 0 {
+                                return;
+                            }
+                            if line == "\r\n" {
+                                break;
+                            }
+                        }
+                        let _ = writer.write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\n\r\nok");
+                    }
+                });
+            }
+        });
+        let url = format!("http://127.0.0.1:{port}/v1/models");
+        for id in [6, 7] {
+            let asked = asked_of(&url, "GET", Vec::new(), None).expect("asked");
+            let (told, said) = mpsc::channel();
+            let head =
+                tauri::async_runtime::block_on(fetched(("w".into(), id), asked, move |one| {
+                    told.send(one).is_ok()
+                }))
+                .expect("head");
+            assert_eq!(head.status, 200);
+            while let Ok(one) = said.recv_timeout(Duration::from_secs(5)) {
+                if one.get("end").is_some() {
+                    break;
+                }
+            }
+        }
+        assert_eq!(accepted.load(Ordering::SeqCst), 1);
     }
     #[test]
     fn only_http_and_https_are_asked() {
