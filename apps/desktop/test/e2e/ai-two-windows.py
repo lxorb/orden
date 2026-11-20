@@ -72,6 +72,7 @@ SEED = """async (provider) => {
     usage: { input: 0, output: 0 }, created: now - 3000, updated: now - 1000 })
   return space
 }"""
+CHATS = "typeof window.ordenApp?.aiChats === 'function'"
 OPEN = """async () => { const chat = await window.ordenApp.aiChats(); await chat.openThread('twin', false); return chat.thread?.title }"""
 STORED = """async (space) => { const { readThread } = await import('/src/lib/ai-chat/src/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? { title: t.title, pinned: !!t.pinned, archived: !!t.archived } : null }"""
 STORED_TURNS = """async (space) => { const { readThread } = await import('/src/lib/ai-chat/src/chat/threads.ts'); const t = await readThread(space, 'twin'); return t ? t.turns.map((turn) => turn.role === 'you' ? 'you' : 'model:' + turn.parts.map((part) => part.text || '').join('')) : null }"""
@@ -82,13 +83,13 @@ def drive(browser: Browser) -> None:
     DRIVE.open(a)
     provider = a.evaluate(SETUP, DRIVE.side(Model))
     a.keyboard.press("Control+Shift+A")
-    a.wait_for_timeout(800)
+    a.wait_for_function(CHATS)
     space = a.evaluate(SEED, provider)
     b = a.context.new_page()
     b.on("pageerror", lambda error: wrong(f"page error in B: {error}"))
     DRIVE.open(b)
     b.keyboard.press("Control+Shift+A")
-    b.wait_for_timeout(800)
+    b.wait_for_function(CHATS)
     say(f"A opened {a.evaluate(OPEN)!r}, B opened {b.evaluate(OPEN)!r}")
     a.evaluate("async () => (await window.ordenApp.aiChats()).rename('Herons at night', 'twin')")
     a.wait_for_timeout(600)
