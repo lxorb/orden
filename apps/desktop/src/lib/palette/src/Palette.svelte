@@ -46,6 +46,7 @@
   import { notices, paletteWords, workspace, middleOpens } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { wholeRows } from './whole-rows'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { distinct, keepScope, keptScope, type Scope } from './scope'
 
   /* eslint-disable prefer-const -- `open` is bindable, and a $props() pattern cannot be split */
@@ -87,13 +88,23 @@
   }
   const tabs = $derived(
     workspace.shownTabs.flatMap((tab): OpenTab[] => {
-      const space = workspace.spaceOf(tab.note)
+      const space = workspace.spaceOfTab(tab)
       if (onlyHere && space !== workspace.activeSpaceId) return []
       const url = tab.kind === 'web' ? visitKey(webPages().of(tab.id).url ?? '') : null
       return [{ id: tab.id, kind: tab.kind, path: tab.path, shown: tab.shown, url, space }]
     }),
   )
   const root = $derived(workspace.activeSpace?.root ?? null)
+  $effect(() => {
+    if (open && marksSpaces) untrack(() => workspace.spaceFiles.want())
+  })
+  const elsewhere = $derived(
+    marksSpaces
+      ? workspace.spaceFiles.all
+          .filter((one) => one.space.id !== workspace.activeSpaceId)
+          .map((one) => ({ root: one.space.root, files: one.files }))
+      : [],
+  )
   let hosts = $state.raw<readonly PaletteHost[]>([])
   $effect(() => {
     if (!open || __EVEN_PLUGIN__ || !isDesktop) return
@@ -121,6 +132,7 @@
       worth: (key) => frecency.worth(key),
       now: Date.now(),
       addressOf: (path) => links.shortcutOf(path),
+      elsewhere,
     }
   })
   const all = $derived(world ? candidates(world) : [])
@@ -129,10 +141,14 @@
     return all.filter(
       ({ item }) =>
         item.kind !== 'note' ||
-        !workspace.archive.has(item.entry.path) ||
+        archivedAt(item.entry.path) === null ||
         shownName(item.entry.name).toLowerCase() === whole,
     )
   })
+  function archivedAt(path: string): string | null {
+    const holding = workspace.rootHolding(path)
+    return holding === null ? null : workspace.archive.coverIn(holding, path)
+  }
   const writing = $derived(workspace.active?.kind === 'note' ? view : undefined)
   const wantsHeadings = $derived(mode === 'headings' || (mode === 'everything' && term.length >= 3))
   const headings = $derived(open && wantsHeadings && writing ? scanHeadings(writing.state.doc.toString()) : [])
@@ -320,7 +336,7 @@
       const opened = workspace.openPage(url, ask)
       if (opened) visits.opened(opened, term, url)
     },
-    activate: (tab) => workspace.activate(tab),
+    openHere: (tab, how) => workspace.openHere(tab, how),
     openAtHeading: (path, heading, how) => void workspace.openAtHeading(path, heading, how),
     openAtBlock: (target, how) => void workspace.openAtBlock(target, how),
     revealFolder: (path) => workspace.revealFolder(path),
@@ -379,6 +395,11 @@
     event.stopPropagation()
   }
   function onKeydown(event: KeyboardEvent) {
+    if (shortcuts.pressed('palette.scope', event)) {
+      spend(event)
+      if (spaced) flipScope()
+      return
+    }
     if (event.key === 'ArrowDown' || (event.key === 'n' && event.ctrlKey)) {
       spend(event)
       cursor = (cursor + 1) % Math.max(results.length, 1)
@@ -444,8 +465,11 @@
         aria-label="Search notes and commands"
       />
       {#if spaced}
-        <button type="button" class="orden-chip scope" onclick={flipScope}
-          >{scope === 'here' ? 'Only this space' : 'All spaces'}</button
+        <button
+          type="button"
+          class="orden-chip scope"
+          title={shortcuts.tooltip('Search all spaces or only this one', 'palette.scope')}
+          onclick={flipScope}>{scope === 'here' ? 'Only this space' : 'All spaces'}</button
         >
       {/if}
       {#if viewport.touch}

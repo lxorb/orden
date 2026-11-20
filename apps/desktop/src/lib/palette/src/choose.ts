@@ -8,7 +8,7 @@ export interface Hands {
   openEntry(path: string, how: OpenHow): void
   openAside(path: string): void
   openPage(url: string, ask: TabAsk): void
-  activate(tab: string): void
+  openHere(tab: string, how: OpenHow): void
   openAtHeading(path: string, heading: string, how: OpenHow): void
   openAtBlock(target: string, how: OpenHow): void
   revealFolder(path: string): void
@@ -42,7 +42,7 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
     case 'tab':
       if (press && linkAsk(press) !== 'plain' && row.tab.path) openFile(row.tab.path, press, hands)
       else if (ask !== 'plain' && row.tab.url) hands.openPage(row.tab.url, ask)
-      else hands.activate(row.tab.id)
+      else hands.openHere(row.tab.id, howFor(ask))
       return 'close'
     case 'page':
     case 'address':
