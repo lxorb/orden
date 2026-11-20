@@ -110,6 +110,9 @@ function aliased(state: TreeState, op: Op): Op {
   if (op.t === 'move') return { ...op, id: to(op.id), parent: into(op.parent) }
   return { ...op, id: to(op.id) }
 }
+export function aliasesIn(state: TreeState): ReadonlyMap<string, string> {
+  return aliasesOf.get(state) ?? new Map()
+}
 function alias(state: TreeState, op: Op, result: OpResult) {
   if (op.t !== 'mkdir' || !('merged' in result)) return
   const aliases = aliasesOf.get(state) ?? new Map<string, string>()

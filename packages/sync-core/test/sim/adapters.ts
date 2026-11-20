@@ -17,6 +17,7 @@ export interface View {
 }
 export interface AccountView extends View {
   versions: string[]
+  aliases?: Record<string, string>
 }
 export interface AccountAdapter {
   handle(device: string, route: Route, body: Uint8Array): Promise<Uint8Array>

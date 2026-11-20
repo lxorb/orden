@@ -107,8 +107,15 @@ export function judge(
       holder.set(marker, id)
     }
   }
-  for (const [id, at] of book.restored) {
-    const again = book.deleted.get(id)
+  const real = (id: string) => account.aliases?.[id] ?? id
+  const latest = (byId: ReadonlyMap<string, number>) => {
+    const out = new Map<string, number>()
+    for (const [id, at] of byId) out.set(real(id), Math.max(out.get(real(id)) ?? at, at))
+    return out
+  }
+  const deleted = latest(book.deleted)
+  for (const [id, at] of latest(book.restored)) {
+    const again = deleted.get(id)
     if (!live.has(id) && (again === undefined || again < at)) {
       failures.push(`${id} was restored and is not there`)
     }

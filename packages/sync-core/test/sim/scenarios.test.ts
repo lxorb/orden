@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest'
-import { CALM } from './network'
+import { frame, type Op } from '../../src/wire'
+import { ReferenceAccount } from './account'
+import { judge, ledger } from './checks'
+import { CALM, Clock } from './network'
 import { act, pass, PLAN, roads, settle } from './roads'
 import { type Report, type Step, simulate } from './run'
 
@@ -30,5 +33,40 @@ describe('the planted bug', () => {
       if (report.failures.length) caught += 1
     }
     expect(caught).toBeGreaterThan(0)
+  })
+})
+describe('a folder made apart and folded into one of its name (#2386)', () => {
+  async function folded(after: Op[] = []) {
+    const account = new ReferenceAccount(new Clock(), [])
+    const send = (device: string, ops: Op[]) => account.handle(device, 'ops', frame({ ops }))
+    await send('a', [{ op: 'a1', t: 'mkdir', id: 'here', parent: null, name: 'Trip', seen: 0 }])
+    await send('b', [
+      { op: 'b1', t: 'mkdir', id: 'away', parent: null, name: 'Trip', mergeable: true, seen: 0 },
+      { op: 'b2', t: 'delete', id: 'away', seen: 0 },
+      { op: 'b3', t: 'restore', id: 'away', seen: 0 },
+    ])
+    await send('a', after)
+    const book = ledger(['here', 'away'])
+    book.deleted.set('away', 1)
+    book.restored.set('away', 2)
+    return { view: await account.view(), book }
+  }
+  test('the account names the folder an id was folded into', async () => {
+    const { view } = await folded()
+    expect(view.aliases).toEqual({ away: 'here' })
+    expect(view.entries.map((entry) => entry.id)).toEqual(['here'])
+  })
+  test('a folded id that was restored is found under the folder it was folded into', async () => {
+    const { view, book } = await folded()
+    expect(judge(book, view, [], [])).toEqual([])
+    expect(judge(book, { ...view, aliases: {} }, [], [])).toContain('away was restored and is not there')
+  })
+  test('the folder it was folded into, deleted after the restore, is not owed', async () => {
+    const { view, book } = await folded([{ op: 'a2', t: 'delete', id: 'here', seen: 99 }])
+    book.deleted.set('here', 3)
+    expect(view.entries).toEqual([])
+    expect(judge(book, view, [], [])).toEqual([])
+    book.deleted.set('here', 0)
+    expect(judge(book, view, [], [])).toContain('here was restored and is not there')
   })
 })
