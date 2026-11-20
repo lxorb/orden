@@ -11,6 +11,7 @@ import {
   apart,
   CALM,
   Clock,
+  crowded,
   markersIn,
   pass,
   ReferenceAccount,
@@ -730,6 +731,18 @@ describe('a space met at sign-in whose notes differ on each side (#2371)', () =>
     expect(disk).toContain('%PDF here')
     expect(disk).toContain('%PDF there')
     expect(here.engine.core.held.size).toBe(0)
+  })
+})
+describe('a folder made here, deleted and restored before the account folds it into its namesake (#2386)', () => {
+  test.each([
+    ...[207770002, 207770064, 207770238, 207770322, 207770611].map((seed) => [seed, 'tree'] as const),
+    [207770874, 'order'] as const,
+  ])('seed %i of the %s keeps what was restored', async (seed, mix) => {
+    const report = await simulate({
+      ...crowded(seed, mix),
+      device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
+    })
+    expect(report.failures).toEqual([])
   })
 })
 describe('ports', () => {
