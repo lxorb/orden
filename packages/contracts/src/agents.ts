@@ -71,8 +71,7 @@ export interface AgentChat {
   readonly only?: readonly string[]
   readonly space?: string
 }
-export type AgentCaller =
-  { agent: null } | { agent: AgentGrant; thread?: string; chatMode?: AgentChat['mode']; chat?: AgentChat }
+export type AgentCaller = { agent: null } | { agent: AgentGrant; thread?: string; chat?: AgentChat }
 export type AgentSaid = Record<string, unknown>
 export type AgentAnswer =
   | { ok: true; status: 'ok'; result: unknown; untrusted?: string }
