@@ -74,7 +74,14 @@ serveSyncStore(store)
 const archive = await import('./space-archive')
 const { account } = await import('../../accounts/src/api')
 const double = account as unknown as import('../../accounts/test/fakes').AccountDouble
-const settled = () => vi.waitFor(() => expect(localStorage.getItem('orden:archived-spaces-owed')).toBeNull())
+function owing(): boolean {
+  const kept = JSON.parse(localStorage.getItem('orden:archived-spaces-owed') ?? 'null') as {
+    owed?: Record<string, unknown>
+  } | null
+  const owed = kept?.owed ?? {}
+  return [double.user?.id ?? '', ''].some((who) => who in owed)
+}
+const settled = () => vi.waitFor(() => expect(owing()).toBe(false))
 const last = () => server.sent.at(-1)
 const space = (name: string): Space => ({ id: name, name, root: `/spaces/${name}` })
 function at(place: number): Space {
