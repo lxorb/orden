@@ -101,7 +101,7 @@ class Hovering {
     const width = wide()
     const at = spot(aim.box, width, window.innerWidth)
     const still = await this.stillFor(aim)
-    const facts = !__EVEN_PLUGIN__ && modes.coder ? FACTS_TALL : 0
+    const facts = modes.coder ? FACTS_TALL : 0
     const tall = WORDS_TALL + (still ? STILL_TALL : 0) + facts
     const sliding = this.card !== null
     const over = await this.cover({
@@ -143,7 +143,7 @@ class Hovering {
     this.unwatch?.stop()
     this.unwatch = null
     this.facts = []
-    if (__EVEN_PLUGIN__ || !tab || !modes.coder) return
+    if (!tab || !modes.coder) return
     let stop: (() => void) | null = null
     let gone = false
     this.unwatch = {
