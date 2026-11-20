@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import { isCanvasTarget, isPagesTarget, isWebTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/src/api'
 import { shownName, onDisk as exists, nameOf } from '../../platform/src/api'
@@ -73,7 +74,7 @@ export async function createFile(
     throw new Refused('exists', `${nameOf(paper)} is already there, and would be taken for its paper`)
   }
   const words = await firstWords(call, kind, nameOf(relative))
-  const question = await asked(call, null, `Make ${relative} in ${place.space.name}`)
+  const question = await asked(call, null, `Make ${shownPath(relative)} in ${place.space.name}`)
   if (question) return question
   return done({
     ...(await make(place, relative, words, flag(call, 'open') ? call : null)),

@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/src/api'
 import { automationMoving } from '../../automation/src/api'
@@ -110,7 +111,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   readable(source, from)
   writableAt(place, source)
   readableAll(source, from)
-  const question = await asked(call, null, `Move ${from} to ${to} in ${place.space.name}`)
+  const question = await asked(call, null, `Move ${shownPath(from)} to ${shownPath(to)} in ${place.space.name}`)
   if (question) return question
   if (place.open) await movedIn(place.space.root, from, to)
   else await movedAway(place, source, onDisk(place, to), entry.is_dir)
@@ -154,7 +155,7 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
       (tab.path === path || tab.path.startsWith(`${path}/`)),
   )
   if (shown) needScope(call, 'workspace.focus', 'a file open in front of the reader')
-  const question = await asked(call, null, `Move ${relative} to Recently deleted`, undefined, 'trashing')
+  const question = await asked(call, null, `Move ${shownPath(relative)} to Recently deleted`, undefined, 'trashing')
   if (question) return question
   await workspace.remove(path, entry.is_dir, sourceOf(call))
   return done({ path: relative, trashed: true, space: place.space.id })
@@ -165,7 +166,7 @@ export async function createFolder(call: Call): Promise<AgentAnswer> {
   if (await entryIn(place, relative)) return done({ path: relative, made: false })
   const path = onDisk(place, relative)
   writableAt(place, path)
-  const question = await asked(call, null, `Make the folder ${relative} in ${place.space.name}`)
+  const question = await asked(call, null, `Make the folder ${shownPath(relative)} in ${place.space.name}`)
   if (question) return question
   await invoke('create_folder', { path })
   await workspace.fileCame(path, 'folder')

@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import type { AgentAnswer } from '../../automation/src/api'
 import { notePath, invoke } from '../../platform/src/api'
 import { notes } from './docs'
@@ -76,7 +77,7 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
   const shown = lines.slice(-MOST_LINES)
   const name = call.caller.agent?.name ?? 'orden'
   const section = `## ${name}, ${day}\n\n${shown.map(lineOf).join('\n')}`
-  const question = await asked(call, null, `Write the log of ${day} into ${relative}`)
+  const question = await asked(call, null, `Write the log of ${day} into ${shownPath(relative)}`)
   if (question) return question
   await madeOrChanged(
     place,

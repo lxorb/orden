@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import type { AgentAnswer } from '../../automation/src/api'
 import { invoke, notePath } from '../../platform/src/api'
 import { type Version, versionsOf, versionText } from '../../history/src/api'
@@ -56,7 +57,7 @@ export async function restoreVersion(call: Call): Promise<AgentAnswer> {
   const now = await workspace.noteText(path)
   if (now === null) throw new Refused('no_such_file', `there is no note at ${relative}`)
   const when = new Date(version.at).toISOString().slice(0, 16).replace('T', ' ')
-  const question = await asked(call, 'deleting', `Put back ${relative} as it was at ${when}`)
+  const question = await asked(call, 'deleting', `Put back ${shownPath(relative)} as it was at ${when}`)
   if (question) return question
   const agent = call.caller.agent
   await invoke('snapshot_note', { path, content: now, source: agent?.name }).catch(() => undefined)

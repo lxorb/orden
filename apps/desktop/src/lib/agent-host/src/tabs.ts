@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import {
   type AgentAnswer,
   agentTabKindLoaded,
@@ -302,7 +303,7 @@ async function saveTab(call: Call): Promise<AgentAnswer> {
   const folder = folderOf(relative)
   const file = fileNamed(nameOf(relative), tab.kind)
   writableAt(place, onDisk(place, relative))
-  const question = await asked(call, null, `Save ${tab.shown} as ${relative}`)
+  const question = await asked(call, null, `Save ${tab.shown} as ${shownPath(relative)}`)
   if (question) return question
   const saved = await workspace.save(tab, folder ? onDisk(place, folder) : place.space.root, file)
   if (saved === null) throw new Refused('failed', `tab ${tab.id} could not be saved`)

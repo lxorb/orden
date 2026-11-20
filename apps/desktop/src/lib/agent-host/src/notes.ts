@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import { frontMatterEdit, isPropertyName } from '@orden/markdown/front-matter'
 import { taskAt } from '@orden/markdown/tasks'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
@@ -120,7 +121,7 @@ export async function readNote(call: Call): Promise<AgentAnswer> {
 export async function editNote(call: Call): Promise<AgentAnswer> {
   const named = noteOf(call, true)
   const { place, relative } = named
-  const question = await asked(call, null, `Edit ${relative} in ${place.space.name}`)
+  const question = await asked(call, null, `Edit ${shownPath(relative)} in ${place.space.name}`)
   if (question) return question
   return done(await notes.editNote(writerOf(call), at(named), call.args.edits, ifRev(call), call.deadline))
 }
@@ -129,7 +130,7 @@ export async function writeNote(call: Call): Promise<AgentAnswer> {
   const { place, relative } = named
   const words = wordsSent(call)
   if (words === null) throw new Refused('bad_arguments', 'say the content')
-  const question = await asked(call, null, `Write ${relative} in ${place.space.name}`)
+  const question = await asked(call, null, `Write ${shownPath(relative)} in ${place.space.name}`)
   if (question) return question
   const written = () => notes.writeNote(writerOf(call), at(named), words, ifRev(call), call.deadline)
   if (named.tab) return done(await written())
@@ -140,7 +141,7 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
   const { place, relative } = named
   const words = wordsSent(call)
   if (words === null) throw new Refused('bad_arguments', 'say the content')
-  const question = await asked(call, null, `Add to ${relative} in ${place.space.name}`)
+  const question = await asked(call, null, `Add to ${shownPath(relative)} in ${place.space.name}`)
   if (question) return question
   const under = maybe(call, 'under')
   const edit = { at: under === null ? { end: true } : { heading: under }, insert_after: words }
@@ -165,7 +166,7 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
   if (!isPropertyName(key)) throw new Refused('bad_arguments', `${key} is not a key`)
   if (!('value' in call.args)) throw new Refused('bad_arguments', 'say the value, or null')
   const value = yamlOf(call.args.value)
-  const question = await asked(call, null, `Set ${key} of ${relative}`)
+  const question = await asked(call, null, `Set ${key} of ${shownPath(relative)}`)
   if (question) return question
   const { OWN_KEYS } = await ownKeys()
   const own = OWN_KEYS.find((one) => one === key.toLowerCase())
@@ -204,7 +205,7 @@ export async function setTask(call: Call): Promise<AgentAnswer> {
   const line = (read.text ?? '').split('\n')[row.line] ?? ''
   const task = taskAt(line)
   if (!task) throw new Refused('not_found', `that task has moved in ${relative}`)
-  const question = await asked(call, null, `${wanted ? 'Tick' : 'Clear'} a task in ${relative}`)
+  const question = await asked(call, null, `${wanted ? 'Tick' : 'Clear'} a task in ${shownPath(relative)}`)
   if (question) return question
   const box = task.box + 1
   const ticked = line.slice(0, box) + (wanted ? 'x' : ' ') + line.slice(box + 1)
@@ -219,7 +220,7 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
   if ((await workspace.noteText(onDisk(place, relative))) !== null) {
     throw new Refused('exists', `${relative} is already there, and nothing is written over`)
   }
-  const question = await asked(call, null, `Make ${relative} in ${place.space.name}`)
+  const question = await asked(call, null, `Make ${shownPath(relative)} in ${place.space.name}`)
   if (question) return question
   const answer = await made(place, relative, wordsSent(call) ?? '', flag(call, 'open') ? call : null)
   return done({ ...answer, space: place.space.id })
