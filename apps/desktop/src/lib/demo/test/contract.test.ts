@@ -4,7 +4,7 @@ import { runInNewContext } from 'node:vm'
 import { describe, expect, test, vi } from 'vitest'
 import { holdDatabases } from '../src/held'
 import { drifted, frameAt, replacement, SCENES, writtenAt } from '../src/scenes'
-import { PLAN_TEXT, siteOf, WRITTEN } from '../src/space'
+import { PLAN_TEXT, WRITTEN } from '../src/space'
 
 const PREFIX = 'orden-demo:'
 const SCRIPT = readFileSync(join(import.meta.dirname, '../../../../public/demo.js'), 'utf8')
@@ -223,13 +223,6 @@ describe('two teammates writing', () => {
     expect(change).not.toBe(null)
     if (change) expect(from.slice(0, change.from) + change.insert + from.slice(change.to)).toBe(to)
     expect(replacement(to, to)).toBe(null)
-  })
-})
-describe('the page around the demo', () => {
-  test('is the site on orden.so when the demo runs on app.orden.so, and the demo itself anywhere else', () => {
-    expect(siteOf({ hostname: 'app.orden.so', origin: 'https://app.orden.so' })).toBe('https://orden.so')
-    expect(siteOf({ hostname: 'localhost', origin: 'http://localhost:1420' })).toBe('http://localhost:1420')
-    expect(siteOf({ hostname: 'orden.so', origin: 'https://orden.so' })).toBe('https://orden.so')
   })
 })
 describe('the demo', () => {

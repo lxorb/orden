@@ -5,7 +5,7 @@ import type { Hand } from '@orden/markdown/plane'
 import { CanvasStore } from '../../canvas/src/api'
 import { rooms } from '../../collab/src/api'
 import { invoke, samePath } from '../../platform/src/api'
-import { isDemoCue, type DemoCue } from '../../showcase/src/api'
+import { isDemoCue, originsAt, type DemoCue } from '../../showcase/src/api'
 import { undoToast } from '../../undo-toast/src/api'
 import { tabOverview, toggleTabOverview, type Tab, workspace } from '../../workspace/src/api'
 import { holdDatabases } from './held'
@@ -14,7 +14,6 @@ import {
   CANVAS,
   LAUNCH,
   NEIGHBOURS,
-  siteOf,
   NOTES,
   PAGE,
   PAGE_TITLE,
@@ -106,7 +105,7 @@ async function staged(): Promise<Stage> {
   return { canvas, plan, page }
 }
 export async function play(): Promise<void> {
-  const site = siteOf(location)
+  const { site } = originsAt(location)
   const stage = await staged()
   const origin = location.origin
   let cue: DemoCue = { orden: 'demo', scene: 'canvas', at: 0, still: false }
