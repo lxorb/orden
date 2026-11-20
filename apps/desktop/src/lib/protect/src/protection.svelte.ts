@@ -96,8 +96,7 @@ const WAYS: Folding<Record<string, Way>> = {
   same,
 }
 export const buried = () => import('./buried')
-const synced = () =>
-  __EVEN_PLUGIN__ ? Promise.reject(new Error('nothing is protected in the Even Realities plugin')) : import('./synced')
+const synced = () => import('./synced')
 interface Shut {
   folds: boolean
   keys: { key: string; under: string }[]
