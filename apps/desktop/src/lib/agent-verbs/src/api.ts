@@ -33,3 +33,4 @@ export {
 export { readerPort, stopRefused, stopSignal, stopWatch } from './stopping'
 export { namedTab, tabsOwnSpace, tabWithId } from './tab-target'
 export { gatedBy, type Verb, verbsOf } from './table'
+export { onViewSlip } from './view'
