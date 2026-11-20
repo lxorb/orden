@@ -99,7 +99,7 @@ class Ai {
   private took(state: Accounts) {
     this.state = state
     keep(COPY, accountsText(state))
-    if (!__EVEN_PLUGIN__ && state.accounts.some(stuck)) {
+    if (state.accounts.some(stuck)) {
       void import('./mend').then(({ mend }) => mend(this, state))
     }
   }
@@ -173,8 +173,6 @@ accountsAre(
   },
 )
 ai.restore()
-if (!__EVEN_PLUGIN__) {
-  void import('./vault/start.svelte')
-    .then((one) => one.startVault())
-    .catch((error: unknown) => log('warn', `ai vault: could not start: ${String(error)}`))
-}
+void import('./vault/start.svelte')
+  .then((one) => one.startVault())
+  .catch((error: unknown) => log('warn', `ai vault: could not start: ${String(error)}`))

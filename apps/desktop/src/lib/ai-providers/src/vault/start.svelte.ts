@@ -30,7 +30,6 @@ export async function keepBrowserInVault(on: boolean): Promise<void> {
   await vault.leave()
 }
 async function signIns(): Promise<Record<string, string>> {
-  if (__EVEN_PLUGIN__) return {}
   const { plans } = await import('../local/status.svelte')
   const seen: Record<string, string> = {}
   for (const one of ai.accounts) {
