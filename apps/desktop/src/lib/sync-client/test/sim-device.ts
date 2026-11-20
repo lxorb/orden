@@ -491,6 +491,13 @@ export interface FreshDevice {
   routes: string[]
   space: () => SpaceState
 }
+export async function feedThrough(
+  account: { handle(device: string, route: string, body: Uint8Array): Promise<Uint8Array> },
+  device: string,
+  body: unknown,
+): Promise<unknown> {
+  return unframe(await account.handle(device, 'feed', frame(body as Parameters<typeof frame>[0])))
+}
 export async function freshDevice(
   account: { handle(device: string, route: string, body: Uint8Array): Promise<Uint8Array> },
   id: string,
@@ -528,7 +535,7 @@ export async function freshDevice(
       for (const folder of disk.folders) {
         if (folder.startsWith(`${at}/`)) listed.push({ path: folder.slice(at.length + 1), dir: true })
       }
-      for (const file of disk.files.keys()) {
+      for (const file of [...disk.files.keys(), ...disk.bytes.keys()]) {
         if (file.startsWith(`${at}/`)) listed.push({ path: file.slice(at.length + 1), dir: false })
       }
       return Promise.resolve(listed)

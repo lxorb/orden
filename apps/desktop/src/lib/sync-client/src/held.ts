@@ -154,7 +154,7 @@ export class HeldList implements HeldNotes {
     changes.push(...(await project(core, space, entry, doc, true)))
     let copy: string | undefined
     if (answer === 'both') {
-      const path = this.copyPath(space, entry)
+      const path = copyPath(core, space, entry.name, folderOf(entry.local_path))
       await core.world.disk.write(core.world.join(space.row.root, path), local)
       const made_ = await made(core, space, { path, folder: false, text: local })
       changes.push(...made_.changes)
@@ -176,7 +176,7 @@ export class HeldList implements HeldNotes {
     } else if (answer === 'theirs') {
       if (entry.local_path) await core.world.disk.remove(full, 'file')
     } else {
-      const path = this.copyPath(space, entry)
+      const path = copyPath(core, space, entry.name, folderOf(entry.local_path))
       await core.world.disk.move(full, core.world.join(space.row.root, path), 'file')
       changes.push(...(await made(core, space, { path, folder: false })).changes)
       copy = core.world.join(space.row.root, path)
@@ -202,18 +202,16 @@ export class HeldList implements HeldNotes {
     }
     return against
   }
-  private copyPath(space: SpaceState, entry: EntryRow): string {
-    const name = entry.name
-    const dot = name.lastIndexOf('.')
-    const stem = dot > 0 ? name.slice(0, dot) : name
-    const extension = dot > 0 ? name.slice(dot) : ''
-    const device = this.core.world.name.replace(/[\\/:*?"<>|]/g, '')
-    const folder = folderOf(entry.local_path)
-    for (let counter = 1; ; counter += 1) {
-      const suffix = counter === 1 ? '' : ` ${String(counter)}`
-      const path = joined(folder, `${stem} (${device})${suffix}${extension}`)
-      if (!space.at(path)) return path
-    }
+}
+export function copyPath(core: Core, space: SpaceState, name: string, folder: string): string {
+  const dot = name.lastIndexOf('.')
+  const stem = dot > 0 ? name.slice(0, dot) : name
+  const extension = dot > 0 ? name.slice(dot) : ''
+  const device = core.world.name.replace(/[\\/:*?"<>|]/g, '')
+  for (let counter = 1; ; counter += 1) {
+    const suffix = counter === 1 ? '' : ` ${String(counter)}`
+    const path = joined(folder, `${stem} (${device})${suffix}${extension}`)
+    if (!space.at(path)) return path
   }
 }
 function fileBytes(doc: Doc, update: Uint8Array): Uint8Array {

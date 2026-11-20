@@ -3,9 +3,10 @@ import type { Mirror, Moving, Tracked, Untold } from '../../sync-mirror/src/api'
 import type { Core } from './core'
 import { kindOfName, made, moved } from './create'
 import { MINE } from './docs'
+import { copyPath } from './held'
 import { readFeed } from './pass'
 import { fileOfUpdates, judge, readable, seedOf, shapeOf, turn, unixLines } from './kinds'
-import type { SpaceState } from './places'
+import { folderOf, type SpaceState } from './places'
 import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
 import { project, wrote } from './project'
@@ -92,7 +93,13 @@ export async function firstPass(
     const item = items.get(entry.id)
     if (item && shapeOf(entry.kind)) matched.push({ entry, item, file, tracked })
   }
+  const another = async (entry: EntryRow, path: string): Promise<boolean> => {
+    if (shapeOf(entry.kind) || !entry.file_key || !world.blobs || v1?.notes[path]) return false
+    const bytes = await world.blobs.read(full(path))
+    return bytes !== null && (await world.blobs.hash(bytes)) !== entry.file_key
+  }
   const strays: { path: string; dir: boolean }[] = []
+  const apart: { entry: EntryRow; path: string }[] = []
   for (const listed of listing) {
     const gone = listed.dir ? null : await deletedUnseen(listed.path)
     if (gone) {
@@ -104,6 +111,10 @@ export async function firstPass(
     const entry = listed.dir ? byPlace(listed.path, true) : (byTracked(listed.path) ?? byPlace(listed.path, false))
     if (!entry) {
       strays.push(listed)
+      continue
+    }
+    if (!listed.dir && (await another(entry, listed.path))) {
+      apart.push({ entry, path: listed.path })
       continue
     }
     claimed.add(entry.id)
@@ -199,6 +210,11 @@ export async function firstPass(
       ...(text === null || text === undefined ? {} : { text: unixLines(text) }),
     })
     changes.push(...madeHere.changes)
+  }
+  for (const { entry, path } of apart) {
+    const copy = copyPath(core, space, entry.name, folderOf(path))
+    await world.disk.move(full(path), full(copy), 'file')
+    changes.push(...(await made(core, space, { path: copy, folder: false })).changes)
   }
   changes.push(...done)
   if (!alive()) return false
@@ -319,6 +335,10 @@ async function reconcile(
       }
     } else if (local.includes(remote)) {
       take(local)
+    } else if (!one.tracked && !remote.includes(local)) {
+      const path = copyPath(core, space, one.entry.name, folderOf(one.entry.local_path))
+      await core.world.disk.write(core.world.join(space.row.root, path), local)
+      changes.push(...(await made(core, space, { path, folder: false, text: local })).changes)
     } else if (!remote.includes(local)) {
       changes.push(...hold(core, one.entry.id, remote, local))
     }

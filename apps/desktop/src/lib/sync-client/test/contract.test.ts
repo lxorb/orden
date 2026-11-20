@@ -24,7 +24,7 @@ import { firstPass } from '../src/migrate'
 import { madeTwice } from '../src/twins'
 import { SpaceState } from '../src/places'
 import { scan, type EntryRow } from '../src/store'
-import { EngineDevice, type FreshDevice, freshDevice } from './sim-device'
+import { EngineDevice, feedThrough, type FreshDevice, freshDevice } from './sim-device'
 import { memoryStorage } from './memory-storage'
 import { dropLeft, leftHere, ownRoots, unsentRoots } from '../src/left'
 import { readOnlyLine } from '../src/project'
@@ -661,6 +661,75 @@ describe('words written to a note on this disk that the engine has not read yet 
     expect(there).toContain('a later desk line')
     expect(there).toContain('a line from the desk')
     expect(there).toContain('web added something else')
+  })
+})
+describe('a space met at sign-in whose notes differ on each side (#2371)', () => {
+  test('ends with both texts on the account and on this device, and holds nothing back', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const mine = '# Plan\n\nwritten on this device before signing in\n'
+    const here = await freshDevice(account, 'here', { 'Plan.md': mine, 'Mine.md': 'only on this device\n' })
+    expect(await firstPass(here.engine.core, here.space(), null)).toBe(true)
+    await here.engine.pass('sim')
+    await here.engine.pass('sim')
+    const view = await account.view()
+    const there = view.entries.map((one) => view.texts[one.id] ?? '')
+    const disk = [...here.disk.files.values()]
+    for (const text of [mine, 'only on this device\n', ...SEEDED.map((one) => one.text)]) {
+      expect(there).toContain(text)
+      expect(disk).toContain(text)
+    }
+    expect(here.engine.core.held.size).toBe(0)
+    expect(view.texts[SEEDED[PLAN]?.id ?? '']).toBe(SEEDED[PLAN]?.text)
+  })
+  test('a binary file with other bytes on each side ends with both on the account and on this device', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const kept = new Map<string, Uint8Array>()
+    const hashes = new Map<string, string>()
+    const answers = (device: string) => (route: string, body: unknown) => {
+      if (route === 'ops') {
+        for (const op of (body as { ops: { t: string; id: string; hash?: string }[] }).ops) {
+          if (op.t === 'create' && op.hash) hashes.set(op.id, op.hash)
+        }
+        return undefined
+      }
+      if (route !== 'feed') return undefined
+      return feedThrough(account, device, body).then((reply) => {
+        const page = reply as { items: { id: string; kind: string; hash?: string }[] }
+        for (const item of page.items) if (item.kind === 'file') item.hash = hashes.get(item.id) ?? ''
+        return page
+      })
+    }
+    const blobs = (disk: MemoryDisk) => ({
+      read: (path: string) => disk.readBytes(path),
+      write: (path: string, bytes: Uint8Array) => disk.writeBytes(path, bytes),
+      hash: (bytes: Uint8Array) => Promise.resolve(`h-${new TextDecoder().decode(bytes)}`),
+      up: (hash: string, bytes: Uint8Array) => Promise.resolve(void kept.set(hash, bytes)).then(() => true),
+      down: (_space: string, id: string) => Promise.resolve(kept.get(hashes.get(id) ?? '') ?? null),
+      replace: () => Promise.resolve(null),
+    })
+    const there = await freshDevice(account, 'there', {}, answers('there'), blobs)
+    expect(await firstPass(there.engine.core, there.space(), null)).toBe(true)
+    await there.engine.pass('sim')
+    const made = `${there.space().row.root}/minutes.pdf`
+    await there.disk.writeBytes(made, new TextEncoder().encode('%PDF there'))
+    await there.engine.created(made, false)
+    await there.engine.pass('sim')
+    const here = await freshDevice(account, 'here', {}, answers('here'), blobs)
+    await here.disk.writeBytes(`${here.space().row.root}/minutes.pdf`, new TextEncoder().encode('%PDF here'))
+    expect(await firstPass(here.engine.core, here.space(), null)).toBe(true)
+    await here.engine.pass('sim')
+    await here.engine.pass('sim')
+    const view = await account.view()
+    expect(view.entries.map((one) => hashes.get(one.id)).sort()).toContain('h-%PDF here')
+    expect(view.entries.map((one) => hashes.get(one.id)).sort()).toContain('h-%PDF there')
+    const disk: string[] = []
+    for (const path of [...here.disk.files.keys(), ...here.disk.bytes.keys()]) {
+      const bytes = await here.disk.readBytes(path)
+      if (bytes) disk.push(new TextDecoder().decode(bytes))
+    }
+    expect(disk).toContain('%PDF here')
+    expect(disk).toContain('%PDF there')
+    expect(here.engine.core.held.size).toBe(0)
   })
 })
 describe('ports', () => {
