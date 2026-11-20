@@ -1,5 +1,4 @@
 import { settingFieldsIn } from '@orden/contracts'
-import { glassesGroups, wordFields } from '../../glasses-choices/src/api'
 import {
   setWord,
   BASES_WORD,
@@ -8,8 +7,6 @@ import {
   EXPERIMENTAL_WORD,
   experimentalOn,
   EXPLORER_WORD,
-  GLASSES_WORD,
-  glassesOn,
   hiddenKinds,
   PASS_WORD,
   TIME_WORD,
@@ -63,19 +60,7 @@ function chatFields(): Field[] {
   if (!chatsOn()) return []
   return isMobile ? [] : settingFieldsIn('experimental', 'Chats')
 }
-function glassesFields(): Field[] {
-  if (!glassesOn()) return []
-  return [...glassesGroups().flatMap((group) => group.fields), ...wordFields()]
-}
 function features(): Feature[] {
-  const glasses: Feature = {
-    key: 'glasses',
-    word: GLASSES_WORD,
-    label: 'Glasses',
-    hint: 'Shows your notes and tasks on Even Realities glasses and takes spoken commands.',
-    words: ['glasses', 'even', 'realities', 'g2', 'smart glasses', 'hud', 'voice'],
-    more: glassesFields,
-  }
   const bases: Feature = {
     key: 'databases',
     word: BASES_WORD,
@@ -83,7 +68,6 @@ function features(): Feature[] {
     hint: 'Adds databases, notes that show other notes as a table, board or calendar; turning them off keeps the files.',
     words: ['database', 'databases', 'base', 'bases', 'table', 'board', 'kanban', 'notion'],
   }
-  if (__EVEN_PLUGIN__) return [glasses, bases]
   return [
     {
       key: 'chats',
@@ -119,7 +103,6 @@ function features(): Feature[] {
       words: ['time', 'tracking', 'timer', 'hours', 'activity', 'screen time', 'toggl'],
     },
     bases,
-    glasses,
   ]
 }
 export function experimentalPane(): Pane {

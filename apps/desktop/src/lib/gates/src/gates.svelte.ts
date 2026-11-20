@@ -17,8 +17,7 @@ export type KindName =
   | 'pass'
   | 'web'
   | 'private'
-export function kindsHere(plugin = __EVEN_PLUGIN__): KindName[] {
-  if (plugin) return ['note']
+export function kindsHere(): KindName[] {
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken && chatsOn()) here.push('chat')
@@ -68,23 +67,19 @@ export const EXPLORER_WORD = 'experimental-explorer'
 export const PASS_WORD = 'experimental-pass'
 export const TIME_WORD = 'experimental-time'
 export const BASES_WORD = 'experimental-bases'
-export const GLASSES_WORD = 'experimental-glasses'
 export function chatsOn(): boolean {
-  return !__EVEN_PLUGIN__ && tried(CHATS_WORD)
+  return tried(CHATS_WORD)
 }
 export function explorerOn(): boolean {
-  return !__EVEN_PLUGIN__ && tried(EXPLORER_WORD)
+  return tried(EXPLORER_WORD)
 }
 const passOnly = typeof document !== 'undefined' && document.documentElement.dataset.only === 'pass'
 export function passOn(): boolean {
-  return !__EVEN_PLUGIN__ && (passOnly || tried(PASS_WORD))
+  return passOnly || tried(PASS_WORD)
 }
 export function timeOn(): boolean {
-  return !__EVEN_PLUGIN__ && tried(TIME_WORD)
+  return tried(TIME_WORD)
 }
 export function basesOn(): boolean {
   return tried(BASES_WORD)
-}
-export function glassesOn(): boolean {
-  return tried(GLASSES_WORD)
 }

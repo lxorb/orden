@@ -114,15 +114,15 @@
   import { firstSpaceDoor, gate, loadGuide, loadSetup } from './lib/onboarding/src/api'
 
   if (renamed.showing) void renameNotice.ask()
-  if (isDesktop && !__EVEN_PLUGIN__) {
+  if (isDesktop) {
     setTimeout(() => {
       void import('./lib/ai-providers/src/api')
         .then((one) => one.checkKeysMoved())
         .then((say) => (say ? keysMovedNotice.ask() : undefined))
     }, 3000)
   }
-  if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE_FOLDER) !== null) void outsideNotice.ask()
-  if (isDesktop && !__EVEN_PLUGIN__ && crashAskDue()) {
+  if (isDesktop && storedText(OUTSIDE_FOLDER) !== null) void outsideNotice.ask()
+  if (isDesktop && crashAskDue()) {
     void startup.turn('rooms').then(() => crashAsk.ask())
   }
   const view = $derived(views.of(workspace.panes.focusedId))
@@ -144,7 +144,7 @@
   const flush = $derived(bare || filled)
   const built = { left: false, right: false }
   const keptLeft = $derived((built.left ||= workspace.panel !== null || startup.reached('left')))
-  const padDocked = $derived(!viewport.touch && !__EVEN_PLUGIN__)
+  const padDocked = $derived(!viewport.touch)
   const rightOpen = $derived(padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null)
   const leftShut = $derived(viewport.drawer || workspace.openOn('left') === null)
   const rightShut = $derived(viewport.drawer || !rightOpen)
@@ -202,7 +202,6 @@
     return whenLoaded(support, (one) => one.accountSettings.take())
   })
   $effect(() => {
-    if (__EVEN_PLUGIN__) return
     let stop: (() => void) | null = null
     const off = whenLoaded(support, (one) => (stop = one.hearAccountSettings()))
     return () => {
@@ -225,7 +224,7 @@
     }
   })
   $effect(() => {
-    if (__EVEN_PLUGIN__ || !workspace.restored || workspace.spaces.length) return
+    if (!workspace.restored || workspace.spaces.length) return
     const now = {
       native: isNative,
       plugin: false,
@@ -391,30 +390,20 @@
             writeFile,
           })),
         chats: () =>
-          __EVEN_PLUGIN__
-            ? Promise.reject(new Error('no chats in the Even Realities plugin'))
-            : Promise.all([
-                import('./lib/chats-client/src/api').then((one) => one.chatStore()),
-                import('./lib/chats-client/src/api').then((one) => one.chatOpening()),
-              ]).then(([{ chats }, open]) => ({ chats, ...open })),
-        time: () =>
-          __EVEN_PLUGIN__
-            ? Promise.reject(new Error('no time tracker in the Even Realities plugin'))
-            : import('./lib/time/src/api').then(({ time }) => time),
+          Promise.all([
+            import('./lib/chats-client/src/api').then((one) => one.chatStore()),
+            import('./lib/chats-client/src/api').then((one) => one.chatOpening()),
+          ]).then(([{ chats }, open]) => ({ chats, ...open })),
+        time: () => import('./lib/time/src/api').then(({ time }) => time),
         agents: { standIn },
         ai,
-        aiChats: () =>
-          __EVEN_PLUGIN__
-            ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
-            : chatStore().then(({ chat }) => chat),
+        aiChats: () => chatStore().then(({ chat }) => chat),
         aiVault: () =>
-          __EVEN_PLUGIN__
-            ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
-            : import('./lib/ai-providers/src/api').then(({ vault, writeKey, readSecret }) => ({
-                vault,
-                writeKey,
-                readSecret,
-              })),
+          import('./lib/ai-providers/src/api').then(({ vault, writeKey, readSecret }) => ({
+            vault,
+            writeKey,
+            readSecret,
+          })),
         importing,
         publish,
         rewriting,
@@ -455,11 +444,9 @@
     if (!field) return
     event.preventDefault()
     event.stopPropagation()
-    if (!__EVEN_PLUGIN__) {
-      void import('./lib/context-menu/src/api')
-        .then((one) => one.loadFieldMenu())
-        .then((one) => one.showFieldMenu(event, field))
-    }
+    void import('./lib/context-menu/src/api')
+      .then((one) => one.loadFieldMenu())
+      .then((one) => one.showFieldMenu(event, field))
   }
   function onMouse(event: MouseEvent) {
     if (event.button !== 3 && event.button !== 4) return
@@ -573,7 +560,7 @@
       fullscreen: () => void fullscreen.toggle(workspace.panes),
     }
   }
-  if (!__EVEN_PLUGIN__ && isDesktop && platform() === 'macos') {
+  if (isDesktop && platform() === 'macos') {
     void startup
       .turn('doors')
       .then(() => import('./lib/native-menu/src/api'))
@@ -622,7 +609,7 @@
   class:full={bare}
   class:flush
   class:fabbed={fabShown && !bare}
-  class:tabbed={viewport.device === 'phone' && !!workspace.panel && !bare && !__EVEN_PLUGIN__}
+  class:tabbed={viewport.device === 'phone' && !!workspace.panel && !bare}
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
   style:--panel-room={docked ? `max(var(--panel-narrowest), (100vw - var(--panes-floor)) / ${docked})` : undefined}
@@ -698,12 +685,10 @@
             {@render notices()}
           {/if}
           <PaneTree frame={workspace.panes.frame} />
-          {#if !__EVEN_PLUGIN__}
-            <FirstScreen />
-          {/if}
+          <FirstScreen />
         </div>
 
-        {#if !bare && !filled && !__EVEN_PLUGIN__ && viewport.touch}
+        {#if !bare && !filled && viewport.touch}
           <PadColumn />
         {/if}
 
@@ -826,18 +811,16 @@
 
 <SizeBadge />
 
-{#if !__EVEN_PLUGIN__}
-  <Door open={gate.showing} load={loadSetup}>
-    {#snippet children(Setup)}
-      <Setup.default />
-    {/snippet}
-  </Door>
-  <Door open={gate.guiding} load={loadGuide}>
-    {#snippet children(Guide)}
-      <Guide.default />
-    {/snippet}
-  </Door>
-{/if}
+<Door open={gate.showing} load={loadSetup}>
+  {#snippet children(Setup)}
+    <Setup.default />
+  {/snippet}
+</Door>
+<Door open={gate.guiding} load={loadGuide}>
+  {#snippet children(Guide)}
+    <Guide.default />
+  {/snippet}
+</Door>
 
 {#if paletteDoor.asked}
   {#await paletteDoor.asked then Palette}

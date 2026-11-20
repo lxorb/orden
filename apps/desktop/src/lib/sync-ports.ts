@@ -44,7 +44,7 @@ providePort('sync.workspace', {
   arrived: (path) => workspace.arrived(path),
   fileCame: (path, kind) => workspace.fileCame(path, kind),
   fileWritten: (path) => {
-    if (!__EVEN_PLUGIN__) void import('./pdf/src/api').then((pdf) => pdf.sheetArrived(path))
+    void import('./pdf/src/api').then((pdf) => pdf.sheetArrived(path))
   },
   fileMoved: (from, to, kind) => workspace.fileMoved(from, to, kind),
   fileGone: (path, kind, back) => workspace.fileGone(path, kind, back),

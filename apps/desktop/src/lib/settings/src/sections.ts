@@ -38,7 +38,7 @@ export function sectionGroups(): Item[][] {
   return [
     [
       { id: 'general', label: 'General' },
-      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'space' as SettingsSectionId, label: 'Space' }]),
+      { id: 'space', label: 'Space' },
       { id: 'editor', label: 'Editor' },
       { id: 'kinds', label: 'Note types' },
       { id: 'shortcuts', label: 'Shortcuts' },
@@ -47,10 +47,8 @@ export function sectionGroups(): Item[][] {
       { id: 'markdown', label: 'Markdown' },
       { id: 'appearance', label: 'Appearance' },
       { id: 'ai', label: 'AI' },
-      ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder ? [{ id: 'remote' as SettingsSectionId, label: 'Remote' }] : []),
-      ...(!__EVEN_PLUGIN__ && account.user && modes.coder
-        ? [{ id: 'online' as SettingsSectionId, label: 'Online terminal' }]
-        : []),
+      ...(isDesktop && modes.coder ? [{ id: 'remote' as SettingsSectionId, label: 'Remote' }] : []),
+      ...(account.user && modes.coder ? [{ id: 'online' as SettingsSectionId, label: 'Online terminal' }] : []),
       { id: 'experimental', label: 'Experimental' },
     ],
     [
@@ -60,7 +58,7 @@ export function sectionGroups(): Item[][] {
     [
       { id: 'trash', label: 'Recently deleted' },
       { id: 'archived', label: 'Archived spaces' },
-      ...(__EVEN_PLUGIN__ ? [] : [{ id: 'import' as SettingsSectionId, label: 'Import' }]),
+      { id: 'import', label: 'Import' },
       { id: 'export', label: 'Export' },
     ],
   ]

@@ -9,8 +9,6 @@ export {
   EXPLORER_WORD,
   explorerOn,
   gated,
-  GLASSES_WORD,
-  glassesOn,
   hiddenKinds,
   type KindName,
   KINDS_KEY,

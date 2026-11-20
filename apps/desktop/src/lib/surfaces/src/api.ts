@@ -48,11 +48,7 @@ export const passSurface = held(from('pass') as TabShown)
 export const passFill = held(from('pass-fill') as Loaded<Component<{ bubble: unknown }>>)
 export const emptySurface = held(() => import('../../new-here/src/api').then((one) => ({ default: one.NewHere })))
 export const readingSurface = held(from('reading') as TabShown)
-export const lockScreen = held(() =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
-    : import('../../sharing/src/api').then((one) => one.loadLockScreen()),
-)
+export const lockScreen = held(() => import('../../sharing/src/api').then((one) => one.loadLockScreen()))
 export const findBar = held(from('find-bar') as Loaded<Component<FindBarProps>>)
 export const takeoverBar = held(from('takeover-bar') as Loaded<Component<{ id: string; reason: string }>>)
 export const agentRows = held(
@@ -98,7 +94,6 @@ export const joinPending = latched(() => import('../../sharing/src/api').then((o
 export const renameNotice = latched(() => import('./RenameNotice.svelte'))
 export const keysMovedNotice = latched(from('keys-moved') as Shown)
 export const outsideNotice = latched(() => {
-  if (__EVEN_PLUGIN__) throw new Error('no spaces folder in the Even Realities plugin')
   return import('./OutsideFolder.svelte')
 })
 export const CRASH_REPORTS = 'orden:crash-reports'
@@ -107,9 +102,7 @@ export const crashAskDue = (): boolean => storedText(CRASHES_ASKED) === null && 
 export const crashAsk = latched(from('crash-ask') as Shown)
 export const undoToastNotice = latched(from('undo-toast') as Shown)
 export const privateMark = held(from('private-mark') as Loaded<Component<{ large?: boolean }>>)
-export const syncMark = latched(() =>
-  __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./SyncMark.svelte'),
-)
+export const syncMark = latched(() => import('./SyncMark.svelte'))
 export const spacePickerDialog = latched(loadSpacePicker)
 export const tabOverviewLayer = latched(from('overview') as Shown)
 export const hostPickerDialog = latched(from('host-picker') as Shown)

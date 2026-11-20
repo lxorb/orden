@@ -235,7 +235,7 @@ export async function internalInvoke<T>(
   mounts: readonly Mounted[] = mounted(),
 ): Promise<T> {
   if (command === 'pty_spawn') {
-    const asked = typeof args.folder === 'string' && !__EVEN_PLUGIN__ ? args.folder : null
+    const asked = typeof args.folder === 'string' ? args.folder : null
     if (asked === null) return crate<T>(command, { ...args, folder: null })
     const { workingFolder } = await import('./work')
     const folder = await workingFolder(asked).catch(() => null)

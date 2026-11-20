@@ -173,27 +173,25 @@ export function generalPane(): Pane {
           },
         ],
       },
-      ...(!__EVEN_PLUGIN__ && keptForGood.able ? [keptGroup()] : []),
-      ...(__EVEN_PLUGIN__
-        ? []
-        : [
+      ...(keptForGood.able ? [keptGroup()] : []),
+      ...[
+        {
+          title: 'Protection',
+          fields: [
             {
-              title: 'Protection',
-              fields: [
-                {
-                  kind: 'switch' as const,
-                  key: 'general.protection',
-                  label: 'Use protection',
-                  hint: 'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.',
-                  words: ['protect', 'lock', 'password', 'private', 'hide'],
-                  initial: false,
-                  get: () => protectionOn(),
-                  set: (on: boolean) => void turnProtection(on),
-                },
-                ...(protectionOn() ? [relockField()] : []),
-              ],
-            } satisfies Group,
-          ]),
+              kind: 'switch' as const,
+              key: 'general.protection',
+              label: 'Use protection',
+              hint: 'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.',
+              words: ['protect', 'lock', 'password', 'private', 'hide'],
+              initial: false,
+              get: () => protectionOn(),
+              set: (on: boolean) => void turnProtection(on),
+            },
+            ...(protectionOn() ? [relockField()] : []),
+          ],
+        } satisfies Group,
+      ],
       {
         title: 'Tabs',
         fields: [
@@ -295,50 +293,44 @@ export function generalPane(): Pane {
         title: 'Add task',
         fields: [...settingFieldsIn('general', 'Add task')],
       },
-      ...(__EVEN_PLUGIN__
-        ? []
-        : [
+      ...[
+        {
+          title: 'Code',
+          fields: [
             {
-              title: 'Code',
-              fields: [
-                {
-                  kind: 'switch' as const,
-                  key: 'general.developerMode',
-                  label: 'Developer mode',
-                  hint: 'Shows terminals and the other tools for writing code.',
-                  words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
-                  initial: true,
-                  get: () => modes.coder,
-                  set: (on: boolean) => modes.setDeveloper(on),
-                },
-              ],
+              kind: 'switch' as const,
+              key: 'general.developerMode',
+              label: 'Developer mode',
+              hint: 'Shows terminals and the other tools for writing code.',
+              words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
+              initial: true,
+              get: () => modes.coder,
+              set: (on: boolean) => modes.setDeveloper(on),
             },
-          ]),
-      ...(__EVEN_PLUGIN__
-        ? []
-        : [
+          ],
+        },
+      ],
+      ...[
+        {
+          title: 'Hints',
+          fields: [
             {
-              title: 'Hints',
-              fields: [
-                {
-                  kind: 'switch' as const,
-                  key: 'general.silentMode',
-                  label: 'Silent mode',
-                  hint: 'Hides the tips Orden shows while you get to know it.',
-                  words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
-                  initial: DEFAULTS.silent,
-                  get: () => modes.silent,
-                  set: () => modes.toggleSilent(),
-                },
-              ],
+              kind: 'switch' as const,
+              key: 'general.silentMode',
+              label: 'Silent mode',
+              hint: 'Hides the tips Orden shows while you get to know it.',
+              words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
+              initial: DEFAULTS.silent,
+              get: () => modes.silent,
+              set: () => modes.toggleSilent(),
             },
-          ]),
-      ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
-      ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
-        ? [{ title: 'Terminal', fields: settingFieldsIn('general', 'Terminal') }]
-        : []),
-      ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform()) ? [gpuGroup()] : []),
-      ...(!__EVEN_PLUGIN__ && isDesktop ? [privacyGroup()] : []),
+          ],
+        },
+      ],
+      remindersGroup(),
+      ...(isDesktop && modes.coder ? [{ title: 'Terminal', fields: settingFieldsIn('general', 'Terminal') }] : []),
+      ...(isDesktop && ['linux', 'windows'].includes(platform()) ? [gpuGroup()] : []),
+      ...(isDesktop ? [privacyGroup()] : []),
       {
         title: 'Updates',
         fields: [
@@ -359,7 +351,7 @@ export function generalPane(): Pane {
                 },
               ] satisfies Field[])
             : []),
-          ...(!__EVEN_PLUGIN__ && webChannel
+          ...(webChannel
             ? ([
                 {
                   kind: 'segmented',
@@ -379,7 +371,7 @@ export function generalPane(): Pane {
           versionField(),
         ],
       },
-      ...(!__EVEN_PLUGIN__ && isDesktop ? [{ title: 'Browser', fields: settingFieldsIn('general', 'Browser') }] : []),
+      ...(isDesktop ? [{ title: 'Browser', fields: settingFieldsIn('general', 'Browser') }] : []),
     ],
   }
 }

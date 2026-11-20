@@ -30,7 +30,6 @@
   import { holdScroll } from '../../panes/src/api'
   import type { SettingsSectionId } from '@orden/contracts'
   import { settings } from './window.svelte'
-  import { glassesOn } from '../../gates/src/api'
   import {
     CATEGORIES,
     doubleTaps,
@@ -391,11 +390,9 @@
 <ThemeStore />
 
 {#snippet asker()}
-  {#if !__EVEN_PLUGIN__}
-    {#await import('./AskSettings.svelte') then { default: AskSettings }}
-      <AskSettings offers={offered} ongo={goTo} />
-    {/await}
-  {/if}
+  {#await import('./AskSettings.svelte') then { default: AskSettings }}
+    <AskSettings offers={offered} ongo={goTo} />
+  {/await}
 {/snippet}
 
 {#snippet results()}
@@ -655,12 +652,8 @@
       {/if}
     {/each}
 
-    {#if !__EVEN_PLUGIN__ && settings.section === 'general' && isDesktop}
+    {#if settings.section === 'general' && isDesktop}
       {@render parts('general')}
-    {/if}
-
-    {#if settings.section === 'experimental' && glassesOn()}
-      {@render glassesExtras()}
     {/if}
 
     {#if resettable(current)}
@@ -689,11 +682,9 @@
         <Addresses />
       </div>
 
-      {#if !__EVEN_PLUGIN__}
-        {#await import('../../accounts-ui/src/api').then((ui) => ui.profileRows()) then rows}
-          {#if rows}<rows.default />{/if}
-        {/await}
-      {/if}
+      {#await import('../../accounts-ui/src/api').then((ui) => ui.profileRows()) then rows}
+        {#if rows}<rows.default />{/if}
+      {/await}
 
       <h3>Storage</h3>
       <div class="card">
@@ -765,7 +756,7 @@
     {@render parts('ai')}
   {:else if settings.section === 'online' || settings.section === 'remote' || settings.section === 'archived'}
     {@render parts(settings.section)}
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'space'}
+  {:else if settings.section === 'space'}
     {@render parts('space')}
     {#await import('./SpacePane.svelte') then pane}
       <pane.default />
@@ -1002,14 +993,6 @@
   {:else}
     <p class="note">Nothing matches.</p>
   {/each}
-{/snippet}
-
-{#snippet glassesExtras()}
-  <h3>Questions</h3>
-  <p class="hint caption">
-    The glasses ask the default AI account.
-    <button class="link" onclick={() => settings.show('ai')}>Choose it in Settings, AI</button>
-  </p>
 {/snippet}
 
 {#snippet themeTools()}
