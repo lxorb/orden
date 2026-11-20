@@ -9,6 +9,7 @@ import {
   sameCombination,
   showCombination,
   viewport,
+  watchLayout,
 } from '../../ui-kit/src/api'
 import { knownPreset, type PresetId, presetKeys } from './preset-ids'
 import type { Preset } from './presets'
@@ -250,4 +251,5 @@ function usable(value: unknown): KeyOverrides {
   return kept
 }
 export const shortcuts = new Shortcuts()
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') watchLayout(window)
 heardElsewhere([STORAGE_KEY, PRESET_KEY], () => shortcuts.restore())
