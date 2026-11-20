@@ -155,7 +155,7 @@ describe('a browser that keeps only the words it uses', () => {
         .map((one) => one.path)
         .sort(),
     ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
-    expect(await browser.engine.fetch(`${ROOT}/Nothing`)).toBe(false)
+    expect(await browser.engine.fetch(`${ROOT}/Nothing`)).toBe('gone')
   })
   test('fetches a folder whole from an account that answers a pull a note at a time', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -282,6 +282,23 @@ describe('a browser that keeps only the words it uses', () => {
     await passing
     expect(here).toBe(true)
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)).toBe(SEEDED[0]?.text)
+  })
+  test('a note the account deleted is gone, not out of reach, and one it cannot give is out of reach (#2348)', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const other = await fresh(account, 'o', { lazy: false })
+    await other.engine.pass(SPACE)
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    await other.engine.removing(`${ROOT}/Plan.md`, async () => {
+      await other.disk.remove(`${ROOT}/Plan.md`)
+      return PLAN
+    })
+    await other.engine.pass(SPACE)
+    await browser.engine.pass(SPACE)
+    expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe('gone')
+    expect(await browser.engine.fetch('/elsewhere/Plan.md')).toBe('gone')
+    browser.online = false
+    expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(false)
   })
   test('offline, a note kept away stays asked for, and the next pass brings it', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)

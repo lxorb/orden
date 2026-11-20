@@ -279,18 +279,18 @@ export class Engine implements AskedEngine {
     if (!placed || !entry || !away(placed.space, entry)) return null
     return { id: entry.id, path, size: entry.size ?? 0, modified: entry.mtime ?? 0 }
   }
-  fetch(path: string): Promise<boolean> {
+  fetch(path: string): Promise<boolean | 'gone'> {
     return this.core.use(async () => {
       const placed = this.placed(path)
-      if (!placed) return false
+      if (!placed) return 'gone'
       const entry = placed.space.at(placed.path)
       if (entry && entry.kind !== 'folder') {
         if (entry.local_path) return true
-        if (!away(placed.space, entry)) return false
+        if (!away(placed.space, entry)) return 'gone'
         return this.bring(placed.space, [entry])
       }
       const left = awayUnder(placed.space, placed.path)
-      if (!entry && !left.length) return false
+      if (!entry && !left.length) return 'gone'
       return this.bring(placed.space, left)
     })
   }

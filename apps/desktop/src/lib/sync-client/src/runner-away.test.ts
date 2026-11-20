@@ -262,7 +262,7 @@ describe('a browser keeping no words of a note the engine has just heard of', ()
     keptAway.clear()
     keptAway.reach(
       (path) => browser.engine.awayAt(path),
-      (path) => browser.engine.fetch(path),
+      async (path) => (await browser.engine.fetch(path)) === true,
     )
     expect(keptAway.all()).toEqual([])
     expect(keptAway.at(`${ROOT}/Board.md`)?.path).toBe(`${ROOT}/Board.md`)
