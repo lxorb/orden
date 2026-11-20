@@ -644,6 +644,16 @@ def main() -> None:
             print("closing the setup screen, pid", p.pid, flush=True)
             subprocess.run(["taskkill", "/PID", str(p.pid), "/F"], capture_output=True, check=False)
             time.sleep(3)
+    u32.keybd_event(0x1B, 0, 0, 0)
+    u32.keybd_event(0x1B, 0, 2, 0)
+    time.sleep(1.5)
+    cover = class_at(WIDE // 2, HIGH // 2)
+    print("before the runs, the screen centre shows", cover, flush=True)
+    for p in psutil.process_iter(["name"]):
+        if (p.info.get("name") or "").lower() == "startmenuexperiencehost.exe" and cover.get("owner", "").lower() == "startmenuexperiencehost.exe":
+            print("closing the start menu, pid", p.pid, flush=True)
+            subprocess.run(["taskkill", "/PID", str(p.pid), "/F"], capture_output=True, check=False)
+            time.sleep(3)
     spike = Spike(a.exe, out)
     global POSTED
     check = input_check()
@@ -685,10 +695,12 @@ def main() -> None:
         spike.close(nproc)
     results["extension"]["native_default_style"] = [e.get("msg") for e in spike.events(nlog) if e.get("ev") == "console"]
     composed_extra = [*flags, f"--spike-adapter={adapter}"]
+    results["start_cover"] = cover
     results["scenarios"] = []
-    for name in ("video", "scroll", "idle"):
-        results["scenarios"].append(spike.scenario("native", name, flags))
-        results["scenarios"].append(spike.scenario("composed", name, composed_extra))
+    for _ in range(2):
+        for name in ("video", "scroll", "idle"):
+            results["scenarios"].append(spike.scenario("native", name, flags))
+            results["scenarios"].append(spike.scenario("composed", name, composed_extra))
     results["latency"] = [
         spike.latency("native", flags),
         spike.latency("composed", composed_extra),
