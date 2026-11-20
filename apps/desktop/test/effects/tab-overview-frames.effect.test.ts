@@ -446,6 +446,22 @@ test('the windows’ crosses and names come in the frames after the first, which
   })
   expect(document.querySelectorAll('.caption').length).toBe(document.querySelectorAll('.canvas .window').length)
 })
+test('each window gets its cross and name in a step of its own, so no step outruns the frame budget', async () => {
+  tabOverview.open = true
+  flushSync()
+  const all = document.querySelectorAll('.canvas .window').length
+  expect(all).toBeGreaterThan(1)
+  vi.spyOn(performance, 'now').mockImplementation(() => (now += 3))
+  const counts: number[] = []
+  await vi.waitFor(async () => {
+    frame()
+    await idle(20)
+    counts.push(document.querySelectorAll('.closer').length)
+    expect(counts.at(-1)).toBe(all)
+  })
+  expect(counts.filter((count) => count > 0 && count < all).length).toBeGreaterThan(0)
+  expect(document.querySelectorAll('.caption').length).toBe(all)
+})
 test('the web pages are asked to hold still before the overview measures or builds anything', async () => {
   const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
   const order: string[] = []

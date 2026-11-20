@@ -21,6 +21,10 @@ export function later(work: () => void) {
   queue.push(work)
   ask()
 }
+export function laterFirst(work: () => void) {
+  queue.unshift(work)
+  ask()
+}
 export function forgetLater() {
   queue.length = 0
 }

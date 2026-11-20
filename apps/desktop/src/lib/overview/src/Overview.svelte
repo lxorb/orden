@@ -43,7 +43,7 @@
   import { inRows, meets, packed, pushedAside } from './pack'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot, WIDEST } from './layout'
   import { marked, shownBox, tabCopyOf } from './mirror'
-  import { forgetLater, later } from './later'
+  import { forgetLater, later, laterFirst } from './later'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
 
@@ -521,7 +521,7 @@
     }
   }
   let onTheWay = $state(false)
-  let extras = $state(false)
+  let extras = $state(0)
   let facesFly = $state(false)
   $effect(() => {
     if (onTheWay) {
@@ -795,7 +795,7 @@
       unmoved = true
       panesAsWindows.clear()
       riders.clear()
-      later(() => (extras = true))
+      later(deckOne)
       const asWindows: Record<string, true> = {}
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
@@ -866,9 +866,13 @@
     if (started) onTheWay = true
     aimAll()
   }
+  function deckOne() {
+    extras = extras + 1 < windows.length ? extras + 1 : Infinity
+    if (extras < Infinity) laterFirst(deckOne)
+  }
   function gone() {
     forgetLater()
-    extras = false
+    extras = 0
     homes.clear()
     shown = false
     flights.clear()
@@ -1421,7 +1425,7 @@
           <path d={seamPath(seam)} />
         {/each}
       </svg>
-      {#each extras ? windows : [] as { slot, tab } (tab.id)}
+      {#each windows.slice(0, extras) as { slot, tab } (tab.id)}
         <span
           class="caption"
           style:translate="{slot.x}px {slot.y + slot.h + 8}px"
@@ -1468,7 +1472,7 @@
       <button class="orden-button is-quiet tidy" type="button" onclick={() => void tidy()}>Tidy up</button>
     </div>
 
-    {#each windows as { slot, tab } (tab.id)}
+    {#each windows as { slot, tab }, index (tab.id)}
       {@const face = faceOf(slot)}
       {@const live = asPanes[tab.id] && workspace.panes.at(tab.paneId)?.activeTabId === tab.id}
       <button
@@ -1492,7 +1496,7 @@
         use:placed={tab.id}
       >
         <span class="face-box" style:scale={slot.w / face.w}>
-          {#if !live && extras}
+          {#if !live && index < extras}
             <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} flying={facesFly} />
           {/if}
         </span>
@@ -1505,7 +1509,7 @@
         </span>
         <span class="ring" style:--overview-line={1 / restZoom} aria-hidden="true"></span>
       </button>
-      {#if extras}
+      {#if index < extras}
         <button
           class="closer"
           class:is-front={tab.id === workspace.activeTabId}
