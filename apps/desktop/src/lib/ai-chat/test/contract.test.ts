@@ -299,3 +299,77 @@ describe('a helper started for a chat in another window', () => {
     })
   })
 })
+describe('a turn and the failures it survives', () => {
+  const words = (content: string) => ({ choices: [{ delta: { content } }] })
+  const streamed = (...events: unknown[]) =>
+    new Response(events.map((one) => `data: ${JSON.stringify(one)}\n\n`).join(''))
+  const finished = () => streamed(words('Herons.'), { choices: [{ delta: {}, finish_reason: 'stop' }] })
+  const failed = (status: number, headers: Record<string, string> = {}) =>
+    new Response(JSON.stringify({ error: { message: `refused ${String(status)}` } }), { status, headers })
+  async function turn(replies: (() => Response)[], signal = new AbortController().signal) {
+    const { pacing } = await import('../src/chat/request')
+    const waits: number[] = []
+    const sleep = pacing.sleep
+    pacing.sleep = (ms, until) => {
+      waits.push(ms)
+      return ms > 10_000 ? sleep(ms, until) : Promise.resolve()
+    }
+    const asked: string[] = []
+    vi.stubGlobal('fetch', (url: string) => {
+      if (url.includes('/models')) return Promise.resolve(new Response(JSON.stringify({ data: [{ id: 'llama' }] })))
+      asked.push(url)
+      const next = replies.shift()
+      if (!next) return Promise.reject(new Error('asked once too often'))
+      return Promise.resolve().then(next)
+    })
+    const { createApiEngine } = await import('../src/chat/engine')
+    const { newThread } = await import('../src/chat/threads')
+    const engine = createApiEngine({
+      provider: (id) => (id === LOCAL.id ? LOCAL : null),
+      tools: {
+        list: () => Promise.resolve({ instructions: '', tools: [] }),
+        call: () => Promise.resolve({ text: '', images: [], error: false }),
+        context: () => Promise.resolve(''),
+      },
+    })
+    const heard: { type: string; stop?: string }[] = []
+    try {
+      await engine.send(
+        newThread('Notes', LOCAL.id, 'llama', 'auto', 'approve'),
+        { text: 'Herons?', attachments: [] },
+        (event) => heard.push(event),
+        signal,
+      )
+    } finally {
+      vi.unstubAllGlobals()
+      pacing.sleep = sleep
+    }
+    return { stop: heard.at(-1)?.stop, asked: asked.length, waits }
+  }
+  test.each([529, 429, 503, 408, 409])('goes on after a %i that came before any of the answer', async (status) => {
+    expect(await turn([() => failed(status), finished])).toMatchObject({ stop: 'end', asked: 2 })
+  })
+  test('goes on after a network that failed before any of the answer', async () => {
+    const unreachable = () => {
+      throw new TypeError('Failed to fetch')
+    }
+    expect(await turn([unreachable, finished])).toMatchObject({ stop: 'end', asked: 2 })
+  })
+  test.each([400, 401])('ends in an error at once on a %i', async (status) => {
+    expect(await turn([() => failed(status), finished])).toMatchObject({ stop: 'error', asked: 1 })
+  })
+  test('waits as long as the provider says', async () => {
+    expect(await turn([() => failed(429, { 'retry-after': '2' }), finished])).toMatchObject({ waits: [2_000] })
+  })
+  test('ends as stopped, at once and asking nothing more, when stopped while it waits', async () => {
+    const stopper = new AbortController()
+    setTimeout(() => stopper.abort(), 50)
+    const started = Date.now()
+    const ended = await turn([() => failed(429, { 'retry-after': '30' }), finished], stopper.signal)
+    expect(ended).toMatchObject({ stop: 'stopped', asked: 1 })
+    expect(Date.now() - started).toBeLessThan(5_000)
+  })
+  test('ends in an error, never asked again, when the answer is cut after it began', async () => {
+    expect(await turn([() => streamed(words('Her')), finished])).toMatchObject({ stop: 'error', asked: 1 })
+  })
+})

@@ -12,6 +12,14 @@ const { newThread } = await import('./threads')
 const { body, events } = await import('./recorded/read')
 const { watching } = await import('./sends')
 const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./approvals')
+const { pacing, TRIES } = await import('./request')
+const waits: number[] = []
+const sleepForReal = pacing.sleep
+pacing.random = () => 0.5
+pacing.sleep = (ms) => {
+  waits.push(ms)
+  return Promise.resolve()
+}
 import type { Provider } from '../../../ai-providers/src/providers'
 import type { EngineEvent, Mode, Thread, ToolOutput } from '../../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
@@ -72,7 +80,7 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
   })
   const next = answers.shift() ?? always
   if (!next) throw new Error(`nothing to answer ${url}`)
-  return Promise.resolve(next())
+  return Promise.resolve().then(next)
 })
 const calls: { name: string; args: unknown; mode: Mode }[] = []
 let onCall: () => unknown = () => undefined
@@ -120,6 +128,7 @@ beforeEach(() => {
   onCall = () => undefined
   where = ''
   outside.length = 0
+  waits.length = 0
   forgetLearnt()
 })
 describe('a call made and answered', () => {
@@ -736,10 +745,11 @@ describe('a stream that stops before it says it is done', () => {
   const words = (content: string) => ({ choices: [{ delta: { content } }] })
   const thread = () => newThread('space', 'compatible-1', 'llama', 'auto', 'approve')
   test('is an error, with the words that arrived kept', async () => {
-    answers = [cut(words('Hello '), words('world'))]
+    answers = [cut(words('Hello '), words('world')), cut(words('again'))]
     const one = thread()
     const heard = await send(one, 'Say it')
     expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+    expect(sent).toHaveLength(1)
     expect(one.turns.at(-1)?.parts).toEqual([
       { kind: 'text', text: 'Hello world' },
       { kind: 'notice', code: 'error', text: expect.stringContaining('connection') as string },
@@ -854,5 +864,92 @@ describe('an account the vault moved to a fresh id', () => {
     await send(thread, 'two')
     delete PROVIDERS.moved
     expect(thread.turns[3]?.parts.map((part) => part.kind)).not.toContain('notice')
+  })
+})
+describe('a failure before any of the answer arrived', () => {
+  const failing =
+    (status: number, headers: Record<string, string> = {}) =>
+    () =>
+      new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }), {
+        status,
+        headers: { 'content-type': 'application/json', ...headers },
+      })
+  const unreachable = () => {
+    throw new TypeError('Failed to fetch')
+  }
+  test('mid-run, the turn goes on once the provider answers again, rather than ending in an error', async () => {
+    answers = [stream('anthropic-1'), failing(529), stream('anthropic-2')]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    const heard = await send(thread, 'What is in Birds.md?')
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
+    expect(sent).toHaveLength(3)
+    expect(waits).toHaveLength(1)
+  })
+  test.each([429, 503, 500, 408, 409])('a %i is asked again, after a wait that grows', async (status) => {
+    answers = [failing(status), failing(status), stream('anthropic-2')]
+    const heard = await send(newThread('space', 'anthropic', 'claude-opus-5-5'), 'hi')
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
+    expect(sent).toHaveLength(3)
+    expect(waits).toHaveLength(2)
+    expect(waits[1]).toBeGreaterThan(waits[0] ?? Infinity)
+  })
+  test('a network that fails for a moment is tried again', async () => {
+    answers = [unreachable, stream('anthropic-2')]
+    const heard = await send(newThread('space', 'anthropic', 'claude-opus-5-5'), 'hi')
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
+  })
+  test.each([400, 401, 403, 404])('a %i is an error at once, never asked again', async (status) => {
+    answers = [failing(status), stream('anthropic-2')]
+    const heard = await send(newThread('space', 'anthropic', 'claude-opus-5-5'), 'hi')
+    expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'error' })
+    expect(sent).toHaveLength(1)
+    expect(waits).toEqual([])
+  })
+  test('waits as long as the provider says, in seconds, as a date, or in milliseconds', async () => {
+    answers = [
+      failing(429, { 'retry-after': '3' }),
+      failing(503, { 'retry-after': new Date(Date.now() + 5_000).toUTCString() }),
+      failing(429, { 'retry-after-ms': '250' }),
+      stream('anthropic-2'),
+    ]
+    const heard = await send(newThread('space', 'anthropic', 'claude-opus-5-5'), 'hi')
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
+    expect(waits[0]).toBe(3_000)
+    expect(waits[1]).toBeGreaterThan(3_000)
+    expect(waits[1]).toBeLessThanOrEqual(5_000)
+    expect(waits[2]).toBe(250)
+  })
+  test('a wait longer than a turn should hang is the provider’s error at once', async () => {
+    answers = [failing(429, { 'retry-after': '3600' }), stream('anthropic-2')]
+    const heard = await send(newThread('space', 'anthropic', 'claude-opus-5-5'), 'hi')
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'error', error: 'Overloaded' })
+    expect(sent).toHaveLength(1)
+  })
+  test(`after ${TRIES} tries, the turn ends in the provider’s own words`, async () => {
+    always = failing(529)
+    const heard = await send(newThread('space', 'anthropic', 'claude-opus-5-5'), 'hi')
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'error', error: 'Overloaded' })
+    expect(sent).toHaveLength(TRIES)
+  })
+  test('a stop while it waits ends the turn as stopped at once, and asks nothing more', async () => {
+    pacing.sleep = sleepForReal
+    try {
+      answers = [failing(429, { 'retry-after': '30' }), stream('anthropic-2')]
+      const controller = new AbortController()
+      const thread = newThread('space', 'anthropic', 'claude-opus-5-5')
+      const started = Date.now()
+      const sending = send(thread, 'hi', controller)
+      await vi.waitFor(() => expect(sent).toHaveLength(1))
+      controller.abort()
+      const heard = await sending
+      expect(Date.now() - started).toBeLessThan(5_000)
+      expect(heard.at(-1)).toMatchObject({ type: 'done', stop: 'stopped' })
+      expect(sent).toHaveLength(1)
+    } finally {
+      pacing.sleep = (ms) => {
+        waits.push(ms)
+        return Promise.resolve()
+      }
+    }
   })
 })
