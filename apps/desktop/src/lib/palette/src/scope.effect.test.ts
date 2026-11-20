@@ -33,8 +33,10 @@ vi.mock('../../commands/src/api', async (importOriginal) => {
     ...real,
     paletteCommands: (...given: Parameters<typeof real.paletteCommands>) => [
       ...real.paletteCommands(...given),
-      { id: 'theme-contrast', label: 'Theme: Contrast', run },
-      { id: 'theme-contrast-again', label: 'Theme: Contrast', run, checked: true },
+      { id: 'theme-kestrel', label: 'Theme: Kestrel', run, checked: true },
+      { id: 'theme-kestrel', label: 'Theme: Kestrel', run, checked: true },
+      { id: 'ai-account:work', label: 'AI account: Claude, API key', run },
+      { id: 'ai-account:home', label: 'AI account: Claude, API key', run },
     ],
   }
 })
@@ -144,12 +146,19 @@ describe('what is searched', () => {
   })
 })
 describe('a row', () => {
-  test('is listed once though two commands read the same, and the checked one stays', () => {
+  test('is listed once though its command is offered twice', () => {
     shown()
-    for (const words of ['Contrast', '>Contrast']) {
+    for (const words of ['Kestrel', '>Kestrel']) {
       typed(words)
-      const same = rows().filter((one) => one.label === 'Theme: Contrast')
-      expect(same).toEqual([{ label: 'Theme: Contrast', from: null, ticked: true }])
+      const same = rows().filter((one) => one.label === 'Theme: Kestrel')
+      expect(same).toEqual([{ label: 'Theme: Kestrel', from: null, ticked: true }])
+    }
+  })
+  test('of each of two commands that read the same is kept, so neither becomes unreachable', () => {
+    shown()
+    for (const words of ['AI account', '>AI account']) {
+      typed(words)
+      expect(rows().filter((one) => one.label === 'AI account: Claude, API key')).toHaveLength(2)
     }
   })
 })

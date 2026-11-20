@@ -1,5 +1,6 @@
 import { keep, storedText } from '../../platform/src/api'
 import type { Row } from './rows'
+import { rowKey } from './kinds'
 
 export type Scope = 'all' | 'here'
 export const SCOPE_KEY = 'orden:palette-scope'
@@ -10,7 +11,7 @@ export function distinct(rows: readonly Row[], shown: (row: Row) => string): Row
   const at = new Map<string, number>()
   const out: Row[] = []
   for (const row of rows) {
-    const key = shown(row)
+    const key = `${row.kind}\n${rowKey(row) ?? shown(row)}`
     const kept = at.get(key)
     if (kept === undefined) {
       at.set(key, out.length)

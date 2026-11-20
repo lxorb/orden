@@ -209,9 +209,7 @@
     return spaceWith(workspace.spaceOf(workspace.active.note))
   }
   function shownAs(row: Row): string {
-    const facts = [row.kind, label(row), whereOf(row) ?? '', fromOf(row)?.id ?? '']
-    if (row.kind === 'tab') facts.push(row.tab.id)
-    if (row.kind === 'note') facts.push(row.entry.path)
+    const facts = [label(row), whereOf(row) ?? '', fromOf(row)?.id ?? '']
     return facts.join('\n')
   }
   function label(row: Row): string {
