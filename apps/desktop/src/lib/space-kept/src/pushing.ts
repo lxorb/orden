@@ -1,11 +1,12 @@
 import { syncStore } from '@orden/contracts'
 import { account, api } from '../../accounts/src/api'
 
-type Save = (calls: typeof api, token: string, spaceId: string) => Promise<unknown>
-export async function push(
+type Save<T> = (calls: typeof api, token: string, spaceId: string) => Promise<T>
+export async function push<T>(
   root: string,
-  save: Save,
+  save: Save<T>,
   heard: (landed: boolean) => void = () => undefined,
+  kept: (answer: T) => boolean = () => true,
 ): Promise<void> {
   const token = account.token
   const spaceId = syncStore()?.remoteIdFor(root) ?? null
@@ -19,8 +20,12 @@ export async function push(
     return
   }
   const landed = await save(api, token, spaceId)
-    .then(() => true)
+    .then(kept)
     .catch(() => false)
   heard(landed)
   if (landed) await account.loadSpaces().catch(() => undefined)
 }
+export const keepsAll = (
+  answer: Readonly<Record<string, unknown>> | undefined,
+  sent: Readonly<Record<string, unknown>>,
+): boolean => Object.entries(sent).every(([key, one]) => answer?.[key] === one)

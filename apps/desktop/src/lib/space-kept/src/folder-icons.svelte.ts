@@ -167,7 +167,7 @@ export class FolderIcons {
     const colors = theirTints === undefined ? mine.colors : folderIconMap(theirTints, LONGEST_TINT)
     const met = meet(held, accountId, mine, { icons, colors }, MAPS)
     if (!met) return
-    this.spaces = { ...this.spaces, [root]: { ...met.value, account: accountId, sent: true } }
+    this.spaces = { ...this.spaces, [root]: { ...met.value, account: accountId, sent: !met.tell } }
     this.write()
     if (met.tell) void this.push(root)
   }
@@ -189,13 +189,14 @@ export class FolderIcons {
     this.pushing = { ...this.pushing, [root]: waiting }
   }
   private async push(root: string) {
-    const { push } = await import('./pushing')
+    const { keepsAll, push } = await import('./pushing')
     const icons = this.of(root)
     const colors = this.colorsOf(root)
     await push(
       root,
       (api, token, spaceId) => api.saveFolderIcons(token, spaceId, icons, colors),
       (landed) => this.said(root, landed, icons, colors),
+      (answer) => keepsAll(answer.icons, icons) && keepsAll(answer.tints, colors),
     )
   }
   private said(root: string, landed: boolean, icons: Record<string, string>, colors: Record<string, string>) {

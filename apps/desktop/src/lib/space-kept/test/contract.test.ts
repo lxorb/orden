@@ -1,3 +1,4 @@
+import { providePort, type SyncStorePort } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
   Archive,
@@ -26,6 +27,29 @@ function storage(): Storage {
     clear: () => store.clear(),
   }
 }
+const server = vi.hoisted(() => ({
+  token: null as string | null,
+  sent: 0,
+  keeps: (icon: string) => !icon.startsWith('data:'),
+}))
+vi.mock('../../accounts/src/api', () => ({
+  account: {
+    get token() {
+      return server.token
+    },
+    spaces: [],
+    loadSpaces: () => Promise.resolve(),
+  },
+  api: {
+    saveFolderIcons: (_token: string, _id: string, icons: Record<string, string>, tints: Record<string, string>) => {
+      server.sent++
+      return Promise.resolve({
+        icons: Object.fromEntries(Object.entries(icons).filter(([, one]) => server.keeps(one))),
+        tints,
+      })
+    },
+  },
+}))
 vi.stubGlobal('localStorage', storage())
 beforeEach(() => {
   vi.useFakeTimers()
@@ -214,5 +238,59 @@ describe('what another window keeps', () => {
     expect(heard).toHaveBeenCalledTimes(1)
     elsewhere('orden:archived-spaces', ['/away'])
     expect(heard).toHaveBeenCalledTimes(1)
+  })
+})
+describe('a map the account is still to be told', () => {
+  test('is not taken for sent, so a second pairing before the push lands keeps it', () => {
+    const icons = new FolderIcons(() => '/s')
+    icons.adopt('/s', {}, {}, 'me')
+    icons.set('/s/Work', 'rocket')
+    icons.adopt('/s', {}, {}, 'me')
+    icons.adopt('/s', {}, {}, 'me')
+    expect(icons.iconOf('/s/Work')).toBe('rocket')
+    const excluded = new Excluded(() => '/s')
+    excluded.adopt('/s', [], 'me')
+    excluded.toggle('/s/Drafts')
+    excluded.adopt('/s', [], 'me')
+    excluded.adopt('/s', [], 'me')
+    expect(excluded.of('/s')).toEqual(['Drafts'])
+    const graph = new SpaceGraphSettings(() => '/s')
+    graph.adopt('/s', {}, 'me')
+    graph.set({ filter: 'mine' })
+    graph.adopt('/s', { filter: 'theirs' }, 'me')
+    graph.adopt('/s', { filter: 'theirs' }, 'me')
+    expect(graph.here.filter).toBe('mine')
+  })
+})
+describe('a push to the account', () => {
+  const picture = 'data:image/png;base64,AAAA'
+  async function pushed(icons: FolderIcons, path: string, icon: string) {
+    const before = server.sent
+    icons.set(path, icon)
+    await vi.waitFor(() => expect(server.sent).toBe(before + 1))
+    await vi.advanceTimersByTimeAsync(1)
+  }
+  beforeEach(() => {
+    server.token = 'token'
+    server.keeps = (icon) => !icon.startsWith('data:')
+  })
+  afterEach(() => {
+    server.token = null
+  })
+  test('lands only when the answer keeps what was sent, so what the account dropped is offered again', async () => {
+    const gone = providePort('sync.store', { remoteIdFor: () => 'remote' } as unknown as SyncStorePort)
+    const icons = new FolderIcons(() => '/s')
+    icons.adopt('/s', {}, {}, 'me')
+    await pushed(icons, '/s/Work', picture)
+    const offered = server.sent
+    icons.adopt('/s', {}, {}, 'me')
+    expect(icons.iconOf('/s/Work')).toBe(picture)
+    await vi.waitFor(() => expect(server.sent).toBe(offered + 1))
+    await vi.advanceTimersByTimeAsync(1)
+    server.keeps = () => true
+    await pushed(icons, '/s/Plan', 'rocket')
+    icons.adopt('/s', { Plan: 'rocket' }, {}, 'me')
+    expect(icons.iconOf('/s/Work')).toBeNull()
+    gone()
   })
 })

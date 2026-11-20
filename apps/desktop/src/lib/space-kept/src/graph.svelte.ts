@@ -179,7 +179,7 @@ export class SpaceGraphSettings {
     if (!met) return
     this.spaces = {
       ...this.spaces,
-      [root]: { settings: met.value, account: accountId, sent: true },
+      [root]: { settings: met.value, account: accountId, sent: !met.tell },
     }
     this.write()
     if (met.tell) void this.push(root)
@@ -216,6 +216,7 @@ export class SpaceGraphSettings {
       root,
       (api, token, spaceId) => api.saveGraphSettings(token, spaceId, settings),
       (landed) => this.said(root, landed, settings),
+      (answer) => sameGraph(graphSettingsOf(answer.graph), settings),
     )
   }
   private said(root: string, landed: boolean, settings: GraphSettings) {

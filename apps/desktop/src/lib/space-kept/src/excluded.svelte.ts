@@ -148,7 +148,7 @@ export class Excluded {
     const held = this.spaces[root]
     const met = meet(held, accountId, held?.paths ?? [], account, PATHS)
     if (!met) return
-    this.spaces = { ...this.spaces, [root]: { paths: met.value, account: accountId, sent: true } }
+    this.spaces = { ...this.spaces, [root]: { paths: met.value, account: accountId, sent: !met.tell } }
     this.write()
     if (met.tell) void this.push(root)
   }
@@ -167,6 +167,7 @@ export class Excluded {
       root,
       (api, token, spaceId) => api.saveExcluded(token, spaceId, paths),
       (landed) => this.said(root, landed, paths),
+      (answer) => paths.every((one) => answer.excluded.includes(one)),
     )
   }
   private said(root: string, landed: boolean, paths: string[]) {
