@@ -101,6 +101,10 @@ test('a web tab’s window shows its page as it was left, and only a draft’s w
   const page = workspace.openPage('https://example.com/') ?? ''
   pages.of(page).shot = 'data:image/png;base64,AA=='
   await opened()
+  await vi.waitFor(() => {
+    flushSync()
+    expect(windows().some((one) => one.querySelector('img'))).toBe(true)
+  })
   const web = windows().find((one) => one.querySelector('img'))
   expect(web?.querySelector('img')?.getAttribute('src')).toBe(pages.of(page).shot)
   expect(web?.classList.contains('unsaved')).toBe(false)

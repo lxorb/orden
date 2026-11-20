@@ -77,7 +77,7 @@ async function drawnNow() {
 test('the windows set off on the first frame, their marks standing in for what is not drawn yet', () => {
   tabOverview.open = true
   flushSync()
-  expect(drawn.length).toBeGreaterThan(0)
+  expect(drawn).toEqual([])
   frame()
   frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
@@ -203,6 +203,9 @@ test('a picture that comes in while the windows fly is drawn once they are there
   flushSync()
   await faces.read()
   for (let i = 0; i < 20; i++) frame()
+  await idle(30)
+  flushSync()
+  expect(drawn.length).toBeGreaterThan(0)
   expect(tabOverview.out.length).toBeGreaterThan(0)
   const faceOf = () => document.querySelector('.window .face')
   expect(faceOf()?.querySelector('.mark')).not.toBe(null)
@@ -214,12 +217,20 @@ test('a picture that comes in while the windows fly is drawn once they are there
   expect(faceOf()?.querySelector('.read')).toBe(null)
   expect(faceOf()?.querySelector('.mark')).not.toBe(null)
   for (let i = 0; i < 200 && waiting.size; i++) frame()
+  for (let i = 0; i < 5; i++) {
+    frame()
+    await idle(20)
+  }
   expect(faceOf()?.querySelector('.read')?.textContent).toContain('Some words of it.')
 })
-test('a window drawn before is drawn at once the next time, never waited on', async () => {
+test('a window drawn before is drawn again in the frames after the first, never read again', async () => {
   tabOverview.open = true
   flushSync()
-  await drawnNow()
+  for (let i = 0; i < 5; i++) {
+    frame()
+    await idle(20)
+    await drawnNow()
+  }
   for (let i = 0; i < 200 && waiting.size; i++) frame()
   tabOverview.open = false
   flushSync()
@@ -227,11 +238,18 @@ test('a window drawn before is drawn at once the next time, never waited on', as
   tabOverview.open = true
   flushSync()
   expect(drawn).toEqual([])
+  expect(document.querySelector('.window .face .read')).toBe(null)
+  for (let i = 0; i < 10; i++) {
+    frame()
+    await idle(20)
+  }
+  for (let i = 0; i < 200 && waiting.size; i++) frame()
+  for (let i = 0; i < 5; i++) {
+    frame()
+    await idle(20)
+  }
+  expect(drawn).toEqual([])
   expect(document.querySelector('.window .face .read')?.textContent).toContain('Some words of it.')
-  await Promise.resolve()
-  await Promise.resolve()
-  frame()
-  expect(tabOverview.out.length).toBeGreaterThan(0)
 })
 test('a zoom moves only the camera while it turns, and lines and names are fitted to it once it rests', async () => {
   tabOverview.open = true
@@ -280,9 +298,13 @@ test('each tab is copied once, riding its pane while in front, a chip otherwise,
   tabOverview.open = true
   flushSync()
   await drawnNow()
-  for (let i = 0; i < 400 && waiting.size; i++) frame()
   const copies = () => document.querySelectorAll('.canvas .chip-copy > *, .canvas .rider > *').length
-  expect(copies()).toBe(workspace.tabs.length)
+  await vi.waitFor(async () => {
+    frame()
+    await idle(20)
+    expect(copies()).toBe(workspace.tabs.length)
+  })
+  for (let i = 0; i < 400 && waiting.size; i++) frame()
   const front = workspace.activeTabId
   const rider = () => [...document.querySelectorAll('.canvas .rider > *')].map((one) => one.textContent)
   expect(rider()).toEqual([workspace.tabs.find((one) => one.id === front)?.shown])
@@ -322,6 +344,34 @@ test('a frame of the way out writes no value that every element under it inherit
     }
   }
   expect([...inherited]).toEqual([])
+})
+test('the opening builds no picture of a pane and no copy of a tab, and they come in the frames after', async () => {
+  const strip = workspace.tabs.map((tab, index) => {
+    const one = document.createElement('div')
+    one.dataset.box = tab.id
+    one.textContent = tab.shown
+    one.getBoundingClientRect = () => new DOMRect(index * 120, 40, 110, 32)
+    document.body.append(one)
+    return one
+  })
+  onTestFinished(() => strip.forEach((one) => one.remove()))
+  const real = window.getComputedStyle.bind(window)
+  vi.spyOn(window, 'getComputedStyle').mockImplementation((one) => {
+    const style = real(one)
+    return Object.assign([], { getPropertyValue: (name: string) => style.getPropertyValue(name) }) as never
+  })
+  const taken = vi.spyOn(faces, 'take')
+  tabOverview.open = true
+  flushSync()
+  expect(taken).not.toHaveBeenCalled()
+  expect(document.querySelectorAll('.canvas .chip-copy').length).toBe(0)
+  expect(document.querySelectorAll('.canvas .rider > *').length).toBe(1)
+  await vi.waitFor(async () => {
+    frame()
+    await idle(20)
+    expect(document.querySelectorAll('.canvas .chip-copy > *, .canvas .rider > *').length).toBe(workspace.tabs.length)
+  })
+  expect(taken).toHaveBeenCalled()
 })
 test('nothing is measured once the overview is in the page, until its first frame', () => {
   let laidOut = 0

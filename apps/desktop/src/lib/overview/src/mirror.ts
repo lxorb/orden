@@ -74,9 +74,9 @@ export function tabCopyOf(id: string, inherited: Map<Element, string>): HTMLElem
   copy.style.height = `${box.height}px`
   return copy
 }
-export function snapshotOf(paneId: string): (() => { html: string; w: number; h: number }) | null {
+export function snapshotOf(paneId: string, read?: DOMRect): (() => { html: string; w: number; h: number }) | null {
   const pane = paneBody(paneId)
-  const box = shownBox(paneId)
+  const box = read ?? shownBox(paneId)
   if (!pane || !box || box.width <= 0 || box.height <= 0) return null
   return snapshotFrom(pane, box)
 }
