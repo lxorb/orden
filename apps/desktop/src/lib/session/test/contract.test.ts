@@ -27,6 +27,12 @@ describe('a session written down', () => {
     const read = readDraft({ kind: 'view', path: null, name: 'Old', doc: '{"builtin":"todos"}' })
     expect(read?.name).toBe('Todos')
   })
+  test('keeps the tab hidden behind a tab, one deep', () => {
+    const behind = { ...draft('/Notes/a.md'), twin: { ...draft(null), twin: draft('/Notes/b.md') } }
+    const read = readDraft(JSON.parse(JSON.stringify(behind)))
+    expect(read?.twin).toEqual(draft(null))
+    expect(readDraft(draft('/Notes/a.md'))).not.toHaveProperty('twin')
+  })
   test('starts the right side with the panels about one note', () => {
     expect(panels.rightFrom(undefined)).toEqual([...panels.STARTS_RIGHT])
     expect(panels.mayLiveOn('tree', 'left')).toBe(true)
