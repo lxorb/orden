@@ -1,7 +1,7 @@
 import type { Entry } from '@orden/contracts'
 import { spacesAhead } from './ahead'
 import { account } from '../../accounts/src/api'
-import { identifier, samePath, invoke, isDesktop, isNative } from '../../platform/src/api'
+import { identifier, samePath, invoke, isDesktop, isNative, stored } from '../../platform/src/api'
 import { listedWith } from '../../web-backend/src/api'
 import type { Naming, Space } from './workspace.svelte'
 import type { Tab } from '../../documents/src/api'
@@ -42,6 +42,7 @@ export async function loadSpaces(ws: HoldsSpaces) {
     if (ws.spaces === before) break
   }
   if (!found) return
+  if (stored('orden:spaces-deleted')) found = await (await import('./space-deleted')).undeleted(ws.spaces, found)
   const who = account.user?.id ?? null
   let named = (entry: { name: string; path: string }) => entry.name
   if (!isNative && who !== null) {

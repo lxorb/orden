@@ -465,6 +465,66 @@ describe('the spaces every window shares', () => {
             : Promise.reject(new Error(`${command} is not here`)),
     })
   }
+  function trashing(roots: () => Promise<readonly { name: string; root: string }[]>, trash: () => string[]) {
+    return providePort('backend.web', {
+      invoke: async <T>(command: string) => {
+        if (command === 'list_spaces') return (await roots()).map((one) => ({ name: one.name, path: one.root })) as T
+        if (command === 'trash_item') return { id: 't-fresh' } as T
+        if (command === 'list_trash') return trash().map((id) => ({ id })) as T
+        throw new Error(`${command} is not here`)
+      },
+    })
+  }
+  test('a deleted space that a reading still lists is not brought back, and one put back from the trash is', async () => {
+    workspace.spaces = [{ ...NOTES }, { ...FRESH }]
+    const listed = [NOTES, FRESH]
+    let trash = ['t-fresh']
+    const gone = trashing(
+      () => Promise.resolve(listed),
+      () => trash,
+    )
+    try {
+      await workspace.deleteSpace(FRESH.id)
+      await workspace.loadSpaces()
+      expect(workspace.spaces.map((one) => one.id)).toEqual([NOTES.id])
+      trash = []
+      await workspace.loadSpaces()
+      expect(workspace.spaces.map((one) => [one.id, one.root])).toEqual([
+        [NOTES.id, NOTES.root],
+        [FRESH.id, FRESH.root],
+      ])
+    } finally {
+      gone()
+    }
+  })
+  test('a reading that began before a delete and ends after it, and every later one, leave the space gone', async () => {
+    workspace.spaces = [{ ...NOTES }, { ...FRESH }]
+    const asked: { answer?: (spaces: readonly { name: string; root: string }[]) => void } = {}
+    let slow = true
+    const gone = trashing(
+      () =>
+        slow
+          ? new Promise((done) => {
+              asked.answer = done
+            })
+          : Promise.resolve([NOTES, FRESH]),
+      () => ['t-fresh'],
+    )
+    try {
+      const reading = workspace.loadSpaces()
+      await vi.waitFor(() => expect(asked.answer).toBeDefined())
+      slow = false
+      await workspace.deleteSpace(FRESH.id)
+      asked.answer?.([NOTES, FRESH])
+      await reading
+      expect(workspace.spaces.map((one) => one.id)).toEqual([NOTES.id])
+      await workspace.loadSpaces()
+      await workspace.loadSpaces()
+      expect(workspace.spaces.map((one) => one.id)).toEqual([NOTES.id])
+    } finally {
+      gone()
+    }
+  })
   test('a space another window made has its id here too, and keeps it once that window is gone', async () => {
     workspace.spaces = [{ ...NOTES }]
     let listed = [NOTES]

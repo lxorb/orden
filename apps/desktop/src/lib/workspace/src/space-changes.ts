@@ -1,5 +1,17 @@
 import { account } from '../../accounts/src/api'
-import { identifier, isNative, samePath, invoke, windows, within } from '../../platform/src/api'
+import {
+  identifier,
+  isNative,
+  isRecord,
+  keepJson,
+  samePath,
+  stored,
+  invoke,
+  windows,
+  within,
+} from '../../platform/src/api'
+import { spaceDeleted } from './space-deleted'
+const GONE_KEY = 'orden:spaces-gone'
 import { forgetHome, homeOf, leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
 import type { Space } from './workspace.svelte'
 import { firstShown, type HoldsSpaces, sameName, selectSpace, tabSets } from './spaces'
@@ -95,6 +107,18 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   if (toAccount) leftGone(space.root)
   await spaceGone(ws, space, gone.back)
 }
+export function cameBack(spaces: readonly Space[], from: string, at: string): void {
+  const saved = stored(GONE_KEY)
+  const gone: unknown[] = Array.isArray(saved) ? saved : []
+  const was = gone.find(
+    (one) =>
+      isRecord(one) &&
+      typeof one.root === 'string' &&
+      samePath(one.root, from) &&
+      !spaces.some((held) => held.id === one.id),
+  )
+  if (isRecord(was)) keepJson(GONE_KEY, [{ ...was, root: at }, ...gone.filter((one) => one !== was)])
+}
 export async function dropSpace(ws: HoldsSpaces, id: string) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space) return
@@ -112,6 +136,7 @@ async function spaceGone(ws: HoldsSpaces, space: Space, back?: string) {
   const id = space.id
   await ws.fileGone(space.root, 'space', back)
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
+  spaceDeleted(space.root, back)
   ws.archivedSpaces.set(space.root, false)
   const fetched =
     tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length ? (await import('./sets.svelte')).sets : null
