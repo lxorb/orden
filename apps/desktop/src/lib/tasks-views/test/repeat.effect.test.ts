@@ -43,8 +43,14 @@ test('a repeat set in the sheet shows on the row', async () => {
   const row = () => target.querySelector<HTMLElement>(`[data-todo="${made?.id ?? ''}"]`)
   row()?.querySelector<HTMLButtonElement>('button.body')?.click()
   flushSync()
-  const field = target.querySelector<HTMLInputElement>('[data-todo-editor] input[aria-label="Repeat"]')
-  if (!field) throw new Error('no repeat field')
+  target.querySelector<HTMLButtonElement>('[data-todo-editor] [role="combobox"][aria-label="Repeat"]')?.click()
+  flushSync()
+  ;[...document.querySelectorAll<HTMLElement>('[role="option"]')]
+    .find((one) => one.textContent.trim() === 'Custom')
+    ?.click()
+  flushSync()
+  const field = target.querySelector<HTMLInputElement>('[data-todo-editor] [data-todo-rule]')
+  if (!field) throw new Error('no rule field')
   field.value = 'every! 3 days'
   field.dispatchEvent(new Event('input', { bubbles: true }))
   field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
