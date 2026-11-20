@@ -1,4 +1,4 @@
-import { type Context, nextRepeat, parseRule, type Row, ruleText } from '@orden/bases'
+import { type Context, doneCopyId, nextRepeat, parseRule, type Row, ruleText } from '@orden/bases'
 import { linkContext } from '@orden/bases/links'
 import { PROTECTED, shutFor, objectIn, type Shut, type Env, type Note } from '../../../sync-server/src/api'
 import { writeInbox, heldInbox, cleanPath, MOVED, blobKey } from '../../../sync-server-engine/src/api'
@@ -424,7 +424,13 @@ async function update(env: Env, token: TokenRow, args: Args): Promise<unknown> {
     const today = clockOf(new Date(), await zoneOf(env, token.user_id)).today
     const next = nextRepeat({ repeat: before.repeat, start: before.start, deadline: before.deadline }, today)
     if (next) {
-      await keep(env, token.user_id, newTodoId(), { ...was, done: true, doneAt: Date.now(), repeat: null })
+      await keep(env, token.user_id, doneCopyId(before, today), {
+        ...was,
+        done: true,
+        doneAt: Date.now(),
+        repeat: null,
+        gone: false,
+      })
       const moved: Fields = {
         ...patch,
         start: next.start,
