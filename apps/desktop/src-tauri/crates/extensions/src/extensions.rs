@@ -21,6 +21,7 @@ mod unzip;
 mod chromium;
 pub mod tabs;
 
+pub use chromium::own_pages_open;
 pub use firefox::Gaps;
 use library::Kept;
 use link::Store;
