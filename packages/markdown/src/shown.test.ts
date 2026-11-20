@@ -17,13 +17,15 @@ describe('a path as a reader is shown it', () => {
   })
 })
 describe('the stem of a name', () => {
-  test("is the name without its ending, Orden's own or a file's", () => {
-    expect(stemOf('Plan.md')).toBe('Plan')
+  test("is the name without an ending that has a letter in it, Orden's own or a file's", () => {
     expect(stemOf('Board.canvas')).toBe('Board')
-    expect(stemOf('paper.pdf')).toBe('paper')
+    expect(stemOf('notes.mp3')).toBe('notes')
+    expect(stemOf('a.7z')).toBe('a')
     expect(stemOf('Plan.v2.txt')).toBe('Plan.v2')
-    expect(stemOf('Readme')).toBe('Readme')
-    expect(stemOf('.gitignore')).toBe('.gitignore')
-    expect(stemOf('.md')).toBe('.md')
+  })
+  test('keeps a name whose last part is a number, a folder, or a dotfile', () => {
+    for (const name of ['v1.2', 'Report 2024.10', 'my.folder/README', 'a.b\\c', '.env', 'a/.env', 'Readme']) {
+      expect(stemOf(name)).toBe(name)
+    }
   })
 })
