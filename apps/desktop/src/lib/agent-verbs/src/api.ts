@@ -14,7 +14,7 @@ export {
   text,
   writerOf,
 } from './call'
-export { asksFront, openedBy } from './front'
+export { openedBy } from './front'
 export { answerOf, Refused } from './problem'
 export {
   docSource,

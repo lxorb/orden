@@ -3,7 +3,6 @@ import { describe, expect, test } from 'vitest'
 import {
   answerOf,
   asked,
-  asksFront,
   type Call,
   count,
   done,
@@ -98,10 +97,6 @@ describe('a table of verbs', () => {
     expect(await verbs.broken?.('broken', {}, READER)).toMatchObject({ code: 'no_such_file' })
     expect(await verbs.gated?.('gated', {}, READER)).toMatchObject({ code: 'not_granted' })
     expect(ran).toBe(0)
-  })
-  test('asking for the front no longer brings anything to the front', () => {
-    expect(asksFront(call({ background: false }, agent(['workspace.focus'])), 'a new tab in front')).toBe(false)
-    expect(asksFront(call({ background: false }, agent([])), 'a new tab in front')).toBe(false)
   })
 })
 describe('a chat ending its thread', () => {
