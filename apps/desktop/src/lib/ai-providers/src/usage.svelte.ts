@@ -46,7 +46,7 @@ class Usage {
     return this.weeks[id] ?? null
   }
   async look(account: Pick<Provider, 'id' | 'kind'>, force = false): Promise<void> {
-    if (__EVEN_PLUGIN__ || (account.kind !== 'claude-code' && account.kind !== 'codex')) return
+    if (account.kind !== 'claude-code' && account.kind !== 'codex') return
     const last = this.asked.get(account.id)
     if (!force && last !== undefined && Date.now() - last < AGAIN) return
     this.asked.set(account.id, Date.now())

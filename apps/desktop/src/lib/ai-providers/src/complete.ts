@@ -13,7 +13,7 @@ export interface Ask {
   signal?: AbortSignal
 }
 export async function complete(ask: Ask): Promise<string> {
-  if (!__EVEN_PLUGIN__ && isLocal(ask.provider.kind)) {
+  if (isLocal(ask.provider.kind)) {
     const { askLocal } = await import('./local/ask')
     return await askLocal({ ...ask, provider: { ...ask.provider, kind: ask.provider.kind } })
   }
@@ -37,7 +37,7 @@ export async function complete(ask: Ask): Promise<string> {
   return await streamed(response.body, provider, ask.stream)
 }
 async function keyFor(provider: Provider): Promise<string> {
-  if (__EVEN_PLUGIN__ || provider.kind !== 'chatgpt') return await readKey(provider)
+  if (provider.kind !== 'chatgpt') return await readKey(provider)
   const { planToken } = await import('./chatgpt')
   return await planToken()
 }
@@ -55,7 +55,7 @@ async function refusal(response: Response, provider: Provider): Promise<string> 
   return `The provider answered ${response.status}.`
 }
 async function planSaid(provider: Provider, status: number, body: unknown): Promise<string | null> {
-  if (__EVEN_PLUGIN__ || provider.kind !== 'chatgpt') return null
+  if (provider.kind !== 'chatgpt') return null
   const { planRefusal } = await import('./chatgpt')
   return planRefusal(status, body)
 }
