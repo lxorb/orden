@@ -43,6 +43,8 @@ function spaceName(given: string): string {
   return given.replace(/\p{Cc}/gu, '').replace(/^[\s\p{Cf}]+|[\s\p{Cf}]+$/gu, '')
 }
 const ID_LIMIT = 64
+const NOT_AN_ICON = 'that is not an icon: an icon name, an emoji, or a small PNG picture'
+const NOT_A_TINT = 'that is not a colour an icon is drawn in'
 const MOST_IN_ORDER = 500
 export const spaces = new Hono<{ Bindings: Env; Variables: Variables }>()
 const REACHABLE = `select sp.*,
@@ -151,8 +153,10 @@ spaces.patch('/:id', atLeast('write'), async (context) => {
   }
   const label = name === undefined ? null : spaceName(name)
   if (label === '') return context.json({ error: 'give the space a name' }, 400)
-  const icon = chosen === null || (chosen !== undefined && isIcon(chosen)) ? chosen : undefined
-  const tint = painted === null || (painted !== undefined && isTint(painted)) ? painted : undefined
+  if (typeof chosen === 'string' && !isIcon(chosen)) return context.json({ error: NOT_AN_ICON }, 400)
+  if (typeof painted === 'string' && !isTint(painted)) return context.json({ error: NOT_A_TINT }, 400)
+  const icon = chosen
+  const tint = painted
   const written = await context.env.DB.prepare(
     `update spaces set
        name = coalesce(?1, name),
