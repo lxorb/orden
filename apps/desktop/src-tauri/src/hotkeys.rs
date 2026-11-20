@@ -5,6 +5,8 @@ use std::sync::{Mutex, OnceLock};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter as _};
 
+#[cfg(any(target_os = "macos", test))]
+mod layout;
 #[cfg(target_os = "linux")]
 mod portal;
 #[cfg(any(target_os = "linux", test))]
@@ -66,6 +68,7 @@ struct State {
     )]
     wanted: BTreeMap<Which, String>,
     held: BTreeMap<Which, String>,
+    placed: BTreeMap<Which, String>,
     refused: BTreeSet<Which>,
     reach: Option<Reach>,
     change: bool,
@@ -73,6 +76,7 @@ struct State {
 static HELD: Mutex<State> = Mutex::new(State {
     wanted: BTreeMap::new(),
     held: BTreeMap::new(),
+    placed: BTreeMap::new(),
     refused: BTreeSet::new(),
     reach: None,
     change: false,
@@ -114,23 +118,38 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
         return old;
     }
     let asked = key.is_some();
-    if let Some(old) = &old {
+    if let Some(old) = with_state(|held| held.placed.remove(&which)) {
         let _ = app.global_shortcut().unregister(old.as_str());
     }
     let now = key.filter(|key| {
-        plugin_added(app)
+        let placed = placed_here(key);
+        let held = plugin_added(app)
             && app
                 .global_shortcut()
-                .on_shortcut(key.as_str(), move |app, _, event| {
+                .on_shortcut(placed.as_str(), move |app, _, event| {
                     if event.state == ShortcutState::Pressed {
                         pressed(app, which, None);
                     }
                 })
-                .is_ok()
+                .is_ok();
+        if held {
+            with_state(|state| state.placed.insert(which, placed));
+        }
+        held
     });
     with_state(|held| settled(held, which, asked, now.clone()));
     told_page(app);
     now
+}
+fn placed_here(key: &str) -> String {
+    #[cfg(target_os = "macos")]
+    {
+        layout::placed_here(key)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        key.to_owned()
+    }
 }
 fn settled(state: &mut State, which: Which, asked: bool, now: Option<String>) {
     state.reach = Some(Reach::System);
@@ -308,6 +327,7 @@ mod tests {
         let mut state = State {
             wanted: BTreeMap::new(),
             held: BTreeMap::new(),
+            placed: BTreeMap::new(),
             refused: BTreeSet::new(),
             reach: None,
             change: false,
