@@ -555,6 +555,35 @@ describe('the names this device shows (#2310)', () => {
     })
   })
 })
+describe('words kept at sign-out (#2334)', () => {
+  test('reach the account when the same account signs in again, with a fresh store over the same folder', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const before = await freshDevice(account, 'here')
+    expect(await firstPass(before.engine.core, before.space(), null)).toBe(true)
+    await before.engine.pass('sim')
+    const root = before.space().row.root
+    const plan = `${root}/Plan.md`
+    await before.disk.write(plan, `${before.disk.files.get(plan) ?? ''}Written offline before signing out mk981z\n`)
+    await before.engine.foreign(plan)
+    const fresh = `${root}/Fresh.md`
+    await before.disk.write(fresh, '# Fresh\n\nMade offline before signing out mk982z\n')
+    await before.engine.created(fresh, false, '# Fresh\n\nMade offline before signing out mk982z\n')
+    expect(before.engine.waiting('sim')).toBe(true)
+    before.engine.stop()
+    const kept = Object.fromEntries(
+      [...before.disk.files]
+        .filter(([path]) => path.startsWith(`${root}/`))
+        .map(([path, text]) => [path.slice(root.length + 1), text]),
+    )
+    const again = await freshDevice(account, 'here', kept)
+    expect(await firstPass(again.engine.core, again.space(), null)).toBe(true)
+    await again.engine.pass('sim')
+    const view = await account.view()
+    const textOn = (name: string) => view.texts[view.entries.find((one) => one.name === name)?.id ?? ''] ?? ''
+    expect(markersIn(textOn('Plan.md'))).toEqual(['mk981z'])
+    expect(markersIn(textOn('Fresh.md'))).toEqual(['mk982z'])
+  })
+})
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })
