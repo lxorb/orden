@@ -7,8 +7,11 @@ export type Channel = (typeof CHANNELS)[number]
 export function asChannel(value: unknown): Channel {
   return CHANNELS.find((one) => one === value) ?? 'stable'
 }
-export const webChannel: Channel | null =
-  isNative || __EVEN_PLUGIN__ ? null : import.meta.env.VITE_ORDEN_CHANNEL === 'unstable' ? 'unstable' : 'stable'
+export const webChannel: Channel | null = isNative
+  ? null
+  : import.meta.env.VITE_ORDEN_CHANNEL === 'unstable'
+    ? 'unstable'
+    : 'stable'
 export function switchWebChannel(to: Channel): void {
   if (to === webChannel) return
   location.href = `?channel=${to}`
@@ -43,7 +46,7 @@ function found(value: unknown): Found | null {
   return { rid, currentVersion, version, rawJson }
 }
 export async function stageUpdate(channel: Channel): Promise<string | null> {
-  if (__EVEN_PLUGIN__ || !isDesktop || staged || installed) return null
+  if (!isDesktop || staged || installed) return null
   try {
     const one = found(await invoke<unknown>('check_update', { channel }))
     if (!one) return null
