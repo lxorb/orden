@@ -5,6 +5,7 @@ dist-profile/
 dist-worker/
 dist-handoff/
 dist-home/
+dist-preview/
 target/
 **/src-tauri/gen/*
 !**/src-tauri/gen/android/

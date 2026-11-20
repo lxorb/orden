@@ -72,6 +72,7 @@ export default {
         'src/home.ts',
         'vite.home.config.ts',
         'src/lib/showcase/src/site-worker.ts',
+        'src/lib/showcase/src/preview-worker.ts',
         'src/lib/pass-sync/src/test-device.ts',
         'src/site/site.ts',
         'src/lib/ai-chat/src/review/index.ts',

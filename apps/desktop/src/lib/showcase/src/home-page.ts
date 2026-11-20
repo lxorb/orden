@@ -1,47 +1,43 @@
 import '@fontsource-variable/geist'
 import './home.css'
-import { DEMO_PHONE_SRC, DEMO_SRC, isDemoReady } from './demo-cue'
+import { demoLoopSrc, isDemoLoopScene, isDemoReady, type DemoLoopScene, type DemoPlay } from './demo-cue'
 import {
+  appHomeAt,
   downloadFor,
   LATEST_RELEASE_API,
   originsAt,
   releaseAssets,
+  type AppHome,
   type Origins,
   type ReleaseAsset,
   type Visitor,
 } from './links'
-import { cueOf, deviceTransform, frameOf, storyAt, type Track } from './story'
+import { poolOf } from './pool'
 
 const PHONE = '(max-width: 719.98px)'
 const STILL = '(prefers-reduced-motion: reduce)'
 const LIGHT = '(prefers-color-scheme: light)'
-const DESKTOP_SIZE = [1280, 800] as const
-const PHONE_SIZE = [390, 844] as const
+const DESKTOP_WIDTH = 1280
+const PHONE_WIDTH = 390
+const LIVE = 2
 interface Agent {
   userAgentData?: { getHighEntropyValues?: (hints: string[]) => Promise<{ architecture?: string }> }
 }
-interface Page {
-  hero: HTMLElement
-  stage: HTMLElement
-  device: HTMLElement
+interface Display {
+  box: HTMLElement
   screen: HTMLElement
-  demo: HTMLIFrameElement
-  captions: HTMLElement[]
-  coda: HTMLElement
-  chapters: HTMLElement[]
+  scene: DemoLoopScene
+  frame: HTMLIFrameElement | null
+  ready: boolean
+  playing: boolean
 }
-function pageIn(doc: Document): Page | null {
-  const one = (selector: string) => doc.querySelector<HTMLElement>(selector)
-  const hero = one('.hero')
-  const stage = one('.stage')
-  const device = one('.device')
-  const screen = one('.screen')
-  const demo = doc.querySelector<HTMLIFrameElement>('iframe.demo')
-  const coda = one('.coda-actions')
-  const captions = [...doc.querySelectorAll<HTMLElement>('.caption')]
-  const chapters = [...doc.querySelectorAll<HTMLElement>('.chapter')]
-  if (!hero || !stage || !device || !screen || !demo || !coda || chapters.length === 0) return null
-  return { hero, stage, device, screen, demo, captions, coda, chapters }
+function displaysIn(doc: Document): Display[] {
+  return [...doc.querySelectorAll<HTMLElement>('.display[data-scene]')].flatMap((box) => {
+    const screen = box.querySelector<HTMLElement>('.screen')
+    const { scene } = box.dataset
+    if (!screen || !isDemoLoopScene(scene)) return []
+    return [{ box, screen, scene, frame: null, ready: false, playing: false }]
+  })
 }
 function followTheme(view: Window) {
   const light = view.matchMedia(LIGHT)
@@ -91,71 +87,94 @@ function whenIdle(view: Window, run: () => void) {
   if (view.document.readyState === 'complete') later()
   else view.addEventListener('load', later, { once: true })
 }
-export function showHome(view: Window) {
+export function showHome(view: Window, base: string = import.meta.env.BASE_URL) {
   const origins = originsAt(view.location)
   followTheme(view)
   offerDownload(view, origins)
-  const page = pageIn(view.document)
-  if (!page) return
+  const displays = displaysIn(view.document)
+  if (displays.length === 0) return
+  const app: AppHome = appHomeAt(view.location, base)
   const phone = view.matchMedia(PHONE)
   const still = view.matchMedia(STILL)
-  let track: Track = { rise: 1, span: 1 }
-  let drop = 0
-  let ready = false
+  let started = false
   let asked = false
-  let wanted = false
+  const tell = (display: Display, said: Omit<DemoPlay, 'orden'>) => {
+    display.frame?.contentWindow?.postMessage({ orden: 'demo', ...said } satisfies DemoPlay, app.origin)
+  }
+  const retire = (display: Display) => {
+    display.frame?.remove()
+    display.frame = null
+    display.ready = false
+    display.playing = false
+    display.box.classList.remove('is-ready')
+  }
+  const enlist = (display: Display) => {
+    const frame = view.document.createElement('iframe')
+    frame.className = 'demo'
+    frame.title = 'Orden, live'
+    frame.tabIndex = -1
+    frame.setAttribute('inert', '')
+    frame.setAttribute('aria-hidden', 'true')
+    frame.src = app.home + demoLoopSrc(display.scene, phone.matches)
+    display.frame = frame
+    display.screen.append(frame)
+  }
+  const settle = (display: Display, wanted: boolean) => {
+    if (!display.ready || still.matches || display.playing === wanted) return
+    display.playing = wanted
+    tell(display, { play: wanted })
+  }
   const render = () => {
     asked = false
-    const point = storyAt(view.scrollY, track)
-    const frame = frameOf(point, still.matches)
-    page.device.style.transform = deviceTransform(frame, drop)
-    page.hero.style.opacity = String(frame.hero)
-    page.captions.forEach((caption, index) => {
-      caption.style.opacity = String(frame.captions[index] ?? 0)
+    if (!started) return
+    const height = view.innerHeight
+    const spans = displays.map(({ box }) => {
+      const { top, bottom } = box.getBoundingClientRect()
+      return { top, bottom }
     })
-    page.coda.style.opacity = String(frame.close)
-    const shut = frame.close < 0.5
-    if (page.coda.inert !== shut) page.coda.inert = shut
-    const seen = frame.close > 0 ? 'visible' : 'hidden'
-    if (page.coda.style.visibility !== seen) page.coda.style.visibility = seen
-    if (ready) page.demo.contentWindow?.postMessage(cueOf(point, still.matches), origins.app)
+    const { live, playing } = poolOf(spans, height, LIVE)
+    const awake = view.document.visibilityState !== 'hidden'
+    displays.forEach((display, index) => {
+      const wanted = live.includes(index)
+      if (!wanted && display.frame) retire(display)
+      if (wanted && !display.frame) enlist(display)
+      settle(display, awake && playing.includes(index))
+    })
   }
   const schedule = () => {
     if (asked) return
     asked = true
     view.requestAnimationFrame(render)
   }
-  const measure = () => {
-    const first = page.chapters[0]
-    const rise = (first?.getBoundingClientRect().top ?? 0) + view.scrollY
-    track = { rise, span: first?.offsetHeight ?? 1 }
-    const height = page.stage.offsetHeight
-    drop = Math.max(0, height * (phone.matches ? 0.7 : 0.74) - page.device.offsetTop)
-    const [wide, tall] = phone.matches ? PHONE_SIZE : DESKTOP_SIZE
-    const fit = Math.max(page.screen.clientWidth / wide, page.screen.clientHeight / tall)
-    page.screen.style.setProperty('--fit', String(fit))
-    render()
+  const restart = () => {
+    for (const display of displays) retire(display)
+    fit()
+    schedule()
   }
-  const load = () => {
-    wanted = true
-    ready = false
-    page.device.classList.remove('is-ready')
-    page.demo.src = origins.app + (phone.matches ? DEMO_PHONE_SRC : DEMO_SRC)
+  const fit = () => {
+    const wide = phone.matches ? PHONE_WIDTH : DESKTOP_WIDTH
+    for (const { screen } of displays) screen.style.setProperty('--fit', String(screen.clientWidth / wide))
   }
   view.addEventListener('message', (event: MessageEvent) => {
-    if (event.origin !== origins.app || event.source !== page.demo.contentWindow) return
-    if (!isDemoReady(event.data)) return
-    ready = true
-    page.device.classList.add('is-ready')
+    if (event.origin !== app.origin || !isDemoReady(event.data)) return
+    const display = displays.find(({ frame }) => frame?.contentWindow === event.source)
+    if (!display || display.ready) return
+    display.ready = true
+    display.playing = true
+    display.box.classList.add('is-ready')
+    if (still.matches) tell(display, { still: true })
     render()
   })
   view.addEventListener('scroll', schedule, { passive: true })
-  phone.addEventListener('change', () => {
-    if (wanted) load()
-    measure()
+  view.addEventListener('resize', schedule)
+  view.document.addEventListener('visibilitychange', schedule)
+  phone.addEventListener('change', restart)
+  still.addEventListener('change', restart)
+  const sizes = new ResizeObserver(fit)
+  for (const { screen } of displays) sizes.observe(screen)
+  fit()
+  whenIdle(view, () => {
+    started = true
+    schedule()
   })
-  still.addEventListener('change', schedule)
-  new ResizeObserver(measure).observe(page.stage)
-  measure()
-  whenIdle(view, load)
 }

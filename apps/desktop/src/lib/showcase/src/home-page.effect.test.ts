@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import PAGE from '../../../../home.html?raw'
 import { elapse } from '../../../../test/effects/settle'
+import { DEMO_LOOP_SCENES } from './demo-cue'
 import { showHome } from './home-page'
 
 const BODY = /<body>([\s\S]*)<\/body>/.exec(PAGE)?.[1] ?? ''
@@ -13,15 +14,30 @@ function media(matching: string[]) {
       removeEventListener: () => undefined,
     }) as unknown as MediaQueryList
 }
-function demo() {
-  const frame = document.querySelector<HTMLIFrameElement>('iframe.demo')
-  if (!frame?.contentWindow) throw new Error('no demo frame')
-  return { frame, inside: frame.contentWindow }
+const displays = () => [...document.querySelectorAll<HTMLElement>('.display')]
+function placeAt(scrolled: number) {
+  displays().forEach((box, index) => {
+    const top = index * 1000 - scrolled
+    vi.spyOn(box, 'getBoundingClientRect').mockReturnValue({ top, bottom: top + 600 } as DOMRect)
+  })
+  window.dispatchEvent(new Event('scroll'))
 }
-function sayReady(source: Window | null) {
-  window.dispatchEvent(
-    new MessageEvent('message', { data: { orden: 'demo', ready: true }, origin: location.origin, source }),
-  )
+function frameIn(index: number) {
+  const frame = displays()[index]?.querySelector<HTMLIFrameElement>('iframe.demo') ?? null
+  if (!frame?.contentWindow) return null
+  return {
+    frame,
+    inside: frame.contentWindow,
+    said: vi.spyOn(frame.contentWindow, 'postMessage').mockImplementation(() => undefined),
+  }
+}
+function live(index: number) {
+  const found = frameIn(index)
+  if (!found) throw new Error(`no demo in display ${index}`)
+  return found
+}
+function sayReady(source: Window | null, origin = location.origin) {
+  window.dispatchEvent(new MessageEvent('message', { data: { orden: 'demo', ready: true }, origin, source }))
 }
 beforeEach(() => {
   vi.useFakeTimers()
@@ -88,41 +104,93 @@ describe('the home page', () => {
     for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-download]'))
       expect(link.href).toBe('https://github.com/lxorb/orden/releases/latest')
   })
-  test('loads the demo only once the page has loaded and gone idle, as a phone on a phone', () => {
+  test('loads no demo until the page has gone idle, then only the two nearest the screen, as phones on a phone', () => {
     vi.stubGlobal('matchMedia', media(['(max-width: 719.98px)']))
-    showHome(window)
-    const { frame } = demo()
-    expect(frame.getAttribute('src')).toBe(null)
+    showHome(window, '/')
+    placeAt(0)
+    expect(document.querySelectorAll('iframe')).toHaveLength(0)
     vi.advanceTimersByTime(1000)
-    expect(frame.getAttribute('src')).toBe(`${location.origin}/?demo=phone`)
-    expect(frame.hasAttribute('inert')).toBe(true)
-    expect(frame.tabIndex).toBe(-1)
+    const frames = [...document.querySelectorAll<HTMLIFrameElement>('iframe.demo')]
+    expect(frames.map((one) => one.getAttribute('src'))).toEqual([
+      `${location.origin}/?demo=flow&loop&phone`,
+      `${location.origin}/?demo=canvas&loop&phone`,
+    ])
+    for (const frame of frames) {
+      expect(frame.hasAttribute('inert')).toBe(true)
+      expect(frame.tabIndex).toBe(-1)
+      expect(frame.getAttribute('aria-hidden')).toBe('true')
+    }
   })
-  test('cues the demo once it says it is ready, and only then', () => {
-    vi.stubGlobal('matchMedia', media(['(prefers-reduced-motion: reduce)']))
-    showHome(window)
+  test('shows a demo once it says it is ready, pauses it off screen and hands its place on far away', () => {
+    vi.stubGlobal('matchMedia', media([]))
+    showHome(window, '/')
+    placeAt(0)
     vi.advanceTimersByTime(1000)
-    const { frame, inside } = demo()
-    const sent = vi.spyOn(inside, 'postMessage').mockImplementation(() => undefined)
-    window.dispatchEvent(new Event('scroll'))
-    expect(sent).not.toHaveBeenCalled()
+    const hero = live(0)
+    const next = live(1)
+    sayReady(next.inside, 'https://elsewhere.example')
     sayReady(window)
-    expect(sent).not.toHaveBeenCalled()
-    sayReady(inside)
-    expect(frame.closest('.device')?.classList.contains('is-ready')).toBe(true)
-    expect(sent).toHaveBeenLastCalledWith({ orden: 'demo', scene: 'canvas', at: 0, still: true }, location.origin)
-    window.dispatchEvent(new Event('scroll'))
-    expect(sent).toHaveBeenCalledTimes(2)
+    expect(displays()[1]?.classList.contains('is-ready')).toBe(false)
+    sayReady(next.inside)
+    expect(displays()[1]?.classList.contains('is-ready')).toBe(true)
+    expect(next.said).toHaveBeenLastCalledWith({ orden: 'demo', play: false }, location.origin)
+    sayReady(hero.inside)
+    expect(hero.said).not.toHaveBeenCalled()
+    placeAt(1000)
+    expect(hero.frame.isConnected).toBe(false)
+    expect(displays()[0]?.classList.contains('is-ready')).toBe(false)
+    expect(next.said).toHaveBeenLastCalledWith({ orden: 'demo', play: true }, location.origin)
+    expect(live(2).frame.getAttribute('src')).toBe(`${location.origin}/?demo=markdown&loop`)
+    expect(document.querySelectorAll('iframe.demo')).toHaveLength(2)
   })
-  test('marks the hero and every chapter for a reader to scroll to', () => {
-    const scenes = [...document.querySelectorAll<HTMLElement>('[data-scene]')].map((one) => one.dataset.scene)
-    expect(scenes).toEqual(['hero', 'canvas', 'write', 'browse', 'organize', 'overview'])
+  test('pauses what plays while the page is hidden', () => {
+    vi.stubGlobal('matchMedia', media([]))
+    showHome(window, '/')
+    placeAt(0)
+    vi.advanceTimersByTime(1000)
+    const hero = live(0)
+    sayReady(hero.inside)
+    vi.spyOn(Document.prototype, 'visibilityState', 'get').mockReturnValue('hidden')
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(hero.said).toHaveBeenLastCalledWith({ orden: 'demo', play: false }, location.origin)
+  })
+  test('holds every demo still when motion is reduced, and never tells it to play', () => {
+    vi.stubGlobal('matchMedia', media(['(prefers-reduced-motion: reduce)']))
+    showHome(window, '/')
+    placeAt(0)
+    vi.advanceTimersByTime(1000)
+    const hero = live(0)
+    const next = live(1)
+    sayReady(hero.inside)
+    sayReady(next.inside)
+    placeAt(300)
+    for (const { said } of [hero, next]) {
+      expect(said).toHaveBeenCalledTimes(1)
+      expect(said).toHaveBeenCalledWith({ orden: 'demo', still: true }, location.origin)
+    }
+  })
+  test('finds the app beside itself when built under a path', () => {
+    vi.stubGlobal('matchMedia', media([]))
+    showHome(window, '/preview/')
+    placeAt(0)
+    vi.advanceTimersByTime(1000)
+    expect(live(0).frame.getAttribute('src')).toBe(`${location.origin}/preview/app/?demo=flow&loop`)
+  })
+  test('shows the hero workflow first and then one display per feature, each under its own line', () => {
+    expect(displays().map((one) => one.dataset.scene)).toEqual([...DEMO_LOOP_SCENES])
+    expect(document.querySelector('.hero .display')?.getAttribute('data-scene')).toBe('flow')
+    const features = [...document.querySelectorAll<HTMLElement>('.feature')]
+    expect(features).toHaveLength(DEMO_LOOP_SCENES.length - 1)
+    for (const feature of features) {
+      expect(feature.querySelector('h2.line')?.textContent.trim()).toBeTruthy()
+      expect(feature.querySelectorAll('.display')).toHaveLength(1)
+    }
   })
   test('keeps its words few', () => {
     const words = document.body.textContent
       .replace(/Download|Try it out/g, '')
       .split(/\s+/)
       .filter(Boolean)
-    expect(words.length).toBeLessThan(40)
+    expect(words.length).toBeLessThan(45)
   })
 })
