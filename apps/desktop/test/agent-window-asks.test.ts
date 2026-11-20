@@ -24,8 +24,10 @@ const shown: {
   opened?: () => void
   reply?: { replied: (text: string) => void }
 }[] = []
+const unshown: string[] = []
 vi.mock('../src/lib/notify/src/api', () => ({
   show: (one: (typeof shown)[number]) => shown.push(one),
+  unshow: (tag: string) => unshown.push(tag),
 }))
 const heard: ((event: AgentHeard) => void)[] = []
 const opened: string[] = []
@@ -60,6 +62,7 @@ beforeEach(() => {
   asked.length = 0
   copied.length = 0
   shown.length = 0
+  unshown.length = 0
   opened.length = 0
   answer = { status: 'ok', result: {} }
   pasted = 'what was copied'
@@ -113,6 +116,15 @@ describe('a question put to the reader', () => {
     expect(opened).toEqual(['claude'])
     asking.forget('claude')
     expect(await waiting).toMatchObject({ result: { dismissed: true } })
+  })
+  test('a question whose call a stop ends is put away, from the session and the notifications both', async () => {
+    const waiting = askReader(call('ask_reader', { kind: 'choice', message: 'Deploy?', choices: ['Yes', 'No'] }))
+    await vi.waitFor(() => expect(asking.of('claude')).toHaveLength(1))
+    const id = asking.of('claude')[0]?.id ?? ''
+    for (const on of heard) on({ kind: 'stopped', agent: null })
+    await expect(waiting).rejects.toMatchObject({ code: 'stopped' })
+    expect(asking.of('claude')).toEqual([])
+    expect(unshown).toEqual([`ask-${id}`])
   })
   test('a line typed in the notification is the answer too', async () => {
     const waiting = askReader(call('ask_reader', { kind: 'text', message: 'Branch name?' }))

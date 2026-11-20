@@ -1,6 +1,6 @@
 import type { AgentReaderPort } from '@orden/contracts'
 import type { AgentAnswer } from '../../automation/src/api'
-import { show } from '../../notify/src/api'
+import { show, unshow } from '../../notify/src/api'
 import { openAgentSession } from '../../workspace/src/api'
 import {
   type Call,
@@ -85,7 +85,11 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
 async function heard(reader: AgentReaderPort, call: Call, id: string, patience: number): Promise<AgentAnswer> {
   const halting = await stopSignal(call)
   const said = await reader.heard(id, patience, halting.signal).finally(halting.end)
-  if (halting.signal.aborted && said === null) throw stopRefused(`question ${id} is still open`)
+  if (halting.signal.aborted && said === null) {
+    reader.answer(id, null)
+    unshow(`ask-${id}`)
+    throw stopRefused(`question ${id} was put away`)
+  }
   if (said === null) return done({ id, waiting: true })
   return said.answer === null ? done({ id, dismissed: true }) : done({ id, answer: said.answer })
 }
