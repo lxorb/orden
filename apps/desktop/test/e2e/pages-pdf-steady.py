@@ -32,14 +32,11 @@ async ({ path, data }) => {
 """
 WATCH = """
 () => {
-  const probe = { beats: [], frames: [], longest: 0, marks: {} }
+  const probe = { tasks: [], frames: [] }
   window.__steady = probe
-  let last = performance.now()
-  setInterval(() => {
-    const now = performance.now()
-    probe.beats.push([now, now - last])
-    last = now
-  }, 16)
+  new PerformanceObserver((list) => {
+    for (const task of list.getEntries()) probe.tasks.push([task.startTime, task.duration])
+  }).observe({ type: 'longtask' })
   const look = (at) => {
     const sheets = [...document.querySelectorAll('.pages .sheet')].filter((one) => {
       const box = one.getBoundingClientRect()
@@ -59,12 +56,12 @@ WATCH = """
 SINCE = """
 (from) => {
   const probe = window.__steady
-  const beats = probe.beats.filter(([at]) => at >= from)
+  const tasks = probe.tasks.filter(([at, long]) => at + long >= from)
   const frames = probe.frames.filter(([at]) => at >= from)
   let gap = 0
   for (let i = 1; i < frames.length; i++) gap = Math.max(gap, frames[i][0] - frames[i - 1][0])
   return {
-    blocked: Math.max(0, ...beats.map(([, between]) => between)),
+    blocked: Math.max(0, ...tasks.map(([, long]) => long)),
     gap,
     frames: frames.length,
     bare: frames.filter(([, , bare]) => bare > 0).length,
