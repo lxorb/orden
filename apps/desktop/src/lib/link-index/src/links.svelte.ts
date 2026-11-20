@@ -748,7 +748,6 @@ class Links {
     path: string | null,
     stranger: boolean,
   ): () => void {
-    if (__EVEN_PLUGIN__) return () => undefined
     const root = this.root
     const from = path === null || root === null ? null : insideSpace(root, path)
     let stop: (() => void) | null = null
