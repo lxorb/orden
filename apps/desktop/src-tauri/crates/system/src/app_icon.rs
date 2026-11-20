@@ -34,7 +34,8 @@ fn icon(app: &str) -> Option<String> {
     if let Some(drawn) = DRAWN.held().get(app) {
         return drawn.clone();
     }
-    let source = SOURCES.held().get(app).cloned()?;
+    let mut source = SOURCES.held().get(app).cloned()?;
+    source.path = source.path.map(resolved);
     let drawn = platform::drawn(&source);
     let mut cache = DRAWN.held();
     if cache.len() >= MOST_KNOWN {
@@ -42,6 +43,15 @@ fn icon(app: &str) -> Option<String> {
     }
     cache.insert(app.to_owned(), drawn.clone());
     drawn
+}
+fn resolved(path: PathBuf) -> PathBuf {
+    std::fs::canonicalize(&path).map_or(path, plain)
+}
+fn plain(path: PathBuf) -> PathBuf {
+    match path.to_str().and_then(|one| one.strip_prefix(r"\\?\")) {
+        Some(rest) if rest.as_bytes().get(1) == Some(&b':') => PathBuf::from(rest),
+        _ => path,
+    }
 }
 fn data_url(kind: &str, bytes: &[u8]) -> String {
     format!("data:{kind};base64,{}", base64::engine::general_purpose::STANDARD.encode(bytes))
@@ -539,7 +549,7 @@ mod platform {
 #[cfg(test)]
 mod tests {
     use super::freedesktop::{chosen, entries, names, Themes};
-    use super::{data_url, straight, Source};
+    use super::{data_url, plain, resolved, straight, Source};
     use std::path::{Path, PathBuf};
 
     fn put(root: &Path, path: &str, bytes: &[u8]) {
@@ -634,6 +644,29 @@ mod tests {
         assert_eq!(super::icon("never seen by the tracker"), None);
         super::seen("tested app", Source::default());
         assert_eq!(super::icon("tested app"), super::icon("tested app"));
+    }
+    #[test]
+    fn an_app_reached_through_a_link_is_drawn_from_where_the_link_leads() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let real = dir.path().join("Real.app");
+        std::fs::create_dir(&real).expect("the app");
+        #[cfg(unix)]
+        {
+            let link = dir.path().join("Link.app");
+            std::os::unix::fs::symlink(&real, &link).expect("a link");
+            assert_eq!(resolved(link), std::fs::canonicalize(&real).expect("the app's own path"));
+        }
+        let gone = dir.path().join("Gone.app");
+        assert_eq!(resolved(gone.clone()), gone);
+        assert_eq!(plain(PathBuf::from(r"\\?\C:\Apps\one.exe")), PathBuf::from(r"C:\Apps\one.exe"));
+        assert_eq!(
+            plain(PathBuf::from(r"\\?\UNC\host\one.exe")),
+            PathBuf::from(r"\\?\UNC\host\one.exe")
+        );
+        assert_eq!(
+            plain(PathBuf::from("/Applications/Safari.app")),
+            PathBuf::from("/Applications/Safari.app")
+        );
     }
     #[test]
     fn the_shells_pixels_are_read_straight_and_its_mask_cuts_the_holes() {
