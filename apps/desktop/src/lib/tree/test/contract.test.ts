@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Entry } from '@orden/contracts'
+import { type Entry, providePort, type SyncStorePort } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
   Arranged,
@@ -15,6 +15,30 @@ import {
   withoutEntry,
 } from '../src/api'
 
+const server = vi.hoisted(() => ({
+  token: null as string | null,
+  sent: 0,
+  answer: (sent: unknown): Promise<unknown> => Promise.resolve(sent),
+}))
+vi.mock('../../accounts/src/api', () => ({
+  account: {
+    get token() {
+      return server.token
+    },
+    spaces: [],
+    loadSpaces: () => Promise.resolve(),
+  },
+  api: {
+    saveArranged: (_token: string, _id: string, arranged: unknown) => {
+      server.sent++
+      return server.answer({ arranged })
+    },
+    saveSort: (_token: string, _id: string, sort: unknown) => {
+      server.sent++
+      return server.answer({ sort })
+    },
+  },
+}))
 const SRC = join(import.meta.dirname, '../src')
 const file = (path: string, modified = 0): Entry => ({
   name: path.split('/').at(-1) ?? path,
@@ -164,5 +188,54 @@ describe('a move the tree shows before the disk has it', () => {
     arranged.moved('/s/Crate', '/s/Box')
     expect(arranged.listOf('/s')).toEqual(['b.md', 'a.md', 'c.md'])
     expect(arranged.listOf('/s/Box')).toEqual(['two.md', 'one.md'])
+  })
+})
+describe('what the account is told of how a space is ordered', () => {
+  let gone = () => undefined as unknown
+  async function told(run: () => unknown) {
+    const before = server.sent
+    run()
+    await vi.waitFor(() => expect(server.sent).toBe(before + 1))
+    await vi.advanceTimersByTimeAsync(1)
+  }
+  beforeEach(() => {
+    inMemory()
+    server.token = 'token'
+    gone = providePort('sync.store', { remoteIdFor: () => 'remote' } as unknown as SyncStorePort)
+  })
+  afterEach(() => {
+    gone()
+    server.token = null
+    server.answer = (sent) => Promise.resolve(sent)
+    outOfMemory()
+  })
+  test('an order still on its way is not taken for sent, so a second pairing keeps it', async () => {
+    server.answer = () => new Promise(() => undefined)
+    const arranged = new Arranged(() => '/s')
+    await arranged.adopt('/s', {}, 'me')
+    await told(() => arranged.set('/s/Work', ['b.md', 'a.md']))
+    await told(() => arranged.adopt('/s', {}, 'me'))
+    await told(() => arranged.adopt('/s', {}, 'me'))
+    expect(arranged.of('/s')).toEqual({ Work: ['b.md', 'a.md'] })
+  })
+  test('an order lands only when the answer keeps it, and is offered again when it does not', async () => {
+    server.answer = () => Promise.resolve({ arranged: {} })
+    const arranged = new Arranged(() => '/s')
+    await arranged.adopt('/s', {}, 'me')
+    await told(() => arranged.set('/s/Work', ['b.md', 'a.md']))
+    expect(arranged.kept('/s').sent).toBe(false)
+    await arranged.adopt('/s', {}, 'me')
+    expect(arranged.of('/s')).toEqual({ Work: ['b.md', 'a.md'] })
+    server.answer = (sent) => Promise.resolve(sent)
+    await told(() => arranged.set('/s/Work', ['a.md', 'b.md']))
+    expect(arranged.kept('/s').sent).toBe(true)
+  })
+  test('a sort lands only when the answer keeps it', async () => {
+    server.answer = () => Promise.resolve({ sort: 'name' })
+    const sorting = new SpaceSorting(() => '/s')
+    sorting.adopt('/s', 'name', 'me')
+    await told(() => sorting.set('manual'))
+    sorting.adopt('/s', 'name', 'me')
+    expect(sorting.of('/s')).toBe('manual')
   })
 })

@@ -1,6 +1,6 @@
 import { push } from '../../space-kept/src/api'
 import { arrangedMap, type Arranged } from './arranged.svelte'
-import { type Folding, meet } from '../../platform/src/api'
+import { type Folding, isRecord, meet } from '../../platform/src/api'
 
 function same(one: Record<string, string[]>, other: Record<string, string[]>): boolean {
   const keys = Object.keys(one)
@@ -11,6 +11,10 @@ function same(one: Record<string, string[]>, other: Record<string, string[]>): b
     return mine.length === theirs.length && mine.every((name, at) => name === theirs[at])
   })
 }
+const holds = (answer: unknown, sent: Record<string, string[]>): boolean => {
+  const kept = arrangedMap(isRecord(answer) ? answer.arranged : null)
+  return Object.entries(sent).every(([key, names]) => same({ [key]: names }, { [key]: kept[key] ?? [] }))
+}
 const ORDERS: Folding<Record<string, string[]>> = {
   fold: (theirs, mine) => ({ ...theirs, ...mine }),
   same,
@@ -20,13 +24,15 @@ export async function fold(store: Arranged, root: string, theirs: unknown, accou
   const held = store.kept(root)
   const met = meet(held, accountId, held.folders, account, ORDERS)
   if (!met) return
-  store.took(root, met.value, accountId)
+  store.took(root, met.value, accountId, !met.tell)
   if (met.tell) await send(store, root)
 }
 export async function send(store: Arranged, root: string): Promise<void> {
+  const folders = store.of(root)
   await push(
     root,
-    (api, token, spaceId) => api.saveArranged(token, spaceId, store.of(root)),
+    (api, token, spaceId) => api.saveArranged(token, spaceId, folders),
     (landed) => store.said(root, landed),
+    (answer) => holds(answer, folders),
   )
 }
