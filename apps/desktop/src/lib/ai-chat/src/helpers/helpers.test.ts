@@ -270,3 +270,26 @@ describe('a helper of a chat that keeps tools out', () => {
     expect(runs[1]?.thread.only).toEqual(['read_note'])
   })
 })
+describe('a helper asked for by a chat that lives in another window', () => {
+  const from = (chat: string) => ({ ...asked(null, 'sonnet'), asking: chat })
+  test('belongs to that chat, and stops when the chat stops', async () => {
+    const { made, runs } = roads()
+    const started = await helpers.start(from('chat-a'), made)
+    if ('refused' in started) throw new Error(started.refused)
+    expect(started).toMatchObject({ parent: 'chat-a', root: 'chat-a', depth: 1 })
+    expect(runs[0]?.thread.parent).toBe('chat-a')
+    helpers.stopUnder('chat-b')
+    expect(runs[0]?.signal.aborted).toBe(false)
+    helpers.stopUnder('chat-a')
+    expect(runs[0]?.signal.aborted).toBe(true)
+  })
+  test(`counts toward that chat's ${PER_ROOT} at once, and no other's`, async () => {
+    const { made } = roads()
+    for (let at = 0; at < PER_ROOT; at++) {
+      const one = await helpers.start(from('chat-a'), made)
+      if ('refused' in one) throw new Error(one.refused)
+    }
+    expect(await helpers.start(from('chat-a'), made)).toHaveProperty('refused')
+    expect(await helpers.start(from('chat-b'), made)).not.toHaveProperty('refused')
+  })
+})

@@ -33,14 +33,17 @@ import {
   type Listed,
   newThread,
   otherWindowDeleted,
+  otherWindowStopped,
   otherWindowWrote,
   readThread,
+  sayStopped,
   unclaimAnswer,
 } from '../chat/threads'
 import {
   type Draft,
   type Effort,
   type EngineEvent,
+  FIRST_MODE,
   type Goal,
   type Mode,
   type ModelInfo,
@@ -205,6 +208,7 @@ class Chat implements Panel {
     this.started = true
     otherWindowWrote((id) => this.heardWritten(id))
     otherWindowDeleted((id) => this.heardDeleted(id))
+    otherWindowStopped((id) => this.end(id, 'stop', false))
     onMoves((moves) => this.moved(moves))
     this.listing = false
     this.popover = null
@@ -414,7 +418,7 @@ class Chat implements Panel {
   startHere(text: string, chips: Mention[], around: Around): { thread: Thread; ended: Promise<Ended> } {
     this.know(workspace.spaces.map((one) => one.id))
     this.here(workspace.activeSpaceId ?? '')
-    const thread = this.fresh()
+    const thread = { ...this.fresh(), mode: FIRST_MODE }
     this.live.set(thread.id, thread)
     return { thread, ended: this.sendIn(thread, text, chips, around) }
   }
@@ -622,7 +626,7 @@ class Chat implements Panel {
   }
   startEdit(turn?: string): void {
     const thread = this.open
-    if (!thread || this.running.includes(thread.id)) return
+    if (!thread || this.answers(thread)) return
     const message = turn ? thread.turns.find((one) => one.id === turn) : lastMessage(thread)
     if (!message?.draft) return
     this.putBack(this.requeue, true)
@@ -671,9 +675,12 @@ class Chat implements Panel {
     if (thread !== this.open && !ai.provider(thread.provider)) return
     this.next(thread)
   }
+  answers(thread: Thread): boolean {
+    return this.running.includes(thread.id) || !!thread.elsewhere
+  }
   rewind(turn?: string): void {
     const thread = this.open
-    if (thread) openRewind(thread, this, turn)
+    if (thread && !this.answers(thread)) openRewind(thread, this, turn)
   }
   send(text: string): void {
     this.say(text, [], this.around?.() ?? { front: null, selection: '' })
@@ -969,10 +976,7 @@ class Chat implements Panel {
     if (id) this.stopIn(id)
   }
   stopIn(id: string): void {
-    this.stoppers.get(id)?.abort()
-    void import('../helpers/helpers.svelte').then(({ helpers }) => {
-      helpers.stopUnder(id)
-    })
+    this.end(id, 'stop')
   }
   get busy(): boolean {
     return !!this.head && this.running.includes(this.head.id)
@@ -1030,7 +1034,7 @@ class Chat implements Panel {
     this.setQueue(list)
   }
   retry(model?: { provider: string; id: string }, thread = this.open): void {
-    if (!thread || this.running.includes(thread.id) || thread.elsewhere) return
+    if (!thread || this.answers(thread)) return
     if (model) {
       void this.chooseModel(model.provider, model.id).then((switched) => {
         if (switched) this.retry(undefined, thread)
@@ -1199,7 +1203,7 @@ class Chat implements Panel {
   private async compacted(focus?: string): Promise<void> {
     const thread = this.open
     const provider = this.provider
-    if (!thread?.turns.length || !provider || this.running.includes(thread.id)) return
+    if (!thread?.turns.length || !provider || this.answers(thread)) return
     const stopper = this.begin(thread)
     let stop: Stop = 'end'
     if (!(await this.claimed(thread))) {
@@ -1238,7 +1242,7 @@ class Chat implements Panel {
   branch(name?: string, from?: string): void {
     const thread = this.open
     const last = from ? thread?.turns.find((one) => one.id === from) : thread?.turns.at(-1)
-    if (!thread || !last) return
+    if (!thread || !last || (this.answers(thread) && last === thread.turns.at(-1))) return
     const copy = branchThread(thread, last.id, name ?? thread.title)
     this.show(copy)
     this.relist()
@@ -1300,8 +1304,8 @@ class Chat implements Panel {
     const thread = await this.held(id)
     if (!thread) return
     this.move(thread, { type: archived ? 'archive' : 'unarchive' })
+    if (archived) this.end(thread.id, 'archive')
     await keepThread(thread).catch(() => undefined)
-    if (archived) this.forgetEdit(thread.id, true)
     if (archived && thread === this.open) this.newThread()
     await this.refreshHeads()
   }
@@ -1325,32 +1329,34 @@ class Chat implements Panel {
       () => false,
     )
     this.relist()
-    this.stopAll(id)
+    this.stoppers.get(id)?.abort()
     if (!(await deleting)) {
       this.relist()
       await this.refreshHeads()
       return
     }
+    this.end(id, 'delete')
     this.forgetThread(id)
     await this.refreshHeads()
   }
   heardDeleted(id: string): void {
-    this.stopAll(id)
+    this.end(id, 'delete', false)
     this.forgetThread(id)
     this.relist()
   }
-  private stopAll(id: string): void {
+  private end(id: string, how: 'stop' | 'archive' | 'delete', tell = true): void {
     this.stoppers.get(id)?.abort()
+    void import('../helpers/helpers.svelte').then(({ helpers }) => helpers.stopUnder(id))
+    if (tell && how !== 'delete') sayStopped(id)
+    if (how === 'stop') return
     this.unwait(id)
-    this.forgetEdit(id)
+    this.forgetEdit(id, how === 'archive')
+    if (how === 'archive') return
     for (const one of this.queued[id] ?? []) one.settle?.({ stop: 'stopped', turn: null, usage: null })
     this.queued = without(this.queued, id)
   }
   private forgetThread(id: string): void {
-    void import('../helpers/helpers.svelte').then(({ helpers }) => {
-      helpers.stopUnder(id)
-      helpers.forget(id)
-    })
+    void import('../helpers/helpers.svelte').then(({ helpers }) => helpers.forget(id))
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
   }

@@ -322,6 +322,14 @@ export function otherWindowWrote(listener: (id: string) => void): () => void {
     if (typeof said.id === 'string') listener(said.id)
   })
 }
+export function sayStopped(id: string): void {
+  windows.say('thread-stopped', { id })
+}
+export function otherWindowStopped(listener: (id: string) => void): () => void {
+  return windows.hear('thread-stopped', (said) => {
+    if (isString(said.id)) listener(said.id)
+  })
+}
 export function otherWindowDeleted(listener: (id: string) => void): () => void {
   return windows.hear('thread-deleted', (said) => {
     const { id, space } = said

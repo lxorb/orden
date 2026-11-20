@@ -178,6 +178,7 @@ export async function runAgent(args: Record<string, unknown>, asker: Asker, dead
     .start(
       {
         parent,
+        ...(asker.thread ? { asking: asker.thread } : {}),
         space,
         prompt,
         description: word(args, 'description'),

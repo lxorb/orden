@@ -2,15 +2,28 @@ import { beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
 import type { Draft, EngineEvent, Part, Thread, Turn } from '../../../ai-providers/src/chat/types'
 
 const { memoryStorage } = await import('../../../../../test/disk')
+const waitFor: typeof vi.waitFor = (check, options = { timeout: 10_000 }) => vi.waitFor(check, options)
 vi.stubGlobal('localStorage', memoryStorage())
+interface Line {
+  onmessage: ((event: { data: unknown }) => void) | null
+  said: Record<string, unknown>[]
+}
+const lines = vi.hoisted(() => [] as Line[])
 vi.stubGlobal(
   'BroadcastChannel',
   class {
     onmessage = null
-    postMessage = () => undefined
+    said: Record<string, unknown>[] = []
+    constructor() {
+      lines.push(this)
+    }
+    postMessage = (message: Record<string, unknown>) => void this.said.push(message)
     close = () => undefined
   },
 )
+const fromWindowB = (kind: string, what: Record<string, unknown>) =>
+  lines.at(-1)?.onmessage?.({ data: { ...what, kind, from: 'window-b' } })
+const toldOthers = (kind: string) => (lines.at(-1)?.said ?? []).filter((one) => one.kind === kind)
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
 const deleted = vi.hoisted(() => [] as string[])
 const refusing = vi.hoisted(() => ({ delete: false, write: false, after: Promise.resolve() }))
@@ -84,8 +97,9 @@ vi.mock('../review/index', () => ({
     panel.send(text)
   },
   lastMessage: () => null,
-  openRewind: () => null,
+  openRewind: (...args: unknown[]) => void rewinds.push(args),
 }))
+const rewinds = vi.hoisted(() => [] as unknown[])
 const gathering = vi.hoisted(() => ({ gate: Promise.resolve() }))
 vi.mock('./gather', async (importOriginal) => {
   const real = await importOriginal<typeof import('./gather')>()
@@ -156,7 +170,7 @@ describe('the panel’s chats', () => {
     await had('home', 'Recipes', 2_000)
     localStorage.setItem('orden:ai-sidebar', JSON.stringify({ open: { home: 'none-left' } }))
     const chat = await opened(['work', 'home'])
-    await vi.waitFor(() => expect(chat.heads).toHaveLength(3))
+    await waitFor(() => expect(chat.heads).toHaveLength(3))
     expect(chat.heads.map((one) => [one.title, one.space])).toEqual([
       ['Garden', 'home'],
       ['Recipes', 'home'],
@@ -167,7 +181,7 @@ describe('the panel’s chats', () => {
     const plan = await had('work', 'Quarterly plan', 1_000)
     const chat = await opened()
     await chat.openThread(plan.id, false)
-    await vi.waitFor(() => expect(chat.heads).toHaveLength(1))
+    await waitFor(() => expect(chat.heads).toHaveLength(1))
     chat.models = { p: [] }
     const { keepMoves } = await import('../../../ai-providers/src/api')
     keepMoves({ p: 'p-2' })
@@ -182,7 +196,7 @@ describe('the panel’s chats', () => {
     let answer: (list: never[]) => void = () => undefined
     const asked = vi.spyOn(engine, 'models').mockReturnValueOnce(new Promise((done) => (answer = done)))
     const listing = chat.loadModels({ id: 'p', kind: 'compatible', model: 'm', name: 'Fake' })
-    await vi.waitFor(() => expect(asked).toHaveBeenCalled())
+    await waitFor(() => expect(asked).toHaveBeenCalled())
     const { keepMoves } = await import('../../../ai-providers/src/api')
     keepMoves({ p: 'p-3' })
     answer([{ id: 'theirs', name: 'Theirs' } as never])
@@ -212,7 +226,7 @@ describe('the panel’s chats', () => {
     expect(chat.head?.id).toBe(plan.id)
     expect(chat.text).toBe('and the budget for')
     expect(chat.thread?.space).toBe('work')
-    await vi.waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['Quarterly plan', 'Garden']))
+    await waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['Quarterly plan', 'Garden']))
     expect(chat.head?.id).toBe(plan.id)
   })
   test('start a new one in the space in front, and an empty one follows the reader', async () => {
@@ -233,7 +247,7 @@ describe('the panel’s chats', () => {
     await had('work', 'Quarterly plan', 9_000)
     localStorage.setItem('orden:ai-sidebar', JSON.stringify({ last: garden.id }))
     const fresh = await opened(['work', 'home'])
-    await vi.waitFor(() => expect(fresh.head?.id).toBe(garden.id))
+    await waitFor(() => expect(fresh.head?.id).toBe(garden.id))
   })
   test('open a new one where a new one was open when the panel was left', async () => {
     const garden = await had('home', 'Garden', 1_000)
@@ -241,13 +255,13 @@ describe('the panel’s chats', () => {
     await chat.openThread(garden.id, false)
     chat.newThread()
     const next = await opened(['work', 'home'])
-    await vi.waitFor(() => expect(next.heads).toHaveLength(1))
+    await waitFor(() => expect(next.heads).toHaveLength(1))
     expect(next.head?.kept).toBe(false)
   })
   test('delete a thread from the space it is kept in', async () => {
     const garden = await had('home', 'Garden', 1_000)
     const chat = await opened(['work', 'home', 'more'])
-    await vi.waitFor(() => expect(chat.heads.some((one) => one.id === garden.id)).toBe(true))
+    await waitFor(() => expect(chat.heads.some((one) => one.id === garden.id)).toBe(true))
     await chat.remove(garden.id)
     expect(deleted).toEqual([`home/${garden.id}`])
     expect(chat.heads.some((one) => one.id === garden.id)).toBe(false)
@@ -260,7 +274,7 @@ describe('the panel’s chats', () => {
     expect([task?.space, task?.title, task?.mode]).toEqual(['home', 'Book the dentist', 'auto'])
     expect(chat.pending[task?.id ?? '']).toBe('Do this task')
     expect(chat.thread).toBe(open)
-    await vi.waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['Book the dentist']))
+    await waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['Book the dentist']))
   })
   test('say which space a running thread works in, for its calls that name none', async () => {
     const chat = await opened(['work', 'home'])
@@ -279,7 +293,7 @@ describe('the panel’s chats', () => {
     chat.text = 'go on'
     chat.submit({ front: null, selection: '' })
     const asked = chat.thread
-    await vi.waitFor(() => expect(chat.resets[String(asked?.id)]).toEqual({ until, waiting: false }))
+    await waitFor(() => expect(chat.resets[String(asked?.id)]).toEqual({ until, waiting: false }))
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     chat.waitForReset(true)
     chat.newThread()
@@ -287,7 +301,7 @@ describe('the panel’s chats', () => {
     expect(engine.send).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(30_000)
     vi.useRealTimers()
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
     expect(engine.send.mock.calls[1]?.slice(0, 2)).toEqual([asked, { text: 'go on', attachments: [] }])
   })
   test('wait no longer for the plan to reset once the wait is taken back', async () => {
@@ -295,7 +309,7 @@ describe('the panel’s chats', () => {
     engine.send.mockClear()
     chat.text = 'go on'
     chat.submit({ front: null, selection: '' })
-    await vi.waitFor(() => expect(chat.resets[String(chat.thread?.id)]?.waiting).toBe(false))
+    await waitFor(() => expect(chat.resets[String(chat.thread?.id)]?.waiting).toBe(false))
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     chat.waitForReset(true)
     chat.waitForReset(false)
@@ -371,7 +385,7 @@ describe('the field while a message is changed', () => {
     chat.startEdit('u1')
     chat.text = 'old question, fixed'
     chat.submit({ front: null, selection: '' })
-    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    await waitFor(() => expect(chat.trouble).toBe('down'))
     expect(chat.text).toBe('old question, fixed\n\na long new draft')
   })
   test('keeps a queued message that could not be sent, whatever the field holds by then', async () => {
@@ -383,12 +397,12 @@ describe('the field while a message is changed', () => {
     chat.text = 'first'
     engine.send.mockClear()
     chat.submit(around)
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     chat.text = 'second'
     chat.submit(around)
     chat.text = 'typed since'
     answer()
-    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    await waitFor(() => expect(chat.trouble).toBe('down'))
     expect(chat.text).toBe('second\n\ntyped since')
   })
   let hearing: ((event: EngineEvent) => void) | null = null
@@ -405,7 +419,7 @@ describe('the field while a message is changed', () => {
     engine.send.mockClear()
     chat.text = 'first'
     chat.submit(around)
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     chat.text = 'second'
     chat.submit(around)
     return () => answer()
@@ -417,9 +431,9 @@ describe('the field while a message is changed', () => {
     const answer = await queuedBehind(chat)
     chat.editQueued(chat.queue[0]!.id)
     answer()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     chat.cancelEdit()
-    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+    await waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
     expect(chat.queue).toEqual([])
   })
   test('sends a queued message let go by another thread coming to the front after the answer ended', async () => {
@@ -427,16 +441,16 @@ describe('the field while a message is changed', () => {
     const answer = await queuedBehind(chat)
     chat.editQueued(chat.queue[0]!.id)
     answer()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     chat.newThread()
-    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+    await waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
   })
   test('keeps a queued message let go after a stop waiting in the queue', async () => {
     const chat = await asked()
     await queuedBehind(chat)
     chat.editQueued(chat.queue[0]!.id)
     chat.stop()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     chat.cancelEdit()
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(sentWords()).toEqual(['first'])
@@ -466,7 +480,7 @@ describe('the field while a message is changed', () => {
     expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
     chat.cancelEdit()
     answer()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     expect(steer).toHaveBeenCalledWith(expect.anything(), 'second, changed')
     expect(sentWords()).toEqual(['first'])
     expect(chat.queue).toEqual([])
@@ -481,7 +495,7 @@ describe('the field while a message is changed', () => {
     expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
     chat.cancelEdit()
     answer()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     expect(sentWords()).toEqual(['first'])
   })
   test('puts a queued message being changed back, as changed, when another is taken to change', async () => {
@@ -519,7 +533,7 @@ describe('the field while a message is changed', () => {
     chat.text = 'my draft'
     chat.editQueued(chat.queue[0]!.id)
     answer()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
   }
   const settled = () => new Promise((resolve) => setTimeout(resolve, 20))
   test('neither sends nor keeps again a deleted chat’s queued message being changed', async () => {
@@ -536,7 +550,7 @@ describe('the field while a message is changed', () => {
     const id = String(chat.thread?.id)
     await heldAfterAnswer(chat)
     chat.archive(id)
-    await vi.waitFor(() => expect(chat.thread?.id).not.toBe(id))
+    await waitFor(() => expect(chat.thread?.id).not.toBe(id))
     await settled()
     expect(sentWords()).toEqual(['first'])
   })
@@ -559,7 +573,7 @@ describe('the field while a message is changed', () => {
     await settled()
     expect(sentWords()).toEqual(['first'])
     chat.cancelEdit()
-    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+    await waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
   })
   test('sends what was queued while Ask again answered', async () => {
     const chat = await asked()
@@ -567,16 +581,16 @@ describe('the field while a message is changed', () => {
     engine.send.mockImplementationOnce(() => new Promise<void>((resolve) => (answer = resolve)))
     engine.send.mockClear()
     chat.retry()
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     chat.text = 'second'
     chat.submit(around)
     chat.text = 'third'
     chat.submit(around)
     chat.editQueued(chat.queue[1]!.id)
     answer()
-    await vi.waitFor(() => expect(sentWords()).toEqual(['old question', 'second']))
+    await waitFor(() => expect(sentWords()).toEqual(['old question', 'second']))
     chat.cancelEdit()
-    await vi.waitFor(() => expect(sentWords()).toEqual(['old question', 'second', 'third']))
+    await waitFor(() => expect(sentWords()).toEqual(['old question', 'second', 'third']))
   })
   test('sends what was queued while the chat was compacted', async () => {
     const chat = await asked()
@@ -585,12 +599,12 @@ describe('the field while a message is changed', () => {
     ;(engine as unknown as { compact: unknown }).compact = compact
     engine.send.mockClear()
     chat.compact()
-    await vi.waitFor(() => expect(compact).toHaveBeenCalled())
+    await waitFor(() => expect(compact).toHaveBeenCalled())
     chat.text = 'second'
     chat.submit(around)
     expect(sentWords()).toEqual([])
     done()
-    await vi.waitFor(() => expect(sentWords()).toEqual(['second']))
+    await waitFor(() => expect(sentWords()).toEqual(['second']))
   })
   test('says a compaction failed only in the thread it failed in', async () => {
     const chat = await asked()
@@ -598,10 +612,10 @@ describe('the field while a message is changed', () => {
     const compact = vi.fn(() => new Promise<void>((_, reject) => (fail = reject)))
     ;(engine as unknown as { compact: unknown }).compact = compact
     chat.compact()
-    await vi.waitFor(() => expect(compact).toHaveBeenCalled())
+    await waitFor(() => expect(compact).toHaveBeenCalled())
     chat.newThread()
     fail(new Error('too long'))
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(chat.trouble).toBeNull()
   })
@@ -610,26 +624,29 @@ describe('the field while a message is changed', () => {
     edits.length = 0
     await queuedBehind(chat)
     chat.stop()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     chat.text = 'my draft'
     chat.startEdit('u1')
     chat.editQueued(chat.queue[0]!.id)
     chat.submit(around)
-    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+    await waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
     expect(edits).toEqual([])
     expect(chat.changing).toBe(false)
   })
-  test('keeps the whole queue of a chat archived while it answers, the message being changed too', async () => {
+  test('stops the answer of a chat archived while it answers, and keeps its whole queue unsent, the message being changed too', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)
-    const answer = await queuedBehind(chat)
+    await queuedBehind(chat)
     chat.text = 'third'
     chat.submit(around)
     chat.editQueued(chat.queue[0]!.id)
     chat.archive(id)
-    await vi.waitFor(() => expect(chat.thread?.id).not.toBe(id))
-    answer()
-    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second', 'third']))
+    await waitFor(() => expect(chat.thread?.id).not.toBe(id))
+    await waitFor(() => expect(chat.running).not.toContain(id))
+    await settled()
+    expect(sentWords()).toEqual(['first'])
+    const queued = (chat as unknown as { queued: Record<string, { text: string }[]> }).queued
+    expect(queued[id]?.map((one) => one.text)).toEqual(['second', 'third'])
   })
   test('keeps a queued message let go by another chat coming to the front in its own chat where it cannot be sent', async () => {
     const chat = await asked()
@@ -679,14 +696,14 @@ describe('a note made of a thread', () => {
     place.noteFrom.mockResolvedValueOnce(null)
     await chat.noteFrom('# Answer\n')
     expect(place.noteFrom).toHaveBeenCalledTimes(1)
-    await vi.waitFor(() => expect(said(chat)).toEqual(['Save as a note: you can only read this space']))
+    await waitFor(() => expect(said(chat)).toEqual(['Save as a note: you can only read this space']))
   })
   test('is refused, and says so, where the thread’s space is not on this device', async () => {
     const chat = await openIn('work', 'home')
     if (chat.thread) chat.thread.space = 'gone'
     await chat.noteFrom('# Answer\n')
     expect(place.noteFrom).not.toHaveBeenCalled()
-    await vi.waitFor(() => expect(said(chat)).toEqual(['Save as a note: no such space']))
+    await waitFor(() => expect(said(chat)).toEqual(['Save as a note: no such space']))
   })
 })
 describe('a chat while it answers', () => {
@@ -713,7 +730,7 @@ describe('a chat while it answers', () => {
     tasks.add({ thread: note.id, kind: 'subtask', label: 'deeper', helper: 'h2', stop: under })
     tasks.add({ thread: 'elsewhere', kind: 'loop', label: 'keep on', stop: other })
     await chat.remove(id)
-    await vi.waitFor(() => expect(batch).toHaveBeenCalled())
+    await waitFor(() => expect(batch).toHaveBeenCalled())
     expect(under).toHaveBeenCalled()
     expect(other).not.toHaveBeenCalled()
     expect(tasks.of(id)).toEqual([])
@@ -758,15 +775,15 @@ describe('a chat while it answers', () => {
     try {
       const first = await helpers.start(ask, roads)
       if ('refused' in first) throw new Error(first.refused)
-      await vi.waitFor(() => expect(signals).toHaveLength(1))
+      await waitFor(() => expect(signals).toHaveLength(1))
       chat.stop()
-      await vi.waitFor(() => expect(signals[0]?.aborted).toBe(true))
+      await waitFor(() => expect(signals[0]?.aborted).toBe(true))
       expect((parent as Thread & { helpers?: string[] }).helpers).toEqual([first.id])
       const second = await helpers.start(ask, roads)
       if ('refused' in second) throw new Error(second.refused)
-      await vi.waitFor(() => expect(signals).toHaveLength(2))
+      await waitFor(() => expect(signals).toHaveLength(2))
       await chat.remove(id)
-      await vi.waitFor(() => expect(signals[1]?.aborted).toBe(true))
+      await waitFor(() => expect(signals[1]?.aborted).toBe(true))
     } finally {
       engine.send.mockReset()
     }
@@ -792,7 +809,7 @@ describe('a chat while it answers', () => {
     const fork = vi.fn()
     tasks.add({ thread: id, kind: 'fork', label: 'a copy', helper: 'h3', stop: fork })
     chat.stop()
-    await vi.waitFor(() => expect(fork).toHaveBeenCalled())
+    await waitFor(() => expect(fork).toHaveBeenCalled())
     expect(tasks.of(id)).toEqual([])
   })
   async function answeringOn() {
@@ -806,7 +823,7 @@ describe('a chat while it answers', () => {
     )
     chat.text = 'go on'
     chat.submit(around)
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     return { chat, id: String(chat.thread?.id) }
   }
   test('stays deleted once deleted while it answers', async () => {
@@ -846,9 +863,9 @@ describe('a chat while it answers', () => {
     chat.submit(around)
     const id = String(chat.thread?.id)
     chat.here('home')
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     go()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     await settled()
     expect(chat.thread?.space).toBe('work')
     expect(kept.get('work')?.has(id)).toBe(true)
@@ -897,7 +914,7 @@ describe('a chat while it answers', () => {
       return Promise.resolve()
     })
     chat.retry()
-    await vi.waitFor(() => expect(thread.turns.map((one) => one.id)).toEqual(['u2']))
+    await waitFor(() => expect(thread.turns.map((one) => one.id)).toEqual(['u2']))
     expect(thread.turns[0]?.at).toBe(1)
   })
   test('Ask again tells the engine the chat was cut before it sends the message again', async () => {
@@ -918,7 +935,7 @@ describe('a chat while it answers', () => {
       return Promise.resolve()
     })
     chat.retry()
-    await vi.waitFor(() => expect(order).toEqual(['rewound:0', 'send:0']))
+    await waitFor(() => expect(order).toEqual(['rewound:0', 'send:0']))
     expect(rewound).toHaveBeenCalledWith(thread)
   })
   test('keeps the message and its answer on Ask again refused before any turn', async () => {
@@ -928,7 +945,7 @@ describe('a chat while it answers', () => {
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
     await settled()
     chat.retry()
-    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    await waitFor(() => expect(chat.trouble).toBe('down'))
     expect(thread.turns.map((one) => one.id)).toEqual(['u1', 'm1'])
   })
   function held(): () => void {
@@ -965,7 +982,7 @@ describe('a chat while it answers', () => {
     expect(chat.busy).toBe(true)
     chat.stop()
     go()
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     await settled()
     const id = String(chat.thread?.id)
     expect(words(chat.thread)).toEqual(['old question', 'my new question'])
@@ -1014,12 +1031,12 @@ describe('a chat while it answers', () => {
     )
     chat.text = 'first'
     chat.submit(around)
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     chat.text = 'and shorter'
     chat.steer()
     expect(chat.text).toBe('')
     answer()
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
     const sent = engine.send.mock.calls as unknown as [unknown, Draft][]
     expect(sent.map((call) => call[1].text)).toEqual(['first', 'and shorter'])
   })
@@ -1032,7 +1049,7 @@ describe('a chat while it answers', () => {
     chat.submit(around)
     chat.here('home')
     go()
-    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    await waitFor(() => expect(chat.trouble).toBe('down'))
     await settled()
     expect(chat.thread?.turns).toEqual([])
     expect(chat.thread?.space).toBe('home')
@@ -1088,12 +1105,12 @@ describe('a chat while it answers', () => {
     chat.steer()
     await settled()
     go()
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     chat.text = 'B'
     chat.steer()
     await settled()
     answer()
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
     await settled()
     const sent = engine.send.mock.calls as unknown as [unknown, Draft][]
     expect(sent.map((call) => call[1].text)).toEqual(['first', 'A'])
@@ -1106,7 +1123,7 @@ describe('a chat while it answers', () => {
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
     chat.text = 'first'
     chat.submit(around)
-    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    await waitFor(() => expect(chat.trouble).toBe('down'))
     await settled()
     expect([chat.thread?.provider, chat.thread?.model]).toEqual(['other', 'm2'])
   })
@@ -1127,7 +1144,7 @@ describe('a chat while it answers', () => {
     await settled()
     refuse()
     await removing
-    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await waitFor(() => expect(chat.busy).toBe(false))
     await settled()
     expect(chat.heads.map((one) => one.id)).toContain(id)
     expect(kept.get('work')?.get(id)?.body).toContain('my new question')
@@ -1142,7 +1159,7 @@ describe('the panel’s chats and their helpers (#1062)', () => {
     await keepThread(helper)
     await had('home', 'Garden', 2_000)
     const chat = await opened(['work', 'home'])
-    await vi.waitFor(() => expect(chat.every).toHaveLength(3))
+    await waitFor(() => expect(chat.every).toHaveLength(3))
     expect(chat.heads.map((one) => one.title)).toEqual(['Serie 6', 'Garden'])
     await chat.openThread(helper.id, false)
     expect(chat.head).toMatchObject({ id: helper.id, parent: parent.id })
@@ -1153,7 +1170,7 @@ describe('the panel’s chats and their helpers (#1062)', () => {
     helper.parent = 'deleted-long-ago'
     await keepThread(helper)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['↳ Aufgabe 5']))
+    await waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['↳ Aufgabe 5']))
   })
   test('take the helpers kept before they said whose they were out of the list, once', async () => {
     const { keepThread, readThread } = await import('../chat/threads')
@@ -1167,7 +1184,7 @@ describe('the panel’s chats and their helpers (#1062)', () => {
     await keepThread(parent)
     await keepThread(helper)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['Serie 6', 'Serie 6']))
+    await waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['Serie 6', 'Serie 6']))
     expect(chat.heads.map((one) => one.id).sort()).toEqual([parent.id, fork.id].sort())
     expect((await readThread('work', deeper.id))?.parent).toBe(helper.id)
     expect((await readThread('work', subtask.id))?.parent).toBe(parent.id)
@@ -1181,15 +1198,15 @@ describe('a chat’s unread mark (#1064)', () => {
     chat.text = 'how far is the moon'
     chat.submit({ front: null, selection: '' })
     const asked = String(chat.thread?.id)
-    await vi.waitFor(() => expect(chat.unread.has(asked)).toBe(true))
+    await waitFor(() => expect(chat.unread.has(asked)).toBe(true))
     const again = await launched()
     again.know(['work'])
-    await vi.waitFor(() => expect(again.unread.has(asked)).toBe(true))
+    await waitFor(() => expect(again.unread.has(asked)).toBe(true))
     await again.saw(asked)
     expect(again.unread.has(asked)).toBe(false)
     const third = await launched()
     third.know(['work'])
-    await vi.waitFor(() => expect(third.every.map((one) => one.id)).toContain(asked))
+    await waitFor(() => expect(third.every.map((one) => one.id)).toContain(asked))
     expect(third.unread.has(asked)).toBe(false)
   })
   test('comes with a question for the reader, before the answer is over', async () => {
@@ -1211,7 +1228,7 @@ describe('a chat’s unread mark (#1064)', () => {
     chat.text = 'tidy Birds'
     chat.submit({ front: null, selection: '' })
     const asked = String(chat.thread?.id)
-    await vi.waitFor(() => expect(chat.unread.has(asked)).toBe(true))
+    await waitFor(() => expect(chat.unread.has(asked)).toBe(true))
     expect(chat.running).toContain(asked)
     release()
   })
@@ -1222,7 +1239,7 @@ describe('a chat’s unread mark (#1064)', () => {
     helper.parent = parent.id
     await keepThread(helper)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.every).toHaveLength(2))
+    await waitFor(() => expect(chat.every).toHaveLength(2))
     expect(chat.unread.size).toBe(0)
     chat.answered(helper)
     expect([...chat.unread]).toEqual([parent.id])
@@ -1236,12 +1253,12 @@ describe('a chat’s unread mark (#1064)', () => {
     const shelved = await had('work', 'Serie 6', 3_000)
     const listed = await had('work', 'Serie 7', 4_000)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.every).toHaveLength(2))
+    await waitFor(() => expect(chat.every).toHaveLength(2))
     chat.answered(shelved)
     chat.answered(listed)
     expect(chat.unread.size).toBe(2)
     chat.archive(shelved.id)
-    await vi.waitFor(() => expect([...chat.unread]).toEqual([listed.id]))
+    await waitFor(() => expect([...chat.unread]).toEqual([listed.id]))
     await chat.saw(listed.id)
     expect(chat.unread.size).toBe(0)
   })
@@ -1262,7 +1279,7 @@ describe('an answer on its way', () => {
         }),
     )
     chat.send('Tidy the herons')
-    await vi.waitFor(() => expect(engaged).toHaveLength(1))
+    await waitFor(() => expect(engaged).toHaveLength(1))
     const [one] = engaged
     if (!one) throw new Error('never asked')
     const written = async () => {
@@ -1278,7 +1295,7 @@ describe('an answer on its way', () => {
   }
   test('has the message written down as it begins, and that it is still answering', async () => {
     const { written } = await answering()
-    await vi.waitFor(async () => {
+    await waitFor(async () => {
       const thread = await written()
       expect(thread?.turns.map((one) => one.id)).toEqual(['message', 'answer'])
       expect(thread?.answering).toBe('answer')
@@ -1289,13 +1306,13 @@ describe('an answer on its way', () => {
     word('Herons stand')
     const { settleUp } = await import('../../../parting/src/api')
     settleUp()
-    await vi.waitFor(async () =>
+    await waitFor(async () =>
       expect((await written())?.turns[1]?.parts[0]).toEqual({ kind: 'text', text: 'Herons stand' }),
     )
   })
   test('has its words written every few seconds as they arrive', async () => {
     const { written, word } = await answering()
-    await vi.waitFor(async () => expect((await written())?.answering).toBe('answer'))
+    await waitFor(async () => expect((await written())?.answering).toBe('answer'))
     vi.useFakeTimers()
     try {
       word('Herons')
@@ -1303,9 +1320,7 @@ describe('an answer on its way', () => {
     } finally {
       vi.useRealTimers()
     }
-    await vi.waitFor(async () =>
-      expect((await written())?.turns[1]?.parts[0]).toEqual({ kind: 'text', text: 'Herons' }),
-    )
+    await waitFor(async () => expect((await written())?.turns[1]?.parts[0]).toEqual({ kind: 'text', text: 'Herons' }))
   })
   test('has what a finished call changed written at once', async () => {
     const { model, one, written } = await answering()
@@ -1319,7 +1334,7 @@ describe('an answer on its way', () => {
     } as const
     model.parts[0] = part
     one.on({ type: 'part', turn: model.id, index: 0, part })
-    await vi.waitFor(async () => expect((await written())?.turns[1]?.parts[0]).toEqual(part))
+    await waitFor(async () => expect((await written())?.turns[1]?.parts[0]).toEqual(part))
   })
   test('reads back cut off, in the same thread, after a reload', async () => {
     const { one, word } = await answering()
@@ -1327,7 +1342,7 @@ describe('an answer on its way', () => {
     const { settleUp } = await import('../../../parting/src/api')
     settleUp()
     const { readThread } = await import('../chat/threads')
-    await vi.waitFor(async () => {
+    await waitFor(async () => {
       const again = await readThread('work', one.thread.id)
       expect(again?.turns[1]?.parts).toEqual([
         { kind: 'text', text: 'Herons stand' },
@@ -1352,8 +1367,8 @@ describe('an answer on its way', () => {
         }),
     )
     void chat.turn(thread, 'Review this', { mode: 'auto', model: 'other', effort: 'high' })
-    await vi.waitFor(() => expect(engaged).toHaveLength(1))
-    await vi.waitFor(async () => {
+    await waitFor(() => expect(engaged).toHaveLength(1))
+    await waitFor(async () => {
       const again = await readThread('work', thread.id)
       expect(again?.turns).toHaveLength(2)
       expect(again).toMatchObject({ mode: 'approve', model: 'm', effort: 'auto' })
@@ -1364,10 +1379,10 @@ describe('an answer on its way', () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] })
     try {
       const { one, written } = await answering()
-      await vi.waitFor(async () => expect((await written())?.answering).toBe('answer'))
+      await waitFor(async () => expect((await written())?.answering).toBe('answer'))
       const first = (await written()) as Thread & { answeringAt: number }
       await vi.advanceTimersByTimeAsync(60_000)
-      await vi.waitFor(async () => {
+      await waitFor(async () => {
         const now = (await written()) as Thread & { answeringAt: number }
         expect(now.answeringAt).toBeGreaterThan(first.answeringAt)
       })
@@ -1400,7 +1415,7 @@ describe('an answer on its way', () => {
     finished.turns[1] = { id: 'm', role: 'model', at: 2, parts: [{ kind: 'text', text: 'whole' }] }
     await keepThread(finished)
     await held.readAgain(thread.id)
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalled())
+    await waitFor(() => expect(engine.send).toHaveBeenCalled())
     const live = (await readThread('work', thread.id))?.turns ?? []
     expect(JSON.stringify(live)).toContain('whole')
     expect(JSON.stringify(live)).not.toContain('stale')
@@ -1466,12 +1481,12 @@ describe('an answer on its way', () => {
       two.adopt(theirs, true)
       one.send('From the first window')
       two.send('From the second window')
-      await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
-      await vi.waitFor(() => expect(two.running).toEqual([]), 3000)
+      await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+      await waitFor(() => expect(two.running).toEqual([]), 3000)
       await new Promise((resolve) => setTimeout(resolve, 200))
       expect(engine.send).toHaveBeenCalledTimes(1)
       ends.shift()?.()
-      await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
+      await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
       const second = engine.send.mock.calls[1]
       expect(second?.[1].text).toContain('From the second window')
       expect(second?.[0].turns.slice(0, 4).map((turn) => turn.id)).toEqual(['y', 'm', 'you-2', 'model-2'])
@@ -1507,7 +1522,7 @@ describe('an answer on its way', () => {
     }
     await keepThread(theirs)
     ;(chat as unknown as { heardWritten(id: string): void }).heardWritten(thread.id)
-    await vi.waitFor(() => expect(chat.turns[3]?.parts).toEqual([{ kind: 'text', text: 'Some more' }]))
+    await waitFor(() => expect(chat.turns[3]?.parts).toEqual([{ kind: 'text', text: 'Some more' }]))
     expect(chat.turns.slice(0, 3)).toEqual(before.slice(0, 3))
     chat.turns.slice(0, 3).forEach((turn, at) => expect(turn).toBe(before[at]))
   })
@@ -1530,7 +1545,7 @@ describe('an answer on its way', () => {
     const { model, one, written } = await answering()
     one.on({ type: 'done', stop: 'end' })
     one.end()
-    await vi.waitFor(async () => {
+    await waitFor(async () => {
       expect((await written())?.answering).toBeUndefined()
       expect((await written())?.turns[1]?.id).toBe(model.id)
     })
@@ -1563,7 +1578,7 @@ describe('where a chat stands', () => {
     chat.text = 'hello'
     chat.submit(around)
     const id = String(chat.thread?.id)
-    await vi.waitFor(() => expect(chat.states.get(id)).toBe('done'))
+    await waitFor(() => expect(chat.states.get(id)).toBe('done'))
     expect(chat.thread?.state).toBe('done')
   })
   test('an error where the answer failed, waiting while it waits on the plan', async () => {
@@ -1577,7 +1592,7 @@ describe('where a chat stands', () => {
     chat.text = 'go on'
     chat.submit(around)
     const id = String(chat.thread?.id)
-    await vi.waitFor(() => expect(chat.states.get(id)).toBe('error'))
+    await waitFor(() => expect(chat.states.get(id)).toBe('error'))
     chat.waitForReset(true)
     expect(chat.states.get(id)).toBe('waiting')
     chat.waitForReset(false)
@@ -1589,7 +1604,7 @@ describe('where a chat stands', () => {
     chat.text = 'hello'
     chat.submit(around)
     const id = String(chat.thread?.id)
-    await vi.waitFor(() => expect(chat.states.get(id)).toBe('interrupted'))
+    await waitFor(() => expect(chat.states.get(id)).toBe('interrupted'))
   })
   test('needs input while the agent waits on the reader', async () => {
     let release: () => void = () => undefined
@@ -1620,18 +1635,18 @@ describe('where a chat stands', () => {
     chat.text = 'edit it'
     chat.submit(around)
     const id = String(chat.thread?.id)
-    await vi.waitFor(() => expect(chat.states.get(id)).toBe('needs-input'))
+    await waitFor(() => expect(chat.states.get(id)).toBe('needs-input'))
     release()
-    await vi.waitFor(() => expect(chat.states.get(id)).toBe('done'))
+    await waitFor(() => expect(chat.states.get(id)).toBe('done'))
   })
   test('archived once archived, and done again once brought back', async () => {
     const plan = await had('work', 'Plan', 1_000)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.heads).toHaveLength(1))
+    await waitFor(() => expect(chat.heads).toHaveLength(1))
     chat.archive(plan.id)
-    await vi.waitFor(() => expect(chat.states.get(plan.id)).toBe('archived'))
+    await waitFor(() => expect(chat.states.get(plan.id)).toBe('archived'))
     chat.unarchive(plan.id)
-    await vi.waitFor(() => expect(chat.states.get(plan.id)).toBe('done'))
+    await waitFor(() => expect(chat.states.get(plan.id)).toBe('done'))
   })
   test('interrupted, after a launch, where it was at work when the app closed', async () => {
     const { keepThread, newThread } = await import('../chat/threads')
@@ -1640,16 +1655,16 @@ describe('where a chat stands', () => {
     thread.state = 'running'
     await keepThread(thread)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.states.get(thread.id)).toBe('interrupted'))
+    await waitFor(() => expect(chat.states.get(thread.id)).toBe('interrupted'))
   })
   test('pinned to the top, and kept so', async () => {
     const plan = await had('work', 'Plan', 1_000)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.heads).toHaveLength(1))
+    await waitFor(() => expect(chat.heads).toHaveLength(1))
     await chat.pin(plan.id)
     expect(chat.heads[0]?.pinned).toBeGreaterThan(0)
     const again = await opened()
-    await vi.waitFor(() => expect(again.heads[0]?.pinned).toBeGreaterThan(0))
+    await waitFor(() => expect(again.heads[0]?.pinned).toBeGreaterThan(0))
     await again.pin(plan.id, false)
     expect(again.heads[0]?.pinned).toBeUndefined()
   })
@@ -1689,7 +1704,7 @@ describe('switching a chat to another model', () => {
     chat.models = { p: [{ id: 'other', name: 'Other' } as never] }
     ticking.answer = { id: 'cancel', ticked: false }
     expect(chat.modelNamed('other')).toBe(true)
-    await vi.waitFor(() => expect(ticking.asked).toHaveLength(1))
+    await waitFor(() => expect(ticking.asked).toHaveLength(1))
     expect(thread.model).toBe('m')
   })
   test('asks first by Ask again with another model, and asks nothing again on no', async () => {
@@ -1701,7 +1716,7 @@ describe('switching a chat to another model', () => {
     engine.send.mockClear()
     ticking.answer = { id: 'cancel', ticked: false }
     chat.retry({ provider: 'p', id: 'other' })
-    await vi.waitFor(() => expect(ticking.asked).toHaveLength(1))
+    await waitFor(() => expect(ticking.asked).toHaveLength(1))
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(thread.model).toBe('m')
     expect(engine.send).not.toHaveBeenCalled()
@@ -1714,7 +1729,7 @@ describe('switching a chat to another model', () => {
     ]
     engine.send.mockClear()
     chat.retry({ provider: 'p', id: 'other' })
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalled())
+    await waitFor(() => expect(engine.send).toHaveBeenCalled())
     expect(thread.model).toBe('other')
   })
   test('and never on a short one', async () => {
@@ -1748,7 +1763,7 @@ describe('where a chat stands', () => {
     )
     chat.text = 'go on'
     chat.submit({ front: null, selection: '' })
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     return { chat, tell: (part: Part, index: number) => tell(part, index), end: () => finish() }
   }
   const call = (id: string, state: 'asking' | 'ok' | 'running'): Part => ({
@@ -1789,7 +1804,7 @@ describe('where a chat stands', () => {
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
     await keepThread(thread)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.every.map((one) => one.state)).toEqual(['interrupted']))
+    await waitFor(() => expect(chat.every.map((one) => one.state)).toEqual(['interrupted']))
     await chat.openThread(thread.id, false)
     expect(chat.thread?.state).toBe('interrupted')
     let finish: () => void = () => undefined
@@ -1801,10 +1816,10 @@ describe('where a chat stands', () => {
     )
     chat.text = 'again'
     chat.submit({ front: null, selection: '' })
-    await vi.waitFor(() => expect(chat.every.map((one) => one.state)).toEqual(['running']))
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(chat.every.map((one) => one.state)).toEqual(['running']))
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
     finish()
-    await vi.waitFor(() => expect(chat.running).toEqual([]))
+    await waitFor(() => expect(chat.running).toEqual([]))
   })
   test('a chat another window is answering in is at work, not interrupted', async () => {
     const { keepThread, newThread } = await import('../chat/threads')
@@ -1815,7 +1830,7 @@ describe('where a chat stands', () => {
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
     await keepThread(thread)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running'))
+    await waitFor(() => expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running'))
   })
   test('so is one of those in hand here, opened or asked after', async () => {
     const { claimAnswer, keepThread, newThread, unclaimAnswer } = await import('../chat/threads')
@@ -1828,7 +1843,7 @@ describe('where a chat stands', () => {
     onTestFinished(() => unclaimAnswer(thread.id))
     await keepThread(thread)
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.every.map((one) => one.id)).toEqual([thread.id]))
+    await waitFor(() => expect(chat.every.map((one) => one.id)).toEqual([thread.id]))
     await chat.openThread(thread.id, false)
     expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running')
     chat.showThreads()
@@ -1851,19 +1866,19 @@ describe('a chat in the list the moment it changes (#1111)', () => {
   }
   test('is there at once when it is made and left with Back, the answer still to come', async () => {
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.head).not.toBeNull())
+    await waitFor(() => expect(chat.head).not.toBeNull())
     const answer = holding()
     chat.text = 'plan the week'
     chat.submit({ front: null, selection: '' })
     const id = chat.thread?.id ?? ''
-    await vi.waitFor(() => expect(chat.head?.kept).toBe(true))
+    await waitFor(() => expect(chat.head?.kept).toBe(true))
     chat.newThread()
     expect(chat.heads.map((one) => one.id)).toEqual([id])
     chat.showThreads()
     await new Promise((done) => setTimeout(done, 0))
     expect(chat.heads.map((one) => one.id)).toEqual([id])
     answer()
-    await vi.waitFor(() => expect(chat.running).toEqual([]))
+    await waitFor(() => expect(chat.running).toEqual([]))
     expect(chat.heads.map((one) => one.id)).toEqual([id])
   })
   test('is there at once while its first message is still gathered', async () => {
@@ -1876,7 +1891,7 @@ describe('a chat in the list the moment it changes (#1111)', () => {
     chat.submit({ front: null, selection: '' })
     expect(chat.heads.map((one) => one.id)).toEqual([chat.thread?.id])
     open()
-    await vi.waitFor(() => expect(chat.running).toEqual([]))
+    await waitFor(() => expect(chat.running).toEqual([]))
   })
   test('started from elsewhere is there at once', async () => {
     const chat = await opened(['work', 'home'])
@@ -1888,7 +1903,7 @@ describe('a chat in the list the moment it changes (#1111)', () => {
     const garden = await had('home', 'Garden', 1_000)
     const plan = await had('work', 'Plan', 2_000)
     const chat = await opened(['work', 'home'])
-    await vi.waitFor(() => expect(chat.heads).toHaveLength(2))
+    await waitFor(() => expect(chat.heads).toHaveLength(2))
     const line = (id: string) => chat.heads.find((one) => one.id === id)
     await chat.rename('Allotment', garden.id)
     expect(line(garden.id)?.title).toBe('Allotment')
@@ -1897,9 +1912,9 @@ describe('a chat in the list the moment it changes (#1111)', () => {
     await new Promise((done) => setTimeout(done, 0))
     expect(line(plan.id)?.pinned).toBeGreaterThan(0)
     chat.archive(garden.id)
-    await vi.waitFor(() => expect(line(garden.id)?.archived).toBe(true))
+    await waitFor(() => expect(line(garden.id)?.archived).toBe(true))
     const removing = chat.remove(plan.id)
-    await vi.waitFor(() => expect(line(plan.id)).toBeUndefined())
+    await waitFor(() => expect(line(plan.id)).toBeUndefined())
     await removing
     expect(line(plan.id)).toBeUndefined()
   })
@@ -1927,7 +1942,7 @@ describe('a chat started outside the panel', () => {
   })
   test('is in the list at once, and the chat open in the panel stays open', async () => {
     const chat = await opened()
-    await vi.waitFor(() => expect(chat.head).not.toBeNull())
+    await waitFor(() => expect(chat.head).not.toBeNull())
     const open = chat.thread
     let gate: () => void = () => undefined
     gathering.gate = new Promise((done) => {
@@ -1964,9 +1979,9 @@ describe('a chat started outside the panel', () => {
     })
     chat.watch(thread)
     await ended
-    await vi.waitFor(() => expect(chat.watched[thread.id]?.length).toBe(2))
+    await waitFor(() => expect(chat.watched[thread.id]?.length).toBe(2))
     await chat.sendIn(thread, 'Second', [], { front: null, selection: '', picked: null })
-    await vi.waitFor(() => expect(chat.watched[thread.id]?.length).toBe(4))
+    await waitFor(() => expect(chat.watched[thread.id]?.length).toBe(4))
     expect(chat.watched[thread.id]?.[2]?.draft?.text).toBe('Second')
     chat.unwatch(thread)
     expect(chat.watched).toEqual({})
@@ -1979,10 +1994,144 @@ describe('a chat started outside the panel', () => {
     chat.watch(one.thread)
     chat.watch(two.thread)
     await Promise.all([one.ended, two.ended])
-    await vi.waitFor(() => expect(chat.watched[one.thread.id]?.length).toBe(2))
-    await vi.waitFor(() => expect(chat.watched[two.thread.id]?.length).toBe(2))
+    await waitFor(() => expect(chat.watched[one.thread.id]?.length).toBe(2))
+    await waitFor(() => expect(chat.watched[two.thread.id]?.length).toBe(2))
     chat.unwatch(one.thread)
     expect(Object.keys(chat.watched)).toEqual([two.thread.id])
     chat.unwatch(two.thread)
+  })
+})
+describe('a running chat', () => {
+  const settled = () => new Promise((resolve) => setTimeout(resolve, 20))
+  function running() {
+    const signals: AbortSignal[] = []
+    let release: () => void = () => undefined
+    engine.send.mockImplementationOnce(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void, signal?: AbortSignal) => {
+        thread.turns.push({ id: 'u2', role: 'you', at: 2, parts: [], draft })
+        thread.turns.push({ id: 'm2', role: 'model', at: 2, parts: [] })
+        if (signal) signals.push(signal)
+        return new Promise<void>((done) => {
+          release = () => {
+            on({ type: 'done', stop: 'end' })
+            done()
+          }
+          signal?.addEventListener('abort', () => release())
+        })
+      },
+    )
+    return { signals, release: () => release() }
+  }
+  async function work(id: string) {
+    const { tasks } = await import('../commands/tasks.svelte')
+    const stopped: string[] = []
+    for (const kind of ['loop', 'goal', 'fork'] as const) {
+      tasks.add({ thread: id, kind, label: kind, stop: () => void stopped.push(kind) })
+    }
+    return stopped
+  }
+  test('opens no rewind over the running answer', async () => {
+    const chat = await asked()
+    const { release } = running()
+    rewinds.length = 0
+    chat.send('go on')
+    await waitFor(() => expect(chat.busy).toBe(true))
+    chat.rewind('u1')
+    expect(rewinds).toEqual([])
+    release()
+  })
+  test('is not compacted, nor branched from its last turn, nor edited, while it answers', async () => {
+    const chat = await asked()
+    const compact = vi.fn(() => Promise.resolve())
+    ;(engine as unknown as { compact: unknown }).compact = compact
+    const { release } = running()
+    chat.send('go on')
+    await waitFor(() => expect(chat.busy).toBe(true))
+    const id = chat.thread?.id
+    chat.compact()
+    chat.branch()
+    chat.startEdit('u1')
+    await settled()
+    expect(compact).not.toHaveBeenCalled()
+    expect(chat.thread?.id).toBe(id)
+    expect(chat.editing).toBeNull()
+    release()
+  })
+  test('archived, stops its answer, its loop, its goal and its helpers, and tells the other windows', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const { signals } = running()
+    chat.send('go on')
+    await waitFor(() => expect(signals).toHaveLength(1))
+    const stopped = await work(id)
+    chat.archive(id)
+    await waitFor(() => expect(chat.thread?.id).not.toBe(id))
+    await waitFor(() => expect(stopped.sort()).toEqual(['fork', 'goal', 'loop']))
+    expect(signals[0]?.aborted).toBe(true)
+    expect(toldOthers('thread-stopped')).toContainEqual(expect.objectContaining({ id }))
+  })
+  test('stopped, stops its loop and its goal too, and tells the other windows', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const stopped = await work(id)
+    chat.stop()
+    await waitFor(() => expect(stopped.sort()).toEqual(['fork', 'goal', 'loop']))
+    expect(toldOthers('thread-stopped')).toContainEqual(expect.objectContaining({ id }))
+  })
+  test('deleted, stops its answer, its loop and its goal', async () => {
+    const chat = await asked(['work', 'home'])
+    const id = String(chat.thread?.id)
+    const { signals } = running()
+    chat.send('go on')
+    await waitFor(() => expect(signals).toHaveLength(1))
+    const stopped = await work(id)
+    await chat.remove(id)
+    await waitFor(() => expect(stopped.sort()).toEqual(['fork', 'goal', 'loop']))
+    expect(signals[0]?.aborted).toBe(true)
+  })
+  test('stopped in another window, stops here what it runs here, its helpers too, and tells nobody again', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const { signals } = running()
+    chat.send('go on')
+    await waitFor(() => expect(signals).toHaveLength(1))
+    const stopped = await work(id)
+    const { helpers } = await import('../helpers/helpers.svelte')
+    const helped: AbortSignal[] = []
+    const provider = { id: 'p', kind: 'compatible', model: 'm', name: 'Fake' } as const
+    const started = await helpers.start(
+      { parent: null, asking: id, space: 'work', prompt: 'Look', description: 'look', model: '', mode: 'approve' },
+      {
+        offered: () => Promise.resolve([{ provider, models: [] }]),
+        run: (_thread, _text, signal) => {
+          helped.push(signal)
+          return new Promise(() => undefined)
+        },
+      },
+    )
+    if ('refused' in started) throw new Error(started.refused)
+    expect(started.parent).toBe(id)
+    const told = toldOthers('thread-stopped').length
+    fromWindowB('thread-stopped', { id })
+    await waitFor(() => expect(stopped.sort()).toEqual(['fork', 'goal', 'loop']))
+    await waitFor(() => expect(helped[0]?.aborted).toBe(true))
+    expect(signals[0]?.aborted).toBe(true)
+    expect(toldOthers('thread-stopped')).toHaveLength(told)
+  })
+})
+describe('a chat started outside the panel', () => {
+  test('is an Approve chat, whatever mode a chat in the panel was last put in', async () => {
+    const chat = await opened()
+    await waitFor(() => expect(chat.head).not.toBeNull())
+    chat.setMode('plan')
+    const { thread, ended } = chat.startHere('What does this word mean?', [], {
+      front: null,
+      selection: '',
+      picked: null,
+    })
+    await ended
+    expect(thread.mode).toBe('approve')
+    chat.newThread()
+    expect(chat.thread?.mode).toBe('plan')
   })
 })

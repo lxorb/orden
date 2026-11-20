@@ -26,6 +26,7 @@ export interface Helper {
 }
 interface Asked {
   parent: Thread | null
+  asking?: string
   space: string
   prompt: string
   description: string
@@ -54,7 +55,7 @@ type Helped = Thread & { helpers?: string[] }
 class Helpers {
   all = $state.raw<Helper[]>([])
   private stops = new Map<string, AbortController>()
-  private under = new Map<string, { parent: Helped; child: Thread }>()
+  private under = new Map<string, { parent: string; above: Helped | null; child: Thread }>()
   private ends = new Map<string, Promise<void>>()
   get(id: string): Helper | null {
     return this.all.find((one) => one.id === id) ?? null
@@ -70,11 +71,12 @@ class Helpers {
   }
   async start(asked: Asked, roads: Roads): Promise<Helper | { refused: string }> {
     const parent = asked.parent
-    const depth = parent ? this.depthOf(parent.id) + 1 : 1
+    const from = parent?.id ?? asked.asking ?? null
+    const depth = from ? this.depthOf(from) + 1 : 1
     if (depth > DEPTH) {
       return { refused: `a helper ${DEPTH} deep may not start another; do the work yourself` }
     }
-    const root = parent ? this.rootOf(parent.id) : null
+    const root = from ? this.rootOf(from) : null
     const running = this.all.filter(
       (one) => one.state === 'running' && (root === null ? one.parent === null : one.root === root),
     )
@@ -92,10 +94,10 @@ class Helpers {
     const thread = newThread(asked.space, route.provider.id, route.model, asked.effort ?? 'auto', asked.mode)
     const named = [asked.description, asked.prompt.split('\n')[0]?.slice(0, 60)].find(Boolean)
     thread.title = `↳ ${named ?? ''}`
-    if (parent) thread.parent = parent.id
+    if (from) thread.parent = from
     const helper: Helper = {
       id: thread.id,
-      parent: parent?.id ?? null,
+      parent: from,
       root: root ?? thread.id,
       depth,
       provider: route.provider.id,
@@ -107,6 +109,7 @@ class Helpers {
     }
     this.all = [...this.all, helper]
     if (parent) this.startedUnder(parent, thread)
+    else if (from) this.under.set(thread.id, { parent: from, above: null, child: thread })
     const stopper = new AbortController()
     this.stops.set(helper.id, stopper)
     const late = setTimeout(() => stopper.abort(), MINUTES * 60_000)
@@ -164,8 +167,8 @@ class Helpers {
   }
   startedUnder(parent: Thread, child: Thread): void {
     keptUnder(parent, child)
-    this.under.set(child.id, { parent, child })
-    for (let above: Helped | undefined = parent; above; above = this.under.get(above.id)?.parent) {
+    this.under.set(child.id, { parent: parent.id, above: parent, child })
+    for (let above: Helped | null | undefined = parent; above; above = this.under.get(above.id)?.above) {
       if (above.helpers?.includes(child.id)) continue
       above.helpers = [...(above.helpers ?? []), child.id]
       void keepThread(above).catch(() => undefined)
@@ -176,7 +179,7 @@ class Helpers {
   }
   forget(id: string): void {
     this.under.delete(id)
-    for (const [child, one] of [...this.under]) if (one.parent.id === id) this.forget(child)
+    for (const [child, one] of [...this.under]) if (one.parent === id) this.forget(child)
   }
   stop(id: string): void {
     this.stops.get(id)?.abort()
@@ -184,7 +187,7 @@ class Helpers {
   }
   stopUnder(thread: string): void {
     tasks.stop(thread)
-    for (const [child, one] of [...this.under]) if (one.parent.id === thread) this.stop(child)
+    for (const [child, one] of [...this.under]) if (one.parent === thread) this.stop(child)
   }
 }
 export const helpers = new Helpers()
