@@ -182,13 +182,13 @@ class Shortcuts {
   get forEditor(): KeyOverrides {
     return this.overrides
   }
-  private readonly owed = new AccountOwed(OWED_KEY, undefined, () => this.take({}, 'default'))
+  private readonly owed = new AccountOwed(OWED_KEY, undefined, (owed) =>
+    this.take(usable(owed.shortcuts), knownPreset(owed.preset) ?? 'default'),
+  )
   receive(remote: AccountSettings) {
     this.owed.follows()
     const theirs = remote.shortcuts
     if (this.owed.standing) {
-      const owed = this.owed.mine?.patch
-      if (owed?.shortcuts) this.take(usable(owed.shortcuts), knownPreset(owed.preset) ?? this.preset)
       this.share()
       return
     }

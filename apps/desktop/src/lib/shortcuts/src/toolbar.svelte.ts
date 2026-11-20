@@ -113,13 +113,11 @@ class Toolbar {
     if (chosen) keepJson(STORAGE_KEY, chosen)
     else forget(STORAGE_KEY)
   }
-  private readonly owed = new AccountOwed(OWED_KEY, undefined, () => this.take(null))
+  private readonly owed = new AccountOwed(OWED_KEY, undefined, (owed) => this.take(usable(owed.toolbar)))
   receive(remote: AccountSettings) {
     this.owed.follows()
     const theirs = remote.toolbar
     if (this.owed.standing) {
-      const owed = this.owed.mine?.patch
-      if (owed && 'toolbar' in owed) this.take(usable(owed.toolbar))
       this.share()
       return
     }
