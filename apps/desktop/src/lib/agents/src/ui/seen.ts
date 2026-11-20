@@ -83,6 +83,8 @@ export function heard(seen: Seen, event: AgentEvent, now: number): void {
     case 'connected':
       seen.connected = event.agents
       return
+    case 'ended':
+      return
   }
 }
 function resumed(seen: Seen, agent: string): void {

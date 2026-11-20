@@ -62,6 +62,10 @@ export function readEvent(value: unknown): AgentEvent | null {
       const agents = strings(value.agents)
       return agents ? { kind: 'connected', agents } : null
     }
+    case 'ended': {
+      const thread = text('thread')
+      return thread === null ? null : { kind: 'ended', thread }
+    }
     default:
       return null
   }

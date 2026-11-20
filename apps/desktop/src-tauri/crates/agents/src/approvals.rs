@@ -204,6 +204,19 @@ pub fn pending(agent: Option<&str>) -> Vec<Approval> {
         .map(|one| one.approval.clone())
         .collect()
 }
+pub fn ended_in(thread: &str) -> Vec<Approval> {
+    held()
+        .iter_mut()
+        .filter(|one| {
+            one.approval.answer == ApprovalAnswer::Pending
+                && one.approval.thread.as_deref() == Some(thread)
+        })
+        .map(|one| {
+            one.approval.answer = ApprovalAnswer::Expired;
+            one.approval.clone()
+        })
+        .collect()
+}
 pub fn expire(app: &AppHandle) {
     let expired: Vec<Approval> = held()
         .iter_mut()
@@ -322,6 +335,32 @@ mod tests {
         assert!(
             matches!(unless_allowed_telling(asking(), |_| {}), Some(Answer::NeedsApproval { approval: fresh, .. }) if fresh != approval)
         );
+    }
+    #[test]
+    fn a_thread_ended_lets_its_questions_lapse_and_no_other_threads() {
+        let mut grant = Grant::own("ending-agent".into(), "Ending");
+        grant.thread = Some("ending-x".into());
+        let mine = unless_allowed_telling(
+            Asking::of(&grant, Category::Writing, "Edit".into(), "edit_note:a".into()),
+            |_| {},
+        );
+        grant.thread = Some("ending-y".into());
+        let other = unless_allowed_telling(
+            Asking::of(&grant, Category::Writing, "Edit".into(), "edit_note:a".into()),
+            |_| {},
+        );
+        let (
+            Some(Answer::NeedsApproval { approval: mine, .. }),
+            Some(Answer::NeedsApproval { approval: other, .. }),
+        ) = (mine, other)
+        else {
+            panic!("both asked");
+        };
+        let lapsed = ended_in("ending-x");
+        assert_eq!(lapsed.iter().map(|one| one.id.as_str()).collect::<Vec<_>>(), [mine.as_str()]);
+        assert_eq!(any(&mine).map(|one| one.answer), Some(ApprovalAnswer::Expired));
+        assert_eq!(any(&other).map(|one| one.answer), Some(ApprovalAnswer::Pending));
+        assert!(ended_in("ending-x").is_empty());
     }
     #[test]
     fn a_key_names_the_verb_the_tab_and_the_element() {

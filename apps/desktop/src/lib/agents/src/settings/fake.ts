@@ -93,7 +93,7 @@ export class FakeCrate implements AgentsCrate {
       at,
     )
     this.grants.push(grant)
-    this.emit({ kind: 'answered', agent: grant.id })
+    this.emit({ kind: 'answered', agent: grant.id, thread: null })
     return grant
   }
   called(agent: string, verb: string, at: number, args: Record<string, unknown> = {}, status = 'ok', code?: string) {

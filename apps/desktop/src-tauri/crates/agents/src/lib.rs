@@ -89,6 +89,12 @@ impl Caller {
             Caller::Reader => Caller::Reader,
         }
     }
+    pub fn thread(&self) -> Option<&str> {
+        match self {
+            Caller::Reader => None,
+            Caller::Agent(grant) => grant.thread.as_deref(),
+        }
+    }
     pub fn limits(&self) -> grants::Limits {
         match self {
             Caller::Reader => grants::Limits::default(),

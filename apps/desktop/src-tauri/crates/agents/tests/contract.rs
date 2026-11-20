@@ -120,3 +120,20 @@ fn a_verb_its_chat_keeps_out_is_refused_before_it_runs_and_the_session_verbs_nev
     assert!(orden_agents::in_its_chat(&Caller::Agent(Box::new(grant)), "edit_note").is_ok());
     assert!(orden_agents::in_its_chat(&Caller::Reader, "edit_note").is_ok());
 }
+#[test]
+fn a_thread_ended_cancels_what_its_calls_run_and_no_other_threads() {
+    let caller = |thread: Option<&str>| {
+        Caller::Agent(Box::new(Grant::own("contract-ending".into(), "Ending")))
+            .in_thread(thread.map(str::to_owned))
+    };
+    let mine = orden_agents::stop::since_for(&caller(Some("contract-thread-x")));
+    let other = orden_agents::stop::since_for(&caller(Some("contract-thread-y")));
+    let bare = orden_agents::stop::since_for(&caller(None));
+    assert!(!orden_agents::stop::cancelled(mine));
+    orden_agents::stop::ended("contract-thread-x");
+    assert!(orden_agents::stop::cancelled(mine));
+    assert!(!orden_agents::stop::cancelled(other));
+    assert!(!orden_agents::stop::cancelled(bare));
+    let after = orden_agents::stop::since_for(&caller(Some("contract-thread-x")));
+    assert!(!orden_agents::stop::cancelled(after));
+}

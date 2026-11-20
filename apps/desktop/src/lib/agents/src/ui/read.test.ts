@@ -31,6 +31,10 @@ describe('the crate news, read', () => {
     expect(readEvent({ kind: 'connected', agents: ['a', 3] })).toBeNull()
     expect(readEvent({ kind: 'asked', approval: { id: 'q1' } })).toBeNull()
     expect(readEvent({ kind: 'something new' })).toBeNull()
+    expect(readEvent({ kind: 'ended' })).toBeNull()
+  })
+  test('hears a chat stop end its thread', () => {
+    expect(readEvent({ kind: 'ended', thread: 'thread-a' })).toEqual({ kind: 'ended', thread: 'thread-a' })
   })
   test('keeps the thread a question was raised in', () => {
     const approval = {

@@ -28,9 +28,9 @@ struct Request {
     body: Option<Vec<u8>>,
     save: Option<PathBuf>,
     until: Instant,
-    since: u64,
+    since: stop::Since,
 }
-pub fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Answer {
+pub fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: stop::Since) -> Answer {
     if !caller.holds(Scope::Network) {
         return Answer::error(
             Code::NotGranted,
@@ -61,7 +61,12 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Ans
             .unwrap_or_else(|_| Answer::error(Code::Failed, "the request broke off"))
     })
 }
-fn request(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Result<Request, Answer> {
+fn request(
+    app: &AppHandle,
+    caller: &Caller,
+    asked: &Http,
+    since: stop::Since,
+) -> Result<Request, Answer> {
     let bad = |why: String| Answer::error(Code::BadArguments, why);
     let method = asked.method.as_deref().unwrap_or("GET").trim().to_ascii_uppercase();
     let method = Method::from_bytes(method.as_bytes())
@@ -218,7 +223,11 @@ fn body_of(bytes: Vec<u8>, cut: bool) -> (String, bool) {
         }
     }
 }
-async fn saved(response: &mut reqwest::Response, path: &Path, since: u64) -> Result<u64, Answer> {
+async fn saved(
+    response: &mut reqwest::Response,
+    path: &Path,
+    since: stop::Since,
+) -> Result<u64, Answer> {
     let failing = |why: String| Answer::error(Code::Failed, why);
     if let Some(folder) = path.parent() {
         std::fs::create_dir_all(folder).map_err(|why| failing(why.to_string()))?;

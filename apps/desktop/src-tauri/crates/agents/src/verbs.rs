@@ -957,6 +957,7 @@ pub enum Event {
     Closed { agent: String, id: TabId },
     Stopped { closed: bool },
     Connected { agents: Vec<String> },
+    Ended { thread: String },
 }
 pub mod window {
     use serde::{Deserialize, Serialize};
@@ -1198,6 +1199,10 @@ mod tests {
         assert_eq!(
             serde_json::to_value(Event::Stopped { closed: false }).expect("json"),
             json!({ "kind": "stopped", "closed": false })
+        );
+        assert_eq!(
+            serde_json::to_value(Event::Ended { thread: "thread-1".into() }).expect("json"),
+            json!({ "kind": "ended", "thread": "thread-1" })
         );
     }
 }

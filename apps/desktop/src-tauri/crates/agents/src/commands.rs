@@ -9,8 +9,13 @@ pub fn agents_stop(
     webview: tauri::Webview,
     app: AppHandle,
     agent: Option<String>,
+    thread: Option<String>,
 ) -> Result<bool, String> {
     orden_base::labels::from_the_app(&webview)?;
+    if let Some(thread) = thread.filter(|one| crate::is_thread(one)) {
+        stop::end_thread(&app, &thread);
+        return Ok(false);
+    }
     Ok(match agent {
         Some(agent) => {
             stop::halt(&app, &agent);

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import type { Grant, Scope } from '../../../agent-protocol/src/api'
-import { readGrant } from './crate'
+import { readGrant, readHeard } from './crate'
 import { CATEGORY_WORDS } from './words'
 import {
   asks,
@@ -206,5 +206,17 @@ describe('a grant saved before a scope was taken away', () => {
   it('reads with the scope dropped and the rest kept', () => {
     const before = { ...own(), scopes: ['applications', ...own().scopes, 'someday'] }
     expect(readGrant(before)?.scopes).toEqual(own().scopes)
+  })
+})
+describe('the crate news the settings hear', () => {
+  it('names the thread a chat stop ended, and the thread a question was raised in', () => {
+    expect(readHeard({ kind: 'ended', thread: 'thread-a' })).toEqual({ kind: 'ended', agent: null, thread: 'thread-a' })
+    expect(readHeard({ kind: 'asked', approval: { agent: 'orden-cc', thread: 'thread-b' } })).toEqual({
+      kind: 'asked',
+      agent: 'orden-cc',
+      thread: 'thread-b',
+    })
+    expect(readHeard({ kind: 'paused', agent: 'orden-cc' })).toEqual({ kind: 'paused', agent: 'orden-cc', thread: null })
+    expect(readHeard({ kind: 'something new' })).toBeNull()
   })
 })
