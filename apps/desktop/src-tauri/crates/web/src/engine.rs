@@ -22,6 +22,7 @@ pub type Dialogs = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
 pub type Permissions = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
 pub type Page = WebviewBuilder<orden_base::Engine>;
 pub type ExtensionsCdp = fn(&str, &Value, std::time::Duration) -> Result<Value, String>;
+pub type Entries = (Vec<String>, usize);
 pub struct Engine {
     pub page_id: fn(&PlatformWebview) -> Option<NativeWindow>,
     pub call: Call,
@@ -40,6 +41,7 @@ pub struct Engine {
     pub permission_answer: fn(u64, bool) -> bool,
     pub zoom: fn(&PlatformWebview) -> f64,
     pub extensions_cdp: ExtensionsCdp,
+    pub history: fn(&PlatformWebview) -> Option<Entries>,
 }
 static ENGINE: std::sync::OnceLock<Engine> = std::sync::OnceLock::new();
 pub fn hand(engine: Engine) {
@@ -69,6 +71,9 @@ pub fn extensions_cdp(
     patience: std::time::Duration,
 ) -> Result<Value, String> {
     (engine()?.extensions_cdp)(method, params, patience)
+}
+pub fn history(platform: &PlatformWebview) -> Option<Entries> {
+    (engine().ok()?.history)(platform)
 }
 pub fn engine() -> Result<&'static Engine, String> {
     ENGINE.get().ok_or_else(|| "the engine has not started".to_owned())

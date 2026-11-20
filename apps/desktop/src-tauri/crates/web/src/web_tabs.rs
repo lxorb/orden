@@ -100,59 +100,40 @@ const BARS: &str = include_str!("web_bars.js");
 fn bars() -> &'static str {
     BARS.trim().trim_start_matches(';')
 }
-struct Trail {
+struct Kept {
     urls: Vec<String>,
     at: usize,
-    engine: bool,
-    asked: bool,
 }
-impl Default for Trail {
-    fn default() -> Self {
-        Self { urls: Vec::new(), at: 0, engine: true, asked: false }
-    }
+#[derive(Debug, Default, PartialEq)]
+struct Steps {
+    urls: Vec<String>,
+    at: usize,
+    kept: bool,
 }
-impl Trail {
-    fn restored(urls: Vec<String>, at: usize) -> Self {
-        let at = at.min(urls.len().saturating_sub(1));
-        Self { engine: urls.len() < 2, urls, at, asked: false }
-    }
-    fn step_to(&self, by: isize) -> Option<&String> {
-        self.at.checked_add_signed(by).and_then(|there| self.urls.get(there))
-    }
-    fn visited(&mut self, url: &str) {
-        if self.urls.get(self.at).is_some_and(|here| here == url) {
-            return;
-        }
-        if self.at > 0 && self.urls.get(self.at - 1).is_some_and(|back| back == url) {
-            self.at -= 1;
-            return;
-        }
-        if self.urls.get(self.at + 1).is_some_and(|on| on == url) {
-            self.at += 1;
-            return;
-        }
-        if !self.urls.is_empty() {
-            self.urls.truncate(self.at + 1);
-            self.at = self.urls.len();
-        }
-        self.urls.push(url.to_string());
-    }
-    fn asked_for(&mut self, url: &str) {
-        self.visited(url);
-        self.asked = true;
-    }
-    fn loaded(&mut self, url: &str) {
-        let asked = std::mem::take(&mut self.asked);
-        match self.urls.get_mut(self.at) {
-            Some(here) if asked && here != url => url.clone_into(here),
-            _ => self.visited(url),
-        }
-    }
+impl Steps {
     fn back(&self) -> bool {
         self.at > 0
     }
     fn forward(&self) -> bool {
         self.at + 1 < self.urls.len()
+    }
+    fn to(&self, by: isize) -> Option<usize> {
+        self.at.checked_add_signed(by).filter(|there| *there < self.urls.len())
+    }
+}
+fn seed(url: &str) -> bool {
+    url.is_empty() || url == BLANK || crate::engine::internal(url)
+}
+fn steps_of(engine: Option<crate::engine::Entries>, kept: Option<&Kept>) -> Steps {
+    let (mut urls, at) = engine.unwrap_or_default();
+    let seeds = urls.iter().take_while(|one| seed(one)).count();
+    urls.drain(..seeds);
+    match kept {
+        Some(kept) if urls.len() <= 1 => Steps { urls: kept.urls.clone(), at: kept.at, kept: true },
+        _ => {
+            let at = at.saturating_sub(seeds).min(urls.len().saturating_sub(1));
+            Steps { urls, at, kept: false }
+        }
     }
 }
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
@@ -161,7 +142,7 @@ pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<or
 }
 #[derive(Default)]
 pub struct WebTabs {
-    trails: Mutex<HashMap<String, Trail>>,
+    kept: Mutex<HashMap<String, Kept>>,
     opening: Mutex<HashSet<String>>,
 }
 struct Claim<'a> {
@@ -185,35 +166,94 @@ impl WebTabs {
             busy.remove(tab);
         }
     }
-    fn walked(&self, tab: &str, url: &str) {
-        if let Ok(mut trails) = self.trails.lock() {
-            trails.entry(tab.to_string()).or_default().asked_for(url);
-        }
-    }
     fn restore(&self, tab: &str, urls: Vec<String>, at: usize) {
-        if urls.is_empty() {
-            return;
-        }
-        if let Ok(mut trails) = self.trails.lock() {
-            trails.insert(tab.to_string(), Trail::restored(urls, at));
+        if let Ok(mut kept) = self.kept.lock() {
+            if urls.len() < 2 {
+                kept.remove(tab);
+            } else {
+                let at = at.min(urls.len() - 1);
+                kept.insert(tab.to_string(), Kept { urls, at });
+            }
         }
     }
-    fn walk(&self, tab: &str) -> (Vec<String>, usize) {
-        self.trails
-            .lock()
-            .ok()
-            .and_then(|trails| trails.get(tab).map(|one| (one.urls.clone(), one.at)))
-            .unwrap_or_default()
-    }
-    fn stepping(&self, tab: &str, by: isize) -> Option<String> {
-        let mut trails = self.trails.lock().ok()?;
-        let trail = trails.get_mut(tab)?;
-        let url = trail.step_to(by)?.clone();
-        if by.unsigned_abs() > 1 {
-            trail.at = trail.at.checked_add_signed(by)?;
+    fn steps(&self, tab: &str, engine: Option<crate::engine::Entries>) -> Steps {
+        let Ok(mut kept) = self.kept.lock() else {
+            return steps_of(engine, None);
+        };
+        let steps = steps_of(engine, kept.get(tab));
+        if !steps.kept {
+            kept.remove(tab);
         }
-        (!trail.engine).then_some(url)
+        steps
     }
+    fn stepped(&self, tab: &str, at: usize) {
+        if let Ok(mut kept) = self.kept.lock() {
+            if let Some(one) = kept.get_mut(tab) {
+                one.at = at;
+            }
+        }
+    }
+    fn forget(&self, tab: &str) {
+        if let Ok(mut kept) = self.kept.lock() {
+            kept.remove(tab);
+        }
+    }
+}
+fn engine_history_now(view: &Webview) -> Option<crate::engine::Entries> {
+    let (sending, said) = std::sync::mpsc::channel();
+    view.with_webview(move |platform| {
+        let _ = sending.send(crate::engine::history(&platform));
+    })
+    .ok()?;
+    said.recv_timeout(std::time::Duration::from_secs(2)).ok().flatten()
+}
+async fn engine_history(view: &Webview) -> Option<crate::engine::Entries> {
+    let view = view.clone();
+    tauri::async_runtime::spawn_blocking(move || engine_history_now(&view)).await.ok().flatten()
+}
+struct Telling {
+    app: AppHandle,
+    view: Webview,
+    tab: String,
+    url: String,
+    title: Option<String>,
+    loading: bool,
+}
+fn in_order(telling: Telling) {
+    static TELLING: std::sync::OnceLock<Mutex<std::sync::mpsc::Sender<Telling>>> =
+        std::sync::OnceLock::new();
+    let sender = TELLING.get_or_init(|| {
+        let (sender, told) = std::sync::mpsc::channel::<Telling>();
+        let _ = std::thread::Builder::new().name("web steps".into()).spawn(move || {
+            for one in told {
+                tell(one);
+            }
+        });
+        Mutex::new(sender)
+    });
+    if let Ok(sender) = sender.lock() {
+        let _ = sender.send(telling);
+    }
+}
+fn tell(told: Telling) {
+    let Telling { app, view, tab, url, title, loading } = told;
+    if app.get_webview(view.label()).is_none() {
+        return;
+    }
+    let engine = engine_history_now(&view);
+    let steps = app.try_state::<WebTabs>().map(|tabs| tabs.steps(&tab, engine)).unwrap_or_default();
+    let payload = Moved {
+        tab: tab.clone(),
+        url,
+        title: title.unwrap_or_default(),
+        back: steps.back(),
+        forward: steps.forward(),
+        loading,
+    };
+    let Ok(payload) = serde_json::to_value(payload) else {
+        return;
+    };
+    crate::web_steady::say(&app, view.window().label(), MOVED, &tab, loading, payload);
 }
 #[derive(Deserialize)]
 pub struct Pane {
@@ -480,7 +520,6 @@ pub async fn web_open(
     made?;
     crate::keyboard::built(&label_of(&tab));
     listening(&app, &tab, store, onward);
-    tabs.walked(&tab, &url);
     Ok(crate::web_cut::layering(&label_of(&tab)))
 }
 fn windows_asked(
@@ -603,28 +642,14 @@ fn say(
     if url == BLANK || crate::engine::internal(url) {
         return;
     }
-    let stepping = app.try_state::<WebTabs>().and_then(|tabs| {
-        tabs.trails.lock().ok().map(|mut open| {
-            let trail = open.entry(tab.to_string()).or_default();
-            if !loading && !url.is_empty() {
-                trail.loaded(url);
-            }
-            (trail.back(), trail.forward())
-        })
-    });
-    let (back, forward) = stepping.unwrap_or((false, false));
-    let payload = Moved {
+    in_order(Telling {
+        app: app.clone(),
+        view: view.clone(),
         tab: tab.to_string(),
         url: url.to_string(),
-        title: title.unwrap_or_default(),
-        back,
-        forward,
+        title,
         loading,
-    };
-    let Ok(payload) = serde_json::to_value(payload) else {
-        return;
-    };
-    crate::web_steady::say(app, view.window().label(), MOVED, tab, loading, payload);
+    });
 }
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
@@ -709,7 +734,7 @@ pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), Stri
     view.navigate(at).map_err(|error| format!("that address could not be opened: {error}"))
 }
 #[tauri::command]
-pub fn web_step(
+pub async fn web_step(
     app: AppHandle,
     tabs: tauri::State<'_, WebTabs>,
     tab: String,
@@ -725,18 +750,27 @@ pub fn web_step(
         Step::Back => -steps,
         Step::Forward => steps,
     };
-    if let Some(url) = tabs.stepping(&tab, by) {
-        let at = address(&url)?;
-        return view
-            .navigate(at)
-            .map_err(|error| format!("that page could not be stepped: {error}"));
-    }
-    view.eval(format!("history.go({by})"))
-        .map_err(|error| format!("that page could not be stepped: {error}"))
+    let steps = tabs.steps(&tab, engine_history(&view).await);
+    let Some(there) = steps.to(by) else {
+        return Ok(());
+    };
+    let going = if steps.kept {
+        let url = address(&steps.urls[there])?;
+        tabs.stepped(&tab, there);
+        format!("location.replace({})", serde_json::Value::String(url.to_string()))
+    } else {
+        format!("history.go({by})")
+    };
+    view.eval(going).map_err(|error| format!("that page could not be stepped: {error}"))
 }
 #[tauri::command]
-pub fn web_trail(tabs: tauri::State<'_, WebTabs>, tab: String) -> (Vec<String>, usize) {
-    tabs.walk(&tab)
+pub async fn web_trail(app: AppHandle, tab: String) -> (Vec<String>, usize) {
+    let engine = match app.get_webview(&label_of(&tab)) {
+        Some(view) => engine_history(&view).await,
+        None => None,
+    };
+    let steps = app.state::<WebTabs>().steps(&tab, engine);
+    (steps.urls, steps.at)
 }
 #[tauri::command]
 pub async fn web_look(
@@ -753,8 +787,15 @@ pub async fn web_look(
     let answer = waiting.recv().await.ok_or_else(|| "that page said nothing".to_string())?;
     let said = serde_json::from_str::<Looked>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))?;
-    let (trail, at) = tabs.walk(&tab);
-    Ok(Look { url: said.url, x: said.x, y: said.y, trail, at, edited: said.edited })
+    let steps = tabs.steps(&tab, engine_history(&view).await);
+    Ok(Look {
+        url: said.url,
+        x: said.x,
+        y: said.y,
+        trail: steps.urls,
+        at: steps.at,
+        edited: said.edited,
+    })
 }
 #[tauri::command]
 pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), String> {
@@ -816,6 +857,12 @@ pub async fn web_close(
 ) -> Result<(), String> {
     let label = label_of(&tab);
     unadopt(&tab);
+    if keep {
+        if let Some(view) = app.get_webview(&label) {
+            let steps = tabs.steps(&tab, engine_history(&view).await);
+            tabs.restore(&tab, steps.urls, steps.at);
+        }
+    }
     let (sending, mut waiting) = tauri::async_runtime::channel::<()>(1);
     let closing = app.clone();
     let named = tab.clone();
@@ -844,14 +891,8 @@ pub async fn web_close(
     if posted.is_ok() {
         let _ = waiting.recv().await;
     }
-    if let Ok(mut open) = tabs.trails.lock() {
-        if keep {
-            if let Some(trail) = open.get_mut(&tab) {
-                trail.engine = false;
-            }
-        } else {
-            open.remove(&tab);
-        }
+    if !keep {
+        tabs.forget(&tab);
     }
     Ok(())
 }
@@ -947,8 +988,8 @@ pub fn on_the_page(
 #[cfg(test)]
 mod tests {
     use super::{
-        address, allowed, becomes, handed_over, opening, reader, tab_of, Becomes, Place, Profile,
-        Trail, WebTabs, BLANK,
+        address, allowed, becomes, handed_over, opening, reader, steps_of, tab_of, Becomes, Place,
+        Profile, Steps, WebTabs, BLANK,
     };
     use tauri::Url;
 
@@ -1101,89 +1142,54 @@ mod tests {
             assert!(handed_over(&at(url)).is_none(), "{url}");
         }
     }
-    #[test]
-    fn a_trail_steps_back_and_forgets_what_was_ahead_when_somewhere_new() {
-        for (visits, urls, at, back, forward) in [
-            (&["a"][..], &["a"][..], 0, false, false),
-            (&["a", "b"], &["a", "b"], 1, true, false),
-            (&["a", "a"], &["a"], 0, false, false),
-            (&["a", "b", "a"], &["a", "b"], 0, false, true),
-            (&["a", "b", "a", "c"], &["a", "c"], 1, true, false),
-        ] {
-            let mut trail = Trail::default();
-            for one in visits {
-                trail.visited(one);
-            }
-            assert_eq!(trail.urls, urls, "{visits:?}");
-            assert_eq!(trail.at, at, "{visits:?}");
-            assert_eq!((trail.back(), trail.forward()), (back, forward), "{visits:?}");
-        }
+    fn engine(urls: &[&str], at: usize) -> crate::engine::Entries {
+        (urls.iter().map(|one| (*one).to_string()).collect(), at)
+    }
+    fn owned(urls: &[&str]) -> Vec<String> {
+        urls.iter().map(|one| (*one).to_string()).collect()
     }
     #[test]
-    fn an_address_that_redirects_is_one_step_where_it_landed() {
-        let mut trail = Trail::default();
-        trail.asked_for("http://short.example/a");
-        trail.loaded("https://long.example/a");
-        assert_eq!(trail.urls, ["https://long.example/a"]);
-        assert!(!trail.back());
-        trail.loaded("https://long.example/b");
-        assert!(trail.back());
-        assert_eq!(trail.urls.len(), 2);
-        let mut plain = Trail::default();
-        plain.asked_for("https://a.example/");
-        plain.loaded("https://a.example/");
-        plain.loaded("https://c.example/");
-        assert_eq!(plain.urls, ["https://a.example/", "https://c.example/"]);
+    fn the_steps_are_the_engine_s_own_entries_without_the_blank_page_the_tab_was_built_on() {
+        let a = "https://a.example/";
+        let b = "https://b.example/hop";
+        let first = steps_of(Some(engine(&[BLANK, a], 1)), None);
+        assert_eq!(first, Steps { urls: owned(&[a]), at: 0, kept: false });
+        assert!(!first.back());
+        assert!(!first.forward());
+        assert_eq!(first.to(-1), None);
+        let replaced = steps_of(Some(engine(&[BLANK, a, b], 2)), None);
+        assert_eq!(replaced.urls, owned(&[a, b]));
+        assert!(replaced.back() && !replaced.forward());
+        assert_eq!(replaced.to(-1), Some(0));
+        assert_eq!(replaced.to(-2), None);
+        let back = steps_of(Some(engine(&[BLANK, a, b], 1)), None);
+        assert!(!back.back() && back.forward());
+        assert_eq!(back.to(1), Some(1));
+        assert_eq!(back.to(2), None);
+        let seeded = steps_of(Some(engine(&[BLANK, "about:blank", a], 2)), None);
+        assert_eq!((seeded.urls.len(), seeded.at), (1, 0));
+        assert_eq!(steps_of(None, None), Steps::default());
+        assert_eq!(steps_of(Some(engine(&[BLANK], 0)), None), Steps::default());
     }
     #[test]
-    fn a_tab_opened_fresh_steps_through_the_engine_s_own_history() {
+    fn a_revived_trail_steps_by_address_until_the_page_goes_somewhere_of_its_own() {
+        let urls = owned(&["https://a.example/", "https://b.example/", "https://c.example/"]);
         let tabs = WebTabs::default();
-        for url in ["http://short.example/a", "https://b.example/"] {
-            tabs.walked("t", url);
-        }
-        assert_eq!(tabs.stepping("t", -1), None);
-        assert_eq!(tabs.stepping("t", 1), None);
-    }
-    #[test]
-    fn a_row_of_the_history_is_a_jump_that_keeps_the_trail() {
-        let tabs = WebTabs::default();
-        tabs.restore("t", vec!["https://a.example/".into()], 0);
-        for url in ["https://b.example/", "https://c.example/"] {
-            tabs.walked("t", url);
-        }
-        assert_eq!(tabs.stepping("t", -2), None);
-        tabs.walked("t", "https://a.example/");
-        assert_eq!(
-            tabs.walk("t"),
-            (
-                vec![
-                    "https://a.example/".to_string(),
-                    "https://b.example/".to_string(),
-                    "https://c.example/".to_string(),
-                ],
-                0,
-            )
-        );
-        assert_eq!(tabs.stepping("t", -1), None);
-        assert_eq!(tabs.stepping("t", 3), None);
-        assert_eq!(tabs.walk("t").1, 0);
-    }
-    #[test]
-    fn a_revived_page_jumps_by_address() {
-        let tabs = WebTabs::default();
-        tabs.restore(
-            "t",
-            vec![
-                "https://a.example/".into(),
-                "https://b.example/".into(),
-                "https://c.example/".into(),
-            ],
-            2,
-        );
-        assert_eq!(tabs.stepping("t", -2), Some("https://a.example/".to_string()));
-        tabs.walked("t", "https://a.example/");
-        assert_eq!(tabs.walk("t").0.len(), 3);
-        assert_eq!(tabs.stepping("t", 1), Some("https://b.example/".to_string()));
+        tabs.restore("t", urls.clone(), 2);
+        let revived = tabs.steps("t", Some(engine(&[BLANK, "https://c.example/"], 1)));
+        assert_eq!(revived, Steps { urls: urls.clone(), at: 2, kept: true });
+        assert_eq!(revived.to(-2), Some(0));
+        tabs.stepped("t", 0);
+        let stepped = tabs.steps("t", Some(engine(&[BLANK, "https://a.example/"], 1)));
+        assert_eq!((stepped.at, stepped.kept, stepped.forward()), (0, true, true));
+        let elsewhere =
+            tabs.steps("t", Some(engine(&[BLANK, "https://a.example/", "https://d.example/"], 2)));
+        assert_eq!(elsewhere.urls, owned(&["https://a.example/", "https://d.example/"]));
+        assert!(!elsewhere.kept);
+        assert!(!tabs.steps("t", Some(engine(&[BLANK, "https://a.example/"], 1))).kept);
+        tabs.restore("u", owned(&["https://a.example/"]), 0);
+        assert!(!tabs.steps("u", None).kept);
+        assert!(tabs.kept.lock().expect("kept").get("u").is_none());
     }
     #[test]
     fn orden_s_page_scripts_leave_the_page_s_world_alone() {
@@ -1307,14 +1313,13 @@ mod tests {
         assert_eq!(tab_of("main"), None);
     }
     #[test]
-    fn the_trail_is_kept_for_the_tab_that_walked_it() {
+    fn a_kept_trail_belongs_to_its_own_tab() {
         let tabs = WebTabs::default();
-        tabs.walked("a", "https://a.example/");
-        tabs.walked("a", "https://b.example/");
-        tabs.walked("b", "https://c.example/");
-        let trails = tabs.trails.lock().expect("the trails");
-        assert!(trails["a"].back());
-        assert!(!trails["b"].back());
+        tabs.restore("a", vec!["https://a.example/".into(), "https://b.example/".into()], 1);
+        assert!(tabs.steps("a", None).back());
+        assert!(!tabs.steps("b", None).back());
+        tabs.forget("a");
+        assert!(!tabs.steps("a", None).back());
     }
     #[test]
     fn the_reader_says_whether_it_wants_the_selection() {

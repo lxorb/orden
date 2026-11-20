@@ -240,6 +240,7 @@ pub(crate) fn page_id(
 }
 pub(crate) mod certificate;
 pub(crate) mod devtools;
+pub(crate) mod history;
 pub(crate) mod mute;
 pub(crate) mod renderer;
 pub(crate) mod scheme;
