@@ -1070,10 +1070,6 @@
       --tab-ground var(--dur-slow) var(--ease-out),
       opacity var(--dur-fast) var(--ease-out);
   }
-  .tab.chosen:not(.active)::before {
-    opacity: 1;
-    background: var(--surface-picked);
-  }
   .tab.active .fill::before,
   .tab.active .fill::after {
     content: '';

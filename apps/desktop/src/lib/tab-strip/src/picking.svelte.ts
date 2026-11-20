@@ -1,3 +1,4 @@
+import './chosen.css'
 import { untrack } from 'svelte'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
