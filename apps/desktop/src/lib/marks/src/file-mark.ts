@@ -1,7 +1,6 @@
 import type { Component } from 'svelte'
 import { type FileMark, surfaceLoad } from '@orden/contracts'
 import {
-  isApplicationTarget,
   isBaseTarget,
   isCanvasTarget,
   isChatTarget,
@@ -40,10 +39,6 @@ const Key: IconNode = [
   ['path', { d: 'm19 5 3 3' }],
   ['path', { d: 'm16 8 2 2' }],
 ]
-const Window: IconNode = [
-  ['rect', { width: '18', height: '20', x: '3', y: '2', rx: '2' }],
-  ['path', { d: 'M3 9h18' }],
-]
 const PAGE_TOP: IconNode = [
   [
     'path',
@@ -69,7 +64,6 @@ export function fileMark(name: string): FileMark {
   if (isBaseTarget(name)) return 'base'
   if (isChatTarget(name)) return 'chat'
   if (isTermTarget(name)) return 'terminal'
-  if (isApplicationTarget(name)) return 'application'
   if (isImageTarget(name)) return 'picture'
   if (isMarkdownPath(name) || PLAIN_TEXT.test(name)) return 'note'
   return 'file'
@@ -87,7 +81,6 @@ export const MARKS: Record<FileMark, IconNode> = {
   remote: Server,
   base: Table,
   chat: MessageSquare,
-  application: Window,
   key: Key,
   time: Clock,
   settings: Cog,

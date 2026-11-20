@@ -10,7 +10,6 @@ export interface Showing {
     | 'view'
     | 'chat'
     | 'channel'
-    | 'application'
     | 'explorer'
     | 'pass'
     | 'time'
