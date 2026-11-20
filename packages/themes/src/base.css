@@ -24,6 +24,12 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
+body {
+  height: calc(100% - var(--orden-band, 0px));
+}
+:root[data-orden-band] body {
+  contain: layout;
+}
 .orden-unselectable {
   -webkit-user-select: none;
   user-select: none;
@@ -371,15 +377,18 @@ select option {
   box-shadow: var(--shadow-lg);
 }
 :root:not([data-touch]) .orden-screen {
-  max-height: min(var(--screen-tall), calc(100dvh - var(--screen-top) - var(--screen-gutter)));
+  max-height: min(var(--screen-tall), calc(100dvh - var(--orden-band, 0px) - var(--screen-top) - var(--screen-gutter)));
 }
 :root:not([data-touch]) .orden-screen.is-centred {
   top: 50%;
   translate: -50% -50%;
-  max-height: min(var(--screen-tall), calc(100dvh - 2 * var(--screen-gutter)));
+  max-height: min(var(--screen-tall), calc(100dvh - var(--orden-band, 0px) - 2 * var(--screen-gutter)));
 }
 :root:not([data-touch]) .orden-screen.is-steady {
-  height: min(var(--screen-height, var(--screen-tall)), calc(100dvh - 2 * var(--screen-gutter)));
+  height: min(
+    var(--screen-height, var(--screen-tall)),
+    calc(100dvh - var(--orden-band, 0px) - 2 * var(--screen-gutter))
+  );
 }
 :where(button, [role='button'], [role='menuitem'], [role='tab'], a[href], input, select, textarea):disabled,
 :where(button, [role='button'], [role='menuitem'], [role='tab'], a[href])[aria-disabled='true'],
