@@ -6,10 +6,7 @@ import { samePath, spaceHolding } from '../../../platform/src/api'
 import { protectionOn } from './gate'
 import { unlocks, protection } from '../../../protect/src/api'
 
-const unlocking = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
-    : import('./unlocking')
+const unlocking = () => import('./unlocking')
 const failed = (error: unknown) =>
   busy.failed(`That did not work: ${error instanceof Error ? error.message : String(error)}`)
 export const LOCK_MARK: IconNode = [
@@ -24,7 +21,7 @@ function rootOf(path: string): string | null {
   return spaceHolding(workspaceView().spaces, path)?.root ?? null
 }
 export function protectEntries(path: string | null | undefined): ProtectRow[] {
-  if (__EVEN_PLUGIN__ || !path) return []
+  if (!path) return []
   const root = rootOf(path)
   if (root === null) return []
   const locks = protection.covering(path)

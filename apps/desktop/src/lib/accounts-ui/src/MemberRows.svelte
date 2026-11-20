@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Facts, initial } from '../../ui-kit/src/api'
+  import { Facts } from '../../ui-kit/src/api'
   import { type share as shareStore, whoIs } from '../../sharing/src/api'
   import { account, called } from '../../accounts/src/api'
   import type { Face, Member, MemberRole, Sharing } from '../../accounts/src/api'
@@ -34,7 +34,7 @@
   })
   const pressFor = (person: { id?: string | null }) => {
     const id = person.id
-    return id && !__EVEN_PLUGIN__
+    return id
       ? (event: MouseEvent) => {
           const from = event.currentTarget as Element
           void import('./card.svelte').then((card) => {
@@ -43,7 +43,7 @@
         }
       : undefined
   }
-  const avatars = __EVEN_PLUGIN__ ? null : import('./Avatar.svelte')
+  const avatars = import('./Avatar.svelte')
   const roleOf = (person: Member) => (person.admin ? 'admin' : person.role)
   function menuFor(person: Member) {
     return [
@@ -62,11 +62,7 @@
 
 {#snippet face(worn: Face, press: ((event: MouseEvent) => void) | undefined)}
   {#await avatars then got}
-    {#if got}
-      <got.default face={worn} onpress={press} />
-    {:else}
-      <span class="orden-badge" aria-hidden="true">{initial(worn.name)}</span>
-    {/if}
+    <got.default face={worn} onpress={press} />
   {/await}
 {/snippet}
 

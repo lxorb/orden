@@ -282,7 +282,6 @@ describe('the badge in front of a name', () => {
       .map((one) => one.name)
       .sort()
     expect(wearing).toEqual([
-      'lib/accounts-ui/src/MemberRows.svelte',
       'lib/accounts-ui/src/ShareSheet.svelte',
       'lib/accounts/src/AccountBadge.svelte',
       'lib/agents/src/settings/AgentMark.svelte',
