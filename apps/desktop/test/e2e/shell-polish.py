@@ -521,8 +521,8 @@ def panel_ends(page: Page, label: str, phone: bool = False) -> None:
         return
     kept = [one["name"] for one in foot["acts"] if one["name"] != "Download the app"]
     check(
-        len(kept) == 3 and kept[0] == "Send feedback" and kept[2] == "Settings",
-        f"[{label}] the foot holds Send feedback, the theme and the settings ({kept})",
+        kept == ["Send feedback", "Settings"],
+        f"[{label}] the foot holds Send feedback and the settings, the theme being in the account menu ({kept})",
     )
     for one in foot["acts"]:
         check(
