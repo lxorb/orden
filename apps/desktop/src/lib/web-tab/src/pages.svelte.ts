@@ -40,6 +40,12 @@ const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
 const BLANK_WAITS = 3000
 const AFTER_COMMIT = 1200
+const ARRIVAL_WAITS = 100
+const overlaps = (one: Rect, other: Rect): boolean =>
+  one.x < other.x + other.width &&
+  other.x < one.x + one.width &&
+  one.y < other.y + other.height &&
+  other.y < one.y + one.height
 const ARRIVES = 3000
 export interface Rect {
   x: number
@@ -239,6 +245,7 @@ class Pages {
   private readonly goingTo = new WeakMap<Page, string>()
   private readonly movedWhileTyping = new WeakSet<Page>()
   private listening: Promise<void> | null = null
+  private readonly arriving = new Set<{ pane: Rect; done: Promise<void> }>()
   each(): [string, Page][] {
     return [...this.held.entries()]
   }
@@ -275,7 +282,15 @@ class Pages {
   typedInto(tabId: string): boolean {
     return (this.held.get(tabId)?.halfTyped ?? null) !== null
   }
-  async show(tabId: string, url: string, pane: Rect, visible = true, over: Over = NOTHING): Promise<void> {
+  show(tabId: string, url: string, pane: Rect, visible = true, over: Over = NOTHING): Promise<void> {
+    const done = this.showing(tabId, url, pane, visible, over)
+    if (!visible || !this.held.get(tabId)?.live) return done
+    const one = { pane, done }
+    this.arriving.add(one)
+    void done.finally(() => this.arriving.delete(one))
+    return done
+  }
+  private async showing(tabId: string, url: string, pane: Rect, visible: boolean, over: Over): Promise<void> {
     this.gone.delete(tabId)
     const page = this.of(tabId)
     this.wake(page)
@@ -556,9 +571,15 @@ class Pages {
     page.heldAt = null
     page.looked = Date.now()
     if (isDesktop && page.live && page.lent) void this.aside(tabId, page, pane)
-    else void this.place(tabId, pane, false)
+    else void this.afterArrivals(pane).then(() => (page.onScreen ? undefined : this.place(tabId, pane, false)))
     if (!isDesktop) return
     void this.look(tabId).then(() => this.rest(tabId))
+  }
+  private async afterArrivals(pane: Rect): Promise<void> {
+    await Promise.resolve()
+    const into = [...this.arriving].filter((one) => overlaps(one.pane, pane)).map((one) => one.done)
+    if (into.length === 0) return
+    await Promise.race([Promise.all(into), new Promise((go) => setTimeout(go, ARRIVAL_WAITS))])
   }
   async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
     await this.put(tabId, page, awayFrom(pane))

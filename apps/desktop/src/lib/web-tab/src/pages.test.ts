@@ -1375,3 +1375,35 @@ test('a page glanced at before the overview opens is pictured quick, as small as
   await settle()
   expect(last('web_shot')).toEqual({ tab: 'a', quick: true })
 })
+describe('two web tabs switched in one pane', () => {
+  const places = () =>
+    calls.filter((one) => one.command === 'web_place').map((one) => [one.args.tab, one.args.visible] as const)
+  test('the one coming in is placed before the one going is hidden, so the pane never stands empty', async () => {
+    await built('s0')
+    await built('s1')
+    pages.hide('s1', PANE)
+    await settle()
+    calls.length = 0
+    pages.hide('s0', PANE)
+    void pages.show('s1', SITE, PANE)
+    await settle()
+    expect(places()).toEqual([
+      ['s1', true],
+      ['s0', false],
+    ])
+  })
+  test('a page going from a pane nothing comes into is hidden at once, whatever comes into another', async () => {
+    const beside = { ...PANE, x: PANE.x + PANE.width + 10 }
+    await built('u0', SITE, beside)
+    await built('u1')
+    pages.hide('u1', PANE)
+    await settle()
+    calls.length = 0
+    pages.hide('u0', beside)
+    void pages.show('u1', SITE, PANE)
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(places()).toEqual([['u0', false]])
+    await settle()
+  })
+})
