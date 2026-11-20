@@ -1215,10 +1215,12 @@ describe('chats', () => {
       const linked = await chatOfOwner()
       await chatFile('Thesis.chat', chatText({ v: 1, chat: linked }))
       const device = connect(running.of(ids.reader).hub, { device: 'device-phone', who: ids.reader })
+      const laptop = connect(running.of(ids.owner).hub, { device: 'device-owner-laptop', who: ids.owner })
       expect((await remove(people.writer, unlinked)).status).toBe(204)
       expect((await remove(people.owner, linked)).status).toBe(204)
       for (const token of [people.owner, people.writer, people.reader]) expect(await list(token)).toEqual([])
       expect(device.take().map((one) => (one as { chat?: string }).chat)).toEqual([unlinked, linked])
+      expect(laptop.take().map((one) => (one as { chat?: string }).chat)).toEqual([unlinked, linked])
       expect((await call(env, `/v2/chats/${linked}/events`, { token: people.owner })).status).toBe(404)
     })
     test('again is still done, and a chat nobody knows is not found', async () => {
