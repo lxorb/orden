@@ -8,6 +8,23 @@ html:root,
 :root > body {
   background: var(--bg);
 }
+html:root {
+  --font-ui-chosen: 'Geist Variable';
+  --brand-sky: #c3dbf9;
+  --brand-lilac: #d2d2f3;
+  --brand-rose: #e4c9ed;
+  --brand-ink: #1b2133;
+  --brand: linear-gradient(135deg, var(--brand-sky), var(--brand-lilac) 50%, var(--brand-rose));
+  --brand-edge: transparent;
+  --brand-glow: 0.2;
+  --focus-ring: 2px solid var(--brand-lilac);
+  --selection: rgb(210 210 243 / 0.3);
+}
+html:root[data-theme='light'] {
+  --brand-edge: rgb(27 33 51 / 0.1);
+  --brand-glow: 0.75;
+  --focus-ring: 2px solid var(--brand-ink);
+}
 .track {
   position: relative;
 }
@@ -53,6 +70,21 @@ html:root,
 .actions {
   margin-top: clamp(28px, 5.5svh, 52px);
 }
+.orden-button.is-brand,
+.orden-button.is-brand:hover:not(:disabled),
+.orden-button.is-brand:active:not(:disabled) {
+  background: var(--brand);
+  box-shadow: inset 0 0 0 1px var(--brand-edge);
+  color: var(--brand-ink);
+}
+@media (hover: hover) {
+  .orden-button.is-brand:hover:not(:disabled) {
+    filter: brightness(1.05) saturate(1.1);
+  }
+}
+.orden-button.is-brand:active:not(:disabled) {
+  filter: brightness(0.96);
+}
 .orden-button.is-big {
   min-width: 14em;
   min-height: 48px;
@@ -72,7 +104,10 @@ html:root,
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(56% 48% at 50% 72%, var(--accent-soft), transparent 72%);
+  background:
+    radial-gradient(30% 28% at 38% 74%, rgb(195 219 249 / var(--brand-glow)), transparent 72%),
+    radial-gradient(30% 28% at 62% 76%, rgb(228 201 237 / var(--brand-glow)), transparent 72%),
+    radial-gradient(62% 54% at 50% 74%, rgb(210 210 243 / calc(var(--brand-glow) * 0.7)), transparent 74%);
   pointer-events: none;
 }
 .caption {

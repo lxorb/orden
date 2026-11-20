@@ -1,6 +1,15 @@
+import '@fontsource-variable/geist'
 import './home.css'
 import { DEMO_PHONE_SRC, DEMO_SRC, isDemoReady } from './demo-cue'
-import { APP_HREF, downloadFor, LATEST_RELEASE_API, releaseAssets, type ReleaseAsset, type Visitor } from './links'
+import {
+  downloadFor,
+  LATEST_RELEASE_API,
+  originsAt,
+  releaseAssets,
+  type Origins,
+  type ReleaseAsset,
+  type Visitor,
+} from './links'
 import { cueOf, deviceTransform, frameOf, storyAt, type Track } from './story'
 
 const PHONE = '(max-width: 719.98px)'
@@ -42,7 +51,7 @@ function followTheme(view: Window) {
   apply()
   light.addEventListener('change', apply)
 }
-function offerDownload(view: Window) {
+function offerDownload(view: Window, origins: Origins) {
   const { navigator } = view
   let visitor: Visitor = { userAgent: navigator.userAgent, touchPoints: navigator.maxTouchPoints }
   let assets: ReleaseAsset[] = []
@@ -54,7 +63,7 @@ function offerDownload(view: Window) {
     }
   }
   paint()
-  for (const link of view.document.querySelectorAll<HTMLAnchorElement>('a[data-app]')) link.href = APP_HREF
+  for (const link of view.document.querySelectorAll<HTMLAnchorElement>('a[data-app]')) link.href = `${origins.app}/`
   const asked = (navigator as Agent).userAgentData?.getHighEntropyValues?.(['architecture'])
   asked?.then(
     ({ architecture }) => {
@@ -82,8 +91,9 @@ function whenIdle(view: Window, run: () => void) {
   else view.addEventListener('load', later, { once: true })
 }
 export function showHome(view: Window) {
+  const origins = originsAt(view.location)
   followTheme(view)
-  offerDownload(view)
+  offerDownload(view, origins)
   const page = pageIn(view.document)
   if (!page) return
   const phone = view.matchMedia(PHONE)
@@ -107,7 +117,7 @@ export function showHome(view: Window) {
     if (page.coda.inert !== shut) page.coda.inert = shut
     const seen = frame.close > 0 ? 'visible' : 'hidden'
     if (page.coda.style.visibility !== seen) page.coda.style.visibility = seen
-    if (ready) page.demo.contentWindow?.postMessage(cueOf(point, still.matches), view.location.origin)
+    if (ready) page.demo.contentWindow?.postMessage(cueOf(point, still.matches), origins.app)
   }
   const schedule = () => {
     if (asked) return
@@ -129,10 +139,10 @@ export function showHome(view: Window) {
     wanted = true
     ready = false
     page.device.classList.remove('is-ready')
-    page.demo.src = phone.matches ? DEMO_PHONE_SRC : DEMO_SRC
+    page.demo.src = origins.app + (phone.matches ? DEMO_PHONE_SRC : DEMO_SRC)
   }
   view.addEventListener('message', (event: MessageEvent) => {
-    if (event.origin !== view.location.origin || event.source !== page.demo.contentWindow) return
+    if (event.origin !== origins.app || event.source !== page.demo.contentWindow) return
     if (!isDemoReady(event.data)) return
     ready = true
     page.device.classList.add('is-ready')

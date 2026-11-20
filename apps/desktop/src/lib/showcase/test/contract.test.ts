@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
-  APP_HREF,
+  APP_ORIGIN,
   cueOf,
   DEMO_PHONE_SRC,
   DEMO_SCENES,
@@ -11,7 +11,11 @@ import {
   isDemoReady,
   LATEST_RELEASE,
   LATEST_RELEASE_API,
+  originsAt,
   releaseAssets,
+  siteAnswer,
+  siteFiles,
+  SITE_ORIGIN,
   storyAt,
   type DemoCue,
 } from '../src/api'
@@ -166,7 +170,52 @@ describe('the download button', () => {
     expect(releaseAssets('not json')).toEqual([])
     expect(LATEST_RELEASE_API).toBe('https://api.github.com/repos/lxorb/orden/releases/latest')
   })
-  test('and Try it out opens the app', () => {
-    expect(APP_HREF).toBe('/')
+})
+describe('the two addresses', () => {
+  test('orden.so is the site and app.orden.so the app, seen from either', () => {
+    expect(SITE_ORIGIN).toBe('https://orden.so')
+    expect(APP_ORIGIN).toBe('https://app.orden.so')
+    for (const hostname of ['orden.so', 'app.orden.so'])
+      expect(originsAt({ origin: `https://${hostname}`, hostname })).toEqual({ site: SITE_ORIGIN, app: APP_ORIGIN })
+  })
+  test('anywhere else, such as a preview, the page and the app share one origin', () => {
+    const preview = { origin: 'http://127.0.0.1:4791', hostname: '127.0.0.1' }
+    expect(originsAt(preview)).toEqual({ site: preview.origin, app: preview.origin })
+  })
+})
+describe('the site Worker on orden.so', () => {
+  const page = '<!doctype html><title>Orden</title>'
+  const assets = {
+    fetch: (request: Request) =>
+      Promise.resolve(
+        new URL(request.url).pathname === '/'
+          ? new Response(page, { headers: { 'content-type': 'text/html' } })
+          : new Response('Not found', { status: 404 }),
+      ),
+  }
+  const answer = (url: string, method = 'GET') => siteAnswer(new Request(url, { method }), assets)
+  test('shows the home page at the root, and lets nobody frame it', async () => {
+    const shown = await answer('https://orden.so/')
+    expect(shown.status).toBe(200)
+    expect(await shown.text()).toBe(page)
+    expect(shown.headers.get('content-security-policy')).toBe("frame-ancestors 'none'")
+    expect(shown.headers.get('x-frame-options')).toBe('DENY')
+  })
+  test('sends every old link into the app at app.orden.so, path and query kept', async () => {
+    for (const [from, to] of [
+      ['https://orden.so/?channel=unstable', 'https://app.orden.so/?channel=unstable'],
+      ['https://orden.so/?demo', 'https://app.orden.so/?demo'],
+      ['https://orden.so/join/abc', 'https://app.orden.so/join/abc'],
+      ['https://orden.so/pass-link/xyz', 'https://app.orden.so/pass-link/xyz'],
+    ] as const) {
+      const sent = await answer(from)
+      expect(sent.status, from).toBe(301)
+      expect(sent.headers.get('location'), from).toBe(to)
+    }
+    expect((await answer('https://orden.so/', 'POST')).status).toBe(308)
+  })
+  test('keeps its built files for a year, by name', () => {
+    expect(siteFiles()._headers).toContain('/home/*')
+    expect(siteFiles()._headers).toContain('immutable')
   })
 })
