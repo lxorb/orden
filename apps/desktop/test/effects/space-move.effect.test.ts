@@ -30,6 +30,7 @@ await import('../../src/lib/workspace/src/sets.svelte')
 const { pane } = await import('../../src/lib/panes/src/api')
 const { moveToSpace } = await import('../../src/lib/workspace/src/moving-space')
 const { written } = await import('../../src/lib/parting/src/api')
+const { prompt } = await import('../../src/lib/ui-kit/src/prompt.svelte')
 const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'
 const FOOD = '/spaces/Home/Food.md'
@@ -58,6 +59,7 @@ beforeEach(async () => {
   one.files.set(IDEAS, '# Ideas\n')
   one.files.set(FOOD, '# Food\n')
   histories.length = 0
+  vi.spyOn(prompt, 'choose').mockResolvedValue('file')
   workspace.spaces = [
     { id: 'work', name: 'Work', root: '/spaces/Work' },
     { id: 'home', name: 'Home', root: '/spaces/Home' },

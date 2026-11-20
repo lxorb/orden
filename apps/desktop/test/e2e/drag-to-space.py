@@ -141,6 +141,9 @@ def desktop(browser: Browser) -> None:
     DRIVE.settled(page)
     carry_to_switcher(page, f'[data-tab="{tab}"]')
     drop_on(page, work, "tab")
+    page.get_by_role("button", name="Move the file too").click(timeout=10000)
+    DRIVE.settled(page)
+    page.wait_for_timeout(600)
     moved(page, "tab", ids, "Draft.md")
     path = page.evaluate("(id) => window.ordenApp.workspace.tabs.find((one) => one.id === id)?.path ?? null", tab)
     if path != join(ids["work"]["root"], "Draft.md"):
