@@ -10,6 +10,7 @@ import {
 } from '@orden/editor'
 import type { EmbeddedNote } from '@orden/markdown'
 import { oneEdit } from '@orden/markdown/edits'
+import { paperOf } from '@orden/markdown/paper'
 import {
   blockIdOf,
   blockIds,
@@ -144,7 +145,6 @@ function stillReaches(
   }
   return ends(at, written) || ends(shownName(at), written)
 }
-const paperOf = (pages: string): string => `${pages}.pdf`
 function carried(was: string, now: string): (path: string) => string | null {
   const paper = isPagesTarget(was) && isPagesTarget(now) ? paperOf(was) : null
   return (path) => {
