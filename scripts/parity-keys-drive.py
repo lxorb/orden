@@ -48,6 +48,7 @@ html,body{margin:0;background:#ff00ff;height:100%;overflow:hidden;font:14px sans
 <script>
 const field = document.getElementById('field')
 const said = { who: location.search.slice(1) || 'main', log: [], answers: {}, asked: {} }
+if (said.who !== 'main') document.title = 'keys ' + said.who
 let sent = 0
 const tell = () => {
   said.focus = document.hasFocus()
@@ -856,6 +857,97 @@ return true
             self.row(4, check, None, None, None, unsure)
         else:
             self.judged(4, check, said["web"], said["note"])
+    def strip_click(self, tab: str) -> bool:
+        box = self.js(f"(() => {{ const one = [...document.querySelectorAll('.pick[data-tab=\"' + {json.dumps(tab)} + '\"]')].find((it) => it.getBoundingClientRect().width > 0); const r = one?.getBoundingClientRect(); return r ? {{ x: r.x + r.width / 2, y: r.y + r.height / 2 }} : null }})()")
+        if not isinstance(box, dict):
+            return False
+        self.keys.click(*self.screen.at(box["x"], box["y"]))
+        return True
+    def by_number(self, tab: str) -> bool:
+        at = self.js(f"orden.workspace.tabsIn(orden.workspace.panes.focusedId).findIndex((one) => one.id === {json.dumps(tab)})")
+        if not isinstance(at, int) or not 0 <= at < 8:
+            return False
+        self.keys.chord(f"Mod-{at + 1}" if MAC else f"Mod-Alt-{at + 1}")
+        return True
+    def by_overview(self, tab: str) -> bool:
+        name = self.js(f"orden.workspace.tabs.find((one) => one.id === {json.dumps(tab)})?.shown")
+        if not isinstance(name, str):
+            return False
+        self.keys.chord("Alt Alt")
+        if self.app.until(f"{OVERVIEW} || null", 4) is None:
+            return False
+        time.sleep(0.8)
+        spot = self.js(importlib.import_module("overview_pick").bubble(name))
+        if not isinstance(spot, dict):
+            self.keys.chord("Escape")
+            return False
+        self.keys.click(*self.screen.at(spot["x"], spot["y"]))
+        return self.app.until(f"!{OVERVIEW} || null", 4) is not None
+    def typed_page(self, who: str) -> str | None:
+        self.show(self.ids["web"])
+        self.focus_page()
+        self.keys.chord("Mod-t")
+        if self.app.until("(document.activeElement?.closest?.('.webbar') && document.activeElement.tagName === 'INPUT') || null", 4) is None:
+            return None
+        tab = self.js("orden.workspace.activeTabId")
+        self.js(f"const one = document.activeElement; one.value = {json.dumps(self.url + '?' + who)}; one.dispatchEvent(new Event('input', {{ bubbles: true }})); return true")
+        time.sleep(0.3)
+        self.keys.chord("Return")
+        if not isinstance(tab, str) or self.app.until(f"orden.pages.each().some(([id, one]) => id === {json.dumps(tab)} && one.live && one.sent && one.sent.visible) || null", 40) is None:
+            return None
+        time.sleep(1.5)
+        return tab
+    def web_return(self) -> None:
+        check = "a loaded web tab entered again gives the keyboard to its page, never its address"
+        self.reset()
+        made = [self.typed_page(who) for who in ("second", "third")]
+        if not all(made):
+            self.row(4, check, made, None, None, "a web tab could not be opened from a new tab's address")
+            return
+        first, second = made
+        pages = {first: "second", second: "third"}
+        ready = {}
+        for tab, who in pages.items():
+            self.show(tab)
+            ready[who] = self.focus_page(who)
+        if not all(ready.values()):
+            self.row(4, check, ready, None, None, "a page could not be given the keyboard by a click")
+            return
+        address = "(() => { const one = document.activeElement; const bar = !!one?.closest?.('.webbar') && one.tagName === 'INPUT'; return { tab: orden.workspace.activeTabId, active: " + DESCRIBE + "(one), address: bar, picked: bar && one.selectionStart !== one.selectionEnd } })()"
+        ways: list[tuple[str, Callable[[str], bool]]] = [("a click on its tab", self.strip_click), ("its number", self.by_number), ("the overview", self.by_overview)]
+        legs = [(first, self.ids["three"], first, "note"), (second, None, first, "web"), (first, None, second, "web")]
+        for name, way in ways:
+            said: list[dict[str, Any]] = []
+            ok = True
+            for start, away, back, kind in legs:
+                self.show(start)
+                self.focus_page(pages[start])
+                went = way(away) if away else True
+                if away:
+                    time.sleep(1.0)
+                came = way(back)
+                time.sleep(1.2)
+                state = self.js(address)
+                token = self.token()
+                asked = time.monotonic()
+                self.keys.typed(token)
+                time.sleep(0.6)
+                page = token in str(page_said(pages[back], asked + 0.3).get("value", ""))
+                typed_address = self.js(f"[...document.querySelectorAll('.webbar input')].some((one) => one.value.includes({json.dumps(token)}))") is True
+                said.append({"from": kind, "went": went, "came": came, "state": state, "typed in the page": page, "typed in the address": typed_address})
+                ok = ok and went and came and isinstance(state, dict) and state.get("tab") == back and not state.get("address") and not state.get("picked") and page and not typed_address
+            self.row(4, f"{check}: by {name}", said, "no note counterpart: a note has no address", ok)
+        self.reset()
+        before = self.js("orden.workspace.tabs.length")
+        self.show(self.ids["web"])
+        self.focus_page()
+        self.keys.chord("Mod-t")
+        time.sleep(1.2)
+        state = self.js(address)
+        made = self.js("orden.workspace.tabs.length")
+        fresh = isinstance(before, int) and isinstance(made, int) and made > before
+        self.row(4, "a new empty tab (Mod-t) starts in its address", {"opened": fresh, "state": state}, "no note counterpart", fresh and isinstance(state, dict) and state.get("address") is True)
+        self.reset()
     def dead_keys(self) -> None:
         layout = self.dead_layout()
         if layout is not None:
@@ -1488,6 +1580,7 @@ def main() -> int:
         drive.reader()
         drive.shortcuts()
         drive.focus_moves()
+        drive.web_return()
         drive.dead_keys()
         drive.menu_regressions()
         drive.page_ui()
