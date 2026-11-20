@@ -214,7 +214,7 @@
   .setup :global(.o-list > *) {
     position: relative;
   }
-  .setup :global(.o-list > * + *::before) {
+  .setup :global(.o-list > :not(:first-child)::before) {
     content: '';
     position: absolute;
     top: 0;
