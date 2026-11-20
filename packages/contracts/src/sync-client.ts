@@ -112,6 +112,7 @@ export interface SyncDescribing {
 export interface SyncWriteHearing {
   there(path: string): Promise<boolean>
   made(path: string): Promise<void>
+  changed?(path: string): Promise<void>
   wrote(path: string, content: string): void
 }
 export interface SyncSpace {
