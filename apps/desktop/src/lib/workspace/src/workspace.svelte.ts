@@ -32,7 +32,6 @@ import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from '../../link-index/src/api'
 import {
-  isPlugin,
   onDisk,
   insideOnly,
   askCase,
@@ -758,7 +757,7 @@ class Workspace {
     }
   }
   private async readSitting() {
-    if (!isNative && !isPlugin()) {
+    if (!isNative) {
       try {
         if (await seed()) {
           ;(await import('./first-visit.svelte')).firstVisit.seeded()
@@ -1472,7 +1471,6 @@ class Workspace {
     return tab.id
   }
   async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
-    if (__EVEN_PLUGIN__) return
     void surfaceLoad('pages').catch(() => undefined)
     const path = this.spelled(asked)
     const held = isPagesTarget(path) ? path : await this.heldBy(path)
@@ -1550,7 +1548,6 @@ class Workspace {
     return { pdf, root: this.rootHolding(path), move }
   }
   async openCanvas(asked: string, how: OpenHow = {}) {
-    if (__EVEN_PLUGIN__) return
     const path = this.spelled(asked)
     this.showTab(await this.opened.opening(path, () => this.openPlane(path, how)), how)
   }
@@ -1612,7 +1609,6 @@ class Workspace {
     return file
   }
   async openWeb(asked: string, how: OpenHow = {}) {
-    if (isPlugin()) return
     const path = this.spelled(asked)
     const held = this.opened.at(path)
     if (held) {
@@ -1693,7 +1689,7 @@ class Workspace {
     return services().sites.convertWebsites(this)
   }
   openWebsite(inPrivate = false) {
-    if (__EVEN_PLUGIN__ || viewport.touch) return
+    if (viewport.touch) return
     const file = this.document({
       kind: 'web',
       path: null,
@@ -1711,7 +1707,7 @@ class Workspace {
     this.persist()
   }
   openPage(url: string, ask: TabAsk = 'plain', opener?: string): string | null {
-    if (__EVEN_PLUGIN__ || viewport.touch) return null
+    if (viewport.touch) return null
     const back = ask === 'behind' && !viewport.touch
     const from = this.tabs.find((one) => one.id === opener)
     const pane = from?.paneId ?? this.panes.focusedId
@@ -1741,7 +1737,7 @@ class Workspace {
     return tab.id
   }
   async createWebsite(folder?: string, named?: string) {
-    if (__EVEN_PLUGIN__ || viewport.touch) return
+    if (viewport.touch) return
     const dir = folder ?? this.activeSpace?.root
     if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('web', dir)) return
@@ -1797,7 +1793,6 @@ class Workspace {
     }
   }
   async openPages(asked: string, page: number | null = null, how: OpenHow = {}) {
-    if (__EVEN_PLUGIN__) return
     const path = this.spelled(asked)
     await this.holdPaperBeside(path)
     const tab = this.showTab(await this.opened.opening(path, () => this.openDeck(path, page, how)), how)
@@ -1884,10 +1879,7 @@ class Workspace {
     return tab
   }
   async openEntry(path: string, options: OpenHow = {}) {
-    const opener = openerFor(path, (one) => links.urlOf(one) !== null, {
-      evenBuild: __EVEN_PLUGIN__,
-      isPlugin: isPlugin(),
-    })
+    const opener = openerFor(path, (one) => links.urlOf(one) !== null)
     switch (opener) {
       case null:
         return
@@ -1904,7 +1896,6 @@ class Workspace {
         await this.openCanvas(path, options)
         return
       case 'view': {
-        if (__EVEN_PLUGIN__) return
         if (!basesOn()) {
           busy.failed('Databases are off. Turn them on in Settings.')
           return
@@ -1913,10 +1904,10 @@ class Workspace {
         return
       }
       case 'chat':
-        if (!__EVEN_PLUGIN__) await (await tabKindLoaded('chat')).open?.(path, options)
+        await (await tabKindLoaded('chat')).open?.(path, options)
         return
       case 'term':
-        if (!__EVEN_PLUGIN__) await (await tabKindLoaded('terminal')).open?.(path, options)
+        await (await tabKindLoaded('terminal')).open?.(path, options)
         return
       case 'note':
         await this.open(path, options)
@@ -2238,7 +2229,7 @@ class Workspace {
     if (!tab) return
     if (ask !== 'plain') void this.stepAside(tab, by, ask)
     else if (tab.kind === 'web') void webPages().step(tab.id, by < 0 ? 'back' : 'forward')
-    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer') void services().explorerStep(tab, by)
+    else if (tab.kind === 'explorer') void services().explorerStep(tab, by)
     else void this.walk(tab.at + by, tab.id)
   }
   private async stepAside(tab: Tab, by: -1 | 1, ask: TabAsk) {
@@ -2286,7 +2277,6 @@ class Workspace {
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
   private async mayClose(shown: readonly Tab[], again: () => void): Promise<boolean> {
-    if (__EVEN_PLUGIN__) return true
     const closing = this.withTwins(shown)
     if (closing.some(unsaved)) {
       const { mayLose } = await import('./closing-unsaved')
@@ -2589,11 +2579,11 @@ class Workspace {
     return invoke<string | null>('same_pdf', { from, space: root }).catch(() => null)
   }
   async draftPdf(from: string): Promise<void> {
-    const open = __EVEN_PLUGIN__ ? null : await (await services().pdfPages()).draftPdf(this, from)
+    const open = await (await services().pdfPages()).draftPdf(this, from)
     if (open) this.showTab(open.note)
   }
   async keepPaper(note: NoteDoc, path: string): Promise<void> {
-    if (!__EVEN_PLUGIN__) await (await services().pdfPages()).keepPaper(this, note, path)
+    await (await services().pdfPages()).keepPaper(this, note, path)
   }
   private async copied(landed: string[], into: string | null) {
     if (!landed.length) return
@@ -2764,7 +2754,7 @@ class Workspace {
       this.showPanel('tree')
       return
     }
-    if (!__EVEN_PLUGIN__ && this.archive.has(path)) {
+    if (this.archive.has(path)) {
       this.showPanel('tree')
       services().showArchive(path)
       return
@@ -3148,13 +3138,13 @@ class Workspace {
   }
   private opensOwnKind(path: string): boolean {
     const isUrlNote = (one: string) => links.urlOf(one) !== null
-    const opener = openerFor(path, isUrlNote, { evenBuild: __EVEN_PLUGIN__, isPlugin: isPlugin() })
+    const opener = openerFor(path, isUrlNote)
     return opener === 'view' || opener === 'chat' || opener === 'term'
   }
   private opensInNoTab(path: string): boolean {
     if (isMarkdownPath(path) || PLAIN_TEXT.test(path)) return false
     const isUrlNote = (one: string) => links.urlOf(one) !== null
-    return openerFor(path, isUrlNote, { evenBuild: __EVEN_PLUGIN__, isPlugin: isPlugin() }) === 'note'
+    return openerFor(path, isUrlNote) === 'note'
   }
   private async revealLinked(path: string) {
     await (await import('../../files-out/src/api')).reveal(path)
@@ -3370,7 +3360,7 @@ class Workspace {
     return copy
   }
   private plainCopyOf(tab: Tab, paneId: string): Tab {
-    const words = !__EVEN_PLUGIN__ && tab.kind === 'terminal' && tab.path === null ? shellWords(tab.doc) : null
+    const words = tab.kind === 'terminal' && tab.path === null ? shellWords(tab.doc) : null
     if (!words) return new Tab(tab.note, paneId)
     const note = this.document({
       kind: 'terminal',

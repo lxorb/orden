@@ -31,8 +31,7 @@ const PATH = 'Work/Meeting 2026-09-12 1432.md'
 describe('a meeting note already on a disk', () => {
   test('opens as a note, in the app and in the plugin', () => {
     const isUrlNote = () => webUrlOf(OLD_MEETING) !== null
-    expect(openerFor(PATH, isUrlNote, { evenBuild: false, isPlugin: false })).toBe('note')
-    expect(openerFor(PATH, isUrlNote, { evenBuild: true, isPlugin: true })).toBe('note')
+    expect(openerFor(PATH, isUrlNote)).toBe('note')
   })
   test('syncs as a note', () => {
     expect(kindOfName('Meeting 2026-09-12 1432.md')).toBe('note')

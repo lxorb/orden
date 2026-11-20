@@ -10,19 +10,15 @@ import {
 import { isMarkdownPath } from '../../platform/src/api'
 
 export type Opener = 'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'term' | 'note'
-export interface Build {
-  evenBuild: boolean
-  isPlugin: boolean
-}
-export function openerFor(path: string, isUrlNote: (path: string) => boolean, build: Build): Opener | null {
-  if (isPdfTarget(path)) return build.evenBuild ? null : 'pdf'
+export function openerFor(path: string, isUrlNote: (path: string) => boolean): Opener | null {
+  if (isPdfTarget(path)) return 'pdf'
   if (isWebTarget(path)) return 'web'
   if (isMarkdownPath(path) && isUrlNote(path)) return 'web'
-  if (isPagesTarget(path)) return build.isPlugin ? null : 'pages'
-  if (isCanvasTarget(path)) return build.isPlugin ? null : 'canvas'
-  if (isBaseTarget(path)) return build.isPlugin ? null : 'view'
-  if (isChatTarget(path)) return build.isPlugin ? null : 'chat'
-  if (isTermTarget(path)) return build.isPlugin ? null : 'term'
+  if (isPagesTarget(path)) return 'pages'
+  if (isCanvasTarget(path)) return 'canvas'
+  if (isBaseTarget(path)) return 'view'
+  if (isChatTarget(path)) return 'chat'
+  if (isTermTarget(path)) return 'term'
   return 'note'
 }
 export function sharedKind(path: string): 'canvas' | 'pages' | 'channel' | 'note' {

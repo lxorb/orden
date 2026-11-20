@@ -160,10 +160,9 @@ describe('the name a document is listed under', () => {
       chat: 'Team.chat',
       term: 'Claude Code.term',
     }
-    const build = { evenBuild: false, isPlugin: false }
     for (const [kind, name] of Object.entries(one)) {
       expect(
-        openerFor(name, () => false, build),
+        openerFor(name, () => false),
         name,
       ).toBe(kind)
       expect(shownName(name), name).toBe(name.slice(0, name.lastIndexOf('.')))
