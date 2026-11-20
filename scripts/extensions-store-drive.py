@@ -307,12 +307,15 @@ def chrome_dialog(drive: Drive) -> str | None:
         assert drive.process is not None
         mine = client.CreatePropertyCondition(uia.UIA_ProcessIdPropertyId, drive.process.pid)
         buttons = client.CreatePropertyCondition(uia.UIA_ControlTypePropertyId, uia.UIA_ButtonControlTypeId)
-        windows = client.GetRootElement().FindAll(uia.TreeScope_Children, mine)
-        for index in range(windows.Length):
-            each = windows.GetElement(index).FindAll(uia.TreeScope_Descendants, buttons)
-            for at in range(each.Length):
-                if (each.GetElement(at).CurrentName or "").strip().lower() == "add extension":
-                    return "a window with an Add extension button"
+        try:
+            windows = client.GetRootElement().FindAll(uia.TreeScope_Children, mine)
+            for index in range(windows.Length):
+                each = windows.GetElement(index).FindAll(uia.TreeScope_Descendants, buttons)
+                for at in range(each.Length):
+                    if (each.GetElement(at).CurrentName or "").strip().lower() == "add extension":
+                        return "a window with an Add extension button"
+        except Exception as error:  # noqa: BLE001 - a window may go while it is read
+            print(f"the window list changed while it was read: {error}", flush=True)
         return None
     if sys.platform == "darwin":
         return None
@@ -460,11 +463,14 @@ def native_load_error(drive: Drive) -> str | None:
         from comtypes.gen import UIAutomationClient as uia
         client = comtypes.client.CreateObject(uia.CUIAutomation, interface=uia.IUIAutomation)
         assert drive.process is not None
-        found = client.GetRootElement().FindAll(uia.TreeScope_Descendants, client.CreatePropertyCondition(uia.UIA_ProcessIdPropertyId, drive.process.pid))
-        for index in range(found.Length):
-            name = found.GetElement(index).CurrentName or ""
-            if "Error Loading Extension" in name or "manifest version" in name:
-                return name
+        try:
+            found = client.GetRootElement().FindAll(uia.TreeScope_Descendants, client.CreatePropertyCondition(uia.UIA_ProcessIdPropertyId, drive.process.pid))
+            for index in range(found.Length):
+                name = found.GetElement(index).CurrentName or ""
+                if "Error Loading Extension" in name or "manifest version" in name:
+                    return name
+        except Exception as error:  # noqa: BLE001 - a window may go while it is read
+            print(f"the window list changed while it was read: {error}", flush=True)
         return None
     if sys.platform == "darwin":
         return None
