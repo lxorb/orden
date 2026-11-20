@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, type RpcView, signIn, testEnv, type TestEnv } from './harness'
 import { running } from './room'
 import { type InboxPage, inboxPageOf } from '@orden/sync-core'
+import { doneCopyId } from '@orden/bases'
 
 let env: TestEnv
 let token: string
@@ -185,6 +186,32 @@ describe('the todos, with Orden closed', () => {
         labels: ['home'],
       })
       expect((await json(key, 'list_tasks', {})).todos).toMatchObject([{ id, deadline: '2026-12-01' }])
+    })
+    test('keeps one done copy of an occurrence, named by it, when a device ticked it too', async () => {
+      const key = await connector()
+      const added = await json(key, 'add_task', {
+        title: 'Pay rent',
+        deadline: '2026-11-01',
+        repeat: 'every month on the 1st',
+      })
+      const id = added.id as string
+      const copy = doneCopyId({ id, start: null, deadline: '2026-11-01' }, '2026-11-20')
+      expect(copy).toBe(`${id}-2026-11-01`)
+      const stamp = `${Date.UTC(2026, 10, 19, 12).toString(36).padStart(9, '0')}-0000-phone`
+      const fields = { kind: 'todo', title: 'Pay rent', deadline: '2026-11-01', done: true, gone: false, repeat: null }
+      env.db
+        .prepare('insert into inbox_items (user_id, id, fields, stamps, seq, at, by) values (?, ?, ?, ?, 1, 1, ?)')
+        .run(
+          (env.db.prepare('select id from users').get() as { id: string }).id,
+          copy,
+          JSON.stringify(fields),
+          JSON.stringify(Object.fromEntries(Object.keys(fields).map((one) => [one, stamp]))),
+          'phone',
+        )
+      await onTheDay(() => json(key, 'update_task', { id, done: true }))
+      const done = (await json(key, 'list_tasks', { done: true })).todos.filter((one) => one.id !== id)
+      expect(done.map((one) => one.id)).toEqual([copy])
+      expect(done[0]).toMatchObject({ done: true, deadline: '2026-11-01', repeat: null })
     })
     test('counted from when it is done goes from the asker’s today', async () => {
       const key = await connector()
