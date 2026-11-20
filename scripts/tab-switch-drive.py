@@ -6,9 +6,10 @@ to and from a web tab and between web tabs, is made by a click on the tab, by Ct
 three times each, while the pane is filmed. The app has no Ctrl+number for tabs.
 
 It fails when a key typed right after a switch to a note or a terminal lands anywhere but
-in the new tab, when a tab does not arrive and, given --fail-over, when a switch's median
-first frame is later than that. It warns when a switch calls pages.shoot for the tab it shows
-or web_shot pictures a page going behind.
+in the new tab, when a switch calls pages.shoot for the tab it shows or web_shot for any page,
+when a tab does not arrive and, given --fail-over, when a switch's median first frame is later
+than that. Every fetch in a switch is kept with its reply's size and parse time, and the table
+names the reply that cost the most.
 
 * first frame: the press to the first change on screen;
 * settled: the press to the last change;
@@ -66,13 +67,35 @@ IPC = """
   if (!perf || perf.__ipc) return true
   perf.__ipc = true
   perf.ipc = []
+  perf.replies = []
   perf.focusAtKey = []
-  const named = (url) => { const found = /(?:ipc[.:\\/]+localhost\\/)([A-Za-z0-9_:|]+)/.exec(String(url)); return found ? decodeURIComponent(found[1]) : null }
+  const named = (url) => { const found = /(?:ipc[.:\\/]+localhost\\/)([^?#]+)/.exec(String(url)); return found ? decodeURIComponent(found[1]) : null }
   const was = window.fetch
   window.fetch = function (input, ...rest) {
     const name = named(typeof input === 'string' ? input : input && input.url)
     const start = performance.timeOrigin + performance.now()
     const said = was.call(this, input, ...rest)
+    if (perf.on) {
+      const reply = { name: name || String(typeof input === 'string' ? input : input && input.url).slice(0, 80), start, size: 0, read: 0, parse: 0, done: 0 }
+      perf.replies.push(reply)
+      Promise.resolve(said).then((res) => {
+        reply.done = performance.timeOrigin + performance.now()
+        if (!res || typeof res.text !== 'function') return
+        res.json = function () {
+          const asked = performance.now()
+          return Response.prototype.text.call(this).then((text) => {
+            const read = performance.now()
+            const value = JSON.parse(text)
+            reply.size = text.length
+            reply.read = Math.round((read - asked) * 10) / 10
+            reply.parse = Math.round((performance.now() - read) * 10) / 10
+            return value
+          })
+        }
+        const buffer = res.arrayBuffer
+        res.arrayBuffer = function () { return buffer.call(this).then((one) => { reply.size = one.byteLength; return one }) }
+      }, () => (reply.done = -1))
+    }
     if (perf.on && name && name.startsWith('web_')) {
       const row = [name, start, 0]
       perf.ipc.push(row)
@@ -177,7 +200,7 @@ class Switches:
             return {"error": "could not find the tab"}
         before = self.app.eval(LOOK)
         band = perf.Band(self.band())
-        self.app.eval("window.__perf.start(); window.__perf.ipc = []; window.__perf.focusAtKey = []; return true")
+        self.app.eval("window.__perf.start(); window.__perf.ipc = []; window.__perf.replies = []; window.__perf.focusAtKey = []; return true")
         pressed = time.time() * 1000
         self.go(how)
         press([MARK])
@@ -185,7 +208,7 @@ class Switches:
             perf.point(*away)
         time.sleep(WATCH)
         frames = band.stop()
-        extra = self.app.eval("return { ipc: window.__perf.ipc || [], focus: window.__perf.focusAtKey || [] }") or {}
+        extra = self.app.eval("return { ipc: window.__perf.ipc || [], focus: window.__perf.focusAtKey || [], replies: window.__perf.replies || [] }") or {}
         page = self.app.eval("return window.__perf.stop()", 60) or {}
         after = self.app.eval(LOOK)
         film = perf.filmed(frames, pressed, pressed + WATCH * 1000)
@@ -210,6 +233,7 @@ class Switches:
             "shoots": sum(1 for one in page.get("calls", []) if one[0] == "shoot"),
             "shoots_to": sum(1 for one in page.get("calls", []) if one[0] == "shoot" and len(one) > 3 and one[3] == after.get("active")),
             "pictures": sum(1 for one in [*page.get("invokes", []), *extra.get("ipc", [])] if one[0] == "web_shot"),
+            "replies": sorted(([one["name"], one["size"], one["read"], one["parse"]] for one in extra.get("replies", [])), key=lambda one: -one[3]),
         }
     def rest(self) -> tuple[float, float]:
         pane = self.app.eval(PANE)
@@ -279,6 +303,15 @@ def cases(strip: list[dict[str, Any]]) -> list[tuple[str, str, dict[str, Any], d
             seen.add((how, start["id"], to["id"]))
             kept.append((how, name, start, to))
     return kept
+def heaviest(got: list[dict[str, Any]]) -> str:
+    by: dict[str, list[list[Any]]] = {}
+    for one in got:
+        for reply in one.get("replies", []):
+            by.setdefault(reply[0], []).append(reply)
+    if not by:
+        return ""
+    name, replies = max(by.items(), key=lambda item: sum(one[2] + one[3] for one in item[1]))
+    return f"{name.replace('|', ' ')}: {len(replies)} in {len(got)} switches, up to {round(max(one[1] for one in replies) / 1024, 1)} KB, read and parsed in {round(sum(one[2] + one[3] for one in replies) / len(got), 1)} ms a switch"
 def median(values: list[Any]) -> float | None:
     got = [one for one in values if isinstance(one, (int, float))]
     return round(statistics.median(got), 1) if got else None
@@ -345,6 +378,7 @@ def main() -> int:
                 "web_ms": median([one.get("web_ms") for one in got]),
                 "focus_at_key": sorted({focus for one in got for focus in one.get("focus_at_key", []) or ["no keydown seen"]}),
                 "shoots": median([one.get("shoots") for one in got]),
+                "heaviest": heaviest(got),
                 "rounds": got,
             }
             rows.append(row)
@@ -356,11 +390,11 @@ def main() -> int:
         shutil.rmtree(spaces, ignore_errors=True)
     (args.out / "tabs.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
     lines = [
-        "| how | switch | first ms | each first ms | settled ms | arrived | key landed | focus at the key | LoAF ms | web_* calls | web_* ms | shoots |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| how | switch | first ms | each first ms | settled ms | arrived | key landed | focus at the key | LoAF ms | web_* calls | web_* ms | shoots | heaviest IPC reply |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for row in rows:
-        lines.append(f"| {row['how']} | {row['switch']} | {row['first']} | {' '.join(str(one) for one in row['firsts'])} | {row['settled']} | {row['arrived']}/{args.rounds} | {'; '.join(row['landed'])} | {'; '.join(row['focus_at_key'])} | {row['loaf_ms']} | {row['invokes']} {' '.join(row['web'])} | {row['web_ms']} | {row['shoots']} |")
+        lines.append(f"| {row['how']} | {row['switch']} | {row['first']} | {' '.join(str(one) for one in row['firsts'])} | {row['settled']} | {row['arrived']}/{args.rounds} | {'; '.join(row['landed'])} | {'; '.join(row['focus_at_key'])} | {row['loaf_ms']} | {row['invokes']} {' '.join(row['web'])} | {row['web_ms']} | {row['shoots']} | {row['heaviest']} |")
     table = "\n".join(lines) + "\n"
     (args.out / "table.md").write_text(table, encoding="utf-8")
     print(table, flush=True)
@@ -372,10 +406,10 @@ def main() -> int:
             wrong.append(f"{named}: a key typed right after the switch landed {', '.join(strayed)}")
         shot = sum(one.get("shoots_to") or 0 for one in row["rounds"])
         if shot:
-            print(f"::warning::{named}: the switch called pages.shoot for the tab it shows {shot} times", flush=True)
+            wrong.append(f"{named}: the switch called pages.shoot for the tab it shows {shot} times")
         behind = sum(one.get("pictures") or 0 for one in row["rounds"])
         if behind:
-            print(f"::warning::{named}: web_shot pictured a page going behind {behind} times", flush=True)
+            wrong.append(f"{named}: web_shot pictured a page {behind} times")
         if row["arrived"] < args.rounds:
             wrong.append(f"{named}: the tab arrived {row['arrived']} of {args.rounds} times")
         if args.fail_over is None:
