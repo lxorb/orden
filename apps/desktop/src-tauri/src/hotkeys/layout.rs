@@ -85,14 +85,20 @@ pub fn placed_here(accelerator: &str) -> String {
     }
 }
 #[cfg(target_os = "macos")]
+pub fn watch(then: fn()) {
+    mac::watch(then);
+}
+#[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 mod mac {
     use std::ffi::c_void;
+    use std::sync::OnceLock;
 
     type Ref = *const c_void;
     #[link(name = "Carbon", kind = "framework")]
     unsafe extern "C" {
         static kTISPropertyUnicodeKeyLayoutData: Ref;
+        static kTISNotifySelectedKeyboardInputSourceChanged: Ref;
         fn TISCopyCurrentASCIICapableKeyboardLayoutInputSource() -> Ref;
         fn TISGetInputSourceProperty(source: Ref, key: Ref) -> Ref;
         fn LMGetKbdType() -> u8;
@@ -113,6 +119,37 @@ mod mac {
     unsafe extern "C" {
         fn CFDataGetBytePtr(data: Ref) -> *const u8;
         fn CFRelease(object: Ref);
+        fn CFNotificationCenterGetDistributedCenter() -> Ref;
+        fn CFNotificationCenterAddObserver(
+            center: Ref,
+            observer: Ref,
+            callback: extern "C" fn(Ref, *mut c_void, Ref, Ref, Ref),
+            name: Ref,
+            object: Ref,
+            behavior: isize,
+        );
+    }
+    const DELIVER_AT_ONCE: isize = 4;
+    static THEN: OnceLock<fn()> = OnceLock::new();
+    extern "C" fn heard(_: Ref, _: *mut c_void, _: Ref, _: Ref, _: Ref) {
+        if let Some(then) = THEN.get() {
+            then();
+        }
+    }
+    pub fn watch(then: fn()) {
+        if THEN.set(then).is_err() {
+            return;
+        }
+        unsafe {
+            CFNotificationCenterAddObserver(
+                CFNotificationCenterGetDistributedCenter(),
+                (&raw const THEN).cast(),
+                heard,
+                kTISNotifySelectedKeyboardInputSourceChanged,
+                std::ptr::null(),
+                DELIVER_AT_ONCE,
+            );
+        }
     }
     const DISPLAY: u16 = 3;
     const NO_DEAD_KEYS: u32 = 1;

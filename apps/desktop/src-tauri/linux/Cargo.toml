@@ -8,6 +8,7 @@
 [workspace]
 members = ["crates/*"]
 default-members = [".", "crates/*"]
+exclude = ["patches/global-hotkey"]
 
 [workspace.package]
 edition = "2021"
@@ -269,6 +270,7 @@ tempfile.workspace = true
 
 [target.'cfg(target_os = "linux")'.dev-dependencies]
 zbus = { workspace = true, features = ["p2p"] }
+global-hotkey = "0.8"
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 windows = { workspace = true, features = [
@@ -286,3 +288,4 @@ strip = true
 
 [patch.crates-io]
 tauri-runtime-cef = { path = "linux/tauri-runtime-cef" }
+global-hotkey = { path = "patches/global-hotkey" }

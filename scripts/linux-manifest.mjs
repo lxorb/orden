@@ -70,6 +70,7 @@ export function linuxManifest(app) {
   let table = ''
   let skipping = false
   let open = false
+  const patched = PATCHED.map(([name, path]) => `${name} = { path = "${path}" }`)
   for (const raw of lines) {
     const line = raw.trimEnd()
     if (open) {
@@ -80,11 +81,12 @@ export function linuxManifest(app) {
     if (line.trim() === '' || line.trimStart().startsWith('#')) continue
     if (line.startsWith('[')) {
       table = line
-      skipping = line === '[package.metadata.cef]'
+      skipping = line === '[package.metadata.cef]' || line === '[patch.crates-io]'
       if (!skipping) out.push('', line)
       continue
     }
     if (skipping) {
+      if (table === '[patch.crates-io]') patched.push(line)
       if (/\[\s*$/.test(line)) open = true
       continue
     }
@@ -100,7 +102,7 @@ export function linuxManifest(app) {
     const inDependencies = /dependencies\]$/.test(table)
     out.push(...(inDependencies ? moved(line, pins, table) : [line]))
   }
-  out.push('', '[patch.crates-io]', ...PATCHED.map(([name, path]) => `${name} = { path = "${path}" }`))
+  out.push('', '[patch.crates-io]', ...patched)
   return `${HEADER}${out.join('\n')}\n`
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
