@@ -34,9 +34,11 @@ fn icon(app: &str) -> Option<String> {
     if let Some(drawn) = DRAWN.held().get(app) {
         return drawn.clone();
     }
-    let mut source = SOURCES.held().get(app).cloned()?;
-    source.path = source.path.map(resolved);
-    let drawn = platform::drawn(&source);
+    let seen = SOURCES.held().get(app).cloned();
+    let drawn = seen.or_else(|| platform::find(app)).and_then(|mut source| {
+        source.path = source.path.map(resolved);
+        platform::drawn(&source)
+    });
     let mut cache = DRAWN.held();
     if cache.len() >= MOST_KNOWN {
         cache.clear();
@@ -358,6 +360,10 @@ mod platform {
             .or_else(|| keyed("kdeglobals", "Theme"))
             .unwrap_or_else(|| "hicolor".to_owned())
     }
+    #[allow(clippy::unnecessary_wraps)]
+    pub fn find(app: &str) -> Option<Source> {
+        Some(Source { path: None, class: Some(app.to_owned()) })
+    }
     pub fn drawn(source: &Source) -> Option<String> {
         static KNOWN: OnceLock<(Vec<Entry>, Themes)> = OnceLock::new();
         let (listed, themes) = KNOWN.get_or_init(|| {
@@ -436,9 +442,20 @@ mod platform {
         let holes = mask.filter(|(_, w, h)| (*w, *h) == (width, height)).map(|(one, _, _)| one);
         Some((super::straight(&bgra, holes.as_deref()), width, height))
     }
+    pub fn find(app: &str) -> Option<Source> {
+        crate::win_apps::find(app)
+    }
     #[allow(unsafe_code)]
     pub fn drawn(source: &Source) -> Option<String> {
-        let path = HSTRING::from(source.path.as_deref()?.as_os_str());
+        let file = source.path.as_deref()?;
+        if file.extension().is_some_and(|ending| ending.eq_ignore_ascii_case("png")) {
+            let size = std::fs::metadata(file).ok()?.len();
+            return (size <= 1024 * 1024)
+                .then(|| std::fs::read(file).ok())
+                .flatten()
+                .map(|bytes| data_url("image/png", &bytes));
+        }
+        let path = HSTRING::from(file.as_os_str());
         let mut icon = HICON::default();
         unsafe { SHDefExtractIconW(&path, 0, 0, Some(&raw mut icon), None, SIDE) }.ok().ok()?;
         if icon.is_invalid() {
@@ -496,6 +513,29 @@ mod platform {
 
     use super::{data_url, Source, SIDE};
 
+    #[allow(deprecated)]
+    pub fn find(app: &str) -> Option<Source> {
+        let workspace = NSWorkspace::sharedWorkspace();
+        let running = workspace.runningApplications().iter().find_map(|one| {
+            (one.localizedName()?.to_string() == app).then(|| one.bundleURL()?.path()).flatten()
+        });
+        let path = running
+            .map(|path| std::path::PathBuf::from(path.to_string()))
+            .or_else(|| {
+                let found = workspace.fullPathForApplication(&NSString::from_str(app))?;
+                Some(std::path::PathBuf::from(found.to_string()))
+            })
+            .or_else(|| {
+                let home = dirs::home_dir().map(|one| one.join("Applications"));
+                ["/Applications", "/System/Applications", "/System/Applications/Utilities"]
+                    .into_iter()
+                    .map(std::path::PathBuf::from)
+                    .chain(home)
+                    .map(|folder| folder.join(format!("{app}.app")))
+                    .find(|one| one.is_dir())
+            })?;
+        Some(Source { path: Some(path), class: None })
+    }
     #[allow(unsafe_code)]
     pub fn drawn(source: &Source) -> Option<String> {
         let path = NSString::from_str(source.path.as_deref()?.to_str()?);
@@ -542,6 +582,9 @@ mod platform {
 mod platform {
     use super::Source;
 
+    pub fn find(_app: &str) -> Option<Source> {
+        None
+    }
     pub fn drawn(_source: &Source) -> Option<String> {
         None
     }
@@ -640,7 +683,7 @@ mod tests {
         assert_eq!(themes.find("nothing"), None);
     }
     #[test]
-    fn an_app_is_drawn_only_after_the_tracker_saw_it() {
+    fn an_app_no_desktop_knows_has_no_icon() {
         assert_eq!(super::icon("never seen by the tracker"), None);
         super::seen("tested app", Source::default());
         assert_eq!(super::icon("tested app"), super::icon("tested app"));
@@ -682,6 +725,22 @@ mod tests {
         let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_owned());
         let source = Source { path: Some(PathBuf::from(root).join("explorer.exe")), class: None };
         assert!(super::platform::drawn(&source)
+            .is_some_and(|one| one.starts_with("data:image/png;base64,")));
+    }
+    #[cfg(windows)]
+    #[test]
+    fn edge_is_found_by_its_name_without_being_seen() {
+        let found = super::platform::find("msedge");
+        assert!(found
+            .and_then(|one| super::platform::drawn(&one))
+            .is_some_and(|one| one.starts_with("data:image/png;base64,")));
+    }
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn safari_is_found_by_its_name_without_being_seen() {
+        let found = super::platform::find("Safari");
+        assert!(found
+            .and_then(|one| super::platform::drawn(&one))
             .is_some_and(|one| one.starts_with("data:image/png;base64,")));
     }
     #[cfg(target_os = "macos")]

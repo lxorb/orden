@@ -185,14 +185,8 @@ mod platform {
 }
 #[cfg(windows)]
 mod platform {
-    use windows::core::PWSTR;
-    use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::System::StationsAndDesktops::{
         CloseDesktop, OpenInputDesktop, DESKTOP_CONTROL_FLAGS, DESKTOP_SWITCHDESKTOP,
-    };
-    use windows::Win32::System::Threading::{
-        OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
-        PROCESS_QUERY_LIMITED_INFORMATION,
     };
     use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
 
@@ -214,31 +208,19 @@ mod platform {
     }
     pub fn front_app() -> Option<(String, Source)> {
         let mut process = 0u32;
-        let mut buffer = [0u16; 1024];
-        let mut length = u32::try_from(buffer.len()).ok()?;
         #[allow(unsafe_code)]
-        unsafe {
+        let front = unsafe {
             let front = GetForegroundWindow();
             if front.is_invalid() {
                 return None;
             }
             GetWindowThreadProcessId(front, Some(&raw mut process));
-            if process == 0 {
-                return None;
-            }
-            let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process).ok()?;
-            let named = QueryFullProcessImageNameW(
-                handle,
-                PROCESS_NAME_WIN32,
-                PWSTR(buffer.as_mut_ptr()),
-                &raw mut length,
-            );
-            let _ = CloseHandle(handle);
-            named.ok()?;
+            front
+        };
+        if process == 0 {
+            return None;
         }
-        let length = usize::try_from(length).ok()?.min(buffer.len());
-        let path = String::from_utf16_lossy(&buffer[..length]);
-        Some((path.clone(), Source { path: Some(path.into()), class: None }))
+        crate::win_apps::front(front, process)
     }
 }
 #[cfg(target_os = "macos")]
