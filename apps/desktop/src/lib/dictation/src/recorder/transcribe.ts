@@ -4,6 +4,7 @@ import {
   headersWithoutType,
   heardUrl,
   type Provider,
+  providerFetch,
   reachable,
   readKey,
   transcriberNow,
@@ -48,7 +49,7 @@ async function heardByProvider(provider: Provider, wav: Uint8Array<ArrayBuffer>,
     form.append('model', model)
     form.append('response_format', model === 'whisper-1' ? 'verbose_json' : 'json')
     if (prompt) form.append('prompt', prompt)
-    const response = await fetch(heardUrl(provider), {
+    const response = await providerFetch(heardUrl(provider), {
       method: 'POST',
       headers: headersWithoutType(provider, apiKey),
       body: form,

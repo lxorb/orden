@@ -7,6 +7,7 @@ export type { Engine, EngineEvent, Goal, GoalState, ModelInfo, NoticeCode } from
 export type { Part, Stop, Thread, ThreadHead, ToolOutput, ToolState, Turn } from './chat/types'
 export type { Usage } from './chat/types'
 export { complete, listModels, wasStopped } from './complete'
+export { providerFetch } from './fetching'
 export { canTranscribe, transcriberNow } from './hears'
 export { forgetKey, hasKey, keysAreGuarded, keysInFile, keysMoved as onKeysMoved } from './keys'
 export { readKey, readSecret, writeKey, writeSecret } from './keys'

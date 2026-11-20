@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import * as api from '../src/api'
 import { promptOf } from '../src/heard'
@@ -43,5 +45,19 @@ describe('what dictation sends to be heard', () => {
     expect(new TextDecoder().decode(wav.subarray(0, 4))).toBe('RIFF')
     expect(view.getUint16(22, true)).toBe(1)
     expect(view.getUint32(24, true)).toBe(RATE)
+  })
+})
+describe('a transcription', () => {
+  test('reaches its provider only through the AI providers’ request, never the page’s own fetch', () => {
+    const root = join(import.meta.dirname, '../src')
+    const files = (readdirSync(root, { recursive: true }) as string[]).filter(
+      (one) => /\.(ts|svelte)$/.test(one) && !one.endsWith('.test.ts'),
+    )
+    const bare = files.filter((one) =>
+      readFileSync(join(root, one), 'utf8')
+        .split('\n')
+        .some((line) => /(?<![.\w]|async\s|function\s)fetch\(/.test(line) && !line.includes('fetch(assetUrl(')),
+    )
+    expect(bare).toEqual([])
   })
 })
