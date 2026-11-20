@@ -1,15 +1,22 @@
 import { account, api } from '../../accounts/src/api'
 import { sync } from '../../sync-store/src/api'
-import { invoke } from '../../platform/src/api'
+import { folderOf, invoke, joinPath, KEPT_HOME, nameOf } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { protection } from '../../protect/src/api'
 import type { TrashItem } from './trash.svelte'
 
+async function spaceRoot(path: string): Promise<string> {
+  const placed = path.startsWith('/') || /^[A-Za-z]:[\\/]/.test(path)
+  const at = placed ? path : joinPath(await invoke<string>('spaces_root'), path)
+  const slashed = at.replace(/\\/g, '/')
+  return nameOf(folderOf(slashed)) === KEPT_HOME ? joinPath(at, nameOf(slashed)) : at
+}
 export async function restored(item: TrashItem): Promise<void> {
   if (item.source === 'device') {
-    const at = await invoke<string>('restore_trash', { id: item.ref })
+    const back = await invoke<string>('restore_trash', { id: item.ref })
+    const at = item.kind === 'space' ? await spaceRoot(back) : back
     workspace.undone.forget(item.ref)
-    if (item.kind === 'space' && item.from !== undefined) await workspace.spaceCameBack(item.from, at)
+    if (item.kind === 'space' && item.from !== undefined) await workspace.spaceCameBack(await spaceRoot(item.from), at)
     else await workspace.loadSpaces()
     await workspace.loadTree()
     if (item.kind === 'space') await protection.unbury(item.ref, at, '')
