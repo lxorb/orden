@@ -320,14 +320,21 @@ describe('the strip', () => {
     expect(itemIn(view, 'Forward')).toMatchObject({ accelerator: 'Cmd+]', anywhere: true })
     expect(keyRuns(itemIn(view, 'Back').anywhere, 'page')).toBe(true)
   })
-  test('builds the strip again when back and forward come or go', () => {
+  test('keeps back and forward off the brackets while they are grey', () => {
     const keyFor = (command: string) =>
       ({ 'web.back': 'Mod-[', 'web.forward': 'Mod-]' })[command] ?? KEYS[command] ?? null
     const onPage = describeMenuBar(
       sources({ viewRows: [row('Back', 'web.back'), row('Forward', 'web.forward')], keyFor }),
     ).entries
-    const onNote = describeMenuBar(sources({ viewRows: [], keyFor })).entries
-    expect(changesBetween(onPage, onNote)).toBe(null)
+    const greyed = [row('Back', undefined, { disabled: true }), row('Forward', undefined, { disabled: true })]
+    const onNote = describeMenuBar(sources({ viewRows: greyed, keyFor })).entries
+    expect(changesBetween(onPage, onNote)).toEqual({
+      changes: [
+        { id: 'view.2', enabled: false, accelerator: null },
+        { id: 'view.3', enabled: false, accelerator: null },
+      ],
+      refill: [],
+    })
     expect(JSON.stringify(onNote)).not.toContain('Cmd+[')
   })
   test('runs each row’s own function, by the row’s id', () => {
@@ -363,19 +370,37 @@ describe('the strip, changed', () => {
       keyFor: (command) => (command === 'format.bold' ? 'Mod-Shift-b' : (KEYS[command] ?? null)),
       words: { ...WORDS, quit: 'Leave Orden' },
     })
-    expect(changesBetween(before, after)).toEqual([
-      { id: 'orden.quit', text: 'Leave Orden' },
-      { id: 'file.5', enabled: true },
-      { id: 'format.0', accelerator: 'Cmd+Shift+B' },
-      { id: 'view.0', checked: true },
-    ])
+    expect(changesBetween(before, after)).toEqual({
+      changes: [
+        { id: 'orden.quit', text: 'Leave Orden' },
+        { id: 'file.5', enabled: true },
+        { id: 'format.0', accelerator: 'Cmd+Shift+B' },
+        { id: 'view.0', checked: true },
+      ],
+      refill: [],
+    })
   })
   test('not at all when nothing did', () => {
-    expect(changesBetween(bar(), bar())).toEqual([])
+    expect(changesBetween(bar(), bar())).toEqual({ changes: [], refill: [] })
   })
-  test('built again when a row came or went', () => {
+  test('the one menu filled again when a row of it came or went, and the strip kept', () => {
     const file = { opening: [row('New note', 'app.new')], closing: [] }
-    expect(changesBetween(bar(), bar({ file }))).toBeNull()
+    const plan = changesBetween(bar(), bar({ file }))
+    expect(plan?.refill.map((one) => one.id)).toEqual(['file'])
+    expect(plan?.changes).toEqual([])
+  })
+  test('and only the submenu, where the rows that came or went are inside one', () => {
+    const colours: MenuGroup = {
+      id: 'format',
+      label: 'Format',
+      rows: [row('Bold', 'format.bold'), row('Clash', 'format.clash'), { label: 'Colour', rows: [row('Red')] }],
+    }
+    const groups = GROUPS.map((one) => (one.id === 'format' ? colours : one))
+    expect(changesBetween(bar(), bar({ groups }))?.refill.map((one) => one.id)).toEqual(['format.2'])
+  })
+  test('built again only when a menu of the strip came or went', () => {
+    const groups = GROUPS.filter((one) => one.id !== 'format')
+    expect(changesBetween(bar(), bar({ groups }))).toBeNull()
   })
   test('and when a row became a different kind of thing', () => {
     const plain: MenuGroup = {
@@ -384,7 +409,7 @@ describe('the strip, changed', () => {
       rows: [row('Fullscreen', 'app.fullscreen')],
     }
     const groups = GROUPS.map((one) => (one.id === 'view' ? plain : one))
-    expect(changesBetween(bar(), bar({ groups }))).toBeNull()
+    expect(changesBetween(bar(), bar({ groups }))?.refill.map((one) => one.id)).toEqual(['view'])
   })
 })
 describe('a key the page let pass', () => {

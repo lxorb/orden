@@ -348,7 +348,7 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const at = help < 0 ? own.length : help
   return { entries: [app, ...own.slice(0, at), window, ...own.slice(at)], runs }
 }
-export interface Change {
+interface Change {
   id: string
   text?: string
   enabled?: boolean
@@ -361,32 +361,47 @@ export function flatten(entries: NativeEntry[]): NativeEntry[] {
 function shapeOf(entry: NativeEntry): string {
   if (entry.kind === 'system') return `${entry.id} system ${entry.item}`
   if (entry.kind === 'item') return `${entry.id} ${entry.checked === undefined ? 'item' : 'check'}`
-  if (entry.kind === 'submenu') return `${entry.id} submenu ${entry.items.length}`
+  if (entry.kind === 'submenu') return `${entry.id} submenu ${entry.role ?? ''}`
   return `${entry.id} rule`
 }
-export function changesBetween(before: NativeEntry[], after: NativeEntry[]): Change[] | null {
-  const was = flatten(before)
-  const now = flatten(after)
-  if (was.length !== now.length) return null
-  const changes: Change[] = []
-  for (const [index, next] of now.entries()) {
-    const previous = was[index]
-    if (!previous || shapeOf(previous) !== shapeOf(next)) return null
-    const change: Change = { id: next.id }
-    if (previous.kind !== 'rule' && next.kind !== 'rule' && previous.text !== next.text) {
-      change.text = next.text
-    }
-    if (previous.kind === 'item' && next.kind === 'item') {
-      if (previous.enabled !== next.enabled) change.enabled = next.enabled
-      if (previous.checked !== next.checked && next.checked !== undefined) {
-        change.checked = next.checked
-      }
-      if (previous.accelerator !== next.accelerator) change.accelerator = next.accelerator
-    }
-    if (previous.kind === 'submenu' && next.kind === 'submenu' && previous.enabled !== next.enabled) {
-      change.enabled = next.enabled
-    }
-    if (Object.keys(change).length > 1) changes.push(change)
+function changeOf(previous: NativeEntry, next: NativeEntry): Change | null {
+  const change: Change = { id: next.id }
+  if (previous.kind !== 'rule' && next.kind !== 'rule' && previous.text !== next.text) {
+    change.text = next.text
   }
-  return changes
+  if (previous.kind === 'item' && next.kind === 'item') {
+    if (previous.enabled !== next.enabled) change.enabled = next.enabled
+    if (previous.checked !== next.checked && next.checked !== undefined) {
+      change.checked = next.checked
+    }
+    if (previous.accelerator !== next.accelerator) change.accelerator = next.accelerator
+  }
+  if (previous.kind === 'submenu' && next.kind === 'submenu' && previous.enabled !== next.enabled) {
+    change.enabled = next.enabled
+  }
+  return Object.keys(change).length > 1 ? change : null
+}
+export interface Plan {
+  changes: Change[]
+  refill: NativeSubmenu[]
+}
+export function changesBetween(before: NativeEntry[], after: NativeEntry[]): Plan | null {
+  const plan: Plan = { changes: [], refill: [] }
+  const walk = (was: NativeEntry[], now: NativeEntry[], parent: NativeSubmenu | null): boolean => {
+    const same = was.length === now.length && now.every((next, index) => shapeOf(was[index] ?? next) === shapeOf(next))
+    if (!same) {
+      if (parent) plan.refill.push(parent)
+      return parent !== null
+    }
+    for (const [index, next] of now.entries()) {
+      const previous = was[index] ?? next
+      const change = changeOf(previous, next)
+      if (change) plan.changes.push(change)
+      if (previous.kind === 'submenu' && next.kind === 'submenu' && !walk(previous.items, next.items, next)) {
+        return false
+      }
+    }
+    return true
+  }
+  return walk(before, after, null) ? plan : null
 }
