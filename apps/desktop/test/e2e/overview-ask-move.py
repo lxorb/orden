@@ -13,23 +13,23 @@ async () => {
   ws.openBlank('Over there', '# Over there')
   await new Promise((go) => setTimeout(go, 300))
   await ws.selectSpace(home.id)
-  ws.openBlank('Plan', '# Plan')
-  ws.openBlank('Draft', '# Draft')
+  const saved = await ws.noteFrom('# Plan\\n\\nwords', home.root)
+  await ws.loadTree()
+  await ws.openEntry(saved, { activate: true })
+  const brief = await ws.noteFrom('# Brief\\n\\nwords', home.root)
+  await ws.loadTree()
+  await ws.openEntry(brief, { activate: true })
   ws.openPage('https://example.com/')
   localStorage.setItem('orden:overview-spaces', 'all')
   await new Promise((go) => setTimeout(go, 600))
-  return { home: home.id, work: work.id }
+  return { home: home.id, work: work.id, homeName: home.name, workRoot: work.root, saved, brief }
 }
 """
-HOME_OF = """(name) => {
+SPACE_OF = """(name) => {
   const ws = window.ordenApp.workspace
-  const tab = ws.tabs.find((one) => one.shown === name || one.kind === name)
-  if (!tab) return null
-  const root = tab.path && ws.spaces.find((space) => tab.path.startsWith(space.root.replace(/\\/+$/, '') + '/'))
-  return root ? root.id : tab.note.home
+  const tab = ws.tabs.find((one) => one.shown === name)
+  return tab ? { space: ws.spaceOfTab(tab), path: tab.path } : null
 }"""
-ORDER = "() => window.ordenApp.workspace.tabs.filter((one) => one.paneId).map((one) => one.shown)"
-STATE = "() => window.ordenApp.workspace.tabs.map((one) => [one.shown, one.kind, one.note.home, one.path, !!window.ordenApp.workspace.panes.at(one.paneId)])"
 SHEET = "!!document.querySelector('.sheet form')"
 def window_of(page: Page, label: str) -> dict | None:
     return page.evaluate(
@@ -64,6 +64,14 @@ def drag(page: Page, start: dict, end: dict) -> None:
     page.wait_for_timeout(200)
     page.mouse.up()
     page.wait_for_timeout(900)
+def asked(page: Page) -> tuple[str, list[str]]:
+    said = page.evaluate("() => document.querySelector('.sheet form').innerText")
+    buttons = page.evaluate("() => [...document.querySelectorAll('.sheet form button')].map((one) => one.textContent.trim())")
+    return said, buttons
+def answer(page: Page, label: str) -> None:
+    page.locator(".sheet form button", has_text=label).click()
+    wait_for(page, f"!{SHEET}", "the question answered")
+    page.wait_for_timeout(1400)
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1400, "height": 900})
     DRIVE.open(page)
@@ -74,7 +82,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(1200)
     page.get_by_role("button", name="Tidy up").click()
     page.wait_for_timeout(1200)
-    order = page.evaluate(ORDER)
     before = resting(page, "Plan")
     there = window_of(page, "Over there")
     if not before or not there:
@@ -82,56 +89,59 @@ def drive(browser: Browser) -> None:
         return
     drag(page, before, there)
     if not page.evaluate(SHEET):
-        wrong("a note dropped on another space moved without a question")
+        wrong("a saved note dropped on another space moved without a question")
         return
-    said = page.evaluate("() => document.querySelector('.sheet form').innerText")
-    buttons = page.evaluate("() => [...document.querySelectorAll('.sheet form button')].map((one) => one.textContent.trim())")
-    title = page.evaluate("() => document.querySelector('.sheet form h2, .sheet form .title, .sheet form [id]')?.textContent?.trim() ?? ''")
+    said, buttons = asked(page)
     say(f"[ask] the question: {said!r}, buttons {buttons}")
     shot(page, "asked")
-    if sorted(buttons) != ["Cancel", "Move"]:
-        wrong(f"[ask] the buttons are {buttons}, not Move and Cancel")
-    if "Work" not in said or said.count("?") != 1:
-        wrong(f"[ask] the question is not one short sentence naming the space: {said!r} {title!r}")
-    if page.evaluate(HOME_OF, "Plan") != ids["home"]:
+    if sorted(buttons) != ["Move the file too", "Only the tab"]:
+        wrong(f"[ask] the buttons are {buttons}")
+    if "Plan" not in said or "Work" not in said or ids["homeName"] not in said:
+        wrong(f"[ask] the question does not name the note and both spaces: {said!r}")
+    if page.evaluate(SPACE_OF, "Plan")["space"] != ids["home"]:
         wrong("[ask] the note moved before the answer")
-    page.locator(".sheet form button", has_text="Cancel").click()
+    page.keyboard.press("Escape")
     wait_for(page, f"!{SHEET}", "the question put away")
     page.wait_for_timeout(1200)
     back = resting(page, "Plan")
-    shot(page, "cancelled")
-    say(f"[cancel] Plan from {before} to {back}, order {page.evaluate(ORDER)}")
-    if page.evaluate(HOME_OF, "Plan") != ids["home"]:
-        wrong("[cancel] Cancel still moved the note")
+    now = page.evaluate(SPACE_OF, "Plan")
+    say(f"[cancel] Plan from {before} to {back}: {now}")
+    if now["space"] != ids["home"] or now["path"] != ids["saved"]:
+        wrong(f"[cancel] Escape still moved the note: {now}")
     if not back or abs(back["x"] - before["x"]) > 8 or abs(back["y"] - before["y"]) > 8:
         wrong(f"[cancel] the window did not go back where it was: {before} -> {back}")
-    if page.evaluate(ORDER) != order:
-        wrong(f"[cancel] the order of the tabs changed: {order} -> {page.evaluate(ORDER)}")
     if not page.evaluate("() => !!document.activeElement?.closest('.canvas')"):
         wrong("[cancel] the keyboard did not come back to the overview")
     drag(page, window_of(page, "Plan"), window_of(page, "Over there"))
     if not page.evaluate(SHEET):
-        wrong("[move] the second drop asked nothing")
+        wrong("[tab] the second drop asked nothing")
         return
-    page.locator(".sheet form button", has_text="Move").click()
-    wait_for(page, f"!{SHEET}", "the question answered")
-    page.wait_for_timeout(1500)
-    if page.evaluate(HOME_OF, "Plan") != ids["work"]:
-        wrong(f"[move] Move did not take the note to Work: {page.evaluate(STATE)}")
-    say("ok   [move] Move took the note to Work")
-    page.wait_for_timeout(800)
-    shot(page, "moved")
-    web = web_label(page)
+    answer(page, "Only the tab")
+    now = page.evaluate(SPACE_OF, "Plan")
+    if now["space"] != ids["work"] or now["path"] != ids["saved"]:
+        wrong(f"[tab] Only the tab did not leave the file where it was and show the tab in Work: {now}")
+    else:
+        say("ok   [tab] the tab is in Work and its file stays where it was")
+    drag(page, window_of(page, "Brief"), window_of(page, "Over there"))
+    if not page.evaluate(SHEET):
+        wrong("[file] a saved note dropped on another space moved without a question")
+    else:
+        answer(page, "Move the file too")
+        now = page.evaluate(SPACE_OF, "Brief")
+        if now["space"] != ids["work"] or not str(now["path"]).startswith(ids["workRoot"].rstrip("/") + "/"):
+            wrong(f"[file] Move the file too did not move the file into Work: {now}")
+        else:
+            say("ok   [file] the note and its file are in Work")
+    web = page.evaluate("() => window.ordenApp.workspace.tabs.find((one) => one.kind === 'web').shown")
     drag(page, window_of(page, web), window_of(page, "Over there"))
     if page.evaluate(SHEET):
-        wrong("[web] a web tab asked before moving")
-        page.locator(".sheet form button", has_text="Cancel").click()
+        wrong(f"[web] a tab with no saved file asked before moving: {asked(page)}")
+        page.keyboard.press("Escape")
+    elif page.evaluate(SPACE_OF, web)["space"] != ids["work"]:
+        wrong(f"[web] the web tab did not move: {page.evaluate(SPACE_OF, web)}")
     else:
-        page.wait_for_timeout(1200)
-        if page.evaluate(HOME_OF, "web") != ids["work"]:
-            wrong(f"[web] the web tab did not move: {page.evaluate(STATE)}")
-        else:
-            say("ok   [web] the web tab moved without a question")
-    shot(page, "web-moved")
+        say("ok   [web] the web tab moved without a question")
+    here = page.evaluate("() => [...document.querySelectorAll('[data-space-name]')].map((one) => [one.dataset.spaceName, one.textContent.trim()])")
+    say(f"[spaces] {here}")
     page.close()
-raise SystemExit(DRIVE.run(drive, "notes ask before moving to another space, web tabs do not"))
+raise SystemExit(DRIVE.run(drive, "a saved tab dragged to another space asks whether its file goes too; others move at once"))
