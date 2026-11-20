@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { Cadence, nextPassIn } from '../src/cadence'
 import { hubDeviceOf, madeDeviceId } from '../src/made-device'
 import { accountOver } from '../src/transport'
@@ -24,6 +24,8 @@ import { madeTwice } from '../src/twins'
 import { SpaceState } from '../src/places'
 import { scan, type EntryRow } from '../src/store'
 import { EngineDevice, type FreshDevice, freshDevice } from './sim-device'
+import { memoryStorage } from './memory-storage'
+import { dropLeft, leftHere, ownRoots, unsentRoots } from '../src/left'
 
 const settle: Step = { t: 'wait', ticks: 40 }
 function road(script: readonly Step[]): Promise<Report> {
@@ -379,6 +381,56 @@ describe('the device a request names (#2280)', () => {
       unbind()
     }
   })
+})
+describe('a space signed out of (#2252)', () => {
+  function shown(roots: readonly string[], dropped: string[] = []) {
+    return providePort('sync.workspace', {
+      spaces: roots.map((root, at) => ({ id: `w${String(at)}`, root, name: root })),
+      dropSpace: (id: string) => Promise.resolve(void dropped.push(id)),
+    } as never)
+  }
+  async function signedOutOf(run: () => Promise<void>) {
+    vi.stubGlobal('localStorage', memoryStorage())
+    try {
+      await run()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  }
+  test('that sign-out could not drop, being no longer listed, keeps the mark of the account that left it', () =>
+    signedOutOf(async () => {
+      leftHere('alice', ['/s/Work'], false)
+      const dropped: string[] = []
+      const hidden = shown([], dropped)
+      await dropLeft(['/s/Work'])
+      hidden()
+      const back = shown(['/s/Work'])
+      expect(ownRoots('bob')).toEqual([])
+      expect(ownRoots('alice')).toEqual(['/s/Work'])
+      back()
+      expect(dropped).toEqual([])
+    }))
+  test('with words not yet sent stays on this device as the leaving account’s, and is no other account’s', () =>
+    signedOutOf(async () => {
+      const here = await freshDevice(new ReferenceAccount(new Clock(), SEEDED), 'alice-device')
+      expect(await firstPass(here.engine.core, here.space(), null)).toBe(true)
+      await here.engine.pass('sim')
+      const root = here.space().row.root
+      const done = () => Promise.resolve(true)
+      expect(await unsentRoots(here.engine, [root], done)).toEqual([])
+      await here.disk.write(`${root}/Plan.md`, 'Written before signing out mk961z\n')
+      await here.engine.foreign(`${root}/Plan.md`)
+      const unsent = await unsentRoots(here.engine, [root], done)
+      expect(unsent).toEqual([root])
+      leftHere('alice', [root], false)
+      const dropped: string[] = []
+      const listed = shown([root], dropped)
+      await dropLeft([root].filter((one) => !unsent.includes(one)))
+      expect(dropped).toEqual([])
+      expect(ownRoots('bob')).toEqual([])
+      expect(ownRoots('alice')).toEqual([root])
+      listed()
+    }))
 })
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {

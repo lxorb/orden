@@ -77,8 +77,7 @@ import { eachDue, reachable, sentAll } from './rounds'
 import { Cadence, FALLBACK, NUDGE, nextPassIn } from './cadence'
 import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../../accounts/src/api'
-import { forgetAccount, leaveSpaces } from '../../left-spaces/src/api'
-import { dropLeft, leaveUnsent, ownRoots, unsentRoots } from './left'
+import { dropLeft, leaveUnsent, leftHere, ownRoots, unsentRoots } from './left'
 
 type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 const ASKS_AT_MOST = 30_000
@@ -614,8 +613,7 @@ class Runner {
   private async leave(accountId: string, keepHere: boolean): Promise<void> {
     const engine = this.current
     const roots = ownRoots(accountId)
-    if (keepHere) forgetAccount(accountId)
-    else leaveSpaces(accountId, roots)
+    leftHere(accountId, roots, keepHere)
     let sent: string[] = []
     if (engine && !this.local && !isNative() && !keepHere) {
       await workspace()
