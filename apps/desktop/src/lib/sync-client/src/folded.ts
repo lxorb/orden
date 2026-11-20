@@ -1,5 +1,6 @@
 import type { Op } from '@orden/sync-core'
 import type { SpaceState } from './places'
+import type { Disk } from './world'
 import { outgoingBytes } from './records'
 import { put, remove, type Change } from './store'
 
@@ -49,10 +50,25 @@ export function foldedInto(space: SpaceState, mine: string, into: string): Chang
     } else if (!theirs.local_path) {
       theirs.local_path = ours.local_path
       changes.push(put('entries', { ...theirs }))
+    } else if (ours.local_path && ours.local_path !== theirs.local_path) {
+      space.emptied.add(ours.local_path)
     }
   }
   const positioned = movedKey(space.ordering.positions, mine, into)
   if (movedKey(space.ordering.meta, mine, into) || positioned) space.repositioned = true
   space.changed()
   return changes
+}
+export async function emptiedGone(space: SpaceState, disk: Disk, join: (root: string, path: string) => string) {
+  for (const path of [...space.emptied]) {
+    const full = join(space.row.root, path)
+    const held = disk.holds ? await disk.holds(full) : null
+    if (held === null || space.at(path)) {
+      space.emptied.delete(path)
+      continue
+    }
+    if (held.length) continue
+    space.emptied.delete(path)
+    await disk.remove(full, 'folder').catch(() => undefined)
+  }
 }

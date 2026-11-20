@@ -125,6 +125,7 @@ export class SpaceState {
   gone: Gone = new Map()
   keeping: Keeping = emptyKeeping()
   lostCheckedAt = -Infinity
+  readonly emptied = new Set<string>()
   private shownCache: TreeState | null = null
   private pathsCache: Map<string, string> | null = null
   private placedCache: Map<string, { folder: string; names: string[] }> | null = null
