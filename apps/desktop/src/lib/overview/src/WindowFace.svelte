@@ -83,12 +83,12 @@
     if (!flying && awake && now !== shot) later(() => (shot = landed() ? latestShot : shot))
   })
   let decodedShot = $state<string | null>(null)
-  let kept = $state<Face | null>(null)
+  let kept = $state.raw<Face | null>(null)
   $effect(() => {
     const now = face
     if (!flying && awake && now !== kept) later(() => (kept = landed() ? face : kept))
   })
-  let readScreen = $state<{ text: string; cols: number } | null>(null)
+  let readScreen = $state.raw<{ text: string; cols: number } | null>(null)
   $effect(() => {
     if (how !== 'scrollback' || locked || !awake) return
     let stale = false
@@ -99,7 +99,7 @@
       stale = true
     }
   })
-  let screen = $state<{ text: string; cols: number } | null>(null)
+  let screen = $state.raw<{ text: string; cols: number } | null>(null)
   $effect.pre(() => {
     const now = readScreen
     if (!flying && awake && now !== screen) later(() => (screen = landed() ? readScreen : screen))

@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { idle } from '../../../../test/effects/settle'
 
 const { workspace } = await import('../../workspace/src/api')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
@@ -73,5 +74,19 @@ describe('a window of the overview', () => {
     )
     expect(shownIn.textContent).not.toContain('item 40 of the list')
     expect(shownIn.querySelectorAll('*').length).toBeLessThan(200)
+  })
+  test('with a kept picture comes to rest and asks for no more frames', async () => {
+    const note = new NoteDoc(
+      { kind: 'note', path: `${ROOT}/Kept.md`, name: 'Kept.md', text: '# Kept', dirty: false },
+      () => undefined,
+    )
+    target = document.createElement('div')
+    document.body.append(target)
+    const face = { html: '<p>kept</p>', shot: null, w: 800, h: 600, at: 1 }
+    shown = mount(WindowFace, { target, props: { tab: new Tab(note, 'pane'), face, width: 800, height: 600 } })
+    await idle(300)
+    const asked = vi.spyOn(window, 'requestAnimationFrame')
+    await idle(300)
+    expect(asked.mock.calls.filter(([one]) => !String(one).includes('done('))).toEqual([])
   })
 })
