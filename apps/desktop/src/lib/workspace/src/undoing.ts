@@ -346,14 +346,7 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
   if (action.back) await ws.fileCame(from, 'file', undefined, action.back)
   ws.reload(action.into, action.intoContent)
   const others = (path: string) => !samePath(path, action.into) && !samePath(path, action.from)
-  const back = samePath(from, action.from) ? (action.relinks ?? []) : []
-  const restored: string[] = []
-  for (const one of back.filter((each) => others(each.path))) {
-    if (!(await stillSays(ws, one.path, one.after))) continue
-    await writeFile(one.path, one.before)
-    ws.reload(one.path, one.before)
-    restored.push(one.path)
-  }
+  const restored = await relinksBack(ws, samePath(from, action.from) ? (action.relinks ?? []) : [], others)
   const rest = action.relinked?.filter(others).filter((path) => !restored.some((one) => samePath(one, path)))
   if (!rest || rest.length) await ws.retarget(action.into, from, rest ? { only: rest } : {})
 }
@@ -368,4 +361,20 @@ async function uncarve(ws: PutsBack, action: Extract<FileAction, { kind: 'split'
     await ws.fileGone(action.created, 'file')
   }
   ws.reload(action.from, action.fromContent)
+  const others = (path: string) => !samePath(path, action.from) && !samePath(path, action.created)
+  await relinksBack(ws, action.relinks ?? [], others)
+}
+async function relinksBack(
+  ws: PutsBack,
+  relinks: readonly { path: string; before: string; after: string }[],
+  others: (path: string) => boolean,
+): Promise<string[]> {
+  const restored: string[] = []
+  for (const one of relinks.filter((each) => others(each.path))) {
+    if (!(await stillSays(ws, one.path, one.after))) continue
+    await writeFile(one.path, one.before)
+    ws.reload(one.path, one.before)
+    restored.push(one.path)
+  }
+  return restored
 }

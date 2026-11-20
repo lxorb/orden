@@ -105,13 +105,20 @@ async function carve(
   await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
   await writeFile(path, carved.kept)
   ws.reload(path, carved.kept)
+  const relinked: string[] = []
+  const relinks: { path: string; before: string; after: string }[] = []
+  await ws.retarget(path, created, { part: carved.taken, touched: relinked, wrote: relinks })
+  const now = (one: string, was: string) =>
+    [...relinks].reverse().find((each) => samePath(each.path, one))?.after ?? was
   ws.undone.record({
     kind,
     from: path,
     fromContent: before,
-    fromAfter: carved.kept,
+    fromAfter: now(path, carved.kept),
     created,
-    createdContent: carved.taken,
+    createdContent: now(created, carved.taken),
+    relinked,
+    relinks,
   })
   await ws.loadTree()
   ws.persist()

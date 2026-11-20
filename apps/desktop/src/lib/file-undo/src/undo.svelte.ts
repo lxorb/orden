@@ -44,6 +44,8 @@ export type FileAction =
       fromAfter: string
       created: string
       createdContent: string
+      relinked?: string[]
+      relinks?: { path: string; before: string; after: string }[]
     }
   | {
       kind: 'replace'

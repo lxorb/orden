@@ -376,6 +376,18 @@ describe('a merge and a carve put back', () => {
     expect(sent.filter((one) => one.path === '/s/c.md' && one.command === 'write_note')).toEqual([])
     expect(told).toContain('retargeted /s/b.md -> /s/a.md')
   })
+  test('a carve puts back the links it moved to the new note, in one step', async () => {
+    const relinks = [{ path: '/s/c.md', before: 'see [[a#b]] and [[a]]', after: 'see [[b#b]] and [[a]]' }]
+    disk.set('/s/a.md', SPLIT.fromAfter)
+    disk.set('/s/b.md', SPLIT.createdContent)
+    disk.set('/s/c.md', 'see [[b#b]] and [[a]]')
+    const ws = store({ ...SPLIT, relinked: ['/s/c.md'], relinks })
+    await undoLastFileAction(ws)
+    const written = sent.filter((one) => one.command === 'write_note').map((one) => [one.path, one.content])
+    expect(written).toContainEqual(['/s/c.md', 'see [[a#b]] and [[a]]'])
+    expect(written).toContainEqual(['/s/a.md', SPLIT.fromContent])
+    expect(ws.undone.stack).toEqual([])
+  })
   test('a merge put back hands the note back under the id it left with, so what it kept returns', async () => {
     disk.set('/s/b.md', MERGE.intoAfter)
     const ws = store({ ...MERGE, back: 'merged-1' })
