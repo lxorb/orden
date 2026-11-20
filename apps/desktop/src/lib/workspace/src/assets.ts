@@ -1,6 +1,7 @@
 import { api, BASE, account } from '../../accounts/src/api'
 import { attachmentFolder, modes } from '../../modes/src/api'
-import { sha256, invoke, spaceRelative } from '../../platform/src/api'
+import { sha256, spaceRelative } from '../../platform/src/api'
+import { saveAsset } from '../../file-writes/src/api'
 import { links } from '../../link-index/src/api'
 import { workspace } from './workspace.svelte'
 
@@ -41,12 +42,8 @@ export async function storeAttachment(file: File, notePath: string | null): Prom
 }
 export async function storeBeside(bytes: ArrayBuffer, notePath: string, name: string): Promise<string | null> {
   const root = workspace.rootHolding(notePath)
-  const written = await invoke<string>('save_asset', {
-    notePath,
-    folder: attachmentFolder(modes.attachments, notePath, root),
-    name,
-    bytes: new Uint8Array(bytes),
-  }).catch(() => null)
+  const folder = attachmentFolder(modes.attachments, notePath, root)
+  const written = await saveAsset(notePath, folder, name, new Uint8Array(bytes)).catch(() => null)
   const relative = written === null || root === null ? null : spaceRelative(root, notePath, written)
   if (root !== null && relative) links.fileWritten(root, relative)
   return written
