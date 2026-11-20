@@ -103,10 +103,7 @@ function looseIn(files: string[]): string[] {
       .map((one) => `${relative(ROOT, path).replace(/\\/g, '/')}: ${one.replace(/\s+/g, ' ')}`)
   })
 }
-const STILL_LOOSE = [
-  'packages/themes/src/base.css: :has(> .orden-mark)',
-  'apps/desktop/src/lib/foreign/src/ForeignMark.svelte: :is(:is(.orden-row-label, :has(+ .orden-row-label)):has(~ .foreign))',
-]
+const STILL_LOOSE = ['packages/themes/src/base.css: :has(> .orden-mark)']
 describe('a :has() rule', () => {
   test('is told apart when nothing but the :has() says which element it styles', () => {
     expect(loose(':has(> .orden-mark)')).toBe(true)
