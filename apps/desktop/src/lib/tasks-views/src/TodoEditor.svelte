@@ -4,7 +4,6 @@
     cleanLabel,
     PRIORITIES,
     PRIORITY_NAMES,
-    priorityTone,
     type Priority,
     type Todo,
     type TodoPatch,
@@ -30,6 +29,7 @@
   let title = $state('')
   let description = $state('')
   let repeat = $state('')
+  let customizing = $state(false)
   let newLabel = $state('')
   let newSubtask = $state('')
   let refused = $state<string | null>(null)
@@ -41,11 +41,12 @@
     const id = todo.id
     const nextTitle = todo.title
     const nextDescription = todo.description
-    const nextRepeat = todo.repeat ?? ''
+    const nextRepeat = (todo.repeat ?? '').replace(/ when done$/, '')
     const fresh = seen !== id
     if (fresh) {
       seen = id
       refused = null
+      customizing = false
     }
     untrack(() => {
       if (fresh || title === titleFrom) title = nextTitle
@@ -99,11 +100,22 @@
   const dayOr = (value: string): string | null => (value === '' ? null : value)
   const WHEN_DONE = ' when done'
   const EVERY = ['every day', 'every week', 'every month', 'every year']
+  const CUSTOM = 'custom'
   const afterDone = $derived((todo.repeat ?? '').endsWith(WHEN_DONE))
   const rule = $derived((todo.repeat ?? '').slice(0, afterDone ? -WHEN_DONE.length : undefined))
-  function saveRepeat(next = repeat) {
+  const choice = $derived(EVERY.includes(rule) ? rule : rule !== '' || customizing ? CUSTOM : '')
+  function saveRepeat(next: string) {
     const text = next.trim()
     if (text !== (todo.repeat ?? '')) void change({ repeat: text === '' ? null : text })
+  }
+  function saveRule() {
+    const text = repeat.trim()
+    const counted = afterDone && text !== '' && !/ when done$|^every!/i.test(text)
+    saveRepeat(counted ? text + WHEN_DONE : text)
+  }
+  function choose(next: string) {
+    customizing = next === CUSTOM
+    if (!customizing) saveRepeat(next === '' ? '' : next + (afterDone ? WHEN_DONE : ''))
   }
   function fitting(field: HTMLTextAreaElement, _words: string) {
     const fit = () => {
@@ -147,7 +159,7 @@
 
   <div class="fields">
     <div class="field">
-      <span class="name">Priority <span class="tone" style:background={priorityTone(todo.priority)}></span></span>
+      <span class="name">Priority</span>
       <Select
         label="Priority"
         value={String(todo.priority)}
@@ -173,40 +185,44 @@
     </div>
     <div class="field wide">
       <span class="name">Repeat</span>
-      <div class="repeat">
-        <input
-          class="orden-field"
-          type="text"
-          aria-label="Repeat"
-          placeholder="every 3 days"
-          bind:value={repeat}
-          onblur={() => saveRepeat()}
-          onkeydown={(event) => {
-            if (event.key !== 'Enter') return
-            event.preventDefault()
-            saveRepeat()
-          }}
-        />
-        <Select
-          label="Repeat every"
-          value={rule}
-          options={[
-            { value: '', label: 'None' },
-            ...EVERY.map((one) => ({ value: one, label: one.replace('every', 'Every') })),
-            ...(rule !== '' && !EVERY.includes(rule) ? [{ value: rule, label: 'Typed' }] : []),
-          ]}
-          onchange={(next: string) => saveRepeat(next === '' ? '' : next + (afterDone ? WHEN_DONE : ''))}
-        />
-      </div>
-      <span class="after">
-        <Switch
-          on={afterDone}
-          disabled={todo.repeat === null}
-          label="Count from when it's done"
-          onchange={(on: boolean) => saveRepeat(rule + (on ? WHEN_DONE : ''))}
-        />
-        Count from when it's done
-      </span>
+      <Select
+        label="Repeat"
+        value={choice}
+        options={[
+          { value: '', label: 'None' },
+          ...EVERY.map((one) => ({ value: one, label: one.replace('every', 'Every') })),
+          { value: CUSTOM, label: 'Custom' },
+        ]}
+        onchange={choose}
+      />
+      {#if choice === CUSTOM}
+        <label class="rule">
+          <span class="name">Rule</span>
+          <input
+            class="orden-field"
+            type="text"
+            placeholder="every 3 days, every month on the 1st"
+            data-todo-rule
+            bind:value={repeat}
+            onblur={saveRule}
+            onkeydown={(event) => {
+              if (event.key !== 'Enter') return
+              event.preventDefault()
+              saveRule()
+            }}
+          />
+        </label>
+      {/if}
+      {#if todo.repeat !== null}
+        <span class="after">
+          <Switch
+            on={afterDone}
+            label="Count from when it's done"
+            onchange={(on: boolean) => saveRepeat(rule + (on ? WHEN_DONE : ''))}
+          />
+          Count from when it's done
+        </span>
+      {/if}
     </div>
   </div>
 
@@ -374,14 +390,10 @@
   .wide {
     grid-column: 1 / -1;
   }
-  .repeat {
+  .rule {
     display: flex;
-    gap: var(--space-2);
-    align-items: center;
-  }
-  .repeat input {
-    flex: 1;
-    min-width: 0;
+    flex-direction: column;
+    gap: var(--space-1);
   }
   .after {
     display: inline-flex;
@@ -394,14 +406,6 @@
     color: var(--muted-strong);
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
-  }
-  .tone {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    margin-inline-start: var(--space-1);
-    border-radius: 50%;
-    vertical-align: 1px;
   }
   .group > .orden-section {
     margin: 0;
