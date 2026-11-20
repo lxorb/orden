@@ -54,10 +54,8 @@
         <TimeField label="End" value={clockOf(span.end)} onchange={(next: string) => moved('end', next)} />
       {/if}
       <span class="long">{length(end - span.start)}</span>
-      <button type="button" class="orden-glyph shut" aria-label="Close" title="Close" onclick={onclose}
-        ><Cross /></button
-      >
     </div>
+    <button type="button" class="orden-glyph shut" aria-label="Close" title="Close" onclick={onclose}><Cross /></button>
     <div class="acts">
       <button type="button" class="orden-chip" onclick={onsplit}>Split</button>
       {#if hasBefore}<button type="button" class="orden-chip" onclick={() => onmerge('before')}
@@ -75,6 +73,7 @@
     padding-bottom: var(--space-2);
   }
   .editor {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
@@ -86,12 +85,13 @@
     box-shadow: var(--shadow-sm);
   }
   .clocks {
+    padding-inline-end: calc(var(--row-height) + var(--space-1));
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
   }
-  .clocks > :global(*:not(.to, .long, .shut)) {
+  .clocks > :global(*:not(.to, .long)) {
     flex: 1 1 6.5rem;
     min-width: 0;
   }
@@ -110,7 +110,9 @@
     font-variant-numeric: tabular-nums;
   }
   .shut {
-    margin-inline-start: auto;
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
   }
   .acts {
     display: flex;

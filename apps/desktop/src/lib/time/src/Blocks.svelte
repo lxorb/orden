@@ -317,6 +317,7 @@
     flex-direction: column;
     gap: var(--space-4);
     min-width: 0;
+    padding-top: var(--space-2);
   }
   .empty {
     margin: var(--space-4) 0;

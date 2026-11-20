@@ -133,7 +133,7 @@
                   >
                 </span>
                 {#if rule}<ActivityMark activity={rule.activity} size={12} />{/if}
-                <span class="orden-row-meta">{length(place.ms)}</span>
+                <span class="orden-row-meta spent" data-time-spent>{length(place.ms)}</span>
               </button>
             </li>
           {/each}
@@ -205,11 +205,17 @@
     }
   }
   .place {
+    --spent: 4.25rem;
     background: linear-gradient(
-      to right,
-      color-mix(in srgb, var(--tint) 14%, transparent) var(--share),
-      transparent var(--share)
-    );
+        to right,
+        color-mix(in srgb, var(--tint) 14%, transparent) var(--share),
+        transparent var(--share)
+      )
+      no-repeat 0 0 / calc(100% - var(--spent) - var(--space-1)) 100%;
+  }
+  .spent {
+    flex: 0 0 var(--spent);
+    text-align: end;
   }
   .orden-row-meta {
     font-variant-numeric: tabular-nums;

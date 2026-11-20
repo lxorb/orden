@@ -104,6 +104,8 @@ describe('the time tracker as a tab', () => {
     expect(own()[0]).toEqual(['Rest', at(9), at(11)])
     pressed(target.querySelector('[data-time-block="a"] .body'))
     expect(target.querySelector('[data-time-editor]')).not.toBeNull()
+    expect(target.querySelector('[data-time-editor] .clocks [aria-label="Close"]')).toBeNull()
+    expect(target.querySelector('[data-time-editor] > [aria-label="Close"]')).not.toBeNull()
     pressed(button('Split'))
     expect(own()).toEqual([
       ['Rest', at(9), at(10)],
@@ -233,7 +235,7 @@ test('each place row shows its name between its icon and its time', () => {
     const name = row.querySelector('.name')
     expect(name?.textContent.trim()).not.toBe('')
     expect(parts.findIndex((one) => one.includes('orden-row-label'))).toBe(1)
-    expect(parts.at(-1)).toContain('orden-row-meta')
+    expect(parts.at(-1)).toContain('spent')
     expect(parts.filter((one) => one.includes('fill'))).toEqual([])
   }
   expect(rows.map((one) => one.querySelector('.name')?.textContent.trim())).toEqual([
