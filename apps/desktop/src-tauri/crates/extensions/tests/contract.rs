@@ -2,9 +2,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use orden_extensions::extensions::library::{
-    firefox_folders, folder_of, loaded_folders, unpack, write, Kept,
-};
+use orden_extensions::extensions::library::{folder_of, loaded_folders, unpack, write, Kept};
 use orden_extensions::extensions::link::Store;
 use orden_extensions::extensions::{shown, Done, Gaps};
 use serde_json::{json, Value};
@@ -31,9 +29,8 @@ fn said(done: Done) -> Value {
     serde_json::to_value(done).expect("an answer")
 }
 #[test]
-fn a_profile_with_no_library_loads_no_firefox_extension() {
+fn a_profile_with_no_library_loads_no_extension() {
     let root = tempfile::tempdir().expect("a folder");
-    assert!(firefox_folders(root.path()).is_empty());
     assert!(loaded_folders(root.path()).is_empty());
 }
 #[test]
@@ -66,8 +63,7 @@ fn chromium_loads_every_enabled_folder_orden_keeps_and_only_those() {
     let (from_firefox, from_store) = (unpacked(root, &firefox), unpacked(root, &store));
     unpacked(root, &off);
     write(root, &[firefox, store, off, pin]).expect("written");
-    assert_eq!(loaded_folders(root), vec![from_firefox.clone(), from_store]);
-    assert_eq!(firefox_folders(root), vec![from_firefox]);
+    assert_eq!(loaded_folders(root), vec![from_firefox, from_store]);
 }
 #[test]
 fn a_store_file_that_is_not_a_signed_crx3_is_refused_with_why() {

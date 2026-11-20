@@ -145,15 +145,9 @@ pub fn ours(root: &Path, one: &Kept) -> bool {
         || folder_of(root, &one.id, &one.version).join("manifest.json").is_file()
 }
 pub fn loaded_folders(root: &Path) -> Vec<PathBuf> {
-    folders(root, |_| true)
-}
-pub fn firefox_folders(root: &Path) -> Vec<PathBuf> {
-    folders(root, |one| one.store == Store::Firefox)
-}
-fn folders(root: &Path, which: impl Fn(&Kept) -> bool) -> Vec<PathBuf> {
     read(root)
         .into_iter()
-        .filter(|one| one.enabled && which(one))
+        .filter(|one| one.enabled)
         .map(|one| folder_of(root, &one.id, &one.version))
         .filter(|folder| {
             folder.join("manifest.json").is_file() && !folder.to_string_lossy().contains(',')
@@ -169,8 +163,8 @@ mod amo_tests {
     use super::super::firefox::{chromium_version, id_and_key};
     use super::super::unzip::tests::zip;
     use super::{
-        firefox_folders, folder_of, loaded_folders, read, tidy, unpack, unpack_checked,
-        unpack_firefox, write, Kept, Store,
+        folder_of, loaded_folders, read, tidy, unpack, unpack_checked, unpack_firefox, write, Kept,
+        Store,
     };
 
     fn xpi(version: &str) -> (Vec<u8>, Listing) {
@@ -281,6 +275,5 @@ mod amo_tests {
         let pin = Kept { id: "a".repeat(32), ..kept.clone() };
         write(root, &[kept, pin]).expect("written");
         assert_eq!(loaded_folders(root), vec![folder]);
-        assert!(firefox_folders(root).is_empty());
     }
 }
