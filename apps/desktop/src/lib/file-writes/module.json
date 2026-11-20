@@ -1,5 +1,5 @@
 {
   "name": "file-writes",
   "layer": "foundation",
-  "dependsOn": ["contracts", "documents", "link-index", "platform"]
+  "dependsOn": ["contracts", "documents", "link-index", "markdown", "platform"]
 }
