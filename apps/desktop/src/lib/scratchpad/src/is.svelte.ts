@@ -55,7 +55,6 @@ class Shown {
 }
 export const shown = new Shown()
 export function toggleScratchpad(): void {
-  if (__EVEN_PLUGIN__) return
   if (shown.on && !inCard()) shown.calling = true
   else if (shown.on) workspace.closeRight()
   else workspace.showRight('scratchpad')
@@ -64,7 +63,6 @@ export function closeScratchpad(): void {
   if (shown.on) workspace.closeRight()
 }
 export function scratchFromDrawer(): void {
-  if (__EVEN_PLUGIN__) return
   if (shown.on) {
     workspace.closeRight()
     return

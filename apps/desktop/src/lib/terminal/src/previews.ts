@@ -10,9 +10,7 @@ export function screenText(serialized: string, rows: number): string {
   return lines.slice(-Math.max(rows, 1)).join('\n')
 }
 export async function scrollbackOf(tab: PreviewedTab): Promise<ScreenPreview | null> {
-  const live = __EVEN_PLUGIN__
-    ? null
-    : await import('./sessions.svelte').then((one) => one.screenOf(tab)).catch(() => null)
+  const live = await import('./sessions.svelte').then((one) => one.screenOf(tab)).catch(() => null)
   if (live) return live
   const key = readSpec(tab.doc)?.key ?? ''
   const history = await peekHistory({ space: tab.home, key })

@@ -6,7 +6,6 @@ import { ptyOf, sessionEnded } from './running'
 
 export async function mayEnd(closing: readonly Tab[], every: readonly Tab[] = closing): Promise<boolean> {
   if (!(await mayStop(closing))) return false
-  if (__EVEN_PLUGIN__) return true
   const loose = unkeptOnline(closing, every)
   const [one] = loose
   if (!one) return true

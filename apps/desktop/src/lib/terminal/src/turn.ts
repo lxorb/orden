@@ -6,7 +6,7 @@ import { workspace } from '../../workspace/src/api'
 import { hostIdOf, readSpec } from './spec'
 
 export function turnable(tab: Tab): boolean {
-  if (__EVEN_PLUGIN__ || !explorerOn() || isOnlineTab(tab)) return false
+  if (!explorerOn() || isOnlineTab(tab)) return false
   const shell = readSpec(tab.doc)?.shell ?? ''
   return hostIdOf(shell) === null && !shell.startsWith('wsl:')
 }
