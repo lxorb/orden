@@ -1,6 +1,17 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+const hooked = vi.hoisted(() => ({ work: null as (() => Promise<void>) | null, settled: 0 }))
+vi.mock('../../accounts/src/api', async (original) => ({
+  ...(await original<object>()),
+  account: { settleWith: (work: () => Promise<void>) => (hooked.work = work) },
+}))
+vi.mock('../src/settling', () => ({
+  settleLocalNotes: () => {
+    hooked.settled += 1
+    return Promise.resolve()
+  },
+}))
 import { conflictRule, DEFAULT_RULE, mirrorsFor, newMirror, readMirror, returning, savedRecord } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
@@ -50,5 +61,12 @@ describe('what the sync remembers', () => {
     expect(asksOnReturn('other', true)).toBe(true)
     expect(asksOnReturn('mine', true)).toBe(false)
     expect(apartName('Plans', new Set(['Plans 2']))).toBe('Plans 3')
+  })
+})
+describe('a sign-in another tab left unanswered (#2341)', () => {
+  test('is settled in this tab by asking about local notes once, through the hook the api leaves with the account', async () => {
+    expect(hooked.work).not.toBeNull()
+    await hooked.work?.()
+    expect(hooked.settled).toBe(1)
   })
 })

@@ -1,3 +1,4 @@
+import { account } from '../../accounts/src/api'
 export { type Answer, type Clash, type ConflictRule, conflictRule, DEFAULT_RULE } from './conflicts'
 export {
   type Mirror,
@@ -18,3 +19,4 @@ export const returning = () => import('./returning')
 export const settling = () => import('./settling')
 export const mirrorHolding = () => import('./holding')
 export const writingDown = () => import('./write-down')
+if ('settleWith' in account) account.settleWith(async () => (await import('./settling')).settleLocalNotes())
