@@ -26,6 +26,10 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     page.evaluate("() => { const ws = window.ordenApp.workspace; ws.showPanel('tree') }")
     wait_for(page, "() => window.ordenApp.workspace.panel === 'tree'", "the file list")
+    page.wait_for_timeout(300)
+    if page.evaluate(SIDES)["leftDrawn"]:
+        wrong("the left side draws panel tabs with only the file list to choose")
+    page.evaluate("() => window.ordenApp.workspace.movePanel('outline', 'left')")
     wait_for(page, "() => !!document.querySelector('aside[data-sidebar]:not(.right) [role=tablist]')", "the left side's tabs")
     pressed(page, "left", "Files", "tree", "the folder pressed while it is in front")
     pressed(page, "left", "Files", "tree", "and again")
