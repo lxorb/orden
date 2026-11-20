@@ -58,6 +58,7 @@ async function opened(url: string, certificate: unknown) {
   flushSync()
 }
 const text = (selector: string) => target.querySelector(selector)?.textContent ?? ''
+const codes = () => [...target.querySelectorAll('.code .hex')].map((one) => one.textContent.replaceAll('\u200b', ''))
 test('pressing the secure connection line shows the whole chain, site first, up to the root', async () => {
   await opened('https://example.com/a', CHAIN)
   expect(answers.asked).toEqual([{ tab: 'tab-1', address: 'https://example.com/a' }])
@@ -70,21 +71,26 @@ test('pressing the secure connection line shows the whole chain, site first, up 
   expect(line?.getAttribute('aria-expanded')).toBe('true')
   const steps = [...target.querySelectorAll<HTMLButtonElement>('.chain button')]
   expect(steps.map((one) => one.dataset.role)).toEqual(['site', 'intermediate', 'root'])
-  expect(steps.map((one) => [...one.querySelectorAll('.name .fact')].map((fact) => fact.textContent))).toEqual([
-    ['example.com'],
-    ['R3', "Let's Encrypt"],
-    ['ISRG Root X1', 'Internet Security Research Group'],
+  expect(
+    steps.map((one) => [
+      one.querySelector('.name')?.textContent,
+      ...[...one.querySelectorAll('.orden-row-meta .fact')].map((fact) => fact.textContent),
+    ]),
+  ).toEqual([
+    ['example.com', 'Site'],
+    ['R3', 'Intermediate', "Let's Encrypt"],
+    ['ISRG Root X1', 'Root', 'Internet Security Research Group'],
   ])
   expect(text('.details')).toContain('example.com')
   expect(text('.details')).toContain('R3')
   expect(text('.details')).toContain("Let's Encrypt")
-  expect(text('.details')).toContain('example.com-fingerprint')
-  expect(text('.details')).toContain('01:02')
+  expect(codes()).toContain('example.com-fingerprint')
+  expect(codes().join(' ')).toContain('01:02')
   steps[2]?.click()
   flushSync()
   expect(steps[2]?.getAttribute('aria-pressed')).toBe('true')
   expect(steps[0]?.getAttribute('aria-pressed')).toBe('false')
-  expect(text('.details')).toContain('ISRG Root X1-fingerprint')
+  expect(codes()).toContain('ISRG Root X1-fingerprint')
   expect(text('.details')).toContain('Internet Security Research Group')
   line?.click()
   flushSync()
