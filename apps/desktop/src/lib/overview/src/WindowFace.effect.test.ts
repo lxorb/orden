@@ -6,6 +6,7 @@ const { workspace } = await import('../../workspace/src/api')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { unlocks } = await import('../../protect/src/unlocked.svelte')
 const WindowFace = (await import('./WindowFace.svelte')).default
+const { settled } = await import('./later')
 const ROOT = '/space'
 const PATH = `${ROOT}/Diary.md`
 let target: HTMLElement | undefined
@@ -84,6 +85,7 @@ describe('a window of the overview', () => {
     document.body.append(target)
     const face = { html: '<p>kept</p>', shot: null, w: 800, h: 600, at: 1 }
     shown = mount(WindowFace, { target, props: { tab: new Tab(note, 'pane'), face, width: 800, height: 600 } })
+    await settled()
     await idle(300)
     const asked = vi.spyOn(window, 'requestAnimationFrame')
     await idle(300)

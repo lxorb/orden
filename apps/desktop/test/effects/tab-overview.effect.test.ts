@@ -16,6 +16,7 @@ const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { runTap } = await (await import('../../src/lib/shortcuts/src/api')).doubleTaps()
 const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
+const { settled } = await import('../../src/lib/overview/src/later')
 let close: () => void
 beforeEach(() => {
   workspace.panes.collapse()
@@ -45,7 +46,7 @@ async function opened() {
     ?.run()
   flushSync()
   await tick()
-  if (workspace.tabs.length) await vi.waitFor(() => expect(document.querySelector('.canvas .closer')).not.toBe(null))
+  await settled()
 }
 test('the palette’s row shows one window per tab, the strip leaves them out, the keyboard on the one in front', async () => {
   await opened()
@@ -102,10 +103,7 @@ test('a web tab’s window shows its page as it was left, and only a draft’s w
   const page = workspace.openPage('https://example.com/') ?? ''
   pages.of(page).shot = 'data:image/png;base64,AA=='
   await opened()
-  await vi.waitFor(() => {
-    flushSync()
-    expect(windows().some((one) => one.querySelector('img'))).toBe(true)
-  })
+  while (!windows().some((one) => one.querySelector('img'))) await idle(20)
   const web = windows().find((one) => one.querySelector('img'))
   expect(web?.querySelector('img')?.getAttribute('src')).toBe(pages.of(page).shot)
   expect(web?.classList.contains('unsaved')).toBe(false)

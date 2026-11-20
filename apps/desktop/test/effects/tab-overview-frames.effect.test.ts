@@ -20,6 +20,7 @@ const { default: Overview } = await import('../../src/lib/overview/src/Overview.
 const { tabOverview } = await import('../../src/lib/workspace/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { faces } = await import('../../src/lib/overview/src/faces.svelte')
+const { settled } = await import('../../src/lib/overview/src/later')
 let now = 0
 let waiting = new Map<number, FrameRequestCallback>()
 let next = 1
@@ -29,6 +30,17 @@ function frame(ms = 1000 / 60) {
   waiting = new Map()
   for (const run of due.values()) run(now)
   flushSync()
+}
+async function until(seen: () => boolean) {
+  while (!seen()) {
+    frame()
+    await idle(20)
+  }
+}
+async function drained() {
+  let calm = false
+  void settled().then(() => (calm = true))
+  await until(() => calm)
 }
 let close: () => void
 const app: HTMLElement[] = []
@@ -82,11 +94,7 @@ test('the windows set off on the first frame, their faces coming in after, marks
   frame()
   frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
-  await vi.waitFor(async () => {
-    frame()
-    await idle(20)
-    expect(document.querySelector('.window .face .mark')).not.toBe(null)
-  })
+  await until(() => document.querySelector('.window .face .mark') !== null)
 })
 test('a web page whose picture is still being taken keeps the windows waiting a few frames at most', async () => {
   const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
@@ -306,11 +314,8 @@ test('each tab is copied once, riding its pane while in front, a chip otherwise,
   flushSync()
   await drawnNow()
   const copies = () => document.querySelectorAll('.canvas .chip-copy > *, .canvas .rider > *').length
-  await vi.waitFor(async () => {
-    frame()
-    await idle(20)
-    expect(copies()).toBe(workspace.tabs.length)
-  })
+  await drained()
+  expect(copies()).toBe(workspace.tabs.length)
   for (let i = 0; i < 400 && waiting.size; i++) frame()
   const front = workspace.activeTabId
   const rider = () => [...document.querySelectorAll('.canvas .rider > *')].map((one) => one.textContent)
@@ -373,11 +378,8 @@ test('the opening builds no picture of a pane and no copy of a tab, and they com
   expect(taken).not.toHaveBeenCalled()
   expect(document.querySelectorAll('.canvas .chip-copy').length).toBe(0)
   expect(document.querySelectorAll('.canvas .rider > *').length).toBe(1)
-  await vi.waitFor(async () => {
-    frame()
-    await idle(20)
-    expect(document.querySelectorAll('.canvas .chip-copy > *, .canvas .rider > *').length).toBe(workspace.tabs.length)
-  })
+  await drained()
+  expect(document.querySelectorAll('.canvas .chip-copy > *, .canvas .rider > *').length).toBe(workspace.tabs.length)
   expect(taken).toHaveBeenCalled()
 })
 test('nothing is measured once the overview is in the page, until its first frame', () => {
@@ -439,11 +441,8 @@ test('the windows’ crosses and names come in the frames after the first, which
   flushSync()
   expect(document.querySelectorAll('.canvas .window').length).toBeGreaterThan(0)
   expect(document.querySelectorAll('.closer, .caption').length).toBe(0)
-  await vi.waitFor(async () => {
-    frame()
-    await idle(20)
-    expect(document.querySelectorAll('.closer').length).toBe(document.querySelectorAll('.canvas .window').length)
-  })
+  await drained()
+  expect(document.querySelectorAll('.closer').length).toBe(document.querySelectorAll('.canvas .window').length)
   expect(document.querySelectorAll('.caption').length).toBe(document.querySelectorAll('.canvas .window').length)
 })
 test('each window gets its cross and name in a step of its own, so no step outruns the frame budget', async () => {
@@ -453,12 +452,7 @@ test('each window gets its cross and name in a step of its own, so no step outru
   expect(all).toBeGreaterThan(1)
   vi.spyOn(performance, 'now').mockImplementation(() => (now += 3))
   const counts: number[] = []
-  await vi.waitFor(async () => {
-    frame()
-    await idle(20)
-    counts.push(document.querySelectorAll('.closer').length)
-    expect(counts.at(-1)).toBe(all)
-  })
+  await until(() => counts.push(document.querySelectorAll('.closer').length) > 0 && counts.at(-1) === all)
   expect(counts.filter((count) => count > 0 && count < all).length).toBeGreaterThan(0)
   expect(document.querySelectorAll('.caption').length).toBe(all)
 })
@@ -557,11 +551,8 @@ test('the one bar is over every window on every frame, and a window under it sho
   tabOverview.open = true
   flushSync()
   await drawnNow()
-  await vi.waitFor(async () => {
-    frame()
-    await idle(20)
-    expect(document.querySelector('.closer')).not.toBe(null)
-  })
+  await drained()
+  expect(document.querySelector('.closer')).not.toBe(null)
   const pane = document.querySelector<HTMLElement>(`[data-pane="${workspace.panes.all[0]?.id}"]`)
   for (let i = 0; i < 200 && waiting.size; i++) {
     frame()
