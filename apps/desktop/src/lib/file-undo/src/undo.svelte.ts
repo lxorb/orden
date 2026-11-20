@@ -221,6 +221,11 @@ function labelOf(action: FileAction | undefined): string | null {
     }
   }
 }
+function headingOf(before: FileAction | undefined, step: FileAction): boolean {
+  if (step.kind !== 'replace' || before?.kind !== 'rename') return false
+  const [only, ...more] = step.notes
+  return only !== undefined && !more.length && samePath(only.path, before.to)
+}
 function doesAgain(action: FileAction): boolean {
   switch (action.kind) {
     case 'move':
@@ -232,7 +237,7 @@ function doesAgain(action: FileAction): boolean {
     case 'keep':
       return true
     case 'many':
-      return action.steps.every(doesAgain)
+      return action.steps.every((step, at) => doesAgain(step) || headingOf(action.steps[at - 1], step))
     case 'copy':
       return action.made.every((one) => one.from !== undefined)
     case 'outside':

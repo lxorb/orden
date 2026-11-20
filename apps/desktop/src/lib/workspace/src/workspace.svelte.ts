@@ -165,7 +165,6 @@ import {
   isFolderNote,
   linkedFiles,
   noteToNest,
-  renameSteps,
   unnesting,
   anyOpen,
   flatRows,
@@ -186,7 +185,6 @@ import { plainOrigin } from '@orden/scan/web-address'
 import { apartOf, readWebFile } from '@orden/scan/shortcut'
 import { agentMarks } from './agent-marks.svelte'
 import { followTitle, settleTitle } from './title-follow'
-import { retitled as retitledText, stemOf } from './title-name'
 import { filesUnder, SpaceFiles } from './space-files.svelte'
 import { services } from './services'
 
@@ -228,6 +226,7 @@ const changes = () => import('./space-changes')
 const essentials = () => import('./essentials.svelte')
 const paneStays = (strip: number, showing: Tab | null) => strip > 0 || (showing?.essential ?? null) !== null
 const sets = () => import('./sets.svelte').then((one) => one.sets)
+const retitling = () => import('./retitling')
 function fromFolder(folder: string, target: string): string | null {
   const parts = folder.split('/').filter(Boolean)
   for (const part of target.split('/')) {
@@ -468,7 +467,7 @@ class Workspace {
     () => this.tabs,
     (start) => {
       const note = new NoteDoc(start, (one) => this.saving.edited(one))
-      followTitle(note, (path, name) => void this.renameByTitle(path, name))
+      followTitle(note, (path, name, was) => void this.renameByTitle(path, name, was))
       return note
     },
   )
@@ -2844,12 +2843,14 @@ class Workspace {
     const folder = entryAt(this.tree, folderOf(path))
     return (folder?.children ?? []).filter((one) => !samePath(one.path, path)).map((one) => one.name)
   }
-  async rename(path: string, name: string) {
+  async rename(path: string, name: string, words?: string) {
     const clean = name.trim()
     if (!clean || clean.includes('/') || clean.includes('\\')) return
     const target = joinPath(folderOf(path), clean)
     if (sameSpelling(target, path) || !(await this.writableAt(path))) return
-    await this.saving.holdingUnder(path, () => this.renameFile(path, target, true))
+    await this.undone.batch(() =>
+      this.saving.holdingUnder(path, () => this.renameFile(path, target, true, false, words)),
+    )
   }
   holdingUnder(path: string, run: () => Promise<void>): Promise<void> {
     return this.saving.holdingUnder(path, run)
@@ -2857,34 +2858,13 @@ class Workspace {
   holdingWrites<T>(path: string, run: () => Promise<T>, stalled: () => Promise<T>): Promise<T> {
     return this.saving.holdingWrites(path, run, stalled)
   }
-  async renameByTitle(path: string, name: string): Promise<void> {
-    const extension = /\.[^./\\]+$/.exec(path)?.[0] ?? '.md'
-    const steps = isFolderNote(path) ? renameSteps(path, name + extension) : [{ path, name: name + extension }]
-    for (const step of steps) {
-      const dir = folderOf(step.path)
-      const there = joinPath(dir, step.name)
-      const free =
-        sameSpelling(there, step.path) || !(this.nameTaken(dir, step.path)(step.name) || (await onDisk(there)))
-      if (!free) {
-        busy.failed(
-          `Could not rename ${stemOf(path) ?? nameOf(path)} to ${name}: a note with that name already exists here.`,
-        )
-        return
-      }
-    }
-    if (!(await this.writableAt(path))) return
-    await this.undone.batch(async () => {
-      for (const step of steps) {
-        const target = joinPath(folderOf(step.path), step.name)
-        const titled = samePath(step.path, path)
-        await this.saving.holdingUnder(step.path, () => this.renameFile(step.path, target, true, false, titled))
-      }
-    })
+  async renameByTitle(path: string, name: string, was: string): Promise<void> {
+    if (await this.writableAt(path)) await (await retitling()).renameByTitle(this, path, name, was)
   }
-  private async renameFile(path: string, target: string, undoable: boolean, hold = false, titled = false) {
-    await inFlight(target, () => this.renamingFile(path, target, undoable, hold, titled))
+  private async renameFile(path: string, target: string, undoable: boolean, hold = false, words?: string) {
+    await inFlight(target, () => this.renamingFile(path, target, undoable, hold, words))
   }
-  private async renamingFile(path: string, target: string, undoable: boolean, hold: boolean, titled = false) {
+  private async renamingFile(path: string, target: string, undoable: boolean, hold: boolean, words?: string) {
     const kind = this.kindAt(path)
     this.showMove(path, target)
     if (undoable) this.naming = null
@@ -2895,37 +2875,18 @@ class Workspace {
       throw error
     }
     const rewrote = await this.retargetMoved(path, target)
-    const retitled = titled || (undoable && kind === 'file' && (await this.retitle(path, target)))
+    const note = this.opened.at(path)
+    note?.flush()
+    const { replaced, retitle } = await retitling()
+    const heading = undoable && kind === 'file' ? await retitle(note, path, target, words) : null
+    if (note && heading) this.saving.owed(note)
     if (undoable) {
-      this.undone.record({
-        kind: 'rename',
-        from: path,
-        to: target,
-        ...(rewrote ? { rewrote } : {}),
-        ...(retitled ? { retitled } : {}),
-      })
+      this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
+      if (heading) this.undone.record(replaced(target, heading.before, heading.after))
     }
     await this.fileMoved(path, target, kind)
     await this.loadTree()
     this.persist()
-  }
-  private async retitle(path: string, target: string): Promise<boolean> {
-    const note = this.opened.at(path)
-    if (note) {
-      note.flush()
-      const text = retitledText(note.text, path, target)
-      if (text === null) return false
-      note.replace(text, note.dirty)
-      note.dirty = true
-      this.saving.owed(note)
-      return true
-    }
-    if (stemOf(target) === null) return false
-    const was = await invoke<string>('read_note', { path: target }).catch(() => null)
-    const text = was === null ? null : retitledText(was, path, target)
-    if (text === null) return false
-    await writeFile(target, text)
-    return true
   }
   async renameOnDisk(from: string, to: string, kind: Kind, how: { hold?: boolean } = {}) {
     const op = {

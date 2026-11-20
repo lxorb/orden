@@ -1,20 +1,9 @@
 import { nameFromTitle } from '../../platform/src/api'
+import type { NoteDoc } from '../../documents/src/api'
 import { lineOf, sameName, stemOf, titleOf } from './title-name'
 
-interface Caret {
-  head: number
-  focused: boolean
-  typed: boolean
-}
-export interface Titled {
-  readonly path: string | null
-  readonly live: {
-    readonly text: { toString(): string }
-    caret(listener: (caret: Caret) => void): () => void
-  }
-}
 const settling = new WeakMap<object, () => void>()
-export function followTitle(note: Titled, rename: (path: string, name: string) => void): () => void {
+export function followTitle(note: NoteDoc, rename: (path: string, name: string, was: string) => void): () => void {
   let watching: { snapshot: string; typed: string | null } | null = null
   const settle = () => {
     const was = watching
@@ -24,7 +13,7 @@ export function followTitle(note: Titled, rename: (path: string, name: string) =
     const now = titleOf(note.live.text.toString())?.words ?? null
     if (!was || path === null || stem === null || now === null || was.typed !== now) return
     const name = nameFromTitle(now)
-    if (name !== null && sameName(was.snapshot, stem) && !sameName(now, stem)) rename(path, name)
+    if (name !== null && sameName(was.snapshot, stem) && !sameName(now, stem)) rename(path, name, was.snapshot)
   }
   settling.set(note, settle)
   return note.live.caret((caret) => {

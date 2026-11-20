@@ -1,18 +1,23 @@
 import type { Bookmark } from '@orden/contracts'
-import { folderOf, nameOf } from '../../platform/src/api'
+import { folderOf, nameOf, samePath } from '../../platform/src/api'
 import { copyAgain, type Copies } from './copying'
 import type { FileAction } from '../../file-undo/src/api'
 import { putBack } from './undoing'
 import { services } from './services'
+import { titleOf } from './title-name'
 
 export interface DoesAgain extends Copies {
   move(from: string, intoFolder: string, how?: 'carries'): Promise<void>
-  rename(path: string, name: string): Promise<void>
+  rename(path: string, name: string, words?: string): Promise<void>
   remove(path: string, isFolder: boolean): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string): Promise<void>
   readonly bookmarks: { put(root: string, list: Bookmark[]): void }
   loadTree(): Promise<void>
   persist(): void
+}
+function wordsOf(next: FileAction | undefined, to: string): string | undefined {
+  const note = next?.kind === 'replace' && next.notes.length === 1 ? next.notes[0] : undefined
+  return note && samePath(note.path, to) ? titleOf(note.after)?.words : undefined
 }
 export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
   const action = ws.undone.next
@@ -50,7 +55,10 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
       break
     }
     case 'many':
-      for (const step of action.steps) await again(ws, step)
+      for (const [at, step] of action.steps.entries()) {
+        if (step.kind === 'rename') await ws.rename(step.from, nameOf(step.to), wordsOf(action.steps[at + 1], step.to))
+        else await again(ws, step)
+      }
       break
     case 'keep': {
       const { moving } = await import('./list-landing.svelte')

@@ -23,10 +23,3 @@ export function lineOf(text: string, title: Title): { from: number; to: number }
   const end = text.indexOf('\n', title.to)
   return { from: text.lastIndexOf('\n', title.from - 1) + 1, to: end === -1 ? text.length : end }
 }
-export function retitled(text: string, from: string, to: string): string | null {
-  const title = titleOf(text)
-  const was = stemOf(from)
-  const now = stemOf(to)
-  if (title === null || was === null || now === null || !sameName(title.words, was)) return null
-  return text.slice(0, title.from) + now + text.slice(title.to)
-}
