@@ -16,11 +16,11 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         |port| RemoteDebugging::Port { port, allowed_origins: Vec::new() },
     );
     let mut asked = switches(&from_run("ORDEN_CEF_ARGS").unwrap_or_default());
-    let firefox = cef_root()
+    let loaded = cef_root()
         .and_then(|root| Some(root.parent()?.join("extensions")))
-        .map(|root| orden_extensions::extensions::library::firefox_folders(&root))
+        .map(|root| orden_extensions::extensions::library::loaded_folders(&root))
         .unwrap_or_default();
-    let loading = with_extensions(&mut asked, &firefox);
+    let loading = with_extensions(&mut asked, &loaded);
     let settings = orden_web_engine::EngineSettings::default()
         .with_switches(orden_web::page_scale::switches())
         .with_switches(asked);
