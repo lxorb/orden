@@ -22,6 +22,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 }))
 const { editHighlights, loadHighlights } = await import('./sidecar')
 const { readSheet } = await import('./highlights')
+const { hearWrites } = await import('../../file-writes/src/api')
 import type { Highlight } from './highlights'
 const mark = (id: string): Highlight => ({
   id,
@@ -69,5 +70,20 @@ describe('the marks on a PDF', () => {
     }))
     const kept = readSheet(disk.written.at(-1) ?? '')
     expect(kept.highlights.map((one) => one.id)).toEqual(['a', 'c'])
+  })
+  test('tell sync the sidecar was made the first time and written after', async () => {
+    const told: string[] = []
+    const stop = hearWrites({
+      there: () => Promise.resolve(disk.written.length > 0),
+      made: (path) => {
+        told.push(`made ${path}`)
+        return Promise.resolve()
+      },
+      wrote: (path, content) => void told.push(`wrote ${path} ${readSheet(content).highlights.length}`),
+    })
+    await editHighlights('/space/paper.pdf', (now) => now)
+    await editHighlights('/space/paper.pdf', (now) => ({ ...now, highlights: [mark('a')] }))
+    stop()
+    expect(told).toEqual(['made /space/paper.pdf.highlights.json', 'wrote /space/paper.pdf.highlights.json 1'])
   })
 })

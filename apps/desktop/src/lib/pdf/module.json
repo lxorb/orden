@@ -3,6 +3,7 @@
   "layer": "content",
   "dependsOn": [
     "contracts",
+    "file-writes",
     "markdown",
     "platform",
     "scan",
