@@ -16,7 +16,7 @@
   import { addTodo, doWithAi, patchTodo, removeTodo, typedPatch, type Typing } from './acts'
   import { Carrying, columnPreview } from './carrying.svelte'
   import Filters from './Filters.svelte'
-  import Pick from './Pick.svelte'
+  import ChipPick from './ChipPick.svelte'
   import { away, glider } from './glide'
   import { openNote } from './notes'
   import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
@@ -90,15 +90,17 @@
 <div class="board" data-todos-board>
   <header class="bar">
     <Filters {shown} />
-    <Pick
+    <ChipPick
       name="Group"
+      label="Group"
       data-todos-group
       value={shown.grouping}
       options={GROUPINGS.map((one) => ({ value: one, label: GROUPING_NAMES[one] }))}
       onchange={(next: string) => shown.setGrouping(next as Grouping)}
     />
-    <Pick
+    <ChipPick
       name="Sort"
+      label="Sort"
       data-todos-sort
       value={shown.sort}
       options={SORTS.map((sort) => ({ value: sort, label: SORT_NAMES[sort] }))}

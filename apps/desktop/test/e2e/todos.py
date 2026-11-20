@@ -189,6 +189,18 @@ def menus_inside(page: Page, tag: str) -> None:
     page.keyboard.press("Escape")
     page.locator(f"{sheet} .close").click()
     say(f"[{tag}] the label menu, the Priority dropdown and the date popup stay in the window and on top")
+def one_row(page: Page, scope: str, *marks: str) -> None:
+    boxes = page.evaluate(
+        "([scope, marks]) => marks.map((mark) => { const one = document.querySelector(`${scope} [${mark}]`); if (!one) return [mark, null]; const box = one.getBoundingClientRect(); const style = getComputedStyle(one); return [mark, one.tagName, one.classList.contains('orden-chip'), Math.round(box.top * 2) / 2, Math.round(box.height * 2) / 2, style.borderTopWidth, style.borderRadius, style.paddingLeft] })",
+        [scope, list(marks)],
+    )
+    say(f"{scope} toolbar: {boxes}")
+    if any(one[1] != "BUTTON" or not one[2] for one in boxes):
+        wrong(f"a control in the {scope} toolbar is not a chip: {boxes}")
+    if len({tuple(one[4:]) for one in boxes}) != 1:
+        wrong(f"the {scope} toolbar chips differ in size or shape: {boxes}")
+    if any(0 < abs(a[3] - b[3]) < a[4] for a in boxes for b in boxes):
+        wrong(f"the {scope} toolbar chips in one row do not line up: {boxes}")
 def no_ring(page: Page) -> None:
     chips = ["[data-todos-panel] [data-todos-label]", "[data-todos-panel] [data-todos-show-done]"]
     page.locator(chips[0]).click()
@@ -259,6 +271,7 @@ def main() -> int:
         sheet_controls(desk)
         desk.locator("[data-todos-panel] [data-todo-editor] .close").click()
         shot(desk, "01-panel")
+        one_row(desk, "[data-todos-panel]", "data-todos-open", "data-todos-show-done", "data-todos-label", "data-todos-group")
         pick_label(desk, "[data-todos-panel]", "admin")
         desk.wait_for_function("() => document.querySelectorAll('[data-todos-panel] [data-todo]').length === 1")
         if titles(desk) != ["Call the bank"]:
@@ -286,10 +299,11 @@ def main() -> int:
         say(f"board: {board}")
         if [one[0] for one in board] != ["admin", "home", "No label"]:
             wrong(f"the board columns are {board}")
-        desk.locator("[data-todos-board] [data-todos-sort] [role=combobox]").click()
+        desk.locator("[data-todos-board] [data-todos-sort]").click()
         desk.locator("[role=listbox] [role=option]", has_text="Priority").click()
-        desk.wait_for_function("() => document.querySelector('[data-todos-board] [data-todos-sort] [role=combobox]').textContent.includes('Priority')")
+        desk.wait_for_function("() => document.querySelector('[data-todos-board] [data-todos-sort]').textContent.includes('Priority')")
         shot(desk, "03-board")
+        one_row(desk, "[data-todos-board]", "data-todos-show-done", "data-todos-any-start", "data-todos-label", "data-todos-group", "data-todos-sort")
         desk.locator("[data-todos-board] [data-todo] .tick").first.check()
         desk.wait_for_function("() => document.querySelector('[data-todos-board] [data-todo].done')")
         say("a todo ticked on the board is done")

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import LabelSelect from './LabelSelect.svelte'
+  import ChipPick from './ChipPick.svelte'
   import type { Shown } from './shown.svelte'
 
   const { shown }: { shown: Shown } = $props()
@@ -24,10 +24,15 @@
       onclick={() => shown.setAnyStart(!shown.anyStart)}>Ignore start date</button
     >
   {/if}
-  <LabelSelect
-    labels={shown.labels}
-    chosen={shown.filter.label}
-    onchoose={(label: string | null) => shown.setLabel(label)}
+  <ChipPick
+    label="Label"
+    search="Search labels"
+    data-todos-label
+    value={shown.filter.label ?? ''}
+    on={shown.filter.label !== null}
+    first={{ value: '', label: 'All labels' }}
+    options={shown.labels.map((one) => ({ value: one, label: one }))}
+    onchange={(next: string) => shown.setLabel(next === '' ? null : next)}
   />
 </div>
 

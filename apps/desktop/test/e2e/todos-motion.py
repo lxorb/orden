@@ -145,9 +145,9 @@ def slow(page: Page, key: str, what: str) -> None:
     if titles(page, key) != [*order[1:4], order[0], *order[4:]]:
         wrong(f"{what}: {order} became {titles(page, key)}")
 def sort(page: Page, name: str) -> None:
-    page.locator(f"{BOARD} [data-todos-sort] [role=combobox]").click()
+    page.locator(f"{BOARD} [data-todos-sort]").click()
     page.locator("[role=listbox] [role=option]", has_text=name).click()
-    wait_for(page, f"document.querySelector('{BOARD} [data-todos-sort] [role=combobox]').textContent.includes({json.dumps(name)})", f"sorted by {name}")
+    wait_for(page, f"document.querySelector('{BOARD} [data-todos-sort]').textContent.includes({json.dumps(name)})", f"sorted by {name}")
     page.wait_for_timeout(400)
 def board(page: Page) -> None:
     page.evaluate("() => window.ordenApp.tasks().then(({ openTodos }) => openTodos())")
@@ -187,7 +187,7 @@ def board(page: Page) -> None:
     if titles(page, "b").index("Charlie two") != titles(page, "b").index("Bravo one") - 1:
         wrong(f"Charlie two did not land above Bravo one: {titles(page, 'b')}")
 def panel_groups(page: Page) -> None:
-    page.locator(f"{PANEL} [data-todos-group] [role=combobox]").click()
+    page.locator(f"{PANEL} [data-todos-group]").click()
     page.locator("[role=listbox] [role=option]", has_text="Label").click()
     page.wait_for_selector(f"{PANEL} [data-todos-group-box][data-key='a'] [data-todos-group-head]")
     page.wait_for_timeout(500)
@@ -233,7 +233,7 @@ def tones(browser: Browser, scheme: str) -> None:
         wrong(f"({scheme}) Low, Medium and High are not each in their own tone: {seen}")
     DRIVE.shot(page, f"tones-{scheme}")
     page.evaluate("() => { const ws = window.ordenApp.workspace; ws.movePanel('tasks', 'right'); ws.showPanel('tasks') }")
-    page.locator(f"{PANEL} [data-todos-group] [role=combobox]").click()
+    page.locator(f"{PANEL} [data-todos-group]").click()
     page.locator("[role=listbox] [role=option]", has_text="Priority").click()
     page.wait_for_selector(f"{PANEL} [data-todos-group-head]")
     page.wait_for_timeout(400)

@@ -197,7 +197,7 @@ def board(page: Page, tag: str) -> None:
     if held(page)["Buy soil"]["labels"] != ["home"]:
         wrong(f"a todo added with the column's + has {held(page)['Buy soil']}")
     field.press("Escape")
-    page.locator(f"{BOARD} [data-todos-group] [role=combobox]").click()
+    page.locator(f"{BOARD} [data-todos-group]").click()
     page.locator("[role=listbox] [role=option]", has_text="Priority").click()
     wait_for(page, f"[...document.querySelectorAll('{BOARD} [data-todos-column] h2 .name')].some((one) => one.textContent.trim() === 'High')", "the priority columns")
     settle(page)
@@ -219,7 +219,7 @@ def board(page: Page, tag: str) -> None:
     if held(page)["Fix the bike"]["priority"] != 2:
         wrong(f"the + of Medium made {held(page)['Fix the bike']}")
     DRIVE.shot(page, f"{tag}08-board-priority")
-    page.locator(f"{BOARD} [data-todos-group] [role=combobox]").click()
+    page.locator(f"{BOARD} [data-todos-group]").click()
     page.locator("[role=listbox] [role=option]", has_text="Deadline").click()
     wait_for(page, f"document.querySelector('{BOARD} [data-todos-column][data-key=today]')", "the deadline columns")
     settle(page)
@@ -246,7 +246,7 @@ def board(page: Page, tag: str) -> None:
     page.wait_for_timeout(600)
     if held(page)["Fix the bike"]["deadline"] != page.evaluate("() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }"):
         wrong(f"a todo dragged to Today has {held(page)['Fix the bike']}")
-    page.locator(f"{BOARD} [data-todos-group] [role=combobox]").click()
+    page.locator(f"{BOARD} [data-todos-group]").click()
     offered = page.evaluate("() => [...document.querySelectorAll('[role=listbox] [role=option]')].map((one) => one.textContent.trim())")
     if "Space" in offered:
         wrong(f"the board still offers to group by space: {offered}")
@@ -265,7 +265,7 @@ def board(page: Page, tag: str) -> None:
     wait_for(page, f"document.querySelector('{BOARD} [data-todo].done')", "Show done on the board")
     DRIVE.shot(page, f"{tag}09-board-priority-done")
     page.locator(f"{BOARD} [data-todos-show-done]").click()
-    page.locator(f"{BOARD} [data-todos-group] [role=combobox]").click()
+    page.locator(f"{BOARD} [data-todos-group]").click()
     page.locator("[role=listbox] [role=option]", has_text="Label").click()
     wait_for(page, f"document.querySelector('{BOARD} [data-todos-column][data-key=home]')", "the label columns again")
     page.wait_for_timeout(600)

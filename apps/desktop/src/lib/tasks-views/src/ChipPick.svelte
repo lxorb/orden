@@ -2,14 +2,30 @@
   import { tick } from 'svelte'
   import { hang, overlays } from '../../ui-kit/src/api'
 
+  interface Choice {
+    value: string
+    label: string
+  }
   const {
-    labels,
-    chosen,
-    onchoose,
+    name,
+    label,
+    value,
+    options,
+    first,
+    search,
+    on = false,
+    onchange,
+    ...rest
   }: {
-    labels: readonly string[]
-    chosen: string | null
-    onchoose: (label: string | null) => void
+    name?: string
+    label: string
+    value: string
+    options: readonly Choice[]
+    first?: Choice
+    search?: string
+    on?: boolean
+    onchange: (next: string) => void
+    [key: `data-${string}`]: string | boolean
   } = $props()
   let open = $state(false)
   let typed = $state('')
@@ -18,27 +34,36 @@
   let list = $state<HTMLElement | null>(null)
   const shown = $derived.by(() => {
     const needle = typed.trim().toLowerCase()
-    return labels.filter((one) => needle === '' || one.toLowerCase().includes(needle))
+    return options.filter((one) => needle === '' || one.label.toLowerCase().includes(needle))
   })
+  const current = $derived((first?.value === value ? first : options.find((one) => one.value === value))?.label)
   async function show() {
     open = true
     typed = ''
     await tick()
-    field?.focus()
+    if (field) field.focus()
+    else list?.querySelector<HTMLElement>('[aria-selected="true"], [role="option"]')?.focus()
   }
-  function choose(label: string | null) {
-    onchoose(label)
+  function choose(next: string) {
+    onchange(next)
     open = false
   }
   function onkeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault()
       open = false
-    } else if (event.key === 'Enter') {
+    } else if (event.key === 'Enter' && event.target === field) {
       event.preventDefault()
-      const first = shown[0]
-      if (first !== undefined) choose(first)
-      else if (typed.trim() === '') choose(null)
+      const top = shown[0]
+      if (top) choose(top.value)
+      else if (first && typed.trim() === '') choose(first.value)
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      const rows = [...(list?.querySelectorAll<HTMLElement>('[role="option"]') ?? [])]
+      const at = rows.indexOf(document.activeElement as HTMLElement)
+      const next = rows[Math.max(0, Math.min(rows.length - 1, at + (event.key === 'ArrowDown' ? 1 : -1)))]
+      if (!next) return
+      event.preventDefault()
+      next.focus()
     }
   }
   function away(event: FocusEvent) {
@@ -56,68 +81,64 @@
   )
 </script>
 
-<div class="labels" bind:this={root} onfocusout={away}>
+<div class="chip-pick" bind:this={root} onfocusout={away}>
   <button
     type="button"
     class="pick orden-chip"
-    class:is-on={chosen !== null}
+    class:is-on={on}
+    role="combobox"
     aria-haspopup="listbox"
     aria-expanded={open}
-    data-todos-label
+    aria-label={label}
+    {...rest}
     onclick={() => (open ? (open = false) : void show())}
   >
-    <span class="text">{chosen ?? 'All labels'}</span>
+    {#if name}<span class="name">{name}</span>{/if}
+    <span class="text">{current ?? ''}</span>
     <svg class="chevron" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 4l3 3 3-3" /></svg>
   </button>
   {#if open}
     <div
       class="list orden-layer"
       role="listbox"
-      aria-label="Label"
+      aria-label={label}
       data-covers
       bind:this={list}
       use:hang={{ side: 'below', gap: 4, from: root }}
       onfocusout={away}
     >
-      <input
-        bind:this={field}
-        bind:value={typed}
-        class="search orden-field"
-        type="search"
-        placeholder="Search labels"
-        {onkeydown}
-      />
-      <button
-        type="button"
-        role="option"
-        aria-selected={chosen === null}
-        class="one orden-row is-short"
-        class:is-on={chosen === null}
-        onclick={() => choose(null)}
-      >
-        All labels
-      </button>
-      {#each shown as label (label)}
+      {#if search !== undefined}
+        <input
+          bind:this={field}
+          bind:value={typed}
+          class="search orden-field"
+          type="search"
+          placeholder={search}
+          {onkeydown}
+        />
+      {/if}
+      {#each first ? [first, ...shown] : shown as one (one.value)}
         <button
           type="button"
           role="option"
-          aria-selected={chosen === label}
+          aria-selected={value === one.value}
           class="one orden-row is-short"
-          class:is-on={chosen === label}
-          onclick={() => choose(label)}
+          class:is-on={value === one.value}
+          onclick={() => choose(one.value)}
+          {onkeydown}
         >
-          {label}
+          {one.label}
         </button>
       {/each}
-      {#if !shown.length}
-        <p class="none">No label matches</p>
+      {#if search !== undefined && !shown.length}
+        <p class="none">No {label.toLowerCase()} matches</p>
       {/if}
     </div>
   {/if}
 </div>
 
 <style>
-  .labels {
+  .chip-pick {
     position: relative;
     min-width: 0;
   }
@@ -126,6 +147,9 @@
     align-items: center;
     gap: var(--space-1);
     max-width: 100%;
+  }
+  .name {
+    color: var(--muted);
   }
   .text {
     overflow: hidden;

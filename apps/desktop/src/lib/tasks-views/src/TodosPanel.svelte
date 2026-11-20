@@ -14,7 +14,7 @@
   import { Carrying } from './carrying.svelte'
   import { away, glider } from './glide'
   import Filters from './Filters.svelte'
-  import Pick from './Pick.svelte'
+  import ChipPick from './ChipPick.svelte'
   import { openNote } from './notes'
   import { shellWorld, Shown } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
@@ -78,8 +78,9 @@
     <button type="button" class="orden-chip" data-todos-open onclick={() => void runCommand('views.todos')}>Open</button
     >
     <Filters {shown} />
-    <Pick
+    <ChipPick
       name="Group"
+      label="Group"
       data-todos-group
       value={shown.group ?? NONE}
       options={[
