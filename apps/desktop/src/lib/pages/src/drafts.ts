@@ -1,5 +1,6 @@
 import { type Canvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
-import { fileBytes, log, nameFromTitle, nameOf, samePath, spaceHolding, invoke } from '../../platform/src/api'
+import { fileBytes, log, nameFromTitle, nameOf, samePath, spaceHolding } from '../../platform/src/api'
+import { writeBytes } from '../../file-writes/src/api'
 import { CanvasStore } from '../../canvas/src/api'
 import { paperOf } from '@orden/markdown/pages'
 import { pageSizes } from '../../pdf/src/api'
@@ -41,7 +42,7 @@ export async function keepPaper(ws: Drafts, note: NoteDoc, path: string): Promis
   if (!from) return
   try {
     const paper = paperOf(path)
-    await invoke('write_bytes', { path: paper, bytes: await fileBytes(from) })
+    await writeBytes(paper, await fileBytes(from))
     const named = (plane: Canvas) => paperNamed(plane, from, nameOf(paper))
     const drawing = CanvasStore.drawing(note, ws.tabs)
     if (drawing) drawing.relinked(named)

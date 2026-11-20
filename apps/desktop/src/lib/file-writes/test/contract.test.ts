@@ -4,9 +4,13 @@ import { describe, expect, test, vi } from 'vitest'
 
 const disk = vi.hoisted(() => new Map<string, string>())
 const told = vi.hoisted(() => [] as string[])
+const asked = vi.hoisted(() => [] as { command: string; args: Record<string, unknown> }[])
 vi.mock('../../platform/src/api', () => ({
   onDisk: (path: string) => Promise.resolve(disk.has(path)),
-  invoke: () => Promise.resolve(),
+  invoke: (command: string, args: Record<string, unknown>) => {
+    asked.push({ command, args })
+    return Promise.resolve(command === 'save_asset' ? `${String(args.folder)}/${String(args.name)}` : undefined)
+  },
   oneWriteAt: <T>(_path: string, run: () => Promise<T>) => run(),
   writeInTurn: (path: string, words: string) => void disk.set(path, words),
   writeTaking: (path: string, words: string) => void disk.set(path, words),
@@ -20,7 +24,16 @@ vi.mock('../../link-index/src/api', () => ({
 vi.mock('../../documents/src/api', () => ({
   wroteHere: (path: string) => told.push(`across ${path}`),
 }))
-const { hearWrites, writeFile, writeIfAbsent } = await import('../src/api')
+const { hearWrites, saveAsset, writeBy, writeFile, writeIfAbsent } = await import('../src/api')
+const listening = () =>
+  hearWrites({
+    there: (path) => Promise.resolve(disk.has(path)),
+    made: (path) => {
+      told.push(`made ${path}`)
+      return Promise.resolve()
+    },
+    wrote: (path, content) => void told.push(`wrote ${path} ${content}`),
+  })
 test('the module stands on its own reads the index, the documents and the platform through their apis only', () => {
   const text = readFileSync(join(import.meta.dirname, '../src/api.ts'), 'utf8')
   expect([...text.matchAll(/from '([^']*)'/g)].map((found) => found[1]).sort()).toEqual([
@@ -31,14 +44,7 @@ test('the module stands on its own reads the index, the documents and the platfo
 })
 describe('writing a file', () => {
   test('tells the index, the ear that listens and sync, a new file as made', async () => {
-    const stop = hearWrites({
-      there: (path) => Promise.resolve(disk.has(path)),
-      made: (path) => {
-        told.push(`made ${path}`)
-        return Promise.resolve()
-      },
-      wrote: (path) => void told.push(`wrote ${path}`),
-    })
+    const stop = listening()
     await writeFile('/s/Plan.md', 'one')
     await writeFile('/s/Plan.md', 'two')
     stop()
@@ -48,7 +54,7 @@ describe('writing a file', () => {
       'made /s/Plan.md',
       'across /s/Plan.md',
       'index /s/Plan.md',
-      'wrote /s/Plan.md',
+      'wrote /s/Plan.md two',
       'across /s/Plan.md',
     ])
   })
@@ -58,5 +64,34 @@ describe('writing a file', () => {
     expect(await writeIfAbsent('/s/New.md', 'new')).toBe(true)
     expect(disk.get('/s/Kept.md')).toBe('kept')
     expect(told.splice(0)).toEqual(['index /s/New.md', 'across /s/New.md'])
+  })
+  test('by any command, a new file is told as made and a file that was there as written', async () => {
+    const stop = listening()
+    const write = (words: string) => () => {
+      disk.set('/s/paper.pdf.highlights.json', words)
+      return Promise.resolve()
+    }
+    await writeBy('/s/paper.pdf.highlights.json', 'one', write('one'))
+    await writeBy('/s/paper.pdf.highlights.json', 'two', write('two'))
+    stop()
+    expect(told.splice(0)).toEqual(['made /s/paper.pdf.highlights.json', 'wrote /s/paper.pdf.highlights.json two'])
+  })
+})
+describe('saving a file beside a note', () => {
+  test('returns where the note links it and tells the ear the whole path, out of the folder too', async () => {
+    const stop = listening()
+    const bytes = new Uint8Array([1, 2])
+    expect(await saveAsset('/s/ideas/Plan.md', 'assets', 'p.png', bytes)).toBe('assets/p.png')
+    expect(await saveAsset('/s/ideas/deep/Plan.md', '../../assets', 'minutes.pdf', bytes)).toBe(
+      '../../assets/minutes.pdf',
+    )
+    expect(await saveAsset('/s/ideas/Plan.md', '../assets', 'q.png', bytes)).toBe('../assets/q.png')
+    stop()
+    expect(told.splice(0)).toEqual(['made /s/ideas/assets/p.png', 'made /s/assets/minutes.pdf', 'made /s/assets/q.png'])
+    expect(asked.splice(0).map((one) => one.command)).toEqual(['save_asset', 'save_asset', 'save_asset'])
+  })
+  test('tells nothing where nobody listens', async () => {
+    expect(await saveAsset('/s/Plan.md', 'assets', 'p.png', new Uint8Array([1]))).toBe('assets/p.png')
+    expect(told.splice(0)).toEqual([])
   })
 })

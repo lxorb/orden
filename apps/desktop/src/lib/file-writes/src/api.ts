@@ -14,15 +14,19 @@ export function hearWrites(one: Hearing): () => void {
     if (hearing === one) hearing = null
   }
 }
-export async function writeFile(path: string, content: string): Promise<void> {
+export async function writeBy(path: string, content: string | null, write: () => Promise<unknown>): Promise<void> {
   const ear = hearing
   const was = ear ? await ear.there(path) : true
-  await writeTaking(path, content)
-  links.noteSaved(path, content)
-  if (ear) {
-    if (was) ear.wrote(path, content)
-    else await ear.made(path)
-  }
+  await write()
+  if (!ear) return
+  if (!was) await ear.made(path)
+  else if (content !== null) ear.wrote(path, content)
+}
+export async function writeFile(path: string, content: string): Promise<void> {
+  await writeBy(path, content, async () => {
+    await writeTaking(path, content)
+    links.noteSaved(path, content)
+  })
   wroteHere(path)
 }
 export async function writeIfAbsent(path: string, content: string): Promise<boolean> {
@@ -38,11 +42,23 @@ export async function writeIfAbsent(path: string, content: string): Promise<bool
   return true
 }
 export async function writeBytes(path: string, bytes: Uint8Array): Promise<void> {
-  const ear = hearing
-  const was = ear ? await ear.there(path) : true
-  await invoke('write_bytes', { path, bytes })
-  await links.cameBack(path, false)
-  if (ear && !was) await ear.made(path)
+  await writeBy(path, null, async () => {
+    await invoke('write_bytes', { path, bytes })
+    await links.cameBack(path, false)
+  })
+}
+function besideNote(notePath: string, relative: string): string {
+  const parts = notePath.split(/[/\\]/).slice(0, -1)
+  for (const part of relative.split('/')) {
+    if (part === '..') parts.pop()
+    else if (part && part !== '.') parts.push(part)
+  }
+  return parts.join(notePath.includes('\\') ? '\\' : '/')
+}
+export async function saveAsset(notePath: string, folder: string, name: string, bytes: Uint8Array): Promise<string> {
+  const relative = await invoke<string>('save_asset', { notePath, folder, name, bytes })
+  await hearing?.made(besideNote(notePath, relative))
+  return relative
 }
 export async function copyPath(from: string, to: string): Promise<void> {
   await invoke('copy_path', { from, to })
