@@ -15,6 +15,7 @@ export function typedPatch(read: TypedTodo): TodoPatch {
     ...(read.start === undefined ? {} : { start: read.start }),
     ...(read.deadline === undefined ? {} : { deadline: read.deadline }),
     ...(read.priority === undefined ? {} : { priority: read.priority }),
+    ...(read.repeat === undefined ? {} : { repeat: read.repeat }),
   }
 }
 export async function addTodo(shown: Shown, title: string, patch: TodoPatch = {}): Promise<Todo | null> {

@@ -44,6 +44,7 @@ export async function addTask(text: string, options: { typed?: boolean } = {}): 
     start: read.start ?? null,
     deadline: read.deadline ?? null,
     priority: read.priority ?? 0,
+    repeat: read.repeat ?? null,
   })
   return made.ok ? { id: made.value.id } : null
 }
