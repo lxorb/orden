@@ -50,7 +50,8 @@ vi.mock('../../../platform/src/tauri', async (original) => ({
   invoke: fakeInvoke,
   isDesktop: true,
 }))
-const { createLocalEngine, SEED_WINDOW } = await import('./engine')
+const { createLocalEngine } = await import('./engine')
+const { DEFAULT_WINDOW: SEED_WINDOW } = await import('../chat/window')
 const { estimateText } = await import('../chat/usage')
 const CLAUDE: Provider & { kind: 'claude-code' } = {
   id: 'cc',

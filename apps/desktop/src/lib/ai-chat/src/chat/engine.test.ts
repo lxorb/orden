@@ -12,6 +12,7 @@ const { newThread } = await import('./threads')
 const { body, events } = await import('./recorded/read')
 const { watching } = await import('./sends')
 const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./approvals')
+const { tokensIn } = await import('./window')
 const { pacing, TRIES } = await import('./request')
 const waits: number[] = []
 const sleepForReal = pacing.sleep
@@ -951,5 +952,89 @@ describe('a failure before any of the answer arrived', () => {
         return Promise.resolve()
       }
     }
+  })
+})
+describe('every request a turn sends', () => {
+  const big = (tokens: number) => 'Herons stand still in the shallows. '.repeat(Math.ceil((tokens * 4) / 36))
+  const calling = (id: string) =>
+    lines(
+      {
+        choices: [
+          {
+            delta: {
+              tool_calls: [{ index: 0, id, function: { name: 'read_note', arguments: '{"path":"Birds.md"}' } }],
+            },
+          },
+        ],
+      },
+      { choices: [{ delta: {}, finish_reason: 'tool_calls' }] },
+    )
+  const saying = (text: string) =>
+    lines({ choices: [{ delta: { content: text } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }] })
+  const reading = (tokens: number) =>
+    createApiEngine({
+      provider: (id) => Object.values(PROVIDERS).find((one) => one.id === id) ?? null,
+      tools: { ...tools, call: () => Promise.resolve({ text: big(tokens), images: [], error: false }) },
+    })
+  const sizes = () => sent.map((one) => tokensIn(one.body))
+  test('fits a small model’s window after a tool answer far bigger than it', async () => {
+    answers = [calling('c1'), saying('Herons wade.')]
+    const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'full')
+    const heard: EngineEvent[] = []
+    await reading(16_000).send(
+      thread,
+      { text: 'What is in Birds.md?', attachments: [] },
+      (one) => heard.push(one),
+      new AbortController().signal,
+    )
+    expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
+    expect(sent).toHaveLength(2)
+    expect(Math.max(...sizes())).toBeLessThan(8_192)
+    expect(JSON.stringify(sent[1]?.body)).toContain('This answer was cut to fit the model’s window')
+  })
+  test.each(['auto', 'off'] as const)(
+    'keeps inside the window over many big reads, compacting mid-turn, with autocompact %s',
+    async (autocompact) => {
+      let reads = 0
+      always = () => {
+        const asked = JSON.stringify(sent.at(-1)?.body)
+        if (asked.includes('Summarize this conversation')) return saying('They read about herons.')()
+        return reads++ < 6 ? calling(`c${String(reads)}`)() : saying('Herons wade.')()
+      }
+      const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'full')
+      thread.usage = { ...thread.usage, window: 40_000 }
+      thread.autocompact = autocompact
+      const heard: EngineEvent[] = []
+      await reading(30_000).send(
+        thread,
+        { text: 'Read Birds.md again and again', attachments: [] },
+        (one) => heard.push(one),
+        new AbortController().signal,
+      )
+      expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
+      expect(Math.max(...sizes())).toBeLessThan(40_000)
+      expect(thread.turns.at(-1)?.parts).toContainEqual({ kind: 'notice', code: 'compacted', text: '' })
+      expect(thread.compaction?.summary).toBe('They read about herons.')
+    },
+  )
+  test('asks for a summary of a thread bigger than the window inside the window, saying what it left out', async () => {
+    const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'full')
+    thread.usage = { ...thread.usage, window: 40_000 }
+    for (let at = 0; at < 30; at++) {
+      thread.turns.push({
+        id: `u${at}`,
+        role: 'you',
+        at,
+        parts: [],
+        draft: { text: `question ${at}`, attachments: [] },
+      })
+      thread.turns.push({ id: `m${at}`, role: 'model', at, parts: [{ kind: 'text', text: big(3_000) }] })
+    }
+    answers = [saying('They spoke of herons.')]
+    await engine.compact(thread)
+    expect(sent).toHaveLength(1)
+    expect(Math.max(...sizes())).toBeLessThan(40_000)
+    expect(JSON.stringify(sent[0]?.body)).toMatch(/\d+ earlier messages are left out to fit the model’s window/)
+    expect(thread.compaction?.summary).toBe('They spoke of herons.')
   })
 })

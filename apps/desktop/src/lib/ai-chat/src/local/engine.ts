@@ -1,5 +1,6 @@
 import { errorText, modelTurn, readOutside, sinceCompaction, summaryOf, userStep, youTurn } from '../chat/transcript'
 import { estimateText } from '../chat/usage'
+import { windowOf } from '../chat/window'
 import {
   type Draft,
   type Effort,
@@ -82,7 +83,6 @@ function wordsOf(turn: Turn): string {
     .join('')
     .trim()
 }
-export const SEED_WINDOW = 128_000
 const PER_MESSAGE = 8
 const sizeOf = (one: Message) => estimateText(one.content) + PER_MESSAGE
 function seeded(thread: Thread, instructions: string, message: string, window: number): { text: string; left: number } {
@@ -130,14 +130,8 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     sessions.delete(id)
     void live.session.close()
   }
-  function windowOf(thread: Thread): number {
-    return (
-      thread.usage.window ??
-      windows.get(thread.model) ??
-      listed.find((one) => one.id === thread.model)?.window ??
-      SEED_WINDOW
-    )
-  }
+  const windowFor = (thread: Thread): number =>
+    windowOf(thread.usage.window, windows.get(thread.model), listed.find((one) => one.id === thread.model)?.window)
   function providerOf(thread: Thread): Provider {
     const provider = setup.provider(thread.provider)
     if (provider?.kind !== kind) throw new Error('That provider is not set up yet.')
@@ -444,7 +438,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       const instructions = opened ? ((await setup.instructions?.(thread).catch(() => '')) ?? '') : ''
       const step = userStep(message)
       const seeding = opened && !!(instructions || before.turns.length)
-      const seed = seeding ? seeded(before, instructions, step.text, windowOf(before)) : null
+      const seed = seeding ? seeded(before, instructions, step.text, windowFor(before)) : null
       if (seed?.left) say({ kind: 'notice', code: 'compacted', text: '' })
       const text = seed ? seed.text : step.text
       const turnSaid: Say = { kind: 'turn', text, images: step.images }

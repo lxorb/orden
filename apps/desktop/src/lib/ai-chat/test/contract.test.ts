@@ -40,7 +40,26 @@ vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<Record<string, unknown>>()),
   invoke: (command: string, args: Record<string, unknown>) => {
     invoked.push({ command, args })
+    if (command === 'ai_cli_open') programLine.out = args.output as { onmessage: (value: unknown) => void }
+    if (command === 'ai_cli_say' && (args.say as { kind?: string }).kind === 'turn') {
+      setTimeout(() => {
+        for (const line of PROGRAM_ANSWER) programLine.out?.onmessage({ kind: 'line', line })
+      }, 0)
+    }
     return Promise.resolve({ content: [], isError: false })
+  },
+}))
+const programLine = vi.hoisted(() => ({ out: null as { onmessage: (value: unknown) => void } | null }))
+const PROGRAM_ANSWER = vi.hoisted(() => [
+  JSON.stringify({
+    type: 'stream_event',
+    event: { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Herons wait.' } },
+  }),
+  JSON.stringify({ type: 'result', subtype: 'success', is_error: false }),
+])
+vi.mock('../../crate/src/native', () => ({
+  Channel: class {
+    onmessage: (value: unknown) => void = () => undefined
   },
 }))
 vi.mock('../../ai-providers/src/keys', async (original) => ({
@@ -412,5 +431,76 @@ describe('a helper that ends', () => {
     ends[1]?.('error')
     helpers.stop(ids[2] ?? '')
     await vi.waitFor(() => expect(programs.released).toEqual(expect.arrayContaining(ids)))
+  })
+})
+describe('what is sent to a model', () => {
+  const big = (tokens: number) => 'Herons stand still in the shallows. '.repeat(Math.ceil((tokens * 4) / 36))
+  test('every request the API loop sends fits the model’s window, after a tool answer far bigger than it too', async () => {
+    const { tokensIn } = await import('../src/chat/window')
+    const { createApiEngine } = await import('../src/chat/engine')
+    const { newThread } = await import('../src/chat/threads')
+    const bodies: unknown[] = []
+    const reply = (...events: unknown[]) =>
+      new Response(events.map((one) => `data: ${JSON.stringify(one)}\n\n`).join('') + 'data: [DONE]\n\n')
+    const replies = [
+      () =>
+        reply(
+          {
+            choices: [
+              { delta: { tool_calls: [{ index: 0, id: 'c1', function: { name: 'read_note', arguments: '{}' } }] } },
+            ],
+          },
+          { choices: [{ delta: {}, finish_reason: 'tool_calls' }] },
+        ),
+      () =>
+        reply({ choices: [{ delta: { content: 'Herons.' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }] }),
+    ]
+    vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
+      if (url.includes('/models')) return Promise.resolve(new Response(JSON.stringify({ data: [{ id: 'llama' }] })))
+      bodies.push(JSON.parse(typeof init.body === 'string' ? init.body : '{}'))
+      return Promise.resolve().then(replies.shift() ?? replies[1] ?? (() => new Response('')))
+    })
+    const engine = createApiEngine({
+      provider: (id) => (id === LOCAL.id ? LOCAL : null),
+      tools: {
+        list: () => Promise.resolve({ instructions: '', tools: [] }),
+        call: () => Promise.resolve({ text: big(20_000), images: [], error: false }),
+        context: () => Promise.resolve(''),
+      },
+    })
+    const thread = newThread('Notes', LOCAL.id, 'llama', 'auto', 'full')
+    thread.usage = { ...thread.usage, window: 8_192 }
+    try {
+      await engine.send(thread, { text: 'Read it', attachments: [] }, () => undefined, new AbortController().signal)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(bodies).toHaveLength(2)
+    for (const body of bodies) expect(tokensIn(body)).toBeLessThan(8_192)
+  })
+  test('a reopened program session’s seed fits the model’s window, and says what it left out', async () => {
+    const { estimateText } = await import('../src/chat/usage')
+    const { createLocalEngine } = await import('../src/local/engine')
+    const { newThread } = await import('../src/chat/threads')
+    const claude = { id: 'cc', kind: 'claude-code', name: 'Claude Code', model: '' } as const
+    const engine = createLocalEngine('claude-code', { provider: (id) => (id === claude.id ? claude : null) })
+    const thread = newThread('Notes', claude.id, '', 'auto', 'approve')
+    thread.usage = { ...thread.usage, window: 20_000 }
+    for (let at = 0; at < 40; at++) {
+      thread.turns.push({
+        id: `u${String(at)}`,
+        role: 'you',
+        at,
+        parts: [],
+        draft: { text: `question ${String(at)}`, attachments: [] },
+      })
+      thread.turns.push({ id: `m${String(at)}`, role: 'model', at, parts: [{ kind: 'text', text: big(1_000) }] })
+    }
+    invoked.length = 0
+    await engine.send(thread, { text: 'and now?', attachments: [] }, () => undefined, new AbortController().signal)
+    const said = invoked.find((one) => one.command === 'ai_cli_say')?.args.say as { text?: string } | undefined
+    const seed = said?.text ?? ''
+    expect(estimateText(seed)).toBeLessThan(20_000)
+    expect(seed).toMatch(/\d+ earlier messages are left out to fit the model’s window/)
   })
 })
