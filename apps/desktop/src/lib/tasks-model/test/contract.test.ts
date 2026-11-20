@@ -125,6 +125,42 @@ describe('a repeating todo', () => {
     expect(bad.ok).toBe(false)
     if (!bad.ok) expect(bad.error.message).toBe('repeat is a rule like "every 3 days" or "every! 10 days"')
   })
+  test('one occurrence of a repeating todo leaves one done copy, wherever and however often it is ticked', async () => {
+    const server = new MemoryTodoServer()
+    const one = world(server)
+    const two = world(server)
+    await one.open('u')
+    await two.open('u')
+    const made = await one.store.add({ title: 'Pay rent', repeat: 'every month', deadline: '2026-11-15' })
+    if (!made.ok) throw new Error(made.error.message)
+    const id = made.value.id
+    await one.store.exchange()
+    await two.store.exchange()
+    await Promise.all([one.store.update(id, { done: true }), two.store.update(id, { done: true })])
+    await one.store.exchange()
+    await two.store.exchange()
+    await one.store.exchange()
+    for (const side of [one, two]) {
+      const rent = side.store.todos.filter((todo) => todo.title === 'Pay rent')
+      expect(rent.filter((todo) => todo.done).map((todo) => todo.deadline)).toEqual(['2026-11-15'])
+      expect(side.store.todo(id)).toMatchObject({ done: false, deadline: '2026-12-15' })
+    }
+    const alone = world(null)
+    await alone.open(null)
+    const own = await alone.store.add({ title: 'Water plants', repeat: 'every week', deadline: '2026-11-16' })
+    if (!own.ok) throw new Error(own.error.message)
+    await Promise.all([
+      alone.store.update(own.value.id, { done: true }),
+      alone.store.update(own.value.id, { done: true }),
+    ])
+    const done = () => alone.store.todos.filter((todo) => todo.title === 'Water plants' && todo.done)
+    expect(done()).toHaveLength(1)
+    expect(alone.store.todo(own.value.id)?.deadline).toBe('2026-11-23')
+    await alone.store.update(own.value.id, { done: false })
+    expect(done()).toHaveLength(0)
+    await alone.store.update(own.value.id, { done: true })
+    expect(done().map((todo) => todo.deadline)).toEqual(['2026-11-16'])
+  })
   test('its rule reaches another device of the user', async () => {
     const server = new MemoryTodoServer()
     const one = world(server)
