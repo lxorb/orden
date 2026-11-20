@@ -307,3 +307,88 @@ describe('a list or a map kept on the account', () => {
     expect(server.settings).toEqual({ shortcuts: { save: 'Mod-s', find: 'Mod-f' }, preset: 'vscode' })
   })
 })
+describe('settings owed when the account signs out', () => {
+  const accounts: Record<string, Record<string, unknown>> = { alice: {}, bob: {} }
+  const kept = new Map<string, string>()
+  let offline = false
+  beforeEach(() => {
+    kept.clear()
+    accounts.alice = {}
+    accounts.bob = {}
+    offline = false
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => kept.get(key) ?? null,
+      setItem: (key: string, value: string) => void kept.set(key, value),
+      removeItem: (key: string) => void kept.delete(key),
+    })
+    vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
+      const who = (init.headers as Record<string, string> | undefined)?.authorization?.replace('Bearer ', '') ?? ''
+      const settings = accounts[who]
+      if (offline || !url.endsWith('/v1/settings') || !settings) return Promise.reject(new Error('offline'))
+      if (init.method === 'PATCH' && typeof init.body === 'string') Object.assign(settings, JSON.parse(init.body))
+      return Promise.resolve(new Response(JSON.stringify({ settings })))
+    })
+  })
+  afterEach(() => {
+    account.token = null
+    account.user = null
+    vi.unstubAllGlobals()
+  })
+  function as(who: string) {
+    account.token = who
+    account.user = { id: who, email: `${who}@example.org`, name: who }
+  }
+  test('reach that account the next time it signs in, and never another', async () => {
+    const owed = new AccountOwed('orden:test-owed-leaving')
+    as('alice')
+    offline = true
+    owed.send({ developer: true, hardBreaks: true })
+    await owed.settle('alice')
+    expect(owed.standing).toBe(true)
+    await account.signOut()
+    offline = false
+    as('bob')
+    expect(owed.standing).toBe(false)
+    await owed.settle('bob')
+    expect(accounts.bob).toEqual({})
+    await account.signOut()
+    as('alice')
+    expect(owed.standing).toBe(true)
+    await owed.settle('alice')
+    expect(accounts.alice).toEqual({ developer: true, hardBreaks: true })
+    expect(owed.standing).toBe(false)
+  })
+  test('another account signing in does not take on the last account’s local settings, and the last one gets its own back', async () => {
+    let reset = 0
+    const owed = new AccountOwed('orden:test-owed-held', undefined, () => reset++)
+    as('alice')
+    await owed.settle('alice')
+    expect(reset).toBe(0)
+    await account.signOut()
+    as('bob')
+    await owed.settle('bob')
+    expect(reset).toBe(1)
+    await owed.settle('bob')
+    expect(reset).toBe(1)
+    await account.signOut()
+    as('alice')
+    await owed.settle('alice')
+    expect(reset).toBe(2)
+  })
+  test('a change one account still owes is kept beside what another then owes', async () => {
+    const owed = new AccountOwed('orden:test-owed-two')
+    offline = true
+    as('alice')
+    owed.send({ vim: true })
+    await account.signOut()
+    as('bob')
+    owed.send({ preset: 'vscode' })
+    offline = false
+    await owed.settle('bob')
+    expect(accounts.bob).toEqual({ preset: 'vscode' })
+    await account.signOut()
+    as('alice')
+    await owed.settle('alice')
+    expect(accounts.alice).toEqual({ vim: true })
+  })
+})
