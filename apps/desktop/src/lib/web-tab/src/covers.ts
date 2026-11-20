@@ -24,6 +24,7 @@ const FLOATING = [...COVERS.floating.map((one) => `.${one}`), '[data-covers]:not
 )
 const SCRIMS = [...COVERS.whole.map((one) => `.${one}`), '[data-covers="all"]'].join(', ')
 const ANY = `${FLOATING}, ${SCRIMS}`
+const EDGE = '[data-covers="edge"]'
 function meets(one: Rect, other: Rect): boolean {
   return (
     one.x < other.x + other.width &&
@@ -125,8 +126,9 @@ export function layersOver(hole: HTMLElement): Layer[] {
   for (const node of document.querySelectorAll(ANY)) {
     if (hole.contains(node) || !seen(node)) continue
     const scrim = node.matches(SCRIMS)
+    const box = trailed(node, restingBox(node, among))
     found.push({
-      box: trailed(node, restingBox(node, among)),
+      box: node.matches(EDGE) && box.x > 0 ? { ...box, x: 0, width: box.x + box.width } : box,
       radius: scrim ? 0 : parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0,
       scrim,
       node,
