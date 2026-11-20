@@ -1,7 +1,7 @@
 import { appliedEdits } from '@orden/markdown/edits'
 import { readTask } from '@orden/markdown/task-line'
 import { describe, expect, test } from 'vitest'
-import { finish, nextOccurrence, nextRepeat, skip, tick } from './occurrence'
+import { doneCopyId, finish, nextOccurrence, nextRepeat, skip, tick } from './occurrence'
 import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 
 const ticked = (note: string, line: number, today: string, skipPast = true) =>
@@ -300,5 +300,23 @@ describe('a monthly or yearly repeat keeps its day across short months', () => {
       '- [ ] Rent 🔁 every month on the 31st 📅 2026-12-31',
       '- [ ] Rent 🔁 every month on the 31st 📅 2027-01-31',
     ])
+  })
+})
+describe('the done copy of one occurrence of a repeating todo', () => {
+  const INBOX_ID = /^[A-Za-z0-9_-]{1,64}$/
+  const todo = { id: 't0123456789abcde', start: '2026-11-20', deadline: null }
+  test('is named by the todo and the day it closes, the same on every device', () => {
+    expect(doneCopyId(todo, '2026-11-21')).toBe('t0123456789abcde-2026-11-20')
+    expect(doneCopyId(todo, '2026-11-22')).toBe(doneCopyId(todo, '2026-11-21'))
+    expect(doneCopyId({ ...todo, start: '2026-11-27' }, '2026-11-21')).not.toBe(doneCopyId(todo, '2026-11-21'))
+    expect(doneCopyId({ ...todo, deadline: '2026-11-25' }, '2026-11-21')).toBe('t0123456789abcde-2026-11-25')
+    expect(doneCopyId({ ...todo, start: null }, '2026-11-21')).toBe('t0123456789abcde-2026-11-21')
+  })
+  test('fits an inbox id, a long todo id cut so the day stays', () => {
+    expect(doneCopyId(todo, '2026-11-21')).toMatch(INBOX_ID)
+    const long = doneCopyId({ ...todo, id: 'x'.repeat(80) }, '2026-11-21')
+    expect(long).toMatch(INBOX_ID)
+    expect(long).toHaveLength(64)
+    expect(long.endsWith('-2026-11-20')).toBe(true)
   })
 })
