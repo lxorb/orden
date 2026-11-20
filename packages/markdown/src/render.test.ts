@@ -65,6 +65,17 @@ describe('GitHub-flavoured basics', () => {
     expect(html).toContain('<table>')
     expect(html).toContain('<td>1</td>')
   })
+  test('wraps every table in its own scroller, for the reader, the published page and an export alike', () => {
+    const table = '| a | b |\n| - | - |\n| 1 | 2 |'
+    for (const html of [
+      renderMarkdown(table),
+      renderMarkdown(table, { escapeHtml: true }),
+      renderMarkdown(`- item\n\n  ${table.replaceAll('\n', '\n  ')}`, { toc: true }),
+    ]) {
+      expect(html).toMatch(/<div class="reading-table"><table>[\s\S]*<\/table>\n?<\/div>/)
+      expect(html.split('<table>').length).toBe(html.split('class="reading-table"').length)
+    }
+  })
   test('renders task lists', () => {
     const html = renderMarkdown('- [x] done\n- [ ] open')
     expect(html).toContain('checked')

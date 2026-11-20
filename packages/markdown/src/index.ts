@@ -244,6 +244,9 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         if (token.title) attributes.push(` title="${escape(token.title)}"`)
         return `<img${attributes.join('')}>`
       },
+      table(token: Tokens.Table) {
+        return `<div class="reading-table">${defaults.table.call(this, token)}</div>`
+      },
       heading(token: Tokens.Heading) {
         const html = defaults.heading.call(this, token)
         if (!options.toc) return html

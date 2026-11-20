@@ -24,10 +24,6 @@ const noteFrom = (target: string, from: EmbeddedNote): string | null =>
   from.path === undefined ? null : links.targetOf(from.path, { kind: 'markdown', target: decodeTarget(target) })
 export const withPictures = (html: string, note: Note, drawn: ReadonlySet<string> = new Set()): string =>
   mapSources(html, (src) => (drawn.has(src) ? null : escapeAll(notePicture(attributeText(src), note.path, note.text))))
-const TABLE = /<table>[\s\S]*?<\/table>/g
-function scrollingTables(html: string): string {
-  return html.replace(TABLE, (table) => `<div class="reading-table">${table}</div>`)
-}
 const MEASURE = 'orden:reading'
 export const tagAnchor: TagHref = (tag) => `#${tag}`
 export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean, tagHref?: TagHref): Promise<string> {
@@ -62,7 +58,7 @@ export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean, 
     drawn,
   )
   performance.measure(MEASURE, { start: at, detail: { bytes: note.text.length } })
-  return scrollingTables(html)
+  return html
 }
 export function unreadableHtml(text: string): string {
   return `<pre class="unreadable">${escapeAll(text)}</pre>`
