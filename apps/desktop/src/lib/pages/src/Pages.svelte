@@ -66,7 +66,7 @@
     textsOf,
   } from '../../pdf/src/api'
   import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './choose'
-  import { began, dragged, lifted, noPull, type Pulling, reachFor, riseOf, startedNearEnd, wheeled } from './pull'
+  import { began, dragged, LET_GO, lifted, noPull, type Pulling, reachFor, riseOf, startedNearEnd, wheeled } from './pull'
   import { inSight } from './sight'
   import { PagesStore } from './store.svelte'
   import { rooms } from '../../collab/src/api'
@@ -368,6 +368,7 @@
   })
   $effect(() => () => {
     if (falling && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(falling)
+    clearTimeout(lettingGo)
     store.halt()
   })
   function screenAt(event: { clientX: number; clientY: number }): Point {
@@ -783,15 +784,8 @@
       if (one.apart > 0 && Math.abs(apart - one.apart) > 0.5) {
         store.zoomAt(middle, apart / one.apart)
       }
-      const answer = dragged(pull, {
-        raw: pull.raw + Math.max(0, was.y - middle.y - room),
-        reach,
-        now: Date.now(),
-        still: stillness(),
-      })
-      pull = answer.pull
+      pull = dragged(pull, { raw: pull.raw + Math.max(0, was.y - middle.y - room), now: Date.now() })
       rise = riseOf(pull, reach, Date.now(), stillness())
-      if (answer.makes) madePage()
       gesture = { ...one, screens, apart }
       return
     }
@@ -823,10 +817,8 @@
       const bottom = store.bottom
       store.camera = store.held({ ...camera, ...wanted })
       const over = Math.max(0, wanted.y - bottom) * camera.scale
-      const answer = dragged(pull, { raw: over, reach, now: Date.now(), still: stillness() })
-      pull = answer.pull
+      pull = dragged(pull, { raw: over, now: Date.now() })
       rise = riseOf(pull, reach, Date.now(), stillness())
-      if (answer.makes) madePage()
       const moved = one.moved || Math.hypot(screen.x - one.screen.x, screen.y - one.screen.y) > A_TWITCH
       if (moved !== one.moved) gesture = { ...one, moved }
       return
@@ -949,10 +941,7 @@
     predicted = []
     if (!one) return
     if (one.kind === 'pan' || one.kind === 'pinch') {
-      const answer = lifted(pull, { reach, now: Date.now(), still: stillness() })
-      pull = answer.pull
-      if (answer.makes) madePage()
-      else fall()
+      letGo()
       if (one.kind === 'pan' && one.onSlot && !one.moved) madePage()
       return
     }
@@ -984,6 +973,14 @@
     tick()
     said.say(`Page ${number}`)
   }
+  let lettingGo = 0
+  function letGo() {
+    clearTimeout(lettingGo)
+    const answer = lifted(pull, { reach, now: Date.now() })
+    pull = answer.pull
+    if (answer.makes) madePage()
+    else fall()
+  }
   function fall() {
     rise = riseOf(pull, reach, Date.now(), stillness())
     if (falling || pull.holding || typeof requestAnimationFrame !== 'function') return
@@ -998,6 +995,7 @@
     falling = requestAnimationFrame(step)
   }
   function endPull() {
+    clearTimeout(lettingGo)
     rise = 0
     pull = { ...pull, raw: 0, holding: false }
   }
@@ -1021,22 +1019,13 @@
     if (!pull.holding && now - pull.at > A_PAUSE) {
       pull = began(pull, startedNearEnd(store.viewBottom, store.last), now)
     }
-    const wanted = camera.y + by.y / camera.scale
-    const bottom = store.bottom
-    store.camera = store.held({
-      ...camera,
-      x: camera.x + by.x / camera.scale,
-      y: wanted,
-    })
-    const answer = wheeled(pull, {
-      delta: Math.max(0, wanted - bottom) * camera.scale,
-      reach,
-      now,
-      still: stillness(),
-    })
-    pull = answer.pull
-    if (answer.makes) madePage()
-    else fall()
+    const back = by.y < 0 ? Math.max(by.y, -pull.raw) : 0
+    const wanted = camera.y + (by.y - back) / camera.scale
+    store.camera = store.held({ ...camera, x: camera.x + by.x / camera.scale, y: wanted })
+    pull = wheeled(pull, { delta: back + Math.max(0, wanted - store.bottom) * camera.scale, now })
+    rise = riseOf(pull, reach, now, stillness())
+    clearTimeout(lettingGo)
+    if (pull.holding) lettingGo = window.setTimeout(letGo, LET_GO)
   }
   const typing = (target: EventTarget | null): boolean =>
     target instanceof HTMLElement &&

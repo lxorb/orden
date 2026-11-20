@@ -42,7 +42,10 @@
     position: absolute;
     border: calc(1px * var(--unit)) dashed var(--line-strong);
     border-radius: calc(3px * var(--unit));
-    background: color-mix(in srgb, var(--surface) calc(var(--part) * 100%), transparent);
+    background: linear-gradient(
+      var(--surface) calc(var(--part) * 100%),
+      color-mix(in srgb, var(--surface) 30%, transparent) calc(var(--part) * 100%)
+    );
     opacity: calc(0.45 + 0.55 * var(--part));
     pointer-events: none;
     transition:
