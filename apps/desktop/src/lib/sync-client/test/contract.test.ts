@@ -27,6 +27,7 @@ import { scan, type EntryRow } from '../src/store'
 import { EngineDevice, type FreshDevice, freshDevice } from './sim-device'
 import { memoryStorage } from './memory-storage'
 import { dropLeft, leftHere, ownRoots, unsentRoots } from '../src/left'
+import { readOnlyLine } from '../src/project'
 
 const settle: Step = { t: 'wait', ticks: 40 }
 function road(script: readonly Step[]): Promise<Report> {
@@ -324,7 +325,8 @@ describe('words the account refuses once the space is only read here (#2249)', (
     expect(member.disk.trashed.map((one) => one.path)).toEqual([file])
     expect(member.disk.trashed[0]?.text).toContain(marker)
     expect(member.disk.files.get(file)).toBe(theirs)
-    expect(logged).toEqual([`you can only read this space, so your change to ${name} went to Recently deleted`])
+    const shown = name.slice(0, name.lastIndexOf('.'))
+    expect(logged).toEqual([`you can only read this space, so your change to ${shown} went to Recently deleted`])
     expect(member.engine.core.hasPending(member.engine.entryAt(file)?.id ?? '')).toBe(false)
   })
 })
@@ -543,6 +545,14 @@ describe('who may rename a space (#2325)', () => {
     expect(manages({ role: 'write', admin: true })).toBe(true)
     expect(manages({ role: 'write' })).toBe(false)
     expect(manages({ role: 'read' })).toBe(false)
+  })
+})
+describe('the names this device shows (#2310)', () => {
+  test('carry no ending of a kind Orden opens, in the log of a change the account would not take', () => {
+    const line = readOnlyLine({ world: { now: () => 1 } } as never, { id: 's' } as never, 'Work/Plan.md')
+    expect(line).toMatchObject({
+      row: { failed: 'you can only read this space, so your change to Work/Plan went to Recently deleted' },
+    })
   })
 })
 describe('ports', () => {

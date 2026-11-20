@@ -714,6 +714,7 @@ describe('a held note', () => {
     await rewrite(here, 'Let us hold the whole release until every reviewer has signed off ')
     await here.engine.pass(SPACE)
     expect(here.engine.core.isHeld(PLAN)).toBe(true)
+    expect(here.engine.held.notes.map((one) => one.name)).toEqual(['Plan'])
     const mine = (await here.engine.core.doc(PLAN))?.text()
     here.routes.length = 0
     await there.engine.saved(`${ROOT}/Plan.md`, 'ignored')
@@ -804,7 +805,7 @@ describe('a push the account refuses', () => {
     expect(one.disk.trashed.map((one) => one.path)).toEqual([`${ROOT}/Plan.md`])
     expect(one.disk.trashed[0]?.text.startsWith('kept ')).toBe(true)
     expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(await textOn(one.account, PLAN))
-    expect(await logged()).toEqual(['you can only read this space, so your change to Plan.md went to Recently deleted'])
+    expect(await logged()).toEqual(['you can only read this space, so your change to Plan went to Recently deleted'])
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(1)
     expect(one.engine.waiting(SPACE)).toBe(false)
@@ -1667,7 +1668,7 @@ describe('another program’s unreadable canvas', () => {
       { path, text: '# Board\n\nprose\n' },
       { path, text: '{"title":"x"}' },
     ])
-    expect(told).toEqual(['Board.canvas'])
+    expect(told).toEqual(['Board'])
     expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
   })
   test('nor is one emptied for a moment by a save', async () => {
@@ -1724,7 +1725,7 @@ describe('a note the disk will not read', () => {
     const read = one.disk.read.bind(one.disk)
     const state = { refused: true }
     one.disk.read = (at) => (state.refused && at === path ? Promise.resolve(null) : read(at))
-    return { one, desk, note, path, told, state }
+    return { one, desk, note: { ...note, name: 'Plan' }, path, told, state }
   }
   test('is not written over by the account, and is said to be not syncing if it lasts', async () => {
     const { one, desk, note, path, told, state } = await refusing()

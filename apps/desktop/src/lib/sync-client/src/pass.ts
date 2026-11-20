@@ -1,3 +1,4 @@
+import { rowName } from '../../platform/src/api'
 import { recoverLost, sendMade, settleFiles } from './files'
 import { foldedInto } from './folded'
 import {
@@ -281,7 +282,10 @@ function unmade(core: Core, space: SpaceState, waiting: readonly Outboxed[], fol
 export async function refused(core: Core, space: SpaceState, op: Op, why: string): Promise<Change[]> {
   if (op.t === 'delete' && why === 'edited') {
     const entry = space.entries.get(op.id)
-    if (entry) core.events.resurrected?.({ id: op.id, name: entry.name, device: core.by.get(op.id) ?? '' })
+    if (entry) {
+      const name = rowName(entry.name, entry.kind === 'folder')
+      core.events.resurrected?.({ id: op.id, name, device: core.by.get(op.id) ?? '' })
+    }
     return []
   }
   if ((op.t === 'create' || op.t === 'mkdir') && why === 'role') {

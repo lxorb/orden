@@ -2,7 +2,7 @@
   import { portOf } from '@orden/contracts'
   import { tick } from 'svelte'
   import { Sheet } from '../../ui-controls/src/api'
-  import { withinSpace } from '../../platform/src/api'
+  import { nameOf, withinSpace } from '../../platform/src/api'
   import { readableSize } from '../../accounts/src/api'
   import { when } from '../../ui-controls/src/api'
   import { workspace } from './ports'
@@ -47,7 +47,7 @@
       const space = path ? workspace().spaces.find((one) => withinSpace(one.root, path) !== null) : null
       const svg = await port.value.svg({
         text,
-        name: shown?.name ?? '',
+        name: shown ? nameOf(shown.path) : '',
         path: space && path ? withinSpace(space.root, path) : null,
         root: space?.root ?? null,
         note: path,

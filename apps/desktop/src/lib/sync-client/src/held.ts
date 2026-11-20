@@ -1,4 +1,5 @@
 import { readCanvas } from '@orden/markdown/canvas'
+import { shownName } from '../../platform/src/api'
 import { diverge, excerpt, pullResponseOf, type Excerpt } from '@orden/sync-core'
 import type { HeldAnswer, Held, HeldNotes, Side } from './asking.svelte'
 import type { Core, Holding } from './core'
@@ -86,7 +87,7 @@ export class HeldList implements HeldNotes {
     return {
       id: entry.id,
       path: this.core.world.join(space.row.root, entry.local_path),
-      name: entry.name,
+      name: shownName(entry.name),
       mine: side(sides.local, shown?.local, this.core.world.name, times.local),
       theirs: side(sides.remote, shown?.remote, await this.names(holding.row.device), theirsAt),
     }
@@ -101,12 +102,12 @@ export class HeldList implements HeldNotes {
       device,
       at,
       excerpt: { text: '', marks: [] },
-      file: { name: entry.name, size: entry.size ?? 0, picture: null },
+      file: { name: shownName(entry.name), size: entry.size ?? 0, picture: null },
     })
     return {
       id: entry.id,
       path: this.core.world.join(space.row.root, entry.local_path),
-      name: entry.name,
+      name: shownName(entry.name),
       mine: side(this.core.world.name, holding.row.at),
       theirs: side(await this.names(holding.row.device), against.at),
     }
