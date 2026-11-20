@@ -178,6 +178,8 @@ macro_rules! desktop_commands {
             orden_ai::ai_cli::ai_cli_close,
             orden_ai::ai_cli::ai_cli_models,
             orden_ai::ai_cli::ai_cli_usage,
+            orden_ai::ai_fetch::ai_fetch,
+            orden_ai::ai_fetch::ai_fetch_stop,
             orden_secrets::chatgpt::chatgpt_sign_in,
             orden_secrets::chatgpt::chatgpt_account,
             orden_secrets::chatgpt::chatgpt_token,
