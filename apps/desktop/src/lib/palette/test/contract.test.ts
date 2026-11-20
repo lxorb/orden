@@ -3,7 +3,8 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { paletteKind } from '@orden/contracts'
 import { candidates, resting } from '../src/kinds'
-import { file, ROOT, tab, world } from '../src/world.fixture'
+import { command, file, ROOT, tab, world } from '../src/world.fixture'
+import { distinct } from '../src/scope'
 import type { Row } from '../src/rows'
 
 const SRC = join(import.meta.dirname, '..', 'src')
@@ -49,5 +50,20 @@ describe('a chat', () => {
   test('nor a message of one: the palette asks no feature for messages', () => {
     const asking = sources().filter(({ text }) => /paletteKind\(\s*'messages'\s*\)|kind: 'message'/.test(text))
     expect(asking.map(({ name }) => name)).toEqual([])
+  })
+})
+describe('the rows it lists', () => {
+  const as = (id: string, checked = false): Row => ({ kind: 'command', command: command(id, 'Twice', { checked }) })
+  const said = (row: Row) => (row.kind === 'command' ? row.command.label : row.kind)
+  const seen = (rows: readonly Row[]) =>
+    rows.map((one) => (one.kind === 'command' ? [one.command.id, one.command.checked] : []))
+  test('hold one command once, the checked one, however often it is offered', () => {
+    expect(seen(distinct([as('theme:contrast'), as('theme:contrast', true)], said))).toEqual([['theme:contrast', true]])
+  })
+  test('keep two commands that read the same, since each does its own thing', () => {
+    expect(seen(distinct([as('ai-account:work'), as('ai-account:home')], said))).toEqual([
+      ['ai-account:work', false],
+      ['ai-account:home', false],
+    ])
   })
 })
