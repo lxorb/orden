@@ -1,6 +1,7 @@
 import { describe, expect, expectTypeOf, test, vi } from 'vitest'
 import { ai, firstModel, isLocal, KIND_NAMES, localCli, MODES, modeIn, modeOfGrant } from '../src/api'
 import { noMoreThan, offeredKinds, signOut, sseJson, sseLines, talkable, type Thread, vault } from '../src/api'
+import type { Engine } from '../src/api'
 
 const kept = vi.hoisted(() => {
   const held = new Map<string, string>()
@@ -60,6 +61,11 @@ describe('a thread', () => {
     expectTypeOf<Thread['only']>().toEqualTypeOf<string[] | undefined>()
     const none: Pick<Thread, 'only'> = { only: [] }
     expect(none.only).toEqual([])
+  })
+})
+describe('an engine', () => {
+  test('may be told a thread is asked no more, so it can let its session go', () => {
+    expectTypeOf<Engine['release']>().toEqualTypeOf<((thread: Thread) => void) | undefined>()
   })
 })
 describe('an Orden account leaving the device', () => {

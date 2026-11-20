@@ -168,6 +168,7 @@ export interface Engine {
   steer(thread: Thread, text: string): Promise<boolean>
   compact(thread: Thread, focus?: string): Promise<void>
   rewound?(thread: Thread): void
+  release?(thread: Thread): void
 }
 /** @public */
 export interface Checkpoint {
