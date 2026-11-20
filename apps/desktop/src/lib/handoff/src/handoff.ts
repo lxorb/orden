@@ -1,8 +1,14 @@
 import { carryKeys, keep, storedText } from '../../platform/src/api'
 import { type DatabaseDump, dump, finished, shaped } from './database-dump'
 
-export const WEB: string = import.meta.env.VITE_ORDEN_WEB ?? 'https://orden.so'
-export const LEGACY_WEB: string = import.meta.env.VITE_ORDEN_LEGACY_WEB ?? 'https://nibeditor.com'
+export const WEB: string = import.meta.env.VITE_ORDEN_WEB ?? 'https://app.orden.so'
+export const LEGACY_WEBS: readonly string[] = (
+  import.meta.env.VITE_ORDEN_LEGACY_WEB ?? 'https://orden.so,https://nibeditor.com'
+)
+  .split(',')
+  .map((one) => one.trim())
+  .filter((one) => one !== '' && one !== WEB)
+export const LEGACY_WEB: string = LEGACY_WEBS[0] ?? ''
 export const HANDOFF_PATH = '/handoff'
 const KIND = 'orden-handoff'
 const FORMER_KIND = 'nib-handoff'
