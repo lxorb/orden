@@ -62,7 +62,7 @@
   import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
   import { SidebarWidth } from './sidebar-width.svelte'
-  import { dur, fly } from '../../platform/src/api'
+  import { dur, fly, onceAFrame } from '../../platform/src/api'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import Bookmarks from './Bookmarks.svelte'
@@ -384,7 +384,9 @@
   $effect(() => {
     const list = outline
     if (!list || current < 0) return
-    list.querySelector('.row.is-on')?.scrollIntoView({ block: 'nearest' })
+    const soon = onceAFrame(() => list.querySelector('.row.is-on')?.scrollIntoView({ block: 'nearest' }))
+    soon()
+    return () => soon.cancel()
   })
   const place = $derived(workspace.shownSpaces.findIndex((one) => one.id === workspace.activeSpaceId))
   let direction = $state(1)
@@ -416,6 +418,8 @@
     if (size.step(event.key, aside)) event.preventDefault()
   }
 </script>
+
+{#snippet label(text: string)}<span class="orden-row-label" dir="auto">{text}</span>{/snippet}
 
 <div
   bind:this={column}
@@ -716,6 +720,7 @@
                 }}
               >
                 {#each workspace.headings as heading, index (index)}
+                  {@const text = heading.text}
                   <li>
                     <button
                       class="orden-row is-short row heading"
@@ -736,7 +741,7 @@
                       ondragend={endSection}
                       ondrop={(event) => dropSection(event, index)}
                     >
-                      <span class="orden-row-label" dir="auto">{heading.text}</span>
+                      {@render label(text)}
                     </button>
                   </li>
                 {/each}
@@ -747,6 +752,7 @@
               <p class="orden-section">Footnotes<span>{workspace.footnotes.length}</span></p>
               <ul>
                 {#each workspace.footnotes as note (note.id)}
+                  {@const text = note.text}
                   <li>
                     <button
                       class="orden-row is-short row note"
@@ -754,7 +760,7 @@
                       onclick={() => jump(note.line)}
                     >
                       <span class="orden-row-mark note-id">{note.id}</span>
-                      <span class="orden-row-label" dir="auto">{note.text}</span>
+                      {@render label(text)}
                     </button>
                   </li>
                 {/each}

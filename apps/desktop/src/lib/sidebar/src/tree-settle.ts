@@ -1,5 +1,6 @@
 import { tick } from 'svelte'
 import { dur } from '../../platform/src/api'
+import { heightOf, offsetOf, type Rows } from '../../windows/src/api'
 
 const SETTLING = 180
 export function anchorShift(
@@ -21,6 +22,10 @@ export function anchorShift(
     if (index < to && (there === undefined || there - (index + 1) === shift)) return shift
   }
   return 0
+}
+export function inSight(index: number, rows: Rows): boolean {
+  const at = offsetOf(index, rows)
+  return rows.room > 0 && at >= rows.top && at + heightOf(index, rows) <= rows.top + rows.room
 }
 export function indexed(ids: readonly string[]): Map<string, number> {
   const out = new Map<string, number>()

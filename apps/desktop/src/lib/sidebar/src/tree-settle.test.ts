@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { anchorShift, indexed } from './tree-settle'
+import { anchorShift, indexed, inSight } from './tree-settle'
 
 const ROWS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 function shift(now: string[], first: number, last: number): number {
@@ -29,5 +29,19 @@ describe('where the list holds the rows in view', () => {
 describe('one row in view', () => {
   test('is what the view holds on to', () => {
     expect(shift(['x', ...ROWS], 3, 3)).toBe(1)
+  })
+})
+describe('a row the switch to its note needs to scroll to', () => {
+  const rows = (top: number, room: number) => ({ count: 40, height: 28, top, room, overscan: 4, fold: null })
+  test('is none while the whole row is in sight', () => {
+    expect(inSight(0, rows(0, 280))).toBe(true)
+    expect(inSight(9, rows(0, 280))).toBe(true)
+    expect(inSight(12, rows(280, 280))).toBe(true)
+  })
+  test('is one cut by an edge, out of sight, or in a list not measured yet', () => {
+    expect(inSight(10, rows(0, 280))).toBe(false)
+    expect(inSight(0, rows(20, 280))).toBe(false)
+    expect(inSight(30, rows(0, 280))).toBe(false)
+    expect(inSight(0, rows(0, 0))).toBe(false)
   })
 })

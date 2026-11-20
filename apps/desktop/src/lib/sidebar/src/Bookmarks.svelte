@@ -301,6 +301,8 @@
   const rowAt = (element: HTMLElement) => drawn.find((one) => one.at === Number(element.dataset.at))
 </script>
 
+{#snippet label(text: string)}<span class="orden-row-label" dir="auto">{text}</span>{/snippet}
+
 {#if drawn.length || offered}
   <div
     class="bookmarks"
@@ -385,6 +387,7 @@
         {#each rows as row (`${row.mark.kind}:${row.mark.path}:${row.mark.text}`)}
           {@const showing = workspace.isGroupOpen(row.mark.path)}
           {@const lands = landing?.at === row.at}
+          {@const text = row.label}
           <li>
             <div class="line">
               {#if row.mark.kind === 'group'}
@@ -431,7 +434,7 @@
                 {:else if row.mark.kind !== 'group'}
                   <svg class="orden-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
                 {/if}
-                <span class="orden-row-label" dir="auto">{row.label}</span>
+                {@render label(text)}
                 {#if row.note}<span class="orden-row-meta">{row.note}</span>{/if}
               </button>
             </div>
