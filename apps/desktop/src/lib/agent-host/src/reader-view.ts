@@ -2,62 +2,61 @@ import { type AgentAnswer, type SettingsSectionId, settingsWindow } from '@orden
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import { panesIn, paneToward, type Toward } from '../../panes/src/api'
-import { asksFront, type Call, done, needScope, openedBy, Refused } from '../../agent-verbs/src/api'
+import { type Call, done, openedBy, Refused } from '../../agent-verbs/src/api'
 
+export function readersView(call: Call, what: string): void {
+  if (call.caller.agent !== null) {
+    throw new Refused('by_hand', `${what} changes what the reader sees, so it is the reader's to do`)
+  }
+}
 export function openPage(call: Call, url: string): Tab | null {
-  const front = asksFront(call, 'opening in front')
-  const id = workspace.openPage(url, front ? 'plain' : 'behind')
+  const id = workspace.openPage(url, 'behind')
   return openedBy(
     call,
     workspace.tabs.find((one) => one.id === id),
-    front,
+    false,
   )
 }
-export async function openFile(
-  call: Call,
-  path: string,
-  front = asksFront(call, 'opening in front'),
-): Promise<Tab | null> {
-  await workspace.openEntry(path, front ? {} : { activate: false, beside: true })
+export async function openFile(call: Call, path: string): Promise<Tab | null> {
+  await workspace.openEntry(path, { activate: false, beside: true })
   return openedBy(
     call,
     workspace.tabs.find((one) => one.path === path),
-    front,
+    false,
   )
 }
-export async function openInSpace(call: Call, space: string, path: string): Promise<Tab | null> {
-  needScope(call, 'workspace.focus', 'another space')
+export async function openInSpace(call: Call, space: string, path: string, link: string): Promise<Tab | null> {
+  readersView(call, `opening a note in another space (the reader can follow ${link})`)
   await workspace.showSpace(space)
-  return openFile(call, path, true)
+  await workspace.openEntry(path)
+  return workspace.active
 }
 export function openUnsaved(call: Call, kind: 'note' | 'canvas' | 'pages', words: string): Tab {
-  const front = asksFront(call, 'a new tab in front')
-  const beside = front ? null : workspace.activeTabId
-  const made = workspace.openUnsaved(kind, words, undefined, beside, front)
-  openedBy(call, made, front)
+  const made = workspace.openUnsaved(kind, words, undefined, workspace.activeTabId, false)
+  openedBy(call, made, false)
   return made
 }
 export async function showScratchpad(call: Call): Promise<AgentAnswer> {
-  const front = asksFront(call, 'opening in front')
+  readersView(call, 'showing the scratchpad (write to it with write_note, tab scratchpad)')
   const scratchpad = await import('../../scratchpad/src/api').then((one) => one.pad())
-  scratchpad.show(null, front)
+  scratchpad.show(null, false)
   return done({ scratchpad: true })
 }
 export function showGraph(call: Call): Tab | null {
-  needScope(call, 'workspace.focus', 'the graph')
+  readersView(call, 'the graph')
   workspace.openGraph()
   return workspace.active
 }
 export function showSettings(call: Call, section: SettingsSectionId): void {
-  needScope(call, 'workspace.focus', 'Settings')
+  readersView(call, 'Settings')
   settingsWindow().show(section)
 }
 export function showTab(call: Call, tab: Tab): void {
-  needScope(call, 'workspace.focus', 'bringing a tab to the front')
+  readersView(call, 'bringing a tab to the front')
   workspace.activate(tab.id)
 }
 export function splitBeside(call: Call, tab: Tab): void {
-  needScope(call, 'workspace.focus', 'a split')
+  readersView(call, 'a split')
   workspace.split('row', tab.id)
 }
 export function paneFor(tab: Tab, pane: string | null, toward: string | null): string | null {
@@ -66,11 +65,11 @@ export function paneFor(tab: Tab, pane: string | null, toward: string | null): s
   return paneToward(workspace.panes.frame, tab.paneId, toward as Toward)?.id ?? null
 }
 export function moveTabTo(call: Call, tab: Tab, pane: string, at: number | null): void {
-  needScope(call, 'workspace.focus', 'moving a tab')
+  readersView(call, 'moving a tab')
   workspace.moveTab(tab.id, pane, at)
 }
 export function arrangePanes(call: Call, layout: string, tab: Tab | null): void {
-  needScope(call, 'workspace.focus', 'arranging the panes')
+  readersView(call, 'arranging the panes')
   const panes = panesIn(workspace.panes.frame)
   switch (layout) {
     case 'columns':

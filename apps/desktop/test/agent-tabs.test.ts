@@ -483,13 +483,10 @@ describe('a tab of every kind, made behind the reader', () => {
     expect(workspace.openUnsaved.mock.lastCall?.[4]).toBe(false)
     expect(workspace.activate).not.toHaveBeenCalled()
   })
-  test('in front only with workspace.focus', async () => {
-    expect(await call('workspace_tabs', { op: 'new', kind: 'note', background: false })).toMatchObject({
-      code: 'not_granted',
-    })
-    expect(workspace.openUnsaved).not.toHaveBeenCalled()
+  test('never in front, even asked for and granted workspace.focus', async () => {
     await call('workspace_tabs', { op: 'new', kind: 'note', background: false }, agent(focusing))
-    expect(workspace.openUnsaved).toHaveBeenLastCalledWith('note', '', undefined, null, true)
+    expect(workspace.openUnsaved.mock.lastCall?.[4]).toBe(false)
+    expect(workspace.activate).not.toHaveBeenCalled()
   })
   test('a denied site by another spelling is denied all the same (#1078)', async () => {
     for (const url of ['https://login.bank.example./', 'https://LOGIN.Bank.Example/', 'https://bank.example.:443/x']) {
@@ -535,15 +532,19 @@ describe('a tab of every kind, made behind the reader', () => {
   })
 })
 describe('opening', () => {
-  test('a page behind; the graph only in front; the scratchpad behind', async () => {
-    await call('workspace_tabs', { op: 'open', url: 'https://docs.example/a' })
+  test('a page behind; the graph and the scratchpad only by the reader, never by an agent', async () => {
+    await call('workspace_tabs', { op: 'open', url: 'https://docs.example/a', background: false }, agent(focusing))
     expect(workspace.openPage).toHaveBeenCalledWith('https://docs.example/a', 'behind')
-    expect(await call('workspace_tabs', { op: 'open', view: 'graph' })).toMatchObject({
-      code: 'not_granted',
-    })
-    await call('workspace_tabs', { op: 'open', view: 'graph' }, agent(focusing))
+    for (const view of ['graph', 'scratchpad']) {
+      expect(await call('workspace_tabs', { op: 'open', view }, agent(focusing)), view).toMatchObject({
+        code: 'by_hand',
+      })
+    }
+    expect(workspace.openGraph).not.toHaveBeenCalled()
+    expect(showPad).not.toHaveBeenCalled()
+    await call('workspace_tabs', { op: 'open', view: 'graph' }, { agent: null })
     expect(workspace.openGraph).toHaveBeenCalled()
-    expect(await call('workspace_tabs', { op: 'open', view: 'scratchpad' })).toMatchObject({
+    expect(await call('workspace_tabs', { op: 'open', view: 'scratchpad' }, { agent: null })).toMatchObject({
       result: { scratchpad: true },
     })
     expect(showPad).toHaveBeenCalledWith(null, false)
@@ -689,16 +690,17 @@ describe('a PDF, Settings and Recently deleted', () => {
     expect(openDocument).toHaveBeenCalledWith('/s/Work/paper.pdf')
     expect(await call('read_pdf', { tab: 'n1' })).toMatchObject({ code: 'bad_arguments' })
   })
-  test('Settings opens at a section, only with workspace.focus', async () => {
-    expect(await call('workspace_tabs', { op: 'open', view: 'settings' })).toMatchObject({
-      code: 'not_granted',
+  test('Settings opens at a section for the reader, and never for an agent', async () => {
+    expect(await call('workspace_tabs', { op: 'open', view: 'settings' }, agent(focusing))).toMatchObject({
+      code: 'by_hand',
     })
+    expect(settings.show).not.toHaveBeenCalled()
     expect(
-      await call('workspace_tabs', { op: 'open', view: 'settings', section: 'ai' }, agent(focusing)),
+      await call('workspace_tabs', { op: 'open', view: 'settings', section: 'ai' }, { agent: null }),
     ).toMatchObject({ result: { settings: 'ai' } })
     expect(settings.show).toHaveBeenCalledWith('ai')
     expect(
-      await call('workspace_tabs', { op: 'open', view: 'settings', section: 'nope' }, agent(focusing)),
+      await call('workspace_tabs', { op: 'open', view: 'settings', section: 'nope' }, { agent: null }),
     ).toMatchObject({ code: 'bad_arguments' })
   })
   test('the list as far as the grant reaches, and one thing put back', async () => {
@@ -739,42 +741,46 @@ describe('a PDF, Settings and Recently deleted', () => {
   })
 })
 describe('tabs moved and panes arranged (#1078)', () => {
-  test('a tab goes to a pane by its id or toward a side, only when asked for', async () => {
-    expect(await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2' })).toMatchObject({
-      code: 'not_granted',
-    })
-    expect(workspace.moveTab).not.toHaveBeenCalled()
-    await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2', at: 0 }, agent(focusing))
+  test('a tab goes to a pane by its id or toward a side, for the reader', async () => {
+    const reader = { agent: null }
+    await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2', at: 0 }, reader)
     expect(workspace.moveTab).toHaveBeenLastCalledWith('n1', 'p2', 0)
-    await call('workspace_tabs', { op: 'move', tab: 'c1', toward: 'left' }, agent(focusing))
+    await call('workspace_tabs', { op: 'move', tab: 'c1', toward: 'left' }, reader)
     expect(workspace.moveTab).toHaveBeenLastCalledWith('c1', 'p1', null)
-    expect(await call('workspace_tabs', { op: 'move', tab: 'n1', toward: 'up' }, agent(focusing))).toMatchObject({
+    expect(await call('workspace_tabs', { op: 'move', tab: 'n1', toward: 'up' }, reader)).toMatchObject({
       code: 'bad_arguments',
     })
-    expect(await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p9' }, agent(focusing))).toMatchObject({
+    expect(await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p9' }, reader)).toMatchObject({
       code: 'bad_arguments',
     })
   })
-  test('the panes split, made even or gathered into one', async () => {
-    await call('workspace_tabs', { op: 'arrange', layout: 'rows', tab: 'n1' }, agent(focusing))
+  test('the panes split, made even or gathered into one, for the reader', async () => {
+    const reader = { agent: null }
+    await call('workspace_tabs', { op: 'arrange', layout: 'rows', tab: 'n1' }, reader)
     expect(workspace.split).toHaveBeenLastCalledWith('column', 'n1')
-    await call('workspace_tabs', { op: 'arrange', layout: 'even' }, agent(focusing))
+    await call('workspace_tabs', { op: 'arrange', layout: 'even' }, reader)
     expect(workspace.panes.equalise).toHaveBeenCalledWith('p1')
-    await call('workspace_tabs', { op: 'arrange', layout: 'single' }, agent(focusing))
+    await call('workspace_tabs', { op: 'arrange', layout: 'single' }, reader)
     expect(workspace.moveTab).toHaveBeenCalledWith('c1', 'p1')
-    expect(await call('workspace_tabs', { op: 'arrange', layout: 'grid' }, agent(focusing))).toMatchObject({
+    expect(await call('workspace_tabs', { op: 'arrange', layout: 'grid' }, reader)).toMatchObject({
       code: 'bad_arguments',
     })
   })
-  test('a move or an arrange answers only the tabs of the spaces granted', async () => {
-    tabs.push(tab('h1', 'note', '/s/Home/Diary.md', { shown: 'Diary' }))
-    tabs[5]!.note.home = 'home'
-    const only = agent(focusing, { spaces: ['Work'] })
-    const idsOf = (said: unknown) => (said as { result: { id: string }[] }).result.map((one) => one.id)
-    const moved = await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2' }, only)
-    expect(idsOf(moved)).toEqual(['n1', 'd1', 'c1', 't1', 's1'])
-    const arranged = await call('workspace_tabs', { op: 'arrange', layout: 'even' }, only)
-    expect(idsOf(arranged)).toEqual(['n1', 'd1', 'c1', 't1', 's1'])
+  test('an agent, granted workspace.focus or not, moves, splits, focuses and arranges nothing', async () => {
+    for (const who of [agent(), agent(focusing), agent(focusing, { mode: 'autonomous' })]) {
+      for (const args of [
+        { op: 'move', tab: 'n1', pane: 'p2' },
+        { op: 'split', tab: 'n1' },
+        { op: 'focus', tab: 'c1' },
+        { op: 'arrange', layout: 'even' },
+      ]) {
+        expect(await call('workspace_tabs', args, who), args.op).toMatchObject({ code: 'by_hand' })
+      }
+    }
+    expect(workspace.moveTab).not.toHaveBeenCalled()
+    expect(workspace.split).not.toHaveBeenCalled()
+    expect(workspace.activate).not.toHaveBeenCalled()
+    expect(workspace.panes.equalise).not.toHaveBeenCalled()
   })
 })
 describe('the reader terminals', () => {
@@ -1023,5 +1029,91 @@ describe('the reader terminals', () => {
     expect(await runAgentVerb('type_terminal', { tab: 't1', text: 'ls' }, { agent: null })).toMatchObject({
       code: 'by_hand',
     })
+  })
+})
+describe('an agent, whatever it is granted (#2402)', () => {
+  const calls: [string, Record<string, unknown>][] = [
+    ['get_context', {}],
+    ['list_spaces', {}],
+    ['list_notes', {}],
+    ['search_notes', { query: 'plan' }],
+    ['list_backlinks', { path: 'Plan.md' }],
+    ['read_note', { path: 'Plan.md' }],
+    ['list_versions', { path: 'Plan.md' }],
+    ['read_canvas', { tab: 'c1' }],
+    ['read_pdf', { tab: 'n1' }],
+    ['pdf_highlights', { op: 'list', path: 'paper.pdf' }],
+    ['edit_note', { path: 'Plan.md', edits: [{ at: { end: true }, insert_after: 'x' }] }],
+    ['write_note', { path: 'Fresh.md', content: '# Fresh\n' }],
+    ['append_note', { path: 'Plan.md', content: 'More.' }],
+    ['set_property', { path: 'Plan.md', key: 'status', value: 'done' }],
+    ['set_task', { path: 'Plan.md', at: { task: 'x' }, done: true }],
+    ['list_tasks', {}],
+    ['add_task', { text: 'Call mum' }],
+    ['update_task', { id: 'nothing', done: true }],
+    ['query_base', { path: 'Books.base' }],
+    ['add_row', { base: 'Books.base', title: 'Dune' }],
+    ['edit_rows', { base: 'Books.base', set: { read: true } }],
+    ['edit_base', { path: 'Books.base', ops: [] }],
+    ['create_note', { path: 'Stew', content: '# Stew\n', open: true }],
+    ['restore_version', { path: 'Plan.md', version: 'v1' }],
+    ['edit_canvas', { tab: 'c1', ops: [{ op: 'add_card', text: 'Hi' }] }],
+    ['capture_to_note', { tab: 'w1', as: 'clip' }],
+    ['attach_agent_log', { path: 'Plan.md' }],
+    ['move_file', { path: 'Pinned.md', to: 'Old/Pinned.md' }],
+    ['trash_file', { path: 'Plan.md' }],
+    ['create_folder', { path: 'Ideas' }],
+    ['workspace_tabs', { op: 'list' }],
+    ['workspace_tabs', { op: 'open', path: 'Pinned.md', background: false }],
+    ['workspace_tabs', { op: 'open', url: 'https://docs.example/', background: false }],
+    ['workspace_tabs', { op: 'open', view: 'graph' }],
+    ['workspace_tabs', { op: 'open', view: 'settings', section: 'ai' }],
+    ['workspace_tabs', { op: 'open', view: 'scratchpad' }],
+    ['workspace_tabs', { op: 'new', kind: 'note', background: false }],
+    ['workspace_tabs', { op: 'new', kind: 'canvas', background: false }],
+    ['workspace_tabs', { op: 'rename', tab: 'd1', name: 'Later' }],
+    ['workspace_tabs', { op: 'save', tab: 'd1', path: 'Later.md' }],
+    ['workspace_tabs', { op: 'close', tab: 'n1' }],
+    ['workspace_tabs', { op: 'split', tab: 'n1' }],
+    ['workspace_tabs', { op: 'focus', tab: 'c1' }],
+    ['workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2' }],
+    ['workspace_tabs', { op: 'arrange', layout: 'single' }],
+    ['bookmarks', { op: 'add', path: 'Plan.md' }],
+    ['run_command', { id: 'graph' }],
+    ['run_command', { id: 'settings' }],
+    ['run_command', { id: 'files' }],
+    ['run_command', { id: 'close-all' }],
+    ['run_command', { id: 'new-canvas' }],
+    ['read_setting', { key: 'editor.font' }],
+    ['write_setting', { key: 'editor.font', value: 'serif' }],
+    ['system_clipboard', { op: 'read' }],
+    ['ask_reader', { kind: 'notice', message: 'Done' }],
+    ['note_editor', { tab: 'n1', op: 'reveal', line: 1 }],
+    ['note_editor', { tab: 'n1', op: 'select', selections: [{ anchor: { line: 1, ch: 0 } }] }],
+    ['note_editor', { tab: 'n1', op: 'fold', line: 1 }],
+    ['recently_deleted', { op: 'list' }],
+  ]
+  test('never moves what the reader sees or where the keys go', async () => {
+    const anything = agent([...EVERY, 'workspace.focus'], { mode: 'autonomous' })
+    for (const [verb, args] of calls) await call(verb, args, anything)
+    for (const moved of [
+      workspace.activate,
+      workspace.showSpace,
+      workspace.split,
+      workspace.moveTab,
+      workspace.openGraph,
+      workspace.panes.equalise,
+      settings.show,
+      showPad,
+    ]) {
+      expect(moved).not.toHaveBeenCalled()
+    }
+    expect(workspace.close).not.toHaveBeenCalledWith('n1')
+    for (const [, how] of workspace.openEntry.mock.calls as unknown as [string, unknown][]) {
+      expect(how).toMatchObject({ activate: false })
+    }
+    for (const [, how] of workspace.openPage.mock.calls as unknown as [string, unknown][]) expect(how).toBe('behind')
+    for (const made of workspace.openUnsaved.mock.calls) expect(made[4]).toBe(false)
+    expect(workspace.activeTabId).toBe('n1')
   })
 })

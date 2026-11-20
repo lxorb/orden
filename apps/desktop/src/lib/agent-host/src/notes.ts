@@ -273,7 +273,7 @@ export async function made(place: Place, relative: string, words: string, open: 
   }
   if (place.open) {
     await workspace.loadTree()
-    if (open) await openFile(open, path, false)
+    if (open) await openFile(open, path)
   } else {
     heldIndex(place)?.noteSaved(path, words)
   }

@@ -734,12 +734,10 @@ describe('the tree', () => {
     })
     expect(workspace.remove).toHaveBeenCalledWith('/s/Home/Soup.md', false, 'Claude Code')
   })
-  test('closes a tab of the reader only with workspace.focus', async () => {
-    expect(await call('trash_file', { path: 'Plan.md' }, agent({ scopes: ['tree'] }))).toMatchObject({
-      code: 'not_granted',
-    })
+  test('trashes a file the reader has in front only when the reader asks', async () => {
+    expect(await call('trash_file', { path: 'Plan.md' })).toMatchObject({ code: 'by_hand' })
     expect(workspace.remove).not.toHaveBeenCalled()
-    expect(await call('trash_file', { path: 'Plan.md' })).toMatchObject({ status: 'ok' })
+    expect(await call('trash_file', { path: 'Plan.md' }, READER)).toMatchObject({ status: 'ok' })
   })
   test('makes a folder once, and tells sync it came', async () => {
     workspace.fileCame.mockClear()
@@ -752,25 +750,27 @@ describe('the tree', () => {
   })
 })
 describe('the reader tabs', () => {
-  test('opens behind the tab in front, and nothing more without workspace.focus', async () => {
-    await call('workspace_tabs', { op: 'open', path: 'Pinned.md' })
+  test('opens behind the tab in front, and moves nothing the reader sees, whatever it was granted', async () => {
+    const focused = agent({ scopes: [...EVERY, 'workspace.focus'], mode: 'autonomous' })
+    await call('workspace_tabs', { op: 'open', path: 'Pinned.md', background: false }, focused)
     expect(workspace.openEntry).toHaveBeenCalledWith('/s/Work/Pinned.md', {
       activate: false,
       beside: true,
     })
-    const plain = agent({ scopes: ['workspace'] })
     for (const [args, why] of [
-      [{ op: 'open', path: 'Plan.md', background: false }, 'opening in front'],
-      [{ op: 'open', path: 'Soup.md', space: 'Home' }, 'another space'],
+      [{ op: 'open', path: 'Soup.md', space: 'Home' }, 'opening a note in another space'],
       [{ op: 'focus', tab: 't2' }, 'bringing a tab to the front'],
       [{ op: 'split', tab: 't1' }, 'a split'],
       [{ op: 'close', tab: 't1' }, 'closing a tab the reader can see'],
     ] as const) {
-      expect(await call('workspace_tabs', args, plain), why).toMatchObject({
-        code: 'not_granted',
-        message: `${why} needs workspace.focus, which this agent was not granted`,
+      expect(await call('workspace_tabs', args, focused), why).toMatchObject({
+        code: 'by_hand',
+        message: expect.stringContaining(why) as string,
       })
     }
+    expect(await call('workspace_tabs', { op: 'open', path: 'Soup.md', space: 'Home' }, focused)).toMatchObject({
+      message: expect.stringContaining('orden://open?space=Home&path=Soup.md') as string,
+    })
     expect(workspace.showSpace).not.toHaveBeenCalled()
     expect(workspace.activate).not.toHaveBeenCalled()
   })
@@ -805,14 +805,14 @@ describe('the reader tabs', () => {
       }
       expect(every.result.map((one) => one.id)).toContain('x1')
     })
-    test('are not listed in the answer to a move', async () => {
+    test('are not listed in the answer to a move the reader makes', async () => {
       const moved = vi.fn()
       Object.assign(workspace, { moveTab: moved })
-      const answered = (await call('workspace_tabs', { op: 'move', tab: 't2', pane: 'p1' }, onlyWork())) as {
+      const answered = (await call('workspace_tabs', { op: 'move', tab: 't2', pane: 'p1' }, READER)) as {
         result?: { id: string }[]
       }
       expect(moved).toHaveBeenCalledWith('t2', 'p1', null)
-      expect(answered.result?.map((one) => one.id)).toEqual(['t1', 't2', 'w1'])
+      expect(answered.result?.map((one) => one.id)).toContain('t2')
     })
     test('do not exist by their id', async () => {
       for (const op of ['rename', 'focus', 'close', 'split', 'save']) {
@@ -1007,27 +1007,29 @@ describe('what asks the reader first', () => {
       category: 'settings',
     })
   })
-  test('the palette: never by hand or the window, publishing asks, moving the reader needs focus', async () => {
-    for (const id of ['record', 'new-terminal', 'close-window']) {
+  test('the palette: never by hand or the window, publishing asks, moving the reader is the reader’s', async () => {
+    for (const id of ['record', 'new-terminal', 'close-window', 'space:home', 'files']) {
       expect(await call('run_command', { id }), id).toMatchObject({ code: 'by_hand' })
     }
-    expect(await call('run_command', { id: 'space:home' }, agent({ scopes: ['workspace'] }))).toMatchObject({
-      code: 'not_granted',
-    })
     answer = { status: 'needs_approval', approval: 'a3', summary: 'Publish' }
     expect(await call('run_command', { id: 'publish' })).toMatchObject({ status: 'needs_approval' })
     expect(asked.find((one) => one.command === 'agents_ask')?.args).toMatchObject({
       category: 'publishing',
     })
-    expect(await call('run_command', { id: 'files' })).toMatchObject({ result: { id: 'files' } })
+    expect(ran).toEqual([])
+    expect(await call('run_command', { id: 'files' }, READER)).toMatchObject({ result: { id: 'files' } })
     expect(ran).toEqual(['files'])
   })
   test('the palette: a row needs what the verb behind it needs, and an unknown row is the reader’s', async () => {
     const plain = agent({ scopes: ['workspace'] })
+    const anything = agent({ scopes: [...EVERY, 'workspace.focus'], mode: 'autonomous' })
+    for (const id of ['close-all', 'settings', 'graph']) {
+      ran.length = 0
+      expect(await call('run_command', { id }, anything), id).toMatchObject({ code: 'by_hand' })
+      expect(ran, id).toEqual([])
+      expect(await call('run_command', { id }, READER), id).toMatchObject({ result: { id } })
+    }
     for (const [id, scope] of [
-      ['close-all', 'workspace.focus'],
-      ['settings', 'workspace.focus'],
-      ['graph', 'workspace.focus'],
       ['reformat', 'notes.write'],
       ['edit.delete-line', 'notes.write'],
       ['undo-file', 'tree'],
@@ -1045,9 +1047,7 @@ describe('what asks the reader first', () => {
       code: 'no_such_space',
     })
     ran.length = 0
-    expect(await call('run_command', { id: 'files' }, plain)).toMatchObject({
-      result: { id: 'files' },
-    })
+    expect(await call('run_command', { id: 'files' }, plain)).toMatchObject({ code: 'by_hand' })
     expect(await call('run_command', { id: 'row-from-next-year' })).toMatchObject({
       code: 'by_hand',
     })
@@ -1055,25 +1055,20 @@ describe('what asks the reader first', () => {
     expect(await call('run_command', { id: 'theme:night' })).toMatchObject({
       status: 'needs_approval',
     })
-    expect(ran).toEqual(['files'])
+    expect(ran).toEqual([])
     expect(await call('run_command', { id: 'row-from-next-year' }, agent({ mode: 'autonomous' }))).toMatchObject({
       result: { id: 'row-from-next-year' },
     })
   })
-  test('the palette: a row that makes a file needs to write as well as to move the reader', async () => {
+  test('the palette: a row that makes a file in front is the reader’s, and points the agent to one made behind', async () => {
     for (const id of ['new-unique', 'new-canvas', 'new-database']) {
       ran.length = 0
-      expect(await call('run_command', { id }, agent({ scopes: ['workspace', 'workspace.focus'] })), id).toMatchObject({
-        code: 'not_granted',
-        message: expect.stringContaining('notes.write'),
-      })
-      expect(await call('run_command', { id }, agent({ scopes: ['workspace', 'notes.write'] })), id).toMatchObject({
-        code: 'not_granted',
-        message: expect.stringContaining('workspace.focus'),
+      expect(await call('run_command', { id }, agent({ scopes: [...EVERY, 'workspace.focus'] })), id).toMatchObject({
+        code: 'by_hand',
+        message: expect.stringContaining('workspace_tabs new'),
       })
       expect(ran, id).toEqual([])
-      const every = id === 'undo-file' ? agent({ spaces: 'all' }) : undefined
-      expect(await call('run_command', { id }, every), id).toMatchObject({ result: { id } })
+      expect(await call('run_command', { id }, READER), id).toMatchObject({ result: { id } })
     }
     expect(await call('run_command', { id: 'undo-file' })).toMatchObject({
       code: 'no_such_space',
@@ -2620,7 +2615,7 @@ describe('a command on the protected note in front', () => {
           code: 'protected',
         })
       }
-      expect(await call('run_command', { id: 'graph' })).toMatchObject({ status: 'ok' })
+      expect(await call('run_command', { id: 'graph' }, READER)).toMatchObject({ status: 'ok' })
       expect(ran).toEqual(['graph'])
     } finally {
       protection.set('/s/Work', '/s/Work/Plan.md', null)

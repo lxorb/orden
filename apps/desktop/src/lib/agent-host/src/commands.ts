@@ -6,6 +6,7 @@ import { readable, readableAll, seen } from './guarded'
 import { protection } from '../../protect/src/api'
 import { views } from '../../panes/src/api'
 import { nothingLockedWaits } from './deleted'
+import { readersView } from './reader-view'
 import { workspace } from '../../workspace/src/api'
 import type { AgentScope as Scope } from '@orden/contracts'
 import type { Category } from '../../agent-protocol/src/api'
@@ -117,15 +118,14 @@ const PANELS = new Set([
   'search-space',
   'sidebar',
 ])
+function movesTheView(id: string): boolean {
+  return (
+    SCREEN.has(id) || PANELS.has(id) || MAKES_NOTE.has(id) || MAKES_SPACE.has(id) || /^(view|space|layout)[.:]/.test(id)
+  )
+}
 function scopesOf(id: string): readonly Scope[] | null {
-  if (ASKS[id] || asksOfSetting(id) || PANELS.has(id) || id.startsWith('view.')) {
-    return ['workspace']
-  }
-  if (MAKES_NOTE.has(id)) return ['notes.write', 'workspace.focus']
-  if (MAKES_SPACE.has(id)) return ['tree', 'workspace.focus']
-  if (SCREEN.has(id) || id.startsWith('space:') || id.startsWith('layout:')) {
-    return ['workspace.focus']
-  }
+  if (movesTheView(id)) return []
+  if (ASKS[id] || asksOfSetting(id)) return ['workspace']
   if (NOTE_TREE.has(id)) return ['tree']
   if (NOTE_WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
   return null
@@ -162,6 +162,9 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   if (kept) throw new Refused('protected', kept)
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
     readersOwn(call, `${id} is the reader's to press`)
+  }
+  if (movesTheView(id)) {
+    readersView(call, `${id}${MAKES_NOTE.has(id) ? ' (workspace_tabs new makes one behind)' : ''}`)
   }
   const path = maybe(call, 'path')
   if (id.startsWith('export-')) exportsOnlyWhatAgentsMay(id)
