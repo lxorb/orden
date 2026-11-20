@@ -325,7 +325,6 @@ export default tseslint.config(
       '**/dist/**',
       '**/dist-before/**',
       '**/dist-profile/**',
-      '**/dist-even/**',
       '**/dist-worker/**',
       '**/dist-handoff/**',
       '**/target/**',

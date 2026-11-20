@@ -5,7 +5,6 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { everySurface } from '@orden/themes/write'
 import { emojiOutlines } from './emoji-outlines'
 import { dirOnWords } from './svelte-dir'
-import manifest from './even.app.json'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
 
@@ -21,8 +20,8 @@ function appVersion(): string {
   return tauri.version
 }
 function stamp(serving: boolean): string {
-  if (serving) return `${manifest.version} dev server started ${when()}`
-  return `${manifest.version} ${commit(false) || 'unknown'} ${when()}`
+  if (serving) return `${appVersion()} dev server started ${when()}`
+  return `${appVersion()} ${commit(false) || 'unknown'} ${when()}`
 }
 function commit(serving: boolean): string {
   if (serving) return ''
@@ -72,7 +71,6 @@ export default defineConfig(({ command, mode }) => ({
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
-        even: resolve(import.meta.dirname, 'even.html'),
         quickAdd: resolve(import.meta.dirname, 'quick-add.html'),
         handoff: resolve(import.meta.dirname, 'handoff.html'),
         passLink: resolve(import.meta.dirname, 'pass-link.html'),

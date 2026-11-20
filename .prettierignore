@@ -1,7 +1,6 @@
 node_modules
 dist
 dist-before
-dist-even
 dist-worker
 dist-handoff
 target

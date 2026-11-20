@@ -59,10 +59,7 @@ export default {
     'packages/sync-core': {},
     'apps/desktop': {
       entry: [
-        'src/**/*.even.ts',
         'index.html',
-        'even.html',
-        'src/even.ts',
         'quick-add.html',
         'src/quick-add.ts',
         'handoff.html',

@@ -135,5 +135,5 @@ export { factsOfLaunch, mark, markPainted, sendTrace, watchFirstInput } from './
 export const iCloud = () => import('./icloud-placeholder')
 export { imagePath, imageUrl, isRemote } from './images'
 export { takeKeyboard } from './take-keyboard'
-export { isPlugin, markPlugin } from './plugin'
+export { isPlugin } from './plugin'
 export const stallWatch = () => import('./stalls')

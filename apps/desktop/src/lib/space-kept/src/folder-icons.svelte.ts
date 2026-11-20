@@ -15,7 +15,7 @@ import {
 } from '../../platform/src/api'
 import { carried, type Moving, moving } from '../../file-ops/src/api'
 
-export const STORAGE_KEY = 'orden:folder-icons'
+const STORAGE_KEY = 'orden:folder-icons'
 export const MOST_FOLDER_ICONS = 400
 const LONGEST_ICON = 2048
 const LONGEST_TINT = 64

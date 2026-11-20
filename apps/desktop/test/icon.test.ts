@@ -1,6 +1,4 @@
-import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { inflateSync } from 'node:zlib'
@@ -273,12 +271,5 @@ describe('the other places the mark appears', () => {
     const touch = /<link rel="apple-touch-icon" href="\/([^"]+)"/.exec(page)?.[1] ?? ''
     const ios = picture(PUBLIC, touch)
     expect(ios.alpha(0, 0), 'iOS rounds the touch icon itself and paints clear corners black').toBe(255)
-  })
-  test('the Even icons are greyscale', () => {
-    const made = mkdtempSync(join(tmpdir(), 'even-icon-'))
-    execFileSync(process.execPath, [join(ROOT, 'scripts/even-icon.mjs'), made])
-    for (const file of ['icon-24.png', 'icon-256.png', 'icon-background-24.png', 'icon-background-256.png']) {
-      expect(picture(made, file).colourType, file).toBe(4)
-    }
   })
 })

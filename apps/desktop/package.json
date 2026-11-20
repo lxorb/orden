@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:even": "vite build --config vite.even.config.ts && node ../../scripts/even-stage.mjs dist-even dist-even",
     "app": "tauri dev",
     "app:build": "tauri build",
     "tauri": "tauri",
@@ -16,7 +15,6 @@
   },
   "dependencies": {
     "@codemirror/language": "^6.12.4",
-    "@evenrealities/even_hub_sdk": "^0.0.15",
     "@fontsource-variable/geist": "5.2.8",
     "@iconify-json/flat-color-icons": "^1.2.3",
     "@iconify-json/fluent-emoji-high-contrast": "^1.2.6",

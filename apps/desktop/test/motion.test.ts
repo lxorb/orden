@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { SOURCE } from './files'
 
-const PLUGIN = 'lib/even/'
 function componentFiles(dir: string): string[] {
   const out: string[] = []
   for (const name of readdirSync(dir)) {
@@ -13,12 +12,10 @@ function componentFiles(dir: string): string[] {
   }
   return out
 }
-const sources = componentFiles(SOURCE)
-  .map((path) => ({
-    name: path.slice(SOURCE.length).replace(/\\/g, '/'),
-    text: readFileSync(path, 'utf8'),
-  }))
-  .filter((one) => !one.name.startsWith(PLUGIN))
+const sources = componentFiles(SOURCE).map((path) => ({
+  name: path.slice(SOURCE.length).replace(/\\/g, '/'),
+  text: readFileSync(path, 'utf8'),
+}))
 const DURATION = /duration:\s*([^,}\n]+)/g
 const THROUGH_DUR = /^(dur\(|calm\(|LAYER\.(fade|rise)\b)/
 describe('the durations JavaScript hands out', () => {

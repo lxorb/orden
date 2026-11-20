@@ -18,7 +18,6 @@ const INDEX = read('../index.html')
 const PAGES: Record<string, string> = {
   'index.html': INDEX,
   'quick-add.html': read('../quick-add.html'),
-  'even.html': read('../even.html'),
   'handoff.html': read('../handoff.html'),
   'pass.html': read('../pass.html'),
 }
