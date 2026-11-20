@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import { isPdfTarget } from '@orden/markdown/links'
 import { readable } from './guarded'
 import type { AgentAnswer } from '../../automation/src/api'
@@ -107,7 +108,7 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
       needScope(call, 'notes.write', 'a highlight')
       if (!canWriteAt(path)) throw new Refused('read_only', 'that PDF is shared with you to read')
       const mark = await markOf(call, path)
-      const question = await asked(call, null, `Highlight "${mark.text.slice(0, 80)}" in ${relative}`)
+      const question = await asked(call, null, `Highlight "${mark.text.slice(0, 80)}" in ${shownPath(relative)}`)
       if (question) return question
       const written = await editHighlights(path, (now) => ({
         ...now,

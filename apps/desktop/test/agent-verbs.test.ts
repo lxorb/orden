@@ -546,6 +546,31 @@ describe('the verbs', () => {
     expect((await agentVerbNames()).sort()).toEqual(Object.keys(AGENT_WINDOW_VERBS).sort())
   })
 })
+describe('what an approval asks the reader', () => {
+  test('names notes, canvases and folders without the endings Orden keeps to itself, and keeps a PDF its own', async () => {
+    files.set('/s/Home/Paper.pdf', '%PDF-1.7')
+    answer = { status: 'needs_approval', approval: 'a1', summary: 'x' }
+    const careful = agent({ mode: 'confirm' })
+    const calls: [string, Record<string, unknown>][] = [
+      ['edit_canvas', { space: 'Home', path: 'board.canvas', ops: [{ op: 'add_card', text: 'Hi' }] }],
+      ['create_note', { space: 'Home', path: 'Stew', content: '# Stew\n' }],
+      ['write_note', { space: 'Home', path: 'Soup', content: '# Soup!\n' }],
+      ['append_note', { space: 'Home', path: 'Soup', content: 'More.' }],
+      ['set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true }],
+      ['move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup.md' }],
+      ['trash_file', { space: 'Home', path: 'Recipes.md' }],
+      ['trash_file', { space: 'Home', path: 'Paper.pdf' }],
+    ]
+    asked.length = 0
+    for (const [verb, args] of calls) await call(verb, args, careful)
+    const said = asked.filter((one) => one.command === 'agents_ask').map((one) => String(one.args.summary))
+    expect(said).toHaveLength(calls.length)
+    expect(said.filter((one) => /\.(md|canvas)\b/.test(one))).toEqual([])
+    expect(said).toContain('Edit the canvas board in Home')
+    expect(said).toContain('Move Soup to Food/Soup in Home')
+    expect(said).toContain('Move Paper.pdf to Recently deleted')
+  })
+})
 describe('another space, without switching', () => {
   test('an agent reads and writes Home while the reader stays in Work, tabs untouched', async () => {
     const before = JSON.stringify(tabs)

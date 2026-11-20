@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import type { AgentAnswer } from '../../automation/src/api'
 import { workspace } from '../../workspace/src/api'
 import { buried } from '../../protect/src/api'
@@ -95,7 +96,7 @@ export async function recentlyDeleted(call: Call): Promise<AgentAnswer> {
     throw new Refused('read_only', `${found.from} is shared with you to read`)
   }
   await nothingLockedWaits(found.item)
-  const question = await asked(call, null, `Put back ${found.name}`)
+  const question = await asked(call, null, `Put back ${shownPath(found.name)}`)
   if (question) return question
   await trash.restore(found.item)
   if (trash.error) throw new Refused('failed', trash.error)

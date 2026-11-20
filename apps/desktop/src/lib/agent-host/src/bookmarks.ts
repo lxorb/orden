@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import type { Bookmark } from '@orden/contracts'
 import type { AgentAnswer } from '../../automation/src/api'
 import { notePath } from '../../platform/src/api'
@@ -57,7 +58,7 @@ export async function bookmarks(call: Call): Promise<AgentAnswer> {
         return false
       }
       if (kept(workspace.bookmarks.of(root))) return done({ ...shown(mark), added: false }, sharedSource(place))
-      const question = await asked(call, null, `Bookmark ${mark.text || mark.path}`)
+      const question = await asked(call, null, `Bookmark ${mark.text || shownPath(mark.path)}`)
       if (question) return question
       const now = workspace.bookmarks.of(root)
       if (kept(now)) return done({ ...shown(mark), added: false }, sharedSource(place))
@@ -75,7 +76,7 @@ export async function bookmarks(call: Call): Promise<AgentAnswer> {
               (one.kind === 'search' && one.text === maybe(call, 'query'))),
         )
       if (!found) return done({ removed: false })
-      const question = await asked(call, null, `Take the bookmark ${found.text || found.path} away`)
+      const question = await asked(call, null, `Take the bookmark ${found.text || shownPath(found.path)} away`)
       if (question) return question
       workspace.bookmarks.remove(found, root)
       return done({ ...shown(found), removed: true }, sharedSource(place))

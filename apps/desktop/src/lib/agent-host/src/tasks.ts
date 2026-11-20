@@ -1,3 +1,4 @@
+import { shownPath, stemOf } from '@orden/markdown/shown'
 import type { Base, Context, Row } from '@orden/bases'
 import { linkContext } from '@orden/bases/links'
 import { readable, seen } from './guarded'
@@ -270,11 +271,11 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   const path = await freePath(place, folder, name)
   readable(onDisk(place, path), path)
   writableAt(place, onDisk(place, path))
-  const question = await asked(call, null, `Make ${path} in ${place.space.name}`)
+  const question = await asked(call, null, `Make ${shownPath(path)} in ${place.space.name}`)
   if (question) return question
   try {
     const words = rowWords(
-      filledTemplate(template, nameOf(path).replace(/\.md$/i, ''), clockOf(new Date())),
+      filledTemplate(template, stemOf(nameOf(path)), clockOf(new Date())),
       where.properties,
       properties as Record<string, unknown>,
     )
@@ -323,7 +324,7 @@ export async function editBase(call: Call): Promise<AgentAnswer> {
   const path = onDisk(place, relative)
   writableAt(place, path)
   baseEdited(base, call.args.ops)
-  const question = await asked(call, null, `Edit ${nameOf(relative)} in ${place.space.name}`)
+  const question = await asked(call, null, `Edit ${shownPath(nameOf(relative))} in ${place.space.name}`)
   if (question) return question
   const { written, next } = await inTurn(path, async () => {
     const { text, base: now } = await baseAt(call)

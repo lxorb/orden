@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import type { AgentAnswer } from '../../automation/src/api'
 import { readable as guarded } from './guarded'
 import { type Canvas, readCanvas as parse, writeCanvas } from '@orden/markdown/canvas'
@@ -105,7 +106,7 @@ export async function editCanvas(call: Call): Promise<AgentAnswer> {
   const target = canvasOf(call, true)
   applied(await canvasAt(target), call.args.ops)
   const named = nameOf(target, call)
-  const question = await asked(call, null, `Edit the canvas ${named} in ${target.place.space.name}`)
+  const question = await asked(call, null, `Edit the canvas ${shownPath(named)} in ${target.place.space.name}`)
   if (question) return question
   const made = await edited(target, call.args.ops, call.caller.agent?.name)
   return done({ path: target.relative, made })

@@ -1,3 +1,4 @@
+import { shownPath } from '@orden/markdown/shown'
 import { webPages } from '@orden/contracts'
 import { freePath } from '@orden/markdown/paths'
 import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter'
@@ -176,7 +177,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   if (relative === null) throw new Refused('bad_arguments', `${target} is not a markdown note`)
   const path = onDisk(place, relative)
   writableAt(place, path)
-  const question = await asked(call, null, `Capture ${page.url} into ${relative}`)
+  const question = await asked(call, null, `Capture ${page.url} into ${shownPath(relative)}`)
   if (question) return question
   inTime(call, 'the page was kept')
   const embed = page.file ? await attachment(place, path, page.file) : null
