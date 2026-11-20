@@ -36,6 +36,10 @@ const KEPT: Record<string, { most: number; why: string }> = {
     why: 'a [[path]] link target a batch helper is told',
   },
   'apps/desktop/src/lib/ai-chat/src/retrieve.ts': { most: 1, why: 'a [[path]] link target written into the answer' },
+  'apps/desktop/src/lib/workspace/src/composing.ts': {
+    most: 1,
+    why: 'the new note named in the [[link]] a split or extract leaves behind',
+  },
 }
 const TO_MOVE: Record<string, number> = {
   'apps/desktop/src/lib/agents/src/ui/session.ts': 2,
@@ -74,7 +78,6 @@ const TO_MOVE: Record<string, number> = {
   'apps/desktop/src/lib/views/src/running.ts': 1,
   'apps/desktop/src/lib/views/src/templates.ts': 5,
   'apps/desktop/src/lib/views/src/words.ts': 1,
-  'apps/desktop/src/lib/workspace/src/composing.ts': 1,
   'packages/bases/src/answer.ts': 1,
   'packages/bases/src/csv.ts': 1,
   'packages/bases/src/expr/runtime.ts': 1,
