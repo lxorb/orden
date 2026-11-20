@@ -8,6 +8,7 @@ const SURFACES = [...SOURCE.matchAll(/\{#await (\w+)\(\) then \w+\}([\s\S]*?)\{\
 const DOORS = [
   ...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then/g),
   ...SOURCE.matchAll(/\{@render surface\((\w+Surface), tab\)\}/g),
+  ...(/const doors[^=]*= \{([^}]*)\}/.exec(SOURCE)?.[1]?.matchAll(/: (\w+Surface)/g) ?? []),
 ]
 describe('a surface a pane is filled with', () => {
   test('is every kind of tab a pane can show', () => {

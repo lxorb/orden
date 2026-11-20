@@ -125,7 +125,8 @@
   const KEPT = 6
   const inEditor = (one: Tab) =>
     one.kind === 'note' && !one.coming && !one.reading && !protection.locked(noteBehind(one))
-  const keepsAlive = (one: Tab) => inEditor(one) || one.kind === 'terminal'
+  const doors: Partial<Record<string, typeof webSurface>> = { terminal: terminalSurface, web: webSurface }
+  const keepsAlive = (one: Tab) => inEditor(one) || !!doors[one.kind]
   const parked = new Parked<Tab>((one) => untrack(() => one.paneId === pane.id && workspace.tabs.includes(one)))
   let recent: string[] = []
   let alive = $state<string[]>([])
@@ -146,7 +147,7 @@
   $effect(() => () => parked.shut())
   const kept = $derived(alive.flatMap((id) => held.find((one) => one.id === id) ?? []))
   const keptNotes = $derived(kept.filter(inEditor))
-  const keptShells = $derived(kept.filter((one) => one.kind === 'terminal'))
+  const keptOwn = $derived(kept.filter((one) => doors[one.kind]))
   const shownKept = $derived(tab && alive.includes(tab.id) ? tab.id : null)
   const keptViews = $state<Record<string, EditorView | undefined>>({})
   const keepsMiddle = $derived(ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)))
@@ -397,7 +398,7 @@
     {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
       {@render surface(pagesSurface, tab)}
     {:else if tab?.kind === 'web'}
-      {@render surface(webSurface, tab)}
+
     {:else if tab?.kind === 'view' && tab.path === null}
       {#key tab.id}
         {#await todosBoard() then TodosBoard}
@@ -524,12 +525,12 @@
       </div>
     {/each}
 
-    {#each keptShells as one (one.id)}
+    {#each keptOwn as one (one.id)}
       {@const here = one.id === shownKept}
-      <div class:shell={here} class:kept={!here} hidden={!here} inert={!here}>
-        {#await terminalSurface() then Terminal}
-          {@const Shell = Terminal as Component<{ tab: Tab; focused: boolean; shown: boolean }>}
-          <Shell tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
+      <div class:front={here} class:kept={!here} hidden={!here} inert={!here}>
+        {#await doors[one.kind]?.() then Own}
+          {@const Kept = Own as Component<{ tab: Tab; focused: boolean; shown: boolean }>}
+          <Kept tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
         {:catch}
           {@render unreachable()}
         {/await}
@@ -666,7 +667,7 @@
   .kept {
     display: none;
   }
-  .shell {
+  .front {
     position: relative;
     flex: 1;
     min-height: 0;

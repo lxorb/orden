@@ -15,6 +15,7 @@ vi.mock('@orden/editor', async (importOriginal) => {
 vi.mock('../../surfaces/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../surfaces/src/api')>()),
   terminalSurface: () => import('../test/Counted.svelte').then((one) => one.default),
+  webSurface: () => import('../test/Counted.svelte').then((one) => one.default),
 }))
 Element.prototype.animate = () =>
   ({
@@ -160,5 +161,29 @@ test('a terminal shown again after a note is not mounted again, and only the sho
   expect(counted.shown[shell]).toBe(true)
   expect(shellBox?.inert).toBe(false)
   expect(shellBox?.hidden).toBe(false)
+  expect(counted.mounts).toBe(1)
+})
+test('a web tab shown again after a note is not mounted again, and is told when it is behind', async () => {
+  const { one, paneId } = opened()
+  await drawn(paneId)
+  workspace.openPage('https://example.com/')
+  const page = workspace.active?.id ?? ''
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('.counted')).not.toBeNull()
+  })
+  expect(counted.shown[page]).toBe(true)
+  workspace.activate(one)
+  flushSync()
+  expect(written()).toBe('The first note.')
+  expect(counted.shown[page]).toBe(false)
+  const pageBox = target.querySelector('.counted')?.parentElement
+  expect(pageBox?.inert).toBe(true)
+  expect(pageBox?.hidden).toBe(true)
+  workspace.activate(page)
+  flushSync()
+  expect(counted.shown[page]).toBe(true)
+  expect(pageBox?.inert).toBe(false)
+  expect(written()).toBe('')
   expect(counted.mounts).toBe(1)
 })
