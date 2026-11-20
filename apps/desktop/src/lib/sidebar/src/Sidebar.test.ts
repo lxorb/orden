@@ -44,8 +44,21 @@ describe('the panel tabs', () => {
   }
   test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
     open('# Head\n')
-    expect(strip('left')).toEqual(['Files'])
+    expect(strip('left')).toEqual([])
     expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Todos', 'Scratchpad'])
+  })
+  test('is no picker at all for a side with one panel to choose, and the row keeps its height', () => {
+    open('# Head\n')
+    viewport.device = 'desktop'
+    workspace.panel = 'tree'
+    const html = render(Sidebar, { props: { side: 'left' as const } }).body
+    expect(html).not.toContain('role="tablist"')
+    expect(html).toMatch(/class="switch[^"]*\blone\b/)
+    workspace.movePanel('outline', 'left')
+    const two = render(Sidebar, { props: { side: 'left' as const } }).body
+    workspace.right = [...panels.STARTS_RIGHT]
+    expect(two).toContain('role="tablist"')
+    expect(two).not.toMatch(/class="switch[^"]*\blone\b/)
   })
   test('and a panel moved over is on the other side, at the end of its strip', () => {
     open('# Head\n')
@@ -60,7 +73,7 @@ describe('the panel tabs', () => {
     hiddenKinds.hidden = [EXPERIMENTAL_WORD, TIME_WORD]
     expect(strip('left')).toEqual(['Files', 'Time tracker'])
     hiddenKinds.hidden = []
-    expect(strip('left')).toEqual(['Files'])
+    expect(strip('left')).toEqual([])
   })
   test('show a panel only where they offer its tab: chats wait for an account', () => {
     open('# Head\n')
@@ -397,9 +410,11 @@ describe('the tab bar on a phone', () => {
   test('stands in for the panel strip on a phone, and only there', () => {
     open('# Head\n')
     expect(bar('tree')).toEqual({ tabs: ['tree', 'tasks', 'search'], on: 'tree' })
+    workspace.movePanel('outline', 'left')
     expect(strip('phone')).toBe(false)
     expect(strip('desktop')).toBe(true)
     expect(strip('tablet')).toBe(true)
+    workspace.right = [...panels.STARTS_RIGHT]
   })
   test('shows tasks full screen on the left, where a desktop keeps them on the right', () => {
     open('# Head\n')
