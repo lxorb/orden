@@ -1,4 +1,4 @@
-import { invoke, isRecord, isString } from '../../platform/src/api'
+import { invoke, isRecord, isString, takeKeyboard } from '../../platform/src/api'
 import { DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
 import { ASKS, grants, siteOf, type Ask } from './permissions.svelte'
 import { pages, type Rect } from './pages.svelte'
@@ -213,6 +213,7 @@ class Asked {
       stopPropagation: () => undefined,
     } as unknown as MouseEvent
     menu.show(shown, done.rows)
+    void takeKeyboard()
     if (!menu.open) pick(null)
   }
   private closeMenu() {
@@ -243,6 +244,7 @@ class Asked {
     return invoke('web_menu_pick', { tab, id, command }).catch(() => undefined)
   }
   heardDialog(asked: DialogAsked) {
+    void takeKeyboard()
     this.dialogs = [...this.dialogs.filter((one) => !(one.tab === asked.tab && one.id === asked.id)), asked]
   }
   answerDialog(asked: DialogAsked, ok: boolean, typed: string | null = null) {
@@ -268,6 +270,7 @@ class Asked {
       return
     }
     this.permissions = [...this.permissions.filter((one) => !(one.tab === asked.tab && one.id === asked.id)), asked]
+    void takeKeyboard()
   }
   answerPermission(asked: PermissionAsked, allow: boolean, remember = true) {
     this.permissionGone(asked.tab, asked.id)
@@ -281,6 +284,7 @@ class Asked {
     this.permissions = this.permissions.filter((one) => !(one.tab === tab && one.id === id))
   }
   heardSelect(asked: SelectAsked) {
+    void takeKeyboard()
     const was = this.select
     if (was) void this.selectPicked(was, null)
     this.select = asked
