@@ -223,16 +223,6 @@ function phrasesFor(words: Readonly<Record<string, string>>) {
     .filter((one) => one.words.length > 0)
     .sort((a, b) => b.words.length - a.words.length)
 }
-export function settled(said: string, words: Readonly<Record<string, string>> = {}): boolean {
-  const heard = bare(said).split(' ').filter(Boolean)
-  if (!heard.length) return false
-  const phrases = phrasesFor(words)
-  const said_ = (one: { words: string[] }) =>
-    one.words.length === heard.length && one.words.every((word, at) => heard[at] === word)
-  const exact = phrases.find(said_)
-  if (!exact || exact.takes) return false
-  return !phrases.some((one) => one.words.length > heard.length && heard.every((word, at) => one.words[at] === word))
-}
 export function commandIn(said: string, words: Readonly<Record<string, string>> = {}): Command | null {
   const heard = bare(said).split(' ').filter(Boolean)
   if (!heard.length) return null

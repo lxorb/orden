@@ -108,12 +108,10 @@ describe('the name a reader sees', () => {
     for (const name of [
       'index.html',
       'quick-add.html',
-      'even.html',
       'handoff.html',
       'pass.html',
       'public/manifest.webmanifest',
       'public/pass.webmanifest',
-      'even.app.json',
     ]) {
       const text = readFileSync(join(APP, name), 'utf8').replace(/<!--[\s\S]*?-->/g, '')
       expect(oldNames(text), name).toEqual([])

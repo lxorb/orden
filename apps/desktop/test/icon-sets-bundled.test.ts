@@ -49,11 +49,6 @@ describe('the icon sets that are data rather than drawing', () => {
       ).toEqual(['/lib/icons/src/icon-sets.ts'])
     }
   })
-  test('and the plugin build leaves every one of them out', () => {
-    const config = readFileSync(join(APP, 'vite.even.config.ts'), 'utf8')
-    const left = config.slice(config.indexOf('const LEFT_OUT'), config.indexOf('/** What a module'))
-    for (const one of DATA) expect(left, one).toContain(one)
-  })
 })
 function escaped(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

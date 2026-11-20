@@ -70,7 +70,7 @@ const ENTRIES: [string, string[]][] = [...PAGES, ['site', [join(APP, 'src', 'sit
 describe('the ports an entry needs', () => {
   test('every page the app builds is read', () => {
     expect(PAGES.map(([page]) => page)).toEqual(
-      expect.arrayContaining(['index.html', 'even.html', 'pass.html', 'quick-add.html', 'handoff.html']),
+      expect.arrayContaining(['index.html', 'pass.html', 'quick-add.html', 'handoff.html']),
     )
     for (const [, starts] of ENTRIES) expect(starts.length).toBeGreaterThan(0)
   })

@@ -284,11 +284,10 @@ describe('the Today widget', () => {
       expect(ids(kind, kotlin), kind).toEqual([...Array(most).keys()])
     }
   })
-  test('is called Todos, on the phone and on the glasses, since it lists undated todos too (#2073)', () => {
+  test('is called Todos on the phone, since it lists undated todos too (#2073)', () => {
     const strings = read(ANDROID, 'res', 'values', 'strings.xml')
     expect(strings).toContain('<string name="widget_today">Todos</string>')
     expect(read(SOURCE, 'lib', 'mobile', 'src', 'widgets.svelte.ts')).toContain("title: 'Todos'")
-    expect(read(SOURCE, 'lib', 'even', 'src', 'bridge.svelte.ts')).toContain("today: 'Todos'")
     expect(strings).not.toMatch(/for today/)
   })
   test('ticks through the page, which reads the anchor the activity hands over', () => {
