@@ -829,6 +829,9 @@ class Links {
       return reaches(link.target) ? null : { path: there, reaches }
     })
   }
+  async leaving(text: string, from: string, to: string, along?: string) {
+    return (await import('./leaving')).leaving(this, text, from, to, along)
+  }
   reachedOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
     const other = from === null ? null : this.otherHolding(from)
     if (from !== null && other !== null) return this.otherReached(other, from, link)
