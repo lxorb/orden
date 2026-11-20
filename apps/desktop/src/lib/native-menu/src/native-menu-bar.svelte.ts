@@ -1,11 +1,10 @@
 import { webPages } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
 import type { CheckMenuItem, Menu, MenuItem as TauriMenuItem, PredefinedMenuItem, Submenu } from '@tauri-apps/api/menu'
-import { takeKeyboard, currentWindow, invoke, afterQuiet } from '../../platform/src/api'
+import { takeKeyboard, currentWindow, invoke, afterQuiet, idle, onceAFrame } from '../../platform/src/api'
 import { hiddenKinds } from '../../gates/src/api'
-import { type MenuItem, fullscreen } from '../../ui-kit/src/api'
+import { type MenuItem, fullscreen, held } from '../../ui-kit/src/api'
 import {
-  type Change,
   changesBetween,
   describeMenuBar,
   documentWindows,
@@ -20,6 +19,8 @@ import {
   type MenuBarWords,
   type NativeEntry,
   type NativeItem,
+  type NativeSubmenu,
+  type Plan,
   type SeenKey,
   type StandIn,
 } from './native-menu'
@@ -43,6 +44,7 @@ interface Built {
   windows: Submenu | null
   help: Submenu | null
 }
+const menus = held(async () => ({ default: await import('@tauri-apps/api/menu') }))
 async function othersOpen(): Promise<boolean> {
   const { getAllWindows } = await import('@tauri-apps/api/window')
   return documentWindows((await getAllWindows()).map((one) => one.label)) > 1
@@ -90,6 +92,10 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
     ],
   }
 }
+function stepRow(id: string, web: boolean, run: () => void): MenuItem {
+  const label = BY_ID.get(id)?.label() ?? id
+  return web ? { label, command: id, run } : { label, disabled: true, run }
+}
 const RELOADING = new Set(['web.reload', 'web.fresh', 'web.back', 'web.forward'])
 function reloadRows(context: MenuBarContext): MenuItem[] {
   const web = workspace.active?.kind === 'web'
@@ -100,12 +106,8 @@ function reloadRows(context: MenuBarContext): MenuItem[] {
   return [
     entryRow('web.reload', context, { disabled: !web, run: step('reload') }),
     entryRow('web.fresh', context, { disabled: !web, run: step('fresh') }),
-    ...(web
-      ? [
-          entryRow('web.back', context, { run: () => workspace.goBack() }),
-          entryRow('web.forward', context, { run: () => workspace.goForward() }),
-        ]
-      : []),
+    stepRow('web.back', web, () => workspace.goBack()),
+    stepRow('web.forward', web, () => workspace.goForward()),
   ]
 }
 type AppMenu = Awaited<ReturnType<typeof appMenuRows>>
@@ -150,7 +152,8 @@ class MenuBar {
   private front = false
   private passing: Promise<void> = Promise.resolve()
   private seen: SeenKey | null = null
-  private readonly soon = afterQuiet(() => this.pass(), SETTLE)
+  private readonly painted = onceAFrame(() => void idle().then(() => this.pass()))
+  private readonly soon = afterQuiet(() => this.painted(), SETTLE)
   async follow(context: () => MenuBarContext): Promise<void> {
     const frame = await currentWindow()
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
@@ -185,11 +188,11 @@ class MenuBar {
     this.runs = new Map([...described.runs].map(([id, run]) => [this.idOf(id), run]))
     this.live = new Map(flatten(entries).flatMap((one) => (one.kind === 'item' ? [[one.id, one]] : [])))
     const fresh = raise && this.told !== null && (await othersOpen())
-    const changes = this.menu && !fresh ? changesBetween(this.shown, entries) : null
-    if (changes) await this.patch(changes)
+    const plan = this.menu && !fresh ? changesBetween(this.shown, entries) : null
+    if (plan) await this.patch(plan)
     else await this.build(entries)
     this.shown = entries
-    if (this.front && (raise || !changes)) await this.raise()
+    if (this.front && (raise || !plan)) await this.raise()
   }
   private async raise(): Promise<void> {
     await this.menu?.setAsAppMenu()
@@ -208,9 +211,10 @@ class MenuBar {
       return one.kind === 'submenu' ? { ...one, id, items: this.owned(one.items) } : { ...one, id }
     })
   }
-  private async patch(changes: Change[]): Promise<void> {
+  private async patch(plan: Plan): Promise<void> {
+    await Promise.all(plan.refill.map((one) => this.refill(one)))
     await Promise.all(
-      changes.map(async (change) => {
+      plan.changes.map(async (change) => {
         const native = this.byId.get(change.id)
         if (!native) return
         if (change.text !== undefined) await native.setText(change.text)
@@ -226,8 +230,23 @@ class MenuBar {
       }),
     )
   }
+  private async refill(entry: NativeSubmenu): Promise<void> {
+    const submenu = this.byId.get(entry.id)
+    const before = flatten(this.shown).find((one) => one.id === entry.id)
+    if (!submenu || !('append' in submenu) || before?.kind !== 'submenu') return
+    const built: Built = { made: [], byId: new Map(), windows: null, help: null }
+    const items = await Promise.all(entry.items.map((one) => this.make(one, built)))
+    const owned = (ids: NativeEntry[]) => ids.flatMap((one) => this.byId.get(one.id) ?? [])
+    const gone = owned(flatten(before.items))
+    await Promise.all(owned(before.items).map((one) => submenu.remove(one)))
+    await submenu.append(items)
+    for (const one of flatten(before.items)) this.byId.delete(one.id)
+    for (const [id, native] of built.byId) this.byId.set(id, native)
+    this.made = [...this.made.filter((one) => !gone.includes(one)), ...built.made]
+    await close(gone)
+  }
   private async build(entries: NativeEntry[]): Promise<void> {
-    const { Menu } = await import('@tauri-apps/api/menu')
+    const { Menu } = await menus()
     const built: Built = { made: [], byId: new Map(), windows: null, help: null }
     try {
       const items = await Promise.all(entries.map((one) => this.make(one, built)))
@@ -245,7 +264,7 @@ class MenuBar {
     }
   }
   private async make(entry: NativeEntry, built: Built): Promise<Native> {
-    const api = await import('@tauri-apps/api/menu')
+    const api = await menus()
     let made: Native
     if (entry.kind === 'rule') {
       made = await api.PredefinedMenuItem.new({ item: 'Separator' })
