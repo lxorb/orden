@@ -695,11 +695,14 @@
   function aimAll() {
     const fronts = frontsNow()
     const hands = untrack(() => heldIds)
+    const pushed = untrack(() => aside)
     for (const { slot, tab } of untrack(() => windows)) {
       if (hands.has(tab.id)) continue
       const flight = flights.get(tab.id)
-      if (out) flight?.aim(lying(slot))
-      else {
+      if (out) {
+        flight?.aim(lying(slot))
+        if (pushed[cellOf.get(tab.id) ?? '']) flight?.land()
+      } else {
         const home = homeOf(tab, slot)
         homes.set(tab.id, home)
         flight?.aim(home)

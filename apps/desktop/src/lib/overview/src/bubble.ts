@@ -3,8 +3,6 @@ import type { Box } from './layout'
 export const N = 120
 export const PAD = 16
 export const CLEAR = 12
-const RATE = 13
-const RESTS = 0.05
 const SEAM = 4
 const STEP = 8
 const TAU = 2 * Math.PI
@@ -145,8 +143,6 @@ function even(points: readonly Point[]): Point[] {
   return out
 }
 export class Bubble {
-  private readonly h = new Float64Array(N)
-  private readonly speed = new Float64Array(N)
   private readonly shown = new Float64Array(N)
   private goal: Float64Array = new Float64Array(N)
   private floor: Float64Array = new Float64Array(N)
@@ -154,7 +150,6 @@ export class Bubble {
   private outline: Point[] = []
   constructor(boxes: readonly Box[]) {
     this.aim(boxes)
-    this.h.set(this.goal)
     this.shown.set(this.goal)
     this.draw()
   }
@@ -178,33 +173,11 @@ export class Bubble {
     const at = (share: number) => this.shown[Math.round(share * N) % N] ?? 0
     return { x: (at(0) - at(0.5)) / 2, y: (at(0.25) - at(0.75)) / 2 }
   }
-  step(seconds: number, boxes: readonly Box[], still = false): boolean {
+  step(boxes: readonly Box[]) {
     this.aim(boxes)
-    const dt = Math.min(Math.max(seconds, 0), 0.05)
-    const fade = Math.exp(-RATE * dt)
-    let rests = true
-    for (let i = 0; i < N; i++) {
-      const goal = this.goal[i] ?? 0
-      if (still) {
-        this.h[i] = goal
-        this.speed[i] = 0
-        continue
-      }
-      const off = (this.h[i] ?? 0) - goal
-      const v = this.speed[i] ?? 0
-      const lead = v + RATE * off
-      this.h[i] = goal + (off + lead * dt) * fade
-      this.speed[i] = (v - RATE * lead * dt) * fade
-      rests &&= Math.abs((this.h[i] ?? 0) - goal) < RESTS && Math.abs(this.speed[i] ?? 0) < RESTS
-    }
-    if (rests) {
-      this.h.set(this.goal)
-      this.speed.fill(0)
-    }
-    for (let i = 0; i < N; i++) this.shown[i] = Math.max(this.h[i] ?? 0, this.floor[i] ?? 0)
+    for (let i = 0; i < N; i++) this.shown[i] = Math.max(this.goal[i] ?? 0, this.floor[i] ?? 0)
     this.edges = []
     this.draw()
-    return rests
   }
   private draw() {
     let points = even(hullOf(this.shown))
