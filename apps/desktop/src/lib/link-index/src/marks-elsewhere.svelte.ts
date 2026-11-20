@@ -41,12 +41,10 @@ async function wornBy(path: string, content: string): Promise<Worn> {
     }
   }
   if (isChatTarget(path)) {
-    if (__EVEN_PLUGIN__) return NOTHING
     const pointer = (await import('@orden/chats/pointer')).chatOf(content)
     return { ...NOTHING, icon: pointer?.icon ?? null, iconColor: pointer?.iconColor ?? null }
   }
   if (isTermTarget(path)) {
-    if (__EVEN_PLUGIN__) return NOTHING
     const term = (await import('@orden/online/term')).termOf(content)
     return { ...NOTHING, icon: term?.icon ?? null, iconColor: term?.iconColor ?? null }
   }
@@ -82,7 +80,7 @@ class Elsewhere {
     const { path } = asked
     const [content, paper] = await Promise.all([
       invoke<string>('read_note', { path }).catch(() => null),
-      !__EVEN_PLUGIN__ && isPagesTarget(path) ? holdsItsPaper(path) : false,
+      isPagesTarget(path) ? holdsItsPaper(path) : false,
     ])
     const worn = content === null ? NOTHING : await wornBy(path, content)
     if (this.asked.get(key) === asked) this.held.set(key, { ...worn, paper })
