@@ -18,6 +18,7 @@ export function rewritten(action: FileAction, from: string, to: string) {
     case 'rename':
       action.from = at(action.from)
       action.to = at(action.to)
+      for (const one of action.wrote ?? []) one.path = at(one.path)
       break
     case 'delete':
       if (action.trashId && at(action.path) !== action.path) {

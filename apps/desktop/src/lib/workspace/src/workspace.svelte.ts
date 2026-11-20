@@ -2030,10 +2030,10 @@ class Workspace {
     if (samePath(target, from) || within(from, intoFolder) !== null) return
     if (!(await this.writableAt(from, intoFolder))) return
     const leaving = spaceHolding(this.spaces, from)
-    let back = () => Promise.resolve()
-    if (leaving && within(leaving.root, intoFolder) === null) {
-      back = await services().chatsCarried(from, intoFolder)
-    }
+    const away =
+      leaving && within(leaving.root, intoFolder) === null
+        ? await (await import('./leaving-space')).leavingSpace(this, from, intoFolder, target)
+        : null
     const kind = this.kindAt(from)
     this.showMove(from, target, kind)
     await this.undone.batch(async () => {
@@ -2044,7 +2044,7 @@ class Workspace {
           } catch (error) {
             this.shown.delete(`${from}\n${target}`)
             this.showMove(target, from, kind, false)
-            await back()
+            await away?.back()
             await this.loadTree()
             throw error
           }
@@ -2054,6 +2054,7 @@ class Workspace {
             from,
             to: target,
             ...(rewrote ? { rewrote } : {}),
+            ...(await away?.carry()),
             ...(how ? { [how]: true } : {}),
           })
           await this.fileMoved(from, target, kind)
