@@ -93,7 +93,6 @@ export {
 export {
   type CommandExtension,
   type FileMark,
-  type NewKind,
   type PanelSide,
   type SettingsSectionId,
   type SidebarPanelId,
@@ -115,15 +114,11 @@ export {
 } from './sidebar'
 export {
   NO_HOSTS,
-  NO_MESSAGES,
   NO_SETTINGS,
   NO_VISITS,
   type PaletteDestination,
   type PaletteHost,
   type PaletteHosts,
-  type PaletteMessage,
-  type PaletteMessages,
-  type PaletteOpenHow,
   type PaletteSetting,
   type PaletteSettings,
   type PaletteKindId,
