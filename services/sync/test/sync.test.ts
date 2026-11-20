@@ -164,13 +164,19 @@ describe("a space's icon", () => {
       expect(response.json.space.icon, icon).toBe(icon)
     }
   })
-  test('refuses anything that is not an icon name', async () => {
-    const response = await call(env, `/v1/spaces/${space}`, {
-      method: 'PATCH',
-      token,
-      body: { icon: '../../etc/passwd' },
-    })
-    expect(response.json.space.icon).toBe(null)
+  test('refuses anything that is not an icon, saying so, and keeps the icon it had', async () => {
+    await call(env, `/v1/spaces/${space}`, { method: 'PATCH', token, body: { icon: 'Book' } })
+    for (const icon of ['../../etc/passwd', 'data:image/svg+xml;base64,PHN2Zz4=', '']) {
+      const response = await call(env, `/v1/spaces/${space}`, {
+        method: 'PATCH',
+        token,
+        body: { icon, name: 'Not this either' },
+      })
+      expect(response.status, icon).toBe(400)
+      expect(response.json.error, icon).toBe('that is not an icon: an icon name, an emoji, or a small PNG picture')
+    }
+    const listed = await call(env, '/v1/spaces', { token })
+    expect(listed.json.spaces.find((one) => one.id === space)).toMatchObject({ name: 'Work', icon: 'Book' })
   })
 })
 describe("the colour a space's icon is drawn in", () => {
@@ -210,7 +216,9 @@ describe("the colour a space's icon is drawn in", () => {
     await dress({ icon: 'Briefcase', tint: 'violet' })
     for (const tint of ['#ff0000', '../../etc/passwd', 'rgb(1, 2, 3)', 'Violet']) {
       const response = await dress({ tint })
-      expect(response.json.space.tint, tint).toBe('violet')
+      expect(response.status, tint).toBe(400)
+      expect(response.json.error, tint).toBe('that is not a colour an icon is drawn in')
+      expect((await inRail())?.tint, tint).toBe('violet')
     }
   })
   test('may name a colour this build has never heard of', async () => {
