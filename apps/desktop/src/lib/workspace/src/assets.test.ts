@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
 const api = vi.hoisted(() => ({ BASE: '' }))
+const asset = vi.hoisted(() => ({ relative: null as string | null }))
 vi.mock('../../accounts/src/client', () => ({
   api: {},
   get BASE() {
@@ -11,7 +12,7 @@ vi.mock('../../accounts/src/client', () => ({
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: async (command: string, args?: { name?: string }) => {
-    if (command === 'save_asset') return `assets/${args?.name ?? ''}`
+    if (command === 'save_asset') return asset.relative ?? `assets/${args?.name ?? ''}`
     if (command === 'scan_links') {
       const { scanNote } = await import('@orden/scan/note')
       return { notes: [scanNote('Work/Plan.md', '# Plan\n')], files: [] }
@@ -21,7 +22,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 }))
 vi.stubGlobal('location', { href: 'https://orden.so/s/notes' })
 vi.stubGlobal('localStorage', memoryStorage())
-const { accountAddress, storeImage } = await import('./assets')
+const { accountAddress, storeAttachment, storeImage } = await import('./assets')
+const { hearWrites } = await import('../../file-writes/src/api')
 const { workspace } = await import('./workspace.svelte')
 const { links } = await import('../../link-index/src/api')
 const { startup } = await import('../../launch/src/api')
@@ -52,5 +54,27 @@ describe('a picture stored beside a note', () => {
     )
     expect(src).toMatch(/^assets\/[0-9a-f]{16}\.png$/)
     expect(links.rebased(`![](${src ?? ''})\n`, '/s/Work/Plan.md', '/s/Plan.md')).toBe(`![](Work/${src ?? ''})\n`)
+  })
+})
+describe('a file stored beside a note', () => {
+  test('is told to the write hearing at its whole path, in the note folder or the space folder', async () => {
+    api.BASE = ''
+    const made: string[] = []
+    const gone = hearWrites({
+      there: () => Promise.resolve(false),
+      made: (path) => Promise.resolve(void made.push(path)),
+      wrote: () => undefined,
+    })
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/s' }]
+    try {
+      await storeImage(new File([new Uint8Array([4, 5])], 'a.png', { type: 'image/png' }), '/s/Work/Plan.md')
+      asset.relative = '../assets/b.pdf'
+      await storeAttachment(new File([new Uint8Array([6])], 'b.pdf'), '/s/Work/Plan.md')
+    } finally {
+      asset.relative = null
+      gone()
+    }
+    expect(made[0]).toMatch(/^\/s\/Work\/assets\/[0-9a-f]{16}\.png$/)
+    expect(made[1]).toBe('/s/assets/b.pdf')
   })
 })
