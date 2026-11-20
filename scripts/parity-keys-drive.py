@@ -1015,7 +1015,7 @@ return true
         self.show(self.ids["web"])
         web = None
         if self.focus_page():
-            web = self.menu_keys(lambda: self.keys.click(*self.in_page(300, 104), right=True), self.in_page(320, 460))
+            web = self.menu_keys(lambda: self.keys.click(*self.in_page(265, 384), right=True), self.in_page(60, 440))
         for check in ("closed by a left click", "closed by Escape", "arrows move"):
             web_ok = bool(web and web.get(check))
             note_ok = bool(note and note.get(check))
