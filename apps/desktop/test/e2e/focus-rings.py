@@ -56,7 +56,7 @@ def drive(browser: Browser) -> None:
                 continue
             seen[key] = one
             if one["outline"] and one["square"] and one["width"] > 24 and one["height"] > 16:
-                say(f"[{scheme}] square ring: {json.dumps(one)}")
+                DRIVE.wrong(f"[{scheme}] a square ring: {json.dumps(one)}")
             if "button.pick" in one["path"]:
                 tabs += 1
                 if not one["outline"]:
@@ -69,4 +69,4 @@ def drive(browser: Browser) -> None:
         if not tabs:
             DRIVE.wrong(f"[{scheme}] the Tab key never reached a tab")
         page.context.close()
-raise SystemExit(DRIVE.run(drive, "a tab shows keyboard focus in its own rounded shape, never a square ring"))
+raise SystemExit(DRIVE.run(drive, "keyboard focus is a ring in the shape of what holds it, never a square one"))
