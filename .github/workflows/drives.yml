@@ -333,8 +333,15 @@ jobs:
       contents: read
     uses: ./.github/workflows/web-tab.yml
 
+  layouts:
+    needs: which
+    if: ${{ needs.which.outputs.go == 'true' && (needs.which.outputs.nightly == 'true' || inputs.native) }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/layout-keys.yml
+
   report:
-    needs: [which, drives, native, pair, suites, web-tab]
+    needs: [which, drives, native, pair, suites, web-tab, layouts]
     if: ${{ failure() && needs.which.outputs.go == 'true' && (needs.which.outputs.nightly == 'true' || inputs.report) }}
     runs-on: ubuntu-latest
     permissions:
@@ -351,14 +358,16 @@ jobs:
       SUITES: ${{ needs.suites.outputs.failed }}
       SUITES_RESULT: ${{ needs.suites.result }}
       WEB_TAB_RESULT: ${{ needs.web-tab.result }}
+      LAYOUTS_RESULT: ${{ needs.layouts.result }}
     steps:
       - name: Say so on the issue that collects failed nights
         run: |
-          body=$(printf '%s\n\n%s\n%s\n%s\n%s\n%s\n' \
+          body=$(printf '%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n' \
             "Drives run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID (attempt $GITHUB_RUN_ATTEMPT) on $GITHUB_REF_NAME at $SHA failed." \
             "- Browser drives: ${WEB:-none failed}" \
             "- Probe drives ($NATIVE_RESULT): ${NATIVE:-none failed}" \
             "- Sync and capture with two probes ($PAIR_RESULT): ${PAIR:-none failed}" \
             "- The endpoint suites on Windows x64 and Arm ($SUITES_RESULT): ${SUITES:-none failed}" \
-            "- The web tab drives of web-tab.yml: $WEB_TAB_RESULT")
+            "- The web tab drives of web-tab.yml: $WEB_TAB_RESULT" \
+            "- Shortcuts on Colemak, Dvorak and Russian layouts (layout-keys.yml): $LAYOUTS_RESULT")
           gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="$body" --jq .html_url
