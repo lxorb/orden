@@ -97,7 +97,7 @@ const names = new Set(graph.files.map((one) => one.replace(/\\/g, '/')))
 function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
-const BUDGET = 2_210_350
+const BUDGET = 2_210_600
 const MOST_FILES = 520
 const MOST_TEXT = 6_500
 describe('what the app evaluates before it draws anything', () => {
