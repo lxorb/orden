@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { ROOT } from './files'
 
 const PLACES = ['apps/desktop/src', 'packages']
+const SHARED = ['packages/markdown/src/note-name.ts', 'packages/markdown/src/shown.ts']
 const PASSED = new Set(['node_modules', 'dist', 'test', 'e2e', 'target', 'coverage'])
 const OWN_ENDING = '(?:md|markdown|mdown|mkd|canvas|term|chat|url|webloc|pages|base|application)'
 const ENDING = `/\\\\\\.(?:\\((?:\\?:)?(?=[^()/]*\\b${OWN_ENDING}\\b)[^()/]*\\)|${OWN_ENDING}|\\[\\^[^\\]]*\\][+*])\\$/[a-z]*`
@@ -40,6 +41,10 @@ const KEPT: Record<string, { most: number; why: string }> = {
     most: 1,
     why: 'the new note named in the [[link]] a split or extract leaves behind',
   },
+  'apps/desktop/src/lib/platform/src/space-paths.ts': {
+    most: 2,
+    why: 'md-only names links resolve against and paths are built from',
+  },
 }
 const TO_MOVE: Record<string, number> = {
   'apps/desktop/src/lib/agents/src/ui/session.ts': 2,
@@ -67,7 +72,6 @@ const TO_MOVE: Record<string, number> = {
   'apps/desktop/src/lib/pages/src/out.ts': 1,
   'apps/desktop/src/lib/pdf/src/handed.ts': 1,
   'apps/desktop/src/lib/plane/src/picture.ts': 1,
-  'apps/desktop/src/lib/platform/src/space-paths.ts': 2,
   'apps/desktop/src/lib/tasks-views/src/carrying.svelte.ts': 1,
   'apps/desktop/src/lib/views/src/ViewHead.svelte': 2,
   'apps/desktop/src/lib/views/src/act.ts': 1,
@@ -108,13 +112,28 @@ function walk(dir: string, found: string[] = []): string[] {
 const sources = PLACES.flatMap((place) => walk(join(ROOT, place)))
   .map((path) => relative(ROOT, path).replace(/\\/g, '/'))
   .filter((path) => (path.startsWith('packages/') ? path.includes('/src/') : true))
-  .filter((path) => path !== 'packages/markdown/src/note-name.ts')
+  .filter((path) => !SHARED.includes(path))
 const count = (text: string, pattern: RegExp) => [...text.matchAll(pattern)].length
+const texts = new Map(sources.map((path) => [path, readFileSync(join(ROOT, path), 'utf8')]))
+const endingConsts = new Set(
+  [...texts.values()].flatMap((text) => [...text.matchAll(ENDING_CONST)].map((one) => one[1] ?? '')),
+)
+const IMPORTED = /import\s*\{([^}]*)\}\s*from/g
 function strips(text: string): number {
-  const named = [...text.matchAll(ENDING_CONST)].map((one) => one[1] ?? '')
-  return (
-    count(text, STRIPPED) +
-    named.reduce((sum, name) => sum + count(text, new RegExp(`\\.replace\\(\\s*${name}\\s*,\\s*''\\s*\\)`, 'g')), 0)
+  const own = [...text.matchAll(ENDING_CONST)].map((one) => one[1] ?? '')
+  const brought = [...text.matchAll(IMPORTED)]
+    .flatMap((one) => (one[1] ?? '').split(','))
+    .map(
+      (one) =>
+        one
+          .trim()
+          .split(/\s+as\s+/)
+          .pop() ?? '',
+    )
+    .filter((name) => endingConsts.has(name))
+  return [...new Set([...own, ...brought])].reduce(
+    (sum, name) => sum + count(text, new RegExp(`\\.replace\\(\\s*${name}\\s*,\\s*''\\s*\\)`, 'g')),
+    count(text, STRIPPED),
   )
 }
 function raw(path: string, text: string): number {
@@ -125,7 +144,7 @@ function raw(path: string, text: string): number {
 }
 function over(found: (path: string, text: string) => number, allowed: Record<string, number>): string[] {
   return sources.flatMap((path) => {
-    const many = found(path, readFileSync(join(ROOT, path), 'utf8'))
+    const many = found(path, texts.get(path) ?? '')
     const most = allowed[path] ?? 0
     return many > most ? [`${path}: ${String(many)}, at most ${String(most)}`] : []
   })
