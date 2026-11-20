@@ -1,5 +1,5 @@
 import type { CanvasEdge, CanvasNode } from '@orden/markdown/canvas'
-import { LAUNCH, PAGE, PLAN, PRESS, ROUTES, WRITTEN } from './space'
+import { BASE, LAUNCH, PAGE, PLAN, PRESS, ROUTES, WRITTEN } from './space'
 
 export const SCENES = ['canvas', 'write', 'browse', 'organize', 'overview'] as const
 export type Scene = (typeof SCENES)[number]
@@ -115,7 +115,7 @@ function cardsAt(origin: string, ride: Point, picture: number, routes: Point | n
     nodes.push({
       id: 'bike',
       type: 'file',
-      file: `${origin}/demo/bike.svg`,
+      file: `${origin}${BASE}demo/bike.svg`,
       x: 50 - width / 2,
       y: 10 - height / 2,
       width,
@@ -221,14 +221,23 @@ export function frameAt(scene: Scene, given: number, origin: string, phone = fal
     typed,
   }
 }
-export function writtenAt(text: string, typed: readonly [number, number]): { text: string; carets: [number, number] } {
+export interface Written {
+  after: string
+  words: string
+  lead?: string
+}
+export function writtenAt(
+  text: string,
+  typed: readonly number[],
+  written: readonly Written[] = WRITTEN,
+): { text: string; carets: number[] } {
   let out = text
-  const carets: [number, number] = [0, 0]
+  const carets: number[] = written.map(() => 0)
   let shift = 0
-  WRITTEN.forEach((one, at) => {
+  written.forEach((one, at) => {
     const place = text.indexOf(one.after) + one.after.length + shift
     const count = typed[at] ?? 0
-    const words = count > 0 ? `\n- ${one.words.slice(0, count)}` : ''
+    const words = count > 0 ? `${one.lead ?? '\n- '}${one.words.slice(0, count)}` : ''
     out = out.slice(0, place) + words + out.slice(place)
     shift += words.length
     carets[at] = place + words.length

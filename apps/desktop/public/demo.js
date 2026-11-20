@@ -1,7 +1,8 @@
 ;(function (into) {
-  const asked = new URLSearchParams(into.location.search).get('demo')
+  const params = new URLSearchParams(into.location.search)
+  const asked = params.get('demo')
   if (asked === null) return
-  const mode = asked === 'phone' ? 'phone' : 'desktop'
+  const mode = asked === 'phone' || params.has('phone') ? 'phone' : 'desktop'
   const PREFIX = 'orden-demo:'
   const KEPT = {
     'orden:seeded': 'yes',
@@ -126,6 +127,35 @@
         'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
     })
     Object.defineProperty(into.navigator, 'userAgentData', { configurable: true, value: { mobile: true } })
+  }
+  if (into.top !== into) {
+    for (const Kind of [into.HTMLElement, into.SVGElement]) {
+      if (!Kind) continue
+      const focusing = Kind.prototype.focus
+      Object.defineProperty(Kind.prototype, 'focus', {
+        configurable: true,
+        writable: true,
+        value(options) {
+          if (!into.document.hasFocus()) return
+          focusing.call(this, Object.assign({}, options, { preventScroll: true }))
+        },
+      })
+    }
+    const inside = function () {
+      const box = this.getBoundingClientRect()
+      for (let around = this.parentElement; around; around = around.parentElement) {
+        if (around.scrollHeight <= around.clientHeight && around.scrollWidth <= around.clientWidth) continue
+        const room = around.getBoundingClientRect()
+        if (box.top < room.top) around.scrollTop -= room.top - box.top
+        else if (box.bottom > room.bottom) around.scrollTop += Math.min(box.bottom - room.bottom, box.top - room.top)
+        if (box.left < room.left) around.scrollLeft -= room.left - box.left
+        else if (box.right > room.right) around.scrollLeft += Math.min(box.right - room.right, box.left - room.left)
+        return
+      }
+    }
+    for (const name of ['scrollIntoView', 'scrollIntoViewIfNeeded'])
+      if (into.Element && name in into.Element.prototype)
+        Object.defineProperty(into.Element.prototype, name, { configurable: true, writable: true, value: inside })
   }
   const root = into.document.documentElement
   root.dataset.theme = into.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
