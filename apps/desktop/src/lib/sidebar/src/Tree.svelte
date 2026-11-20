@@ -858,7 +858,7 @@
     >
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
       {@render label(name)}
-      {#if !__EVEN_PLUGIN__ && entry.evicted}
+      {#if entry.evicted}
         {#await import('./CloudMark.svelte') then mark}<mark.default path={entry.path} />{/await}
       {/if}
       {#if othersIn(opens)}<SharedMark label="Also open elsewhere" />

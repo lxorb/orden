@@ -30,7 +30,7 @@
 <span class="orden-row-label" dir="auto"
   >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b>{:else}{piece.text}{/if}{/each}</span
 >
-{#if !__EVEN_PLUGIN__ && others.length}
+{#if others.length}
   {#await import('../../accounts-ui/src/api') then ui}<ui.Faces ids={others} />{/await}
 {/if}
 {#if reads}
