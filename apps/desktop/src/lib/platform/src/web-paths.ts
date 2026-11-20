@@ -1,4 +1,4 @@
-const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+export const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 export function normalise(path: string): string {
   const parts = path
     .replace(/\\/g, '/')
