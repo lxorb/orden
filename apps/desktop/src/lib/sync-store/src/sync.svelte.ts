@@ -315,10 +315,11 @@ class Sync {
     const spaceId = this.remoteIdFor(root)
     if (!token || spaceId === null || this.reads(spaceId)) return
     const list = workspace().bookmarksOf(root)
-    const landed = await api.saveBookmarks(token, spaceId, list).then(
-      () => true,
-      () => false,
-    )
+    const key = (b: (typeof list)[number], id = b.id) => JSON.stringify([b.kind, b.path, b.text, b.parent, b.view, id])
+    const landed = await api
+      .saveBookmarks(token, spaceId, list)
+      .then(({ bookmarks }) => list.every((one) => bookmarks.some((b) => key(b) === key(one, one.id ?? b.id))))
+      .catch(() => false)
     workspace().bookmarksSaid(root, landed, list)
   }
   wrote(path: string, content: string): void {
