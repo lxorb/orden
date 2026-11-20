@@ -32,7 +32,8 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         .enable_features(settings.enabled_features.clone())
         .command_line_args(settings.switches.clone())
         .devtools(DevToolsPolicy::Allowed)
-        .remote_debugging(debugging);
+        .remote_debugging(debugging)
+        .browser_pipe(true);
     if cfg!(target_os = "macos") {
         engine = engine.secret_storage(SecretStorage::Mock);
     }
@@ -50,6 +51,22 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         engine = engine.root_cache_path(root);
     }
     engine
+}
+pub(crate) fn try_browser_pipe() {
+    let Some(path) = from_run("ORDEN_BROWSER_PIPE_PROBE") else {
+        return;
+    };
+    std::thread::spawn(move || {
+        let said = tauri_runtime_cef::extensions_cdp(
+            "Extensions.loadUnpacked",
+            &serde_json::json!({ "path": path }),
+            std::time::Duration::from_secs(60),
+        );
+        match said {
+            Ok(answer) => eprintln!("browser pipe: ok {answer}"),
+            Err(error) => eprintln!("browser pipe: error {error}"),
+        }
+    });
 }
 fn from_run(name: &str) -> Option<String> {
     orden_web_engine::from_run(cfg!(debug_assertions), name)

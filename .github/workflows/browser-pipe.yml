@@ -1,0 +1,96 @@
+name: browser-pipe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['tmp/2277-pipe*']
+
+concurrency:
+  group: browser-pipe-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pipe:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: so.orden.Orden.probe.pipe
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+
+      - name: The debug app
+        run: |
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          debug=apps/desktop/src-tauri/target/${{ matrix.target }}/debug
+          export CARGO_PROFILE_DEV_DEBUG=line-tables-only
+          case "$RUNNER_OS" in
+            macOS)
+              bash scripts/linux-cef.sh tauri build --debug --target ${{ matrix.target }} --bundles app \
+                --ignore-version-mismatches --config "$config"
+              app=$(ls -d $debug/bundle/macos/*.app | head -1)
+              echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+              ;;
+            *)
+              bash scripts/linux-cef.sh tauri build --debug --target ${{ matrix.target }} --no-bundle \
+                --ignore-version-mismatches --config "$config"
+              bash scripts/cef-beside.sh $debug
+              rm -f "$debug/chrome-sandbox"
+              [ "$RUNNER_OS" = Windows ] && exe=orden.exe || exe=orden
+              echo "EXE=$PWD/$debug/$exe" >>"$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: The drive's tools
+        run: |
+          case "$RUNNER_OS" in
+            Linux)
+              sudo apt-get install -y xvfb dbus-x11 openbox
+              python3 -m venv "$RUNNER_TEMP/pipe"
+              "$RUNNER_TEMP/pipe/bin/pip" install --quiet psutil
+              echo "PY=$RUNNER_TEMP/pipe/bin/python" >>"$GITHUB_ENV"
+              ;;
+            Windows)
+              python -m pip install --quiet psutil
+              echo "PY=python" >>"$GITHUB_ENV"
+              ;;
+            *)
+              python3 -m venv "$RUNNER_TEMP/pipe"
+              "$RUNNER_TEMP/pipe/bin/pip" install --quiet psutil
+              echo "PY=$RUNNER_TEMP/pipe/bin/python" >>"$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: The pipe answers and no port speaks the DevTools protocol
+        if: ${{ env.EXE != '' }}
+        timeout-minutes: 15
+        run: bash scripts/parity-run.sh scripts/browser-pipe-drive.py
+
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: browser-pipe-${{ runner.os }}
+          path: parity
+          if-no-files-found: ignore
+          retention-days: 5
