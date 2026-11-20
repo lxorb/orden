@@ -533,10 +533,10 @@
   let top = $state<HTMLElement>()
   let under = $state<HTMLElement>()
   let bar: HTMLElement | null = null
-  let opens: HTMLElement[] = []
+  let dimmed: HTMLElement[] = []
   let slides: HTMLElement[] = []
   function opensOf() {
-    opens = [
+    dimmed = [
       ...document.querySelectorAll<HTMLElement>(
         "header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle], [data-pane]:has(> .card > .here)",
       ),
@@ -545,9 +545,15 @@
     bar = document.querySelector<HTMLElement>("header[data-chrome='top']")
   }
   function opened(at: number) {
-    const value = String(Math.round(at * 1000) / 1000)
-    for (const one of [...opens, under, top]) one?.style.setProperty('--overview-open', value)
-    for (const one of slides) one.style.setProperty('--overview-slide', value)
+    const open = Math.round(at * 1000) / 1000
+    const value = String(open)
+    for (const one of dimmed) one.style.setProperty('--overview-open', value)
+    for (const one of slides) one.style.translate = `${(one.dataset.chrome === 'end' ? 100 : -100) * open}% 0`
+    if (under) under.style.opacity = value
+    if (top) {
+      top.style.opacity = value
+      top.style.translate = `-50% calc(-50% + ${(1 - open) * -8}px)`
+    }
     bar?.style.setProperty('--overview-bar', value)
   }
   let started = true
@@ -598,7 +604,10 @@
     Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
-    parts.window.style.setProperty('--overview-lift', String(opening.at))
+    const lift = opening.at
+    parts.window.style.boxShadow = heldIds.has(id)
+      ? ''
+      : `0 ${24 * lift}px ${64 * lift}px ${-12 * lift}px rgb(0 0 0 / 0.26)`
     parts.ring.style.setProperty('--overview-open', String(opening.at))
     parts.ring.style.setProperty('--flight-x', String(slot.w / Math.max(pose.w, 1)))
     parts.ring.style.setProperty('--flight-y', String(slot.h / Math.max(pose.h, 1)))
@@ -833,11 +842,11 @@
     tabOverview.lifted = []
     delete document.documentElement.dataset.overview
     void webPages().letGo()
-    for (const one of opens) one.style.removeProperty('--overview-open')
-    for (const one of slides) one.style.removeProperty('--overview-slide')
+    for (const one of dimmed) one.style.removeProperty('--overview-open')
+    for (const one of slides) one.style.removeProperty('translate')
     bar?.style.removeProperty('--overview-bar')
     bar = null
-    opens = []
+    dimmed = []
     slides = []
   }
   const close = () => (tabOverview.open = false)
@@ -1500,26 +1509,10 @@
 {/if}
 
 <style>
-  @property --overview-slide {
-    syntax: '<number>';
-    inherits: false;
-    initial-value: 0;
-  }
   @property --overview-bar {
     syntax: '<number>';
     inherits: false;
     initial-value: 0;
-  }
-  @property --overview-lift {
-    syntax: '<number>';
-    inherits: false;
-    initial-value: 1;
-  }
-  :global(html[data-overview='slide'] [data-chrome='start']) {
-    translate: calc(-100% * var(--overview-slide, 0)) 0;
-  }
-  :global(html[data-overview='slide'] [data-chrome='end']) {
-    translate: calc(100% * var(--overview-slide, 0)) 0;
   }
   :global(
     html[data-overview]
@@ -1556,8 +1549,8 @@
     display: flex;
     gap: var(--space-2);
     align-items: center;
-    translate: -50% calc(-50% + (1 - var(--overview-open, 0)) * -8px);
-    opacity: var(--overview-open, 0);
+    translate: -50% calc(-50% - 8px);
+    opacity: 0;
   }
   .tidy {
     white-space: nowrap;
@@ -1569,6 +1562,7 @@
     inset: 0;
     z-index: var(--z-raised);
     overflow: hidden;
+    opacity: 0;
     pointer-events: none;
     user-select: none;
     -webkit-user-select: none;
@@ -1587,7 +1581,6 @@
     left: 0;
     overflow: visible;
     pointer-events: none;
-    opacity: var(--overview-open, 0);
   }
   .seams path {
     fill: none;
@@ -1608,8 +1601,7 @@
     overflow: hidden;
     transform-origin: 0 0;
     background: none;
-    box-shadow: 0 calc(24px * var(--overview-lift, 1)) calc(64px * var(--overview-lift, 1))
-      calc(-12px * var(--overview-lift, 1)) rgb(0 0 0 / 0.26);
+    box-shadow: 0 24px 64px -12px rgb(0 0 0 / 0.26);
     cursor: pointer;
     outline: none;
     touch-action: none;

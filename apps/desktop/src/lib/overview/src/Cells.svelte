@@ -111,10 +111,6 @@
     overflow: visible;
     pointer-events: none;
   }
-  .cells,
-  .name {
-    opacity: var(--overview-open, 0);
-  }
   .bubble {
     fill: color-mix(in srgb, var(--tint) 7%, transparent);
     stroke: color-mix(in srgb, var(--tint) 50%, transparent);
