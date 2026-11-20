@@ -83,7 +83,7 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
 export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space) return
-  const toAccount = account.signedIn && !keep && (await accountHoldsSpace(space.root))
+  const toAccount = account.signedIn && (await accountHoldsSpace(space.root, keep))
   const gone = await (
     toAccount
       ? invoke('delete_space', { path: space.root }).then(() => ({ back: undefined }))
@@ -133,11 +133,14 @@ export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean>
   if (!tabs.some((tab) => tab.kind === 'terminal')) return true
   return await services().mayEnd(tabs)
 }
-async function accountHoldsSpace(root: string): Promise<boolean> {
+async function accountHoldsSpace(root: string, deleted: boolean): Promise<boolean> {
   const { sync } = await import('../../sync-store/src/api')
   const id = sync.remoteIdFor(root)
   if (id === null) return false
-  if (account.spaces.find((one) => one.id === id)?.role !== 'owner') return false
+  const held = deleted
+    ? account.deletedSpaces.includes(id)
+    : account.spaces.find((one) => one.id === id)?.role === 'owner'
+  if (!held) return false
   const { accountHoldsAll } = await import('./undoing')
   return accountHoldsAll(root, (one, how) => sync.holds(one, how))
 }

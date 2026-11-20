@@ -11,7 +11,11 @@ vi.mock('../../platform/src/tauri', () => ({
     return Promise.resolve('')
   },
 }))
-const account = vi.hoisted(() => ({ signedIn: true, spaces: [] as { id: string; role: string }[] }))
+const account = vi.hoisted(() => ({
+  signedIn: true,
+  spaces: [] as { id: string; role: string }[],
+  deletedSpaces: [] as string[],
+}))
 vi.mock('../../accounts/src/account.svelte', () => ({ account }))
 const remote = new Map<string, string>()
 let unpushed = new Set<string>()
@@ -50,6 +54,7 @@ beforeEach(() => {
   unpushed = new Set()
   account.signedIn = true
   account.spaces = [{ id: 'r1', role: 'owner' }]
+  account.deletedSpaces = []
 })
 describe('a space of your own deleted signed in', () => {
   test('that the account holds whole is left to the account', async () => {
@@ -81,4 +86,26 @@ test('a space somebody else owns goes to this device’s trash', async () => {
   await deleteSpace(store(), 'w')
   expect(sent).toContain('trash_item')
   expect(sent).not.toContain('delete_space')
+})
+describe('a space deleted to keep, as another device does when the account deleted it', () => {
+  test('that the account has in its Recently deleted and holds whole leaves no second copy here', async () => {
+    account.spaces = []
+    account.deletedSpaces = ['r1']
+    await deleteSpace(store(), 'w', true)
+    expect(sent).toContain('delete_space')
+    expect(sent).not.toContain('trash_item')
+  })
+  test('with a note not pushed yet goes to this device’s trash, so nothing is lost', async () => {
+    account.spaces = []
+    account.deletedSpaces = ['r1']
+    unpushed = new Set(['/s/Work/a.md'])
+    await deleteSpace(store(), 'w', true)
+    expect(sent).toContain('trash_item')
+    expect(sent).not.toContain('delete_space')
+  })
+  test('that the account still holds goes to this device’s trash as before', async () => {
+    await deleteSpace(store(), 'w', true)
+    expect(sent).toContain('trash_item')
+    expect(sent).not.toContain('delete_space')
+  })
 })
