@@ -135,22 +135,29 @@ describe('a shortcut the account turned down', () => {
   })
 })
 describe('signing out', () => {
-  test('leaves nothing owed for the next account, nor for the one that left', async () => {
+  test('keeps what is owed for the account that left, never for the next one', async () => {
     const { shortcuts } = await relaunched()
     world.failing = true
     shortcuts.set('format.bold', 'Mod-Alt-j')
     await settled()
     world.failing = false
     signedOut()
+    world.saved = []
+    world.token = 'token'
     world.user = { id: 'u2' }
     shortcuts.receive({ shortcuts: { 'format.italic': 'Mod-Alt-q' } })
-    signedOut()
-    world.saved = []
-    world.user = { id: 'u1' }
-    shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-j' } })
     await settled()
     expect(world.saved).toEqual([])
+    expect(shortcuts.keyFor('format.bold')).not.toBe('Mod-Alt-j')
+    expect(shortcuts.keyFor('format.italic')).toBe('Mod-Alt-q')
+    signedOut()
+    world.token = 'token'
+    world.user = { id: 'u1' }
+    shortcuts.receive({ shortcuts: {} })
+    await settled()
+    expect(world.saved).toEqual([{ shortcuts: { 'format.bold': 'Mod-Alt-j' }, preset: 'custom' }])
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-j')
+    expect(shortcuts.keyFor('format.italic')).not.toBe('Mod-Alt-q')
   })
 })
 describe('a shortcut changed while the session is read, in a session with no account', () => {
@@ -196,5 +203,29 @@ describe('a toolbar changed while the account could not hear it', () => {
     expect(world.saved.at(-1)).toMatchObject({
       toolbar: expect.arrayContaining(['paragraph.task-list']),
     })
+  })
+})
+describe('a toolbar owed to an account that signed out', () => {
+  test('never reaches the next account, and reaches its own when it signs in again', async () => {
+    const { toolbar } = await relaunched()
+    world.failing = true
+    toolbar.add('paragraph.task-list')
+    await settled()
+    world.failing = false
+    signedOut()
+    world.saved = []
+    world.token = 'token'
+    world.user = { id: 'u2' }
+    toolbar.receive({ toolbar: null })
+    await settled()
+    expect(world.saved).toEqual([])
+    expect(toolbar.ids).not.toContain('paragraph.task-list')
+    signedOut()
+    world.token = 'token'
+    world.user = { id: 'u1' }
+    toolbar.receive({ toolbar: null })
+    await settled()
+    expect(world.saved).toEqual([{ toolbar: expect.arrayContaining(['paragraph.task-list']) }])
+    expect(toolbar.ids).toContain('paragraph.task-list')
   })
 })

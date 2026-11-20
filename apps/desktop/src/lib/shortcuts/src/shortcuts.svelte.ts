@@ -181,7 +181,12 @@ class Shortcuts {
   receive(remote: AccountSettings) {
     const theirs = remote.shortcuts
     if (this.owed.standing) {
-      this.share()
+      const owed = this.owed.mine?.patch
+      if (owed?.shortcuts) {
+        this.overrides = usable(owed.shortcuts)
+        this.preset = knownPreset(owed.preset) ?? this.preset
+        this.settle()
+      } else this.share()
       return
     }
     if (!theirs || typeof theirs !== 'object') {
