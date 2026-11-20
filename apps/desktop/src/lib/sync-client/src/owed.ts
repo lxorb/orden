@@ -2,12 +2,16 @@ import type { SyncFileOp } from '@orden/contracts'
 
 export interface Owing {
   id: string
-  what: { kind: 'wrote'; path: string; text: string } | { kind: 'op'; op: SyncFileOp; entry?: string }
+  what:
+    | { kind: 'wrote'; path: string; text: string }
+    | { kind: 'changed'; path: string }
+    | { kind: 'op'; op: SyncFileOp; entry?: string }
 }
 const MOST_OWED = 1_000
 export async function takeOwed(
   engine: {
     saved(path: string, text: string): Promise<void>
+    foreign(path: string): Promise<void>
     entryAt(path: string): { id: string } | null | undefined
   },
   item: Owing,
@@ -15,6 +19,10 @@ export async function takeOwed(
 ): Promise<void> {
   if (item.what.kind === 'wrote') {
     await engine.saved(item.what.path, item.what.text)
+    return
+  }
+  if (item.what.kind === 'changed') {
+    await engine.foreign(item.what.path)
     return
   }
   const op = item.what.op

@@ -17,11 +17,12 @@ function engineHearing() {
       return Promise.resolve('id')
     },
     saved: (path: string, text: string) => Promise.resolve(void told.push(`saved ${path} ${text}`)),
+    foreign: (path: string) => Promise.resolve(void told.push(`foreign ${path}`)),
   }
-  let hearing: SyncWriteHearing | null = null
+  let hearing: (SyncWriteHearing & { changed?: (path: string) => Promise<void> }) | null = null
   const came: string[] = []
   const unbind = providePort('sync.workspace', {
-    hearWrites: (one: SyncWriteHearing) => {
+    hearWrites: (one: SyncWriteHearing & { changed?: (path: string) => Promise<void> }) => {
       hearing = one
       return () => undefined
     },
@@ -50,5 +51,22 @@ describe('every file the app writes in a space (#2301)', () => {
       expect(told).toEqual(['saved /s/Plan.md words', 'created /s/assets/minutes.pdf false undefined']),
     )
     done()
+  })
+  test('a file rewritten by its bytes reaches the engine as changed, to be read again and sent (#2301)', async () => {
+    const { told, hearing, done } = engineHearing()
+    await hearing()?.changed?.('/s/assets/minutes.pdf')
+    expect(told).toEqual(['foreign /s/assets/minutes.pdf'])
+    done()
+  })
+  test('one told to a window without the engine is passed to the window that has it', async () => {
+    const { takeOwed } = await import('./owed')
+    const told: string[] = []
+    const engine = {
+      saved: () => Promise.resolve(),
+      foreign: (path: string) => Promise.resolve(void told.push(`foreign ${path}`)),
+      entryAt: () => null,
+    }
+    await takeOwed(engine, { id: '1', what: { kind: 'changed', path: '/s/assets/minutes.pdf' } }, () => undefined)
+    expect(told).toEqual(['foreign /s/assets/minutes.pdf'])
   })
 })
