@@ -14,7 +14,8 @@ import type { AgentAnswer } from '../../automation/src/api'
 import { views } from '../../panes/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import { type Call, docSource, done, need, needScope, Refused, namedTab } from '../../agent-verbs/src/api'
+import { type Call, docSource, done, need, Refused, namedTab } from '../../agent-verbs/src/api'
+import { readersView } from './reader-view'
 import { readable } from './guarded'
 
 const MOST_MARKS = 500
@@ -102,13 +103,13 @@ export function noteEditor(call: Call): AgentAnswer {
     return done({ tab: tab.id, marks: marks.length })
   }
   if (!view) {
-    throw new Refused('failed', `tab ${tab.id} is not on screen, so it has no editor: workspace_tabs focus shows it`)
+    throw new Refused('failed', `tab ${tab.id} is not on screen, so it has no editor`)
   }
   switch (op) {
     case 'selection':
       return done({ tab: tab.id, ...selectionsShown(view) }, sourceOfNote(tab))
     case 'select': {
-      needScope(call, 'workspace.focus', 'moving the reader’s caret')
+      readersView(call, 'moving the reader’s caret')
       const stretches: Stretch[] = listOf(call, 'selections', MOST_SELECTIONS).map((one, at) => {
         const anchor = placeIn(one.anchor ?? one.head, `selections[${at}].anchor`)
         return {
@@ -122,12 +123,13 @@ export function noteEditor(call: Call): AgentAnswer {
     }
     case 'fold':
     case 'unfold': {
+      readersView(call, 'folding the reader’s note')
       const line = lineOf(call)
       const changed = op === 'fold' ? foldLine(view, line) : unfoldLine(view, line)
       return done({ tab: tab.id, line, changed })
     }
     case 'reveal': {
-      needScope(call, 'workspace.focus', 'scrolling the reader’s note')
+      readersView(call, 'scrolling the reader’s note')
       const line = lineOf(call)
       showLine(view, view.state.doc.line(Math.min(Math.max(1, line), view.state.doc.lines)).from)
       return done({ tab: tab.id, line })

@@ -83,18 +83,14 @@ describe('an agent given space A only', () => {
     const listed = (await run({ op: 'list' })) as { result: { id: string }[] }
     expect(listed.result.map((one) => one.id)).toEqual(['ta'])
   })
-  test('move answers with its own space’s tabs alone', async () => {
-    const answer = (await run({ op: 'move', tab: 'ta', pane: 'p1' })) as {
-      result: { id: string }[]
-    }
-    expect(answer.result.map((one) => one.id)).toEqual(['ta'])
-  })
-  test('arrange single leaves the tabs set aside where they are, and names only its own', async () => {
+  test('move and arrange are the reader’s, refused to the agent and moving nothing', async () => {
     moved.length = 0
-    const answer = (await run({ op: 'arrange', layout: 'single' })) as {
-      result: { id: string }[]
+    for (const args of [
+      { op: 'move', tab: 'ta', pane: 'p1' },
+      { op: 'arrange', layout: 'single' },
+    ]) {
+      await expect(run(args)).rejects.toMatchObject({ code: 'by_hand' })
     }
     expect(moved).toEqual([])
-    expect(answer.result.map((one) => one.id)).toEqual(['ta'])
   })
 })

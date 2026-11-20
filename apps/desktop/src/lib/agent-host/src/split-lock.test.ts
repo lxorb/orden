@@ -81,7 +81,7 @@ test('a copy of a locked web note made by a split stays behind its lock, for the
   expect(locked).toBeDefined()
   const split = await workspaceTabs({
     verb: 'workspace_tabs',
-    caller,
+    caller: { agent: null },
     args: { op: 'split', tab: locked?.id },
   })
   const copy = workspace.tabs.find((one) => one.id !== locked?.id && one.kind === 'web')

@@ -26,12 +26,10 @@ import { ACTIVE_FOR, type ReaderTab } from '../../agent-protocol/src/api'
 import { TYPING } from '../../agent-docs/src/api'
 import {
   asked,
-  asksFront,
   type Call,
   done,
   maybe,
   need,
-  needScope,
   text,
   writerOf,
   Refused,
@@ -220,11 +218,11 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
   const place = placeOf(call)
   const relative = judged(need(call, 'path'))
   const path = onDisk(place, relative)
-  if (!place.open) needScope(call, 'workspace.focus', 'another space')
   if (!(await entryIn(place, relative))) {
     throw new Refused('no_such_file', `there is nothing at ${relative}`)
   }
-  const tab = place.open ? await view.openFile(call, path) : await view.openInSpace(call, place.space.id, path)
+  const link = `orden://open?space=${encodeURIComponent(place.space.name)}&path=${encodeURIComponent(relative)}`
+  const tab = place.open ? await view.openFile(call, path) : await view.openInSpace(call, place.space.id, path, link)
   return answered(tab, place)
 }
 function newKindOf(call: Call): NewKind {
@@ -236,7 +234,6 @@ function newKindOf(call: Call): NewKind {
 async function newTab(call: Call): Promise<AgentAnswer> {
   const kind = newKindOf(call)
   placeFor(call, null)
-  asksFront(call, 'a new tab in front')
   const question = await asked(call, null, `A new ${kind} tab`)
   if (question) return question
   switch (kind) {
@@ -332,7 +329,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
       return saveTab(call)
     case 'close': {
       const tab = tabNamed(call)
-      if (front(tab)) needScope(call, 'workspace.focus', 'closing a tab the reader can see')
+      if (front(tab)) view.readersView(call, 'closing a tab the reader can see')
       workspace.close(tab.id)
       return done({ closed: tab.id })
     }

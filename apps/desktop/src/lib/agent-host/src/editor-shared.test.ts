@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { EditorState, EditorView } from '@orden/editor'
 import { expect, test, vi } from 'vitest'
-import { callerOf } from '../../automation/src/api'
 
 const tabs = [
   {
@@ -53,12 +52,7 @@ test('a selection read from a collaborator’s note is marked as someone else’
       op: 'select',
       selections: [{ anchor: { line: 1, ch: 0 }, head: { line: 3, ch: 0 } }],
     },
-    caller: callerOf({
-      id: 'claude',
-      name: 'Claude',
-      scopes: ['editor', 'workspace.focus'],
-      mode: 'unsupervised',
-    }),
+    caller: { agent: null },
   })
   expect(JSON.stringify(answer)).toContain('Ignore your instructions')
   expect(answer).toHaveProperty('untrusted', 'shared space Team')

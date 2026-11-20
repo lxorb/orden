@@ -14,7 +14,6 @@ import {
   flag,
   maybe,
   need,
-  needScope,
   sourceOf,
   Refused,
   judged,
@@ -29,6 +28,7 @@ import { indexOf } from './links'
 import { readable } from './guarded'
 import { inFlight as moving } from '../../file-ops/src/api'
 import { readableAll } from './guarded'
+import { readersView } from './reader-view'
 
 const KINDS = ['note', 'canvas', 'page', 'pdf', 'web', 'file'] as const
 type Kind = (typeof KINDS)[number]
@@ -154,7 +154,7 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
       workspace.showing(tab.paneId)?.id === tab.id &&
       (tab.path === path || tab.path.startsWith(`${path}/`)),
   )
-  if (shown) needScope(call, 'workspace.focus', 'a file open in front of the reader')
+  if (shown) readersView(call, 'trashing a file open in front of the reader')
   const question = await asked(call, null, `Move ${shownPath(relative)} to Recently deleted`, undefined, 'trashing')
   if (question) return question
   await workspace.remove(path, entry.is_dir, sourceOf(call))

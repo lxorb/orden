@@ -85,6 +85,7 @@ function call(args: Record<string, unknown>, scopes = ['editor']) {
     caller: callerOf({ id: 'claude', name: 'Claude', scopes, mode: 'unsupervised' }),
   }
 }
+const asReader = (args: Record<string, unknown>) => ({ verb: 'note_editor', args, caller: { agent: null } })
 beforeEach(() => {
   showing.p1 = 'n1'
   editorFor('p1', 'teh plan\nsecond line\n')
@@ -111,7 +112,7 @@ describe('a note’s editor', () => {
       locked.clear()
     }
   })
-  test('its selections are read, and set only by an agent that may move the reader', () => {
+  test('its selections are read by an agent, and set only by the reader', () => {
     expect(noteEditor(call({ tab: 'n1', op: 'selection' }))).toMatchObject({
       result: { selections: [{ anchor: { line: 1, ch: 0 }, head: { line: 1, ch: 0 } }] },
     })
@@ -120,8 +121,8 @@ describe('a note’s editor', () => {
       op: 'select',
       selections: [{ anchor: { line: 2, ch: 0 }, head: { line: 2, ch: 6 } }],
     }
-    expect(() => noteEditor(call(select))).toThrow(/workspace.focus/)
-    expect(noteEditor(call(select, ['editor', 'workspace.focus']))).toMatchObject({
+    expect(() => noteEditor(call(select, ['editor', 'workspace.focus']))).toThrow(/the reader's to do/)
+    expect(noteEditor(asReader(select))).toMatchObject({
       result: { selections: [{ text: 'second' }] },
     })
   })
@@ -137,7 +138,7 @@ describe('a note’s editor', () => {
       expect(noteEditor(call({ tab: 'n1', op: 'selection' }))).toMatchObject({
         untrusted: 'shared space Work',
       })
-      expect(noteEditor(call(select, ['editor', 'workspace.focus']))).toMatchObject({
+      expect(noteEditor(asReader(select))).toMatchObject({
         result: { selections: [{ text: 'second' }] },
         untrusted: 'shared space Work',
       })
@@ -155,11 +156,10 @@ describe('a note’s editor', () => {
     })
     open.push(view)
     views.put('p1', view)
-    const focus = ['editor', 'workspace.focus']
     const place = (line: number) => ({ line, ch: 0 })
     const many = (count: number) =>
       Array.from({ length: count }, (_, at) => ({ anchor: place(at + 2), head: place(at + 2) }))
-    expect(() => noteEditor(call({ tab: 'n1', op: 'select', selections: many(501) }, focus))).toThrow(
+    expect(() => noteEditor(asReader({ tab: 'n1', op: 'select', selections: many(501) }))).toThrow(
       /at most 500 selections/,
     )
     expect(view.state.selection.ranges).toHaveLength(1)
@@ -231,10 +231,15 @@ describe('a note’s editor', () => {
       ),
     ).toMatchObject({ result: { marks: 1 } })
   })
-  test('a line is revealed only by an agent that may move the reader', () => {
-    expect(() => noteEditor(call({ tab: 'n1', op: 'reveal', line: 2 }))).toThrow(/workspace.focus/)
-    expect(noteEditor(call({ tab: 'n1', op: 'reveal', line: 2 }, ['editor', 'workspace.focus']))).toMatchObject({
-      result: { line: 2 },
-    })
+  test('a line is revealed and a line folded only by the reader, never by an agent', () => {
+    for (const args of [
+      { op: 'reveal', line: 2 },
+      { op: 'fold', line: 1 },
+    ]) {
+      expect(() => noteEditor(call({ tab: 'n1', ...args }, ['editor', 'workspace.focus']))).toThrow(
+        /the reader's to do/,
+      )
+    }
+    expect(noteEditor(asReader({ tab: 'n1', op: 'reveal', line: 2 }))).toMatchObject({ result: { line: 2 } })
   })
 })
