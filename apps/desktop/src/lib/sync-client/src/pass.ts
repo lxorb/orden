@@ -1,4 +1,5 @@
 import { recoverLost, sendMade, settleFiles } from './files'
+import { foldedInto } from './folded'
 import {
   coalesce,
   feedPageOf,
@@ -192,6 +193,11 @@ async function sendOps(
       answered.add(one)
       done.push(remove('outbox', one.row.op_id))
       if ('merged' in result || 'refused' in result) leave()
+      if ('merged' in result && op.t === 'mkdir') {
+        done.push(...foldedInto(space, op.id, result.merged))
+        byOp = opsOf(space)
+        continue
+      }
       if ('merged' in result && op.t === 'create') {
         const merge: Merging = { mine: op.id, into: result.merged, create: op }
         const { one: queued, change } = core.outgoing(space, { t: 'merge', merge }, space.row.cursor)

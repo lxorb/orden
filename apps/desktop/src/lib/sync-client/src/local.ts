@@ -83,7 +83,7 @@ async function applied(core: Core, space: SpaceState): Promise<Change[]> {
     changes.push(remove('outbox', one.row.op_id))
     if (one.record.t !== 'op') continue
     const op = { ...one.record.op, seen: state.cursor }
-    if (op.t === 'create') delete op.mergeable
+    if (op.t === 'create' || op.t === 'mkdir') delete op.mergeable
     const result = applyOp(state, op, { role: 'owner', device })
     if ('refused' in result) refusals.push([op, result.refused])
   }
