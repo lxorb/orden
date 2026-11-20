@@ -34,13 +34,12 @@ function placesIn(root: string): IconTarget[] {
   for (const tab of workspace.tabs) if (tab.kind === 'terminal') places.push({ kind: 'terminal', tab: tab.id })
   return places
 }
-async function wornInFiles(root: string): Promise<Worn[]> {
-  if (!samePath(links.rootOf(), root)) return []
+async function wornInFiles(root: string): Promise<Worn[] | null> {
+  if (!samePath(workspace.activeSpace?.root, root)) return null
   const found: Worn[] = []
-  for (const at of links.index(null).files) {
-    const chat = isChatTarget(at)
-    if (!chat && !isTermTarget(at)) continue
-    const path = insideSpace(root, at)
+  for (const { path } of workspace.files) {
+    const chat = isChatTarget(path)
+    if (!chat && !isTermTarget(path)) continue
     const text = await workspace.noteText(path)
     if (text === null) continue
     const site = siteOfIcon(chat ? chatOf(text)?.icon : termOf(text)?.icon)
@@ -54,9 +53,10 @@ export async function keepWebIcons(root: string, keep: Keep = keptSitePicture): 
     const site = siteOfIcon(wornBy(target))
     if (site !== null) worn.set(keyOf(target), { target, site, read: false })
   }
-  for (const one of await wornInFiles(root)) worn.set(keyOf(one.target), one)
+  const files = await wornInFiles(root)
+  for (const one of files ?? []) worn.set(keyOf(one.target), one)
   const pictures = new Map<string, Promise<string | null>>()
-  let left = false
+  let left = files === null
   for (const { target, site, read } of worn.values()) {
     let picture = pictures.get(site)
     if (!picture) {

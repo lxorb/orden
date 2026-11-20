@@ -27,7 +27,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
           if (one.endsWith('.md')) return [scanNote(one, text)]
           return one.endsWith('.url') ? [scanShortcut(one, text)] : []
         }),
-        files: held.filter((one) => !one.endsWith('.md')),
+        files: held.filter((one) => !/\.(md|chat|term)$/.test(one)),
       }
     }
     if (command === 'write_note') {
@@ -53,6 +53,25 @@ const keep = (site: string) => {
   asked.push(site)
   return Promise.resolve(site === 'a.dev' ? KEPT : null)
 }
+async function scanned() {
+  const at = (path: string) => ({
+    name: path.split('/').pop() ?? path,
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+  workspace.tree = {
+    name: 'space',
+    path: '/space',
+    is_dir: true,
+    modified: 0,
+    created: 0,
+    children: Object.keys(notes).map(at),
+  }
+  await links.build('/space')
+}
 async function fresh() {
   notes = { ...SPACE }
   asked.length = 0
@@ -70,7 +89,7 @@ async function fresh() {
   workspace.itemMeta.set('/space/notes/Kept.md', { [ICON_KEY]: 'anchor' })
   workspace.folderIcons.set('/space/Work', 'site:a.dev')
   workspace.folderIcons.set('/space/Home', 'house')
-  await links.build('/space')
+  await scanned()
 }
 beforeEach(fresh)
 describe('web icons chosen before they were kept (#2257)', () => {
@@ -102,11 +121,26 @@ describe('web icons chosen before they were kept (#2257)', () => {
   test('are done once every site had a picture', async () => {
     workspace.applyIcon('/other', null, null)
     notes['/space/Away.url'] = SHORTCUT
-    await links.build('/space')
+    await scanned()
     expect(await keepWebIcons('/space', keep)).toBe(true)
     asked.length = 0
     expect(await keepWebIcons('/space', keep)).toBe(true)
     expect(asked).toEqual([])
+  })
+  test('are not done for a space no longer in sight, whose files were never read', async () => {
+    workspace.applyIcon('/space', null, null)
+    workspace.applyIcon('/other', null, null)
+    workspace.itemMeta.forget('/space')
+    workspace.folderIcons.forget('/space')
+    notes = { ...SPACE, '/space/Away.url': SHORTCUT }
+    await scanned()
+    workspace.activeSpaceId = 'o'
+    expect(await keepWebIcons('/space', keep)).toBe(false)
+    expect(notes['/space/Team.chat']).toBe(SPACE['/space/Team.chat'])
+    workspace.activeSpaceId = 's'
+    await scanned()
+    await keepWebIcons('/space', keep)
+    expect(JSON.parse(notes['/space/Team.chat'] ?? '')).toEqual({ v: 1, chat: CHAT, icon: KEPT })
   })
   test('ask for no site at all where none is worn', async () => {
     workspace.applyIcon('/space', null, null)
@@ -114,7 +148,7 @@ describe('web icons chosen before they were kept (#2257)', () => {
     workspace.itemMeta.forget('/space')
     workspace.folderIcons.forget('/space')
     notes = { '/space/Starred.md': SPACE['/space/Starred.md'] ?? '' }
-    await links.build('/space')
+    await scanned()
     expect(await keepWebIcons('/space', keep)).toBe(true)
     expect(asked).toEqual([])
   })
