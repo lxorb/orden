@@ -4,6 +4,17 @@ const subtle = (): SubtleCrypto => globalThis.crypto.subtle
 export function newNonce(): string {
   return base64(globalThis.crypto.getRandomValues(new Uint8Array(32)))
 }
+export async function answerNonce(secret: string, asking: string, committed: string): Promise<string> {
+  const key = await subtle().importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const said = new TextEncoder().encode(`orden ai vault answer ${asking} ${committed}`)
+  return base64(new Uint8Array(await subtle().sign('HMAC', key, said)))
+}
 export async function commitment(pub: string, nonce: string): Promise<string> {
   const digest = await subtle().digest('SHA-256', joined(unbase64(pub), unbase64(nonce)))
   return base64(new Uint8Array(digest))

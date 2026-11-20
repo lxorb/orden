@@ -1,13 +1,13 @@
-import { commitment, digits as pairingDigits, newNonce } from '../pairing'
+import { answerNonce, commitment, digits as pairingDigits, newNonce } from '../pairing'
 import { authOf, type DeviceKey, deviceKeyIn, fingerprint, idOf, newDeviceKey } from './crypto'
 import { newVaultKey, open, seal, unwrap, wrap } from './crypto'
-import { SvelteMap } from 'svelte/reactivity'
 import type { Accounts } from '../accounts'
 import { agrees, type Base, baseOf, type Contents, contentsIn, merged, type Side } from './merge'
 
 const DIGITS = 'nib ai vault digits'
 const DEVICE_SECRET = 'ai-vault-device'
 const JOINED_SECRET = 'ai-vault-joined'
+const ASKING_SECRET = 'ai-vault-asking'
 const TRIES = 3
 const MOST_BEFORE = 20
 function beforeIn(value: unknown): string[] {
@@ -46,10 +46,6 @@ interface Mine {
   nonce: string
   answer: { nonce: string; from: string; digits: string } | null
 }
-interface Answered {
-  commitment: string
-  nonce: string
-}
 export interface VaultWorld {
   account(): string | null
   call<T>(path: string, method?: string, body?: unknown): Promise<T>
@@ -63,6 +59,18 @@ export interface VaultWorld {
   served(): string | null
   serve(account: string | null): void
   drop(gone: Accounts['accounts']): Promise<void>
+}
+const isText = (value: unknown): value is string => typeof value === 'string'
+function mineIn(value: unknown, account: string): Mine | null {
+  if (typeof value !== 'object' || value === null) return null
+  const kept = value as Record<string, unknown>
+  if (kept.account !== account || !isText(kept.nonce)) return null
+  const said = kept.answer as Record<string, unknown> | null
+  const answer =
+    typeof said === 'object' && said !== null && isText(said.nonce) && isText(said.from) && isText(said.digits)
+      ? { nonce: said.nonce, from: said.from, digits: said.digits }
+      : null
+  return { nonce: kept.nonce, answer }
 }
 function isConflict(error: unknown): boolean {
   return typeof error === 'object' && error !== null && (error as { status?: unknown }).status === 409
@@ -86,7 +94,6 @@ export class Vault {
   private device: DeviceKey | null = null
   private registered = ''
   private mineAsking: Mine | null = null
-  private readonly answered = new SvelteMap<string, Answered>()
   private offered = ''
   private key: Uint8Array<ArrayBuffer> | null = null
   private running: Promise<void> | null = null
@@ -121,14 +128,21 @@ export class Vault {
   private read(device: DeviceKey): Promise<Read> {
     return this.world.call<Read>(`/v2/ai?device=${device.id}`)
   }
-  private async register(device: DeviceKey): Promise<void> {
-    const nonce = newNonce()
+  private async keptAsking(account: string): Promise<Mine | null> {
+    return mineIn(JSON.parse((await this.world.readSecret(ASKING_SECRET)) ?? 'null'), account)
+  }
+  private async keepAsking(account: string, mine: Mine | null): Promise<void> {
+    await this.world.writeSecret(ASKING_SECRET, JSON.stringify(mine ? { account, ...mine } : null))
+  }
+  private async register(device: DeviceKey, account: string): Promise<void> {
+    const mine = { nonce: newNonce(), answer: null }
+    await this.keepAsking(account, mine)
     await this.world.call('/v2/ai/devices', 'POST', {
       id: device.id,
       name: this.world.deviceName(),
-      commitment: await commitment(device.pub, nonce),
+      commitment: await commitment(device.pub, mine.nonce),
     })
-    this.mineAsking = { nonce, answer: null }
+    this.mineAsking = mine
   }
   private async once(): Promise<void> {
     const account = this.world.account()
@@ -144,13 +158,15 @@ export class Vault {
     if (this.standing === 'off') this.standing = 'opening'
     const device = await this.mine()
     if (this.registered !== account) {
-      await this.register(device)
+      this.mineAsking = await this.keptAsking(account)
+      if (!this.mineAsking) await this.register(device, account)
       this.registered = account
     }
     for (let tries = 0; tries < TRIES; tries++) {
       const read = await this.read(device)
       const me = read.devices.find((one) => one.id === device.id)
       if (!me) {
+        await this.keepAsking(account, null)
         this.registered = ''
         this.again = true
         return
@@ -170,7 +186,7 @@ export class Vault {
             return
           }
           this.standing = 'waiting'
-          await this.ask(device, me, read.devices)
+          await this.ask(account, device, me, read.devices)
           return
         }
         if (await this.first(device, me)) continue
@@ -191,7 +207,10 @@ export class Vault {
       }
       this.digits = ''
       this.offeredBy = ''
-      this.mineAsking = null
+      if (this.mineAsking) {
+        this.mineAsking = null
+        await this.keepAsking(account, null)
+      }
       this.asking = await this.answer(device, others)
       if (await this.met(account, device, read)) return
     }
@@ -221,39 +240,39 @@ export class Vault {
     this.offered = ''
     await this.refresh()
   }
-  private async ask(device: DeviceKey, me: Listed, devices: Listed[]): Promise<void> {
-    const asking = this.mineAsking
-    const answer = asking?.answer
-    if (
-      !asking ||
-      (me.pub !== null && !answer) ||
-      (answer && (me.nonce !== answer.nonce || me.nonceFrom !== answer.from))
-    ) {
-      await this.register(device)
+  private async ask(account: string, device: DeviceKey, me: Listed, devices: Listed[]): Promise<void> {
+    const asking = await this.keptAsking(account)
+    this.mineAsking = asking
+    let answer = asking?.answer ?? null
+    const moved = answer ? me.nonce !== answer.nonce || me.nonceFrom !== answer.from : me.pub !== null
+    if (!asking || moved || (me.pub === null && me.commitment !== (await commitment(device.pub, asking.nonce)))) {
+      await this.register(device, account)
       this.digits = ''
       this.again = true
       return
     }
-    if (answer) {
-      this.digits = answer.digits
-      return
+    if (!answer) {
+      if (!me.nonce || !me.nonceFrom) {
+        this.digits = ''
+        return
+      }
+      const answering = devices.find((one) => one.id === me.nonceFrom)
+      if (!answering?.pub) {
+        this.digits = ''
+        return
+      }
+      const digits = await pairingDigits(DIGITS, device.pub, asking.nonce, me.nonce, answering.pub)
+      answer = { nonce: me.nonce, from: me.nonceFrom, digits }
+      this.mineAsking = { ...asking, answer }
+      await this.keepAsking(account, this.mineAsking)
     }
-    if (!me.nonce || !me.nonceFrom) {
-      this.digits = ''
-      return
+    if (me.pub === null) {
+      await this.world.call(`/v2/ai/devices/${device.id}/reveal`, 'PUT', {
+        pub: device.pub,
+        nonce: asking.nonce,
+      })
     }
-    const answering = devices.find((one) => one.id === me.nonceFrom)
-    if (!answering?.pub) {
-      this.digits = ''
-      return
-    }
-    await this.world.call(`/v2/ai/devices/${device.id}/reveal`, 'PUT', {
-      pub: device.pub,
-      nonce: asking.nonce,
-    })
-    const said = await pairingDigits(DIGITS, device.pub, asking.nonce, me.nonce, answering.pub)
-    asking.answer = { nonce: me.nonce, from: me.nonceFrom, digits: said }
-    this.digits = said
+    this.digits = answer.digits
   }
   private async first(device: DeviceKey, me: Listed): Promise<boolean> {
     if (me.pub === null) {
@@ -290,34 +309,24 @@ export class Vault {
     if (!key) return []
     const shown: Asking[] = []
     for (const one of others) {
-      if (one.approved) continue
-      if (one.nonce === null) {
-        const nonce = newNonce()
-        try {
-          await this.world.call(`/v2/ai/devices/${one.id}/nonce`, 'PUT', {
-            nonce,
-            from: device.id,
-            auth: await authOf(key),
+      if (one.approved || (one.nonce !== null && one.nonceFrom !== device.id)) continue
+      const nonce = await answerNonce(JSON.stringify(device.priv), one.id, one.commitment)
+      if (one.nonce !== nonce) {
+        if (one.pub !== null) continue
+        await this.world
+          .call(`/v2/ai/devices/${one.id}/nonce`, 'PUT', { nonce, from: device.id, auth: await authOf(key) })
+          .catch((error: unknown) => {
+            if (!isConflict(error)) throw error
           })
-          this.answered.set(one.id, { commitment: one.commitment, nonce })
-        } catch (error) {
-          if (!isConflict(error)) throw error
-        }
-        continue
-      }
-      const mine = this.answered.get(one.id)
-      if (one.nonceFrom !== device.id) continue
-      if (mine?.nonce !== one.nonce) {
-        await this.world.call(`/v2/ai/devices/${one.id}`, 'DELETE', {}).catch(() => undefined)
         continue
       }
       if (one.pub === null || one.revealed === null) continue
-      const holds = (await commitment(one.pub, one.revealed)) === mine.commitment && (await idOf(one.pub)) === one.id
+      const holds = (await commitment(one.pub, one.revealed)) === one.commitment && (await idOf(one.pub)) === one.id
       if (!holds) continue
       shown.push({
         id: one.id,
         name: one.name,
-        digits: await pairingDigits(DIGITS, one.pub, one.revealed, mine.nonce, device.pub),
+        digits: await pairingDigits(DIGITS, one.pub, one.revealed, nonce, device.pub),
         pub: one.pub,
       })
     }
@@ -383,11 +392,7 @@ export class Vault {
         auth: await authOf(key),
       })
     }
-    this.forgetAsking(id)
-  }
-  private forgetAsking(id: string): void {
-    this.asking = this.asking.filter((one) => one.id !== id)
-    this.answered.delete(id)
+    this.dismiss(id)
   }
   dismiss(id: string): void {
     this.asking = this.asking.filter((one) => one.id !== id)
@@ -397,7 +402,7 @@ export class Vault {
     await this.world
       .call(`/v2/ai/devices/${id}`, 'DELETE', key ? { auth: await authOf(key) } : {})
       .catch(() => undefined)
-    this.forgetAsking(id)
+    this.dismiss(id)
   }
   async startOver(): Promise<void> {
     const account = this.world.account()
@@ -483,7 +488,6 @@ export class Vault {
     this.key = null
     this.registered = ''
     this.mineAsking = null
-    this.answered.clear()
     this.offered = ''
     this.offeredBy = ''
     this.asking = []
