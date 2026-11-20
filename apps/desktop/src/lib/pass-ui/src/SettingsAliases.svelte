@@ -152,7 +152,7 @@
   .card {
     margin: 0;
   }
-  .card > :global(* + *) {
+  .card > :global(:not(:first-child)) {
     border-top: 1px solid var(--line);
   }
   .row {
