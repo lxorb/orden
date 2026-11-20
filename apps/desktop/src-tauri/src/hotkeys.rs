@@ -111,8 +111,10 @@ fn by_portal(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
     with_state(|held| held.held.get(&which).cloned())
 }
 fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<String> {
-    use tauri_plugin_global_shortcut::{GlobalShortcutExt as _, ShortcutState};
+    use tauri_plugin_global_shortcut::GlobalShortcutExt as _;
 
+    #[cfg(target_os = "macos")]
+    watch_layout(app);
     let old = with_state(|held| held.held.get(&which).cloned());
     if old.is_some() && old == key {
         return old;
@@ -121,25 +123,69 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
     if let Some(old) = with_state(|held| held.placed.remove(&which)) {
         let _ = app.global_shortcut().unregister(old.as_str());
     }
-    let now = key.filter(|key| {
-        let placed = placed_here(key);
-        let held = plugin_added(app)
-            && app
-                .global_shortcut()
-                .on_shortcut(placed.as_str(), move |app, _, event| {
-                    if event.state == ShortcutState::Pressed {
-                        pressed(app, which, None);
-                    }
-                })
-                .is_ok();
-        if held {
-            with_state(|state| state.placed.insert(which, placed));
-        }
-        held
-    });
+    let now = key.filter(|key| put(app, which, placed_here(key)));
     with_state(|held| settled(held, which, asked, now.clone()));
     told_page(app);
     now
+}
+fn put(app: &AppHandle, which: Which, placed: String) -> bool {
+    use tauri_plugin_global_shortcut::{GlobalShortcutExt as _, ShortcutState};
+
+    let held = plugin_added(app)
+        && app
+            .global_shortcut()
+            .on_shortcut(placed.as_str(), move |app, _, event| {
+                if event.state == ShortcutState::Pressed {
+                    pressed(app, which, None);
+                }
+            })
+            .is_ok();
+    if held {
+        with_state(|state| state.placed.insert(which, placed));
+    }
+    held
+}
+#[cfg(any(target_os = "macos", test))]
+fn moved(state: &State, place: impl Fn(&str) -> String) -> Vec<(Which, String, String)> {
+    state
+        .held
+        .iter()
+        .filter_map(|(which, key)| {
+            let old = state.placed.get(which)?;
+            let new = place(key);
+            (new != *old).then(|| (*which, old.clone(), new))
+        })
+        .collect()
+}
+#[cfg(target_os = "macos")]
+fn watch_layout(app: &AppHandle) {
+    use tauri::Manager as _;
+
+    static APP: OnceLock<AppHandle> = OnceLock::new();
+    if APP.set(app.clone()).is_ok() {
+        layout::watch(|| {
+            if let Some(app) = APP.get() {
+                let _ = app.run_on_main_thread(|| {
+                    if let Some(app) = APP.get() {
+                        layout_changed(app);
+                    }
+                });
+            }
+        });
+    }
+}
+#[cfg(target_os = "macos")]
+fn layout_changed(app: &AppHandle) {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt as _;
+
+    for (which, old, new) in with_state(|state| moved(state, placed_here)) {
+        let _ = app.global_shortcut().unregister(old.as_str());
+        with_state(|state| state.placed.remove(&which));
+        if !put(app, which, new) {
+            with_state(|state| settled(state, which, true, None));
+        }
+    }
+    told_page(app);
 }
 fn placed_here(key: &str) -> String {
     #[cfg(target_os = "macos")]
@@ -342,6 +388,53 @@ mod tests {
         settled(&mut state, Which::QuickAdd, false, None);
         assert!(state.refused.is_empty());
         assert!(state.held.is_empty());
+    }
+    #[test]
+    fn a_new_layout_moves_only_the_keys_it_types_elsewhere() {
+        let mut state = State {
+            wanted: BTreeMap::new(),
+            held: BTreeMap::new(),
+            placed: BTreeMap::new(),
+            refused: BTreeSet::new(),
+            reach: None,
+            change: false,
+        };
+        state.held.insert(Which::QuickAdd, "Control+Alt+T".to_owned());
+        state.placed.insert(Which::QuickAdd, "Control+Alt+T".to_owned());
+        state.held.insert(Which::StopAgents, "Control+Alt+Space".to_owned());
+        state.placed.insert(Which::StopAgents, "Control+Alt+Space".to_owned());
+        let colemak = |key: &str| key.replace("+T", "+KeyF");
+        assert_eq!(
+            moved(&state, colemak),
+            [(Which::QuickAdd, "Control+Alt+T".to_owned(), "Control+Alt+KeyF".to_owned())]
+        );
+        state.placed.insert(Which::QuickAdd, "Control+Alt+KeyF".to_owned());
+        assert!(moved(&state, colemak).is_empty());
+        assert_eq!(
+            moved(&state, str::to_owned),
+            [(Which::QuickAdd, "Control+Alt+KeyF".to_owned(), "Control+Alt+T".to_owned())]
+        );
+    }
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_layout_without_latin_letters_holds_a_key_where_its_letter_sits_on_a_us_board() {
+        use global_hotkey::hotkey::Code;
+        use global_hotkey::x11_place::keycode_in;
+
+        let cyrillic: Vec<u32> =
+            (8..=255_u32).flat_map(|code| [0x6c0 + code % 32, 0x6e0 + code % 32]).collect();
+        assert_eq!(keycode_in(&cyrillic, 2, 8, 0x54, Code::KeyT), Some(28));
+        assert_eq!(keycode_in(&cyrillic, 2, 8, 0x4b, Code::KeyK), Some(45));
+        let mut colemak = cyrillic.clone();
+        colemak[(41 - 8) * 2] = 0x74;
+        colemak[(41 - 8) * 2 + 1] = 0x54;
+        assert_eq!(keycode_in(&colemak, 2, 8, 0x54, Code::KeyT), Some(41));
+        let mut us_and_cyrillic: Vec<u32> =
+            (8..=255_u32).flat_map(|code| [0, 0, 0x6c0 + code % 32, 0x6e0 + code % 32]).collect();
+        us_and_cyrillic[(28 - 8) * 4] = 0x74;
+        us_and_cyrillic[(28 - 8) * 4 + 1] = 0x54;
+        assert_eq!(keycode_in(&us_and_cyrillic, 4, 8, 0x54, Code::KeyT), Some(28));
+        assert_eq!(keycode_in(&cyrillic, 2, 8, 0xffc2, Code::F5), None);
     }
     #[test]
     fn the_page_knows_each_key_by_the_registry_id() {
