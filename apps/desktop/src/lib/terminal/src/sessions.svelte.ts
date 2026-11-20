@@ -565,8 +565,12 @@ class Session {
   }
   show(on: boolean, focus: boolean) {
     this.hidden = !on
-    if (!on) this.term.blur()
-    else if (focus) this.focus()
+    if (on && focus) this.focus()
+    else if (!on && this.host.contains(document.activeElement)) requestAnimationFrame(() => this.letGo())
+  }
+  private letGo() {
+    const at = document.activeElement
+    if (this.hidden && at instanceof HTMLElement && this.host.contains(at)) at.blur()
   }
   fit() {
     if (!this.drawn || this.replaying || !this.host.isConnected) return
@@ -1095,6 +1099,7 @@ class Session {
     event.stopPropagation()
   }
   private pressed(event: KeyboardEvent): boolean {
+    if (this.hidden) return false
     if (event.type !== 'keydown') return true
     const command = commandOf(event)
     let route = routeKey(event, shortcuts.platform, command, shortcuts.pressed('edit.find', event))

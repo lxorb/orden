@@ -101,3 +101,30 @@ test('a screen shown again does not answer the questions in it to the shell, and
   await vi.waitFor(() => expect(written.join('')).toContain('TURNMARK'))
   expect(written.join('')).toBe('$env:TURNMARK\r')
 })
+test('a terminal put behind that does not hold the keyboard is left alone, and one that does lets it go (#2290)', async () => {
+  const tab = workspace.openUnsaved('terminal', JSON.stringify({ shell: 'bash', folder: null, key: 'k4' }), 'Behind')
+  const session = sessionOf(tab)
+  const place = document.createElement('div')
+  document.body.append(place)
+  await session.attach(place, false)
+  const term = (session as unknown as { term: { blur(): void } }).term
+  const blurs = vi.spyOn(term, 'blur')
+  const away = document.createElement('input')
+  document.body.append(away)
+  away.focus()
+  session.show(false, false)
+  expect(blurs).not.toHaveBeenCalled()
+  expect(document.activeElement).toBe(away)
+  session.show(true, false)
+  const inside = place.querySelector<HTMLElement>('textarea') ?? place.appendChild(document.createElement('textarea'))
+  inside.focus()
+  session.show(false, false)
+  expect(
+    (session as unknown as { pressed(event: KeyboardEvent): boolean }).pressed(
+      new KeyboardEvent('keydown', { key: 'a' }),
+    ),
+  ).toBe(false)
+  await new Promise((done) => requestAnimationFrame(done))
+  expect(place.contains(document.activeElement)).toBe(false)
+  away.remove()
+})
