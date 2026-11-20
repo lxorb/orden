@@ -59,6 +59,16 @@ fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
     }
     grant
 }
+impl Mode {
+    fn word(self) -> &'static str {
+        match self {
+            Mode::Approve => "approve",
+            Mode::Auto => "auto",
+            Mode::Full => "full",
+            Mode::Plan => "plan",
+        }
+    }
+}
 fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     match mode {
         Mode::Approve => {
@@ -68,6 +78,7 @@ fn supervised(mut grant: Grant, mode: Mode) -> Grant {
         Mode::Full => grant = grant.with_full_permissions(),
         Mode::Auto | Mode::Plan => {}
     }
+    grant.chat_mode = Some(mode.word().to_owned());
     grant
 }
 pub fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
@@ -547,7 +558,7 @@ mod tests {
         let mut stored = grant();
         stored.asks.insert(Category::Deleting, false);
         let auto = supervised(stored.clone(), Mode::Auto);
-        assert_eq!(auto, stored);
+        assert_eq!(Grant { chat_mode: None, ..auto.clone() }, stored);
         assert_eq!(auto.mode, GrantMode::Unsupervised);
         for category in ASKED {
             assert_eq!(auto.asks(category), category != Category::Deleting, "{category:?}");
@@ -571,13 +582,36 @@ mod tests {
     #[test]
     fn a_mode_is_laid_over_a_call_as_the_grant_says() {
         let stored = grant();
-        assert_eq!(supervised(stored.clone(), Mode::Plan), stored);
+        let plan = supervised(stored.clone(), Mode::Plan);
+        assert_eq!(plan.chat_mode.as_deref(), Some("plan"));
+        assert_eq!(Grant { chat_mode: None, ..plan }, stored);
         let laid = grant();
         assert_eq!(laid.mode, GrantMode::Unsupervised);
         assert!(laid.asks.is_empty());
         assert_eq!(CONTEXT, "get_context");
         assert!(made("orden-a".into(), "Orden A", &builtin(true)).holds(Scope::BrowserReader));
         assert!(!made("orden-a".into(), "Orden A", &builtin(false)).holds(Scope::BrowserReader));
+    }
+    #[test]
+    fn a_lent_caller_tells_the_window_the_mode_of_its_chat() {
+        for (mode, word) in [
+            (Mode::Approve, "approve"),
+            (Mode::Auto, "auto"),
+            (Mode::Full, "full"),
+            (Mode::Plan, "plan"),
+        ] {
+            let told = Caller::Agent(Box::new(supervised(grant(), mode))).told().expect("told");
+            assert_eq!(told["chat_mode"], word, "{mode:?}");
+            let read: Mode = serde_json::from_value(told["chat_mode"].clone()).expect("a mode");
+            assert_eq!(read, mode);
+            let threaded = Caller::Agent(Box::new(supervised(grant(), mode)))
+                .in_thread(Some("thread-1".into()))
+                .told()
+                .expect("told");
+            assert_eq!(threaded["chat_mode"], word, "{mode:?}");
+        }
+        let plain = Caller::Agent(Box::new(grant())).told().expect("told");
+        assert!(plain.get("chat_mode").is_none());
     }
     #[test]
     fn a_provider_id_that_is_not_one_makes_no_grant() {
