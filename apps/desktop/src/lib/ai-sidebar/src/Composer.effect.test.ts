@@ -107,6 +107,16 @@ test('two chips of one name are both drawn', () => {
   expect(() => composer()).not.toThrow()
   expect(target.querySelectorAll('.chip .name')).toHaveLength(2)
 })
+test('a chip names a file without Orden’s own ending, and keeps a real file’s (#2310)', () => {
+  panel.chips = [
+    { kind: 'note', id: 'Plans/Board.canvas', label: 'Plans/Board.canvas' },
+    { kind: 'words', id: 'Papers/Report.pdf', label: 'Report.pdf', text: 'words' },
+  ]
+  composer()
+  const chips = [...target.querySelectorAll<HTMLElement>('.chips > .chip:not(.implicit)')]
+  expect(chips.map((one) => one.querySelector('.name')?.textContent)).toEqual(['Plans/Board', 'Report.pdf'])
+  expect(chips.map((one) => one.title)).toEqual(['Plans/Board', 'Report.pdf'])
+})
 test('a chat of another space picked with @ keeps its space', async () => {
   panel.heads = [{ id: 'garden', title: 'Garden', space: 'home', updated: 1, archived: false }]
   panel.text = '@Gar'

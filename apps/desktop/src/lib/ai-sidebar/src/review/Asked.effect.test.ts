@@ -42,3 +42,24 @@ test('a write asked in a thread of another space shows the note of the thread’
   void unmount(shown)
   target.remove()
 })
+test('the note a write asks about is named without its ending (#2310)', async () => {
+  const target = document.createElement('div')
+  document.body.append(target)
+  const shown = mount(Asked, {
+    target,
+    props: {
+      part: {
+        kind: 'tool',
+        id: 'w',
+        verb: 'write_note',
+        args: { path: 'Diary', content: 'new words' },
+        state: 'asking',
+      } as never,
+      thread: { space: 'home' } as never,
+    },
+  })
+  await settle()
+  expect(target.querySelector('.name')?.textContent).toBe('Diary')
+  void unmount(shown)
+  target.remove()
+})

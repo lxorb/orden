@@ -53,3 +53,17 @@ test('an answer is not drawn again when another tab comes to the front', () => {
   void unmount(shown)
   target.remove()
 })
+test('a source says its place without Orden’s own ending (#2310)', () => {
+  const turn = { id: 't2', role: 'model', parts: [{ kind: 'text', text: 'As the board says [1].' }] }
+  const target = document.createElement('div')
+  document.body.append(target)
+  const sources = [{ path: 'Plans/Board.canvas', name: 'Board', line: 1 }]
+  const shown = mount(Reply, {
+    target,
+    props: { turn: turn as never, sources: sources as never, last: true, live: false },
+  })
+  flushSync()
+  expect(target.querySelector<HTMLElement>('.source')?.title).toBe('Plans/Board')
+  void unmount(shown)
+  target.remove()
+})
