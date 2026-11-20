@@ -802,6 +802,9 @@
       {/await}
     {/if}
   </aside>
+  {#if peek}
+    <div class="reach" data-covers aria-hidden="true"></div>
+  {/if}
 </div>
 
 <style>
@@ -854,6 +857,12 @@
   }
   .column.shut.floating.peek aside {
     transform: none;
+  }
+  .reach {
+    position: absolute;
+    inset-block: var(--card-inset);
+    inset-inline-start: 0;
+    width: var(--card-inset);
   }
   .column.moving,
   .column.shut {

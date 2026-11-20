@@ -295,6 +295,24 @@ describe('a shut side', () => {
     expect(aside()).toContain('data-covers')
     edgePeek.out = false
   })
+  test('the window’s edge that keeps the peek out is cut from a web page too, so the pointer resting there stays on the app', async () => {
+    const { edgePeek } = await import('../../ui-kit/src/api')
+    const { readFileSync } = await import('node:fs')
+    open('# Head\n')
+    workspace.panel = 'tree'
+    workspace.closePanel()
+    const reach = () =>
+      /<div class="reach[^"]*"[^>]*>/.exec(render(Sidebar, { props: { side: 'left' as const } }).body)?.[0]
+    expect(reach()).toBeUndefined()
+    edgePeek.out = true
+    expect(reach()).toContain('data-covers')
+    edgePeek.out = false
+    const css = readFileSync(new URL('./Sidebar.svelte', import.meta.url), 'utf8')
+    const rule = /\.reach \{([^}]*)\}/.exec(css)?.[1] ?? ''
+    expect(rule).toContain('inset-inline-start: 0;')
+    expect(rule).toContain('width: var(--card-inset);')
+    expect(/\.column\.shut\.floating aside \{[^}]*inset-inline-start: var\(--card-inset\);/.test(css)).toBe(true)
+  })
   test('and an open one is the same column, open and reachable', () => {
     open('# Head\n')
     const html = drawn('tree')
