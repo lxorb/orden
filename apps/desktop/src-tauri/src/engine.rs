@@ -41,7 +41,9 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         engine = engine.disable_features([LOAD_EXTENSION_OFF]);
     }
     if let Some(root) = cef_root() {
-        if root.parent().is_some_and(crate::engine::windowless::windowless_wanted) {
+        if root.parent().is_some_and(|config| {
+            windowless_on(crate::engine::windowless::windowless_wanted(config), config)
+        }) {
             engine = engine.with_settings(|settings| settings.windowless_rendering_enabled = 1);
         }
         if root.parent().is_some_and(|config| !orden_system::gpu::accelerated(config)) {
@@ -67,6 +69,9 @@ pub(crate) fn try_browser_pipe() {
             Err(error) => eprintln!("browser pipe: error {error}"),
         }
     });
+}
+fn windowless_on(agents: bool, config: &std::path::Path) -> bool {
+    agents || orden_web::inside::wanted(config)
 }
 fn from_run(name: &str) -> Option<String> {
     orden_web_engine::from_run(cfg!(debug_assertions), name)
@@ -242,6 +247,12 @@ pub(crate) mod windowless;
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn pages_drawn_inside_orden_turn_windowless_rendering_on() {
+        let config = tempfile::tempdir().expect("a config folder");
+        std::fs::write(config.path().join(orden_web::inside::FILE), "1\n").expect("the choice");
+        assert!(super::windowless_on(false, config.path()));
+    }
     #[test]
     fn a_new_window_is_handed_only_to_a_page_still_open() {
         let sources = [
