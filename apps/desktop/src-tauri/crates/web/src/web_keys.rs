@@ -412,6 +412,7 @@ pub fn focus_in(_pages: &[u32]) -> Option<u32> {
 mod grabbed {
     use orden_base::Held as _;
     use std::collections::HashMap;
+    use std::sync::atomic::{AtomicU8, Ordering};
     use std::sync::{Arc, Mutex, OnceLock};
 
     use tauri::{AppHandle, Emitter, Manager};
@@ -466,6 +467,8 @@ mod grabbed {
         x: RustConnection,
         root: Window,
         raw: bool,
+        pointer: u16,
+        group: AtomicU8,
         pages: Mutex<HashMap<u32, String>>,
         map: Mutex<Map>,
     }
@@ -475,18 +478,54 @@ mod grabbed {
         per: usize,
         syms: Vec<Keysym>,
     }
+    const COLUMNS: [usize; 4] = [0, 2, 6, 8];
+    fn placed(code: Keycode) -> Option<Keysym> {
+        const ROWS: [(Keycode, &[u8]); 4] =
+            [(10, b"1234567890"), (24, b"qwertyuiop"), (38, b"asdfghjkl"), (52, b"zxcvbnm")];
+        ROWS.iter().find_map(|&(first, keys)| {
+            keys.get(usize::from(code.checked_sub(first)?)).map(|one| Keysym::from(*one))
+        })
+    }
+    fn foreign(sym: Keysym) -> bool {
+        matches!(
+            sym,
+            0x04A1..=0x04DF
+                | 0x05AC..=0x05F2
+                | 0x06A1..=0x06FF
+                | 0x07A1..=0x07F9
+                | 0x0CDF..=0x0CFA
+                | 0x0DA1..=0x0DF9
+                | 0x0EA1..=0x0EFA
+        ) || sym
+            .checked_sub(0x0100_0000)
+            .and_then(char::from_u32)
+            .is_some_and(|one| u32::from(one) >= 0x370 && one.is_alphabetic())
+    }
     impl Map {
-        fn keysym(&self, code: Keycode) -> Option<Keysym> {
+        fn keysym(&self, code: Keycode, group: u8) -> Option<Keysym> {
             let at = usize::from(code.checked_sub(self.first)?) * self.per;
             let row = self.syms.get(at..at + self.per)?;
-            row.iter().copied().find(|sym| vk_of(*sym).is_some())
+            let typed = |group: usize| {
+                let from = *COLUMNS.get(group)?;
+                let syms = row.get(from..row.len().min(from + 2))?;
+                syms.iter().any(|sym| *sym != 0).then_some(syms)
+            };
+            let syms = typed(usize::from(group)).or_else(|| typed(0))?;
+            syms.iter()
+                .copied()
+                .find(|sym| vk_of(*sym).is_some())
+                .or_else(|| syms.iter().any(|sym| foreign(*sym)).then(|| placed(code)).flatten())
         }
-        fn keycodes(&self, sym: Keysym) -> Vec<Keycode> {
+        fn keycodes(&self, sym: Keysym, group: u8) -> Vec<Keycode> {
             (0..self.syms.len() / self.per.max(1))
                 .filter_map(|code| Keycode::try_from(code).ok()?.checked_add(self.first))
-                .filter(|code| self.keysym(*code) == Some(sym))
+                .filter(|code| self.keysym(*code, group) == Some(sym))
                 .collect()
         }
+    }
+    fn locks(group: u8) -> Vec<u16> {
+        let shifted = if group == 0 { &[0][..] } else { &[0, 0x80][..] };
+        shifted.iter().flat_map(|one| LOCKS.map(|lock| lock | one)).collect()
     }
     static GRABS: OnceLock<Option<Arc<Grabs>>> = OnceLock::new();
     impl Grabs {
@@ -507,10 +546,11 @@ mod grabbed {
         fn grab(&self, page: u32) {
             let _ = self.x.ungrab_key(Grab::ANY, page, ModMask::ANY);
             let holder = self.pages.held().get(&page).cloned().unwrap_or_default();
+            let group = self.group.load(Ordering::Relaxed);
             let map = self.map.held();
             for (sym, mask) in chords(&app_chords(&holder)) {
-                for code in map.keycodes(sym) {
-                    for lock in LOCKS {
+                for code in map.keycodes(sym, group) {
+                    for lock in locks(group) {
                         let _ = self.x.grab_key(
                             false,
                             page,
@@ -527,6 +567,20 @@ mod grabbed {
         }
         fn pages(&self) -> Vec<u32> {
             self.pages.held().keys().copied().collect()
+        }
+        fn followed(&self) -> u8 {
+            let now = self
+                .x
+                .xinput_xi_query_pointer(self.root, self.pointer)
+                .ok()
+                .and_then(|cookie| cookie.reply().ok())
+                .map_or(0, |said| said.group.effective & 3);
+            if self.group.swap(now, Ordering::Relaxed) != now {
+                for page in self.pages() {
+                    self.grab(page);
+                }
+            }
+            now
         }
         fn focused(&self, pages: &[u32]) -> Option<u32> {
             let mut at = self.x.get_input_focus().ok()?.reply().ok()?.focus;
@@ -552,7 +606,8 @@ mod grabbed {
             let Ok(code) = Keycode::try_from(key.detail) else {
                 return;
             };
-            let sym = self.map.held().keysym(code);
+            let group = self.followed();
+            let sym = self.map.held().keysym(code, group);
             let Some(vk) = sym.and_then(vk_of) else {
                 return;
             };
@@ -613,7 +668,7 @@ mod grabbed {
                     _ => continue,
                 };
                 let holder = self.pages.held().get(&window).cloned();
-                let sym = self.map.held().keysym(code);
+                let sym = self.map.held().keysym(code, self.group.load(Ordering::Relaxed));
                 let (Some(holder), Some(vk)) = (holder, sym.and_then(vk_of)) else {
                     continue;
                 };
@@ -658,14 +713,22 @@ mod grabbed {
                     .ok()?;
                 let root = x.setup().roots.first()?.root;
                 let raw = raw_keys(&x, root);
+                let pointer = x
+                    .xinput_xi_get_client_pointer(x11rb::NONE)
+                    .ok()
+                    .and_then(|cookie| cookie.reply().ok())
+                    .map_or(0, |said| said.deviceid);
                 let grabs = Arc::new(Grabs {
                     x,
                     root,
                     raw,
+                    pointer,
+                    group: AtomicU8::new(0),
                     pages: Mutex::new(HashMap::new()),
                     map: Mutex::new(Map::default()),
                 });
                 grabs.read_map();
+                grabs.followed();
                 let (hearing, app) = (grabs.clone(), app.clone());
                 std::thread::Builder::new()
                     .name("web keys".into())
@@ -716,7 +779,7 @@ mod grabbed {
     }
     #[cfg(test)]
     mod tests {
-        use super::{chords, Map};
+        use super::{chords, Keycode, Keysym, Map};
         use crate::web_keys::{Asked, Chord};
 
         #[test]
@@ -735,10 +798,97 @@ mod grabbed {
         #[test]
         fn a_digit_under_shift_is_still_the_key_s() {
             let map = Map { first: 10, per: 2, syms: vec![0x26, 0x31, 0xE9, 0x32, 0x61, 0x41] };
-            assert_eq!(map.keycodes(0x31), vec![10]);
-            assert_eq!(map.keysym(10), Some(0x31));
-            assert_eq!(map.keycodes(0x61), vec![12]);
-            assert_eq!(map.keysym(12), Some(0x61));
+            assert_eq!(map.keycodes(0x31, 0), vec![10]);
+            assert_eq!(map.keysym(10, 0), Some(0x31));
+            assert_eq!(map.keycodes(0x61, 0), vec![12]);
+            assert_eq!(map.keysym(12, 0), Some(0x61));
+        }
+        const QWERTY: [&str; 4] = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm"];
+        const LAYOUTS: [(&str, [&str; 4]); 6] = [
+            ("QWERTY", QWERTY),
+            ("Colemak", ["1234567890", "qwfpgjluy;", "arstdhneio", "zxcvbkm"]),
+            ("Dvorak", ["1234567890", "',.pyfgcrl", "aoeuidhtns", ";qjkxbm"]),
+            ("AZERTY", ["&é\"'(-è_çà", "azertyuiop", "qsdfghjklm", "wxcvbn,"]),
+            ("QWERTZ", ["1234567890", "qwertzuiop", "asdfghjkl", "yxcvbnm"]),
+            ("Cyrillic", ["1234567890", "йцукенгшщз", "фывапролд", "ячсмить"]),
+        ];
+        fn sym_of(one: char) -> Keysym {
+            if one.is_ascii() {
+                Keysym::from(one)
+            } else {
+                0x0100_0000 + Keysym::from(one)
+            }
+        }
+        fn laid(groups: &[[&str; 4]]) -> Map {
+            let per = 2 * groups.len();
+            let mut syms = vec![0; 56 * per];
+            for (group, rows) in groups.iter().enumerate() {
+                for (row, first) in rows.iter().zip([10usize, 24, 38, 52]) {
+                    for (at, one) in row.chars().enumerate() {
+                        let code = first + at - 8;
+                        let shifted = if first == 10 {
+                            sym_of(QWERTY[0].chars().nth(at).unwrap_or(one))
+                        } else {
+                            sym_of(one.to_ascii_uppercase())
+                        };
+                        syms[code * per + 2 * group] = sym_of(one);
+                        syms[code * per + 2 * group + 1] = shifted;
+                    }
+                }
+            }
+            Map { first: 8, per, syms }
+        }
+        fn typing(rows: &[&str; 4], letter: char) -> Option<Keycode> {
+            rows.iter().zip([10u8, 24, 38, 52]).find_map(|(row, first)| {
+                row.chars()
+                    .position(|one| one == letter)
+                    .map(|at| first + u8::try_from(at).unwrap_or(0))
+            })
+        }
+        #[test]
+        fn a_chord_is_the_key_the_layout_names_and_only_that_key_on_every_layout() {
+            for (name, rows) in LAYOUTS {
+                for (map, group) in
+                    [(laid(&[rows]), 0), (laid(&[QWERTY, rows]), 1), (laid(&[rows, QWERTY]), 0)]
+                {
+                    for letter in "abcdefghijklmnopqrstuvwxyz0123456789".chars() {
+                        let sym = sym_of(letter);
+                        let own = typing(&rows, letter);
+                        let latin =
+                            rows.iter().any(|row| row.chars().any(|one| one.is_ascii_alphabetic()));
+                        let wanted = match own {
+                            _ if letter.is_ascii_digit() => {
+                                vec![typing(&QWERTY, letter).expect("a QWERTY key")]
+                            }
+                            Some(code) => vec![code],
+                            None if latin => vec![],
+                            None => vec![typing(&QWERTY, letter).expect("a QWERTY key")],
+                        };
+                        assert_eq!(
+                            map.keycodes(sym, group),
+                            wanted,
+                            "{name} group {group}: {letter}"
+                        );
+                    }
+                }
+            }
+        }
+        #[test]
+        fn colemak_s_t_and_f_keys_are_each_one_chord() {
+            let (f, t) = (sym_of('f'), sym_of('t'));
+            for (map, group) in [(laid(&[LAYOUTS[1].1]), 0), (laid(&[QWERTY, LAYOUTS[1].1]), 1)] {
+                assert_eq!(map.keysym(26, group), Some(f));
+                assert_eq!(map.keysym(41, group), Some(t));
+                assert_eq!(map.keycodes(f, group), vec![26]);
+                assert_eq!(map.keycodes(t, group), vec![41]);
+            }
+            let both = laid(&[QWERTY, LAYOUTS[1].1]);
+            assert_eq!(both.keycodes(t, 0), vec![28]);
+        }
+        #[test]
+        fn another_group_is_grabbed_with_the_modifier_it_wears() {
+            assert_eq!(super::locks(0), vec![0, 0x02, 0x10, 0x12]);
+            assert_eq!(super::locks(1), vec![0, 0x02, 0x10, 0x12, 0x80, 0x82, 0x90, 0x92]);
         }
     }
 }
