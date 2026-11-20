@@ -13,7 +13,8 @@ import {
   WRITTEN_HEADER,
 } from '../../../sync-server/src/api'
 import { subprotocol, tokenOf, tokenProtocolOf } from '@orden/rooms'
-import { ROOM_V2_NAMES } from '@orden/sync-core'
+import { deviceOffered, ROOM_V2_NAMES } from '@orden/sync-core'
+import { boundDevice } from '../hub/devices'
 import { SIGNED_IN_AS } from './access'
 import { isChatPointer, noteKind } from './kind'
 import type { Ingested } from './room'
@@ -42,8 +43,7 @@ reached as (
 )
 select (select coalesce(user_id, guest_id) from me) as who,
        (select guest_id from me) as guest,
-       (select d.id from me join devices d on d.session_id = me.session_id
-           and d.user_id = me.user_id and d.revoked_at is null limit 1) as bound,
+       (select ${boundDevice('me.session_id', 'me.user_id', '?4')} from me) as bound,
        (select space_id from reached) as space_id,
        (select path from reached) as path,
        (select epoch from reached) as epoch,
@@ -80,16 +80,18 @@ rooms.get('/:noteId', async (context) => {
   const token = tokenOf(offered)
   const noteId = context.req.param('noteId')
   const hash = await sha256(token ?? '')
-  const allowed = await context.env.DB.prepare(ALLOWED).bind(hash, now(), noteId).first<{
-    who: string | null
-    guest: string | null
-    bound: string | null
-    space_id: string | null
-    path: string | null
-    epoch: number | null
-    kind: string | null
-    role: string | null
-  }>()
+  const allowed = await context.env.DB.prepare(ALLOWED)
+    .bind(hash, now(), noteId, deviceOffered(offered)?.device ?? '')
+    .first<{
+      who: string | null
+      guest: string | null
+      bound: string | null
+      space_id: string | null
+      path: string | null
+      epoch: number | null
+      kind: string | null
+      role: string | null
+    }>()
   if (!allowed?.who) return context.json({ error: SIGN_IN }, 401)
   if (!allowed.space_id) return context.json({ error: NO_SUCH_NOTE }, 404)
   if (isChatPointer(allowed.path ?? '')) return context.json({ error: NO_SUCH_NOTE }, 404)

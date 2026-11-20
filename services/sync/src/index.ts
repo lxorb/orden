@@ -120,7 +120,7 @@ const appOrigins = cors({
     isOwnOrigin(context.env, origin)
       ? origin
       : '',
-  allowHeaders: ['authorization', 'content-type', ...SAID(['device', 'diagram'])],
+  allowHeaders: ['authorization', 'content-type', ...SAID(['device', 'device-id', 'diagram'])],
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   maxAge: 86400,
 })

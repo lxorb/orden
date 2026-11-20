@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { feedPage } from '../src/sync2/feed'
 import { applyOps } from '../src/sync2/ops'
 import { prepareSpace } from '../src/sync2/prepare'
+import { deviceOfSession } from '../src/hub/devices'
 import { reachedSpace } from '../src/spaces/space'
 import { MOST_IN_A_SPACE, NO_SEAT_LEFT, roomForASeat, seatsUsed } from '../src/spaces/share'
 import { isIcon, readIcons } from '../src/spaces/icons'
@@ -197,5 +198,35 @@ describe('who manages a space', () => {
     user('u-note', 'note@example.com')
     member('note@example.com', 'write', 1, 'n-1')
     expect(await reach('u-note', 'note@example.com')).toBeNull()
+  })
+})
+describe('the device a write is from', () => {
+  const sha256 = async (text: string) =>
+    [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))]
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+  test('is the one the request names when its session holds it, else one the session holds', async () => {
+    const hash = await sha256('token-1')
+    env.db
+      .prepare('insert into sessions (id, user_id, token_hash, created_at, expires_at) values (?, ?, ?, 1, ?)')
+      .run('s-1', USER, hash, Date.now() + 60_000)
+    env.db
+      .prepare('insert into sessions (id, user_id, token_hash, created_at, expires_at) values (?, ?, ?, 1, ?)')
+      .run('s-2', USER, await sha256('token-2'), Date.now() + 60_000)
+    const device = (id: string, session: string) =>
+      env.db
+        .prepare(
+          `insert into devices (id, user_id, session_id, name, platform, app, created_at, last_seen_at)
+           values (?, ?, ?, 'D', 'web', '1', 1, 1)`,
+        )
+        .run(id, USER, session)
+    device('d-a', 's-1')
+    device('d-b', 's-1')
+    device('d-other', 's-2')
+    const of = (asked?: string) => deviceOfSession(env, USER, 'Bearer token-1', asked)
+    expect(await of('d-a')).toBe('d-a')
+    expect(await of('d-b')).toBe('d-b')
+    expect(['d-a', 'd-b']).toContain(await of('d-other'))
+    expect(['d-a', 'd-b']).toContain(await of())
   })
 })
