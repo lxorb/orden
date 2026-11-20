@@ -49,3 +49,15 @@ test('a new chat’s pointer is sent at once, so another device names it even if
   expect(place?.path).toBe('/away/Launch.chat')
   expect(store.pass).toHaveBeenCalledTimes(1)
 })
+test('the chats under a path being deleted are read from the pointers on disk, listed or not (#2321)', async () => {
+  const { chatsUnder } = await import('./pointers')
+  const PLAN = `c_${'1'.repeat(32)}`
+  const TALK = `c_${'2'.repeat(32)}`
+  const files = disk.current?.files ?? new Map<string, string>()
+  files.set('/away/Work/Plan.chat', `{"v":1,"chat":"${PLAN}"}\n`)
+  files.set('/away/Work/Deep/Talk.chat', `{"v":1,"chat":"${TALK}"}\n`)
+  files.set('/away/Work/Notes.md', '# Notes\n')
+  expect(await chatsUnder('/away/Work/Plan.chat')).toEqual([PLAN])
+  expect((await chatsUnder('/away/Work')).sort()).toEqual([PLAN, TALK])
+  expect(await chatsUnder('/away/Work/Notes.md')).toEqual([])
+})

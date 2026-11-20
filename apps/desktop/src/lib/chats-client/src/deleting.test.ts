@@ -7,6 +7,7 @@ const world = vi.hoisted(() => ({
   asked: [] as { title: string; detail: string | undefined }[],
   list: [] as { id?: string; path: string | null; name: string | null; lastSeq: number }[],
   ended: [] as string[],
+  under: new Map<string, string[]>(),
 }))
 vi.mock('../../ui-kit/src/api', () => ({
   prompt: {
@@ -29,11 +30,17 @@ vi.mock('./http', () => ({
     return Promise.resolve(true)
   },
 }))
-const { mayDelete, pointersGone } = await import('./deleting')
+vi.mock('./pointers', () => ({ chatsUnder: (path: string) => Promise.resolve(world.under.get(path) ?? []) }))
+const { ending, mayDelete } = await import('./deleting')
 beforeEach(() => {
   world.answer = false
   world.asked = []
   world.ended = []
+  world.under = new Map([
+    ['/space/Quiet.chat', ['c_quiet']],
+    ['/space', ['c_plans', 'c_quiet', 'c_trip']],
+    ['/space/New.chat', ['c_new']],
+  ])
   world.list = [
     { id: 'c_plans', path: '/space/Plans.chat', name: 'Plans', lastSeq: 12 },
     { id: 'c_quiet', path: '/space/Quiet.chat', name: 'Quiet', lastSeq: 0 },
@@ -66,21 +73,23 @@ test('every way the sidebar deletes asks through it', () => {
   expect(read('../../sidebar/src/Tree.svelte')).toContain('one.removeAsking(going)')
 })
 describe('a chat deleted here (#2321)', () => {
-  test('is ended on the account once its pointer is gone, so no device lists it again', async () => {
-    expect(await mayDelete(['/space/Quiet.chat'])).toBe(true)
-    pointersGone('/space/Quiet.chat', false)
+  test('is ended on the account once the workspace says its pointer went', async () => {
+    const finish = await ending(['/space/Quiet.chat', '/space/Notes.md'])
+    expect(world.ended).toEqual([])
+    finish()
     expect(world.ended).toEqual(['c_quiet'])
   })
   test('in a folder deleted here, is ended with the folder', async () => {
-    world.answer = true
-    expect(await mayDelete(['/space/Plans.chat', '/space/Trip.chat'])).toBe(true)
-    pointersGone('/space', true)
-    expect(world.ended.sort()).toEqual(['c_plans', 'c_trip'])
+    ;(await ending(['/space']))()
+    expect(world.ended.sort()).toEqual(['c_plans', 'c_quiet', 'c_trip'])
   })
-  test('is not ended when the deleting is called off, nor by a pointer another device deleted', async () => {
-    expect(await mayDelete(['/space/Plans.chat'])).toBe(false)
-    pointersGone('/space/Plans.chat', false)
-    pointersGone('/space/Trip.chat', false)
+  test('just made and not listed yet, is ended by what its pointer says', async () => {
+    ;(await ending(['/space/New.chat']))()
+    expect(world.ended).toEqual(['c_new'])
+  })
+  test('is not ended while the deleting has not happened, nor when nothing of it was a chat', async () => {
+    await ending(['/space/Quiet.chat'])
+    ;(await ending(['/space/Notes.md']))()
     expect(world.ended).toEqual([])
   })
 })
