@@ -819,7 +819,9 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     const target = `/${wanted}`
     const from = normalise(args.from)
     if (from !== target) {
-      await renameNote(args.from, target)
+      if (await holds(target)) throw new Error('something already lives there')
+      keptAway.letGoUnder(from, target)
+      if (await holds(from, true)) await renameNote(from, target, false, false, true)
       await changeTrash((entries) => {
         const gone = entries
           .filter((one) => one.kind === 'space' && one.from === from)
@@ -831,7 +833,7 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     }
     return { name: wanted, path: target }
   },
-  delete_space: ({ path }) => removeFolder(path),
+  delete_space: ({ path }) => removeFolder(path).then(() => keptAway.letGoUnder(path)),
   trash_item: ({ path, kind, alone, arrived }) => trashItem(path, kind, alone === true, arrived === true),
   trash_words: ({ path, content }) => trashWords(path, content),
   list_trash: async () => (await trashEntries()).sort((a, b) => b.trashedAt - a.trashedAt),

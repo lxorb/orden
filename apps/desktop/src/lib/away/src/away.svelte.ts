@@ -79,10 +79,14 @@ class KeptAway {
     if (exact) return [exact]
     return [...this.files.entries()].flatMap(([one, away]) => (one !== base && under(base, one) ? [away] : []))
   }
-  letGoUnder(path: string) {
-    const base = normalise(path)
-    const kept = [...this.files].filter(([one]) => one !== base && !under(base, one))
-    if (kept.length !== this.files.size) this.files = new Map(kept)
+  letGoUnder(from: string, to?: string) {
+    const base = normalise(from)
+    const kept: [string, Away][] = []
+    for (const [one, away] of this.files) {
+      const path = one !== base && !under(base, one) ? one : to && normalise(to) + one.slice(base.length)
+      if (path) kept.push([path, { ...away, path }])
+    }
+    this.files = new Map(kept)
   }
   all(): Away[] {
     return [...this.files.values()]

@@ -1213,6 +1213,43 @@ describe('a note kept away', () => {
     expect(await webInvoke('path_exists', { path: '/Notes' })).toBe(false)
     expect(await webInvoke('list_trash')).toEqual([])
   })
+  test('does not keep its space from being renamed, offline or not, and goes with the space, its words left with the account', async () => {
+    const asked = away({ yes: true }, ['/Notes/Plan.md', '/Other/x.md'])
+    await write('/Notes/Idea.md', 'idea')
+    expect(await webInvoke('rename_space', { from: '/Notes', name: 'Ideas' })).toEqual({
+      name: 'Ideas',
+      path: '/Ideas',
+    })
+    expect(disk.files.get('/Ideas/Idea.md')?.content).toBe('idea')
+    expect(disk.files.has('/Notes/Idea.md')).toBe(false)
+    expect(keptAway.at('/Ideas/Plan.md')).not.toBeNull()
+    expect(keptAway.under('/Notes')).toEqual([])
+    expect(keptAway.at('/Other/x.md')).not.toBeNull()
+    expect((await webInvoke<{ path: string }[]>('list_spaces')).map((one) => one.path)).toEqual(['/Ideas', '/Other'])
+    expect(asked).toEqual([])
+  })
+  test('of a space with nothing else on this device lets the space be renamed all the same', async () => {
+    away({ yes: true }, ['/Notes/Plan.md'])
+    expect(await webInvoke('rename_space', { from: '/Notes', name: 'Ideas' })).toEqual({
+      name: 'Ideas',
+      path: '/Ideas',
+    })
+    expect((await webInvoke<{ path: string }[]>('list_spaces')).map((one) => one.path)).toEqual(['/Ideas'])
+  })
+  test('stays where it was when the space would be renamed onto another', async () => {
+    away({ yes: true }, ['/Notes/Plan.md'])
+    await write('/Ideas/x.md', 'x')
+    await expect(webInvoke('rename_space', { from: '/Notes', name: 'Ideas' })).rejects.toThrow(
+      'something already lives there',
+    )
+    expect(keptAway.at('/Notes/Plan.md')).not.toBeNull()
+  })
+  test('of a deleted space goes with it, so the space is not listed again', async () => {
+    away({ yes: true }, ['/Notes/Plan.md'])
+    await write('/Notes/Idea.md', 'idea')
+    await webInvoke('delete_space', { path: '/Notes' })
+    expect(await webInvoke('list_spaces')).toEqual([])
+  })
   test('is in the link index as the account read it, and by its name before that', async () => {
     await write('/Notes/Idea.md', 'see [[Plan]]')
     keptAway.keep(
