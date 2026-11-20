@@ -1,5 +1,6 @@
 import type { SettingsSectionId } from '@orden/contracts'
 import { connectors } from '../../accounts/src/api'
+import { rootedAt } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 
 class SettingsWindow {
@@ -8,9 +9,18 @@ class SettingsWindow {
   historyOpen = $state(false)
   error = $state<string | null>(null)
   at = $state<'access' | null>(null)
-  space = $state<string | null>(null)
+  private held = $state<{ id: string } | { root: string } | null>(null)
   landsOnField = $state(false)
   asked = $state(0)
+  get space(): string | null {
+    const held = this.held
+    if (held === null || 'root' in held) return held?.root ?? null
+    return workspace.spaces.find((one) => one.id === held.id)?.root ?? null
+  }
+  set space(root: string | null) {
+    const found = root === null ? undefined : rootedAt(workspace.spaces, root)
+    this.held = root === null ? null : found ? { id: found.id } : { root }
+  }
   get open(): boolean {
     return workspace.settingsShown
   }
