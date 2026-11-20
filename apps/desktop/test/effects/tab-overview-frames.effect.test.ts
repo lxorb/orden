@@ -89,11 +89,11 @@ test('the first frame that moves moves by one frame, however long the frame befo
   await drawnNow()
   frame()
   frame(400)
-  const open = Number(document.querySelector<HTMLElement>('.top')?.style.getPropertyValue('--overview-open'))
+  const open = Number(document.querySelector<HTMLElement>('.top')?.style.opacity)
   expect(open).toBeGreaterThan(0)
   expect(open).toBeLessThan(0.3)
 })
-const OWN = new Set(['--overview-slide', '--overview-lift', '--overview-bar'])
+const OWN = new Set(['--overview-bar'])
 test('no frame sets a value that the panes, the sidebars or the windows’ pictures inherit', async () => {
   tabOverview.open = true
   flushSync()
@@ -296,6 +296,23 @@ test('a pointer moving over the ground asks nothing of the page, and asks where 
     floor?.dispatchEvent(new PointerEvent('pointermove', { clientX: 100 + i * 10, clientY: 300, bubbles: true }))
   expect(asked.mock.calls.filter(([one]) => one.includes('data-space-name'))).toEqual([])
   expect(floor?.style.cursor ?? '').toBe('')
+})
+test('a frame of the way out writes no value that every element under it inherits', async () => {
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  const inherited = new Set<string>()
+  for (let i = 0; i < 12; i++) {
+    frame()
+    for (const one of document.querySelectorAll<HTMLElement>('*')) {
+      if (one.querySelectorAll('*').length < 40) continue
+      for (let k = 0; k < one.style.length; k++) {
+        const name = one.style.item(k)
+        if (name.startsWith('--') && name !== '--overview-bar') inherited.add(`${one.className || one.tagName} ${name}`)
+      }
+    }
+  }
+  expect([...inherited]).toEqual([])
 })
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]

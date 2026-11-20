@@ -94,7 +94,7 @@ def toggle(page: Page) -> None:
 def opened(page: Page) -> None:
     toggle(page)
     wait_for(page, "document.querySelector('.canvas')", "the overview")
-    wait_for(page, "Number(document.querySelector('.canvas .top')?.style.getPropertyValue('--overview-open')) >= 0.99", "the overview open")
+    wait_for(page, "Number(document.querySelector('.canvas .top')?.style.opacity) >= 0.99", "the overview open")
     before = None
     for _ in range(40):
         page.wait_for_timeout(150)
