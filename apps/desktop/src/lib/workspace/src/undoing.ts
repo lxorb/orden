@@ -5,9 +5,7 @@ import {
   onDisk,
   folderOf,
   isMarkdownPath,
-  nameOf,
   samePath,
-  shownName,
   within,
   invoke,
   oneWriteAt,
@@ -25,6 +23,7 @@ import { writeFile } from '../../file-writes/src/api'
 import { inFlight, type Kind } from '../../file-ops/src/api'
 import type { Binning, FileAction, FileActions, Kept } from '../../file-undo/src/api'
 import { services } from './services'
+import { retitled } from './title-name'
 
 export interface PutsBack {
   readonly undone: FileActions
@@ -342,9 +341,8 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
 async function titledBack(ws: PutsBack, path: string, renamed: string) {
   const open = ws.documentAt(path)
   const text = open?.text ?? (await invoke<string>('read_note', { path }).catch(() => null))
-  const title = `# ${shownName(nameOf(renamed))}`
-  if (text === null || (text !== title && !text.startsWith(`${title}\n`))) return
-  const back = `# ${shownName(nameOf(path))}${text.slice(title.length)}`
+  const back = text === null ? null : retitled(text, renamed, path)
+  if (back === null) return
   await writeFile(path, back)
   ws.reload(path, back)
 }
