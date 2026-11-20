@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex, PoisonError, RwLock};
 
 use serde::Serialize;
+use serde_json::Value;
 use tauri::{AppHandle, Emitter as _};
 
 mod amo;
@@ -12,6 +13,7 @@ mod fetch;
 mod firefox;
 pub mod library;
 pub mod link;
+mod live;
 mod manifest;
 pub mod popup;
 mod unzip;
@@ -28,6 +30,7 @@ const CHANGED: &str = "orden://extensions";
 static WRITING: Mutex<()> = Mutex::new(());
 static PROBLEMS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 static PENDING: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::default);
+const PATIENCE: std::time::Duration = std::time::Duration::from_secs(20);
 const PREINSTALLED: &str = "ublock-origin-lite";
 const DECIDED: &str = ".preinstalled";
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
@@ -145,6 +148,35 @@ pub fn preinstall(app: &AppHandle) {
         let _ = std::fs::write(&decided, PREINSTALLED);
     });
 }
+fn browser(method: &str, params: Value) -> Result<Value, String> {
+    orden_web::engine::extensions_cdp(method, &params, PATIENCE)
+}
+fn land(cdp: &mut impl FnMut(&str, Value) -> Result<Value, String>, one: &Kept, folder: &Path) {
+    let problem = live::landed(cdp, one, folder);
+    if one.enabled && problem.is_none() {
+        library::ran(folder);
+    }
+    went(&one.id, problem);
+}
+fn turned(
+    cdp: &mut impl FnMut(&str, Value) -> Result<Value, String>,
+    one: Kept,
+    folder: &Path,
+    on: bool,
+) {
+    if on && !library::running(folder) {
+        land(cdp, &Kept { enabled: true, ..one }, folder);
+    } else {
+        went(&one.id, None);
+    }
+}
+fn went(id: &str, problem: Option<String>) {
+    let mut problems = PROBLEMS.held();
+    problems.retain(|(one, _)| one != id);
+    if let Some(why) = problem {
+        problems.push((id.to_owned(), why));
+    }
+}
 fn changed(app: &AppHandle) {
     let _ = app.emit(CHANGED, ());
 }
@@ -239,6 +271,7 @@ fn listed_as(
         one
     };
     let folder = library::folder_of(root, &one.id, &one.version);
+    land(&mut browser, &one, &folder);
     let _ = listed(app);
     changed(app);
     Ok(shown(one, &folder))
@@ -264,7 +297,11 @@ pub async fn extensions_set(
                     }
                 }
                 (Err(why), None) => return Err(why),
-                _ => {}
+                (Err(_), Some(one)) => {
+                    let folder = library::folder_of(&root, &one.id, &one.version);
+                    turned(&mut browser, one, &folder, on);
+                }
+                (Ok(()), None) => {}
             }
         }
         {
@@ -299,10 +336,14 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
         let root = root(&app)?;
         {
             let ours = kept(&app).iter().any(|one| one.id == id && library::ours(&root, one));
-            let done = chromium::remove(&app, &id);
-            if !ours {
-                done?;
+            let done =
+                if ours { live::unload(&mut browser, &id) } else { chromium::remove(&app, &id) };
+            if let Err(why) = done {
+                if !ours || chromium::installed(&app).iter().any(|(one, _)| one.id == id) {
+                    return Err(why);
+                }
             }
+            went(&id, None);
         }
         {
             let _writing = WRITING.held();
@@ -365,6 +406,10 @@ async fn amo_update(app: &AppHandle, one: &Kept) -> Result<bool, String> {
     .map_err(|error| error.to_string())?
 }
 #[tauri::command]
+pub fn extensions_restart(app: AppHandle) {
+    app.restart()
+}
+#[tauri::command]
 pub async fn extensions_page(app: AppHandle, id: String, options: bool) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || page_of(&app, &id, options))
         .await
@@ -391,7 +436,7 @@ mod tests {
 
     use serde_json::{json, Value};
 
-    use super::{merged, shown, Kept, Store, LARGEST};
+    use super::{land, library, merged, shown, turned, went, Kept, Store, LARGEST};
 
     fn kept() -> Kept {
         Kept {
@@ -520,5 +565,76 @@ mod tests {
         let pin = Kept { id: "c".repeat(32), ..kept() };
         let (list, pending) = merged(Vec::new(), &[pin], root, nothing);
         assert!(list.is_empty() && pending.is_empty());
+    }
+    #[test]
+    fn why_chromium_would_not_load_one_shows_on_its_row_until_it_goes() {
+        let folder = tempfile::tempdir().expect("a folder");
+        let id = "e".repeat(32);
+        let one = Kept { id: id.clone(), ..kept() };
+        let why = "Chromium did not load it: Extensions.loadUnpacked: Manifest file is missing";
+        went(&id, Some(why.to_owned()));
+        let said = serde_json::to_value(shown(one.clone(), folder.path())).expect("a row");
+        assert_eq!(said["problem"], why);
+        went(&id, None);
+        let said = serde_json::to_value(shown(one, folder.path())).expect("a row");
+        assert_eq!(said["problem"], Value::Null);
+    }
+    #[test]
+    fn with_no_extensions_page_one_loaded_at_once_runs_and_one_refused_waits_saying_why() {
+        let root = tempfile::tempdir().expect("a folder");
+        let root = root.path();
+        let made = |id: &str| {
+            let one = Kept { id: id.to_owned(), version: "2.0".to_owned(), ..kept() };
+            let folder = root.join(id).join("2.0");
+            fs::create_dir_all(&folder).expect("a folder");
+            fs::write(folder.join("manifest.json"), "{}").expect("a manifest");
+            (one, folder)
+        };
+        let (fine, fine_folder) = made(&"h".repeat(32));
+        let mut loads = |_: &str, _: Value| Ok(json!({ "id": "h".repeat(32) }));
+        land(&mut loads, &fine, &fine_folder);
+        let (refused, refused_folder) = made(&"i".repeat(32));
+        let mut declining =
+            |_: &str, _: Value| Err("Extensions.loadUnpacked: not allowed".to_owned());
+        land(&mut declining, &refused, &refused_folder);
+        let (_, pending) =
+            merged(Vec::new(), &[fine.clone(), refused.clone()], root, library::running);
+        assert!(!pending.contains(&fine.id));
+        assert!(pending.contains(&refused.id));
+        let said = |one: &Kept, folder: &Path| {
+            serde_json::to_value(shown(one.clone(), folder)).expect("a row")["problem"].clone()
+        };
+        assert_eq!(said(&fine, &fine_folder), Value::Null);
+        assert_eq!(
+            said(&refused, &refused_folder),
+            "Chromium did not load it: Extensions.loadUnpacked: not allowed"
+        );
+    }
+    #[test]
+    fn with_no_extensions_page_one_turned_off_keeps_its_settings_and_runs_until_the_next_start() {
+        let root = tempfile::tempdir().expect("a folder");
+        let root = root.path();
+        let one = Kept { id: "j".repeat(32), version: "3.0".to_owned(), ..kept() };
+        let folder = root.join(&one.id).join("3.0");
+        fs::create_dir_all(&folder).expect("a folder");
+        fs::write(folder.join("manifest.json"), "{}").expect("a manifest");
+        let asked = std::cell::RefCell::new(Vec::new());
+        let mut cdp = |method: &str, _: Value| {
+            asked.borrow_mut().push(method.to_owned());
+            Ok(json!({ "id": "j".repeat(32) }))
+        };
+        library::ran(&folder);
+        let off = Kept { enabled: false, ..one.clone() };
+        turned(&mut cdp, off.clone(), &folder, false);
+        let (_, pending) = merged(Vec::new(), std::slice::from_ref(&off), root, library::running);
+        assert!(pending.contains(&off.id));
+        turned(&mut cdp, off, &folder, true);
+        let (_, pending) = merged(Vec::new(), std::slice::from_ref(&one), root, library::running);
+        assert!(pending.is_empty());
+        assert!(asked.borrow().is_empty(), "{asked:?}");
+        library::stopped(&folder);
+        turned(&mut cdp, one.clone(), &folder, true);
+        assert_eq!(*asked.borrow(), ["Extensions.loadUnpacked"]);
+        assert!(library::running(&folder));
     }
 }
