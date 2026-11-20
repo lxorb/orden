@@ -4,6 +4,7 @@ import { emptyCanvas, writeCanvas } from '@orden/markdown/canvas'
 import type { Hand } from '@orden/markdown/plane'
 import { CanvasStore } from '../../canvas/src/api'
 import { rooms } from '../../collab/src/api'
+import { writeBytes } from '../../file-writes/src/api'
 import { invoke, samePath } from '../../platform/src/api'
 import { isDemoCue, originsAt, type DemoCue } from '../../showcase/src/api'
 import { undoToast } from '../../undo-toast/src/api'
@@ -45,7 +46,7 @@ export async function seed(): Promise<void> {
   })
   for (const path of PICTURES) {
     const drawn = await fetch(`/demo/${path.slice(path.lastIndexOf('/') + 1)}`)
-    await invoke('write_bytes', { path: at(path), bytes: new Uint8Array(await drawn.arrayBuffer()) })
+    await writeBytes(at(path), new Uint8Array(await drawn.arrayBuffer()))
   }
 }
 const until = async <T>(found: () => T | null | undefined): Promise<T> => {
