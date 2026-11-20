@@ -8,5 +8,5 @@ function protectionIn(words: readonly string[]): boolean {
   return !words.includes(NO_PROTECTION_WORD) && protection.any
 }
 export function protectionOn(): boolean {
-  return !__EVEN_PLUGIN__ && protectionIn(hiddenKinds.hidden)
+  return protectionIn(hiddenKinds.hidden)
 }

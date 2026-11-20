@@ -21,7 +21,7 @@ export function showProfile(id: string, from: Element, space: string | null = nu
     space,
     at: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
   }
-  if (mounted || __EVEN_PLUGIN__) return
+  if (mounted) return
   mounted = true
   void import('./ProfileCard.svelte').then((one) => mount(one.default, { target: document.body }))
 }
