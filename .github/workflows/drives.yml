@@ -9,6 +9,14 @@ on:
         description: 'Only the drives whose name holds one of these words, comma separated'
         required: false
         default: ''
+      native:
+        description: 'Also run the drives of a Windows probe build, as the nightly run does'
+        type: boolean
+        default: false
+      report:
+        description: 'Say a failure on #2306, as the nightly run does'
+        type: boolean
+        default: false
 
 concurrency:
   group: drives
@@ -22,10 +30,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read
+      actions: write
     outputs:
       ref: ${{ steps.which.outputs.ref }}
       go: ${{ steps.which.outputs.go }}
+      nightly: ${{ steps.which.outputs.nightly }}
     steps:
       - id: which
         env:
@@ -33,10 +42,13 @@ jobs:
           EVENT: ${{ github.event_name }}
           REPO: ${{ github.repository }}
           RUN: ${{ github.run_id }}
+          ONLY: ${{ inputs.only }}
         run: |
           if [ "$EVENT" != schedule ]; then
             echo "Dispatched: driving $GITHUB_REF_NAME at $GITHUB_SHA."
-            { echo "ref=$GITHUB_SHA"; echo go=true; } >>"$GITHUB_OUTPUT"
+            nightly=false
+            if [ "$GITHUB_REF_NAME" = unstable ] && [ -z "$ONLY" ]; then nightly=true; fi
+            { echo "ref=$GITHUB_SHA"; echo go=true; echo "nightly=$nightly"; } >>"$GITHUB_OUTPUT"
             exit 0
           fi
           sha=$(gh api "repos/$REPO/commits/unstable" --jq .sha)
@@ -50,7 +62,11 @@ jobs:
             go=false
             echo "::notice::Nothing pushed to unstable since the last night; no drives tonight."
           fi
-          { echo "ref=$sha"; echo "go=$go"; } >>"$GITHUB_OUTPUT"
+          if [ "$go" = true ]; then
+            gh api -X POST "repos/$REPO/actions/workflows/drives.yml/dispatches" -f ref=unstable
+            echo "::notice::Tonight's drives run as a dispatch on unstable, with unstable's own drives.yml."
+          fi
+          { echo "ref=$sha"; echo go=false; echo nightly=false; } >>"$GITHUB_OUTPUT"
 
   drives:
     needs: which
@@ -59,6 +75,8 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 150
+    outputs:
+      failed: ${{ steps.failed.outputs.names }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -85,6 +103,11 @@ jobs:
         run: |
           python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 ${ONLY:+--only "$ONLY"}
 
+      - name: The failed drives
+        id: failed
+        if: always()
+        run: python3 scripts/failed-drives.py >>"$GITHUB_OUTPUT"
+
       - name: The table
         if: always()
         run: |
@@ -99,3 +122,172 @@ jobs:
           path: apps/desktop/test/e2e/shots
           retention-days: 14
           if-no-files-found: ignore
+
+  native:
+    needs: which
+    if: ${{ needs.which.outputs.go == 'true' && (needs.which.outputs.nightly == 'true' || inputs.native) }}
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: so.orden.Orden.probe.drives
+      PYTHONIOENCODING: utf-8
+    outputs:
+      failed: ${{ steps.failed.outputs.names }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ needs.which.outputs.ref }}
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: x86_64-pc-windows-msvc
+
+      - name: The probe
+        run: |
+          printf '{"identifier":"%s","version":"99.0.0","plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}' \
+            "$IDENTIFIER" > probe.json
+          bash scripts/linux-cef.sh tauri build --no-bundle --ignore-version-mismatches --config ../../probe.json
+          bash scripts/cef-beside.sh apps/desktop/src-tauri/target/release
+          echo "ORDEN_PROBE_EXE=$(cygpath -w "$PWD/apps/desktop/src-tauri/target/release/orden.exe")" >>"$GITHUB_ENV"
+          echo "ORDEN_PROBE_IDENTIFIER=$IDENTIFIER" >>"$GITHUB_ENV"
+
+      - name: The drives' tools
+        run: |
+          python -m pip install --quiet playwright pillow mss numpy comtypes
+          python -m playwright install chromium
+
+      - name: The drives that need a probe
+        id: run-all
+        run: python apps/desktop/test/e2e/run-all.py --jobs 1 --retries 1 --only essential-web-data.py,full-window-native.py,launch.py
+
+      - name: The window's look
+        id: appearance-e2e
+        if: ${{ !cancelled() }}
+        run: python scripts/appearance-e2e.py --app "$ORDEN_PROBE_EXE" --identifier "$IDENTIFIER"
+
+      - name: The recorder
+        id: recorder-e2e
+        if: ${{ !cancelled() }}
+        run: python scripts/recorder-e2e.py --app "$ORDEN_PROBE_EXE" --identifier "$IDENTIFIER"
+
+      - name: The failed drives
+        id: failed
+        if: always()
+        env:
+          STEPS: ${{ toJSON(steps) }}
+        run: python scripts/failed-drives.py >>"$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: drives-native
+          path: |
+            apps/desktop/test/e2e/shots
+            target/appearance-e2e
+            target/recorder-e2e
+          retention-days: 14
+          if-no-files-found: ignore
+
+  pair:
+    needs: which
+    if: ${{ needs.which.outputs.go == 'true' && (needs.which.outputs.nightly == 'true' || inputs.native) }}
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONIOENCODING: utf-8
+      SYNCED: so.orden.Orden.probe.sync2280
+      OTHER: so.orden.Orden.probe.capture
+    outputs:
+      failed: ${{ steps.failed.outputs.names }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ needs.which.outputs.ref }}
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: x86_64-pc-windows-msvc
+
+      - name: Two probes, one against a local Worker
+        env:
+          VITE_ORDEN_API: http://127.0.0.1:47280
+        run: |
+          release=apps/desktop/src-tauri/target/release
+          printf '{"identifier":"%s","version":"99.0.0","build":{"beforeBuildCommand":"pnpm build --mode drive"},"bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}' \
+            "$SYNCED" > synced.json
+          bash scripts/linux-cef.sh tauri build --no-bundle --ignore-version-mismatches --config ../../synced.json
+          bash scripts/cef-beside.sh $release
+          mkdir -p "$RUNNER_TEMP/synced"
+          cp -r $release/. "$RUNNER_TEMP/synced/"
+          printf '{"identifier":"%s","version":"99.0.0","plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}' \
+            "$OTHER" > other.json
+          bash scripts/linux-cef.sh tauri build --no-bundle --ignore-version-mismatches --config ../../other.json
+          bash scripts/cef-beside.sh $release
+          echo "SYNCED_EXE=$(cygpath -w "$RUNNER_TEMP/synced/orden.exe")" >>"$GITHUB_ENV"
+          echo "OTHER_EXE=$(cygpath -w "$PWD/$release/orden.exe")" >>"$GITHUB_ENV"
+
+      - name: The drives' tools
+        run: |
+          python -m pip install --quiet playwright pillow mss numpy comtypes
+          python -m playwright install chromium
+
+      - name: Sync between the app and a browser
+        id: sync-latency-drive
+        run: python scripts/sync-latency-drive.py --exe "$SYNCED_EXE" --identifier "$SYNCED" --out sync-latency
+
+      - name: Capture by process
+        id: capture-e2e
+        if: ${{ !cancelled() }}
+        run: python scripts/capture-e2e.py --app "$SYNCED_EXE" --identifier "$SYNCED" --app "$OTHER_EXE" --identifier "$OTHER"
+
+      - name: The failed drives
+        id: failed
+        if: always()
+        env:
+          STEPS: ${{ toJSON(steps) }}
+        run: python scripts/failed-drives.py >>"$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: drives-pair
+          path: |
+            sync-latency
+            target/capture-e2e
+          retention-days: 14
+          if-no-files-found: ignore
+
+  report:
+    needs: [which, drives, native, pair]
+    if: ${{ failure() && needs.which.outputs.go == 'true' && (needs.which.outputs.nightly == 'true' || inputs.report) }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: 2306
+      SHA: ${{ needs.which.outputs.ref }}
+      WEB: ${{ needs.drives.outputs.failed }}
+      NATIVE: ${{ needs.native.outputs.failed }}
+      NATIVE_RESULT: ${{ needs.native.result }}
+      PAIR: ${{ needs.pair.outputs.failed }}
+      PAIR_RESULT: ${{ needs.pair.result }}
+    steps:
+      - name: Say so on the issue that collects failed nights
+        run: |
+          body=$(printf '%s\n\n%s\n%s\n%s\n' \
+            "Drives run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID (attempt $GITHUB_RUN_ATTEMPT) on $GITHUB_REF_NAME at $SHA failed." \
+            "- Browser drives: ${WEB:-none failed}" \
+            "- Probe drives ($NATIVE_RESULT): ${NATIVE:-none failed}" \
+            "- Sync and capture with two probes ($PAIR_RESULT): ${PAIR:-none failed}")
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="$body" --jq .html_url

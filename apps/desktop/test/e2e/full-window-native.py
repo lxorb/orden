@@ -12,7 +12,7 @@ from typing import Any
 from harness import ROOT, Drive, Native, end, identifier_of
 
 NEEDS = ("native",)
-DRIVE = Drive(__file__, served=False)
+DRIVE = Drive(__file__, served=False, known={"the page never came up beside the app's own": "#2314"})
 say, wrong = DRIVE.say, DRIVE.wrong
 SPACE = "Full window"
 PAGE = "A page"
@@ -98,7 +98,8 @@ def drive(_browser: object) -> None:
             site = min(shown, key=lambda one: cursor.area(one[0]))[0]
         time.sleep(0.3)
     if not site:
-        raise SystemExit("the page never came up beside the app's own")
+        wrong("the page never came up beside the app's own")
+        return
     time.sleep(1)
     content = content_of(window, user32)
     before = rect_of(site, user32)

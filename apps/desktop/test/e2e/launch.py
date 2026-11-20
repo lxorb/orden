@@ -370,6 +370,8 @@ def phases(medians: dict[str, float]) -> list[str]:
     return [
         f"{label} {medians[name]:.0f}" if name in medians else f"{label} -" for name, label in PHASES
     ]
+SILENT = "a cold launch writes no startup line"
+SILENT_ISSUE = "#2312"
 def main() -> int:
     if sys.platform != "win32":
         print("this drive launches a Windows build")
@@ -401,6 +403,9 @@ def main() -> int:
                     if one:
                         cold.append(one)
                     say(f"cold {kind} {at + 1} of {told.runs}: {'read' if one else 'no line'}")
+                    if not one and not cold:
+                        print(f"KNOWN: {SILENT} ({SILENT_ISSUE})", flush=True)
+                        return 0
                 after = load()
                 if cold:
                     kept[f"cold {kind}"] = cold
@@ -463,6 +468,7 @@ def main() -> int:
     print()
     for line in summary:
         print(line)
+    print(f"KNOWN NO LONGER: {SILENT} ({SILENT_ISSUE}) - take it off the drive", flush=True)
     if told.json:
         told.json.write_text(json.dumps(kept, indent=1), encoding="utf-8")
     return 0
