@@ -113,11 +113,12 @@ async function spaceGone(ws: HoldsSpaces, space: Space, back?: string) {
   ws.persist()
 }
 export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean> {
-  const tabs = tabSets.fetched
+  const shown = tabSets.fetched
     ? (await import('./sets.svelte')).sets.tabsOf(id)
     : ws.activeSpaceId === id
       ? ws.tabs
       : []
+  const tabs = [...shown, ...shown.flatMap((tab) => ws.twinOf(tab.id) ?? [])]
   if (!tabs.some((tab) => tab.kind === 'terminal')) return true
   return await services().mayEnd(tabs)
 }
