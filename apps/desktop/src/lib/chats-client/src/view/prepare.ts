@@ -1,3 +1,4 @@
+import { stemOf } from '@orden/markdown/shown'
 import { barsOf } from './media'
 
 export interface Prepared {
@@ -34,7 +35,7 @@ async function picture(file: File): Promise<Prepared> {
     const preview = await previewOf(bitmap, bitmap.width, bitmap.height)
     return {
       blob,
-      name: file.name.replace(/\.[^.]+$/, '') + '.webp',
+      name: `${stemOf(file.name)}.webp`,
       type: 'image/webp',
       width: bitmap.width,
       height: bitmap.height,

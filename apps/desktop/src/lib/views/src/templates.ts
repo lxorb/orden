@@ -78,7 +78,7 @@ export async function pickTemplate(): Promise<void> {
   const make = async (template: string) => {
     const name = await workspace.freeNameOnDisk(dir, 'Untitled.md')
     const path = joinPath(dir, name)
-    await writeFile(path, await templateWords(template, name.replace(/\.md$/i, '')))
+    await writeFile(path, await templateWords(template, shownName(name)))
     await workspace.loadTree()
     await workspace.fileCame(path, 'file')
     await workspace.open(path)

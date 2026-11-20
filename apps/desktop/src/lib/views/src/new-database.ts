@@ -1,7 +1,7 @@
 import { type Base, writeBase } from '@orden/bases'
 import { folderNotePath } from '../../tree/src/api'
 import { basesOn } from '../../gates/src/api'
-import { samePath, joinPath } from '../../platform/src/api'
+import { samePath, joinPath, shownName } from '../../platform/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { workspace } from '../../workspace/src/api'
 
@@ -53,7 +53,7 @@ async function freeFolder(dir: string, wanted: string): Promise<string> {
   }
 }
 export function databaseName(named: string | undefined): string {
-  const typed = (named ?? 'Board').trim().replace(/\.md$/i, '')
+  const typed = shownName((named ?? 'Board').trim())
   const wanted = typed.replace(/[\\/:*?"<>|]/g, '-').trim()
   return /^\.*$/.test(wanted) ? 'Board' : wanted
 }
