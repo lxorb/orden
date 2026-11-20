@@ -1,9 +1,10 @@
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import { account, AccountOwed, type AccountSettings } from '../../accounts/src/api'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, keepDays, SNAPSHOT_MINUTES, snapshotMinutes } from '../../snapshots/src/api'
 import { heardElsewhere, isRecord, keepJson, stored, invoke } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 
 export const STORAGE_KEY = 'orden:recovery'
+const OWED_KEY = 'orden:recovery-owed'
 const MINUTE = 60 * 1000
 const DAY = 24 * 60 * MINUTE
 class Recovery {
@@ -55,6 +56,12 @@ class Recovery {
     this.share({ recoveryDays: wanted })
   }
   receive(remote: AccountSettings) {
+    this.owed.follows()
+    if (this.owed.standing) {
+      const token = account.accountToken
+      if (token) void this.owed.settle(token)
+      return
+    }
     const every = remote.recoveryEvery
     if (typeof every === 'number' && snapshotMinutes(every) === every && every !== this.every) {
       this.every = every
@@ -91,10 +98,15 @@ class Recovery {
     if (!this.every) return
     this.ticker = setInterval(() => void this.snapshot(), this.every * MINUTE)
   }
+  private readonly owed = new AccountOwed(OWED_KEY, undefined, (owed) => this.backToDefaults(owed))
+  private backToDefaults(owed: AccountSettings) {
+    this.every = snapshotMinutes(owed.recoveryEvery)
+    this.days = keepDays(owed.recoveryDays)
+    this.persist()
+    if (this.sweeper !== undefined) this.retime()
+  }
   private share(patch: AccountSettings) {
-    const token = account.accountToken
-    if (!token) return
-    void api.saveSettings(token, patch).catch(() => undefined)
+    this.owed.send(patch)
   }
   private persist() {
     keepJson(STORAGE_KEY, { every: this.every, days: this.days })
