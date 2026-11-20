@@ -3,7 +3,7 @@ from harness import EXPERIMENTAL_SWITCH, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-FEATURES = ["Chats", "Applications", "Password manager", "Time tracker", "Databases"]
+FEATURES = ["Chats", "Password manager", "Time tracker", "Databases", "Glasses"]
 KEPT = "() => JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]')"
 def knob(page: Page, label: str):
     return page.locator(f'[role=switch][aria-label="{label}"]')
@@ -65,8 +65,6 @@ def drive(browser: Browser) -> None:
         flip(page, label, True)
     if not page.evaluate("() => document.body.textContent.includes('My keywords')"):
         wrong("Chats is on, but its settings are not under it")
-    if not page.evaluate("() => document.body.textContent.includes('Share the clipboard with applications')"):
-        wrong("Applications is on, but its clipboard switch is not under it")
     shot(page, "all-on")
     say("each feature turns on, with its settings under it")
     master(page, None)
