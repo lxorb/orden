@@ -3,10 +3,12 @@ import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 const saved = vi.hoisted(() => [] as [string, unknown][])
+const net = vi.hoisted(() => ({ down: false }))
 vi.mock('../../accounts/src/client', async (actual) => ({
   ...(await actual<typeof import('../../accounts/src/client')>()),
   api: {
     saveSettings: (token: string, patch: unknown) => {
+      if (net.down) return Promise.reject(new Error('offline'))
       saved.push([token, patch])
       return Promise.resolve({ settings: {} })
     },
@@ -34,6 +36,7 @@ afterEach(() => {
   viewport.device = was
   token = null
   user = null
+  net.down = false
   vi.restoreAllMocks()
 })
 describe('the kinds offered', () => {
@@ -168,5 +171,24 @@ describe('another account signing in on this window', () => {
     expect(hiddenKinds.hidden).toEqual(['pages'])
     receive({})
     expect(hiddenKinds.hidden).toEqual(['pages'])
+  })
+  test('that comes back finds what it still owes here, and the account is told that and nothing of the other', async () => {
+    token = 'a'
+    user = { id: 'a' }
+    receive({})
+    net.down = true
+    setKind('canvas', false)
+    await vi.waitFor(() => expect(hiddenKinds.hidden).toEqual(['canvas']))
+    token = 'b'
+    user = { id: 'b' }
+    receive({})
+    expect(hiddenKinds.hidden).toEqual([])
+    net.down = false
+    token = 'a'
+    user = { id: 'a' }
+    receive({})
+    expect(hiddenKinds.hidden).toEqual(['canvas'])
+    await vi.waitFor(() => expect(saved.at(-1)).toEqual(['a', { hiddenKinds: ['canvas'] }]))
+    expect(saved.filter(([who]) => who === 'b')).toEqual([])
   })
 })

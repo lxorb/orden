@@ -5,8 +5,8 @@ import { forget, isString, keepJson } from '../../platform/src/api'
 const OWED_KEY = 'orden:kinds-owed'
 let owed: AccountOwed | null = null
 const owing = () =>
-  (owed ??= new AccountOwed(OWED_KEY, undefined, () => {
-    hiddenKinds.hidden = []
+  (owed ??= new AccountOwed(OWED_KEY, undefined, (theirs) => {
+    hiddenKinds.hidden = hiddenOf(theirs.hiddenKinds)
     settle()
   }))
 const MOST_KINDS = 32
