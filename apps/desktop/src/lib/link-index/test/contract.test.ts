@@ -175,4 +175,24 @@ describe('the link index', () => {
     expect(reached()).toEqual(['Paper.pages.pdf', 'Paper.pages.pdf', 'Paper.pages.pdf'])
     if (backend.ok) providePort('backend.web', backend.value)
   })
+  test('a chat in the space is no file it lists, no node of the graph and no suggestion', async () => {
+    const backend = portOf('backend.web')
+    const scanned = { notes: [], files: ['Talk.chat', 'b.png'] }
+    providePort('backend.web', {
+      invoke: <T>(command: string) => Promise.resolve((command === 'scan_links' ? scanned : null) as T),
+    })
+    const index = spaceLinks()
+    void index.build('/s')
+    index.noteSaved('/s/A.md', '[[Team.chat]]\n![[Team.chat]]\n[t](Team.chat)')
+    index.noteSaved('/s/Team.chat', '{"id":"c1"}')
+    index.fileAdded('Lobby.chat', 'a.png')
+    index.fileWritten('/s', 'Desk.chat')
+    await index.follow({ op: 'created', kind: 'folder', path: '/s/Room', root: '/s' })
+    expect(index.index('/s/A.md').files).toEqual(['Room/b.png', 'a.png'])
+    expect(index.index('/s/A.md').notes.map((one) => one.path)).toEqual(['A.md'])
+    expect(index.pictureOf(true).nodes.map((one) => one.path)).toEqual(['A.md'])
+    expect(index.pictureOf(false).nodes.map((one) => one.path)).toEqual(['A.md'])
+    expect(index.outgoing('/s/A.md').map((one) => one.to)).toEqual([null, null, null])
+    if (backend.ok) providePort('backend.web', backend.value)
+  })
 })

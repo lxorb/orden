@@ -152,6 +152,11 @@ export function carried(was: string, now: string): (path: string) => string | nu
     return path === paper ? paperOf(now) : null
   }
 }
+const scanLinks = (root: string): Promise<SpaceLinks | null> =>
+  invoke<SpaceLinks | undefined>('scan_links', { root }).then(
+    (found) => (found ? { ...found, files: found.files.filter((one) => !isChatTarget(one)) } : null),
+    () => null,
+  )
 export const BREATHE_EVERY = 500
 interface FilesNamed {
   whole: ReadonlyMap<string, readonly string[]>
@@ -313,7 +318,7 @@ class Links {
         this.changed()
       }
     })
-    const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
+    const found = await scanLinks(root)
     mark('scan_links answered')
     if (this.scans !== mine) {
       landed()
@@ -545,7 +550,7 @@ class Links {
       }
       return
     }
-    const found = await invoke<SpaceLinks>('scan_links', { root: path }).catch(() => null)
+    const found = await scanLinks(path)
     if (!found || this.scans !== mine) return
     const within = (one: string) => `${relative}/${one}`
     this.fileAdded(...found.files.map(within))
@@ -689,8 +694,7 @@ class Links {
   private readingOther = new Map<string, Promise<void>>()
   private readOther(root: string): Promise<void> {
     this.others.set(root, 'reading')
-    const reading: Promise<void> = invoke<SpaceLinks>('scan_links', { root })
-      .catch(() => null)
+    const reading: Promise<void> = scanLinks(root)
       .then((found) => {
         if (this.readingOther.get(root) !== reading || this.others.get(root) !== 'reading') return
         this.others.set(root, {
@@ -1050,7 +1054,7 @@ class Links {
       if (touched) this.changed()
       return touched
     }
-    const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
+    const found = await scanLinks(root)
     if (!found) return 0
     const carry = carried(now, was)
     const back = (path: string) => carry(path) ?? path
@@ -1212,7 +1216,7 @@ class Links {
     return found === null ? null : insideSpace(root, found)
   }
   fileWritten(root: string, relative: string) {
-    if (isHiddenPath(relative)) return
+    if (isHiddenPath(relative) || isChatTarget(relative)) return
     if (this.root !== null && samePath(root, this.root)) {
       this.fileAdded(relative)
       return
@@ -1224,7 +1228,7 @@ class Links {
   }
   fileAdded(...relative: string[]) {
     this.editFiles((files) => {
-      const fresh = relative.filter((one) => one && !files.includes(one))
+      const fresh = relative.filter((one) => one && !isChatTarget(one) && !files.includes(one))
       return fresh.length ? [...files, ...fresh].sort() : files
     })
   }
