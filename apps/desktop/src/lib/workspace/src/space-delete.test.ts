@@ -4,6 +4,7 @@ import { serveSyncStore } from '../../../../test/sync-store'
 const sent: string[] = []
 let trees = new Map<string, unknown>()
 vi.mock('../../platform/src/tauri', () => ({
+  isNative: false,
   invoke: (command: string, args?: Record<string, unknown>) => {
     sent.push(command)
     if (command === 'read_tree') return Promise.resolve(trees.get(String(args?.root)) ?? null)
