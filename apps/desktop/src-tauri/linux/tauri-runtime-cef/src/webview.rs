@@ -578,12 +578,24 @@ impl AppWebview {
   }
 
   pub(crate) fn set_visible(&self, visible: bool) {
+    #[cfg(target_os = "macos")]
+    let retold = self.offscreen.is_none() &&
+      crate::accessibility::retold_when_shown(
+        self.native_visible(),
+        visible,
+        crate::accessibility::asked(),
+      );
     self.host.was_hidden(if visible { 0 } else { 1 });
     if let Some(view) = &self.offscreen {
       view.visible.store(visible, Ordering::Relaxed);
       view.request_redraw();
     } else {
       self.apply_visible(visible);
+    }
+    #[cfg(target_os = "macos")]
+    if retold {
+      self.host.set_accessibility_state(crate::accessibility::state(false));
+      self.host.set_accessibility_state(crate::accessibility::state(true));
     }
   }
 
