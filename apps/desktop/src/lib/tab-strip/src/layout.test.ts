@@ -248,12 +248,12 @@ describe('closing tabs with the pointer', () => {
   })
 })
 describe('the hairlines between tabs', () => {
-  test('between two plain tabs, never beside a filled one or after the last', () => {
+  test('between two plain tabs, worn by the second, never beside a filled one or before the first', () => {
     const shown = separated(['a', 'b', 'c', 'd', 'e'], new Set(['c']))
-    expect([...shown]).toEqual(['a', 'd'])
+    expect([...shown]).toEqual(['b', 'e'])
   })
   test('every plain pair has one', () => {
-    expect([...separated(['a', 'b', 'c'], new Set())]).toEqual(['a', 'b'])
+    expect([...separated(['a', 'b', 'c'], new Set())]).toEqual(['b', 'c'])
   })
 })
 describe("a tab's cross as it opens out under the pointer", () => {

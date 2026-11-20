@@ -205,7 +205,7 @@ export function separated(ids: readonly string[], filled: ReadonlySet<string>): 
   for (let at = 0; at < ids.length - 1; at++) {
     const here = ids[at]
     const next = ids[at + 1]
-    if (here && next && !filled.has(here) && !filled.has(next)) shown.add(here)
+    if (here && next && !filled.has(here) && !filled.has(next)) shown.add(next)
   }
   return shown
 }

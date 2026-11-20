@@ -304,7 +304,7 @@
         ? (block?.order(drag) ?? moved(sized, drag.from, drag.slot).map((one) => one.id))
         : sized.filter((one) => !(drag.out && lifted.includes(one.id))).map((one) => one.id)
     if (incoming !== null) ids.splice(incoming, 0, '')
-    const filled = new Set([...lifted, ...picked, '', activeId ?? '', hovered ?? ''])
+    const filled = new Set([...lifted, ...picked, '', drag.on ? (activeId ?? '') : '', hovered ?? ''])
     return separated(ids, filled)
   })
   const quiet = $derived(!focused && !alone)
@@ -1153,7 +1153,7 @@
   .tab::after {
     content: '';
     position: absolute;
-    inset-inline-end: -0.5px;
+    inset-inline-start: -0.5px;
     top: calc(50% - 8px);
     width: 1px;
     height: 16px;
@@ -1164,6 +1164,10 @@
   }
   .tab.line::after {
     opacity: 1;
+  }
+  .tab.active::after,
+  .tabs:not(.moving) .tab.active + .tab::after {
+    opacity: 0;
   }
   .tab:global(.leaving) {
     pointer-events: none;
