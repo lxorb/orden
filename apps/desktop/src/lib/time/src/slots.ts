@@ -16,6 +16,10 @@ export interface Level {
   share: number
 }
 export const slotsFor = (width: number): number => Math.max(1, Math.floor(width / SLOT_PX))
+const STEPS = [5, 10, 15, 30, 60].map((one) => one * 60_000)
+const LEAST_STEP_PX = 4
+export const snapFor = (width: number, whole: number): number =>
+  STEPS.find((one) => width <= 0 || (one / whole) * width >= LEAST_STEP_PX) ?? 60 * 60_000
 export function barsOf(
   spans: readonly Span[],
   lane: Lane,

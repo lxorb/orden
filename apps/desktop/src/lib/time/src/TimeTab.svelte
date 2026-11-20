@@ -74,7 +74,7 @@
   ] as const
 </script>
 
-<div class="tab">
+<div class="tab" data-time-tab>
   <div class="head">
     <Picker {now} wide onmanage={manage} />
   </div>
@@ -230,11 +230,8 @@
     }
   }
   @container (max-width: 480px) {
-    .lanes {
-      overflow-x: auto;
-    }
-    .lanes > :global(.day) {
-      min-width: 36rem;
+    .head :global(.since) {
+      display: none;
     }
   }
 </style>

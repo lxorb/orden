@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { linearly } from '../../../../../../scripts/growth'
 import { HOUR, MINUTE } from './days'
 import type { Span } from './records'
-import { barsOf, levelsOf, slotsFor } from './slots'
+import { barsOf, levelsOf, slotsFor, snapFor } from './slots'
 
 const seen = (id: string, place: string, start: number, end: number): Span => ({
   id,
@@ -63,5 +63,24 @@ describe('a row of places drawn as flat bars', () => {
       )
     const bars = linearly((count) => barsOf(switches(count), 'site', 0, DAY, 400, DAY), 16_000)
     expect(bars.length).toBeGreaterThan(10)
+  })
+  test('on a phone the row is cut into fewer slots, and a short visit still keeps one', () => {
+    const spans = [
+      seen('a', 'moodle', 9 * HOUR, 12 * HOUR),
+      seen('b', 'short.example', 12.5 * HOUR, 12.5 * HOUR + 20_000),
+      seen('c', 'mail', 13 * HOUR, 15 * HOUR),
+    ]
+    const slots = slotsFor(330)
+    const bars = barsOf(spans, 'site', 8 * HOUR, 18 * HOUR, slots, DAY)
+    expect(slots).toBe(82)
+    expect(bars.map((one) => one.key)).toEqual(['moodle', 'short.example', 'mail'])
+    expect(bars.every((one) => one.to - one.from >= (10 * HOUR) / slots - 1)).toBe(true)
+  })
+  test('a block snaps to steps a finger can tell apart, finer as the day is drawn wider', () => {
+    expect(snapFor(1000, 10 * HOUR)).toBe(5 * MINUTE)
+    expect(snapFor(330, 10 * HOUR)).toBe(10 * MINUTE)
+    expect(snapFor(170, 10 * HOUR)).toBe(15 * MINUTE)
+    expect(snapFor(60, 24 * HOUR)).toBe(HOUR)
+    expect(snapFor(0, 10 * HOUR)).toBe(5 * MINUTE)
   })
 })

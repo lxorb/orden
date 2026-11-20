@@ -3,10 +3,11 @@
   import ActivityLayer from './ActivityLayer.svelte'
   import ActivityMark from './ActivityMark.svelte'
   import { isOwn } from './counted'
-  import { MINUTE, piecesIn } from './days'
+  import { piecesIn } from './days'
   import { clock, length, nameOf, tintOf } from './look'
   import type { Minute } from './minutes'
   import { moveBlock, placeBlock, removeBlock, resizeBlock, setActivity, unset } from './schedule'
+  import { snapFor } from './slots'
   import { time } from './time.svelte'
 
   const {
@@ -28,7 +29,7 @@
     onselect: (id: string | null) => void
     onmanage: () => void
   } = $props()
-  const SNAP = 5 * MINUTE
+  const SNAP = $derived(snapFor(width, to - from))
   type Kind = 'make' | 'move' | 'start' | 'end'
   interface Drag {
     kind: Kind

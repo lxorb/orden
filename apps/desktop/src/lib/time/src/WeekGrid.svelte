@@ -67,91 +67,93 @@
   })
 </script>
 
-<div class="week" style:--rows={span / HOUR} style:--per-hour="{PER_HOUR}px" dir="ltr">
-  <div class="corner"></div>
-  {#each columns as column (column.day)}
-    <button
-      type="button"
-      class="head"
-      class:today={column.day === midnightOf(now)}
-      data-day={column.day}
-      onclick={() => onpick(column.day, null)}
-    >
-      <span class="name">{localDate(column.day, { weekday: 'short', day: 'numeric' })}</span>
-      <span class="total">{column.whole ? length(column.whole) : ''}</span>
-      <span class="total active">{column.active ? `${length(column.active)} active` : ''}</span>
-    </button>
-  {/each}
+<div class="frame">
+  <div class="week" style:--rows={span / HOUR} style:--per-hour="{PER_HOUR}px" dir="ltr">
+    <div class="corner"></div>
+    {#each columns as column (column.day)}
+      <button
+        type="button"
+        class="head"
+        class:today={column.day === midnightOf(now)}
+        data-day={column.day}
+        onclick={() => onpick(column.day, null)}
+      >
+        <span class="name">{localDate(column.day, { weekday: 'short', day: 'numeric' })}</span>
+        <span class="total">{column.whole ? length(column.whole) : ''}</span>
+        <span class="total active">{column.active ? `${length(column.active)} active` : ''}</span>
+      </button>
+    {/each}
 
-  <div class="hours" aria-hidden="true">
-    {#each hours as hour (hour)}
-      <span style:top="{((hour - bounds[0]) / span) * 100}%">{localDate(from + hour, { hour: 'numeric' })}</span>
+    <div class="hours" aria-hidden="true">
+      {#each hours as hour (hour)}
+        <span style:top="{((hour - bounds[0]) / span) * 100}%">{localDate(from + hour, { hour: 'numeric' })}</span>
+      {/each}
+    </div>
+    {#each columns as column (column.day)}
+      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+      <div
+        class="column"
+        class:today={column.day === midnightOf(now)}
+        onclick={(event) => {
+          if (event.target === event.currentTarget) onpick(column.day, null)
+        }}
+      >
+        {#each column.pieces as { item: piece, row, rows } (piece.span.id)}
+          <button
+            type="button"
+            class="block"
+            style:--row={row}
+            style:--rows={rows}
+            style:top={top(column.day, piece.from)}
+            style:height={tall(piece.to - piece.from)}
+            style:--tint={tintOf(piece.span.activity)}
+            title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(piece.to)}"
+            onclick={() => onpick(column.day, piece.span.id)}
+          >
+            {#if (piece.to - piece.from) / HOUR >= 0.6}
+              <span class="what"
+                ><ActivityMark activity={piece.span.activity} size={12} /><span class="name"
+                  >{nameOf(piece.span.activity, 'No activity')}</span
+                ></span
+              >
+              <span class="long">{length(piece.to - piece.from)}</span>
+            {/if}
+          </button>
+        {/each}
+        {#if column.nowShown}
+          <span class="now" style:top={top(column.day, now)}></span>
+        {/if}
+      </div>
     {/each}
   </div>
-  {#each columns as column (column.day)}
-    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div
-      class="column"
-      class:today={column.day === midnightOf(now)}
-      onclick={(event) => {
-        if (event.target === event.currentTarget) onpick(column.day, null)
-      }}
-    >
-      {#each column.pieces as { item: piece, row, rows } (piece.span.id)}
-        <button
-          type="button"
-          class="block"
-          style:--row={row}
-          style:--rows={rows}
-          style:top={top(column.day, piece.from)}
-          style:height={tall(piece.to - piece.from)}
-          style:--tint={tintOf(piece.span.activity)}
-          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(piece.to)}"
-          onclick={() => onpick(column.day, piece.span.id)}
-        >
-          {#if (piece.to - piece.from) / HOUR >= 0.6}
-            <span class="what"
-              ><ActivityMark activity={piece.span.activity} size={12} /><span class="name"
-                >{nameOf(piece.span.activity, 'No activity')}</span
-              ></span
-            >
-            <span class="long">{length(piece.to - piece.from)}</span>
-          {/if}
-        </button>
-      {/each}
-      {#if column.nowShown}
-        <span class="now" style:top={top(column.day, now)}></span>
-      {/if}
-    </div>
-  {/each}
-</div>
 
-{#if week.length}
-  <ul class="totals" data-time-week>
-    {#each week as one (one.activity)}
-      {@const goal = one.activity === null ? null : time.goalFor(one.activity, 'week')}
-      <li class="orden-row is-short">
-        <ActivityMark activity={one.activity} />
-        <span class="orden-row-label" dir="auto">{nameOf(one.activity, 'No activity')}</span>
-        {#if goal}
-          <div class="goal">
-            <div
-              class="orden-meter"
-              role="meter"
-              aria-label="Weekly goal"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow={Math.round(Math.min(1, one.ms / goal.ms) * 100)}
-            >
-              <div class="orden-meter-fill" style:width="{Math.min(1, one.ms / goal.ms) * 100}%"></div>
+  {#if week.length}
+    <ul class="totals" data-time-week>
+      {#each week as one (one.activity)}
+        {@const goal = one.activity === null ? null : time.goalFor(one.activity, 'week')}
+        <li class="orden-row is-short">
+          <ActivityMark activity={one.activity} />
+          <span class="orden-row-label" dir="auto">{nameOf(one.activity, 'No activity')}</span>
+          {#if goal}
+            <div class="goal">
+              <div
+                class="orden-meter"
+                role="meter"
+                aria-label="Weekly goal"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow={Math.round(Math.min(1, one.ms / goal.ms) * 100)}
+              >
+                <div class="orden-meter-fill" style:width="{Math.min(1, one.ms / goal.ms) * 100}%"></div>
+              </div>
             </div>
-          </div>
-        {/if}
-        <span class="orden-row-meta">{length(one.ms)}{goal ? ` / ${length(goal.ms)}` : ''}</span>
-      </li>
-    {/each}
-  </ul>
-{/if}
+          {/if}
+          <span class="orden-row-meta">{length(one.ms)}{goal ? ` / ${length(goal.ms)}` : ''}</span>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+</div>
 
 <style>
   .week {
@@ -162,6 +164,7 @@
     row-gap: var(--space-2);
   }
   .head {
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -184,8 +187,15 @@
     color: var(--accent);
     font-weight: var(--weight-strong);
   }
+  .frame {
+    container: time-week / inline-size;
+    min-width: 0;
+  }
   .total {
     min-height: 1.2em;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: center;
     color: var(--text-strong);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
@@ -275,5 +285,24 @@
   }
   .orden-row-meta {
     font-variant-numeric: tabular-nums;
+  }
+  @container time-week (max-width: 560px) {
+    .week {
+      grid-template-columns: 2.25rem repeat(7, minmax(0, 1fr));
+      column-gap: 2px;
+    }
+    .head {
+      font-size: var(--text-xs);
+    }
+    .hours span {
+      right: var(--space-1);
+    }
+    .block {
+      padding-inline: 2px;
+    }
+    .what :global(.mark),
+    .long {
+      display: none;
+    }
   }
 </style>
