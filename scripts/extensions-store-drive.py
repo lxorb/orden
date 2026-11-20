@@ -197,7 +197,12 @@ class Drive:
         return next((one for one in self.pages() if wanted.search(str(one.get("url", "")))), None)
     def opened(self, url: str) -> None:
         self.eval(f"orden.workspace.openPage({json.dumps(url)}, 'front'); return true")
-        self.waited(f"(() => {{ const shown = {SHOWN}; return shown && shown.url && shown.url.startsWith({json.dumps(url)}) ? shown : null }})()", 40, f"the web tab never showed {url}")
+        front = (
+            f"(() => {{ const shown = {SHOWN}; if (shown && shown.url && shown.url.startsWith({json.dumps(url)})) return shown;"
+            f" const tab = orden.workspace.tabs.find((one) => (one.address ?? '').startsWith({json.dumps(url)}));"
+            " if (tab) orden.workspace.activate(tab.id); return null })()"
+        )
+        self.waited(front, 40, f"the web tab never showed {url}")
 STORE = re.compile(rf"^https://(chromewebstore\.google\.com/detail/[^?#]*{ID}|consent\.google\.com/)")
 def bubble_said(drive: Drive) -> Any:
     return drive.eval("document.querySelector('[role=dialog][aria-label=\"Extensions\"] .said')?.innerText ?? null")
