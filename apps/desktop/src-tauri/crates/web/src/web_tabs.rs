@@ -580,8 +580,16 @@ fn reporting(
                 let declaring = crate::web_worlds::value(&asking, crate::web_icons::ASK)
                     .and_then(|said| serde_json::from_value(said).ok())
                     .unwrap_or_default();
-                if let Some(icon) = crate::web_icons::best(&declaring) {
-                    crate::web_icons::said(&marked, &holder, &named, &icon);
+                let Some(icon) = crate::web_icons::best(&declaring) else {
+                    return;
+                };
+                crate::web_icons::said(&marked, &holder, &named, &icon);
+                if let Some(drawing) = crate::web_icons::drawing(&icon) {
+                    let said = crate::web_worlds::value(&asking, &drawing);
+                    let worn = crate::web_icons::drawn(said.as_ref(), icon.clone());
+                    if worn != icon {
+                        crate::web_icons::said(&marked, &holder, &named, &worn);
+                    }
                 }
             });
         }
