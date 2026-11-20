@@ -59,6 +59,8 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
         notes.delete(path)
         return entry
       }
+      case 'spaces_root':
+        return '/home/me/Orden'
       case 'list_trash':
         return [...deviceTrash].sort((a, b) => b.trashedAt - a.trashedAt)
       case 'restore_trash': {
@@ -246,6 +248,32 @@ describe('signed out', () => {
     expect(told).toHaveBeenCalledWith('/space', '/space 2')
     told.mockRestore()
   })
+  test.each([
+    [
+      'kept by Orden',
+      '.orden/Trip',
+      '/home/me/Orden/.orden/Trip 2',
+      '/home/me/Orden/.orden/Trip/Trip',
+      '/home/me/Orden/.orden/Trip 2/Trip 2',
+    ],
+    ['a plain folder', 'Trip', '/home/me/Orden/Trip 2', '/home/me/Orden/Trip', '/home/me/Orden/Trip 2'],
+  ])(
+    'a space %s on the desktop is told to the workspace by its own root, before and after',
+    async (_, from, lands, was, now) => {
+      deviceTrash.push({ id: 'k1', kind: 'space', name: 'Trip', from, trashedAt: Date.now() })
+      await trash.load()
+      const [only] = trash.items
+      if (!only) throw new Error('the deleted space is not in the list')
+      landsAt = lands
+      const told = vi.spyOn(workspace, 'spaceCameBack').mockResolvedValue()
+      const unburied = vi.spyOn(protection, 'unbury').mockResolvedValue()
+      await trash.restore(only)
+      expect(told).toHaveBeenCalledWith(was, now)
+      expect(unburied).toHaveBeenCalledWith('k1', now, '')
+      told.mockRestore()
+      unburied.mockRestore()
+    },
+  )
   test('a protected space is protected again once it is put back', async () => {
     protection.set('/space', '/space', 'password')
     protection.set('/space', '/space/Idea.md', 'device')
