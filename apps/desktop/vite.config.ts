@@ -77,7 +77,6 @@ export default defineConfig(({ command, mode }) => ({
         handoff: resolve(import.meta.dirname, 'handoff.html'),
         passLink: resolve(import.meta.dirname, 'pass-link.html'),
         pass: resolve(import.meta.dirname, 'pass.html'),
-        home: resolve(import.meta.dirname, 'home.html'),
       },
     },
   },

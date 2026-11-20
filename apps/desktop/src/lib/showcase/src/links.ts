@@ -1,4 +1,14 @@
-export const APP_HREF = '/'
+export const SITE_ORIGIN = 'https://orden.so'
+export const APP_ORIGIN = 'https://app.orden.so'
+export interface Origins {
+  site: string
+  app: string
+}
+const OURS = [SITE_ORIGIN, APP_ORIGIN].map((one) => new URL(one).hostname)
+export function originsAt(at: { origin: string; hostname: string }): Origins {
+  if (OURS.includes(at.hostname)) return { site: SITE_ORIGIN, app: APP_ORIGIN }
+  return { site: at.origin, app: at.origin }
+}
 export const LATEST_RELEASE = 'https://github.com/lxorb/orden/releases/latest'
 export const LATEST_RELEASE_API = 'https://api.github.com/repos/lxorb/orden/releases/latest'
 const ASSET_HOME = 'https://github.com/lxorb/orden/releases/download/'

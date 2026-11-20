@@ -79,7 +79,7 @@ describe('the home page', () => {
     for (const link of downloads) expect(link.href).toBe(file)
     const apps = [...document.querySelectorAll<HTMLAnchorElement>('a[data-app]')]
     expect(apps).toHaveLength(2)
-    for (const link of apps) expect(link.getAttribute('href')).toBe('/')
+    for (const link of apps) expect(link.getAttribute('href')).toBe(`${location.origin}/`)
   })
   test('keeps the release page when the release cannot be read', async () => {
     vi.stubGlobal('matchMedia', media([]))
@@ -94,7 +94,7 @@ describe('the home page', () => {
     const { frame } = demo()
     expect(frame.getAttribute('src')).toBe(null)
     vi.advanceTimersByTime(1000)
-    expect(frame.getAttribute('src')).toBe('/?demo=phone')
+    expect(frame.getAttribute('src')).toBe(`${location.origin}/?demo=phone`)
     expect(frame.hasAttribute('inert')).toBe(true)
     expect(frame.tabIndex).toBe(-1)
   })

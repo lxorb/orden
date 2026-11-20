@@ -1,0 +1,16 @@
+{
+  "name": "orden-site",
+  "main": "src/site-worker.ts",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "../../../dist-home",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
+    "run_worker_first": ["/"],
+  },
+  "routes": [
+    { "pattern": "orden.so/", "zone_name": "orden.so" },
+    { "pattern": "orden.so/home/*", "zone_name": "orden.so" },
+  ],
+}
