@@ -179,7 +179,7 @@
   .card {
     overflow: hidden;
   }
-  .card > :global(* + *) {
+  .card > :global(:not(:first-child)) {
     border-top: 1px solid var(--line);
   }
   .dial,

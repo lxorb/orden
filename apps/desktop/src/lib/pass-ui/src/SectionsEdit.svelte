@@ -77,7 +77,7 @@
   .name:focus {
     color: var(--text-strong);
   }
-  .pass-stack > :global(* + *) {
+  .pass-stack > :global(:not(:first-child)) {
     border-top: 1px solid var(--line);
   }
   .orden-glyph :global(.orden-cross) {

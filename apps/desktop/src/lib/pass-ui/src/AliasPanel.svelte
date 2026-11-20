@@ -62,7 +62,7 @@
 </section>
 
 <style>
-  .pass-card > :global(* + *) {
+  .pass-card > :global(:not(:first-child)) {
     border-top: 1px solid var(--line);
   }
   .line {

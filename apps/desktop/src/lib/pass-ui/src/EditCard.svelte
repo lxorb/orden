@@ -10,7 +10,7 @@
 </div>
 
 <style>
-  .pass-stack > :global(* + *) {
+  .pass-stack > :global(:not(:first-child)) {
     border-top: 1px solid var(--line);
   }
   .orden-section {
