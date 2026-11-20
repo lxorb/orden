@@ -293,3 +293,23 @@ describe('a helper asked for by a chat that lives in another window', () => {
     expect(await helpers.start(from('chat-b'), made)).not.toHaveProperty('refused')
   })
 })
+describe('a helper that ends', () => {
+  test.each(['done', 'failed', 'stopped'] as const)('%s, lets its thread go, and nothing else', async (how) => {
+    const { made, runs } = roads()
+    const released: string[] = []
+    const before = helpers.released
+    helpers.released = (thread) => void released.push(thread.id)
+    try {
+      const started = await helpers.start(asked(parent(`p-${how}`), 'opus'), made)
+      if ('refused' in started) throw new Error(started.refused)
+      expect(released).toEqual([])
+      if (how === 'done') runs[0]?.end(answered('Two herons.'))
+      if (how === 'failed') runs[0]?.end({ stop: 'error', error: 'signed out', usage: null, turn: null })
+      if (how === 'stopped') helpers.stop(started.id)
+      expect(await helpers.wait(started.id, 1000)).toMatchObject({ state: how })
+      expect(released).toEqual([started.id])
+    } finally {
+      helpers.released = before
+    }
+  })
+})

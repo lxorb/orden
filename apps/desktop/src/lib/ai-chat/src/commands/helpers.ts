@@ -49,7 +49,7 @@ async function run(
     return null
   } finally {
     tasks.done(task.id)
-    helpers.endedUnder(helper.id)
+    helpers.endedUnder(helper)
   }
 }
 function answered(task: string, ended: Ended | null): string {
@@ -154,7 +154,7 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
           signal: stopper.signal,
         })
         .catch(() => null)
-      helpers.endedUnder(helper.id)
+      helpers.endedUnder(helper)
       if (ended && ended.stop !== 'error' && ended.stop !== 'stopped') done++
     }
   }

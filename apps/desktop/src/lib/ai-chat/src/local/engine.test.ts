@@ -892,3 +892,35 @@ describe('a long chat whose program session ended, seeded again', () => {
     expect(seed).not.toContain('left out')
   })
 })
+describe('a session let go', () => {
+  test('closes at once while nothing runs in it, and a later message opens a fresh one', async () => {
+    const built = engine(CLAUDE)
+    const on = thread(CLAUDE)
+    await send(CLAUDE, on, 'one', built)
+    expect(opened[0]?.closed).toBe(false)
+    built.release?.(on)
+    await vi.waitFor(() => expect(opened[0]?.closed).toBe(true))
+    await send(CLAUDE, on, 'two', built)
+    expect(opened).toHaveLength(2)
+  })
+  test('closes once the answer it gives ends, never in the middle of it', async () => {
+    const rest: (() => void)[] = []
+    const lines = claudeTurn('Herons wait.')
+    answer = (open, said) => {
+      if (said.kind !== 'turn') return []
+      rest.push(() => {
+        for (const one of lines.slice(4)) line(open.channel, one)
+      })
+      return lines.slice(0, 4)
+    }
+    const built = engine(CLAUDE)
+    const on = thread(CLAUDE)
+    const sending = send(CLAUDE, on, 'one', built)
+    await vi.waitFor(() => expect(rest).toHaveLength(1))
+    built.release?.(on)
+    expect(opened[0]?.closed).toBe(false)
+    rest[0]?.()
+    await sending
+    await vi.waitFor(() => expect(opened[0]?.closed).toBe(true))
+  })
+})
