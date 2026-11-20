@@ -125,8 +125,7 @@
   const KEPT = 6
   const inEditor = (one: Tab) =>
     one.kind === 'note' && !one.coming && !one.reading && !protection.locked(noteBehind(one))
-  const doors: Partial<Record<string, typeof webSurface>> = { terminal: terminalSurface, web: webSurface }
-  const keepsAlive = (one: Tab) => inEditor(one) || !!doors[one.kind]
+  const keepsAlive = (one: Tab) => !one.coming && !protection.locked(noteBehind(one))
   const handoff = new Handoff()
   const parked = new Parked<Tab>((one) => untrack(() => one.paneId === pane.id && workspace.tabs.includes(one)))
   let recent: string[] = []
@@ -147,7 +146,7 @@
   $effect(() => () => parked.shut())
   const kept = $derived(alive.flatMap((id) => held.find((one) => one.id === id) ?? []))
   const keptNotes = $derived(kept.filter(inEditor))
-  const keptOwn = $derived(kept.filter((one) => doors[one.kind]))
+  const keptOwn = $derived(kept.filter((one) => !inEditor(one)))
   const shownKept = $derived(tab && alive.includes(tab.id) ? tab.id : null)
   const keptViews = $state<Record<string, EditorView | undefined>>({})
   const keepsMiddle = $derived(ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)))
@@ -380,71 +379,12 @@
               {@render unreachable()}
             {/await}
           {/key}
-        {:else if tab?.kind === 'graph'}
-          {#await graphSurface() then Graph}
-            <Graph
-              graph={picture}
-              whole
-              current={workspace.relativeNote}
-              focused={workspace.panes.focusedId === pane.id}
-              onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
-              onescape={() => void workspace.closeAsking(tab.id)}
-            />
-          {:catch}
-            {@render unreachable()}
-          {/await}
-        {:else if tab?.kind === 'canvas'}
-          {@render surface(canvasSurface, tab)}
-        {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
-          {@render surface(pagesSurface, tab)}
-        {:else if tab?.kind === 'web'}
-
-        {:else if tab?.kind === 'view' && tab.path === null}
-          {#key tab.id}
-            {#await todosBoard() then TodosBoard}
-              <TodosBoard />
-            {:catch}
-              {@render unreachable()}
-            {/await}
-          {/key}
-        {:else if tab?.kind === 'view'}
-          {@render surface(viewSurface, tab)}
-        {:else if tab?.kind === 'channel'}
-          {@render surface(chatSurface, tab)}
-        {:else if tab?.kind === 'chat'}
-          {#key tab.id}
-            {#await askPanel() then ChatPanel}
-              <ChatPanel wide {tab} />
-            {:catch}
-              {@render unreachable()}
-            {/await}
-          {/key}
-        {:else if tab?.kind === 'terminal'}
-
-        {:else if tab?.kind === 'explorer'}
-          {#if explorerOn()}
-            {@render surface(explorerSurface, tab)}
-          {/if}
-        {:else if tab?.kind === 'pass'}
-          {@render surface(passSurface, tab)}
-        {:else if tab?.kind === 'settings'}
-          {#key tab.id}
-            {#await settingsSurface() then SettingsPanel}
-              <SettingsPanel />
-            {:catch}
-              {@render unreachable()}
-            {/await}
-          {/key}
-        {:else if tab?.kind === 'time'}
-          {@render surface(timeSurface, tab)}
         {:else if tab?.coming}
           <div class="coming" role="status">
             {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
               ? 'Not on this device. It opens once you are online again.'
               : 'Loading…'}
           </div>
-        {:else if tab?.reading}
-          {@render surface(readingSurface, tab)}
         {:else if stacking}
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div class="stack" data-region="editor">
@@ -501,12 +441,7 @@
       {@const here = one.id === shownKept}
       <div class:front={here} class:kept={!here} hidden={!here} inert={!here}>
         <svelte:boundary failed={unreachable}>
-          {#await doors[one.kind]?.() then Own}
-            {@const Kept = Own as Component<{ tab: Tab; focused: boolean; shown: boolean }>}
-            <Kept tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
-          {:catch}
-            {@render unreachable()}
-          {/await}
+          {@render own(one, here)}
         </svelte:boundary>
       </div>
     {/each}
@@ -527,14 +462,73 @@
   {/if}
 </div>
 
-{#snippet surface(load: () => Promise<Component<{ tab: Tab; focused: boolean }>>, shown: Tab)}
-  {#key shown.id}
-    {#await load() then Surface}
-      <Surface tab={shown} focused={workspace.panes.focusedId === pane.id} />
+{#snippet surface(
+  load: () => Promise<Component<{ tab: Tab; focused: boolean; shown: boolean }>>,
+  one: Tab,
+  here: boolean,
+)}
+  {#await load() then Surface}
+    <Surface tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
+  {:catch}
+    {@render unreachable()}
+  {/await}
+{/snippet}
+
+{#snippet own(one: Tab, here: boolean)}
+  {#if one.kind === 'graph'}
+    {#await graphSurface() then Graph}
+      <Graph
+        graph={picture}
+        whole
+        current={workspace.relativeNote}
+        focused={here && workspace.panes.focusedId === pane.id}
+        onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
+        onescape={() => void workspace.closeAsking(one.id)}
+      />
     {:catch}
       {@render unreachable()}
     {/await}
-  {/key}
+  {:else if one.kind === 'canvas'}
+    {@render surface(canvasSurface, one, here)}
+  {:else if one.kind === 'pages' || one.kind === 'pdf'}
+    {@render surface(pagesSurface, one, here)}
+  {:else if one.kind === 'web'}
+    {@render surface(webSurface, one, here)}
+  {:else if one.kind === 'terminal'}
+    {@render surface(terminalSurface, one, here)}
+  {:else if one.kind === 'view' && one.path === null}
+    {#await todosBoard() then TodosBoard}
+      <TodosBoard />
+    {:catch}
+      {@render unreachable()}
+    {/await}
+  {:else if one.kind === 'view'}
+    {@render surface(viewSurface, one, here)}
+  {:else if one.kind === 'channel'}
+    {@render surface(chatSurface, one, here)}
+  {:else if one.kind === 'chat'}
+    {#await askPanel() then ChatPanel}
+      <ChatPanel wide tab={one} />
+    {:catch}
+      {@render unreachable()}
+    {/await}
+  {:else if one.kind === 'explorer'}
+    {#if explorerOn()}
+      {@render surface(explorerSurface, one, here)}
+    {/if}
+  {:else if one.kind === 'pass'}
+    {@render surface(passSurface, one, here)}
+  {:else if one.kind === 'settings'}
+    {#await settingsSurface() then SettingsPanel}
+      <SettingsPanel />
+    {:catch}
+      {@render unreachable()}
+    {/await}
+  {:else if one.kind === 'time'}
+    {@render surface(timeSurface, one, here)}
+  {:else if one.reading}
+    {@render surface(readingSurface, one, here)}
+  {/if}
 {/snippet}
 
 {#snippet editor(one: Tab, into: Record<string, EditorView | undefined>, shown: boolean, front: boolean, kept: Tab[])}
