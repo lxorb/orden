@@ -8,6 +8,7 @@
   import { localDate, invoke, dur, fly } from '../../platform/src/api'
   import { shownSite } from './idn'
   import { ASK_NAMES, ASKS, grants } from './permissions.svelte'
+  import { CopyButton } from '../../ui-controls/src/api'
 
   const {
     url,
@@ -70,7 +71,7 @@
   const at = $derived(certificate && chosen < certificate.chain.length ? chosen : 0)
   const shown = $derived(certificate?.chain[at])
   const secure = $derived(certificate ? certificate.secure : https)
-  const named = (party: Party) => [party.name, ...party.organization]
+  const breakable = (hex: string) => hex.replaceAll(':', ':\u200b')
   const day = (when: number) => localDate(when, { dateStyle: 'long' })
   const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
@@ -81,10 +82,19 @@
 <div
   bind:this={bubble}
   class="site orden-bubble is-pressable"
+  class:wide={showingCertificate}
   role="dialog"
   aria-label={shownSite(site)}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
+  {#snippet party(one: Party)}
+    <span class="lines">
+      <span>{one.name}</span>
+      {#each one.organization as org (org)}
+        <span class="also">{org}</span>
+      {/each}
+    </span>
+  {/snippet}
   {#snippet how()}
     <Glyph icon={secure ? Lock : TriangleAlert} />
     <span class="said">{secure ? 'Connection is secure' : 'Connection is not secure'}</span>
@@ -113,16 +123,20 @@
       {#if certificate && shown}
         <ol class="chain" aria-label="Certificate chain">
           {#each certificate.chain as link, index (index)}
-            <li style:--depth={index}>
+            <li>
               <button
-                class="orden-button is-quiet"
-                class:chosen={index === at}
+                class="orden-row link"
+                class:is-on={index === at}
                 aria-pressed={index === at}
                 data-role={role(link, index)}
                 onclick={() => (chosen = index)}
               >
-                <span class="role">{ROLES[role(link, index)]()}</span>
-                <span class="name"><Facts parts={named(link.to)} /></span>
+                <span class="who">
+                  <span class="name">{link.to.name}</span>
+                  <span class="orden-row-meta">
+                    <Facts parts={[ROLES[role(link, index)](), ...link.to.organization]} />
+                  </span>
+                </span>
               </button>
             </li>
           {/each}
@@ -134,18 +148,23 @@
         {/if}
         <dl class="details">
           <dt>Issued to</dt>
-          <dd><Facts parts={named(shown.to)} /></dd>
+          <dd>{@render party(shown.to)}</dd>
           <dt>Issued by</dt>
-          <dd><Facts parts={named(shown.by)} /></dd>
+          <dd>{@render party(shown.by)}</dd>
           <dt>Valid from</dt>
           <dd>{day(shown.from)}</dd>
           <dt>Valid until</dt>
           <dd>{day(shown.until)}</dd>
-          <dt>Serial number</dt>
-          <dd class="hex">{shown.serial}</dd>
-          <dt>SHA-256 fingerprint</dt>
-          <dd class="hex">{shown.sha256}</dd>
         </dl>
+        {#each [{ label: 'Serial number', value: shown.serial }, { label: 'SHA-256 fingerprint', value: shown.sha256 }] as code (code.label)}
+          <div class="code">
+            <div class="head">
+              <span class="label">{code.label}</span>
+              <CopyButton value={code.value} />
+            </div>
+            <code class="hex" dir="ltr">{breakable(code.value)}</code>
+          </div>
+        {/each}
       {:else if asked}
         <p class="note">The certificate could not be read.</p>
       {/if}
@@ -190,6 +209,9 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+  }
+  .site.wide {
+    width: min(26rem, calc(100% - var(--space-4)));
   }
   .how {
     margin: 0;
@@ -244,28 +266,18 @@
     flex-direction: column;
     gap: 2px;
   }
-  .chain > li {
-    padding-inline-start: calc(var(--depth) * var(--space-2));
-  }
-  .chain button {
-    width: 100%;
+  .link {
     min-height: 0;
-    padding: var(--space-1) var(--space-2);
-    justify-content: flex-start;
-    gap: var(--space-2);
-    font-size: var(--text-sm);
-    text-align: start;
+    padding-block: var(--space-1);
   }
-  .chain button.chosen {
-    background: var(--surface-2);
-    color: var(--text-strong);
-  }
-  .chain .role {
-    flex: none;
-    color: var(--text-muted);
-  }
-  .chain .name {
+  .who {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .who > .name {
+    color: var(--text-strong);
     overflow-wrap: anywhere;
   }
   .note {
@@ -276,9 +288,10 @@
   }
   .details {
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: var(--space-3);
+    row-gap: var(--space-1);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
   }
@@ -286,12 +299,42 @@
     color: var(--text-muted);
   }
   .details > dd {
-    margin: 0 0 var(--space-1);
+    margin: 0;
     color: var(--text);
     overflow-wrap: anywhere;
   }
-  .details > .hex {
+  .lines {
+    display: flex;
+    flex-direction: column;
+  }
+  .lines > .also {
+    color: var(--text-muted);
+  }
+  .code {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+  .code > .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .code .label {
+    color: var(--text-muted);
+  }
+  .hex {
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text-strong);
     font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.6;
   }
   .grants {
     margin: 0;
