@@ -137,7 +137,14 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="chip-input {look}" onpointerdown={pressed}>
+<div
+  class="chip-input {look}"
+  onpointerdown={pressed}
+  onkeyup={follow}
+  onclick={follow}
+  onfocusin={follow}
+  onselect={follow}
+>
   <div class="letters" bind:this={mirror} aria-hidden="true">
     {#each pieces as piece (piece.from)}{#if piece.chip}<span class="chip" data-chip={piece.chip} data-from={piece.from}
           >{piece.text}</span
@@ -155,13 +162,9 @@
     onkeydown={keyed}
     oninput={typed}
     onscroll={follow}
-    onselect={follow}
-    onkeyup={follow}
-    onclick={follow}
-    onfocus={follow}
   />
   {#if offered.length}
-    <div class="offers" data-covers role="listbox" aria-label={rest['aria-label'] ?? undefined}>
+    <div class="orden-layer offers" data-covers role="listbox" aria-label={rest['aria-label'] ?? undefined}>
       {#each offered as one, index (one.value)}
         <button
           type="button"
@@ -211,20 +214,15 @@
     caret-color: var(--text-strong);
     outline: none;
   }
-  .field:focus {
-    box-shadow: none;
-  }
   .field::placeholder {
     color: var(--muted);
   }
   .field::selection {
-    background: var(--accent-soft);
     color: transparent;
   }
   .chip {
     border-radius: var(--radius-sm);
     background: var(--accent-soft);
-    box-shadow: 0 0 0 1px var(--accent-soft);
     color: var(--accent);
   }
   .offers {
@@ -233,11 +231,6 @@
     inset-inline-start: 0;
     z-index: var(--z-popover);
     min-width: 14rem;
-    max-width: 100%;
     padding: var(--space-1);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--surface-3);
-    box-shadow: var(--shadow-md);
   }
 </style>
