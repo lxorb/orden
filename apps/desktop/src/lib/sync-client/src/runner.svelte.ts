@@ -1288,11 +1288,24 @@ class Runner {
     })
   }
   private hearsWrites(): () => void {
-    return workspace().hearWrites({
-      there: (path) => onDisk(path),
-      made: (path) => workspace().fileCame(path, 'file'),
-      wrote: (path, content) => void this.wrote(path, content),
+    const hearing = {
+      there: (path: string) => onDisk(path),
+      made: (path: string) => workspace().fileCame(path, 'file'),
+      wrote: (path: string, content: string) => void this.wrote(path, content),
+      changed: (path: string) => this.changed(path),
+    }
+    return workspace().hearWrites(hearing)
+  }
+  async changed(path: string): Promise<void> {
+    const engine = this.current
+    if (!engine) {
+      if (this.owedTo) this.owed.add({ kind: 'changed', path })
+      return
+    }
+    await engine.foreign(path).catch((error: unknown) => {
+      log('error', `sync: changed ${path} - ${String(error)}`)
     })
+    this.push()
   }
   private hearLeader() {
     if (!isNative()) holdThisWindow()

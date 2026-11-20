@@ -155,6 +155,7 @@ describe('what a window with no engine owes', () => {
 describe('a thing said again', () => {
   const engine = (id: string | null) => ({
     saved: () => Promise.resolve(),
+    foreign: () => Promise.resolve(),
     entryAt: () => (id === null ? null : { id }),
   })
   const removed = (id?: string): Owing => ({

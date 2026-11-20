@@ -584,6 +584,36 @@ describe('words kept at sign-out (#2334)', () => {
     expect(markersIn(textOn('Fresh.md'))).toEqual(['mk982z'])
   })
 })
+describe('a binary file the app rewrites in a space (#2301)', () => {
+  test('sends its new bytes to the account once the engine is told it changed', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const kept = new Map<string, Uint8Array>()
+    const replaced: string[] = []
+    const blobs = (disk: MemoryDisk) => ({
+      read: (path: string) => disk.readBytes(path),
+      write: (path: string, bytes: Uint8Array) => disk.writeBytes(path, bytes),
+      hash: (bytes: Uint8Array) => Promise.resolve(`h-${new TextDecoder().decode(bytes)}`),
+      up: (hash: string, bytes: Uint8Array) => Promise.resolve(void kept.set(hash, bytes)).then(() => true),
+      down: () => Promise.resolve(null),
+      replace: (_space: string, _id: string, hash: string) => {
+        replaced.push(hash)
+        return Promise.resolve({ ok: true as const, seq: 9 })
+      },
+    })
+    const here = await freshDevice(account, 'here', {}, () => undefined, blobs)
+    expect(await firstPass(here.engine.core, here.space(), null)).toBe(true)
+    await here.engine.pass('sim')
+    const path = `${here.space().row.root}/assets/minutes.pdf`
+    await here.disk.writeBytes(path, new TextEncoder().encode('%PDF first'))
+    await here.engine.created(path, false)
+    await here.engine.pass('sim')
+    await here.disk.writeBytes(path, new TextEncoder().encode('%PDF second'))
+    await here.engine.foreign(path)
+    await here.engine.pass('sim')
+    expect(replaced).toEqual(['h-%PDF second'])
+    expect(new TextDecoder().decode(kept.get('h-%PDF second'))).toBe('%PDF second')
+  })
+})
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })
