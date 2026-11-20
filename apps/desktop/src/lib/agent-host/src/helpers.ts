@@ -33,9 +33,16 @@ function reachesAsFar(call: Call): void {
     )
   }
 }
+function modeOf(call: Call): Mode {
+  const caller = call.caller
+  if (!caller.agent) return 'auto'
+  if (!caller.agent.builtIn) return modeOfGrant(caller.agent.mode)
+  if (caller.chatMode) return caller.chatMode
+  throw new Refused('not_granted', 'the mode of the chat that asked is not known, so no helper was started')
+}
 function askerOf(call: Call) {
   const agent = call.caller.agent
-  const mode: Mode = agent ? modeOfGrant(agent.mode) : 'auto'
+  const mode = modeOf(call)
   const thread = 'thread' in call.caller ? (call.caller.thread ?? null) : null
   return { thread, mode, ...(agent ? { reach: agent } : {}) }
 }

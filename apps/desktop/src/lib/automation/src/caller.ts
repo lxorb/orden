@@ -14,12 +14,16 @@ export const READER: Caller = { agent: null }
 function texts(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
 }
+const CHAT_MODES = ['approve', 'auto', 'full', 'plan'] as const
+type ChatMode = (typeof CHAT_MODES)[number]
+const isChatMode = (value: unknown): value is ChatMode => CHAT_MODES.some((one) => one === value)
 export function callerOf(told: unknown, thread?: unknown): Caller {
   if (told === undefined || told === null) return READER
   const grant = isRecord(told) ? told : {}
   const id = typeof grant.id === 'string' && grant.id ? grant.id : 'agent'
   const builtIn = grant.built_in === true
   const threadOf = builtIn && typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread) ? { thread } : {}
+  const chatModeOf = builtIn && isChatMode(grant.chat_mode) ? { chatMode: grant.chat_mode } : {}
   return {
     agent: {
       id,
@@ -36,6 +40,7 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
         : {},
     },
     ...threadOf,
+    ...chatModeOf,
   }
 }
 export const fullPermissions = (grant: { mode?: string } | null | undefined): boolean => grant?.mode === 'autonomous'
