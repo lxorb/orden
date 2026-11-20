@@ -60,15 +60,25 @@ test('put back from Recently deleted, the pointer brings its chat back', async (
   await chats.pointerMoved(null, POINTER)
   expect(listed()).toEqual([[CHAT, 'Plans']])
 })
-test('a chat whose pointer has not come yet keeps its row, nameless until it does', async () => {
+test('a chat whose pointer has not come yet is not listed, a nameless row nobody can open, until it comes (#2321)', async () => {
   account.chats = [CHAT, OTHER]
   await chats.reconnected()
+  await vi.waitFor(() => expect(chats.entry(OTHER)).toBeNull())
+  expect(listed()).toEqual([[CHAT, 'Plans']])
+  disk.pointers.set('/space/Launch.chat', OTHER)
+  chats.pointersSeen('/space', [POINTER, '/space/Launch.chat'])
   await vi.waitFor(() =>
     expect(listed()).toEqual([
       [CHAT, 'Plans'],
-      [OTHER, null],
+      [OTHER, 'Launch'],
     ]),
   )
+})
+test('a chat whose pointer was deleted elsewhere is not listed after a reload, though the account still lists it (#2321)', async () => {
+  await chats.forget()
+  account.chats = [CHAT, OTHER]
+  await chats.start('account-1')
+  expect(listed()).toEqual([[CHAT, 'Plans']])
 })
 test('its pointer deleted by the sync, which tells the file operations nothing, it goes too', async () => {
   disk.pointers.delete(POINTER)
@@ -84,10 +94,7 @@ test('a chat whose pointer comes late is named when it comes, though a look for 
     await chats.forget()
     account.chats = [CHAT, OTHER]
     await chats.start('account-1')
-    expect(listed()).toEqual([
-      [CHAT, 'Plans'],
-      [OTHER, null],
-    ])
+    expect(listed()).toEqual([[CHAT, 'Plans']])
     disk.fails = 1
     await vi.advanceTimersByTimeAsync(3_000)
     disk.pointers.set('/space/Launch.chat', OTHER)

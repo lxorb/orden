@@ -70,6 +70,7 @@ class ChatsStore implements Chats {
   private readonly arrivals = new Set<(chat: string, messages: readonly Message[]) => void>()
   private looking: ReturnType<typeof setTimeout> | null = null
   private lookWait = LOOK_FIRST
+  private missing = false
   private stops: (() => void)[] = []
   get me(): Who | null {
     if (account.user) return `user:${account.user.id}`
@@ -127,6 +128,7 @@ class ChatsStore implements Chats {
     if (this.looking) clearTimeout(this.looking)
     this.looking = null
     this.lookWait = LOOK_FIRST
+    this.missing = false
     this.engine?.stop()
     this.engine = null
     this.cache = null
@@ -213,7 +215,7 @@ class ChatsStore implements Chats {
     }
     entries.sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
     const before = new Map(this.list.map((one) => [one.id, one.members]))
-    this.list = entries
+    this.list = entries.filter((one) => one.path !== null)
     for (const one of entries) {
       const was = before.get(one.id)
       if (was === undefined || was === one.members) continue
@@ -221,7 +223,8 @@ class ChatsStore implements Chats {
       this.views.get(one.id)?.view.relist()
     }
     for (const listener of this.listeners) listener()
-    if (entries.some((one) => !one.path)) this.awaitPointers()
+    this.missing = entries.some((one) => !one.path)
+    if (this.missing) this.awaitPointers()
     else this.lookWait = LOOK_FIRST
   }
   private awaitPointers(): void {
@@ -233,7 +236,7 @@ class ChatsStore implements Chats {
       void this.lookForPointers()
         .catch(() => undefined)
         .finally(() => {
-          if (this.engine && this.list.some((one) => !one.path)) this.awaitPointers()
+          if (this.engine && this.missing) this.awaitPointers()
         })
     }, this.lookWait)
   }
