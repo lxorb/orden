@@ -32,6 +32,35 @@ STEADY = ("hover", "keys", "zoom", "pan")
 OPENS = 1800.0
 AHEAD = 250.0
 DEBUG_PORT = 9339
+FRAME = 16.7
+LIMITS = {
+    "windows-arm64": {
+        "open: second Alt keyup to first screen change": 535.0,
+        "open: frame gap p95": 70.0,
+        "hover: SendInput to screen change": 220.0,
+        "click on a card: to screen change": 350.0,
+        "keydown: event to next frame": 2 * FRAME,
+        "pointerover: event to next frame": 2 * FRAME,
+    },
+    "windows-x64": {
+        "open: second Alt keyup to first screen change": 420.0,
+        "open: frame gap p95": 70.0,
+        "hover: SendInput to screen change": 150.0,
+        "click on a card: to screen change": 215.0,
+        "keydown: event to next frame": 2 * FRAME,
+        "pointerover: event to next frame": 2 * FRAME,
+    },
+}
+IDLE_CPU = 8.0
+BURDEN = """
+(ms) => {
+  const busy = () => { const until = performance.now() + ms; while (performance.now() < until) {} }
+  const frame = () => { if (document.documentElement.hasAttribute('data-overview')) busy(); requestAnimationFrame(frame) }
+  requestAnimationFrame(frame)
+  for (const kind of ['keydown', 'keyup', 'pointerover']) addEventListener(kind, busy, true)
+  return true
+}
+"""
 WORDS = (
     "overview layout frame paint native page tab space window card shot zoom scroll pan close open measure"
     " render style script quiet steady spring motion picture corner shadow border river stone garden"
@@ -930,6 +959,22 @@ def table(said: dict[str, Any]) -> str:
     for one in said["not_measured"]:
         out.append(f"- {one}")
     return "\n".join(out)
+def label() -> str:
+    if sys.platform == "darwin":
+        return "macos-arm64"
+    import platform
+    return "windows-arm64" if platform.machine().lower() in ("arm64", "aarch64") else "windows-x64"
+def held(said: dict[str, Any], limits: dict[str, float]) -> list[str]:
+    wrong = []
+    one = said["passes"].get("window", {}).get("summary", {})
+    for row, most in limits.items():
+        seen = one.get(row, {}).get("median")
+        if seen is None or seen > most:
+            wrong.append(f"{row}: {seen} ms, over {most:.0f} ms")
+    idle = round(sum(row["percent"] for row in said["rest"]["cpu"].values()), 1)
+    if idle > IDLE_CPU:
+        wrong.append(f"idle CPU after the rounds {idle}% of a core, over {IDLE_CPU}%")
+    return wrong
 def judged(said: dict[str, Any], args: argparse.Namespace) -> list[str]:
     wrong = []
     one = said["passes"].get("window", {}).get("summary", {})
@@ -970,6 +1015,8 @@ def main() -> int:
     parser.add_argument("--frame-ms", default=16.0, type=float)
     parser.add_argument("--input-frames", default=1.0, type=float)
     parser.add_argument("--report-only", action="store_true")
+    parser.add_argument("--limits", action="store_true", help="fail past this platform's limits in LIMITS; a platform without them only reports")
+    parser.add_argument("--burden", type=float, default=0.0, help="busy the page this many ms on every overview frame and key, to prove the limits fail")
     args = parser.parse_args()
     if "probe" not in args.identifier and os.environ.get("GITHUB_ACTIONS") != "true":
         raise SystemExit(f"{args.identifier} is not a probe identifier")
@@ -1009,6 +1056,8 @@ def main() -> int:
         print(f"content: {said['content']}", flush=True)
         if app.eval(PROBE) is not True:
             raise SystemExit("the page probe was not put in")
+        if args.burden:
+            app.eval(f"return ({BURDEN.strip()})({args.burden})")
         session = Session(app, desk, process.pid, args.out)
         gpu = Gpu(1800, args.out)
         time.sleep(3)
@@ -1019,6 +1068,8 @@ def main() -> int:
         time.sleep(3)
         said["passes"]["full screen"] = passed(session, "full screen", spans)
         said["trace"] = session.traced()
+        time.sleep(5)
+        said["rest"] = session.idle()
         kinds = session.kinds(family(process.pid) | set(session.names))
         said["gpu"] = gpu_of(gpu.rows(), kinds, spans, exes())
     finally:
@@ -1059,6 +1110,16 @@ def main() -> int:
     written = table(said)
     (args.out / "table.md").write_text(written, encoding="utf-8")
     print(written, flush=True)
+    if args.limits:
+        limits = LIMITS.get(label())
+        if limits is None:
+            print(f"{label()}: no limits, reported only", flush=True)
+            return 0
+        wrong = held(said, limits)
+        for one in wrong:
+            print(f"::error::{label()}: {one}", flush=True)
+        print(f"{label()}: {'within' if not wrong else 'past'} its limits", flush=True)
+        return 1 if wrong else 0
     wrong = judged(said, args)
     for one in wrong:
         print(f"::{'warning' if args.report_only else 'error'}::{one}", flush=True)

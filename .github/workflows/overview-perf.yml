@@ -7,9 +7,17 @@ on:
         description: A release.yml run whose Windows and Mac builds are timed; empty builds a probe
         required: false
         default: ''
+      limits:
+        description: Fail past the platform's limits, as the release hover job does
+        type: boolean
+        default: false
+      burden:
+        description: Busy the page this many ms on every overview frame and key
+        required: false
+        default: '0'
 
 concurrency:
-  group: overview-perf-${{ github.ref }}-${{ inputs.run }}
+  group: overview-perf-${{ github.ref }}-${{ inputs.run }}-${{ inputs.limits }}-${{ inputs.burden }}
   cancel-in-progress: true
 
 permissions:
@@ -40,6 +48,8 @@ jobs:
         shell: bash
     env:
       RUN: ${{ inputs.run }}
+      LIMITS: ${{ inputs.limits }}
+      BURDEN: ${{ inputs.burden || '0' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
@@ -106,8 +116,10 @@ jobs:
             py=python
             python -m pip install --quiet pillow mss numpy
           fi
+          [ "$LIMITS" = true ] && judge=--limits || judge=--report-only
           "$py" scripts/overview-perf-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out out \
-            --first-frame-ms 150 --frame-ms 16 --input-frames 1 --report-only
+            --first-frame-ms 150 --frame-ms 16 --input-frames 1 --burden "$BURDEN" $judge \
+            || { cat out/table.md >>"$GITHUB_STEP_SUMMARY"; exit 1; }
           cat out/table.md >>"$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
