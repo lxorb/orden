@@ -209,6 +209,8 @@ macro_rules! desktop_commands {
             orden_web::page_scale::page_scale_seen,
             orden_web::page_scale::interface_zoom_chosen,
             orden_web::page_scale::interface_zoom_choose,
+            orden_web::inside::web_inside,
+            orden_web::inside::web_inside_choose,
             orden_web::page_scheme::page_scheme_seen,
             spelling::spell_languages,
             orden_system::fonts::font_families,
