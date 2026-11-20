@@ -11,6 +11,8 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import crash_told
+from fresh_app import ended
 from probe_app import identifier_of, run_probe, sized
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -86,6 +88,7 @@ def waited_for(path: pathlib.Path, patience: float = 60) -> dict:
         try:
             held = json.loads(path.read_text(encoding="utf-8"))
             if held.get("port") and held.get("secret"):
+                crash_told.told(int(held["port"]), held["secret"])
                 return held
         except (OSError, ValueError):
             pass
@@ -196,7 +199,7 @@ def drive(apps: list[pathlib.Path], given: list[str]) -> None:
             say(f"a copy of the screen is a different picture ({screen.stat().st_size} bytes)")
     finally:
         for _label, process, _held in running:
-            process.terminate()
+            ended(process, gentle=True)
         time.sleep(1.0)
 def main() -> int:
     if sys.platform != "win32":
