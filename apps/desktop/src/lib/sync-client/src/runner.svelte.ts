@@ -58,6 +58,7 @@ import { type Leadership, leadSync } from './lead'
 import { forgetMadeDeviceId, hubDeviceOf, madeDeviceId } from './made-device'
 import { Owed, type Owing, takeOwed } from './owed'
 import { placesOf } from './placing'
+import { manages } from './manages'
 import type { Carried } from './papers-carried'
 import { holdsDocument, joinsAs, shapeOf, turn, unixLines } from './kinds'
 import { hub } from './hub.svelte'
@@ -1118,7 +1119,7 @@ class Runner {
     const accountId = holder()
     const listed = account().spaces.find((one) => one.id === spaceId)
     const name = workspace().spaces.find((one) => samePath(one.root, root))?.name ?? nameOf(root)
-    if (!token || !accountId || listed?.role !== 'owner' || !name || listed.name === name) return
+    if (!token || !accountId || !listed || !manages(listed) || !name || listed.name === name) return
     await sendName(token, accountId, spaceId, name)
     await account()
       .loadSpaces()
