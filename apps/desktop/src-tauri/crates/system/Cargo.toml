@@ -22,6 +22,9 @@ reqwest.workspace = true
 rustls.workspace = true
 tokio.workspace = true
 
+[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
+dirs.workspace = true
+
 [target.'cfg(target_os = "linux")'.dependencies]
 tauri-plugin-deep-link.workspace = true
 zbus.workspace = true
@@ -29,13 +32,13 @@ x11rb.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
 libc.workspace = true
-dirs.workspace = true
 objc2.workspace = true
 block2.workspace = true
 objc2-foundation.workspace = true
 objc2-app-kit.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
+png.workspace = true
 tauri-plugin-opener.workspace = true
 windows-registry.workspace = true
 windows = { workspace = true, features = [

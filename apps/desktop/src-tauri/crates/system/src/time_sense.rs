@@ -31,7 +31,11 @@ fn sensed() -> Sensed {
     Sensed {
         idle_ms: input.map(|one| one.idle_ms),
         front: input.map(|one| one.front),
-        app: platform::front_app().and_then(|name| app_name(&name)),
+        app: platform::front_app().and_then(|(name, source)| {
+            let app = app_name(&name)?;
+            crate::app_icon::seen(&app, source);
+            Some(app)
+        }),
         lid: power.lid,
         locked: power.locked,
     }
@@ -72,6 +76,7 @@ mod platform {
     use zbus::zvariant::{OwnedObjectPath, OwnedValue};
 
     use super::Power;
+    use crate::app_icon::Source;
 
     fn read(path: &Path) -> Option<String> {
         std::fs::read_to_string(path).ok().map(|one| one.trim().to_owned())
@@ -172,8 +177,10 @@ mod platform {
     pub fn power() -> Power {
         Power { lid: lid(), locked: locked() }
     }
-    pub fn front_app() -> Option<String> {
-        crate::front_x::front_class()
+    pub fn front_app() -> Option<(String, Source)> {
+        let (class, pid) = crate::front_x::front_window()?;
+        let path = pid.and_then(|pid| std::fs::read_link(format!("/proc/{pid}/exe")).ok());
+        Some((class.clone(), Source { path, class: Some(class) }))
     }
 }
 #[cfg(windows)]
@@ -190,6 +197,7 @@ mod platform {
     use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
 
     use super::Power;
+    use crate::app_icon::Source;
 
     pub fn power() -> Power {
         #[allow(unsafe_code)]
@@ -204,7 +212,7 @@ mod platform {
         };
         Power { lid: None, locked: Some(locked) }
     }
-    pub fn front_app() -> Option<String> {
+    pub fn front_app() -> Option<(String, Source)> {
         let mut process = 0u32;
         let mut buffer = [0u16; 1024];
         let mut length = u32::try_from(buffer.len()).ok()?;
@@ -229,7 +237,8 @@ mod platform {
             named.ok()?;
         }
         let length = usize::try_from(length).ok()?.min(buffer.len());
-        Some(String::from_utf16_lossy(&buffer[..length]))
+        let path = String::from_utf16_lossy(&buffer[..length]);
+        Some((path.clone(), Source { path: Some(path.into()), class: None }))
     }
 }
 #[cfg(target_os = "macos")]
@@ -240,6 +249,7 @@ mod platform {
     use objc2_app_kit::NSWorkspace;
 
     use super::Power;
+    use crate::app_icon::Source;
 
     fn said(program: &str, args: &[&str]) -> Option<String> {
         let out = Command::new(program).args(args).output().ok()?;
@@ -254,19 +264,21 @@ mod platform {
             .map(|text| text.contains("\"CGSSessionScreenIsLocked\"=Yes"));
         Power { lid, locked }
     }
-    pub fn front_app() -> Option<String> {
+    pub fn front_app() -> Option<(String, Source)> {
         let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
-        Some(app.localizedName()?.to_string())
+        let path = app.bundleURL().and_then(|url| url.path()).map(|path| path.to_string().into());
+        Some((app.localizedName()?.to_string(), Source { path, class: None }))
     }
 }
 #[cfg(not(any(target_os = "linux", windows, target_os = "macos")))]
 mod platform {
     use super::Power;
+    use crate::app_icon::Source;
 
     pub fn power() -> Power {
         Power::default()
     }
-    pub fn front_app() -> Option<String> {
+    pub fn front_app() -> Option<(String, Source)> {
         None
     }
 }

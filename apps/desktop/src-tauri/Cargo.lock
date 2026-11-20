@@ -3513,6 +3513,7 @@ dependencies = [
  "objc2-foundation",
  "orden-base",
  "orden-placement",
+ "png 0.18.1",
  "reqwest",
  "rustls",
  "serde",

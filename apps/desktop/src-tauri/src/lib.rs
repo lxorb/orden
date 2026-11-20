@@ -392,6 +392,7 @@ macro_rules! desktop_commands {
             orden_web::web_state::web_copy,
             orden_system::presence::input_idle,
             orden_system::presence::device_name,
+            orden_system::app_icon::app_icon,
             orden_system::time_sense::time_sense,
             orden_system::touchpad::touchpad_pan,
         ]

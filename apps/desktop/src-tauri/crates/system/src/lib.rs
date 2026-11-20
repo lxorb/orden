@@ -1,4 +1,5 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
+pub mod app_icon;
 pub mod app_place;
 pub mod appearance;
 pub mod bundle_name;

@@ -41,11 +41,21 @@ fn active(x: &X) -> Option<Window> {
         .next()
         .filter(|one| *one != 0)
 }
-pub fn front_class() -> Option<String> {
+fn pid_of(x: &X, window: Window) -> Option<u32> {
+    x.connection
+        .get_property(false, window, x.pid, AtomEnum::CARDINAL, 0, 1)
+        .ok()?
+        .reply()
+        .ok()?
+        .value32()?
+        .next()
+}
+pub fn front_window() -> Option<(String, Option<u32>)> {
     asked(|x| {
+        let window = active(x)?;
         let class = x
             .connection
-            .get_property(false, active(x)?, x.class, AtomEnum::STRING, 0, 256)
+            .get_property(false, window, x.class, AtomEnum::STRING, 0, 256)
             .ok()?
             .reply()
             .ok()?
@@ -53,7 +63,7 @@ pub fn front_class() -> Option<String> {
         let mut parts = class.split(|one| *one == 0).filter(|one| !one.is_empty());
         let instance = parts.next();
         let named = parts.next().or(instance)?;
-        Some(String::from_utf8_lossy(named).into_owned())
+        Some((String::from_utf8_lossy(named).into_owned(), pid_of(x, window)))
     })
 }
 pub struct Input {
@@ -64,15 +74,7 @@ pub fn input() -> Option<Input> {
     asked(|x| {
         let idle_ms =
             x.connection.screensaver_query_info(x.root).ok()?.reply().ok()?.ms_since_user_input;
-        let front = active(x).and_then(|window| {
-            x.connection
-                .get_property(false, window, x.pid, AtomEnum::CARDINAL, 0, 1)
-                .ok()?
-                .reply()
-                .ok()?
-                .value32()?
-                .next()
-        }) == Some(std::process::id());
+        let front = active(x).and_then(|window| pid_of(x, window)) == Some(std::process::id());
         Some(Input { idle_ms: u64::from(idle_ms), front })
     })
 }
