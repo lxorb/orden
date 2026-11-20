@@ -19,7 +19,9 @@ const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus(
 const { account } = await import('../../accounts/src/account.svelte')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 let token: string | null = null
+let user: { id: string } | null = null
 Object.defineProperty(account, 'accountToken', { get: () => token, configurable: true })
+Object.defineProperty(account, 'user', { get: () => user, configurable: true })
 let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
@@ -31,6 +33,7 @@ beforeEach(() => {
 afterEach(() => {
   viewport.device = was
   token = null
+  user = null
   vi.restoreAllMocks()
 })
 describe('the kinds offered', () => {
@@ -148,5 +151,22 @@ describe('the account', () => {
     token = 'token'
     receive({})
     expect(saved).toEqual([['token', { hiddenKinds: ['pages'] }]])
+  })
+})
+describe('another account signing in on this window', () => {
+  test("sees its own kinds or the defaults, never the last account's choices kept here, and the same account again keeps its own", () => {
+    token = 'one'
+    user = { id: 'one' }
+    receive({})
+    setKind('canvas', false)
+    expect(hiddenKinds.hidden).toEqual(['canvas'])
+    token = 'two'
+    user = { id: 'two' }
+    receive({})
+    expect(hiddenKinds.hidden).toEqual([])
+    receive({ hiddenKinds: ['pages'] })
+    expect(hiddenKinds.hidden).toEqual(['pages'])
+    receive({})
+    expect(hiddenKinds.hidden).toEqual(['pages'])
   })
 })

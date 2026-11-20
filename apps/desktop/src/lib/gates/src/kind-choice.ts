@@ -4,7 +4,11 @@ import { forget, isString, keepJson } from '../../platform/src/api'
 
 const OWED_KEY = 'orden:kinds-owed'
 let owed: AccountOwed | null = null
-const owing = () => (owed ??= new AccountOwed(OWED_KEY))
+const owing = () =>
+  (owed ??= new AccountOwed(OWED_KEY, undefined, () => {
+    hiddenKinds.hidden = []
+    settle()
+  }))
 const MOST_KINDS = 32
 const KIND = /^[a-z][a-z-]{0,23}$/
 export function hiddenOf(value: unknown): string[] {
@@ -39,6 +43,7 @@ export function setWord(word: string, on: boolean) {
   share()
 }
 export function receive(remote: AccountSettings) {
+  owing().follows()
   const theirs = remote.hiddenKinds
   if (owing().standing) {
     share()
