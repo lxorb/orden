@@ -38,7 +38,7 @@ def enter_as_a_key(page: Page) -> None:
     page.keyboard.press("Control+,")
     page.wait_for_function(
         """() => {
-          const sheet = document.querySelector('[role=dialog]')
+          const sheet = document.querySelector('[role=region][aria-label=Settings]')
           const panes = [...(sheet?.querySelectorAll('nav button, [role=tab], aside button') ?? [])]
           const pane = panes.find((one) => one.innerText.trim() === 'Shortcuts')
           pane?.click()
@@ -46,10 +46,10 @@ def enter_as_a_key(page: Page) -> None:
         }"""
     )
     page.wait_for_function(
-        "() => [...document.querySelectorAll('[role=dialog] button')].some((one) => one.parentElement.innerText.startsWith('Scratchpad') || one.parentElement.parentElement.innerText.startsWith('Scratchpad'))"
+        "() => [...document.querySelectorAll('[role=region][aria-label=Settings] button')].some((one) => one.parentElement.innerText.startsWith('Scratchpad') || one.parentElement.parentElement.innerText.startsWith('Scratchpad'))"
     )
     press_row = """() => {
-      const buttons = [...document.querySelectorAll('[role=dialog] button')]
+      const buttons = [...document.querySelectorAll('[role=region][aria-label=Settings] button')]
       buttons
         .filter((one) => one.parentElement.parentElement.innerText.startsWith('Scratchpad') || one.parentElement.innerText.startsWith('Scratchpad'))[0]
         .click()
