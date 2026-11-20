@@ -112,6 +112,7 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'POST', path: /^\/v2\/chats\/[^/]+\/(events|read)$/ },
   { method: 'PUT', path: /^\/v2\/chats\/[^/]+\/me$/ },
   { method: 'PATCH', path: /^\/v2\/chats\/[^/]+$/ },
+  { method: 'DELETE', path: /^\/v2\/chats\/[^/]+$/ },
 ]
 export function guestMayReach(method: string, path: string): boolean {
   return OPEN_TO_GUESTS.some((one) => one.method === method && one.path.test(path))

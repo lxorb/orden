@@ -1,6 +1,7 @@
 import { AT_A_TIME, places, type Env } from '../../../sync-server/src/api'
 import { noteChatFiles } from '../../../sync-server-engine/src/api'
 const KEPT_FOR = 30 * 24 * 60 * 60 * 1000
+const ORPHANED_AFTER = 7 * 24 * 60 * 60 * 1000
 export async function sweepChats(env: Env, at: number): Promise<number> {
   await env.DB.prepare(
     `update chats set ended_at = ?1
@@ -8,9 +9,10 @@ export async function sweepChats(env: Env, at: number): Promise<number> {
         and ((file_id is not null and not exists (select 1 from notes n where n.id = chats.file_id
                                                      and not (n.deleted = 1 and n.deleted_at is null)))
              or exists (select 1 from spaces s where s.id = chats.space_id
-                           and s.deleted = 1 and s.deleted_at is null))`,
+                           and s.deleted = 1 and s.deleted_at is null)
+             or (file_id is null and coalesce(last_at, created_at) < ?2))`,
   )
-    .bind(at)
+    .bind(at, at - ORPHANED_AFTER)
     .run()
   const { results } = await env.DB.prepare('select id from chats where ended_at is not null and ended_at < ? limit ?')
     .bind(at - KEPT_FOR, AT_A_TIME)
