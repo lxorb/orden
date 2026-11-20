@@ -6,7 +6,6 @@
   import {
     asked,
     onScreen,
-    paneOf,
     type Choice,
     type DialogAsked,
     type PermissionAsked,
@@ -18,9 +17,6 @@
   const dialog = $derived(asked.dialogOf(tab))
   const permission = $derived(dialog ? null : asked.permissionOf(tab))
   const select = $derived(asked.selectOf(tab))
-  const SHEET = 416
-  const pane = $derived.by(() => (dialog || permission ? paneOf(tab) : null))
-  const sheetAt = $derived(pane ? { x: pane.x + Math.max(16, (pane.width - SHEET) / 2), y: pane.y + 16 } : null)
   let typed = $derived(dialog?.default ?? '')
   function siteOf(origin: string | null): string {
     return origin ? plainOrigin(origin) : 'This page'
@@ -117,12 +113,10 @@
 {#if dialog}
   {@const one = dialog}
   <div
-    class="orden-layer ask"
+    class="orden-screen ask"
     role="alertdialog"
     aria-label={siteOf(one.origin)}
     tabindex="-1"
-    style:left={sheetAt ? `${sheetAt.x}px` : undefined}
-    style:top={sheetAt ? `${sheetAt.y}px` : undefined}
     use:focusFirst
     onkeydown={(event) => dialogKey(event, one)}
     transition:fly={{ y: -8, duration: dur(140), easing: cubicOut }}
@@ -152,12 +146,10 @@
 {:else if permission}
   {@const one = permission}
   <div
-    class="orden-layer ask"
+    class="orden-screen ask"
     role="alertdialog"
     aria-label={siteOf(one.origin)}
     tabindex="-1"
-    style:left={sheetAt ? `${sheetAt.x}px` : undefined}
-    style:top={sheetAt ? `${sheetAt.y}px` : undefined}
     use:focusFirst
     onkeydown={(event) => {
       if (event.key === 'Escape') asked.answerPermission(one, false)
@@ -218,10 +210,7 @@
 
 <style>
   .ask {
-    position: fixed;
-    z-index: var(--z-float);
-    width: 416px;
-    max-width: calc(100vw - 32px);
+    z-index: var(--z-sheet);
     padding: var(--space-4);
     display: flex;
     flex-direction: column;

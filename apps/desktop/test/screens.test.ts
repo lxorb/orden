@@ -82,6 +82,7 @@ describe('every layer in the middle of the window', () => {
       'lib/terminal/src/remote/HostPicker.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
       'lib/ui-controls/src/Sheet.svelte',
+      'lib/web-tab/src/WebAsks.svelte',
     ])
   })
   test.each(layers)('$name says where and how tall in no number of its own', ({ css, selector }) => {

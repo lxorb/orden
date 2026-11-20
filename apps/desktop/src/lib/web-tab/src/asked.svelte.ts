@@ -130,7 +130,7 @@ export function readSelect(said: unknown): SelectAsked | null {
     options,
   }
 }
-export function paneOf(tab: string): Rect | null {
+function paneOf(tab: string): Rect | null {
   const page = pages.peek(tab)
   return page?.sent && !page.sent.away && page.sent.visible ? page.sent.pane : null
 }
