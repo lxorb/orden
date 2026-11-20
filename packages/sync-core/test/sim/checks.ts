@@ -1,4 +1,5 @@
 import { diverge } from '../../src/diverge'
+import { analyse } from '../../src/merge3'
 import { nameKey } from '../../src/tree'
 import type { AccountView, Classification, EntryView, View } from './adapters'
 
@@ -25,6 +26,24 @@ export function ledger(initial: Iterable<string>): Ledger {
     restored: new Map(),
     deleted: new Map(),
   }
+}
+function insertedByBoth(classifications: readonly Classification[]): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>()
+  for (const one of classifications) {
+    if (one.held) continue
+    const { alone } = analyse(one.base, one.local, one.remote)
+    for (const mine of alone.local) {
+      if (mine.from !== mine.to) continue
+      for (const theirs of alone.remote) {
+        if (theirs.from !== mine.from || theirs.to !== mine.to) continue
+        const there = new Set(markersIn(theirs.insert))
+        const twice = out.get(one.id) ?? new Set<string>()
+        for (const marker of markersIn(mine.insert)) if (there.has(marker)) twice.add(marker)
+        out.set(one.id, twice)
+      }
+    }
+  }
+  return out
 }
 function sortedEntries(entries: readonly EntryView[]): string {
   return JSON.stringify(
@@ -100,10 +119,11 @@ export function judge(
     if (book.retired.has(marker) || book.lost.has(marker) || kept.has(marker)) continue
     failures.push(`${marker} was typed and is in no note and no version`)
   }
+  const twice = insertedByBoth(classifications)
   for (const [id, text] of Object.entries(account.texts)) {
     const seen = new Set<string>()
     for (const marker of markersIn(text)) {
-      if (seen.has(marker)) failures.push(`${marker} is in ${id} twice`)
+      if (seen.has(marker) && !twice.get(id)?.has(marker)) failures.push(`${marker} is in ${id} twice`)
       seen.add(marker)
     }
   }
