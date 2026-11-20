@@ -45,6 +45,7 @@ export class TodoStore {
   openedFor = $state<string | null | undefined>(undefined)
   private records: TodoRecords | null = null
   private moved: readonly (Moved & { readonly id: string })[] = []
+  private ticking: readonly string[] = []
   private disk: OpenedDisk | null = null
   private owner: string | null | undefined = undefined
   private server: TodoServer | null = null
@@ -182,14 +183,39 @@ export class TodoStore {
     if (!records) return missing('the todos are not open yet')
     const was = this.todo(id)
     if (!was) return missing(`no todo ${id}`)
+    if (patch.done === true && !was.done && was.repeat !== null) {
+      const tick = `${was.id}\n${was.start ?? ''}\n${was.deadline ?? ''}`
+      if (this.ticking.includes(tick)) return ok(was)
+      this.ticking = [...this.ticking, tick]
+      try {
+        return await this.ticked({ ...was, repeat: was.repeat }, patch)
+      } finally {
+        this.ticking = this.ticking.filter((one) => one !== tick)
+      }
+    }
+    return this.patched(was, patch)
+  }
+  private async ticked(was: Todo & { repeat: string }, patch: TodoPatch): Promise<Result<Todo>> {
+    const { doneCopyId, nextRepeat } = await import('@orden/bases/occurrence')
+    const now = this.todo(was.id)
+    if (!now || now.done || now.start !== was.start || now.deadline !== was.deadline) {
+      return now ? ok(now) : missing(`no todo ${was.id}`)
+    }
+    const today = dayOf(this.world.now())
+    const next = nextRepeat({ repeat: was.repeat, start: was.start, deadline: was.deadline }, today)
+    if (!next) return this.patched(was, patch)
     const plain = checkedPatch(patch)
     const checked = plain.ok ? await ruled(plain.value) : plain
     if (!checked.ok) return checked
-    if (checked.value.done === true && !was.done && was.repeat !== null) {
-      const { nextRepeat } = await import('@orden/bases/occurrence')
-      const next = nextRepeat({ repeat: was.repeat, start: was.start, deadline: was.deadline }, dayOf(this.world.now()))
-      if (next) return this.moveOn(was, checked.value, next)
-    }
+    return this.moveOn(was, checked.value, next, doneCopyId(was, today))
+  }
+  private async patched(was: Todo, patch: TodoPatch): Promise<Result<Todo>> {
+    const records = this.records
+    if (!records) return missing('the todos are not open yet')
+    const id = was.id
+    const plain = checkedPatch(patch)
+    const checked = plain.ok ? await ruled(plain.value) : plain
+    if (!checked.ok) return checked
     const back = this.moved.find((one) => one.id === id)
     if (checked.value.done === false && !was.done && back) return this.moveBack(id, back)
     const fields = fieldsOf(checked.value)
@@ -208,11 +234,11 @@ export class TodoStore {
     was: Todo,
     patch: TodoPatch,
     next: { repeat: string; start: string | null; deadline: string | null },
+    copy: string,
   ): Promise<Result<Todo>> {
     const records = this.records
     if (!records) return missing('the todos are not open yet')
     const now = this.world.now()
-    const copy = newId()
     const { title, description, labels, start, deadline, priority, subtasks, order } = was
     const kept = fieldsOf({
       title,
@@ -235,7 +261,7 @@ export class TodoStore {
       subtasks: was.subtasks.map((one) => ({ ...one, done: false })),
     })
     await records.change([
-      { id: copy, fields: { ...kept, kind: KIND, created: now, doneAt: now } },
+      { id: copy, fields: { ...kept, kind: KIND, created: now, doneAt: now, gone: false } },
       { id: was.id, fields },
     ])
     this.moved = [
