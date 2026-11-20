@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { type Importer, providePort } from '@orden/contracts'
 import { beginSetup, gate, loadGuide, loadSetup } from '../src/api'
 import { bringing, mcpImporting } from '../src/bring'
@@ -68,5 +68,36 @@ describe('what the setup asks of the MCP import', () => {
     expect(mcpImporting().importable(['found'])).toBe(true)
     expect(await mcpImporting().picker()).toEqual({ default: 'picker' })
     unbind()
+  })
+})
+describe('a setup opened again', () => {
+  test('still goes back to the steps before the one it was left on', async () => {
+    const kept = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => kept.get(key) ?? null,
+      setItem: (key: string, value: string) => void kept.set(key, value),
+      removeItem: (key: string) => void kept.delete(key),
+      clear: () => kept.clear(),
+    })
+    vi.resetModules()
+    const first = (await import('../src/setup-state.svelte')).setup
+    first.begin(false)
+    first.next('account')
+    first.next('appearance')
+    expect(first.step).toBe('heard')
+    vi.resetModules()
+    const [{ gate: reopened }, { setup: again }] = await Promise.all([
+      import('../src/gate.svelte'),
+      import('../src/setup-state.svelte'),
+    ])
+    reopened.restore()
+    again.resume()
+    expect(again.step).toBe('heard')
+    expect(again.canGoBack).toBe(true)
+    again.back()
+    expect(again.step).toBe('appearance')
+    again.back()
+    expect(again.step).toBe('account')
+    vi.unstubAllGlobals()
   })
 })
