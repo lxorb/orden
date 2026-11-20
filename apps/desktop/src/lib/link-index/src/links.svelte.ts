@@ -99,6 +99,7 @@ export interface Retargeting {
   only?: readonly string[]
   touched?: string[]
   wrote?: { path: string; before: string; after: string }[]
+  part?: string
 }
 interface OtherSpace {
   refs: NoteRef[]
@@ -1056,7 +1057,7 @@ class Links {
     }
     const found = await scanLinks(root)
     if (!found) return 0
-    const carry = carried(now, was)
+    const carry = how.part === undefined ? carried(now, was) : () => null
     const back = (path: string) => carry(path) ?? path
     const notes = found.notes.map((note) => {
       const path = back(note.path)
