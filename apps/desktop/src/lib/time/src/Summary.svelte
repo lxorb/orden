@@ -7,6 +7,7 @@
   import { length, nameOf, placeTint, tintOf } from './look'
   import type { Minute } from './minutes'
   import Pie from './Pie.svelte'
+  import { percent } from './percent.svelte'
   import PlaceIcon from './PlaceIcon.svelte'
   import { appName } from './places'
   import type { Lane, Per } from './records'
@@ -58,7 +59,7 @@
   const active = $derived(activeIn(minutes, from, to))
   const found = $derived(within(time.spans, minutes, from, to, now))
   const groups = $derived(LANES.map(([key, label]) => ({ lane: key, label, list: found.places[key] })))
-  const share = (ms: number) => (totals.ms > 0 ? Math.round((ms / totals.ms) * 100) : 0)
+  const part = (ms: number, of: number) => `${of > 0 ? Math.round((ms / of) * 100) : 0}%`
   const goalOf = (activity: string | null) => (activity === null || per === null ? null : time.goalFor(activity, per))
   function countAs(event: MouseEvent, kind: Lane, place: Place) {
     event.preventDefault()
@@ -83,6 +84,16 @@
 
 <div class="summary">
   <section class="card totals" data-time-summary bind:this={card}>
+    <div class="tools">
+      <button
+        type="button"
+        class="orden-chip"
+        class:is-on={percent.on}
+        aria-pressed={percent.on}
+        data-time-percent
+        onclick={() => percent.set(!percent.on)}>Show percent</button
+      >
+    </div>
     <Pie
       slices={totals.slices}
       ms={totals.ms}
@@ -123,8 +134,11 @@
                   >
                 {/if}
               </span>
-              <span class="orden-row-meta">{length(slice.ms)}{goal ? ` of ${length(goal.ms)}` : ''}</span>
-              <span class="orden-row-meta share">{share(slice.ms)}%</span>
+              <span class="orden-row-meta" data-time-value
+                >{percent.on
+                  ? part(slice.ms, totals.ms)
+                  : `${length(slice.ms)}${goal ? ` of ${length(goal.ms)}` : ''}`}</span
+              >
             </button>
           </li>
         {/each}
@@ -147,6 +161,7 @@
     </div>
     {#each groups as group (group.lane)}
       {@const most = group.list[0]?.ms ?? 1}
+      {@const whole = group.list.reduce((sum, one) => sum + one.ms, 0)}
       <div class="group" class:picked={lane === group.lane} data-time-lane={group.lane}>
         <p class="orden-section">{group.label}</p>
         {#if !group.list.length}
@@ -172,7 +187,9 @@
                   >
                 </span>
                 {#if rule}<ActivityMark activity={rule.activity} size={12} />{/if}
-                <span class="orden-row-meta spent" data-time-spent>{length(place.ms)}</span>
+                <span class="orden-row-meta spent" data-time-spent
+                  >{percent.on ? part(place.ms, whole) : length(place.ms)}</span
+                >
               </button>
             </li>
           {/each}
@@ -193,6 +210,11 @@
     flex-direction: column;
     gap: var(--space-3);
     min-width: 0;
+  }
+  .tools {
+    display: flex;
+    justify-content: flex-end;
+    margin: calc(var(--space-1) * -1) 0 var(--space-2);
   }
   .card {
     min-width: 0;
@@ -265,10 +287,6 @@
   }
   .orden-row-meta {
     font-variant-numeric: tabular-nums;
-  }
-  .share {
-    flex: 0 0 2.4rem;
-    text-align: end;
   }
   .unset .name {
     color: var(--muted-strong);

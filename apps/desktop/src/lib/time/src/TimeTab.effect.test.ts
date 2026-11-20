@@ -297,3 +297,31 @@ describe('the time tracker beside the notes', () => {
     expect(target.querySelector('.orden-section')).toBeNull()
   })
 })
+test('Show percent turns every number in the summary into a share and back, and stays chosen', async () => {
+  const { percent, PERCENT } = await import('./percent.svelte')
+  percent.set(false)
+  const work = time.addActivity('Work')
+  const eat = time.addActivity('Eat')
+  time.schedule([
+    { kind: 'add', span: block('a', at(9), at(12), work.id) },
+    { kind: 'add', span: block('b', at(12), at(13), eat.id) },
+  ])
+  time.addSpan({ start: at(9), end: at(10), source: 'app', place: 'Code', label: 'Code' })
+  time.addSpan({ start: at(10), end: at(13), source: 'app', place: 'orden', label: 'orden' })
+  shown(TimeTab, { tab: tab() })
+  const values = () => [
+    ...[...target.querySelectorAll('[data-slice] [data-time-value]')].map((one) => one.textContent.trim()),
+    ...[...target.querySelectorAll('[data-time-lane="app"] [data-time-spent]')].map((one) => one.textContent.trim()),
+  ]
+  const chip = target.querySelector('[data-time-percent]')
+  expect(chip?.classList.contains('orden-chip')).toBe(true)
+  expect(chip?.getAttribute('aria-pressed')).toBe('false')
+  expect(values()).toEqual([length(3 * H), length(H), length(3 * H), length(H)])
+  pressed(chip)
+  expect(chip?.getAttribute('aria-pressed')).toBe('true')
+  expect(values()).toEqual(['75%', '25%', '75%', '25%'])
+  expect(localStorage.getItem(PERCENT)).toBe('true')
+  pressed(chip)
+  expect(values()).toEqual([length(3 * H), length(H), length(3 * H), length(H)])
+  expect(localStorage.getItem(PERCENT)).toBe('false')
+})
