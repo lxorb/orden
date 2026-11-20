@@ -41,7 +41,6 @@ import { unixLines } from '../../documents/src/api'
 export type Status = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 const VERSION = 'orden:sync-version'
 type Runner = (typeof import('../../sync-client/src/api'))['runner']
-const V2 = !__EVEN_PLUGIN__
 function workspace(): SyncWorkspacePort {
   return needPort('sync.workspace')
 }
@@ -101,11 +100,11 @@ class Sync {
   private v2: Runner | null = null
   private local: Runner | null = null
   get engine(): Runner | null {
-    return V2 ? this.v2 : null
+    return this.v2
   }
   private unmirror: (() => void) | null = null
   private wantsV2(): boolean {
-    if (!V2 || account.guest) return false
+    if (account.guest) return false
     return account.user?.syncVersion === 2 || storedText(VERSION) === '2'
   }
   start() {
@@ -133,7 +132,7 @@ class Sync {
     this.timer = null
     document.removeEventListener('visibilitychange', this.onVisibility)
     window.removeEventListener('focus', this.onReturn)
-    if (!V2 || !this.v2) return null
+    if (!this.v2) return null
     const runner = this.v2
     this.v2 = null
     this.unmirror?.()
@@ -141,7 +140,6 @@ class Sync {
     return runner.stop()
   }
   private startV2() {
-    if (!V2) return
     const mine = this.generation
     this.version = 2
     arriving.settled()
@@ -176,7 +174,7 @@ class Sync {
     })()
   }
   private startLocal(mine: number) {
-    if (!V2 || !isDesktop) return
+    if (!isDesktop) return
     void (async () => {
       await startup.turn('rooms')
       const { runner } = await import('../../sync-client/src/api')
@@ -187,7 +185,7 @@ class Sync {
     })()
   }
   private leaveLocal() {
-    if (!V2 || !isDesktop) return
+    if (!isDesktop) return
     this.local = null
     void (async () => {
       await startup.turn('rooms')
@@ -211,7 +209,7 @@ class Sync {
     this.schedule(0)
   }
   get passing(): boolean {
-    return V2 && this.v2 ? this.v2.passing : this.running
+    return this.v2 ? this.v2.passing : this.running
   }
   stop() {
     this.generation++
@@ -231,8 +229,8 @@ class Sync {
   private readonly pulling = new Set<string>()
   private readonly toldUnwritten = new Set<string>()
   follow(op: FileOp): Promise<void> | undefined {
-    if (V2 && this.v2) return this.v2.follow(op)
-    if (V2 && this.local) return this.local.follow(op)
+    if (this.v2) return this.v2.follow(op)
+    if (this.local) return this.local.follow(op)
     if (op.op !== 'moved') return undefined
     if (this.pulling.has(`${op.from}\n${op.to}`)) return undefined
     if (op.kind !== 'space') return this.moved(op.from, op.to)
@@ -284,13 +282,13 @@ class Sync {
   }
   async forget(root: string, role: SpaceRole | null) {
     const token = account.token
-    if (V2 && this.local) await this.local.forget(root)
+    if (this.local) await this.local.forget(root)
     const spaceId = this.remoteIdFor(root)
     if (spaceId === null) return
-    const shared = !(V2 && this.v2) && !!this.mirrorAt(root)?.shared
+    const shared = !this.v2 && !!this.mirrorAt(root)?.shared
     const theirs = shared || (role !== null && role !== 'owner')
     const mine = !shared && role === 'owner'
-    if (V2 && this.v2) {
+    if (this.v2) {
       await this.v2.forget(root)
     } else {
       this.mirrors = without(this.mirrors, this.keyAt(root) ?? root)
@@ -323,15 +321,16 @@ class Sync {
     workspace().bookmarksSaid(root, landed, list)
   }
   wrote(path: string, content: string): void {
-    if (V2 && this.v2) void this.v2.wrote(path, content)
-    else if (V2 && this.local) void this.local.wrote(path, content)
+    if (this.v2) void this.v2.wrote(path, content)
+    else if (this.local) void this.local.wrote(path, content)
     else this.nudge()
   }
   mergeable(path: string): void {
-    if (V2) (this.v2 ?? this.local)?.mergeable(path)
+    const engine = this.v2 ?? this.local
+    engine?.mergeable(path)
   }
   nudge() {
-    if (V2 && this.v2) {
+    if (this.v2) {
       this.v2.nudge()
       return
     }
@@ -379,10 +378,10 @@ class Sync {
     this.schedule(owed ? nudgeDelay(Infinity) : this.delay())
   }
   get engineComing(): boolean {
-    return V2 && this.version === 2 && !this.v2
+    return this.version === 2 && !this.v2
   }
   async pass(): Promise<boolean> {
-    if (V2 && this.v2) return await this.v2.passNow()
+    if (this.v2) return await this.v2.passNow()
     if (this.engineComing) return false
     const first = this.first
     this.first = false
@@ -425,11 +424,11 @@ class Sync {
     await account.loadSpaces().catch(() => undefined)
   }
   remoteIdFor(root: string): string | null {
-    if (V2 && this.v2) return this.v2.remoteIdFor(root)
+    if (this.v2) return this.v2.remoteIdFor(root)
     return this.mirrorAt(root)?.spaceId ?? null
   }
   roleKept(root: string): string | null {
-    if (V2 && this.v2) return this.v2.roleKept(root)
+    if (this.v2) return this.v2.roleKept(root)
     const mirror = this.mirrorAt(root)
     return mirror && !mirror.shared ? 'owner' : null
   }
@@ -437,7 +436,7 @@ class Sync {
     return account.spaces.find((one) => one.id === spaceId)?.role === 'read'
   }
   pathOf(id: string): string | null {
-    if (V2 && this.v2) return null
+    if (this.v2) return null
     for (const mirror of Object.values(this.mirrors)) {
       for (const [path, held] of Object.entries(mirror.notes)) {
         if (held.id === id) return joinPath(mirror.root, path)
@@ -446,14 +445,14 @@ class Sync {
     return null
   }
   entryIdAt(root: string, path: string): string | null {
-    return V2 ? (this.v2?.tracked(joinPath(root, path))?.id ?? null) : null
+    return this.v2?.tracked(joinPath(root, path))?.id ?? null
   }
   entryPathOf(root: string, id: string): string | null {
-    const file = V2 ? this.v2?.fileOf(id) : null
+    const file = this.v2?.fileOf(id)
     return file ? within(root, file) : null
   }
   tracked(path: string): { id: string; version: number; hash: string } | null {
-    if (V2 && this.v2) return this.v2.tracked(path)
+    if (this.v2) return this.v2.tracked(path)
     for (const mirror of Object.values(this.mirrors)) {
       const relative = within(mirror.root, path)
       const held = relative === null ? undefined : mirror.notes[relative]
@@ -463,7 +462,7 @@ class Sync {
     return moving ? { id: moving.id, version: moving.version, hash: moving.hash } : null
   }
   async holds(path: string, how: HoldCheck = {}): Promise<boolean> {
-    if (V2 && this.v2) return this.v2.holds(path, how)
+    if (this.v2) return this.v2.holds(path, how)
     for (const mirror of Object.values(this.mirrors)) {
       const relative = within(mirror.root, path)
       if (relative === null) continue
@@ -539,7 +538,7 @@ class Sync {
     })
   }
   async run(): Promise<boolean> {
-    if (V2 && this.v2) return await this.v2.passNow()
+    if (this.v2) return await this.v2.passNow()
     if (this.running) this.owed = true
     if (this.running || !account.token) return false
     const token = account.token
