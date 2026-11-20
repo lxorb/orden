@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { everySurface } from '@orden/themes/write'
 import { emojiOutlines } from './emoji-outlines'
+import { dirOnWords } from './svelte-dir'
 import manifest from './even.app.json'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
@@ -42,7 +43,7 @@ const everyPage = {
   },
 }
 export default defineConfig(({ command, mode }) => ({
-  plugins: [svelte(), emojiOutlines()],
+  plugins: [svelte(), dirOnWords(), emojiOutlines()],
   define: {
     __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
     __EVEN_PLUGIN__: 'false',

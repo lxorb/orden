@@ -1,10 +1,11 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defaultExclude, defineConfig } from 'vitest/config'
 import { emojiOutlines } from './emoji-outlines'
+import { dirOnWords } from './svelte-dir'
 
 const clocks = { hookTimeout: 30000, testTimeout: 30000 }
 export default defineConfig({
-  plugins: [svelte(), emojiOutlines()],
+  plugins: [svelte(), dirOnWords(), emojiOutlines()],
   define: {
     __EVEN_BUILD__: JSON.stringify('under test'),
     __EVEN_PLUGIN__: 'false',
