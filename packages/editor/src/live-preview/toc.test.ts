@@ -39,11 +39,11 @@ describe('a table of contents', () => {
     const entries = headings(state('# One\n\n## Two\n'))
     expect(new TocWidget(entries).eq(new TocWidget([...entries]))).toBe(true)
   })
-  test('is different when a heading moved', () => {
+  test('is the same when only the place of its headings moved, since a jump finds the heading when pressed', () => {
     const before = headings(state('# One\n\n## Two\n'))
     const after = headings(state('a new line\n\n# One\n\n## Two\n'))
     expect(after.map((one) => one.text)).toEqual(before.map((one) => one.text))
-    expect(new TocWidget(before).eq(new TocWidget(after))).toBe(false)
+    expect(new TocWidget(before).eq(new TocWidget(after))).toBe(true)
   })
   test('is different when a heading was renamed, added or promoted', () => {
     const one = headings(state('# One\n\n## Two\n'))

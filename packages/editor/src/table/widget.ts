@@ -33,7 +33,7 @@ export class TableWidget extends OrdenWidget {
     super()
   }
   override eq(other: TableWidget) {
-    return other.source === this.source && other.from === this.from && other.writable === this.writable
+    return other.source === this.source && other.writable === this.writable
   }
   override ignoreEvent() {
     return true
@@ -58,8 +58,8 @@ export class TableWidget extends OrdenWidget {
     if (!table) return false
     const model = table.modelFor(this.source)
     if (!model) return false
-    const moved = previous.from !== this.from && previous.source !== this.source
-    if (moved && !(table.continues(this) && table.sameTable(model))) return false
+    const moved = !table.continues(this) && previous.source !== this.source
+    if (moved && !table.sameTable(model)) return false
     table.adopt(this, model)
     return true
   }

@@ -11,6 +11,7 @@ import { tableWrites } from '../table/navigation'
 import { tableTracking } from '../table/widget'
 import { itemStart } from './item-start'
 import { foundMatch } from './reveal'
+import { keptPlaces } from './widget'
 
 export function livePreview(): Extension {
   return [
@@ -19,6 +20,7 @@ export function livePreview(): Extension {
     footnoteReading,
     pointerSnap,
     itemStart,
+    keptPlaces,
     foundMatch,
     dropSpacing,
     livePreviewDecorations,

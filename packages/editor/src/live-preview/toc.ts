@@ -40,7 +40,7 @@ export class TocWidget extends OrdenWidget {
     if (other.entries.length !== this.entries.length) return false
     return this.entries.every((mine, index) => {
       const theirs = other.entries[index]
-      return !!theirs && theirs.text === mine.text && theirs.level === mine.level && theirs.from === mine.from
+      return !!theirs && theirs.text === mine.text && theirs.level === mine.level
     })
   }
   toDOM(view: EditorView) {
@@ -51,16 +51,20 @@ export class TocWidget extends OrdenWidget {
       return nav
     }
     const top = this.entries.reduce((least, entry) => Math.min(least, entry.level), Infinity)
-    for (const entry of this.entries) {
+    for (const [index, entry] of this.entries.entries()) {
       const link = document.createElement('a')
       link.textContent = entry.text
       link.href = '#'
       link.style.paddingLeft = `${(entry.level - top) * 1.1}em`
       link.addEventListener('mousedown', (event) => {
         event.preventDefault()
+        const now = headings(view.state)
+        const same = (one: Heading | undefined) => one?.text === entry.text && one.level === entry.level
+        const at = (same(now[index]) ? now[index] : now.find(same))?.from
+        if (at === undefined) return
         view.dispatch({
-          selection: { anchor: entry.from },
-          effects: EditorView.scrollIntoView(entry.from, { y: 'start', yMargin: 72 }),
+          selection: { anchor: at },
+          effects: EditorView.scrollIntoView(at, { y: 'start', yMargin: 72 }),
           userEvent: 'select',
         })
         view.focus()

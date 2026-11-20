@@ -1,5 +1,5 @@
 import { calloutIconParts } from '@orden/markdown/callouts'
-import { OrdenWidget } from './widget'
+import { OrdenWidget, type Place } from './widget'
 import { EditorView } from '@codemirror/view'
 import { iconElement } from '../icon'
 import { fenceCodeAt } from '../fence'
@@ -110,8 +110,8 @@ export class FenceHeaderWidget extends OrdenWidget {
     return (
       other.language === this.language &&
       other.caption === this.caption &&
-      other.infoFrom === this.infoFrom &&
-      other.blockFrom === this.blockFrom &&
+      other.infoFrom - other.blockFrom === this.infoFrom - this.blockFrom &&
+      other.infoTo - other.infoFrom === this.infoTo - this.infoFrom &&
       other.asking === this.asking
     )
   }
@@ -119,6 +119,8 @@ export class FenceHeaderWidget extends OrdenWidget {
     const bar = document.createElement('span')
     bar.className = 'orden-fence-header'
     bar.contentEditable = 'false'
+    const block = this.place(view, bar, this.blockFrom)
+    const info = this.place(view, bar, this.infoFrom)
     const row = document.createElement('span')
     row.className = 'orden-fence-row'
     bar.append(row)
@@ -137,7 +139,7 @@ export class FenceHeaderWidget extends OrdenWidget {
     label.title = 'Set the language'
     label.textContent = this.language || 'plain'
     if (!this.language) label.classList.add('orden-fence-unset')
-    const edit = () => this.editLanguage(view, label, bar)
+    const edit = () => this.editLanguage(view, label, bar, info.at)
     label.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
@@ -145,8 +147,8 @@ export class FenceHeaderWidget extends OrdenWidget {
     })
     pressedByKey(label, edit)
     controls.append(label)
-    if (isRunnableLanguage(this.language)) controls.append(this.runButton(view))
-    else if (isAiLanguage(this.language)) controls.append(this.askButton(view))
+    if (isRunnableLanguage(this.language)) controls.append(this.runButton(view, block))
+    else if (isAiLanguage(this.language)) controls.append(this.askButton(view, block))
     const copy = document.createElement('button')
     copy.className = 'orden-fence-copy'
     copy.type = 'button'
@@ -168,7 +170,7 @@ export class FenceHeaderWidget extends OrdenWidget {
     draw(SHEETS)
     const take = () => {
       navigator.clipboard
-        .writeText(fenceCodeAt(view.state, this.blockFrom))
+        .writeText(fenceCodeAt(view.state, block.at))
         .then(() => {
           copy.classList.add('orden-fence-copied')
           copy.title = 'Copied'
@@ -231,28 +233,29 @@ export class FenceHeaderWidget extends OrdenWidget {
     pressedByKey(button, press)
     return button
   }
-  private runButton(view: EditorView): HTMLElement {
+  private runButton(view: EditorView, block: Place): HTMLElement {
     return this.glyphButton('Run', 'Run the code', 'M4 2.6l7 4.4-7 4.4z', () => {
-      const fence = runnableFenceAt(view.state, this.blockFrom)
+      const fence = runnableFenceAt(view.state, block.at)
       if (fence) runFence(view, fence)
     })
   }
-  private askButton(view: EditorView): HTMLElement {
-    if (this.asking) return this.glyphButton('Stop', 'Stop', 'M4 4h6v6H4z', () => stopAskAt(view, this.blockFrom))
+  private askButton(view: EditorView, block: Place): HTMLElement {
+    if (this.asking) return this.glyphButton('Stop', 'Stop', 'M4 4h6v6H4z', () => stopAskAt(view, block.at))
     return this.glyphButton('Ask', 'Ask the model', 'M4 2.6l7 4.4-7 4.4z', () => {
-      const fence = aiFenceAt(view.state, this.blockFrom)
+      const fence = aiFenceAt(view.state, block.at)
       if (fence) askAiFence(view, fence)
     })
   }
-  private editLanguage(view: EditorView, label: HTMLElement, dom: HTMLElement) {
+  private editLanguage(view: EditorView, label: HTMLElement, dom: HTMLElement, infoFrom: number) {
+    const infoTo = infoFrom + this.infoTo - this.infoFrom
     const field = document.createElement('input')
     field.className = 'orden-fence-language-input'
     field.value = this.language
     field.placeholder = 'language'
     field.spellcheck = false
-    const written = view.state.sliceDoc(this.infoFrom, this.infoTo)
-    const opening = view.state.doc.lineAt(this.infoFrom)
-    const ticked = view.state.sliceDoc(opening.from, this.infoFrom).trimEnd().endsWith('`')
+    const written = view.state.sliceDoc(infoFrom, infoTo)
+    const opening = view.state.doc.lineAt(infoFrom)
+    const ticked = view.state.sliceDoc(opening.from, infoFrom).trimEnd().endsWith('`')
     const land = later(view)
     let done = false
     const commit = () => {
@@ -262,11 +265,11 @@ export class FenceHeaderWidget extends OrdenWidget {
       field.replaceWith(label)
       if (next === this.language) return
       queueMicrotask(() => {
-        land((state) =>
-          state.sliceDoc(this.infoFrom, this.infoTo) === written
-            ? { changes: { from: this.infoFrom, to: this.infoTo, insert: next } }
-            : null,
-        )
+        land((state, placed) => {
+          const from = placed(infoFrom)
+          const to = placed(infoTo)
+          return state.sliceDoc(from, to) === written ? { changes: { from, to, insert: next } } : null
+        })
       })
     }
     field.addEventListener('keydown', (event) => {
