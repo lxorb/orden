@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       drives:
-        description: The parity drives to run, by name (look, motion, pointer, keys).
+        description: The parity drives to run, by name (look, motion, pointer, keys, turn).
         default: look motion pointer keys
 
 concurrency:
@@ -111,6 +111,11 @@ jobs:
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'keys') && hashFiles('scripts/parity-keys-drive.py') != '' }}
         timeout-minutes: 20
         run: bash scripts/parity-run.sh scripts/parity-keys-drive.py
+
+      - name: Turn
+        if: ${{ !cancelled() && env.EXE != '' && runner.os != 'Windows' && contains(env.DRIVES, 'turn') && hashFiles('scripts/turn-drive.py') != '' }}
+        timeout-minutes: 15
+        run: bash scripts/parity-run.sh scripts/turn-drive.py
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
