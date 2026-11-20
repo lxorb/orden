@@ -35,6 +35,18 @@ describe('names', () => {
     expect(stemOf('v1.2 notes')).toBe('v1.2 notes')
     expect(fileNameFor('Plan.md', 'pdf')).toBe('Plan.pdf')
   })
+  test("a stem drops Orden's own ending and any real one, but never a dot that is part of the name", () => {
+    expect(stemOf('Board.canvas')).toBe('Board')
+    expect(stemOf('Shell.term')).toBe('Shell')
+    expect(stemOf('photo.jpeg')).toBe('photo')
+    expect(stemOf('v1.2')).toBe('v1.2')
+    expect(stemOf('Report 2024.10')).toBe('Report 2024.10')
+    expect(stemOf('my.folder/README')).toBe('my.folder/README')
+    expect(stemOf('a.b\\c')).toBe('a.b\\c')
+    expect(stemOf('.env')).toBe('.env')
+    expect(fileNameFor('.env', 'txt')).toBe('.env.txt')
+    expect(fileNameFor('Board.canvas', 'png')).toBe('Board.png')
+  })
   test('a claimed name is numbered past the ones already taken and then taken itself', () => {
     const taken = new Set(['a.png'])
     expect(claimName('a.png', taken)).toBe('a 2.png')
