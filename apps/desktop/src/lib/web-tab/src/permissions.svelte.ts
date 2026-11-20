@@ -13,8 +13,28 @@ export const ASKS = [
   'fonts',
   'midi',
   'windows',
+  'screen',
+  'pointer',
+  'files',
+  'media-keys',
 ] as const
 export type Ask = (typeof ASKS)[number]
+export const ASK_NAMES: Record<Ask, string> = {
+  camera: 'Camera',
+  microphone: 'Microphone',
+  location: 'Location',
+  notifications: 'Notifications',
+  clipboard: 'Clipboard',
+  sensors: 'Motion sensors',
+  downloads: 'Automatic downloads',
+  fonts: 'Fonts',
+  midi: 'MIDI devices',
+  windows: 'Window management',
+  screen: 'Screen sharing',
+  pointer: 'Pointer lock',
+  files: 'Files and folders',
+  'media-keys': 'Protected content',
+}
 type Answer = 'allow' | 'block'
 function isAsk(value: string): value is Ask {
   return ASKS.some((one) => one === value)

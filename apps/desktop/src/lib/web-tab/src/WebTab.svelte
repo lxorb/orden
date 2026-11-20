@@ -58,6 +58,7 @@
   import WebExtensions from './WebExtensions.svelte'
   import { extensions, type Extension } from './extensions.svelte'
   import WebSite from './WebSite.svelte'
+  import WebAsks from './WebAsks.svelte'
   import { NewHere } from '../../new-here/src/api'
   import { handAppKeys } from './app-keys.svelte'
   import { cameFromAfter, focusBeside, readLeft } from './keys'
@@ -674,6 +675,7 @@
       ondragleave={() => leftPage(tab.id)}
       ondrop={(event) => hole && droppedOnPage(tab.id, hole, event, page.zoom)}
     ></div>
+    <WebAsks tab={tab.id} />
   {:else if page.framing === 'frame' && address}
     <iframe
       class="framed"
