@@ -122,7 +122,6 @@ const commanded = (id: string, label: string, command: string, extra: Partial<Co
   ...extra,
 })
 function importCommands(): Command[] {
-  if (__EVEN_PLUGIN__) return []
   const asked = (id: string) => () => {
     settingsWindow().show('import')
     void runCommand(id)
@@ -154,7 +153,7 @@ export interface Command extends MenuItem {
   ownWindow?: boolean
 }
 function agentRows(): Command[] {
-  if (__EVEN_PLUGIN__ || !agentMarks.heard) return []
+  if (!agentMarks.heard) return []
   return [
     {
       id: 'agents',
@@ -466,7 +465,7 @@ function spaceCommands(): Command[] {
         }))
       : []),
     ...(canShare(space) ? [{ id: 'share', label: 'Share this space', run: () => void shareSpace(space) }] : []),
-    ...(isDesktop && !__EVEN_PLUGIN__ && internal.routed?.('read_tree', { root: space.root })
+    ...(isDesktop && internal.routed?.('read_tree', { root: space.root })
       ? [
           {
             id: 'export-space',
@@ -509,7 +508,7 @@ export function appCommands(view?: EditorView): Command[] {
   return without([
     ...(unsaved ? [{ id: 'save', label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(unsaved.id) }] : []),
     { id: 'new', label: 'New note', hint: shortcuts.hint('app.new'), run: entry('app.new') },
-    ...(__EVEN_PLUGIN__ ? [] : [keyed('quick-add', 'Add task', 'app.quick-add')]),
+    keyed('quick-add', 'Add task', 'app.quick-add'),
     ...commandRows('send', view),
     {
       id: 'new-unique',
@@ -544,13 +543,13 @@ export function appCommands(view?: EditorView): Command[] {
           },
           { id: 'new-website', label: 'Open a website', run: () => workspace.openWebsite() },
         ]),
-    ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
+    ...(isDesktop && modes.coder
       ? [
           commanded('new-terminal', 'New terminal', 'terminal.new', { ownWindow: true }),
           commanded('new-remote', 'Remote', 'terminal.remote', { ownWindow: true }),
         ]
       : []),
-    ...(__EVEN_PLUGIN__ || !modes.coder
+    ...(!modes.coder
       ? []
       : [
           commanded('new-online-terminal', 'New online terminal', 'terminal.online', {
@@ -644,16 +643,12 @@ export function appCommands(view?: EditorView): Command[] {
     },
     ...commandRows('agent-undo', view),
     ...agentRows(),
-    ...(__EVEN_PLUGIN__
-      ? []
-      : [
-          {
-            id: 'copy-uri',
-            label: 'Copy link to this note',
-            disabled: !workspace.active?.path,
-            run: () => void copyNoteLink(),
-          },
-        ]),
+    {
+      id: 'copy-uri',
+      label: 'Copy link to this note',
+      disabled: !workspace.active?.path,
+      run: () => void copyNoteLink(),
+    },
     ...commandRows('export-picker', view),
     ...commandRows('export', view),
     ...spaceCommands(),
@@ -832,7 +827,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => workspace.holdPanel(workspace.held ? null : (workspace.panelTab?.id ?? null)),
     },
     keyed('graph', 'Graph', 'app.graph'),
-    ...(__EVEN_PLUGIN__ || !passOn()
+    ...(!passOn()
       ? []
       : [
           keyed('pass', 'Pass', 'app.pass'),
@@ -840,23 +835,19 @@ export function appCommands(view?: EditorView): Command[] {
           commanded('pass-new-login', 'New login', 'pass.new-login'),
           commanded('pass-generate', 'Generate password', 'pass.generate'),
         ]),
-    ...(__EVEN_PLUGIN__
-      ? []
-      : [
-          {
-            id: 'todos',
-            label: 'Todos',
-            hint: shortcuts.hint('app.tasks'),
-            run: entry('app.tasks'),
-          },
-          ...(timeOn()
-            ? [
-                keyed('time-tab', 'Open time tracker', 'time.tab'),
-                keyed('time-start', 'Start timer', 'time.start'),
-                keyed('time-stop', 'Stop timer', 'time.stop'),
-              ]
-            : []),
-        ]),
+    {
+      id: 'todos',
+      label: 'Todos',
+      hint: shortcuts.hint('app.tasks'),
+      run: entry('app.tasks'),
+    },
+    ...(timeOn()
+      ? [
+          keyed('time-tab', 'Open time tracker', 'time.tab'),
+          keyed('time-start', 'Start timer', 'time.start'),
+          keyed('time-stop', 'Stop timer', 'time.stop'),
+        ]
+      : []),
     keyed('region-next', 'Next section', 'app.region-next'),
     keyed('region-previous', 'Previous section', 'app.region-previous'),
     keyed('spaces', 'Spaces', 'space.switcher'),

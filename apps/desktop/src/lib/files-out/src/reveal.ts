@@ -29,7 +29,7 @@ export function remotePath(path: string): boolean {
   return /^[\\/]{2}/.test(said)
 }
 export async function reveal(path: string, how: { system?: boolean } = {}): Promise<void> {
-  if (!isDesktop || __EVEN_PLUGIN__ || remotePath(path)) return
+  if (!isDesktop || remotePath(path)) return
   const disk = await diskPathOf(path)
   const shows = how.system ? null : explorer()
   if (shows?.offered() && (await shows.show(disk).catch(() => false))) return
