@@ -135,6 +135,7 @@ const workspace = {
     const { invoke } = await import('../src/lib/platform/src/tauri')
     await invoke('rename_note', { from, to })
   }),
+  fileCame: vi.fn(() => Promise.resolve()),
   fileMoved: vi.fn((from: string, to: string, kind: Kind) =>
     workspace.fileOps.tell({ op: 'moved', from, to, kind, root: '/s/Home' }),
   ),
@@ -715,12 +716,14 @@ describe('the tree', () => {
     expect(workspace.remove).not.toHaveBeenCalled()
     expect(await call('trash_file', { path: 'Plan.md' })).toMatchObject({ status: 'ok' })
   })
-  test('makes a folder once', async () => {
+  test('makes a folder once, and tells sync it came', async () => {
+    workspace.fileCame.mockClear()
     expect(await call('create_folder', { path: 'Ideas' })).toMatchObject({ result: { made: true } })
     expect(await call('create_folder', { path: 'Ideas' })).toMatchObject({
       result: { made: false },
     })
     expect(workspace.loadTree).toHaveBeenCalled()
+    expect(workspace.fileCame.mock.calls).toEqual([[expect.stringMatching(/\/Ideas$/), 'folder']])
   })
 })
 describe('the reader tabs', () => {
@@ -1396,6 +1399,25 @@ describe('a page into a note', () => {
     expect(String(kept?.name)).toMatch(/^page-[\d-]+\.png$/)
     expect([...(kept?.bytes as Uint8Array)]).toEqual([80, 78, 71, 32, 98, 121, 116, 101, 115])
     expect(files.get('/s/Work/A page.md')).toContain(`![[files/${String(kept?.name)}]]`)
+  })
+  test('a picture kept beside the note goes through the writes sync hears', async () => {
+    const { hearWrites } = await import('../src/lib/file-writes/src/api')
+    const made: string[] = []
+    const stop = hearWrites({
+      there: () => Promise.resolve(false),
+      made: (path) => {
+        made.push(path)
+        return Promise.resolve()
+      },
+      wrote: () => undefined,
+    })
+    try {
+      reads({ html: undefined, png: btoa('PNG bytes') })
+      await call('capture_to_note', { tab: 'a1', as: 'screenshot' })
+    } finally {
+      stop()
+    }
+    expect(made).toContain(`/s/Work/files/${String(saved()?.name)}`)
   })
   test('a PDF is printed on the reader own paper and kept beside the note', async () => {
     reads({ html: undefined, pdf: btoa('%PDF-1.7') })
