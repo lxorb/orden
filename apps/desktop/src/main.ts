@@ -43,13 +43,11 @@ if (isDesktop && (await (await import('./lib/workspace/src/former-home')).finish
   location.reload()
   await new Promise<never>(() => undefined)
 }
-const demo = document.documentElement.dataset.demo ? (await import('./lib/demo/src/api')).demoRun : null
-if (demo) await (await demo()).seed()
+await Reflect.get(window, 'ordenDemo')
 mark('mounting')
 watchFirstInput()
 watchPresses()
 holdComposingKeys()
 const app = mount(App, { target })
 markPainted('shell painted')
-if (demo) void demo().then((run) => run.play())
 export default app
