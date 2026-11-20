@@ -11,9 +11,7 @@ import { paperOf as ownPaper } from '@orden/markdown/pages'
 import { SvelteMap } from 'svelte/reactivity'
 
 const paperAway = () =>
-  __EVEN_PLUGIN__ || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined'
-    ? null
-    : import('./paper-away')
+  typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined' ? null : import('./paper-away')
 const SCALE = 2
 const ROUGH = 0.5
 const SHARP = 4

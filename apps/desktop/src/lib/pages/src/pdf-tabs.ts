@@ -3,7 +3,7 @@ import { pageSizes } from '../../pdf/src/api'
 import { adoptBeside as adopt, asItself as itself, asPageNote as pageNote, noteHolding } from './from-pdf'
 import { turningIn } from './turning'
 
-const drafts = () => (__EVEN_PLUGIN__ ? Promise.reject(new Error('no PDF drafts in the plugin')) : import('./drafts'))
+const drafts = () => import('./drafts')
 export const draftPdf: typeof import('./drafts').draftPdf = async (ws, from) => (await drafts()).draftPdf(ws, from)
 export const keepPaper: typeof import('./drafts').keepPaper = async (ws, note, path) =>
   (await drafts()).keepPaper(ws, note, path)
