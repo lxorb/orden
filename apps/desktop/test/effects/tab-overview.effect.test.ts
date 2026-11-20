@@ -45,6 +45,7 @@ async function opened() {
     ?.run()
   flushSync()
   await tick()
+  if (workspace.tabs.length) await vi.waitFor(() => expect(document.querySelector('.canvas .closer')).not.toBe(null))
 }
 test('the palette’s row shows one window per tab, the strip leaves them out, the keyboard on the one in front', async () => {
   await opened()

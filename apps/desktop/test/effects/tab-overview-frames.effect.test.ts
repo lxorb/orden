@@ -427,6 +427,18 @@ test('the windows’ pictures come in together, in the frame after the windows l
   expect(first).toBeGreaterThan(landed)
   expect(seen[first]).toBe(Math.max(...seen))
 })
+test('the windows’ crosses and names come in the frames after the first, which draws only the windows', async () => {
+  tabOverview.open = true
+  flushSync()
+  expect(document.querySelectorAll('.canvas .window').length).toBeGreaterThan(0)
+  expect(document.querySelectorAll('.closer, .caption').length).toBe(0)
+  await vi.waitFor(async () => {
+    frame()
+    await idle(20)
+    expect(document.querySelectorAll('.closer').length).toBe(document.querySelectorAll('.canvas .window').length)
+  })
+  expect(document.querySelectorAll('.caption').length).toBe(document.querySelectorAll('.canvas .window').length)
+})
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]
     .filter((one) => one.style.willChange !== '' || one.classList.contains('is-moving'))
@@ -503,6 +515,11 @@ test('the one bar is over every window on every frame, and a window under it sho
   tabOverview.open = true
   flushSync()
   await drawnNow()
+  await vi.waitFor(async () => {
+    frame()
+    await idle(20)
+    expect(document.querySelector('.closer')).not.toBe(null)
+  })
   const pane = document.querySelector<HTMLElement>(`[data-pane="${workspace.panes.all[0]?.id}"]`)
   for (let i = 0; i < 200 && waiting.size; i++) {
     frame()

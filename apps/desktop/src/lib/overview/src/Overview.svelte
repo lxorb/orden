@@ -521,6 +521,7 @@
     }
   }
   let onTheWay = $state(false)
+  let extras = $state(false)
   let facesFly = $state(false)
   $effect(() => {
     if (onTheWay) {
@@ -794,6 +795,7 @@
       unmoved = true
       panesAsWindows.clear()
       riders.clear()
+      later(() => (extras = true))
       const asWindows: Record<string, true> = {}
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
@@ -866,6 +868,7 @@
   }
   function gone() {
     forgetLater()
+    extras = false
     homes.clear()
     shown = false
     flights.clear()
@@ -955,6 +958,7 @@
   }
   function named(node: HTMLElement, id: string) {
     captions.set(id, node)
+    if (started) paint(id)
     return {
       destroy() {
         captions.delete(id)
@@ -966,6 +970,7 @@
   }
   function closing(node: HTMLElement, id: string) {
     closers.set(id, node)
+    if (started) paint(id)
     return {
       destroy() {
         closers.delete(id)
@@ -1416,7 +1421,7 @@
           <path d={seamPath(seam)} />
         {/each}
       </svg>
-      {#each windows as { slot, tab } (tab.id)}
+      {#each extras ? windows : [] as { slot, tab } (tab.id)}
         <span
           class="caption"
           style:translate="{slot.x}px {slot.y + slot.h + 8}px"
@@ -1500,20 +1505,22 @@
         </span>
         <span class="ring" style:--overview-line={1 / restZoom} aria-hidden="true"></span>
       </button>
-      <button
-        class="closer"
-        class:is-front={tab.id === workspace.activeTabId}
-        class:is-held={heldIds.has(tab.id)}
-        type="button"
-        tabindex="-1"
-        title="Close"
-        aria-label="Close"
-        onpointerdown={(event) => event.stopPropagation()}
-        onclick={(event) => shut(event, tab)}
-        use:closing={tab.id}
-      >
-        <Cross />
-      </button>
+      {#if extras}
+        <button
+          class="closer"
+          class:is-front={tab.id === workspace.activeTabId}
+          class:is-held={heldIds.has(tab.id)}
+          type="button"
+          tabindex="-1"
+          title="Close"
+          aria-label="Close"
+          onpointerdown={(event) => event.stopPropagation()}
+          onclick={(event) => shut(event, tab)}
+          use:closing={tab.id}
+        >
+          <Cross />
+        </button>
+      {/if}
       {#if ridersDrawn[tab.id]}
         <span class="rider" class:is-front={tab.id === workspace.activeTabId} aria-hidden="true" use:riding={tab.id}
         ></span>
