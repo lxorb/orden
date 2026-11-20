@@ -7,6 +7,7 @@ export interface Hearing {
   there(path: string): Promise<boolean>
   made(path: string): Promise<void>
   wrote(path: string, content: string): void
+  changed?: Hearing['made']
 }
 let hearing: Hearing | null = null
 export function hearWrites(one: Hearing): () => void {
@@ -17,11 +18,12 @@ export function hearWrites(one: Hearing): () => void {
 }
 export async function writeBy(path: string, content: string | null, write: () => Promise<unknown>): Promise<void> {
   const ear = hearing
-  const was = ear ? await ear.there(path) : true
+  const was = await ear?.there(path)
   await write()
   if (!ear) return
   if (!was) await ear.made(path)
-  else if (content !== null) ear.wrote(path, content)
+  else if (content === null) await ear.changed?.(path)
+  else ear.wrote(path, content)
 }
 export async function writeFile(path: string, content: string): Promise<void> {
   await writeBy(path, content, async () => {
