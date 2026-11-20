@@ -39,6 +39,7 @@ import {
   isMarkdownPath,
   nameOf,
   noteName,
+  pathKey,
   pathKeyAs,
   relativePath,
   samePath,
@@ -339,14 +340,30 @@ class Links {
   private landing: Promise<void> = Promise.resolve()
   private scans = 0
   private since: ((held: Held) => Held)[] = []
+  private keyOf(path: string): string {
+    return pathKey(path, this.root ?? undefined)
+  }
+  private once<T>(items: readonly T[], pathOf: (item: T) => string): readonly T[] {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's keys, thrown away after it
+    const seen = new Set<string>()
+    const kept = items.filter((item) => {
+      const key = this.keyOf(pathOf(item))
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    return kept.length === items.length ? items : kept
+  }
   private edit(change: (notes: readonly ScannedNote[]) => ScannedNote[]) {
-    if (this.scanning) this.since.push((held) => ({ ...held, notes: change(held.notes) }))
-    this.notes = change(this.notes)
+    const unique = (notes: readonly ScannedNote[]) => [...this.once(change(notes), (note) => note.path)]
+    if (this.scanning) this.since.push((held) => ({ ...held, notes: unique(held.notes) }))
+    this.notes = unique(this.notes)
     this.changed()
   }
   private editFiles(change: (files: readonly string[]) => readonly string[]) {
-    if (this.scanning) this.since.push((held) => ({ ...held, files: change(held.files) }))
-    const files = change(this.files)
+    const unique = (files: readonly string[]) => this.once(change(files), (path) => path)
+    if (this.scanning) this.since.push((held) => ({ ...held, files: unique(held.files) }))
+    const files = unique(this.files)
     if (files === this.files) return
     this.files = files
     this.changed()
@@ -520,7 +537,7 @@ class Links {
   private put(...scanned: ScannedNote[]) {
     this.edit((notes) =>
       scanned.reduce<ScannedNote[]>((held, one) => {
-        const at = held.findIndex((note) => note.path === one.path)
+        const at = held.findIndex((note) => this.keyOf(note.path) === this.keyOf(one.path))
         return at === -1 ? [...held, one] : [...held.slice(0, at), one, ...held.slice(at + 1)]
       }, notes.slice()),
     )
@@ -568,12 +585,16 @@ class Links {
     const carry = carried(was, now)
     const moved = (path: string) => carry(path) ?? path
     this.editFiles((files) => (files.some((path) => moved(path) !== path) ? files.map(moved).sort() : files))
-    this.edit((notes) =>
-      notes.map((note) => {
+    this.edit((notes) => {
+      const staying = new Set(
+        notes.filter((note) => moved(note.path) === note.path).map((note) => this.keyOf(note.path)),
+      )
+      return notes.flatMap((note) => {
         const path = moved(note.path)
-        return path === note.path ? note : { ...note, path, name: noteName(path) }
-      }),
-    )
+        if (path === note.path) return [note]
+        return staying.has(this.keyOf(path)) ? [] : [{ ...note, path, name: noteName(path) }]
+      })
+    })
   }
   private crossed(from: string, to: string): boolean {
     return (this.relative(from) === null) !== (this.relative(to) === null)
