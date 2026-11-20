@@ -5,7 +5,6 @@
     carriedNothing,
     carriedRows,
     carryBookmark,
-    DIVIDER,
     draggedBookmark,
     dropOver,
     GRAPH_MARK,
@@ -249,11 +248,9 @@
     const group = row.mark.kind === 'group'
     const icons = row.mark.kind === 'note' || row.mark.kind === 'folder' ? iconEntries(row.face, row.folder) : []
     return [
-      ...(row.mark.kind === 'note' && row.path
-        ? [{ label: 'Open in new tab', run: () => pressed(row, 'front') }, DIVIDER]
-        : []),
-      ...(unloading.length ? [...unloading, DIVIDER] : []),
-      ...(icons.length ? [...icons, DIVIDER] : []),
+      ...(row.mark.kind === 'note' && row.path ? [{ label: 'Open in new tab', run: () => pressed(row, 'front') }] : []),
+      ...unloading,
+      ...icons,
       ...(group
         ? [
             { label: 'Rename', run: () => void renameGroup(row.mark) },
@@ -268,7 +265,6 @@
             },
           ]
         : []),
-      DIVIDER,
       { label: 'New group', run: () => void newGroup() },
     ]
   }
