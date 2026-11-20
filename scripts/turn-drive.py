@@ -1,4 +1,4 @@
-"""Does a terminal turn into the file explorer of its folder and back, its shell running on? Linux and macOS.
+"""Does a terminal turn into the file explorer of its folder and back, its shell running on? Linux, macOS and Windows.
 
 #2274. One app, the explorer switched on under Experimental:
 
@@ -13,7 +13,7 @@
    neither button is offered;
 7. a terminal tucked behind its explorer comes back with it after a restart.
 
-    python scripts/turn-drive.py --exe <probe orden> --identifier <probe id> --out <folder>
+    python scripts/turn-drive.py --exe <probe orden> --identifier <probe id> --out <folder> [--shell powershell|cmd]
 """
 from __future__ import annotations
 import argparse
@@ -30,9 +30,60 @@ from typing import Any
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from fresh_app import ended, fresh  # noqa: E402
-from native_app import App, config_of, endpoint, forward  # noqa: E402
+from native_app import INNER, App, config_of, endpoint, forward  # noqa: E402
 
 MAC = sys.platform == "darwin"
+WINDOWS = sys.platform == "win32"
+class Posix:
+    id = os.environ.get("SHELL") or "/bin/bash"
+    @staticmethod
+    def into(folder: pathlib.Path) -> str:
+        return f"mkdir -p '{folder}' && cd '{folder}' && export TURNMARK=42 && echo SCROLLBACK-TURN-7"
+    @staticmethod
+    def mark(path: pathlib.Path) -> str:
+        return f"echo $TURNMARK > '{path}'"
+    @staticmethod
+    def up_two() -> str:
+        return "cd ../.."
+    @staticmethod
+    def where(path: pathlib.Path) -> str:
+        return f"pwd > '{path}'"
+class PowerShell:
+    id = "powershell"
+    @staticmethod
+    def into(folder: pathlib.Path) -> str:
+        return f"New-Item -ItemType Directory -Force -Path '{folder}' | Out-Null; Set-Location '{folder}'; $env:TURNMARK=42; echo SCROLLBACK-TURN-7"
+    @staticmethod
+    def mark(path: pathlib.Path) -> str:
+        return f"$env:TURNMARK | Out-File -Encoding ascii '{path}'"
+    @staticmethod
+    def up_two() -> str:
+        return "Set-Location ..\\.."
+    @staticmethod
+    def where(path: pathlib.Path) -> str:
+        return f"(Get-Location).Path | Out-File -Encoding ascii '{path}'"
+class Cmd:
+    id = "cmd"
+    @staticmethod
+    def into(folder: pathlib.Path) -> str:
+        return f'mkdir "{folder}" & cd /d "{folder}" & set "TURNMARK=42" & echo SCROLLBACK-TURN-7'
+    @staticmethod
+    def mark(path: pathlib.Path) -> str:
+        return f'(echo %TURNMARK%)> "{path}"'
+    @staticmethod
+    def up_two() -> str:
+        return "cd /d ..\\.."
+    @staticmethod
+    def where(path: pathlib.Path) -> str:
+        return f'(cd)> "{path}"'
+SHELLS = {"posix": Posix, "powershell": PowerShell, "pwsh": PowerShell, "cmd": Cmd}
+def kind_of(shell: str) -> Any:
+    name = pathlib.PureWindowsPath(shell).name.lower() if WINDOWS else shell
+    if "cmd" in name:
+        return Cmd
+    if "pwsh" in name or "powershell" in name:
+        return PowerShell
+    return Posix
 ON = ["experimental", "experimental-explorer"]
 TERMINAL_TURN = 'button[aria-label^="Show in file explorer"], button[aria-label^="Back to the file explorer"]'
 EXPLORER_TURN = 'button[aria-label^="Terminal here"], button[aria-label^="Back to the terminal"]'
@@ -73,14 +124,15 @@ class Drive:
         return said if isinstance(said, str) else None
     def typed(self, words: str) -> None:
         self.run(
-            "const field = document.querySelector('.xterm-helper-textarea');"
+            "const field = [...document.querySelectorAll('.xterm-helper-textarea')].find((one) => one.closest('.xterm')?.offsetParent !== null);"
             " if (!field) return false;"
             f" field.dispatchEvent(new InputEvent('input', {{ data: {json.dumps(words)}, inputType: 'insertText', bubbles: true }}));"
             " return true"
         )
     def rows(self) -> list[str]:
         said = self.run(
-            "return [...document.querySelectorAll('.xterm-rows > div')]"
+            "const shown = [...document.querySelectorAll('.xterm')].find((one) => one.offsetParent !== null);"
+            " return [...(shown ? shown.querySelectorAll('.xterm-rows > div') : [])]"
             ".map((row) => row.textContent.replace(/\\u00a0/g, ' ').trimEnd())"
         )
         return said if isinstance(said, list) else []
@@ -92,6 +144,9 @@ class Drive:
     def chord(self, letter: str) -> None:
         forward(self.app, self.pid)
         time.sleep(0.3)
+        if WINDOWS:
+            self.windows_chord(letter)
+            return
         if not MAC and shutil.which("xdotool"):
             subprocess.run(["xdotool", "key", "--clearmodifiers", f"ctrl+alt+{letter}"], check=False)
             return
@@ -101,6 +156,42 @@ class Drive:
             f"const press = new KeyboardEvent('keydown', {{ key: {json.dumps(letter)}, code: {json.dumps(code)}, {mods}, bubbles: true, cancelable: true }});"
             " (document.activeElement ?? document.body).dispatchEvent(press); return true"
         )
+    def windows_chord(self, letter: str) -> None:
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        class KEYBDINPUT(ctypes.Structure):
+            _fields_ = [("wVk", wintypes.WORD), ("wScan", wintypes.WORD), ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD), ("dwExtraInfo", ctypes.c_size_t)]
+        class MOUSEINPUT(ctypes.Structure):
+            _fields_ = [("dx", wintypes.LONG), ("dy", wintypes.LONG), ("mouseData", wintypes.DWORD), ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD), ("dwExtraInfo", ctypes.c_size_t)]
+        class EITHER(ctypes.Union):
+            _fields_ = [("ki", KEYBDINPUT), ("mi", MOUSEINPUT)]
+        class INPUT(ctypes.Structure):
+            _fields_ = [("type", wintypes.DWORD), ("u", EITHER)]
+        def send(one: Any) -> None:
+            user32.SendInput(1, ctypes.byref(one), ctypes.sizeof(INPUT))
+        spot = self.run(
+            "const pane = [...document.querySelectorAll('.xterm-screen, [data-pane]')].find((one) => one.offsetParent !== null);"
+            " if (!pane) return null; const r = pane.getBoundingClientRect();"
+            " return { x: r.x + r.width / 2, y: r.y + Math.min(r.height - 8, 60) }"
+        )
+        inner = self.run(INNER)
+        if isinstance(spot, dict) and isinstance(inner, dict) and "x" in inner:
+            user32.SetCursorPos(round(inner["x"] + spot["x"] * inner["scale"]), round(inner["y"] + spot["y"] * inner["scale"]))
+            time.sleep(0.15)
+            for flag in (0x2, 0x4):
+                one = INPUT(type=0)
+                one.u.mi = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=flag, time=0, dwExtraInfo=0)
+                send(one)
+                time.sleep(0.05)
+            time.sleep(0.3)
+        keys = (0x11, 0x12, ord(letter.upper()))
+        for up in (False, True):
+            for vk in (reversed(keys) if up else keys):
+                one = INPUT(type=1)
+                one.u.ki = KEYBDINPUT(wVk=vk, wScan=user32.MapVirtualKeyW(vk, 0), dwFlags=0x2 if up else 0, time=0, dwExtraInfo=0)
+                send(one)
+                time.sleep(0.05)
     def shot(self, name: str) -> None:
         try:
             import mss
@@ -114,7 +205,7 @@ class Drive:
         found = until(lambda: path.exists() and path.read_text(encoding="utf-8", errors="replace").strip(), seconds)
         return found or ""
 def same(one: str | None, two: pathlib.Path) -> bool:
-    return bool(one) and os.path.realpath(str(one)) == os.path.realpath(str(two))
+    return bool(one) and os.path.normcase(os.path.realpath(str(one))) == os.path.normcase(os.path.realpath(str(two)))
 def gate(drive: Drive, on: bool) -> None:
     kinds = ON if on else ["experimental"]
     drive.run(f"localStorage.setItem('orden:hidden-kinds', {json.dumps(json.dumps(kinds))}); setTimeout(() => location.reload(), 50); return true")
@@ -127,8 +218,7 @@ def gate(drive: Drive, on: bool) -> None:
     ):
         raise SystemExit("the explorer gate never took")
     time.sleep(2)
-def terminal(drive: Drive, folder: pathlib.Path, key: str) -> str:
-    shell = os.environ.get("SHELL") or "/bin/bash"
+def terminal(drive: Drive, folder: pathlib.Path, key: str, shell: str) -> str:
     tab = drive.run(
         "const ws = orden.workspace;"
         f" ws.openUnsaved('terminal', JSON.stringify({{ shell: {json.dumps(shell)}, folder: {json.dumps(str(folder))}, key: {json.dumps(key)} }}), 'Turn');"
@@ -138,13 +228,13 @@ def terminal(drive: Drive, folder: pathlib.Path, key: str) -> str:
         raise SystemExit("the terminal never drew")
     time.sleep(2)
     return str(tab)
-def steps(drive: Drive, tmp: pathlib.Path, restart: Any) -> None:
+def steps(drive: Drive, tmp: pathlib.Path, restart: Any, shell: Any) -> None:
     deep = tmp / "a" / "b"
     marks = tmp / "marks"
     marks.mkdir()
     gate(drive, True)
-    terminal(drive, tmp, "turn-one")
-    drive.typed(f"mkdir -p '{deep}' && cd '{deep}' && export TURNMARK=42 && echo SCROLLBACK-TURN-7\r")
+    terminal(drive, tmp, "turn-one", shell.id)
+    drive.typed(shell.into(deep) + "\r")
     check(until(lambda: same(drive.folder(), deep), 20), f"1. the terminal reports its folder {deep} (it said {drive.folder()})")
     before = drive.active()
     tabs = before.get("tabs")
@@ -166,7 +256,7 @@ def steps(drive: Drive, tmp: pathlib.Path, restart: Any) -> None:
     check(back.get("id") == before.get("id"), f"3. it is the same terminal tab ({back.get('id')} was {before.get('id')})")
     check(back.get("tabs") == tabs, f"3. the strip keeps {tabs} tabs ({back.get('tabs')})")
     time.sleep(1)
-    drive.typed(f"echo $TURNMARK > '{marks / 'mark'}'\r")
+    drive.typed(shell.mark(marks / "mark") + "\r")
     check(drive.wrote(marks / "mark") == "42", f"3. the shell still holds its mark ({drive.wrote(marks / 'mark', 1)!r})")
     rows = drive.rows()
     check(any("SCROLLBACK-TURN-7" in row for row in rows), f"3. the scrollback is still there ({len(rows)} rows drawn)")
@@ -178,7 +268,7 @@ def steps(drive: Drive, tmp: pathlib.Path, restart: Any) -> None:
     drive.press(EXPLORER_TURN)
     check(until(lambda: drive.active().get("kind") == "terminal", 10), "4. and back to the terminal")
     time.sleep(1)
-    drive.typed("cd ../..\r")
+    drive.typed(shell.up_two() + "\r")
     check(until(lambda: same(drive.folder(), tmp), 20), f"4. the shell reports {tmp} ({drive.folder()})")
     drive.press(TERMINAL_TURN)
     check(until(lambda: drive.active().get("kind") == "explorer" and same(drive.folder(), tmp), 10), f"4. the explorer follows the shell to {tmp} ({drive.folder()})")
@@ -192,7 +282,8 @@ def steps(drive: Drive, tmp: pathlib.Path, restart: Any) -> None:
     drive.press(EXPLORER_TURN)
     check(until(lambda: drive.active().get("kind") == "terminal" and drive.run("return !!document.querySelector('.xterm-helper-textarea')") is True, 30), "5. it turns into a terminal")
     time.sleep(2)
-    drive.typed(f"pwd > '{marks / 'pwd'}'\r")
+    here = kind_of(drive.run("return JSON.parse(orden.workspace.active?.doc || '{}').shell ?? ''") or "")
+    drive.typed(here.where(marks / "pwd") + "\r")
     where = drive.wrote(marks / "pwd")
     check(bool(start) and same(where, pathlib.Path(start or "/nowhere")), f"5. the terminal starts in the explorer's folder {start} ({where!r})")
     drive.shot("5-terminal-here")
@@ -207,7 +298,9 @@ def steps(drive: Drive, tmp: pathlib.Path, restart: Any) -> None:
     check(isinstance(first, dict) and first.get("tucked") == 0, f"6. off, nothing is tucked behind a tab ({first})")
     until(lambda: drive.run("return !!document.querySelector('.xterm-helper-textarea')") is True, 30)
     time.sleep(1)
-    drive.typed(f"echo $TURNMARK > '{marks / 'after-off'}'\r")
+    drive.typed("\r")
+    time.sleep(1)
+    drive.typed(shell.mark(marks / "after-off") + "\r")
     check(drive.wrote(marks / "after-off") == "42", f"6. off, it is the same shell, still holding its mark ({drive.wrote(marks / 'after-off', 1)!r})")
     check(drive.button(TERMINAL_TURN) is None, f"6. off, a terminal offers no turn button ({drive.button(TERMINAL_TURN)!r})")
     drive.run(
@@ -219,7 +312,7 @@ def steps(drive: Drive, tmp: pathlib.Path, restart: Any) -> None:
     check(drive.button(EXPLORER_TURN) is None, f"6. off, an explorer offers no turn button ({drive.button(EXPLORER_TURN)!r})")
     drive.shot("6-off")
     gate(drive, True)
-    terminal(drive, tmp, "turn-again")
+    terminal(drive, tmp, "turn-again", shell.id)
     offered = until(lambda: drive.button(TERMINAL_TURN), 20)
     check(bool(offered), f"7. on again, a new terminal offers its turn button ({offered!r})")
     drive.press(TERMINAL_TURN)
@@ -240,9 +333,8 @@ def main() -> int:
     parser.add_argument("--exe", required=True, type=pathlib.Path)
     parser.add_argument("--identifier", required=True)
     parser.add_argument("--out", required=True, type=pathlib.Path)
+    parser.add_argument("--shell", choices=sorted(SHELLS), default="powershell" if WINDOWS else "posix")
     args = parser.parse_args()
-    if sys.platform == "win32":
-        raise SystemExit("this drive turns a POSIX shell: Linux and macOS only")
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
     args.out.mkdir(parents=True, exist_ok=True)
@@ -274,7 +366,7 @@ def main() -> int:
         time.sleep(3)
     try:
         app, pid = launch()
-        steps(Drive(app, pid, args.out), tmp, restart)
+        steps(Drive(app, pid, args.out), tmp, restart, SHELLS[args.shell])
     finally:
         for process in running:
             ended(process, gentle=True)
