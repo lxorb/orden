@@ -87,12 +87,19 @@
   const wholeOf = (cells: readonly Cell[]): Box =>
     around(cells.flatMap(({ key }) => outlineAt(key) ?? []).map(boundsOf)) ?? room
   const CELLS_APART = 4
+  let nameFont = ''
+  let measurer: CanvasRenderingContext2D | null = null
+  function fontOfNames(): string {
+    const style = getComputedStyle(document.documentElement)
+    const size = parseFloat(style.getPropertyValue('--text-base')) || 13
+    const weight = style.getPropertyValue('--weight-strong').trim() || '600'
+    return `${weight} ${size * NAME_SIZE}px ${getComputedStyle(document.body).fontFamily}`
+  }
   function nameWide(key: string): number {
-    const name = [...document.querySelectorAll<HTMLElement>('[data-space-name]')].find(
-      (one) => one.dataset.spaceName === key,
-    )
     const said = workspace.spaces.find((space) => space.id === key)?.name ?? ''
-    const wide = name && name.offsetWidth > 0 ? name.offsetWidth : said.length * 13
+    measurer ??= document.createElement('canvas').getContext('2d')
+    if (measurer) measurer.font = nameFont
+    const wide = measurer && nameFont ? measurer.measureText(said).width : said.length * 13
     return wide * SPACE_NAMES_MOST
   }
   const outlineFor = (key: string, boxes: readonly Box[]): Outline | null =>
@@ -215,6 +222,7 @@
   }
   const NAMES_MOST = 2.5
   const SPACE_NAMES_MOST = 2
+  const NAME_SIZE = 1.6
   const NAME_ROOM = 72
   const CAPTION_ROOM = 8 + 20 * NAMES_MOST
   const shapeOf = (paneId: string): number => {
@@ -419,6 +427,10 @@
     const by = offsetOf(key)
     return [by ? { ...empty, x: empty.x + by.x, y: empty.y + by.y } : empty]
   }
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read before the overview is drawn, never rendered
+  const stripRead = new Map<string, DOMRect>()
+  const stripBox = (id: string): DOMRect | undefined =>
+    started ? marked('box', id)?.getBoundingClientRect() : stripRead.get(id)
   function homeOf(tab: Tab, slot: Slot): Pose {
     if (workspace.panes.at(tab.paneId)?.activeTabId === tab.id) {
       const laidOut = panesAsWindows.get(tab.id)
@@ -431,14 +443,14 @@
       }
     }
     riders.delete(tab.id)
-    const chip = marked('box', tab.id)?.getBoundingClientRect()
+    const chip = stripBox(tab.id)
     if (chip && chip.width > 0 && chip.right > 0 && chip.left < width) return onCanvas(chip, 1)
     return { ...lifted(slot), alpha: 0 }
   }
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const riders = new Map<string, { dx: number; dy: number; width: number }>()
   function rides(id: string, box: DOMRect) {
-    const chip = marked('box', id)?.getBoundingClientRect()
+    const chip = stripBox(id)
     if (!chip || chip.width <= 0) return void riders.delete(id)
     riders.set(id, { dx: chip.x - box.x, dy: chip.y - box.y, width: box.width })
   }
@@ -753,6 +765,12 @@
     if (!again) {
       corner = cardCorner()
       barBottom = barOf()
+      nameFont = fontOfNames()
+      stripRead.clear()
+      for (const tab of workspace.tabs) {
+        const box = marked('box', tab.id)?.getBoundingClientRect()
+        if (box) stripRead.set(tab.id, box)
+      }
       places.recall(workspace.tabs)
       entered = performance.now()
       started = false
