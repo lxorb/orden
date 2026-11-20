@@ -362,6 +362,19 @@ describe('a tab and its twin', () => {
     expect(workspace.tucked).toContain(shell)
     expect(workspace.turn(before[0] ?? '')).toBeNull()
   })
+  test('is kept with its tab in the session, and comes back tucked behind it', async () => {
+    const two = three()
+    const shell = workspace.turn(two.id, { ...SHELL, words: '{"key":"k1"}' })
+    if (!shell) throw new Error('no twin')
+    workspace.turn(shell.id)
+    const written = JSON.parse(JSON.stringify(workspace.layout())) as ReturnType<typeof workspace.layout>
+    const { made } = await workspace.built(written)
+    const back = made.filter((one) => one.name === 'Two').at(-1)
+    if (!back) throw new Error('the tab did not come back')
+    const twin = workspace.twinOf(back.id)
+    expect([twin?.kind, twin?.name, twin?.doc]).toEqual(['terminal', 'Shell', '{"key":"k1"}'])
+    expect(made).not.toContain(twin)
+  })
   test('closes with its tab, asked as itself would be, and a no keeps both', async () => {
     const two = three()
     const shell = workspace.turn(two.id, SHELL)
