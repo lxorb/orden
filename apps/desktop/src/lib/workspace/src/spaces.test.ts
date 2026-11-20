@@ -75,6 +75,7 @@ function store(spaces: Space[]) {
     clearSelection: () => undefined,
     loadTree: () => Promise.resolve(),
     persist: () => undefined,
+    formerId: () => null,
   }
   return { ws: ws as unknown as HoldsSpaces, told }
 }

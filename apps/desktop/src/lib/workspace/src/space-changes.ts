@@ -59,8 +59,11 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
     }).catch(() => null)
     if (!renamed) return
     const from = space.root
-    space.name = renamed.name
-    space.root = renamed.path
+    ws.spaces = ws.spaces.map((one) => (one.id === id ? { ...one, name: renamed.name, root: renamed.path } : one))
+    if (ws.archivedSpaces.has(from)) {
+      ws.archivedSpaces.set(from, false)
+      ws.archivedSpaces.set(renamed.path, true)
+    }
     leftMoved(from, renamed.path)
     await ws.fileMoved(from, renamed.path, 'space')
     done.moved = true
