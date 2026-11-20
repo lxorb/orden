@@ -80,6 +80,21 @@ describe('the tree of a space', () => {
     expect(rowIds.peek('/s/Away/plan.md')).toBeUndefined()
   })
 })
+function inMemory() {
+  vi.useFakeTimers()
+  const store = new Map<string, string>()
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => void store.set(key, value),
+    removeItem: (key: string) => void store.delete(key),
+  })
+  vi.stubGlobal('window', new EventTarget())
+}
+function outOfMemory() {
+  vi.clearAllTimers()
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+}
 describe('what another window arranged or sorted', () => {
   const MINE = '/mine'
   const THEIRS = '/theirs'
@@ -118,21 +133,8 @@ describe('what another window arranged or sorted', () => {
       },
     },
   }
-  beforeEach(() => {
-    vi.useFakeTimers()
-    const store = new Map<string, string>()
-    vi.stubGlobal('localStorage', {
-      getItem: (key: string) => store.get(key) ?? null,
-      setItem: (key: string, value: string) => void store.set(key, value),
-      removeItem: (key: string) => void store.delete(key),
-    })
-    vi.stubGlobal('window', new EventTarget())
-  })
-  afterEach(() => {
-    vi.clearAllTimers()
-    vi.useRealTimers()
-    vi.unstubAllGlobals()
-  })
+  beforeEach(inMemory)
+  afterEach(outOfMemory)
   test.each(Object.entries(stores))('%s shows what another window wrote as soon as it is heard', (_, store) => {
     const here = store.open()
     elsewhere(store.key, store.theirs(saved(store.key)))
@@ -143,5 +145,24 @@ describe('what another window arranged or sorted', () => {
     localStorage.setItem(store.key, JSON.stringify(store.theirs(saved(store.key))))
     here.act()
     expect(store.open().seen()).toBe(true)
+  })
+})
+describe('a move the tree shows before the disk has it', () => {
+  beforeEach(inMemory)
+  afterEach(outOfMemory)
+  test('keeps an arranged row in its place however often it is told, and takes it back where it was', () => {
+    const arranged = new Arranged(() => '/s')
+    arranged.set('/s', ['b.md', 'a.md', 'c.md'])
+    arranged.set('/s/Box', ['two.md', 'one.md'])
+    for (let told = 0; told < 2; told++) {
+      arranged.moved('/s/a.md', '/s/z.md')
+      arranged.moved('/s/Box', '/s/Crate')
+    }
+    expect(arranged.listOf('/s')).toEqual(['b.md', 'z.md', 'c.md'])
+    expect(arranged.listOf('/s/Crate')).toEqual(['two.md', 'one.md'])
+    arranged.moved('/s/z.md', '/s/a.md')
+    arranged.moved('/s/Crate', '/s/Box')
+    expect(arranged.listOf('/s')).toEqual(['b.md', 'a.md', 'c.md'])
+    expect(arranged.listOf('/s/Box')).toEqual(['two.md', 'one.md'])
   })
 })
