@@ -61,13 +61,11 @@ async function webIconEdit(
   return oneEdit(before, rewriteShortcut(said, { chosen: icon, chosenColour: colour }))
 }
 async function chatIconEdit(before: string, icon: string | null, colour: string | null): Promise<TextEdit | null> {
-  if (__EVEN_PLUGIN__) return null
   const { chatOf, chatText, withIcon } = await import('@orden/chats')
   const pointer = chatOf(before)
   return pointer && oneEdit(before, chatText(withIcon(pointer, icon, colour)))
 }
 async function termIconEdit(before: string, icon: string | null, colour: string | null): Promise<TextEdit | null> {
-  if (__EVEN_PLUGIN__) return null
   const { termOf, termText } = await import('@orden/online/term')
   const term = termOf(before)
   if (!term) return null

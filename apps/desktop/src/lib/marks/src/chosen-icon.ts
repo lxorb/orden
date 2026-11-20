@@ -32,7 +32,7 @@ export function chosenIcon(path: string): string | null {
   return elsewhere.of(path)?.icon ?? workspace.folderIcons.iconOf(mapKey(path), away)
 }
 export function holdsPaper(path: string): boolean {
-  if (__EVEN_PLUGIN__ || !isPagesTarget(path)) return false
+  if (!isPagesTarget(path)) return false
   const listed = workspace.entryAt(path)
   if (listed) return listed.paper === true
   return elsewhere.of(path)?.paper === true

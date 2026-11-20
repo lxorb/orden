@@ -21,7 +21,7 @@ export function verdict(running: string | null, served: string, reloadedFor: str
   return served !== running && served !== reloadedFor ? 'reload' : 'offer'
 }
 export async function answer(page: Missing): Promise<boolean> {
-  const served = isNative || __EVEN_PLUGIN__ ? entryRunning() : await entryServed()
+  const served = isNative ? entryRunning() : await entryServed()
   if (served === null) return false
   if (verdict(entryRunning(), served, storedText(RELOADED_FOR)) === 'offer') page.offer()
   else {
