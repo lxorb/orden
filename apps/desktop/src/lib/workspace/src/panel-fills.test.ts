@@ -10,8 +10,11 @@ const tab = (kind: TabKind, more: Partial<Filling> = {}): Filling => ({
   ...more,
 })
 describe('the panels a tab fills', () => {
-  test('are every panel with no tab in front, which has nothing to tell them apart by', () => {
-    for (const panel of ['outline', 'links', 'tree', 'ask'] as const) expect(fills(panel, null)).toBe(true)
+  test('leave out the Outline and the Links with no tab in front, which have nothing to show then', () => {
+    expect(fills('outline', null)).toBe(false)
+    expect(fills('links', null)).toBe(false)
+    expect(fills('outline', tab('note', { headings: 1 }))).toBe(true)
+    expect(fills('links', tab('note', { headings: 1 }))).toBe(true)
   })
   test('and none this build does not have, which a window may have kept', () => {
     expect(fills('footnotes' as never, null)).toBe(false)

@@ -18,5 +18,5 @@ const ASKS: Partial<Record<Panel, (tab: Filling) => boolean>> = {
 export function fills(id: Panel, tab: Filling | null): boolean {
   if (!isPanel(id)) return false
   const asks = ASKS[id]
-  return !asks || tab === null || asks(tab)
+  return !asks || (tab !== null && asks(tab))
 }
