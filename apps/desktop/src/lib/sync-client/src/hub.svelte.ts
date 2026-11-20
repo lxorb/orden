@@ -1,9 +1,9 @@
 import { DEVICE_PROTOCOL, shutOut, TOKEN_PROTOCOL } from '@orden/sync-core'
 import { untrack } from 'svelte'
 import { BEAT_EVERY, linkDelay, heldForLife, roomDelay } from '../../platform/src/api'
-import { madeDeviceId } from './made-device'
+import { hubDeviceOf, madeDeviceId } from './made-device'
 import { account, invoke, isDesktop, platform, remote } from './ports'
-import { BEAT, DEVICE, readHubFrame, type FromDevice, type FromHub, type HubFrame, type HubType } from './hub-frames'
+import { BEAT, readHubFrame, type FromDevice, type FromHub, type HubFrame, type HubType } from './hub-frames'
 
 export type HubState = 'off' | 'connecting' | 'open'
 const OPEN_WITHIN = 10_000
@@ -281,9 +281,7 @@ export async function deviceId(): Promise<string> {
   const user = account().user
   if (user && !__EVEN_PLUGIN__) {
     const { runner } = await import('./runner.svelte')
-    const device = await runner.deviceOf(user.id).catch(() => null)
-    if (device && DEVICE.test(device)) return device
-    return madeDeviceId(user.id)
+    return hubDeviceOf(await runner.deviceOf(user.id).catch(() => null), user.id)
   }
   return madeDeviceId(null)
 }

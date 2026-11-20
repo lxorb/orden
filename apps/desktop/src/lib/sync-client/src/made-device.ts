@@ -15,3 +15,6 @@ export function madeDeviceId(account: string | null): string {
 export function forgetMadeDeviceId(account: string): void {
   forget(keyOf(account))
 }
+export function hubDeviceOf(kept: string | null | undefined, account: string): string {
+  return kept && DEVICE.test(kept) ? kept : madeDeviceId(account)
+}

@@ -55,7 +55,7 @@ import { Engine, type AwayFile } from './engine'
 import type { Query } from '@orden/scan/search/query'
 import type { Found } from '@orden/scan/search/walk'
 import { type Leadership, leadSync } from './lead'
-import { forgetMadeDeviceId, madeDeviceId } from './made-device'
+import { forgetMadeDeviceId, hubDeviceOf, madeDeviceId } from './made-device'
 import { Owed, type Owing, takeOwed } from './owed'
 import { placesOf } from './placing'
 import type { Carried } from './papers-carried'
@@ -279,7 +279,8 @@ class Runner {
   }
   private async running(user: { id: string }, live: () => boolean): Promise<Engine | null> {
     const store = await openSyncStore(user.id, true, madeDeviceId(user.id))
-    const engine = await Engine.start(appWorld(tokenOf(user.id), this.telling), store, {
+    const deviceId = () => hubDeviceOf(store.opened.device, user.id)
+    const engine = await Engine.start(appWorld(tokenOf(user.id), this.telling, deviceId), store, {
       names: (device) => this.nameOf(device),
     })
     if (!live() || this.accountId !== user.id) {
@@ -296,7 +297,7 @@ class Runner {
     await followRoots(engine.core)
     if (!isNative()) {
       const store = await openIndex(user.id).catch(() => null)
-      if (store) this.indexing = new Indexing(engine, readingFor(tokenOf(user.id)), store)
+      if (store) this.indexing = new Indexing(engine, readingFor(tokenOf(user.id), deviceId), store)
       this.indexStore = store
     }
     await this.carriedIn(engine)
@@ -518,7 +519,10 @@ class Runner {
     const token = account().token
     if (!user || !token) return false
     const store = await openSyncStore(user.id, true, madeDeviceId(user.id))
-    const engine = await Engine.start(appWorld(tokenOf(user.id), this.telling), store)
+    const engine = await Engine.start(
+      appWorld(tokenOf(user.id), this.telling, () => hubDeviceOf(store.opened.device, user.id)),
+      store,
+    )
     let back = false
     try {
       const kept = await this.kept(engine)
