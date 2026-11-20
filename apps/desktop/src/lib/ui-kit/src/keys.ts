@@ -93,8 +93,49 @@ function held(event: Keystroke) {
     shift: event.shiftKey ?? false,
   }
 }
-function unshifted(event: Keystroke): string | undefined {
-  return event.code === undefined ? undefined : PHYSICAL[event.code]
+let laidOut: ReadonlyMap<string, string> | null = null
+let laidKeys: ReadonlySet<string> = new Set()
+interface LayoutReader {
+  getLayoutMap?: () => Promise<ReadonlyMap<string, string>>
+}
+export function readLayout(): Promise<void> {
+  const reader = typeof navigator === 'undefined' ? undefined : (navigator as { keyboard?: LayoutReader }).keyboard
+  if (!reader?.getLayoutMap) return Promise.resolve()
+  return reader.getLayoutMap().then(
+    (map) => {
+      laidOut = map
+      laidKeys = new Set([...map.values()].map((one) => one.toLowerCase()))
+    },
+    () => undefined,
+  )
+}
+const ASCII = /^[!-~]$/
+function relaid(event: KeyboardEvent) {
+  if (event.key.length === 1 && !ASCII.test(event.key)) void readLayout()
+}
+export function watchLayout(within: Window = window): () => void {
+  void readLayout()
+  const again = () => void readLayout()
+  within.addEventListener('focus', again)
+  within.addEventListener('keydown', relaid, true)
+  return () => {
+    within.removeEventListener('focus', again)
+    within.removeEventListener('keydown', relaid, true)
+  }
+}
+export function keyOf(event: Keystroke, platform: Platform): string {
+  const typed = normalizeKey(event.key)
+  if (typedWithAltGr(event, platform)) return typed
+  const code = event.code ?? ''
+  const digit = /^Digit(\d)$/.exec(code)?.[1]
+  if (digit !== undefined) return digit
+  if (/^[a-z]$/.test(typed)) return typed
+  const down = held(event)
+  if (ASCII.test(typed) && !down.shift && !down.alt) return typed
+  const laid = laidOut?.get(code)?.toLowerCase()
+  if (laid !== undefined && ASCII.test(laid) && (down.alt || !/^\p{L}$/u.test(typed))) return laid
+  const physical = PHYSICAL[code]
+  return physical === undefined || laidKeys.has(physical) ? typed : physical
 }
 function typedWithAltGr(event: Keystroke, platform: Platform): boolean {
   const down = held(event)
@@ -105,19 +146,15 @@ function typedWithAltGr(event: Keystroke, platform: Platform): boolean {
     !down.meta &&
     !down.shift &&
     event.key.length === 1 &&
-    event.key !== ' '
+    event.key !== ' ' &&
+    laidOut?.get(event.code ?? '')?.toLowerCase() !== event.key.toLowerCase()
   )
 }
 export function readCombination(event: Keystroke, platform: Platform): string | null {
   if (MODIFIER_KEYS.has(event.key)) return null
-  const down = held(event)
-  const physical = unshifted(event)
-  const key =
-    (down.shift || down.alt) && physical !== undefined && !typedWithAltGr(event, platform)
-      ? physical
-      : normalizeKey(event.key)
+  const key = keyOf(event, platform)
   if (!key) return null
-  return writeCombination({ ...down, key }, platform)
+  return writeCombination({ ...held(event), key }, platform)
 }
 export function chorded(event: Keystroke): boolean {
   const down = held(event)
@@ -134,13 +171,8 @@ export function matchesCombination(text: string, event: Keystroke, platform: Pla
   if (wanted.ctrl !== down.ctrl) return false
   if (wanted.meta !== down.meta) return false
   if (wanted.alt !== down.alt) return false
-  const typed = normalizeKey(event.key)
-  const underneath = typedWithAltGr(event, platform) ? typed : unshifted(event)
-  if (wanted.shift !== down.shift) {
-    if (wanted.shift || !isDigit(wanted.key)) return false
-    return wanted.key === underneath
-  }
-  return wanted.key === typed || wanted.key === underneath
+  if (wanted.shift !== down.shift && (wanted.shift || !isDigit(wanted.key))) return false
+  return wanted.key === keyOf(event, platform)
 }
 const SIGNS = { ctrl: '⌃', alt: '⌥', shift: '⇧', meta: '⌘' }
 const SHOWN: Record<string, string> = {
