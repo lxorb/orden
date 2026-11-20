@@ -43,11 +43,13 @@
     onzoom,
     onbrowser,
     extending = null,
+    blank = false,
     ground,
     theme,
   }: {
     page: Page
     tab: string
+    blank?: boolean
     ground?: { colour: string } | undefined
     theme?: 'dark' | 'light' | undefined
     focused: boolean
@@ -80,11 +82,10 @@
   })
   let field = $state<{ take(): void; keep(): void }>()
   const resting = $derived(shownUrl(page.url ?? ''))
-  const started = untrack(() => page.url === null)
   function arrive() {
     const was = page.keyboard
     page.keyboard = null
-    if (focused && (was === 'address' || (started && !page.seen))) take()
+    if (focused && (was === 'address' || (blank && !page.seen))) take()
     else if (focused && was === 'page' && isDesktop) void invoke('keyboard_back', { tab }).catch(() => undefined)
     page.seen = true
   }
@@ -119,7 +120,13 @@
     }
     window.addEventListener('keydown', key, true)
     window.addEventListener('keydown', escape)
+    const root = document.documentElement
+    const paged = new MutationObserver(() => {
+      if (shown && focused && root.hasAttribute(IN_A_PAGE)) page.keyboard = 'page'
+    })
+    paged.observe(root, { attributes: true, attributeFilter: [IN_A_PAGE] })
     return () => {
+      paged.disconnect()
       window.removeEventListener('keydown', key, true)
       window.removeEventListener('keydown', escape)
       if (shown && focused && document.documentElement.hasAttribute(IN_A_PAGE)) page.keyboard = 'page'

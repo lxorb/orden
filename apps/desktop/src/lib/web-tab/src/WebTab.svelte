@@ -530,6 +530,7 @@
     <WebBar
       {page}
       tab={tab.id}
+      blank={address === ''}
       {shown}
       ground={chrome.barOf(tab.id)}
       theme={chrome.barTheme(tab.id)}

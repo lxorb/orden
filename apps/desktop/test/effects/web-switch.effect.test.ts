@@ -661,6 +661,79 @@ test('a kept web tab gives its half-typed address back with the keyboard and the
   expect([field.value, field.selectionStart, field.selectionEnd]).toEqual(['exam', 2, 2])
   void unmount(app)
 })
+test('a loaded web tab gives the keyboard to its page when it is shown, and only a new empty one to its address', async () => {
+  window.dispatchEvent(new Event('pointerup'))
+  await launched()
+  const { kept } = await import('./kept.svelte')
+  for (const [address, takes] of [
+    ['https://example.com/loaded', false],
+    [null, true],
+  ] as const) {
+    if (address) workspace.openPage(address)
+    else workspace.openWebsite()
+    const tab = workspace.tabs.at(-1)
+    if (!tab) throw new Error('no web tab was opened')
+    kept.shown = false
+    const app = mount(WebTab, {
+      target,
+      props: {
+        tab,
+        focused: true,
+        get shown() {
+          return kept.shown
+        },
+      },
+    })
+    flushSync()
+    await frames()
+    kept.shown = true
+    flushSync()
+    await frames()
+    const field = target.querySelector<HTMLInputElement>('.web input')
+    expect(document.activeElement === field, address ?? 'a new tab').toBe(takes)
+    void unmount(app)
+    workspace.close(tab.id)
+  }
+})
+test('a web tab left with its page holding the keyboard gives it back to the page, not the address it was typed in before', async () => {
+  window.dispatchEvent(new Event('pointerup'))
+  await launched()
+  workspace.openPage('https://example.com/typed-then-clicked')
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no web tab was opened')
+  const { kept } = await import('./kept.svelte')
+  kept.shown = true
+  const app = mount(WebTab, {
+    target,
+    props: {
+      tab,
+      focused: true,
+      get shown() {
+        return kept.shown
+      },
+    },
+  })
+  flushSync()
+  await frames()
+  const field = target.querySelector<HTMLInputElement>('.web input')
+  if (!field) throw new Error('no address field')
+  field.focus()
+  const away = vi.spyOn(document, 'hasFocus').mockReturnValue(false)
+  field.blur()
+  document.documentElement.setAttribute('data-keyboard-in-page', '')
+  await frames()
+  away.mockRestore()
+  document.documentElement.removeAttribute('data-keyboard-in-page')
+  kept.shown = false
+  flushSync()
+  await frames()
+  kept.shown = true
+  flushSync()
+  await frames()
+  expect(document.activeElement).not.toBe(field)
+  void unmount(app)
+  workspace.close(tab.id)
+})
 test('a web tab kept while another of its pane is in front hides its page and comes back in place, mounted all along', async () => {
   await launched()
   workspace.openWebsite()
