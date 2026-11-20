@@ -11,7 +11,6 @@ export type FileMark =
   | 'remote'
   | 'base'
   | 'chat'
-  | 'application'
   | 'key'
   | 'time'
   | 'settings'
@@ -47,7 +46,6 @@ export const TAB_KINDS = [
   'view',
   'chat',
   'channel',
-  'application',
   'explorer',
   'pass',
   'time',
