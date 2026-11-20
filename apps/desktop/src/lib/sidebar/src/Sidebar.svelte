@@ -476,8 +476,8 @@
       </div>
     {/if}
 
-    <div class="switch" bind:clientWidth={rowWidth}>
-      {#if !phoneTabs}
+    <div class="switch" class:lone={mine.length < 2} bind:clientWidth={rowWidth}>
+      {#if !phoneTabs && mine.length > 1}
         <div
           bind:this={tablist}
           class="orden-segmented panels"
@@ -938,6 +938,10 @@
     align-items: center;
     gap: var(--space-1);
     padding: 0 var(--space-1) var(--space-2);
+  }
+  .switch.lone::before {
+    content: '';
+    height: calc(var(--row-height) + 6px);
   }
   aside.right .switch {
     padding-top: var(--space-2);
