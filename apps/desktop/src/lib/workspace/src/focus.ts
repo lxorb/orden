@@ -4,6 +4,13 @@ import { isRegion, type Region, REGIONS, stepRegion } from './regions'
 import { workspace } from './workspace.svelte'
 
 const FOCUSABLE = '[tabindex="0"], button, input, select, textarea, a[href], summary, [contenteditable="true"]'
+export function shownIn(box: Element | null | undefined, selector: string): HTMLElement | null {
+  for (const one of box?.querySelectorAll<HTMLElement>(selector) ?? []) {
+    const away = one.closest('[inert], [hidden]')
+    if (away === null || away === box || !box?.contains(away)) return one
+  }
+  return null
+}
 function reachable(node: Element): boolean {
   if (!(node instanceof HTMLElement)) return false
   if (node.matches(':disabled') || node.getAttribute('aria-hidden') === 'true') return false
@@ -40,8 +47,8 @@ function within(name: Region, panel?: Panel): HTMLElement | null {
 function entryOf(name: Region, panel?: Panel): HTMLElement | null {
   const box = within(name, panel)
   if (!box) return null
-  const writing = box.querySelector('.cm-content, [data-entry]')
-  if (writing instanceof HTMLElement) return writing
+  const writing = shownIn(box, '.cm-content, [data-entry]')
+  if (writing) return writing
   for (const one of box.querySelectorAll<HTMLElement>(FOCUSABLE)) {
     if (reachable(one) && one.getAttribute('role') !== 'separator') return one
   }
@@ -100,8 +107,8 @@ function settle(name: Region, panel?: Panel, left = 8): void {
   })
 }
 function pressRegion(name: Region, what?: string): boolean {
-  const found = what === undefined ? null : boxOf(name)?.querySelector(what)
-  const entry = found instanceof HTMLElement ? found : entryOf(name)
+  const found = what === undefined ? null : shownIn(boxOf(name), what)
+  const entry = found ?? entryOf(name)
   if (!entry) return false
   press(entry)
   return true

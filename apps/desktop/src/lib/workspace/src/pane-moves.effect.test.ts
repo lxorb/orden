@@ -72,6 +72,14 @@ describe('Alt and a way', () => {
     expect(state.focused).toBe('b')
     expect(document.activeElement).toBe(note('b'))
   })
+  test('into the shown terminal, never one kept hidden before it in the same pane', () => {
+    const box = document.querySelector('[data-pane="b"]')!
+    box.innerHTML =
+      '<div class="kept" hidden inert><div class="xterm"><textarea class="away"></textarea></div></div>' +
+      '<div class="xterm"><textarea class="here"></textarea></div>'
+    movePane('right')
+    expect(document.activeElement).toBe(box.querySelector('.here'))
+  })
   test('into a web page, by the crate, which holds its keyboard', () => {
     state.web = 'b'
     movePane('right')
