@@ -132,6 +132,23 @@ describe('reading one tab', () => {
     const back = readDraft({ kind: 'terminal', path: null, name: 'PowerShell', doc })
     expect(back).toMatchObject({ kind: 'terminal', path: null, name: 'PowerShell', doc })
   })
+  test('brings back the tab it hides behind it, one deep, and leaves out one that cannot be read', () => {
+    const shell = {
+      kind: 'terminal',
+      path: null,
+      name: 'Shell',
+      doc: '{"shell":"bash","folder":"/s/Plans","key":"k1"}',
+    }
+    const files = { kind: 'explorer', path: null, name: 'Plans', doc: '/s/Plans', twin: shell }
+    const back = readDraft({ ...files, twin: { ...shell, twin: files } })
+    expect(back?.twin).toMatchObject({ kind: 'terminal', name: 'Shell', doc: shell.doc })
+    expect(back?.twin).not.toHaveProperty('twin')
+    expect(readDraft(JSON.parse(JSON.stringify(back)))).toEqual(back)
+    expect(readDraft(files)?.twin).toMatchObject({ kind: 'terminal' })
+    expect(readDraft({ ...files, twin: { kind: 'terminal', doc: '' } })).not.toHaveProperty('twin')
+    expect(readDraft({ ...files, twin: 'Shell' })).not.toHaveProperty('twin')
+    expect(readDraft({ ...files, twin: undefined })).not.toHaveProperty('twin')
+  })
   test('brings a tab with no file back in the space it was opened in', () => {
     expect(web({ space: 'w' })).toMatchObject({ space: 'w' })
     expect(web({ space: 'w', path: '/Notes/Site.url' })).not.toHaveProperty('space')

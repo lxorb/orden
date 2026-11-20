@@ -38,6 +38,7 @@ export interface Draft {
   apart?: string | undefined
   behind?: string | undefined
   space?: string | undefined
+  twin?: Draft | undefined
 }
 export interface PaneDraft {
   id: string
@@ -138,7 +139,12 @@ export function readDraft(value: unknown): Draft | null {
     ...(path === null && isString(space) ? { space } : {}),
     ...(path === null && isString(apart) ? { apart } : {}),
     ...(path === null && isString(behind) ? { behind } : {}),
+    ...twinOf(value.twin),
   }
+}
+function twinOf(value: unknown): { twin?: Draft } {
+  const twin = isRecord(value) ? readDraft({ ...value, twin: undefined }) : null
+  return twin ? { twin } : {}
 }
 function readDrafts(value: unknown): Draft[] {
   if (!Array.isArray(value)) return []
