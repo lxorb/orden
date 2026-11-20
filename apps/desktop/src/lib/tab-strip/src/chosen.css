@@ -1,0 +1,18 @@
+[data-box].chosen:not(.active) .fill {
+  opacity: 1;
+  background: var(--accent-soft);
+}
+[data-box].chosen + [data-box].chosen:not(.active) .fill {
+  inset-inline-start: 0;
+  border-start-start-radius: 0;
+}
+[data-box].chosen:not(.active):has(+ [data-box].chosen) .fill {
+  inset-inline-end: 0;
+  border-start-end-radius: 0;
+}
+[data-box].chosen .pick {
+  color: var(--text);
+}
+[data-box].chosen:not(.active):hover::before {
+  opacity: 0;
+}
