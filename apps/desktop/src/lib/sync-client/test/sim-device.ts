@@ -16,6 +16,7 @@ import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { HERE } from '../src/docs'
 import { Engine } from '../src/engine'
+import type { Blobs } from '../src/files'
 import { holdsDocument } from '../src/kinds'
 import { MemoryDisk } from '../src/memory-disk'
 import { MemoryStore } from '../src/memory-store'
@@ -495,6 +496,7 @@ export async function freshDevice(
   id: string,
   files: Record<string, string> = {},
   answers: (route: string, body: unknown) => unknown = () => undefined,
+  blobs?: (disk: MemoryDisk) => Blobs,
 ): Promise<FreshDevice> {
   const root = `/fresh/${id}`
   const disk = new MemoryDisk()
@@ -520,6 +522,7 @@ export async function freshDevice(
     join: (base, path) => `${base}/${path}`,
     foldsCase: true,
     platform: 'other',
+    ...(blobs ? { blobs: blobs(disk) } : {}),
     list: (at) => {
       const listed: { path: string; dir: boolean }[] = []
       for (const folder of disk.folders) {
