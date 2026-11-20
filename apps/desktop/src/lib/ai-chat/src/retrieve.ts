@@ -2,7 +2,7 @@ import { frontMatterBlock } from '@orden/markdown/front-matter'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import { searchSpace } from '../../search/src/api'
-import { waited } from '../../platform/src/api'
+import { shownName, waited } from '../../platform/src/api'
 import type { Message } from '../../ai-providers/src/api'
 
 export interface Passage {
@@ -195,7 +195,7 @@ export async function retrieve(
     if (path === null || path === front?.path) continue
     const text = await space.read(note.path)
     if (text === null) continue
-    const name = note.name.replace(/\.(?:md|markdown)$/i, '')
+    const name = shownName(note.name)
     const found = passagesOf({ path, name, text }, note.lines, Math.min(PER_NOTE, BUDGET - spent))
     for (const passage of found.slice(0, MOST_PASSAGES - out.length)) {
       out.push(passage)

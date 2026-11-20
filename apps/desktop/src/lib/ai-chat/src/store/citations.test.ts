@@ -25,6 +25,11 @@ describe('Ask’s passages', () => {
     expect(made.map((one) => one.label)).toEqual(['[1] Herons, line 1', '[2] Hovering, line 15'])
     expect(made[1]?.cite).toEqual({ path: 'Hovering.md', name: 'Hovering', line: 14 })
   })
+  test('are labelled by the name a note shows, never its Orden ending', () => {
+    const [one] = passageAttachments([{ path: 'Log.term', name: 'Log.term', line: 0, text: 'x' }])
+    expect(one?.label).toBe('[1] Log, line 1')
+    expect(one?.cite.path).toBe('Log.term')
+  })
   test('come back from a message as its sources, and nothing else it carried does', () => {
     const draft = {
       text: 'q',

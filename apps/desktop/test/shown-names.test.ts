@@ -22,13 +22,15 @@ const KEPT: Record<string, { most: number; why: string }> = {
   'apps/desktop/src/lib/agent-host/src/log.ts': { most: 1, why: 'a [[path]] link target' },
   'apps/desktop/src/lib/views/src/board-menus.ts': { most: 1, why: 'a [[path]] link target' },
   'apps/desktop/src/lib/tasks-model/src/relink.ts': { most: 1, why: 'link targets compared' },
+  'apps/desktop/src/lib/ai-chat/src/commands/helpers.ts': {
+    most: 1,
+    why: 'a [[path]] link target a batch helper is told',
+  },
+  'apps/desktop/src/lib/ai-chat/src/retrieve.ts': { most: 1, why: 'a [[path]] link target written into the answer' },
 }
 const TO_MOVE: Record<string, number> = {
   'apps/desktop/src/lib/agent-host/src/tasks.ts': 3,
   'apps/desktop/src/lib/agents/src/ui/session.ts': 2,
-  'apps/desktop/src/lib/ai-chat/src/commands/helpers.ts': 1,
-  'apps/desktop/src/lib/ai-chat/src/retrieve.ts': 2,
-  'apps/desktop/src/lib/ai-chat/src/store/mentions.ts': 1,
   'apps/desktop/src/lib/ai-sidebar/src/Conversation.svelte': 1,
   'apps/desktop/src/lib/ai-sidebar/src/review/words.ts': 1,
   'apps/desktop/src/lib/ai-sidebar/src/verbs.ts': 1,

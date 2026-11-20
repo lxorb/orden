@@ -1,3 +1,4 @@
+import { shownName } from '../../../platform/src/api'
 import type { Passage } from '../retrieve'
 import type { Attachment, Draft, Turn } from '../../../ai-providers/src/api'
 
@@ -19,7 +20,7 @@ function isCited(one: Attachment): one is Cited {
 }
 export function passageAttachments(passages: readonly Passage[]): Cited[] {
   return passages.map((one, at) => ({
-    label: `[${at + 1}] ${one.name}, line ${one.line + 1}`,
+    label: `[${at + 1}] ${shownName(one.name)}, line ${one.line + 1}`,
     text: one.text,
     cite: { path: one.path, name: one.name, line: one.line },
   }))

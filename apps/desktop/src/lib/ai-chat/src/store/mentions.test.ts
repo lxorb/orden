@@ -43,3 +43,20 @@ test('a word after the @ longer than any name is weighed against none, so each k
   expect(growth((count) => ranked(notes, 'p'.repeat(count)), 400, 16)).toBeLessThan(GROWS_AT_MOST)
   expect(ranked(notes, 'plan1').length).toBeGreaterThan(0)
 })
+describe('a file picked with @', () => {
+  test('is labelled by the name it shows, never its Orden ending, and keeps its path', () => {
+    for (const [name, label] of [
+      ['Terminal.term', 'Terminal'],
+      ['Plan.md', 'Plan'],
+      ['Board.canvas', 'Board'],
+      ['Talk.chat', 'Talk'],
+      ['Site.url', 'Site'],
+      ['Book.pages', 'Book'],
+      ['Tasks.base', 'Tasks'],
+      ['photo.png', 'photo.png'],
+    ] as const) {
+      expect(mentionOf({ path: `/s/${name}`, name, is_dir: false })).toEqual({ kind: 'note', id: `/s/${name}`, label })
+    }
+    expect(mentionOf({ path: '/s/Inbox.md', name: 'Inbox.md', is_dir: true }).label).toBe('Inbox.md/')
+  })
+})
