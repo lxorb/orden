@@ -1,9 +1,10 @@
-import { extracted, merged, type Split, splitAt } from '../../link-format/src/api'
+import { carving, merged, type Split } from '../../link-format/src/api'
 import { links, type Retargeting } from '../../link-index/src/api'
 import { folderOf, isMarkdownPath, samePath, withinSpace, invoke, joinPath } from '../../platform/src/api'
 import { type Tab, UNTITLED } from '../../documents/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import type { FileActions } from '../../file-undo/src/api'
+import { stemOf } from './title-name'
 
 export interface Composes {
   readonly activeSpace: { root: string } | null
@@ -73,14 +74,18 @@ export async function splitAtCaret(ws: Composes, at: number): Promise<void> {
   if (!tab?.path) return
   ws.flush()
   const doc = tab.doc
-  await carve(ws, tab.path, doc, (named) => splitAt(doc, at, UNTITLED, named), 'split')
+  const path = tab.path
+  const { splitAt } = await carving()
+  await carve(ws, path, doc, (named) => splitAt(doc, at, UNTITLED, named, stemOf(path) ?? undefined), 'split')
 }
 export async function extractSelection(ws: Composes, from: number, to: number): Promise<void> {
   const tab = ws.active
   if (!tab?.path) return
   ws.flush()
   const doc = tab.doc
-  await carve(ws, tab.path, doc, (named) => extracted(doc, from, to, UNTITLED, named), 'extract')
+  const path = tab.path
+  const { extracted } = await carving()
+  await carve(ws, path, doc, (named) => extracted(doc, from, to, UNTITLED, named, stemOf(path) ?? undefined), 'extract')
 }
 async function carve(
   ws: Composes,

@@ -263,6 +263,14 @@ describe('a note split at the caret', () => {
       relinks: [{ path: ALPHA, before: alpha, after: disk.get(ALPHA) }],
     })
   })
+  test('and a link in the part it moved to a heading left behind names the note it came from', async () => {
+    const BETA = `${SPACE}/Beta.md`
+    const beta = '# Beta\n\n## Intro\n\nintro\n\n## Later\n\nsee [[#Intro]]\n'
+    const ws = space({ [BETA]: beta }, BETA)
+    await splitAtCaret(ws, beta.indexOf('## Later'))
+    expect(disk.get(`${SPACE}/Later.md`)).toContain('[[Beta#Intro]]')
+    expect(disk.get(BETA)).not.toContain('see ')
+  })
   test('and nothing happens where there is nothing after the caret', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.length)
@@ -293,6 +301,15 @@ describe('a selection made into a note of its own', () => {
     await extractSelection(ws, from, from + 'Later'.length)
     expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
     expect(disk.get(NOTE)).toContain('[[Later 2|Later]]')
+  })
+  test('and a link in what it took to a heading left behind names the note it came from', async () => {
+    const BETA = `${SPACE}/Beta.md`
+    const beta = '# Beta\n\n## Intro\n\nintro\n\nsee [[#Intro]]\n'
+    const ws = space({ [BETA]: beta }, BETA)
+    const from = beta.indexOf('see')
+    await extractSelection(ws, from, beta.length - 1)
+    const made = [...disk.keys()].find((one) => one !== BETA) ?? ''
+    expect(disk.get(made)).toContain('[[Beta#Intro]]')
   })
   test('and the links to what it took follow it there', async () => {
     const BETA = `${SPACE}/Beta.md`
