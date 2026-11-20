@@ -87,4 +87,39 @@ describe('a segmented switch whose choice moves (#2290)', () => {
       switched.destroy()
     }
   })
+  test('and measures nothing in the turn it is mounted, placing its thumb in the next frame', () => {
+    const frames: FrameRequestCallback[] = []
+    vi.stubGlobal('requestAnimationFrame', (run: FrameRequestCallback) => frames.push(run))
+    vi.stubGlobal('cancelAnimationFrame', () => undefined)
+    let read = 0
+    const left = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetLeft')
+    Object.defineProperty(HTMLElement.prototype, 'offsetLeft', {
+      configurable: true,
+      get: () => {
+        read++
+        return 12
+      },
+    })
+    const node = document.createElement('div')
+    for (const name of ['a', 'b']) {
+      const button = document.createElement('button')
+      button.textContent = name
+      if (name === 'b') button.classList.add('on')
+      node.append(button)
+    }
+    document.body.append(node)
+    try {
+      const switched = segmented(node)
+      const thumb = node.querySelector<HTMLElement>('.orden-segmented-thumb')
+      expect(read).toBe(0)
+      expect(thumb?.style.opacity).toBe('0')
+      for (const run of frames.splice(0)) run(0)
+      expect(read).toBe(1)
+      expect(thumb?.style.opacity).toBe('')
+      expect(thumb?.style.transform).toBe('translate(12px, 0px)')
+      switched.destroy()
+    } finally {
+      if (left) Object.defineProperty(HTMLElement.prototype, 'offsetLeft', left)
+    }
+  })
 })
