@@ -42,7 +42,7 @@ class Faces {
     setTimeout(() => {
       if (!workspace.tabs.includes(tab)) return
       const snapshot = later()
-      if (snapshot.html.length <= LARGEST) this.keep(tab, { ...snapshot, shot: null, at: Date.now() })
+      if (snapshot && snapshot.html.length <= LARGEST) this.keep(tab, { ...snapshot, shot: null, at: Date.now() })
     }, TAKE_LATER)
   }
   drew(tab: Tab, snapshot: { html: string; w: number; h: number }) {
