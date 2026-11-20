@@ -87,3 +87,17 @@ test('a session opened with only some tools names just those, and an empty list 
   await openSession(opening, () => undefined)
   expect(opened.at(-1)).not.toHaveProperty('only')
 })
+test('a session opened for a thread of a space names the space, and one of no space names none', async () => {
+  const opening = {
+    tool: 'codex',
+    agent: { id: 'cx', name: 'Codex' },
+    mode: 'auto',
+    model: null,
+    effort: null,
+    thread: 't1',
+  } as const
+  await openSession({ ...opening, space: 'work' }, () => undefined)
+  expect(opened.at(-1)).toMatchObject({ thread: 't1', space: 'work' })
+  await openSession(opening, () => undefined)
+  expect(opened.at(-1)).not.toHaveProperty('space')
+})
