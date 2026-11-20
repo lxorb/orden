@@ -131,7 +131,7 @@ export async function renameKept(from: string, name: string): Promise<Space> {
   const others = (await names()).filter((one) => !same(one, old))
   if (others.some((one) => same(one, wanted))) throw new Error(`there is a space called ${wanted}`)
   const folder = joinPath(await home(), wanted)
-  if (!__EVEN_PLUGIN__) await (await work()).letGoWorking(was)
+  await (await work()).letGoWorking(was)
   await found.mount.folder.retire()
   unmount(found.mount.root)
   try {
@@ -144,7 +144,7 @@ export async function renameKept(from: string, name: string): Promise<Space> {
   const root = rootIn(folder, wanted)
   await crate('write_note', { path: root, content: '' })
   await mounted(root, folder)
-  if (!__EVEN_PLUGIN__) await (await work()).movedWorking(was, folder, root)
+  await (await work()).movedWorking(was, folder, root)
   const madeOf = fromOf.get(from)
   fromOf.delete(from)
   if (madeOf) fromOf.set(root, madeOf)
@@ -154,7 +154,7 @@ export async function removeKept(root: string, forGood: boolean): Promise<unknow
   const found = mountOf(root)
   if (!found || found.inside) throw new Error(`${root} is not a space kept here`)
   const folder = found.mount.folder.name
-  if (!__EVEN_PLUGIN__) await (await work()).letGoWorking(folder, 'gone')
+  await (await work()).letGoWorking(folder, 'gone')
   await found.mount.folder.retire()
   const was = fromOf.get(root)
   if (was) {

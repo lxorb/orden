@@ -29,7 +29,7 @@ export function places(): Place[] {
     },
     { section: 'sync', label: 'What synced', text: [] },
     { section: 'sync', label: 'Go back', text: ['This space, as it was'] },
-    ...(__EVEN_PLUGIN__ ? [] : [{ section: 'space' as const, label: 'Agent instructions', text: ['AGENTS.md'] }]),
+    ...[{ section: 'space' as const, label: 'Agent instructions', text: ['AGENTS.md'] }],
     { section: 'appearance', label: 'Themes', text: ['Browse', 'Install'] },
     { section: 'editor', label: 'Reset to defaults', text: [] },
     { section: 'shortcuts', label: 'Vim keys', text: ['vim'] },

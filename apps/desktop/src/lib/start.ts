@@ -41,16 +41,14 @@ import {
 } from './workspace/src/api'
 import { providePort } from '@orden/contracts'
 
-if (!__EVEN_PLUGIN__) {
-  providePort('quit.ask', { mayStop: async (why) => (await import('./quit-ports')).mayStop(why) })
-}
+providePort('quit.ask', { mayStop: async (why) => (await import('./quit-ports')).mayStop(why) })
 const DAY = 24 * 60 * 60 * 1000
 async function openPdfs(paths: readonly string[]) {
   const { showPdfs } = await (await import('./pdf/src/api')).handed()
   await showPdfs(paths)
 }
 async function listenForAgents(): Promise<() => void> {
-  if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
+  if (!isDesktop) return () => undefined
   const { listen } = await import('@tauri-apps/api/event')
   const heard = door(() => import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()))
   return listen<unknown>('orden://agent', ({ payload }) => {
@@ -61,16 +59,14 @@ export function start(): () => void {
   mark('start')
   collectErrors()
   void startup.turn('doors').then(async () => (await stallWatch()).watchStalls())
-  if (!__EVEN_PLUGIN__) {
-    void startup
-      .turn('doors')
-      .then(async () => (await import('./theme-looks/src/api')).store.keepUp())
-      .catch((error: unknown) => log('warn', `themes: ${String(error)}`))
-  }
+  void startup
+    .turn('doors')
+    .then(async () => (await import('./theme-looks/src/api')).store.keepUp())
+    .catch((error: unknown) => log('warn', `themes: ${String(error)}`))
   factsOfLaunch(() => `${workspace.spaces.length} spaces, ${workspace.tabs.length} tabs`)
   viewport.start()
   theme.init()
-  if (!__EVEN_PLUGIN__) void import('./theme-looks/src/api').then((one) => one.syncLook())
+  void import('./theme-looks/src/api').then((one) => one.syncLook())
   modes.restore()
   shortcuts.restore()
   toolbar.restore()
@@ -78,10 +74,10 @@ export function start(): () => void {
   hiddenKinds.restore()
   connectors.restore()
   choices.restore()
-  if (!__EVEN_PLUGIN__) gate.restore()
+  gate.restore()
   const settling = setTimeout(() => {
     startup.settled = true
-    if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.settle())
+    void hinting().then(({ hints }) => hints.settle())
   }, 20_000)
   installAiRunner()
   recovery.restore()
@@ -94,11 +90,9 @@ export function start(): () => void {
     .restore()
     .then(async () => {
       mark('space restored')
-      if (!__EVEN_PLUGIN__) {
-        const { startAutomation } = await (await import('./automation/src/api')).automationStart()
-        stops.keep(await startAutomation())
-        stops.keep(await listenForAgents())
-      }
+      const { startAutomation } = await (await import('./automation/src/api')).automationStart()
+      stops.keep(await startAutomation())
+      stops.keep(await listenForAgents())
       if (onTheActivity()) {
         const { startHanded } = await import('./mobile/src/api')
         stops.keep(startHanded())
@@ -122,88 +116,86 @@ export function start(): () => void {
   void warmDoors().catch(() => {
     // Answered by reloading.svelte.ts.
   })
-  if (!__EVEN_PLUGIN__) {
+  void startup
+    .turn('right')
+    .then(() => import('./rows/src/api'))
+    .then(() => startRunner())
+  void startup
+    .turn('right')
+    .then(featureGates)
+    .then(({ whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn }) => {
+      whenPassOn(
+        () => void import('./pass-sync/src/api').then((one) => one.startPassSync()),
+        () => void import('./pass-sync/src/api').then((one) => one.quietPass()),
+      )
+      whenChatsOn(() => void import('./chats-client/src/api').then((one) => one.wakeChats()))
+      whenTimeOn(() => void import('./time/src/api').then((one) => one.wakeTime()))
+      whenExplorerOn()
+    })
+  void startup
+    .turn('right')
+    .then(() => import('./chats-client/src/api'))
+    .then((one) => one.retireChats())
+    .then((one) => one.forgetRetiredChatsHere())
+    .catch(() => undefined)
+  void startup
+    .turn('right')
+    .then(() => import('./tasks-model/src/api'))
+    .then(({ startTodos }) => startTodos())
+  void startup.turn('right').then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
+  void startup.turn('right').then(blankTabs)
+  void startup
+    .turn('right')
+    .then(() => import('./overview/src/api'))
+    .then((one) => one.wakeFaces())
+  void startup
+    .turn('right')
+    .then(() => import('./auto-tidy/src/api'))
+    .then((one) => stops.keep(one.startAutoTidy()))
+  void startup.turn('rooms').then(() =>
+    import('./sync-client/src/api').then(({ connect }) => {
+      connect()
+    }),
+  )
+  if (isDesktop) {
+    void (async () => {
+      await startup.turn('right')
+      await convertAll(workspace)
+      await keepWorking()
+      if (platform() !== 'macos') return
+      const { quickShortcuts } = await import('./quick-add/src/api')
+      await (await quickShortcuts()).hearShortcuts()
+    })().catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
+    void startup.turn('rooms').then(() => oneWindow())
+  }
+  let fetched: Promise<Across> | null = null
+  const across = () => (fetched ??= acrossStarting().then(({ startAcross }) => startAcross()))
+  workspace.acrossWhenWriting(across)
+  void startup.turn('rooms').then(across)
+  const reporting = !import.meta.env.DEV && !__DRIVEABLE__
+  if (isDesktop) {
+    void startup.turn('rooms').then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
     void startup
       .turn('right')
-      .then(() => import('./rows/src/api'))
-      .then(() => startRunner())
-    void startup
-      .turn('right')
-      .then(featureGates)
-      .then(({ whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn }) => {
-        whenPassOn(
-          () => void import('./pass-sync/src/api').then((one) => one.startPassSync()),
-          () => void import('./pass-sync/src/api').then((one) => one.quietPass()),
-        )
-        whenChatsOn(() => void import('./chats-client/src/api').then((one) => one.wakeChats()))
-        whenTimeOn(() => void import('./time/src/api').then((one) => one.wakeTime()))
-        whenExplorerOn()
-      })
-    void startup
-      .turn('right')
-      .then(() => import('./chats-client/src/api'))
-      .then((one) => one.retireChats())
-      .then((one) => one.forgetRetiredChatsHere())
-      .catch(() => undefined)
-    void startup
-      .turn('right')
-      .then(() => import('./tasks-model/src/api'))
-      .then(({ startTodos }) => startTodos())
-    void startup.turn('right').then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
-    void startup.turn('right').then(blankTabs)
-    void startup
-      .turn('right')
-      .then(() => import('./overview/src/api'))
-      .then((one) => one.wakeFaces())
-    void startup
-      .turn('right')
-      .then(() => import('./auto-tidy/src/api'))
-      .then((one) => stops.keep(one.startAutoTidy()))
-    void startup.turn('rooms').then(() =>
-      import('./sync-client/src/api').then(({ connect }) => {
-        connect()
-      }),
-    )
-    if (isDesktop) {
-      void (async () => {
-        await startup.turn('right')
-        await convertAll(workspace)
-        await keepWorking()
-        if (platform() !== 'macos') return
-        const { quickShortcuts } = await import('./quick-add/src/api')
-        await (await quickShortcuts()).hearShortcuts()
-      })().catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
-      void startup.turn('rooms').then(() => oneWindow())
-    }
-    let fetched: Promise<Across> | null = null
-    const across = () => (fetched ??= acrossStarting().then(({ startAcross }) => startAcross()))
-    workspace.acrossWhenWriting(across)
-    void startup.turn('rooms').then(across)
-    const reporting = !import.meta.env.DEV && !__DRIVEABLE__
-    if (isDesktop) {
-      void startup.turn('rooms').then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
-      void startup
-        .turn('right')
-        .then(() => import('./quick-add/src/api'))
-        .then((one) => one.quickAnywhere())
-        .then((one) => stops.keep(one.listen()))
-      void outsideDrops()
-        .then(({ hearOutsideDrops }) => hearOutsideDrops())
-        .then(stops.keep)
-        .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
-      void startup
-        .turn('rooms')
-        .then(() => import('./crash-reports/src/api'))
-        .then((one) => one.watchCrashes(reporting))
-        .then(stops.keep)
-    }
+      .then(() => import('./quick-add/src/api'))
+      .then((one) => one.quickAnywhere())
+      .then((one) => stops.keep(one.listen()))
+    void outsideDrops()
+      .then(({ hearOutsideDrops }) => hearOutsideDrops())
+      .then(stops.keep)
+      .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
     void startup
       .turn('rooms')
-      .then(() => import('./usage/src/api'))
-      .then((one) => one.watchUsage(reporting))
+      .then(() => import('./crash-reports/src/api'))
+      .then((one) => one.watchCrashes(reporting))
       .then(stops.keep)
-    void import('./ui-controls/src/api').then((one) => stops.keep(one.hidePointerWhileTyping()))
   }
+  void startup
+    .turn('rooms')
+    .then(() => import('./usage/src/api'))
+    .then((one) => one.watchUsage(reporting))
+    .then(stops.keep)
+  void import('./ui-controls/src/api').then((one) => stops.keep(one.hidePointerWhileTyping()))
   return () => {
     stops.end()
     clearInterval(sweeper)

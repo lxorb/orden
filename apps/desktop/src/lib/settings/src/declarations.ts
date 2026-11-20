@@ -44,12 +44,7 @@ function shortcutFields(): Field[] {
 export async function declarations(view?: EditorView): Promise<Field[]> {
   await registered()
   const rows = declaredPanes(view).flatMap((pane) => pane.groups.flatMap((group) => group.fields))
-  const all = [
-    ...rows,
-    ...(await themeDeclarations()),
-    ...shortcutFields(),
-    ...(__EVEN_PLUGIN__ ? [] : [relockField()]),
-  ]
+  const all = [...rows, ...(await themeDeclarations()), ...shortcutFields(), relockField()]
   const seen = new Set<string>()
   return all.filter((one) => {
     if (!one.key) return false

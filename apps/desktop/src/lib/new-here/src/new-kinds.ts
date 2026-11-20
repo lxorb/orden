@@ -87,7 +87,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     mark: 'chat',
     letter: 'm',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__) inPane(paneId, () => tabKindLoaded('chat').then((one) => one.make?.()))
+      inPane(paneId, () => tabKindLoaded('chat').then((one) => one.make?.()))
     },
   }),
   ai: () => ({
@@ -98,7 +98,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     icon: SPARK,
     letter: 'q',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__) inPane(paneId, () => runCommand('ai.tab'))
+      inPane(paneId, () => runCommand('ai.tab'))
     },
   }),
   explorer: () => ({
@@ -108,7 +108,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     mark: 'folder',
     letter: 'f',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__) inPane(paneId, () => runCommand('app.explorer'))
+      inPane(paneId, () => runCommand('app.explorer'))
     },
   }),
   pass: () => ({
@@ -118,7 +118,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     mark: 'key',
     letter: 'k',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__) inPane(paneId, () => runCommand('pass.open'))
+      inPane(paneId, () => runCommand('pass.open'))
     },
   }),
   terminal: () => terminalRow(),
@@ -196,7 +196,7 @@ function onlineRow(): NewKindRow {
     icon: ONLINE,
     letter: 'o',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__) inPane(paneId, () => making()?.online())
+      inPane(paneId, () => making()?.online())
     },
   }
 }
@@ -208,7 +208,7 @@ function remoteRow(): NewKindRow {
     mark: 'remote',
     letter: 's',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__) void making()?.pickHost(paneId)
+      void making()?.pickHost(paneId)
     },
   }
 }

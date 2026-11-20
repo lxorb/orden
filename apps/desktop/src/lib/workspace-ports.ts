@@ -56,30 +56,28 @@ serveWorkspace({
   },
   webData: webDataStores,
 })
-if (!__EVEN_PLUGIN__) {
-  serveWorkspace({
-    undoOutside: async (action) => (await import('./explorer/src/api')).undoOutside(action),
-    redoOutside: async (action) => (await import('./explorer/src/api')).redoOutside(action),
-    explorerStep: async (tab, by) => {
-      const view = (await import('./explorer/src/api')).viewOf(tab)
-      await (by < 0 ? view.back() : view.forward())
-    },
-    mayEnd: async (closing, every) => (await import('./terminal/src/api')).mayEnd(closing, every),
-    terminalMoved: async (doc, from, to) => {
-      const { moveHistory, readSpec } = await import('./terminal/src/api')
-      const key = readSpec(doc)?.key ?? ''
-      moveHistory({ space: from, key }, { space: to, key })
-    },
-    chatsCarried: async (path, folder) => (await import('./chats-client/src/api')).chatsCarried(path, folder),
-  })
-  whenPortProvided('workspace.view', (view) =>
-    view.follow((op) => {
-      if (op.op !== 'moved') return
-      return import('./explorer/src/api').then(
-        ({ moved }) => moved(op.from, op.to),
-        () => undefined,
-      )
-    }),
-  )
-}
+serveWorkspace({
+  undoOutside: async (action) => (await import('./explorer/src/api')).undoOutside(action),
+  redoOutside: async (action) => (await import('./explorer/src/api')).redoOutside(action),
+  explorerStep: async (tab, by) => {
+    const view = (await import('./explorer/src/api')).viewOf(tab)
+    await (by < 0 ? view.back() : view.forward())
+  },
+  mayEnd: async (closing, every) => (await import('./terminal/src/api')).mayEnd(closing, every),
+  terminalMoved: async (doc, from, to) => {
+    const { moveHistory, readSpec } = await import('./terminal/src/api')
+    const key = readSpec(doc)?.key ?? ''
+    moveHistory({ space: from, key }, { space: to, key })
+  },
+  chatsCarried: async (path, folder) => (await import('./chats-client/src/api')).chatsCarried(path, folder),
+})
+whenPortProvided('workspace.view', (view) =>
+  view.follow((op) => {
+    if (op.op !== 'moved') return
+    return import('./explorer/src/api').then(
+      ({ moved }) => moved(op.from, op.to),
+      () => undefined,
+    )
+  }),
+)
 providePort('spaces.archived', { listed: async () => (await spaceArchiving()).listed() })

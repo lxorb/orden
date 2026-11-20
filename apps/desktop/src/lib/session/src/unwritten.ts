@@ -44,7 +44,7 @@ export async function cameBack(draft: Draft & { path: string }, asks: Asks): Pro
     await asks.keepVersion(draft.path, read).catch(() => undefined)
     return onFile(true, base)
   }
-  if (draft.kind !== 'note' || __EVEN_PLUGIN__) return asDraft()
+  if (draft.kind !== 'note') return asDraft()
   const merged = await mergedOver(base, words, disk)
   return onFile(merged !== disk, disk, merged)
 }
@@ -61,11 +61,10 @@ export async function mergedOver(base: string, words: string, disk: string): Pro
     )
       return disk
   }
-  if (__EVEN_PLUGIN__) return words
   const { mergedOn } = await import('@orden/sync-core')
   return mergedOn(base, words, disk)
 }
 export async function wordsOnto(draft: Draft, kind: Draft['kind'], holds: string): Promise<string | null> {
-  if (draft.base === undefined || draft.kind !== 'note' || kind !== 'note' || __EVEN_PLUGIN__) return null
+  if (draft.base === undefined || draft.kind !== 'note' || kind !== 'note') return null
   return mergedOver(unixLines(draft.base), unixLines(draft.doc), holds)
 }

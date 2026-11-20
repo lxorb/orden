@@ -3,7 +3,7 @@ from harness import EXPERIMENTAL_SWITCH, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-FEATURES = ["Chats", "Password manager", "Time tracker", "Databases", "Glasses"]
+FEATURES = ["Chats", "Password manager", "Time tracker", "Databases"]
 KEPT = "() => JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]')"
 def knob(page: Page, label: str):
     return page.locator(f'[role=switch][aria-label="{label}"]')

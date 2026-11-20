@@ -158,7 +158,7 @@
         {@render dot(modes.highlight, false, () => void showColours(true))}
       {/if}
     {/each}
-    {#if docked && !__EVEN_PLUGIN__ && !held.includes(HANDWRITING)}
+    {#if docked && !held.includes(HANDWRITING)}
       {@render press(nameFor(HANDWRITING), '', () => act(HANDWRITING), PenLine)}
     {/if}
   {/if}
