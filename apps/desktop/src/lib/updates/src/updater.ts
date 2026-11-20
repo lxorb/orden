@@ -14,6 +14,7 @@ export function switchWebChannel(to: Channel): void {
   location.href = `?channel=${to}`
 }
 let staged: { version: string; install(): Promise<void>; close(): Promise<void> } | null = null
+let installed = false
 export const ready = () => staged !== null
 export const stagedVersion = () => staged?.version ?? null
 let keeper: Promise<string | null> | null = null
@@ -42,7 +43,7 @@ function found(value: unknown): Found | null {
   return { rid, currentVersion, version, rawJson }
 }
 export async function stageUpdate(channel: Channel): Promise<string | null> {
-  if (__EVEN_PLUGIN__ || !isDesktop || staged) return null
+  if (__EVEN_PLUGIN__ || !isDesktop || staged || installed) return null
   try {
     const one = found(await invoke<unknown>('check_update', { channel }))
     if (!one) return null
@@ -79,7 +80,7 @@ export async function settled(): Promise<void> {
 export async function restartToUpdate(install = true) {
   if (!(await mayStop('restart'))) return
   await settled()
-  if (install && !(await installStaged())) return
+  if (install && !installed && !(await installStaged())) return
   try {
     await invoke('crash_leaving').catch(() => undefined)
     const { relaunch } = await import('@tauri-apps/plugin-process')
@@ -90,22 +91,23 @@ export async function restartToUpdate(install = true) {
   }
 }
 export async function installStaged(closing = false): Promise<boolean> {
-  if (!staged) return false
+  const update = staged
+  if (!update) return false
   if (!(await invoke<boolean>('update_may_install', { closing }).catch(() => true))) {
     if (closing) handOn()
     return false
   }
   try {
     await invoke('crash_leaving').catch(() => undefined)
-    await staged.install()
-    return true
+    await update.install()
   } catch (error) {
     log('error', `update: ${error instanceof Error ? error.message : String(error)}`)
     void invoke('update_install_failed').catch(() => undefined)
     return false
-  } finally {
-    staged = null
   }
+  installed = true
+  if (staged === update) staged = null
+  return true
 }
 const HANDING = 'orden:update-handed'
 function handOn() {

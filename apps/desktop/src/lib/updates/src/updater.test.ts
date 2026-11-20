@@ -15,11 +15,12 @@ const world = vi.hoisted(() => ({
   notUpdated: null as { refused: boolean; command: string | null; reason: string } | null,
   mayStop: true,
   relaunched: 0,
+  relaunchFails: false,
 }))
 vi.mock('@tauri-apps/plugin-process', () => ({
   relaunch: () => {
     world.relaunched++
-    return Promise.resolve()
+    return world.relaunchFails ? Promise.reject(new Error('stuck')) : Promise.resolve()
   },
 }))
 vi.mock('../../platform/src/api', async (importOriginal) => ({
@@ -84,6 +85,7 @@ beforeEach(async () => {
   world.notUpdated = null
   world.mayStop = true
   world.relaunched = 0
+  world.relaunchFails = false
   vi.resetModules()
   const { providePort } = await import('@orden/contracts')
   providePort('quit.ask', { mayStop: () => Promise.resolve(world.mayStop) })
@@ -197,6 +199,38 @@ describe('the installer on the way out', () => {
     await updater.stageUpdate('stable')
     expect(await updater.installStaged()).toBe(true)
     expect(world.askedToInstall).toEqual([{ closing: false }])
+  })
+})
+describe('Restart now', () => {
+  test('after an install that failed tries the downloaded update again', async () => {
+    await updater.stageUpdate('stable')
+    world.installFails = true
+    await updater.restartToUpdate()
+    expect([world.installs, world.relaunched, updater.ready()]).toEqual([1, 0, true])
+    world.installFails = false
+    await updater.restartToUpdate()
+    expect([world.installs, world.relaunched, world.downloads]).toEqual([2, 1, 1])
+    expect(updater.ready()).toBe(false)
+  })
+  test('after a relaunch that failed relaunches into the installed update', async () => {
+    await updater.stageUpdate('stable')
+    world.relaunchFails = true
+    await updater.restartToUpdate()
+    world.relaunchFails = false
+    await updater.restartToUpdate()
+    expect([world.installs, world.relaunched]).toEqual([1, 2])
+  })
+  test('an installed update is not fetched again', async () => {
+    await updater.stageUpdate('stable')
+    await updater.installStaged()
+    expect(await updater.stageUpdate('stable')).toBe(null)
+    expect(world.downloads).toBe(1)
+  })
+  test('a window closing after an install that failed leaves the update to try again', async () => {
+    await updater.stageUpdate('stable')
+    world.installFails = true
+    expect(await updater.installStaged(true)).toBe(false)
+    expect(updater.stagedVersion()).toBe('1.4.0')
   })
 })
 describe('settling for another window s installer', () => {

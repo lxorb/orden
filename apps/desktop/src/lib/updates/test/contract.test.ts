@@ -1,8 +1,39 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { providePort } from '@orden/contracts'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { asChannel, ready, restartToUpdate } from '../src/api'
+import { stageUpdate } from '../src/updater'
+
+const world = vi.hoisted(() => ({ installs: 0, installFails: false, relaunched: 0 }))
+vi.mock('@tauri-apps/plugin-process', () => ({
+  relaunch: () => {
+    world.relaunched++
+    return Promise.resolve()
+  },
+}))
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  isDesktop: true,
+  isNative: true,
+  invoke: (command: string) => {
+    if (command === 'update_may_install') return Promise.resolve(true)
+    if (command === 'check_update')
+      return Promise.resolve({ rid: 7, currentVersion: '1.3.0', version: '1.4.0', rawJson: {} })
+    return Promise.resolve(null)
+  },
+}))
+vi.mock('@tauri-apps/plugin-updater', () => ({
+  Update: class {
+    version = '1.4.0'
+    download = () => Promise.resolve()
+    close = () => Promise.resolve()
+    install = () => {
+      world.installs++
+      return world.installFails ? Promise.reject(new Error('refused')) : Promise.resolve()
+    }
+  },
+}))
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -32,5 +63,18 @@ describe('an update', () => {
     unbind()
     expect(asked).toEqual(['restart'])
     expect(ready()).toBe(false)
+  })
+})
+describe('after an install that failed', () => {
+  test('the next Restart now tries again with the update it downloaded', async () => {
+    const unbind = providePort('quit.ask', { mayStop: () => Promise.resolve(true) })
+    await stageUpdate('stable')
+    world.installFails = true
+    await restartToUpdate()
+    expect(ready()).toBe(true)
+    world.installFails = false
+    await restartToUpdate()
+    unbind()
+    expect([world.installs, world.relaunched, ready()]).toEqual([2, 1, false])
   })
 })
