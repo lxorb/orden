@@ -7,6 +7,7 @@
   import { membersRoot } from './shell-parts'
 
   const root = $derived(membersRoot())
+  const manages = $derived(root !== null && managesSpace(root))
   $effect(() => {
     const at = root
     if (at === null) return
@@ -17,15 +18,23 @@
   })
 </script>
 
-{#if members.error}
-  <div class="orden-setting setting"><span class="name wrong">{members.error}</span></div>
-{/if}
-{#if members.seats}
+{#if members.who === null && members.error}
   <div class="orden-setting setting">
-    <span class="name seats">{members.seats.used} of {members.seats.most} places used</span>
+    <span class="name" class:wrong={manages} class:seats={!manages}>
+      {manages ? members.error : 'Only the owner and admins can see who is in this space.'}
+    </span>
   </div>
+{:else}
+  {#if members.error}
+    <div class="orden-setting setting"><span class="name wrong">{members.error}</span></div>
+  {/if}
+  {#if members.seats}
+    <div class="orden-setting setting">
+      <span class="name seats">{members.seats.used} of {members.seats.most} places used</span>
+    </div>
+  {/if}
+  <MemberRows store={members} {manages} titled={false} />
 {/if}
-<MemberRows store={members} manages={root !== null && managesSpace(root)} titled={false} />
 
 <style>
   .seats {
