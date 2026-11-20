@@ -37,13 +37,13 @@ CONTROLS = """
 () => {
   const style = (one) => getComputedStyle(one)
   return {
-    switches: [...document.querySelectorAll('[role=dialog] .orden-switch')].filter((one) => one.checkVisibility()).map((one) => ({
+    switches: [...document.querySelectorAll('[role=region][aria-label=Settings] .orden-switch')].filter((one) => one.checkVisibility()).map((one) => ({
       on: one.classList.contains('on'), edge: style(one).borderTopColor, edgeWide: style(one).borderTopWidth, ground: style(one).backgroundColor,
     })),
-    segments: [...document.querySelectorAll('[role=dialog] .orden-segmented button')].filter((one) => one.checkVisibility()).map((one) => ({
+    segments: [...document.querySelectorAll('[role=region][aria-label=Settings] .orden-segmented button')].filter((one) => one.checkVisibility()).map((one) => ({
       on: one.classList.contains('on'), ground: style(one).backgroundColor, words: one.textContent.trim(),
     })),
-    swatches: [...document.querySelectorAll('[role=dialog] .swatch:not(.picked)')].filter((one) => one.checkVisibility()).map((one) => getComputedStyle(one, one.classList.contains('active') ? '::after' : null).backgroundColor),
+    swatches: [...document.querySelectorAll('[role=region][aria-label=Settings] .swatch:not(.picked)')].filter((one) => one.checkVisibility()).map((one) => getComputedStyle(one, one.classList.contains('active') ? '::after' : null).backgroundColor),
   }
 }
 """
@@ -51,7 +51,7 @@ def system(page: Page) -> dict[str, str]:
     return page.evaluate(SYSTEM)
 def track_ends(page: Page, canvas: str) -> list[str]:
     bad = []
-    for at, slider in enumerate(page.locator("[role=dialog] .orden-slider").all()):
+    for at, slider in enumerate(page.locator("[role=region][aria-label=Settings] .orden-slider").all()):
         if not slider.is_visible():
             continue
         picture = Image.open(io.BytesIO(slider.screenshot())).convert("RGB")
@@ -73,7 +73,7 @@ WORDS_BOX = """
 """
 def words_unseen(page: Page) -> list[str]:
     bad = []
-    for button in page.locator("[role=dialog] .orden-segmented button.on").all():
+    for button in page.locator("[role=region][aria-label=Settings] .orden-segmented button.on").all():
         if not button.is_visible():
             continue
         picture = Image.open(io.BytesIO(button.screenshot())).convert("RGB")
@@ -123,7 +123,7 @@ def drive_scheme(browser: Browser, scheme: str) -> None:
                 wrong(f"[{scheme}] {one['line']}: the room on its {side.lower()} is drawn as a bar of {colour}, not the window's {colours['canvas']}")
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
     page.wait_for_timeout(400)
-    field = page.locator("[role=dialog] input[type=search], [role=dialog] input").first
+    field = page.locator("[role=region][aria-label=Settings] input").first
     field.focus()
     page.keyboard.type("x")
     ring = page.evaluate(
