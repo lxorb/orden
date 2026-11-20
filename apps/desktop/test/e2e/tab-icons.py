@@ -131,6 +131,7 @@ def marks(request: harness.Files) -> bool:
     return request.reply((DIST / "icon-256.png").read_bytes(), "image/png")
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
+    context.add_init_script("localStorage.setItem('orden:icon-tabs', 'yes')")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"[{scheme}] page error: {error}"))
     page.on(
