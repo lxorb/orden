@@ -9,14 +9,14 @@ html:root,
   background: var(--bg);
 }
 html:root {
-  --font-ui-chosen: 'Geist Variable';
+  --font-ui: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
   --brand-sky: #c3dbf9;
   --brand-lilac: #d2d2f3;
   --brand-rose: #e4c9ed;
   --brand-ink: #1b2133;
   --brand: linear-gradient(135deg, var(--brand-sky), var(--brand-lilac) 50%, var(--brand-rose));
   --brand-edge: transparent;
-  --brand-glow: 0.2;
+  --brand-glow: 0.26;
   --focus-ring: 2px solid var(--brand-lilac);
   --selection: rgb(210 210 243 / 0.3);
 }
@@ -107,7 +107,7 @@ html:root[data-theme='light'] {
   background:
     radial-gradient(30% 28% at 38% 74%, rgb(195 219 249 / var(--brand-glow)), transparent 72%),
     radial-gradient(30% 28% at 62% 76%, rgb(228 201 237 / var(--brand-glow)), transparent 72%),
-    radial-gradient(62% 54% at 50% 74%, rgb(210 210 243 / calc(var(--brand-glow) * 0.7)), transparent 74%);
+    radial-gradient(62% 54% at 50% 74%, rgb(210 210 243 / calc(var(--brand-glow) * 0.5)), transparent 74%);
   pointer-events: none;
 }
 .caption {

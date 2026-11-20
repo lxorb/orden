@@ -23,4 +23,7 @@ describe('the home page styles', () => {
     expect(home).toContain(':root > body')
     expect(HOME).toMatch(/html:root,\s*:root > body \{[^}]*height: auto;[^}]*overflow: visible;/)
   })
+  test('set their words in the Geist they ship, before any fallback', () => {
+    expect(HOME).toMatch(/html:root \{[^}]*--font-ui: 'Geist Variable', 'Geist',/)
+  })
 })
