@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick as laidOut, untrack } from 'svelte'
-  import { closeOnBack, chorded, overlays, Cross, prompt } from '../../ui-kit/src/api'
+  import { closeOnBack, chorded, overlays, Cross } from '../../ui-kit/src/api'
   import { stillness, keep, storedText } from '../../platform/src/api'
   import { Select, trap } from '../../ui-controls/src/api'
   import {
@@ -35,7 +35,6 @@
   import { boundsOf, boxOutline, moved as shifted, type Outline, outlineOf } from './outline'
   import { canWriteAt } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { TAB_KINDS } from '../../tab-kinds/src/api'
   import type { Frame } from '../../panes/src/api'
   import { faces } from './faces.svelte'
   import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
@@ -1036,7 +1035,12 @@
         from,
         goes:
           together && !pressed.whole && tabs.length
-            ? spacesFor(tabs.map(movingOf), workspace, canWriteAt, mayCarry).map((one) => one.id)
+            ? spacesFor(
+                tabs.map((tab) => ({ ...movingOf(tab), at: workspace.spaceOfTab(tab) })),
+                workspace,
+                canWriteAt,
+                mayCarry,
+              ).map((one) => one.id)
             : [],
         with: ids.slice(1).flatMap((one) => {
           const slot = resting.find((lying) => lying.id === one)
@@ -1170,34 +1174,15 @@
     landing: Landing & { kind: 'space' },
     before: Readonly<Record<string, Box>>,
   ) {
-    const asks = ids.some((id) => {
-      const tab = byId.get(id)
-      return !!tab && TAB_KINDS[tab.kind].asksToMove
-    })
-    if (asks) {
-      for (const id of ids) {
-        const box = before[id]
-        if (box) places.keepWindows({ [id]: box }, workspace.tabs)
-        else places.forgetWindow(id, workspace.tabs)
-      }
-      const space = workspace.spaces.find((one) => one.id === landing.key)?.name ?? ''
-      const sure = await prompt.confirm({
-        title: `Move to ${space}?`,
-        confirmLabel: 'Move',
-      })
-      if (!sure) return
+    for (const id of ids) {
+      const box = before[id]
+      if (box) places.keepWindows({ [id]: box }, workspace.tabs)
+      else places.forgetWindow(id, workspace.tabs)
     }
-    drop(ids, landing)
+    const went = await (await spaceMoving()).moveToSpace(ids, landing.key)
+    if (went !== null) for (const id of ids) places.forgetWindow(id, workspace.tabs)
   }
-  function drop(ids: readonly string[], landing: Landing) {
-    if (landing.kind === 'space') {
-      void spaceMoving()
-        .then((one) => one.moveToSpace(ids, landing.key))
-        .then((went) => {
-          if (!went) for (const one of ids) places.forgetWindow(one, workspace.tabs)
-        })
-      return
-    }
+  function drop(ids: readonly string[], landing: Landing & { kind: 'strip' }) {
     const id = ids[0]
     if (!id) return
     const into = stripPlace(tabsOf(landing.paneId), id, landing.before)
