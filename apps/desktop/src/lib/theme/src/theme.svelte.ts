@@ -103,7 +103,7 @@ const GLASS: ThemeInfo = {
   load: () => import('@orden/themes/glass').then((module) => module.glassCss),
   own: () => looks().then((port) => port.glassSettings()),
 }
-const FIRST_LOOK = __EVEN_PLUGIN__ ? null : { theme: GLASS_THEME, accent: 'green' }
+const FIRST_LOOK = { theme: GLASS_THEME, accent: 'green' }
 const GIVEN_KEY = 'orden:accent-given'
 const GIVEN_BEFORE = 'yellow'
 const MOVED_KEY = 'orden:theme-moved'
@@ -182,13 +182,7 @@ class Themes {
   readonly accents = ACCENTS
   private readonly fromFolder = $derived(this.files.filter((file) => !copiesBuiltIn(file)))
   readonly all = $derived<ThemeInfo[]>(
-    namedApart([
-      DEFAULT_THEME,
-      CONTRAST,
-      ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(GLASS)]),
-      ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(WALLPAPER)]),
-      ...this.fromFolder,
-    ]),
+    namedApart([DEFAULT_THEME, CONTRAST, this.withLoaded(GLASS), this.withLoaded(WALLPAPER), ...this.fromFolder]),
   )
   readonly active = $derived(this.all.find((one) => one.id === this.id) ?? DEFAULT_THEME)
   readonly wanted = $derived<Scheme>(this.scheme === 'system' ? this.preferred : this.scheme)
@@ -319,7 +313,6 @@ class Themes {
     this.trying = {}
   }
   private giveAccent(drawers: ChosenSettings, first: boolean, unwritten: boolean) {
-    if (!FIRST_LOOK) return
     const held = drawers[SHARED]?.accent
     const given = storedText(GIVEN_KEY) ?? (unwritten && storedText(ACCENT_KEY) === null ? GIVEN_BEFORE : '')
     const stillGiven = held === undefined ? first : held === given
@@ -336,11 +329,10 @@ class Themes {
     const saved = storedText(STORAGE_KEY)
     const chosen = storedText(SCHEME_KEY)
     const id = !saved || saved === 'null' || isSchemeChoice(saved) ? DEFAULT_ID : saved
-    const look = FIRST_LOOK
-    const first = look !== null && id === DEFAULT_ID && !(saved && storedText(MOVED_KEY))
+    const first = id === DEFAULT_ID && !(saved && storedText(MOVED_KEY))
     this.scheme = isSchemeChoice(chosen) ? chosen : isSchemeChoice(saved) ? saved : 'system'
     this.keptScheme = this.scheme
-    this.id = first ? look.theme : id
+    this.id = first ? FIRST_LOOK.theme : id
     this.keptId = this.id
     return first
   }
@@ -590,7 +582,7 @@ class Themes {
         .then((css) => this.wear(applying === this.applied ? css : null, kept))
         .catch(() => this.wear(applying === this.applied ? '' : null, kept))
     }
-    if (!__EVEN_PLUGIN__ && this.owns) this.wearAround(theme, kept)
+    if (this.owns) this.wearAround(theme, kept)
     this.paintSystemBars()
     if (kept) rememberGround()
   }
@@ -634,14 +626,13 @@ class Themes {
     if (this.active.own && this.owned?.id !== this.id) void this.readOwn(this.active)
   }
   private async readOwn(theme: ThemeInfo) {
-    if (__EVEN_PLUGIN__ || !theme.own) return
+    if (!theme.own) return
     const list = await theme.own().catch(() => null)
     if (!list || this.id !== theme.id) return
     this.owned = { id: theme.id, list }
     this.paintSettings()
   }
   private keepSheet(css: string) {
-    if (__EVEN_PLUGIN__) return
     const theme = this.active
     if (theme.load === undefined && theme.path === undefined) {
       forget(SHEET_KEY)
@@ -650,7 +641,6 @@ class Themes {
     if (earlySheet()?.css !== css) keepJson(SHEET_KEY, { id: theme.id, css })
   }
   private async readDeclarations(css: string) {
-    if (__EVEN_PLUGIN__) return
     const applying = this.applied
     const { declaredIn, readProperty } = await import('./declared')
     if (applying !== this.applied || css !== this.sheet) return
