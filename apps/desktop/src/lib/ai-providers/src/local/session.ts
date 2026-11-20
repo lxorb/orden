@@ -18,6 +18,7 @@ export interface Opening {
   thread?: string
   without?: string[]
   only?: string[]
+  space?: string
 }
 interface Picture {
   mime: string
@@ -93,6 +94,7 @@ export async function openSession(opening: Opening, heard: (said: Heard) => void
       ...(opening.thread ? { thread: opening.thread } : {}),
       ...(opening.without?.length ? { without: opening.without } : {}),
       ...(opening.only ? { only: opening.only } : {}),
+      ...(opening.space ? { space: opening.space } : {}),
     },
     output: channel,
   })
