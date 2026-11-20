@@ -75,3 +75,10 @@ describe('a listed command an agent runs', () => {
     expect(calls.find((one) => one.name === 'agents_ask')?.args.category).toBe('writing')
   })
 })
+describe('the hidden shell a command runs in (#2355)', () => {
+  test('is started not to be kept, so it ends with the app, its page or its window', async () => {
+    calls.length = 0
+    await runTerminal({ verb: 'run_terminal', caller: agent('unsupervised'), args: { command: 'git status' } })
+    expect(calls.find((one) => one.name === 'pty_spawn')?.args.kept).toBe(false)
+  })
+})

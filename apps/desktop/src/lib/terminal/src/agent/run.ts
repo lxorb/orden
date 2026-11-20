@@ -102,7 +102,7 @@ function session(
         settle(ended(exit))
       }
     }
-    invoke('pty_spawn', { id, shell, folder, cols: 160, rows: 48, output })
+    invoke('pty_spawn', { id, shell, folder, cols: 160, rows: 48, kept: false, output })
       .then(async () => {
         if (signal.aborted) {
           halt()

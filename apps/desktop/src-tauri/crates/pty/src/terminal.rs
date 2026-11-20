@@ -31,6 +31,17 @@ struct Held {
     owner: String,
     session: Arc<Session>,
     remote: bool,
+    kept: bool,
+}
+pub fn ends(kept: bool, killing: bool) -> bool {
+    killing || !kept
+}
+fn release(held: &Held, killing: bool) {
+    if ends(held.kept, killing) {
+        held.session.end();
+    } else {
+        held.session.detach();
+    }
 }
 #[derive(Serialize)]
 pub struct Spawned {
@@ -80,12 +91,8 @@ impl Terminals {
             return;
         }
         std::thread::spawn(move || {
-            for held in ending {
-                if kill {
-                    held.session.end();
-                } else {
-                    held.session.detach();
-                }
+            for held in &ending {
+                release(held, kill);
             }
         });
     }
@@ -112,8 +119,8 @@ pub fn end_all(app: &AppHandle) {
         terminals.closing.store(true, Ordering::SeqCst);
         sessions.drain().map(|(_, held)| held).collect()
     };
-    for held in ending {
-        held.session.detach();
+    for held in &ending {
+        release(held, false);
     }
 }
 fn place(webview: &Webview) -> Result<Place, String> {
@@ -157,6 +164,7 @@ pub async fn pty_spawn(
     key: Option<String>,
     plain: Option<bool>,
     name: Option<String>,
+    kept: Option<bool>,
     output: Channel<InvokeResponseBody>,
 ) -> Result<Spawned, String> {
     let stamp = webview.state::<Terminals>().stamp();
@@ -192,7 +200,7 @@ pub async fn pty_spawn(
         let pid = session.pid();
         let fresh = session.fresh();
         let session = Arc::new(session);
-        if !kept_alone(&terminals, &id, owner, stamp, &session, remote) {
+        if !kept_alone(&terminals, &id, owner, stamp, &session, remote, kept.unwrap_or(true)) {
             if fresh {
                 session.end();
             } else {
@@ -318,6 +326,7 @@ fn kept_alone(
     stamp: u64,
     session: &Arc<Session>,
     remote: bool,
+    kept: bool,
 ) -> bool {
     let mut sessions = terminals.lock();
     if terminals.closing.load(Ordering::SeqCst)
@@ -326,7 +335,7 @@ fn kept_alone(
     {
         return false;
     }
-    sessions.insert(id.to_owned(), Held { owner, session: Arc::clone(session), remote });
+    sessions.insert(id.to_owned(), Held { owner, session: Arc::clone(session), remote, kept });
     true
 }
 #[tauri::command]
@@ -397,7 +406,7 @@ pub fn pty_kill(webview: Webview, id: String) -> Result<(), String> {
 #[tauri::command]
 pub fn pty_detach(webview: Webview, id: String) -> Result<(), String> {
     if let Some(held) = let_go(&webview, &id)? {
-        held.session.detach();
+        release(&held, false);
     }
     Ok(())
 }
@@ -448,12 +457,12 @@ mod tests {
         let terminals = Terminals::default();
         let first = Arc::new(idle_shell());
         let second = Arc::new(idle_shell());
-        assert!(kept_alone(&terminals, "t1", "main".to_owned(), 0, &first, false));
-        assert!(!kept_alone(&terminals, "t1", "main".to_owned(), 0, &second, false));
+        assert!(kept_alone(&terminals, "t1", "main".to_owned(), 0, &first, false, true));
+        assert!(!kept_alone(&terminals, "t1", "main".to_owned(), 0, &second, false, true));
         let (held, _) = terminals.held("main", "t1").expect("held");
         assert!(Arc::ptr_eq(&held, &first));
         terminals.closing.store(true, Ordering::SeqCst);
-        assert!(!kept_alone(&terminals, "t2", "main".to_owned(), 0, &second, false));
+        assert!(!kept_alone(&terminals, "t2", "main".to_owned(), 0, &second, false, true));
         first.end();
         second.end();
     }
@@ -463,12 +472,20 @@ mod tests {
         let stamp = terminals.stamp();
         terminals.end_where(Some("main"), true);
         let late = Arc::new(idle_shell());
-        assert!(!kept_alone(&terminals, "t1", "main".to_owned(), stamp, &late, false));
+        assert!(!kept_alone(&terminals, "t1", "main".to_owned(), stamp, &late, false, true));
         assert!(terminals.held("main", "t1").is_err());
         let other = Arc::new(idle_shell());
-        assert!(kept_alone(&terminals, "t2", "other".to_owned(), stamp, &other, false));
+        assert!(kept_alone(&terminals, "t2", "other".to_owned(), stamp, &other, false, true));
         let fresh = Arc::new(idle_shell());
-        assert!(kept_alone(&terminals, "t1", "main".to_owned(), terminals.stamp(), &fresh, false));
+        assert!(kept_alone(
+            &terminals,
+            "t1",
+            "main".to_owned(),
+            terminals.stamp(),
+            &fresh,
+            false,
+            true
+        ));
         late.end();
         other.end();
         fresh.end();
@@ -478,7 +495,12 @@ mod tests {
         let terminals = Terminals::default();
         terminals.lock().insert(
             "t1".to_owned(),
-            Held { owner: "main".to_owned(), session: Arc::new(idle_shell()), remote: true },
+            Held {
+                owner: "main".to_owned(),
+                session: Arc::new(idle_shell()),
+                remote: true,
+                kept: true,
+            },
         );
         let free = terminals.with("main", "t1", |_| terminals.sessions.try_lock().is_ok());
         assert_eq!(free, Ok(true));
