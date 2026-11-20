@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { runCommand } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
   import { dur, slide } from '../../platform/src/api'
   import {
@@ -74,6 +75,8 @@
 
 <section class="todos" aria-label="Todos" data-todos-panel use:edgeScroll>
   <div class="bar">
+    <button type="button" class="orden-chip" data-todos-open onclick={() => void runCommand('views.todos')}>Open</button
+    >
     <Filters {shown} />
     <Pick
       name="Group"

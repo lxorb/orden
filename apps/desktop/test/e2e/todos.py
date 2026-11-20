@@ -271,8 +271,17 @@ def main() -> int:
         add(desk, "Throw this away")
         delete(desk, "[data-todos-panel]", "Throw this away")
         say("Delete todo in the panel deletes it")
-        desk.evaluate("() => window.ordenApp.tasks().then(({ openTodos }) => openTodos())")
+        TABS = "() => window.ordenApp.workspace.tabs.filter((one) => one.kind === 'view' && one.path === null).length"
+        desk.locator("[data-todos-panel] [data-todos-open]").click()
         desk.wait_for_selector("[data-todos-board] [data-todos-column]")
+        desk.evaluate("() => { const ws = window.ordenApp.workspace; const other = ws.tabs.find((one) => !(one.kind === 'view' && one.path === null)); if (other) ws.activate(other.id) }")
+        desk.locator("[data-todos-panel] [data-todos-open]").click()
+        desk.wait_for_timeout(500)
+        shown_tabs = desk.evaluate(TABS)
+        front = desk.evaluate("() => { const ws = window.ordenApp.workspace; const tab = ws.tabs.find((one) => one.id === ws.activeTabId); return tab ? tab.kind === 'view' && tab.path === null : false }")
+        say(f"Open in the panel: {shown_tabs} Todos tab, in front {front}")
+        if shown_tabs != 1 or not front:
+            wrong(f"the panel's Open made {shown_tabs} Todos tabs, in front {front}")
         board = desk.evaluate(BOARD)
         say(f"board: {board}")
         if [one[0] for one in board] != ["admin", "home", "No label"]:
