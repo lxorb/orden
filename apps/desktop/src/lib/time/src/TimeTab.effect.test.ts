@@ -325,3 +325,22 @@ test('Show percent turns every number in the summary into a share and back, and 
   expect(values()).toEqual([length(3 * H), length(H), length(3 * H), length(H)])
   expect(localStorage.getItem(PERCENT)).toBe('false')
 })
+test('the range, the day shown and Untracked come back as they were left when the tab is drawn again', () => {
+  shown(TimeTab, { tab: tab() })
+  const radio = (label: string) =>
+    [...target.querySelectorAll('[data-time-range] [role="radio"]')].find((one) => one.textContent.trim() === label)
+  pressed(radio('Week'))
+  pressed(target.querySelector('[aria-label="Previous"]'))
+  pressed(target.querySelector('[data-time-untracked]'))
+  const title = () => target.querySelector('[data-time-range] .title')?.textContent.trim()
+  const left = title()
+  const kept = written
+  expect(JSON.parse(kept)).toMatchObject({ range: 'week', untracked: false })
+  expect(JSON.parse(kept).day).toBeTypeOf('number')
+  close?.()
+  target.replaceChildren()
+  shown(TimeTab, { tab: tab(kept) })
+  expect(radio('Week')?.getAttribute('aria-checked')).toBe('true')
+  expect(title()).toBe(left)
+  expect(target.querySelector('[data-time-untracked]')?.getAttribute('aria-pressed')).toBe('false')
+})
