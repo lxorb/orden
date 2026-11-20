@@ -1,5 +1,6 @@
 import type { EditorView } from '@orden/editor'
 import { encodeTarget } from '@orden/markdown/links'
+import { stemOf } from '@orden/markdown/shown'
 import { storeImage, workspace } from '../../workspace/src/api'
 import { busy, message, viewport } from '../../ui-kit/src/api'
 import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
@@ -33,7 +34,7 @@ export async function putPicture(view: EditorView, file: File): Promise<void> {
   }
 }
 function alt(name: string): string {
-  return name.replace(/\.[^.]+$/, '').replace(/[[\]]/g, '')
+  return stemOf(name).replace(/[[\]]/g, '')
 }
 export function writeAtCaret(view: EditorView, text: string): void {
   const range = view.state.selection.main

@@ -1,4 +1,5 @@
 import { foldName, encodeTarget } from '@orden/markdown/links'
+import { stemOf } from '@orden/markdown/shown'
 import { codeAndWords } from '@orden/markdown/tags'
 import { folderOf, relativePath } from '../../platform/src/api'
 import { folderPlan, isHidden, isJunk } from './folder'
@@ -190,7 +191,7 @@ function ordinal(day: number): string {
   return `${day}${['th', 'st', 'nd', 'rd'][day % 10] ?? 'th'}`
 }
 function pageName(path: string): string {
-  const name = (/^pages\/(.+)$/i.exec(path)?.[1] ?? path).replace(/\.[^./]+$/, '')
+  const name = stemOf(/^pages\/(.+)$/i.exec(path)?.[1] ?? path)
   return decoded(name.split('___').join('/'))
 }
 function decoded(name: string): string {

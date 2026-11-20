@@ -98,6 +98,12 @@ describe('the space as a graph', () => {
     expect(graph.nodes.filter((node) => node.path === null)).toHaveLength(1)
     expect(joins(graph)).toEqual(['One - Plan', 'Plan - Two'])
   })
+  test("a missing target is shown without Orden's own ending, and stays apart from a missing note of that name", () => {
+    const graph = space({ 'One.md': '[[Board.canvas]] [[Board]] [[Plan.md]] [[Plan]]' })
+    const missing = graph.nodes.filter((node) => node.path === null)
+    expect(missing.map((node) => node.name).sort()).toEqual(['Board', 'Board', 'Plan'])
+    expect(new Set(missing.map((node) => node.id)).size).toBe(3)
+  })
   test('an attachment is not a note that is missing', () => {
     const graph = space({ 'One.md': 'a picture: ![[shot.png]] and ![](diagram.svg)' })
     expect(named(graph)).toEqual(['One'])
@@ -126,7 +132,7 @@ describe('the files a space embeds', () => {
     const graph = withFiles({
       'One.md': '![[shot.png]] ![[paper.pdf]] ![[voice.m4a]] ![[clip.mp4]] ![[Board.canvas]]',
     })
-    expect(named(graph).sort()).toEqual(['Board.canvas', 'One', 'clip.mp4', 'paper.pdf', 'shot.png', 'voice.m4a'])
+    expect(named(graph).sort()).toEqual(['Board', 'One', 'clip.mp4', 'paper.pdf', 'shot.png', 'voice.m4a'])
     expect(
       graph.nodes
         .filter((node) => node.attachment)

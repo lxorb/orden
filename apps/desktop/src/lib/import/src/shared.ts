@@ -1,5 +1,6 @@
 import { shownHost } from '@orden/scan/web-address'
 import { escapeText, plainWords } from '@orden/markdown/escapes'
+import { stemOf } from '@orden/markdown/shown'
 import { plainTaskWords, taskWords } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 import type { Arrived, Shared, SharedItem } from '@orden/contracts'
@@ -81,7 +82,7 @@ export function sharedTitle(arrived: Arrived): string {
     if (found) return found
   }
   const first = arrived.items.find((one) => one.text === null)
-  if (first?.name) return safeName(first.name.replace(/\.[^.]+$/, ''))
+  if (first?.name) return safeName(stemOf(first.name))
   if (address) return safeName(shownHost(address))
   return 'Shared'
 }
@@ -125,7 +126,7 @@ export function sharedPlan(
     const held = bytes.get(at)
     if (item.text !== null || !held?.length) return
     if (isNote(item)) {
-      const name = names.free(`${safeName(item.name.replace(/\.[^.]+$/, ''))}.md`)
+      const name = names.free(`${safeName(stemOf(item.name))}.md`)
       notes.push({ kind: 'note', path: name, text: decoded(held) })
       return
     }
