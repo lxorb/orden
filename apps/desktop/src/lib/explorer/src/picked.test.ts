@@ -26,4 +26,18 @@ describe("a file explorer's pick", () => {
     expect(kept.cursor).toBe('c')
     expect(stillThere(pickedAt(NOTHING, names, 'b', 'one'), ['a']).cursor).toBeNull()
   })
+  it('moves to the row after one that went, or before it at the end, picking it when nothing picked is left', () => {
+    const gone = stillThere(pickedAt(NOTHING, names, 'b', 'one'), ['a', 'c', 'd', 'e'], names)
+    expect(gone).toEqual({ names: new Set(['c']), cursor: 'c', anchor: 'c' })
+    const several = pickedAt(pickedAt(NOTHING, names, 'b', 'one'), names, 'c', 'range')
+    expect(stillThere(several, ['a', 'd', 'e'], names).cursor).toBe('d')
+    expect(stillThere(pickedAt(NOTHING, names, 'e', 'one'), ['a', 'b'], names).cursor).toBe('b')
+    const kept = stillThere(
+      pickedAt(pickedAt(NOTHING, names, 'a', 'one'), names, 'c', 'toggle'),
+      ['a', 'b', 'd', 'e'],
+      names,
+    )
+    expect(kept).toEqual({ names: new Set(['a']), cursor: 'd', anchor: null })
+    expect(stillThere(pickedAt(NOTHING, names, 'b', 'one'), [], names).cursor).toBeNull()
+  })
 })
