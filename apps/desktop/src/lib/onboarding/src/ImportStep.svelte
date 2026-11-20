@@ -2,7 +2,7 @@
   import { bringing } from './bring'
   import { BROWSERS } from './catalog'
   import Logo from './Logo.svelte'
-  import Mark from './Mark.svelte'
+  import LogoTile from './LogoTile.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
 
@@ -26,7 +26,7 @@
       {#if browser}<Logo name={browser.name} icon={browser.icon} colour={browser.colour} />{/if}
     </span>
     <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-    <span class="end"><Mark size={44} /></span>
+    <LogoTile size={76} />
   </div>
 {/snippet}
 
