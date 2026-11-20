@@ -33,6 +33,8 @@ const RECEIPTS = 'orden:chat-receipts'
 const WIKILINK = /\[\[([^\]|#^]+)/g
 const LOOK_FIRST = 2000
 const LOOK_AGAIN = 30_000
+const HEARD_FIRST = 500
+const HEARD_LAST = 16_000
 function remoteFor(id: string): Remote {
   const other = () => {
     const now = account.user?.id ?? account.guest?.id ?? null
@@ -148,7 +150,10 @@ class ChatsStore implements Chats {
     const engine = this.engine
     if (!engine) return
     await engine.flushAll()
-    await engine.refresh()
+    for (let wait = HEARD_FIRST; this.engine === engine && wait <= HEARD_LAST; wait *= 2) {
+      if (await engine.refresh()) return
+      await new Promise((settle) => setTimeout(settle, wait))
+    }
   }
   lookAgain(): Promise<void> {
     return this.engine ? this.lookForPointers() : Promise.resolve()

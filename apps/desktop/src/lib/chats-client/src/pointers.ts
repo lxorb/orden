@@ -39,6 +39,14 @@ function pointerPaths(entry: Entry, out: string[]): string[] {
   }
   return out
 }
+export async function chatsUnder(path: string): Promise<string[]> {
+  const own = await readPointer(path)
+  if (own) return [own]
+  const tree = await invoke<Entry>('read_tree', { root: path, options: { showHidden: true } }).catch(() => null)
+  if (!tree) return []
+  const chats = await Promise.all(pointerPaths(tree, []).map(readPointer))
+  return chats.filter((one) => one !== null)
+}
 export async function findPointers(
   rank: (chat: string, place: Place) => number = () => 0,
   unread: (root: string) => void = () => undefined,

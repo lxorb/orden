@@ -31,6 +31,11 @@ providePort('chats', {
     const { mayDelete } = await (await import('./chats-client/src/api')).chatDeleting()
     return mayDelete(paths)
   },
+  ending: async (paths) => {
+    if (__EVEN_PLUGIN__) return () => undefined
+    const { ending } = await (await import('./chats-client/src/api')).chatDeleting()
+    return ending(paths)
+  },
 })
 const agentsApi = () =>
   __EVEN_PLUGIN__ ? Promise.reject(new Error('no agents in the Even Realities plugin')) : import('./agents/src/api')
