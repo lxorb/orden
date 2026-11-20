@@ -3,15 +3,7 @@ import type { SyntaxNode } from '@lezer/common'
 import type { EditorState, Line } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { DOCUMENT, PLANE } from '@orden/markdown/icons'
-import {
-  embedKind,
-  embedSize,
-  isTabFile,
-  linkTarget,
-  pageFragment,
-  parseWikilink,
-  sectionOf,
-} from '@orden/markdown/links'
+import { embedKind, embedSize, isTabFile, pageFragment, parseWikilink, sectionOf } from '@orden/markdown/links'
 import { iconElement } from '../icon'
 import { followAnchors } from '../links'
 import { pressedByKey } from '../press'
@@ -20,7 +12,16 @@ import { BaseWidget } from '../live-preview/render'
 import { OrdenWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
 import type { LinkSpan } from './at'
-import { type FileDrawing, jumpFor, type NoteIndex, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
+import {
+  type FileDrawing,
+  jumpFor,
+  type NoteIndex,
+  noteIndex,
+  noteOpener,
+  resolveFile,
+  resolveLink,
+  shownTarget,
+} from './notes'
 
 const MOST_EMBEDDED = 40_000
 const EMBED_MAX = 512
@@ -80,7 +81,7 @@ export class EmbedWidget extends OrdenWidget {
     const caption = document.createElement('button')
     caption.className = 'orden-embed-name'
     caption.type = 'button'
-    caption.textContent = this.link.alias ?? linkTarget(this.link)
+    caption.textContent = this.link.alias ?? shownTarget(this.link, this.path)
     const open = (press?: MouseEvent) => {
       const state = view.state
       state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind), press)
@@ -281,7 +282,7 @@ export class EmbedFileWidget extends OrdenWidget {
     card.append(iconElement(this.kind === 'pdf' ? DOCUMENT : PLANE, 'orden-embed-icon'))
     const name = document.createElement('span')
     name.className = 'orden-embed-name'
-    name.textContent = this.link.alias ?? linkTarget(this.link)
+    name.textContent = this.link.alias ?? shownTarget(this.link, this.path)
     card.append(name)
     const open = (press?: MouseEvent) => {
       const state = view.state
