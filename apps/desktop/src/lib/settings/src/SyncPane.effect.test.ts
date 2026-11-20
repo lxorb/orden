@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 const world = vi.hoisted(() => ({
   rolled: [] as { space: string; at: number; preview: boolean }[],
   space: 'space-a',
+  engine: null as object | null,
+  held: [] as { id: string; name: string; theirs: { at: number } }[],
+  clashes: [] as { path: string; at: number }[],
 }))
 vi.mock('../../accounts/src/api', async (original) => ({
   ...(await original<typeof import('../../accounts/src/api')>()),
@@ -23,7 +26,14 @@ vi.mock('../../sync-store/src/api', () => ({
   sync: { remoteIdFor: () => world.space, nudge: () => undefined },
 }))
 vi.mock('../../sync-client/src/api', () => ({
-  asking: { engine: null, held: [] },
+  asking: {
+    get engine() {
+      return world.engine
+    },
+    get held() {
+      return world.held
+    },
+  },
   scan: () => undefined,
 }))
 vi.mock('../../foreign/src/api', () => ({
@@ -31,7 +41,13 @@ vi.mock('../../foreign/src/api', () => ({
 }))
 vi.mock('../../sync-mirror/src/api', async (original) => ({
   ...(await original<typeof import('../../sync-mirror/src/api')>()),
-  record: { passes: [], clashes: [], settle: () => Promise.resolve() },
+  record: {
+    passes: [],
+    get clashes() {
+      return world.clashes
+    },
+    settle: () => Promise.resolve(),
+  },
 }))
 vi.mock('../../workspace/src/api', () => ({
   workspace: { activeSpace: { root: '/space' }, spaces: [] },
@@ -45,6 +61,9 @@ let close: (() => void) | undefined
 beforeEach(() => {
   world.rolled = []
   world.space = 'space-a'
+  world.engine = null
+  world.held = []
+  world.clashes = []
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -80,5 +99,20 @@ describe('going back to how a space was', () => {
     expect(Date.now() - looked).toBeGreaterThan(170 * DAY)
     const went = world.rolled.filter((one) => !one.preview)
     expect(went.every((one) => Date.now() - one.at <= KEEP_MONTH * DAY + 60_000)).toBe(true)
+  })
+})
+describe('a note waiting for you', () => {
+  test("is named without Orden's own ending, and with its folder where the sync gave its path", () => {
+    world.clashes = [{ path: '/s/Plans/Notes/Board.canvas', at: 1 }]
+    let made = mount(SyncPane, { target })
+    flushSync()
+    expect(target.querySelector('.clash .name')?.textContent).toBe('Notes/Board')
+    void unmount(made)
+    world.engine = { on: () => () => undefined, store: { read: () => Promise.resolve([[], []]) } }
+    world.held = [{ id: 'n1', name: 'Plan.md', theirs: { at: 1 } }]
+    made = mount(SyncPane, { target })
+    close = () => void unmount(made)
+    flushSync()
+    expect(target.querySelector('.held .name')?.textContent).toBe('Plan')
   })
 })

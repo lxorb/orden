@@ -15,6 +15,8 @@
   import { asking, scan, type Engine } from '../../sync-client/src/api'
   import { workspace } from '../../workspace/src/api'
   import { Hint } from '../../ui-controls/src/api'
+  import { shownName } from '@orden/markdown/note-name'
+  import { shownPath } from '@orden/markdown/shown'
 
   let days = $state(1)
   const back = $derived(rollbackSteps(modes.keepVersions))
@@ -156,7 +158,7 @@
     sync.nudge()
   }
   function shortPath(path: string): string {
-    return path.split(/[\\/]/).slice(-2).join('/')
+    return shownPath(path.split(/[\\/]/).slice(-2).join('/'))
   }
   const horizons = [
     { value: String(KEEP_MONTH), label: 'A month' },
@@ -214,7 +216,7 @@
   <div class="card" transition:fade={{ duration: dur(130) }}>
     {#each asking.held as note (note.id)}
       <button class="orden-action held" onclick={() => void asking.revisit(note)}>
-        <span class="name">{note.name}</span>
+        <span class="name">{shownName(note.name)}</span>
         <span class="hint">{when(note.theirs.at, 'short')}</span>
       </button>
     {/each}
