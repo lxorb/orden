@@ -1,0 +1,117 @@
+name: layout-keys
+
+on:
+  push:
+    branches: ['tmp/ci-2394*']
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: layout-keys-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  layouts:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: so.orden.Orden.probe.layouts
+      ROLLING: 'true'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+
+      - name: The probe
+        run: |
+          source scripts/edge-profile.sh
+          config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
+          release=apps/desktop/src-tauri/target/${{ matrix.target }}/release
+          case "$RUNNER_OS" in
+            macOS)
+              bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --bundles app \
+                --ignore-version-mismatches --config "$config"
+              app=$(ls -d $release/bundle/macos/*.app | head -1)
+              echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
+              ;;
+            *)
+              bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
+                --ignore-version-mismatches --config "$config"
+              bash scripts/cef-beside.sh $release
+              [ "$RUNNER_OS" = Windows ] && exe=orden.exe || exe=orden
+              echo "EXE=$PWD/$release/$exe" >>"$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: The drives' tools
+        run: |
+          case "$RUNNER_OS" in
+            Linux)
+              sudo apt-get install -y xvfb dbus-x11 openbox xdotool at-spi2-core x11-xkb-utils xkb-data
+              sandbox="$(dirname "$EXE")/chrome-sandbox"
+              if [ -f "$sandbox" ]; then
+                sudo chown root:root "$sandbox"
+                sudo chmod 4755 "$sandbox"
+              fi
+              python3 -m venv "$RUNNER_TEMP/parity"
+              "$RUNNER_TEMP/parity/bin/pip" install --quiet pillow mss numpy python-xlib
+              echo "PY=$RUNNER_TEMP/parity/bin/python" >>"$GITHUB_ENV"
+              ;;
+            Windows)
+              python -m pip install --quiet pillow mss numpy comtypes
+              echo "PY=python" >>"$GITHUB_ENV"
+              ;;
+            *)
+              python3 -m venv "$RUNNER_TEMP/parity"
+              "$RUNNER_TEMP/parity/bin/pip" install --quiet pillow mss numpy pyobjc-framework-Quartz pyobjc-framework-Cocoa pyobjc-framework-ApplicationServices
+              echo "PY=$RUNNER_TEMP/parity/bin/python" >>"$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: QWERTY, to compare
+        if: ${{ !cancelled() && env.EXE != '' }}
+        timeout-minutes: 15
+        run: bash scripts/parity-run.sh scripts/layout-keys-drive.py --layout qwerty --out parity/layout-qwerty
+
+      - name: A Latin layout other than QWERTY
+        if: ${{ !cancelled() && env.EXE != '' }}
+        timeout-minutes: 15
+        run: bash scripts/parity-run.sh scripts/layout-keys-drive.py --layout latin --out parity/layout-latin
+
+      - name: Colemak as the second layout group
+        if: ${{ !cancelled() && env.EXE != '' && runner.os == 'Linux' }}
+        timeout-minutes: 15
+        run: bash scripts/parity-run.sh scripts/layout-keys-drive.py --layout second --out parity/layout-second
+
+      - name: Russian
+        if: ${{ !cancelled() && env.EXE != '' }}
+        timeout-minutes: 15
+        run: bash scripts/parity-run.sh scripts/layout-keys-drive.py --layout ru --out parity/layout-ru
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: layout-keys-${{ runner.os }}
+          path: parity
+          if-no-files-found: ignore
+          retention-days: 5
