@@ -11,7 +11,7 @@
     const options = Array.from(select.options, function (option, index) {
       const group = option.parentElement instanceof HTMLOptGroupElement ? option.parentElement : null
       return {
-        index: index,
+        index,
         label: option.label || option.text,
         disabled: option.disabled || (group !== null && group.disabled),
         group: group === null ? null : group.label,
@@ -24,13 +24,13 @@
     if (typeof bound === 'function') {
       bound(
         JSON.stringify({
-          id: id,
+          id,
           x: box.x,
           y: box.y,
           width: box.width,
           height: box.height,
           selected: select.selectedIndex,
-          options: options,
+          options,
         }),
       )
     }
