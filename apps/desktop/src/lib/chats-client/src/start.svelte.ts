@@ -8,6 +8,7 @@ import { isMobile } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { FileOp } from '../../file-ops/src/api'
 import { chats } from './store.svelte'
+import { pointersGone } from './deleting'
 import { unreadIn } from './unread'
 
 const isPointer = (path: string) => path.toLowerCase().endsWith(CHAT_EXTENSION)
@@ -17,6 +18,7 @@ function followed(op: FileOp): void {
     return
   }
   if (op.op === 'removed') {
+    pointersGone(op.path, op.kind !== 'file')
     if (op.kind === 'file' && isPointer(op.path)) void chats.pointerMoved(op.path, null)
     else if (op.kind !== 'file') void chats.lookAgain()
     return

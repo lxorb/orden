@@ -1,5 +1,5 @@
 import { type Event, type Message, ulid, type Who } from '@orden/chats'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { MemoryCache } from './cache'
 import { ChatEngine, type Remote } from './engine'
 import { keepsRow } from './fold'
@@ -185,5 +185,27 @@ describe('a stopped engine', () => {
     online = true
     await engine.flush(CHAT)
     expect(posted).toEqual([50])
+  })
+})
+describe('a chat the account ended (#2321)', () => {
+  test('leaves the list when a poke for it finds it gone', async () => {
+    const { ApiError } = await import('../../accounts/src/api')
+    const { chatRow } = await import('./test-account')
+    let ended = false
+    const remote: Remote = {
+      list: () => Promise.resolve({ chats: ended ? [] : [chatRow(CHAT)] }),
+      events: () => (ended ? Promise.reject(new ApiError(404, 'gone')) : Promise.resolve({ events: [], more: false })),
+      state: () => (ended ? Promise.reject(new ApiError(404, 'gone')) : Promise.resolve(null)),
+      post: () => Promise.resolve(null),
+      read: () => Promise.resolve(true),
+    }
+    const engine = new ChatEngine(new MemoryCache(), remote, () => 'user:me')
+    engines.push(engine)
+    await engine.load()
+    await engine.refresh()
+    expect(engine.chats.get(CHAT)?.row?.id).toBe(CHAT)
+    ended = true
+    engine.poked({ t: 'chat', chat: CHAT, seq: 9, at: 9, by: 'user:you', mention: false })
+    await vi.waitFor(() => expect(engine.chats.get(CHAT)?.row ?? null).toBeNull())
   })
 })

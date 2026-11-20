@@ -115,7 +115,7 @@ export class ChatEngine {
       }
       this.say({ t: 'list' })
     }
-    if (chat) void this.sync(poke.chat).catch(() => undefined)
+    if (chat) void this.sync(poke.chat).catch(() => this.refresh().catch(() => undefined))
     else void this.refresh()
   }
   sync(id: string): Promise<void> {
