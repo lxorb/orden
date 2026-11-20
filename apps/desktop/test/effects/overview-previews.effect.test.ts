@@ -63,9 +63,3 @@ test('a terminal’s window is its screen as it is now, not only what was writte
   )
   expect((await scrollbackOf(tab))?.text).toBe('$ make\nall done')
 })
-test('no kind is left with nothing but a picture of it, but an application, whose picture keeps its frame', () => {
-  const only = Object.entries(TAB_KINDS)
-    .filter(([, traits]) => traits.preview === 'picture')
-    .map(([kind]) => kind)
-  expect(only).toEqual(['application'])
-})

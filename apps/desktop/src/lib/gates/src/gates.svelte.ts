@@ -13,7 +13,6 @@ export type KindName =
   | 'terminal'
   | 'remote'
   | 'online'
-  | 'application'
   | 'explorer'
   | 'pass'
   | 'web'
@@ -26,14 +25,13 @@ export function kindsHere(plugin = __EVEN_PLUGIN__): KindName[] {
   if (web) here.push('ai')
   if (isDesktop && modes.coder) here.push('terminal', 'remote')
   if (modes.coder) here.push('online')
-  if (appsOn()) here.push('application')
   if (isDesktop && explorerOn()) here.push('explorer')
   if (passOn()) here.push('pass')
   if (web) here.push('web')
   if (web && isDesktop) here.push('private')
   return here
 }
-const GATED: readonly KindName[] = ['chat', 'application', 'explorer', 'pass']
+const GATED: readonly KindName[] = ['chat', 'explorer', 'pass']
 export function gated(kind: KindName): boolean {
   return GATED.includes(kind)
 }
@@ -66,7 +64,6 @@ function tried(word: string): boolean {
   return experimentalOn() && hiddenKinds.hidden.includes(word)
 }
 export const CHATS_WORD = 'experimental-chats'
-export const APPS_WORD = 'experimental-apps'
 export const EXPLORER_WORD = 'experimental-explorer'
 export const PASS_WORD = 'experimental-pass'
 export const TIME_WORD = 'experimental-time'
@@ -74,9 +71,6 @@ export const BASES_WORD = 'experimental-bases'
 export const GLASSES_WORD = 'experimental-glasses'
 export function chatsOn(): boolean {
   return !__EVEN_PLUGIN__ && tried(CHATS_WORD)
-}
-export function appsOn(): boolean {
-  return !__EVEN_PLUGIN__ && tried(APPS_WORD)
 }
 export function explorerOn(): boolean {
   return !__EVEN_PLUGIN__ && tried(EXPLORER_WORD)

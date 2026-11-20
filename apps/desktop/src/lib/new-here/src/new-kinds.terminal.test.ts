@@ -27,8 +27,8 @@ providePort('terminal.making', {
   online: () => Promise.resolve(),
 })
 const { kindLines, newKinds } = await import('./new-kinds')
-const { APPS_WORD, EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
-hiddenKinds.hidden = [EXPERIMENTAL_WORD, APPS_WORD, EXPLORER_WORD, PASS_WORD]
+const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
+hiddenKinds.hidden = [EXPERIMENTAL_WORD, EXPLORER_WORD, PASS_WORD]
 const terminalKind = () => newKinds().find((one) => one.kind === 'terminal')
 const { workspace } = await import('../../workspace/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
@@ -43,10 +43,10 @@ describe('a terminal, as a kind a new tab can be', () => {
       ['ai'],
       ['terminal', 'remote', 'online'],
       ['web', 'private'],
-      ['application', 'explorer', 'pass'],
+      ['explorer', 'pass'],
     ])
   })
-  test('is left out, with Remote and Online, for somebody who does not write code, applications staying', async () => {
+  test('is left out, with Remote and Online, for somebody who does not write code, the explorer staying', async () => {
     const { modes } = await import('../../modes/src/api')
     modes.developer = false
     try {
@@ -54,7 +54,7 @@ describe('a terminal, as a kind a new tab can be', () => {
         ['note', 'canvas', 'pages'],
         ['ai'],
         ['web', 'private'],
-        ['application', 'explorer', 'pass'],
+        ['explorer', 'pass'],
       ])
     } finally {
       modes.developer = null

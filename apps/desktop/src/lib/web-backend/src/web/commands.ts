@@ -28,14 +28,7 @@ import { markedPlane, type PlaneMarks, planeMarks } from '@orden/scan/canvas'
 import { scanNote, scanShortcut, type SpaceLinks } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 import { tagsIn } from '@orden/scan/search/tags'
-import {
-  isApplicationTarget,
-  isBaseTarget,
-  isChatTarget,
-  isTermTarget,
-  isWebTarget,
-  PDF_SIDECAR,
-} from '@orden/markdown/links'
+import { isBaseTarget, isChatTarget, isTermTarget, isWebTarget, PDF_SIDECAR } from '@orden/markdown/links'
 import { keptAway, NOT_HERE } from '../../../away/src/api'
 import { rehomed, unread } from '@orden/scan/indexed'
 import {
@@ -115,8 +108,7 @@ function listed(path: string): boolean {
     isWebTarget(path) ||
     isBaseTarget(path) ||
     isChatTarget(path) ||
-    isTermTarget(path) ||
-    isApplicationTarget(path)
+    isTermTarget(path)
   )
 }
 const sidecarOf = (path: string) => `${normalise(path)}${PDF_SIDECAR}`
@@ -191,7 +183,7 @@ export function readsAsText(path: string): boolean {
     isCanvas(path) ||
     isPages(path) ||
     path.endsWith(PDF_SIDECAR) ||
-    /\.(base|url|webloc|term|chat|application)$/i.test(path)
+    /\.(base|url|webloc|term|chat)$/i.test(path)
   )
 }
 const wordsOf = (base64: string) => new TextDecoder().decode(fromBase64(base64))

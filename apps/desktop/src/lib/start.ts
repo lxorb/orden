@@ -130,14 +130,13 @@ export function start(): () => void {
     void startup
       .turn('right')
       .then(featureGates)
-      .then(({ whenAppsOn, whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn }) => {
+      .then(({ whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn }) => {
         whenPassOn(
           () => void import('./pass-sync/src/api').then((one) => one.startPassSync()),
           () => void import('./pass-sync/src/api').then((one) => one.quietPass()),
         )
         whenChatsOn(() => void import('./chats-client/src/api').then((one) => one.wakeChats()))
         whenTimeOn(() => void import('./time/src/api').then((one) => one.wakeTime()))
-        whenAppsOn()
         whenExplorerOn()
       })
     void startup

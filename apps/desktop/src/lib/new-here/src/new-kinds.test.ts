@@ -1,4 +1,4 @@
-import { providePort, registerCommand, registerTabKind } from '@orden/contracts'
+import { providePort, registerCommand } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
@@ -15,19 +15,18 @@ providePort('terminal.making', {
   pickHost: noting('remote'),
   online: noting('online'),
 })
-registerTabKind('application', () => Promise.resolve({ make: noting('application') }))
 registerCommand('ai.tab', () => Promise.resolve(() => void noting('ai')()))
 await import('../../web-tab/src/api')
 const { fitsWhole, groupOf, kindLines, newKinds } = await import('./new-kinds')
 const { workspace } = await import('../../workspace/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
-const { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
+const { EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
 let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
   localStorage.clear()
-  hiddenKinds.hidden = [EXPERIMENTAL_WORD, APPS_WORD, PASS_WORD]
+  hiddenKinds.hidden = [EXPERIMENTAL_WORD, PASS_WORD]
 })
 afterEach(() => {
   viewport.device = was
@@ -46,17 +45,8 @@ function makers(): string[] {
   return made
 }
 describe('the kinds a new tab can be', () => {
-  test('are the four, an AI chat, an online terminal, an application and Pass, in the order a reader is offered them', () => {
-    expect(newKinds().map((one) => one.kind)).toEqual([
-      'note',
-      'canvas',
-      'pages',
-      'ai',
-      'online',
-      'application',
-      'pass',
-      'web',
-    ])
+  test('are the four, an AI chat, an online terminal and Pass, in the order a reader is offered them', () => {
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'ai', 'online', 'pass', 'web'])
   })
   test('stand in groups: notes, chats, terminals, the browser, then the apps', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
@@ -64,7 +54,7 @@ describe('the kinds a new tab can be', () => {
       ['ai'],
       ['online'],
       ['web'],
-      ['application', 'pass'],
+      ['pass'],
     ])
   })
   test('fold into one card a group of several, which offers them all, and leave one alone', async () => {
@@ -98,44 +88,26 @@ describe('the kinds a new tab can be', () => {
       'New page note',
       'New AI chat',
       'Online terminal',
-      'New application',
       'Pass',
       'New web note',
     ])
   })
   test('each wears the mark its own files wear', () => {
-    expect(newKinds().map((one) => one.mark)).toEqual([
-      'note',
-      'canvas',
-      'pages',
-      'chat',
-      'terminal',
-      'application',
-      'key',
-      'web',
-    ])
+    expect(newKinds().map((one) => one.mark)).toEqual(['note', 'canvas', 'pages', 'chat', 'terminal', 'key', 'web'])
   })
   test('leave the website out on a phone', () => {
     viewport.device = 'phone'
-    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'pass'])
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online', 'pass'])
   })
   test('and on a tablet', () => {
     viewport.device = 'tablet'
-    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'pass'])
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online', 'pass'])
   })
   test('make one each', async () => {
     const made = makers()
     for (const one of newKinds()) one.make()
     await vi.waitFor(() =>
-      expect([...made].sort()).toEqual([
-        'ai',
-        'application',
-        'canvas',
-        'note',
-        'online',
-        'pages',
-        'web https://www.google.com/',
-      ]),
+      expect([...made].sort()).toEqual(['ai', 'canvas', 'note', 'online', 'pages', 'web https://www.google.com/']),
     )
   })
   test('a web note opens the search engine this device chose', async () => {
@@ -162,7 +134,7 @@ describe('the kinds a new tab can be', () => {
   })
   test('each answers a letter of its own', () => {
     const letters = newKinds().map((one) => one.letter)
-    expect(letters).toEqual(['n', 'c', 'p', 'q', 'o', 'a', 'k', 'w'])
+    expect(letters).toEqual(['n', 'c', 'p', 'q', 'o', 'k', 'w'])
     expect(new Set(letters).size).toBe(letters.length)
   })
 })
