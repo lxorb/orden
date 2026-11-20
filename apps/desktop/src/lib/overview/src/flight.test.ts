@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { paneDrawn } from './flight'
+import { Flight, paneDrawn } from './flight'
 
 function drawnAt(transform: string, box: { x: number; y: number }, px: number, py: number) {
   const [tx, ty, scale] = (/translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(transform) ?? [])
@@ -59,4 +59,14 @@ test('a pane’s corners are its own at home and become the window’s as the ov
     if (before) for (const [i, one] of seen.entries()) expect(Math.abs(one - (before[i] ?? 0))).toBeLessThan(1)
     before = seen
   }
+})
+test('a window rests once it is within half a pixel on the screen, however far the canvas is zoomed out', () => {
+  const pose = { x: 100, y: 100, w: 320, h: 240, tab: 0, alpha: 1 }
+  const near = { ...pose, x: 101 }
+  const out = new Flight(pose)
+  out.aim(near, 0.25)
+  expect(out.resting).toBe(true)
+  const close = new Flight(pose)
+  close.aim(near, 1)
+  expect(close.resting).toBe(false)
 })

@@ -512,7 +512,7 @@
       else paint(id)
     }
     awayFromStrip()
-    if (moving) fly()
+    if (moving) frameAsked = requestAnimationFrame(tick)
     else {
       landSpring(opening)
       opened(opening.at)
@@ -731,12 +731,12 @@
       if (hands.has(tab.id)) continue
       const flight = flights.get(tab.id)
       if (out) {
-        flight?.aim(lying(slot))
+        flight?.aim(lying(slot), camera.zoom)
         if (pushed[cellOf.get(tab.id) ?? '']) flight?.land()
       } else {
         const home = homeOf(tab, slot)
         homes.set(tab.id, home)
-        flight?.aim(home)
+        flight?.aim(home, camera.zoom)
       }
     }
     if (started) for (const id of fronts) paint(id)
