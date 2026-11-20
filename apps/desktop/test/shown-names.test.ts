@@ -16,6 +16,14 @@ const MARKUP_NAME_OF = /\{nameOf\(/g
 const KEPT: Record<string, { most: number; why: string }> = {
   'apps/desktop/src/lib/link-index/src/links.svelte.ts': { most: 1, why: 'names compared to resolve links' },
   'packages/editor/src/wikilink/notes.ts': { most: 2, why: 'names compared and written as link paths' },
+  'packages/editor/src/wikilink/complete.ts': {
+    most: 1,
+    why: 'the link name written for a block in a note the index lacks',
+  },
+  'packages/editor/src/wikilink/note-links.ts': {
+    most: 1,
+    why: 'the link name written for a path that is no note or file',
+  },
   'packages/bases/src/link-context.ts': { most: 1, why: 'names compared to resolve links' },
   'packages/scan/src/scan-note.ts': { most: 1, why: 'the name links resolve against in the index' },
   'packages/scan/src/indexed.ts': { most: 1, why: 'the name links resolve against in the index' },
@@ -71,8 +79,6 @@ const TO_MOVE: Record<string, number> = {
   'packages/bases/src/csv.ts': 1,
   'packages/bases/src/expr/runtime.ts': 1,
   'packages/bases/src/ids.ts': 1,
-  'packages/editor/src/wikilink/complete.ts': 1,
-  'packages/editor/src/wikilink/note-links.ts': 1,
 }
 const RAW_KEPT: Record<string, { most: number; why: string }> = {
   'apps/desktop/src/lib/explorer/src/ExplorerColumn.svelte': {
