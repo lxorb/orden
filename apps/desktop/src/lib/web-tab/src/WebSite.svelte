@@ -200,16 +200,6 @@
     font-family: var(--font-ui);
     font-size: var(--text-row);
   }
-  .how > svg {
-    flex: none;
-    width: var(--icon-md);
-    height: var(--icon-md);
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
   button.how {
     min-height: 0;
     margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
@@ -223,8 +213,14 @@
     flex: 1;
   }
   .how > .chevron {
+    flex: none;
     width: var(--icon-sm);
     height: var(--icon-sm);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     color: var(--text-muted);
     transition: transform var(--dur-fast) var(--ease-out);
   }
