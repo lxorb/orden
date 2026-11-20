@@ -151,6 +151,33 @@ describe('the list out over the note', () => {
     stop = peek.watch(room)
   })
 })
+function effectAfter(source: string, anchor: string): string {
+  const from = source.indexOf('$effect(() => {', source.indexOf(anchor))
+  if (!source.includes(anchor) || from < 0) return ''
+  let depth = 0
+  for (let at = source.indexOf('{', from); at < source.length; at++) {
+    if (source[at] === '{') depth++
+    else if (source[at] === '}' && --depth === 0) return source.slice(from, at + 1)
+  }
+  return ''
+}
+describe('the effect a source test reads', () => {
+  const source = [
+    'let floating = $state(false)',
+    '$effect(() => {',
+    '  if (peek) { floating = true; return }',
+    '})',
+    'const later = () => requestAnimationFrame(() => {})',
+  ].join('\n')
+  test('ends where its own braces close, never at the end of the file', () => {
+    const effect = effectAfter(source, 'let floating = $state(false)')
+    expect(effect).toMatch(/^\$effect\(\(\) => \{[\s\S]*floating = true[\s\S]*\}$/)
+    expect(effect).not.toMatch(/requestAnimationFrame/)
+  })
+  test('and is nothing when what it follows is gone, so the test that reads it fails', () => {
+    expect(effectAfter(source, 'let sinking = $state(false)')).toBe('')
+  })
+})
 describe('the left side', () => {
   const sidebar = readFileSync(join(import.meta.dirname, '../../sidebar/src/Sidebar.svelte'), 'utf8')
   test('lets it out only shut, as a column, outside full screen and under nothing', () => {
@@ -186,10 +213,9 @@ describe('the left side', () => {
       rule(':global(:root:not([data-touch], [data-drawer])) .column.right.shut:not(.moving, .peek) aside'),
     ).toMatch(/transform: translateX\(calc\(100%/)
     expect(rule('.column.shut.floating.peek aside')).toMatch(/transform: none;/)
-    const effect = sidebar.slice(sidebar.indexOf('let floating = $state(false)'))
-    expect(effect.slice(0, effect.indexOf('/** Whether a row is being carried'))).not.toMatch(
-      /requestAnimationFrame|tick\(/,
-    )
+    const effect = effectAfter(sidebar, 'let floating = $state(false)')
+    expect(effect).toMatch(/floating = true/)
+    expect(effect).not.toMatch(/requestAnimationFrame|tick\(/)
   })
   test('and quickly, quickest at its start, and gone as quickly', () => {
     expect(rule('.column.shut.floating aside')).toMatch(
