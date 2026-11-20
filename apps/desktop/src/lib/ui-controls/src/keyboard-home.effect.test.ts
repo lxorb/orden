@@ -7,10 +7,12 @@ const crate = vi.hoisted(() => ({
   inPage: true,
   hold: null as Promise<void> | null,
   heard: new Map<string, () => void>(),
+  said: [] as string[],
 }))
 vi.mock('../../platform/src/tauri', () => ({
   isDesktop: true,
   invoke: async (command: string) => {
+    crate.said.push(command)
     if (command !== 'keyboard_went') return undefined
     if (crate.hold) await crate.hold
     return crate.inPage
@@ -53,6 +55,7 @@ function control(html: string): HTMLElement {
   return one
 }
 beforeEach(() => {
+  crate.said.length = 0
   crate.inPage = true
   crate.hold = null
   blurs = 0
@@ -250,6 +253,42 @@ describe('a focus ring', () => {
     key('ArrowDown')
     expect(pointing()).toBe(false)
     off()
+  })
+})
+describe('a layer that takes the keyboard before it says it is open', () => {
+  test.each([
+    ['a palette', 'orden-screen'],
+    ['a menu', 'orden-layer'],
+    ['a bubble', 'orden-bubble'],
+  ])('%s over a page leaves the keyboard the page s, and gives it back when it closes', async (_kind, layer) => {
+    await pageTookIt()
+    crate.said.length = 0
+    const opened = control(`<div class="${layer}"><input aria-label="Find"></div>`)
+    opened.querySelector('input')?.focus()
+    const off = overlays.show(
+      () => undefined,
+      () => [opened],
+    )
+    await settle()
+    expect(crate.said).not.toContain('keyboard_here')
+    opened.remove()
+    off()
+    await vi.waitFor(() => expect(crate.said).toContain('keyboard_back'))
+    expect(crate.said).not.toContain('keyboard_here')
+  })
+  test('over the app gives the keyboard back to where it was in the app', async () => {
+    const field = control('<input aria-label="Title">')
+    field.focus()
+    const opened = control('<div class="orden-screen"><input aria-label="Find"></div>')
+    opened.querySelector('input')?.focus()
+    const off = overlays.show(
+      () => undefined,
+      () => [opened],
+    )
+    await settle()
+    opened.remove()
+    off()
+    await vi.waitFor(() => expect(document.activeElement).toBe(field))
   })
 })
 test('the crate and the page name the word the same', () => {
