@@ -54,3 +54,27 @@ describe('the record of what can be undone', () => {
     expect(undone.last?.kind === 'replace' && undone.last.notes[0]?.after).toBe('three')
   })
 })
+describe('what can be done again', () => {
+  const replace = (path: string) => ({
+    kind: 'replace' as const,
+    notes: [{ path, content: '# What? Now\n', after: '# Later\n', edits: [] }],
+  })
+  const rename = { kind: 'rename' as const, from: '/s/What Now.md', to: '/s/Later.md' }
+  const undoneOnce = (action: FileAction) => {
+    const undone = new FileActions()
+    undone.record(action)
+    undone.drop()
+    return undone.next
+  }
+  test('a rename with the heading it rewrote, right after it in the same note', () => {
+    const both: FileAction = { kind: 'many', steps: [rename, replace('/s/Later.md')] }
+    expect(undoneOnce(both)).toBe(both)
+  })
+  test('never a search and replace, alone or beside a rename it did not follow', () => {
+    expect(undoneOnce(replace('/s/Later.md'))).toBeUndefined()
+    expect(undoneOnce({ kind: 'many', steps: [rename, replace('/s/Other.md')] })).toBeUndefined()
+    expect(undoneOnce({ kind: 'many', steps: [replace('/s/Later.md'), rename] })).toBeUndefined()
+    const two = { ...replace('/s/Later.md'), notes: [...replace('/s/Later.md').notes, ...replace('/s/Other.md').notes] }
+    expect(undoneOnce({ kind: 'many', steps: [rename, two] })).toBeUndefined()
+  })
+})

@@ -23,7 +23,6 @@ import { writeFile } from '../../file-writes/src/api'
 import { inFlight, type Kind } from '../../file-ops/src/api'
 import type { Binning, FileAction, FileActions, Kept } from '../../file-undo/src/api'
 import { services } from './services'
-import { retitled } from './title-name'
 
 export interface PutsBack {
   readonly undone: FileActions
@@ -328,7 +327,6 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
       })
       if (action.rewrote) await ws.retarget(action.to, action.from, { moved: true }).catch(() => undefined)
       await ws.fileMoved(action.to, action.from, kind)
-      if (action.retitled) await titledBack(ws, action.from, action.to)
     }),
   )
   if (action.nests) {
@@ -337,14 +335,6 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   if (action.kind === 'move' && action.carries) {
     await (await import('./moving-space')).tabsFollow(action.from)
   }
-}
-async function titledBack(ws: PutsBack, path: string, renamed: string) {
-  const open = ws.documentAt(path)
-  const text = open?.text ?? (await invoke<string>('read_note', { path }).catch(() => null))
-  const back = text === null ? null : retitled(text, renamed, path)
-  if (back === null) return
-  await writeFile(path, back)
-  ws.reload(path, back)
 }
 async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge' }>) {
   if (!(await stillSays(ws, action.into, action.intoAfter))) {

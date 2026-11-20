@@ -327,22 +327,6 @@ describe('a name put back', () => {
     expect(sent).toEqual([{ command: 'rename_note', path: '', content: '' }])
     expect(told).toEqual(['retargeted /s/b.md -> /s/a.md', 'moved /s/b.md -> /s/a.md'])
   })
-  test('puts back the title the rename wrote at the top of the note', async () => {
-    disk.set('/s/Plan.md', '# Road\n\nwords\n')
-    const ws = store({ kind: 'rename', from: '/s/Plan.md', to: '/s/Road.md', retitled: true })
-    await undoLastFileAction(ws)
-    expect(sent).toContainEqual({
-      command: 'write_note',
-      path: '/s/Plan.md',
-      content: '# Plan\n\nwords\n',
-    })
-  })
-  test('and leaves a title written since the rename as it is', async () => {
-    disk.set('/s/Plan.md', '# Something else\n')
-    const ws = store({ kind: 'rename', from: '/s/Plan.md', to: '/s/Road.md', retitled: true })
-    await undoLastFileAction(ws)
-    expect(sent.some((one) => one.command === 'write_note')).toBe(false)
-  })
   test('and leaves the links alone where the rename did not touch them', async () => {
     const ws = store({ kind: 'move', from: '/s/a.md', to: '/s/f/a.md' })
     await undoLastFileAction(ws)
