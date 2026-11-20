@@ -471,7 +471,7 @@
   const LONGEST_FRAME = 1 / 30
   let entered = 0
   let stood = true
-  const STANDS = 1500
+  const STANDS = 100
   function fly() {
     if (frameAsked) return
     last = performance.now()
