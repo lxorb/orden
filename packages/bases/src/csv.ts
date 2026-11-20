@@ -1,3 +1,4 @@
+import { shownName } from '@orden/markdown/note-name'
 import { onClock } from './dates'
 import { isDate, isLink, text } from './expr/runtime'
 import type { Value } from './types'
@@ -6,7 +7,7 @@ export function csvValue(value: Value): string {
   if (value === null) return ''
   if (Array.isArray(value)) return value.map(csvValue).filter(Boolean).join(', ')
   if (isLink(value)) {
-    return value.display ?? (value.target.split('/').pop() ?? value.target).replace(/\.md$/i, '')
+    return value.display ?? shownName(value.target.split('/').pop() ?? value.target)
   }
   if (isDate(value)) {
     const here = onClock(value)

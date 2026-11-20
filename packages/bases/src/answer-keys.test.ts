@@ -37,3 +37,8 @@ describe('a view that reads this', () => {
     expect(paths('status: closed')).toEqual(['b.md'])
   })
 })
+test('groups by file.path in the order of the names the app shows', () => {
+  const base = readBase('views:\n  - type: table\n    name: T\n    groupBy:\n      property: file.path\n')
+  const rows = [noteRow('Plan 2.md', ''), noteRow('Plan.canvas', '')]
+  expect(answer(base, 'T', rows, context).groups.map((one) => one.key)).toEqual(['Plan.canvas', 'Plan 2.md'])
+})

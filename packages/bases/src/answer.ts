@@ -1,3 +1,4 @@
+import { shownName } from '@orden/markdown/note-name'
 import { compile, formulaReader } from './expr/compile'
 import { refusing, underGuard } from './expr/pattern'
 import { fieldOf, type Scope, settled, sortCompare, text, type Val } from './expr/runtime'
@@ -92,7 +93,7 @@ export function placeOfKey(key: string): { space: string | null; path: string } 
   return at === -1 ? { space: null, path: key } : { space: key.slice(0, at), path: key.slice(at + 2) }
 }
 function byNoteName(a: string, b: string): number {
-  const name = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '')
+  const name = (path: string) => shownName(path.slice(path.lastIndexOf('/') + 1))
   return sortCompare(name(a), name(b)) || sortCompare(a, b)
 }
 function optionOrder(base: Base, property: string | undefined): string[] {
