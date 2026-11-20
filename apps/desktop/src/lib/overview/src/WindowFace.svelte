@@ -49,7 +49,6 @@
     }
   })
   let awake = $state(false)
-  const landed = (): boolean => !flying
   later(() => (awake = true))
   let made = $state('')
   $effect(() => {
@@ -72,21 +71,21 @@
     }
   })
   let html = $state('')
-  $effect(() => {
+  $effect.pre(() => {
     const now = made
-    if (!flying && awake && now !== html) later(() => (html = landed() ? made : html))
+    if (!flying && awake) html = now
   })
   const latestShot = $derived(how === 'photograph' ? (webPages().of(tab.id).shot ?? face?.shot ?? null) : null)
   let shot = $state<string | null>(null)
-  $effect(() => {
+  $effect.pre(() => {
     const now = latestShot
-    if (!flying && awake && now !== shot) later(() => (shot = landed() ? latestShot : shot))
+    if (!flying && awake) shot = now
   })
   let decodedShot = $state<string | null>(null)
   let kept = $state.raw<Face | null>(null)
-  $effect(() => {
+  $effect.pre(() => {
     const now = face
-    if (!flying && awake && now !== kept) later(() => (kept = landed() ? face : kept))
+    if (!flying && awake) kept = now
   })
   let readScreen = $state.raw<{ text: string; cols: number } | null>(null)
   $effect(() => {
@@ -102,7 +101,7 @@
   let screen = $state.raw<{ text: string; cols: number } | null>(null)
   $effect.pre(() => {
     const now = readScreen
-    if (!flying && awake && now !== screen) later(() => (screen = landed() ? readScreen : screen))
+    if (!flying && awake) screen = now
   })
   function drawn(node: HTMLElement, kept: Face) {
     const draw = (one: Face) => {

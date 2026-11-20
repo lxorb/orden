@@ -521,6 +521,15 @@
     }
   }
   let onTheWay = $state(false)
+  let facesFly = $state(false)
+  $effect(() => {
+    if (onTheWay) {
+      facesFly = true
+      return
+    }
+    const after = requestAnimationFrame(() => (facesFly = false))
+    return () => cancelAnimationFrame(after)
+  })
   const stageSize = $derived.by(() => {
     const boxes = Object.values(panes).filter((one) => one.w > 0 && one.h > 0)
     const widest = boxes.sort((a, b) => b.w * b.h - a.w * a.h)[0]
@@ -1479,7 +1488,7 @@
       >
         <span class="face-box" style:scale={slot.w / face.w}>
           {#if !live}
-            <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} flying={onTheWay} />
+            <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} flying={facesFly} />
           {/if}
         </span>
         <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">

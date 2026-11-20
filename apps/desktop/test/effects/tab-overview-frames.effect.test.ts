@@ -405,6 +405,28 @@ test('nothing is measured once the overview is in the page, until its first fram
   expect(document.querySelector('.canvas .window')).not.toBe(null)
   expect(laidOut).toBe(0)
 })
+test('the windows’ pictures come in together, in the frame after the windows land', async () => {
+  tabOverview.open = true
+  flushSync()
+  for (let i = 0; i < 6; i++) {
+    frame()
+    await idle(20)
+    await drawnNow()
+  }
+  const drawnNowCount = () => document.querySelectorAll('.window .face .read').length
+  const seen: number[] = []
+  let landed = -1
+  for (let i = 0; i < 300 && waiting.size; i++) {
+    const before = [...document.querySelectorAll<HTMLElement>('.window')].map((one) => one.style.transform).join('|')
+    frame()
+    const after = [...document.querySelectorAll<HTMLElement>('.window')].map((one) => one.style.transform).join('|')
+    if (before !== after) landed = i
+    seen.push(drawnNowCount())
+  }
+  const first = seen.findIndex((one) => one > 0)
+  expect(first).toBeGreaterThan(landed)
+  expect(seen[first]).toBe(Math.max(...seen))
+})
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]
     .filter((one) => one.style.willChange !== '' || one.classList.contains('is-moving'))
