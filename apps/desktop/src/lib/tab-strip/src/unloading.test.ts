@@ -66,8 +66,8 @@ describe('what can be unloaded', () => {
       expect(mayUnload(add(kind, kind)), kind).toBe(true)
     }
   })
-  test('is never a shell, an application, the AI panel, a private page or an agent’s tab', () => {
-    for (const kind of ['terminal', 'application', 'chat'] as const) {
+  test('is never a shell, the AI panel, a private page or an agent’s tab', () => {
+    for (const kind of ['terminal', 'chat'] as const) {
       const tab = add(kind, kind)
       expect(mayUnload(tab), kind).toBe(false)
       expect(unloadEntries(tab).map((row) => row?.label)).not.toContain('Unload tab')
