@@ -17,7 +17,7 @@ describe('a setting changed on two devices', () => {
   })
   test('counts a list never heard as empty, so nothing the other device added is lost', () => {
     expect(settingMerged('archivedSpaces', undefined, ['c'], ['b'])).toEqual(['b', 'c'])
-    expect(settingMerged('glassesWords', undefined, { a: 'x' }, { b: 'y' })).toEqual({ a: 'x', b: 'y' })
+    expect(settingMerged('shortcuts', undefined, { a: 'x' }, { b: 'y' })).toEqual({ a: 'x', b: 'y' })
   })
   test('lets this device’s plain value stand', () => {
     expect(settingMerged('preset', 'orden', 'vscode', 'vim')).toBe('vscode')

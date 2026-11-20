@@ -281,10 +281,10 @@ describe('a list or a map kept on the account', () => {
     expect(server.settings.archivedSpaces).toEqual(['a', 'd'])
   })
   test('in a map keeps the other device’s keys beside this one’s', async () => {
-    await heard({ glassesMarks: { bold: true, italic: false } })
-    server.settings.glassesMarks = { bold: true, italic: false, strike: true }
-    await api.saveSettings('token', { glassesMarks: { italic: true } })
-    expect(server.settings.glassesMarks).toEqual({ italic: true, strike: true })
+    await heard({ shortcuts: { save: 'Mod-s', find: 'Mod-f' } })
+    server.settings.shortcuts = { save: 'Mod-s', find: 'Mod-f', open: 'Mod-o' }
+    await api.saveSettings('token', { shortcuts: { find: 'Mod-Shift-f' } })
+    expect(server.settings.shortcuts).toEqual({ find: 'Mod-Shift-f', open: 'Mod-o' })
   })
   test('changed offline and sent after a reload heard newer settings still keeps the other device’s change', async () => {
     const owed = new AccountOwed('orden:test-owed-settings')
