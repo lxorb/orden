@@ -32,6 +32,8 @@ const answered = async (path: string, options?: { method?: string; body?: unknow
 export const listChats = async (): Promise<ChatList | null> => chatListOf(await ask('/v2/chats'))
 export const makeChat = async (space: string): Promise<Pointer | null> =>
   chatOf(JSON.stringify(await ask('/v2/chats', { body: { space } })))
+export const endChat = (chat: string): Promise<boolean> =>
+  answered(chatPath(chat), { method: 'DELETE' }).catch(() => false)
 export const moveChat = (chat: string, space: string) => answered(chatPath(chat), { method: 'PATCH', body: { space } })
 export async function eventsOf(
   chat: string,
