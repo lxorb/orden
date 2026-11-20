@@ -736,6 +736,7 @@ class Runner {
           offline = true
         })
       }
+      const gone: string[] = []
       await eachDue(
         this.due,
         () => this.current === engine,
@@ -784,7 +785,12 @@ class Runner {
           if (passed && (passed.pulled || passed.pushed)) moved = true
           if (passed?.pulled && id === this.spaceOnScreen(engine)) await workspace().loadTree()
         },
+        (id) => gone.push(id),
       )
+      if (gone.length && Date.now() - this.reconciledAt > GONE_AGAIN) {
+        this.due.add('')
+        this.cadence.go()
+      }
       this.quiet = moved ? 0 : Math.min(this.quiet + 1, 8)
       if (this.current !== engine) return
       if (this.local) {
@@ -1807,6 +1813,7 @@ export const runner = new Runner()
 owesLast(() => runner.flushing())
 owesAtTheEnd(() => runner.parting())
 const SENDING_ROUNDS = 4
+const GONE_AGAIN = 2_000
 const SETTLING = 1_500
 async function searchedAway(args: unknown, part: (found: Found) => void): Promise<Found[] | null> {
   const asked = (args ?? {}) as {
