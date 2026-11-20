@@ -278,6 +278,14 @@ test('a slice and its row light each other, and the pie’s centre tells that ac
   flushSync()
   expect(centre()).toBe(`${length(3 * H)}tracked`.replace(/\s+/g, ''))
 })
+test('the running block ticks its time with no blinking mark beside it', () => {
+  const work = time.addActivity('Work')
+  time.start(work.id, at(14))
+  shown(TimeTab, { tab: tab() })
+  const running = target.querySelector(`[data-time-block="${time.running[0]?.id ?? ''}"]`)
+  expect(running?.textContent).toContain('1:00:00')
+  expect(running?.querySelector('.pulse, [class*="pulse"]')).toBeNull()
+})
 describe('the time tracker beside the notes', () => {
   test('shows the activity running and today’s tracked total, and nothing else', () => {
     const work = time.addActivity('Work')
