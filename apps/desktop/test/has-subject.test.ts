@@ -106,7 +106,9 @@ function siblingsUnnamed(selector: string): boolean {
         part = ''
       } else part += char
     }
-    const unnamed = steps.some(([compound, joint]) => (joint === '+' || joint === '~') && !named(compound))
+    const unnamed = steps.some(
+      ([compound, joint]) => (joint === '+' || joint === '~') && compound !== '' && !named(compound),
+    )
     return unnamed || pseudos(flat).some((pseudo) => pseudo.args !== null && siblingsUnnamed(pseudo.args))
   })
 }
@@ -119,13 +121,16 @@ function selectorsOf(css: string): string[] {
     .map((one) => (one[1] ?? '').trim())
     .filter((one) => one && !one.startsWith('@') && !/^(from|to|\d+%)/.test(one))
 }
+function styleOf(path: string): string[] {
+  const text = readFileSync(path, 'utf8')
+  const css = path.endsWith('.svelte')
+    ? [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1] ?? '').join('\n')
+    : text
+  return selectorsOf(css)
+}
 function looseIn(files: string[]): string[] {
   return files.flatMap((path) => {
-    const text = readFileSync(path, 'utf8')
-    const css = path.endsWith('.svelte')
-      ? [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1] ?? '').join('\n')
-      : text
-    return selectorsOf(css)
+    return styleOf(path)
       .filter((one) => loose(one))
       .map((one) => `${relative(ROOT, path).replace(/\\/g, '/')}: ${one.replace(/\s+/g, ' ')}`)
   })
@@ -159,10 +164,15 @@ describe('a sibling combinator', () => {
     expect(siblingsUnnamed('.cm-line + .cm-line')).toBe(false)
     expect(siblingsUnnamed('[data-x] ~ .y')).toBe(false)
     expect(siblingsUnnamed(':is(.a, .b) + p')).toBe(false)
+    expect(siblingsUnnamed('.row:not(:last-child, :has(+ .edited))')).toBe(false)
+    expect(siblingsUnnamed('.row:has(p + p)')).toBe(true)
   })
-  test('in the themes always names what stands before it, so a change anywhere never restyles the siblings after it', () => {
-    const found = walk(THEMES, (path) => path.endsWith('.css')).flatMap((path) =>
-      selectorsOf(readFileSync(path, 'utf8'))
+  test('in the app and its themes always names what stands before it, so a change anywhere never restyles the siblings after it', () => {
+    const found = [
+      ...walk(THEMES, (path) => path.endsWith('.css')),
+      ...walk(SOURCE, (path) => /\.(css|svelte)$/.test(path), ['node_modules']),
+    ].flatMap((path) =>
+      styleOf(path)
         .filter((one) => siblingsUnnamed(one))
         .map((one) => `${relative(ROOT, path).replace(/\\/g, '/')}: ${one.replace(/\s+/g, ' ')}`),
     )
