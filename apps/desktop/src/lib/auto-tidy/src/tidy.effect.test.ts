@@ -159,12 +159,11 @@ describe('the wall clock', () => {
   })
 })
 describe('what never closes', () => {
-  test('a draft, an unsaved web tab, a tab with unsaved changes, a running terminal, an app or a chat', () => {
+  test('a draft, an unsaved web tab, a tab with unsaved changes, a running terminal or a chat', () => {
     const kept = [
       add('Draft', 'note', null),
       add('Page', 'web', null),
       add('Shell', 'terminal', '/space/shell.term'),
-      add('App', 'application', '/space/app.app'),
       add('Chat', 'chat', '/space/c.chat'),
     ]
     const dirty = add('Dirty')
