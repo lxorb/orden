@@ -7,9 +7,13 @@ import {
   resizeBlock,
   setActivity,
   type Span,
+  takesTime,
   unset,
   type Write,
 } from '../src/api'
+import type { TimeDisk } from '../src/disk'
+import type { Row } from '../src/ledger'
+import { TimeStore } from '../src/store.svelte'
 import { csvOf, jsonOf, recordsIn } from '../src/written'
 
 describe('what the time is written out as', () => {
@@ -167,5 +171,81 @@ describe('the day in numbers, for the pie', () => {
     const spans = [block('night', next - H, next + 2 * H)]
     expect(dayTotals(spans, day, next + 5 * H)).toEqual({ slices: [{ activity: 'night', ms: H }], ms: H })
     expect(dayTotals(spans, next, next + 5 * H)).toEqual({ slices: [{ activity: 'night', ms: 2 * H }], ms: 2 * H })
+  })
+})
+function memory(name: string): TimeDisk {
+  const rows: Record<string, Row> = {}
+  return {
+    name,
+    rows: () => Promise.resolve(Object.values(rows)),
+    put: (list) => {
+      for (const one of list) rows[`${one.kind}:${one.id}`] = one
+      return Promise.resolve()
+    },
+    read: () => Promise.resolve(undefined),
+    keep: () => Promise.resolve(),
+    clear: () => Promise.resolve(),
+    minutes: () => Promise.resolve([]),
+    keepMinutes: () => Promise.resolve(),
+    close: () => undefined,
+  }
+}
+describe('an edit to the schedule that removes or cuts recorded time can be taken back', () => {
+  async function opened(name: string) {
+    const store = new TimeStore(() => Promise.resolve(memory(name)))
+    await store.opened({ owner: null, server: null, device: 'here' })
+    const work = store.addActivity('Work')
+    store.schedule([
+      { kind: 'add', span: block('a', 9 * H, 10 * H, work.id) },
+      { kind: 'add', span: block('b', 11 * H, 12 * H, work.id) },
+    ])
+    return store
+  }
+  const shown = (store: TimeStore) => store.spans.map((one) => [one.id, one.start, one.end])
+  test('a block moved over another takes its place, and one undo brings both back as they were, and redo again', async () => {
+    const store = await opened('moved')
+    const writes = moveBlock(store.spans, 'a', 11 * H, 16 * H)
+    expect(takesTime(store.spans, writes, 16 * H)).toBe(true)
+    store.schedule(writes)
+    expect(shown(store)).toEqual([['a', 11 * H, 12 * H]])
+    expect(store.undoSchedule()).toBe(true)
+    expect(shown(store)).toEqual([
+      ['a', 9 * H, 10 * H],
+      ['b', 11 * H, 12 * H],
+    ])
+    expect(store.redoSchedule()).toBe(true)
+    expect(shown(store)).toEqual([['a', 11 * H, 12 * H]])
+  })
+  test('a block deleted, cut or split comes back whole, and what the edit added goes', async () => {
+    const store = await opened('cut')
+    const removed = store.schedule(removeBlock(store.spans, 'b'))
+    expect(shown(store)).toEqual([['a', 9 * H, 10 * H]])
+    expect(store.undoSchedule(removed)).toBe(true)
+    const placed = placeBlock(store.spans, 11.25 * H, 11.5 * H, null, 16 * H, 'c')
+    expect(takesTime(store.spans, placed, 16 * H)).toBe(true)
+    store.schedule(placed)
+    expect(shown(store)).toHaveLength(4)
+    store.undoSchedule()
+    expect(shown(store)).toEqual([
+      ['a', 9 * H, 10 * H],
+      ['b', 11 * H, 12 * H],
+    ])
+    const grown = resizeBlock(store.spans, 'a', 9 * H, 11.5 * H, 16 * H)
+    store.schedule(grown)
+    expect(shown(store)).toEqual([
+      ['a', 9 * H, 11.5 * H],
+      ['b', 11.5 * H, 12 * H],
+    ])
+    store.undoSchedule()
+    expect(shown(store)).toEqual([
+      ['a', 9 * H, 10 * H],
+      ['b', 11 * H, 12 * H],
+    ])
+  })
+  test('an edit that only adds or moves into free time takes nothing', async () => {
+    const store = await opened('free')
+    expect(takesTime(store.spans, moveBlock(store.spans, 'a', 13 * H, 16 * H), 16 * H)).toBe(false)
+    expect(takesTime(store.spans, placeBlock(store.spans, 14 * H, 15 * H, null, 16 * H), 16 * H)).toBe(false)
+    expect(takesTime(store.spans, setActivity(store.spans, 'a', null), 16 * H)).toBe(false)
   })
 })

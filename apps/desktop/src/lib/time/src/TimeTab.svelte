@@ -1,10 +1,12 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { localDate, midnightOf } from '../../platform/src/api'
+  import { shortcuts } from '../../shortcuts/src/api'
   import { menu, segmented } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
   import Activities from './Activities.svelte'
   import DayLanes from './DayLanes.svelte'
+  import { undone } from './edit'
   import { daysAfter, endOf, startOf } from './days'
   import { hoursShown, type Picked } from './lanes'
   import { managing } from './manage.svelte'
@@ -65,6 +67,12 @@
   function step(by: number) {
     choose(view === 'day' ? daysAfter(day, by) : daysAfter(startOf('week', day), 7 * by))
   }
+  function keyed(event: KeyboardEvent) {
+    if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]')) return
+    const redo = shortcuts.pressed('edit.redo', event) || shortcuts.pressed('edit.redo.alt', event)
+    if (!redo && !shortcuts.pressed('edit.undo', event)) return
+    if (undone(redo)) event.preventDefault()
+  }
   function showMenu(event: MouseEvent) {
     void import('./menu').then(({ trackingMenu }) => menu.show(event, trackingMenu(), { title: 'Time tracker' }))
   }
@@ -74,7 +82,8 @@
   ] as const
 </script>
 
-<div class="tab" data-time-tab>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="tab" data-time-tab onkeydown={keyed}>
   <div class="head">
     <Picker {now} wide onmanage={manage} />
   </div>

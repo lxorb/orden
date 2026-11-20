@@ -7,6 +7,7 @@ const { length } = await import('./look')
 const { dayTotals } = await import('./schedule')
 const { localDate, midnightOf } = await import('../../platform/src/api')
 const { menu } = await import('../../ui-kit/src/api')
+const { undoToast } = await import('../../undo-toast/src/api')
 const TimePanel = (await import('./TimePanel.svelte')).default
 const TimeTab = (await import('./TimeTab.svelte')).default
 const H = 3_600_000
@@ -26,6 +27,7 @@ afterEach(() => {
   close?.()
   target.remove()
   menu.hide()
+  undoToast.dismiss()
   vi.useRealTimers()
   vi.restoreAllMocks()
 })
@@ -223,6 +225,71 @@ describe('the day as a schedule', () => {
     track()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }))
     flushSync()
     expect(own()).toEqual([['Work', at(9), at(10)]])
+  })
+  const undoKey = (redo = false) => {
+    track()?.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: redo ? 'Z' : 'z',
+        code: 'KeyZ',
+        ctrlKey: true,
+        shiftKey: redo,
+        bubbles: true,
+      }),
+    )
+    flushSync()
+  }
+  test('a block dragged over another takes its place, and Ctrl+Z brings both back', () => {
+    laidOut()
+    const work = time.addActivity('Work')
+    const rest = time.addActivity('Rest')
+    time.schedule([
+      { kind: 'add', span: blockSpan('w', at(9), at(10), work.id) },
+      { kind: 'add', span: blockSpan('r', at(11), at(12), rest.id) },
+    ])
+    shown(TimeTab, { tab: tab() })
+    drag(target.querySelector('[data-block="w"]'), 9.5, 11.5)
+    expect(own()).toEqual([['Work', at(11), at(12)]])
+    expect(undoToast.kind).toBe('moved')
+    undoKey()
+    expect(own()).toEqual([
+      ['Work', at(9), at(10)],
+      ['Rest', at(11), at(12)],
+    ])
+    expect(undoToast.kind).toBeNull()
+    undoKey(true)
+    expect(own()).toEqual([['Work', at(11), at(12)]])
+  })
+  test('a block deleted, or grown over another, is brought back by the undo notice or Ctrl+Z', async () => {
+    laidOut()
+    const work = time.addActivity('Work')
+    const rest = time.addActivity('Rest')
+    time.schedule([
+      { kind: 'add', span: blockSpan('w', at(9), at(10), work.id) },
+      { kind: 'add', span: blockSpan('r', at(11), at(12), rest.id) },
+    ])
+    shown(TimeTab, { tab: tab() })
+    drag(target.querySelector('[data-block="r"]'), 11.5, 11.5)
+    track()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }))
+    flushSync()
+    expect(own()).toEqual([['Work', at(9), at(10)]])
+    expect(undoToast.kind).toBe('deleted')
+    await undoToast.undo({ undone: { stack: [], last: undefined }, undoFileAction: () => Promise.resolve() })
+    flushSync()
+    expect(own()).toEqual([
+      ['Work', at(9), at(10)],
+      ['Rest', at(11), at(12)],
+    ])
+    drag(target.querySelector('[data-block="w"] [data-edge="end"]'), 10, 11.5)
+    expect(own()).toEqual([
+      ['Work', at(9), at(11.5)],
+      ['Rest', at(11.5), at(12)],
+    ])
+    expect(undoToast.kind).toBe('moved')
+    undoKey()
+    expect(own()).toEqual([
+      ['Work', at(9), at(10)],
+      ['Rest', at(11), at(12)],
+    ])
   })
   test('active time nobody set shows as Not set, and one pick fills it', async () => {
     vi.setSystemTime(new Date(2026, 4, 20, 15, 0))
