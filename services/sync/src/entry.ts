@@ -59,6 +59,6 @@ wire({
   outbound: (ctx) => (ctx.exports as unknown as Exports).Egress({ props: {} }),
 })
 export { DirectoryBackupGateway }
-export { AccountHub, ChatLog, NoteRoom } from './index'
+export { AccountHub, AppRelay, ChatLog, NoteRoom } from './index'
 export { Machine } from './sync-server-machines/src/api'
 export default worker

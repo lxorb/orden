@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
-import { AccountHub, ChatLog, NoteRoom } from '../src'
+import { AccountHub, AppRelay, ChatLog, NoteRoom } from '../src'
 import { Machine } from '../src/sync-server-machines/src/machines/machine'
 import type { Env } from '../src/sync-server/src/types'
 import { HubState } from './hub-fakes'
@@ -12,6 +12,7 @@ const MADE: Record<string, (env: Env) => object> = {
   NoteRoom: (env) => new NoteRoom(state(), env),
   AccountHub: (env) => new AccountHub(state(), env),
   ChatLog: (env) => new ChatLog(state(), env),
+  AppRelay: (env) => new AppRelay(state(), env),
   Machine: (env) => new Machine(state(), env),
 }
 function busyOnce(): { db: D1Database; asked: () => number } {
