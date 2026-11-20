@@ -60,9 +60,9 @@
     const above = at.y + at.height + needed > innerHeight && at.y - needed > 0
     return { left: at.x, top: above ? at.y - needed : at.y + at.height + 4, width: Math.max(at.width, 160), above }
   })
-  let rose = false
+  const rose = { above: false }
   $effect.pre(() => {
-    if (placed) rose = placed.above
+    if (placed) rose.above = placed.above
   })
   $effect(() => {
     const one = select
@@ -179,7 +179,7 @@
     onkeydown={(event) => selectKey(event, one)}
     onmouseleave={() => (hovered = null)}
     onmousedown={(event) => event.preventDefault()}
-    transition:fly={{ y: rose ? 4 : -4, duration: dur(120), easing: cubicOut }}
+    transition:fly={{ y: rose.above ? 4 : -4, duration: dur(120), easing: cubicOut }}
   >
     {#each grouped(one.options) as part, at (at)}
       {#if part.group}<li class="group" role="presentation">{part.group}</li>{/if}
