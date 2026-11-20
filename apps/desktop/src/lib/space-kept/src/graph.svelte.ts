@@ -123,6 +123,7 @@ export class SpaceGraphSettings {
     this.keeping.value = value
   }
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
+  private offering: string[] = []
   constructor(private readonly root: () => string | null) {}
   reread(): void {
     this.keeping.reread()
@@ -177,12 +178,19 @@ export class SpaceGraphSettings {
     const unsent = kept?.sent === false && kept.account === accountId
     const met = meet(kept, accountId, kept?.settings ?? DEFAULT_GRAPH, account, unsent ? UNSENT : SETTINGS)
     if (!met) return
-    this.spaces = {
-      ...this.spaces,
-      [root]: { settings: met.value, account: accountId, sent: !met.tell },
+    const sent = !met.tell
+    if (!kept || !sameGraph(kept.settings, met.value) || kept.account !== accountId || kept.sent !== sent) {
+      this.spaces = { ...this.spaces, [root]: { settings: met.value, account: accountId, sent } }
+      this.write()
     }
-    this.write()
-    if (met.tell) void this.push(root)
+    if (met.tell) this.offer(root)
+  }
+  private offer(root: string) {
+    if (this.offering.includes(root)) return
+    this.offering = [...this.offering, root]
+    void this.push(root).finally(() => {
+      this.offering = this.offering.filter((one) => one !== root)
+    })
   }
   private put(root: string, settings: GraphSettings) {
     this.spaces = {

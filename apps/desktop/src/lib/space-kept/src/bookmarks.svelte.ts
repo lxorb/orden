@@ -306,11 +306,12 @@ export class Bookmarks {
       }
       return null
     }
-    this.spaces = {
-      ...this.spaces,
-      [root]: { list: met.value, account: accountId, sent: !met.tell },
+    const sent = !met.tell
+    const same = held?.account === accountId && held.sent === sent
+    if (!same || JSON.stringify(held.list) !== JSON.stringify(met.value)) {
+      this.spaces = { ...this.spaces, [root]: { list: met.value, account: accountId, sent } }
+      this.write()
     }
-    this.write()
     return met.tell ? met.value : null
   }
   said(root: string, landed: boolean, list: readonly Bookmark[]) {
