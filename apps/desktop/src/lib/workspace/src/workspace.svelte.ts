@@ -56,6 +56,7 @@ import {
   afterQuiet,
   waited,
   isRecord,
+  Kept as KeptValue,
   keepJson,
   stored,
   log,
@@ -216,6 +217,28 @@ const PLACEHOLDER: Record<NewKind, string> = {
 }
 export type { Heading } from '../../documents/src/api'
 const STORAGE_KEY = 'orden:workspace'
+const SPACES_KEY = 'orden:spaces'
+const GONE_KEY = 'orden:spaces-gone'
+function spacesFrom(saved: unknown): Space[] {
+  if (!Array.isArray(saved)) return []
+  const out: Space[] = []
+  for (const one of saved) {
+    if (!isRecord(one)) continue
+    const { id, name, root } = one
+    if (typeof id !== 'string' || typeof name !== 'string' || typeof root !== 'string') continue
+    if (out.some((held) => held.id === id || samePath(held.root, root))) continue
+    out.push({ id, name, root })
+  }
+  return out
+}
+function sameIds<T>(state: T, shared: readonly Space[], mine: readonly Space[]): T {
+  let text = JSON.stringify(state)
+  for (const one of mine) {
+    const same = shared.find((held) => samePath(held.root, one.root))
+    if (same && same.id !== one.id) text = text.replaceAll(JSON.stringify(one.id), JSON.stringify(same.id))
+  }
+  return JSON.parse(text) as T
+}
 const TREE_KEY = 'orden:tree'
 const SESSION_DELAY = 400
 const WORDS_KEPT = 1_000_000
@@ -279,7 +302,27 @@ export function archivedRefused(): void {
 }
 class Workspace {
   private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
-  spaces = $state<Space[]>([])
+  private readonly sharedSpaces = new KeptValue<Space[]>(SPACES_KEY, spacesFrom, () => void this.spacesMoved())
+  get spaces(): Space[] {
+    return this.sharedSpaces.value
+  }
+  set spaces(next: Space[]) {
+    this.sharedSpaces.reread()
+    const left = this.sharedSpaces.value.filter((one) => !next.some((kept) => kept.id === one.id))
+    if (left.length) keepJson(GONE_KEY, [...left, ...spacesFrom(stored(GONE_KEY))].slice(0, 64))
+    this.sharedSpaces.value = next
+    this.sharedSpaces.write()
+  }
+  formerId(root: string): string | null {
+    const was = spacesFrom(stored(GONE_KEY)).find((one) => samePath(one.root, root))
+    return was && !this.spaces.some((one) => one.id === was.id) ? was.id : null
+  }
+  private async spacesMoved(): Promise<void> {
+    const open = this.activeSpace
+    if (this.activeSpaceId === null) return
+    if (!open) await this.loadSpaces()
+    else if (this.tree && !samePath(this.tree.path, open.root)) await this.loadTree()
+  }
   private spaceOn = $state<string | null>(null)
   private peeking = $state<string | null>(null)
   get activeSpaceId(): string | null {
@@ -712,7 +755,9 @@ class Workspace {
     this.sessionKey = slots?.sessionOf(slot) ?? STORAGE_KEY
     this.slot = slot
     const kept = stored(this.sessionKey)
-    const state = readSession(kept) ?? (slot === 0 || !slots ? null : slots.freshWindow(stored(STORAGE_KEY)))
+    const read = readSession(kept) ?? (slot === 0 || !slots ? null : slots.freshWindow(stored(STORAGE_KEY)))
+    const shared = this.sharedSpaces.value
+    const state = read && shared.length ? sameIds(read, shared, read.spaces) : read
     if (isRecord(kept) && holdsRetiredTab(kept.layout))
       void import('./notices.svelte').then(({ gateNote }) =>
         gateNote.show('Chats from other services are gone, so their tabs were closed'),
@@ -732,7 +777,7 @@ class Workspace {
       void this.takeWhatWasLeft(slot)
       return
     }
-    this.spaces = state.spaces
+    if (!shared.length) this.spaces = state.spaces
     this.positions = new Positions(state.positions ?? {})
     this.closed.restore(state.closed ?? [])
     this.setsRead = state.sets
@@ -1867,6 +1912,7 @@ class Workspace {
     }
   }
   async loadSpaces() {
+    this.sharedSpaces.reread()
     await spaces.loadSpaces(this)
     mark('spaces listed')
   }

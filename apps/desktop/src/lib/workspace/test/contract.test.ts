@@ -449,3 +449,93 @@ describe("a note's title and its file name", () => {
     expect(sameName('Plan', 'Road')).toBe(false)
   })
 })
+describe('the spaces every window shares', () => {
+  const NOTES = { id: 'w-notes', name: 'Notes', root: '/w/Notes' }
+  const WORK = { id: 'w-work', name: 'Work', root: '/w/Work' }
+  const FRESH = { id: 'w-fresh', name: 'Fresh', root: '/w/Fresh' }
+  const shared = () => JSON.parse(localStorage.getItem('orden:spaces') ?? '[]') as { id: string; root: string }[]
+  const elsewhere = (spaces: readonly object[]) => localStorage.setItem('orden:spaces', JSON.stringify(spaces))
+  function listing(roots: () => readonly { name: string; root: string }[]) {
+    return providePort('backend.web', {
+      invoke: <T>(command: string, args?: Record<string, unknown>) =>
+        command === 'list_spaces'
+          ? Promise.resolve(roots().map((one) => ({ name: one.name, path: one.root })) as T)
+          : command === 'read_note' && args?.path === '/w/Work/Plan.md'
+            ? Promise.resolve('# Plan\n' as T)
+            : Promise.reject(new Error(`${command} is not here`)),
+    })
+  }
+  test('a space another window made has its id here too, and keeps it once that window is gone', async () => {
+    workspace.spaces = [{ ...NOTES }]
+    let listed = [NOTES]
+    const gone = listing(() => listed)
+    try {
+      elsewhere([NOTES, FRESH])
+      listed = [NOTES, FRESH]
+      await workspace.loadSpaces()
+      expect(workspace.spaces.map((one) => one.id)).toEqual([NOTES.id, FRESH.id])
+      await workspace.loadSpaces()
+      expect(shared().map((one) => one.id)).toEqual([NOTES.id, FRESH.id])
+    } finally {
+      gone()
+    }
+  })
+  test('the order another window set is followed here, and kept for the next launch', async () => {
+    workspace.spaces = [{ ...NOTES }, { ...WORK }, { ...FRESH }]
+    const gone = listing(() => [NOTES, WORK, FRESH])
+    try {
+      elsewhere([FRESH, NOTES, WORK])
+      await workspace.loadSpaces()
+      expect(workspace.spaces.map((one) => one.id)).toEqual([FRESH.id, NOTES.id, WORK.id])
+      workspace.moveSpace(WORK.id, FRESH.id)
+      expect(shared().map((one) => one.id)).toEqual([WORK.id, FRESH.id, NOTES.id])
+    } finally {
+      gone()
+    }
+  })
+  test('a space deleted and put back comes back under the id it had, in every window', async () => {
+    workspace.spaces = [{ ...NOTES }, { ...FRESH }]
+    let listed = [NOTES, FRESH]
+    const gone = listing(() => listed)
+    try {
+      workspace.spaces = [{ ...NOTES }]
+      listed = [NOTES]
+      await workspace.loadSpaces()
+      listed = [NOTES, FRESH]
+      await workspace.loadSpaces()
+      expect(workspace.spaces.map((one) => one.id)).toEqual([NOTES.id, FRESH.id])
+      expect(shared().map((one) => one.id)).toEqual([NOTES.id, FRESH.id])
+    } finally {
+      gone()
+    }
+  })
+  test('a space another window renamed keeps its id, its place and the window in it here', async () => {
+    const JOB = { ...WORK, name: 'Job', root: '/w/Job' }
+    workspace.spaces = [{ ...NOTES }, { ...WORK }]
+    workspace.activeSpaceId = WORK.id
+    let listed = [NOTES, WORK]
+    const gone = listing(() => listed)
+    try {
+      await workspace.open('/w/Work/Plan.md')
+      elsewhere([NOTES, JOB])
+      listed = [NOTES, JOB]
+      await workspace.fileOps.tell({
+        op: 'moved',
+        kind: 'space',
+        from: WORK.root,
+        to: JOB.root,
+        root: WORK.root,
+        into: JOB.root,
+      })
+      await workspace.loadSpaces()
+      expect(workspace.tabHere((one) => one.path === '/w/Job/Plan.md')).not.toBeNull()
+      expect(workspace.spaces.map((one) => [one.id, one.root])).toEqual([
+        [NOTES.id, NOTES.root],
+        [WORK.id, JOB.root],
+      ])
+      expect([workspace.activeSpaceId, workspace.activeSpace?.root]).toEqual([WORK.id, JOB.root])
+    } finally {
+      gone()
+    }
+  })
+})

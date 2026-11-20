@@ -20,6 +20,7 @@ export interface HoldsSpaces {
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   close(id: string): void
   twinOf(id: string): Tab | null
+  formerId(root: string): string | null
   clearSelection(): void
   loadTree(): Promise<void>
   persist(): void
@@ -61,9 +62,16 @@ export async function loadSpaces(ws: HoldsSpaces) {
   ws.spaces = found
     .map((entry, index) => ({ entry, index }))
     .sort((a, b) => at(a.entry.path) - at(b.entry.path) || a.index - b.index)
-    .map(({ entry }) => byRoot.get(entry.path) ?? { id: identifier(), name: entry.name, root: entry.path })
+    .map(
+      ({ entry }) =>
+        byRoot.get(entry.path) ?? { id: ws.formerId(entry.path) ?? identifier(), name: entry.name, root: entry.path },
+    )
   const gone = ws.activeSpaceId
-  if (ws.spaces.some((space) => space.id === gone)) return
+  const open = ws.spaces.find((space) => space.id === gone)
+  if (open) {
+    if (ws.tree && !samePath(ws.tree.path, open.root)) await ws.loadTree()
+    return
+  }
   const next = firstShown(ws)
   if (gone === null || next === null || !tabSets.fetched) {
     ws.activeSpaceId = next
