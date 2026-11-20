@@ -613,6 +613,7 @@ class Drive:
         row = page.locator("[role=option]", has_text="Export…").first
         row.wait_for()
         row.click()
+        page.wait_for_selector(".palette", state="detached")
         tile = page.locator(f'.tile[data-format="{format}"]')
         tile.wait_for()
         tile.click()
