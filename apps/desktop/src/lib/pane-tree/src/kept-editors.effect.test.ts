@@ -48,6 +48,7 @@ beforeEach(() => {
   document.body.append(target)
   vi.mocked(createEditor).mockClear()
   counted.mounts = 0
+  counted.shown = {}
 })
 afterEach(() => {
   if (shown) void unmount(shown, { outro: false })
@@ -136,4 +137,28 @@ test('keeps no more than six editors, and a note let go of keeps its undo', asyn
   const { undoEdit } = await import('@orden/editor')
   expect(undoEdit(again)).toBe(true)
   expect(again.state.doc.toString()).toBe('Words 0.')
+})
+test('a terminal shown again after a note is not mounted again, and only the shown tab takes keys', async () => {
+  const { one, shell, paneId } = opened()
+  await drawn(paneId)
+  workspace.activate(shell)
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('.counted')).not.toBeNull()
+  })
+  expect(counted.shown[shell]).toBe(true)
+  workspace.activate(one)
+  flushSync()
+  expect(written()).toBe('The first note.')
+  expect(counted.shown[shell]).toBe(false)
+  const shellBox = target.querySelector('.counted')?.parentElement
+  expect(shellBox?.inert).toBe(true)
+  expect(shellBox?.hidden).toBe(true)
+  expect(target.querySelector<HTMLElement>('.editor')?.inert).toBeFalsy()
+  workspace.activate(shell)
+  flushSync()
+  expect(counted.shown[shell]).toBe(true)
+  expect(shellBox?.inert).toBe(false)
+  expect(shellBox?.hidden).toBe(false)
+  expect(counted.mounts).toBe(1)
 })
