@@ -529,9 +529,9 @@ class Workspace {
   readonly fileOps = new FileOps()
   constructor() {
     $effect.root(() => {
-      let was: string | null | undefined
+      let was: string | undefined
       $effect(() => {
-        const who = account.user?.id ?? null
+        const who = `${account.user?.id ?? ''} ${account.spaces.map((one) => `${one.id}:${one.name}`).join(' ')}`
         const first = was === undefined
         was = who
         if (!first && untrack(() => this.restored)) void untrack(() => this.loadSpaces())
