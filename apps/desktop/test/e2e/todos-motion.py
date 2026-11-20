@@ -157,6 +157,7 @@ def board(page: Page) -> None:
     wait_for(page, f"document.querySelectorAll('{BOARD} [data-todo-card]').length >= 13", "the cards")
     page.wait_for_timeout(600)
     slow(page, "d", "sorted: Delta one carried slowly down its column")
+    sort(page, "Manual")
     slow(page, "d", "manual: Delta two carried slowly down its column")
     scope = f"{BOARD} [data-todos-column]"
     first = page.locator(scope).first.bounding_box() or {}
@@ -178,6 +179,7 @@ def board(page: Page) -> None:
     under = box(page, "Bravo three")
     frames = carry(page, box(page, "Bravo one"), (under["x"] + 40, under["y"] + under["height"] * 0.8), scope)
     still(frames, "Bravo one under Bravo three in its column")
+    sort(page, "Manual")
     under = box(page, "Bravo one")
     frames = carry(page, box(page, "Charlie two"), (under["x"] + 40, under["y"] + under["height"] * 0.2), scope)
     still(frames, "manual: Charlie two into column b")

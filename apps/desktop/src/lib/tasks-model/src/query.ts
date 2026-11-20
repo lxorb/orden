@@ -46,15 +46,24 @@ const deadlineOrder = (a: Todo, b: Todo): number => {
 }
 const priorityOrder = (a: Todo, b: Todo): number => b.priority - a.priority
 const manualOrder = (a: Todo, b: Todo): number => a.order - b.order || a.created - b.created
+const sortedBy = (sort: Sort) =>
+  sort === 'deadline'
+    ? (a: Todo, b: Todo) => deadlineOrder(a, b) || priorityOrder(a, b)
+    : sort === 'priority'
+      ? (a: Todo, b: Todo) => priorityOrder(a, b) || deadlineOrder(a, b)
+      : () => 0
 export function sortedTodos(todos: readonly Todo[], sort: Sort, keep: readonly string[] = []): Todo[] {
   const finished = (one: Todo) => Number(one.done && !keep.includes(one.id))
-  const order =
-    sort === 'deadline'
-      ? (a: Todo, b: Todo) => deadlineOrder(a, b) || priorityOrder(a, b) || manualOrder(a, b)
-      : sort === 'priority'
-        ? (a: Todo, b: Todo) => priorityOrder(a, b) || deadlineOrder(a, b) || manualOrder(a, b)
-        : manualOrder
-  return [...todos].sort((a, b) => finished(a) - finished(b) || order(a, b))
+  const order = sortedBy(sort)
+  return [...todos].sort((a, b) => finished(a) - finished(b) || order(a, b) || manualOrder(a, b))
+}
+export function keepsSort(todos: readonly Todo[], sort: Sort): boolean {
+  const order = sortedBy(sort)
+  const finished = (one: Todo) => Number(one.done)
+  return todos.every((one, at) => {
+    const before = todos[at - 1]
+    return !before || (finished(before) - finished(one) || order(before, one)) <= 0
+  })
 }
 export interface Group {
   readonly label: string | null
