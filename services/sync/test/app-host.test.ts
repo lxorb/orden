@@ -20,6 +20,7 @@ const FILES = {
   '/icon-256.png': 'icon',
   '/sw.js': 'the app worker',
   '/demo/phone.html': 'a demo',
+  '/demo/web/kestrel.html': 'a page in the demo',
   '/pass.html': 'pass',
   '/pass-link.html': 'a link',
 }
@@ -116,13 +117,31 @@ describe('a name under orden.so nobody publishes under', () => {
   })
 })
 describe('framing', () => {
-  test('a demo page of the app may be framed by the site, and by nobody else', async () => {
+  test('a demo page of the app may be framed by the site, and inside the app’s own demo, and by nobody else', async () => {
     served()
-    for (const path of ['/?demo', '/?demo=phone', '/demo/phone']) {
+    for (const path of ['/?demo', '/?demo=phone', '/demo/phone', '/demo/web/kestrel']) {
       const page = await call(env, path, { host: APP })
-      expect(page.headers.get('content-security-policy'), path).toBe('frame-ancestors https://orden.so')
+      const policy = page.headers.get('content-security-policy') ?? ''
+      const ancestors = policy.replace(/^frame-ancestors /, '').split(' ')
+      expect(policy, path).toMatch(/^frame-ancestors /)
+      expect(ancestors.sort(), path).toEqual(["'self'", 'https://orden.so'])
       expect(page.headers.get('x-frame-options'), path).toBeNull()
     }
+  })
+  test('a demo page framed by the app’s demo, itself framed by the site, finds every ancestor allowed', async () => {
+    served()
+    const inner = await call(env, '/demo/web/kestrel', { host: APP })
+    const outer = await call(env, '/?demo', { host: APP })
+    const allows = (policy: string | null, origin: string) =>
+      (policy ?? '')
+        .replace(/^frame-ancestors /, '')
+        .split(' ')
+        .some((one) => one === origin || (one === "'self'" && origin === 'https://app.orden.so'))
+    for (const ancestor of ['https://app.orden.so', 'https://orden.so']) {
+      expect(allows(inner.headers.get('content-security-policy'), ancestor), ancestor).toBe(true)
+    }
+    expect(allows(outer.headers.get('content-security-policy'), 'https://orden.so')).toBe(true)
+    expect(allows(inner.headers.get('content-security-policy'), 'https://evil.example')).toBe(false)
   })
   test('every other page, and every page on another name, is nobody’s to frame', async () => {
     served()
