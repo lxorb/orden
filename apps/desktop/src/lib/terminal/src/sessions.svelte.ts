@@ -50,6 +50,7 @@ import {
 } from './history'
 import type { Picture } from './images'
 import { imageKey, imageKeyTyped, type Route, routeKey, typedBy } from './keys'
+import { Whereabouts } from './whereabouts'
 import { findColours, monospace, terminalContrast, terminalGround, terminalTheme } from './look'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
@@ -154,6 +155,7 @@ class Session {
   private unmatched: string | null = null
   private readonly unwatch: () => void
   private boxed = ''
+  private readonly whereabouts = new Whereabouts()
   private hidden = false
   private readonly watching = new ResizeObserver((seen) => {
     const box = seen.at(-1)?.contentRect
@@ -1019,14 +1021,16 @@ class Session {
     if (this.pty === null || !(source instanceof PtySource)) return
     const folder = await source.where()
     const spec = this.spec()
-    if (folder && folder !== spec.folder) this.respec({ ...spec, folder })
+    const next = this.whereabouts.heard('kernel', folder, spec.folder)
+    if (next) this.respec({ ...spec, folder: next })
   }
   private reported(code: 7 | 9, data: string): boolean {
     if (code === 9 && !data.startsWith('9;')) return false
     if (this.remote) return true
     const spec = this.spec()
     const folder = reportedFolder(code, data, platform() === 'windows', spec.shell.startsWith('wsl:'))
-    if (folder && folder !== spec.folder) this.respec({ ...spec, folder })
+    const next = this.whereabouts.heard('shell', folder, spec.folder)
+    if (next) this.respec({ ...spec, folder: next })
     return true
   }
   private get inFront(): boolean {
