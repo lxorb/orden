@@ -30,6 +30,11 @@ import type { Write } from './schedule'
 import type { TimeRecord } from './written'
 
 const CURSOR = 'cursor'
+const STEPS_KEPT = 50
+export interface Step {
+  readonly before: readonly (readonly [string, Span | null])[]
+  readonly after: readonly (readonly [string, Span | null])[]
+}
 const SEND_AFTER = 1500
 const TRACKING = 'tracking'
 const REMINDERS = 'reminders'
@@ -62,6 +67,8 @@ export class TimeStore {
   ready = $state(false)
   kept = $state<boolean | null>(null)
   readonly running = $derived(this.spans.filter((span) => span.end === null))
+  private undos: Step[] = []
+  private redos: Step[] = []
   private recent: {
     activities: readonly Activity[]
     spans: readonly Span[]
@@ -287,14 +294,44 @@ export class TimeStore {
     this.stop(at)
     return this.addSpan({ start: at, end: null, activity, source: 'timer' })
   }
-  schedule(writes: readonly Write[]): void {
-    this.written(
-      writes.map((one) => {
-        if (one.kind === 'remove') return this.write('span', one.id, null)
-        const span = one.kind === 'add' ? { ...one.span, device: one.span.device ?? (this.device || null) } : one.span
-        return this.write('span', span.id, spanValue(span))
-      }),
-    )
+  schedule(writes: readonly Write[]): Step | null {
+    if (!writes.length) return null
+    const after: (readonly [string, Span | null])[] = []
+    for (const one of writes) {
+      const entry =
+        one.kind === 'remove'
+          ? ([one.id, null] as const)
+          : ([
+              one.span.id,
+              one.kind === 'add' ? { ...one.span, device: one.span.device ?? (this.device || null) } : one.span,
+            ] as const)
+      const at = after.findIndex(([id]) => id === entry[0])
+      if (at === -1) after.push(entry)
+      else after[at] = entry
+    }
+    const step: Step = { before: after.map(([id]) => [id, this.span(id)] as const), after }
+    this.put(step.after)
+    this.undos = [...this.undos, step].slice(-STEPS_KEPT)
+    this.redos = []
+    return step
+  }
+  undoSchedule(step: Step | null = this.undos.at(-1) ?? null): boolean {
+    if (!step || !this.undos.includes(step)) return false
+    this.undos = this.undos.filter((one) => one !== step)
+    this.redos = [...this.redos, step]
+    this.put(step.before)
+    return true
+  }
+  redoSchedule(): boolean {
+    const step = this.redos.at(-1)
+    if (!step) return false
+    this.redos = this.redos.slice(0, -1)
+    this.undos = [...this.undos, step]
+    this.put(step.after)
+    return true
+  }
+  private put(spans: readonly (readonly [string, Span | null])[]): void {
+    this.written(spans.map(([id, span]) => this.write('span', id, span ? spanValue(span) : null)))
   }
   stop(at = Date.now()): void {
     const rows = this.running.map((span) =>

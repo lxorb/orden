@@ -12,6 +12,7 @@
   import Pie from './Pie.svelte'
   import type { Lane } from './records'
   import { dayTotals, removeBlock, resizeBlock, setActivity } from './schedule'
+  import { edited } from './edit'
   import { time } from './time.svelte'
 
   const {
@@ -62,7 +63,7 @@
       which === 'start'
         ? resizeBlock(time.spans, span.id, at, span.end ?? now, now)
         : resizeBlock(time.spans, span.id, span.start, end, now)
-    time.schedule(writes)
+    edited(writes, 'moved')
   }
   function countAs(event: MouseEvent, lane: Lane, place: Place) {
     event.preventDefault()
@@ -96,7 +97,7 @@
       <ActivityButton
         value={block.activity}
         placeholder="Activity"
-        onpick={(activity: string) => time.schedule(setActivity(time.spans, block.id, activity))}
+        onpick={(activity: string) => edited(setActivity(time.spans, block.id, activity), 'scheduled')}
         {onmanage}
       />
       <div class="clocks">
@@ -112,7 +113,7 @@
         type="button"
         class="orden-action is-danger"
         onclick={() => {
-          time.schedule(removeBlock(time.spans, block.id))
+          edited(removeBlock(time.spans, block.id), 'deleted')
           onselect(null)
         }}>Delete</button
       >

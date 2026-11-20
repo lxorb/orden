@@ -4,6 +4,7 @@ export { trackingMenu } from './menu'
 export { openTime }
 export { time } from './time.svelte'
 export type { Activity, Span } from './records'
+export type { Step } from './store.svelte'
 export {
   dayTotals,
   type DayTotals,
@@ -13,6 +14,7 @@ export {
   resizeBlock,
   setActivity,
   type Slice,
+  takesTime,
   type Stretch,
   unset,
   type Write,

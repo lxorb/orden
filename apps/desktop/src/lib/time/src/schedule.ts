@@ -40,6 +40,15 @@ function cleared(spans: readonly Span[], start: number, end: number, now: number
   }
   return out
 }
+export function takesTime(spans: readonly Span[], writes: readonly Write[], now: number): boolean {
+  return writes.some((one) => {
+    const id = one.kind === 'remove' ? one.id : one.span.id
+    const was = spans.find((span) => span.id === id && isOwn(span))
+    if (!was || one.kind === 'add') return false
+    if (one.kind === 'remove') return true
+    return untilOf(one.span, now) - one.span.start < untilOf(was, now) - was.start
+  })
+}
 export function placeBlock(
   spans: readonly Span[],
   start: number,

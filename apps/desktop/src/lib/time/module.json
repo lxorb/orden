@@ -17,6 +17,8 @@
     "sync-store",
     "gates",
     "glyphs",
-    "icon-picker"
+    "icon-picker",
+    "shortcuts",
+    "undo-toast"
   ]
 }

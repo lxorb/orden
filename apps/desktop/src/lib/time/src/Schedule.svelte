@@ -8,6 +8,7 @@
   import type { Minute } from './minutes'
   import { moveBlock, placeBlock, removeBlock, resizeBlock, setActivity, unset } from './schedule'
   import { snapFor } from './slots'
+  import { edited } from './edit'
   import { time } from './time.svelte'
 
   const {
@@ -117,24 +118,24 @@
       return
     }
     if (was.id === null) return
-    if (was.kind === 'move') time.schedule(moveBlock(time.spans, was.id, was.a, now))
-    else time.schedule(resizeBlock(time.spans, was.id, was.a, was.b, now))
+    if (was.kind === 'move') edited(moveBlock(time.spans, was.id, was.a, now), 'moved')
+    else edited(resizeBlock(time.spans, was.id, was.a, was.b, now), 'moved')
     onselect(was.id)
   }
   function picked(activity: string) {
     const ask = asking
     if (!ask) return
     if (ask.id !== null) {
-      time.schedule(setActivity(time.spans, ask.id, activity))
+      edited(setActivity(time.spans, ask.id, activity), 'scheduled')
       onselect(ask.id)
       return
     }
     const id = crypto.randomUUID()
-    time.schedule(placeBlock(time.spans, ask.from, ask.to, activity, now, id))
+    edited(placeBlock(time.spans, ask.from, ask.to, activity, now, id), 'scheduled')
     onselect(id)
   }
   function remove(id: string) {
-    time.schedule(removeBlock(time.spans, id))
+    edited(removeBlock(time.spans, id), 'deleted')
     if (selected === id) onselect(null)
   }
   function keyed(event: KeyboardEvent) {
