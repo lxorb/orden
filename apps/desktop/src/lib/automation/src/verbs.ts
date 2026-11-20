@@ -218,7 +218,6 @@ function withPositions(takes: readonly string[], rest: readonly string[]): Said 
   return out
 }
 async function runEval(args: Said): Promise<unknown> {
-  if (__EVEN_PLUGIN__) throw new Error('the plugin does not run code')
   const code = wordsOf(args, 'code')
   if (!code) throw new Error('say what to run')
   const { evaluate } = await import('./eval')

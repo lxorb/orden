@@ -51,7 +51,6 @@ export async function answerTheCrate(name: string, args: Said): Promise<unknown>
     case 'agent.program_free':
       return programFree(args)
     case 'agent.working_folder': {
-      if (__EVEN_PLUGIN__) return null
       const path = said(args, 'path')
       return path ? await workingPath(path) : null
     }

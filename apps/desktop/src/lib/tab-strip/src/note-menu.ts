@@ -14,7 +14,7 @@ export async function noteMenu(paneId: string): Promise<MenuEntry[]> {
   const pick = (ids: readonly string[]) => ids.flatMap((id) => byId.get(id) ?? [])
   return [
     ...pick(['history', 'print']),
-    ...(__EVEN_PLUGIN__ ? [] : [{ label: 'Export', asks: true, run: () => void runCommand('export.picker') }]),
+    { label: 'Export', asks: true, run: () => void runCommand('export.picker') },
     ...GROUPS.flatMap((ids) => [DIVIDER, ...pick(ids)]),
   ]
 }
