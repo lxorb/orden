@@ -71,7 +71,7 @@ test('a page’s select closes cleanly, and the page’s menu after it opens as 
   void unmount(app)
   target.remove()
 })
-test('a page’s list closes on a press in the page, as Orden’s do, and on Escape', async () => {
+test('a page’s list closes on a press in the page, as Orden’s do, but not on the window giving the page back its focus from the press that opened it, and on Escape', async () => {
   Object.assign(pages.of('t'), {
     sent: { pane: { x: 0, y: 40, width: 800, height: 560 }, visible: true, frame: null, cut: null },
   })
@@ -80,7 +80,21 @@ test('a page’s list closes on a press in the page, as Orden’s do, and on Esc
   const app = mount(WebAsks, { target, props: { tab: 't' } })
   const options = [{ index: 0, label: 'Apple', disabled: false, group: null }]
   for (const [id, close] of [
-    [3, () => overlays.away()],
+    [
+      3,
+      () => {
+        dispatchEvent(new Event('blur'))
+        flushSync()
+        expect(asks.selectOf('t')).not.toBeNull()
+        const later = performance.now() + 1000
+        vi.spyOn(performance, 'now').mockReturnValue(later)
+        overlays.away()
+        flushSync()
+        expect(asks.selectOf('t')).not.toBeNull()
+        dispatchEvent(new Event('blur'))
+        vi.restoreAllMocks()
+      },
+    ],
     [
       4,
       () =>
