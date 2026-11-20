@@ -99,6 +99,13 @@ describe('tasks-views contract', () => {
       [{ path: 'Work/Roadmap.md', target: 'Roadmap', heading: null, block: null, page: null }, undefined, '/s/home'],
     ])
   })
+  test('a file name is shown through the one shownName, no view strips a suffix of its own', () => {
+    const src = join(import.meta.dirname, '..', 'src')
+    for (const name of readdirSync(src)) {
+      const text = readFileSync(join(src, name), 'utf8')
+      expect(/\.replace\(\/[^/]*\\\.(md|canvas|base|pages|term|chat|url|webloc)/.test(text), name).toBe(false)
+    }
+  })
   test('a priority takes its tone only from the model, no view keeps its own table of tones', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {
