@@ -4,14 +4,14 @@ import { deviceCan, deviceName, deviceSays, hashPassword, matches, unlocks, prot
 import PasswordSheet from './PasswordSheet.svelte'
 import type { Way } from '../../../protect/src/api'
 
-function asked(choosing: boolean, title: string): Promise<string | null> {
+function asked(choosing: boolean, title: string, check: (typed: string) => Promise<boolean>): Promise<string | null> {
   return new Promise((resolve) => {
     const sheet = mount(PasswordSheet, {
       target: document.body,
       props: {
         choosing,
         title,
-        check: passwordOpens,
+        check,
         onanswer: (typed: string | null) => {
           resolve(typed)
           setTimeout(() => void unmount(sheet, { outro: true }), 0)
@@ -20,10 +20,11 @@ function asked(choosing: boolean, title: string): Promise<string | null> {
     })
   })
 }
-async function passwordOpens(typed: string): Promise<boolean> {
-  const kept = protection.password
+async function passwordOpens(path: string, typed: string): Promise<boolean> {
+  const kept = protection.passwordFor(path)
   return kept !== null && (await matches(typed, kept))
 }
+const anything = () => Promise.resolve(true)
 const ownerSays = () => busy.run(`Waiting for ${deviceName()}…`, () => deviceSays('Unlock what you protected in Orden'))
 const reasonOf = (error: unknown) => (error instanceof Error ? error.message : String(error))
 const couldNotAsk = (error: unknown) => busy.failed(`${deviceName()} could not be asked: ${reasonOf(error)}`)
@@ -39,7 +40,7 @@ async function ownerOpens(): Promise<boolean | null> {
   }
 }
 export async function unlockAt(path: string, typed: string): Promise<boolean> {
-  if (!(await passwordOpens(typed))) return false
+  if (!(await passwordOpens(path, typed))) return false
   unlocks.unlock(protection.covering(path))
   return true
 }
@@ -56,12 +57,19 @@ async function opened(path: string): Promise<boolean> {
   if (!unlocks.shut(locks)) return true
   const open =
     ((await deviceCan()) && (await ownerOpens()) === true) ||
-    (protection.password !== null && (await asked(false, 'Unlock')) !== null)
+    (protection.passwordFor(path) !== null &&
+      (await asked(false, 'Unlock', (typed) => passwordOpens(path, typed))) !== null)
   if (open) unlocks.unlock(locks)
   return open
 }
-async function wayFor(): Promise<Way | null> {
+const othersLocks = () => busy.failed("This space's locks belong to another account")
+async function wayFor(root: string): Promise<Way | null> {
+  const mayPassword = protection.passwordMayLock(root)
   if (await deviceCan()) {
+    if (!mayPassword) {
+      const said = await ownerOpens()
+      return said ? 'device' : null
+    }
     const picked = await prompt.choose({
       title: 'Protect with',
       detail: 'Protected, not encrypted: this only keeps it from being opened by accident.',
@@ -76,15 +84,19 @@ async function wayFor(): Promise<Way | null> {
       if (said !== null) return said ? 'device' : null
     }
   }
+  if (!mayPassword) {
+    othersLocks()
+    return null
+  }
   if (protection.password) return 'password'
-  const chosen = await asked(true, 'Choose a password')
+  const chosen = await asked(true, 'Choose a password', anything)
   if (chosen === null) return null
   protection.setPassword(await hashPassword(chosen))
   return 'password'
 }
 const cannotProtect = (error: unknown) => busy.failed(`That could not be protected: ${reasonOf(error)}`)
 export async function protect(root: string, path: string): Promise<void> {
-  const way = await wayFor().catch((error: unknown) => {
+  const way = await wayFor(root).catch((error: unknown) => {
     cannotProtect(error)
     return null
   })

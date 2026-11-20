@@ -12,7 +12,7 @@
   let busy = $state(false)
   let field = $state<HTMLInputElement>()
   let device = $state(false)
-  const password = $derived(protection.password !== null)
+  const password = $derived(protection.passwordFor(path) !== null)
   $effect(() => {
     void deviceCan().then((can) => (device = can))
   })
