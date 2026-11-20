@@ -69,6 +69,9 @@ struct Comp {
     layers: [Layer; 3],
     pending: bool,
     dirty: Vec<RECT>,
+    prev: Option<RECT>,
+    full_left: u8,
+    raster: ID3D11RasterizerState,
     first: bool,
     w: i32,
     h: i32,
@@ -251,6 +254,15 @@ unsafe fn make(hwnd: HWND, cfg: &Config) -> Result<Comp> {
     })();
     log::line(format!(r#"{{"ev":"sync","fence":{}}}"#, fence.is_ok()));
     let fence = fence.ok();
+    let raster_desc = D3D11_RASTERIZER_DESC {
+        FillMode: D3D11_FILL_SOLID,
+        CullMode: D3D11_CULL_NONE,
+        DepthClipEnable: true.into(),
+        ScissorEnable: true.into(),
+        ..Default::default()
+    };
+    let mut raster = None;
+    device.CreateRasterizerState(&raster_desc, Some(&mut raster))?;
     let dirty_event = CreateEventW(None, false, false, None)?;
     let reply = CreateEventW(None, false, false, None)?;
     REPLY = reply.0 as usize;
@@ -272,6 +284,9 @@ unsafe fn make(hwnd: HWND, cfg: &Config) -> Result<Comp> {
         layers: Default::default(),
         pending: false,
         dirty: Vec::new(),
+        prev: None,
+        full_left: 2,
+        raster: raster.unwrap(),
         first: true,
         w: cfg.w,
         h: cfg.h,
@@ -308,6 +323,14 @@ pub fn on_present() {
     unsafe {
         let _ = SetEvent(HANDLE(REPLY as *mut c_void));
     }
+}
+
+fn join(a: RECT, b: RECT) -> RECT {
+    RECT { left: a.left.min(b.left), top: a.top.min(b.top), right: a.right.max(b.right), bottom: a.bottom.max(b.bottom) }
+}
+
+fn bound(rects: &[RECT]) -> RECT {
+    rects.iter().copied().reduce(join).unwrap_or_default()
 }
 
 #[derive(Clone, Copy)]
@@ -635,6 +658,16 @@ impl Comp {
             MinDepth: 0.0,
             MaxDepth: 1.0,
         }]));
+        let now = bound(&self.dirty);
+        let scissor = if self.full_left > 0 {
+            self.full_left -= 1;
+            RECT { left: 0, top: 0, right: self.w, bottom: self.h }
+        } else {
+            join(now, self.prev.unwrap_or(now))
+        };
+        self.prev = Some(now);
+        ctx.RSSetState(&self.raster);
+        ctx.RSSetScissorRects(Some(&[scissor]));
         ctx.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         ctx.IASetInputLayout(None);
         ctx.VSSetShader(&self.vs, None);
@@ -660,8 +693,9 @@ impl Comp {
         self.pending = false;
         let t1 = log::qpc();
         log::line(format!(
-            r#"{{"ev":"present","t":{t0},"n":{},"area":{area},"us":{},"hr":"{:08x}"}}"#,
+            r#"{{"ev":"present","t":{t0},"n":{},"area":{area},"drawn":{},"us":{},"hr":"{:08x}"}}"#,
             rects.len(),
+            (scissor.right - scissor.left) as i64 * (scissor.bottom - scissor.top) as i64,
             log::us(t1 - t0),
             hr.0 as u32
         ));

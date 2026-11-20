@@ -425,7 +425,7 @@ class Spike:
         gproc, gout = self.gpu_start(f"{mode}-{name}")
         time.sleep(1.0)
         c0 = self.cpu(proc.pid)
-        watched = {pid for pid, (role, _) in c0.items() if role in ("browser", "gpu")}
+        watched = {pid for pid, (role, _) in c0.items() if role in ("browser", "gpu", "renderer")}
         th0 = {pid: threads(pid) for pid in watched}
         q0 = qpc()
         t0 = time.perf_counter()
@@ -452,7 +452,8 @@ class Spike:
                 was = th0.get(pid, {}).get(tid, (tname, 0.0))[1]
                 rows.append((round((spent - was) / WINDOW * 100.0, 2), tname))
             rows.sort(reverse=True)
-            hot[role] = [f"{n} {v}" for v, n in rows[:8] if v > 0.2]
+            if any(v > 0.2 for v, _ in rows):
+                hot[f"{role}:{pid}"] = [f"{n} {v}" for v, n in rows[:8] if v > 0.2]
         per_process = sorted(
             ((role, round((spent - c0.get(pid, (role, 0.0))[1]) / WINDOW * 100.0, 2)) for pid, (role, spent) in c1.items()),
             key=lambda x: -x[1],
@@ -520,7 +521,7 @@ class Spike:
         print("scenario", json.dumps(result), flush=True)
         return result
 
-    def latency(self, mode: str, flags: list[str], trials: int = 20) -> dict:
+    def latency(self, mode: str, flags: list[str], trials: int = 40) -> dict:
         proc, log = self.launch(mode, "latency.html", flags)
         want = 2 if mode == "composed" else 1
         ev = self.wait_for(log, lambda seen: sum(1 for e in seen if e.get("ev") == "created") >= want, 30)
@@ -607,6 +608,11 @@ def main() -> None:
     a = ap.parse_args()
     out = pathlib.Path(a.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
+    for p in psutil.process_iter(["name"]):
+        if (p.info.get("name") or "").lower() in ("wwahost.exe", "useroobebroker.exe"):
+            print("closing the setup screen, pid", p.pid, flush=True)
+            subprocess.run(["taskkill", "/PID", str(p.pid), "/F"], capture_output=True, check=False)
+            time.sleep(3)
     spike = Spike(a.exe, out)
     global POSTED
     check = input_check()
