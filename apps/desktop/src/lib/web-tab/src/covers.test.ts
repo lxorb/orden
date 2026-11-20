@@ -89,6 +89,20 @@ describe("the notices row's cards", () => {
     expect(noticeRows()).toEqual([notices])
   })
 })
+describe('a layer that keeps itself out while the pointer rests at the window’s edge', () => {
+  test('is cut from a page from that edge, so the pointer resting there is on the app', () => {
+    document.body.innerHTML = `
+      <div class="hole"></div>
+      <aside data-covers="edge"></aside>
+      <div data-covers></div>`
+    const [peek, other] = [...document.querySelectorAll('[data-covers]')]
+    const at = { x: 8, y: 50, width: 240, height: 400 }
+    for (const one of [peek, other]) one!.getBoundingClientRect = () => DOMRect.fromRect(at)
+    const found = layersOver(document.querySelector<HTMLElement>('.hole')!)
+    expect(found.find((one) => one.node === peek)?.box).toEqual({ x: 0, y: 50, width: 248, height: 400 })
+    expect(found.find((one) => one.node === other)?.box).toEqual(at)
+  })
+})
 describe("a swipe's arrow over a page", () => {
   function swipe(stage: 'tracking' | 'went'): HTMLElement {
     document.body.innerHTML = `

@@ -433,7 +433,7 @@
     bind:clientWidth={asideWidth}
     data-region={side === 'right' ? 'right' : undefined}
     data-sidebar
-    data-covers={floating || peek ? '' : undefined}
+    data-covers={peek ? 'edge' : floating ? '' : undefined}
     aria-label={side === 'right' ? 'Right sidebar' : `${workspace.activeSpace?.name ?? 'Space'} panel`}
     class:resizing={size.dragging}
     class:right={side === 'right'}
@@ -802,9 +802,6 @@
       {/await}
     {/if}
   </aside>
-  {#if peek}
-    <div class="reach" data-covers aria-hidden="true"></div>
-  {/if}
 </div>
 
 <style>
@@ -857,12 +854,6 @@
   }
   .column.shut.floating.peek aside {
     transform: none;
-  }
-  .reach {
-    position: absolute;
-    inset-block: var(--card-inset);
-    inset-inline-start: 0;
-    width: var(--card-inset);
   }
   .column.moving,
   .column.shut {
