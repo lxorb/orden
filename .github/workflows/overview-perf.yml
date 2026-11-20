@@ -122,6 +122,13 @@ jobs:
             || { cat out/table.md >>"$GITHUB_STEP_SUMMARY"; exit 1; }
           cat out/table.md >>"$GITHUB_STEP_SUMMARY"
 
+      - name: Tab switches, timed
+        if: ${{ !cancelled() && env.EXE != '' }}
+        run: |
+          [ "$RUNNER_OS" = macOS ] && py="$RUNNER_TEMP/perf/bin/python" || py=python
+          "$py" scripts/tab-switch-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out out/tabs
+          cat out/tabs/table.md >>"$GITHUB_STEP_SUMMARY"
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
