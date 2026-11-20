@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const moved = vi.hoisted(() => [] as string[])
+const answer: { value: boolean | null } = vi.hoisted(() => ({ value: true }))
 vi.mock('../../src/lib/tab-strip/src/to-space', () => ({
   spacesOf: () => [{ id: 'home' }, { id: 'uni' }],
   spacesOfPaths: () => [{ id: 'home' }],
   toSpace: (ids: string[], space: string) => {
-    moved.push(`${ids.join()} to ${space}`)
-    return Promise.resolve()
+    if (answer.value) moved.push(`${ids.join()} to ${space}`)
+    return Promise.resolve(answer.value)
   },
 }))
 vi.mock('../../src/lib/workspace/src/api', () => ({
@@ -130,6 +131,22 @@ describe('a tab held over the switcher', () => {
     expect(moved).toEqual(['t1 to home'])
     expect(list.hidden).toBe(true)
     expect(byId('home')?.classList.contains('is-drop')).toBe(false)
+  })
+  test('a move the reader cancels moves nothing and leaves nothing lit or open', async () => {
+    answer.value = null
+    try {
+      const { list } = switcher()
+      over('switcher')
+      vi.advanceTimersByTime(500)
+      over('home')
+      expect(droppedOnSpace(TAB)).toBe(true)
+      await vi.waitFor(() => expect(list.hidden).toBe(true))
+      expect(moved).toEqual([])
+      expect(document.querySelectorAll('.is-drop')).toHaveLength(0)
+      expect(byId('switcher')?.getAttribute('aria-expanded')).toBe('false')
+    } finally {
+      answer.value = true
+    }
   })
   test('from the button to the list, and between two rows, the list stays; off it, it closes', () => {
     const { list } = switcher()
