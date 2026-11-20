@@ -122,19 +122,20 @@
       : [],
   )
   const stacking = $derived(columns.length > 1 && columns.some((one) => one.id === tab?.id))
-  const KEPT_NOTES = 6
+  const KEPT = 6
   const inEditor = (one: Tab) =>
     one.kind === 'note' && !one.coming && !one.reading && !protection.locked(noteBehind(one))
+  const keepsAlive = (one: Tab) => inEditor(one) || one.kind === 'terminal'
   const parked = new Parked<Tab>((one) => untrack(() => one.paneId === pane.id && workspace.tabs.includes(one)))
   let recent: string[] = []
   let alive = $state<string[]>([])
   $effect.pre(() => {
     const keeping = !stacking
-    const front = keeping && tab && inEditor(tab) ? tab.id : null
-    const notes = keeping ? held.filter(inEditor).map((one) => one.id) : []
+    const front = keeping && tab && keepsAlive(tab) ? tab.id : null
+    const notes = keeping ? held.filter(keepsAlive).map((one) => one.id) : []
     untrack(() => {
       recent = (front ? [front, ...recent.filter((id) => id !== front)] : recent).filter((id) => notes.includes(id))
-      const keep = recent.slice(0, KEPT_NOTES)
+      const keep = recent.slice(0, KEPT)
       const next = [...alive.filter((id) => keep.includes(id)), ...keep.filter((id) => !alive.includes(id))]
       if (next.length !== alive.length || next.some((id, at) => id !== alive[at])) alive = next
     })
@@ -144,13 +145,15 @@
   })
   $effect(() => () => parked.shut())
   const kept = $derived(alive.flatMap((id) => held.find((one) => one.id === id) ?? []))
-  const shownNote = $derived(tab && alive.includes(tab.id) ? tab.id : null)
+  const keptNotes = $derived(kept.filter(inEditor))
+  const keptShells = $derived(kept.filter((one) => one.kind === 'terminal'))
+  const shownKept = $derived(tab && alive.includes(tab.id) ? tab.id : null)
   const keptViews = $state<Record<string, EditorView | undefined>>({})
   const keepsMiddle = $derived(ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)))
   const edged = $derived(keepsMiddle ? '' : undefined)
   const columnViews = $state<Record<string, EditorView | undefined>>({})
   const view = $derived(
-    stacking ? columnViews[pane.activeTabId ?? ''] : shownNote === null ? undefined : keptViews[shownNote],
+    stacking ? columnViews[pane.activeTabId ?? ''] : shownKept === null ? undefined : keptViews[shownKept],
   )
   function takeColumn(id: string) {
     if (id === pane.activeTabId && workspace.panes.focusedId === pane.id) return
@@ -416,7 +419,7 @@
         {/await}
       {/key}
     {:else if tab?.kind === 'terminal'}
-      {@render surface(terminalSurface, tab)}
+
     {:else if tab?.kind === 'explorer'}
       {#if explorerOn()}
         {@render surface(explorerSurface, tab)}
@@ -487,8 +490,8 @@
       {/await}
     {/if}
 
-    {#each kept as one (one.id)}
-      {@const here = one.id === shownNote}
+    {#each keptNotes as one (one.id)}
+      {@const here = one.id === shownKept}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class:editor={here}
@@ -518,6 +521,18 @@
             rooms.moved(current)
           }}
         />
+      </div>
+    {/each}
+
+    {#each keptShells as one (one.id)}
+      {@const here = one.id === shownKept}
+      <div class:shell={here} class:kept={!here} hidden={!here} inert={!here}>
+        {#await terminalSurface() then Terminal}
+          {@const Shell = Terminal as Component<{ tab: Tab; focused: boolean; shown: boolean }>}
+          <Shell tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
+        {:catch}
+          {@render unreachable()}
+        {/await}
       </div>
     {/each}
 
@@ -659,6 +674,13 @@
   }
   .kept {
     display: none;
+  }
+  .shell {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   .stack {
     position: relative;
