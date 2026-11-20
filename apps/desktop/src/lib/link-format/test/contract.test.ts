@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { formatLink, isLinkFormat, LINK_FORMATS, linkWriting, setLinkWriting } from '../src/api'
+import { carving, formatLink, isLinkFormat, LINK_FORMATS, linkWriting, setLinkWriting } from '../src/api'
 
 const SRC = join(import.meta.dirname, '../src')
 test('the module stands on its own reaches no app module but the platform', () => {
@@ -32,4 +32,29 @@ describe('the way a link is written', () => {
     ])
     expect(formatLink({ name: 'Plan', embed: true, fragment: 'Goals' }, 'wikilink')).toBe('![[Plan#Goals]]')
   })
+})
+test('a split or extract points the links that crossed the cut by fragment alone at the note now holding it', async () => {
+  const { extracted, splitAt } = await carving()
+  const text = [
+    '# Plan',
+    '',
+    'See [[#Later]], [[#^blk]], [x](#later), [[#Plan]] and [[#Gone]].',
+    '',
+    '## Later',
+    '',
+    'back to [[#Plan]] and [[#Later]]',
+    '',
+    'kept ^blk',
+    '',
+  ].join('\n')
+  const at = text.indexOf('## Later')
+  expect(splitAt(text, at, 'Untitled', undefined, 'Plan')).toEqual({
+    kept: '# Plan\n\nSee [[Later#Later]], [[Later#^blk]], [x](Later.md#later), [[#Plan]] and [[#Gone]].\n\n[[Later]]\n',
+    taken: '## Later\n\nback to [[Plan#Plan]] and [[#Later]]\n\nkept ^blk\n',
+    name: 'Later',
+  })
+  expect(splitAt(text, at, 'Untitled')?.taken).toBe('## Later\n\nback to [[#Plan]] and [[#Later]]\n\nkept ^blk\n')
+  const cut = extracted(text, at, text.length, 'Untitled', 'Soon', 'Plan')
+  expect(cut?.kept).toContain('See [[Soon#Later]], [[Soon#^blk]], [x](Soon.md#later), [[#Plan]] and [[#Gone]].')
+  expect(cut?.taken).toContain('back to [[Plan#Plan]] and [[#Later]]')
 })
