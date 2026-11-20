@@ -12,6 +12,7 @@ const text = (value: unknown) => (typeof value === 'string' ? value : '')
 const notes = new Map<string, string>()
 const unreadable = new Set<string>()
 let deviceTrash: Entry[] = []
+let landsAt: string | null = null
 function onlyTrashed(): Entry {
   const [entry] = deviceTrash
   if (!entry) throw new Error('nothing is in the device trash')
@@ -65,7 +66,7 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
         if (!entry) throw new Error('nothing to restore')
         deviceTrash = deviceTrash.filter((one) => one !== entry)
         notes.set(entry.from, 'restored')
-        return entry.from
+        return landsAt ?? entry.from
       }
       case 'purge_trash':
         deviceTrash = deviceTrash.filter((one) => one.id !== args?.id)
@@ -162,6 +163,7 @@ beforeEach(() => {
   notes.set('/space/Idea.md', '# Idea')
   unreadable.clear()
   deviceTrash = []
+  landsAt = null
   calls.length = 0
   apiCalls.length = 0
   remote.spaces = []
@@ -232,6 +234,17 @@ describe('signed out', () => {
     expect(calls).toContain('trash_item')
     expect(calls).not.toContain('delete_space')
     expect(onlyTrashed()).toMatchObject({ kind: 'space', from: '/space' })
+  })
+  test('a space put back beside a new one of its name keeps its id, its root told to the workspace', async () => {
+    await workspace.deleteSpace('s')
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted space is not in the list')
+    landsAt = '/space 2'
+    const told = vi.spyOn(workspace, 'spaceCameBack').mockResolvedValue()
+    await trash.restore(only)
+    expect(told).toHaveBeenCalledWith('/space', '/space 2')
+    told.mockRestore()
   })
   test('a protected space is protected again once it is put back', async () => {
     protection.set('/space', '/space', 'password')
