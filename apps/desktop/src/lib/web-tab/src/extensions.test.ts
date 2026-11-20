@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, test, vi } from 'vitest'
 
 const asked: { command: string; args: Record<string, unknown> | undefined }[] = []
@@ -27,8 +28,17 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return refuse ? Promise.reject(new Error('no')) : Promise.resolve(undefined)
   },
 }))
-const { PENDING_SAID, UNKNOWN_ANSWER, UPDATE_EVERY, extensions, pinnedOf, readExtension, updateDue } =
-  await import('./extensions.svelte')
+const {
+  PENDING_SAID,
+  POPUP_UNKNOWN,
+  UNKNOWN_ANSWER,
+  UPDATE_EVERY,
+  extensions,
+  pinnedOf,
+  readExtension,
+  readPopupSaid,
+  updateDue,
+} = await import('./extensions.svelte')
 const { ASK_AGAIN, NOT_ANSWERING } = await import('./answering')
 function row(fields: Record<string, unknown>): Record<string, unknown> {
   return {
@@ -202,6 +212,86 @@ test('a popup closed while its browser was busy is never built, and one closed w
   extensions.close()
   await building
   expect(asked.map((one) => one.command)).toEqual(['extension_popup_open', 'extension_popup_close'])
+})
+describe('what a popup says', () => {
+  const RUST = readFileSync(
+    new URL('../../../../src-tauri/crates/extensions/src/extensions/popup.rs', import.meta.url),
+    'utf8',
+  )
+  const said = RUST.split('enum Said {')[1]?.split('\n}')[0] ?? ''
+  const kinds = [...said.matchAll(/^\s*([A-Z]\w*)\s*(?:\{([^}]*)\})?,?\s*$/gm)].map(([, name = '', fields = '']) => ({
+    kind: name.charAt(0).toLowerCase() + name.slice(1),
+    payload: Object.fromEntries(
+      [...fields.matchAll(/(\w+):\s*(\w+)/g)].map(([, field = '', type = '']) => [
+        field,
+        type === 'String' ? 'Chromium would not open it' : 7,
+      ]),
+    ),
+  }))
+  test('every kind the crate sends is one the app knows', () => {
+    expect(kinds.map((one) => one.kind)).toContain('size')
+    expect(kinds.map((one) => one.kind)).toContain('closed')
+    for (const { kind, payload } of kinds) {
+      const read = readPopupSaid({ kind, ...payload })
+      expect(read.kind, kind).toBe(kind)
+      if (read.kind === 'failed') expect(read.problem).not.toBe(POPUP_UNKNOWN)
+    }
+  })
+  test('a refusal keeps its words, and anything else it cannot read is a refusal that says so', () => {
+    expect(readPopupSaid({ kind: 'failed', problem: 'ERR_BLOCKED_BY_CLIENT' })).toEqual({
+      kind: 'failed',
+      problem: 'ERR_BLOCKED_BY_CLIENT',
+    })
+    for (const one of [
+      null,
+      'closed',
+      { kind: 'failed', problem: '  ' },
+      { kind: 'size', width: 0, height: 20 },
+      { kind: 'size', width: '300' },
+      { kind: 'grown' },
+      {},
+    ]) {
+      expect(readPopupSaid(one), JSON.stringify(one)).toEqual({ kind: 'failed', problem: POPUP_UNKNOWN })
+    }
+  })
+  test('a size keeps the popup open; closing, a refusal or an unknown answer closes it, and only a refusal or an unknown answer leaves words on its button', async () => {
+    await extensions.load()
+    extensions.open('a', 't1', null)
+    const popped = extensions.popped
+    if (!popped) throw new Error('no popup')
+    expect(extensions.heardPopup(popped, { kind: 'size', width: 320, height: 480 })).toEqual({
+      width: 320,
+      height: 480,
+    })
+    expect(extensions.popped).toBe(popped)
+    expect(extensions.heardPopup(popped, { kind: 'closed' })).toBeNull()
+    expect(extensions.popped).toBeNull()
+    expect(extensions.list[0]?.problem).toBeNull()
+    for (const [payload, words] of [
+      [{ kind: 'failed', problem: 'ERR_BLOCKED_BY_CLIENT' }, 'ERR_BLOCKED_BY_CLIENT'],
+      [{ kind: 'grown' }, POPUP_UNKNOWN],
+    ] as const) {
+      await extensions.load()
+      extensions.open('a', 't1', null)
+      const one = extensions.popped
+      if (!one) throw new Error('no popup')
+      asked.length = 0
+      expect(extensions.heardPopup(one, payload)).toBeNull()
+      expect(extensions.popped).toBeNull()
+      expect(extensions.list[0]?.problem).toBe(words)
+      expect(asked.map((each) => each.command)).toEqual(['extension_popup_close', 'extensions_list'])
+    }
+    await extensions.load()
+  })
+  test('an extension waiting for a restart opens no popup', async () => {
+    lists.push(Promise.resolve([row({ id: 'p', pending: true })]))
+    await extensions.load()
+    asked.length = 0
+    extensions.open('p', 't1', null)
+    expect(extensions.popped).toBeNull()
+    expect(asked).toEqual([])
+    await extensions.load()
+  })
 })
 function later<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
   let resolve: (value: T) => void = () => undefined

@@ -29,9 +29,8 @@
     let unlisten: (() => void) | null = null
     void import('@tauri-apps/api/event')
       .then(({ listen }) =>
-        listen<{ kind: string; width?: number; height?: number }>('orden://extension-popup', ({ payload }) => {
-          if (payload.kind === 'closed') extensions.close(popped)
-          else if (payload.width && payload.height) size = { width: payload.width, height: payload.height }
+        listen<unknown>('orden://extension-popup', ({ payload }) => {
+          size = extensions.heardPopup(popped, payload) ?? size
         }),
       )
       .then((stop) => {

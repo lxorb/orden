@@ -70,6 +70,7 @@ function readAsks(said: unknown): { name: string; gaps: Gaps } | null {
 export const PENDING_SAID = 'Starts when Orden next opens'
 export const OFF_SAID = 'Turns off when Orden next opens'
 export const UNKNOWN_ANSWER = 'Orden could not install that extension: it got an answer it does not know'
+export const POPUP_UNKNOWN = 'Orden closed this popup: it got an answer it does not know'
 export function pinnedOf(list: readonly Extension[]): Extension[] {
   return list.filter((one) => one.enabled && one.action && one.pinned && !one.pending)
 }
@@ -82,6 +83,21 @@ export interface Popped {
   id: string
   tab: string
   store: string | null | undefined
+}
+export type PopupSaid =
+  { kind: 'size'; width: number; height: number } | { kind: 'closed' } | { kind: 'failed'; problem: string }
+export function readPopupSaid(said: unknown): PopupSaid {
+  if (!isRecord(said)) return { kind: 'failed', problem: POPUP_UNKNOWN }
+  if (said.kind === 'closed') return { kind: 'closed' }
+  if (said.kind === 'failed') {
+    const problem = typeof said.problem === 'string' && said.problem.trim() ? said.problem : POPUP_UNKNOWN
+    return { kind: 'failed', problem }
+  }
+  const { width, height } = said
+  if (said.kind === 'size' && typeof width === 'number' && typeof height === 'number' && width > 0 && height > 0) {
+    return { kind: 'size', width, height }
+  }
+  return { kind: 'failed', problem: POPUP_UNKNOWN }
 }
 interface PopupRect {
   x: number
@@ -186,10 +202,21 @@ class Extensions {
     return said ? said[1] : null
   }
   open(id: string, tab: string, store: string | null | undefined): void {
+    if (this.list.find((one) => one.id === id)?.pending) return
     this.pop(this.popped?.id === id && this.popped.tab === tab ? null : { id, tab, store })
   }
   close(which?: Popped): void {
     if (!which || this.popped === which) this.pop(null)
+  }
+  heardPopup(popped: Popped, said: unknown): { width: number; height: number } | null {
+    const one = readPopupSaid(said)
+    if (one.kind === 'size') return { width: one.width, height: one.height }
+    this.close(popped)
+    if (one.kind === 'failed') {
+      this.change(popped.id, { problem: one.problem })
+      void this.load()
+    }
+    return null
   }
   private pop(next: Popped | null) {
     if (this.popped) void invoke('extension_popup_close').catch(() => undefined)
