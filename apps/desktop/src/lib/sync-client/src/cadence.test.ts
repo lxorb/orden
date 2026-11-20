@@ -72,6 +72,12 @@ describe('the next pass, with the hub not open (#2280)', () => {
     expect(at(false, false, 8)).toBeGreaterThan(ONLINE_POLL)
     expect(at(true, true, 8)).toBeGreaterThan(ONLINE_POLL)
   })
+  test('after a pass the account did not answer, tries again within seconds even with the hub thought open (#2321)', () => {
+    for (const hubOpen of [true, false]) {
+      expect(nextPassIn({ waiting: false, local: false, hubOpen, hidden: false, online: false, quiet: 0 })).toBe(2_000)
+      expect(nextPassIn({ waiting: false, local: false, hubOpen, hidden: false, online: false, quiet: 8 })).toBe(30_000)
+    }
+  })
   test('with the hub open waits for its poke, and something unsent comes after the nudge', () => {
     expect(nextPassIn({ waiting: false, local: false, hubOpen: true, hidden: false, online: true, quiet: 0 })).toBe(
       FALLBACK,

@@ -69,10 +69,11 @@ export class Hub {
     }
   }
   back(): void {
-    if (!this.retry) return
+    if (!this.leading || !this.token) return
     clearTimeout(this.retry)
     this.retry = undefined
     this.tries = 0
+    if (this.socket) this.lost(this.socket)
     this.connect()
   }
   follow(token: string | null): void {

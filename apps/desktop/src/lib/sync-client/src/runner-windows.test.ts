@@ -201,7 +201,7 @@ describe('the engine’s window', () => {
     other.say('sync-owed', { account: 'b', item: item('words of B') })
     await vi.waitFor(() => expect(one.saved).toHaveBeenCalledTimes(1))
   })
-  test('on a follower, focus and a visible window’s beat reach it', async () => {
+  test('on a follower, focus, coming back online and a visible window’s beat reach it (#2321)', async () => {
     const listeners = new Map<string, () => void>()
     vi.stubGlobal('window', {
       addEventListener: (type: string, listener: () => void) => listeners.set(type, listener),
@@ -224,8 +224,10 @@ describe('the engine’s window', () => {
       const kicks = heardByOther('sync-kick')
       listeners.get('focus')?.()
       expect(kicks).toHaveLength(1)
-      await vi.advanceTimersByTimeAsync(30_000)
+      listeners.get('online')?.()
       expect(kicks).toHaveLength(2)
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(kicks).toHaveLength(3)
     } finally {
       vi.useRealTimers()
     }
