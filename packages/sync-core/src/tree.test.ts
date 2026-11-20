@@ -118,6 +118,24 @@ describe('tree', () => {
     expect(state.entries.has('mine')).toBe(false)
     expect(state.cursor).toBe(cursor)
   })
+  test('a flagged folder onto a live folder of that name is merged, and changes nothing (#2254)', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    const cursor = state.cursor
+    const op: Op = { op: opId(), t: 'mkdir', id: 'g', parent: null, name: 'work', mergeable: true, seen: 0 }
+    expect(applyOp(state, op, PHONE)).toEqual({ op: op.op, merged: 'f' })
+    expect(state.entries.has('g')).toBe(false)
+    expect(state.cursor).toBe(cursor)
+    expect(applyOp(state, op, PHONE)).toEqual({ op: op.op, merged: 'f' })
+    expect(create(state, 'n', 'Plan.md', 'g')).toMatchObject({ ok: true, parent: 'f' })
+  })
+  test('an id folded away and later made for real is its own folder again (#2254)', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    applyOp(state, { op: opId(), t: 'mkdir', id: 'g', parent: null, name: 'Work', mergeable: true, seen: 0 }, PHONE)
+    expect(mkdir(state, 'g', 'Other')).toMatchObject({ ok: true, id: 'g', name: 'Other' })
+    expect(create(state, 'n', 'Plan.md', 'g')).toMatchObject({ ok: true, parent: 'g' })
+  })
   test('an edit beats a delete that had not seen it', () => {
     const state = treeState()
     create(state, 'n', 'Plan.md')
@@ -486,6 +504,14 @@ const device = fc.constantFrom(...DEVICES)
 const opArb: fc.Arbitrary<Op> = fc
   .oneof(
     fc.record({ t: fc.constant('mkdir' as const), id: folder, parent, name, seen }),
+    fc.record({
+      t: fc.constant('mkdir' as const),
+      id: folder,
+      parent,
+      name,
+      seen,
+      mergeable: fc.constant(true as const),
+    }),
     fc.record({
       t: fc.constant('create' as const),
       id: note,

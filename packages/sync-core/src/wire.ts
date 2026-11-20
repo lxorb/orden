@@ -40,6 +40,7 @@ export interface MkdirOp extends OpBase {
   id: string
   parent: string | null
   name: string
+  mergeable?: true
   pos?: string
 }
 export interface CreateOp extends OpBase {
@@ -221,8 +222,10 @@ export function opOf(value: unknown): Op | null {
     case 'mkdir': {
       if (!isParent(value.parent) || !isName(value.name)) return null
       if (value.pos !== undefined && !isPosition(value.pos)) return null
+      if (value.mergeable !== undefined && value.mergeable !== true) return null
       const made: MkdirOp = { op, t: 'mkdir', id, parent: value.parent, name: value.name, seen }
       if (value.pos !== undefined) made.pos = value.pos
+      if (value.mergeable === true) made.mergeable = true
       return made
     }
     case 'create': {
