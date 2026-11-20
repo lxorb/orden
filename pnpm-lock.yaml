@@ -113,9 +113,6 @@ importers:
       '@orden/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@orden/glasses':
-        specifier: workspace:*
-        version: link:../../packages/glasses
       '@orden/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
