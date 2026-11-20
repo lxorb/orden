@@ -4,6 +4,7 @@ import {
   askSheet,
   type Entry,
   type PickedFile,
+  chatsEnding,
   providePort,
   surfaceLoad,
   tabKindLoaded,
@@ -2618,7 +2619,9 @@ class Workspace {
       try {
         for (const { path, isFolder } of going) {
           try {
+            const ended = await chatsEnding([path])
             const kept = await this.bin(path, isFolder, { settled: true })
+            ended()
             if (kept) this.undone.record({ kind: 'delete', path, ...kept })
             await this.fileGone(path, isFolder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
           } catch (error) {
@@ -3022,7 +3025,9 @@ class Workspace {
     if (this.keepsArchived(path) || !(await this.writableAt(path))) return
     await this.undone.batch(async () => {
       this.hideEntry(path)
+      const ended = await chatsEnding([path])
       const kept = await this.bin(path, isFolder, { source })
+      ended()
       if (kept) this.undone.record({ kind: 'delete', path, ...kept })
       await this.fileGone(path, isFolder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
       await this.loadTree()
