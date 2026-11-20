@@ -459,9 +459,11 @@ async function trashItem(path: string, kind: string, alone = false, arrived = fa
     if (!(await tree.trash.take(source, entry, beside))) throw new Error('nothing is there')
     return { ...entry, from: source }
   }
-  await bringBackUnder(source)
-  await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
+  if (kind !== 'space') await bringBackUnder(source)
+  else if (!(await keptAway.bringBackUnder(source))) keptAway.letGoUnder(source)
   const entry = { id, kind, name, from: source, trashedAt: now(), ...flagged(alone, arrived) }
+  if (kind === 'space' && !(await holds(source))) return entry
+  await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
   await changeTrash((entries) => [...entries, entry])
   return entry
 }
