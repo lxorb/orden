@@ -87,7 +87,7 @@ describe('the pane over the crate', () => {
     await Promise.resolve()
     await Promise.resolve()
     expect(pane.grants.map((one) => one.id)).toEqual(['claude-code'])
-    fake.emit({ kind: 'acting', agent: 'claude-code' })
+    fake.emit({ kind: 'acting', agent: 'claude-code', thread: null })
     expect(pane.last.get('claude-code')).toBeGreaterThan(0)
     pane.close()
     fake.pair('Codex', 2)

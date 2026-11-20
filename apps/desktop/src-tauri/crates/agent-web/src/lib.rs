@@ -65,7 +65,7 @@ fn run(app: &AppHandle, caller: &Caller, session: &str, verb: Verb) -> Answer {
                     "the reader pressed the stop: nothing runs until they resume",
                 );
             }
-            let since = stop::generation();
+            let since = stop::since_for(caller);
             match limits::wait_for_room(
                 caller.id(),
                 limits::Counted::Calls,
@@ -92,10 +92,10 @@ fn run(app: &AppHandle, caller: &Caller, session: &str, verb: Verb) -> Answer {
         }
     }
 }
-fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
+fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: stop::Since) -> Answer {
     browser::answer(app, caller, verb, since)
 }
-fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
+fn count_navigation(caller: &Caller, since: stop::Since) -> Result<(), Answer> {
     match limits::wait_for_room(
         caller.id(),
         limits::Counted::Navigations,

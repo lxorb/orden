@@ -38,7 +38,12 @@ impl Place {
         }
     }
 }
-pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
+pub fn answer(
+    app: &AppHandle,
+    caller: &Caller,
+    verb: Verb,
+    since: orden_agents::stop::Since,
+) -> Answer {
     if !caller.holds(Scope::Browser) && !caller.holds(Scope::BrowserReader) {
         return Answer::error(Code::NotGranted, "this agent was not granted the browser");
     }
@@ -180,7 +185,7 @@ fn gate<'a>(
     verb: &str,
     view: &'a View,
     place: &Place,
-    since: u64,
+    since: orden_agents::stop::Since,
 ) -> Result<Page<'a>, Answer> {
     let label = view.label();
     let own = matches!(place, Place::Own(_));
@@ -214,7 +219,7 @@ fn page_on(
     view: &View,
     label: String,
     own: bool,
-    since: u64,
+    since: orden_agents::stop::Since,
     limits: Option<(Grant, Store)>,
     cleared: bool,
 ) -> Page<'_> {
@@ -240,7 +245,12 @@ pub fn peek(app: &AppHandle, tab: &str) -> Result<Picture, String> {
         _ => "the page could not be photographed".into(),
     })
 }
-fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
+fn on_a_tab(
+    app: &AppHandle,
+    caller: &Caller,
+    verb: Verb,
+    since: orden_agents::stop::Since,
+) -> Answer {
     let name = verb.name();
     let Some(tab) = tab_of(&verb) else {
         return Answer::error(Code::BadArguments, format!("{name} needs a tab"));
@@ -258,7 +268,7 @@ pub fn on_tab(
     caller: &Caller,
     tab: &str,
     name: &str,
-    since: u64,
+    since: orden_agents::stop::Since,
     lets_through: bool,
     act: impl FnOnce(&Place, &Page<'_>) -> Answer,
 ) -> Answer {

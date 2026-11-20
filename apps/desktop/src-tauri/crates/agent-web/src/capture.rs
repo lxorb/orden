@@ -47,7 +47,7 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     if crate::tabs::find(caller.id(), tab).is_some() && !caller.holds(Scope::Browser) {
         return Answer::error(Code::NotGranted, "this agent was not granted tabs of its own");
     }
-    let since = orden_agents::stop::generation();
+    let since = orden_agents::stop::since_for(caller);
     crate::browser::on_tab(app, caller, tab, VERB, since, false, |_, page| {
         let url = page.url();
         let captured = match asked.shape {

@@ -1,5 +1,5 @@
 use orden_base::Held as _;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 
@@ -10,11 +10,52 @@ use crate::verbs::{Event, EVENT};
 static GENERATION: AtomicU64 = AtomicU64::new(0);
 static STOPPED: AtomicBool = AtomicBool::new(false);
 static HALTED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
-pub fn generation() -> u64 {
-    GENERATION.load(Ordering::SeqCst)
+static THREADS: Mutex<Option<HashMap<String, Turns>>> = Mutex::new(None);
+static NEXT_THREAD: AtomicU64 = AtomicU64::new(1);
+#[derive(Clone, Copy)]
+struct Turns {
+    id: u64,
+    ended: u64,
 }
-pub fn cancelled(since: u64) -> bool {
-    GENERATION.load(Ordering::SeqCst) != since
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Since {
+    all: u64,
+    thread: Option<(u64, u64)>,
+}
+pub fn generation() -> Since {
+    Since { all: GENERATION.load(Ordering::SeqCst), thread: None }
+}
+fn turns_of<R>(thread: &str, then: impl FnOnce(&mut Turns) -> R) -> R {
+    let mut all = THREADS.held();
+    let turns = all
+        .get_or_insert_with(HashMap::new)
+        .entry(thread.to_owned())
+        .or_insert_with(|| Turns { id: NEXT_THREAD.fetch_add(1, Ordering::SeqCst), ended: 0 });
+    then(turns)
+}
+pub fn since_for(caller: &crate::Caller) -> Since {
+    let thread = caller.thread().map(|thread| turns_of(thread, |turns| (turns.id, turns.ended)));
+    Since { thread, ..generation() }
+}
+pub fn cancelled(since: Since) -> bool {
+    GENERATION.load(Ordering::SeqCst) != since.all
+        || since.thread.is_some_and(|(id, ended)| {
+            THREADS
+                .held()
+                .as_ref()
+                .is_some_and(|all| all.values().any(|turns| turns.id == id && turns.ended != ended))
+        })
+}
+pub fn end_thread(app: &AppHandle, thread: &str) {
+    ended(thread);
+    for approval in crate::approvals::ended_in(thread) {
+        let _ = app.emit(EVENT, Event::Answered { approval });
+    }
+    let _ = app.emit(EVENT, Event::Ended { thread: thread.to_owned() });
+}
+pub fn ended(thread: &str) {
+    turns_of(thread, |turns| turns.ended += 1);
+    crate::process::end_thread(thread);
 }
 pub fn stopped() -> bool {
     STOPPED.load(Ordering::SeqCst)

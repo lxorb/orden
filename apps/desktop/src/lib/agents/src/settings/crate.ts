@@ -27,6 +27,7 @@ const count = (value: unknown, fallback: number): number =>
 export interface Heard {
   kind: AgentEvent['kind']
   agent: string | null
+  thread: string | null
 }
 const KINDS: readonly AgentEvent['kind'][] = [
   'acting',
@@ -37,13 +38,19 @@ const KINDS: readonly AgentEvent['kind'][] = [
   'tab',
   'closed',
   'stopped',
+  'ended',
 ]
-function readHeard(value: unknown): Heard | null {
+export function readHeard(value: unknown): Heard | null {
   if (!isRecord(value)) return null
   const kind = known(KINDS, value.kind)
   if (!kind) return null
   const agent = isRecord(value.approval) ? value.approval.agent : value.agent
-  return { kind, agent: typeof agent === 'string' ? agent : null }
+  const thread = isRecord(value.approval) ? value.approval.thread : value.thread
+  return {
+    kind,
+    agent: typeof agent === 'string' ? agent : null,
+    thread: typeof thread === 'string' ? thread : null,
+  }
 }
 const SCOPES: readonly Scope[] = [
   'context',

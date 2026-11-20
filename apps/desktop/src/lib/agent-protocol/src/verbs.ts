@@ -243,3 +243,4 @@ export type AgentEvent =
   | { kind: 'closed'; agent: string; id: string }
   | { kind: 'stopped'; closed: boolean }
   | { kind: 'connected'; agents: string[] }
+  | { kind: 'ended'; thread: string }

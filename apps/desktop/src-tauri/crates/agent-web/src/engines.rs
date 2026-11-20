@@ -150,7 +150,7 @@ pub struct Page<'a> {
     pub view: &'a View,
     pub label: String,
     pub own: bool,
-    pub since: u64,
+    pub since: orden_agents::stop::Since,
     pub limits: Option<(Grant, Store)>,
     pub credentials: AtomicBool,
     pub worlds: Mutex<HashMap<(Option<String>, String), i64>>,
