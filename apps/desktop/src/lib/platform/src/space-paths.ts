@@ -1,6 +1,7 @@
 import { insideOnly } from './inside'
 import { endingOf } from '@orden/markdown/note-name'
 import { invoke, isNative, joinPath, platform } from './tauri'
+import { MARKDOWN } from './web-paths'
 
 const folding = new Map<string, boolean>()
 const foldsHere = () => ['windows', 'macos', 'ios'].includes(platform())
@@ -147,7 +148,6 @@ export function insideAnyOf(roots: readonly string[], said: string): string | nu
 const cut = (path: string) => Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
 export const folderOf = (path: string) => path.slice(0, Math.max(0, cut(path)))
 export const nameOf = (path: string) => path.slice(cut(path) + 1)
-const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 export const noteName = (relative: string) => nameOf(relative).replace(MARKDOWN, '')
 export const withoutExtension = (relative: string) => relative.replace(MARKDOWN, '')
 export const isHiddenPath = (relative: string) => relative.split('/').some((part) => part.startsWith('.'))
