@@ -203,7 +203,7 @@ export interface Space {
 }
 export type { NoteDoc, Tab, TabKind } from '../../documents/src/api'
 export type { Entry } from '@orden/contracts'
-export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat' | 'database'
+export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'database'
 export interface Naming {
   path: string
   appending: boolean
@@ -214,7 +214,6 @@ const PLACEHOLDER: Record<NewKind, string> = {
   canvas: 'Untitled.canvas',
   pages: 'Untitled.pages',
   web: 'Untitled.url',
-  chat: 'Chat.chat',
   database: 'Untitled',
 }
 export type { Heading } from '../../documents/src/api'
@@ -2825,8 +2824,7 @@ class Workspace {
     else if (naming.making === 'pages') await this.createPages(dir, name)
     else if (naming.making === 'web') await this.createWebsite(dir, name)
     else if (naming.making === 'database') await (await tabKindLoaded('view')).make?.(dir, name)
-    else if (naming.making !== 'chat') await this.createNote(dir, name)
-    else if (!__EVEN_PLUGIN__) await (await tabKindLoaded('chat')).make?.(dir, name)
+    else await this.createNote(dir, name)
   }
   cancelNaming() {
     const naming = this.naming
