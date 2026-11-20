@@ -2,7 +2,16 @@ import { type Event, type Message, matches, parseSearch, type Who } from '@orden
 import { EVENTS_A_MINUTE, LONGEST_SEARCH } from '@orden/chats/limits'
 import { newChatOf, postEventsOf } from '@orden/chats/wire'
 import { Hono } from 'hono'
-import { newId, now, within, NO_SUCH_SPACE, type Env, type Variables, type Whoever } from '../../../sync-server/src/api'
+import {
+  askHub,
+  newId,
+  now,
+  within,
+  NO_SUCH_SPACE,
+  type Env,
+  type Variables,
+  type Whoever,
+} from '../../../sync-server/src/api'
 import {
   MOST_MEMBERS,
   roomForAnItem,
@@ -150,6 +159,44 @@ chats.post('/', async (context) => {
     .bind(chat, space.id, now())
     .run()
   return context.json({ v: 1, chat }, 201)
+})
+chats.delete('/:chat', async (context) => {
+  const env = context.env
+  const who = context.get('who')
+  const chat = context.req.param('chat')
+  const held = await env.DB.prepare('select space_id, last_seq, ended_at from chats where id = ?')
+    .bind(chat)
+    .first<{ space_id: string; last_seq: number; ended_at: number | null }>()
+  if (!held) return context.json({ error: NO_SUCH_CHAT }, 404)
+  const space = await reachedSpace(env, who, held.space_id)
+  if (!space) {
+    const shared = await reachChat(env, who, chat)
+    return shared
+      ? context.json({ error: 'this chat was shared with you, not its space' }, 403)
+      : context.json({ error: NO_SUCH_CHAT }, 404)
+  }
+  if (!allows(space.role, 'write')) return context.json({ error: refusal('write') }, 403)
+  if (held.ended_at !== null) return context.body(null, 204)
+  const at = now()
+  const ended = await env.DB.prepare('update chats set ended_at = ? where id = ? and ended_at is null')
+    .bind(at, chat)
+    .run()
+  if (ended.meta.changes) {
+    const by = who.kind === 'user' ? `user:${who.user.id}` : `guest:${who.guest.id}`
+    const members = await membersOf(env, chat)
+    await Promise.all(
+      members.map((one) =>
+        askHub(env, one.who.slice(one.who.indexOf(':') + 1), 'chat', {
+          'x-orden-chat': chat,
+          'x-orden-seq': String(held.last_seq),
+          'x-orden-at': String(at),
+          'x-orden-by': by,
+          'x-orden-mention': 'no',
+        }),
+      ),
+    )
+  }
+  return context.body(null, 204)
 })
 chats.patch('/:chat', async (context) => {
   const env = context.env

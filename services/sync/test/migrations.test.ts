@@ -385,3 +385,25 @@ describe('0091, the admins of a space', () => {
     database.close()
   })
 })
+describe('0092, a chat its pointer brings back', () => {
+  test('is live again when its pointer leaves Recently deleted, and only then', () => {
+    const database = upTo('0092_chats_come_back.sql')
+    seed(database)
+    database.exec(
+      `insert into notes (id, space_id, path, seq, updated_at, deleted, deleted_at, size, hash)
+       values ('p', 'sp', 'Talk.chat', 1, 1, 1, 5, 10, 'h'), ('q', 'sp', 'Other.chat', 1, 1, 0, null, 10, 'h')`,
+    )
+    database.exec(
+      `insert into chats (id, space_id, file_id, created_at, ended_at)
+       values ('c1', 'sp', 'p', 1, 7), ('c2', 'sp', 'q', 1, 7)`,
+    )
+    database.exec(`update notes set size = 11 where id = 'q'`)
+    database.exec(`update notes set deleted = 0, deleted_at = null where id = 'p'`)
+    const rows = database.prepare('select id, ended_at from chats order by id').all()
+    expect(rows).toEqual([
+      { id: 'c1', ended_at: null },
+      { id: 'c2', ended_at: 7 },
+    ])
+    database.close()
+  })
+})

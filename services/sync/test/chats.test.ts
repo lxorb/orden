@@ -1208,6 +1208,72 @@ describe('chats', () => {
       })
     })
   })
+  describe('deleted by its id', () => {
+    const remove = (token: string, chat: string) => call(env, `/v2/chats/${chat}`, { method: 'DELETE', token })
+    test('leaves the list, whether its pointer arrived or not, and tells the members', async () => {
+      const unlinked = await chatOfOwner()
+      const linked = await chatOfOwner()
+      await chatFile('Thesis.chat', chatText({ v: 1, chat: linked }))
+      const device = connect(running.of(ids.reader).hub, { device: 'device-phone', who: ids.reader })
+      expect((await remove(people.writer, unlinked)).status).toBe(204)
+      expect((await remove(people.owner, linked)).status).toBe(204)
+      for (const token of [people.owner, people.writer, people.reader]) expect(await list(token)).toEqual([])
+      expect(device.take().map((one) => (one as { chat?: string }).chat)).toEqual([unlinked, linked])
+      expect((await call(env, `/v2/chats/${linked}/events`, { token: people.owner })).status).toBe(404)
+    })
+    test('again is still done, and a chat nobody knows is not found', async () => {
+      const chat = await chatOfOwner()
+      expect((await remove(people.owner, chat)).status).toBe(204)
+      expect((await remove(people.owner, chat)).status).toBe(204)
+      expect((await remove(people.owner, 'c_00000000000000000000000000000000')).status).toBe(404)
+      expect((await remove(people.stranger, chat)).status).toBe(404)
+    })
+    test('is for those who may write in its space, and not for one handed the pointer alone', async () => {
+      const chat = await chatOfOwner()
+      const secret = await chatOfOwner()
+      const file = await chatFile('Private.chat', chatText({ v: 1, chat: secret }))
+      await call(env, `/v1/spaces/${spaceId}/share/invite?item=${file}`, {
+        token: people.owner,
+        body: { email: 'stranger@example.com', role: 'write' },
+      })
+      expect((await remove(people.reader, chat)).status).toBe(403)
+      expect((await remove(people.guestReader, chat)).status).toBe(403)
+      expect((await remove(people.stranger, secret)).status).toBe(403)
+      expect((await list(people.owner)).map((one) => one.id).sort()).toEqual([chat, secret].sort())
+      expect((await remove(people.guestWriter, chat)).status).toBe(204)
+    })
+    test('comes back with its pointer put back from Recently deleted', async () => {
+      const chat = await chatOfOwner()
+      const file = await chatFile('Thesis.chat', chatText({ v: 1, chat }))
+      await send(people.owner, chat, postOf('kept'))
+      await call(env, `/v1/notes/${file}`, { method: 'DELETE', token: people.owner })
+      await remove(people.owner, chat)
+      expect(await list(people.owner)).toEqual([])
+      const back = await call(env, `/v1/trash/notes/${file}/restore`, { method: 'POST', token: people.owner })
+      expect(back.status).toBe(200)
+      expect((await list(people.owner)).map((one) => one.id)).toEqual([chat])
+      expect((await events(people.owner, chat)).events).toHaveLength(1)
+    })
+    test('comes back when its pointer is written again', async () => {
+      const chat = await chatOfOwner()
+      await remove(people.owner, chat)
+      await chatFile('Again.chat', chatText({ v: 1, chat }))
+      expect((await list(people.owner)).map((one) => one.id)).toEqual([chat])
+    })
+  })
+  describe('one whose pointer never came', () => {
+    test('ends a week on, and neither a newer one nor one with a pointer does', async () => {
+      const orphan = await chatOfOwner()
+      const linked = await chatOfOwner()
+      await chatFile('Thesis.chat', chatText({ v: 1, chat: linked }))
+      at(6 * 86_400_000)
+      const fresh = await chatOfOwner()
+      await sweepChats(env, T0 + 8 * 86_400_000)
+      const ended = env.db.prepare('select id from chats where ended_at is not null').all() as { id: string }[]
+      expect(ended.map((one) => one.id)).toEqual([orphan])
+      expect((await list(people.owner)).map((one) => one.id).sort()).toEqual([linked, fresh].sort())
+    })
+  })
   describe('its pointer, on sync v1', () => {
     test('a v1 account makes a chat, writes its pointer, posts and lists it', async () => {
       const chat = await chatOfOwner()
