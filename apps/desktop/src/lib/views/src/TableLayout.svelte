@@ -13,6 +13,7 @@
   import type { Kit } from './kit'
   import { distinctKeys } from './list-items'
   import { groupLabel, noteNames, propertyName, summaryName } from './words'
+  import { keepFocus } from './keep-focus'
 
   const { kit }: { kit: Kit } = $props()
   const live = $derived(kit.live)
@@ -236,6 +237,7 @@
     bind:this={body}
     role="rowgroup"
     tabindex="-1"
+    use:keepFocus={() => () => body?.querySelector<HTMLElement>('.cell.on') ?? null}
     onkeydown={keydown}
     style:padding-top="{shown.above}px"
     style:padding-bottom="{shown.below}px"
