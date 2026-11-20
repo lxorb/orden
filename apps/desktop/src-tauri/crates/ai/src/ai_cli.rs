@@ -20,7 +20,7 @@ use serde_json::Value;
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, Webview};
 
-use crate::ai_agent::Builtin;
+use crate::ai_agent::{Builtin, Chat};
 pub use args::Tool;
 use args::{Effort, Mode, Shape};
 use codex_app::Host;
@@ -404,8 +404,18 @@ pub struct Opening {
     without: Vec<String>,
     #[serde(default)]
     only: Option<Vec<String>>,
+    #[serde(default)]
+    space: Option<String>,
 }
 impl Opening {
+    fn chat(&self) -> Option<Chat> {
+        self.mode.map(|mode| Chat {
+            mode,
+            without: self.without.clone(),
+            only: self.only.clone(),
+            space: self.space.clone(),
+        })
+    }
     fn narrowed(mut self) -> Self {
         self.without = args::kept_out(&self.without, self.only.take().as_deref());
         self
@@ -419,6 +429,7 @@ pub async fn ai_cli_open(
     output: Channel<Value>,
 ) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
+        let chat = opening.chat();
         let opening = opening.narrowed();
         let owner = owner(&webview)?;
         let load = webview.state::<Asks>().load_of(&owner);
@@ -433,10 +444,8 @@ pub async fn ai_cli_open(
         let folder = workroom(&app)?;
         let model = opening.model.as_deref().filter(|one| !one.trim().is_empty());
         let model = args::checked_model(model)?;
-        let token = opening
-            .mode
-            .map(|mode| crate::ai_agent::lend(&app, &opening.agent, mode))
-            .transpose()?;
+        let token =
+            chat.map(|chat| crate::ai_agent::lend(&app, &opening.agent, chat)).transpose()?;
         let home = home_for(&app, tool, opening.account.as_deref())?;
         let claude = match tool {
             Tool::ClaudeCode => Some(claude_command(
