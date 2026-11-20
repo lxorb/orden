@@ -614,6 +614,55 @@ describe('a binary file the app rewrites in a space (#2301)', () => {
     expect(new TextDecoder().decode(kept.get('h-%PDF second'))).toBe('%PDF second')
   })
 })
+describe('words written to a note on this disk that the engine has not read yet (#2351)', () => {
+  async function pair() {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const desk = await freshDevice(account, 'desk')
+    const web = await freshDevice(account, 'web')
+    for (const one of [desk, web]) {
+      expect(await firstPass(one.engine.core, one.space(), null)).toBe(true)
+      await one.engine.pass('sim')
+    }
+    const at = (one: FreshDevice) => `${one.space().row.root}/Plan.md`
+    const base = SEEDED[0]?.text ?? ''
+    const textOn = async () => {
+      const view = await account.view()
+      return view.texts[view.entries.find((one) => one.name === 'Plan.md')?.id ?? ''] ?? ''
+    }
+    const fromWeb = async () => {
+      await web.disk.write(at(web), `${base}web added something else\n`)
+      await web.engine.foreign(at(web))
+      await web.engine.pass('sim')
+    }
+    return { desk, web, at, base, textOn, fromWeb }
+  }
+  test('are folded in, not written over, when the account’s words come down', async () => {
+    const { desk, at, base, textOn, fromWeb } = await pair()
+    await fromWeb()
+    await desk.disk.write(at(desk), `a line from the desk\n${base}`)
+    await desk.engine.pass('sim')
+    await desk.engine.pass('sim')
+    expect(desk.disk.files.get(at(desk))).toContain('a line from the desk')
+    expect(desk.disk.files.get(at(desk))).toContain('web added something else')
+    expect(await textOn()).toContain('a line from the desk')
+  })
+  test('are folded in, not written over, when a push of this device’s own words meets the account’s', async () => {
+    const { desk, at, base, textOn, fromWeb } = await pair()
+    await desk.disk.write(at(desk), `a line from the desk\n${base}`)
+    await desk.engine.foreign(at(desk))
+    await fromWeb()
+    await desk.disk.write(at(desk), `a later desk line\na line from the desk\n${base}`)
+    await desk.engine.pass('sim')
+    await desk.engine.pass('sim')
+    const here = desk.disk.files.get(at(desk)) ?? ''
+    expect(here).toContain('a later desk line')
+    expect(here).toContain('web added something else')
+    const there = await textOn()
+    expect(there).toContain('a later desk line')
+    expect(there).toContain('a line from the desk')
+    expect(there).toContain('web added something else')
+  })
+})
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })

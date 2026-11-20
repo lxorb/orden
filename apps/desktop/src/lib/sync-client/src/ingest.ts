@@ -38,6 +38,17 @@ export async function readAgain(core: Core, space: SpaceState): Promise<Change[]
   }
   return changes
 }
+export async function foldedLate(core: Core, space: SpaceState): Promise<Change[]> {
+  const changes: Change[] = []
+  for (const id of [...core.unfolded]) {
+    const entry = space.entries.get(id)
+    if (!entry) continue
+    core.unfolded.delete(id)
+    if (core.isHeld(id) || core.pinned.has(id) || space.foreign(id)) continue
+    changes.push(...(await foldIn(core, space, entry)))
+  }
+  return changes
+}
 export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Promise<Change[]> {
   if (!entry.local_path || core.isHeld(entry.id)) return []
   const full = core.world.join(space.row.root, entry.local_path)
@@ -98,6 +109,6 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
   doc.write((live) => turn(doc.shape, live, ours, resolution, MINE))
   doc.flush()
   changes.push(...core.docChanges(doc))
-  changes.push(...(await project(core, space, entry, doc)))
+  changes.push(...(await project(core, space, entry, doc, true)))
   return changes
 }

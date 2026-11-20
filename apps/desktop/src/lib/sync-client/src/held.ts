@@ -151,7 +151,7 @@ export class HeldList implements HeldNotes {
     }
     changes.push(...core.letGoChanges(id))
     changes.push(...core.docChanges(doc))
-    changes.push(...(await project(core, space, entry, doc)))
+    changes.push(...(await project(core, space, entry, doc, true)))
     let copy: string | undefined
     if (answer === 'both') {
       const path = this.copyPath(space, entry)

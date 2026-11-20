@@ -23,7 +23,7 @@ import * as Y from 'yjs'
 import { Core, type Holding } from './core'
 import type { Doc } from './docs'
 import { MINE } from './docs'
-import { foldIn, readAgain } from './ingest'
+import { foldedLate, foldIn, readAgain } from './ingest'
 import { fileOfUpdates, holdsDocument, judge, shapeOf, turn, unixLines } from './kinds'
 import { dropUnmade, made, unstackedNames } from './create'
 import { type Outboxed, settle, type SpaceState } from './places'
@@ -72,6 +72,7 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   const pushed = await pushDocs(core, space, alive)
   if (pushed === null) return passed
   passed.pushed = pushed
+  if (core.unfolded.size) await core.commit(await foldedLate(core, space))
   passed.finished = true
   return passed
 }
