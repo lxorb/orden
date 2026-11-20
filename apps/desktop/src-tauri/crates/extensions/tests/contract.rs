@@ -23,8 +23,11 @@ fn kept(id: &str, store: Store, enabled: bool) -> Kept {
 fn unpacked(root: &Path, one: &Kept) -> PathBuf {
     let folder = folder_of(root, &one.id, &one.version);
     fs::create_dir_all(&folder).expect("a folder");
-    fs::write(folder.join("manifest.json"), r#"{"name": "Pass", "version": "1.2.3"}"#)
-        .expect("a manifest");
+    fs::write(
+        folder.join("manifest.json"),
+        r#"{"manifest_version": 3, "name": "Pass", "version": "1.2.3"}"#,
+    )
+    .expect("a manifest");
     folder
 }
 fn said(done: Done) -> Value {
@@ -51,6 +54,7 @@ fn every_answer_to_an_install_has_the_shape_the_desktop_reads() {
     assert_eq!(installed["name"], "Pass");
     assert!(installed["pending"].is_boolean());
     assert_eq!(installed.get("problem"), Some(&Value::Null));
+    assert_eq!(installed.get("cannotRun"), Some(&Value::Null));
     assert!(installed["enabled"].is_boolean());
     assert!(installed["pinned"].is_boolean());
     assert!(installed.get("asks").is_none());
@@ -101,4 +105,17 @@ fn what_chromium_was_handed_at_the_start_or_since_is_what_runs() {
     assert!(running(&off_folder));
     stopped(&on_folder);
     assert!(!running(&on_folder));
+}
+#[test]
+fn an_old_format_folder_on_disk_is_not_handed_to_chromium_and_says_why() {
+    let root = tempfile::tempdir().expect("a folder");
+    let root = root.path();
+    let old = kept(&"m".repeat(32), Store::Edge, true);
+    let folder = unpacked(root, &old);
+    fs::write(folder.join("manifest.json"), r#"{"manifest_version": 2, "name": "uBlock Origin"}"#)
+        .expect("an old manifest");
+    write(root, std::slice::from_ref(&old)).expect("written");
+    assert!(loaded_folders(root).is_empty());
+    let row = serde_json::to_value(shown(old, &folder)).expect("a row");
+    assert_eq!(row["cannotRun"], "It uses an old format this browser no longer runs");
 }

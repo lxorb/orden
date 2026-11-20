@@ -90,6 +90,9 @@ fn unpack_with(
     let made = (|| {
         unzip::unzip(zip, &making)?;
         finish(&making)?;
+        if let Some(why) = manifest::fault(&making) {
+            return Err(why);
+        }
         let about = manifest::read(&making)?;
         if !plain_version(&about.version) {
             return Err("that extension's version is not one".to_string());
@@ -153,7 +156,7 @@ pub fn loaded_folders(root: &Path) -> Vec<PathBuf> {
         .filter(|one| one.enabled)
         .map(|one| folder_of(root, &one.id, &one.version))
         .filter(|folder| {
-            folder.join("manifest.json").is_file() && !folder.to_string_lossy().contains(',')
+            manifest::fault(folder).is_none() && !folder.to_string_lossy().contains(',')
         })
         .collect();
     for folder in &folders {
@@ -294,5 +297,21 @@ mod amo_tests {
         let pin = Kept { id: "a".repeat(32), ..kept.clone() };
         write(root, &[kept, pin]).expect("written");
         assert_eq!(loaded_folders(root), vec![folder]);
+    }
+    #[test]
+    fn a_store_file_in_an_old_format_is_refused_and_nothing_is_kept() {
+        let root = tempfile::tempdir().expect("a folder");
+        let root = root.path();
+        let archive = zip(&[(
+            "manifest.json",
+            br#"{"manifest_version": 2, "name": "uBlock Origin", "version": "1.60.0"}"#,
+        )]);
+        let (bytes, id) = crx::tests::crx(&archive);
+        let checked = crx::checked(&bytes, &id, None).expect("checked");
+        assert_eq!(
+            unpack_checked(root, &checked),
+            Err("It uses an old format this browser no longer runs".to_owned())
+        );
+        assert!(std::fs::read_dir(root.join(&id)).expect("its home").next().is_none());
     }
 }
