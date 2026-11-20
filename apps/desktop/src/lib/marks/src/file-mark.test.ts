@@ -17,7 +17,6 @@ describe('the mark a file wears', () => {
     expect(fileMark('Bugs.base')).toBe('base')
     expect(fileMark('shot.png')).toBe('picture')
     expect(fileMark('Build.term')).toBe('terminal')
-    expect(fileMark('GIMP.application')).toBe('application')
   })
   test('every extension a picture is written in', () => {
     for (const name of ['a.png', 'a.apng', 'a.jpg', 'a.jpeg', 'a.gif', 'a.webp', 'a.avif', 'a.bmp', 'a.ico', 'a.svg']) {
@@ -81,7 +80,6 @@ describe('the marks a row wears', () => {
     'remote',
     'base',
     'chat',
-    'application',
     'key',
     'time',
     'settings',
@@ -100,7 +98,7 @@ describe('the marks a row wears', () => {
     const library = Object.values(lucide)
       .filter(Array.isArray)
       .map((one) => JSON.stringify(one))
-    const resized = ['canvas', 'application', 'pdf', 'key']
+    const resized = ['canvas', 'pdf', 'key']
     for (const name of MARK_NAMES.filter((one) => !resized.includes(one))) {
       expect(library, name).toContain(JSON.stringify(MARKS[name]))
     }
@@ -121,12 +119,6 @@ describe('the marks a row wears', () => {
       expect(card?.[1]).toMatchObject({ x: String(at), y: String(at), width: '9', height: '9' })
       expect(card?.[1].rx).toBe('2.25')
     }
-  })
-  test("the application's window is Lucide's panel-top on the grid the rest of the set fills", () => {
-    const [frame, bar] = MARKS.application
-    expect(MARKS.application.map(([tag]) => tag)).toEqual(['rect', 'path'])
-    expect(frame?.[1]).toMatchObject({ x: '3', y: '2', width: '18', height: '20', rx: '2' })
-    expect(bar?.[1].d).toBe('M3 9h18')
   })
   test('a PDF is Lucide s page with "PDF" written under it', () => {
     const [outline, corner, ...letters] = MARKS.pdf
