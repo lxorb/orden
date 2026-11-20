@@ -54,8 +54,9 @@ function space(notes: Record<string, string>, openAt?: string) {
       if (back) buried.push(back)
     },
     reload: (path: string) => void told.push(`reloaded ${path}`),
-    retarget: (from: string, to: string) => {
+    retarget: (from: string, to: string, how: Retargeting = {}) => {
       told.push(`retargeted ${from} -> ${to}`)
+      if (how.part !== undefined) partsMoved(from, to, how)
       return Promise.resolve(1)
     },
     open: async (path: string) => void told.push(`opened ${path}`),
@@ -70,6 +71,22 @@ function space(notes: Record<string, string>, openAt?: string) {
     },
   }
   return ws as unknown as Composes
+}
+type Retargeting = import('../../link-index/src/api').Retargeting
+const nameOf = (path: string) => path.slice(path.lastIndexOf('/') + 1, -'.md'.length)
+function partsMoved(from: string, to: string, how: Retargeting) {
+  const part = how.part ?? ''
+  for (const [path, text] of [...disk]) {
+    if (path === from || path === to) continue
+    const after = text.replace(/\[\[([^\]#|]+)#([^\]|]+)\]\]/g, (link, note: string, fragment: string) => {
+      const inPart = fragment.startsWith('^') ? part.includes(` ${fragment}`) : part.includes(`# ${fragment}\n`)
+      return note === nameOf(from) && inPart ? `[[${nameOf(to)}#${fragment}]]` : link
+    })
+    if (after === text) continue
+    disk.set(path, after)
+    how.touched?.push(path)
+    how.wrote?.push({ path, before: text, after })
+  }
 }
 beforeEach(() => {
   sent.length = 0
@@ -232,6 +249,20 @@ describe('a note split at the caret', () => {
     expect(disk.get(NOTE)).toContain('[[Later 2]]')
     expect(disk.get(NOTE)).not.toContain('[[Later]]')
   })
+  test('moves the links to a heading or block it carried along, leaves the rest, and keeps them to undo', async () => {
+    const BETA = `${SPACE}/Beta.md`
+    const ALPHA = `${SPACE}/Alpha.md`
+    const beta = '# Beta\n\nintro\n\n## Later\n\npara ^blk\n'
+    const alpha = '[[Beta#Later]] and [[Beta#^blk]] and [[Beta#Beta]]\n'
+    const ws = space({ [BETA]: beta, [ALPHA]: alpha }, BETA)
+    await splitAtCaret(ws, beta.indexOf('## Later'))
+    expect(disk.get(ALPHA)).toBe('[[Later#Later]] and [[Later#^blk]] and [[Beta#Beta]]\n')
+    expect(ws.undone.stack[0]).toMatchObject({
+      kind: 'split',
+      relinked: [ALPHA],
+      relinks: [{ path: ALPHA, before: alpha, after: disk.get(ALPHA) }],
+    })
+  })
   test('and nothing happens where there is nothing after the caret', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.length)
@@ -262,6 +293,15 @@ describe('a selection made into a note of its own', () => {
     await extractSelection(ws, from, from + 'Later'.length)
     expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
     expect(disk.get(NOTE)).toContain('[[Later 2|Later]]')
+  })
+  test('and the links to what it took follow it there', async () => {
+    const BETA = `${SPACE}/Beta.md`
+    const ALPHA = `${SPACE}/Alpha.md`
+    const beta = '# Beta\n\nintro\n\n## Later\n\npara ^blk\n'
+    const ws = space({ [BETA]: beta, [ALPHA]: '[[Beta#Later]] and [[Beta#Beta]]\n' }, BETA)
+    await extractSelection(ws, beta.indexOf('## Later'), beta.length)
+    expect(disk.get(ALPHA)).toBe('[[Later#Later]] and [[Beta#Beta]]\n')
+    expect(ws.undone.stack[0]).toMatchObject({ kind: 'extract', relinked: [ALPHA] })
   })
   test('and nothing happens where nothing is selected', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)

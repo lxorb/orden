@@ -40,11 +40,14 @@ export function rewritten(action: FileAction, from: string, to: string) {
       action.from = at(action.from)
       action.into = at(action.into)
       if (action.relinked) action.relinked = action.relinked.map(at)
+      if (action.relinks) action.relinks = action.relinks.map((one) => ({ ...one, path: at(one.path) }))
       break
     case 'split':
     case 'extract':
       action.from = at(action.from)
       action.created = at(action.created)
+      if (action.relinked) action.relinked = action.relinked.map(at)
+      if (action.relinks) action.relinks = action.relinks.map((one) => ({ ...one, path: at(one.path) }))
       break
     case 'replace':
       for (const note of action.notes) note.path = at(note.path)
