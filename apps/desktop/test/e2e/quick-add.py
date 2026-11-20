@@ -52,8 +52,8 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Enter")
     wait_for(page, f"document.querySelector('{FIELD}')?.value === ''", "the field empty again")
     typed(page, "Water the plants #fa")
-    wait_for(page, "document.querySelector('.sheet .quick .suggest [role=option]')", "a label offered")
-    offered = page.locator(".sheet .quick .suggest [role=option]").all_inner_texts()
+    wait_for(page, "document.querySelector('.sheet .quick .offers [role=option]')", "a label offered")
+    offered = page.locator(".sheet .quick .offers [role=option]").all_inner_texts()
     say(f"[labels offered] {offered}")
     if not any("family" in one for one in offered):
         wrong("the label typed before is not offered")
