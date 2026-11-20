@@ -3,7 +3,16 @@ import { protection } from '../../protect/src/api'
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
 import { menu } from '../../ui-kit/src/api'
 import { rows } from '../../rows/src/api'
-import { folderOf, insideSpace, relativeTo, samePath, within, invoke, joinPath } from '../../platform/src/api'
+import {
+  folderOf,
+  insideSpace,
+  relativeTo,
+  samePath,
+  shownName,
+  within,
+  invoke,
+  joinPath,
+} from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { nowHere } from './days'
@@ -80,7 +89,7 @@ export async function pickTemplate(): Promise<void> {
   })
   menu.show(
     at,
-    found.map((one) => ({ label: one.name.replace(/\.md$/i, ''), run: () => void make(one.path) })),
+    found.map((one) => ({ label: shownName(one.name), run: () => void make(one.path) })),
     { title: 'New note from template' },
   )
 }

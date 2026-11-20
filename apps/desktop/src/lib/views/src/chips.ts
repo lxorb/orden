@@ -1,5 +1,5 @@
 import { onClock, type Value } from '@orden/bases'
-import { localNumber } from '../../platform/src/api'
+import { localNumber, shownName } from '../../platform/src/api'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
 import { dayWords } from '@orden/editor/task-days'
 
@@ -24,7 +24,7 @@ export function valueText(value: Value, today: string): string {
     return dayWords(here.iso, today, here.time?.slice(0, 5))
   }
   if (isDurationValue(value)) return minutesText(Math.round(value.ms / 60_000))
-  if (isLinkValue(value)) return value.display ?? (value.target.split('/').pop() ?? value.target).replace(/\.md$/i, '')
+  if (isLinkValue(value)) return value.display ?? shownName(value.target.split('/').pop() ?? value.target)
   if ('kind' in value && 'name' in value && typeof value.name === 'string') return value.name
   if ('kind' in value && 'src' in value && typeof value.src === 'string') return value.src
   return ''

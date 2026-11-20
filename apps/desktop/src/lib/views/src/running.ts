@@ -11,6 +11,8 @@ import {
   spaceHolding,
   invoke,
   joinPath,
+  nameOf,
+  shownName,
 } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { protection } from '../../protect/src/api'
@@ -97,7 +99,7 @@ export async function readHeld(path: string): Promise<void> {
     const base = readBase(await invoke<string>('read_note', { path }))
     if (basesOn() && space && (base.orden.id || readAutomations(base).length)) {
       held.set(path, {
-        name: path.replace(/^.*[\\/]/, '').replace(/\.base$/i, ''),
+        name: shownName(nameOf(path)),
         space: space.name,
         base,
       })

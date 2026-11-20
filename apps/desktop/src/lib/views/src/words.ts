@@ -1,5 +1,5 @@
 import { addDays, groupName, isWhen, placeOfKey, type Value } from '@orden/bases'
-import { localDate } from '../../platform/src/api'
+import { localDate, shownName } from '../../platform/src/api'
 import { dateAt } from './days'
 import { bare } from './columns'
 import { dayWords } from '@orden/editor/task-days'
@@ -63,7 +63,7 @@ export function propertyName(property: string, displayName?: string): string {
 }
 const priorityName = (priority: number): string => `p${priority}`
 export type NoteNames = ReadonlyMap<string, number>
-const nameOf = (path: string) => (path.split('/').pop() ?? path).replace(/\.md$/i, '')
+const nameOf = (path: string) => shownName(path.split('/').pop() ?? path)
 export function noteNames(keys: readonly Value[]): NoteNames {
   const counts = new Map<string, number>()
   for (const key of keys) {

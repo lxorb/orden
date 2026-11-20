@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type Base, writeBase } from '@orden/bases'
   import { DIVIDER, menu, type MenuEntry, ORDER_MARK, segmented, viewport } from '../../ui-kit/src/api'
-  import { relativeTo } from '../../platform/src/api'
+  import { relativeTo, shownName } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'
   import ArrangeBuilder from './ArrangeBuilder.svelte'
   import AutomationsBuilder from './AutomationsBuilder.svelte'
@@ -81,7 +81,7 @@
     return [
       { label: 'Blank', checked: chosen === undefined, run: () => pick(null) },
       ...found.map((one) => ({
-        label: one.name.replace(/\.md$/i, ''),
+        label: shownName(one.name),
         checked: chosen === linkTo(one.path),
         run: () => pick(linkTo(one.path)),
       })),

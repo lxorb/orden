@@ -2,7 +2,7 @@ import { may } from '@orden/chats'
 import { account } from '../../accounts/src/api'
 import { hiddenKinds } from '../../gates/src/api'
 import { prompt } from '../../ui-kit/src/api'
-import { nameOf, samePath, spaceHolding, withoutExtension } from '../../platform/src/api'
+import { nameOf, samePath, shownName, spaceHolding } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { headingAbove, sentWords } from './sent-words'
 import { openChat } from './view/open'
@@ -40,7 +40,7 @@ export async function sendToChat(note: string, quote?: { text: string; heading?:
   }
   if (!path || !chat) return
   openChat(path)
-  chats.offer(chat, sentWords(withoutExtension(nameOf(note)), quote), { note })
+  chats.offer(chat, sentWords(shownName(nameOf(note)), quote), { note })
 }
 export function sendSelection(note: string, text: string, from: number, to: number): Promise<void> {
   return sendToChat(note, { text: text.slice(from, to), heading: headingAbove(text, from) })

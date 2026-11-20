@@ -2,7 +2,7 @@
   import { protection } from '../../../protect/src/api'
   import { FileMark, fileMark } from '../../../marks/src/api'
   import { links } from '../../../link-index/src/api'
-  import { folderOf, insideSpace, nameOf, withoutExtension } from '../../../platform/src/api'
+  import { folderOf, insideSpace, nameOf, shownName } from '../../../platform/src/api'
   import { workspace } from '../../../workspace/src/api'
   import { cardLines } from './note-card'
 
@@ -10,7 +10,7 @@
   const relative = $derived(links.targetOf(from, { kind: 'wikilink', target }))
   const root = $derived(workspace.rootHolding(from))
   const path = $derived(relative && root ? insideSpace(root, relative) : null)
-  const name = $derived(path ? withoutExtension(nameOf(path)) : '')
+  const name = $derived(path ? shownName(nameOf(path)) : '')
   const folder = $derived(relative ? folderOf(relative) : '')
   let lines = $state.raw<string[]>([])
   const follows = (_value: unknown) => undefined
