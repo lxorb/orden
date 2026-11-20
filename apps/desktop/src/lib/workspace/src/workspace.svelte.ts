@@ -1,3 +1,4 @@
+import { untrack } from 'svelte'
 import { noteId } from '../../modes/src/api'
 import {
   askSheet,
@@ -484,6 +485,15 @@ class Workspace {
   positions = new Positions()
   readonly fileOps = new FileOps()
   constructor() {
+    $effect.root(() => {
+      let was: string | null | undefined
+      $effect(() => {
+        const who = account.user?.id ?? null
+        const first = was === undefined
+        was = who
+        if (!first && untrack(() => this.restored)) void untrack(() => this.loadSpaces())
+      })
+    })
     this.fileOps.follow((op) => this.opened.follow(op, (id) => this.close(id)))
     this.fileOps.follow((op) => this.saving.follow(op))
     this.fileOps.follow((op) => this.positions.follow(op))
