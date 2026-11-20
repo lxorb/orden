@@ -11,6 +11,10 @@
     "platform",
     "showcase",
     "undo-toast",
-    "workspace"
+    "workspace",
+    "tasks-model",
+    "ui-kit",
+    "ai-chat",
+    "ai-providers"
   ]
 }

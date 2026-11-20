@@ -17,7 +17,7 @@ class Kept {
     this.held.set(key, value)
   }
 }
-function visitor(search: string, light = false) {
+function visitor(search: string, light = false, more: Record<string, unknown> = {}) {
   const real = new Kept()
   real.setItem('orden:theme-scheme', '"light"')
   const opened: string[] = []
@@ -65,6 +65,7 @@ function visitor(search: string, light = false) {
       return { matches: query === 'all' || (light && query.includes('light')) }
     },
   }
+  Object.assign(into, more)
   into.window = into
   runInNewContext(SCRIPT, into)
   const root = (
@@ -163,6 +164,45 @@ describe('a visit to the demo leaves the visitor’s own data alone', () => {
     expect((into.navigator as { userAgent: string }).userAgent).toContain('iPhone')
   })
 })
+describe('a demo framed in a page', () => {
+  test('never pulls the page to itself, nor takes its keys', () => {
+    const focused: unknown[] = []
+    const scrolled: string[] = []
+    class Element {
+      parentElement: Element | null = null
+      getBoundingClientRect() {
+        return { top: 0, bottom: 10, left: 0, right: 10 }
+      }
+      scrollIntoView() {
+        scrolled.push('page')
+      }
+    }
+    class HTMLElement extends Element {
+      focus(options?: unknown) {
+        focused.push(options)
+      }
+    }
+    let has = false
+    const { into } = visitor('?demo=canvas&loop', false, {
+      top: {},
+      Element,
+      HTMLElement,
+      SVGElement: undefined,
+    })
+    ;(into.document as { hasFocus: () => boolean }).hasFocus = () => has
+    const one = new (into.HTMLElement as typeof HTMLElement)()
+    one.focus()
+    expect(focused).toEqual([])
+    has = true
+    one.focus({ focusVisible: true })
+    expect(focused).toEqual([{ focusVisible: true, preventScroll: true }])
+    one.scrollIntoView()
+    expect(scrolled).toEqual([])
+  })
+  test('and as a phone when the page asks for one', () => {
+    expect(visitor('?demo=chat&loop&phone').root.dataset.demo).toBe('phone')
+  })
+})
 describe('every scene', () => {
   const origin = 'https://orden.so'
   test('is the same frame for the same place, every visit', () => {
@@ -212,7 +252,8 @@ describe('two teammates writing', () => {
   test('type their words in, a letter at a time, each with a caret after the last one', () => {
     const half = writtenAt(PLAN_TEXT, [5, 3])
     expect(half.text).toContain(`${WRITTEN[0].after}\n- ${WRITTEN[0].words.slice(0, 5)}\n`)
-    expect(half.text.slice(half.carets[1] - 3, half.carets[1])).toBe(WRITTEN[1].words.slice(0, 3))
+    const second = half.carets[1] ?? 0
+    expect(half.text.slice(second - 3, second)).toBe(WRITTEN[1].words.slice(0, 3))
     const done = writtenAt(PLAN_TEXT, [WRITTEN[0].words.length, WRITTEN[1].words.length]).text
     for (const one of WRITTEN) expect(done).toContain(one.words)
   })

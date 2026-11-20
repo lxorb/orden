@@ -4,9 +4,10 @@ export const CANVAS = 'Board.canvas'
 export const PLAN = 'Plan.md'
 export const PRESS = 'Press kit.md'
 export const LAUNCH = 'Launch'
-export const PAGE = '/demo/web/kestrel.html'
+export const BASE: string = import.meta.env.BASE_URL
+export const PAGE = `${BASE}demo/web/kestrel.html`
 export const PAGE_TITLE = 'Kestrel One'
-export const ROUTES = '/demo/web/routes.html'
+export const ROUTES = `${BASE}demo/web/routes.html`
 export const PICTURES = ['Design/bike.svg', 'Design/route.svg'] as const
 export const PLAN_TEXT = `# Launch plan
 
@@ -20,7 +21,26 @@ export const WRITTEN = [
   { after: '- Final photos of the Kestrel One', words: 'Book the river loop for the ride test' },
   { after: '- Embargo lifts Thursday 08:00', words: 'Send the kit to three city blogs' },
 ] as const
+export const SPEC = 'Spec sheet.pdf'
+export const RIDE_DATA = 'Ride data.md'
+export const RIDE_TEXT = `# Ride data
+
+Average speed on the river loop:
+
+$$
+v = \\frac{14\\ \\text{km}}{0.8\\ \\text{h}}
+$$
+
+\`\`\`js
+const loop = { km: 14, minutes: 48 }
+\`\`\`
+`
+export const RIDE_WRITTEN = [
+  { after: '{0.8\\ \\text{h}}\n$$', words: 'That is about **17.5 km/h**, faster than the bus.', lead: '\n\n' },
+  { after: 'const loop = { km: 14, minutes: 48 }', words: 'const speed = loop.km / (loop.minutes / 60)', lead: '\n' },
+] as const
 export const NOTES: Readonly<Record<string, string>> = {
+  [RIDE_DATA]: RIDE_TEXT,
   [PLAN]: PLAN_TEXT,
   [PRESS]: `# Press kit
 

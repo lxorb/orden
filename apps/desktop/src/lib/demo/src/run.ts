@@ -10,8 +10,9 @@ import { isDemoCue, originsAt, type DemoCue } from '../../showcase/src/api'
 import { undoToast } from '../../undo-toast/src/api'
 import { tabOverview, toggleTabOverview, type Tab, workspace } from '../../workspace/src/api'
 import { holdDatabases } from './held'
-import { drifted, type Frame, frameAt, type Point, replacement, type Scene, TEAM, writtenAt } from './scenes'
+import { drifted, type Frame, frameAt, type Point, replacement, TEAM, writtenAt } from './scenes'
 import {
+  BASE,
   CANVAS,
   LAUNCH,
   NEIGHBOURS,
@@ -24,6 +25,7 @@ import {
   PRESS,
   ROOT,
   SPACE,
+  SPEC,
 } from './space'
 
 const at = (path: string) => `${ROOT}/${path}`
@@ -44,8 +46,10 @@ export async function seed(): Promise<void> {
     path: at(CANVAS),
     content: writeCanvas({ ...emptyCanvas(), nodes: first.nodes, edges: first.edges }),
   })
+  const spec = await fetch(`${BASE}demo/spec.pdf`)
+  await writeBytes(at(SPEC), new Uint8Array(await spec.arrayBuffer()))
   for (const path of PICTURES) {
-    const drawn = await fetch(`/demo/${path.slice(path.lastIndexOf('/') + 1)}`)
+    const drawn = await fetch(`${BASE}demo/${path.slice(path.lastIndexOf('/') + 1)}`)
     await writeBytes(at(path), new Uint8Array(await drawn.arrayBuffer()))
   }
 }
@@ -58,12 +62,12 @@ const until = async <T>(found: () => T | null | undefined): Promise<T> => {
 }
 const HANDS_EVERY = 90
 const nextFrame = () => new Promise((done) => requestAnimationFrame(done))
-interface Stage {
+export interface Stage {
   canvas: Tab
   plan: Tab
   page: Tab | null
 }
-async function staged(): Promise<Stage> {
+export async function staged(): Promise<Stage> {
   await until(() => workspace.restored && workspace.spaces.some((one) => samePath(one.root, ROOT)))
   for (const { name, notes } of NEIGHBOURS) {
     const other = workspace.spaces.find((one) => samePath(one.root, `/${name}`))
@@ -105,11 +109,10 @@ async function staged(): Promise<Stage> {
   if (page) rooms.heard(page.note.key, 1, people([2]))
   return { canvas, plan, page }
 }
-export async function play(): Promise<void> {
-  const { site } = originsAt(location)
-  const stage = await staged()
+type Cue = Pick<DemoCue, 'scene' | 'at' | 'still'>
+export function driver(stage: Stage): (cue: Cue, now: number) => void {
   const origin = location.origin
-  let cue: DemoCue = { orden: 'demo', scene: 'canvas', at: 0, still: false }
+  let cue: Cue = { scene: 'canvas', at: 0, still: false }
   let began = performance.now()
   let drawn: Frame | null = null
   let shownSince = 0
@@ -233,9 +236,25 @@ export async function play(): Promise<void> {
       into.handsAre(hands(cue.still ? frame.hands : drifted(frame.hands, (now - began) / 1000)))
     }
   }
+  return (next: Cue, now: number) => {
+    if (next.scene !== cue.scene) began = now
+    cue = next
+    draw(now)
+  }
+}
+export async function play(): Promise<void> {
+  const { site } = originsAt(location)
+  const stage = await staged()
+  const asked = new URLSearchParams(location.search)
+  if (asked.has('loop')) {
+    await (await import('./loop')).loop(stage, driver(stage), asked.get('demo') ?? 'canvas', site)
+    return
+  }
+  const draw = driver(stage)
+  let cue: Cue = { scene: 'canvas', at: 0, still: false }
   let ticking = false
   const tick = (now: number) => {
-    draw(now)
+    draw(cue, now)
     ticking = cue.still !== true
     if (ticking) requestAnimationFrame(tick)
   }
@@ -247,13 +266,11 @@ export async function play(): Promise<void> {
   }
   addEventListener('message', (event: MessageEvent<unknown>) => {
     if (event.origin !== site || event.source !== parent || !isDemoCue(event.data)) return
-    const scene: Scene = event.data.scene
-    if (scene !== cue.scene) began = performance.now()
     cue = event.data
-    if (cue.still) draw(performance.now())
+    if (cue.still) draw(cue, performance.now())
     else wake()
   })
-  draw(performance.now())
+  draw(cue, performance.now())
   await nextFrame()
   await nextFrame()
   wake()
