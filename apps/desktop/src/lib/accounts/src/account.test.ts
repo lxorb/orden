@@ -390,65 +390,6 @@ describe('restoring a session', () => {
     expect(localStorage.getItem('orden:session')).toBe('session')
   })
 })
-describe('a host that keeps the token too', () => {
-  function vault(held: { token: string | null }) {
-    return {
-      read: () => Promise.resolve(held.token),
-      write: (token: string) => {
-        held.token = token
-        return Promise.resolve()
-      },
-      clear: () => {
-        held.token = null
-        return Promise.resolve()
-      },
-    }
-  }
-  test('signs back in from the host when the page kept nothing', async () => {
-    account.alsoKeepIn(vault({ token: 'from-the-host' }))
-    await account.restore()
-    expect(account.token).toBe('from-the-host')
-    expect(account.signedIn).toBe(true)
-    expect(localStorage.getItem('orden:session')).toBe('from-the-host')
-  })
-  test('says it is still looking while the stores are being asked', async () => {
-    let answer: (token: string | null) => void = () => undefined
-    account.alsoKeepIn({
-      read: () =>
-        new Promise<string | null>((resolve) => {
-          answer = resolve
-        }),
-      write: () => Promise.resolve(),
-      clear: () => Promise.resolve(),
-    })
-    const restoring = account.restore()
-    await vi.waitFor(() => expect(account.restoring).toBe(true))
-    expect(account.signedIn).toBe(false)
-    answer('from-the-host')
-    await restoring
-    expect(account.restoring).toBe(false)
-    expect(account.signedIn).toBe(true)
-  })
-  test('lets the stores decide between them, rather than the page alone', async () => {
-    localStorage.setItem('orden:session', 'session')
-    account.alsoKeepIn(vault({ token: 'from-the-host' }))
-    await account.restore()
-    expect(account.token).toBe('from-the-host')
-  })
-  test('falls back to the page when there is no vault at all', async () => {
-    localStorage.setItem('orden:session', 'session')
-    await account.restore()
-    expect(account.token).toBe('session')
-  })
-  test('hands a fresh token to the host, and takes it back on the way out', async () => {
-    const held: { token: string | null } = { token: null }
-    account.alsoKeepIn(vault(held))
-    await account.verify('123456')
-    await vi.waitFor(() => expect(held.token).toBe('session'))
-    await account.signOut()
-    await vi.waitFor(() => expect(held.token).toBeNull())
-  })
-})
 describe('a session a share link handed out', () => {
   test('is a guest: signed in, with no account behind it', async () => {
     server.meIsAGuest = true

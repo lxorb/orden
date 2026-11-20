@@ -14,11 +14,6 @@ const locks = (): LockManager | null =>
   typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
 export type Step = 'email' | 'code' | 'second'
 export type Leaving = 'asked' | 'told' | 'kept'
-export interface Vault {
-  read(): Promise<string | null>
-  write(token: string): Promise<void>
-  clear(): Promise<void>
-}
 const TRIES = [400, 1200, 2500]
 const ASK_BEFORE_LEAVING = 3000
 function rejected(error: unknown): boolean {
@@ -61,10 +56,6 @@ class Session {
   readonly accountToken = $derived(this.user ? this.token : null)
   readonly name = $derived(this.user ? called(this.user) : (this.guest?.name ?? null))
   readonly syncable = $derived(this.signedIn && !this.settling)
-  private vault: Vault | null = null
-  alsoKeepIn(vault: Vault) {
-    this.vault = vault
-  }
   private readonly alsoForget = new Set<(kept: boolean) => void>()
   forgetWithSession(clear: (kept: boolean) => void) {
     this.alsoForget.add(clear)
@@ -111,12 +102,11 @@ class Session {
     }
   }
   private async lookForSession() {
-    const saved = (await this.vault?.read()) ?? storedText(STORAGE_KEY)
+    const saved = storedText(STORAGE_KEY)
     if (!saved) {
       this.heardNoAccount()
       return
     }
-    keep(STORAGE_KEY, saved)
     this.token = saved
     this.lookedFor()
     for (const pause of [0, ...TRIES]) {
@@ -231,12 +221,17 @@ class Session {
     const who = await Promise.race([api.me(token).catch(() => null), waited(ASK_BEFORE_LEAVING).then(() => null)])
     return who?.user ? who.user.id : who?.guest ? `guest:${who.guest.id}` : null
   }
+  private async whole(token: string, user: Account): Promise<Account> {
+    if (user.syncVersion !== undefined) return user
+    const who = (await api.me(token).catch(() => null))?.user
+    return who?.id === user.id ? who : user
+  }
   private async settleIn(token: string, user: Account): Promise<void> {
+    user = await this.whole(token, user)
     await this.leaveFor(token, { user })
     this.guest = null
     this.holdSettling(user.id)
     keep(STORAGE_KEY, token)
-    void this.vault?.write(token).catch(() => undefined)
     this.stopResendTimer()
     this.settling = true
     this.token = token
@@ -266,11 +261,11 @@ class Session {
     return true
   }
   async arrive(token: string, who: { user?: Account; guest?: Guest }, heard = false) {
+    if (who.user) who = { ...who, user: await this.whole(token, who.user) }
     await this.leaveFor(token, who)
     this.stopResendTimer()
     if (who.user && !heard) this.holdSettling(who.user.id)
     keep(STORAGE_KEY, token)
-    void this.vault?.write(token).catch(() => undefined)
     if (who.user) this.settling = true
     this.token = token
     this.user = who.user ?? null
@@ -367,7 +362,6 @@ class Session {
     forget(SETTINGS_HEARD)
     if (this.askingHere) forget(UNSETTLED)
     this.letGoOfSettling()
-    void this.vault?.clear().catch(() => undefined)
     this.stopResendTimer()
     this.token = null
     this.user = null
