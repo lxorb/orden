@@ -35,7 +35,6 @@ function sleeping() {
 export const OUT_OF_THE_WAY = 20_000
 const SHOT_KEEPS = 400
 const LOOK_WAITS = 500
-const SHOT_WAITS = 300
 const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
 const BLANK_WAITS = 3000
@@ -656,7 +655,10 @@ class Pages {
   }
   async retake(tabId: string, page: Page, quick = false): Promise<void> {
     if (page.shooting) return page.shooting
-    const taking = this.photograph(page, tabId, quick)
+    const { url, pane, shotAt, shot } = page
+    const asked = invoke<string | null>('web_shot', quick ? { tab: tabId, quick } : { tab: tabId })
+    asked.catch(() => undefined)
+    const taking = still().then((one) => one.photographed(page, asked, url, pane, shotAt, shot !== null))
     page.shooting = taking
     try {
       await taking
@@ -669,28 +671,6 @@ class Pages {
     if (!page || (page.shot && Date.now() - page.shotAt < SHOT_KEEPS)) return
     page.shot = null
     void this.shoot(tabId)
-  }
-  private async photograph(page: Page, tabId: string, quick: boolean): Promise<void> {
-    const { url, pane, shotAt } = page
-    const same = (now: Rect | null) => now?.width === pane?.width && now?.height === pane?.height
-    const asked = invoke<string | null>('web_shot', quick ? { tab: tabId, quick } : { tab: tabId })
-    const standing = page.shot !== null
-    void asked.then(
-      async (said) => {
-        if (said && standing) await (await still()).decoded(said)
-        if (said && page.shotAt === shotAt && page.url === url && same(page.pane)) {
-          page.shot = said
-          page.shotAt = Date.now()
-        }
-      },
-      () => undefined,
-    )
-    try {
-      await Promise.race([asked, new Promise<null>((go) => setTimeout(() => go(null), SHOT_WAITS))])
-    } catch {
-      // A platform with no way to photograph a webview. The hole keeps its own
-      // ground, which is what it held before there was a picture to hold.
-    }
   }
   private wake(page: Page) {
     clearTimeout(page.resting)
