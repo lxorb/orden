@@ -19,6 +19,7 @@ export interface HoldsSpaces {
   fileGone(path: string, kind: 'space', back?: string): Promise<void>
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   close(id: string): void
+  twinOf(id: string): Tab | null
   clearSelection(): void
   loadTree(): Promise<void>
   persist(): void

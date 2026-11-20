@@ -171,6 +171,25 @@ describe('a running shell in the space being deleted, which the sheet says nothi
     expect(workspace.tabs).toEqual([])
   })
 })
+test('a running shell tucked behind a tab of the space being deleted is asked about, and no keeps both', async () => {
+  const workspace = await window([WORK, FOOD], 'work')
+  await fetched()
+  workspace.openWebsite()
+  const page = workspace.tabs[0]
+  if (!page) throw new Error('no tab')
+  const shell = workspace.turn(page.id, { kind: 'terminal', words: '', title: 'Shell' })
+  if (!shell) throw new Error('no twin')
+  workspace.turn(shell.id)
+  ending.answer = false
+  ending.asked = []
+  const { prompt } = await import('../../ui-kit/src/prompt.svelte')
+  vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
+  const { deleteSpace } = await import('../../spaces/src/api')
+  await deleteSpace(workspace.spaces[0] ?? WORK)
+  expect(ending.asked).toEqual([['web', 'terminal']])
+  expect(workspace.spaces.map((one) => one.id)).toEqual(['work', 'food'])
+  expect(workspace.tucked).toContain(shell)
+})
 test('a space that is still there keeps its set through a launch', async () => {
   const before = await window([WORK, FOOD], 'work')
   await fetched()
