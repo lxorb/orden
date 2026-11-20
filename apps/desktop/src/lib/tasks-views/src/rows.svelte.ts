@@ -167,7 +167,61 @@ export class TodoRows {
     }
   }
 }
+function holdFocus(node: HTMLElement) {
+  const gone = (one: Element) => !one.isConnected || one.closest('[inert]') !== null
+  const ids = () =>
+    [...node.querySelectorAll<HTMLElement>('[data-todo]')]
+      .filter((one) => !gone(one))
+      .map((one) => one.dataset.todo ?? '')
+  let held: { id: string; around: string[] } | null = null
+  const hold = (at: Element | null) => {
+    const id = at?.closest<HTMLElement>('[data-todo]')?.dataset.todo
+    held = id ? { id, around: ids() } : null
+  }
+  const came = (event: FocusEvent) => hold(event.target instanceof Element ? event.target : null)
+  const left = (event: FocusEvent) => {
+    if (event.relatedTarget instanceof Node && node.contains(event.relatedTarget)) return
+    const was = event.target
+    queueMicrotask(() => {
+      if (was instanceof Element && !gone(was) && !node.contains(document.activeElement)) held = null
+    })
+  }
+  const changed = () => {
+    const at = document.activeElement
+    if (at && at !== document.body && !gone(at)) {
+      if (node.contains(at)) hold(at)
+      return
+    }
+    if (!held) return
+    const here = ids()
+    const { id, around } = held
+    const from = around.indexOf(id)
+    const next = [id, ...around.slice(from + 1), ...around.slice(0, Math.max(0, from)).reverse()].find((one) =>
+      here.includes(one),
+    )
+    const row = [...node.querySelectorAll<HTMLElement>('[data-todo]')]
+      .find((one) => one.dataset.todo === next && !gone(one))
+      ?.querySelector<HTMLElement>('.body')
+    if (row) {
+      row.focus()
+      return
+    }
+    if (!node.hasAttribute('tabindex')) node.tabIndex = -1
+    node.focus()
+    held = null
+  }
+  const watch = new MutationObserver(changed)
+  watch.observe(node, { childList: true, subtree: true, attributeFilter: ['inert'] })
+  node.addEventListener('focus', came, true)
+  node.addEventListener('blur', left, true)
+  return () => {
+    watch.disconnect()
+    node.removeEventListener('focus', came, true)
+    node.removeEventListener('blur', left, true)
+  }
+}
 export function rowKeys(node: HTMLElement, rows: TodoRows) {
+  const unhold = holdFocus(node)
   const heard = (event: KeyboardEvent) => rows.key(event, node)
   const pressed = (event: MouseEvent) => {
     if (event.target instanceof Element && !event.target.closest('[data-todo], [data-todo-editor]'))
@@ -183,6 +237,7 @@ export function rowKeys(node: HTMLElement, rows: TodoRows) {
   window.addEventListener('keydown', away)
   return {
     destroy: () => {
+      unhold()
       node.removeEventListener('keydown', heard)
       node.removeEventListener('click', pressed)
       window.removeEventListener('keydown', away)
