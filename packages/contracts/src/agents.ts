@@ -65,7 +65,8 @@ export interface AgentGrant {
   readonly programs: readonly string[]
   readonly sites: Readonly<Record<string, string>>
 }
-export type AgentCaller = { agent: null } | { agent: AgentGrant; thread?: string }
+export type AgentCaller =
+  { agent: null } | { agent: AgentGrant; thread?: string; chatMode?: 'approve' | 'auto' | 'full' | 'plan' }
 export type AgentSaid = Record<string, unknown>
 export type AgentAnswer =
   | { ok: true; status: 'ok'; result: unknown; untrusted?: string }
