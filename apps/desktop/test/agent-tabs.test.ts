@@ -941,18 +941,19 @@ describe('the reader terminals', () => {
     })
     expect(online.taken).toBe(0)
   })
-  test('opening an online terminal asks as opening any tab does, and in front only with focus', async () => {
+  test('opening an online terminal asks as opening any tab does, and never in front, focus or not', async () => {
     answer = { status: 'needs_approval', approval: 'a5', summary: 'A new online tab' }
     expect(
       await call('workspace_tabs', { op: 'new', kind: 'online' }, agent(EVERY, { mode: 'confirm' })),
     ).toMatchObject({ status: 'needs_approval' })
     expect(madeOnline).not.toHaveBeenCalled()
     answer = { status: 'ok', result: {} }
-    expect(await call('workspace_tabs', { op: 'new', kind: 'online', background: false })).toMatchObject({
-      code: 'not_granted',
-    })
+    await call('workspace_tabs', { op: 'new', kind: 'online', background: false })
     await call('workspace_tabs', { op: 'new', kind: 'online', background: false }, agent(focusing))
-    expect(madeOnline).toHaveBeenCalledWith(null, true)
+    expect(madeOnline.mock.calls).toEqual([
+      ['n1', false],
+      ['n1', false],
+    ])
   })
   test('an online terminal the account will not make is refused with why', async () => {
     for (const [why, code] of [

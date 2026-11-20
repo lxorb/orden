@@ -8,13 +8,13 @@ const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 const KIT = /from '[./]*agent-verbs\/src\/api'/
 const DOORS: Record<string, RegExp[]> = {
   'agent-verbs/src/front.ts': [
-    /'background' in call\.args && !flag\(call, 'background'\)/,
-    /needScope\(call, 'workspace\.focus'/,
+    /export function asksFront\(_call: Call, _why: string\): boolean \{\s*return false/,
     /agentMarks\.opened/,
   ],
-  'agent-host/src/reader-view.ts': [/asksFront\(call/, /needScope\(call, 'workspace\.focus'/],
-  'terminal/src/agent/verbs.ts': [/asksFront\(call/, /activate: front/],
-  'terminal/src/agent/online.ts': [/asksFront\(call/, /madeOnline\(front \? null : workspace\.activeTabId, front\)/],
+  'agent-verbs/src/view.ts': [/readerActs === acts && moved\(before, viewNow\(\)\)/, /await putBack\(before\)/],
+  'agent-host/src/reader-view.ts': [/readersView\(call/, /openPage\(url, 'behind'\)/, /activate: false, beside: true/],
+  'terminal/src/agent/verbs.ts': [/activate: false/, /openedBy\(call, tab, false\)/],
+  'terminal/src/agent/online.ts': [/madeOnline\(workspace\.activeTabId, false\)/],
 }
 const TAKES = [
   /workspace\.activate\(/,
@@ -47,7 +47,7 @@ describe('an agent at work, in the background', () => {
       for (const take of TAKES) expect(text, `${named(path)}: ${String(take)}`).not.toMatch(take)
     }
   })
-  test('the doors land everything behind unless the front was asked for', () => {
+  test('the doors land everything behind, put back what moved, and leave what would show something to the reader', () => {
     for (const [name, marks] of Object.entries(DOORS)) {
       const door = readFileSync(join(LIB, name), 'utf8')
       for (const mark of marks) expect(door, `${name}: ${String(mark)}`).toMatch(mark)
