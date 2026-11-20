@@ -185,6 +185,14 @@ export const dayTotals = (spans: readonly Span[], day: number, now: number): Day
 export interface RangeTotals extends DayTotals {
   untracked: number
 }
+function notSetIn(spans: readonly Span[], minutes: readonly Minute[], from: number, to: number, now: number): number {
+  let ms = 0
+  for (let day = from; day < to && day <= now; day = daysAfter(day, 1)) {
+    const end = Math.min(daysAfter(day, 1), to)
+    ms += notSet(spans, minutes, day, end, now).reduce((sum, one) => sum + Math.min(one.to, now) - one.from, 0)
+  }
+  return ms
+}
 export function rangeTotals(
   spans: readonly Span[],
   minutes: readonly Minute[],
@@ -196,9 +204,7 @@ export function rangeTotals(
   const held = scheduleTotals(spans, from, to, now)
   const named = held.slices.filter((one) => one.activity !== null)
   const unnamed = held.slices.find((one) => one.activity === null)?.ms ?? 0
-  const loose = untracked
-    ? unnamed + notSet(spans, minutes, from, to, now).reduce((sum, one) => sum + one.to - one.from, 0)
-    : 0
+  const loose = untracked ? unnamed + notSetIn(spans, minutes, from, to, now) : 0
   const slices = loose > 0 ? [...named, { activity: null, ms: loose }] : named
   return { slices, ms: slices.reduce((sum, one) => sum + one.ms, 0), untracked: loose }
 }
