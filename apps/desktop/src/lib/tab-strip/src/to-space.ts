@@ -6,12 +6,13 @@ import { mayCarry, movingOf, type Space, spaceMoving, spacesFor, workspace } fro
 const tabsOf = (ids: readonly string[]) => workspace.tabs.filter((one) => ids.includes(one.id))
 const spacesOfMoving = (moving: Parameters<typeof spacesFor>[0]): Space[] =>
   spacesFor(moving, workspace, canWriteAt, mayCarry).filter((one) => !workspace.archivedSpaces.has(one.root))
-export const spacesOf = (tabs: readonly Tab[]) => spacesOfMoving(tabs.map(movingOf))
+export const spacesOf = (tabs: readonly Tab[]) =>
+  spacesOfMoving(tabs.map((tab) => ({ ...movingOf(tab), at: workspace.spaceOfTab(tab) })))
 export const spacesOfPaths = (paths: readonly string[]) =>
   spacesOfMoving(paths.map((path) => ({ path, home: null, shared: null })))
-export async function toSpace(ids: readonly string[], space: string): Promise<void> {
+export async function toSpace(ids: readonly string[], space: string): Promise<boolean | null> {
   const { moveToSpace } = await spaceMoving()
-  await moveToSpace(ids, space)
+  return await moveToSpace(ids, space)
 }
 export async function whichSpace(spaces: readonly Space[]): Promise<string | null> {
   const { prompt } = await import('../../ui-kit/src/api')
