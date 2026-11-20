@@ -225,6 +225,83 @@ describe('a chat', () => {
     expect(workspace.revealing).not.toBe(TEAM)
   })
 })
+describe('a chat deleted on any path', () => {
+  const ROOT = '/notes/Ends'
+  const TEAM = `${ROOT}/Team.chat`
+  const ROOM = `${ROOT}/Room`
+  const INNER = `${ROOM}/Inner.chat`
+  const STUCK = `${ROOT}/Stuck.chat`
+  const entry = (path: string, children?: Entry[]): Entry => ({
+    name: path.slice(path.lastIndexOf('/') + 1),
+    path,
+    is_dir: children !== undefined,
+    modified: 0,
+    created: 0,
+    children: children ?? [],
+  })
+  function deleting() {
+    const asked: string[][] = []
+    const ended: string[][] = []
+    const tree = () => entry(ROOT, [entry(TEAM), entry(STUCK), entry(ROOM, [entry(INNER)])])
+    const backend = providePort('backend.web', {
+      invoke: <T>(command: string, args?: Record<string, unknown>) => {
+        if (command === 'trash_item') {
+          return args?.path === STUCK
+            ? Promise.reject(new Error('the disk said no'))
+            : Promise.resolve({ id: `t-${String(args?.path)}` } as T)
+        }
+        if (command === 'read_tree') return Promise.resolve(tree() as T)
+        return Promise.resolve(null as T)
+      },
+    })
+    const chats = providePort('chats', {
+      list: () => Promise.resolve([]),
+      chatAt: () => Promise.resolve(null),
+      part: () => Promise.resolve(null),
+      offer: () => Promise.resolve(),
+      openLink: () => Promise.resolve(),
+      mayDelete: () => Promise.resolve(true),
+      ending: (paths) => {
+        asked.push([...paths])
+        return Promise.resolve(() => void ended.push([...paths]))
+      },
+    })
+    workspace.spaces = [{ id: 'ends', name: 'Ends', root: ROOT }]
+    workspace.activeSpaceId = 'ends'
+    workspace.tree = tree()
+    return {
+      asked,
+      ended,
+      done: () => {
+        chats()
+        backend()
+      },
+    }
+  }
+  test('ends the chat of a deleted pointer, and of one in a deleted folder, once each', async () => {
+    const { asked, ended, done } = deleting()
+    try {
+      await workspace.remove(TEAM, false)
+      await workspace.remove(ROOM, true)
+      expect(asked).toEqual([[TEAM], [ROOM]])
+      expect(ended).toEqual([[TEAM], [ROOM]])
+    } finally {
+      done()
+    }
+  })
+  test('ends none whose delete failed, and only those of a batch that went', async () => {
+    const { ended, done } = deleting()
+    try {
+      await expect(workspace.remove(STUCK, false)).rejects.toThrow()
+      expect(ended).toEqual([])
+      workspace.tree = entry(ROOT, [entry(TEAM), entry(STUCK)])
+      await workspace.removeMany([STUCK, TEAM])
+      expect(ended).toEqual([[TEAM]])
+    } finally {
+      done()
+    }
+  })
+})
 describe('another window', () => {
   const MINE = { id: 'mine', name: 'Mine', root: '/notes/Mine' }
   const STAYS = { id: 'stays', name: 'Stays', root: '/notes/Stays' }
