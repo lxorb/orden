@@ -1186,6 +1186,33 @@ describe('a note kept away', () => {
     expect(disk.files.get('/Notes/Plan.md')?.content).toBe('Ship Monday')
     expect(disk.files.get('/Notes/Idea.md')?.content).toBe('idea')
   })
+  test('of a space the account no longer gives back is let go, and the space still goes to Recently deleted with what this device holds', async () => {
+    const asked = away({ yes: true }, ['/Notes/Plan.md', '/Notes/Deep/Idea.md', '/Other/x.md'])
+    await write('/Notes/Idea.md', 'idea')
+    const entry = await trash('/Notes', 'space')
+    expect(asked).toEqual(['/Notes'])
+    expect(keptAway.under('/Notes')).toEqual([])
+    expect(keptAway.at('/Other/x.md')).not.toBeNull()
+    expect(disk.files.has('/Notes/Idea.md')).toBe(false)
+    expect(await webInvoke('path_exists', { path: '/Notes' })).toBe(false)
+    expect((await webInvoke<{ id: string }[]>('list_trash')).map((one) => one.id)).toEqual([entry.id])
+    await restore(entry.id)
+    expect(disk.files.get('/Notes/Idea.md')?.content).toBe('idea')
+  })
+  test('of a space the account gives back goes to Recently deleted with it, to come back whole', async () => {
+    away({ yes: false }, ['/Notes/Plan.md'])
+    await write('/Notes/Idea.md', 'idea')
+    const entry = await trash('/Notes', 'space')
+    await restore(entry.id)
+    expect(disk.files.get('/Notes/Plan.md')?.content).toBe('Ship Monday')
+    expect(disk.files.get('/Notes/Idea.md')?.content).toBe('idea')
+  })
+  test('of a space with nothing on this device lets the space go with nothing put in Recently deleted', async () => {
+    away({ yes: true }, ['/Notes/Plan.md'])
+    await trash('/Notes', 'space')
+    expect(await webInvoke('path_exists', { path: '/Notes' })).toBe(false)
+    expect(await webInvoke('list_trash')).toEqual([])
+  })
   test('is in the link index as the account read it, and by its name before that', async () => {
     await write('/Notes/Idea.md', 'see [[Plan]]')
     keptAway.keep(
