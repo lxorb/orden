@@ -48,23 +48,23 @@ const workspace = vi.hoisted(() => {
   }
   return held
 })
-const told = vi.hoisted(() => ({ sent: [] as unknown[], fails: false }))
-const session = vi.hoisted(() => ({ forgets: [] as (() => void)[] }))
+const server: { settings: Record<string, unknown>; sent: Record<string, unknown>[]; offline: boolean } = {
+  settings: {},
+  sent: [],
+  offline: false,
+}
+vi.stubGlobal('fetch', (_url: string, init: { method?: string; body?: string } = {}) => {
+  if (server.offline) return Promise.reject(new TypeError('offline'))
+  if (init.method === 'PATCH') {
+    const body = JSON.parse(init.body ?? '{}') as Record<string, unknown>
+    server.sent.push(body)
+    server.settings = { ...server.settings, ...body }
+  }
+  return Promise.resolve(new Response(JSON.stringify({ settings: server.settings }), { status: 200 }))
+})
 vi.mock('../../workspace/src/api', () => ({ workspace }))
-vi.mock('../../accounts/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../accounts/src/api')>()),
-  account: {
-    accountToken: 'token',
-    forgetWithSession: (clear: () => void) => session.forgets.push(clear),
-    holdsNoAccount: () => undefined,
-  },
-  api: {
-    saveSettings: (_token: string, patch: unknown) => {
-      if (told.fails) return Promise.reject(new Error('offline'))
-      told.sent.push(patch)
-      return Promise.resolve({ settings: {} })
-    },
-  },
+vi.mock('../../accounts/src/account.svelte', async () => ({
+  account: (await import('../../accounts/test/fakes')).accountDouble('a'),
 }))
 const store = vi.hoisted(() => ({
   remoteIdFor: (root: string) => (root === '/spaces/Local' ? null : `id-${root.slice(8)}`),
@@ -72,6 +72,10 @@ const store = vi.hoisted(() => ({
 vi.mock('../../sync-store/src/api', () => ({ sync: store }))
 serveSyncStore(store)
 const archive = await import('./space-archive')
+const { account } = await import('../../accounts/src/api')
+const double = account as unknown as import('../../accounts/test/fakes').AccountDouble
+const settled = () => vi.waitFor(() => expect(localStorage.getItem('orden:archived-spaces-owed')).toBeNull())
+const last = () => server.sent.at(-1)
 const space = (name: string): Space => ({ id: name, name, root: `/spaces/${name}` })
 function at(place: number): Space {
   const found = workspace.spaces[place]
@@ -84,8 +88,10 @@ beforeEach(() => {
   workspace.spaces = [space('Notes'), space('Work'), space('Old'), space('Local')]
   workspace.activeSpaceId = 'Notes'
   workspace.openedArchived = null
-  told.sent.length = 0
-  told.fails = false
+  server.settings = {}
+  server.sent.length = 0
+  server.offline = false
+  if (double.user?.id !== 'a') double.signInAs('a')
   workspace.leaveArchived.mockClear()
 })
 describe('a space put away', () => {
@@ -118,7 +124,8 @@ describe('the account', () => {
   test('hears the ids of its spaces put away, and nothing of a space only this device has', async () => {
     await archive.archiveSpace(at(2))
     await archive.archiveSpace(at(3))
-    expect(told.sent.at(-1)).toEqual({ archivedSpaces: ['id-Old'] })
+    await settled()
+    expect(server.settings.archivedSpaces).toEqual(['id-Old'])
   })
   test('puts away and brings back what another device did, the open space left first', async () => {
     await archive.receive({ archivedSpaces: ['id-Notes', 'id-Work'] })
@@ -129,27 +136,32 @@ describe('the account', () => {
     expect(workspace.shownSpaces.map((one) => one.name)).toEqual(['Notes', 'Old', 'Local'])
   })
   test('keeps what it holds of spaces this device does not have', async () => {
+    server.settings = { archivedSpaces: ['id-Elsewhere'] }
     await archive.receive({ archivedSpaces: ['id-Elsewhere'] })
     await archive.archiveSpace(at(1))
-    expect(told.sent.at(-1)).toEqual({ archivedSpaces: ['id-Elsewhere', 'id-Work'] })
+    await settled()
+    expect(server.settings.archivedSpaces).toEqual(['id-Elsewhere', 'id-Work'])
   })
   test('is sent this device’s list where it changed offline, rather than undoing it', async () => {
-    told.fails = true
-    await archive.archiveSpace(at(1))
-    told.fails = false
     await archive.receive({ archivedSpaces: [] })
+    server.offline = true
+    await archive.archiveSpace(at(1))
+    server.offline = false
+    await archive.receive({ archivedSpaces: [] })
+    await settled()
     expect(workspace.shownSpaces.map((one) => one.name)).toEqual(['Notes', 'Old', 'Local'])
-    expect(told.sent.at(-1)).toEqual({ archivedSpaces: ['id-Work'] })
+    expect(server.settings.archivedSpaces).toEqual(['id-Work'])
   })
   test('that signed out leaves nothing of its list to the next one on the device', async () => {
     await archive.receive({ archivedSpaces: ['id-Elsewhere'] })
-    told.fails = true
+    server.offline = true
     await archive.archiveSpace(at(1))
-    told.fails = false
-    for (const clear of session.forgets) clear()
+    server.offline = false
+    double.signInAs('b')
     await archive.unarchiveSpace(at(1))
     await archive.archiveSpace(at(2))
-    expect(told.sent.at(-1)).toEqual({ archivedSpaces: ['id-Old'] })
+    await settled()
+    expect(last()).toEqual({ archivedSpaces: ['id-Old'] })
   })
   test('never leaves no space in sight', async () => {
     workspace.spaces = [space('Notes'), space('Work')]
@@ -167,5 +179,33 @@ describe('an archived space opened to look at it', () => {
     workspace.openedArchived = null
     await archive.receive({ archivedSpaces: ['id-Old'] })
     expect(workspace.activeSpaceId).toBe('Notes')
+  })
+})
+const heardOnce = (ids: string[]) =>
+  localStorage.setItem('orden:settings-heard', JSON.stringify({ who: 'a', settings: { archivedSpaces: ids } }))
+describe('a space archived on one device', () => {
+  test('never unarchives a space another device archived meanwhile', async () => {
+    heardOnce([])
+    await archive.receive({ archivedSpaces: [] })
+    server.settings = { archivedSpaces: ['id-Two'] }
+    server.offline = true
+    await archive.archiveSpace(at(2))
+    server.offline = false
+    await archive.listed()
+    await vi.waitFor(() => expect(server.sent.at(-1)?.archivedSpaces).toEqual(['id-Two', 'id-Old']))
+    workspace.spaces = [...workspace.spaces, space('Two')]
+    await archive.receive({ archivedSpaces: server.settings.archivedSpaces as string[] })
+    expect(archive.archivedSpaces().map((one) => one.name)).toEqual(['Old', 'Two'])
+  })
+  test('nor after a reload that heard the other device first, while this one still owed its own', async () => {
+    heardOnce([])
+    await archive.receive({ archivedSpaces: [] })
+    server.settings = { archivedSpaces: ['id-Two'] }
+    server.offline = true
+    await archive.archiveSpace(at(2))
+    server.offline = false
+    heardOnce(['id-Two'])
+    await archive.listed()
+    await vi.waitFor(() => expect(server.sent.at(-1)?.archivedSpaces).toEqual(['id-Two', 'id-Old']))
   })
 })
