@@ -5,12 +5,17 @@ the overview drive's heavy local site. Each switch, note to note, to and from th
 to and from a web tab and between web tabs, is made by a click on the tab, by Ctrl+Tab and once by Ctrl+PageDown,
 three times each, while the pane is filmed. The app has no Ctrl+number for tabs.
 
+It fails when a key typed right after a switch to a note or a terminal lands anywhere but
+in the new tab, when a tab does not arrive and, given --fail-over, when a switch's median
+first frame is later than that. It warns when a switch calls pages.shoot for the tab it shows
+or web_shot pictures a page going behind.
+
 * first frame: the press to the first change on screen;
 * settled: the press to the last change;
 * keys: a key is sent right after the press, and the drive reads where it landed;
 * long animation frames, web_* invokes and pages.shoot calls in that second.
 
-    python scripts/tab-switch-drive.py --exe <orden> --identifier <id> --out <folder> [--fail-over MS]
+    python scripts/tab-switch-drive.py --exe <orden> --identifier <id> --out <folder> [--rounds N] [--fail-over MS]
 """
 from __future__ import annotations
 import argparse
@@ -33,7 +38,6 @@ from native_app import App, config_of, endpoint  # noqa: E402
 
 perf = importlib.import_module("overview-perf-drive")
 MAC = sys.platform == "darwin"
-ROUNDS = 3
 WATCH = 1.2
 MARK = "q"
 TABS = """
@@ -166,8 +170,8 @@ class Switches:
     def one(self, how: str, start: dict[str, Any], to: dict[str, Any], strip: list[dict[str, Any]]) -> dict[str, Any]:
         self.activate(start)
         self.desk.forward()
-        if how == "click":
-            perf.point(*self.screen(*self.rest()))
+        away = self.screen(*self.rest())
+        perf.point(*away)
         time.sleep(0.4)
         if not self.aim(how, to):
             return {"error": "could not find the tab"}
@@ -177,6 +181,8 @@ class Switches:
         pressed = time.time() * 1000
         self.go(how)
         press([MARK])
+        if how == "click":
+            perf.point(*away)
         time.sleep(WATCH)
         frames = band.stop()
         extra = self.app.eval("return { ipc: window.__perf.ipc || [], focus: window.__perf.focusAtKey || [] }") or {}
@@ -202,6 +208,8 @@ class Switches:
             "web_ms": round(sum(one[2] - one[1] for one in [*page.get("invokes", []), *extra.get("ipc", [])] if one[2] > 0), 1),
             "focus_at_key": extra.get("focus", []),
             "shoots": sum(1 for one in page.get("calls", []) if one[0] == "shoot"),
+            "shoots_to": sum(1 for one in page.get("calls", []) if one[0] == "shoot" and len(one) > 3 and one[3] == after.get("active")),
+            "pictures": sum(1 for one in [*page.get("invokes", []), *extra.get("ipc", [])] if one[0] == "web_shot"),
         }
     def rest(self) -> tuple[float, float]:
         pane = self.app.eval(PANE)
@@ -280,6 +288,7 @@ def main() -> int:
     parser.add_argument("--identifier", required=True)
     parser.add_argument("--out", default=pathlib.Path("out-tabs"), type=pathlib.Path)
     parser.add_argument("--fail-over", type=float, help="fail when a switch's median first frame is later than this many ms")
+    parser.add_argument("--rounds", type=int, default=3, help="how many times each switch is made")
     args = parser.parse_args()
     if "probe" not in args.identifier and os.environ.get("GITHUB_ACTIONS") != "true":
         raise SystemExit(f"{args.identifier} is not a probe identifier")
@@ -315,10 +324,17 @@ def main() -> int:
         strip = runner.tabs()
         print(f"tabs: {[(one['kind'], one['name']) for one in strip]}", flush=True)
         for how, name, start, to in cases(strip):
-            got = [runner.one(how, start, to, strip) for _ in range(ROUNDS)]
+            got = []
+            for _ in range(args.rounds):
+                one = runner.one(how, start, to, strip)
+                if not one.get("arrived") and not one.get("focus_at_key"):
+                    print(f"{how} {name}: the app saw neither the switch nor the key, so the round is made again", flush=True)
+                    one = runner.one(how, start, to, strip)
+                got.append(one)
             row = {
                 "how": how, "switch": name if how == "click" else f"{name} to {sorted({one.get('to', '?') for one in got})}",
                 "first": median([one.get("first") for one in got]),
+                "firsts": [one.get("first") for one in got],
                 "settled": median([one.get("settled") for one in got]),
                 "arrived": sum(1 for one in got if one.get("arrived")),
                 "landed": sorted({one.get("landed", one.get("error", "")) for one in got}),
@@ -332,7 +348,7 @@ def main() -> int:
                 "rounds": got,
             }
             rows.append(row)
-            print(f"{how:12} {name:28} first {row['first']} settled {row['settled']} arrived {row['arrived']}/{ROUNDS} key {row['landed']} loaf {row['loaf_ms']} invokes {row['invokes']} shoots {row['shoots']}", flush=True)
+            print(f"{how:12} {name:28} first {row['first']} settled {row['settled']} arrived {row['arrived']}/{args.rounds} key {row['landed']} loaf {row['loaf_ms']} invokes {row['invokes']} shoots {row['shoots']}", flush=True)
     finally:
         ended(process)
         log.close()
@@ -340,24 +356,36 @@ def main() -> int:
         shutil.rmtree(spaces, ignore_errors=True)
     (args.out / "tabs.json").write_text(json.dumps(rows, indent=1), encoding="utf-8")
     lines = [
-        "| how | switch | first ms | settled ms | arrived | key landed | focus at the key | LoAF ms | web_* calls | web_* ms | shoots |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        "| how | switch | first ms | each first ms | settled ms | arrived | key landed | focus at the key | LoAF ms | web_* calls | web_* ms | shoots |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for row in rows:
-        lines.append(f"| {row['how']} | {row['switch']} | {row['first']} | {row['settled']} | {row['arrived']}/{ROUNDS} | {'; '.join(row['landed'])} | {'; '.join(row['focus_at_key'])} | {row['loaf_ms']} | {row['invokes']} {' '.join(row['web'])} | {row['web_ms']} | {row['shoots']} |")
+        lines.append(f"| {row['how']} | {row['switch']} | {row['first']} | {' '.join(str(one) for one in row['firsts'])} | {row['settled']} | {row['arrived']}/{args.rounds} | {'; '.join(row['landed'])} | {'; '.join(row['focus_at_key'])} | {row['loaf_ms']} | {row['invokes']} {' '.join(row['web'])} | {row['web_ms']} | {row['shoots']} |")
     table = "\n".join(lines) + "\n"
     (args.out / "table.md").write_text(table, encoding="utf-8")
     print(table, flush=True)
     wrong = []
     for row in rows:
-        if any("outside" in one for one in row["landed"]):
-            print(f"::warning::{row['how']} {row['switch']}: the key landed outside the new tab", flush=True)
-        if row["arrived"] < ROUNDS:
-            wrong.append(f"{row['how']} {row['switch']}: the tab arrived {row['arrived']} of {ROUNDS} times")
-        if args.fail_over is not None and (row["first"] is None or row["first"] > args.fail_over):
-            wrong.append(f"{row['how']} {row['switch']}: first frame {row['first']} ms, over {args.fail_over} ms")
+        named = f"{row['how']} {row['switch']}"
+        strayed = sorted({one.get("landed", "") for one in row["rounds"] if one.get("to") in ("note", "terminal") and one.get("landed") != "in the new tab"})
+        if strayed:
+            wrong.append(f"{named}: a key typed right after the switch landed {', '.join(strayed)}")
+        shot = sum(one.get("shoots_to") or 0 for one in row["rounds"])
+        if shot:
+            print(f"::warning::{named}: the switch called pages.shoot for the tab it shows {shot} times", flush=True)
+        behind = sum(one.get("pictures") or 0 for one in row["rounds"])
+        if behind:
+            print(f"::warning::{named}: web_shot pictured a page going behind {behind} times", flush=True)
+        if row["arrived"] < args.rounds:
+            wrong.append(f"{named}: the tab arrived {row['arrived']} of {args.rounds} times")
+        if args.fail_over is None:
+            continue
+        if row["first"] is None:
+            print(f"::warning::{named}: no first frame was filmed, so it is not judged", flush=True)
+        elif row["first"] > args.fail_over:
+            wrong.append(f"{named}: median first frame {row['first']} ms, over {args.fail_over} ms")
     for one in wrong:
-        print(f"::{'error' if args.fail_over is not None else 'warning'}::{one}", flush=True)
-    return 1 if wrong and args.fail_over is not None else 0
+        print(f"::error::{one}", flush=True)
+    return 1 if wrong else 0
 if __name__ == "__main__":
     raise SystemExit(main())

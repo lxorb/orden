@@ -15,9 +15,21 @@ on:
         description: Busy the page this many ms on every overview frame and key
         required: false
         default: '0'
+      platforms:
+        description: Only these labels, space separated (windows-arm64 windows-x64 macos-arm64); empty runs all
+        required: false
+        default: ''
+      rounds:
+        description: How many times the tab switch drive makes each switch
+        required: false
+        default: '3'
+      tabs_only:
+        description: Time only the tab switches, not the overview
+        type: boolean
+        default: false
 
 concurrency:
-  group: overview-perf-${{ github.ref }}-${{ inputs.run }}-${{ inputs.limits }}-${{ inputs.burden }}
+  group: overview-perf-${{ github.ref }}-${{ inputs.run }}-${{ inputs.limits }}-${{ inputs.burden }}-${{ inputs.platforms }}-${{ inputs.rounds }}-${{ inputs.tabs_only }}
   cancel-in-progress: true
 
 permissions:
@@ -32,12 +44,15 @@ jobs:
           - platform: windows-11-arm
             target: aarch64-pc-windows-msvc
             label: windows-arm64
+            tab_first_ms: 390
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             label: windows-x64
+            tab_first_ms: 235
           - platform: macos-latest
             target: aarch64-apple-darwin
             label: macos-arm64
+            tab_first_ms: 535
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 150
     permissions:
@@ -50,11 +65,14 @@ jobs:
       RUN: ${{ inputs.run }}
       LIMITS: ${{ inputs.limits }}
       BURDEN: ${{ inputs.burden || '0' }}
+      WANTED: ${{ inputs.platforms == '' || contains(inputs.platforms, matrix.label) }}
+      ROUNDS: ${{ inputs.rounds || '3' }}
+      TAB_FIRST_MS: ${{ matrix.tab_first_ms }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        if: ${{ inputs.run != '' }}
+        if: ${{ env.WANTED == 'true' && inputs.run != '' }}
         with:
           name: orden-${{ matrix.label }}
           path: built
@@ -62,7 +80,7 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: The release build
-        if: ${{ inputs.run != '' }}
+        if: ${{ env.WANTED == 'true' && inputs.run != '' }}
         run: |
           if [ "$RUNNER_OS" = macOS ]; then
             mkdir -p "$RUNNER_TEMP/orden"
@@ -81,12 +99,12 @@ jobs:
           echo "timed: $(basename "$setup") from run $RUN"
 
       - uses: ./.github/actions/desktop-setup
-        if: ${{ inputs.run == '' }}
+        if: ${{ env.WANTED == 'true' && inputs.run == '' }}
         with:
           target: ${{ matrix.target }}
 
       - name: The probe
-        if: ${{ inputs.run == '' }}
+        if: ${{ env.WANTED == 'true' && inputs.run == '' }}
         env:
           IDENTIFIER: so.orden.Orden.probe.perf
         run: |
@@ -106,31 +124,37 @@ jobs:
           fi
           echo "IDENTIFIER=$IDENTIFIER" >>"$GITHUB_ENV"
 
-      - name: The overview, timed
+      - name: The drives' Python
+        if: ${{ env.WANTED == 'true' }}
         run: |
           if [ "$RUNNER_OS" = macOS ]; then
             python3 -m venv "$RUNNER_TEMP/perf"
-            py="$RUNNER_TEMP/perf/bin/python"
-            "$py" -m pip install --quiet pillow mss numpy pyobjc-framework-Quartz
+            "$RUNNER_TEMP/perf/bin/python" -m pip install --quiet pillow mss numpy pyobjc-framework-Quartz
           else
-            py=python
             python -m pip install --quiet pillow mss numpy
           fi
+
+      - name: The overview, timed
+        if: ${{ env.WANTED == 'true' && !inputs.tabs_only }}
+        run: |
+          [ "$RUNNER_OS" = macOS ] && py="$RUNNER_TEMP/perf/bin/python" || py=python
           [ "$LIMITS" = true ] && judge=--limits || judge=--report-only
           "$py" scripts/overview-perf-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out out \
             --first-frame-ms 150 --frame-ms 16 --input-frames 1 --burden "$BURDEN" $judge \
             || { cat out/table.md >>"$GITHUB_STEP_SUMMARY"; exit 1; }
           cat out/table.md >>"$GITHUB_STEP_SUMMARY"
 
-      - name: Tab switches, timed
-        if: ${{ !cancelled() && env.EXE != '' }}
+      - name: Tab switches, timed and guarded
+        if: ${{ !cancelled() && env.WANTED == 'true' && env.EXE != '' }}
         run: |
           [ "$RUNNER_OS" = macOS ] && py="$RUNNER_TEMP/perf/bin/python" || py=python
-          "$py" scripts/tab-switch-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out out/tabs
+          "$py" scripts/tab-switch-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out out/tabs \
+            --rounds "$ROUNDS" --fail-over "$TAB_FIRST_MS" \
+            || { cat out/tabs/table.md >>"$GITHUB_STEP_SUMMARY"; exit 1; }
           cat out/tabs/table.md >>"$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: ${{ always() && env.WANTED == 'true' }}
         with:
           name: overview-perf-${{ matrix.label }}
           path: out
