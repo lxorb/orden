@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       drives:
-        description: The parity drives to run, by name (look, motion, pointer, keys, turn, explorer).
-        default: look motion pointer keys
+        description: The parity drives to run, by name (look, motion, pointer, keys, turn, explorer, ink).
+        default: look motion pointer keys ink
 
 concurrency:
   group: web-parity-${{ github.ref }}
@@ -38,7 +38,7 @@ jobs:
     env:
       IDENTIFIER: so.orden.Orden.probe.parity
       ROLLING: 'true'
-      DRIVES: ${{ inputs.drives || 'look motion pointer keys' }}
+      DRIVES: ${{ inputs.drives || 'look motion pointer keys ink' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
@@ -111,6 +111,11 @@ jobs:
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'keys') && hashFiles('scripts/parity-keys-drive.py') != '' }}
         timeout-minutes: 20
         run: bash scripts/parity-run.sh scripts/parity-keys-drive.py
+
+      - name: Ink
+        if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'ink') && hashFiles('scripts/ink-black-drive.py') != '' }}
+        timeout-minutes: 15
+        run: bash scripts/parity-run.sh scripts/ink-black-drive.py
 
       - name: Turn
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'turn') && hashFiles('scripts/turn-drive.py') != '' }}
