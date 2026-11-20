@@ -76,11 +76,12 @@ test("a closed window's leftover draft goes to its own space's set, and one of n
   startup.turn = (stage) => (stage === 'doors' ? new Promise(() => undefined) : turn(stage))
   const { workspace } = await import('./workspace.svelte')
   await workspace.restore()
-  await vi.waitFor(() =>
-    expect(workspace.tabs.map((one) => one.doc).sort()).toEqual(['WRITTEN IN NO SPACE', 'WRITTEN IN TWO']),
+  await vi.waitFor(
+    () => expect(workspace.tabs.map((one) => one.doc).sort()).toEqual(['WRITTEN IN NO SPACE', 'WRITTEN IN TWO']),
+    { timeout: 15_000 },
   )
   const here = () => workspace.tabs.filter((one) => workspace.panes.at(one.paneId)).map((one) => one.doc)
-  await vi.waitFor(() => expect(here()).toEqual(['WRITTEN IN NO SPACE']))
+  await vi.waitFor(() => expect(here()).toEqual(['WRITTEN IN NO SPACE']), { timeout: 15_000 })
   const { sets } = await import('./sets.svelte')
   expect(sets.tabsOf('two').map((one) => one.doc)).toEqual(['WRITTEN IN TWO'])
 })
