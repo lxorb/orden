@@ -65,6 +65,30 @@ LOOK = """
   }
 }
 """
+INSET = """
+() => {
+  const pane = document.querySelector('[role="region"][aria-label="Settings"] .pane')
+  const card = (title) => [...(pane?.querySelectorAll('h3') ?? [])].find((one) => one.textContent.trim() === title)?.nextElementSibling ?? null
+  const words = (el) => {
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    return range.getBoundingClientRect()
+  }
+  const seen = []
+  for (const [title, picks] of [
+    ['General', [...(card('General')?.querySelectorAll('.what') ?? [])]],
+    ['Members', [card('Members')?.querySelector('.seats'), card('Members')?.querySelector('.row.person .who')]],
+  ]) {
+    const box = card(title)?.getBoundingClientRect()
+    for (const el of picks) {
+      if (!box || !el) continue
+      const at = words(el)
+      seen.push({ title, text: el.textContent.trim(), left: Math.round(at.left - box.left), right: Math.round(box.right - at.right) })
+    }
+  }
+  return seen
+}
+"""
 class Worker(harness.Worker):
     def __init__(self) -> None:
         super().__init__(DRIVE)
@@ -125,7 +149,7 @@ def choices(page: Page, who: str) -> list[str]:
     pick.click()
     listed = page.get_by_role("listbox", name="Role")
     listed.wait_for(state="visible", timeout=5_000)
-    said = [one.strip() for one in listed.get_by_role("option").all_inner_texts()]
+    said = listed.get_by_role("option").evaluate_all("(all) => all.map((one) => one.textContent.trim())")
     page.keyboard.press("Escape")
     listed.wait_for(state="hidden", timeout=5_000)
     return said
@@ -213,6 +237,13 @@ def owner_side(browser: Browser, token: str, space_id: str, sent: list[tuple[str
     phone.evaluate("(root) => window.ordenApp.settings.show('space', root)", root)
     looked(phone, "owner phone", 4)
     phone.wait_for_timeout(400)
+    inside = phone.evaluate(INSET)
+    if len(inside) < 4:
+        wrong(f"[owner phone] found only {inside} to measure in the cards")
+    for one in inside:
+        if one["left"] < 8 or one["right"] < 0:
+            wrong(f"[owner phone] {one['text']!r} in {one['title']} starts {one['left']}px from the card's left edge and ends {one['right']}px inside its right edge")
+    say(f"on a phone the words sit {sorted({one['left'] for one in inside})}px inside the cards")
     phone.evaluate("() => document.activeElement?.blur?.()")
     DRIVE.shot(phone, "ui2284-phone")
     phone.context.close()
