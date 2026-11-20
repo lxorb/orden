@@ -521,9 +521,9 @@
     const current = view
     const reasons = [showing?.id, showing?.kind, showing?.reading, workspace.naming, palette]
     if (!current || !reasons.length) return
-    let painted = 0
-    const frame = requestAnimationFrame(() => {
-      painted = window.setTimeout(() => {
+    let stop: (() => void) | null = null
+    const off = whenLoaded(support, (one) => {
+      stop = one.caretAfterPaint(() => {
         const may = takesCaret(showing ? { kind: showing.kind, reading: showing.reading } : null, {
           overlaid: overlays.depth > 0,
           renaming: workspace.naming !== null,
@@ -533,8 +533,8 @@
       })
     })
     return () => {
-      cancelAnimationFrame(frame)
-      clearTimeout(painted)
+      off()
+      stop?.()
     }
   })
   function sidebarUndo(event: KeyboardEvent) {

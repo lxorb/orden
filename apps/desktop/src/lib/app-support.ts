@@ -74,3 +74,22 @@ export function hearAccountSettings(): () => void {
     stop?.()
   }
 }
+const EARLY = ['keydown', 'beforeinput', 'compositionstart'] as const
+export function caretAfterPaint(take: () => void, at: Window = window): () => void {
+  let frame = 0
+  let painted = 0
+  const stop = () => {
+    at.cancelAnimationFrame(frame)
+    at.clearTimeout(painted)
+    for (const kind of EARLY) at.removeEventListener(kind, early, true)
+  }
+  function early() {
+    stop()
+    take()
+  }
+  for (const kind of EARLY) at.addEventListener(kind, early, true)
+  frame = at.requestAnimationFrame(() => {
+    painted = at.setTimeout(early)
+  })
+  return stop
+}
