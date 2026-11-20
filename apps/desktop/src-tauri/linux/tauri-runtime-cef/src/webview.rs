@@ -1319,7 +1319,13 @@ impl<T: UserEvent> WinitCefApp<T> {
       WebviewMessage::GoForward => child.browser.go_forward(),
       WebviewMessage::CanGoForward(tx) => _ = tx.send(Ok(child.browser.can_go_forward() == 1)),
       WebviewMessage::Close => child.host.close_browser(0),
-      WebviewMessage::SetFocus => child.host.set_focus(1),
+      WebviewMessage::SetFocus => {
+        child.host.set_focus(1);
+        #[cfg(windows)]
+        if child.offscreen.is_none() {
+          crate::platform::give_keyboard(child.host.window_handle());
+        }
+      }
       WebviewMessage::Url(tx) => {
         let url = child.url().unwrap_or_default();
         let _ = tx.send(Ok(url));

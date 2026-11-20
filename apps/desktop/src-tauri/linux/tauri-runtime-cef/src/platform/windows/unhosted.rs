@@ -60,3 +60,13 @@ pub(crate) fn put_out_of_sight(browser: cef::sys::cef_window_handle_t) {
     );
   }
 }
+
+pub(crate) fn give_keyboard(browser: cef::sys::cef_window_handle_t) {
+  let browser = HWND(browser.0 as _);
+  unsafe {
+    if browser.0.is_null() || !IsWindow(Some(browser)).as_bool() {
+      return;
+    }
+    let _ = windows::Win32::UI::Input::KeyboardAndMouse::SetFocus(Some(browser));
+  }
+}
