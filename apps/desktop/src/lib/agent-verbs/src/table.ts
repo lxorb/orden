@@ -1,16 +1,18 @@
 import type { AgentAnswer, AgentVerb, AgentVerbs } from '@orden/contracts'
 import type { Call } from './call'
 import { answerOf, Refused } from './problem'
+import { keepingView } from './view'
 
 export type Verb = (call: Call) => AgentAnswer | Promise<AgentAnswer>
 function ran(verb: Verb): AgentVerb {
-  return async (name, args, caller, deadline) => {
-    try {
-      return await verb(deadline ? { verb: name, args, caller, deadline } : { verb: name, args, caller })
-    } catch (error) {
-      return answerOf(error)
-    }
-  }
+  return (name, args, caller, deadline) =>
+    keepingView(name, async () => {
+      try {
+        return await verb(deadline ? { verb: name, args, caller, deadline } : { verb: name, args, caller })
+      } catch (error) {
+        return answerOf(error)
+      }
+    })
 }
 export function verbsOf(table: Readonly<Record<string, Verb>>): AgentVerbs {
   return Object.fromEntries(Object.entries(table).map(([name, verb]) => [name, ran(verb)]))
