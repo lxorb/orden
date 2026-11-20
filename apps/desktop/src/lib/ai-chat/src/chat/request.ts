@@ -3,6 +3,7 @@ import {
   readKey,
   headersFor,
   type Provider,
+  providerFetch,
   reachable,
   troubleIn,
   usable,
@@ -84,7 +85,7 @@ export async function request(
   const sent = await headers(provider, init.headers)
   for (let tries = 0; ; tries++) {
     if (signal?.aborted) throw stopped()
-    const answered = await fetch(url, {
+    const answered = await providerFetch(url, {
       method: init.method ?? 'POST',
       headers: sent,
       ...(init.body === undefined ? {} : { body: init.body }),

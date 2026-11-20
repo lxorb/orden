@@ -35,6 +35,7 @@ vi.mock('../src/store/setup', async (original) => ({
       release: (thread: { id: string }) => void programs.released.push(thread.id),
     }),
 }))
+const providerFetched = vi.hoisted(() => [] as string[])
 const invoked = vi.hoisted(() => [] as { command: string; args: Record<string, unknown> }[])
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<Record<string, unknown>>()),
@@ -68,6 +69,10 @@ vi.mock('../../ai-providers/src/keys', async (original) => ({
 }))
 vi.mock('../../ai-providers/src/api', async (original) => ({
   ...(await original<Record<string, unknown>>()),
+  providerFetch: (url: string, init?: RequestInit) => {
+    providerFetched.push(url)
+    return fetch(url, init)
+  },
   ai: (() => {
     const local = { id: 'compatible-1', kind: 'compatible', name: 'Ollama', model: 'llama', baseUrl: 'http://x' }
     return { providers: [local], provider: () => local, providerFor: () => local }
@@ -507,5 +512,29 @@ describe('what is sent to a model', () => {
     const seed = said?.text ?? ''
     expect(estimateText(seed)).toBeLessThan(20_000)
     expect(seed).toMatch(/\d+ earlier messages are left out to fit the model’s window/)
+  })
+})
+describe('a request to an AI provider', () => {
+  test('leaves through providerFetch, and nothing in the module calls fetch itself', async () => {
+    const { readdirSync, readFileSync, statSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const source = join(import.meta.dirname, '../src')
+    const files = (dir: string): string[] =>
+      readdirSync(dir).flatMap((name) => {
+        const path = join(dir, name)
+        if (statSync(path).isDirectory()) return files(path)
+        return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
+      })
+    const bare = files(source).filter((path) => /(?<![\w.])fetch\(/.test(readFileSync(path, 'utf8')))
+    expect(bare).toEqual([])
+    const { request } = await import('../src/chat/request')
+    providerFetched.length = 0
+    vi.stubGlobal('fetch', () => Promise.resolve(new Response('{}')))
+    try {
+      await request(LOCAL, 'http://x/v1/chat/completions', { body: '{}' })
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(providerFetched).toEqual(['http://x/v1/chat/completions'])
   })
 })
