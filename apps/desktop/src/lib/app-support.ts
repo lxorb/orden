@@ -4,6 +4,9 @@ import { recovery } from './history/src/api'
 import { modes } from './modes/src/api'
 import { shortcuts, toolbar } from './shortcuts/src/api'
 import { spaceArchiving } from './spaces/src/api'
+import { keyboardStays, overlays, takesCaret, viewport } from './ui-kit/src/api'
+import { paneMoves, workspace } from './workspace/src/api'
+import type { EditorView } from '@orden/editor'
 
 interface Hears {
   on(type: 'settings', run: () => void): () => void
@@ -75,21 +78,51 @@ export function hearAccountSettings(): () => void {
   }
 }
 const EARLY = ['keydown', 'beforeinput', 'compositionstart'] as const
-export function caretAfterPaint(take: () => void, at: Window = window): () => void {
+export function caretAfterPaint(take: () => void, early: () => void = take, at: Window = window): () => void {
   let frame = 0
   let painted = 0
   const stop = () => {
     at.cancelAnimationFrame(frame)
     at.clearTimeout(painted)
-    for (const kind of EARLY) at.removeEventListener(kind, early, true)
+    for (const kind of EARLY) at.removeEventListener(kind, keyed, true)
   }
-  function early() {
+  function keyed() {
     stop()
-    take()
+    early()
   }
-  for (const kind of EARLY) at.addEventListener(kind, early, true)
+  for (const kind of EARLY) at.addEventListener(kind, keyed, true)
   frame = at.requestAnimationFrame(() => {
-    painted = at.setTimeout(early)
+    painted = at.setTimeout(() => {
+      stop()
+      take()
+    })
   })
   return stop
+}
+let moves: Awaited<ReturnType<typeof paneMoves>> | null = null
+void paneMoves().then((one) => (moves = one))
+interface Shown {
+  kind: NonNullable<Parameters<typeof takesCaret>[0]>['kind']
+  reading: boolean
+}
+export function caretInto(
+  current: EditorView | null | undefined,
+  tab: Shown | null | undefined,
+  pane: string,
+): () => void {
+  const free = () => overlays.depth === 0 && workspace.naming === null && !viewport.touch && !keyboardStays()
+  const note = () =>
+    !!current &&
+    takesCaret(tab ? { kind: tab.kind, reading: tab.reading } : null, {
+      overlaid: overlays.depth > 0,
+      renaming: workspace.naming !== null,
+      touch: viewport.touch,
+    })
+  const intoNote = () => {
+    if (current && note() && !keyboardStays() && !current.hasFocus) current.focus()
+  }
+  return caretAfterPaint(intoNote, () => {
+    if (note()) intoNote()
+    else if (free()) moves?.keyboardInto(pane)
+  })
 }
