@@ -173,10 +173,12 @@ jobs:
         include:
           - platform: windows-11-arm
             label: windows-arm64
+            tab_first_ms: 390
           - platform: windows-latest
             label: windows-x64
+            tab_first_ms: 235
     runs-on: ${{ matrix.platform }}
-    timeout-minutes: 35
+    timeout-minutes: 45
     defaults:
       run:
         shell: bash
@@ -200,6 +202,15 @@ jobs:
           python -m pip install --quiet pillow mss numpy
           python scripts/overview-perf-drive.py --exe "$(cygpath -w "$RUNNER_TEMP")\\orden\\orden.exe" \
             --identifier so.orden.Orden --out overview-perf --limits
+
+      - name: A tab switch shows its tab and takes keys within this platform's limits
+        if: ${{ !cancelled() }}
+        env:
+          TAB_FIRST_MS: ${{ matrix.tab_first_ms }}
+        run: |
+          python -m pip install --quiet pillow mss numpy
+          python scripts/tab-switch-drive.py --exe "$(cygpath -w "$RUNNER_TEMP")\\orden\\orden.exe" \
+            --identifier so.orden.Orden --out overview-perf/tabs --fail-over "$TAB_FIRST_MS"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: failure()
