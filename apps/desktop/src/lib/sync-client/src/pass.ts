@@ -1,6 +1,6 @@
 import { rowName } from '../../platform/src/api'
 import { recoverLost, sendMade, settleFiles } from './files'
-import { foldedInto } from './folded'
+import { emptiedGone, foldedInto } from './folded'
 import {
   coalesce,
   feedPageOf,
@@ -438,6 +438,7 @@ export async function settleDisk(core: Core, space: SpaceState, sending = false)
   })
   await core.commit([...core.entryChanges(moved), ...forgets])
   if (moved.length) core.events.placed?.({ moved: moved.length })
+  if (space.emptied.size) await emptiedGone(space, core.world.disk, (root, path) => core.world.join(root, path))
 }
 function pullable(core: Core, space: SpaceState, entry: EntryRow): boolean {
   if (!Core.isDocument(entry) || entry.seq === null || !space.isLive(entry.id)) return false
