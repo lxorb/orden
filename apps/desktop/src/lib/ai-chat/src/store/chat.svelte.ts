@@ -9,6 +9,7 @@ import {
   stored,
   storedText,
   afterQuiet,
+  invoke,
   onceAFrame,
 } from '../../../platform/src/api'
 import { message, prompt } from '../../../ui-kit/src/api'
@@ -1353,6 +1354,7 @@ class Chat implements Panel {
   }
   private end(id: string, how: 'stop' | 'archive' | 'delete', tell = true): void {
     this.stoppers.get(id)?.abort()
+    if (tell) void invoke('agents_stop', { thread: id }).catch(() => undefined)
     void import('../helpers/helpers.svelte').then(({ helpers }) => helpers.stopUnder(id))
     if (tell && how !== 'delete') sayStopped(id)
     if (how === 'stop') return
