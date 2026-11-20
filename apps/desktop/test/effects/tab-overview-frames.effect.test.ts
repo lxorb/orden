@@ -439,6 +439,25 @@ test('the windows’ crosses and names come in the frames after the first, which
   })
   expect(document.querySelectorAll('.caption').length).toBe(document.querySelectorAll('.canvas .window').length)
 })
+test('the web pages are asked to hold still before the overview measures or builds anything', async () => {
+  const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+  const order: string[] = []
+  vi.spyOn(pages, 'holdStill').mockImplementation(() => {
+    order.push('hold')
+    return null
+  })
+  for (const one of app) {
+    const measured = one.getBoundingClientRect.bind(one)
+    one.getBoundingClientRect = () => {
+      order.push('measure')
+      return measured()
+    }
+  }
+  tabOverview.open = true
+  flushSync()
+  expect(order[0]).toBe('hold')
+  expect(order).toContain('measure')
+})
 function layered(): string[] {
   return [...document.querySelectorAll<HTMLElement>('*')]
     .filter((one) => one.style.willChange !== '' || one.classList.contains('is-moving'))

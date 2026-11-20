@@ -773,6 +773,10 @@
   function enter() {
     const again = shown
     if (!again) {
+      entered = performance.now()
+      const holding = webPages().holdStill()
+      stood = holding === null
+      void holding?.finally(() => (stood = true))
       corner = cardCorner()
       barBottom = barOf()
       nameFont = fontOfNames()
@@ -782,12 +786,8 @@
         if (box) stripRead.set(tab.id, box)
       }
       places.recall(workspace.tabs)
-      entered = performance.now()
       started = false
       void faces.read()
-      const holding = webPages().holdStill()
-      stood = holding === null
-      void holding?.finally(() => (stood = true))
       measure()
       arrange(shownKeys)
       lookAtAll()
