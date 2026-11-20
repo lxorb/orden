@@ -60,16 +60,16 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     const stop = holding ?? standing.find((row) => row.matches(currentSelector())) ?? standing[0] ?? null
     for (const row of rows) {
       if (naming(row)) row.removeAttribute('tabindex')
-      else row.tabIndex = row === stop ? 0 : -1
+      else tabbed(row, row === stop ? 0 : -1)
     }
     if (settings.quiet) {
-      for (const one of node.querySelectorAll<HTMLElement>(settings.quiet)) one.tabIndex = -1
+      for (const one of node.querySelectorAll<HTMLElement>(settings.quiet)) tabbed(one, -1)
     }
   }
   function stand(row: HTMLElement) {
-    row.tabIndex = 0
+    tabbed(row, 0)
     for (const other of rowsOf()) {
-      if (other !== row) other.tabIndex = -1
+      if (other !== row) tabbed(other, -1)
     }
     row.focus()
     row.scrollIntoView({ block: 'nearest' })
@@ -182,6 +182,9 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       node.removeEventListener('focusin', onFocusIn)
     },
   }
+}
+function tabbed(row: HTMLElement, at: number) {
+  if (row.getAttribute('tabindex') !== String(at)) row.tabIndex = at
 }
 function atRow(row: HTMLElement): MouseEvent {
   const box = row.getBoundingClientRect()

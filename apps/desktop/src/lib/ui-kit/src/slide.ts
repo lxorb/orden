@@ -42,21 +42,29 @@ export function segmented(node: HTMLElement) {
     thumb.style.height = `${on.offsetHeight}px`
     thumb.style.transform = `translate(${on.offsetLeft}px, ${on.offsetTop}px)`
   }
+  let frame = 0
+  const soon = () => {
+    frame ||= requestAnimationFrame(() => {
+      frame = 0
+      place()
+    })
+  }
   thumb.style.transition = 'none'
   place()
   const settled = requestAnimationFrame(() => (thumb.style.transition = ''))
-  const watched = new MutationObserver(place)
+  const watched = new MutationObserver(soon)
   watched.observe(node, {
     attributes: true,
     attributeFilter: ['class'],
     childList: true,
     subtree: true,
   })
-  const measured = typeof ResizeObserver === 'function' ? new ResizeObserver(place) : null
+  const measured = typeof ResizeObserver === 'function' ? new ResizeObserver(soon) : null
   measured?.observe(node)
   return {
     destroy() {
       cancelAnimationFrame(settled)
+      cancelAnimationFrame(frame)
       watched.disconnect()
       measured?.disconnect()
       thumb.remove()
