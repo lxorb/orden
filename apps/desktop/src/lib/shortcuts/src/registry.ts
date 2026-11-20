@@ -371,38 +371,34 @@ const APP_ENTRIES: Shortcut[] = [
         .catch(() => undefined),
   ),
   app('view', 'app.links', 'Links', 'Mod-Shift-b', () => revealPanel('links')),
-  ...(__EVEN_PLUGIN__
-    ? []
-    : [
-        app('paragraph', 'app.handwriting', 'Handwriting', null, () => void runCommand('app.handwriting')),
-        {
-          id: 'app.tasks',
-          label: () => 'Todos',
-          category: 'view',
-          scope: 'app',
-          key: 'Mod-Shift-y',
-          run: () => void runCommand('views.todos'),
-        } satisfies Shortcut,
-        app('view', 'app.chats', 'Chats', 'Mod-Shift-u', () => revealPanel('chats'), {
-          shown: () => chatsOn(),
-        }),
-        app('view', 'app.time', 'Time tracker', null, () => revealPanel('time'), {
-          shown: () => timeOn(),
-        }),
-        app('view', 'time.tab', 'Open time tracker', null, () => void runCommand('time.tab'), {
-          shown: () => timeOn(),
-        }),
-        app('view', 'time.start', 'Start timer', null, () => void runCommand('time.start'), {
-          shown: () => timeOn(),
-        }),
-        app('view', 'time.stop', 'Stop timer', null, () => void runCommand('time.stop'), {
-          shown: () => timeOn(),
-        }),
-        panel('view', 'chat.jump-new', 'New messages', 'Mod-j'),
-        panel('view', 'chat.record', 'Voice message', 'Mod-Shift-m'),
-        panel('view', 'chat.search', 'Search this chat', 'Mod-f'),
-        panel('view', 'chat.members', 'Members', 'Mod-u'),
-      ]),
+  app('paragraph', 'app.handwriting', 'Handwriting', null, () => void runCommand('app.handwriting')),
+  {
+    id: 'app.tasks',
+    label: () => 'Todos',
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-y',
+    run: () => void runCommand('views.todos'),
+  } satisfies Shortcut,
+  app('view', 'app.chats', 'Chats', 'Mod-Shift-u', () => revealPanel('chats'), {
+    shown: () => chatsOn(),
+  }),
+  app('view', 'app.time', 'Time tracker', null, () => revealPanel('time'), {
+    shown: () => timeOn(),
+  }),
+  app('view', 'time.tab', 'Open time tracker', null, () => void runCommand('time.tab'), {
+    shown: () => timeOn(),
+  }),
+  app('view', 'time.start', 'Start timer', null, () => void runCommand('time.start'), {
+    shown: () => timeOn(),
+  }),
+  app('view', 'time.stop', 'Stop timer', null, () => void runCommand('time.stop'), {
+    shown: () => timeOn(),
+  }),
+  panel('view', 'chat.jump-new', 'New messages', 'Mod-j'),
+  panel('view', 'chat.record', 'Voice message', 'Mod-Shift-m'),
+  panel('view', 'chat.search', 'Search this chat', 'Mod-f'),
+  panel('view', 'chat.members', 'Members', 'Mod-u'),
   app('view', 'app.ask', 'Ask', 'Mod-Shift-a', () => {
     if (!askAgain?.()) revealPanel('ask')
   }),
@@ -412,7 +408,6 @@ const APP_ENTRIES: Shortcut[] = [
     'Selection to the AI panel',
     'Mod-Alt-k',
     () => void runCommand('app.ask-selection'),
-    { shown: () => !__EVEN_PLUGIN__ },
   ),
   app('view', 'app.quick-question', 'Quick question', 'Mod Mod', () => void runCommand('app.quick-question')),
   app('view', 'app.reload', 'Reload Orden', 'Mod-r', () => location.reload()),
@@ -423,7 +418,6 @@ const APP_ENTRIES: Shortcut[] = [
   app('view', 'agents.stop', 'Stop agents', 'Mod-Alt-Shift-k', () => void runCommand('agents.stop'), {
     mac: 'Mod-Ctrl-Alt-k',
     desktop: true,
-    shown: () => !__EVEN_PLUGIN__,
   }),
   app('view', 'app.region-next', 'Next section', 'F6', () => void stepRegionFocus(1)),
   app('view', 'app.region-previous', 'Previous section', 'Shift-F6', () => void stepRegionFocus(-1)),
@@ -450,13 +444,9 @@ const APP_ENTRIES: Shortcut[] = [
     desktop: true,
     shown: () => explorerOn(),
   }),
-  ...(__EVEN_PLUGIN__
-    ? []
-    : [
-        app('view', 'app.pass', 'Pass', 'Mod-Alt-v', () => void runCommand('pass.open'), {
-          shown: () => passOn(),
-        }),
-      ]),
+  app('view', 'app.pass', 'Pass', 'Mod-Alt-v', () => void runCommand('pass.open'), {
+    shown: () => passOn(),
+  }),
   app('view', 'app.graph', 'Graph', null, () => workspace.openGraph()),
   app('view', 'app.source', 'Source mode', 'Mod-/', (context) => modes.toggleSource(context.view)),
   app('view', 'app.focus', 'Focus mode', 'F8', (context) => modes.toggleFocus(context.view), {
@@ -734,12 +724,10 @@ const EXPLORER_ENTRIES: Shortcut[] = (
 ).map(([id, label, key, mac]) =>
   panel('explorer', id, label, key, { mac, ...(id.endsWith('.alt') ? { alias: true } : {}) }),
 )
-const PASS_KEYS: readonly (readonly [string, string, string])[] = __EVEN_PLUGIN__
-  ? []
-  : [
-      ['pass.search', 'Search Pass', 'Mod-f'],
-      ['pass.new-login', 'New login', 'Mod-n'],
-    ]
+const PASS_KEYS: readonly (readonly [string, string, string])[] = [
+  ['pass.search', 'Search Pass', 'Mod-f'],
+  ['pass.new-login', 'New login', 'Mod-n'],
+]
 const PASS_ENTRIES: Shortcut[] = PASS_KEYS.map(([id, label, key]) =>
   panel('pass', id, label, key, { shown: () => passOn() }),
 )
