@@ -9,7 +9,6 @@ vi.mock('../../link-index/src/api', () => ({
   queryRowsHtml: () => Promise.resolve(null),
 }))
 vi.mock('../../workspace/src/api', () => ({ keptCoverOf: () => null }))
-vi.stubGlobal('__EVEN_PLUGIN__', false)
 const { readingHtml } = await import('./render')
 const SHEET = join(import.meta.dirname, '../../../../../../packages/themes/src/base.css')
 const READING = join(import.meta.dirname, 'Reading.svelte')

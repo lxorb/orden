@@ -128,7 +128,7 @@ export async function renderNote(
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html
 }
 export async function exportPandoc(source: string, name: string, format: PandocFormat, note: string | null = null) {
-  if (!isDesktop || __EVEN_PLUGIN__) return
+  if (!isDesktop) return
   const spec = PANDOC_FORMATS.find((entry) => entry.id === format)
   if (!spec) return
   const target = await chooseTarget(name, spec.extension, spec.label)

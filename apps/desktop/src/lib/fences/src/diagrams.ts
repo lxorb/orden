@@ -27,7 +27,6 @@ export async function drawDiagram(
   where: DiagramFor = 'document',
   pictures = true,
 ): Promise<string> {
-  if (__EVEN_PLUGIN__) throw new Error('no diagrams in the Even Realities plugin')
   if (language === 'flow') return drawFlowchart(code, scheme)
   const mermaid = language === 'sequence' ? sequenceToMermaid(code) : code
   return drawMermaid(pictures ? mermaid : withoutPictures(mermaid), scheme, where, pictures)

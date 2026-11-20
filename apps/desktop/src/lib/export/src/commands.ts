@@ -20,7 +20,6 @@ import { picker } from './picker.svelte'
 
 type Row = CommandExtension
 export function exportCommands(): Row[] {
-  if (__EVEN_PLUGIN__) return []
   const note = () => workspace.active
   const source = () => openTarget().source
   const name = () => note()?.name ?? 'Untitled.md'
@@ -101,7 +100,6 @@ export function exportCommands(): Row[] {
   return shut(commands)
 }
 export function exportPicker(): Row[] {
-  if (__EVEN_PLUGIN__) return []
   const formats = exportCommands().filter((one) => one.id !== 'page-setup')
   return [
     {

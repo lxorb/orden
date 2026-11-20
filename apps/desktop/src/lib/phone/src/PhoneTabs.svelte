@@ -18,10 +18,7 @@
   const tabs = $derived(
     panels.PHONE_TABS.filter(
       (one) =>
-        workspace.offers(one) &&
-        workspace.fills(one) &&
-        (one !== 'chats' || (!__EVEN_PLUGIN__ && !!account.accountToken && chatsOn())) &&
-        (one !== 'tasks' || !__EVEN_PLUGIN__),
+        workspace.offers(one) && workspace.fills(one) && (one !== 'chats' || (!!account.accountToken && chatsOn())),
     ),
   )
   const on = $derived(workspace.panel ?? workspace.reopens)

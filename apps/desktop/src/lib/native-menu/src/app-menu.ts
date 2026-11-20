@@ -337,12 +337,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: account.user ? 'Sign out' : 'Sign in',
           asks: !account.user,
-          run: () =>
-            account.user
-              ? __EVEN_PLUGIN__
-                ? void account.signOut('asked')
-                : void account.leave()
-              : (account.open = true),
+          run: () => (account.user ? void account.leave() : (account.open = true)),
         },
         DIVIDER,
         ...(isDesktop ? [{ label: 'Check for updates', asks: true, run: () => void updates.check() }] : []),

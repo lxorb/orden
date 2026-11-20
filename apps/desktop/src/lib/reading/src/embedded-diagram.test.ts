@@ -18,7 +18,6 @@ vi.mock('../../link-index/src/api', () => ({
   queryRowsHtml: () => Promise.resolve(null),
 }))
 vi.mock('../../workspace/src/api', () => ({ keptCoverOf: () => null }))
-vi.stubGlobal('__EVEN_PLUGIN__', false)
 const { readingHtml } = await import('./render')
 describe('a diagram inside a note embedded in the reading view', () => {
   test('is drawn as a diagram, as it is in the note itself', async () => {

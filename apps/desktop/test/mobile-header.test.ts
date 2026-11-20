@@ -80,9 +80,7 @@ describe('the button that opens the file list', () => {
 describe("the sides' buttons on a desktop", () => {
   test('are in the bar, shown, and never in the sides', () => {
     const squeezed = titlebar.replace(/\s+/g, ' ')
-    expect(squeezed).toContain(
-      '{:else if workspace.right.length || !__EVEN_PLUGIN__} <SidebarToggle side="right" /> {/if}',
-    )
+    expect(squeezed).toContain('{:else} <SidebarToggle side="right" /> {/if}')
     expect(squeezed).toContain('{#if viewport.touch} {#if workspace.right.length} <SidebarToggle side="right" /> {/if}')
     expect(sidebar).not.toContain('<SidebarToggle side="right"')
     expect(sidebar).toContain("if (viewport.touch || side === 'right') return")

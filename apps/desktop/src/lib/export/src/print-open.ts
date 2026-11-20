@@ -6,7 +6,7 @@ import { workspace } from '../../workspace/src/api'
 
 export async function printOpen(): Promise<void> {
   const kind = workspace.active?.kind
-  if (__EVEN_PLUGIN__ || (kind !== 'canvas' && kind !== 'pages')) {
+  if (kind !== 'canvas' && kind !== 'pages') {
     await printNote()
     return
   }

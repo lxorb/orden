@@ -101,7 +101,7 @@
     {@render hits(mentions)}
   {/if}
 
-  {#if account.accountToken && !__EVEN_PLUGIN__ && chatsOn()}
+  {#if account.accountToken && chatsOn()}
     {#await chatLinks() then ChatLinks}
       <ChatLinks {path} />
     {/await}
