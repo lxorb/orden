@@ -20,7 +20,7 @@ import {
 import { anthropic } from './anthropic'
 import { always, type Answers, crateAnswers } from './approvals'
 import { catalogue, unlisted, windowIn } from './catalogue'
-import { compactThread } from './compact'
+import { compactionOf, compactThread } from './compact'
 import { completions } from './completions'
 import { gemini } from './gemini'
 import { within } from './effort'
@@ -31,8 +31,9 @@ import { responses } from './responses'
 import { type Adjusted, round } from './round'
 import { crateTools, type Tools } from './tools'
 import { baseEffort, type Call, errorText, modelTurn, stepsOf, type Step, youTurn } from './transcript'
-import { added, estimate, shouldCompact } from './usage'
-import type { ToolDef, Wire } from './wire'
+import { added, estimate, noUsage, shouldCompact } from './usage'
+import type { Ask, ToolDef, Wire } from './wire'
+import { fitOutputs, limitOf, roomFor, tokensIn, windowOf } from './window'
 import { allows } from './reach'
 
 function apiOf(kind: ProviderKind): Api | null {
@@ -44,6 +45,7 @@ function apiOf(kind: ProviderKind): Api | null {
 }
 const WIRES: Record<Api, Wire> = { anthropic, responses, completions, gemini }
 export const MOST_ROUNDS = 40
+const GO_ON = 'Go on with the request from where the summary leaves off.'
 const MOST_ASKS = 3
 let leaving = false
 if (typeof addEventListener === 'function') {
@@ -225,6 +227,52 @@ export function createApiEngine(setup: Setup): Engine {
       if (used) turn.usage = used
       if (whole && addedNow.length) turn.replay = { api, model: model.id, messages: addedNow }
     }
+    const askNow = (): Ask => ({
+      provider,
+      model,
+      effort: thread.effort,
+      base: perMessage ? baseEffort(thread, thread.effort) : thread.effort,
+      fast: !!thread.fast,
+      system,
+      tools: listing.tools,
+      steps,
+      added: addedNow,
+      web: !!message.web,
+      perMessage,
+    })
+    const window = () => windowOf(thread.usage.window, model.window)
+    const fitted = async () => {
+      if (tokensIn(wire.request(askNow()).body) <= limitOf(window(), thread.autocompact)) return
+      const before = thread.turns.slice(0, -1)
+      const upTo = before.at(-1)
+      if (!upTo) return
+      const compacted = await compactionOf(
+        {
+          thread,
+          provider,
+          api,
+          wire,
+          model,
+          system,
+          tools: listing.tools,
+          steps: [...steps, ...(addedNow.length ? [{ role: 'native' as const, messages: addedNow }] : [])],
+        },
+        signal,
+      ).catch((error: unknown) => {
+        if (wasStopped(error) || signal.aborted) throw error
+        return null
+      })
+      if (!compacted) return
+      const { spent, ...made } = compacted
+      thread.compaction = { ...made, upTo: upTo.id }
+      if (spent) spend(thread, { ...noUsage(null), input: spent.input, output: spent.output })
+      steps = [
+        ...stepsOf({ turns: before, compaction: thread.compaction }, api, model.id, perMessage),
+        { role: 'user', text: GO_ON, images: [] },
+      ]
+      addedNow = []
+      say({ kind: 'notice', code: 'compacted', text: '' })
+    }
     try {
       for (let rounds = 0; ; rounds++) {
         if (rounds >= MOST_ROUNDS) {
@@ -232,22 +280,11 @@ export function createApiEngine(setup: Setup): Engine {
           stop = 'steps'
           break
         }
+        await fitted()
         start = turn.parts.length
         const result = await round(
           wire,
-          {
-            provider,
-            model,
-            effort: thread.effort,
-            base: perMessage ? baseEffort(thread, thread.effort) : thread.effort,
-            fast: !!thread.fast,
-            system,
-            tools: listing.tools,
-            steps,
-            added: addedNow,
-            web: !!message.web,
-            perMessage,
-          },
+          askNow(),
           (parts, changed, said) => {
             if (said && !answered) {
               answered = said
@@ -278,7 +315,9 @@ export function createApiEngine(setup: Setup): Engine {
         }
         if (ending === 'pause') continue
         if (ending === 'tool') {
-          const outputs = await runCalls(thread, provider, calls, turn, start, on, signal)
+          const ran = await runCalls(thread, provider, calls, turn, start, on, signal)
+          const now = tokensIn(wire.request(askNow()).body)
+          const outputs = fitOutputs(ran, roomFor(window(), limitOf(window(), thread.autocompact), now))
           addedNow = [...addedNow, ...wire.results(outputs)]
           if (signal.aborted) throw new DOMException('stopped', 'AbortError')
         } else if (ending !== 'end') {

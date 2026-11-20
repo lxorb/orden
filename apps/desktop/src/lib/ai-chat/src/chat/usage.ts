@@ -73,7 +73,7 @@ export function added(before: Usage, after: Usage): Usage {
 export function filled(usage: Usage): number {
   return usage.input + usage.output
 }
-const PICTURE = 1_600
+export const PICTURE = 1_600
 export function estimateText(words: string): number {
   let wide = 0
   for (let at = 0; at < words.length; at++) {
