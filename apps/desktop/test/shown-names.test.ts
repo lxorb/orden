@@ -14,7 +14,8 @@ const TAB_NAME = /\bname:\s*tab\.name\s*[,}\n]/g
 const MARKUP_NAME = /\{(?:tab|entry)\.name\}/g
 const PLATFORM_NAME_OF = /import\s*\{[^}]*\bnameOf\b[^}]*\}\s*from\s*'[^']*platform\/src\/api'/
 const MARKUP_NAME_OF = /\{nameOf\(/g
-const KEPT: Record<string, { most: number; why: string }> = {
+type Kept = Record<string, { most: number; why: string }>
+const KEPT: Kept = {
   'apps/desktop/src/lib/link-index/src/links.svelte.ts': { most: 1, why: 'names compared to resolve links' },
   'packages/editor/src/wikilink/notes.ts': { most: 2, why: 'names compared and written as link paths' },
   'packages/editor/src/wikilink/complete.ts': {
@@ -68,20 +69,13 @@ const KEPT: Record<string, { most: number; why: string }> = {
   'apps/desktop/src/lib/import/src/rewrite.ts': { most: 4, why: 'link targets resolved and written as link paths' },
   'apps/desktop/src/lib/import/src/tomboy.ts': { most: 1, why: 'the [[path]] link a Tomboy note link becomes' },
 }
-const TO_MOVE: Record<string, number> = {
-  'apps/desktop/src/lib/tasks-views/src/carrying.svelte.ts': 1,
-}
-const RAW_KEPT: Record<string, { most: number; why: string }> = {
+const RAW_KEPT: Kept = {
   'apps/desktop/src/lib/explorer/src/ExplorerColumn.svelte': {
     most: 1,
     why: "the system's own file names, as on disk",
   },
   'apps/desktop/src/lib/canvas/src/Canvas.svelte': { most: 2, why: 'the name an export takes its stem from' },
   'apps/desktop/src/lib/workspace/src/workspace.svelte.ts': { most: 1, why: 'written into the saved session' },
-}
-const RAW_TO_MOVE: Record<string, number> = {
-  'apps/desktop/src/lib/time/src/sense.svelte.ts': 1,
-  'apps/desktop/src/lib/sharing/src/protect/LockScreen.svelte': 1,
 }
 function walk(dir: string, found: string[] = []): string[] {
   if (!existsSync(dir)) return found
@@ -126,27 +120,27 @@ function raw(path: string, text: string): number {
     : 0
   return count(text, TAB_NAME) + markup
 }
-function over(found: (path: string, text: string) => number, allowed: Record<string, number>): string[] {
-  return sources.flatMap((path) => {
+function apart(found: (path: string, text: string) => number, kept: Kept): string[] {
+  const gone = Object.keys(kept)
+    .filter((path) => !texts.has(path))
+    .map((path) => `${path}: kept, but there is no such file`)
+  const off = sources.flatMap((path) => {
     const many = found(path, texts.get(path) ?? '')
-    const most = allowed[path] ?? 0
-    return many > most ? [`${path}: ${String(many)}, at most ${String(most)}`] : []
+    const most = kept[path]?.most ?? 0
+    return many === most ? [] : [`${path}: ${String(many)}, kept as ${String(most)}`]
   })
+  return [...gone, ...off]
 }
-const most = (kept: Record<string, { most: number }>, moving: Record<string, number>) => ({
-  ...moving,
-  ...Object.fromEntries(Object.entries(kept).map(([path, one]) => [path, one.most])),
-})
 describe("a name a reader is shown keeps no ending of Orden's own", () => {
   test('the walk reaches the app and its packages', () => {
     expect(sources.length).toBeGreaterThan(500)
     expect(sources).toContain('packages/markdown/src/links.ts')
   })
-  test('is cut through shownName, shownPath or stemOf, never by a pattern of its own; the places left only grow fewer', () => {
-    expect(over((_, text) => strips(text), most(KEPT, TO_MOVE))).toEqual([])
+  test('is cut through shownName, shownPath or stemOf, never by a pattern of its own, but in the places kept, each counted as it is', () => {
+    expect(apart((_, text) => strips(text), KEPT)).toEqual([])
   })
-  test('is never a tab or entry name drawn as it is; the places left only grow fewer', () => {
-    expect(over(raw, most(RAW_KEPT, RAW_TO_MOVE))).toEqual([])
+  test('is never a tab or entry name drawn as it is, but in the places kept, each counted as it is', () => {
+    expect(apart(raw, RAW_KEPT)).toEqual([])
   })
   test('every place kept says why', () => {
     for (const one of [...Object.values(KEPT), ...Object.values(RAW_KEPT)]) expect(one.why.length).toBeGreaterThan(10)
