@@ -1,7 +1,7 @@
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { seedUpdate } from '../../src/seed'
-import { applyOp, contentChanged, type TreeState, treeState } from '../../src/tree'
+import { aliasesIn, applyOp, contentChanged, type TreeState, treeState } from '../../src/tree'
 import {
   FEED_PAGE,
   type FeedItem,
@@ -192,6 +192,7 @@ export class ReferenceAccount implements AccountAdapter {
       const held = this.docs.get(entry.id)
       if (held) texts[entry.id] = held.doc.getText(TEXT).toJSON()
     }
-    return Promise.resolve({ entries, texts, versions: [...this.versions] })
+    const aliases = Object.fromEntries(aliasesIn(this.tree))
+    return Promise.resolve({ entries, texts, versions: [...this.versions], aliases })
   }
 }
