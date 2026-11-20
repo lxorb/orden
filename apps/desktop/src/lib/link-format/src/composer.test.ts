@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { decodeTarget, findLinks } from '@orden/markdown/links'
-import { extracted, linkTo, merged, splitAt } from './composer'
+import { extracted, splitAt } from './carve'
+import { linkTo, merged } from './composer'
 
 describe('merging one note into another', () => {
   test('puts a rule at the seam and keeps both texts', () => {

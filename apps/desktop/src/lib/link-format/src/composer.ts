@@ -8,9 +8,7 @@ import {
   frontMatterList,
   stripFrontMatter,
 } from '@orden/markdown/front-matter'
-import { isTabFile } from '@orden/markdown/links'
 import { flowItem } from '@orden/markdown/yaml'
-import { nameFromContent } from '../../platform/src/api'
 
 const SEAM = '\n\n---\n\n'
 const LISTED = new Set(['aliases', 'alias', 'tags', 'tag', 'cssclasses'])
@@ -60,37 +58,3 @@ export const pickedLink = (target: LinkWrite): string =>
     fragment: target.fragment ?? null,
     file: target.file ?? null,
   })
-export interface Split {
-  kept: string
-  taken: string
-  name: string
-}
-export function splitAt(text: string, at: number, fallback: string, named?: string): Split | null {
-  const start = lineStart(text, Math.max(0, Math.min(at, text.length)))
-  const taken = text.slice(start).trim()
-  if (!taken) return null
-  const name = named ?? nameFromContent(taken) ?? fallback
-  const kept = `${text.slice(0, start).replace(/\s+$/, '')}\n\n${linkTo(noteNamed(name))}\n`
-  return { kept, taken: `${taken}\n`, name }
-}
-export function extracted(text: string, from: number, to: number, fallback: string, named?: string): Split | null {
-  const chosen = text.slice(from, to)
-  const taken = chosen.trim()
-  if (!taken) return null
-  const start = from + chosen.length - chosen.trimStart().length
-  const end = to - (chosen.length - chosen.trimEnd().length)
-  const name = named ?? nameFromContent(taken) ?? fallback
-  const shown = oneLine(taken)
-  const alias = shown.replace(SENTENCE_END, '') === name ? '' : shown
-  const kept = text.slice(0, start) + linkTo(noteNamed(name), alias) + text.slice(end)
-  return { kept, taken: `${taken}\n`, name }
-}
-const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
-const noteNamed = (name: string): string => (isTabFile(name) || MARKDOWN.test(name) ? `${name}.md` : name)
-const SENTENCE_END = /[.!?。！？]+$/u
-function oneLine(text: string): string {
-  const first = text.split('\n')[0] ?? ''
-  const words = first.replace(/^\s*>?\s*(?:#{1,6}\s+|[-*+]\s+|\d+[.)]\s+)?/, '').trim()
-  return words.length > 0 && words.length <= 60 ? words : ''
-}
-const lineStart = (text: string, at: number): number => text.lastIndexOf('\n', Math.max(0, at - 1)) + 1
