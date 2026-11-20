@@ -255,6 +255,7 @@ describe('the field a title is renamed in where it stands', () => {
       'lib/agents/src/settings/AgentDetail.svelte',
       'lib/tasks-views/src/TodoEditor.svelte',
       'lib/terminal/src/remote/HostDetail.svelte',
+      'lib/time/src/Activities.svelte',
     ])
     const own = components
       .filter((one) =>

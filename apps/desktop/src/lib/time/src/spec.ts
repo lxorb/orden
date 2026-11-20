@@ -1,7 +1,7 @@
 import { isRecord } from '../../platform/src/api'
 
-export type View = 'day' | 'week' | 'reports'
-const VIEWS: readonly View[] = ['day', 'week', 'reports']
+export type View = 'day' | 'week'
+const VIEWS: readonly View[] = ['day', 'week']
 export interface Spec {
   view: View
 }
@@ -13,6 +13,6 @@ export function readSpec(text: string): Spec {
     value = null
   }
   if (!isRecord(value)) return { view: 'day' }
-  return { view: VIEWS.find((one) => one === value.view) ?? 'day' }
+  return { view: value.view === 'reports' ? 'week' : (VIEWS.find((one) => one === value.view) ?? 'day') }
 }
 export const writeSpec = (spec: Spec): string => JSON.stringify(spec)

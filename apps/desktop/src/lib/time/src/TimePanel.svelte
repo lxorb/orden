@@ -1,18 +1,21 @@
 <script lang="ts">
   import { midnightOf } from '../../platform/src/api'
-  import { Facts } from '../../ui-kit/src/api'
+  import Activities from './Activities.svelte'
+  import ActivityMark from './ActivityMark.svelte'
   import { isOwn } from './counted'
-  import { daysAfter, MINUTE, near, piecesIn } from './days'
+  import { daysAfter, piecesIn } from './days'
   import { activeIn, hoursShown } from './lanes'
-  import { length, tintOf } from './look'
+  import { length } from './look'
+  import { managing } from './manage.svelte'
   import { openTime } from './open'
+  import Picker from './Picker.svelte'
   import { dayTotals } from './schedule'
   import './start.svelte'
   import Strip from './Strip.svelte'
   import { time } from './time.svelte'
-  import Timer from './Timer.svelte'
   import { ticking, watchedMinutes } from './watched.svelte'
 
+  const me = crypto.randomUUID()
   const ticker = ticking()
   const now = $derived(ticker.now)
   const today = $derived(midnightOf(now))
@@ -21,84 +24,71 @@
   $effect(() => {
     void time.exchange()
   })
-  const own = $derived(time.spans.filter(isOwn))
   const shown = $derived(
     hoursShown(
       today,
       tomorrow,
-      [
-        ...piecesIn(time.spans, today, tomorrow, now).flatMap((one) => [one.from, one.to]),
-        ...minutes.list.map((one) => one.at),
-        now,
-      ],
+      [...piecesIn(time.spans, today, tomorrow, now, isOwn).flatMap((one) => [one.from, one.to]), now],
       [9, 17],
     ),
   )
   const totals = $derived(dayTotals(time.spans, today, now))
   const active = $derived(activeIn(minutes.list, today, tomorrow))
   const recent = $derived(time.latest().slice(0, 5))
-  const inFront = $derived.by(() => {
-    const fresh = near(time.spans, now - 2 * MINUTE, Infinity).filter(
-      (one) => !isOwn(one) && one.end !== null && now - one.end < 2 * MINUTE,
-    )
-    const of = (lane: string) => [...fresh].reverse().find((one) => one.source === lane)?.label ?? null
-    return [of('app'), of('site') ?? of('tab')].filter((one) => one !== null)
-  })
   const todayOf = (activity: string) => totals.slices.find((one) => one.activity === activity)?.ms ?? 0
+  const manage = () => managing.open(me)
   function opened(event: MouseEvent) {
     const target = event.target as Element | null
-    if (target?.closest('button, input, a, [role="option"]')) return
+    if (target?.closest('button, input, a, [role="option"], [role="listbox"]')) return
     openTime()
   }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="time" ondblclick={opened}>
-  <Timer {now} />
-
-  {#if inFront.length && time.recording}
-    <p class="front">
-      <span class="live" aria-hidden="true"></span><span class="name" dir="auto"><Facts line parts={inFront} /></span>
-    </p>
-  {/if}
+  <Picker {now} onmanage={manage} />
 
   {#if recent.length}
     <p class="orden-section">Recent</p>
     <ul>
       {#each recent as one (one.id)}
         {@const on = time.running.some((span) => span.activity === one.id)}
-        <li class:on>
+        <li>
           <button
             type="button"
             class="orden-row is-short"
             class:is-on={on}
             title="Start timer"
-            onclick={() => time.start(one.id)}
+            data-activity={one.id}
+            onclick={() => {
+              if (!on) time.start(one.id)
+            }}
           >
-            <span class="dot" style:background={tintOf(one.id)}></span>
+            <ActivityMark activity={one.id} />
             <span class="orden-row-label" dir="auto">{one.name}</span>
             <span class="orden-row-meta">{todayOf(one.id) ? length(todayOf(one.id)) : ''}</span>
-            <svg class="play" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.2v7.6L9.8 6z" /></svg>
           </button>
         </li>
       {/each}
     </ul>
   {/if}
 
-  <p class="orden-section">Today<span>{length(totals.ms)}</span></p>
+  <p class="orden-section">Today<span data-time-today>{length(totals.ms)}</span></p>
   <div class="today">
-    <Strip from={shown[0]} to={shown[1]} spans={own} minutes={minutes.list} {now} hours />
+    <Strip from={shown[0]} to={shown[1]} spans={time.spans} {now} />
+    <p class="active">Active<span data-time-active>{length(active)}</span></p>
   </div>
-  <p class="active">Active<span>{length(active)}</span></p>
 
-  <button type="button" class="orden-button is-quiet open" onclick={() => openTime()}>Open time tracker</button>
+  <button type="button" class="orden-row is-short is-quiet open" onclick={() => openTime()}>Open time tracker</button>
 </div>
+
+<Activities open={managing.by === me} onclose={() => managing.close()} />
 
 <style>
   .time {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--space-1);
     padding-top: var(--space-1);
   }
   ul {
@@ -106,62 +96,25 @@
     padding: 0;
     list-style: none;
   }
-  .dot {
-    flex: none;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
-  .front {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    margin: 0;
-    padding: 0 var(--space-2);
-    overflow: hidden;
-    color: var(--muted-strong);
-    font-size: var(--text-xs);
-    white-space: nowrap;
-  }
-  .front .name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .live {
-    flex: none;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--success);
-  }
-  .play {
-    flex: none;
-    width: 10px;
-    height: 10px;
-    fill: currentColor;
-    opacity: 0;
-  }
-  li:hover .play,
-  li:focus-within .play,
-  li.on .play {
-    opacity: 0.7;
-  }
   .today {
-    padding: 0 var(--space-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: 0 var(--row-pad);
   }
   .active {
     display: flex;
     justify-content: space-between;
     margin: 0;
-    padding: 0 var(--space-2);
     color: var(--muted-strong);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
+  .orden-row-meta {
+    font-variant-numeric: tabular-nums;
+  }
   .open {
-    align-self: stretch;
-    margin-top: var(--space-1);
-    border: 1px solid var(--line-strong);
+    margin-top: var(--space-2);
+    color: var(--muted);
   }
 </style>

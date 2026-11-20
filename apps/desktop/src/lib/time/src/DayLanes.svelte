@@ -1,218 +1,157 @@
 <script lang="ts">
   import { localDate } from '../../platform/src/api'
-  import { isOwn } from './counted'
-  import { HOUR, MINUTE, piecesIn } from './days'
-  import { type Band, bandsOf, bucketsOf, type Picked, stacked } from './lanes'
-  import { clock, length, nameOf, placeTint, tintOf } from './look'
+  import { HOUR, MINUTE } from './days'
+  import type { Picked } from './lanes'
+  import { clock, length, placeTint } from './look'
   import type { Minute } from './minutes'
-  import type { Lane, Span } from './records'
+  import type { Lane } from './records'
+  import Schedule from './Schedule.svelte'
+  import { barsOf, levelsOf, slotsFor } from './slots'
+  import { time } from './time.svelte'
 
   const {
     from,
     to,
-    spans,
-    own,
     minutes,
     now,
-    picked,
-    onpick,
+    selected,
+    range,
+    onselect,
+    onrange,
+    onmanage,
   }: {
     from: number
     to: number
-    spans: readonly Span[]
-    own: readonly Span[]
     minutes: readonly Minute[]
     now: number
-    picked: Picked | null
-    onpick: (next: Picked | null) => void
+    selected: string | null
+    range: Picked | null
+    onselect: (id: string | null) => void
+    onrange: (next: Picked | null) => void
+    onmanage: () => void
   } = $props()
   const SNAP = 5 * MINUTE
-  const nowShown = $derived(from <= now && now < to)
-  const whole = $derived(to - from)
-  const at = (moment: number) => `${((moment - from) / whole) * 100}%`
-  const wide = (ms: number) => `${Math.max(0.2, (ms / whole) * 100)}%`
-  const pixels = (ms: number) => (ms / whole) * width
-  const said = $derived(stacked(piecesIn(own, from, to, now, isOwn)))
-  const lanes = $derived(
-    (
-      [
-        ['app', 'Apps'],
-        ['site', 'Websites'],
-        ['space', 'Spaces'],
-        ['tab', 'Tabs'],
-      ] as const
-    ).map(([lane, label]): { lane: Lane; label: string; bands: Band[] } => ({
-      lane,
-      label,
-      bands: bandsOf(spans, lane, from, to, now),
-    })),
-  )
-  const buckets = $derived(bucketsOf(minutes, from, to, SNAP))
+  const LANES: readonly [Lane, string][] = [
+    ['app', 'Apps'],
+    ['site', 'Websites'],
+    ['space', 'Spaces'],
+    ['tab', 'Tabs'],
+  ]
   let width = $state(0)
+  const whole = $derived(to - from)
+  const slots = $derived(slotsFor(width))
+  const at = (moment: number) => `${((moment - from) / whole) * 100}%`
+  const wide = (ms: number) => `${(ms / whole) * 100}%`
+  const pixels = (ms: number) => (ms / whole) * width
+  const rows = $derived(
+    LANES.map(([lane, label]) => ({ lane, label, bars: barsOf(time.spans, lane, from, to, slots, now) })),
+  )
+  const levels = $derived(levelsOf(minutes, from, to, slots))
+  const nowShown = $derived(from <= now && now < to)
   const hours = $derived.by(() => {
     const out: number[] = []
-    const step = [1, 2, 3, 4, 6, 12].map((one) => one * HOUR).find((one) => (one / whole) * width >= 64) ?? 12 * HOUR
+    const step = [1, 2, 3, 4, 6, 12].map((one) => one * HOUR).find((one) => (one / whole) * width >= 56) ?? 12 * HOUR
     for (let one = Math.ceil(from / step) * step; one <= to; one += step) out.push(one)
     return out
   })
-  let track = $state<HTMLElement>()
-  let pressed: { x: number; at: number; span: string | null } | null = null
-  let dragging = $state(false)
+  let rowsBox = $state<HTMLElement | null>(null)
+  let pressed: { x: number; at: number } | null = null
+  let dragging = false
   function timeAt(x: number): number {
-    const box = track?.getBoundingClientRect()
+    const box = rowsBox?.getBoundingClientRect()
     if (!box?.width) return from
-    const share = Math.min(1, Math.max(0, (x - box.left) / box.width))
-    return Math.round((from + share * whole) / SNAP) * SNAP
+    return Math.round((from + Math.min(1, Math.max(0, (x - box.left) / box.width)) * whole) / SNAP) * SNAP
   }
   function down(event: PointerEvent) {
     if (event.button !== 0) return
-    const hit = (event.target as Element | null)?.closest<HTMLElement>('[data-span]')
-    pressed = { x: event.clientX, at: timeAt(event.clientX), span: hit?.dataset.span ?? null }
-    track?.setPointerCapture(event.pointerId)
+    pressed = { x: event.clientX, at: timeAt(event.clientX) }
+    rowsBox?.setPointerCapture(event.pointerId)
   }
   function move(event: PointerEvent) {
-    if (!pressed) return
-    if (!dragging && Math.abs(event.clientX - pressed.x) < 4) return
+    if (!pressed || (!dragging && Math.abs(event.clientX - pressed.x) < 4)) return
     dragging = true
     const here = timeAt(event.clientX)
-    onpick({
-      from: Math.min(pressed.at, here),
-      to: Math.max(pressed.at, here, Math.min(pressed.at, here) + SNAP),
-      span: null,
-    })
+    onrange({ from: Math.min(pressed.at, here), to: Math.max(pressed.at, here, Math.min(pressed.at, here) + SNAP) })
   }
   function up() {
-    const was = pressed
+    if (!dragging && pressed) onrange(null)
     pressed = null
-    if (dragging) {
-      dragging = false
-      return
-    }
-    if (!was) return
-    const span = was.span ? own.find((one) => one.id === was.span) : undefined
-    onpick(
-      span
-        ? { from: span.start, to: span.end ?? now, span: span.id }
-        : picked
-          ? null
-          : {
-              from: Math.floor(was.at / HOUR) * HOUR,
-              to: Math.floor(was.at / HOUR) * HOUR + HOUR,
-              span: null,
-            },
-    )
+    dragging = false
   }
 </script>
 
 <div class="day" dir="ltr">
   <div class="labels" aria-hidden="true">
     <span class="axis"></span>
-    <span class="said-label">You said</span>
-    {#each lanes as lane (lane.lane)}
-      <span class="lane-label">{lane.label}</span>
-    {/each}
-    <span class="busy-label">Active</span>
+    <span class="schedule-label"></span>
+    {#each rows as row (row.lane)}<span class="lane-label">{row.label}</span>{/each}
+    <span class="active-label">Active</span>
   </div>
 
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="track"
-    class:dragging
-    bind:this={track}
-    bind:clientWidth={width}
-    onpointerdown={down}
-    onpointermove={move}
-    onpointerup={up}
-    onpointercancel={() => {
-      pressed = null
-      dragging = false
-    }}
-  >
-    <div class="axis">
-      {#each hours as hour (hour)}
-        <span style:left={at(hour)}>{localDate(hour, { hour: 'numeric' })}</span>
-      {/each}
+  <div class="track" bind:clientWidth={width}>
+    <div class="axis" aria-hidden="true">
+      {#each hours as hour (hour)}<span style:left={at(hour)}>{localDate(hour, { hour: 'numeric' })}</span>{/each}
     </div>
-
-    <div class="said">
-      {#each said as { item: piece, row, rows } (piece.span.id)}
-        <button
-          type="button"
-          class="block"
-          class:on={picked?.span === piece.span.id}
-          data-span={piece.span.id}
-          style:left={at(piece.from)}
-          style:width={wide(piece.to - piece.from)}
-          style:top="{(row / rows) * 100}%"
-          style:height="{100 / rows}%"
-          style:--tint={tintOf(piece.span.activity)}
-          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(piece.to)}"
-        >
-          {#if pixels(piece.to - piece.from) > 40}
-            <span class="name" dir="auto">{nameOf(piece.span.activity, 'No activity')}</span>
-            {#if rows === 1 && pixels(piece.to - piece.from) > 52}
-              <span class="long">{length(piece.to - piece.from)}</span>
-            {/if}
-          {/if}
-        </button>
+    <Schedule {from} {to} {now} {minutes} {width} {selected} {onselect} {onmanage} />
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="rows"
+      bind:this={rowsBox}
+      onpointerdown={down}
+      onpointermove={move}
+      onpointerup={up}
+      onpointercancel={() => {
+        pressed = null
+        dragging = false
+      }}
+    >
+      {#each rows as row (row.lane)}
+        <div class="lane" data-lane={row.lane}>
+          {#each row.bars as bar (bar.from)}
+            <span
+              class="bar"
+              style:left={at(bar.from)}
+              style:width={wide(bar.to - bar.from)}
+              style:--tint={placeTint(bar.key)}
+              title="{bar.label}, {clock(bar.from)}–{clock(bar.to)}, {length(bar.ms)}"
+              dir="auto"
+              >{#if pixels(bar.to - bar.from) >= 48}{bar.label}{/if}</span
+            >
+          {/each}
+        </div>
       {/each}
-    </div>
-
-    {#each lanes as lane (lane.lane)}
-      <div class="lane">
-        {#each lane.bands as band (`${band.key}-${band.from}`)}
+      <div class="lane active" data-lane="active">
+        {#each levels as level (level.from)}
           <span
-            class="band"
-            style:left={at(band.from)}
-            style:width={wide(band.to - band.from)}
-            style:--tint={placeTint(band.key)}
-            title="{band.label}, {clock(band.from)}–{clock(band.to)}"
-            dir="auto"
-            >{#if pixels(band.to - band.from) > 48}{band.label}{/if}</span
-          >
+            class="level"
+            style:left={at(level.from)}
+            style:width={wide(level.to - level.from)}
+            style:height="{Math.max(10, level.share * 100)}%"
+            title="{clock(level.from)}–{clock(level.to)}, {Math.round(level.share * 100)}%"
+          ></span>
         {/each}
       </div>
-    {/each}
-
-    <div class="busy">
-      {#each buckets as bucket (bucket.from)}
-        {#if bucket.seen > 0}
-          <span
-            class:away={bucket.away > bucket.active}
-            style:left={at(bucket.from)}
-            style:width={wide(SNAP)}
-            style:height="{Math.max(8, Math.min(1, bucket.active / bucket.seen) * 100)}%"
-          ></span>
-        {/if}
-      {/each}
+      {#if range}
+        <span
+          class="range"
+          style:left={at(Math.max(from, range.from))}
+          style:width={wide(Math.min(to, range.to) - Math.max(from, range.from))}
+        ></span>
+      {/if}
     </div>
-
-    {#each hours as hour (hour)}
-      <span class="tick" style:left={at(hour)}></span>
-    {/each}
-
-    {#if nowShown}
-      <span class="now" style:left={at(now)}></span>
-    {/if}
-
-    {#if picked}
-      <span
-        class="picked"
-        style:left={at(Math.max(from, picked.from))}
-        style:width={wide(Math.min(to, picked.to) - Math.max(from, picked.from))}
-      ></span>
-    {/if}
+    {#each hours as hour (hour)}<span class="tick" style:left={at(hour)}></span>{/each}
+    {#if nowShown}<span class="now" style:left={at(now)}></span>{/if}
   </div>
 </div>
 
 <style>
   .day {
-    --said: 52px;
-    --lane: 24px;
-    --busy: 34px;
     --axis: 18px;
+    --schedule: 56px;
+    --lane: 22px;
+    --active: 26px;
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     column-gap: var(--space-3);
     user-select: none;
     -webkit-user-select: none;
@@ -223,7 +162,6 @@
     gap: 4px;
     color: var(--muted);
     font-size: var(--text-xs);
-    text-align: end;
   }
   .labels span {
     display: flex;
@@ -234,16 +172,14 @@
   .labels .axis {
     height: var(--axis);
   }
-  .said-label {
-    height: var(--said);
-    color: var(--text-strong);
-    font-weight: var(--weight-strong);
+  .schedule-label {
+    height: var(--schedule);
   }
   .lane-label {
     height: var(--lane);
   }
-  .busy-label {
-    height: var(--busy);
+  .active-label {
+    height: var(--active);
   }
   .track {
     position: relative;
@@ -251,99 +187,63 @@
     flex-direction: column;
     gap: 4px;
     min-width: 0;
-    cursor: crosshair;
-    touch-action: pan-y;
   }
-  .track > .axis {
+  .axis {
     position: relative;
     height: var(--axis);
     color: var(--muted);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-  .track > .axis span {
+  .axis span {
     position: absolute;
     translate: -50% 0;
     white-space: nowrap;
   }
-  .said,
-  .lane,
-  .busy {
+  .rows {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: crosshair;
+    touch-action: pan-y;
+  }
+  .lane {
+    position: relative;
+    height: var(--lane);
+    overflow: hidden;
     border-radius: var(--radius-sm);
     background: var(--surface-2);
   }
-  .said {
-    height: var(--said);
-  }
-  .lane {
-    height: var(--lane);
-    overflow: hidden;
-  }
-  .busy {
-    height: var(--busy);
-    overflow: hidden;
-  }
-  .block {
+  .bar {
     position: absolute;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 3px;
-    padding: 0 var(--space-2);
-    overflow: hidden;
-    border: 2px solid transparent;
-    border-radius: calc(var(--radius-sm) + 2px);
-    background: var(--tint) padding-box;
-    color: var(--accent-ink);
-    font: inherit;
-    font-size: var(--text-xs);
-    text-align: start;
-    cursor: pointer;
-  }
-  .block.on {
-    outline: 2px solid var(--text-strong);
-    outline-offset: 1px;
-  }
-  .block .name {
-    overflow: hidden;
-    font-weight: var(--weight-strong);
-    text-align: -webkit-match-parent;
-    text-align: match-parent;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .block .long {
-    opacity: 0.85;
-    font-variant-numeric: tabular-nums;
-  }
-  .band {
-    position: absolute;
-    top: 2px;
-    bottom: 2px;
+    top: 0;
+    bottom: 0;
     padding: 0 var(--space-1);
     overflow: hidden;
-    border-radius: 3px;
-    background: color-mix(in srgb, var(--tint) 30%, transparent);
-    box-shadow: inset 2px 0 0 var(--tint);
+    background: color-mix(in srgb, var(--tint) 55%, var(--surface));
     color: var(--text-strong);
-    font-size: 11px;
-    line-height: 18px;
-    text-align: -webkit-match-parent;
-    text-align: match-parent;
+    font-size: var(--text-xs);
+    line-height: var(--lane);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .busy span {
+  .active {
+    height: var(--active);
+  }
+  .level {
     position: absolute;
     bottom: 0;
     background: var(--accent);
-    opacity: 0.55;
+    opacity: 0.75;
   }
-  .busy span.away {
-    background: repeating-linear-gradient(135deg, var(--muted) 0 2px, transparent 2px 4px);
-    opacity: 0.8;
+  .range {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-inline: 1px solid var(--accent);
+    background: var(--accent-soft);
+    pointer-events: none;
   }
   .tick {
     position: absolute;
@@ -356,19 +256,17 @@
   }
   .now {
     position: absolute;
-    top: calc(var(--axis) - 2px);
+    top: var(--axis);
     bottom: 0;
     width: 2px;
-    margin-inline-start: -1px;
+    translate: -1px 0;
     background: var(--danger);
     pointer-events: none;
   }
-  .picked {
-    position: absolute;
-    top: var(--axis);
-    bottom: 0;
-    border-inline: 1px solid var(--accent);
-    background: color-mix(in srgb, var(--accent) 14%, transparent);
-    pointer-events: none;
+  @media (forced-colors: active) {
+    .bar,
+    .level {
+      forced-color-adjust: none;
+    }
   }
 </style>

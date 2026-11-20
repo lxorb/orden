@@ -1,36 +1,37 @@
 <script lang="ts">
   import { localDate, midnightOf } from '../../platform/src/api'
-  import { daysAfter, HOUR, MINUTE, piecesIn, wholeOf } from './days'
-  import { activeIn, bucketsOf, hoursShown, stacked } from './lanes'
+  import ActivityMark from './ActivityMark.svelte'
+  import { isOwn } from './counted'
+  import { daysAfter, HOUR, piecesIn } from './days'
+  import { activeIn, hoursShown, stacked } from './lanes'
   import { clock, length, nameOf, tintOf } from './look'
   import type { Minute } from './minutes'
-  import type { Span } from './records'
+  import { dayTotals } from './schedule'
+  import { time } from './time.svelte'
 
   const {
     from,
-    said,
     minutes,
     now,
     onpick,
   }: {
     from: number
-    said: readonly Span[]
     minutes: readonly Minute[]
     now: number
     onpick: (day: number, span: string | null) => void
   } = $props()
   const PER_HOUR = 44
   const days = $derived(Array.from({ length: 7 }, (_, index) => daysAfter(from, index)))
+  const own = $derived(time.spans.filter(isOwn))
   const bounds = $derived.by((): [number, number] => {
     const times = [
-      ...piecesIn(said, from, daysAfter(from, 7), now).flatMap((one) => [
+      ...piecesIn(own, from, daysAfter(from, 7), now).flatMap((one) => [
         one.from - midnightOf(one.from),
         one.to - midnightOf(Math.max(one.from, one.to - 1)),
       ]),
       ...minutes.map((one) => one.at - midnightOf(one.at)),
     ]
-    const [start, end] = hoursShown(0, 24 * HOUR, times)
-    return [start, end]
+    return hoursShown(0, 24 * HOUR, times)
   })
   const span = $derived(bounds[1] - bounds[0])
   const top = (day: number, at: number) => `${((at - day - bounds[0]) / span) * 100}%`
@@ -42,19 +43,28 @@
   })
   const columns = $derived(
     days.map((day) => {
-      const shownFrom = day + bounds[0]
-      const shownTo = day + bounds[1]
-      const pieces = stacked(piecesIn(said, shownFrom, shownTo, now))
+      const totals = dayTotals(time.spans, day, now)
       return {
         day,
-        pieces,
-        whole: wholeOf(piecesIn(said, day, daysAfter(day, 1), now)),
+        pieces: stacked(piecesIn(own, day + bounds[0], day + bounds[1], now)),
+        whole: totals.ms,
+        totals,
         active: activeIn(minutes, day, daysAfter(day, 1)),
-        buckets: bucketsOf(minutes, shownFrom, shownTo, 15 * MINUTE),
-        nowShown: shownFrom <= now && now <= shownTo,
+        nowShown: day + bounds[0] <= now && now <= day + bounds[1],
       }
     }),
   )
+  const week = $derived.by(() => {
+    const out: { activity: string | null; ms: number }[] = []
+    for (const column of columns) {
+      for (const slice of column.totals.slices) {
+        const held = out.find((one) => one.activity === slice.activity)
+        if (held) held.ms += slice.ms
+        else out.push({ ...slice })
+      }
+    }
+    return out.sort((one, other) => other.ms - one.ms)
+  })
 </script>
 
 <div class="week" style:--rows={span / HOUR} style:--per-hour="{PER_HOUR}px" dir="ltr">
@@ -64,17 +74,18 @@
       type="button"
       class="head"
       class:today={column.day === midnightOf(now)}
+      data-day={column.day}
       onclick={() => onpick(column.day, null)}
     >
       <span class="name">{localDate(column.day, { weekday: 'short', day: 'numeric' })}</span>
       <span class="total">{column.whole ? length(column.whole) : ''}</span>
-      <span class="total active" title="Active">{column.active ? length(column.active) : ''}</span>
+      <span class="total active">{column.active ? `${length(column.active)} active` : ''}</span>
     </button>
   {/each}
 
   <div class="hours" aria-hidden="true">
     {#each hours as hour (hour)}
-      <span style:top="{((hour - bounds[0]) / span) * 100}%">{clock(from + hour)}</span>
+      <span style:top="{((hour - bounds[0]) / span) * 100}%">{localDate(from + hour, { hour: 'numeric' })}</span>
     {/each}
   </div>
   {#each columns as column (column.day)}
@@ -86,16 +97,6 @@
         if (event.target === event.currentTarget) onpick(column.day, null)
       }}
     >
-      {#each column.buckets as bucket (bucket.from)}
-        {#if bucket.seen > 0}
-          <span
-            class="busy"
-            style:top={top(column.day, bucket.from)}
-            style:height={tall(15 * MINUTE)}
-            style:opacity={0.15 + 0.85 * Math.min(1, bucket.active / bucket.seen)}
-          ></span>
-        {/if}
-      {/each}
       {#each column.pieces as { item: piece, row, rows } (piece.span.id)}
         <button
           type="button"
@@ -109,7 +110,11 @@
           onclick={() => onpick(column.day, piece.span.id)}
         >
           {#if (piece.to - piece.from) / HOUR >= 0.6}
-            <span class="what">{nameOf(piece.span.activity, 'No activity')}</span>
+            <span class="what"
+              ><ActivityMark activity={piece.span.activity} size={12} /><span class="name"
+                >{nameOf(piece.span.activity, 'No activity')}</span
+              ></span
+            >
             <span class="long">{length(piece.to - piece.from)}</span>
           {/if}
         </button>
@@ -121,10 +126,37 @@
   {/each}
 </div>
 
+{#if week.length}
+  <ul class="totals" data-time-week>
+    {#each week as one (one.activity)}
+      {@const goal = one.activity === null ? null : time.goalFor(one.activity, 'week')}
+      <li class="orden-row is-short">
+        <ActivityMark activity={one.activity} />
+        <span class="orden-row-label" dir="auto">{nameOf(one.activity, 'No activity')}</span>
+        {#if goal}
+          <div class="goal">
+            <div
+              class="orden-meter"
+              role="meter"
+              aria-label="Weekly goal"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={Math.round(Math.min(1, one.ms / goal.ms) * 100)}
+            >
+              <div class="orden-meter-fill" style:width="{Math.min(1, one.ms / goal.ms) * 100}%"></div>
+            </div>
+          </div>
+        {/if}
+        <span class="orden-row-meta">{length(one.ms)}{goal ? ` / ${length(goal.ms)}` : ''}</span>
+      </li>
+    {/each}
+  </ul>
+{/if}
+
 <style>
   .week {
     display: grid;
-    grid-template-columns: 4rem repeat(7, minmax(0, 1fr));
+    grid-template-columns: 3.5rem repeat(7, minmax(0, 1fr));
     grid-template-rows: auto calc(var(--rows) * var(--per-hour));
     column-gap: 4px;
     row-gap: var(--space-2);
@@ -133,7 +165,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     padding: var(--space-1) 0;
     border: none;
     border-radius: var(--radius-sm);
@@ -141,7 +173,12 @@
     color: var(--muted-strong);
     font: inherit;
     font-size: var(--text-sm);
-    cursor: pointer;
+    cursor: default;
+  }
+  @media (hover: hover) {
+    .head:hover {
+      background: var(--surface-hover);
+    }
   }
   .head.today .name {
     color: var(--accent);
@@ -149,12 +186,12 @@
   }
   .total {
     min-height: 1.2em;
-    color: var(--muted);
+    color: var(--text-strong);
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
-  .active {
-    color: var(--accent);
+  .total.active {
+    color: var(--muted);
   }
   .hours {
     position: relative;
@@ -177,43 +214,45 @@
       var(--surface-2) 0 calc(var(--per-hour) - 1px),
       var(--line) calc(var(--per-hour) - 1px) var(--per-hour)
     );
-    cursor: pointer;
   }
-  .busy {
-    position: absolute;
-    left: 0;
-    width: 4px;
-    border-radius: 2px;
-    background: var(--accent);
-    pointer-events: none;
+  .column.today {
+    box-shadow: inset 0 0 0 1px var(--accent-soft);
   }
   .block {
     position: absolute;
-    left: calc(8px + (100% - 11px) * var(--row) / var(--rows));
-    width: calc((100% - 11px) / var(--rows) - 2px);
+    left: calc(2px + (100% - 4px) * var(--row) / var(--rows));
+    width: calc((100% - 4px) / var(--rows) - 2px);
     display: flex;
     flex-direction: column;
     gap: 1px;
     min-height: 3px;
-    padding: 3px var(--space-1);
+    padding: 3px var(--space-1) 3px calc(var(--space-1) + 3px);
     overflow: hidden;
     border: none;
     border-radius: var(--radius-sm);
-    background: var(--tint);
-    color: var(--accent-ink);
+    background: color-mix(in srgb, var(--tint) 26%, var(--surface));
+    box-shadow: inset 3px 0 0 var(--tint);
+    color: var(--text-strong);
     font: inherit;
     font-size: var(--text-xs);
     text-align: start;
-    cursor: pointer;
+    cursor: default;
   }
   .what {
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
     font-weight: var(--weight-strong);
+  }
+  .name {
+    min-width: 0;
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .long {
-    opacity: 0.85;
+    color: var(--muted-strong);
     font-variant-numeric: tabular-nums;
   }
   .now {
@@ -224,5 +263,17 @@
     margin-top: -1px;
     background: var(--danger);
     pointer-events: none;
+  }
+  .totals {
+    max-width: 22rem;
+    margin: var(--space-5) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .goal {
+    flex: 0 0 6rem;
+  }
+  .orden-row-meta {
+    font-variant-numeric: tabular-nums;
   }
 </style>

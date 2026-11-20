@@ -3,27 +3,26 @@
   import { localDate, midnightOf } from '../../platform/src/api'
   import { menu, segmented } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { counted, isOwn } from './counted'
+  import Activities from './Activities.svelte'
   import DayLanes from './DayLanes.svelte'
-  import { counts, daysAfter, endOf, piecesIn, startOf, stepped } from './days'
-  import Inside from './Inside.svelte'
+  import { daysAfter, endOf, startOf } from './days'
   import { hoursShown, type Picked } from './lanes'
-  import { clock, length, nameOf, tintOf } from './look'
-  import Reports from './Reports.svelte'
-  import { unset } from './schedule'
+  import { managing } from './manage.svelte'
+  import Picker from './Picker.svelte'
+  import Side from './Side.svelte'
   import { readSpec, type View, writeSpec } from './spec'
   import './start.svelte'
   import { time } from './time.svelte'
-  import Timer from './Timer.svelte'
   import WeekGrid from './WeekGrid.svelte'
   import { ticking, watchedMinutes } from './watched.svelte'
 
   const { tab }: { tab: Tab } = $props()
+  const me = crypto.randomUUID()
   const first = untrack(() => readSpec(tab.doc))
   let view = $state<View>(first.view)
   let chosen = $state<number | null>(null)
-  let period = $state<'week' | 'month'>('week')
-  let picked = $state<Picked | null>(null)
+  let selected = $state<string | null>(null)
+  let range = $state<Picked | null>(null)
   const ticker = ticking()
   const now = $derived(ticker.now)
   const day = $derived(chosen ?? midnightOf(now))
@@ -36,110 +35,74 @@
   $effect(() => {
     void time.exchange()
   })
-  const range = $derived.by((): [number, number] => {
+  const span = $derived.by((): [number, number] => {
     if (view === 'day') return [day, daysAfter(day, 1)]
-    const unit = view === 'week' ? 'week' : period
-    const from = startOf(unit, day)
-    return [from, endOf(unit, from)]
+    const from = startOf('week', day)
+    return [from, endOf('week', from)]
   })
-  const minutes = watchedMinutes(() => range)
-  const own = $derived(counted(time.spans, time.rules))
-  const said = $derived(time.spans.filter(isOwn))
+  const minutes = watchedMinutes(() => span)
   const shown = $derived(
-    hoursShown(range[0], range[1], [
-      ...piecesIn(time.spans, range[0], range[1], now).flatMap((one) => [one.from, one.to]),
+    hoursShown(span[0], span[1], [
+      ...time.spans
+        .filter((one) => one.start < span[1] && (one.end ?? now) > span[0])
+        .flatMap((one) => [one.start, one.end ?? now]),
       ...minutes.list.map((one) => one.at),
       now,
     ]),
   )
-  const entries = $derived(
-    piecesIn(said, range[0], range[1], now)
-      .filter((one) => one.span.end === null || counts(one.to - one.from))
-      .sort((one, other) => other.from - one.from),
+  const current = $derived(view === 'day' ? day === midnightOf(now) : startOf('week', now) === span[0])
+  const titled = $derived(
+    view === 'day'
+      ? localDate(day, { weekday: 'long', day: 'numeric', month: 'long' })
+      : `${localDate(span[0], { day: 'numeric', month: 'short' })} – ${localDate(daysAfter(span[1], -1), { day: 'numeric', month: 'short', year: 'numeric' })}`,
   )
-  const loose = $derived(view === 'day' ? unset(time.spans, minutes.list, ...range, now) : [])
-  const current = $derived(
-    view === 'day' ? day === midnightOf(now) : startOf(view === 'week' ? 'week' : period, now) === range[0],
-  )
-  const titled = $derived.by(() => {
-    if (view === 'day') return localDate(day, { weekday: 'long', day: 'numeric', month: 'long' })
-    if (view === 'reports' && period === 'month') return localDate(range[0], { month: 'long', year: 'numeric' })
-    return `${localDate(range[0], { day: 'numeric', month: 'short' })} – ${localDate(daysAfter(range[1], -1), { day: 'numeric', month: 'short', year: 'numeric' })}`
-  })
+  const manage = () => managing.open(me)
   function choose(one: number) {
     chosen = one === midnightOf(now) ? null : one
+    selected = null
+    range = null
   }
   function step(by: number) {
-    picked = null
-    if (view === 'day') choose(daysAfter(day, by))
-    else if (view === 'week' || period === 'week') choose(daysAfter(startOf('week', day), 7 * by))
-    else choose(stepped('month', startOf('month', day), by))
-  }
-  function toDay(one: number) {
-    choose(one)
-    view = 'day'
-    picked = null
+    choose(view === 'day' ? daysAfter(day, by) : daysAfter(startOf('week', day), 7 * by))
   }
   function showMenu(event: MouseEvent) {
     void import('./menu').then(({ trackingMenu }) => menu.show(event, trackingMenu(), { title: 'Time tracker' }))
   }
-  const VIEWS = $derived([
+  const VIEWS = [
     ['day', 'Day'],
     ['week', 'Week'],
-    ['reports', 'Reports'],
-  ] as const)
+  ] as const
 </script>
 
 <div class="tab">
   <div class="head">
-    <div class="timer"><Timer {now} wide /></div>
+    <Picker {now} wide onmanage={manage} />
   </div>
 
   <div class="bar">
     <div class="orden-segmented" role="radiogroup" aria-label="Time tracker" use:segmented>
       {#each VIEWS as [id, label] (id)}
-        <button
-          type="button"
-          role="radio"
-          aria-checked={view === id}
-          class:on={view === id}
-          onclick={() => {
-            view = id
-            picked = null
-          }}>{label}</button
+        <button type="button" role="radio" aria-checked={view === id} class:on={view === id} onclick={() => (view = id)}
+          >{label}</button
         >
       {/each}
     </div>
-    {#if view === 'reports'}
-      <div class="orden-segmented" role="radiogroup" aria-label="Reports" use:segmented>
-        {#each [['week', 'Week'], ['month', 'Month']] as const as [id, label] (id)}
-          <button
-            type="button"
-            role="radio"
-            aria-checked={period === id}
-            class:on={period === id}
-            onclick={() => (period = id)}>{label}</button
-          >
-        {/each}
-      </div>
-    {/if}
     <div class="moving">
-      <button type="button" class="orden-chip" aria-label="Previous" onclick={() => step(-1)}>‹</button>
+      <button type="button" class="orden-chip is-quiet" aria-label="Previous" onclick={() => step(-1)}>‹</button>
       <span class="title">{titled}</span>
-      <button type="button" class="orden-chip" aria-label="Next" onclick={() => step(1)}>›</button>
+      <button type="button" class="orden-chip is-quiet" aria-label="Next" onclick={() => step(1)}>›</button>
       {#if !current}
-        <button
-          type="button"
-          class="orden-chip"
-          onclick={() => {
-            chosen = null
-            picked = null
-          }}>Today</button
-        >
+        <button type="button" class="orden-chip" onclick={() => choose(midnightOf(now))}>Today</button>
       {/if}
     </div>
-    <button type="button" class="orden-chip more" aria-label="More" title="More" aria-haspopup="menu" onclick={showMenu}
-      >⋯</button
+    <button type="button" class="orden-chip" onclick={manage}>Activities</button>
+    <button
+      type="button"
+      class="orden-chip is-quiet"
+      aria-label="More"
+      title="More"
+      aria-haspopup="menu"
+      onclick={showMenu}>⋯</button
     >
   </div>
 
@@ -150,85 +113,49 @@
           <DayLanes
             from={shown[0]}
             to={shown[1]}
-            spans={time.spans}
-            own={said}
             minutes={minutes.list}
             {now}
-            {picked}
-            onpick={(next: Picked | null) => (picked = next)}
+            {selected}
+            {range}
+            onselect={(id: string | null) => {
+              selected = id
+              range = null
+            }}
+            onrange={(next: Picked | null) => {
+              range = next
+              selected = null
+            }}
+            onmanage={manage}
           />
-          <p class="hint">Drag across the day to see what happened in that time.</p>
-          {#if entries.length}
-            <ul class="entries">
-              {#each entries as piece (piece.span.id)}
-                <li>
-                  <button
-                    type="button"
-                    class="orden-row"
-                    class:is-on={picked?.span === piece.span.id}
-                    onclick={() =>
-                      (picked = {
-                        from: piece.span.start,
-                        to: piece.span.end ?? now,
-                        span: piece.span.id,
-                      })}
-                  >
-                    <span class="dot" style:background={tintOf(piece.span.activity)}></span>
-                    <span class="orden-row-label named"
-                      ><span class="name" dir="auto">{nameOf(piece.span.activity, 'No activity')}</span
-                      >{#if piece.span.note}<span class="note" dir="auto">{piece.span.note}</span>{/if}</span
-                    >
-                    <span class="orden-row-meta clock"
-                      >{clock(piece.span.start)}–{piece.span.end === null ? '' : clock(piece.span.end)}</span
-                    >
-                    <span class="orden-row-meta long">{length(piece.to - piece.from)}</span>
-                  </button>
-                </li>
-              {/each}
-            </ul>
-          {/if}
         </div>
         <aside class="side">
-          {#if picked}
-            <Inside
-              {picked}
-              onpick={(next: Picked | null) => (picked = next)}
-              spans={time.spans}
-              minutes={minutes.list}
-              {now}
-              {loose}
-            />
-          {:else}
-            <Inside
-              picked={{ from: range[0], to: range[1], span: null }}
-              title={localDate(day, { weekday: 'short', day: 'numeric', month: 'short' })}
-              spans={time.spans}
-              minutes={minutes.list}
-              {now}
-              {loose}
-              whole
-              onpick={(next: Picked | null) => (picked = next)}
-            />
-          {/if}
+          <Side
+            {day}
+            {now}
+            minutes={minutes.list}
+            {selected}
+            {range}
+            onselect={(id: string | null) => (selected = id)}
+            onmanage={manage}
+          />
         </aside>
       </div>
-    {:else if view === 'week'}
+    {:else}
       <WeekGrid
-        from={range[0]}
-        {said}
+        from={span[0]}
         minutes={minutes.list}
         {now}
-        onpick={(one: number, span: string | null) => {
-          toDay(one)
-          const entry = span ? time.span(span) : null
-          if (entry) picked = { from: entry.start, to: entry.end ?? now, span: entry.id }
+        onpick={(one: number, id: string | null) => {
+          choose(one)
+          view = 'day'
+          selected = id
         }}
       />
-    {:else}
-      <Reports from={range[0]} to={range[1]} spans={time.spans} {own} minutes={minutes.list} {now} onday={toDay} />
     {/if}
   </div>
 </div>
+
+<Activities open={managing.by === me} onclose={() => managing.close()} />
 
 <style>
   .tab {
@@ -279,52 +206,14 @@
   }
   .day {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 18rem;
+    grid-template-columns: minmax(0, 1fr) 17rem;
     gap: var(--space-5);
     align-items: start;
   }
-  .hint {
-    margin: var(--space-3) 0 0;
-    color: var(--muted);
-    font-size: var(--text-sm);
-  }
-  .entries {
-    margin: var(--space-3) 0 0;
-    padding: 0;
-    list-style: none;
-  }
-  .dot {
-    flex: none;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
-  .named {
-    display: flex;
-    gap: var(--space-2);
-  }
-  .named > * {
-    min-width: 0;
-    overflow: hidden;
-    text-align: -webkit-match-parent;
-    text-align: match-parent;
-    text-overflow: ellipsis;
-  }
-  .note {
-    color: var(--muted);
-  }
-  .clock,
-  .long {
-    font-variant-numeric: tabular-nums;
-  }
-  .long {
-    flex: 0 0 4.5rem;
-    text-align: end;
-  }
   .side {
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-2);
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+    background: color-mix(in srgb, var(--surface-2) 50%, transparent);
   }
   @container (max-width: 760px) {
     .day {
@@ -338,6 +227,14 @@
     .bar,
     .body {
       padding-inline: var(--space-3);
+    }
+  }
+  @container (max-width: 480px) {
+    .lanes {
+      overflow-x: auto;
+    }
+    .lanes > :global(.day) {
+      min-width: 36rem;
     }
   }
 </style>

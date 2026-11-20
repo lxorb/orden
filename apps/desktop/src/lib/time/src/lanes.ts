@@ -6,31 +6,6 @@ import { type Lane, LANES, type Span } from './records'
 export interface Picked {
   from: number
   to: number
-  span: string | null
-}
-export interface Band {
-  key: string
-  label: string
-  from: number
-  to: number
-}
-const JOINED = 2 * MINUTE
-export function bandsOf(spans: readonly Span[], lane: Lane, from: number, to: number, now: number): Band[] {
-  const out: Band[] = []
-  const lastOf = new Map<string, Band>()
-  const mine = (span: Span) => span.source === lane && span.place !== null
-  for (const piece of piecesIn(spans, from, to, now, mine)) {
-    const key = piece.span.place ?? ''
-    const last = lastOf.get(key)
-    if (last && piece.from - last.to <= JOINED && piece.from >= last.from) {
-      last.to = Math.max(last.to, piece.to)
-      continue
-    }
-    const band = { key, label: piece.span.label ?? key, from: piece.from, to: piece.to }
-    out.push(band)
-    lastOf.set(key, band)
-  }
-  return out.sort((one, other) => one.from - other.from)
 }
 export const activeIn = (minutes: readonly Minute[], from: number, to: number): number =>
   minutes.reduce((sum, one) => (one.at >= from && one.at < to ? sum + one.active * 1000 : sum), 0)
@@ -61,40 +36,6 @@ export function within(
     watched: inside.length * MINUTE,
     places,
   }
-}
-export function madeOf(
-  spans: readonly Span[],
-  activity: string | null,
-  lane: Lane,
-  from: number,
-  to: number,
-  now: number,
-): Place[] {
-  const said = piecesIn(spans, from, to, now, (span) => isOwn(span) && span.activity === activity)
-  const seen = (span: Span) => span.source === lane
-  const pieces = said.flatMap((one) => piecesIn(spans, one.from, one.to, now, seen))
-  return placesOf(pieces, lane)
-}
-export interface Bucket {
-  from: number
-  seen: number
-  active: number
-  away: number
-}
-export function bucketsOf(minutes: readonly Minute[], from: number, to: number, size: number): Bucket[] {
-  const count = Math.max(1, Math.ceil((to - from) / size))
-  const held: Minute[][] = Array.from({ length: count }, () => [])
-  for (const minute of minutes) {
-    if (minute.at < from || minute.at >= to) continue
-    held[Math.floor((minute.at - from) / size)]?.push(minute)
-  }
-  const span = size / MINUTE
-  return held.map((inside, index) => ({
-    from: from + index * size,
-    seen: inside.length / span,
-    active: inside.reduce((sum, one) => sum + one.active, 0) / 60 / span,
-    away: inside.filter((one) => one.locked === true || one.lid === false).length / span,
-  }))
 }
 export function hoursShown(
   from: number,
