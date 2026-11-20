@@ -2,7 +2,7 @@
   import { untrack } from 'svelte'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import { Icon } from '../../../glyphs/src/api'
-  import { nameOf } from '../../../platform/src/api'
+  import { nameOf, shownName } from '../../../platform/src/api'
   import { deviceCan, deviceName, protection } from '../../../protect/src/api'
   import { openedWithin, unlockAt, unlockByDevice } from './unlocking'
 
@@ -45,7 +45,7 @@
 
 <div class="locked" data-region="editor" role="group" aria-label="Protected">
   <span class="mark" aria-hidden="true"><Icon icon={null} fallback={Lock} /></span>
-  <p class="name">{nameOf(path)}</p>
+  <p class="name">{shownName(nameOf(path))}</p>
   {#if device}
     <button class="orden-button" class:is-quiet={password} disabled={busy} onclick={byDevice}>
       Use {deviceName()}

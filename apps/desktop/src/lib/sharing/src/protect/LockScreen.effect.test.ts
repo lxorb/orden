@@ -36,7 +36,7 @@ async function typeAndUnlock(password: string) {
 describe('the lock screen', () => {
   test('shows the name and says it is not encryption, never the words', () => {
     expect(lockedAt(NOTE)).toBe(true)
-    expect(target.textContent).toContain('Plans.md')
+    expect(target.querySelector('.name')?.textContent).toBe('Plans')
     expect(target.textContent).toContain('not encrypted')
   })
   test('stays shut for a wrong password, and says so', async () => {
@@ -52,4 +52,13 @@ describe('the lock screen', () => {
     await vi.waitFor(() => expect(lockedAt(NOTE)).toBe(false))
     expect(lockedAt(`${ROOT}/Inside/Other.md`)).toBe(false)
   })
+})
+test('a board under the lock is named without its ending too', () => {
+  const board = document.createElement('div')
+  document.body.append(board)
+  const drawn = mount(LockScreen, { target: board, props: { path: `${ROOT}/Inside/Board.canvas` }, intro: false })
+  flushSync()
+  expect(board.querySelector('.name')?.textContent).toBe('Board')
+  void unmount(drawn)
+  board.remove()
 })
