@@ -1,8 +1,8 @@
 import { account } from '../../accounts/src/api'
-import { identifier, samePath, invoke, windows, within } from '../../platform/src/api'
+import { identifier, isNative, samePath, invoke, windows, within } from '../../platform/src/api'
 import { forgetHome, homeOf, leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
 import type { Space } from './workspace.svelte'
-import { firstShown, type HoldsSpaces, selectSpace, tabSets } from './spaces'
+import { firstShown, type HoldsSpaces, sameName, selectSpace, tabSets } from './spaces'
 import { services } from './services'
 
 export async function adoptSpace(ws: HoldsSpaces, name: string, fresh = false, home?: string): Promise<string | null> {
@@ -15,13 +15,21 @@ export async function adoptSpace(ws: HoldsSpaces, name: string, fresh = false, h
     }).catch(() => null))
   if (!created) return null
   if (!ws.spaces.some((space) => samePath(space.root, created.path))) {
-    const space: Space = { id: identifier(), name: created.name, root: created.path }
+    const asked = name.trim()
+    const shown = !sameName(created.name, asked) && (await heldByAnother(asked)) ? asked : created.name
+    const space: Space = { id: identifier(), name: shown, root: created.path }
     ws.spaces = [...ws.spaces, space]
     windows.say('spaces-again')
     if (ws.activeSpaceId) ws.persist()
     else await selectSpace(ws, space.id)
   }
   return created.path
+}
+async function heldByAnother(name: string): Promise<boolean> {
+  const who = account.user?.id ?? null
+  if (isNative || who === null) return false
+  const listed = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => null)
+  return listed?.some((one) => sameName(one.name, name) && leftByAnother(one.path, who)) ?? false
 }
 async function keptFolder(name: string, home?: string): Promise<{ name: string; path: string } | null> {
   const listed = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => null)

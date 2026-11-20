@@ -43,8 +43,17 @@ export async function loadSpaces(ws: HoldsSpaces) {
   }
   if (!found) return
   const who = account.user?.id ?? null
+  let named = (entry: { name: string; path: string }) => entry.name
   if (!isNative && who !== null) {
-    const { leftByAnother } = await import('../../left-spaces/src/api')
+    const { homeOf, leftByAnother } = await import('../../left-spaces/src/api')
+    const all = found
+    named = (entry) => {
+      const home = homeOf(entry.path, who)
+      const theirs = home === null ? undefined : account.spaces.find((one) => one.id === home)
+      if (!theirs || theirs.name === entry.name) return entry.name
+      const held = all.some((one) => sameName(one.name, theirs.name) && leftByAnother(one.path, who))
+      return held ? theirs.name : entry.name
+    }
     found = found.filter((one) => !leftByAnother(one.path, who))
   }
   const had = new Set(before.map((space) => space.root))
@@ -62,10 +71,12 @@ export async function loadSpaces(ws: HoldsSpaces) {
   ws.spaces = found
     .map((entry, index) => ({ entry, index }))
     .sort((a, b) => at(a.entry.path) - at(b.entry.path) || a.index - b.index)
-    .map(
-      ({ entry }) =>
-        byRoot.get(entry.path) ?? { id: ws.formerId(entry.path) ?? identifier(), name: entry.name, root: entry.path },
-    )
+    .map(({ entry }) => {
+      const name = named(entry)
+      const kept = byRoot.get(entry.path)
+      if (!kept) return { id: ws.formerId(entry.path) ?? identifier(), name, root: entry.path }
+      return kept.name === name ? kept : { ...kept, name }
+    })
   const gone = ws.activeSpaceId
   const open = ws.spaces.find((space) => space.id === gone)
   if (open) {
@@ -81,6 +92,7 @@ export async function loadSpaces(ws: HoldsSpaces) {
   await sets.toSpace(next)
   await sets.gone(gone)
 }
+export const sameName = (one: string, other: string): boolean => one.toLowerCase() === other.toLowerCase()
 export const firstShown = (ws: HoldsSpaces): string | null =>
   (ws.spaces.find((one) => !ws.archivedSpaces.has(one.root)) ?? ws.spaces[0])?.id ?? null
 export function moveSpace(ws: HoldsSpaces, id: string, beforeId: string | null): boolean {
