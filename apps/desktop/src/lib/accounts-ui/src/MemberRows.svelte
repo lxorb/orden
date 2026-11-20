@@ -113,7 +113,7 @@
 
   {#if titled}<h3>Who has access</h3>{/if}
 
-  <div class="row person" class:orden-setting={!titled}>
+  <div class="row person" class:orden-setting={!titled} class:setting={!titled}>
     {@render face(faceOf(who.owner, called(who.owner)), pressFor(who.owner))}
     <span class="name">
       <span class="named"
@@ -129,6 +129,7 @@
     <div
       class="row person"
       class:orden-setting={!titled}
+      class:setting={!titled}
       class:waiting={store.waiting(whoIs(person))}
       transition:fade={{ duration: dur(130) }}
     >
@@ -159,7 +160,7 @@
     font-size: var(--text-xs);
     color: var(--muted);
   }
-  .person {
+  .person:not(.setting) {
     padding: var(--space-1) 0;
   }
   .worn {
