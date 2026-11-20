@@ -2,13 +2,15 @@
   import { cubicOut } from 'svelte/easing'
   import { account } from '../../accounts/src/api'
   import { joining } from './joining.svelte'
-  import { dur, fade, LAYER, scale } from '../../platform/src/api'
+  import { dur, fade, LAYER, scale, shownName } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
   import { trap } from '../../ui-controls/src/api'
 
   const invitation = $derived(joining.invitation)
   const who = $derived(invitation?.from ?? 'Somebody')
-  const shared = $derived(invitation ? `${who} shared ${invitation.note ?? invitation.space} with you` : null)
+  const shared = $derived(
+    invitation ? `${who} shared ${invitation.note ? shownName(invitation.note) : invitation.space} with you` : null,
+  )
   function close() {
     if (joining.step === 'waiting' || joining.step === 'asking') joining.close()
     else joining.dismiss()

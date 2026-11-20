@@ -5,7 +5,7 @@ const store = vi.hoisted(() => ({
   step: null as string | null,
   shown: true,
   aside: false,
-  invitation: { from: 'Emil', space: 'Plans', note: null },
+  invitation: { from: 'Emil', space: 'Plans', note: null as string | null },
   told: '',
   busy: false,
   error: null,
@@ -26,6 +26,7 @@ beforeEach(() => {
   for (const one of [store.close, store.cancel, store.dismiss, store.reopen]) one.mockClear()
   store.shown = true
   store.aside = false
+  store.invitation.note = null
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -85,4 +86,9 @@ test('a wait put aside says so at the foot of the window, and opens again', () =
   draw(JoinPending, 'waiting')
   button('Waiting for Emil').click()
   expect(store.reopen).toHaveBeenCalledOnce()
+})
+test('names a file shared on its own without the ending Orden keeps it under', () => {
+  store.invitation.note = 'Board.canvas'
+  draw(JoinSheet, 'asking')
+  expect(target.querySelector('.shared')?.textContent).toBe('Emil shared Board with you')
 })
