@@ -1,6 +1,6 @@
 import { freeName as freeWhole, freePath } from '@orden/markdown/paths'
 import { type ItemMeta, patched, sameMeta } from './meta'
-import { type EntryKind, heldName, LONGEST_NAME, type Op, type OpResult, shortened } from './wire'
+import { type EntryKind, heldName, LONGEST_NAME, type MkdirOp, type Op, type OpResult, shortened } from './wire'
 
 export interface TreeEntry {
   id: string
@@ -91,6 +91,30 @@ function holdsName(state: TreeState, parent: string | null, key: string, except:
     else if (entry.id !== except) return true
   }
   return false
+}
+function folderNamed(state: TreeState, parent: string | null, key: string): TreeEntry | undefined {
+  for (const entry of names(state).byPlace.get(parent)?.get(key) ?? []) {
+    const there =
+      state.entries.get(entry.id) === entry && !entry.deleted && entry.parent === parent && nameKey(entry.name) === key
+    if (there && entry.kind === 'folder') return entry
+  }
+  return undefined
+}
+const aliasesOf = new WeakMap<TreeState, Map<string, string>>()
+function aliased(state: TreeState, op: Op): Op {
+  const aliases = aliasesOf.get(state)
+  if (!aliases) return op
+  const to = (id: string) => (state.entries.has(id) ? id : (aliases.get(id) ?? id))
+  const into = (parent: string | null) => (parent === null ? null : to(parent))
+  if (op.t === 'mkdir' || op.t === 'create') return { ...op, parent: into(op.parent) }
+  if (op.t === 'move') return { ...op, id: to(op.id), parent: into(op.parent) }
+  return { ...op, id: to(op.id) }
+}
+function alias(state: TreeState, op: Op, result: OpResult) {
+  if (op.t !== 'mkdir' || !('merged' in result)) return
+  const aliases = aliasesOf.get(state) ?? new Map<string, string>()
+  aliasesOf.set(state, aliases)
+  aliases.set(op.id, result.merged)
 }
 function freeName(state: TreeState, parent: string | null, wanted: string, kind: EntryKind, except: string): string {
   const free = (candidate: string) => !holdsName(state, parent, nameKey(candidate), except)
@@ -238,6 +262,11 @@ class Rules {
     }
     return null
   }
+  joined(op: MkdirOp): OpResult | null {
+    if (!op.mergeable || this.state.entries.has(op.id)) return null
+    const folder = folderNamed(this.state, op.parent, nameKey(heldName(op.name)))
+    return folder ? { op: op.op, merged: folder.id } : null
+  }
   target(op: Op & { id: string }): TreeEntry | OpResult {
     const entry = this.state.entries.get(op.id)
     if (!entry) return { op: op.op, refused: 'gone' }
@@ -364,7 +393,7 @@ class Rules {
   applied(op: Op): OpResult {
     switch (op.t) {
       case 'mkdir':
-        return this.made(op, op.id, 'folder', op.parent, op.name, op.pos)
+        return this.joined(op) ?? this.made(op, op.id, 'folder', op.parent, op.name, op.pos)
       case 'create':
         return this.merged(op) ?? this.made(op, op.id, op.kind, op.parent, op.name, op.pos)
       case 'rename':
@@ -387,10 +416,16 @@ function isEntry(value: TreeEntry | OpResult): value is TreeEntry {
 }
 export function applyOp(state: TreeState, op: Op, context: OpContext): OpResult {
   const before = state.done.get(op.op)
-  if (before) return before
+  if (before) {
+    alias(state, op, before)
+    return before
+  }
   const result: OpResult =
-    context.role === 'read' ? { op: op.op, refused: 'role' } : new Rules(state, context.device).applied(op)
+    context.role === 'read'
+      ? { op: op.op, refused: 'role' }
+      : new Rules(state, context.device).applied(aliased(state, op))
   state.done.set(op.op, result)
+  alias(state, op, result)
   return result
 }
 export function contentChanged(state: TreeState, id: string, device?: string): number {
