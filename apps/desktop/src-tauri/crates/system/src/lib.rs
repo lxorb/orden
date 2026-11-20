@@ -25,3 +25,5 @@ pub mod system_update;
 pub mod time_sense;
 pub mod touchpad;
 pub mod updates;
+#[cfg(any(windows, test))]
+mod win_apps;
