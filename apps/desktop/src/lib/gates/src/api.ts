@@ -1,6 +1,4 @@
 export {
-  APPS_WORD,
-  appsOn,
   BASES_WORD,
   basesOn,
   CHATS_WORD,

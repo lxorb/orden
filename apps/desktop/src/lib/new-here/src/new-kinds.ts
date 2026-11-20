@@ -124,16 +124,6 @@ const ROWS: Record<KindName, () => NewKindRow> = {
   terminal: () => terminalRow(),
   remote: () => remoteRow(),
   online: () => onlineRow(),
-  application: () => ({
-    kind: 'application',
-    line: 'apps',
-    label: () => kindLabel('application'),
-    mark: 'application',
-    letter: 'a',
-    make: (paneId) => {
-      if (!__EVEN_PLUGIN__) inPane(paneId, () => tabKindLoaded('application').then((one) => one.make?.()))
-    },
-  }),
   web: () => ({
     kind: 'web',
     line: 'browser',

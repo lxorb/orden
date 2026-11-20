@@ -77,7 +77,6 @@ export const TAB_KINDS = {
   view: { ...PLAIN, mark: 'base', fileDocument: false },
   chat: { ...PLAIN, glyph: 'ask', takesDrops: true, asksToMove: true },
   channel: { ...PLAIN, mark: 'chat', takesDrops: true, fileDocument: false },
-  application: { ...PLAIN, mark: 'application', preview: 'picture' },
   explorer: { ...PLAIN, ...APART, mark: 'folder' },
   pass: { ...PLAIN, ...APART, mark: 'key', preview: 'mark', single: true },
   time: { ...PLAIN, ...APART, mark: 'time', single: true },

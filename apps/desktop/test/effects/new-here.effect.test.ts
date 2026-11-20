@@ -2,7 +2,7 @@ import { providePort } from '@orden/contracts'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { NewHere } from '../../src/lib/new-here/src/api'
-import { APPS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } from '../../src/lib/gates/src/api'
+import { EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } from '../../src/lib/gates/src/api'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 import { workspace } from '../../src/lib/workspace/src/api'
 
@@ -33,7 +33,7 @@ let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
-  hiddenKinds.hidden = [EXPERIMENTAL_WORD, APPS_WORD, PASS_WORD]
+  hiddenKinds.hidden = [EXPERIMENTAL_WORD, PASS_WORD]
   target = document.createElement('div')
   target.dataset.pane = workspace.panes.focusedId
   document.body.append(target)
@@ -84,7 +84,6 @@ test('offers every kind a new tab can be, in the lines Emil gave them', () => {
     'New AI chat',
     'Online terminal',
     'New web note',
-    'New application',
     'Pass',
   ])
   expect([...target.querySelectorAll('.line')].map(names)).toEqual([
@@ -92,7 +91,7 @@ test('offers every kind a new tab can be, in the lines Emil gave them', () => {
     ['New AI chat'],
     ['Online terminal'],
     ['New web note'],
-    ['New application', 'Pass'],
+    ['Pass'],
   ])
 })
 test('folds each group into one card where the lines do not fit, a lone kind staying itself', async () => {
@@ -103,7 +102,7 @@ test('folds each group into one card where the lines do not fit, a lone kind sta
   vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(120)
   here()
   flushSync()
-  expect(names(target)).toEqual(['Notes', 'New AI chat', 'Online terminal', 'New web note', 'Apps'])
+  expect(names(target)).toEqual(['Notes', 'New AI chat', 'Online terminal', 'New web note', 'Pass'])
   const notes = target.querySelector<HTMLElement>('[data-group="notes"]')
   expect(notes?.getAttribute('aria-haspopup')).toBe('menu')
   expect(notes?.querySelector('kbd')).toBeNull()
@@ -121,26 +120,8 @@ test('folds each group into one card where the lines do not fit, a lone kind sta
 test('each wearing its letter, which a screen reader is told as its key', () => {
   makers()
   here()
-  expect(buttons().map((one) => one.querySelector('kbd')?.textContent)).toEqual([
-    'N',
-    'C',
-    'P',
-    'Q',
-    'O',
-    'W',
-    'A',
-    'K',
-  ])
-  expect(buttons().map((one) => one.getAttribute('aria-keyshortcuts'))).toEqual([
-    'N',
-    'C',
-    'P',
-    'Q',
-    'O',
-    'W',
-    'A',
-    'K',
-  ])
+  expect(buttons().map((one) => one.querySelector('kbd')?.textContent)).toEqual(['N', 'C', 'P', 'Q', 'O', 'W', 'K'])
+  expect(buttons().map((one) => one.getAttribute('aria-keyshortcuts'))).toEqual(['N', 'C', 'P', 'Q', 'O', 'W', 'K'])
 })
 test('lands the keyboard on the first of them', () => {
   makers()
@@ -211,7 +192,7 @@ test('and hears no letter once that tab is not the one in front', () => {
 test('is one stop for Tab, whichever button the keyboard is on', () => {
   makers()
   here()
-  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1, -1])
+  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1])
 })
 test('takes the keyboard once what held it in the tab just closed is gone', async () => {
   makers()

@@ -9,7 +9,6 @@ const NAMES: Record<KindName, string> = {
   terminal: 'Terminal',
   remote: 'Remote',
   online: 'Online terminal',
-  application: 'Application',
   explorer: 'File explorer',
   pass: 'Pass',
   web: 'Web note',
