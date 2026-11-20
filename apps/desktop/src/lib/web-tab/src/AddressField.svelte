@@ -116,6 +116,13 @@
       restored = false
     })
   }
+  let keeping = false
+  export function keep() {
+    if (!field || document.activeElement !== field) return
+    remember()
+    held.keyboard = 'address'
+    keeping = true
+  }
   function here(): boolean {
     return field?.isConnected === true
   }
@@ -162,7 +169,9 @@
   function onBlur() {
     if (!here() || !field) return
     remember()
-    if (document.hasFocus() && !pressedOn?.closest('[data-tab]')) held.keyboard = null
+    const hidden = keeping || field.closest('[inert]') !== null
+    keeping = false
+    if (!hidden && document.hasFocus() && !pressedOn?.closest('[data-tab]')) held.keyboard = null
     holding = false
     editing = false
     ontyping(false)

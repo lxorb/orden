@@ -14,11 +14,13 @@
   const {
     book,
     focused,
+    shown: inSight = true,
     onopen,
     onclear,
   }: {
     book: string
     focused: boolean
+    shown?: boolean
     onopen: (url: string, ask: TabAsk) => void
     onclear: () => void
   } = $props()
@@ -50,8 +52,15 @@
       const said = Number.parseFloat(getComputedStyle(list).getPropertyValue('--row-height'))
       if (said > 0) rowHeight = said
     }
-    if (focused) field?.focus({ preventScroll: true })
+    if (focused && inSight) field?.focus({ preventScroll: true })
     return stop
+  })
+  let wasShown = untrack(() => inSight)
+  $effect(() => {
+    const on = inSight
+    if (on === wasShown) return
+    wasShown = on
+    if (on && untrack(() => focused)) untrack(() => field?.focus({ preventScroll: true }))
   })
   function visitOf(row: HistoryRow): Visit | null {
     return row.kind === 'visit' ? row.visit : null

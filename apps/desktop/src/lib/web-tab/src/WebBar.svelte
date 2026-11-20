@@ -30,6 +30,7 @@
     page,
     tab,
     focused,
+    shown = true,
     book,
     onstep,
     onhistory,
@@ -50,6 +51,7 @@
     ground?: { colour: string } | undefined
     theme?: 'dark' | 'light' | undefined
     focused: boolean
+    shown?: boolean
     book: string
     onstep: (step: 'back' | 'forward' | 'reload' | 'fresh' | 'stop', press?: MouseEvent) => void
     onhistory: (forward: boolean, event: MouseEvent) => void
@@ -76,17 +78,31 @@
   $effect(() => {
     if (mark) marked = true
   })
-  let field = $state<{ take(): void }>()
+  let field = $state<{ take(): void; keep(): void }>()
   const resting = $derived(shownUrl(page.url ?? ''))
   const started = untrack(() => page.url === null)
-  onMount(() => {
+  function arrive() {
     const was = page.keyboard
     page.keyboard = null
     if (focused && (was === 'address' || (started && !page.seen))) take()
     else if (focused && was === 'page' && isDesktop) void invoke('keyboard_back', { tab }).catch(() => undefined)
     page.seen = true
+  }
+  function leave() {
+    field?.keep()
+    if (focused && document.documentElement.hasAttribute(IN_A_PAGE)) page.keyboard = 'page'
+  }
+  let wasShown = untrack(() => shown)
+  $effect(() => {
+    const on = shown
+    if (on === wasShown) return
+    wasShown = on
+    untrack(on ? arrive : leave)
+  })
+  onMount(() => {
+    if (shown) arrive()
     const key = (event: KeyboardEvent) => {
-      if (!focused || overlays.depth > 0) return
+      if (!focused || !shown || overlays.depth > 0) return
       const said = barKey(event, shortcuts)
       if (!said || (said.to === 'zoom' && !page.live)) return
       event.preventDefault()
@@ -97,7 +113,7 @@
       else showTab(said.at)
     }
     const escape = (event: KeyboardEvent) => {
-      if (!focused || !stops(event, page.loading, shortcuts)) return
+      if (!focused || !shown || !stops(event, page.loading, shortcuts)) return
       event.preventDefault()
       onstep('stop')
     }
@@ -106,7 +122,7 @@
     return () => {
       window.removeEventListener('keydown', key, true)
       window.removeEventListener('keydown', escape)
-      if (focused && document.documentElement.hasAttribute(IN_A_PAGE)) page.keyboard = 'page'
+      if (shown && focused && document.documentElement.hasAttribute(IN_A_PAGE)) page.keyboard = 'page'
     }
   })
   function take() {
