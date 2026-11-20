@@ -76,7 +76,7 @@
   import { inside } from '../../panes/src/api'
   import { keptAway } from '../../away/src/api'
   import { rowMenus } from '../../row-menu/src/api'
-  import { indexed, settle } from './tree-settle'
+  import { indexed, inSight, settle } from './tree-settle'
 
   const { tree }: { tree: Entry } = $props()
   const OVERSCAN = 6
@@ -684,8 +684,8 @@
     const index = note === null ? null : rowOfNote(note)
     const row = index === null ? undefined : flat[index]
     if (!row || !workspace.isSelected(row.entry.path)) workspace.clearSelection()
-    if (index === null) return
-    void reach(index)
+    if (index === null || untrack(() => inSight(index, rows))) return
+    requestAnimationFrame(() => void reach(index))
   })
   $effect(() => {
     const asked = workspace.revealing
@@ -733,6 +733,8 @@
     standing = null
   }
 </script>
+
+{#snippet label(text: string)}<span class="orden-row-label" dir="auto">{text}</span>{/snippet}
 
 <svelte:window onkeydowncapture={movedOn} onpointerdowncapture={movedOn} />
 
@@ -855,7 +857,7 @@
       onpointerenter={() => entry.evicted && keptAway.ahead(entry.path)}
     >
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
-      <span class="orden-row-label" dir="auto">{name}</span>
+      {@render label(name)}
       {#if !__EVEN_PLUGIN__ && entry.evicted}
         {#await import('./CloudMark.svelte') then mark}<mark.default path={entry.path} />{/await}
       {/if}
