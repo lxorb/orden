@@ -173,7 +173,9 @@ function wasLayer(record: Change): boolean {
 export function bringsLayer(record: Change): boolean {
   if (record.type === 'attributes') {
     const on = record.target
-    return on instanceof Element && (on.matches(ANY) || on.querySelector(ANY) !== null || wasLayer(record))
+    if (!(on instanceof Element)) return false
+    if (on.matches(ANY) || wasLayer(record)) return true
+    return record.attributeName !== 'style' && on.querySelector(ANY) !== null
   }
   if (record.target instanceof Element && record.target.matches(NOTICES)) return true
   for (const nodes of [record.addedNodes, record.removedNodes]) {
@@ -229,6 +231,10 @@ function hold(nodes: readonly Element[], owed: readonly Promise<unknown>[]): voi
     for (const one of fresh) one.removeAttribute(HELD)
   })
 }
+let hushed = false
+export function hushArrivals(on: boolean): void {
+  hushed = on
+}
 const SHOWN_BY = ['class', 'style', 'hidden', 'data-covers']
 const told = new Set<() => unknown>()
 let arriving: MutationObserver | null = null
@@ -236,7 +242,7 @@ export function watchArrivals(tell: () => unknown): () => void {
   if (typeof MutationObserver !== 'function') return () => undefined
   told.add(tell)
   arriving ??= new MutationObserver((records) => {
-    if (!records.some(bringsLayer)) return
+    if (hushed || !records.some(bringsLayer)) return
     const came = arrivals(records)
     const owed = [...told].map((one) => one()).filter((one): one is Promise<unknown> => one instanceof Promise)
     if (owed.length > 0 && came.length > 0) hold(came, owed)

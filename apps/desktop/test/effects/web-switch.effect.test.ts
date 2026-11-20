@@ -730,7 +730,9 @@ describe('a page held still while its hole moves, and let go', () => {
       await settle()
       const held = asked.filter((one) => one.command === 'web_place')
       expect(held.at(-1)?.args).toMatchObject(
-        cutting ? { visible: false } : { visible: true, cut: { all: true }, pane: { x: -OUT_OF_THE_WAY } },
+        cutting
+          ? { visible: true, cut: { all: true } }
+          : { visible: true, cut: { all: true }, pane: { x: -OUT_OF_THE_WAY } },
       )
       expect(hole.classList.contains('still')).toBe(true)
       asked.length = 0
