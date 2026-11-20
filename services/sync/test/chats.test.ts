@@ -1268,11 +1268,27 @@ describe('chats', () => {
         })
       }
     })
-    test('comes back when its pointer is written again', async () => {
+    test('stays ended when its pointer arrives after it was deleted, and its undo still brings it back', async () => {
       const chat = await chatOfOwner()
       await remove(people.owner, chat)
-      await chatFile('Again.chat', chatText({ v: 1, chat }))
+      const file = await chatFile('Quick.chat', chatText({ v: 1, chat }))
+      expect(await list(people.owner)).toEqual([])
+      expect(env.db.prepare('select file_id, ended_at from chats where id = ?').get(chat)).toEqual({
+        file_id: file,
+        ended_at: T0 + 200_000,
+      })
+      await call(env, `/v1/notes/${file}`, { method: 'DELETE', token: people.owner })
+      expect(await list(people.owner)).toEqual([])
+      await call(env, `/v1/trash/notes/${file}/restore`, { method: 'POST', token: people.owner })
       expect((await list(people.owner)).map((one) => one.id)).toEqual([chat])
+    })
+    test('stays ended when its pointer is made and taken away in one go after it', async () => {
+      const chat = await chatOfOwner()
+      await remove(people.owner, chat)
+      const file = await chatFile('Gone.chat', chatText({ v: 1, chat }))
+      await call(env, `/v1/notes/${file}`, { method: 'DELETE', token: people.owner })
+      expect(env.db.prepare('select ended_at from chats where id = ?').get(chat)).toEqual({ ended_at: T0 + 200_000 })
+      expect(await list(people.owner)).toEqual([])
     })
   })
   describe('one whose pointer never came', () => {
