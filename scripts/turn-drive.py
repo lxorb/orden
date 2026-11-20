@@ -208,16 +208,20 @@ def same(one: str | None, two: pathlib.Path) -> bool:
     return bool(one) and os.path.normcase(os.path.realpath(str(one))) == os.path.normcase(os.path.realpath(str(two)))
 def gate(drive: Drive, on: bool) -> None:
     kinds = ON if on else ["experimental"]
-    drive.run(f"localStorage.setItem('orden:hidden-kinds', {json.dumps(json.dumps(kinds))}); setTimeout(() => location.reload(), 50); return true")
-    time.sleep(1.5)
     has = "true" if on else "false"
-    if not drive.app.until(
-        "if (!orden.workspace) return null;"
-        f" return JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]').includes('experimental-explorer') === {has} || null",
-        60,
-    ):
-        raise SystemExit("the explorer gate never took")
-    time.sleep(2)
+    for tries in (1, 2):
+        drive.run(f"localStorage.setItem('orden:hidden-kinds', {json.dumps(json.dumps(kinds))}); setTimeout(() => location.reload(), 50); return true")
+        time.sleep(1.5)
+        if drive.app.until(
+            "if (!orden.workspace) return null;"
+            f" return JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]').includes('experimental-explorer') === {has} || null",
+            60,
+        ):
+            time.sleep(2)
+            return
+        said = drive.app.answer("return [!!globalThis.orden?.workspace, localStorage.getItem('orden:hidden-kinds'), location.href, document.readyState]")
+        print(f"the explorer gate missed on try {tries}: {json.dumps(said)}", flush=True)
+    raise SystemExit("the explorer gate never took")
 def terminal(drive: Drive, folder: pathlib.Path, key: str, shell: str) -> str:
     tab = drive.run(
         "const ws = orden.workspace;"
