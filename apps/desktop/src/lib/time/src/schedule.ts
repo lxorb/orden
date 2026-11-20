@@ -133,6 +133,45 @@ export function unset(
   if (open) out.push(open)
   return out.filter((one) => one.to - one.from >= least)
 }
+export const NOT_SET_LEAST = 5 * MINUTE
+export function notSet(
+  spans: readonly Span[],
+  minutes: readonly Minute[],
+  from: number,
+  to: number,
+  now: number,
+  least = NOT_SET_LEAST,
+): Stretch[] {
+  const loose = unset(spans, minutes, from, to, now, least)
+  if (!loose.length) return []
+  const said = piecesIn(spans, from, to, now, isOwn).filter((one) => one.to > one.from)
+  const before = (at: number) => said.reduce((most, one) => (one.to <= at && one.to > most ? one.to : most), -Infinity)
+  const after = (at: number) =>
+    said.reduce((least, one) => (one.from >= at && one.from < least ? one.from : least), Infinity)
+  const gaps = new Map<string, Stretch>()
+  for (const one of loose) {
+    const start = before(one.from)
+    const end = after(one.to)
+    const key = `${start}:${end}`
+    const held = gaps.get(key)
+    if (held) {
+      held.from = Math.min(held.from, one.from)
+      held.to = Math.max(held.to, one.to)
+      held.active += one.active
+    } else {
+      gaps.set(key, { ...one })
+    }
+  }
+  const last = Math.min(to, now)
+  return [...gaps].map(([key, gap]) => {
+    const [start, end] = key.split(':').map(Number) as [number, number]
+    return {
+      from: Number.isFinite(start) ? start : gap.from,
+      to: Number.isFinite(end) ? end : now < to ? last : gap.to,
+      active: gap.active,
+    }
+  })
+}
 export interface Slice {
   activity: string | null
   ms: number
@@ -143,7 +182,6 @@ export interface DayTotals {
 }
 export const dayTotals = (spans: readonly Span[], day: number, now: number): DayTotals =>
   scheduleTotals(spans, day, daysAfter(day, 1), now)
-export const NOT_SET_LEAST = 5 * MINUTE
 export interface RangeTotals extends DayTotals {
   untracked: number
 }
@@ -159,7 +197,7 @@ export function rangeTotals(
   const named = held.slices.filter((one) => one.activity !== null)
   const unnamed = held.slices.find((one) => one.activity === null)?.ms ?? 0
   const loose = untracked
-    ? unnamed + unset(spans, minutes, from, to, now, NOT_SET_LEAST).reduce((sum, one) => sum + one.to - one.from, 0)
+    ? unnamed + notSet(spans, minutes, from, to, now).reduce((sum, one) => sum + one.to - one.from, 0)
     : 0
   const slices = loose > 0 ? [...named, { activity: null, ms: loose }] : named
   return { slices, ms: slices.reduce((sum, one) => sum + one.ms, 0), untracked: loose }
