@@ -23,6 +23,9 @@ const RAN_OUT = 'the time to answer ran out before the helper was started; nothi
 export interface Asker {
   thread: string | null
   mode: Mode
+  without?: readonly string[]
+  only?: readonly string[]
+  space?: string
   reach?: Reach
 }
 export interface Held extends Reach {
@@ -160,7 +163,11 @@ export async function runAgent(args: Record<string, unknown>, asker: Asker, dead
   if (!prompt) return { refused: 'say prompt: the whole task, as the helper should read it' }
   const { chat } = await import('../store/chat.svelte')
   const parent = asker.thread ? chat.threadOf(asker.thread) : null
-  const space = parent?.space ?? workspace.activeSpace?.id ?? ''
+  const told = parent ? undefined : asker.space
+  if (told !== undefined && !workspace.spaces.some((one) => one.id === told)) {
+    return { refused: `there is no space "${told}" in this window` }
+  }
+  const space = parent?.space ?? told ?? workspace.activeSpace?.id ?? ''
   if (!space) return { refused: 'open a space first' }
   const type = word(args, 'subagent_type')
   const notes = await import('../commands/found')
@@ -185,6 +192,8 @@ export async function runAgent(args: Record<string, unknown>, asker: Asker, dead
         model: first(word(args, 'model'), profile?.model),
         ...(EFFORTS.includes(effort as Effort) ? { effort: effort as Effort } : {}),
         mode: parent?.mode ?? asker.mode,
+        ...(asker.without ? { without: asker.without } : {}),
+        ...(asker.only ? { only: asker.only } : {}),
         ...(instructions ? { instructions } : {}),
       },
       {
