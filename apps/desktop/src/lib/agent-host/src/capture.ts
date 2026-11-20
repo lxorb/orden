@@ -32,6 +32,7 @@ import { made, madeOrChanged } from './notes'
 import { treeOf } from './tree'
 import { readable } from './guarded'
 import { noteBehind } from '../../protect/src/api'
+import { saveAsset } from '../../file-writes/src/api'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
 type Shape = (typeof SHAPES)[number]
@@ -207,11 +208,10 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
 async function attachment(place: Place, notePath: string, file: Kept): Promise<string> {
   writableAt(place, notePath)
   const bytes = await decoded(`data:application/octet-stream;base64,${file.base64}`)
-  const saved = await invoke<string>('save_asset', {
+  return await saveAsset(
     notePath,
-    folder: attachmentFolder(modes.attachments, notePath, place.space.root),
-    name: `page-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${file.extension}`,
+    attachmentFolder(modes.attachments, notePath, place.space.root),
+    `page-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${file.extension}`,
     bytes,
-  })
-  return saved
+  )
 }

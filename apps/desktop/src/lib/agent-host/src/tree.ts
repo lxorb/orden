@@ -168,6 +168,7 @@ export async function createFolder(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Make the folder ${relative} in ${place.space.name}`)
   if (question) return question
   await invoke('create_folder', { path })
+  await workspace.fileCame(path, 'folder')
   if (place.open) await workspace.loadTree()
   return done({ path: relative, made: true })
 }
