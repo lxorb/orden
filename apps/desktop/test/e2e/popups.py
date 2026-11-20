@@ -14,6 +14,18 @@ def gone(page: Page, selector: str, what: str) -> bool:
         return False
 def blurred(page: Page) -> None:
     page.evaluate("() => window.dispatchEvent(new FocusEvent('blur'))")
+ICONS = """
+(popup) => [...document.querySelectorAll(popup)].flatMap((box) => [...box.querySelectorAll('svg[viewBox="0 0 24 24"]')])
+  .map((one) => {
+    const r = one.getBoundingClientRect()
+    const style = getComputedStyle(one)
+    return { w: Math.round(r.width), h: Math.round(r.height), stroke: style.stroke, fill: style.fill, label: one.closest('[aria-label]')?.getAttribute('aria-label') ?? one.parentElement?.className ?? '' }
+  })
+  .filter((one) => one.w > 32 || one.h > 32 || (one.stroke === 'none' && one.fill === 'rgb(0, 0, 0)'))
+"""
+def icons(page: Page, name: str, popup: str) -> None:
+    for one in page.evaluate(ICONS, popup):
+        wrong(f"{name}: an icon draws at {one['w']}x{one['h']} px with stroke {one['stroke']} and fill {one['fill']} ({one['label']!r})")
 def check(
     page: Page,
     name: str,
@@ -43,6 +55,7 @@ def check(
             return
         if how == "a press past it":
             shot(page, f"{name.replace(' ', '-')}-open")
+            icons(page, name, popup)
         close()
         if not gone(page, popup, f"{name} to close on {how}"):
             said = page.evaluate(
@@ -187,6 +200,11 @@ def drive(browser: Browser) -> None:
         check(page, "a site's information", lambda: site.click(), ".site.orden-bubble", ".web")
     else:
         say("a site's information: this build has no page to say anything about")
+    puzzle = page.locator('[data-opens="extensions"]').first
+    if puzzle.count() and puzzle.is_visible():
+        check(page, "the extensions", lambda: puzzle.click(), ".extensions.orden-bubble", ".web")
+    else:
+        say("the extensions: this build shows no extensions button on a web tab")
     page.evaluate(
         "async () => (await window.ordenApp.downloads()).heard({ id: 1, tab: '', url:"
         " 'https://example.com/a.pdf', name: 'a.pdf', state: 'done', received: 9, total: 9 })"
