@@ -22,15 +22,13 @@ reqwest.workspace = true
 rustls.workspace = true
 tokio.workspace = true
 
-[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-libc.workspace = true
-
 [target.'cfg(target_os = "linux")'.dependencies]
 tauri-plugin-deep-link.workspace = true
 zbus.workspace = true
 x11rb.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
+libc.workspace = true
 dirs.workspace = true
 objc2.workspace = true
 block2.workspace = true
@@ -45,7 +43,6 @@ windows = { workspace = true, features = [
   "Win32_Foundation",
   "Win32_Graphics_Gdi",
   "Win32_System_LibraryLoader",
-  "Win32_System_Power",
   "Win32_System_Registry",
   "Win32_System_StationsAndDesktops",
   "Win32_System_SystemInformation",
