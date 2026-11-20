@@ -113,7 +113,9 @@ class Toolbar {
   receive(remote: AccountSettings) {
     const theirs = remote.toolbar
     if (this.owed.standing) {
-      this.share()
+      const owed = this.owed.mine?.patch
+      if (owed && 'toolbar' in owed) this.chosen = usable(owed.toolbar)
+      this.settle()
       return
     }
     if (theirs === undefined) {
