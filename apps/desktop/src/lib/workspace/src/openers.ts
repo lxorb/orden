@@ -1,5 +1,4 @@
 import {
-  isApplicationTarget,
   isBaseTarget,
   isCanvasTarget,
   isChatTarget,
@@ -24,7 +23,6 @@ export function openerFor(path: string, isUrlNote: (path: string) => boolean, bu
   if (isBaseTarget(path)) return build.isPlugin ? null : 'view'
   if (isChatTarget(path)) return build.isPlugin ? null : 'chat'
   if (isTermTarget(path)) return build.isPlugin ? null : 'term'
-  if (isApplicationTarget(path)) return null
   return 'note'
 }
 export function sharedKind(path: string): 'canvas' | 'pages' | 'channel' | 'note' {

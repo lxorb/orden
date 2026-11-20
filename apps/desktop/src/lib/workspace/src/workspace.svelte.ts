@@ -17,7 +17,6 @@ import { basesOn, hiddenKinds } from '../../gates/src/api'
 import { keptAway } from '../../away/src/api'
 import {
   blockIds,
-  isApplicationTarget,
   isChatTarget,
   isBaseTarget,
   isCanvasTarget,
@@ -616,7 +615,7 @@ class Workspace {
   private readonly unlisted = $derived.by(() => {
     const bases = basesOn()
     return (root: string, path: string) =>
-      isInstructions(root, path) || isChatTarget(path) || isApplicationTarget(path) || (!bases && isBaseTarget(path))
+      isInstructions(root, path) || isChatTarget(path) || (!bases && isBaseTarget(path))
   })
   readonly shownFiles = $derived.by((): Entry[] => {
     const root = this.tree?.path
