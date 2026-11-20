@@ -262,4 +262,23 @@ describe('the link index', () => {
     expect(nodes).toHaveLength(new Set(nodes).size)
     expect(index.backlinks('/s/Gxx.md')).toHaveLength(1)
   })
+  test('a note leaving its space names the pictures it reaches there, and its links reach their copies in the new space', async () => {
+    const index = spaceLinks()
+    void index.build('/s')
+    index.spaceOf = (path) => (path.startsWith('/t/') ? '/t' : '/s')
+    const plan = '![](../assets/a.png)\n![[b.png]]\n[n](../Other.md)\n[[Other]]\n![](pic.png)'
+    index.noteSaved('/s/Work/Plan.md', plan)
+    index.noteSaved('/s/Other.md', '# Other')
+    index.fileAdded('assets/a.png', 'assets/b.png', 'Work/pic.png')
+    const carried = (...paths: string[]) => paths.map((one) => ({ from: `/s/${one}`, to: `/t/${one}` }))
+    expect(await index.leaving(plan, '/s/Work/Plan.md', '/t/Plan.md')).toEqual({
+      text: '![](assets/a.png)\n![[b.png]]\n[n](../Other.md)\n[[Other]]\n![](Work/pic.png)',
+      carry: carried('assets/a.png', 'assets/b.png', 'Work/pic.png'),
+    })
+    expect(await index.leaving(plan, '/s/Work/Plan.md', '/t/Work/Plan.md', '/s/Work')).toEqual({
+      text: plan,
+      carry: carried('assets/a.png', 'assets/b.png'),
+    })
+    expect(await index.leaving(plan, '/s/Work/Plan.md', '/s/Plan.md')).toBeNull()
+  })
 })
