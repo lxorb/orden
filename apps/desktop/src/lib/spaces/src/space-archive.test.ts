@@ -216,3 +216,18 @@ describe('a space archived on one device', () => {
     await vi.waitFor(() => expect(server.sent.at(-1)?.archivedSpaces).toEqual(['id-Two', 'id-Old']))
   })
 })
+describe('another account signed in on this device', () => {
+  test("sees its own archived spaces, or none, never the last account's, and the same account again keeps its own", async () => {
+    await archive.receive({ archivedSpaces: [] })
+    await archive.archiveSpace(at(3))
+    expect(archive.archivedSpaces().map((one) => one.name)).toEqual(['Local'])
+    double.signInAs('a')
+    await archive.receive({ archivedSpaces: [] })
+    expect(archive.archivedSpaces().map((one) => one.name)).toEqual(['Local'])
+    double.signInAs('b')
+    await archive.receive({ archivedSpaces: [] })
+    expect(archive.archivedSpaces()).toEqual([])
+    await archive.receive({ archivedSpaces: ['id-Work'] })
+    expect(archive.archivedSpaces().map((one) => one.name)).toEqual(['Work'])
+  })
+})
