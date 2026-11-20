@@ -561,7 +561,7 @@ class Pages {
     if (isDesktop && page.live && page.lent) void import('./lending').then((one) => one.aside(tabId, page, pane))
     else
       void Promise.resolve()
-        .then(() => this.arriving.size && still().then((one) => one.arrived(this, pane)))
+        .then(() => (this.arriving.size ? still().then((one) => one.arrived(this, pane)) : undefined))
         .then(() => (page.onScreen ? undefined : this.place(tabId, pane, false)))
     if (!isDesktop) return
     void this.look(tabId).then(() => this.rest(tabId))
