@@ -231,3 +231,19 @@ describe('another account signed in on this device', () => {
     expect(archive.archivedSpaces().map((one) => one.name)).toEqual(['Work'])
   })
 })
+describe('an account that signed out owing an archive', () => {
+  test('gets its own list back when it signs in again after another, and the account hears exactly its own', async () => {
+    await archive.receive({ archivedSpaces: [] })
+    server.offline = true
+    await archive.archiveSpace(at(2))
+    double.signInAs('b')
+    await archive.receive({ archivedSpaces: [] })
+    expect(archive.archivedSpaces()).toEqual([])
+    double.signInAs('a')
+    await archive.receive({ archivedSpaces: [] })
+    await vi.waitFor(() => expect(archive.archivedSpaces().map((one) => one.name)).toEqual(['Old']))
+    server.offline = false
+    await archive.listed()
+    await vi.waitFor(() => expect(last()).toEqual({ archivedSpaces: ['id-Old'] }))
+  })
+})
