@@ -298,8 +298,6 @@ def steps(drive: Drive, tmp: pathlib.Path, restart: Any, shell: Any) -> None:
     check(isinstance(first, dict) and first.get("tucked") == 0, f"6. off, nothing is tucked behind a tab ({first})")
     until(lambda: drive.run("return !!document.querySelector('.xterm-helper-textarea')") is True, 30)
     time.sleep(1)
-    drive.typed("\r")
-    time.sleep(1)
     drive.typed(shell.mark(marks / "after-off") + "\r")
     check(drive.wrote(marks / "after-off") == "42", f"6. off, it is the same shell, still holding its mark ({drive.wrote(marks / 'after-off', 1)!r})")
     check(drive.button(TERMINAL_TURN) is None, f"6. off, a terminal offers no turn button ({drive.button(TERMINAL_TURN)!r})")
