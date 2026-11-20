@@ -280,7 +280,7 @@ export class Hub {
 }
 export async function deviceId(): Promise<string> {
   const user = account().user
-  if (user && !__EVEN_PLUGIN__) {
+  if (user) {
     const { runner } = await import('./runner.svelte')
     return hubDeviceOf(await runner.deviceOf(user.id).catch(() => null), user.id)
   }

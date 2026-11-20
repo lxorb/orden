@@ -159,7 +159,6 @@ const mounted = door(() =>
   }),
 )
 function sheet(): Promise<void> {
-  if (__EVEN_PLUGIN__) return Promise.resolve()
   return mounted()
 }
 async function resurrected(event: Resurrected) {
@@ -168,7 +167,6 @@ async function resurrected(event: Resurrected) {
   back.show(event)
 }
 export async function unsyncedToast(name: string) {
-  if (__EVEN_PLUGIN__) return
   await askSheet('undo-toast')
   const { unsynced } = await import('./unsynced.svelte')
   unsynced.show(name)

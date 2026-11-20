@@ -483,7 +483,6 @@ async function mergedOver(
   local: string,
   remote: string,
 ): Promise<string | null> {
-  if (__EVEN_PLUGIN__) return null
   const ancestor = await baseOf(token, path, id, base)
   if (ancestor === null) return null
   const { mergedCleanly } = await import('./merging')
@@ -805,7 +804,7 @@ export async function push(mirror: Mirror, token: string, joined: Joined, sendin
   const unread = unlistedIn(tree).map((one) => `${relativeTo(root, one.path)}/`)
   const all = [...flatten(tree), ...(await ownNotes(root, tree))]
   const everything = all.filter((one) => !inForeignCopy(relativeTo(root, one.path)))
-  if (!__EVEN_PLUGIN__ && everything.length < all.length) void askSheet('sync-mark')
+  if (everything.length < all.length) void askSheet('sync-mark')
   const folded = await foldWebCopies(everything)
   for (const one of folded) sending.folded?.(one)
   const listed = everything.filter((one) => !folded.some((fold) => fold.gone === one.path))
