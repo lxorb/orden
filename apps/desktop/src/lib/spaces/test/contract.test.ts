@@ -34,10 +34,10 @@ describe('the spaces', () => {
 describe('the unread chats of a space', () => {
   const badge = (unread: number) =>
     /class="count[^"]*">([^<]*)</.exec(render(SpaceBadge, { props: { space: SPACE, unread } }).body)?.[1] ?? null
-  test('sit at the corner of its icon, 99+ past 99 and nothing at 0', () => {
+  test('sit at the corner of its icon, 9+ past 9 on a desktop and nothing at 0', () => {
     expect(badge(5)).toBe('5')
-    expect(badge(99)).toBe('99')
-    expect(badge(120)).toBe('99+')
+    expect(badge(9)).toBe('9')
+    expect(badge(120)).toBe('9+')
     expect(badge(0)).toBeNull()
   })
   test('are what the chats say, nothing without them, and the other spaces add up', () => {

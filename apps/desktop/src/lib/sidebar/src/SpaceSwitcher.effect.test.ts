@@ -3,6 +3,7 @@ import { afterEach, expect, test } from 'vitest'
 import { registerSidebarPart } from '@orden/contracts'
 
 const { workspace } = await import('../../workspace/src/api')
+const { viewport } = await import('../../ui-kit/src/api')
 const SpaceSwitcher = (await import('./SpaceSwitcher.svelte')).default
 const gone: (() => void)[] = []
 afterEach(() => {
@@ -34,7 +35,7 @@ test('the current space wears the unread chats of the other spaces, once the cha
   flushSync()
   expect(badge(into)).toBe('7')
 })
-test('and no badge when the others have nothing unread, and 99+ past 99', () => {
+test('and no badge when the others have nothing unread, 9+ past 9 on a desktop and 99+ past 99 on a phone', () => {
   const into = drawn()
   const counts: Record<string, number> = { '/a': 9 }
   const drop = registerSidebarPart({ id: 'chats', unreadIn: (root) => counts[root] ?? 0 })
@@ -45,5 +46,9 @@ test('and no badge when the others have nothing unread, and 99+ past 99', () => 
   counts['/c'] = 40
   gone.push(registerSidebarPart({ id: 'chats', unreadIn: (root) => counts[root] ?? 0 }))
   flushSync()
+  expect(badge(into)).toBe('9+')
+  viewport.device = 'phone'
+  flushSync()
   expect(badge(into)).toBe('99+')
+  viewport.device = 'desktop'
 })
