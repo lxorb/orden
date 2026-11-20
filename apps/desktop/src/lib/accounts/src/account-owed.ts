@@ -1,7 +1,7 @@
 import { account } from './account.svelte'
 import { api } from './client'
 import type { AccountSettings } from './routes'
-import { forget, isRecord, keepJson, stored } from '../../platform/src/api'
+import { forget, isRecord, keep, keepJson, stored, storedText } from '../../platform/src/api'
 
 interface Kept {
   who: string | null
@@ -24,31 +24,56 @@ export class AccountOwed {
   constructor(
     readonly key: string,
     readonly landed?: (settings: AccountSettings) => void,
+    private readonly reset?: () => void,
   ) {
     account.forgetWithSession(() => {
       this.session++
-      forget(this.key)
+      this.keep(null, null)
     })
-    account.holdsNoAccount(() => {
-      if (this.kept?.who === null) forget(this.key)
-    })
+    account.holdsNoAccount(() => this.keep(null, null))
   }
-  private get kept(): Kept | null {
+  private get owing(): Record<string, Kept> {
     const kept = stored(this.key)
-    if (!isRecord(kept)) return null
-    return {
-      who: typeof kept.who === 'string' ? kept.who : null,
-      patch: isRecord(kept.patch) ? kept.patch : {},
-      base: isRecord(kept.base) ? kept.base : {},
-    }
+    if (!isRecord(kept)) return {}
+    const read = (who: string, one: unknown): Kept | null =>
+      isRecord(one) && isRecord(one.patch)
+        ? { who: who || null, patch: one.patch, base: isRecord(one.base) ? one.base : {} }
+        : null
+    const all = isRecord(kept.owed) ? kept.owed : { [typeof kept.who === 'string' ? kept.who : '']: kept }
+    return Object.fromEntries(
+      Object.entries(all).flatMap(([who, one]) => {
+        const held = read(who, one)
+        return held ? [[who, held]] : []
+      }),
+    )
+  }
+  private keep(who: string | null, kept: { patch: AccountSettings; base: AccountSettings } | null): void {
+    const rest = Object.entries(this.owing).filter(([one]) => one !== (who ?? '') && (who === null || one !== ''))
+    const owed = Object.fromEntries([
+      ...rest.map(([one, { patch, base }]) => [one, { patch, base }] as const),
+      ...(kept ? [[who ?? '', kept] as const] : []),
+    ])
+    if (Object.keys(owed).length) keepJson(this.key, { owed })
+    else forget(this.key)
+  }
+  follows(): void {
+    const who = account.user?.id
+    if (!who) return
+    const holder = storedText(`${this.key}:holder`)
+    if (holder === who) return
+    if (holder !== null) this.reset?.()
+    keep(`${this.key}:holder`, who)
   }
   get mine(): Kept | null {
     return this.held()
   }
   private held(): Kept | null {
-    const kept = this.kept
-    const who = account.user?.id ?? null
-    return kept && (kept.who === null || who === null || kept.who === who) ? kept : null
+    const owing = this.owing
+    const who = account.user?.id
+    const mine = who ? owing[who] : undefined
+    const unknown = owing['']
+    if (!mine || !unknown) return mine ?? unknown ?? null
+    return { who: mine.who, patch: { ...mine.patch, ...unknown.patch }, base: { ...unknown.base, ...mine.base } }
   }
   get standing(): boolean {
     return this.mine !== null
@@ -62,11 +87,12 @@ export class AccountOwed {
     for (const name of Object.keys(patch) as (keyof AccountSettings)[]) {
       if (!mine || !(name in mine.patch)) base[name] = heard[name]
     }
-    keepJson(this.key, { who: account.user?.id ?? mine?.who ?? null, patch: { ...mine?.patch, ...patch }, base })
+    this.keep(account.user?.id ?? mine?.who ?? null, { patch: { ...mine?.patch, ...patch }, base })
     const token = account.accountToken
     if (token) void this.settle(token)
   }
   async settle(token: string): Promise<void> {
+    this.follows()
     const kept = this.mine
     if (!kept || !Object.keys(kept.patch).length) return
     const session = this.session
@@ -80,10 +106,10 @@ export class AccountOwed {
       (name) => said(mine.patch[name as Name]) !== said(kept.patch[name as Name]),
     )
     if (rest.length) {
-      keepJson(this.key, { who: mine.who, patch: only(mine.patch, rest), base: only(mine.base, rest) })
+      this.keep(mine.who, { patch: only(mine.patch, rest), base: only(mine.base, rest) })
       return
     }
-    forget(this.key)
+    this.keep(mine.who, null)
     if (answer !== true) this.landed?.(answer)
   }
 }
