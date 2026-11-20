@@ -195,4 +195,50 @@ describe('the link index', () => {
     expect(index.outgoing('/s/A.md').map((one) => one.to)).toEqual([null, null, null])
     if (backend.ok) providePort('backend.web', backend.value)
   })
+  test('a part carved out of a note takes the links into its headings and blocks along, and leaves the rest', async () => {
+    const alpha = '[[Beta#Later]] and [[Beta#^blk]] and [[Beta]] and [[Beta#intro-less-heading]]\n[m](Beta.md#Later)'
+    const part = '## Later\n\nsoon\n\nkept ^blk\n'
+    const card = (subpath?: string) => ({
+      id: subpath ?? 'whole',
+      type: 'file',
+      file: 'Beta.md',
+      subpath,
+      x: 0,
+      y: 0,
+      width: 9,
+      height: 9,
+    })
+    const board = (...nodes: object[]) => JSON.stringify({ nodes, edges: [] })
+    const disk = new Map([
+      ['/s/Beta.md', '# Beta\n\nintro\n'],
+      ['/s/Later.md', part],
+      ['/s/Alpha.md', alpha],
+      ['/s/Board.canvas', board(card('#^blk'), card(), card('#page=2'))],
+    ])
+    const backend = portOf('backend.web')
+    const index = spaceLinks()
+    providePort('backend.web', {
+      invoke: <T>(command: string) =>
+        Promise.resolve((command === 'scan_links' ? { notes: index.held(), files: [] } : null) as T),
+    })
+    void index.build('/s')
+    for (const [path, text] of disk) index.noteSaved(path, text)
+    await vi.waitFor(() => expect(index.held()).toHaveLength(4))
+    const open = (path: string): OpenNote | null => {
+      const text = disk.get(path)
+      if (text === undefined) return null
+      const writeTo = (at: string, words: string) => Promise.resolve(void disk.set(at, words)).then(() => words)
+      return { text, onDisk: text, flush: () => undefined, edited: () => undefined, wroteAs: () => undefined, writeTo }
+    }
+    const how = { part, wrote: [] as { path: string; before: string; after: string }[], touched: [] as string[] }
+    await index.retarget('/s/Beta.md', '/s/Later.md', '/s', open, how)
+    const after = '[[Later#Later]] and [[Later#^blk]] and [[Beta]] and [[Beta#intro-less-heading]]\n[m](Later.md#Later)'
+    expect(disk.get('/s/Alpha.md')).toBe(after)
+    const cards = JSON.parse(disk.get('/s/Board.canvas') ?? '') as { nodes: { file: string }[] }
+    expect(cards.nodes.map((one) => one.file)).toEqual(['Later.md', 'Beta.md', 'Beta.md'])
+    expect(how.wrote).toContainEqual({ path: '/s/Alpha.md', before: alpha, after })
+    expect(how.touched.sort()).toEqual(['/s/Alpha.md', '/s/Board.canvas'])
+    expect(disk.get('/s/Beta.md')).toBe('# Beta\n\nintro\n')
+    if (backend.ok) providePort('backend.web', backend.value)
+  })
 })

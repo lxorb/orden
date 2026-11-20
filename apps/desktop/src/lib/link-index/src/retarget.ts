@@ -1,6 +1,14 @@
 import { type NoteIndex, type NoteRef, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
 import { oneEdit } from '@orden/markdown/edits'
-import { isCanvasTarget, isPagesTarget, isTabFile, type LinkKind } from '@orden/markdown/links'
+import {
+  isCanvasTarget,
+  isPagesTarget,
+  isTabFile,
+  type LinkKind,
+  parseWikilink,
+  sectionOf,
+  type Wikilink,
+} from '@orden/markdown/links'
 import type { ScannedNote } from '@orden/scan/note'
 import type { OpenNote } from '@orden/contracts'
 import {
@@ -29,6 +37,9 @@ import {
 } from './links.svelte'
 import { services } from './services'
 
+type Fragment = Pick<Wikilink, 'heading' | 'block'>
+const WHOLE: Fragment = { heading: null, block: null }
+const fragmentOf = (subpath: string | undefined): Fragment => (subpath ? parseWikilink(`_${subpath}`) : null) ?? WHOLE
 export async function retargetIn(
   notes: readonly ScannedNote[],
   resolve: (source: string, link: { kind: LinkKind; target: string }) => string | null,
@@ -44,9 +55,16 @@ export async function retargetIn(
   },
 ): Promise<number> {
   const { was, now, root, open, how, files, listed } = asked
-  const { moved = false, only, touched: told } = how
+  const { moved = false, only, touched: told, part } = how
   const name = comparable(nameOf(was))
-  const moving = carried(was, now)
+  const moving = part === undefined ? carried(was, now) : () => null
+  const toward = (path: string, link: Fragment): string | null =>
+    part === undefined
+      ? moving(path)
+      : path === was && (link.heading !== null || link.block !== null) && sectionOf(part, link) !== null
+        ? now
+        : null
+  const cardTo = (path: string, subpath?: string) => toward(path, fragmentOf(subpath))
   const movingNames = new Set(
     [...notes.map((one) => one.path), ...files]
       .filter((path) => moving(path) !== null)
@@ -138,19 +156,19 @@ export async function retargetIn(
     const source = went ?? note.path
     const shifted = went !== null && folderOf(went) !== folderOf(note.path)
     const answered = new Map<string, string | Placed | null>()
-    const to = (link: { kind: LinkKind; target: string }): string | Placed | null => {
-      const key = `${link.kind}\0${link.target}`
+    const to = (link: { kind: LinkKind; target: string } & Fragment): string | Placed | null => {
+      const key = `${link.kind}\0${link.target}\0${link.heading}\0${link.block}`
       const held = answered.get(key)
       if (held !== undefined) return held
       const there = whereNow(link)
       answered.set(key, there)
       return there
     }
-    const whereNow = (link: { kind: LinkKind; target: string }): string | Placed | null => {
+    const whereNow = (link: { kind: LinkKind; target: string } & Fragment): string | Placed | null => {
       const found = resolve(note.path, link)
       if (found === null) return null
       const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
-      const there = moving(found) ?? found
+      const there = toward(found, link) ?? found
       if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) {
         const arriving = arrivingNames.has(lastOf(link)) || movingAliases.has(comparable(link.target))
         if (there === found && !shifted && !arriving) return null
@@ -177,7 +195,7 @@ export async function retargetIn(
     }
     const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
     const rewrite = plane ? await import('./canvas-rewrite') : null
-    const card = rewrite?.cardsMoving(note.path, moving) ?? null
+    const card = rewrite?.cardsMoving(note.path, cardTo) ?? null
     const worth = plane || note.links.some((link) => (named(link) || shifted) && to(link) !== null)
     if (!worth) continue
     const absolute = insideSpace(root, note.path)
@@ -186,7 +204,7 @@ export async function retargetIn(
     const drawn = doc && rewrite && !isPagesTarget(note.path) ? await services().plane(doc) : null
     let read = listed?.(note.path) ?? note
     const drawing = { relinked: false, before: '' }
-    const file = card ?? moving
+    const file = card ?? cardTo
     const fresh = async () => {
       const before = await wordsOf(absolute, target, open)
       if (before === null) return null

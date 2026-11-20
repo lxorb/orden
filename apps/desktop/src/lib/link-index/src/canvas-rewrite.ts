@@ -7,7 +7,7 @@ import { type Placed, retargetLinks } from './link-rewrite'
 export function retargetCanvas(
   text: string,
   source: string,
-  file: (path: string) => string | null,
+  file: (path: string, subpath?: string) => string | null,
   to: (link: FoundLink) => string | Placed | null,
   now = Date.now(),
 ): string | null {
@@ -19,7 +19,7 @@ export function retargetCanvas(
     const type = node.get('type')?.value
     const card = node.get('file')
     const words = node.get('text')
-    const there = type === 'file' && card ? file(card.value) : null
+    const there = type === 'file' && card ? file(card.value, node.get('subpath')?.value) : null
     const id = node.get('id')?.value
     if (card && there !== null) {
       edits.push({ from: card.from, to: card.to, insert: JSON.stringify(there) })
@@ -43,12 +43,12 @@ export function retargetCanvas(
 export function retargetPlane(
   canvas: Canvas,
   source: string,
-  file: (path: string) => string | null,
+  file: (path: string, subpath?: string) => string | null,
   to: (link: FoundLink) => string | Placed | null,
 ): Canvas {
   const nodes = canvas.nodes.map((node) => {
     if (node.type === 'file') {
-      const there = file(node.file)
+      const there = file(node.file, node.subpath)
       return there === null ? node : { ...node, file: there }
     }
     if (node.type !== 'text') return node
@@ -59,13 +59,13 @@ export function retargetPlane(
 }
 export function cardsMoving(
   note: string,
-  moving: (path: string) => string | null,
-): ((path: string) => string | null) | null {
+  moving: (path: string, subpath?: string) => string | null,
+): ((path: string, subpath?: string) => string | null) | null {
   if (!isPagesTarget(note)) return moving
   if (folderOf(note) !== '') return null
   const own = paperOf(note)
-  return (path) => {
-    const there = path === own ? null : moving(path)
+  return (path, subpath) => {
+    const there = path === own ? null : moving(path, subpath)
     return there === own ? null : there
   }
 }
