@@ -27,9 +27,9 @@
   const swiped = $derived(swipeOpens())
   const BACK_MARK = 'M8.2 2.2 3.9 6.5l4.3 4.3'
   const MORE_MARK = 'M3 6.5h.1M6.5 6.5h.1M10 6.5h.1'
-  const phone = $derived(viewport.device === 'phone' && !__EVEN_PLUGIN__)
-  const phoneDoor = () => (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('../../phone/src/api'))
-  const touchTabs = $derived(viewport.touch && !__EVEN_PLUGIN__)
+  const phone = $derived(viewport.device === 'phone')
+  const phoneDoor = () => import('../../phone/src/api')
+  const touchTabs = $derived(viewport.touch)
   const tabCount = $derived(workspace.tabsIn(workspace.panes.focusedId).length)
   let grid = $state(false)
   let pressed: { x: number; y: number } | null = null
@@ -126,7 +126,7 @@
     {#if workspace.right.length}
       <SidebarToggle side="right" />
     {/if}
-  {:else if workspace.right.length || !__EVEN_PLUGIN__}
+  {:else}
     <SidebarToggle side="right" />
   {/if}
 {/snippet}
@@ -161,7 +161,7 @@
 {#snippet leftToggle()}
   {#if !listless}
     <SidebarToggle unseen={swiped} />
-    {#if swiped && startup.settled && !__EVEN_PLUGIN__}
+    {#if swiped && startup.settled}
       <span class="swipe-hint">
         {#await loadHintCard() then card}
           <card.default

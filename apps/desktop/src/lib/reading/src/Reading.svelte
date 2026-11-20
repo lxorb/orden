@@ -30,8 +30,7 @@
   let drawn = false
   let undrawn: (() => void) | undefined
   function basesIn(page: HTMLElement, from: string | null): () => void {
-    if (__EVEN_PLUGIN__ || !page.querySelector('[data-base-code], .embed-file[data-kind="base"]'))
-      return () => undefined
+    if (!page.querySelector('[data-base-code], .embed-file[data-kind="base"]')) return () => undefined
     let stop: (() => void) | null = null
     let stopped = false
     void import('../../views/src/api')

@@ -30,7 +30,7 @@
     onopen?: ((path: string, how: OpenHow) => void) | undefined
     onescape?: (() => void) | undefined
   } = $props()
-  if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.dismiss('graph'))
+  void hinting().then(({ hints }) => hints.dismiss('graph'))
   const A_FRAME = 6
   const A_SETTLE = 10
   const A_CLICK = 3
