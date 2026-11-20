@@ -59,6 +59,7 @@ MOD = "Control"
 WORKER_PATIENCE = 90
 DROPPED = b"Network connection lost"
 BUILD_PATIENCE = 600
+STALE_BUILD = 6 * 60 * 60
 TEARDOWN = 90
 NEEDS = {
     "native": "a native probe build (Windows, ORDEN_PROBE_EXE and ORDEN_PROBE_IDENTIFIER)",
@@ -157,7 +158,7 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
         return
     say(f"building the web app into {into.name}")
     started = time.monotonic()
-    shutil.rmtree(into, ignore_errors=True)
+    fresh = build_aside(into)
     environment = {**os.environ}
     environment.pop("NODE_ENV", None)
     if served_by_worker:
@@ -165,7 +166,7 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
     else:
         environment.pop("VITE_ORDEN_API", None)
     done = subprocess.run(
-        [*tool(APP, "vite"), "build", "--mode", "drive", "--outDir", str(into), "--emptyOutDir"],
+        [*tool(APP, "vite"), "build", "--mode", "drive", "--outDir", str(fresh), "--emptyOutDir"],
         cwd=APP,
         env=environment,
         capture_output=True,
@@ -176,12 +177,33 @@ def build(into: Path = DIST, served_by_worker: bool = False) -> None:
         check=False,
     )
     if done.returncode != 0:
+        shutil.rmtree(fresh, ignore_errors=True)
         raise SystemExit(f"the build failed:\n{done.stdout}\n{done.stderr}")
-    (into / POINTED).write_text(kind, encoding="utf-8")
-    (into / SEED_PATH.lstrip("/")).write_text(SEED_PAGE, encoding="utf-8")
+    (fresh / POINTED).write_text(kind, encoding="utf-8")
+    (fresh / SEED_PATH.lstrip("/")).write_text(SEED_PAGE, encoding="utf-8")
+    settle_build(fresh, into)
     say(f"built in {time.monotonic() - started:.0f}s")
     if served_by_worker:
         machine_bundle(fresh=True)
+def build_aside(into: Path) -> Path:
+    return Path(tempfile.mkdtemp(prefix=f"orden-{into.name}-"))
+def settle_build(fresh: Path, into: Path) -> None:
+    files = sorted(
+        (one for one in fresh.rglob("*") if one.is_file()),
+        key=lambda one: one.relative_to(fresh).parts[0] != "assets",
+    )
+    stale = time.time() - STALE_BUILD
+    kept = into / "assets"
+    for old in kept.iterdir() if kept.is_dir() else []:
+        if old.is_file() and old.stat().st_mtime < stale and not (fresh / "assets" / old.name).exists():
+            old.unlink(missing_ok=True)
+    for one in files:
+        target = into / one.relative_to(fresh)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        landing = target.with_name(f"{target.name}.{os.getpid()}")
+        shutil.copyfile(one, landing)
+        os.replace(landing, target)
+    shutil.rmtree(fresh, ignore_errors=True)
 def machine_bundle(fresh: bool) -> None:
     if not fresh and MACHINE_BUNDLE.exists():
         return

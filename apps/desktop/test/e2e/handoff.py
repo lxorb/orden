@@ -3,7 +3,7 @@ import subprocess
 import time
 from typing import Any
 from playwright.sync_api import Browser, Page
-from harness import APP, BUILD_PATIENCE, Drive, Files, tool
+from harness import APP, BUILD_PATIENCE, Drive, Files, build_aside, settle_build, tool
 
 FOLDER = APP / "dist-handoff"
 DRIVE = Drive(__file__, folder=FOLDER)
@@ -30,11 +30,12 @@ def built() -> None:
         say(f"reusing the build in {FOLDER.name}")
         return
     say(f"building the web app into {FOLDER.name} for {OLD} and {NEW}")
+    fresh = build_aside(FOLDER)
     environment = {**os.environ, "VITE_ORDEN_WEB": NEW, "VITE_ORDEN_LEGACY_WEB": OLD}
     environment.pop("NODE_ENV", None)
     environment.pop("VITE_ORDEN_API", None)
     done = subprocess.run(
-        [*tool(APP, "vite"), "build", "--mode", "drive", "--outDir", str(FOLDER), "--emptyOutDir"],
+        [*tool(APP, "vite"), "build", "--mode", "drive", "--outDir", str(fresh), "--emptyOutDir"],
         cwd=APP,
         env=environment,
         capture_output=True,
@@ -46,6 +47,7 @@ def built() -> None:
     )
     if done.returncode != 0:
         raise SystemExit(f"the build failed:\n{done.stdout}\n{done.stderr}")
+    settle_build(fresh, FOLDER)
     ORIGINS.write_text(f"{OLD} {NEW}", encoding="utf-8")
 @DRIVE.answers
 def handoff_page(request: Files) -> bool:
