@@ -26,6 +26,11 @@ const KEPT: Record<string, { most: number; why: string }> = {
     why: 'the link name written for a path that is no note or file',
   },
   'packages/bases/src/link-context.ts': { most: 1, why: 'names compared to resolve links' },
+  'packages/bases/src/expr/runtime.ts': {
+    most: 1,
+    why: 'link targets compared, as Obsidian resolves [[Plan]] to Plan.md',
+  },
+  'packages/bases/src/ids.ts': { most: 1, why: 'paths compared to order the rows that take an id' },
   'packages/scan/src/scan-note.ts': { most: 1, why: 'the name links resolve against in the index' },
   'packages/scan/src/indexed.ts': { most: 1, why: 'the name links resolve against in the index' },
   'apps/desktop/src/lib/agent-host/src/log.ts': { most: 1, why: 'a [[path]] link target' },
@@ -70,10 +75,6 @@ const TO_MOVE: Record<string, number> = {
   'apps/desktop/src/lib/pdf/src/handed.ts': 1,
   'apps/desktop/src/lib/plane/src/picture.ts': 1,
   'apps/desktop/src/lib/tasks-views/src/carrying.svelte.ts': 1,
-  'packages/bases/src/answer.ts': 1,
-  'packages/bases/src/csv.ts': 1,
-  'packages/bases/src/expr/runtime.ts': 1,
-  'packages/bases/src/ids.ts': 1,
 }
 const RAW_KEPT: Record<string, { most: number; why: string }> = {
   'apps/desktop/src/lib/explorer/src/ExplorerColumn.svelte': {
