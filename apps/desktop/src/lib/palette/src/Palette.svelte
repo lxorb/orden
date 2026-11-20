@@ -61,7 +61,7 @@
   } = $props()
   /* eslint-enable prefer-const */
   $effect(() => {
-    if (!__EVEN_PLUGIN__ && open) whenLoaded(hinting, ({ hints }) => hints.dismiss('palette'))
+    if (open) whenLoaded(hinting, ({ hints }) => hints.dismiss('palette'))
   })
   let query = $state('')
   let cursor = $state(0)
@@ -69,7 +69,7 @@
   const asked = $derived(modeOf(query))
   const mode = $derived(asked.mode)
   const term = $derived(asked.term)
-  const browses = $derived(!__EVEN_PLUGIN__ && !viewport.touch)
+  const browses = $derived(!viewport.touch)
   const visits = paletteKind('visits')
   let forgotten = $state(0)
   const commands = $derived(open ? paletteCommands(view) : [])
@@ -107,7 +107,7 @@
   )
   let hosts = $state.raw<readonly PaletteHost[]>([])
   $effect(() => {
-    if (!open || __EVEN_PLUGIN__ || !isDesktop) return
+    if (!open || !isDesktop) return
     void paletteKind('hosts')
       .list()
       .then((list) => (hosts = list))
@@ -170,7 +170,7 @@
   function hostRows(): Row[] {
     const list = all.filter((one) => one.kind === 'host')
     const found = term ? ranked(term, list) : list.map((one) => one.item)
-    const offer = __EVEN_PLUGIN__ ? null : paletteKind('hosts').wanted(term)
+    const offer = paletteKind('hosts').wanted(term)
     return offer ? [...found, { kind: 'connect', ...offer }] : found
   }
   const browsed = $derived(
@@ -371,9 +371,7 @@
     frecency.forget(key)
     if (row.kind === 'note') workspace.device.unremember(row.entry.path)
     if (row.kind === 'tab' && row.tab.path) workspace.device.unremember(row.tab.path)
-    if (!__EVEN_PLUGIN__ && row.kind === 'page') {
-      visits.forget(row.url)
-    }
+    if (row.kind === 'page') visits.forget(row.url)
     forgotten++
   }
   export async function showCommands() {
