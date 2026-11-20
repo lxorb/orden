@@ -7,13 +7,12 @@ import { howFor, opensLink, type TabAsk, tabAsk, workspace } from '../../../work
 import { type Here, placeOf, withPaths } from './paths'
 
 let home: string | null = null
-const homeFound =
-  isDesktop && !__EVEN_PLUGIN__
-    ? import('@tauri-apps/api/path')
-        .then((path) => path.homeDir())
-        .then((found) => (home = found))
-        .catch(() => null)
-    : Promise.resolve(null)
+const homeFound = isDesktop
+  ? import('@tauri-apps/api/path')
+      .then((path) => path.homeDir())
+      .then((found) => (home = found))
+      .catch(() => null)
+  : Promise.resolve(null)
 function opensHere(path: string): boolean {
   if (spaceHolding(workspace.spaces, path) === null) return false
   const mark = fileMark(nameOf(path))
@@ -26,7 +25,7 @@ function chatHere(root: string | null): Here {
     spaces: workspace.spaces,
     holds: (path) => links.holdsFile(path),
     opens: opensHere,
-    reveals: isDesktop && !__EVEN_PLUGIN__,
+    reveals: isDesktop,
   }
 }
 export const chatPaths = (html: string, root: string | null): string => withPaths(html, chatHere(root))

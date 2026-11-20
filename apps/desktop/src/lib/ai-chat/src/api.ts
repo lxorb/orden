@@ -15,22 +15,17 @@ export type { TaskTool } from './store/prefs'
 export { installAiRunner } from './ask'
 export { chatsUnread, lookAtLaunch }
 export function askQuickly(): void {
-  if (__EVEN_PLUGIN__) return
   void import('./quick.svelte').then(({ quick }) => quick.show())
 }
-const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
-export const chatStore = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./store/chat.svelte')>() : import('./store/chat.svelte')
-export const chatSends = () => (__EVEN_PLUGIN__ ? away<typeof import('./chat/sends')>() : import('./chat/sends'))
-export const chatReveal = () => (__EVEN_PLUGIN__ ? away<typeof import('./store/reveal')>() : import('./store/reveal'))
-export const chatQuoting = () => (__EVEN_PLUGIN__ ? away<typeof import('./store/quote')>() : import('./store/quote'))
-export const chatReplies = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./commands/chats')>() : import('./commands/chats')
-export const helperRun = () => (__EVEN_PLUGIN__ ? away<typeof import('./helpers/run')>() : import('./helpers/run'))
-export const chatCommands = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./commands/index')>() : import('./commands/index')
-export const sidebarParts = () => (__EVEN_PLUGIN__ ? away<typeof import('./parts')>() : import('./parts'))
-export const todoWithAi = () => (__EVEN_PLUGIN__ ? away<typeof import('./store/do-todo')>() : import('./store/do-todo'))
+export const chatStore = () => import('./store/chat.svelte')
+export const chatSends = () => import('./chat/sends')
+export const chatReveal = () => import('./store/reveal')
+export const chatQuoting = () => import('./store/quote')
+export const chatReplies = () => import('./commands/chats')
+export const helperRun = () => import('./helpers/run')
+export const chatCommands = () => import('./commands/index')
+export const sidebarParts = () => import('./parts')
+export const todoWithAi = () => import('./store/do-todo')
 export const rewritingStore = () => import('./rewriting.svelte')
 export const loadRewriteSheet = () => import('./RewriteSheet.svelte')
 const FRESH_MARK = 'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'
