@@ -6,7 +6,7 @@
   import { dur, slide } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'
   import ExtensionGaps from './ExtensionGaps.svelte'
-  import { extensions, OFF_SAID, PENDING_SAID } from './extensions.svelte'
+  import { extensions, NOT_WORKING, OFF_SAID, PENDING_SAID } from './extensions.svelte'
   import ExtensionRestart from './ExtensionRestart.svelte'
 
   let opened = $state<string | null>(null)
@@ -34,7 +34,9 @@
       {/if}
       <span class="what">
         <span class="named">{one.name}</span>
-        {#if one.problem}
+        {#if one.cannotRun !== null}
+          <small class="warn">{NOT_WORKING}</small>
+        {:else if one.problem}
           <small class="warn">Did not load</small>
         {:else if one.pending}
           <small>{one.enabled ? PENDING_SAID : OFF_SAID}</small>
@@ -43,13 +45,19 @@
         {/if}
       </span>
     </button>
-    <Switch
-      on={one.enabled}
-      label="Turn {one.name} on or off"
-      onchange={(on: boolean) => void extensions.enable(one.id, on)}
-    />
+    {#if one.cannotRun === null}
+      <Switch
+        on={one.enabled}
+        label="Turn {one.name} on or off"
+        onchange={(on: boolean) => void extensions.enable(one.id, on)}
+      />
+    {:else}
+      <button class="orden-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}>Remove</button>
+    {/if}
   </div>
-  {#if one.pending}
+  {#if one.cannotRun !== null}
+    <p class="warn cannot">{one.cannotRun}</p>
+  {:else if one.pending}
     <ExtensionRestart {one} />
   {/if}
   {#if opened === one.id}
@@ -177,6 +185,9 @@
   }
   .danger {
     color: var(--danger);
+  }
+  .cannot {
+    padding: 0 0 var(--space-2) calc(var(--icon-lg) + var(--space-2));
   }
   form input {
     flex: 1;

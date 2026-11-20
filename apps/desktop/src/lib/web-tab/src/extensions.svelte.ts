@@ -21,6 +21,7 @@ export interface Extension {
   problem: string | null
   gaps: Gaps | null
   pending: boolean
+  cannotRun: string | null
 }
 interface Asking {
   link: string
@@ -46,6 +47,7 @@ export function readExtension(said: unknown): Extension | null {
     problem: text(said.problem),
     gaps: readGaps(said.gaps),
     pending: said.pending === true,
+    cannotRun: text(said.cannotRun),
   }
 }
 function words(field: unknown): string[] {
@@ -71,8 +73,12 @@ export const PENDING_SAID = 'Starts when Orden next opens'
 export const OFF_SAID = 'Turns off when Orden next opens'
 export const UNKNOWN_ANSWER = 'Orden could not install that extension: it got an answer it does not know'
 export const POPUP_UNKNOWN = 'Orden closed this popup: it got an answer it does not know'
+export const NOT_WORKING = 'Not working'
+export function runs(one: Extension): boolean {
+  return !one.pending && one.cannotRun === null
+}
 export function pinnedOf(list: readonly Extension[]): Extension[] {
-  return list.filter((one) => one.enabled && one.action && one.pinned && !one.pending)
+  return list.filter((one) => one.enabled && one.action && one.pinned && runs(one))
 }
 export const UPDATE_EVERY = 5 * 60 * 60 * 1000
 const LOOKED = 'orden.extensions.looked'
@@ -202,7 +208,8 @@ class Extensions {
     return said ? said[1] : null
   }
   open(id: string, tab: string, store: string | null | undefined): void {
-    if (this.list.find((one) => one.id === id)?.pending) return
+    const one = this.list.find((each) => each.id === id)
+    if (one && !runs(one)) return
     this.pop(this.popped?.id === id && this.popped.tab === tab ? null : { id, tab, store })
   }
   close(which?: Popped): void {
