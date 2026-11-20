@@ -21,7 +21,7 @@ function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
   return import('./permissions.svelte')
 }
 function leftPrivate(privateLeft: boolean): void {
-  if (!__EVEN_PLUGIN__ && !privateLeft) void pagePermissions().then(({ grants }) => grants.leftPrivate())
+  if (!privateLeft) void pagePermissions().then(({ grants }) => grants.leftPrivate())
 }
 function shut(tab: string, keep: boolean): Promise<unknown> {
   return invoke('web_close', { tab, keep }).catch(() => undefined)
@@ -410,7 +410,6 @@ class Pages {
     else this.hide(tabId, wanted.pane)
   }
   async place(tabId: string, pane: Rect, visible: boolean, covering = false, over: Over = NOTHING): Promise<void> {
-    if (__EVEN_PLUGIN__) return
     const page = this.held.get(tabId)
     if (!isDesktop || !page) return
     if (page.opening) {
@@ -471,7 +470,7 @@ class Pages {
     await this.put(tabId, page, { pane, visible: false, frame: null, cut: null })
   }
   private async cover(tabId: string, page: Page, pane: Rect, over: Over): Promise<void> {
-    if (__EVEN_PLUGIN__ || !over.cut) return
+    if (!over.cut) return
     const placed = this.put(tabId, page, {
       pane,
       visible: true,
@@ -483,12 +482,10 @@ class Pages {
     await placed
   }
   private async put(tabId: string, page: Page, one: Placement): Promise<void> {
-    if (__EVEN_PLUGIN__) return
     page.placing ??= new Latest((sent) => this.send(tabId, page, sent))
     await page.placing.put(one).catch(() => undefined)
   }
   private async send(tabId: string, page: Page, one: Placement): Promise<void> {
-    if (__EVEN_PLUGIN__) return
     page.sent = one
     try {
       const said = await invoke<boolean | 'hollows' | undefined>('web_place', {
@@ -528,7 +525,7 @@ class Pages {
     return Promise.all(shown.map(([tabId, page]) => this.holdOne(tabId, page))).then(() => undefined)
   }
   private heldWhere(page: Page): Placement | null {
-    if (__EVEN_PLUGIN__ || !isDesktop || !page.live) return null
+    if (!isDesktop || !page.live) return null
     return page.heldAt ?? (page.shown && page.sent?.visible && !page.sent.away ? page.sent : null)
   }
   private async holdOne(tabId: string, page: Page): Promise<void> {
@@ -851,7 +848,7 @@ class Pages {
     await closeItself(tabId, opener)
   }
   private listen(): Promise<void> {
-    if (__EVEN_PLUGIN__ || !isDesktop || typeof window === 'undefined') return Promise.resolve()
+    if (!isDesktop || typeof window === 'undefined') return Promise.resolve()
     this.listening ??= (async () => {
       const { hearHere: listen } = await import('../../windows/src/api')
       await listen('orden://web-open', (event) => {
@@ -969,7 +966,7 @@ class Pages {
 }
 export const pages = new Pages()
 function carried(step: (carry: typeof import('./carry-in')) => void): void {
-  if (isDesktop && !__EVEN_PLUGIN__) void import('./carry-in').then(step)
+  if (isDesktop) void import('./carry-in').then(step)
 }
 providePort('web.pages', {
   get cuts() {
@@ -1017,7 +1014,6 @@ providePort('web.pages', {
     visited.brought(webData.history(), rows)
   },
   takeEngine: async (engine) => {
-    if (__EVEN_PLUGIN__) return 'same'
     const { CUSTOM, searchEngine } = await import('./search-engine.svelte')
     const same =
       'id' in engine
@@ -1031,15 +1027,13 @@ providePort('web.pages', {
   },
   searchHome: async () => (await import('./search-engine.svelte')).searchEngine.home,
   replayKey: (key) => {
-    if (!__EVEN_PLUGIN__) replay(key)
+    replay(key)
   },
   articleOf: async (page) => {
-    if (__EVEN_PLUGIN__) return ''
     const { articleOf } = await import('./note')
     return (await articleOf(page)).html
   },
   clipNote: async (page, on) => {
-    if (__EVEN_PLUGIN__) return ''
     const { clipNote } = await import('./note')
     return clipNote(page, on)
   },
