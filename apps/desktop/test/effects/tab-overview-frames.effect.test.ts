@@ -479,6 +479,20 @@ test('each window gets its cross and name in a task of its own, and the tasks go
   }
   expect(tasks).toEqual([])
 })
+test('the windows’ later work waits until they start to move, so the frames before carry only the windows', async () => {
+  const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+  vi.spyOn(pages, 'holdStill').mockImplementation(() => new Promise<void>(() => undefined))
+  tabOverview.open = true
+  flushSync()
+  for (let i = 0; i < 4; i++) {
+    frame()
+    await idle(20)
+  }
+  expect(document.querySelectorAll('.canvas .window').length).toBeGreaterThan(0)
+  expect(document.querySelectorAll('.closer').length).toBe(0)
+  await drained()
+  expect(document.querySelectorAll('.closer').length).toBe(document.querySelectorAll('.canvas .window').length)
+})
 test('the windows fly by the frames’ own times, however late each frame’s work begins', () => {
   vi.spyOn(performance, 'now').mockImplementation(() => now + 40)
   tabOverview.open = true
