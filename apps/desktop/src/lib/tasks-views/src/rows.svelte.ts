@@ -50,6 +50,11 @@ export class TodoRows {
     if (id !== null && !this.picking.has(id)) return [id]
     return [...this.picking.paths]
   }
+  letGo() {
+    this.picking.clear()
+    const at = document.activeElement
+    if (at instanceof HTMLElement && at.closest('[data-todo]')) at.blur()
+  }
   tick(id: string, done: boolean): Promise<void> {
     return tickTodos(this.host.shown, this.targets(id), done)
   }
@@ -130,7 +135,7 @@ export class TodoRows {
     } else if (shortcuts.pressed('tree.deselect', event) && this.picking.paths.length) {
       event.preventDefault()
       event.stopPropagation()
-      this.picking.clear()
+      this.letGo()
     } else if (shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)) {
       const going = this.targets(here)
       if (!going.length) return
@@ -171,7 +176,7 @@ export function rowKeys(node: HTMLElement, rows: TodoRows) {
   const away = (event: KeyboardEvent) => {
     const at = event.target instanceof Element ? event.target : null
     if (event.defaultPrevented || at?.closest('input, textarea, [contenteditable]')) return
-    if (shortcuts.pressed('tree.deselect', event) && rows.picking.paths.length) rows.picking.clear()
+    if (shortcuts.pressed('tree.deselect', event) && rows.picking.paths.length) rows.letGo()
   }
   node.addEventListener('keydown', heard)
   node.addEventListener('click', pressed)

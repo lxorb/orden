@@ -186,6 +186,7 @@
     border-color: var(--tone);
   }
   .body {
+    border-radius: var(--radius-sm);
     display: flex;
     flex: 1;
     flex-direction: column;
