@@ -40,17 +40,10 @@ def drive(browser: Browser) -> None:
         "the wrapped note to be the one open",
     )
     shot(page, "01-written")
-    page.keyboard.press("Control+o")
-    wait_for(page, "document.activeElement?.matches('.palette input')", "the palette's field")
-    page.keyboard.type("> Plain text")
-    wait_for(
-        page,
-        "[...document.querySelectorAll('.palette [role=option]')].some((one) => one.textContent.includes('Plain text'))",
-        "the palette to offer Plain text",
-    )
-    shot(page, "02-palette")
+    go = DRIVE.pick_export(page, "txt")
+    shot(page, "02-picker")
     with page.expect_download(timeout=20000) as caught:
-        page.keyboard.press("Enter")
+        go.click()
     download = caught.value
     SHOTS.mkdir(parents=True, exist_ok=True)
     where = SHOTS / "exported.txt"
