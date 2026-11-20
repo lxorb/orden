@@ -50,6 +50,7 @@ beforeEach(() => {
   vi.mocked(createEditor).mockClear()
   counted.mounts = 0
   counted.shown = {}
+  counted.throws = false
 })
 afterEach(() => {
   if (shown) void unmount(shown, { outro: false })
@@ -229,4 +230,23 @@ test('a note shown when the hidden one did not have the keyboard does not take i
   flushSync()
   expect(document.activeElement).toBe(outside)
   outside.remove()
+})
+test('a surface that fails as it is put behind still leaves the pane showing the tab in front', async () => {
+  const { one, shell, paneId } = opened()
+  await drawn(paneId)
+  workspace.activate(shell)
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('.counted')).not.toBeNull()
+  })
+  const shellBox = target.querySelector('.counted')?.parentElement
+  counted.throws = true
+  workspace.activate(one)
+  try {
+    flushSync()
+  } catch {
+    flushSync()
+  }
+  expect(shellBox?.hidden).toBe(true)
+  expect(written()).toBe('The first note.')
 })

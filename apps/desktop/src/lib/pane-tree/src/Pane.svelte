@@ -370,107 +370,117 @@
       {/snippet}
     </Door>
 
-    {#if tab && behind && locked}
-      {#key tab.id}
-        {#await lockScreen() then LockScreen}
-          <LockScreen path={behind} focused={workspace.panes.focusedId === pane.id} />
-        {:catch}
-          {@render unreachable()}
-        {/await}
-      {/key}
-    {:else if tab?.kind === 'graph'}
-      {#await graphSurface() then Graph}
-        <Graph
-          graph={picture}
-          whole
-          current={workspace.relativeNote}
-          focused={workspace.panes.focusedId === pane.id}
-          onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
-          onescape={() => void workspace.closeAsking(tab.id)}
-        />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {:else if tab?.kind === 'canvas'}
-      {@render surface(canvasSurface, tab)}
-    {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
-      {@render surface(pagesSurface, tab)}
-    {:else if tab?.kind === 'web'}
+    {#key tab?.id}
+      <svelte:boundary failed={unreachable}>
+        {#if tab && behind && locked}
+          {#key tab.id}
+            {#await lockScreen() then LockScreen}
+              <LockScreen path={behind} focused={workspace.panes.focusedId === pane.id} />
+            {:catch}
+              {@render unreachable()}
+            {/await}
+          {/key}
+        {:else if tab?.kind === 'graph'}
+          {#await graphSurface() then Graph}
+            <Graph
+              graph={picture}
+              whole
+              current={workspace.relativeNote}
+              focused={workspace.panes.focusedId === pane.id}
+              onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
+              onescape={() => void workspace.closeAsking(tab.id)}
+            />
+          {:catch}
+            {@render unreachable()}
+          {/await}
+        {:else if tab?.kind === 'canvas'}
+          {@render surface(canvasSurface, tab)}
+        {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
+          {@render surface(pagesSurface, tab)}
+        {:else if tab?.kind === 'web'}
 
-    {:else if tab?.kind === 'view' && tab.path === null}
-      {#key tab.id}
-        {#await todosBoard() then TodosBoard}
-          <TodosBoard />
-        {:catch}
-          {@render unreachable()}
-        {/await}
-      {/key}
-    {:else if tab?.kind === 'view'}
-      {@render surface(viewSurface, tab)}
-    {:else if tab?.kind === 'channel'}
-      {@render surface(chatSurface, tab)}
-    {:else if tab?.kind === 'chat'}
-      {#key tab.id}
-        {#await askPanel() then ChatPanel}
-          <ChatPanel wide {tab} />
-        {:catch}
-          {@render unreachable()}
-        {/await}
-      {/key}
-    {:else if tab?.kind === 'terminal'}
+        {:else if tab?.kind === 'view' && tab.path === null}
+          {#key tab.id}
+            {#await todosBoard() then TodosBoard}
+              <TodosBoard />
+            {:catch}
+              {@render unreachable()}
+            {/await}
+          {/key}
+        {:else if tab?.kind === 'view'}
+          {@render surface(viewSurface, tab)}
+        {:else if tab?.kind === 'channel'}
+          {@render surface(chatSurface, tab)}
+        {:else if tab?.kind === 'chat'}
+          {#key tab.id}
+            {#await askPanel() then ChatPanel}
+              <ChatPanel wide {tab} />
+            {:catch}
+              {@render unreachable()}
+            {/await}
+          {/key}
+        {:else if tab?.kind === 'terminal'}
 
-    {:else if tab?.kind === 'explorer'}
-      {#if explorerOn()}
-        {@render surface(explorerSurface, tab)}
-      {/if}
-    {:else if tab?.kind === 'pass'}
-      {@render surface(passSurface, tab)}
-    {:else if tab?.kind === 'settings'}
-      {#key tab.id}
-        {#await settingsSurface() then SettingsPanel}
-          <SettingsPanel />
-        {:catch}
-          {@render unreachable()}
-        {/await}
-      {/key}
-    {:else if tab?.kind === 'time'}
-      {@render surface(timeSurface, tab)}
-    {:else if tab?.coming}
-      <div class="coming" role="status">
-        {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
-          ? 'Not on this device. It opens once you are online again.'
-          : 'Loading…'}
-      </div>
-    {:else if tab?.reading}
-      {@render surface(readingSurface, tab)}
-    {:else if stacking}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="stack" data-region="editor">
-        {#each columns as one (one.id)}
-          <section class="column" class:is-active={one.id === pane.activeTabId} onfocusin={() => takeColumn(one.id)}>
-            <button
-              class="spine"
-              title={one.shown}
-              aria-label={one.shown}
-              aria-pressed={one.id === pane.activeTabId}
-              onclick={() => workspace.activate(one.id)}
-            >
-              <span class="orden-row-label" dir="auto">{one.shown}</span>
-            </button>
-            <div class="sheet" oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}>
-              {@render editor(one, columnViews, true, one.id === pane.activeTabId, held)}
-            </div>
-          </section>
-        {/each}
-      </div>
-    {:else if !tab}
-      {#await emptySurface() then NewHere}
-        <NewHere paneId={pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/if}
-
+        {:else if tab?.kind === 'explorer'}
+          {#if explorerOn()}
+            {@render surface(explorerSurface, tab)}
+          {/if}
+        {:else if tab?.kind === 'pass'}
+          {@render surface(passSurface, tab)}
+        {:else if tab?.kind === 'settings'}
+          {#key tab.id}
+            {#await settingsSurface() then SettingsPanel}
+              <SettingsPanel />
+            {:catch}
+              {@render unreachable()}
+            {/await}
+          {/key}
+        {:else if tab?.kind === 'time'}
+          {@render surface(timeSurface, tab)}
+        {:else if tab?.coming}
+          <div class="coming" role="status">
+            {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
+              ? 'Not on this device. It opens once you are online again.'
+              : 'Loading…'}
+          </div>
+        {:else if tab?.reading}
+          {@render surface(readingSurface, tab)}
+        {:else if stacking}
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div class="stack" data-region="editor">
+            {#each columns as one (one.id)}
+              <section
+                class="column"
+                class:is-active={one.id === pane.activeTabId}
+                onfocusin={() => takeColumn(one.id)}
+              >
+                <button
+                  class="spine"
+                  title={one.shown}
+                  aria-label={one.shown}
+                  aria-pressed={one.id === pane.activeTabId}
+                  onclick={() => workspace.activate(one.id)}
+                >
+                  <span class="orden-row-label" dir="auto">{one.shown}</span>
+                </button>
+                <div
+                  class="sheet"
+                  oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}
+                >
+                  {@render editor(one, columnViews, true, one.id === pane.activeTabId, held)}
+                </div>
+              </section>
+            {/each}
+          </div>
+        {:else if !tab}
+          {#await emptySurface() then NewHere}
+            <NewHere paneId={pane.id} />
+          {:catch}
+            {@render unreachable()}
+          {/await}
+        {/if}
+      </svelte:boundary>
+    {/key}
     {#each keptNotes as one (one.id)}
       {@const here = one.id === shownKept}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -481,19 +491,23 @@
         data-region={here ? 'editor' : undefined}
         oncontextmenu={(event: MouseEvent) => showMenu(event, keptViews[one.id], one.path)}
       >
-        {@render editor(one, keptViews, here, here, [one])}
+        <svelte:boundary failed={unreachable}>
+          {@render editor(one, keptViews, here, here, [one])}
+        </svelte:boundary>
       </div>
     {/each}
 
     {#each keptOwn as one (one.id)}
       {@const here = one.id === shownKept}
       <div class:front={here} class:kept={!here} hidden={!here} inert={!here}>
-        {#await doors[one.kind]?.() then Own}
-          {@const Kept = Own as Component<{ tab: Tab; focused: boolean; shown: boolean }>}
-          <Kept tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
-        {:catch}
-          {@render unreachable()}
-        {/await}
+        <svelte:boundary failed={unreachable}>
+          {#await doors[one.kind]?.() then Own}
+            {@const Kept = Own as Component<{ tab: Tab; focused: boolean; shown: boolean }>}
+            <Kept tab={one} focused={here && workspace.panes.focusedId === pane.id} shown={here} />
+          {:catch}
+            {@render unreachable()}
+          {/await}
+        </svelte:boundary>
       </div>
     {/each}
 
