@@ -233,7 +233,6 @@
                   aria-expanded={only === id && open}
                   onclick={(event) => clicked(event, id)}
                 >
-                  {#if running}<span class="pulse" aria-hidden="true"></span>{/if}
                   <span class="long">{running ? ticking(now - row.from) : length(row.to - row.from)}</span>
                 </button>
                 <button
@@ -420,24 +419,6 @@
   }
   .block.on .more {
     opacity: 1;
-  }
-  .pulse {
-    flex: none;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--danger);
-    animation: pulse 1.6s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    50% {
-      opacity: 0.3;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .pulse {
-      animation: none;
-    }
   }
   .unset {
     border: 1px dashed var(--line-strong);
