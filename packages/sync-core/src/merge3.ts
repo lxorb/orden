@@ -37,15 +37,17 @@ function shared(one: string, other: string): number {
 }
 const ONE_PASSAGE = 16
 const HELD_WHOLE = 8
-function samePassage(one: string, other: string): boolean {
-  if (shared(one, other) > ONE_PASSAGE) return true
+function heldWhole(one: string, other: string): boolean {
   const [shorter, longer] = one.trim().length <= other.trim().length ? [one, other] : [other, one]
   const words = shorter.trim()
   return words.length >= HELD_WHOLE && longer.includes(words)
 }
+function samePassage(one: string, other: string): boolean {
+  return shared(one, other) > ONE_PASSAGE || heldWhole(one, other)
+}
 function meets(one: Edit, other: Edit): boolean {
   if (isInsertion(one) && isInsertion(other)) {
-    return one.from === other.from && samePassage(one.insert, other.insert)
+    return one.from === other.from && heldWhole(one.insert, other.insert)
   }
   const [insertion, span] = isInsertion(one) ? [one, other] : [other, one]
   if (isInsertion(insertion)) {

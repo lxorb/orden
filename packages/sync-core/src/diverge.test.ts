@@ -749,3 +749,60 @@ describe('the same rewrite made on two devices at once', () => {
     expect(judged.resolution).toBe(both)
   })
 })
+describe('two sides adding at one point (#2351)', () => {
+  const plan = '# Plan\n\nthe start\n\nnative wrote this\n\nweb wrote this\n'
+  const added = (base: string, at: number, words: string) => base.slice(0, at) + words + base.slice(at)
+  const cases: [string, string, number, string, string][] = [
+    ['a shared tail', plan, plan.length, '\nnative at the same time 0\n', '\nweb at the same time 0\n'],
+    ['a shared head', plan, plan.length, '\ncall Bob at 3\n', '\ncall Alice at 3\n'],
+    [
+      'one word apart',
+      plan,
+      plan.length,
+      '\nWe ship on Monday after the review, with milk and eggs.\n',
+      '\nWe ship on Tuesday after the review, with milk and eggs.\n',
+    ],
+    ['a word each inside a line', plan, plan.indexOf('start'), 'big ', 'old '],
+  ]
+  test.each(cases)('keeps what both wrote whole: %s', (_, base, at, mine, theirs) => {
+    const local = added(base, at, mine)
+    const remote = added(base, at, theirs)
+    const orders = [added(base, at, mine + theirs), added(base, at, theirs + mine)]
+    for (const [one, other] of [
+      [local, remote],
+      [remote, local],
+    ] as const) {
+      const crdt = crdtMerge(base, one, other)
+      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+        for (const merged of [undefined, crdt]) {
+          const result = diverge(base, one, other, times, merged)
+          expect(result.verdict).toBe('clean')
+          expect(result.overlaps).toEqual([])
+          expect(result.settled).toBe('newer')
+          expect(orders).toContain(result.resolution)
+          if (merged !== undefined) expect(result.resolution).toBe(crdt)
+        }
+      }
+    }
+  })
+  test.each([
+    ['a line', plan.length, '\nnative at the same time 0\n'],
+    ['a word inside a line', plan.indexOf('start'), 'big '],
+  ])('says what both added alike once: %s', (_, at, words) => {
+    const text = added(plan, at, words)
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      for (const merged of [undefined, crdtMerge(plan, text, text)]) {
+        expect(diverge(plan, text, text, times, merged).resolution).toBe(text)
+      }
+    }
+  })
+  test('takes the fuller of two additions when one holds the other', () => {
+    const local = `${plan}\ncall Bob at 3\n`
+    const remote = `${plan}\ncall Bob at 3 about the rent\n`
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      for (const merged of [undefined, crdtMerge(plan, local, remote)]) {
+        expect(diverge(plan, local, remote, times, merged).resolution).toBe(remote)
+      }
+    }
+  })
+})
