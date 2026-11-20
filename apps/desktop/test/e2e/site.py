@@ -1,4 +1,6 @@
 import functools
+from collections.abc import Iterator
+from contextlib import contextmanager
 import hashlib
 import re
 import time
@@ -218,6 +220,15 @@ def sheet(browser, out: Path, token: str, name: str, width, height, agent, finge
             )
             say(f"[{name}] {section}: {len(small)} targets under the floor {small[:4]}")
     context.close()
+@contextmanager
+def at_the_app(worker: Worker) -> Iterator[None]:
+    worker.stop()
+    worker.start()
+    try:
+        yield
+    finally:
+        worker.stop()
+        worker.start(upstream=BLOG_HOST)
 def pages(worker: Worker, token: str, space: str) -> None:
     index = site("/")
     listed = sorted(set(re.findall(r"<span>([^<]+)</span>", index.text)))
@@ -236,15 +247,18 @@ def pages(worker: Worker, token: str, space: str) -> None:
     head = site("/public/one").text
     for what in ['<meta name="description"', 'property="og:image"', 'rel="canonical"', 'rel="alternate"']:
         say(f"the head of /public/one has {what}: {what in head}")
-    notes = request(f"/v1/spaces/{space}/changes?since=0", token).get("notes", [])
-    moved = next((one for one in notes if one["path"] == "Moved.md"), None)
+    with at_the_app(worker):
+        notes = request(f"/v1/spaces/{space}/changes?since=0", token).get("notes", [])
+        moved = next((one for one in notes if one["path"] == "Moved.md"), None)
+        if moved:
+            request(
+                f"/v1/notes/{moved['id']}",
+                token,
+                {"path": "Moved along.md", "content": "# Moved\n\nRenamed.\n", "baseVersion": moved["version"]},
+                method="PUT",
+            )
+    say(f"the site host keeps the account's API to itself: {site(f'/v1/spaces/{space}/changes').status}")
     if moved:
-        request(
-            f"/v1/notes/{moved['id']}",
-            token,
-            {"path": "Moved along.md", "content": "# Moved\n\nRenamed.\n", "baseVersion": moved["version"]},
-            method="PUT",
-        )
         was = site("/moved", follow=False)
         say(f"after the rename /moved answers {was.status} to {was.headers.get('location')}")
         say(f"and /moved-along answers {site('/moved-along').status}")
@@ -311,7 +325,7 @@ def searching() -> None:
         found = re.findall(r'class="what">([^<]+)<', answer.text)
         say(f"{what} ({query}): {found}")
     say(f"a private note is never an answer: {'Three' not in site('/search?q=mycology').text}")
-def forms(token: str, space: str) -> None:
+def forms(worker: Worker, token: str, space: str) -> None:
     page = site("/say-hello")
     action = re.search(r'action="/form/([^"]+)"', page.text)
     say(f"the form posts to the note that asked: {bool(action)}")
@@ -327,7 +341,8 @@ def forms(token: str, space: str) -> None:
     say(f"and the page says so: {'Thank you' in site(f'/say-hello?sent={note}').text}")
     refused = site(f"/form/{note}", data=b"your-email=ada%40example.com", follow=False)
     say(f"a question it needs is refused: {'wrong=' in (refused.headers.get('location') or '')}")
-    held = request(f"/v1/spaces/{space}/answers", token)
+    with at_the_app(worker):
+        held = request(f"/v1/spaces/{space}/answers", token)
     say(f"the account holds: {[row['answers'] for row in held.get('answers', [])]}")
 def diagrams() -> list[str]:
     page = site("/public/diagram")
@@ -353,7 +368,7 @@ def diagrams() -> list[str]:
     allowed = "img-src 'self'" in policy
     say(f"and the policy lets the page show its own pictures: {allowed}")
     return sources
-def dressing(token: str, space: str) -> None:
+def dressing(worker: Worker, token: str, space: str) -> None:
     css = b"#write{--orden-drive:1}"
     digest = hashlib.sha256(css).hexdigest()
     put = urllib.request.Request(
@@ -362,19 +377,20 @@ def dressing(token: str, space: str) -> None:
         method="PUT",
         headers={"authorization": f"Bearer {token}", "content-type": "text/css"},
     )
-    harness.opened(put)
-    request(
-        f"/v1/spaces/{space}/files",
-        token,
-        {"files": [{"path": "publish.css", "hash": digest}]},
-        method="PUT",
-    )
-    request(
-        f"/v1/spaces/{space}/site",
-        token,
-        {"analytics": {"url": "https://plausible.io/js/script.js", "domain": BLOG_HOST}},
-        method="PUT",
-    )
+    with at_the_app(worker):
+        harness.opened(put)
+        request(
+            f"/v1/spaces/{space}/files",
+            token,
+            {"files": [{"path": "publish.css", "hash": digest}]},
+            method="PUT",
+        )
+        request(
+            f"/v1/spaces/{space}/site",
+            token,
+            {"analytics": {"url": "https://plausible.io/js/script.js", "domain": BLOG_HOST}},
+            method="PUT",
+        )
     one = site("/public/one")
     policy = one.headers.get("content-security-policy") or ""
     say(f"the author's own stylesheet is linked: {f'/i/{digest}.css' in one.text}")
@@ -493,7 +509,8 @@ def looking(browser, out: Path) -> None:
             say(f"shot {name}-hover.png")
         context.close()
 def password(worker: Worker, token: str, space: str) -> None:
-    request(f"/v1/spaces/{space}/site", token, {"password": PASSWORD}, method="PUT")
+    with at_the_app(worker):
+        request(f"/v1/spaces/{space}/site", token, {"password": PASSWORD}, method="PUT")
     asked = site("/public/one")
     say(f"with a password set, the page answers {asked.status} with a form: {'type=\"password\"' in asked.text}")
     say(f"and nothing of the note: {'The first words of it' not in asked.text}")
@@ -509,7 +526,8 @@ def password(worker: Worker, token: str, space: str) -> None:
     say(f"the right one answers {right.status} to {right.headers.get('location')}, holding {ticket[:14]}…")
     read = site("/public/one", cookie=ticket)
     say(f"behind it, the note: {'The first words of it' in read.text} ({read.status})")
-    request(f"/v1/spaces/{space}/site", token, {"password": None}, method="PUT")
+    with at_the_app(worker):
+        request(f"/v1/spaces/{space}/site", token, {"password": None}, method="PUT")
     say(f"with the password off, the page answers {site('/public/one').status} again")
 def main() -> int:
     worker = Worker()
@@ -539,12 +557,12 @@ def main() -> int:
         say("--- searching it ---")
         searching()
         say("--- a form on a page ---")
-        forms(token, space)
+        forms(worker, token, space)
         say("--- a diagram the app drew ---")
         diagrams()
         drawn(browser, SHOTS)
         say("--- the author's own dressing ---")
-        dressing(token, space)
+        dressing(worker, token, space)
         say("--- the site in a browser ---")
         looking(browser, SHOTS)
         say("--- behind a password ---")
