@@ -5,6 +5,7 @@ type Held = typeof Pages
 const COVER_HIDES = 5000
 const STILL_LOOKS = 100
 const PICTURE_EVERY = 200
+const SHOT_WAITS = 300
 const ARRIVAL_WAITS = 100
 const overlaps = (one: Rect, other: Rect): boolean =>
   one.x < other.x + other.width &&
@@ -104,4 +105,30 @@ export function watchGround(): void {
     requestAnimationFrame(looked)
   })
   for (const one of [document.documentElement, document.body]) watching.observe(one, { attributes: true })
+}
+export async function photographed(
+  page: Page,
+  asked: Promise<string | null>,
+  url: string | null,
+  pane: Rect | null,
+  shotAt: number,
+  standing: boolean,
+): Promise<void> {
+  const same = (now: Rect | null) => now?.width === pane?.width && now?.height === pane?.height
+  void asked.then(
+    async (said) => {
+      if (said && standing) await decoded(said)
+      if (said && page.shotAt === shotAt && page.url === url && same(page.pane)) {
+        page.shot = said
+        page.shotAt = Date.now()
+      }
+    },
+    () => undefined,
+  )
+  try {
+    await Promise.race([asked, new Promise<null>((go) => setTimeout(() => go(null), SHOT_WAITS))])
+  } catch {
+    // A platform with no way to photograph a webview. The hole keeps its own
+    // ground, which is what it held before there was a picture to hold.
+  }
 }
