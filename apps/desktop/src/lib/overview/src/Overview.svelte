@@ -1511,7 +1511,7 @@
       {/if}
     {/each}
   </div>
-  {#if !__EVEN_PLUGIN__ && out && !onTheWay}
+  {#if out && !onTheWay}
     {#await import('./Offstage.svelte') then Offstage}
       <Offstage.default
         tabs={windows.flatMap(({ tab }) => (asPanes[tab.id] ? [] : [tab]))}
