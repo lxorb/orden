@@ -216,7 +216,11 @@ describe('the crate news the settings hear', () => {
       agent: 'orden-cc',
       thread: 'thread-b',
     })
-    expect(readHeard({ kind: 'paused', agent: 'orden-cc' })).toEqual({ kind: 'paused', agent: 'orden-cc', thread: null })
+    expect(readHeard({ kind: 'paused', agent: 'orden-cc' })).toEqual({
+      kind: 'paused',
+      agent: 'orden-cc',
+      thread: null,
+    })
     expect(readHeard({ kind: 'something new' })).toBeNull()
   })
 })
