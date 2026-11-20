@@ -29,9 +29,10 @@ for (const kind of ['pointerdown', 'mousedown', 'click', 'auxclick', 'contextmen
   const at = e.target instanceof Element ? e.target : null
   __heard.push([kind, at ? at.tagName + '.' + [...at.classList].join('.') : '', e.ctrlKey, e.shiftKey, e.altKey, e.defaultPrevented])
 }, true)
-for (const kind of ['click', 'mousedown']) addEventListener(kind, (e) => {
-  __heard.push(['bubbled ' + kind, e.defaultPrevented])
+for (const kind of ['click', 'mousedown', 'keydown']) addEventListener(kind, (e) => {
+  __heard.push(['bubbled ' + kind, e.defaultPrevented, e.key ?? '', document.activeElement?.tagName ?? ''])
 })
+addEventListener('keydown', (e) => __heard.push(['keydown', e.key, e.code, e.target instanceof Element ? e.target.tagName + '.' + [...e.target.classList].join('.') : '', e.defaultPrevented]), true)
 return true
 """
 def client_origin(hwnd: int) -> tuple[int, int]:
@@ -103,27 +104,25 @@ def acts(app: App, hwnd: int, scope: str, wrong: list[str]) -> None:
         click(point, [])
         click(point, [])
         focused = app.eval("return document.activeElement?.closest('[data-todo]')?.textContent.trim() ?? document.activeElement?.tagName")
+        app.eval("window.__heard = []; return true")
         key(DELETE)
         time.sleep(1)
         left = titles(app, scope)
-        print(f"{scope}: Delete with {focused} focused leaves {left}", flush=True)
+        print(f"{scope}: Delete with {focused} focused leaves {left}; picked {picked(app, scope)}; heard {json.dumps(app.eval('return window.__heard'))}", flush=True)
         if "Pick three" in left:
             wrong.append(f"the Delete key on a focused todo in {scope} kept it: {left}")
 def tried(app: App, hwnd: int, scope: str, wrong: list[str]) -> None:
     for mod in ["Control", "Shift"]:
         app.eval("document.activeElement?.blur(); window.__heard = []; return true")
-        for title in ["Pick one", "Pick one"]:
-            point = at(app, hwnd, scope, title)
-            if point:
-                click(point, [])
+        key(ESCAPE)
         first, last = ("Pick one", "Pick three") if mod == "Control" else ("Pick two", "Pick four")
         app.eval("window.__heard = []; return true")
-        for title in [first, last]:
+        for title, held in [(first, []), (first, []), (last, [mod])]:
             point = at(app, hwnd, scope, title)
             if not point:
                 wrong.append(f"no row {title} in {scope}")
                 return
-            click(point, [mod])
+            click(point, held)
         now = picked(app, scope)
         heard = app.eval("return window.__heard")
         print(f"{scope}: {mod} clicks on {first} and {last} pick {now}; heard {json.dumps(heard)}", flush=True)
