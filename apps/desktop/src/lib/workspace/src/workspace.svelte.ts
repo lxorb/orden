@@ -2042,7 +2042,6 @@ class Workspace {
           try {
             await this.renameOnDisk(from, target, kind)
           } catch (error) {
-            this.shown.delete(`${from}\n${target}`)
             this.showMove(target, from, kind, false)
             await away?.back()
             await this.loadTree()
@@ -2687,6 +2686,7 @@ class Workspace {
     this.device.follow(op)
     for (const store of this.rowStores) keeping(store)(op)
     if (told) this.shown.add(`${from}\n${to}`)
+    else this.shown.delete(`${to}\n${from}`)
     if (this.tree) this.tree = withMove(this.tree, from, to)
   }
   heardMove(from: string, to: string, told = false) {
@@ -2966,7 +2966,6 @@ class Workspace {
     try {
       await this.renameOnDisk(path, target, kind, hold ? { hold } : {})
     } catch (error) {
-      this.shown.delete(`${path}\n${target}`)
       this.showMove(target, path, kind, false)
       await this.loadTree()
       throw error
