@@ -184,10 +184,28 @@ describe('the lists', () => {
   })
 })
 describe('what the setup keeps', () => {
-  test('reads a step and its answers back', () => {
-    expect(keptProgress({ step: 'notes', answers: { browser: 'safari', notes: null, code: 'no' } })).toEqual({
+  test('reads a step, its answers and the way there back', () => {
+    expect(
+      keptProgress({
+        step: 'notes',
+        answers: { browser: 'safari', notes: null, code: 'no' },
+        trail: ['appearance', 'heard', 'browser', 'notes'],
+        signedIn: true,
+      }),
+    ).toEqual({
       step: 'notes',
       answers: { browser: 'safari', notes: null, code: 'no' },
+      trail: ['appearance', 'heard', 'browser', 'notes'],
+      signedIn: true,
+    })
+  })
+  test('lays every earlier step behind a step kept without its way there', () => {
+    expect(keptProgress({ step: 'heard', answers: {} })).toMatchObject({
+      trail: ['account', 'appearance', 'heard'],
+      signedIn: false,
+    })
+    expect(keptProgress({ step: 'heard', trail: ['account', 'nowhere', 'notes'] })).toMatchObject({
+      trail: ['account', 'appearance', 'heard'],
     })
   })
   test('remembers that it is done', () => {
@@ -198,7 +216,7 @@ describe('what the setup keeps', () => {
     expect(keptProgress({ step: 'nowhere' })).toBeNull()
   })
   test('drops answers it cannot read', () => {
-    expect(keptProgress({ step: 'ai', answers: { browser: 4, code: 'maybe' } })).toEqual({
+    expect(keptProgress({ step: 'ai', answers: { browser: 4, code: 'maybe' } })).toMatchObject({
       step: 'ai',
       answers: { browser: null, notes: null, code: null },
     })

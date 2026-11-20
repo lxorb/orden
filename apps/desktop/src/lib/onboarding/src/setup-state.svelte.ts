@@ -43,7 +43,8 @@ class Setup {
     const kept = readProgress()
     if (kept === null || kept === 'done') return
     this.answers = kept.answers
-    this.open(kept.step)
+    this.signedIn = kept.signedIn
+    this.open(kept.step, kept.trail)
   }
   begin(signedIn: boolean) {
     if (readProgress() === 'done' || this.showing) return
@@ -51,9 +52,9 @@ class Setup {
     this.answers = blank()
     this.open(firstStep(this.answers, this.reach))
   }
-  private open(step: Step) {
+  private open(step: Step, trail: Step[] = [step]) {
     this.step = step
-    this.trail = [step]
+    this.trail = trail
     this.showing = true
     this.keep()
     stepped(`setup-${step}`)
@@ -138,7 +139,8 @@ class Setup {
     stepped('setup-guide')
   }
   private keep() {
-    if (this.showing) keepProgress({ step: this.step, answers: this.answers })
+    if (this.showing)
+      keepProgress({ step: this.step, answers: this.answers, trail: this.trail, signedIn: this.signedIn })
   }
 }
 export const setup = new Setup()

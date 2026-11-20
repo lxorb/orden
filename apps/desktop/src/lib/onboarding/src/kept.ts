@@ -1,6 +1,6 @@
 import { isRecord, keepJson, stored } from '../../platform/src/api'
 import type { Answers, Step } from './flow'
-import { isStep } from './flow'
+import { isStep, STEPS } from './flow'
 import { PROGRESS_KEY } from './gate.svelte'
 
 const REQUESTS_KEY = 'orden:setup-requests'
@@ -8,6 +8,8 @@ const HEARD_KEY = 'orden:setup-heard'
 export interface Progress {
   step: Step
   answers: Answers
+  trail: Step[]
+  signedIn: boolean
 }
 export type Kept = Progress | 'done' | null
 export function keptProgress(said: unknown): Kept {
@@ -16,9 +18,14 @@ export function keptProgress(said: unknown): Kept {
   const answers = isRecord(said.answers) ? said.answers : {}
   const text = (value: unknown) => (typeof value === 'string' ? value : null)
   const code = answers.code === 'yes' || answers.code === 'no' ? answers.code : null
+  const step = said.step
+  const walked = Array.isArray(said.trail) ? said.trail.filter(isStep) : []
+  const trail = walked.at(-1) === step ? walked : STEPS.slice(0, STEPS.indexOf(step) + 1)
   return {
-    step: said.step,
+    step,
     answers: { browser: text(answers.browser), notes: text(answers.notes), code },
+    trail,
+    signedIn: said.signedIn === true,
   }
 }
 export function readProgress(): Kept {
