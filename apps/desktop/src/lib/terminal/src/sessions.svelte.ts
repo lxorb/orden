@@ -1315,11 +1315,26 @@ export async function usageOfTab(tab: Tab): Promise<Usage | null> {
 export function screenOf(tab: { readonly id: string }): { text: string; cols: number } | null {
   return sessions.get(tab.id)?.screenNow() ?? null
 }
+let unpainted: (() => void) | null = null
 export function sessionOf(tab: Tab): Session {
   let one = sessions.get(tab.id)
-  if (!one) sessions.set(tab.id, (one = new Session(tab)))
+  if (!one) {
+    sessions.set(tab.id, (one = new Session(tab)))
+    const owed = unpainted
+    unpainted = null
+    owed?.()
+  }
   return one
 }
+const RESTYLES = new Set(['STYLE'])
+const restyled = (records: readonly MutationRecord[]): boolean =>
+  records.some(
+    (one) =>
+      one.type === 'attributes' ||
+      RESTYLES.has(one.target.nodeName) ||
+      RESTYLES.has(one.target.parentNode?.nodeName ?? '') ||
+      [...one.addedNodes, ...one.removedNodes].some((node) => RESTYLES.has(node.nodeName)),
+  )
 export type { Session }
 function watch() {
   $effect.root(() => {
@@ -1343,6 +1358,10 @@ function watch() {
   let frame = 0
   let painted = ''
   const repaint = (themed = shells.themed) => {
+    if (!sessions.size) {
+      unpainted = () => repaint(themed)
+      return
+    }
     cancelAnimationFrame(frame)
     frame = requestAnimationFrame(() => {
       const theme = laid(terminalTheme(document.documentElement, !themed))
@@ -1363,7 +1382,9 @@ function watch() {
       untrack(() => repaint(themed))
     })
   })
-  const page = new MutationObserver(() => repaint())
+  const page = new MutationObserver((records) => {
+    if (restyled(records)) repaint()
+  })
   page.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-theme', 'style', 'class'],
