@@ -1180,11 +1180,12 @@
   }
   .pick {
     position: absolute;
-    inset: 0 3px;
+    inset: var(--tab-top) 3px 0;
     display: flex;
     align-items: center;
     min-width: 0;
-    padding: var(--tab-top) 8px;
+    padding: 0 8px var(--tab-top);
+    border-radius: var(--round) var(--round) 0 0;
     overflow: hidden;
     white-space: nowrap;
     text-align: start;

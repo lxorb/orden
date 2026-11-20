@@ -15,7 +15,8 @@ test('a hovered tab lights in a box as far from the bar as from the top', () => 
   expect(rule('.tab::before')).toMatch(/border-radius: var\(--round\);/)
 })
 test('what a tab says sits in the middle of that box', () => {
-  expect(rule('.pick')).toMatch(/padding: var\(--tab-top\) 8px;/)
+  expect(rule('.pick')).toMatch(/inset: var\(--tab-top\) 3px 0;/)
+  expect(rule('.pick')).toMatch(/padding: 0 8px var\(--tab-top\);/)
   for (const one of ['.shut', '.tab::after']) {
     expect(rule(one), one).toMatch(/top: calc\(50% - 8px\);/)
   }
