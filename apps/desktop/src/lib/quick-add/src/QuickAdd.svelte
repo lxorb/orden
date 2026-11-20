@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Priority } from '@orden/markdown/task-line'
-  import { parseQuickAdd, type QuickFields } from '@orden/bases/language'
+  import { parseTodo, type QuickFields, type TypedTodo } from '@orden/bases/language'
   import { todayOf } from '@orden/bases'
-  import { keepFocus, type MenuEntry } from '../../ui-kit/src/api'
+  import type { MenuEntry } from '../../ui-kit/src/api'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar.mjs'
   import Flag from 'lucide/dist/esm/icons/flag.mjs'
@@ -13,16 +13,7 @@
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import { onMount, tick, untrack } from 'svelte'
   import type { Dictates } from '../../dictation/src/api'
-  import {
-    carried,
-    chosen,
-    DateAsk,
-    longPaste,
-    piecesOf,
-    type Spot as Span,
-    suggestions,
-    tokenAt,
-  } from '../../ui-controls/src/api'
+  import { ChipInput, DateAsk, longPaste, type Spot, suggestions, type Token } from '../../ui-controls/src/api'
   import type { Provider } from '../../ai-providers/src/api'
   import type { Entry, Prefill } from './entry'
   import { pastedLines, without } from './field'
@@ -59,8 +50,8 @@
   } = $props()
   let text = $state(untrack(() => prefill.text ?? ''))
   let description = $state<string | null>(untrack(() => prefill.description ?? null))
-  let keep = $state<Span[]>(untrack(() => [...(prefill.keep ?? [])]))
-  let escaped = $state<Span[]>(untrack(() => [...(prefill.escaped ?? [])]))
+  let keep = $state<Spot[]>(untrack(() => [...(prefill.keep ?? [])]))
+  let escaped = $state<Spot[]>(untrack(() => [...(prefill.escaped ?? [])]))
   let picked = $state<{
     due?: string | null
     time?: string | null
@@ -71,32 +62,27 @@
     tags?: string[]
   }>({})
   let input = $state<HTMLInputElement>()
-  let mirror = $state<HTMLElement>()
   let words = $state<HTMLTextAreaElement>()
   let asking = $state<{ rows: MenuEntry[]; at: DOMRect } | null>(null)
   let pasted = $state<string[] | null>(null)
-  let seen = untrack(() => prefill.text ?? '')
   const today = $derived(todayOf())
-  const read = $derived(
-    smart
-      ? parseQuickAdd(text, langs, new Date(), { keep, escaped })
-      : { text: text.trim(), fields: { tags: [], remind: [] }, chips: [] },
-  )
-  const pieces = $derived(piecesOf(text, read.chips))
+  const read = $derived(smart ? parseTodo(text, langs, new Date(), { keep, escaped }) : plainTodo(text))
   const fields = $derived.by((): QuickFields => {
     const given = prefill.fields ?? {}
     const out: QuickFields = {
-      ...given,
-      ...read.fields,
-      tags: [...(prefill.tags ?? []), ...(given.tags ?? []), ...read.fields.tags],
-      remind: read.fields.remind.length ? read.fields.remind : (given.remind ?? []),
+      tags: [...(prefill.tags ?? []), ...(given.tags ?? []), ...read.labels],
+      remind: picked.remind ?? given.remind ?? [],
     }
-    for (const key of ['due', 'time', 'priority', 'deadline', 'duration', 'recurrence'] as const) {
-      if (read.fields[key] === undefined && given[key] !== undefined) {
-        Object.assign(out, { [key]: given[key] })
-      }
-    }
-    if (out.due === undefined && prefill.due !== undefined) out.due = prefill.due
+    if (given.time !== undefined) out.time = given.time
+    if (given.duration !== undefined) out.duration = given.duration
+    const due = read.start ?? given.due ?? prefill.due
+    if (due !== undefined) out.due = due
+    const deadline = read.deadline ?? given.deadline
+    if (deadline !== undefined) out.deadline = deadline
+    const priority = read.priority === undefined ? given.priority : quickPriority(read.priority)
+    if (priority !== undefined) out.priority = priority
+    const recurrence = read.repeat ?? given.recurrence
+    if (recurrence !== undefined) out.recurrence = recurrence
     if (picked.due === null) delete out.due
     else if (picked.due !== undefined) out.due = picked.due
     if (picked.time === null) delete out.time
@@ -106,8 +92,7 @@
     if (picked.deadline === null) delete out.deadline
     else if (picked.deadline !== undefined) out.deadline = picked.deadline
     if (picked.priority !== undefined) out.priority = picked.priority
-    if (picked.remind !== undefined) out.remind = picked.remind
-    if (picked.tags !== undefined) out.tags = [...picked.tags, ...read.fields.tags]
+    if (picked.tags !== undefined) out.tags = [...picked.tags, ...read.labels]
     out.tags = [...new Set(out.tags)]
     return out
   })
@@ -137,77 +122,13 @@
     words: () => tags.slice(0, 12),
   }
   $effect(() => {
-    const now = text
-    if (now === seen) return
-    keep = carried(keep, seen, now)
-    escaped = carried(escaped, seen, now)
-    seen = now
-  })
-  function follow() {
-    if (input && mirror) mirror.scrollLeft = input.scrollLeft
-    caret = input && input.selectionStart === input.selectionEnd ? (input.selectionStart ?? -1) : -1
-  }
-  let caret = $state(-1)
-  const SIGNS = ['#', '@', '%']
-  let dismissed = $state(-1)
-  let active = $state(0)
-  const token = $derived(smart && caret >= 0 ? tokenAt(text, caret, SIGNS) : null)
-  const offered = $derived.by((): string[] => {
-    if (!token || token.from === dismissed) return []
-    return suggestions(token.query, tags)
-  })
-  $effect.pre(() => {
-    if (offered.length >= 0) active = 0
-  })
-  function take(value: string) {
     const field = input
-    if (!token || !field) return
-    const next = chosen(text, token, value)
-    text = next.text
-    void tick().then(() => {
-      field.setSelectionRange(next.caret, next.caret)
-      follow()
-    })
-  }
-  function suggestKey(event: KeyboardEvent): boolean {
-    if (!offered.length || event.isComposing) return false
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      event.preventDefault()
-      const by = event.key === 'ArrowDown' ? 1 : -1
-      active = (active + by + offered.length) % offered.length
-      return true
-    }
-    if ((event.key === 'Enter' && !event.shiftKey) || event.key === 'Tab') {
-      const one = offered[active]
-      if (one === undefined) return false
-      event.preventDefault()
-      take(one)
-      return true
-    }
-    if (event.key === 'Escape' && token) {
-      event.preventDefault()
-      event.stopPropagation()
-      dismissed = token.from
-      return true
-    }
-    return false
-  }
-  function pressed(event: PointerEvent) {
-    if (!mirror) return
-    for (const chip of mirror.querySelectorAll<HTMLElement>('[data-chip]')) {
-      const box = chip.getBoundingClientRect()
-      if (
-        event.clientX >= box.left &&
-        event.clientX <= box.right &&
-        event.clientY >= box.top &&
-        event.clientY <= box.bottom
-      ) {
-        const from = Number(chip.dataset.from)
-        keep = [...keep, { from, to: from + chip.textContent.length }]
-        return
-      }
-    }
-  }
+    if (!field) return
+    const held = dictated(field, voiceField)
+    return () => held.destroy()
+  })
+  const offers = (token: Token) =>
+    suggestions(token.query, tags).map((tag) => ({ value: tag, label: `${token.sign}${tag}`, kind: 'tag' }))
   function dropChip(kind: string) {
     const chip = read.chips.find((one) => one.kind === kind)
     if (!chip) return
@@ -309,7 +230,6 @@
     ask(
       event,
       durationRows(fields.duration, (duration) => {
-        dropChip('duration')
         picked = { ...picked, duration }
         input?.focus()
       }),
@@ -323,7 +243,6 @@
   }
   function clear() {
     text = ''
-    seen = ''
     keep = []
     escaped = []
     picked = {}
@@ -341,7 +260,7 @@
     }
   }
   async function submit(open: boolean) {
-    const entry = entryOf(read.text, fields)
+    const entry = entryOf(read.title, fields)
     if (!entry || thinking || sending) return
     await handOver(entry, open, text)
   }
@@ -366,11 +285,10 @@
     sending = true
     try {
       for (const [index, line] of lines.entries()) {
-        const said = smart ? parseQuickAdd(line, langs, new Date()) : null
-        const own: QuickFields = said
-          ? { ...fields, ...said.fields, tags: [...new Set([...fields.tags, ...said.fields.tags])] }
-          : fields
-        const entry = entryOf(said ? said.text || line : line, own)
+        const said = smart ? parseTodo(line, langs, new Date()) : null
+        const own: QuickFields = said ? { ...fields, ...todoFields(said) } : fields
+        if (said) own.tags = [...new Set([...fields.tags, ...said.labels])]
+        const entry = entryOf(said ? said.title || line : line, own)
         if (entry && (await onsubmit(entry, false)) === false) {
           pasted = lines.slice(index)
           return
@@ -380,6 +298,20 @@
       sending = false
     }
     clear()
+  }
+  function plainTodo(said: string): TypedTodo {
+    return { title: said.trim(), labels: [], chips: [] }
+  }
+  function quickPriority(level: 0 | 1 | 2 | 3): Priority {
+    return (4 - level) as Priority
+  }
+  function todoFields(said: TypedTodo): Partial<QuickFields> {
+    const out: Partial<QuickFields> = {}
+    if (said.start !== undefined) out.due = said.start
+    if (said.deadline !== undefined) out.deadline = said.deadline
+    if (said.priority !== undefined) out.priority = quickPriority(said.priority)
+    if (said.repeat !== undefined) out.recurrence = said.repeat
+    return out
   }
   const LONG_TITLE = 10_000
   function onpaste(event: ClipboardEvent) {
@@ -400,7 +332,6 @@
     void tick().then(() => words?.focus())
   }
   function onkeydown(event: KeyboardEvent) {
-    if (event.currentTarget === input && suggestKey(event)) return
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
@@ -441,54 +372,19 @@
 </script>
 
 <div class="quick" class:edit={mode === 'edit'}>
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="line" onpointerdown={pressed}>
-    <div class="letters" bind:this={mirror} aria-hidden="true">
-      {#each pieces as piece (piece.from)}{#if piece.chip}<span
-            class="chip"
-            data-chip={piece.chip}
-            data-from={piece.from}>{piece.text}</span
-          >{:else}{piece.text}{/if}{/each}&#8203;
-    </div>
-    <input
-      bind:this={input}
+  <div class="line" onfocusin={() => (spoken = input)}>
+    <ChipInput
       bind:value={text}
-      use:dictated={voiceField}
-      class="field"
-      onfocus={() => (spoken = input)}
+      bind:kept={keep}
+      bind:input
+      chips={read.chips}
+      signs={smart ? ['#', '@', '%'] : []}
+      {offers}
       {onkeydown}
       {onpaste}
-      oninput={follow}
-      onscroll={follow}
-      onselect={follow}
-      onkeyup={follow}
       placeholder="Add task"
       aria-label="Add task"
-      spellcheck="false"
-      autocomplete="off"
-      aria-autocomplete="list"
-      aria-expanded={offered.length > 0}
     />
-    {#if offered.length}
-      <div class="suggest" data-covers role="listbox" aria-label="Add task">
-        {#each offered as one, index (one)}
-          <button
-            type="button"
-            class="orden-row is-short"
-            class:is-on={index === active}
-            role="option"
-            aria-selected={index === active}
-            tabindex="-1"
-            onpointerdown={keepFocus}
-            onmousedown={keepFocus}
-            onclick={() => take(one)}
-          >
-            <span class="orden-row-mark"><Glyph icon={Tag} /></span>
-            <span class="orden-row-label">{one}</span>
-          </button>
-        {/each}
-      </div>
-    {/if}
   </div>
 
   {#if description !== null}
@@ -582,7 +478,7 @@
         <button
           type="button"
           class="control"
-          disabled={!read.text || thinking}
+          disabled={!read.title || thinking}
           onclick={() => void submitAi(provider)}
           title="Add with AI"
         >
@@ -592,7 +488,7 @@
       {#if dictates && speech?.canDictate()}
         <speech.DictateButton owner={voiceField} below />
       {/if}
-      <button type="button" class="add" disabled={!read.text} onclick={() => void submit(false)}
+      <button type="button" class="add" disabled={!read.title} onclick={() => void submit(false)}
         >{mode === 'edit' ? 'Save' : 'Add'}</button
       >
     </div>
@@ -614,73 +510,17 @@
     padding: var(--space-3);
   }
   .line {
-    position: relative;
-  }
-  .suggest {
-    position: absolute;
-    top: calc(100% + var(--space-1));
-    inset-inline-start: 0;
-    z-index: var(--z-popover);
-    min-width: 14rem;
-    max-width: 100%;
-    padding: var(--space-1);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--surface-3);
-    box-shadow: var(--shadow-md);
-  }
-  .letters,
-  .field {
-    box-sizing: border-box;
-    width: 100%;
-    padding: var(--space-1) var(--space-1);
-    border: none;
+    border-bottom: 1px solid var(--line);
     font-family: var(--font-ui);
     font-size: var(--text-base);
     line-height: 1.5;
-    letter-spacing: normal;
-    white-space: pre;
-  }
-  .letters {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    color: var(--text-strong);
-    pointer-events: none;
-  }
-  .field {
-    position: relative;
-    background: none;
-    color: transparent;
-    caret-color: var(--text-strong);
-    outline: none;
-  }
-  .line {
-    border-bottom: 1px solid var(--line);
     transition: border-color var(--dur-fast) var(--ease-out);
   }
   .line:focus-within {
     border-bottom-color: var(--accent);
   }
-  input.field:focus,
   textarea.words:focus {
     box-shadow: none;
-  }
-  .field::placeholder {
-    color: var(--muted);
-  }
-  .field::selection {
-    background: var(--accent-soft);
-    color: transparent;
-  }
-  .chip {
-    border-radius: var(--radius-sm);
-    background: var(--accent-soft);
-    box-shadow: 0 0 0 1px var(--accent-soft);
-    color: var(--accent);
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-fast) var(--ease-out);
   }
   .words {
     box-sizing: border-box;
