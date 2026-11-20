@@ -301,6 +301,7 @@ describe('a Claude Code thread', () => {
       effort: 'high',
       account: 'cc',
       thread: 'thread-1',
+      space: 'Notes',
     })
     expect(opened[0]?.said.map((one) => one.kind)).toEqual(['turn', 'model', 'effort', 'turn'])
     expect(opened[0]?.said[1]).toEqual({ kind: 'model', model: 'sonnet' })
@@ -311,6 +312,10 @@ describe('a Claude Code thread', () => {
     const on = thread(CLAUDE, { only: ['update_task', 'list_tasks'], without: ['list_tasks'] })
     await send(CLAUDE, on, 'one')
     expect(opened[0]?.opening).toMatchObject({ only: ['update_task', 'list_tasks'], without: ['list_tasks'] })
+  })
+  test('tells the session the space its thread works in', async () => {
+    await send(CLAUDE, thread(CLAUDE, { space: 'Garden' }), 'one')
+    expect(opened[0]?.opening).toMatchObject({ space: 'Garden' })
   })
   test('a new mode is a new session, seeded with the instructions and the transcript', async () => {
     const built = engine(CLAUDE, 'File papers under Reading.')

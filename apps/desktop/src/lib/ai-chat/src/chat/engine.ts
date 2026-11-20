@@ -351,7 +351,7 @@ export function createApiEngine(setup: Setup): Engine {
       calls.map(async (call) => {
         const ask = (): Promise<ToolOutput> =>
           allows(thread, call.name)
-            ? tools.call(provider, thread.mode, call.name, call.args, thread.id)
+            ? tools.call(provider, thread.mode, call.name, call.args, thread)
             : Promise.resolve(keptOut(call.name))
         let output = await ask()
         for (let asked = 0; output.approval && asked < MOST_ASKS; asked++) {

@@ -1,15 +1,21 @@
 import { isDesktop, invoke } from '../../../platform/src/api'
 import type { Provider } from '../../../ai-providers/src/api'
 import { READER_TABS, rightsKey } from '../../../ai-providers/src/api'
-import type { Mode, ToolOutput } from '../../../ai-providers/src/api'
+import type { Mode, Thread, ToolOutput } from '../../../ai-providers/src/api'
 import { heardTools } from './outside'
 import { record, text, type ToolDef } from './wire'
 
 export interface Tools {
   list(provider: Provider, mode: Mode): Promise<Listed>
-  call(provider: Provider, mode: Mode, name: string, args: unknown, thread?: string): Promise<ToolOutput>
+  call(provider: Provider, mode: Mode, name: string, args: unknown, thread?: Called): Promise<ToolOutput>
   context(provider: Provider, thread?: string): Promise<string>
 }
+type Called = Pick<Thread, 'id' | 'space' | 'without' | 'only'>
+const reachOf = (thread: Called | undefined) => ({
+  ...(thread?.without?.length ? { without: thread.without } : {}),
+  ...(thread?.only ? { only: thread.only } : {}),
+  ...(thread?.space ? { space: thread.space } : {}),
+})
 interface Listed {
   instructions: string
   tools: ToolDef[]
@@ -75,7 +81,7 @@ export const crateTools: Tools = {
     try {
       if (name === 'run_agent' || name === 'agent_result') {
         const { answerText, helperHere } = await import('../helpers/run')
-        const answered = await helperHere(name, record(args), { thread: thread ?? null, mode })
+        const answered = await helperHere(name, record(args), { thread: thread?.id ?? null, mode, ...reachOf(thread) })
         return {
           text: answerText(answered),
           images: [],
@@ -88,7 +94,8 @@ export const crateTools: Tools = {
         mode,
         tool: name,
         args: typeof args === 'object' && args !== null ? args : {},
-        ...(thread ? { thread } : {}),
+        ...(thread ? { thread: thread.id } : {}),
+        ...reachOf(thread),
       })
       return outputIn(answered)
     } catch (error) {

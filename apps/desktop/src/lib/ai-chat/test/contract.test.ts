@@ -23,6 +23,14 @@ vi.mock('../../workspace/src/api', () => ({
   agentMarks: { open: null },
 }))
 vi.mock('../../gates/src/api', () => ({ chatsOn: () => true }))
+const invoked = vi.hoisted(() => [] as { command: string; args: Record<string, unknown> }[])
+vi.mock('../../platform/src/api', async (original) => ({
+  ...(await original<Record<string, unknown>>()),
+  invoke: (command: string, args: Record<string, unknown>) => {
+    invoked.push({ command, args })
+    return Promise.resolve({ content: [], isError: false })
+  },
+}))
 vi.mock('../../ai-providers/src/keys', async (original) => ({
   ...(await original<Record<string, unknown>>()),
   readKey: () => Promise.resolve('sk-test'),
@@ -237,5 +245,57 @@ describe('a chat that runs', () => {
     chat.setMode('plan')
     const { thread } = chat.startHere('What does this word mean?', [], { front: null, selection: '' })
     expect(thread.mode).toBe('approve')
+  })
+})
+describe('a helper started for a chat in another window', () => {
+  test('keeps out every tool its chat keeps out, uses only what its chat may, and works in its chat’s space', async () => {
+    world.parent = null
+    world.children.length = 0
+    const { runAgent } = await helperRun()
+    const said = await runAgent(
+      { prompt: 'Find the herons.' },
+      {
+        thread: 'chat-in-window-2',
+        mode: 'approve',
+        without: ['edit_note'],
+        only: ['read_note', 'edit_note'],
+        space: 'Notes',
+      },
+    )
+    expect(said).not.toHaveProperty('refused')
+    expect(world.children[0]).toMatchObject({
+      parent: 'chat-in-window-2',
+      mode: 'approve',
+      only: ['read_note', 'edit_note'],
+      space: 'Notes',
+    })
+    expect((world.children[0] as { without?: string[] }).without).toContain('edit_note')
+    const refused = await runAgent(
+      { prompt: 'Find the herons.' },
+      { thread: 'chat-in-window-2', mode: 'approve', space: 'Gone' },
+    )
+    expect(refused).toHaveProperty('refused')
+  })
+  test('and every call a chat makes tells the crate what that chat keeps out, may use and works in', async () => {
+    const { crateTools } = await import('../src/chat/tools')
+    invoked.length = 0
+    await crateTools.call(
+      LOCAL,
+      'approve',
+      'edit_note',
+      { path: 'a.md' },
+      {
+        id: 't1',
+        space: 'Notes',
+        without: ['browser_open'],
+        only: ['read_note'],
+      },
+    )
+    expect(invoked.find((one) => one.command === 'ai_agent_call')?.args).toMatchObject({
+      thread: 't1',
+      space: 'Notes',
+      without: ['browser_open'],
+      only: ['read_note'],
+    })
   })
 })

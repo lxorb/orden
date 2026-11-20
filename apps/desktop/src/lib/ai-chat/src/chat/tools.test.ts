@@ -78,7 +78,7 @@ describe('the crate is asked', () => {
 })
 describe('a helper call', () => {
   test('that fails is an answer the model reads, not a failed turn', async () => {
-    expect(await crateTools.call(CLAUDE, 'full', 'run_agent', { prompt: 'go' }, 't1')).toEqual({
+    expect(await crateTools.call(CLAUDE, 'full', 'run_agent', { prompt: 'go' }, { id: 't1', space: 'Notes' })).toEqual({
       text: 'the helpers could not start',
       images: [],
       error: true,
@@ -88,11 +88,20 @@ describe('a helper call', () => {
 describe('a call says its thread', () => {
   test('so an edit it makes is that thread’s, not whichever of the provider’s started last', async () => {
     answer = { content: [{ type: 'text', text: '{}' }], isError: false }
-    await crateTools.call(CLAUDE, 'full', 'edit_note', { path: 'a.md' }, 'thread-1')
+    await crateTools.call(CLAUDE, 'full', 'edit_note', { path: 'a.md' }, { id: 'thread-1', space: 'Notes' })
     expect(asked.at(-1)).toMatchObject({
       command: 'ai_agent_call',
-      args: { tool: 'edit_note', thread: 'thread-1' },
+      args: { tool: 'edit_note', thread: 'thread-1', space: 'Notes' },
     })
+  })
+  test('with what its chat keeps out and the only tools it may use, an empty list too', async () => {
+    answer = { content: [{ type: 'text', text: '{}' }], isError: false }
+    const thread = { id: 'thread-1', space: 'Notes', without: ['browser_open'], only: ['read_note', 'edit_note'] }
+    await crateTools.call(CLAUDE, 'full', 'edit_note', { path: 'a.md' }, thread)
+    expect(asked.at(-1)?.args).toMatchObject({ without: ['browser_open'], only: ['read_note', 'edit_note'] })
+    await crateTools.call(CLAUDE, 'full', 'edit_note', { path: 'a.md' }, { id: 'thread-1', space: 'Notes', only: [] })
+    expect(asked.at(-1)?.args).toMatchObject({ only: [] })
+    expect(asked.at(-1)?.args).not.toHaveProperty('without')
   })
   test('and so does the context of its turn, which is told the space the thread works in', async () => {
     answer = []

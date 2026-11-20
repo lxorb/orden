@@ -33,6 +33,8 @@ interface Asked {
   model: string
   effort?: Effort
   mode: Mode
+  without?: readonly string[]
+  only?: readonly string[]
   instructions?: string
 }
 interface Roads {
@@ -92,6 +94,14 @@ class Helpers {
     const route = routed(asked.model, offered, parentProvider)
     if ('refused' in route) return route
     const thread = newThread(asked.space, route.provider.id, route.model, asked.effort ?? 'auto', asked.mode)
+    keptUnder(
+      {
+        mode: asked.mode,
+        ...(asked.without ? { without: [...asked.without] } : {}),
+        ...(asked.only ? { only: [...asked.only] } : {}),
+      },
+      thread,
+    )
     const named = [asked.description, asked.prompt.split('\n')[0]?.slice(0, 60)].find(Boolean)
     thread.title = `↳ ${named ?? ''}`
     if (from) thread.parent = from
