@@ -7,8 +7,7 @@ const SOURCE = readFileSync(join(import.meta.dirname, './Pane.svelte'), 'utf8')
 const SURFACES = [...SOURCE.matchAll(/\{#await (\w+)\(\) then \w+\}([\s\S]*?)\{\/await\}/g)]
 const DOORS = [
   ...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then/g),
-  ...SOURCE.matchAll(/\{@render surface\((\w+Surface), tab\)\}/g),
-  ...(/const doors[^=]*= \{([^}]*)\}/.exec(SOURCE)?.[1]?.matchAll(/: (\w+Surface)/g) ?? []),
+  ...SOURCE.matchAll(/\{@render surface\((\w+Surface), one, here\)\}/g),
 ]
 describe('a surface a pane is filled with', () => {
   test('is every kind of tab a pane can show', () => {
@@ -34,7 +33,7 @@ describe('a surface a pane is filled with', () => {
     }
   })
 })
-const OWN_SURFACES = [...SOURCE.matchAll(/\{:else if tab\?\.kind === '(\w+)'\}/g)].map(
+const OWN_SURFACES = [...SOURCE.matchAll(/\{:else if one\.kind === '(\w+)'\}/g)].map(
   ([, kind]) => kind as keyof typeof TAB_KINDS,
 )
 describe('a kind with a surface of its own', () => {

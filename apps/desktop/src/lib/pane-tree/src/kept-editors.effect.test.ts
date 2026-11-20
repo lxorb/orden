@@ -16,6 +16,8 @@ vi.mock('../../surfaces/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../surfaces/src/api')>()),
   terminalSurface: () => import('../test/Counted.svelte').then((one) => one.default),
   webSurface: () => import('../test/Counted.svelte').then((one) => one.default),
+  timeSurface: () => import('../test/Counted.svelte').then((one) => one.default),
+  passSurface: () => import('../test/Counted.svelte').then((one) => one.default),
 }))
 Element.prototype.animate = () =>
   ({
@@ -249,4 +251,34 @@ test('a surface that fails as it is put behind still leaves the pane showing the
   }
   expect(shellBox?.hidden).toBe(true)
   expect(written()).toBe('The first note.')
+})
+test('every kind of tab switched away from and back to keeps its surface, and the least recent past six goes', async () => {
+  const { one, paneId } = opened()
+  await drawn(paneId)
+  const time = workspace.openUnsaved('time', '{}', 'Time tracker').id
+  await vi.waitFor(() => {
+    flushSync()
+    expect(counted.shown[time]).toBe(true)
+  })
+  const box = target.querySelector('.counted')?.parentElement
+  workspace.activate(one)
+  flushSync()
+  expect(counted.shown[time]).toBe(false)
+  expect(box?.hidden).toBe(true)
+  workspace.activate(time)
+  flushSync()
+  expect(counted.shown[time]).toBe(true)
+  expect(target.querySelector('.counted')?.parentElement).toBe(box)
+  expect(counted.mounts).toBe(1)
+  for (let at = 0; at < 6; at += 1) {
+    workspace.openBlank(`Other ${at}`, `Words ${at}.`)
+    flushSync()
+  }
+  expect(target.querySelector('.counted')).toBeNull()
+  workspace.activate(time)
+  await vi.waitFor(() => {
+    flushSync()
+    expect(counted.shown[time]).toBe(true)
+  })
+  expect(counted.mounts).toBe(2)
 })
