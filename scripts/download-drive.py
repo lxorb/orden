@@ -24,8 +24,15 @@ def tab():
             return found
         time.sleep(0.5)
     raise SystemExit("::error::there is no web tab")
+OWN = []
 def send(to):
-    run(f"window.__TAURI_INTERNALS__.invoke('web_navigate', {{ tab: {json.dumps(tab())}, url: {json.dumps(to)} }}).then(() => 'sent')")
+    if not OWN:
+        made = run(f"orden.workspace.openPage({json.dumps(to)})")
+        if isinstance(made, str) and made:
+            OWN.append(made)
+            return
+        OWN.append(tab())
+    run(f"window.__TAURI_INTERNALS__.invoke('web_navigate', {{ tab: {json.dumps(OWN[0])}, url: {json.dumps(to)} }}).then(() => 'sent')")
 def served():
     try:
         return SERVED.read_text()
