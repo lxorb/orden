@@ -15,7 +15,7 @@ function hands(): { asked: string[]; hands: Hands } {
       openEntry: say('open'),
       openAside: say('aside'),
       openPage: say('page'),
-      activate: say('activate'),
+      openHere: say('here'),
       openAtHeading: say('heading'),
       openAtBlock: say('block'),
       revealFolder: say('folder'),
@@ -76,10 +76,17 @@ describe('choosing an open tab', () => {
     folder: null,
     shared: false,
   }
-  test('switches to it', () => {
+  test('brings it here, whatever space holds it, so the window stays in this space', () => {
     const { asked, hands: with_ } = hands()
     choose(open, key(), with_)
-    expect(asked).toEqual(['activate ["t1"]'])
+    choose(page, key(), with_)
+    expect(asked).toEqual(['here ["t1",{}]', 'here ["w1",{}]'])
+  })
+  test('one with neither a file nor a page comes here the way the modifier asks', () => {
+    const { asked, hands: with_ } = hands()
+    const graph: Row = { kind: 'tab', tab: tab('g1', 'Graph', { kind: 'graph' }), folder: null, shared: false }
+    choose(graph, key({ ctrl: true }), with_)
+    expect(asked).toEqual(['here ["g1",{"activate":false,"beside":true}]'])
   })
   test('with a modifier, opens what it holds again the way the modifier asks', () => {
     const note = hands()

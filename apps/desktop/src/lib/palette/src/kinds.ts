@@ -25,8 +25,9 @@ export interface World {
   worth: (key: string) => number
   now: number
   addressOf?: (path: string) => string | null
+  elsewhere?: readonly { root: string; files: readonly Entry[] }[]
 }
-const LIFT = { bookmarked: 6, recent: 8, here: -24, unavailable: -30, about: 12 }
+const LIFT = { bookmarked: 6, recent: 8, here: -24, unavailable: -30, about: 12, away: -1 }
 const noteKey = (path: string) => `note:${path}`
 const pageKey = (url: string) => `page:${url}`
 function addressOf(url: string): string {
@@ -117,11 +118,13 @@ function readingOf(entry: Entry, root: string): Reading {
   readings.set(entry, reading)
   return reading
 }
-function sharing(files: readonly Entry[], root: string): (alike: string) => boolean {
+function sharing(groups: readonly { root: string; files: readonly Entry[] }[]): (alike: string) => boolean {
   const named = new Map<string, number>()
-  for (const one of files) {
-    const { alike } = readingOf(one, root)
-    named.set(alike, (named.get(alike) ?? 0) + 1)
+  for (const { root, files } of groups) {
+    for (const one of files) {
+      const { alike } = readingOf(one, root)
+      named.set(alike, (named.get(alike) ?? 0) + 1)
+    }
   }
   return (alike) => (named.get(alike) ?? 0) > 1
 }
@@ -134,8 +137,13 @@ function recentFirst(files: readonly Entry[], place: ReadonlyMap<string, number>
 }
 export function candidates(world: World): Candidate<Row>[] {
   const out: Candidate<Row>[] = []
-  const files = world.files.filter((one) => !isChatTarget(one.path))
-  const shared = sharing(files, world.root)
+  const unchatted = (list: readonly Entry[]) => list.filter((one) => !isChatTarget(one.path))
+  const files = unchatted(world.files)
+  const places = [
+    { root: world.root, files, away: 0 },
+    ...(world.elsewhere ?? []).map((one) => ({ root: one.root, files: unchatted(one.files), away: LIFT.away })),
+  ]
+  const shared = sharing(places)
   const place = new Map(world.recent.map((path, index) => [path, index]))
   const recency = (path: string) => {
     const at = place.get(path)
@@ -169,21 +177,23 @@ export function candidates(world: World): Candidate<Row>[] {
       ),
     )
   }
-  for (const entry of recentFirst(files, place)) {
-    const reading = readingOf(entry, world.root)
-    if (open.has(reading.key)) continue
-    const url = world.addressOf?.(entry.path) ?? null
-    const address = url ? foldName(addressOf(url)) : null
-    out.push({
-      key: reading.key,
-      kind: 'note',
-      name: reading.name,
-      names: address ? [hostOf(address)] : [],
-      also: address ? [...reading.also, address] : reading.also,
-      lift: lifted(entry.path),
-      use: world.worth(reading.key),
-      item: { kind: 'note', entry, folder: reading.folder, shared: shared(reading.alike) },
-    })
+  for (const spot of places) {
+    for (const entry of recentFirst(spot.files, place)) {
+      const reading = readingOf(entry, spot.root)
+      if (open.has(reading.key)) continue
+      const url = world.addressOf?.(entry.path) ?? null
+      const address = url ? foldName(addressOf(url)) : null
+      out.push({
+        key: reading.key,
+        kind: 'note',
+        name: reading.name,
+        names: address ? [hostOf(address)] : [],
+        also: address ? [...reading.also, address] : reading.also,
+        lift: lifted(entry.path) + spot.away,
+        use: world.worth(reading.key),
+        item: { kind: 'note', entry, folder: reading.folder, shared: shared(reading.alike) },
+      })
+    }
   }
   out.push(...bookmarkCandidates(world, files))
   for (const command of world.commands) {

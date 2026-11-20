@@ -1,7 +1,31 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { SCOPE_KEY } from './scope'
+import { settle } from '../../../../test/effects/settle'
 
+const entry = (path: string, children: unknown[] = []) => ({
+  name: path.slice(path.lastIndexOf('/') + 1),
+  path,
+  is_dir: children.length > 0,
+  modified: 0,
+  created: 0,
+  children,
+})
+const TREES: Record<string, unknown> = {
+  '/notes/Work': entry('/notes/Work', [entry('/notes/Work/Plan.md')]),
+  '/notes/Old': entry('/notes/Old', [entry('/notes/Old/Plan.md'), entry('/notes/Old/Trip.md')]),
+}
+vi.mock('../../platform/src/tauri', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../platform/src/tauri')>()
+  return {
+    ...real,
+    invoke: (command: string, args?: Record<string, unknown>) => {
+      if (command === 'read_tree') return Promise.resolve(TREES[String(args?.root)] ?? null)
+      if (command === 'read_note') return Promise.resolve('')
+      return real.invoke(command, args)
+    },
+  }
+})
 vi.mock('../../commands/src/api', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../commands/src/api')>()
   const run = () => undefined
@@ -62,6 +86,7 @@ beforeAll(async () => {
   workspace.openBlank('Mountains', '# Mountains')
   await workspace.showSpace(WORK.id)
   workspace.openBlank('Mountain hut', '# Mountain hut')
+  await workspace.loadTree()
 })
 beforeEach(() => {
   localStorage.clear()
@@ -126,5 +151,67 @@ describe('a row', () => {
       const same = rows().filter((one) => one.label === 'Theme: Contrast')
       expect(same).toEqual([{ label: 'Theme: Contrast', from: null, ticked: true }])
     }
+  })
+})
+describe('another space', () => {
+  test('all spaces: its notes are found, named by their space; only this space: they are not', async () => {
+    shown()
+    typed('Trip')
+    await settle()
+    typed('Trip')
+    const trips = () => rows().filter((one) => one.label === 'Trip')
+    const everywhere = trips()
+    expect(everywhere.map((one) => one.from)).toContainEqual(expect.stringMatching(/Old$/))
+    chip()?.click()
+    flushSync()
+    typed('Trip')
+    expect(trips()).toHaveLength(everywhere.length - 1)
+    expect(trips().filter((one) => one.from !== null)).toEqual([])
+  })
+  test('a note named the same in both spaces is listed for each', async () => {
+    shown()
+    await settle()
+    typed('Plan')
+    const plans = rows().filter((one) => one.label === 'Plan')
+    expect(plans.map((one) => one.from)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/Work$/), expect.stringMatching(/Old$/)]),
+    )
+  })
+  test('choosing its note or its tab opens it here, and the window stays in this space', async () => {
+    shown()
+    await settle()
+    for (const [words, name] of [
+      ['Trip', 'Trip'],
+      ['Mountains', 'Mountains'],
+    ] as const) {
+      typed(words)
+      const row = [...target.querySelectorAll<HTMLElement>('[role="option"]')].find(
+        (one) => one.querySelector('.orden-row-label')?.textContent === name,
+      )
+      if (!row) throw new Error(`no row for ${name}`)
+      row.click()
+      await settle()
+      expect(workspace.activeSpaceId).toBe(WORK.id)
+      hidden()
+      shown()
+    }
+  })
+  test('Alt+A switches what is searched, is kept, and types nothing', () => {
+    shown()
+    const input = target.querySelector('input')
+    if (!input) throw new Error('no palette field')
+    const press = new KeyboardEvent('keydown', {
+      key: 'a',
+      code: 'KeyA',
+      altKey: true,
+      bubbles: true,
+      cancelable: true,
+    })
+    input.dispatchEvent(press)
+    flushSync()
+    expect(press.defaultPrevented).toBe(true)
+    expect(chip()?.textContent).toBe('Only this space')
+    expect(localStorage.getItem(SCOPE_KEY)).toBe('here')
+    expect(input.value).toBe('')
   })
 })
