@@ -1,3 +1,4 @@
+import { nameOf, shownName } from '../../platform/src/api'
 import { LONGEST_PICTURE, readIcon, readTint } from '../../ui-kit/src/api'
 
 const LONGEST_NAME = 80
@@ -44,6 +45,7 @@ function tagsOf(value: unknown): string[] {
   }
   return out
 }
+export const placeLabel = (label: string | null, key: string): string => shownName(label ?? nameOf(key))
 export const activityName = (name: string): string => name.trim().slice(0, LONGEST_NAME).trim()
 export function iconOf(value: unknown): string | null {
   const said = typeof value === 'string' ? value.trim() : ''

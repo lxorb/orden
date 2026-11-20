@@ -1,5 +1,5 @@
 import { counts, type Piece } from './days'
-import type { Activity, Lane, Rule, Span } from './records'
+import { type Activity, type Lane, placeLabel, type Rule, type Span } from './records'
 
 export interface Place {
   lane: Lane
@@ -27,7 +27,7 @@ export function placesOf(pieces: readonly Piece[], lane: Lane): Place[] {
   for (const piece of pieces) {
     const key = piece.span.place
     if (piece.span.source !== lane || key === null) continue
-    const place = by.get(key) ?? { lane, key, name: piece.span.label ?? key, ms: 0 }
+    const place = by.get(key) ?? { lane, key, name: placeLabel(piece.span.label, key), ms: 0 }
     place.ms += piece.to - piece.from
     by.set(key, place)
   }

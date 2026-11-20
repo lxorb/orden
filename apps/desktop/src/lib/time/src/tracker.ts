@@ -64,6 +64,15 @@ export class Tracker {
     for (const lane of LANES) if (this.unwritten(lane)) this.written(lane)
   }
 }
+export interface Tabbed {
+  readonly path: string | null
+  readonly kind: string
+  readonly name: string
+  readonly shown: string
+  readonly inPrivate: boolean
+}
+export const tabPlace = (tab: Tabbed | null | undefined): Place | null =>
+  !tab || tab.inPrivate ? null : { key: tab.path ?? `${tab.kind}:${tab.name}`, name: tab.shown }
 export function siteOf(address: string | null | undefined): string | null {
   if (!address) return null
   try {

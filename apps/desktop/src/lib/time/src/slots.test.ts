@@ -18,6 +18,14 @@ const seen = (id: string, place: string, start: number, end: number): Span => ({
 })
 const DAY = 24 * HOUR
 describe('a row of places drawn as flat bars', () => {
+  test('a bar is named without the file type an older label kept', () => {
+    const old = {
+      ...seen('t', '/s/Terminal.term', 9 * HOUR, 10 * HOUR),
+      source: 'tab' as const,
+      label: 'Terminal.term',
+    }
+    expect(barsOf([old], 'tab', 0, DAY, 96, DAY).map((one) => one.label)).toEqual(['Terminal'])
+  })
   test('a visit of a few seconds still takes its slot and does not vanish', () => {
     const bars = barsOf([seen('a', 'short.example', 10 * HOUR, 10 * HOUR + 8000)], 'site', 0, DAY, 250, DAY)
     expect(bars.map((one) => one.key)).toEqual(['short.example'])
