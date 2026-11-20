@@ -77,5 +77,3 @@ Lake path, 6 km. Forest loop, 9 km. Both before breakfast.
     },
   },
 ]
-export const siteOf = (here: Pick<Location, 'hostname' | 'origin'>): string =>
-  here.hostname === 'app.orden.so' ? 'https://orden.so' : here.origin
