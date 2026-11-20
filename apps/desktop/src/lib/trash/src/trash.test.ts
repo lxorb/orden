@@ -272,6 +272,7 @@ describe('signed out', () => {
     const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
     await trash.purge(only)
     expect(asked).toHaveBeenCalledOnce()
+    expect(asked.mock.calls[0]?.[0].title).toBe('Delete Idea?')
     expect(calls).toContain('purge_trash')
     expect(calls).not.toContain('restore_trash')
     expect(notes.has('/space/Idea.md')).toBe(false)

@@ -2,7 +2,7 @@ import { account, api } from '../../accounts/src/api'
 import { message, prompt } from '../../ui-kit/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { sync } from '../../sync-store/src/api'
-import { folderOf, insideSpace, samePath, within, invoke } from '../../platform/src/api'
+import { folderOf, insideSpace, rowName, samePath, within, invoke } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { protection } from '../../protect/src/api'
 
@@ -150,7 +150,7 @@ class Trash {
   }
   async purge(item: TrashItem) {
     const sure = await prompt.confirm({
-      title: `Delete ${item.name}?`,
+      title: `Delete ${rowName(item.name, item.kind !== 'note')}?`,
       confirmLabel: 'Delete now',
       danger: true,
     })
