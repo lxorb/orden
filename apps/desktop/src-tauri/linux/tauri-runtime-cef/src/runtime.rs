@@ -495,6 +495,7 @@ pub struct Cef {
   chrome_policy_id: Option<String>,
   persist_session_cookies: bool,
   remote_debugging: RemoteDebugging,
+  browser_pipe: bool,
   devtools: DevToolsPolicy,
   debug_environment: DebugEnvironment,
   certificate_errors: CertificateErrorPolicy,
@@ -535,6 +536,7 @@ impl fmt::Debug for Cef {
       .field("chrome_policy_id", &self.chrome_policy_id)
       .field("persist_session_cookies", &self.persist_session_cookies)
       .field("remote_debugging", &self.remote_debugging)
+      .field("browser_pipe", &self.browser_pipe)
       .field("devtools", &self.devtools)
       .field("debug_environment", &self.debug_environment)
       .field("certificate_errors", &self.certificate_errors)
@@ -996,6 +998,14 @@ impl Cef {
   #[must_use]
   pub fn remote_debugging(mut self, remote_debugging: RemoteDebugging) -> Self {
     self.remote_debugging = remote_debugging;
+    self
+  }
+
+  /// A DevTools protocol pipe to the browser target that only this application holds,
+  /// reached through [`crate::extensions_cdp`]. No TCP server is opened for it.
+  #[must_use]
+  pub fn browser_pipe(mut self, on: bool) -> Self {
+    self.browser_pipe = on;
     self
   }
 
@@ -2661,6 +2671,7 @@ wrap_with_args! {
     // supplied through `Cef::command_line_arg` - goes here. The application's own
     // switches are appended last so they win over the runtime's defaults.
     browser_command_line_args: Vec<(String, Option<String>)>,
+    debugging_command_line_args: Vec<(String, Option<String>)>,
     // The `Cef::cef_api_version` override, passed on to child processes. See
     // `API_VERSION_SWITCH`.
     api_version: Option<i32>,
@@ -2718,6 +2729,10 @@ wrap_with_args! {
         }
 
         append_command_line_args(command_line, &self.browser_command_line_args);
+        for name in crate::browser_pipe::DEBUGGING_SWITCHES {
+          command_line.remove_switch(Some(&CefString::from(*name)));
+        }
+        append_command_line_args(command_line, &self.debugging_command_line_args);
 
         // Last, and merging rather than replacing: CEF has already written its own
         // `--disable-features` by this point, and appending over it would drop entries
@@ -3158,6 +3173,7 @@ impl<T: UserEvent> CefRuntime<T> {
       chrome_policy_id,
       persist_session_cookies,
       remote_debugging,
+      browser_pipe,
       devtools: devtools_policy,
       debug_environment,
       certificate_errors,
@@ -3291,11 +3307,31 @@ impl<T: UserEvent> CefRuntime<T> {
     // refused two ways: the switch is only appended when the application asked for it,
     // and the local-state preference is pinned off otherwise so a switch that reaches
     // Chromium another way is refused as well.
-    let remote_debugging_enabled = match &remote_debugging {
+    let mut debugging_command_line_args = Vec::new();
+    let wanted_browser_pipe = browser_pipe;
+    let browser_pipe = browser_pipe
+      .then(crate::browser_pipe::open)
+      .flatten()
+      .map(|switches| debugging_command_line_args.extend(switches))
+      .is_some();
+    if wanted_browser_pipe && !browser_pipe {
+      log::warn!("the browser pipe could not be opened, so extensions_cdp answers that it is not open");
+    }
+    let remote_debugging_enabled = browser_pipe
+      | match &remote_debugging {
       RemoteDebugging::Disabled => false,
+      RemoteDebugging::Pipe if browser_pipe => {
+        log::warn!("ignoring RemoteDebugging::Pipe: the browser pipe holds descriptors 3 and 4");
+        false
+      }
       RemoteDebugging::Pipe => {
-        browser_command_line_args.push(("--remote-debugging-pipe".to_string(), None));
+        crate::browser_pipe::hand_back_inherited();
+        debugging_command_line_args.push(("--remote-debugging-pipe".to_string(), None));
         true
+      }
+      RemoteDebugging::Port { port, .. } if !cfg!(debug_assertions) => {
+        log::warn!("ignoring RemoteDebugging::Port {{ port: {port} }}: a release build opens no port");
+        false
       }
       RemoteDebugging::Port {
         port,
@@ -3309,12 +3345,12 @@ impl<T: UserEvent> CefRuntime<T> {
           );
           false
         } else {
-          browser_command_line_args.push((
+          debugging_command_line_args.push((
             "--remote-debugging-port".to_string(),
             Some(port.to_string()),
           ));
           if !allowed_origins.is_empty() {
-            browser_command_line_args.push((
+            debugging_command_line_args.push((
               "--remote-allow-origins".to_string(),
               Some(allowed_origins.join(",")),
             ));
@@ -3470,6 +3506,7 @@ impl<T: UserEvent> CefRuntime<T> {
       restore_deep_link_arguments: command_line_args_disabled,
       internal_command_line_args,
       browser_command_line_args,
+      debugging_command_line_args,
       api_version,
       disabled_features,
       enabled_features,

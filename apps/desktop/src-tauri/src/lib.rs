@@ -630,7 +630,9 @@ fn first_of_all(handle: &tauri::AppHandle) {
         permissions: engine::permissions,
         permission_answer: engine::permission_answer,
         zoom: engine::zoom,
+        extensions_cdp: tauri_runtime_cef::extensions_cdp,
     });
+    engine::try_browser_pipe();
     engine::hear_keys();
     orden_agent_web::engines::hand(orden_agent_web::engines::Pages {
         page: engine::windowless::shared,
