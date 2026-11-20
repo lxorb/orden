@@ -3,7 +3,7 @@ import { shownName } from '@orden/markdown/note-name'
 import { termOf } from '@orden/online/term'
 
 export function isOnlineTab(tab: { kind: string; path: string | null; doc?: string }): boolean {
-  if (__EVEN_PLUGIN__ || tab.kind !== 'terminal') return false
+  if (tab.kind !== 'terminal') return false
   if (tab.path !== null) return isTermTarget(tab.path)
   return tab.doc !== undefined && termOf(tab.doc) !== null
 }

@@ -1,14 +1,11 @@
 import type { TabKindParts } from '@orden/contracts'
 
-const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
-export const loadViewTab = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./ViewTab.svelte')>() : import('./ViewTab.svelte')
-export const startRunner = (): Promise<void> =>
-  __EVEN_PLUGIN__ ? Promise.resolve() : import('./runner.svelte').then(() => undefined)
-export const baseOpening = () => (__EVEN_PLUGIN__ ? away<typeof import('./open')>() : import('./open'))
-export const baseMounting = () => (__EVEN_PLUGIN__ ? away<typeof import('./mount')>() : import('./mount'))
+export const loadViewTab = () => import('./ViewTab.svelte')
+export const startRunner = (): Promise<void> => import('./runner.svelte').then(() => undefined)
+export const baseOpening = () => import('./open')
+export const baseMounting = () => import('./mount')
 export const rowsCopied = () => import('./copied')
-const todosEntry = () => (__EVEN_PLUGIN__ ? away<typeof import('./todos-entry')>() : import('./todos-entry'))
+const todosEntry = () => import('./todos-entry')
 export const createDatabase: typeof import('./new-database').createDatabase = (...args) =>
   import('./new-database').then((one) => one.createDatabase(...args))
 export const pickTemplate: typeof import('./templates').pickTemplate = () =>
@@ -22,7 +19,6 @@ export const orderMoved: typeof import('./order-paths').orderMoved = (...args) =
   import('./order-paths').then((one) => one.orderMoved(...args))
 export const viewTabKind: TabKindParts = {
   open: async (path, how) => {
-    if (__EVEN_PLUGIN__) return
     ;(await baseOpening()).openBaseFile(path, how)
   },
   make: (folder, name) => createDatabase(folder, name),
