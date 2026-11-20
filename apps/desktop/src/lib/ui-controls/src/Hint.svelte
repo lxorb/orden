@@ -3,6 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { hang } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
+  import { marked } from './marked'
 
   const { text }: { text: string } = $props()
   let open = $state(false)
@@ -15,7 +16,7 @@
 
 <svelte:window onpointerdown={outside} />
 
-<span class="explain orden-mark orden-hint" bind:this={host}
+<span class="explain orden-mark orden-hint" bind:this={host} use:marked={'hint'}
   >&#8288;<button
     type="button"
     aria-label={text}
@@ -68,11 +69,11 @@
   .explain {
     position: relative;
   }
-  :global(:has(> .orden-hint)) {
+  :global(.orden-marked-hint) {
     --mark-gap: 5px;
     --mark-size: 16px;
   }
-  :global([data-touch] :has(> .orden-hint)) {
+  :global([data-touch] .orden-marked-hint) {
     --mark-size: var(--touch-icon);
   }
   button {

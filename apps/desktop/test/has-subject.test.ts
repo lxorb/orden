@@ -106,9 +106,6 @@ function looseIn(files: string[]): string[] {
 const STILL_LOOSE = [
   'packages/themes/src/base.css: :has(> .orden-mark)',
   'apps/desktop/src/lib/foreign/src/ForeignMark.svelte: :is(:is(.orden-row-label, :has(+ .orden-row-label)):has(~ .foreign))',
-  'apps/desktop/src/lib/ui-controls/src/Hint.svelte: :is(:has(> .orden-hint))',
-  'apps/desktop/src/lib/ui-controls/src/Hint.svelte: :is([data-touch] :has(> .orden-hint))',
-  'apps/desktop/src/lib/ui-controls/src/Outward.svelte: :is(:has(> .orden-outward))',
 ]
 describe('a :has() rule', () => {
   test('is told apart when nothing but the :has() says which element it styles', () => {
