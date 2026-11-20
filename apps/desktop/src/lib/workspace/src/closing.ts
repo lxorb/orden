@@ -21,7 +21,7 @@ export async function guardClose(quitting: () => Promise<Quitting>): Promise<voi
   addEventListener('pagehide', () => settle())
   const window = await currentWindow()
   await window.onCloseRequested((event) => void onClose(event, window))
-  if (!__EVEN_PLUGIN__ && isDesktop) {
+  if (isDesktop) {
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
     const own = getCurrentWindow()
     await own.listen('orden://quit', () => void onQuit(window))

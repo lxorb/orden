@@ -71,10 +71,10 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
       break
     case 'archive':
     case 'unarchive':
-      if (!__EVEN_PLUGIN__) await services().archiveAgain(action)
+      await services().archiveAgain(action)
       break
     case 'outside':
-      if (!__EVEN_PLUGIN__) await services().redoOutside(action)
+      await services().redoOutside(action)
       break
     case 'merge':
     case 'split':

@@ -94,7 +94,7 @@ export function dropOnList(event: DragEvent, folder: string) {
     void explorer.value.carry(explorerDragged(transfer), folder, 'copy')
     return
   }
-  if (transfer && isFileDrop(transfer) && !__EVEN_PLUGIN__) {
+  if (transfer && isFileDrop(transfer)) {
     const caught = caughtFiles(transfer)
     void import('../../ui-controls/src/api')
       .then(({ filesUnder }) => filesUnder(caught))

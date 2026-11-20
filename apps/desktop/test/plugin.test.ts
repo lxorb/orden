@@ -9,7 +9,6 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
 const page = vi.hoisted(() => ({ plugin: false }))
 vi.mock('../src/lib/platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/platform/src/api')>()),
-  isPlugin: () => page.plugin,
   markPlugin: () => {
     page.plugin = true
   },

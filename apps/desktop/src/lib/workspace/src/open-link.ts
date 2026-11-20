@@ -2,7 +2,7 @@ import { portOf, settingsWindow } from '@orden/contracts'
 import type { LinkPress, NoteJump, NoteOpener } from '@orden/editor'
 import { howFor, linkAsk, type TabAsk, tabAsk } from './new-tab'
 import { viewport } from '../../ui-kit/src/api'
-import { isPlugin, isOpenable, openExternal } from '../../platform/src/api'
+import { isOpenable, openExternal } from '../../platform/src/api'
 import { isWebAddress } from '@orden/scan/web-address'
 import { workspace } from './workspace.svelte'
 
@@ -17,7 +17,7 @@ export function webHref(href: string): string | null {
   return isWebAddress(said) ? said : null
 }
 function holdsPages(): boolean {
-  return !isPlugin() && !viewport.touch
+  return !viewport.touch
 }
 export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkPlace {
   if (!isOpenable(href)) return 'nowhere'
@@ -25,7 +25,7 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
   return ask === 'behind' ? 'behind' : 'here'
 }
 export function settingsPane(href: string): 'import' | null {
-  return !__EVEN_PLUGIN__ && /^(orden|nib):\/\/settings\/import\/?$/i.test(href.trim()) ? 'import' : null
+  return /^(orden|nib):\/\/settings\/import\/?$/i.test(href.trim()) ? 'import' : null
 }
 export function followHref(href: string, press: LinkPress): void {
   const pane = settingsPane(href)

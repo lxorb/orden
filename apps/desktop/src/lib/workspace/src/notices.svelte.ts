@@ -5,7 +5,7 @@ import { UNDO_LINGER, undoToast } from '../../undo-toast/src/api'
 class Lingering {
   private timer: ReturnType<typeof setTimeout> | undefined
   protected told() {
-    if (!__EVEN_PLUGIN__) void askSheet('undo-toast')
+    void askSheet('undo-toast')
     this.linger()
   }
   hold() {

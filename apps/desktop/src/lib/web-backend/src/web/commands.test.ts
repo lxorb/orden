@@ -539,10 +539,9 @@ describe('the tree', () => {
       chat: 'Team.chat',
       term: 'Build.term',
     }
-    const build = { evenBuild: false, isPlugin: false }
     for (const [kind, name] of Object.entries(one)) {
       expect(
-        openerFor(name, () => false, build),
+        openerFor(name, () => false),
         name,
       ).toBe(kind)
       await write(`/Notes/${name}`, '{}')
