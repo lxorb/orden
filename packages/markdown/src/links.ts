@@ -156,6 +156,10 @@ export const isBaseTarget = (target: string): boolean => /\.base$/i.test(target.
 export const isChatTarget = (target: string): boolean => /\.chat$/i.test(target)
 export const isTermTarget = (target: string | null): boolean => target !== null && /\.term$/i.test(target)
 export const isPagesTarget = ending(/\.pages$/i)
+export const paperOf = (pages: string): string => `${pages}.pdf`
+export const holderOf = (path: string): string | null =>
+  /\.pages\.pdf$/i.test(path) ? path.slice(0, -'.pdf'.length) : null
+export const pairOf = (path: string): string | null => holderOf(path) ?? (/\.pages$/i.test(path) ? paperOf(path) : null)
 export const isWebTarget = ending(/\.(url|webloc)$/i)
 export const isImageTarget = ending(/\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i)
 export const isAudioTarget = ending(/\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|weba)$/i)
