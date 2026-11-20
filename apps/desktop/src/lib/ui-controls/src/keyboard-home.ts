@@ -7,6 +7,7 @@ export const IN_PAGE = 'orden://keyboard-in-page'
 const LEAVING = 300
 const OWED = 1000
 const DRAGGED = new Set(['insertFromDrop', 'deleteByDrag'])
+const LAYERS = '.orden-screen, .orden-layer, .orden-bubble'
 function strayed(event: InputEvent): void {
   const at = event.target
   const keyboard = document.activeElement
@@ -55,7 +56,7 @@ class KeyboardHome {
     if (!(at instanceof HTMLElement)) return
     this.moves += 1
     this.last = at
-    this.lastInLayer = overlays.depth > 0
+    this.lastInLayer = overlays.depth > 0 || at.closest(LAYERS) !== null
     if (this.lastInLayer || this.regaining || !document.hasFocus()) return
     if (this.pressing && pressedThrough(at)) return
     this.here = at
