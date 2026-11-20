@@ -98,7 +98,7 @@ function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
 const BUDGET = 2_208_500
-const MOST_FILES = 521
+const MOST_FILES = 520
 const MOST_TEXT = 6_500
 describe('what the app evaluates before it draws anything', () => {
   test('is under the budget, in bytes of our own source', () => {
