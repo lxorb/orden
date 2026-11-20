@@ -2,6 +2,7 @@ import type { Bookmark } from '@orden/contracts'
 import { ApiError, BASE, request } from './client'
 import { isRecord, isString, parsed } from '../../platform/src/api'
 import type { Avatar, Status } from './face'
+import { readSettings, saveSettings } from './settings'
 
 export interface Account {
   id: string
@@ -240,7 +241,7 @@ export interface AccountSettings {
   silent?: boolean
   developer?: boolean
 }
-interface KeyState {
+export interface KeyState {
   set: boolean
   tail: string
 }
@@ -327,13 +328,8 @@ export const routes = {
   createSpace: (token: string, name: string) =>
     request<{ space: RemoteSpace }>('/v1/spaces', { token, body: { name } }),
   usage: (token: string) => request<{ used: number; limit: number }>('/v1/usage', { token }),
-  settings: (token: string) => request<{ settings: AccountSettings; key?: KeyState }>('/v1/settings', { token }),
-  saveSettings: (token: string, patch: AccountSettings) =>
-    request<{ settings: AccountSettings }>('/v1/settings', {
-      method: 'PATCH',
-      token,
-      body: patch,
-    }),
+  settings: readSettings,
+  saveSettings,
   removeAskKey: (token: string) => request<KeyState>('/v1/ask/key', { method: 'DELETE', token }),
   warm: async (): Promise<void> => {
     await fetch(`${BASE}/health`, { method: 'GET', keepalive: true }).catch(() => undefined)
