@@ -1,5 +1,5 @@
 export const DEMO_SCENES = ['canvas', 'write', 'browse', 'organize', 'overview'] as const
-export type DemoScene = (typeof DEMO_SCENES)[number]
+type DemoScene = (typeof DEMO_SCENES)[number]
 export interface DemoCue {
   orden: 'demo'
   scene: DemoScene
@@ -31,4 +31,34 @@ export function isDemoCue(data: unknown): data is DemoCue {
 }
 export function isDemoReady(data: unknown): data is DemoReady {
   return said(data) && data.ready === true
+}
+export const DEMO_LOOP_SCENES = [
+  'flow',
+  'canvas',
+  'markdown',
+  'pages',
+  'bubbles',
+  'ai',
+  'todos',
+  'chat',
+  'search',
+] as const
+export type DemoLoopScene = (typeof DEMO_LOOP_SCENES)[number]
+export interface DemoPlay {
+  orden: 'demo'
+  play?: boolean
+  still?: true
+}
+export function isDemoLoopScene(scene: unknown): scene is DemoLoopScene {
+  return DEMO_LOOP_SCENES.includes(scene as DemoLoopScene)
+}
+export function demoLoopSrc(scene: DemoLoopScene, phone: boolean): string {
+  return `/?demo=${scene}&loop${phone ? '&phone' : ''}`
+}
+export function isDemoPlay(data: unknown): data is DemoPlay {
+  if (!said(data)) return false
+  const { play, still } = data
+  if (play !== undefined && typeof play !== 'boolean') return false
+  if (still !== undefined && still !== true) return false
+  return (play === undefined) !== (still === undefined)
 }

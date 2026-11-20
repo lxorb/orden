@@ -1,0 +1,14 @@
+{
+  "name": "orden-site-preview",
+  "main": "src/preview-worker.ts",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": false,
+  "assets": {
+    "directory": "../../../dist-preview",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
+    "run_worker_first": true,
+  },
+  "routes": [{ "pattern": "orden.so/preview*", "zone_name": "orden.so" }],
+}

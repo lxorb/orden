@@ -7,6 +7,11 @@ on:
         description: The commit of main to put on orden.so
         required: false
         default: main
+      preview:
+        description: Put it on orden.so/preview/ with its own build of the app, and leave orden.so as it is
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -34,10 +39,26 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build the home page
+        if: ${{ !inputs.preview }}
         run: pnpm --filter @orden/desktop exec vite build --config vite.home.config.ts
 
       - name: Put it on orden.so
+        if: ${{ !inputs.preview }}
         working-directory: services/sync
         run: pnpm exec wrangler deploy --config ../../apps/desktop/src/lib/showcase/wrangler.jsonc --message "site ${GITHUB_SHA::12}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Build the preview and the app it shows
+        if: ${{ inputs.preview }}
+        working-directory: apps/desktop
+        run: |
+          pnpm exec vite build --config vite.home.config.ts --mode site-preview
+          pnpm exec vite build --base /preview/app/ --outDir dist-preview/preview/app --emptyOutDir
+
+      - name: Put it on orden.so/preview/
+        if: ${{ inputs.preview }}
+        working-directory: services/sync
+        run: pnpm exec wrangler deploy --config ../../apps/desktop/src/lib/showcase/wrangler.preview.jsonc --message "preview ${GITHUB_SHA::12}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

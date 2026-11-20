@@ -1,27 +1,30 @@
 import { describe, expect, test } from 'vitest'
 import {
   APP_ORIGIN,
-  cueOf,
+  appHomeAt,
+  DEMO_LOOP_SCENES,
   DEMO_PHONE_SRC,
   DEMO_SCENES,
   DEMO_SRC,
+  demoLoopSrc,
   downloadFor,
-  frameOf,
   isDemoCue,
+  isDemoLoopScene,
+  isDemoPlay,
   isDemoReady,
   LATEST_RELEASE,
   LATEST_RELEASE_API,
   originsAt,
+  poolOf,
+  previewAnswer,
   releaseAssets,
   siteAnswer,
   siteFiles,
   SITE_ORIGIN,
-  storyAt,
   type DemoCue,
+  type DemoPlay,
 } from '../src/api'
 
-const TRACK = { rise: 900, span: 1350 }
-const END = TRACK.rise + DEMO_SCENES.length * TRACK.span
 const MAC =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15'
 const WINDOWS =
@@ -80,50 +83,69 @@ describe('the cue the home page sends its demo', () => {
     expect(isDemoReady({ orden: 'demo', ready: 'yes' })).toBe(false)
     expect(isDemoReady({ ready: true })).toBe(false)
   })
-  test('is a cue the demo accepts at every point of the page, still or moving', () => {
-    for (let scrolled = -200; scrolled <= END + 2000; scrolled += 37) {
-      for (const still of [false, true]) {
-        const cue = cueOf(storyAt(scrolled, TRACK), still)
-        expect(isDemoCue(cue), String(scrolled)).toBe(true)
-        expect(cue.still).toBe(still)
-      }
-    }
+})
+describe('the loops the home page shows', () => {
+  test('name the hero workflow first and then each feature, each at its own address', () => {
+    expect(DEMO_LOOP_SCENES).toEqual([
+      'flow',
+      'canvas',
+      'markdown',
+      'pages',
+      'bubbles',
+      'ai',
+      'todos',
+      'chat',
+      'search',
+    ])
+    expect(demoLoopSrc('flow', false)).toBe('/?demo=flow&loop')
+    expect(demoLoopSrc('chat', true)).toBe('/?demo=chat&loop&phone')
+    expect(isDemoLoopScene('search')).toBe(true)
+    expect(isDemoLoopScene('write')).toBe(false)
+  })
+  test('are told to play, to pause or to hold still, one at a time', () => {
+    const told: DemoPlay[] = [
+      { orden: 'demo', play: true },
+      { orden: 'demo', play: false },
+      { orden: 'demo', still: true },
+    ]
+    for (const one of told) expect(isDemoPlay(one)).toBe(true)
+    for (const wrong of [
+      null,
+      { orden: 'demo' },
+      { orden: 'demo', play: 'yes' },
+      { orden: 'demo', still: false },
+      { orden: 'demo', play: true, still: true },
+      { orden: 'other', play: true },
+    ])
+      expect(isDemoPlay(wrong)).toBe(false)
   })
 })
-describe('the story the page scrolls through', () => {
-  test('opens on the canvas while the window rises', () => {
-    expect(storyAt(0, TRACK)).toMatchObject({ scene: 'canvas', at: 0, rise: 0 })
-    expect(storyAt(TRACK.rise / 2, TRACK)).toMatchObject({ scene: 'canvas', at: 0, rise: 0.5 })
+describe('the pool of live displays', () => {
+  const HEIGHT = 900
+  const at = (top: number, tall = 600) => ({ top, bottom: top + tall })
+  test('runs at most the given number, those nearest the middle of the screen', () => {
+    const spans = [at(-2400), at(-1200), at(150), at(1000), at(2200), at(3400)]
+    expect(poolOf(spans, HEIGHT, 2)).toEqual({ live: [2, 3], playing: [2] })
+    expect(poolOf(spans, HEIGHT, 1).live).toEqual([2])
+    expect(poolOf(spans, HEIGHT, 0)).toEqual({ live: [], playing: [] })
   })
-  test('starts each chapter where its section starts and ends on the overview', () => {
-    DEMO_SCENES.forEach((scene, index) => {
-      const start = TRACK.rise + index * TRACK.span
-      expect(storyAt(start, TRACK)).toMatchObject({ scene, at: 0, rise: 1 })
-      expect(storyAt(start + TRACK.span / 2, TRACK)).toMatchObject({ scene, at: 0.5 })
-    })
-    expect(storyAt(END + 500, TRACK)).toMatchObject({ scene: 'overview', at: 1 })
+  test('plays only what is on screen and keeps the next one warm a little ahead', () => {
+    const { live, playing } = poolOf([at(-1300), at(400), at(1300)], HEIGHT, 2)
+    expect(live).toEqual([1, 2])
+    expect(playing).toEqual([1])
   })
-  test('shows a chapter line in full where its section starts, and one line at a time', () => {
-    DEMO_SCENES.forEach((_scene, index) => {
-      const frame = frameOf(storyAt(TRACK.rise + index * TRACK.span, TRACK), false)
-      expect(frame.captions[index]).toBe(1)
-    })
-    for (let scrolled = 0; scrolled <= END; scrolled += 23) {
-      const shown = frameOf(storyAt(scrolled, TRACK), false).captions.filter((one) => one > 0.5)
-      expect(shown.length, String(scrolled)).toBeLessThanOrEqual(1)
-    }
+  test('lets everything far off the screen rest as a poster', () => {
+    expect(poolOf([at(-5000), at(5000)], HEIGHT, 2).live).toEqual([])
+    expect(poolOf([at(200, 0)], HEIGHT, 2).live).toEqual([])
   })
-  test('brings the buttons back only at the end', () => {
-    expect(frameOf(storyAt(TRACK.rise + 4 * TRACK.span, TRACK), false).close).toBe(0)
-    expect(frameOf(storyAt(END, TRACK), false).close).toBe(1)
-    expect(frameOf(storyAt(END, TRACK), true).close).toBe(1)
-  })
-  test('holds still frames when motion is reduced', () => {
-    for (let scrolled = 0; scrolled <= END; scrolled += 41) {
-      const frame = frameOf(storyAt(scrolled, TRACK), true)
-      expect(frame.lift).toBe(1)
-      expect(frame.hero).toBe(1)
-      for (const value of [...frame.captions, frame.shrink, frame.close]) expect([0, 1]).toContain(value)
+  test('never runs more than asked at any point of a long page', () => {
+    const spans = Array.from({ length: 9 }, (_, index) => at(index * 1100))
+    for (let scrolled = -500; scrolled < 9000; scrolled += 53) {
+      const moved = spans.map(({ top, bottom }) => ({ top: top - scrolled, bottom: bottom - scrolled }))
+      const { live, playing } = poolOf(moved, HEIGHT, 2)
+      expect(live.length, String(scrolled)).toBeLessThanOrEqual(2)
+      expect(playing.length, String(scrolled)).toBeGreaterThan(0)
+      for (const index of playing) expect(live).toContain(index)
     }
   })
 })
@@ -182,6 +204,14 @@ describe('the two addresses', () => {
     const preview = { origin: 'http://127.0.0.1:4791', hostname: '127.0.0.1' }
     expect(originsAt(preview)).toEqual({ site: preview.origin, app: preview.origin })
   })
+  test('the page finds the app at app.orden.so, or beside itself when built under a path', () => {
+    const site = { origin: 'https://orden.so', hostname: 'orden.so' }
+    expect(appHomeAt(site, '/')).toEqual({ origin: APP_ORIGIN, home: APP_ORIGIN })
+    expect(appHomeAt(site, '/preview/')).toEqual({ origin: SITE_ORIGIN, home: 'https://orden.so/preview/app' })
+    const local = { origin: 'http://127.0.0.1:4791', hostname: '127.0.0.1' }
+    expect(appHomeAt(local, '/')).toEqual({ origin: local.origin, home: local.origin })
+    expect(appHomeAt(local, '/preview')).toEqual({ origin: local.origin, home: `${local.origin}/preview/app` })
+  })
 })
 describe('the site Worker on orden.so', () => {
   const page = '<!doctype html><title>Orden</title>'
@@ -217,5 +247,54 @@ describe('the site Worker on orden.so', () => {
   test('keeps its built files for a year, by name', () => {
     expect(siteFiles()._headers).toContain('/home/*')
     expect(siteFiles()._headers).toContain('immutable')
+  })
+})
+describe('the preview Worker on orden.so/preview/', () => {
+  const html = (body: string) => new Response(body, { headers: { 'content-type': 'text/html' } })
+  const files: Record<string, () => Response> = {
+    '/preview/': () => html('page'),
+    '/preview/app/': () => html('app'),
+    '/preview/app/handoff': () => html('handoff'),
+    '/preview/app/demo/web/kestrel.html': () => html('kestrel'),
+    '/preview/app/assets/main.js': () => new Response('code', { headers: { 'content-type': 'text/javascript' } }),
+  }
+  const seen: string[] = []
+  const assets = {
+    fetch: (request: Request) => {
+      const { pathname } = new URL(request.url)
+      seen.push(pathname)
+      return Promise.resolve(files[pathname]?.() ?? new Response('Not found', { status: 404 }))
+    },
+  }
+  const answer = (url: string, method = 'GET') => previewAnswer(new Request(url, { method }), assets)
+  test('shows the new page and its demos to nobody but itself, and to no search engine', async () => {
+    for (const url of [
+      'https://orden.so/preview/',
+      'https://orden.so/preview/app/?demo=flow&loop',
+      'https://orden.so/preview/app/demo/web/kestrel.html',
+      'https://orden.so/preview/app/assets/main.js',
+    ]) {
+      const shown = await answer(url)
+      expect(shown.status, url).toBe(200)
+      expect(shown.headers.get('x-robots-tag'), url).toContain('noindex')
+      expect(shown.headers.get('content-security-policy'), url).toBe("frame-ancestors 'self'")
+    }
+  })
+  test('opens the app only as the demo, so the real app never runs on the site', async () => {
+    for (const url of ['https://orden.so/preview/app/', 'https://orden.so/preview/app/handoff']) {
+      const sent = await answer(url)
+      expect(sent.status, url).toBe(302)
+      expect(sent.headers.get('location'), url).toBe('https://orden.so/preview/')
+    }
+  })
+  test('answers nothing outside its path and only reads', async () => {
+    seen.length = 0
+    expect((await answer('https://orden.so/')).status).toBe(404)
+    expect((await answer('https://orden.so/previewed')).status).toBe(404)
+    expect(seen).toEqual([])
+    expect((await answer('https://orden.so/preview/', 'POST')).status).toBe(405)
+    const bare = await answer('https://orden.so/preview')
+    expect(bare.status).toBe(301)
+    expect(bare.headers.get('location')).toBe('https://orden.so/preview/')
   })
 })

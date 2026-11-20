@@ -9,6 +9,18 @@ export function originsAt(at: { origin: string; hostname: string }): Origins {
   if (OURS.includes(at.hostname)) return { site: SITE_ORIGIN, app: APP_ORIGIN }
   return { site: at.origin, app: at.origin }
 }
+export interface AppHome {
+  origin: string
+  home: string
+}
+export function appHomeAt(at: { origin: string; hostname: string }, base: string): AppHome {
+  if (base === '/' || base === '') {
+    const { app } = originsAt(at)
+    return { origin: app, home: app }
+  }
+  const under = base.startsWith('/') ? base : `/${base}`
+  return { origin: at.origin, home: `${at.origin}${under.endsWith('/') ? under : `${under}/`}app` }
+}
 export const LATEST_RELEASE = 'https://github.com/lxorb/orden/releases/latest'
 export const LATEST_RELEASE_API = 'https://api.github.com/repos/lxorb/orden/releases/latest'
 const ASSET_HOME = 'https://github.com/lxorb/orden/releases/download/'

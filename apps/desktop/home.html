@@ -21,8 +21,8 @@
     <script type="module" src="/src/home.ts"></script>
   </head>
   <body>
-    <main class="track">
-      <header class="hero" data-scene="hero">
+    <main class="page">
+      <header class="hero">
         <h1 class="title">Orden</h1>
         <p class="slogan">Workspace, done differently.</p>
         <div class="actions">
@@ -62,20 +62,60 @@
             ><span>Try it out</span></a
           >
         </div>
+        <figure class="display is-hero" data-scene="flow" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
       </header>
-      <div class="stage">
-        <h2 class="caption">Lay it out together.</h2>
-        <h2 class="caption">Write side by side.</h2>
-        <h2 class="caption">Browse without leaving.</h2>
-        <h2 class="caption">Everything in its place.</h2>
-        <h2 class="caption">Everyone, in one place.</h2>
-        <div class="device" aria-hidden="true">
-          <div class="screen">
-            <div class="poster"></div>
-            <iframe class="demo" title="Orden, live" tabindex="-1" inert aria-hidden="true"></iframe>
-          </div>
-        </div>
-        <div class="coda-actions">
+      <section class="feature">
+        <h2 class="line">Lay it out together.</h2>
+        <figure class="display" data-scene="canvas" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
+      </section>
+      <section class="feature">
+        <h2 class="line">Write side by side.</h2>
+        <figure class="display" data-scene="markdown" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
+      </section>
+      <section class="feature">
+        <h2 class="line">Draw on anything.</h2>
+        <figure class="display" data-scene="pages" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
+      </section>
+      <section class="feature">
+        <h2 class="line">See everything at once.</h2>
+        <figure class="display" data-scene="bubbles" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
+      </section>
+      <section class="feature">
+        <h2 class="line">Let AI do the clicking.</h2>
+        <figure class="display" data-scene="ai" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
+      </section>
+      <section class="feature">
+        <h2 class="line">Keep your todos in order.</h2>
+        <figure class="display" data-scene="todos" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
+      </section>
+      <section class="feature">
+        <h2 class="line">Talk where you work.</h2>
+        <figure class="display" data-scene="chat" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
+      </section>
+      <section class="feature">
+        <h2 class="line">Find anything, fast.</h2>
+        <figure class="display" data-scene="search" aria-hidden="true">
+          <div class="screen"><div class="poster"></div></div>
+        </figure>
+      </section>
+      <footer class="coda">
+        <div class="actions coda-actions">
           <a class="orden-button is-brand is-big" data-download href="https://github.com/lxorb/orden/releases/latest"
             ><svg
               class="button-glyph"
@@ -112,13 +152,7 @@
             ><span>Try it out</span></a
           >
         </div>
-      </div>
-      <section class="chapter" data-scene="canvas" aria-hidden="true"></section>
-      <section class="chapter" data-scene="write" aria-hidden="true"></section>
-      <section class="chapter" data-scene="browse" aria-hidden="true"></section>
-      <section class="chapter" data-scene="organize" aria-hidden="true"></section>
-      <section class="chapter" data-scene="overview" aria-hidden="true"></section>
-      <div class="coda" aria-hidden="true"></div>
+      </footer>
     </main>
   </body>
 </html>
