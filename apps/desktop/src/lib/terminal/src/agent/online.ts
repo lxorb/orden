@@ -6,7 +6,7 @@ import { isOnlineTab } from '../../../online-terms/src/api'
 import { termOf } from '@orden/online/term'
 import { relativeTo, samePath, spaceHolding } from '../../../platform/src/api'
 import { runner } from '../../../sync-client/src/api'
-import { asksFront, type Call, done, openedBy, reachable, Refused, tabsInReach } from '../../../agent-verbs/src/api'
+import { type Call, done, openedBy, reachable, Refused, tabsInReach } from '../../../agent-verbs/src/api'
 import { workspace } from '../../../workspace/src/api'
 
 const WHY: Record<Why, [Refused['code'], string]> = {
@@ -24,11 +24,10 @@ function refusedOf(why: Why): Refused {
   return new Refused(code, `${why}: ${words}`)
 }
 export async function newOnline(call: Call): Promise<string | null> {
-  const front = asksFront(call, 'a new tab in front')
   const { madeOnline } = await import('../online/open')
-  const made = await madeOnline(front ? null : workspace.activeTabId, front)
+  const made = await madeOnline(workspace.activeTabId, false)
   if (typeof made === 'string') throw refusedOf(made)
-  return openedBy(call, made, front)?.id ?? null
+  return openedBy(call, made, false)?.id ?? null
 }
 export async function listOnline(call: Call): Promise<AgentAnswer> {
   if (!account.accountToken) throw refusedOf('signed-out')

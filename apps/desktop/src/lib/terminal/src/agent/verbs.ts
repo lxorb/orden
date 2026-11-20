@@ -1,15 +1,5 @@
 import type { AgentCaller, AgentSaid, AgentTabKind } from '@orden/contracts'
-import {
-  asksFront,
-  type Call,
-  judged,
-  maybe,
-  onDisk,
-  openedBy,
-  placeFor,
-  Refused,
-  verbsOf,
-} from '../../../agent-verbs/src/api'
+import { type Call, judged, maybe, onDisk, openedBy, placeFor, Refused, verbsOf } from '../../../agent-verbs/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { openTerminal } from '../open'
 import { shellRunning } from '../running'
@@ -38,14 +28,13 @@ async function newTerminal(call: Call): Promise<string | null> {
   }
   const cwd = maybe(call, 'cwd')
   const folder = cwd === null ? undefined : onDisk(placeFor(call, null), judged(cwd))
-  const front = asksFront(call, 'a new tab in front')
-  const beside = front ? null : workspace.activeTabId
+  const beside = workspace.activeTabId
   const tab = await openTerminal(shell.id, {
     ...(folder === undefined ? {} : { folder }),
     ...(beside ? { beside } : {}),
-    activate: front,
+    activate: false,
   })
-  return openedBy(call, tab, front)?.id ?? null
+  return openedBy(call, tab, false)?.id ?? null
 }
 export const terminalTabs: AgentTabKind = {
   open: (args, caller) => newTerminal(callOf(args, caller)),
