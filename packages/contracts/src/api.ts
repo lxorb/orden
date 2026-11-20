@@ -214,6 +214,7 @@ export {
 export {
   type AgentAnswer,
   type AgentCaller,
+  type AgentChat,
   type AgentCrateAnswers,
   type AgentGrant,
   type AgentHeard,
