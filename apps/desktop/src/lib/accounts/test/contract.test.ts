@@ -409,3 +409,34 @@ describe('settings owed when the account signs out', () => {
     expect(accounts.alice).toEqual({ vim: true })
   })
 })
+describe('the account a sign-in leaves', () => {
+  const user = { id: 'uv', email: 'ver@example.org', name: 'Ver' }
+  beforeEach(() => {
+    const kept = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => kept.get(key) ?? null,
+      setItem: (key: string, value: string) => void kept.set(key, value),
+      removeItem: (key: string) => void kept.delete(key),
+    })
+    vi.stubGlobal('fetch', (url: string) => {
+      if (url.endsWith('/v1/auth/verify'))
+        return Promise.resolve(new Response(JSON.stringify({ token: 'coded', user })))
+      if (url.endsWith('/v1/me'))
+        return Promise.resolve(new Response(JSON.stringify({ user: { ...user, syncVersion: 2 } })))
+      return Promise.reject(new Error('offline'))
+    })
+  })
+  afterEach(async () => {
+    await account.signOut()
+    vi.unstubAllGlobals()
+  })
+  test('carries the sync version /v1/me gives, through a code', async () => {
+    account.email = 'ver@example.org'
+    expect(await account.verify('123456')).toBe(true)
+    expect(account.user?.syncVersion).toBe(2)
+  })
+  test('and through a link or a token handed over', async () => {
+    await account.arrive('coded', { user })
+    expect(account.user?.syncVersion).toBe(2)
+  })
+})

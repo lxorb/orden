@@ -20,7 +20,7 @@ export type {
   SpaceFile,
   SpaceRole,
 } from './routes'
-export { account, type Vault } from './account.svelte'
+export { account } from './account.svelte'
 export { AccountOwed, heardSettings } from './account-owed'
 export { readableSize, usage } from './usage.svelte'
 export { default as AccountBadge } from './AccountBadge.svelte'
