@@ -74,14 +74,19 @@ async function drawnNow() {
   await Promise.resolve()
   flushSync()
 }
-test('the windows set off on the first frame, their marks standing in for what is not drawn yet', () => {
+test('the windows set off on the first frame, their faces coming in after, marks standing in for what is not drawn yet', async () => {
   tabOverview.open = true
   flushSync()
   expect(drawn).toEqual([])
+  expect(document.querySelector('.window .face')).toBe(null)
   frame()
   frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
-  expect(document.querySelector('.window .face .mark')).not.toBe(null)
+  await vi.waitFor(async () => {
+    frame()
+    await idle(20)
+    expect(document.querySelector('.window .face .mark')).not.toBe(null)
+  })
 })
 test('a web page whose picture is still being taken keeps the windows waiting a few frames at most', async () => {
   const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
@@ -168,6 +173,8 @@ test('a window chosen from behind the pane goes home as that pane in one move, a
   flushSync()
   await drawnNow()
   for (let i = 0; i < 400 && waiting.size; i++) frame()
+  await idle(30)
+  flushSync()
   const paneId = workspace.panes.all[0]?.id ?? ''
   const pane = document.querySelector<HTMLElement>(`[data-pane="${paneId}"]`)
   const was = workspace.activeTabId

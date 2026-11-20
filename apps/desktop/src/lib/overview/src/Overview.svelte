@@ -1492,7 +1492,7 @@
         use:placed={tab.id}
       >
         <span class="face-box" style:scale={slot.w / face.w}>
-          {#if !live}
+          {#if !live && extras}
             <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} flying={facesFly} />
           {/if}
         </span>
