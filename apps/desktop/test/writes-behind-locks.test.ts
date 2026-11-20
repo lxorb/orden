@@ -16,6 +16,7 @@ describe('the words of a note written by anything but its own editor', () => {
       'documents/src/documents.svelte.ts',
       'file-writes/src/api.ts',
       'link-index/src/links.svelte.ts',
+      'link-index/src/retarget.ts',
       'workspace/src/note-text.ts',
       'workspace/src/undoing.ts',
     ])
