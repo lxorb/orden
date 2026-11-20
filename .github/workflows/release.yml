@@ -9,7 +9,6 @@ on:
       - '**/*.test.ts'
       - 'apps/desktop/test/**'
       - 'packages/editor/test/**'
-      - 'packages/glasses/test/**'
       - 'services/*/test/**'
       - packaging/nix/edge.json
   workflow_dispatch:
