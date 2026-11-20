@@ -1,4 +1,4 @@
-import { leftByAnother, leftGone } from '../../left-spaces/src/api'
+import { forgetAccount, leaveSpaces, leftByAnother, leftGone } from '../../left-spaces/src/api'
 import { log, samePath, windows } from '../../platform/src/api'
 import { prompt } from '../../ui-kit/src/api'
 import { workspace } from './ports'
@@ -8,6 +8,10 @@ export function ownRoots(accountId: string | null): string[] {
   return workspace()
     .spaces.map((space) => space.root)
     .filter((root) => !leftByAnother(root, accountId))
+}
+export function leftHere(accountId: string, roots: readonly string[], keepHere: boolean): void {
+  if (keepHere) forgetAccount(accountId)
+  else leaveSpaces(accountId, roots)
 }
 export async function unsentRoots(
   engine: Engine,
@@ -36,8 +40,9 @@ export async function leaveUnsent(): Promise<boolean> {
 export async function dropLeft(roots: readonly string[]): Promise<void> {
   for (const root of roots) {
     const space = workspace().spaces.find((one) => samePath(one.root, root))
+    if (!space) continue
     try {
-      if (space) await workspace().dropSpace(space.id)
+      await workspace().dropSpace(space.id)
       leftGone(root)
     } catch (error) {
       log('warn', `sync: a space signed out of stays in this browser - ${String(error)}`)
