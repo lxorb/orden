@@ -1254,6 +1254,18 @@ describe('chats', () => {
       expect((await list(people.owner)).map((one) => one.id)).toEqual([chat])
       expect((await events(people.owner, chat)).events).toHaveLength(1)
     })
+    test('ends a chat made a moment ago whose pointer is already in Recently deleted, or already purged', async () => {
+      for (const purged of [false, true]) {
+        const chat = await chatOfOwner()
+        const file = await chatFile(`Quick ${String(purged)}.chat`, chatText({ v: 1, chat }))
+        await call(env, `/v1/notes/${file}`, { method: 'DELETE', token: people.owner })
+        if (purged) await call(env, `/v1/trash/notes/${file}`, { method: 'DELETE', token: people.owner })
+        expect((await remove(people.owner, chat)).status, String(purged)).toBe(204)
+        expect(env.db.prepare('select ended_at from chats where id = ?').get(chat), String(purged)).toEqual({
+          ended_at: T0 + 200_000,
+        })
+      }
+    })
     test('comes back when its pointer is written again', async () => {
       const chat = await chatOfOwner()
       await remove(people.owner, chat)
