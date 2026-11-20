@@ -14,8 +14,11 @@ export async function openTerminal(shellId?: string, where: Where = {}): Promise
   const host = shellId === undefined ? null : hostIdOf(shellId)
   if (host !== null) {
     const { openRemote } = await import('./remote/open')
-    await openRemote(host, where.beside === undefined ? {} : { beside: where.beside })
-    return null
+    const id = await openRemote(host, {
+      ...(where.beside === undefined ? {} : { beside: where.beside }),
+      behind: where.activate === false,
+    })
+    return workspace.tabs.find((one) => one.id === id) ?? null
   }
   const list = await shells.ask()
   const shell = list.find((one) => one.id === shellId) ?? shells.chosen
