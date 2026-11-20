@@ -137,7 +137,7 @@
     const room = hole
     if (!room || !watching) return
     watching.observe(room)
-    const unshift = watchShifts(room, chase)
+    const unshift = watchShifts(room, chase, () => pages.still)
     untrack(() => follow())
     return () => {
       watching.unobserve(room)

@@ -106,6 +106,19 @@ describe('a hole that moves', () => {
     for (const heard of listening) heard()
     expect(live().options.rootMargin).toBe('-76px -200px -40px -240px')
   })
+  test('says nothing and reads no box while the pages are held still under the overview', () => {
+    const shifted = vi.fn()
+    let resting = false
+    watchShifts(hole, shifted, () => resting)
+    live().say(1)
+    resting = true
+    const read = vi.spyOn(hole, 'getBoundingClientRect')
+    box = { ...box, left: 0 }
+    live().say(0.75)
+    expect(shifted).not.toHaveBeenCalled()
+    expect(read).not.toHaveBeenCalled()
+    read.mockRestore()
+  })
   test('says nothing while it sits still', () => {
     const shifted = vi.fn()
     watchShifts(hole, shifted)

@@ -19,7 +19,7 @@ function boxOf(node: Element): Box {
   return { left, top, width, height }
 }
 const CLIPPED_AGAIN = 1000
-export function watchShifts(node: Element, shifted: () => void): () => void {
+export function watchShifts(node: Element, shifted: () => void, resting: () => boolean = () => false): () => void {
   if (typeof IntersectionObserver !== 'function') return () => undefined
   let observer: IntersectionObserver | null = null
   let again: ReturnType<typeof setTimeout> | undefined
@@ -35,6 +35,7 @@ export function watchShifts(node: Element, shifted: () => void): () => void {
     const root = document.documentElement
     let first = true
     const heard = (entries: IntersectionObserverEntry[]) => {
+      if (resting()) return
       const ratio = entries[0]?.intersectionRatio ?? 1
       if (ratio !== threshold) {
         shifted()

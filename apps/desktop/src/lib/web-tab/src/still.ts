@@ -5,6 +5,7 @@ type Held = typeof Pages
 const COVER_HIDES = 5000
 const STILL_LOOKS = 100
 const PICTURE_EVERY = 200
+const GROUND_WAITS = 1000
 const SHOT_WAITS = 300
 const ARRIVAL_WAITS = 100
 const overlaps = (one: Rect, other: Rect): boolean =>
@@ -102,7 +103,8 @@ export function watchGround(): void {
   const watching = new MutationObserver(() => {
     if (asked) return
     asked = true
-    requestAnimationFrame(looked)
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(looked, { timeout: GROUND_WAITS })
+    else setTimeout(looked, GROUND_WAITS)
   })
   for (const one of [document.documentElement, document.body]) watching.observe(one, { attributes: true })
 }
