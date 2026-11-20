@@ -30,8 +30,9 @@ PATIENCE = 90.0
 STARTED = time.monotonic()
 REQUEST = re.compile(rb"^(GET|POST|PUT|PATCH|DELETE) (\S+) HTTP/1\.1\r\n", re.MULTILINE)
 PATHS = (
-    "const ws = window.ordenApp.workspace; const base = ws.activeSpace.root.replace(/\\/+$/, '') + '/';"
-    " return ws.notes.map((n) => n.path.slice(base.length)).sort()"
+    "const ws = window.ordenApp.workspace; const flat = (one) => one.replace(/\\\\/g, '/');"
+    " const base = flat(ws.activeSpace.root).replace(/\\/+$/, '') + '/';"
+    " return ws.notes.map((n) => flat(n.path).slice(base.length)).sort()"
 )
 events: list[tuple[float, str, str, str]] = []
 table: list[tuple[str, float]] = []
