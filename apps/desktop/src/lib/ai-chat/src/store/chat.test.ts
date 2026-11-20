@@ -25,12 +25,14 @@ const fromWindowB = (kind: string, what: Record<string, unknown>) =>
   lines.at(-1)?.onmessage?.({ data: { ...what, kind, from: 'window-b' } })
 const toldOthers = (kind: string) => (lines.at(-1)?.said ?? []).filter((one) => one.kind === kind)
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
+const stoppedCalls = vi.hoisted(() => [] as string[])
 const deleted = vi.hoisted(() => [] as string[])
 const refusing = vi.hoisted(() => ({ delete: false, write: false, after: Promise.resolve() }))
 vi.mock('../../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../platform/src/tauri')>()),
   isNative: true,
   invoke: (command: string, args: Record<string, unknown>) => {
+    if (command === 'agents_stop') stoppedCalls.push(String(args.thread))
     const space = String(args.space)
     const shelf = kept.get(space) ?? new Map<string, { head: unknown; body: string }>()
     kept.set(space, shelf)
@@ -2112,12 +2114,34 @@ describe('a running chat', () => {
     if ('refused' in started) throw new Error(started.refused)
     expect(started.parent).toBe(id)
     const told = toldOthers('thread-stopped').length
+    stoppedCalls.length = 0
     fromWindowB('thread-stopped', { id })
     await waitFor(() => expect(stopped.sort()).toEqual(['fork', 'goal', 'loop']))
     await waitFor(() => expect(helped[0]?.aborted).toBe(true))
     expect(signals[0]?.aborted).toBe(true)
     expect(toldOthers('thread-stopped')).toHaveLength(told)
+    expect(stoppedCalls).not.toContain(id)
+    expect(stoppedCalls).toEqual([started.id])
   })
+  test.each(['stop', 'archive', 'delete'] as const)(
+    'on %s, tells the crate to end the calls of the chat and of each helper under it, once each',
+    async (how) => {
+      const chat = await asked(['work', 'home'])
+      const id = String(chat.thread?.id)
+      const { helpers } = await import('../helpers/helpers.svelte')
+      const provider = { id: 'p', kind: 'compatible', model: 'm', name: 'Fake' } as const
+      const started = await helpers.start(
+        { parent: null, asking: id, space: 'work', prompt: 'Look', description: 'look', model: '', mode: 'approve' },
+        { offered: () => Promise.resolve([{ provider, models: [] }]), run: () => new Promise(() => undefined) },
+      )
+      if ('refused' in started) throw new Error(started.refused)
+      stoppedCalls.length = 0
+      if (how === 'stop') chat.stop()
+      if (how === 'archive') chat.archive(id)
+      if (how === 'delete') await chat.remove(id)
+      await waitFor(() => expect([...stoppedCalls].sort()).toEqual([id, started.id].sort()))
+    },
+  )
 })
 describe('a chat started outside the panel', () => {
   test('is an Approve chat, whatever mode a chat in the panel was last put in', async () => {

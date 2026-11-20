@@ -235,7 +235,7 @@ describe('a chat that runs', () => {
     expect(rewinds).toHaveLength(1)
   })
   test.each(['stop', 'archive', 'delete'] as const)(
-    'ends on %s all it runs: its loop, its goal and its helpers, one started for it in another window too',
+    'ends on %s all it runs: its loop, its goal, its helpers, one started for it in another window too, and the calls the crate runs for them',
     async (how) => {
       const { chat, thread } = await opened()
       const { tasks } = await import('../src/commands/tasks.svelte')
@@ -264,11 +264,16 @@ describe('a chat that runs', () => {
         },
       )
       expect(started).toMatchObject({ parent: thread.id })
+      if ('refused' in started) throw new Error(started.refused)
+      invoked.length = 0
       if (how === 'stop') chat.stop()
       if (how === 'archive') chat.archive(thread.id)
       if (how === 'delete') chat.heardDeleted(thread.id)
       await vi.waitFor(() => expect(stopped.sort()).toEqual(['goal', 'loop']))
       await vi.waitFor(() => expect(helped[0]?.aborted).toBe(true))
+      const told = invoked.filter((one) => one.command === 'agents_stop').map((one) => one.args.thread)
+      expect(told).toContain(started.id)
+      if (how !== 'delete') expect(told).toContain(thread.id)
     },
   )
   test('started outside the panel is an Approve chat, whatever mode the panel was last put in', async () => {

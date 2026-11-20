@@ -1,3 +1,4 @@
+import { invoke } from '../../../platform/src/api'
 import { keepThread, newThread } from '../chat/threads'
 import { untrusted } from '../chat/transcript'
 import type { Effort, Mode, Thread } from '../../../ai-providers/src/api'
@@ -195,6 +196,7 @@ class Helpers {
   }
   stop(id: string): void {
     this.stops.get(id)?.abort()
+    void invoke('agents_stop', { thread: id }).catch(() => undefined)
     this.stopUnder(id)
   }
   stopUnder(thread: string): void {
