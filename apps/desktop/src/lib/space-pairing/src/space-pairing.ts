@@ -48,6 +48,12 @@ async function iconSent(token: string, who: string, spaceId: string): Promise<bo
   if (owed) await sendIcon(token, who, spaceId, owed)
   return owed !== null
 }
+async function removed(root: string): Promise<boolean> {
+  const held = () => workspace.spaces.find((one) => samePath(one.root, root))
+  const space = held()
+  if (space) await workspace.deleteSpace(space.id, true)
+  return !held()
+}
 async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
   await workspace.spacesKnown()
   const seeded = seedSpaceRoot()
@@ -81,16 +87,11 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
     untouched: await untouchedDefault(),
   })
   for (const root of plan.remove) {
-    const space = workspace.spaces.find((one) => samePath(one.root, root))
+    if (!(await removed(root))) continue
     pairing.unpair(root)
-    if (space) await workspace.deleteSpace(space.id, true)
     forgetHome(root)
   }
-  for (const root of plan.discard) {
-    const space = workspace.spaces.find((one) => samePath(one.root, root))
-    if (space) await workspace.deleteSpace(space.id, true)
-    forgetSeedSpace()
-  }
+  for (const root of plan.discard) if (await removed(root)) forgetSeedSpace()
   for (const root of [...plan.detach, ...plan.drop]) pairing.unpair(root)
   const shared = (id: string) => account.spaces.find((one) => one.id === id)?.role !== 'owner'
   for (const { root, spaceId } of plan.pair) pairing.pair(root, spaceId, shared(spaceId))

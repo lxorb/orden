@@ -132,6 +132,26 @@ describe('a space the account says was deleted', () => {
     expect(result.drop).toEqual([])
     expect(result.detach).toEqual([])
   })
+  test('is removed by a device that lost its mirror but remembers its folder, and not paired by name', () => {
+    const result = plan({
+      local: [local('Work')],
+      remote: [remote('Work', 'id-new')],
+      homes: [{ root: '/spaces/Work', spaceId: 'id-old' }],
+      deleted: ['id-old'],
+    })
+    expect(result.remove).toEqual(['/spaces/Work'])
+    expect(result.upload).toEqual([])
+    expect(result.pair).toEqual([])
+    expect(result.adopt.map((one) => one.id)).toEqual(['id-new'])
+  })
+  test('remembered as the home of a space the account has dropped for good, is sent up as before', () => {
+    const result = plan({
+      local: [local('Work')],
+      homes: [{ root: '/spaces/Work', spaceId: 'id-old' }],
+    })
+    expect(result.remove).toEqual([])
+    expect(result.upload.map((one) => one.name)).toEqual(['Work'])
+  })
   test('leaves a folder that was never mirrored alone', () => {
     const result = plan({ local: [local('Work')], deleted: ['id-Work'] })
     expect(result.remove).toEqual([])
@@ -198,7 +218,7 @@ describe('a space somebody shared', () => {
     expect(result.adopt.map((one) => one.id)).toEqual(['id-mine'])
     expect(result.upload).toEqual([])
   })
-  test('leaves a remembered folder alone once that space is gone from the account', () => {
+  test('removes a remembered folder once that space is deleted on the account, never sending it up', () => {
     const result = plan({
       local: [local('Work')],
       remote: [theirs('Other', 'id-other')],
@@ -206,7 +226,8 @@ describe('a space somebody shared', () => {
       deleted: ['id-Work'],
     })
     expect(result.pair).toEqual([])
-    expect(result.upload.map((one) => one.name)).toEqual(['Work'])
+    expect(result.remove).toEqual(['/spaces/Work'])
+    expect(result.upload).toEqual([])
   })
   test('is adopted beside the account’s own space of the same name', () => {
     const result = plan({
