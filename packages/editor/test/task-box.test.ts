@@ -39,7 +39,7 @@ afterEach(() => {
 })
 describe("a task's box", () => {
   test('is named for what ticking it means', () => {
-    new CheckboxWidget(false, 2, 5).toDOM({} as EditorView)
+    new CheckboxWidget(false).toDOM({} as EditorView)
     expect(made[0]?.attributes.get('aria-label')).toBe('Done')
   })
 })

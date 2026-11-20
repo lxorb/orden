@@ -24,15 +24,16 @@ export class BulletWidget extends OrdenWidget {
   }
 }
 export class CheckboxWidget extends OrdenWidget {
-  constructor(
-    private readonly checked: boolean,
-    private readonly from: number,
-    private readonly to: number,
-  ) {
+  constructor(private readonly checked: boolean) {
     super()
   }
   override eq(other: CheckboxWidget) {
-    return other.checked === this.checked && other.from === this.from
+    return other.checked === this.checked
+  }
+  override updateDOM(dom: HTMLElement) {
+    if (!(dom instanceof HTMLInputElement)) return false
+    dom.checked = this.checked
+    return true
   }
   toDOM(view: EditorView) {
     const box = document.createElement('input')
@@ -43,9 +44,10 @@ export class CheckboxWidget extends OrdenWidget {
     box.addEventListener('mousedown', (event) => {
       event.preventDefault()
       if (view.state.readOnly) return
-      view.dispatch({
-        changes: { from: this.from, to: this.to, insert: this.checked ? '[ ]' : '[x]' },
-      })
+      const from = view.posAtDOM(box)
+      const mark = view.state.sliceDoc(from, from + 3)
+      if (!TASK_MARK.test(mark)) return
+      view.dispatch({ changes: { from, to: from + 3, insert: /x/i.test(mark) ? '[ ]' : '[x]' } })
     })
     return box
   }
@@ -53,6 +55,7 @@ export class CheckboxWidget extends OrdenWidget {
     return false
   }
 }
+const TASK_MARK = /^\[[ xX]\]$/
 export class RuleWidget extends OrdenWidget {
   override eq() {
     return true
