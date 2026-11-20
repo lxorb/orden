@@ -13,21 +13,28 @@ interface Kept {
 function noteOf(tab: NoteTab): { note: NoteTab['note']; arrivals: number } {
   return untrack(() => ({ note: tab.note, arrivals: tab.note.arrivals }))
 }
+export class Handoff {
+  private owed = false
+  private to: { focus(): void } | null = null
+  left() {
+    if (this.to) this.to.focus()
+    else this.owed = true
+    queueMicrotask(() => (this.owed = false))
+  }
+  came(view: { focus(): void }) {
+    if (this.owed) view.focus()
+    else this.to = view
+    this.owed = false
+    queueMicrotask(() => (this.to = null))
+  }
+}
 export class Parked<T extends NoteTab = NoteTab> {
   private readonly kept = new Map<T, Kept>()
   private open = true
   constructor(private readonly wanted: (tab: T) => boolean) {}
-  get count(): number {
-    return this.kept.size
-  }
   put(tab: T, one: Kept) {
-    const was = this.kept.get(tab)
-    if (was && was !== one) was.state.release()
     if (this.open && this.wanted(tab)) this.kept.set(tab, one)
-    else {
-      this.kept.delete(tab)
-      one.state.release()
-    }
+    else one.state.release()
   }
   claim(tab: T): Kept | undefined {
     const one = this.kept.get(tab)

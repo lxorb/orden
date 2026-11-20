@@ -23,7 +23,7 @@
     trustedMarkupEffect,
   } from '@orden/editor'
   import { pickedLink } from '../../link-format/src/api'
-  import { EditorStates, type Parked } from './editor-states'
+  import { EditorStates, type Handoff, type Parked } from './editor-states'
   import { firstScreen } from '../../first-screen/src/api'
   import { mark } from '../../platform/src/api'
   import { modes } from '../../modes/src/api'
@@ -49,6 +49,7 @@
     focused,
     shown = true,
     parked,
+    handoff,
     view = $bindable(),
   }: {
     tab: Tab
@@ -65,6 +66,7 @@
     focused: boolean
     shown?: boolean
     parked?: Parked<Tab>
+    handoff?: Handoff
     view?: EditorView | undefined
   } = $props()
   /* eslint-enable prefer-const */
@@ -151,17 +153,24 @@
     shortcuts.apply(created)
     view = created
     bar = overlayScrollbar(created.scrollDOM, created.dom)
-    return () => {
-      if (parked) states.park(created, parked)
-      else states.releaseAll(created)
-      modes.forget(created)
-      shortcuts.forget(created)
-      bar?.stop()
-      bar = undefined
-      created.destroy()
-      view = undefined
-    }
+    return () =>
+      letGo(created, () => {
+        if (parked) states.park(created, parked)
+        else states.releaseAll(created)
+        modes.forget(created)
+        shortcuts.forget(created)
+        bar?.stop()
+        bar = undefined
+        created.destroy()
+        view = undefined
+      })
   })
+  function letGo(current: EditorView, go: () => void) {
+    const had = current.hasFocus
+    if (had) current.contentDOM.blur()
+    go()
+    if (had) handoff?.left()
+  }
   let away: { at: ParentNode; place: StateEffect<unknown> } | null = null
   $effect(() => {
     const current = view
@@ -169,13 +178,15 @@
     if (shown) {
       untrack(() => {
         if (__DRIVEABLE__) Object.assign(window, { orden: current })
-        if (!away) return
-        away.at.append(current.dom)
-        current.dispatch({ effects: away.place })
-        away = null
-        current.requestMeasure()
-        bar?.settle()
-        onselection?.(current)
+        if (away) {
+          away.at.append(current.dom)
+          current.dispatch({ effects: away.place })
+          away = null
+          current.requestMeasure()
+          bar?.settle()
+          onselection?.(current)
+        }
+        handoff?.came(current)
       })
       return
     }
@@ -183,8 +194,7 @@
       const at = current.dom.parentNode
       if (!at) return
       away = { at, place: current.scrollSnapshot() }
-      if (current.hasFocus) current.contentDOM.blur()
-      current.dom.remove()
+      letGo(current, () => current.dom.remove())
     })
   })
   $effect(() => {

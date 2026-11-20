@@ -56,7 +56,7 @@
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
   import Editor from './Editor.svelte'
-  import { Parked } from './editor-states'
+  import { Handoff, Parked } from './editor-states'
   import { keptAway } from '../../away/src/api'
   import { chrome } from '../../theme/src/api'
   import { without } from '../../graph/src/api'
@@ -126,6 +126,7 @@
   const inEditor = (one: Tab) =>
     one.kind === 'note' && !one.coming && !one.reading && !protection.locked(noteBehind(one))
   const keepsAlive = (one: Tab) => inEditor(one) || one.kind === 'terminal'
+  const handoff = new Handoff()
   const parked = new Parked<Tab>((one) => untrack(() => one.paneId === pane.id && workspace.tabs.includes(one)))
   let recent: string[] = []
   let alive = $state<string[]>([])
@@ -136,8 +137,7 @@
     untrack(() => {
       recent = (front ? [front, ...recent.filter((id) => id !== front)] : recent).filter((id) => notes.includes(id))
       const keep = recent.slice(0, KEPT)
-      const next = [...alive.filter((id) => keep.includes(id)), ...keep.filter((id) => !alive.includes(id))]
-      if (next.length !== alive.length || next.some((id, at) => id !== alive[at])) alive = next
+      alive = [...alive.filter((id) => keep.includes(id)), ...keep.filter((id) => !alive.includes(id))]
     })
   })
   $effect(() => {
@@ -459,25 +459,7 @@
               <span class="orden-row-label" dir="auto">{one.shown}</span>
             </button>
             <div class="sheet" oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}>
-              <Editor
-                bind:view={columnViews[one.id]}
-                tab={one}
-                focused={workspace.panes.focusedId === pane.id && one.id === pane.activeTabId}
-                kept={held}
-                onimage={saveImage}
-                resolveimage={resolveImage}
-                openlink={followHref}
-                notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
-                opennote={followNote}
-                nameblock={nameBlock}
-                onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
-                onfindslow={tallySlow}
-                onselection={(current: EditorView) => {
-                  views.moved(current)
-                  placement.remember(current)
-                  rooms.moved(current)
-                }}
-              />
+              {@render editor(one, columnViews, true, one.id === pane.activeTabId, held)}
             </div>
           </section>
         {/each}
@@ -500,27 +482,7 @@
         data-region={here ? 'editor' : undefined}
         oncontextmenu={(event: MouseEvent) => showMenu(event, keptViews[one.id], one.path)}
       >
-        <Editor
-          bind:view={keptViews[one.id]}
-          tab={one}
-          shown={here}
-          focused={here && workspace.panes.focusedId === pane.id}
-          kept={[one]}
-          {parked}
-          onimage={saveImage}
-          resolveimage={resolveImage}
-          openlink={followHref}
-          notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
-          opennote={followNote}
-          nameblock={nameBlock}
-          onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
-          onfindslow={tallySlow}
-          onselection={(current: EditorView) => {
-            views.moved(current)
-            placement.remember(current)
-            rooms.moved(current)
-          }}
-        />
+        {@render editor(one, keptViews, here, here, [one])}
       </div>
     {/each}
 
@@ -560,6 +522,31 @@
       {@render unreachable()}
     {/await}
   {/key}
+{/snippet}
+
+{#snippet editor(one: Tab, into: Record<string, EditorView | undefined>, shown: boolean, front: boolean, kept: Tab[])}
+  <Editor
+    bind:view={into[one.id]}
+    tab={one}
+    {shown}
+    focused={front && workspace.panes.focusedId === pane.id}
+    {kept}
+    {parked}
+    {handoff}
+    onimage={saveImage}
+    resolveimage={resolveImage}
+    openlink={followHref}
+    notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
+    opennote={followNote}
+    nameblock={nameBlock}
+    onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
+    onfindslow={tallySlow}
+    onselection={(current: EditorView) => {
+      views.moved(current)
+      placement.remember(current)
+      rooms.moved(current)
+    }}
+  />
 {/snippet}
 
 {#snippet unreachable()}
