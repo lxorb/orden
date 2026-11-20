@@ -887,6 +887,9 @@ impl<T: UserEvent> WinitCefApp<T> {
       None => cef::RuntimeStyle::DEFAULT,
     };
 
+    #[cfg(windows)]
+    let born = (pending.webview_attributes.bounds.is_some() && offscreen.is_none())
+      .then(|| (parent.0 as isize, bounds.clone()));
     let window_info = if let Some(options) = &pending.runtime_specific_attributes.offscreen {
       options.window_info(parent)
     } else {
@@ -941,14 +944,24 @@ impl<T: UserEvent> WinitCefApp<T> {
         // Create with an inert document so the BrowserHost exists before the real
         // navigation; the real URL is loaded once the document-start script is set.
         let initial_url = CefString::from(INITIAL_LOAD_URL);
-        let Some(browser) = cef::browser_host_create_browser_sync(
-          Some(&window_info),
-          Some(&mut client),
-          Some(&initial_url),
-          Some(&settings),
-          None,
-          request_context.as_mut(),
-        ) else {
+        let mut create = || {
+          cef::browser_host_create_browser_sync(
+            Some(&window_info),
+            Some(&mut client),
+            Some(&initial_url),
+            Some(&settings),
+            None,
+            request_context.as_mut(),
+          )
+        };
+        #[cfg(windows)]
+        let made = match &born {
+          Some((parent, bounds)) => crate::platform::born_where_asked(*parent, bounds, create),
+          None => create(),
+        };
+        #[cfg(not(windows))]
+        let made = create();
+        let Some(browser) = made else {
           log::error!("failed to create CEF browser for webview {label:?}");
           return;
         };

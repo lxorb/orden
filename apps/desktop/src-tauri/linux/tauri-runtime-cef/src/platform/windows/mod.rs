@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
 
+mod born;
 mod dead_key;
 mod drop_targets;
 mod event_loop;
@@ -12,6 +13,7 @@ mod webview;
 mod window;
 mod window_menu;
 
+pub(crate) use born::born_where_asked;
 pub(crate) use dead_key::keep_dead_key;
 pub(crate) use drop_targets::let_go_of_drops_in_time;
 pub(crate) use unhosted::{give_keyboard, put_out_of_sight};
