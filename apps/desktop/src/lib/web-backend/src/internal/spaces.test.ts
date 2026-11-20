@@ -699,6 +699,22 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     expect(await read(`${root}/Plan.md`)).toBe('ship it')
     expect(await convertSpace(ws, 's0')).toBe(false)
   })
+  test('writes the new folder through the list of spaces every window shares, the id kept', async () => {
+    const { convertSpace } = await import('./convert')
+    notes()
+    const { ws } = workspace('/spaces/Notes')
+    localStorage.setItem('orden:spaces', JSON.stringify(ws.spaces))
+    Object.defineProperty(ws, 'spaces', {
+      get: () => JSON.parse(localStorage.getItem('orden:spaces') ?? '[]') as typeof ws.spaces,
+      set: (next: typeof ws.spaces) => {
+        localStorage.setItem('orden:spaces', JSON.stringify(next))
+      },
+    })
+    expect(await convertSpace(ws, 's0')).toBe(true)
+    expect(JSON.parse(localStorage.getItem('orden:spaces') ?? '[]')).toEqual([
+      { id: 's0', name: expect.stringMatching(/^Notes/), root: expect.stringMatching(/^\/spaces\/\.orden\/Notes/) },
+    ])
+  })
   test('a half-made folder from an old build, with only its source named, is gone on with too', async () => {
     const { convertAll } = await import('./convert')
     notes()
