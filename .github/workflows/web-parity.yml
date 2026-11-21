@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       drives:
-        description: The parity drives to run, by name (look, motion, pointer, keys, turn, explorer, ink).
-        default: look motion pointer keys ink
+        description: The parity drives to run, by name (look, motion, pointer, keys, turn, explorer, ink, capture, session).
+        default: look motion pointer keys ink capture session
 
 concurrency:
   group: web-parity-${{ github.ref }}
@@ -38,7 +38,7 @@ jobs:
     env:
       IDENTIFIER: so.orden.Orden.probe.parity
       ROLLING: 'true'
-      DRIVES: ${{ inputs.drives || 'look motion pointer keys ink' }}
+      DRIVES: ${{ inputs.drives || 'look motion pointer keys ink capture session' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
@@ -111,6 +111,16 @@ jobs:
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'keys') && hashFiles('scripts/parity-keys-drive.py') != '' }}
         timeout-minutes: 20
         run: bash scripts/parity-run.sh scripts/parity-keys-drive.py
+
+      - name: Capture
+        if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'capture') && hashFiles('scripts/parity-capture-drive.py') != '' }}
+        timeout-minutes: 10
+        run: bash scripts/parity-run.sh scripts/parity-capture-drive.py
+
+      - name: Session
+        if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'session') && hashFiles('scripts/parity-session-drive.py') != '' }}
+        timeout-minutes: 10
+        run: bash scripts/parity-run.sh scripts/parity-session-drive.py
 
       - name: Ink
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'ink') && hashFiles('scripts/ink-black-drive.py') != '' }}
