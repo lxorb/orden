@@ -42,18 +42,18 @@ describe('what is owed to the account', () => {
   test('gathers every change made while it could not hear, and sends them together', async () => {
     server.offline = true
     owed.send({ vim: true })
-    owed.send({ ligatures: 'code' })
+    owed.send({ attachments: 'note' })
     await vi.waitFor(() => expect(owed.standing).toBe(true))
     server.offline = false
     await owed.settle('token')
-    expect(server.sent).toEqual([{ vim: true, ligatures: 'code' }])
+    expect(server.sent).toEqual([{ vim: true, attachments: 'note' }])
     expect(owed.standing).toBe(false)
   })
   test('lets go of a change the account turns down without losing the rest', async () => {
     server.offline = true
-    owed.send({ vim: true, ligatures: 'code' })
+    owed.send({ vim: true, attachments: 'note' })
     server.offline = false
-    server.refuses = 'ligatures'
+    server.refuses = 'attachments'
     await owed.settle('token')
     expect(server.sent).toEqual([{ vim: true }])
     expect(owed.standing).toBe(false)

@@ -90,21 +90,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           },
           {
             kind: 'select',
-            key: 'editor.ligatures',
-            label: 'Ligatures',
-            hint: 'Joins pairs such as -> or != into one sign, in code only or everywhere.',
-            words: ['font'],
-            options: [
-              { value: 'off', label: 'Off' },
-              { value: 'code', label: 'Code only' },
-              { value: 'all', label: 'Everywhere' },
-            ],
-            initial: DEFAULTS.ligatures,
-            get: () => modes.ligatures,
-            set: (value) => modes.setLigatures(value, view),
-          },
-          {
-            kind: 'select',
             key: 'editor.attachments',
             label: 'Attachments',
             hint: 'Where a picture or file you paste or drop into a note is saved.',
