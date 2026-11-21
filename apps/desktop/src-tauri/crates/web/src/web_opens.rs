@@ -347,25 +347,27 @@ pub const SCRIPT: &str = r"(function () {
   })
 
   last('keydown', function (event, stopped) {
-    if (!event.isTrusted || event.defaultPrevented || event.metaKey) return
-    var ctrl = event.ctrlKey
+    var mac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform)
+    if (!event.isTrusted || event.defaultPrevented || (event.metaKey && !mac)) return
+    var ctrl = event.ctrlKey && !event.metaKey
+    var mod = mac ? event.metaKey && !event.ctrlKey : ctrl
     var alt = event.altKey
     var back = event.shiftKey
     var code = event.keyCode
     var name = null
     if (stopped && code === 27) return
-    if (!ctrl && !alt && !back && code === 27) return open('about:blank', 'orden-escape')
-    if (ctrl && alt) return
+    if (!ctrl && !mod && !alt && !back && code === 27) return open('about:blank', 'orden-escape')
+    if ((ctrl || mod) && alt) return
     else if (alt) name = code === 68 && !back ? 'orden-address' : null
-    else if (ctrl && code === 70 && !back) name = 'orden-find'
-    else if (ctrl && code === 76 && !back) name = 'orden-address'
-    else if (ctrl && (code === 48 || code === 96) && !back) name = 'orden-actual-size'
+    else if (mod && code === 70 && !back) name = 'orden-find'
+    else if (mod && code === 76 && !back) name = 'orden-address'
+    else if (mod && (code === 48 || code === 96) && !back) name = 'orden-actual-size'
     else if (ctrl && code === 68) name = back ? 'orden-ctrl-shift-d' : 'orden-ctrl-d'
     else if (ctrl && code === 32) name = back ? 'orden-ctrl-shift-space' : 'orden-ctrl-space'
     else if (ctrl && code === 72 && !back) name = 'orden-ctrl-h'
     else if (ctrl && code === 46 && back) name = 'orden-ctrl-shift-delete'
-    else if (ctrl && code === 71) name = back ? 'orden-find-previous' : 'orden-find-next'
-    else if (!ctrl && code === 114) name = back ? 'orden-find-previous' : 'orden-find-next'
+    else if (mod && code === 71) name = back ? 'orden-find-previous' : 'orden-find-next'
+    else if (!ctrl && !mod && code === 114) name = back ? 'orden-find-previous' : 'orden-find-next'
     if (!name || (stopped && /^orden-(find|actual)/.test(name))) return
     event.preventDefault()
     open('about:blank', name)
@@ -726,7 +728,7 @@ mod tests {
         for name in ["", "orden-find", "orden-actual", "ORDEN-ACTUAL-SIZE", "_blank"] {
             assert!(!actual(name), "{name:?}");
         }
-        assert!(SCRIPT.contains("ctrl && (code === 48 || code === 96) && !back"));
+        assert!(SCRIPT.contains("mod && (code === 48 || code === 96) && !back"));
     }
     #[test]
     fn an_ask_reaches_the_window_as_one_of_eight_words_for_its_tab() {
