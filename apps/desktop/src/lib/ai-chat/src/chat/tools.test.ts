@@ -156,7 +156,7 @@ describe('an answer, as orden mcp writes it', () => {
           },
         },
       }),
-    ).toMatchObject({ approval: 'a17', error: false })
+    ).toMatchObject({ approval: 'a17', error: false, asks: 'Place order' })
   })
 })
 describe('an account the vault moved to a fresh id', () => {

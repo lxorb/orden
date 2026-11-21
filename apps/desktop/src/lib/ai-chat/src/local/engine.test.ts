@@ -768,6 +768,7 @@ describe('a question raised in one of two threads on one program', () => {
     verb: string
     category: string
     thread?: string
+    summary?: string
   }
   async function twoAsked(asked: Omit<Asked, 'id' | 'agent' | 'verb' | 'category'>) {
     const rests: (() => void)[] = []
@@ -807,10 +808,17 @@ describe('a question raised in one of two threads on one program', () => {
       hear({ id: 'q1', agent: 'orden-cc', verb: 'read_note', category: 'writing', ...asked })
     }
     const states = [a, b].map((one) => (one.turns.at(-1)?.parts[1] as { state: string }).state)
+    const resultOf = () => (b.turns.at(-1)?.parts[1] as { result?: { asks?: string; text: string } }).result
+    const asking = resultOf()
     for (const rest of rests) rest()
     await Promise.all([sentA, sentB])
-    return { given, states }
+    return { given, states, asking, after: resultOf() }
   }
+  test('says what it asks in the reader’s words, and keeps them once the program has its answer', async () => {
+    const { asking, after } = await twoAsked({ thread: 'thread-b', summary: 'Copy Gym.md to Archive/' })
+    expect(asking).toMatchObject({ asks: 'Copy Gym.md to Archive/', approval: 'q1' })
+    expect(after).toMatchObject({ asks: 'Copy Gym.md to Archive/', text: 'Herons wade.' })
+  })
   test('waits in the row of the thread that raised it, and another thread’s Always never answers it', async () => {
     const { given, states } = await twoAsked({ thread: 'thread-b' })
     expect(given).toEqual([])
