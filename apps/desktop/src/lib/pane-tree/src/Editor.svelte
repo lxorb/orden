@@ -23,7 +23,7 @@
     trustedMarkupEffect,
   } from '@orden/editor'
   import { pickedLink } from '../../link-format/src/api'
-  import { EditorStates, type Handoff, type Parked } from './editor-states'
+  import { EditorStates, foldsKeyboard, type Handoff, type Parked } from './editor-states'
   import { firstScreen } from '../../first-screen/src/api'
   import { mark } from '../../platform/src/api'
   import { modes } from '../../modes/src/api'
@@ -153,8 +153,10 @@
     shortcuts.apply(created)
     view = created
     bar = overlayScrollbar(created.scrollDOM, created.dom)
+    const unfold = untrack(() => viewport.touch) ? foldsKeyboard(created) : null
     return () =>
       letGo(created, () => {
+        unfold?.()
         if (parked) states.park(created, parked)
         else states.releaseAll(created)
         modes.forget(created)

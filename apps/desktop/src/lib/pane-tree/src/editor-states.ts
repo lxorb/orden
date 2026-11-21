@@ -1,6 +1,8 @@
 import { untrack } from 'svelte'
 import { HeldState, letGo, type SharedDoc, type StateEffect, type StateView } from '@orden/editor'
 
+const FOLD_AFTER = 24
+
 export interface NoteTab {
   readonly note: { readonly live: SharedDoc; readonly arrivals: number }
 }
@@ -145,5 +147,36 @@ export class EditorStates {
     this.held.clear()
     this.shown = null
     this.settled = false
+  }
+}
+interface Folding {
+  readonly scrollDOM: HTMLElement
+  readonly contentDOM: HTMLElement
+  readonly hasFocus: boolean
+  readonly composing: boolean
+  readonly state: { readonly selection: { readonly main: { readonly empty: boolean } } }
+}
+export function foldsKeyboard(view: Folding): () => void {
+  let from: number | null = null
+  const start = (event: TouchEvent) => {
+    from = event.touches.length === 1 ? (event.touches[0]?.clientY ?? null) : null
+  }
+  const move = (event: TouchEvent) => {
+    const y = event.touches[0]?.clientY
+    if (from === null || y === undefined || y - from < FOLD_AFTER) return
+    from = null
+    if (view.hasFocus && !view.composing && view.state.selection.main.empty) view.contentDOM.blur()
+  }
+  const end = () => (from = null)
+  const scroller = view.scrollDOM
+  scroller.addEventListener('touchstart', start, { passive: true })
+  scroller.addEventListener('touchmove', move, { passive: true })
+  scroller.addEventListener('touchend', end)
+  scroller.addEventListener('touchcancel', end)
+  return () => {
+    scroller.removeEventListener('touchstart', start)
+    scroller.removeEventListener('touchmove', move)
+    scroller.removeEventListener('touchend', end)
+    scroller.removeEventListener('touchcancel', end)
   }
 }
