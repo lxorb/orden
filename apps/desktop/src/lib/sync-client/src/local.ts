@@ -40,18 +40,21 @@ export async function localFirst(
   const changes: Change[] = []
   for (const one of listing) {
     if (core.life !== life) return false
-    if (space.at(one.path)) continue
-    const document = !one.dir && holdsDocument(kindOfName(one.path))
-    const text = document ? await world.disk.read(world.join(space.row.root, one.path)) : undefined
-    if (text === null) continue
-    const id = carried.get(space.key(one.path))
-    const madeHere = await made(core, space, {
-      path: one.path,
-      folder: one.dir,
-      ...(id === undefined || core.entry(id) ? {} : { id }),
-      ...(text === undefined ? {} : { text: unixLines(text) }),
+    const full = world.join(space.row.root, one.path)
+    await core.oneAt(full, async () => {
+      if (space.at(one.path)) return
+      const document = !one.dir && holdsDocument(kindOfName(one.path))
+      const text = document ? await world.disk.read(full) : undefined
+      if (text === null) return
+      const id = carried.get(space.key(one.path))
+      const madeHere = await made(core, space, {
+        path: one.path,
+        folder: one.dir,
+        ...(id === undefined || core.entry(id) ? {} : { id }),
+        ...(text === undefined ? {} : { text: unixLines(text) }),
+      })
+      changes.push(...madeHere.changes)
     })
-    changes.push(...madeHere.changes)
   }
   await core.commit(changes)
   return core.life === life

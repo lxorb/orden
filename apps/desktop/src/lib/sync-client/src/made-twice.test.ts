@@ -8,7 +8,7 @@ import type { World } from './world'
 
 const ROOT = '/device/space'
 const later = () => new Promise((settle) => setTimeout(settle, 5))
-async function here() {
+async function here(listed: () => { path: string; dir: boolean }[] = () => []) {
   const disk = new MemoryDisk()
   disk.folders.add(ROOT)
   const world: World = {
@@ -21,7 +21,7 @@ async function here() {
     join: (root, path) => `${root}/${path}`,
     foldsCase: true,
     platform: 'other',
-    list: () => Promise.resolve([]),
+    list: () => Promise.resolve(listed()),
     blobs: {
       async read(path) {
         await later()
@@ -58,5 +58,22 @@ describe('a file made once and heard twice', () => {
     disk.folders.add(`${ROOT}/Apps`)
     await Promise.all([engine.created(`${ROOT}/Apps`, true), engine.created(`${ROOT}/Apps`, true)])
     expect([...state.entries.values()].filter((one) => one.name === 'Apps')).toHaveLength(1)
+  })
+})
+describe('a space read for the first time while a file lands in it', () => {
+  test('has that file once, at its own name (an import landing in a new space)', async () => {
+    let landed = false
+    const { disk, engine, state } = await here(() => (landed ? [{ path: 'Plan.md', dir: false }] : []))
+    const path = `${ROOT}/Plan.md`
+    await disk.write(path, '# Plan\n')
+    const read = disk.read.bind(disk)
+    disk.read = async (at) => {
+      for (let turn = 0; turn < 4; turn += 1) await later()
+      return read(at)
+    }
+    landed = true
+    await Promise.all([localFirst(engine.core, state, new Map()), later().then(() => engine.created(path, false))])
+    const notes = [...state.entries.values()].filter((one) => one.kind === 'note')
+    expect(notes.map((one) => [one.name, one.local_path])).toEqual([['Plan.md', 'Plan.md']])
   })
 })
