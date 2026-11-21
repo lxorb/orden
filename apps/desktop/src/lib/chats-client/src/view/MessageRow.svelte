@@ -15,7 +15,7 @@
   import { markMentions } from './marks'
   import NoteCard from './NoteCard.svelte'
   import { cardTarget } from './note-card'
-  import { sortFiles } from './media'
+  import { PICTURE_TALLEST, PICTURE_WIDEST, sortFiles } from './media'
   import { accountOf, faceOf, nameOf } from './people'
   import PollCard from './PollCard.svelte'
   import Reactions from './Reactions.svelte'
@@ -98,6 +98,12 @@
     return { update: draw, destroy: () => untip?.destroy() }
   }
   function follow(event: MouseEvent) {
+    const picture = (event.target as Element | null)?.closest('img')
+    if (picture && !picture.closest('a') && picture.currentSrc) {
+      event.preventDefault()
+      followHref(picture.currentSrc, event)
+      return
+    }
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href')
     if (!anchor || !href) return
@@ -185,6 +191,8 @@
           class="body orden-rendered"
           class:big
           dir="auto"
+          style:--picture-widest="{PICTURE_WIDEST}px"
+          style:--picture-tallest="{PICTURE_TALLEST}px"
           use:words={{
             body: message.body,
             edited: message.editedAt !== undefined,
@@ -418,6 +426,17 @@
   }
   .body {
     overflow-wrap: anywhere;
+  }
+  .body :global(img) {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: min(100%, var(--picture-widest));
+    max-height: var(--picture-tallest);
+    margin-top: var(--space-1);
+    border-radius: var(--radius-md);
+    object-fit: contain;
+    cursor: zoom-in;
   }
   .body :global(:is(p, ul, ol, pre, blockquote, table, h1, h2, h3, h4, h5, h6)) {
     margin: 0;
