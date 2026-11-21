@@ -7,7 +7,7 @@
   import { chooseFiles, longPaste } from '../../ui-controls/src/api'
   import { links } from '../../link-index/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { views } from '../../panes/src/api'
+  import { views, whileShown } from '../../panes/src/api'
   import { workspace } from '../../workspace/src/api'
   import { DictateButton, canDictate, dictating, showsDictateButton } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
@@ -387,10 +387,8 @@
   )
   let reasoning = $state(false)
   let now = $state(Date.now())
-  $effect(() => {
-    if (!goal) return
-    const clock = setInterval(() => (now = Date.now()), 30_000)
-    return () => clearInterval(clock)
+  whileShown(30_000, () => {
+    if (goal) now = Date.now()
   })
   async function clearGoal() {
     const named = rowNamed(await commandsFor(chat), 'goal')
