@@ -654,6 +654,8 @@ const AI_ENTRIES: Shortcut[] = (
     ['ai.stop', 'Stop the answer', 'Escape'],
     ['ai.unfold', 'Open every step', 'Mod-o'],
     ['ai.new', 'New chat', 'Mod-n'],
+    ['ai.approve', 'Approve what the AI asks', 'Mod-Shift-Enter'],
+    ['ai.deny', 'Deny what the AI asks', 'Mod-Shift-Backspace'],
   ] as const
 ).map(([id, label, key]) => panel('view', id, label, key))
 const FIELD_ENTRIES: Shortcut[] = [panel('edit', 'field.dictate', 'Dictate', 'Alt-v')]

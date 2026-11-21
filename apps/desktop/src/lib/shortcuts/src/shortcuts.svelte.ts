@@ -90,6 +90,10 @@ class Shortcuts {
     const key = this.keyFor(id)
     return key ? showCombination(key, this.platform) : undefined
   }
+  keys(id: string): string | undefined {
+    const entry = BY_ID.get(id)
+    return entry && !viewport.touch && offeredHere(entry) ? this.hint(id) : undefined
+  }
   tooltip(label: string, id: string | null = null): string {
     const key = id !== null && !viewport.touch ? this.hint(id) : undefined
     return key ? `${label} (${key})` : label
