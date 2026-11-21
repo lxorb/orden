@@ -602,6 +602,38 @@ describe('another space, without switching', () => {
     expect(workspace.close).not.toHaveBeenCalled()
     expect(workspace.activate).not.toHaveBeenCalled()
   })
+  test('a folder is listed as a folder, an empty one too, and a kind asked for leaves folders out', async () => {
+    folders.add('/s/Home/Empty')
+    folders.add('/s/Home/Old')
+    files.set('/s/Home/Old/Stock.md', '# Stock\n')
+    try {
+      expect(await call('list_notes', { space: 'Home' })).toMatchObject({
+        result: [
+          { path: 'board.canvas', kind: 'canvas' },
+          { path: 'Empty', kind: 'folder' },
+          { path: 'Old', kind: 'folder' },
+          { path: 'Old/Stock.md', kind: 'note' },
+          { path: 'Recipes.md', kind: 'note' },
+          { path: 'Soup.md', kind: 'note' },
+        ],
+      })
+      const notes = (await call('list_notes', { space: 'Home', kind: 'note' })) as { result: { kind: string }[] }
+      expect(notes.result.map((one) => one.kind)).toEqual(['note', 'note', 'note'])
+      expect(await call('list_notes', { space: 'Home', kind: 'folder' })).toMatchObject({
+        result: [
+          { path: 'Empty', kind: 'folder' },
+          { path: 'Old', kind: 'folder' },
+        ],
+      })
+      expect(await call('list_notes', { space: 'Home', folder: 'Old' })).toMatchObject({
+        result: [{ path: 'Old/Stock.md', kind: 'note' }],
+      })
+    } finally {
+      folders.delete('/s/Home/Empty')
+      folders.delete('/s/Home/Old')
+      files.delete('/s/Home/Old/Stock.md')
+    }
+  })
   test('the tree of Home is read off the disk, and the search asked of Home', async () => {
     const listed = await call('list_notes', { space: 'Home' })
     expect(listed).toMatchObject({
