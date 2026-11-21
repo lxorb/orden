@@ -122,6 +122,18 @@ describe('reading notes through it', () => {
   test('lists the notes in one', async () => {
     expect(await tool(await connector(), 'list_notes', { space: 'Work' })).toContain('plan.md')
   })
+  test('lists its folders too, an empty one as well, each ending in / (#2433)', async () => {
+    const folder = env.db.prepare(
+      `insert into folders (id, space_id, parent_id, name, name_key, seq, updated_at)
+       values (?, ?, ?, ?, ?, 1, 0)`,
+    )
+    folder.run('trip', space, null, 'Trip', 'trip')
+    folder.run('days', space, 'trip', 'Days', 'days')
+    const listed = (await tool(await connector(), 'list_notes', { space: 'Work' })).split('\n')
+    expect(listed).toContain('Trip/')
+    expect(listed).toContain('Trip/Days/')
+    expect(listed).toContain('plan.md')
+  })
   test('takes a space id as readily as a name', async () => {
     expect(await tool(await connector(), 'list_notes', { space })).toContain('plan.md')
   })

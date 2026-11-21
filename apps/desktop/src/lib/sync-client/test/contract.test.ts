@@ -745,6 +745,54 @@ describe('a folder made here, deleted and restored before the account folds it i
     expect(report.failures).toEqual([])
   })
 })
+describe('one note made apart on several devices with the same words (#2433)', () => {
+  test.each([2, 3])('is one note on the account and on every device, with %i devices', async (devices) => {
+    const script: Step[] = []
+    for (let device = 0; device < devices; device += 1) script.push({ t: 'offline', device })
+    for (let device = 0; device < devices; device += 1) {
+      script.push({
+        t: 'act',
+        device,
+        action: { t: 'create', folder: null, name: 'Same.md', words: 'mk901z the same' },
+      })
+      script.push({ t: 'act', device, action: { t: 'mkdir', folder: null, name: 'Trip' } })
+    }
+    for (let device = 0; device < devices; device += 1)
+      script.push({ t: 'online', device }, { t: 'pass', device }, settle)
+    for (let device = 0; device < devices; device += 1) script.push({ t: 'pass', device }, settle)
+    const report = await simulate({
+      seed: 11,
+      devices,
+      faults: CALM,
+      script,
+      device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
+    })
+    expect(report.failures).toEqual([])
+    expect(report.account.entries.map((one) => one.name).sort()).toEqual(['Ideas.md', 'Plan.md', 'Same.md', 'Trip'])
+    expect(textOf(report, 'Same.md')).toBe('mk901z the same')
+  })
+  test('made apart with other words, it is two notes, and never more than one numbered copy each', async () => {
+    const report = await road([
+      { t: 'offline', device: 0 },
+      { t: 'act', device: 0, action: { t: 'create', folder: null, name: 'Same.md', words: 'mk911z' } },
+      { t: 'act', device: 1, action: { t: 'create', folder: null, name: 'Same.md', words: 'mk912z' } },
+      { t: 'pass', device: 1 },
+      settle,
+      { t: 'online', device: 0 },
+      { t: 'pass', device: 0 },
+      settle,
+      { t: 'pass', device: 1 },
+      settle,
+    ])
+    expect(report.failures).toEqual([])
+    expect(report.account.entries.map((one) => one.name).sort()).toEqual([
+      'Ideas.md',
+      'Plan.md',
+      'Same 2.md',
+      'Same.md',
+    ])
+  })
+})
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })

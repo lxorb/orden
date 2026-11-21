@@ -94,6 +94,7 @@ function applied(
   const size = hash === undefined ? undefined : sizes.get(hash)
   if (hash === undefined || size === undefined) return { op: op.op, refused: 'gone' }
   const result = tree.apply(op, context)
+  if ('merged' in result) return result
   tree.content.set(op.id, { hash, size, front: null, epoch: 0, epochBase: null })
   return result
 }

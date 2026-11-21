@@ -45,7 +45,7 @@ export const TOOLS = [
   },
   {
     name: 'list_notes',
-    description: 'List the notes in a space.',
+    description: 'List the notes and folders in a space. A folder ends in /.',
     inputSchema: {
       type: 'object',
       properties: { space: { type: 'string', description: 'Space name or id.' } },
@@ -160,6 +160,27 @@ export async function askedSpace(env: Env, userId: string, args: Record<string, 
   if (!wanted?.trim()) return 'Which space?'
   return (await findSpace(env, userId, wanted)) ?? `No space called ${wanted}.`
 }
+async function folderPaths(env: Env, space: Space): Promise<string[]> {
+  const { results } = await env.DB.prepare('select id, parent_id, name from folders where space_id = ? and deleted = 0')
+    .bind(space.id)
+    .all<{ id: string; parent_id: string | null; name: string }>()
+  const byId = new Map(results.map((row) => [row.id, row]))
+  const pathOf = (id: string): string | null => {
+    const names: string[] = []
+    const seen = new Set<string>()
+    for (let at = byId.get(id); at; at = at.parent_id === null ? undefined : byId.get(at.parent_id)) {
+      if (seen.has(at.id)) return null
+      seen.add(at.id)
+      names.unshift(at.name)
+      if (at.parent_id !== null && !byId.has(at.parent_id)) return null
+    }
+    return names.join('/')
+  }
+  return results.flatMap((row) => {
+    const path = pathOf(row.id)
+    return path === null ? [] : [`${path}/`]
+  })
+}
 async function listNotes(env: Env, space: Space): Promise<string> {
   const { results } = await env.DB.prepare(
     `select path from notes where space_id = ? and deleted = 0 and kind != 'file'
@@ -167,15 +188,10 @@ async function listNotes(env: Env, space: Space): Promise<string> {
   )
     .bind(space.id, MOST_NOTES + 1)
     .all<{ path: string }>()
-  if (!results.length) return 'No notes yet.'
-  const listed = marked(
-    spaceSource(space),
-    results
-      .slice(0, MOST_NOTES)
-      .map((row) => row.path)
-      .join('\n'),
-  )
-  return results.length > MOST_NOTES ? `${listed}\n${stoppedAt(MOST_NOTES)}` : listed
+  const paths = [...results.map((row) => row.path), ...(await folderPaths(env, space))].sort()
+  if (!paths.length) return 'No notes yet.'
+  const listed = marked(spaceSource(space), paths.slice(0, MOST_NOTES).join('\n'))
+  return paths.length > MOST_NOTES ? `${listed}\n${stoppedAt(MOST_NOTES)}` : listed
 }
 function stoppedAt(count: number): string {
   return `I stopped after ${count} notes, so the others are not listed.`
