@@ -6,7 +6,6 @@ import {
   setCodeTheme,
   setFocusMode,
   setHeadingNumbers,
-  setLigatures,
   setLineHeight,
   setMeasure,
   setQuietMarks,
@@ -22,7 +21,6 @@ import {
   setTypewriterMode,
   setVim,
   onVimMode,
-  type LigatureScope,
   type VimMode,
   type EditorView,
 } from '@orden/editor'
@@ -51,6 +49,7 @@ import { opening } from '../../documents/src/api'
 
 const STORAGE_KEY = 'orden:modes'
 const STALE = [
+  'ligatures',
   'spellLanguage',
   'spellWords',
   'overviewBlur',
@@ -83,11 +82,6 @@ export function rollbackSteps(keep: number): number[] {
   return ROLLBACK_STEPS.filter((one) => one <= keep)
 }
 export const WIDTHS = [32, 38, 42, 50, 60, 80] as const
-export const LIGATURE_SCOPES: readonly LigatureScope[] = ['off', 'code', 'all']
-export function ligatureScope(value: unknown): LigatureScope | null {
-  if (typeof value === 'boolean') return value ? 'all' : 'off'
-  return LIGATURE_SCOPES.find((one) => one === value) ?? null
-}
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 export const FRAMES = ['orden', 'system'] as const
 export type Frame = (typeof FRAMES)[number]
@@ -120,7 +114,6 @@ interface Saved {
   hand: boolean
   fonts: Record<FontPlace, string>
   closeBrackets: boolean
-  ligatures: LigatureScope
   mobileSeen: boolean
   vim: boolean
   attachments: string
@@ -186,7 +179,6 @@ export const DEFAULTS = {
   hand: false,
   fonts: { ui: '', content: '', mono: '' } as Record<FontPlace, string>,
   closeBrackets: true,
-  ligatures: 'off' as LigatureScope,
   mobileSeen: false,
   vim: false,
   attachments: 'space' as AttachmentFolder,
@@ -251,7 +243,6 @@ class Modes {
   hand = $state(DEFAULTS.hand)
   fonts = $state<Record<FontPlace, string>>({ ...DEFAULTS.fonts })
   closeBrackets = $state(DEFAULTS.closeBrackets)
-  ligatures = $state<LigatureScope>(DEFAULTS.ligatures)
   mobileSeen = $state(DEFAULTS.mobileSeen)
   vim = $state(DEFAULTS.vim)
   readonly vimModes = new SvelteMap<EditorView, VimMode>()
@@ -295,7 +286,6 @@ class Modes {
       this.spellLanguages =
         stringList(saved.spellLanguages) ??
         (isString(saved.spellLanguage) && saved.spellLanguage !== 'system' ? [saved.spellLanguage] : [])
-      this.ligatures = ligatureScope(saved.ligatures) ?? DEFAULTS.ligatures
       this.conflicts = conflictRule(saved.conflicts) ?? DEFAULTS.conflicts
       this.keepVersions = keepingOf(saved.keepVersions) ?? DEFAULTS.keepVersions
       this.remindBefore = remindingOf(saved.remindBefore) ?? this.remindBefore
@@ -392,7 +382,6 @@ class Modes {
       spellcheck: this.spellcheck,
       dictionary: this.dictionary,
       closeBrackets: this.closeBrackets,
-      ligatures: this.ligatures,
       vim: this.vim,
     }
   }
@@ -513,11 +502,6 @@ class Modes {
     this.each(view, (one) => setSpellcheck(one, this.spellcheck, this.dictionary))
     this.persist()
   }
-  setLigatures(scope: string, view?: EditorView) {
-    this.take('ligatures', ligatureScope(scope) ?? undefined, true, (wanted) =>
-      this.each(view, (one) => setLigatures(one, wanted)),
-    )
-  }
   setHighlightTone(tone: number | null) {
     this.take('highlightTone', highlightTone(tone).tone, true, () => setHighlightColour(this.highlight))
   }
@@ -608,11 +592,6 @@ class Modes {
     void api.saveSettings(token, { mobileSeen: true }).catch(() => undefined)
   }
   private readonly synced: Synced = {
-    ligatures: {
-      read: (value) => ligatureScope(value) ?? undefined,
-      start: DEFAULTS.ligatures,
-      then: (scope) => this.each(undefined, (one) => setLigatures(one, scope)),
-    },
     vim: { read: flag, start: DEFAULTS.vim, then: (on) => this.each(undefined, (one) => setVim(one, on)) },
     attachments: { read: (value) => (isAttachmentFolder(value) ? value : undefined), start: DEFAULTS.attachments },
     conflicts: { read: (value) => conflictRule(value) ?? undefined, start: DEFAULTS.conflicts },
@@ -787,7 +766,6 @@ class Modes {
       spellLanguages: this.spellLanguages,
       alwaysOnTop: this.alwaysOnTop,
       closeBrackets: this.closeBrackets,
-      ligatures: this.ligatures,
       mobileSeen: this.mobileSeen,
       vim: this.vim,
       attachments: this.attachments,
