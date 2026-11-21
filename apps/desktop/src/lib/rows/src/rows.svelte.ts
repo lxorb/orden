@@ -18,6 +18,10 @@ const store = new RowsStore({
   }),
   breathe,
   now: () => Date.now(),
+  stamp: async (path) => {
+    const said = await invoke<{ modified: number; created?: number } | null>('file_stamp', { path })
+    return said ? { mtime: said.modified, ctime: said.created ?? 0 } : null
+  },
   vault: isVault,
   meta: (root, path) => workspace.itemMeta.itemsOf(root)[path] ?? null,
   list: () => false,

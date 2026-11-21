@@ -271,7 +271,7 @@ mod tests {
         Arc::from("ink ".repeat(of).as_str())
     }
     fn stamp(len: u64) -> Stamp {
-        Stamp { modified: 1, len }
+        Stamp { modified: 1, created: 1, len }
     }
     #[test]
     fn what_is_held_is_counted_once_per_note() {

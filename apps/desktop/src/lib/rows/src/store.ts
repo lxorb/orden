@@ -27,9 +27,14 @@ export interface Host {
   open(): { root: string | null; scanned(): Promise<void>; notes(): readonly ScannedNote[] }
   breathe(): Promise<void>
   now(): number
+  stamp?(path: string): Promise<OnDisk | null>
   vault(root: string): Promise<boolean>
   list?(root: string, path: string): boolean
   meta?(root: string, path: string): Readonly<Record<string, string>> | null
+}
+export interface OnDisk {
+  mtime: number
+  ctime: number
 }
 const CHUNK = 250
 const encoder = new TextEncoder()
@@ -106,7 +111,7 @@ export class RowsStore {
       if (held.name !== space.name) this.rename(held, space.name)
     }
   }
-  saved(path: string, content: string) {
+  saved(path: string, content: string, onDisk: OnDisk | null = null) {
     const held = this.holding(path)
     if (!held) return
     const relative = within(held.root, path, held.root)
@@ -114,9 +119,9 @@ export class RowsStore {
     const key = pathKey(relative, held.root)
     const now = this.host.now()
     this.edit(held, key, (before) => {
-      const known = before?.[0]?.file.ctime ?? 0
+      const known = onDisk && onDisk.ctime > 0 ? onDisk.ctime : (before?.[0]?.file.ctime ?? 0)
       const ctime = known > 0 ? known : now
-      const stamp = { size: bytesOf(content), mtime: now, ctime }
+      const stamp = { size: bytesOf(content), mtime: onDisk && onDisk.mtime > 0 ? onDisk.mtime : now, ctime }
       return this.rowsIn(held, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
     })
   }
@@ -291,8 +296,11 @@ export class RowsStore {
   private async fileCame(path: string) {
     const held = this.holding(path)
     if (!held || !isMarkdownPath(path)) return
-    const content = await this.host.read(path)
-    if (content !== null) this.saved(path, content)
+    const [content, onDisk] = await Promise.all([
+      this.host.read(path),
+      this.host.stamp?.(path).catch(() => null) ?? null,
+    ])
+    if (content !== null) this.saved(path, content, onDisk)
   }
   private async folderCame(path: string) {
     const held = this.holding(path)
