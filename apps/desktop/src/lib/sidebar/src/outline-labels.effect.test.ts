@@ -11,6 +11,7 @@ vi.mock('../../surfaces/src/api', () => ({
   phoneTabsBar: () => new Promise(() => undefined),
   phoneYou: () => new Promise(() => undefined),
   showFeedback: () => undefined,
+  scratchpadCard: () => new Promise(() => undefined),
 }))
 const { workspace } = await import('../../workspace/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
@@ -63,4 +64,38 @@ test('a heading written with a link, marks, code or escapes is named by its word
   void unmount(shown)
   into.remove()
   workspace.rightPanel = null
+})
+test('a space switched to moves a panel of the space, and never the scratchpad beside it', async () => {
+  const { shown: pad } = await import('../../scratchpad/src/api')
+  viewport.device = 'desktop'
+  workspace.tabs = []
+  workspace.spaces = [
+    { id: 's', name: 'Space', root: '/space' },
+    { id: 't', name: 'Two', root: '/two' },
+  ]
+  workspace.activeSpaceId = 's'
+  workspace.panel = 'tree'
+  pad.on = true
+  const right = document.createElement('div')
+  const left = document.createElement('div')
+  document.body.append(right, left)
+  const drawn = [
+    mount(Sidebar, { target: right, props: { side: 'right' as const } }),
+    mount(Sidebar, { target: left, props: { side: 'left' as const } }),
+  ]
+  flushSync()
+  const moved = vi.spyOn(Element.prototype, 'animate')
+  const body = right.querySelector('.stack > .body')
+  workspace.activeSpaceId = 't'
+  flushSync()
+  const stacks = moved.mock.contexts
+  expect(stacks).not.toContain(right.querySelector('.stack'))
+  expect(stacks.filter((one) => one === left.querySelector('.stack'))).toHaveLength(1)
+  expect(right.querySelector('.stack > .body')).toBe(body)
+  moved.mockRestore()
+  for (const one of drawn) void unmount(one)
+  right.remove()
+  left.remove()
+  pad.on = false
+  workspace.panel = null
 })
