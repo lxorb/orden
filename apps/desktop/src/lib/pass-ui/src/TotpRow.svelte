@@ -1,30 +1,28 @@
 <script lang="ts">
   import Copy from 'lucide/dist/esm/icons/copy.mjs'
+  import { untrack } from 'svelte'
   import { code, totpIn, type TotpCode } from '@orden/pass/totp'
+  import { whileShown } from '../../panes/src/api'
   import { copyField } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
 
   const { secret, label = '2FA code' }: { secret: string; label?: string } = $props()
   const totp = $derived(totpIn(secret))
   let now = $state<TotpCode | null>(null)
-  $effect(() => {
-    const asked = totp
+  function tick(asked = totp) {
     if (!asked) {
       now = null
       return
     }
-    let stale = false
-    const tick = () =>
-      void code(asked, Date.now()).then((made) => {
-        if (!stale) now = made
-      })
-    tick()
-    const timer = setInterval(tick, 1000)
-    return () => {
-      stale = true
-      clearInterval(timer)
-    }
+    void code(asked, Date.now()).then((made) => {
+      if (totp === asked) now = made
+    })
+  }
+  $effect(() => {
+    const asked = totp
+    untrack(() => tick(asked))
   })
+  whileShown(1000, () => tick())
   const shown = $derived.by(() => {
     const digits = now?.code ?? ''
     const half = Math.ceil(digits.length / 2)
