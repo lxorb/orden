@@ -1,6 +1,6 @@
 import { typedAddress } from '@orden/scan/typed'
 
-export type Failure = 'unreachable' | 'certificate' | 'other'
+export type Failure = 'offline' | 'unknown' | 'unreachable' | 'slow' | 'certificate' | 'blocked' | 'other'
 export interface Upgrade {
   tried: string
   fallback: string
@@ -23,5 +23,5 @@ function siteOf(url: string): string | null {
 export function settled(upgrade: Upgrade, url: string, failure: Failure | null): Settled {
   const site = siteOf(url)
   if (site === null || site !== siteOf(upgrade.tried)) return 'unrelated'
-  return failure === 'unreachable' && url.startsWith('https:') ? 'fallback' : 'done'
+  return (failure === 'unreachable' || failure === 'slow') && url.startsWith('https:') ? 'fallback' : 'done'
 }

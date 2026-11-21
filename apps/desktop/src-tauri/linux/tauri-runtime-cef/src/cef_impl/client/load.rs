@@ -64,10 +64,11 @@ wrap_load_handler! {
       &self,
       browser: Option<&mut Browser>,
       frame: Option<&mut Frame>,
-      _error_code: Errorcode,
+      error_code: Errorcode,
       _error_text: Option<&CefString>,
       failed_url: Option<&CefString>,
     ) {
+      let code = sys::cef_errorcode_t::from(error_code) as i32;
       if let Some(failed_url) = failed_url
         && let Ok(url) = url::Url::parse(&failed_url.to_string())
       {
@@ -75,7 +76,7 @@ wrap_load_handler! {
           &self.frame_event_handler,
           browser,
           frame,
-          crate::FrameEventKind::NavigationFailed { url },
+          crate::FrameEventKind::NavigationFailed { url, code },
         );
       }
     }
