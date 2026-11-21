@@ -54,6 +54,7 @@ const FILE_COMMANDS = new Set([
   'read_asset',
   'read_file',
   'file_stamp',
+  'set_file_times',
   'file_there',
 ])
 const TRASH_COMMANDS = new Set(['list_trash', 'restore_trash', 'purge_trash', 'purge_trash_older_than'])

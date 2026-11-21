@@ -719,7 +719,6 @@ const UNSUPPORTED: Record<string, unknown> = {
   has_pandoc: false,
   web_pass_fill: false,
   file_stamp: null,
-  set_file_times: null,
   mcp_config: null,
   owner_can: false,
   write_log: null,
@@ -746,6 +745,8 @@ interface Args {
   folder?: string
   days: number
   age: number
+  modified: number
+  created?: number
 }
 async function bringBack(path: string) {
   if (!(await keptAway.bringBack(path))) throw new Error(NOT_HERE)
@@ -771,6 +772,14 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     if (arrived !== true && raw !== true && keptAway.at(path)) await bringBack(path)
     if (arrived !== true && !(await occupied(normalise(path)))) namedForEveryMachine(path)
     await writeNote(path, content)
+  },
+  async set_file_times({ path, modified, created }) {
+    const at = normalise(path)
+    const words = await files.get(at)
+    if (words) return files.put({ ...words, modified, created: created ?? words.created })
+    const asset = await assets.get(at)
+    if (asset) return assets.put({ ...asset, modified })
+    throw new Error(`no file at ${path}`)
   },
   write_bytes: ({ path, bytes, base64 }) =>
     writeBytes(path, bytes instanceof Uint8Array ? toBase64(bytes) : base64, assetType(path)),

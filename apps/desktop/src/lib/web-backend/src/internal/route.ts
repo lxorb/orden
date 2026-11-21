@@ -279,7 +279,12 @@ export async function internalInvoke<T>(
     }
     case 'file_stamp': {
       const entry = await mount.folder.at(at)
-      return (entry?.key ? { modified: entry.modified, len: entry.size } : null) as T
+      return (entry?.key ? { modified: entry.modified, created: entry.made, len: entry.size } : null) as T
+    }
+    case 'set_file_times': {
+      const { modified, created } = args as { modified: number; created?: number }
+      await mount.folder.stamp(at, modified, created)
+      return undefined as T
     }
     case 'file_there':
       return ((await mount.folder.at(at)) !== null) as T
