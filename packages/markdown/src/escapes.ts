@@ -233,3 +233,48 @@ export const released = (text: string, asWritten = false): string =>
     const char = String.fromCharCode(one.charCodeAt(0) - HELD)
     return asWritten ? `\\${char}` : char
   })
+const CODE_HELD = 0xf000
+const A_HELD_CODE = /[-]/g
+const A_WIKILINK = /!?\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g
+const A_LINK =
+  /!?\[((?:[^[\]]|\[[^[\]]*\])*)\](?:\((?:[^()\s]|\([^()\s]*\))*(?:\s+(?:"[^"]*"|'[^']*'|\([^()]*\)))?\s*\)|\[[^\]]*\])/g
+const AN_AUTOLINK = /<([a-zA-Z][a-zA-Z0-9+.-]{1,31}:[^\s<>]*|[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+)>/g
+const A_TAG = /<!--[\s\S]*?-->|<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?\/?>/g
+const MARKS = [
+  /\*\*(?=\S)(.*?\S)\*\*/g,
+  /(?<![\p{L}\p{N}_])__(?=\S)(.*?\S)__(?![\p{L}\p{N}_])/gu,
+  /~~(?=\S)(.*?\S)~~/g,
+  /==(?=\S)(.*?\S)==/g,
+  /(?<!\*)\*(?=[^\s*])(.*?[^\s*])\*(?!\*)/g,
+  /(?<![\p{L}\p{N}_])_(?=[^\s_])(.*?[^\s_])_(?![\p{L}\p{N}_])/gu,
+]
+function unmarked(text: string): string {
+  let out = text
+  for (let was = ''; was !== out;) {
+    was = out
+    for (const mark of MARKS) out = out.replace(mark, '$1')
+  }
+  return out
+}
+function codeWords(span: string): string {
+  const run = /^`+/.exec(span)?.[0].length ?? 1
+  const inside = span.slice(run, -run)
+  return inside.startsWith(' ') && inside.endsWith(' ') && inside.trim() ? inside.slice(1, -1) : inside
+}
+export function headingWords(text: string): string {
+  const codes: string[] = []
+  const held = codeAndWords(text)
+    .map((one) => {
+      if (one.code) return String.fromCharCode(CODE_HELD + codes.push(codeWords(one.text)) - 1)
+      return heldEscapes(one.text)
+    })
+    .join('')
+  const words = unmarked(
+    held
+      .replace(A_WIKILINK, (_, target: string, alias?: string) => (alias?.trim() ? alias : target))
+      .replace(A_LINK, '$1')
+      .replace(AN_AUTOLINK, '$1')
+      .replace(A_TAG, ''),
+  )
+  return released(words).replace(A_HELD_CODE, (one) => codes[one.charCodeAt(0) - CODE_HELD] ?? '')
+}
