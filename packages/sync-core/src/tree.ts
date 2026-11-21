@@ -1,6 +1,15 @@
 import { freeName as freeWhole, freePath } from '@orden/markdown/paths'
 import { type ItemMeta, patched, sameMeta } from './meta'
-import { type EntryKind, heldName, LONGEST_NAME, type MkdirOp, type Op, type OpResult, shortened } from './wire'
+import {
+  type CreateOp,
+  type EntryKind,
+  heldName,
+  LONGEST_NAME,
+  type MkdirOp,
+  type Op,
+  type OpResult,
+  shortened,
+} from './wire'
 
 export interface TreeEntry {
   id: string
@@ -27,6 +36,7 @@ export interface TreeState {
 export interface OpContext {
   role: 'owner' | 'write' | 'read'
   device?: string
+  hashOf?: (id: string) => string | undefined
 }
 export function nameKey(name: string): string {
   return name.normalize('NFC').toLowerCase()
@@ -92,13 +102,14 @@ function holdsName(state: TreeState, parent: string | null, key: string, except:
   }
   return false
 }
+function holding(state: TreeState, parent: string | null, key: string): TreeEntry[] {
+  return [...(names(state).byPlace.get(parent)?.get(key) ?? [])].filter(
+    (entry) =>
+      state.entries.get(entry.id) === entry && !entry.deleted && entry.parent === parent && nameKey(entry.name) === key,
+  )
+}
 function folderNamed(state: TreeState, parent: string | null, key: string): TreeEntry | undefined {
-  for (const entry of names(state).byPlace.get(parent)?.get(key) ?? []) {
-    const there =
-      state.entries.get(entry.id) === entry && !entry.deleted && entry.parent === parent && nameKey(entry.name) === key
-    if (there && entry.kind === 'folder') return entry
-  }
-  return undefined
+  return holding(state, parent, key).find((entry) => entry.kind === 'folder')
 }
 const aliasesOf = new WeakMap<TreeState, Map<string, string>>()
 function aliased(state: TreeState, op: Op): Op {
@@ -234,6 +245,7 @@ class Rules {
   constructor(
     private readonly state: TreeState,
     private readonly device: string | undefined,
+    private readonly hashOf?: (id: string) => string | undefined,
   ) {}
   made(op: Op, id: string, kind: EntryKind, parent: string | null, wanted: string, pos?: string): OpResult {
     const { state, device } = this
@@ -256,8 +268,20 @@ class Rules {
     named(state, entry)
     return placement(op, entry)
   }
-  merged(op: Op & { t: 'create' }): OpResult | null {
-    if (!op.mergeable) return null
+  twin(op: CreateOp): OpResult | null {
+    const { state, hashOf } = this
+    if (!op.hash || !hashOf || state.entries.has(op.id)) return null
+    const wanted = op.hash.toLowerCase()
+    let found: string | undefined
+    freePath(heldName(op.name), (candidate) => {
+      const holders = holding(state, op.parent, nameKey(candidate))
+      found ??= holders.find((one) => one.kind === op.kind && hashOf(one.id)?.toLowerCase() === wanted)?.id
+      return holders.length > 0 && found === undefined
+    })
+    return found === undefined ? null : { op: op.op, merged: found }
+  }
+  merged(op: CreateOp): OpResult | null {
+    if (!op.mergeable) return this.twin(op)
     const key = nameKey(op.name)
     for (const one of this.state.entries.values()) {
       if (one.deleted || one.parent !== op.parent || one.kind !== op.kind) continue
@@ -426,7 +450,7 @@ export function applyOp(state: TreeState, op: Op, context: OpContext): OpResult 
   const result: OpResult =
     context.role === 'read'
       ? { op: op.op, refused: 'role' }
-      : new Rules(state, context.device).applied(aliased(state, op))
+      : new Rules(state, context.device, context.hashOf).applied(aliased(state, op))
   state.done.set(op.op, result)
   alias(state, op, result)
   return result
