@@ -85,7 +85,7 @@ class Drive:
         selector, make = KINDS[kind]
         for _try in range(4):
             made = self.run(f"(async () => {{ try {{ await orden.workspace.{make}(undefined, {json.dumps(named)}); return 'made' }} catch (error) {{ return String(error) }} }})()")
-            if self.until(f"!!orden.workspace.active?.path?.endsWith('.{kind}') && !!document.querySelector('{selector}')", 6):
+            if self.until(f"orden.workspace.active?.kind === '{kind}' && !!document.querySelector('{selector}')", 6):
                 break
             print(
                 f"{kind}: {made}; "
@@ -94,7 +94,7 @@ class Drive:
             )
         time.sleep(1)
         box = self.run(
-            f"(() => {{ const r = document.querySelector('{selector}')?.getBoundingClientRect();"
+            f"(() => {{ const r = [...document.querySelectorAll('{selector}')].find((one) => one.getClientRects().length)?.getBoundingClientRect();"
             " return r ? { x: r.x, y: r.y, width: r.width, height: r.height } : null })()"
         )
         return box if isinstance(box, dict) else None
@@ -106,7 +106,7 @@ class Drive:
             return
         clip = {"x": box["x"] + 8, "y": box["y"] + 60, "width": min(700, box["width"] - 16), "height": min(480, box["height"] - 80)}
         self.run(
-            f"document.querySelector('{KINDS[kind][0]}').dispatchEvent(new KeyboardEvent('keydown', {{ key: 'd', code: 'KeyD', bubbles: true }}))"
+            f"[...document.querySelectorAll('{KINDS[kind][0]}')].find((one) => one.getClientRects().length).dispatchEvent(new KeyboardEvent('keydown', {{ key: 'd', code: 'KeyD', bubbles: true }}))"
         )
         time.sleep(0.4)
         region = self.region(clip)
@@ -130,7 +130,7 @@ class Drive:
         print(
             f"{label}: backing "
             + json.dumps(self.run(
-                "(() => { const live = document.querySelector('canvas.ink.live')?.getContext('2d')?.getContextAttributes?.() ?? null;"
+                "(() => { const live = [...document.querySelectorAll('canvas.ink.live')].find((one) => one.getClientRects().length)?.getContext('2d')?.getContextAttributes?.() ?? null;"
                 " const gl = document.createElement('canvas').getContext('webgl');"
                 " const info = gl?.getExtension('WEBGL_debug_renderer_info');"
                 " return { live, renderer: info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : null } })()"

@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       drives:
-        description: The parity drives to run, by name (look, motion, pointer, keys, turn, explorer, ink, capture, session).
-        default: look motion pointer keys ink capture session
+        description: The parity drives to run, by name (look, motion, pointer, keys, turn, explorer, ink, capture, session, scroll).
+        default: look motion pointer keys ink capture session scroll
 
 concurrency:
   group: web-parity-${{ github.ref }}
@@ -38,7 +38,7 @@ jobs:
     env:
       IDENTIFIER: so.orden.Orden.probe.parity
       ROLLING: 'true'
-      DRIVES: ${{ inputs.drives || 'look motion pointer keys ink capture session' }}
+      DRIVES: ${{ inputs.drives || 'look motion pointer keys ink capture session scroll' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
@@ -126,6 +126,11 @@ jobs:
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'ink') && hashFiles('scripts/ink-black-drive.py') != '' }}
         timeout-minutes: 15
         run: bash scripts/parity-run.sh scripts/ink-black-drive.py
+
+      - name: Pages scroll
+        if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'scroll') && hashFiles('scripts/pages-scroll-drive.py') != '' }}
+        timeout-minutes: 10
+        run: bash scripts/parity-run.sh scripts/pages-scroll-drive.py
 
       - name: Turn
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'turn') && hashFiles('scripts/turn-drive.py') != '' }}
