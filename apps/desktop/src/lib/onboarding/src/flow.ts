@@ -105,3 +105,7 @@ export function typedName(query: string): string {
 export function requestKey(kind: 'browser' | 'notes' | 'ai', name: string): string {
   return `${kind}:${name.trim().toLocaleLowerCase()}`
 }
+export function continuesOn(device: string, named: string): 'MacBook' | 'computer' | null {
+  if (device === 'desktop') return null
+  return /^(iPhone|iPad|iOS)\b/.test(named) ? 'MacBook' : 'computer'
+}

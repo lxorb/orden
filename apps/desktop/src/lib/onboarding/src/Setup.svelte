@@ -2,8 +2,8 @@
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { iconLibrary } from '../../glyphs/src/api'
-  import { BRANDS } from '../../ui-kit/src/api'
-  import { dur, fade, fly } from '../../platform/src/api'
+  import { BRANDS, viewport } from '../../ui-kit/src/api'
+  import { deviceName, dur, fade, fly } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
   import AccountStep from './AccountStep.svelte'
   import AiStep from './AiStep.svelte'
@@ -11,8 +11,10 @@
   import BrowserStep from './BrowserStep.svelte'
   import CodeStep from './CodeStep.svelte'
   import HeardStep from './HeardStep.svelte'
+  import { continuesOn } from './flow'
   import ImportStep from './ImportStep.svelte'
   import McpStep from './McpStep.svelte'
+  import MobileStep from './MobileStep.svelte'
   import NotesStep from './NotesStep.svelte'
   import { setup } from './setup-state.svelte'
   import WelcomeStep from './WelcomeStep.svelte'
@@ -34,8 +36,9 @@
     iconLibrary.load(BRANDS)
     void setup.look()
   })
+  const elsewhere = $derived(continuesOn(viewport.device, deviceName()))
   const Shown = $derived(SCREENS[setup.step])
-  const wide = $derived(setup.step === 'account' || setup.step === 'welcome')
+  const wide = $derived(elsewhere !== null || setup.step === 'account' || setup.step === 'welcome')
   const way = $derived(setup.forward ? 1 : -1)
 </script>
 
@@ -43,7 +46,7 @@
   class="setup"
   data-covers="all"
   class:wide
-  data-step={setup.step}
+  data-step={elsewhere ? 'mobile' : setup.step}
   role="dialog"
   aria-modal="true"
   aria-label="Orden"
@@ -51,15 +54,19 @@
   transition:fade={{ duration: dur(500) }}
 >
   <div class="aura" aria-hidden="true"></div>
-  {#key setup.step}
-    <div
-      class="stage"
-      in:fly={{ x: way * 60, duration: dur(550), delay: dur(80), easing: cubicOut }}
-      out:fly={{ x: way * -60, duration: dur(450), easing: cubicOut }}
-    >
-      <Shown />
-    </div>
-  {/key}
+  {#if elsewhere}
+    <div class="stage"><MobileStep device={elsewhere} /></div>
+  {:else}
+    {#key setup.step}
+      <div
+        class="stage"
+        in:fly={{ x: way * 60, duration: dur(550), delay: dur(80), easing: cubicOut }}
+        out:fly={{ x: way * -60, duration: dur(450), easing: cubicOut }}
+      >
+        <Shown />
+      </div>
+    {/key}
+  {/if}
 </div>
 
 <style>
