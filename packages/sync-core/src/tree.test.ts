@@ -1,7 +1,7 @@
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import { linearly } from '../../../scripts/growth'
-import { applyOp, contentChanged, kindOfName, nameKey, type TreeState, treeState } from './tree'
+import { applyOp, contentChanged, kindOfName, nameKey, type OpContext, type TreeState, treeState } from './tree'
 import type { Op, OpResult } from './wire'
 
 const OWNER = { role: 'owner' as const, device: 'laptop' }
@@ -135,6 +135,72 @@ describe('tree', () => {
     applyOp(state, { op: opId(), t: 'mkdir', id: 'g', parent: null, name: 'Work', mergeable: true, seen: 0 }, PHONE)
     expect(mkdir(state, 'g', 'Other')).toMatchObject({ ok: true, id: 'g', name: 'Other' })
     expect(create(state, 'n', 'Plan.md', 'g')).toMatchObject({ ok: true, parent: 'g' })
+  })
+  describe('a note made apart with the same words is the same note (#2433)', () => {
+    const hashes = new Map([
+      ['here', 'ABC1'],
+      ['other', 'ff00'],
+    ])
+    const hashOf = (id: string) => hashes.get(id)
+    const made = (
+      state: TreeState,
+      id: string,
+      name: string,
+      hash: string,
+      context: OpContext = { ...PHONE, hashOf },
+    ) => applyOp(state, { op: opId(), t: 'create', id, kind: 'note', parent: null, name, hash, seen: 0 }, context)
+    test('one of that name with the same hash takes it in, whatever the case of the hash', () => {
+      const state = treeState()
+      create(state, 'here', 'Same.md')
+      const cursor = state.cursor
+      expect(made(state, 'away', 'same.md', 'abc1')).toEqual({ op: expect.any(String), merged: 'here' })
+      expect(state.entries.has('away')).toBe(false)
+      expect(state.cursor).toBe(cursor)
+    })
+    test('a numbered one of that name with the same hash takes it in, the plain name first', () => {
+      const state = treeState()
+      create(state, 'other', 'Same.md')
+      create(state, 'here', 'Same 2.md')
+      expect(made(state, 'away', 'Same.md', 'abc1')).toEqual({ op: expect.any(String), merged: 'here' })
+      hashes.set('other', 'abc1')
+      expect(made(state, 'again', 'Same.md', 'abc1')).toEqual({ op: expect.any(String), merged: 'other' })
+      hashes.set('other', 'ff00')
+    })
+    test('other words are numbered as before', () => {
+      const state = treeState()
+      create(state, 'here', 'Same.md')
+      expect(made(state, 'away', 'Same.md', 'beef')).toMatchObject({ ok: true, id: 'away', name: 'Same 2.md' })
+      expect(made(state, 'third', 'Same.md', 'cafe')).toMatchObject({ ok: true, id: 'third', name: 'Same 3.md' })
+    })
+    test('without a way to read hashes, or without a hash, a second one is numbered as before', () => {
+      const state = treeState()
+      create(state, 'here', 'Same.md')
+      expect(made(state, 'away', 'Same.md', 'abc1', PHONE)).toMatchObject({ ok: true, name: 'Same 2.md' })
+      const plain = {
+        op: opId(),
+        t: 'create' as const,
+        id: 'plain',
+        kind: 'note' as const,
+        parent: null,
+        name: 'Same.md',
+        seen: 0,
+      }
+      expect(applyOp(state, plain, { ...PHONE, hashOf })).toMatchObject({ ok: true, name: 'Same 3.md' })
+    })
+    test('a deleted one, or one in another folder, is no twin', () => {
+      const state = treeState()
+      create(state, 'here', 'Same.md')
+      applyOp(state, { op: opId(), t: 'delete', id: 'here', seen: state.cursor }, OWNER)
+      expect(made(state, 'away', 'Same.md', 'abc1')).toMatchObject({ ok: true, id: 'away', name: 'Same.md' })
+      mkdir(state, 'f', 'Work')
+      expect(
+        applyOp(
+          state,
+          { op: opId(), t: 'create', id: 'inner', kind: 'note', parent: 'f', name: 'Same.md', hash: 'abc1', seen: 0 },
+          { ...PHONE, hashOf },
+        ),
+      ).toMatchObject({ ok: true, id: 'inner', parent: 'f' })
+    })
   })
   test('an edit beats a delete that had not seen it', () => {
     const state = treeState()

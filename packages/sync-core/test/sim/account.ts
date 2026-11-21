@@ -1,6 +1,6 @@
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
-import { seedUpdate } from '../../src/seed'
+import { hash32, seedUpdate } from '../../src/seed'
 import { aliasesIn, applyOp, contentChanged, type TreeState, treeState } from '../../src/tree'
 import {
   FEED_PAGE,
@@ -94,13 +94,17 @@ export class ReferenceAccount implements AccountAdapter {
       }
     }
   }
+  private hashOf(id: string): string | undefined {
+    const text = this.docs.get(id)?.doc.getText(TEXT).toJSON()
+    return text ? `${hash32('a', text).toString(16)}${hash32('b', text).toString(16)}` : undefined
+  }
   private ops(device: string, value: unknown) {
     const request = opsRequestOf(value)
     if (!request) throw new Error('ops: not a request')
     const results: OpResult[] = request.ops.map((op) => {
       const judged =
         this.plant === 'delete-without-seen' && op.t === 'delete' ? { ...op, seen: Number.MAX_SAFE_INTEGER } : op
-      const result = applyOp(this.tree, judged, { role: 'owner', device })
+      const result = applyOp(this.tree, judged, { role: 'owner', device, hashOf: (id) => this.hashOf(id) })
       if (op.t === 'create' && 'id' in result && DOCUMENTS.has(op.kind) && !this.docs.has(op.id)) {
         this.docs.set(op.id, { doc: new Y.Doc(), seq: 0, at: this.clock.now })
       }
