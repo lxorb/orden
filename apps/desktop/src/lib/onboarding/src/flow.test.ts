@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { BROWSERS, MAIN_BROWSERS, MAIN_NOTES, NOTES_APPS, SETTING_NAMES } from './catalog'
 import {
   type Answers,
+  continuesOn,
   firstStep,
   keyKindOf,
   markdownStyleFor,
@@ -113,6 +114,19 @@ describe('the setup on a phone', () => {
     expect(phoneBringing('obsidian', 'vault')).toBe('computer')
     expect(phoneBringing('apple', 'apple')).toBe('computer')
     expect(phoneBringing('joplin', null)).toBeNull()
+  })
+})
+describe('the setup on a mobile device', () => {
+  test('is not offered, and asks for a MacBook on Apple handhelds and a computer elsewhere', () => {
+    expect(continuesOn('phone', 'iPhone')).toBe('MacBook')
+    expect(continuesOn('tablet', 'iPad')).toBe('MacBook')
+    expect(continuesOn('phone', 'iOS browser')).toBe('MacBook')
+    expect(continuesOn('phone', 'Android phone')).toBe('computer')
+    expect(continuesOn('tablet', 'Android browser')).toBe('computer')
+  })
+  test('runs as before on a computer', () => {
+    expect(continuesOn('desktop', 'Mac desktop')).toBeNull()
+    expect(continuesOn('desktop', 'Windows browser')).toBeNull()
   })
 })
 describe('Use an API key', () => {

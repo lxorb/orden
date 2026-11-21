@@ -15,8 +15,9 @@
     head?: Snippet
     children?: Snippet
     onback?: (() => void) | null
+    backless?: boolean
   }
-  const { title = '', primary = null, quiet = null, head, children, onback = null }: Props = $props()
+  const { title = '', primary = null, quiet = null, head, children, onback = null, backless = false }: Props = $props()
   function pressed(event: KeyboardEvent) {
     if (event.key !== 'Enter' || !primary || primary.disabled || primary.busy) return
     const on = event.target instanceof Element ? event.target : null
@@ -30,7 +31,7 @@
 
 <section class="screen" aria-label={title}>
   <div class="top">
-    {#if onback !== null || setup.canGoBack}
+    {#if !backless && (onback !== null || setup.canGoBack)}
       <button class="back" type="button" onclick={() => (onback ? onback() : setup.back())}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
         Back
