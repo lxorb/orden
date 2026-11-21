@@ -214,3 +214,30 @@ describe("glass's own pair", () => {
     expect(glassCss).toContain(`intercept='${GRAIN}'`)
   })
 })
+describe("the edge round a page's card", () => {
+  test('is drawn from the frame it sits on, a shade toward its words, whatever the app wears', () => {
+    for (const app of SCHEMES) {
+      for (const [site, ground] of Object.entries(SITES)) {
+        const frame = frameFor({ colour: ground, page: true }, app, sides, PAPER[app])
+        const tint = rgb(frame.tint)
+        const edge = rgb(frame.edge)
+        const words = sides[frame.scheme].text
+        expect(Math.abs(luminance(edge) - luminance(tint)), `${site} in ${app}`).toBeGreaterThan(0.01)
+        expect(Math.abs(luminance(edge) - luminance(tint)), `${site} in ${app}`).toBeLessThan(
+          Math.abs(luminance(words) - luminance(tint)) / 3,
+        )
+      }
+    }
+  })
+  test('on a white page is a light grey line, never the dark one of an app that wears dark', () => {
+    const frame = frameFor({ colour: SITES['white Google']!, page: true }, 'dark', sides, PAPER.dark)
+    expect(frame.scheme).toBe('light')
+    expect(luminance(rgb(frame.edge))).toBeGreaterThan(0.6)
+  })
+  test('goes with a pair of the app’s own too', () => {
+    for (const app of SCHEMES) {
+      const frame = pairFor(stopsOf(undefined, app, 'violet', sides[app].scrim), app, sides)
+      expect(Math.abs(luminance(rgb(frame.edge)) - luminance(rgb(frame.tint)))).toBeGreaterThan(0.005)
+    }
+  })
+})

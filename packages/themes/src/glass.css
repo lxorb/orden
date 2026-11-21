@@ -27,6 +27,7 @@
     var(--bg)
   );
   --tab-frame: transparent;
+  --card-edge: var(--glass-edge, var(--line));
   --side-bar-bg-color: var(--glass-layer);
   --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, transparent);
   --glass-tab-hover: color-mix(in srgb, var(--text) 10%, transparent);

@@ -13,6 +13,7 @@ export interface Frame {
   tint: string
   second?: string
   wash: number
+  edge: string
 }
 export interface Dials {
   strength: number
@@ -24,6 +25,7 @@ export interface Bar {
 }
 export const PAGE_WASH = 0.8
 export const MARK_TONE = 0.22
+const EDGE = 0.12
 const TONES = [MARK_TONE, 0.16, 0.11, 0.06, 0]
 const HOVER = 0.1
 export const GRAIN = 0.025
@@ -81,7 +83,10 @@ export function frameFor(source: Source, app: Scheme, sides: Sides, paper: Rgb, 
   const lift = floorOf(side, side.scrim, { least: tint, most: tint })
   if (lift > 0) tint = rgbOf(hexOf(over(side.scrim, lift, tint))) ?? tint
   const wash = Math.max(stated, floorOf(side, tint, span))
-  return { scheme, tint: hexOf(tint), wash }
+  return { scheme, tint: hexOf(tint), wash, edge: edgeOn(tint, side) }
+}
+function edgeOn(ground: Rgb, side: Palette): string {
+  return hexOf(over(side.text, EDGE, ground))
 }
 function written(colour: Rgb): Rgb {
   return rgbOf(hexOf(colour)) ?? colour
@@ -94,5 +99,5 @@ export function pairFor(stops: Stops, app: Scheme, sides: Sides, dials: Dials = 
     .map((one) => floorOf(side, side.scrim, { least: one, most: one }, AIM, GRAIN))
     .reduce((high, one) => Math.max(high, one), -Infinity)
   const [first, second] = toned.map((one) => (lift > 0 ? written(over(side.scrim, lift, one)) : one)) as [Rgb, Rgb]
-  return { scheme: app, tint: hexOf(first), second: hexOf(second), wash: 1 }
+  return { scheme: app, tint: hexOf(first), second: hexOf(second), wash: 1, edge: edgeOn(first, side) }
 }

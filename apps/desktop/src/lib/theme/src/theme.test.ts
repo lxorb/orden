@@ -131,6 +131,7 @@ function systemTurns(scheme: 'light' | 'dark') {
   for (const heard of shown.heard) heard({ payload: scheme })
 }
 const { chosenFirst, theme } = await import('./theme.svelte')
+const { chrome } = await import('./chrome.svelte')
 const { stamped, stampOf } = await import('./stamp')
 await Promise.all([
   import('@orden/themes/glass'),
@@ -874,6 +875,21 @@ describe('the glass theme', () => {
     expect(theme.accentIsTheme).toBe(false)
     await settled(() => settingIds().includes('follow'))
     expect(ownIds()).toEqual(['follow', 'tint', 'pair', 'tab'])
+  })
+  test('tells the pages it follows when the system turns the app light or dark, since the pages turn with it', async () => {
+    theme.init()
+    theme.select('glass')
+    await settled(() => injected().includes('--glass-chrome'))
+    let told = 0
+    chrome.turned(() => told++)
+    systemPrefers(!media.light)
+    expect(told).toBe(1)
+    theme.setScheme(theme.current)
+    expect(told).toBe(1)
+    systemPrefers(!media.light)
+    expect(told).toBe(1)
+    theme.setScheme('system')
+    expect(told).toBe(2)
   })
   test('passes over the material, opacity and content an older build kept for it (#2162)', async () => {
     kept.setItem(
