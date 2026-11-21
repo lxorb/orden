@@ -39,18 +39,17 @@ export function next(state: SessionState, event: SessionEvent): SessionState {
       return state === 'archived' ? 'done' : state
   }
 }
-const PRIORITY: Record<SessionState, number> = {
-  'needs-input': 0,
-  error: 1,
-  interrupted: 2,
-  done: 3,
-  waiting: 4,
-  running: 5,
-  archived: 6,
-}
-export const SESSION_STATES = Object.keys(PRIORITY) as SessionState[]
+export const SESSION_STATES: readonly SessionState[] = [
+  'needs-input',
+  'error',
+  'interrupted',
+  'done',
+  'waiting',
+  'running',
+  'archived',
+]
 export function isSessionState(value: unknown): value is SessionState {
-  return typeof value === 'string' && Object.hasOwn(PRIORITY, value)
+  return SESSION_STATES.includes(value as SessionState)
 }
 export const STATE_COLOURS: Record<SessionState, string> = {
   running: 'slate',
@@ -96,9 +95,9 @@ export function ordered<T extends ThreadHead>(
     .sort(
       (a, b) =>
         Number(!!b.pinned) - Number(!!a.pinned) ||
-        PRIORITY[state(a)] - PRIORITY[state(b)] ||
-        Number(unread.has(b.id)) - Number(unread.has(a.id)) ||
-        b.updated - a.updated,
+        Number(state(b) === 'needs-input') - Number(state(a) === 'needs-input') ||
+        b.updated - a.updated ||
+        Number(unread.has(b.id)) - Number(unread.has(a.id)),
     )
 }
 export function beside<T extends { id: string }>(list: readonly T[], id: string, step: 1 | -1): T | null {

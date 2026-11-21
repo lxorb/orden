@@ -57,7 +57,7 @@ const head = (id: string, more: Partial<ThreadHead> = {}): ThreadHead => ({
 })
 describe('the order chats are listed in', () => {
   const states = (heads: ThreadHead[]) => statesOf(heads)
-  test('puts what wants the reader first, and what is still at work last', () => {
+  test('puts what wants the reader first, then the newest, whatever else each is doing', () => {
     const heads = [
       head('running', { state: 'running', updated: 9 }),
       head('done', { state: 'done', updated: 8 }),
@@ -68,18 +68,36 @@ describe('the order chats are listed in', () => {
     ]
     expect(ordered(heads, states(heads), new Set()).map((one) => one.id)).toEqual([
       'asks',
-      'failed',
-      'stopped',
+      'running',
       'done',
       'waits',
-      'running',
+      'stopped',
+      'failed',
     ])
   })
-  test('unread before read within a state, then the latest first', () => {
+  test('a new chat at work or waiting sits above older finished and failed ones, under a pinned one and one that asks', () => {
+    const heads = [
+      head('failed', { state: 'error', updated: 5 }),
+      head('done', { state: 'done', updated: 6 }),
+      head('pinned', { state: 'done', pinned: 1, updated: 1 }),
+      head('asks', { state: 'needs-input', updated: 2 }),
+      head('new', { state: 'running', updated: 9 }),
+      head('waits', { state: 'waiting', updated: 8 }),
+    ]
+    expect(ordered(heads, states(heads), new Set(['failed'])).map((one) => one.id)).toEqual([
+      'pinned',
+      'asks',
+      'new',
+      'waits',
+      'done',
+      'failed',
+    ])
+  })
+  test('unread before read only between chats of the same moment', () => {
     const heads = [
       head('old', { state: 'done', updated: 1 }),
       head('new', { state: 'done', updated: 5 }),
-      head('unread', { state: 'done', updated: 2 }),
+      head('unread', { state: 'done', updated: 5 }),
     ]
     expect(ordered(heads, states(heads), new Set(['unread'])).map((one) => one.id)).toEqual(['unread', 'new', 'old'])
   })
