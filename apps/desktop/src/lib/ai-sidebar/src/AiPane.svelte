@@ -14,6 +14,7 @@
   import { whileShown } from '../../panes/src/api'
   import { Select, Hint, Switch } from '../../ui-controls/src/api'
   import { canDictate, type Engine, engines, local } from '../../dictation/src/api'
+  import StandingInstructions from './StandingInstructions.svelte'
 
   let keyed = $state<Record<string, boolean>>({})
   let adding = $state(false)
@@ -384,6 +385,8 @@
     {/each}
   </div>
 {/if}
+
+<StandingInstructions />
 
 {#if canDictate()}
   <h3>Dictation</h3>
