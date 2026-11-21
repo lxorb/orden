@@ -124,3 +124,30 @@ describe('the link', () => {
     expect(target.querySelector('.card-head')?.children).toHaveLength(2)
   })
 })
+describe('the roles', () => {
+  const roles = (select: HTMLButtonElement | undefined) => {
+    select?.click()
+    flushSync()
+    const list = select?.getAttribute('aria-controls')
+    const listed = list ? [...document.querySelectorAll<HTMLElement>(`[id="${list}"] [role="option"]`)] : []
+    const words = listed.map((one) => one.textContent.trim())
+    select?.click()
+    flushSync()
+    return words
+  }
+  const selects = () => [...target.querySelectorAll<HTMLButtonElement>('button[role="combobox"][aria-label="Role"]')]
+  test('go from the least a person may do to the most, for an invite and for the link', () => {
+    shown({ link: link('open') })
+    draw()
+    const linked = [...target.querySelectorAll('.name')]
+      .find((one) => one.textContent === 'Anyone with the link')
+      ?.parentElement?.querySelector<HTMLButtonElement>('button[role="combobox"]')
+    expect(roles(selects()[0])).toEqual(['View', 'Write', 'Admin'])
+    expect(roles(linked ?? undefined)).toEqual(['View', 'Write'])
+  })
+  test('offer no admin for one file, in the same order', () => {
+    store.item = { id: 'note-1', path: 'Notes/plan.md' }
+    draw()
+    expect(roles(selects()[0])).toEqual(['View', 'Write'])
+  })
+})

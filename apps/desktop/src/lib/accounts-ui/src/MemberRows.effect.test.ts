@@ -99,9 +99,9 @@ describe('the people in a space', () => {
   test('may be made admins by whoever manages the space, all but a guest', () => {
     draw({ store: storeWith(), manages: true })
     expect(picker('bob')?.disabled).toBe(false)
-    expect(choices('bob')).toEqual(['Write', 'View', 'Admin', 'Remove'])
-    expect(choices('Windows wren')).toEqual(['Write', 'View', 'Remove'])
-    expect(choices('dee')).toEqual(['Write', 'View', 'Admin', 'Resend', 'Remove'])
+    expect(choices('bob')).toEqual(['View', 'Write', 'Admin', 'Remove'])
+    expect(choices('Windows wren')).toEqual(['View', 'Write', 'Remove'])
+    expect(choices('dee')).toEqual(['View', 'Write', 'Admin', 'Resend', 'Remove'])
   })
   test('and making one asks the store for it', () => {
     const store = storeWith()
@@ -114,7 +114,7 @@ describe('the people in a space', () => {
   })
   test('offer no admin on the sheet about one file', () => {
     draw({ store: storeWith({ id: 'note-1', path: 'Notes/plan.md' }), manages: true })
-    expect(choices('bob')).toEqual(['Write', 'View', 'Remove'])
+    expect(choices('bob')).toEqual(['View', 'Write', 'Remove'])
   })
   test('are only shown to somebody who writes or reads there', () => {
     draw({ store: storeWith(), manages: false })

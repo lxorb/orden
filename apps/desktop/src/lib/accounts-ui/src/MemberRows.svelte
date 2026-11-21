@@ -5,13 +5,9 @@
   import type { Face, Member, MemberRole, Sharing } from '../../accounts/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { dur, fade } from '../../platform/src/api'
+  import { ADMIN, ROLES } from './roles'
 
   const { store, manages, titled = true }: { store: typeof shareStore; manages: boolean; titled?: boolean } = $props()
-  const ROLES = [
-    { value: 'write', label: 'Write' },
-    { value: 'read', label: 'View' },
-  ]
-  const ADMIN = { value: 'admin', label: 'Admin' }
   const who = $derived(store.who)
   const whole = $derived(store.item === null)
   const mine = $derived(
