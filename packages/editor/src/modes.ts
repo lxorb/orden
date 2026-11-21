@@ -252,7 +252,7 @@ export interface ModeSettings {
   spellcheck: boolean
   dictionary?: string | undefined
   closeBrackets: boolean
-  ligatures: LigatureScope
+  ligatures?: LigatureScope
   vim: boolean
 }
 export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
@@ -270,7 +270,7 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     spelling.reconfigure(spellingFor(settings.spellcheck, settings.dictionary)),
     brackets.reconfigure(bracketsFor(settings.closeBrackets)),
     completionEffect(settings.closeBrackets),
-    glyphs.reconfigure(ligaturesFor(settings.ligatures)),
+    glyphs.reconfigure(ligaturesFor(settings.ligatures ?? 'off')),
     headingNumbers.reconfigure(headingNumbersFor(settings.numbers)),
     codeLineNumbers.reconfigure(codeLineNumbersFor(settings.lineNumbers)),
     direction.reconfigure(directionFor(settings.rtl)),
