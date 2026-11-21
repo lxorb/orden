@@ -24,11 +24,21 @@ export async function loop(stage: Stage, draw: Draw, asked: string, site: string
   let last = performance.now()
   let ticking = false
   const phase = () => (still ? scene.still : (spent / scene.period) % 1)
+  let broken = false
+  const drawn = (now: number) => {
+    if (broken) return false
+    try {
+      scene.tick(phase(), now)
+      return true
+    } catch {
+      broken = true
+      return false
+    }
+  }
   const tick = (now: number) => {
     if (playing && !still) spent += Math.min(100, now - last)
     last = now
-    scene.tick(phase(), now)
-    ticking = playing && !still
+    ticking = drawn(now) && playing && !still
     if (ticking) requestAnimationFrame(tick)
   }
   const wake = () => {
@@ -44,13 +54,13 @@ export async function loop(stage: Stage, draw: Draw, asked: string, site: string
     if (!said) return
     if (said.still) {
       still = true
-      scene.tick(phase(), performance.now())
+      drawn(performance.now())
       return
     }
     playing = said.play === true
     if (playing) wake()
   })
-  scene.tick(phase(), performance.now())
+  drawn(performance.now())
   await new Promise((done) => requestAnimationFrame(done))
   await new Promise((done) => requestAnimationFrame(done))
   wake()

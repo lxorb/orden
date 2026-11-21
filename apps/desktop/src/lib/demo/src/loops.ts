@@ -377,8 +377,9 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
             const at = found.getBoundingClientRect()
             return { x: box.left + at.left + at.width / 2, y: box.top + at.top + at.height / 2 }
           }
-        if (inner && view) {
-          const tall = Math.max(0, view.documentElement.scrollHeight - inner.innerHeight)
+        const root = view?.documentElement ?? null
+        if (inner && root) {
+          const tall = Math.max(0, root.scrollHeight - inner.innerHeight)
           const down =
             browsing(phase) === 'routes'
               ? tall * smooth(clamp((phase - 0.36) / 0.08))
