@@ -160,3 +160,12 @@ describe('a long history of recorded time', () => {
     expect(ratio).toBeLessThan(GROWS_AT_MOST)
   })
 })
+describe('a year', () => {
+  test('starts on the first of January, ends a year on, and steps by years', () => {
+    const at = new Date(2026, 10, 19, 15).getTime()
+    const start = startOf('year', at)
+    expect(start).toBe(new Date(2026, 0, 1).getTime())
+    expect(endOf('year', start)).toBe(new Date(2027, 0, 1).getTime())
+    expect(stepped('year', start, -1)).toBe(new Date(2025, 0, 1).getTime())
+  })
+})

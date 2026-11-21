@@ -4,7 +4,7 @@ import type { Span } from './records'
 export const HOUR = 3_600_000
 export const MINUTE = 60_000
 export const counts = (ms: number): boolean => ms >= MINUTE / 2
-export type Range = 'day' | 'week' | 'month'
+export type Range = 'day' | 'week' | 'month' | 'year'
 export interface Piece {
   span: Span
   from: number
@@ -23,20 +23,23 @@ export function startOf(range: Range, at: number): number {
   const date = new Date(midnightOf(at))
   if (range === 'week') date.setDate(date.getDate() - ((date.getDay() + 6) % 7))
   if (range === 'month') date.setDate(1)
+  if (range === 'year') date.setMonth(0, 1)
   return date.getTime()
 }
 export function endOf(range: Range, start: number): number {
   if (range === 'day') return daysAfter(start, 1)
   if (range === 'week') return daysAfter(start, 7)
   const date = new Date(start)
-  date.setMonth(date.getMonth() + 1)
+  if (range === 'year') date.setFullYear(date.getFullYear() + 1)
+  else date.setMonth(date.getMonth() + 1)
   return date.getTime()
 }
 export function stepped(range: Range, start: number, by: number): number {
   if (range === 'day') return daysAfter(start, by)
   if (range === 'week') return daysAfter(start, 7 * by)
   const date = new Date(start)
-  date.setMonth(date.getMonth() + by)
+  if (range === 'year') date.setFullYear(date.getFullYear() + by)
+  else date.setMonth(date.getMonth() + by)
   return date.getTime()
 }
 interface Reach {

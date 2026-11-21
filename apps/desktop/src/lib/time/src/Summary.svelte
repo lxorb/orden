@@ -21,6 +21,7 @@
     minutes,
     totals,
     per,
+    wide = false,
   }: {
     from: number
     to: number
@@ -28,6 +29,7 @@
     minutes: readonly Minute[]
     totals: RangeTotals
     per: Per | null
+    wide?: boolean
   } = $props()
   const LANES: readonly [Lane, string][] = [
     ['app', 'Apps'],
@@ -82,7 +84,7 @@
   }
 </script>
 
-<div class="summary">
+<div class="summary" class:wide>
   <section class="card totals" data-time-summary bind:this={card}>
     <div class="tools">
       <button
@@ -331,6 +333,13 @@
     padding-inline: var(--row-pad);
     min-height: 26px;
     font-size: var(--text-xs);
+  }
+  @container time-tab (min-width: 880px) {
+    .summary.wide {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+    }
   }
   @container time-tab (max-width: 879px) {
     .switch {

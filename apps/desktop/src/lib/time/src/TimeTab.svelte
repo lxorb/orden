@@ -55,18 +55,20 @@
   const span = $derived.by((): [number, number] => {
     if (kind === 'day') return [day, daysAfter(day, 1)]
     if (kind === 'custom' && custom) return [custom[0], daysAfter(custom[1], 1)]
-    const unit = kind === 'month' ? 'month' : 'week'
+    const unit = kind === 'month' || kind === 'year' ? kind : 'week'
     const from = startOf(unit, day)
     return [from, endOf(unit, from)]
   })
   const minutes = watchedMinutes(() => span)
   const totals = $derived(rangeTotals(time.spans, minutes.list, span[0], span[1], now, { untracked }))
+  const single = $derived(span[1] === daysAfter(span[0], 1))
   const holdsToday = $derived(span[0] <= now && now < span[1])
   const short = (at: number) => localDate(at, { day: 'numeric', month: 'short' })
   const titled = $derived.by(() => {
     const last = daysAfter(span[1], -1)
     if (kind === 'day') return localDate(day, { weekday: 'long', day: 'numeric', month: 'long' })
     if (kind === 'month') return localDate(span[0], { month: 'long', year: 'numeric' })
+    if (kind === 'year') return localDate(span[0], { year: 'numeric' })
     if (kind === 'custom') return `${short(span[0])} to ${short(last)}`
     const sameMonth = new Date(span[0]).getMonth() === new Date(last).getMonth()
     const end = sameMonth ? localDate(last, { day: 'numeric' }) : short(last)
@@ -84,7 +86,7 @@
   function step(by: number) {
     if (kind === 'day') choose(daysAfter(day, by))
     else if (kind === 'week') choose(daysAfter(startOf('week', day), 7 * by))
-    else if (kind === 'month') choose(stepped('month', startOf('month', day), by))
+    else if (kind === 'month' || kind === 'year') choose(stepped(kind, startOf(kind, day), by))
     else if (custom) {
       const days = Math.round((daysAfter(custom[1], 1) - custom[0]) / 86_400_000)
       custom = [daysAfter(custom[0], days * by), daysAfter(custom[1], days * by)]
@@ -129,6 +131,7 @@
     ['day', 'Day'],
     ['week', 'Week'],
     ['month', 'Month'],
+    ['year', 'Year'],
     ['custom', 'Custom'],
   ] as const
 </script>
@@ -198,7 +201,7 @@
       </div>
     </div>
 
-    <div class="main">
+    <div class="main" class:alone={!single}>
       <aside class="left">
         <Summary
           from={span[0]}
@@ -207,22 +210,15 @@
           minutes={minutes.list}
           {totals}
           per={kind === 'day' ? 'day' : kind === 'week' ? 'week' : null}
+          wide={!single}
         />
       </aside>
-      <section class="right">
-        <p class="orden-section">
-          Schedule{#if kind === 'day'}<span>{length(totals.ms)}</span>{/if}
-        </p>
-        <Blocks
-          from={span[0]}
-          to={span[1]}
-          {now}
-          minutes={minutes.list}
-          {untracked}
-          single={kind === 'day'}
-          onmanage={manage}
-        />
-      </section>
+      {#if single}
+        <section class="right">
+          <p class="orden-section">Schedule<span>{length(totals.ms)}</span></p>
+          <Blocks from={span[0]} to={span[1]} {now} minutes={minutes.list} {untracked} single onmanage={manage} />
+        </section>
+      {/if}
     </div>
   </div>
 </div>
@@ -317,6 +313,12 @@
     grid-template-columns: 21.5rem minmax(0, 1fr);
     gap: var(--space-5);
     align-items: start;
+  }
+  .main.alone {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .alone .left {
+    position: static;
   }
   .left {
     position: sticky;
