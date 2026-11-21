@@ -205,7 +205,6 @@ export interface TrashListing {
   }[]
 }
 export interface AccountSettings {
-  ligatures?: boolean | string
   look?: unknown
   mobileSeen?: boolean
   attachments?: string

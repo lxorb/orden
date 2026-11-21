@@ -337,7 +337,7 @@ describe('what is written down', () => {
   })
   test('is left alone by an account that carries none', () => {
     shortcuts.set('format.bold', 'Mod-Alt-b')
-    shortcuts.receive({ ligatures: true })
+    shortcuts.receive({ vim: true })
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
   })
 })
@@ -459,7 +459,7 @@ describe('the keyboard the account carries', () => {
   })
   test('keeps the one this machine has when the account carries none', () => {
     shortcuts.choose(keyboard('obsidian'))
-    shortcuts.receive({ ligatures: true })
+    shortcuts.receive({ vim: true })
     expect(shortcuts.preset).toBe('obsidian')
   })
 })
