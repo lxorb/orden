@@ -2,7 +2,7 @@
   import LoaderCircle from 'lucide/dist/esm/icons/loader-circle.mjs'
   import { agentMarks, workspace } from '../../workspace/src/api'
   import { siteMark, wearsChosen } from './chosen-icon'
-  import { terminalMark } from './file-mark'
+  import { importMark, terminalMark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { ASK_MARK, GRAPH_MARK } from '../../ui-kit/src/api'
   import { webPages, type WebPageSeen } from '@orden/contracts'
@@ -57,6 +57,14 @@
   <span class="mark" aria-hidden="true">
     <img src={found} alt="" draggable="false" onerror={() => (broken = true)} />
   </span>
+{:else if tab.kind === 'import'}
+  {#await importMark()}
+    <FileMark mark="import" />
+  {:then Mark}
+    <Mark {tab} />
+  {:catch}
+    <FileMark mark="import" />
+  {/await}
 {:else if traits.liveMark}
   {#await terminalMark()}
     <FileMark mark="terminal" />

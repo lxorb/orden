@@ -135,8 +135,8 @@ describe("Apple Notes off the Mac's own database", () => {
     const said = (await planFor(read())).lost
     expect(said.some((one) => one.includes('behind a password'))).toBe(true)
     expect(said.some((one) => one.includes('Recently Deleted'))).toBe(true)
-    expect(said.some((one) => one.includes('drawings'))).toBe(true)
-    expect(said.some((one) => one.includes('tables'))).toBe(true)
+    expect(said.some((one) => one.includes('drawing'))).toBe(true)
+    expect(said.some((one) => one.includes('table'))).toBe(true)
     expect(said.some((one) => one.includes('iCloud'))).toBe(true)
   })
   test('nothing is said about what did come over whole', async () => {

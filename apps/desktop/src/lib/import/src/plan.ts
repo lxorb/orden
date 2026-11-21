@@ -21,11 +21,16 @@ import type { Times } from './sources'
 export type Planned = (
   { kind: 'note'; path: string; text: string } | { kind: 'file'; path: string; bytes: Uint8Array; pages?: true }
 ) & { times?: Times }
+export interface Trouble {
+  path: string
+  why: string
+}
 export interface ImportPlan {
   format: FormatId
   files: Planned[]
   lost: string[]
   inbox?: string
+  failed?: Trouble[]
 }
 export interface Counts {
   notes: number

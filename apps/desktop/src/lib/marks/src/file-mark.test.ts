@@ -83,6 +83,7 @@ describe('the marks a row wears', () => {
     'key',
     'time',
     'settings',
+    'import',
   ]
   test('every kind of row has one, and a folder is not a kind of row', () => {
     for (const name of ['Box', 'Box/', 'Box/Box.md', 'Box.md', 'index.md']) {

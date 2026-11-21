@@ -7,6 +7,7 @@ import { dayOf, type Meta } from './meta'
 import { Names, pageLink, safeName } from './names'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
+import { counted } from './counted'
 
 const APP = /^logseq\//i
 const PROPERTY = /^\s*(?:-\s+)?([A-Za-z][\w -]{0,39}):: *(.*?)\r?$/
@@ -95,7 +96,12 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
     },
   })
   if (flattened) {
-    plan.lost.push(`${flattened} block references were written out as the words they pointed at`)
+    plan.lost.push(
+      counted(flattened, 'block reference was', 'block references were') +
+        ' written out as the words ' +
+        (flattened === 1 ? 'it' : 'they') +
+        ' pointed at',
+    )
   }
   return plan
 }

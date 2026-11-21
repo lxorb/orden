@@ -103,7 +103,7 @@ describe('an Apple Journal export', () => {
   test('says what a reader has to know: HEIC, and the cards Journal draws', async () => {
     const said = (await readJournal(anExport())).lost
     expect(said.some((one) => one.includes('HEIC'))).toBe(true)
-    expect(said.some((one) => one.includes('mood and activity'))).toBe(true)
+    expect(said.some((one) => one.includes('mood or activity'))).toBe(true)
   })
   test('a picture an entry shows that the export did not hold is counted', async () => {
     const plan = await readJournal([
@@ -126,7 +126,7 @@ describe('an Apple Journal export', () => {
       ),
     ])
     expect(noteAt(plan, '2023-12-17.md')).toContain('Old Town Market Place')
-    expect(plan.lost).toContain('1 mood and activity cards are drawings, so only their words come over')
+    expect(plan.lost).toContain('1 mood or activity card is a drawing, so only its words come over')
   })
   test('an entry with no date anywhere is still a note', async () => {
     const plan = await readJournal([file('Entries/whatever.html', '<html><body>Words</body></html>')])

@@ -67,7 +67,7 @@ describe('a Logseq graph', () => {
       file('pages/Other.md', '- As noted: ((aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee))\n'),
     ])
     expect(noteAt(plan, 'Other.md')).toContain('As noted: The quarter closed ahead of plan')
-    expect(plan.lost[0]).toBe('1 block references were written out as the words they pointed at')
+    expect(plan.lost[0]).toBe('1 block reference was written out as the words it pointed at')
   })
   test('a reference to a block nothing exported is left as it was', async () => {
     const plan = await readLogseq([file('pages/A.md', '- See ((99999999-8888-7777-6666-555555555555))\n')])
@@ -134,7 +134,7 @@ describe('a Logseq graph', () => {
       file('pages/A.md', `- ${code} but ((${id})) and [[Sep 11th, 2026]]\n`),
     ])
     expect(noteAt(plan, 'A.md')).toContain(`- ${code} but Woke up and [[2026-09-11]]`)
-    expect(plan.lost).toEqual(['1 block references were written out as the words they pointed at'])
+    expect(plan.lost).toEqual(['1 block reference was written out as the words it pointed at'])
   })
   test('a link to a journal follows it to the date it is now', async () => {
     const plan = await readLogseq([

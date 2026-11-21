@@ -22,6 +22,9 @@
     "sync-store",
     "modes",
     "tree",
-    "glyphs"
+    "glyphs",
+    "web-backend",
+    "documents",
+    "mascot"
   ]
 }

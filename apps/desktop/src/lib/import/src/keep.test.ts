@@ -73,7 +73,7 @@ describe('a Google Keep export', () => {
       file('Keep/Here.json', keepNote({ title: 'Here', textContent: 'y' })),
     ])
     expect(plan.files.map((one) => one.path)).toEqual(['Here.md'])
-    expect(plan.lost[0]).toBe('1 notes were in the bin and stay there')
+    expect(plan.lost[0]).toBe('1 note was in the bin and stays there')
   })
   test('an archived note goes to a folder called Archive, and says so', async () => {
     const plan = await readKeep([file('Keep/Old.json', keepNote({ title: 'Old', textContent: 'x', isArchived: true }))])

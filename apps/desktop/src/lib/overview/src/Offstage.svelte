@@ -13,6 +13,7 @@
     graphSurface,
     pagesSurface,
     timeSurface,
+    importSurface,
     viewSurface,
   } from '../../surfaces/src/api'
   import { faces } from './faces.svelte'
@@ -104,6 +105,8 @@
         {#await explorerSurface() then ExplorerTab}<ExplorerTab tab={current} focused={false} />{/await}
       {:else if current.kind === 'time'}
         {#await timeSurface() then TimeTab}<TimeTab tab={current} />{/await}
+      {:else if current.kind === 'import'}
+        {#await importSurface() then ImportTab}<ImportTab tab={current} />{/await}
       {/if}
     {/key}
   </div>

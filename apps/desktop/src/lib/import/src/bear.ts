@@ -6,6 +6,7 @@ import { dayOf, type Meta } from './meta'
 import { readPlain } from './plain'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
+import { counted } from './counted'
 
 const ARCHIVE = 'Archive'
 const BUNDLE = /^(.*?\.textbundle)(?:\/|$)/i
@@ -51,13 +52,13 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
     meta: (source) => infoOf(moved, source.path)?.meta,
   })
   if (trashed) {
-    lost.push(`${trashed} notes were in the bin and stay there`)
+    lost.push(counted(trashed, 'note was', 'notes were') + ` in the bin and ${trashed === 1 ? 'stays' : 'stay'} there`)
   }
   if (locked) {
-    lost.push(`${locked} notes are behind a password, which nothing but Bear can open`)
+    lost.push(counted(locked, 'note is', 'notes are') + ' behind a password, which nothing but Bear can open')
   }
   if (archived) {
-    lost.push(`${archived} archived notes are in a folder called Archive`)
+    lost.push(counted(archived, 'archived note is', 'archived notes are') + ' in a folder called Archive')
   }
   plan.lost.push(...lost)
   return plan

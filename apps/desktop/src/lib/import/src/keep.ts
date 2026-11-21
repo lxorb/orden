@@ -4,6 +4,7 @@ import { dayOf, noteText, type Meta } from './meta'
 import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
+import { counted } from './counted'
 
 const ASSETS = 'assets'
 const ARCHIVE = 'Archive'
@@ -86,10 +87,10 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
     })
   }
   if (trashed) {
-    lost.push(`${trashed} notes were in the bin and stay there`)
+    lost.push(counted(trashed, 'note was', 'notes were') + ` in the bin and ${trashed === 1 ? 'stays' : 'stay'} there`)
   }
   if (archived) {
-    lost.push(`${archived} archived notes are in a folder called Archive`)
+    lost.push(counted(archived, 'archived note is', 'archived notes are') + ' in a folder called Archive')
   }
   if (unreadable) {
     lost.push(

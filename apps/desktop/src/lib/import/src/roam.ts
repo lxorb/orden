@@ -4,6 +4,7 @@ import { dayOf, noteText, type Meta } from './meta'
 import { Names, pageLink, safeName } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
+import { counted } from './counted'
 
 const JOURNALS = 'Journals'
 const DAY =
@@ -74,7 +75,12 @@ export async function readRoam(sources: readonly Source[]): Promise<ImportPlan> 
     }
   }
   if (flattened) {
-    lost.push(`${flattened} block references were written out as the words they pointed at`)
+    lost.push(
+      counted(flattened, 'block reference was', 'block references were') +
+        ' written out as the words ' +
+        (flattened === 1 ? 'it' : 'they') +
+        ' pointed at',
+    )
   }
   return { format: 'roam', files: written, lost }
 }

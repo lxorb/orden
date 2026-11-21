@@ -88,7 +88,7 @@ describe('an Evernote export', () => {
   </note>`
     const plan = await readEvernote([file('A.enex', enex(secret))])
     expect(noteAt(plan, 'Secret.md')).toContain('…')
-    expect(plan.lost[0]).toBe('1 passages are encrypted, and nothing can read them without Evernote')
+    expect(plan.lost[0]).toBe('1 passage is encrypted, and nothing can read it without Evernote')
   })
   test('an attachment with no name of its own is named after its bytes', async () => {
     const unnamed = `  <note>
@@ -184,7 +184,7 @@ describe('an Evernote export that is not quite what the format says', () => {
       '<note-attributes><reminder-order>1424108700000</reminder-order><reminder-time>20150216T174500Z</reminder-time></note-attributes>',
     )
     const plan = await readEvernote([file('A.enex', enex(`${none}\n${one}`))])
-    expect(plan.lost).toEqual(['1 notes had a reminder, which the export does not carry'])
+    expect(plan.lost).toEqual(['1 note had a reminder, which the export does not carry'])
   })
   test('one picture in two notes is one file', async () => {
     const twice = `${bodied('One', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, 'p.png'))}

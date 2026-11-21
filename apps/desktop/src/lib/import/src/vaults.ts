@@ -26,9 +26,13 @@ export async function vaultSources(vault: Vault): Promise<Source[]> {
   return files.map((file) => {
     let held: Promise<Uint8Array> | null = null
     const once = () =>
-      (held ??= invoke<string>('read_obsidian_file', { vault: vault.path, path: file.path }).then(fromBase64, () => {
-        throw new Error(`${file.path} could not be read.`)
-      }))
+      (held ??= invoke<string>('read_obsidian_file', { vault: vault.path, path: file.path }).then(
+        fromBase64,
+        (error: unknown) => {
+          const why = String(error).split(': ').pop()
+          throw new Error(`${file.path} could not be read${why ? `: ${why}` : '.'}`)
+        },
+      ))
     return {
       path: file.path,
       ...(file.modified

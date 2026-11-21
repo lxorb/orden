@@ -1250,7 +1250,7 @@ class Workspace {
     this.openUnsaved('pages', blankPages(modes.pagesPaper))
   }
   openUnsaved(
-    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'explorer' | 'pass' | 'time' | 'settings',
+    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'explorer' | 'pass' | 'time' | 'settings' | 'import',
     text: string,
     name = UNTITLED,
     beside: string | null = null,
