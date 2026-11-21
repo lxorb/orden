@@ -103,7 +103,7 @@ const GLASS: ThemeInfo = {
   load: () => import('@orden/themes/glass').then((module) => module.glassCss),
   own: () => looks().then((port) => port.glassSettings()),
 }
-const FIRST_LOOK = { theme: GLASS_THEME, accent: 'green' }
+export const FIRST_LOOK = { theme: GLASS_THEME, accent: 'green' }
 const GIVEN_KEY = 'orden:accent-given'
 const GIVEN_BEFORE = 'yellow'
 const MOVED_KEY = 'orden:theme-moved'
