@@ -27,7 +27,6 @@ const ALLOWED: Record<string, { count: number; why: string }> = {
   'chats-client/src/Bell.svelte': { count: 1, why: 'the bell is not in a tab' },
   'chats-client/src/socket.ts': { count: 1, why: "the connection's heartbeat" },
   'chats-client/src/view/Recorder.svelte': { count: 1, why: 'ticks only while a voice note is being recorded' },
-  'views/src/day.svelte.ts': { count: 1, why: 'to move to whileShown' },
   'ai-sidebar/src/Composer.svelte': { count: 1, why: 'to move to whileShown' },
   'ai-sidebar/src/AiPane.svelte': { count: 1, why: 'to move to whileShown' },
 }

@@ -7,6 +7,7 @@
   import BoardLayout from './BoardLayout.svelte'
   import CardsLayout from './CardsLayout.svelte'
   import ChartLayout from './ChartLayout.svelte'
+  import { dayWhileShown } from './day.svelte'
   import { ghostOwner } from './drag.svelte'
   import DragGhost from './DragGhost.svelte'
   import type { Kit } from './kit'
@@ -23,6 +24,7 @@
   let asked = $state(0)
   const ghost = ghostOwner()
   onDestroy(ghost.release)
+  dayWhileShown()
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     const target = event.target
     if (keyElsewhere(event, event.currentTarget)) return
