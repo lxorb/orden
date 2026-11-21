@@ -14,6 +14,7 @@ export interface Point {
   y: number
 }
 export interface Frame {
+  grip: Point
   shown: Shown
   tree: boolean
   moved: boolean
@@ -156,7 +157,7 @@ export const drifted = (hands: readonly Point[], time: number): Point[] =>
     x: one.x + 7 * Math.sin(time * 0.8 + at * 2.1),
     y: one.y + 5 * Math.sin(time * 1.1 + at * 1.3),
   }))
-export function frameAt(scene: Scene, given: number, origin: string, phone = false): Frame {
+export function frameAt(scene: Scene, given: number, origin: string, phone = false, you = false): Frame {
   const at = clamp(given)
   const order = SCENES.indexOf(scene)
   const past = (one: Scene) => order > SCENES.indexOf(one)
@@ -176,7 +177,7 @@ export function frameAt(scene: Scene, given: number, origin: string, phone = fal
   if (scene === 'canvas') {
     const grip = { x: ride.x + GRIP.x, y: ride.y + GRIP.y }
     hands = [
-      at < 0.12 ? toward({ x: -300, y: 260 }, grip, span(at, 0, 0.12)) : grip,
+      you ? REST[0] : at < 0.12 ? toward({ x: -300, y: 260 }, grip, span(at, 0, 0.12)) : grip,
       at < 0.45
         ? REST[1]
         : at < 0.6
@@ -209,6 +210,10 @@ export function frameAt(scene: Scene, given: number, origin: string, phone = fal
           ]
         : [WRITTEN[0].words.length, WRITTEN[1].words.length]
   return {
+    grip:
+      at < 0.12
+        ? toward({ x: -300, y: 260 }, { x: ride.x + GRIP.x, y: ride.y + GRIP.y }, span(at, 0, 0.12))
+        : { x: ride.x + GRIP.x, y: ride.y + GRIP.y },
     shown,
     tree: scene === 'organize' && at >= 0.1,
     moved,

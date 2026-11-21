@@ -109,7 +109,7 @@ export async function staged(): Promise<Stage> {
   if (page) rooms.heard(page.note.key, 1, people([2]))
   return { canvas, plan, page }
 }
-type Cue = Pick<DemoCue, 'scene' | 'at' | 'still'>
+type Cue = Pick<DemoCue, 'scene' | 'at' | 'still'> & { you?: boolean }
 export function driver(stage: Stage): (cue: Cue, now: number) => void {
   const origin = location.origin
   let cue: Cue = { scene: 'canvas', at: 0, still: false }
@@ -208,7 +208,7 @@ export function driver(stage: Stage): (cue: Cue, now: number) => void {
     const still = cue.still === true
     const at = still ? 1 : cue.at
     if (made.scene !== cue.scene || made.at !== at)
-      made = { scene: cue.scene, at, frame: frameAt(cue.scene, at, origin, phone) }
+      made = { scene: cue.scene, at, frame: frameAt(cue.scene, at, origin, phone, cue.you === true) }
     const { frame } = made
     const showing = CanvasStore.drawing(stage.canvas.note, workspace.tabs)
     if (showing !== store) {

@@ -2,7 +2,7 @@ import type { DemoCue } from '../../showcase/src/api'
 import { loopScenes, type LoopScene } from './loops'
 import type { Stage } from './run'
 
-type Draw = (cue: Pick<DemoCue, 'scene' | 'at' | 'still'>, now: number) => void
+type Draw = (cue: Pick<DemoCue, 'scene' | 'at' | 'still'> & { you?: boolean }, now: number) => void
 interface Heard {
   play?: boolean
   still?: boolean
