@@ -14,6 +14,7 @@ vi.mock('../../surfaces/src/api', () => ({
   showFeedback: () => undefined,
 }))
 const { workspace } = await import('../../workspace/src/api')
+type Entry = import('../../workspace/src/api').Entry
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { agentMarks } = await import('../../workspace/src/api')
 const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('../../gates/src/api')
@@ -482,5 +483,31 @@ describe('the head of a phone screen', () => {
     }
     viewport.device = 'desktop'
     workspace.panel = null
+  })
+})
+describe('a bookmarked heading', () => {
+  test('is named by its words, not the markdown it is written in', async () => {
+    const Bookmarks = (await import('./Bookmarks.svelte')).default
+    const entry = (path: string, children: Entry[] = []) => ({
+      name: path.split('/').pop() ?? path,
+      path,
+      is_dir: children.length > 0,
+      modified: 0,
+      created: 0,
+      children,
+    })
+    workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    workspace.bookmarks.put('/space', [
+      { kind: 'heading', path: 'Gym.md', text: '3a. [Lateral Raise Machine](https://example.com/raise)' },
+    ])
+    const tree = workspace.tree
+    workspace.tree = entry('/space', [entry('/space/Gym.md')])
+    const { headingWords } = await import('@orden/markdown/escapes')
+    const html = render(Bookmarks, { props: { onsearch: () => undefined, nameOf: headingWords } }).body
+    workspace.bookmarks.put('/space', [])
+    workspace.tree = tree
+    expect(html).toContain('3a. Lateral Raise Machine')
+    expect(html).not.toContain('](https://')
   })
 })
