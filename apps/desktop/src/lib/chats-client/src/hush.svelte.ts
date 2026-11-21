@@ -1,8 +1,9 @@
 import { type Hours, isHours, isKeywords, MUTED_FOR_GOOD } from '@orden/chats/notify'
-import { account, api, type AccountSettings, stands } from '../../accounts/src/api'
+import { account, AccountOwed, type AccountSettings, stands } from '../../accounts/src/api'
 import { heardElsewhere, isBoolean, isRecord, keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden.chat-hush'
+const OWED_KEY = 'orden:chat-hush-owed'
 export const WEEKDAYS = [1, 2, 3, 4, 5]
 export const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6]
 export const WORKING_HOURS: Hours = { days: WEEKDAYS, from: 9 * 60, to: 18 * 60 }
@@ -11,6 +12,11 @@ class Hush {
   hours = $state<Hours | null>(null)
   previews = $state(true)
   sound = $state(false)
+  private readonly owed = new AccountOwed(
+    OWED_KEY,
+    (settings) => this.taken(settings),
+    (owed) => this.backToDefaults(owed),
+  )
   constructor() {
     this.heard()
   }
@@ -45,13 +51,19 @@ class Hush {
     this.changed({ chatSound: on })
   }
   forget() {
-    this.keywords = []
-    this.hours = null
-    this.previews = true
-    this.sound = false
+    this.defaults()
     this.persist()
   }
   receive(remote: AccountSettings) {
+    this.owed.follows()
+    if (this.owed.standing) {
+      const token = account.accountToken
+      if (token) void this.owed.settle(token)
+      return
+    }
+    this.taken(remote)
+  }
+  private taken(remote: AccountSettings) {
     this.took({
       keywords: remote.chatKeywords,
       hours: remote.chatHours,
@@ -59,6 +71,16 @@ class Hush {
       sound: remote.chatSound,
     })
     this.persist()
+  }
+  private defaults() {
+    this.keywords = []
+    this.hours = null
+    this.previews = true
+    this.sound = false
+  }
+  private backToDefaults(owed: AccountSettings) {
+    this.defaults()
+    this.taken(owed)
   }
   private took(value: Record<string, unknown>) {
     if (isKeywords(value.keywords)) this.keywords = value.keywords
@@ -68,8 +90,7 @@ class Hush {
   }
   private changed(patch: AccountSettings) {
     this.persist()
-    const token = account.accountToken
-    if (token) void api.saveSettings(token, patch).catch(() => undefined)
+    this.owed.send(patch)
   }
   private persist() {
     keepJson(KEY, {

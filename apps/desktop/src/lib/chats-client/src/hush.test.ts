@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 const saved = vi.hoisted(() => [] as Record<string, unknown>[])
 vi.mock('../../accounts/src/account.svelte', () => ({
-  account: { accountToken: 'token', forgetWithSession: () => undefined },
+  account: { accountToken: 'token', forgetWithSession: () => undefined, holdsNoAccount: () => undefined },
 }))
 vi.mock('../../accounts/src/client', () => ({
   api: {
@@ -12,6 +12,12 @@ vi.mock('../../accounts/src/client', () => ({
     },
   },
 }))
+const kept = new Map<string, string>()
+vi.stubGlobal('localStorage', {
+  getItem: (key: string) => kept.get(key) ?? null,
+  setItem: (key: string, value: string) => void kept.set(key, value),
+  removeItem: (key: string) => void kept.delete(key),
+})
 const { hush, WEEKDAYS } = await import('./hush.svelte')
 describe('hush', () => {
   it('reads keywords off a line, each once, and tells the account', () => {
