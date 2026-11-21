@@ -2,8 +2,8 @@ import type { FileRef } from '@orden/chats'
 import { WAVE_BARS } from '@orden/chats/limits'
 
 const GALLERY_MOST = 6
-const PICTURE_TALLEST = 360
-const PICTURE_WIDEST = 320
+export const PICTURE_TALLEST = 360
+export const PICTURE_WIDEST = 320
 export function isPicture(file: FileRef): boolean {
   return file.type.startsWith('image/')
 }
