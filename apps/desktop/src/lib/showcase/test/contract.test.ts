@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
+  ageInWords,
   APP_ORIGIN,
   appHomeAt,
   DEMO_LOOP_SCENES,
@@ -20,6 +21,7 @@ import {
   poolOf,
   previewAnswer,
   releaseAssets,
+  releasedAt,
   siteAnswer,
   siteFiles,
   SITE_ORIGIN,
@@ -193,6 +195,20 @@ describe('the download button', () => {
     expect(releaseAssets({ assets: [{ name: 1 }, null, 'x'] })).toEqual([])
     expect(releaseAssets('not json')).toEqual([])
     expect(LATEST_RELEASE_API).toBe('https://api.github.com/repos/lxorb/orden/releases/latest')
+  })
+})
+describe('the age of the latest release', () => {
+  test('is read from the release, and from nothing else', () => {
+    expect(releasedAt({ published_at: '2026-11-21T11:12:54Z' })?.toISOString()).toBe('2026-11-21T11:12:54.000Z')
+    for (const wrong of [null, 'x', {}, { published_at: 5 }, { published_at: 'soon' }])
+      expect(releasedAt(wrong)).toBe(null)
+  })
+  test('is told in days, with today and yesterday by name', () => {
+    const at = new Date('2026-11-21T11:00:00Z')
+    expect(ageInWords(at, new Date('2026-11-21T23:00:00Z'))).toBe('today')
+    expect(ageInWords(at, new Date('2026-11-22T12:00:00Z'))).toBe('yesterday')
+    expect(ageInWords(at, new Date('2026-11-27T12:00:00Z'))).toBe('6 days ago')
+    expect(ageInWords(at, new Date('2026-11-20T12:00:00Z'))).toBe('today')
   })
 })
 describe('the two addresses', () => {

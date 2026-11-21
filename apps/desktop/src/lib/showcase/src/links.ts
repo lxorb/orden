@@ -80,3 +80,16 @@ export function releaseAssets(body: unknown): ReleaseAsset[] {
     return typeof name === 'string' && typeof url === 'string' ? [{ name, url }] : []
   })
 }
+export function releasedAt(body: unknown): Date | null {
+  const published = (body as { published_at?: unknown } | null)?.published_at
+  if (typeof published !== 'string') return null
+  const at = new Date(published)
+  return Number.isNaN(at.getTime()) ? null : at
+}
+const DAY = 24 * 60 * 60 * 1000
+export function ageInWords(then: Date, now: Date): string {
+  const days = Math.max(0, Math.floor((now.getTime() - then.getTime()) / DAY))
+  if (days === 0) return 'today'
+  if (days === 1) return 'yesterday'
+  return `${days} days ago`
+}

@@ -12,6 +12,7 @@ export {
   type DemoPlay,
 } from './demo-cue'
 export {
+  ageInWords,
   APP_ORIGIN,
   appHomeAt,
   downloadFor,
@@ -19,6 +20,7 @@ export {
   LATEST_RELEASE_API,
   originsAt,
   releaseAssets,
+  releasedAt,
   SITE_ORIGIN,
 } from './links'
 export { poolOf } from './pool'
