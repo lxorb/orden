@@ -1,5 +1,6 @@
 import { EditorSelection, type EditorState, type TransactionSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { pressedByPointer } from '../../press'
 import { later } from '../../shared'
 import { OrdenWidget } from '../widget'
 import { openLightbox } from './lightbox'
@@ -165,12 +166,15 @@ export class ImageWidget extends OrdenWidget {
       frame.classList.remove('is-loading')
       frame.classList.add('is-broken')
     })
-    frame.addEventListener('pointerdown', (event) => {
-      if (event.button !== 0 || this.inToolbar(event)) return
-      event.preventDefault()
-      const current = imageOfFrame(view, frame)
-      if (current) select(view, current, event.shiftKey)
-    })
+    pressedByPointer(
+      frame,
+      (event) => {
+        event.preventDefault()
+        const current = imageOfFrame(view, frame)
+        if (current) select(view, current, event.shiftKey)
+      },
+      (event) => this.inToolbar(event),
+    )
     frame.addEventListener('mousedown', (event) => {
       if (!this.inToolbar(event)) event.preventDefault()
     })
