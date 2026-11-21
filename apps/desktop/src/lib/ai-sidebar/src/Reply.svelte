@@ -18,6 +18,7 @@
   import { howFor, tabAsk } from '../../workspace/src/api'
   import { views } from '../../panes/src/api'
   import { ai } from '../../ai-providers/src/api'
+  import { settingsWindow } from '@orden/contracts'
   import type { Source } from './chat-parts'
   import Explored from './Explored.svelte'
   import PartRow from './PartRow.svelte'
@@ -161,6 +162,7 @@
   const failed = $derived(turn.parts.some((part) => part.kind === 'notice' && part.code === 'error'))
   const answered = $derived(!!words.trim())
   const reset = $derived(chat.head ? chat.resets[chat.head.id] : undefined)
+  const others = $derived(ai.providers.filter((one) => one.id !== chat.provider?.id))
 </script>
 
 {#snippet one(block: Block)}
@@ -195,6 +197,13 @@
           <button class="link" onclick={() => chat.waitForReset(false)}>Cancel</button>
         {:else if reset}
           <button class="link" onclick={() => chat.waitForReset(true)}> Continue when the limit resets </button>
+        {/if}
+        {#if reset}
+          {#each others as one (one.id)}
+            <button class="link" onclick={() => chat.retryWith(one.id)}>Ask {one.name}</button>
+          {:else}
+            <button class="link" onclick={() => settingsWindow().show('ai')}>Add a provider</button>
+          {/each}
         {/if}
       {/if}
     </p>
