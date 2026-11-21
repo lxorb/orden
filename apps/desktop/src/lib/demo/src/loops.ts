@@ -1,3 +1,4 @@
+import { type ChatsDemo, portOf } from '@orden/contracts'
 import { setPeers } from '@orden/editor'
 import type { DemoCue } from '../../showcase/src/api'
 import { CanvasStore } from '../../canvas/src/api'
@@ -9,9 +10,10 @@ import { chatStore } from '../../ai-chat/src/api'
 import { ai } from '../../ai-providers/src/api'
 import { replacement, TEAM, writtenAt } from './scenes'
 import { browsing, scriptOf, turnsAt, working } from './ai'
+import { BEFORE, CHAT_NAME, chatAt, DURING, PEOPLE } from './chat'
 import { inkAt } from './ink'
 import type { Stage } from './run'
-import { PAGE, PLAN_TEXT, RIDE_DATA, RIDE_TEXT, RIDE_WRITTEN, ROOT, ROUTES, SPEC, WRITTEN } from './space'
+import { LAUNCH, PAGE, PLAN_TEXT, RIDE_DATA, RIDE_TEXT, RIDE_WRITTEN, ROOT, ROUTES, SPEC, WRITTEN } from './space'
 
 type Draw = (cue: Pick<DemoCue, 'scene' | 'at' | 'still'>, now: number) => void
 export interface LoopScene {
@@ -152,7 +154,51 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
     }
     await new Promise((done) => requestAnimationFrame(done))
   })
+  let talk: { chats: ChatsDemo; path: string } | null = null
+  let talked = { said: 0, typing: null as string | null }
+  let staging = false
+  let lastPhase = 0
+  const restage = async () => {
+    const port = portOf('chats.demo')
+    if (!port.ok || staging) return
+    staging = true
+    try {
+      const [me, ...others] = PEOPLE
+      const chats = await port.value.stage(me)
+      const path = chats.add(`${ROOT}/${LAUNCH}`, CHAT_NAME, others)
+      for (const one of BEFORE) chats.say(path, one.from, one.body)
+      chats.open(path)
+      talk = { chats, path }
+      talked = { said: 0, typing: null }
+    } finally {
+      staging = false
+    }
+  }
   return {
+    chat: {
+      period: 16000,
+      still: 0.85,
+      ready: restage,
+      tick: (phase) => {
+        const wrapped = phase < lastPhase
+        lastPhase = phase
+        if (wrapped) {
+          void restage()
+          return
+        }
+        if (!talk) return
+        const now = chatAt(phase)
+        if (now.typing !== talked.typing) {
+          if (talked.typing) talk.chats.typing(talk.path, talked.typing, false)
+          if (now.typing) talk.chats.typing(talk.path, now.typing, true)
+        }
+        for (let at = talked.said; at < now.said; at++) {
+          const line = DURING[at]
+          if (line) talk.chats.say(talk.path, line.from, line.body)
+        }
+        talked = now
+      },
+    },
     flow: {
       period: 20000,
       still: 0.35,
