@@ -147,6 +147,7 @@ function outputIn(value: unknown): ToolOutput | undefined {
     images,
     error: value.error === true,
     ...(isString(value.approval) ? { approval: value.approval } : {}),
+    ...(isString(value.asks) ? { asks: value.asks } : {}),
     ...(isString(value.category) ? { category: value.category } : {}),
     ...(isString(value.site) ? { site: value.site } : {}),
     ...(isString(value.agent) ? { agent: value.agent } : {}),

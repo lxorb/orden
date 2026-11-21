@@ -52,6 +52,7 @@ export function outputIn(value: unknown): ToolOutput {
     ...(approval ? { approval } : {}),
     ...(approval && text(meta.category) ? { category: text(meta.category) } : {}),
     ...(approval && text(meta.site) ? { site: text(meta.site) } : {}),
+    ...(approval && text(meta.summary) ? { asks: text(meta.summary) } : {}),
   }
 }
 export const crateTools: Tools = {

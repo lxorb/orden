@@ -18,11 +18,11 @@ describe('a question the crate asks', () => {
     const asked: unknown[] = []
     await crateAnswers.asked((one) => asked.push(one))
     const approval = { id: 'q1', agent: 'orden-cc', verb: 'read_note', category: 'writing' }
-    heard?.({ payload: { kind: 'asked', approval: { ...approval, thread: 'thread-b' } } })
+    heard?.({ payload: { kind: 'asked', approval: { ...approval, thread: 'thread-b', summary: 'Copy Gym.md' } } })
     heard?.({ payload: { kind: 'asked', approval: { ...approval, id: 'q2', thread: '' } } })
     heard?.({ payload: { kind: 'asked', approval: { ...approval, id: 'q3' } } })
     expect(asked).toEqual([
-      { ...approval, thread: 'thread-b' },
+      { ...approval, thread: 'thread-b', summary: 'Copy Gym.md' },
       { ...approval, id: 'q2' },
       { ...approval, id: 'q3' },
     ])

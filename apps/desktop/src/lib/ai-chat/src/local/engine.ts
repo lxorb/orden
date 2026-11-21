@@ -359,8 +359,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
                 at: Date.now(),
               }
             : null
-          if (part?.kind === 'tool' && outcome) grow(at, { ...part, ...outcome })
-          else if (at < 0) say({ kind: 'tool', id, verb: name, args: args ?? {}, state: 'running', ...outcome })
+          if (part?.kind === 'tool' && outcome) {
+            const asks = part.result?.asks
+            grow(at, { ...part, ...outcome, result: { ...outcome.result, ...(asks ? { asks } : {}) } })
+          } else if (at < 0) say({ kind: 'tool', id, verb: name, args: args ?? {}, state: 'running', ...outcome })
         }
         if (said.compacted) say({ kind: 'notice', code: 'compacted', text: '' })
         if (said.usage) counted(said.usage)
@@ -428,6 +430,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
             approval: asked.id,
             category: asked.category,
             ...(asked.site ? { site: asked.site } : {}),
+            ...(asked.summary ? { asks: asked.summary } : {}),
           },
         })
       })

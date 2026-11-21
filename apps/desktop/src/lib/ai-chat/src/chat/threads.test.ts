@@ -489,14 +489,14 @@ describe('a helper’s thread (#1062)', () => {
           verb: 'run_agent',
           args: {},
           state: 'ok',
-          result: { text: 'done', images: [], error: false, agent: 'h-1' },
+          result: { text: 'done', images: [], error: false, agent: 'h-1', asks: 'Copy Gym.md' },
         },
         { kind: 'notice', code: 'command', text: '↳ check', threads: ['h-2', 4] as string[] },
       ],
     })
     const back = threadIn(JSON.parse(JSON.stringify(thread)))
     expect(back?.turns.at(-1)?.parts).toEqual([
-      expect.objectContaining({ result: expect.objectContaining({ agent: 'h-1' }) }),
+      expect.objectContaining({ result: expect.objectContaining({ agent: 'h-1', asks: 'Copy Gym.md' }) }),
       { kind: 'notice', code: 'command', text: '↳ check', threads: ['h-2'] },
     ])
   })
