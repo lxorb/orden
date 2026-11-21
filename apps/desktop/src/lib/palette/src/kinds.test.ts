@@ -110,6 +110,11 @@ describe('one row per place', () => {
     expect(first?.kind === 'note' && first.entry.path).toBe(`${ROOT}/Uni/Plan.md`)
     expect(found.map(named)).toContain('bookmark Plan B')
   })
+  test('a bookmarked heading reads as its words, and still opens at the heading as written (#2443)', () => {
+    const mark = { kind: 'heading' as const, path: 'Plan.md', text: 'Plan [B](https://example.com/b)' }
+    const [row] = ranked('plan b', everything({ bookmarks: [mark] })).filter((one) => one.kind === 'bookmark')
+    expect(row?.kind === 'bookmark' && [row.label, row.mark.text]).toEqual(['Plan B', mark.text])
+  })
   test('a setting a command already opens is the command', () => {
     const found = candidates(
       world({
@@ -202,6 +207,16 @@ describe('the headings of the note in front', () => {
     expect(rows[1]?.item).toMatchObject({ depth: 1 })
     expect(ranked('', rows, MOST_PLACES)).toHaveLength(MOST_PLACES)
     expect(ranked('day 7', rows, MOST_PLACES).length).toBeLessThanOrEqual(MOST_PLACES)
+  })
+  test('read as the words they show, while each still goes to its own line (#2443)', () => {
+    const marked = [
+      { line: 7, text: 'See [the plan](https://example.com/plan) and **`Tax` [[Home/Tax|forms]]**', level: 2 },
+    ]
+    const rows = headingCandidates(marked, true)
+    expect(rows.map((one) => one.item)).toEqual([
+      { kind: 'place', line: 7, text: 'See the plan and Tax forms', depth: 0, hint: null },
+    ])
+    expect(ranked('plan and tax', rows).map(named)).toEqual(['# See the plan and Tax forms'])
   })
   test('sit under one another behind `#`', () => {
     const rows = headingCandidates(HEADINGS, true).map((one) => one.item)
