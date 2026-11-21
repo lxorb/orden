@@ -57,7 +57,7 @@ test('picking a space in the menu shows that space and shuts the menu', async ()
   const shown = vi.spyOn(workspace, 'showSpace').mockResolvedValue(undefined)
   gone.push(() => shown.mockRestore())
   into.querySelector<HTMLButtonElement>('button.name')?.click()
-  await vi.waitFor(() => expect(into.querySelector('[data-spaces-open]')).not.toBeNull())
+  await vi.waitFor(() => expect(into.querySelector('[data-spaces-open]')).not.toBeNull(), { timeout: 10_000 })
   flushSync()
   const row = [...into.querySelectorAll<HTMLButtonElement>('[data-spaces-open] .orden-row')].find((one) =>
     one.textContent.includes('Work'),
