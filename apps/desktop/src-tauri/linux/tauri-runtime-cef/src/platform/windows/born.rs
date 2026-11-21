@@ -26,6 +26,10 @@ fn asked() -> Option<Asked> {
   *ASKED.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
+fn inside(at: [i32; 4]) -> [i32; 4] {
+  [0, 0, at[2], at[3]]
+}
+
 fn class_of(window: HWND) -> String {
   let mut name = [0u16; 64];
   let length = unsafe { GetClassNameW(window, &mut name) };
@@ -47,7 +51,7 @@ unsafe extern "system" fn held(
     {
       let pos = &mut *(lparam.0 as *mut WINDOWPOS);
       pos.flags = (pos.flags & !(SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE)) | SWP_NOACTIVATE;
-      let [x, y, cx, cy] = asked.at;
+      let [x, y, cx, cy] = inside(asked.at);
       (pos.x, pos.y, pos.cx, pos.cy) = (x, y, cx, cy);
     }
     DefSubclassProc(hwnd, msg, wparam, lparam)
@@ -68,7 +72,7 @@ unsafe extern "system" fn creating(code: i32, wparam: WPARAM, lparam: LPARAM) ->
       {
         let cs = &mut *made.lpcs;
         cs.style &= !(WS_VISIBLE.0 as i32);
-        [cs.x, cs.y, cs.cx, cs.cy] = asked.at;
+        [cs.x, cs.y, cs.cx, cs.cy] = inside(asked.at);
         asked.child = child.0 as isize;
         drop(kept);
         let _ = SetWindowSubclass(child, Some(held), HELD, 0);
@@ -117,4 +121,15 @@ pub(crate) fn born_where_asked<T>(
     }
   }
   made
+}
+
+#[cfg(test)]
+mod tests {
+  use super::inside;
+
+  #[test]
+  fn a_page_is_born_inside_its_window_at_the_size_asked_whatever_place_was_asked() {
+    assert_eq!(inside([-20000, -20000, 1024, 645]), [0, 0, 1024, 645]);
+    assert_eq!(inside([353, 75, 25, 25]), [0, 0, 25, 25]);
+  }
 }
