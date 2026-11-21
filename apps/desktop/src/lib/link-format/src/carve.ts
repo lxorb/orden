@@ -1,4 +1,5 @@
 import { encodeTarget, findLinks, isTabFile, sectionOf, wikilinkCannotName } from '@orden/markdown/links'
+import { headingWords } from '@orden/markdown/escapes'
 import { nameFromContent } from '../../platform/src/api'
 import { linkTo } from './composer'
 
@@ -55,7 +56,7 @@ const noteNamed = (name: string): string => (isTabFile(name) || MARKDOWN.test(na
 const SENTENCE_END = /[.!?。！？]+$/u
 function oneLine(text: string): string {
   const first = text.split('\n')[0] ?? ''
-  const words = first.replace(/^\s*>?\s*(?:#{1,6}\s+|[-*+]\s+|\d+[.)]\s+)?/, '').trim()
+  const words = headingWords(first.replace(/^\s*>?\s*(?:#{1,6}\s+|[-*+]\s+|\d+[.)]\s+)?/, '')).trim()
   return words.length > 0 && words.length <= 60 ? words : ''
 }
 const lineStart = (text: string, at: number): number => text.lastIndexOf('\n', Math.max(0, at - 1)) + 1
