@@ -3,6 +3,8 @@
   import { menu } from '../../ui-kit/src/api'
   import ActivityMark from './ActivityMark.svelte'
   import { sensesDevice } from './machine'
+  import { sensesHealth } from './health'
+  import { watchedHealth } from './health-store.svelte'
   import type { Place } from './counted'
   import { activeIn, within } from './lanes'
   import { length, nameOf, placeTint, tintOf } from './look'
@@ -59,6 +61,7 @@
       : undefined,
   )
   let all = $state<Lane | null>(null)
+  const health = watchedHealth(() => [from, to])
   const active = $derived(activeIn(minutes, from, to))
   const found = $derived(within(time.spans, minutes, from, to, now))
   const groups = $derived(LANES.map(([key, label]) => ({ lane: key, label, list: found.places[key] })))
@@ -205,6 +208,11 @@
       </div>
     {/each}
   </section>
+  {#if sensesHealth(health.readings, health.workouts)}
+    {#await import('./HealthCard.svelte') then { default: HealthCard }}
+      <HealthCard {from} {to} readings={health.readings} workouts={health.workouts} />
+    {/await}
+  {/if}
   {#if sensesDevice(minutes)}
     {#await import('./DeviceCard.svelte') then { default: DeviceCard }}
       <DeviceCard {from} {to} {minutes} />

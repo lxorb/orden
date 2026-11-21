@@ -1,10 +1,10 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly, localDate, midnightOf } from '../../platform/src/api'
+  import { dur, fly, isDesktop, localDate, midnightOf } from '../../platform/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { DateField } from '../../ui-controls/src/api'
-  import { DIVIDER, hang, menu, overlays, segmented } from '../../ui-kit/src/api'
+  import { Cross, DIVIDER, hang, menu, overlays, segmented } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
   import Activities from './Activities.svelte'
   import Blocks from './Blocks.svelte'
@@ -13,6 +13,7 @@
   import { length } from './look'
   import { managing } from './manage.svelte'
   import { dayOf } from '../../tasks-model/src/api'
+  import HeartPicker from './HeartPicker.svelte'
   import NowCard from './NowCard.svelte'
   import { rangeTotals } from './schedule'
   import { type Kind, readSpec, writeSpec } from './spec'
@@ -122,9 +123,34 @@
     if (!redo && !shortcuts.pressed('edit.undo', event)) return
     if (undone(redo)) event.preventDefault()
   }
+  let picking = $state<HTMLInputElement | null>(null)
+  let more = $state<HTMLElement | null>(null)
+  let heartOpen = $state(false)
+  let imported = $state<string | null>(null)
+  async function importWatch(files: FileList | null) {
+    if (!files?.length) return
+    const [{ gatherFiles }, { healthStore }] = await Promise.all([
+      import('./health-import'),
+      import('./health-store.svelte'),
+    ])
+    const got = await gatherFiles([...files])
+    await healthStore.keep(got.readings, got.workouts)
+    imported = `Imported ${String(got.read)} ${got.read === 1 ? 'file' : 'files'}${got.failed.length ? `, ${String(got.failed.length)} could not be read` : ''}`
+    if (picking) picking.value = ''
+  }
   function showMenu(event: MouseEvent) {
     void import('./menu').then(({ trackingMenu }) =>
-      menu.show(event, [{ label: 'Activities', run: manage }, DIVIDER, ...trackingMenu()], { title: 'Time tracker' }),
+      menu.show(
+        event,
+        [
+          { label: 'Activities', run: manage },
+          { label: 'Import watch data (FIT)...', run: () => picking?.click() },
+          ...(isDesktop ? [{ label: 'Heart rate monitor...', run: () => (heartOpen = true) }] : []),
+          DIVIDER,
+          ...trackingMenu(),
+        ],
+        { title: 'Time tracker' },
+      ),
     )
   }
   const KINDS = [
@@ -196,11 +222,29 @@
           aria-label="More"
           title="More"
           aria-haspopup="menu"
+          bind:this={more}
           onclick={showMenu}>⋯</button
         >
+        <input
+          bind:this={picking}
+          class="files"
+          type="file"
+          accept=".fit,.zip"
+          multiple
+          aria-label="Watch data files"
+          data-time-import
+          onchange={(event) => void importWatch(event.currentTarget.files)}
+        />
       </div>
     </div>
 
+    {#if imported}
+      <p class="imported" role="status" data-time-imported>
+        {imported}<button type="button" class="orden-glyph" aria-label="Dismiss" onclick={() => (imported = null)}
+          ><Cross /></button
+        >
+      </p>
+    {/if}
     <div class="main" class:alone={!single}>
       <aside class="left">
         <Summary
@@ -223,6 +267,10 @@
   </div>
 </div>
 
+{#if heartOpen && more}
+  <HeartPicker from={more} onclose={() => (heartOpen = false)} />
+{/if}
+
 {#if customOpen && customChip}
   <div
     class="custom orden-layer"
@@ -244,6 +292,21 @@
 <Activities open={managing.by === me} onclose={() => managing.close()} />
 
 <style>
+  .files {
+    display: none;
+  }
+  .imported {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-3);
+    padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text);
+  }
   .tab {
     container: time-tab / inline-size;
     height: 100%;
