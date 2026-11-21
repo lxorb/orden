@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { FileRef } from '@orden/chats'
   import { localNumber } from '../../../platform/src/api'
-  import { fitted, gallery, isVideo } from './media'
+  import { fitted, gallery, galleryWidth, isVideo } from './media'
   import { fileUrl } from './urls.svelte'
 
   const {
@@ -44,7 +44,7 @@
     </button>
   {/if}
 {:else if files.length > 1}
-  <div class="grid" style:--across={grid.across} style:width="{Math.min(column, 480)}px">
+  <div class="grid" style:--across={grid.across} style:width="{galleryWidth(column)}px">
     {#each grid.shown as file, index (`${file.hash}:${index}`)}
       <button type="button" class="cell picture" aria-label={file.name} onclick={() => onopen(index)}>
         <img src={url(file)} alt="" draggable="false" loading="lazy" decoding="async" />
