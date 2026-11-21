@@ -16,6 +16,7 @@
     "ui-kit",
     "workspace",
     "icon-picker",
-    "marks"
+    "marks",
+    "gates"
   ]
 }

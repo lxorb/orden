@@ -248,7 +248,9 @@ describe('the requests a drive holds or refuses', () => {
 })
 describe('a panel the sidebar offers only to an account', () => {
   const sidebar = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'sidebar', 'src', 'Sidebar.svelte')
-  const owed = [...sidebar.matchAll(/id !== '(\w+)' \|\| \(!!account\.accountToken\b/g)].map((found) => caught(found))
+  const owed = [...sidebar.matchAll(/id !== '(\w+)' \|\| (?:\(!!account\.accountToken\b|chatsShownIn\()/g)].map(
+    (found) => caught(found),
+  )
   test('is read from the rule that offers it', () => {
     expect(owed).toContain('chats')
   })
