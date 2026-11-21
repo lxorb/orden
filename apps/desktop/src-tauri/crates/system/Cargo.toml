@@ -20,7 +20,10 @@ base64.workspace = true
 fontdb.workspace = true
 reqwest.workspace = true
 rustls.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["rt"] }
+btleplug = "0.13"
+futures-util = "0.3"
+uuid = "1"
 
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
 dirs.workspace = true
