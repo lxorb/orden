@@ -1331,7 +1331,7 @@ impl<T: UserEvent> WinitCefApp<T> {
       WebviewMessage::CanGoBack(tx) => _ = tx.send(Ok(child.browser.can_go_back() == 1)),
       WebviewMessage::GoForward => child.browser.go_forward(),
       WebviewMessage::CanGoForward(tx) => _ = tx.send(Ok(child.browser.can_go_forward() == 1)),
-      WebviewMessage::Close => child.host.close_browser(0),
+      WebviewMessage::Close => child.host.close_browser(crate::capture::closing(child.browser.identifier())),
       WebviewMessage::SetFocus => {
         child.host.set_focus(1);
         #[cfg(windows)]
