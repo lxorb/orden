@@ -399,3 +399,30 @@ test('the device card sums what this computer said of itself, and stays away whe
   expect(row('On battery')).toContain(length(30 * M))
   expect(row('CPU')).toContain('25%')
 })
+test('watch data imported from a FIT file shows in a Health card beside the day', async () => {
+  const { fitBytes, fitSeconds } = await import('../test/fit-maker')
+  const bytes = fitBytes([
+    {
+      global: 55,
+      fields: [
+        [253, 4, 0x86],
+        [27, 1, 0x02],
+      ],
+      rows: [
+        [fitSeconds(at(8)), 60],
+        [fitSeconds(at(8) + M), 70],
+      ],
+    },
+  ])
+  shown(TimeTab, { tab: tab() })
+  const input = target.querySelector<HTMLInputElement>('[data-time-import]')
+  expect(input?.type).toBe('file')
+  Object.defineProperty(input, 'files', { value: [new File([bytes], 'WELLNESS.FIT')], configurable: true })
+  input?.dispatchEvent(new Event('change', { bubbles: true }))
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.ownerDocument.querySelector('[data-time-imported]')?.textContent).toContain('Imported 1 file')
+    expect(target.querySelector('[data-time-health-card]')).not.toBeNull()
+  })
+  expect(target.querySelector('[data-health-row="Heart rate"]')?.textContent).toContain('65 bpm')
+})

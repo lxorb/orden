@@ -2,6 +2,7 @@
   import ActivityButton from './ActivityButton.svelte'
   import { ticking } from './days'
   import { clock } from './look'
+  import { liveHeart } from './health-live.svelte'
   import { time } from './time.svelte'
 
   const { now, compact = false, onmanage }: { now: number; compact?: boolean; onmanage: () => void } = $props()
@@ -22,6 +23,13 @@
     />
     <span class="since">{running ? `Since ${clock(running.start)}` : 'Not tracking'}</span>
   </div>
+  {#if liveHeart.state === 'connected' && liveHeart.bpm !== null}
+    <span class="heart" data-time-live-heart title="Heart rate from {liveHeart.name ?? 'your watch'}"
+      ><svg viewBox="0 0 16 16" aria-hidden="true"
+        ><path d="M8 14s-5.5-3.4-5.5-7.2A3 3 0 0 1 8 4.6a3 3 0 0 1 5.5 2.2C13.5 10.6 8 14 8 14Z" /></svg
+      >{liveHeart.bpm}</span
+    >
+  {/if}
   {#if running}
     <span class="tick" role="timer">{ticking(now - running.start)}</span>
     <button
@@ -38,6 +46,23 @@
 </div>
 
 <style>
+  .heart {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-inline-start: auto;
+    color: var(--danger);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--weight-strong);
+  }
+  .heart svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .heart + .tick {
+    margin-inline-start: var(--space-3);
+  }
   .now {
     container: time-now / inline-size;
     display: flex;
