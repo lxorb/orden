@@ -2594,11 +2594,7 @@ class Workspace {
     sync.nudge()
   }
   async removeMany(paths: string[]) {
-    const writable = await this.writableOf(this.deletable(paths))
-    const going = writable.flatMap((path) => {
-      const entry = this.entryAt(path)
-      return entry ? [{ path, isFolder: entry.is_dir }] : []
-    })
+    const going = (await import('./binning')).widened(this, await this.writableOf(this.deletable(paths)))
     this.clearSelection()
     if (!going.length) return
     for (const { path } of going) this.hideEntry(path)
@@ -3021,8 +3017,12 @@ class Workspace {
     const holding = spaceHolding(this.spaces, path)
     return holding?.root ?? this.activeSpace?.root ?? null
   }
-  async remove(path: string, isFolder: boolean, source?: string) {
-    if (this.keepsArchived(path) || !(await this.writableAt(path))) return
+  async remove(asked: string, folder: boolean, source?: string) {
+    if (this.keepsArchived(asked) || !(await this.writableAt(asked))) return
+    const { path, isFolder } = (await import('./binning')).widened(this, [asked], folder)[0] ?? {
+      path: asked,
+      isFolder: folder,
+    }
     await this.undone.batch(async () => {
       this.hideEntry(path)
       const ended = await chatsEnding([path])

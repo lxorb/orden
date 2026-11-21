@@ -3,7 +3,8 @@ import { account } from '../../accounts/src/api'
 import { keptAway } from '../../away/src/api'
 import type { Binning, Kept } from '../../file-undo/src/api'
 import type { FileOps } from '../../file-ops/src/api'
-import { invoke, isMarkdownPath, oneWriteAt } from '../../platform/src/api'
+import type { Entry } from '@orden/contracts'
+import { folderOf, invoke, isMarkdownPath, oneWriteAt, samePath, within } from '../../platform/src/api'
 
 interface Bins {
   readonly fileOps: FileOps
@@ -68,4 +69,31 @@ async function accountHolds(ws: Bins, path: string, isFolder: boolean): Promise<
   if (!isFolder) return sync.holds(path)
   const { accountHoldsAll } = await import('./undoing')
   return accountHoldsAll(path, (one, how) => sync.holds(one, how))
+}
+interface Widens {
+  readonly spaces: readonly { root: string }[]
+  entryAt(path: string): Entry | null
+  keepsArchived(path: string): boolean
+}
+export function widened(ws: Widens, paths: readonly string[], folder?: boolean): { path: string; isFolder: boolean }[] {
+  const going = new Set(paths)
+  for (const path of paths) {
+    let at = path
+    while (at !== folderOf(at)) {
+      const up = folderOf(at)
+      if (going.has(up) || ws.spaces.some((one) => samePath(one.root, up)) || ws.keepsArchived(up)) break
+      const entry = ws.entryAt(up)
+      if (!entry?.is_dir || !entry.children.every((one) => one.name.startsWith('.') || going.has(one.path))) break
+      going.add(up)
+      at = up
+    }
+  }
+  const all = [...going]
+  return all
+    .filter((one) => !all.some((other) => other !== one && within(other, one) !== null))
+    .flatMap((path) => {
+      const entry = ws.entryAt(path)
+      if (entry) return [{ path, isFolder: entry.is_dir }]
+      return folder === undefined ? [] : [{ path, isFolder: folder }]
+    })
 }

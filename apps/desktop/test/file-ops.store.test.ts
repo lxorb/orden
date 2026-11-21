@@ -93,8 +93,8 @@ describe('a store the app has never heard of', () => {
       `moved ${ROOT}/Idea.md ${ROOT}/Goal/Idea.md`,
       `moved ${ROOT}/Work ${ROOT}/Desk`,
       `moved ${ROOT}/Desk ${ROOT}/Work`,
-      `removed ${ROOT}/Work/Notes.md`,
-      `created ${ROOT}/Work/Notes.md`,
+      `removed ${ROOT}/Work`,
+      `created ${ROOT}/Work`,
     ])
   })
   test('and a document open inside a folder that moves goes with it', async () => {
