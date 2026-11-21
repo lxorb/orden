@@ -36,14 +36,13 @@
   } from '../../ui-kit/src/api'
   import { alone, swipeOpens, dropOnList, workspace, agentMarks, pullable } from '../../workspace/src/api'
   import { movesSection, headingAt, lineOf } from '../../documents/src/api'
-  import { door } from '@orden/markdown/door'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { landsIn, dropTarget } from '../../tree/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { searching, sidebarPart } from '@orden/contracts'
-  import { account, arriving } from '../../accounts/src/api'
-  import { newSpace } from '../../spaces/src/api'
+  import { arriving } from '../../accounts/src/api'
+  import { chatsShownIn, chatsUnreadIn, newSpace } from '../../spaces/src/api'
   import { panels, type Panel, type PanelSide } from '../../session/src/api'
   import {
     archiveSection,
@@ -111,7 +110,7 @@
   const phoneTabs = $derived(side === 'left' && viewport.device === 'phone')
   const padHere = $derived(side === 'right' && !viewport.touch)
   const offered = (id: Panel) =>
-    workspace.fills(id) && (id !== 'chats' || (!!account.accountToken && chatsOn())) && (id !== 'time' || timeOn())
+    workspace.fills(id) && (id !== 'chats' || chatsShownIn()) && (id !== 'time' || timeOn())
   const open = $derived(padHere ? workspace.rightShows !== null : workspace.openOn(side) !== null)
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
   const showing = $derived.by((): Panel | 'scratchpad' => {
@@ -277,7 +276,8 @@
       menu.show(event, orderMenu(), { title: orderTitle() }),
     )
   }
-  function showTabMenu(event: MouseEvent, id: Panel, label: string) {
+  function showTabMenu(event: MouseEvent, id: Panel | 'scratchpad', label: string) {
+    if (id === 'scratchpad') return
     event.preventDefault()
     const own = import('./panel-menu')
     const shown = (rows: MenuEntry[]) => menu.show(event, rows, { title: label })
@@ -314,14 +314,9 @@
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     ongoto?.(line)
   }
-  const headingWordsOf = door(() => import('@orden/markdown/escapes'))
-  let headingWords = $state<((text: string) => string) | null>(null)
-  const namesHeadings = $derived(
-    workspace.headings.length > 0 || workspace.bookmarks.list.some((one) => one.kind === 'heading'),
-  )
-  $effect(() => {
-    if (headingWords || !namesHeadings) return
-    void headingWordsOf().then(
+  let headingWords = $state<(text: string) => string>()
+  onMount(() => {
+    import('@orden/markdown/escapes').then(
       (one) => (headingWords = one.headingWords),
       () => undefined,
     )
@@ -520,18 +515,14 @@
                 const id = firstPress ?? item.id
                 void sidebarPart(id)?.toTab?.()
               }}
-              oncontextmenu={(event) => {
-                if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
-              }}
-              use:longPress={(event) => {
-                if (item.id !== 'scratchpad') showTabMenu(event, item.id, item.label)
-              }}
+              oncontextmenu={(event) => showTabMenu(event, item.id, item.label)}
+              use:longPress={(event) => showTabMenu(event, item.id, item.label)}
             >
               <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
               {#if item.id === 'ask'}
                 <CountBadge count={agentMarks.waiting} corner />
               {/if}
-              {#if item.id === 'ask' && unread}
+              {#if (item.id === 'ask' && unread) || (item.id === 'chats' && chatsUnreadIn())}
                 <UnreadDot corner />
               {/if}
             </button>
@@ -728,6 +719,8 @@
               >
                 {#each workspace.headings as heading, index (index)}
                   {@const text = headingName(heading.text)}
+                  {@const about = (event: MouseEvent) =>
+                    menu.show(event, headingMenu(index, heading.text), { title: text })}
                   <li>
                     <button
                       class="orden-row is-short row heading"
@@ -738,8 +731,8 @@
                       style:--level={heading.level - shallowest}
                       draggable="true"
                       onclick={() => jump(heading.line)}
-                      oncontextmenu={(event) => menu.show(event, headingMenu(index, heading.text), { title: text })}
-                      use:longPress={(event) => menu.show(event, headingMenu(index, heading.text), { title: text })}
+                      oncontextmenu={about}
+                      use:longPress={about}
                       ondragstart={(event) => startSection(event, index)}
                       use:dropOver={(event) => overSection(event, index)}
                       ondragleave={() => (dropAt = null)}

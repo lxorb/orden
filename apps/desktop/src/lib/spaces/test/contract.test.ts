@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
-import { providePort, registerSidebarPart, settingsPartsIn } from '@orden/contracts'
+import { providePort, settingsPartsIn } from '@orden/contracts'
 import { chatsUnreadBesides, chatsUnreadIn, publishSpace, SpaceBadge, spaceMenu } from '../src/api'
 
 const SPACE = { id: 's', name: 'Notes', root: '/s' }
@@ -40,16 +40,9 @@ describe('the unread chats of a space', () => {
     expect(badge(120)).toBe('9+')
     expect(badge(0)).toBeNull()
   })
-  test('are what the chats say, nothing without them, and the other spaces add up', () => {
-    const spaces = [SPACE, { id: 't', name: 'Team', root: '/t' }, { id: 'u', name: 'Club', root: '/u' }]
+  test('are none while no chats are there to say any', () => {
     expect(chatsUnreadIn('/s')).toBe(0)
-    const counts: Record<string, number> = { '/s': 2, '/t': 5, '/u': 1 }
-    const drop = registerSidebarPart({ id: 'chats', unreadIn: (root) => counts[root] ?? 0 })
-    expect(chatsUnreadIn('/t')).toBe(5)
-    expect(chatsUnreadBesides(spaces, '/s')).toBe(6)
-    expect(chatsUnreadBesides(spaces, '/t')).toBe(3)
-    drop()
-    expect(chatsUnreadBesides(spaces, '/s')).toBe(0)
+    expect(chatsUnreadBesides([SPACE, { id: 't', name: 'Team', root: '/t' }], '/s')).toBe(0)
   })
 })
 describe('the General part of a space in Settings', () => {

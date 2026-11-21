@@ -19,6 +19,7 @@ export interface SidebarPart {
   readonly tools?: readonly SidebarTool[]
   readonly unread?: () => boolean
   readonly unreadIn?: (root: string) => number
+  readonly holdsIn?: (root: string) => boolean
   readonly open?: () => boolean
   readonly toggle?: () => void
   readonly covers?: () => boolean

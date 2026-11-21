@@ -13,14 +13,7 @@ import {
   trustAgain,
   protectEntries,
 } from '../../sharing/src/api'
-import {
-  hearSidebarParts,
-  portOf,
-  registerSettingsPart,
-  type SettingPlace,
-  settingsWindow,
-  sidebarPart,
-} from '@orden/contracts'
+import { hearSidebarParts, portOf, registerSettingsPart, type SettingPlace, settingsWindow } from '@orden/contracts'
 import { createSubscriber } from 'svelte/reactivity'
 import { type Space, spaceChanges, workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
@@ -104,6 +97,7 @@ export function spaceMenu(space: Space): MenuEntry[] {
     ...(managesSpace(space.root) ? [{ label: 'Rename', run: () => void renameSpace(space) }] : []),
     ...(canWriteAt(space.root) ? [{ label: 'Choose an icon', run: () => iconChoice.space(space.id) }] : []),
     { label: 'Settings', run: () => settingsWindow().show('space', space.root) },
+    ...(chats?.chatsRows(space.root) ?? []),
     ...(canShare(space) ? [{ label: 'Share', run: () => void shareSpace(space) }] : []),
     ...(canPublish(space) ? [{ label: 'Publish', run: () => publishSpace(space) }] : []),
     ...(canTrustAgain(space) ? [{ label: 'Trust this space again', run: () => void trustAgain(space) }] : []),
@@ -183,9 +177,22 @@ export function toggleSpacePicker(): void {
   void import('./space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
 }
 const heard = createSubscriber((update) => hearSidebarParts(update))
-export function chatsUnreadIn(root: string): number {
+let chats: typeof import('./space-chats.svelte') | undefined
+const kept = createSubscriber((update) => {
+  void import('./space-chats.svelte').then((one) => {
+    chats = one
+    update()
+  })
+})
+export function chatsShownIn(root = workspace.activeSpace?.root): boolean {
   heard()
-  return sidebarPart('chats')?.unreadIn?.(root) ?? 0
+  kept()
+  return !!chats?.chatsHere(root)
+}
+export function chatsUnreadIn(root = workspace.activeSpace?.root): number {
+  heard()
+  kept()
+  return chats?.unreadHere(root) ?? 0
 }
 export function chatsUnreadBesides(spaces: readonly { root: string }[], here: string): number {
   return spaces.reduce((sum, one) => (one.root === here ? sum : sum + chatsUnreadIn(one.root)), 0)
