@@ -9,6 +9,7 @@ import { workspace } from '../../workspace/src/api'
 import type { FileOp } from '../../file-ops/src/api'
 import { chats } from './store.svelte'
 import { unreadIn } from './unread'
+import { holdsIn } from './view/here'
 
 const isPointer = (path: string) => path.toLowerCase().endsWith(CHAT_EXTENSION)
 function followed(op: FileOp): void {
@@ -50,6 +51,7 @@ $effect.root(() => {
 registerSidebarPart({
   id: 'chats',
   unreadIn: (root) => (chatsOn() && account.accountToken ? unreadIn(chats.list, root, Date.now()) : 0),
+  holdsIn: (root) => chatsOn() && !!account.accountToken && holdsIn(chats.list, root),
 })
 account.forgetWithSession(() => void chats.forget())
 hub.on('chat', (frame) => chats.poked(frame.said))

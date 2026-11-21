@@ -6,7 +6,7 @@
   import { canWriteAt } from '../../../sharing/src/api'
   import type { ChatEntry, Hit } from '../shapes'
   import ChatMark from './ChatMark.svelte'
-  import { bySpace } from './by-space'
+  import { chatsHere, onlyHere } from './here'
   import { Glyph } from '../../../chat-kit/src/api'
   import { Select } from '../../../ui-controls/src/api'
   import { chatName, makeChat, nameChat, openChat } from './open'
@@ -31,13 +31,13 @@
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
   let activity = $state.raw<Hit[]>([])
   let arranged = $state<'all' | 'priority'>('all')
+  const here = $derived(chatsHere(store().list, workspace.activeSpace?.root))
   const chats = $derived.by(() => {
     const asked = chatsView.query.trim().toLowerCase()
-    return [...store().list]
+    return [...here]
       .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
-  const grouped = $derived(bySpace(chats, workspace.spaces))
   startPriorities()
   const byLevel = $derived.by(() => {
     if (!priorities.on || arranged !== 'priority') return { pending: [], rest: [] }
@@ -73,9 +73,11 @@
       ...(priority ? { fields: { priority } } : {}),
     })
   }
-  const mentions = $derived(store().list.reduce((sum, one) => sum + one.mentions, 0))
+  const mentions = $derived(here.reduce((sum, one) => sum + one.mentions, 0))
   const now = Date.now()
   let hits = $state.raw<Hit[]>([])
+  const hitsHere = $derived(onlyHere(hits, here))
+  const savedHere = $derived(onlyHere(saved.list, here))
   $effect(() => {
     const asked = chatsView.query.trim()
     if (!asked) {
@@ -236,7 +238,7 @@
     <button type="button" class="orden-row" onclick={() => (showing = 'saved')}>
       <span class="orden-row-mark"><Glyph name="saved" /></span>
       <span class="orden-row-label">Saved</span>
-      {#if saved.list.length}<span class="orden-row-meta">{localNumber(saved.list.length)}</span>{/if}
+      {#if savedHere.length}<span class="orden-row-meta">{localNumber(savedHere.length)}</span>{/if}
     </button>
 
     <div class="section">
@@ -259,43 +261,40 @@
         () => (chatsView.naming = null),
       )}
     {/if}
-    {#each grouped as group (group.key)}
-      {#if grouped.length > 1}<p class="space">{group.name}</p>{/if}
-      {#each group.chats as chat (chat.id)}
-        {@const muted = chat.mutedUntil !== null && chat.mutedUntil > now}
-        {@const count = unreadCount(chat, now)}
-        {@const unread = count > 0}
-        {@const on = workspace.active?.path === chat.path && chat.path !== null}
-        {#if chatsView.renaming === chat.id}
-          {@render namer(
-            chat.name ?? 'Chat',
-            'Rename',
-            (typed) => {
-              if (chatsView.renaming === chat.id) void renamed(chat, typed)
-            },
-            () => (chatsView.renaming = null),
-          )}
-        {:else}<button
-            type="button"
-            class="orden-row entry"
-            class:unread
-            class:muted
-            class:is-on={on}
-            disabled={!chat.path}
-            use:seen={on}
-            onclick={() => open(chat)}
-            oncontextmenu={(event) => rowMenu(event, chat)}
-            use:longPress={(event) => menu.show(event, chatRowMenu(chat))}
-          >
-            <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
-            <span class="orden-row-label">{chat.name ?? 'Chat'}</span>
-            {#if chat.mentions && !muted}
-              <CountBadge count={chat.mentions} />
-            {:else if unread}
-              <span class="orden-row-meta count">{localNumber(count)}</span>
-            {/if}
-          </button>{/if}
-      {/each}
+    {#each chats as chat (chat.id)}
+      {@const muted = chat.mutedUntil !== null && chat.mutedUntil > now}
+      {@const count = unreadCount(chat, now)}
+      {@const unread = count > 0}
+      {@const on = workspace.active?.path === chat.path && chat.path !== null}
+      {#if chatsView.renaming === chat.id}
+        {@render namer(
+          chat.name ?? 'Chat',
+          'Rename',
+          (typed) => {
+            if (chatsView.renaming === chat.id) void renamed(chat, typed)
+          },
+          () => (chatsView.renaming = null),
+        )}
+      {:else}<button
+          type="button"
+          class="orden-row entry"
+          class:unread
+          class:muted
+          class:is-on={on}
+          disabled={!chat.path}
+          use:seen={on}
+          onclick={() => open(chat)}
+          oncontextmenu={(event) => rowMenu(event, chat)}
+          use:longPress={(event) => menu.show(event, chatRowMenu(chat))}
+        >
+          <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
+          <span class="orden-row-label">{chat.name ?? 'Chat'}</span>
+          {#if chat.mentions && !muted}
+            <CountBadge count={chat.mentions} />
+          {:else if unread}
+            <span class="orden-row-meta count">{localNumber(count)}</span>
+          {/if}
+        </button>{/if}
     {/each}
   {:else}
     <button type="button" class="orden-row back" onclick={() => (showing = 'chats')}>
@@ -303,22 +302,22 @@
       <span class="orden-row-label">{showing === 'activity' ? 'Activity' : 'Saved'}</span>
     </button>
     {#if showing === 'activity'}
-      {#each activity as one (`${one.chat}:${one.message.id}`)}
+      {#each onlyHere(activity, here) as one (`${one.chat}:${one.message.id}`)}
         {@render found(one.chat, one.message.id, one.message.author, firstLine(one.message.body))}
       {:else}
         <p class="empty"><Glyph name="mention" /></p>
       {/each}
     {:else}
-      {#each saved.list as one (`${one.chat}:${one.message}`)}
+      {#each savedHere as one (`${one.chat}:${one.message}`)}
         {@render found(one.chat, one.message, one.author, one.line)}
       {:else}
         <p class="empty"><Glyph name="saved" /></p>
       {/each}
     {/if}
   {/if}
-  {#if showing === 'chats' && hits.length}
+  {#if showing === 'chats' && hitsHere.length}
     <p class="orden-section">Messages</p>
-    {#each hits as one (`${one.chat}:${one.message.id}`)}
+    {#each hitsHere as one (`${one.chat}:${one.message.id}`)}
       {@render found(one.chat, one.message.id, one.message.author, firstLine(one.message.body))}
     {/each}
   {/if}
@@ -339,15 +338,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-  }
-  .space {
-    margin: var(--space-2) 0 var(--space-1);
-    padding-inline: var(--space-2);
-    overflow: hidden;
-    color: var(--muted);
-    font-size: var(--text-xs);
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .namer {
     margin: 0 0 var(--space-1);
