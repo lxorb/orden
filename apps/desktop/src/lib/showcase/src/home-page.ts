@@ -1,10 +1,12 @@
 import { demoLoopSrc, isDemoLoopScene, isDemoReady, type DemoLoopScene, type DemoPlay } from './demo-cue'
 import {
+  ageInWords,
   appHomeAt,
   downloadFor,
   LATEST_RELEASE_API,
   originsAt,
   releaseAssets,
+  releasedAt,
   type AppHome,
   type Origins,
   type ReleaseAsset,
@@ -75,9 +77,17 @@ function offerDownload(view: Window, origins: Origins) {
       .then((body: unknown) => {
         assets = releaseAssets(body)
         paint()
+        showAge(view, releasedAt(body))
       })
       .catch(() => undefined)
   })
+}
+function showAge(view: Window, at: Date | null) {
+  const line = view.document.querySelector<HTMLElement>('[data-updated]')
+  const age = line?.querySelector('[data-age]')
+  if (!line || !age || !at) return
+  age.textContent = ageInWords(at, new Date())
+  line.hidden = false
 }
 function whenIdle(view: Window, run: () => void) {
   const idle = (view as { requestIdleCallback?: Window['requestIdleCallback'] }).requestIdleCallback

@@ -97,6 +97,32 @@ describe('the home page', () => {
     expect(apps).toHaveLength(2)
     for (const link of apps) expect(link.getAttribute('href')).toBe(`${location.origin}/`)
   })
+  test('says how long ago the latest release came out once it is read, and nothing before', async () => {
+    vi.stubGlobal('matchMedia', media([]))
+    vi.setSystemTime(new Date('2026-11-24T09:00:00Z'))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response(JSON.stringify({ published_at: '2026-11-21T11:12:54Z', assets: [] })))),
+    )
+    showHome(window, '/')
+    const line = document.querySelector<HTMLElement>('[data-updated]')
+    expect(line?.hidden).toBe(true)
+    await elapse(1000)
+    expect(line?.hidden).toBe(false)
+    expect(line?.textContent.replace(/\s+/g, ' ').trim()).toBe('The last update was 2 days ago.')
+  })
+  test('says plainly that Orden is open source and free, and where its changes and wishes go', () => {
+    expect(document.querySelector('.free')?.textContent).toContain('Open source and 100% free.')
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('.growing a')].map((one) => one.getAttribute('href'))
+    expect(links).toEqual(['https://github.com/lxorb/orden/releases', 'https://github.com/lxorb/orden/issues/new'])
+    const platforms = [...document.querySelectorAll('.platforms svg')].map((one) => one.getAttribute('aria-label'))
+    expect(platforms).toEqual(['Windows', 'macOS', 'Linux', 'Android'])
+  })
+  test('ends on its two buttons alone', () => {
+    const coda = document.querySelector('.coda')
+    expect(coda?.querySelectorAll('a.orden-button')).toHaveLength(2)
+    expect(coda?.querySelector('.display, .line')).toBe(null)
+  })
   test('keeps the release page when the release cannot be read', async () => {
     vi.stubGlobal('matchMedia', media([]))
     showHome(window)
@@ -191,6 +217,6 @@ describe('the home page', () => {
       .replace(/Download|Try it out/g, '')
       .split(/\s+/)
       .filter(Boolean)
-    expect(words.length).toBeLessThan(45)
+    expect(words.length).toBeLessThan(100)
   })
 })
