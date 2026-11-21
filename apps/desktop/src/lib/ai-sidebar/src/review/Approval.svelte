@@ -1,10 +1,18 @@
 <script lang="ts">
   import { alwaysOffered, crateAnswers, sayAlways } from '../chat-parts'
   import type { Part, Thread } from '../../../ai-providers/src/api'
+  import { workspace } from '../../../workspace/src/api'
   import Asked from './Asked.svelte'
+  import { bareName, objectOf } from '../verbs'
 
   const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } = $props()
   let answering = $state(false)
+  const root = $derived(workspace.spaces.find((one) => one.id === thread?.space)?.root ?? null)
+  const asks = $derived.by(() => {
+    const said = part.result?.asks?.trim()
+    if (!said) return `${bareName(part.verb)} ${objectOf(part.args)}`.trim()
+    return root ? said.split(`${root.replace(/[\\/]+$/, '')}/`).join('') : said
+  })
   async function answer(allow: boolean, always = false) {
     const approval = part.result?.approval
     if (!approval || answering) return
@@ -15,7 +23,7 @@
 </script>
 
 <div class="approval">
-  {#if part.result?.text}<p>{part.result.text}</p>{/if}
+  <p dir="auto">{asks}</p>
   <Asked {part} {thread} />
   <div class="answers">
     <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>Approve</button>
