@@ -3,8 +3,9 @@ import { bringing, mcpImporting } from './bring'
 import { BROWSERS, type Preset, type PresetSetting } from './catalog'
 import { type Answers, firstStep, markdownStyleFor, type Reach, shows, type Step, stepAfter } from './flow'
 import { gate } from './gate.svelte'
-import { heardBefore, keepProgress, readProgress } from './kept'
-import { isMobile } from '../../platform/src/api'
+import { heardBefore, keepProgress, readProgress, waitForAccount } from './kept'
+import { account } from '../../accounts/src/api'
+import { isMobile, isNative } from '../../platform/src/api'
 import { stepped } from '../../usage/src/api'
 
 export interface Issue {
@@ -45,6 +46,28 @@ class Setup {
     this.answers = kept.answers
     this.signedIn = kept.signedIn
     this.open(kept.step, kept.trail)
+  }
+  private waiting: (() => void) | null = null
+  start(signedIn: boolean) {
+    if (isNative || signedIn) {
+      this.begin(signedIn)
+      return
+    }
+    if (readProgress() === 'done') return
+    waitForAccount()
+    this.awaitAccount()
+  }
+  awaitAccount() {
+    this.waiting ??= $effect.root(() => {
+      $effect(() => {
+        if (!account.user) return
+        queueMicrotask(() => {
+          this.waiting?.()
+          this.waiting = null
+          this.begin(true)
+        })
+      })
+    })
   }
   begin(signedIn: boolean) {
     if (readProgress() === 'done' || this.showing) return

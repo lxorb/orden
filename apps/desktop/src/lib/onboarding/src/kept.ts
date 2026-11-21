@@ -31,6 +31,9 @@ export function keptProgress(said: unknown): Kept {
 export function readProgress(): Kept {
   return keptProgress(stored(PROGRESS_KEY))
 }
+export function waitForAccount(): void {
+  keepJson(PROGRESS_KEY, 'waiting')
+}
 export function keepProgress(progress: Progress | 'done'): void {
   keepJson(PROGRESS_KEY, progress)
 }
