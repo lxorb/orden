@@ -374,6 +374,19 @@ export class Core {
     if (doc) return doc.hasPending
     return this.numbers.get(id)?.pending ?? false
   }
+  private readonly making = new Map<string, Promise<unknown>>()
+  async oneAt<T>(path: string, work: () => Promise<T>): Promise<T> {
+    const at = path.replace(/\\/g, '/').normalize('NFC')
+    const key = this.world.foldsCase ? at.toLowerCase() : at
+    const mine = (this.making.get(key) ?? Promise.resolve()).then(work)
+    const settled = mine.catch(() => undefined)
+    this.making.set(key, settled)
+    try {
+      return await mine
+    } finally {
+      if (this.making.get(key) === settled) this.making.delete(key)
+    }
+  }
   private busy = 0
   async use<T>(work: () => Promise<T>): Promise<T> {
     this.busy += 1
