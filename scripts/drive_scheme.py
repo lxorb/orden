@@ -75,8 +75,9 @@ def clicked(run, want, seconds=4):
     said = run(
         "(async () => { const wait = (ms) => new Promise((done) => setTimeout(done, ms));"
         " const account = document.querySelector(%s); if (!account) return 'no account button';"
-        " account.click(); await wait(50);"
-        " const row = [...document.querySelectorAll(%s)].find((one) => one.textContent.trim() === 'Themes');"
+        " account.click(); let row = null;"
+        " for (let i = 0; i < 40 && !row; i++) { await wait(50);"
+        " row = [...document.querySelectorAll(%s)].find((one) => one.textContent.trim() === 'Themes') }"
         " if (!row) return 'no Themes in the account menu'; row.click();"
         " for (let i = 0; i < 40 && !document.querySelector(%s); i++) await wait(50);"
         " const choice = document.querySelector(%s); if (!choice) return 'no choice in the picker';"

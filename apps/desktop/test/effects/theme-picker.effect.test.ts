@@ -94,6 +94,7 @@ test('Themes in the account menu opens it, and the sidebar foot holds no themes 
   flushSync()
   expect(target.querySelector('[aria-label="Themes"], [aria-label="Light"], [aria-label="Dark"]')).toBeNull()
   target.querySelector<HTMLElement>('[aria-haspopup="menu"]')?.click()
+  await expect.poll(() => menu.open).toBe(true)
   const rows = menu.items.filter((one): one is MenuItem => one !== null)
   rows.find((one) => one.label === 'Themes')?.run()
   menu.hide()
@@ -125,10 +126,15 @@ test('the native drives switch the scheme through the account menu and the choic
     const account = document.querySelector<HTMLElement>(driven('ACCOUNT'))
     expect(account, 'the drives press an account button the foot no longer draws').not.toBeNull()
     account?.click()
-    flushSync()
-    const row = [...document.querySelectorAll<HTMLElement>(driven('MENU'))].find(
-      (one) => one.textContent.trim() === 'Themes',
-    )
+    const themes = () =>
+      [...document.querySelectorAll<HTMLElement>(driven('MENU'))].find((one) => one.textContent.trim() === 'Themes')
+    await expect
+      .poll(() => {
+        flushSync()
+        return themes()
+      })
+      .toBeDefined()
+    const row = themes()
     expect(row, 'the drives press Themes in a menu that no longer offers it').toBeDefined()
     row?.click()
     await expect.poll(() => picking.open).toBe(true)
