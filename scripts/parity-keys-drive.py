@@ -948,6 +948,36 @@ return true
         fresh = isinstance(before, int) and isinstance(made, int) and made > before
         self.row(4, "a new empty tab (Mod-t) starts in its address", {"opened": fresh, "state": state}, "no note counterpart", fresh and isinstance(state, dict) and state.get("address") is True)
         self.reset()
+    def bar_popups(self) -> None:
+        listen = (
+            "window.__barLog = []; if (!window.__barHeard) { window.__barHeard = true;"
+            " for (const kind of ['blur', 'focus']) addEventListener(kind, (e) => window.__barLog?.push([kind, Math.round(performance.now()), e.isTrusted, e.target === window]), true) }"
+            " return Math.round(performance.now())"
+        )
+        for name, opened in (("More", "!!document.querySelector('[role=menu]')"), ("Extensions", "!!document.querySelector('.extensions.orden-bubble')")):
+            check = f"a click on the web bar's {name} button keeps its popup open"
+            self.reset()
+            self.show(self.ids["web"])
+            if not self.focus_page():
+                self.row(7, check, None, "no note counterpart: a note has no web bar", None, "the page could not be given the keyboard by a click")
+                continue
+            time.sleep(0.5)
+            box = self.js(f"(() => {{ const one = [...document.querySelectorAll('button[aria-label=\"{name}\"]')].find((it) => it.getBoundingClientRect().width > 0); const r = one?.getBoundingClientRect(); return r ? {{ x: r.x + r.width / 2, y: r.y + r.height / 2 }} : null }})()")
+            if not isinstance(box, dict):
+                self.row(7, check, {"button": False}, "no note counterpart: a note has no web bar", False)
+                continue
+            start = self.js(listen)
+            self.keys.click(*self.screen.at(box["x"], box["y"]))
+            seen = []
+            for _ in range(8):
+                time.sleep(0.25)
+                seen.append(self.js(opened) is True)
+            log = self.js("window.__barLog || []") or []
+            heard = [[one[0], one[1] - start, one[2], one[3]] for one in log if isinstance(one, list) and isinstance(start, (int, float))]
+            self.row(7, check, {"open every 250 ms for 2 s": seen, "window blur and focus (ms after, trusted, on the window)": heard[:12]}, "no note counterpart: a note has no web bar", all(seen))
+            self.keys.chord("Escape")
+            time.sleep(0.5)
+        self.reset()
     def dead_keys(self) -> None:
         layout = self.dead_layout()
         if layout is not None:
@@ -1581,6 +1611,7 @@ def main() -> int:
         drive.shortcuts()
         drive.focus_moves()
         drive.web_return()
+        drive.bar_popups()
         drive.dead_keys()
         drive.menu_regressions()
         drive.page_ui()
