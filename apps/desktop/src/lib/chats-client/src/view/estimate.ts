@@ -1,5 +1,5 @@
 import type { Message } from '@orden/chats'
-import { fitted, gallery, sortFiles } from './media'
+import { fitted, gallery, galleryWidth, sortFiles } from './media'
 import type { Item } from './rows'
 
 const LINE = 21
@@ -20,7 +20,7 @@ function messageHeight(message: Message, head: boolean, width: number): number {
   if (seen.length === 1 && seen[0]) height += fitted(seen[0], column).height + 6
   else if (seen.length > 1) {
     const { across, shown } = gallery(seen)
-    const side = Math.min(column, 480) / across
+    const side = galleryWidth(column) / across
     height += Math.ceil(shown.length / across) * side + 6
   }
   height += heard.length * 48 + other.length * 52

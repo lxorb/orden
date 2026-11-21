@@ -3,7 +3,7 @@ import { WAVE_BARS } from '@orden/chats/limits'
 
 const GALLERY_MOST = 6
 const PICTURE_TALLEST = 360
-const PICTURE_WIDEST = 480
+const PICTURE_WIDEST = 320
 export function isPicture(file: FileRef): boolean {
   return file.type.startsWith('image/')
 }
@@ -30,6 +30,9 @@ export function fitted(file: FileRef, column: number): { width: number; height: 
   }
   const scale = Math.min(1, widest / width, PICTURE_TALLEST / height)
   return { width: Math.round(width * scale), height: Math.round(height * scale) }
+}
+export function galleryWidth(column: number): number {
+  return Math.min(column, PICTURE_WIDEST)
 }
 export function gallery(files: readonly FileRef[]) {
   const shown = files.slice(0, GALLERY_MOST)

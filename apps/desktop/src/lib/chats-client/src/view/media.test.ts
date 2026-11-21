@@ -1,6 +1,6 @@
 import type { FileRef } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
-import { barsOf, fitted, gallery, seekAt, sortFiles } from './media'
+import { barsOf, fitted, gallery, galleryWidth, seekAt, sortFiles } from './media'
 
 const file = (type: string, more: Partial<FileRef> = {}): FileRef => ({
   hash: 'a'.repeat(64),
@@ -12,8 +12,8 @@ const file = (type: string, more: Partial<FileRef> = {}): FileRef => ({
 describe('pictures', () => {
   test('one is fitted inside the column and the caps, its shape kept', () => {
     expect(fitted(file('image/webp', { width: 1600, height: 1200 }), 800)).toEqual({
-      width: 480,
-      height: 360,
+      width: 320,
+      height: 240,
     })
     expect(fitted(file('image/webp', { width: 400, height: 2000 }), 800)).toEqual({
       width: 72,
@@ -27,6 +27,23 @@ describe('pictures', () => {
       width: 300,
       height: 225,
     })
+  })
+  test('one is never wider than 320 or taller than 360 in any chat, so the chat around it stays in view (#2448)', () => {
+    for (const [width, height] of [
+      [4000, 3000],
+      [3000, 4000],
+      [1920, 1080],
+      [800, 600],
+      [320, 2400],
+    ] as const) {
+      const shown = fitted(file('image/png', { width, height }), 1400)
+      expect(shown.width).toBeLessThanOrEqual(320)
+      expect(shown.height).toBeLessThanOrEqual(360)
+      expect(Math.abs(shown.width / shown.height - width / height)).toBeLessThan(0.05)
+    }
+    expect(fitted(file('image/png', { width: 800, height: 600 }), 1400)).toEqual({ width: 320, height: 240 })
+    expect(galleryWidth(1400)).toBe(320)
+    expect(galleryWidth(200)).toBe(200)
   })
   test('one whose size nobody stated is a square', () => {
     expect(fitted(file('image/webp'), 800)).toEqual({ width: 240, height: 240 })

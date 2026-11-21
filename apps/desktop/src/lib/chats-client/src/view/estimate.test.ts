@@ -26,7 +26,7 @@ test('a picture is as tall as it will be drawn, from the size the sender stated'
     body: '',
     files: [{ hash: 'a', name: 'p', size: 1, type: 'image/webp', width: 960, height: 720 }],
   })
-  expect(estimate(picture, 1000)).toBe(30 + 360 + 6)
+  expect(estimate(picture, 1000)).toBe(30 + 240 + 6)
 })
 test('a day and the New line are their own heights', () => {
   expect(estimate({ kind: 'day', key: 'd', day: '2026-10-07', at: 0 }, 800)).toBe(36)
