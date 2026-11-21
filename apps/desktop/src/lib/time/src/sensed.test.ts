@@ -11,3 +11,34 @@ describe('what the system says of the person at the computer', () => {
     expect(said && withIdle(said, 400_000).idleMs).toBe(1_000)
   })
 })
+test('the device readings come through, and anything unknown is null', () => {
+  expect(
+    sensedOf({
+      idleMs: 0,
+      cpu: 0.3,
+      memory: 0.4,
+      battery: 0.9,
+      charging: true,
+      ac: true,
+      screen: true,
+      online: true,
+      network: 'wired',
+      boot: 5,
+    }),
+  ).toMatchObject({
+    cpu: 0.3,
+    memory: 0.4,
+    battery: 0.9,
+    charging: true,
+    ac: true,
+    screen: true,
+    online: true,
+    network: 'wired',
+    boot: 5,
+  })
+  expect(sensedOf({ idleMs: 0, battery: 'full', network: 'radio', charging: 1 })).toMatchObject({
+    battery: null,
+    network: null,
+    charging: null,
+  })
+})

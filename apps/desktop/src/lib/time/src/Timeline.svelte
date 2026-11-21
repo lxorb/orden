@@ -4,6 +4,7 @@
   import { trap } from '../../ui-controls/src/api'
   import { closeOnBack, Cross, overlays } from '../../ui-kit/src/api'
   import DayLanes from './DayLanes.svelte'
+  import { sensesDevice } from './machine'
   import { daysAfter } from './days'
   import { hoursShown } from './lanes'
   import { time } from './time.svelte'
@@ -60,6 +61,11 @@
   </div>
   <div class="body">
     <DayLanes from={shown[0]} to={shown[1]} minutes={minutes.list} {now} />
+    {#if sensesDevice(minutes.list)}
+      {#await import('./DeviceLanes.svelte') then { default: DeviceLanes }}
+        <DeviceLanes from={shown[0]} to={shown[1]} minutes={minutes.list} />
+      {/await}
+    {/if}
   </div>
 </div>
 

@@ -1,18 +1,44 @@
 export const SAMPLE_EVERY = 5000
 export const KEEP_MINUTES = 90 * 24 * 60 * 60_000
-export interface Sample {
+export type Network = 'wifi' | 'wired' | 'cellular'
+export const NETWORKS: readonly Network[] = ['wifi', 'wired', 'cellular']
+export interface Device {
+  cpu: number | null
+  memory: number | null
+  battery: number | null
+  charging: boolean | null
+  ac: boolean | null
+  screen: boolean | null
+  online: boolean | null
+  network: Network | null
+  boot: number | null
+}
+export interface Sample extends Partial<Device> {
   at: number
   idleMs: number | null
   lid: boolean | null
   locked: boolean | null
 }
-export interface Minute {
+export interface Minute extends Partial<Device> {
   at: number
   active: number
   samples: number
   lid: boolean | null
   locked: boolean | null
 }
+export const NO_DEVICE: Device = {
+  cpu: null,
+  memory: null,
+  battery: null,
+  charging: null,
+  ac: null,
+  screen: null,
+  online: null,
+  network: null,
+  boot: null,
+}
+const share = (value: number | null | undefined): number | null =>
+  typeof value !== 'number' || !Number.isFinite(value) ? null : Math.min(1, Math.max(0, value))
 const minuteOf = (at: number): number => Math.floor(at / 60_000) * 60_000
 const fresh = (at: number): Minute => ({
   at,
@@ -20,16 +46,29 @@ const fresh = (at: number): Minute => ({
   samples: 0,
   lid: null,
   locked: null,
+  ...NO_DEVICE,
 })
 const MINUTE = 60_000
 const LONGEST_GAP = 75_000
 function folded(minute: Minute, sample: Sample): Minute {
+  const before = minute.cpu ?? null
+  const samples = minute.samples + 1
+  const cpu = share(sample.cpu)
   return {
     at: minute.at,
     active: minute.active,
-    samples: minute.samples + 1,
+    samples,
     lid: sample.lid === false || minute.lid === false ? false : (sample.lid ?? minute.lid),
     locked: sample.locked === true || minute.locked === true ? true : (sample.locked ?? minute.locked),
+    cpu: cpu === null ? before : before === null ? cpu : before + (cpu - before) / samples,
+    memory: share(sample.memory) ?? minute.memory ?? null,
+    battery: share(sample.battery) ?? minute.battery ?? null,
+    charging: sample.charging ?? minute.charging ?? null,
+    ac: sample.ac ?? minute.ac ?? null,
+    screen: sample.screen === false || minute.screen === false ? false : (sample.screen ?? minute.screen ?? null),
+    online: sample.online === false || minute.online === false ? false : (sample.online ?? minute.online ?? null),
+    network: sample.network ?? minute.network ?? null,
+    boot: sample.boot ?? minute.boot ?? null,
   }
 }
 export class MinuteFold {
@@ -81,5 +120,14 @@ export function minuteValue(value: unknown): Minute | null {
     samples: number('samples') ?? 0,
     lid: flag('lid'),
     locked: flag('locked'),
+    cpu: share(number('cpu')),
+    memory: share(number('memory')),
+    battery: share(number('battery')),
+    charging: flag('charging'),
+    ac: flag('ac'),
+    screen: flag('screen'),
+    online: flag('online'),
+    network: NETWORKS.find((kind) => kind === one.network) ?? null,
+    boot: number('boot'),
   }
 }

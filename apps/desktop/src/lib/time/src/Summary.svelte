@@ -2,6 +2,7 @@
   import { overlays, segmented } from '../../ui-kit/src/api'
   import { menu } from '../../ui-kit/src/api'
   import ActivityMark from './ActivityMark.svelte'
+  import { sensesDevice } from './machine'
   import type { Place } from './counted'
   import { activeIn, within } from './lanes'
   import { length, nameOf, placeTint, tintOf } from './look'
@@ -204,6 +205,11 @@
       </div>
     {/each}
   </section>
+  {#if sensesDevice(minutes)}
+    {#await import('./DeviceCard.svelte') then { default: DeviceCard }}
+      <DeviceCard {from} {to} {minutes} />
+    {/await}
+  {/if}
 </div>
 
 <style>

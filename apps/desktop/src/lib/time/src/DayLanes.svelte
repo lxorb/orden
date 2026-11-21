@@ -125,6 +125,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 4.5rem;
     color: var(--muted);
     font-size: var(--text-xs);
   }
