@@ -95,6 +95,14 @@ describe('splitting a note at the caret', () => {
   })
 })
 describe('extracting a selection', () => {
+  test('names the link it leaves by the words a heading shows, not its markdown', () => {
+    const doc = '## [Lateral Raise Machine](https://example.com/raise) for `arms`\n\nthree sets\n'
+    expect(extracted(doc, 0, doc.length, 'Untitled', 'Raise')?.kept).toBe('[[Raise|Lateral Raise Machine for arms]]\n')
+    const plain = '## [Lateral Raise Machine](https://example.com/raise)\n\nthree sets\n'
+    expect(extracted(plain, 0, plain.length, 'Untitled', 'Lateral Raise Machine')?.kept).toBe(
+      '[[Lateral Raise Machine]]\n',
+    )
+  })
   const doc = 'before The whole idea, written out. after'
   test('the selection becomes a note and a link takes its place', () => {
     const from = doc.indexOf('The whole')
