@@ -1,6 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import { MapMode, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { headingWords } from '@orden/markdown/escapes'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { blocksOf, commentedLines, foldName, headingText, isHeading, type Row, rowsOf } from '@orden/markdown/links'
 import { inCode } from '../code'
@@ -142,13 +143,17 @@ const matches = (note: NoteRef, needle: string): boolean =>
   foldName(note.name).includes(needle) ||
   foldName(note.path).includes(needle) ||
   note.aliases.some((alias) => foldName(alias).includes(needle))
+function headingLabel(heading: string): { label: string; displayLabel?: string } {
+  const words = headingWords(heading)
+  return words === heading ? { label: heading } : { label: heading, displayLabel: words }
+}
 function headingOptions(target: LinkWrite, note: NoteRef, typed: string): Completion[] {
   const needle = foldName(typed.trim())
   return note.headings
     .filter((heading) => !needle || foldName(heading).includes(needle))
     .slice(0, MOST_SHOWN)
     .map((heading) => ({
-      label: heading,
+      ...headingLabel(heading),
       apply: insert({ ...target, fragment: heading }),
       type: 'keyword',
     }))
@@ -235,7 +240,7 @@ function spaceHeadings(index: NoteIndex, typed: string): { rows: Completion[]; a
     for (const heading of note.headings) {
       if (!fuzzy(heading, needle)) continue
       rows.push({
-        label: heading,
+        ...headingLabel(heading),
         detail: shownNote(note),
         apply: insert({ ...about(index, note), fragment: heading }),
         type: 'keyword',
