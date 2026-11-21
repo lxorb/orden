@@ -6,6 +6,7 @@ import { fromOthers } from '../commands/found'
 import { instructionsFor } from '../commands/instructions'
 import { untrusted } from '../chat/transcript'
 import { CITING, cites } from './citations'
+import { standingInstructions } from './standing.svelte'
 
 const INSTRUCTIONS = ['AGENTS.md', 'CLAUDE.md']
 const told = new Map<string, string>()
@@ -19,7 +20,9 @@ export async function instructionsOf(thread: Thread): Promise<string> {
   const space = workspace.spaces.find((one) => one.id === thread.space)
   const read = space ? await Promise.all(INSTRUCTIONS.map((name) => instructionFile(`${space.root}/${name}`))) : []
   const commands = await instructionsFor(thread).catch(() => '')
+  const standing = standingInstructions()
   const said = [
+    ...(standing ? [standing] : []),
     ...read.filter((one): one is string => !!one),
     ...(commands.trim() ? [commands] : []),
     ...(cites(thread.turns) ? [CITING] : []),

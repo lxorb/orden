@@ -10,6 +10,7 @@ import {
 } from '../chat/transcript'
 import { estimateText } from '../chat/usage'
 import { windowOf } from '../chat/window'
+import { instructionsKept } from '../store/standing.svelte'
 import {
   type Draft,
   type Effort,
@@ -64,6 +65,7 @@ const STOPPING = 10_000
 interface Live {
   session: Session
   mode: Mode
+  standing: string
   model: string
   effort: Effort
   fast: boolean
@@ -148,7 +150,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   }
   async function liveFor(thread: Thread, provider: Provider): Promise<[Live, boolean]> {
     const held = sessions.get(thread.id)
-    const fits = held?.mode === thread.mode && held.account === provider.id
+    const fits = held?.mode === thread.mode && held.account === provider.id && held.standing === instructionsKept.text
     if (held && !held.session.ended && fits) return [held, false]
     if (held) await held.session.close()
     let session: Session
@@ -181,6 +183,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     const live: Live = {
       session,
       mode: thread.mode,
+      standing: instructionsKept.text,
       model: thread.model,
       effort: thread.effort,
       fast: !!thread.fast,

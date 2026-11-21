@@ -1063,3 +1063,26 @@ describe('every request a turn sends', () => {
     expect(thread.compaction?.summary).toBe('They spoke of herons.')
   })
 })
+describe('the reader’s standing instructions', () => {
+  test('go with every message in the system words, a change with the next one, and nothing once cleared', async () => {
+    let standing = 'Keep explanations short and concise.'
+    const told = createApiEngine({
+      provider: (id) => Object.values(PROVIDERS).find((one) => one.id === id) ?? null,
+      tools,
+      instructions: () => Promise.resolve(standing ? `The reader's standing instructions:\n${standing}` : ''),
+    })
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'approve')
+    const ask = async (text: string) => {
+      answers = [stream('anthropic-2')]
+      await told.send(thread, { text, attachments: [] }, () => undefined, new AbortController().signal)
+      return JSON.stringify(sent.at(-1)?.body.system ?? '')
+    }
+    const first = await ask('one')
+    expect(first).toContain("The reader's standing instructions:")
+    expect(first).toContain('Keep explanations short and concise.')
+    standing = 'Answer in German.'
+    expect(await ask('two')).toContain('Answer in German.')
+    standing = ''
+    expect(await ask('three')).not.toContain('standing instructions')
+  })
+})
