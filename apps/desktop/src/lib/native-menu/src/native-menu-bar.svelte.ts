@@ -23,6 +23,8 @@ import {
   type Plan,
   type SeenKey,
   type StandIn,
+  type StandInWay,
+  standInWay,
 } from './native-menu'
 import { shortcuts } from '../../shortcuts/src/api'
 import { type AppContext, BY_ID, runEntry } from '../../shortcuts/src/api'
@@ -303,20 +305,21 @@ class MenuBar {
     const entry = this.live.get(id)
     const run = this.runs.get(id)
     if (!entry || !run) return
-    if (entry.key && letPass(entry.key, this.seen, performance.now())) return
     const away = !document.hasFocus()
     if (entry.standIn) {
-      this.standIn(entry.standIn, entry.key, away)
+      this.standIn(entry.standIn, entry.key, standInWay(entry.key, this.seen, performance.now(), away))
       return
     }
+    if (entry.key && letPass(entry.key, this.seen, performance.now())) return
     const at: KeyboardAt = away ? 'away' : this.context?.view?.hasFocus ? 'note' : 'page'
     if (entry.key && !keyRuns(entry.anywhere, at)) return
     if (away) void takeKeyboard()
     run()
   }
-  private standIn(action: StandIn, key: string | null, away: boolean): void {
+  private standIn(action: StandIn, key: string | null, way: StandInWay): void {
+    if (way === 'done') return
     const keystroke = key ? keystrokeOf(key) : null
-    if (!away && keystroke) {
+    if (way === 'keystroke' && keystroke) {
       const event = new KeyboardEvent('keydown', { ...keystroke, bubbles: true, cancelable: true })
       ;(document.activeElement ?? document.body).dispatchEvent(event)
       if (event.defaultPrevented) return

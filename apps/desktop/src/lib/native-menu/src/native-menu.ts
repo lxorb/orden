@@ -175,10 +175,16 @@ export function keystrokeOf(text: string): Keypress | null {
     shiftKey: combination.shift,
   }
 }
+function seenNow(key: string, seen: SeenKey | null, now: number): seen is SeenKey {
+  return !!seen && now - seen.at <= LET_PASS_WITHIN && matchesCombination(key, seen.event, 'mac')
+}
 export function letPass(key: string, seen: SeenKey | null, now: number): boolean {
-  if (!seen || now - seen.at > LET_PASS_WITHIN) return false
-  if (seen.event.defaultPrevented) return false
-  return matchesCombination(key, seen.event, 'mac')
+  return seenNow(key, seen, now) && !seen.event.defaultPrevented
+}
+export type StandInWay = 'done' | 'native' | 'keystroke'
+export function standInWay(key: string | null, seen: SeenKey | null, now: number, away: boolean): StandInWay {
+  if (key && seenNow(key, seen, now)) return seen.event.defaultPrevented ? 'done' : 'native'
+  return key && !away ? 'keystroke' : 'native'
 }
 export function leftFullscreen(was: boolean, now: boolean, appOn: boolean): boolean {
   return was && !now && appOn
