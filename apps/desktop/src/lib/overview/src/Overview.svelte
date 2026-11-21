@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick as laidOut, untrack } from 'svelte'
   import { closeOnBack, chorded, overlays, Cross } from '../../ui-kit/src/api'
+  import { land as landSpring, resting as sprung, SHARE, spring, step } from '../../springs/src/api'
   import { stillness, keep, storedText } from '../../platform/src/api'
   import { Select, trap } from '../../ui-controls/src/api'
   import {
@@ -38,7 +39,6 @@
   import type { Frame } from '../../panes/src/api'
   import { faces } from './faces.svelte'
   import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
-  import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
   import { keptAt, readsBefore, roomFor, settled, stripLanding, stripPlace } from './free'
   import { inRows, meets, packed, pushedAside } from './pack'
   import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot, WIDEST } from './layout'

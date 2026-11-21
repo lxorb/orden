@@ -10,7 +10,7 @@
   import { canShareItem, shareThisFile } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { swiping } from '../../back-swipe/src/api'
-  import { findBar, passFill, takeoverBar } from '../../surfaces/src/api'
+  import { emptySurface, findBar, passFill, takeoverBar } from '../../surfaces/src/api'
   import type { Tab } from '../../documents/src/api'
   import { favicon, plainOrigin } from '@orden/scan/web-address'
   import { HISTORY_MARK, isOwnPage } from '@orden/scan/own-pages'
@@ -60,7 +60,6 @@
   import { extensions, type Extension } from './extensions.svelte'
   import WebSite from './WebSite.svelte'
   import WebAsks from './WebAsks.svelte'
-  import { NewHere } from '../../new-here/src/api'
   import { handAppKeys } from './app-keys.svelte'
   import { cameFromAfter, focusBeside, readLeft } from './keys'
 
@@ -531,6 +530,7 @@
       {page}
       tab={tab.id}
       blank={address === ''}
+      offering={choosing}
       {shown}
       ground={chrome.barOf(tab.id)}
       theme={chrome.barTheme(tab.id)}
@@ -679,7 +679,9 @@
   {/if}
 
   {#if choosing}
-    <NewHere paneId={tab.paneId} chosenOn={tab.id} />
+    {#await emptySurface() then NewHere}
+      <NewHere paneId={tab.paneId} chosenOn={tab.id} />
+    {/await}
   {:else if own}
     {#await import('./WebHistory.svelte') then history}
       <history.default

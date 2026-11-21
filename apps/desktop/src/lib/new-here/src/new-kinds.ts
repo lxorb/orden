@@ -3,7 +3,6 @@ import type { IconNode } from 'lucide'
 import type { FileMark } from '@orden/contracts'
 import { hiddenKinds, type KindName, kindsHere } from '../../gates/src/api'
 import { kindLabel } from './kind-words'
-import { MARKS } from '../../marks/src/api'
 import { menu, type MenuEntry } from '../../ui-kit/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { workspace } from '../../workspace/src/api'
@@ -26,8 +25,8 @@ export interface NewKindRow {
   icon?: IconNode
   letter: string
   make: (paneId?: string) => void
-  grouped?: boolean
   others?: (paneId?: string) => Promise<MenuEntry[]>
+  paintedApart?: boolean
   ready?: () => void
 }
 const making = () => {
@@ -129,6 +128,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     line: 'browser',
     label: () => kindLabel('web'),
     mark: 'web',
+    paintedApart: true,
     letter: 'w',
     make: (paneId) =>
       inPane(paneId, async () => {
@@ -141,46 +141,13 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     line: 'browser',
     label: () => kindLabel('private'),
     mark: 'web',
+    paintedApart: true,
     letter: 'i',
     make: (paneId) => inPane(paneId, () => workspace.openWebsite(true)),
   }),
 }
 export function kindLines(kinds: readonly NewKindRow[]): NewKindRow[][] {
   return LINES.map((line) => kinds.filter((one) => one.line === line)).filter((line) => line.length > 0)
-}
-export function groupOf(line: readonly NewKindRow[]): NewKindRow | null {
-  const [first] = line
-  if (!first || line.length === 1) return first ?? null
-  return {
-    kind: first.kind,
-    line: first.line,
-    mark: first.mark,
-    ...(first.icon ? { icon: first.icon } : {}),
-    label: () => LINE_TITLES[first.line],
-    letter: '',
-    grouped: true,
-    make: () => undefined,
-    others: (paneId) =>
-      Promise.resolve(
-        line.map((one) => ({
-          label: one.label(),
-          icon: one.icon ?? MARKS[one.mark],
-          hint: one.letter.toUpperCase(),
-          run: () => one.make(paneId),
-        })),
-      ),
-  }
-}
-export function fitsWhole(
-  lines: readonly NewKindRow[][],
-  room: { width: number; height: number },
-  card: { width: number; height: number; gap: number },
-  stacked: boolean,
-): boolean {
-  if (room.width <= 0 || card.width <= 0) return true
-  const across = stacked ? 1 : Math.max(1, Math.floor((room.width + card.gap) / (card.width + card.gap)))
-  const rows = lines.reduce((sum, line) => sum + Math.ceil(line.length / across), 0)
-  return rows * card.height + (rows - 1) * card.gap <= room.height
 }
 const ONLINE: IconNode = [
   ['path', { d: 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z' }],

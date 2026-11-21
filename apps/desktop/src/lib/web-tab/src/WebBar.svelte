@@ -44,12 +44,14 @@
     onbrowser,
     extending = null,
     blank = false,
+    offering = false,
     ground,
     theme,
   }: {
     page: Page
     tab: string
     blank?: boolean
+    offering?: boolean
     ground?: { colour: string } | undefined
     theme?: 'dark' | 'light' | undefined
     focused: boolean
@@ -85,7 +87,7 @@
   function arrive() {
     const was = page.keyboard
     page.keyboard = null
-    if (focused && (was === 'address' || (blank && !page.seen))) take()
+    if (focused && (was === 'address' || (blank && !offering && !page.seen))) take()
     else if (focused && !blank && isDesktop) void invoke('keyboard_back', { tab }).catch(() => undefined)
     page.seen = true
   }
