@@ -5,7 +5,9 @@ class Gate {
   showing = $state(false)
   guiding = $state(false)
   restore() {
-    if (isRecord(stored(PROGRESS_KEY))) this.showing = true
+    const kept = stored(PROGRESS_KEY)
+    if (isRecord(kept)) this.showing = true
+    else if (kept === 'waiting') void import('./wait')
   }
   finish() {
     this.showing = false
