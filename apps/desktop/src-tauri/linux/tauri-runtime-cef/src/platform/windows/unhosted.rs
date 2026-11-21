@@ -61,12 +61,38 @@ pub(crate) fn put_out_of_sight(browser: cef::sys::cef_window_handle_t) {
   }
 }
 
+fn holds_keyboard(browser: HWND, focus: HWND, within: impl Fn(HWND, HWND) -> bool) -> bool {
+  !focus.0.is_null() && (focus == browser || within(browser, focus))
+}
+
 pub(crate) fn give_keyboard(browser: cef::sys::cef_window_handle_t) {
   let browser = HWND(browser.0 as _);
   unsafe {
     if browser.0.is_null() || !IsWindow(Some(browser)).as_bool() {
       return;
     }
+    let focus = windows::Win32::UI::Input::KeyboardAndMouse::GetFocus();
+    if holds_keyboard(browser, focus, |parent, child| {
+      windows::Win32::UI::WindowsAndMessaging::IsChild(parent, child).as_bool()
+    }) {
+      return;
+    }
     let _ = windows::Win32::UI::Input::KeyboardAndMouse::SetFocus(Some(browser));
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::holds_keyboard;
+  use windows::Win32::Foundation::HWND;
+
+  #[test]
+  fn a_browser_that_holds_the_keyboard_in_itself_or_its_page_is_not_focused_again() {
+    let (browser, page, other) = (HWND(1 as _), HWND(2 as _), HWND(3 as _));
+    let within = |parent: HWND, child: HWND| parent == browser && child == page;
+    assert!(holds_keyboard(browser, browser, within));
+    assert!(holds_keyboard(browser, page, within));
+    assert!(!holds_keyboard(browser, other, within));
+    assert!(!holds_keyboard(browser, HWND(std::ptr::null_mut()), within));
   }
 }
