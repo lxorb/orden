@@ -311,3 +311,18 @@ test('a tab put behind stops its clock, and shown again ticks at once and on', a
     vi.useRealTimers()
   }
 })
+test('a note shown keeps its editor while settings it was dressed with change and the file list is read again', async () => {
+  const { paneId } = opened()
+  const first = await drawn(paneId)
+  const { modes } = await import('../../modes/src/api')
+  const was = modes.width
+  modes.width = was + 4
+  flushSync()
+  await workspace.loadTree()
+  flushSync()
+  modes.width = was
+  flushSync()
+  expect(views.of(paneId)).toBe(first)
+  expect(first.dom.isConnected).toBe(true)
+  expect(vi.mocked(createEditor)).toHaveBeenCalledTimes(1)
+})
