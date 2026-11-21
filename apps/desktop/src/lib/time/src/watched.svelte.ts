@@ -1,41 +1,35 @@
+import { whileShown } from '../../panes/src/api'
 import type { Minute } from './minutes'
 import { time } from './time.svelte'
 
 const AGAIN = 60_000
-export function watchedMinutes(
-  range: () => readonly [number, number],
-  seen: () => boolean = () => true,
-): { list: Minute[] } {
+export function watchedMinutes(range: () => readonly [number, number]): { list: Minute[] } {
   let list = $state.raw<Minute[]>([])
-  $effect(() => {
+  let asked = 0
+  function load() {
     const [from, to] = range()
-    if (!seen()) return
-    let gone = false
-    const load = () =>
-      void time.minutes(from, to).then((found) => {
-        if (!gone) list = found
-      })
+    const mine = ++asked
+    void time.minutes(from, to).then((found) => {
+      if (mine === asked) list = found
+    })
+  }
+  $effect(() => {
+    range()
     load()
-    const timer = setInterval(load, AGAIN)
-    return () => {
-      gone = true
-      clearInterval(timer)
-    }
   })
+  whileShown(AGAIN, load)
   return {
     get list() {
       return list
     },
   }
 }
-export function ticking(seen: () => boolean = () => true): { now: number } {
+export function ticking(): { now: number } {
   let now = $state(Date.now())
-  $effect(() => {
-    if (!seen()) return
-    now = Date.now()
-    const timer = setInterval(() => (now = Date.now()), time.running.length ? 1000 : 20_000)
-    return () => clearInterval(timer)
-  })
+  whileShown(
+    () => (time.running.length ? 1000 : 20_000),
+    () => (now = Date.now()),
+  )
   return {
     get now() {
       return now

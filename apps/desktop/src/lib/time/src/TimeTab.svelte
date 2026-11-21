@@ -22,7 +22,7 @@
   import Timeline from './Timeline.svelte'
   import { ticking, watchedMinutes } from './watched.svelte'
 
-  const { tab, shown = true }: { tab: Tab; shown?: boolean } = $props()
+  const { tab }: { tab: Tab } = $props()
   const me = crypto.randomUUID()
   const first = untrack(() => readSpec(tab.doc))
   let kind = $state<Kind>(first.range)
@@ -34,7 +34,7 @@
   let customChip = $state<HTMLElement | null>(null)
   let customLayer = $state<HTMLElement | null>(null)
   let draft = $state<[string, string]>(['', ''])
-  const ticker = ticking(() => shown)
+  const ticker = ticking()
   const now = $derived(ticker.now)
   const day = $derived(chosen ?? midnightOf(now))
   $effect(() => {
@@ -59,10 +59,7 @@
     const from = startOf(unit, day)
     return [from, endOf(unit, from)]
   })
-  const minutes = watchedMinutes(
-    () => span,
-    () => shown,
-  )
+  const minutes = watchedMinutes(() => span)
   const totals = $derived(rangeTotals(time.spans, minutes.list, span[0], span[1], now, { untracked }))
   const holdsToday = $derived(span[0] <= now && now < span[1])
   const short = (at: number) => localDate(at, { day: 'numeric', month: 'short' })
