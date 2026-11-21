@@ -5,6 +5,7 @@ import { type Keyed, lastingKeys } from './tab-keys'
 const KEY = 'orden:overview-places'
 const WINDOWS = 'orden:overview-windows-2'
 const WINDOWS_BEFORE = 'orden:overview-windows'
+const HAND = 'orden:overview-by-hand'
 const APART = 360
 export function readPlaces(value: unknown): Record<string, Box> {
   if (typeof value !== 'object' || value === null) return {}
@@ -42,11 +43,16 @@ class Places {
   private slot = 0
   private all = $state.raw<Record<string, Box>>(readPlaces(stored(KEY)))
   private put = $state.raw<Record<string, Box>>({})
+  private hand = storedText(HAND) !== null
   own(slot: number) {
     if (slot === this.slot) return
     this.slot = slot
     this.all = readPlaces(storedFor(KEY, slot))
     this.put = {}
+    this.hand = storedText(scoped(HAND, slot)) !== null
+  }
+  get byHand(): boolean {
+    return this.hand || Object.keys(this.put).length > 0
   }
   private key(key: string): string {
     return scoped(key, this.slot)
@@ -84,6 +90,8 @@ class Places {
   }
   tidy(arranged: Readonly<Record<string, Box>> = {}) {
     this.put = {}
+    this.hand = false
+    forget(this.key(HAND))
     this.all = { ...arranged }
     keepJson(this.key(WINDOWS), {})
     keepJson(this.key(KEY), this.all)
@@ -92,6 +100,11 @@ class Places {
     if (!Object.keys(more).length) return
     this.all = { ...this.all, ...more }
     keepJson(this.key(KEY), this.all)
+  }
+  moved(more: Readonly<Record<string, Box>>) {
+    this.arrange(more)
+    this.hand = true
+    keepJson(this.key(HAND), true)
   }
   every(): Readonly<Record<string, Box>> {
     return this.all

@@ -33,7 +33,7 @@
   import { places } from './places.svelte'
   import { type Cell, cellAt } from './cells'
   import Cells from './Cells.svelte'
-  import { boundsOf, boxOutline, moved as shifted, type Outline, outlineOf } from './outline'
+  import { boundsOf, boxOutline, holds, moved as shifted, type Outline, outlineOf } from './outline'
   import { canWriteAt } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import type { Frame } from '../../panes/src/api'
@@ -169,7 +169,7 @@
     }
     return out
   }
-  const byHand = () => Object.keys(places.windows).length > 0
+  const byHand = () => places.byHand
   function arrange(keys: readonly string[]) {
     if (byHand()) placeNew(keys)
     else places.tidy(sortedPlaces(keys))
@@ -284,7 +284,6 @@
     from: string
     goes: readonly string[]
     with: readonly { id: string; dx: number; dy: number; w: number; h: number }[]
-    whole: string | null
   } | null>(null)
   let chosen = $state<readonly string[]>([])
   const heldBoxes = $derived.by(() => {
@@ -340,16 +339,6 @@
   })
   let aside = $state<Record<string, Point>>({})
   const offsetOf = (key: string): Point | null => aside[key] ?? null
-  function pushAside() {
-    const whole = held?.whole
-    const carried = whole ? outlineFor(whole, [...heldBoxes.values()]) : null
-    if (!whole || !carried) return
-    const others = cellBoxes.flatMap((one) => {
-      const outline = one.key === whole ? null : outlineAt(one.key)
-      return outline ? [{ key: one.key, outline }] : []
-    })
-    aside = pushedAside(carried, others, CELLS_APART, aside)
-  }
   const laid = $derived({
     slots,
     seams: gridCells.flatMap((one) =>
@@ -874,6 +863,7 @@
   }
   function gone() {
     forgetLater()
+    over = null
     extras = 0
     homes.clear()
     shown = false
@@ -1001,11 +991,11 @@
       await new Promise((go) => requestAnimationFrame(go))
     }
   }
-  let pressed: { id: string; x: number; y: number; pointer: number; whole: string | null } | null = null
+  let pressed: { id: string; x: number; y: number; pointer: number } | null = null
   let dragged = false
   function down(event: PointerEvent, id: string) {
     if (event.button !== 0 || !out) return
-    pressed = { id, x: event.clientX, y: event.clientY, pointer: event.pointerId, whole: null }
+    pressed = { id, x: event.clientX, y: event.clientY, pointer: event.pointerId }
     dragged = false
     event.stopPropagation()
   }
@@ -1020,13 +1010,8 @@
     }
     open(tab)
   }
-  function carriedWith(id: string, whole: string | null): string[] {
+  function carriedWith(id: string): string[] {
     const lying = (one: string) => flights.has(one) && resting.some((slot) => slot.id === one)
-    if (whole)
-      return [
-        id,
-        ...resting.filter((one) => cellOf.get(one.id) === whole && one.id !== id).map((one) => one.id),
-      ].filter(lying)
     if (chosen.includes(id)) return [id, ...chosen.filter((one) => one !== id)].filter(lying)
     chosen = []
     return [id]
@@ -1039,9 +1024,9 @@
       const flight = flights.get(id)
       if (!flight) return
       const pose = flight.pose
-      if (!pressed.whole) (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+      ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
       const grabbed = toCanvas(camera, pressed)
-      const ids = carriedWith(id, pressed.whole)
+      const ids = carriedWith(id)
       const first = resting.find((one) => one.id === id)
       const tabs = ids.flatMap((one) => byId.get(one) ?? [])
       const from = cellOf.get(id) ?? spaceKey
@@ -1054,7 +1039,7 @@
         landing: null,
         from,
         goes:
-          together && !pressed.whole && tabs.length
+          together && tabs.length
             ? spacesFor(
                 tabs.map((tab) => ({ ...movingOf(tab), at: workspace.spaceOfTab(tab) })),
                 workspace,
@@ -1066,7 +1051,6 @@
           const slot = resting.find((lying) => lying.id === one)
           return slot && first ? [{ id: one, dx: slot.x - first.x, dy: slot.y - first.y, w: slot.w, h: slot.h }] : []
         }),
-        whole: pressed.whole,
       }
       at = id
     }
@@ -1076,12 +1060,11 @@
     const h = own?.h ?? 1
     const box = { x: hand.x - held.fx * w, y: hand.y - held.fy * h, w, h }
     held = { ...held, box, landing: landingFor(hand) }
-    pushAside()
     for (const one of heldIds) follow(one)
     fly()
   }
   function landingFor(point: Point): (Landing & { kind: 'space' }) | null {
-    if (!held || held.whole) return null
+    if (!held) return null
     const from = held.from
     const goes = held.goes
     const now = held.landing?.key ?? from
@@ -1114,27 +1097,13 @@
     dragged = true
     const before = places.windows
     const lying = laid.slots
-    const pushed = Object.entries(aside)
-    aside = {}
-    for (const [key, by] of pushed) {
-      const place = places.at(key)
-      if (place) places.arrange({ [key]: { ...place, x: place.x + by.x, y: place.y + by.y } })
-    }
     const box = hand.box
-    const was = resting.find((one) => one.id === hand.id)
     const ids = [hand.id, ...hand.with.map((one) => one.id)]
     held = null
     if (box) {
       places.keepWindows(Object.fromEntries(lying.map((one) => [one.id, one])), workspace.tabs)
     }
-    if (hand.whole) {
-      const place = places.at(hand.whole)
-      if (box && was && place)
-        places.arrange({
-          [hand.whole]: { ...place, x: place.x + box.x - was.x, y: place.y + box.y - was.y },
-        })
-      void settleApart(hand.whole, true)
-    } else if (hand.landing) void carry(ids, hand.landing, before)
+    if (hand.landing) void carry(ids, hand.landing, before)
     else if (box) {
       void settleApart(hand.from, false)
       const own = lying.filter((one) => cellOf.get(one.id) === spaceKey)
@@ -1181,7 +1150,7 @@
       workspace.tabs,
     )
     const place = places.at(key)
-    if (place) places.arrange({ [key]: { ...place, x: place.x + dx, y: place.y + dy } })
+    if (place) places.moved({ [key]: { ...place, x: place.x + dx, y: place.y + dy } })
   }
   function cancelled() {
     pressed = null
@@ -1283,45 +1252,30 @@
   let panning = false
   function grounded(event: PointerEvent) {
     if (!(event.target instanceof Element) || !event.target.closest('.floor')) return
-    const space = out && event.button === 0 && !touching.size ? nameAt(event) : null
-    const first = space ? laid.slots.find((slot) => cellOf.get(slot.id) === space) : null
-    if (first) {
-      handTakes()
-      pressed = {
-        id: first.id,
-        x: event.clientX,
-        y: event.clientY,
-        pointer: event.pointerId,
-        whole: space,
-      }
-      dragged = false
-      event.target.setPointerCapture(event.pointerId)
-      return
-    }
-    if (space) {
-      handTakes()
-      carrying = {
-        key: space,
-        pointer: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        moving: false,
-      }
-      event.target.setPointerCapture(event.pointerId)
-      return
-    }
+    const space = out && event.button === 0 && !touching.size ? bubbleAt(event) : null
     handTakes()
-    touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
     event.target.setPointerCapture(event.pointerId)
+    if (space) {
+      carrying = { key: space, pointer: event.pointerId, x: event.clientX, y: event.clientY, moving: false }
+      return
+    }
+    touching.set(event.pointerId, { x: event.clientX, y: event.clientY })
     panning = touching.size > 1
   }
-  function nameAt(point: { clientX: number; clientY: number }): string | null {
-    for (const name of document.querySelectorAll<HTMLElement>('[data-space-name]')) {
-      const box = name.getBoundingClientRect()
-      const { clientX: x, clientY: y } = point
-      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) return name.dataset.spaceName ?? null
+  function bubbleAt(point: { clientX: number; clientY: number }): string | null {
+    if (!all) return null
+    const at = toCanvas(camera, { x: point.clientX, y: point.clientY })
+    for (const { key } of cellBoxes) {
+      const outline = outlineAt(key)
+      const by = offsetOf(key)
+      if (outline && holds(by ? shifted(outline, by.x, by.y) : outline, at.x, at.y)) return key
     }
     return null
+  }
+  let over = $state<string | null>(null)
+  function goInto(key: string) {
+    if (key === spaceKey) close()
+    else void workspace.showSpace(key).then(close)
   }
   let carrying = $state<{
     key: string
@@ -1353,18 +1307,18 @@
     carrying = null
     const moves = Object.entries(aside)
     aside = {}
-    if (!one.moving || event.type !== 'pointerup') return
-    for (const [key, by] of moves) {
-      const place = places.at(key)
-      if (place) places.arrange({ [key]: { ...place, x: place.x + by.x, y: place.y + by.y } })
-    }
+    if (event.type !== 'pointerup') return
+    if (!one.moving) return goInto(one.key)
+    for (const [key, by] of moves) shiftSpace(key, by.x, by.y)
     void settleApart(one.key, true)
   }
   function dragging(event: PointerEvent) {
     if (carrying) return carried(event)
-    if (pressed?.whole && pressed.pointer === event.pointerId) return moved(event)
     const was = touching.get(event.pointerId)
-    if (!was) return
+    if (!was) {
+      if (!pressed && !held) over = bubbleAt(event)
+      return
+    }
     const now = { x: event.clientX, y: event.clientY }
     const [first, second] = [...touching.entries()]
     if (touching.size === 2 && first && second) {
@@ -1381,11 +1335,6 @@
   }
   function letGo(event: PointerEvent) {
     if (carrying) return setDown(event)
-    if (pressed?.whole && pressed.pointer === event.pointerId) {
-      if (event.type === 'pointerup') up(event)
-      else cancelled()
-      return
-    }
     if (!touching.delete(event.pointerId)) return
     if (!touching.size && !panning && event.type === 'pointerup') close()
     if (!touching.size) panning = false
@@ -1457,7 +1406,7 @@
     onselectstart={(event) => event.preventDefault()}
     ondragstart={(event) => event.preventDefault()}
   >
-    <div class="floor" style:top="{barBottom}px" aria-hidden="true"></div>
+    <div class="floor" class:is-over={over !== null} style:top="{barBottom}px" aria-hidden="true"></div>
 
     <div class="top" style:--overview-top="{barBottom > 0 ? barBottom : ROW}px" bind:this={top}>
       {#if spaces.length > 1}
@@ -1576,6 +1525,9 @@
     position: fixed;
     inset: 0;
     z-index: var(--z-raised);
+  }
+  .floor.is-over {
+    cursor: pointer;
   }
   .top {
     position: fixed;

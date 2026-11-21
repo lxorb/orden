@@ -43,3 +43,7 @@ export function middleOf(o: Outline): { x: number; y: number } {
   const box = boundsOf(o)
   return { x: box.x + box.w / 2, y: box.y + box.h / 2 }
 }
+export function holds(o: Outline, x: number, y: number): boolean {
+  for (let i = 0; i < N; i++) if (x * (COS[i] ?? 0) + y * (SIN[i] ?? 0) > at(o, i)) return false
+  return true
+}
