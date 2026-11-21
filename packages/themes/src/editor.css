@@ -869,11 +869,6 @@
   -webkit-text-fill-color: currentcolor;
   pointer-events: none;
 }
-.cm-editor:not(.orden-ligatures) .orden-inline-code,
-.cm-editor:not(.orden-ligatures) .cm-line.orden-code {
-  font-variant-ligatures: none;
-  font-feature-settings: 'calt' 0;
-}
 .cm-panels {
   border: none;
   background: var(--surface);
