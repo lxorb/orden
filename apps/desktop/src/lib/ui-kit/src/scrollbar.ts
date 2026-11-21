@@ -69,34 +69,36 @@ function freshen(scroller: HTMLElement, host: HTMLElement | null) {
   freshening.set(scroller, { scroller, host: host ?? freshening.get(scroller)?.host ?? null })
   frame()
 }
-export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): OverlayScrollbar {
+export interface Surface {
+  content(): number
+  visible(): number
+  at(): number
+  to(at: number): void
+}
+interface Placed {
+  top: number
+  height: number
+  end: number
+  slack: number
+}
+function barOn(host: HTMLElement, surface: Surface, placed: () => Placed) {
   const bar = document.createElement('div')
   bar.className = 'orden-scrollbar'
   const thumb = document.createElement('div')
   thumb.className = 'orden-scrollbar-thumb'
   bar.append(thumb)
   host.append(bar)
-  scroller.classList.add('orden-scrolls')
-  freshen(scroller, host)
   const shown = { top: -1, height: -1, end: -1, needed: false, size: -1, offset: -1 }
   let seen: { top: number; height: number; end: number; thumb: Thumb | null } | null = null
   let held = false
   let stopped = false
+  const track = (slack = 0): Track => {
+    const visible = surface.visible()
+    return { content: surface.content(), visible, at: surface.at(), track: visible, least: LEAST, slack }
+  }
   const measure = () => {
-    const visible = scroller.clientHeight
-    seen = {
-      top: scroller.offsetTop,
-      height: visible,
-      end: host.clientWidth - scroller.offsetLeft - scroller.clientWidth,
-      thumb: thumbFor({
-        content: scroller.scrollHeight,
-        visible,
-        at: scroller.scrollTop,
-        track: visible,
-        least: LEAST,
-        slack: parseFloat(getComputedStyle(scroller).paddingBottom) || 0,
-      }),
-    }
+    const { top, height, end, slack } = placed()
+    seen = { top, height, end, thumb: thumbFor(track(slack)) }
   }
   const paint = () => {
     if (!seen || stopped) return
@@ -135,29 +137,16 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
     dimming.cancel()
     if (!held) dimming()
   }
-  const onScroll = () => {
-    soon()
-    light()
-  }
   const grab = (event: PointerEvent) => {
-    const visible = scroller.clientHeight
-    const each = contentPerThumb({
-      content: scroller.scrollHeight,
-      visible,
-      at: scroller.scrollTop,
-      track: visible,
-      least: LEAST,
-    })
+    const each = contentPerThumb(track())
     if (!each) return
     event.preventDefault()
     thumb.setPointerCapture(event.pointerId)
     held = true
     bar.classList.add('is-held')
     light()
-    const from = { y: event.clientY, at: scroller.scrollTop }
-    const move = (moved: PointerEvent) => {
-      scroller.scrollTop = from.at + (moved.clientY - from.y) * each
-    }
+    const from = { y: event.clientY, at: surface.at() }
+    const move = (moved: PointerEvent) => surface.to(from.at + (moved.clientY - from.y) * each)
     const done = () => {
       held = false
       bar.classList.remove('is-held')
@@ -170,17 +159,14 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
     thumb.addEventListener('pointerup', done)
     thumb.addEventListener('pointercancel', done)
   }
-  scroller.addEventListener('scroll', onScroll, { passive: true })
-  scroller.addEventListener('pointerenter', light)
   thumb.addEventListener('pointerdown', grab)
-  const watching = new ResizeObserver(soon)
-  watching.observe(scroller)
   soon()
   return {
+    light,
+    redraw: soon,
     settle: () => {
       bar.classList.add('is-settling')
       easing()
-      soon()
       light()
     },
     stop: () => {
@@ -188,13 +174,53 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
       drawing.delete(drawn)
       dimming.cancel()
       easing.cancel()
-      watching.disconnect()
-      scroller.removeEventListener('scroll', onScroll)
-      scroller.removeEventListener('pointerenter', light)
       thumb.removeEventListener('pointerdown', grab)
+      bar.remove()
+    },
+  }
+}
+export function surfaceScrollbar(host: HTMLElement, surface: Surface): { moved(): void; stop(): void } {
+  const bar = barOn(host, surface, () => ({ top: 0, height: surface.visible(), end: 0, slack: 0 }))
+  host.addEventListener('pointerenter', bar.light)
+  return {
+    moved: bar.light,
+    stop: () => {
+      host.removeEventListener('pointerenter', bar.light)
+      bar.stop()
+    },
+  }
+}
+export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): OverlayScrollbar {
+  scroller.classList.add('orden-scrolls')
+  freshen(scroller, host)
+  const bar = barOn(
+    host,
+    {
+      content: () => scroller.scrollHeight,
+      visible: () => scroller.clientHeight,
+      at: () => scroller.scrollTop,
+      to: (at) => (scroller.scrollTop = at),
+    },
+    () => ({
+      top: scroller.offsetTop,
+      height: scroller.clientHeight,
+      end: host.clientWidth - scroller.offsetLeft - scroller.clientWidth,
+      slack: parseFloat(getComputedStyle(scroller).paddingBottom) || 0,
+    }),
+  )
+  scroller.addEventListener('scroll', bar.light, { passive: true })
+  scroller.addEventListener('pointerenter', bar.light)
+  const watching = new ResizeObserver(() => bar.redraw())
+  watching.observe(scroller)
+  return {
+    settle: bar.settle,
+    stop: () => {
+      watching.disconnect()
+      scroller.removeEventListener('scroll', bar.light)
+      scroller.removeEventListener('pointerenter', bar.light)
+      bar.stop()
       scroller.classList.remove('orden-scrolls')
       freshen(scroller, null)
-      bar.remove()
     },
   }
 }
