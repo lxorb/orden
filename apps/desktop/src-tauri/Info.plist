@@ -38,6 +38,8 @@
 	<string>Orden uses the camera only for a site in a web tab, and only when you allow it.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Orden turns what you say into words in your note while you dictate.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Orden reads your watch's heart rate when you connect it in the time tracker.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Orden looks for printers on your network when you print.</string>
 </dict>

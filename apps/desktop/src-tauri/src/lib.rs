@@ -394,6 +394,9 @@ macro_rules! desktop_commands {
             orden_system::presence::input_idle,
             orden_system::presence::device_name,
             orden_system::app_icon::app_icon,
+            orden_system::heart::hr_devices,
+            orden_system::heart::hr_connect,
+            orden_system::heart::hr_disconnect,
             orden_system::time_sense::time_sense,
             orden_system::touchpad::touchpad_pan,
         ]

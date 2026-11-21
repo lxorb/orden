@@ -12,6 +12,7 @@ pub mod front_x;
 pub mod full_screen;
 pub mod gpu;
 pub mod ground;
+pub mod heart;
 #[cfg(target_os = "macos")]
 pub mod lights;
 pub mod link_preview;
