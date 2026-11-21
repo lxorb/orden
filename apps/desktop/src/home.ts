@@ -1,5 +1,7 @@
 import '@orden/themes/tokens.css'
 import '@orden/themes/base.css'
-import { showHome } from './lib/showcase/src/api'
+import '@fontsource-variable/geist'
+import './lib/showcase/src/home.css'
+import { homePage } from './lib/showcase/src/api'
 
-showHome(window)
+void homePage().then(({ showHome }) => showHome(window))

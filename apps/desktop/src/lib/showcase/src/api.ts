@@ -22,5 +22,5 @@ export {
   SITE_ORIGIN,
 } from './links'
 export { poolOf } from './pool'
-export { showHome } from './home-page'
+export const homePage = () => import('./home-page')
 export { previewAnswer, siteAnswer, siteFiles } from './site'

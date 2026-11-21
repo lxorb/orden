@@ -1,5 +1,3 @@
-import '@fontsource-variable/geist'
-import './home.css'
 import { demoLoopSrc, isDemoLoopScene, isDemoReady, type DemoLoopScene, type DemoPlay } from './demo-cue'
 import {
   appHomeAt,

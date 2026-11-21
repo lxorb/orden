@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   APP_ORIGIN,
@@ -296,5 +298,37 @@ describe('the preview Worker on orden.so/preview/', () => {
     const bare = await answer('https://orden.so/preview')
     expect(bare.status).toBe(301)
     expect(bare.headers.get('location')).toBe('https://orden.so/preview/')
+  })
+})
+describe('what the module carries', () => {
+  const SOURCE = new URL('../src/', import.meta.url)
+  test('no style and no font, so a module that imports its api keeps the page styles out of the app', () => {
+    const code = readdirSync(SOURCE).filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
+    expect(code).toContain('api.ts')
+    for (const name of code)
+      expect(readFileSync(new URL(name, SOURCE), 'utf8'), name).not.toMatch(
+        /import\s+['"][^'"]*(?:\.css|@fontsource[^'"]*)['"]/,
+      )
+  })
+  test('the page styles are imported by the home page entry alone, so no app chunk can carry them', () => {
+    const app = new URL('../../../', SOURCE).pathname
+    const files = (dir: string): string[] =>
+      readdirSync(dir).flatMap((name) => {
+        const path = join(dir, name)
+        if (statSync(path).isDirectory()) return files(path)
+        return /\.(?:ts|svelte|js)$/.test(name) && !name.includes('.test.') ? [path] : []
+      })
+    const takers = files(app).filter((path) => /home\.css['"]/.test(readFileSync(path, 'utf8')))
+    expect(takers.map((path) => path.slice(app.length))).toEqual(['home.ts'])
+  })
+  test('the api reaches the page code only through a lazy door', () => {
+    const api = readFileSync(new URL('api.ts', SOURCE), 'utf8')
+    expect(api).not.toMatch(/from '\.\/home-page'/)
+    expect(api).toContain("import('./home-page')")
+  })
+  test('the home page entry brings the page styles and its font itself', () => {
+    const entry = readFileSync(new URL('../../../home.ts', SOURCE), 'utf8')
+    expect(entry).toContain("import './lib/showcase/src/home.css'")
+    expect(entry).toContain("import '@fontsource-variable/geist'")
   })
 })
