@@ -232,6 +232,7 @@
     flex: none;
     display: flex;
     width: 16rem;
+    overflow: hidden;
     padding-top: var(--space-2);
     border-inline-end: 1px solid var(--line);
     background: var(--surface);
