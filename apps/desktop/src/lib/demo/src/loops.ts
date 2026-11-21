@@ -228,6 +228,12 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
         await new Promise((done) => setTimeout(done, 300))
         chat.newThread()
         asking = chat
+        const thread = chat.thread
+        if (thread) thread.title = 'Weekend routes'
+        if (document.documentElement.dataset.demo !== 'phone' || !thread) return
+        thread.turns = turnsAt(0.05, script)
+        chat.touched(thread)
+        workspace.openChat(thread.id, 'Weekend routes')
       },
       tick: (phase) => {
         const thread = asking?.thread

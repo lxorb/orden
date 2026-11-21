@@ -45,7 +45,11 @@ export function turnsAt(phase: number, script: readonly Said[]): Turn[] {
     if (phase < one.at) break
     const last = turns.at(-1)
     if (last?.role === one.role) last.parts.push(one.part(phase))
-    else turns.push({ id: `demo-${turns.length}`, role: one.role, at: 0, parts: [one.part(phase)] })
+    else {
+      const part = one.part(phase)
+      const draft = one.role === 'you' && part.kind === 'text' ? { draft: { text: part.text, attachments: [] } } : {}
+      turns.push({ id: `demo-${turns.length}`, role: one.role, at: 0, parts: [part], ...draft })
+    }
   }
   return turns
 }

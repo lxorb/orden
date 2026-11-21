@@ -15,6 +15,7 @@
     'orden:usage-help': 'false',
     'orden:theme': 'default',
     'orden:theme-moved': 'yes',
+    'orden:ai-sidebar': '{"rail":false}',
   }
   const SERVER = /^\/(?:v\d+|themes|api)(?:\/|$)/
   const here = into.location.href
