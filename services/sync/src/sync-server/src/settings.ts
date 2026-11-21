@@ -13,7 +13,6 @@ import { askHub } from './hub/reach'
 type Check = (value: unknown) => string | null
 const ATTACHMENT_FOLDERS = ['space', 'note', 'named']
 const PRESETS = ['default', 'notion', 'obsidian', 'vscode', 'vim', 'custom']
-const LIGATURE_SCOPES = ['off', 'code', 'all']
 function wordOf(name: string, allowed: readonly string[]): Check {
   return (value) =>
     typeof value === 'string' && allowed.includes(value) ? null : `${name} must be one of ${allowed.join(', ')}`
@@ -31,10 +30,6 @@ function oneOf(name: string, allowed: readonly number[]): Check {
     typeof value === 'number' && allowed.includes(value) ? null : `${name} must be one of ${allowed.join(', ')}`
 }
 const KNOWN: Record<string, Check> = {
-  ligatures: (value) =>
-    typeof value === 'boolean' || (typeof value === 'string' && LIGATURE_SCOPES.includes(value))
-      ? null
-      : `ligatures must be true, false, or one of ${LIGATURE_SCOPES.join(', ')}`,
   mobileSeen: switched('mobileSeen'),
   vim: (value) => (typeof value === 'boolean' ? null : 'vim must be true or false'),
   attachments: (value) =>
@@ -89,6 +84,7 @@ const RETIRED: ReadonlySet<string> = new Set([
   'glassesSeen',
   'glassesModel',
   'glassesEffort',
+  'ligatures',
 ])
 const MOST_SHORTCUTS = 200
 const LONGEST_ID = 64

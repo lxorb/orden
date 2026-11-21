@@ -19,37 +19,31 @@ describe('account settings', () => {
     expect(response.json.settings).toEqual({})
   })
   test('keep what is chosen', async () => {
-    const set = await patch({ ligatures: true })
+    const set = await patch({ vim: true })
     expect(set.status).toBe(200)
-    expect(set.json.settings).toEqual({ ligatures: true })
+    expect(set.json.settings).toEqual({ vim: true })
     const read = await call(env, '/v1/settings', { token })
-    expect(read.json.settings).toEqual({ ligatures: true })
+    expect(read.json.settings).toEqual({ vim: true })
   })
   test('a change leaves the rest as it was', async () => {
-    await patch({ ligatures: true })
-    expect((await patch({})).json.settings).toEqual({ ligatures: true })
-    expect((await patch({ ligatures: false })).json.settings).toEqual({ ligatures: false })
+    await patch({ vim: true })
+    expect((await patch({})).json.settings).toEqual({ vim: true })
+    expect((await patch({ vim: false })).json.settings).toEqual({ vim: false })
   })
   test('refuse what the app does not know', async () => {
     expect((await patch({ colour: 'red' })).status).toBe(400)
-    expect((await patch({ ligatures: 'yes' })).status).toBe(400)
+    expect((await patch({ vim: 'yes' })).status).toBe(400)
     expect((await patch([true])).status).toBe(400)
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({})
   })
-  test('the ligature scope is one of the three the app offers', async () => {
-    for (const scope of ['off', 'code', 'all']) {
-      const set = await patch({ ligatures: scope })
-      expect(set.status, scope).toBe(200)
-      expect(set.json.settings.ligatures).toBe(scope)
+  test('let go of the ligatures an older app still sends, so the rest of the write lands and nothing of them is kept', async () => {
+    for (const ligatures of [true, false, 'off', 'code', 'all', 'sometimes']) {
+      const set = await patch({ ligatures, vim: true })
+      expect(set.status, String(ligatures)).toBe(200)
+      expect(set.json.settings).toEqual({ vim: true })
     }
-  })
-  test('and a switch from an older build still reads', async () => {
-    expect((await patch({ ligatures: true })).json.settings.ligatures).toBe(true)
-    expect((await patch({ ligatures: false })).json.settings.ligatures).toBe(false)
-  })
-  test('but not a scope nobody has heard of', async () => {
-    expect((await patch({ ligatures: 'sometimes' })).status).toBe(400)
-    expect((await patch({ ligatures: 2 })).status).toBe(400)
+    env.db.prepare('update users set settings = ?').run(JSON.stringify({ ligatures: 'code', vim: true }))
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ vim: true })
   })
   describe('how long a note keeps its earlier versions', () => {
     test('is one of the intervals the app offers', async () => {
@@ -73,7 +67,7 @@ describe('account settings', () => {
   })
   test('are the account’s alone', async () => {
     const other = await signIn(env, 'c@d.dev')
-    await patch({ ligatures: true })
+    await patch({ vim: true })
     expect((await call(env, '/v1/settings', { token: other })).json.settings).toEqual({})
     expect((await call(env, '/v1/settings')).status).toBe(401)
   })
@@ -283,14 +277,14 @@ describe('a name that is not a setting', () => {
     expect(response.json.error.length).toBeLessThanOrEqual('unknown setting '.length + 64)
   })
   test('leaves the settings as they were', async () => {
-    await patch({ ligatures: true })
+    await patch({ vim: true })
     await call(env, '/v1/settings', {
       method: 'PATCH',
       token,
-      raw: '{"__proto__":{"ligatures":false}}',
+      raw: '{"__proto__":{"vim":false}}',
       headers: { 'content-type': 'application/json' },
     })
-    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ ligatures: true })
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ vim: true })
   })
 })
 describe('the kinds an account turned off', () => {
@@ -410,10 +404,10 @@ describe('the shortcuts an account carries', () => {
     expect(read.json.settings.shortcuts).toEqual({ 'format.bold': 'Mod-Alt-b' })
   })
   test('sit beside the other settings rather than replacing them', async () => {
-    await patch({ ligatures: true })
+    await patch({ vim: true })
     await patch({ shortcuts: { 'app.save': 'F2' } })
     const read = await call(env, '/v1/settings', { token })
-    expect(read.json.settings).toEqual({ ligatures: true, shortcuts: { 'app.save': 'F2' } })
+    expect(read.json.settings).toEqual({ vim: true, shortcuts: { 'app.save': 'F2' } })
   })
 })
 describe('the theme kept with the account', () => {
@@ -436,7 +430,7 @@ describe('the theme kept with the account', () => {
   test('takes a sheet larger than the room the other settings share', async () => {
     const css = `:root { --bg: #000; }${' '.repeat(20 * 1024)}`
     expect((await patch({ look: { ...LOOK, css } })).status).toBe(200)
-    expect((await patch({ ligatures: true })).status).toBe(200)
+    expect((await patch({ vim: true })).status).toBe(200)
   })
   test('leaves an older build that knows nothing of it working', async () => {
     await patch({ look: LOOK })
@@ -465,14 +459,15 @@ describe('a setting the app no longer has', () => {
     spellWords: ['orden', 'tauri'],
     pull: 'app.palette',
     undatedInToday: false,
+    ligatures: 'code',
   }
   test('is taken from an older build and kept nowhere', async () => {
     for (const [name, value] of Object.entries(RETIRED)) {
-      const set = await patch({ [name]: value, ligatures: true })
+      const set = await patch({ [name]: value, vim: true })
       expect(set.status, name).toBe(200)
-      expect(set.json.settings, name).toEqual({ ligatures: true })
+      expect(set.json.settings, name).toEqual({ vim: true })
     }
-    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ ligatures: true })
+    expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ vim: true })
   })
   test('is taken whatever shape it has', async () => {
     for (const name of Object.keys(RETIRED)) {

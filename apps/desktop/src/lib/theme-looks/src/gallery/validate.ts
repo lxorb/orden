@@ -50,7 +50,6 @@ const PROSE_PROPERTIES = new Set([
   'border-radius',
   'box-shadow',
   'font-family',
-  'font-feature-settings',
   'font-size',
   'font-style',
   'font-variant',
