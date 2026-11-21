@@ -142,6 +142,23 @@
     /\b(sign ?in|log ?in|log ?on|anmelden|einloggen|connexion|se connecter|iniciar sesi[oó]n|acceder|ingresar|accedi|entrar|inloggen|next|weiter|continue|suivant|siguiente|avanti|continuar|pr[oó]ximo|volgende)(?![a-z0-9])|войти|вход|далее|登录|登入|ログイン|サインイン|次へ/
   const SIGN_UP =
     /\b(sign ?up|register|registration|create ?(an |your )?account|join|registrieren|registrierung|konto (erstellen|anlegen)|inscri(re|ption|bete|birse)|cr[ée]er (un )?compte|crear (una )?cuenta|reg[ií]strate|registrati|registrazione|crea (un )?account|criar conta|cadastr(o|ar)|registreren|account aanmaken)(?![a-z0-9])|регистрац|создать аккаунт|зарегистр|注册|註冊|登録|新規/
+  const RECOVERS =
+    /\b(forgot|forgotten|lost|reset|recover(y)?|restore|password (assistance|help)|vergessen|zur[uü]cksetzen|wiederherstell|oubli[ée]|r[ée]initialis|r[ée]cup[ée]r|olvid|restablec|recuper|reimposta|dimenticat|vergeten|herstel)|восстанов|сброс|забыл|找回|重置|忘记|忘記|再設定|忘れ/
+  const SUBSCRIBES =
+    /\b(newsletters?|subscribe|subscription|unsubscribe|mailing ?list|abonnieren|abonnement|s'abonner|abonn|suscrib|iscriviti|nieuwsbrief|inschrijven)|подпис|рассылк|订阅|訂閱|購読|メルマガ/
+  const NOT_A_SECRET = /\b(gift|voucher|coupon|promo|redeem|card ?(number|pin)|cvv|cvc)(?![a-z0-9])/
+  const WORDS = [
+    ['cc-number', CC_NUMBER, 5],
+    ['cc-csc', CC_CSC, 5],
+    ['cc-exp-month', CC_EXP_MONTH, 5],
+    ['cc-exp-year', CC_EXP_YEAR, 5],
+    ['cc-exp', CC_EXP, 4],
+    ['cc-name', CC_NAME, 5],
+    ['totp', TOTP, 4],
+    ['email', EMAIL, 3],
+    ['username', USERNAME, 2],
+    ...ROLES.map(([role, pattern]) => [role, pattern, role === 'name' || role === 'country' ? 2 : 3]),
+  ]
   const SUBMITS = 'button, input[type=submit], input[type=image], input[type=button], [role=button]'
   const doc = randomly()
   const named = new WeakMap()
@@ -300,28 +317,24 @@
       return said(NEW) && !said(CURRENT) ? 'new-password' : 'password'
     }
     if (auto) return auto
-    if (said(CC_NUMBER)) return 'cc-number'
-    if (said(CC_CSC)) return 'cc-csc'
-    if (said(CC_EXP_MONTH)) return 'cc-exp-month'
-    if (said(CC_EXP_YEAR)) return 'cc-exp-year'
-    if (said(CC_EXP)) return 'cc-exp'
-    if (said(CC_NAME)) return 'cc-name'
-    if (said(TOTP)) return 'totp'
-    if (type === 'email') return 'email'
-    if (said(USERNAME)) return 'username'
-    if (said(EMAIL)) return 'email'
-    for (const [role, pattern] of ROLES) if (said(pattern)) return role
-    if (type === 'tel') return 'tel'
-    if (
-      el instanceof HTMLInputElement &&
-      said(SHORT_CODE) &&
-      !said(NOT_A_CODE) &&
-      el.maxLength >= 4 &&
-      el.maxLength <= 10
-    ) {
-      return 'totp'
+    const scores = new Map()
+    const add = (role, points) => scores.set(role, (scores.get(role) || 0) + points)
+    for (const [role, pattern, weight] of WORDS) {
+      for (const one of parts) if (pattern.test(one)) add(role, weight)
     }
-    return 'unknown'
+    if (type === 'email') add('email', 4)
+    if (type === 'tel') add('tel', 2)
+    const boxed = el instanceof HTMLInputElement && el.maxLength >= 4 && el.maxLength <= 10
+    if (boxed && said(SHORT_CODE) && !said(NOT_A_CODE)) add('totp', 3)
+    let best = 'unknown'
+    let most = 0
+    for (const [role, points] of scores) {
+      if (points > most) {
+        best = role
+        most = points
+      }
+    }
+    return best
   }
   function visible(el) {
     if (el.hidden || typeOf(el) === 'hidden') return false
@@ -378,20 +391,19 @@
     return loose
   }
   function signalsOf(form) {
-    const parts = [location.pathname]
-    if (form === loose) {
-      parts.push(document.title)
-    } else {
+    const where = [location.pathname, document.title]
+    const said = []
+    if (form !== loose) {
       for (const key of ['id', 'name', 'action', 'class', 'aria-label']) {
-        parts.push(form.getAttribute(key) || '')
+        where.push(form.getAttribute(key) || '')
       }
       let counting = 0
-      for (const button of form.querySelectorAll(SUBMITS)) {
-        if (++counting > 6) break
-        parts.push(button.textContent || button.value || '')
+      for (const one of form.querySelectorAll(SUBMITS + ', h1, h2, h3, legend')) {
+        if (++counting > 8) break
+        said.push(one.textContent || one.value || '')
       }
     }
-    return normal(parts.join(' '), 800)
+    return { where: normal(where.join(' '), 400), said: normal(said.join(' '), 400) }
   }
   function sixBoxes(fields) {
     let run = []
@@ -426,9 +438,12 @@
     const passwords = seen.filter((one) => one.type === 'password')
     const userish = seen.filter((one) => one.role === 'username' || one.role === 'email')
     const identity = new Set(seen.filter((one) => IDENTITY.has(one.role)).map((one) => one.role))
-    const signals = signalsOf(form)
+    const { where, said } = signalsOf(form)
+    const signals = where + ' ' + said
     const signsUp = SIGN_UP.test(signals)
     const signsIn = SIGN_IN.test(signals)
+    const recovers = RECOVERS.test(where) || (RECOVERS.test(said) && !SIGN_IN.test(said))
+    const elsewhere = (recovers ? 6 : 0) + (SUBSCRIBES.test(signals) ? 6 : 0)
     const texts = seen.filter(textish)
     if (!passwords.length) {
       if (has('totp')) return 'totp'
@@ -440,7 +455,9 @@
             /webauthn/.test(one.el.getAttribute('autocomplete') || '') ||
             one.parts.some((part) => USERNAME.test(part)),
         )
-        if (hiddenPassword || declared || (signsIn && !signsUp)) return 'username'
+        const score =
+          (hiddenPassword ? 3 : 0) + (declared ? 2 : 0) + (signsIn ? 2 : 0) - (signsUp && !signsIn ? 3 : 0) - elsewhere
+        if (score >= 2) return 'username'
       }
       if (identity.size >= 2) return 'identity'
       return null
@@ -474,8 +491,10 @@
         renew(0)
       } else if (userish.length || before(seen, only)) {
         kind = 'login'
-      } else {
+      } else if (2 + (signsIn ? 2 : 0) - (saysNotASecret(only) ? 4 : 0) - elsewhere > 0) {
         kind = 'password'
+      } else {
+        return null
       }
     }
     if (kind === 'login' && !userish.length) {
@@ -483,6 +502,9 @@
       if (one) one.role = one.type === 'email' ? 'email' : 'username'
     }
     return kind
+  }
+  function saysNotASecret(one) {
+    return one.parts.some((part) => NOT_A_SECRET.test(part))
   }
   function saysCurrent(one) {
     return one.parts.some((part) => CURRENT.test(part))
