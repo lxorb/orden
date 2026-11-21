@@ -4,9 +4,12 @@
   import { workspace } from '../../../workspace/src/api'
   import Asked from './Asked.svelte'
   import { bareName, objectOf } from '../verbs'
+  import { shortcuts } from '../../../shortcuts/src/api'
 
   const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } = $props()
   let answering = $state(false)
+  const approveKeys = $derived(shortcuts.keys('ai.approve'))
+  const denyKeys = $derived(shortcuts.keys('ai.deny'))
   const root = $derived(workspace.spaces.find((one) => one.id === thread?.space)?.root ?? null)
   const asks = $derived.by(() => {
     const said = part.result?.asks?.trim()
@@ -26,7 +29,9 @@
   <p dir="auto">{asks}</p>
   <Asked {part} {thread} />
   <div class="answers">
-    <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>Approve</button>
+    <button class="orden-button" disabled={answering} onclick={() => void answer(true)}
+      >Approve{#if approveKeys}<kbd class="orden-keys">{approveKeys}</kbd>{/if}</button
+    >
     {#if thread && alwaysOffered(part.result?.category)}
       <button
         class="orden-button is-quiet"
@@ -35,7 +40,9 @@
         onclick={() => void answer(true, true)}>Always</button
       >
     {/if}
-    <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}>Deny</button>
+    <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}
+      >Deny{#if denyKeys}<kbd class="orden-keys">{denyKeys}</kbd>{/if}</button
+    >
   </div>
 </div>
 
@@ -60,5 +67,11 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
+    container: answers / inline-size;
+  }
+  @container answers (width < 24rem) {
+    .answers .orden-keys {
+      display: none;
+    }
   }
 </style>

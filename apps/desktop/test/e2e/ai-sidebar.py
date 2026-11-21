@@ -609,9 +609,14 @@ def shape(browser: Browser, scheme: str) -> None:
     waited(page, "!document.querySelector('.ask .card')", "the card gone once kept")
     page.evaluate(ASKING)
     waited(page, "document.querySelector('.ask .approval')", "the question")
-    answers = page.locator(".ask .approval .answers button").all_inner_texts()
+    answers = page.evaluate(
+        "() => [...document.querySelectorAll('.ask .approval .answers button')].map((one) => one.firstChild?.textContent?.trim())"
+    )
     if answers != ["Approve", "Always", "Deny"]:
         wrong(f"the question does not offer Codex's answers: {answers}")
+    keys = page.locator(".ask .approval .answers button .orden-keys").all_inner_texts()
+    if len(keys) != 2 or not all(keys):
+        wrong(f"Approve and Deny do not show their keys: {keys}")
     page.wait_for_timeout(500)
     shot(page, f"{tag}06-approval-side")
     page.evaluate(
