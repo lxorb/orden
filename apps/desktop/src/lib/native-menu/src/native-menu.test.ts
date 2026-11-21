@@ -14,6 +14,7 @@ import {
   type NativeItem,
   type NativeSubmenu,
   type SeenKey,
+  standInWay,
   titled,
   toAccelerator,
 } from './native-menu'
@@ -434,6 +435,31 @@ describe('a key the page let pass', () => {
     expect(letPass('Mod-i', seen(), 1050)).toBe(false)
     expect(letPass('Mod-b', seen(), 5000)).toBe(false)
     expect(letPass('Mod-b', null, 1050)).toBe(false)
+  })
+})
+describe('a stand-in pressed by its key', () => {
+  const STAND_INS = [
+    { key: 'Mod-z', event: { key: 'z', code: 'KeyZ', shiftKey: false } },
+    { key: 'Mod-Shift-z', event: { key: 'Z', code: 'KeyZ', shiftKey: true } },
+    { key: 'Mod-a', event: { key: 'a', code: 'KeyA', shiftKey: false } },
+  ]
+  const seen = (event: (typeof STAND_INS)[number]['event'], defaultPrevented = false): SeenKey => ({
+    event: { ...event, ctrlKey: false, metaKey: true, altKey: false, defaultPrevented },
+    at: 1000,
+  })
+  test('the page saw and did not act on goes to the system, which is all a field on a Mac answers', () => {
+    for (const one of STAND_INS) expect(standInWay(one.key, seen(one.event), 1050, false)).toBe('native')
+  })
+  test('the page acted on is done', () => {
+    for (const one of STAND_INS) expect(standInWay(one.key, seen(one.event, true), 1050, false)).toBe('done')
+  })
+  test('the page never saw is handed it as a keystroke first, or to the system from another window', () => {
+    for (const one of STAND_INS) {
+      expect(standInWay(one.key, null, 1050, false)).toBe('keystroke')
+      expect(standInWay(one.key, seen(one.event), 5000, false)).toBe('keystroke')
+      expect(standInWay(one.key, null, 1050, true)).toBe('native')
+    }
+    expect(standInWay(null, null, 1050, false)).toBe('native')
   })
 })
 describe('full screen, left by the window', () => {
