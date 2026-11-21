@@ -99,6 +99,10 @@ export class PagesStore extends CanvasStore {
     const below = this.canAdd ? GUTTER + PEEK / scale : slack
     return { first: -slack + down / 2, last: this.tall + below - down / 2 }
   }
+  get range(): { first: number; last: number } {
+    const { first, last } = this.limits(this.camera.scale)
+    return last < first ? { first: this.tall / 2, last: this.tall / 2 } : { first, last }
+  }
   get bottom(): number {
     const { first, last } = this.limits(this.camera.scale)
     return last < first ? this.tall / 2 : last

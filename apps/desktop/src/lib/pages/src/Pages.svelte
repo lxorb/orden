@@ -1,5 +1,14 @@
 <script lang="ts">
-  import { keyElsewhere, longPress, said, viewport, DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
+  import {
+    keyElsewhere,
+    longPress,
+    said,
+    surfaceScrollbar,
+    viewport,
+    DIVIDER,
+    menu,
+    type MenuEntry,
+  } from '../../ui-kit/src/api'
   import { untrack } from 'svelte'
   import {
     CanvasBar,
@@ -462,6 +471,7 @@
   }
   $effect(() => () => stopDoubting())
   function onpointerdown(event: PointerEvent) {
+    if (event.target instanceof Element && event.target.closest('.orden-scrollbar')) return
     if (contacts.echo(event)) return
     endDoubting()
     tools.used()
@@ -1001,6 +1011,31 @@
     rise = 0
     pull = { ...pull, raw: 0, holding: false }
   }
+  let bar: { moved(): void; stop(): void } | null = null
+  $effect(() => {
+    const element = host
+    if (!element) return
+    const one = untrack(() =>
+      surfaceScrollbar(element, {
+        content: () => (store.range.last - store.range.first) * store.camera.scale + store.pane.height,
+        visible: () => store.pane.height,
+        at: () => (store.camera.y - store.range.first) * store.camera.scale,
+        to: (at) => {
+          store.halt()
+          store.camera = store.held({ ...store.camera, y: store.range.first + at / store.camera.scale })
+        },
+      }),
+    )
+    bar = one
+    return () => {
+      one.stop()
+      if (bar === one) bar = null
+    }
+  })
+  const scrolled = $derived([camera.y, camera.scale, store.pane.height, store.tall].join(' '))
+  $effect(() => {
+    if (scrolled) bar?.moved()
+  })
   $effect(() => {
     const element = host
     if (!element) return
