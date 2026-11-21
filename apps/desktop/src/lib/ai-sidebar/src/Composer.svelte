@@ -17,6 +17,7 @@
   import { hostHere } from './host'
   import MentionMark from './MentionMark.svelte'
   import ModeMark from './ModeMark.svelte'
+  import { MODE_ICONS } from './mode-icons'
   import ModelPicker from './ModelPicker.svelte'
   import { chatPicture, MOST_CHAT_PICTURES, MOST_CHAT_TEXT, textHeld } from './picture'
   import Queue from './Queue.svelte'
@@ -333,6 +334,7 @@
   function modeMenu(event: MouseEvent) {
     const row = (mode: Mode) => ({
       label: modeWord(mode),
+      icon: MODE_ICONS[mode],
       checked: head?.mode === mode,
       run: () => chat.setMode(mode),
     })
