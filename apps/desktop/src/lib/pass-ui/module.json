@@ -20,6 +20,7 @@
     "modes",
     "surfaces",
     "icon-picker",
-    "glyphs"
+    "glyphs",
+    "panes"
   ]
 }
