@@ -504,8 +504,9 @@ export function decodeTarget(target: string): string {
   }
 }
 const MUST_ENCODE = /[%\\<>#?:()|`]|\s/gu
+const WEB = /^([a-z][\w+.-]*:\/\/|mailto:|tel:)/i
 export const encodeTarget = (path: string): string =>
-  path.replace(MUST_ENCODE, (one) =>
+  path.replace(WEB.test(path) ? /[\\<>()|`\s]/gu : MUST_ENCODE, (one) =>
     one.charCodeAt(0) < 0x80
       ? `%${one.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`
       : encodeURIComponent(one),
