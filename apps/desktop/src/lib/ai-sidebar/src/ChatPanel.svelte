@@ -7,7 +7,8 @@
   import { ai } from '../../ai-providers/src/api'
   import { agentMarks, type Tab, workspace } from '../../workspace/src/api'
   import { agentSession } from '../../surfaces/src/api'
-  import { following, toggleFollow, chat, side, railOpen } from './chat-parts'
+  import { following, toggleFollow, chat, side, railOpen, crateAnswers } from './chat-parts'
+  import { answerByKeys } from './review/asked-keys'
   import { rememberRail, chatToTab } from './chat-parts'
   import Composer from './Composer.svelte'
   import Conversation from './Conversation.svelte'
@@ -133,6 +134,7 @@
   bind:this={root}
   onfocusin={claim}
   onpointerdown={claim}
+  onkeydowncapture={(event) => answerByKeys(event, chat.turns, (id, allow) => crateAnswers.answer(id, allow))}
   data-chat-drop=""
   use:dropOver={(event) => {
     if (isTreeDrag(event.dataTransfer)) event.preventDefault()
