@@ -138,22 +138,17 @@
       ...(dressed ? [] : [shortcutEffect(shortcuts.forEditor)]),
     ]
   }
-  $effect(() => {
-    const first = untrack(() => tab)
-    const created = createEditor({ parent: host, ...untrack(() => optionsFor(first)) })
+  $effect(() => untrack(built))
+  function built() {
+    const first = tab
+    const created = createEditor({ parent: host, ...optionsFor(first) })
     mark('editor built')
-    if (!parked || !states.resumed(first, parked)) {
-      states.started(
-        first,
-        created,
-        untrack(() => placeOf(first)),
-      )
-    }
+    if (!parked || !states.resumed(first, parked)) states.started(first, created, placeOf(first))
     modes.apply(created)
     shortcuts.apply(created)
     view = created
     bar = overlayScrollbar(created.scrollDOM, created.dom)
-    const unfold = untrack(() => viewport.touch) ? foldsKeyboard(created) : null
+    const unfold = viewport.touch ? foldsKeyboard(created) : null
     return () =>
       letGo(created, () => {
         unfold?.()
@@ -166,7 +161,7 @@
         created.destroy()
         view = undefined
       })
-  })
+  }
   function letGo(current: EditorView, go: () => void) {
     const had = current.hasFocus
     if (had) current.contentDOM.blur()
