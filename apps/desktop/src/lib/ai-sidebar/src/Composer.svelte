@@ -532,7 +532,7 @@
         {/if}
         {#if button === 'stop'}
           <button class="go" title="Stop" aria-label="Stop" onclick={() => chat.stop()}>
-            <svg viewBox="0 0 13 13"><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg>
+            <svg viewBox="0 0 13 13"><rect class="square" x="2.5" y="2.5" width="8" height="8" rx="1.4" /></svg>
           </button>
         {:else if button === 'send'}
           <button

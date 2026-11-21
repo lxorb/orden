@@ -247,3 +247,10 @@ test('pictures pasted all at once stop at as many as a message takes, and say so
   expect(drawn).toHaveLength(20)
   expect(panel.trouble).toContain('one-more.png was not added')
 })
+test('the stop button’s square fills about half its circle, as other apps draw it (#2415)', () => {
+  Object.assign(panel, { busy: true, text: '' })
+  composer()
+  const square = target.querySelector('.go .square')
+  const box = target.querySelector('.go svg')?.getAttribute('viewBox')?.split(' ').map(Number) ?? []
+  expect(Number(square?.getAttribute('width')) / (box[2] ?? 1)).toBeGreaterThanOrEqual(0.5)
+})
