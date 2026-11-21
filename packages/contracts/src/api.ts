@@ -244,6 +244,7 @@ export {
   type ChatPorts,
   type ChatsDemo,
   type ChatsDemoPerson,
+  type ChatsDemoPicture,
   type ChatsDemoPort,
   type ChatsPort,
   chatsEnding,

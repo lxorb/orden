@@ -407,6 +407,11 @@ export class FixtureChats implements Chats {
     this.files.set(hash, URL.createObjectURL(new Blob([bytes.slice()])))
     return Promise.resolve(hash)
   }
+  filed(url: string): string {
+    const hash = hexOf(this.random, 64)
+    this.files.set(hash, url)
+    return hash
+  }
   fileUrl(_chat: string, hash: string): Promise<string | null> {
     return Promise.resolve(this.files.get(hash) ?? pictureOf(hash))
   }
