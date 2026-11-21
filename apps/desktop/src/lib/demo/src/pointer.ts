@@ -63,10 +63,10 @@ export class Pointer {
     })
     Object.assign(this.ring.style, {
       position: 'absolute',
-      left: '-22px',
-      top: '-22px',
-      width: '44px',
-      height: '44px',
+      left: '-30px',
+      top: '-30px',
+      width: '60px',
+      height: '60px',
       borderRadius: '50%',
       border: `3px solid ${look === 'ai' ? ink : '#7c6bf5'}`,
       opacity: '0',
@@ -88,13 +88,13 @@ export class Pointer {
       this.root.append(dot)
     } else {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-      svg.setAttribute('width', '32')
-      svg.setAttribute('height', '32')
+      svg.setAttribute('width', '44')
+      svg.setAttribute('height', '44')
       svg.setAttribute('viewBox', '0 0 32 32')
       Object.assign(svg.style, {
         position: 'absolute',
-        left: look === 'pen' ? '-4px' : '-3px',
-        top: look === 'pen' ? '-28px' : '-2px',
+        left: look === 'pen' ? '-5.5px' : '-4px',
+        top: look === 'pen' ? '-38.5px' : '-3px',
         overflow: 'visible',
         filter: 'drop-shadow(0 2px 3px rgb(0 0 0 / 0.35))',
       })
@@ -112,8 +112,8 @@ export class Pointer {
       tag.textContent = label
       Object.assign(tag.style, {
         position: 'absolute',
-        left: '24px',
-        top: '22px',
+        left: '34px',
+        top: '30px',
         padding: '2px 8px',
         borderRadius: '8px',
         background: ink,
