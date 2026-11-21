@@ -219,6 +219,16 @@ describe('serving an image', () => {
     const response = await call(env, `/i/${sized(64).hash}.png`)
     expect(response.headers.get('cache-control')).toContain('immutable')
   })
+  test('hands it back by its bare hash on every host a note may name it by, old ones too (#2451)', async () => {
+    await upload(sized(64))
+    for (const host of ['orden.so', 'api.orden.so', 'nibeditor.com', 'www.nibeditor.com']) {
+      for (const name of [sized(64).hash, `${sized(64).hash}.png`, sized(64).hash.toUpperCase()]) {
+        const response = await call(env, `/i/${name}`, { host })
+        expect(response.status, `${host}/i/${name}`).toBe(200)
+        expect(response.headers.get('content-type')).toBe('image/png')
+      }
+    }
+  })
   test('is a miss for something never stored', async () => {
     expect((await call(env, `/i/${OTHER}.png`)).status).toBe(404)
   })
