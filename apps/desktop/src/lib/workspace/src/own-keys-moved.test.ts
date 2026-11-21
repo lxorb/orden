@@ -22,6 +22,16 @@ vi.mock('../../link-index/src/api', () => ({
       }),
   },
 }))
+const timed: unknown[] = []
+vi.mock('../../platform/src/tauri', async (original) => ({
+  ...(await original<object>()),
+  invoke: (command: string, args: { path: string; modified?: number; created?: number }) => {
+    if (command === 'file_stamp')
+      return Promise.resolve({ modified: 1_600_000_000_000, created: 1_500_000_000_000, len: 1 })
+    if (command === 'set_file_times') timed.push(args)
+    return Promise.reject(new Error(`${command} is not here`))
+  },
+}))
 vi.stubGlobal('localStorage', memoryStorage())
 const { ItemMetaStore } = await import('../../space-kept/src/api')
 const { moveOwnKeysSoon } = await import('./own-keys-moved')
@@ -41,6 +51,7 @@ beforeEach(() => {
   held.texts.clear()
   held.signedIn = false
   held.root = '/space'
+  timed.length = 0
 })
 describe("a space's notes from before Orden kept its own metadata", () => {
   test('have their icon, colour and cover moved out of the text, once', async () => {
@@ -54,6 +65,7 @@ describe("a space's notes from before Orden kept its own metadata", () => {
     })
     expect(held.texts.get(PLAN)).toBe('---\ntitle: Plan\n---\n\n# Plan\n')
     expect(held.texts.get('/space/Bare.md')).toBe('# Bare\n')
+    expect(timed).toEqual([{ path: PLAN, modified: 1_600_000_000_000, created: 1_500_000_000_000 }])
     expect(workspace.itemMeta.movedFromText('/space')).toBe(true)
     held.texts.set('/space/Imported.md', '---\nicon: leaf\n---\n\n# From Obsidian\n')
     await moved()
