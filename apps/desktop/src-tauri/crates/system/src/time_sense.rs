@@ -12,6 +12,8 @@ pub struct Sensed {
     app: Option<String>,
     lid: Option<bool>,
     locked: Option<bool>,
+    #[serde(flatten)]
+    device: crate::device::Device,
 }
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 struct Power {
@@ -38,6 +40,7 @@ fn sensed() -> Sensed {
         }),
         lid: power.lid,
         locked: power.locked,
+        device: crate::device::read(),
     }
 }
 fn power() -> Power {
@@ -280,12 +283,18 @@ mod tests {
         assert_eq!(app_name(&"x".repeat(200)).map(|one| one.len()), Some(80));
     }
     #[test]
-    fn only_what_the_tracker_reads_is_sent() {
+    fn the_tracker_is_sent_its_app_and_the_device_s_state() {
         let sent = serde_json::to_value(Sensed::default()).expect("json");
         let mut keys: Vec<&str> =
             sent.as_object().expect("an object").keys().map(String::as_str).collect();
         keys.sort_unstable();
-        assert_eq!(keys, ["app", "front", "idleMs", "lid", "locked"]);
+        assert_eq!(
+            keys,
+            [
+                "ac", "app", "battery", "boot", "charging", "cpu", "front", "idleMs", "lid",
+                "locked", "memory", "network", "online", "screen"
+            ]
+        );
     }
     #[test]
     fn the_system_is_asked_without_trouble() {

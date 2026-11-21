@@ -4,6 +4,7 @@ pub mod app_place;
 pub mod appearance;
 pub mod bundle_name;
 pub mod default_browser;
+mod device;
 pub mod document_window;
 pub mod fonts;
 #[cfg(target_os = "linux")]
