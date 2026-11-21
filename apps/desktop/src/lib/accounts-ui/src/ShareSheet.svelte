@@ -7,15 +7,12 @@
   import { FileMark, SpaceMark } from '../../marks/src/api'
   import { dur, fade, scale } from '../../platform/src/api'
   import MemberRows from './MemberRows.svelte'
+  import { ADMIN, ROLES } from './roles'
 
-  const ROLES = [
-    { value: 'write', label: 'Write' },
-    { value: 'read', label: 'View' },
-  ]
   const who = $derived(share.who)
   const link = $derived(who?.link ?? null)
   const item = $derived(share.item)
-  const inviting = $derived(item ? ROLES : [...ROLES, { value: 'admin', label: 'Admin' }])
+  const inviting = $derived(item ? ROLES : [...ROLES, ADMIN])
   const subject = $derived(item ? shownName(nameOf(item.path)) : (share.space?.name ?? ''))
   const alreadyInTheSpace = $derived(!!share.space && isShared(share.space.root))
   function toggleLink() {
