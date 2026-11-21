@@ -844,10 +844,41 @@ describe('a page note’s zoom', () => {
     expect(registry.shortcuts.keyFor('pages.zoom.out')).toBe('Mod-Alt--')
     expect(registry.shortcuts.keyFor('pages.fit')).toBe('Mod-Alt-0')
   })
-  test('and never on the three that change the size of the words', () => {
-    const size = ['app.zoom-in', 'app.zoom-out', 'app.zoom-reset'].map((id) => registry.shortcuts.keyFor(id))
-    for (const id of ['pages.zoom.in', 'pages.zoom.out', 'pages.fit']) {
-      expect(size, id).not.toContain(registry.shortcuts.keyFor(id))
+  test('and off a Mac never on the three that change the size of the words', () => {
+    for (const platform of ['win', 'linux'] as const) {
+      const size = ['app.zoom-in', 'app.zoom-out', 'app.zoom-reset'].map((id) => defaultKeyFor(found(id), platform))
+      for (const id of ['pages.zoom.in', 'pages.zoom.out', 'pages.fit']) {
+        expect(size, `${platform} ${id}`).not.toContain(defaultKeyFor(found(id), platform))
+      }
+    }
+  })
+  test('on a Mac takes Cmd and the zoom keys over the paper and the plane, and Shift with 1 and 2 to fit', async () => {
+    const { shortcuts } = await onMac()
+    const shift = (digit: string) => press(digit === '1' ? '!' : '@', { code: `Digit${digit}`, shift: true })
+    for (const [id, event] of [
+      ['canvas.fit', shift('1')],
+      ['canvas.frame', shift('2')],
+      ['pages.fit', shift('1')],
+      ['pages.fit.page', shift('2')],
+      ['canvas.zoom.in', press('=', { code: 'Equal', meta: true })],
+      ['pages.zoom.out', press('-', { code: 'Minus', meta: true })],
+      ['canvas.zoom.actual', press('0', { code: 'Digit0', meta: true })],
+    ] as const) {
+      expect(shortcuts.pressed(id, event), id).toBe(true)
+    }
+    expect(defaultKeyFor(found('canvas.zoom.actual'), 'mac')).toBe('Mod-0')
+    expect(defaultKeyFor(found('pages.fit.page'), 'mac')).toBe('Shift-2')
+    for (const platform of ['win', 'linux'] as const) {
+      expect(defaultKeyFor(found('canvas.zoom.actual'), platform)).toBeNull()
+      expect(defaultKeyFor(found('pages.fit.page'), platform)).toBeNull()
+    }
+    expect(shortcuts.pressed('canvas.fit', press('1', { code: 'Digit1' }))).toBe(false)
+    expect(shortcuts.pressed('canvas.fit', shift('2'))).toBe(false)
+    for (const id of ['canvas.fit', 'canvas.frame', 'canvas.zoom.in', 'canvas.zoom.out', 'canvas.zoom.actual']) {
+      expect(shortcuts.conflicts(id, shortcuts.keyFor(id) ?? ''), id).toEqual([])
+    }
+    for (const id of ['pages.fit', 'pages.fit.page', 'pages.zoom.in', 'pages.zoom.out']) {
+      expect(shortcuts.conflicts(id, shortcuts.keyFor(id) ?? ''), id).toEqual([])
     }
   })
   test('is read where the paper is, and shares its keys with the plane', () => {
@@ -929,7 +960,13 @@ describe('on a Mac', () => {
     ['tree.delete', 'Mod-Backspace', 'Delete'],
     ['tree.delete.alt', 'Mod-Delete', 'Backspace'],
     ['tree.rename', 'Mod-Enter', 'F2'],
-    ['canvas.frame', 'Mod-Alt-1', 'Mod-1'],
+    ['canvas.frame', 'Shift-2', 'Mod-1'],
+    ['canvas.fit', 'Shift-1', 'Mod-Alt-0'],
+    ['canvas.zoom.in', 'Mod-=', 'Mod-Alt-='],
+    ['canvas.zoom.out', 'Mod--', 'Mod-Alt--'],
+    ['pages.zoom.in', 'Mod-=', 'Mod-Alt-='],
+    ['pages.zoom.out', 'Mod--', 'Mod-Alt--'],
+    ['pages.fit', 'Shift-1', 'Mod-Alt-0'],
     ['canvas.front', 'Mod-Alt-]', 'Mod-Shift-]'],
     ['canvas.back', 'Mod-Alt-[', 'Mod-Shift-['],
   ]

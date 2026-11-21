@@ -100,7 +100,18 @@ describe.each(['default', 'notion', 'obsidian', 'vscode'])('the %s keyboard', (i
         !one.id.startsWith('pass.'),
     )
     const app = registry.SHORTCUTS.filter((one) => !one.contextual && one.scope === 'app')
-    const shared = new Set(['canvas.duplicate app.deselect-tab'])
+    const shared = new Set([
+      'canvas.duplicate app.deselect-tab',
+      ...(platform === 'mac'
+        ? [
+            'canvas.zoom.in app.zoom-in',
+            'canvas.zoom.out app.zoom-out',
+            'canvas.zoom.actual app.zoom-reset',
+            'pages.zoom.in app.zoom-in',
+            'pages.zoom.out app.zoom-out',
+          ]
+        : []),
+    ])
     for (const entry of surfaces) {
       const key = keyUnder(keys, entry.id, platform)
       if (!key) continue

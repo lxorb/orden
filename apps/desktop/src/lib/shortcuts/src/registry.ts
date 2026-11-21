@@ -611,13 +611,21 @@ const PAGES_ENTRIES: Shortcut[] = (
     ['pages.add', 'Add a page', null],
   ] as const
 ).map(([id, label, key]) => panel('pages', id, label, key))
-const MAC_CANVAS: Record<string, string> = {
-  'canvas.frame': 'Mod-Alt-1',
+const MAC_KEYS: Record<string, string> = {
+  'canvas.frame': 'Shift-2',
   'canvas.front': 'Mod-Alt-]',
   'canvas.back': 'Mod-Alt-[',
+  'canvas.zoom.in': 'Mod-=',
+  'canvas.zoom.out': 'Mod--',
+  'canvas.zoom.actual': 'Mod-0',
+  'canvas.fit': 'Shift-1',
+  'pages.zoom.in': 'Mod-=',
+  'pages.zoom.out': 'Mod--',
+  'pages.fit': 'Shift-1',
+  'pages.fit.page': 'Shift-2',
 }
-for (const entry of CANVAS_ENTRIES) {
-  const mac = MAC_CANVAS[entry.id]
+for (const entry of [...CANVAS_ENTRIES, ...PAGES_ENTRIES]) {
+  const mac = MAC_KEYS[entry.id]
   if (mac) entry.mac = mac
 }
 const WEB_ENTRIES: Shortcut[] = (
