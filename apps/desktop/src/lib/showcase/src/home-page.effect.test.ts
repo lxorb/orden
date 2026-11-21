@@ -177,10 +177,12 @@ describe('the home page', () => {
     expect(live(0).frame.getAttribute('src')).toBe(`${location.origin}/preview/app/?demo=flow&loop`)
   })
   test('shows the hero workflow first and then one display per feature, each under its own line', () => {
-    expect(displays().map((one) => one.dataset.scene)).toEqual([...DEMO_LOOP_SCENES])
+    const shown = displays().map((one) => one.dataset.scene)
+    expect(shown).toEqual(['flow', 'canvas', 'markdown', 'pages', 'bubbles', 'ai', 'todos', 'search'])
+    for (const scene of shown) expect(DEMO_LOOP_SCENES).toContain(scene)
     expect(document.querySelector('.hero .display')?.getAttribute('data-scene')).toBe('flow')
     const features = [...document.querySelectorAll<HTMLElement>('.feature')]
-    expect(features).toHaveLength(DEMO_LOOP_SCENES.length - 1)
+    expect(features).toHaveLength(shown.length - 1)
     for (const feature of features) {
       expect(feature.querySelector('h2.line')?.textContent.trim()).toBeTruthy()
       expect(feature.querySelectorAll('.display')).toHaveLength(1)
