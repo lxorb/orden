@@ -9,6 +9,7 @@ import { resizeTo } from './size'
 import { selectedImage, selectionOver } from './selection'
 
 const NATURAL = new Map<string, { width: number; height: number }>()
+const BROKEN = new Set<string>()
 const DRAG_START = 3
 function displayWidth(spec: ImageSpec, natural: number | undefined): string {
   if (spec.zoom !== 100) return natural ? `${Math.round((natural * spec.zoom) / 100)}px` : `${spec.zoom}%`
@@ -155,14 +156,18 @@ export class ImageWidget extends OrdenWidget {
       image.width = known.width
       image.height = known.height
       frame.classList.remove('is-loading')
+    } else if (BROKEN.has(src)) {
+      frame.classList.replace('is-loading', 'is-broken')
     }
     image.addEventListener('load', () => {
+      BROKEN.delete(src)
       NATURAL.set(src, { width: image.naturalWidth, height: image.naturalHeight })
       if (!known) frame.classList.add('is-fresh')
       frame.classList.remove('is-loading', 'is-broken')
       this.sync(frame, imageOfFrame(view, frame) ?? this.spec)
     })
     image.addEventListener('error', () => {
+      BROKEN.add(src)
       frame.classList.remove('is-loading')
       frame.classList.add('is-broken')
     })
