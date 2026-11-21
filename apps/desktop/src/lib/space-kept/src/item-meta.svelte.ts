@@ -85,16 +85,16 @@ const EMPTY: Held = { items: {}, unsent: {}, adopted: false, moved: false }
 export class ItemMetaStore {
   private keeping = new Kept(STORAGE_KEY, read)
   private buried = new Kept(BURIED_KEY, buriedOf)
-  private get spaces(): Record<string, Held> {
+  private get spaces() {
     return this.keeping.value
   }
-  private set spaces(value: Record<string, Held>) {
+  private set spaces(value) {
     this.keeping.value = value
   }
   private describing: Describing | null = null
   private hearing: ((path: string) => void)[] = []
   constructor(private readonly rootOf: (path: string | null) => string | null) {}
-  reread(): void {
+  reread() {
     this.keeping.reread()
   }
   private kept(root: string): Held {

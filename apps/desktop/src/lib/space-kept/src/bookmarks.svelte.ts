@@ -116,10 +116,10 @@ function read(saved: unknown): Record<string, Held> {
 const LISTS: Folding<Bookmark[]> = { fold: mergeBookmarks, same: sameList }
 export class Bookmarks {
   private keeping = new Kept(STORAGE_KEY, read, () => this.changed())
-  private get spaces(): Record<string, Held> {
+  private get spaces() {
     return this.keeping.value
   }
-  private set spaces(value: Record<string, Held>) {
+  private set spaces(value) {
     this.keeping.value = value
   }
   private get ids(): SyncStorePort | null {

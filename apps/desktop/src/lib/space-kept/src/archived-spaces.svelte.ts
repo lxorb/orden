@@ -7,7 +7,7 @@ export class ArchivedSpaces {
   constructor(heard?: () => void) {
     this.keeping = new Kept(KEY, (saved) => stringList(saved)?.slice(0, MOST) ?? [], heard)
   }
-  get roots(): readonly string[] {
+  get roots() {
     return this.keeping.value
   }
   has(root: string): boolean {

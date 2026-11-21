@@ -116,16 +116,16 @@ const SETTINGS: Folding<GraphSettings> = {
 const UNSENT: Folding<GraphSettings> = { fold: (_theirs, mine) => mine, same: sameGraph }
 export class SpaceGraphSettings {
   private keeping = new Kept(STORAGE_KEY, read)
-  private get spaces(): Record<string, Held> {
+  private get spaces() {
     return this.keeping.value
   }
-  private set spaces(value: Record<string, Held>) {
+  private set spaces(value) {
     this.keeping.value = value
   }
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
   private offering: string[] = []
   constructor(private readonly root: () => string | null) {}
-  reread(): void {
+  reread() {
     this.keeping.reread()
   }
   of(root: string): GraphSettings {
