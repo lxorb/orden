@@ -42,6 +42,8 @@ export type SurfaceId =
   | 'terminal'
   | 'terminal-mark'
   | 'time'
+  | 'import-tab'
+  | 'import-mark'
   | 'time-panel'
   | 'todos'
   | 'undo-toast'

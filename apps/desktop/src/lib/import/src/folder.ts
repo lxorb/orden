@@ -1,5 +1,6 @@
 import { type Meta, keptText, noteText } from './meta'
-import type { FormatId, ImportPlan, Planned } from './plan'
+import type { FormatId, ImportPlan, Planned, Trouble } from './plan'
+import { troubleOf } from './trouble'
 import { canvasFollowed, ExportFiles, isCanvas, rewriteLinks } from './rewrite'
 import type { Source } from './sources'
 
@@ -32,23 +33,34 @@ export async function folderPlan(sources: readonly Source[], options: FolderOpti
     if (placement.to !== source.path) renamed.set(source.path, placement.to)
   }
   const written: Planned[] = []
+  const failed: Trouble[] = []
   for (const one of placed) {
-    if (!one.read) {
-      const bytes = await one.source.bytes()
-      const kept = renamed.size && isCanvas(one.to) ? canvasFollowed(bytes, renamed) : bytes
-      written.push({ kind: 'file', path: one.to, bytes: kept, ...timesOf(one.source) })
-      continue
+    try {
+      written.push(await plannedOf(one, files, renamed))
+    } catch (error) {
+      failed.push({ path: one.source.path, why: troubleOf(error, one.source.path) })
     }
-    const said = await one.read(await one.source.text(), one.source)
-    const body = rewriteLinks(said.text, { was: one.source.path, now: one.to }, files.find, files.reaches)
-    written.push({
-      kind: 'note',
-      path: one.to,
-      text: said.kept ? keptText(body) : noteText(said.title ?? null, body, said.meta ?? {}, said.own),
-      ...timesOf(one.source),
-    })
   }
-  return { format: options.format, files: written, lost: [...(options.lost ?? [])] }
+  return { format: options.format, files: written, lost: [...(options.lost ?? [])], failed }
+}
+async function plannedOf(
+  one: { source: Source; to: string; read: Placement['read'] },
+  files: ExportFiles,
+  renamed: ReadonlyMap<string, string>,
+): Promise<Planned> {
+  if (!one.read) {
+    const bytes = await one.source.bytes()
+    const kept = renamed.size && isCanvas(one.to) ? canvasFollowed(bytes, renamed) : bytes
+    return { kind: 'file', path: one.to, bytes: kept, ...timesOf(one.source) }
+  }
+  const said = await one.read(await one.source.text(), one.source)
+  const body = rewriteLinks(said.text, { was: one.source.path, now: one.to }, files.find, files.reaches)
+  return {
+    kind: 'note',
+    path: one.to,
+    text: said.kept ? keptText(body) : noteText(said.title ?? null, body, said.meta ?? {}, said.own),
+    ...timesOf(one.source),
+  }
 }
 const timesOf = (source: Source) => (source.times ? { times: source.times } : {})
 function nameFor(path: string): string {

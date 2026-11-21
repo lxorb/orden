@@ -9,6 +9,7 @@ import type { ImportPlan, Planned } from './plan'
 import { encodeTarget } from '@orden/markdown/links'
 import type { Source } from './sources'
 import { closingOf, element, elements, plainText, textOf, textsOf } from './xml'
+import { counted } from './counted'
 
 const ASSETS = 'assets'
 const EXTENSIONS: Readonly<Record<string, string>> = {
@@ -107,10 +108,15 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
     }
   }
   if (encrypted) {
-    lost.push(`${encrypted} passages are encrypted, and nothing can read them without Evernote`)
+    lost.push(
+      counted(encrypted, 'passage is', 'passages are') +
+        ' encrypted, and nothing can read ' +
+        (encrypted === 1 ? 'it' : 'them') +
+        ' without Evernote',
+    )
   }
   if (reminders) {
-    lost.push(`${reminders} notes had a reminder, which the export does not carry`)
+    lost.push(counted(reminders, 'note', 'notes') + ' had a reminder, which the export does not carry')
   }
   if (missing) {
     lost.push(

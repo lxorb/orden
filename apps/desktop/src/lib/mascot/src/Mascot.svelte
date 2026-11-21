@@ -39,6 +39,7 @@
     font-weight: 400;
     line-height: 1.2;
     white-space: pre;
+    -webkit-user-select: none;
     user-select: none;
   }
   .glyph {

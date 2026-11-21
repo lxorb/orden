@@ -6,6 +6,7 @@ import { workspace } from '../../workspace/src/api'
 import { writeBytes, writeFile } from '../../file-writes/src/api'
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
+import { troubleOf } from './trouble'
 import type { Times } from './sources'
 import { baseFollowed, basesFollowed, calledBy, canvasFollowed, isBase, isCanvas, linksFollowed } from './rewrite'
 
@@ -20,6 +21,9 @@ export interface Landed {
 }
 export interface Writing {
   onWritten?: (done: number, total: number) => void
+  onLanded?: (file: Planned, path: string) => void
+  onFailed?: (file: Planned, why: string) => void
+  stopped?: () => boolean
 }
 export async function applyImport(plan: Written, target: ImportTarget, options: Writing = {}): Promise<Landed> {
   const { canWriteAt } = await import('../../sharing/src/api')
@@ -31,13 +35,20 @@ export async function applyImport(plan: Written, target: ImportTarget, options: 
   let done = 0
   try {
     for (const file of files) {
+      if (options.stopped?.()) break
       const path = joinPath(target.root, file.path)
-      if (file.kind === 'note') {
-        await writeFile(path, file.text)
-        wrote[path] = await sha256(file.text)
-      } else await writeBytes(path, file.bytes)
-      if (file.times) await stamped(path, file.times)
-      paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
+      try {
+        if (file.kind === 'note') {
+          await writeFile(path, file.text)
+          wrote[path] = await sha256(file.text)
+        } else await writeBytes(path, file.bytes)
+        if (file.times) await stamped(path, file.times)
+        paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
+        options.onLanded?.(file, path)
+      } catch (error) {
+        if (!options.onFailed) throw error
+        options.onFailed(file, troubleOf(error, path, 'Could not be written.'))
+      }
       done += 1
       options.onWritten?.(done, files.length)
     }

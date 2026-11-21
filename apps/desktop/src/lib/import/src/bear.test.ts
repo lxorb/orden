@@ -80,9 +80,9 @@ describe('a Bear backup', () => {
     ])
     expect(plan.files.map((one) => one.path).sort()).toEqual(['Archive/Old.md', 'Kept.md'])
     expect(plan.lost).toEqual([
-      '1 notes were in the bin and stay there',
-      '1 notes are behind a password, which nothing but Bear can open',
-      '1 archived notes are in a folder called Archive',
+      '1 note was in the bin and stays there',
+      '1 note is behind a password, which nothing but Bear can open',
+      '1 archived note is in a folder called Archive',
     ])
   })
   test('a link into Bear that names a note in the backup is a link to that note', async () => {

@@ -30,7 +30,7 @@ describe('a vault read where it is', () => {
     const sources = await vaultSources({ name: 'Brain', path: '/home/me/Brain' })
     const [locked, home] = sources
     await expect(home?.text()).resolves.toBe('# Home')
-    await expect(locked?.bytes()).rejects.toThrow('Attachments/locked.png could not be read.')
+    await expect(locked?.bytes()).rejects.toThrow('Attachments/locked.png could not be read: Permission denied')
   })
   test('knows when each file was written, and nothing it was not told', async () => {
     const [locked, home] = await vaultSources({ name: 'Brain', path: '/home/me/Brain' })

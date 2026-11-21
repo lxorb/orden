@@ -14,6 +14,7 @@ export type FileMark =
   | 'key'
   | 'time'
   | 'settings'
+  | 'import'
 export type TabPanel = 'outline' | 'links'
 export interface TabKindTraits {
   readonly words: boolean
@@ -50,6 +51,7 @@ export const TAB_KINDS = [
   'pass',
   'time',
   'settings',
+  'import',
 ] as const
 export type TabKind = (typeof TAB_KINDS)[number]
 export const isTabKind = (value: unknown): value is TabKind =>

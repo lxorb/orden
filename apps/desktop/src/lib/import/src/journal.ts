@@ -5,6 +5,7 @@ import { Names, safeName } from './names'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 import { closingOf, tagsIn, unescapeXml } from './xml'
+import { counted } from './counted'
 
 const ENTRY = /(^|\/)entries\/[^/]+\.html?$/i
 const RESOURCE = /(^|\/)resources\/[^/]+$/i
@@ -59,10 +60,15 @@ export async function readJournal(sources: readonly Source[]): Promise<ImportPla
     },
   })
   if (heic) {
-    plan.lost.push(`${heic} pictures came as HEIC, which nothing but Apple shows`)
+    plan.lost.push(counted(heic, 'picture', 'pictures') + ' came as HEIC, which nothing but Apple shows')
   }
   if (drawn) {
-    plan.lost.push(`${drawn} mood and activity cards are drawings, so only their words come over`)
+    plan.lost.push(
+      counted(drawn, 'mood or activity card is a drawing', 'mood and activity cards are drawings') +
+        ', so only ' +
+        (drawn === 1 ? 'its' : 'their') +
+        ' words come over',
+    )
   }
   if (missing) {
     plan.lost.push(

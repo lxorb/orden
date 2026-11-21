@@ -21,6 +21,7 @@ import MessageSquare from 'lucide/dist/esm/icons/message-square.mjs'
 import NotebookPen from 'lucide/dist/esm/icons/notebook-pen.mjs'
 import Server from 'lucide/dist/esm/icons/server.mjs'
 import Cog from 'lucide/dist/esm/icons/settings.mjs'
+import FolderInput from 'lucide/dist/esm/icons/folder-input.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
 import Table from 'lucide/dist/esm/icons/table-2.mjs'
 import type { Tab } from '../../documents/src/api'
@@ -84,6 +85,7 @@ export const MARKS: Record<FileMark, IconNode> = {
   key: Key,
   time: Clock,
   settings: Cog,
+  import: FolderInput,
 }
 export const faceOf = (mark: FileMark, chosen: boolean): 'mark' | 'letter' =>
   mark === 'note' && !chosen ? 'letter' : 'mark'
@@ -97,6 +99,7 @@ export function initialOf(name: string): string {
   return first ?? ''
 }
 type TermTab = Pick<Tab, 'doc' | 'running'> & { id?: string; path?: string | null }
+export const importMark = held(() => surfaceLoad('import-mark') as Promise<{ default: Component<{ tab: Tab }> }>)
 export const terminalMark = held(
   () => surfaceLoad('terminal-mark') as Promise<{ default: Component<{ tab: TermTab }> }>,
 )

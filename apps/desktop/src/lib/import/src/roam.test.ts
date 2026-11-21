@@ -42,7 +42,7 @@ describe('a Roam export', () => {
   test('a block reference is written out as what it said', async () => {
     const plan = await readRoam([file('graph.json', GRAPH)])
     expect(noteAt(plan, 'Journals/2026-09-11.md')).toContain('As I said in First thought')
-    expect(plan.lost[0]).toBe('1 block references were written out as the words they pointed at')
+    expect(plan.lost[0]).toBe('1 block reference was written out as the words it pointed at')
   })
   test('a JSON that is not a Roam graph is not read as one', async () => {
     const plan = await readRoam([file('settings.json', '{"theme":"dark"}')])

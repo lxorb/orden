@@ -14,6 +14,8 @@ export const importingStore = () => import('./importing.svelte')
 const migratingStore = () => import('./migrating.svelte')
 export const loadMigrateRows = () => import('./MigrateRows.svelte')
 export const loadImportSheet = () => import('./ImportSheet.svelte')
+export const loadImportTab = () => import('./ImportTab.svelte')
+export const loadImportMark = () => import('./ImportMark.svelte')
 async function showImport() {
   const { importing } = await importingStore()
   importing.show()

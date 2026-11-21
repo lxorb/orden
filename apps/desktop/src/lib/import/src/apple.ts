@@ -6,6 +6,7 @@ import { dayOf, type Meta } from './meta'
 import { Names, safeParts } from './names'
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'
+import { counted } from './counted'
 
 interface AppleNote {
   path: string
@@ -79,19 +80,22 @@ function fromTheTop(text: string): string {
 function lost(read: AppleNotes): ImportPlan['lost'] {
   const lines: ImportPlan['lost'] = []
   if (read.locked) {
-    lines.push(`${read.locked} notes are behind a password, which nothing but Notes can open`)
+    lines.push(counted(read.locked, 'note is', 'notes are') + ' behind a password, which nothing but Notes can open')
   }
   if (read.binned) {
-    lines.push(`${read.binned} notes are in Recently Deleted, and stay there`)
+    lines.push(
+      counted(read.binned, 'note is', 'notes are') +
+        ` in Recently Deleted, and ${read.binned === 1 ? 'stays' : 'stay'} there`,
+    )
   }
   if (read.drawn) {
-    lines.push(`${read.drawn} drawings and scans have no picture on this Mac`)
+    lines.push(counted(read.drawn, 'drawing or scan has', 'drawings and scans have') + ' no picture on this Mac')
   }
   if (read.tables) {
-    lines.push(`${read.tables} tables inside notes do not come over`)
+    lines.push(counted(read.tables, 'table inside a note does', 'tables inside notes do') + ' not come over')
   }
   if (read.missing) {
-    lines.push(`${read.missing} attachments are in iCloud rather than on this Mac`)
+    lines.push(counted(read.missing, 'attachment is', 'attachments are') + ' in iCloud rather than on this Mac')
   }
   return lines
 }

@@ -83,6 +83,7 @@
     settingsSurface,
     terminalSurface,
     timeSurface,
+    importSurface,
     todosBoard,
     viewSurface,
     webSurface,
@@ -527,6 +528,8 @@
     {/await}
   {:else if one.kind === 'time'}
     {@render surface(timeSurface, one, here)}
+  {:else if one.kind === 'import'}
+    {@render surface(importSurface, one, here)}
   {:else if one.reading}
     {@render surface(readingSurface, one, here)}
   {/if}

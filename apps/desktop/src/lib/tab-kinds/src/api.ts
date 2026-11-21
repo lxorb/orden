@@ -81,6 +81,7 @@ export const TAB_KINDS = {
   pass: { ...PLAIN, ...APART, mark: 'key', preview: 'mark', single: true },
   time: { ...PLAIN, ...APART, mark: 'time', single: true },
   settings: { ...PLAIN, ...APART, mark: 'settings', preview: 'mark', single: true },
+  import: { ...PLAIN, ...APART, mark: 'import', preview: 'mark' },
 } as const satisfies Record<TabKind, TabKindTraits>
 const KINDS = Object.keys(TAB_KINDS) as readonly TabKind[]
 export function kindsWhere(trait: (traits: TabKindTraits) => boolean): TabKind[] {

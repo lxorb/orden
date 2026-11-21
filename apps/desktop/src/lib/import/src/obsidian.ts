@@ -3,6 +3,7 @@ import type { LinkFormat } from '../../link-format/src/api'
 import type { Carried } from './carry'
 import { isJunk } from './folder'
 import type { Source } from './sources'
+import { counted } from './counted'
 
 const SETTINGS = /^(?:[^/]+\/)?\.obsidian\//
 export function atVaultTop(sources: readonly Source[]): Source[] {
@@ -34,7 +35,7 @@ export function lostInVault(sources: readonly Source[]): string[] {
     return IN_ICLOUD.test(name) && !parts.some((part) => part.startsWith('.'))
   }).length
   if (!away) return []
-  return [`${away} files are in iCloud rather than on this Mac`]
+  return [counted(away, 'file is', 'files are') + ' in iCloud rather than on this Mac']
 }
 export async function obsidianCarries(sources: readonly Source[]): Promise<Carried> {
   const app = atVaultTop(sources).find((one) => one.path === '.obsidian/app.json')

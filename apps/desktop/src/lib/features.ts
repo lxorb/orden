@@ -176,6 +176,8 @@ registerSurfaces({
   chats: () => import('./chats-client/src/api').then((one) => one.loadChatsPanel()),
   'time-panel': () => import('./time/src/api').then((one) => one.loadTimePanel()),
   time: () => import('./time/src/api').then((one) => one.loadTimeTab()),
+  'import-tab': () => import('./import/src/api').then((one) => one.loadImportTab()),
+  'import-mark': () => import('./import/src/api').then((one) => one.loadImportMark()),
   pages: () => import('./pages/src/api').then((one) => one.loadPages()),
   'pages-navigator': () => import('./pages/src/api').then((one) => one.loadNavigator()),
   web: loadWebTab,

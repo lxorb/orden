@@ -14,6 +14,7 @@ export interface Showing {
     | 'pass'
     | 'time'
     | 'settings'
+    | 'import'
     | 'connect'
   reading: boolean
 }
