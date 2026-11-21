@@ -681,8 +681,6 @@
             {#if listing}
               <Bookmarks onsearch={runBookmarked} nameOf={headingName} />
 
-              <p class="orden-section">Files</p>
-
               <Tree tree={listing} />
 
               {#if !workspace.files.length && !arriving.coming.size && hiddenKinds.offers('note') && canWriteAt(workspace.activeSpace?.root ?? '')}
