@@ -62,6 +62,7 @@ function named(file: File, path: string): PickedFile {
     name: file.name,
     webkitRelativePath: path,
     size: file.size,
+    lastModified: file.lastModified,
     slice: (start, end) => file.slice(start, end),
     arrayBuffer: () => file.arrayBuffer(),
   }

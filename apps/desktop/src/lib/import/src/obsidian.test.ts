@@ -643,6 +643,24 @@ describe('the files in a vault', () => {
     expect(kept?.kind).toBe('file')
     expect(plan.files.some((one) => one.path === 'filenames.md')).toBe(false)
   })
+  test('keep when each note and picture was written when the vault is picked as a folder', async () => {
+    const words = (body: string) => new TextEncoder().encode(body)
+    const at = (one: PickedFile, lastModified: number): PickedFile => ({ ...one, lastModified })
+    const sources = await sourcesFrom(
+      insideFolder([
+        picked('Vault/.obsidian/app.json', words('{}')),
+        at(picked('Vault/Old.md', words('![[photo.png]]')), 1_600_000_000_000),
+        at(picked('Vault/photo.png', words('png')), 1_500_000_000_000),
+      ]),
+    )
+    const plan = await readAs('obsidian', sources)
+    const times = Object.fromEntries(plan.files.map((one) => [one.path, one.times?.modified]))
+    expect(times).toEqual({
+      '.obsidian/app.json': undefined,
+      'Old.md': 1_600_000_000_000,
+      'photo.png': 1_500_000_000_000,
+    })
+  })
   test('keep a Word document whole when the vault is picked as a folder', async () => {
     const zip = new JSZip()
     zip.file('[Content_Types].xml', '<Types/>')

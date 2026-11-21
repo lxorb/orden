@@ -4,6 +4,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
+use orden_base::clock;
 use orden_base::paths::{folded, inside, MAX_DEPTH};
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -15,6 +16,8 @@ pub struct Vault {
 pub struct VaultFile {
     pub path: String,
     pub size: u64,
+    pub modified: u64,
+    pub created: u64,
 }
 const MOST_FILES: usize = 200_000;
 #[tauri::command(async)]
@@ -145,8 +148,13 @@ fn walk(root: &Path, folder: &Path, depth: usize, found: &mut Vec<VaultFile>) {
         if kind.is_dir() {
             walk(root, &path, depth + 1, found);
         } else if kind.is_file() {
-            let size = entry.metadata().map_or(0, |one| one.len());
-            found.push(VaultFile { path: relative, size });
+            let data = entry.metadata().ok();
+            found.push(VaultFile {
+                path: relative,
+                size: data.as_ref().map_or(0, fs::Metadata::len),
+                modified: clock::of(data.as_ref().and_then(|one| one.modified().ok())),
+                created: clock::of(data.as_ref().and_then(|one| one.created().ok())),
+            });
             if found.len() >= MOST_FILES {
                 return;
             }
@@ -360,5 +368,20 @@ mod tests {
         fs::write(vault.join("Home.md"), "# Home").expect("a note");
         let paths: Vec<String> = files_of(vault).into_iter().map(|one| one.path).collect();
         assert_eq!(paths, vec![".Plan.md.icloud", "Home.md"]);
+    }
+    #[test]
+    fn a_file_is_listed_with_when_it_was_last_written() {
+        let here = tempfile::tempdir().expect("a folder");
+        let note = here.path().join("Old.md");
+        fs::write(&note, "# Old").expect("a note");
+        let then = std::time::UNIX_EPOCH + std::time::Duration::from_secs(1_600_000_000);
+        fs::File::options()
+            .write(true)
+            .open(&note)
+            .and_then(|file| file.set_modified(then))
+            .expect("an old time");
+        let listed = files_of(here.path());
+        assert_eq!(listed[0].modified, 1_600_000_000_000);
+        assert!(listed[0].created > 0);
     }
 }

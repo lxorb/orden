@@ -36,7 +36,7 @@ export async function folderPlan(sources: readonly Source[], options: FolderOpti
     if (!one.read) {
       const bytes = await one.source.bytes()
       const kept = renamed.size && isCanvas(one.to) ? canvasFollowed(bytes, renamed) : bytes
-      written.push({ kind: 'file', path: one.to, bytes: kept })
+      written.push({ kind: 'file', path: one.to, bytes: kept, ...timesOf(one.source) })
       continue
     }
     const said = await one.read(await one.source.text(), one.source)
@@ -45,10 +45,12 @@ export async function folderPlan(sources: readonly Source[], options: FolderOpti
       kind: 'note',
       path: one.to,
       text: said.kept ? keptText(body) : noteText(said.title ?? null, body, said.meta ?? {}, said.own),
+      ...timesOf(one.source),
     })
   }
   return { format: options.format, files: written, lost: [...(options.lost ?? [])] }
 }
+const timesOf = (source: Source) => (source.times ? { times: source.times } : {})
 function nameFor(path: string): string {
   const name = path.split('/').pop() ?? path
   return name.replace(/\.(md|markdown|mdown|mkd|txt)$/i, '')

@@ -2,15 +2,21 @@ import type { PickedFile } from '@orden/contracts'
 import { isJunk } from './names'
 import { tidyPath } from '../../ui-controls/src/api'
 
+export interface Times {
+  modified: number
+  created?: number
+}
 export interface Source {
   path: string
+  times?: Times
   text(): Promise<string>
   bytes(): Promise<Uint8Array>
 }
 const DEEPEST = 3
 const MOST_BYTES = 512 * 1024 * 1024
-export const sourceOf = (path: string, bytes: Uint8Array): Source => ({
+export const sourceOf = (path: string, bytes: Uint8Array, modified?: number): Source => ({
   path: tidyPath(path),
+  ...(modified ? { times: { modified } } : {}),
   text: () => Promise.resolve(decoded(bytes)),
   bytes: () => Promise.resolve(bytes),
 })
@@ -29,6 +35,7 @@ export function insideFolder(picked: readonly PickedFile[]): PickedFile[] {
   return picked.map((one) => ({
     name: one.name,
     webkitRelativePath: tidyPath((one.webkitRelativePath ?? '').trim()).slice(folder.length + 1),
+    ...(one.lastModified ? { lastModified: one.lastModified } : {}),
     arrayBuffer: () => one.arrayBuffer(),
   }))
 }
@@ -39,7 +46,8 @@ export async function sourcesFrom(picked: readonly PickedFile[]): Promise<Source
     const inside = (one.webkitRelativePath ?? '').trim()
     const path = tidyPath(inside.length ? inside : one.name)
     const bytes = new Uint8Array(await one.arrayBuffer())
-    if (inside.length && (!parts || !path.toLowerCase().endsWith('.zip'))) found.push(sourceOf(path, bytes))
+    if (inside.length && (!parts || !path.toLowerCase().endsWith('.zip')))
+      found.push(sourceOf(path, bytes, one.lastModified))
     else for (const source of await expand(path, bytes, 0)) found.push(source)
   }
   return found

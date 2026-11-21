@@ -3,6 +3,7 @@ use base64::Engine as _;
 use std::fs;
 use std::io::Read as _;
 use std::path::Path;
+use std::time::{Duration, UNIX_EPOCH};
 use tauri::ipc::{InvokeBody, Request};
 use tauri::AppHandle;
 
@@ -256,6 +257,37 @@ pub fn remove_empty_folder(app: AppHandle, path: String) -> Result<(), String> {
 pub struct Stamp {
     pub modified: u64,
     pub len: u64,
+}
+#[tauri::command(async)]
+pub fn set_file_times(
+    app: AppHandle,
+    path: String,
+    modified: u64,
+    created: Option<u64>,
+) -> Result<(), String> {
+    times_set(&in_spaces(&app, &path)?, modified, created)
+}
+fn times_set(target: &Path, modified: u64, created: Option<u64>) -> Result<(), String> {
+    let at = |millis: u64| UNIX_EPOCH + Duration::from_millis(millis);
+    let times = fs::FileTimes::new().set_modified(at(modified));
+    #[cfg(any(target_os = "macos", windows))]
+    let times = match created {
+        Some(created) if created > 0 => {
+            #[cfg(target_os = "macos")]
+            use std::os::macos::fs::FileTimesExt as _;
+            #[cfg(windows)]
+            use std::os::windows::fs::FileTimesExt as _;
+            times.set_created(at(created))
+        }
+        _ => times,
+    };
+    #[cfg(not(any(target_os = "macos", windows)))]
+    let _ = created;
+    fs::File::options()
+        .write(true)
+        .open(target)
+        .and_then(|file| file.set_times(times))
+        .map_err(|error| cannot("stamp", target, &error))
 }
 #[tauri::command(async)]
 pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String> {
@@ -601,6 +633,18 @@ mod tests {
         body.extend_from_slice(b"\r\nafter\r\n");
         fs::write(&target, &body).expect("a long first line");
         assert!(!super::crlf(std::path::Path::new(&target)));
+    }
+    #[test]
+    fn a_file_takes_the_times_it_is_handed() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join("old.md");
+        fs::write(&target, b"words").expect("the file");
+        super::times_set(&target, 1_600_000_000_000, Some(1_500_000_000_000)).expect("the times");
+        let data = fs::metadata(&target).expect("the file's data");
+        assert_eq!(orden_base::clock::of(data.modified().ok()), 1_600_000_000_000);
+        #[cfg(target_os = "macos")]
+        assert_eq!(orden_base::clock::of(data.created().ok()), 1_500_000_000_000);
+        assert_eq!(fs::read(&target).expect("the file back"), b"words");
     }
     #[test]
     fn stamps_a_file_and_nothing_else() {

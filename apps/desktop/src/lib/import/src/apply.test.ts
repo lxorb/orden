@@ -4,10 +4,12 @@ import type { ImportPlan, Planned } from './plan'
 
 const wrote: { command: string; path: string }[] = []
 let refusing: string | null = null
+let timeless: string | null = null
 const recorded: unknown[] = []
 const said = new Map<string, string>()
 const onDisk = new Set<string>()
 const listed = new Map<string, string[]>()
+const timed: Record<string, unknown>[] = []
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'file_stamp') {
@@ -29,6 +31,8 @@ vi.mock('../../platform/src/tauri', () => ({
     }
     if (args.path === refusing) return Promise.reject(new Error('the disk is full'))
     if (command === 'write_note') said.set(String(args.path), String(args.content))
+    if (command === 'set_file_times' && args.path === timeless) return Promise.reject(new Error('read-only'))
+    if (command === 'set_file_times') timed.push(args)
     wrote.push({ command, path: String(args.path) })
     return Promise.resolve()
   },
@@ -69,11 +73,13 @@ beforeEach(() => {
   heard.length = 0
   recorded.length = 0
   refusing = null
+  timeless = null
   readOnly.clear()
   onDisk.clear()
   listed.clear()
   said.clear()
   described.length = 0
+  timed.length = 0
 })
 const planOf = (files: Planned[]): ImportPlan => ({ format: 'markdown', files, lost: [] })
 const note = (path: string, text: string): Planned => ({ kind: 'note', path, text })
@@ -672,6 +678,31 @@ test('an import into a space that is not the one open has a link by name reach t
     { root: '/Other', folder: 'Vault' },
   )
   expect(said.get('/Other/Vault/Daily/Day.md')).toBe('See [[Vault/Ideas|Ideas]] and ![[Vault/cover.png]].')
+})
+describe('the times a note was written', () => {
+  test('come with it, after its words are written', async () => {
+    const times = { modified: 1_600_000_000_000, created: 1_500_000_000_000 }
+    await applyImport(
+      planOf([{ ...note('Old.md', '# Old'), times }, { ...file('photo.png'), times }, note('New.md', '')]),
+      {
+        root: '/Space',
+        folder: '',
+      },
+    )
+    expect(timed).toEqual([
+      { path: '/Space/Old.md', ...times },
+      { path: '/Space/photo.png', ...times },
+    ])
+    const order = wrote.map((one) => `${one.command} ${one.path}`)
+    expect(order.indexOf('set_file_times /Space/Old.md')).toBeGreaterThan(order.indexOf('write_note /Space/Old.md'))
+  })
+  test('that cannot be kept leave the note written all the same', async () => {
+    timeless = '/Space/Old.md'
+    const times = { modified: 1_600_000_000_000 }
+    const landed = await applyImport(planOf([{ ...note('Old.md', '# Old'), times }]), { root: '/Space', folder: '' })
+    expect(landed.paths).toEqual(['/Space/Old.md'])
+    expect(said.get('/Space/Old.md')).toBe('# Old')
+  })
 })
 describe('an import into a space that already holds an earlier copy', () => {
   test('does not write over a picture the file list does not show', async () => {

@@ -8,6 +8,8 @@ export interface Vault {
 interface VaultFile {
   path: string
   size: number
+  modified: number
+  created: number
 }
 export async function vaults(): Promise<Vault[]> {
   if (!isDesktop) return []
@@ -29,6 +31,9 @@ export async function vaultSources(vault: Vault): Promise<Source[]> {
       }))
     return {
       path: file.path,
+      ...(file.modified
+        ? { times: { modified: file.modified, ...(file.created ? { created: file.created } : {}) } }
+        : {}),
       text: async () => decoded(await once()),
       bytes: once,
     }
