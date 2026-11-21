@@ -4,6 +4,9 @@ import type { OwedMark } from './owed-mark'
 export interface LookWorld {
   owing: OwedMark
   token(): string | null
+  who(): string | null
+  holder: { read(): string | null; write(who: string): void }
+  plain(): Look
   look(): Look
   wear(look: Look): Promise<void>
   read(token: string): Promise<{ look?: unknown }>
@@ -23,6 +26,13 @@ export class LookSync {
   }
   async adopt(token: string): Promise<void> {
     const session = this.session
+    const who = this.world.who()
+    const holder = this.world.holder.read()
+    if (who && holder !== who) {
+      this.world.holder.write(who)
+      if (holder !== null) await this.world.wear(this.world.plain())
+      if (this.session !== session) return
+    }
     const owing = this.owed || (this.world.owing.standing && this.saving === 0)
     if (owing) await this.push(token, this.world.owing.mark())
     if (this.session !== session || this.owed) return

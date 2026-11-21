@@ -46,6 +46,15 @@ function device(
         drop: (key) => void kept.delete(key),
       }),
       token: () => account.accountToken,
+      who: () => account.user?.id ?? null,
+      holder: {
+        read: () => {
+          const held = kept.get('orden:look-holder')
+          return typeof held === 'string' ? held : null
+        },
+        write: (who) => void kept.set('orden:look-holder', who),
+      },
+      plain: () => CLASSIC,
       look: () => one.worn,
       wear: (look) => {
         one.worn = look
@@ -165,6 +174,30 @@ describe('a theme that follows the account', () => {
     expect(server.settings.get('b')?.look).toEqual(CLASSIC)
     expect(server.settings.get('a')?.look).toEqual(CLASSIC)
     expect(one.worn).toEqual(CLASSIC)
+  })
+  test('is the account’s own: the next account on the device starts plain, and the first gets its own back', async () => {
+    const one = device(CLASSIC)
+    await signIn(one)
+    one.pick(DARK_GLASS)
+    await settled(one)
+    expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
+    one.account.signOut()
+    one.account.signInAs('b')
+    await signIn(one)
+    expect(one.worn).toEqual(CLASSIC)
+    expect(server.settings.get('b')?.look).toEqual(CLASSIC)
+    one.account.signOut()
+    one.account.signInAs('a')
+    await signIn(one)
+    expect(one.worn).toEqual(DARK_GLASS)
+    expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
+  })
+  test('keeps what a device wore before its first account ever signed in', async () => {
+    const one = device(LIGHT_ROSE, null)
+    one.account.signInAs('a')
+    await signIn(one)
+    expect(one.worn).toEqual(LIGHT_ROSE)
+    expect(server.settings.get('a')?.look).toEqual(LIGHT_ROSE)
   })
   test('never wears what one account answered after switching to another', async () => {
     server.settings.set('a', { look: DARK_GLASS })
