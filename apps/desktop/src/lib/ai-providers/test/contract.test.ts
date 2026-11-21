@@ -4,7 +4,7 @@ import { describe, expect, expectTypeOf, test, vi } from 'vitest'
 import { ai, complete, firstModel, isLocal, KIND_NAMES, localCli, MODES, modeIn, modeOfGrant } from '../src/api'
 import { noMoreThan, offeredKinds, signOut, sseJson, sseLines, talkable, type Thread, vault } from '../src/api'
 import { listModels, providerFetch, type Provider, wasStopped } from '../src/api'
-import type { Engine } from '../src/api'
+import type { Engine, ToolOutput } from '../src/api'
 
 const kept = vi.hoisted(() => {
   const held = new Map<string, string>()
@@ -91,6 +91,13 @@ describe('a thread', () => {
     expectTypeOf<Thread['only']>().toEqualTypeOf<string[] | undefined>()
     const none: Pick<Thread, 'only'> = { only: [] }
     expect(none.only).toEqual([])
+  })
+})
+describe('a tool’s output', () => {
+  test('may carry the line a reader is asked to approve, apart from what the model is told', () => {
+    expectTypeOf<ToolOutput['asks']>().toEqualTypeOf<string | undefined>()
+    const asked: ToolOutput = { text: '', images: [], error: false, approval: 'a1', asks: 'Copy a.md to b.md' }
+    expect(asked.asks).toBe('Copy a.md to b.md')
   })
 })
 describe('an engine', () => {

@@ -30,6 +30,7 @@ export interface ToolOutput {
   images: { mime: string; data: string }[]
   error: boolean
   approval?: string
+  asks?: string
   category?: string
   site?: string
   agent?: string
