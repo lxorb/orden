@@ -35,7 +35,10 @@
   import { essentials, workspace, howFor, middleOpens, type TabAsk, tabAsk } from '../../workspace/src/api'
   import { tabLetters, tabUnloading } from '../../tab-strip/src/api'
 
-  const { onsearch }: { onsearch: (query: string) => void } = $props()
+  const {
+    onsearch,
+    nameOf = (heading: string) => heading,
+  }: { onsearch: (query: string) => void; nameOf?: (heading: string) => string } = $props()
   interface Row {
     mark: Bookmark
     at: number
@@ -91,7 +94,7 @@
     const own = entry.is_dir ? folderNote(entry) : null
     return {
       ...shared,
-      label: named ? mark.text : rowName(entry.name, entry.is_dir),
+      label: mark.kind === 'heading' ? nameOf(mark.text) : named ? mark.text : rowName(entry.name, entry.is_dir),
       note: named ? rowName(entry.name, entry.is_dir) : null,
       path: entry.path,
       face: own?.path ?? entry.path,

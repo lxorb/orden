@@ -36,6 +36,7 @@
   } from '../../ui-kit/src/api'
   import { alone, swipeOpens, dropOnList, workspace, agentMarks, pullable } from '../../workspace/src/api'
   import { movesSection, headingAt, lineOf } from '../../documents/src/api'
+  import { door } from '@orden/markdown/door'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { landsIn, dropTarget } from '../../tree/src/api'
@@ -313,6 +314,19 @@
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     ongoto?.(line)
   }
+  const headingWordsOf = door(() => import('@orden/markdown/escapes'))
+  let headingWords = $state<((text: string) => string) | null>(null)
+  const namesHeadings = $derived(
+    workspace.headings.length > 0 || workspace.bookmarks.list.some((one) => one.kind === 'heading'),
+  )
+  $effect(() => {
+    if (headingWords || !namesHeadings) return
+    void headingWordsOf().then(
+      (one) => (headingWords = one.headingWords),
+      () => undefined,
+    )
+  })
+  const headingName = (text: string): string => headingWords?.(text) ?? text
   const shallowest = $derived(workspace.headings.reduce((least, heading) => Math.min(least, heading.level), 6))
   const current = $derived.by(() => {
     if (showing !== 'outline') return -1
@@ -354,7 +368,7 @@
   function moveSectionEntries(at: number): MenuEntry[] {
     if (!viewport.touch) return []
     const targets = workspace.headings
-      .map((heading, index) => ({ id: String(index), label: heading.text, index }))
+      .map((heading, index) => ({ id: String(index), label: headingName(heading.text), index }))
       .filter((one) => movesSection(workspace.headings, at, one.index))
     if (!targets.length) return []
     return [
@@ -665,7 +679,7 @@
 
           {#if showing === 'tree'}
             {#if listing}
-              <Bookmarks onsearch={runBookmarked} />
+              <Bookmarks onsearch={runBookmarked} nameOf={headingName} />
 
               <p class="orden-section">Files</p>
 
@@ -714,7 +728,7 @@
                 }}
               >
                 {#each workspace.headings as heading, index (index)}
-                  {@const text = heading.text}
+                  {@const text = headingName(heading.text)}
                   <li>
                     <button
                       class="orden-row is-short row heading"
@@ -725,10 +739,8 @@
                       style:--level={heading.level - shallowest}
                       draggable="true"
                       onclick={() => jump(heading.line)}
-                      oncontextmenu={(event) =>
-                        menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
-                      use:longPress={(event) =>
-                        menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
+                      oncontextmenu={(event) => menu.show(event, headingMenu(index, heading.text), { title: text })}
+                      use:longPress={(event) => menu.show(event, headingMenu(index, heading.text), { title: text })}
                       ondragstart={(event) => startSection(event, index)}
                       use:dropOver={(event) => overSection(event, index)}
                       ondragleave={() => (dropAt = null)}

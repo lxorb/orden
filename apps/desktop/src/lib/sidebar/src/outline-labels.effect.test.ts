@@ -43,3 +43,24 @@ test('a note switched to rewrites the direction of no outline row it shares with
   workspace.rightPanel = null
   expect(rewritten.filter((one) => one !== 'Merlin')).toEqual([])
 })
+test('a heading written with a link, marks, code or escapes is named by its words', async () => {
+  viewport.device = 'desktop'
+  workspace.tabs = []
+  workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+  workspace.activeSpaceId = 's'
+  workspace.openBlank(
+    'Gym',
+    '# 3a. [Lateral Raise Machine](https://example.com/raise)\n\n## A **bold** `code` \\*star\\*\n',
+  )
+  workspace.rightPanel = 'outline'
+  const into = document.createElement('div')
+  document.body.append(into)
+  const shown = mount(Sidebar, { target: into, props: { side: 'right' as const } })
+  const labels = () => [...into.querySelectorAll('.heading .orden-row-label')].map((one) => one.textContent)
+  await vi.waitFor(() => expect(labels()).toEqual(['3a. Lateral Raise Machine', 'A bold code *star*']), {
+    timeout: 10_000,
+  })
+  void unmount(shown)
+  into.remove()
+  workspace.rightPanel = null
+})
