@@ -25,9 +25,17 @@ export interface ChatsDemoPerson {
   readonly id: string
   readonly name: string
 }
+export interface ChatsDemoPicture {
+  readonly width: number
+  readonly height: number
+  readonly name?: string
+  readonly caption?: string
+}
 export interface ChatsDemo {
   add(folder: string, name: string, members: readonly ChatsDemoPerson[]): string
-  say(path: string, from: string, body: string): void
+  say(path: string, from: string, body: string): string | null
+  picture(path: string, from: string, url: string, size: ChatsDemoPicture): string | null
+  react(path: string, message: string, who: string, emoji: string): void
   typing(path: string, who: string, on: boolean): void
   open(path: string, how?: OpenHow): void
 }
