@@ -460,6 +460,21 @@ describe('a markdown target the way a link names a file', () => {
     expect(encodeTarget('Café/Ünïcode 日本.md')).toBe('Café/Ünïcode%20日本.md')
     expect(encodeTarget('re:view (1)#2?.md')).toBe('re%3Aview%20%281%29%232%3F.md')
   })
+  test('a web address keeps its scheme, query and fragment, and writes out only what a link cannot hold', () => {
+    for (const url of [
+      'https://orden.so/i/0f3a.png',
+      'https://example.com/a%20b.png?w=2&h=3#top',
+      'http://localhost:8080/x.png',
+      'mailto:me@example.com?subject=Hi',
+    ]) {
+      expect(encodeTarget(url)).toBe(url)
+    }
+    const shot = 'https://orden.so/i/0f3a.png'
+    expect(renderMarkdown(`![](${encodeTarget(shot)})`)).toContain(`src="${shot}"`)
+    expect(encodeTarget('https://example.com/a b (1).png')).toBe('https://example.com/a%20b%20%281%29.png')
+    expect(encodeTarget('https://example.com/<x>|`y`')).toBe('https://example.com/%3Cx%3E%7C%60y%60')
+    expect(encodeTarget('re:view.md')).toBe('re%3Aview.md')
+  })
   test('a definition is a link, its target the part a rename rewrites', () => {
     const text = 'See [the plan][p].\n\n[p]: <My Plan.md#Goals> "Plan"\n'
     const [link] = findLinks(text)
