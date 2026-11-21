@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 const source = readFileSync(new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url), 'utf8')
 const script = /pub const SCRIPT: &str = r"([\s\S]*?)";/.exec(source)?.[1] ?? ''
 type Listening = 'bare' | 'stops' | 'takes'
-function page(listening: Listening) {
+function page(listening: Listening, mac = false) {
   const dom = new JSDOM('<input id="field">', { runScripts: 'outside-only' })
   const asked: string[] = []
   const inside = dom.window as unknown as Window & typeof globalThis
@@ -13,7 +13,9 @@ function page(listening: Listening) {
     asked.push(name ?? '')
     return null
   }
-  inside.eval(script.replaceAll('!event.isTrusted', 'false'))
+  inside.eval(
+    script.replaceAll('!event.isTrusted', 'false').replaceAll('/Mac/.test(navigator.platform)', mac ? 'true' : 'false'),
+  )
   const field = inside.document.getElementById('field') as HTMLInputElement
   for (const type of ['keydown', 'keyup']) {
     field.addEventListener(type, (event) => {
@@ -51,6 +53,36 @@ describe('Ctrl+Space in a page', () => {
   })
   test("is the page's when it takes it", async () => {
     expect(await pressedWithCtrl('takes', 32)).toEqual([])
+  })
+})
+async function pressedFor(
+  mac: boolean,
+  keyCode: number,
+  held: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean },
+) {
+  const { asked, press, settled } = page('bare', mac)
+  press('keydown', { key: 'x', keyCode, ...held })
+  await settled()
+  return asked
+}
+describe('the find, address and size keys in a page', () => {
+  test('answer Cmd on a Mac', async () => {
+    expect(await pressedFor(true, 70, { metaKey: true })).toEqual(['orden-find'])
+    expect(await pressedFor(true, 76, { metaKey: true })).toEqual(['orden-address'])
+    expect(await pressedFor(true, 48, { metaKey: true })).toEqual(['orden-actual-size'])
+    expect(await pressedFor(true, 71, { metaKey: true })).toEqual(['orden-find-next'])
+    expect(await pressedFor(true, 71, { metaKey: true, shiftKey: true })).toEqual(['orden-find-previous'])
+  })
+  test('leave Ctrl+F to the page on a Mac', async () => {
+    expect(await pressedFor(true, 70, { ctrlKey: true })).toEqual([])
+  })
+  test('answer Ctrl and leave Cmd alone elsewhere', async () => {
+    expect(await pressedFor(false, 70, { ctrlKey: true })).toEqual(['orden-find'])
+    expect(await pressedFor(false, 70, { metaKey: true })).toEqual([])
+  })
+  test('keep Ctrl+Space on Ctrl on a Mac', async () => {
+    expect(await pressedFor(true, 32, { ctrlKey: true })).toEqual(['orden-ctrl-space'])
+    expect(await pressedFor(true, 32, { metaKey: true })).toEqual([])
   })
 })
 describe('Shift twice in a page', () => {
