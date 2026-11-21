@@ -1,0 +1,956 @@
+[
+  {
+    "url": "https://github.com/login",
+    "title": "Sign in to GitHub · GitHub",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/session\"><label>Username or email address <input type=\"text\" name=\"login\" id=\"login_field\" autocomplete=\"username\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" autocomplete=\"current-password\" data-truth=\"password\"></label><input type=\"text\" name=\"required_field_0ada\" hidden data-truth=\"none\"><input type=\"submit\" value=\"Sign in\"></form>"
+  },
+  {
+    "url": "https://news.ycombinator.com/login",
+    "title": "",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\"><input type=\"text\" name=\"acct\" autocomplete=\"username\" data-truth=\"username\"><input type=\"password\" name=\"pw\" autocomplete=\"current-password\" data-truth=\"password\"><input type=\"submit\" value=\"login\"></form><form data-truth-kind=\"signup\"><input type=\"text\" name=\"acct\" autocomplete=\"username\" data-truth=\"username\"><input type=\"password\" name=\"pw\" autocomplete=\"new-password\" data-truth=\"new-password\"><input type=\"submit\" value=\"create account\"></form>"
+  },
+  {
+    "url": "https://stackoverflow.com/users/login",
+    "title": "Log In - Stack Overflow",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search\" id=\"search\" class=\"s-topbar--searchbar js-searchbar \"><input type=\"text\" name=\"q\" placeholder=\"Search…\" aria-label=\"Search\" autocomplete=\"off\" maxlength=\"240\" data-truth=\"none\"></form><form data-truth-kind=\"login\" action=\"/users/login\" id=\"login-form\" class=\"d-flex fd-column gs12 gsy\"><label>Email <input type=\"email\" name=\"email\" id=\"email\" maxlength=\"100\" data-truth=\"email\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Log in</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/enwiki/wiki/Special:UserLogin?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=e0f40569a47ee2e7221f066ac93e8e12",
+    "title": "Log in - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/enwiki/w/index.php?title=Special:UserLo\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Username <input name=\"wpName\" id=\"wpName1\" placeholder=\"Enter your username\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Enter your password\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Log in</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/dewiki/wiki/Spezial:Anmelden?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=eaf1941bd43e6c180caa16e7f01dc660",
+    "title": "Anmelden – Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/dewiki/w/index.php?title=Spezial:Anmeld\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Benutzername <input name=\"wpName\" id=\"wpName1\" placeholder=\"Gib deinen Benutzernamen ein\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Passwort <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Gib dein Passwort ein\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Anmelden</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/frwiki/wiki/Sp%C3%A9cial:Connexion?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=81f5f62a2c52ab4b90dda9836d77f0a7",
+    "title": "Se connecter - Wikipédia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/frwiki/w/index.php?title=Sp%C3%A9cial:C\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Nom d’utilisateur <input name=\"wpName\" id=\"wpName1\" placeholder=\"Saisissez votre nom d’utilisateur\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Mot de passe <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Entrez votre mot de passe\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Se connecter</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/eswiki/wiki/Especial:Entrar?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=86634d7f68fe620c06355eb750e89731",
+    "title": "Ingresar - Wikipedia, la enciclopedia libre",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/eswiki/w/index.php?title=Especial:Entra\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Usuario <input name=\"wpName\" id=\"wpName1\" placeholder=\"Escribe tu nombre de usuario\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Contraseña <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Escribe tu contraseña\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Acceder</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/itwiki/wiki/Speciale:Entra?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=dc870769ff969d16f9d6a03c9bf8159f",
+    "title": "Entra - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/itwiki/w/index.php?title=Speciale:Entra\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Nome utente <input name=\"wpName\" id=\"wpName1\" placeholder=\"Inserisci il tuo nome utente\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Inserisci la tua password\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Entra</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/ptwiki/wiki/Especial:Entrar?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=5058e8fd7bc511a02fbde7a48f1c010f",
+    "title": "Iniciar sessão – Wikipédia, a enciclopédia livre",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/ptwiki/w/index.php?title=Especial:Entra\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Nome de utilizador(a) <input name=\"wpName\" id=\"wpName1\" placeholder=\"Introduza o seu nome de utilizador(a)\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Palavra-passe <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Insira a sua palavra-passe\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Iniciar sessão</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/nlwiki/wiki/Speciaal:Aanmelden?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=175f979d1582d56b1cf9fe96e087a5be",
+    "title": "Aanmelden - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/nlwiki/w/index.php?title=Speciaal:Aanme\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Gebruikersnaam <input name=\"wpName\" id=\"wpName1\" placeholder=\"Geef uw gebruikersnaam op\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Wachtwoord <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Geef uw wachtwoord op\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Aanmelden</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/ruwiki/wiki/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%92%D1%85%D0%BE%D0%B4?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=7f6c3771306e1ab24b306812967993e2",
+    "title": "Войти - Википедия",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/ruwiki/w/index.php?title=%D0%A1%D0%BB%D\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Имя учётной записи <input name=\"wpName\" id=\"wpName1\" placeholder=\"Введите имя вашей учётной записи\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Пароль <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Введите свой пароль\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Войти</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/jawiki/wiki/%E7%89%B9%E5%88%A5:%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=6a371a868197c346fdf962fb4145805e",
+    "title": "ログイン - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/jawiki/w/index.php?title=%E7%89%B9%E5%8\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>利用者名 <input name=\"wpName\" id=\"wpName1\" placeholder=\"利用者名を入力\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>パスワード <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"パスワードを入力\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>ログイン</button></form>"
+  },
+  {
+    "url": "https://pypi.org/account/login/",
+    "title": "Log in · PyPI",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search/\" class=\"search-form search-form--primary\"><label>Search PyPI <input type=\"text\" name=\"q\" id=\"search\" placeholder=\"Type '/' to search projects\" autocomplete=\"off\" data-truth=\"none\"></label><button>Search</button></form><form data-truth-kind=\"login\" action=\"/account/login/\" id=\"login-form\"><label>Username (required) <input type=\"text\" name=\"username\" id=\"username\" placeholder=\"Your username\" autocomplete=\"username\" data-truth=\"username\"></label><label>Password (required) <input type=\"password\" name=\"password\" id=\"password\" placeholder=\"Your password\" autocomplete=\"current-password\" maxlength=\"4096\" data-truth=\"password\"></label><input type=\"submit\" value=\"Log in\"></form>"
+  },
+  {
+    "url": "https://login.yahoo.com/",
+    "title": "Sign in | Yahoo",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" id=\"challenge-form\" class=\"flex-col flex gap-x-6 gap-y-6\"><label>Username or email <input type=\"text\" name=\"username\" id=\"username\" data-truth=\"username\"></label><button></button><button>Next</button><button>Sign in with Google</button><button>Create account</button></form>"
+  },
+  {
+    "url": "https://www.reddit.com/login/?rdt=58896",
+    "title": "Welcome to Reddit",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"login\" data-loose=\"\"><label>* <input type=\"text\" name=\"username\" autocomplete=\"username webauthn\" aria-labelledby=\"fp-input-label\" data-truth=\"username\"></label></div><div data-truth-kind=\"login\" data-loose=\"\"><label>* <input type=\"password\" name=\"password\" autocomplete=\"current-password\" aria-labelledby=\"fp-input-label\" data-truth=\"password\"></label></div>"
+  },
+  {
+    "url": "https://www.dropbox.com/login",
+    "title": "Login or Sign Up",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\"><label>Email <input type=\"email\" name=\"susi_email\" id=\"susi_email6181730961734427\" placeholder=\"name@company.com\" autocomplete=\"username webauthn\" inputmode=\"email\" data-truth=\"username\"></label><input type=\"password\" name=\"autofill-password\" id=\"credential-autofill-hint\" hidden data-truth=\"none\"><button>Continue</button></form>"
+  },
+  {
+    "url": "https://www.netflix.com/nl-en/login?serverState=Bgj1wuvcAxLgAVSgrX2KhmoKXMVxSwzrRApD%2FQXPjZuKDleI93XB1VykASlp%2FFz%2BjX9TcVKQTW1OJseJOodCWNM0RXqiaJhA%2BDCAqWm%2BAubt26ssmja3h2zjgKc9iV0hSIxifz2QtO9Zb2FS%2BlyGm%2FkFnFmy4gSXmSMun9cWdkDwliVW7NTr8iW%2F7EUeljoZwoCpdOUFmpUTRqWyxohWHpbu114zForvIQCTqn7NC%2B",
+    "title": "Netflix",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" class=\"hcw-ltr-iqcdef-cache-4fdrtc\"><h1>Enter your info to sign in</h1><h2>Or get started with a new account.</h2><label>Email address or mobile number <input type=\"text\" name=\"userLoginId\" id=\"_R_lajal9laklallaqlamlemim_\" autocomplete=\"email\" data-truth=\"email\"></label><label>Password <input type=\"password\" name=\"password\" id=\"_R_l6lal9laklallaqlamlemim_\" autocomplete=\"password\" data-truth=\"password\"></label><button>Continue</button><button>Get help</button></form><div data-truth-kind=\"none\" data-loose=\"\"><label>Select language <select name=\"LanguageSelect\" id=\"_R_jlaqim_\" data-truth=\"none\"><option>Nederlands</option><option>English</option></select></label></div>"
+  },
+  {
+    "url": "https://accounts.spotify.com/en/login",
+    "title": "Spotify",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\"><label>Email <input type=\"text\" id=\"username\" autocomplete=\"username\" data-truth=\"username\"></label><button>Continue</button></form>"
+  },
+  {
+    "url": "https://www.facebook.com/login/",
+    "title": "Facebook",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" id=\"login_form\"><label>Email or mobile number <input type=\"text\" name=\"email\" id=\"_R_c9l6neappb6amH1_\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"pass\" id=\"_R_cdl6neappb6amH1_\" data-truth=\"password\"></label><button>Log in</button><input type=\"submit\" value=\"\"></form>"
+  },
+  {
+    "url": "https://id.atlassian.com/login",
+    "title": "Log in to continue - Log in with Atlassian account",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" id=\"form-login\" class=\"css-r44k6v\"><span id=\"username-_r0_-label\">Email*</span><label>Email* <input type=\"email\" name=\"username\" id=\"username-_r0_\" placeholder=\"Enter your email\" autocomplete=\"username\" aria-labelledby=\"username-_r0_-label\" data-truth=\"username\"></label><span id=\"password-_r1_-label\">Password</span><input type=\"password\" name=\"password\" id=\"password\" placeholder=\"Enter password\" autocomplete=\"current-password\" aria-labelledby=\"password-_r1_-label\" hidden data-truth=\"none\"><button>Show password</button><button></button><button>Continue</button><button>Log in with email</button></form>"
+  },
+  {
+    "url": "https://cloud.digitalocean.com/login",
+    "title": "Log in to your account | DigitalOcean",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"#\"><label>email* <input type=\"text\" name=\"email\" id=\"email\" placeholder=\"Enter your email address\" autocomplete=\"none\" data-truth=\"username\"></label><label>Password* <input type=\"password\" name=\"password\" id=\"password\" placeholder=\"Enter your password\" autocomplete=\"none\" data-truth=\"password\"></label><button>Log In</button></form>"
+  },
+  {
+    "url": "https://account.proton.me/login",
+    "title": "Proton Account: Sign-in",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" name=\"loginForm\"><span id=\"label-5\">Email or username</span><label>Email or username <input id=\"username\" autocomplete=\"username\" aria-labelledby=\"label-5\" data-truth=\"username\"></label><button>Continue</button><button>Trouble signing in?</button></form>"
+  },
+  {
+    "url": "https://signin.ebay.com/signin/",
+    "title": "Sign in or Register | eBay",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" action=\"https://signin.ebay.com/signin/s\" id=\"signin-form\" name=\"signin-form\" class=\"signin-form \"><label>Email or username <input type=\"text\" name=\"userid\" id=\"userid\" autocomplete=\"username\" maxlength=\"64\" data-truth=\"username\"></label><button>Continue</button><label>Password <input type=\"password\" name=\"pass\" id=\"pass\" aria-label=\"Password for null\" autocomplete=\"current-password\" maxlength=\"64\" hidden data-truth=\"none\"></label><button>Sign in</button><button></button><button></button></form>"
+  },
+  {
+    "url": "https://login.live.com/",
+    "title": "Sign in",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" class=\"___cqaz2i0 fly5x3f\"><button></button><h1>Sign in</h1><label>Email or phone number <input type=\"email\" id=\"usernameEntry\" placeholder=\"\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><button>Forgot your username?</button><button>Next</button><button>Create an account</button></form>"
+  },
+  {
+    "url": "https://id.atlassian.com/login?application=bitbucket&continue=https%3A%2F%2Fbitbucket.org%2Faccount%2Fsignin%2F%3Fnext%3D%252F%26redirectCount%3D1",
+    "title": "Log in to continue - Log in with Atlassian account",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" id=\"form-login\" class=\"css-r44k6v\"><span id=\"username-_r0_-label\">Email*</span><label>Email* <input type=\"email\" name=\"username\" id=\"username-_r0_\" placeholder=\"Enter your email\" autocomplete=\"username\" aria-labelledby=\"username-_r0_-label\" data-truth=\"username\"></label><span id=\"password-_r1_-label\">Password</span><input type=\"password\" name=\"password\" id=\"password\" placeholder=\"Enter password\" autocomplete=\"current-password\" aria-labelledby=\"password-_r1_-label\" hidden data-truth=\"none\"><button>Show password</button><button></button><button>Continue</button><button>Log in with email</button></form>"
+  },
+  {
+    "url": "https://www.heise.de/sso/login/",
+    "title": "Heise Login Service",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/sso/login/login/nojs\" class=\"a-form\"><input type=\"text\" name=\"username\" id=\"login-user\" placeholder=\"E-Mail-Adresse\" data-truth=\"username\"><input type=\"password\" name=\"password\" id=\"login-password\" placeholder=\"Passwort\" data-truth=\"password\"><button>Anmelden</button></form>"
+  },
+  {
+    "url": "https://lobste.rs/login",
+    "title": "Login | Lobsters",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/login\"><label>E-mail or Username <input type=\"text\" name=\"email\" id=\"email\" inputmode=\"email\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" data-truth=\"password\"></label><input type=\"submit\" value=\"Login\"></form>"
+  },
+  {
+    "url": "https://www.openstreetmap.org/login?cookie_test=true",
+    "title": "OpenStreetMap",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/login\" id=\"login_form\"><label>Email Address or Username <input type=\"text\" name=\"username\" id=\"username\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" autocomplete=\"on\" data-truth=\"password\"></label><input type=\"submit\" value=\"Log in\"></form>"
+  },
+  {
+    "url": "https://www.openstreetmap.org/login?cookie_test=true&referer=%2Foauth2%2Fauthorize%3Fclient_id%3Dqqh_i8RkDbqz6cITlMJ81F1wncD6kDRGI3AutBAboJ8%26redirect_uri%3Dhttps%253A%252F%252Fcommunity.openstreetmap.org%252Fauth%252Foauth2_basic%252Fcallback%26response_type%3Dcode%26scope%3Dread_prefs%2Bread_emai",
+    "title": "OpenStreetMap",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/login\" id=\"login_form\"><label>Email Address or Username <input type=\"text\" name=\"username\" id=\"username\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" autocomplete=\"on\" data-truth=\"password\"></label><input type=\"submit\" value=\"Log in\"></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/mediawikiwiki/wiki/Special:UserLogin?useformat=desktop&usesul3=1&returntoquery=%3F&centralauthLoginToken=941b06137dfac4ba2274d92e1c7461c4",
+    "title": "Log in - MediaWiki",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/mediawikiwiki/w/index.php?title=Special\" name=\"userlogin\" class=\"mw-htmlform mw-htmlform-codex webauth-cr\"><label>Username <input name=\"wpName\" id=\"wpName1\" placeholder=\"Enter your username\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"wpPassword\" id=\"wpPassword1\" placeholder=\"Enter your password\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Log in</button></form>"
+  },
+  {
+    "url": "https://gitea.com/user/login",
+    "title": "Sign In - Gitea: Git with a cup of tea",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/user/login\" class=\"ui form\"><label>Username or Email Address <input type=\"text\" name=\"user_name\" id=\"user_name\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Sign In</button></form>"
+  },
+  {
+    "url": "https://www.mercadolibre.com.ar/",
+    "title": "Mercado Libre Argentina - Envíos Gratis en el día",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.mercadolibre.com.ar/jm/searc\" class=\"nav-search\"><label>Ingresá lo que quieras encontrar <input type=\"text\" name=\"as_word\" id=\"cb1-edit\" placeholder=\"Buscar productos, marcas y más…\" autocomplete=\"off\" maxlength=\"120\" data-truth=\"none\"></label><button></button></form>"
+  },
+  {
+    "url": "https://account.habr.com/ru/ident/s1Mu4RH11M7y-x6rX7cUg9AEez5wqCCBmGqVT1GF0Bh1YuFdzfCZMMrG6USXoHG8iIuzFit4DQcmGXjxyGlMQVnf-ywV-uw1A_IZQ6ddYvkKWwFwtJqFz27E1VvN_Ne1qCnqcdfkhXeZEuqfRxqqtAd9kIWZ5c2i0P0WYrfi2mO3Q831YKVCYGgjRg1AbbNemhvkrQvXhoMVLV_u",
+    "title": "Хабр Аккаунт",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"https://account.habr.com/ru/ident/in/s1M\" id=\"ident-form\"><input type=\"email\" name=\"email\" data-truth=\"email\"><input type=\"password\" name=\"password\" data-truth=\"password\"><button>Понятно</button></form>"
+  },
+  {
+    "url": "https://passport.yandex.ru/pwl-yandex/auth/add",
+    "title": "Log in",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" class=\"auth-layout yandex-layout\"><input type=\"submit\" value=\"\"><h1>Log in with ID</h1><input type=\"text\" id=\"react-aria-«R16ab»\" placeholder=\"Username or email\" aria-label=\"Username or email\" autocomplete=\"username\" data-truth=\"username\"><button></button><button></button><button></button><button></button><button></button><button>Next</button><button>Face or fingerprint login</button><button>QR code</button><button>Create ID</button></form>"
+  },
+  {
+    "url": "https://www.douban.com/",
+    "title": "豆瓣",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.douban.com/search\"><input type=\"text\" name=\"q\" placeholder=\"书籍、电影、音乐、小组、小站、成员\" autocomplete=\"off\" maxlength=\"60\" data-truth=\"none\"><input type=\"submit\" value=\"搜索\"></form>"
+  },
+  {
+    "url": "https://www.pixiv.net/en/",
+    "title": "Online community for artist [pixiv]",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" class=\"style_field__fpFyP\"><input type=\"text\" placeholder=\"Search pixiv\" data-truth=\"none\"></form>"
+  },
+  {
+    "url": "https://www.aliexpress.com/p/ug-login-page/login.html",
+    "title": "Buy Products Online from China Wholesalers at Aliexpress.com",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\"><input type=\"text\" placeholder=\"\" aria-label=\"Email or phone number\" label=\"Email or phone number\" autocomplete=\"username webauthn\" data-truth=\"username\"></form>"
+  },
+  {
+    "url": "https://gitlab.com/users/sign_up",
+    "title": "Sign up · GitLab",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/users\" id=\"new_new_user\" class=\"gl-show-field-errors js-arkose-labs-form\"><label>If you are human, please ignore this field. <input type=\"text\" name=\"firstname\" id=\"firstname\" autocomplete=\"oZbSBvwb5GkT\" hidden data-truth=\"none\"></label><label>First name <input type=\"text\" name=\"new_user[first_name]\" id=\"new_user_first_name\" title=\"This field is required.\" data-truth=\"none\"></label><label>Last name <input type=\"text\" name=\"new_user[last_name]\" id=\"new_user_last_name\" title=\"This field is required.\" data-truth=\"none\"></label><label>Username <input type=\"text\" name=\"new_user[username]\" id=\"new_user_username\" title=\"Please create a username with only alphanumeric characters.\" data-truth=\"username\"></label><label>Company email <input type=\"email\" name=\"new_user[email]\" id=\"new_user_email\" title=\"Please provide a valid email address.\" data-truth=\"email\"></label><label>Password <input type=\"password\" name=\"new_user[password]\" id=\"new_user_password\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><button></button><button>Continue</button></form>"
+  },
+  {
+    "url": "https://pypi.org/account/register/",
+    "title": "Create an account · PyPI",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search/\" class=\"search-form search-form--primary\"><label>Search PyPI <input type=\"text\" name=\"q\" id=\"search\" placeholder=\"Type '/' to search projects\" autocomplete=\"off\" data-truth=\"none\"></label><button>Search</button></form><form data-truth-kind=\"signup\" action=\"/account/register/\"><label>Name <input type=\"text\" name=\"full_name\" id=\"full_name\" placeholder=\"Your name\" autocomplete=\"name\" maxlength=\"100\" data-truth=\"none\"></label><label>Email address (required) <input type=\"email\" name=\"email\" id=\"email\" placeholder=\"Your email address\" autocomplete=\"email\" maxlength=\"254\" data-truth=\"email\"></label><label>Confirm form <input type=\"text\" name=\"confirm_form\" id=\"confirm_form\" hidden data-truth=\"none\"></label><label>Username (required) <input type=\"text\" name=\"username\" id=\"username\" placeholder=\"Select a username\" autocomplete=\"username\" maxlength=\"50\" data-truth=\"username\"></label><label>Password (required) <input type=\"password\" name=\"new_password\" id=\"new_password\" placeholder=\"Select a password\" autocomplete=\"new-password\" maxlength=\"4096\" data-truth=\"new-password\"></label><label>Confirm password (required) <input type=\"password\" name=\"password_confirm\" id=\"password_confirm\" placeholder=\"Confirm password\" autocomplete=\"new-password\" maxlength=\"4096\" data-truth=\"new-password\"></label><textarea name=\"g-recaptcha-response\" id=\"g-recaptcha-response-0pmlv4abxuc\" hidden data-truth=\"none\"></textarea><textarea name=\"h-captcha-response\" id=\"h-captcha-response-0pmlv4abxuc\" hidden data-truth=\"none\"></textarea><input type=\"submit\" value=\"Create account\"></form>"
+  },
+  {
+    "url": "https://codeberg.org/user/sign_up",
+    "title": "Register - Codeberg.org",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/user/sign_up\" class=\"ui form\"><label>Username <input type=\"text\" name=\"user_name\" id=\"user_name\" data-truth=\"username\"></label><label>Email address <input type=\"email\" name=\"email\" id=\"email\" data-truth=\"email\"></label><label>Confirm email address <input type=\"email\" name=\"confirm_email\" id=\"confirm_email\" data-truth=\"email\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Confirm password <input type=\"password\" name=\"retype\" id=\"retype\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><span id=\"captcha-intro\">This page currently has a captcha required to complete the registration.</span><span id=\"captcha-aid\">Please enter the following number or word into the captcha field:</span><span id=\"codeberg-service\">Services</span><span id=\"captcha-morehelp\">If you have difficulties solving the captcha, please contact us at contact@codeb</span><label>CAPTCHA: Please enter the following number or word into the captcha field: <input name=\"img-captcha-response\" id=\"captcha\" autocomplete=\"off\" aria-labelledby=\"captcha-intro captcha-aid codeberg-service captcha-morehelp\" data-truth=\"none\"></label><button>Register account</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/enwiki/wiki/Special:CreateAccount?useformat=desktop&usesul3=1&centralauthLoginToken=8da0c0f13e07472fae46729e10ad92c8",
+    "title": "Create account - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/enwiki/w/index.php?title=Special:Create\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>Username <input name=\"wpName\" id=\"wpName2\" placeholder=\"Enter your username\" autocomplete=\"username\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"Enter a password\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Confirm password <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"Enter password again\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Email address (optional) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"Enter your email address\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>Create your account</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/dewiki/wiki/Spezial:Benutzerkonto_anlegen?useformat=desktop&usesul3=1&centralauthLoginToken=c6f6b427544958afcbb1b4c5116bbb7b",
+    "title": "Benutzerkonto anlegen – Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/dewiki/w/index.php?title=Spezial:Benutz\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>Benutzername <input name=\"wpName\" id=\"wpName2\" placeholder=\"Gib deinen Benutzernamen ein\" autocomplete=\"username\" data-truth=\"username\"></label><label>Passwort <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"Gib dein Passwort ein\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Passwort bestätigen <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"Gib das Passwort erneut ein\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>E-Mail-Adresse (optional) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"Gib deine E-Mail-Adresse ein\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>Benutzerkonto erstellen</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/frwiki/wiki/Sp%C3%A9cial:Cr%C3%A9er_un_compte?useformat=desktop&usesul3=1&centralauthLoginToken=ac60cee503b810301872fd4a9bce2953",
+    "title": "Créer un compte - Wikipédia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/frwiki/w/index.php?title=Sp%C3%A9cial:C\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>Nom d’utilisateur <input name=\"wpName\" id=\"wpName2\" placeholder=\"Saisissez votre nom d’utilisateur\" autocomplete=\"username\" data-truth=\"username\"></label><label>Mot de passe <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"Entrez un mot de passe\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Confirmez le mot de passe <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"Entrez à nouveau le mot de passe\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Adresse de courriel (optionnel) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"Entrez votre adresse de courriel\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>Créez votre compte</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/eswiki/wiki/Especial:Crear_una_cuenta?useformat=desktop&usesul3=1&centralauthLoginToken=105febc5e1cfb96dd87c219608c761a0",
+    "title": "Crear una cuenta - Wikipedia, la enciclopedia libre",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/eswiki/w/index.php?title=Especial:Crear\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>Usuario <input name=\"wpName\" id=\"wpName2\" placeholder=\"Escribe tu nombre de usuario\" autocomplete=\"username\" data-truth=\"username\"></label><label>Contraseña <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"Escribe una contraseña\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Confirma la contraseña <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"Introduce de nuevo la contraseña\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Dirección de correo electrónico (opcional) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"Escribe tu dirección de correo electrónico\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>Crea tu cuenta</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/itwiki/wiki/Speciale:CreaUtenza?useformat=desktop&usesul3=1&centralauthLoginToken=4ea72bed2a054c1dc1d23615ad2cbf45",
+    "title": "Registrati - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/itwiki/w/index.php?title=Speciale:CreaU\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>Nome utente <input name=\"wpName\" id=\"wpName2\" placeholder=\"Inserisci il tuo nome utente\" autocomplete=\"username\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"Inserisci una password\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Conferma password <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"Inserisci nuovamente la password\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Indirizzo email (facoltativo) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"Inserisci il tuo indirizzo email\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>Crea la tua utenza</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/jawiki/wiki/%E7%89%B9%E5%88%A5:%E3%82%A2%E3%82%AB%E3%82%A6%E3%83%B3%E3%83%88%E4%BD%9C%E6%88%90?useformat=desktop&usesul3=1&centralauthLoginToken=0b64e8fda5f1a90e0313fb8ebc503103",
+    "title": "アカウント作成 - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/jawiki/w/index.php?title=%E7%89%B9%E5%8\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>利用者名 <input name=\"wpName\" id=\"wpName2\" placeholder=\"利用者名を入力\" autocomplete=\"username\" data-truth=\"username\"></label><label>パスワード <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"パスワードを入力\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>パスワード再入力 <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"パスワードを再入力\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>メールアドレス (省略可能) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"メールアドレスを入力\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>アカウントを作成する</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/ruwiki/wiki/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:%D0%A1%D0%BE%D0%B7%D0%B4%D0%B0%D1%82%D1%8C_%D1%83%D1%87%D1%91%D1%82%D0%BD%D1%83%D1%8E_%D0%B7%D0%B0%D0%BF%D0%B8%D1%81%D1%8C?useformat=desktop&usesul3=1&centralauthLoginToken=6421870667361e9c274635a1c2145468",
+    "title": "Создать учётную запись - Википедия",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/ruwiki/w/index.php?title=%D0%A1%D0%BB%D\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>Имя учётной записи <input name=\"wpName\" id=\"wpName2\" placeholder=\"Введите имя вашей учётной записи\" autocomplete=\"username\" data-truth=\"username\"></label><label>Пароль <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"Введите пароль\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Подтвердите пароль <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"Введите пароль ещё раз\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Адрес электронной почты (необязательно) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"Введите свой адрес электронной почты\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>Создать учётную запись</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/nlwiki/wiki/Speciaal:GebruikerAanmaken?useformat=desktop&usesul3=1&centralauthLoginToken=d0d090aca74b743b149c79465bc12bc5",
+    "title": "Account aanmaken - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/nlwiki/w/index.php?title=Speciaal:Gebru\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>Gebruikersnaam <input name=\"wpName\" id=\"wpName2\" placeholder=\"Geef uw gebruikersnaam op\" autocomplete=\"username\" data-truth=\"username\"></label><label>Wachtwoord <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"Geef een wachtwoord op\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Bevestig wachtwoord <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"Vul het wachtwoord opnieuw in\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>E-mailadres (optioneel) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"Geef uw e-mailadres op\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>Uw account aanmaken</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/ptwiki/wiki/Especial:Criar_conta?useformat=desktop&usesul3=1&centralauthLoginToken=926b0a3344233685b805283eccec36be",
+    "title": "Criar conta – Wikipédia, a enciclopédia livre",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/ptwiki/w/index.php?title=Especial:Criar\" id=\"userlogin2\" name=\"userlogin2\" class=\"mw-htmlform mw-htmlform-codex\"><button></button><label>Nome de utilizador(a) <input name=\"wpName\" id=\"wpName2\" placeholder=\"Introduza o seu nome de utilizador(a)\" autocomplete=\"username\" data-truth=\"username\"></label><label>Palavra-passe <input type=\"password\" name=\"wpPassword\" id=\"wpPassword2\" placeholder=\"Insira uma palavra-passe\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Confirmar a palavra-passe <input type=\"password\" name=\"retype\" id=\"wpRetype\" placeholder=\"Inserir novamente a palavra-passe\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Endereço de correio eletrónico (opcional) <input type=\"email\" name=\"email\" id=\"wpEmail\" placeholder=\"Introduza o seu endereço de correio eletrónico\" autocomplete=\"email\" maxlength=\"255\" data-truth=\"email\"></label><button>Crie a sua conta</button></form>"
+  },
+  {
+    "url": "https://lobste.rs/login",
+    "title": "Login | Lobsters",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/login\"><label>E-mail or Username <input type=\"text\" name=\"email\" id=\"email\" inputmode=\"email\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" data-truth=\"password\"></label><input type=\"submit\" value=\"Login\"></form>"
+  },
+  {
+    "url": "https://www.openstreetmap.org/user/new?cookie_test=true",
+    "title": "Sign Up | OpenStreetMap",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/user\" id=\"new_user\" class=\"new_user\"><label>Email <input type=\"email\" name=\"user[email]\" id=\"user_email\" data-truth=\"email\"></label><label>Display Name <input type=\"text\" name=\"user[display_name]\" id=\"user_display_name\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"user[pass_crypt]\" id=\"user_pass_crypt\" data-truth=\"new-password\"></label><label>Confirm Password <input type=\"password\" name=\"user[pass_crypt_confirmation]\" id=\"user_pass_crypt_confirmation\" data-truth=\"new-password\"></label><input type=\"submit\" value=\"Sign Up\"></form>"
+  },
+  {
+    "url": "https://gitea.com/user/sign_up",
+    "title": "Register - Gitea: Git with a cup of tea",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/user/sign_up\" class=\"ui form\"><label>Username <input type=\"text\" name=\"user_name\" id=\"user_name\" data-truth=\"username\"></label><label>Email Address <input type=\"email\" name=\"email\" id=\"email\" data-truth=\"email\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Confirm Password <input type=\"password\" name=\"retype\" id=\"retype\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><textarea name=\"g-recaptcha-response\" id=\"g-recaptcha-response-0vi0u2opn0u\" hidden data-truth=\"none\"></textarea><textarea name=\"h-captcha-response\" id=\"h-captcha-response-0vi0u2opn0u\" hidden data-truth=\"none\"></textarea><button>Register Account</button></form>"
+  },
+  {
+    "url": "https://www.reddit.com/register/?rdt=37642",
+    "title": "Welcome to Reddit",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><label>* <input type=\"email\" name=\"email\" autocomplete=\"email\" aria-labelledby=\"fp-input-label\" data-truth=\"none\"></label></div>"
+  },
+  {
+    "url": "https://gitlab.com/users/password/new",
+    "title": "GitLab",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/users/password\" id=\"new_user\" class=\"gl-show-field-errors\"><label>Email <input type=\"email\" name=\"user[email]\" id=\"user_email\" title=\"Please provide a valid email address.\" autocomplete=\"off\" data-truth=\"none\"></label><textarea name=\"g-recaptcha-response\" id=\"g-recaptcha-response\" hidden data-truth=\"none\"></textarea><button>Reset password</button></form>"
+  },
+  {
+    "url": "https://pypi.org/account/request-password-reset/",
+    "title": "Password reset · PyPI",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search/\" class=\"search-form search-form--primary\"><label>Search PyPI <input type=\"text\" name=\"q\" id=\"search\" placeholder=\"Type '/' to search projects\" autocomplete=\"off\" data-truth=\"none\"></label><button>Search</button></form><form data-truth-kind=\"none\" action=\"/account/request-password-reset/\"><label>Username or email (required) <input type=\"text\" name=\"username_or_email\" id=\"username_or_email\" autocomplete=\"off\" data-truth=\"none\"></label><input type=\"submit\" value=\"Request password reset\"></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/enwiki/wiki/Special:PasswordReset?useformat=desktop",
+    "title": "Reset password - Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"//auth.wikimedia.org/enwiki/w/index.php?\" class=\"mw-htmlform mw-htmlform-codex\"><label>Username: <input name=\"wpUsername\" id=\"mw-input-wpUsername\" data-truth=\"none\"></label><label>Email address: <input type=\"email\" name=\"wpEmail\" id=\"mw-input-wpEmail\" data-truth=\"none\"></label><button>Reset password</button></form>"
+  },
+  {
+    "url": "https://auth.wikimedia.org/dewiki/wiki/Spezial:Passwort_neu_vergeben?useformat=desktop",
+    "title": "Passwort zurücksetzen – Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"//auth.wikimedia.org/dewiki/w/index.php?\" class=\"mw-htmlform mw-htmlform-codex\"><label>Benutzername: <input name=\"wpUsername\" id=\"mw-input-wpUsername\" data-truth=\"none\"></label><label>E-Mail-Adresse: <input type=\"email\" name=\"wpEmail\" id=\"mw-input-wpEmail\" data-truth=\"none\"></label><button>Passwort zurücksetzen</button></form>"
+  },
+  {
+    "url": "https://stackoverflow.com/users/account-recovery",
+    "title": "Account Recovery - Stack Overflow",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search\" id=\"search\" class=\"s-topbar--searchbar js-searchbar \"><input type=\"text\" name=\"q\" placeholder=\"Search…\" aria-label=\"Search\" autocomplete=\"off\" maxlength=\"240\" data-truth=\"none\"></form><form data-truth-kind=\"none\" action=\"/users/account-recovery\" id=\"account-recovery\" class=\"d-flex gs12 gsy fd-column\"><label>Email <input type=\"text\" name=\"email\" id=\"email\" data-truth=\"none\"></label><button>Send recovery email</button></form>"
+  },
+  {
+    "url": "https://www.openstreetmap.org/user/forgot-password",
+    "title": "Lost password | OpenStreetMap",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/user/forgot-password\"><label>Email Address <input type=\"text\" name=\"email\" id=\"email\" data-truth=\"none\"></label><input type=\"submit\" value=\"Reset password\"></form>"
+  },
+  {
+    "url": "https://lobste.rs/login/forgot_password",
+    "title": "Reset Password | Lobsters",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/login/reset_password\"><label>E-mail or Username <input type=\"text\" name=\"email\" id=\"email\" inputmode=\"email\" data-truth=\"none\"></label><input type=\"submit\" value=\"Reset Password\"></form>"
+  },
+  {
+    "url": "https://duckduckgo.com/",
+    "title": "DuckDuckGo - Protection. Privacy. Peace of mind.",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/\" id=\"searchbox_homepage\" class=\"search-toggle-box-module-scss-module__ul\" aria-label=\"Search the web with DuckDuckGo\"><textarea name=\"q\" placeholder=\"Search privately\" aria-label=\"Search with DuckDuckGo\" autocomplete=\"off\" data-truth=\"none\"></textarea><button></button></form>"
+  },
+  {
+    "url": "https://www.bing.com/",
+    "title": "Search - Microsoft Bing",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search\" id=\"sb_form\" class=\"sb_form hassbi c_show_form fl c_show_c c\"><button></button><input type=\"submit\" value=\"\"><textarea type=\"search\" name=\"q\" id=\"sb_form_q\" placeholder=\"Search the web\" title=\"Enter your search term\" autocomplete=\"off\" maxlength=\"2000\" inputmode=\"search\" data-truth=\"none\"></textarea><button></button><button></button><button></button><button></button><button></button><button>upload an image</button><button>open camera</button><input type=\"text\" id=\"sb_imgpst\" placeholder=\"paste image link to search\" hidden data-truth=\"none\"><button></button></form>"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Main_Page",
+    "title": "Wikipedia, the free encyclopedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/w/index.php\" id=\"searchform\" class=\"cdx-search-input cdx-search-input--has-e\"><input type=\"search\" name=\"search\" id=\"searchInput\" placeholder=\"Search Wikipedia\" aria-label=\"Search Wikipedia\" title=\"Search Wikipedia [alt-f]\" autocomplete=\"off\" data-truth=\"none\"><button>Search</button></form>"
+  },
+  {
+    "url": "https://de.wikipedia.org/wiki/Wikipedia:Hauptseite",
+    "title": "Wikipedia – Die freie Enzyklopädie",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/w/index.php\" id=\"searchform\" class=\"cdx-search-input cdx-search-input--has-e\"><input type=\"search\" name=\"search\" id=\"searchInput\" placeholder=\"Wikipedia durchsuchen\" aria-label=\"Wikipedia durchsuchen\" title=\"Durchsuche die Wikipedia [alt-f]\" autocomplete=\"off\" data-truth=\"none\"><button>Suchen</button></form>"
+  },
+  {
+    "url": "https://ja.wikipedia.org/wiki/%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%9A%E3%83%BC%E3%82%B8",
+    "title": "Wikipedia",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/w/index.php\" id=\"searchform\" class=\"cdx-search-input cdx-search-input--has-e\"><input type=\"search\" name=\"search\" id=\"searchInput\" placeholder=\"Wikipedia内を検索\" aria-label=\"Wikipedia内を検索\" title=\"Wikipedia内を検索 [alt-f]\" autocomplete=\"off\" data-truth=\"none\"><button>検索</button></form>"
+  },
+  {
+    "url": "https://pypi.org/",
+    "title": "PyPI · The Python Package Index",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search/\" class=\"search-form search-form--large search-fo\"><label>Search PyPI <input type=\"text\" name=\"q\" id=\"search\" placeholder=\"Type '/' to search projects\" autocomplete=\"off\" data-truth=\"none\"></label><button>Search</button></form>"
+  },
+  {
+    "url": "https://www.openstreetmap.org/#map=8/52.154/5.295",
+    "title": "OpenStreetMap",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search\" class=\"search_form bg-body-secondary p-2\"><input type=\"text\" name=\"query\" id=\"query\" placeholder=\"Search\" autocomplete=\"on\" data-truth=\"none\"><button>Where is this?</button><button></button></form>"
+  },
+  {
+    "url": "https://www.baidu.com/",
+    "title": "百度一下，你就知道",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"//www.baidu.com/s\" id=\"form\" name=\"f\" class=\"fm\"><input name=\"wd\" id=\"kw\" autocomplete=\"off\" maxlength=\"255\" data-truth=\"none\"><input type=\"submit\" value=\"百度一下\"></form>"
+  },
+  {
+    "url": "https://www.sbb.ch/de",
+    "title": "Das Online-Portal der SBB für Fahrplan, Zug und ÖV",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" class=\"sbb-common-grid-element z-1\"><label>Von <input type=\"text\" name=\"origin\" id=\"origin\" data-truth=\"none\"></label><button></button><label>Nach <input type=\"text\" name=\"destination\" id=\"destination\" data-truth=\"none\"></label><button></button></form>"
+  },
+  {
+    "url": "https://www.booking.com/?chal_t=1795203449405&force_referer=",
+    "title": "Booking.com | Official site | The best hotels, flights, car rentals & accommodations",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.booking.com/searchresults.ht\" aria-label=\"Search properties\"><label>Search in your own words <input name=\"ss\" id=\"searchbox-horizontal-destination-input\" placeholder=\"Family-friendly apartments in Paris that allow pets\" aria-label=\"Search in your own words\" autocomplete=\"off\" data-truth=\"none\"></label><button>Select datesCheck-in date - Check-out da</button><button>2 adults · 0 children · 1 room</button><button>Search</button></form>"
+  },
+  {
+    "url": "https://www.airbnb.com/",
+    "title": "Airbnb | Vacation rentals, cabins, beach houses, & more",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/homes\" class=\"f1hztvqy atm_vy_1osqo2v atm_e2_1osqo2v a\"><input type=\"search\" name=\"query\" id=\"bigsearch-query-location-input\" placeholder=\"Search destinations\" aria-label=\"Where\" autocomplete=\"off\" data-truth=\"none\"><button>WhenAdd dates</button><button>WhoAdd guests</button><button></button></form>"
+  },
+  {
+    "url": "https://www.otto.de/",
+    "title": "OTTO - Mode, Möbel & Technik » Zum Online-Shop",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" class=\"js_squirrel_searchForm squirrel_searchFo\"><input type=\"text\" placeholder=\"Wonach suchst du?\" autocomplete=\"off\" maxlength=\"150\" data-truth=\"none\"><button></button></form><div data-truth-kind=\"none\" data-loose=\"\"><input type=\"email\" id=\"input\" placeholder=\"E-Mail-Adresse\" autocomplete=\"off\" maxlength=\"80\" inputmode=\"email\" aria-labelledby=\"text-field__label\" data-truth=\"none\"></div>"
+  },
+  {
+    "url": "https://buttondown.com/",
+    "title": "Buttondown - Newsletter software for people like you",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" id=\"contact-us\" class=\"border border-border bg-card p-6 sm:p-8 \"><label>Your name <input type=\"text\" name=\"yourname\" id=\"yourname\" placeholder=\"Justin Duke\" data-truth=\"none\"></label><label>Your email <input type=\"email\" name=\"youremail\" id=\"youremail\" placeholder=\"support@buttondown.com\" data-truth=\"none\"></label><label>Support topic <select name=\"abouttopic\" id=\"abouttopic\" data-truth=\"none\"><option>Choose a topic…</option><option>Account review / approval</option><option>Billing / plans</option></select></label><label>Buttondown username (if you have one) <input type=\"text\" name=\"yourusername\" id=\"yourusername\" placeholder=\"your-newsletter\" data-truth=\"none\"></label><label>How can we help? <textarea name=\"about\" id=\"about\" placeholder=\"Describe your question or issue...\" data-truth=\"none\"></textarea></label><button>Send us a message</button></form>"
+  },
+  {
+    "url": "https://blog.cloudflare.com/",
+    "title": "Cloudflare Blog",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\"><label>Email address <input type=\"email\" name=\"email\" id=\"newsletter-email\" placeholder=\"Your email address\" autocomplete=\"email\" data-truth=\"none\"></label><button>Subscribe</button></form>"
+  },
+  {
+    "url": "https://www.heise.de/newsletter/",
+    "title": "Newsletter-Übersicht | heise online",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/suche\" id=\"heisetopnavi_search\" class=\"group/search m-0 flex gap-2\"><legend>Suchen</legend><input type=\"text\" name=\"q\" placeholder=\"Suchen\" autocomplete=\"on\" data-truth=\"none\"><button></button></form>"
+  },
+  {
+    "url": "https://www.spiegel.de/",
+    "title": "DER SPIEGEL | Online-Nachrichten",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><input type=\"text\" placeholder=\"z.B. Hans Müller\" autocomplete=\"off\" inputmode=\"text\" data-truth=\"none\"><button>Suchen</button></div>"
+  },
+  {
+    "url": "https://mailchimp.com/?currency=EUR",
+    "title": "Email & SMS Marketing Platform | Mailchimp",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><select aria-label=\"Currency\" data-truth=\"none\"><option>$ AUD</option><option>R$ BRL</option><option>$ CAD</option></select><h2>Standard</h2><button></button><button></button><button></button><button></button></div><form data-truth-kind=\"none\" class=\"flex flex--middle contactsSelect\"><label>Contacts Contacts <select name=\"Number of Contacts\" id=\"all_plans_contacts_select_423087164\" autocomplete=\"off\" data-truth=\"none\"><option>0-500</option><option>501-1,500</option><option>1,501-2,500</option></select></label></form><div data-truth-kind=\"none\" data-loose=\"\"><button>Industries and Solutions</button><button>Integrations</button><button>Resources</button><button>EN</button><button>Hi, %s</button><button>Main Menu</button><button>Close Main Menu</button><button>Industries and Solutions</button><button>Back</button><button>Close Main Menu</button><button>Industry</button><button>Back</button><button>Close Main Menu</button><button>Solutions</button><button>Back</button><button>Close Main Menu</button><button>Professional Services</button><button>Back</button><button>Close Main Menu</button><button>Integrations</button><button>Back</button><button>Close Main Menu</button><button>Most Popular</button><button>Back</button><button>Close Main Menu</button><button>Your Tech Stack</button><button>Back</button><button>Close Main Menu</button><button>For Developers</button><button>Back</button><button>Close Main Menu</button><button>Resources</button><button>Back</button><button>Close Main Menu</button><button>Learn with Mailchimp</button><button>Back</button><button>Close Main Menu</button><button>For Developers</button><button>Back</button><button>Close Main Menu</button><button>Professional Services</button><button>Back</button><button>Close Main Menu</button><button>English</button><button>Hi, %s</button><button>Back</button><button>Close Main Menu</button><button>Customize my experience</button><button></button><button></button><button></button><button></button><button></button><legend>What's your industry?</legend><button>Select</button><legend>What are the top 4 things you want to achieve? Select up to 4</legend><button>No thank you</button><button>Customize my experience</button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><button></button><label>This page is now available in other languages. <select name=\"languagePicker\" id=\"languagePicker-1906327429\" data-truth=\"none\"><option>English</option><option>Español</option><option>Français</option></select></label><button>Customize</button><button>Reject all</button><button>Accept all</button><button></button><button></button><button>View Cookies</button><button></button><button>View Cookies</button><button></button><button>View Cookies</button><button></button><button>View Cookies</button><button>Back Button</button><button>Filter Icon</button><button>Clear</button><button>Apply</button><button>Cancel</button><button>Allow All</button><button>Reject All</button><button>Confirm My Choices</button></div>"
+  },
+  {
+    "url": "https://wordpress.org/documentation/article/comments-in-wordpress/",
+    "title": "Comments in WordPress | Documentation",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://wordpress.org/documentation/\" class=\"wp-block-search__button-inside wp-block-\"><label>Search documentation <input type=\"search\" name=\"s\" id=\"wp-block-search__input-8\" placeholder=\"Search documentation\" data-truth=\"none\"></label><button></button></form><form data-truth-kind=\"none\" action=\"https://wordpress.org/documentation/\" class=\"wp-block-search__button-outside wp-block\"><label>Search <input type=\"search\" name=\"s\" id=\"wp-block-search__input-9\" placeholder=\"\" data-truth=\"none\"></label><button>Search</button></form>"
+  },
+  {
+    "url": "https://make.wordpress.org/core/2024/01/01/",
+    "title": "Page not found | Make WordPress Core",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://make.wordpress.org/core/\" id=\"searchform\"><input type=\"text\" name=\"s\" id=\"s\" data-truth=\"none\"><input type=\"submit\" value=\"Search\"></form><form data-truth-kind=\"none\" action=\"https://make.wordpress.org/core/\" class=\"wp-block-search__button-inside wp-block-\"><label>Search <input type=\"search\" name=\"s\" id=\"wp-block-search__input-8\" placeholder=\"Search\" data-truth=\"none\"></label><button></button></form><form data-truth-kind=\"none\" action=\"https://wordpress.com/email-subscription\" id=\"subscribe-blog\"><label>Type your email… <input type=\"email\" name=\"email\" id=\"subscribe-field\" placeholder=\"Type your email…\" title=\"Please fill in this field.\" autocomplete=\"email\" data-truth=\"none\"></label><button>Subscribe</button></form>"
+  },
+  {
+    "url": "https://www.smashingmagazine.com/",
+    "title": "Smashing Magazine - For Web Designers And Developers",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.google.com/webhp?q=site:smas\" id=\"js-search-form\" class=\"search-form\"><input type=\"search\" name=\"q\" id=\"js-search-input\" placeholder=\"Search articles...\" aria-label=\"Search articles\" autocomplete=\"off\" inputmode=\"search\" data-truth=\"none\"><button>Clear Search</button><input type=\"submit\" value=\"Search\"></form><form data-truth-kind=\"none\" action=\"//smashingmagazine.us1.list-manage.com/s\"><label>Your (smashing) email <input type=\"email\" name=\"EMAIL\" id=\"mce-EMAIL-hp\" placeholder=\"Your email\" data-truth=\"none\"></label><input type=\"submit\" value=\"Meow!\"></form>"
+  },
+  {
+    "url": "https://www.mozilla.org/en-US/contact/",
+    "title": "Contacts, Spaces and Communities - Contact us - Mozilla",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"#\" id=\"lang_form\" class=\"moz24-c-language-switcher\"><label>Language <select name=\"lang\" id=\"page-language-select\" data-truth=\"none\"><option>English (Canadian)</option><option>English (British)</option><option>English</option></select></label></form>"
+  },
+  {
+    "url": "https://www.python.org/psf/contact/",
+    "title": "Welcome to Python.org",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/search/\" class=\"search-the-site\"><label>Search This Site <input type=\"search\" name=\"q\" id=\"id-search-field\" placeholder=\"Search\" data-truth=\"none\"></label><button>GO</button></form>"
+  },
+  {
+    "url": "https://www.hetzner.com/contact/",
+    "title": "404 - page not found",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/newsletter/\"><input type=\"email\" name=\"email\" placeholder=\"mail address\" data-truth=\"none\"><button></button></form>"
+  },
+  {
+    "url": "https://www.infomaniak.com/en/contact",
+    "title": "🚀 Page cannot be found. - Infomaniak",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://newsletter.infomaniak.com/extern\" class=\"news-input\"><input type=\"email\" name=\"inf[1]\" id=\"newsletter-input\" placeholder=\"Enter your email address\" data-truth=\"none\"><button>Subscribe!</button></form>"
+  },
+  {
+    "url": "https://discourse.mozilla.org/",
+    "title": "Mozilla Discourse",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><input type=\"search\" id=\"welcome-banner-search-input\" placeholder=\"Search\" aria-label=\"Search\" autocomplete=\"off\" data-truth=\"none\"><button>​</button></div>"
+  },
+  {
+    "url": "https://meta.discourse.org/",
+    "title": "Discourse Meta - The Official Support Forum for Discourse",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><input type=\"search\" id=\"welcome-banner-search-input\" placeholder=\"Search\" aria-label=\"Search\" autocomplete=\"off\" data-truth=\"none\"><button>​</button></div>"
+  },
+  {
+    "url": "https://lichess.org/login",
+    "title": "Sign in • lichess.org",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"/login\" class=\"form3\"><label>User name or email <input name=\"username\" id=\"form3-username\" autocomplete=\"username\" maxlength=\"320\" data-truth=\"username\"></label><button></button><label>Password <input type=\"password\" name=\"password\" id=\"form3-password\" autocomplete=\"current-password\" data-truth=\"password\"></label><button></button><label>Authentication code <input name=\"token\" id=\"form3-token\" autocomplete=\"one-time-code\" inputmode=\"numeric\" hidden data-truth=\"none\"></label><button>Sign inVerifying your device...</button></form>"
+  },
+  {
+    "url": "https://lichess.org/signup",
+    "title": "Register • lichess.org",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\" action=\"/signup\" id=\"signup-form\" class=\"form3\"><label>Username <input name=\"username\" id=\"form3-username\" autocomplete=\"username\" maxlength=\"20\" data-truth=\"username\"></label><button></button><label>Password <input type=\"password\" name=\"password\" id=\"form3-password\" autocomplete=\"new-password\" maxlength=\"999\" data-truth=\"new-password\"></label><button></button><label>Email <input type=\"email\" name=\"email\" id=\"form3-email\" maxlength=\"320\" data-truth=\"email\"></label><button></button><button>RegisterVerifying your device...</button></form>"
+  },
+  {
+    "url": "https://archive.org/login",
+    "title": "Log in to the Internet Archive",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><label>Search the Archive. Filters and Advanced Search available below. <input type=\"text\" id=\"text-input\" placeholder=\"Search\" inputmode=\"search\" data-truth=\"none\"></label><button>Clear search query</button></div><form data-truth-kind=\"login\"><label>Email address <input type=\"email\" name=\"username\" id=\"email-input\" autocomplete=\"username\" data-truth=\"email\"></label><label>Password <input type=\"password\" name=\"password\" id=\"password-input\" autocomplete=\"current-password\" data-truth=\"password\"></label><button></button><button></button><input type=\"submit\" value=\"\"></form>"
+  },
+  {
+    "url": "https://archive.org/signup",
+    "title": "Sign Up at the Internet Archive",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><label>Search the Archive. Filters and Advanced Search available below. <input type=\"text\" id=\"text-input\" placeholder=\"Search\" inputmode=\"search\" data-truth=\"none\"></label><button>Clear search query</button></div><form data-truth-kind=\"signup\"><input type=\"email\" name=\"username\" id=\"username\" maxlength=\"127\" data-truth=\"email\"><input type=\"text\" name=\"screenname\" id=\"screenname\" maxlength=\"40\" data-truth=\"none\"><label>Choose a password 8 to 100 characters <input type=\"password\" name=\"password\" id=\"password-input\" autocomplete=\"current-password\" maxlength=\"100\" data-truth=\"new-password\"></label><button></button><button></button><input type=\"submit\" value=\"\"></form>"
+  },
+  {
+    "url": "https://www.chess.com/login",
+    "title": "Login - Chess.com",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"https://www.chess.com/login_check\" id=\"authentication-login-form\" class=\"authentication-login-form login-form\"><button>+1</button><input type=\"tel\" id=\"phone-number-text\" placeholder=\"Phone number\" aria-label=\"phone number\" hidden data-truth=\"username\"><input type=\"email\" id=\"login-username\" placeholder=\"Username, Phone, or Email\" aria-label=\"Username, Phone, or Email\" autocomplete=\"email\" data-truth=\"email\"><input type=\"password\" id=\"login-password\" placeholder=\"Password\" aria-label=\"Password\" autocomplete=\"current-password\" data-truth=\"password\"><button></button><input type=\"email\" name=\"_username\" id=\"username\" aria-label=\"Username, Phone, or Email\" hidden data-truth=\"email\"><input type=\"password\" name=\"_password\" id=\"password\" aria-label=\"Password\" autocomplete=\"off\" hidden data-truth=\"password\"><button>Log In</button></form>"
+  },
+  {
+    "url": "https://www.strava.com/login",
+    "title": "Log In | Strava",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\"><label>Email <input type=\"email\" name=\"email\" id=\"desktop-email\" placeholder=\"Your Email\" autocomplete=\"username\" data-truth=\"username\"></label><label>country <input type=\"text\" name=\"country\" id=\"desktop-country\" autocomplete=\"new-password\" hidden data-truth=\"none\"></label><button>Log In</button></form>"
+  },
+  {
+    "url": "https://www.kickstarter.com/login",
+    "title": "Log in - Kickstarter",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\"><span id=\"react-aria3527878670-_r_1_\">Email</span><label>Email <input type=\"email\" name=\"passwordless-email\" id=\"react-aria3527878670-_r_0_\" placeholder=\"name@email.com\" title=\"\" aria-labelledby=\"react-aria3527878670-_r_1_\" data-truth=\"username\"></label><button>Continue</button></form>"
+  },
+  {
+    "url": "https://www.twitch.tv/login",
+    "title": "Log In - Twitch",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" name=\"login-submit-form\"><label>Email or Username <input type=\"text\" id=\"login-username\" aria-label=\"Email or Username\" autocomplete=\"username webauthn\" data-truth=\"username\"></label><button>Continue</button><button>Continue with Google</button><button>Continue with Amazon</button><button>Continue with Apple</button><button>Don't have an account? Sign up</button></form>"
+  },
+  {
+    "url": "https://www.tumblr.com/login",
+    "title": "Register - Login",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\"><input type=\"text\" name=\"email\" placeholder=\"Email\" aria-label=\"email\" autocomplete=\"email\" data-truth=\"email\"><input type=\"password\" name=\"password\" placeholder=\"Password\" aria-label=\"password\" autocomplete=\"current-password\" data-truth=\"password\"><button>Log in</button></form><form data-truth-kind=\"none\" action=\"/search\" class=\"aogHd\"><input type=\"text\" name=\"q\" placeholder=\"Search Tumblr\" aria-label=\"Search\" autocomplete=\"off\" data-truth=\"none\"></form>"
+  },
+  {
+    "url": "https://www.pinterest.com/login/",
+    "title": "Pinterest Login",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" aria-label=\"login form\"><label>Email <input type=\"email\" id=\"email\" placeholder=\"Email\" autocomplete=\"email\" data-truth=\"email\"></label><label>Password <input type=\"password\" id=\"password\" placeholder=\"Password\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Log in</button></form>"
+  },
+  {
+    "url": "https://id.atlassian.com/login?application=trello&continue=https%3A%2F%2Ftrello.com%2Fauth%2Fatlassian%2Fcallback%3FreturnUrl%3D%26aaOnboarding%3D%26updateEmail%3D%26traceId%3D%26ssoVerified%3D%26createMember%3D%26jiraInviteLink%3D",
+    "title": "Log in to continue - Log in with Atlassian account",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" id=\"form-login\" class=\"css-r44k6v\"><span id=\"username-_r0_-label\">Email*</span><label>Email* <input type=\"email\" name=\"username\" id=\"username-_r0_\" placeholder=\"Enter your email\" autocomplete=\"username\" aria-labelledby=\"username-_r0_-label\" data-truth=\"username\"></label><span id=\"password-_r1_-label\">Password</span><input type=\"password\" name=\"password\" id=\"password\" placeholder=\"Enter password\" autocomplete=\"current-password\" aria-labelledby=\"password-_r1_-label\" hidden data-truth=\"none\"><button>Show password</button><button></button><button>Continue</button><button>Log in with email</button></form>"
+  },
+  {
+    "url": "https://identity.flickr.com/login",
+    "title": "Flickr Login",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" id=\"login-form\"><label>Email address <input type=\"email\" id=\"login-email\" maxlength=\"128\" data-truth=\"username\"></label><button>Next</button></form>"
+  },
+  {
+    "url": "https://www.deviantart.com/users/login",
+    "title": "Log In | DeviantArt",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" action=\"/_sisu/do/step2\" class=\"ngW4zn TRQko5\"><label>Username <input type=\"text\" name=\"username\" id=\"username\" data-truth=\"username\"></label><button>Next</button><button>Continue with Apple</button><button>Continue with Facebook</button></form>"
+  },
+  {
+    "url": "https://vk.ru/",
+    "title": "VK | Welcome!",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><label>Search VK <input type=\"search\" id=\"search-:r0:\" placeholder=\"Search VK\" autocomplete=\"off\" data-truth=\"none\"></label><button>Очистить</button></div>"
+  },
+  {
+    "url": "https://ok.ru/",
+    "title": "OK social network. Communication with friends on OK. Your meeting place with classmates",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/dk\" class=\"hidden-l\" aria-label=\"toolbar\"><label>Search on OK <input type=\"text\" name=\"st.query\" placeholder=\"Search on OK\" autocomplete=\"off\" maxlength=\"255\" data-truth=\"none\"></label><button></button></form><form data-truth-kind=\"login\"><input type=\"text\" name=\"st.email\" id=\"field_email\" placeholder=\"Phone number or email address\" data-truth=\"username\"><input type=\"password\" name=\"st.password\" id=\"field_password\" placeholder=\"Password\" data-truth=\"password\"><button>Показать пароль</button><button>Sign in</button></form>"
+  },
+  {
+    "url": "https://login.kleinanzeigen.de/u/login/identifier?state=hKFo2SBTaEh4cVJpdzdtb2FHVFpZNEo0b2JQanlXMUJKUXJjLaFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIG5fNmVWemIwTHZLZktQdjV5anh4d1FSTFJHYmFkWmJRo2NpZNkgYU9xNzRDbTVmVUJvTTFKaWZIVGhIbFoySkhYbFZVQ3E",
+    "title": "Kleinanzeigen - Anmelden",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" class=\"ccf381147 _form-login-id\"><button>Weiter</button><span id=\"username-label\">E-mail *</span><label>E-mail * <input type=\"email\" name=\"username\" id=\"username\" autocomplete=\"email\" inputmode=\"email\" aria-labelledby=\"username-label\" data-truth=\"username\"></label><input type=\"password\" autocomplete=\"off\" hidden data-truth=\"none\"><button>Weiter</button></form>"
+  },
+  {
+    "url": "https://account.nicovideo.jp/spa/login/index.html",
+    "title": "ログイン - ニコニコ",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" class=\"_1l4uyvk0\"><input type=\"text\" name=\"mailOrTel\" placeholder=\"メールアドレスまたは電話番号\" autocomplete=\"username\" data-truth=\"username\"><input type=\"password\" name=\"password\" placeholder=\"パスワード\" autocomplete=\"current-password\" data-truth=\"password\"><button></button><button>ログイン</button></form>"
+  },
+  {
+    "url": "https://passport.bilibili.com/login?site=OVERSEAS&lang=en",
+    "title": "Account login",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"login\" data-loose=\"\"><input type=\"text\" placeholder=\"Please enter email or phone\" autocomplete=\"on\" maxlength=\"32\" data-truth=\"username\"><input type=\"password\" placeholder=\"Please enter password\" autocomplete=\"on\" maxlength=\"32\" data-truth=\"password\"></div>"
+  },
+  {
+    "url": "https://login.bol.com/wsp/login",
+    "title": "bol | Inloggen",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" class=\"w-full\"><span id=\"react-aria-_R_nl6H1_\">E-mailadres</span><label>E-mailadres <input type=\"email\" name=\"j_username\" id=\"username\" placeholder=\" \" autocomplete=\"email\" aria-labelledby=\"react-aria-_R_nl6H1_\" data-truth=\"email\"></label><span id=\"react-aria-_R_l7l6H1_\">Wachtwoord</span><label>Wachtwoord <input type=\"password\" name=\"j_password\" id=\"password\" placeholder=\" \" autocomplete=\"current-password\" aria-labelledby=\"react-aria-_R_l7l6H1_\" data-truth=\"password\"></label><button></button><input hidden data-truth=\"none\"><input hidden data-truth=\"none\"><button>Inloggen</button></form>"
+  },
+  {
+    "url": "https://www.coursera.org/?authMode=login",
+    "title": "Coursera | Online Courses & Credentials From Top Educators. Join for Free",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" class=\"search-form css-14o2hni\"><input type=\"text\" name=\"query\" id=\"search-autocomplete-input\" placeholder=\"What do you want to learn?\" aria-label=\"Search catalog\" autocomplete=\"off\" data-truth=\"none\"><button></button><legend>​</legend></form><form data-truth-kind=\"username\" action=\"javascript:void(0)\" name=\"unified_auth_entry\" class=\"css-1lkta6a\"><label>Email * * <input type=\"email\" name=\"email\" id=\"cds-react-aria3812232531-:r4:\" placeholder=\"name@email.com\" aria-label=\"Email\" autocomplete=\"email\" data-truth=\"username\"></label><legend>​</legend><button>Continue</button></form>"
+  },
+  {
+    "url": "https://www.figma.com/login",
+    "title": "Login | Figma",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" id=\"auth-view-page\" class=\"sign_in_and_up--centerText--oSPBA auth_v\"><h1>Sign in to Figma</h1><button>Continue with Google</button><label>Email <input type=\"email\" name=\"email\" id=\"email\" autocomplete=\"username\" data-truth=\"email\"></label><label>Password <input type=\"password\" name=\"password\" id=\"current-password\" autocomplete=\"current-password\" data-truth=\"password\"></label><button>Log in</button></form>"
+  },
+  {
+    "url": "https://app.asana.com/-/login",
+    "title": "Log in - Asana",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"username\" name=\"loginEmailForm\" class=\"LoginEmailForm HighlightSol_1625403506_r\"><label>Email address <input type=\"email\" name=\"e\" id=\"lui_0\" autocomplete=\"username\" data-truth=\"username\"></label><button>Continue</button></form>"
+  },
+  {
+    "url": "https://www.marktplaats.nl/identity/v2/login",
+    "title": "Login Mijn Marktplaats",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"username\" data-loose=\"\"><button>Inloggen</button><button>Account aanmaken</button><button>Doorgaan met Google</button><label>E-mailadres <input type=\"email\" name=\"email\" id=\"email\" autocomplete=\"off\" data-truth=\"username\"></label><button>Toon</button><button>Inloggen met je e-mailadres</button></div><div data-truth-kind=\"login\" data-loose=\"\"><label>Wachtwoord <input type=\"password\" name=\"password\" id=\"password\" data-truth=\"password\"></label><button>Toon</button></div>"
+  },
+  {
+    "url": "https://www.orange.fr/portail",
+    "title": "Portail Orange | Offres Mobiles, Internet, TV, Actu & Accès compte Mail",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://lemoteur.orange.fr\" id=\"morpheus-search\"><button></button><input type=\"password\" hidden data-truth=\"none\"><input type=\"text\" name=\"kw\" placeholder=\"Rechercher sur Orange...\" aria-label=\"Rechercher sur Orange\" autocomplete=\"off\" data-truth=\"none\"><button></button><button></button><button></button></form>"
+  },
+  {
+    "url": "https://www.repubblica.it/",
+    "title": "la Repubblica - Ultime notizie di Cronaca, Politica, Economia, Sport, Esteri",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.repubblica.it/ricerca/\" class=\"rep-slim-header__search\"><label>Cerca articoli o argomenti su Repubblica <input type=\"search\" name=\"query\" id=\"repSlimHeaderFormInput\" placeholder=\"Cerca articoli o argomenti\" maxlength=\"30\" data-truth=\"none\"></label><button></button></form><form data-truth-kind=\"none\" action=\"https://www.repubblica.it/ricerca/\" class=\"rep-left-nav__search\"><label>Cerca articoli o argomenti su Repubblica <input type=\"search\" name=\"query\" id=\"repLeftNavFormInput\" placeholder=\"Ricerca su Repubblica\" data-truth=\"none\"></label><button></button></form>"
+  },
+  {
+    "url": "https://www.strava.com/register/free",
+    "title": "Strava | Running, Cycling & Hiking App - Train, Track & Share",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\"><label>Email <input type=\"email\" name=\"email\" id=\"desktop-email\" placeholder=\"Enter Email\" autocomplete=\"username\" data-truth=\"none\"></label><label>country <input type=\"text\" name=\"country\" id=\"desktop-country\" autocomplete=\"new-password\" hidden data-truth=\"none\"></label><button>Sign Up</button></form>"
+  },
+  {
+    "url": "https://www.tumblr.com/register",
+    "title": "Register - Login",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"signup\"><input type=\"text\" name=\"email\" placeholder=\"Email\" aria-label=\"email\" autocomplete=\"email\" data-truth=\"email\"><input type=\"password\" name=\"password\" placeholder=\"Password\" aria-label=\"password\" autocomplete=\"new-password\" data-truth=\"new-password\"><button>Sign up</button></form><form data-truth-kind=\"none\" action=\"/search\" class=\"aogHd\"><input type=\"text\" name=\"q\" placeholder=\"Search Tumblr\" aria-label=\"Search\" autocomplete=\"off\" data-truth=\"none\"></form>"
+  },
+  {
+    "url": "https://lichess.org/password/reset",
+    "title": "Password reset • lichess.org",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/password/reset/send\" class=\"form3\"><label>Email <input type=\"email\" name=\"email\" id=\"form3-email\" autocomplete=\"email\" maxlength=\"320\" data-truth=\"none\"></label><button>Email me a link</button></form>"
+  },
+  {
+    "url": "https://archive.org/forgot-password",
+    "title": "Reset your password",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><label>Search the Archive. Filters and Advanced Search available below. <input type=\"text\" id=\"text-input\" placeholder=\"Search\" inputmode=\"search\" data-truth=\"none\"></label><button>Clear search query</button></div><form data-truth-kind=\"none\" id=\"reset-password-form\"><label>Your email address <input type=\"email\" name=\"email\" id=\"email-input\" data-truth=\"none\"></label><button></button><input type=\"submit\" value=\"\"></form>"
+  },
+  {
+    "url": "https://www.goodreads.com/ap/forgotpassword?email=&language=en_US&openid.assoc_handle=amzn_goodreads_web_na&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid",
+    "title": "Goodreads Password Assistance",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.goodreads.com/ap/forgotpassw\" name=\"forgotPassword\" class=\"auth-validate-form auth-real-time-valida\"><h1>Password assistance</h1><label>Email <input type=\"email\" name=\"email\" id=\"ap_email\" maxlength=\"128\" data-truth=\"none\"></label><input type=\"submit\" value=\"\"></form>"
+  },
+  {
+    "url": "https://www.chess.com/forgot",
+    "title": "Forgot Password? - Chess.com",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" id=\"password-recovery-form\" class=\"authentication-login-form login-form\"><input type=\"text\" name=\"forgot_password[username]\" id=\"forgot_password_username\" placeholder=\"Enter Username, Email, or Phone Number\" autocomplete=\"nope\" data-truth=\"none\"><button>Submit</button></form>"
+  },
+  {
+    "url": "https://bitly.com/",
+    "title": "Bitly | Short URLs, QR Codes, and More",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" class=\"flex flex-col\"><input type=\"url\" id=\"form-short-link-long-url\" placeholder=\"https://example.com/my-long-url\" data-truth=\"none\"><button>Add tracking</button><button>Get your link for free</button></form>"
+  },
+  {
+    "url": "https://www.timeanddate.com/worldclock/",
+    "title": "The World Clock - Worldwide",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/worldclock/\" class=\"bn-header__searchbox picker-city noprint\"><input type=\"search\" name=\"query\" placeholder=\"Search for city or place…\" autocomplete=\"off\" data-truth=\"none\"><button></button></form><form data-truth-kind=\"none\" action=\"/scripts/gowc.php\" id=\"wc-sort\" name=\"wc-sort\" class=\"inline\"><label>Sort By: <select name=\"sort\" id=\"sort\" data-truth=\"none\"><option>City</option><option>Country</option><option>Time</option></select></label></form><form data-truth-kind=\"none\" action=\"/scripts/gowc.php\" id=\"wc-shown\" name=\"wc-shown\" class=\"inline\"><label>Cities Shown: <select name=\"low\" id=\"pop\" data-truth=\"none\"><option>Capitals (215)</option><option>Most Popular (143)</option><option>Popular (358)</option></select></label></form>"
+  },
+  {
+    "url": "https://www.kayak.nl/?ispredir=true",
+    "title": "Zoek naar vluchten, hotels en huurauto's | KAYAK",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><button></button><input type=\"text\" placeholder=\"\" aria-label=\"Vertreklocatie\" data-truth=\"none\"></div><div data-truth-kind=\"none\" data-loose=\"\"><input type=\"text\" placeholder=\"\" aria-label=\"Je kunt alles vragen\" maxlength=\"300\" data-truth=\"none\"><button>Vertrek - Retour</button><button>1Economy</button><button>Zoek</button></div>"
+  },
+  {
+    "url": "https://www.rightmove.co.uk/",
+    "title": "Rightmove - UK's number one property website for properties for sale and to rent",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><input type=\"text\" name=\"locationSearch\" id=\"ta_searchInput\" placeholder=\"Bath, NW3, or Leeds station\" aria-label=\"Textfield input\" autocomplete=\"off\" maxlength=\"100\" data-truth=\"none\"><button>Search</button></div>"
+  },
+  {
+    "url": "https://www.post.ch/de",
+    "title": "Die Schweizerische Post",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.post.ch/swisspost-tracking?f\" class=\"ppm-track-and-trace__form\"><label>Sendungsnummer <input type=\"text\" name=\"text-input\" id=\"text-input-icon-id\" placeholder=\"Sendungsnummer eingeben\" aria-label=\"Sendungsnummer\" data-truth=\"none\"></label><button>Suchen</button></form>"
+  },
+  {
+    "url": "https://www.ikea.com/de/de/",
+    "title": "Frische Einrichtungsideen & erschwingliche Möbel - IKEA",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.ikea.com/de/de/search/\" class=\"search-box-form\"><input type=\"search\" name=\"q\" id=\"ikea-search-input\" placeholder=\"Was suchst du?\" aria-label=\"Suche nach Produkten, Inspiration oder Neuheiten\" autocomplete=\"off\" data-truth=\"none\"><button>Lösche die Eingabe im Suchfeld</button><button>Suchen</button></form>"
+  },
+  {
+    "url": "https://www.mediamarkt.de/",
+    "title": "Elektronik, Trends & Technik kaufen im Onlineshop | MediaMarkt",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/de/search.html\" id=\"storybook-form-1\"><button></button><button></button><label>Was suchst Du? <input type=\"search\" name=\"query\" id=\"search-form\" placeholder=\" \" autocomplete=\"off\" maxlength=\"1000\" data-truth=\"none\"></label><button>KI-Suche</button></form>"
+  },
+  {
+    "url": "https://www.coolblue.nl/",
+    "title": "Coolblue - Alles voor een glimlach",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"/zoeken\" class=\"webshop-layout-162tvoi\"><input type=\"search\" name=\"query\" id=\"search\" placeholder=\"Zoeken naar...\" aria-label=\"Zoeken naar producten\" autocomplete=\"off\" data-truth=\"none\"><button></button><button></button></form><form data-truth-kind=\"none\"><label>E-mailadres <input type=\"email\" name=\"email\" id=\"footer-newsletter-email\" autocomplete=\"email\" data-truth=\"none\"></label><button>Aanmelden</button></form>"
+  },
+  {
+    "url": "https://github.com/search",
+    "title": "Search · GitHub",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><input type=\"text\" placeholder=\"Search GitHub\" aria-label=\"Search GitHub\" data-truth=\"none\"><button>prefixes</button></div>"
+  },
+  {
+    "url": "https://www.rakuten.co.jp/",
+    "title": "【楽天市場】Shopping is Entertainment! ： インターネット最大級の通信販売、通販オンラインショッピングコミュニティ",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://search.rakuten.co.jp/search/mall\" id=\"searchForm\" class=\"input--2hxBK input-common-header--35ZyJ \"><input type=\"search\" name=\"sitem\" id=\"common-header-search-input\" placeholder=\"キーワード検索\" data-truth=\"none\"></form>"
+  },
+  {
+    "url": "https://www.marca.com/",
+    "title": "MARCA - Diario online líder en información deportiva",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><label>Resultados: <select id=\"filtro_competiciones\" data-truth=\"none\"><option>Todos</option><option>Fútbol</option><option>LALIGA EA Sports</option></select></label><button>Anterior</button><button>Siguiente</button></div>"
+  },
+  {
+    "url": "https://www.chip.de/",
+    "title": "CHIP – News, Tests, Downloads, Tech- & Verbraucherberatung",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.chip.de/static/suche-chip_78\" class=\"Autocomplete-Search \"><button></button><input type=\"text\" name=\"q\" placeholder=\"Schnell finden, wonach Sie suchen\" aria-label=\"Schnell finden, wonach Sie suchen\" autocomplete=\"off\" data-truth=\"none\"><button>CHIP-Bestenlisten</button><button>Smartphone-Tests</button><button>Akkusauger-Kaufberatung</button><button>Verbraucher-News</button><button>Aktuelle Testberichte</button><button>Download-Charts</button><button>Schnäppchen-Angebote</button><button>Test-Videos</button><button>Haus &amp; Garten-Tipps</button></form><div data-truth-kind=\"none\" data-loose=\"\"><input type=\"email\" name=\"email\" placeholder=\"E-Mail-Adresse eintragen\" autocomplete=\"off\" data-truth=\"none\"><button>anmelden</button></div><div data-truth-kind=\"none\" data-loose=\"\"><input type=\"email\" name=\"email\" placeholder=\"E-Mail-Adresse eintragen\" autocomplete=\"off\" data-truth=\"none\"><button>anmelden</button></div>"
+  },
+  {
+    "url": "https://www.smashingmagazine.com/the-smashing-newsletter/",
+    "title": "The Smashing Email Newsletter - Smashing Magazine",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.google.com/webhp?q=site:smas\" id=\"js-search-form\" class=\"search-form\"><input type=\"search\" name=\"q\" id=\"js-search-input\" placeholder=\"Search articles...\" aria-label=\"Search articles\" autocomplete=\"off\" inputmode=\"search\" data-truth=\"none\"><button>Clear Search</button><input type=\"submit\" value=\"Search\"></form><form data-truth-kind=\"none\" action=\"//smashingmagazine.us1.list-manage.com/s\"><label>Your (smashing) email <input type=\"email\" name=\"EMAIL\" id=\"mce-EMAIL-hp\" placeholder=\"Your email\" data-truth=\"none\"></label><input type=\"submit\" value=\"Meow!\"></form>"
+  },
+  {
+    "url": "https://www.debian.org/contact",
+    "title": "Debian -- How to contact us",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://search.debian.org/cgi-bin/omega\" name=\"p\"><input name=\"P\" data-truth=\"none\"><input type=\"submit\" value=\"Search\"></form><div data-truth-kind=\"none\" data-loose=\"\"><input type=\"submit\" value=\"Search\"><h1>How to contact us</h1><h2>General Information</h2><button>Read our FAQ</button><h2>Installing and using Debian</h2><h2>Publicity &amp; Press</h2><h2>Events &amp; Conferences</h2><h2>Helping Debian</h2><h2>Reporting problems in Debian packages</h2><h2>Debian Development</h2><h2>Problems with the Debian Infrastructure</h2><h2>Harassment Issues</h2><select data-truth=\"none\"><option>Select your language</option><option>català</option><option>dansk</option></select></div>"
+  },
+  {
+    "url": "https://kde.org/contact/",
+    "title": "Press - KDE Community",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://www.paypal.com/en_US/cgi-bin/web\"><label>Amount <input type=\"text\" name=\"amount\" id=\"donateAmountField\" data-truth=\"none\"></label><button>Donate via PayPal</button></form>"
+  },
+  {
+    "url": "https://hackaday.com/2024/01/01/",
+    "title": "01 | January | 2024 | Hackaday",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"https://hackaday.com/\" class=\"search-form\"><label>Search for: <input type=\"search\" name=\"s\" placeholder=\"Search …\" data-truth=\"none\"></label><input type=\"submit\" value=\"Search\"></form><form data-truth-kind=\"none\" action=\"//hackaday.us11.list-manage.com/subscrib\" id=\"mc-embedded-subscribe-form\" name=\"mc-embedded-subscribe-form\" class=\"subscribe-form validate\"><input type=\"email\" name=\"EMAIL\" id=\"mce-EMAIL\" placeholder=\"Enter Email Address\" data-truth=\"none\"><input type=\"text\" name=\"b_80fc49ec84df168e48c00c18a_a428253bfe\" data-truth=\"none\"><input type=\"submit\" value=\"Subscribe\"></form><form data-truth-kind=\"none\" action=\"https://hackaday.com\"><label>Categories <select name=\"cat\" id=\"cat\" data-truth=\"none\"><option>Select Category</option><option>3d Printer hacks</option><option>Android Hacks</option></select></label></form><form data-truth-kind=\"none\" action=\"//hackaday.us11.list-manage.com/subscrib\" id=\"mc-embedded-subscribe-form\" name=\"mc-embedded-subscribe-form\" class=\"subscribe-form validate\"><input type=\"email\" name=\"EMAIL\" id=\"mce-EMAIL\" placeholder=\"Enter Email Address\" data-truth=\"none\"><input type=\"text\" name=\"b_80fc49ec84df168e48c00c18a_a428253bfe\" data-truth=\"none\"><input type=\"submit\" value=\"Subscribe\"></form>"
+  },
+  {
+    "url": "https://forum.manjaro.org/",
+    "title": "Manjaro Linux Forum",
+    "captured": "2026-11-20",
+    "html": "<div data-truth-kind=\"none\" data-loose=\"\"><input type=\"search\" id=\"header-search-input\" placeholder=\"Search\" aria-label=\"Search\" autocomplete=\"off\" data-truth=\"none\"><button>​</button></div>"
+  },
+  {
+    "url": "https://bbs.archlinux.org/",
+    "title": "Arch Linux Forums",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"none\" action=\"viewforum.php\" id=\"qjump\"><label>Jump to Newbie Corner Installation Kernel &amp; Hardware Applications &amp; Desktop Envi <select name=\"id\" data-truth=\"none\"><option>Newbie Corner</option><option>Installation</option><option>Kernel &amp; Hardware</option></select></label><input type=\"submit\" value=\" Go \"></form>"
+  },
+  {
+    "url": "https://forums.debian.net/",
+    "title": "Debian User Forums - Index page",
+    "captured": "2026-11-20",
+    "html": "<form data-truth-kind=\"login\" action=\"./ucp.php?mode=login\" class=\"headerspace\"><h3>Login • Register</h3><label>Username: <input type=\"text\" name=\"username\" id=\"username\" title=\"Username\" data-truth=\"username\"></label><label>Password: <input type=\"password\" name=\"password\" id=\"password\" title=\"Password\" autocomplete=\"off\" data-truth=\"password\"></label><input type=\"submit\" value=\"Login\"></form>"
+  },
+  {
+    "url": "https://github.com/settings/security",
+    "title": "Account security",
+    "captured": "hand-made",
+    "html": "<form action=\"/account/password\" data-truth-kind=\"change\"><h2>Change password</h2><label>Old password <input type=\"password\" name=\"user[old_password]\" id=\"user_old_password\" autocomplete=\"current-password\" data-truth=\"password\"></label><label>New password <input type=\"password\" name=\"user[password]\" id=\"user_new_password\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Confirm new password <input type=\"password\" name=\"user[password_confirmation]\" id=\"user_confirm_new_password\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><button>Update password</button></form>"
+  },
+  {
+    "url": "https://example.org/admin/password_change/",
+    "title": "Password change | Django site admin",
+    "captured": "hand-made",
+    "html": "<form action=\"\" data-truth-kind=\"change\"><label>Old password: <input type=\"password\" name=\"old_password\" autocomplete=\"current-password\" id=\"id_old_password\" data-truth=\"password\"></label><label>New password: <input type=\"password\" name=\"new_password1\" autocomplete=\"new-password\" id=\"id_new_password1\" data-truth=\"new-password\"></label><label>New password confirmation: <input type=\"password\" name=\"new_password2\" autocomplete=\"new-password\" id=\"id_new_password2\" data-truth=\"new-password\"></label><input type=\"submit\" value=\"Change my password\"></form>"
+  },
+  {
+    "url": "https://www.mediawiki.org/wiki/Special:ChangeCredentials",
+    "title": "Change password - MediaWiki",
+    "captured": "hand-made",
+    "html": "<form action=\"/w/index.php?title=Special:ChangeCredentials\" data-truth-kind=\"change\"><label>New password <input type=\"password\" name=\"password\" id=\"ooui-php-1\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><label>Confirm password <input type=\"password\" name=\"retype\" id=\"ooui-php-2\" autocomplete=\"new-password\" data-truth=\"new-password\"></label><button>Change credentials</button></form>"
+  },
+  {
+    "url": "https://example.com/wp-admin/profile.php",
+    "title": "Profile ‹ Blog - WordPress",
+    "captured": "hand-made",
+    "html": "<form action=\"profile.php\" id=\"your-profile\" data-truth-kind=\"none\"><h2>Name</h2><label>Username <input type=\"text\" name=\"user_login\" id=\"user_login\" data-truth=\"none\"></label><label>First Name <input type=\"text\" name=\"first_name\" id=\"first_name\" data-truth=\"none\"></label><label>Last Name <input type=\"text\" name=\"last_name\" id=\"last_name\" data-truth=\"none\"></label><label>Nickname (required) <input type=\"text\" name=\"nickname\" id=\"nickname\" data-truth=\"none\"></label><label>Website <input type=\"url\" name=\"url\" id=\"url\" data-truth=\"none\"></label><label>Biographical Info <textarea name=\"description\" id=\"description\" data-truth=\"none\"></textarea></label><button>Set New Password</button><input type=\"submit\" value=\"Update Profile\"></form>"
+  },
+  {
+    "url": "https://accounts.example.de/einstellungen/passwort",
+    "title": "Passwort ändern",
+    "captured": "hand-made",
+    "html": "<form action=\"/einstellungen/passwort\" data-truth-kind=\"change\"><h1>Passwort ändern</h1><label>Aktuelles Passwort <input type=\"password\" name=\"altes_passwort\" data-truth=\"password\"></label><label>Neues Passwort <input type=\"password\" name=\"neues_passwort\" data-truth=\"new-password\"></label><label>Neues Passwort wiederholen <input type=\"password\" name=\"neues_passwort_wdh\" data-truth=\"new-password\"></label><button>Speichern</button></form>"
+  },
+  {
+    "url": "https://github.com/sessions/two-factor/app",
+    "title": "Two-factor authentication",
+    "captured": "hand-made",
+    "html": "<form action=\"/sessions/two-factor\" data-truth-kind=\"totp\"><h1>Two-factor authentication</h1><label>Authentication code <input type=\"text\" name=\"app_otp\" id=\"app_totp\" autocomplete=\"one-time-code\" inputmode=\"numeric\" maxlength=\"6\" data-truth=\"totp\"></label><button>Verify</button></form>"
+  },
+  {
+    "url": "https://accounts.google.com/v3/signin/challenge/totp",
+    "title": "Google Accounts",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"totp\"><h1>2-Step Verification</h1><label>Enter code <input type=\"tel\" name=\"totpPin\" id=\"totpPin\" autocomplete=\"off\" data-truth=\"totp\"></label><button>Next</button></form>"
+  },
+  {
+    "url": "https://login.live.com/ppsecure/post.srf",
+    "title": "Enter code",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"totp\"><h1>Enter code</h1><input type=\"tel\" name=\"otc\" id=\"idTxtBx_SAOTCC_OTC\" maxlength=\"8\" placeholder=\"Code\" aria-label=\"Code\" data-truth=\"totp\"><input type=\"submit\" value=\"Verify\"></form>"
+  },
+  {
+    "url": "https://www.amazon.de/ap/mfa",
+    "title": "Zwei-Schritt-Verifizierung",
+    "captured": "hand-made",
+    "html": "<form action=\"/ap/signin\" data-truth-kind=\"totp\"><h1>Zwei-Schritt-Verifizierung</h1><label>Code eingeben <input type=\"tel\" name=\"otpCode\" id=\"auth-mfa-otpcode\" autocomplete=\"off\" maxlength=\"6\" data-truth=\"totp\"></label><input type=\"submit\" value=\"Anmelden\"></form>"
+  },
+  {
+    "url": "https://store.steampowered.com/login/",
+    "title": "Sign In",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"totp\"><h2>Enter the code from your Steam Mobile App</h2><input type=\"text\" maxlength=\"1\" data-truth=\"totp\"><input type=\"text\" maxlength=\"1\" data-truth=\"totp\"><input type=\"text\" maxlength=\"1\" data-truth=\"totp\"><input type=\"text\" maxlength=\"1\" data-truth=\"totp\"><input type=\"text\" maxlength=\"1\" data-truth=\"totp\"></form>"
+  },
+  {
+    "url": "https://passport.example.cn/verify",
+    "title": "验证",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"totp\"><label>短信验证码 <input type=\"text\" name=\"smscode\" maxlength=\"6\" data-truth=\"totp\"></label><button>确定</button></form>"
+  },
+  {
+    "url": "https://shop.example.com/checkout",
+    "title": "Checkout",
+    "captured": "hand-made",
+    "html": "<form action=\"/checkout\" data-truth-kind=\"card\"><h2>Payment</h2><label>Name on card <input type=\"text\" name=\"cc-name\" autocomplete=\"cc-name\" data-truth=\"none\"></label><label>Card number <input type=\"text\" name=\"cardnumber\" autocomplete=\"cc-number\" inputmode=\"numeric\" data-truth=\"none\"></label><label>Expiration (MM/YY) <input type=\"text\" name=\"exp-date\" autocomplete=\"cc-exp\" data-truth=\"none\"></label><label>Security code <input type=\"text\" name=\"cvc\" autocomplete=\"cc-csc\" maxlength=\"4\" data-truth=\"none\"></label><label>Discount code <input type=\"text\" name=\"discount\" data-truth=\"none\"></label><button>Pay now</button></form>"
+  },
+  {
+    "url": "https://shop.example.com/checkout/address",
+    "title": "Checkout",
+    "captured": "hand-made",
+    "html": "<form class=\"woocommerce-checkout\" data-truth-kind=\"identity\"><label>First name <input type=\"text\" name=\"billing_first_name\" id=\"billing_first_name\" autocomplete=\"given-name\" data-truth=\"none\"></label><label>Last name <input type=\"text\" name=\"billing_last_name\" autocomplete=\"family-name\" data-truth=\"none\"></label><label>Street address <input type=\"text\" name=\"billing_address_1\" autocomplete=\"address-line1\" data-truth=\"none\"></label><label>Postcode / ZIP <input type=\"text\" name=\"billing_postcode\" autocomplete=\"postal-code\" data-truth=\"none\"></label><label>Town / City <input type=\"text\" name=\"billing_city\" autocomplete=\"address-level2\" data-truth=\"none\"></label><label>Phone <input type=\"tel\" name=\"billing_phone\" autocomplete=\"tel\" data-truth=\"none\"></label><label>Email address <input type=\"email\" name=\"billing_email\" autocomplete=\"email\" data-truth=\"none\"></label><label>Coupon code <input type=\"text\" name=\"coupon_code\" data-truth=\"none\"></label><button>Place order</button></form>"
+  },
+  {
+    "url": "https://shop.example.de/kasse",
+    "title": "Kasse",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"none\"><label>Gutscheincode <input type=\"text\" name=\"voucher\" data-truth=\"none\"></label><button>Einlösen</button></form>"
+  },
+  {
+    "url": "https://example.com/account/lookup",
+    "title": "Find your account",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"none\"><h1>Track your order</h1><label>Order number <input type=\"text\" name=\"order_id\" data-truth=\"none\"></label><label>Email <input type=\"email\" name=\"email\" data-truth=\"none\"></label><button>Find order</button></form>"
+  },
+  {
+    "url": "https://example.com/products",
+    "title": "Products",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"none\"><label>Min price <input type=\"number\" name=\"price_min\" data-truth=\"none\"></label><label>Max price <input type=\"number\" name=\"price_max\" data-truth=\"none\"></label><button>Apply filters</button></form>"
+  },
+  {
+    "url": "https://example.com/blog/post",
+    "title": "A post",
+    "captured": "hand-made",
+    "html": "<form action=\"/wp-comments-post.php\" id=\"commentform\" data-truth-kind=\"none\"><h3>Leave a Reply</h3><label>Comment <textarea name=\"comment\" id=\"comment\" data-truth=\"none\"></textarea></label><label>Name * <input type=\"text\" name=\"author\" id=\"author\" autocomplete=\"name\" data-truth=\"none\"></label><label>Email * <input type=\"email\" name=\"email\" id=\"email\" autocomplete=\"email\" data-truth=\"none\"></label><label>Website <input type=\"url\" name=\"url\" id=\"url\" data-truth=\"none\"></label><input type=\"submit\" value=\"Post Comment\"></form>"
+  },
+  {
+    "url": "https://example.com/contact",
+    "title": "Contact",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"none\"><label>Your name <input type=\"text\" name=\"your-name\" data-truth=\"none\"></label><label>Your email <input type=\"email\" name=\"your-email\" data-truth=\"none\"></label><label>Subject <input type=\"text\" name=\"your-subject\" data-truth=\"none\"></label><label>Your message <textarea name=\"your-message\" data-truth=\"none\"></textarea></label><input type=\"submit\" value=\"Send\"></form>"
+  },
+  {
+    "url": "https://example.com/",
+    "title": "Home",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"none\"><input type=\"text\" name=\"q\" placeholder=\"Search\" data-truth=\"none\"><button>Continue</button></form>"
+  },
+  {
+    "url": "https://example.com/login",
+    "title": "Log in",
+    "captured": "hand-made",
+    "html": "<form action=\"/search\" data-truth-kind=\"none\"><input type=\"text\" name=\"query\" placeholder=\"Search the help center\" data-truth=\"none\"><button>Go</button></form><form action=\"/session\" data-truth-kind=\"login\"><label>Username <input type=\"text\" name=\"user\" data-truth=\"username\"></label><label>Password <input type=\"password\" name=\"pass\" data-truth=\"password\"></label><button>Log in</button></form>"
+  },
+  {
+    "url": "https://example.com/",
+    "title": "Home",
+    "captured": "hand-made",
+    "html": "<form action=\"/subscribe\" data-truth-kind=\"none\"><h3>Get our newsletter</h3><input type=\"email\" name=\"EMAIL\" placeholder=\"Your email address\" data-truth=\"none\"><button>Next</button></form>"
+  },
+  {
+    "url": "https://example.com/chat",
+    "title": "Chat",
+    "captured": "hand-made",
+    "html": "<div data-loose=\"\" data-truth-kind=\"none\"><input type=\"text\" placeholder=\"Type a message\" aria-label=\"Message\" data-truth=\"none\"><button>Send</button></div>"
+  },
+  {
+    "url": "https://example.com/redeem",
+    "title": "Gift card",
+    "captured": "hand-made",
+    "html": "<form data-truth-kind=\"none\"><label>Gift card PIN <input type=\"password\" name=\"giftcard_pin\" maxlength=\"8\" data-truth=\"none\"></label><button>Check balance</button></form>"
+  }
+]
