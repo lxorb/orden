@@ -59,7 +59,6 @@ const api = vi.hoisted(() => {
   }
 })
 interface Held {
-  ligatures?: boolean | string
   attachments?: string
   vim?: boolean
   mobileSeen?: boolean
@@ -120,7 +119,6 @@ beforeEach(async () => {
 test.each([
   ['readOnly', false, () => modes.toggleReadOnly(), true],
   ['punctuation', false, () => modes.togglePunctuation(), true],
-  ['ligatures', 'off', () => modes.setLigatures('code'), 'code'],
   ['vim', false, () => modes.toggleVim(), true],
   ['quietMarks', false, () => modes.toggleQuietMarks(), true],
   ['silent', false, () => modes.toggleSilent(), true],
@@ -198,21 +196,22 @@ describe('smart punctuation', () => {
     expect((await restarted()).punctuation).toBe(true)
   })
 })
-describe('the ligature scope', () => {
-  test('reads a switch written by an older build', async () => {
-    localStorage.setItem('orden:modes', JSON.stringify({ ligatures: true }))
-    expect((await restarted()).ligatures).toBe('all')
-    localStorage.setItem('orden:modes', JSON.stringify({ ligatures: false }))
-    expect((await restarted()).ligatures).toBe('off')
+describe('ligatures, which are gone (#2454)', () => {
+  test('leave nothing behind, and what older builds wrote down is dropped quietly with the rest kept', async () => {
+    for (const ligatures of [true, false, 'code', 'all', 'off', 'sometimes']) {
+      localStorage.setItem('orden:modes', JSON.stringify({ ligatures, vim: true }))
+      const back = await restarted()
+      expect(back.vim).toBe(true)
+      expect('ligatures' in back).toBe(false)
+      expect(localStorage.getItem('orden:modes')).not.toContain('ligatures')
+    }
   })
-  test('falls back to off for a scope it does not know', async () => {
-    localStorage.setItem('orden:modes', JSON.stringify({ ligatures: 'sometimes' }))
-    expect((await restarted()).ligatures).toBe('off')
-  })
-  test('ignores a scope it does not know when one is chosen', () => {
-    modes.setLigatures('code')
-    modes.setLigatures('sometimes')
-    expect(modes.ligatures).toBe('code')
+  test('and are not taken from an account that still holds them', async () => {
+    Object.assign(api, { settings: async () => ({ settings: { ligatures: 'all', vim: true } }) })
+    await modes.adopt('token')
+    expect(modes.vim).toBe(true)
+    expect('ligatures' in modes).toBe(false)
+    expect(localStorage.getItem('orden:modes')).not.toContain('ligatures')
   })
 })
 describe('modal editing', () => {
@@ -266,7 +265,7 @@ describe('modal editing', () => {
       modes.toggleFocus()
       modes.toggleTypewriter()
       modes.toggleOpensInSource()
-      modes.setLigatures('all')
+      modes.setAttachments('named')
       const store = await restarted()
       expect(store.vim).toBe(false)
     })
@@ -483,10 +482,10 @@ describe('taking over what the account holds', () => {
   })
   test('keeps a change the account never heard across a restart, and sends it before reading', async () => {
     const sent: Held[] = []
-    let server: Held = { ligatures: 'all' }
+    let server: Held = { attachments: 'named' }
     const accounts = await import('../../accounts/src/api')
     accounts.account.token = 'token'
-    modes.setLigatures('code')
+    modes.setAttachments('note')
     const store = await restarted()
     ;(await import('../../accounts/src/api')).account.token = 'token'
     api.saveSettings = async (_token: string, patch: Held) => {
@@ -496,15 +495,15 @@ describe('taking over what the account holds', () => {
     }
     api.settings = async () => ({ settings: server })
     await store.adopt('token')
-    expect(sent).toEqual([{ ligatures: 'code' }])
-    expect(store.ligatures).toBe('code')
+    expect(sent).toEqual([{ attachments: 'note' }])
+    expect(store.attachments).toBe('note')
     sent.length = 0
     await (await restarted()).adopt('token')
     expect(sent).toEqual([])
   })
   test('keeps what is owed to an account through a launch that does not know the account yet', async () => {
     const sent: Held[] = []
-    let server: Held = { vim: false, ligatures: 'all' }
+    let server: Held = { vim: false, attachments: 'named' }
     const signedIn = async (id: string | null) => {
       const { account } = await import('../../accounts/src/api')
       account.token = 'token'
@@ -518,7 +517,7 @@ describe('taking over what the account holds', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     const store = await restarted()
     await signedIn(null)
-    store.setLigatures('code')
+    store.setAttachments('note')
     await signedIn('u1')
     api.saveSettings = async (_token: string, patch: Held) => {
       sent.push(patch)
@@ -527,9 +526,9 @@ describe('taking over what the account holds', () => {
     }
     api.settings = async () => ({ settings: server })
     await store.adopt('token')
-    expect(sent).toEqual([{ vim: true, ligatures: 'code' }])
+    expect(sent).toEqual([{ vim: true, attachments: 'note' }])
     expect(store.vim).toBe(true)
-    expect(store.ligatures).toBe('code')
+    expect(store.attachments).toBe('note')
     const { account } = await import('../../accounts/src/api')
     account.token = null
     account.user = null
@@ -538,29 +537,29 @@ describe('taking over what the account holds', () => {
     const sent: Held[] = []
     const { account } = await import('../../accounts/src/api')
     await account.restore()
-    modes.setLigatures('code')
+    modes.setAttachments('note')
     const store = await restarted()
     api.saveSettings = async (_token: string, patch: Held) => {
       sent.push(patch)
       return { settings: {} }
     }
-    api.settings = async () => ({ settings: { ligatures: 'all' } })
+    api.settings = async () => ({ settings: { attachments: 'named' } })
     await store.adopt('token')
     expect(sent).toEqual([])
-    expect(store.ligatures).toBe('all')
+    expect(store.attachments).toBe('named')
   })
   test('lets go of a change the account turned down, and hears the account again', async () => {
     const { ApiError } = await import('../../accounts/src/client')
     let server: Held = { vim: false }
     api.saveSettings = async (_token: string, patch: Held) => {
-      if (patch.ligatures === 'code') throw new ApiError(400, 'refused')
+      if (patch.attachments === 'note') throw new ApiError(400, 'refused')
       server = { ...server, ...patch }
       return { settings: server }
     }
     api.settings = async () => ({ settings: server })
     const { account } = await import('../../accounts/src/api')
     account.token = 'token'
-    modes.setLigatures('code')
+    modes.setAttachments('note')
     await modes.adopt('token')
     account.token = null
     server = { ...server, vim: true }
@@ -573,9 +572,6 @@ describe('taking over what the account holds', () => {
     [{ silent: true }, 'silent', true],
     [{ canvasTurns: true }, 'canvasTurns', true],
     [{ developer: false }, 'coder', false],
-    [{ ligatures: 'code' }, 'ligatures', 'code'],
-    [{ ligatures: true }, 'ligatures', 'all'],
-    [{ ligatures: 'sometimes' }, 'ligatures', 'off'],
     [{ attachments: 'named' }, 'attachments', 'named'],
     [{ attachments: 'vault' }, 'attachments', 'space'],
     [{ undatedInToday: false, silent: true }, 'silent', true],
@@ -584,12 +580,6 @@ describe('taking over what the account holds', () => {
     await modes.adopt('token')
     expect((modes as unknown as Record<string, unknown>)[key]).toBe(value)
     expect('undatedInToday' in modes).toBe(false)
-  })
-  test('reads false from an older build as off', async () => {
-    modes.setLigatures('all')
-    api.settings = async () => ({ settings: { ligatures: false } })
-    await modes.adopt('token')
-    expect(modes.ligatures).toBe('off')
   })
   test('deletes the OpenAI key the glasses kept on the account before they asked the default AI account', async () => {
     const removed: string[] = []
@@ -601,18 +591,8 @@ describe('taking over what the account holds', () => {
     await modes.adopt('token')
     expect(removed).toEqual(['token'])
   })
-  test('leaves alone a choice made while the answer was in the air', async () => {
-    const { release, settingsCall } = heldAnswer({ ligatures: 'all' })
-    api.settings = settingsCall
-    const adopted = modes.adopt('token')
-    modes.setLigatures('code')
-    modes.setLigatures('off')
-    release()
-    await adopted
-    expect(modes.ligatures).toBe('off')
-  })
   test('says nothing about modal editing unless the account does', async () => {
-    for (const settings of [{}, { ligatures: 'all' }, { attachments: 'note' }] as Held[]) {
+    for (const settings of [{}, { silent: true }, { attachments: 'note' }] as Held[]) {
       const store = await restarted()
       api.settings = async () => ({ settings })
       await store.adopt('token')
@@ -979,18 +959,16 @@ describe('another account in the same window (#2344)', () => {
     modes.apply(surface())
     await signedIn('alice')
     modes.setVimKeys(true)
-    modes.setLigatures('code')
     modes.setAttachments('named')
     await modes.adopt('alice')
-    expect(server.alice).toMatchObject({ vim: true, ligatures: 'code', attachments: 'named' })
+    expect(server.alice).toMatchObject({ vim: true, attachments: 'named' })
     told.calls = []
     await signedIn('bob')
     expect(modes.vim).toBe(false)
-    expect(modes.ligatures).toBe('off')
     expect(modes.attachments).toBe('space')
     expect(modes.silent).toBe(true)
     expect(told.calls).toContainEqual({ mode: 'vim', on: false })
-    expect(saved()).toMatchObject({ vim: false, ligatures: 'off', attachments: 'space', silent: true })
+    expect(saved()).toMatchObject({ vim: false, attachments: 'space', silent: true })
     modes.setVimKeys(true)
     await modes.adopt('bob')
     line.offline = true
@@ -1000,7 +978,6 @@ describe('another account in the same window (#2344)', () => {
     line.offline = false
     await signedIn('alice')
     expect(modes.vim).toBe(true)
-    expect(modes.ligatures).toBe('code')
     expect(modes.attachments).toBe('named')
     expect(modes.silent).toBe(false)
     done()

@@ -62,7 +62,6 @@ const AWAY = {
   spellLanguages: ['de-DE', 'fr-FR'],
   alwaysOnTop: true,
   closeBrackets: false,
-  ligatures: 'code',
   mobileSeen: true,
   vim: true,
   attachments: 'note',
@@ -124,7 +123,6 @@ describe('what an older build wrote', () => {
       spellLanguage: 7,
       spellWords: ['Orden', 3],
       closeBrackets: 0,
-      ligatures: 'some',
       attachments: 'desk',
       pagesPaper: 'a9',
       frame: 'mine',
@@ -136,8 +134,6 @@ describe('what an older build wrote', () => {
       highlightTone: 'red',
       linkFormat: 'bbcode',
     },
-    'an older ligature switch, on': { ligatures: true },
-    'an older ligature switch, off': { ligatures: false },
     'spelling words past what is kept': {
       spellWords: [...Array.from({ length: 1200 }, (_, at) => `word${at}`), 'not a word!'],
     },
@@ -161,7 +157,6 @@ describe('what an older build wrote', () => {
 describe('what the account holds', () => {
   const ANSWERS: Record<string, Record<string, unknown>> = {
     'every setting the account carries, away from its default': {
-      ligatures: 'all',
       vim: true,
       attachments: 'named',
       conflicts: 'theirs',
@@ -179,7 +174,6 @@ describe('what the account holds', () => {
       spellWords: ['Orden', 'not a word!', 'Tauri'],
     },
     'values no version wrote': {
-      ligatures: 'some',
       vim: 'yes',
       attachments: 'desk',
       conflicts: 'coin',
@@ -196,7 +190,6 @@ describe('what the account holds', () => {
       linkFormat: 'bbcode',
       spellWords: 'Orden',
     },
-    'an older ligature switch': { ligatures: true },
     'a properties mode said as anything else': { properties: 'rows' },
     'a tone that is no colour': { highlightTone: null },
     'nothing at all': {},
