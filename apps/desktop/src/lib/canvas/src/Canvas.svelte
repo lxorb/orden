@@ -508,11 +508,10 @@
     }
   })
   function measure(element: HTMLElement) {
-    const rect = element.getBoundingClientRect()
-    if (!rect.width || !rect.height) return
+    if (!element.offsetWidth || !element.offsetHeight) return
     const was = height
-    width = Math.round(rect.width)
-    height = Math.round(rect.height)
+    width = element.offsetWidth
+    height = element.offsetHeight
     if (placed && viewport.touch && was && height !== was) {
       store.camera = panned(camera, 0, -(height - was) / 2)
     }

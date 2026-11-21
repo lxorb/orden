@@ -1,63 +1,107 @@
 <script lang="ts">
-  import KindCard from './KindCard.svelte'
-  import { fitsWhole, groupOf, kindLines, offeredKinds, type NewKindRow, showOthers } from './new-kinds'
+  import Sun from './Sun.svelte'
+  import { type Picked, sunHand } from './sun-hand'
+  import { Dial } from './dial.svelte'
+  import { growInto } from './grow'
+  import { kindLines, offeredKinds, type NewKindRow, showOthers } from './new-kinds'
   import { kindOfLetter, letterIsOurs } from './new-kind-keys'
-  import { overlays, roving } from '../../ui-kit/src/api'
-  import { viewport } from '../../ui-kit/src/api'
+  import { countsOf, slotsOf } from './sun-slots'
+  import { MIDDLE, MIDDLE_KEY, RESTING, walked } from './sun-keys'
+  import { overlays, viewport } from '../../ui-kit/src/api'
+  import { isDesktop, stillness } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'
 
   const { paneId, chosenOn }: { paneId: string; chosenOn?: string } = $props()
+  const LEFT_BEHIND = 600
   const kinds = $derived(offeredKinds())
-  const lines = $derived(kindLines(kinds))
-  let room = $state({ width: 0, height: 0 })
-  let card = $state({ width: 0, height: 0, gap: 0 })
-  const whole = $derived(lines.length === kinds.length || fitsWhole(lines, room, card, viewport.touch))
-  const shown = $derived(whole ? lines : [lines.flatMap((line) => groupOf(line) ?? [])])
-  function measure(here: HTMLElement) {
-    const read = () => {
-      const style = getComputedStyle(here)
-      const first = here.querySelector<HTMLElement>('.line > button')
-      room = {
-        width: here.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
-        height: here.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom),
-      }
-      if (first)
-        card = {
-          width: first.offsetWidth,
-          height: first.offsetHeight,
-          gap: parseFloat(style.rowGap) || 0,
-        }
-    }
-    read()
-    const watching = new ResizeObserver(read)
-    watching.observe(here)
-    return () => watching.disconnect()
-  }
+  const slots = $derived(slotsOf(kindLines(kinds)))
+  const counts = $derived(countsOf(slots))
+  const dial = new Dial()
+  dial.aim = MIDDLE
+  let element = $state<HTMLElement>()
+  const hand = sunHand()
+  let launching = $state(false)
+
   function choosing() {
     if (chosenOn !== undefined) workspace.chosenOn(chosenOn)
   }
-  function make(one: NewKindRow) {
+  function placeOf(one: NewKindRow): [number, number] | null {
+    for (const [slot, found] of slots.entries()) {
+      const index = found?.kinds.indexOf(one) ?? -1
+      if (found && index >= 0) return [slot, index]
+    }
+    return null
+  }
+  function optionElement(slot: number, index: number): Element | null {
+    return element?.querySelector(`[data-slot="${slot}"] [data-index="${index}"]`) ?? null
+  }
+  function others(slot: number, index: number): boolean {
+    const one = slots[slot]?.kinds[index]
+    const anchor = optionElement(slot, index) ?? element?.querySelector(`[data-slot="${slot}"]`)
+    return !!one && !!anchor && showOthers(one, anchor, paneId, choosing)
+  }
+  function cardOf(here: HTMLElement): HTMLElement | null {
+    return here.closest('[data-pane]')?.querySelector<HTMLElement>(':scope > .card') ?? null
+  }
+  function leftBehind(): Promise<boolean> {
+    const until = performance.now() + LEFT_BEHIND
+    return new Promise((done) => {
+      const look = () => {
+        if (!element?.isConnected) done(true)
+        else if (performance.now() > until) done(false)
+        else requestAnimationFrame(look)
+      }
+      requestAnimationFrame(look)
+    })
+  }
+  async function launch(slot: number, index: number) {
+    const one = slots[slot]?.kinds[index]
+    if (!one || launching) return
+    launching = true
+    dial.aim = { hub: false, open: slot, index }
+    let growing: ReturnType<typeof growInto> | null = null
+    const here = element
+    if (!stillness() && !(isDesktop && one.paintedApart) && here) {
+      await hand.settled(slot, index)
+      const shape = hand.shapeOf(slot, index)
+      const card = cardOf(here)
+      if (shape && card && here.isConnected)
+        growing = growInto(card, here, {
+          ...shape,
+          slot,
+          index,
+          accent: getComputedStyle(here).getPropertyValue('--accent').trim() || 'currentColor',
+          ground: getComputedStyle(here).backgroundColor,
+        })
+    }
     choosing()
     one.make(paneId)
+    const gone = growing ? await growing.arrived : await leftBehind()
+    if (gone || !element?.isConnected) return
+    dial.aim = RESTING
+    launching = false
   }
-  function others(one: NewKindRow, card: Element | null | undefined): boolean {
-    return !!card && showOthers(one, card, paneId, choosing)
+  function pick(slot: number, index: number, how: Picked) {
+    if (how === 'others' && others(slot, index)) return
+    void launch(slot, index)
   }
-  function choose(event: MouseEvent, one: NewKindRow) {
-    const chevron = event.target instanceof Element && event.target.closest('[data-more]')
-    const card = event.currentTarget instanceof Element ? event.currentTarget : null
-    if ((chevron || event.shiftKey || one.grouped) && others(one, card)) return
-    make(one)
-  }
-  let element = $state<HTMLElement>()
+
+  let claimed = false
   function taken(): boolean {
+    const hub = element?.querySelector<HTMLElement>('.hub')
+    if (!hub) return false
     const at = document.activeElement
-    if (at && at !== document.body && !element?.contains(at)) return false
-    element?.querySelector('button')?.focus()
-    return true
+    const claims = chosenOn !== undefined && !claimed && overlays.depth === 0
+    if (!claims && at && at !== document.body && !element?.contains(at)) return false
+    hub.focus({ preventScroll: true })
+    claimed = document.activeElement === hub
+    return claimed
+  }
+  function showingHere(): boolean {
+    return chosenOn === undefined || workspace.showing(paneId)?.id === chosenOn
   }
   $effect(() => {
-    if (chosenOn !== undefined || workspace.panes.focusedId !== paneId) return
+    if (workspace.panes.focusedId !== paneId || !showingHere()) return
     if (taken()) return
     const until = performance.now() + 1000
     let frame = requestAnimationFrame(function again() {
@@ -66,81 +110,86 @@
     return () => cancelAnimationFrame(frame)
   })
   function hears(): boolean {
-    if (workspace.panes.focusedId !== paneId || overlays.depth > 0) return false
-    if (chosenOn !== undefined && workspace.showing(paneId)?.id !== chosenOn) return false
+    if (launching || workspace.panes.focusedId !== paneId || overlays.depth > 0 || !showingHere()) return false
     return letterIsOurs(document.activeElement, element?.closest('[data-pane]') ?? element ?? null)
+  }
+  function steers(): boolean {
+    const at = document.activeElement
+    return at === null || at === document.body || at === document.documentElement || !!element?.contains(at)
+  }
+  function steer(event: KeyboardEvent): boolean {
+    if (event.ctrlKey || event.metaKey || event.altKey || !steers()) return false
+    if (event.key === MIDDLE_KEY) {
+      if (event.repeat || event.shiftKey) return true
+      dial.aim = MIDDLE
+      return true
+    }
+    if (event.key === 'Escape') {
+      if (!dial.hub && dial.open === null) return false
+      dial.aim = RESTING
+      return true
+    }
+    if (event.key === 'Enter') {
+      const { open, index } = dial
+      if (open === null) return false
+      const count = counts[open] ?? 0
+      if (index !== null) pick(open, index, event.shiftKey ? 'others' : 'click')
+      else if (count === 1) pick(open, 0, event.shiftKey ? 'others' : 'click')
+      return true
+    }
+    const next = walked(dial.aim, event.key, counts)
+    if (next === null) return false
+    dial.aim = next
+    return true
   }
   $effect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return
+      if (event.defaultPrevented || !hears()) return
+      if (steer(event)) {
+        event.preventDefault()
+        event.stopPropagation()
+        return
+      }
       const one = kindOfLetter(kinds, event)
-      if (!one || !hears()) return
+      if (!one) return
+      const place = placeOf(one)
+      if (!place) return
       event.preventDefault()
       event.stopPropagation()
-      const card = element?.querySelector(`[data-kind="${one.kind}"]`)
-      if (event.shiftKey && others(one, card)) return
-      make(one)
+      pick(place[0], place[1], event.shiftKey ? 'others' : 'click')
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
   })
 </script>
 
-<div
-  class="here"
-  bind:this={element}
-  {@attach measure}
-  data-new-here={paneId}
-  data-grouped={whole ? undefined : ''}
-  use:roving={{ across: !viewport.touch, rows: 'button', wrap: true }}
-  role="group"
-  aria-label="New tab"
->
-  {#each shown as line (line[0]?.line)}
-    <div class="line">
-      {#each line as one, at (one.grouped ? one.line : one.kind)}
-        <KindCard
-          {one}
-          letter={one.letter}
-          rise={whole ? kinds.indexOf(one) : at}
-          data-kind={one.grouped ? undefined : one.kind}
-          data-group={one.grouped ? one.line : undefined}
-          aria-haspopup={one.grouped ? 'menu' : undefined}
-          aria-keyshortcuts={one.grouped ? undefined : one.letter.toUpperCase()}
-          onclick={(event: MouseEvent) => choose(event, one)}
-          onpointerenter={() => one.ready?.()}
-          onfocus={() => one.ready?.()}
-        />
-      {/each}
-    </div>
-  {/each}
+<div class="here" bind:this={element} data-new-here={paneId} role="group" aria-label="New tab">
+  <div class="room">
+    <Sun
+      {slots}
+      {dial}
+      {hand}
+      touch={viewport.touch}
+      locked={launching}
+      onpick={pick}
+      onready={(one: NewKindRow) => one.ready?.()}
+    />
+  </div>
 </div>
 
 <style>
   .here {
     flex: 1;
+    min-height: 0;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: safe center;
-    gap: var(--space-3);
+    justify-content: center;
     padding: var(--space-6);
     background: var(--empty-ground, var(--bg));
-    overflow: auto;
+    overflow: hidden;
+    container-type: size;
   }
-  .line {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-3);
-  }
-  :global([data-touch]) .here,
-  :global([data-touch]) .line {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: center;
-  }
-  :global([data-touch]) .line {
-    width: 100%;
+  .room {
+    width: min(42rem, 100cqw, 100cqh);
   }
 </style>

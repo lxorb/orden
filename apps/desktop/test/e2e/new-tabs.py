@@ -1,5 +1,5 @@
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
-from harness import Drive
+from harness import Drive, choose_kind
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -54,14 +54,17 @@ NEW_TAB = """
   const tab = ws.active
   const pane = document.querySelector(`[data-pane="${ws.panes.focusedId}"]`)
   const here = pane?.querySelector('[data-new-here]')
-  const name = (one) => one.querySelector('.orden-row-label')?.textContent.trim()
   const at = document.activeElement
   return {
     newTab: !!tab && ws.isNewTab(tab),
-    typing: at?.getAttribute('aria-label') === 'Address',
-    typed: at instanceof HTMLInputElement ? at.value : null,
-    lines: here ? [...here.querySelectorAll('.line')].map((line) => [...line.querySelectorAll('.kind')].map(name)) : [],
-    letters: here ? [...here.querySelectorAll('.kind kbd')].map((one) => one.textContent) : [],
+    middle: !!at?.matches('[data-new-here] .hub'),
+    picked: !!here?.querySelector('.hub.picked'),
+    quarters: here
+      ? [...here.querySelectorAll('[data-slot]')].map((one) =>
+          [...one.querySelectorAll('[data-kind]')].map((option) => option.getAttribute('aria-label')),
+        )
+      : [],
+    letters: here ? [...here.querySelectorAll('[data-kind]')].map((one) => one.getAttribute('aria-keyshortcuts')) : [],
     menu: !!document.querySelector('.menu'),
   }
 }
@@ -75,23 +78,14 @@ CALLED = """
 """
 HERE = """
 () => {
-  const buttons = [...document.querySelectorAll('[data-new-here] button')]
-  const round = (n) => Math.round(n * 100) / 100
-
+  const here = document.querySelector('[data-new-here]')
+  const at = document.activeElement
   return {
-    buttons: buttons.map((one) => one.querySelector('.orden-row-label')?.textContent.trim()),
-    on: (() => {
-      const at = document.activeElement
-      if (!at || at === document.body) return null
-      return at.querySelector('.orden-row-label')?.textContent.trim() ?? at.tagName.toLowerCase()
-    })(),
-    marks: buttons.map((one) => {
-      const svg = one.querySelector('.mark svg')
-      if (!svg) return null
-
-      const box = svg.getBBox()
-      return { top: round(box.y), tall: round(box.height), wide: round(box.width) }
-    }),
+    kinds: here ? [...here.querySelectorAll('[data-kind]')].map((one) => one.getAttribute('aria-label')) : [],
+    middle: !!at?.matches('[data-new-here] .hub'),
+    open: here?.querySelector('.quarter.open')?.getAttribute('data-quarter') ?? null,
+    picked: here?.querySelector('.option.picked')?.getAttribute('aria-label') ?? null,
+    marks: here ? [...here.querySelectorAll('[data-kind]')].map((one) => !!one.querySelector('.glyph')) : [],
   }
 }
 """
@@ -162,35 +156,34 @@ def heading_key(page) -> None:
         wrong(f"Ctrl+1 did not make it a heading again: {page.evaluate(LINE)!r}")
     else:
         say(f"Control+1 again        -> {page.evaluate(LINE)!r}")
-LINES = [
+QUARTERS = [
     ["New note", "New canvas", "New page note"],
     ["New AI chat"],
     ["Online terminal"],
-    ["New web note"],
-    ["Pass"],
+    ["New web note", "Pass"],
 ]
 def chooser(page) -> None:
     say("--- Ctrl+T ---")
     before = len(page.evaluate(STATE)["tabs"])
     page.keyboard.press("Control+KeyT")
-    if not settles(page, f"() => ({NEW_TAB})().lines.length > 0"):
-        wrong(f"Ctrl+T drew no kinds under its address field: {page.evaluate(NEW_TAB)}")
+    if not settles(page, f"() => ({NEW_TAB})().quarters.length > 0"):
+        wrong(f"Ctrl+T drew no sun under its address field: {page.evaluate(NEW_TAB)}")
     new = page.evaluate(NEW_TAB)
     state = page.evaluate(STATE)
     if len(state["tabs"]) != before + 1 or not new["newTab"]:
         wrong(f"Ctrl+T did not make a new tab: {state['active']}")
     else:
         say("Control+T              -> a new tab")
-    if not new["typing"]:
-        wrong("the new tab's address field did not take the keyboard")
+    if not settles(page, f"() => ({NEW_TAB})().middle") or not page.evaluate(NEW_TAB)["picked"]:
+        wrong(f"the new tab's middle did not take the keyboard: {page.evaluate(NEW_TAB)}")
     else:
-        say("the keyboard           -> in the address field")
-    if new["lines"] != LINES:
-        wrong(f"the kinds are not in Emil's lines: {new['lines']}")
+        say("the keyboard           -> on the middle of the sun, picked")
+    if new["quarters"] != QUARTERS:
+        wrong(f"the kinds are not in their quarters: {new['quarters']}")
     else:
-        say(f"the lines              -> {new['lines']}")
+        say(f"the quarters           -> {new['quarters']}")
     if new["letters"] != ["N", "C", "P", "Q", "O", "W", "K"]:
-        wrong(f"the cards do not wear their letters: {new['letters']}")
+        wrong(f"the options do not wear their letters: {new['letters']}")
     settles(page, f"() => ({CALLED})().title === 'New tab'")
     called = page.evaluate(CALLED)
     if called != {"label": "New tab", "title": "New tab"}:
@@ -199,27 +192,17 @@ def chooser(page) -> None:
         say("its name               -> New tab, in the strip and on the window")
     page.screenshot(path=str(SHOTS / "new-tab.png"))
     page.keyboard.press("KeyC")
-    page.wait_for_timeout(300)
-    new = page.evaluate(NEW_TAB)
-    if new["typed"] != "c" or len(page.evaluate(STATE)["tabs"]) != before + 1:
-        wrong(f"a letter in the address field did something else: {new}")
-    else:
-        say("C in the field         -> the address's, nothing made")
-    page.keyboard.press("Backspace")
-    page.keyboard.press("Escape")
-    page.wait_for_timeout(200)
-    page.keyboard.press("KeyC")
-    if not settles(page, "() => window.ordenApp.workspace.active?.kind === 'canvas'"):
-        wrong(f"C after Escape made no plane: {page.evaluate(STATE)['active']}")
+    if not settles(page, "() => window.ordenApp.workspace.active?.kind === 'canvas'", 4000):
+        wrong(f"C on a new tab made no plane: {page.evaluate(STATE)['active']}")
     state = page.evaluate(STATE)
     if len(state["tabs"]) != before + 1 or any(one["kind"] == "web" for one in state["tabs"]):
         wrong(f"the plane did not take the new tab's place: {state['tabs']}")
     else:
-        say("Escape, C              -> a plane, where the new tab was")
+        say("C                      -> a plane, where the new tab was")
     say("--- the plus ---")
     before = len(page.evaluate(STATE)["tabs"])
     page.locator(".strip button.new").first.click()
-    if not settles(page, f"() => ({NEW_TAB})().lines.length > 0"):
+    if not settles(page, f"() => ({NEW_TAB})().quarters.length > 0"):
         wrong("the plus made no new tab")
     new = page.evaluate(NEW_TAB)
     if new["menu"]:
@@ -228,8 +211,10 @@ def chooser(page) -> None:
         wrong(f"the plus did not make a new tab: {page.evaluate(STATE)['active']}")
     else:
         say("the plus               -> a new tab, no menu")
-    page.locator('[data-new-here] .kind:has-text("New web note")').first.click()
-    settles(page, f"() => window.ordenApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab")
+    if not settles(page, f"() => ({NEW_TAB})().middle"):
+        wrong("the plus kept the keyboard from the new tab's middle")
+    choose_kind(page, "web")
+    settles(page, f"() => window.ordenApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab", 4000)
     state = page.evaluate(STATE)
     address = page.evaluate("() => window.ordenApp.workspace.active?.address ?? ''")
     if (
@@ -251,8 +236,13 @@ def unsaved(page) -> None:
         ("web", "New web note"),
     ):
         page.keyboard.press("Control+KeyT")
-        page.locator(f'[data-new-here] .kind:has-text("{row}")').first.click()
-        page.wait_for_timeout(800)
+        choose_kind(page, kind)
+        settles(
+            page,
+            f"() => window.ordenApp.workspace.active?.kind === '{kind}' && !window.ordenApp.workspace.isNewTab(window.ordenApp.workspace.active)",
+            4000,
+        )
+        page.wait_for_timeout(300)
         state = page.evaluate(STATE)
         if state["active"] != {"kind": kind, "path": None}:
             wrong(f"{row} did not open an unsaved {kind}: {state['active']}")
@@ -347,43 +337,36 @@ def nothing_open(page) -> None:
         say("every tab closed       -> nothing open, and nothing made")
     settles(page, "() => !!document.activeElement?.closest('[data-new-here]')")
     here = page.evaluate(HERE)
-    if here["buttons"] != [one for line in LINES for one in line]:
-        wrong(f"the empty pane does not offer the kinds: {here['buttons']}")
+    if here["kinds"] != [one for quarter in QUARTERS for one in quarter]:
+        wrong(f"the empty pane does not offer the kinds: {here['kinds']}")
     else:
-        say(f"the buttons            -> {here['buttons']}")
-    if here["on"] != "New note":
-        wrong(f"the keyboard did not land on the first button: {here['on']!r}")
+        say(f"the kinds              -> {here['kinds']}")
+    if not here["middle"]:
+        wrong("the keyboard did not land on the middle of the sun")
     else:
-        say("the keyboard           -> on New note, the first")
-    marks = here["marks"]
-    say(f"the marks              -> {marks}")
-    if any(one is None for one in marks):
-        wrong(f"a button wears no mark at all: {marks}")
-    else:
-        files = [one for one, name in zip(marks, here["buttons"]) if name not in ("Online terminal", "New AI chat")]
-        sizes = {(one["top"], one["tall"]) for one in files}
-        if len(sizes) != 1:
-            wrong(f"the marks do not fill the same height of their grid: {sorted(sizes)}")
-        else:
-            say(f"one height             -> {sizes.pop()} of 24")
+        say("the keyboard           -> on the middle")
+    if not all(here["marks"]):
+        wrong(f"an option wears no mark at all: {here['marks']}")
     page.screenshot(path=str(SHOTS / "nothing-open.png"))
-    page.keyboard.press("ArrowLeft")
+    page.keyboard.press("ArrowUp")
     page.wait_for_timeout(250)
-    if page.evaluate(HERE)["on"] != "Pass":
-        wrong("the arrows do not walk the buttons, or do not wrap")
+    if page.evaluate(HERE)["open"] != "notes":
+        wrong(f"ArrowUp did not open the notes: {page.evaluate(HERE)}")
     else:
-        say("ArrowLeft              -> Pass, round the end")
-    page.keyboard.press("ArrowRight")
-    page.keyboard.press("ArrowRight")
-    page.keyboard.press("ArrowRight")
+        say("ArrowUp                -> the notes open")
+    for _ in range(3):
+        page.keyboard.press("ArrowRight")
     page.wait_for_timeout(250)
-    if page.evaluate(HERE)["on"] != "New page note":
-        wrong("the arrows do not walk the buttons across the lines")
+    if page.evaluate(HERE)["picked"] != "New page note":
+        wrong(f"the arrows do not walk the notes to the end: {page.evaluate(HERE)}")
+    else:
+        say("ArrowRight x3          -> New page note, at the end")
+    page.screenshot(path=str(SHOTS / "nothing-open-notes.png"))
     page.keyboard.press("Enter")
-    page.wait_for_timeout(900)
+    settles(page, "() => window.ordenApp.workspace.active?.kind === 'pages'", 4000)
     state = page.evaluate(STATE)
     if state["active"] != {"kind": "pages", "path": None}:
-        wrong(f"pressing the button did not make a page note: {state['active']}")
+        wrong(f"Enter did not make a page note: {state['active']}")
     else:
         say("Enter                  -> an unsaved page note")
     held_over_the_buttons(page)
@@ -397,7 +380,7 @@ def held_over_the_buttons(page) -> None:
     )
     page.wait_for_timeout(800)
     page.keyboard.press("KeyP")
-    if not settles(page, "() => window.ordenApp.workspace.active?.kind === 'pages'"):
+    if not settles(page, "() => window.ordenApp.workspace.active?.kind === 'pages'", 4000):
         wrong(f"P over an empty pane made no page note: {page.evaluate(STATE)['active']}")
     else:
         say("P                      -> a page note")
@@ -414,34 +397,35 @@ def held_over_the_buttons(page) -> None:
     else:
         say("Control+T              -> a new tab, as anywhere")
     page.screenshot(path=str(SHOTS / "over-nothing-open.png"))
-GROUPS = """() => [...document.querySelectorAll('.here[role=group] .kind')].map((one) => ({
-  name: one.querySelector('.orden-row-label')?.textContent.trim(),
-  group: one.getAttribute('data-group'),
-}))"""
-def grouped(page) -> None:
+FITS = """() => {
+  const here = document.querySelector('[data-new-here]')
+  const sun = here?.querySelector('.sun')
+  if (!here || !sun) return null
+  const room = here.getBoundingClientRect()
+  const box = sun.getBoundingClientRect()
+  return {
+    inside: box.left >= room.left - 1 && box.right <= room.right + 1 && box.top >= room.top - 1 && box.bottom <= room.bottom + 1,
+    kinds: here.querySelectorAll('[data-kind]').length,
+    labels: here.querySelectorAll('[data-kind] .label').length,
+  }
+}"""
+def small(page) -> None:
     say("--- a small window ---")
     page.set_viewport_size({"width": 820, "height": 520})
-    if not settles(page, "() => !!document.querySelector('.here[role=group] [data-group]')"):
-        wrong(f"a small window still shows every kind: {page.evaluate(GROUPS)}")
-        page.set_viewport_size({"width": 1440, "height": 900})
-        return
-    cards = page.evaluate(GROUPS)
-    say(f"the cards              -> {[one['name'] for one in cards]}")
-    if [one["name"] for one in cards if one["group"]] != ["Notes"]:
-        wrong(f"the only group is not Notes: {cards}")
-    page.screenshot(path=str(SHOTS / "grouped.png"))
-    page.click(".here[role=group] [data-group=notes]")
-    if not settles(page, "() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].some((one) => one.textContent.includes('New canvas'))"):
-        wrong("the Notes card opened no menu with its kinds")
+    page.wait_for_timeout(500)
+    fits = page.evaluate(FITS)
+    if not fits or not fits["inside"] or fits["kinds"] != 7:
+        wrong(f"the sun does not fit a small window with every kind: {fits}")
     else:
-        say("Notes                  -> a menu of note, canvas and page note")
-    page.screenshot(path=str(SHOTS / "grouped-menu.png"))
-    page.keyboard.press("Escape")
+        say(f"a small window         -> the sun fits, {fits['kinds']} kinds")
+    page.screenshot(path=str(SHOTS / "small.png"))
     page.set_viewport_size({"width": 1440, "height": 900})
-    if not settles(page, "() => !document.querySelector('.here[role=group] [data-group]')"):
-        wrong("a large window again still shows the groups")
+    page.wait_for_timeout(500)
+    fits = page.evaluate(FITS)
+    if not fits or fits["labels"] != 7:
+        wrong(f"a large window again does not name every option: {fits}")
     else:
-        say("a large window again   -> every kind")
+        say("a large window again   -> every option named")
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     context = browser.new_context(
@@ -466,7 +450,7 @@ def drive(browser) -> None:
     unsaved(page)
     saving(page)
     nothing_open(page)
-    grouped(page)
+    small(page)
     page.screenshot(path=str(SHOTS / "after.png"))
     context.close()
 def main() -> int:

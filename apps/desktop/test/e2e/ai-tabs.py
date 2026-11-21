@@ -2,7 +2,7 @@ import http.server
 import json
 import sys
 from playwright.sync_api import Browser, Page
-from harness import Drive
+from harness import Drive, choose_kind
 
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
@@ -125,8 +125,8 @@ def drive(browser: Browser, scheme: str) -> None:
     if len(page.evaluate(CHATS)) != 2:
         wrong(f"dragging a chat that has a tab made another: {page.evaluate(CHATS)}")
     page.keyboard.press("Control+KeyT")
-    waited(page, "document.querySelector('[data-new-here] .kind')", "the new tab's kinds")
-    page.locator('[data-new-here] .kind:has-text("New AI chat")').first.click()
+    waited(page, "document.querySelector('[data-new-here] [data-kind=ai]')", "the new tab's kinds")
+    choose_kind(page, "ai")
     if not waited(page, f"({CHATS})().length === 3", "a new AI chat tab"):
         wrong(f"New AI chat made no chat tab: {page.evaluate(CHATS)}")
     waited(page, "document.activeElement?.matches('.ask.wide textarea')", "the new chat's field")

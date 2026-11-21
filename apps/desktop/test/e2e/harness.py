@@ -93,6 +93,17 @@ def experimental_on(page: Any) -> None:
         f"document.querySelector('{EXPERIMENTAL_SWITCH}')?.getAttribute('aria-checked') === 'true'",
         timeout=15_000,
     )
+def choose_kind(page: Any, kind: str) -> None:
+    here = "[data-new-here]"
+    page.locator(f"{here} [data-kind={kind}]").first.wait_for(state="attached")
+    line = page.evaluate(
+        f"() => document.querySelector('{here} [data-kind={kind}]')?.closest('[data-slot]')?.dataset.line ?? null"
+    )
+    page.locator(f"{here} [data-quarter={line}]").first.hover()
+    page.wait_for_function(
+        f"() => !!document.querySelector('{here} [data-slot][data-line={line}] .quarter.open')"
+    )
+    page.locator(f"{here} [data-kind={kind}]").first.click()
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 if os.environ.get("ORDEN_HANG_AFTER"):

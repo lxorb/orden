@@ -1,10 +1,11 @@
-import { providePort } from '@orden/contracts'
+import { providePort, registerCommand } from '@orden/contracts'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { NewHere } from '../../src/lib/new-here/src/api'
+import NewHere from '../../src/lib/new-here/src/NewHere.svelte'
 import { EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } from '../../src/lib/gates/src/api'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 import { workspace } from '../../src/lib/workspace/src/api'
+import { settle } from './settle'
 
 const nothing = () => Promise.resolve()
 providePort('terminal.making', {
@@ -14,19 +15,11 @@ providePort('terminal.making', {
   pickHost: nothing,
   online: nothing,
 })
+const asked: string[] = []
+registerCommand('ai.tab', () => Promise.resolve(() => void asked.push('ai')))
 await import('../../src/lib/web-tab/src/api')
-Element.prototype.animate = () =>
-  ({
-    cancel: () => undefined,
-    pause: () => undefined,
-    play: () => undefined,
-    finished: Promise.resolve(),
-    currentTime: 0,
-    startTime: 0,
-    playState: 'finished',
-    effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
-  }) as unknown as Animation
 Element.prototype.scrollIntoView = () => undefined
+const SOON = { timeout: 3000 }
 let target: HTMLElement
 let close: (() => void) | undefined
 let was: 'phone' | 'tablet' | 'desktop'
@@ -66,133 +59,205 @@ function here(chosenOn?: string) {
   flushSync()
   close = () => void unmount(made, { outro: false })
 }
-const buttons = () => [...target.querySelectorAll<HTMLButtonElement>('button')]
-const names = (within: ParentNode) =>
-  [...within.querySelectorAll('.orden-row-label')].map((one) => one.textContent.trim())
+const hub = () => target.querySelector<HTMLButtonElement>('.hub')
+const quarters = () =>
+  [...target.querySelectorAll<SVGElement>('[data-slot]')].map((one) => [
+    Number(one.dataset.slot),
+    one.dataset.line,
+    [...one.querySelectorAll<SVGElement>('[data-kind]')].map((option) => option.dataset.kind),
+  ])
+const option = (kind: string) => target.querySelector<SVGElement>(`[data-kind="${kind}"]`)
+const quarter = (line: string) => target.querySelector<SVGElement>(`[data-quarter="${line}"]`)
+const opened = () => target.querySelector<SVGElement>('.quarter.open')?.dataset.quarter ?? null
+const picked = () => target.querySelector<SVGElement>('.option.picked')?.dataset.kind ?? null
 function press(key: string, held: KeyboardEventInit = {}) {
   const at = document.activeElement ?? document.body
   at.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...held }))
   flushSync()
 }
-test('offers every kind a new tab can be, in the lines Emil gave them', () => {
+function click(on: Element | null, held: MouseEventInit = {}) {
+  on?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ...held }))
+  flushSync()
+}
+
+test('puts each group in the quarter its arrow points to, the apps joining the browser when none is free', () => {
   makers()
   here()
-  expect(names(target)).toEqual([
-    'New note',
-    'New canvas',
-    'New page note',
-    'New AI chat',
-    'Online terminal',
-    'New web note',
-    'Pass',
-  ])
-  expect([...target.querySelectorAll('.line')].map(names)).toEqual([
-    ['New note', 'New canvas', 'New page note'],
-    ['New AI chat'],
-    ['Online terminal'],
-    ['New web note'],
-    ['Pass'],
+  expect(quarters()).toEqual([
+    [0, 'notes', ['note', 'canvas', 'pages']],
+    [1, 'chats', ['ai']],
+    [2, 'terminals', ['online']],
+    [3, 'browser', ['web', 'pass']],
   ])
 })
-test('folds each group into one card where the lines do not fit, a lone kind staying itself', async () => {
-  const made = makers()
-  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(320)
-  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(320)
-  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(144)
-  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(120)
+test('leaves a quarter empty when its group is not here, the apps taking the first free one', () => {
+  makers()
+  viewport.device = 'phone'
   here()
-  flushSync()
-  expect(names(target)).toEqual(['Notes', 'New AI chat', 'Online terminal', 'New web note', 'Pass'])
-  const notes = target.querySelector<HTMLElement>('[data-group="notes"]')
-  expect(notes?.getAttribute('aria-haspopup')).toBe('menu')
-  expect(notes?.querySelector('kbd')).toBeNull()
-  expect(notes?.querySelector('[data-more]')).not.toBeNull()
-  const { menu } = await import('../../src/lib/ui-kit/src/api')
-  const shown = vi.spyOn(menu, 'show').mockImplementation(() => undefined)
-  notes?.click()
-  await vi.waitFor(() => expect(shown).toHaveBeenCalled())
-  const rows = shown.mock.calls[0]?.[1] ?? []
-  expect(rows.map((row) => row?.label)).toEqual(['New note', 'New canvas', 'New page note'])
-  expect(made).toEqual([])
+  expect(quarters()).toEqual([
+    [0, 'notes', ['note', 'canvas', 'pages']],
+    [1, 'apps', ['pass']],
+    [2, 'terminals', ['online']],
+  ])
+  expect(target.querySelectorAll('.empty')).toHaveLength(1)
+})
+test('starts with the middle picked and holding the keyboard', () => {
+  makers()
+  here()
+  expect(hub()?.classList.contains('picked')).toBe(true)
+  expect(document.activeElement).toBe(hub())
+  expect(hub()?.getAttribute('aria-keyshortcuts')).toBe('Space')
+})
+test('is one stop for Tab, the middle', () => {
+  makers()
+  here()
+  const stops = [...target.querySelectorAll<HTMLElement | SVGElement>('button, [tabindex]')].filter(
+    (one) => one.tabIndex >= 0,
+  )
+  expect(stops).toEqual([hub()])
+})
+test('opens the quarter an arrow points at, walks its options, and makes the one picked with Enter', async () => {
+  const made = makers()
+  here()
+  press('ArrowUp')
+  expect(opened()).toBe('notes')
+  expect(picked()).toBeNull()
+  press('ArrowRight')
+  expect(picked()).toBe('note')
+  press('ArrowRight')
+  expect(picked()).toBe('canvas')
+  press('Enter')
+  await vi.waitFor(() => expect(made).toEqual(['canvas']), SOON)
+})
+test('goes back to the middle with the arrow pointing home', () => {
+  makers()
+  here()
+  press('ArrowLeft')
+  expect(opened()).toBe('browser')
+  press('ArrowRight')
+  expect(opened()).toBeNull()
+  expect(hub()?.classList.contains('picked')).toBe(true)
+})
+test('makes a lone kind straight from its quarter, with Enter or a click', async () => {
+  makers()
+  asked.length = 0
+  here()
+  press('ArrowRight')
+  expect(opened()).toBe('chats')
+  press('Enter')
+  await vi.waitFor(() => expect(asked).toEqual(['ai']), SOON)
+})
+test('and a click on the quarter of a lone kind makes it too', async () => {
+  makers()
+  asked.length = 0
+  here()
+  click(quarter('chats'))
+  await vi.waitFor(() => expect(asked).toEqual(['ai']), SOON)
+})
+test('lets go of everything with Escape, and Space picks the middle again', () => {
+  makers()
+  here()
+  press('ArrowUp')
+  press('ArrowUp')
+  expect(picked()).toBe('canvas')
+  press('Escape')
+  expect(opened()).toBeNull()
+  expect(picked()).toBeNull()
+  expect(hub()?.classList.contains('picked')).toBe(false)
+  press('ArrowUp')
+  expect(opened()).toBeNull()
+  press(' ')
+  expect(hub()?.classList.contains('picked')).toBe(true)
+  press('ArrowUp')
+  expect(opened()).toBe('notes')
+})
+test('makes a kind by its letter, opening its quarter on the way', async () => {
+  const made = makers()
+  here()
   press('c')
-  expect(made).toEqual(['canvas'])
-})
-test('each wearing its letter, which a screen reader is told as its key', () => {
-  makers()
-  here()
-  expect(buttons().map((one) => one.querySelector('kbd')?.textContent)).toEqual(['N', 'C', 'P', 'Q', 'O', 'W', 'K'])
-  expect(buttons().map((one) => one.getAttribute('aria-keyshortcuts'))).toEqual(['N', 'C', 'P', 'Q', 'O', 'W', 'K'])
-})
-test('lands the keyboard on the first of them', () => {
-  makers()
-  here()
-  expect(document.activeElement).toBe(buttons()[0])
-})
-test('and the arrows walk the rest', () => {
-  makers()
-  here()
-  const first = buttons()[0]
-  first?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
-  flushSync()
-  expect(document.activeElement).toBe(buttons()[1])
-})
-test('makes its own kind when one is pressed', async () => {
-  const made = makers()
-  here()
-  for (const one of buttons()) one.click()
-  flushSync()
-  await vi.waitFor(() => expect(made).toEqual(['note', 'canvas', 'pages', 'web']))
-})
-test('makes a kind by its letter, with the keyboard on a card', () => {
-  const made = makers()
-  here()
-  expect(document.activeElement).toBe(buttons()[0])
-  press('c')
-  expect(made).toEqual(['canvas'])
+  expect(opened()).toBe('notes')
+  expect(picked()).toBe('canvas')
+  await vi.waitFor(() => expect(made).toEqual(['canvas']), SOON)
 })
 test('and with the keyboard on nothing at all', async () => {
   const made = makers()
   here()
-  ;(document.activeElement as HTMLElement | null)?.blur()
+  hub()?.blur()
   press('p')
-  press('W', { shiftKey: true })
-  await vi.waitFor(() => expect(made).toEqual(['pages', 'web']))
+  await vi.waitFor(() => expect(made).toEqual(['pages']), SOON)
 })
-test('but never in a field, nor under a modifier', () => {
+test('but never in a field, nor under a modifier', async () => {
   const made = makers()
   here()
   const field = document.createElement('input')
   target.prepend(field)
   field.focus()
   press('n')
+  press('ArrowUp')
   field.remove()
-  buttons()[0]?.focus()
+  hub()?.focus()
   press('n', { ctrlKey: true })
   press('n', { altKey: true })
+  press('ArrowUp', { metaKey: true })
+  await settle()
   expect(made).toEqual([])
+  expect(opened()).toBeNull()
 })
-test('in a new tab, leaves the keyboard where it was and says which tab the choice is on', () => {
+test('makes the option clicked once its quarter is open', async () => {
+  const made = makers()
+  here()
+  press('ArrowUp')
+  click(option('pages'))
+  await vi.waitFor(() => expect(made).toEqual(['pages']), SOON)
+})
+test('wears each letter, which a screen reader is told as its key', () => {
+  makers()
+  here()
+  expect([...target.querySelectorAll('[data-kind]')].map((one) => one.getAttribute('aria-keyshortcuts'))).toEqual([
+    'N',
+    'C',
+    'P',
+    'Q',
+    'O',
+    'W',
+    'K',
+  ])
+  expect(quarter('notes')?.getAttribute('aria-expanded')).toBe('false')
+})
+test('in a new tab, takes the keyboard for the middle and says which tab the choice is on', async () => {
   const made = makers()
   const chosen: string[] = []
   vi.spyOn(workspace, 'chosenOn').mockImplementation((id) => void chosen.push(id))
   vi.spyOn(workspace, 'showing').mockReturnValue({ id: 'new-tab' } as ReturnType<typeof workspace.showing>)
   here('new-tab')
-  expect(target.contains(document.activeElement)).toBe(false)
+  expect(document.activeElement).toBe(hub())
+  expect(hub()?.classList.contains('picked')).toBe(true)
   press('c')
-  expect(made).toEqual(['canvas'])
+  await vi.waitFor(() => expect(made).toEqual(['canvas']), SOON)
   expect(chosen).toEqual(['new-tab'])
 })
-test('and hears no letter once that tab is not the one in front', () => {
+test('takes the keyboard from the plus that made the new tab', async () => {
+  makers()
+  vi.spyOn(workspace, 'showing').mockReturnValue({ id: 'new-tab' } as ReturnType<typeof workspace.showing>)
+  const plus = document.createElement('button')
+  document.body.append(plus)
+  plus.focus()
+  here('new-tab')
+  await vi.waitFor(() => expect(document.activeElement).toBe(hub()), SOON)
+  plus.focus()
+  await settle()
+  expect(document.activeElement).toBe(plus)
+  plus.remove()
+})
+test('and hears no key once that tab is not the one in front', async () => {
   const made = makers()
   vi.spyOn(workspace, 'showing').mockReturnValue(null)
   here('new-tab')
   press('c')
+  press('ArrowUp')
+  await settle()
   expect(made).toEqual([])
-})
-test('is one stop for Tab, whichever button the keyboard is on', () => {
-  makers()
-  here()
-  expect(buttons().map((one) => one.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1])
+  expect(opened()).toBeNull()
 })
 test('takes the keyboard once what held it in the tab just closed is gone', async () => {
   makers()
@@ -202,8 +267,7 @@ test('takes the keyboard once what held it in the tab just closed is gone', asyn
   here()
   expect(document.activeElement).toBe(leaving)
   leaving.remove()
-  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
-  expect(document.activeElement).toBe(buttons()[0])
+  await vi.waitFor(() => expect(document.activeElement).toBe(hub()), SOON)
 })
 test('leaves the keyboard where the reader put it outside the pane', async () => {
   makers()
@@ -211,7 +275,16 @@ test('leaves the keyboard where the reader put it outside the pane', async () =>
   document.body.append(elsewhere)
   elsewhere.focus()
   here()
-  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+  await settle()
   expect(document.activeElement).toBe(elsewhere)
   elsewhere.remove()
+})
+test('makes nothing twice while one kind is on its way', async () => {
+  const made = makers()
+  here()
+  press('n')
+  press('c')
+  await vi.waitFor(() => expect(made).toEqual(['note']), SOON)
+  await settle()
+  expect(made).toEqual(['note'])
 })
