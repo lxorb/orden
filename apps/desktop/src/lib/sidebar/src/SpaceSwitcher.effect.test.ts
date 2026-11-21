@@ -1,5 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { registerSidebarPart } from '@orden/contracts'
 
 const { workspace } = await import('../../workspace/src/api')
@@ -51,4 +51,21 @@ test('and no badge when the others have nothing unread, 9+ past 9 on a desktop a
   flushSync()
   expect(badge(into)).toBe('99+')
   viewport.device = 'desktop'
+})
+test('picking a space in the menu shows that space and shuts the menu', async () => {
+  const into = drawn()
+  const shown = vi.spyOn(workspace, 'showSpace').mockResolvedValue(undefined)
+  gone.push(() => shown.mockRestore())
+  into.querySelector<HTMLButtonElement>('button.name')?.click()
+  await vi.waitFor(() => expect(into.querySelector('[data-spaces-open]')).not.toBeNull())
+  flushSync()
+  const row = [...into.querySelectorAll<HTMLButtonElement>('[data-spaces-open] .orden-row')].find((one) =>
+    one.textContent.includes('Work'),
+  )
+  expect(row).toBeDefined()
+  row?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+  row?.click()
+  flushSync()
+  expect(shown).toHaveBeenCalledWith('b')
+  await vi.waitFor(() => expect(into.querySelector('button.name')?.getAttribute('aria-expanded')).toBe('false'))
 })
