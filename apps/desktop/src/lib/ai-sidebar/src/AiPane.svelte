@@ -11,6 +11,7 @@
   import { firstModel, isLocal, offeredKinds, type Provider } from '../../ai-providers/src/api'
   import type { Adding } from '../../ai-providers/src/api'
   import { message, viewport } from '../../ui-kit/src/api'
+  import { whileShown } from '../../panes/src/api'
   import { Select, Hint, Switch } from '../../ui-controls/src/api'
   import { canDictate, type Engine, engines, local } from '../../dictation/src/api'
 
@@ -31,14 +32,10 @@
     for (const account of ai.accounts) void ask(account)
     const lookFile = () => void keysInFile().then((found) => (inFile = found))
     lookFile()
-    const measuring = setInterval(() => {
-      for (const account of ai.accounts) void usage.look(account)
-    }, USAGE_EVERY)
-    const unhear = onKeysMoved(lookFile)
-    return () => {
-      clearInterval(measuring)
-      unhear()
-    }
+    return onKeysMoved(lookFile)
+  })
+  whileShown(USAGE_EVERY, () => {
+    for (const account of ai.accounts) void usage.look(account)
   })
   async function ask(account: Provider) {
     const { kind } = account
