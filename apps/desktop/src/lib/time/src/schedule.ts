@@ -186,10 +186,23 @@ export interface RangeTotals extends DayTotals {
   untracked: number
 }
 function notSetIn(spans: readonly Span[], minutes: readonly Minute[], from: number, to: number, now: number): number {
+  const sorted = [...minutes].sort((one, other) => one.at - other.at)
+  const own = spans.filter((one) => isOwn(one) && one.start < to && (one.end ?? now) > from)
+  let at = 0
   let ms = 0
   for (let day = from; day < to && day <= now; day = daysAfter(day, 1)) {
     const end = Math.min(daysAfter(day, 1), to)
-    ms += notSet(spans, minutes, day, end, now).reduce((sum, one) => sum + Math.min(one.to, now) - one.from, 0)
+    while (at < sorted.length && (sorted[at]?.at ?? end) < day) at += 1
+    let past = at
+    while (past < sorted.length && (sorted[past]?.at ?? end) < end) past += 1
+    if (past > at) {
+      const held = own.filter((one) => one.start < end && (one.end ?? now) > day)
+      ms += notSet(held, sorted.slice(at, past), day, end, now).reduce(
+        (sum, one) => sum + Math.min(one.to, now) - one.from,
+        0,
+      )
+    }
+    at = past
   }
   return ms
 }

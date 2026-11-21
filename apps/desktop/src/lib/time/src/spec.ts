@@ -1,7 +1,7 @@
 import { isRecord } from '../../platform/src/api'
 
-export type Kind = 'day' | 'week' | 'month' | 'custom'
-const KINDS: readonly Kind[] = ['day', 'week', 'month', 'custom']
+export type Kind = 'day' | 'week' | 'month' | 'year' | 'custom'
+const KINDS: readonly Kind[] = ['day', 'week', 'month', 'year', 'custom']
 export interface Spec {
   range: Kind
   from: number | null
