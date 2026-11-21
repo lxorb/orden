@@ -10,6 +10,7 @@ export interface Worn {
   tint: string
   second?: string
   wash: number
+  edge?: string
 }
 interface Kept extends Worn {
   app: Scheme
@@ -17,7 +18,7 @@ interface Kept extends Worn {
   bar: Ground | null
 }
 const KEY = 'orden:glass-chrome'
-const PAINTED = ['--glass-tint', '--glass-tint-2', '--glass-tinted'] as const
+const PAINTED = ['--glass-tint', '--glass-tint-2', '--glass-tinted', '--glass-edge'] as const
 function percent(fraction: number): string {
   return `${Math.round(fraction * 100)}%`
 }
@@ -34,6 +35,7 @@ function kept(): Kept | null {
     scheme: said.scheme,
     tint: said.tint,
     ...(isString(said.second) && HEX.test(said.second) ? { second: said.second } : {}),
+    ...(isString(said.edge) && HEX.test(said.edge) ? { edge: said.edge } : {}),
     wash: said.wash,
     tab: isString(said.tab) ? said.tab : null,
     bar: isGround(said.bar) ? said.bar : null,
@@ -60,8 +62,13 @@ class Chrome {
     const own = this.bars[tab]?.scheme ?? this.app
     return own === (this.theme ?? this.app) ? undefined : own
   }
+  private readonly turns: (() => void)[] = []
+  turned(run: () => void): void {
+    this.turns.push(run)
+  }
   wake(app: Scheme): void {
     const was = this.on
+    if (was && app !== this.app) for (const run of this.turns) run()
     this.app = app
     if (was) return
     this.on = true
@@ -111,9 +118,11 @@ class Chrome {
       '--glass-tint': worn.tint,
       '--glass-tint-2': worn.second ?? worn.tint,
       '--glass-tinted': percent(worn.wash),
+      '--glass-edge': worn.edge ?? '',
     }
     for (const token of PAINTED) {
-      if (style.getPropertyValue(token) !== said[token]) style.setProperty(token, said[token])
+      if (!said[token]) style.removeProperty(token)
+      else if (style.getPropertyValue(token) !== said[token]) style.setProperty(token, said[token])
     }
   }
 }

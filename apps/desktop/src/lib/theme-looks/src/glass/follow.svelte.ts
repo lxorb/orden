@@ -90,6 +90,9 @@ export function follow(): void {
   if (stop || !SIDES) return
   const sides = SIDES
   for (const tab of webPages().tabs()) landed(tab)
+  chrome.turned(() => {
+    for (const tab of webPages().tabs()) landed(tab)
+  })
   stop = $effect.root(() => {
     $effect(() => {
       if (!chrome.on) return

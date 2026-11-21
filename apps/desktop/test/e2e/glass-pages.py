@@ -100,6 +100,16 @@ BARE = """
   return null
 }
 """
+EDGE = """
+() => {
+  const probe = document.createElement('span')
+  probe.style.color = 'var(--card-edge)'
+  document.body.append(probe)
+  const said = getComputedStyle(probe).color
+  probe.remove()
+  return (said.match(/[\\d.]+/g) ?? []).slice(0, 3).map(Number)
+}
+"""
 def luminance(colour: tuple[float, ...]) -> float:
     def channel(one: float) -> float:
         value = one / 255
@@ -127,11 +137,18 @@ def fresh(browser: Browser, scheme: str) -> Page:
     DRIVE.settled(page)
     return page
 def open_site(page: Page, name: str) -> None:
+    page.evaluate(
+        "() => { const ws = window.ordenApp.workspace; for (const one of ws.tabs.filter((tab) => tab.kind === 'web')) ws.close(one.id, false) }"
+    )
     address = f"{DRIVE.origin}/glass/{name}.html"
     page.evaluate("(address) => window.ordenApp.workspace.openPage(address)", address)
     wait_for(page, "document.querySelector('.web .card .orden-button')", f"the {name} card")
     page.click(".web .card .orden-button")
-    wait_for(page, f"document.querySelector('iframe[data-web-tab]')?.src?.endsWith('/glass/{name}.html')", "the frame")
+    wait_for(
+        page,
+        f"[...document.querySelectorAll('iframe[data-web-tab]')].some((one) => one.src.endsWith('/glass/{name}.html'))",
+        "the frame",
+    )
     wait_for(page, "document.querySelector('.webbar.grounded')", f"the {name} page's colour on its bar")
     if name in LATE:
         wait_for(
@@ -172,6 +189,13 @@ def drive(browser: Browser) -> None:
                     say(f"ok   {label} the frame is {'dark' if dark else 'light'}: {seen[:3]}")
                 else:
                     wrong(f"{label} the frame {seen[:3]} is not as {'dark' if name in DARK else 'light'} as the page")
+            if name in DARK | LIGHT:
+                edge = tuple(page.evaluate(EDGE))
+                light_edge = luminance(edge) > MIDDLE
+                if light_edge == (name in LIGHT):
+                    say(f"ok   {label} the card's edge is drawn from the frame: {edge}")
+                else:
+                    wrong(f"{label} the card's edge {edge} is not drawn from a frame as {'light' if name in LIGHT else 'dark'} as the page")
             if frame and name in HUED:
                 seen = picture.getpixel((frame[0], frame[1]))
                 if seen[2] - seen[0] >= HUED[name]:
