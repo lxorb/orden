@@ -2,6 +2,7 @@
   import { runCommand } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
   import { dur, slide } from '../../platform/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import {
     GROUPING_NAMES,
     GROUPINGS,
@@ -109,7 +110,10 @@
     </label>
   </form>
   {#if !shown.todos.length}
-    <p class="empty">Nothing to do</p>
+    <div class="empty">
+      <Mascot mood="proud" size={32} />
+      <p>Nothing to do</p>
+    </div>
   {/if}
   <div class="lists" bind:this={box} use:rowKeys={rows}>
     {#each groups as group, at (group.key)}
@@ -191,12 +195,18 @@
     padding: var(--space-2);
   }
   .empty {
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
     padding: var(--space-5) var(--space-2);
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     text-align: center;
+  }
+  .empty p {
+    margin: 0;
   }
   .bar {
     display: flex;
