@@ -408,6 +408,7 @@
     const id = workspace.activeSpaceId
     if (id === arrived) return
     arrived = id
+    if (['scratchpad', 'time', 'ask'].includes(untrack(() => showing))) return
     untrack(() => stack)?.animate(
       [
         { transform: `translateY(${16 * untrack(() => direction)}px)`, opacity: 0 },
