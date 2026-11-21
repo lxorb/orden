@@ -250,6 +250,19 @@ describe('notes', () => {
     await write('/Notes/Idea.md', 'two')
     expect(disk.files.get('/Notes/Idea.md')?.created).toBe(made)
   })
+  test('take the times they are handed, words and pictures alike', async () => {
+    await write('/Notes/Old.md', 'one')
+    await webInvoke('write_bytes', { path: '/Notes/old.png', base64: 'AQI=' })
+    await webInvoke('set_file_times', {
+      path: '/Notes/Old.md',
+      modified: 1_600_000_000_000,
+      created: 1_500_000_000_000,
+    })
+    await webInvoke('set_file_times', { path: '/Notes/old.png', modified: 1_600_000_000_000 })
+    expect(disk.files.get('/Notes/Old.md')).toMatchObject({ modified: 1_600_000_000_000, created: 1_500_000_000_000 })
+    expect(disk.assets.get('/Notes/old.png')?.modified).toBe(1_600_000_000_000)
+    await expect(webInvoke('set_file_times', { path: '/Notes/Gone.md', modified: 1 })).rejects.toThrow()
+  })
 })
 describe('renaming', () => {
   test('takes everything under a folder along', async () => {

@@ -153,6 +153,15 @@ describe('the call to the crate, on a desktop', () => {
     expect(tree.children[0]?.children[0]?.path).toBe(`${root}\\Work\\Plan.md`)
     expect(await internalInvoke('file_stamp', { path: `${root}\\Work\\Plan.md` }, all())).toEqual({
       modified: 1001,
+      created: 1001,
+      len: 7,
+    })
+    const times = { path: `${root}\\Work\\Plan.md`, modified: 1_600_000_000_000, created: 1_500_000_000_000 }
+    expect((await import('./roots')).forInternal('set_file_times', times)).toBe(true)
+    await internalInvoke('set_file_times', times, all())
+    expect(await internalInvoke('file_stamp', { path: times.path }, all())).toEqual({
+      modified: 1_600_000_000_000,
+      created: 1_500_000_000_000,
       len: 7,
     })
     expect(await internalInvoke('file_stamp', { path: `${root}\\Work` }, all())).toBeNull()

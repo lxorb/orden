@@ -26,6 +26,18 @@ describe('a folder Orden keeps', () => {
     expect(bytes.texts.get('k1.md')).toBe('ship it')
     expect(await folder.readText('work/plan.md')).toBe('ship it')
   })
+  test('takes the times a file is handed, and keeps them when opened again', async () => {
+    const bytes = new MemoryBytes()
+    const folder = await opened(bytes)
+    await folder.write('Old.md', 'one')
+    await folder.write('Old.md', 'two')
+    await folder.stamp('old.md', 1_600_000_000_000, 1_500_000_000_000)
+    expect(await folder.at('Old.md')).toMatchObject({ modified: 1_600_000_000_000, made: 1_500_000_000_000 })
+    await folder.flush()
+    const again = await opened(bytes)
+    expect(await again.at('Old.md')).toMatchObject({ modified: 1_600_000_000_000, made: 1_500_000_000_000 })
+    await expect(folder.stamp('Gone.md', 1)).rejects.toThrow('no file at Gone.md')
+  })
   test('a write that lands while its note is renamed goes into the renamed note and leaves no second name on it', async () => {
     let release = (): void => undefined
     const held = new Promise<void>((done) => (release = done))

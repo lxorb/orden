@@ -373,6 +373,18 @@ export class InternalFolder {
       })
     })
   }
+  async stamp(path: string, modified: number, made?: number): Promise<void> {
+    return this.op(() =>
+      this.change(() => {
+        const there = this.paths.get(this.keyOf(path))
+        if (!there?.entry.key) throw new Error(`no file at ${path}`)
+        const entry = { ...there.entry, modified, made: made ?? there.entry.made }
+        this.paths.set(this.keyOf(there.path), { path: there.path, entry })
+        this.stamps.delete(there.path)
+        return [{ kind: 'modified', path: there.path, dir: false, size: entry.size, mtime: modified, id: entry.key }]
+      }),
+    )
+  }
   async adopt(path: string, what: Uint8Array | null): Promise<void> {
     return this.op(async () => {
       await this.fresh()
