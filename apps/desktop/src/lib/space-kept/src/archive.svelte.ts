@@ -38,16 +38,16 @@ function read(saved: unknown): Record<string, Held> {
 const EMPTY: ArchiveMap = {}
 export class Archive {
   private keeping = new Kept(STORAGE_KEY, read)
-  private get spaces(): Record<string, Held> {
+  private get spaces() {
     return this.keeping.value
   }
-  private set spaces(value: Record<string, Held>) {
+  private set spaces(value) {
     this.keeping.value = value
   }
   private live = new WeakMap<ArchiveMap, ReadonlySet<string>>()
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
   constructor(private readonly root: () => string | null) {}
-  reread(): void {
+  reread() {
     this.keeping.reread()
   }
   of(root: string): ArchiveMap {

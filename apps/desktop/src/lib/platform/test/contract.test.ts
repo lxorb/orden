@@ -13,6 +13,8 @@ import {
   folderOf,
   fromBase64,
   hiddenUnder,
+  imagePath,
+  imageUrl,
   insideOnly,
   isNative,
   isReserved,
@@ -322,6 +324,23 @@ describe('a request in time', () => {
     } finally {
       globalThis.fetch = was
     }
+  })
+})
+describe('a picture the account keeps', () => {
+  const HASH = 'ab'.repeat(32)
+  test('is fetched from the account in every form a note has written it', () => {
+    const note = '/s/Plan.md'
+    expect(imageUrl(`https://orden.so/i/${HASH}.png`, note)).toBe(`https://orden.so/i/${HASH}.png`)
+    expect(imageUrl(`https://orden.so/i/${HASH}`, note)).toBe(`https://orden.so/i/${HASH}`)
+    expect(imageUrl(`https://nibeditor.com/i/${HASH}`, note)).toBe(`https://orden.so/i/${HASH}`)
+    expect(imageUrl(`https%3A//orden.so/i/${HASH}.png`, note)).toBe(`https://orden.so/i/${HASH}.png`)
+    expect(imagePath(`https%3A//orden.so/i/${HASH}.png`, note)).toBeNull()
+  })
+  test('and a picture elsewhere is fetched where it is', () => {
+    const note = '/s/Plan.md'
+    expect(imageUrl(`https://example.com/i/${HASH}`, note)).toBe(`https://example.com/i/${HASH}`)
+    expect(imageUrl('https%3A//example.com/pic.png', note)).toBe('https://example.com/pic.png')
+    expect(imageUrl('data:image/png;base64,AA', note)).toBe('data:image/png;base64,AA')
   })
 })
 describe('a dialog answered ahead', () => {

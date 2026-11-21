@@ -1,9 +1,9 @@
 import { heardElsewhere, isRecord, keep, parsed, storedText } from './stored'
 
-const ordered = (_: string, one: unknown): unknown =>
-  isRecord(one) ? Object.fromEntries(Object.entries(one).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : one
+const ordered = (_: string, one: unknown) =>
+  isRecord(one) ? Object.fromEntries(Object.entries(one).sort(([a], [b]) => a.localeCompare(b))) : one
 const textOf = (value: unknown): string | undefined => JSON.stringify(value, ordered)
-function joined(mine: unknown[], base: unknown[], theirs: unknown[]): unknown[] {
+function joined(mine: unknown[], base: unknown[], theirs: unknown[]) {
   const ours = mine.map(textOf)
   const was = base.map(textOf)
   const held = theirs.map(textOf)
@@ -30,8 +30,8 @@ export class Kept<T> {
   value = $state.raw<T>(undefined as T)
   private text: string | null
   constructor(
-    private readonly key: string,
-    private readonly read: (saved: unknown) => T,
+    private key: string,
+    private read: (saved: unknown) => T,
     heard?: () => void,
   ) {
     this.text = storedText(key)
@@ -40,7 +40,7 @@ export class Kept<T> {
       if (this.reread()) heard?.()
     })
   }
-  reread(): boolean {
+  reread() {
     const now = storedText(this.key)
     if (now === this.text) return false
     const was = this.value
@@ -49,7 +49,7 @@ export class Kept<T> {
     this.text = now
     return textOf(this.value) !== textOf(was)
   }
-  write(): void {
+  write() {
     this.reread()
     const text = JSON.stringify(this.value)
     this.text = keep(this.key, text) ? text : storedText(this.key)

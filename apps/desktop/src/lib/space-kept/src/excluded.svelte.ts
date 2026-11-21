@@ -48,14 +48,14 @@ function under(path: string, excluded: string, root?: string): boolean {
 export class Excluded {
   private keeping = new Kept(STORAGE_KEY, read)
   private offering: string[] = []
-  private get spaces(): Record<string, Held> {
+  private get spaces() {
     return this.keeping.value
   }
-  private set spaces(value: Record<string, Held>) {
+  private set spaces(value) {
     this.keeping.value = value
   }
   constructor(private readonly root: () => string | null) {}
-  reread(): void {
+  reread() {
     this.keeping.reread()
   }
   of(root: string): string[] {
