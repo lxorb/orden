@@ -494,7 +494,7 @@
   },
   {
     "name": "list_notes",
-    "description": "The notes in a space, one path a line: notes, canvases, page notes, PDFs and web notes.",
+    "description": "The notes and folders in a space, one path a line, a folder ending in /: notes, canvases, page notes, PDFs, web notes and folders, empty ones too.",
     "inputSchema": {
       "type": "object",
       "properties": {

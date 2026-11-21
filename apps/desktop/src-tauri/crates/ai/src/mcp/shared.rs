@@ -12,7 +12,7 @@ pub fn text(tool: &str, args: &Value, result: &Value) -> Option<String> {
     let path = || words(args, "path");
     Some(match tool {
         "list_spaces" => lines(result, |row| field(row, "name"), "No spaces yet."),
-        "list_notes" => lines(result, |row| field(row, "path"), "No notes yet."),
+        "list_notes" => lines(result, listed, "No notes yet."),
         "read_note" if args.get("include").is_none() => words(result, "text"),
         "search_notes" => lines(
             result,
@@ -54,6 +54,11 @@ fn lines(result: &Value, row: impl Fn(&Value) -> Option<String>, none: &str) -> 
         rows.join("\n")
     }
 }
+fn listed(row: &Value) -> Option<String> {
+    let path = field(row, "path")?;
+    let folder = row.get("kind").and_then(Value::as_str) == Some("folder");
+    Some(if folder && !path.ends_with('/') { format!("{path}/") } else { path })
+}
 fn field(row: &Value, key: &str) -> Option<String> {
     row.as_str().or_else(|| row.get(key).and_then(Value::as_str)).map(str::to_owned)
 }
@@ -82,6 +87,20 @@ mod tests {
             Some("plan.md\na/b.md")
         );
         assert_eq!(text("list_notes", &json!({}), &json!([])).as_deref(), Some("No notes yet."));
+        assert_eq!(
+            text(
+                "list_notes",
+                &json!({}),
+                &json!([
+                    { "path": "Empty", "kind": "folder" },
+                    { "path": "Plans/", "kind": "folder" },
+                    { "path": "Plans/a.md", "kind": "note" },
+                    { "path": "README", "kind": "note" }
+                ])
+            )
+            .as_deref(),
+            Some("Empty/\nPlans/\nPlans/a.md\nREADME")
+        );
         assert_eq!(
             text(
                 "read_note",
