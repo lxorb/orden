@@ -1,6 +1,7 @@
 import { isRecord } from '../../platform/src/api'
+import { type Device, NETWORKS } from './minutes'
 
-export interface Sensed {
+export interface Sensed extends Partial<Device> {
   idleMs: number | null
   front: boolean | null
   app: string | null
@@ -28,6 +29,15 @@ export function sensedOf(value: unknown): Sensed | null {
     app: appOf(value.app),
     lid: flagOr(value.lid),
     locked: flagOr(value.locked),
+    cpu: numberOr(value.cpu),
+    memory: numberOr(value.memory),
+    battery: numberOr(value.battery),
+    charging: flagOr(value.charging),
+    ac: flagOr(value.ac),
+    screen: flagOr(value.screen),
+    online: flagOr(value.online),
+    network: NETWORKS.find((kind) => kind === value.network) ?? null,
+    boot: numberOr(value.boot),
   }
 }
 export const withIdle = (said: Sensed, idleMs: number): Sensed => (said.idleMs === null ? { ...said, idleMs } : said)

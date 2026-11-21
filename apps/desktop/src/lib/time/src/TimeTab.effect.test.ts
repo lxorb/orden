@@ -366,3 +366,36 @@ test('Year sits between Month and Custom and covers the year, and only a single 
   pressed(radios().find((one) => one.textContent.trim() === 'Day'))
   expect(schedule()).not.toBeNull()
 })
+test('the device card sums what this computer said of itself, and stays away when it said nothing', async () => {
+  shown(TimeTab, { tab: tab() })
+  await new Promise((done) => setTimeout(done, 0))
+  flushSync()
+  expect(target.querySelector('[data-time-device-card]')).toBeNull()
+  close?.()
+  target.replaceChildren()
+  time.keepMinutes(
+    Array.from({ length: 30 }, (_, index) => ({
+      at: at(9) + index * M,
+      active: 30,
+      samples: 12,
+      lid: true,
+      locked: false,
+      battery: 0.9 - index * 0.01,
+      ac: false,
+      cpu: 0.25,
+      memory: 0.5,
+      online: true,
+      boot: at(7),
+    })),
+  )
+  shown(TimeTab, { tab: tab() })
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('[data-time-device-card]')).not.toBeNull()
+  })
+  const row = (name: string) =>
+    target.querySelector(`[data-device-row="${name}"]`)?.textContent.replace(/\s+/g, ' ').trim()
+  expect(row('Battery')).toContain('61%')
+  expect(row('On battery')).toContain(length(30 * M))
+  expect(row('CPU')).toContain('25%')
+})

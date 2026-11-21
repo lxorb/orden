@@ -3,7 +3,7 @@ import { sync } from '../../sync-store/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { timeOn } from '../../gates/src/api'
-import { SAMPLE_EVERY } from './minutes'
+import { NO_DEVICE, SAMPLE_EVERY } from './minutes'
 import { appIcons } from './app-icons.svelte'
 import { Sampler } from './sampler'
 import { type Sensed, sensedOf, withIdle } from './sensed'
@@ -49,6 +49,8 @@ const near = (): Sensed => ({
   app: null,
   lid: null,
   locked: null,
+  ...NO_DEVICE,
+  online: navigator.onLine,
 })
 const sampler = new Sampler({
   asked: async () => {
