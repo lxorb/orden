@@ -16,7 +16,6 @@ import {
   setEquationNumbers,
   setFocusMode,
   setHeadingNumbers,
-  setLigatures,
   setReadOnlyMode,
   setRightToLeft,
   setSourceMode,
@@ -194,7 +193,6 @@ const DEFAULTS: ModeSettings = {
   equationNumbers: false,
   spellcheck: false,
   closeBrackets: true,
-  ligatures: 'off',
   vim: false,
 }
 const editorClasses = (state: EditorState): string[] =>
@@ -210,7 +208,6 @@ describe('the classes the stylesheet works from', () => {
   const modes: [string, (view: EditorView, on: boolean) => void, string][] = [
     ['focus mode', setFocusMode, 'orden-focus-mode'],
     ['typewriter mode', setTypewriterMode, 'orden-typewriter-mode'],
-    ['ligatures', (view, on) => setLigatures(view, on ? 'all' : 'off'), 'orden-ligatures'],
     ['numbered headings', setHeadingNumbers, 'orden-numbered'],
     ['code line numbers', setCodeLineNumbers, 'orden-line-numbers'],
     ['right to left', setRightToLeft, 'orden-rtl'],
