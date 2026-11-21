@@ -90,7 +90,7 @@ describe('the Chats view', () => {
     expect((await messagesFor('plan')).map((one) => one.message.id)).toEqual(['m1', 'm3'])
     const panel = readFileSync(join(import.meta.dirname, '../src/view/ChatsPanel.svelte'), 'utf8')
     expect(panel).toMatch(/messagesFor\(asked\)/)
-    expect(panel).toMatch(/\{#each hits as one/)
+    expect(panel).toMatch(/\{#each hitsHere as one/)
   })
 })
 describe('what one account leaves behind (#2167)', () => {
