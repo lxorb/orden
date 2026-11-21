@@ -897,6 +897,7 @@ class Chat implements Panel {
     cut = false,
   ): Promise<Ended> {
     if (isDeleted(thread.id) && (await staysDeleted(thread.id))) return { stop: 'stopped', turn: null, usage: null }
+    await this.fitModel(thread, provider)
     const engine = await engineOf(provider.kind)
     if (cut) engine.rewound?.(thread)
     const ended: Ended = { stop: 'end', turn: null, usage: null }
@@ -1083,6 +1084,20 @@ class Chat implements Panel {
         if (thread === this.open) this.trouble = message(error, 'The model did not answer.')
       })
       .finally(() => void this.ended(thread, stopper, true, stop))
+  }
+  retryWith(provider: string, thread = this.open): void {
+    const listed = ai.provider(provider)
+    if (listed) this.retry({ provider, id: modelFor(listed) }, thread)
+  }
+  private async fitModel(thread: Thread, provider: Provider): Promise<void> {
+    const known = this.models[provider.id] ?? (await this.loadModels(provider).catch(() => []))
+    if (!known.length || known.some((one) => one.id === thread.model)) return
+    const chosen = modelFor(provider)
+    const model = known.find((one) => one.id === chosen) ?? known[0]
+    if (!model) return
+    thread.model = model.id
+    thread.effort = within(effortFor(provider.id, model.id), model.efforts)
+    thread.usage = { ...thread.usage, window: model.window ?? null }
   }
   waitForReset(on: boolean): void {
     const thread = this.open

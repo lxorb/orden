@@ -2159,3 +2159,32 @@ describe('a chat started outside the panel', () => {
     expect(chat.thread?.mode).toBe('plan')
   })
 })
+describe('a chat whose provider changed under it', () => {
+  test('is sent with a model that provider knows, not the one it had before', async () => {
+    const chat = await asked()
+    const thread = chat.thread
+    if (!thread) throw new Error('no chat')
+    thread.model = 'default'
+    const listed = engine.models
+    engine.models = () =>
+      Promise.resolve([{ id: 'm', name: 'M', window: 1_000, efforts: ['auto'], images: false, fast: false }]) as never
+    try {
+      engine.send.mockClear()
+      chat.send('go on')
+      await waitFor(() => expect(engine.send).toHaveBeenCalled())
+      expect(engine.send.mock.calls[0]?.[0].model).toBe('m')
+    } finally {
+      engine.models = listed
+    }
+  })
+  test('is asked again with another provider through retryWith, its models listed or not', async () => {
+    const chat = await asked()
+    await waitFor(() => expect(chat.thread).not.toBeNull())
+    chat.send('go on')
+    await waitFor(() => expect(chat.busy).toBe(false))
+    engine.send.mockClear()
+    chat.retryWith('p')
+    await waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    expect(engine.send.mock.calls[0]?.[0].provider).toBe('p')
+  })
+})

@@ -202,6 +202,31 @@ describe('a call made and answered', () => {
     })
     expect(sent[1]?.body.model).toBe('claude-sonnet-5')
   })
+  test('a chat continued with another provider is told it reads the whole chat again', async () => {
+    answers = [stream('anthropic-2'), stream('anthropic-2')]
+    const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'auto', 'approve')
+    thread.turns.push(
+      { id: 'u0', role: 'you', at: 1, parts: [], draft: { text: 'one', attachments: [] } },
+      {
+        id: 'm0',
+        role: 'model',
+        at: 1,
+        parts: [{ kind: 'text', text: 'Herons.' }],
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+      },
+    )
+    thread.provider = 'anthropic'
+    thread.model = 'claude-opus-5-5'
+    await send(thread, 'two')
+    expect(thread.turns[3]?.parts[0]).toEqual({
+      kind: 'notice',
+      code: 'model',
+      text: 'Continued with Claude: it reads the whole chat again',
+    })
+    await send(thread, 'three')
+    expect(thread.turns[5]?.parts.some((one) => one.kind === 'notice')).toBe(false)
+  })
 })
 describe('a tool the thread is not given', () => {
   test('is not listed, and a call to it never reaches the crate', async () => {
