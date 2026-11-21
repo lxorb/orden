@@ -538,3 +538,14 @@ describe('a request to an AI provider', () => {
     expect(providerFetched).toEqual(['http://x/v1/chat/completions'])
   })
 })
+describe('the reader’s standing instructions', () => {
+  test('are kept through the keptInstructions door, said under their own line, and nothing once cleared', async () => {
+    const { keptInstructions } = await import('../src/api')
+    const { instructionsKept, standingInstructions } = await keptInstructions()
+    instructionsKept.set('Keep explanations short and concise.')
+    expect(standingInstructions()).toBe("The reader's standing instructions:\nKeep explanations short and concise.")
+    instructionsKept.set('')
+    expect(instructionsKept.text).toBe('')
+    expect(standingInstructions()).toBe('')
+  })
+})

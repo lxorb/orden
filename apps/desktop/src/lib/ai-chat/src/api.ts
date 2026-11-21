@@ -26,6 +26,7 @@ export const helperRun = () => import('./helpers/run')
 export const chatCommands = () => import('./commands/index')
 export const sidebarParts = () => import('./parts')
 export const todoWithAi = () => import('./store/do-todo')
+export const keptInstructions = () => import('./store/standing.svelte')
 export const rewritingStore = () => import('./rewriting.svelte')
 export const loadRewriteSheet = () => import('./RewriteSheet.svelte')
 const FRESH_MARK = 'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'

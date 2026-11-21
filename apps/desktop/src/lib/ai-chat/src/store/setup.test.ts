@@ -23,7 +23,8 @@ vi.mock('../../../protect/src/api', () => ({
   protection: { agentsMay: (path: string) => !shut.has(path) },
 }))
 vi.mock('../commands/instructions', () => ({ instructionsFor: () => Promise.resolve('') }))
-const { instructionsOf } = await import('./setup')
+const { instructionsOf, instructionsSent } = await import('./setup')
+const { instructionsKept } = await import('./standing.svelte')
 test("sends the reader's own space's instructions as they are", async () => {
   expect(await instructionsOf(newThread('own', 'p', 'm'))).toBe('Write in English.')
 })
@@ -43,5 +44,25 @@ test('leaves out an instructions note behind a lock agents may not read', async 
     )
   } finally {
     shut.clear()
+  }
+})
+test("sends the reader's standing instructions first, counts them, and nothing once they are cleared", async () => {
+  const { memoryStorage } = await import('../../../../../test/disk')
+  vi.stubGlobal('localStorage', memoryStorage())
+  try {
+    instructionsKept.set('Keep explanations short and concise.')
+    const thread = newThread('own', 'p', 'm')
+    const sent = await instructionsOf(thread)
+    expect(sent).toBe("The reader's standing instructions:\nKeep explanations short and concise.\n\nWrite in English.")
+    expect(instructionsSent(thread.id)).toBe(sent)
+    expect(localStorage.getItem('orden:ai-standing-instructions')).toBe('Keep explanations short and concise.')
+    instructionsKept.set('Answer in German.')
+    expect(await instructionsOf(thread)).toContain('Answer in German.')
+    instructionsKept.set('   ')
+    expect(instructionsKept.text).toBe('')
+    expect(await instructionsOf(thread)).toBe('Write in English.')
+    expect(localStorage.getItem('orden:ai-standing-instructions')).toBeNull()
+  } finally {
+    vi.unstubAllGlobals()
   }
 })

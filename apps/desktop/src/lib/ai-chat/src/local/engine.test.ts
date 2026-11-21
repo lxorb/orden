@@ -51,6 +51,7 @@ vi.mock('../../../platform/src/tauri', async (original) => ({
   isDesktop: true,
 }))
 const { createLocalEngine } = await import('./engine')
+const { instructionsKept, standingInstructions } = await import('../store/standing.svelte')
 const { DEFAULT_WINDOW: SEED_WINDOW } = await import('../chat/window')
 const { estimateText } = await import('../chat/usage')
 const CLAUDE: Provider & { kind: 'claude-code' } = {
@@ -954,5 +955,35 @@ describe('a chat continued with a program after another provider', () => {
       code: 'model',
       text: 'Continued with Claude Code: it reads the whole chat again',
     })
+  })
+})
+describe('the reader’s standing instructions in a program’s session', () => {
+  test('seed the session, and a change opens a fresh one seeded with the new words', async () => {
+    const built = createLocalEngine('claude-code', {
+      provider: (id) => (id === CLAUDE.id ? CLAUDE : null),
+      answers: QUIET,
+      instructions: () => Promise.resolve(standingInstructions()),
+    })
+    const on = thread(CLAUDE)
+    const seedOf = (at: number) => {
+      const first = opened[at]?.said[0]?.text
+      return typeof first === 'string' ? first : ''
+    }
+    instructionsKept.text = 'Keep explanations short and concise.'
+    try {
+      await send(CLAUDE, on, 'one', built)
+      expect(seedOf(0)).toContain("The reader's standing instructions:\nKeep explanations short and concise.")
+      await send(CLAUDE, on, 'two', built)
+      expect(opened).toHaveLength(1)
+      instructionsKept.text = 'Answer in German.'
+      await send(CLAUDE, on, 'three', built)
+      expect(opened).toHaveLength(2)
+      expect(seedOf(1)).toContain('Answer in German.')
+      instructionsKept.text = ''
+      await send(CLAUDE, on, 'four', built)
+      expect(seedOf(2)).not.toContain('standing instructions')
+    } finally {
+      instructionsKept.text = ''
+    }
   })
 })
