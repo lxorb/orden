@@ -364,7 +364,7 @@ mod tests {
       "main",
       Event::NavigationStarted { url: url.clone() },
     );
-    apply(&barrier, "main", Event::NavigationFailed { url });
+    apply(&barrier, "main", Event::NavigationFailed { url, code: -3 });
     assert!(barrier.ready_generation().is_none());
     apply(
       &barrier,

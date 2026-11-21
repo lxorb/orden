@@ -99,6 +99,7 @@ test('reads how a page arrived, and why it did not', () => {
     ...plain,
     failure: 'unreachable',
   })
+  expect(readSaid({ ...arrived, failure: 'offline', bare: true })).toEqual({ ...plain, failure: 'offline', bare: true })
   expect(readSaid({ ...arrived, failure: 'x' })).toEqual(plain)
   expect(readSaid({ ...arrived, failure: 'other', bare: true, reason: 'No such server.' })).toEqual({
     ...arrived,

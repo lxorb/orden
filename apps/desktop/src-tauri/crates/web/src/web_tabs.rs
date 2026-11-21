@@ -594,6 +594,11 @@ fn reporting(
             });
         }
     });
+    let failing = (app.clone(), tab.to_string());
+    let builder = crate::engine::fails(
+        builder,
+        Box::new(move |url, code| crate::web_page::failed(&failing.0, &failing.1, url, code)),
+    );
     let titled = tab.to_string();
     let naming = app.clone();
     builder.on_document_title_changed(move |view, title| {

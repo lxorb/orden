@@ -2,6 +2,7 @@
   "name": "web-tab",
   "layer": "features",
   "dependsOn": [
+    "mascot",
     "contracts",
     "accounts",
     "back-swipe",

@@ -30,6 +30,7 @@ const upgrade = { tried: 'https://example.com', fallback: 'http://example.com' }
 test('nothing answering over https goes to http', () => {
   expect(settled(upgrade, 'https://example.com/', 'unreachable')).toBe('fallback')
   expect(settled(upgrade, 'https://www.example.com/', 'unreachable')).toBe('fallback')
+  expect(settled(upgrade, 'https://example.com/', 'slow')).toBe('fallback')
 })
 test('a wrong certificate is shown, never stepped round', () => {
   expect(settled(upgrade, 'https://example.com/', 'certificate')).toBe('done')
@@ -37,6 +38,8 @@ test('a wrong certificate is shown, never stepped round', () => {
 test('a page that arrived, or failed for another reason, settles it', () => {
   expect(settled(upgrade, 'https://example.com/', null)).toBe('done')
   expect(settled(upgrade, 'https://example.com/', 'other')).toBe('done')
+  expect(settled(upgrade, 'https://example.com/', 'offline')).toBe('done')
+  expect(settled(upgrade, 'https://example.com/', 'unknown')).toBe('done')
   expect(settled(upgrade, 'http://example.com/', 'unreachable')).toBe('done')
 })
 test('another site finishing as the tab left it is not the upgrade', () => {

@@ -634,6 +634,7 @@ fn first_of_all(handle: &tauri::AppHandle) {
         dialog_answer: engine::dialog_answer,
         permissions: engine::permissions,
         permission_answer: engine::permission_answer,
+        fails: engine::fails,
         zoom: engine::zoom,
         extensions_cdp: tauri_runtime_cef::extensions_cdp,
         history: engine::history::history,

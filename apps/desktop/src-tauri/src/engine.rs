@@ -214,6 +214,18 @@ pub(crate) fn permissions(
     use tauri_runtime_cef::WebviewBuilderCefExt as _;
     page.on_permission_ask(move |said| serde_json::to_value(said).is_ok_and(&*permissions))
 }
+pub(crate) fn fails(
+    page: orden_web::engine::Page,
+    fails: orden_web::engine::Fails,
+) -> orden_web::engine::Page {
+    use tauri_runtime_cef::{FrameEventKind, WebviewBuilderCefExt as _};
+    page.on_frame_event(move |event| {
+        if let (true, FrameEventKind::NavigationFailed { url, code }) = (event.is_main, &event.kind)
+        {
+            fails(url.as_str(), *code);
+        }
+    })
+}
 pub(crate) fn permission_answer(id: u64, allow: bool) -> bool {
     tauri_runtime_cef::answer_permission(id, allow)
 }

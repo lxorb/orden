@@ -41,8 +41,9 @@ pub enum FrameEventKind {
   NavigationStarted { url: url::Url },
   /// A document committed, before its contents begin loading.
   DocumentCommitted { url: url::Url },
-  /// Navigation failed or was cancelled. This is not a document-ready signal.
-  NavigationFailed { url: url::Url },
+  /// Navigation failed or was cancelled, with Chromium's net error code (`-3` is
+  /// a cancel). This is not a document-ready signal.
+  NavigationFailed { url: url::Url, code: i32 },
   /// An address changed, including a same-document history or fragment change.
   AddressChanged { url: url::Url },
   /// The browser assigned this frame as its main frame.

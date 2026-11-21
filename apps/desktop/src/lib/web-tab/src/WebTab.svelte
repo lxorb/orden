@@ -17,6 +17,8 @@
   import { searchEngine } from './search-engine.svelte'
   import { unopened, webAddress } from '@orden/scan/typed'
   import { upgradeOf } from './upgrade'
+  import { failedLook } from './failed'
+  import { Mascot } from '../../mascot/src/api'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
   import { droppedOnPage, leftPage, overPage } from './carry-in'
@@ -142,6 +144,12 @@
       watching.unobserve(room)
       unshift()
     }
+  })
+  $effect(() => {
+    if (!page.crashed || page.failure?.failure !== 'offline') return
+    const back = () => void pages.step(tab.id, 'reload')
+    addEventListener('online', back)
+    return () => removeEventListener('online', back)
   })
   $effect(() => heldOrLet(pages.still, page.heldAt))
   $effect(() => hushArrivals(pages.still))
@@ -696,12 +704,11 @@
       />
     {/await}
   {:else if isDesktop && page.crashed}
+    {@const failed = failedLook(page.failure?.failure ?? null, plainOrigin(address))}
     <div class="card">
-      <p class="name">{page.title || plainOrigin(address)}</p>
+      <Mascot mood={failed.mood} />
+      <p class="name">{failed.line}</p>
       <p class="site">{address}</p>
-      {#if page.failure?.reason}
-        <p class="why">{page.failure.reason}</p>
-      {/if}
       <div class="rows">
         <button class="orden-button" onclick={() => void pages.step(tab.id, 'reload')}> Reload </button>
         <button class="orden-button is-quiet" onclick={() => void openExternal(address)}> Open in the browser </button>
@@ -860,11 +867,5 @@
     margin: 0;
     font-size: var(--text-sm);
     overflow-wrap: anywhere;
-  }
-  .why {
-    max-width: 36em;
-    margin: 0;
-    color: var(--text);
-    font-size: var(--text-sm);
   }
 </style>

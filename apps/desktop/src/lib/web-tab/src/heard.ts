@@ -22,7 +22,15 @@ export type Said = { tab: string } & (
     }
   | { said: 'crashed' }
 )
-const FAILURES: readonly string[] = ['unreachable', 'certificate', 'other'] satisfies Failure[]
+const FAILURES: readonly string[] = [
+  'offline',
+  'unknown',
+  'unreachable',
+  'slow',
+  'certificate',
+  'blocked',
+  'other',
+] satisfies Failure[]
 const STEPS: readonly string[] = ['in', 'out', 'reset'] satisfies ZoomStep[]
 export interface NotArrived {
   url: string

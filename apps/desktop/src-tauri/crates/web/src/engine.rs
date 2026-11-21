@@ -20,6 +20,7 @@ pub type Zooms = Box<dyn Fn(crate::web_page::Step) + Send + Sync>;
 pub type Menus = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
 pub type Dialogs = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
 pub type Permissions = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
+pub type Fails = Box<dyn Fn(&str, i32) + Send + Sync>;
 pub type Page = WebviewBuilder<orden_base::Engine>;
 pub type ExtensionsCdp = fn(&str, &Value, std::time::Duration) -> Result<Value, String>;
 pub type Entries = (Vec<String>, usize);
@@ -39,6 +40,7 @@ pub struct Engine {
     pub dialog_answer: fn(u64, bool, Option<String>) -> bool,
     pub permissions: fn(Page, Permissions) -> Page,
     pub permission_answer: fn(u64, bool) -> bool,
+    pub fails: fn(Page, Fails) -> Page,
     pub zoom: fn(&PlatformWebview) -> f64,
     pub extensions_cdp: ExtensionsCdp,
     pub history: fn(&PlatformWebview) -> Option<Entries>,
@@ -77,6 +79,12 @@ pub fn history(platform: &PlatformWebview) -> Option<Entries> {
 }
 pub fn engine() -> Result<&'static Engine, String> {
     ENGINE.get().ok_or_else(|| "the engine has not started".to_owned())
+}
+pub fn fails(page: Page, fails: Fails) -> Page {
+    match engine() {
+        Ok(engine) => (engine.fails)(page, fails),
+        Err(_) => page,
+    }
 }
 pub fn zooms(page: Page, zooms: Zooms) -> Page {
     match engine() {
