@@ -458,8 +458,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-xs);
   }
-  .tiles.is-floating + .orden-section,
-  .bookmarks:has(> .is-floating:only-child) + :global(.orden-section) {
+  .tiles.is-floating + .orden-section {
     margin-top: 0;
     visibility: hidden;
   }

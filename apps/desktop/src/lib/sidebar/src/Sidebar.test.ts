@@ -12,6 +12,7 @@ vi.mock('../../surfaces/src/api', () => ({
   phoneTabsBar: () => new Promise(() => undefined),
   phoneYou: () => new Promise(() => undefined),
   showFeedback: () => undefined,
+  syncMark: () => new Promise(() => undefined),
 }))
 const { workspace } = await import('../../workspace/src/api')
 type Entry = import('../../workspace/src/api').Entry
@@ -150,6 +151,25 @@ describe('the head of the list', () => {
       expect(html, device).not.toMatch(/class="hunt\b/)
       expect(html, device).not.toMatch(/role="tab"[^>]*aria-label="Search"/)
     }
+  })
+  test('has no Files title over the files, on a desktop or a phone', () => {
+    open('# Head\n')
+    const tree = workspace.tree
+    const entry = (path: string, children: Entry[] = []) => ({
+      name: path.split('/').pop() ?? path,
+      path,
+      is_dir: children.length > 0,
+      modified: 0,
+      created: 0,
+      children,
+    })
+    workspace.tree = entry('/space', [entry('/space/Kestrel.md')])
+    for (const device of ['desktop', 'phone'] as const) {
+      const html = drawn('tree', device)
+      expect(html, device).toContain('Kestrel')
+      expect(html, device).not.toMatch(/class="orden-section[^"]*">Files</)
+    }
+    workspace.tree = tree
   })
   test('has no new note button beside the space, on a desktop or a phone', () => {
     open('# Head\n')
