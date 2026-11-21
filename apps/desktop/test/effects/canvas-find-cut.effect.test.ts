@@ -100,8 +100,12 @@ test('a find goes to a locked card it finds, though a locked card cannot be pick
   )
   const tab = new Tab(note, 'pane')
   const measured = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 800, 600))
+  const wide = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(800)
+  const tall = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(600)
   onTestFinished(() => {
     measured.mockRestore()
+    wide.mockRestore()
+    tall.mockRestore()
   })
   const target = document.createElement('div')
   document.body.append(target)

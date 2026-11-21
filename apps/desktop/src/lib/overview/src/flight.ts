@@ -1,4 +1,4 @@
-import { type Feel, FLIGHT, land, PIXELS, resting, SHARE, type Spring, spring, step } from './spring'
+import { type Feel, FLIGHT, land, PIXELS, resting, SHARE, type Spring, spring, step } from '../../springs/src/api'
 
 export interface Pose {
   x: number
