@@ -180,7 +180,12 @@ pub(crate) fn open() -> Option<Vec<(String, Option<String>)>> {
     return None;
   }
   switches.insert(0, ("--remote-debugging-pipe".to_string(), None));
+  switches.push(unmarked());
   Some(switches)
+}
+
+fn unmarked() -> (String, Option<String>) {
+  ("--disable-blink-features".to_string(), Some("AutomationControlled".to_string()))
 }
 
 #[cfg(unix)]
@@ -359,6 +364,17 @@ fn io_pipes(reads: usize, writes: usize) -> Option<String> {
 mod tests {
   use super::*;
   use std::io::Cursor;
+
+  #[test]
+  fn the_pipe_never_marks_pages_as_driven_by_automation() {
+    assert_eq!(
+      super::unmarked(),
+      ("--disable-blink-features".to_string(), Some("AutomationControlled".to_string()))
+    );
+    let source = include_str!("browser_pipe.rs");
+    let opening = &source[source.find("pub(crate) fn open()").expect("open")..];
+    assert!(opening[..opening.find("\n}\n").expect("its end")].contains("switches.push(unmarked())"));
+  }
 
   struct Dribble {
     bytes: Vec<u8>,
