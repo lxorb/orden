@@ -1,7 +1,7 @@
 import { oneEdit } from '@orden/markdown/edits'
 import type { MetaPatch } from '@orden/sync-core'
 import { links } from '../../link-index/src/api'
-import { log, isMarkdownPath, samePath, joinPath } from '../../platform/src/api'
+import { invoke, log, isMarkdownPath, samePath, joinPath } from '../../platform/src/api'
 import { ownKeys } from '../../web-backend/src/api'
 import { type Change, changeOf } from '@orden/scan/search/replace'
 import type { ItemMetaStore } from '../../space-kept/src/api'
@@ -49,6 +49,25 @@ async function moveOwnKeys(root: string, workspace: Notes, signedIn: boolean): P
   }
   if (!mayMove(root, workspace, signedIn)) return
   workspace.itemMeta.setMany(root, patches)
-  if (changes.length) await workspace.replaceInNotes(changes, { throughLocks: true })
+  if (changes.length)
+    await keepingTimes(
+      changes.map((one) => one.path),
+      () => workspace.replaceInNotes(changes, { throughLocks: true }),
+    )
   workspace.itemMeta.markMoved(root)
+}
+interface Stamp {
+  modified: number
+  created?: number
+}
+async function keepingTimes(paths: readonly string[], change: () => Promise<unknown>): Promise<void> {
+  const stamps = new Map<string, Stamp>()
+  for (const path of paths) {
+    const stamp = await invoke<Stamp | null>('file_stamp', { path }).catch(() => null)
+    if (stamp) stamps.set(path, stamp)
+  }
+  await change()
+  for (const [path, { modified, created }] of stamps) {
+    await invoke('set_file_times', { path, modified, ...(created ? { created } : {}) }).catch(() => undefined)
+  }
 }
