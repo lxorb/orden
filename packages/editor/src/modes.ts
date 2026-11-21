@@ -14,7 +14,6 @@ import { enclosing } from './nodes'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
 import { codeThemeEffect } from './code-theme'
-import { ligatures, type LigatureScope } from './ligatures'
 import { once } from './once'
 import { completionEffect } from './completion'
 import { wrapSelection } from './wrap'
@@ -29,7 +28,6 @@ const language = new Compartment()
 const equations = new Compartment()
 const spelling = new Compartment()
 const brackets = new Compartment()
-const glyphs = new Compartment()
 const readOnly = new Compartment()
 const headingNumbers = new Compartment()
 const codeLineNumbers = new Compartment()
@@ -130,7 +128,6 @@ export const modeExtensions = (length = 0): Extension => [
   equations.of(numberEquations.of(false)),
   spelling.of(spellingFor(false)),
   brackets.of(bracketsFor(true)),
-  glyphs.of(ligaturesFor('off')),
   readOnly.of(readOnlyFor(false)),
   headingNumbers.of(headingNumbersFor(false)),
   codeLineNumbers.of(codeLineNumbersFor(false)),
@@ -150,9 +147,6 @@ const previewFor = once((source: boolean): Extension => (source ? [] : livePrevi
 const focusFor = once((on: boolean): Extension => (on ? [focusPlugin, editorClass('orden-focus-mode')] : []))
 const typewriterFor = once((on: boolean): Extension =>
   on ? [typewriterPlugin, editorClass('orden-typewriter-mode')] : [],
-)
-const ligaturesFor = once((scope: LigatureScope): Extension =>
-  scope === 'off' ? [] : [ligatures(scope), editorClass('orden-ligatures')],
 )
 const punctuationFor = once((on: boolean): Extension => (on ? smartPunctuation() : []))
 const headingNumbersFor = once((on: boolean): Extension =>
@@ -252,7 +246,6 @@ export interface ModeSettings {
   spellcheck: boolean
   dictionary?: string | undefined
   closeBrackets: boolean
-  ligatures?: LigatureScope
   vim: boolean
 }
 export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
@@ -270,7 +263,6 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     spelling.reconfigure(spellingFor(settings.spellcheck, settings.dictionary)),
     brackets.reconfigure(bracketsFor(settings.closeBrackets)),
     completionEffect(settings.closeBrackets),
-    glyphs.reconfigure(ligaturesFor(settings.ligatures ?? 'off')),
     headingNumbers.reconfigure(headingNumbersFor(settings.numbers)),
     codeLineNumbers.reconfigure(codeLineNumbersFor(settings.lineNumbers)),
     direction.reconfigure(directionFor(settings.rtl)),
@@ -312,9 +304,6 @@ export function setQuietMarks(view: EditorView, on: boolean) {
 }
 export function setTypewriterMode(view: EditorView, on: boolean) {
   view.dispatch({ effects: typewriter.reconfigure(typewriterFor(on)) })
-}
-export function setLigatures(view: EditorView, scope: LigatureScope) {
-  view.dispatch({ effects: glyphs.reconfigure(ligaturesFor(scope)) })
 }
 export function setSmartPunctuation(view: EditorView, on: boolean) {
   view.dispatch({ effects: punctuation.reconfigure(punctuationFor(on)) })
