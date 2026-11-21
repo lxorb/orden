@@ -65,22 +65,19 @@ export async function listNotes(call: Call): Promise<AgentAnswer> {
   const asked = maybe(call, 'folder')
   const folder = asked === null ? null : judged(asked)
   const kind = maybe(call, 'kind')
-  if (kind !== null && !KINDS.some((one) => one === kind)) {
-    throw new Refused('bad_arguments', `kind is one of ${KINDS.join(', ')}`)
+  if (kind !== null && kind !== 'folder' && !KINDS.some((one) => one === kind)) {
+    throw new Refused('bad_arguments', `kind is one of ${KINDS.join(', ')} or folder`)
   }
   const root = place.space.root
   const archived = workspace.archive.keysOf(root)
   const showArchived = flag(call, 'archived')
-  const rows: { path: string; kind: Kind; modified: number; archived?: true }[] = []
+  const rows: { path: string; kind: Kind | 'folder'; modified: number; archived?: true }[] = []
   const walk = (entry: Entry) => {
     for (const child of entry.children) {
-      if (child.is_dir) {
-        walk(child)
-        continue
-      }
+      if (child.is_dir) walk(child)
       const path = relativeTo(root, child.path)
       if (folder !== null && !path.startsWith(`${folder}/`)) continue
-      const what = kindOf(path)
+      const what = child.is_dir ? 'folder' : kindOf(path)
       if (kind !== null && what !== kind) continue
       const put = coveredBy(archived, path) !== null
       if (put && !showArchived) continue
