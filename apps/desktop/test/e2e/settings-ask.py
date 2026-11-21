@@ -38,11 +38,11 @@ class Model(http.server.BaseHTTPRequestHandler):
         told = next((one["content"] for one in body.get("messages", []) if one.get("role") == "system"), "")
         Model.told.append(told)
         typewriter = idOf(told, "Typewriter mode")
-        ligatures = idOf(told, "Ligatures")
+        attachments = idOf(told, "Attachments")
         words = json.dumps({
             "say": "Typewriter mode is under Editor.",
             "show": [typewriter],
-            "change": [{"id": typewriter, "to": True}, {"id": ligatures, "to": "all"}],
+            "change": [{"id": typewriter, "to": True}, {"id": attachments, "to": "note"}],
         })
         if body.get("stream"):
             self.send_response(200)
@@ -64,7 +64,7 @@ async (base) => {
   ai.setDefault(made.id)
 }
 """
-HELD = "() => ({ typewriter: window.ordenApp.modes.typewriter, ligatures: window.ordenApp.modes.ligatures })"
+HELD = "() => ({ typewriter: window.ordenApp.modes.typewriter, attachments: window.ordenApp.modes.attachments })"
 def waited(page: Page, expression: str, what: str, patience: float = 20) -> bool:
     return DRIVE.waited(page, expression, what, patience)
 def drive(browser: Browser, scheme: str) -> None:
@@ -80,14 +80,14 @@ def drive(browser: Browser, scheme: str) -> None:
     tag = f"{scheme}/"
     shot(page, f"{tag}01-bar")
     page.locator(".asker input").click()
-    page.keyboard.type("Where is typewriter mode? Turn it on, and ligatures everywhere")
+    page.keyboard.type("Where is typewriter mode? Turn it on, and save attachments next to the note")
     page.keyboard.press("Enter")
     if not waited(page, "document.querySelector('.asker .answer')", "the agent's answer"):
         wrong("the ask bar showed no answer")
         page.context.close()
         return
     told = Model.told[-1] if Model.told else ""
-    if "Typewriter mode | switch" not in told or "Ligatures | choice" not in told:
+    if "Typewriter mode | switch" not in told or "Attachments | choice" not in told:
         wrong("the agent was not told the settings it may change")
     said = page.locator(".asker .said").inner_text()
     if "Typewriter mode is under Editor." not in said:
@@ -108,9 +108,9 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(".asker .change", has_text="Typewriter mode").locator("button", has_text="Change").click()
     if not waited(page, f"({HELD})().typewriter === {json.dumps(not before['typewriter'])}", "Typewriter mode to change"):
         wrong("confirming the change did not make it")
-    page.locator(".asker .change", has_text="Ligatures").locator("button", has_text="Skip").click()
+    page.locator(".asker .change", has_text="Attachments").locator("button", has_text="Skip").click()
     page.wait_for_timeout(300)
-    if page.evaluate(HELD)["ligatures"] != before["ligatures"]:
+    if page.evaluate(HELD)["attachments"] != before["attachments"]:
         wrong("a skipped change was made anyway")
     else:
         say("confirmed one          -> made; the skipped one is not")

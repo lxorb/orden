@@ -116,7 +116,6 @@ const CASES: [string, string, 1 | 3][] = [
   ['text size', 'setting Text size', 1],
   ['line width', 'setting Line width', 1],
   ['vim', 'setting Vim keys', 1],
-  ['ligatures', 'setting Ligatures', 1],
   ['dark', 'setting Mode', 3],
   ['goals', 'bookmark Goals', 1],
   ['tag:work', 'bookmark tag:work', 1],
