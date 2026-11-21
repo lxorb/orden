@@ -53,6 +53,7 @@ beforeEach(() => {
   counted.mounts = 0
   counted.shown = {}
   counted.throws = false
+  counted.ticks = 0
 })
 afterEach(() => {
   if (shown) void unmount(shown, { outro: false })
@@ -281,4 +282,32 @@ test('every kind of tab switched away from and back to keeps its surface, and th
     expect(counted.shown[time]).toBe(true)
   })
   expect(counted.mounts).toBe(2)
+})
+test('a tab put behind stops its clock, and shown again ticks at once and on', async () => {
+  const { one, shell, paneId } = opened()
+  await drawn(paneId)
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+  try {
+    const before = vi.getTimerCount()
+    workspace.activate(shell)
+    await vi.waitFor(() => {
+      flushSync()
+      expect(target.querySelector('.counted')).not.toBeNull()
+    })
+    expect(vi.getTimerCount()).toBe(before + 1)
+    workspace.activate(one)
+    flushSync()
+    const ticked = counted.ticks
+    vi.advanceTimersByTime(5000)
+    expect(counted.ticks).toBe(ticked)
+    expect(vi.getTimerCount()).toBe(before)
+    workspace.activate(shell)
+    flushSync()
+    vi.advanceTimersByTime(0)
+    expect(counted.ticks).toBe(ticked + 1)
+    vi.advanceTimersByTime(2000)
+    expect(counted.ticks).toBe(ticked + 3)
+  } finally {
+    vi.useRealTimers()
+  }
 })

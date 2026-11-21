@@ -56,6 +56,7 @@
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { isDesktop } from '../../platform/src/api'
   import Editor from './Editor.svelte'
+  import Shown from './Shown.svelte'
   import { Handoff, Parked } from './editor-states'
   import { keptAway } from '../../away/src/api'
   import { chrome } from '../../theme/src/api'
@@ -441,7 +442,7 @@
       {@const here = one.id === shownKept}
       <div class:front={here} class:kept={!here} hidden={!here} inert={!here}>
         <svelte:boundary failed={unreachable}>
-          {@render own(one, here)}
+          <Shown shown={here}>{@render own(one, here)}</Shown>
         </svelte:boundary>
       </div>
     {/each}
