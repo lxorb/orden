@@ -8,21 +8,26 @@ export function pressedByKey(node: HTMLElement, onPress: () => void): void {
 }
 const STILL = 8
 const touching = (event: PointerEvent) => event.pointerType === 'touch' || event.pointerType === 'pen'
-const far = (from: PointerEvent, to: PointerEvent) =>
-  Math.hypot(to.clientX - from.clientX, to.clientY - from.clientY) > STILL
+interface Down {
+  id: number
+  x: number
+  y: number
+}
+const still = (down: Down | null, event: PointerEvent): down is Down =>
+  down !== null && down.id === event.pointerId && Math.hypot(event.clientX - down.x, event.clientY - down.y) <= STILL
 export function pressedByPointer(
   node: HTMLElement,
   onPress: (event: PointerEvent) => void,
   skip: (event: PointerEvent) => boolean = () => false,
 ): void {
-  let down: PointerEvent | null = null
+  let down: Down | null = null
   node.addEventListener('pointerdown', (event) => {
     if (event.button !== 0 || skip(event)) return
-    if (touching(event)) down = event
+    if (touching(event)) down = { id: event.pointerId, x: event.clientX, y: event.clientY }
     else onPress(event)
   })
   node.addEventListener('pointermove', (event) => {
-    if (down?.pointerId === event.pointerId && far(down, event)) down = null
+    if (!still(down, event)) down = null
   })
   node.addEventListener('pointercancel', () => {
     down = null
@@ -30,6 +35,6 @@ export function pressedByPointer(
   node.addEventListener('pointerup', (event) => {
     const was = down
     down = null
-    if (was?.pointerId === event.pointerId && !far(was, event)) onPress(event)
+    if (still(was, event)) onPress(event)
   })
 }
