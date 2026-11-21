@@ -3,8 +3,9 @@ export interface Line {
   from: string
   body: string
   typing?: number
+  picture?: string
 }
-interface Reaction {
+export interface Reaction {
   at: number
   line: number
   from: string
@@ -32,7 +33,7 @@ export function duringOf(picture: string): readonly Line[] {
     { at: 0.72, from: 'mara', body: 'Framing this one for the office.' },
   ]
 }
-const REACTIONS: readonly Reaction[] = [
+export const REACTIONS: readonly Reaction[] = [
   { at: 0.3, line: 0, from: 'jonas', emoji: '😂' },
   { at: 0.36, line: 0, from: 'mara', emoji: '🍕' },
   { at: 0.52, line: 0, from: 'jonas', emoji: '🔥' },
