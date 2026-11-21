@@ -34,4 +34,11 @@ describe('the home page styles', () => {
     }
     expect(HOME).not.toMatch(/radial-gradient\([^)]*rgb\(\d/)
   })
+  test('end on two big buttons side by side on a wide screen and of one width on a phone', () => {
+    expect(HOME).toMatch(/\.coda-actions \{[^}]*width: 100%;/)
+    expect(HOME).toMatch(/\.coda \.orden-button\.is-big \{[^}]*min-height: clamp\(64px/)
+    expect(HOME).toMatch(
+      /@media \(max-width: 719\.98px\) \{[\s\S]*\.coda \.orden-button\.is-big \{\s*width: min\(340px, 100%\);/,
+    )
+  })
 })
