@@ -8,6 +8,7 @@
 #[cfg(target_os = "macos")]
 mod accessibility;
 mod browser_pipe;
+mod capture;
 pub use browser_pipe::{EXTENSION_METHODS, extensions_cdp};
 mod cef_impl;
 pub use cef_impl::request_context::keep_open;

@@ -26,6 +26,17 @@ wrap_with_args! {
   }
 
   impl DisplayHandler {
+    fn on_media_access_change(
+      &self,
+      browser: Option<&mut Browser>,
+      has_video_access: ::std::os::raw::c_int,
+      has_audio_access: ::std::os::raw::c_int,
+    ) {
+      if let Some(browser) = browser {
+        crate::capture::heard(browser.identifier(), has_video_access != 0, has_audio_access != 0);
+      }
+    }
+
     fn on_cursor_change(
       &self,
       browser: Option<&mut Browser>,
