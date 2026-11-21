@@ -15,7 +15,7 @@
 
   const { rail = false, quiet = false }: { rail?: boolean; quiet?: boolean } = $props()
   let field = $state<HTMLInputElement>()
-  let lit = $state(0)
+  let lit = $state(-1)
   function matches(one: ThreadHead, words: string[]): boolean {
     const text = `${one.title} ${one.words} ${one.model}`.toLowerCase()
     return words.every((word) => text.includes(word))
@@ -60,11 +60,13 @@
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
       const step = event.key === 'ArrowDown' ? 1 : -1
-      lit = (lit + step + rows.length) % Math.max(1, rows.length)
+      const from = lit < 0 ? (step === 1 ? -1 : 0) : lit
+      lit = (from + step + rows.length) % Math.max(1, rows.length)
       reach(lit)
     } else if (event.key === 'Enter') {
       event.preventDefault()
-      if (one) void chat.openThread(one.id)
+      const chosen = one ?? rows[0]
+      if (chosen) void chat.openThread(chosen.id)
     } else if (event.key === 'Delete' && one && !deletesTyped(event.currentTarget as HTMLInputElement)) {
       event.preventDefault()
       if (event.shiftKey) void chat.remove(one.id)
@@ -125,7 +127,7 @@
       />
     </div>
   </div>
-  <ul class="list" role="listbox" use:scrollbar>
+  <ul class="list" role="listbox" use:scrollbar onpointerleave={() => (lit = -1)}>
     {#if agentMarks.heard && !chat.listQuery}
       {#await agentRows() then AgentRows}
         <AgentRows
