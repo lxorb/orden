@@ -2,6 +2,7 @@
   "name": "tasks-views",
   "layer": "content",
   "dependsOn": [
+    "mascot",
     "contracts",
     "bases",
     "platform",

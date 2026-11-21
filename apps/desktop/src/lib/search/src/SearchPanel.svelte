@@ -2,6 +2,7 @@
   import type { Entry } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
   import { shownName, relativeTo, dur, fly } from '../../platform/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { ARCHIVE_MARK, roving, SEARCH_MARK } from '../../ui-kit/src/api'
   import { hitKey, search } from './panel.svelte'
   import { OPERATORS } from '@orden/scan/search/query'
@@ -363,7 +364,10 @@
     {/each}
   </ul>
 {:else if search.asks && !search.running}
-  <p class="empty-text">Nothing found</p>
+  <div class="none">
+    <Mascot mood="shrug" size={32} />
+    <p class="empty-text">Nothing found</p>
+  </div>
 {:else if !search.text.trim() && tags.length}
   <TagTree nodes={tags} />
 {/if}
@@ -593,8 +597,15 @@
     width: var(--icon-sm);
     height: var(--icon-sm);
   }
+  .none {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
+  }
   .empty-text {
-    margin: var(--space-3) var(--row-pad) 0;
+    margin: 0 var(--row-pad);
     font-size: var(--text-row);
     color: var(--muted);
   }

@@ -145,7 +145,8 @@ describe('tasks-views contract', () => {
           one === '../../windows/src/api' ||
           one === '../../undo-toast/src/api' ||
           one === '../../ai-chat/src/api' ||
-          one === '../../tree/src/api'
+          one === '../../tree/src/api' ||
+          one === '../../mascot/src/api'
         expect(allowed, `${name} imports ${one}`).toBe(true)
       }
     }

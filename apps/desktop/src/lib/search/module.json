@@ -2,6 +2,7 @@
   "name": "search",
   "layer": "content",
   "dependsOn": [
+    "mascot",
     "contracts",
     "bases",
     "editor",
