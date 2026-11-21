@@ -1,4 +1,5 @@
 import { foldName, isChatTarget } from '@orden/markdown/links'
+import { headingWords } from '@orden/markdown/escapes'
 import type { Command } from '../../commands/src/api'
 import { fileMark } from '../../marks/src/api'
 import { shownName, rowName, folderOf, insideSpace, relativeTo, withinSpace } from '../../platform/src/api'
@@ -271,7 +272,7 @@ function bookmarkCandidates(world: World, listed: readonly Entry[]): Candidate<R
     const entry = files.get(path)
     if (!entry && !folder) continue
     const name = entry ? shownName(entry.name) : rowName(inside.split('/').at(-1) ?? inside, true)
-    const label = folder ? name : mark.text
+    const label = folder ? name : mark.kind === 'heading' ? headingWords(mark.text) : mark.text
     out.push(
       candidate(
         'bookmark',
@@ -296,22 +297,25 @@ export function headingCandidates(
   nested: boolean,
 ): Candidate<Row>[] {
   const top = headings.reduce((least, one) => Math.min(least, one.level), Infinity)
-  return headings.map((one) => ({
-    key: null,
-    kind: 'heading',
-    name: foldName(one.text),
-    names: [],
-    also: [],
-    lift: 0,
-    use: 0,
-    item: {
-      kind: 'place',
-      line: one.line,
-      text: one.text,
-      depth: nested ? one.level - top : 0,
-      hint: null,
-    },
-  }))
+  return headings.map((one) => {
+    const text = headingWords(one.text)
+    return {
+      key: null,
+      kind: 'heading',
+      name: foldName(text),
+      names: [],
+      also: [],
+      lift: 0,
+      use: 0,
+      item: {
+        kind: 'place',
+        line: one.line,
+        text,
+        depth: nested ? one.level - top : 0,
+        hint: null,
+      },
+    }
+  })
 }
 export function resting(
   all: readonly Candidate<Row>[],
