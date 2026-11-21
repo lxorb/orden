@@ -26,7 +26,6 @@ import { gate } from './onboarding/src/api'
 import { shortcuts, toolbar } from './shortcuts/src/api'
 import { theme } from './theme/src/api'
 import { convertAll, keepWorking } from './web-backend/src/api'
-import { trash } from './trash/src/api'
 import { updates } from './updates/src/api'
 import { startRunner } from './views/src/api'
 import {
@@ -101,8 +100,11 @@ export function start(): () => void {
     .catch((error: unknown) => {
       log('error', `restore: ${error instanceof Error ? error.message : String(error)}`)
     })
-  void trash.sweep()
-  const sweeper = setInterval(() => void trash.sweep(), DAY)
+  void import('./trash/src/api').then(({ trash }) => {
+    void trash.sweep()
+    const sweeper = setInterval(() => void trash.sweep(), DAY)
+    stops.keep(() => clearInterval(sweeper))
+  })
   const stopRecovery = recovery.start()
   const stopStrayDrops = guardDrops((paths) => void openPdfs(paths))
   void (async () => (await closing()).guardClose(() => import('./quit-ports')))()
@@ -198,7 +200,6 @@ export function start(): () => void {
   void import('./ui-controls/src/api').then((one) => stops.keep(one.hidePointerWhileTyping()))
   return () => {
     stops.end()
-    clearInterval(sweeper)
     clearTimeout(settling)
     stopRecovery()
     stopReloading()

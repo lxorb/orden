@@ -270,6 +270,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/first-screen/src/keep.svelte.ts', "what keeps a note's first screen"],
     ['/lib/search/src/warm.svelte.ts', "the search's hold on the space"],
     ['/markdown/src/index.ts', 'the renderer'],
+    ['/lib/trash/src/trash.svelte.ts', 'the recently deleted list, which start sweeps once it has come'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
