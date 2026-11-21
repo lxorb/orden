@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   editedWords,
   escapeText,
+  headingWords,
   heldEscapes,
   plainWords,
   released,
@@ -243,4 +244,38 @@ test('an edit anywhere in a line with backticks reads back as the edit', () => {
     const edited = shown.slice(0, from) + pick(next() % 3) + shown.slice(to)
     expect([line, edited, shownWords(editedWords(line, edited))]).toEqual([line, edited, edited])
   }
+})
+describe('the words a heading shows, as an outline lists it', () => {
+  test('a link, a picture and a reference link show their words, not their address', () => {
+    expect(headingWords('3a. [Lateral Raise Machine](https://example.com/a_(b)?x=1 "title")')).toBe(
+      '3a. Lateral Raise Machine',
+    )
+    expect(headingWords('![the logo](logo.png) and [docs][ref] and [here][]')).toBe('the logo and docs and here')
+    expect(headingWords('[a [nested] link](u) ends')).toBe('a [nested] link ends')
+  })
+  test('a wiki link shows its alias, or its target when it has none', () => {
+    expect(headingWords('See [[Some note#Part|the part]] and [[Other note]]')).toBe('See the part and Other note')
+    expect(headingWords('![[picture.png]] [[note#h|]]')).toBe('picture.png note#h')
+  })
+  test('an autolink shows its address and an html tag goes', () => {
+    expect(headingWords('Mail <me@example.com> or <https://orden.so/x> in <b>bold</b><br/><!-- note -->')).toBe(
+      'Mail me@example.com or https://orden.so/x in bold',
+    )
+  })
+  test('code loses its backticks and keeps every character inside', () => {
+    expect(headingWords('Run `pnpm **test**` and ``a ` b`` and ` x `')).toBe('Run pnpm **test** and a ` b and x')
+    expect(headingWords('[`code` link](u)')).toBe('code link')
+  })
+  test('emphasis, strike and highlight marks go, nested or not', () => {
+    expect(headingWords('**bold** __strong__ *it* _em_ ~~gone~~ ==lit==')).toBe('bold strong it em gone lit')
+    expect(headingWords('***both*** **_mixed_** *a **b** c* [**linked**](u)')).toBe('both mixed a b c linked')
+  })
+  test('an underscore or star inside words or sums is a character', () => {
+    expect(headingWords('snake_case_name and 2*3 and a * b * c')).toBe('snake_case_name and 2*3 and a * b * c')
+    expect(headingWords('file_name_ok _ alone ** loose')).toBe('file_name_ok _ alone ** loose')
+  })
+  test('an escape shows its character, which is never a mark', () => {
+    expect(headingWords('\\*not it\\* and \\[not a link\\](u) and a\\_b')).toBe('*not it* and [not a link](u) and a_b')
+    expect(headingWords('plain words')).toBe('plain words')
+  })
 })
