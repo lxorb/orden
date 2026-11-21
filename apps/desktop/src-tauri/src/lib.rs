@@ -44,6 +44,7 @@ macro_rules! commands {
             orden_notes::notes::delete_folder,
             orden_notes::notes::remove_empty_folder,
             orden_notes::notes::file_stamp,
+            orden_notes::notes::set_file_times,
             orden_notes::notes::file_there,
             orden_notes::notes::note_evicted,
             orden_notes::notes::path_taken,

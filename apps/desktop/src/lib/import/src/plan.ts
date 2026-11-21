@@ -16,8 +16,11 @@ export type FormatId =
   | 'pandoc'
   | 'pdf-pages'
   | 'todoist'
-export type Planned =
+import type { Times } from './sources'
+
+export type Planned = (
   { kind: 'note'; path: string; text: string } | { kind: 'file'; path: string; bytes: Uint8Array; pages?: true }
+) & { times?: Times }
 export interface ImportPlan {
   format: FormatId
   files: Planned[]

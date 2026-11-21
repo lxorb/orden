@@ -719,6 +719,7 @@ const UNSUPPORTED: Record<string, unknown> = {
   has_pandoc: false,
   web_pass_fill: false,
   file_stamp: null,
+  set_file_times: null,
   mcp_config: null,
   owner_can: false,
   write_log: null,

@@ -6,6 +6,7 @@ import { workspace } from '../../workspace/src/api'
 import { writeBytes, writeFile } from '../../file-writes/src/api'
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
+import type { Times } from './sources'
 import { baseFollowed, basesFollowed, calledBy, canvasFollowed, isBase, isCanvas, linksFollowed } from './rewrite'
 
 type Written = Pick<ImportPlan, 'files'>
@@ -35,6 +36,7 @@ export async function applyImport(plan: Written, target: ImportTarget, options: 
         await writeFile(path, file.text)
         wrote[path] = await sha256(file.text)
       } else await writeBytes(path, file.bytes)
+      if (file.times) await stamped(path, file.times)
       paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
       done += 1
       options.onWritten?.(done, files.length)
@@ -44,6 +46,10 @@ export async function applyImport(plan: Written, target: ImportTarget, options: 
   }
   return { paths, stepped }
 }
+const stamped = (path: string, { modified, created }: Times) =>
+  invoke('set_file_times', { path, modified, created }).catch((error: unknown) => {
+    log('warn', `import: ${path} keeps the time it was written, not its own: ${String(error)}`)
+  })
 const asPages = async (path: string): Promise<string[]> => [(await workspace.pageNoteForPdf(path)) ?? path]
 async function landed(paths: string[], wrote: Record<string, string>) {
   workspace.undone.record({ kind: 'import', paths, wrote })

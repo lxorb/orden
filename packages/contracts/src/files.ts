@@ -2,6 +2,7 @@ export interface PickedFile {
   name: string
   webkitRelativePath?: string
   size?: number
+  lastModified?: number
   slice?(start: number, end: number): { arrayBuffer(): Promise<ArrayBuffer> }
   arrayBuffer(): Promise<ArrayBuffer>
 }

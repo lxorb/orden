@@ -5,7 +5,7 @@ vi.mock('../../platform/src/tauri', () => ({
     if (command === 'obsidian_vault_files') {
       return Promise.resolve([
         { path: 'Attachments/locked.png', size: 4 },
-        { path: 'Home.md', size: 6 },
+        { path: 'Home.md', size: 6, modified: 1_600_000_000_000, created: 1_500_000_000_000 },
         { path: 'Café.md', size: 4 },
         { path: 'Wide.md', size: 6 },
       ])
@@ -31,6 +31,11 @@ describe('a vault read where it is', () => {
     const [locked, home] = sources
     await expect(home?.text()).resolves.toBe('# Home')
     await expect(locked?.bytes()).rejects.toThrow('Attachments/locked.png could not be read.')
+  })
+  test('knows when each file was written, and nothing it was not told', async () => {
+    const [locked, home] = await vaultSources({ name: 'Brain', path: '/home/me/Brain' })
+    expect(home?.times).toEqual({ modified: 1_600_000_000_000, created: 1_500_000_000_000 })
+    expect(locked?.times).toBeUndefined()
   })
   test('reads a note written in another encoding as the words it holds', async () => {
     const [, , cafe, wide] = await vaultSources({ name: 'Brain', path: '/home/me/Brain' })
