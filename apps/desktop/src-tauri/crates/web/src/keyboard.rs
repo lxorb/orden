@@ -209,7 +209,10 @@ pub fn keyboard_here(webview: Webview) {
 #[tauri::command]
 pub fn keyboard_went(webview: Webview) -> bool {
     let window = webview.window().label().to_string();
-    let Some(page) = native::holding(&window) else {
+    let typing = homes(|all| all.typing.get(&window).cloned());
+    let Some(page) =
+        native::holding(&window).or_else(|| typing.filter(|page| native::page_focused(page)))
+    else {
         return false;
     };
     homes(|all| all.page_took(&window, &page));
@@ -293,6 +296,21 @@ mod native {
     #[cfg(not(windows))]
     pub fn seen(_label: &str) -> bool {
         true
+    }
+    #[cfg(windows)]
+    #[allow(unsafe_code, reason = "the system's keyboard focus is read through Win32")]
+    pub fn page_focused(label: &str) -> bool {
+        use windows::Win32::UI::Input::KeyboardAndMouse::GetFocus;
+        use windows::Win32::UI::WindowsAndMessaging::IsChild;
+        let Some(page) = window_of(label) else {
+            return false;
+        };
+        let focus = unsafe { GetFocus() };
+        !focus.0.is_null() && (focus == page || unsafe { IsChild(page, focus) }.as_bool())
+    }
+    #[cfg(not(windows))]
+    pub fn page_focused(_label: &str) -> bool {
+        false
     }
     #[cfg(target_os = "linux")]
     pub fn x11_took(app: &AppHandle, x11: u32) {
