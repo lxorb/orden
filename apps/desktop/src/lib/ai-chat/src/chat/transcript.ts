@@ -10,6 +10,7 @@ import type {
   ToolOutput,
   Turn,
 } from '../../../ai-providers/src/api'
+import { movedSince } from '../../../ai-providers/src/api'
 
 export type Step =
   | { role: 'user'; text: string; images: { mime: string; data: string }[] }
@@ -33,6 +34,19 @@ export function modelTurn({ provider, model, effort }: Thread): Turn {
     model,
     effort,
   }
+}
+export function answeredBy(thread: Pick<Thread, 'turns'>): { provider: string; model: string } | null {
+  for (let at = thread.turns.length - 1; at >= 0; at--) {
+    const turn = thread.turns[at]
+    if (turn?.role === 'model' && turn.model)
+      return { provider: movedSince(turn.provider ?? '', turn.at), model: turn.model }
+  }
+  return null
+}
+export function continuedWith(thread: Pick<Thread, 'turns' | 'provider'>, name: string): Part | null {
+  const last = answeredBy(thread)
+  if (!last?.provider || last.provider === thread.provider) return null
+  return { kind: 'notice', code: 'model', text: `Continued with ${name}: it reads the whole chat again` }
 }
 export function youTurn(thread: Thread, draft: Draft, more: Partial<Turn> = {}): Turn {
   const { effort } = thread

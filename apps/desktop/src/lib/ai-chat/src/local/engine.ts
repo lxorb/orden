@@ -1,4 +1,13 @@
-import { errorText, modelTurn, readOutside, sinceCompaction, summaryOf, userStep, youTurn } from '../chat/transcript'
+import {
+  continuedWith,
+  errorText,
+  modelTurn,
+  readOutside,
+  sinceCompaction,
+  summaryOf,
+  userStep,
+  youTurn,
+} from '../chat/transcript'
 import { estimateText } from '../chat/usage'
 import { windowOf } from '../chat/window'
 import {
@@ -224,7 +233,9 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       turn.parts[index] = part
       on({ type: 'part', turn: turn.id, index, part })
     }
-    if (switched && thread.model && switched !== thread.model)
+    const moved = continuedWith(before, setup.provider(thread.provider)?.name ?? thread.provider)
+    if (moved) say(moved)
+    else if (switched && thread.model && switched !== thread.model)
       say({ kind: 'notice', code: 'model', text: thread.model })
     const failed = (error: unknown): Stop => {
       const words = errorText(error)

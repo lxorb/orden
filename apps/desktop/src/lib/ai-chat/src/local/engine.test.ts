@@ -925,3 +925,26 @@ describe('a session let go', () => {
     await vi.waitFor(() => expect(opened[0]?.closed).toBe(true))
   })
 })
+describe('a chat continued with a program after another provider', () => {
+  test('is told it reads the whole chat again', async () => {
+    const on = thread(CLAUDE, {
+      turns: [
+        { id: 'u0', role: 'you', at: 1, parts: [], draft: { text: 'one', attachments: [] } },
+        {
+          id: 'm0',
+          role: 'model',
+          at: 1,
+          parts: [{ kind: 'text', text: 'Herons.' }],
+          provider: 'anthropic',
+          model: 'claude-opus-5-5',
+        },
+      ],
+    })
+    await send(CLAUDE, on, 'two')
+    expect(on.turns[3]?.parts[0]).toEqual({
+      kind: 'notice',
+      code: 'model',
+      text: 'Continued with Claude Code: it reads the whole chat again',
+    })
+  })
+})

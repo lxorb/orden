@@ -1,7 +1,6 @@
 import {
   type LocalKind,
   isLocal,
-  movedSince,
   onMoves,
   type Provider,
   type ProviderKind,
@@ -30,7 +29,17 @@ import { Refused, wasStopped } from './request'
 import { responses } from './responses'
 import { type Adjusted, round } from './round'
 import { crateTools, type Tools } from './tools'
-import { baseEffort, type Call, errorText, modelTurn, stepsOf, type Step, youTurn } from './transcript'
+import {
+  answeredBy,
+  baseEffort,
+  type Call,
+  continuedWith,
+  errorText,
+  modelTurn,
+  stepsOf,
+  type Step,
+  youTurn,
+} from './transcript'
 import { added, estimate, noUsage, shouldCompact } from './usage'
 import type { Ask, ToolDef, Wire } from './wire'
 import { fitOutputs, limitOf, roomFor, tokensIn, windowOf } from './window'
@@ -98,13 +107,8 @@ export interface Setup {
   instructions?(thread: Thread): Promise<string>
 }
 function lastModel(thread: Thread): string {
-  for (let at = thread.turns.length - 1; at >= 0; at--) {
-    const turn = thread.turns[at]
-    if (turn?.role === 'model' && turn.model) {
-      return `${movedSince(turn.provider ?? '', turn.at)}/${turn.model}`
-    }
-  }
-  return ''
+  const last = answeredBy(thread)
+  return last ? `${last.provider}/${last.model}` : ''
 }
 function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
   return { ...listing, tools: listing.tools.filter((one) => allows(thread, one.name)) }
@@ -180,7 +184,9 @@ export function createApiEngine(setup: Setup): Engine {
       turn.parts.push(part)
       on({ type: 'part', turn: turn.id, index: turn.parts.length - 1, part })
     }
-    if (switched && switched !== `${thread.provider}/${thread.model}`)
+    const moved = continuedWith({ ...thread, turns: thread.turns.slice(0, -2) }, provider.name)
+    if (moved) say(moved)
+    else if (switched && switched !== `${thread.provider}/${thread.model}`)
       say({ kind: 'notice', code: 'model', text: model.name })
     let listing = { instructions: '', tools: [] as ToolDef[] }
     if (learnt(provider.id, model.id).tools !== false) {
