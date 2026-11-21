@@ -256,6 +256,7 @@ pub fn remove_empty_folder(app: AppHandle, path: String) -> Result<(), String> {
 #[derive(Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct Stamp {
     pub modified: u64,
+    pub created: u64,
     pub len: u64,
 }
 #[tauri::command(async)]
@@ -330,7 +331,11 @@ pub fn stamp_of(target: &Path) -> Option<Stamp> {
     if !data.is_file() {
         return None;
     }
-    Some(Stamp { modified: clock::of(data.modified().ok()), len: data.len() })
+    Some(Stamp {
+        modified: clock::of(data.modified().ok()),
+        created: clock::of(data.created().ok()),
+        len: data.len(),
+    })
 }
 #[cfg(test)]
 mod tests {

@@ -245,6 +245,17 @@ describe('the rows of every space', () => {
     void store.follow({ op: 'removed', path: `${WORK}/Archive`, kind: 'folder', root: WORK })
     expect(store.of()).toEqual([])
   })
+  test('a note that came from elsewhere is as old as the disk says, and one saved here is new', async () => {
+    const stamp = () => Promise.resolve({ mtime: 1_600_000_000_000, ctime: 1_500_000_000_000 })
+    const { store, disk, settled } = rig({}, WORK, [], { stamp })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    disk.set(`${WORK}/Old.md`, '# Old\n')
+    await store.follow({ op: 'created', path: `${WORK}/Old.md`, kind: 'file', root: WORK })
+    expect(store.at(`${WORK}/Old.md`)[0]?.file).toMatchObject({ mtime: 1_600_000_000_000, ctime: 1_500_000_000_000 })
+    store.saved(`${WORK}/Old.md`, '# Old, edited\n')
+    expect(store.at(`${WORK}/Old.md`)[0]?.file).toMatchObject({ mtime: 42, ctime: 1_500_000_000_000 })
+  })
   test("a note moved to another space is that space's now", async () => {
     const { store, answer, settled } = rig({ [`${WORK}/Plan.md`]: '- [ ] Go\n' }, WORK)
     store.spacesAre([
