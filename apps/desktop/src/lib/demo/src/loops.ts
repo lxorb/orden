@@ -18,7 +18,7 @@ import { chatStore } from '../../ai-chat/src/api'
 import { ai } from '../../ai-providers/src/api'
 import { frameAt, replacement, TEAM, writtenAt } from './scenes'
 import { browsing, scriptOf, turnsAt, working } from './ai'
-import { BEFORE, CHAT_NAME, chatAt, duringOf, PEOPLE } from './chat'
+import { BEFORE, CHAT_NAME, chatAt, duringOf, PEOPLE, REACTIONS } from './chat'
 import { inkAt, nextTip } from './ink'
 import { boxOf, onPlane, placeAt, type Point, Pointer, type Stop } from './pointer'
 import type { Stage } from './run'
@@ -236,11 +236,11 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
     }
     await pause(0)
   })
-  let talk: { chats: ChatsDemo; path: string } | null = null
+  let talk: { chats: ChatsDemo; path: string; ids: (string | null)[] } | null = null
   let talked = { said: 0, typing: null as string | null, reacted: 0 }
   let staging = false
   let lastPhase = 0
-  const during = duringOf(`${location.origin}${BASE}demo/lan.svg`)
+  const during = duringOf(`${location.origin}${BASE}demo/lan-party.png`)
   const restage = async () => {
     const port = portOf('chats.demo')
     if (!port.ok || staging) return
@@ -251,7 +251,7 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
       const path = chats.add(`${ROOT}/${LAUNCH}`, CHAT_NAME, others)
       for (const one of BEFORE) chats.say(path, one.from, one.body)
       chats.open(path)
-      talk = { chats, path }
+      talk = { chats, path, ids: [] }
       talked = { said: 0, typing: null, reacted: 0 }
     } finally {
       staging = false
@@ -285,7 +285,19 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
         for (let at = talked.said; at < now.said; at++) {
           const line = during[at]
           if (!line) continue
-          talk.chats.say(talk.path, line.from, line.body)
+          talk.ids[at] = line.picture
+            ? talk.chats.picture(talk.path, line.from, line.picture, {
+                width: 320,
+                height: 200,
+                name: 'lan-party.png',
+                caption: line.body,
+              })
+            : talk.chats.say(talk.path, line.from, line.body)
+        }
+        for (let at = talked.reacted; at < now.reacted; at++) {
+          const one = REACTIONS[at]
+          const id = one ? talk.ids[one.line] : null
+          if (one && id) talk.chats.react(talk.path, id, one.from, one.emoji)
         }
         talked = now
       },
