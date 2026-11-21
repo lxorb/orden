@@ -158,9 +158,18 @@ async function sendOps(
     space.outbox = queue
     changes.push(...unmade(core, space, waiting, folded))
     const batch = space.outbox.filter(going).slice(0, OPS_BATCH)
+    const words = new Map<string, string>()
     for (const one of batch) {
       if (one.record.t !== 'op') continue
-      one.record = { t: 'op', op: one.record.op, sent: true }
+      const op = one.record.op
+      if (op.t === 'create' && !op.mergeable && op.hash === undefined && shapeOf(op.kind)) {
+        const text = (await core.doc(op.id))?.text()
+        if (text) {
+          op.hash = await core.world.digest(text)
+          words.set(op.op, text)
+        }
+      }
+      one.record = { t: 'op', op, sent: true }
       one.row = { ...one.row, op: outgoingBytes(one.record) }
       changes.push(put('outbox', one.row))
     }
@@ -195,13 +204,15 @@ async function sendOps(
       answered.add(one)
       done.push(remove('outbox', one.row.op_id))
       if ('merged' in result || 'refused' in result) leave()
-      if ('merged' in result && op.t === 'mkdir') {
+      if ('merged' in result && (op.t === 'mkdir' || (op.t === 'create' && !shapeOf(op.kind)))) {
         done.push(...foldedInto(space, op.id, result.merged))
         byOp = opsOf(space)
         continue
       }
       if ('merged' in result && op.t === 'create') {
-        const merge: Merging = { mine: op.id, into: result.merged, create: op }
+        const base = words.get(op.op)
+        const create = op.mergeable || base === undefined ? op : { ...op, mergeable: { text: base } }
+        const merge: Merging = { mine: op.id, into: result.merged, create }
         const { one: queued, change } = core.outgoing(space, { t: 'merge', merge }, space.row.cursor)
         space.outbox.push(queued)
         done.push(change, core.counterRow())

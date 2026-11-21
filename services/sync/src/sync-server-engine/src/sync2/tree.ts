@@ -110,6 +110,7 @@ interface NoteRow {
   changes_by: string | null
   path: string
   epoch: number
+  hash: string | null
 }
 interface Folders {
   live?: TreeEntry
@@ -172,6 +173,7 @@ export class Tree {
   private readonly raw: NoteRow[] = []
   private readonly rawIds = new Set<string>()
   readonly content = new Map<string, Content>()
+  private readonly hashes = new Map<string, string>()
   private readonly answered = new Map<string, OpResult>()
   private unmarked = false
   moves: Moved[] = []
@@ -191,6 +193,7 @@ export class Tree {
         this.unmarked = true
       }
       this.paths.set(row.id, row.path)
+      if (row.hash) this.hashes.set(row.id, row.hash)
       if (row.name === null) {
         this.raw.push(row)
         this.rawIds.add(row.id)
@@ -257,9 +260,12 @@ export class Tree {
     this.state.cursor += 1
     return this.state.cursor
   }
+  hashOf(id: string): string | undefined {
+    return this.content.get(id)?.hash ?? this.hashes.get(id)
+  }
   apply(op: Op, context: OpContext): OpResult {
     const repeated = this.state.done.has(op.op)
-    const result = applyOp(this.state, op, context)
+    const result = applyOp(this.state, op, { ...context, hashOf: (id) => this.hashOf(id) })
     if (!repeated) this.answered.set(op.op, result)
     return result
   }
@@ -659,7 +665,7 @@ function noteEntry(row: NoteRow, name: string): TreeEntry {
 }
 const FOLDER_COLUMNS = 'id, parent_id, name, deleted, seq, updated_by, deleted_in, pos, meta, changes_by'
 const NOTE_COLUMNS = `id, kind, folder_id, name, deleted, seq, doc_seq, updated_by, doc_by, deleted_in,
-            placed_seq, placed_by, pos, meta, changes_by, path, epoch`
+            placed_seq, placed_by, pos, meta, changes_by, path, epoch, hash`
 export const KEPT = 'not (deleted = 1 and deleted_at is null)'
 async function cursorOf(env: Env, spaceId: string): Promise<number> {
   const cursor = await env.DB.prepare('select next from space_cursor where space_id = ?')

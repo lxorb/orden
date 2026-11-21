@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { FeedPage, OpResult, OpsResponse } from '@orden/sync-core'
 import { call, signIn, type TestEnv, testEnv } from './harness'
@@ -256,6 +257,22 @@ describe('tree operations', () => {
       'Café.md',
       'Café 2.md',
     ])
+  })
+  test('answer a create of words a note of its name already holds with that note, and number other words once (#2433)', async () => {
+    const sha = (text: string) => createHash('sha256').update(text).digest('hex')
+    await prepare()
+    const plan = await made('Plan.md', '# Plan\n\nthe same words\n')
+    const results = await ops([
+      op('create', { id: 'p2', kind: 'note', parent: null, name: 'Plan.md', hash: sha('# Plan\n\nthe same words\n') }),
+      op('create', { id: 'p3', kind: 'note', parent: null, name: 'Plan.md', hash: sha('other words\n') }),
+      op('create', { id: 'p4', kind: 'note', parent: null, name: 'Plan.md' }),
+    ])
+    expect(results.results[0]).toMatchObject({ merged: plan })
+    expect(results.results.slice(1).map((one) => ('name' in one ? one.name : null))).toEqual(['Plan 2.md', 'Plan 3.md'])
+    env.db.prepare('update notes set hash = ? where id = ?').run(sha('other words\n'), 'p3')
+    expect(
+      await one(op('create', { id: 'p5', kind: 'note', parent: null, name: 'Plan.md', hash: sha('other words\n') })),
+    ).toMatchObject({ merged: 'p3' })
   })
   test("answer a create of the day's note that is already there with the note", async () => {
     const day = { kind: 'note', parent: null, name: '2026-09-30.md', mergeable: { text: '' } }
