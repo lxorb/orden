@@ -173,6 +173,7 @@ describe('shell extension points', () => {
         'chat',
         'explorer',
         'graph',
+        'import',
         'note',
         'pages',
         'pass',
