@@ -35,7 +35,7 @@ function modelsFor(provider: Provider): string[] {
   return remembered ? [remembered, ...every.filter((one) => one !== remembered)] : every
 }
 export function transcribedBy(): string {
-  const provider = transcriberNow()
+  const provider = __AI__ ? transcriberNow() : null
   if (!provider) return WHISPER
   return modelsFor(provider)[0] ?? WHISPER
 }
@@ -96,17 +96,19 @@ export interface Hearing {
   tries?: number
 }
 export async function heardPiece(wav: Uint8Array<ArrayBuffer>, hearing: Hearing = {}): Promise<Words> {
-  const provider = hearing.road === 'account' ? null : transcriberNow()
+  const provider = !__AI__ || hearing.road === 'account' ? null : transcriberNow()
   const token = account.accountToken
   if (!provider && (!token || hearing.road === 'provider')) {
-    throw new Error('Add an AI provider or sign in to turn speech into words.')
+    throw new Error(
+      __AI__ ? 'Add an AI provider or sign in to turn speech into words.' : 'Sign in to turn speech into words.',
+    )
   }
   const prompt = hearing.prompt ?? ''
   const tries = hearing.tries ?? TRIES
   let trouble: unknown = null
   for (let round = 1; round <= tries; round++) {
     try {
-      if (provider) return await heardByProvider(provider, wav, prompt)
+      if (__AI__ && provider) return await heardByProvider(provider, wav, prompt)
       const said = await api.askPiece(token ?? '', wav, prompt)
       return { text: said.said ?? '', language: said.language }
     } catch (error) {

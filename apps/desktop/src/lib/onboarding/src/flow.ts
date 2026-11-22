@@ -44,6 +44,7 @@ export function shows(step: Step, answers: Answers, reach: Reach): boolean {
     case 'import':
       return !reach.phone && answers.browser !== null && reach.importable(answers.browser)
     case 'ai':
+      if (!__AI__) return false
       if (reach.phone && reach.connected) return false
       return reach.signIns || offersApiKey(answers.code)
     case 'mcp':

@@ -508,7 +508,7 @@
     {@render surface(viewSurface, one, here)}
   {:else if one.kind === 'channel'}
     {@render surface(chatSurface, one, here)}
-  {:else if one.kind === 'chat'}
+  {:else if __AI__ && one.kind === 'chat'}
     {#await askPanel() then ChatPanel}
       <ChatPanel wide tab={one} />
     {:catch}

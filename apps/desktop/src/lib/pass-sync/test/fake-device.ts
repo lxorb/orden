@@ -11,15 +11,14 @@ beforeEach(() => {
   fake.secrets.clear()
   Object.assign(fake, { guarded: true, can: true, yes: true, asked: [] })
 })
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => fake.guarded,
+vi.mock('../../platform/src/secrets', () => ({
+  secretsGuarded: () => fake.guarded,
   readSecret: (id: string) => Promise.resolve(fake.secrets.get(id) ?? null),
   writeSecret: (id: string, secret: string) => {
     fake.secrets.set(id, secret)
     return Promise.resolve()
   },
-  forgetKey: (id: string) => {
+  forgetSecret: (id: string) => {
     fake.secrets.delete(id)
     return Promise.resolve()
   },

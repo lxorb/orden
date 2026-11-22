@@ -78,12 +78,12 @@ jobs:
           MAIN: ${{ steps.live.outputs.main }}
 
       - name: Build the unstable web app
-        run: VITE_ORDEN_CHANNEL=unstable pnpm --filter @orden/desktop build
+        run: VITE_ORDEN_CHANNEL=unstable pnpm --filter @orden/desktop build --mode web
 
       - name: Build the release's web app and put the two together
         working-directory: ${{ runner.temp }}/main
         run: |
-          pnpm --filter ./apps/desktop build
+          pnpm --filter ./apps/desktop build --mode web
           bash scripts/web-channels.sh apps/desktop/dist "$GITHUB_WORKSPACE/apps/desktop/dist"
 
       - name: Build ordend for the Worker's bundle

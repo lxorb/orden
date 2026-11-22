@@ -46,7 +46,7 @@ export function sectionGroups(): Item[][] {
       { id: 'spelling', label: 'Spelling' },
       { id: 'markdown', label: 'Markdown' },
       { id: 'appearance', label: 'Appearance' },
-      { id: 'ai', label: 'AI' },
+      ...(__AI__ ? [{ id: 'ai' as SettingsSectionId, label: 'AI' }] : []),
       ...(isDesktop && modes.coder ? [{ id: 'remote' as SettingsSectionId, label: 'Remote' }] : []),
       ...(account.user && modes.coder ? [{ id: 'online' as SettingsSectionId, label: 'Online terminal' }] : []),
       { id: 'experimental', label: 'Experimental' },

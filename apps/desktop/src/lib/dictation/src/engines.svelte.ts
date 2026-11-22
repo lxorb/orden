@@ -25,7 +25,7 @@ class Engines {
   chosen = $state<Engine | null>(ENGINES.find((one) => one === storedText(KEY)) ?? null)
   usable(engine: Engine): boolean {
     if (engine === 'auto' || engine === 'local') return local.fits
-    if (engine === 'provider') return !!transcriberNow()
+    if (engine === 'provider') return __AI__ && !!transcriberNow()
     if (engine === 'account') return !!account.accountToken
     return deviceHears()
   }

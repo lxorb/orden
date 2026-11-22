@@ -49,7 +49,7 @@ export function places(): Place[] {
       all.push({ section: part.section, label: place.label, text: [...place.text] })
     }
   }
-  if (account.user) {
+  if (__AI__ && account.user) {
     all.push({
       section: 'ai',
       label: 'LLM access',

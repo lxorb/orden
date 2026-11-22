@@ -38,6 +38,7 @@ import {
   safeName,
   samePath,
   sha256,
+  secrets,
   Shared,
   shownName,
   spaceOf,
@@ -70,6 +71,9 @@ describe('the module stands on its own', () => {
   test('loads outside the app as the web build: no native host, no platform name', () => {
     expect(isNative).toBe(false)
     expect(platform()).toBe('')
+  })
+  test('guards no secret outside the app', async () => {
+    expect((await secrets()).secretsGuarded()).toBe(false)
   })
 })
 describe('paths on disk', () => {

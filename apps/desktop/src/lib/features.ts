@@ -75,21 +75,22 @@ serveLinks({
 })
 providePort('search', { panel: search, show: showSearch, fromView: searchFrom })
 providePort('settings.window', settings)
-providePort('settings.ask', {
-  ask: async (system, said) => {
-    const { ai, complete } = await import('./ai-providers/src/api')
-    const provider = ai.providerFor('ask')
-    if (!provider) return null
-    return await complete({
-      provider,
-      model: provider.model,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: said },
-      ],
-    })
-  },
-})
+if (__AI__)
+  providePort('settings.ask', {
+    ask: async (system, said) => {
+      const { ai, complete } = await import('./ai-providers/src/api')
+      const provider = ai.providerFor('ask')
+      if (!provider) return null
+      return await complete({
+        provider,
+        model: provider.model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: said },
+        ],
+      })
+    },
+  })
 providePort('shell.sheets', sheets)
 providePort('shell.focus', { editor: focusEditor })
 providePort('shell.notice', {
@@ -112,7 +113,6 @@ registerSurfaces({
   'find-bar': () => import('./reading/src/api').then((one) => ({ default: one.FindBar })),
   publish: () => import('./publishing/src/api').then((one) => one.loadPublishSheet()),
   import: () => import('./import/src/api').then((one) => one.loadImportSheet()),
-  rewrite: loadRewriteSheet,
   'recording-pill': () => import('./dictation/src/api').then((one) => one.loadRecordingPill()),
   overview: () => import('./overview/src/api').then((one) => one.loadOverview()),
   'host-picker': () => import('./terminal/src/api').then((one) => one.loadHostPicker()),
@@ -122,7 +122,7 @@ registerSurfaces({
   'search-panel': loadSearchPanel,
   links: () => import('./links-panel/src/api').then((one) => one.loadLinksPanel()),
 })
-registerSidebarPart(askPart)
+if (__AI__) registerSidebarPart(askPart)
 registerSidebarPart(outlinePart)
 registerSidebarPart(scratchpadPart)
 registerSidebarPart({ id: 'tasks', toTab: () => runCommand('views.todos').then(() => undefined) })
@@ -140,7 +140,7 @@ whenPortProvided('workspace.view', (view) =>
     })().catch(() => undefined)
   }),
 )
-registerCommand('app.quick-question', async () => (await import('./ai-chat/src/api')).askQuickly)
+if (__AI__) registerCommand('app.quick-question', async () => (await import('./ai-chat/src/api')).askQuickly)
 registerCommand('app.scratchpad', async () => (await import('./scratchpad/src/api')).toggleScratchpad)
 for (const row of ['random-note', 'print']) {
   registerCommand(`app.${row}`, async () => {
@@ -148,12 +148,13 @@ for (const row of ['random-note', 'print']) {
     return () => void runRow(row)
   })
 }
-registerSettingsPart({
-  section: 'ai',
-  card: false,
-  shown: () => true,
-  load: async () => (await import('./ai-sidebar/src/api')).aiPane(),
-})
+if (__AI__)
+  registerSettingsPart({
+    section: 'ai',
+    card: false,
+    shown: () => true,
+    load: async () => (await import('./ai-sidebar/src/api')).aiPane(),
+  })
 registerCommands('import.', async () => (await import('./import/src/api')).importCommands)
 registerCommands('views.', async () => (await import('./views/src/api')).viewCommands)
 registerCommands('export.', async () => (await import('./export/src/api')).exportRuns)
@@ -163,10 +164,10 @@ providePort('commands.app', {
     return appCommands(view as Parameters<typeof appCommands>[0])
   },
 })
-registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src/api')).accountRows)
+if (__AI__) registerCommandRows('ai-accounts', async () => (await import('./ai-providers/src/api')).accountRows)
 registerCommandRows('record', async () => (await import('./dictation/src/api')).recordRows)
 registerCommandRows('transcribe', async () => (await import('./dictation/src/api')).transcribeRows)
-registerCommandRows('rewrite', async () => (await rewritingStore()).rewriteRows)
+if (__AI__) registerCommandRows('rewrite', async () => (await rewritingStore()).rewriteRows)
 registerSurfaces({
   canvas: () => import('./canvas/src/api').then((one) => one.loadCanvas()),
   tasks: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosPanel })),
@@ -184,19 +185,24 @@ registerSurfaces({
   explorer: () => import('./explorer/src/api').then((one) => one.loadExplorerTab()),
   pass: () => import('./pass-ui/src/api').then((one) => one.loadPassTab()),
   'pass-fill': () => import('./pass-ui/src/api').then((one) => one.loadPassFill()),
-  'takeover-bar': () => import('./agents/src/api').then((one) => one.loadTakeoverBar()),
-  'agent-rows': () => import('./agents/src/api').then((one) => one.loadAgentRows()),
-  'agent-session': () => import('./agents/src/api').then((one) => one.loadAgentSession()),
-  spark: () => import('./agents/src/api').then((one) => ({ default: one.Spark })),
+  ...(__AI__
+    ? {
+        'takeover-bar': () => import('./agents/src/api').then((one) => one.loadTakeoverBar()),
+        'agent-rows': () => import('./agents/src/api').then((one) => one.loadAgentRows()),
+        'agent-session': () => import('./agents/src/api').then((one) => one.loadAgentSession()),
+        spark: () => import('./agents/src/api').then((one) => ({ default: one.Spark })),
+        rewrite: loadRewriteSheet,
+        ask: () => import('./ai-sidebar/src/api').then((one) => one.loadChatPanel()),
+        'quick-question': () => import('./ai-sidebar/src/api').then((one) => one.loadQuickQuestion()),
+        'keys-moved': () => import('./ai-providers/src/api').then((one) => one.loadKeysMoved()),
+      }
+    : {}),
   'phone-tabs': () => import('./phone/src/api').then((one) => one.loadPhoneTabs()),
   'phone-you': () => import('./phone/src/api').then((one) => one.loadPhoneYou()),
-  ask: () => import('./ai-sidebar/src/api').then((one) => one.loadChatPanel()),
   archive: loadArchive,
   'archived-strip': loadArchivedStrip,
   export: () => import('./export/src/api').then((one) => one.loadExportSheet()),
-  'quick-question': () => import('./ai-sidebar/src/api').then((one) => one.loadQuickQuestion()),
   'scratchpad-card': () => import('./scratchpad/src/api').then((one) => one.loadScratchpadCard()),
-  'keys-moved': () => import('./ai-providers/src/api').then((one) => one.loadKeysMoved()),
   'crash-ask': () => import('./crash-reports/src/api').then((one) => one.loadCrashAsk()),
   'undo-toast': () => import('./workspace/src/api').then((one) => one.loadUndoToast()),
 })
@@ -205,19 +211,23 @@ registerSidebarPart({
   menu: async () => (await import('./time/src/api')).trackingMenu(),
   toTab: async () => void (await import('./time/src/api')).openTime(),
 })
-registerFeature(() => import('./agents/src/api'))
-registerFeature(() => import('./mcp-servers/src/api'))
+if (__AI__) {
+  registerFeature(() => import('./agents/src/api'))
+  registerFeature(() => import('./mcp-servers/src/api'))
+}
 registerFeature(() => import('./chats-client/src/api'))
 registerFeature(() => import('./crash-reports/src/api'))
 registerFeature(() => import('./terminal/src/api'))
 registerFeature(() => import('./auto-tidy/src/api'))
 registerTabKind('terminal', async () => (await import('./terminal/src/api')).terminalTabKind())
 registerCommand('app.new-private', async () => (await (await import('./web-tab/src/api')).privateWindows()).openPrivate)
-registerCommand(
-  'app.ask-selection',
-  async () => (await (await import('./ai-chat/src/api')).chatQuoting()).quoteSelection,
-)
-registerCommand('agents.stop', async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents)
+if (__AI__) {
+  registerCommand(
+    'app.ask-selection',
+    async () => (await (await import('./ai-chat/src/api')).chatQuoting()).quoteSelection,
+  )
+  registerCommand('agents.stop', async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents)
+}
 registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
 registerCommand('explorer.turn', async () => (await import('./explorer/src/api')).turnExplorer)
 registerCommand('app.handwriting', async () => {
@@ -247,14 +257,16 @@ providePort('web.siteIcons', {
 })
 registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
 registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
-registerCommand('ai.tab', async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab)
-registerCommand('ai.threads', async () => {
-  const { chat } = await (await import('./ai-chat/src/api')).chatStore()
-  return () => chat.showThreads()
-})
+if (__AI__) {
+  registerCommand('ai.tab', async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab)
+  registerCommand('ai.threads', async () => {
+    const { chat } = await (await import('./ai-chat/src/api')).chatStore()
+    return () => chat.showThreads()
+  })
+}
 registerCommandRows('export', async () => (await import('./export/src/api')).exportCommands)
 registerCommandRows('export-picker', async () => (await import('./export/src/api')).exportPicker)
-registerCommandRows('agent-undo', async () => (await import('./agent-docs/src/api')).undoRows)
+if (__AI__) registerCommandRows('agent-undo', async () => (await import('./agent-docs/src/api')).undoRows)
 registerCommandRows('send', async () => (await import('./chats-client/src/api')).sendRows)
 registerCommands('time.', async () => (await import('./time/src/api')).timeCommands)
 registerHearing(async () => (await (await import('./web-tab/src/api')).pagesHanded()).hearPages)
@@ -298,7 +310,7 @@ export async function warmDoors(): Promise<void> {
     () => joinSheet.ask(),
     () => undoToastNotice.ask(),
     () => import('./context-menu/src/api').then((one) => one.loadFieldMenu()),
-    () => import('./ai-providers/src/api'),
+    __AI__ ? () => import('./ai-providers/src/api') : undefined,
     () => import('./tab-strip/src/api').then((one) => one.tabMenus()),
     () => import('./tab-strip/src/api').then((one) => one.stripMenus()),
     () => import('./row-menu/src/api').then((one) => one.rowMenus()),

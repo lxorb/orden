@@ -32,29 +32,30 @@ providePort('quit.terminal', {
     return Promise.resolve()
   },
 })
-providePort('quit.thread', {
-  rows: async (window) => {
-    const { answering } = await chatSends()
-    const threads = answering()
-    if (!threads.length) return []
-    const { ai } = await import('./ai-providers/src/api')
-    return threads.map((thread) => {
-      const kind = ai.provider(thread.provider)?.kind
-      const program = kind === 'claude-code' ? 'claude' : kind === 'codex' ? 'codex' : null
-      return {
-        window,
-        kind: 'thread',
-        id: thread.id,
-        name: thread.title || 'Untitled',
-        busy: true,
-        ...(program ? { doc: '', running: { name: null, program, host: null, colour: null } } : {}),
-      }
-    })
-  },
-  show: async (row) => {
-    workspace.showPanel('ask')
-    const { chat } = await chatStore()
-    await chat.openThread(row.id)
-  },
-})
+if (__AI__)
+  providePort('quit.thread', {
+    rows: async (window) => {
+      const { answering } = await chatSends()
+      const threads = answering()
+      if (!threads.length) return []
+      const { ai } = await import('./ai-providers/src/api')
+      return threads.map((thread) => {
+        const kind = ai.provider(thread.provider)?.kind
+        const program = kind === 'claude-code' ? 'claude' : kind === 'codex' ? 'codex' : null
+        return {
+          window,
+          kind: 'thread',
+          id: thread.id,
+          name: thread.title || 'Untitled',
+          busy: true,
+          ...(program ? { doc: '', running: { name: null, program, host: null, colour: null } } : {}),
+        }
+      })
+    },
+    show: async (row) => {
+      workspace.showPanel('ask')
+      const { chat } = await chatStore()
+      await chat.openThread(row.id)
+    },
+  })
 export { answerQuitting, holdToQuit, mayStop, quitAsked } from './quitting/src/api'

@@ -2,6 +2,7 @@ import type { CommandExtension } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
 import { embedKind, parseWikilink } from '@orden/markdown/links'
 import { canTranscribe } from '../../../ai-providers/src/api'
+import { account } from '../../../accounts/src/api'
 import { canWriteAt } from '../../../sharing/src/api'
 import { isMarkdownPath } from '../../../platform/src/api'
 import { workspace } from '../../../workspace/src/api'
@@ -56,7 +57,8 @@ async function transcribeEmbed(view: EditorView, at: number) {
 }
 export function transcribeRows(spot?: object): CommandExtension[] {
   const { view, at } = (spot ?? {}) as { view?: EditorView; at?: number }
-  if (!view || at === undefined || view.state.readOnly || !canTranscribe()) return []
+  if (!view || at === undefined || view.state.readOnly || !(__AI__ ? canTranscribe() : !!account.accountToken))
+    return []
   if (!recordingAt(view, at)) return []
   return [{ id: 'transcribe', label: 'Transcribe', run: () => void transcribeEmbed(view, at) }]
 }

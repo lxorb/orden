@@ -119,7 +119,7 @@
           >
         </button>
       {/each}
-      {#if onai && !todo.done}
+      {#if __AI__ && onai && !todo.done}
         <button type="button" class="act ai" aria-label="Do with AI" title="Do with AI" data-todo-ai onclick={onai}>
           <svg viewBox="0 0 16 16" aria-hidden="true"
             ><path

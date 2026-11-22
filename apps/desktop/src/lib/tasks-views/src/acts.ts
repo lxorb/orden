@@ -90,6 +90,7 @@ export async function linkNotes(todo: Todo, names: readonly string[]): Promise<v
   await patchTodo(todo.id, { description })
 }
 export async function doWithAi(todo: Todo, space: string | null): Promise<boolean> {
+  if (!__AI__) return false
   const { doWithAi: run } = await todoWithAi()
   return run(todo, space ?? '')
 }

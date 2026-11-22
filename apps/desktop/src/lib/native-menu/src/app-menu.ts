@@ -317,7 +317,7 @@ export function appMenu(context: Context): MenuGroup[] {
         }),
         go('app.files', 'Files'),
         { label: 'Outline', run: () => workspace.showPanel('outline') },
-        ...unlessTouch([go('app.ask', 'Ask')]),
+        ...(__AI__ ? unlessTouch([go('app.ask', 'Ask')]) : []),
         DIVIDER,
         fold('view.fold', 'Fold', toggleFold),
         fold('view.fold-all', 'Fold everything', foldHeadings),

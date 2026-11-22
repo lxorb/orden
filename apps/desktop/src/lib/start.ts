@@ -47,7 +47,7 @@ async function openPdfs(paths: readonly string[]) {
   await showPdfs(paths)
 }
 async function listenForAgents(): Promise<() => void> {
-  if (!isDesktop) return () => undefined
+  if (!__AI__ || !isDesktop) return () => undefined
   const { listen } = await import('@tauri-apps/api/event')
   const heard = door(() => import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()))
   return listen<unknown>('orden://agent', ({ payload }) => {
@@ -78,7 +78,7 @@ export function start(): () => void {
     startup.settled = true
     forget('orden:hints')
   }, 20_000)
-  installAiRunner()
+  if (__AI__) installAiRunner()
   recovery.restore()
   record.restore()
   account.forgetWithSession(() => record.forgetEverything())

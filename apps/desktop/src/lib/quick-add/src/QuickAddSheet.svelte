@@ -35,7 +35,7 @@
     <QuickAdd
       langs={[region()]}
       tags={[...new Set([...links.spaceTags.map((one) => one.tag), ...labels])]}
-      provider={ai.providerFor('ask')}
+      provider={__AI__ ? ai.providerFor('ask') : null}
       prefill={quickAdd.prefill}
       smart={quickAdd.smart}
       onsubmit={added}

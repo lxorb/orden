@@ -38,7 +38,7 @@
       .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
-  startPriorities()
+  if (__AI__) startPriorities()
   const byLevel = $derived.by(() => {
     if (!priorities.on || arranged !== 'priority') return { pending: [], rest: [] }
     const ranked = chats.map((entry) => ({

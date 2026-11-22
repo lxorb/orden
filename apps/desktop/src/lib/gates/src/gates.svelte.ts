@@ -21,7 +21,7 @@ export function kindsHere(): KindName[] {
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken && chatsOn()) here.push('chat')
-  if (web) here.push('ai')
+  if (__AI__ && web) here.push('ai')
   if (isDesktop && modes.coder) here.push('terminal', 'remote')
   if (modes.coder) here.push('online')
   if (isDesktop && explorerOn()) here.push('explorer')

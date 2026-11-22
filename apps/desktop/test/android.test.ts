@@ -223,9 +223,9 @@ describe('the bridge the page talks over', () => {
     for (const call of [
       'const said = await frameWord()',
       'if (!said) throw new NoWord()',
-      'secretRead(await word(), id)',
-      'secretWrite(await word(), id, secret)',
-      'secretForget(await word(), id)',
+      'read(await word(), name)',
+      'write(await word(), name, secret)',
+      'forget(await word(), name)',
     ]) {
       expect(page, call).toContain(call)
     }

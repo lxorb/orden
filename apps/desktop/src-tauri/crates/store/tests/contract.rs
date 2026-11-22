@@ -1,3 +1,5 @@
+#![cfg(desktop)]
+
 use orden_store::ai_accounts;
 
 #[test]

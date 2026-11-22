@@ -330,7 +330,7 @@
   {/if}
 
   <div class="foot">
-    {#if onai && !todo.done}
+    {#if __AI__ && onai && !todo.done}
       <button type="button" class="ai orden-chip" data-todo-ai onclick={onai}>Do with AI</button>
     {/if}
     <button type="button" class="danger orden-action is-danger" onclick={onremove}>Delete todo</button>

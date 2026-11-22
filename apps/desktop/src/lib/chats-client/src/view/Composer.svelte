@@ -181,7 +181,7 @@
       setText('')
       words = ''
     }
-    const question = ordenAsked(words)
+    const question = __AI__ ? ordenAsked(words) : null
     if (question !== null && !attachments.refs.length) {
       setText('')
       store().keepDraft(draftKey, '')
