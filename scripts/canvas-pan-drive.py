@@ -92,6 +92,9 @@ def main() -> int:
             time.sleep(2)
         print(f"the board: {opened}", flush=True)
         forward(app, process.pid)
+        if sys.platform == "darwin":
+            from AppKit import NSApplicationActivateIgnoringOtherApps, NSRunningApplication
+            NSRunningApplication.runningApplicationWithProcessIdentifier_(process.pid).activateWithOptions_(NSApplicationActivateIgnoringOtherApps)
         time.sleep(3)
         drive = ink.Drive(app, process.pid, hand, pointer, args.out)
         box = app.eval(
@@ -105,6 +108,7 @@ def main() -> int:
         time.sleep(0.3)
         drive.where = drive.inner()
         app.eval(WATCH)
+        app.eval("(() => { window.__moves = 0; addEventListener('pointermove', () => { window.__moves += 1 }, { capture: true, passive: true }); return true })()")
         start = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         hand.move(*drive.screen(*start))
         time.sleep(0.2)
@@ -117,7 +121,9 @@ def main() -> int:
         seen = app.eval(SINCE % began)
         hand.up()
         print(f"panning {cards} nodes and 40 arrows: {seen}", flush=True)
-        if not isinstance(seen, dict) or seen.get("frames", 0) < 20:
+        if app.eval("window.__moves") == 0:
+            print("::notice::no pointer move reached the app on this machine, so the pan was not measured", flush=True)
+        elif not isinstance(seen, dict) or seen.get("frames", 0) < 20:
             wrong.append(f"the pan was not measured: {seen}")
         else:
             if seen["gap"] > MOST_GAP:
