@@ -13,7 +13,6 @@
     "ui-kit",
     "space-kept",
     "ui-controls",
-    "workspace",
-    "hints"
+    "workspace"
   ]
 }
