@@ -18,7 +18,6 @@ const actions = {
   print: () => undefined,
   find: () => undefined,
   save: () => undefined,
-  share: () => undefined,
   settings: () => undefined,
 }
 function labels(url: string | null, zoom = 1): string[] {
@@ -38,7 +37,6 @@ test('is Chromes own menu, in Chromes own order', () => {
     'Print…',
     'Find',
     'Save as a note',
-    'Share…',
     'Copy link',
     'Open in the browser',
     'Settings',
@@ -109,8 +107,7 @@ test('saving the page as a note is a row of the menu, and runs the clipper', () 
   row?.run()
   expect(saved).toBe(1)
 })
-test('Share… is greyed on a page with nothing here to share', () => {
-  const rows = webRows(page('https://a.example/'), 1, { ...actions, share: undefined })
-  const share = rows.find((one) => one?.label === 'Share…')
-  expect(share?.disabled).toBe(true)
+test('a web tab’s menu offers no Share, since a web note is never shared', () => {
+  const rows = webRows(page('https://a.example/'), 1, actions)
+  expect(rows.some((one) => one?.label.startsWith('Share'))).toBe(false)
 })

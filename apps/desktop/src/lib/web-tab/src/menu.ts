@@ -33,7 +33,6 @@ export interface WebActions {
   print: () => void
   find?: (() => void) | undefined
   save: () => void
-  share?: (() => void) | undefined
   settings: () => void
 }
 export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntry[] {
@@ -83,7 +82,6 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
     ...(actions.find ? [{ label: 'Find', hint: shortcuts.hint('edit.find'), disabled: !has, run: actions.find }] : []),
     DIVIDER,
     { label: 'Save as a note', disabled: !has, run: actions.save },
-    { label: 'Share…', disabled: !has || !actions.share, run: () => actions.share?.() },
     {
       label: 'Copy link',
       disabled: !has,
