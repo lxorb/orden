@@ -1,15 +1,22 @@
-import { busy, message } from '../../ui-kit/src/api'
+import { busy } from '../../ui-kit/src/api'
 import { isDesktop } from '../../platform/src/api'
-import { arrive } from './arrive'
 import { landBrowser } from './browser-landing'
-import { type BrowserProfile, type FoundBrowser, foundBrowsers } from './browsers'
+import {
+  BROWSER_LOGOS,
+  BROWSER_NAMES,
+  type BrowserProfile,
+  type FoundBrowser,
+  foundBrowsers,
+  ZEN_LOGO,
+} from './browsers'
 import { folderNameFor } from './folder-name'
-import { type Bring, startImport } from './run.svelte'
+import { type Brought, startImport } from './run.svelte'
 import { insideFolder, pickedFolder, sourcesFrom } from './sources'
 import { type Vault, vaults, vaultSources } from './vaults'
 import { landZen } from './zen-landing'
 import { type ZenProfile, zenProfiles } from './zen-profiles'
 
+const PAGES = { notes: 'pages', files: 'other files' }
 class Migrating {
   working = $state(false)
   vaults = $state<Vault[] | null>(null)
@@ -38,10 +45,16 @@ class Migrating {
     else if (only) await this.browserProfile(only, false)
   }
   async browserProfile(profile: BrowserProfile, several = true) {
-    await this.running(async () => {
-      const space = await landBrowser(profile, several)
-      this.browserProfiles = null
-      await arrive(space, false)
+    const browser = BROWSER_NAMES[profile.browser]
+    this.browserProfiles = null
+    const label = several ? `${browser} (${profile.name})` : browser
+    await this.bringing({
+      label,
+      title: label,
+      where: profile.path,
+      slug: BROWSER_LOGOS[profile.browser],
+      words: PAGES,
+      land: (told) => landBrowser(profile, several, told),
     })
   }
   async zen() {
@@ -53,10 +66,14 @@ class Migrating {
     else busy.failed('Zen’s tabs could not be read.')
   }
   async zenProfile(profile: ZenProfile) {
-    await this.running(async () => {
-      const space = await landZen(profile)
-      this.profiles = null
-      await arrive(space, false)
+    this.profiles = null
+    await this.bringing({
+      label: 'Zen',
+      title: 'Zen',
+      where: profile.path,
+      slug: ZEN_LOGO,
+      words: PAGES,
+      land: (told) => landZen(profile, told),
     })
   }
   async vault(vault: Vault) {
@@ -94,6 +111,7 @@ class Migrating {
     await this.bringing({
       name: (format) => folderNameFor(picked, format),
       label: picked.length === 1 && first ? `“${first.name}”` : `${String(picked.length)} files`,
+      title: picked.length === 1 && first ? first.name : `${String(picked.length)} files`,
       read: async () => ({ sources: await sourcesFrom(picked) }),
     })
     return true
@@ -112,27 +130,12 @@ class Migrating {
       },
     })
   }
-  private async bringing(bring: Bring) {
+  private async bringing(bring: Brought) {
     if (this.working) return
     this.working = true
     this.vaults = null
     try {
       await startImport(bring)
-    } finally {
-      this.working = false
-    }
-  }
-  private async running(task: () => Promise<void>) {
-    if (this.working) return
-    this.working = true
-    try {
-      await busy.run('Importing', async () => {
-        try {
-          await task()
-        } catch (error) {
-          busy.failed(message(error, 'That import could not be written.'))
-        }
-      })
     } finally {
       this.working = false
     }

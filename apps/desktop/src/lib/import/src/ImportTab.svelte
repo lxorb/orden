@@ -11,7 +11,8 @@
   import { workspace } from '../../workspace/src/api'
   import { brandOf } from './brands'
   import type { RowKind } from './progress'
-  import { kept, openAccess, readKept, removed, runs } from './run.svelte'
+  import { readKept } from './kept'
+  import { kept, openAccess, removed, runs } from './run.svelte'
 
   const { tab }: { tab: Tab } = $props()
   const saved = untrack(() => readKept(tab.doc))
@@ -22,9 +23,11 @@
   const phase = $derived(run?.phase ?? 'interrupted')
   const working = $derived(phase === 'reading' || phase === 'writing' || phase === 'checking')
   const tally = $derived(run?.tally ?? { notes: 0, files: 0, skipped: 0, failed: 0 })
-  const troubled = $derived(tally.failed + tally.skipped > 0)
+  const troubled = $derived(!!run?.rows.some((row) => row.kind === 'failed' || (row.kind === 'skipped' && row.path)))
+  const checked = $derived(run ? !('land' in run.bring) : false)
+  const called = $derived(checked ? 'files' : (run?.bring.words?.notes ?? 'files'))
   const spaceName = $derived(run?.space?.name ?? workspace.spaces.find((one) => one.id === saved?.space)?.name ?? '')
-  const slug = $derived(brandOf(run?.format ?? null))
+  const slug = $derived(run?.bring.slug ?? brandOf(run?.format ?? null))
   const mood = $derived(
     phase === 'review'
       ? tally.failed
@@ -65,9 +68,12 @@
       return tally.failed
         ? {
             head: `${String(tally.failed)} ${tally.failed === 1 ? 'file' : 'files'} could not be imported`,
-            text: `The other ${String(ok)} are in “${spaceName}”, checked against the source.`,
+            text: `The other ${String(ok)} are in “${spaceName}”${checked ? ', checked against the source' : ''}.`,
           }
-        : { head: 'No problems', text: `All ${String(ok)} files are in “${spaceName}”, checked against the source.` }
+        : {
+            head: 'No problems',
+            text: `All ${String(ok)} ${called} are in “${spaceName}”${checked ? ', checked against the source' : ''}.`,
+          }
     }
     if (phase === 'failed') return { head: 'Nothing could be imported', text: run?.error ?? '' }
     if (phase === 'interrupted')
@@ -87,8 +93,8 @@
     failed: 'Nothing failed.',
   }
   const COUNTS: { kind: Shown; label: string }[] = [
-    { kind: 'notes', label: 'notes' },
-    { kind: 'files', label: 'other files' },
+    { kind: 'notes', label: run?.bring.words?.notes ?? 'notes' },
+    { kind: 'files', label: run?.bring.words?.files ?? 'other files' },
     { kind: 'remaining', label: 'remaining' },
     { kind: 'skipped', label: 'skipped' },
     { kind: 'failed', label: 'failed' },
@@ -105,7 +111,7 @@
       <div class="end">
         <span class="tile"><Icon icon={slug ? readIcon(brandIcon(slug)) : null} fallback={FolderOpen} /></span>
         <span class="said" title={run?.bring.where ?? undefined}
-          >{run?.bring.where?.split('/').pop() ?? saved?.label}</span
+          >{run?.bring.title ?? run?.bring.where?.split('/').pop() ?? saved?.label}</span
         >
       </div>
       <span class="arrow"><Icon icon={null} fallback={ArrowRight} /></span>
@@ -194,13 +200,15 @@
         <button type="button" class="orden-button is-quiet is-soft" onclick={() => void run.cancel()}>Close</button>
         <button type="button" class="orden-button" onclick={() => void run.again()}>Try Again</button>
       {:else}
-        <button
-          type="button"
-          class="orden-button is-quiet is-soft"
-          onclick={() => void removed(saved?.space ?? null, saved?.from ?? null)}
-        >
-          Cancel Import
-        </button>
+        {#if saved?.made}
+          <button
+            type="button"
+            class="orden-button is-quiet is-soft"
+            onclick={() => void removed(saved.space, saved.from)}
+          >
+            Cancel Import
+          </button>
+        {/if}
         <button type="button" class="orden-button" onclick={() => void kept(tab)}>
           {saved?.finished ? 'Complete Import' : 'Keep What Came In'}
         </button>

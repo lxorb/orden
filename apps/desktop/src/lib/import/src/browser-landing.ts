@@ -1,5 +1,6 @@
 import type { BrowserId } from '@orden/contracts'
 import type { Space } from '../../workspace/src/api'
+import type { Landed } from './run.svelte'
 import { arcSidebar } from './arc'
 import { bringHistory, droppedLine, takeEngine, withMarks } from './browser-extras'
 import { BROWSER_NAMES, browserFile, type BrowserProfile } from './browsers'
@@ -31,7 +32,7 @@ const KEPT: Partial<Record<BrowserId, (browser: string) => string>> = {
   opera: WORKSPACES,
   'opera-gx': WORKSPACES,
 }
-export async function landBrowser(profile: BrowserProfile, several: boolean): Promise<Space> {
+export async function landBrowser(profile: BrowserProfile, several: boolean, told?: Landed): Promise<Space> {
   const browser = BROWSER_NAMES[profile.browser]
   const name = several ? `${browser} (${profile.name})` : browser
   const firefox = profile.browser === 'firefox'
@@ -48,8 +49,10 @@ export async function landBrowser(profile: BrowserProfile, several: boolean): Pr
     ...(kept ? [kept(browser)] : []),
     ...(await takeEngine(read.engine, browser)),
   ]
-  const first = await landSpaces(spaces, lines, nothing)
-  await bringHistory(profile.browser, profile.path)
+  const first = await landSpaces(spaces, lines, nothing, told)
+  const history = () => bringHistory(profile.browser, profile.path)
+  if (told) told.later.push(history)
+  else await history()
   return first
 }
 async function readProfile(profile: BrowserProfile, name: string): Promise<Read | null> {

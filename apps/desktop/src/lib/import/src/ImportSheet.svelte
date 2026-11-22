@@ -187,28 +187,7 @@
         </div>
       {/if}
 
-      {#if importing.stage === 'done'}
-        <p class="note">
-          {counts.notes === 1 ? '1 note arrived.' : `${counts.notes} notes arrived.`}
-        </p>
-        {#if importing.stepped}
-          <p class="hint">
-            {importing.stepped === 1
-              ? '1 name was taken, so that file stepped aside.'
-              : `${importing.stepped} names were taken, so those files stepped aside.`}
-          </p>
-        {/if}
-        <button class="orden-button" onclick={() => importing.close()}>Done</button>
-      {:else}
-        <button class="orden-button" disabled={!ready} onclick={() => void importing.run()}>
-          {importing.stage === 'writing' ? 'Importing' : 'Import'}
-        </button>
-        {#if importing.stage === 'writing'}
-          <p class="hint" transition:fade={{ duration: dur(130) }}>
-            {importing.written} of {plan?.files.length ?? 0}
-          </p>
-        {/if}
-      {/if}
+      <button class="orden-button" disabled={!ready} onclick={() => void importing.run()}>Import</button>
     {/if}
   {/if}
 </Sheet>

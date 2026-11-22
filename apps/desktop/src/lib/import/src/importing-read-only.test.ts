@@ -62,10 +62,10 @@ vi.mock('./document', () => ({
 }))
 const storedFor = vi.hoisted((): string[] => [])
 const landedIn = vi.hoisted((): { root: string; folder: string }[] => [])
-vi.mock('./apply', () => ({
-  applyImport: (_: unknown, target: { root: string; folder: string }) => {
-    landedIn.push(target)
-    return Promise.resolve({ paths: [], stepped: 0 })
+vi.mock('./run.svelte', () => ({
+  startImport: (bring: { into: { root: string; folder: string } }) => {
+    landedIn.push(bring.into)
+    return Promise.resolve()
   },
 }))
 const { importing } = await import('./importing.svelte')
@@ -150,8 +150,8 @@ test('an import with no folder of its own lands where it was sent, not in a fold
     await importing.run()
   }
   expect(landedIn).toEqual([
-    { root: MINE.root, folder: '' },
-    { root: MINE.root, folder: 'Plans' },
-    { root: MINE.root, folder: 'Plans/Notion' },
+    { root: MINE.root, folder: '', kept: '' },
+    { root: MINE.root, folder: 'Plans', kept: 'Plans' },
+    { root: MINE.root, folder: 'Plans/Notion', kept: 'Plans' },
   ])
 })
