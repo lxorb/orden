@@ -111,6 +111,36 @@ mod tests {
         }
     }
     #[test]
+    fn the_time_tracker_is_reached_under_its_own_scope_and_described_whole() {
+        let names = [
+            "time_tracker",
+            "time_blocks",
+            "time_activities",
+            "time_summary",
+            "time_health",
+            "time_files",
+            "time_settings",
+        ];
+        for name in names {
+            let scope = AGENT_VERBS.iter().find(|(verb, _)| *verb == name).map(|(_, scope)| *scope);
+            assert_eq!(scope, Some(Some(Scope::Time)), "{name}");
+            let tool = find(name).expect(name);
+            assert_eq!(tool.input["type"], "object", "{name}");
+            assert!(!tool.description.is_empty(), "{name}");
+            assert!(reaches(&grant(&[Scope::Time]), name), "{name}");
+            assert!(!reaches(&grant(&[Scope::NotesRead, Scope::NotesWrite]), name), "{name}");
+        }
+        let reads = |name: &str| {
+            find(name)
+                .and_then(|tool| tool.annotations.clone())
+                .and_then(|one| one["readOnlyHint"].as_bool())
+                == Some(true)
+        };
+        assert!(reads("time_summary") && reads("time_health"));
+        assert!(!reads("time_tracker") && !reads("time_settings") && !reads("time_blocks"));
+        assert_eq!(serde_json::to_value(Scope::Time).expect("json"), "time");
+    }
+    #[test]
     fn a_todo_belongs_to_no_space() {
         for name in ["list_tasks", "add_task", "update_task"] {
             let tool = find(name).expect(name);

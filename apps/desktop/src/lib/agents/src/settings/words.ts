@@ -16,6 +16,7 @@ export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
   clipboard: () => 'Clipboard',
   questions: () => 'Questions',
   editor: () => 'Editor',
+  time: () => 'Time tracker',
   helpers: () => 'Helpers',
 }
 export const SCOPE_WORDS: Record<Scope, () => string> = {
@@ -40,6 +41,7 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   clipboard: () => 'Read and change the clipboard',
   ask: () => 'Ask you a question or tell you something',
   editor: () => 'Select, mark and fold in your notes',
+  time: () => 'Read and change your tracked time, activities, health data and tracker settings',
   agents: () => 'Start helpers on your AI accounts',
 }
 export const CATEGORY_WORDS: Record<Category, () => string> = {

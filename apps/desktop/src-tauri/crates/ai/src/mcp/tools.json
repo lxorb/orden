@@ -1206,6 +1206,126 @@
     }
   },
   {
+    "name": "time_tracker",
+    "description": "The time tracker's timer: status (what runs, since when, whether recording is on), start an activity (the latest one if none is named), switch to another activity, or stop.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["status", "start", "switch", "stop"] },
+        "activity": { "type": "string", "description": "activity id or name" }
+      },
+      "required": ["op"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "time_blocks",
+    "description": "The tracker's schedule blocks: list a stretch (today if from and to are not said) with its Not set gaps; add, edit (start, end, activity, note, tags), move, split at a moment, merge two, delete; fill every Not set gap in a stretch with an activity; undo or redo the last schedule change.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": ["list", "add", "edit", "move", "split", "merge", "delete", "fill", "undo", "redo"]
+        },
+        "id": { "type": "string" },
+        "other": { "type": "string", "description": "the block merged in" },
+        "from": { "type": "string", "description": "ISO 8601 date and time" },
+        "to": { "type": "string", "description": "ISO 8601 date and time" },
+        "start": { "type": "string", "description": "ISO 8601 date and time" },
+        "end": { "type": "string", "description": "ISO 8601 date and time" },
+        "at": { "type": "string", "description": "ISO 8601 date and time" },
+        "activity": { "type": ["string", "null"], "description": "activity id or name; null for none" },
+        "note": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["op"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": true }
+  },
+  {
+    "name": "time_activities",
+    "description": "The tracker's activities: list, create (name, tint, icon, parent), rename, recolor, archive, unarchive, delete.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["list", "create", "rename", "recolor", "archive", "unarchive", "delete"] },
+        "activity": { "type": "string", "description": "activity id or name" },
+        "name": { "type": "string" },
+        "tint": { "type": "string" },
+        "icon": { "type": "string" },
+        "parent": { "type": "string" }
+      },
+      "required": ["op"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": true }
+  },
+  {
+    "name": "time_summary",
+    "description": "Tracked time over a day, week, month or year around at (now if not said), or a custom from and to: minutes per activity, untracked minutes, the apps, websites, spaces and tabs used, device activity and battery, and health (heart, sleep, steps, stress, SpO2, breathing, workouts).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "range": { "type": "string", "enum": ["day", "week", "month", "year", "custom"] },
+        "at": { "type": "string", "description": "ISO 8601 date and time" },
+        "from": { "type": "string", "description": "ISO 8601 date and time" },
+        "to": { "type": "string", "description": "ISO 8601 date and time" }
+      }
+    },
+    "annotations": { "readOnlyHint": true, "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "time_health",
+    "description": "Health readings the tracker holds for a stretch (today if from and to are not said): heart rate, stress, sleep stages, SpO2, breathing and steps, with workouts and a sum.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["read"] },
+        "from": { "type": "string", "description": "ISO 8601 date and time" },
+        "to": { "type": "string", "description": "ISO 8601 date and time" },
+        "kinds": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["heart", "stress", "sleep", "spo2", "breath", "steps"] }
+        }
+      },
+      "required": ["op"]
+    },
+    "annotations": { "readOnlyHint": true, "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "time_files",
+    "description": "Bring a file in a space into the tracker (watch data as .fit or a .zip of them, or tracked time as .json), or export the tracked time to a new .json or .csv file in a space.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["import", "export"] },
+        "path": { "type": "string" },
+        "space": { "type": "string" }
+      },
+      "required": ["op", "path"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": false }
+  },
+  {
+    "name": "time_settings",
+    "description": "The tracker's settings: read them, or write recording, reminding, a goal (activity, per day or week, goal_minutes, null for none) or what a place counts as (lane app, site, space or tab, count_place, activity, null for nothing).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["read", "write"] },
+        "recording": { "type": "boolean" },
+        "reminding": { "type": "boolean" },
+        "activity": { "type": ["string", "null"], "description": "activity id or name; null for none" },
+        "per": { "type": "string", "enum": ["day", "week"] },
+        "goal_minutes": { "type": ["number", "null"] },
+        "lane": { "type": "string", "enum": ["app", "site", "space", "tab"] },
+        "count_place": { "type": "string" }
+      },
+      "required": ["op"]
+    },
+    "annotations": { "openWorldHint": false, "destructiveHint": false }
+  },
+  {
     "name": "explorer_tabs",
     "description": "The reader's file explorer tabs, folders on this computer. op list; open a folder (path, absolute or ~/) in a tab behind; in a tab: go to a folder, select paths, and through it trash (to the system trash), move or copy paths into to, rename a path to name, mkdir name. Each change the reader can undo. In a space use the note tools.",
     "inputSchema": {

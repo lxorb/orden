@@ -74,6 +74,7 @@ const SCOPES: readonly Scope[] = [
   'clipboard',
   'ask',
   'editor',
+  'time',
   'agents',
 ]
 const CATEGORIES: readonly Category[] = [

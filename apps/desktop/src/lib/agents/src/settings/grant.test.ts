@@ -46,6 +46,7 @@ describe('the defaults', () => {
       'clipboard',
       'ask',
       'editor',
+      'time',
       'agents',
     ])
     expect(grant.spaces).toBe('all')

@@ -23,6 +23,7 @@ export const SCOPE_GROUPS = [
   { id: 'clipboard', scopes: ['clipboard'] },
   { id: 'questions', scopes: ['ask'] },
   { id: 'editor', scopes: ['editor'] },
+  { id: 'time', scopes: ['time'] },
   { id: 'helpers', scopes: ['agents'] },
 ] as const satisfies readonly { id: string; scopes: readonly Scope[] }[]
 export type ScopeGroup = (typeof SCOPE_GROUPS)[number]['id']
@@ -48,6 +49,7 @@ const ALL_SCOPES: readonly Scope[] = [
   'clipboard',
   'ask',
   'editor',
+  'time',
   'agents',
 ]
 export const LIMITS = {
@@ -162,6 +164,7 @@ export function thirdPartyGrant(id: string, client: string, created: number): Gr
           'clipboard',
           'ask',
           'editor',
+          'time',
         ].includes(one),
     ),
     mode: 'confirm',

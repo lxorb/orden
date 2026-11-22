@@ -54,11 +54,13 @@ pub enum Scope {
     Ask,
     #[serde(rename = "editor")]
     Editor,
+    #[serde(rename = "time")]
+    Time,
     #[serde(rename = "agents")]
     Agents,
 }
 impl Scope {
-    pub const ALL: [Scope; 22] = [
+    pub const ALL: [Scope; 23] = [
         Scope::Context,
         Scope::NotesRead,
         Scope::NotesWrite,
@@ -80,6 +82,7 @@ impl Scope {
         Scope::Clipboard,
         Scope::Ask,
         Scope::Editor,
+        Scope::Time,
         Scope::Agents,
     ];
 }
@@ -216,6 +219,7 @@ impl Grant {
                     | Scope::Clipboard
                     | Scope::Ask
                     | Scope::Editor
+                    | Scope::Time
             )
         });
         grant.mode = Mode::Confirm;
@@ -752,6 +756,7 @@ mod tests {
         assert!(own.holds(Scope::Network));
         assert!(own.holds(Scope::Clipboard) && own.holds(Scope::Ask));
         assert!(own.holds(Scope::Editor));
+        assert!(own.holds(Scope::Time));
         assert!(own.asks(Category::Terminal));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
@@ -766,6 +771,7 @@ mod tests {
         assert!(!other.holds(Scope::Network));
         assert!(!other.holds(Scope::Clipboard) && !other.holds(Scope::Ask));
         assert!(!other.holds(Scope::Editor));
+        assert!(!other.holds(Scope::Time));
         assert_eq!(other.mode, Mode::Confirm);
     }
     #[test]
