@@ -817,11 +817,9 @@
 .orden-read-only .orden-table-rows,
 .orden-read-only .orden-table-columns,
 .orden-read-only .orden-table-resize,
-.orden-read-only .orden-image-alt,
 .orden-read-only .orden-image-size,
 .orden-read-only .orden-image-source,
 .orden-read-only .orden-image-delete,
-.orden-read-only .orden-image-tools-gap,
 .orden-read-only .orden-image-handle {
   display: none;
 }
@@ -1494,33 +1492,6 @@
   opacity: 1;
   pointer-events: auto;
   transform: translate(calc(-50% + var(--orden-tools-shift, 0px)), 0);
-}
-.orden-image-alt {
-  width: 11em;
-  height: 24px;
-  padding: 0 7px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--text);
-  font: inherit;
-  outline: none;
-  user-select: text;
-  -webkit-user-select: text;
-  transition: background var(--dur-instant) var(--ease-out);
-}
-.orden-image-alt::placeholder {
-  color: var(--muted);
-}
-.orden-image-alt:hover,
-.orden-image-alt:focus {
-  background: var(--surface-2);
-}
-.orden-image-tools-gap {
-  width: 1px;
-  height: 14px;
-  margin: 0 3px;
-  background: var(--line-strong);
 }
 .orden-image-tool {
   display: grid;

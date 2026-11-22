@@ -7,10 +7,8 @@ import '@orden/markdown/eager'
 import { parsed } from '../../../test/parsed'
 import { ordenMarkdownExtensions } from '../../markdown/extensions'
 import { livePreview } from '..'
-import { SharedDoc } from '../../shared'
 import { noRects } from '../../../test/views'
 
-const DOC = 'words\n\n![A cat](cat.png)\n\nend'
 const errors: unknown[] = []
 beforeAll(() => {
   noRects()
@@ -24,45 +22,6 @@ beforeAll(() => {
 })
 afterEach(() => {
   errors.length = 0
-})
-function typedAlt(text: string, doc = DOC): EditorView {
-  const view = new EditorView({
-    state: parsed(
-      EditorState.create({
-        doc,
-        selection: EditorSelection.cursor(doc.length),
-        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreview()],
-      }),
-    ),
-    parent: document.body,
-  })
-  const alt = view.contentDOM.querySelector('input')
-  alt?.focus()
-  if (alt) alt.value = text
-  return view
-}
-test('is written to the picture when the field is left', async () => {
-  const view = typedAlt('A dog')
-  view.focus()
-  await Promise.resolve()
-  expect(view.state.doc.toString()).toBe(DOC.replace('A cat', 'A dog'))
-  view.destroy()
-})
-test('is let go of, and throws nothing, when its picture was taken away', async () => {
-  const view = typedAlt('A dog')
-  view.dispatch({ changes: { from: DOC.indexOf('!'), to: DOC.indexOf('\n\nend'), insert: '' } })
-  await Promise.resolve()
-  expect(errors).toEqual([])
-  expect(view.state.doc.toString()).toBe('words\n\n\n\nend')
-  view.destroy()
-})
-test('in a picture wrapped in HTML, is written to its img tag and leaves the wrapper', async () => {
-  const doc = 'words\n\n<p align="center"><img src="cat.png" alt="A cat"></p>\n\nend'
-  const view = typedAlt('A dog', doc)
-  view.focus()
-  await Promise.resolve()
-  expect(view.state.doc.toString()).toBe('words\n\n<p align="center"><img src="cat.png" alt="A dog"></p>\n\nend')
-  view.destroy()
 })
 test('a corner pressed and let go without a drag leaves a sized picture as it was', () => {
   Object.defineProperty(HTMLImageElement.prototype, 'naturalWidth', {
@@ -92,21 +51,5 @@ test('a corner pressed and let go without a drag leaves a sized picture as it wa
   handle?.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 51, clientY: 9 }))
   handle?.dispatchEvent(new MouseEvent('pointerup', { button: 0, bubbles: true, clientX: 50 }))
   expect(view.state.doc.toString()).toBe(doc)
-  view.destroy()
-})
-test('goes to its own note when the pane has moved to another note before it was left', async () => {
-  const mine = new SharedDoc(DOC)
-  const elsewhere = DOC.replace('words', 'wordz')
-  const other = new SharedDoc(elsewhere)
-  const view = typedAlt('A dog')
-  mine.join(view)
-  const alt = view.contentDOM.querySelector('input')
-  alt?.dispatchEvent(new FocusEvent('focus'))
-  if (alt) alt.value = 'A dog'
-  other.join(view)
-  await Promise.resolve()
-  await Promise.resolve()
-  expect(view.state.doc.toString()).toBe(elsewhere)
-  expect(mine.text.toString()).toBe(DOC.replace('A cat', 'A dog'))
   view.destroy()
 })
