@@ -43,7 +43,7 @@
   import { startup, Stops } from './lib/launch/src/api'
   import { renamed } from './lib/launch/src/renamed.svelte'
   import { account, arriving, usage } from './lib/accounts/src/api'
-  import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
+  import { joining, canWriteIn, JoinShell, share, sharedWithYou } from './lib/sharing/src/api'
   import {
     drawer,
     drawerFollowing,
@@ -112,7 +112,7 @@
   import { type TabKind, TAB_KINDS } from './lib/tab-kinds/src/api'
   import { doubleTaps, shortcuts, toolbar } from './lib/shortcuts/src/api'
   import type { AppContext } from './lib/shortcuts/src/api'
-  import { firstSpaceDoor, gate, loadGuide, loadSetup } from './lib/onboarding/src/api'
+  import { firstSpaceDoor, gate, loadGuide, loadSetup, SetupShell } from './lib/onboarding/src/api'
 
   if (renamed.showing) void renameNotice.ask()
   if (isDesktop) {
@@ -225,6 +225,7 @@
     }
   })
   $effect(() => {
+    if (workspace.restored && workspace.spaces.length && !gate.showing) gate.letGo()
     if (!workspace.restored || workspace.spaces.length) return
     const now = {
       native: isNative,
@@ -828,6 +829,12 @@
 
 <SizeBadge />
 
+{#if gate.ahead !== null}
+  <SetupShell />
+{/if}
+{#if joining.covering}
+  <JoinShell />
+{/if}
 <Door open={gate.showing} load={loadSetup}>
   {#snippet children(Setup)}
     <Setup.default />

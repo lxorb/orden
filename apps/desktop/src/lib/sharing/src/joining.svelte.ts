@@ -27,6 +27,12 @@ class Joining {
   busy = $state(false)
   error = $state<string | null>(null)
   closed = $state(false)
+  arriving = $state(typeof location !== 'undefined' && PATH.test(location.pathname))
+  private opened = $state(false)
+  private landing = $state(false)
+  get covering(): boolean {
+    return this.arriving && !this.closed && (!this.opened || this.busy || this.landing || this.step !== null)
+  }
   get aside(): boolean {
     return this.closed && (this.step === 'asking' || this.step === 'waiting')
   }
@@ -38,7 +44,11 @@ class Joining {
   private asks = 0
   async start() {
     const found = PATH.exec(window.location.pathname)
-    if (!found?.[1]) return this.resume()
+    if (!found?.[1]) {
+      this.arriving = false
+      return this.resume()
+    }
+    this.opened = true
     this.token = found[1]
     window.history.replaceState(null, '', '/')
     await this.open(this.token)
@@ -122,6 +132,14 @@ class Joining {
     await this.landed(joined)
   }
   private async landed(joined: Joined) {
+    this.landing = true
+    try {
+      await this.settle(joined)
+    } finally {
+      this.landing = false
+    }
+  }
+  private async settle(joined: Joined) {
     if (joined.code && joined.email) {
       account.askForCode(joined.email, joined.resendIn ?? 0)
       return
@@ -147,6 +165,7 @@ class Joining {
       this.stopAsking()
       await (await import('./one-file')).landOn(joined.item)
       this.arrived()
+      this.arriving = false
       return
     }
     const space = joined.space
@@ -156,6 +175,7 @@ class Joining {
     await syncStore()?.pass()
     const here = workspaceView().spaces.find((one) => syncStore()?.remoteIdFor(one.root) === space.id)
     if (here) await workspaceView().showSpace(here.id)
+    this.arriving = false
   }
   private arrived() {
     this.stopAsking()
@@ -233,6 +253,7 @@ class Joining {
     this.dismiss()
   }
   dismiss() {
+    this.arriving = false
     this.stopAsking()
     this.closed = false
     this.step = null
