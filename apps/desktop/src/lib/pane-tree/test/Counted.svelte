@@ -12,6 +12,9 @@
   $effect(() => {
     counted.shown[tab.id] = shown
   })
+  $effect(() => () => {
+    if (counted.leaveThrows) throw new Error('a surface failed as it was taken down')
+  })
 </script>
 
 <div class="counted">{tab.id}{!shown && counted.throws ? fail() : ''}</div>

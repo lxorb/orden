@@ -49,6 +49,24 @@
     handle.addEventListener('pointerup', stop)
     handle.addEventListener('pointercancel', stop)
   }
+  const SETTLE = 1000
+  let rebuiltAt = -SETTLE
+  let rebuilding = false
+  let lost = $state(false)
+  function rebuilt(error: unknown, reset: () => void) {
+    console.error(error)
+    if (rebuilding) return
+    if (performance.now() - rebuiltAt < SETTLE) {
+      lost = true
+      return
+    }
+    rebuilding = true
+    queueMicrotask(() => {
+      rebuilding = false
+      rebuiltAt = performance.now()
+      reset()
+    })
+  }
   const STEP = 0.05
   function nudge(event: KeyboardEvent, split: Split) {
     if (!host) return
@@ -105,8 +123,14 @@
       {/if}
     {/each}
   </div>
+{:else if lost}
+  <div class="lost" role="alert">
+    <button class="orden-button" onclick={() => location.reload()}>Reload</button>
+  </div>
 {:else if frame.kind === 'pane'}
-  <Pane pane={frame} />
+  <svelte:boundary onerror={rebuilt}>
+    <Pane pane={frame} />
+  </svelte:boundary>
 {/if}
 
 <style>
@@ -121,6 +145,11 @@
   }
   .split.sliding {
     transition: none;
+  }
+  .lost {
+    flex: 1;
+    display: grid;
+    place-items: center;
   }
   .side {
     display: flex;

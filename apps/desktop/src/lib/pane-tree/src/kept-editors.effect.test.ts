@@ -47,6 +47,7 @@ const { views } = await import('../../panes/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { counted } = await import('../test/counted')
 const Pane = (await import('./Pane.svelte')).default
+const PaneTree = (await import('./PaneTree.svelte')).default
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
 beforeEach(() => {
@@ -61,6 +62,7 @@ beforeEach(() => {
   counted.mounts = 0
   counted.shown = {}
   counted.throws = false
+  counted.leaveThrows = false
   counted.ticks = 0
   guest.viewOnly = false
 })
@@ -261,6 +263,52 @@ test('a surface that fails as it is put behind still leaves the pane showing the
   }
   expect(shellBox?.hidden).toBe(true)
   expect(written()).toBe('The first note.')
+})
+test('a surface that fails as it is taken down leaves the pane rebuilt, showing the tab in front then and after', async () => {
+  const { one, two, shell, paneId } = opened()
+  shown = mount(PaneTree, { target, props: { frame: workspace.panes.frame } })
+  workspace.activate(shell)
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('.counted')).not.toBeNull()
+  })
+  const said = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  counted.leaveThrows = true
+  workspace.activate(two)
+  workspace.close(shell, false)
+  flushSync()
+  await vi.waitFor(() => {
+    flushSync()
+    expect(written()).toBe('The second note.')
+  })
+  expect(target.querySelector('.counted')).toBeNull()
+  expect(said).toHaveBeenCalled()
+  for (const [id, words] of [
+    [one, 'The first note.'],
+    [two, 'The second note.'],
+    [one, 'The first note.'],
+  ] as const) {
+    workspace.activate(id)
+    flushSync()
+    expect(written()).toBe(words)
+  }
+  expect(views.of(paneId)).toBeDefined()
+  said.mockRestore()
+})
+test('a pane that fails again as it is rebuilt offers a reload instead of rebuilding over and over', async () => {
+  opened()
+  const said = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const failing = vi.spyOn(workspace, 'showing').mockImplementation(() => {
+    throw new Error('a pane failed as it was drawn')
+  })
+  shown = mount(PaneTree, { target, props: { frame: workspace.panes.frame } })
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('[role="alert"] button')?.textContent).toBe('Reload')
+  })
+  expect(failing.mock.calls.length).toBeLessThan(10)
+  failing.mockRestore()
+  said.mockRestore()
 })
 test('every kind of tab switched away from and back to keeps its surface, and the least recent past six goes', async () => {
   const { one, paneId } = opened()
