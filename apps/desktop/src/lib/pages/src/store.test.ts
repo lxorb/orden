@@ -3,15 +3,16 @@ import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 const { NoteDoc, Tab } = await import('../../documents/src/api')
-const { PagesStore, PEEK } = await import('./store.svelte')
+const { MOST_OF_A_PAGE, PagesStore, PEEK, READING } = await import('./store.svelte')
+const { viewport } = await import('../../ui-kit/src/api')
 const { blankPages, GUTTER, pagesOf } = await import('@orden/markdown/pages')
 const { readCanvas } = await import('@orden/markdown/canvas')
 const A4 = { width: 794, height: 1123 }
-function opened(text = blankPages(), path = '/space/Lecture.pages') {
+function opened(text = blankPages(), path = '/space/Lecture.pages', pane = { width: 1180, height: 722 }) {
   const note = new NoteDoc({ kind: 'pages', path, name: 'Lecture.pages', text, dirty: false }, () => undefined)
   const store = new PagesStore(new Tab(note, 'pane'))
-  store.measured(1180, 722)
-  if (!store.framed) store.fitWidth(false)
+  store.measured(pane.width, pane.height)
+  if (!store.framed) store.open(false)
   return { store, note }
 }
 function ofPages(count: number, path?: string) {
@@ -23,10 +24,10 @@ beforeEach(() => {
   localStorage.clear()
 })
 describe('a page note', () => {
-  test('opens on one page, fitted across the pane', () => {
+  test('opens on one page, as large as most of the page still in sight allows', () => {
     const { store } = opened()
     expect(store.count).toBe(1)
-    expect(store.camera.scale).toBeCloseTo((1180 - 56) / A4.width, 6)
+    expect(store.camera.scale).toBeCloseTo((722 - 56) / (MOST_OF_A_PAGE * A4.height), 6)
   })
   test('lays its column out with a gutter between the sheets', () => {
     const { store } = ofPages(3)
@@ -125,6 +126,35 @@ describe('the view held to the column', () => {
     const { store } = ofPages(2)
     store.camera = store.held({ ...store.camera, x: 400 })
     expect(store.camera.x).toBeCloseTo(0, 6)
+  })
+})
+describe('the zoom a page note opens at', () => {
+  const at = (width: number, height: number) =>
+    opened(blankPages(), `/space/At ${String(width)}.pages`, { width, height }).store
+  test('on a laptop, the page as wide as most of it in sight allows', () => {
+    expect(at(1440, 800).camera.scale).toBeCloseTo((800 - 56) / (MOST_OF_A_PAGE * A4.height), 6)
+  })
+  test('on a wide monitor, no larger than reading size, the page centred with room either side', () => {
+    const store = at(2560, 1400)
+    expect(store.camera.scale).toBe(READING)
+    expect(A4.width * store.camera.scale).toBeLessThan(1000)
+    expect(store.camera.x).toBe(0)
+  })
+  test('on a tall portrait pane, the width of the pane', () => {
+    expect(at(900, 1500).camera.scale).toBeCloseTo((900 - 56) / A4.width, 6)
+  })
+  test('on a short pane, never so close that less than most of a page is in sight', () => {
+    const store = at(1200, 500)
+    expect((500 - 56) / store.camera.scale).toBeGreaterThanOrEqual(MOST_OF_A_PAGE * A4.height - 0.001)
+  })
+  test('on a phone, the width of the screen', () => {
+    viewport.device = 'phone'
+    try {
+      expect(at(390, 800).camera.scale).toBeCloseTo((390 - 56) / A4.width, 6)
+      expect(at(844, 390).camera.scale).toBeCloseTo((844 - 56) / A4.width, 6)
+    } finally {
+      viewport.device = 'desktop'
+    }
   })
 })
 describe('the two fits and the zoom in between', () => {
