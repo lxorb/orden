@@ -47,6 +47,7 @@ describe('the handle a drive reads the app through', () => {
     'account',
     'busy',
     'fullscreen',
+    'hiddenKinds',
     'iconChoice',
     'links',
     'modes',
