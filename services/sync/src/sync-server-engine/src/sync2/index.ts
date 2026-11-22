@@ -54,7 +54,7 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
   await preparedSpace(context.env, space, device)
   const who = context.get('who')
   const asker = who.kind === 'user' ? who.user.id : null
-  const done = await applyOps(context.env, space, asker, device, request.ops)
+  const done = await applyOps(context.env, space, asker, device, request.ops, whoseId(who))
   if (done.changed) {
     await pokeSpace(context.env, laterOf(context), space.id, done.cursor, device)
   }
@@ -70,14 +70,14 @@ v2Spaces.get('/:space/feed', atLeast('read', 'space'), async (context) => {
   }
   await preparedSpace(context.env, space)
   if (space.role === 'owner') await mendedSpace(context.env, space, laterOf(context))
-  const page = await feedPage(context.env, space.id, cursorIn(context.req.query('since')))
+  const page = await feedPage(context.env, space.id, cursorIn(context.req.query('since')), whoseId(context.get('who')))
   return answer(context, { ...page, device: await deviceOf(context) })
 })
 v2Spaces.post('/:space/index', atLeast('read', 'space'), async (context) => {
   const space = spaceOf(context)
   const request = indexRequestOf(await requestBody(context))
   if (!request) return context.json({ error: NOT_A_REQUEST }, 400)
-  return answer(context, { items: await indexItems(context.env, space.id, request.ids) })
+  return answer(context, { items: await indexItems(context.env, space.id, request.ids, whoseId(context.get('who'))) })
 })
 v2Spaces.post('/:space/search', atLeast('read', 'space'), async (context) => {
   const space = spaceOf(context)

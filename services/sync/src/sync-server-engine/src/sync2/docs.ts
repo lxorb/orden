@@ -18,6 +18,7 @@ import {
   type Note,
   type Role,
   sha256,
+  madeByAnother,
   programShut,
   versionsFit,
   type Whoever,
@@ -47,6 +48,7 @@ async function reachedNotes(env: Env, who: Asking, ids: readonly string[]): Prom
   const out = new Map<string, Reached>()
   for (const note of results) {
     if (shut?.(note.space_id, note.path)) continue
+    if (await madeByAnother(env, note, who)) continue
     if (!spaces.has(note.space_id)) {
       spaces.set(note.space_id, (await reachedSpace(env, who, note.space_id))?.role ?? null)
     }

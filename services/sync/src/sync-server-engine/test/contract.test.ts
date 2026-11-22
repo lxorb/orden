@@ -32,7 +32,7 @@ async function heardFromZero(): Promise<{ ids: string[]; pages: number }> {
   let since = 0
   let pages = 0
   for (; pages < 20; pages += 1) {
-    const page = await feedPage(env, SPACE, since)
+    const page = await feedPage(env, SPACE, since, USER)
     ids.push(...page.items.map((item) => item.id))
     since = page.cursor
     if (!page.more) break
@@ -75,7 +75,7 @@ describe('the feed', () => {
     const many = Array.from({ length: PAGE + 5 }, (_, at) => note(`n-${String(at)}`, `${String(at)}.md`))
     await ops(many)
     await ops([op('delete', { id: 'n-3' })])
-    const first = await feedPage(env, SPACE, 0)
+    const first = await feedPage(env, SPACE, 0, USER)
     expect(first.items.length).toBe(PAGE)
     expect(first.more).toBe(true)
     expect(first.cursor).toBe(first.items.at(-1)?.seq)
@@ -85,7 +85,7 @@ describe('the feed', () => {
     const { ids, pages } = await heardFromZero()
     expect(pages).toBe(2)
     expect(new Set(ids).size).toBe(PAGE + 5)
-    const deleted = (await feedPage(env, SPACE, first.cursor)).items.find((item) => item.id === 'n-3')
+    const deleted = (await feedPage(env, SPACE, first.cursor, USER)).items.find((item) => item.id === 'n-3')
     expect(deleted?.deleted).toBe(true)
   })
 })

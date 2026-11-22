@@ -178,6 +178,7 @@ export class Tree {
   private unmarked = false
   moves: Moved[] = []
   gone: string[] = []
+  maker: string | null = null
   constructor(
     readonly spaceId: string,
     readonly next: number,
@@ -400,6 +401,7 @@ export class Tree {
         front: content.front,
         epoch: content.epoch,
         epochBase: content.epochBase,
+        maker: this.maker,
       })
     }
     const described = [...this.state.entries.values()].flatMap((entry) => {
@@ -595,14 +597,14 @@ function insertNotes(
       `insert into notes (id, space_id, path, seq, version, updated_at, deleted, deleted_at, size,
                           hash, front, folder_id, name, name_key, kind, epoch, epoch_base,
                           doc_seq, doc_by, updated_by, deleted_in, placed_seq, placed_by, pos,
-                          meta, changes_by)
+                          meta, changes_by, made_by)
        select ${field('id')}, ?1, ${field('path')}, ${field('seq')}, 1, ?2, ${field('deleted')},
               case ${field('deleted')} when 1 then ?2 else null end, ${field('size')},
               ${field('hash')}, ${field('front')}, ${field('parent')}, ${field('name')},
               ${field('key')}, ${field('kind')}, ${field('epoch')}, ${field('epochBase')},
               ${field('docSeq')}, ${field('docBy')}, ${field('by')}, ${field('deletedIn')},
               ${field('placedSeq')}, ${field('placedBy')}, ${field('pos')}, ${field('meta')},
-              ${field('changesBy')}
+              ${field('changesBy')}, ${field('maker')}
          from json_each(?3)`,
     )
     .bind(space, at, JSON.stringify(rows))
@@ -898,9 +900,11 @@ export async function changeTree<T>(
   work: (tree: Tree) => T | Promise<T>,
   opIds: readonly string[] = [],
   reach?: Reach,
+  maker: string | null = null,
 ): Promise<Changed<T>> {
   for (let attempt = 0; ; attempt++) {
     const tree = reach ? await readReach(env, spaceId, device, reach) : await readTree(env, spaceId, device)
+    tree.maker = maker
     if (opIds.length) tree.remember(await answeredBefore(env, spaceId, opIds))
     const value = await work(tree)
     const batch = tree.statements(env)

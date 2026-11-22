@@ -1,5 +1,5 @@
 import { FEED_PAGE, heldName, isEntryId, metaFromText, type FeedItem } from '@orden/sync-core'
-import type { Env } from '../../../sync-server/src/api'
+import { type Env, makerOf, webNoteIn } from '../../../sync-server/src/api'
 import { KEPT, kindOfName } from './tree'
 import { prepareSpace } from './prepare'
 
@@ -20,27 +20,32 @@ interface Row {
   folder: number
   pos: string | null
   meta: string | null
+  maker: string | null
 }
+type Fed = FeedItem & { own?: true }
 const CHANGED = `select * from (
     select id, kind, folder_id as parent, name, deleted, seq, doc_seq, epoch, epoch_base, hash,
-           size, updated_by as by, updated_at as at, 0 as folder, pos, meta
+           size, updated_by as by, updated_at as at, 0 as folder, pos, meta,
+           case when ${webNoteIn('notes')} then ${makerOf('notes')} end as maker
       from notes where space_id = ?1 and seq > ?2 and (name is not null or ${KEPT})
     union all
     select id, 'folder', parent_id, name, deleted, seq, null, null, null, '', 0, updated_by,
-           updated_at, 1, pos, meta
+           updated_at, 1, pos, meta, null
       from folders where space_id = ?1 and seq > ?2
   ) order by seq limit ?3`
 export async function feedPage(
   env: Env,
   spaceId: string,
   since: number,
+  viewer: string,
 ): Promise<{
-  items: FeedItem[]
+  items: Fed[]
   cursor: number
   more: boolean
   order: true
   meta: true
   index: true
+  owns: true
 }> {
   let rows = await changedSince(env, spaceId, since)
   if (rows.some((row) => row.name === null)) {
@@ -52,14 +57,18 @@ export async function feedPage(
   const page = unnamed === -1 ? whole : whole.slice(0, unnamed)
   const safe = (row: Row) => row.deleted === 1 || (isEntryId(row.id) && (row.parent === null || isEntryId(row.parent)))
   return {
-    items: page.flatMap((row) =>
-      row.name === null || !safe(row) ? [] : [{ ...itemOf(row, row.name), name: heldName(row.name) }],
-    ),
+    items: page.flatMap((row): Fed[] => {
+      if (row.name === null || !safe(row)) return []
+      if (row.maker !== null && row.maker !== viewer) return [keptAway(row)]
+      const item = { ...itemOf(row, row.name), name: heldName(row.name) }
+      return [row.maker === null ? item : { ...item, own: true }]
+    }),
     cursor: page.at(-1)?.seq ?? since,
     more: unnamed === -1 ? rows.length > FEED_PAGE : page.length > 0,
     order: true,
     meta: true,
     index: true,
+    owns: true,
   }
 }
 function changedSince(env: Env, spaceId: string, since: number): Promise<Row[]> {
@@ -67,6 +76,20 @@ function changedSince(env: Env, spaceId: string, since: number): Promise<Row[]> 
     .bind(spaceId, since, FEED_PAGE + 1)
     .all<Row>()
     .then(({ results }) => results)
+}
+function keptAway(row: Row): FeedItem {
+  return {
+    id: row.id,
+    kind: 'url',
+    parent: null,
+    name: row.id,
+    deleted: true,
+    seq: row.seq,
+    hash: '',
+    size: 0,
+    by: '',
+    at: row.at,
+  }
 }
 function itemOf(row: Row, name: string): FeedItem {
   const item: FeedItem = {

@@ -12,6 +12,7 @@ import {
   FRONT_REV,
   hooks,
   htmlIsLive,
+  keptFrom,
   type Note,
   note as noted,
   now,
@@ -55,9 +56,9 @@ async function deletedNotes(env: Env, userId: string): Promise<DeletedNote[]> {
   const { results } = await env.DB.prepare(
     `select n.*, s.name as space_name from notes n
        join spaces s on s.id = n.space_id
-      where s.user_id = ? and s.deleted = 0 and n.deleted = 1 and n.deleted_at is not null
-        and n.kind != 'file'
-      order by n.deleted_at desc limit ?`,
+      where s.user_id = ?1 and s.deleted = 0 and n.deleted = 1 and n.deleted_at is not null
+        and n.kind != 'file' and not ${keptFrom('n', '?1')}
+      order by n.deleted_at desc limit ?2`,
   )
     .bind(userId, AT_ONCE)
     .all<DeletedNote>()

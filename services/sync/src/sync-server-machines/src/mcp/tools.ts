@@ -8,6 +8,7 @@ import {
   fits,
   PROTECTED,
   shutFor,
+  webNotesKeptFrom,
   type Env,
   type Note,
   type Shut,
@@ -181,14 +182,17 @@ async function folderPaths(env: Env, space: Space): Promise<string[]> {
     return path === null ? [] : [`${path}/`]
   })
 }
-async function listNotes(env: Env, space: Space): Promise<string> {
+async function listNotes(env: Env, space: Space, kept: Shut): Promise<string> {
   const { results } = await env.DB.prepare(
     `select path from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
   )
     .bind(space.id, MOST_NOTES + 1)
     .all<{ path: string }>()
-  const paths = [...results.map((row) => row.path), ...(await folderPaths(env, space))].sort()
+  const paths = [
+    ...results.flatMap((row) => (kept(space.id, row.path) ? [] : [row.path])),
+    ...(await folderPaths(env, space)),
+  ].sort()
   if (!paths.length) return 'No notes yet.'
   const listed = marked(spaceSource(space), paths.slice(0, MOST_NOTES).join('\n'))
   return paths.length > MOST_NOTES ? `${listed}\n${stoppedAt(MOST_NOTES)}` : listed
@@ -340,13 +344,14 @@ async function writeNote(
   space: Space,
   args: Record<string, unknown>,
   device: string | undefined,
+  maker: string,
 ): Promise<string> {
   const path = cleanPath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
   if (hiddenPath(path)) return HIDDEN(path)
   const asked = text(args, 'content')
   if (asked === null) return 'The content has to be text.'
-  const put = await putNote(env, space, path, asked ?? '', device)
+  const put = await putNote(env, space, path, asked ?? '', device, undefined, undefined, maker)
   if (put === MOVED) return changedWhileWriting(path)
   if (typeof put === 'string') return put
   return `Saved ${put.path}.`
@@ -362,6 +367,7 @@ export async function putNote(
   device?: string,
   read?: Note | null,
   meta?: ItemMeta,
+  maker: string | null = null,
 ): Promise<{ path: string } | string> {
   const size = byteLength(content)
   if (size > MAX_NOTE_BYTES) return 'That note is too large.'
@@ -391,7 +397,7 @@ export async function putNote(
     return { path: saved.path }
   }
   try {
-    const made = await addNote(env, space.id, path, content, '', device, meta)
+    const made = await addNote(env, space.id, path, content, '', device, meta, maker)
     await pokeNow(env, space.id, made.seq, device)
     return { path: made.path }
   } catch (error) {
@@ -415,6 +421,15 @@ export async function callTool(
   args: Record<string, unknown>,
 ): Promise<string> {
   const userId = token.user_id
+  const shut = async (spaces: readonly Space[]): Promise<Shut> => {
+    const protectedFor = await shutFor(env, userId)
+    const kept = await webNotesKeptFrom(
+      env,
+      userId,
+      spaces.map((one) => one.id),
+    )
+    return (spaceId, path) => protectedFor(spaceId, path) || kept(spaceId, path)
+  }
   switch (name) {
     case 'list_spaces': {
       const all = await spacesFor(env, userId)
@@ -427,23 +442,25 @@ export async function callTool(
     }
     case 'list_notes': {
       const space = await askedSpace(env, userId, args)
-      return typeof space === 'string' ? space : listNotes(env, space)
+      if (typeof space === 'string') return space
+      return listNotes(env, space, await webNotesKeptFrom(env, userId, [space.id]))
     }
     case 'read_note': {
       const space = await askedSpace(env, userId, args)
       if (typeof space === 'string') return space
-      return readNote(env, space, args, await shutFor(env, userId))
+      return readNote(env, space, args, await shut([space]))
     }
     case 'search_notes': {
       if (args.space !== undefined && args.space !== null) {
         const space = await askedSpace(env, userId, args)
-        return typeof space === 'string' ? space : searchNotes(env, [space], args, await shutFor(env, userId))
+        return typeof space === 'string' ? space : searchNotes(env, [space], args, await shut([space]))
       }
-      return searchNotes(env, await spacesFor(env, userId), args, await shutFor(env, userId))
+      const all = await spacesFor(env, userId)
+      return searchNotes(env, all, args, await shut(all))
     }
     case 'list_backlinks': {
       const space = await askedSpace(env, userId, args)
-      return typeof space === 'string' ? space : listBacklinks(env, space, args, await shutFor(env, userId))
+      return typeof space === 'string' ? space : listBacklinks(env, space, args, await shut([space]))
     }
     case 'write_note': {
       if (token.read_only) return 'This token may only read. Allow writing in Orden’s settings first.'
@@ -452,7 +469,8 @@ export async function callTool(
       if (space.role === 'read') return `${space.name} was shared with you to read, not to write.`
       const path = cleanPath(text(args, 'path') ?? '')
       if (path && (await shutFor(env, userId))(space.id, path)) return PROTECTED(path)
-      return writeNote(env, space, args, token.device)
+      if (path && (await webNotesKeptFrom(env, userId, [space.id]))(space.id, path)) return `No note at ${path}.`
+      return writeNote(env, space, args, token.device, userId)
     }
     default:
       return `No tool called ${name}.`

@@ -1,4 +1,4 @@
-import type { Env } from '../../../sync-server/src/api'
+import { type Env, keptFrom } from '../../../sync-server/src/api'
 
 export const SIGNED_IN_AS = `me as (
   select u.id as user_id, u.email as email, null as guest_id, s.id as session_id
@@ -11,6 +11,7 @@ export const SIGNED_IN_AS = `me as (
 )`
 const ACCESS = `with ${SIGNED_IN_AS}
 select case when sp.deleted = 1 then 'none'
+            when ${keptFrom('n', 'coalesce(me.user_id, me.guest_id)')} then 'none'
             when sp.user_id = me.user_id then 'write'
             when 'write' in (coalesce(ms.role, ''), coalesce(mi.role, ''),
                              coalesce(gs.role, ''), coalesce(gi.role, '')) then 'write'

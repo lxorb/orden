@@ -60,6 +60,7 @@ export async function applyOps(
   asker: string | null,
   device: string,
   ops: readonly Op[],
+  maker: string | null = asker,
 ): Promise<Changed<OpResult[]>> {
   const sizes = await blobSizes(env, space, asker, createdHashes(ops))
   const taken = await takenIds(env, space.id, ops)
@@ -71,6 +72,7 @@ export async function applyOps(
     (tree) => ops.map((op) => applied(tree, op, context, sizes, taken)),
     ops.map((op) => op.op),
     reachOf(ops),
+    maker,
   )
 }
 function applied(
@@ -189,9 +191,10 @@ export async function createByPath(
   path: string,
   content: Content,
   meta?: ItemMeta,
+  maker: string | null = null,
 ): Promise<{ made: string } | { taken: string }> {
   const { reach, work } = creatingAt(path, device, content, meta)
-  const { value } = await changeTree(env, spaceId, device, (tree) => work(tree), [], reach)
+  const { value } = await changeTree(env, spaceId, device, (tree) => work(tree), [], reach, maker)
   return value
 }
 export async function moveByPath(

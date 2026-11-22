@@ -128,6 +128,7 @@ export interface Note {
   deleted_in?: number | null
   paper?: string | null
   meta?: string | null
+  made_by?: string | null
 }
 export type Role = 'owner' | 'write' | 'read'
 export interface Reached extends Space {
@@ -137,6 +138,7 @@ export interface Reached extends Space {
 export interface Scope {
   id: string
   path: string | null
+  web?: true
 }
 export interface SpaceFile {
   path: string

@@ -6,6 +6,7 @@ import {
   forgetMailed,
   inviteMessage,
   isEmail,
+  isWebNote,
   machineOf,
   mailer,
   mayMail,
@@ -23,6 +24,8 @@ import {
   SPACE_IS_FULL,
   type Reached,
   type Variables,
+  WEB_NOTE_UNSHARED,
+  webNoteIn,
 } from '../../../sync-server/src/api'
 import { avatarIn } from '../people/avatar'
 import { roomsRevoked } from '../rooms'
@@ -100,10 +103,10 @@ const WHOLE_SPACE: Scope = { id: '', path: null }
 async function scopeOf(env: Env, spaceId: string, asked: string | undefined): Promise<Scope | null> {
   const id = (asked ?? '').slice(0, ID_LIMIT)
   if (!id) return WHOLE_SPACE
-  const note = await env.DB.prepare('select id, path from notes where id = ? and space_id = ? and deleted = 0')
+  const note = await env.DB.prepare('select id, path, kind from notes where id = ? and space_id = ? and deleted = 0')
     .bind(id, spaceId)
-    .first<Pick<Note, 'id' | 'path'>>()
-  return note ? { id: note.id, path: note.path } : null
+    .first<Pick<Note, 'id' | 'path' | 'kind'>>()
+  return note ? { id: note.id, path: note.path, ...(isWebNote(note) ? { web: true } : {}) } : null
 }
 async function itemsShared(env: Env, spaceId: string): Promise<Set<string>> {
   const { results } = await env.DB.prepare(
@@ -310,11 +313,12 @@ async function seatedOrRoom(env: Env, spaceId: string, item: string, email: stri
   return !!held || (await roomForASeat(env, spaceId, item))
 }
 export const share = new Hono<{ Bindings: Env; Variables: Variables }>()
-function about(): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> {
+function about(granting = false): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> {
   return async (context, next) => {
     const space = spaceOf(context)
     const scope = await scopeOf(context.env, space.id, context.req.query('item'))
     if (!scope) return context.json({ error: NO_SUCH_NOTE }, 404)
+    if (granting && scope.web) return context.json({ error: WEB_NOTE_UNSHARED }, 400)
     context.set('scope', scope)
     await next()
   }
@@ -325,7 +329,7 @@ share.get('/:id/share', atLeast('read'), about(), async (context) => {
   if (scope.id && !space.manages) return context.json({ error: ONLY_THOSE_WHO_MANAGE }, 403)
   return context.json(await sharing(context.env, space, scope))
 })
-share.post('/:id/share/invite', manages(), about(), async (context) => {
+share.post('/:id/share/invite', manages(), about(true), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const caller = context.get('user')
@@ -409,7 +413,7 @@ share.post('/:id/share/invite', manages(), about(), async (context) => {
   }
   return context.json(await sharing(context.env, space, scope))
 })
-share.patch('/:id/share/members/:email', manages(), about(), async (context) => {
+share.patch('/:id/share/members/:email', manages(), about(true), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const body = await readBody(context)
@@ -467,7 +471,7 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
   await roomsRevoked(context.env, space.id, who.user.id, 'none')
   return context.json({ ok: true })
 })
-share.put('/:id/share/link', manages(), about(), async (context) => {
+share.put('/:id/share/link', manages(), about(true), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const body = await readBody(context)
@@ -513,7 +517,7 @@ share.delete('/:id/share/link', manages(), about(), async (context) => {
   for (const { guest_id } of waiting.results) await forgetEmptyGuest(context.env, guest_id)
   return context.json(await sharing(context.env, space, scope))
 })
-share.post('/:id/share/requests/:email', manages(), about(), async (context) => {
+share.post('/:id/share/requests/:email', manages(), about(true), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
@@ -563,7 +567,7 @@ share.delete('/:id/share/requests/:email', manages(), about(), async (context) =
 function guestIdOf(context: { req: { param: (name: string) => string | undefined } }): string {
   return (context.req.param('guest') ?? '').slice(0, ID_LIMIT)
 }
-share.post('/:id/share/guests/:guest', manages(), about(), async (context) => {
+share.post('/:id/share/guests/:guest', manages(), about(true), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const guest = guestIdOf(context)
@@ -592,7 +596,7 @@ share.post('/:id/share/guests/:guest', manages(), about(), async (context) => {
   await onceShared(context.env, space.id, scope.id)
   return context.json(await sharing(context.env, space, scope))
 })
-share.patch('/:id/share/guests/:guest', manages(), about(), async (context) => {
+share.patch('/:id/share/guests/:guest', manages(), about(true), async (context) => {
   const space = spaceOf(context)
   const scope = context.get('scope')
   const guest = guestIdOf(context)
@@ -657,7 +661,7 @@ interface SharedRow {
 const SHARED_WITH_ME = `select n.id, n.path, n.updated_at, m.role,
     sp.id as space_id, sp.name as space_name, u.name as owner_name, u.email as owner_email
   from space_members m
-  join notes n on n.id = m.item and n.deleted = 0
+  join notes n on n.id = m.item and n.deleted = 0 and not ${webNoteIn('n')}
   join spaces sp on sp.id = m.space_id and sp.deleted = 0
   join users u on u.id = sp.user_id
  where m.email = ?1 and m.item <> ''
@@ -665,7 +669,7 @@ const SHARED_WITH_ME = `select n.id, n.path, n.updated_at, m.role,
 const GUEST_SHARED_WITH_ME = `select n.id, n.path, n.updated_at, g.role,
     sp.id as space_id, sp.name as space_name, u.name as owner_name, u.email as owner_email
   from guest_members g
-  join notes n on n.id = g.item and n.deleted = 0
+  join notes n on n.id = g.item and n.deleted = 0 and not ${webNoteIn('n')}
   join spaces sp on sp.id = g.space_id and sp.deleted = 0
   join users u on u.id = sp.user_id
  where g.guest_id = ?1 and g.item <> '' and g.joined_at is not null
