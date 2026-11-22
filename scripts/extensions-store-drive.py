@@ -543,6 +543,92 @@ def old_one(drive: Drive) -> None:
         drive.fail("Remove left the old extension listed")
     drive.eval("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return true")
     print("the old extension showed as not working, with no Chromium dialog, and Remove took it away", flush=True)
+def worlds_in(drive: Drive, login: str) -> tuple[list[str], Any]:
+    drive.opened(login)
+    wanted = re.compile("^" + re.escape(login))
+    target = None
+    until = time.monotonic() + 20
+    while time.monotonic() < until and not target:
+        target = drive.page_at(wanted)
+        time.sleep(0.5)
+    if not target:
+        drive.fail(f"no page target for {login}")
+    assert target is not None
+    page = Session(target)
+    page.call("Runtime.enable")
+    page.listen(1)
+    page.events.clear()
+    page.call("Page.reload")
+    page.listen(8)
+    cleared = max((at for at, each in enumerate(page.events) if each.get("method") == "Runtime.executionContextsCleared"), default=-1)
+    worlds = [each["params"]["context"] for each in page.events[cleared + 1:] if each.get("method") == "Runtime.executionContextCreated"]
+    ours = [str(each.get("name")) for each in worlds if str(each.get("origin", "")).startswith(ORIGIN)]
+    marks = page.value(MARKS)
+    page.close()
+    return ours, marks
+def fresh_site(login: str) -> str:
+    return login.replace("127.0.0.1", "localhost", 1)
+def stopped_in(drive: Drive, login: str, what: str) -> None:
+    ours, marks = worlds_in(drive, login)
+    if isinstance(marks, list) and marks:
+        drive.shot("still-runs")
+        drive.fail(f"Proton Pass still runs after {what}: its marks {marks} are on the page")
+    fresh, fresh_marks = worlds_in(drive, fresh_site(login))
+    if fresh or (isinstance(fresh_marks, list) and fresh_marks):
+        drive.shot("still-runs-fresh")
+        drive.fail(f"Proton Pass still runs after {what} on a site it never saw: worlds {fresh}, marks {fresh_marks}")
+    print(f"after {what}: no marks in the open tab (its old world may linger: {ours}), nothing on a fresh site", flush=True)
+def switched(drive: Drive, login: str) -> None:
+    drive.step("Proton Pass is turned off: its content script no longer runs in a web tab")
+    drive.eval(f"return await window.__TAURI_INTERNALS__.invoke('extensions_set', {{ id: {json.dumps(ID)}, enabled: false }}).then(() => 'off', (error) => 'ERR ' + error)", 60)
+    one = drive.listed()
+    if not one or one.get("enabled") is not False:
+        drive.fail(f"turning it off did not stick: {one}")
+    if sys.platform == "darwin" and one.get("pending"):
+        print("on macOS Chromium cannot turn it off at once: it says it turns off when Orden next opens", flush=True)
+    else:
+        stopped_in(drive, login, "it was turned off")
+    drive.step("Proton Pass is turned on again: its content script runs again")
+    said = drive.eval(f"return await window.__TAURI_INTERNALS__.invoke('extensions_set', {{ id: {json.dumps(ID)}, enabled: true }}).then(() => 'on', (error) => 'ERR ' + error)", 60)
+    if str(said).startswith("ERR"):
+        drive.fail(f"turning it on again failed: {said}")
+    until = time.monotonic() + 30
+    while time.monotonic() < until:
+        ours, marks = worlds_in(drive, login)
+        if ours or (isinstance(marks, list) and marks):
+            print(f"on again: worlds {ours}, marks {marks}", flush=True)
+            return
+        time.sleep(2)
+    drive.shot("on-not-running")
+    drive.fail("Proton Pass does not run again after it was turned back on")
+def gone(drive: Drive, login: str) -> None:
+    drive.step("Proton Pass is removed from the extensions menu")
+    drive.eval("orden.settings.show('general'); return true")
+    drive.waited(SETTINGS, 20, "Settings has no Extensions card")
+    said = drive.eval(f"return await window.__TAURI_INTERNALS__.invoke('extensions_remove', {{ id: {json.dumps(ID)} }}).then(() => 'removed', (error) => 'ERR ' + error)", 90)
+    print(f"remove: {said}", flush=True)
+    drive.eval("(orden.settings.hide ? orden.settings.hide() : (orden.settings.open = false)); return true")
+    if str(said).startswith("ERR"):
+        drive.shot("remove-refused")
+        drive.fail(f"Remove failed: {said}")
+    until = time.monotonic() + 30
+    while time.monotonic() < until and drive.listed():
+        time.sleep(1)
+    if drive.listed():
+        drive.shot("remove-kept")
+        drive.fail(f"Remove left it listed: {drive.listed()}")
+    stopped_in(drive, login, "Remove")
+    drive.stopped()
+    drive.step("Orden is started again: Proton Pass stays gone")
+    drive.start(again=True)
+    if drive.listed():
+        drive.shot("back-after-restart")
+        drive.fail(f"Proton Pass came back after a restart: {drive.listed()}")
+    ours, marks = worlds_in(drive, login)
+    if ours or (isinstance(marks, list) and marks):
+        drive.shot("runs-after-restart")
+        drive.fail(f"Proton Pass runs again after a restart: worlds {ours}, marks {marks}")
+    print("Proton Pass stayed removed after a restart", flush=True)
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -572,6 +658,8 @@ def main() -> int:
             restarted(drive)
         ran(drive, f"{base}/login")
         popup(drive, f"{base}/login")
+        switched(drive, f"{base}/login")
+        gone(drive, f"{base}/login")
     except Stop as stop:
         wrong = str(stop)
     except (OSError, ConnectionError) as error:
