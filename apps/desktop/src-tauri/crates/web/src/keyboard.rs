@@ -62,6 +62,36 @@ impl Homes {
         Back::Later
     }
 }
+#[derive(Debug, Default)]
+struct Presses {
+    down: HashSet<String>,
+    waiting: HashMap<String, String>,
+}
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+impl Presses {
+    fn pressed(&mut self, window: &str) {
+        self.down.insert(window.to_string());
+        self.waiting.remove(window);
+    }
+    fn queue(&mut self, window: &str, page: &str) -> bool {
+        if !self.down.contains(window) {
+            return false;
+        }
+        self.waiting.insert(window.to_string(), page.to_string());
+        true
+    }
+    fn released(&mut self, window: &str) -> Option<String> {
+        self.down.remove(window);
+        self.waiting.remove(window)
+    }
+    fn closed(&mut self, page: &str) {
+        self.waiting.retain(|_, one| one != page);
+    }
+}
+static PRESSES: LazyLock<Mutex<Presses>> = LazyLock::new(Mutex::default);
+fn presses<T>(look: impl FnOnce(&mut Presses) -> T) -> T {
+    look(&mut PRESSES.held())
+}
 static HOMES: LazyLock<Mutex<Homes>> = LazyLock::new(Mutex::default);
 fn homes<T>(look: impl FnOnce(&mut Homes) -> T) -> T {
     look(&mut HOMES.held())
@@ -116,9 +146,16 @@ pub fn built(page: &str) {
 }
 pub fn placed(app: &AppHandle, view: &Webview, visible: bool) {
     let page = view.label();
-    if homes(|all| all.placed(page, visible, now())) && native::in_front(&view.window()) {
-        native::take(app, page);
+    let window = view.window();
+    if homes(|all| all.placed(page, visible, now())) && native::in_front(&window) {
+        give(app, window.label(), page);
     }
+}
+fn give(app: &AppHandle, window: &str, page: &str) -> bool {
+    if cfg!(windows) && presses(|all| all.queue(window, page)) {
+        return true;
+    }
+    native::take(app, page)
 }
 pub fn hold_for_layer(app: &AppHandle, window: &str) {
     if cfg!(windows) || native::holding(window).is_none() {
@@ -128,6 +165,7 @@ pub fn hold_for_layer(app: &AppHandle, window: &str) {
 pub fn closed(page: &str) {
     homes(|all| all.closed(page));
     engine(|all| all.closed(page));
+    presses(|all| all.closed(page));
     native::let_go_of(page);
 }
 pub fn window_came_back(app: &AppHandle, window: &str) {
@@ -227,8 +265,29 @@ pub fn keyboard_into(webview: Webview, tab: String, last: bool) -> bool {
 }
 #[tauri::command]
 pub fn keyboard_pressed(webview: Webview) {
-    if webview.label() == webview.window().label() {
-        let _ = native::take(webview.app_handle(), webview.label());
+    let window = webview.window().label().to_string();
+    if webview.label() != window {
+        return;
+    }
+    presses(|all| all.pressed(&window));
+    if cfg!(windows) && native::holding(&window).is_none() {
+        return;
+    }
+    let _ = native::take(webview.app_handle(), webview.label());
+}
+#[tauri::command]
+pub fn keyboard_released(webview: Webview) {
+    let window = webview.window().label().to_string();
+    if webview.label() != window {
+        return;
+    }
+    let Some(page) = presses(|all| all.released(&window)) else {
+        return;
+    };
+    let app = webview.app_handle();
+    let mine = app.get_webview(&page).is_some_and(|view| view.window().label() == window);
+    if mine && native::seen(&page) && native::take(app, &page) {
+        homes(|all| all.page_took(&window, &page));
     }
 }
 #[tauri::command]
@@ -261,7 +320,9 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
         return false;
     }
     match homes(|all| all.back(window.label(), now())) {
-        Back::Page(page) => native::seen(&page) && native::take(webview.app_handle(), &page),
+        Back::Page(page) => {
+            native::seen(&page) && give(webview.app_handle(), window.label(), &page)
+        }
         Back::Later => true,
         Back::Own => false,
     }
@@ -396,7 +457,7 @@ pub use native::x11_took;
 
 #[cfg(test)]
 mod tests {
-    use super::{Back, Engine, Homes, OWED_MS};
+    use super::{Back, Engine, Homes, Presses, OWED_MS};
 
     fn typing_in(window: &str, page: &str) -> Homes {
         let mut homes = Homes::default();
@@ -447,6 +508,48 @@ mod tests {
         let closed = &source[source.find("pub fn closed(").expect("closed")..];
         assert!(closed[..closed.find("\n}\n").expect("its end")]
             .contains("engine(|all| all.closed(page))"));
+    }
+    #[test]
+    fn on_windows_a_press_in_the_app_takes_the_keyboard_only_from_a_page_that_holds_it() {
+        let source = include_str!("keyboard.rs");
+        let pressed = &source[source.find("pub fn keyboard_pressed(").expect("keyboard_pressed")..];
+        let pressed = &pressed[..pressed.find("\n}\n").expect("its end")];
+        let guard =
+            pressed.find("cfg!(windows) && native::holding(&window).is_none()").expect("the guard");
+        assert!(guard < pressed.find("native::take(").expect("the take"));
+    }
+    #[test]
+    fn a_page_chosen_by_a_press_in_the_app_takes_the_keyboard_once_the_press_ends() {
+        let mut presses = Presses::default();
+        assert!(!presses.queue("orden-1", "web-a"));
+        presses.pressed("orden-1");
+        assert!(presses.queue("orden-1", "web-a"));
+        assert!(!presses.queue("orden-2", "web-b"));
+        assert_eq!(presses.released("orden-1").as_deref(), Some("web-a"));
+        assert_eq!(presses.released("orden-1"), None);
+        assert!(!presses.queue("orden-1", "web-a"));
+        presses.pressed("orden-1");
+        assert!(presses.queue("orden-1", "web-a"));
+        presses.closed("web-a");
+        assert_eq!(presses.released("orden-1"), None);
+        presses.pressed("orden-1");
+        assert!(presses.queue("orden-1", "web-a"));
+        presses.pressed("orden-1");
+        assert_eq!(presses.released("orden-1"), None);
+        let source = include_str!("keyboard.rs");
+        let body = |name: &str| {
+            let from = &source[source.find(name).expect(name)..];
+            from[..from.find("\n}\n").expect("its end")].to_string()
+        };
+        assert!(body("fn give(").contains("presses(|all| all.queue(window, page))"));
+        assert!(body("pub fn keyboard_back(")
+            .contains("give(webview.app_handle(), window.label(), &page)"));
+        assert!(body("pub fn placed(").contains("give(app, window.label(), page)"));
+        assert!(!body("pub fn placed(").contains("native::take("));
+        let script = include_str!("keyboard_press.js");
+        assert!(script.contains("'pointerup'") && script.contains("'keyboard_released'"));
+        let lib = include_str!("../../../src/lib.rs");
+        assert!(lib.contains("orden_web::keyboard::keyboard_released,"));
     }
     #[test]
     fn a_window_nobody_typed_in_a_page_of_is_typing_in_its_own() {

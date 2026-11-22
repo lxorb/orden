@@ -331,6 +331,7 @@ macro_rules! desktop_commands {
             orden_web::web_tabs::web_place,
             orden_web::keyboard::keyboard_watch,
             orden_web::keyboard::keyboard_pressed,
+            orden_web::keyboard::keyboard_released,
             orden_web::keyboard::keyboard_here,
             orden_web::keyboard::keyboard_went,
             orden_web::keyboard::keyboard_back,
