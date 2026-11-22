@@ -1,79 +1,30 @@
 <script lang="ts">
-  import { cubicOut } from 'svelte/easing'
   import { settingsWindow } from '@orden/contracts'
   import { readableSize, usage } from '../../accounts/src/api'
-  import { dur, fly } from '../../platform/src/api'
-  import { told } from '../../ui-kit/src/api'
+  import { toastDoor } from '../../ui-kit/src/api'
 
   const words = $derived(`${readableSize(usage.used)} of ${readableSize(usage.limit)} used.`)
+  const Toast = $derived(toastDoor.one)
+  $effect(() => {
+    if (usage.warning) void toastDoor.ask()
+  })
 </script>
 
-{#if usage.warning}
-  <div class="toast" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }} {@attach told(words)}>
-    <p>{words}</p>
-
-    <div class="actions">
-      <button class="quiet" onclick={() => (usage.dismissed = true)}>Dismiss</button>
-      <button
-        class="link"
-        onclick={() => {
+{#if usage.warning && Toast}
+  <Toast
+    {words}
+    stacked
+    tone="danger"
+    actions={[
+      { label: 'Dismiss', look: 'quiet', run: () => (usage.dismissed = true) },
+      {
+        label: 'Manage storage',
+        run: () => {
           usage.dismissed = true
           settingsWindow().show('account')
-        }}
-      >
-        Manage storage
-      </button>
-    </div>
-  </div>
+        },
+      },
+    ]}
+    ongone={() => (usage.dismissed = true)}
+  />
 {/if}
-
-<style>
-  .toast {
-    grid-column: 1;
-    justify-self: start;
-    max-width: 20rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--danger);
-    border-radius: var(--radius-md);
-    background: var(--surface-3);
-    box-shadow: var(--shadow-lg);
-  }
-  p {
-    margin: 0;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    color: var(--text);
-  }
-  .actions {
-    display: flex;
-    gap: var(--space-3);
-  }
-  button {
-    padding: 0;
-    border: none;
-    background: none;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    cursor: default;
-  }
-  .quiet {
-    color: var(--muted-strong);
-  }
-  .quiet:hover {
-    color: var(--text-strong);
-  }
-  .link {
-    color: var(--accent);
-    font-weight: var(--weight-strong);
-  }
-  :global([data-touch]) .toast {
-    justify-self: stretch;
-    max-width: none;
-  }
-  :global([data-touch]) button {
-    min-height: var(--touch-target);
-  }
-</style>

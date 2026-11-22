@@ -1,9 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { cubicOut } from 'svelte/easing'
   import { focusEditor } from './focus'
-  import { dur, fly } from '../../platform/src/api'
-  import { told } from '../../ui-kit/src/api'
+  import { toastDoor } from '../../ui-kit/src/api'
   import { back, unsynced } from '../../sync-client/src/api'
   import { undoToast } from '../../undo-toast/src/api'
   import { failed, gateNote, reservedName, unread } from './notices.svelte'
@@ -19,6 +17,8 @@
     moved: 'Moved',
     deleted: 'Deleted',
   })
+  const Toast = $derived(toastDoor.one)
+  void toastDoor.ask()
   undoToast.know(workspace.undone.stack)
   $effect(() => {
     const stack = workspace.undone.stack
@@ -27,9 +27,6 @@
   $effect(() => {
     if (undoToast.kind) untrack(() => failed.dismiss())
   })
-  function toldUndo(kind: keyof typeof word) {
-    return told(undoToast.kind ? `${word[kind]}. Undo` : '')
-  }
   const turn = $derived(
     reservedName.root ? 'reserved' : failed.retry ? 'failed' : undoToast.kind ? 'undo' : unread.shown ? 'unread' : null,
   )
@@ -111,114 +108,49 @@
   })
 </script>
 
-{#if reservedName.root}
-  <div
-    class="toast"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told("AGENTS is this space's agent instructions")}
-    {@attach kept('reserved')}
-  >
-    <p>AGENTS is this space's agent instructions</p>
-    <button class="undo" onclick={() => reservedName.open()}>Open</button>
-  </div>
-{:else if failed.retry}
-  <div
-    class="toast"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(`${failed.undoing ? 'Not undone' : 'Not moved'}. Retry`)}
-    {@attach kept('failed')}
-  >
-    <p>{failed.undoing ? 'Not undone' : 'Not moved'}</p>
-    <button class="undo" onclick={() => failed.again()}>Retry</button>
-    {#if failed.skip}
-      <button class="undo" onclick={() => failed.giveUp()}>Skip</button>
-    {/if}
-  </div>
-{:else if undoToast.kind}
-  <div
-    class="toast"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach toldUndo(undoToast.kind)}
-    {@attach kept('undo', undoToast)}
-  >
-    <p>{word[undoToast.kind]}</p>
-    <button class="undo" onclick={() => void undoToast.undo(workspace)}>Undo</button>
-  </div>
-{:else if unread.shown}
-  <div
-    class="toast"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told('That file could not be read')}
-  >
-    <p>That file could not be read</p>
-  </div>
-{/if}{#if back.said}
-  {@const words = `${back.said.name} is back: ${back.said.device} was writing in it`}
-  <div
-    class="toast"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(words)}
-    {@attach kept('back', back)}
-  >
-    <p>{words}</p>
-  </div>
-{/if}{#if gateNote.said}
-  {@const words = gateNote.said}
-  <div
-    class="toast"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(words)}
-    {@attach kept('gate', gateNote)}
-  >
-    <p>{words}</p>
-  </div>
-{/if}{#if unsynced.said}
-  {@const about = unsynced.many > 1 ? (unsynced.many === 1 ? '1 file' : `${unsynced.many} files`) : unsynced.said}
-  {@const words = `Changes to ${about} are not syncing`}
-  <div
-    class="toast"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(words)}
-    {@attach kept('unsynced', unsynced)}
-  >
-    <p>{words}</p>
-  </div>
+{#if Toast}
+  {#if reservedName.root}
+    <Toast
+      words="AGENTS is this space's agent instructions"
+      actions={[{ label: 'Open', run: () => reservedName.open() }]}
+      ongone={() => reservedName.dismiss()}
+      {@attach kept('reserved')}
+    />
+  {:else if failed.retry}
+    <Toast
+      words={failed.undoing ? 'Not undone' : 'Not moved'}
+      said={() => `${failed.undoing ? 'Not undone' : 'Not moved'}. Retry`}
+      actions={[
+        { label: 'Retry', run: () => failed.again() },
+        ...(failed.skip ? [{ label: 'Skip', run: () => failed.giveUp() }] : []),
+      ]}
+      ongone={() => failed.dismiss()}
+      {@attach kept('failed')}
+    />
+  {:else if undoToast.kind}
+    <Toast
+      words={word[undoToast.kind]}
+      said={() => (undoToast.kind ? `${word[undoToast.kind]}. Undo` : '')}
+      actions={[{ label: 'Undo', run: () => void undoToast.undo(workspace) }]}
+      ongone={() => undoToast.dismiss()}
+      {@attach kept('undo', undoToast)}
+    />
+  {:else if unread.shown}
+    <Toast words="That file could not be read" ongone={() => unread.dismiss()} />
+  {/if}{#if back.said}
+    <Toast
+      words={`${back.said.name} is back: ${back.said.device} was writing in it`}
+      ongone={() => back.dismiss()}
+      {@attach kept('back', back)}
+    />
+  {/if}{#if gateNote.said}
+    <Toast words={gateNote.said} ongone={() => gateNote.dismiss()} {@attach kept('gate', gateNote)} />
+  {/if}{#if unsynced.said}
+    {@const about = unsynced.many > 1 ? `${unsynced.many} files` : unsynced.said}
+    <Toast
+      words={`Changes to ${about} are not syncing`}
+      ongone={() => unsynced.dismiss()}
+      {@attach kept('unsynced', unsynced)}
+    />
+  {/if}
 {/if}
-
-<style>
-  .toast {
-    grid-column: 1;
-    justify-self: start;
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    padding: var(--space-2) var(--space-4);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--surface-3);
-    box-shadow: var(--shadow-lg);
-  }
-  p {
-    margin: 0;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    color: var(--text);
-  }
-  .undo {
-    padding: 0;
-    border: none;
-    background: none;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    color: var(--accent);
-    cursor: default;
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-  .undo:active {
-    opacity: 0.6;
-  }
-  :global([data-touch]) .undo {
-    min-height: var(--touch-target);
-  }
-</style>

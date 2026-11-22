@@ -1,3 +1,4 @@
+import { readied } from './doors.svelte'
 export { closeOnBack } from './backstack.svelte'
 export { busy } from './busy.svelte'
 export { reloading } from './reloading.svelte'
@@ -145,4 +146,5 @@ export { escapeLeaves, fullscreen } from './fullscreen.svelte'
 export { keyboardStays, staysOn, takesCaret } from './caret'
 export { keyElsewhere } from './layer-keys'
 export { default as Door } from './Door.svelte'
+export const toastDoor = readied(() => import('./Toast.svelte'))
 export { guardDrops } from './drops'
