@@ -318,6 +318,31 @@ describe('the feed', () => {
     expect(feedPageOf({ ...page, device: 'laptop' })).toEqual({ ...page, device: 'laptop' })
     expect(feedPageOf({ ...page, device: 7 })).toEqual(page)
   })
+  test("a page says it marks the viewer's own items, and an item says it is the viewer's own, only as true (#2475)", () => {
+    const link = {
+      id: 'u',
+      kind: 'url',
+      parent: null,
+      name: 'Docs.url',
+      deleted: false,
+      seq: 3,
+      hash: '',
+      size: 0,
+      by: 'laptop',
+      at: 1,
+    }
+    const page = { items: [{ ...link, own: true }], cursor: 3, more: false, owns: true }
+    expect(feedPageOf(page)).toEqual(page)
+    expect(feedPageOf(JSON.parse(JSON.stringify(page)))).toEqual(page)
+    for (const said of [false, 'true', 1, null, {}]) {
+      const read = feedPageOf({ items: [{ ...link, own: said }], cursor: 3, more: false, owns: said })
+      expect(read).toEqual({ items: [link], cursor: 3, more: false })
+      expect(read && 'owns' in read).toBe(false)
+      expect(read?.items[0] && 'own' in read.items[0]).toBe(false)
+    }
+    const note = { ...link, id: 'n', kind: 'note', name: 'Plan.md', own: true }
+    expect(feedPageOf({ items: [note], cursor: 3, more: false })?.items[0]?.own).toBe(true)
+  })
 })
 describe('documents', () => {
   test('a pull and its answers survive the envelope', () => {

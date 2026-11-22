@@ -19,6 +19,7 @@ export interface FeedItem {
   at: number
   pos?: string
   meta?: ItemMeta
+  own?: true
 }
 export interface FeedPage {
   items: FeedItem[]
@@ -27,6 +28,7 @@ export interface FeedPage {
   order?: true
   meta?: true
   index?: true
+  owns?: true
   device?: string
 }
 export const FEED_PAGE = 1000
@@ -311,6 +313,7 @@ function feedItemOf(value: unknown): FeedItem | null {
   if (epochBase !== undefined) item.epochBase = epochBase
   if (pos !== undefined) item.pos = pos
   if (kept && Object.keys(kept).length) item.meta = kept
+  if (value.own === true) item.own = true
   return item
 }
 function namedAsPath(value: unknown): boolean {
@@ -346,6 +349,7 @@ export function feedPageOf(value: unknown): FeedPage | null {
   if (value.order === true) page.order = true
   if (value.meta === true) page.meta = true
   if (value.index === true) page.index = true
+  if (value.owns === true) page.owns = true
   if (typeof value.device === 'string' && value.device) page.device = value.device
   return page
 }
