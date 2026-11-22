@@ -83,3 +83,21 @@ describe('a pointer press', () => {
     expect(POINTING).toBe('data-pointing')
   })
 })
+describe('a scrim', () => {
+  test('is clear or has the box over it marked, so a page under it is never cut whole', () => {
+    const unmarked = readdirSync(SRC)
+      .filter((name) => name.endsWith('.svelte'))
+      .flatMap((name) => {
+        const text = readFileSync(join(SRC, name), 'utf8')
+        return [...text.matchAll(/class="orden-scrim([^"]*)"[\s\S]*?<\/div>/g)]
+          .filter((found) => !(found[1] ?? '').includes('is-clear'))
+          .filter((found) => {
+            const after = text.slice(found.index + found[0].length)
+            const box = after.slice(0, after.indexOf('>', after.indexOf('<div')) + 1)
+            return !/orden-screen|orden-layer|data-covers/.test(box)
+          })
+          .map(() => name)
+      })
+    expect(unmarked).toEqual([])
+  })
+})

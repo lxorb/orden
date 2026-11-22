@@ -131,7 +131,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="orden-scrim scrim" transition:fade={{ duration: dur(130) }} onclick={close}></div>
 
-    <div class="sheet" transition:fly={{ y: 32, duration: dur(220), easing: cubicOut }}>
+    <div class="sheet" data-covers transition:fly={{ y: 32, duration: dur(220), easing: cubicOut }}>
       {#if label}<p class="heading">{label}</p>{/if}
 
       <ul {id} role="listbox" aria-label={label}>

@@ -34,8 +34,7 @@
 </script>
 
 <div
-  class="catch"
-  data-covers="all"
+  class="orden-scrim is-clear catch"
   role="presentation"
   onpointerdown={(event) => {
     spendClick(event)

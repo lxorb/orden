@@ -128,6 +128,7 @@
     <div
       id={popId}
       class="sheet"
+      data-covers
       role="dialog"
       aria-label={label}
       tabindex="-1"
