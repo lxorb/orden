@@ -1,5 +1,5 @@
 {
   "name": "emoji",
   "layer": "foundation",
-  "dependsOn": ["contracts", "markdown", "platform", "ui-kit", "windows", "icons"]
+  "dependsOn": ["contracts", "markdown", "platform", "ui-kit", "windows", "icons", "mascot"]
 }
