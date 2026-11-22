@@ -365,7 +365,9 @@ export async function readFeed(
     if (read.device !== undefined) core.mine.add(read.device)
     const changes: Change[] = []
     const wanted = core.wanted(space.id)
-    for (const item of read.items) {
+    for (const said of read.items) {
+      const item =
+        read.owns && said.kind === 'url' && !said.deleted && said.own !== true ? { ...said, deleted: true } : said
       heard?.(item)
       core.by.set(item.id, item.by)
       const had = space.entries.get(item.id)

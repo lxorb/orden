@@ -793,6 +793,50 @@ describe('one note made apart on several devices with the same words (#2433)', (
     ])
   })
 })
+describe('a web note another member of a shared space made (#2475)', () => {
+  async function fed(owns: boolean) {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const extra = (seq: number, id: string, name: string, own: boolean) => ({
+      id,
+      kind: 'url',
+      parent: null,
+      name,
+      deleted: false,
+      seq,
+      hash: '',
+      size: 0,
+      by: 'there',
+      at: 1,
+      ...(own ? { own: true } : {}),
+    })
+    const answers = (route: string, body: unknown) => {
+      if (route !== 'feed') return undefined
+      return feedThrough(account, 'here', body).then((reply) => {
+        const page = reply as { items: { seq: number }[]; cursor: number; owns?: boolean }
+        if ((body as { since: number }).since > 0) return page
+        const top = page.items.reduce((high, one) => Math.max(high, one.seq), page.cursor)
+        page.items.push(extra(top + 1, 'theirs', 'Bank.url', false), extra(top + 2, 'mine', 'Mine.url', true))
+        page.cursor = top + 2
+        if (owns) page.owns = true
+        return page
+      })
+    }
+    const here = await freshDevice(account, 'here', {}, answers)
+    expect(await firstPass(here.engine.core, here.space(), null)).toBe(true)
+    await here.engine.pass('sim')
+    return here
+  }
+  test('never reaches this device when the account marks its own, and this account’s own does', async () => {
+    const here = await fed(true)
+    expect(here.space().entries.get('theirs')?.deleted ?? true).toBe(true)
+    expect([...here.disk.files.keys()].some((path) => path.endsWith('Bank.url'))).toBe(false)
+    expect(here.space().entries.get('mine')?.deleted).toBe(false)
+  })
+  test('is left as it comes from an account that does not mark its own yet', async () => {
+    const here = await fed(false)
+    expect(here.space().entries.get('theirs')?.deleted).toBe(false)
+  })
+})
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })
