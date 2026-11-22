@@ -48,19 +48,14 @@ const BROWSER_ONLY_COMMANDS: &[&CStr] = &[
   resources::IDC_BASIC_PRINT,
   resources::IDC_VIEW_SOURCE,
   resources::IDC_CONTENT_CONTEXT_VIEWFRAMESOURCE,
-  resources::IDC_CONTENT_CONTEXT_SAVELINKAS,
-  resources::IDC_CONTENT_CONTEXT_SAVEIMAGEAS,
-  resources::IDC_CONTENT_CONTEXT_SAVEAVAS,
   resources::IDC_CONTENT_CONTEXT_SAVEPLUGINAS,
   resources::IDC_CONTENT_CONTEXT_SAVEVIDEOFRAMEAS,
   // Opening a browser surface the app does not own.
-  resources::IDC_CONTENT_CONTEXT_OPENLINKNEWTAB,
   resources::IDC_CONTENT_CONTEXT_OPENLINKNEWWINDOW,
   resources::IDC_CONTENT_CONTEXT_OPENLINKOFFTHERECORD,
   resources::IDC_CONTENT_CONTEXT_OPENLINKINPROFILE,
   resources::IDC_CONTENT_CONTEXT_OPENLINKBOOKMARKAPP,
   resources::IDC_CONTENT_CONTEXT_OPENLINKSPLITVIEW,
-  resources::IDC_CONTENT_CONTEXT_OPENIMAGENEWTAB,
   resources::IDC_CONTENT_CONTEXT_OPEN_ORIGINAL_IMAGE_NEW_TAB,
   resources::IDC_CONTENT_CONTEXT_OPENAVNEWTAB,
   resources::IDC_CONTENT_CONTEXT_GOTOURL,
@@ -81,6 +76,14 @@ const BROWSER_ONLY_COMMANDS: &[&CStr] = &[
   resources::IDC_CONTENT_CONTEXT_SHARING_SUBMENU,
   resources::IDC_CONTENT_CONTEXT_GENERATE_QR_CODE,
   resources::IDC_ROUTE_MEDIA,
+];
+
+const DRAWN_BY_THE_APP: &[&CStr] = &[
+  resources::IDC_CONTENT_CONTEXT_OPENLINKNEWTAB,
+  resources::IDC_CONTENT_CONTEXT_OPENIMAGENEWTAB,
+  resources::IDC_CONTENT_CONTEXT_SAVELINKAS,
+  resources::IDC_CONTENT_CONTEXT_SAVEIMAGEAS,
+  resources::IDC_CONTENT_CONTEXT_SAVEAVAS,
 ];
 
 /// Entries that open DevTools. Kept when the webview enables devtools, removed
@@ -105,6 +108,7 @@ const UNKNOWN_COMMAND_ID: c_int = -1;
 
 struct CommandIds {
   browser_only: Vec<c_int>,
+  drawn_by_the_app: Vec<c_int>,
   devtools: Vec<c_int>,
 }
 
@@ -120,6 +124,7 @@ fn command_ids() -> &'static CommandIds {
 
   COMMAND_IDS.get_or_init(|| CommandIds {
     browser_only: resolve_command_ids(BROWSER_ONLY_COMMANDS),
+    drawn_by_the_app: resolve_command_ids(DRAWN_BY_THE_APP),
     devtools: resolve_command_ids(DEVTOOLS_COMMANDS),
   })
 }
@@ -194,6 +199,11 @@ wrap_context_menu_handler! {
       let command_ids = command_ids();
       for id in &command_ids.browser_only {
         model.remove(*id);
+      }
+      if self.menu.is_none() {
+        for id in &command_ids.drawn_by_the_app {
+          model.remove(*id);
+        }
       }
       if !self.devtools_enabled {
         for id in &command_ids.devtools {

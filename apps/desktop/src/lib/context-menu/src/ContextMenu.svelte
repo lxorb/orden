@@ -86,6 +86,11 @@
       seen.removeEventListener('scroll', hide)
     }
   })
+  $effect(() => {
+    if (!menu.which || menu.keepFocus || !element || viewport.touch) return
+    const first = menu.keys ? element.querySelector<HTMLElement>('.orden-row:not(:disabled)') : element
+    if (first && document.activeElement !== first) first.focus()
+  })
   function arrive(node: Element) {
     if (sheet) return fly(node, { y: 40, duration: dur(220), easing: cubicOut })
     return scale(node, { duration: dur(120), start: 0.96, easing: cubicOut })
@@ -96,7 +101,7 @@
     const box = row.getBoundingClientRect()
     void more().then((rows) => {
       const at = new MouseEvent('contextmenu', { clientX: box.right, clientY: box.top })
-      menu.show(at, rows, { title: item.label })
+      menu.show(at, rows, { title: item.label, sub: true })
     })
   }
   function choose(item: MenuItem, event: MouseEvent) {
@@ -196,6 +201,7 @@
     style:left={sheet ? undefined : `${position.x}px`}
     style:top={sheet ? undefined : `${position.y}px`}
     transition:arrive
+    data-lands={menu.keys ? undefined : ''}
     use:trap={!menu.keepFocus}
     use:pullsAway={sheet ? () => menu.hide() : null}
     onkeydown={onKey}
@@ -277,7 +283,8 @@
   button:disabled {
     color: var(--muted);
   }
-  button.lit {
+  button.lit,
+  button:focus:not(:disabled) {
     background: var(--surface-hover);
     color: var(--item-hover-text-color);
   }

@@ -1,10 +1,13 @@
-import { DIVIDER, type MenuEntry } from './menu-item'
+import { DIVIDER, type MenuEntry, walkableRows } from './menu-item'
 
+export const POINTING = 'data-pointing'
 interface MenuOptions {
   title?: string
   near?: boolean
   keepFocus?: boolean
   up?: boolean
+  keys?: boolean
+  sub?: boolean
   until?: AbortSignal
 }
 class ContextMenu {
@@ -16,22 +19,29 @@ class ContextMenu {
   near = $state(false)
   keepFocus = $state(false)
   up = $state(false)
+  keys = $state(false)
   lit = $state(-1)
   heldAt: { x: number; y: number } | null = null
   from: Element | null = null
   private shown = 0
-  show(event: MouseEvent, items: MenuEntry[], options: MenuOptions = {}) {
+  private root = $state(0)
+  get which(): number {
+    return this.open ? this.root : 0
+  }
+  show(event: MouseEvent, items: MenuEntry[], options: MenuOptions = {}): number {
     event.preventDefault()
     event.stopPropagation()
     const usable = trim(items)
-    if (!usable.length || options.until?.aborted) return
+    if (!usable.length || options.until?.aborted) return 0
     this.items = usable
     const shown = ++this.shown
+    if (!options.sub || !this.open) this.root = shown
     this.title = options.title ?? null
     this.near = !!options.near
     this.keepFocus = !!options.keepFocus
     this.up = !!options.up
-    this.lit = -1
+    this.keys = options.keys ?? !pointing()
+    this.lit = this.keys && this.keepFocus ? (walkableRows(usable)[0] ?? -1) : -1
     this.from = event.type === 'click' ? openerOf(event) : null
     const under = this.from?.getBoundingClientRect()
     this.x = under ? under.left : event.clientX
@@ -45,6 +55,7 @@ class ContextMenu {
       },
       { once: true },
     )
+    return this.root
   }
   replace(items: MenuEntry[]) {
     if (this.open) this.items = trim(items)
@@ -52,6 +63,9 @@ class ContextMenu {
   hide() {
     this.open = false
   }
+}
+function pointing(): boolean {
+  return typeof document !== 'undefined' && document.documentElement.hasAttribute(POINTING)
 }
 function openerOf(event: MouseEvent): Element | null {
   const at = event.currentTarget ?? event.target

@@ -63,7 +63,15 @@ test('a page’s select closes cleanly, and the page’s menu after it opens as 
   expect(() => flushSync()).not.toThrow()
   await settle()
   expect(asked.at(-1)).toEqual({ command: 'web_select_pick', args: { tab: 't', id: 1, index: 1 } })
-  const said = readMenu({ tab: 't', id: 2, x: 30, y: 120, zoom: 1, link: 'https://example.com/', items: [] })
+  const said = readMenu({
+    tab: 't',
+    id: 2,
+    x: 30,
+    y: 120,
+    zoom: 1,
+    link: 'https://example.com/',
+    items: [{ command: 1, label: 'Copy link address', kind: 'command', enabled: true, checked: false }],
+  })
   if (!said) throw new Error('no menu')
   await asks.showMenu(said)
   expect(menu.open).toBe(true)
@@ -114,5 +122,67 @@ test('a page’s list closes on a press in the page, as Orden’s do, but not on
     expect(asked.at(-1)).toEqual({ command: 'web_select_pick', args: { tab: 't', id, index: null } })
   }
   void unmount(app)
+  target.remove()
+})
+test('a row of the page’s menu, or of its submenu, answers the page with its command, and the menu lights its first row only when keys opened it (#2481)', async () => {
+  Object.assign(pages.of('t'), {
+    sent: { pane: { x: 0, y: 40, width: 800, height: 560 }, visible: true, frame: null, cut: null },
+  })
+  const ContextMenu = (await import('../../context-menu/src/ContextMenu.svelte')).default
+  const target = document.createElement('div')
+  document.body.append(target)
+  const shown = mount(ContextMenu, { target })
+  const items = [
+    { command: 113, label: 'Copy image', kind: 'command', enabled: true, checked: false },
+    {
+      command: 200,
+      label: 'Writing direction',
+      kind: 'submenu',
+      enabled: true,
+      checked: false,
+      items: [{ command: 201, label: 'Left to right', kind: 'radio', enabled: true, checked: false }],
+    },
+  ]
+  const open = async (id: number, keys: boolean) => {
+    const said = readMenu({
+      tab: 't',
+      id,
+      x: 30,
+      y: 120,
+      zoom: 1,
+      link: null,
+      image: 'https://a.example/a.png',
+      keys,
+      items,
+    })
+    if (!said) throw new Error('no menu')
+    await asks.showMenu(said)
+    flushSync()
+    await settle()
+  }
+  const row = (label: string) =>
+    [...target.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find((one) => one.textContent.includes(label))
+  const picks = () => asked.filter((one) => one.command === 'web_menu_pick').map((one) => one.args)
+  asked.length = 0
+  await open(5, false)
+  expect(document.activeElement).toBe(target.querySelector('[role="menu"]'))
+  row('Copy image')?.click()
+  flushSync()
+  await settle()
+  expect(picks()).toEqual([{ tab: 't', id: 5, command: 113 }])
+  asked.length = 0
+  await open(6, true)
+  expect(document.activeElement).toBe(row('Copy image'))
+  row('Writing direction')?.querySelector<HTMLElement>('[data-more]')?.click()
+  await settle()
+  flushSync()
+  await settle()
+  expect(picks()).toEqual([])
+  row('Left to right')?.click()
+  flushSync()
+  await settle()
+  expect(picks()).toEqual([{ tab: 't', id: 6, command: 201 }])
+  expect(menu.open).toBe(false)
+  void unmount(shown)
   target.remove()
 })

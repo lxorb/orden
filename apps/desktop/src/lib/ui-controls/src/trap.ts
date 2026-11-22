@@ -1,3 +1,5 @@
+import { POINTING } from '../../ui-kit/src/api'
+
 const FOCUSABLE = [
   'button',
   '[href]',
@@ -16,13 +18,14 @@ function within(node: HTMLElement): HTMLElement[] {
   )
 }
 function lands(node: HTMLElement): HTMLElement | null {
+  if (node.matches('[data-lands]')) return node
   if (document.documentElement.hasAttribute('data-touch')) {
     return node.matches('.orden-host[tabindex]') ? node : null
   }
   return node.querySelector<HTMLElement>('[data-lands]:not(:disabled)')
 }
 export const IN_A_PAGE = 'data-keyboard-in-page'
-export const POINTING = 'data-pointing'
+export { POINTING }
 export function trap(node: HTMLElement, holds = true) {
   if (!holds) return { destroy: () => undefined }
   const from = document.documentElement.hasAttribute(IN_A_PAGE) ? null : document.activeElement
