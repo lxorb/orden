@@ -5,22 +5,16 @@
   import { liveHeart } from './health-live.svelte'
   import { time } from './time.svelte'
 
-  const { now, compact = false, onmanage }: { now: number; compact?: boolean; onmanage: () => void } = $props()
+  const { now, onmanage }: { now: number; onmanage: () => void } = $props()
   const running = $derived(time.running[0] ?? null)
   function picked(activity: string) {
     if (running?.activity !== activity) time.start(activity)
   }
 </script>
 
-<div class="now" class:compact class:running={running !== null} data-time-now>
+<div class="now" class:running={running !== null} data-time-now>
   <div class="what">
-    <ActivityButton
-      value={running?.activity ?? null}
-      placeholder="Start"
-      onpick={picked}
-      {onmanage}
-      strong={!compact}
-    />
+    <ActivityButton value={running?.activity ?? null} placeholder="Start" onpick={picked} {onmanage} strong />
     <span class="since">{running ? `Since ${clock(running.start)}` : 'Not tracking'}</span>
   </div>
   {#if liveHeart.state === 'connected' && liveHeart.bpm !== null}
@@ -112,33 +106,6 @@
     width: 12px;
     height: 12px;
     fill: currentColor;
-  }
-  .compact {
-    flex-wrap: wrap;
-    gap: var(--space-1) var(--space-2);
-    padding: 0;
-    border: none;
-    background: none;
-    box-shadow: none;
-  }
-  .compact .what {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .compact .since {
-    padding-inline: var(--space-1);
-    font-size: var(--text-xs);
-  }
-  .compact .tick {
-    font-size: 1.05rem;
-  }
-  .compact .word {
-    display: none;
-  }
-  .compact .stop {
-    width: var(--row-height);
-    justify-content: center;
-    padding: 0;
   }
   @container (max-width: 480px) {
     .word {

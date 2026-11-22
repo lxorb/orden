@@ -301,13 +301,158 @@ test('the running block ticks its time with no blinking mark beside it', () => {
   expect(running?.querySelector('.pulse, [class*="pulse"]')).toBeNull()
 })
 describe('the time tracker beside the notes', () => {
-  test('shows the activity running and today’s tracked total, and nothing else', () => {
-    const work = time.addActivity('Work')
-    time.schedule([{ kind: 'add', span: block('a', at(9), at(11), work.id) }])
+  const field = () => target.querySelector<HTMLInputElement>('[data-time-start] input')
+  const startRows = () =>
+    [...target.querySelectorAll('[data-time-start] [role="option"]')].map((one) => one.textContent.trim())
+  function typedHere(text: string) {
+    const input = field()
+    if (!input) throw new Error('no field')
+    input.value = text
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    flushSync()
+  }
+  test('has Open, and with nothing running a search over the five activities used last, one click starting it', () => {
+    const made = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((name) => time.addActivity(name))
+    time.schedule(
+      made.map((one, index) => ({ kind: 'add', span: block(one.id, at(index + 1), at(index + 1.5), one.id) })),
+    )
     shown(TimePanel)
-    expect(target.querySelector('[data-time-today]')?.textContent).toContain(length(2 * H))
-    expect(target.textContent).toContain('Not tracking')
-    expect(target.querySelector('.orden-section')).toBeNull()
+    expect(button('Open')?.classList.contains('orden-chip')).toBe(true)
+    expect(target.querySelector('[data-time-current]')).toBeNull()
+    expect(target.querySelector('[data-time-start]')?.textContent).toContain('Recent')
+    expect(startRows()).toEqual(['G', 'F', 'E', 'D', 'C'])
+    pressed([...target.querySelectorAll('[data-time-start] [role="option"]')][2])
+    expect(time.running.map((one) => time.activity(one.activity)?.name)).toEqual(['E'])
+    expect(field()).toBeNull()
+  })
+  test('the search finds any activity or makes a new one and starts it', () => {
+    for (const name of ['Work', 'Walk', 'Read']) time.addActivity(name)
+    shown(TimePanel)
+    typedHere('w')
+    expect(startRows().filter((one) => !one.includes('Create'))).toEqual(['Work', 'Walk'])
+    typedHere('Lunch')
+    expect(target.querySelector('[data-time-start] [data-time-create]')?.textContent).toContain('Create "Lunch"')
+    field()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    flushSync()
+    expect(time.running.map((one) => time.activity(one.activity)?.name)).toEqual(['Lunch'])
+  })
+  test('a running activity shows its name, colour, time since it began and a stop, in place of the search', () => {
+    const work = time.addActivity('Work', 'teal')
+    time.start(work.id, at(14))
+    shown(TimePanel)
+    const card = target.querySelector<HTMLElement>('[data-time-current]')
+    expect(card?.textContent).toContain('Work')
+    expect(card?.textContent).toContain('1:00:00')
+    expect(card?.style.getPropertyValue('--tint')).not.toBe('')
+    expect(field()).toBeNull()
+    pressed(card?.querySelector('[data-time-stop]'))
+    expect(time.running).toEqual([])
+    expect(field()).not.toBeNull()
+  })
+  test('today’s schedule shows each block with its time, chip and length, and a Not set gap is filled from it', () => {
+    const work = time.addActivity('Work')
+    time.addActivity('Rest')
+    time.schedule([
+      { kind: 'add', span: block('a', at(9), at(11), work.id) },
+      { kind: 'add', span: block('b', at(12), at(13), work.id) },
+    ])
+    time.keepMinutes(
+      Array.from({ length: 60 }, (_, index) => ({
+        at: at(11) + index * M,
+        active: 30,
+        samples: 12,
+        lid: true,
+        locked: false,
+      })),
+    )
+    shown(TimePanel)
+    expect(target.querySelector('[data-time-today]')).toBeNull()
+    const blocks = [...target.querySelectorAll('[data-time-side-block]')]
+    expect(blocks.map((one) => one.querySelector('[data-time-chip]')?.textContent.trim())).toEqual(['Work', 'Work'])
+    expect(blocks[0]?.textContent).toContain(length(2 * H))
+    expect(target.querySelector('section[aria-label="Today"] .orden-section')?.textContent).toContain(length(3 * H))
+    return vi.waitFor(() => {
+      flushSync()
+      const unset = target.querySelector('[data-time-side-unset]')
+      expect(unset?.textContent).toContain('Choose activity')
+      pressed(unset?.querySelector('button'))
+      pressed(option('Rest'))
+      expect(own().find((one) => one[0] === 'Rest')).toEqual(['Rest', at(11), at(12)])
+    })
+  })
+})
+test('Timeline turns the tab into the day’s timeline in place and back, and stays chosen', () => {
+  shown(TimeTab, { tab: tab() })
+  const toggle = target.querySelector('[data-time-timeline-open]')
+  expect(toggle?.getAttribute('aria-pressed')).toBe('false')
+  pressed(toggle)
+  expect(toggle?.getAttribute('aria-pressed')).toBe('true')
+  const view = target.querySelector('[data-time-timeline]')
+  expect(view).not.toBeNull()
+  expect(view?.closest('[role="dialog"]')).toBeNull()
+  expect(document.querySelector('[role="dialog"]')).toBeNull()
+  expect(target.querySelector('[data-time-summary]')).toBeNull()
+  expect(target.querySelector('[data-time-range] [role="radiogroup"]')).toBeNull()
+  expect(JSON.parse(written)).toMatchObject({ timeline: true })
+  const kept = written
+  close?.()
+  target.replaceChildren()
+  shown(TimeTab, { tab: tab(kept) })
+  expect(target.querySelector('[data-time-timeline]')).not.toBeNull()
+  pressed(target.querySelector('[data-time-timeline-open]'))
+  expect(target.querySelector('[data-time-timeline]')).toBeNull()
+  expect(target.querySelector('[data-time-summary]')).not.toBeNull()
+})
+describe('the activities editor', () => {
+  async function editor() {
+    shown(TimeTab, { tab: tab() })
+    const { managing } = await import('./manage.svelte')
+    pressed(target.querySelector('[data-time-now] [data-time-pick]'))
+    pressed(document.querySelector('[data-time-activities] .manage'))
+    expect(managing.by).not.toBeNull()
+    return document.querySelector<HTMLElement>('[role="dialog"][aria-label="Activities"]')
+  }
+  const names = () =>
+    [...document.querySelectorAll<HTMLInputElement>('[data-time-sheet] [data-activity] input')].map((one) => one.value)
+  test('adds from the field on top, renames in place and changes the colour from the swatches', async () => {
+    time.addActivity('Work', 'blue')
+    const sheet = await editor()
+    const add = sheet?.querySelector<HTMLInputElement>('[data-activity-add]')
+    if (!add) throw new Error('no field')
+    add.value = 'Sport'
+    add.dispatchEvent(new Event('input', { bubbles: true }))
+    add.form?.requestSubmit()
+    flushSync()
+    expect(names()).toEqual(['Work', 'Sport'])
+    expect(add.value).toBe('')
+    const name = sheet?.querySelector<HTMLInputElement>('[data-activity] input[aria-label="Name"]')
+    if (!name) throw new Error('no name')
+    name.value = 'Deep work'
+    name.dispatchEvent(new Event('change', { bubbles: true }))
+    expect(time.activities.map((one) => one.name)).toEqual(['Deep work', 'Sport'])
+    const work = time.activities[0]
+    pressed(sheet?.querySelector('[data-activity-colour]'))
+    pressed(document.querySelector('[aria-label="Colour"] button[aria-label="Green"]'))
+    expect(time.activity(work?.id ?? null)?.tint).toBe('green')
+  })
+  test('Alt and an arrow move an activity, and an archived one goes under Archived until it is brought back', async () => {
+    for (const name of ['A', 'B', 'C']) time.addActivity(name)
+    const sheet = await editor()
+    const nameOf = (label: string) =>
+      [...(sheet?.querySelectorAll<HTMLInputElement>('[data-activity] input[aria-label="Name"]') ?? [])].find(
+        (one) => one.value === label,
+      )
+    nameOf('A')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true }))
+    flushSync()
+    expect(names()).toEqual(['B', 'A', 'C'])
+    time.changeActivity(time.activities.find((one) => one.name === 'C')?.id ?? '', { archived: true })
+    flushSync()
+    expect(names()).toEqual(['B', 'A'])
+    const fold = sheet?.querySelector('[data-activity-archived]')
+    expect(fold?.textContent).toContain('1')
+    pressed(fold)
+    pressed(button('Unarchive'))
+    expect(names()).toEqual(['B', 'A', 'C'])
   })
 })
 test('Show percent turns every number in the summary into a share and back, and stays chosen', async () => {

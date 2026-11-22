@@ -51,7 +51,7 @@ describe('the rows of every sidebar view (#2487)', () => {
     todos: 'tasks-views/src/TodoRow.svelte',
     links: 'links-panel/src/HitList.svelte',
     search: 'search/src/SearchPanel.svelte',
-    time: 'time/src/TimePanel.svelte',
+    time: 'time/src/ActivityFind.svelte',
   }
   test('wear the shared row, so they light, press and stay chosen as a note row does', () => {
     const own = Object.entries(VIEWS).flatMap(([view, file]) => {

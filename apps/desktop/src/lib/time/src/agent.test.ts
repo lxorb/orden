@@ -88,6 +88,7 @@ describe('every user action in the time tracker has an agent verb', () => {
     addActivity: 'time_activities create',
     changeActivity: 'time_activities rename, recolor, archive, unarchive',
     removeActivity: 'time_activities delete',
+    moveActivity: 'time_activities move',
     span: 'time_blocks list',
     addSpan: 'time_blocks add',
     changeSpan: 'time_blocks edit',
@@ -192,6 +193,14 @@ describe('an agent at the time tracker', () => {
     expect(await result('time_activities', { op: 'archive', activity: uni.id })).toMatchObject({ archived: true })
     expect(await result('time_activities', { op: 'unarchive', activity: uni.id })).toMatchObject({ archived: false })
     expect(await run('time_activities', { op: 'recolor', activity: 'Study', tint: 'plaid' })).toMatchObject({
+      code: 'bad_arguments',
+    })
+    expect(
+      (await result<{ name: string }[]>('time_activities', { op: 'move', activity: 'Gym', to: 0 })).map(
+        (one) => one.name,
+      ),
+    ).toEqual(['Gym', 'Study'])
+    expect(await run('time_activities', { op: 'move', activity: 'Gym', to: -1 })).toMatchObject({
       code: 'bad_arguments',
     })
     expect(await result('time_activities', { op: 'delete', activity: 'Gym' })).toMatchObject({

@@ -8,6 +8,7 @@ export interface Spec {
   to: number | null
   untracked: boolean
   day: number | null
+  timeline: boolean
 }
 const numberOr = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)
 export function readSpec(text: string): Spec {
@@ -17,7 +18,7 @@ export function readSpec(text: string): Spec {
   } catch {
     value = null
   }
-  if (!isRecord(value)) return { range: 'day', from: null, to: null, untracked: true, day: null }
+  if (!isRecord(value)) return { range: 'day', from: null, to: null, untracked: true, day: null, timeline: false }
   const old = value.view === 'reports' || value.view === 'week' ? 'week' : null
   const range = KINDS.find((one) => one === value.range) ?? old ?? 'day'
   const from = range === 'custom' ? numberOr(value.from) : null
@@ -28,6 +29,7 @@ export function readSpec(text: string): Spec {
     to,
     untracked: value.untracked !== false,
     day: numberOr(value.day),
+    timeline: value.timeline === true,
   }
 }
 export const writeSpec = (spec: Spec): string => JSON.stringify(spec)

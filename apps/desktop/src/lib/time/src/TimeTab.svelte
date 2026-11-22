@@ -20,7 +20,7 @@
   import './start.svelte'
   import Summary from './Summary.svelte'
   import { time } from './time.svelte'
-  import Timeline from './Timeline.svelte'
+  import TimelineView from './TimelineView.svelte'
   import { ticking, watchedMinutes } from './watched.svelte'
 
   const { tab }: { tab: Tab } = $props()
@@ -30,7 +30,7 @@
   let custom = $state<[number, number] | null>(first.from !== null && first.to !== null ? [first.from, first.to] : null)
   let untracked = $state(first.untracked)
   let chosen = $state<number | null>(first.day)
-  let timeline = $state(false)
+  let timeline = $state(first.timeline)
   let customOpen = $state(false)
   let customChip = $state<HTMLElement | null>(null)
   let customLayer = $state<HTMLElement | null>(null)
@@ -45,6 +45,7 @@
       to: kind === 'custom' ? (custom?.[1] ?? null) : null,
       untracked,
       day: chosen,
+      timeline,
     })
     untrack(() => {
       if (text !== tab.doc) tab.note.replace(text, false)
@@ -53,10 +54,11 @@
   $effect(() => {
     void time.exchange()
   })
+  const shownKind = $derived<Kind>(timeline ? 'day' : kind)
   const span = $derived.by((): [number, number] => {
-    if (kind === 'day') return [day, daysAfter(day, 1)]
+    if (shownKind === 'day') return [day, daysAfter(day, 1)]
     if (kind === 'custom' && custom) return [custom[0], daysAfter(custom[1], 1)]
-    const unit = kind === 'month' || kind === 'year' ? kind : 'week'
+    const unit = shownKind === 'month' || shownKind === 'year' ? shownKind : 'week'
     const from = startOf(unit, day)
     return [from, endOf(unit, from)]
   })
@@ -67,7 +69,7 @@
   const short = (at: number) => localDate(at, { day: 'numeric', month: 'short' })
   const titled = $derived.by(() => {
     const last = daysAfter(span[1], -1)
-    if (kind === 'day') return localDate(day, { weekday: 'long', day: 'numeric', month: 'long' })
+    if (shownKind === 'day') return localDate(day, { weekday: 'long', day: 'numeric', month: 'long' })
     if (kind === 'month') return localDate(span[0], { month: 'long', year: 'numeric' })
     if (kind === 'year') return localDate(span[0], { year: 'numeric' })
     if (kind === 'custom') return `${short(span[0])} to ${short(last)}`
@@ -85,7 +87,7 @@
     chosen = one === midnightOf(now) ? null : one
   }
   function step(by: number) {
-    if (kind === 'day') choose(daysAfter(day, by))
+    if (shownKind === 'day') choose(daysAfter(day, by))
     else if (kind === 'week') choose(daysAfter(startOf('week', day), 7 * by))
     else if (kind === 'month' || kind === 'year') choose(stepped(kind, startOf(kind, day), by))
     else if (custom) {
@@ -168,28 +170,30 @@
     <NowCard {now} onmanage={manage} />
 
     <div class="bar" data-time-range>
-      <div class="orden-segmented" role="radiogroup" aria-label="Range" use:segmented>
-        {#each KINDS as [id, label] (id)}
-          {#if id === 'custom'}
-            <button
-              type="button"
-              role="radio"
-              aria-checked={kind === id}
-              class:on={kind === id}
-              bind:this={customChip}
-              onclick={() => pick(id)}>{label}</button
-            >
-          {:else}
-            <button
-              type="button"
-              role="radio"
-              aria-checked={kind === id}
-              class:on={kind === id}
-              onclick={() => pick(id)}>{label}</button
-            >
-          {/if}
-        {/each}
-      </div>
+      {#if !timeline}
+        <div class="orden-segmented" role="radiogroup" aria-label="Range" use:segmented>
+          {#each KINDS as [id, label] (id)}
+            {#if id === 'custom'}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={kind === id}
+                class:on={kind === id}
+                bind:this={customChip}
+                onclick={() => pick(id)}>{label}</button
+              >
+            {:else}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={kind === id}
+                class:on={kind === id}
+                onclick={() => pick(id)}>{label}</button
+              >
+            {/if}
+          {/each}
+        </div>
+      {/if}
       <div class="moving">
         <button type="button" class="orden-glyph step" aria-label="Previous" title="Previous" onclick={() => step(-1)}
           ><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg></button
@@ -198,22 +202,31 @@
         <button type="button" class="orden-glyph step" aria-label="Next" title="Next" onclick={() => step(1)}
           ><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg></button
         >
-        {#if !holdsToday && kind !== 'custom'}
+        {#if !holdsToday && shownKind !== 'custom'}
           <button type="button" class="orden-chip" onclick={() => (chosen = null)}>Today</button>
         {/if}
       </div>
       <div class="ends">
+        {#if !timeline}
+          <button
+            type="button"
+            class="orden-chip marked"
+            aria-pressed={untracked}
+            class:is-on={untracked}
+            data-time-untracked
+            onclick={() => (untracked = !untracked)}
+          >
+            <span class="dashed" aria-hidden="true"></span>Untracked
+          </button>
+        {/if}
         <button
           type="button"
           class="orden-chip marked"
-          aria-pressed={untracked}
-          class:is-on={untracked}
-          data-time-untracked
-          onclick={() => (untracked = !untracked)}
+          aria-pressed={timeline}
+          class:is-on={timeline}
+          data-time-timeline-open
+          onclick={() => (timeline = !timeline)}
         >
-          <span class="dashed" aria-hidden="true"></span>Untracked
-        </button>
-        <button type="button" class="orden-chip marked" data-time-timeline-open onclick={() => (timeline = true)}>
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13h12M4 10V6M7 10V3M10 10V7M13 10V5" /></svg>Timeline
         </button>
         <button
@@ -245,25 +258,29 @@
         >
       </p>
     {/if}
-    <div class="main" class:alone={!single}>
-      <aside class="left">
-        <Summary
-          from={span[0]}
-          to={span[1]}
-          {now}
-          minutes={minutes.list}
-          {totals}
-          per={kind === 'day' ? 'day' : kind === 'week' ? 'week' : null}
-          wide={!single}
-        />
-      </aside>
-      {#if single}
-        <section class="right">
-          <p class="orden-section">Schedule<span>{length(totals.ms)}</span></p>
-          <Blocks from={span[0]} to={span[1]} {now} minutes={minutes.list} {untracked} single onmanage={manage} />
-        </section>
-      {/if}
-    </div>
+    {#if timeline}
+      <TimelineView {day} {now} />
+    {:else}
+      <div class="main" class:alone={!single}>
+        <aside class="left">
+          <Summary
+            from={span[0]}
+            to={span[1]}
+            {now}
+            minutes={minutes.list}
+            {totals}
+            per={kind === 'day' ? 'day' : kind === 'week' ? 'week' : null}
+            wide={!single}
+          />
+        </aside>
+        {#if single}
+          <section class="right">
+            <p class="orden-section">Schedule<span>{length(totals.ms)}</span></p>
+            <Blocks from={span[0]} to={span[1]} {now} minutes={minutes.list} {untracked} single onmanage={manage} />
+          </section>
+        {/if}
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -285,9 +302,6 @@
     <DateField label="To" value={draft[1]} onchange={(next: string) => (draft = [draft[0], next])} />
     <button type="button" class="orden-button" onclick={apply}>Apply</button>
   </div>
-{/if}
-{#if timeline}
-  <Timeline start={daysAfter(span[1], -1)} {now} onclose={() => (timeline = false)} />
 {/if}
 <Activities open={managing.by === me} onclose={() => managing.close()} />
 

@@ -44,7 +44,7 @@ import { csvOf, jsonOf, recordsIn } from './written'
 export const OPS = {
   time_tracker: ['status', 'start', 'switch', 'stop'],
   time_blocks: ['list', 'add', 'edit', 'move', 'split', 'merge', 'delete', 'fill', 'undo', 'redo'],
-  time_activities: ['list', 'create', 'rename', 'recolor', 'archive', 'unarchive', 'delete'],
+  time_activities: ['list', 'create', 'rename', 'recolor', 'archive', 'unarchive', 'move', 'delete'],
   time_summary: ['day', 'week', 'month', 'year', 'custom'],
   time_health: ['read'],
   time_files: ['import', 'export'],
@@ -300,6 +300,16 @@ async function activities(call: Call): Promise<AgentAnswer> {
     return done(activityShown(time.addActivity(name, tintOf(call), parent, maybe(call, 'icon'))))
   }
   const activity = activityNamed(call)
+  if (op === 'move') {
+    const to = call.args.to
+    if (typeof to !== 'number' || !Number.isInteger(to) || to < 0) {
+      throw new Refused('bad_arguments', 'to is the place to move it to, 0 for the first')
+    }
+    const question = await asked(call, null, `Move ${activity.name}`)
+    if (question) return question
+    time.moveActivity(activity.id, to)
+    return done(time.activities.filter((one) => !one.archived).map(activityShown))
+  }
   const change: Partial<Omit<Activity, 'id'>> | null =
     op === 'rename'
       ? { name: need(call, 'name') }

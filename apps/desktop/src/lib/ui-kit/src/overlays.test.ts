@@ -251,7 +251,7 @@ describe('what hides a web page', () => {
     'lib/time/src/Summary.svelte',
     'lib/time/src/HeartPicker.svelte',
     'lib/time/src/TimeTab.svelte',
-    'lib/time/src/Timeline.svelte',
+    'lib/time/src/Activities.svelte',
     'lib/quitting/src/QuitSheet.svelte',
     'lib/terminal/src/remote/HostPicker.svelte',
     'lib/tab-strip/src/hover-card.svelte.ts',
