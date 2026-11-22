@@ -5,7 +5,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { addTask, todos } from '../../tasks-model/src/api'
 import { menu, prompt } from '../../ui-kit/src/api'
 import { TodosBoard, TodosPanel } from '../src/api'
-import { swipedAway } from '../src/swipe-away'
+import { swiped } from '../src/swipe'
 
 providePort('sync.account', {
   token: null,
@@ -85,29 +85,79 @@ describe.each(VIEWS)('a todo row in the %s', (_, View) => {
     prompt.submit()
     await gone(first.id, second.id)
   })
-  test('is swiped away on a touch screen', async () => {
+  test('is deleted by a swipe to the left on a touch screen', async () => {
     const one = await made('Take out the bins')
-    const { row } = shown(View)
-    const line = row(one.id)
-    if (!line) throw new Error('no row')
-    Object.defineProperty(line, 'offsetWidth', { value: 300 })
-    const finger = (type: string, x: number) =>
-      line.dispatchEvent(
-        Object.assign(new MouseEvent(type, { bubbles: true, clientX: x, clientY: 10 }), {
-          pointerType: 'touch',
-          pointerId: 7,
-        }),
-      )
+    const finger = fingerOn(shown(View).row(one.id))
     finger('pointerdown', 250)
     finger('pointermove', 200)
     finger('pointermove', 100)
     finger('pointerup', 60)
     await gone(one.id)
   })
+  test('is marked done by a swipe to the right, ticked before it settles', async () => {
+    const one = await made('Call the bank')
+    const { row } = shown(View)
+    const finger = fingerOn(row(one.id))
+    finger('pointerdown', 40)
+    finger('pointermove', 80)
+    finger('pointermove', 170)
+    const swipe = row(one.id)?.closest<HTMLElement>('.swipe')
+    expect(swipe?.dataset.swipe).toBe('done')
+    expect(swipe?.hasAttribute('data-armed')).toBe(true)
+    finger('pointerup', 180)
+    expect(swipe?.hasAttribute('data-ticked')).toBe(true)
+    await vi.waitFor(() => expect(todos.todo(one.id)?.done).toBe(true))
+  })
+  test('springs back and keeps the todo when let go early', async () => {
+    const one = await made('Book the dentist')
+    const { row } = shown(View)
+    const finger = fingerOn(row(one.id))
+    finger('pointerdown', 250, 10, 0)
+    finger('pointermove', 230, 10, 200)
+    finger('pointermove', 200, 10, 600)
+    finger('pointerup', 200, 10, 900)
+    const swipe = row(one.id)?.closest<HTMLElement>('.swipe')
+    expect(swipe?.hasAttribute('data-settling')).toBe(true)
+    expect(swipe?.style.getPropertyValue('--swipe-x')).toBe('0px')
+    await new Promise((done) => setTimeout(done, 500))
+    expect(todos.todo(one.id)).not.toBeNull()
+    expect(todos.todo(one.id)?.done).toBe(false)
+  })
+  test('never takes a scroll up or down for a swipe', async () => {
+    const one = await made('Pay the rent')
+    const { row } = shown(View)
+    const finger = fingerOn(row(one.id))
+    finger('pointerdown', 100, 10)
+    finger('pointermove', 106, 40)
+    finger('pointermove', 260, 60)
+    finger('pointerup', 280, 60)
+    expect(row(one.id)?.closest<HTMLElement>('.swipe')?.dataset.swipe).toBeUndefined()
+    await new Promise((done) => setTimeout(done, 500))
+    expect(todos.todo(one.id)).not.toBeNull()
+    expect(todos.todo(one.id)?.done).toBe(false)
+  })
 })
-test('a swipe goes away past a third of the row and only when it is sideways', () => {
-  expect(swipedAway(120, 4, 300)).toBe(true)
-  expect(swipedAway(-120, 4, 300)).toBe(true)
-  expect(swipedAway(90, 4, 300)).toBe(false)
-  expect(swipedAway(120, 90, 300)).toBe(false)
+function fingerOn(line: HTMLElement | null) {
+  if (!line) throw new Error('no row')
+  Object.defineProperty(line, 'offsetWidth', { value: 300 })
+  let at = 0
+  return (type: string, x: number, y = 10, time?: number) => {
+    at = time ?? at + 16
+    const event = Object.assign(new MouseEvent(type, { bubbles: true, clientX: x, clientY: y }), {
+      pointerType: 'touch',
+      pointerId: 7,
+    })
+    Object.defineProperty(event, 'timeStamp', { value: at })
+    line.dispatchEvent(event)
+  }
+}
+test('a swipe acts past two fifths of the row or on a quick flick, and only when it is sideways', () => {
+  expect(swiped(120, 4, 300)).toBe('done')
+  expect(swiped(-120, 4, 300)).toBe('delete')
+  expect(swiped(90, 4, 300)).toBeNull()
+  expect(swiped(120, 90, 300)).toBeNull()
+  expect(swiped(60, 2, 300, 1.2)).toBe('done')
+  expect(swiped(-60, 2, 300, -1.2)).toBe('delete')
+  expect(swiped(60, 2, 300, -1.2)).toBeNull()
+  expect(swiped(30, 2, 300, 2)).toBeNull()
 })
