@@ -33,6 +33,7 @@ import type {
   Shown,
 } from '../shapes'
 import { dayOf } from './when'
+import { neverShared } from '../web-notes'
 
 const OPENING = 100
 const PAGE = 200
@@ -371,9 +372,11 @@ export class FixtureChats implements Chats {
     return offer
   }
   noteReach(_chat: string, path: string) {
-    return Promise.resolve(this.reaches.get(path) ?? null)
+    const reach = this.reaches.get(path) ?? null
+    return Promise.resolve(reach && neverShared(path) ? { ...reach, share: false } : reach)
   }
   shareNote(_chat: string, path: string): Promise<boolean> {
+    if (neverShared(path)) return Promise.resolve(false)
     this.reaches.delete(path)
     return Promise.resolve(true)
   }
