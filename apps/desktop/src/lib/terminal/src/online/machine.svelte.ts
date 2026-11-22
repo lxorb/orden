@@ -1,12 +1,10 @@
 import { type MachineState, near } from '@orden/online'
-import { type Offers, offers, type Online, online, refusedOf, type Refused, startStop } from './calls'
+import { type Online, online, refusedOf, type Refused, startStop } from './calls'
 
 class OnlineMachine {
   known = $state<Online | null>(null)
   refused = $state<Refused | null>(null)
   busy = $state(false)
-  offers = $state<Offers | null>(null)
-  picking = $state(false)
   get near(): boolean {
     return this.known !== null && near(this.known.used, this.known.limit)
   }
@@ -17,17 +15,6 @@ class OnlineMachine {
     } catch (error) {
       this.refused = refusedOf(error)
     }
-  }
-  async offer(): Promise<void> {
-    try {
-      this.offers = await offers()
-    } catch {
-      this.offers = null
-    }
-  }
-  async chosen(): Promise<void> {
-    this.picking = false
-    await this.refresh()
   }
   heard(state: MachineState) {
     const machine = this.known?.machine

@@ -4,8 +4,7 @@
   import { diskNear, diskShare, shares } from '@orden/online'
   import { runner } from '../../../sync-client/src/api'
   import { workspace } from '../../../workspace/src/api'
-  import { summaryOf } from './choosing'
-  import MachinePicker from './MachinePicker.svelte'
+  import { summaryOf } from './summary'
   import { opens, rowsOf, type SessionRow } from './listing'
   import { machine } from './machine.svelte'
   import { sessions } from './sessions.svelte'
@@ -53,13 +52,6 @@
   }
   const about = $derived(known?.machine?.server ?? null)
   const summary = $derived(about ? summaryOf(about) : null)
-  const allowed = $derived(known?.allowed === true)
-  $effect(() => {
-    if (allowed) void machine.offer()
-  })
-  const offers = $derived(machine.offers)
-  const choosable = $derived(offers !== null && (!known?.machine || known.machine.host === 'hetzner'))
-  const running = $derived((sessions.list ?? []).filter((one) => one.alive === true).length)
   const STATES: Record<string, string> = {
     awake: 'Awake',
     starting: 'Starting',
@@ -97,7 +89,7 @@
 </script>
 
 <div class="online">
-  {#if known?.machine ?? choosable}
+  {#if known?.machine}
     <div class="card">
       <div class="orden-setting setting">
         <span class="name">
@@ -109,14 +101,6 @@
         </span>
         <div class="row">
           <span class="hint">{stateWords}</span>
-          {#if choosable}
-            <button
-              class="orden-chip"
-              aria-expanded={machine.picking}
-              disabled={state === 'starting' || state === 'stopping'}
-              onclick={() => (machine.picking = !machine.picking)}>{about?.made ? 'Change' : 'Choose'}</button
-            >
-          {/if}
           <button
             class="orden-chip"
             disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
@@ -124,12 +108,6 @@
           >
         </div>
       </div>
-    </div>
-  {/if}
-
-  {#if machine.picking && offers}
-    <div class="card">
-      <MachinePicker {offers} server={about} {running} chosen={() => machine.chosen()} />
     </div>
   {/if}
 
