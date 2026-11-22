@@ -56,6 +56,8 @@ addEventListener('contextmenu', (e) => {
   if (e.target.id === 'words') getSelection().selectAllChildren(e.target)
   if (e.target === field && field.value) field.select()
   said.log.push(['contextmenu', e.target.id, e.button])
+  said.menus = (said.menus || 0) + 1
+  said.menuOn = e.target.id
   tell()
 }, true)
 addEventListener('mousemove', (e) => { said.mouse = [e.clientX, e.clientY] }, true)
@@ -214,6 +216,7 @@ class Menus(keys.Drive):
         self.clipboard = Clipboard()
         self.base = self.url.rsplit("/", 1)[0]
         self.missed = ""
+        self.menus = 0
     def spot(self, x: float, y: float) -> tuple[float, float]:
         at = self.in_page(x, y)
         scale = (self.in_page(x + 100, y)[0] - at[0]) / 100 or 1.0
@@ -231,13 +234,14 @@ class Menus(keys.Drive):
     def opened(self, at: tuple[float, float]) -> dict[str, Any]:
         for _ in range(2):
             self.keys.chord("Escape")
+        self.menus = keys.page_said("main", time.monotonic()).get("menus") or 0
         self.keys.click(*self.spot(*at), right=True)
         time.sleep(1.2)
         return self.menu_now()
     def landed(self, at: tuple[float, float]) -> None:
         want = TARGETS.get(at)
-        log = keys.page_said("main", time.monotonic()).get("log") or []
-        got = next((one[1] for one in reversed(log) if one and one[0] == "contextmenu"), None)
+        said = keys.page_said("main", time.monotonic())
+        got = said.get("menuOn") if (said.get("menus") or 0) > self.menus else None
         self.missed = "" if want is None or got == want else f"the right click reached {got!r} in the page, not #{want}, so the drive aimed wrong"
     def measured(self, item: int, check: str, web: Any, ok: bool) -> None:
         self.row(item, check, web, None, None if self.missed else ok, self.missed)
