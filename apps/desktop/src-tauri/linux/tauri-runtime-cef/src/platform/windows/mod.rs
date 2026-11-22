@@ -8,6 +8,7 @@ mod drop_targets;
 mod event_loop;
 mod icon;
 mod monitor;
+mod parked;
 mod unhosted;
 mod webview;
 mod window;
