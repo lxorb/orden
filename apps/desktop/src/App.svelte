@@ -101,6 +101,7 @@
   import { chatStore, rewritingStore } from './lib/ai-chat/src/api'
   import { sync } from './lib/sync-store/src/api'
   import { Titlebar } from './lib/titlebar/src/api'
+  import Region from './Region.svelte'
   import { choices, modes, watchTextSize } from './lib/modes/src/api'
   import { links } from './lib/link-index/src/api'
   import { windowDocuments } from './lib/windows/src/api'
@@ -634,7 +635,9 @@
         ontransitionend={(event) => drawer.arrived(event)}
       >
         {#if keptLeft}
-          <Sidebar ongoto={goto} onmovesection={moveSectionTo} />
+          <Region name="left sidebar">
+            <Sidebar ongoto={goto} onmovesection={moveSectionTo} />
+          </Region>
         {/if}
       </div>
     {/if}
@@ -684,12 +687,18 @@
           {#if !noticesOver}
             {@render notices()}
           {/if}
-          <PaneTree frame={workspace.panes.frame} />
-          <FirstScreen />
+          <Region name="panes">
+            <PaneTree frame={workspace.panes.frame} />
+          </Region>
+          <Region name="first screen">
+            <FirstScreen />
+          </Region>
         </div>
 
         {#if !bare && !filled && viewport.touch}
-          <PadColumn />
+          <Region name="scratchpad column">
+            <PadColumn />
+          </Region>
         {/if}
 
         {#if (workspace.right.length || padDocked) && !bare && !filled}
@@ -709,7 +718,9 @@
             ontransitionend={(event) => rightDrawer.arrived(event)}
           >
             {#if keptRight}
-              <Sidebar side="right" ongoto={goto} onmovesection={moveSectionTo} />
+              <Region name="right sidebar">
+                <Sidebar side="right" ongoto={goto} onmovesection={moveSectionTo} />
+              </Region>
             {/if}
           </div>
         {/if}
@@ -734,11 +745,13 @@
 
 {#snippet corners()}
   {#if hasStatusBar(workspace.active?.kind) && !bare && !filled}
-    <StatusBar
-      doc={workspace.active?.doc ?? ''}
-      reading={modes.readOnly || !canWriteHere}
-      vimMode={modes.vimModeOf(view)}
-    />
+    <Region name="status bar">
+      <StatusBar
+        doc={workspace.active?.doc ?? ''}
+        reading={modes.readOnly || !canWriteHere}
+        vimMode={modes.vimModeOf(view)}
+      />
+    </Region>
   {/if}
 
   {#if fabShown && !bare}
@@ -750,61 +763,65 @@
 
 {#snippet notices()}
   <div class="notices" data-notices data-region="notices" class:over={noticesOver} class:above={tabOverview.open}>
-    <StorageWarning />
-    {#if undoToastNotice.asked}
-      {#await undoToastNotice.asked then UndoToast}
-        <UndoToast />
-      {/await}
-    {/if}
-    {#if recordingPill.asked}
-      {#await recordingPill.asked then RecordingPill}
-        <RecordingPill />
-      {/await}
-    {/if}
-    {#if joining.aside && joinPending.asked}
-      {#await joinPending.asked then JoinPending}
-        <JoinPending />
-      {/await}
-    {/if}
-    {#if keysMovedNotice.asked}
-      {#await keysMovedNotice.asked then KeysMoved}
-        <KeysMoved />
-      {/await}
-    {/if}
-    {#if outsideNotice.asked}
-      {#await outsideNotice.asked then OutsideFolder}
-        <OutsideFolder />
-      {/await}
-    {/if}
-    {#if renamed.showing && renameNotice.asked}
-      {#await renameNotice.asked then RenameNotice}
-        <RenameNotice ongone={() => renamed.dismiss()} />
-      {/await}
-    {/if}
-    {#if updates.ready}
-      <UpdateNotice
-        version={updates.ready}
-        managed={updates.managed}
-        system={updates.system}
-        channel={updates.channel}
-        ondismiss={() => updates.dismiss()}
-      />
-    {/if}
-    {#if reloading.offered}
-      <div class="reload" role="alert">
-        <button class="orden-button" onclick={() => location.reload()}>Reload</button>
-      </div>
-    {/if}
+    <Region name="notices">
+      <StorageWarning />
+      {#if undoToastNotice.asked}
+        {#await undoToastNotice.asked then UndoToast}
+          <UndoToast />
+        {/await}
+      {/if}
+      {#if recordingPill.asked}
+        {#await recordingPill.asked then RecordingPill}
+          <RecordingPill />
+        {/await}
+      {/if}
+      {#if joining.aside && joinPending.asked}
+        {#await joinPending.asked then JoinPending}
+          <JoinPending />
+        {/await}
+      {/if}
+      {#if keysMovedNotice.asked}
+        {#await keysMovedNotice.asked then KeysMoved}
+          <KeysMoved />
+        {/await}
+      {/if}
+      {#if outsideNotice.asked}
+        {#await outsideNotice.asked then OutsideFolder}
+          <OutsideFolder />
+        {/await}
+      {/if}
+      {#if renamed.showing && renameNotice.asked}
+        {#await renameNotice.asked then RenameNotice}
+          <RenameNotice ongone={() => renamed.dismiss()} />
+        {/await}
+      {/if}
+      {#if updates.ready}
+        <UpdateNotice
+          version={updates.ready}
+          managed={updates.managed}
+          system={updates.system}
+          channel={updates.channel}
+          ondismiss={() => updates.dismiss()}
+        />
+      {/if}
+      {#if reloading.offered}
+        <div class="reload" role="alert">
+          <button class="orden-button" onclick={() => location.reload()}>Reload</button>
+        </div>
+      {/if}
+    </Region>
   </div>
 {/snippet}
 
 {#snippet bar()}
-  <Titlebar
-    panes={panesWide}
-    onpalette={() => {
-      palette = true
-    }}
-  />
+  <Region name="title bar">
+    <Titlebar
+      panes={panesWide}
+      onpalette={() => {
+        palette = true
+      }}
+    />
+  </Region>
 {/snippet}
 
 <PullMark />
