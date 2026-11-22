@@ -1,5 +1,7 @@
 import hashlib
 import json
+import re
+import secrets
 import sys
 import time
 import uuid
@@ -42,8 +44,20 @@ def signed_in(
     return context, page
 def standing(word: str) -> str:
     return f"async () => (await window.ordenApp.aiVault()).vault.standing === {json.dumps(word)}"
+ASKED = re.compile(r"wants your AI accounts|offers this device|your AI vault|six digits", re.IGNORECASE)
+def asked(page: Page) -> list[str]:
+    seen = page.evaluate("() => [...document.querySelectorAll('.orden-bubble, .orden-screen, [role=dialog], [role=alertdialog]')].map((one) => one.innerText.trim()).filter(Boolean)")
+    words = page.evaluate("() => document.body.innerText")
+    return [one for one in seen if ASKED.search(one)] + [line for line in words.split("\n") if "wants your AI accounts" in line]
+def holding(page: Page) -> Any:
+    return page.evaluate(
+        """async () => {
+          const { readSecret } = await window.ordenApp.aiVault()
+          return { key: await readSecret('anthropic'), ids: window.ordenApp.ai.accounts.map((one) => one.id) }
+        }"""
+    )
 def main() -> int:
-    worker = harness.Worker(DRIVE)
+    worker = harness.Worker(DRIVE, {"OPENAI_KEY_SECRET": secrets.token_hex(32)})
     with DRIVE.session() as browser:
         worker.prepare()
         user = str(uuid.uuid4())
@@ -65,95 +79,46 @@ def main() -> int:
             }""",
             KEY,
         )
-        wait(laptop, standing("open"), "the laptop's vault open", 40)
-        check("the account's first device opens without a word", True)
+        wait(laptop, standing("open"), "the laptop's AI accounts open", 40)
+        until = time.monotonic() + LIVE
+        rows: list[Any] = []
+        while time.monotonic() < until and not rows:
+            rows = worker.query("select rev, sealed from ai_accounts")
+            time.sleep(0.5)
+        check("the laptop's accounts reach the server", len(rows) == 1)
+        check("the server holds them sealed, the key nowhere in the clear", bool(rows) and KEY not in json.dumps(rows))
         _, stranger = signed_in(browser, tokens[2], "a browser not told", vault=False)
         stranger.wait_for_timeout(3000)
-        check(
-            "a browser not told to keep its keys in the vault stays out of it",
-            stranger.evaluate(standing("off")) and len(worker.query("select id from ai_devices")) == 1,
-        )
+        check("a browser not told to keep its keys with the account stays out", stranger.evaluate(standing("off")) and holding(stranger)["ids"] == [])
         _, phone = signed_in(browser, tokens[1], "phone")
-        wait(phone, standing("waiting"), "the phone waiting", 40)
-        digits = wait(
-            phone,
-            "async () => (await window.ordenApp.aiVault()).vault.digits",
-            "the phone's six digits, once the laptop answered",
-            40,
-        )
-        phone.evaluate("window.ordenApp.settings.show('ai')")
-        phone.wait_for_selector(f"text={digits}")
-        shot(phone, "01-phone-waiting")
-        check("the phone waits, its six digits in Settings > AI", bool(digits))
-        laptop.wait_for_selector(".approve", timeout=LIVE * 1000)
-        bubble = laptop.locator(".approve").inner_text()
-        shot(laptop, "02-laptop-asked")
-        check("the laptop's bubble names the phone and shows the same digits", digits in bubble)
-        laptop.locator(".approve").get_by_role("button", name="Allow", exact=True).click()
-        wait(phone, standing("offered"), "the phone offered the vault", LIVE)
-        phone.wait_for_selector("text=offers this device your AI vault")
-        before = phone.evaluate("() => window.ordenApp.ai.accounts.map((one) => one.id)")
-        shot(phone, "03-phone-offered")
-        check("the phone, offered the vault, takes nothing until Join", before == [])
-        phone.get_by_role("button", name="Join", exact=True).click()
-        wait(phone, standing("open"), "the phone open", LIVE)
-        have = phone.evaluate(
-            """async () => {
-              const { readSecret } = await window.ordenApp.aiVault()
-              return { key: await readSecret('anthropic'),
-                       ids: window.ordenApp.ai.accounts.map((one) => one.id) }
-            }"""
-        )
-        check("the phone has the account", have["ids"] == ["anthropic"])
+        start = time.monotonic()
+        wait(phone, standing("open"), "the phone's AI accounts open", 40)
+        wait(phone, "() => window.ordenApp.ai.accounts.some((one) => one.id === 'anthropic')", "the account on the phone", LIVE)
+        say(f"     the phone had the account {time.monotonic() - start:.1f} s after sign-in")
+        have = holding(phone)
+        check("the phone, only signed in, has the account", have["ids"] == ["anthropic"])
         check("the phone has the key, in its own secret store", have["key"] == KEY)
-        shot(phone, "04-phone-open")
-        rows = worker.query("select blob from ai_vaults")
-        wraps = worker.query("select wrapped, pub from ai_devices")
-        stored = json.dumps(rows) + json.dumps(wraps)
-        check("the account holds the vault sealed", len(rows) == 1 and KEY not in stored)
-        check("both devices are allowed", len(wraps) == 2 and all(one["wrapped"] for one in wraps))
+        phone.evaluate("window.ordenApp.settings.show('ai')")
+        phone.wait_for_timeout(1500)
+        shot(phone, "01-phone-signed-in")
+        shot(laptop, "02-laptop-unasked")
+        check("the phone shows no prompt, no digits and nothing to join", asked(phone) == [])
+        check("the laptop shows no bubble and nobody wants its AI accounts", asked(laptop) == [])
         phone.evaluate("window.ordenApp.ai.update('anthropic', { name: 'Work' })")
         start = time.monotonic()
         wait(laptop, "() => window.ordenApp.ai.accounts[0]?.name === 'Work'", "the change on the laptop", LIVE)
         say(f"     a change on the phone reached the laptop in {time.monotonic() - start:.1f} s")
         check("a change on the phone reaches the laptop", True)
+        laptop.evaluate("window.ordenApp.ai.update('anthropic', { name: 'After' })")
+        start = time.monotonic()
+        wait(phone, "() => window.ordenApp.ai.accounts[0]?.name === 'After'", "the change on the phone", LIVE)
+        say(f"     a change on the laptop reached the phone in {time.monotonic() - start:.1f} s")
+        check("a change on the laptop reaches the phone", True)
         phone.reload(wait_until="domcontentloaded")
         wait(phone, "() => !!window.ordenApp && !!window.ordenApp.aiVault", "the phone again", 40)
         wait(phone, standing("open"), "the phone open after a reload", 40)
-        check("the phone, reloaded, opens without asking", True)
-        phone.keyboard.press("Control+Shift+KeyP")
-        phone.wait_for_selector(".palette input")
-        phone.keyboard.type("Sign out")
-        phone.wait_for_timeout(400)
-        phone.keyboard.press("Enter")
-        phone.wait_for_selector("text=Also remove this device from your AI vault?", timeout=LIVE * 1000)
-        shot(phone, "05-phone-signing-out")
-        check("signing out asks whether the phone leaves the vault too", True)
-        phone.locator('.sheet:has(p.title)').get_by_role("button", name="Sign out", exact=True).click()
-        wait(phone, "() => !window.ordenApp.account.signedIn", "the phone signed out", LIVE)
-        approved = worker.query("select id from ai_devices where approved_at is not null")
-        check("Sign out alone keeps the phone in the vault", len(approved) == 2)
-        held = worker.query("select rev, blob, auth_hash from ai_vaults")[0]
-        laptop.evaluate("window.ordenApp.settings.show('ai')")
-        laptop.wait_for_selector("text=Devices with your AI vault")
-        rows = laptop.locator('.card[data-device]:not(:has-text("This device"))')
-        shot(laptop, "06-laptop-devices")
-        check("the laptop lists both devices, itself marked", laptop.locator("text=This device").count() >= 1)
-        rows.first.get_by_role("button", name="Remove", exact=True).click()
-        laptop.locator('.sheet:has(p.title:has-text("Remove "))').get_by_role("button", name="Remove", exact=True).click()
-        wait(
-            laptop,
-            "async () => (await window.ordenApp.aiVault()).vault.allowed.length === 1",
-            "the phone let go of",
-            LIVE,
-        )
-        after = worker.query("select rev, blob, auth_hash from ai_vaults")[0]
-        devices = worker.query("select name, wrapped from ai_devices")
-        check("the vault is sealed again under a new key", after["blob"] != held["blob"] and after["rev"] > held["rev"])
-        check("the account holds the new token's hash", after["auth_hash"] != held["auth_hash"])
-        check("the phone's place and its wrap are gone", len(devices) == 1 and devices[0]["wrapped"])
-        laptop.evaluate("window.ordenApp.ai.update('anthropic', { name: 'After' })")
-        wait(laptop, standing("open"), "the laptop still open", LIVE)
-        shot(laptop, "07-laptop-alone")
+        have = holding(phone)
+        check("the phone, reloaded, keeps the account and its key without asking", have["ids"] == ["anthropic"] and have["key"] == KEY and asked(phone) == [])
+        shot(phone, "03-phone-reloaded")
     return DRIVE.verdict("the AI accounts carried from one device to another, end to end")
 raise SystemExit(main())
