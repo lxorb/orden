@@ -399,25 +399,25 @@ const APP_ENTRIES: Shortcut[] = [
   panel('view', 'chat.record', 'Voice message', 'Mod-Shift-m'),
   panel('view', 'chat.search', 'Search this chat', 'Mod-f'),
   panel('view', 'chat.members', 'Members', 'Mod-u'),
-  app('view', 'app.ask', 'Ask', 'Mod-Shift-a', () => {
-    if (!askAgain?.()) revealPanel('ask')
-  }),
-  app(
-    'view',
-    'app.ask-selection',
-    'Selection to the AI panel',
-    'Mod-Alt-k',
-    () => void runCommand('app.ask-selection'),
-  ),
-  app('view', 'app.quick-question', 'Quick question', 'Mod Mod', () => void runCommand('app.quick-question')),
+  ...(__AI__
+    ? [
+        app('view', 'app.ask', 'Ask', 'Mod-Shift-a', () => {
+          if (!askAgain?.()) revealPanel('ask')
+        }),
+        app('view', 'app.ask-selection', 'Selection to the AI panel', 'Mod-Alt-k', () => {
+          void runCommand('app.ask-selection')
+        }),
+        app('view', 'app.quick-question', 'Quick question', 'Mod Mod', () => void runCommand('app.quick-question')),
+        app('view', 'agents.stop', 'Stop agents', 'Mod-Alt-Shift-k', () => void runCommand('agents.stop'), {
+          mac: 'Mod-Ctrl-Alt-k',
+          desktop: true,
+        }),
+      ]
+    : []),
   app('view', 'app.reload', 'Reload Orden', 'Mod-r', () => location.reload()),
   app('view', 'app.scratchpad', 'Scratchpad', 'Mod-n', () => void runCommand('app.scratchpad')),
   app('view', 'app.scratchpad.alt', 'Scratchpad', 'Mod-Shift-x', () => void runCommand('app.scratchpad'), {
     alias: true,
-  }),
-  app('view', 'agents.stop', 'Stop agents', 'Mod-Alt-Shift-k', () => void runCommand('agents.stop'), {
-    mac: 'Mod-Ctrl-Alt-k',
-    desktop: true,
   }),
   app('view', 'app.region-next', 'Next section', 'F6', () => void stepRegionFocus(1)),
   app('view', 'app.region-previous', 'Previous section', 'Shift-F6', () => void stepRegionFocus(-1)),
@@ -645,19 +645,21 @@ const WEB_ENTRIES: Shortcut[] = (
     ...(id.endsWith('.alt') ? { alias: true } : {}),
   }),
 )
-const AI_ENTRIES: Shortcut[] = (
-  [
-    ['ai.mode', 'Next mode', 'Shift-Tab'],
-    ['ai.model', 'Model and effort', 'Alt-p'],
-    ['ai.effort', 'Next effort', 'Alt-t'],
-    ['ai.steer', 'Send into the running answer', 'Mod-Enter'],
-    ['ai.stop', 'Stop the answer', 'Escape'],
-    ['ai.unfold', 'Open every step', 'Mod-o'],
-    ['ai.new', 'New chat', 'Mod-n'],
-    ['ai.approve', 'Approve what the AI asks', 'Mod-Shift-Enter'],
-    ['ai.deny', 'Deny what the AI asks', 'Mod-Shift-Backspace'],
-  ] as const
-).map(([id, label, key]) => panel('view', id, label, key))
+const AI_ENTRIES: Shortcut[] = __AI__
+  ? (
+      [
+        ['ai.mode', 'Next mode', 'Shift-Tab'],
+        ['ai.model', 'Model and effort', 'Alt-p'],
+        ['ai.effort', 'Next effort', 'Alt-t'],
+        ['ai.steer', 'Send into the running answer', 'Mod-Enter'],
+        ['ai.stop', 'Stop the answer', 'Escape'],
+        ['ai.unfold', 'Open every step', 'Mod-o'],
+        ['ai.new', 'New chat', 'Mod-n'],
+        ['ai.approve', 'Approve what the AI asks', 'Mod-Shift-Enter'],
+        ['ai.deny', 'Deny what the AI asks', 'Mod-Shift-Backspace'],
+      ] as const
+    ).map(([id, label, key]) => panel('view', id, label, key))
+  : []
 const FIELD_ENTRIES: Shortcut[] = [panel('edit', 'field.dictate', 'Dictate', 'Alt-v')]
 const PALETTE_ENTRIES: Shortcut[] = [panel('view', 'palette.scope', 'Search all spaces or only this one', 'Alt-a')]
 CANVAS_ENTRIES.push(panel('canvas', 'canvas.delete.alt', 'Delete what is picked', 'Backspace', { alias: true }))

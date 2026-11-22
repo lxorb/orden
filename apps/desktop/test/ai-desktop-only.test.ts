@@ -22,6 +22,11 @@ const WAYS_IN = [
   'Chat priorities',
   'Draft replies',
   'Add an AI provider',
+  'Quick question',
+  'Selection to the AI panel',
+  'Approve what the AI asks',
+  'Deny what the AI asks',
+  'Next effort',
 ]
 let code: string[] = []
 let sources: string[] = []
