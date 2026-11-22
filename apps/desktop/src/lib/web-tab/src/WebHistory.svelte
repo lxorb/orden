@@ -3,6 +3,7 @@
   import { onMount, untrack } from 'svelte'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { region, localDate } from '../../platform/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { tabAsk, type TabAsk } from '../../workspace/src/api'
   import { menu } from '../../ui-kit/src/api'
   import { dayName, historyRows, onScreen, type HistoryRow } from './history-list'
@@ -193,7 +194,10 @@
         {/each}
       </div>
     {:else if typed}
-      <p class="none">Nothing found</p>
+      <div class="none found">
+        <Mascot mood="shrug" size={32} />
+        <p>Nothing found</p>
+      </div>
     {/if}
   </div>
 </div>
@@ -303,5 +307,14 @@
     padding: var(--space-4) var(--row-pad);
     color: var(--muted);
     font-size: var(--text-sm);
+  }
+  .found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .found p {
+    margin: 0;
   }
 </style>

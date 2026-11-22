@@ -17,6 +17,7 @@
   import FilePlus from 'lucide/dist/esm/icons/file-plus.mjs'
   import Server from 'lucide/dist/esm/icons/server.mjs'
   import { paletteCommands } from '../../commands/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { fileMark } from '../../marks/src/api'
   import { FileMark } from '../../marks/src/api'
   import { Icon } from '../../glyphs/src/api'
@@ -558,7 +559,10 @@
     {:else if mode === 'headings' && !headings.length}
       <p class="nothing">No headings in this note</p>
     {:else if term}
-      <p class="nothing">Nothing found</p>
+      <div class="nothing found">
+        <Mascot mood="shrug" size={28} />
+        <p>Nothing found</p>
+      </div>
     {/if}
   </div>
 {/if}
@@ -680,6 +684,15 @@
     padding: var(--space-4);
     color: var(--muted);
     font-size: var(--text-row);
+  }
+  .found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .found p {
+    margin: 0;
   }
   kbd {
     flex: none;

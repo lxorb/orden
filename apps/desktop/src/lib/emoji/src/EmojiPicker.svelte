@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { windowFor } from '../../windows/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { emojiData, type EmojiData, findEmoji } from './data'
   import { emojiRecent } from './recent.svelte'
   import { inTone, type Tone, TONES } from './tones'
@@ -136,7 +137,10 @@
     {:else if !data}
       <p class="empty">Loading…</p>
     {:else if !cells.length}
-      <p class="empty">Nothing found</p>
+      <div class="empty found">
+        <Mascot mood="shrug" size={24} />
+        <p>Nothing found</p>
+      </div>
     {:else}
       <div style:height="{shown.above}px"></div>
       {#each rows.slice(shown.first, shown.last + 1) as row, index (shown.first + index)}
@@ -237,5 +241,14 @@
     color: var(--muted);
     text-align: center;
     font-size: var(--text-sm);
+  }
+  .found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .found p {
+    margin: 0;
   }
 </style>

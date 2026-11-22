@@ -1,5 +1,6 @@
 <script lang="ts">
   import { account } from '../../accounts/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { ACCENTS } from '../../theme/src/api'
   import {
     brandIcon,
@@ -323,7 +324,10 @@
       {:else if !held}
         <p class="empty">Loading…</p>
       {:else if !cells.length}
-        <p class="empty">Nothing found</p>
+        <div class="empty found">
+          <Mascot mood="shrug" size={24} />
+          <p>Nothing found</p>
+        </div>
       {:else}
         <div class="tall" style:height="{rows.length * cell}px">
           {#each rows.slice(shown.from, shown.to) as row, index (shown.from + index)}
@@ -540,5 +544,14 @@
     max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
+  }
+  .found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .found p {
+    margin: 0;
   }
 </style>
