@@ -13,6 +13,7 @@ export type AgentScope =
   | 'browser.network'
   | 'browser.storage'
   | 'settings'
+  | 'time'
   | 'agents'
   | 'terminal'
   | 'files'
