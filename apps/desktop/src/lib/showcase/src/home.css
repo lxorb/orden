@@ -290,6 +290,16 @@ html:root[data-theme='light'] {
     radial-gradient(28% 30% at 60% 50%, rgb(var(--glow-rose) / var(--brand-glow)), transparent 72%);
   pointer-events: none;
 }
+.contact {
+  position: absolute;
+  right: 0;
+  bottom: max(var(--space-6), env(safe-area-inset-bottom));
+  left: 0;
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 16px;
+  text-align: center;
+}
 .coda-actions {
   position: relative;
   width: 100%;
