@@ -31,5 +31,6 @@ export {
 } from './sharing.svelte'
 export const loadLockScreen = () => import('./protect/LockScreen.svelte')
 export { pastesMarkup } from './trust'
+export { default as JoinShell } from './JoinShell.svelte'
 export const loadJoinSheet = () => import('./JoinSheet.svelte')
 export const loadJoinPending = () => import('./JoinPending.svelte')
