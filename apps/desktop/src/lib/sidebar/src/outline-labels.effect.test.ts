@@ -99,3 +99,36 @@ test('a space switched to moves a panel of the space, and never the scratchpad b
   pad.on = false
   workspace.panel = null
 })
+test('a side keeps each view it opened, hidden, so switching back finds the same view where it was left (#2505)', async () => {
+  viewport.device = 'desktop'
+  workspace.tabs = []
+  workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+  workspace.activeSpaceId = 's'
+  workspace.openBlank('Kept', heads('Kestrel'))
+  workspace.rightPanel = 'outline'
+  const into = document.createElement('div')
+  document.body.append(into)
+  const shown = mount(Sidebar, { target: into, props: { side: 'right' as const } })
+  const body = (panel: string) => into.querySelector<HTMLElement>(`.body[data-panel="${panel}"]`)
+  await vi.waitFor(() => expect(body('outline')?.hidden).toBe(false))
+  const outline = body('outline')
+  if (!outline) throw new Error('no outline')
+  outline.scrollTop = 120
+  outline.dispatchEvent(new Event('scroll'))
+  workspace.rightPanel = 'links'
+  flushSync()
+  await vi.waitFor(() => expect(body('links')?.hidden).toBe(false))
+  expect(outline.isConnected).toBe(true)
+  expect(outline.hidden).toBe(true)
+  expect(outline.inert).toBe(true)
+  outline.scrollTop = 0
+  workspace.rightPanel = 'outline'
+  flushSync()
+  expect(body('outline')).toBe(outline)
+  expect(outline.hidden).toBe(false)
+  expect(outline.scrollTop).toBe(120)
+  expect(body('links')?.hidden).toBe(true)
+  void unmount(shown)
+  into.remove()
+  workspace.rightPanel = null
+})

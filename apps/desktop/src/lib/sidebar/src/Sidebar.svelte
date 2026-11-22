@@ -1,6 +1,5 @@
 <script lang="ts">
   import {
-    arrive,
     ASK_MARK,
     carried,
     carrySection,
@@ -15,7 +14,6 @@
     GRAPH_MARK,
     isSectionDrag,
     landing,
-    leave,
     LINKS_MARK,
     longPress,
     menu,
@@ -400,14 +398,38 @@
     if (id === arrived) return
     arrived = id
     if (['scratchpad', 'time', 'ask'].includes(untrack(() => showing))) return
-    untrack(() => stack)?.animate(
+    slideIn(
+      untrack(() => stack),
+      untrack(() => direction),
+    )
+  })
+  const slideIn = (node: HTMLElement | undefined, toward = 1) =>
+    node?.animate(
       [
-        { transform: `translateY(${16 * untrack(() => direction)}px)`, opacity: 0 },
+        { transform: `translateY(${16 * toward}px)`, opacity: 0 },
         { transform: 'none', opacity: 1 },
       ],
       { duration: dur(220), easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)' },
     )
-  })
+  let kept: (Panel | 'scratchpad')[] = []
+  const opened = $derived.by(() => (kept = kept.includes(showing) ? kept : [...kept, showing]))
+  function keeps(node: HTMLElement, on: boolean) {
+    let top = 0
+    const heard = () => {
+      if (!node.hidden) top = node.scrollTop
+    }
+    node.addEventListener('scroll', heard, { passive: true })
+    return {
+      update(next: boolean) {
+        if (next && !on) {
+          node.scrollTop = top
+          slideIn(node)
+        }
+        on = next
+      },
+      destroy: () => node.removeEventListener('scroll', heard),
+    }
+  }
   const size = new SidebarWidth(() => side)
   let aside = $state<HTMLElement>()
   let asideWidth = $state(0)
@@ -628,21 +650,22 @@
     </div>
 
     <div class="stack" bind:this={stack}>
-      {#key showing}
+      {#each opened as id (id)}
         <div
           class="body"
-          data-region={side === 'left' ? 'list' : undefined}
-          data-panel={showing}
-          use:scrollbar={showing}
+          data-region={side === 'left' && id === showing ? 'list' : undefined}
+          data-panel={id}
+          hidden={id !== showing}
+          inert={id !== showing}
+          use:scrollbar={id}
           use:pullable
-          in:arrive
-          out:leave
+          use:keeps={id === showing}
         >
-          {#if held && holdable}
+          {#if held && holdable && id === showing}
             <p class="holding">{workspace.panelTab?.shown ?? ''}</p>
           {/if}
 
-          {#if showing === 'tree'}
+          {#if id === 'tree'}
             {#if listing}
               <Bookmarks onsearch={runBookmarked} nameOf={headingName} />
 
@@ -672,7 +695,7 @@
             {:else}
               <button class="empty" onclick={() => newSpace()}>Create a space</button>
             {/if}
-          {:else if showing === 'outline'}
+          {:else if id === 'outline'}
             {#if outlined?.covers?.()}
               {#await pagesNavigator() then PagesNavigator}
                 <PagesNavigator />
@@ -737,37 +760,37 @@
                 {/each}
               </ul>
             {/if}
-          {:else if showing === 'tasks'}
+          {:else if id === 'tasks'}
             {#await tasksPanel() then TodosPanel}
               <TodosPanel />
             {/await}
-          {:else if showing === 'chats' && chatsOn()}
+          {:else if id === 'chats' && chatsOn()}
             {#await chatsPanel() then ChatsPanel}
               <ChatsPanel />
             {/await}
-          {:else if showing === 'time'}
+          {:else if id === 'time'}
             {#await timePanel() then TimePanel}
               <TimePanel />
             {/await}
-          {:else if showing === 'ask'}
+          {:else if id === 'ask'}
             {#await askPanel() then AskPanel}
               <AskPanel {ongoto} />
             {/await}
-          {:else if showing === 'links'}
+          {:else if id === 'links'}
             {#await linksPanel() then Links}
               <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
             {/await}
-          {:else if showing === 'scratchpad'}
+          {:else if id === 'scratchpad'}
             {#await scratchpadCard() then Card}
               <Card docked />
             {/await}
-          {:else if showing === 'search'}
+          {:else if id === 'search'}
             {#await searchPanel() then SearchPanel}
               <SearchPanel {ongoto} />
             {/await}
           {/if}
         </div>
-      {/key}
+      {/each}
     </div>
 
     {#if side === 'left' && !phoneTabs}
@@ -968,6 +991,9 @@
     position: relative;
     flex: 1;
     min-height: 0;
+  }
+  .body[hidden] {
+    display: none;
   }
   .body {
     position: absolute;
