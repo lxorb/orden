@@ -202,7 +202,6 @@ describe('the ring a keyboard leaves', () => {
       .sort()
     expect(wearing).toEqual([
       'lib/agents/src/ui/PairingBubble.svelte',
-      'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/canvas/src/Canvas.svelte',
       'lib/context-menu/src/ContextMenu.svelte',
       'lib/pass-ui/src/PassFill.svelte',
@@ -286,7 +285,6 @@ describe('the badge in front of a name', () => {
       'lib/accounts/src/AccountBadge.svelte',
       'lib/agents/src/settings/AgentMark.svelte',
       'lib/agents/src/ui/PairingBubble.svelte',
-      'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/pass-ui/src/VaultMark.svelte',
       'lib/spaces/src/SpaceBadge.svelte',
       'lib/spaces/src/SpaceMenu.svelte',
@@ -518,7 +516,6 @@ describe('the bubble a sentence appears in', () => {
       .sort()
     expect(own).toEqual([
       'lib/agents/src/ui/PairingBubble.svelte',
-      'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/chats-client/src/view/Tip.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/sidebar/src/NameField.svelte',
