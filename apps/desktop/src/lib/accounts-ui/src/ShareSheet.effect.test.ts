@@ -19,10 +19,11 @@ const store = vi.hoisted(() => ({
   close: () => undefined,
   setLink: vi.fn(),
   revoke: vi.fn(),
+  inShared: false,
 }))
 vi.mock('../../sharing/src/api', () => ({
   share: store,
-  isShared: () => false,
+  isShared: () => store.inShared,
   whoIs: (person: { guest?: string | null; email?: string | null }) => `person:${person.guest ?? person.email ?? ''}`,
 }))
 const ShareSheet = (await import('./ShareSheet.svelte')).default
@@ -34,6 +35,7 @@ beforeEach(() => {
   store.item = null
   store.seats = null
   store.full = false
+  store.inShared = false
   store.who = {
     owner: { email: 'owner@example.com', name: 'Emil' },
     item: null,
@@ -149,5 +151,14 @@ describe('the roles', () => {
     store.item = { id: 'note-1', path: 'Notes/plan.md' }
     draw()
     expect(roles(selects()[0])).toEqual(['View', 'Write'])
+  })
+})
+describe('the sheet about one file', () => {
+  test('says nothing about who in the space already has it, shared space or not (#2482)', () => {
+    store.item = { id: 'note-1', path: 'Notes/plan.md' }
+    store.inShared = true
+    draw()
+    expect(says('already has it')).toBe(false)
+    expect(target.querySelector('.note')).toBeNull()
   })
 })

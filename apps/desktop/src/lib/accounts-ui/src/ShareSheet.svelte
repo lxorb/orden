@@ -1,7 +1,7 @@
 <script lang="ts">
   import { fileMark } from '../../marks/src/api'
   import { nameOf, shownName } from '../../platform/src/api'
-  import { isShared, share } from '../../sharing/src/api'
+  import { share } from '../../sharing/src/api'
   import type { GivenRole, MemberRole } from '../../accounts/src/api'
   import { Copyable, QrCode, Select, Sheet } from '../../ui-controls/src/api'
   import { FileMark, SpaceMark } from '../../marks/src/api'
@@ -14,7 +14,6 @@
   const item = $derived(share.item)
   const inviting = $derived(item ? ROLES : [...ROLES, ADMIN])
   const subject = $derived(item ? shownName(nameOf(item.path)) : (share.space?.name ?? ''))
-  const alreadyInTheSpace = $derived(!!share.space && isShared(share.space.root))
   function toggleLink() {
     if (share.busy) return
     if (link) void share.revoke()
@@ -41,10 +40,6 @@
 
   {#if share.error}
     <p class="wrong">{share.error}</p>
-  {/if}
-
-  {#if item && alreadyInTheSpace}
-    <p class="note">Everyone in the space already has it.</p>
   {/if}
 
   <div class="card">
