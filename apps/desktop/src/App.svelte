@@ -358,6 +358,7 @@
         setup: gate,
         modes,
         choices,
+        hiddenKinds,
         shortcuts,
         theme,
         toolbar,
