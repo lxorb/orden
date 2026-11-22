@@ -1,11 +1,11 @@
 import type { Entry } from '@orden/contracts'
 import { dayOf, sizeOf, startupOfMs, usageEventOf, type UsageDay, type UsageEvent } from '@orden/sync-core'
 import { account, request } from '../../accounts/src/api'
-import { heardElsewhere, systemLocale, log, keepJson, stored, isMobile, isNative } from '../../platform/src/api'
+import { heardElsewhere, systemLocale, log, keepJson, stored, isMobile, isNative, invoke } from '../../platform/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { HELP_IMPROVE, USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
-import { flush, pruned } from './queue'
+import { flush, pruned, sendable } from './queue'
 import { commonOf } from './system'
 import { saveTallies, started, spent, takeTallies, type Tally } from './tally'
 
@@ -79,14 +79,13 @@ function checked(event: UsageEvent): UsageEvent[] {
 function roll(at = Date.now()): void {
   const today = dayOf(at)
   const added: UsageEvent[] = []
+  if (!usageChoice.helping) return
   if (stored(USAGE_PINGED) !== today) {
-    added.push(...checked({ v: 1, kind: 'daily', day: today, ...common() }))
+    added.push(...checked({ v: 1, kind: 'daily', day: today, ...common(), install: usageChoice.install() }))
     keepJson(USAGE_PINGED, today)
   }
-  if (usageChoice.helping) {
-    for (const [day, tally] of Object.entries(takeTallies(today))) {
-      added.push(...checked(dayEvent(day, tally)))
-    }
+  for (const [day, tally] of Object.entries(takeTallies(today))) {
+    added.push(...checked(dayEvent(day, tally)))
   }
   if (added.length) keepQueue([...queuedEvents(), ...added])
 }
@@ -119,7 +118,16 @@ function idle(work: () => void): void {
   if (typeof requestIdleCallback === 'function') requestIdleCallback(work, { timeout: A_MINUTE })
   else setTimeout(work, 0)
 }
-export function watchUsage(sending: boolean): () => void {
+async function held(): Promise<boolean> {
+  if (!isNative || isMobile) return false
+  try {
+    return await invoke<boolean>('usage_held')
+  } catch {
+    return true
+  }
+}
+export async function watchUsage(sending: boolean): Promise<() => void> {
+  if (!sending || !sendable({ native: isNative, version: __APP_VERSION__, held: await held() })) return () => undefined
   if (usageChoice.helping) started(startupOfMs(performance.now()))
   roll()
   const minutes = setInterval(() => idle(tick), A_MINUTE)
@@ -131,7 +139,7 @@ export function watchUsage(sending: boolean): () => void {
   const send = () =>
     idle(() => {
       roll()
-      if (sending && !metered()) void sendQueued()
+      if (!metered()) void sendQueued()
     })
   const first = setTimeout(send, FIRST_SEND)
   const hourly = setInterval(send, AN_HOUR)

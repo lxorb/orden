@@ -44,24 +44,24 @@ afterEach(() => {
   target.remove()
 })
 describe('the crash report question', () => {
-  test('is asked the first time Orden opens, crash reports ticked and usage data not, with one button', async () => {
+  test('is asked the first time Orden opens, crash reports and usage data ticked, with one button', async () => {
     const { due, crashReports } = await launch()
     expect(due).toBe(true)
     expect(crashReports.asking).toBe(true)
     expect(dialog()?.getAttribute('aria-modal')).toBe('true')
     expect(box()?.checked).toBe(true)
-    expect(usageBox()?.checked).toBe(false)
+    expect(usageBox()?.checked).toBe(true)
     expect(dialog()?.textContent.replace(/\s+/g, ' ').trim()).toBe(
       'Send crash reports to help improve Orden Also share anonymous usage data Continue',
     )
   })
   test.each([
-    [true, 'true'],
-    [false, null],
-  ])('turns usage data on only when ticked (%s)', async (ticked, kept) => {
+    [true, null],
+    [false, 'false'],
+  ])('keeps usage data on unless it is unticked (%s)', async (ticked, kept) => {
     await launch()
     const { usageChoice } = await import('../../usage/src/api')
-    if (ticked) usageBox()?.click()
+    if (!ticked) usageBox()?.click()
     flushSync()
     goOn()
     expect(usageChoice.helping).toBe(ticked)

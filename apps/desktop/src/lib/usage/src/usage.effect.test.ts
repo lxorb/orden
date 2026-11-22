@@ -32,7 +32,8 @@ function common() {
   }
 }
 describe('the day’s tally', () => {
-  test('counts nothing until usage data is turned on', async () => {
+  test('counts nothing once usage data is turned off', async () => {
+    localStorage.setItem(HELPING, 'false')
     const { ran, changed, storedTallies, saveTallies } = await load()
     ran('print', 'palette')
     changed('general.searchEngine', 'duckduckgo')
@@ -188,5 +189,54 @@ describe('what a device says about itself', () => {
       signedIn: false,
     })
     expect(said.system).toEqual({ os: 'linux', arch: 'other', form: 'web', engine: 'gecko' })
+  })
+})
+describe('which builds send', () => {
+  test('a release or an unstable install on a user’s machine sends, the web app too', async () => {
+    const { sendable } = await import('./queue')
+    expect(sendable({ native: true, version: '0.22.2', held: false })).toBe(true)
+    expect(sendable({ native: true, version: '0.22.3-2240', held: false })).toBe(true)
+    expect(sendable({ native: false, version: '0.0.1', held: false })).toBe(true)
+  })
+  test('a test, dev or CI build never sends', async () => {
+    const { sendable } = await import('./queue')
+    for (const version of ['0.0.1', '99.0.0', '0.99.0', 'under test', '0.22.0-unstable.4']) {
+      expect(sendable({ native: true, version, held: false }), version).toBe(false)
+    }
+    expect(sendable({ native: true, version: '0.22.2', held: true })).toBe(false)
+  })
+  test('a build the runner holds back queues and sends nothing', async () => {
+    localStorage.setItem(HELPING, 'true')
+    const { watchUsage } = await import('./watch.svelte')
+    const stop = await watchUsage(false)
+    stop()
+    expect(localStorage.getItem('orden:usage-queue')).toBe(null)
+    expect(localStorage.getItem('orden:usage-pinged')).toBe(null)
+  })
+})
+describe('one install keeps one id', () => {
+  test('the id survives a restart and an update, and leaves with usage data turned off', async () => {
+    localStorage.setItem(HELPING, 'true')
+    const first = (await load()).usageChoice.install()
+    vi.resetModules()
+    const again = await load()
+    expect(again.usageChoice.install()).toBe(first)
+    again.usageChoice.setHelping(false)
+    expect(localStorage.getItem(INSTALL)).toBe('null')
+  })
+  test('usage data is on until it is turned off, and off it keeps no id and nothing to send', async () => {
+    const fresh = await load()
+    expect(fresh.usageChoice.helping).toBe(true)
+    const { pruned } = await import('./queue')
+    const ping = { ...common(), kind: 'daily' as const, day: TODAY, install: fresh.usageChoice.install() }
+    expect(typeof usageEventOf(ping)).toBe('object')
+    expect(pruned([ping], TODAY, true)).toEqual([ping])
+    localStorage.setItem('orden:usage-queue', JSON.stringify([ping]))
+    fresh.usageChoice.setHelping(false)
+    expect(pruned([ping], TODAY, false)).toEqual([])
+    expect(localStorage.getItem(INSTALL)).toBe('null')
+    expect(localStorage.getItem('orden:usage-queue')).toBe('[]')
+    vi.resetModules()
+    expect((await load()).usageChoice.helping).toBe(false)
   })
 })

@@ -10,7 +10,7 @@ function freshInstall(): string {
   return [...bytes].map((one) => one.toString(16).padStart(2, '0')).join('')
 }
 class UsageChoice {
-  helping = $state(stored(HELP_IMPROVE) === true)
+  helping = $state(stored(HELP_IMPROVE) !== false)
   readonly changes = new Set<() => void>()
   setHelping(on: boolean): void {
     this.helping = on
@@ -18,11 +18,12 @@ class UsageChoice {
     if (!on) {
       keepJson(INSTALL_ID, null)
       keepJson(USAGE_DAYS, {})
+      keepJson(USAGE_QUEUE, [])
     }
     for (const one of this.changes) one()
   }
   heard(): void {
-    const on = stored(HELP_IMPROVE) === true
+    const on = stored(HELP_IMPROVE) !== false
     if (on === this.helping) return
     this.helping = on
     for (const one of this.changes) one()
