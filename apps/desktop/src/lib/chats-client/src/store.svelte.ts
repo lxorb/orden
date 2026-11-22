@@ -23,6 +23,7 @@ import type { ChatEntry, ChatMember, Chats, ChatView, Draft, HistoryAsk, Hit, Of
 import { type ChatCache, MemoryCache } from './cache'
 import { ChatEngine, type Remote } from './engine'
 import * as http from './http'
+import { neverShared } from './web-notes'
 import { chatName, findPointers, makePointer, type Place, readPointer } from './pointers'
 import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
 import { isRetiredChat } from '../../documents/src/api'
@@ -610,9 +611,11 @@ class ChatsStore implements Chats {
   }
   async noteReach(chat: string, path: string) {
     const at = this.remoteNote(path)
-    return at ? await http.noteReachOf(chat, at.space, at.note) : null
+    const reach = at ? await http.noteReachOf(chat, at.space, at.note) : null
+    return reach && neverShared(path) ? { ...reach, share: false } : reach
   }
   async shareNote(chat: string, path: string): Promise<boolean> {
+    if (neverShared(path)) return false
     const at = this.remoteNote(path)
     return at ? await http.shareNote(chat, at.space, at.note) : false
   }
