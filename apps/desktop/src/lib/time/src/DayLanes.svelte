@@ -11,10 +11,10 @@
 
   const { from, to, minutes, now }: { from: number; to: number; minutes: readonly Minute[]; now: number } = $props()
   const LANES: readonly [Lane, string][] = [
-    ['app', 'Apps'],
-    ['site', 'Websites'],
     ['space', 'Spaces'],
+    ['site', 'Websites'],
     ['tab', 'Tabs'],
+    ['app', 'Apps'],
   ]
   let width = $state(0)
   const whole = $derived(to - from)

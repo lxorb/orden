@@ -35,13 +35,13 @@
     wide?: boolean
   } = $props()
   const LANES: readonly [Lane, string][] = [
-    ['app', 'Apps'],
-    ['site', 'Websites'],
     ['space', 'Spaces'],
+    ['site', 'Websites'],
     ['tab', 'Tabs'],
+    ['app', 'Apps'],
   ]
   const TOP = 5
-  let lane = $state<Lane>('app')
+  let lane = $state<Lane>('space')
   let lit = $state<string | null>(null)
   let card = $state<HTMLElement | null>(null)
   let pinned = $state(false)
