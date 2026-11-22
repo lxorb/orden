@@ -9,6 +9,7 @@ interface StandIn {
   attributes: Map<string, string>
   setAttribute(name: string, value: string): void
   addEventListener(): void
+  append(): void
 }
 function standIn(): StandIn {
   return {
@@ -20,6 +21,9 @@ function standIn(): StandIn {
       this.attributes.set(name, value)
     },
     addEventListener() {
+      return undefined
+    },
+    append() {
       return undefined
     },
   }
@@ -40,6 +44,6 @@ afterEach(() => {
 describe("a task's box", () => {
   test('is named for what ticking it means', () => {
     new CheckboxWidget(false).toDOM({} as EditorView)
-    expect(made[0]?.attributes.get('aria-label')).toBe('Done')
+    expect(made.find((one) => one.type === 'checkbox')?.attributes.get('aria-label')).toBe('Done')
   })
 })

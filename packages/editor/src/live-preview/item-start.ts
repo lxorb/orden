@@ -53,16 +53,25 @@ function hiddenRun(state: EditorState, line: Line): Run | null {
   if (start === null || at <= start) return null
   return { from: line.from + start, to: line.from + at }
 }
+const BOXED = /\[[ xX]\]/
+function caretAtWords(state: EditorState, run: Run): SelectionRange {
+  return EditorSelection.cursor(run.to, BOXED.test(state.sliceDoc(run.from, run.to)) ? -1 : 0)
+}
 function kept(before: EditorState, after: EditorState, range: SelectionRange, at: number) {
   const line = after.doc.lineAt(range.head)
   const run = hiddenRun(after, line)
-  if (!run || range.head >= run.to || range.head < run.from) return range
+  if (!run || range.head > run.to || range.head < run.from) return range
+  if (range.head === run.to) {
+    if (!range.empty) return range
+    const placed = caretAtWords(after, run)
+    return placed.assoc === range.assoc ? range : placed
+  }
   const was = (before.selection.ranges[at] ?? before.selection.main).head
   const sameLine = was >= line.from && was <= line.to
   if (!range.empty) {
     return sameLine && was > run.to ? EditorSelection.range(range.anchor, run.to) : range
   }
-  return EditorSelection.cursor(run.to)
+  return caretAtWords(after, run)
 }
 function backOutOfWords(view: EditorView, toward: Direction): boolean {
   const { state } = view
