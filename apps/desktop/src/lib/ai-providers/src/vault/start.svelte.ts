@@ -1,33 +1,29 @@
-import { mount, unmount, untrack } from 'svelte'
+import { untrack } from 'svelte'
 import { account, request } from '../../../accounts/src/api'
-import { afterQuiet, deviceName, forget, keep, keepJson, log } from '../../../platform/src/api'
+import { afterQuiet, forget, keep, keepJson, log } from '../../../platform/src/api'
 import { parsed, storedText, isNative, NoWord, wordSaid } from '../../../platform/src/api'
 import { removed } from '../accounts'
 import { isLocal, type ProviderKind } from '../providers'
-import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
+import { forgetKey, keysMoved, readSecret, writeKey } from '../keys'
 import { keepMoves } from '../moves'
 import { fingerprint } from './crypto'
 import { ai } from '../store.svelte'
 import type { Base, Contents } from './merge'
 import { Vault, type VaultWorld } from './vault.svelte'
-import VaultApprove from './VaultApprove.svelte'
 
 const SETTLE = 800
 const EVERY = 5 * 60_000
 const keyed = (kind: ProviderKind) => !isLocal(kind) && kind !== 'chatgpt'
-const baseKey = (id: string) => `orden:ai-vault-base:${id}`
-const BROWSER_KEY = 'orden:ai-vault-browser'
+const baseKey = (id: string) => `orden:ai-accounts-base:${id}`
 const SERVED_KEY = 'orden:ai-vault-account'
+const BROWSER_KEY = 'orden:ai-vault-browser'
 export const browserVault = $state({ on: storedText(BROWSER_KEY) === 'yes' })
 export async function keepBrowserInVault(on: boolean): Promise<void> {
   browserVault.on = on
   if (on) keep(BROWSER_KEY, 'yes')
   else forget(BROWSER_KEY)
-  if (on) {
-    await vault.refresh()
-    return
-  }
-  await vault.leave()
+  if (on) await vault.refresh()
+  else await vault.left(true)
 }
 async function signIns(): Promise<Record<string, string>> {
   const { plans } = await import('../local/status.svelte')
@@ -60,9 +56,6 @@ export const world: VaultWorld = {
       ...(body === undefined ? {} : { body }),
       ...(account.token ? { token: account.token } : {}),
     }),
-  readSecret,
-  writeSecret,
-  deviceName,
   async local(): Promise<Contents> {
     const keys: Record<string, string> = {}
     for (const one of ai.accounts) {
@@ -133,12 +126,6 @@ export function startVault(): void {
         if (who) void vault.refresh()
         else vault.signedOut()
       })
-    })
-    const asking = $derived(vault.asking.length > 0)
-    $effect(() => {
-      if (!asking) return
-      const bubble = untrack(() => mount(VaultApprove, { target: document.body, props: { vault } }))
-      return () => void unmount(bubble, { outro: true })
     })
   })
 }

@@ -112,12 +112,12 @@ describe('an Orden account leaving the device', () => {
     await ai.written()
     const accounts = { accounts: [theirs], active: {}, defaultVendor: '', uses: {} }
     kept.set('orden:ai-vault-account', 'u1')
-    kept.set('orden:ai-vault-base:u1', JSON.stringify({ accounts, keys: {}, seen: {} }))
+    kept.set('orden:ai-accounts-base:u1', JSON.stringify({ accounts, keys: {}, seen: {} }))
     vault.seen = { [theirs.id]: 'a@example.com' }
     await signOut()
     await vi.waitFor(() => expect(ai.accounts.map((one) => one.id)).toEqual([mine.id]))
     expect(vault.seen).toEqual({})
-    expect(kept.has('orden:ai-vault-base:u1')).toBe(false)
+    expect(kept.has('orden:ai-accounts-base:u1')).toBe(false)
   })
 })
 describe('a request to a provider', () => {

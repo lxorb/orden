@@ -1,170 +1,27 @@
 import { describe, expect, test } from 'vitest'
 import { added, type Accounts, NONE, removed, resolve, updated } from '../accounts'
 import type { Base, Contents } from './merge'
-import { newNonce } from '../pairing'
-import { deviceKeyIn, newDeviceKey, open, unwrap } from './crypto'
 import { Vault, type VaultWorld } from './vault.svelte'
 
-interface Row {
-  name: string
-  commitment: string
-  nonce: string | null
-  nonceFrom: string | null
-  pub: string | null
-  revealed: string | null
-  wrapped: string | null
-}
-const bytes = (text: string) => Uint8Array.from(atob(text), (one) => one.charCodeAt(0))
-async function sha(...parts: string[]): Promise<string> {
-  const all = parts.map(bytes)
-  const joined = new Uint8Array(all.reduce((sum, one) => sum + one.length, 0))
-  let at = 0
-  for (const one of all) {
-    joined.set(one, at)
-    at += one.length
-  }
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', joined))
-  return [...digest].map((one) => one.toString(16).padStart(2, '0')).join('')
-}
 const refused = (status: number, said: string) => Object.assign(new Error(said), { status })
 class Account {
   rev = 0
-  blob: string | null = null
-  authHash: string | null = null
-  devices = new Map<string, Row>()
-  rotations = 0
-  private async holds(auth: unknown): Promise<boolean> {
-    return typeof auth === 'string' && this.authHash !== null && (await sha(auth)) === this.authHash
+  contents: string | null = null
+  writes = 0
+  answer(path: string, method = 'GET', body: Record<string, unknown> = {}): Promise<unknown> {
+    if (path !== '/v2/ai/accounts') return Promise.reject(new Error(`${method} ${path} is not a route`))
+    if (method === 'GET') return Promise.resolve({ rev: this.rev, contents: this.contents })
+    if (body.rev !== this.rev) return Promise.reject(refused(409, 'stale'))
+    this.rev += 1
+    this.writes += 1
+    this.contents = String(body.contents)
+    return Promise.resolve({ rev: this.rev })
   }
-  private allowed(): boolean {
-    return [...this.devices.values()].some((one) => one.wrapped !== null)
-  }
-  async answer(path: string, method = 'GET', body: Record<string, unknown> = {}): Promise<unknown> {
-    const url = new URL(path, 'https://x')
-    if (method === 'GET' && url.pathname === '/v2/ai') {
-      const device = url.searchParams.get('device') ?? ''
-      return {
-        rev: this.rev,
-        blob: this.blob,
-        wrapped: this.devices.get(device)?.wrapped ?? null,
-        devices: [...this.devices].map(([id, one]) => ({
-          id,
-          name: one.name,
-          pub: one.pub,
-          commitment: one.commitment,
-          nonce: one.nonce,
-          nonceFrom: one.nonceFrom,
-          revealed: one.revealed,
-          approved: one.wrapped !== null,
-        })),
-      }
-    }
-    if (method === 'POST' && url.pathname === '/v2/ai/devices') {
-      const id = String(body.id)
-      const held = this.devices.get(id)
-      if (held?.wrapped) held.name = String(body.name)
-      else {
-        this.devices.set(id, {
-          name: String(body.name),
-          commitment: String(body.commitment),
-          nonce: null,
-          nonceFrom: null,
-          pub: null,
-          revealed: null,
-          wrapped: null,
-        })
-      }
-      return { ok: true }
-    }
-    const step = /^\/v2\/ai\/devices\/(\w+)\/(nonce|reveal|wrap)$/.exec(url.pathname)
-    if (method === 'PUT' && step) {
-      const id = step[1] ?? ''
-      const row = this.devices.get(id)
-      if (!row) throw refused(404, 'no such device')
-      if (step[2] === 'nonce') {
-        if (!(await this.holds(body.auth))) throw refused(403, 'not the vault key')
-        if (row.wrapped || row.pub || (row.nonce && row.nonceFrom !== body.from)) {
-          throw refused(409, 'answered already')
-        }
-        row.nonce = String(body.nonce)
-        row.nonceFrom = String(body.from)
-        return { ok: true }
-      }
-      if (step[2] === 'reveal') {
-        const pub = String(body.pub)
-        if (row.pub) throw refused(409, 'revealed already')
-        if ((await sha(pub)).slice(0, 32) !== id) throw refused(400, 'that key is not this device')
-        const committed = [...bytes(row.commitment)].map((one) => one.toString(16).padStart(2, '0')).join('')
-        if ((await sha(pub, String(body.nonce))) !== committed) {
-          throw refused(400, 'not what this device committed to')
-        }
-        if (!row.nonce && (this.blob !== null || this.allowed())) throw refused(409, 'not answered yet')
-        row.pub = pub
-        row.revealed = String(body.nonce)
-        return { ok: true }
-      }
-      if (!(await this.holds(body.auth))) throw refused(403, 'not the vault key')
-      if (!row.pub) throw refused(404, 'no such device')
-      row.wrapped = String(body.wrapped)
-      return { ok: true }
-    }
-    const device = /^\/v2\/ai\/devices\/(\w+)$/.exec(url.pathname)
-    if (method === 'DELETE' && device) {
-      const row = this.devices.get(device[1] ?? '')
-      if (!row) throw refused(404, 'no such device')
-      if (row.wrapped && !(await this.holds(body.auth))) throw refused(403, 'not the vault key')
-      const others = [...this.devices].some(([id, one]) => id !== device[1] && one.wrapped)
-      if (row.wrapped && others) throw refused(409, 'change the key instead')
-      this.devices.delete(device[1] ?? '')
-      return { ok: true }
-    }
-    if (method === 'PUT' && url.pathname === '/v2/ai/rotate') {
-      if (!(await this.holds(body.auth))) throw refused(403, 'not the vault key')
-      if (body.rev !== this.rev) throw refused(409, 'stale')
-      this.rotations += 1
-      const keep = body.keep as string[]
-      const wraps = body.wraps as string[]
-      this.rev += 1
-      this.blob = String(body.blob)
-      this.authHash = await sha(String(body.next))
-      for (const id of body.go as string[]) this.devices.delete(id)
-      for (const [id, one] of this.devices) {
-        const at = keep.indexOf(id)
-        if (at >= 0) one.wrapped = wraps[at] ?? null
-        else if (one.wrapped) Object.assign(one, { wrapped: null, pub: null, nonce: null })
-      }
-      return { rev: this.rev }
-    }
-    if (method === 'PUT' && url.pathname === '/v2/ai/vault') {
-      if (body.rev === 0) {
-        if (this.blob !== null) throw refused(409, 'stale')
-        this.authHash = await sha(String(body.auth))
-      } else {
-        if (!(await this.holds(body.auth))) throw refused(403, 'not the vault key')
-        if (body.rev !== this.rev) throw refused(409, 'stale')
-      }
-      this.rev += 1
-      this.blob = String(body.blob)
-      return { rev: this.rev }
-    }
-    if (method === 'DELETE' && url.pathname === '/v2/ai/vault') {
-      if (!(await this.holds(body.auth)) && this.allowed()) throw refused(403, 'not the vault key')
-      this.rev = 0
-      this.blob = null
-      this.authHash = null
-      for (const one of this.devices.values()) one.wrapped = null
-      return { ok: true }
-    }
-    throw new Error(`${method} ${path} is not a route`)
+  held(): Contents {
+    return JSON.parse(this.contents ?? 'null') as Contents
   }
 }
-function device(
-  account: Account,
-  name: string,
-  accounts: Accounts = NONE,
-  kept: ReadonlyMap<string, string> = new Map(),
-) {
-  const secrets = new Map(kept)
+function device(account: Account, accounts: Accounts = NONE) {
   const here = {
     accounts,
     keys: {} as Record<string, string>,
@@ -177,12 +34,6 @@ function device(
     account: () => here.who,
     call: async <T>(path: string, method?: string, body?: unknown) =>
       (await here.server.answer(path, method, body as Record<string, unknown>)) as T,
-    readSecret: (key) => Promise.resolve(secrets.get(key) ?? null),
-    writeSecret: (key, value) => {
-      secrets.set(key, value)
-      return Promise.resolve()
-    },
-    deviceName: () => name,
     local: () => Promise.resolve({ accounts: here.accounts, keys: { ...here.keys }, seen: {} }),
     apply: (contents: Contents) => {
       here.accounts = contents.accounts
@@ -205,86 +56,45 @@ function device(
       return Promise.resolve()
     },
   }
-  return { vault: new Vault(world), here, secrets, world }
+  return { vault: new Vault(world), here, world }
 }
 const keyed = added(NONE, 'anthropic').state
 type Device = ReturnType<typeof device>
-async function letIn(laptop: Device, phone: Device) {
-  for (let round = 0; round < 2; round++) {
-    await phone.vault.refresh()
-    await laptop.vault.refresh()
-  }
-}
-async function allowed(laptop: Device, phone: Device) {
-  await letIn(laptop, phone)
-  await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
-}
 async function opened(keys = true) {
   const account = new Account()
-  const laptop = device(account, 'Laptop', keyed)
+  const laptop = device(account, keyed)
   if (keys) laptop.here.keys = { anthropic: 'sk-ant-secret' }
   await laptop.vault.refresh()
   return { account, laptop }
 }
-describe('the AI accounts on two devices', () => {
-  test('a device says its vault is open only once the accounts in it are here', async () => {
-    const { account, laptop } = await opened()
-    const phone = device(account, 'Phone')
-    await allowed(laptop, phone)
-    await phone.vault.refresh()
-    expect(phone.vault.standing).toBe('offered')
-    const said: string[] = []
-    const apply = phone.world.apply.bind(phone.world)
-    phone.world.apply = async (contents, before, moved) => {
-      said.push(phone.vault.standing)
-      await apply(contents, before, moved)
-    }
-    await phone.vault.join()
-    expect(said).toEqual(['offered'])
-    expect(phone.vault.standing).toBe('open')
-    expect(phone.here.accounts.accounts.map((one) => one.id)).toEqual(['anthropic'])
-  })
-  test('the first device opens at once, and the vault never says a key', async () => {
+describe('a device signed in to the account', () => {
+  test('keeps its AI accounts and keys with the account at once', async () => {
     const { account, laptop } = await opened()
     expect(laptop.vault.standing).toBe('open')
-    expect(account.rev).toBeGreaterThanOrEqual(1)
-    expect(account.blob).not.toContain('sk-ant-secret')
-    expect(JSON.stringify([...account.devices.values()])).not.toContain('sk-ant-secret')
+    expect(account.held().keys).toEqual({ anthropic: 'sk-ant-secret' })
   })
-  test('a second device waits, shows the six digits the first shows, and once allowed has the accounts and keys', async () => {
-    const { account, laptop } = await opened()
-    const phone = device(account, 'Phone')
+  test('new to the account has its AI accounts and keys on its first look, with nothing asked of another device', async () => {
+    const { account } = await opened()
+    const phone = device(account)
     await phone.vault.refresh()
-    expect(phone.vault.standing).toBe('waiting')
-    expect(phone.vault.digits).toBe('')
-    await laptop.vault.refresh()
-    await phone.vault.refresh()
-    expect(phone.vault.digits).toMatch(/^\d{3} \d{3}$/)
-    expect(phone.here.keys).toEqual({})
-    await laptop.vault.refresh()
-    expect(laptop.vault.asking).toEqual([
-      {
-        id: expect.any(String),
-        name: 'Phone',
-        digits: phone.vault.digits,
-        pub: expect.any(String),
-      },
-    ])
-    await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
-    await phone.vault.refresh()
-    expect(phone.vault.standing).toBe('offered')
-    expect(phone.vault.offeredBy).toBe('Laptop')
-    await phone.vault.join()
     expect(phone.vault.standing).toBe('open')
     expect(phone.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
     expect(phone.here.accounts.accounts.map((one) => one.id)).toEqual(['anthropic'])
   })
-  test('a change on either device reaches the other', async () => {
-    const { account, laptop } = await opened(false)
-    const phone = device(account, 'Phone')
-    await allowed(laptop, phone)
+  test('brings what only it held the first time, and takes what the account holds', async () => {
+    const { account, laptop } = await opened()
+    const phone = device(account, added(NONE, 'openai').state)
+    phone.here.keys = { openai: 'sk-only-on-the-phone' }
     await phone.vault.refresh()
-    await phone.vault.join()
+    await laptop.vault.refresh()
+    const both = { anthropic: 'sk-ant-secret', openai: 'sk-only-on-the-phone' }
+    expect(phone.here.keys).toEqual(both)
+    expect(laptop.here.keys).toEqual(both)
+  })
+  test('sees a change made on another reach it', async () => {
+    const { account, laptop } = await opened(false)
+    const phone = device(account)
+    await phone.vault.refresh()
     phone.here.keys = { anthropic: 'sk-typed-on-the-phone' }
     phone.here.accounts = added(phone.here.accounts, 'openai').state
     await phone.vault.refresh()
@@ -292,7 +102,27 @@ describe('the AI accounts on two devices', () => {
     expect(laptop.here.keys.anthropic).toBe('sk-typed-on-the-phone')
     expect(laptop.here.accounts.accounts.map((one) => one.id)).toEqual(['anthropic', 'openai'])
   })
-  test('an account here under the id of a different one there moves to a fresh id, and what was on it here goes with it', async () => {
+  test('writing over another device’s write meanwhile takes it in and writes again', async () => {
+    const { account, laptop } = await opened()
+    const phone = device(account)
+    await phone.vault.refresh()
+    phone.here.accounts = added(phone.here.accounts, 'openai').state
+    phone.here.keys = { ...phone.here.keys, openai: 'sk-openai' }
+    const call = laptop.world.call.bind(laptop.world)
+    let crossed = false
+    laptop.world.call = async <T>(path: string, method?: string, body?: unknown): Promise<T> => {
+      const said = await call<T>(path, method, body)
+      if (!crossed && method === undefined) {
+        crossed = true
+        await phone.vault.refresh()
+      }
+      return said
+    }
+    laptop.here.keys = { anthropic: 'sk-ant-new' }
+    await laptop.vault.refresh()
+    expect(account.held().keys).toEqual({ anthropic: 'sk-ant-new', openai: 'sk-openai' })
+  })
+  test('with an account here under the id of a different one there moves it to a fresh id, and what was on it goes with it', async () => {
     const account = new Account()
     const router = updated(added(NONE, 'compatible').state, 'compatible-1', {
       name: 'OpenRouter',
@@ -302,267 +132,34 @@ describe('the AI accounts on two devices', () => {
       name: 'Ollama',
       baseUrl: 'http://localhost:11434/v1',
     })
-    const laptop = device(account, 'Laptop', router)
+    const laptop = device(account, router)
     await laptop.vault.refresh()
-    const phone = device(account, 'Phone', ollama)
-    await allowed(laptop, phone)
-    await phone.vault.refresh()
+    const phone = device(account, ollama)
     const thread = { provider: 'compatible-1' }
     const apply = phone.world.apply.bind(phone.world)
     phone.world.apply = async (contents, before, moved) => {
       thread.provider = moved[thread.provider] ?? thread.provider
       await apply(contents, before, moved)
     }
-    await phone.vault.join()
+    await phone.vault.refresh()
     expect(resolve(phone.here.accounts, 'compatible-1')?.name).toBe('OpenRouter')
     expect(resolve(phone.here.accounts, thread.provider)?.name).toBe('Ollama')
   })
-  test('a device offered the vault opens nothing, takes nothing and gives nothing until it joins', async () => {
+  test('writes nothing when nothing changed', async () => {
     const { account, laptop } = await opened()
-    const phone = device(account, 'Phone', added(NONE, 'openai').state)
-    phone.here.keys = { openai: 'sk-only-on-the-phone' }
-    await allowed(laptop, phone)
-    const before = { rev: account.rev, blob: account.blob }
-    await phone.vault.refresh()
-    await phone.vault.refresh()
-    expect(phone.vault.standing).toBe('offered')
-    expect(phone.here.keys).toEqual({ openai: 'sk-only-on-the-phone' })
-    expect(phone.here.accounts.accounts.map((one) => one.id)).toEqual(['openai'])
-    expect({ rev: account.rev, blob: account.blob }).toEqual(before)
+    const writes = account.writes
     await laptop.vault.refresh()
-    expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
-    await phone.vault.join()
-    expect(phone.vault.standing).toBe('open')
-    expect(account.rev).toBeGreaterThan(before.rev)
     await laptop.vault.refresh()
-    expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret', openai: 'sk-only-on-the-phone' })
-  })
-  test('a device beside a vault that is there never makes one of its own unasked', async () => {
-    const account = new Account()
-    const lost = device(account, 'Lost laptop', keyed)
-    await lost.vault.refresh()
-    account.devices.clear()
-    const held = account.blob
-    const fresh = device(account, 'New laptop', added(NONE, 'openai').state)
-    fresh.here.keys = { openai: 'sk-openai' }
-    await fresh.vault.refresh()
-    await fresh.vault.refresh()
-    expect(fresh.vault.standing).toBe('stranded')
-    expect(account.blob).toBe(held)
-  })
-  test('a device not allowed gets nothing, and one turned down asks again from nothing', async () => {
-    const { account, laptop } = await opened()
-    const stranger = device(account, 'Stranger')
-    await letIn(laptop, stranger)
-    await laptop.vault.deny(laptop.vault.asking[0]?.id ?? '')
-    expect(laptop.vault.asking).toEqual([])
-    await stranger.vault.refresh()
-    expect(stranger.here.keys).toEqual({})
-    expect(stranger.vault.standing).toBe('waiting')
-  })
-  test('a device of an account with no device left to allow it starts over with its own', async () => {
-    const account = new Account()
-    const lost = device(account, 'Lost laptop', keyed)
-    await lost.vault.refresh()
-    account.devices.clear()
-    const fresh = device(account, 'New laptop', added(NONE, 'openai').state)
-    fresh.here.keys = { openai: 'sk-openai' }
-    await fresh.vault.refresh()
-    expect(fresh.vault.standing).toBe('stranded')
-    await fresh.vault.startOver()
-    expect(fresh.vault.standing).toBe('open')
-    expect(fresh.here.accounts.accounts.map((one) => one.id)).toEqual(['openai'])
-  })
-  test('the same device, after a restart or a reinstall, opens without asking', async () => {
-    const { account, laptop } = await opened()
-    const again = device(account, 'Laptop', NONE, laptop.secrets)
-    await again.vault.refresh()
-    expect(again.vault.standing).toBe('open')
-    expect(again.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
-  })
-})
-describe('somebody between the two screens', () => {
-  test('cannot change the key under the digits the reader compared', async () => {
-    const { account, laptop } = await opened()
-    const phone = device(account, 'Phone')
-    await letIn(laptop, phone)
-    const shown = laptop.vault.asking[0]
-    expect(shown?.digits).toBe(phone.vault.digits)
-    const thief = await newDeviceKey()
-    const row = account.devices.get(shown?.id ?? '')
-    if (row) row.pub = thief.pub
-    await laptop.vault.allow(shown?.id ?? '')
-    expect(row?.wrapped).toBeNull()
-    expect(laptop.vault.asking).toEqual([])
-  })
-  test('cannot reveal a key the asking device did not commit to', async () => {
-    const { account, laptop } = await opened(false)
-    const phone = device(account, 'Phone')
-    await phone.vault.refresh()
-    await laptop.vault.refresh()
-    await phone.vault.refresh()
-    const thief = await newDeviceKey()
-    const row = [...account.devices.values()].find((one) => one.name === 'Phone')
-    if (row) row.pub = thief.pub
-    await laptop.vault.refresh()
-    expect(laptop.vault.asking).toEqual([])
-  })
-  test('cannot pick a key that shows the digits the reader’s own device shows', async () => {
-    const { account, laptop } = await opened(false)
-    const thief = device(account, 'Phone')
-    await thief.vault.refresh()
-    await laptop.vault.refresh()
-    await thief.vault.refresh()
-    await laptop.vault.refresh()
-    const forThief = laptop.vault.asking[0]?.digits
-    const phone = device(account, 'Phone')
-    await phone.vault.refresh()
-    const own = [...account.devices.entries()].find(
-      ([id, one]) => one.name === 'Phone' && id !== laptop.vault.asking[0]?.id && !one.pub,
-    )
-    const laptopId = [...account.devices.entries()].find(([, one]) => one.name === 'Laptop')?.[0]
-    if (own) {
-      own[1].nonce = newNonce()
-      own[1].nonceFrom = laptopId ?? null
-    }
-    await phone.vault.refresh()
-    expect(phone.vault.digits).toMatch(/^\d{3} \d{3}$/)
-    expect(forThief).toMatch(/^\d{3} \d{3}$/)
-    expect(phone.vault.digits).not.toBe(forThief)
-  })
-  test('cannot take the keys of a device it offers a vault of its own', async () => {
-    const account = new Account()
-    const thief = device(account, 'Laptop')
-    await thief.vault.refresh()
-    const phone = device(account, 'Phone', keyed)
-    phone.here.keys = { anthropic: 'sk-ant-secret' }
-    await allowed(thief, phone)
-    const before = account.blob
-    await phone.vault.refresh()
-    expect(phone.vault.standing).toBe('offered')
-    expect(account.blob).toBe(before)
-    await thief.vault.refresh()
-    expect(thief.here.keys).toEqual({})
-  })
-  test('cannot answer, wrap, write the vault or let it go without the vault key', async () => {
-    const { account } = await opened(false)
-    const phone = device(account, 'Phone')
-    await phone.vault.refresh()
-    const id = [...account.devices.entries()].find(([, one]) => one.name === 'Phone')?.[0] ?? ''
-    const forged = { auth: btoa('not the key') }
-    await expect(
-      account.answer(`/v2/ai/devices/${id}/nonce`, 'PUT', {
-        nonce: newNonce(),
-        from: id,
-        ...forged,
-      }),
-    ).rejects.toMatchObject({ status: 403 })
-    await expect(
-      account.answer(`/v2/ai/devices/${id}/wrap`, 'PUT', { wrapped: 'eA', ...forged }),
-    ).rejects.toMatchObject({ status: 403 })
-    await expect(
-      account.answer('/v2/ai/vault', 'PUT', { rev: account.rev, blob: 'eA', ...forged }),
-    ).rejects.toMatchObject({ status: 403 })
-    await expect(account.answer('/v2/ai/vault', 'DELETE', forged)).rejects.toMatchObject({
-      status: 403,
-    })
-  })
-})
-describe('a device let go of', () => {
-  async function three() {
-    const { account, laptop } = await opened()
-    const others = []
-    for (const name of ['Phone', 'Tablet']) {
-      const one = device(account, name)
-      await allowed(laptop, one)
-      await one.vault.refresh()
-      await one.vault.join()
-      expect(one.vault.standing).toBe('open')
-      others.push(one)
-    }
-    const [phone, tablet] = others
-    if (!phone || !tablet) throw new Error('two devices')
-    await laptop.vault.refresh()
-    return { account, laptop, phone, tablet }
-  }
-  const idOf = (account: Account, name: string) => [...account.devices].find(([, one]) => one.name === name)?.[0] ?? ''
-  test('lists every device let in, this one marked', async () => {
-    const { laptop } = await three()
-    expect(laptop.vault.allowed.map((one) => [one.name, one.mine])).toEqual([
-      ['Laptop', true],
-      ['Phone', false],
-      ['Tablet', false],
-    ])
-  })
-  test('cannot open the vault written after it went, with the key it kept', async () => {
-    const { account, laptop, phone, tablet } = await three()
-    const phoneId = idOf(account, 'Phone')
-    const kept = account.devices.get(phoneId)?.wrapped ?? ''
-    const phoneKey = deviceKeyIn(JSON.parse(phone.secrets.get('ai-vault-device') ?? 'null'))
-    if (!phoneKey) throw new Error('the phone has a key')
-    const oldKey = await unwrap(kept, phoneKey)
-    await expect(open(oldKey, account.blob ?? '')).resolves.toContain('sk-ant-secret')
-    expect(await laptop.vault.remove(phoneId)).toBe(true)
-    expect(account.devices.has(phoneId)).toBe(false)
-    expect(laptop.vault.allowed.map((one) => one.name)).toEqual(['Laptop', 'Tablet'])
-    laptop.here.keys = { anthropic: 'sk-ant-after' }
-    await laptop.vault.refresh()
-    await tablet.vault.refresh()
-    expect(tablet.vault.standing).toBe('open')
-    expect(tablet.here.keys).toEqual({ anthropic: 'sk-ant-after' })
-    await expect(open(oldKey, account.blob ?? '')).rejects.toThrow()
-    await phone.vault.refresh()
-    expect(phone.vault.standing).not.toBe('open')
-    expect(phone.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
-  })
-  test('leaves the devices that stay joined, offered nothing again', async () => {
-    const { account, laptop, tablet } = await three()
-    await laptop.vault.remove(idOf(account, 'Phone'))
-    await tablet.vault.refresh()
-    expect(tablet.vault.standing).toBe('open')
-    await laptop.vault.remove(idOf(account, 'Tablet'))
-    expect(laptop.vault.allowed.map((one) => one.name)).toEqual(['Laptop'])
-    expect(account.rotations).toBe(2)
-  })
-  test('is this device too, when it leaves, and the others keep the vault', async () => {
-    const { account, laptop, phone } = await three()
-    await phone.vault.leave()
-    expect(phone.vault.standing).toBe('off')
-    expect(account.devices.has(idOf(account, 'Phone'))).toBe(false)
-    await laptop.vault.refresh()
-    expect(laptop.vault.standing).toBe('open')
-    expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
-  })
-  test('changes the key over the vault as it is, written meanwhile by another device', async () => {
-    const { account, laptop, tablet } = await three()
-    tablet.here.keys = { anthropic: 'sk-from-the-tablet' }
-    await tablet.vault.refresh()
-    expect(await laptop.vault.remove(idOf(account, 'Phone'))).toBe(true)
-    await laptop.vault.refresh()
-    await tablet.vault.refresh()
-    expect(laptop.here.keys).toEqual({ anthropic: 'sk-from-the-tablet' })
-    expect(tablet.vault.standing).toBe('open')
-  })
-  test('the last device takes the vault with it', async () => {
-    const { account, laptop } = await opened(false)
-    await laptop.vault.leave()
-    expect(account.blob).toBeNull()
-    expect(account.devices.size).toBe(0)
+    expect(account.writes).toBe(writes)
   })
 })
 describe('an Orden account leaving the device', () => {
-  async function read(server: Account, laptop: Device): Promise<string> {
-    const mine = deviceKeyIn(JSON.parse(laptop.secrets.get('ai-vault-device') ?? 'null'))
-    const wrapped = mine ? server.devices.get(mine.id)?.wrapped : null
-    if (!mine || !wrapped) throw new Error('the laptop is let in')
-    return await open(await unwrap(wrapped, mine), server.blob ?? '')
-  }
   function signIn(laptop: Device, who: string, server = new Account()) {
     laptop.here.who = who
     laptop.here.server = server
     return server
   }
-  test('takes the AI accounts and keys of its vault off the device, and the next account’s vault never gets them', async () => {
+  test('takes the AI accounts and keys it kept off the device, and the next account never gets them', async () => {
     const { laptop } = await opened()
     laptop.vault.seen = { anthropic: 'a@example.com' }
     laptop.here.who = null
@@ -576,25 +173,22 @@ describe('an Orden account leaving the device', () => {
     const other = signIn(laptop, 'u2')
     await laptop.vault.refresh()
     expect(laptop.vault.standing).toBe('open')
-    const theirs = await read(other, laptop)
-    expect(theirs).not.toContain('sk-ant-secret')
-    expect(theirs).toContain('sk-only-here')
-    expect(laptop.here.keys).toEqual({ [local.account.id]: 'sk-only-here' })
+    expect(other.contents).not.toContain('sk-ant-secret')
+    expect(other.contents).toContain('sk-only-here')
   })
-  test('is noticed when another signs in without the first signing out, before the new vault opens', async () => {
+  test('is noticed when another signs in without the first signing out, before the next account’s are read', async () => {
     const { laptop } = await opened()
     const other = signIn(laptop, 'u2')
     await laptop.vault.refresh()
-    expect(laptop.vault.standing).toBe('open')
     expect(laptop.here.keys).toEqual({})
-    expect(await read(other, laptop)).not.toContain('sk-ant-secret')
+    expect(other.contents ?? '').not.toContain('sk-ant-secret')
   })
-  test('while the vault is being read, brings nothing of it back', async () => {
+  test('while the account is being read, brings nothing of it back', async () => {
     const { account, laptop } = await opened()
     const call = laptop.world.call.bind(laptop.world)
     laptop.world.call = async <T>(path: string, method?: string, body?: unknown): Promise<T> => {
       const said = await call<T>(path, method, body)
-      if (path.startsWith('/v2/ai?') && laptop.here.who) {
+      if (method === undefined && laptop.here.who) {
         laptop.here.who = null
         await laptop.vault.left()
       }
@@ -606,111 +200,21 @@ describe('an Orden account leaving the device', () => {
     expect(laptop.here.accounts.accounts).toEqual([])
     expect(account.rev).toBe(rev)
   })
-  test('finds its AI accounts again in its vault when it signs in again', async () => {
+  test('finds its AI accounts again when it signs in again', async () => {
     const { account, laptop } = await opened()
     laptop.here.who = null
     await laptop.vault.left()
     signIn(laptop, 'u1', account)
     await laptop.vault.refresh()
     expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
-    expect(await read(account, laptop)).toContain('sk-ant-secret')
+    expect(account.held().keys).toEqual({ anthropic: 'sk-ant-secret' })
   })
-  test('deleted with its data kept here leaves the AI accounts on the device, no longer of its vault', async () => {
+  test('deleted with its data kept here leaves the AI accounts on the device, no longer the account’s', async () => {
     const { laptop } = await opened()
     laptop.here.who = null
     await laptop.vault.left(true)
     expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
     expect(laptop.world.loadBase('u1')).toBeNull()
     expect(laptop.world.served()).toBeNull()
-  })
-})
-describe('one device runs the vault in several windows and across reloads', () => {
-  const names = (account: Account) => [...account.devices.values()].map((one) => one.name)
-  test('lets a new device in from either window, and neither throws it out', async () => {
-    const { account, laptop } = await opened()
-    const second = new Vault(laptop.world)
-    const phone = device(account, 'Phone')
-    await phone.vault.refresh()
-    await laptop.vault.refresh()
-    await phone.vault.refresh()
-    await second.refresh()
-    expect(names(account)).toContain('Phone')
-    await laptop.vault.refresh()
-    expect(laptop.vault.asking.map((one) => one.name)).toEqual(['Phone'])
-    expect(second.asking.map((one) => one.digits)).toEqual([phone.vault.digits])
-  })
-  test('an approving window reloaded while the new device waits shows the same digits and lets it in', async () => {
-    const { account, laptop } = await opened()
-    const phone = device(account, 'Phone')
-    await phone.vault.refresh()
-    await laptop.vault.refresh()
-    await phone.vault.refresh()
-    const reloaded = new Vault(laptop.world)
-    await reloaded.refresh()
-    expect(reloaded.asking.map((one) => one.digits)).toEqual([phone.vault.digits])
-    await reloaded.allow(reloaded.asking[0]?.id ?? '')
-    await phone.vault.refresh()
-    await phone.vault.join()
-    expect(phone.vault.standing).toBe('open')
-    expect(phone.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
-  })
-  test('an asking device reloaded keeps its digits and gets in', async () => {
-    const { account, laptop } = await opened()
-    const phone = device(account, 'Phone')
-    await phone.vault.refresh()
-    await laptop.vault.refresh()
-    await phone.vault.refresh()
-    const digits = phone.vault.digits
-    expect(digits).toMatch(/^\d{3} \d{3}$/)
-    const reloaded = new Vault(phone.world)
-    await reloaded.refresh()
-    expect(reloaded.digits).toBe(digits)
-    await laptop.vault.refresh()
-    expect(laptop.vault.asking.map((one) => one.digits)).toEqual([digits])
-    await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
-    await reloaded.refresh()
-    await reloaded.join()
-    expect(reloaded.standing).toBe('open')
-    expect(phone.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
-  })
-  test('an asking device with two windows asks once and shows one set of digits in both', async () => {
-    const { account, laptop } = await opened()
-    const phone = device(account, 'Phone')
-    const second = new Vault(phone.world)
-    await phone.vault.refresh()
-    await second.refresh()
-    await laptop.vault.refresh()
-    await phone.vault.refresh()
-    await second.refresh()
-    await laptop.vault.refresh()
-    expect(names(account)).toEqual(['Laptop', 'Phone'])
-    expect(phone.vault.digits).toMatch(/^\d{3} \d{3}$/)
-    expect(second.digits).toBe(phone.vault.digits)
-    expect(laptop.vault.asking.map((one) => one.digits)).toEqual([phone.vault.digits])
-  })
-  test('a nonce said in this device’s name that it cannot account for is sent again before the reveal and left alone after it, never a reason to throw the new device out', async () => {
-    const { account, laptop } = await opened()
-    const laptopId = [...account.devices.entries()].find(([, one]) => one.name === 'Laptop')?.[0] ?? null
-    const phone = device(account, 'Phone')
-    await phone.vault.refresh()
-    const row = [...account.devices.values()].find((one) => one.name === 'Phone')
-    if (!row) throw new Error('the phone asks')
-    const unknown = newNonce()
-    Object.assign(row, { nonce: unknown, nonceFrom: laptopId })
-    await laptop.vault.refresh()
-    expect(row.nonce).not.toBe(unknown)
-    await phone.vault.refresh()
-    await laptop.vault.refresh()
-    expect(laptop.vault.asking.map((one) => one.digits)).toEqual([phone.vault.digits])
-    const again = device(account, 'Tablet')
-    await again.vault.refresh()
-    const tablet = [...account.devices.values()].find((one) => one.name === 'Tablet')
-    if (!tablet) throw new Error('the tablet asks')
-    Object.assign(tablet, { nonce: newNonce(), nonceFrom: laptopId })
-    await again.vault.refresh()
-    expect(tablet.pub).not.toBeNull()
-    await laptop.vault.refresh()
-    expect(names(account)).toContain('Tablet')
-    expect(laptop.vault.asking.map((one) => one.name)).toEqual(['Phone'])
   })
 })
