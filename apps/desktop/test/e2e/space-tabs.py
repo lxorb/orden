@@ -54,11 +54,9 @@ WATCH = """
 FRAMES = "() => { cancelAnimationFrame(window.__watching); return window.__frames }"
 def look(page: Page) -> dict:
     return page.evaluate(LOOK)
-HINTS_SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 def opened(browser: Browser, scheme: str, motion: str = "reduce") -> tuple[Page, dict]:
     context = browser.new_context(viewport=SIZE, color_scheme=scheme, reduced_motion=motion)
     context.add_init_script(HIDE_CARET)
-    context.add_init_script(HINTS_SEEN)
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)

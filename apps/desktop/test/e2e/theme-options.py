@@ -152,7 +152,6 @@ def dial(page: Any, id: str, value: Any) -> None:
     page.wait_for_timeout(700)
 def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a picture") -> Any:
     page = DRIVE.page(browser, viewport={"width": 1240, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
-    page.add_init_script("localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette']))")
     DRIVE.open(page)
     DRIVE.seed(page, note)
     DRIVE.open_note(page, name)

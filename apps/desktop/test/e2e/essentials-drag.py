@@ -4,7 +4,6 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 PATIENCE = 30
-HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -84,7 +83,6 @@ def walk(browser: Browser, reduced: bool) -> None:
         viewport={"width": 1180, "height": 800}, reduced_motion="reduce" if reduced else "no-preference"
     )
     page = context.new_page()
-    page.add_init_script(HINTS)
     page.add_init_script(COUNTING)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     tag = "[less motion] " if reduced else ""

@@ -8,7 +8,6 @@ PHONE = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-HINTS_SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
 BUTTON = '[data-space-drop="switcher"]'
 LIST = "!!document.querySelector('[data-spaces-open]')"
 HOLD = 900
@@ -85,7 +84,6 @@ def moved(page: Page, label: str, ids: dict, name: str) -> None:
     shut(page, f"[{label}] the list of spaces to close after the drop")
 def desktop(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
-    page.add_init_script(HINTS_SEEN)
     DRIVE.open(page)
     ids = page.evaluate(SEED)
     wait_for(page, f"document.querySelector('{BUTTON}')", "[desktop] the switcher")
@@ -182,7 +180,6 @@ def phone(browser: Browser) -> None:
         has_touch=True,
         is_mobile=True,
     )
-    page.add_init_script(HINTS_SEEN)
     DRIVE.open(page)
     ids = page.evaluate(SEED)
     page.evaluate("() => { window.ordenApp.workspace.panel = 'tree' }")

@@ -8,7 +8,6 @@ TABLET_AGENT = (
     "Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko)"
     " Chrome/140.0.0.0 Safari/537.36"
 )
-OTHERS_SEEN = "localStorage.setItem('orden:hints', JSON.stringify(['drawer', 'graph', 'palette']))"
 INSIDE = "localStorage.setItem('orden:side-toggles-inside', 'yes')"
 END_GAP = """
 () => {
@@ -88,7 +87,6 @@ def in_the_bar(page: Any, state: str) -> None:
 def as_left(browser: Any, stored: bool) -> None:
     state = "stored-inside" if stored else "default"
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 760})
-    page.add_init_script(OTHERS_SEEN)
     if stored:
         page.add_init_script(INSIDE)
     DRIVE.open(page)
@@ -98,8 +96,6 @@ def as_left(browser: Any, stored: bool) -> None:
     DRIVE.settled(page)
     page.wait_for_timeout(500)
     in_the_bar(page, state)
-    if page.evaluate("() => !!document.querySelector('.orden-bubble.hint[role=status]')"):
-        wrong(f"[{state}] an edge hint is up with the buttons in the bar")
 def drive(browser: Any) -> None:
     as_left(browser, stored=False)
     as_left(browser, stored=True)

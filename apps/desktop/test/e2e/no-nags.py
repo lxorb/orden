@@ -30,7 +30,6 @@ CHROME_TEXT = """
 }
 """
 OPEN_LEFT = "() => { const ws = window.ordenApp.workspace; if (!ws.openOn('left')) ws.toggleSidebar('left') }"
-HINT = "() => document.querySelector('.orden-bubble.hint')?.innerText.trim() ?? null"
 def nags_in(page: Any) -> list[str]:
     return [one for one in page.evaluate(CHROME_TEXT) if NAG.search(one)]
 def signed_out(page: Any, device: str) -> None:
@@ -42,10 +41,6 @@ def desktop(browser: Browser) -> None:
     signed_out(page, "desktop")
     page.evaluate(OPEN_LEFT)
     wait_for(page, "() => !!document.querySelector('.foot .who')", "the panel's foot")
-    hint = wait_for(page, HINT, "the session's one hint", PATIENCE)
-    say(f"[desktop] the hint: {hint!r}")
-    if NAG.search(hint):
-        wrong(f"[desktop] the hint pushes an account: {hint!r}")
     DRIVE.shot(page, "desktop-settled")
     found = nags_in(page)
     say(f"[desktop] lines that push an account: {found}")
@@ -63,7 +58,6 @@ def desktop(browser: Browser) -> None:
         "Sign in in Settings > Account",
     )
     DRIVE.shot(page, "desktop-account")
-SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 SETTLED = "() => performance.now() > performance.getEntriesByName('orden: start')[0].startTime + 21_000"
 STILL = """
 () => document.getAnimations().every(
@@ -80,7 +74,6 @@ def settled_with_nothing_left(browser: Browser, device: str) -> None:
             "user_agent": ANDROID,
         }
     page = DRIVE.page(browser, **options)
-    page.add_init_script(SEEN)
     DRIVE.open(page)
     signed_out(page, device)
     page.evaluate(OPEN_LEFT)
@@ -92,10 +85,6 @@ def settled_with_nothing_left(browser: Browser, device: str) -> None:
     wait_for(page, STILL, "the window to stop moving")
     DRIVE.settled(page)
     DRIVE.shot(page, f"{device}-nothing-left")
-    hint = page.evaluate("() => document.querySelector('.orden-bubble.hint')?.textContent.trim() ?? null")
-    say(f"[{device}] the hint with the feature hints put away: {hint!r}")
-    if hint is not None:
-        wrong(f"[{device}] a card came up with nothing left to point at: {hint!r}")
     found = nags_in(page)
     say(f"[{device}] lines that push an account: {found}")
     if found:
