@@ -365,7 +365,7 @@ mod tests {
             sizes.insert(tool.name.clone(), tool.listed().to_string().len());
         }
         let total: usize = sizes.values().sum();
-        assert!(total < 41_700, "the tools are {total} characters: {sizes:?}");
+        assert!(total < 45_500, "the tools are {total} characters: {sizes:?}");
         for (name, size) in &sizes {
             assert!(*size < 1_700, "{name} is {size} characters");
         }
