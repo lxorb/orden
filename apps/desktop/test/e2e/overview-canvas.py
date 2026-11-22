@@ -72,7 +72,12 @@ LAID = """
 })
 """
 ZOOM = "() => Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under .world').style.transform)?.[1] ?? 1)"
-CELLS = "() => [...document.querySelectorAll('.bubble')].map((one) => { const b = one.getBoundingClientRect(); return [b.x, b.y, b.width, b.height] })"
+CELLS = """
+() => {
+  const [cx, cy, zoom] = (/translate\\(([-\\d.]+)px, ([-\\d.]+)px\\) scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under .world').style.transform) ?? []).slice(1).map(Number)
+  return [...document.querySelectorAll('.bubble')].map((one) => { const b = one.getBBox(); return [cx + b.x * zoom, cy + b.y * zoom, b.width * zoom, b.height * zoom] })
+}
+"""
 FRONTS = "() => { const ws = window.ordenApp.workspace; return [ws.activeTabId, ...ws.panes.all.map((one) => one.activeTabId)] }"
 CROSSED = """
 () => {

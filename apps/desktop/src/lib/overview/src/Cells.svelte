@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import { apart, Bubble } from './bubble'
+  import { dur, stillness } from '../../platform/src/api'
+  import { apart, Bubble, SWAY_MS, wobbleOf } from './bubble'
   import type { Box } from './layout'
 
   interface Shown {
@@ -22,8 +23,12 @@
   } = $props()
   interface Kept {
     bubble: Bubble
+    holder: SVGSVGElement | null
     path: SVGPathElement | null
     name: HTMLElement | null
+    sway: Animation | null
+    size: number
+    origin: string
   }
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const kept = new Map<string, Kept>()
@@ -34,17 +39,68 @@
   function keptOf(key: string): Kept {
     const known = kept.get(key)
     if (known) return known
-    const made: Kept = { bubble: new Bubble(boxesOf(key, pushed())), path: null, name: null }
+    const made: Kept = {
+      bubble: new Bubble(boxesOf(key, pushed())),
+      holder: null,
+      path: null,
+      name: null,
+      sway: null,
+      size: 0,
+      origin: '',
+    }
     kept.set(key, made)
     return made
   }
-  function drawn(node: SVGPathElement, key: string) {
-    keptOf(key).path = node
+  function drawn(node: SVGSVGElement, key: string) {
+    const one = keptOf(key)
+    one.holder = node
+    one.path = node.querySelector('path')
     return {
       destroy() {
+        one.sway?.cancel()
         kept.delete(key)
       },
     }
+  }
+  function seedOf(key: string): number {
+    let hash = 7
+    for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) % 9973
+    return hash / 9973
+  }
+  function centre(one: Kept) {
+    const { x, y } = one.bubble.middle()
+    const origin = `${Math.round(x)}px ${Math.round(y)}px`
+    if (one.holder && origin !== one.origin) one.holder.style.transformOrigin = one.origin = origin
+  }
+  function sway(key: string, one: Kept) {
+    const holder = one.holder
+    const size = one.bubble.size()
+    if (!holder || stillness() || typeof holder.animate !== 'function') return
+    if (one.sway && Math.abs(size - one.size) <= one.size / 4) {
+      one.sway.play()
+      return
+    }
+    const seed = seedOf(key)
+    const at = one.sway?.currentTime ?? seed * SWAY_MS
+    one.sway?.cancel()
+    one.size = size
+    one.sway = holder.animate(wobbleOf(size, seed), { duration: dur(SWAY_MS), iterations: Number.POSITIVE_INFINITY })
+    one.sway.currentTime = at
+  }
+  const REST_MS = 700
+  let hushed = true
+  let rest = 0
+  function hush() {
+    if (!hushed) for (const one of kept.values()) one.sway?.pause()
+    hushed = true
+    clearTimeout(rest)
+    rest = window.setTimeout(stir, REST_MS)
+  }
+  function stir() {
+    rest = 0
+    if (frame) return
+    hushed = false
+    for (const [key, one] of kept) sway(key, one)
   }
   function named(node: HTMLElement, key: string) {
     keptOf(key).name = node
@@ -74,6 +130,7 @@
     }
     for (const { one } of all) {
       one.path?.setAttribute('d', one.bubble.pathOf())
+      centre(one)
       const crown = one.bubble.crown()
       if (one.name) one.name.style.translate = `${crown.x}px ${crown.y}px`
     }
@@ -81,6 +138,7 @@
     const moving = hand !== null || seen !== last
     last = seen
     frame = moving ? requestAnimationFrame(tick) : 0
+    hush()
   }
   export function wake() {
     if (frame || (!cells.length && !holding)) return
@@ -89,14 +147,19 @@
   $effect(() => {
     if (cells.length || holding) wake()
   })
-  onDestroy(() => cancelAnimationFrame(frame))
+  onDestroy(() => {
+    cancelAnimationFrame(frame)
+    clearTimeout(rest)
+  })
 </script>
 
-<svg class="cells" width="1" height="1" aria-hidden="true">
-  {#each cells as cell (cell.key)}
-    <path class="bubble" class:is-on={cell.on} style:--tint={cell.tint ?? 'var(--accent)'} use:drawn={cell.key} />
-  {/each}
-</svg>
+<svelte:window onpointermovecapture={hush} onpointerdowncapture={hush} onkeydowncapture={hush} onwheelcapture={hush} />
+
+{#each cells as cell (cell.key)}
+  <svg class="cells" width="1" height="1" aria-hidden="true" use:drawn={cell.key}>
+    <path class="bubble" class:is-on={cell.on} style:--tint={cell.tint ?? 'var(--accent)'} />
+  </svg>
+{/each}
 {#each cells as cell (cell.key)}
   <span class="name" class:is-on={cell.on} data-space-name={cell.key} aria-hidden="true" use:named={cell.key} dir="auto"
     >{cell.name}</span

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { apart, Bubble, CLEAR, PAD } from './bubble'
+import { apart, Bubble, CLEAR, PAD, wobbleOf } from './bubble'
 import type { Box } from './layout'
 
 function outline(one: Bubble): [number, number][] {
@@ -184,7 +184,7 @@ test('every window is inside it on every frame: dragged, thrown, arriving and le
     }
   }
 })
-test('two bubbles that would overlap meet along a line between them, and never overlap', () => {
+test('two bubbles that would overlap squeeze round each other, and never overlap', () => {
   for (const gap of [70, 40, 20, 8]) {
     const ones = [{ x: 0, y: 0, w: 300, h: 200 }]
     const others = [
@@ -271,4 +271,70 @@ test('round rows of windows it is round all the way, with no long straight edge'
     expect(share, name).toBeLessThan(0.2)
     expect(encloses(one, boxes, PAD / 2), name).toBe(true)
   }
+})
+const touching: Record<string, [Box[], Box[]]> = {
+  'two wide spaces side by side': [
+    [
+      { x: 0, y: 0, w: 1200, h: 780 },
+      { x: 1240, y: 0, w: 1200, h: 780 },
+    ],
+    [
+      { x: 2700, y: -100, w: 820, h: 520 },
+      { x: 3560, y: -100, w: 820, h: 520 },
+      { x: 2700, y: 480, w: 820, h: 520 },
+      { x: 3560, y: 480, w: 820, h: 520 },
+    ],
+  ],
+  'a small space against a big one': [[{ x: 0, y: 0, w: 800, h: 500 }], [{ x: 900, y: 150, w: 300, h: 200 }]],
+}
+test('touching bubbles stay round where they meet: no corner and no long shared wall', () => {
+  for (const [name, [ones, others]] of Object.entries(touching)) {
+    const one = new Bubble(ones)
+    const other = new Bubble(others)
+    one.step(ones)
+    other.step(others)
+    apart(one, other, ones, others)
+    const a = outline(one)
+    const b = outline(other)
+    expect(
+      a.some(([x, y]) => insideOf(b, x, y)),
+      name,
+    ).toBe(false)
+    expect(
+      b.some(([x, y]) => insideOf(a, x, y)),
+      name,
+    ).toBe(false)
+    expect(encloses(one, ones), name).toBe(true)
+    expect(encloses(other, others), name).toBe(true)
+    expect(tightestOf(one), name).toBeGreaterThan(40)
+    expect(tightestOf(other), name).toBeGreaterThan(40)
+    if (name !== 'two wide spaces side by side') continue
+    const theirs = walked(other)
+    const near = walked(one).filter(([x, y]) => theirs.some(([u, v]) => Math.hypot(u - x, v - y) < 16))
+    let shared = 0
+    for (const [x, y] of near) for (const [u, v] of near) shared = Math.max(shared, Math.hypot(u - x, v - y))
+    const tall =
+      Math.max(...[...ones, ...others].map((box) => box.y + box.h)) -
+      Math.min(...[...ones, ...others].map((box) => box.y))
+    expect(shared / tall, name).toBeLessThan(0.3)
+  }
+})
+test('a bubble wobbles by a few pixels over time, back where it began after each round', () => {
+  for (const size of [80, 400, 2400]) {
+    const frames = wobbleOf(size, 0.37)
+    const values = frames.map((frame) => {
+      const [turn, sx, sy] = (String(frame.transform).match(/-?\d+(\.\d+)?/g) ?? []).map(Number)
+      return { turn: turn ?? 0, sx: sx ?? 1, sy: sy ?? 1 }
+    })
+    expect(new Set(frames.map((frame) => frame.transform)).size).toBeGreaterThan(frames.length / 2)
+    expect(frames.at(-1)?.transform).toBe(frames[0]?.transform)
+    const most = Math.max(
+      ...values.map(
+        ({ turn, sx, sy }) => size * (Math.max(Math.abs(sx - 1), Math.abs(sy - 1)) + (Math.abs(turn) * Math.PI) / 180),
+      ),
+    )
+    expect(most).toBeGreaterThan(1)
+    expect(most).toBeLessThan(12)
+  }
+  expect(wobbleOf(400, 0.1)[5]?.transform).not.toBe(wobbleOf(400, 0.6)[5]?.transform)
 })
