@@ -175,29 +175,13 @@ html:root[data-theme='light'] {
   right: 0;
   bottom: 0;
   background-color: var(--bg);
-  background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1.6px);
-  background-position: 11px 11px;
-  background-size: 22px 22px;
 }
-.poster::before,
-.poster::after {
-  content: '';
-  position: absolute;
-  top: 0;
-}
-.poster::before {
-  bottom: 0;
-  left: 0;
-  width: 19%;
-  border-right: 1px solid var(--line);
-  background: var(--surface);
-}
-.poster::after {
-  right: 0;
-  left: 19%;
-  height: 5.5%;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+.poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 0 0;
 }
 .demo {
   width: 1280px;
@@ -338,13 +322,6 @@ html:root[data-theme='light'] {
   .demo {
     width: 390px;
     height: 844px;
-  }
-  .poster::before {
-    display: none;
-  }
-  .poster::after {
-    left: 0;
-    height: 7%;
   }
   .coda-actions {
     flex-direction: column;

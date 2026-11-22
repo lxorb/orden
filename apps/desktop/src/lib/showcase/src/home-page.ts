@@ -19,7 +19,8 @@ const STILL = '(prefers-reduced-motion: reduce)'
 const LIGHT = '(prefers-color-scheme: light)'
 const DESKTOP_WIDTH = 1280
 const PHONE_WIDTH = 390
-const LIVE = 2
+const LIVE_DESKTOP = 4
+const LIVE_PHONE = 3
 interface Agent {
   userAgentData?: { getHighEntropyValues?: (hints: string[]) => Promise<{ architecture?: string }> }
 }
@@ -128,24 +129,35 @@ export function showHome(view: Window, base: string = import.meta.env.BASE_URL) 
     display.screen.append(frame)
   }
   const settle = (display: Display, wanted: boolean) => {
-    if (!display.ready || still.matches || display.playing === wanted) return
+    if (!display.ready || display.playing === wanted) return
     display.playing = wanted
     tell(display, { play: wanted })
   }
   const render = () => {
     asked = false
     if (!started) return
+    if (still.matches) {
+      for (const display of displays) if (display.frame) retire(display)
+      return
+    }
     const height = view.innerHeight
     const spans = displays.map(({ box }) => {
       const { top, bottom } = box.getBoundingClientRect()
       return { top, bottom }
     })
-    const { live, playing } = poolOf(spans, height, LIVE)
+    const held = displays.flatMap((display, index) => (display.frame ? [index] : []))
+    const { live, playing } = poolOf(spans, height, phone.matches ? LIVE_PHONE : LIVE_DESKTOP, held)
+    displays.forEach((display, index) => {
+      if (display.frame && !live.includes(index)) retire(display)
+    })
+    for (const index of live) {
+      const display = displays[index]
+      if (!display || display.frame) continue
+      if (displays.some((one) => one.frame && !one.ready)) break
+      enlist(display)
+    }
     const awake = view.document.visibilityState !== 'hidden'
     displays.forEach((display, index) => {
-      const wanted = live.includes(index)
-      if (!wanted && display.frame) retire(display)
-      if (wanted && !display.frame) enlist(display)
       settle(display, awake && playing.includes(index))
     })
   }
@@ -170,7 +182,6 @@ export function showHome(view: Window, base: string = import.meta.env.BASE_URL) 
     display.ready = true
     display.playing = true
     display.box.classList.add('is-ready')
-    if (still.matches) tell(display, { still: true })
     render()
   })
   view.addEventListener('scroll', schedule, { passive: true })
