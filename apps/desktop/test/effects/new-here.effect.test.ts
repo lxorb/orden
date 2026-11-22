@@ -4,8 +4,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import NewHere from '../../src/lib/new-here/src/NewHere.svelte'
 import { EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } from '../../src/lib/gates/src/api'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
-import { workspace } from '../../src/lib/workspace/src/api'
-import { settle } from './settle'
+import { tabOverview, workspace } from '../../src/lib/workspace/src/api'
+import { idle, settle } from './settle'
 
 const nothing = () => Promise.resolve()
 providePort('terminal.making', {
@@ -287,4 +287,59 @@ test('makes nothing twice while one kind is on its way', async () => {
   await vi.waitFor(() => expect(made).toEqual(['note']), SOON)
   await settle()
   expect(made).toEqual(['note'])
+})
+const shape = (kind: string) => option(kind)?.querySelector('.shape')?.getAttribute('d') ?? ''
+function pointer(type: string, on: Element | null) {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true })
+  Object.defineProperties(event, { pointerId: { value: 1 }, pointerType: { value: 'mouse' } })
+  on?.dispatchEvent(event)
+  flushSync()
+}
+async function fannedOut(kind: string) {
+  await vi.waitFor(async () => {
+    const was = shape(kind)
+    await idle(60)
+    expect(was).not.toBe('')
+    expect(shape(kind)).toBe(was)
+  }, SOON)
+}
+test('opens a quarter once, never starting over when the kinds here are read again', async () => {
+  makers()
+  here()
+  press('ArrowUp')
+  await fannedOut('pages')
+  const open = ['note', 'canvas', 'pages'].map(shape)
+  hiddenKinds.hidden = [...hiddenKinds.hidden]
+  flushSync()
+  expect(['note', 'canvas', 'pages'].map(shape)).toEqual(open)
+  await settle()
+  expect(['note', 'canvas', 'pages'].map(shape)).toEqual(open)
+})
+test('and never while the pointer walks from option to option', async () => {
+  makers()
+  here()
+  pointer('pointermove', quarter('notes'))
+  expect(opened()).toBe('notes')
+  await fannedOut('pages')
+  const open = shape('note')
+  for (const kind of ['note', 'canvas', 'pages', 'canvas', 'note']) {
+    pointer('pointermove', option(kind))
+    expect(picked()).toBe(kind)
+    await settle()
+  }
+  pointer('pointermove', quarter('notes'))
+  await fannedOut('note')
+  expect(shape('note')).toBe(open)
+})
+test('opens the overview from the middle', () => {
+  makers()
+  here()
+  tabOverview.open = false
+  click(hub())
+  expect(tabOverview.open).toBe(true)
+  click(hub())
+  expect(tabOverview.open).toBe(true)
+  tabOverview.open = false
+  press(' ')
+  expect(tabOverview.open).toBe(false)
 })

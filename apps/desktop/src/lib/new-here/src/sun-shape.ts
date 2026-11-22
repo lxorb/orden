@@ -1,9 +1,10 @@
 export const HUB = 44
 export const INNER = 150
-export const RING = 158
+export const RING = 162
 export const OUTER = 300
 export const REACH = 340
-export const GAP = 3
+export const GAP = 6
+const CORNER = 12
 export const LIFT = 5
 export const PULL = 110
 export const SLOTS = 4
@@ -38,19 +39,39 @@ function gapAt(radius: number): number {
 }
 const fixed = (value: number): string => value.toFixed(2)
 
-export function arcPath({ inner, outer, from, to }: Piece): string {
+export function arcPath({ inner, outer, from, to }: Piece, corner = CORNER): string {
   if (outer - inner < 1) return ''
-  const near = gapAt(inner)
-  const far = gapAt(outer)
-  if (to - from <= 2 * near) return ''
-  const wide = to - from > 180 ? 1 : 0
-  const [x0, y0] = at(outer, from + far)
-  const [x1, y1] = at(outer, to - far)
-  const [x2, y2] = at(inner, to - near)
-  const [x3, y3] = at(inner, from + near)
+  const side = GAP / 2
+  if (to - from <= 2 * gapAt(inner)) return ''
+  const half = Math.min(89.9, (to - from) / 2) * (Math.PI / 180)
+  const sine = Math.sin(half)
+  const round = Math.max(
+    0,
+    Math.min(corner, (outer - inner) / 2, (outer * sine - side) / (1 + sine), (inner * sine - side) / (1 - sine)),
+  )
+  const far = (Math.asin(Math.min(1, (side + round) / (outer - round))) * 180) / Math.PI
+  const near = (Math.asin(Math.min(1, (side + round) / (inner + round))) * 180) / Math.PI
+  const along = (radius: number) => Math.sqrt(Math.max(0, radius * radius - (side + round) * (side + round)))
+  const edge = (angle: number, toward: number, length: number): Point => {
+    const [ux, uy] = at(1, angle)
+    const [nx, ny] = at(1, angle + toward)
+    return [ux * length + nx * side, uy * length + ny * side]
+  }
+  const point = ([x, y]: Point) => `${fixed(x)} ${fixed(y)}`
+  const bend = (end: Point) =>
+    round > 0.01 ? `A${fixed(round)} ${fixed(round)} 0 0 1 ${point(end)}` : `L${point(end)}`
+  const wideOut = to - from - 2 * far > 180 ? 1 : 0
+  const wideIn = to - from - 2 * near > 180 ? 1 : 0
   return (
-    `M${fixed(x0)} ${fixed(y0)}A${outer} ${outer} 0 ${wide} 1 ${fixed(x1)} ${fixed(y1)}` +
-    `L${fixed(x2)} ${fixed(y2)}A${inner} ${inner} 0 ${wide} 0 ${fixed(x3)} ${fixed(y3)}Z`
+    `M${point(edge(from, 90, along(outer - round)))}` +
+    bend(at(outer, from + far)) +
+    `A${outer} ${outer} 0 ${wideOut} 1 ${point(at(outer, to - far))}` +
+    bend(edge(to, -90, along(outer - round))) +
+    `L${point(edge(to, -90, along(inner + round)))}` +
+    bend(at(inner, to - near)) +
+    `A${inner} ${inner} 0 ${wideIn} 0 ${point(at(inner, from + near))}` +
+    bend(edge(from, 90, along(inner + round))) +
+    'Z'
   )
 }
 export function quarterPiece(slot: number): Piece {

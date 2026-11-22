@@ -9,7 +9,7 @@
   import { MIDDLE, MIDDLE_KEY, RESTING, walked } from './sun-keys'
   import { overlays, viewport } from '../../ui-kit/src/api'
   import { isDesktop, stillness } from '../../platform/src/api'
-  import { workspace } from '../../workspace/src/api'
+  import { tabOverview, toggleTabOverview, workspace } from '../../workspace/src/api'
 
   const { paneId, chosenOn }: { paneId: string; chosenOn?: string } = $props()
   const LEFT_BEHIND = 600
@@ -80,6 +80,9 @@
     if (gone || !element?.isConnected) return
     dial.aim = RESTING
     launching = false
+  }
+  function overview() {
+    if (!launching && !tabOverview.open) toggleTabOverview()
   }
   function pick(slot: number, index: number, how: Picked) {
     if (how === 'others' && others(slot, index)) return
@@ -173,6 +176,7 @@
       locked={launching}
       onpick={pick}
       onready={(one: NewKindRow) => one.ready?.()}
+      oncentre={overview}
     />
   </div>
 </div>
