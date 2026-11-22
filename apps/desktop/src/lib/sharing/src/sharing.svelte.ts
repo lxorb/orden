@@ -124,8 +124,9 @@ export function isSharedItem(path: string): boolean {
   if (!id) return false
   return account.spaces.some((one) => one.sharedItems?.includes(id))
 }
+export const isWebNote = (path: string): boolean => /\.url$/i.test(path)
 export function canShareItem(path: string | null | undefined): boolean {
-  if (!path) return false
+  if (!path || isWebNote(path)) return false
   const space = spaceHolding(workspaceView().spaces, path)
   if (!space || !canShare(space)) return false
   return !!idOf(path)
@@ -293,7 +294,7 @@ class Share {
     await this.about(space, null, false)
   }
   async showItem(space: WorkspaceSpace, path: string) {
-    const id = idOf(path)
+    const id = isWebNote(path) ? null : idOf(path)
     if (!id) return
     await this.about(space, { id, path })
   }
