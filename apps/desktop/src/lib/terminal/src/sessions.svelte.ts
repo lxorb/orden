@@ -22,7 +22,7 @@ import {
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../../ui-controls/src/api'
-import { identifier, invoke, localDate, platform } from '../../platform/src/api'
+import { identifier, invoke, localDate, onDisk, platform, samePath } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
 import { owes } from '../../parting/src/api'
 import { SHORTCUTS, shortcuts } from '../../shortcuts/src/api'
@@ -55,7 +55,7 @@ import { findColours, monospace, terminalContrast, terminalGround, terminalTheme
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
 import { AddressLinks, chosenText } from './links'
-import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPaths } from './paste'
+import { asksFirst, cdLine, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPaths } from './paste'
 import { setEnded, setLive, setPty } from './running'
 import { clipboardWrite, type Notice, osc777Notice, osc9Notice } from './signals'
 import { shellName, shells, SIZES } from './shells.svelte'
@@ -307,6 +307,31 @@ class Session {
     const now = this.tab.running
     const same = now?.name === name && now.program === program && now.host === host && now.colour === colour
     if (!same) this.tab.running = { name, program, host, colour }
+  }
+  private onLine = false
+  private heardTyped(data: string) {
+    if (notTyped(data)) return
+    const last = data.slice(Math.max(data.lastIndexOf('\r'), data.lastIndexOf('\x03'), data.lastIndexOf('\x15')) + 1)
+    if (last !== data || last === '') this.onLine = last !== ''
+    else this.onLine = true
+  }
+  private lineHeld(): boolean {
+    return this.onLine
+  }
+  async goTo(folder: string): Promise<boolean> {
+    const source = this.source
+    const shell = this.spec().shell
+    if (this.remote || this.underneath !== null || shell.startsWith('wsl:')) return false
+    if (this.pty === null || !(source instanceof PtySource) || this.lineHeld() || this.left().alternate) return false
+    const line = cdLine(folder, shell)
+    if (line === null) return false
+    const here = (await source.where()) ?? this.spec().folder
+    if (here !== null && samePath(here, folder)) return false
+    if (!(await onDisk(folder)) || (await source.busy())) return false
+    if (source !== this.source || this.lineHeld()) return false
+    this.outgoing.push({ data: `${line}\r`, binary: false })
+    void this.send()
+    return true
   }
   private get remote(): boolean {
     return this.online || hostIdOf(this.spec().shell) !== null
@@ -975,6 +1000,7 @@ class Session {
       return
     }
     this.outgoing.push({ data, binary })
+    if (!binary) this.heardTyped(data)
     void this.send()
     if (binary || !data.includes('\r') || this.reachedHere) return
     this.front.entered()
@@ -1312,10 +1338,15 @@ function placeOf(tab: Tab): Place {
   const home = (tab.note as { home?: string | null }).home ?? null
   return { space: home, key: readSpec(tab.doc)?.key ?? '' }
 }
+const REPORTS = /^(?:[IO]|<[\d;]*[Mm]|\d+;\d+R|[?>][\d;]*c)$/
+const notTyped = (data: string) => data.startsWith('\x1b[') && REPORTS.test(data.slice(2))
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry of screens; nothing renders from it
 const sessions = new Map<string, Session>()
 export async function usageOfTab(tab: Tab): Promise<Usage | null> {
   return (await sessions.get(tab.id)?.usage()) ?? null
+}
+export async function goTo(tabId: string, folder: string): Promise<boolean> {
+  return (await sessions.get(tabId)?.goTo(folder)) ?? false
 }
 export function screenOf(tab: { readonly id: string }): { text: string; cols: number } | null {
   return sessions.get(tab.id)?.screenNow() ?? null

@@ -114,6 +114,15 @@ export function spokenPath(path: string, shell: string): string | null {
   if (speech === 'nu') return seen.includes("'") ? rawNu(seen) : `'${seen}'`
   return seen.includes('%') ? null : `"${seen.replace(/"/g, '?')}"`
 }
+export function cdLine(folder: string, shell: string): string | null {
+  for (const char of folder) if (control(char)) return null
+  const spoken = spokenPath(folder, shell)
+  if (spoken === null) return null
+  const speech = speechOf(shell)
+  if (speech === 'cmd') return `cd /d ${spoken}`
+  if (speech === 'powershell') return `Set-Location -LiteralPath ${spoken}`
+  return `cd ${spoken}`
+}
 export function spokenPaths(paths: readonly string[], shell: string): { said: string; left: number } {
   const spoken = paths.map((path) => spokenPath(path, shell))
   const said = spoken.filter((one) => one !== null)

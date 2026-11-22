@@ -45,6 +45,7 @@ export const openAll = async (...args: Parameters<typeof RemoteOpen.openAll>) =>
   (await remoteOpening()).openAll(...args)
 export const connectTo = async (...args: Parameters<typeof RemoteOpen.connectTo>) =>
   (await remoteOpening()).connectTo(...args)
+export const terminalGoing = () => import('./sessions.svelte').then((one) => one.goTo)
 export const terminalAgent = () => import('./agent/verbs')
 export const terminalTabKind = () => import('./tab-kind').then((one) => one.terminalTabKind)
 export const loadTerminalTab = () => import('./TerminalTab.svelte')

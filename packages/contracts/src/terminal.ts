@@ -24,7 +24,11 @@ interface TerminalJudgePort {
     folder: string,
   ) => Promise<boolean>
 }
+interface TerminalGoingPort {
+  readonly goTo: (tabId: string, folder: string) => Promise<boolean>
+}
 export interface TerminalPorts {
+  readonly 'terminal.going': TerminalGoingPort
   readonly 'terminal.judge': TerminalJudgePort
   readonly 'terminal.lines': TerminalLinesPort
   readonly 'terminal.making': TerminalMakingPort
