@@ -84,11 +84,15 @@ class Setup {
   }
   async look() {
     void this.lookForMcp()
-    const { signInKind } = await import('./connect')
-    this.signIns = (['claude', 'chatgpt', 'gemini'] as const).some((one) => signInKind(one))
+    if (__AI__) {
+      const { signInKind } = await import('./connect')
+      this.signIns = (['claude', 'chatgpt', 'gemini'] as const).some((one) => signInKind(one))
+    }
     if (this.phone) {
-      const { ai } = await import('../../ai-providers/src/api')
-      this.connected = ai.accounts.length > 0
+      if (__AI__) {
+        const { ai } = await import('../../ai-providers/src/api')
+        this.connected = ai.accounts.length > 0
+      }
     } else {
       this.here = await bringing().here()
     }

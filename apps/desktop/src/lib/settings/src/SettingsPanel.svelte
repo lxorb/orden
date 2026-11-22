@@ -390,9 +390,11 @@
 <ThemeStore />
 
 {#snippet asker()}
-  {#await import('./AskSettings.svelte') then { default: AskSettings }}
-    <AskSettings offers={offered} ongo={goTo} />
-  {/await}
+  {#if __AI__}
+    {#await import('./AskSettings.svelte') then { default: AskSettings }}
+      <AskSettings offers={offered} ongo={goTo} />
+    {/await}
+  {/if}
 {/snippet}
 
 {#snippet results()}

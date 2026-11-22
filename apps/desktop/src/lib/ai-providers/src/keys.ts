@@ -1,26 +1,6 @@
-import { frameWord, NoWord, isDesktop, isMobile, isNative, invoke } from '../../platform/src/api'
+import { invoke, isDesktop, isNative, secrets } from '../../platform/src/api'
 import type { Provider } from './providers'
 
-interface Secrets {
-  secretRead(said: string, name: string): string | null
-  secretWrite(said: string, name: string, secret: string): void
-  secretForget(said: string, name: string): void
-}
-function bridge(): Secrets | undefined {
-  const found: unknown = (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__
-  if (typeof found !== 'object' || found === null) return undefined
-  const shape = found as Partial<Secrets>
-  return typeof shape.secretRead === 'function' &&
-    typeof shape.secretWrite === 'function' &&
-    typeof shape.secretForget === 'function'
-    ? (shape as Secrets)
-    : undefined
-}
-async function word(): Promise<string> {
-  const said = await frameWord()
-  if (!said) throw new NoWord()
-  return said
-}
 export function keysAreGuarded(): boolean {
   return isNative
 }
@@ -46,19 +26,13 @@ export async function writeKey(id: string, secret: string, quiet = false): Promi
   if (!quiet) for (const one of moved) one()
 }
 export async function forgetKey(id: string, quiet = false): Promise<void> {
-  const phone = isMobile ? bridge() : undefined
-  if (phone) phone.secretForget(await word(), id)
-  else await invoke<null>('secret_forget', { name: id })
+  await (await secrets()).forgetSecret(id)
   if (!quiet) for (const one of moved) one()
 }
 export async function writeSecret(id: string, secret: string): Promise<void> {
-  const phone = isMobile ? bridge() : undefined
-  if (phone) phone.secretWrite(await word(), id, secret)
-  else await invoke<null>('secret_write', { name: id, secret })
+  await (await secrets()).writeSecret(id, secret)
 }
-export const readSecret = (id: string): Promise<string | null> => read(id)
-async function read(id: string): Promise<string | null> {
-  const phone = isMobile ? bridge() : undefined
-  const found: unknown = phone ? phone.secretRead(await word(), id) : await invoke<unknown>('secret_read', { name: id })
-  return typeof found === 'string' && found ? found : null
+export async function readSecret(id: string): Promise<string | null> {
+  return (await secrets()).readSecret(id)
 }
+const read = readSecret

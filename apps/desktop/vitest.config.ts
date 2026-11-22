@@ -12,6 +12,7 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify('under test'),
     __APP_COMMIT__: JSON.stringify('c0ffee1'),
     __CLAUDE_CODE__: 'true',
+    __AI__: 'true',
   },
   test: {
     fsModuleCache: true,

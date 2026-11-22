@@ -109,13 +109,6 @@ macro_rules! commands {
             orden_notes::space_watch::working_unwatch,
             orden_notes::space_watch::working_scan,
             orden_notes::space_watch::file_identity,
-            orden_store::ai_accounts::ai_accounts_read,
-            orden_store::ai_accounts::ai_accounts_write,
-            orden_store::ai_threads::ai_threads_list,
-            orden_store::ai_threads::ai_thread_read,
-            orden_store::ai_threads::ai_thread_write,
-            orden_store::ai_threads::ai_thread_delete,
-            orden_store::ai_threads::ai_threads_forget,
             $($desktop)*
         ]
     };
@@ -124,6 +117,13 @@ macro_rules! commands {
 macro_rules! desktop_commands {
     () => {
         commands![
+            orden_store::ai_accounts::ai_accounts_read,
+            orden_store::ai_accounts::ai_accounts_write,
+            orden_store::ai_threads::ai_threads_list,
+            orden_store::ai_threads::ai_thread_read,
+            orden_store::ai_threads::ai_thread_write,
+            orden_store::ai_threads::ai_thread_delete,
+            orden_store::ai_threads::ai_threads_forget,
             orden_agents::endpoint::automation_result,
             orden_agents::endpoint::automation_listening,
             orden_agents::endpoint::automation_claim,

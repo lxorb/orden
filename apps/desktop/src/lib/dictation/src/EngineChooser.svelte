@@ -51,7 +51,7 @@
         where: 'Audio goes to Orden and Cloudflare, and is not kept',
       }
     }
-    const provider = transcriberNow()
+    const provider = __AI__ ? transcriberNow() : null
     const to = provider ? whereTo(provider) : { local: false, host: '' }
     return {
       name: provider?.name ?? 'Your AI provider',

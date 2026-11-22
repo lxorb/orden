@@ -66,7 +66,7 @@ export function guideCards(came: Came): Card[] {
           text: 'Browse next to your notes, without switching apps.',
         },
   )
-  if (came.ai) {
+  if (__AI__ && came.ai) {
     cards.push({
       at: 'tabs',
       title: 'Ask your AI',

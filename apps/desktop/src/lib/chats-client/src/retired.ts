@@ -1,4 +1,4 @@
-import { forget, isRecord, isString, keep, stored, storedText } from '../../platform/src/api'
+import { forget, isRecord, isString, keep, secrets, stored, storedText } from '../../platform/src/api'
 
 const ACCOUNTS = 'orden:chat-accounts'
 const CLEARED = 'orden:chats-retired'
@@ -65,9 +65,8 @@ async function sealedNames(): Promise<string[]> {
 }
 export async function forgetRetiredChatsHere(): Promise<void> {
   if (typeof indexedDB === 'undefined' || storedText(CLEARED) !== null) return
-  const { forgetKey } = await import('../../ai-providers/src/api')
   await forgetRetiredChats({
-    forgetSecret: (name) => forgetKey(name, true),
+    forgetSecret: async (name) => (await secrets()).forgetSecret(name),
     sealedNames,
     dropDatabase: (name) => done(indexedDB.deleteDatabase(name)).then(() => undefined),
   })

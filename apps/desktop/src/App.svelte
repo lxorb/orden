@@ -115,7 +115,7 @@
   import { firstSpaceDoor, gate, loadGuide, loadSetup, SetupShell } from './lib/onboarding/src/api'
 
   if (renamed.showing) void renameNotice.ask()
-  if (isDesktop) {
+  if (__AI__ && isDesktop) {
     setTimeout(() => {
       void import('./lib/ai-providers/src/api')
         .then((one) => one.checkKeysMoved())

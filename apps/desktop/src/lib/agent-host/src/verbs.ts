@@ -73,6 +73,5 @@ export const hostVerbs = verbsOf({
   ask_reader: askReader,
   note_editor: noteEditor,
   recently_deleted: recentlyDeleted,
-  run_agent: runAgent,
-  agent_result: agentResult,
+  ...(__AI__ ? { run_agent: runAgent, agent_result: agentResult } : {}),
 })

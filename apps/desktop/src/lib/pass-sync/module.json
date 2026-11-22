@@ -4,7 +4,6 @@
   "dependsOn": [
     "contracts",
     "accounts",
-    "ai-providers",
     "files-out",
     "markdown",
     "pass",

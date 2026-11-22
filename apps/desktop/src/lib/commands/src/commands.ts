@@ -153,7 +153,7 @@ export interface Command extends MenuItem {
   ownWindow?: boolean
 }
 function agentRows(): Command[] {
-  if (!agentMarks.heard) return []
+  if (!__AI__ || !agentMarks.heard) return []
   return [
     {
       id: 'agents',
@@ -362,7 +362,7 @@ const WRITTEN: Block[] = [
   block('paragraph.quote', () => 'Quote', toggleQuote),
   block('paragraph.math-block', () => 'Math block', insertMathBlock),
   block('paragraph.chart', () => 'Chart', insertChart),
-  block('ai-block', () => 'AI block', insertAiBlock),
+  ...(__AI__ ? [block('ai-block', () => 'AI block', insertAiBlock)] : []),
   block('paragraph.callout', () => 'Callout', insertCallout),
   block('paragraph.bullet-list', () => 'Bulleted list', toggleBulletList),
   block('paragraph.ordered-list', () => 'Numbered list', toggleOrderedList),
@@ -652,7 +652,7 @@ export function appCommands(view?: EditorView): Command[] {
     ...commandRows('export-picker', view),
     ...commandRows('export', view),
     ...spaceCommands(),
-    { id: 'llm', label: 'Connect an LLM to your notes', run: () => settingsWindow().show('llm') },
+    ...(__AI__ ? [{ id: 'llm', label: 'Connect an LLM to your notes', run: () => settingsWindow().show('llm') }] : []),
     account.user
       ? {
           id: 'signout',
@@ -809,8 +809,8 @@ export function appCommands(view?: EditorView): Command[] {
       run: entry('app.search', view),
     },
     keyed('links-panel', 'Links', 'app.links'),
-    ...(viewport.touch ? [] : [keyed('ask-panel', 'Ask', 'app.ask')]),
-    keyed('quick-question', 'Quick question', 'app.quick-question'),
+    ...(__AI__ && !viewport.touch ? [keyed('ask-panel', 'Ask', 'app.ask')] : []),
+    ...(__AI__ ? [keyed('quick-question', 'Quick question', 'app.quick-question')] : []),
     keyed('reload-app', 'Reload Orden', 'app.reload'),
     keyed('scratchpad', 'Scratchpad', 'app.scratchpad'),
     keyed(

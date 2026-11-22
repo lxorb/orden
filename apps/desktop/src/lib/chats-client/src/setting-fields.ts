@@ -77,23 +77,27 @@ export function chatsFields(): SettingField[] {
       get: () => hush.sound,
       set: (on) => hush.setSound(on),
     },
-    {
-      kind: 'switch',
-      label: 'Chat priorities',
-      hint: 'Your AI gives each chat a priority when a message arrives and learns from the ones you change.',
-      words: ['chat', 'priority', 'urgent', 'important', 'ai', 'sort'],
-      initial: false,
-      get: () => priorities.on,
-      set: (on) => priorities.setOn(on),
-    },
-    {
-      kind: 'switch',
-      label: 'Draft replies',
-      hint: 'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.',
-      words: ['chat', 'draft', 'reply', 'ai', 'task', 'todo', 'suggest'],
-      initial: false,
-      get: () => priorities.drafting,
-      set: (on) => priorities.setDrafting(on),
-    },
+    ...(__AI__
+      ? ([
+          {
+            kind: 'switch',
+            label: 'Chat priorities',
+            hint: 'Your AI gives each chat a priority when a message arrives and learns from the ones you change.',
+            words: ['chat', 'priority', 'urgent', 'important', 'ai', 'sort'],
+            initial: false,
+            get: () => priorities.on,
+            set: (on) => priorities.setOn(on),
+          },
+          {
+            kind: 'switch',
+            label: 'Draft replies',
+            hint: 'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.',
+            words: ['chat', 'draft', 'reply', 'ai', 'task', 'todo', 'suggest'],
+            initial: false,
+            get: () => priorities.drafting,
+            set: (on) => priorities.setDrafting(on),
+          },
+        ] satisfies SettingField[])
+      : []),
   ]
 }

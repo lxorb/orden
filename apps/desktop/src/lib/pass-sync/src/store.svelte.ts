@@ -23,11 +23,10 @@ import type { Invite, Member, MemberState } from '@orden/pass/wire'
 import { rank } from '@orden/pass/urls'
 import { untrack } from 'svelte'
 import { account } from '../../accounts/src/api'
-import { forgetKey, keysAreGuarded, readSecret, writeSecret } from '../../ai-providers/src/api'
 import { message } from '../../ui-kit/src/api'
 import { deviceCan, deviceSays } from '../../protect/src/api'
 import { passOn } from '../../gates/src/api'
-import { forget, heardElsewhere, storedText } from '../../platform/src/api'
+import { forget, heardElsewhere, secrets, storedText } from '../../platform/src/api'
 import { adoptedChange } from './adopt'
 import type { AliasAccount } from './alias-account'
 import type { Picked } from './attachments'
@@ -119,8 +118,13 @@ function files(): Promise<typeof import('./attachments')> {
 async function signed(): Promise<Signed> {
   return (await import('./share-call')).signedSharing()
 }
+type Keychain = Awaited<ReturnType<typeof secrets>>
+let keychain: Keychain | null = null
+function withKeychain<T>(use: (one: Keychain) => Promise<T>): Promise<T> {
+  return keychain ? use(keychain) : secrets().then((one) => use((keychain = one)))
+}
 async function deviceSecret(): Promise<Uint8Array<ArrayBuffer> | null> {
-  const text = await readSecret(DEVICE_SECRET)
+  const text = await withKeychain((one) => one.readSecret(DEVICE_SECRET))
   if (text === null) return null
   try {
     const bytes = unbase64(text)
@@ -133,7 +137,7 @@ async function ensuredDeviceSecret(): Promise<Uint8Array<ArrayBuffer>> {
   const known = await deviceSecret()
   if (known) return known
   const made = randomBytes(32)
-  await writeSecret(DEVICE_SECRET, base64(made))
+  await withKeychain((one) => one.writeSecret(DEVICE_SECRET, base64(made)))
   return made
 }
 const EXPORT_ENDS = { sealed: '.sealed.json', json: '.json', csv: '.csv' }
@@ -172,7 +176,7 @@ export class PassStore {
     const [keyring, device] = await Promise.all([readKeyring(), readDevice()])
     this.keyring = keyring
     this.device = device
-    this.canPin = keysAreGuarded()
+    this.canPin = await withKeychain((one) => Promise.resolve(one.secretsGuarded()))
     this.canDevice = this.canPin && (await deviceCan())
     const way = device?.seal.way ?? 'password'
     if (this.settings.lock !== way) this.setSetting('lock', way)
@@ -773,7 +777,7 @@ export class PassStore {
   }
   private async forgetDevice(): Promise<void> {
     await this.keepDevice(null)
-    if (this.canPin) await forgetKey(DEVICE_SECRET, true).catch(() => undefined)
+    if (this.canPin) await withKeychain((one) => one.forgetSecret(DEVICE_SECRET)).catch(() => undefined)
   }
   private async keepDevice(row: DeviceRow | null): Promise<void> {
     await writeDevice(row)

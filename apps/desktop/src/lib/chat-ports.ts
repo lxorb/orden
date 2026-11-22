@@ -29,21 +29,23 @@ providePort('chats.demo', {
   stage: (me) => import('./chats-client/src/api').then((one) => one.chatsDemo()).then(({ demoChats }) => demoChats(me)),
 })
 const agentsApi = () => import('./agents/src/api')
-providePort('agents.writes', {
-  wrote: (agent, tabs) => {
-    void agentsApi()
-      .then((one) => one.agentsUi())
-      .then((ui) => ui.wrote(agent, tabs))
-  },
-})
-providePort('agents.reader', {
-  knows: (agent, id) => agentsApi().then(({ asking }) => asking.knows(agent, id)),
-  waiting: (agent) => agentsApi().then(({ asking }) => asking.of(agent).length),
-  ask: (question) => agentsApi().then(({ asking }) => asking.ask({ ...question, choices: [...question.choices] }).id),
-  answer: (id, answer) => void agentsApi().then(({ asking }) => asking.answer(id, answer)),
-  heard: (id, patience, signal) => agentsApi().then(({ asking }) => asking.heard(id, patience, signal)),
-  hear: (on) => agentsApi().then(({ tauriCrate }) => tauriCrate.hear(on)),
-})
+if (__AI__)
+  providePort('agents.writes', {
+    wrote: (agent, tabs) => {
+      void agentsApi()
+        .then((one) => one.agentsUi())
+        .then((ui) => ui.wrote(agent, tabs))
+    },
+  })
+if (__AI__)
+  providePort('agents.reader', {
+    knows: (agent, id) => agentsApi().then(({ asking }) => asking.knows(agent, id)),
+    waiting: (agent) => agentsApi().then(({ asking }) => asking.of(agent).length),
+    ask: (question) => agentsApi().then(({ asking }) => asking.ask({ ...question, choices: [...question.choices] }).id),
+    answer: (id, answer) => void agentsApi().then(({ asking }) => asking.answer(id, answer)),
+    heard: (id, patience, signal) => agentsApi().then(({ asking }) => asking.heard(id, patience, signal)),
+    hear: (on) => agentsApi().then(({ tauriCrate }) => tauriCrate.hear(on)),
+  })
 providePort('agents.marks', {
   keepMarksOf: (agents) => {
     void import('./agent-host/src/api').then(({ keepMarksOf }) => keepMarksOf(agents))
@@ -93,15 +95,18 @@ providePort('import.bring', {
 })
 const mcpServers = () => import('./mcp-servers/src/api')
 providePort('import.mcp', {
-  scan: () => (!isDesktop ? Promise.resolve([]) : mcpServers().then((one) => one.scanMcp())),
+  scan: () => (!__AI__ || !isDesktop ? Promise.resolve([]) : mcpServers().then((one) => one.scanMcp())),
   importable: (found) =>
     (found as readonly Found[]).some((one) => one.servers.some((server) => !server.already && !server.orden)),
   picker: () =>
-    !isDesktop ? Promise.reject(new Error('no MCP servers here')) : mcpServers().then((one) => one.loadMcpImport()),
+    !__AI__ || !isDesktop
+      ? Promise.reject(new Error('no MCP servers here'))
+      : mcpServers().then((one) => one.loadMcpImport()),
 })
-providePort('account.signingOut', {
-  signOut: async () => {
-    const { signOut } = await import('./ai-providers/src/api')
-    await signOut()
-  },
-})
+if (__AI__)
+  providePort('account.signingOut', {
+    signOut: async () => {
+      const { signOut } = await import('./ai-providers/src/api')
+      await signOut()
+    },
+  })

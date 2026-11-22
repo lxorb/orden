@@ -28,7 +28,7 @@
     import: ImportStep,
     notes: NotesStep,
     code: CodeStep,
-    ai: AiStep,
+    ai: __AI__ ? AiStep : WelcomeStep,
     mcp: McpStep,
     welcome: WelcomeStep,
   }

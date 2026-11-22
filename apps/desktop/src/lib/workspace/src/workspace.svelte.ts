@@ -3282,7 +3282,7 @@ class Workspace {
     return panels.panelsOn(this.rightHere, side, every).filter((one) => this.offers(one))
   }
   offers(panel: Panel): boolean {
-    return panel !== 'ask' || !viewport.touch
+    return panel !== 'ask' || (__AI__ && !viewport.touch)
   }
   get nextRight(): Panel | null {
     const last = this.lastRight
