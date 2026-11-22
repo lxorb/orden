@@ -61,7 +61,8 @@ blobs.put('/:hash', async (context) => {
   const declared = Number(context.req.header('content-length') ?? 0)
   if (declared > limit) return context.json({ error: 'that file is too big' }, 413)
   const { mine, there } = await held(context.env, user.id, hash)
-  if (mine) return context.json({ hash, stored: false })
+  const typed = async () => (await context.env.NOTES.head(blobKey(hash)))?.httpMetadata?.contentType !== BYTES
+  if (mine && (type === BYTES || (await typed()))) return context.json({ hash, stored: false })
   const body = await context.req.arrayBuffer()
   if (!body.byteLength) return context.json({ error: 'nothing to store' }, 400)
   if (body.byteLength > limit) return context.json({ error: 'that file is too big' }, 413)
@@ -72,11 +73,18 @@ blobs.put('/:hash', async (context) => {
     return context.json({ error: WRONG_BYTES }, 400)
   }
   if (!verified && there) return context.json({ error: WRONG_BYTES }, 400)
+  const put = () => context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
+  if (mine) {
+    await put()
+    await context.env.DB.prepare('update blobs set type = ?1 where hash = ?2 and type = ?3')
+      .bind(type, hash, BYTES)
+      .run()
+    return context.json({ hash, stored: false })
+  }
   if (!(await fits(context.env, user.id, body.byteLength))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
-  const put = () => context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
-  const placed = !there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))
+  const placed = !there || (verified && (!(await holdsItsName(context.env, hash, body.byteLength)) || !(await typed())))
   if (placed) await put()
   const written = await context.env.DB.prepare(
     `insert into blobs (hash, user_id, size, type, created_at)
@@ -115,6 +123,12 @@ blobs.delete('/:hash', async (context) => {
   }
   return context.json({ ok: true })
 })
+async function declaredType(env: Env, hash: string): Promise<string> {
+  const row = await env.DB.prepare("select type from blobs where hash = ? and type like 'image/%' limit 1")
+    .bind(hash)
+    .first<{ type: string }>()
+  return row?.type ?? BYTES
+}
 export const publicBlobs = new Hono<{ Bindings: Env }>()
 const DRESSING = new Set(['text/css', 'text/javascript'])
 async function dressesThisSite(env: Env, host: string, hash: string): Promise<boolean> {
@@ -143,7 +157,8 @@ publicBlobs.get('/:name', async (context) => {
   if (!HASH.test(hash)) return context.notFound()
   const object = await context.env.NOTES.get(blobKey(hash))
   if (!object) return context.notFound()
-  const type = object.httpMetadata?.contentType ?? 'application/octet-stream'
+  const stored = object.httpMetadata?.contentType ?? BYTES
+  const type = stored === BYTES ? await declaredType(context.env, hash) : stored
   if (type === BYTES) return context.notFound()
   if (DOCUMENTS.has(type) && !(await publishedAnywhere(context.env, hash, context.req.raw))) {
     return context.notFound()
