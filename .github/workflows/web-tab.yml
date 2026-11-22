@@ -14,6 +14,7 @@ on:
       - apps/desktop/src/lib/ui-kit/src/drag-paths.ts
       - apps/desktop/src/lib/ui-kit/src/outside-drops.ts
       - scripts/web-tab-drive.py
+      - scripts/web-switch-drive.py
       - scripts/gesture-drive.py
       - scripts/edge-drive.py
       - scripts/native_app.py
@@ -102,6 +103,19 @@ jobs:
             Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
             Windows) python "${drive[@]}" ;;
             *) python3 "${drive[@]}" ;;
+          esac
+
+      - name: Fast switches between web tabs end on the last one
+        if: ${{ !cancelled() && env.EXE != '' && runner.os != 'macOS' }}
+        timeout-minutes: 10
+        run: |
+          drive=(scripts/web-switch-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
+          case "$RUNNER_OS" in
+            Linux)
+              python3 -m pip install --quiet --break-system-packages python-xlib
+              xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}"
+              ;;
+            *) python "${drive[@]}" ;;
           esac
 
       - name: Orden's own scripts are not the reader's press
