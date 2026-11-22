@@ -4,10 +4,13 @@
 
 1. a terminal goes into a new folder, sets a mark in its shell and reports the folder;
 2. its turn button shows the file explorer in the same place, on that folder;
-3. the explorer goes up one folder and turns back with Ctrl+Alt+U: the same shell
-   still holds the mark and its scrollback, and the strip has as many tabs as before;
-4. turned again, the explorer stays where it was left, since the shell did not move;
-   once the shell has gone somewhere else, the explorer follows it there;
+3. the explorer goes up one folder and turns back with Ctrl+Alt+U: the same shell, idle at its
+   prompt, follows it there, still holds the mark and its scrollback, and the strip has as many
+   tabs as before;
+4. turned again, the explorer is where the shell is; once the shell has gone somewhere else, the
+   explorer follows it there; with a program in the foreground, or a posix shell waiting in read,
+   the explorer moving types nothing into it, and turning to the explorer again brings the explorer
+   to the shell's folder;
 5. a new file explorer turns into a terminal in its folder;
 6. with the explorer switched off, a tab showing its explorer shows its own shell again and
    neither button is offered;
@@ -43,8 +46,17 @@ class Posix:
     def mark(path: pathlib.Path) -> str:
         return f"echo $TURNMARK > '{path}'"
     @staticmethod
-    def up_two() -> str:
-        return "cd ../.."
+    def go(folder: pathlib.Path) -> str:
+        return f"cd '{folder}'"
+    @staticmethod
+    def busy(seconds: int) -> str:
+        return f"sleep {seconds}"
+    @staticmethod
+    def asking() -> str:
+        return "read TURNREAD"
+    @staticmethod
+    def answered(path: pathlib.Path) -> str:
+        return f"echo \"$TURNREAD\" > '{path}'"
     @staticmethod
     def where(path: pathlib.Path) -> str:
         return f"pwd > '{path}'"
@@ -57,8 +69,11 @@ class PowerShell:
     def mark(path: pathlib.Path) -> str:
         return f"$env:TURNMARK | Out-File -Encoding ascii '{path}'"
     @staticmethod
-    def up_two() -> str:
-        return "Set-Location ..\\.."
+    def go(folder: pathlib.Path) -> str:
+        return f"Set-Location '{folder}'"
+    @staticmethod
+    def busy(seconds: int) -> str:
+        return f"Start-Sleep {seconds}"
     @staticmethod
     def where(path: pathlib.Path) -> str:
         return f"(Get-Location).Path | Out-File -Encoding ascii '{path}'"
@@ -71,8 +86,11 @@ class Cmd:
     def mark(path: pathlib.Path) -> str:
         return f'(echo %TURNMARK%)> "{path}"'
     @staticmethod
-    def up_two() -> str:
-        return "cd /d ..\\.."
+    def go(folder: pathlib.Path) -> str:
+        return f'cd /d "{folder}"'
+    @staticmethod
+    def busy(seconds: int) -> str:
+        return f"timeout /t {seconds} /nobreak"
     @staticmethod
     def where(path: pathlib.Path) -> str:
         return f'(cd)> "{path}"'
@@ -85,6 +103,7 @@ def kind_of(shell: str) -> Any:
         return PowerShell
     return Posix
 ON = ["experimental", "experimental-explorer"]
+BUSY = 15
 TERMINAL_TURN = 'button[aria-label^="Show in file explorer"], button[aria-label^="Back to the file explorer"]'
 EXPLORER_TURN = 'button[aria-label^="Terminal here"], button[aria-label^="Back to the terminal"]'
 failures: list[str] = []
@@ -259,24 +278,72 @@ def steps(drive: Drive, tmp: pathlib.Path, restart: Any, shell: Any) -> None:
     check(back.get("kind") == "terminal", f"3. Ctrl+Alt+U turns back to the terminal ({back.get('kind')})")
     check(back.get("id") == before.get("id"), f"3. it is the same terminal tab ({back.get('id')} was {before.get('id')})")
     check(back.get("tabs") == tabs, f"3. the strip keeps {tabs} tabs ({back.get('tabs')})")
+    check(until(lambda: same(drive.folder(), tmp / "a"), 20), f"3. the shell, idle at its prompt, reports the explorer's folder {tmp / 'a'} ({drive.folder()})")
     time.sleep(1)
     drive.typed(shell.mark(marks / "mark") + "\r")
     check(drive.wrote(marks / "mark") == "42", f"3. the shell still holds its mark ({drive.wrote(marks / 'mark', 1)!r})")
     rows = drive.rows()
     check(any("SCROLLBACK-TURN-7" in row for row in rows), f"3. the scrollback is still there ({len(rows)} rows drawn)")
+    drive.typed(shell.where(marks / "followed") + "\r")
+    followed = drive.wrote(marks / "followed")
+    check(same(followed, tmp / "a"), f"3. the shell itself is in {tmp / 'a'} ({followed!r})")
     drive.shot("3-terminal")
     drive.press(TERMINAL_TURN)
     check(until(lambda: drive.active().get("kind") == "explorer", 10), "4. turned again, the explorer shows")
     time.sleep(1)
-    check(same(drive.folder(), tmp / "a"), f"4. the shell did not move, so the explorer stays on {tmp / 'a'} ({drive.folder()}; the shell says {drive.twin_folder()}, it said {left!r} when turned away)")
+    check(same(drive.folder(), tmp / "a"), f"4. the shell followed it, so the explorer stays on {tmp / 'a'} ({drive.folder()}; the shell says {drive.twin_folder()}, it said {left!r} when turned away)")
     drive.press(EXPLORER_TURN)
     check(until(lambda: drive.active().get("kind") == "terminal", 10), "4. and back to the terminal")
     time.sleep(1)
-    drive.typed(shell.up_two() + "\r")
+    drive.typed(shell.go(tmp) + "\r")
     check(until(lambda: same(drive.folder(), tmp), 20), f"4. the shell reports {tmp} ({drive.folder()})")
     drive.press(TERMINAL_TURN)
     check(until(lambda: drive.active().get("kind") == "explorer" and same(drive.folder(), tmp), 10), f"4. the explorer follows the shell to {tmp} ({drive.folder()})")
     drive.shot("4-followed")
+    drive.press(EXPLORER_TURN)
+    check(until(lambda: drive.active().get("kind") == "terminal", 10), "4. back to the terminal, to start a program")
+    time.sleep(1)
+    drive.typed(shell.busy(BUSY) + "\r")
+    started = time.monotonic()
+    time.sleep(2)
+    drive.press(TERMINAL_TURN)
+    check(until(lambda: drive.active().get("kind") == "explorer" and same(drive.folder(), tmp), 10), f"4. with the program running, the explorer shows {tmp} ({drive.folder()})")
+    drive.press('button[aria-label="Folder above"]')
+    check(until(lambda: same(drive.folder(), tmp.parent), 10), f"4. the explorer goes up to {tmp.parent} ({drive.folder()})")
+    drive.press(EXPLORER_TURN)
+    check(until(lambda: drive.active().get("kind") == "terminal", 10), "4. and turns back to the busy terminal")
+    time.sleep(2)
+    check(same(drive.folder(), tmp), f"4. the busy terminal still reports {tmp} ({drive.folder()})")
+    drive.shot("4-busy")
+    time.sleep(max(0.0, started + BUSY + 2 - time.monotonic()))
+    drive.typed(shell.where(marks / "busy") + "\r")
+    stayed = drive.wrote(marks / "busy", 20)
+    check(same(stayed, tmp), f"4. nothing was typed into the program: once it ended the shell is still in {tmp} ({stayed!r})")
+    drive.press(TERMINAL_TURN)
+    check(until(lambda: drive.active().get("kind") == "explorer" and same(drive.folder(), tmp), 10), f"4. turned again, the explorer comes back to the shell's folder {tmp} ({drive.folder()})")
+    if shell is Posix:
+        drive.press(EXPLORER_TURN)
+        check(until(lambda: drive.active().get("kind") == "terminal", 10), "4. back to the terminal, to wait in read")
+        time.sleep(1)
+        drive.typed(shell.asking() + "\r")
+        time.sleep(1.5)
+        drive.press(TERMINAL_TURN)
+        check(until(lambda: drive.active().get("kind") == "explorer", 10), "4. with read waiting, the explorer shows")
+        drive.press('button[aria-label="Folder above"]')
+        check(until(lambda: same(drive.folder(), tmp.parent), 10), f"4. the explorer goes up to {tmp.parent} ({drive.folder()})")
+        drive.press(EXPLORER_TURN)
+        check(until(lambda: drive.active().get("kind") == "terminal", 10), "4. and turns back to the shell waiting in read")
+        time.sleep(2)
+        drive.typed("ENDREAD\r")
+        time.sleep(1)
+        drive.typed(shell.answered(marks / "read") + "\r")
+        heard = drive.wrote(marks / "read")
+        check(heard == "ENDREAD", f"4. nothing was typed into read: it got only the drive's line ({heard!r})")
+        drive.typed(shell.where(marks / "after-read") + "\r")
+        stayed = drive.wrote(marks / "after-read")
+        check(same(stayed, tmp), f"4. the shell is still in {tmp} after read ({stayed!r})")
+        drive.press(TERMINAL_TURN)
+        check(until(lambda: drive.active().get("kind") == "explorer" and same(drive.folder(), tmp), 10), f"4. turned again, the explorer comes back to {tmp} ({drive.folder()})")
     drive.chord("e")
     made = until(lambda: drive.active().get("kind") == "explorer" and drive.active().get("id") != shown.get("id") and drive.active(), 10) or {}
     check(bool(made), "5. Ctrl+Alt+E opens a new file explorer")
