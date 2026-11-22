@@ -152,7 +152,8 @@ export interface Command extends MenuItem {
   ownWindow?: boolean
 }
 function agentRows(): Command[] {
-  if (!__AI__ || !agentMarks.heard) return []
+  if (!__AI__) return []
+  if (!agentMarks.heard) return []
   return [
     {
       id: 'agents',

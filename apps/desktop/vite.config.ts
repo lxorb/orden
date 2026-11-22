@@ -10,8 +10,9 @@ import { CSP } from './src/csp'
 import { carriesAi } from './ai-build'
 
 const host = process.env.TAURI_DEV_HOST
-const AI_MODULES = /\/src\/lib\/(?:ai-chat|ai-sidebar|ai-providers|agents|mcp-servers)\/src\//
-const NAMES_AI = /ai-chat|ai-sidebar|ai-providers|agents|mcp-servers/
+const AI_MODULES =
+  /\/src\/lib\/(?:ai-chat|ai-sidebar|ai-providers|agents|mcp-servers|agent-verbs|agent-host|agent-docs|agent-protocol)\/src\//
+const NAMES_AI = /ai-chat|ai-sidebar|ai-providers|agents|mcp-servers|agent-verbs|agent-host|agent-docs|agent-protocol/
 const WITHOUT_AI = '\0orden-without-ai'
 function withoutAi(): Plugin {
   const slashed = (id: string) => id.replace(/\\/g, '/')

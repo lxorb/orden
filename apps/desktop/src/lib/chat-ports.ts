@@ -46,17 +46,19 @@ if (__AI__)
     heard: (id, patience, signal) => agentsApi().then(({ asking }) => asking.heard(id, patience, signal)),
     hear: (on) => agentsApi().then(({ tauriCrate }) => tauriCrate.hear(on)),
   })
-providePort('agents.marks', {
-  keepMarksOf: (agents) => {
-    void import('./agent-host/src/api').then(({ keepMarksOf }) => keepMarksOf(agents))
-  },
-})
-providePort('agents.crate', {
-  answer: async (name, args) => {
-    const { answerTheCrate } = await import('./agent-host/src/api')
-    return answerTheCrate(name, args)
-  },
-})
+if (__AI__)
+  providePort('agents.marks', {
+    keepMarksOf: (agents) => {
+      void import('./agent-host/src/api').then(({ keepMarksOf }) => keepMarksOf(agents))
+    },
+  })
+if (__AI__)
+  providePort('agents.crate', {
+    answer: async (name, args) => {
+      const { answerTheCrate } = await import('./agent-host/src/api')
+      return answerTheCrate(name, args)
+    },
+  })
 providePort('voice', {
   record: () => import('./dictation/src/api').then((one) => one.recordVoice()),
   wordsIn: (bytes) =>

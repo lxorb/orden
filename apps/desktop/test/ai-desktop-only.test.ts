@@ -7,7 +7,8 @@ import { carriesAi } from '../ai-build'
 
 const app = resolve(import.meta.dirname, '..')
 const built = mkdtempSync(join(tmpdir(), 'orden-web-'))
-const AI = /\/src\/lib\/(?:ai-chat|ai-sidebar|ai-providers|agents|mcp-servers)\/src\//
+const AI =
+  /\/src\/lib\/(?:ai-chat|ai-sidebar|ai-providers|agents|mcp-servers|agent-verbs|agent-host|agent-docs|agent-protocol)\/src\//
 const WAYS_IN = [
   'ai_thread_write',
   'ai_accounts_read',
@@ -18,6 +19,7 @@ const WAYS_IN = [
   'Connect an LLM to your notes',
   'LLM access',
   'Do with AI',
+  'Stop agents',
   'AI block',
   'Chat priorities',
   'Draft replies',
