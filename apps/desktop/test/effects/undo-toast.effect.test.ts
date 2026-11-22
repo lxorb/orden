@@ -1,9 +1,11 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { said } from '../../src/lib/ui-kit/src/api'
+import { said, toastDoor } from '../../src/lib/ui-kit/src/api'
 import UndoToast from '../../src/lib/workspace/src/UndoToast.svelte'
 import { UNDO_LINGER, undoToast } from '../../src/lib/undo-toast/src/api'
 import { workspace } from '../../src/lib/workspace/src/api'
+
+await toastDoor.ask()
 
 Element.prototype.animate = () =>
   ({

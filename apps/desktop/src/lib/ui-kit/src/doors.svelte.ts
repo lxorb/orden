@@ -32,3 +32,21 @@ export function latched<T>(load: () => Promise<{ default: T }>): Latched<T> {
     },
   }
 }
+interface Readied<T> {
+  ask: () => Promise<T | null>
+  readonly one: T | null
+}
+export function readied<T>(load: () => Promise<{ default: T }>): Readied<T> {
+  const fetch = held(load)
+  let one = $state.raw<T | null>(null)
+  return {
+    ask: () =>
+      fetch().then(
+        (got) => (one = got),
+        () => one,
+      ),
+    get one() {
+      return one
+    },
+  }
+}

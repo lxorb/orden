@@ -33,6 +33,7 @@ const { back } = await import('../../src/lib/sync-client/src/resurrected.svelte'
 const { UNDO_LINGER } = await import('../../src/lib/undo-toast/src/api')
 const HeldMark = (await import('../../src/lib/sync-client/src/HeldMark.svelte')).default
 const UndoToast = (await import('../../src/lib/workspace/src/UndoToast.svelte')).default
+await (await import('../../src/lib/ui-kit/src/api')).toastDoor.ask()
 const PATHS = ['/space/Plan.md', '/space/Trip.md', '/space/Other.md']
 function held(id: string, path: string, mineAt: number, theirsAt: number): Held {
   return {
