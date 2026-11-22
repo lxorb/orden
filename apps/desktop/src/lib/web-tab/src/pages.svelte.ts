@@ -189,6 +189,7 @@ export class Page {
   watching: object | null = null
   stirred = true
   placings = 0
+  showings = 0
   stowed = false
   stowing: ReturnType<typeof setTimeout> | undefined
   blank = false
@@ -289,15 +290,16 @@ class Pages {
     this.wake(page)
     page.url ??= url
     page.onScreen = true
+    const turn = ++page.showings
     if (!isDesktop) {
       page.live = true
       return
     }
     await this.listen()
-    if (page.crashed || !inSight(page)) return
+    if (page.crashed || page.showings !== turn) return
     if (page.live) {
       await this.thaw(tabId)
-      if (!inSight(page)) return
+      if (page.showings !== turn) return
       await this.place(tabId, pane, visible, !visible, over)
       return
     }
@@ -494,6 +496,7 @@ class Pages {
     await page.placing.put(one).catch(() => undefined)
   }
   private async send(tabId: string, page: Page, one: Placement): Promise<void> {
+    if (one.visible && !one.away && !page.onScreen && !page.lent) return
     page.sent = one
     try {
       const said = await invoke<boolean | 'hollows' | undefined>('web_place', {
@@ -555,13 +558,15 @@ class Pages {
     const page = this.held.get(tabId)
     if (!page) return
     page.onScreen = false
+    const turn = ++page.showings
+    page.placings++
     page.heldAt = null
     page.looked = Date.now()
     if (isDesktop && page.live && page.lent) void import('./lending').then((one) => one.aside(tabId, page, pane))
     else
       void Promise.resolve()
         .then(() => (this.arriving.size ? still().then((one) => one.arrived(this, pane)) : undefined))
-        .then(() => (page.onScreen ? undefined : this.place(tabId, pane, false)))
+        .then(() => (page.showings === turn ? this.place(tabId, pane, false) : undefined))
     if (!isDesktop) return
     void this.look(tabId).then(() => this.rest(tabId))
   }
