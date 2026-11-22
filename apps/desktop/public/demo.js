@@ -8,7 +8,6 @@
     'orden:seeded': 'yes',
     'orden:setup': '"done"',
     'orden:first-visit': 'answered',
-    'orden:hints': '["drawer","graph","palette"]',
     'orden:renamed': 'told',
     'orden:contrast-offered': 'yes',
     'orden:kept-for-good-asked': 'yes',
