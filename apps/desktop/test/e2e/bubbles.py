@@ -185,7 +185,7 @@ def look(browser: Browser, tag: str) -> None:
     names(page, tag)
     page.evaluate("() => window.ordenApp.settings.show('general')")
     wait_for(page, "() => !!document.querySelector('[role=\"region\"][aria-label=\"Settings\"] .explain')", "the settings")
-    counted = every_sentence(page, tag, ("general", "editor", "markdown", "appearance", "ai", "spelling"))
+    counted = every_sentence(page, tag, ("general", "editor", "appearance", "ai"))
     at_the_foot(page, tag)
     page.evaluate("() => { window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
     counted += every_sentence(page, tag, ("sync", "account", "ai"))

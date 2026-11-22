@@ -58,7 +58,7 @@ def drive(browser: Browser) -> None:
     if seen != [{"raw": False, "source": False}, {"raw": True, "source": True}]:
         wrong(f"the two faces did not survive a reload: {seen}")
     shot(page, "02-after-reload")
-    page.evaluate("() => window.ordenApp.settings.show('markdown')")
+    page.evaluate("() => window.ordenApp.settings.show('editor')")
     row = page.get_by_role("switch", name="Open notes in source mode")
     row.wait_for()
     row.scroll_into_view_if_needed()

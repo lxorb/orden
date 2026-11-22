@@ -64,6 +64,8 @@ async (base) => {
   ai.setDefault(made.id)
 }
 """
+SEARCH = '[aria-label=Settings] nav .search input'
+ASK = ".orden-setting.setting.ask"
 HELD = "() => ({ typewriter: window.ordenApp.modes.typewriter, attachments: window.ordenApp.modes.attachments })"
 def waited(page: Page, expression: str, what: str, patience: float = 20) -> bool:
     return DRIVE.waited(page, expression, what, patience)
@@ -73,17 +75,31 @@ def drive(browser: Browser, scheme: str) -> None:
     page.evaluate(SETUP, MODEL_ORIGIN)
     before = page.evaluate(HELD)
     page.evaluate("() => window.ordenApp.settings.show('general')")
-    if not waited(page, "document.querySelector('.asker input')", "the ask bar at the top of Settings"):
-        wrong("Settings has no ask bar")
+    if not waited(page, f"document.querySelector('{SEARCH}')", "the search field of Settings"):
+        wrong("Settings has no search field")
         page.context.close()
         return
     tag = f"{scheme}/"
-    shot(page, f"{tag}01-bar")
-    page.locator(".asker input").click()
-    page.keyboard.type("Where is typewriter mode? Turn it on, and save attachments next to the note")
-    page.keyboard.press("Enter")
+    question = "Where is typewriter mode? Turn it on, and save attachments next to the note"
+    page.locator(SEARCH).click()
+    page.keyboard.type(question)
+    if not waited(page, f"document.querySelector('{ASK}')", "the Ask AI row under the results"):
+        wrong("the search shows no Ask AI row")
+        page.context.close()
+        return
+    offered = page.locator(ASK).inner_text().strip()
+    if offered != f"Ask AI “{question}”":
+        wrong(f"the Ask AI row reads {offered!r}")
+    last = page.evaluate(
+        f"() => {{ const rows = [...document.querySelectorAll('[role=\"region\"][aria-label=\"Settings\"] .orden-setting')];"
+        f" return rows.at(-1) === document.querySelector('{ASK}') }}"
+    )
+    if not last:
+        wrong("Ask AI is not the last row of the search")
+    shot(page, f"{tag}01-search")
+    page.locator(ASK).click()
     if not waited(page, "document.querySelector('.asker .answer')", "the agent's answer"):
-        wrong("the ask bar showed no answer")
+        wrong("asking showed no answer")
         page.context.close()
         return
     told = Model.told[-1] if Model.told else ""
@@ -101,10 +117,6 @@ def drive(browser: Browser, scheme: str) -> None:
         say("offered                -> two changes, none made yet")
     page.wait_for_timeout(400)
     shot(page, f"{tag}02-answer")
-    page.locator(".asker .answer button.row").first.click()
-    if not waited(page, "window.ordenApp.settings.section === 'editor'", "Settings to open Editor"):
-        wrong("showing the setting did not open its pane")
-    waited(page, "!!document.querySelector('.orden-setting.landed')", "the setting lit where it lives", 5)
     page.locator(".asker .change", has_text="Typewriter mode").locator("button", has_text="Change").click()
     if not waited(page, f"({HELD})().typewriter === {json.dumps(not before['typewriter'])}", "Typewriter mode to change"):
         wrong("confirming the change did not make it")
@@ -115,11 +127,25 @@ def drive(browser: Browser, scheme: str) -> None:
     else:
         say("confirmed one          -> made; the skipped one is not")
     shot(page, f"{tag}03-settled")
+    page.locator(".asker .answer button.row").first.click()
+    if not waited(page, "window.ordenApp.settings.section === 'editor'", "Settings to open Editor"):
+        wrong("showing the setting did not open its pane")
+    waited(page, "!!document.querySelector('.orden-setting.landed')", "the setting lit where it lives", 5)
+    page.locator(SEARCH).fill("zqxw vbnj")
+    if not waited(page, f"document.querySelector('{ASK}')", "the Ask AI row for a search that finds nothing"):
+        wrong("a search that finds nothing offers no Ask AI row")
+    else:
+        asked = len(Model.told)
+        page.locator(SEARCH).press("Enter")
+        if not waited(page, "!!document.querySelector('.asker .answer')", "Enter to ask") or len(Model.told) <= asked:
+            wrong("Enter in a search that finds nothing did not ask")
+        else:
+            say("enter on no results    -> asked")
     page.context.close()
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
             say(f"--- {scheme} ---")
             drive(browser, scheme)
-    return DRIVE.verdict("Settings has an ask bar whose agent finds settings and changes one only once confirmed")
+    return DRIVE.verdict("the search of Settings ends in Ask AI, whose agent finds settings and changes one only once confirmed")
 raise SystemExit(main())
