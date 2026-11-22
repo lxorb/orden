@@ -309,6 +309,7 @@ class Session {
     if (!same) this.tab.running = { name, program, host, colour }
   }
   private onLine = false
+  private atPrompt = false
   private heardTyped(data: string) {
     if (notTyped(data)) return
     const last = data.slice(Math.max(data.lastIndexOf('\r'), data.lastIndexOf('\x03'), data.lastIndexOf('\x15')) + 1)
@@ -316,7 +317,7 @@ class Session {
     else this.onLine = true
   }
   private lineHeld(): boolean {
-    return this.onLine
+    return this.onLine || (this.marks && !this.atPrompt)
   }
   async goTo(folder: string): Promise<boolean> {
     const source = this.source
@@ -330,6 +331,7 @@ class Session {
     if (await source.busy()) return false
     if (source !== this.source || this.lineHeld()) return false
     this.outgoing.push({ data: `${line}\r`, binary: false })
+    this.atPrompt = false
     void this.send()
     return true
   }
@@ -720,6 +722,7 @@ class Session {
     if (this.online) this.arrival.begin()
     if (!this.online) setPty(this.tab.id, id)
     this.front = new Front(spec.shell.startsWith('wsl:'))
+    this.atPrompt = false
     this.named()
     const source = this.online
       ? (await import('./online/source')).onlineSource(
@@ -883,6 +886,7 @@ class Session {
     this.resumable = null
     if (command === null) return
     this.outgoing.push({ data: `${command}\r`, binary: false })
+    this.atPrompt = false
     void this.send()
     this.focus()
   }
@@ -897,6 +901,7 @@ class Session {
       return
     }
     this.marks = true
+    this.atPrompt = true
     this.front.prompted()
     this.named()
     if (this.underneath !== null) this.askSoon(0)
@@ -1001,6 +1006,7 @@ class Session {
     }
     this.outgoing.push({ data, binary })
     if (!binary) this.heardTyped(data)
+    if (!binary && data.includes('\r')) this.atPrompt = false
     void this.send()
     if (binary || !data.includes('\r') || this.reachedHere) return
     this.front.entered()

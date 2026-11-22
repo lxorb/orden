@@ -123,17 +123,25 @@ afterEach(() => {
   flushSync()
   place.remove()
 })
-async function shell(spec: string, key: string, spawned = true) {
+const PROMPT = Array.from('\x1b]133;A\x1b\\$ ', (one) => one.charCodeAt(0))
+async function prompted() {
+  const out = new ArrayBuffer(PROMPT.length)
+  new Uint8Array(out).set(PROMPT)
+  channels.at(-1)?.onmessage?.(out)
+  await idle(20)
+}
+async function shell(spec: string, key: string, spawned = true, prompt = true) {
   workspace.openUnsaved('terminal', writeSpec({ shell: spec, folder: null, key, name: null }), 'Shell')
   const tab = workspace.tabs.at(-1)
   if (!tab) throw new Error('no tab')
   await sessionOf(tab).attach(place, false)
   if (spawned) await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_spawn')).toBe(true))
   await idle(20)
+  if (spawned && prompt) await prompted()
   asked.length = 0
   return tab
 }
-test('a shell resting at an empty prompt goes to the folder the explorer shows, quoted for it (#2274)', async () => {
+test('a shell resting at its prompt goes to the folder the explorer shows, quoted for it (#2274)', async () => {
   const tab = await shell('bash', 'k-go')
   expect(await goTo(tab.id, "/work/Plans B/it's")).toBe(true)
   await vi.waitFor(() => expect(typed()).toEqual(["cd '/work/Plans B/it'\\''s'\r"]))
@@ -142,6 +150,41 @@ test('a folder outside every space gets the cd too, though the app reads no file
   const tab = await shell('bash', 'k-out')
   expect(await goTo(tab.id, '/etc/ssl')).toBe(true)
   await vi.waitFor(() => expect(typed()).toEqual(['cd /etc/ssl\r']))
+})
+test('after a program ends and its prompt comes back, the shell is sent again (#2274)', async () => {
+  const tab = await shell('bash', 'k-after')
+  typing?.('make\r')
+  expect(await goTo(tab.id, '/work')).toBe(false)
+  await prompted()
+  expect(await goTo(tab.id, '/work')).toBe(true)
+  expect(await goTo(tab.id, '/srv')).toBe(false)
+  await prompted()
+  expect(await goTo(tab.id, '/srv')).toBe(true)
+  await idle(20)
+  expect(typed()).toEqual(['make\r', 'cd /work\r', 'cd /srv\r'])
+})
+test('nothing is typed while a builtin or cmdlet runs inside the shell itself, with no program under it (#2274)', async () => {
+  const bash = await shell('bash', 'k-read')
+  typing?.('read name\r')
+  expect(await goTo(bash.id, '/work')).toBe(false)
+  typing?.('while true; do :; done\r')
+  expect(await goTo(bash.id, '/work')).toBe(false)
+  const pwsh = await shell('pwsh', 'k-sleep')
+  typing?.('Start-Sleep 15\r')
+  expect(await goTo(pwsh.id, '/work')).toBe(false)
+  await prompted()
+  expect(await goTo(pwsh.id, '/work')).toBe(true)
+  await idle(20)
+  expect(typed().at(-1)).toBe('Set-Location -LiteralPath /work\r')
+})
+test('a shell that has never shown a prompt mark falls back to asking whether a program runs under it (#2274)', async () => {
+  const tab = await shell('zsh', 'k-zsh', true, false)
+  machine.busy = true
+  expect(await goTo(tab.id, '/work')).toBe(false)
+  machine.busy = false
+  expect(await goTo(tab.id, '/work')).toBe(true)
+  await idle(20)
+  expect(typed()).toEqual(['cd /work\r'])
 })
 test('nothing is typed into a shell already there, running a program or holding a half-typed line (#2274)', async () => {
   const tab = await shell('bash', 'k-stay')
