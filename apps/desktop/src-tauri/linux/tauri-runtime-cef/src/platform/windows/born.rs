@@ -108,6 +108,7 @@ pub(crate) fn born_where_asked<T>(
       let _ = RemoveWindowSubclass(child, Some(held), HELD);
       if IsWindow(Some(child)).as_bool() {
         let [x, y, cx, cy] = born.at;
+        let (x, y) = super::parked::parked(child, x, y, cx, cy);
         let _ = SetWindowPos(
           child,
           None,

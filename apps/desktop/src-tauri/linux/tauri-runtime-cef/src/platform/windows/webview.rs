@@ -178,6 +178,7 @@ impl AppWebview {
   }
 
   pub(crate) fn apply_physical_bounds(&self, _scale: f64, x: i32, y: i32, width: i32, height: i32) {
+    let (x, y) = super::parked::parked(self.hwnd(), x, y, width, height);
     unsafe {
       let _ = SetWindowPos(
         self.hwnd(),
