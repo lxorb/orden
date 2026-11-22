@@ -13,7 +13,6 @@ export interface Server {
   id: number
   status: string
   location: string
-  type: string
 }
 interface Price {
   location: string
@@ -25,16 +24,8 @@ export interface ServerType {
   cores: number
   memory: number
   disk: number
-  cpu: 'shared' | 'dedicated'
-  arch: 'x86' | 'arm'
-  deprecated: boolean
   prices: Price[]
   available: string[]
-}
-export interface Location {
-  name: string
-  city: string
-  country: string
 }
 export interface Pricing {
   currency: string
@@ -58,12 +49,10 @@ function serverOf(value: unknown): Server | null {
   }
   const datacenter = isRecord(value.datacenter) ? value.datacenter : null
   const location = datacenter && isRecord(datacenter.location) ? datacenter.location.name : null
-  const type = isRecord(value.server_type) ? value.server_type.name : null
   return {
     id: value.id,
     status: value.status,
     location: typeof location === 'string' ? location : '',
-    type: typeof type === 'string' ? type : '',
   }
 }
 const listed = (value: unknown, key: string): unknown[] => {
@@ -89,9 +78,6 @@ function typeOf(value: unknown): ServerType | null {
     cores: value.cores,
     memory: value.memory,
     disk: typeof value.disk === 'number' ? value.disk : 0,
-    cpu: value.cpu_type === 'dedicated' ? 'dedicated' : 'shared',
-    arch: value.architecture === 'arm' ? 'arm' : 'x86',
-    deprecated: value.deprecated === true || isRecord(value.deprecation),
     prices,
     available,
   }
@@ -153,15 +139,6 @@ export class Hetzner {
     if (!made) throw new HetznerError(502, 'shape', 'the made server did not read')
     return made
   }
-  async changeType(id: number, type: string): Promise<void> {
-    await this.ask('POST', `/servers/${String(id)}/actions/change_type`, {
-      server_type: type,
-      upgrade_disk: true,
-    })
-  }
-  async shutdown(id: number, hard: boolean): Promise<void> {
-    await this.ask('POST', `/servers/${String(id)}/actions/${hard ? 'poweroff' : 'shutdown'}`)
-  }
   async deleteServer(id: number): Promise<void> {
     await this.ask('DELETE', `/servers/${String(id)}`)
   }
@@ -197,24 +174,6 @@ export class Hetzner {
     const type = typeOf(listed(said, 'server_types')[0])
     if (!type) throw new HetznerError(404, 'not_found', `no server type ${name}`)
     return { ...type, name }
-  }
-  async serverTypes(): Promise<ServerType[]> {
-    const said = await this.ask('GET', '/server_types?per_page=50')
-    return listed(said, 'server_types').flatMap((one) => typeOf(one) ?? [])
-  }
-  async locations(): Promise<Location[]> {
-    const said = await this.ask('GET', '/locations?per_page=50')
-    return listed(said, 'locations').flatMap((one) =>
-      isRecord(one) && typeof one.name === 'string'
-        ? [
-            {
-              name: one.name,
-              city: typeof one.city === 'string' ? one.city : one.name,
-              country: typeof one.country === 'string' ? one.country : '',
-            },
-          ]
-        : [],
-    )
   }
   async pricing(): Promise<Pricing> {
     const said = await this.ask('GET', '/pricing')

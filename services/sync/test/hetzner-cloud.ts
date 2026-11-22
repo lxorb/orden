@@ -4,7 +4,6 @@ interface FakeServer {
   status: string
   location: string
   type: string
-  changing?: { to: string; looks: number }
   labels: Record<string, string>
   userData: string
   firewall: number
@@ -13,68 +12,11 @@ interface FakeType {
   cores: number
   memory: number
   disk: number
-  cpu_type: 'shared' | 'dedicated'
-  architecture: 'x86' | 'arm'
   monthly: string
   hourly: string
-  deprecated?: boolean
 }
 const TYPES: Record<string, FakeType> = {
-  cx23: {
-    cores: 2,
-    memory: 4,
-    disk: 40,
-    cpu_type: 'shared',
-    architecture: 'x86',
-    monthly: '4.7481',
-    hourly: '0.0083',
-  },
-  cx43: {
-    cores: 8,
-    memory: 16,
-    disk: 160,
-    cpu_type: 'shared',
-    architecture: 'x86',
-    monthly: '13.6731',
-    hourly: '0.0238',
-  },
-  cx53: {
-    cores: 16,
-    memory: 32,
-    disk: 320,
-    cpu_type: 'shared',
-    architecture: 'x86',
-    monthly: '27.3581',
-    hourly: '0.0476',
-  },
-  cax31: {
-    cores: 8,
-    memory: 16,
-    disk: 160,
-    cpu_type: 'shared',
-    architecture: 'arm',
-    monthly: '15.4581',
-    hourly: '0.0262',
-  },
-  ccx33: {
-    cores: 8,
-    memory: 32,
-    disk: 240,
-    cpu_type: 'dedicated',
-    architecture: 'x86',
-    monthly: '74.8781',
-    hourly: '0.1202',
-  },
-  cx42: {
-    cores: 8,
-    memory: 16,
-    disk: 160,
-    cpu_type: 'shared',
-    architecture: 'x86',
-    monthly: '19.9900',
-    hourly: '0.0320',
-    deprecated: true,
-  },
+  cx43: { cores: 8, memory: 16, disk: 160, monthly: '13.6731', hourly: '0.0238' },
 }
 interface Failure {
   method: string
@@ -97,8 +39,6 @@ export class Cloud {
   readonly failures: Failure[] = []
   available = ['nbg1', 'fsn1', 'hel1']
   linkStatus = 101
-  changeLooks = 2
-  stubborn = false
   private next = 100
   fail(method: string, path: RegExp, status: number, code: string): void {
     this.failures.push({ method, path, status, code })
@@ -140,39 +80,13 @@ export class Cloud {
     let match: RegExpExecArray | null
     if (method === 'GET' && path === '/servers') {
       const servers = this.labelled(this.servers, url)
-      for (const one of servers) {
-        if (one.changing && --one.changing.looks <= 0) {
-          one.type = one.changing.to
-          delete one.changing
-        }
-      }
       return Response.json({
         servers: servers.map((one) => ({
           id: one.id,
           status: one.status,
-          server_type: { name: one.type },
           datacenter: { location: { name: one.location } },
         })),
       })
-    }
-    if ((match = /^\/servers\/(\d+)\/actions\/(shutdown|poweroff|change_type)$/.exec(path))) {
-      const server = this.servers.find((one) => one.id === Number(match?.[1]))
-      if (!server) return Response.json({ error: { code: 'not_found', message: 'gone' } }, { status: 404 })
-      if (server.changing) return Response.json({ error: { code: 'locked', message: 'busy' } }, { status: 423 })
-      if (match[2] === 'shutdown') {
-        if (!this.stubborn) server.status = 'off'
-      } else if (match[2] === 'poweroff') {
-        server.status = 'off'
-      } else {
-        const to = TYPES[String(given.server_type)]
-        const from = TYPES[server.type]
-        if (server.status !== 'off')
-          return Response.json({ error: { code: 'server_not_stopped', message: 'on' } }, { status: 409 })
-        if (!to || (from && (to.disk < from.disk || to.architecture !== from.architecture)))
-          return Response.json({ error: { code: 'invalid_input', message: 'no' } }, { status: 422 })
-        server.changing = { to: String(given.server_type), looks: this.changeLooks }
-      }
-      return Response.json({ action: { id: 3 } }, { status: 201 })
     }
     if (method === 'POST' && path === '/servers') {
       const firewalls = given.firewalls as { firewall: number }[]
@@ -207,7 +121,6 @@ export class Cloud {
     }
     if ((match = /^\/servers\/(\d+)\/actions\/(reset|poweron)$/.exec(path))) {
       const server = this.servers.find((one) => one.id === Number(match?.[1]))
-      if (server?.changing) return Response.json({ error: { code: 'locked', message: 'busy' } }, { status: 423 })
       if (server) server.status = 'running'
       return Response.json({ action: { id: 2 } }, { status: 201 })
     }
@@ -250,9 +163,6 @@ export class Cloud {
             cores: type.cores,
             memory: type.memory,
             disk: type.disk,
-            cpu_type: type.cpu_type,
-            architecture: type.architecture,
-            deprecated: type.deprecated ?? false,
             prices: ['nbg1', 'fsn1', 'hel1'].map((location) => ({
               location,
               price_hourly: { net: '0', gross: type.hourly },
@@ -265,16 +175,6 @@ export class Cloud {
             })),
           }
         }),
-      })
-    }
-    if (method === 'GET' && path === '/locations') {
-      return Response.json({
-        locations: [
-          { name: 'fsn1', city: 'Falkenstein', country: 'DE' },
-          { name: 'nbg1', city: 'Nuremberg', country: 'DE' },
-          { name: 'hel1', city: 'Helsinki', country: 'FI' },
-          { name: 'ash', city: 'Ashburn, VA', country: 'US' },
-        ],
       })
     }
     if (method === 'GET' && path === '/pricing') {

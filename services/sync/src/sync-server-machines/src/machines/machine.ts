@@ -1,6 +1,6 @@
 import { BEAT, BEAT_ANSWER } from '@orden/sync-core'
 import { randomToken, note, askHub, SocketLock, stillSignedIn, steadyEnv, type Env } from '../../../sync-server/src/api'
-import { audit, type Detail, failureOf, type Named, type Step } from './audit'
+import { audit, type Detail, failureOf, type Step } from './audit'
 import { budgetLeft } from './budget'
 import { whyNotWake } from './gate'
 import { HostRefused } from './hetzner-host'
@@ -77,8 +77,6 @@ const FIRST_BOOT_LIMIT = 20 * MINUTE
 const REBOOT_AFTER = 3 * MINUTE
 const REBOOT_LIMIT = 10 * MINUTE
 const SILENT_AGAIN = 5 * MINUTE
-const SHUTDOWN_GRACE = 2 * MINUTE
-const RESIZE_LIMIT = 20 * MINUTE
 const ME = 'me'
 const HOST = 'host'
 const PROVISION = 'provision'
@@ -123,10 +121,8 @@ interface Me {
 }
 interface Provision {
   since: number
-  why: 'boot' | 'recover' | 'resize'
+  why: 'boot' | 'recover'
   rebooted: boolean
-  type?: string
-  from?: string
 }
 interface SessionNews {
   program?: Extract<ServerFrame, { t: 'program' }>
@@ -250,9 +246,6 @@ export class Machine implements DurableObject {
         return Response.json({ state: await this.state() })
       case 'reboot':
         await this.reboot()
-        return Response.json({ state: await this.state() })
-      case 'resize':
-        await this.resize(headers.get('x-orden-type') ?? '', headers.get('x-orden-who'))
         return Response.json({ state: await this.state() })
       case 'host':
         await this.move(headers.get('x-orden-host') === 'hetzner' ? 'hetzner' : 'cloudflare')
@@ -802,10 +795,6 @@ export class Machine implements DurableObject {
     const me = await this.me()
     const waiting = await this.ctx.storage.get<Provision>(PROVISION)
     if (!me || !waiting) return
-    if (waiting.why === 'resize') {
-      await this.resizing(me, waiting)
-      return
-    }
     const now = Date.now()
     try {
       await this.attachLink()
@@ -860,58 +849,6 @@ export class Machine implements DurableObject {
     this.everybody({ t: 'machine', state: 'starting' })
     await this.powerCycle(me)
   }
-  private async resize(type: string, who: string | null): Promise<void> {
-    const me = await this.me()
-    const host = await this.host()
-    if (!me || !type || !host.alwaysOn || !host.resize) return
-    if ((await this.ctx.storage.get<Provision>(PROVISION))?.why === 'resize') return
-    const row = await this.env.DB.prepare('select size from machines where id = ?')
-      .bind(me.id)
-      .first<{ size: string }>()
-    await audit(this.env, me.id, 'resize', { who, detail: type as Named })
-    const link = this.link
-    this.link = null
-    try {
-      link?.close(1000, 'resize')
-    } catch {
-      // Already closed.
-    }
-    const now = Date.now()
-    const waiting = {
-      since: now,
-      why: 'resize',
-      rebooted: true,
-      type,
-      from: row?.size ?? type,
-    } satisfies Provision
-    await this.ctx.storage.put(PROVISION, waiting)
-    await this.setState('starting')
-    await this.ctx.storage.setAlarm(now + FIRST_LOOK)
-  }
-  private async resizing(me: Me, waiting: Provision): Promise<void> {
-    const host = await this.host()
-    const waited = Date.now() - waiting.since
-    try {
-      if (!host.resize) throw new Error('this host cannot resize a machine')
-      if (await host.resize(me.id, waiting.type ?? '', waited >= SHUTDOWN_GRACE)) {
-        await this.waitFor('recover', true)
-        return
-      }
-    } catch (error) {
-      await this.failed(me, 'resize', error)
-      if (waiting.from && waiting.from !== waiting.type) {
-        await this.ctx.storage.put(PROVISION, { ...waiting, type: waiting.from })
-      }
-    }
-    if (waited >= RESIZE_LIMIT) {
-      await this.failed(me, 'resize', new Error('the server did not come back resized'))
-      await this.ctx.storage.delete(PROVISION)
-      await this.setState('asleep', 'restart')
-      return
-    }
-    this.everybody({ t: 'machine', state: 'starting' })
-    await this.ctx.storage.setAlarm(Date.now() + PROVISION_EVERY)
-  }
   private async move(kind: HostKind): Promise<void> {
     const me = await this.me()
     if (!me) return
@@ -935,7 +872,6 @@ export class Machine implements DurableObject {
   async wake(): Promise<void> {
     const state = await this.state()
     if (state === 'awake' && this.link) return
-    if ((await this.ctx.storage.get<Provision>(PROVISION))?.why === 'resize') return
     this.waking ??= this.waken().finally(() => {
       this.waking = null
     })
