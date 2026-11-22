@@ -41,7 +41,7 @@ export async function seed(): Promise<void> {
   await invoke('create_space', { name: SPACE })
   for (const folder of FOLDERS) await invoke('create_folder', { path: at(folder) })
   for (const [path, content] of Object.entries(NOTES)) await invoke('write_note', { path: at(path), content })
-  const first = frameAt('canvas', 0, origin)
+  const first = frameAt('canvas', 1, origin)
   await invoke('write_note', {
     path: at(CANVAS),
     content: writeCanvas({ ...emptyCanvas(), nodes: first.nodes, edges: first.edges }),
