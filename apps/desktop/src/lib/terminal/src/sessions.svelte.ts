@@ -317,7 +317,7 @@ class Session {
     else this.onLine = true
   }
   private lineHeld(): boolean {
-    return this.onLine || (this.marks && !this.atPrompt)
+    return this.onLine || !this.atPrompt
   }
   async goTo(folder: string): Promise<boolean> {
     const source = this.source

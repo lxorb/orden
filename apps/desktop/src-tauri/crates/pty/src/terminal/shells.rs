@@ -11,6 +11,8 @@ pub enum Kind {
     Cmd,
     PowerShell,
     Bash,
+    Zsh,
+    Fish,
     Wsl,
     Other,
 }
@@ -48,6 +50,7 @@ pub trait Machine {
     fn distributions(&self) -> Vec<String>;
     fn studios(&self) -> Vec<Studio>;
     fn etc_shells(&self) -> String;
+    fn kept_dotdir(&self, files: &[(&str, &str)]) -> Option<PathBuf>;
 }
 static WSL_SILENT: AtomicBool = AtomicBool::new(false);
 const LOOKS: u8 = 3;
@@ -144,9 +147,25 @@ impl Shell {
                 env.push(("PROMPT".to_owned(), prompt));
             }
             Kind::PowerShell => args.extend(powershell_args(None)),
-            Kind::Bash if machine.var("PROMPT_COMMAND").is_none() => {
-                env.push(("PROMPT_COMMAND".to_owned(), BASH_PROMPT.to_owned()));
+            Kind::Bash => {
+                let prompt = match machine.var("PROMPT_COMMAND") {
+                    Some(own) => format!("{BASH_PROMPT}; {own}"),
+                    None => BASH_PROMPT.to_owned(),
+                };
+                env.push(("PROMPT_COMMAND".to_owned(), prompt));
             }
+            Kind::Zsh => {
+                let own = machine
+                    .var("ZDOTDIR")
+                    .or_else(|| home.as_ref().map(|one| one.to_string_lossy().into_owned()));
+                if let (Some(own), Some(ours)) = (own, machine.kept_dotdir(&ZSH_FILES)) {
+                    let ours = ours.to_string_lossy().into_owned();
+                    env.push(("ORDEN_ZDOTDIR".to_owned(), own));
+                    env.push(("ORDEN_ZSH".to_owned(), ours.clone()));
+                    env.push(("ZDOTDIR".to_owned(), ours));
+                }
+            }
+            Kind::Fish => args.extend(["--init-command".to_owned(), FISH_PROMPT.to_owned()]),
             Kind::Wsl if machine.var("PROMPT_COMMAND").is_none() => {
                 env.push(("PROMPT_COMMAND".to_owned(), BASH_PROMPT.to_owned()));
                 let carried = match machine.var("WSLENV") {
@@ -169,6 +188,25 @@ impl Shell {
 const CMD_MARK: &str = "$E]133;A$E\\";
 const CMD_PROMPT: &str = "$E]133;A$E\\$E]9;9;$P$E\\$P$G";
 const BASH_PROMPT: &str = r#"printf '\e]133;A\e\\\e]7;file://%s\e\\' "$PWD""#;
+const ZSH_FILES: [(&str, &str); 3] =
+    [(".zshenv", ZSH_ENV), (".zprofile", ZSH_PROFILE), (".zshrc", ZSH_RC)];
+const ZSH_ENV: &str = r#"ZDOTDIR=$ORDEN_ZDOTDIR
+[[ -f "$ZDOTDIR/.zshenv" ]] && builtin source "$ZDOTDIR/.zshenv"
+ORDEN_ZDOTDIR=$ZDOTDIR
+ZDOTDIR=$ORDEN_ZSH
+"#;
+const ZSH_PROFILE: &str = r#"ZDOTDIR=$ORDEN_ZDOTDIR
+[[ -f "$ZDOTDIR/.zprofile" ]] && builtin source "$ZDOTDIR/.zprofile"
+ORDEN_ZDOTDIR=$ZDOTDIR
+ZDOTDIR=$ORDEN_ZSH
+"#;
+const ZSH_RC: &str = r#"ZDOTDIR=$ORDEN_ZDOTDIR
+builtin unset ORDEN_ZDOTDIR ORDEN_ZSH
+[[ -f "$ZDOTDIR/.zshrc" ]] && builtin source "$ZDOTDIR/.zshrc"
+__orden_prompt() { builtin printf '\e]133;A\e\\\e]7;file://%s\e\\' "$PWD"; }
+precmd_functions+=(__orden_prompt)
+"#;
+const FISH_PROMPT: &str = r"function __orden_prompt --on-event fish_prompt; printf '\e]133;A\e\\\\\e]7;file://%s\e\\\\' $PWD; end";
 const POWERSHELL_PROMPT: &str = "$global:__ordenPrompt = $function:prompt; \
 function global:prompt { \
 [Console]::Write([char]27 + ']133;A' + [char]27 + '\\'); \
@@ -333,7 +371,12 @@ pub fn unix(machine: &impl Machine) -> Vec<Shell> {
             let twice = kept.iter().filter(|one| name_of(one) == program).count() > 1;
             let id = path.to_string_lossy().into_owned();
             let name = if twice { id.clone() } else { program.clone() };
-            let kind = if program == "bash" { Kind::Bash } else { Kind::Other };
+            let kind = match program.as_str() {
+                "bash" => Kind::Bash,
+                "zsh" => Kind::Zsh,
+                "fish" => Kind::Fish,
+                _ => Kind::Other,
+            };
             let shell = Shell::new(id, name, path.clone(), kind);
             if login {
                 shell.with_args(&["-l"])
@@ -410,6 +453,17 @@ impl Machine for ThisMachine {
     }
     fn distributions(&self) -> Vec<String> {
         wsl_list()
+    }
+    fn kept_dotdir(&self, files: &[(&str, &str)]) -> Option<PathBuf> {
+        let folder = dirs::cache_dir()?.join("orden").join("zsh");
+        std::fs::create_dir_all(&folder).ok()?;
+        for (name, text) in files {
+            let path = folder.join(name);
+            if std::fs::read_to_string(&path).ok().as_deref() != Some(*text) {
+                std::fs::write(&path, text).ok()?;
+            }
+        }
+        Some(folder)
     }
     fn studios(&self) -> Vec<Studio> {
         let Some(data) = self.var("ProgramData") else {
@@ -522,6 +576,9 @@ mod tests {
         }
         fn etc_shells(&self) -> String {
             self.shells.clone()
+        }
+        fn kept_dotdir(&self, _files: &[(&str, &str)]) -> Option<PathBuf> {
+            Some(PathBuf::from("/cache/orden/zsh"))
         }
     }
     fn ids(shells: &[Shell]) -> Vec<&str> {
@@ -777,5 +834,159 @@ mod tests {
         assert_eq!(bash.launch(Some(there), &machine).folder, Some(PathBuf::from(there)));
         assert_eq!(bash.launch(Some(gone), &machine).folder, Some(PathBuf::from(home)));
         assert_eq!(bash.launch(None, &machine).folder, Some(PathBuf::from(home)));
+    }
+    #[test]
+    fn zsh_and_fish_are_told_apart_and_marked_like_bash() {
+        let mut fake = Fake::default().file("/bin/zsh").file("/usr/bin/fish").file("/bin/bash");
+        fake.shells = "/bin/zsh\n/usr/bin/fish\n/bin/bash\n".to_owned();
+        let kinds: Vec<Kind> = unix(&fake).iter().map(|one| one.kind).collect();
+        assert_eq!(kinds, vec![Kind::Zsh, Kind::Fish, Kind::Bash]);
+        let bash = Shell::new("bash", "bash", PathBuf::from("/bin/bash"), Kind::Bash);
+        let own = bash.launch(None, &Fake::default().set("PROMPT_COMMAND", "history -a"));
+        assert!(own
+            .env
+            .contains(&("PROMPT_COMMAND".to_owned(), format!("{BASH_PROMPT}; history -a"))));
+        let fish = Shell::new("fish", "fish", PathBuf::from("/usr/bin/fish"), Kind::Fish);
+        let args = fish.launch(None, &Fake::default()).args;
+        assert_eq!(args[0], "--init-command");
+        assert!(args[1].contains("--on-event fish_prompt") && args[1].contains(r"\e]133;A"));
+    }
+    #[test]
+    fn zsh_starts_from_orden_folder_that_reads_the_reader_own_files_first() {
+        let zsh = Shell::new("zsh", "zsh", PathBuf::from("/bin/zsh"), Kind::Zsh);
+        let home = zsh.launch(None, &Fake::default().set("HOME", "/home/me"));
+        for pair in [
+            ("ZDOTDIR", "/cache/orden/zsh"),
+            ("ORDEN_ZSH", "/cache/orden/zsh"),
+            ("ORDEN_ZDOTDIR", "/home/me"),
+        ] {
+            assert!(home.env.contains(&(pair.0.to_owned(), pair.1.to_owned())), "{pair:?}");
+        }
+        let own = zsh.launch(
+            None,
+            &Fake::default().set("HOME", "/home/me").set("ZDOTDIR", "/home/me/.config/zsh"),
+        );
+        assert!(own.env.contains(&("ORDEN_ZDOTDIR".to_owned(), "/home/me/.config/zsh".to_owned())));
+        for (name, text) in ZSH_FILES {
+            assert!(text.contains(&format!(r#"builtin source "$ZDOTDIR/{name}""#)), "{name}");
+        }
+        assert!(
+            ZSH_RC.contains(r"\e]133;A")
+                && ZSH_RC.ends_with("precmd_functions+=(__orden_prompt)\n")
+        );
+    }
+    #[cfg(unix)]
+    fn found(names: &[&str]) -> Option<PathBuf> {
+        names.iter().map(PathBuf::from).find(|one| one.exists())
+    }
+    #[cfg(unix)]
+    struct Home(PathBuf);
+    #[cfg(unix)]
+    impl Machine for Home {
+        fn var(&self, name: &str) -> Option<String> {
+            if name == "HOME" {
+                return Some(self.0.to_string_lossy().into_owned());
+            }
+            if name == "ZDOTDIR" || name == "PROMPT_COMMAND" {
+                return None;
+            }
+            ThisMachine.var(name)
+        }
+        fn exists(&self, path: &Path) -> bool {
+            ThisMachine.exists(path)
+        }
+        fn is_folder(&self, path: &Path) -> bool {
+            ThisMachine.is_folder(path)
+        }
+        fn distributions(&self) -> Vec<String> {
+            Vec::new()
+        }
+        fn studios(&self) -> Vec<Studio> {
+            Vec::new()
+        }
+        fn etc_shells(&self) -> String {
+            String::new()
+        }
+        fn kept_dotdir(&self, files: &[(&str, &str)]) -> Option<PathBuf> {
+            ThisMachine.kept_dotdir(files)
+        }
+    }
+    #[cfg(unix)]
+    #[test]
+    fn a_real_zsh_keeps_the_reader_own_config_and_hooks_and_gains_the_mark() {
+        let Some(program) = found(&["/bin/zsh", "/usr/bin/zsh"]) else { return };
+        let home = tempfile::tempdir().unwrap();
+        std::fs::write(home.path().join(".zshenv"), "ENV_SAID=env\n").unwrap();
+        std::fs::write(
+            home.path().join(".zshrc"),
+            "RC_SAID=rc\nmine() {}\nprecmd_functions+=(mine)\nPS1='mine> '\n",
+        )
+        .unwrap();
+        let zsh = Shell::new("zsh", "zsh", program.clone(), Kind::Zsh);
+        let launch = zsh.launch(None, &Home(home.path().to_path_buf()));
+        let said = std::process::Command::new(&program)
+            .args(["-i", "-c", r#"print -r -- "$ENV_SAID $RC_SAID ${precmd_functions[*]} $PS1 ${ORDEN_ZSH:-gone} $ZDOTDIR""#])
+            .envs(launch.env.iter().cloned())
+            .env("HOME", home.path())
+            .output()
+            .unwrap();
+        let printed = String::from_utf8_lossy(&said.stdout);
+        assert_eq!(
+            printed.trim(),
+            format!("env rc mine __orden_prompt mine>  gone {}", home.path().display())
+        );
+    }
+    #[cfg(unix)]
+    #[test]
+    fn a_real_fish_keeps_the_reader_own_config_and_gains_the_mark() {
+        let Some(program) =
+            found(&["/usr/bin/fish", "/usr/local/bin/fish", "/opt/homebrew/bin/fish"])
+        else {
+            return;
+        };
+        let home = tempfile::tempdir().unwrap();
+        let config = home.path().join(".config/fish");
+        std::fs::create_dir_all(&config).unwrap();
+        std::fs::write(config.join("config.fish"), "set -g CONFIG_SAID config\n").unwrap();
+        let fish = Shell::new("fish", "fish", program.clone(), Kind::Fish);
+        let launch = fish.launch(None, &Home(home.path().to_path_buf()));
+        let said = std::process::Command::new(&program)
+            .args(launch.args.iter().cloned().chain([
+                "-c".to_owned(),
+                "echo $CONFIG_SAID; functions -q __orden_prompt; and echo marked".to_owned(),
+            ]))
+            .env("HOME", home.path())
+            .env_remove("XDG_CONFIG_HOME")
+            .output()
+            .unwrap();
+        assert_eq!(String::from_utf8_lossy(&said.stdout).trim(), "config\nmarked");
+    }
+    #[cfg(unix)]
+    #[test]
+    fn a_real_powershell_wraps_the_profile_own_prompt_with_the_mark() {
+        let Some(program) = found(&["/usr/bin/pwsh", "/opt/microsoft/powershell/7/pwsh"]) else {
+            return;
+        };
+        for profile in [
+            "function prompt { 'mine> ' }\n",
+            "Import-Module PSReadLine\nSet-PSReadLineOption -EditMode Emacs\nfunction prompt { 'mine> ' }\n",
+        ] {
+            let home = tempfile::tempdir().unwrap();
+            let config = home.path().join(".config/powershell");
+            std::fs::create_dir_all(&config).unwrap();
+            std::fs::write(config.join("Microsoft.PowerShell_profile.ps1"), profile).unwrap();
+            let pwsh = Shell::new("pwsh", "PowerShell", program.clone(), Kind::PowerShell);
+            let launch = pwsh.launch(None, &Home(home.path().to_path_buf()));
+            let wrapper = launch.args.last().unwrap();
+            let said = std::process::Command::new(&program)
+                .args(["-Command", &format!("{wrapper}; prompt")])
+                .env("HOME", home.path())
+                .env_remove("XDG_CONFIG_HOME")
+                .output()
+                .unwrap();
+            let printed = String::from_utf8_lossy(&said.stdout);
+            assert!(printed.contains("\u{1b}]133;A\u{1b}\\"), "{printed:?}");
+            assert!(printed.trim_end().ends_with("mine>"), "{printed:?}");
+        }
     }
 }

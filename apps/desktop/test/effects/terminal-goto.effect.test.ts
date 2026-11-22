@@ -177,14 +177,25 @@ test('nothing is typed while a builtin or cmdlet runs inside the shell itself, w
   await idle(20)
   expect(typed().at(-1)).toBe('Set-Location -LiteralPath /work\r')
 })
-test('a shell that has never shown a prompt mark falls back to asking whether a program runs under it (#2274)', async () => {
-  const tab = await shell('zsh', 'k-zsh', true, false)
-  machine.busy = true
+test('a shell that has never shown a prompt mark is never typed into, whatever runs under it (#2274)', async () => {
+  const tab = await shell('bash', 'k-none', true, false)
   expect(await goTo(tab.id, '/work')).toBe(false)
-  machine.busy = false
-  expect(await goTo(tab.id, '/work')).toBe(true)
   await idle(20)
-  expect(typed()).toEqual(['cd /work\r'])
+  expect(typed()).toEqual([])
+})
+test('zsh and fish, marked like the others now, get nothing while a builtin waits and the cd at their prompt (#2274)', async () => {
+  for (const [spec, key] of [
+    ['/bin/zsh', 'k-zsh'],
+    ['/usr/bin/fish', 'k-fish'],
+  ] as const) {
+    const tab = await shell(spec, key)
+    typing?.('read name\r')
+    expect(await goTo(tab.id, '/work')).toBe(false)
+    await prompted()
+    expect(await goTo(tab.id, '/work')).toBe(true)
+    await idle(20)
+    expect(typed()).toEqual(['read name\r', 'cd /work\r'])
+  }
 })
 test('nothing is typed into a shell already there, running a program or holding a half-typed line (#2274)', async () => {
   const tab = await shell('bash', 'k-stay')
