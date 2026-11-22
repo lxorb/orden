@@ -2,7 +2,7 @@ import { indexed } from '@orden/scan/indexed'
 import type { SearchNote } from '@orden/scan/search/match'
 import { walkSearch } from '@orden/scan/search/walk'
 import type { FoundHit, FoundLoose, IndexItem, SearchAnswer, SearchRequest } from '@orden/scan/wire'
-import { type Env, sha256 } from '../../../sync-server/src/api'
+import { type Env, keptFrom, sha256 } from '../../../sync-server/src/api'
 import { noteKey } from '../notes'
 
 const MOST_READ = 8 * 1024 * 1024
@@ -47,12 +47,18 @@ async function wordsOf(
 function hidden(path: string): boolean {
   return path.split('/').some((part) => part.startsWith('.'))
 }
-export async function indexItems(env: Env, spaceId: string, ids: readonly string[]): Promise<IndexItem[]> {
+export async function indexItems(
+  env: Env,
+  spaceId: string,
+  ids: readonly string[],
+  viewer: string,
+): Promise<IndexItem[]> {
   const { results } = await env.DB.prepare(
     `select id, path, kind, hash, seq, doc_seq, updated_at from notes
-      where id in (select value from json_each(?)) and +space_id = ? and deleted = 0`,
+      where id in (select value from json_each(?1)) and +space_id = ?2 and deleted = 0
+        and not ${keptFrom('notes', '?3')}`,
   )
-    .bind(JSON.stringify([...new Set(ids)]), spaceId)
+    .bind(JSON.stringify([...new Set(ids)]), spaceId, viewer)
     .all<Row>()
   const items: IndexItem[] = []
   const found = new Set(results.map((row) => row.id))

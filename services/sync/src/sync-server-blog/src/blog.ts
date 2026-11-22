@@ -49,6 +49,7 @@ import {
   type Space,
   notesOfSite,
   siteOrigin,
+  isWebNote,
 } from '../../sync-server/src/api'
 import { noteKey, noteKind, keepAnswer, readSpaceFiles } from '../../sync-server-engine/src/api'
 import '@orden/markdown/eager'
@@ -554,7 +555,7 @@ async function takeAnswer(env: Env, space: Space, site: Site, request: Request, 
   if (!note) return new Response('Not found', { status: 404 })
   const front = readFront(note.front)
   const shown = space.blog_note ? note.path === space.blog_note : publishes(site.rules, note.path, front)
-  if (!shown || (await shutFor(env, space.user_id))(space.id, note.path))
+  if (!shown || isWebNote(note) || (await shutFor(env, space.user_id))(space.id, note.path))
     return new Response('Not found', { status: 404 })
   const object = await env.NOTES.get(noteKey(space.id, note.id))
   const source = noteWithoutComments(object ? await object.text() : '')
@@ -660,7 +661,7 @@ async function served(env: Env, space: Space, url: URL, request: Request, site: 
     )
       .bind(space.id, space.blog_note)
       .first<Note>()
-    if (!only || (await shutFor(env, space.user_id))(space.id, only.path)) return missing()
+    if (!only || isWebNote(only) || (await shutFor(env, space.user_id))(space.id, only.path)) return missing()
     const object = await env.NOTES.get(noteKey(space.id, only.id))
     const source = noteWithoutComments(object ? await object.text() : '')
     const front = readFront(only.front)

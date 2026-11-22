@@ -25,6 +25,7 @@ import {
   SPACE_IS_FULL,
   type User,
   type Variables,
+  webNoteIn,
 } from '../../../sync-server/src/api'
 import {
   EMAIL_LIMIT,
@@ -62,7 +63,7 @@ async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
   const link = await env.DB.prepare(
     `select l.role, l.mode, l.item, n.path as item_path, sp.* from space_links l
        join spaces sp on sp.id = l.space_id
-       left join notes n on n.id = l.item and n.deleted = 0
+       left join notes n on n.id = l.item and n.deleted = 0 and not ${webNoteIn('n')}
       where l.token = ? and sp.deleted = 0 and (l.item = '' or n.id is not null)`,
   )
     .bind(token)
@@ -81,7 +82,7 @@ async function tokenLeadsTo(env: Env, token: string): Promise<Leads | null> {
   const invite = await env.DB.prepare(
     `select m.email, m.role, m.expires_at, m.item, n.path as item_path, sp.* from space_members m
        join spaces sp on sp.id = m.space_id
-       left join notes n on n.id = m.item and n.deleted = 0
+       left join notes n on n.id = m.item and n.deleted = 0 and not ${webNoteIn('n')}
       where m.invite_hash = ? and sp.deleted = 0 and (m.item = '' or n.id is not null)`,
   )
     .bind(hash)

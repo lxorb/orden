@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import {
   domainStatus,
   type Env,
+  isWebNote,
   NO_ADDRESS,
   NOT_A_PATH,
   now,
@@ -9,6 +10,7 @@ import {
   releaseDomain,
   type Space,
   type Variables,
+  WEB_NOTE_UNSHARED,
 } from '../../../sync-server/src/api'
 import { PATH_LIMIT, readablePath } from '../notes'
 import { cleanDomain, dnsRecords, DOMAIN_LIMIT, looksLikeDomain, ours, reserved, SUBDOMAIN } from './addresses'
@@ -83,6 +85,7 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     note = asked ? readablePath(asked) : null
     if (asked && note === null) return context.json({ error: NOT_A_PATH }, 400)
   }
+  if (note && isWebNote({ path: note })) return context.json({ error: WEB_NOTE_UNSHARED }, 400)
   if (note) {
     const exists = await context.env.DB.prepare('select id from notes where space_id = ? and path = ? and deleted = 0')
       .bind(space.id, note)

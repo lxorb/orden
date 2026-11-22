@@ -194,3 +194,13 @@ export {
   versionsFit,
   versionsOf,
 } from './versions'
+export {
+  isWebNote,
+  keptFrom,
+  madeByAnother,
+  makerOf,
+  WEB_NOTE_UNSHARED,
+  webNoteIn,
+  webNotesKeptFrom,
+  whoIs,
+} from './web-notes'

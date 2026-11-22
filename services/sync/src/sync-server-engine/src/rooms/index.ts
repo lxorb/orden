@@ -3,6 +3,7 @@ import {
   chunks,
   type Env,
   hooks,
+  keptFrom,
   NO_SUCH_NOTE,
   note,
   type Note,
@@ -38,8 +39,9 @@ reached as (
                               and gs.item = '' and gs.joined_at is not null
     left join guest_members gi on gi.space_id = sp.id and gi.guest_id = me.guest_id
                               and gi.item = n.id and gi.joined_at is not null
-   where sp.user_id = me.user_id or ms.role is not null or mi.role is not null
-      or gs.role is not null or gi.role is not null
+   where (sp.user_id = me.user_id or ms.role is not null or mi.role is not null
+      or gs.role is not null or gi.role is not null)
+     and not ${keptFrom('n', 'coalesce(me.user_id, me.guest_id)')}
 )
 select (select coalesce(user_id, guest_id) from me) as who,
        (select guest_id from me) as guest,

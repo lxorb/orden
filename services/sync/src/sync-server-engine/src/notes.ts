@@ -13,6 +13,8 @@ import {
   keepVersion,
   keepWords,
   laterOf,
+  madeByAnother,
+  makerOf,
   newId,
   NO_SUCH_NOTE,
   NOT_A_PATH,
@@ -40,6 +42,8 @@ import {
   versionKey,
   versionsAt,
   versionsOf,
+  webNoteIn,
+  whoIs,
   writeFront,
 } from '../../sync-server/src/api'
 import { mergeCanvasFiles } from '@orden/markdown/canvas-merge'
@@ -112,11 +116,12 @@ export async function addNote(
   by = '',
   device?: string,
   meta?: ItemMeta,
+  maker: string | null = null,
 ): Promise<Note> {
   const space = await env.DB.prepare('select prepared_at from spaces where id = ?')
     .bind(spaceId)
     .first<{ prepared_at: number | null }>()
-  if (space?.prepared_at) return await placeNote(env, spaceId, path, content, by, device, meta)
+  if (space?.prepared_at) return await placeNote(env, spaceId, path, content, by, device, meta, maker)
   const note: Note = {
     id: newId(),
     space_id: spaceId,
@@ -130,6 +135,7 @@ export async function addNote(
     hash: await sha256(content),
     front: writeFront(content),
     meta: metaText(meta),
+    made_by: maker,
   }
   note.seq = (
     await atNextSeq(
@@ -137,8 +143,8 @@ export async function addNote(
       spaceId,
       env.DB.prepare(
         `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, front,
-                            front_rev, meta)
-         values (?2, ?1, ?3, ${TAKEN_SEQ}, ?4, ?5, 0, ?6, ?7, ?8, ?9, ?10)`,
+                            front_rev, meta, made_by)
+         values (?2, ?1, ?3, ${TAKEN_SEQ}, ?4, ?5, 0, ?6, ?7, ?8, ?9, ?10, ?11)`,
       ).bind(
         note.space_id,
         note.id,
@@ -150,6 +156,7 @@ export async function addNote(
         note.front,
         FRONT_REV,
         note.meta,
+        maker,
       ),
     )
   ).seq
@@ -170,6 +177,7 @@ async function placeNote(
   by: string,
   device: string | undefined,
   meta: ItemMeta | undefined,
+  maker: string | null,
 ): Promise<Note> {
   const hash = await sha256(content)
   const document = DOCUMENT_KINDS.has(kindOfName(path))
@@ -186,6 +194,7 @@ async function placeNote(
       epochBase: document ? hash : null,
     },
     meta,
+    maker,
   )
   if ('taken' in placed) throw new NoteTaken(placed.taken)
   const note = await env.DB.prepare('select * from notes where id = ?').bind(placed.made).first<Note>()
@@ -219,7 +228,7 @@ export async function noteBeside(env: Env, note: Note, content: string, by = '')
   for (let counter = 1; counter <= 20; counter += 1) {
     const path = numbered(beside, counter)
     if (await noteAt(env, note.space_id, path)) continue
-    return await addNote(env, note.space_id, path, content, by)
+    return await addNote(env, note.space_id, path, content, by, undefined, undefined, note.made_by ?? null)
   }
   return null
 }
@@ -325,15 +334,22 @@ notes.get('/spaces/:spaceId/changes', atLeast('read', 'spaceId'), async (context
   const asked = Math.floor(Number(context.req.query('since') ?? 0))
   const since = Number.isFinite(asked) && asked > 0 ? asked : 0
   const { results } = await context.env.DB.prepare(
-    `select * from notes where space_id = ? and seq > ? and kind not in ${V1_HIDDEN}
+    `select *, case when ${webNoteIn('notes')} then ${makerOf('notes')} end as maker
+       from notes where space_id = ? and seq > ? and kind not in ${V1_HIDDEN}
       order by seq limit 1000`,
   )
     .bind(space.id, since)
-    .all<Note>()
+    .all<Note & { maker: string | null }>()
   const shut = await programShut(context.env, context.get('who'))
   const told = shut ? results.filter((note) => !shut(note.space_id, note.path)) : results
   const cursor = results.at(-1)?.seq ?? since
-  return context.json({ notes: told.map(presentNote), cursor, more: results.length === 1000 })
+  const me = whoIs(context.get('who'))
+  const shown = told.map((note) =>
+    note.maker !== null && note.maker !== me
+      ? { ...presentNote(note), deleted: true, size: 0, hash: '' }
+      : presentNote(note),
+  )
+  return context.json({ notes: shown, cursor, more: results.length === 1000 })
 })
 notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context) => {
   const space = spaceOf(context)
@@ -365,6 +381,8 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
       content,
       deviceIn(said((name) => context.req.header(name), 'device')),
       device,
+      undefined,
+      whoIs(context.get('who')),
     )
   } catch (error) {
     const won =
@@ -395,6 +413,7 @@ async function reachedNote(
   if (!note || HIDDEN_FROM_V1.has(note.kind ?? 'note')) return null
   if ((await programShut(env, who))?.(note.space_id, note.path)) return null
   if (note.deleted && note.deleted_at === null) return null
+  if (await madeByAnother(env, note, who)) return null
   const space = await reachedSpace(env, who, note.space_id)
   if (space) return { note, space, only: false }
   if (note.deleted) return null

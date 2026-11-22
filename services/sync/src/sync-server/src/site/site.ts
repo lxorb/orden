@@ -1,4 +1,5 @@
 import { objectIn } from '../body'
+import { isWebNote } from '../web-notes'
 import type { NoteFront } from './front'
 import { PASSWORD_LIMIT } from './gate'
 
@@ -116,6 +117,7 @@ function longest(path: string, rules: readonly string[]): number {
   return found
 }
 export function publishes(rules: SiteRules, path: string, front: NoteFront): boolean {
+  if (isWebNote({ path })) return false
   if (front.publish !== undefined) return front.publish
   const held = longest(path, rules.include)
   const kept = longest(path, rules.exclude)
