@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
 import { svelte, walk } from './files'
-import { COVERS } from '../src/lib/web-tab/src/covers'
+import { COVERS, UNCUT } from '../src/lib/web-tab/src/covers'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 const RUNG =
@@ -64,7 +64,7 @@ function classesOf(node: Node): string[] {
   }
   return words.filter(Boolean)
 }
-const SHAPES: readonly string[] = [...COVERS.floating, ...COVERS.whole]
+const SHAPES: readonly string[] = [...COVERS, ...UNCUT]
 function registered(node: Node): boolean {
   if (classesOf(node).some((one) => SHAPES.includes(one))) return true
   return (node.attributes ?? []).some((one) => one.name === 'data-covers')

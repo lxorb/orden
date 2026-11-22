@@ -10,20 +10,14 @@ export interface Cut {
 export interface Layer {
   box: Rect
   radius: number
-  scrim: boolean
   node?: Element
 }
 const NOTICES = '[data-notices]'
 const CARDS = `${NOTICES} > *`
-export const COVERS = {
-  floating: ['orden-layer', 'orden-bubble', 'orden-screen', 'orden-swipe', 'orden-flight'],
-  whole: ['orden-scrim', 'orden-swipe-room'],
-} as const
-const FLOATING = [...COVERS.floating.map((one) => `.${one}`), '[data-covers]:not([data-covers="all"])', CARDS].join(
-  ', ',
-)
-const SCRIMS = [...COVERS.whole.map((one) => `.${one}`), '[data-covers="all"]'].join(', ')
-const ANY = `${FLOATING}, ${SCRIMS}`
+export const COVERS = ['orden-layer', 'orden-bubble', 'orden-screen', 'orden-swipe', 'orden-flight'] as const
+const ANY = [...COVERS.map((one) => `.${one}`), '[data-covers]', CARDS].join(', ')
+export const UNCUT = ['orden-scrim', 'orden-swipe-room'] as const
+const UNDER = UNCUT.map((one) => `.${one}`).join(', ')
 const EDGE = '[data-covers="edge"]'
 function meets(one: Rect, other: Rect): boolean {
   return (
@@ -37,22 +31,17 @@ export function cutOf(hole: Rect, layers: readonly Layer[]): Cut | null {
   const over = layers.filter((one) => one.box.width > 0 && one.box.height > 0 && meets(one.box, hole))
   if (over.length === 0) return null
   return {
-    all: over.some((one) => one.scrim),
-    hollows: over
-      .filter((one) => !one.scrim)
-      .map((one) => ({
-        x: one.box.x - hole.x,
-        y: one.box.y - hole.y,
-        width: one.box.width,
-        height: one.box.height,
-        radius: one.radius,
-      })),
+    all: false,
+    hollows: over.map((one) => ({
+      x: one.box.x - hole.x,
+      y: one.box.y - hole.y,
+      width: one.box.width,
+      height: one.box.height,
+      radius: one.radius,
+    })),
   }
 }
 export const ALL: Cut = { all: true, hollows: [] }
-export function settled(cut: Cut | null, pictured: boolean, cuts: boolean): Cut | null {
-  return cut?.all && (pictured || !cuts) ? ALL : cut
-}
 export function boxOf(node: Element): Rect {
   const box = node.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
@@ -125,16 +114,17 @@ export function layersOver(hole: HTMLElement): Layer[] {
   const among = running()
   for (const node of document.querySelectorAll(ANY)) {
     if (hole.contains(node) || !seen(node)) continue
-    const scrim = node.matches(SCRIMS)
     const box = trailed(node, restingBox(node, among))
     found.push({
       box: node.matches(EDGE) && box.x > 0 ? { ...box, x: 0, width: box.x + box.width } : box,
-      radius: scrim ? 0 : parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0,
-      scrim,
+      radius: radiusOf(node),
       node,
     })
   }
-  return found
+  return [...found, ...strangersOver(hole, found)]
+}
+function radiusOf(node: Element): number {
+  return parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0
 }
 export function moving(hole: HTMLElement): boolean {
   if (Date.now() - movedAt < TRAIL) return true
@@ -146,17 +136,27 @@ export function moving(hole: HTMLElement): boolean {
   }
   return false
 }
-export function strangerOver(hole: HTMLElement): boolean {
+function outermost(node: Element, hole: HTMLElement): Element {
+  let top = node
+  while (top.parentElement && !top.parentElement.contains(hole) && top.parentElement !== document.body) {
+    top = top.parentElement
+  }
+  return top
+}
+function strangersOver(hole: HTMLElement, known: readonly Layer[] = []): Layer[] {
+  if (typeof document.elementFromPoint !== 'function') return []
   const box = hole.getBoundingClientRect()
+  const found = new Set<Element>()
   for (const x of [0.08, 0.5, 0.92]) {
     for (const y of [0.08, 0.5, 0.92]) {
       const on = document.elementFromPoint(box.x + box.width * x, box.y + box.height * y)
-      if (on === null || on === hole || hole.contains(on)) continue
-      if (on.closest(ANY)) continue
-      return true
+      if (on === null || on === hole || hole.contains(on) || on.contains(hole)) continue
+      if (on.closest(ANY) || on.closest(UNDER)) continue
+      const top = outermost(on, hole)
+      if (!known.some((one) => one.node === top)) found.add(top)
     }
   }
-  return false
+  return [...found].map((node) => ({ box: boxOf(node), radius: radiusOf(node), node }))
 }
 export function noticeRows(): Element[] {
   return [...document.querySelectorAll(NOTICES)]
@@ -166,7 +166,7 @@ type Change = Pick<MutationRecord, 'target' | 'addedNodes' | 'removedNodes'> & {
   attributeName?: string | null
   oldValue?: string | null
 }
-const MARKS = new Set<string>([...COVERS.floating, ...COVERS.whole])
+const MARKS = new Set<string>(COVERS)
 function wasLayer(record: Change): boolean {
   if (record.attributeName === 'data-covers') return true
   if (record.attributeName !== 'class' || !record.oldValue) return false

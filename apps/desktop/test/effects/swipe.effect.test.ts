@@ -300,7 +300,7 @@ test('over a web page the arrow comes in over the page s picture, and is a layer
     pageSaid({ tab: 'w1', kind: 'wheel', dx: -10, dy: 0, at: at * 8, left: false, right: false })
   }
   flushSync()
-  expect(layersOver(hole).map((one) => one.scrim)).toEqual([true, false])
+  expect(layersOver(hole).map((one) => one.node?.classList.contains('orden-swipe'))).toEqual([true])
   letGo()
   vi.advanceTimersByTime(PLAYS + 1)
   flushSync()

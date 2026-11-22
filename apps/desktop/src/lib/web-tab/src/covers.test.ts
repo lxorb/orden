@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
-  ALL,
   bringsLayer,
   cutOf,
   HELD,
@@ -10,18 +9,20 @@ import {
   layersOver,
   moving,
   noticeRows,
-  settled,
   TRAIL,
   watchArrivals,
-  type Cut,
   type Layer,
 } from './covers'
 
 const PAGE = { x: 300, y: 100, width: 900, height: 600 }
 function float(x: number, y: number, width: number, height: number, radius = 8): Layer {
-  return { box: { x, y, width, height }, radius, scrim: false }
+  return { box: { x, y, width, height }, radius }
 }
-const SCRIM: Layer = { box: { x: 0, y: 0, width: 1200, height: 800 }, radius: 0, scrim: true }
+function boxed(selector: string, box: { x: number; y: number; width: number; height: number }): HTMLElement {
+  const node = document.querySelector<HTMLElement>(selector)!
+  node.getBoundingClientRect = () => DOMRect.fromRect(box)
+  return node
+}
 describe('what of a page the app is over', () => {
   test('nothing open is nothing over it', () => {
     expect(cutOf(PAGE, [])).toBeNull()
@@ -43,10 +44,31 @@ describe('what of a page the app is over', () => {
     expect(cut?.all).toBe(false)
     expect(cut?.hollows).toHaveLength(2)
   })
-  test('a scrim covers all of the page, and the sheet on it is still its own hollow', () => {
-    const cut = cutOf(PAGE, [SCRIM, float(400, 150, 500, 400, 12)])
-    expect(cut?.all).toBe(true)
-    expect(cut?.hollows).toEqual([{ x: 100, y: 50, width: 500, height: 400, radius: 12 }])
+  test('a scrim is never cut from the page, and the sheet on it is a hollow of its own box', () => {
+    document.body.innerHTML =
+      '<div class="hole"></div><div class="orden-scrim"></div><div class="orden-layer sheet"></div>'
+    const hole = boxed('.hole', PAGE)
+    boxed('.orden-scrim', { x: 0, y: 0, width: 1200, height: 800 })
+    boxed('.sheet', { x: 400, y: 150, width: 500, height: 400 })
+    expect(cutOf(PAGE, layersOver(hole))).toEqual({
+      all: false,
+      hollows: [{ x: 100, y: 50, width: 500, height: 400, radius: 0 }],
+    })
+  })
+  test('something unmarked over the page is a hollow of its outermost part beside the page, never all of it', () => {
+    document.body.innerHTML = '<main><div class="hole"></div></main><div class="wrap"><span class="tip"></span></div>'
+    const hole = boxed('.hole', PAGE)
+    boxed('.wrap', { x: 700, y: 350, width: 100, height: 100 })
+    const tip = document.querySelector('.tip')!
+    document.elementFromPoint = (x: number, y: number) => (x >= 700 && x <= 800 && y >= 350 && y <= 450 ? tip : hole)
+    try {
+      expect(cutOf(PAGE, layersOver(hole))).toEqual({
+        all: false,
+        hollows: [{ x: 400, y: 250, width: 100, height: 100, radius: 0 }],
+      })
+    } finally {
+      Reflect.deleteProperty(document, 'elementFromPoint')
+    }
   })
   test('a layer with no size yet is not over anything', () => {
     expect(cutOf(PAGE, [float(400, 120, 0, 0)])).toBeNull()
@@ -69,7 +91,6 @@ describe("the notices row's cards", () => {
     const { hole, notices, toast } = row()
     const found = layersOver(hole)
     expect(found.map((one) => one.node)).toEqual([toast])
-    expect(found[0]?.scrim).toBe(false)
     expect(found.some((one) => one.node === notices)).toBe(false)
   })
   test('a layer hidden with what it stands in is no layer', () => {
@@ -110,14 +131,13 @@ describe("a swipe's arrow over a page", () => {
       <div class="track ${stage === 'went' ? '' : 'orden-swipe-room'}"><div class="orden-swipe"></div></div>`
     return document.querySelector<HTMLElement>('.hole')!
   }
-  test('while the fingers are on, its room covers the page, and the circle is a layer', () => {
+  test('while the fingers are on, its room is never cut, and the circle is a layer', () => {
     const found = layersOver(swipe('tracking'))
-    expect(found.map((one) => one.scrim)).toEqual([true, false])
-    expect(found.find((one) => one.scrim)?.node?.classList.contains('track')).toBe(true)
+    expect(found.map((one) => one.node?.classList.contains('orden-swipe'))).toEqual([true])
   })
   test('bursting on its way out, it is the circle alone', () => {
     const found = layersOver(swipe('went'))
-    expect(found.map((one) => one.scrim)).toEqual([false])
+    expect(found.map((one) => one.node?.classList.contains('orden-swipe'))).toEqual([true])
   })
 })
 describe('a page over the notices', () => {
@@ -152,10 +172,16 @@ describe('a layer arriving by itself', () => {
     const card = document.createElement('div')
     expect(bringsLayer(record(document.querySelector('[data-notices]')!, [], [card]))).toBe(true)
   })
-  test('a layer marked rather than shaped is one, in its own shape or over all of the page', () => {
+  test('a layer marked rather than shaped is a hollow of its own box, whatever the mark says', () => {
     document.body.innerHTML = '<div data-covers class="ghost"></div><div data-covers="all" class="catch"></div>'
-    const found = layersOver(document.createElement('div'))
-    expect(found.map((one) => one.scrim)).toEqual([false, true])
+    boxed('.ghost', { x: 400, y: 120, width: 100, height: 50 })
+    boxed('.catch', { x: 0, y: 0, width: 1200, height: 800 })
+    const cut = cutOf(PAGE, layersOver(document.createElement('div')))
+    expect(cut?.all).toBe(false)
+    expect(cut?.hollows).toEqual([
+      { x: 100, y: 20, width: 100, height: 50, radius: 0 },
+      { x: -300, y: -100, width: 1200, height: 800, radius: 0 },
+    ])
   })
   test('and as one is shown, hidden or moved in place, or what holds one is', () => {
     document.body.innerHTML =
@@ -166,10 +192,10 @@ describe('a layer arriving by itself', () => {
     expect(bringsLayer(changed(document.querySelector('p')!))).toBe(false)
   })
   test('a layer shown by its style is heard before the next frame', async () => {
-    document.body.innerHTML = '<div class="orden-scrim" style="visibility: hidden"></div><p></p>'
+    document.body.innerHTML = '<div class="orden-layer" style="visibility: hidden"></div><p></p>'
     let heard = 0
     const stop = watchArrivals(() => (heard += 1))
-    document.querySelector<HTMLElement>('.orden-scrim')!.style.visibility = ''
+    document.querySelector<HTMLElement>('.orden-layer')!.style.visibility = ''
     await Promise.resolve()
     expect(heard).toBe(1)
     document.querySelector('p')!.setAttribute('style', 'color: red')
@@ -197,27 +223,6 @@ describe('a layer arriving by itself', () => {
     document.querySelector('main')!.append(Object.assign(document.createElement('div'), { className: 'orden-layer' }))
     await Promise.resolve()
     expect([one, other]).toEqual([1, 2])
-  })
-})
-describe('what is told of a cut', () => {
-  const arrow = (x: number): Cut => ({
-    all: true,
-    hollows: [{ x, y: 100, width: 40, height: 40, radius: 20 }],
-  })
-  test('is the same for every step of an arrow over a page standing as its picture', () => {
-    expect(settled(arrow(10), true, true)).toEqual(settled(arrow(30), true, true))
-    expect(settled(arrow(10), true, true)).toEqual(ALL)
-  })
-  test('cuts round the arrow while there is no picture yet, on an engine that cuts', () => {
-    expect(settled(arrow(10), false, true)).toEqual(arrow(10))
-  })
-  test('is all of the page on an engine that cannot cut', () => {
-    expect(settled(arrow(10), false, false)).toEqual(ALL)
-  })
-  test('leaves a menu over a page that is not hidden alone', () => {
-    const menu: Cut = { all: false, hollows: [{ x: 1, y: 2, width: 3, height: 4, radius: 5 }] }
-    expect(settled(menu, true, true)).toBe(menu)
-    expect(settled(null, true, true)).toBeNull()
   })
 })
 describe('a layer going', () => {
