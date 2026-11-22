@@ -114,6 +114,12 @@ describe('reading one tab', () => {
     expect(web({ [field]: value })).toMatchObject({ [field]: value })
     expect(web({ path: '/s/a.url', [field]: value })).not.toHaveProperty(field)
   })
+  test('keeps which shared note a tab with no file showed, so opening its link again finds it (#2479)', () => {
+    expect(plain({ shared: 'note-7' })).toMatchObject({ shared: 'note-7' })
+    expect(plain()).not.toHaveProperty('shared')
+    expect(plain({ shared: 7 })).not.toHaveProperty('shared')
+    expect(readDraft({ path: '/Notes/plan.md', name: 'plan', doc: '', shared: 'note-7' })).not.toHaveProperty('shared')
+  })
   const kindOf = (path: string, kind: unknown) => readDraft({ kind, path, name: path.slice(7), doc: '' })?.kind
   test.each([
     ['/Notes/Board.canvas', [undefined, 'note', 'pdf', 'graph', 'nonsense', 7], 'canvas'],

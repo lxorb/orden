@@ -30,6 +30,7 @@ export interface Draft {
   folds?: readonly FoldLines[] | undefined
   base?: string | undefined
   share?: string | undefined
+  shared?: string | undefined
   reading?: boolean | undefined
   source?: boolean | undefined
   page?: number | undefined
@@ -114,7 +115,7 @@ function readFolds(value: unknown): readonly FoldLines[] | null {
 export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value) || isRetiredTab(value)) return null
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, address, space, source, apart, behind, base } = value
+  const { folds, page, zoom, address, space, source, apart, behind, base, shared } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
   const shut = readFolds(folds)
@@ -137,6 +138,7 @@ export function readDraft(value: unknown): Draft | null {
     ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
     ...(isString(address) ? { address } : {}),
     ...(path === null && isString(space) ? { space } : {}),
+    ...(path === null && isString(shared) ? { shared } : {}),
     ...(path === null && isString(apart) ? { apart } : {}),
     ...(path === null && isString(behind) ? { behind } : {}),
     ...twinOf(value.twin),
