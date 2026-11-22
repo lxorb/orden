@@ -7,7 +7,6 @@
   import { chrome, landed } from '../../theme/src/api'
   import { startup } from '../../launch/src/api'
   import { hiddenKinds, passOn } from '../../gates/src/api'
-  import { canShareItem, shareThisFile } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { swiping } from '../../back-swipe/src/api'
   import { emptySurface, findBar, passFill, takeoverBar } from '../../surfaces/src/api'
@@ -522,10 +521,6 @@
     print: () => void pages.print(tab.id),
     find: isDesktop ? () => (page.find.open = true) : undefined,
     save: clip,
-    get share() {
-      const path = tab.path
-      return path !== null && canShareItem(path) ? () => void shareThisFile(path) : undefined
-    },
     settings: () => settingsWindow().show(),
   }
 </script>
