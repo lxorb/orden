@@ -43,3 +43,24 @@ describe('hint cards', () => {
     expect(existsSync(join(LIB, 'hints'))).toBe(false)
   })
 })
+describe('the rows of every sidebar view (#2487)', () => {
+  const VIEWS = {
+    files: 'sidebar/src/Tree.svelte',
+    outline: 'sidebar/src/Sidebar.svelte',
+    chats: 'chats-client/src/view/ChatsPanel.svelte',
+    todos: 'tasks-views/src/TodoRow.svelte',
+    links: 'links-panel/src/HitList.svelte',
+    search: 'search/src/SearchPanel.svelte',
+    time: 'time/src/TimePanel.svelte',
+  }
+  test('wear the shared row, so they light, press and stay chosen as a note row does', () => {
+    const own = Object.entries(VIEWS).flatMap(([view, file]) => {
+      const source = readFileSync(join(LIB, file), 'utf8')
+      const style = source.slice(source.lastIndexOf('<style'))
+      const shared = /class="[^"]*\borden-row\b/.test(source)
+      const restyled = /orden-row[^{]*:hover|:hover[^{]*orden-row/.test(style)
+      return shared && !restyled ? [] : [`${view}: ${shared ? 'restyles the hover' : 'has no shared row'}`]
+    })
+    expect(own).toEqual([])
+  })
+})
