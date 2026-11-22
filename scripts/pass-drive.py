@@ -221,7 +221,7 @@ def joined(port, email, password):
     return True
 def pass_turned_on():
     run("(orden.settings.show('experimental'), 'shown')")
-    for label in ("Enable experimental features", "Password manager"):
+    for label in ("Password manager",):
         switch = f"document.querySelector('[role=switch][aria-label=\"{label}\"]')"
         if not until(lambda: app(f"!!{switch}?.getClientRects().length"), 20):
             fail(f"Settings shows no {label} switch")

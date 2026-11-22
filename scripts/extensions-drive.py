@@ -26,7 +26,7 @@ def listed():
 def ours(all_of):
     return [one for one in all_of or [] if one.get("name") == NAME]
 def settings_rows():
-    run("(orden.settings.show('general'), 'shown')")
+    run("(orden.settings.show('browser'), 'shown')")
     for _ in range(40):
         said = run(
             "(() => { const head = [...document.querySelectorAll('h3')].find((one) => one.innerText.trim() === 'Extensions');"
@@ -176,9 +176,9 @@ if PHASE == "installed":
     rows = settings_rows()
     subprocess.run(["grim", str(OUT / "extensions-settings.png")], check=False)
     if not rows or NAME not in rows:
-        fail(f"Settings > General > Extensions does not name it: {rows!r}")
+        fail(f"Settings > Browser > Extensions does not name it: {rows!r}")
     else:
-        print(f"installed: Settings > General > Extensions names it: {rows.strip()[:120]!r}")
+        print(f"installed: Settings > Browser > Extensions names it: {rows.strip()[:120]!r}")
     closed()
     from_popup(
         one, front, "chrome.runtime.sendMessage('open'), 'asked'",
