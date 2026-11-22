@@ -264,6 +264,7 @@ registerAgentVerbs(async () => (await import('./agent-host/src/api')).hostVerbs)
 registerAgentVerbs(async () => (await import('./explorer/src/api')).explorerVerbs())
 registerAgentVerbs(async () => (await import('./chats-client/src/api')).chatVerbs())
 registerAgentVerbs(async () => (await (await import('./terminal/src/api')).terminalAgent()).terminalVerbs)
+registerAgentVerbs(async () => await (await import('./time/src/api')).timeAgentVerbs())
 registerAgentTabKind('terminal', async () => (await (await import('./terminal/src/api')).terminalAgent()).terminalTabs)
 registerAgentTabKind('online', async () => (await (await import('./terminal/src/api')).terminalAgent()).onlineTabs)
 registerSettingsPart({

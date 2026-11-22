@@ -24,6 +24,9 @@
     "tree",
     "tasks-model",
     "tab-kinds",
-    "panes"
+    "panes",
+    "agent-verbs",
+    "file-writes",
+    "protect"
   ]
 }
