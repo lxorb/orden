@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Help from 'lucide/dist/esm/icons/circle-question-mark.mjs'
+  import Info from 'lucide/dist/esm/icons/info.mjs'
   import { cubicOut } from 'svelte/easing'
   import { hang } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
@@ -49,7 +49,7 @@
     }}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each Help as [tag, attrs], index (index)}
+      {#each Info as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}
     </svg>

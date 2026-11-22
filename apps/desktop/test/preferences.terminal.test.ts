@@ -22,9 +22,9 @@ await import('../src/lib/web-tab/src/api')
 await (await import('@orden/contracts')).registered()
 function row(label: string) {
   const found = preferences()
-    .flatMap((pane) => pane.groups)
-    .find((group) => group.title === 'Terminal')
-    ?.fields.find((one) => one.label === label)
+    .find((pane) => pane.id === 'terminal')
+    ?.groups.flatMap((group) => group.fields)
+    .find((one) => one.label === label)
   if (found?.kind !== 'select') throw new Error(`no ${label}`)
   return found
 }
@@ -79,6 +79,7 @@ describe('a desktop’s own rows', () => {
         expect(labels).toContain(label)
       }
       for (const one of fields) {
+        if (!one.hint) continue
         expect(one.hint.replace(/\d\.(\d)?/g, ''), one.label).toMatch(/^[^.]*\.$/)
         expect(one.hint.length, one.label).toBeLessThan(110)
       }

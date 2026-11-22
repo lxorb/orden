@@ -169,7 +169,6 @@ export function appearancePane(): Pane {
             key: 'appearance.style',
             open: true,
             label: 'Style',
-            hint: 'The theme Orden is drawn in.',
             words: ['theme', 'look'],
             options: theme.all.map((one) => ({ value: one.id, label: one.name })),
             get: () => theme.id,
@@ -179,7 +178,6 @@ export function appearancePane(): Pane {
             kind: 'segmented',
             key: 'appearance.mode',
             label: 'Mode',
-            hint: 'Light, dark, or whichever the system is in.',
             words: ['dark', 'light', 'night', 'theme'],
             options: SCHEME_CHOICES.map((one) => ({
               value: one,
@@ -222,7 +220,6 @@ export function appearancePane(): Pane {
             kind: 'switch',
             key: 'appearance.pointingHand',
             label: 'Pointing hand on buttons',
-            hint: 'Shows a pointing hand over buttons, as web pages do.',
             words: ['cursor', 'mouse', 'hand', 'click'],
             initial: DEFAULTS.hand,
             get: () => modes.hand,
@@ -232,7 +229,6 @@ export function appearancePane(): Pane {
             kind: 'switch',
             key: 'appearance.paneFollowsPointer',
             label: 'Active pane follows the pointer',
-            hint: 'The pane under the pointer becomes the one you work in.',
             words: ['pane', 'split', 'focus follows mouse', 'hover', 'mouse', 'active'],
             initial: true,
             get: () => workspace.device.paneFollowsPointer,
@@ -249,7 +245,6 @@ export function appearancePane(): Pane {
                   kind: 'segmented',
                   key: 'appearance.frame',
                   label: 'Frame',
-                  hint: 'Orden’s own title bar, or the window frame of your system.',
                   words: ['title bar', 'window'],
                   options: [
                     { value: 'orden', label: 'Orden’s own' },
@@ -264,7 +259,6 @@ export function appearancePane(): Pane {
                       {
                         kind: 'select',
                         label: 'Zoom',
-                        hint: 'How large all of Orden is drawn on this device.',
                         words: ['scale', 'interface', 'ui', 'sidebar', 'bigger', 'smaller'],
                         options: INTERFACE_ZOOMS.map((one) => ({
                           value: String(one),

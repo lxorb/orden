@@ -80,17 +80,23 @@ SIGNED_IN = (
     " account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' };"
     " account.token = 'drive' }"
 )
-EXPERIMENTAL_SWITCH = '[role=switch][aria-label="Enable experimental features"]'
+EXPERIMENTAL_SWITCH = '[role=switch][aria-label="Databases"]'
+EXPERIMENTAL_TAKEN = "() => JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]').includes('experimental')"
 def experimental_on(page: Any) -> None:
     page.evaluate("() => window.ordenApp.settings.show('experimental')")
     knob = page.locator(EXPERIMENTAL_SWITCH)
     knob.wait_for(state="visible", timeout=15_000)
-    if knob.get_attribute("aria-checked") == "true":
+    if page.evaluate(EXPERIMENTAL_TAKEN):
         return
     knob.click()
     page.locator("[role=dialog].sheet .row button.orden-button:not(.is-quiet)", has_text="Turn on").click()
     page.wait_for_function(
         f"document.querySelector('{EXPERIMENTAL_SWITCH}')?.getAttribute('aria-checked') === 'true'",
+        timeout=15_000,
+    )
+    knob.click()
+    page.wait_for_function(
+        f"document.querySelector('{EXPERIMENTAL_SWITCH}')?.getAttribute('aria-checked') === 'false'",
         timeout=15_000,
     )
 def choose_kind(page: Any, kind: str) -> None:

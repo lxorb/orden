@@ -147,15 +147,10 @@
         </label>
       {/if}
       <div class="orden-setting setting">
-        <button
-          type="button"
-          class="orden-chip is-quiet resend"
-          disabled={busy || resendIn > 0}
-          onclick={() => void mail()}
-        >
+        <button type="button" class="orden-chip resend" disabled={busy || resendIn > 0} onclick={() => void mail()}>
           {resendIn > 0 ? `Resend in ${resendIn}s` : 'Send a new code'}
         </button>
-        <button type="button" class="orden-chip is-quiet" onclick={onend}>Cancel</button>
+        <button type="button" class="orden-chip" onclick={onend}>Cancel</button>
         <button type="submit" class="orden-chip" disabled={busy || !code.trim()}> Continue </button>
       </div>
     </form>

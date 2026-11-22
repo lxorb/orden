@@ -40,7 +40,7 @@
     <span class="name">Import a folder</span>
     <span class="pair">
       <button
-        class="orden-chip is-quiet"
+        class="orden-chip"
         type="button"
         disabled={migrating.working}
         aria-busy={migrating.working}
@@ -79,7 +79,7 @@
   <div class="orden-setting">
     <span class="name"></span>
     <button
-      class="orden-chip is-quiet"
+      class="orden-chip"
       type="button"
       disabled={migrating.working}
       aria-busy={migrating.working}
@@ -108,7 +108,7 @@
   <div class="orden-setting">
     <span class="name"></span>
     <button
-      class="orden-chip is-quiet"
+      class="orden-chip"
       type="button"
       disabled={migrating.working}
       aria-busy={migrating.working}

@@ -3,7 +3,7 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-PANES = ("general", "editor", "markdown", "appearance", "ai", "spelling")
+PANES = ("general", "editor", "appearance", "ai")
 SIGNED_IN = ("sync", "account", "ai")
 OFF_CENTRE = 0.75
 GAP_SPREAD = 0.5

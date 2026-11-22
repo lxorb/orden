@@ -38,9 +38,10 @@ export function openOut() {
     trusted: target.trusted,
   }
 }
-async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>> {
+type Appearance = typeof choices.exportAppearance
+async function look(appearance: Appearance): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>> {
   const chosen = { accent: theme.accent, codeTheme: modes.codeTheme }
-  if (choices.exportAppearance !== 'app') return { ...chosen, scheme: choices.exportAppearance }
+  if (appearance !== 'app') return { ...chosen, scheme: appearance }
   const file = theme.active.path
   const sheets = await Promise.all([
     file
@@ -56,16 +57,20 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
   ])
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
 }
-export async function renderOptions(target: Target): Promise<RunOptions> {
+export async function renderOptions(
+  target: Target,
+  page = choices.page,
+  appearance: Appearance = choices.exportAppearance,
+): Promise<RunOptions> {
   await links.spaceRead(target.path)
   return {
-    page: choices.page,
+    page,
     resolveImage: (src: string) => picturePath(attributeText(src), target.path, target.source) ?? src,
     pictures: picturesOf(target.path, target.source, pictureBeside(target.path), true),
     picturesWritten: (source: string) => picturesWrittenOut(source, target.path),
     readNote: (name: string) => links.embedNote(name, target.path),
     link: (link) => links.relativeTarget(link, target.path),
     escapeHtml: !target.trusted,
-    ...(await look()),
+    ...(await look(appearance)),
   }
 }

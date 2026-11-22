@@ -15,7 +15,8 @@ vi.mock('../../accounts/src/client', async (actual) => ({
   },
 }))
 const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } = await import('./gates.svelte')
-const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
+const { forgetDeveloper, hiddenOf, locked, mayHide, receive, setCoding, setKind, setWord } =
+  await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('../../new-here/src/api')
 const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus()
 const { account } = await import('../../accounts/src/account.svelte')
@@ -187,5 +188,36 @@ describe('another account signing in on this window', () => {
     expect(hiddenKinds.hidden).toEqual(['canvas'])
     await vi.waitFor(() => expect(saved.at(-1)).toEqual(['a', { hiddenKinds: ['canvas'] }]))
     expect(saved.filter(([who]) => who === 'b')).toEqual([])
+  })
+})
+describe('somebody who once said they write no code', () => {
+  const coding = ['terminal', 'remote', 'online']
+  test('has the terminals turned off once, and the old answer forgotten', () => {
+    setKind('canvas', false)
+    localStorage.setItem('orden:modes', JSON.stringify({ developer: false, vim: true }))
+    forgetDeveloper()
+    expect(hiddenKinds.hidden).toEqual(['canvas', ...coding])
+    expect(JSON.parse(localStorage.getItem('orden:modes') ?? '{}')).toEqual({ vim: true })
+    expect(JSON.parse(localStorage.getItem('orden:hidden-kinds') ?? '[]')).toEqual(['canvas', ...coding])
+    setCoding(true)
+    forgetDeveloper()
+    expect(hiddenKinds.hidden).toEqual(['canvas'])
+  })
+  test('who said they do keeps them, the old answer forgotten too', () => {
+    localStorage.setItem('orden:modes', JSON.stringify({ developer: true, vim: true }))
+    forgetDeveloper()
+    expect(hiddenKinds.hidden).toEqual([])
+    expect(JSON.parse(localStorage.getItem('orden:modes') ?? '{}')).toEqual({ vim: true })
+  })
+  test('on the account has them turned off here, and the account is told so it asks no more', async () => {
+    token = 'token'
+    receive({ hiddenKinds: ['pages'], developer: false })
+    expect(hiddenKinds.hidden).toEqual(['pages', ...coding])
+    await vi.waitFor(() =>
+      expect(Object.assign({}, ...saved.map(([, patch]) => patch))).toEqual({
+        hiddenKinds: ['pages', ...coding],
+        developer: true,
+      }),
+    )
   })
 })

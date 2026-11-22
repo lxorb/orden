@@ -53,7 +53,7 @@
   import { theme } from '../../theme/src/api'
   import ThemeStore from './ThemeStore.svelte'
   import { store } from '../../theme-looks/src/api'
-  import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
+  import { type Field, type PictureSide, preferences } from './preferences'
   import { modes } from '../../modes/src/api'
   import { workspace } from '../../workspace/src/api'
   import { dur, fly, slide } from '../../platform/src/api'
@@ -143,6 +143,7 @@
     settings.listing = false
   }
   const offered = () => offers(panes, places, titleOf)
+  let asking = $state<{ ask(): Promise<void> }>()
   function goTo(section: SettingsSectionId, label: string) {
     go(section)
     landing.label = label || null
@@ -314,8 +315,6 @@
     <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
       {#if !stacked}
         <h1>Settings</h1>
-      {:else}
-        {@render asker()}
       {/if}
 
       <label class="orden-field search">
@@ -326,6 +325,11 @@
           spellcheck="false"
           autocapitalize="off"
           autocorrect="off"
+          onkeydown={(event) => {
+            if (event.key !== 'Enter' || event.isComposing || found.length) return
+            event.preventDefault()
+            void asking?.ask()
+          }}
         />
       </label>
 
@@ -361,9 +365,6 @@
       use:scrollbar={settings.section}
       in:fly={enter(24)}
     >
-      {#if !stacked}
-        {@render asker()}
-      {/if}
       {#if query && !stacked}
         <div class="pane">
           <h2 class="orden-pane-head">Search settings</h2>
@@ -392,7 +393,7 @@
 {#snippet asker()}
   {#if __AI__}
     {#await import('./AskSettings.svelte') then { default: AskSettings }}
-      <AskSettings offers={offered} ongo={goTo} />
+      <div class="card"><AskSettings bind:this={asking} said={query} offers={offered} ongo={goTo} /></div>
     {/await}
   {/if}
 {/snippet}
@@ -418,9 +419,10 @@
         {/if}
       {/each}
     </div>
-  {:else}
+  {:else if !__AI__}
     <p class="note">Nothing matches.</p>
   {/if}
+  {@render asker()}
 {/snippet}
 
 {#snippet named(field: Field, where?: string)}
@@ -569,7 +571,7 @@
       <label class="orden-setting setting">
         {@render named(field, where)}
         <input
-          class="orden-field is-value"
+          class="orden-field is-value is-plain"
           type="text"
           value={field.get()}
           placeholder={field.placeholder}
@@ -591,7 +593,7 @@
           options={field.options}
           onchange={(value: string) => field.set(value)}
           label={field.label}
-          plain={viewport.touch}
+          plain
         />
       </div>
     </div>
@@ -600,11 +602,7 @@
 
 {#snippet defaultBrowser()}
   <div class="orden-setting setting">
-    <span class="name"
-      ><span class="what"
-        >Default browser<Hint text="Makes Orden the browser that links from other programs open in." /></span
-      ></span
-    >
+    <span class="name"><span class="what">Default browser</span></span>
     <DefaultBrowser />
   </div>
 {/snippet}
@@ -631,10 +629,10 @@
 {#snippet pane()}
   {#if current}
     {#each current.groups as group, index (index)}
-      <h3>{group.title}</h3>
-      {#if group.fields.length}
+      {#if group.title}<h3>{group.title}</h3>{/if}
+      {#if group.fields.length || (current.id === 'browser' && index === 0)}
         <div class="card">
-          {#if group.title === 'Browser'}{@render defaultBrowser()}{/if}
+          {#if current.id === 'browser' && index === 0}{@render defaultBrowser()}{/if}
           {#each group.fields as field, index (index)}
             {@render row(field)}
             {#if field.key === 'appearance.mode'}{@render themeTools()}{/if}
@@ -654,38 +652,13 @@
       {/if}
     {/each}
 
-    {#if settings.section === 'general' && isDesktop}
-      {@render parts('general')}
-    {/if}
-
-    {#if resettable(current)}
-      <div class="card">
-        <button class="orden-action" onclick={() => resetPane(current)}>Reset to defaults</button>
-      </div>
-    {/if}
+    {@render parts(settings.section)}
   {:else if settings.section === 'account'}
     {#if account.user}
-      <h3>Account</h3>
-      <div class="card">
-        <label class="orden-setting setting">
-          <span class="name"
-            ><span class="what"
-              >Display name<Hint text="The name the others see on what you share and in chats." /></span
-            ></span
-          >
-          <input
-            class="orden-field is-value"
-            value={account.user.name ?? ''}
-            placeholder="Your name"
-            spellcheck="false"
-            onchange={(event) => void rename(event.currentTarget.value)}
-          />
-        </label>
-        <Addresses />
-      </div>
-
-      {#await import('../../accounts-ui/src/api').then((ui) => ui.profileRows()) then rows}
-        {#if rows}<rows.default />{/if}
+      {#await import('../../accounts-ui/src/api').then((ui) => ui.profileRows())}
+        {@render accountCard()}
+      {:then rows}
+        <rows.default>{@render accountCard()}</rows.default>
       {/await}
 
       <h3>Storage</h3>
@@ -733,7 +706,7 @@
         <label class="orden-setting setting">
           <span class="name">Your name</span>
           <input
-            class="orden-field is-value"
+            class="orden-field is-value is-plain"
             value={account.guest.name}
             placeholder="Your name"
             spellcheck="false"
@@ -756,7 +729,7 @@
     <SyncPane />
   {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
     {@render parts('ai')}
-  {:else if settings.section === 'online' || settings.section === 'remote' || settings.section === 'archived'}
+  {:else if settings.section === 'archived'}
     {@render parts(settings.section)}
   {:else if settings.section === 'space'}
     {@render parts('space')}
@@ -768,6 +741,25 @@
   {:else if settings.section === 'import'}
     {@render parts('import')}
   {/if}
+{/snippet}
+
+{#snippet accountCard()}
+  <div class="card">
+    <label class="orden-setting setting">
+      <span class="name"
+        ><span class="what">Display name<Hint text="The name the others see on what you share and in chats." /></span
+        ></span
+      >
+      <input
+        class="orden-field is-value is-plain"
+        value={account.user?.name ?? ''}
+        placeholder="Your name"
+        spellcheck="false"
+        onchange={(event) => void rename(event.currentTarget.value)}
+      />
+    </label>
+    <Addresses />
+  </div>
 {/snippet}
 
 {#snippet keyboard()}
@@ -784,7 +776,7 @@
           options={presetChoices}
           onchange={(value: string) => void choosePreset(value)}
           label="Shortcuts"
-          plain={viewport.touch}
+          plain
         />
       </div>
     </div>
@@ -793,7 +785,6 @@
       kind: 'switch',
       key: 'shortcuts.vim',
       label: 'Vim keys',
-      hint: 'Moves and edits in notes with Vim’s keys.',
       get: () => modes.vim,
       set: (on) => modes.setVimKeys(on),
     })}
@@ -1099,6 +1090,50 @@
   }
   .part {
     display: contents;
+  }
+  .sheet:not(.phone) .pane {
+    gap: var(--space-5);
+  }
+  .sheet:not(.phone) .pane h2 {
+    margin: 0;
+    font-size: calc(var(--text-base) * 1.45);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .sheet:not(.phone) .pane :global(h3) {
+    margin: 0 0 calc(-1 * var(--space-3));
+    padding-inline: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-strong);
+    color: var(--muted);
+  }
+  .sheet:not(.phone) .pane :global(.card) {
+    padding: 0 var(--space-4);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+  }
+  .sheet:not(.phone) .pane :global(.card:empty) {
+    display: none;
+  }
+  .sheet:not(.phone) .pane :global(.card :is(.orden-setting, .orden-action)) {
+    min-height: calc(var(--row-height) + var(--space-4));
+  }
+  .sheet:not(.phone) .pane :global(.card :is(.orden-setting, .orden-action) + :is(.orden-setting, .orden-action)) {
+    border-top: 1px solid var(--line);
+  }
+  .sheet:not(.phone) .pane :global(.card .orden-setting > .name > :is(.what, .orden-named)) {
+    font-weight: var(--weight-row);
+    color: var(--text-strong);
+  }
+  .sheet:not(.phone) .setting .value.said {
+    font-family: var(--font-ui);
+  }
+  .sheet:not(.phone) .card > .stack {
+    padding-block: var(--space-3);
+  }
+  .sheet:not(.phone) .hint.caption {
+    padding-inline: var(--space-1);
   }
   .card {
     display: flex;

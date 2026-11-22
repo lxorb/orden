@@ -237,7 +237,7 @@ def look(browser: Browser, kind: str, width: int, height: int, scheme: str) -> N
             DRIVE.wait_for(page, SIGNED_IN, "the account")
         name = f"{kind}-{width}-{scheme}-{machine}"
         page.evaluate("() => window.ordenApp.settings.show('general')")
-        page.evaluate("() => window.ordenApp.settings.show('online')")
+        page.evaluate("() => window.ordenApp.settings.show('terminal')")
         DRIVE.wait_for(page, "document.querySelector('.online .meter')", f"[{name}] the meters")
         quiet(page)
         shot(page, name)
@@ -314,4 +314,4 @@ def ending(page: Page, account: Account) -> None:
 def drive(browser: Browser) -> None:
     for kind, width, height, scheme in LOOKS:
         look(browser, kind, width, height, scheme)
-raise SystemExit(DRIVE.run(drive, "Settings > Online terminal is laid out in every look"))
+raise SystemExit(DRIVE.run(drive, "Settings > Terminal > Online terminal is laid out in every look"))

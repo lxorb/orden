@@ -194,7 +194,7 @@
       </span>
       <span class="text">{when(session.lastUsedAt)}</span>
       {#if !session.current}
-        <button class="orden-chip" onclick={() => void end(session)}>End</button>
+        <button class="orden-chip is-danger" onclick={() => void end(session)}>End</button>
       {/if}
     </div>
   {/each}

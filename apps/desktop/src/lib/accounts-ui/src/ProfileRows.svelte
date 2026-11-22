@@ -11,6 +11,9 @@
   import { CLEARS, type Clears, clearsAt, stands } from '../../accounts/src/api'
   import { Hint } from '../../ui-controls/src/api'
   import { Switch } from '../../ui-controls/src/api'
+  import type { Snippet } from 'svelte'
+
+  const { children }: { children?: Snippet } = $props()
 
   const user = $derived(account.user)
   const status = $derived(user && stands(user.status, Date.now()) ? (user.status ?? null) : null)
@@ -80,44 +83,46 @@
 </script>
 
 {#if user}
-  <h3>Profile</h3>
-  <div class="card">
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="orden-setting setting"
-      use:dropOver={(event) => event.preventDefault()}
-      ondrop={(event) => {
-        event.preventDefault()
-        given(event.dataTransfer?.files)
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="profile"
+    use:dropOver={(event) => event.preventDefault()}
+    ondrop={(event) => {
+      event.preventDefault()
+      given(event.dataTransfer?.files)
+    }}
+    onpaste={(event) => given(event.clipboardData?.files)}
+  >
+    <Avatar
+      face={{
+        name: account.name ?? '',
+        avatar: user.avatar ?? null,
+        key: user.id,
       }}
-      onpaste={(event) => given(event.clipboardData?.files)}
-    >
-      <Avatar
-        face={{
-          name: account.name ?? '',
-          avatar: user.avatar ?? null,
-          key: user.id,
-        }}
-        size={32}
-      />
-      <span class="name"
-        ><span class="orden-named">Picture<Hint text="The picture the others see beside your name." /></span></span
-      >
-      <span class="ends">
-        <button class="orden-chip" aria-haspopup={camera ? 'menu' : undefined} onclick={change}>Change</button>
-        {#if user.avatar}
-          <button class="orden-chip" onclick={() => void kept(removeFace)}>Remove</button>
-        {/if}
-      </span>
-    </div>
+      size={80}
+    />
+    <span class="who">
+      <b>{account.name ?? ''}</b>
+      {#if user.email}<small>{user.email}</small>{/if}
+    </span>
+    <span class="ends">
+      <button class="orden-chip" aria-haspopup={camera ? 'menu' : undefined} onclick={change}>Change picture</button>
+      {#if user.avatar}
+        <button class="orden-chip is-danger" onclick={() => void kept(removeFace)}>Remove</button>
+      {/if}
+    </span>
+  </div>
 
+  {@render children?.()}
+
+  <div class="card">
     <label class="orden-setting setting">
       <span class="name"
         ><span class="orden-named">Pronouns<Hint text="Shown to the others beside your name, such as she/her." /></span
         ></span
       >
       <input
-        class="orden-field is-value"
+        class="orden-field is-value is-plain"
         value={user.pronouns ?? ''}
         placeholder="Optional"
         maxlength="40"
@@ -127,10 +132,7 @@
     </label>
 
     <label class="orden-setting setting is-tall">
-      <span class="name"
-        ><span class="orden-named">Bio<Hint text="A few words about you that the others see on your profile." /></span
-        ></span
-      >
+      <span class="name"><span class="orden-named">Bio</span></span>
       <textarea
         class="orden-field is-value"
         rows="3"
@@ -141,11 +143,7 @@
     </label>
 
     <div class="orden-setting setting is-tall">
-      <span class="name"
-        ><span class="orden-named"
-          >Status<Hint text="What you are up to, shown to the others beside your name until it clears." /></span
-        ></span
-      >
+      <span class="name"><span class="orden-named">Status</span></span>
       <span class="orden-field is-value">
         <button
           type="button"
@@ -191,15 +189,13 @@
 
     {#if status}
       <div class="orden-setting setting">
-        <span class="name"
-          ><span class="orden-named">Clear after<Hint text="When your status is taken away again." /></span></span
-        >
+        <span class="name"><span class="orden-named">Clear after</span></span>
         <div class="orden-setting-value">
           <Select
             value={clears}
             options={CLEARS.map((one) => ({ value: one, label: CLEAR_WORDS[one] }))}
             label="Clear after"
-            plain={viewport.touch}
+            plain
             onchange={(value: string) => {
               clears = value as Clears
               withStatus({})
@@ -228,11 +224,7 @@
       class="orden-setting setting pressable"
       onclick={() => void kept(() => changeProfile({ hidden: !(user.hidden ?? false) }))}
     >
-      <span class="name"
-        ><span class="orden-named"
-          >Appear offline<Hint text="The others see you as offline even while you are here." /></span
-        ></span
-      >
+      <span class="name"><span class="orden-named">Appear offline</span></span>
       <Switch
         on={user.hidden ?? false}
         label="Appear offline"
@@ -248,12 +240,33 @@
 {/if}
 
 <style>
-  h3 {
-    margin: var(--space-3) 0 calc(-1 * var(--space-2));
+  .profile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .who {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .who b {
+    overflow: hidden;
     font-family: var(--font-ui);
-    font-size: var(--text-sm);
+    font-size: 20px;
     font-weight: var(--weight-strong);
-    color: var(--muted-strong);
+    color: var(--text-strong);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .who small {
+    overflow: hidden;
+    font-size: var(--text-sm);
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .card {
     display: flex;

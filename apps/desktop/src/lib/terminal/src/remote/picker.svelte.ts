@@ -31,7 +31,7 @@ class HostPicker {
   }
   manage(): void {
     this.dismiss()
-    settingsWindow().show('remote')
+    settingsWindow().show('terminal')
   }
   dismiss(): void {
     this.open = false

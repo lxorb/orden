@@ -1,7 +1,8 @@
 import { settingFieldsIn } from '@orden/contracts'
 import { method, isDesktop, isMobile, platform } from '../../platform/src/api'
 import { usageChoice } from '../../usage/src/api'
-import { DEFAULTS, modes, REMIND_BEFORE } from '../../modes/src/api'
+import { DEFAULTS, KEEP_MONTH, KEEP_YEAR, modes, REMIND_BEFORE } from '../../modes/src/api'
+import { account } from '../../accounts/src/api'
 import { protectionOn, turnProtection } from '../../sharing/src/api'
 import { DEFAULT_RELOCK, NEVER, RELOCK_MINUTES, unlocks } from '../../protect/src/api'
 import { recovery } from '../../history/src/api'
@@ -11,7 +12,6 @@ import { tabCycle } from '../../tab-cycle/src/api'
 import { fitTabs, iconTabs, PREVIEW_DELAY, previewDelay, unloadTabs } from '../../tab-strip/src/api'
 import { swipeChoice } from '../../back-swipe/src/api'
 import { asChannel, switchWebChannel, updates, webChannel } from '../../updates/src/api'
-import { hiddenTabs, isHiddenTabs } from '../../workspace/src/api'
 import type { Field, Group, Pane } from './fields'
 import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
@@ -70,53 +70,64 @@ function privacyGroup(): Group {
     ],
   }
 }
-function remindersGroup(): Group {
+function reminderFields(): Field[] {
   const exact = method('exactAlarms')
   const ask = method('askExactAlarms')
+  return [
+    {
+      kind: 'select',
+      key: 'general.remindBefore',
+      label: 'Reminders',
+      hint: 'How long before a task’s time it reminds you, unless the task says otherwise.',
+      words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
+      options: REMIND_BEFORE.map((minutes) => ({
+        value: String(minutes),
+        label: minutes < 0 ? 'Off' : minutes === 0 ? 'At the time' : `${minutes} min`,
+      })),
+      initial: String(DEFAULTS.remindBefore),
+      get: () => String(modes.remindBefore),
+      set: (value) => modes.setRemindBefore(Number(value)),
+    },
+    ...(hasTray
+      ? ([
+          {
+            kind: 'switch',
+            key: 'general.stayInTray',
+            label: 'Stay in the tray',
+            hint: 'Keeps Orden running in the tray after its window closes, so chat notices still arrive.',
+            words: ['tray', 'background', 'menu bar', 'close', 'quit'],
+            get: () => residency.on,
+            set: (on) => residency.set(on),
+          },
+        ] satisfies Field[])
+      : []),
+    ...(exact && ask
+      ? ([
+          {
+            kind: 'switch',
+            label: 'Exact alarms',
+            hint: 'Lets reminders ring at the exact minute rather than when the phone gets round to it.',
+            words: ['alarm', 'reminder', 'exact', 'battery'],
+            get: () => exact(),
+            set: () => ask(),
+          },
+        ] satisfies Field[])
+      : []),
+  ]
+}
+function accountVersionsField(): Field {
   return {
-    title: 'Reminders',
-    ...(isDesktop && platform() === 'linux' ? { caption: { text: 'Reminders ring while Orden is open' } } : {}),
-    fields: [
-      {
-        kind: 'select',
-        key: 'general.remindBefore',
-        label: 'Automatic',
-        hint: 'How long before a task’s time it reminds you, unless the task says otherwise.',
-        words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
-        options: REMIND_BEFORE.map((minutes) => ({
-          value: String(minutes),
-          label: minutes < 0 ? 'Off' : minutes === 0 ? 'At the time' : `${minutes} min`,
-        })),
-        initial: String(DEFAULTS.remindBefore),
-        get: () => String(modes.remindBefore),
-        set: (value) => modes.setRemindBefore(Number(value)),
-      },
-      ...(hasTray
-        ? ([
-            {
-              kind: 'switch',
-              key: 'general.stayInTray',
-              label: 'Stay in the tray',
-              hint: 'Keeps Orden running in the tray after its window closes, so chat notices still arrive.',
-              words: ['tray', 'background', 'menu bar', 'close', 'quit'],
-              get: () => residency.on,
-              set: (on) => residency.set(on),
-            },
-          ] satisfies Field[])
-        : []),
-      ...(exact && ask
-        ? ([
-            {
-              kind: 'switch',
-              label: 'Exact alarms',
-              hint: 'Lets reminders ring at the exact minute rather than when the phone gets round to it.',
-              words: ['alarm', 'reminder', 'exact', 'battery'],
-              get: () => exact(),
-              set: () => ask(),
-            },
-          ] satisfies Field[])
-        : []),
+    kind: 'select',
+    key: 'sync.keepVersions',
+    label: 'Keep versions on the account for',
+    words: ['history', 'backup', 'sync', 'account', 'month', 'year'],
+    options: [
+      { value: String(KEEP_MONTH), label: 'A month' },
+      { value: String(KEEP_YEAR), label: 'A year' },
     ],
+    initial: String(DEFAULTS.keepVersions),
+    get: () => String(modes.keepVersions),
+    set: (value) => modes.setKeepVersions(Number(value)),
   }
 }
 function keptGroup(): Group {
@@ -142,13 +153,38 @@ export function generalPane(): Pane {
     label: 'General',
     groups: [
       {
-        title: 'Recovery',
+        title: '',
+        fields: [
+          {
+            kind: 'switch',
+            key: 'general.protection',
+            label: 'Use protection',
+            hint: 'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.',
+            words: ['protect', 'lock', 'password', 'private', 'hide'],
+            initial: false,
+            get: () => protectionOn(),
+            set: (on) => void turnProtection(on),
+          },
+          ...(protectionOn() ? [relockField()] : []),
+          {
+            kind: 'switch',
+            key: 'general.silentMode',
+            label: 'Silent mode',
+            hint: 'Hides the tips Orden shows while you get to know it.',
+            words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
+            initial: DEFAULTS.silent,
+            get: () => modes.silent,
+            set: () => modes.toggleSilent(),
+          },
+        ],
+      },
+      {
+        title: 'Version history',
         fields: [
           {
             kind: 'select',
             key: 'general.keepVersionEvery',
             label: 'Keep a version every',
-            hint: 'How often a note you are editing is saved as a version you can go back to in History.',
             words: ['backup', 'history', 'snapshot'],
             options: SNAPSHOT_MINUTES.map((minutes) => ({
               value: String(minutes),
@@ -162,7 +198,6 @@ export function generalPane(): Pane {
             kind: 'select',
             key: 'general.keepVersionsFor',
             label: 'Keep versions for',
-            hint: 'How long those versions are kept before they are deleted.',
             options: KEEP_DAYS.map((days) => ({
               value: String(days),
               label: days === 1 ? '1 day' : `${days} days`,
@@ -171,27 +206,10 @@ export function generalPane(): Pane {
             get: () => String(recovery.days),
             set: (value) => recovery.setDays(Number(value)),
           },
+          ...(account.user ? [accountVersionsField()] : []),
         ],
       },
       ...(keptForGood.able ? [keptGroup()] : []),
-      ...[
-        {
-          title: 'Protection',
-          fields: [
-            {
-              kind: 'switch' as const,
-              key: 'general.protection',
-              label: 'Use protection',
-              hint: 'Adds Protect to menus, to keep notes, folders and spaces behind a password or this device’s lock.',
-              words: ['protect', 'lock', 'password', 'private', 'hide'],
-              initial: false,
-              get: () => protectionOn(),
-              set: (on: boolean) => void turnProtection(on),
-            },
-            ...(protectionOn() ? [relockField()] : []),
-          ],
-        } satisfies Group,
-      ],
       {
         title: 'Tabs',
         fields: [
@@ -222,7 +240,6 @@ export function generalPane(): Pane {
                   kind: 'switch',
                   key: 'general.iconTabs',
                   label: 'Show other tabs as icons',
-                  hint: 'Every tab but the one in front shows only its icon; pointing at one shows its name.',
                   words: ['icon', 'compact', 'pinned', 'title', 'tabs'],
                   initial: false,
                   get: () => iconTabs.on,
@@ -232,7 +249,6 @@ export function generalPane(): Pane {
                   kind: 'switch',
                   key: 'general.fitTabs',
                   label: 'Tabs as wide as their names',
-                  hint: 'Each tab is only as wide as its icon, name and close button need; off, every tab is the same width.',
                   words: ['width', 'wide', 'narrow', 'compact', 'fit', 'title', 'tabs'],
                   initial: true,
                   get: () => fitTabs.on,
@@ -242,7 +258,6 @@ export function generalPane(): Pane {
                   kind: 'slider',
                   key: 'general.tabPreviewDelay',
                   label: 'Tab preview delay',
-                  hint: 'How long the pointer rests on a tab before its preview shows.',
                   words: ['hover', 'card', 'tooltip', 'preview', 'tabs'],
                   min: PREVIEW_DELAY.least,
                   max: PREVIEW_DELAY.most,
@@ -260,75 +275,19 @@ export function generalPane(): Pane {
                   kind: 'switch',
                   key: 'general.swipeBetweenPages',
                   label: 'Swipe between pages',
-                  hint: 'Two fingers sideways on the touchpad go back and forward.',
                   words: ['swipe', 'gesture', 'touchpad', 'trackpad', 'back', 'forward', 'history'],
                   initial: true,
                   get: () => swipeChoice.on,
                   set: (on) => swipeChoice.set(on),
                 },
               ] satisfies Field[])),
-          ...(isDesktop
-            ? ([
-                {
-                  kind: 'segmented',
-                  key: 'general.hiddenTabs',
-                  label: 'Hidden tabs',
-                  hint: 'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.',
-                  words: ['spaces', 'background', 'pause', 'sleep', 'freeze', 'audio'],
-                  options: [
-                    { value: 'run', label: 'Keep running' },
-                    { value: 'pause', label: 'Pause' },
-                    { value: 'ask', label: 'Ask' },
-                  ],
-                  initial: 'ask',
-                  get: () => hiddenTabs.choice,
-                  set: (value) => hiddenTabs.set(isHiddenTabs(value) ? value : 'ask'),
-                },
-              ] satisfies Field[])
-            : []),
           ...settingFieldsIn('general', 'Tabs'),
         ],
       },
       {
-        title: 'Add task',
-        fields: [...settingFieldsIn('general', 'Add task')],
+        title: 'Tasks',
+        fields: [...settingFieldsIn('general', 'Add task'), ...reminderFields()],
       },
-      ...[
-        {
-          title: 'Code',
-          fields: [
-            {
-              kind: 'switch' as const,
-              key: 'general.developerMode',
-              label: 'Developer mode',
-              hint: 'Shows terminals and the other tools for writing code.',
-              words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
-              initial: true,
-              get: () => modes.coder,
-              set: (on: boolean) => modes.setDeveloper(on),
-            },
-          ],
-        },
-      ],
-      ...[
-        {
-          title: 'Hints',
-          fields: [
-            {
-              kind: 'switch' as const,
-              key: 'general.silentMode',
-              label: 'Silent mode',
-              hint: 'Hides the tips Orden shows while you get to know it.',
-              words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
-              initial: DEFAULTS.silent,
-              get: () => modes.silent,
-              set: () => modes.toggleSilent(),
-            },
-          ],
-        },
-      ],
-      remindersGroup(),
-      ...(isDesktop && modes.coder ? [{ title: 'Terminal', fields: settingFieldsIn('general', 'Terminal') }] : []),
       ...(isDesktop && ['linux', 'windows'].includes(platform()) ? [gpuGroup()] : []),
       ...(isDesktop ? [privacyGroup()] : []),
       {
@@ -371,7 +330,6 @@ export function generalPane(): Pane {
           versionField(),
         ],
       },
-      ...(isDesktop ? [{ title: 'Browser', fields: settingFieldsIn('general', 'Browser') }] : []),
     ],
   }
 }

@@ -163,9 +163,7 @@ describe('the menu, the palette and the shortcut settings', () => {
     await only(() => workspace.openGraph())
     expect(offeredIds()).toEqual([...offeredBy('note')])
     expect(menuRows().length).toBeGreaterThan(0)
-    expect(menuRows().filter((row) => row.label !== 'Page setup for export')).toSatisfy(
-      (rows: { disabled?: boolean }[]) => rows.every((row) => row.disabled === true),
-    )
+    expect(menuRows()).toSatisfy((rows: { disabled?: boolean }[]) => rows.every((row) => row.disabled === true))
   })
   test('show the same rows in the same order in the menu as in the palette', async () => {
     for (const open of [

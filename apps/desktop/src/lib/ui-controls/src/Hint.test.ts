@@ -11,7 +11,7 @@ describe('a hint', () => {
   test('draws the glyph', () => {
     expect(body).toContain('<svg')
     expect(body).toContain('<circle')
-    expect(body).toContain('d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"')
+    expect(body).toContain('d="M12 16v-4"')
   })
   test('carries its sentence, as the name of the thing that shows it', () => {
     expect(body).toContain(`aria-label="${SENTENCE}"`)
@@ -53,7 +53,7 @@ describe('where the panel draws it', () => {
     expect(panel).toContain('{#if field.hint}<Hint text={field.hint} />{/if}')
     expect(drawn.filter((one) => one === '<Hint text={entry.why()} />')).toHaveLength(1)
     const written = drawn.filter((one) => one !== '<Hint text={field.hint} />' && one !== '<Hint text={entry.why()} />')
-    expect(written.length).toBeGreaterThan(2)
+    expect(written.length).toBeGreaterThan(1)
     for (const one of written) expect(one).toMatch(/^<Hint text="[^"]+\." \/>$/)
   })
   test('through the snippet every kind of row renders its name with', () => {

@@ -23,8 +23,8 @@ const LOCK = { root: ROOT, key: 'Diary.md', way: 'password' as const }
 const ids = (path: string) => protectEntries(path).map((one) => one.id)
 const protectionFields = () =>
   generalPane()
-    .groups.filter((group) => group.title === 'Protection')
-    .flatMap((group) => group.fields.map((one) => one.key))
+    .groups.flatMap((group) => group.fields.map((one) => one.key))
+    .filter((key) => key === 'general.protection' || key === 'general.relockAfter')
 beforeEach(() => {
   workspace.spaces = [{ id: 's', name: 'Space', root: ROOT }]
   hiddenKinds.hidden = []

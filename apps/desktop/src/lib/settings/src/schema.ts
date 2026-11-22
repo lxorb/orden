@@ -12,7 +12,7 @@ export interface SettingSchema {
 export type Schema = Record<string, SettingSchema>
 function settingOf(field: Field): SettingSchema | null {
   if (!field.key) return null
-  const about = { description: field.hint }
+  const about = { description: field.hint ?? field.label }
   const initial = 'initial' in field && field.initial !== undefined ? { default: field.initial } : {}
   if (field.member !== undefined) {
     if (field.kind !== 'switch') return null

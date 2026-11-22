@@ -82,7 +82,7 @@ describe('the file explorer, under Experimental', () => {
   test('shows in Settings as off, and off is its default', () => {
     expect(field().get()).toBe(false)
     expect(field().initial).toBe(false)
-    expect(field().locked?.()).toBe(false)
+    expect(field().locked).toBeUndefined()
   })
   test('stays off for a reader who had it on before it was experimental', () => {
     localStorage.setItem(KINDS_KEY, JSON.stringify(['canvas', 'shown-explorer']))

@@ -18,4 +18,4 @@ export {
   TIME_WORD,
   timeOn,
 } from './gates.svelte'
-export { locked, receive, setKind, setWord, turnedOff } from './kind-choice'
+export { forgetDeveloper, locked, receive, setCoding, setKind, setWord, turnedOff } from './kind-choice'

@@ -29,6 +29,7 @@ import { type Picture, readPictures, sourcesIn } from './pictures'
 import { toPlainText } from './text'
 import { bundleFiles, packEntries } from './textbundle'
 import { workspace } from '../../workspace/src/api'
+import { type PdfPreview, previewOf } from './pdf-preview'
 
 export interface Note {
   source: string
@@ -60,6 +61,12 @@ const picturesOf = (sources: readonly string[], options: RunOptions) =>
 function paperFor(note: Note, options: RunOptions, title: string): PaperTwips {
   const setup = pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP)
   return paperTwips(setup, title, runningDate(note.source, options.date))
+}
+export async function pdfPreview(given: Note, options: RunOptions): Promise<PdfPreview> {
+  const note = await withKept(given)
+  await loadFor(note.source)
+  const page = paperInches(pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP))
+  return previewOf(await pageOf(note, { ...options, scheme: 'light' }), page)
 }
 async function exportPdf(note: Note, options: RunOptions): Promise<string | null> {
   const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))

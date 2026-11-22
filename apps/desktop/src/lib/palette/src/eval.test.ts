@@ -109,7 +109,7 @@ const CASES: [string, string, 1 | 3][] = [
   ['chatgpt', 'page ChatGPT', 1],
   ['polybox', 'page polybox', 1],
   ['tauri', 'page tauri - Rust', 3],
-  ['spelling', 'setting Spelling', 1],
+  ['spelling', 'setting Check spelling', 1],
   ['spell check', 'setting Check spelling', 1],
   ['check spelling', 'setting Check spelling', 1],
   ['font', 'setting Text size', 1],

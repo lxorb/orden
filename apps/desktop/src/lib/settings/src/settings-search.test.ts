@@ -76,7 +76,7 @@ const panes: Pane[] = [
 ]
 const places: Place[] = [
   { section: 'account', label: 'Storage', text: ['used', 'limit'] },
-  { section: 'export', label: 'Export as PDF', text: [] },
+  { section: 'terminal', label: 'Add host', text: ['SSH'] },
 ]
 const labels = (query: string) =>
   search(query, panes, places).map((hit) => (hit.kind === 'field' ? hit.field.label : hit.label))
@@ -89,7 +89,7 @@ describe('searching the settings', () => {
     ['nocturne', ['Mode']],
     ['footnotes', ['Strict CommonMark']],
     ['limit', ['Storage']],
-    ['pdf', ['Export as PDF']],
+    ['ssh', ['Add host']],
     ['  DEUTSCH ', ['Language']],
     ['', []],
     ['   ', []],
@@ -98,17 +98,16 @@ describe('searching the settings', () => {
   })
   test('finds a field by the pane it lives in, and says which pane a hit belongs to', () => {
     expect(labels('general')).toHaveLength(5)
-    const [hit] = search('pdf', panes, places)
-    expect(hit?.kind === 'place' ? hit.section : null).toBe('export')
+    const [hit] = search('ssh', panes, places)
+    expect(hit?.kind === 'place' ? hit.section : null).toBe('terminal')
     const [field] = search('wait', panes, places)
     expect(field?.kind === 'field' ? field.pane.id : null).toBe('general')
   })
 })
 describe('the hand-written panes the search knows about', () => {
   const source = readFileSync(join(import.meta.dirname, './places.ts'), 'utf8')
-  test('name how long the account keeps a note’s history, and the rescue under it', () => {
-    expect(source).toContain("label: 'History on the account'")
-    expect(source).toContain("'Keep versions'")
+  test('name the rescue that takes a space back, while how long versions are kept is a field under General', () => {
+    expect(source).not.toContain("label: 'History on the account'")
     expect(source).toContain("label: 'Go back'")
   })
 })

@@ -56,9 +56,10 @@ def printed_pdf(page: Page) -> None:
         }"""
     )
     DRIVE.pick_export(page, "pdf").click()
+    page.locator('[role="dialog"][aria-label="Export as PDF"] .go').click()
     wait_for(
         page,
-        "() => [...document.querySelectorAll('iframe')].some((one) => one.contentDocument?.body?.innerText.includes('kestrel hangs'))",
+        "() => [...document.querySelectorAll('iframe:not(.preview)')].some((one) => one.contentDocument?.body?.innerText.includes('kestrel hangs'))",
         "the PDF's sheet with the note on it",
     )
     say("pdf: the note went to the print sheet that saves a PDF")
@@ -110,23 +111,40 @@ def no_palette_rows(page: Page) -> None:
     if not rows or not rows[0].startswith("Export…"):
         wrong("Export… is not the first row for pdf")
     page.keyboard.press("Escape")
-def settings_export(page: Page) -> None:
-    page.evaluate("() => window.ordenApp.settings.show('export')")
-    page.wait_for_timeout(600)
-    seen = page.evaluate(
-        """() => {
-          const pane = document.querySelector('[role="region"][aria-label="Settings"] .pane')
-          return {
-            heads: [...pane.querySelectorAll('h3')].map((one) => one.innerText),
-            actions: [...pane.querySelectorAll('.orden-action')].map((one) => one.innerText),
-          }
-        }"""
+def pdf_dialog(page: Page) -> None:
+    printing = "() => document.querySelectorAll('iframe:not(.preview)').length"
+    frames = page.evaluate(printing)
+    DRIVE.pick_export(page, "pdf").click()
+    dialog = page.locator('[role="dialog"][aria-label="Export as PDF"]')
+    dialog.wait_for()
+    wait_for(
+        page,
+        """() => document.querySelector('iframe.preview')?.contentDocument?.body?.innerText.includes('kestrel hangs')""",
+        "the first page in the preview",
     )
-    say(f"Settings > Export: {seen}")
-    if any(head == "This note" for head in seen["heads"]):
-        wrong("Settings still has the This note section")
-    if any(one.startswith("Export as") for one in seen["actions"]):
-        wrong(f"Settings still exports the note: {seen['actions']}")
+    portrait = page.evaluate("() => document.querySelector('iframe.preview').getBoundingClientRect().toJSON()")
+    dialog.locator('[role="radio"]', has_text="Landscape").click()
+    dialog.locator('input[placeholder="${title}"]').fill("Field notes")
+    wait_for(
+        page,
+        """() => {
+          const frame = document.querySelector('iframe.preview')
+          const box = frame?.getBoundingClientRect()
+          return box && box.width > box.height && frame.contentDocument?.body?.innerText.includes('Field notes')
+        }""",
+        "the preview turned on its side with the header on it",
+    )
+    say(f"the preview went from {portrait['width']:.0f}x{portrait['height']:.0f} to landscape with a header")
+    shot(page, "pdf-dialog")
+    dialog.locator("button", has_text="Cancel").click()
+    dialog.wait_for(state="detached")
+    page.wait_for_timeout(800)
+    if page.evaluate(printing) > frames:
+        wrong("Cancel still sent the note to print")
+    kept = page.evaluate("() => JSON.parse(localStorage.getItem('orden:page') ?? '{}')")
+    say(f"the page kept after Cancel: {kept}")
+    if kept.get("orientation") != "landscape" or kept.get("header") != "Field notes":
+        wrong(f"the dialog did not keep its page: {kept}")
 def drive(browser: Browser) -> None:
     for scheme in ("light", "dark"):
         context = DRIVE.context(browser, color_scheme=scheme, viewport={"width": 1200, "height": 820})
@@ -139,6 +157,6 @@ def drive(browser: Browser) -> None:
             each_format(page)
             remembered(page)
             no_palette_rows(page)
-            settings_export(page)
+            pdf_dialog(page)
         context.close()
 raise SystemExit(DRIVE.run(drive, "Export… picks every format from one picker"))

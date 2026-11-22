@@ -209,3 +209,8 @@ export async function settleMarkdown(app: string | null): Promise<void> {
   const { modes } = await import('../../modes/src/api')
   if ((style === 'clean') !== modes.quietMarks) modes.toggleQuietMarks()
 }
+export async function settleCoding(writes: boolean, first: boolean): Promise<void> {
+  const [{ modes }, { setCoding }] = await Promise.all([import('../../modes/src/api'), import('../../gates/src/api')])
+  if (first && modes.quietMarks === writes) modes.toggleQuietMarks()
+  setCoding(writes)
+}

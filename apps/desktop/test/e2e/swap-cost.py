@@ -50,7 +50,7 @@ def main() -> int:
             [
                 "window.ordenApp.settings.section = 'editor'",
                 "window.ordenApp.settings.section = 'appearance'",
-                "window.ordenApp.settings.section = 'markdown'",
+                "window.ordenApp.settings.section = 'ai'",
                 "window.ordenApp.settings.section = 'general'",
             ],
         )

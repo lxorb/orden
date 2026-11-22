@@ -1,6 +1,6 @@
 import { webPages } from '@orden/contracts'
 import { mount } from 'svelte'
-import { modes } from '../../modes/src/api'
+import { hiddenKinds } from '../../gates/src/api'
 import { overlays, viewport } from '../../ui-kit/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
@@ -34,6 +34,7 @@ const WIDE_REM = 16
 const WORDS_TALL = 72
 const STILL_TALL = 144
 const FACTS_TALL = 48
+const runsTerminals = () => hiddenKinds.offers('terminal') || hiddenKinds.offers('remote')
 class Hovering {
   card = $state<Shown | null>(null)
   facts = $state<string[][]>([])
@@ -101,7 +102,7 @@ class Hovering {
     const width = wide()
     const at = spot(aim.box, width, window.innerWidth)
     const still = await this.stillFor(aim)
-    const facts = modes.coder ? FACTS_TALL : 0
+    const facts = runsTerminals() ? FACTS_TALL : 0
     const tall = WORDS_TALL + (still ? STILL_TALL : 0) + facts
     const sliding = this.card !== null
     const over = await this.cover({
@@ -143,7 +144,7 @@ class Hovering {
     this.unwatch?.stop()
     this.unwatch = null
     this.facts = []
-    if (!tab || !modes.coder) return
+    if (!tab || !runsTerminals()) return
     let stop: (() => void) | null = null
     let gone = false
     this.unwatch = {

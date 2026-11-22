@@ -30,7 +30,6 @@ export function terminalFields(): SettingField[] {
       key: 'general.shell',
       open: true,
       label: 'Shell',
-      hint: 'The shell a new terminal starts.',
       options: shells.list.map((one) => ({ value: one.id, label: shellName(one) })),
       get: () => shells.chosen?.id ?? '',
       set: (id) => shells.choose(id),
@@ -39,7 +38,6 @@ export function terminalFields(): SettingField[] {
       kind: 'slider',
       key: 'general.terminalTextSize',
       label: 'Text size',
-      hint: 'How large the text in terminals is.',
       min: SIZES.least,
       max: SIZES.most,
       step: 1,
@@ -72,7 +70,6 @@ export function terminalFields(): SettingField[] {
       kind: 'select',
       key: 'general.warnBeforeQuitting',
       label: 'Warn before quitting',
-      hint: 'Asks before Orden quits with terminals open: always, or only while something runs in one.',
       words: ['quit', 'close', 'exit', 'confirm', 'running', 'process', 'claude'],
       options: [
         { value: 'always', label: 'Always' },

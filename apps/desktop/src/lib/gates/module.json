@@ -1,5 +1,5 @@
 {
   "name": "gates",
   "layer": "foundation",
-  "dependsOn": ["contracts", "accounts", "modes", "platform", "ui-kit"]
+  "dependsOn": ["contracts", "accounts", "platform", "ui-kit"]
 }

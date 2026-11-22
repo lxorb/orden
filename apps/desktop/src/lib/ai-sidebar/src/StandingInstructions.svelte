@@ -45,7 +45,7 @@
   <div class="orden-setting setting tall">
     <label class="name" for="ai-standing">Sent to the AI with every chat</label>
     {#if draft}
-      <button class="orden-chip is-quiet" onclick={clear}>Clear</button>
+      <button class="orden-chip" onclick={clear}>Clear</button>
     {/if}
     <textarea
       id="ai-standing"

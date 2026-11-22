@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Hint, Select } from '../../ui-controls/src/api'
-  import { viewport } from '../../ui-kit/src/api'
   import { type Mode, MODES, modeWord } from '../../ai-providers/src/api'
   import { DEFAULT_ASK, rememberTaskAsk, rememberTaskMode, rememberTaskUses } from './chat-parts'
   import { TASK_TOOLS, type TaskTool, taskAsk, taskMode, taskUses } from './chat-parts'
@@ -45,7 +44,7 @@
         }))}
         onchange={(value: string) => rememberTaskMode((tasked = value as Mode))}
         label="Do with AI"
-        plain={viewport.touch}
+        plain
       />
     </div>
   </div>

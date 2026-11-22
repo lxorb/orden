@@ -110,7 +110,7 @@
       {name}
       <small>{access(used.readOnly)} {when(used.lastUsedAt)}</small>
     </span>
-    <button class="orden-chip is-quiet" {disabled} {onclick}>{label}</button>
+    <button class="orden-chip is-danger" {disabled} {onclick}>{label}</button>
   </div>
 {/snippet}
 

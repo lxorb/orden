@@ -6,7 +6,7 @@
   import { when } from '../../ui-controls/src/api'
   import { Facts } from '../../ui-kit/src/api'
   import { log } from '../../platform/src/api'
-  import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from '../../modes/src/api'
+  import { modes, rollbackSteps } from '../../modes/src/api'
   import { dur, fade } from '../../platform/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { type Answer, type Clash, record } from '../../sync-mirror/src/api'
@@ -161,10 +161,6 @@
   function shortPath(path: string): string {
     return shownPath(path.split(/[\\/]/).slice(-2).join('/'))
   }
-  const horizons = [
-    { value: String(KEEP_MONTH), label: 'A month' },
-    { value: String(KEEP_YEAR), label: 'A year' },
-  ]
 </script>
 
 {#if !asking.engine}
@@ -179,6 +175,7 @@
       >
       <div class="orden-setting-value">
         <Select
+          plain
           value={modes.conflicts}
           options={rules}
           onchange={(value: string) => modes.setConflicts(value)}
@@ -187,29 +184,7 @@
       </div>
     </div>
   </div>
-
-  <p class="hint">Nothing is ever thrown away: what does not win is kept as a version.</p>
 {/if}
-
-<h3>History on the account</h3>
-
-<div class="card">
-  <div class="orden-setting setting">
-    <span class="name"
-      ><span class="orden-named"
-        >Keep versions<Hint text="How far back the account keeps earlier versions of your notes." /></span
-      ></span
-    >
-    <div class="orden-setting-value">
-      <Select
-        value={String(modes.keepVersions)}
-        options={horizons}
-        onchange={(value: string) => modes.setKeepVersions(Number(value))}
-        label="Keep versions"
-      />
-    </div>
-  </div>
-</div>
 
 {#if asking.engine && asking.held.length}
   <h3>Waiting for you</h3>
@@ -301,6 +276,7 @@
     >
     <div class="orden-setting-value">
       <Select
+        plain
         value={String(chosen)}
         options={back.map((one) => ({
           value: String(one),

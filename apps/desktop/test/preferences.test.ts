@@ -5,7 +5,7 @@ import { memoryStorage } from './disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
-const { preferences, resettable } = await import('../src/lib/settings/src/preferences')
+const { preferences } = await import('../src/lib/settings/src/preferences')
 const { theme } = await import('../src/lib/theme/src/theme.svelte')
 const { DICTIONARIES } = await import('../src/lib/spelling/src/api')
 await import('../src/lib/quick-add/src/api')
@@ -29,24 +29,29 @@ function readsAsOneSentence(hint: string, label: string) {
 }
 describe('the sentence behind a setting', () => {
   const every = panes.flatMap((one) => one.groups.flatMap((group) => group.fields))
-  test('is there for every setting, the ones a word explains too', () => {
+  const said = every.flatMap((one) => (one.hint ? [{ label: one.label, hint: one.hint }] : []))
+  test('is left out where the name says it all', () => {
     expect(every.length).toBeGreaterThan(40)
-    for (const one of every) expect(one.hint, one.label).toBeTruthy()
+    for (const label of ['Text size', 'Line spacing', 'Mode', 'Swipe between pages', 'Check spelling'])
+      expect(
+        field(label === 'Mode' ? 'appearance' : label === 'Swipe between pages' ? 'general' : 'editor', label).hint,
+        label,
+      ).toBeUndefined()
   })
   test('says more than the name does', () => {
-    for (const one of every) expect(one.hint.toLowerCase(), one.label).not.toBe(one.label.toLowerCase())
+    for (const one of said) expect(one.hint.toLowerCase(), one.label).not.toBe(one.label.toLowerCase())
   })
   test('is one plain sentence, which is all a tooltip has room for', () => {
-    for (const one of every) readsAsOneSentence(one.hint, one.label)
+    for (const one of said) readsAsOneSentence(one.hint, one.label)
   })
   test('still explains the words that explain nothing to somebody new', () => {
     expect(field('general', 'Smart dates').hint).toMatch(/dates/)
-    expect(field('markdown', 'Strict CommonMark').hint).toMatch(/standard markdown/)
+    expect(field('editor', 'Strict CommonMark').hint).toMatch(/standard markdown/)
   })
 })
-describe('the Markdown pane', () => {
-  test('shows the markdown while writing unless asked not to', () => {
-    const shown = field('markdown', 'Show markdown while writing')
+describe('the Markdown settings', () => {
+  test('sit in Editor and show the markdown while writing unless asked not to', () => {
+    const shown = field('editor', 'Show markdown while writing')
     expect(shown.kind).toBe('switch')
     expect(shown.initial).toBe(true)
   })
@@ -63,7 +68,6 @@ describe('the Note types pane', () => {
       'Online terminal',
       'Web note',
     ])
-    expect(kinds && resettable(kinds)).toBe(true)
     const fields = kinds?.groups.flatMap((group) => group.fields) ?? []
     for (const one of fields) expect(one.icon).toBeDefined()
     const [last, ...rest] = [...fields].reverse()
@@ -116,9 +120,6 @@ describe('the Appearance pane', () => {
       theme.files = []
       theme.id = 'default'
     }
-  })
-  test('offers no reset, since neither row is a default anybody drifted from', () => {
-    expect(resettable(pane('appearance'))).toBe(false)
   })
   test('and asks two questions, contrast being a theme rather than a switch', () => {
     expect(pane('appearance').groups[0]?.fields.map((one) => one.label)).toEqual(['Style', 'Mode', 'Accent'])
@@ -193,7 +194,7 @@ describe('the release channel', () => {
     expect(row().initial).toBe('stable')
   })
   test('says what the two words mean, since neither explains itself', () => {
-    const hint = row().hint
+    const hint = row().hint ?? ''
     readsAsOneSentence(hint, 'Release channel')
     expect(hint).toContain('Stable')
     expect(hint).toContain('Unstable')
@@ -224,7 +225,7 @@ describe('the web version', () => {
     expect(row().initial).toBe('stable')
   })
   test('says what the two words mean, and which of them can break', () => {
-    const hint = row().hint
+    const hint = row().hint ?? ''
     expect(hint).toContain('Stable')
     expect(hint).toContain('Unstable')
     expect(hint).toContain('break')
@@ -251,9 +252,10 @@ describe('the spelling dictionaries', () => {
   test('are offered in the order every language list keeps', () => {
     expect([...DICTIONARIES]).toEqual(inLanguageOrder(DICTIONARIES))
   })
-  test('are the platform’s where Orden cannot choose them, and the pane says so', () => {
-    const spelling = pane('spelling')
-    expect(spelling.groups.flatMap((group) => group.fields).map((one) => one.label)).toEqual(['Check spelling'])
-    expect(spelling.groups[0]?.caption?.text).toMatch(/system or browser/)
+  test('are the platform’s where Orden cannot choose them, leaving one switch at the end of Editor', () => {
+    const spelling = pane('editor').groups.at(-1)
+    expect(spelling?.title).toBe('Spelling')
+    expect(spelling?.fields.map((one) => one.label)).toEqual(['Check spelling'])
+    expect(spelling?.caption).toBeUndefined()
   })
 })

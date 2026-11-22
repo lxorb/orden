@@ -63,7 +63,7 @@ export interface Group {
   caption?: Caption
   fields: Field[]
 }
-type PaneId = 'general' | 'editor' | 'kinds' | 'spelling' | 'markdown' | 'appearance' | 'experimental' | 'export'
+type PaneId = 'general' | 'editor' | 'kinds' | 'appearance' | 'browser' | 'terminal' | 'experimental'
 export interface Pane {
   id: PaneId
   label: string

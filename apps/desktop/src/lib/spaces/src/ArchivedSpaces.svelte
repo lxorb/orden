@@ -27,12 +27,14 @@
         <SpaceBadge {space} />
         <span class="name">{space.name}</span>
         <button
-          class="quiet"
+          class="orden-chip"
           disabled={busy || workspace.openedArchived === space.id}
           onclick={() => void held(() => workspace.openArchived(space.id))}>Open</button
         >
-        <button class="quiet" disabled={busy} onclick={() => void held(() => unarchiveSpace(space))}>Unarchive</button>
-        <button class="quiet danger" disabled={busy} onclick={() => void held(() => deleteSpace(space))}>
+        <button class="orden-chip" disabled={busy} onclick={() => void held(() => unarchiveSpace(space))}
+          >Unarchive</button
+        >
+        <button class="orden-chip is-danger" disabled={busy} onclick={() => void held(() => deleteSpace(space))}>
           {theirs(space) ? 'Leave' : 'Delete'}
         </button>
       </div>
@@ -72,25 +74,5 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  button.quiet {
-    flex: none;
-    padding: 9px 0 9px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    background: none;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    color: var(--muted);
-    cursor: default;
-  }
-  @media (hover: hover) {
-    button.quiet:hover:not(:disabled) {
-      color: var(--text);
-    }
-    button.quiet.danger:hover:not(:disabled) {
-      color: var(--danger);
-    }
   }
 </style>

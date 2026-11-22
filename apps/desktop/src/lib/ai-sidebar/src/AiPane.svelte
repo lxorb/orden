@@ -4,13 +4,13 @@
   import { onMount } from 'svelte'
   import { accountName, vendorName, type Account, repeatable } from '../../ai-providers/src/api'
   import { vendorOf, AddAccount, FEATURES, ai, listModels } from '../../ai-providers/src/api'
-  import { forgetKey, hasKey, keysAreGuarded, keysInFile } from '../../ai-providers/src/api'
-  import { onKeysMoved, writeKey, localCli, loadPlanRows } from '../../ai-providers/src/api'
+  import { forgetKey, hasKey, keysAreGuarded } from '../../ai-providers/src/api'
+  import { writeKey, localCli, loadPlanRows } from '../../ai-providers/src/api'
   import { type LocalPlans, USAGE_EVERY, usage, type Weekly } from '../../ai-providers/src/api'
   import { browserVault, keepBrowserInVault, vault, ProviderMark } from '../../ai-providers/src/api'
   import { firstModel, isLocal, offeredKinds, type Provider } from '../../ai-providers/src/api'
   import type { Adding } from '../../ai-providers/src/api'
-  import { message, viewport } from '../../ui-kit/src/api'
+  import { message } from '../../ui-kit/src/api'
   import { whileShown } from '../../panes/src/api'
   import { Select, Hint, Switch } from '../../ui-controls/src/api'
   import { canDictate, type Engine, engines, local } from '../../dictation/src/api'
@@ -19,7 +19,6 @@
   let keyed = $state<Record<string, boolean>>({})
   let adding = $state(false)
   let trouble = $state<Record<string, string>>({})
-  let inFile = $state(false)
   const EXAMPLE_URL = 'http://localhost:11434'
   const named = (vendor: string) => vendorName(vendor, ai.accounts)
   const addable = $derived(
@@ -31,9 +30,6 @@
   const plansHeld = localCli().then((one) => (plans = one.plans))
   onMount(() => {
     for (const account of ai.accounts) void ask(account)
-    const lookFile = () => void keysInFile().then((found) => (inFile = found))
-    lookFile()
-    return onKeysMoved(lookFile)
   })
   whileShown(USAGE_EVERY, () => {
     for (const account of ai.accounts) void usage.look(account)
@@ -183,9 +179,6 @@
       />
     </div>
   </div>
-  <p class="hint caption">
-    Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.
-  </p>
 {/if}
 
 {#if ai.accounts.length}
@@ -202,7 +195,7 @@
           {:else}
             <button class="orden-chip" onclick={() => ai.setDefault(provider.id)}>Make default</button>
           {/if}
-          <button class="orden-chip is-quiet" onclick={() => forget(provider)}>Remove</button>
+          <button class="orden-chip is-danger" onclick={() => forget(provider)}>Remove</button>
         </div>
       </div>
       {#if isLocal(provider.kind)}
@@ -250,7 +243,7 @@
           {#if keyed[provider.id]}
             <div class="row">
               <span class="hint">Set</span>
-              <button class="orden-chip is-quiet" onclick={() => void drop(provider)}>Remove</button>
+              <button class="orden-chip is-danger" onclick={() => void drop(provider)}>Remove</button>
             </div>
           {:else}
             <input
@@ -322,7 +315,7 @@
             options={[{ value: '', label: 'Default' }, ...ai.vendors.map((one) => ({ value: one, label: named(one) }))]}
             onchange={(value: string) => ai.use(feature.id, value)}
             label={feature.label}
-            plain={viewport.touch}
+            plain
           />
         </div>
       </div>
@@ -346,7 +339,7 @@
           ]}
           onchange={(value: string) => engines.choose(engines.offered().find((one) => one === value) ?? null)}
           label="Dictate with"
-          plain={viewport.touch}
+          plain
         />
       </div>
     </div>
@@ -362,7 +355,7 @@
               >Downloading {Math.floor((100 * local.fetching.done) / Math.max(1, local.fetching.total))}%</span
             >
           {:else if local.ready}
-            <button class="orden-chip is-quiet" onclick={() => void local.remove()}>Remove</button>
+            <button class="orden-chip is-danger" onclick={() => void local.remove()}>Remove</button>
           {:else}
             <button class="orden-chip" onclick={() => void local.fetch()}
               >Download ({Math.round((local.machine?.model.bytes ?? 0) / 1e6)} MB)</button
@@ -380,21 +373,6 @@
 {#await import('./DoWithAiCard.svelte') then card}
   <card.default />
 {/await}
-
-{#if vault.standing !== 'open' && (!keysAreGuarded() || vault.standing === 'off')}
-  <p class="hint caption">
-    {#if !keysAreGuarded()}
-      This browser holds the keys in its own storage.
-    {:else}
-      Sign in to have them on every device.
-    {/if}
-  </p>
-{/if}
-{#if inFile}
-  <p class="hint caption" role="note">
-    No keyring was found on this device, so your keys are kept in a file only you can read.
-  </p>
-{/if}
 
 <style>
   h3 {

@@ -93,7 +93,7 @@
           Accept
         </button>
         <button
-          class="orden-chip is-quiet"
+          class="orden-chip is-danger"
           disabled={store.busy || !manages}
           onclick={() => void store.decline(person)}
         >

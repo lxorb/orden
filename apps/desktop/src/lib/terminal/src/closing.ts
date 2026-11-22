@@ -12,7 +12,7 @@ export async function mayEnd(closing: readonly Tab[], every: readonly Tab[] = cl
   const { prompt } = await import('../../ui-kit/src/api')
   const answer = await prompt.choose({
     title: loose.length === 1 ? `End ${one.shown}?` : 'End these online terminals?',
-    detail: `Saved nowhere, a session kept running is found again in Settings, Online terminal.`,
+    detail: `Saved nowhere, a session kept running is found again in Settings, Terminal.`,
     options: [
       { id: 'cancel', label: 'Cancel' },
       { id: 'end', label: 'End', danger: true },
