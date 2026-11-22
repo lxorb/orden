@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPath, spokenPaths } from './paste'
+import { asksFirst, cdLine, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPath, spokenPaths } from './paste'
 
 describe('a paste into a terminal', () => {
   test('loses the whitespace after a single line', () => {
@@ -98,5 +98,16 @@ describe('a picture in a paste', () => {
     expect(imageIn(transfer('words', 'image/png'))).toBeNull()
     expect(imageIn(transfer('', 'application/pdf'))).toBeNull()
     expect(imageIn(null)).toBeNull()
+  })
+})
+describe('a cd to a folder', () => {
+  test('is quoted for the shell it is typed into, and refused for a name it cannot carry (#2274)', () => {
+    expect(cdLine('/work/plans', 'bash')).toBe('cd /work/plans')
+    expect(cdLine("/work/Plans B/it's", 'zsh')).toBe("cd '/work/Plans B/it'\\''s'")
+    expect(cdLine('/work/Plans B', '/usr/bin/fish')).toBe("cd '/work/Plans B'")
+    expect(cdLine("C:\\Work\\Bob's", 'pwsh')).toBe("Set-Location -LiteralPath 'C:\\Work\\Bob''s'")
+    expect(cdLine('D:\\Work Files', 'cmd')).toBe('cd /d "D:\\Work Files"')
+    expect(cdLine('D:\\100%', 'cmd')).toBeNull()
+    expect(cdLine('/work/a\nb', 'bash')).toBeNull()
   })
 })

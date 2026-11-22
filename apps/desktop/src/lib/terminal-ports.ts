@@ -31,6 +31,9 @@ providePort('terminal.judge', {
     return free.runsFree(program, args, programs, folder, osOf(platform()))
   },
 })
+providePort('terminal.going', {
+  goTo: async (tabId, folder) => (await (await terminal()).terminalGoing())(tabId, folder),
+})
 providePort('terminal.lines', {
   typeIn: async (line, pick) => {
     const [{ openTerminal, shells, ptyOf }, { workspace }] = await Promise.all([
