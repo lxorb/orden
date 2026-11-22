@@ -1655,6 +1655,18 @@ class Runner {
       const on: On | null = joins === 'views' ? { note } : joins === 'surface' && surface ? { surface } : null
       if (on && entry && engine.core.hasDoc(entry.id))
         wanted.set(one.key, { id: entry.id, on, arrivals: () => note.arrivals })
+      else
+        this.outside(
+          one.key,
+          one.path,
+          !engine.placed(one.path)
+            ? 'no synced space holds it'
+            : !entry
+              ? 'the space holds no entry there'
+              : !engine.core.hasDoc(entry.id)
+                ? 'its words are not here yet'
+                : 'it opens as another kind',
+        )
     }
     const own = new Set([...wanted.values()].map((one) => one.id))
     for (const id of this.relay.ids()) {
@@ -1712,14 +1724,34 @@ class Runner {
     log('warn', `sync2: ${path} is open as another kind than it syncs as`)
     void unsyncedToast(path.split(/[\\/]/).pop() ?? path)
   }
+  private readonly said = new Map<string, string>()
+  private outside(key: string, path: string, why: string) {
+    if (this.said.get(key) === why) return
+    this.said.set(key, why)
+    log('info', `live: ${path.split(/[\\/]/).pop() ?? path} stays out of its room - ${why} (${path})`)
+  }
   private readonly carried = new Set<string>()
   private enter(engine: Engine, key: string, id: string, on: On) {
     const core = engine.core
     const doc = core.docs.get(id)
     const entry = core.entry(id)
     const space = core.spaceOf(id)
-    if (!doc?.live || entry?.seq == null || !space || core.isHeld(id)) return
-    if (doc.epoch < (core.epochs.get(id) ?? doc.epoch) || !account().token) return
+    const why = !doc?.live
+      ? 'its words are not open'
+      : entry?.seq == null || !space
+        ? 'the account does not hold it yet'
+        : core.isHeld(id)
+          ? 'it waits for an answer'
+          : doc.epoch < (core.epochs.get(id) ?? doc.epoch)
+            ? 'it waits for a newer start'
+            : account().token
+              ? null
+              : 'nobody is signed in'
+    if (why !== null || !doc?.live || !space) {
+      this.outside(key, entry?.local_path ?? id, why ?? 'its words are not open')
+      return
+    }
+    this.said.delete(key)
     this.carried.add(key)
     const room = carry(key, {
       noteId: id,

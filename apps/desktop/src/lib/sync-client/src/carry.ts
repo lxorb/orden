@@ -12,6 +12,7 @@ import {
 } from '../../collab/src/api'
 import type { Carrying, Seen, Who } from '../../collab-rooms/src/api'
 import { theme } from '../../theme/src/api'
+import { log } from '../../platform/src/api'
 import type { InkStroke } from '@orden/markdown/canvas'
 import { type PlaneSurface, type Point } from '@orden/markdown/plane'
 
@@ -42,18 +43,22 @@ export async function carry(
       rooms.heard(key, count, seen)
     },
     gone: () => {
+      log('info', `live: ${carried.noteId} left its room to start again`)
       uncarry(key)
       carried.gone()
     },
     refused: () => {
+      log('info', `live: ${carried.noteId} is too large for a room`)
       uncarry(key)
       busy.failed(TOO_LARGE_FOR_A_ROOM)
     },
     shut: (signedOut: boolean) => {
+      log('info', `live: ${carried.noteId} was shut out of its room${signedOut ? ', signed out' : ''}`)
       uncarry(key)
       if (signedOut) void account().recheck()
     },
     demoted: () => {
+      log('info', `live: ${carried.noteId} may only be read now`)
       void demoted(
         'note' in carried.on ? carried.on.note : null,
         () => uncarry(key),
