@@ -75,7 +75,7 @@
   {@attach heldBy}
 >
   {#if !command}
-    <Mascot mood="excited" size={24} />
+    <Mascot mood="excited" size={20} />
   {/if}
   {#if command}
     <p>To update, run this in a terminal:</p>
@@ -114,7 +114,7 @@
   .notice {
     grid-column: 3;
     justify-self: end;
-    max-width: 22rem;
+    max-width: 26rem;
     display: flex;
     align-items: center;
     gap: var(--space-3);
