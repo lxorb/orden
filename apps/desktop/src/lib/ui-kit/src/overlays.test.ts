@@ -240,7 +240,6 @@ describe('what hides a web page', () => {
     'lib/settings/src/ThemeStore.svelte',
     'lib/agents/src/ui/PairingBubble.svelte',
     'lib/ai-sidebar/src/Composer.svelte',
-    'lib/ai-providers/src/vault/VaultApprove.svelte',
     'lib/dictation/src/EngineChooser.svelte',
     'lib/chat-kit/src/Float.svelte',
     'lib/chats-client/src/view/Lightbox.svelte',
