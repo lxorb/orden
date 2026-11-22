@@ -115,7 +115,7 @@ const typewriterPlugin = EditorView.updateListener.of((update) => {
   if (Math.abs(offset) < 1) return
   view.scrollDOM.scrollTop += offset
 })
-export const modeExtensions = (length = 0): Extension => [
+export const modeExtensions = (length = 0, unwritable = false): Extension => [
   language.of(tooLongToParse(length) ? NO_LANGUAGE : markdownFor(false)),
   strictness,
   seen,
@@ -128,7 +128,7 @@ export const modeExtensions = (length = 0): Extension => [
   equations.of(numberEquations.of(false)),
   spelling.of(spellingFor(false)),
   brackets.of(bracketsFor(true)),
-  readOnly.of(readOnlyFor(false)),
+  readOnly.of(readOnlyFor(unwritable)),
   headingNumbers.of(headingNumbersFor(false)),
   codeLineNumbers.of(codeLineNumbersFor(false)),
   direction.of(directionFor(false)),
