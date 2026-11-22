@@ -509,7 +509,7 @@
   margin: 0 0.45em 0 0;
   vertical-align: -2px;
   text-indent: 0;
-  border: 1.5px solid var(--line-strong);
+  border: 1.5px solid var(--muted);
   border-radius: 4px;
   background: transparent;
   cursor: pointer;
@@ -518,6 +518,13 @@
     border-color var(--dur-fast) var(--ease-out),
     background var(--dur-fast) var(--ease-out),
     transform var(--dur-fast) var(--ease-spring);
+}
+.orden-task-box {
+  padding-inline-end: 0.3em;
+  margin-inline-end: 0.3em;
+}
+.orden-task-box > .orden-checkbox {
+  margin: 0;
 }
 .orden-checkbox:hover {
   border-color: var(--accent);

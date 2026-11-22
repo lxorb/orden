@@ -31,11 +31,14 @@ export class CheckboxWidget extends OrdenWidget {
     return other.checked === this.checked
   }
   override updateDOM(dom: HTMLElement) {
-    if (!(dom instanceof HTMLInputElement)) return false
-    dom.checked = this.checked
+    const box = dom.firstElementChild
+    if (!(box instanceof HTMLInputElement)) return false
+    box.checked = this.checked
     return true
   }
   toDOM(view: EditorView) {
+    const holder = document.createElement('span')
+    holder.className = 'orden-task-box'
     const box = document.createElement('input')
     box.type = 'checkbox'
     box.className = 'orden-checkbox'
@@ -44,12 +47,13 @@ export class CheckboxWidget extends OrdenWidget {
     box.addEventListener('mousedown', (event) => {
       event.preventDefault()
       if (view.state.readOnly) return
-      const from = view.posAtDOM(box)
+      const from = view.posAtDOM(holder)
       const mark = view.state.sliceDoc(from, from + 3)
       if (!TASK_MARK.test(mark)) return
       view.dispatch({ changes: { from, to: from + 3, insert: /x/i.test(mark) ? '[ ]' : '[x]' } })
     })
-    return box
+    holder.append(box)
+    return holder
   }
   override ignoreEvent() {
     return false

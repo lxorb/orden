@@ -179,7 +179,7 @@ describe('blocks', () => {
     ['> quoted', ['> ']],
     ['a\n\n---', ['---']],
     ['- one\n- two', ['-', '-']],
-    ['- [x] done', ['- ', '[x]']],
+    ['- [x] done', ['- ', '[x] ']],
   ])
   test('replaces the whole table with a rendered one', () => {
     expect(blocks('| a |\n| - |\n| 1 |')).toEqual(['| a |\n| - |\n| 1 |'])
