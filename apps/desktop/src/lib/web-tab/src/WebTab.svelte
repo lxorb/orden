@@ -25,18 +25,17 @@
   import {
     ALL,
     boxOf,
-    settled,
     cutOf,
     layersOver,
     hushArrivals,
     moving,
     noticeRows,
-    strangerOver,
     watchArrivals,
     type Cut,
     type Layer,
   } from './covers'
   import { ALLOW, SANDBOX } from './frame'
+  import { keysFollowLayers } from './layer-keys'
   import { keepNow, keepPage } from './keep'
   import { trailSteps, webRows, zoomed, type WebActions } from './menu'
   import { mute, muteSite } from './mute'
@@ -103,7 +102,6 @@
     if (page.filling) return { box, cut: null }
     if (filling.by !== null || (workspace.panes.dragging?.tabId ?? null) !== null) return { box, cut: ALL }
     if (!hole) return { box, cut: null }
-    if (strangerOver(hole)) return { box, cut: ALL }
     const layers = layersOver(hole)
     watchLayers(layers)
     return { box, cut: cutOf(box, layers) }
@@ -220,7 +218,7 @@
     }
     const covered = coverOf(box)
     const at = covered.box
-    const cut = settled(covered.cut, page.shot !== null, pages.cuts)
+    const cut = covered.cut
     last = at
     const visible = cut === null
     const corner = page.filling ? ([0, 0] as const) : cardCorner(hole)
@@ -302,6 +300,7 @@
     window.addEventListener('keydown', pressed, true)
     window.addEventListener('keyup', released, true)
     const unwatch = overlays.watch(follow)
+    const unkeys = isDesktop ? keysFollowLayers() : () => undefined
     const unarrive = watchArrivals(lookNow)
     return () => {
       gone = true
@@ -310,6 +309,7 @@
       cancelAnimationFrame(chasing)
       watching?.disconnect()
       unwatch()
+      unkeys()
       unarrive()
       if (tab.path !== null) keepNow(tab.path)
       window.removeEventListener('resize', follow)

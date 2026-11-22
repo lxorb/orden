@@ -114,6 +114,7 @@ Element.prototype.animate = () =>
 Object.defineProperty(globalThis, 'CSS', { value: { escape: (text: string) => text } })
 let over: Element | null = null
 document.elementFromPoint = () => over ?? document.querySelector('.hole')
+document.hasFocus = () => true
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { OUT_OF_THE_WAY, pages } = await import('../../src/lib/web-tab/src/pages.svelte')
@@ -231,22 +232,16 @@ test('the page goes out of the way, still drawn, while a layer of the app is ove
   expect(away(shown)).toBe(false)
   void unmount(app)
 })
-test('a page a sheet covers for long is hidden, and comes back drawn out of the way first', async () => {
+test('a scrim alone, however long it stays, leaves the page placed and live', async () => {
   const { app } = await opened('https://example.com/stowed')
   asked.length = 0
   const scrim = layer('orden-scrim', { x: 0, y: 0, width: 800, height: 600 })
   onTestFinished(() => scrim.remove())
   await frames()
-  expect(away(asked.filter((one) => one.command === 'web_place').at(-1))).toBe(true)
   await elapse(5_000)
-  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(false)
-  asked.length = 0
-  scrim.remove()
-  await frames()
   const placed = asked.filter((one) => one.command === 'web_place')
-  expect(away(placed[0])).toBe(true)
-  expect(placed.at(-1)?.args.visible).toBe(true)
-  expect(away(placed.at(-1))).toBe(false)
+  expect(placed.filter((one) => one.args.visible === false || away(one) || one.args.cut !== null)).toEqual([])
+  expect(asked.map((one) => one.command)).not.toContain('web_shot')
   void unmount(app)
 })
 test('a layer that is not over the page leaves it alone', async () => {
@@ -365,7 +360,7 @@ test('a hover card never hides a page there is no picture of', async () => {
   await frames()
   void unmount(app)
 })
-test('a sheet over the page covers all of it at once, picture or none', async () => {
+test('a sheet on a scrim over the page is a hollow of its own box, and the page stays live round it', async () => {
   cuts = true
   const { tab, app } = await opened('https://example.com/sheet')
   pages.of(tab.id).shot = null
@@ -375,9 +370,11 @@ test('a sheet over the page covers all of it at once, picture or none', async ()
   await settle()
   const placed = asked.filter((one) => one.command === 'web_place')
   expect(placed.length).toBeGreaterThan(0)
-  expect(placed.every((one) => one.args.visible === true)).toBe(true)
-  expect(placed.every((one) => (one.args.cut as { all: boolean } | null)?.all === true)).toBe(true)
-  expect(asked.map((one) => one.command)).toContain('web_shot')
+  expect(placed.every((one) => one.args.visible === true && !away(one))).toBe(true)
+  expect(placed.at(-1)?.args.cut).toEqual({
+    all: false,
+    hollows: [{ x: 200, y: 60, width: 400, height: 300, radius: 0 }],
+  })
   scrim.remove()
   sheet.remove()
   await frames()
@@ -413,10 +410,14 @@ describe('a layer is answered in the frame it is first drawn in, however it came
       take: (shown) => shown.remove(),
     },
     {
-      name: 'a clear scrim put in, as a menu’s and the overview’s canvas are',
-      all: true,
+      name: 'a screen over the whole window, marked all, as the lightbox is',
+      all: false,
       ready: () => null,
-      show: () => layer('orden-scrim is-clear', whole),
+      show: () => {
+        const made = layer('ghost', whole)
+        made.dataset.covers = 'all'
+        return made
+      },
       take: (shown) => shown.remove(),
     },
     {
@@ -438,10 +439,10 @@ describe('a layer is answered in the frame it is first drawn in, however it came
       },
     },
     {
-      name: 'shown and hidden by its style, as the overview’s ground is',
-      all: true,
+      name: 'shown and hidden by its style',
+      all: false,
       ready: () => {
-        const made = layer('orden-scrim', whole)
+        const made = layer('orden-layer', box)
         made.style.visibility = 'hidden'
         return made
       },
@@ -491,6 +492,23 @@ describe('a layer is answered in the frame it is first drawn in, however it came
       void unmount(app)
     })
   }
+})
+test('a scrim, clear or dimmed, put in or shown by its style, asks nothing of the page', async () => {
+  cuts = true
+  const { app } = await opened('https://example.com/scrims')
+  await frames()
+  asked.length = 0
+  const clear = layer('orden-scrim is-clear', { x: 0, y: 0, width: 800, height: 600 })
+  const dim = layer('orden-scrim', { x: 0, y: 0, width: 800, height: 600 })
+  dim.style.visibility = 'hidden'
+  await settle()
+  dim.style.visibility = ''
+  await settle()
+  expect(asked.filter((one) => one.command === 'web_place' && one.args.cut !== null)).toEqual([])
+  clear.remove()
+  dim.remove()
+  await frames()
+  void unmount(app)
 })
 test('the page goes out of the way, still drawn, while a drag is over the panes, and comes back when it ends', async () => {
   await launched()
