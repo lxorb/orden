@@ -69,9 +69,7 @@ vi.mock('../../src/lib/ai-providers/src/complete', () => ({
   listModels: () => Promise.resolve(['model-a']),
 }))
 vi.mock('../../src/lib/ai-providers/src/vault/start.svelte', () => ({
-  browserVault: { on: false },
-  keepBrowserInVault: () => Promise.resolve(),
-  vault: { standing: 'open', allowed: [], seen: {}, remove: () => Promise.resolve(true) },
+  vault: { standing: 'open', seen: {} },
   startVault: () => undefined,
 }))
 const { default: AiPane } = await import('../../src/lib/ai-sidebar/src/AiPane.svelte')

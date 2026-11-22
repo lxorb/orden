@@ -4,15 +4,15 @@
   import { onMount } from 'svelte'
   import { accountName, vendorName, type Account, repeatable } from '../../ai-providers/src/api'
   import { vendorOf, AddAccount, FEATURES, ai, listModels } from '../../ai-providers/src/api'
-  import { forgetKey, hasKey, keysAreGuarded } from '../../ai-providers/src/api'
+  import { forgetKey, hasKey } from '../../ai-providers/src/api'
   import { writeKey, localCli, loadPlanRows } from '../../ai-providers/src/api'
   import { type LocalPlans, USAGE_EVERY, usage, type Weekly } from '../../ai-providers/src/api'
-  import { browserVault, keepBrowserInVault, vault, ProviderMark } from '../../ai-providers/src/api'
+  import { vault, ProviderMark } from '../../ai-providers/src/api'
   import { firstModel, isLocal, offeredKinds, type Provider } from '../../ai-providers/src/api'
   import type { Adding } from '../../ai-providers/src/api'
   import { message } from '../../ui-kit/src/api'
   import { whileShown } from '../../panes/src/api'
-  import { Select, Hint, Switch } from '../../ui-controls/src/api'
+  import { Select, Hint } from '../../ui-controls/src/api'
   import { canDictate, type Engine, engines, local } from '../../dictation/src/api'
   import StandingInstructions from './StandingInstructions.svelte'
 
@@ -163,23 +163,6 @@
 {/snippet}
 
 <h3>Accounts</h3>
-
-{#if !keysAreGuarded()}
-  <div class="card">
-    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div class="orden-setting setting" onclick={() => void keepBrowserInVault(!browserVault.on)}>
-      {@render hinted(
-        'Keep this browser’s keys in the vault',
-        'Syncs this browser’s AI keys with your other devices through your Orden account.',
-      )}
-      <Switch
-        on={browserVault.on}
-        label="Keep this browser’s keys in the vault"
-        onchange={(on: boolean) => void keepBrowserInVault(on)}
-      />
-    </div>
-  </div>
-{/if}
 
 {#if ai.accounts.length}
   {#each ai.accounts as provider (provider.id)}
