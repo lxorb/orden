@@ -53,8 +53,6 @@ describe('the button that opens the file list', () => {
     expect(titlebar).toContain('const swiped = $derived(swipeOpens())')
     expect(read('App.svelte')).toContain('if (!host || !swipeOpens()) return')
     expect(toggle).toContain('class:orden-said={unseen && !keyed}')
-    expect(titlebar).toMatch(/hint="drawer"/)
-    expect(read('lib/hints/src/hints.svelte.ts')).toMatch(/HINTS = \['drawer'/)
   })
   test('and nothing else anywhere draws one', () => {
     const others = componentsWith(PANEL).filter((name) => name !== 'lib/titlebar/src/SidebarToggle.svelte')
@@ -85,12 +83,10 @@ describe("the sides' buttons on a desktop", () => {
     expect(sidebar).not.toContain('<SidebarToggle side="right"')
     expect(sidebar).toContain("if (viewport.touch || side === 'right') return")
   })
-  test('have no setting that moves them, and no hint that comes with it', () => {
+  test('have no setting that moves them', () => {
     for (const text of [titlebar, sidebar, read('lib/settings/src/appearance-pane.ts')]) {
       expect(text).not.toMatch(/sideToggles|side-toggles/)
     }
-    expect(titlebar).not.toMatch(/hint="edge"/)
-    expect(read('lib/hints/src/hints.svelte.ts')).not.toContain("'edge'")
   })
 })
 describe('the menu of the whole app', () => {

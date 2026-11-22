@@ -1,4 +1,3 @@
-import { hinting } from './hints/src/api'
 import { oneWindow } from './web-tab/src/api'
 import { door } from '@orden/markdown/door'
 import { account, connectors } from './accounts/src/api'
@@ -7,6 +6,7 @@ import { installAiRunner } from './ai-chat/src/api'
 import { joining } from './sharing/src/api'
 import {
   collectErrors,
+  forget,
   log,
   isDesktop,
   platform,
@@ -76,7 +76,7 @@ export function start(): () => void {
   gate.restore()
   const settling = setTimeout(() => {
     startup.settled = true
-    void hinting().then(({ hints }) => hints.settle())
+    forget('orden:hints')
   }, 20_000)
   installAiRunner()
   recovery.restore()
