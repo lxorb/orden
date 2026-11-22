@@ -22,7 +22,10 @@ const PHONE_WIDTH = 390
 const LIVE_DESKTOP = 4
 const LIVE_PHONE = 3
 interface Agent {
-  userAgentData?: { getHighEntropyValues?: (hints: string[]) => Promise<{ architecture?: string }> }
+  userAgentData?: {
+    platform?: string
+    getHighEntropyValues?: (hints: string[]) => Promise<{ architecture?: string }>
+  }
 }
 interface Display {
   box: HTMLElement
@@ -50,10 +53,15 @@ function followTheme(view: Window) {
 }
 function offerDownload(view: Window, origins: Origins) {
   const { navigator } = view
-  let visitor: Visitor = { userAgent: navigator.userAgent, touchPoints: navigator.maxTouchPoints }
+  let visitor: Visitor = {
+    userAgent: navigator.userAgent,
+    touchPoints: navigator.maxTouchPoints,
+    platform: (navigator as Agent).userAgentData?.platform,
+    coarse: view.matchMedia('(pointer: coarse)').matches,
+  }
   let assets: ReleaseAsset[] = []
   const paint = () => {
-    const { label, href } = downloadFor(visitor, assets)
+    const { label, href } = downloadFor(visitor, assets, `${origins.app}/`)
     for (const link of view.document.querySelectorAll<HTMLAnchorElement>('a[data-download]')) {
       link.href = href
       const text = link.querySelector('[data-label]')
