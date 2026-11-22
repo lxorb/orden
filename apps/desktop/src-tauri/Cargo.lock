@@ -3231,6 +3231,7 @@ dependencies = [
  "orden-import",
  "orden-mcp-client",
  "orden-notes",
+ "orden-opencode",
  "orden-placement",
  "orden-pty",
  "orden-reminders",
@@ -3516,6 +3517,19 @@ dependencies = [
  "libc",
  "notify",
  "objc2-foundation",
+ "orden-base",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tempfile",
+]
+
+[[package]]
+name = "orden-opencode"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "orden-agents",
  "orden-base",
  "serde",
  "serde_json",

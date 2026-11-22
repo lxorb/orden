@@ -182,6 +182,7 @@ orden-explorer = { path = "crates/explorer" }
 orden-extensions = { path = "crates/extensions" }
 orden-import = { path = "crates/import" }
 orden-mcp-client = { path = "crates/mcp-client" }
+orden-opencode = { path = "crates/opencode" }
 orden-placement = { path = "crates/placement" }
 orden-pty = { path = "crates/pty" }
 orden-reminders = { path = "crates/reminders" }

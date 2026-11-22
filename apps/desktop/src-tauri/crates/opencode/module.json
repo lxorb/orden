@@ -1,0 +1,6 @@
+{
+  "name": "opencode",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["agents", "base"]
+}
