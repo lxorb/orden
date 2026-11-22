@@ -45,6 +45,25 @@ const MARKS: readonly Mark[] = [
       return [0.542 + 0.07 * t, 0.39 - 0.055 * t - 0.01 * Math.sin(t * Math.PI)]
     },
   },
+  {
+    id: 'range',
+    from: 0.52,
+    to: 0.58,
+    path: (k) => [0.245 + 0.2 * k, 0.266 + 0.005 * Math.sin(k * Math.PI * 5)],
+  },
+  {
+    id: 'arrow',
+    from: 0.65,
+    to: 0.72,
+    path: (k) => {
+      if (k < 0.7) {
+        const t = ease(k / 0.7)
+        return [0.66 - 0.18 * t, 0.31 - 0.05 * t - 0.02 * Math.sin(t * Math.PI)]
+      }
+      const t = ease((k - 0.7) / 0.3)
+      return [0.48 + 0.025 * t, 0.26 + 0.012 * t]
+    },
+  },
 ]
 const ERASED = { from: 0.86, to: 0.96 }
 function pointsOf(mark: Mark, box: Box, until = 1): InkPoint[] {

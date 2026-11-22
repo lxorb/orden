@@ -15,6 +15,7 @@
     "tasks-model",
     "ui-kit",
     "ai-chat",
-    "ai-providers"
+    "ai-providers",
+    "views"
   ]
 }

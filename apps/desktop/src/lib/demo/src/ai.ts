@@ -10,6 +10,11 @@ const tool = (id: string, verb: string, args: unknown, from: number, to: number)
   role: 'model',
   part: (phase) => ({ kind: 'tool', id, verb, args, state: phase < to ? 'running' : 'ok' }),
 })
+const DONE = 'Done: River loop, Old town and Harbour are on your todos for Saturday.'
+const streamed = (text: string, by: number) => {
+  const words = text.split(' ')
+  return words.slice(0, Math.max(1, Math.ceil(words.length * Math.min(1, by)))).join(' ')
+}
 export function scriptOf(page: string, routes: string): readonly Said[] {
   return [
     {
@@ -33,13 +38,13 @@ export function scriptOf(page: string, routes: string): readonly Said[] {
     {
       at: 0.72,
       role: 'model',
-      part: () => ({ kind: 'text', text: 'Done: River loop, Old town and Harbour are on your todos for Saturday.' }),
+      part: (phase) => ({ kind: 'text', text: streamed(DONE, (phase - 0.72) / 0.08) }),
     },
   ]
 }
-const AI_ENDS = 0.92
-export function turnsAt(phase: number, script: readonly Said[]): Turn[] {
-  if (phase >= AI_ENDS) return []
+const ASKED = 0.04
+export function turnsAt(given: number, script: readonly Said[]): Turn[] {
+  const phase = given < ASKED ? 1 : given
   const turns: Turn[] = []
   for (const one of script) {
     if (phase < one.at) break
@@ -53,5 +58,5 @@ export function turnsAt(phase: number, script: readonly Said[]): Turn[] {
   }
   return turns
 }
-export const browsing = (phase: number): 'page' | 'routes' => (phase >= 0.32 && phase < AI_ENDS ? 'routes' : 'page')
+export const browsing = (phase: number): 'page' | 'routes' => (phase >= 0.32 || phase < ASKED ? 'routes' : 'page')
 export const working = (phase: number): boolean => phase >= 0.12 && phase < 0.72
