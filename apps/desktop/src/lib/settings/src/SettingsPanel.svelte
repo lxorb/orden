@@ -419,6 +419,8 @@
         {/if}
       {/each}
     </div>
+  {:else if !__AI__}
+    <p class="note">Nothing matches.</p>
   {/if}
   {@render asker()}
 {/snippet}
