@@ -34,7 +34,11 @@ class Device {
     return syncUpdate(Y.encodeStateAsUpdate(this.doc, before))
   }
 }
-async function arrive(made: NoteRoom, state: FakeState, note: { id: string; spaceId: string }): Promise<Device> {
+async function arrive(
+  made: NoteRoom,
+  state: FakeState,
+  note: { id: string; spaceId: string; device?: string },
+): Promise<Device> {
   const device = new Device(await join(made, note))
   await say(made, state, device.socket, syncStep1(device.doc))
   await settle(made, state, [device])
@@ -501,6 +505,40 @@ describe('a room', () => {
     await woken.alarm()
     const read = await call(env, `/v1/notes/${noteId}`, { token })
     expect(read.json.content).toBe('# Together\nnever written down\n')
+  })
+  test('takes away a caret its device stopped renewing, even while its socket looks open (#2478)', async () => {
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+    const two = await arrive(made, state, { id: noteId, spaceId })
+    one.awareness.setLocalStateField('who', { name: 'Gone quiet', accent: 'violet' })
+    await say(made, state, one.socket, awarenessUpdate(one.awareness, [one.doc.clientID]))
+    await settle(made, state, [one, two])
+    expect(two.awareness.getStates().has(one.doc.clientID)).toBe(true)
+    const now = Date.now()
+    vi.spyOn(Date, 'now').mockReturnValue(now + 60_000)
+    two.awareness.setLocalStateField('who', { name: 'Still here', accent: 'teal' })
+    await say(made, state, two.socket, awarenessUpdate(two.awareness, [two.doc.clientID]))
+    await settle(made, state, [two])
+    vi.restoreAllMocks()
+    expect(two.awareness.getStates().has(one.doc.clientID)).toBe(false)
+    const three = await arrive(made, state, { id: noteId, spaceId })
+    expect(three.awareness.getStates().has(one.doc.clientID)).toBe(false)
+  })
+  test('lets a device that comes back replace its own old caret at once (#2478)', async () => {
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId, device: 'desk' })
+    const two = await arrive(made, state, { id: noteId, spaceId, device: 'phone' })
+    one.awareness.setLocalStateField('who', { name: 'Desk', accent: 'violet' })
+    await say(made, state, one.socket, awarenessUpdate(one.awareness, [one.doc.clientID]))
+    await settle(made, state, [one, two])
+    const again = await arrive(made, state, { id: noteId, spaceId, device: 'desk' })
+    await settle(made, state, [two, again])
+    expect(two.awareness.getStates().has(one.doc.clientID)).toBe(false)
+    expect(again.awareness.getStates().has(one.doc.clientID)).toBe(false)
+    again.awareness.setLocalStateField('who', { name: 'Desk', accent: 'violet' })
+    await say(made, state, again.socket, awarenessUpdate(again.awareness, [again.doc.clientID]))
+    await settle(made, state, [two, again])
+    expect([...two.awareness.getStates().keys()].filter((id) => id !== two.doc.clientID)).toEqual([again.doc.clientID])
   })
   test('takes a caret away when its device leaves', async () => {
     const { room: made, state } = room(env)
