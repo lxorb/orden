@@ -54,7 +54,7 @@ jobs:
         working-directory: apps/desktop
         run: |
           pnpm exec vite build --config vite.home.config.ts --mode site-preview
-          pnpm exec vite build --base /preview/app/ --outDir dist-preview/preview/app --emptyOutDir
+          pnpm exec vite build --mode web --base /preview/app/ --outDir dist-preview/preview/app --emptyOutDir
 
       - name: Put it on orden.so/preview/
         if: ${{ inputs.preview }}

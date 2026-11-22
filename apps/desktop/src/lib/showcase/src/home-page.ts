@@ -39,7 +39,7 @@ function displaysIn(doc: Document): Display[] {
   return [...doc.querySelectorAll<HTMLElement>('.display[data-scene]')].flatMap((box) => {
     const screen = box.querySelector<HTMLElement>('.screen')
     const { scene } = box.dataset
-    if (!screen || !isDemoLoopScene(scene)) return []
+    if (!screen || !isDemoLoopScene(scene) || box.hasAttribute('data-poster-only')) return []
     return [{ box, screen, scene, frame: null, ready: false, playing: false }]
   })
 }
