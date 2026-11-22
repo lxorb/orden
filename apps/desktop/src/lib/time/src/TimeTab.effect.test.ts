@@ -246,6 +246,19 @@ test('each place row shows its name between its icon and its time', () => {
     'Xterm',
   ])
 })
+test('the breakdown and the timeline show Spaces, Websites, Tabs, then Apps, and Spaces is picked first', () => {
+  shown(TimeTab, { tab: tab() })
+  const order = ['space', 'site', 'tab', 'app']
+  const switcher = [...target.querySelectorAll('[data-time-places] [role="radio"]')]
+  expect(switcher.map((one) => one.textContent.trim())).toEqual(['Spaces', 'Websites', 'Tabs', 'Apps'])
+  expect(switcher[0]?.getAttribute('aria-checked')).toBe('true')
+  expect([...target.querySelectorAll<HTMLElement>('[data-time-lane]')].map((one) => one.dataset.timeLane)).toEqual(
+    order,
+  )
+  pressed(target.querySelector('[data-time-timeline-open]'))
+  const lanes = [...document.querySelectorAll<HTMLElement>('[data-time-timeline] [data-lane]')]
+  expect(lanes.map((one) => one.dataset.lane)).toEqual([...order, 'active'])
+})
 test('a slice and its row light each other, and the pie’s centre tells that activity until the pointer leaves or a press lands elsewhere', () => {
   const work = time.addActivity('Work')
   const uni = time.addActivity('Uni')
