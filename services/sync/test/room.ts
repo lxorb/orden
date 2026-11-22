@@ -114,14 +114,14 @@ export function room(env: Env): { room: NoteRoom; state: FakeState } {
 }
 export async function join(
   made: NoteRoom,
-  note: { id: string; spaceId: string; kind?: RoomKind; who?: string },
+  note: { id: string; spaceId: string; kind?: RoomKind; who?: string; device?: string },
   writes = true,
 ): Promise<FakeSocket> {
   const socket = new FakeSocket()
   await made.enter(
     socket as unknown as WebSocket,
     { noteId: note.id, spaceId: note.spaceId, kind: note.kind ?? 'words' },
-    { writes, who: note.who ?? '' },
+    { writes, who: note.who ?? '', ...(note.device ? { v2: true, device: note.device } : {}) },
   )
   return socket
 }

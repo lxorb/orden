@@ -70,6 +70,7 @@ import { accessOf } from './access'
 const SETTLE_DELAY = 1_200
 const SETTLES_WITHIN = 15_000
 const MOST_ANNOUNCED = 32
+const PRESENCE_LASTS = 45_000
 export interface Held {
   noteId: string
   spaceId: string
@@ -345,6 +346,14 @@ export class NoteRoom implements DurableObject {
       )
     }
     server.send(syncStep1(this.state.doc))
+    if (joining.v2 && joining.device) {
+      for (const one of this.ctx.getWebSockets()) {
+        if (one !== server && speaksV2(one) && deviceIdOf(one) === joining.device) {
+          forget(this.awareness, announcedBy(one), one)
+        }
+      }
+    }
+    this.outlasted()
     const present = awarenessState(this.awareness)
     if (present) server.send(present)
   }
@@ -543,6 +552,7 @@ export class NoteRoom implements DurableObject {
       socket.close(TOO_LARGE, TOO_LARGE_IN_A_ROOM)
       return
     }
+    this.outlasted()
     const answer = receive(said, this.state.doc, this.awareness, socket, (client) =>
       this.ctx.getWebSockets().every((one) => one === socket || !announcedBy(one).includes(client)),
     )
@@ -693,6 +703,13 @@ export class NoteRoom implements DurableObject {
         // the carets away; there is nothing to do about it here.
       }
     }
+  }
+  private outlasted() {
+    const now = Date.now()
+    const stale = [...this.awareness.meta]
+      .filter(([client, meta]) => this.awareness.states.has(client) && now - meta.lastUpdated > PRESENCE_LASTS)
+      .map(([client]) => client)
+    if (stale.length) forget(this.awareness, stale, null)
   }
   private announced(origin: unknown, changed: AwarenessChange) {
     if (!isSocket(origin)) return
