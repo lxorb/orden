@@ -110,6 +110,23 @@
     follows(id)
     atEnd = true
   })
+  $effect(() => {
+    const box = talk
+    if (!box) return
+    let shown = box.clientHeight > 0
+    let followed = atEnd
+    const sized = new ResizeObserver(() => {
+      const now = box.clientHeight > 0
+      if (!now && shown) followed = atEnd
+      if (now && !shown && followed) {
+        box.scrollTop = box.scrollHeight
+        atEnd = true
+      }
+      shown = now
+    })
+    sized.observe(box)
+    return () => sized.disconnect()
+  })
   let looked = $state(0)
   $effect(() => {
     const look = () => looked++
