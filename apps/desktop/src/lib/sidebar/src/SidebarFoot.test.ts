@@ -18,9 +18,9 @@ describe('the foot of the sidebar', () => {
       expect(drawn(device), device).toContain('aria-label="Send feedback"')
     }
   })
-  test('in a desktop browser offers the app to download, and leaves the themes to the account menu (#2063)', () => {
+  test('in a desktop browser offers no app to download (#2462), and leaves the themes to the account menu (#2063)', () => {
     const html = drawn('desktop')
-    expect(html).toContain('aria-label="Download the app"')
+    expect(html).not.toContain('Download the app')
     expect(html).not.toContain('aria-label="Themes"')
     expect(html).not.toMatch(/aria-label="(Light|Dark)"/)
   })
