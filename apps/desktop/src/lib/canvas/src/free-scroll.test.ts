@@ -117,3 +117,39 @@ test('a wheel that counts in lines or pages, as Firefox reports a mouse wheel mo
   })
   expect(free.wheel({ deltaX: -1, deltaY: 0, deltaMode: 2, timeStamp: 900 }).x).toBeLessThan(-100)
 })
+describe('a wheel told from a touchpad', () => {
+  const at = (deltaY: number, timeStamp: number, more: { deltaX?: number; deltaMode?: number } = {}) => ({
+    deltaX: 0,
+    deltaY,
+    timeStamp,
+    ...more,
+  })
+  test('notched steps of a mouse wheel, in lines or in whole pixels, are a wheel', () => {
+    const free = new FreeScroll()
+    expect(free.notched(at(3, 0, { deltaMode: 1 }))).toBe(true)
+    expect(free.notched(at(100, 1000))).toBe(true)
+    expect(free.notched(at(-120, 1050))).toBe(true)
+    expect(free.notched(at(53, 2000))).toBe(true)
+  })
+  test('fine pixel deltas, or any sideways movement, are a touchpad', () => {
+    const free = new FreeScroll()
+    expect(free.notched(at(4.5, 0))).toBe(false)
+    expect(free.notched(at(12, 1000))).toBe(false)
+    expect(free.notched(at(100, 2000, { deltaX: 3 }))).toBe(false)
+  })
+  test('a touchpad stream stays a touchpad when its glide sends a large whole step', () => {
+    const free = new FreeScroll()
+    expect(free.notched(at(6.25, 0))).toBe(false)
+    expect(free.notched(at(120, 16))).toBe(false)
+    expect(free.notched(at(100, 32))).toBe(false)
+    expect(free.notched(at(100, 1000))).toBe(true)
+  })
+  test('two fingers the engine reports, or its pans, are a touchpad whatever the wheel says', () => {
+    const fingers = new FreeScroll()
+    fingers.fingers(2)
+    expect(fingers.notched(at(100, 0))).toBe(false)
+    const panning = new FreeScroll()
+    panning.pan(0, 4, 995)
+    expect(panning.notched(at(100, 1000))).toBe(false)
+  })
+})

@@ -949,8 +949,9 @@
     if (!element) return
     event.preventDefault()
     const rect = element.getBoundingClientRect()
-    if (event.ctrlKey || event.metaKey) {
-      if (pinching()) return
+    const held = event.ctrlKey || event.metaKey
+    if (held && pinching()) return
+    if (held || freeScroll.notched(event)) {
       store.camera = zoomed(
         camera,
         width,

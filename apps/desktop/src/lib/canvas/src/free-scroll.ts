@@ -6,6 +6,8 @@ const LEARNT = 1.5
 const STEADY = 0.3
 const GLIDE = 400
 const SLOWING = 2
+const PAUSE = 300
+const NOTCHED = 50
 interface Vector {
   x: number
   y: number
@@ -40,6 +42,20 @@ export class FreeScroll {
   pan(dx: number, dy: number, now: number): void {
     this.owed = { x: this.owed.x + dx, y: this.owed.y + dy }
     this.lastRaw = now
+  }
+  private notchedRun = false
+  private lastKind = -Infinity
+  notched(event: Wheeled): boolean {
+    const now = event.timeStamp
+    const fresh = now - this.lastKind > PAUSE
+    this.lastKind = now
+    const notch =
+      !this.touching &&
+      now - this.lastRaw >= FRESH &&
+      !event.deltaX &&
+      (event.deltaMode === 1 || (Number.isInteger(event.deltaY) && Math.abs(event.deltaY) >= NOTCHED))
+    this.notchedRun = fresh ? notch : this.notchedRun && notch
+    return this.notchedRun
   }
   wheel(event: Wheeled): Vector {
     const now = event.timeStamp
