@@ -22,6 +22,7 @@ export {
   releaseAssets,
   releasedAt,
   SITE_ORIGIN,
+  type Visitor,
 } from './links'
 export { poolOf } from './pool'
 export const homePage = () => import('./home-page')

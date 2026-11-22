@@ -28,6 +28,8 @@ export interface Visitor {
   userAgent: string
   touchPoints?: number
   architecture?: string
+  platform?: string | undefined
+  coarse?: boolean
 }
 export interface ReleaseAsset {
   name: string
@@ -45,13 +47,28 @@ const LABELS: Record<Exclude<System, 'ios'>, string> = {
   windows: 'Download for Windows',
   linux: 'Download for Linux',
 }
-function systemOf({ userAgent, touchPoints = 0 }: Visitor): System | null {
+const HINTS: Record<string, System | null> = {
+  android: 'android',
+  ios: 'ios',
+  macos: 'macos',
+  windows: 'windows',
+  linux: 'linux',
+  'chrome os': null,
+  chromeos: null,
+}
+function hinted(platform: string | undefined): System | null | undefined {
+  const key = platform?.trim().toLowerCase() ?? ''
+  return key in HINTS ? HINTS[key] : undefined
+}
+function systemOf({ userAgent, touchPoints = 0, platform, coarse = false }: Visitor): System | null {
+  const hint = hinted(platform)
+  if (hint === 'android' || hint === 'ios') return hint
   if (/android/i.test(userAgent)) return 'android'
   if (/iphone|ipad|ipod/i.test(userAgent)) return 'ios'
-  if (/macintosh|mac os x/i.test(userAgent)) return touchPoints > 1 ? 'ios' : 'macos'
-  if (/windows/i.test(userAgent)) return 'windows'
-  if (/cros/i.test(userAgent)) return null
-  if (/linux|x11/i.test(userAgent)) return 'linux'
+  if (hint === null || /\bcros\b/i.test(userAgent)) return null
+  if (hint === 'macos' || /macintosh|mac os x/i.test(userAgent)) return touchPoints > 1 ? 'ios' : 'macos'
+  if (hint === 'windows' || /windows/i.test(userAgent)) return 'windows'
+  if (hint === 'linux' || /linux|x11/i.test(userAgent)) return coarse && touchPoints > 1 ? 'android' : 'linux'
   return null
 }
 function onArm({ userAgent, architecture }: Visitor): boolean {
@@ -63,9 +80,10 @@ function endingFor(system: Exclude<System, 'ios'>, arm: boolean): string {
   if (system === 'windows') return arm ? '-windows-arm64-setup.exe' : '-windows-x64-setup.exe'
   return arm ? '-linux-arm64.AppImage' : '-linux-x64.AppImage'
 }
-export function downloadFor(visitor: Visitor, assets: readonly ReleaseAsset[] = []): Download {
+export function downloadFor(visitor: Visitor, assets: readonly ReleaseAsset[] = [], app = `${APP_ORIGIN}/`): Download {
   const system = systemOf(visitor)
-  if (!system || system === 'ios') return { label: 'Download', href: LATEST_RELEASE }
+  if (system === 'ios') return { label: 'Open the web app', href: app }
+  if (!system) return { label: 'Download', href: LATEST_RELEASE }
   const ending = endingFor(system, onArm(visitor))
   const asset = assets.find(
     ({ name, url }) => name.startsWith('Orden-') && name.endsWith(ending) && url.startsWith(ASSET_HOME),

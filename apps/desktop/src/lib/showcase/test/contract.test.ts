@@ -27,6 +27,7 @@ import {
   SITE_ORIGIN,
   type DemoCue,
   type DemoPlay,
+  type Visitor,
 } from '../src/api'
 
 const MAC =
@@ -193,11 +194,73 @@ describe('the download button', () => {
       href: LATEST_RELEASE,
     })
   })
-  test('sends anyone it has no file for to the latest release', () => {
+  test('sends anyone it has no file for to the latest release, and an iPhone or iPad to the web app', () => {
     const latest = { label: 'Download', href: LATEST_RELEASE }
-    expect(downloadFor({ userAgent: IPHONE }, ASSETS)).toEqual(latest)
-    expect(downloadFor({ userAgent: MAC, touchPoints: 5 }, ASSETS)).toEqual(latest)
+    const web = { label: 'Open the web app', href: `${APP_ORIGIN}/` }
+    expect(downloadFor({ userAgent: IPHONE }, ASSETS)).toEqual(web)
+    expect(downloadFor({ userAgent: MAC, touchPoints: 5 }, ASSETS)).toEqual(web)
+    expect(downloadFor({ userAgent: IPHONE }, ASSETS, 'https://orden.so/preview/app/').href).toBe(
+      'https://orden.so/preview/app/',
+    )
     expect(downloadFor({ userAgent: 'curl/8.0' }, ASSETS)).toEqual(latest)
+  })
+  test('tells each real browser its own system, phones and tablets before the desktops their agents name', () => {
+    const real: [string, Visitor, string][] = [
+      ['Windows, Chrome', { userAgent: WINDOWS }, 'Download for Windows'],
+      ['macOS, Safari', { userAgent: MAC }, 'Download for macOS'],
+      ['Linux, Chrome', { userAgent: LINUX }, 'Download for Linux'],
+      ['Linux laptop with a touch screen', { userAgent: LINUX, touchPoints: 10, coarse: false }, 'Download for Linux'],
+      ['Android, Chrome', { userAgent: ANDROID, touchPoints: 5, coarse: true }, 'Download for Android'],
+      [
+        'Android, Chrome reduced agent',
+        {
+          userAgent:
+            'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
+          platform: 'Android',
+        },
+        'Download for Android',
+      ],
+      [
+        'Android, Samsung Internet',
+        {
+          userAgent:
+            'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/122.0.0.0 Mobile Safari/537.36',
+        },
+        'Download for Android',
+      ],
+      [
+        'Android, Firefox',
+        { userAgent: 'Mozilla/5.0 (Android 15; Mobile; rv:132.0) Gecko/132.0 Firefox/132.0' },
+        'Download for Android',
+      ],
+      [
+        'Android, Chrome asking for the desktop site',
+        { userAgent: LINUX, touchPoints: 5, coarse: true },
+        'Download for Android',
+      ],
+      ['Android, desktop agent but platform said', { userAgent: LINUX, platform: 'Android' }, 'Download for Android'],
+      ['iPhone, Safari', { userAgent: IPHONE, touchPoints: 5, coarse: true }, 'Open the web app'],
+      [
+        'iPad, Safari on an old iPadOS',
+        {
+          userAgent:
+            'Mozilla/5.0 (iPad; CPU OS 16_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        },
+        'Open the web app',
+      ],
+      ['iPad, Safari with its desktop agent', { userAgent: MAC, touchPoints: 5, coarse: true }, 'Open the web app'],
+      [
+        'Chromebook',
+        {
+          userAgent:
+            'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        },
+        'Download',
+      ],
+      ['Chromebook, platform said', { userAgent: LINUX, platform: 'Chrome OS' }, 'Download'],
+    ]
+    for (const [name, visitor, label] of real) expect(downloadFor(visitor, ASSETS).label, name).toBe(label)
+    expect(downloadFor({ userAgent: ANDROID }, ASSETS).href).toBe(asset('android.apk'))
   })
   test('takes nothing from a release but its own files', () => {
     const elsewhere = releaseAssets({
