@@ -759,6 +759,12 @@ describe('connecting', () => {
     )
     expect(effects).toEqual([])
   })
+  test('keeps the card under the pointer while it rests on one of its dots', () => {
+    const near = { port: { id: 'a', side: 'top' as const } }
+    const { machine } = play([move(HERE, { hit: hit({ node: 'a' }) }), move(HERE, { hit: hit(near) })], context())
+    expect(machine.hovered).toBe('a')
+    expect(play([move(HERE, { hit: hit(near) })], context()).machine.hovered).toBe('a')
+  })
 })
 describe('what a gesture leaves behind', () => {
   test('a cancelled pointer leaves nothing half done', () => {

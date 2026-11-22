@@ -367,8 +367,9 @@
     `Canvas: ${store.canvas.nodes.length} cards, ${store.canvas.edges.length} links, ${store.canvas.ink.length} drawings`,
   )
   const lassoed = $derived(store.picked.length > 0 && store.picked.every((id) => inked.has(id)))
+  const porting = $derived(!gesture && store.editing === null && tools.which === 'select')
   const ported = $derived.by(() => {
-    if (gesture || store.editing !== null || tools.which !== 'select') return null
+    if (!porting) return null
     const under = machine.hovered
     const node = under === null ? undefined : shown.nodes.find((one) => one.id === under)
     if (!node || !roomFor(boxOf(node), camera.scale, PORT)) return null
@@ -556,6 +557,7 @@
         box,
         scale: camera.scale,
         ported,
+        ports: porting,
         coarse,
         lassoed,
       },
@@ -867,7 +869,10 @@
     }
     const wants = !machine.gesture || machine.gesture.kind === 'erase' || machine.gesture.kind === 'pull'
     const found = wants ? hitFor(point, coarse) : NOTHING
-    if (!machine.gesture) over = overOf(found)
+    if (!machine.gesture) {
+      over = overOf(found)
+      nearPort = found.port
+    }
     if (ours) rubAt = machine.gesture?.kind === 'erase' ? point : null
     send({
       kind: 'move',
@@ -1199,6 +1204,7 @@
     }
   })
   let over = $state.raw<Over>(null)
+  let nearPort = $state.raw<Hit['port']>(null)
   let rubAt = $state.raw<Point | null>(null)
   function overOf(found: Hit): Over {
     if (found.handle) return found.handle
@@ -1347,6 +1353,7 @@
           {@const point = sidePoint(ported, side)}
           <div
             class="port"
+            class:near={nearPort?.id === portedBox.id && nearPort.side === side}
             style:left="{point.x}px"
             style:top="{point.y}px"
             style:width="{PORT * unit}px"
@@ -1612,10 +1619,16 @@
     background: var(--surface);
     border: 1.5px solid var(--accent);
     opacity: 0.75;
-    transition: opacity var(--dur-fast) var(--ease-out);
+    transition:
+      opacity var(--dur-fast) var(--ease-out),
+      scale var(--dur-fast) var(--ease-out);
   }
-  .port:hover {
+  .port:hover,
+  .port.near {
     opacity: 1;
+  }
+  .port.near {
+    scale: 1.5;
   }
   .port.aiming {
     background: var(--accent);

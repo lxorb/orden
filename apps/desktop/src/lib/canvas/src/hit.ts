@@ -1,4 +1,4 @@
-import type { Canvas, InkStroke } from '@orden/markdown/canvas'
+import type { Canvas, CanvasNode, InkStroke, Side } from '@orden/markdown/canvas'
 import {
   awayFromSegment,
   type Box,
@@ -18,6 +18,8 @@ import { FORGIVING, type Hit, NOTHING } from './pointer'
 
 export const HANDLE = 9
 export const PORT = 9
+const PORT_REACH = 12
+const PORT_INSIDE = 4
 const ROOM = 3
 export const roomFor = (box: Box, scale: number, size: number): boolean =>
   Math.min(box.width, box.height) * scale >= ROOM * size
@@ -27,6 +29,7 @@ export interface Where {
   box: Box | null
   scale: number
   ported: string | null
+  ports: boolean
   coarse: boolean
   lassoed: boolean
 }
@@ -40,12 +43,16 @@ export function hitAt(where: Where, point: Point): Hit {
   }
   const endpoint = endpointAt(where, point, HANDLE / 2 / where.scale + slack)
   if (endpoint) return { ...NOTHING, endpoint }
-  const port = portAt(where, point, slack)
-  if (port) return { ...NOTHING, port }
   const free = where.canvas.nodes.filter((one) => !one.locked)
+  const edgeReach = 6 * unit + slack
+  const port = where.ports ? portAt(where, free, point, slack) : null
+  const dot = PORT / 2 / where.scale + 2 * unit + slack
+  if (port && (port.away <= dot || !edgeAt(where.canvas, point, edgeReach, port.id))) {
+    return { ...NOTHING, port: { id: port.id, side: port.side } }
+  }
   const node = nodeAt(free, point, 12)
   if (node) return { ...NOTHING, node: node.id }
-  const edge = edgeAt(where.canvas, point, 6 * unit + slack)
+  const edge = edgeAt(where.canvas, point, edgeReach)
   if (edge) return { ...NOTHING, edge }
   const stroke = strokeAt(where.canvas.ink, point, 2 * unit + slack)
   if (stroke) {
@@ -94,26 +101,56 @@ function turnAt(box: Box, point: Point, reach: number): boolean {
   const at = { x: box.x + box.width / 2, y: box.y - reach * 1.6 }
   return Math.hypot(point.x - at.x, point.y - at.y) <= reach
 }
-function portAt(where: Where, point: Point, slack: number): Hit['port'] {
-  const id = where.ported
-  if (!id) return null
-  const node = where.canvas.nodes.find((one) => one.id === id)
-  if (!node) return null
-  const reach = PORT / 2 / where.scale + slack + 2 / where.scale
-  const box = boxOf(node)
-  for (const side of SIDES) {
-    const at = sidePoint(box, side)
-    if (Math.hypot(point.x - at.x, point.y - at.y) <= reach) return { id, side }
+interface Near {
+  id: string
+  side: Side
+  away: number
+}
+function portAt(where: Where, free: readonly CanvasNode[], point: Point, slack: number): Near | null {
+  const reach = PORT_REACH / where.scale + slack
+  const inside = PORT_INSIDE / where.scale
+  const top = nodeAt(free, point, 0)
+  const nearest = (node: CanvasNode): Near | null => {
+    const box = boxOf(node)
+    if ((top && top.id !== node.id) || !roomFor(box, where.scale, PORT)) return null
+    let best: Near | null = null
+    for (const side of SIDES) {
+      const at = sidePoint(box, side)
+      const away = Math.hypot(point.x - at.x, point.y - at.y)
+      if (away > reach || depth(box, side, point) > inside) continue
+      if (!best || away < best.away) best = { id: node.id, side, away }
+    }
+    return best
+  }
+  const hovered = where.ported === null ? undefined : free.find((one) => one.id === where.ported)
+  const near = hovered ? nearest(hovered) : null
+  if (near || where.coarse) return near
+  for (let index = free.length - 1; index >= 0; index--) {
+    const node = free[index]
+    const found = node && node !== hovered ? nearest(node) : null
+    if (found) return found
   }
   return null
 }
+function depth(box: Box, side: Side, point: Point): number {
+  switch (side) {
+    case 'top':
+      return point.y - box.y
+    case 'right':
+      return box.x + box.width - point.x
+    case 'bottom':
+      return box.y + box.height - point.y
+    case 'left':
+      return point.x - box.x
+  }
+}
 const SAMPLES = 40
-function edgeAt(canvas: Canvas, point: Point, reach: number): string | null {
+function edgeAt(canvas: Canvas, point: Point, reach: number, apart: string | null = null): string | null {
   if (!canvas.edges.length) return null
   const byId = new Map(canvas.nodes.map((node) => [node.id, node]))
   for (let index = canvas.edges.length - 1; index >= 0; index--) {
     const edge = canvas.edges[index]
-    if (!edge) continue
+    if (!edge || edge.fromNode === apart || edge.toNode === apart) continue
     const from = byId.get(edge.fromNode)
     const to = byId.get(edge.toNode)
     if (!from || !to) continue

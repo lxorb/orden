@@ -95,6 +95,7 @@ describe('a plane of thousands of cards, all picked, in groups', () => {
             box: null,
             scale: 1,
             ported: null,
+            ports: true,
             coarse: false,
             lassoed: false,
           },

@@ -566,7 +566,7 @@ function select(machine: Machine, input: Down, context: Context): Step {
 function onMove(machine: Machine, input: Move, context: Context): Step {
   const one = machine.gesture
   if (!one) {
-    const hovered = input.hit.node
+    const hovered = input.hit.port?.id ?? input.hit.node
     return {
       machine: hovered === machine.hovered ? machine : { ...machine, hovered },
       effects: [],
